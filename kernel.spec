@@ -5,7 +5,7 @@
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 # _without_source	- don't build source
-# _without_selinux	- don't build SELinux kernel
+# _without_lsm		- don't build LSM/SELinux kernel
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -33,9 +33,9 @@ Source21:	%{name}-ia32-smp.config
 #Source73:	%{name}-ppc.config
 #Source74:	%{name}-ppc-smp.config
 Patch0:		http://piorun.ds.pg.gda.pl/~blues/linux-2.5.67-genrtc_fix.patch
-# SELinux
-Patch1:		http://www.nsa.gov/selinux/lk/2.5.69-selinux0.patch.gz
-Patch2:		http://www.nsa.gov/selinux/lk/libfs.patch.gz
+Patch1:		patch-2.5.69-ac1.bz2
+# LSM/SELinux
+Patch10:	http://www.nsa.gov/selinux/lk/2.5.69-selinux0.patch.gz
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -261,8 +261,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %prep
 %setup -q -n linux-%{version}
 %patch0 -p0
-%{!?_without_selinux:%patch1 -p1}
-%{!?_without_selinux:%patch2 -p1}
+%patch1 -p1
+%{!?_without_lsm:%patch10 -p1}
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -468,7 +468,7 @@ install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoco
 ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
 %endif
 
-%if %{?_without_selinux:0}%{!?_without_selinux:1}
+%if %{?_without_lsm:0}%{!?_without_lsm:1}
 #install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/{linux,asm-i386}/flask
 install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/flask
 #install security/lids/include/linux/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
