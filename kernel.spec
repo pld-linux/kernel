@@ -635,8 +635,8 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 %endif
 
 # EVMS
-#%patch136 -p1
-#%patch137 -p1
+%patch136 -p1
+%patch137 -p1
 
 %ifarch %{ix86}
 %patch139 -p1
