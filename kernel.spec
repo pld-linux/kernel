@@ -514,7 +514,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch0 -p1
 
 %if "%{_cset}" != "0"
-patch -p1 -q < %{SOURCE2}
+patch -p1 -s < %{SOURCE2}
 %endif
 
 %patch4 -p1
