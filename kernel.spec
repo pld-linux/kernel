@@ -128,7 +128,6 @@ Patch41:	linux-2.4.20-rc1-isdn-hisax-USB.patch
 Patch42:	linux-2.4.20-rc1-ticable.h-USB.patch
 Patch43:	linux-2.4.20-rc1-IDE.patch
 Patch44:	kernel-2.4-NTfix.patch
-Patch45:	linux-2.4.19-USB-hid-input.patch
 
 # Assorted bugfixes
 
@@ -471,7 +470,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %ifarch ppc
 %patch908 -p1
 %endif
-
 %patch4 -p1
 %patch5 -p1
 %patch904 -p1
@@ -621,9 +619,6 @@ echo USB 2.0 Support from Linux-2.4.20-rc1.
 
 # security BUG
 %patch44 -p1
-
-# fixed USB input module
-%patch45 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
