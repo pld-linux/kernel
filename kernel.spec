@@ -236,6 +236,7 @@ Patch302:	2.6.7-ppc-cciss-div.patch
 Patch303:	2.6.7-ppc-saa7146-workaround.patch
 Patch304:	2.6.7-ppc-ipr-div.patch
 Patch305:	2.6.7-ppc-proxydict-workaround.patch
+Patch306:	2.6.7-sparc-cycle-workaround.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -740,6 +741,7 @@ patch -p1 -s < exec-shield.patch
 %patch303 -p1
 %patch304 -p1
 %patch305 -p1
+%patch306 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
