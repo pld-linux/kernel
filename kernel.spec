@@ -18,6 +18,7 @@
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	bootsplash	# build with bootsplash
+%bcond_with	swsuspend	# build with software suspend
 
 %bcond_with	mosix		# build with openMosix support
 
@@ -84,7 +85,6 @@ Source1:	%{name}-autoconf.h
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
 # Source3-md5:	56299a33297f65997d9787a87f76af66
 # http://lkml.org/lkml/2004/6/2/228
-## Source6:	http://prdownloads.sourceforge.net/swsusp/software-suspend-2.0.0.81-for-2.6.6.tar.bz2
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source30:	%{name}-x86_64.config
@@ -248,6 +248,13 @@ Patch400:	2.6.7-kill-warnings.patch
 Patch420:	openMosix-2.6.7-PLD.patch
 
 Patch440:	2.6.8.1-qdisc_run.patch
+
+# http://download.berlios.de/softwaresuspend/software-suspend-2.0.0.105-for-2.6.8.1.tar.bz2
+Patch460:	20-software-suspend-linux-2.6.8.1-rev1-whole
+Patch461:	21-software-suspend-linux-2.6.8.1-rev2-incremental
+Patch462:	21-software-suspend-linux-2.6.8.1-rev3-incremental
+Patch463:	30-software-suspend-core-2.0.0.104-whole
+Patch464:	31-software-suspend-core-2.0.0.105-incremental
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -749,6 +756,16 @@ patch -p1 -s < exec-shield.patch
 %endif
 
 %patch440 -p1
+
+# software suspend
+%if %{with swsuspend}
+%patch460 -p1
+%patch461 -p1
+%patch462 -p1
+%patch463 -p1
+%patch464 -p1
+%patch465 -p1
+%endif
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
