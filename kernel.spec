@@ -17,7 +17,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.5.67
-Release:	0.2
+Release:	0.3
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
@@ -42,13 +42,13 @@ BuildRequires:	egcs64
 #%else
 #BuildRequires:	%{kgcc_package}
 %endif
-BuildRequires:	modutils
+BuildRequires:	module-init-tools
 Buildrequires:	perl
 Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Autoreqprov:	no
 Prereq:		fileutils
-Prereq:		modutils
+Prereq:		module-init-tools
 Prereq:		geninitrd >= 2.21
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
