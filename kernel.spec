@@ -628,7 +628,7 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 %endif
 
 %patch32 -p1
-%{!?_without_grsec:%patch910 -p1}
+#%{!?_without_grsec:%patch910 -p1}
 
 # hostap
 #echo Installing Host AP support
