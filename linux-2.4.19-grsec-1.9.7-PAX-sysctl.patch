@@ -1,0 +1,89 @@
+--- linux-2.4.19/kernel/sysctl.c.org	Thu Sep 26 19:41:20 2002
++++ linux-2.4.19/kernel/sysctl.c	Mon Sep 30 14:21:12 2002
+@@ -285,7 +285,8 @@
+ GS_RANDSRC, GS_RANDPING, GS_SOCKET_ALL, GS_SOCKET_ALL_GID, GS_SOCKET_CLIENT, 
+ GS_SOCKET_CLIENT_GID, GS_SOCKET_SERVER, GS_SOCKET_SERVER_GID, 
+ GS_TTY, GS_TTYS, GS_PTY, GS_GROUP, GS_GID, GS_ACHDIR, GS_AMOUNT, GS_AIPC, 
+-GS_DMSG, GS_RANDRPC, GS_FINDTASK, GS_LOCK};
++GS_DMSG, GS_RANDRPC, GS_FINDTASK, GS_PAXNOEXEC, GS_PAXPAGEEXEC, GS_PAXSEGMEXEC, 
++GS_PAXEMUTRAMP, GS_PAXMPROTECT, GS_LOCK};
+ 
+ static ctl_table grsecurity_table[] = {
+ 	{GS_ACL,"acl", NULL, sizeof(int), 0600, NULL, &gr_proc_handler},
+@@ -439,6 +440,26 @@
+ 	{GS_FINDTASK, "chroot_findtask", &grsec_enable_chroot_findtask, 
+ 	 sizeof (int), 0600, NULL, &proc_dointvec},
+ #endif
++#ifdef CONFIG_GRKERNSEC_PAX_NOEXEC
++	 {GS_PAXNOEXEC, "pax_noexec", &grsec_pax_noexec, 
++	 sizeof (int), 0600, NULL, &proc_dointvec},
++#endif
++#ifdef CONFIG_GRKERNSEC_PAX_PAGEEXEC
++	 {GS_PAXPAGEEXEC, "pax_pageexec", &grsec_pax_pageexec, 
++	 sizeof (int), 0600, NULL, &proc_dointvec},
++#endif
++#ifdef CONFIG_GRKERNSEC_PAX_SEGMEXEC
++	 {GS_PAXSEGMEXEC, "pax_segmexec", &grsec_pax_segmexec, 
++	 sizeof (int), 0600, NULL, &proc_dointvec},
++#endif
++#ifdef CONFIG_GRKERNSEC_PAX_EMUTRAMP
++	 {GS_PAXEMUTRAMP, "pax_emutramp", &grsec_pax_emutramp, 
++	 sizeof (int), 0600, NULL, &proc_dointvec},
++#endif
++#ifdef CONFIG_GRKERNSEC_PAX_MPROTECT
++	 {GS_PAXMPROTECT, "pax_mprotect", &grsec_pax_mprotect, 
++	 sizeof (int), 0600, NULL, &proc_dointvec},
++#endif
+ 	{GS_LOCK, "grsec_lock", &grsec_lock, sizeof (int), 0600, NULL,
+ 	 &proc_dointvec},
+ #endif
+--- linux-2.4.19/grsecurity/grsecurity.c.org	Thu Sep 26 19:41:20 2002
++++ linux-2.4.19/grsecurity/grsecurity.c	Mon Sep 30 14:10:09 2002
+@@ -53,6 +53,11 @@
+ int grsec_enable_socket_server = 0;
+ int grsec_socket_server_gid = 0;
+ int grsec_lock = 0;
++int grsec_pax_noexec = 0;
++int grsec_pax_pageexec = 0;
++int grsec_pax_segmexec = 0;
++int grsec_pax_emutramp = 0;
++int grsec_pax_mprotect = 0;
+ 
+ /* 
+    handle the variables if parts of grsecurity are configured without sysctl 
+@@ -167,6 +172,21 @@
+ grsec_enable_socket_server = 1;
+ grsec_socket_server_gid= CONFIG_GRKERNSEC_SOCKET_SERVER_GID;
+ #endif
++#ifdef CONFIG_GRKERNSEC_PAX_NOEXEC
++grsec_pax_noexec = 1;
++#endif
++#ifdef CONFIG_GRKERNSEC_PAX_PAGEEXEC
++grsec_pax_pageexec = 1;
++#endif
++#ifdef CONFIG_GRKERNSEC_PAX_SEGMEXEC
++grsec_pax_segmexec = 1;
++#endif
++#ifdef CONFIG_GRKERNSEC_PAX_EMUTRAMP
++grsec_pax_emutramp = 1;
++#endif
++#ifdef CONFIG_GRKERNSEC_PAX_MPROTECT
++grsec_pax_mprotect = 1;
++#endif
+ #endif
+ 
+ return;
+--- linux-2.4.19/include/linux/grsecurity.h.org	Fri Sep 27 03:42:07 2002
++++ linux-2.4.19/include/linux/grsecurity.h	Mon Sep 30 14:27:55 2002
+@@ -99,6 +99,11 @@
+ extern int grsec_enable_audit_ipc;
+ extern int grsec_enable_mount;
+ extern int grsec_enable_chdir;
++extern int grsec_pax_noexec;
++extern int grsec_pax_pageexec;
++extern int grsec_pax_segmexec;
++extern int grsec_pax_emutramp;
++extern int grsec_pax_mprotect;
+ extern int grsec_lock;
+ 
+ extern struct task_struct *child_reaper;
