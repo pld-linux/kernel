@@ -1,6 +1,6 @@
 #
 %define		_netfilter_snap		20040518
-%define		_cset			20040521_0734
+%define		_cset			20040522_2209
 %define		no_install_post_strip	1
 #
 Summary:	The Linux kernel (the core of the Linux operating system)
