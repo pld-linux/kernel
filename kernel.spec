@@ -179,14 +179,14 @@ BuildRequires:	sparc32
 %endif
 Provides:	%{name}-up = %{version}-%{release}
 %ifarch %{ix86} ppc
-Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(i2c) = %{i2c_version}
 Provides:	i2c = %{i2c_version}
 Provides:	bttv = %{bttv_version}
 %endif
+Provides:	%{name}(freeswan) = %{freeswan_version}
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
-Provides:	%{name}(freeswan) = %{freeswan_version}
+Provides:	%{name}(reiserfs) = %{version}
 Autoreqprov:	no
 PreReq:		modutils
 PreReq:		fileutils
@@ -258,15 +258,15 @@ Summary(pl):	Kernel %{version} skompilowany na maszyny SMP
 Group:		Base/Kernel
 Provides:	%{name} = %{version}-%{release}
 %ifarch %{ix86} ppc
-Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(i2c) = %{i2c_version}
 Provides:	i2c = %{i2c_version}
 Provides:	bttv = %{bttv_version}
 
 %endif
+Provides:	%{name}(freeswan) = %{freeswan_version}
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
-Provides:	%{name}(freeswan) = %{freeswan_version}
+Provides:	%{name}(reiserfs) = %{version}
 PreReq:		modutils
 PreReq:		fileutils
 PreReq:		geninitrd
@@ -342,13 +342,13 @@ Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra
 Group:		Base/Kernel
 %ifarch %{ix86} ppc
-Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	i2c-devel = %{i2c_version}
 %endif
-Provides:	%{name}-headers(ipvs) = %{version}
-Provides:	%{name}-headers(rawio) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
 Provides:	%{name}-headers(freeswan) = %{freeswan_version}
+Provides:	%{name}-headers(ipvs) = %{version}
+Provides:	%{name}-headers(rawio) = %{version}
+Provides:	%{name}-headers(reiserfs) = %{version}
 Obsoletes:	i2c-devel
 Autoreqprov:	no
 
