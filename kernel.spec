@@ -32,7 +32,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	3.6%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	3.7%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -282,6 +282,7 @@ Patch3000:	linux-2.4.1-compilefailure.patch
 Patch3001:	linux-2.4.20-nicupdates.patch
 Patch3002:	linux-2.4.20-EXPORT_SYMBOL.patch
 Patch3003:	linux-2.4.20-missing-license-tags.patch
+Patch3004:	linux-2.4.20-line.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -603,7 +604,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch240 -p1
 %patch245 -p1
 %patch246 -p1
-#%patch255 -p1
+%patch255 -p1
 %patch260 -p1
 %patch265 -p1
 %patch1000 -p1
@@ -687,6 +688,8 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch3001 -p1
 %patch3002 -p1
 %patch3003 -p1
+
+%patch3004 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 echo Adding Tekram DC395/315 driver
