@@ -128,6 +128,8 @@ Patch47:	http://home.sch.bme.hu/~cell/br2684/dist/010109/br2684-common.c-spin_un
 Patch48:	http://domsch.com/linux/aacraid/linux-2.4.1-axboe-scsi-max-sec.patch
 
 Patch49:	linux-binutils.patch
+## Kernel crashes during making reiser-module:
+Patch50:	%{name}-reiser.patch
 
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
@@ -169,7 +171,8 @@ allocation de process, entrée/sortie de peripheriques, etc.
 
 %description -l pl
 Pakiet zawiera j±dro Linuxa niezbêdne do prawid³owego dzia³ania
-Twojego komputera.
+Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
+siê w komputerze, takich jak karty muzyczne, sterowniki dysków, etc.
 
 %package lids
 Summary:	LIDS enabled kernel version %{version}
@@ -394,6 +397,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch47 -p1
 %patch48 -p1
 %patch49 -p1
+%patch50 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
