@@ -15,7 +15,7 @@
 %define		ipvs_version		1.0.4
 %define		freeswan_version	1.97
 %define		IPperson_version	20020427-2.4.18
-%define		grsec_version		1.9.7d-2.4.19
+%define		grsec_version		1.9.7d-2.4.20
 %define		jfs_version		2.4-1.0.24
 %define		lvm_version		1.0.5
 %define		evms_version		1.1.0
@@ -87,7 +87,7 @@ Patch4:		linux-2.4.20-xfs-1.2pre3.patch.bz2
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.18.0.patch.bz2 
 Patch5:		linux-abi-2.4.20.0.patch.bz2
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
-Patch6:		grsecurity-%{grsec_version}.patch.gz
+Patch6:		grsecurity-%{grsec_version}.patch
 # Preemptive kernel  patch
 Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.19-rc5-3.patch
 Patch8:		preempt_sched_O1_ck3_2.4.19.patch.bz2
@@ -471,16 +471,12 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch1 -p1
 %patch900 -p1
 %patch2 -p1
-%patch2000 -p1
-%ifarch ppc
-#%patch908 -p1
-%endif
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
 %patch904 -p1
+exit 0
 %{!?_without_grsec:%patch6 -p1}
-exit 1
 %ifarch ppc
 %patch907 -p1
 %endif
@@ -547,9 +543,6 @@ exit 1
 
 %patch905 -p1
 
-# XFree DRM
-%patch31 -p1
-
 # Tekram DC395/315 U/UW SCSI host driver
 echo Adding Tekram DC395/315 driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -606,21 +599,8 @@ echo Installing WRR Support
 %patch913 -p0
 patch -p1 -s < squashfs1.0c/squashfs-patch
 
-# USB 2.0 patch
-echo USB 2.0 Support from Linux-2.4.20-rc1.
-#%patch36 -p1
-#%patch37 -p1
-#%patch38 -p1
-#%patch39 -p1
-#%patch40 -p1
-#%patch41 -p1
-#%patch42 -p1
-
 # added missing MODULE_LICENSE, MODULE_DESCRIPTION, MODULE_AUTHOR
 %patch914 -p1
-
-# added some USB digital cameras.
-%patch915 -p1
 
 # IDE subsystem
 #%patch43 -p1
