@@ -13,7 +13,6 @@
 %bcond_without	up	# don't build UP kernel
 %bcond_without	source	# don't build kernel-source package
 %bcond_with	verbose	# verbose build (V=1)
-%bcond_with	grsec	# add grsec support
 
 %{?debug:%define with_verbose 1}
 
@@ -27,9 +26,6 @@
 %endif
 # temporary as BOOT is not finished yet
 %undefine	with_BOOT
-
-# for grsecurity
-%define		grsec
 
 ## Program required by kernel to work.
 %define		_binutils_ver		2.12
@@ -638,7 +634,7 @@ cp drivers/usb/media/libpwcx.a_mipsel drivers/usb/media/libpwcx.a_
 %patch90 -p1
 
 #grsec
-%{?with_grsec:%patch94 -p1}
+%patch94 -p1
 
 %patch96 -p1
 
@@ -704,7 +700,7 @@ BuildConfig (){
 	cat %{SOURCE80} >> arch/%{base_arch}/defconfig
 
 #grsec
-%{?with_grsec:cat %{SOURCE90} >> arch/%{base_arch}/defconfig}
+cat %{SOURCE90} >> arch/%{base_arch}/defconfig
 
 	ln -sf arch/%{base_arch}/defconfig .config
 
@@ -906,7 +902,7 @@ BuildConfig
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig smp
-##%{?with_smp:BuildKernel smp}
+%{?with_smp:BuildKernel smp}
 %{?with_smp:PreInstallKernel smp}
 
 %if %{with BOOT}
@@ -968,7 +964,7 @@ echo "CONFIG_MK7=y" >> .config
 %endif
 cat %{SOURCE80} >> .config
 #grsec
-%{?with_grsec:cat %{SOURCE90} >> .config}
+cat %{SOURCE90} >> .config
 
 cp .config config-up
 
@@ -992,7 +988,7 @@ echo "CONFIG_MK7=y" >> .config
 %endif
 cat %{SOURCE80} >> .config
 #grsec
-%{?with_grsec:cat %{SOURCE90} >> .config}
+cat %{SOURCE90} >> .config
 
 cp .config config-smp
 
