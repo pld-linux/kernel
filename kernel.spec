@@ -48,7 +48,7 @@ Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.3.gz
 #Patch2:		linux-2.4.0-freeswan-%{freeswan_version}.patch
 #Patch3:		linux-ipv6-addrconf.patch
 Patch4:		kernel-i8255-asm-fix.patch
-Patch5:		ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.2-%{pre_version}.gz
+#Patch5:		ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.2-%{pre_version}.gz
 Patch6:		dc395-patch-PLD-fix.patch
 Patch7:		linux-2.4.1-disable-message-printing.patch
 Patch8:		ftp://ftp.winds.org/linux/patches/2.4.1/aacraid-2.4.1-%{aacraid_version}.patch
