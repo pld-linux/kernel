@@ -819,7 +819,6 @@ cat %{SOURCE100} >> .config
 
 cp .config config-smp
 
-install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
 if [ -e $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h ]; then
 install $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h \
@@ -842,10 +841,9 @@ ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
 %endif
 
 %{__make} include/linux/version.h
-%{__make} clean
-cp $KERNEL_BUILD_DIR/scripts/modpost scripts
+%{__make} mrproper
 
-rm -f $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/.config
+install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
 
 %clean
 rm -rf $RPM_BUILD_ROOT
