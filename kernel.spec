@@ -2,7 +2,7 @@
 %define		pcmcia_version		3.1.30
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.34
-%define		i2c_version		2.5.5
+%define		i2c_version		2.6.2
 %define		wlan_version		0.3.4
 %define		tun_version		1.1
 %define         vlan_version            1.0.1
@@ -52,7 +52,7 @@ Source25:	%{name}-sparc64-BOOT.config
 Source26:	%{name}-alpha.config
 Source27:	%{name}-alpha-smp.config
 Source28:	%{name}-alpha-BOOT.config
-
+Source50:	http://www.netroedge.com/~lm78/archive/i2c-%{i2c-version}.tar.gz
 # in this place i will include Patches
 
 Patch0:		%{name}-pldfblogo.patch
@@ -424,6 +424,13 @@ cd serial-5.05
 %patch42 -p1
 ./install-in-kernel ../
 cd .. 
+
+# i2c
+%ifarch %{ix86}
+cd i2c-%{i2c_version}
+mkpatch/mkpatch.pl . ../../linux | (cd ../../linux; patch -p1 -s)
+cd ..
+%endif
 
 # 2.2.20ow1
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
