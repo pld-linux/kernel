@@ -2,7 +2,8 @@
 # If you define the following as 1, only kernel, -headers and -source
 # packages will be built
 #
-# _with_lids - build LIDS enabled kernels
+# _with_lids	- build LIDS enabled kernels
+# _with_grsec	- build kernel with grsecurity patch
 #
 %define		test_build		0
 #
@@ -14,6 +15,7 @@
 %define		wlan_version		0.1.7
 %define		sym_ncr_version		sym-1.7.3-ncr-3.4.3
 %define		vlan_version		1.0.1
+%define		IPperson_version	20010703-2.4.5
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -39,6 +41,7 @@ Source10:	http://www.linux-wlan.com/linux-wlan/linux-wlan-ng-%{wlan_version}.tar
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
 Source12:	http://www.komacke.com/ftp/rl2isa-driver/rl2_driver.tgz
 Source13:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
+Source14:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -334,8 +337,8 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%{?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -n linux}
-%{!?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -n linux}
+%{?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -n linux}
+%{!?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -a14 -n linux}
 %patch1000 -p1
 #%patch0 -p1
 %patch1 -p1
@@ -349,7 +352,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
+%if%{?_with_grsec:1}%{!?_with_grsec:0}
 %patch11 -p1
+%endif
 
 %patch101 -p0
 #%patch102 -p0
