@@ -6,7 +6,7 @@ Summary(ru):	Ядро Linux
 Summary(uk):	Ядро Linux
 Name:		kernel
 Version:	2.4.20
-Release:	0.3
+Release:	0.4
 License:	GPL
 Group:		Base/Kernel
 # Source0-md5:	c439d5c93d7fc9a1480a90842465bb97
@@ -33,7 +33,7 @@ Source19:	%{name}-sparc-BOOT.config
 Source20:	%{name}-sparc.config
 Source21:	%{name}-sparc-smp.config
 Source22:	%{name}-autoconf.h
-Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc4.bz2
+Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc5.bz2
 ExclusiveOS:	Linux
 Autoreqprov:	no
 URL:		http://www.kernel.org/
