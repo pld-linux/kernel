@@ -6017,14 +6017,12 @@ diff -urN linux-2.4.22.org/fs/fcntl.c linux-2.4.22/fs/fcntl.c
 diff -urN linux-2.4.22.org/fs/locks.c linux-2.4.22/fs/locks.c
 --- linux-2.4.22.org/fs/locks.c	2003-11-22 22:08:59.000000000 +0100
 +++ linux-2.4.22/fs/locks.c	2003-11-22 22:14:07.000000000 +0100
-@@ -138,6 +138,7 @@
- static struct file_lock *locks_alloc_lock(int account)
+@@ -138,4 +138,5 @@
+ static struct file_lock *locks_alloc_lock(void)
  {
- 	struct file_lock *fl;
 +	if(account) gr_learn_resource(current, RLIMIT_LOCKS, current->locks);
- 	if (account && current->locks >= current->rlim[RLIMIT_LOCKS].rlim_cur)
- 		return NULL;
- 	fl = kmem_cache_alloc(filelock_cache, SLAB_KERNEL);
+	return kmem_cache_alloc(filelock_cache, SLAB_KERNEL);
+ }
 diff -urN linux-2.4.22.org/fs/namei.c linux-2.4.22/fs/namei.c
 --- linux-2.4.22.org/fs/namei.c	2003-11-22 22:09:07.000000000 +0100
 +++ linux-2.4.22/fs/namei.c	2003-11-22 22:14:07.000000000 +0100
