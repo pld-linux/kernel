@@ -3,11 +3,11 @@
 #		- fix lirc_sasem (usb api)
 #		- add distcc support (and don't break crossbuild!)
 #		- fix vserver against new grsec
-#		- fix pty (http://lkml.org/lkml/2005/2/14/212)
 #		- http://secunia.com/advisories/14295/
 #		- undefine symbols @alpha
 #			"pci_get_legacy_ide_irq" [drivers/ide/pci/amd74xx.ko] undefined!
 #			"pm_power_off" [drivers/char/ipmi/ipmi_poweroff.ko] undefined!
+#		- fix pptp conntrack
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
