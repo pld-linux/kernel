@@ -1031,6 +1031,7 @@ cat %{SOURCE1004} >> .config
 cat %{SOURCE1005} >> .config
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
+%{!?_without_wrr:cat %{SOURCE1668} >> .config}
 %{?_with_preemptive:cat %{SOURCE1999} >> .config}
 
 %{__make} oldconfig
