@@ -8,7 +8,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.17
-Release:	7
+Release:	8
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -18,9 +18,9 @@ Source2:	%{name}-BuildASM.sh
 Source3:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
 Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-127.tar.gz
 Source5:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
-Source6:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.17+.gz
 # NFS server patches
-Source7:	http://download.sourceforge.net/nfs/dhiggen_merge-4.1.tar.gz
+Source6:	http://download.sourceforge.net/nfs/dhiggen_merge-4.1.tar.gz
+Source7:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/sym-1.7.2-ncr-3.4.2.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -55,6 +55,7 @@ Patch13:	linux-ipv6-addrconf.patch
 Patch14:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
 # Linux Virtual Server: http://www.linuxvirtualserver.org/software/
 Patch15:	linux-ipvs-0.9.16-%{version}.patch
+Patch16:	kernel-3c90x.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -267,7 +268,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a4 -a5 -n linux
+%setup -q -a3 -a4 -a5 -a7 -n linux
 %patch0 -p1
 %patch14 -p1
 %patch1 -p1
@@ -285,15 +286,20 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch12 -p1
 %patch13 -p1
 %patch15 -p1
+%patch16 -p1
 
-tar zxf %{SOURCE7} dhiggen-over-0.23.1
+tar zxf %{SOURCE6} dhiggen-over-0.23.1
 patch -p2 -s <dhiggen-over-0.23.1
 
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
-zcat %{SOURCE6} > drivers/net/3c59x.c
+
+# move symbios drivers to proper place
+mv sym-1.7.2-ncr-3.4.2/*.{c,h} drivers/scsi
+mv sym-1.7.2-ncr-3.4.2/{README,ChangeLog}.* Documentation
+rm -rf sym-1.7.2-ncr-3.4.2
 
 %build
 BuildKernel() {
@@ -462,8 +468,9 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH16}
 
-tar zxf %{SOURCE7} dhiggen-over-0.23.1 -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
+tar zxf %{SOURCE6} dhiggen-over-0.23.1 -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
 patch -p2 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <dhiggen-over-0.23.1
 rm -f dhiggen-over-0.23.1
@@ -472,7 +479,12 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/li
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi/
-zcat %{SOURCE6} > $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/net/3c59x.c
+
+# symbios drivers
+tar zxf %{SOURCE7}
+mv sym-1.7.2-ncr-3.4.2/*.{c,h} drivers/scsi
+mv sym-1.7.2-ncr-3.4.2/{README,ChangeLog}.* Documentation
+rm -rf sym-1.7.2-ncr-3.4.2
 
 %ifarch sparc
 ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
@@ -523,6 +535,7 @@ rm -f scripts/mkdep
 
 %clean
 rm -rf $RPM_BUILD_ROOT
+rm -rf $RPM_BUILD_DIR/linux-installed
 
 # do this for upgrades...in case the old modules get removed we have
 # loopback in the kernel so that mkinitrd will work.
