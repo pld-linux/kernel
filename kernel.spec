@@ -31,7 +31,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	2.28.5
+Release:	2.29
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
@@ -663,7 +663,7 @@ echo Updating VIA Southbridge
 %patch142 -p1
 
 #HPFS fix.
-%patch20 -p1
+%patch21 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
