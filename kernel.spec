@@ -28,7 +28,7 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1
+%define		_rel		1.1
 %define		_rc		2
 %define		_cset		20040107_0505
 
@@ -169,6 +169,15 @@ Patch76:	2.6.1-rc1-NF-osf-%{_netfilter_snap}.patch
 Patch78:	http://www.saout.de/misc/dm-crypt.diff
 
 Patch80:	2.6-pnp.patch
+
+# from ftp://ftp.lsil.com/HostAdapterDrivers/linux/Fusion-MPT/2.6-patches/3.00.00/
+Patch82:	2.6.1-rc2-mptlinux-3.00.00.patch
+
+Patch84:	2.6.1-rc2-ini9100u-lkml.patch
+
+Patch86:	2.6.1-rc2-radeon-yd-lkml.patch
+
+Patch88:	2.6.1-rc2-request_firmware-lkml.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -574,6 +583,14 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch78 -p1
 
 %patch80 -p1
+
+%patch82 -p1
+
+%patch84 -p1
+
+%patch86 -p1
+
+%patch88 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
