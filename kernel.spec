@@ -149,7 +149,6 @@ cp -R . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 find include/ -type d -maxdepth 1 -name "asm-*" ! -name asm-i386 ! -name asm-generic | xargs rm -rf
 %{__make} mrproper
-ln -sf asm-i386 include/asm
 
 %clean
 rm -rf $RPM_BUILD_ROOT
