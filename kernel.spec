@@ -504,8 +504,6 @@ Group:		Base/Kernel
 PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Provides:	alsa-driver
-Obsoletes:	alsa-driver
-Obsoletes:	alsa-driver-smp
 Autoreqprov:	no
 
 %description smp-sound-alsa
