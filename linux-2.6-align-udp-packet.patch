@@ -1,0 +1,17 @@
+The udp-packet constructed in netpoll_send_udp should be aligned
+to avoid alignment-traps on some platforms. The patch applies to
+vanilla 2.6.11.2.
+
+Signed-off-by: Sven Henkel <shenkel@gmail.com>
+
+--- a/net/core/netpoll.c	2005-03-09 09:12:58.000000000 +0100
++++ b/net/core/netpoll.c	2005-03-18 15:56:30.330061256 +0100
+@@ -233,7 +233,7 @@ void netpoll_send_udp(struct netpoll *np
+ 
+ 	udp_len = len + sizeof(*udph);
+ 	ip_len = eth_len = udp_len + sizeof(*iph);
+-	total_len = eth_len + ETH_HLEN;
++	total_len = eth_len + ETH_HLEN + NET_IP_ALIGN;
+ 
+ 	skb = find_skb(np, total_len, total_len - len);
+ 	if (!skb)
