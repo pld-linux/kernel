@@ -9,6 +9,7 @@
 # _without_boot		- don't build BOOT kernel
 # _without_source	- don't build source
 # _without_doc		- don't build documentation package
+# _with_glibc23		- build with support for glibc-kernel-headers
 #
 
 %define		patch_level	0
@@ -1613,8 +1614,8 @@ fi
 %{_prefix}/src/linux-%{version}/include
 %{_prefix}/src/linux-%{version}/Rules.make
 %{_prefix}/src/linux-%{version}/config*
-%{_includedir}/asm
-%{_includedir}/linux
+%{!?_with_glibc23:%{_includedir}/asm}
+%{!?_with_glibc23:%{_includedir}/linux}
 
 %if %{?_without_doc:0}%{!?_without_doc:1}
 %files doc
