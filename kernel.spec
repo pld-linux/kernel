@@ -52,8 +52,8 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_post_ver	%{nil}
-%define		_rel		0.3HEAD
-%define		_cset		20041029_0006
+%define		_rel		0.1HEAD
+%define		_cset		20041115_2103
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -75,12 +75,12 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-%define		_rc	-rc1
+%define		_rc	-rc2
 Source0:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	4689a60980f79a223aca6c2244c456e4
+# Source0-md5:	cbefa7b4012682fe8b5cbb207ecb559c
 Source1:	%{name}-autoconf.h
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
-# Source4-md5:	6186714cfbb40550de65b3aad610b439
+# Source4-md5:	d9e5cc45b31620c17436b13fedcc3475
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -117,7 +117,7 @@ Patch30:	kernel-vmalloc-reserve.patch
 
 # suspend/resume
 # http://softwaresuspend.berlios.de/
-Patch500:	linux-2.6-software-suspend-2.1.patch.gz
+Patch500:	linux-2.6-software-suspend-2.1.5.patch.gz
 
 # http://sources.redhat.com/cluster/
 Patch550:	linux-cluster-cman.patch
@@ -477,6 +477,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %if "%{_apply_cset}" != "0"
 bzcat %{SOURCE4} | patch -p1 -s
+[ $? -ne 0 ] && exit 1
 %endif
 
 %patch15 -p1
