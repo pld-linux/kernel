@@ -82,12 +82,6 @@ Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
 # Source3-md5:	1877704da68cd3a77630426225f611d5
 # http://lkml.org/lkml/2004/6/2/228
-Source4:	http://people.redhat.com/mingo/nx-patches/nx-2.6.7-A2
-# Source4-md5:	a6f6f85a511cfad6bf79ffc1c67d70a9
-# http://lkml.org/lkml/2004/6/2/233
-Source5:	http://people.redhat.com/mingo/exec-shield/exec-shield-nx-2.6.7-A0
-# Source5-md5:	ba236ecfe687f5cc2f611797fbcf52e9
-Source6:	exec-shield-make-peace-with-grsecurity.patch
 ## Source6:	http://prdownloads.sourceforge.net/swsusp/software-suspend-2.0.0.81-for-2.6.6.tar.bz2
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -230,6 +224,10 @@ Patch200:	linux-cluster-cman.patch
 Patch201:	linux-cluster-dlm.patch
 Patch202:	linux-cluster-gfs.patch
 Patch203:	linux-cluster-gnbd.patch
+
+# http://lkml.org/lkml/2004/6/2/233
+Patch211:	http://people.redhat.com/mingo/exec-shield/exec-shield-nx-2.6.7-A0
+Patch212:	exec-shield-make-peace-with-grsecurity.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -697,13 +695,10 @@ echo "Not fixed !!"
 %endif
 %endif
 
-# NX is NX and it has noting to do with exec-shield beside
-# exec-shield using NX feature
 %if %{with execshield}
-patch -p1 -s < %{SOURCE4}
-install %{SOURCE5} exec-shield.patch
+install %{PATCH211} exec-shield.patch
 %if %{with grsec}
-patch -s exec-shield.patch < %{SOURCE6}
+patch -s exec-shield.patch < %{PATCH212}
 %endif
 patch -p1 -s < exec-shield.patch
 %endif
