@@ -47,6 +47,9 @@ Patch32:	2.6.4-imq-nat.patch
 Patch33:	2.6.4-wrr.patch
 Patch34:	2.6.4-hfsc.patch
 Patch50:	2.6.4-pom-ng-%{_netfilter_snap}.patch
+Patch51:	%{name}-ip_dst_output.patch
+Patch52:	%{name}-netfilter-ipt_osf.patch
+Patch53:	%{name}-netfilter-ipt_string.patch
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 BuildRequires:	module-init-tools
@@ -132,6 +135,9 @@ hardware.
 %patch34 -p1
 
 %patch50 -p1
+%patch51 -p1
+%patch52 -p1
+%patch53 -p1
 
 %build
 cat << EOF > cleanup-nondist-kernel.sh
