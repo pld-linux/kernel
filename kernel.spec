@@ -252,7 +252,9 @@ plus, il peut quand même fonctionner pour les système mono-processeur.
 Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono wymagane
 przez komputery zawieraj±ce dwa lub wiêcej procesorów. Powinno równie¿ dobrze 
 dzia³aæ na maszynach z jednym procesorem.
+%endif 
 
+%if %{?_without_smp:0}%{!?_without_smp:1}
 %if %{?_with_lids:1}%{!?_with_lids:0}
 %package lids-smp
 Summary:	LIDS enabled kernel version %{version} compiled for SMP machines
@@ -635,9 +637,9 @@ BuildKernel
 
 %if !%{test_build}
 # SMP KERNEL
-%if %{?_with_lids:1}%{!?_with_lids:0}
+%if %{?_without_smp:0}%{!?_without_smp:1}
 BuildKernel smp
-%endif
+%endif			# %{_without_smp}
 
 %if %{?_with_lids:1}%{!?_with_lids:0}
 # UP LIDS KERNEL
@@ -646,8 +648,8 @@ BuildKernel lids
 %if%{?_without_smp:0}%{!?_without_smp:1}
 # SMP LIDS KERNEL
 BuildKernel lids smp
-%endif
-%endif
+%endif			# %{_without_smp}
+%endif			# %{_with_lids}
 
 # BOOT kernel
 %ifnarch i586 i686
@@ -655,7 +657,8 @@ KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk"
 rm -rf $KERNEL_INSTALL_DIR
 BuildKernel BOOT
 %endif
-%endif
+
+%endif			# %{test_build}
 
 %install
 umask 022
