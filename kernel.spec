@@ -83,6 +83,7 @@ Patch22:	linux-2.4.2-raw-ip.patch
 Patch23:	linux-2.4.2-epson-1640SU-scanner.patch
 Patch24:	PCI_ISA_bridge.patch
 Patch25:	linux-2.4.2-nvram-hdd.patch
+Patch26:	linux-2.4.x-parisc-PCI-support.patch
 
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
@@ -307,7 +308,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch7 -p1
 %patch8 -p1
 # patches from Linux kernel list
-%patch11 -p1
+# %patch11 -p1
 %patch12 -p1
 %patch13 -p1
 # next patches
@@ -327,6 +328,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch23 -p1
 %patch24 -p0
 %patch25 -p0
+%patch26 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -574,7 +576,7 @@ ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 %endif
 
 # patches from Linux kernel list
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
+# patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
 ## next
@@ -590,6 +592,7 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH22}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH23}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH24}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH25}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH26}
 
 ## SymBios/NCR drivers install
 mv $RPM_BUILD_ROOT/usr/src/linux-%{version}/%{sym_ncr_version}/*.{c,h} $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi
