@@ -103,9 +103,9 @@ Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Provides:	%{name} %{version}
-Provides:	%{name}(reiserfs) %{version}
-Provides:	%{name}(agpgart) %{version}
+Provides:	%{name} = %{version}
+Provides:	%{name}(reiserfs) = %{version}
+Provides:	%{name}(agpgart) = %{version}
 Prereq:		modutils
 Autoreqprov:	no
 
