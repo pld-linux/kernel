@@ -141,12 +141,12 @@ Patch129:	linux-53c7,8xx-build.fix
 Patch130:	linux-PPC-SMP.patch
 Patch131:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch132:	ide-EXPORT_SYMBOL.fix
+Patch133:	linux-proc_get_inode.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
 # tweaks for grsecurity, description inside patch
 Patch900:	loop-jari-2.4.18.0.patch
-Patch901:	linux-proc_get_inode.patch
 # DRM (note that this doesn't fix drm when running on 386 or 486 CPU!)
 Patch902:	linux-drm-%{drm_xfree_version}-force-cmpxchg.patch
 Patch903:	linux-drm-2.4.19-mm.patch
@@ -460,8 +460,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch130 -p0
 %patch131 -p0
 %patch132 -p0
+%patch133 -p1
 
-%patch901 -p1
 %patch905 -p1
 
 # XFree DRM
