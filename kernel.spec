@@ -745,7 +745,7 @@ rm -rf $RPM_BUILD_DIR/linux-installed
 
 
 %post
-test ! -f /boot/vmlinuz || mv -f /boot/vmlinuz /boot/vmlinuz.oldm
+test ! -f /boot/vmlinuz || mv -f /boot/vmlinuz /boot/vmlinuz.old
 test ! -f /boot/System.map || mv -f /boot/System.map /boot/System.map.old
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
