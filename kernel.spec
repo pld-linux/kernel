@@ -141,7 +141,7 @@ Patch27:	linux-ppc-oops.patch
 Patch28:	linux-2.6-sparc-ksyms.patch
 
 #Patch30:	2.6.x-ppp_mppe.patch
-
+Patch31:	linux-2.6-skge.patch
 Patch32:	2.6.x-TGA-fbdev-lkml.patch
 Patch33:	linux-kbuild-extmod.patch
 
@@ -554,7 +554,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch28 -p1
 
 #patch30 -p1
-
+%patch31 -p1
 #patch32 -p1	NEEDS UPDATE
 %patch33 -p1
 
