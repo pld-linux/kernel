@@ -7,6 +7,7 @@
 # TODO:
 #		- check I2C
 #		- fix bootsplash
+#		- pwc
 #
 # Conditional build:
 %bcond_without	BOOT		# don't build BOOT kernel
@@ -49,8 +50,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.4
-%define		_cset		20040716_1706
+%define		_rel		0.5
+%define		_cset		20040717_0306
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -81,7 +82,7 @@ Source0:	http://kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	b114cc716cd62cfe34d56e69639a60da
+# Source3-md5:	d0a73fa94406f58893a286f434295108
 # http://lkml.org/lkml/2004/6/2/228
 ## Source6:	http://prdownloads.sourceforge.net/swsusp/software-suspend-2.0.0.81-for-2.6.6.tar.bz2
 Source20:	%{name}-i386.config
