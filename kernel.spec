@@ -27,7 +27,7 @@ Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.gz
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
@@ -64,6 +64,7 @@ Source1004:	%{name}-xfs.config
 Source1005:	%{name}-netfilter.config
 Source1006:	%{name}-ipvs.config
 Source1007:	%{name}-ippersonality.config
+Source1008:	%{name}-netrandom.config
 
 # New features
 
@@ -492,7 +493,6 @@ echo Network Device Random
 %patch12 -p1
 %patch13 -p1
 
-
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
@@ -556,6 +556,7 @@ BuildKernel() {
 	cat %{SOURCE1005} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1006} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1007} >> arch/$RPM_ARCH/defconfig
+	cat %{SOURCE1008} >> arch/$RPM_ARCH/defconfig
 	if [ "$LIDS" = "lids" ] ; then
 		echo ENABLING LIDS...
 		cat %{SOURCE1000} >> arch/$RPM_ARCH/defconfig
@@ -689,6 +690,7 @@ cat %{SOURCE1004} >> .config
 cat %{SOURCE1005} >> .config
 cat %{SOURCE1006} >> .config
 cat %{SOURCE1007} >> .config
+cat %{SOURCE1008} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
@@ -716,6 +718,7 @@ cat %{SOURCE1004} >> .config
 cat %{SOURCE1005} >> .config
 cat %{SOURCE1006} >> .config
 cat %{SOURCE1007} >> .config
+cat %{SOURCE1008} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
