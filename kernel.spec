@@ -92,6 +92,8 @@ Source5:	dpt_i2o-2.5.0-2331.tgz
 # Source5-md5:	573cff0f9cb9fc489d0139888d7ce17d
 Source6:	ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.8/acpi-20040715-2.6.8.diff.gz
 # Source6-md5:	d8162768783a9007603f5a2d2ffb4697
+Source7:	ftp://ftp.alsa-project.org/pub/kernel-patches/alsa-bk-2004-08-15.patch.gz
+# Source7-md5:	1230b7176206801d2eedf61a303f03cf
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -138,7 +140,7 @@ Patch25:	2.6.7-alpha_compile.patch
 Patch26:	2.6.7-ppc-asm-defs.patch
 Patch27:	2.6.7-ppc-cciss-div.patch
 Patch28:	2.6.7-ppc-ipr-div.patch
-Patch29:	2.6.8-intel8x0-ck804-lkml.patch
+
 #Patch30:	2.6.x-ppp_mppe.patch
 Patch31:	2.6.x-SGI_VW-fbdev-lkml.patch
 Patch32:	2.6.x-TGA-fbdev-lkml.patch
@@ -562,6 +564,9 @@ zcat %{SOURCE4} | patch -p1 -s
 # ACPI
 zcat %{SOURCE6} | patch -p1 -s
 
+# ALSA-1.0.6
+zcat %{SOURCE7} | patch -p1 -s
+
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
@@ -591,7 +596,7 @@ zcat %{SOURCE6} | patch -p1 -s
 %patch26 -p1
 %patch27 -p1
 %patch28 -p1
-%patch29 -p1
+
 #patch30 -p1
 %patch31 -p1
 %patch32 -p1
