@@ -343,7 +343,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch4 -p0 
 %patch5 -p0
 %patch6 -p1
-#%patch8 -p1
+%patch8 -p1
 %patch9 -p1
 %patch10 -p0
 %patch11 -p1
@@ -566,7 +566,7 @@ patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
 # patches from Linux kernel list
-#patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH9}
 ## next
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
