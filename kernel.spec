@@ -2,8 +2,6 @@
 # If you define the following as 1, only kernel, -headers and -source
 # packages will be built
 #
-# _without_grsec	- build without grsecurity patch
-# _with_preemptive	- build with Preemptible patch
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 # _without_boot		- don't build BOOT kernel
@@ -14,11 +12,10 @@
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
 #
-%define		pre_version		pre1
+%define		pre_version		rc2
 %define		ipvs_version		1.0.7
 %define		freeswan_version	1.97
 %define		IPperson_version	20020819-2.4.19
-%define		grsec_version		1.9.9c
 %define		jfs_version		2.4-1.1.1
 %define		lvm_version		1.0.5
 %define		evms_version		1.2.0
@@ -32,10 +29,10 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.4.20
-Release:	0.%{pre_version}.%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}.1
+Release:	0.%{pre_version}.1
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.gz
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
@@ -58,8 +55,6 @@ Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
 Source1000:	%{name}-addon.config
 Source1001:	%{name}-netfilter.config
-Source1100:	%{name}-preemptive.config
-Source1666:	%{name}-grsec.config
 Source2000:	%{name}-win4lin.config
 
 # New features/updates/backports
@@ -69,7 +64,7 @@ Source2000:	%{name}-win4lin.config
 Patch0:		%{name}-pldfblogo.patch
 # from ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/testing/
 Patch10:	patch-int-2.4.20.1.bz2
-Patch11:	loop-jari-2.4.20.0.patch
+Patch11:	loop-jari-2.4.21.0.patch
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch12:	linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
 Patch15:	linux-2.4.21-sched-O1.patch
@@ -103,7 +98,7 @@ Patch60:	linux-2.4.20-reiserfs-quota.patch.bz2
 Patch65:	linux-2.4.20-squashfs.patch
 #Patch70:	linux-2.4.20-afs.patch.bz2
 #from http://sci.felk.cvut.cz/nwd/linux/nwd-patch-2.4.19
-Patch75:	nwd-2.4.20.patch
+Patch75:	nwd-2.4.21.patch
 
 # Networking
 
@@ -149,10 +144,6 @@ Patch185:	atm-30-idt77105-cleanup.patch
 Patch200:	linux-2.4.20-dm-9.patch.bz2
 # EVMS support (http://www.sourceforge.net/projects/evms/)
 Patch201:	linux-2.4.20-evms-1.9.0.patch.bz2
-# from http://www.promise.com/support/file/driver/promise-patch-2.4.19.gz
-Patch205:	linux-2.4.20-promise.patch.bz2
-# from http://www.promise.com/support/file/driver/st6000src_1.30_01_0326.tgz
-Patch206:	linux-2.4.20-promise-st6000.patch.bz2
 
 #from http://prdownloads.sourceforge.net/i810fb/linux-2.4.20-i810fb.diff.bz2
 Patch210:	linux-2.4.20-I810FB.patch.bz2
@@ -171,8 +162,6 @@ Patch245:	linux-2.4.20-01-edd.patch
 Patch246:	linux-2.4.20-02-edd-allocate.patch
 #i2c - version 2.7.0
 Patch255:	linux-2.4.20-i2c-2.7.0.patch.gz
-# from ftp://ftp.lsil.com/pub/symchips/scsi/FusionMPT/Linux/2.03.00/mptlinux-2.03.00-src.tar.gz
-Patch260:	linux-2.4.20-mptlinux-2.03.00.patch.bz2
 Patch265:	linux-2.4.20-e820.patch
 # Syntax bug
 Patch270:	dc395-tab.patch
@@ -181,11 +170,6 @@ Patch275:	linux-2.4.20-qla2x00-v6.04.00-fo.patch.gz
 
 # The following go last as they touch a lot of code
 # and/or are on bcond and/or are ifarch
-
-# from http://grsecurity.net/grsecurity-%{grsec_version}.patch
-Patch800:	grsecurity-%{grsec_version}-%{version}.patch.bz2
-Patch801:	PPC-grsecurity-pgtable.h.patch
-Patch802:	linux-2.4.20-grsecurity-%{grsec_version}-kmem.patch
 
 # Win4Lin
 Patch900:	linux-2.4.20-Win4Lin.PLD.patch.bz2
@@ -198,7 +182,6 @@ Patch1000:	jam-04-clone-detached.patch
 Patch1002:	jam-06-force-inline.patch
 Patch1003:	jam-07-scsi-error-tmout.patch
 Patch1004:	jam-08-memparam.patch
-Patch1005:	jam-09-cache-detection.patch
 Patch1006:	jam-10-highpage-init.patch
 Patch1007:	jam-11-self_exec_id.patch
 Patch1008:	jam-15-fast-csum-D.patch
@@ -212,23 +195,17 @@ Patch1102:	linux-2.4.20-lvm-updates.patch
 Patch1105:	linux-2.4.12-scsi_scan.patch
 Patch1106:	linux-scsi-debug-bug.patch
 
-Patch1110:	01-sound.diff
 # This patch allows to create more than one sound device using alsa
 # and devfs with two or more sound cards
 Patch1111:	linux-sound_core.patch
-Patch1113:	linux-2.4.20-i810_audio.patch
 
 # rivafb - fix for text background in 16bpp modes
 Patch1150:	linux-rivafb16.patch
-# misc tdfxfb fixes - detailed description inside
-Patch1151:	linux-tdfxfb-fixes.patch
 Patch1152:	linux-2.4.20-agp_uninorth.patch
 Patch1153:	linux-2.4.20-radeonfb_clean.patch
 Patch1154:	linux-2.4.20-drm-Makefile.patch
-# support for VIA KT400 chipset in agpgart
-Patch1155:	linux-2.4.20-kt400.patch
 
-Patch1201:	linux-2.4.10-cpqfc.patch
+Patch1201:	linux-2.4.21-cpqfc.patch
 Patch1203:	linux-2.4.20-amd-golem.patch
 Patch1205:	linux-53c7,8xx-build.fix
 Patch1207:	linux-2.4.20-serverworks.patch
@@ -249,7 +226,7 @@ Patch1303:	linux-2.4.20-irixnfs.patch
 # Tru64 NFS kludge
 Patch1304:	linux-2.4.20-tru64nfs.patch
 
-Patch1350:	linux-2.4.18-nousb.patch
+Patch1350:	linux-2.4.21-nousb.patch
 # from http://www.noc.uoa.gr/~avel/page.php?page=nokia&lang=en
 Patch1354:	linux-2.4.20-Nokia5510.patch
 
@@ -268,7 +245,7 @@ Patch1409:	linux-2.4.18-dmi-hall-of-shame.patch
 Patch1410:	linux-2.4.18-input-35215.patch
 Patch1411:	linux-2.4.18-kiobuf.patch
 Patch1413:	linux-2.4.20-andrea-fix-pausing.patch
-Patch1414:	linux-2.4.20-oopsmeharder.patch
+Patch1414:	linux-2.4.21-oopsmeharder.patch
 Patch1415:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch1416:	linux-2.4.20-no-FPU.patch
 
@@ -284,9 +261,7 @@ Patch3004:	linux-2.4.20-sym53c8xx_old.patch
 
 # Security fixes
 
-Patch4000:	linux-2.4.20-ptrace-hole.patch
-
-Patch10000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-pre7.gz
+Patch10000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc2.bz2
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -303,7 +278,6 @@ Provides:	module-info
 Provides:	i2c = 2.7.0
 Provides:	bttv = 0.7.83
 Provides:	%{name}(netfilter) = 1.2.7a-%{netfilter_snap}
-Provides:	%{name}(grsecurity) = %{grsec_version}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
 Provides:	%{name}(cdrw)
@@ -361,7 +335,6 @@ Provides:	module-info
 Provides:	i2c = 2.7.0
 Provides:	bttv = 0.7.83
 Provides:	%{name}(netfilter) = 1.2.7a-%{netfilter_snap}
-Provides:	%{name}(grsecurity) = %{grsec_version}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
 Provides:	%{name}(cdrw)
@@ -569,7 +542,7 @@ bzip2 -dc %{SOURCE10} | tar -xf - -C drivers/scsi/
 cp -f drm/*.{c,h} drivers/char/drm/
 %patch0 -p1
 %patch10 -p1
-#%patch11 -p1
+%patch11 -p1
 %patch12 -p1
 %patch15 -p1
 #%patch20 -p1
@@ -614,8 +587,6 @@ cp -f drm/*.{c,h} drivers/char/drm/
 #%patch185 -p1
 #%patch200 -p1
 #%patch201 -p1
-#%patch205 -p1
-#%patch206 -p1
 #%patch210 -p1
 #%patch215 -p1
 #%patch216 -p1
@@ -627,33 +598,27 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch245 -p1
 %patch246 -p1
 #%patch255 -p1
-#%patch260 -p1
 %patch265 -p1
 %patch275 -p1
 %patch1000 -p1
 %patch1002 -p1
 %patch1003 -p1
 %patch1004 -p1
-#%patch1005 -p1
 %patch1006 -p1
 %patch1007 -p1
 %patch1008 -p1
 %patch1009 -p1
-#%patch1010 -p1
+%patch1010 -p1
 %patch1100 -p1
 %patch1102 -p1
 %patch1105 -p1
 %patch1106 -p0
-#%patch1110 -p1
 %patch1111 -p1
-#%patch1113 -p1
 %patch1150 -p1
-%patch1151 -p1
 %patch1152 -p1
 %patch1153 -p1
 %patch1154 -p1
-#%patch1155 -p1
-#%patch1201 -p1
+%patch1201 -p1
 %patch1203 -p1
 %patch1205 -p1
 %patch1207 -p1
@@ -668,7 +633,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1302 -p1
 %patch1303 -p1
 %patch1304 -p1
-#%patch1350 -p1
+%patch1350 -p1
 %patch1354 -p1
 %patch1400 -p1
 %patch1401 -p1
@@ -677,13 +642,13 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1404 -p1
 %patch1405 -p1
 %patch1406 -p1
-%patch1407 -p0
+%patch1407 -p1
 %patch1408 -p1
 %patch1409 -p1
 %patch1410 -p1
 %patch1411 -p1
 %patch1413 -p1
-#%patch1414 -p1
+%patch1414 -p1
 %patch1415 -p0
 #%patch1416 -p1
 
@@ -696,7 +661,6 @@ cp -f drm/*.{c,h} drivers/char/drm/
 #%patch3002 -p1
 #%patch3003 -p1
 %patch3004 -p1
-#%patch4000 -p1
 
 mv -f drivers/scsi/sym53c8xx.c drivers/scsi/sym53c8xx_old.c
 
@@ -704,7 +668,7 @@ mv -f drivers/scsi/sym53c8xx.c drivers/scsi/sym53c8xx_old.c
 echo Adding Tekram DC395/315 driver
 patch -p1 -s <dc395/dc395-integ24.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
-%patch270 -p0
+%patch270 -p1
 
 # IP personality
 #echo Adding IP Personality 
@@ -717,11 +681,6 @@ cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 
 # The following go last as they touch a lot of code
 # and/or are on bcond and/or are ifarch
-
-%{!?_without_grsec:echo GRSecurity}
-%{!?_without_grsec:%patch800 -p1}
-%{!?_without_grsec:%patch801 -p1}
-%{!?_without_grsec:%patch802 -p1}
 
 %ifarch %{ix86}
 %{?_with_win4lin:echo Win4Lin patch ...}
@@ -784,8 +743,6 @@ BuildKernel() {
 %ifarch athlon
 	echo "CONFIG_MK7=y" >> arch/%{base_arch}/defconfig
 %endif
-	%{?_with_preemptive:cat %{SOURCE1100} >> arch/%{base_arch}/defconfig}
-	%{!?_with_preemptive:echo "# CONFIG_PREEMPT is not set" >> arch/%{base_arch}/defconfig}
 	cat %{SOURCE1000} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1001} >> arch/%{base_arch}/defconfig
 	
@@ -804,9 +761,6 @@ BuildKernel() {
 %ifarch %{ix86}
 		cat %{SOURCE2000} >> arch/%{base_arch}/defconfig
 %endif
-%{?_without_grsec:echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig}
-%{?_without_grsec:echo "# CONFIG_IP_NF_MATCH_STEALTH is not set">> arch/%{base_arch}/defconfig}
-%{!?_without_grsec:cat %{SOURCE1666} >> arch/%{base_arch}/defconfig}
 
 %ifarch i386
 	mv -f arch/%{base_arch}/defconfig arch/%{base_arch}/defconfig.orig
@@ -962,11 +916,8 @@ echo "CONFIG_M686=y" >> .config
 %ifarch athlon
 echo "CONFIG_MK7=y" >> .config
 %endif
-%{?_with_preemptive:cat %{SOURCE1100} >> .config}
-%{!?_with_preemptive:echo "# CONFIG_PREEMPT is not set" >> .config}
 cat %{SOURCE1000} >> .config
 cat %{SOURCE1001} >> .config
-%{!?_without_grsec:cat %{SOURCE1666} >> .config}
 
 %ifarch %{ix86}
 cat %{SOURCE2000} >> .config
@@ -1000,11 +951,8 @@ echo "CONFIG_M686=y" >> .config
 echo "CONFIG_MK7=y" >> .config
 %endif
 
-%{?_with_preemptive:cat %{SOURCE1100} >> .config}
-%{!?_with_preemptive:echo "# CONFIG_PREEMPT is not set" >> .config}
 cat %{SOURCE1000} >> .config
 cat %{SOURCE1001} >> .config
-%{!?_without_grsec:cat %{SOURCE1666} >> .config}
 
 %ifarch %{ix86}
 cat %{SOURCE2000} >> .config
@@ -1345,7 +1293,6 @@ fi
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
-%{!?_without_grsec:%{_prefix}/src/linux-%{version}/grsecurity}
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
 #%{_prefix}/src/linux-%{version}/kdb
