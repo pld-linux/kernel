@@ -257,15 +257,6 @@ diff -Nru a/arch/ppc/kernel/head.S b/arch/ppc/kernel/head.S
  	SAVE_32FPRS(0, r3)
  	mffs	fr0
  	stfd	fr0,THREAD_FPSCR-4(r3)
-@@ -1512,7 +1512,7 @@
- flush_tlbs:
- 	lis	r10, 0x40
- 1:	addic.	r10, r10, -0x1000
--	tlbie	r10
-+	tlbie	r10,0
- 	blt	1b
- 	sync
- 	blr
 @@ -1539,7 +1539,7 @@
  #ifndef CONFIG_PPC64BRIDGE
  	mfspr	r9,PVR
@@ -284,32 +275,6 @@ diff -Nru a/arch/ppc/kernel/head.S b/arch/ppc/kernel/head.S
  	beq	1f
  	mtspr	DBAT3L,r8
  	mtspr	DBAT3U,r11
-diff -Nru a/arch/ppc/kernel/head_e500.S b/arch/ppc/kernel/head_e500.S
---- a/arch/ppc/kernel/head_e500.S	2004-10-10 21:13:08.000000000 +0200
-+++ b/arch/ppc/kernel/head_e500.S	2004-10-10 21:13:08.000000000 +0200
-@@ -1057,7 +1057,7 @@
- #ifndef CONFIG_SMP
- 	lis	r3,last_task_used_spe@ha
- 	lwz	r4,last_task_used_spe@l(r3)
--	cmpi	0,r4,0
-+	cmpwi	0,r4,0
- 	beq	1f
- 	addi	r4,r4,THREAD	/* want THREAD of last_task_used_spe */
- 	SAVE_32EVR(0,r10,r4)
-@@ -1167,11 +1167,11 @@
- 	SYNC
- 	mtmsr	r5			/* enable use of SPE now */
- 	isync
--	cmpi	0,r3,0
-+	cmpwi	0,r3,0
- 	beqlr-				/* if no previous owner, done */
- 	addi	r3,r3,THREAD		/* want THREAD of task */
- 	lwz	r5,PT_REGS(r3)
--	cmpi	0,r5,0
-+	cmpwi	0,r5,0
- 	SAVE_32EVR(0, r4, r3)
-    	evxor	evr6, evr6, evr6	/* clear out evr6 */
- 	evmwumiaa evr6, evr6, evr6	/* evr6 <- ACC = 0 * 0 + ACC */
 diff -Nru a/arch/ppc/kernel/idle_6xx.S b/arch/ppc/kernel/idle_6xx.S
 --- a/arch/ppc/kernel/idle_6xx.S	2003-09-22 17:12:45 -07:00
 +++ b/arch/ppc/kernel/idle_6xx.S	2004-10-07 09:47:04 -07:00
@@ -379,7 +344,7 @@ diff -Nru a/arch/ppc/kernel/misc.S b/arch/ppc/kernel/misc.S
  	bne-	10b
  	stwcx.	r8,0,r9
  	bne-	10b
-@@ -551,12 +551,12 @@
+@@ -551,7 +551,7 @@
  	ori	r9,r9,mmu_hash_lock@l
  	tophys(r9,r9)
  10:	lwarx	r7,0,r9
@@ -388,21 +353,6 @@ diff -Nru a/arch/ppc/kernel/misc.S b/arch/ppc/kernel/misc.S
  	bne-	10b
  	stwcx.	r8,0,r9
  	bne-	10b
- 	eieio
--	tlbie	r3
-+	tlbie	r3,0
- 	sync
- 	TLBSYNC
- 	li	r0,0
-@@ -565,7 +565,7 @@
- 	SYNC_601
- 	isync
- #else /* CONFIG_SMP */
--	tlbie	r3
-+	tlbie	r3,0
- 	sync
- #endif /* CONFIG_SMP */
- #endif /* ! CONFIG_40x */
 @@ -599,7 +599,7 @@
  #else
  	mfspr	r3,PVR
@@ -412,33 +362,6 @@ diff -Nru a/arch/ppc/kernel/misc.S b/arch/ppc/kernel/misc.S
  	beqlr			/* for 601, do nothing */
  	/* 603/604 processor - use invalidate-all bit in HID0 */
  	mfspr	r3,HID0
-@@ -619,7 +619,7 @@
- _GLOBAL(flush_icache_range)
- 	mfspr	r5,PVR
- 	rlwinm	r5,r5,16,16,31
--	cmpi	0,r5,1
-+	cmpwi	0,r5,1
- 	beqlr				/* for 601, do nothing */
- 	li	r5,L1_CACHE_LINE_SIZE-1
- 	andc	r3,r3,r5
-@@ -737,7 +737,7 @@
- _GLOBAL(__flush_dcache_icache)
- 	mfspr	r5,PVR
- 	rlwinm	r5,r5,16,16,31
--	cmpi	0,r5,1
-+	cmpwi	0,r5,1
- 	beqlr					/* for 601, do nothing */
- 	rlwinm	r3,r3,0,0,19			/* Get page base address */
- 	li	r4,4096/L1_CACHE_LINE_SIZE	/* Number of lines in a page */
-@@ -766,7 +766,7 @@
- _GLOBAL(__flush_dcache_icache_phys)
- 	mfspr	r5,PVR
- 	rlwinm	r5,r5,16,16,31
--	cmpi	0,r5,1
-+	cmpwi	0,r5,1
- 	beqlr					/* for 601, do nothing */
- 	mfmsr	r10
- 	rlwinm	r0,r10,0,28,26			/* clear DR */
 @@ -1141,7 +1141,7 @@
  	li	r4,0		/* new sp (unused) */
  	li	r0,__NR_clone
@@ -448,15 +371,6 @@ diff -Nru a/arch/ppc/kernel/misc.S b/arch/ppc/kernel/misc.S
  	bne	1f		/* return if parent */
  	li	r0,0		/* make top-level stack frame */
  	stwu	r0,-16(r1)
-@@ -1439,7 +1439,7 @@
- 	.long sys_ni_syscall		/* 255 - rtas (used on ppc64) */
- 	.long sys_ni_syscall		/* 256 reserved for sys_debug_setcontext */
- 	.long sys_ni_syscall		/* 257 reserved for vserver */
--	.long sys_ni_syscall		/* 258 reserved for new sys_remap_file_pages */
-+	.long sys_ni_syscall		/* 258 reserved for new sys_remap_file_page
- 	.long sys_ni_syscall		/* 259 reserved for new sys_mbind */
- 	.long sys_ni_syscall		/* 260 reserved for new sys_get_mempolicy */
- 	.long sys_ni_syscall		/* 261 reserved for new sys_set_mempolicy */
 diff -Nru a/arch/ppc/kernel/signal.c b/arch/ppc/kernel/signal.c
 --- a/arch/ppc/kernel/signal.c	2004-08-25 10:13:41 -07:00
 +++ b/arch/ppc/kernel/signal.c	2004-10-05 23:05:22 -07:00
@@ -751,60 +665,3 @@ diff -Nru a/arch/ppc64/mm/hash_low.S b/arch/ppc64/mm/hash_low.S
  	beq-	htab_pte_insert_failure
  
  	/* Both are full, we need to evict something */
-diff -Nru a/include/asm-ppc/ppc_asm.h b/include/asm-ppc/ppc_asm.h
---- a/include/asm-ppc/ppc_asm.h	2004-10-11 10:15:51.000000000 +0200
-+++ b/include/asm-ppc/ppc_asm.h	2004-10-11 10:15:51.000000000 +0200
-@@ -116,7 +116,7 @@
- 	li	r4,1024;			\
- 	mtctr	r4;				\
- 	lis	r4,KERNELBASE@h;		\
--0:	tlbie	r4;				\
-+0:	tlbie	r4,0;				\
- 	addi	r4,r4,0x1000;			\
- 	bdnz	0b
- #endif
-diff -Nru a/arch/ppc/mm/hashtable.S b/arch/ppc/mm/hashtable.S
---- a/arch/ppc/mm/hashtable.S	2004-10-11 10:21:10.000000000 +0200
-+++ b/arch/ppc/mm/hashtable.S	2004-10-11 10:21:10.000000000 +0200
-@@ -375,7 +375,7 @@
- 	 */
- 	andi.	r6,r6,_PAGE_HASHPTE
- 	beq+	10f			/* no PTE: go look for an empty slot */
--	tlbie	r4
-+	tlbie	r4,0
- 
- 	addis	r4,r7,htab_hash_searches@ha
- 	lwz	r6,htab_hash_searches@l(r4)
-@@ -616,7 +616,7 @@
- 3:	li	r0,0
- 	STPTE	r0,0(r12)		/* invalidate entry */
- 4:	sync
--	tlbie	r4			/* in hw tlb too */
-+	tlbie	r4,0			/* in hw tlb too */
- 	sync
- 
- 8:	ble	cr1,9f			/* if all ptes checked */
-diff -Nru a/arch/ppc/platforms/pmac_sleep.S b/arch/ppc/platforms/pmac_sleep.S
---- a/arch/ppc/platforms/pmac_sleep.S	2004-10-11 10:21:11.000000000 +0200
-+++ b/arch/ppc/platforms/pmac_sleep.S	2004-10-11 10:21:11.000000000 +0200
-@@ -339,7 +339,7 @@
- 	/* Flush all TLBs */
- 	lis	r4,0x1000
- 1:	addic.	r4,r4,-0x1000
--	tlbie	r4
-+	tlbie	r4,0
- 	blt	1b
- 	sync
- 
-diff -Nru a/arch/ppc/power/cpu_reg.S b/arch/ppc/power/cpu_reg.S
---- a/arch/ppc/power/cpu_reg.S	2004-10-11 10:21:11.000000000 +0200
-+++ b/arch/ppc/power/cpu_reg.S	2004-10-11 10:21:11.000000000 +0200
-@@ -242,7 +242,7 @@
- 	/* Flush all TLBs */;\
- 	lis	r4,0x1000;\
- 1:	addic.	r4,r4,-0x1000;\
--	tlbie	r4;\
-+	tlbie	r4,0;\
- 	blt	1b;\
- 	sync;\
- ;\
