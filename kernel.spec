@@ -3,7 +3,8 @@
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.34
 %define		i2c_version		2.6.2
-%define		bttv_version		0.7.87
+#%define		bttv_version		0.7.87
+%define		bttv_version		0.7.60
 %define		wlan_version		0.3.4
 %define		tun_version		1.1
 %define         vlan_version            1.0.1
@@ -92,7 +93,7 @@ Patch41:	%{name}-serial-initialisation.patch
 Patch42:	%{name}-flip-serial5.05.patch
 Patch43:	%{name}-vlan_bridge.patch
 Patch44:	tulip-patch-0.91.patch.bz2
-Patch45:	linux-2.2.20-bttv-%{bttv_version}.patch.bz2
+#Patch45:	linux-2.2.20-bttv-%{bttv_version}.patch.bz2
 
 Patch100:	jfs-2.2.20-v%{jfs_version}-patch
 Patch101:	linux-atm.patch
@@ -100,6 +101,7 @@ Patch102:	htb2_2.2.17.diff
 Patch103:	bridge-netsyms.patch
 #i2o patch from ftp://ftp.adaptec.com/raid/asr/unix/asr_linux_v242_drv.rpm 
 Patch104:	dpt_i2o-2.2.19.diff
+Patch105	linux-2.2.19-bttv-%{bttv_version}.patch.bz2
 Patch1500:	linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	%{name}-sparc-zs.h.patch
 Patch1502:	%{name}-sparc_netsyms.patch
@@ -392,6 +394,7 @@ cd ..
 cd i2c-%{i2c_version}
 mkpatch/mkpatch.pl . ../../linux | (cd ../../linux; patch -p1 -s)
 cd ..
+%patch105 -p1
 %endif
 
 # 2.2.20ow1
@@ -688,6 +691,7 @@ cd i2c-%{i2c_version}
 mkpatch/mkpatch.pl . $RPM_BUILD_ROOT/usr/src/linux-%{version} | (cd $RPM_BUILD_ROOT/usr/src/linux-%{version}; patch -p1 -s)
 cd ..
 rm -rf i2c-%{i2c_version}/
+bzip2 -dc %{PATCH105} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 %endif
 
 # 2.2.20ow
