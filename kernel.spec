@@ -1,42 +1,71 @@
+
+# I'M BROKEN, DO NOT FIX ME
+
+# DO NOT TOUCH THIS, TOO :)
+
+# ask arekm if in doubt
+
+# ps. 2.4.25 is in kernel24.spec now
+
 #
-# Conditional build:
-%bcond_without	smp		# don't build SMP kernel
-%bcond_without	up		# don't build UP kernel
-%bcond_without	boot		# don't build BOOT kernel
-%bcond_without	source		# don't build source
-%bcond_without	doc		# don't build documentation package
-%bcond_without	grsec		# don't apply grsecurity patch
-%bcond_with	win4lin		# apply the Win4lin patches
+# If you define the following as 1, only kernel, -headers and -source
+# packages will be built
 #
+#	TODO
+# - check I2C
+#
+# BCOND:
+%bcond_without smp	# don't build SMP kernel
+%bcond_without up	# don't build UP kernel
+%bcond_without source	# don't build kernel-source package
+
+## Program required by kernel to work.
+%define		_binutils_ver		2.12
+%define		_util_linux_ver		2.10o
+%define		_module_init_tool_ver	0.9.10
+%define		_e2fsprogs_ver		1.29
+%define		_jfsutils_ver		1.1.3
+%define		_reiserfsprogs_ver	3.6.3
+%define		_xfsprogs_ver		2.1.0
+%define		_pcmcia_cs_ver		3.1.21
+%define		_quota_tools_ver	3.09
+%define		_PPP_ver		2.4.0
+%define		_isdn4k_utils_ver	3.1pre1
+%define		_nfs_utils_ver		1.0.5
+%define		_procps_ver		3.1.13
+%define		_oprofile_ver		0.5.3
+
+%define		_rel		1.1
+%define		_cset		20040219_0706
+
+## netfilter snap 
+%define		_netfilter_snap		20040219
+
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/amd64/x86_64/')
+
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
-#
-%define		pre_version		%{nil}
-%define		netfilter_snap		20031209
-%define		i2c_version		2.8.3
+
+%define		pcmcia_version		3.1.22
+%define		drm_xfree_version	4.3.0
+
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
-Summary(es):	Núcleo (Kernel) linux genérico
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
-Summary(ja):	Linux ¥«¡¼¥Í¥ë (Linux ¥ª¥Ú¥ì¡¼¥Æ¥£¥ó¥°¥·¥¹¥Æ¥à¤Î¿´Â¡ÉôÊ¬)
 Summary(pl):	J±dro Linuksa
-Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
-Version:	2.4.25
-Release:	0.4
-License:	GPL v2
+Version:	2.6.3
+Release:	%{_rel}
+Epoch:		3
+License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
-# Source0-md5:	5fc8e9f43fa44ac29ddf9a9980af57d8
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
+# Source0-md5:	6063a7e424355ec52e0cb559fb99034d
 Source1:	%{name}-autoconf.h
-Source2:	%{name}-BuildASM.sh
-Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
-# Source3-md5:	8ed492197244b6a772270417c66214d3
-Source7:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-1.1.4.tar.gz
-# Source7-md5:	ea33c28ca1d3afa448b20f337b615b48
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
+Source30:	%{name}-amd64.config
+Source31:	%{name}-amd64-smp.config
 Source50:	%{name}-sparc.config
 Source51:	%{name}-sparc-smp.config
 Source60:	%{name}-sparc64.config
@@ -45,285 +74,105 @@ Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
-Source1000:	%{name}-addon.config
-Source1001:	%{name}-netfilter.config
-Source1002:	%{name}-grsec.config
-Source2000:	%{name}-win4lin.config
 
-# New features/updates/backports
+Source80:	%{name}-netfilter.config
 
-# Essential stuff
+Patch0:		2.6.0-ksyms-add.patch
 
-#Patch0:		patch-2.4.25-rc4.bz2
-
-Patch1:		%{name}-pldfblogo.patch
-
-# from ftp://ftp.kernel.org/pub/linux/kernel/people/hvr/testing/
-Patch10:	patch-cryptoloop-jari-2.4.22-rc2.0
-# from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
-Patch12:	linux-2.4.23-freeswan-2.04.patch.gz
-Patch15:	linux-2.4.25-sched-O1.patch
-# http://dl.sourceforge.net/user-mode-linux/uml-patch-2.4.20-6.bz2
-Patch20:	uml-patch-2.4.20-6-21.bz2
-Patch21:	linux-2.4.21-uml-o1.patch
-# http://dl.sourceforge.net/user-mode-linux/host-skas3.patch
-Patch22:	linux-2.4.20-uml-host-skas3.patch
-# http://www.kernel.org/pub/linux/kernel/people/jgarzik/libata/
-Patch23:	2.4.25-pre4-libata1.patch.bz2
-# missing <linux/mm.h> include in libata-core.c (needed on alpha)
-Patch24:	linux-2.4.23-libata1-include.patch
-
-# New filesystems
-
-# http://acl.bestbits.at/
-Patch31:	linux-2.4.21-jfs-acl.patch
-Patch32:	linux-2.4.25-ea-acl-nfsacl-2.4.23-0.8.65.diff.gz
-# http://dl.sourceforge.net/linux-ntfs/
-Patch40:	linux-2.4.25-ntfs-2.1.6a.patch.bz2
-# FC01_davfs_0.2.4.patch
-Patch50:	linux-2.4.20-davfs-0.2.4.patch.bz2
-# FC02_davfs__FUNCTION__.patch
-Patch55:	linux-2.4.20-davfs-_FUNCTION_.patch
-# ftp://ftp.suse.com/pub/people/mason/patches/data-logging/2.4.23/
-# ftp://ftp.suse.com/pub/people/jeffm/reiserfs/aclea/2.4.23/
-Patch56:	01-reiserfs-free-blocks.diff.gz
-Patch57:	02-akpm-b_journal_head-1.diff.gz
-Patch58:	03-reiserfs-sync_fs-5.diff.gz
-Patch59:	04-data-logging-40.diff.gz
-Patch60:	05-reiserfs-quota-28.diff.gz
-Patch61:	06-kinoded-9.diff.gz
-Patch62:	06-write_times.diff.gz
-Patch63:	01-reiserfs-xattrs-2.4.23+datalogging+quota-03
-Patch64:	02-reiserfs-acl-2.4.23+datalogging+quota-03
-# http://dl.sourceforge.net/squashfs/
-Patch65:	squashfs1.3r3-2.4.25.patch
-#from http://sci.felk.cvut.cz/nwd/linux/nwd-patch-2.4.19
-Patch70:	nwd-2.4.21.patch
-Patch80:	linux-2.4.25-intermezzo-acl.patch
-
-# Networking
-
-# ALWAYS use released patchomatic tarball (don't use CVS)
-# DO NOT include patches from patch-o-matic/userspace since they cause iptables incompatibilities
-Patch100:	linux-2.4.23-netfilter-pom-%{netfilter_snap}.patch.gz
-Patch101:	linux-2.4.23-netfilter-IMQ-target.patch
-# http://rnvs.informatik.uni-leipzig.de/ipp2p/index_en.html
-# http://rnvs.informatik.uni-leipzig.de/ipp2p/downloads/ipp2p-0.5a_vs_2.4.22.diff.gz
-Patch102:	ipp2p-0.5a_vs_2.4.22.diff.gz
-
-# http://ebtables.sourceforge.net/
-Patch110:	ebtables-brnf-3_vs_2.4.22.diff.gz
-# http://trash.net/~kaber/imq/
-Patch120:	linux-2.4.21-imq-1.diff
-# ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
-Patch125:	linux-2.4.18-mppe.patch
-Patch130:	linux-2.4.22-tun-new-style.patch
-# http://www.bewley.net/linux/vlan/patches/vlan-3c59x.patch
-Patch135:	linux-2.4.25-vlan-3c59x.patch
-
-# ATM bugfixes
-# Patches by Chas Williams <chas@locutus.cmf.nrl.navy.mil>
-# Included in Chas patch:
-# http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
-# http://christophe.lizzi.free.fr/linux/linux-2.4.0-test9-fore200e-0.3.tar.gz
-# ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/
-Patch150:	linux-2.4.21-atm_diffs.patch
-Patch151:	ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
-Patch152:	linux-2.4.22-fore200e-0.2f.patch
-
-# New devices/drivers
-
-# http://people.sistina.com/~thornber/patches/2.4-stable/
-Patch200:	linux-2.4.25-dm-3.patch
-
-# EVMS additional patches (http://www.sourceforge.net/projects/evms/)
-Patch205:	linux-2.4.25-evms-2.2.1.patch
-
-#from http://dl.sourceforge.net/i810fb/linux-2.4.20-i810fb.diff.bz2
-Patch210:	linux-2.4.21-I810FB.patch.gz
-
-# Support for CDRW packet writing
-Patch215:	%{name}-cdrw-packet.patch
-Patch216:	%{name}-cd-mrw-2.patch
-Patch225:	wrr-linux-2.4.9.patch
-Patch226:	linux-2.4.18-esfq.diff
-# http://l7-filter.sourceforge.net/
-Patch227:	layer7-kernel2.4patch-v0.4.1a.patch.gz
-
-Patch235:	linux-2.4.20-audigy.patch.bz2
-Patch240:	linux-2.4.20-ecc.patch
-# i2c - http://secure.netroedge.com/~lm78/
-Patch255:	linux-2.4.25-i2c-%{i2c_version}-1.patch
-Patch256:	linux-2.4.21-i2c-headers.patch
-Patch257:	linux-2.4.21-i2c-sparc64.patch
-Patch265:	linux-2.4.20-e820.patch
-# Syntax bug
-Patch270:	dc395-tab.patch
-# http://www.qlogic.com/
-Patch275:	linux-2.4.20-qla2x00-v6.04.00-fo.patch.gz
-
-# TV stuff from http://bytesex.org/
-Patch301:	20_v4l2-2.4.23-pre7.diff.gz
-Patch302:	30_bt832-2.4.23-pre7.diff
-Patch303:	30_btaudio-2.4.23-pre7.diff
-
-# AIC7XXX
-# based on http://people.freebsd.org/~gibbs/linux/SRC/aic79xx-linux-2.4-20031222-tar.gz
-Patch350:	linux-2.4.24-aic79xxx-20031222.patch
-
-# I18N stuff
-# Adds a sysctl for controlling the default iocharset
-Patch400:	%{name}-nls_default.patch
-
-# ftp://ftp.suse.com/pub/people/stepan/bootsplash/kernel/
-Patch450:	bootsplash-3.0.7-2.4.25.patch
-
-# The following go last as they touch a lot of code
-# and/or are on bcond and/or are ifarch
-
-# Win4Lin
-Patch900:	linux-2.4.20-Win4Lin.PLD.patch.bz2
-Patch901:	linux-2.4.20-Win4Lin-mki-adapter.patch.bz2
-
-# http://openipmi.sourceforge.net/
-Patch950:	linux-2.4.23-ipmi-v28.patch
-
-# Assorted bugfixes
-
-# jam - http://giga.cps.unizar.es/~magallon/linux/kernel/
-Patch1000:	jam-04-clone-detached.patch
-Patch1002:	jam-06-force-inline.patch
-Patch1003:	jam-07-scsi-error-tmout.patch
-Patch1006:	jam-10-highpage-init.patch
-Patch1007:	jam-11-self_exec_id.patch
-Patch1008:	jam-15-fast-csum-D.patch
-Patch1009:	jam-21-mem-barriers.patch
-Patch1010:	jam-30-smptimers-A0.patch
-
-Patch1102:	linux-2.4.20-lvm-updates.patch
-
-# IrDA patch for broken IBM Latpops
-Patch1104:	linux-2.4.21-irda-ibm.patch
-
-# fix lun probing on multilun RAID chassis
-Patch1105:	linux-2.4.12-scsi_scan.patch
-Patch1106:	linux-scsi-debug-bug.patch
-
-# This patch allows to create more than one sound device using alsa
-# and devfs with two or more sound cards
-Patch1111:	linux-sound_core.patch
-
-# rivafb - fix for text background in 16bpp modes
-Patch1150:	linux-rivafb16.patch
-Patch1152:	linux-2.4.20-agp_uninorth.patch
-
-Patch1201:	linux-2.4.21-cpqfc.patch
-Patch1203:	linux-2.4.20-amd-golem.patch
-Patch1205:	linux-53c7,8xx-build.fix
-Patch1207:	linux-2.4.20-serverworks.patch
-# this patch adds support for "io" and "irq" options in PCNet32 driver module
-Patch1209:	linux-2.4.19-pcnet-parms.patch
-
-# disable some networking printk's
-Patch1250:	linux-2.4.1-netdebug.patch
-Patch1251:	linux-2.4.2-raw-ip.patch
-Patch1252:	linux-2.4.19-netmos_pci_parallel_n_serial.patch
-Patch1253:	linux-proc_net_dev-counter-fix.patch
-Patch1254:	kernel-2.4.17-netsyms-export-fix.patch
-Patch1255:	linux-2.4.20-pre1-nr_frags.patch
-
-Patch1301:	linux-2.4.18-hpfs.patch
-Patch1302:	linux-2.4.18-nfs-default-size.patch
-Patch1303:	linux-2.4.20-irixnfs.patch
-# Tru64 NFS kludge
-Patch1304:	linux-2.4.21-tru64nfs.patch
-Patch1305:	linux-2.4.21-nfs-silly-rename.patch
-
-Patch1350:	linux-2.4.21-nousb.patch
-# from http://www.noc.uoa.gr/~avel/page.php?page=nokia&lang=en
-Patch1354:	linux-2.4.20-Nokia5510.patch
-
-# raid5 xor fix for PIII/P4, should go away shortly
-Patch1400:	linux-2.4.0-raid5xor.patch
-Patch1401:	linux-2.4.0-nonintconfig.patch
-# Add an ioctl to the block layer so we can be EFI compliant
-Patch1402:	linux-2.4.2-blkioctl-sector.patch
-Patch1403:	linux-2.4.3-pcipenalty.patch
-Patch1405:	linux-2.4.7-suspend.patch
-Patch1407:	kernel-Makefile-include-fix.patch
-Patch1408:	kernel-pswscancode.patch
-Patch1410:	linux-2.4.18-input-35215.patch
-Patch1411:	linux-2.4.18-kiobuf.patch
-Patch1413:	linux-2.4.22-andrea-9980_fix-pausing-6.patch
-Patch1414:	linux-2.4.21-oopsmeharder.patch
-Patch1415:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
-Patch1416:	linux-2.4.21-no-FPU.patch
-Patch1418:	linux-2.4.21-hpt372-chicken-egg-hack.patch
-Patch1419:	linux-2.4.21-agp-num_of_masks.patch
-# fix spare disk counting for raid 5
-Patch1420:	linux-raid5-spare-counting.patch
-Patch1421:	linux-2.4.21-bttv-typo.patch
-
-Patch2000:	linux-PPC-SMP.patch
-Patch2001:	linux-2.4-ppc-procesor.patch
-Patch2002:	kernel-2.4.18-SPARC64-PLD.patch
-Patch2003:	linux-2.4.20-AXP-avma1_cs.patch
-Patch2004:	linux-2.4.22-ppc-amd8111e.patch
-
-Patch3000:	linux-2.4.1-compilefailure.patch
-Patch3002:	linux-2.4.20-EXPORT_SYMBOL.patch
-Patch3003:	linux-2.4.20-missing-license-tags.patch
-Patch3004:	linux-2.4.20-sym53c8xx_old.patch
-Patch3008:	linux-drm-4.2.0-force-cmpxchg.patch
-Patch3010:	linux-2.4.21-ipsec-sparc64.patch
-Patch3011:	linux-2.4.22-gcc33-inline.patch
-Patch3012:	linux-2.4.22-gcc-ext3.patch
-Patch3013:	linux-2.4.23-ppc-symbols.patch
-
-# Security patches/fixes
-
-# modified http://www.hardrock.org/kernel/current-updates/linux-2.4.23-updates.patch
-# since we already have some of these fixes applied
-#Patch3500:	http://www.hardrock.org/kernel/current-updates/linux-2.4.24-updates.patch
-Patch3600:	linux-2.4-sysctl-empty.patch
-Patch4000:	grsecurity-2.0-rc4-2.4.25-O1.patch
-Patch4001:	linux-2.4.25-sys_i386.patch
-
-ExclusiveOS:	Linux
-URL:		http://www.kernel.org/
-%ifarch		%{ix86}
-BuildRequires:	bin86
+%if "%{_cset}" != "0"
+# http://www.kernel.org/pub/linux/kernel/v2.5/testing/cset/
+Patch2:		cset-%{_cset}.txt.gz
 %endif
-#BuildRequires:	%{kgcc_package}
-BuildRequires:	modutils
-BuildRequires:	ed
-PreReq:		modutils
-PreReq:		geninitrd >= 1354
-Requires(post,postun):	fileutils
-Requires(postun):	awk
-Provides:	%{name}-up = %{version}-%{release}
+
+Patch4:		squashfs1.3r2-patch
+
+Patch6:		2.6.0-t4-PPC-ENODEV.patch
+
+Patch8:		2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
+Patch10:	2.6.0-t6-usb-irq.patch
+
+Patch12:	2.6.0-t7-memleak-lkml.patch
+Patch13:	2.6.0-t7-memleak2-lkml.patch
+
+Patch16:	2.6.0-t8-clean-mtd-lkml.patch
+Patch18:	2.6.0-t8-swap-include-lkml.patch
+
+Patch20:	2.6.x-x86_64-sys_wait4-EXPORT.patch
+
+Patch22:	2.6.0-t8-VLSI-ix86-lkml.patch
+
+Patch24:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
+
+Patch26:	2.6.0-t8-pci_dma_sync_to_device-lkml.patch
+
+Patch28:	2.6.0-t8-umsdos-lkml.patch
+
+Patch30:	2.6.0-t9-acpi_osl-lkml.patch
+
+Patch32:	2.6.0-t9-PPC-smp.patch
+
+Patch36:	bootsplash-3.1.3-2.6.0-test9.diff
+
+Patch38:	2.6.0-t11-AIC_and_db4-lkml.patch
+
+Patch40:	2.6.0-t11-r8169-getstats.patch
+
+Patch42:	2.6.0-t11-ALI-M1563-lkml.patch
+
+Patch44:	linux-tdfxfb-fillrect.patch
+Patch45:	linux-fbcon-margins.patch
+Patch46:	linux-tdfxfb-interlace+double.patch
+
+Patch48:	2.6.1-rc2-ini9100u-lkml.patch
+
+Patch50:	2.6.1-rc2-VLAN-NS83820-lkml.patch
+
+Patch52:	laptop-mode-2.6.1-7.patch
+
+Patch54:	2.6.3-amd64-fix.patch
+
+Patch56:	kbuild-out-of-tree.diff
+
+Patch58:	2.6.x-PD6729-lkml.patch
+
+Patch60:	2.6.x-IBM-RAS-service-procesor-1of2-lkml.patch
+Patch61:	2.6.x-IBM-RAS-service-procesor-2of2-lkml.patch
+
+Patch64:	2.6.x-ppp_mppe.patch
+
+Patch66:	2.6.2-Initio9100U-Kconfig.patch
+
+Patch68:	2.6.x-patch-o-matic-ng-base-%{_netfilter_snap}.patch
+
+URL:		http://www.kernel.org/
+BuildRequires:	module-init-tools
+BuildRequires:	perl-base
+BuildRequires:	binutils >= 2.14.90.0.7
+%ifarch sparc sparc64
+BuildRequires:	elftoaout
+%endif
+Autoreqprov:	no
+PreReq:		coreutils
+PreReq:		module-init-tools >= 0.9.9
+PreReq:		geninitrd >= 2.57
+Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	module-info
-Provides:	i2c = %{i2c_version}
-Provides:	bttv = 0.7.83
-Provides:	%{name}(netfilter) = 1.2.9-%{netfilter_snap}
-Provides:	%{name}(reiserfs) = %{version}
-Provides:	%{name}(agpgart) = %{version}
-#Provides:	%{name}(cdrw)
-#Provides:	%{name}(cdmrw)
-AutoReqProv:	no
+Provides:	%{name}(netfilter) = %{_netfilter_snap}
 Obsoletes:	kernel-modules
-Conflicts:	iptables < 1.2.9
-Conflicts:	lvm < 1.0.4
-Conflicts:	xfsprogs < 2.1.0
-Conflicts:	reiserfsprogs < 3.6.3
-Conflicts:	e2fsprogs < 1.25
-Conflicts:	jfsutils < 1.0.12
-Conflicts:	util-linux < 2.10o
-Conflicts:	modutils < 2.4.2
-Conflicts:	quota < 3.06
-Conflicts:	linux-atm < 2.4.1
-Conflicts:	device-mapper < 1.00.05
-ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
+Conflicts:	util-linux < %{_util_linux_ver}
+Conflicts:	module-init-tool < %{_module_init_tool_ver}
+Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
+Conflicts:	jfsutils < %{_jfsutils_ver}
+Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
+Conflicts:	xfsprogs < %{_xfsprogs_ver}
+Conflicts:	quota-tools < %{_quota_tools_ver}
+Conflicts:	PPP < %{_PPP_ver}
+Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
+Conflicts:	nfs-utils < %{_nfs_utils_ver}
+Conflicts:	procps < %{_procps_ver}
+Conflicts:	oprofile < %{_oprofile_ver}
+ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc amd64
+ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -337,69 +186,42 @@ Linux-Betriebssystems. Der Kernel ist für grundliegende
 Systemfunktionen verantwortlich: Speicherreservierung,
 Prozeß-Management, Geräte Ein- und Ausgaben, usw.
 
-%description -l es
-Este paquete contiene núcleo (kernel) Linux que se usa para arranque y
-funcionamiento de tu sistema. Contiene soporte a pocos hardwares
-específicos. La mayoría de los hardwares son soportados, vía módulos
-que se cargan después del arranque.
-
 %description -l fr
 Le package kernel contient le kernel linux (vmlinuz), la partie
 centrale d'un système d'exploitation Linux. Le noyau traite les
 fonctions basiques d'un système d'exploitation: allocation mémoire,
 allocation de process, entrée/sortie de peripheriques, etc.
 
-%description -l ja
-kernel ¥Ñ¥Ã¥±¡¼¥¸¤Ë¤Ï¡¤Red Hat Linux ¥ª¥Ú¥ì¡¼¥Æ¥£¥ó¥°¥·¥¹¥Æ¥à¤Î¿´Â¡ÉôÊ¬
-¤È¤â¸À¤¨¤ë Linux ¥«¡¼¥Í¥ë (vmlinuz) ¤¬´Þ¤Þ¤ì¤Æ¤¤¤Þ¤¹¡¥
-¥«¡¼¥Í¥ë¤Ï¡¤¥á¥â¥ê´ÉÍý¡¤¥×¥í¥»¥¹´ÉÍý¡¤¥Ç¥Ð¥¤¥¹¤ÎÆþ½ÐÎÏÅù¡¤¥ª¥Ú¥ì¡¼¥Æ¥£¥ó¥°
-¥·¥¹¥Æ¥à¤Î´ðËÜÅª¤ÊÉôÊ¬¤ò»Ê¤ê¤Þ¤¹¡¥
-
 %description -l pl
 Pakiet zawiera j±dro Linuksa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
-siê w komputerze, takich jak karty muzyczne, sterowniki dysków, etc.
-
-%description -l pt_BR
-Este pacote contém o kernel Linux que é usado para inicialização
-e funcionamento de seu sistema. Contém suporte a poucos hardwares
-específicos. A maioria dos hardwares são suportados via módulos
-que são carregados após a inicialização.
+siê w komputerze, takiego jak sterowniki dysków itp.
 
 %package smp
 Summary:	Kernel version %{version} compiled for SMP machines
 Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
-Summary(es):	Núcleo (kernel) compilado para máquinas SMP
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
-Summary(ja):	SMP (ÂÐ¾Î¥Þ¥ë¥Á¥×¥í¥»¥Ã¥·¥ó¥°) ÂÐ±þ Linux ¥«¡¼¥Í¥ë
-Summary(pl):	J±dro Linuksa %{version} skompilowane dla maszyn wieloprocesorowych
-Summary(pt_BR):	Kernel compilado para máquinas SMP
+Summary(pl):	J±dro Linuksa w wersji %{version} dla maszyn wieloprocesorowych
 Group:		Base/Kernel
-PreReq:		modutils
-PreReq:		geninitrd >= 2.21
-Requires(post,postun):	fileutils
-Requires(postun):	awk
-Provides:	%{name}-smp = %{version}-%{release}
+PreReq:		coreutils
+PreReq:		module-init-tools >= 0.9.9
+PreReq:		geninitrd >= 2.26
+Provides:	%{name}-smp = %{epoch}:%{version}-%{release}
 Provides:	module-info
-Provides:	i2c = %{i2c_version}
-Provides:	bttv = 0.7.83
-Provides:	%{name}(netfilter) = 1.2.9-%{netfilter_snap}
-Provides:	%{name}(reiserfs) = %{version}
-Provides:	%{name}(agpgart) = %{version}
-#Provides:	%{name}(cdrw)
-#Provides:	%{name}(cdmrw)
-AutoReqProv:	no
-Conflicts:	iptables < 1.2.9
-Conflicts:	lvm < 1.0.4
-Conflicts:	xfsprogs < 2.1.0
-Conflicts:	reiserfsprogs < 3.6.3
-Conflicts:	e2fsprogs < 1.25
-Conflicts:	jfsutils < 1.0.12
-Conflicts:	util-linux < 2.10o
-Conflicts:	modutils < 2.4.2
-Conflicts:	quota < 3.06
-Conflicts:	linux-atm < 2.4.1
-Conflicts:	device-mapper < 1.00.05
+Provides:	%{name}(netfilter) = %{_netfilter_snap}
+Conflicts:	util-linux < %{_util_linux_ver}
+Conflicts:	module-init-tool < %{_module_init_tool_ver}
+Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
+Conflicts:	jfsutils < %{_jfsutils_ver}
+Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
+Conflicts:	xfsprogs < %{_xfsprogs_ver}
+Conflicts:	quota-tools < %{_quota_tools_ver}
+Conflicts:	PPP < %{_PPP_ver}
+Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
+Conflicts:	nfs-utils < %{_nfs_utils_ver}
+Conflicts:	procps < %{_procps_ver}
+Conflicts:	oprofile < %{_oprofile_ver}
+Autoreqprov:	no
 
 %description smp
 This package includes a SMP version of the Linux %{version} kernel. It
@@ -412,45 +234,24 @@ Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
 Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
 CPU laufen.
 
-%description smp -l es
-Núcleo (kernel) compilado para máquinas SMP
-
 %description smp -l fr
-Ce package inclu une version SMP du noyau de Linux version %{version}.
+Ce package inclu une version SMP du noyau de Linux version {version}.
 Il et nécessaire seulement pour les machine avec deux processeurs ou
 plus, il peut quand même fonctionner pour les système mono-processeur.
-
-%description smp -l ja
-¤³¤Î¥Ñ¥Ã¥±¡¼¥¸¤Ë¤Ï SMP ÈÇ¤Î Linux ¥«¡¼¥Í¥ë¤¬¼ý¤á¤é¤ì¤Æ¤¤¤Þ¤¹¡¥
-¤³¤Î¥«¡¼¥Í¥ë¤Ï 2¸Ä°Ê¾å¤Î CPU ¤òÅëºÜ¤·¤¿¥Þ¥·¥ó¤Ë¤Î¤ßÉ¬Í×¤È¤Ê¤ê¤Þ¤¹¤¬¡¤
-1CPU ¤Î¥Þ¥·¥ó¤Ç¤âÌäÂê¤Ê¤¯Æ°ºî¤·¤Þ¤¹¡¥
-
-¤¢¤Ê¤¿¤Î¥Þ¥·¥ó¤¬ 2¸Ä°Ê¾å¤Î CPU ¤òÅëºÜ¤·¤Æ¤¤¤ë¾ì¹ç¤Ï
-kernel-smp ¥Ñ¥Ã¥±¡¼¥¸¤ò¥¤¥ó¥¹¥È¡¼¥ë¤·¤Æ¤¯¤À¤µ¤¤¡¥
 
 %description smp -l pl
 Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono
 wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
 Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
 
-%description smp -l pt_BR
-Este pacote inclui uma versão SMP do kernel Linux versão %{version}.
-Ele deve ser utilizado apenas em máquinas com dois ou mais processadores,
-apesar de trabalhar perfeitamente em máquinas com apenas um processador.
-
 %package BOOT
 Summary:	Kernel version %{version} used on the installation boot disks
 Summary(de):	Kernel version %{version} für Installationsdisketten
-Summary(es):	Núcleo (kernel) de Linux, utilizado en el disco de instalación
 Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation
-Summary(ja):	¥¤¥ó¥¹¥È¡¼¥éµ¯Æ°¥Ç¥£¥¹¥¯¤Ç»È¤ï¤ì¤ë Linux ¥«¡¼¥Í¥ë
-Summary(pl):	J±dro Linuksa %{version} dla bootkietek instalacyjnych
-Summary(pt_BR):	Kernel Linux utilizado no disco de instalação
+Summary(pl):	J±dro Linuksa w wersji %{version} dla dyskietek startowych
 Group:		Base/Kernel
-PreReq:		modutils
-Requires(post,postun):	fileutils
-Requires(postun):	awk
-AutoReqProv:	no
+PreReq:		module-init-tools
+Autoreqprov:	no
 
 %description BOOT
 This package includes a trimmed down version of the Linux %{version}
@@ -465,62 +266,50 @@ Installations-Bootdisketten benutzt und sollte nicht auf einem
 installierten System verwendet werden, da viele Funktionen wegen der
 Platzprobleme abgeschaltet sind.
 
-%description BOOT -l es
-Núcleo (kernel) de Linux, utilizado en el disco de instalación
-
-%description BOOT -l ja
-¤³¤Î¥Ñ¥Ã¥±¡¼¥¸¤Ë¤ÏÍ¾Ê¬¤Êµ¡Ç½¤òºï¤êÍî¤·¤Æ¥µ¥¤¥º¤ò¾®¤µ¤¯¤·¤¿
-Linux ¥«¡¼¥Í¥ë¤¬¼ý¤á¤é¤ì¤Æ¤¤¤Þ¤¹¡¥¤³¤Î¥«¡¼¥Í¥ë¤Ï¥¤¥ó¥¹¥È¡¼¥é
-µ¯Æ°¥Ç¥£¥¹¥¯¤Ë»È¤ï¤ì¤ë¤â¤Î¤Ç¡¤´û¤Ë¥¤¥ó¥¹¥È¡¼¥ë¤¬½ª¤Ã¤¿¥·¥¹¥Æ¥à¾å¤Ç
-»È¤¦°Ù¤Î¤â¤Î¤Ç¤¢¤ê¤Þ¤»¤ó¡¥¥µ¥¤¥º¤ò¾®¤µ¤¯¤¹¤ë°Ù¤ËÂ¿¤¯¤Îµ¡Ç½¤¬
-ºï¤é¤ì¤Æ¤¤¤ë¤«¤é¤Ç¤¹¡¥
-
 %description BOOT -l pl
 Pakiet zawiera j±dro Linuksa dedykowane dyskietkom startowym i powinno
 byæ u¿ywane jedynie podczas instalacji systemu. Wiele u¿ytecznych
 opcji zosta³o wy³±czonych, aby jak najbardziej zmniejszyæ jego
 rozmiar.
 
-%description BOOT -l pt_BR
-Este pacote inclui uma versão minimizada do kernel Linux, criada para
-ser utilizada *apenas* no disco de instalação, e não deve ser utilizada
-em máquinas já instaladas, pois várias características do kernel
-são desabilitadas para diminuir o tamanho final do kernel a ser utilizado.
-
 %package pcmcia
 Summary:	PCMCIA modules
 Summary(pl):	Modu³y PCMCIA
 Group:		Base/Kernel
-PreReq:		%{name}-up = %{version}-%{release}
-Requires(postun):	%{name}-up = %{version}-%{release}
+PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
+Provides:	%{name}-pcmcia = %{pcmcia_version}
 Provides:	kernel(pcmcia)
+Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
 
 %description pcmcia
-Kernel PCMCIA modules.
+PCMCIA modules (%{pcmcia_version}).
 
 %description pcmcia -l pl
-Modu³y PCMCIA z kernela.
+Modu³y PCMCIA (%{pcmcia_version}).
 
 %package smp-pcmcia
 Summary:	PCMCIA modules for SMP kernel
 Summary(pl):	Modu³y PCMCIA dla maszyn SMP
 Group:		Base/Kernel
-PreReq:		%{name}-smp = %{version}-%{release}
-Requires(postun):	%{name}-smp = %{version}-%{release}
+PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
+Provides:	%{name}-pcmcia = %{pcmcia_version}
 Provides:	kernel(pcmcia)
+Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
 
 %description smp-pcmcia
-Kernel PCMCIA modules for SMP kernel.
+PCMCIA modules for SMP kernel (%{pcmcia_version}).
 
 %description smp-pcmcia -l pl
-Modu³y PCMCIA z kernela dla maszyn SMP.
+Modu³y PCMCIA dla maszyn SMP (%{pcmcia_version}).
 
 %package drm
 Summary:	DRM kernel modules
 Summary(pl):	Sterowniki DRM
 Group:		Base/Kernel
-PreReq:		%{name}-up = %{version}-%{release}
-Requires(postun):	%{name}-up = %{version}-%{release}
+PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	%{name}-drm = %{drm_xfree_version}
 
 %description drm
@@ -533,8 +322,8 @@ Sterowniki DRM (%{drm_xfree_version}).
 Summary:	DRM SMP kernel modules
 Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
 Group:		Base/Kernel
-PreReq:		%{name}-smp = %{version}-%{release}
-Requires(postun):	%{name}-smp = %{version}-%{release}
+PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Provides:	%{name}-drm = %{drm_xfree_version}
 
 %description smp-drm
@@ -543,69 +332,104 @@ DRM SMP kernel modules (%{drm_xfree_version}).
 %description smp-drm -l pl
 Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
 
-%package headers-2.4
-Summary:	Header files for the Linux 2.4 kernel
-Summary(es):	Archivos de inclusión para núcleo (kernel) Linux 2.4
-Summary(ja):	Linux 2.4 ¥«¡¼¥Í¥ë¤Î¥Ø¥Ã¥À¥Õ¥¡¥¤¥ë
-Summary(pl):	Pliki nag³ówkowe j±dra Linuksa 2.4
-Summary(pt_BR):	Arquivos de inclusão para o kernel Linux 2.4
+%package sound-oss
+Summary:	OSS kernel modules
+Summary(pl):	Sterowniki d¼wiêku OSS
 Group:		Base/Kernel
-Requires(post,postun):	fileutils
-Requires(postun):	awk
+PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
+
+%description sound-oss
+OSS (Open Sound System) drivers.
+
+%description sound-oss -l pl
+Sterowniki d¼wiêku OSS (Open Sound System).
+
+%package smp-sound-oss
+Summary:	OSS SMP kernel modules
+Summary(pl):	Sterowniki d¼wiêku OSS dla maszyn wieloprocesorowych
+Group:		Base/Kernel
+PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
+
+%description smp-sound-oss
+OSS (Open Sound System) SMP sound drivers.
+
+%description smp-sound-oss -l pl
+Sterowniki OSS (Open Sound System) dla maszyn wieloprocesorowych.
+
+%package sound-alsa
+Summary:	ALSA kernel modules
+Summary(pl):	Sterowniki d¼wiêku ALSA
+Group:		Base/Kernel
+PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
+Provides:	alsa-driver
+Obsoletes:	alsa-driver
+Obsoletes:	alsa-driver-up
+
+%description sound-alsa
+ALSA (Advanced Linux Sound Architecture) sound drivers.
+
+%description sound-alsa -l pl
+Sterowniki d¼wiêku ALSA (Advanced Linux Sound Architecture).
+
+%package smp-sound-alsa
+Summary:	ALSA SMP kernel modules
+Summary(pl):	Sterowniki d¼wiêku ALSA dla maszyn wieloprocesorowych
+Group:		Base/Kernel
+PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
+Provides:	alsa-driver
+Obsoletes:	alsa-driver
+Obsoletes:	alsa-driver-smp
+
+%description smp-sound-alsa
+ALSA (Advanced Linux Sound Architecture) SMP sound drivers.
+
+%description smp-sound-alsa -l pl
+Sterowniki d¼wiêku ALSA (Advanced Linux Sound Architecture) dla maszyn
+wieloprocesorowych.
+
+%package headers
+Summary:	Header files for the Linux kernel
+Summary(pl):	Pliki nag³ówkowe j±dra Linuksa
+Group:		Base/Kernel
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
-Provides:	kernel-i2c-devel = %{i2c_version}
-Provides:	%{name}-headers(netfilter) = 1.2.9-%{netfilter_snap}
+Provides:	kernel-i2c-devel
+Provides:	%{name}-headers(netfilter) = %{_netfilter_snap}
+Provides:	%{name}-headers(alsa-drivers)
 Obsoletes:	kernel-i2c-devel
-AutoReqProv:	no
+Autoreqprov:	no
 
-%description headers-2.4
+%description headers
 These are the C header files for the Linux kernel, which define
-structures and constants that are needed when building most standard
-programs under Linux, as well as to rebuild the kernel.
+structures and constants that are needed when rebuilding the kernel
+or building kernel modules.
 
-%description headers-2.4 -l es
-Estos son los archivos de inclusión C para núcleo (kernel) Linux, que
-define estructuras y constantes que son necesarias a la construcción
-de la mayoría de los programas en el Linux, como también para
-reconstruir el núcleo (kernel).
-
-%description headers-2.4 -l ja
-kernel-headers ¥Ñ¥Ã¥±¡¼¥¸¤Ë¤Ï Linux ¥«¡¼¥Í¥ë¤Î C ¥Ø¥Ã¥À¥Õ¥¡¥¤¥ë¤¬
-¼ý¤á¤é¤ì¤Æ¤¤¤Þ¤¹¡¥¥Ø¥Ã¥À¥Õ¥¡¥¤¥ë¤Ë¤Ï¡¤Â¿¤¯¤Î¥×¥í¥°¥é¥à¤ò¥³¥ó¥Ñ¥¤¥ë
-¤¹¤ëºÝ¡¤°¿¤¤¤Ï¥«¡¼¥Í¥ë¤òºÆ¹½ÃÛ¤¹¤ë¤Î¤ËÉ¬Í×¤Ê¹½Â¤¤äÀ©Ìó¤¬ÄêµÁ¤µ¤ì¤Æ¤¤¤Þ¤¹¡¥
-
-%description headers-2.4 -l pl
+%description headers -l pl
 Pakiet zawiera pliki nag³ówkowe j±dra, niezbêdne do rekompilacji j±dra
-oraz niektórych programów.
+oraz budowania modu³ów j±dra.
 
-%description headers-2.4 -l pt_BR
-Estes são os arquivos de inclusão C para o kernel Linux, os
-quais definem estruturas e constantes que são necessárias para
-a construção da maioria dos programas no Linux, bem como para
-reconstruir o próprio kernel.
-
-%package source-2.4
-Summary:	Linux kernel 2.4 source tree
-Summary(es):	Fuentes del núcleo (kernel) Linux 2.4
-Summary(ja):	Linux 2.4 ¥«¡¼¥Í¥ë¤Î¥½¡¼¥¹¥³¡¼¥É
-Summary(pl):	Kod ¼ród³owy j±dra Linuksa 2.4
-Summary(pt_BR):	Fontes do kernel Linux 2.4
+%package source
+Summary:	Kernel source tree
+Summary(pl):	Kod ¼ród³owy j±dra Linuksa
 Group:		Base/Kernel
-Requires:	%{name}-headers-2.4 = %{version}-%{release}
+Autoreqprov:	no
+Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
 %ifarch %{ix86}
 Requires:	bin86
 %endif
-AutoReqProv:	no
 
-%description source-2.4
+%description source
 This is the source code for the Linux kernel. It is required to build
 most C programs as they depend on constants defined in here. You can
 also build a custom kernel that is better tuned to your particular
 hardware.
 
-%description source-2.4 -l de
+%description source -l de
 Das Kernel-Source-Paket enthält den source code (C/Assembler-Code) des
 Linux-Kernels. Die Source-Dateien werden gebraucht, um viele
 C-Programme zu compilieren, da sie auf Konstanten zurückgreifen, die
@@ -613,14 +437,7 @@ im Kernel-Source definiert sind. Die Source-Dateien können auch
 benutzt werden, um einen Kernel zu compilieren, der besser auf Ihre
 Hardware ausgerichtet ist.
 
-%description source-2.4 -l es
-Este es el fuente para el núcleo (kernel) Linux. Se necesita para la
-construcción de la mayoría de los programas C, pues dependen de
-constantes definidas en él. Tu puedes también construir un núcleo
-(kernel) personalizado que será lo mejor configurado para tu hardware
-en particular.
-
-%description source-2.4 -l fr
+%description source -l fr
 Le package pour le kernel-source contient le code source pour le noyau
 linux. Ces sources sont nécessaires pour compiler la plupart des
 programmes C, car il dépend de constantes définies dans le code
@@ -628,236 +445,103 @@ source. Les sources peuvent être aussi utilisée pour compiler un noyau
 personnalisé pour avoir de meilleures performances sur des matériels
 particuliers.
 
-%description source-2.4 -l ja
-kernel-source ¥Ñ¥Ã¥±¡¼¥¸¤Ë¤Ï Linux ¥«¡¼¥Í¥ë¤Î¥½¡¼¥¹¥³¡¼¥É¤¬´Þ¤Þ¤ì¤Æ
-¤¤¤Þ¤¹¡¥¥«¡¼¥Í¥ë¤Î¥½¡¼¥¹¥³¡¼¥É¤ÏÂ¿¤¯¤Î C ¥×¥í¥°¥é¥à¤ÎºîÀ®¤ËÉ¬Í×¤Ç¤¹¡¥
-¥«¡¼¥Í¥ë¤Î¥½¡¼¥¹¥³¡¼¥É¤ËÄêµÁ¤µ¤ì¤Æ¤¤¤ëÀ©¸Â¤Ë°ÍÂ¸¤¹¤ë¤³¤È¤¬¤¢¤ë¤«¤é¤Ç¤¹¡¥
-¤³¤Î¥½¡¼¥¹¥³¡¼¥É¤ò»È¤Ã¤Æ¡¤¤¢¤Ê¤¿¤Î¥·¥¹¥Æ¥à¸þ¤±¤Ë¥Á¥å¡¼¥ó¥¢¥Ã¥×¤·¤¿
-¥«¥¹¥¿¥à¥«¡¼¥Í¥ë¤òºîÀ®¤¹¤ë¤³¤È¤â¤Ç¤­¤Þ¤¹¡¥
-
-%description source-2.4 -l pl
-Pakiet zawiera kod ¼ród³owy j±dra Linuksa.
-
-%description source-2.4 -l pt_BR
-Este é o fonte para o kernel Linux. É necessário para a
-construção da maioria dos programas C, pois eles dependem de
-constantes definidas nele. Você também pode construir um kernel
-personalizado que será melhor configurado para seu hardware particular.
+%description source -l pl
+Pakiet zawiera kod ¼ród³owy j±dra systemu.
 
 %package doc
 Summary:	Kernel documentation
-Summary(es):	Documentación para los archivos fuente del núcleo (kernel) de Linux
-Summary(ja):	¥«¡¼¥Í¥ë¥½¡¼¥¹¤Ë´Þ¤Þ¤ì¤ëÍÍ¡¹¤Ê¥É¥­¥å¥á¥ó¥È
 Summary(pl):	Dokumentacja do j±dra Linuksa
-Summary(pt_BR):	Documentação para os arquivos fontes do kernel Linux
 Group:		Base/Kernel
-AutoReqProv:	no
+Provides:	%{name}-doc = %{version}
+Autoreqprov:	no
 
 %description doc
 This is the documentation for the Linux kernel, as found in
-/usr/src/linux*/Documentation directory.
-
-%description doc -l es
-Documentación para los archivos fuente del núcleo (kernel) de Linux
-
-%description doc -l ja
-¤³¤Î¥Ñ¥Ã¥±¡¼¥¸¤Ë¤Ï¥«¡¼¥Í¥ë¥½¡¼¥¹¤Ë´Þ¤Þ¤ì¤Æ¤¤¤ë¥É¥­¥å¥á¥ó¥È¤¬
-¼ý¤á¤é¤ì¤Æ¤¤¤Þ¤¹¡¥Linux ¥«¡¼¥Í¥ë¤ä¥Ç¥Ð¥¤¥¹¥É¥é¥¤¥Ð¤Ë´Ø¤¹¤ëÍÍ¡¹¤Ê
-¾ðÊó¤¬¤³¤Î¥É¥­¥å¥á¥ó¥È¤Ë¤Ïµ­¤µ¤ì¤Æ¤¤¤Þ¤¹¡¥
-
-Linux ¥«¡¼¥Í¥ë¥â¥¸¥å¡¼¥ë¤òÆÉ¤ß¹þ¤àºÝ¤Î°ú¿ô¤òÄ´¤Ù¤¿¤¤¾ì¹çÅù¡¤
-¤³¤Î¥Ñ¥Ã¥±¡¼¥¸¤ò¥¤¥ó¥¹¥È¡¼¥ë¤¹¤ë¤ÈÎÉ¤¤¤Ç¤·¤ç¤¦¡¥
+/usr/src/linux/Documentation directory.
 
 %description doc -l pl
-Pakiet zawiera dokumentacjê j±dra z katalogu
-/usr/src/linux*/Documentation.
-
-%description doc -l pt_BR
-Este pacote contém documentação para o kernel Linux.
+Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
+/usr/src/linux/Documentation.
 
 %prep
-%setup -q -a3 -n linux-%{version}
-# new JFS
-rm -fr fs/jfs
-gzip -dc %{SOURCE7} | tar -xf -
-#%patch0 -p1
-%patch1 -p1
+%setup -q -n linux-%{version}
+
+%patch0 -p1
+
+%if "%{_cset}" != "0"
+%patch2 -p1
+%endif
+
+%patch4 -p1
+
+%patch6 -p1
+
+%patch8 -p1
 %patch10 -p1
+
 %patch12 -p1
-%patch15 -p1
+%patch13 -p1
+
+%patch16 -p1
+%patch18 -p1
+
 %patch20 -p1
-%patch21 -p1
-# drop it?
-#%patch22 -p1
-%patch23 -p1
+
+%patch22 -p1
+
 %patch24 -p1
+
+%patch26 -p1
+
+%patch28 -p1
+
+%patch30 -p1
+
 %patch32 -p1
-# XXX: TODO - update patch?
-#%patch31 -p1
+
+%patch36 -p1
+
+%patch38 -p1
+
 %patch40 -p1
+
+%patch42 -p1
+
+%patch44 -p1
+%patch45 -p1
+%patch46 -p1
+
+%patch48 -p1
+
 %patch50 -p1
-%patch55 -p1
+
+%patch52 -p1
+
+%patch54 -p1
+
 %patch56 -p1
-%patch57 -p1
+
 %patch58 -p1
-%patch59 -p1
+
 %patch60 -p1
 %patch61 -p1
-%patch62 -p1
-%patch63 -p1
+
 %patch64 -p1
-%patch65 -p1
-%patch70 -p1
-%patch80 -p1
-%patch100 -p1
-%patch101 -p1
-%patch102 -p1
-%patch110 -p1
-%patch120 -p1
-%patch125 -p1
-%patch130 -p1
-%patch135 -p1
-# ???
-#%patch150 -p1
-%patch151 -p1
-%patch152 -p1
-%patch200 -p1
-%patch205 -p1
-%patch210 -p1
-# mtrainer, problematic with some LG cdroms
-#%patch215 -p1
-#%patch216 -p1
-%patch225 -p1
-%patch226 -p1
-%patch227 -p1
-%patch235 -p1
-%patch240 -p1
-%patch255 -p1
-%patch256 -p1
-%patch257 -p1
-%patch265 -p1
-%patch275 -p1
-%patch301 -p1
-%patch302 -p1
-%patch303 -p1
-%patch350 -p1
-%patch400 -p1
-%patch950 -p1
-%patch1000 -p1
-%patch1002 -p1
-%patch1003 -p1
-%patch1006 -p1
-%patch1007 -p1
-# broken on SMP machines!
-#%patch1008 -p1
-%patch1009 -p1
-%patch1010 -p1
-%patch1102 -p1
-%patch1104 -p0
-%patch1105 -p1
-%patch1106 -p0
-%patch1111 -p1
-%patch1150 -p1
-%patch1152 -p1
-%patch1201 -p1
-%patch1203 -p1
-%patch1205 -p1
-%patch1207 -p1
-%patch1209 -p1
-%patch1250 -p1
-%patch1251 -p1
-%patch1252 -p1
-%patch1253 -p1
-%patch1254 -p0
-%patch1255 -p1
-%patch1301 -p1
-%patch1302 -p1
-%patch1303 -p1
-%patch1304 -p1
-%patch1305 -p1
-%patch1350 -p1
-%patch1354 -p1
-%patch1400 -p1
-%patch1401 -p1
-%patch1402 -p1
-%patch1403 -p1
-%patch1405 -p1
-%patch1407 -p1
-%patch1408 -p1
-%patch1410 -p1
-%patch1411 -p1
-%patch1413 -p1
-%patch1414 -p1
-%patch1415 -p0
-%patch1416 -p1
-%patch1418 -p1
-%patch1419 -p1
-%patch1420 -p1
-%patch1421 -p1
 
-%patch2000 -p0
-%patch2001 -p1
-%patch2002 -p1
-%patch2003 -p1
-%ifarch ppc
-%patch2004 -p1
-%endif
+%patch66 -p1
 
-%patch3000 -p1
-%patch3002 -p1
-%patch3003 -p1
-%patch3004 -p1
-cd drivers/char/drm
-%patch3008 -p1
-cd ../../..
-
-%ifarch sparc64
-%patch3010 -p1
-%endif
-
-%patch3011 -p1
-#???
-#%patch3012 -p1
-%patch3013 -p1
-
-# left for future updates
-#%patch3500 -p1
-%patch3600 -p1
-%{?with_grsec:%patch4000 -p1}
-%{!?with_grsec:%patch4001 -p1}
-
-mv -f drivers/scsi/sym53c8xx.c drivers/scsi/sym53c8xx_old.c
-
-# Tekram DC395/315 U/UW SCSI host driver
-echo Adding Tekram DC395/315 driver
-patch -p1 -s < dc395/dc395-integ24.diff
-install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
-%patch270 -p1
-
-%patch450 -p1
-
-# The following go last as they touch a lot of code
-# and/or are on bcond and/or are ifarch
-
-%ifarch %{ix86}
-%if %{with win4lin}
-echo Win4Lin patch ...
-%patch900 -p1
-%patch901 -p1
-%endif
-%endif
-
-# Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
-echo -e ',s/EXTRA_CFLAGS.*-g//g\n,w' | ed net/ipsec/Makefile
+%patch68 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
-echo -e ',s/EXTRAVERSION =.*/EXTRAVERSION =/g\n,w' | ed Makefile
+mv -f Makefile Makefile.orig
+sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
 %ifarch sparc64
-echo -e ',s/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g\n,w' | ed Makefile
+    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
 %endif
+    Makefile.orig >Makefile
 
 %build
-BuildKernel() {
+BuildConfig (){
 	%{?_debug:set -x}
 	# is this a special kernel we want to build?
 	BOOT=
@@ -882,7 +566,7 @@ BuildKernel() {
 	else
 		KernelVer=%{version}-%{release}$1
 	fi
-	echo "BUILDING THE NORMAL KERNEL $*..."
+	echo "Building config file for KERNEL $1..."
 :> arch/%{base_arch}/defconfig
 	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/%{base_arch}/defconfig
 %ifarch i386
@@ -897,136 +581,148 @@ BuildKernel() {
 %ifarch athlon
 	echo "CONFIG_MK7=y" >> arch/%{base_arch}/defconfig
 %endif
-	cat %{SOURCE1000} >> arch/%{base_arch}/defconfig
-	cat %{SOURCE1001} >> arch/%{base_arch}/defconfig
-
-%ifarch sparc64
-	echo -e ',s/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/g\n,w' | \
-		ed arch/%{base_arch}/defconfig
-	echo -e ',s/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/g\n,w' | \
-		ed arch/%{base_arch}/defconfig
-%endif
-
-	if [ "$BOOT" = "yes" ] ; then
-		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
-	else
-		:;
-%if %{with grsec}
-		echo -e ',s/CONFIG_CRYPTO_SHA256=m/CONFIG_CRYPTO_SHA256=y/g\n,w' | \
-			ed arch/%{base_arch}/defconfig
-		cat %{SOURCE1002} >> arch/%{base_arch}/defconfig
-%endif
-	fi
-%ifarch %{ix86}
-	cat %{SOURCE2000} >> arch/%{base_arch}/defconfig
-%endif
 
 %ifarch i386
-	echo -e ',s/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/g\n,w' | \
-		ed arch/%{base_arch}/defconfig
+	mv -f arch/%{base_arch}/defconfig arch/%{base_arch}/defconfig.orig
+	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
+		arch/%{base_arch}/defconfig.orig > arch/%{base_arch}/defconfig
 %endif
 
-	%{__make} mrproper
+	cat %{SOURCE80} >> arch/%{base_arch}/defconfig
+
+	ln -sf arch/%{base_arch}/defconfig .config
+
+	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
+	%{__make} include/linux/autoconf.h
+	if [ "$smp" = "yes" ]; then
+		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
+	else
+		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
+	fi
+}
+
+BuildKernel() {
+	%{?_debug:set -x}
+	echo "Building kernel $1 ..."	
+	%{__make} mrproper \
+		RCS_FIND_IGNORE='-name build-done -prune -o'
 	ln -sf arch/%{base_arch}/defconfig .config
 
 %ifarch sparc
-	sparc32 %{__make} oldconfig
-	sparc32 %{__make} dep clean
+	sparc32 %{__make} clean \
+		RCS_FIND_IGNORE='-name build-done -prune -o'
 %else
-	%{__make} oldconfig
-	%{__make} dep clean
+	%{__make} clean \
+		RCS_FIND_IGNORE='-name build-done -prune -o'
 %endif
-	%{__make} include/linux/version.h
+	%{__make} %{?debug:V=1} include/linux/version.h
 
-# making  table for soundmodem.
-	cd drivers/net/hamradio/soundmodem
-	%{__cc} -o gentbl -lm gentbl.c
-	./gentbl
-	cd ../../../..
+# make does vmlinux, modules and bzImage at once
+%ifarch sparc
+	sparc32 %{__make} %{?debug:V=1}
+%else
+	%{__make} %{?debug:V=1}
+%endif
+}
 
+PreInstallKernel (){
+	BOOT=
+	smp=
+	[ "$1" = "BOOT" -o "$2" = "BOOT" ] && BOOT=yes
+	[ "$1" = "smp" -o "$2" = "smp" ] && smp=yes
 %ifarch %{ix86}
-	%{__make} bzImage
-%endif
-%ifarch sparc
-	sparc32 %{__make} boot
+	if [ "$smp" = "yes" ]; then
+		Config="ia32-smp"
+	else
+		Config="ia32"
+	fi
 %else
-%ifnarch %{ix86}
-	%{__make}
+	if [ "$smp" = "yes" ]; then
+		Config="%{_target_cpu}-smp"
+	else
+		Config="%{_target_cpu}"
+	fi
 %endif
-%endif
-%ifarch sparc
-	sparc32 %{__make} modules
-%else
-	%{__make} modules
-%endif
+	if [ "$BOOT" = "yes" ]; then
+		KernelVer=%{version}-%{release}BOOT
+	else
+		KernelVer=%{version}-%{release}$1
+	fi
 
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
 %ifarch %{ix86}
 	cp arch/i386/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
+%ifarch amd64
+	cp arch/x86_64/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%endif
+
 %ifarch alpha sparc sparc64
 	gzip -cfv vmlinux > vmlinuz
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%ifarch sparc
+	elftoaout arch/sparc/boot/image -o vmlinux.aout
+	install vmlinux.aout $KERNEL_INSTALL_DIR/boot/vmlinux.aout-$KernelVer
 %endif
+%ifarch sparc64
+	elftoaout vmlinux -o vmlinux.aout
+	install vmlinux.aout $KERNEL_INSTALL_DIR/boot/vmlinux.aout-$KernelVer
+%endif
+%endif
+
 %ifarch ppc
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
-%ifarch sparc
-	sparc32 %{__make} modules_install \
-	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
+     %{__make} modules_install \
+	%{?debug:V=1} \
+     	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 	KERNELRELEASE=$KernelVer
-	echo KERNEL RELEASE $KernelVer
-%else
-	%{__make} modules_install \
-	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
-	KERNELRELEASE=$KernelVer
-	echo KERNEL RELEASE $KernelVer
-%endif
+
 	echo "CHECKING DEPENDENCIES FOR KERNEL MODULES"
 	/sbin/depmod --basedir $KERNEL_INSTALL_DIR -ae -F $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer -r $KernelVer || echo
+
+	echo "KERNEL RELEASE $KernelVer DONE"
+
 }
 
 KERNEL_BUILD_DIR=`pwd`
-KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
-rm -rf $KERNEL_INSTALL_DIR
-install -d $KERNEL_INSTALL_DIR
-
-# make drivers/scsi/ missing files
-#	(cd drivers/scsi; make -f M)
 
 # UP KERNEL
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
+rm -rf $KERNEL_INSTALL_DIR
+BuildConfig
 %{?with_up:BuildKernel}
+%{?with_up:PreInstallKernel}
 
 # SMP KERNEL
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
+rm -rf $KERNEL_INSTALL_DIR
+BuildConfig smp
 %{?with_smp:BuildKernel smp}
-
-%if ! %{with up} && ! %{with smp}
-# We need include/asm created somewhere
-make symlinks
-%endif
+%{?with_smp:PreInstallKernel smp}
 
 # BOOT kernel
-%ifnarch i586 i686 athlon
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed%{_libdir}/bootdisk"
-rm -rf $KERNEL_INSTALL_DIR
-%{?with_boot:BuildKernel BOOT}
-%endif
+#%%ifnarch i586 i686 athlon
+#%KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
+#%rm -rf $KERNEL_INSTALL_DIR
+#%%{?with_boot:BuildKernel BOOT}
+#%%{?with_boot:PreInstallKernel boot}
+#%%endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
 umask 022
 
-install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{version}}
+install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 KERNEL_BUILD_DIR=`pwd`
 
-KERNEL_BUILD_INSTALL=no
-%{?with_up:KERNEL_BUILD_INSTALL=yes}
-%{?with_smp:KERNEL_BUILD_INSTALL=yes}
-[ "$KERNEL_BUILD_INSTALL" = "yes" ] && cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
+%if %{with up} || %{with smp}
+cp -a $KERNEL_BUILD_DIR/build-done/kernel-*/* $RPM_BUILD_ROOT
+%endif
 
 for i in "" smp ; do
 	if [ -e  $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i ] ; then
@@ -1035,55 +731,17 @@ for i in "" smp ; do
 			$RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
 	fi
 done
-ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux-2.4
 
-%if %{with source}
-cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}
-%else
-cp -a {include,scripts,Makefile,Rules.make,Documentation} $RPM_BUILD_ROOT/usr/src/linux-%{version}
-%endif
+ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 
-%ifarch sparc sparc64
-sh %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}
-cp -a %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
-%endif
+find . ! -name "build-done" -maxdepth 1 -exec cp -a "{}" "$RPM_BUILD_ROOT/usr/src/linux-%{version}/" ";"
 
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
-# remove foreign architecture files
-cd include
-mkdir _asm_keep
-mv asm-generic _asm_keep
-%ifarch sparc sparc64
-	mv asm-sparc* _asm_keep
-%else
-	mv `resolvesymlink asm 2> /dev/null || readlink asm 2> /dev/null` _asm_keep
-%endif
-rm -rf asm-*
-mv _asm_keep/* .
-rmdir _asm_keep
-cd ..
-
-%if %{with source}
-MYARCH=%{_arch}
-%ifarch %{ix86}
-MYARCH=i386
-%endif
-%ifarch sparc sparc64
-MYARCH="sparc sparc64"
-%endif
-cd arch
-mv $MYARCH ..
-cd ..
-rm -rf arch/*
-mv $MYARCH arch
-%endif
-
-%if %{with source}
-%{__make} mrproper
-
-find  -name "*~" -print | xargs rm -f
-find  -name "*.orig" -print | xargs rm -f
+%{__make} mrproper \
+	RCS_FIND_IGNORE='-name build-done -prune -o'
+find -name "*~" -exec rm -f "{}" ";"
+find -name "*.orig" -exec rm -f "{}" ";"
 
 %ifarch %{ix86}
 cat $RPM_SOURCE_DIR/kernel-ia32.config > .config
@@ -1103,28 +761,8 @@ echo "CONFIG_M686=y" >> .config
 %ifarch athlon
 echo "CONFIG_MK7=y" >> .config
 %endif
-cat %{SOURCE1000} >> .config
-cat %{SOURCE1001} >> .config
-%{?with_grsec:cat %{SOURCE1002} >> .config}
+cat %{SOURCE80} >> .config
 
-%ifarch sparc64
-	echo -e ',s/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/g\n,w' | \
-		ed .config
-	echo -e ',s/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/g\n,w' | \
-		ed .config
-%endif
-
-%ifarch %{ix86}
-cat %{SOURCE2000} >> .config
-%endif
-
-%ifarch sparc
-sparc32 %{__make} oldconfig
-%else
-%{__make} oldconfig
-%endif
-
-mv include/linux/autoconf.h include/linux/autoconf-up.h
 cp .config config-up
 
 %ifarch %{ix86}
@@ -1145,68 +783,37 @@ echo "CONFIG_M686=y" >> .config
 %ifarch athlon
 echo "CONFIG_MK7=y" >> .config
 %endif
+cat %{SOURCE80} >> .config
 
-cat %{SOURCE1000} >> .config
-cat %{SOURCE1001} >> .config
-%{?with_grsec:cat %{SOURCE1002} >> .config}
+cp .config config-smp
 
-%ifarch sparc64
-	echo -e ',s/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/g\n,w' | \
-		ed .config
-	echo -e ',s/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/g\n,w' | \
-		ed .config
+if [ -e $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h ]; then
+install $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h \
+$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
+fi
+
+if [ -e $KERNEL_BUILD_DIR/build-done/kernel-SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h ]; then
+install $KERNEL_BUILD_DIR/build-done/kernel-SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h \
+$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
+fi
+
+%if %{with up} || %{with smp}
+# UP or SMP
+install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{version}/include/linux/* \
+$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 %endif
 
 %ifarch %{ix86}
-cat %{SOURCE2000} >> .config
+ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
 %endif
 
-%ifarch sparc
-sparc32 %{__make} oldconfig
-%else
-%{__make} oldconfig
-%endif
-mv include/linux/autoconf.h include/linux/autoconf-smp.h
-cp .config config-smp
-%endif
+%{__make} mrproper
 
-install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
-
-%if %{with source}
-# this generates modversions info which we want to include and we may as
-# well include the depends stuff as well
-%{__make} symlinks
 %{__make} include/linux/version.h
-#%{__make} "`pwd`/include/linux/modversions.h"
-%endif
-rm -f include/linux/modversions.h
-echo "#include <linux/modsetver.h>" > include/linux/modversions.h
-
-
-# this generates modversions info which we want to include and we may as
-# well include the depends stuff as well, after we fix the paths
-
-%if %{with source}
-%{__make} depend
-find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" \
-	-exec /bin/sh -c "echo -e \",s|$RPM_BUILD_ROOT||g\n,w\" | ed {}" \;
-
-%{__make} clean
-rm -f scripts/mkdep
-rm -f drivers/net/hamradio/soundmodem/gentbl
-%endif
-
-# BOOT
-%if %{with boot}
-%ifnarch i586 i686 athlon
-install -d $RPM_BUILD_ROOT%{_libdir}/bootdisk
-cp -rdp $KERNEL_BUILD_DIR-installed%{_libdir}/bootdisk/* $RPM_BUILD_ROOT%{_libdir}/bootdisk
-%endif
-%endif
+install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
 
 %clean
 rm -rf $RPM_BUILD_ROOT
-rm -rf $RPM_BUILD_DIR/linux-%{version}-installed
 
 %post
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
@@ -1219,15 +826,11 @@ if [ ! -L /lib/modules/%{version} ] ; then
 fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release} /lib/modules/%{version}
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+%depmod %{version}-%{release}
 
 /sbin/geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}.gz /boot/initrd
-
-if [ -f %{_prefix}/src/linux-%{version}/config-up ] ; then
-	ln -s %{_prefix}/src/linux-%{version}/config-up %{_prefix}/src/linux-%{version}/.config
-fi
 
 if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
@@ -1244,15 +847,11 @@ if [ ! -L /lib/modules/%{version} ] ; then
 fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
+%depmod %{version}-%{release}smp
 
 /sbin/geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
-
-if [ -f %{_prefix}/src/linux-%{version}/config-smp ] ; then
-	ln -s %{_prefix}/src/linux-%{version}/config-smp %{_prefix}/src/linux-%{version}/.config
-fi
 
 if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
@@ -1272,7 +871,7 @@ ln -snf vmlinuz-%{version}-%{release}BOOT %{_libdir}/bootdisk/boot/vmlinuz-%{ver
 
 %postun
 if [ -L /lib/modules/%{version} ]; then
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}" ]; then
+	if [ "`ls -l /lib/modules/%{version} | awk '{ print $10 }'`" = "%{version}-%{release}" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f /lib/modules/%{version}
 		fi
@@ -1281,20 +880,32 @@ fi
 rm -f /boot/initrd-%{version}-%{release}.gz
 
 %post pcmcia
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+%depmod %{version}-%{release}
 
 %postun pcmcia
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release} > /dev/null 2>&1
+%depmod %{version}-%{release}
 
 %post drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+%depmod %{version}-%{release}
 
 %postun drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release} > /dev/null 2>&1
+%depmod %{version}-%{release}
+
+%post sound-oss
+%depmod %{version}-%{release}
+
+%postun sound-oss
+%depmod %{version}-%{release}
+
+%post sound-alsa
+%depmod %{version}-%{release}
+
+%postun sound-alsa
+%depmod %{version}-%{release}
 
 %postun smp
 if [ -L /lib/modules/%{version} ]; then
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp" ]; then
+	if [ "`ls -l /lib/modules/%{version} | awk '{ print $10 }'`" = "%{version}-%{release}smp" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f /lib/modules/%{version}
 		fi
@@ -1303,35 +914,47 @@ fi
 rm -f /boot/initrd-%{version}-%{release}smp.gz
 
 %post smp-pcmcia
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
+%depmod %{version}-%{release}smp
 
 %postun smp-pcmcia
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp > /dev/null 2>&1
+%depmod %{version}-%{release}smp
 
 %post smp-drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
+%depmod %{version}-%{release}smp
 
 %postun smp-drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp > /dev/null 2>&1
+%depmod %{version}-%{release}smp
+
+%post smp-sound-oss
+%depmod %{version}-%{release}smp
+
+%postun smp-sound-oss
+%depmod %{version}-%{release}smp
+
+%post smp-sound-alsa
+%depmod %{version}-%{release}smp
+
+%postun smp-sound-alsa
+%depmod %{version}-%{release}smp
 
 %postun BOOT
 if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then
-	if [ "`ls -l %{_libdir}/bootdisk/lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}BOOT" ]; then
+	if [ "`ls -l %{_libdir}/bootdisk/lib/modules/%{version} | awk '{ print $10 }'`" = "%{version}-%{release}BOOT" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f %{_libdir}/bootdisk/lib/modules/%{version}
 		fi
 	fi
 fi
 
-%post headers-2.4
-rm -f /usr/src/linux-2.4
-ln -snf linux-%{version} /usr/src/linux-2.4
+%post headers
+rm -f /usr/src/linux
+ln -snf linux-%{version} /usr/src/linux
 
-%postun headers-2.4
-if [ -L /usr/src/linux-2.4 ]; then
-	if [ "`ls -l /usr/src/linux-2.4 | awk '{ print $11 }'`" = "linux-%{version}" ]; then
+%postun headers
+if [ -L %{_prefix}/src/linux ]; then
+	if [ "`ls -l %{_prefix}/src/linux | awk '{ print $10 }'`" = "linux-%{version}" ]; then
 		if [ "$1" = "0" ]; then
-			rm -f /usr/src/linux-2.4
+			rm -f %{_prefix}/src/linux
 		fi
 	fi
 fi
@@ -1339,66 +962,70 @@ fi
 %if %{with up}
 %files
 %defattr(644,root,root,755)
-%ifarch alpha sparc sparc64 ppc
+%ifarch alpha ppc
 /boot/vmlinux-%{version}-%{release}
+%endif
+%ifarch sparc sparc64
+/boot/vmlinux-%{version}-%{release}
+/boot/vmlinux.aout-%{version}-%{release}
 %endif
 /boot/vmlinuz-%{version}-%{release}
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
 /lib/modules/%{version}-%{release}/kernel
-%ifnarch sparc sparc64
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/ide/legacy/*-cs.o*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/mtd/maps/pcmcia*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/pcmcia
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/scsi/pcmcia
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/pcmcia
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/*_cs.o*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.o*
-%endif
-%ifnarch sparc sparc64
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o*
-%ifnarch alpha
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
-%ifnarch ppc
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o*
-%endif
-%endif
-%endif
 %ifnarch sparc
+#pcmcia stuff
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko
+%endif 
+%ifnarch sparc
+#drm stuff
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 %endif
+%ifnarch sparc
+#oss sound stuff
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/oss
+%endif
+#alsa sound stuff
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/core
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/drivers
+%ifnarch sparc
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/i2c
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/isa
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/pci
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/synth
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/usb
+%endif 
+%ifarch sparc
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/sparc
+%endif 
+
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
 
-%ifnarch sparc sparc64
+%ifnarch sparc
 %files pcmcia
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
-/lib/modules/%{version}-%{release}/kernel/drivers/ide/legacy/*-cs.o*
-/lib/modules/%{version}-%{release}/kernel/drivers/mtd/maps/pcmcia*
-/lib/modules/%{version}-%{release}/kernel/drivers/net/pcmcia
-/lib/modules/%{version}-%{release}/kernel/drivers/scsi/pcmcia
-/lib/modules/%{version}-%{release}/kernel/drivers/char/pcmcia
-/lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o*
-/lib/modules/%{version}-%{release}/kernel/drivers/parport/*_cs.o*
-/lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.o*
-/lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o*
-%ifnarch alpha
-/lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
-%ifnarch ppc
-/lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o*
-%endif
-%endif
-%endif
+%dir /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
+%attr(644,root,root) /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia/*
+/lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
+/lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko
+/lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko
+/lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko
+/lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko
+%endif 			
 
 %ifnarch sparc
 %files drm
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/drivers/char/drm
+%dir /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
+%attr(644, root,root) /lib/modules/%{version}-%{release}/kernel/drivers/char/drm/*
+%endif 			
 %endif			# %%{with up}
-%endif
 
 %if %{with smp}
 %files smp
@@ -1410,57 +1037,59 @@ fi
 /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
 /lib/modules/%{version}-%{release}smp/kernel
-%ifnarch sparc sparc64
+%ifnarch sparc
+#pcmcia stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/legacy/*-cs.o*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/mtd/maps/pcmcia*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/pcmcia
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/scsi/pcmcia
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/pcmcia
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.o*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/*_cs.o*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.o*
-%endif
-%ifnarch ppc sparc sparc64
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o*
-%ifnarch alpha
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o*
-%endif
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko
 %endif
 %ifnarch sparc
+#drm stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 %endif
+%ifarch sparc
+#oss sound stuff
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/oss
+%endif
+#alsa sound stuff
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/core
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/drivers
+%ifnarch sparc
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/i2c
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/isa
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/pci
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/synth
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/usb
+%endif 
+%ifarch sparc
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/sparc
+%endif 
+
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
 
-%ifnarch sparc sparc64
+%ifnarch sparc
 %files -n kernel-smp-pcmcia
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/ide/legacy/*-cs.o*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/mtd/maps/pcmcia*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/net/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/scsi/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/char/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.o*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/parport/*_cs.o*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/dtl1_cs.o*
-%ifnarch ppc
-/lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o*
-%ifnarch alpha
-/lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o*
-%endif
-%endif
-%endif
+%dir /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
+%attr(644,root,root) /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia/*
+/lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
+/lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko
+/lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko
+/lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko
+/lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko
+%endif 			
 
 %ifnarch sparc
 %files -n kernel-smp-drm
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
+%dir /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
+%attr(644,root,root) /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm/*
+%endif			
 %endif			# %%{with smp}
-%endif
 
 %if %{with boot}
 %ifnarch i586 i686 athlon 		# narch
@@ -1478,42 +1107,87 @@ fi
 %endif				# narch
 %endif				# %%{with boot}
 
-%files headers-2.4
+%files headers
 %defattr(644,root,root,755)
 %dir %{_prefix}/src/linux-%{version}
 %{_prefix}/src/linux-%{version}/include
+%{_prefix}/src/linux-%{version}/config-smp
+%{_prefix}/src/linux-%{version}/config-up
 
-%if %{with doc}
 %files doc
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Documentation
-%endif
+#%%{_prefix}/src/linux-%{version}/netfilter-patch-o-matic
 
 %if %{with source}
-%files source-2.4
+%files source
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/arch
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
 %{_prefix}/src/linux-%{version}/init
-%{?with_grsec:%{_prefix}/src/linux-%{version}/grsecurity}
 %{_prefix}/src/linux-%{version}/ipc
-#%{_prefix}/src/linux-%{version}/kdb
 %{_prefix}/src/linux-%{version}/kernel
 %{_prefix}/src/linux-%{version}/lib
 %{_prefix}/src/linux-%{version}/mm
 %{_prefix}/src/linux-%{version}/net
 %{_prefix}/src/linux-%{version}/scripts
-%{_prefix}/src/linux-%{version}/.config
-%{_prefix}/src/linux-%{version}/.depend
-%{_prefix}/src/linux-%{version}/.hdepend
+%{_prefix}/src/linux-%{version}/sound
+%{_prefix}/src/linux-%{version}/security
+%{_prefix}/src/linux-%{version}/usr
 %{_prefix}/src/linux-%{version}/COPYING
 %{_prefix}/src/linux-%{version}/CREDITS
 %{_prefix}/src/linux-%{version}/MAINTAINERS
 %{_prefix}/src/linux-%{version}/Makefile
 %{_prefix}/src/linux-%{version}/README
 %{_prefix}/src/linux-%{version}/REPORTING-BUGS
-%{_prefix}/src/linux-%{version}/Rules.make
-%{_prefix}/src/linux-%{version}/config*
 %endif
+
+%if %{with up}
+%ifnarch sparc
+%files sound-oss
+%defattr(644,root,root,755)
+%dir /lib/modules/%{version}-%{release}/kernel/sound/oss
+%attr(644,root,root) /lib/modules/%{version}-%{release}/kernel/sound/oss/*
+%endif  		
+
+%files sound-alsa
+%defattr(644,root,root,755)
+/lib/modules/%{version}-%{release}/kernel/sound/core
+/lib/modules/%{version}-%{release}/kernel/sound/drivers
+%ifnarch sparc
+/lib/modules/%{version}-%{release}/kernel/sound/i2c
+/lib/modules/%{version}-%{release}/kernel/sound/isa
+/lib/modules/%{version}-%{release}/kernel/sound/pci
+/lib/modules/%{version}-%{release}/kernel/sound/synth
+/lib/modules/%{version}-%{release}/kernel/sound/usb
+%endif			
+%ifarch sparc
+/lib/modules/%{version}-%{release}/kernel/sound/sparc
+%endif			
+%endif
+
+%if %{with smp}
+%ifnarch sparc
+%files smp-sound-oss
+%defattr(644,root,root,755)
+%dir /lib/modules/%{version}-%{release}smp/kernel/sound/oss
+%attr(644,root,root) /lib/modules/%{version}-%{release}smp/kernel/sound/oss/*
+%endif
+
+%files smp-sound-alsa
+%defattr(644,root,root,755)
+/lib/modules/%{version}-%{release}smp/kernel/sound/core
+/lib/modules/%{version}-%{release}smp/kernel/sound/drivers
+%ifnarch sparc
+/lib/modules/%{version}-%{release}smp/kernel/sound/i2c
+/lib/modules/%{version}-%{release}smp/kernel/sound/isa
+/lib/modules/%{version}-%{release}smp/kernel/sound/pci
+/lib/modules/%{version}-%{release}smp/kernel/sound/synth
+/lib/modules/%{version}-%{release}smp/kernel/sound/usb
+%endif 
+%ifarch sparc
+/lib/modules/%{version}-%{release}smp/kernel/sound/sparc
+%endif
+%endif 
