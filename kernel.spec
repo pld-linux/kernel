@@ -152,6 +152,7 @@ Patch905:	linux-ipvs+ext3.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
 Patch907:	jfs_defconfig.fix
+Patch908:	kernel-kallsyms.fix
 
 # Linus's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.13-%{pre_version}.gz
@@ -506,6 +507,8 @@ patch -p1 -s <jfs-2.4.7-1.0.9-patch
 echo Replaced Tulip driver
 cp -f tulip-%{tulip_version}/src/*.{c,h} drivers/net/tulip
 cp -f tulip-%{tulip_version}/src/ChangeLog drivers/net/tulip
+
+%patch908 -p0
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
