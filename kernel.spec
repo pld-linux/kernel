@@ -261,6 +261,7 @@ Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
+Provides:       %{name}-headers(bridging) = %{version}
 Provides:	i2c-devel = 2.6.1
 Autoreqprov:	no
 
