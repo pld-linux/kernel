@@ -26,11 +26,11 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1
-%define		_cset		0
+%define		_rel		1.1
+%define		_cset		20040219_0706
 
 ## netfilter snap 
-%define		_netfilter_snap		20040216
+%define		_netfilter_snap		20040219
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/amd64/x86_64/')
 
@@ -119,8 +119,6 @@ Patch48:	2.6.1-rc2-ini9100u-lkml.patch
 Patch50:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 
 Patch52:	laptop-mode-2.6.1-7.patch
-
-Patch54:	2.6.1-hash_table_size-lkml.patch
 
 Patch56:	kbuild-out-of-tree.diff
 
@@ -507,8 +505,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch50 -p1
 
 %patch52 -p1
-
-%patch54 -p1
 
 %patch56 -p1
 
