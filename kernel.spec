@@ -1,6 +1,4 @@
 #
-# SEE PLD-doc/maintainers file before you edit this file!!
-#
 # If you define the following as 1, only kernel, -headers and -source
 # packages will be built
 #
@@ -12,9 +10,10 @@
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
+%bcond_without	pramfs		# build pramfs support (EXPERIMENTAL)
+%bcond_without	gfs		# build GFS support
 %bcond_without	grsec		# build without grsec
 %bcond_without	execshield	# build without exec-shield
-%bcond_with	pramfs		# build pramfs support (EXPERIMENTAL)
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	bootsplash	# build with bootsplash
@@ -48,7 +47,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.11
+%define		_rel		0.0
 %define		_cset		20040626_2310
 %define		_apply_cset	1
 
@@ -584,24 +583,24 @@ zcat %{SOURCE3} | patch -p1 -s
 #patch1 -p1
 #patch2 -p1
 
-%patch4 -p1
+#patch4 -p1
 
-%patch6 -p1
+#patch6 -p1
 
-%patch8 -p1
+#patch8 -p1
 
-%patch10 -p1
-%patch11 -p1
+#patch10 -p1
+#patch11 -p1
 
-%patch14 -p1
+#patch14 -p1
 
-%patch16 -p1
+#patch16 -p1
 
-%patch18 -p1
+#patch18 -p1
 
-%patch20 -p1
+#patch20 -p1
 
-%patch22 -p1
+#patch22 -p1
 
 #patch24 -p1
 
@@ -611,66 +610,66 @@ echo "Not fixed !!"
 %patch26 -p1
 %endif
 
-%patch28 -p1
+#patch28 -p1
 
-%patch30 -p1
-%patch31 -p1
-%patch32 -p1
-%patch33 -p1
+#patch30 -p1
+#patch31 -p1
+#patch32 -p1
+#patch33 -p1
 
 ##%patch34 -p1
 
-%patch36 -p1
+#patch36 -p1
 
-%patch38 -p1
+#patch38 -p1
 
 #%patch40 -p1
 
-%patch42 -p1
+#patch42 -p1
 
-%patch44 -p1
+#patch44 -p1
 
 # netfilter
-%patch46 -p1
+#patch46 -p1
 #patch47 -p1
 
-%patch48 -p1
+#patch48 -p1
 
-%patch50 -p1
+#patch50 -p1
 #patch51 -p1
 
-%patch54 -p1
+#patch54 -p1
 
-%patch56 -p1
+#patch56 -p1
 
-%patch58 -p1
-%patch59 -p1
+#patch58 -p1
+#patch59 -p1
 
-%patch60 -p1
-%patch61 -p1
+#patch60 -p1
+#patch61 -p1
 
-%patch64 -p1
+#patch64 -p1
 
-%patch66 -p1
+#patch66 -p1
 
-%patch68 -p1
+#patch68 -p1
 
-%patch70 -p1
+#patch70 -p1
 
 %ifarch i386
-%patch72 -p1
+#patch72 -p1
 %endif
 
-%patch74 -p1
+#patch74 -p1
 
 #pramfs
 %if %{with parmfs}
 %patch76 -p1
 %endif
 
-%patch78 -p1
+#patch78 -p1
 
-%patch80 -p1
+#patch80 -p1
 
 # Philips USB drivers.
 #patch82 -p1
@@ -685,33 +684,33 @@ echo "Not fixed !!"
 #cp drivers/usb/media/libpwcx.a_ppc drivers/usb/media/libpwcx.a_
 #endif
 
-%patch84 -p1
+#patch84 -p1
 
-%patch88 -p1
-%patch90 -p1
+#patch88 -p1
+#patch90 -p1
 
 #grsec
-%ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
-%if %{with grsec}
-%patch94 -p1
-%endif
-%endif
+#ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
+#if %{with grsec}
+#patch94 -p1
+#endif
+#endif
 
 # NX is NX and it has noting to do with exec-shield beside
 # exec-shield using NX feature
-patch -p1 -s < %{SOURCE4}
-%if %{with execshield}
-install %{SOURCE5} exec-shield.patch
-%if %{with grsec}
-patch -s exec-shield.patch < %{SOURCE6}
-%endif
-patch -p1 -s < exec-shield.patch
-%endif
+#patch -p1 -s < %{SOURCE4}
+#if %{with execshield}
+#install %{SOURCE5} exec-shield.patch
+#if %{with grsec}
+#patch -s exec-shield.patch < %{SOURCE6}
+#endif
+#patch -p1 -s < exec-shield.patch
+#endif
 
-%patch96 -p1
+#patch96 -p1
 #patch97 -p1
 
-%patch100 -p1
+#patch100 -p1
 
 # routers
 %patch102 -p1
@@ -725,10 +724,12 @@ patch -p1 -s < exec-shield.patch
 
 #patch112 -p1
 
+%if %{with gfs}
 %patch200 -p1
 %patch201 -p1
 %patch202 -p1
 %patch203 -p1
+%endif
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
