@@ -678,14 +678,14 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH106}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH108}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH109}
 
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH200}
-
 #DAC960 drivers
 tar xfz %{SOURCE8}
 mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
 mv DAC960.[ch] drivers/block
-# 2.2.20ow
+
+# 2.2.20ow & hap-linux
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH200}
 
 # symbios drivers
 tar zxf %{SOURCE6}
