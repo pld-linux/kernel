@@ -9,7 +9,7 @@
 # _without_up		- don't build UP kernel
 # _without_wrr		- don't build WRR support
 #
-%define		krelease		6.1
+%define		krelease		7
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
