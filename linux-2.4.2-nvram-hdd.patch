@@ -1,0 +1,41 @@
+--- drivers/char/nvram.c~	Wed Feb 14 02:40:29 2001
++++ drivers/char/nvram.c	Wed Feb 28 23:16:33 2001
+@@ -25,12 +25,18 @@
+  * the kernel and is not a module. Since the functions are used by some Atari
+  * drivers, this is the case on the Atari.
+  *
++ * 02/2001: I've coded some user space hacks for PC that use the NVRAM driver
++ * to set/show hard disk type(s), floppy disk type(s) and display type. These
++ * can be found in bios-cmos-X.Y.tar.gz (X.Y = version #).	Paul G.
++ *
+  *
+  * 	1.1	Cesar Barros: SMP locking fixes
+  * 		added changelog
++ *	1.2	Paul Gortmaker: remove display of type 48/49 hard disk data
++		from /proc as it is not standardized & depends on BIOS mfr.
+  */
+ 
+-#define NVRAM_VERSION		"1.1"
++#define NVRAM_VERSION		"1.2"
+ 
+ #include <linux/module.h>
+ #include <linux/config.h>
+@@ -532,17 +538,6 @@
+ 		PRINT_PROC( "%02x\n", type == 0x0f ? nvram[12] : type );
+ 	else
+ 		PRINT_PROC( "none\n" );
+-
+-	PRINT_PROC( "HD type 48 data: %d/%d/%d C/H/S, precomp %d, lz %d\n",
+-				nvram[18] | (nvram[19] << 8),
+-				nvram[20], nvram[25],
+-				nvram[21] | (nvram[22] << 8),
+-				nvram[23] | (nvram[24] << 8) );
+-	PRINT_PROC( "HD type 49 data: %d/%d/%d C/H/S, precomp %d, lz %d\n",
+-				nvram[39] | (nvram[40] << 8),
+-				nvram[41], nvram[46],
+-				nvram[42] | (nvram[43] << 8),
+-				nvram[44] | (nvram[45] << 8) );
+ 
+ 	PRINT_PROC( "DOS base memory: %d kB\n", nvram[7] | (nvram[8] << 8) );
+ 	PRINT_PROC( "Extended memory: %d kB (configured), %d kB (tested)\n",
+
