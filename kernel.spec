@@ -4,8 +4,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.2.14
-Release:	4
+Version:	2.2.15
+Release:	1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -40,9 +40,9 @@ Patch2:		linux-2.2.14-atm-0.59-fore200e-0.1f.patch.gz
 Patch3:		linux-tasks.patch
 Patch4:		raid-2.2.14-B1.gz
 Patch5:		kernel-cpqarray-raid090.patch
-Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide.2.2.14.20000124.patch.gz
+Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide.2.2.15.20000504.patch.bz2
 Patch7:		%{name}-pldfblogo.patch
-Patch8:		linux-%{version}-freeswan-1.3.patch
+Patch8:		linux-2.2.14-freeswan-1.3.patch
 Patch9:		wanrouter-v2214.patch
 Patch10:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.15-pre9-patch
 ExclusiveOS:	Linux
