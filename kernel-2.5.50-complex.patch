@@ -1,0 +1,166 @@
+diff -urN linux-2.5.50-orig/drivers/char/cyclades.c linux-2.5.50/drivers/char/cyclades.c
+--- linux-2.5.50-orig/drivers/char/cyclades.c	Sat Dec  7 11:08:55 2002
++++ linux-2.5.50/drivers/char/cyclades.c	Sat Dec  7 11:21:20 2002
+@@ -884,7 +884,6 @@
+ 
+ static int cyz_timeron = 0;
+ static struct timer_list cyz_timerlist = TIMER_INITIALIZER(cyz_poll, 0, 0);
+-};
+ #else /* CONFIG_CYZ_INTR */
+ static void cyz_rx_restart(unsigned long);
+ static struct timer_list cyz_rx_full_timer[NR_PORTS];
+diff -urN linux-2.5.50-orig/drivers/char/epca.c linux-2.5.50/drivers/char/epca.c
+--- linux-2.5.50-orig/drivers/char/epca.c	Sat Dec  7 11:08:56 2002
++++ linux-2.5.50/drivers/char/epca.c	Sat Dec  7 11:20:50 2002
+@@ -142,10 +142,6 @@
+ ----------------------------------------------------------------------- */
+ 	
+ 
+-#ifdef MODULE
+-int                init_module(void);
+-void               cleanup_module(void);
+-#endif /* MODULE */
+ 
+ static inline void memwinon(struct board_info *b, unsigned int win);
+ static inline void memwinoff(struct board_info *b, unsigned int win);
+@@ -1535,7 +1531,7 @@
+ 
+ #ifdef MODULE
+ /* -------------------- Begin init_module ---------------------- */
+-int __init init_module()
++int __init init_module(void)
+ { /* Begin init_module */
+ 
+ 	unsigned long	flags;
+@@ -1559,7 +1555,7 @@
+ #ifdef MODULE
+ /* -------------------- Begin cleanup_module  ---------------------- */
+ 
+-void cleanup_module()
++void cleanup_module(void)
+ { /* Begin cleanup_module */
+ 
+ 	int               count, crd;
+diff -urN linux-2.5.50-orig/drivers/char/istallion.c linux-2.5.50/drivers/char/istallion.c
+--- linux-2.5.50-orig/drivers/char/istallion.c	Sat Dec  7 11:08:56 2002
++++ linux-2.5.50/drivers/char/istallion.c	Sat Dec  7 11:22:04 2002
+@@ -661,8 +661,6 @@
+  */
+ 
+ #ifdef MODULE
+-int		init_module(void);
+-void		cleanup_module(void);
+ static void	stli_argbrds(void);
+ static int	stli_parsebrd(stlconf_t *confp, char **argp);
+ 
+@@ -815,7 +813,7 @@
+  *	Loadable module initialization stuff.
+  */
+ 
+-int init_module()
++int init_module(void)
+ {
+ 	unsigned long	flags;
+ 
+@@ -833,7 +831,7 @@
+ 
+ /*****************************************************************************/
+ 
+-void cleanup_module()
++void cleanup_module(void)
+ {
+ 	stlibrd_t	*brdp;
+ 	stliport_t	*portp;
+diff -urN linux-2.5.50-orig/drivers/char/moxa.c linux-2.5.50/drivers/char/moxa.c
+--- linux-2.5.50-orig/drivers/char/moxa.c	Sat Dec  7 11:08:57 2002
++++ linux-2.5.50/drivers/char/moxa.c	Sat Dec  7 11:20:30 2002
+@@ -227,10 +227,6 @@
+ static struct semaphore moxaBuffSem;
+ 
+ int moxa_init(void);
+-#ifdef MODULE
+-int init_module(void);
+-void cleanup_module(void);
+-#endif
+ /*
+  * static functions:
+  */
+diff -urN linux-2.5.50-orig/drivers/char/mxser.c linux-2.5.50/drivers/char/mxser.c
+--- linux-2.5.50-orig/drivers/char/mxser.c	Sat Dec  7 11:08:56 2002
++++ linux-2.5.50/drivers/char/mxser.c	Sat Dec  7 11:20:15 2002
+@@ -328,10 +328,6 @@
+  * static functions:
+  */
+ 
+-#ifdef MODULE
+-int init_module(void);
+-void cleanup_module(void);
+-#endif
+ 
+ static void mxser_getcfg(int board, struct mxser_hwconf *hwconf);
+ int mxser_init(void);
+diff -urN linux-2.5.50-orig/drivers/char/stallion.c linux-2.5.50/drivers/char/stallion.c
+--- linux-2.5.50-orig/drivers/char/stallion.c	Sat Dec  7 11:08:56 2002
++++ linux-2.5.50/drivers/char/stallion.c	Sat Dec  7 11:21:45 2002
+@@ -487,8 +487,6 @@
+  */
+ 
+ #ifdef MODULE
+-int		init_module(void);
+-void		cleanup_module(void);
+ static void	stl_argbrds(void);
+ static int	stl_parsebrd(stlconf_t *confp, char **argp);
+ 
+@@ -759,7 +757,7 @@
+  *	Loadable module initialization stuff.
+  */
+ 
+-int init_module()
++int init_module(void)
+ {
+ 	unsigned long	flags;
+ 
+@@ -777,7 +775,7 @@
+ 
+ /*****************************************************************************/
+ 
+-void cleanup_module()
++void cleanup_module(void)
+ {
+ 	stlbrd_t	*brdp;
+ 	stlpanel_t	*panelp;
+diff -urN linux-2.5.50-orig/drivers/media/video/bttv-cards.c linux-2.5.50/drivers/media/video/bttv-cards.c
+--- linux-2.5.50-orig/drivers/media/video/bttv-cards.c	Sat Dec  7 11:08:45 2002
++++ linux-2.5.50/drivers/media/video/bttv-cards.c	Sat Dec  7 11:25:03 2002
+@@ -1739,7 +1739,7 @@
+ 		btv->tuner_type = 33;
+ 		if (autoload)
+ 			request_module("tda9887");
+-		bttv_call_i2c_clients(btv,AUDC_CONFIG_PINNACLE,&id);
++		bttv_call_i2c_clients(btv,10,&id); /* broken */
+ 	}
+ }
+ 
+diff -urN linux-2.5.50-orig/drivers/pci/quirks.c linux-2.5.50/drivers/pci/quirks.c
+--- linux-2.5.50-orig/drivers/pci/quirks.c	Sat Dec  7 11:09:26 2002
++++ linux-2.5.50/drivers/pci/quirks.c	Sat Dec  7 11:19:57 2002
+@@ -18,6 +18,7 @@
+ #include <linux/pci.h>
+ #include <linux/init.h>
+ #include <linux/delay.h>
++#include <asm/io_apic.h>
+ 
+ #undef DEBUG
+ 
+diff -urN linux-2.5.50-orig/sound/oss/mpu401.h linux-2.5.50/sound/oss/mpu401.h
+--- linux-2.5.50-orig/sound/oss/mpu401.h	Sat Dec  7 11:11:08 2002
++++ linux-2.5.50/sound/oss/mpu401.h	Sat Dec  7 11:26:16 2002
+@@ -7,7 +7,7 @@
+ 
+ /*	From mpu401.c */
+ int probe_mpu401(struct address_info *hw_config);
+-void attach_mpu401(struct address_info * hw_config, struct module *owner);
++int attach_mpu401(struct address_info * hw_config, struct module *owner);
+ void unload_mpu401(struct address_info *hw_info);
+ 
+ int intchk_mpu401(void *dev_id);
