@@ -1,15 +1,16 @@
 #
 # If you define the following as 1, only kernel, -headers and -source
 # packages will be built
-#
-# _without_smp		- don't build SMP kernel
-# _without_up		- don't build UP kernel
-# _without_boot		- don't build BOOT kernel
-# _without_source	- don't build source
-# _without_doc		- don't build documentation package
-# _without_grsec	- don't apply grsecurity patch
-# _without_kheaders	- build without support for glibc-kernel-headers
-#
+
+%bcond_without smp	# don't build SMP kernel
+%bcond_without up	# don't build UP kernel
+%bcond_without boot	# don't build BOOT kernel
+%bcond_without source	# don't build source
+%bcond_without doc	# don't build documentation package
+%bcond_without grsec	# don't apply grsecurity patch
+%bcond_without kheaders	# build without support for glibc-kernel-headers
+%bcond_with win4lin	# apply the Win4lin patches
+
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/amd64/x86_64/')
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
@@ -741,7 +742,7 @@ cd ../../..
 %patch3012 -p1
 
 # XXX: UPDATE (proc in 2.4.23 was converted to seq_file so bigger changes are needed)
-%{!?_without_grsec:%patch4000 -p1}
+%{?with_grsec:%patch4000 -p1}
 
 mv -f drivers/scsi/sym53c8xx.c drivers/scsi/sym53c8xx_old.c
 
@@ -755,9 +756,11 @@ install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 # and/or are on bcond and/or are ifarch
 
 %ifarch %{ix86}
-%{?_with_win4lin:echo Win4Lin patch ...}
-%{?_with_win4lin:%patch900 -p1}
-%{?_with_win4lin:%patch991 -p1}
+%if %{with win4lin}
+echo Win4Lin patch ...
+%patch900 -p1
+%patch991 -p1
+%endif
 %endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
@@ -824,7 +827,7 @@ BuildKernel() {
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
 	else
 		:;
-%if %{?_without_grsec:0}%{!?_without_grsec:1}
+%if %{with grsec}
 		echo -e ',s/CONFIG_CRYPTO_SHA256=m/CONFIG_CRYPTO_SHA256=y/g\n,w' | \
 			ed arch/%{base_arch}/defconfig
 		cat %{SOURCE1002} >> arch/%{base_arch}/defconfig
@@ -909,16 +912,16 @@ install -d $KERNEL_INSTALL_DIR
 #	(cd drivers/scsi; make -f M)
 
 # UP KERNEL
-%{!?_without_up:BuildKernel}
+%{?with_up:BuildKernel}
 
 # SMP KERNEL
-%{!?_without_smp:BuildKernel smp}
+%{?with_smp:BuildKernel smp}
 
 # BOOT kernel
 %ifnarch i586 i686 athlon
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed%{_libdir}/bootdisk"
 rm -rf $KERNEL_INSTALL_DIR
-%{!?_without_boot:BuildKernel BOOT}
+%{?with_boot:BuildKernel BOOT}
 %endif
 
 %install
@@ -930,8 +933,8 @@ install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{version}}
 KERNEL_BUILD_DIR=`pwd`
 
 KERNEL_BUILD_INSTALL=no
-%{!?_without_up:KERNEL_BUILD_INSTALL=yes}
-%{!?_without_smp:KERNEL_BUILD_INSTALL=yes}
+%{?with_up:KERNEL_BUILD_INSTALL=yes}
+%{?with_smp:KERNEL_BUILD_INSTALL=yes}
 [ "$KERNEL_BUILD_INSTALL" = "yes" ] && cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
 
 for i in "" smp ; do
@@ -951,7 +954,7 @@ ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 %endif
 
-%if %{?_without_source:0}%{!?_without_source:1}
+%if %{with source}
 cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}
 %else
 cp -a {include,scripts,Makefile,Rules.make,Documentation} $RPM_BUILD_ROOT/usr/src/linux-%{version}
@@ -964,7 +967,7 @@ cp -a %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
 
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
-%if %{?_without_source:0}%{!?_without_source:1}
+%if %{with source}
 %{__make} mrproper
 
 find  -name "*~" -print | xargs rm -f
@@ -990,7 +993,7 @@ echo "CONFIG_MK7=y" >> .config
 %endif
 cat %{SOURCE1000} >> .config
 cat %{SOURCE1001} >> .config
-%{!?_without_grsec:cat %{SOURCE1002} >> .config}
+%{?with_grsec:cat %{SOURCE1002} >> .config}
 
 %ifarch sparc64
 	echo -e ',s/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/g\n,w' | \
@@ -1033,7 +1036,7 @@ echo "CONFIG_MK7=y" >> .config
 
 cat %{SOURCE1000} >> .config
 cat %{SOURCE1001} >> .config
-%{!?_without_grsec:cat %{SOURCE1002} >> .config}
+%{?with_grsec:cat %{SOURCE1002} >> .config}
 
 %ifarch sparc64
 	echo -e ',s/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/g\n,w' | \
@@ -1057,7 +1060,7 @@ cp .config config-smp
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
-%if %{?_without_source:0}%{!?_without_source:1}
+%if %{with source}
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
 %{__make} symlinks
@@ -1071,7 +1074,7 @@ echo "#include <linux/modsetver.h>" > include/linux/modversions.h
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well, after we fix the paths
 
-%if %{?_without_source:0}%{!?_without_source:1}
+%if %{with source}
 %{__make} depend
 find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" \
 	-exec /bin/sh -c "echo -e \",s|$RPM_BUILD_ROOT||g\n,w\" | ed {}" \;
@@ -1082,7 +1085,7 @@ rm -f drivers/net/hamradio/soundmodem/gentbl
 %endif
 
 # BOOT
-%if %{?_without_boot:0}%{!?_without_boot:1}
+%if %{with boot}
 %ifnarch i586 i686 athlon
 install -d $RPM_BUILD_ROOT%{_libdir}/bootdisk
 cp -rdp $KERNEL_BUILD_DIR-installed%{_libdir}/bootdisk/* $RPM_BUILD_ROOT%{_libdir}/bootdisk
@@ -1221,7 +1224,7 @@ if [ -L /usr/src/linux ]; then
 	fi
 fi
 
-%if %{?_without_up:0}%{!?_without_up:1}
+%if %{with up}
 %files
 %defattr(644,root,root,755)
 %ifarch alpha sparc sparc64 ppc
@@ -1280,10 +1283,10 @@ fi
 %files drm
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
-%endif			# %%{_without_up}
+%endif			# %%{with up}
 %endif
 
-%if %{?_without_smp:0}%{!?_without_smp:1}
+%if %{with smp}
 %files smp
 %defattr(644,root,root,755)
 %ifarch alpha sparc sparc64 ppc
@@ -1342,10 +1345,10 @@ fi
 %files -n kernel-smp-drm
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
-%endif			# %%{_without_smp}
+%endif			# %%{with smp}
 %endif
 
-%if %{?_without_boot:0}%{!?_without_boot:1}
+%if %{with boot}
 %ifnarch i586 i686 athlon 		# narch
 %files BOOT
 %defattr(644,root,root,755)
@@ -1359,23 +1362,22 @@ fi
 %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/build
 %ghost %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.*
 %endif				# narch
-%endif				# %%{_without_boot}
+%endif				# %%{with boot}
 
 %files headers
 %defattr(644,root,root,755)
 %dir %{_prefix}/src/linux-%{version}
 %{_prefix}/src/linux-%{version}/include
-%{?_without_kheaders:%{_includedir}/asm}
-%{?_without_kheaders:%{_includedir}/linux}
+%{!?with_kheaders:%{_includedir}/asm}
+%{!?with_kheaders:%{_includedir}/linux}
 
-%if %{?_without_doc:0}%{!?_without_doc:1}
+%if %{with doc}
 %files doc
-
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Documentation
 %endif
 
-%if %{?_without_source:0}%{!?_without_source:1}
+%if %{with source}
 %files source
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/arch
@@ -1383,7 +1385,7 @@ fi
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
 %{_prefix}/src/linux-%{version}/init
-%{!?_without_grsec:%{_prefix}/src/linux-%{version}/grsecurity}
+%{?with_grsec:%{_prefix}/src/linux-%{version}/grsecurity}
 %{_prefix}/src/linux-%{version}/ipc
 #%{_prefix}/src/linux-%{version}/kdb
 %{_prefix}/src/linux-%{version}/kernel
