@@ -15,7 +15,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	0.4	
+Release:	0.5	
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -101,6 +101,7 @@ Patch106:	linux-netdrivers_vlan.patch
 Patch107:	linux-atm.patch
 Patch108:	atm-unresolved.patch
 Patch109:	af-unresolved.patch
+Patch110:	linux-2.2.20-pcmcia-without-iee1394.patch.bz2
 
 # hap linux based on http://www.theaimsgroup.com/~hlein/hap-linux/hap-linux-2.2.20-2.diff
 Patch200:	hap-linux-2.2.20-2.diff
@@ -413,6 +414,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch106 -p1
 %patch108 -p1
 %patch109 -p1
+%patch110 -p1
 
 # 802.1Q VLANs
 patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
