@@ -30,7 +30,7 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1.2
+%define		_rel		1.3
 %define		_test_ver	0
 %define		_cset		0
 
@@ -559,7 +559,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch94 -p1
 
-%patch96 -p1
+#%%patch96 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
