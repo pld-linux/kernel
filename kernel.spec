@@ -286,7 +286,7 @@ Patch3004:	linux-2.4.20-sym53c8xx_old.patch
 
 Patch4000:	linux-2.4.20-ptrace-hole.patch
 
-Patch10000:	patch-2.4.21-pre7.gz
+Patch10000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-pre7.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
