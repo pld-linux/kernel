@@ -750,6 +750,7 @@ done
 
 %{__make} clean
 rm -f scripts/mkdep
+rm -f drivers/net/hamradio/soundmodem/gentbl
 
 %if %{?_with_lids:1}%{!?_with_lids:0}
 # LIDS config
