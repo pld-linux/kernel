@@ -70,7 +70,7 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.10
+%define		_rel		0.11
 %define		_cset		20041025_0606
 %define		_apply_cset	1
 
@@ -139,7 +139,7 @@ Patch12:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 
 # http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
 Patch14:	2.6.1-all-in-1.patch
-
+Patch15:	linux-2.6-realtime-lsm-0.1.1.patch
 Patch16:	linux-alpha-isa.patch
 Patch17:	2.6.4-psion-5mx.patch
 Patch18:	2.6.5-sparc64-missing-include.patch
@@ -582,7 +582,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch12 -p1
 
 %patch14 -p1
-
+%patch15 -p1
 %patch16 -p1
 %patch17 -p1
 %patch18 -p1
