@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		2
+%define		_rel		3
 %define		_test_ver	10
 %define		_cset		20031125_0507
 
@@ -442,7 +442,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch48 -p1
 
-%patch50 -p1
+#%%patch50 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -894,9 +894,18 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko
 #drm stuff
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
-#sound stuff
-%exclude /lib/modules/%{version}-%{release}/kernel/sound
- 
+#oss sound stuff
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/oss
+#alsa sound stuff
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/core
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/drivers
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/i2c
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/isa
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/pci
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/pcmcia
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/synth
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/usb
+
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
 
@@ -933,8 +942,17 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko
 #drm stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
-#sound stuff
+#oss sound stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/oss
+#alsa sound stuff
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/core
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/drivers
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/i2c
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/isa
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/pci
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/pcmcia
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/synth
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/usb
 
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
