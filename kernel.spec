@@ -106,13 +106,15 @@ Patch1:		patch-int-2.4.20.1.bz2
 Patch2:		loop-jari-2.4.20.0.patch
 
 ## -> general bugfix.
-Patch5:		linux-2.4.20-initrd-close-console.patch
-Patch6:		linux-2.4.20-no-FPU.patch
-Patch7:		linux-53c7,8xx-build.fix
-Patch8:		%{name}-Makefile-include-fix.patch
+Patch4:		linux-2.4.20-initrd-close-console.patch
+Patch5:		linux-2.4.20-no-FPU.patch
+Patch6:		linux-53c7,8xx-build.fix
+Patch7:		%{name}-Makefile-include-fix.patch
 # support for new chipset ? E820
 # from:
-Patch9:	linux-2.4.20-e820.patch
+Patch8:		linux-2.4.20-e820.patch
+# all missing parts
+Patch9:		linux-2.4.20.patch
 
 ## -> grsecurity and other security 
 # from: http://grsecurity.net/grsecurity-%{grsec_version}.patch
@@ -121,7 +123,6 @@ Patch10:	grsecurity-%{grsec_version}-%{version}.patch.gz
 Patch11:	linux-2.4.20-ptrace.patch
 Patch12:	linux-2.4.20-nogrsec.patch
 Patch13:	linux-2.4.20-grsecurity-1.9.9e-kmem.patch
-#Patch14:	PPC-grsecurity-pgtable.h.patch
 
 ## -> Security and network
 #from: ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
@@ -169,7 +170,7 @@ Patch35:	linux-2.4.18-hpfs.patch
 
 ## -> Preemptive kernel  patch
 # from:
-Patch40:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.20-1.patch
+Patch40:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.20-3.patch
 
 
 ## -> Network
@@ -616,15 +617,16 @@ cp drm/*.{c,h} drivers/char/drm/
 %patch2 -p1
 
 ## general bugfix
+%patch4 -p1
 %patch5 -p1
-%patch6 -p1
 #fixed to build NCR SCSI driver
-%patch7 -p1
+%patch6 -p1
 #fixed includes
-%patch8 -p1
+%patch7 -p1
 %ifarch %{ix86}
-%patch9 -p1
+%patch8 -p1
 %endif
+%patch9 -p1
 
 ##grsecurity and other sec.
 %patch10 -p1
