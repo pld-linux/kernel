@@ -3570,15 +3570,23 @@ diff -urN linux-2.4.20/include/asm-ppc/bitops.h linux-2.4.20-o1/include/asm-ppc/
   */
  /*
   * bitops.h: Bit string operations on the ppc
-@@ -10,7 +10,10 @@
+@@ -10,7 +10,18 @@
  #define _PPC_BITOPS_H
  
  #include <linux/config.h>
 +#include <linux/compiler.h>
  #include <asm/byteorder.h>
 +#include <asm/atomic.h>
-+#include <asm/ppc_asm.h>
  
++/* #ifdef CONFIG_IBM405_ERR77 */
++#ifdef CONFIG_WALNUT
++#define PPC405_ERR77(ra,rb)	dcbt	ra, rb;
++#define	PPC405_ERR77_SYNC	sync;
++#else
++#define PPC405_ERR77(ra,rb)
++#define PPC405_ERR77_SYNC
++#endif
++
  /*
   * The test_and_*_bit operations are taken to imply a memory barrier
 @@ -28,7 +30,7 @@
@@ -3918,25 +3926,6 @@ diff -urN linux-2.4.20/include/asm-ppc/bitops.h linux-2.4.20-o1/include/asm-ppc/
  
  static __inline__ int ext2_test_bit(int nr, __const__ void * addr)
  {
-diff -urN linux-2.4.20/include/asm-ppc/ppc_asm.h linux-2.4.20-o1/include/asm-ppc/ppc_asm.h
---- linux-2.4.20/include/asm-ppc/ppc_asm.h	Fri Nov 29 00:53:15 2002
-+++ linux-2.4.20-o1/include/asm-ppc/ppc_asm.h	Wed Mar 12 14:26:21 2003
-@@ -155,6 +155,15 @@
- #define CLR_TOP32(r)
- #endif /* CONFIG_PPC64BRIDGE */
- 
-+/* #ifdef CONFIG_IBM405_ERR77 */
-+#ifdef CONFIG_WALNUT
-+#define PPC405_ERR77(ra,rb)	dcbt	ra, rb;
-+#define	PPC405_ERR77_SYNC	sync;
-+#else
-+#define PPC405_ERR77(ra,rb)
-+#define PPC405_ERR77_SYNC
-+#endif
-+
- /* The boring bits... */
- 
- /* Condition Register Bit Fields */
 diff -urN linux-2.4.20/include/asm-ppc/smp.h linux-2.4.20-o1/include/asm-ppc/smp.h
 --- linux-2.4.20/include/asm-ppc/smp.h	Sat Aug  3 02:39:45 2002
 +++ linux-2.4.20-o1/include/asm-ppc/smp.h	Wed Mar 12 14:29:05 2003
