@@ -19,6 +19,7 @@
 %define		vlan_version		1.4
 %define		IPperson_version	20010724-2.4.7
 %define		grsec_version		1.8-2.4.7
+%define		tulip_version		1.1.8
 %define		aic_version		6.2.3-2.4.7
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -26,7 +27,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.7
-Release:	11
+Release:	12
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -46,6 +47,7 @@ Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym
 Source12:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
 Source13:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source14:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-1.0.6-patch.tar.gz
+Source15:	http://prdownloads.sourceforge.net/tulip/tulip-%{tulip_version}.tar.gz
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source22:	%{name}-i386-BOOT.config
