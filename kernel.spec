@@ -15,7 +15,7 @@ Release:	1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-2.2.19.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
