@@ -64,7 +64,7 @@ Source1666:	%{name}-grsec.config
 # New features
 
 Patch0:		%{name}-pldfblogo.patch
-#Patch1:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
+# ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
 Patch1:		patch-int-2.4.15.0.gz
 Patch2:		linux-2.4.10-freeswan-%{freeswan_version}.patch.gz
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
@@ -75,7 +75,6 @@ Patch5:		linux-%{version}-xfs-20011230.patch.bz2
 #ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2
 Patch7:		linux-abi-2.4.17.0.patch.bz2
 Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
-# grsecurity patch http://www.getrewted.net/
 # http://grsecurity.net/grsecurity-%{grsec_version}.patch
 Patch9:		grsecurity-%{grsec_version}.patch
 # Preemptive kernel  patch
@@ -317,7 +316,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch2 -p1
 %patch4 -p1
 %patch5 -p1
-#%patch7 -p1
+%patch7 -p1
 %patch8 -p1
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
 %ifarch %{ix86}
