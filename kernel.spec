@@ -735,6 +735,7 @@ ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
 
 %{__make} include/linux/version.h
 %{__make} clean
+cp $KERNEL_BUILD_DIR/scripts/modpost scripts
 
 %clean
 rm -rf $RPM_BUILD_ROOT
