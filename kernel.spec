@@ -709,6 +709,9 @@ fi
 %defattr(644,root,root,755)
 %dir %{_prefix}/src/linux-%{version}
 %{_prefix}/src/linux-%{version}/include
+%{_prefix}/src/linux-%{version}/config-smp
+%{_prefix}/src/linux-%{version}/config-up
+%{_prefix}/src/linux-%{version}/.config
 
 %files doc
 %defattr(644,root,root,755)
@@ -731,13 +734,10 @@ fi
 %{_prefix}/src/linux-%{version}/sound
 %{_prefix}/src/linux-%{version}/security
 %{_prefix}/src/linux-%{version}%{_prefix}
-%{_prefix}/src/linux-%{version}/.config
 %{_prefix}/src/linux-%{version}/COPYING
 %{_prefix}/src/linux-%{version}/CREDITS
 %{_prefix}/src/linux-%{version}/MAINTAINERS
 %{_prefix}/src/linux-%{version}/Makefile
 %{_prefix}/src/linux-%{version}/README
 %{_prefix}/src/linux-%{version}/REPORTING-BUGS
-%{_prefix}/src/linux-%{version}/config-smp
-%{_prefix}/src/linux-%{version}/config-up
 %endif
