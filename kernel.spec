@@ -53,6 +53,7 @@ URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Provides:	module-info
 Autoreqprov:	no
+Prereq:		fileutils
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha
 %ifarch		%{ix86}
