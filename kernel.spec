@@ -7,6 +7,7 @@ File: kernel.spec
 	ac-2_6_5-1               2.6.5 official kernel
 	LINUX_2_5                dead 2.5.x branch
 	LINUX_2_6                2.6.x (with grsecurity) development branch
+	LINUX_2_6_8		 2.6.8 (with grsecurity) stable branch
 	KERNEL_2_4_for_RA        ?
 	DEVEL                    ?
 	LINUX_2_2                2.2.x mainteance branch for Ra
