@@ -2,7 +2,6 @@
 %define		pcmcia_version	3.1.23
 %define		reiserfs_version	3.6.24
 %define		freeswan_version	1.8
-%define		atm_version		0.78
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -40,31 +39,18 @@ Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
 #Source32:	%{name}-BuildASM.sh
 Source33:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
 #Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.17+.gz
-# NFS server patches
-#Source40:	http://download.sourceforge.net/nfs/dhiggen_merge-4.1.tar.gz
 Source50:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
-Source51:	ftp://icaftp.epfl.ch/pub/linux/atm/dist/atm-%{atm_version}.tar.gz
 Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.1.gz
-Patch100:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac2.bz2
-Patch101:		%{name}-%{version}-dc395-patch-fix.patch
-#Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.17-reiserfs-3.5.25-patch.gz
+Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac2.bz2
+Patch101:	%{name}-%{version}-dc395-patch-fix.patch
 Patch1:		ftp://ftp.reiserfs.org/pub/2.4/linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
 #Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
-#Patch3:		linux-tasks.patch
-# patch based on http://www.redhat.com/~mingo/raid-patches/
-#Patch4:		raid-2.2.17-A0.gz
-#Patch5:		http://www.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.17/ide.2.2.17.all.20000904.patch.bz2
 #Patch6:		%{name}-pldfblogo.patch
-Patch7:			ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-%{freeswan_version}.tar.gz
+Patch7:		ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-%{freeswan_version}.tar.gz
 #Patch7:		linux-2.2.16-freeswan-%{freeswan_version}.patch
 #Patch8:		wanrouter-v2215.patch.gz
-#Patch10:	linux-newagpdist.patch
-#Patch11:	linux-agphjlfixes.patch
-#Patch12:	linux-agpgart-2.4-compat.patch
 #Patch14:	http://www.linux.org.uk/VERSION/2.2.16combo
 #Patch15:	linux-ipv6-addrconf.patch
-# NFS client patch
-#Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
 # patch for console daemon.
 #Patch21:	wait_any_vt.diff
 Patch50:	i8255-chip.patch
