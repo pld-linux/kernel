@@ -9,7 +9,7 @@
 #
 %define		pre_version		pre11
 %define		lids_version		1.0.11-2.4.6
-%define		ipvs_version		0.9.3
+%define		ipvs_version		0.9.4
 %define		freeswan_version	snap2001jun14R
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.9
