@@ -28,6 +28,11 @@
 
 %{?debug:%define with_verbose 1}
 
+# see TODO
+%if %{with grsec}
+%undefine	with_grsec
+%endif
+
 %if !%{with grsec}
 %undefine	with_pax
 %endif
