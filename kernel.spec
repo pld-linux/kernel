@@ -23,13 +23,14 @@
 %define		jfs_version		2.4-1.0.16
 %define		lvm_version		1.0.3
 %define		evms_version		1.0.0
+%define		tridentfb_version	0.7.0
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	0.100
+Release:	0.101
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -134,6 +135,7 @@ Patch123:	xquad_portio.fix
 # 
 Patch124:	linux-proc_net_dev-counter-fix.patch
 Patch125:	01-sigxfs-vs-blkdev.patch
+Patch126:	linux-2.4.18-SPARC64-ide.h-fix.patch
 Patch127:	kernel-2.4.18-SPARC64-PLD.patch
 Patch129:	kernel-Makefile-include-fix.patch
 Patch130:	kernel-2.4.17-netsyms-export-fix.patch
@@ -151,6 +153,9 @@ Patch137:	evms-linux-2.4.18-common-files.patch
 
 #from http://www.drfruitcake.com/linux/dma-bp.html
 Patch139:	http://www.uwsg.iu.edu/hypermail/linux/kernel/0201.2/att-1802/01-neofb-0.3.1-linux-2.4.18-pre6.patch
+
+#http://prdownloads.sourceforge.net/tridentfb/tridentfb-%{tridentfb_version}.tgz
+Patch140:	kernel-2.4.18-tridentfb.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -495,6 +500,7 @@ echo Installing Net Dev Random patch
 %ifarch sparc64
 echo Fixed SPARC 64 compilation.
 %patch127 -p1
+%patch126 -p1
 %endif
 
 #fixed AXP compilation
@@ -525,6 +531,10 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 %ifarch %{ix86}
 %patch139 -p1
 %endif
+
+# Trident FB
+echo Replacing Trident FB module ..
+%patch140 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
