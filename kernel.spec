@@ -20,6 +20,9 @@ License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
 Group(pl):	Podstawowe/J±dro
+
+# in this place i will include Sources
+
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
@@ -50,6 +53,8 @@ Source26:	%{name}-alpha.config
 Source27:	%{name}-alpha-smp.config
 Source28:	%{name}-alpha-BOOT.config
 
+# in this place i will include Patches
+
 Patch0:		%{name}-pldfblogo.patch
 Patch1:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
 Patch2:		http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
@@ -61,8 +66,14 @@ Patch7:		linux-ipv6-addrconf.patch
 # based on http://support.3com.com/infodeli/tools/nic/linux/3c90x-1.0.0i.tar.gz
 Patch8:		%{name}-3c90x.patch
 Patch9:		linux-ipv6-glibc2.2.patch
+# based on http://bridge.sourceforge.net/patches/bridge-1.0.1-against-2.2.20.diff
+# but diffrent
+Patch10:	brigde-1.0.1-against-2.2.20.diff
 
-# in this place i will make new Patches nad Sources
+# in this place will be PLD patches
+
+#Patch100:	somepatch
+#Patch101:	somepatch2
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -347,6 +358,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch7 -p1
 %patch8 -p1
 %patch9 -p1
+%patch10 -p1
 
 # 802.1Q VLANs
 #cd vlan.%{vlan_version}
@@ -571,6 +583,7 @@ gzip -dc %{PATCH6} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{versi
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH7}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH9}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH10}
 
 #DAC960 drivers
 tar xfz %{SOURCE8}
