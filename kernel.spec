@@ -264,7 +264,7 @@ Provides:	%{name}(agpgart) = %{version}
 Autoreqprov:	no
 Prereq:		fileutils
 Prereq:		modutils
-Prereq:		geninitrd >= 2.13
+Prereq:		geninitrd >= 2.22
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
