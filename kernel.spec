@@ -761,7 +761,7 @@ fi
 %{_prefix}/src/linux-%{version}/include
 %{_prefix}/src/linux-%{version}/config-smp
 %{_prefix}/src/linux-%{version}/config-up
-%{_prefix}/src/linux-%{version}/.config
+#%{_prefix}/src/linux-%{version}/.config
 
 %files doc
 %defattr(644,root,root,755)
