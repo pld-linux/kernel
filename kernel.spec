@@ -30,7 +30,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	2.25
+Release:	2.26
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
@@ -202,7 +202,6 @@ Patch915:	linux-o1-sched-post.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
-BuildRequires:	rpm-build >= 4.0.4
 %ifarch sparc64
 BuildRequires:	egcs64
 %else
@@ -496,12 +495,11 @@ echo "Scheduler din't work on ARCH diffetern than Intel x86"
 %endif
 %patch9 -p1
 %patch906 -p1
-%if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %ifarch%{ix86}
 %patch912 -p1
 %else
 echo "Scheduler din't work on ARCH diffetern than Intel x86"
-%endif
 %endif
 %endif
 %patch15 -p1
