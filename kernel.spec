@@ -936,10 +936,10 @@ fi
 %endif
 /lib/modules/%{version}-%{release}BOOT/kernel
 /lib/modules/%{version}-%{release}BOOT/build
-%endif
 /lib/modules/%{version}-%{release}BOOT/modules.dep
 /lib/modules/%{version}-%{release}BOOT/modules.*map
 /lib/modules/%{version}-%{release}BOOT/modules.generic_string
+%endif
 
 %files headers
 %defattr(644,root,root,755)
