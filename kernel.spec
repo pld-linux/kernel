@@ -300,7 +300,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}-%{test}
+%setup -q -n linux-%{version}-test4
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
