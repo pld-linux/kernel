@@ -39,7 +39,6 @@ Source70:	%{name}-alpha.config
 Patch0:		linux-2.5.67-genrtc_fix.patch
 Patch1:		linux-2.5.70-fix_missing_symb.patch
 Patch2:		linux-2.5-miscfix.patch
-Patch3:		linux-2.5.72-srmcons_ops.patch
 # LSM/SELinux
 # Patch10:	http://lsm.immunix.org/patches/2.5/2.5.72/patch-2.5.72-lsm1.gz
 Patch10:	patch-2.5.72-lsm1.gz
@@ -270,9 +269,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch0 -p0
 %patch1 -p1
 %patch2 -p1
-%ifarch alpha
-%patch3 -p1
-%endif
 %{!?_without_lsm:%patch10 -p1}
 
 # Fix EXTRAVERSION and CC in main Makefile
