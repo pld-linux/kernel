@@ -8,6 +8,7 @@
 #		- check I2C
 #		- fix lirc_sasem (usb api)
 #		- update HP-OmniBook patchset (2.6.1-all-in-1.patch)
+#		- grsecurity 2.0.1
 #
 # Conditional build:
 %bcond_without	BOOT		# don't build BOOT kernel
@@ -51,7 +52,7 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_post_ver	1
-%define		_rel		0.90
+%define		_rel		0.91
 %define		_cset		20040813_0507
 %define		_apply_cset	0
 
