@@ -17204,43 +17204,19 @@ diff -urN linux-2.6.7/include/asm-sparc64/page.h linux-2.6.7/include/asm-sparc64
 diff -urN linux-2.6.7/include/asm-sparc64/pgtable.h linux-2.6.7/include/asm-sparc64/pgtable.h
 --- linux-2.6.7/include/asm-sparc64/pgtable.h	2004-06-16 01:18:52 -0400
 +++ linux-2.6.7/include/asm-sparc64/pgtable.h	2004-06-25 17:41:53 -0400
-@@ -128,7 +128,8 @@
+@@ -164,6 +165,7 @@
+ 				  __PRIV_BITS | \
+ 				  __ACCESS_BITS | __DIRTY_BITS | _PAGE_EXEC)
  
- /* Here are the SpitFire software bits we use in the TTE's. */
- #define _PAGE_FILE	_AC(0x0000000000001000,UL)	/* Pagecache page     */
--#define _PAGE_MODIFIED	_AC(0x0000000000000800,UL)	/* Modified (dirty)   */
-+#define _PAGE_MODIFIED	_AC(0x0000000000001000,UL)	/* Modified (dirty)   */
-+#define _PAGE_EXEC	_AC(0x0000000000000800,UL)	/* Executable SW Bit  */
- #define _PAGE_ACCESSED	_AC(0x0000000000000400,UL)	/* Accessed (ref'd)   */
- #define _PAGE_READ	_AC(0x0000000000000200,UL)	/* Readable SW Bit    */
- #define _PAGE_WRITE	_AC(0x0000000000000100,UL)	/* Writable SW Bit    */
-@@ -164,16 +165,30 @@
- 
- /* Don't set the TTE _PAGE_W bit here, else the dirty bit never gets set. */
- #define PAGE_SHARED	__pgprot (_PAGE_PRESENT | _PAGE_VALID | _PAGE_CACHE | \
--				  __ACCESS_BITS | _PAGE_WRITE)
-+				  __ACCESS_BITS | _PAGE_WRITE | _PAGE_EXEC)
- 
- #define PAGE_COPY	__pgprot (_PAGE_PRESENT | _PAGE_VALID | _PAGE_CACHE | \
--				  __ACCESS_BITS)
-+				  __ACCESS_BITS | _PAGE_EXEC)
- 
- #define PAGE_READONLY	__pgprot (_PAGE_PRESENT | _PAGE_VALID | _PAGE_CACHE | \
--				  __ACCESS_BITS)
-+				  __ACCESS_BITS | _PAGE_EXEC)
- 
- #define PAGE_KERNEL	__pgprot (_PAGE_PRESENT | _PAGE_VALID | _PAGE_CACHE | \
--				  __PRIV_BITS | __ACCESS_BITS | __DIRTY_BITS)
-+				  __PRIV_BITS | __ACCESS_BITS | __DIRTY_BITS | \
-+				  _PAGE_EXEC)
-+
 +#ifdef CONFIG_PAX_PAGEEXEC
-+# define PAGE_SHARED_NOEXEC	__pgprot (_PAGE_PRESENT | _PAGE_VALID | _PAGE_CACHE | \
-+					  __ACCESS_BITS | _PAGE_WRITE)
-+# define PAGE_COPY_NOEXEC	__pgprot (_PAGE_PRESENT | _PAGE_VALID | _PAGE_CACHE | \
-+					  __ACCESS_BITS)
-+# define PAGE_READONLY_NOEXEC	__pgprot (_PAGE_PRESENT | _PAGE_VALID | _PAGE_CACHE | \
-+					  __ACCESS_BITS)
+ #define PAGE_SHARED_NOEXEC	__pgprot (_PAGE_PRESENT | _PAGE_VALID | \
+ 					  _PAGE_CACHE | \
+ 					  __ACCESS_BITS | _PAGE_WRITE)
+@@ -198,6 +198,12 @@
+ 
+ #define PAGE_READONLY_NOEXEC	__pgprot (_PAGE_PRESENT | _PAGE_VALID | \
+ 					  _PAGE_CACHE | __ACCESS_BITS)
++
 +#else
 +# define PAGE_SHARED_NOEXEC	PAGE_SHARED
 +# define PAGE_COPY_NOEXEC	PAGE_COPY
@@ -17249,31 +17225,6 @@ diff -urN linux-2.6.7/include/asm-sparc64/pgtable.h linux-2.6.7/include/asm-spar
  
  #define _PFN_MASK	_PAGE_PADDR
  
-@@ -181,18 +196,18 @@
- 		   __ACCESS_BITS | _PAGE_E)
- 
- #define __P000	PAGE_NONE
--#define __P001	PAGE_READONLY
--#define __P010	PAGE_COPY
--#define __P011	PAGE_COPY
-+#define __P001	PAGE_READONLY_NOEXEC
-+#define __P010	PAGE_COPY_NOEXEC
-+#define __P011	PAGE_COPY_NOEXEC
- #define __P100	PAGE_READONLY
- #define __P101	PAGE_READONLY
- #define __P110	PAGE_COPY
- #define __P111	PAGE_COPY
- 
- #define __S000	PAGE_NONE
--#define __S001	PAGE_READONLY
--#define __S010	PAGE_SHARED
--#define __S011	PAGE_SHARED
-+#define __S001	PAGE_READONLY_NOEXEC
-+#define __S010	PAGE_SHARED_NOEXEC
-+#define __S011	PAGE_SHARED_NOEXEC
- #define __S100	PAGE_READONLY
- #define __S101	PAGE_READONLY
- #define __S110	PAGE_SHARED
 diff -urN linux-2.6.7/include/asm-x86_64/a.out.h linux-2.6.7/include/asm-x86_64/a.out.h
 --- linux-2.6.7/include/asm-x86_64/a.out.h	2004-06-16 01:19:22 -0400
 +++ linux-2.6.7/include/asm-x86_64/a.out.h	2004-06-25 17:41:53 -0400
