@@ -55,7 +55,7 @@
 
 %define		_post_ver	.2
 #define		_post_ver	%{nil}
-%define		_rel		0.31
+%define		_rel		0.32
 %define		_cset		20050302_0807
 %define		_apply_cset	0
 
@@ -73,14 +73,14 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.6.11%{_post_ver}
+Version:	2.6.11
 Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 %define		_rc	%{nil}
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_post_ver}%{_rc}.tar.bz2
 # Source0-md5:	61ade860849e8661f14bd754f5a90986
 Source1:	%{name}-autoconf.h
 
@@ -511,7 +511,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}%{_rc}
+%setup -q -n linux-%{version}%{_post_ver}%{_rc}
 
 %if "%{_apply_cset}" != "0"
 bzcat %{SOURCE4} | patch -p1 -s
