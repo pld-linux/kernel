@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.4.21
-Release:	0.4
+Release:	0.5
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -91,7 +91,6 @@ Patch31:	linux-2.4.21-jfs-acl.patch
 Patch32:	linux-2.4.21-ea+acl+nfsacl-0.8.58.diff.gz
 # http://unc.dl.sourceforge.net/sourceforge/linux-ntfs/
 Patch40:	linux-2.4.21-ntfs-%{ntfs_version}.patch.gz
-Patch41:	linux-2.4.20-ntfs.patch
 # http://dl.sourceforge.net/linux-hfsplus/hfsplus-patch-20020606.patch
 Patch45:	hfsplus-20020606.patch.bz2
 # FC01_davfs_0.2.4.patch
@@ -250,7 +249,7 @@ Patch1413:	linux-2.4.21-andrea-9980_fix-pausing-5.patch
 Patch1414:	linux-2.4.21-oopsmeharder.patch
 Patch1415:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch1416:	linux-2.4.21-no-FPU.patch
-Patch1417:	linux-2.4.21-modular-ide.patch
+Patch1417:	linux-2.4.21-ac4-ide.patch
 
 Patch2000:	linux-PPC-SMP.patch
 Patch2001:	linux-2.4-ppc-procesor.patch
@@ -305,6 +304,7 @@ Conflicts:	jfsutils < 1.0.12
 Conflicts:	util-linux < 2.10o
 Conflicts:	modutils < 2.4.2
 Conflicts:	quota < 3.06
+Conflicts:	linux-atm < 2.4.1
 
 %description
 This package contains the Linux kernel that is used to boot and run
@@ -357,6 +357,7 @@ Conflicts:	jfsutils < 1.0.12
 Conflicts:	util-linux < 2.10o
 Conflicts:	modutils < 2.4.2
 Conflicts:	quota < 3.06
+Conflicts:	linux-atm < 2.4.1
 
 %description smp
 This package includes a SMP version of the Linux %{version} kernel. It
@@ -370,7 +371,7 @@ Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
 CPU laufen.
 
 %description smp -l fr
-Ce package inclu une version SMP du noyau de Linux version {version}.
+Ce package inclu une version SMP du noyau de Linux version %{version}.
 Il et nécessaire seulement pour les machine avec deux processeurs ou
 plus, il peut quand même fonctionner pour les système mono-processeur.
 
@@ -560,7 +561,6 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch32 -p1
 %patch31 -p1
 %patch40 -p1
-#%patch41 -p1
 %patch45 -p1
 %patch50 -p1
 %patch55 -p1
@@ -741,18 +741,9 @@ BuildKernel() {
 	
 	if [ "$BOOT" = "yes" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
-		echo "# CONFIG_CRYPTO is not set" >> arch/%{base_arch}/defconfig
-		echo "CONFIG_ROMFS_FS=y" >> arch/%{base_arch}/defconfig
-		echo "# CONFIG_IP_NF_MATCH_STEALTH is not set">> arch/%{base_arch}/defconfig
-		echo "# CONFIG_NET_SCH_WRR is not set" >> arch/%{base_arch}/defconfig
-		echo "# CONFIG_HOSTAP is not set" >> arch/%{base_arch}/defconfig
-		echo "# CONFIG_USB_KONICAWC is not set">> arch/%{base_arch}/defconfig
-	%ifarch %{ix86}
-		echo "# CONFIG_MKI is not set" >> arch/%{base_arch}/defconfig
-	%endif
 	fi
 %ifarch %{ix86}
-		cat %{SOURCE2000} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE2000} >> arch/%{base_arch}/defconfig
 %endif
 
 %ifarch i386
