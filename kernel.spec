@@ -44,13 +44,9 @@ Source12:	http://www.komacke.com/ftp/rl2isa-driver/rl2_driver.tgz
 Source13:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
 Source14:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source15:	http://www10.software.ibm.com/developer/opensource/pub/jfs-1.0.1-patch.tar.gz
-Source20:	%{name}-i386.config
-Source21:	%{name}-i386-smp.config
+Source20:	%{name}-ia32.config
+Source21:	%{name}-ia32-smp.config
 Source22:	%{name}-i386-BOOT.config
-Source30:	%{name}-i586.config
-Source31:	%{name}-i586-smp.config
-Source40:	%{name}-i686.config
-Source41:	%{name}-i686-smp.config
 Source50:	%{name}-sparc.config
 Source51:	%{name}-sparc-smp.config
 Source52:	%{name}-sparc-BOOT.config
@@ -548,16 +544,38 @@ BuildKernel() {
 	fi
 	# is this a special kernel we want to build?
 	if [ -n "$1" ] ; then
+%ifarch %{ix86}
+		if [ "$1" = "BOOT" ] ; then
+			Config="%{_target_cpu}"-$1
+		else
+			Config="ia32"-$1
+		fi
+%else
 		Config="%{_target_cpu}"-$1
+%endif
 		KernelVer=%{version}-%{release}$1
 		echo BUILDING A KERNEL FOR $1...
 		shift
 	else
+%ifarch %{ix86}
+		Config="ia32"
+%else
 		Config="%{_target_cpu}"
+%endif
 		KernelVer=%{version}-%{release}
 		echo BUILDING THE NORMAL KERNEL...
 	fi
-	cp $RPM_SOURCE_DIR/kernel-$Config.config arch/$RPM_ARCH/defconfig
+	:> arch/$RPM_ARCH/defconfig
+%ifarch i386
+	echo "CONFIG_M386=y" > arch/$RPM_ARCH/defconfig
+%endif
+%ifarch i586
+	echo "CONFIG_M586=y" > arch/$RPM_ARCH/defconfig
+%endif
+%ifarch i686
+	echo "CONFIG_M686=y" > arch/$RPM_ARCH/defconfig
+%endif
+	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1001} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1002} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1003} >> arch/$RPM_ARCH/defconfig
@@ -835,7 +853,21 @@ cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 find  -name "*~" -print | xargs rm -f
 find  -name "*.orig" -print | xargs rm -f
 
+%ifarch i386
+echo "CONFIG_M386=y" > .config
+%endif
+%ifarch i586
+echo "CONFIG_M586=y" > .config
+%endif
+%ifarch i686
+echo "CONFIG_M686=y" > .config
+%endif
+
+%ifarch %{ix86}
+cat $RPM_SOURCE_DIR/kernel-ia32.config >> .config
+%else
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
+%endif
 
 cat %{SOURCE1001} >> .config
 cat %{SOURCE1002} >> .config
@@ -848,7 +880,21 @@ cat %{SOURCE1007} >> .config
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
 
+%ifarch i386
+echo "CONFIG_M386=y" > .config
+%endif
+%ifarch i586
+echo "CONFIG_M586=y" > .config
+%endif
+%ifarch i686
+echo "CONFIG_M686=y" > .config
+%endif
+
+%ifarch %{ix86}
+cat $RPM_SOURCE_DIR/kernel-ia32-smp.config >> .config
+%else
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config .config
+%endif
 
 cat %{SOURCE1001} >> .config
 cat %{SOURCE1002} >> .config
