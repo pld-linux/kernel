@@ -118,6 +118,10 @@ Patch20:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/in
 
 Patch21:	linux-2.4.18-hpfs.patch
 
+Patch22:	ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/linux-2.4.18-mppe-include.patch
+Patch23:	ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/linux-2.4.18-mppe-make.patch
+Patch24:	ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/linux-2.4.18-mppe-pad.patch
+
 # Assorted bugfixes
 
 # from LKML
@@ -594,14 +598,9 @@ echo Fixed compile process for 53c7,8xx driver
 %patch909 -p0
 
 #preemptble kernel patch
-%if%{?_with_preemptible:1}%{!?_with_preemptible:0}
-echo Installing Preemptible patch
-%if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
-%patch20 -p1
-%else
-%patch10 -p1
-%endif
-%endif
+%{?_with_preemptible:echo Installing Preemptible patch}
+%{?_with_preemptible:%{?_with_o1_sched:%patch20 -p1}}
+%{?_with_preemptible:%{!?_with_o1_sched:%patch10 -p1}}
 
 # netdev-random
 echo Installing Net Dev Random patch
@@ -664,6 +663,11 @@ echo Updating VIA Southbridge
 
 #HPFS fix.
 %patch21 -p1
+
+# MPPE (ppp)
+%patch22 -p1
+%patch23 -p1
+%patch24 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
