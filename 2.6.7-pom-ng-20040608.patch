@@ -2505,7 +2505,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7-rc3.org/net/ipv4/ip_input.c linux-2.6.7
 diff -Nur --exclude '*.orig' linux-2.6.7-rc3.org/net/ipv4/ip_output.c linux-2.6.7-rc3/net/ipv4/ip_output.c
 --- linux-2.6.7-rc3.org/net/ipv4/ip_output.c	2004-06-07 21:15:12.000000000 +0200
 +++ linux-2.6.7-rc3/net/ipv4/ip_output.c	2004-06-08 10:38:43.000000000 +0200
-@@ -123,6 +123,15 @@
+@@ -123,6 +124,15 @@
  	return ttl;
  }
  
@@ -2521,7 +2521,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7-rc3.org/net/ipv4/ip_output.c linux-2.6.
  /* 
   *		Add an ip header to a skbuff and send it out.
   *
-@@ -165,7 +174,7 @@
+@@ -165,7 +175,7 @@
  
  	/* Send it out. */
  	return NF_HOOK(PF_INET, NF_IP_LOCAL_OUT, skb, NULL, rt->u.dst.dev,
@@ -2530,16 +2530,19 @@ diff -Nur --exclude '*.orig' linux-2.6.7-rc3.org/net/ipv4/ip_output.c linux-2.6.
  }
  
  static inline int ip_finish_output2(struct sk_buff *skb)
-@@ -284,7 +293,7 @@
+@@ -284,10 +294,8 @@
  		return ip_finish_output(skb);
  }
  
 -int ip_output(struct sk_buff **pskb)
-+static inline int ip_output2(struct sk_buff **pskb)
++static inline int ip_output2(struct sk_buff *skb)
  {
- 	struct sk_buff *skb = *pskb;
+-	struct sk_buff *skb = *pskb;
+-
+ 	IP_INC_STATS(OutRequests);
  
-@@ -297,6 +306,18 @@
+ 	if ((skb->len > dst_pmtu(skb->dst) || skb_shinfo(skb)->frag_list) &&
+@@ -297,6 +305,18 @@
  		return ip_finish_output(skb);
  }
  
@@ -2558,7 +2561,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7-rc3.org/net/ipv4/ip_output.c linux-2.6.
  int ip_queue_xmit(struct sk_buff *skb, int ipfragok)
  {
  	struct sock *sk = skb->sk;
-@@ -390,7 +409,7 @@
+@@ -390,7 +410,7 @@
  	skb->priority = sk->sk_priority;
  
  	return NF_HOOK(PF_INET, NF_IP_LOCAL_OUT, skb, NULL, rt->u.dst.dev,
@@ -2567,7 +2570,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7-rc3.org/net/ipv4/ip_output.c linux-2.6.
  
  no_route:
  	IP_INC_STATS(OutNoRoutes);
-@@ -1180,7 +1199,7 @@
+@@ -1180,7 +1206,7 @@
  
  	/* Netfilter gets whole the not fragmented skb. */
  	err = NF_HOOK(PF_INET, NF_IP_LOCAL_OUT, skb, NULL, 
