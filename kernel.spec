@@ -56,10 +56,9 @@ Patch11:	linux-agphjlfixes.patch
 Patch12:	linux-agpgart-2.4-compat.patch
 Patch13:	linux-ipv6-addrconf.patch
 # NFS client patch
-Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
-# patch from Console Daemon
-#Patch21:	wait_any_vt.diff
-Patch22:	linux-ipvs-0.9.16-2.2.17.patch
+Patch14:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
+# Linux Virtual Server: http://www.linuxvirtualserver.org/software/
+Patch15:	linux-ipvs-0.9.16-%{version}.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -68,7 +67,9 @@ BuildRequires:	egcs64
 %else
 BuildRequires:	egcs
 %endif
-Provides:	module-info
+Provides:	%{name}(reiserfs) = %{version}
+Provides:	%{name}(agpgart) = %{version}
+Provides:	%{name}(ipvs) = %{version}
 Autoreqprov:	no
 Prereq:		fileutils
 Prereq:		modutils
@@ -218,6 +219,7 @@ Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
+Provides:	%{name}-headers(ipvs) = %{version}
 Autoreqprov:	no
 
 %description headers
@@ -268,7 +270,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %prep
 %setup -q -a30 -a31 -a33 -n linux
 %patch0 -p1
-%patch20 -p1
+%patch14 -p1
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
@@ -283,6 +285,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch11 -p1
 %patch12 -p1
 %patch13 -p1
+%patch15 -p1
 
 tar zxf %{SOURCE40} dhiggen-over-0.23.1
 patch -p2 -s <dhiggen-over-0.23.1
@@ -293,8 +296,6 @@ patch -p1 -s <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 zcat %{SOURCE34} > drivers/net/3c59x.c
 
-#patch21 -p1
-%patch22 -p1
 
 %build
 BuildKernel() {
@@ -438,7 +439,7 @@ mv -f $RPM_BUILD_ROOT/usr/src/linux $RPM_BUILD_ROOT/usr/src/linux-%{version}
 ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
 
 gzip -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-bzip2 -dc %{PATCH20} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+bzip2 -dc %{PATCH14} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH1} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
@@ -454,6 +455,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
 
 tar zxf %{SOURCE40} dhiggen-over-0.23.1 -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
