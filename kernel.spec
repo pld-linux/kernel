@@ -353,7 +353,9 @@ rm -rf $RPM_BUILD_ROOT
 
 # NORMAL KERNEL
 BuildKernel
+%ifnarch sparc sparc64
 BuildPCMCIA
+%endif
 
 # FB-ENABLED KERNEL
 #BuildKernel fb
@@ -361,7 +363,9 @@ BuildPCMCIA
 # SMP-ENABLED KERNEL
 %ifnarch i386
 BuildKernel smp
+%ifnarch sparc sparc64
 BuildPCMCIA smp
+%endif
 %endif
 
 # SMP and FB-ENABLED KERNEL
@@ -370,7 +374,9 @@ BuildPCMCIA smp
 # BOOT kernel
 %ifnarch i586 i686
 BuildKernel BOOT
+%ifnarch sparc sparc64
 BuildPCMCIA BOOT
+%endif
 %endif
 
 %install
