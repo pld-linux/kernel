@@ -1157,6 +1157,8 @@ fi
 /lib/modules/%{version}-%{release}/kernel
 %ifnarch sparc
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/ide/legacy/*-cs.o*
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/mtd/maps/pcmcia*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/scsi/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/pcmcia
@@ -1181,6 +1183,8 @@ fi
 %files pcmcia-cs
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
+/lib/modules/%{version}-%{release}/kernel/drivers/ide/legacy/*-cs.o*
+/lib/modules/%{version}-%{release}/kernel/drivers/mtd/maps/pcmcia*
 /lib/modules/%{version}-%{release}/kernel/drivers/net/pcmcia
 /lib/modules/%{version}-%{release}/kernel/drivers/scsi/pcmcia
 /lib/modules/%{version}-%{release}/kernel/drivers/char/pcmcia
@@ -1215,6 +1219,8 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel
 %ifnarch sparc
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/legacy/*-cs.o*
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/mtd/maps/pcmcia*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/scsi/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/pcmcia
@@ -1239,6 +1245,8 @@ fi
 %files -n kernel-smp-pcmcia-cs
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
+/lib/modules/%{version}-%{release}smp/kernel/drivers/ide/legacy/*-cs.o*
+/lib/modules/%{version}-%{release}smp/kernel/drivers/mtd/maps/pcmcia*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/net/pcmcia
 /lib/modules/%{version}-%{release}smp/kernel/drivers/scsi/pcmcia
 /lib/modules/%{version}-%{release}smp/kernel/drivers/char/pcmcia
