@@ -102,6 +102,7 @@ Patch107:	linux-atm.patch
 Patch108:	atm-unresolved.patch
 Patch109:	af-unresolved.patch
 Patch110:	linux-2.2.20-pcmcia-without-iee1394.patch.bz2
+Patch111:	%{name}-mach64.patch
 
 # hap linux based on http://www.theaimsgroup.com/~hlein/hap-linux/hap-linux-2.2.20-2.diff
 Patch200:	hap-linux-2.2.20-2.diff
@@ -418,6 +419,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch108 -p1
 %patch109 -p1
 %patch110 -p1
+%patch111 -p1
 
 # 802.1Q VLANs
 patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
@@ -691,6 +693,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH106}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH108}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH109}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH111}
 
 # VLAN
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <vlan.%{vlan_version}/vlan_2.2.patch
@@ -723,6 +726,8 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < jfs-2.2.common-v%{jfs
 
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH107}
+
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH210}
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
