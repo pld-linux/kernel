@@ -670,7 +670,9 @@ fi
 %dir /lib/modules/%{version}-%{release}BOOT
 #/lib/modules/%{version}-%{release}BOOT/atm
 /lib/modules/%{version}-%{release}BOOT/block
+%ifnarch alpha
 /lib/modules/%{version}-%{release}BOOT/cdrom
+%endif
 /lib/modules/%{version}-%{release}BOOT/fs
 #/lib/modules/%{version}-%{release}BOOT/ipv4
 #/lib/modules/%{version}-%{release}BOOT/ipv6
