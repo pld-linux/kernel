@@ -60,6 +60,7 @@ Source1002:	%{name}-addon.config
 Source1003:	%{name}-netfilter.config
 Source1004:	%{name}-ipvs.config
 Source1666:	%{name}-grsec.config
+Source1667:	%{name}-int.config
 Source1999:	%{name}-preemptive.config
 
 # New features
@@ -491,6 +492,7 @@ BuildKernel() {
 	cat %{SOURCE1002} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1003} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1004} >> arch/$RPM_ARCH/defconfig
+	cat %{SOURCE1667} >> arch/$RPM_ARCH/defconfig
 %if%{?_with_preemptive:1}%{!?_with_preemptive:0}
 	cat %{SOURCE1999} >> arch/$RPM_ARCH/defconfig
 %endif
@@ -635,6 +637,7 @@ cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
 cat %{SOURCE1666} >> .config
+cat %{SOURCE1667} >> .config
 %if%{?_with_preemptive:1}%{!?_with_preemptive:0}
 	cat %{SOURCE1999} >> .config
 %endif
@@ -664,6 +667,7 @@ cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
 cat %{SOURCE1666} >> .config
+cat %{SOURCE1667} >> .config
 %if%{?_with_preemptive:1}%{!?_with_preemptive:0}
 	cat %{SOURCE1999} >> .config
 %endif
