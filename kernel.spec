@@ -1247,7 +1247,7 @@ fi
 %{_prefix}/src/linux-%{version}/arch/*/kernel/[!M]*
 %exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
 %exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/sigframe.h
-#%{_prefix}/src/linux-%{version}/cluster
+%{_prefix}/src/linux-%{version}/cluster
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
