@@ -126,7 +126,8 @@ Patch110:	ebtables-v2.0.003_vs_2.4.20.patch.bz2
 Patch111:	linux-2.4.20-bridge-nf-0.0.10.patch.bz2
 # http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
 Patch115:	linux-2.4.20-ipvs-%{ipvs_version}.patch.bz2
-Patch120:	http://luxik.cdi.cz/~devik/qos/imq-2.4.18.diff-10
+# http://trash.net/~kaber/imq/
+Patch120:	imq-2.4.18.diff-10
 # ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
 Patch125:	linux-2.4.18-mppe.patch
 
