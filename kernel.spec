@@ -76,7 +76,7 @@ Patch0:		2.6.0-ksyms-add.patch
 Patch1:		cset-%{_cset}.txt.gz
 %endif
 
-Patch3:		http://www.13thfloor.at/vserver/e_patches/vs-26x/patch-2.6.2-rc1-vs0.05.diff
+Patch3:		http://vserver.13thfloor.at/Experimental/patch-2.6.2-rc1-vs0.05.1.diff
 
 Patch4:		squashfs1.3r2-patch
 
