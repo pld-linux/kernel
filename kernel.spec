@@ -5,6 +5,8 @@
 # _with_lids		- build LIDS enabled kernels
 # _without_grsec	- build kernel without grsecurity patch
 #
+# WARNING: grsec needs manual tweaking, read note in the patch for details
+#
 %define		test_build		0
 #
 %define		pre_version		pre9
@@ -16,14 +18,14 @@
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		vlan_version		1.4
 %define		IPperson_version	20010724-2.4.7
-%define		grsec_version		1.6-2.4.7
+%define		grsec_version		1.8-2.4.7
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.7
-Release:	9
+Release:	10
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -35,7 +37,7 @@ Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
-Source7:	linux-2.4.7-netfilter-20010927.tar.gz
+Source7:	linux-2.4.7-netfilter-20010928.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source10:	http://www.linux-wlan.com/linux-wlan/linux-wlan-ng-%{wlan_version}.tar.gz
@@ -164,6 +166,8 @@ Patch903:	linux-lids-with-abi.patch
 Patch904:	linux-vlan-fixpatch.patch
 Patch905:	linux-ipvs+ext3.patch
 Patch906:	linux-ext3-quota.patch
+# tweaks for grsecurity, description inside patch
+Patch907:	linux-grsecurity-fixes.patch
 
 # Linus's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.7-%{pre_version}.gz
@@ -399,6 +403,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch8 -p1
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
 %patch9 -p1
+%patch907 -p1
 %endif
 
 %patch101 -p0
@@ -553,6 +558,7 @@ BuildKernel() {
 		Config="%{_target_cpu}"-$1
 %endif
 		KernelVer=%{version}-%{release}$1
+		ExtraVer="-%{release}$1"
 		echo BUILDING A KERNEL FOR $1...
 		shift
 	else
@@ -562,6 +568,7 @@ BuildKernel() {
 		Config="%{_target_cpu}"
 %endif
 		KernelVer=%{version}-%{release}
+		ExtraVer="-%{release}"
 		echo BUILDING THE NORMAL KERNEL...
 	fi
 	:> arch/$RPM_ARCH/defconfig
@@ -586,6 +593,7 @@ BuildKernel() {
 		echo ENABLING LIDS...
 		cat %{SOURCE1000} >> arch/$RPM_ARCH/defconfig
 		KernelVer="${KernelVer}-lids"
+		ExtraVer="${ExtraVer}-lids"
 	fi
 
 	%{__make} mrproper
@@ -661,7 +669,7 @@ BuildKernel BOOT
 %install
 umask 022
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{version}}
+install -d $RPM_BUILD_ROOT/usr/{include,src/linux-%{version}-%{release}}
 
 KERNEL_BUILD_DIR=`pwd`
 cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
@@ -669,24 +677,24 @@ cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
 for i in "" "-lids" smp smp-lids BOOT ; do
 	if [ -e  $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i ] ; then
 		rm -f $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
-		ln -sf /usr/src/linux-%{version} $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
+		ln -sf /usr/src/linux-%{version}-%{release} $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
 	fi
 done
-ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
+ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT/usr/include/linux
 ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
 
 %ifarch sparc sparc64
-ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
-ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
-sh %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}
-cp -a %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
+ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT/usr/include/asm-sparc
+ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT/usr/include/asm-sparc64
+sh %{SOURCE2} $RPM_BUILD_ROOT/usr/include
+cp -a %{SOURCE2} $RPM_BUILD_ROOT/usr/include/asm/BuildASM
 %else
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 %endif
 
-cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
+cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}-%{release}/
 
-cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+cd $RPM_BUILD_ROOT/usr/src/linux-%{version}-%{release}
 
 %{__make} mrproper
 find  -name "*~" -print | xargs rm -f
@@ -746,7 +754,7 @@ cat %{SOURCE1007} >> .config
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
 
-install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
+install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}-%{release}/include/linux/autoconf.h
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
@@ -758,7 +766,7 @@ install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoco
 # well include the depends stuff as well, after we fix the paths
 
 %{__make} depend 
-find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
+find $RPM_BUILD_ROOT/usr/src/linux-%{version}-%{release} -name ".*depend" | \
 while read file ; do
 	mv $file $file.old
 	sed -e "s|$RPM_BUILD_ROOT\(/usr/src/linux\)|\1|g" < $file.old > $file
@@ -770,7 +778,7 @@ rm -f scripts/mkdep
 
 %if %{?_with_lids:1}%{!?_with_lids:0}
 # LIDS config
-cat %{SOURCE1000} >> $RPM_BUILD_ROOT/usr/src/linux-%{version}/.config.lids
+cat %{SOURCE1000} >> $RPM_BUILD_ROOT/usr/src/linux-%{version}-%{release}/.config.lids
 %endif
 
 %clean
@@ -947,11 +955,11 @@ fi
 
 %post headers
 rm -f /usr/src/linux
-ln -snf linux-%{version} /usr/src/linux
+ln -snf linux-%{version}-%{release} /usr/src/linux
 
 %postun headers
 if [ -L /usr/src/linux ]; then 
-	if [ "`ls -l /usr/src/linux | awk '{ print $11 }'`" = "linux-%{version}" ]; then
+	if [ "`ls -l /usr/src/linux | awk '{ print $11 }'`" = "linux-%{version}-%{release}" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f /usr/src/linux
 		fi
@@ -1053,37 +1061,37 @@ fi
 
 %files headers
 %defattr(644,root,root,755)
-%dir %{_prefix}/src/linux-%{version}
-%{_prefix}/src/linux-%{version}/include
-%{_includedir}/asm
-%{_includedir}/linux
+%dir /usr/src/linux-%{version}-%{release}
+/usr/src/linux-%{version}-%{release}/include
+/usr/include/asm
+/usr/include/linux
 
 %files source
 %defattr(-,root,root,755)
-%{_prefix}/src/linux-%{version}/Documentation
-%{_prefix}/src/linux-%{version}/abi
-%{_prefix}/src/linux-%{version}/arch
-%{_prefix}/src/linux-%{version}/crypto
-%{_prefix}/src/linux-%{version}/drivers
-%{_prefix}/src/linux-%{version}/fs
-%{_prefix}/src/linux-%{version}/grsecurity
-%{_prefix}/src/linux-%{version}/i8255
-%{_prefix}/src/linux-%{version}/init
-%{_prefix}/src/linux-%{version}/ipc
-%{_prefix}/src/linux-%{version}/kdb
-%{_prefix}/src/linux-%{version}/kernel
-%{_prefix}/src/linux-%{version}/lib
-%{_prefix}/src/linux-%{version}/mm
-%{_prefix}/src/linux-%{version}/net
-%{_prefix}/src/linux-%{version}/scripts
-%{_prefix}/src/linux-%{version}/.config
-%{?_with_lids:%{_prefix}/src/linux-%{version}/.config.lids}
-%{_prefix}/src/linux-%{version}/.depend
-%{_prefix}/src/linux-%{version}/.hdepend
-%{_prefix}/src/linux-%{version}/COPYING
-%{_prefix}/src/linux-%{version}/CREDITS
-%{_prefix}/src/linux-%{version}/MAINTAINERS
-%{_prefix}/src/linux-%{version}/Makefile
-%{_prefix}/src/linux-%{version}/README
-%{_prefix}/src/linux-%{version}/REPORTING-BUGS
-%{_prefix}/src/linux-%{version}/Rules.make
+/usr/src/linux-%{version}-%{release}/Documentation
+/usr/src/linux-%{version}-%{release}/abi
+/usr/src/linux-%{version}-%{release}/arch
+/usr/src/linux-%{version}-%{release}/crypto
+/usr/src/linux-%{version}-%{release}/drivers
+/usr/src/linux-%{version}-%{release}/fs
+/usr/src/linux-%{version}-%{release}/grsecurity
+/usr/src/linux-%{version}-%{release}/i8255
+/usr/src/linux-%{version}-%{release}/init
+/usr/src/linux-%{version}-%{release}/ipc
+/usr/src/linux-%{version}-%{release}/kdb
+/usr/src/linux-%{version}-%{release}/kernel
+/usr/src/linux-%{version}-%{release}/lib
+/usr/src/linux-%{version}-%{release}/mm
+/usr/src/linux-%{version}-%{release}/net
+/usr/src/linux-%{version}-%{release}/scripts
+/usr/src/linux-%{version}-%{release}/.config
+%{?_with_lids:/usr/src/linux-%{version}-%{release}/.config.lids}
+/usr/src/linux-%{version}-%{release}/.depend
+/usr/src/linux-%{version}-%{release}/.hdepend
+/usr/src/linux-%{version}-%{release}/COPYING
+/usr/src/linux-%{version}-%{release}/CREDITS
+/usr/src/linux-%{version}-%{release}/MAINTAINERS
+/usr/src/linux-%{version}-%{release}/Makefile
+/usr/src/linux-%{version}-%{release}/README
+/usr/src/linux-%{version}-%{release}/REPORTING-BUGS
+/usr/src/linux-%{version}-%{release}/Rules.make
