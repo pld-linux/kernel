@@ -7,22 +7,25 @@
 #
 %define		test_build		0
 #
-%define		pre_version		pre11
+%define		pre_version		pre6
 %define		lids_version		1.0.14-2.4.9
 %define		ipvs_version		0.9.4
 %define		freeswan_version	snap2001sep23b
 %define 	aacraid_version		1.0.6
-%define		wlan_version		0.1.9
+%define		wlan_version		0.1.10
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		vlan_version		1.4
 %define		IPperson_version	20010724-2.4.7
-%define		grsec_version		1.8-2.4.10
+%define		grsec_version		1.8.4-2.4.12
+%define		tulip_version		1.1.8
+%define		aic_version		6.2.3-2.4.7
+%define		jfs_version		2.4-1.0.7
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.4.10
+Version:	2.4.12
 Release:	0.1
 License:	GPL
 Group:		Base/Kernel
@@ -30,20 +33,20 @@ Group(pl):	Podstawowe/J±dro
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
-Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
+Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-133.tar.gz
 Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
-Source7:	linux-netfilter-patches-20010915.tar.gz
+Source7:	linux-2.4.12-netfilter-20011021.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
-# linux-wlan-ng-0.1.9.tar.gz
 Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_version}.tar.gz
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
 Source12:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
 Source13:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
-Source14:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-1.0.5-patch.tar.gz
+Source14:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}-patch.tar.gz
+Source15:	http://prdownloads.sourceforge.net/tulip/tulip-%{tulip_version}.tar.gz
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -60,10 +63,8 @@ Source1000:	%{name}-lids.config
 Source1001:	%{name}-abi.config
 Source1002:	%{name}-grsec.config
 Source1003:	%{name}-addon.config
-Source1004:	%{name}-xfs.config
-Source1005:	%{name}-netfilter.config
-Source1006:	%{name}-ipvs.config
-Source1007:	%{name}-ippersonality.config
+Source1004:	%{name}-netfilter.config
+Source1005:	%{name}-ipvs.config
 
 # New features
 
@@ -76,80 +77,72 @@ Patch3:		linux-2.4.9-aacraid-20010816.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.10.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/
-Patch5:		linux-2.4.10-xfs-20010924.patch.gz
+Patch5:		linux-2.4.13.5-xfs-20011021.patch.gz
 # Compressed iso9660 filesystem
-Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs+filemap-2.4.7-1.diff.gz
+Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-unified-2.4.12.diff.gz
 # Homepage of ABI : http://linux-abi.sourceforge.net/
 # http://prdownloads.sourceforge.net/linux-abi/
 Patch7:		linux-abi-2.4.3-PLD.patch
 Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
 Patch9:		linux-grsecurity-%{grsec_version}.patch
-# Linux Compressed cache
-Patch10:	http://prdownloads.sourceforge.net/linuxcompressed/patch-comp-cache-2.4.6-0.17.bz2
 # EXT3
 # http://www.uow.edu.au/~andrewm/linux/ext3/
-Patch11:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.10-2410.gz
+Patch10:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.10-2410.gz
 
 # Assorted bugfixes
 
-# Quota fixes
-# Patch100:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.6-2.diff.gz
-Patch100:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.10-pre11-1.diff.gz
 # from LKML
-Patch101:	linux-scsi-debug-bug.patch
-Patch102:	linux-2.4.2-raw-ip.patch
-Patch103:	PCI_ISA_bridge.patch
-Patch104:	linux-2.4.2-nvram-hdd.patch
-Patch105:	linux-2.4-fix-kapm.patch
-Patch106:	epca-fix-missing-unregister-driver.patch
+Patch100:	linux-scsi-debug-bug.patch
+Patch101:	linux-2.4.2-raw-ip.patch
+Patch102:	PCI_ISA_bridge.patch
+Patch103:	linux-2.4.2-nvram-hdd.patch
+Patch104:	linux-2.4-fix-kapm.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
-Patch107:	linux-2.4.2-pcnet-parms.patch
-Patch108:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.6-p1.06062001.patch.gz
-Patch109:	linux-reiserfs-rename.patch
-Patch110:	linux-alpha-nfs-2.4.2.patch
-Patch111:	linux-2.4-string.patch
+Patch105:	linux-2.4.2-pcnet-parms.patch
+Patch106:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.6-p1.06062001.patch.gz
+Patch107:	linux-reiserfs-rename.patch
+Patch108:	linux-alpha-nfs-2.4.2.patch
+Patch109:	linux-2.4-string.patch
 # raid5 xor fix for PIII/P4, should go away shortly
-Patch112:	linux-2.4.0-raid5xor.patch
+Patch110:	linux-2.4.0-raid5xor.patch
 # disable some networking printk's
-Patch113:	linux-2.4.1-netdebug.patch
+Patch111:	linux-2.4.1-netdebug.patch
 # SCSI Reset patch for clustering stuff
-Patch114:	linux-2.4.1-scsi-reset.patch
+Patch112:	linux-2.4.1-scsi-reset.patch
 # Add an ioctl to the block layer so we can be EFI compliant
-Patch115:	linux-2.4.2-blkioctl-sector.patch
+Patch113:	linux-2.4.2-blkioctl-sector.patch
 # OHCI IRQ sanity check
-Patch116:	linux-2.4.2-ohci-irq.patch
+Patch114:	linux-2.4.2-ohci-irq.patch
 # fix lun probing on multilun RAID chassis
-Patch117:	linux-2.4.2-scsi_scan.patch
+Patch115:	linux-2.4.12-scsi_scan.patch
 # fix pcnet32 networkdriver load vs ifconfig races
-Patch118:	linux-2.4.3-pcnet32.patch
+Patch116:	linux-2.4.3-pcnet32.patch
 # fix rawio
-Patch119:	linux-2.4.3-rawio.patch
+Patch117:	linux-2.4.3-rawio.patch
 # extra PnP id for sb32awe
-Patch120:	linux-2.4.3-sb.patch
-# ideraid driver updates
-Patch121:	linux-2.4.10-ideraid.patch
+Patch118:	linux-2.4.3-sb.patch
 # another sb16 pnp id
-Patch122:	linux-2.4.6-sb_id.patch
-Patch123:	linux-2.4.10-aironet.patch
-Patch124:	linux-2.4.10-cpqfc.patch
-Patch125:	linux-2.4.10-SAA9730-mips-only.patch
+Patch119:	linux-2.4.6-sb_id.patch
+Patch120:	linux-2.4.10-aironet.patch
+Patch121:	linux-2.4.10-cpqfc.patch
+# Created from lvm.tgz:LVM/PATCHES by doing make
+Patch122:	linux-2.4.7-lvm-1.0.1rc3cvs.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
 Patch900:	kernel-i8255-asm-fix.patch
-Patch901:	dc395-patch-PLD-fix.patch
 # patch fixing problem with ABI and LIDS
-Patch902:	linux-lids-with-abi.patch
-Patch903:	linux-vlan-fixpatch-2.4.7-pre6.patch
+Patch901:	linux-lids-with-abi.patch
+Patch902:	linux-vlan-fixpatch.patch
 # patch fixing LIDS stupidity
-#Patch904:	linux-lids-fixpatch.patch
-Patch905:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
-Patch906:	linux-ipvs+ext3.patch
-Patch907:	linux-ext3-quota.patch
+#Patch903:	linux-lids-fixpatch.patch
+Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
+Patch905:	linux-ipvs+ext3.patch
+Patch906:	linux-ext3-quota.patch
 
 # Linus's -pre
-#Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.10-%{pre_version}.gz
+Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.13-%{pre_version}.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -366,40 +359,38 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%{?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -n linux}
-%{!?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -a14 -n linux}
-#%patch1000 -p1
+%{?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
+%{!?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
+%patch1000 -p1
 #%patch0 -p1
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-%patch11 -p1
-%patch100 -p1
+##%patch10 -p1
 %patch5 -p1
-#%patch6 -p1
+%patch6 -p1
 #%patch7 -p1
 %patch8 -p1
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
 %patch9 -p1
 %endif
 
-%patch101 -p0
-%patch102 -p1
+%patch100 -p0
+%patch101 -p1
+%patch102 -p0
 %patch103 -p0
-%patch104 -p0
+%patch104 -p1
 %patch105 -p1
-%patch106 -p1
+#%patch106 -p1
 %patch107 -p1
-#%patch108 -p1
+%patch108 -p1
 %patch109 -p1
-%ifarch alpha
 %patch110 -p1
-%endif
 %patch111 -p1
-%patch112 -p1
+%patch112 -p2
 %patch113 -p1
-%patch114 -p2
+%patch114 -p1
 %patch115 -p1
 %patch116 -p1
 %patch117 -p1
@@ -407,15 +398,11 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch119 -p1
 %patch120 -p1
 %patch121 -p1
-%patch122 -p1
-%patch123 -p1
-%patch124 -p1
-%patch125 -p1
+#%patch122 -p1
 
 %patch900 -p0 
-%patch901 -p0
-%patch905 -p0
-%patch907 -p1
+%patch904 -p0
+#%patch906 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -442,14 +429,14 @@ echo -e $ANS | ./runme)
 # LIDS
 echo Adding LIDS
 cd lids-%{lids_version}
-%patch902 -p1
+%patch901 -p1
 cd ..
 patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
 %endif
 
 # IPVS
 echo Adding IPVS
-%patch906 -p1
+#%patch905 -p1
 for i in ipvs-%{ipvs_version}/*.diff ; do
 	patch -p1 -s <$i
 done
@@ -475,7 +462,7 @@ rm -rf %{sym_ncr_version}
 # 802.1Q VLANs
 echo Adding VLANs
 cd vlan
-%patch903 -p1
+%patch902 -p1
 cd ..
 patch -p1 -s <vlan/vlan_2.4.patch
 
@@ -485,8 +472,13 @@ patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010724-l
 
 # JFS
 echo Adding JFS
-patch -p1 -s <jfs-2.4.common-v1.0.5-patch
-patch -p1 -s <jfs-2.4.7-v1.0.5-patch
+patch -p1 -s <jfs-2.4.common-1.0.7-patch
+patch -p1 -s <jfs-2.4.7-1.0.7-patch
+
+# Tulip driver installed.
+echo Replaced Tulip driver
+cp -f tulip-%{tulip_version}/src/*.{c,h} drivers/net/tulip
+cp -f tulip-%{tulip_version}/src/ChangeLog drivers/net/tulip
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -549,13 +541,16 @@ BuildKernel() {
 	cat %{SOURCE1003} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1004} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1005} >> arch/$RPM_ARCH/defconfig
-	cat %{SOURCE1006} >> arch/$RPM_ARCH/defconfig
-	cat %{SOURCE1007} >> arch/$RPM_ARCH/defconfig
 	if [ "$LIDS" = "lids" ] ; then
 		echo ENABLING LIDS...
 		cat %{SOURCE1000} >> arch/$RPM_ARCH/defconfig
 		KernelVer="${KernelVer}-lids"
 	fi
+%ifarch i386
+	mv -f arch/$RPM_ARCH/defconfig arch/$RPM_ARCH/defconfig.orig
+	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/'
+		arch/$RPM_ARCH/defconfig.orig > arch/$RPM_ARCH/defconfig
+%endif
 
 	%{__make} mrproper
 	ln -sf arch/$RPM_ARCH/defconfig .config
@@ -682,8 +677,6 @@ cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
 cat %{SOURCE1005} >> .config
-cat %{SOURCE1006} >> .config
-cat %{SOURCE1007} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
@@ -709,8 +702,6 @@ cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
 cat %{SOURCE1005} >> .config
-cat %{SOURCE1006} >> .config
-cat %{SOURCE1007} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
