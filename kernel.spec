@@ -15,15 +15,14 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 # Netfilter snap.
-%define		_netfilter_snap		20040322
+%define		_netfilter_snap		20040330
 #
 %define		no_install_post_strip	1
 #
 Summary:	The Linux kernel (the core of the Linux operating system)
 Name:		kernel
 Version:	2.6.4
-Release:	0.4
-Epoch:		0
+Release:	0.5
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
@@ -38,6 +37,7 @@ Patch6:		2.6.0-t8-swap-include-lkml.patch
 Patch7:		2.6.0-t9-acpi_osl-lkml.patch
 Patch8:		2.6.1-kbuild-out-of-tree.diff
 Patch9:		2.6.1-squashfs1.3r3.patch
+Patch10:	2.6.4-shfs.patch
 Patch20:	2.6.4-paxgrsec.patch
 Patch21:	2.6.4-paxgrsec-gcc34.patch
 Patch30:	2.6.4-esfq.patch
@@ -46,9 +46,8 @@ Patch32:	2.6.4-imq-nat.patch
 Patch33:	2.6.4-unclean.patch
 Patch34:	2.6.4-wrr.patch
 Patch35:	2.6.4-hfsc.patch
-Patch50:	2.6.4-pom-ng-%{_netfilter_snap}-base.patch
-Patch51:	2.6.4-pom-ng-%{_netfilter_snap}-extra.patch
-Patch52:	2.6.4-pom-ng-%{_netfilter_snap}-base-osf.patch
+Patch50:	2.6.4-pom-ng-%{_netfilter_snap}.patch
+Patch51:	2.6.4-pom-ng-20040322-base-osf.patch
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 BuildRequires:	module-init-tools
@@ -123,6 +122,7 @@ hardware.
 %patch7 -p1
 %patch8 -p1
 %patch9 -p1
+%patch10 -p1
 
 %patch20 -p1
 %patch21 -p1
@@ -136,7 +136,6 @@ hardware.
 
 %patch50 -p1
 %patch51 -p1
-%patch52 -p1
 
 %build
 sed -i 's/EXTRAVERSION =.*/EXTRAVERSION =/g' Makefile
