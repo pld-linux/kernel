@@ -11,8 +11,8 @@
 # _without_doc		- don't build documentation package
 #
 
-%define		patch_level	2
-%define		_rel		7
+%define		patch_level	0
+%define		_rel		8
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 #
