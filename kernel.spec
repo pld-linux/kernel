@@ -56,6 +56,7 @@ Patch21:	2.6.0-t1-vesafb.patch
 Patch22:	2.6.0-t1-v4l-m-lkml.patch
 #Patch23:	2.6.0-t1-microstate-lkml.patch
 Patch100:	linux-2.6-miscfix.patch
+Patch101:	2.6.0-t3-swim3.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -297,6 +298,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch21 -p1
 #%patch22 -p1
 %patch100 -p1
+%patch101 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
