@@ -314,7 +314,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch4 -p1
 
-%patch6 -p1
+#%%patch6 -p1
 
 %patch8 -p1
 
