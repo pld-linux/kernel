@@ -1,0 +1,47 @@
+http://www.fedoraforum.org/forum/archive/index.php/t-20281.html
+
+Kernels 2.6.7 and 2.6.8 come with changes to the tcp window size that (should) increase the efficiency of tcp. What it HAS
+done is expose a problem with the way some routers and firewalls handle requests for large windows. Those routers and
+firewalls just refuse to handle them; which is why you may be able to access some sites, but not others.
+
+The quick fix is to su to root and do two things:
+
+#echo "net.ipv4.tcp_moderate_rcvbuf=0" >> /etc/sysctl.conf
+#echo "net.ipv4.tcp_default_win_scale=0" >> /etc/sysctl.conf
+
+diff -ur linux-2.6.8.1.orig/Documentation/networking/ip-sysctl.txt linux-2.6.8.1/Documentation/networking/ip-sysctl.txt
+--- linux-2.6.8.1.orig/Documentation/networking/ip-sysctl.txt	2004-08-14 12:55:20.000000000 +0200
++++ linux-2.6.8.1/Documentation/networking/ip-sysctl.txt	2004-10-03 19:38:20.292776624 +0200
+@@ -353,7 +353,7 @@
+ tcp_default_win_scale - INTEGER
+ 	Sets the minimum window scale TCP will negotiate for on all
+ 	conections.
+-	Default: 7
++	Default: 0
+ 
+ 
+ tcp_frto - BOOLEAN
+diff -ur linux-2.6.8.1.orig/net/ipv4/tcp.c linux-2.6.8.1/net/ipv4/tcp.c
+--- linux-2.6.8.1.orig/net/ipv4/tcp.c	2004-08-14 12:55:09.000000000 +0200
++++ linux-2.6.8.1/net/ipv4/tcp.c	2004-10-03 19:35:49.451707952 +0200
+@@ -276,7 +276,7 @@
+ 
+ atomic_t tcp_orphan_count = ATOMIC_INIT(0);
+ 
+-int sysctl_tcp_default_win_scale = 7;
++int sysctl_tcp_default_win_scale = 0;
+ 
+ int sysctl_tcp_mem[3];
+ int sysctl_tcp_wmem[3] = { 4 * 1024, 16 * 1024, 128 * 1024 };
+diff -ur linux-2.6.8.1.orig/net/ipv4/tcp_input.c linux-2.6.8.1/net/ipv4/tcp_input.c
+--- linux-2.6.8.1.orig/net/ipv4/tcp_input.c	2004-08-14 12:55:48.000000000 +0200
++++ linux-2.6.8.1/net/ipv4/tcp_input.c	2004-10-03 19:37:04.070364192 +0200
+@@ -90,7 +90,7 @@
+ int sysctl_tcp_westwood;
+ int sysctl_tcp_vegas_cong_avoid;
+ 
+-int sysctl_tcp_moderate_rcvbuf = 1;
++int sysctl_tcp_moderate_rcvbuf = 0;
+ 
+ /* Default values of the Vegas variables, in fixed-point representation
+  * with V_PARAM_SHIFT bits to the right of the binary point.
