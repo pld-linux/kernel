@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		2
+%define		_rel		3
 %define		_test_ver	8
 %define		_cset		0
 
@@ -63,6 +63,7 @@ Patch1:		cset-%{_cset}.txt.gz
 
 Patch4:		squashfs1.3-patch
 
+Patch5:		2.6.0-t8-initrd.patch
 Patch6:		2.6.0-t3-sysfs_mem-lkml.patch
 
 Patch8:		2.6.0-t4-PPC-ENODEV.patch
@@ -371,6 +372,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %endif
 
 %patch4 -p1
+
+%patch5 -p1
 
 %patch6 -p1
 
