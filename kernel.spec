@@ -45,7 +45,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		2
+%define		_rel		3
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -170,6 +170,8 @@ Patch104:	linux-2.6-tcp-unaligned-access.patch
 Patch105:	linux-2.6-align-udp-packet.patch
 Patch106:	linux-2.6-smbfs.patch
 Patch107:	linux-2.6-jbd-temp-unlink.patch
+Patch108:	linux-2.6-vm-orphaned-pages.patch
+Patch109:	linux-2.6-reiserfs-page-leak.patch
 
 # linux vserver
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
@@ -562,6 +564,8 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch105 -p1
 %patch106 -p1
 %patch107 -p1
+%patch108 -p1
+%patch109 -p1
 
 %if %{with vserver}
 %patch200 -p1
