@@ -11,12 +11,12 @@
 #endif /* __pld_autoconf_included_file__ */
 
 #if defined(__KERNEL_SMP)
-#include <linux/autoconf-smp.h>
+#include "/usr/src/linux-mosix/include/linux/autoconf-smp.h"
 #define __pld_autoconf_included_file__ 1
 #endif /* __KERNEL_SMP */
 
 #if !defined(__pld_autoconf_included_file__)
-#include <linux/autoconf-up.h>
+#include "/usr/src/linux-mosix/include/linux/autoconf-up.h"
 #else
 #undef __pld_autoconf_included_file__
 #endif /* __pld_autoconf_included_file__ */
