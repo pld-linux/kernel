@@ -177,11 +177,10 @@ Patch61:	%{name}-MAX_INIT_ARGS.patch
 
 # http://tahoe.pl/patch.htm
 Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
-
-# Spock discontinued porting bootsplash to new kernel versions
-# but he introduced a rewrite of bootsplash called gensplash.
+# http://dev.gentoo.org/~spock/projects/vesafb-tng/
+Patch71:	vesafb-tng-0.9-rc4-r3-2.6.9-rc3.patch
 # http://dev.gentoo.org/~spock/projects/gensplash/
-Patch72:	fbsplash-0.9-r7-2.6.9-rc1.patch
+Patch72:	fbsplash-0.9-r8-2.6.9-rc3.patch
 Patch73:	squashfs2.0-patch
 # http://dl.sourceforge.net/pramfs/
 Patch74:	pramfs-2.6.4.patch
@@ -614,14 +613,18 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch61 -p1
 
 %patch70 -p1
+%patch71 -p1
 
 %if %{with fbsplash}
 %patch72 -p1
 %endif
+
 %patch73 -p1
+
 %if %{with parmfs}
 %patch74 -p1
 %endif
+
 %patch75 -p1
 %patch76 -p1
 # see TODO
