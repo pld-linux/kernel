@@ -296,8 +296,8 @@ BuildRequires:	egcs64
 #BuildRequires:	%{kgcc_package}
 %endif
 BuildRequires:	modutils
-Buildrequires:	perl-base
-BuildRequires:	sed >= 3.95
+BuildRequires:	perl-base
+BuildRequires:	sed
 Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.7.0
@@ -791,15 +791,14 @@ cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 %endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
-sed -i -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile
-sed -i -e 's/EXTRA_CFLAGS.*-g//g' net/ipsec/Makefile
+perl -pi -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile
+perl -pi -e 's/EXTRA_CFLAGS.*-g//g' net/ipsec/Makefile
 
 # Fix EXTRAVERSION and CC in main Makefile
-sed -i -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
+perl -pi -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' Makefile
 %ifarch sparc64
-    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
+perl -pi -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' Makefile
 %endif
-    Makefile
 
 %build
 BuildKernel() {
@@ -856,7 +855,7 @@ BuildKernel() {
 %endif
 
 %ifarch i386
-	sed -i -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
+	perl -pi -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
 		arch/%{base_arch}/defconfig
 %endif
 
@@ -1080,7 +1079,7 @@ echo "#include <linux/modsetver.h>" > include/linux/modversions.h
 %if %{?_without_source:0}%{!?_without_source:1}
 %{__make} depend 
 find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
-	xargs sed -i -e "s|$RPM_BUILD_ROOT\(/usr/src/linux\)|\1|g"
+	xargs perl -pi -e "s|$RPM_BUILD_ROOT\(/usr/src/linux\)|\1|g"
 
 %{__make} clean
 rm -f scripts/mkdep
