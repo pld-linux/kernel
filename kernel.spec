@@ -7,14 +7,14 @@
 %define		tun_version		1.1
 %define         vlan_version            1.0.1
 %define		symncr_version		1.7.3c-ncr-3.4.3b
-%define		jfs_version		2.2-1.0.4
+%define		jfs_version		1.0.4
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.19
-Release:	19
+Release:	20
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -31,7 +31,7 @@ Source8:	http://www.dandelion.com/Linux/DAC960-2.2.10.tar.gz
 Source9:	serial-5.05.tar.gz
 Source10:	http://vtun.sourceforge.net/tun/tun-%{tun_version}.tar.gz
 Source13:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
-Source14:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}-patch.tar.gz
+Source14:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.2-%{jfs_version}-patch.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -86,6 +86,7 @@ Patch34:	%{name}-sparc-zs.h.patch
 Patch35:	%{name}-sym53c8xx.patch
 Patch36:	ip_masq_irc-2.2.19-dcc_check-3.diff
 Patch37:	%{name}-udf.patch
+Patch38:	jfs-%{version}-v%{jfs_version}-patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -349,7 +350,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -a13 -n linux
+%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -a13 -a14 -n linux
 
 %patch0 -p1
 %patch1 -p1
@@ -417,6 +418,10 @@ rm -rf sym-%{symncr_version}
 %patch35 -p1
 %patch36 -p1
 %patch37 -p1
+
+# JFS
+patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
+%patch38 -p1
 
 %build
 BuildKernel() {
@@ -673,6 +678,10 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH34}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH35}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH36}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH37}
+
+# JFS
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < jfs-2.2.common-v%{jfs_version}-patch
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH38}
 
 %ifarch sparc sparc64
 ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
