@@ -17,7 +17,7 @@
 %define		_rel		0.1
 %define		test_ver	4
 %define		patch_level	0
-%define		_cset		20030906
+%define		_cset		20030906_2214
 
 %if %{test_ver} != 0
 %define		test	test%{test_ver}
@@ -71,7 +71,7 @@ Source100:	%{name}-misc.config
 # ftp://ftp.kernel.org:/pub/linux/kernel/v2.6/snapshots/
 #Patch1:		patch-2.6.0-test4-bk%{_bk_ver}
 # http://www.kernel.org/pub/linux/kernel/v2.5/testing/cset/
-Patch1:		cset-%{_cset}_2214.txt.gz
+Patch1:		cset-%{_cset}.txt.gz
 
 Patch22:	2.6.0-t3-swim3.patch
 Patch23:	squashfs1.3-patch
@@ -588,7 +588,7 @@ if [ ! -L /lib/modules/%{version} ] ; then
 fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release} /lib/modules/%{version}
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+%depmod %{_kernel_ver}
 
 /sbin/geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
 mv -f /boot/initrd /boot/initrd.old
@@ -613,7 +613,7 @@ if [ ! -L /lib/modules/%{version} ] ; then
 fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
+%depmod %{_kernel_ver}smp
 
 /sbin/geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
 mv -f /boot/initrd /boot/initrd.old
