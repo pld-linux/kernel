@@ -374,7 +374,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch11 -p1
 %patch100 -p1
 %patch5 -p1
-%patch6 -p1
+#%patch6 -p1
 #%patch7 -p1
 %patch8 -p1
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
