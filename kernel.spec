@@ -46,7 +46,7 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_rel		0.12
-%define		_cset		20040601_0409
+%define		_cset		20040601_1708
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040518
@@ -74,7 +74,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	3d6d985f6fb46f40be09ddf05a835fe1
+# Source3-md5:	ece9e328e0cdcf4a093141db36619934
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -892,9 +892,9 @@ KERNEL_BUILD_DIR=`pwd`
 
 # UP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
-rm -rf $KERNEL_INSTALL_DIR
-BuildConfig
-%{?with_up:BuildKernel}
+#rm -rf $KERNEL_INSTALL_DIR
+#BuildConfig
+#{?with_up:BuildKernel}
 %{?with_up:PreInstallKernel}
 
 # SMP KERNEL
