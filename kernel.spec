@@ -12,7 +12,7 @@
 #
 
 %define		patch_level	0
-%define		_rel		14
+%define		_rel		15
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 #
@@ -341,6 +341,7 @@ Patch252:	http://luxik.cdi.cz/~devik/qos/htb/v3/htb_killdbg_2421.diff
 # change network packet traveling, if NAT is enabled should go first there,
 # next one should be IMQ device 
 Patch253:	linux-2.4.25-change-imq_with_nat.patch
+Patch254:	linux-2.4.25-change-imq_number_devices.patch
 
 #esfq
 Patch260:	linux-2.4.18-esfq.diff
@@ -829,6 +830,7 @@ echo Installing WRR Support
 
 # imq vs nat :-)
 %patch253 -p1
+%patch254 -p1
 
 # esfq
 %patch260 -p1
