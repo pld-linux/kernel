@@ -1,0 +1,661 @@
+diff -urN linux-2.2.26.orig/linux-2.2.26-ow1/linux-2.2.26-ow1.diff linux-2.2.26/linux-2.2.26-ow1/linux-2.2.26-ow1.diff
+--- linux-2.2.26.orig/linux-2.2.26-ow1/linux-2.2.26-ow1.diff	Sun Feb 29 23:03:19 2004
++++ linux-2.2.26/linux-2.2.26-ow1/linux-2.2.26-ow1.diff	Mon Nov  1 19:27:52 2004
+@@ -1,36 +1,7 @@
+ diff -urP linux-2.2.26/Documentation/Configure.help linux/Documentation/Configure.help
+ --- linux-2.2.26/Documentation/Configure.help	Wed Mar  5 14:47:02 2003
+ +++ linux/Documentation/Configure.help	Sun Feb 29 14:56:39 2004
+-@@ -1949,6 +1949,12 @@
+-   called binfmt_elf.o. Saying M or N here is dangerous because some
+-   crucial programs on your system might be in ELF format.
+- 
+-+ELF binaries with a.out format interpreters or a.out libraries
+-+CONFIG_BINFMT_ELF_AOUT
+-+  The kernel may support ELF executables which use an a.out format
+-+  interpreter (dynamic linker) and/or a.out shared libraries, in
+-+  addition to the usual ELF-ELF setups. You shouldn't need this.
+-+
+- Kernel support for A.OUT binaries
+- CONFIG_BINFMT_AOUT
+-   A.out (Assembler.OUTput) is a set of formats for libraries and
+-@@ -1962,13 +1968,11 @@
+-   warrant removing support. However its removal is a good idea if you
+-   wish to ensure that absolutely none of your programs will use this
+-   older executable format. If you don't know what to answer at this
+--  point then answer Y. If someone told you "You need a kernel with
+-+  point then answer N. If someone told you "You need a kernel with
+-   QMAGIC support" then you'll have to say Y here. You may answer M to
+-   compile a.out support as a module and later load the module when you
+-   want to use a program or library in a.out format. The module will be
+--  called binfmt_aout.o. Saying M or N here is dangerous though,
+--  because some crucial programs on your system might still be in A.OUT
+--  format.
+-+  called binfmt_aout.o.
+- 
+- Kernel support for JAVA binaries (obsolete)
+- CONFIG_BINFMT_JAVA
+-@@ -15263,6 +15267,109 @@
++@@ -16691,6 +16691,108 @@
+    another UltraSPARC-IIi-cEngine boardset with hardware watchdog,
+    you should say N to this option. 
+     
+@@ -136,58 +107,12 @@
+ +  Note that this feature will do you no good unless you also configure
+ +  your resource limits (in particular, RLIMIT_AS and RLIMIT_NPROC). Most
+ +  systems don't need this.
+-+
+- #
+- # A couple of things I keep forgetting:
+- #   capitalize: AppleTalk, Ethernet, DOS, DMA, FAT, FTP, Internet, 
+-diff -urP linux-2.2.26/Makefile linux/Makefile
+---- linux-2.2.26/Makefile	Sun Feb 29 14:55:25 2004
+-+++ linux/Makefile	Sun Feb 29 14:57:46 2004
+-@@ -1,7 +1,7 @@
+- VERSION = 2
+- PATCHLEVEL = 2
+- SUBLEVEL = 26
+--EXTRAVERSION = 
+-+EXTRAVERSION = -ow1
+- 
+- ARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/)
+- 
+-diff -urP linux-2.2.26/arch/alpha/config.in linux/arch/alpha/config.in
+---- linux-2.2.26/arch/alpha/config.in	Sun Mar 25 16:37:29 2001
+-+++ linux/arch/alpha/config.in	Sun Feb 29 14:56:39 2004
+-@@ -204,6 +204,9 @@
+- bool 'Sysctl support' CONFIG_SYSCTL
+- tristate 'Kernel support for a.out (ECOFF) binaries' CONFIG_BINFMT_AOUT
+- tristate 'Kernel support for ELF binaries' CONFIG_BINFMT_ELF
+-+if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
+-+  bool '   ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
+-+fi
+- tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+- if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
+-   tristate 'Kernel support for JAVA binaries (obsolete)' CONFIG_BINFMT_JAVA
+-@@ -293,6 +296,8 @@
+-   source drivers/sound/Config.in
+- fi
+- endmenu
+-+
+-+source security/Config.in
+  
+- mainmenu_option next_comment
+- comment 'Kernel hacking'
++ IP Security Protocol (IPSEC) (EXPERIMENTAL)
++ CONFIG_IPSEC
+ diff -urP linux-2.2.26/arch/alpha/defconfig linux/arch/alpha/defconfig
+ --- linux-2.2.26/arch/alpha/defconfig	Sun Mar 25 16:31:46 2001
+ +++ linux/arch/alpha/defconfig	Sun Feb 29 14:56:39 2004
+-@@ -51,8 +51,9 @@
+- CONFIG_SYSVIPC=y
+- # CONFIG_BSD_PROCESS_ACCT is not set
+- CONFIG_SYSCTL=y
+--CONFIG_BINFMT_AOUT=y
+-+# CONFIG_BINFMT_AOUT is not set
+- CONFIG_BINFMT_ELF=y
+-+# CONFIG_BINFMT_ELF_AOUT is not set
+- # CONFIG_BINFMT_MISC is not set
+- CONFIG_BINFMT_EM86=y
+- # CONFIG_PARPORT is not set
+ @@ -326,6 +327,16 @@
+  # Sound
+  #
+@@ -205,42 +130,9 @@
+  
+  #
+  # Kernel hacking
+-diff -urP linux-2.2.26/arch/arm/config.in linux/arch/arm/config.in
+---- linux-2.2.26/arch/arm/config.in	Sun Mar 25 16:31:54 2001
+-+++ linux/arch/arm/config.in	Sun Feb 29 14:56:39 2004
+-@@ -136,6 +136,9 @@
+- tristate 'Math emulation' CONFIG_NWFPE
+- tristate 'Kernel support for a.out binaries' CONFIG_BINFMT_AOUT
+- tristate 'Kernel support for ELF binaries' CONFIG_BINFMT_ELF
+-+if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
+-+  bool '   ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
+-+fi
+- tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+- if [ "$CONFIG_CPU_32" = "y" ]; then
+-    tristate 'RISC OS personality' CONFIG_ARTHUR
+-@@ -254,6 +257,8 @@
+- fi
+- 
+- source fs/Config.in
+-+
+-+source security/Config.in
+- 
+- mainmenu_option next_comment
+- comment 'Kernel hacking'
+ diff -urP linux-2.2.26/arch/arm/defconfig linux/arch/arm/defconfig
+ --- linux-2.2.26/arch/arm/defconfig	Sun Mar 25 16:31:54 2001
+ +++ linux/arch/arm/defconfig	Sun Feb 29 14:56:39 2004
+-@@ -49,8 +49,9 @@
+- # CONFIG_BSD_PROCESS_ACCT is not set
+- CONFIG_SYSCTL=y
+- CONFIG_NWFPE=y
+--CONFIG_BINFMT_AOUT=y
+-+# CONFIG_BINFMT_AOUT is not set
+- CONFIG_BINFMT_ELF=y
+-+# CONFIG_BINFMT_ELF_AOUT is not set
+- # CONFIG_BINFMT_MISC is not set
+- # CONFIG_ARTHUR is not set
+- CONFIG_PARPORT=y
+ @@ -481,6 +482,16 @@
+  # CONFIG_NLS_ISO8859_9 is not set
+  CONFIG_NLS_ISO8859_15=m
+@@ -261,16 +153,6 @@
+ diff -urP linux-2.2.26/arch/i386/config.in linux/arch/i386/config.in
+ --- linux-2.2.26/arch/i386/config.in	Fri Nov  2 16:39:05 2001
+ +++ linux/arch/i386/config.in	Sun Feb 29 14:56:39 2004
+-@@ -96,6 +96,9 @@
+- bool 'Sysctl support' CONFIG_SYSCTL
+- tristate 'Kernel support for a.out binaries' CONFIG_BINFMT_AOUT
+- tristate 'Kernel support for ELF binaries' CONFIG_BINFMT_ELF
+-+if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
+-+  bool '   ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
+-+fi
+- tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+- if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
+-   tristate 'Kernel support for JAVA binaries (obsolete)' CONFIG_BINFMT_JAVA
+ @@ -205,6 +208,18 @@
+  if [ "$CONFIG_SOUND" != "n" ]; then
+    source drivers/sound/Config.in
+@@ -293,19 +175,6 @@
+ diff -urP linux-2.2.26/arch/i386/defconfig linux/arch/i386/defconfig
+ --- linux-2.2.26/arch/i386/defconfig	Sun Mar 25 16:37:29 2001
+ +++ linux/arch/i386/defconfig	Sun Feb 29 14:56:39 2004
+-@@ -56,9 +56,10 @@
+- CONFIG_SYSVIPC=y
+- # CONFIG_BSD_PROCESS_ACCT is not set
+- CONFIG_SYSCTL=y
+--CONFIG_BINFMT_AOUT=y
+-+# CONFIG_BINFMT_AOUT is not set
+- CONFIG_BINFMT_ELF=y
+--CONFIG_BINFMT_MISC=y
+-+# CONFIG_BINFMT_ELF_AOUT is not set
+-+# CONFIG_BINFMT_MISC is not set
+- # CONFIG_PARPORT is not set
+- # CONFIG_APM is not set
+- # CONFIG_TOSHIBA is not set
+ @@ -418,6 +419,18 @@
+  # Sound
+  #
+@@ -600,42 +469,9 @@
+  
+  	current->tss.error_code = error_code;
+  	current->tss.trap_no = 13;
+-diff -urP linux-2.2.26/arch/m68k/config.in linux/arch/m68k/config.in
+---- linux-2.2.26/arch/m68k/config.in	Sun Mar 25 16:31:50 2001
+-+++ linux/arch/m68k/config.in	Sun Feb 29 14:56:39 2004
+-@@ -84,6 +84,9 @@
+- bool 'Sysctl support' CONFIG_SYSCTL
+- tristate 'Kernel support for a.out binaries' CONFIG_BINFMT_AOUT
+- tristate 'Kernel support for ELF binaries' CONFIG_BINFMT_ELF
+-+if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
+-+  bool '   ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
+-+fi
+- tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+- 
+- if [ "$CONFIG_AMIGA" = "y" ]; then
+-@@ -461,6 +464,8 @@
+-   source drivers/video/Config.in
+-   endmenu
+- fi
+-+
+-+source security/Config.in
+- 
+- mainmenu_option next_comment
+- comment 'Kernel hacking'
+ diff -urP linux-2.2.26/arch/m68k/defconfig linux/arch/m68k/defconfig
+ --- linux-2.2.26/arch/m68k/defconfig	Sun Mar 25 16:31:50 2001
+ +++ linux/arch/m68k/defconfig	Sun Feb 29 14:56:39 2004
+-@@ -38,8 +38,9 @@
+- CONFIG_NET=y
+- CONFIG_SYSVIPC=y
+- CONFIG_SYSCTL=y
+--CONFIG_BINFMT_AOUT=y
+-+# CONFIG_BINFMT_AOUT is not set
+- CONFIG_BINFMT_ELF=y
+-+# CONFIG_BINFMT_ELF_AOUT is not set
+- CONFIG_ZORRO=y
+- # CONFIG_AMIGA_GSP is not set
+- # CONFIG_GSP_RESOLVER is not set
+ @@ -236,6 +237,16 @@
+  #
+  # CONFIG_SOUND is not set
+@@ -653,37 +489,9 @@
+  
+  #
+  # Kernel hacking
+-diff -urP linux-2.2.26/arch/mips/config.in linux/arch/mips/config.in
+---- linux-2.2.26/arch/mips/config.in	Sun Mar 25 16:31:47 2001
+-+++ linux/arch/mips/config.in	Sun Feb 29 14:56:39 2004
+-@@ -85,6 +85,7 @@
+- fi
+- define_bool CONFIG_BINFMT_AOUT n
+- define_bool CONFIG_BINFMT_ELF y
+-+bool 'ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
+- tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+- if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
+-   tristate 'Kernel support for JAVA binaries (obsolete)' CONFIG_BINFMT_JAVA
+-@@ -293,6 +294,8 @@
+- if [ "$CONFIG_SGI" = "y" ]; then
+-   source drivers/sgi/Config.in
+- fi
+-+
+-+source security/Config.in
+- 
+- mainmenu_option next_comment
+- comment 'Kernel hacking'
+ diff -urP linux-2.2.26/arch/mips/defconfig linux/arch/mips/defconfig
+ --- linux-2.2.26/arch/mips/defconfig	Sun Mar 25 16:31:48 2001
+ +++ linux/arch/mips/defconfig	Sun Feb 29 14:56:39 2004
+-@@ -38,6 +38,7 @@
+- CONFIG_ELF_KERNEL=y
+- # CONFIG_BINFMT_AOUT is not set
+- CONFIG_BINFMT_ELF=y
+-+# CONFIG_BINFMT_ELF_AOUT is not set
+- # CONFIG_BINFMT_MISC is not set
+- CONFIG_NET=y
+- CONFIG_SYSVIPC=y
+ @@ -362,6 +363,16 @@
+  # Sound
+  #
+@@ -701,54 +509,9 @@
+  
+  #
+  # Kernel hacking
+-diff -urP linux-2.2.26/arch/mips/kernel/irixelf.c linux/arch/mips/kernel/irixelf.c
+---- linux-2.2.26/arch/mips/kernel/irixelf.c	Fri Nov  2 16:39:05 2001
+-+++ linux/arch/mips/kernel/irixelf.c	Sun Feb 29 14:56:39 2004
+-@@ -9,6 +9,7 @@
+-  * Copyright 1993, 1994: Eric Youngdale (ericy@cais.com).
+-  */
+- 
+-+#include <linux/config.h>
+- #include <linux/module.h>
+- 
+- #include <linux/fs.h>
+-@@ -50,7 +51,9 @@
+- static struct linux_binfmt irix_format = {
+- 	module:		THIS_MODULE,
+- 	load_binary:	load_irix_binary,
+-+#ifdef CONFIG_BINFMT_ELF_AOUT
+- 	load_shlib:	load_irix_library,
+-+#endif
+- 	core_dump:	irix_core_dump,
+- 	min_coredump:	PAGE_SIZE,
+- };
+-@@ -817,6 +820,7 @@
+- 	return retval;
+- }
+- 
+-+#ifdef CONFIG_BINFMT_ELF_AOUT
+- /* This is really simpleminded and specialized - we are loading an
+-  * a.out library that is given an ELF header.
+-  */
+-@@ -915,6 +919,7 @@
+- 	kfree(elf_phdata);
+- 	return 0;
+- }
+-+#endif
+- 
+- /* Called through irix_syssgi() to map an elf image given an FD,
+-  * a phdr ptr USER_PHDRP in userspace, and a count CNT telling how many
+ diff -urP linux-2.2.26/arch/ppc/config.in linux/arch/ppc/config.in
+ --- linux-2.2.26/arch/ppc/config.in	Fri Nov  2 16:39:05 2001
+ +++ linux/arch/ppc/config.in	Sun Feb 29 14:56:39 2004
+-@@ -69,6 +69,7 @@
+- # only elf supported, a.out is not -- Cort
+- define_bool CONFIG_BINFMT_ELF y
+- define_bool CONFIG_KERNEL_ELF y
+-+bool 'ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
+- tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+- tristate 'Kernel support for JAVA binaries (obsolete)' CONFIG_BINFMT_JAVA
+- 
+ @@ -209,6 +210,8 @@
+  endmenu
+  
+@@ -761,17 +524,6 @@
+ diff -urP linux-2.2.26/arch/ppc/defconfig linux/arch/ppc/defconfig
+ --- linux-2.2.26/arch/ppc/defconfig	Sun Mar 25 16:31:49 2001
+ +++ linux/arch/ppc/defconfig	Sun Feb 29 14:56:39 2004
+-@@ -34,8 +34,9 @@
+- CONFIG_SYSVIPC=y
+- # CONFIG_BSD_PROCESS_ACCT is not set
+- CONFIG_BINFMT_ELF=y
+-+# CONFIG_BINFMT_ELF_AOUT is not set
+- CONFIG_KERNEL_ELF=y
+--CONFIG_BINFMT_MISC=m
+-+# CONFIG_BINFMT_MISC is not set
+- # CONFIG_BINFMT_JAVA is not set
+- CONFIG_PARPORT=m
+- # CONFIG_PARPORT_PC is not set
+ @@ -492,6 +493,16 @@
+  # CONFIG_SOUND_MSNDCLAS is not set
+  # CONFIG_SOUND_MSNDPIN is not set
+@@ -792,16 +544,6 @@
+ diff -urP linux-2.2.26/arch/s390/config.in linux/arch/s390/config.in
+ --- linux-2.2.26/arch/s390/config.in	Sun Mar 25 16:37:30 2001
+ +++ linux/arch/s390/config.in	Sun Feb 29 14:56:39 2004
+-@@ -40,6 +40,9 @@
+- bool 'BSD Process Accounting' CONFIG_BSD_PROCESS_ACCT
+- bool 'Sysctl support' CONFIG_SYSCTL
+- tristate 'Kernel support for ELF binaries' CONFIG_BINFMT_ELF
+-+if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
+-+  bool '   ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
+-+fi
+- 
+- endmenu
+- 
+ @@ -60,6 +63,8 @@
+  source fs/Config.in
+  
+@@ -814,14 +556,6 @@
+ diff -urP linux-2.2.26/arch/s390/defconfig linux/arch/s390/defconfig
+ --- linux-2.2.26/arch/s390/defconfig	Mon May 20 23:32:34 2002
+ +++ linux/arch/s390/defconfig	Sun Feb 29 14:56:39 2004
+-@@ -34,6 +34,7 @@
+- # CONFIG_BSD_PROCESS_ACCT is not set
+- CONFIG_SYSCTL=y
+- CONFIG_BINFMT_ELF=y
+-+# CONFIG_BINFMT_ELF_AOUT is not set
+- 
+- #
+- # S/390 block device drivers
+ @@ -188,6 +189,16 @@
+  # CONFIG_SOLARIS_X86_PARTITION is not set
+  # CONFIG_UNIXWARE_DISKLABEL is not set
+@@ -842,16 +576,6 @@
+ diff -urP linux-2.2.26/arch/sparc/config.in linux/arch/sparc/config.in
+ --- linux-2.2.26/arch/sparc/config.in	Mon Sep 16 16:26:11 2002
+ +++ linux/arch/sparc/config.in	Sun Feb 29 14:56:39 2004
+-@@ -74,6 +74,9 @@
+- bool 'Sysctl support' CONFIG_SYSCTL
+- tristate 'Kernel support for a.out binaries' CONFIG_BINFMT_AOUT
+- tristate 'Kernel support for ELF binaries' CONFIG_BINFMT_ELF
+-+if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
+-+  bool '   ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
+-+fi
+- tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+- if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
+-   tristate 'Kernel support for JAVA binaries (obsolete)' CONFIG_BINFMT_JAVA
+ @@ -225,6 +228,8 @@
+  
+  tristate 'Software watchdog' CONFIG_SOFT_WATCHDOG
+@@ -864,19 +588,6 @@
+ diff -urP linux-2.2.26/arch/sparc/defconfig linux/arch/sparc/defconfig
+ --- linux-2.2.26/arch/sparc/defconfig	Sun Mar 25 16:37:30 2001
+ +++ linux/arch/sparc/defconfig	Sun Feb 29 14:56:39 2004
+-@@ -78,9 +78,10 @@
+- CONFIG_SYSVIPC=y
+- # CONFIG_BSD_PROCESS_ACCT is not set
+- CONFIG_SYSCTL=y
+--CONFIG_BINFMT_AOUT=y
+-+# CONFIG_BINFMT_AOUT is not set
+- CONFIG_BINFMT_ELF=y
+--CONFIG_BINFMT_MISC=m
+-+# CONFIG_BINFMT_ELF_AOUT is not set
+-+# CONFIG_BINFMT_MISC is not set
+- CONFIG_BINFMT_JAVA=m
+- CONFIG_SUNOS_EMUL=y
+- 
+ @@ -333,6 +334,16 @@
+  # Watchdog
+  #
+@@ -897,16 +608,6 @@
+ diff -urP linux-2.2.26/arch/sparc64/config.in linux/arch/sparc64/config.in
+ --- linux-2.2.26/arch/sparc64/config.in	Mon May 20 23:32:34 2002
+ +++ linux/arch/sparc64/config.in	Sun Feb 29 14:56:39 2004
+-@@ -62,6 +62,9 @@
+- bool 'Sysctl support' CONFIG_SYSCTL
+- bool 'Kernel support for Linux/Sparc 32bit binary compatibility' CONFIG_SPARC32_COMPAT
+- tristate 'Kernel support for 64-bit ELF binaries' CONFIG_BINFMT_ELF
+-+if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
+-+  bool '   ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
+-+fi
+- if [ "$CONFIG_SPARC32_COMPAT" != "n" ]; then
+-   tristate 'Kernel support for 32-bit ELF binaries' CONFIG_BINFMT_ELF32
+-   bool 'Kernel support for 32-bit (ie. SunOS) a.out binaries' CONFIG_BINFMT_AOUT32
+ @@ -293,6 +296,8 @@
+  
+  tristate 'Software watchdog' CONFIG_SOFT_WATCHDOG
+@@ -919,20 +620,6 @@
+ diff -urP linux-2.2.26/arch/sparc64/defconfig linux/arch/sparc64/defconfig
+ --- linux-2.2.26/arch/sparc64/defconfig	Sun Mar 25 16:37:30 2001
+ +++ linux/arch/sparc64/defconfig	Sun Feb 29 14:56:39 2004
+-@@ -86,10 +86,11 @@
+- CONFIG_SYSCTL=y
+- CONFIG_SPARC32_COMPAT=y
+- CONFIG_BINFMT_ELF=y
+-+# CONFIG_BINFMT_ELF_AOUT is not set
+- CONFIG_BINFMT_ELF32=y
+- # CONFIG_BINFMT_AOUT32 is not set
+--CONFIG_BINFMT_MISC=m
+--CONFIG_BINFMT_JAVA=m
+-+# CONFIG_BINFMT_MISC is not set
+-+# CONFIG_BINFMT_JAVA is not set
+- # CONFIG_SUNOS_EMUL is not set
+- CONFIG_SOLARIS_EMUL=m
+- CONFIG_PARPORT=m
+ @@ -384,6 +385,16 @@
+  # CONFIG_NLS_ISO8859_15 is not set
+  # CONFIG_NLS_KOI8_R is not set
+@@ -995,192 +682,6 @@
+  #ifdef __sparc__
+  	if (N_MAGIC(ex) == NMAGIC) {
+  		/* Fuck me plenty... */
+-diff -urP linux-2.2.26/fs/binfmt_elf.c linux/fs/binfmt_elf.c
+---- linux-2.2.26/fs/binfmt_elf.c	Mon Sep 16 16:26:13 2002
+-+++ linux/fs/binfmt_elf.c	Sun Feb 29 14:56:39 2004
+-@@ -40,7 +40,9 @@
+- #include <linux/elf.h>
+- 
+- static int load_elf_binary(struct linux_binprm * bprm, struct pt_regs * regs);
+-+#ifdef CONFIG_BINFMT_ELF_AOUT
+- static int load_elf_library(struct file *file);
+-+#endif
+- extern int dump_fpu (struct pt_regs *, elf_fpregset_t *);
+- extern void dump_thread(struct pt_regs *, struct user *);
+- 
+-@@ -63,10 +65,15 @@
+- #define ELF_PAGEOFFSET(_v) ((_v) & (ELF_EXEC_PAGESIZE-1))
+- #define ELF_PAGEALIGN(_v) (((_v) + ELF_EXEC_PAGESIZE - 1) & ~(ELF_EXEC_PAGESIZE - 1))
+- 
+--static struct linux_binfmt elf_format = {
+-+#ifndef CONFIG_SECURE_STACK
+-+static
+-+#endif
+-+struct linux_binfmt elf_format = {
+- 	module:		THIS_MODULE,
+- 	load_binary:	load_elf_binary,
+-+#ifdef CONFIG_BINFMT_ELF_AOUT
+- 	load_shlib:	load_elf_library,
+-+#endif
+- 	core_dump:	elf_core_dump,
+- 	min_coredump:	ELF_EXEC_PAGESIZE,
+- };
+-@@ -359,6 +366,7 @@
+- 	return error;
+- }
+- 
+-+#ifdef CONFIG_BINFMT_ELF_AOUT
+- static unsigned long load_aout_interp(struct exec * interp_ex,
+- 			     struct dentry * interpreter_dentry)
+- {
+-@@ -404,6 +412,7 @@
+- out:
+- 	return elf_entry;
+- }
+-+#endif
+- 
+- /*
+-  * These are the functions used to load ELF style executables and shared
+-@@ -411,7 +420,9 @@
+-  */
+- 
+- #define INTERPRETER_NONE 0
+-+#ifdef CONFIG_BINFMT_ELF_AOUT
+- #define INTERPRETER_AOUT 1
+-+#endif
+- #define INTERPRETER_ELF 2
+- 
+- 
+-@@ -435,7 +446,9 @@
+- 	struct elfhdr elf_ex;
+- 	struct elfhdr interp_elf_ex;
+-   	struct exec interp_ex;
+-+#ifdef CONFIG_BINFMT_ELF_AOUT
+- 	char passed_fileno[6];
+-+#endif
+- 
+- 	/* Get the exec-header */
+- 	elf_ex = *((struct elfhdr *) bprm->buf);
+-@@ -563,6 +576,7 @@
+- 
+- 	/* Some simple consistency checks for the interpreter */
+- 	if (elf_interpreter) {
+-+#ifdef CONFIG_BINFMT_ELF_AOUT
+- 		interpreter_type = INTERPRETER_ELF | INTERPRETER_AOUT;
+- 
+- 		/* Now figure out which format our binary is */
+-@@ -570,6 +584,9 @@
+- 		    (N_MAGIC(interp_ex) != ZMAGIC) &&
+- 		    (N_MAGIC(interp_ex) != QMAGIC))
+- 			interpreter_type = INTERPRETER_ELF;
+-+#else
+-+		interpreter_type = INTERPRETER_ELF;
+-+#endif
+- 
+- 		if (interp_elf_ex.e_ident[0] != 0x7f ||
+- 		    strncmp(&interp_elf_ex.e_ident[1], "ELF", 3) != 0)
+-@@ -579,17 +596,20 @@
+- 		if (!interpreter_type)
+- 			goto out_free_dentry;
+- 
+-+#ifdef CONFIG_BINFMT_ELF_AOUT
+- 		/* Make sure only one type was selected */
+- 		if ((interpreter_type & INTERPRETER_ELF) &&
+- 		     interpreter_type != INTERPRETER_ELF) {
+- 			printk(KERN_WARNING "ELF: Ambiguous type, using ELF\n");
+- 			interpreter_type = INTERPRETER_ELF;
+- 		}
+-+#endif
+- 	}
+- 
+- 	/* OK, we are done with that, now set up the arg stuff,
+- 	   and then start this sucker up */
+- 
+-+#ifdef CONFIG_BINFMT_ELF_AOUT
+- 	if (!bprm->sh_bang) {
+- 		char * passed_p;
+- 
+-@@ -606,6 +626,7 @@
+- 		if ((long)bprm->p < 0)
+- 			goto out_free_dentry;
+- 	}
+-+#endif
+- 
+- 	/* Flush all traces of the currently running executable */
+- 	retval = flush_old_exec(bprm);
+-@@ -617,6 +638,9 @@
+- 	current->mm->end_code = 0;
+- 	current->mm->mmap = NULL;
+- 	current->flags &= ~PF_FORKNOEXEC;
+-+#ifdef CONFIG_SECURE_STACK
+-+	if (elf_ex.e_flags & EF_STACKEXEC) current->flags |= PF_STACKEXEC;
+-+#endif
+- 	elf_entry = (unsigned long) elf_ex.e_entry;
+- 
+- 	/* Do this immediately, since STACK_TOP as used in setup_arg_pages
+-@@ -699,10 +723,12 @@
+- 	end_data += load_bias;
+- 
+- 	if (elf_interpreter) {
+-+#ifdef CONFIG_BINFMT_ELF_AOUT
+- 		if (interpreter_type == INTERPRETER_AOUT)
+- 			elf_entry = load_aout_interp(&interp_ex,
+- 						     interpreter_dentry);
+- 		else
+-+#endif
+- 			elf_entry = load_elf_interp(&interp_elf_ex,
+- 						    interpreter_dentry,
+- 						    &interp_load_addr);
+-@@ -723,7 +749,9 @@
+- 
+- 	kfree(elf_phdata);
+- 
+-+#ifdef CONFIG_BINFMT_ELF_AOUT
+- 	if (interpreter_type != INTERPRETER_AOUT)
+-+#endif
+- 		sys_close(elf_exec_fileno);
+- 
+- 	set_binfmt(&elf_format);
+-@@ -742,14 +770,20 @@
+- 			(interpreter_type == INTERPRETER_ELF ? &elf_ex : NULL),
+- 			load_addr, load_bias,
+- 			interp_load_addr,
+-+#ifdef CONFIG_BINFMT_ELF_AOUT
+- 			(interpreter_type == INTERPRETER_AOUT ? 0 : 1));
+-+#else
+-+			1);
+-+#endif
+- 	if (!bprm->p) {
+- 		force_sig(SIGSEGV, current);
+- 		return 0;
+- 	}
+-+#ifdef CONFIG_BINFMT_ELF_AOUT
+- 	/* N.B. passed_fileno might not be initialized? */
+- 	if (interpreter_type == INTERPRETER_AOUT)
+- 		current->mm->arg_start += strlen(passed_fileno) + 1;
+-+#endif
+- 	current->mm->start_brk = current->mm->brk = elf_brk;
+- 	current->mm->end_code = end_code;
+- 	current->mm->start_code = start_code;
+-@@ -814,9 +848,9 @@
+- 	goto out;
+- }
+- 
+-+#ifdef CONFIG_BINFMT_ELF_AOUT
+- /* This is really simpleminded and specialized - we are loading an
+-    a.out library that is given an ELF header. */
+--
+- static int load_elf_library(struct file *file)
+- {
+- 	struct dentry * dentry;
+-@@ -904,6 +938,7 @@
+- out_putf:
+- 	return error;
+- }
+-+#endif
+- 
+- /*
+-  * Note that some platforms still use traditional core dumps and not
+ diff -urP linux-2.2.26/fs/exec.c linux/fs/exec.c
+ --- linux-2.2.26/fs/exec.c	Fri Nov  2 16:39:08 2001
+ +++ linux/fs/exec.c	Sun Feb 29 14:56:39 2004
+@@ -1194,24 +695,6 @@
+  
+  /*
+   * Here are the actual binaries that will be accepted:
+-@@ -170,6 +173,7 @@
+-  */
+- asmlinkage int sys_uselib(const char * library)
+- {
+-+#if defined(CONFIG_BINFMT_AOUT) || defined(CONFIG_BINFMT_ELF_AOUT)
+- 	int retval;
+- 	struct file * file;
+- 	struct linux_binfmt * fmt;
+-@@ -207,6 +211,9 @@
+- out:
+- 	unlock_kernel();
+-   	return retval;
+-+#else
+-+	return -ENOSYS;
+-+#endif
+- }
+- 
+- /*
+ @@ -479,6 +486,82 @@
+  		kfree(oldsig);
+  }
