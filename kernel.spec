@@ -632,9 +632,6 @@ BuildKernel BOOT
 %endif
 %endif
 
-# building i8255 module
-%{__make} -C i8255
-
 %install
 umask 022
 rm -rf $RPM_BUILD_ROOT
@@ -1023,7 +1020,6 @@ fi
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
 %{_prefix}/src/linux-%{version}/grsecurity
-%{_prefix}/src/linux-%{version}/i8255
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
 %{_prefix}/src/linux-%{version}/kdb
