@@ -50,7 +50,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.10
+%define		_rel		0.11
 %define		_cset		20040718_0608
 %define		_apply_cset	0
 
@@ -82,6 +82,9 @@ Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
 # Source3-md5:	a17d751c6a6b6fd86f11ececd2c0ad62
+# http://lkml.org/lkml/2004/7/18/8
+Source4:	nx-legacy-2.6.8-rc2-A7
+# Source4-md5:	2a2d25d203ce554acf3ffa606527940b
 # http://lkml.org/lkml/2004/6/2/228
 ## Source6:	http://prdownloads.sourceforge.net/swsusp/software-suspend-2.0.0.81-for-2.6.6.tar.bz2
 Source20:	%{name}-i386.config
@@ -544,6 +547,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %if "%{_apply_cset}" != "0"
 zcat %{SOURCE3} | patch -p1 -s
 %endif
+patch -p1 -s < %{SOURCE4}
 
 %patch0 -p1
 %patch1 -p1
@@ -613,7 +617,6 @@ echo "Not fixed !!"
 %patch75 -p1
 %patch76 -p1
 %patch77 -p1
-
 # Philips USB drivers.
 #patch78 -p1
 # selected library
