@@ -44,8 +44,9 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.6
-%define		_cset		20040529_0506
+%define		_rel		0.10
+%define		_cset		20040530_0310
+%define		_apply_cset	0
 
 %define		_netfilter_snap		20040518
 
@@ -65,12 +66,14 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc1.tar.bz2
-# Source0-md5:	50c53b665f6f9febc06b4d27d74b594b
+#define		_rc	0
+%define		_rc	rc2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-%{_rc}.tar.gz
+# Source0-md5:	835ecb6f4a5189573be21603b5a09565
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	9f517c958f516679067b98dd0fc6f9e9
+# Source3-md5:	01f66a63ceccefadfa879c38879d5fcd
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -523,13 +526,17 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}-rc1 -a2
+%if "%{_rc}" != "0"
+%setup -q -n linux-%{version}-%{_rc} -a2
+%else
+%setup -q -a2
+%endif
 
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
 
-%if "%{_cset}" != "0"
+%if "%{_apply_cset}" != "0"
 zcat %{SOURCE3} | patch -p1 -s
 %endif
 
@@ -1016,10 +1023,6 @@ $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 %endif
 
 %{__make} mrproper
-
-# temporary disabled (crosscompialation -> symlink to wrong arch).
-#ln -sf asm-%{base_arch} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
-
 %{__make} include/linux/version.h
 install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
 
