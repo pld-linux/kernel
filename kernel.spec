@@ -1,11 +1,19 @@
-
+#
+#
+# If you define the following as 1, only kernel, -headers and -source
+# packages will be built
+#
+# _with_preemptive      - build with Preemptible patch
+# _without_smp          - don't build SMP kernel
+# _without_up           - don't build UP kernel
+# _without_source       - don't build source
 #
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.5.41
+Version:	2.5.50
 Release:	0.1
 License:	GPL
 Group:		Base/Kernel
@@ -13,17 +21,18 @@ Group:		Base/Kernel
 Source0:        ftp://ftp.kernel.pl/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-i386.config
-Source21:	%{name}-i386-smp.config
+#Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
 Source23:	%{name}-i586.config
-Source24:	%{name}-i586-smp.config
+#Source24:	%{name}-i586-smp.config
 Source25:	%{name}-i686.config
-Source26:	%{name}-i686-smp.config
+#Source26:	%{name}-i686-smp.config
 Source27:	%{name}-athlon.config
-Source28:	%{name}-athlon-smp.config
+#Source28:	%{name}-athlon-smp.config
 Source30:	%{name}-ppc.config
 
-#Patch1:		kernel-2.5.38-devfscdrom.patch
+Patch1:		quirks.patch
+Patch2:		hu.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -207,7 +216,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -n linux-%{version}
-#%patch1 -p1
+%patch1 -p1
+%patch2 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -284,12 +294,11 @@ KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
 rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
 
-# UP Kernel
+# UP KERNEL
+%{!?_without_up:BuildKernel}
 
-BuildKernel
-
-# SMP Kernel
-BuildKernel smp
+# SMP KERNEL
+%{!?_without_smp:BuildKernel smp}
 
 # BOOT kernel - #temporary disable build kernel-BOOT
 %ifnarch i586 i686 athlon 
@@ -433,16 +442,16 @@ fi
 /lib/modules/%{version}-%{release}/modules.*map
 /lib/modules/%{version}-%{release}/modules.generic_string
 
-%files smp
-%defattr(644,root,root,755)
-%attr(600,root,root) /boot/vmlinuz-%{version}-%{release}smp
-%attr(600,root,root) /boot/System.map-%{version}-%{release}smp
-%dir /lib/modules/%{version}-%{release}smp
-/lib/modules/%{version}-%{release}smp/kernel
-/lib/modules/%{version}-%{release}smp/build
-/lib/modules/%{version}-%{release}smp/modules.dep
-/lib/modules/%{version}-%{release}smp/modules.*map
-/lib/modules/%{version}-%{release}smp/modules.generic_string
+#%files smp
+#%defattr(644,root,root,755)
+#%attr(600,root,root) /boot/vmlinuz-%{version}-%{release}smp
+#attr(600,root,root) /boot/System.map-%{version}-%{release}smp
+#%dir /lib/modules/%{version}-%{release}smp
+#/lib/modules/%{version}-%{release}smp/kernel
+#/lib/modules/%{version}-%{release}smp/build
+#/lib/modules/%{version}-%{release}smp/modules.dep
+#/lib/modules/%{version}-%{release}smp/modules.*map
+#/lib/modules/%{version}-%{release}smp/modules.generic_string
 
 %ifnarch i586 i686 athlon
 %files BOOT
@@ -467,6 +476,7 @@ fi
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Documentation
 
+%if %{?_without_source:0}%{!?_without_source:1}
 %files source
 %defattr(644,root,root,755)
 %{_kernelsrcdir}-%{version}/arch
@@ -490,3 +500,4 @@ fi
 %{_kernelsrcdir}-%{version}/README
 %{_kernelsrcdir}-%{version}/REPORTING-BUGS
 %{_kernelsrcdir}-%{version}/Rules.make
+%endif
