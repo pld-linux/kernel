@@ -10,7 +10,7 @@
 # _without_wrr		- don't build WRR support
 # _with_newdrm		- build with new DRM modules
 #
-%define		krelease		5.907
+%define		krelease		5.908
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -56,7 +56,7 @@ Group(uk):	База/Ядро
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
-Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-140.tar.gz
+Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
@@ -238,6 +238,8 @@ Patch918:	linux-2.4.18-xfs-mmap.patch
 # DRM (note that this doesn't fix drm when running on 386 or 486 CPU!)
 Patch950:	linux-drm-%{drm_xfree_version}-force-cmpxchg.patch
 
+## realy temporrary patch
+Patch1001:	2.4.18-temp.patch
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
 
@@ -795,6 +797,8 @@ echo Patch to fixing iptables building process ...
 #patch from LKML to fix small bug in kernel/module.c
 echo Fixed small bug in modules
 %patch104 -p1
+
+%patch1001 -p0
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
