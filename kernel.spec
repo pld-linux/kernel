@@ -44,7 +44,7 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_post_ver	%{nil}
-%define		_rel		0.2HEAD
+%define		_rel		0.3HEAD
 %define		_cset		20040926_0006
 %define		_apply_cset	1
 
@@ -98,7 +98,7 @@ Source91:	%{name}-grsec+pax.config
 
 
 # http://members.optusnet.com.au/ckolivas/kernel/
-Patch10:	patch-2.6.9-rc1-bk19-ck1.bz2
+Patch10:	patch-2.6.9-rc2-ck2.bz2
 # http://kem.p.lodz.pl/~peter/qnet/
 Patch15:	patch-2.6.8.1-qnet2.bz2
 
