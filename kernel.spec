@@ -109,10 +109,10 @@ Patch50:	linux-2.4.20-davfs-0.2.4.patch.bz2
 Patch55:	linux-2.4.20-davfs-_FUNCTION_.patch
 # quota for reiserfs
 #Patch60:	linux-2.4.20-reiserfs-quota.patch.bz2
-Patch60:	05-data-logging-37-for2.4.21-rc3.diff.gz
-Patch61:	06-logging-export-for2.4.21-rc3.diff.gz
-Patch62:	07-quota_nospace_fix.diff.gz
-Patch63:	08-reiserfs-quota-27-rc3.diff.gz
+Patch60:	ftp://ftp.icm.edu.pl/vol/rzm0/linux-reiserfs/reiserfs-for-2.4/testing/data-logging-and-quota-2.4.21-rc3/05-data-logging-37-for2.4.21-rc3.diff.gz
+Patch61:	ftp://ftp.icm.edu.pl/vol/rzm0/linux-reiserfs/reiserfs-for-2.4/testing/data-logging-and-quota-2.4.21-rc3/06-logging-export-for2.4.21-rc3.diff.gz
+Patch62:	ftp://ftp.icm.edu.pl/vol/rzm0/linux-reiserfs/reiserfs-for-2.4/testing/data-logging-and-quota-2.4.21-rc3/07-quota_nospace_fix.diff.gz
+Patch63:	ftp://ftp.icm.edu.pl/vol/rzm0/linux-reiserfs/reiserfs-for-2.4/testing/data-logging-and-quota-2.4.21-rc3/08-reiserfs-quota-27-rc3.diff.gz
 # http://dl.sourceforge.net/squashfs/squashfs-1.1b.tar.gz
 Patch65:	squashfs1.2-2.4.21-patch
 #Patch70:	linux-2.4.20-afs.patch.bz2
