@@ -1,4 +1,4 @@
-%define		ow_version	2.2.15-ow1
+%define		ow_version	2.2.16-ow1
 %define		pcmcia_version	3.1.14
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -52,11 +52,9 @@ Patch8:		wanrouter-v2215.patch.gz
 Patch10:	linux-newagpdist.patch
 Patch11:	linux-agphjlfixes.patch
 Patch12:	ftp://shiva.poland.com/people/serek/kernel-DPT-smartRAID-serek.patch
-# Wiget: This is hand modified OW1 patch
-Patch13:	linux-2.2.15-ow1.diff
 # Wiget: obsoleted by raid patch
-#Patch14:	http://www.linux.org.uk/VERSION/2216.raidfix
-Patch15:	http://www.linux.org.uk/VERSION/2216.decbug
+#Patch13:	http://www.linux.org.uk/VERSION/2216.raidfix
+Patch14:	http://www.linux.org.uk/VERSION/2216.decbug
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -260,11 +258,10 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch10 -p1
 %patch11 -p1
 %patch12 -p1
-%patch13 -p1
-#%patch14 -p1 -R -b .wiget
-%patch15 -p1 -R
+#%patch13 -p1 -R -b .wiget
+%patch14 -p1 -R
 
-#patch -p1 -s -b -z wiget <linux-%{ow_version}/linux-%{ow_version}.diff
+patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
@@ -426,9 +423,9 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
-#patch -s -p1 -R -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
-patch -s -p1 -R -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
+#patch -s -p1 -R -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
+patch -s -p1 -R -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-%{ow_version}/linux-%{ow_version}.diff
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi/
 
