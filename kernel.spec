@@ -28,12 +28,12 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1.1
+%define		_rel		1.2
 %define		_rc		2
 %define		_cset		20040107_0505
 
 ## netfilter snap 
-%define		_netfilter_snap		20040105
+%define		_netfilter_snap		20040107
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/amd64/x86_64/')
 
@@ -158,13 +158,13 @@ Patch64:	2.6.0-sysfs-1of4-lkml.patch
 Patch65:	2.6.0-sysfs-3of4-lkml.patch
 Patch66:	2.6.0-sysfs-4of4-lkml.patch
 
-Patch68:	2.6.0-NF-time-20031226.patch
+Patch68:	2.6.1-rc2-NF-time-%{_netfilter_snap}.patch
 
 Patch70:	linux-2.6-xfs-cvs-20040102.patch
 Patch71:	linux-2.6-xfs-secure-attr.patch
 
-Patch74:	2.6.1-rc1-NF-u32-%{_netfilter_snap}.patch
-Patch76:	2.6.1-rc1-NF-osf-%{_netfilter_snap}.patch
+Patch74:	2.6.1-rc2-NF-u32-%{_netfilter_snap}.patch
+Patch76:	2.6.1-rc2-NF-osf-%{_netfilter_snap}.patch
 
 Patch78:	http://www.saout.de/misc/dm-crypt.diff
 
