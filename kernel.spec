@@ -9,7 +9,7 @@
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 #
-%define		krelease		5.02
+%define		krelease		5.02a
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -60,7 +60,7 @@ Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 # based on cvs cvs@pserver.samba.org:/cvsroot netfilter/userspace
-Source7:	netfilter-25062002.tar.gz
+Source7:	linux-2.4.18-netfilter.tar.gz
 Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_version}.tar.gz
 # new -> ftp://ftp.tux.org/pub/roudier/drivers/portable/sym-2.1.x/sym-2.1.16-20011028.tar.gz
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
@@ -89,7 +89,7 @@ Source1999:	%{name}-preemptive.config
 
 Patch0:		%{name}-pldfblogo.patch
 # from ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
-Patch1:		patch-int-%{version}.1.bz2
+Patch1:		patch-int-%{version}.3.bz2
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch2:		linux-%{version}-freeswan-%{freeswan_version}.patch.gz
 # from  http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
@@ -660,7 +660,7 @@ done
 echo -e $ANS | ./runme pld )
 
 patch -p1 < netfilter-patches/patch-o-matic/pld/log.patch
-%patch917 -p0
+#%patch917 -p0
 
 # IPVS
 echo Adding IPVS
@@ -683,7 +683,7 @@ rm -rf %{sym_ncr_version}
 
 # IP personality
 echo Adding IP Personality 
-%patch905 -p0
+#%patch905 -p0
 patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020427-linux-2.4.18.diff
 #%patch908 -p1
 
@@ -772,7 +772,7 @@ echo Updating VIA Southbridge
 # ADM router
 %patch144 -p1
 
-%patch145 -p1
+#%patch145 -p1
 #%patch146 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
