@@ -25,6 +25,11 @@
 # temporary as BOOT is not finished yet
 %undefine	with_BOOT
 
+%if %{with mosix}
+# openMosix not compile with SMP 
+%undefine	with_smp
+%endif
+
 ## Program required by kernel to work.
 %define		_binutils_ver		2.12
 %define		_util_linux_ver		2.10o
@@ -315,7 +320,7 @@ Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
 Conflicts:	nfs-utils < %{_nfs_utils_ver}
 Conflicts:	procps < %{_procps_ver}
 Conflicts:	oprofile < %{_oprofile_ver}
-ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc amd64
+ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc amd64 s390
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
