@@ -5,7 +5,6 @@
 #		- add distcc support (and don't break crossbuild!)
 #
 # Conditional build:
-%bcond_without	BOOT		# don't build BOOT kernel
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
@@ -35,12 +34,6 @@
 # broken
 %undefine	with_up
 %endif
-
-%ifarch i586 i686 pentium3 pentium4 athlon
-%undefine	with_BOOT
-%endif
-# temporary as BOOT is not finished yet
-%undefine	with_BOOT
 
 ## Program required by kernel to work.
 %define		_binutils_ver		2.12
@@ -434,34 +427,6 @@ OSS (Open Sound System) SMP sound drivers.
 %description smp-sound-oss -l pl
 Sterowniki OSS (Open Sound System) dla maszyn wieloprocesorowych.
 
-%package BOOT
-Summary:	Kernel version %{version} used on the installation boot disks
-Summary(de):	Kernel version %{version} für Installationsdisketten
-Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation
-Summary(pl):	J±dro Linuksa w wersji %{version} dla dyskietek startowych
-Group:		Base/Kernel
-PreReq:		module-init-tools
-Autoreqprov:	no
-
-%description BOOT
-This package includes a trimmed down version of the Linux %{version}
-kernel. This kernel is used on the installation boot disks only and
-should not be used for an installed system, as many features in this
-kernel are turned off because of the size constraints.
-
-%description BOOT -l de
-Dieses Paket enthält eine verkleinerte Version vom Linux-Kernel
-version %{version}. Dieser Kernel wird auf den
-Installations-Bootdisketten benutzt und sollte nicht auf einem
-installierten System verwendet werden, da viele Funktionen wegen der
-Platzprobleme abgeschaltet sind.
-
-%description BOOT -l pl
-Pakiet zawiera j±dro Linuksa dedykowane dyskietkom startowym i powinno
-byæ u¿ywane jedynie podczas instalacji systemu. Wiele u¿ytecznych
-opcji zosta³o wy³±czonych, aby jak najbardziej zmniejszyæ jego
-rozmiar.
-
 %package headers
 Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra Linuksa
@@ -697,20 +662,14 @@ CrossOpts=""
 BuildConfig (){
 	%{?debug:set -x}
 	# is this a special kernel we want to build?
-	BOOT=
 	smp=
-	[ "$1" = "BOOT" -o "$2" = "BOOT" ] && BOOT=yes
 	[ "$1" = "smp" -o "$2" = "smp" ] && smp=yes
 	if [ "$smp" = "yes" ]; then
 		Config="%{_target_base_arch}-smp"
 	else
 		Config="%{_target_base_arch}"
 	fi
-	if [ "$BOOT" = "yes" ]; then
-		KernelVer=%{version}-%{release}BOOT
-	else
-		KernelVer=%{version}-%{release}$1
-	fi
+	KernelVer=%{version}-%{release}$1
 	echo "Building config file for KERNEL $1..."
 	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
 	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
@@ -741,83 +700,6 @@ BuildConfig (){
 			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
 		install .config \
 			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/config-up
-	fi
-}
-
-ConfigBOOT()
-{
-	Config="%{_target_base_arch}"
-	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
-%ifarch i386
-	echo "CONFIG_M386=y" >> arch/%{_target_base_arch}/defconfig
-%endif
-%ifarch i486
-	echo "CONFIG_M486=y" >> arch/%{_target_base_arch}/defconfig
-%endif
-%ifarch i386 i486 i586
-	sed -i 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
-		arch/%{_target_base_arch}/defconfig
-%endif
-	cat <<EOF >>arch/%{_target_base_arch}/defconfig
-	# CONFIG_APM is not set
-	# CONFIG_ACPI is not set
-	# CONFIG_ACPI_BOOT is not set
-	# CONFIG_MTD is not set
-	# CONFIG_NETFILTER is not set
-	# CONFIG_WAN is not set
-	# CONFIG_ATM is not set
-	# CONFIG_HOTPLUG_PCI is not set
-	# CONFIG_NET_SCHED is not set
-	# CONFIG_X86_MCE is not set
-	# CONFIG_MTRR is not set
-	# CONFIG_PM is not set
-	# CONFIG_CPU_FREQ is not set
-	# CONFIG_DRM is not set
-	# CONFIG_FTAPE is not set
-	# CONFIG_WATCHDOG is not set
-	# CONFIG_DVB is not set
-	# CONFIG_DVB_CORE is not set
-	# CONFIG_VIDEO_DEV is not set
-	# CONFIG_SECURITY is not set
-	# CONFIG_SOUND is not set
-	# CONFIG_USB_AUDIO is not set
-	# CONFIG_INPUT_JOYSTICK is not set
-	# CONFIG_OMNIBOOK is not set
-	# CONFIG_NET_RADIO is not set
-	# CONFIG_HOTPLUG is not set
-	# CONFIG_QUOTA is not set
-	# CONFIG_REGPARM is not set
-	# CONFIG_SCSI_LOGGING is not set
-	CONFIG_PACKET=m
-	CONFIG_UNIX=m
-	# CONFIG_DEV_APPLETALK is not set
-	# CONFIG_ECONET_AUNUDP is not set
-	# CONFIG_HIPPI is not set
-	# CONFIG_TR is not set
-	# CONFIG_INPUT_MISC is not set
-	# CONFIG_INPUT_TOUCHSCREEN is not set
-	# CONFIG_PROFILING is not set
-	# CONFIG_DEBUG_KERNEL is not set
-	# CONFIG_DEBUG_SPINLOCK_SLEEP is not set
-	# CONFIG_FRAME_POINTER is not set
-	# CONFIG_LBD is not set
-	# CONFIG_SLIP is not set
-	# CONFIG_PPP is not set
-	# CONFIG_PLIP is not set
-	# CONFIG_FDDI is not set
-	# CONFIG_HAMRADIO is not set
-	# CONFIG_NETPOLL_RX is not set
-	# CONFIG_NETPOLL_TRAP is not set
-	# CONFIG_FB is not set
-EOF
-	ln -sf arch/%{_target_base_arch}/defconfig .config
-
-	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
-	%{__make} $CrossOpts include/linux/autoconf.h
-	if [ "$smp" = "yes" ]; then
-		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
-	else
-		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
 	fi
 }
 
@@ -857,20 +739,14 @@ BuildKernel() {
 }
 
 PreInstallKernel (){
-	BOOT=
 	smp=
-	[ "$1" = "BOOT" -o "$2" = "BOOT" ] && BOOT=yes
 	[ "$1" = "smp" -o "$2" = "smp" ] && smp=yes
 	if [ "$smp" = "yes" ]; then
 		Config="%{_target_base_arch}-smp"
 	else
 		Config="%{_target_base_arch}"
 	fi
-	if [ "$BOOT" = "yes" ]; then
-		KernelVer=%{version}-%{release}BOOT
-	else
-		KernelVer=%{version}-%{release}$1
-	fi
+	KernelVer=%{version}-%{release}$1
 
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
@@ -918,6 +794,7 @@ KERNEL_BUILD_DIR=`pwd`
 # UP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 rm -rf $KERNEL_INSTALL_DIR
+echo "%{release}" > localversion
 BuildConfig
 %{?with_up:BuildKernel}
 %{?with_up:PreInstallKernel}
@@ -925,17 +802,10 @@ BuildConfig
 # SMP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
+echo "%{release}smp" > localversion
 BuildConfig smp
 %{?with_smp:BuildKernel smp}
 %{?with_smp:PreInstallKernel smp}
-
-%if %{with BOOT}
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
-rm -rf $KERNEL_INSTALL_DIR
-ConfigBOOT
-BuildKernel BOOT
-PreInstallKernel BOOT
-%endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -1107,18 +977,6 @@ if [ -L /lib/modules/%{version} ]; then
 fi
 rm -f %{initrd_dir}/initrd-%{version}-%{release}smp.gz
 
-%post BOOT
-if [ ! -L %{_libdir}/bootdisk/lib/modules/%{version} ] ; then
-	mv -f %{_libdir}/bootdisk/lib/modules/%{version} %{_libdir}/bootdisk/lib/modules/%{version}.rpmsave
-fi
-if [ ! -L %{_libdir}/bootdisk/boot/vmlinuz-%{version} ] ; then
-	mv -f %{_libdir}/bootdisk/boot/vmlinuz-%{version} %{_libdir}/bootdisk/boot/vmlinuz-%{version}.rpmsave
-fi
-rm -f %{_libdir}/bootdisk/lib/modules/%{version}
-ln -snf %{version}-%{release}BOOT %{_libdir}/bootdisk/lib/modules/%{version}
-rm -f %{_libdir}/bootdisk/boot/vmlinuz-%{version}
-ln -snf vmlinuz-%{version}-%{release}BOOT %{_libdir}/bootdisk/boot/vmlinuz-%{version}
-
 %post smp-drm
 %depmod %{version}-%{release}smp
 
@@ -1142,15 +1000,6 @@ ln -snf vmlinuz-%{version}-%{release}BOOT %{_libdir}/bootdisk/boot/vmlinuz-%{ver
 
 %postun smp-sound-oss
 %depmod %{version}-%{release}smp
-
-%postun BOOT
-if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then
-	if [ "`ls -l %{_libdir}/bootdisk/lib/modules/%{version} | awk '{ print $10 }'`" = "%{version}-%{release}BOOT" ]; then
-		if [ "$1" = "0" ]; then
-			rm -f %{_libdir}/bootdisk/lib/modules/%{version}
-		fi
-	fi
-fi
 
 %post headers
 rm -f /usr/src/linux
@@ -1344,20 +1193,6 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/sound/oss
 %endif
 %endif			# %%{with smp}
-
-%if %{with BOOT}
-%files BOOT
-%defattr(644,root,root,755)
-%ifarch alpha sparc sparc64 ppc		# arch
-%{_libdir}/bootdisk/boot/vmlinux-%{version}-%{release}BOOT
-%endif				#arch
-%{_libdir}/bootdisk/boot/vmlinuz-%{version}-%{release}BOOT
-%{_libdir}/bootdisk/boot/System.map-%{version}-%{release}BOOT
-%dir %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT
-%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/kernel
-%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/build
-%ghost %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.*
-%endif				# %%{with BOOT}
 
 %files headers
 %defattr(644,root,root,755)
