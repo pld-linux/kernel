@@ -1,43 +1,16 @@
 #
-# SEE PLD-doc/maintainers file before you edit this file!!
-#
-# If you define the following as 1, only kernel, -headers and -source
-# packages will be built
-#
 # TODO:
-#		- check I2C
-#		- fix lirc_sasem (usb api)
-#		- update HP-OmniBook patchset (2.6.1-all-in-1.patch)
-#		- reiserfs4
-#		- update grsecurity patch
-#		- update i2o patchset
-#		- update software suspend patch
-#		- add distcc support (and don't break crossbuild!)
+#	- everything
 #
 # Conditional build:
 %bcond_without	BOOT		# don't build BOOT kernel
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
-%bcond_without	grsec		# build without grsec
-%bcond_with	pax		# enable PaX
-%bcond_with	execshield	# build without exec-shield
-%bcond_with	pramfs		# build pramfs support (EXPERIMENTAL)
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
-%bcond_with	fbsplash	# build with fbsplash
-%bcond_with	swsuspend	# build with software suspend v2 (EXPERIMENTAL)
 
 %{?debug:%define with_verbose 1}
-
-# see TODO
-%if %{with grsec}
-%undefine	with_grsec
-%endif
-
-%if !%{with grsec}
-%undefine	with_pax
-%endif
 
 %ifarch sparc
 # sparc32 is missing important updates from 2.5 cycle - won't build
@@ -70,9 +43,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-#define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.22
+%define		_rel		0.1HEAD
 %define		_cset		20040914_1622
 %define		_apply_cset	1
 
@@ -84,7 +56,6 @@
 
 %define		pcmcia_version		3.1.22
 %define		drm_xfree_version	4.3.0
-#define		pwc_version		9.0.2
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -96,13 +67,11 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-#define		_rc	%{nil}
 %define		_rc	-rc2
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 # Source0-md5:	b3d4a5c384d56ab974d1ac864b995ac4
-#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
+# Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
-#Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
 # Source4-md5:	462cbc68049412fdd73625a6c312bcda
 
@@ -127,110 +96,18 @@ Source80:	%{name}-netfilter.config
 Source90:	%{name}-grsec.config
 Source91:	%{name}-grsec+pax.config
 
-Patch0:		2.6.0-ksyms-add.patch
 
-Patch2:		2.6.0-t6-usb-irq.patch
-Patch3:		2.6.0-t7-memleak-lkml.patch
-Patch4:		2.6.0-t7-memleak2-lkml.patch
-#Patch5:	2.6.0-t8-swap-include-lkml.patch
-Patch6:		2.6.0-t8-VLSI-ix86-lkml.patch
+# http://members.optusnet.com.au/ckolivas/kernel/
+Patch10:	patch-2.6.9-rc1-bk19-ck1.bz2
 
-Patch8:		2.6.0-t8-umsdos-lkml.patch
-Patch9:		2.6.0-t9-acpi_osl-lkml.patch
-
-#Patch11:	2.6.8.1-qos-and-routing-conflict.patch	-- obsolete
-Patch12:	2.6.1-rc2-VLAN-NS83820-lkml.patch
-Patch13:	2.6.2-Initio9100U-Kconfig.patch
-# http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
-Patch14:	2.6.1-all-in-1.patch
-
-Patch16:	linux-alpha-isa.patch
-Patch17:	2.6.4-psion-5mx.patch
-Patch18:	2.6.5-sparc64-missing-include.patch
-Patch19:	2.6.5-3C920b-Tornado.patch
-Patch20:	2.6.5-i386-cmpxchg.patch
-Patch21:	2.6.6-serial-fifo-lkml.patch
-Patch22:	2.6.6-qsort-updated-lkml.patch
-Patch23:	2.6.6-xfs-qsort-lkml.patch
-#Patch24:	2.6.7-bridge_sysfs-lkml.patch
-Patch25:	2.6.7-alpha_compile.patch
-Patch26:	2.6.7-ppc-asm-defs.patch
-
-Patch28:	2.6.7-ppc-ipr-div.patch
-
-#Patch30:	2.6.x-ppp_mppe.patch
-#Patch31:	2.6.x-SGI_VW-fbdev-lkml.patch	-- obsolete
-Patch32:	2.6.x-TGA-fbdev-lkml.patch
-Patch33:	linux-kbuild-extmod.patch
-Patch34:	2.6.8-cpu_feature.patch
-
-# framebuffer fixes
-Patch41:	linux-fbcon-margins.patch
-
-# netfilter
-Patch50:	2.6.7-pom-ng-%{_netfilter_snap}.patch
-# http://www.barbara.eu.org/~quaker/ipt_account/
-Patch51:	2.6.6-ipt_account.patch
-# http://l7-filter.sourceforge.net/
-Patch52:	2.6.8-ipt_layer7.patch
-Patch53:	2.6.4-rc1-01-esfq-imq.patch
-Patch54:	2.6.4-rc1-02-imq-nat-support.patch
-Patch55:	2.6.4-wrr.patch
-Patch56:	linux-2.6-netfilter-syms.patch
-
-# pseudo terminal fix for older glibc
-#Patch60:	%{name}-pts.patch
-Patch61:	%{name}-MAX_INIT_ARGS.patch
-
-# http://tahoe.pl/patch.htm
-Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
-
-# Spock discontinued porting bootsplash to new kernel versions
-# but he introduced a rewrite of bootsplash called gensplash.
-# http://dev.gentoo.org/~spock/projects/gensplash/
-Patch72:	fbsplash-0.9-r7-2.6.9-rc1.patch
-Patch73:	squashfs2.0-patch
-# http://dl.sourceforge.net/pramfs/
-Patch74:	pramfs-2.6.4.patch
-Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
-# http://lirc.sourceforge.net/software/snapshots/lirc-0.7.0pre7.tar.bz2
-Patch76:	2.6.8-lirc-0.7.0-pre7.patch
-# http://i2o.shadowconnect.com/
-# NEEDS UPDATE
-Patch77:	2.6.8-i2o-build_105.patch.gz
-Patch78:	i2o-build_105-fixes.patch
-
-# derived from official grsecurity-2.0.1-2.6.7.patch
-# NEEDS UPDATE
-Patch90:	%{name}-grsec-2.0.1.patch
-
-# http://lkml.org/lkml/2004/6/2/233
-Patch91:	http://people.redhat.com/mingo/exec-shield/exec-shield-nx-2.6.7-A0
-Patch92:	exec-shield-make-peace-with-grsecurity.patch
-
-# frpm http://www.ssi.bg/~ja/#routers
-#Patch100:	00_static_routes-2.6.0-test1-8.diff
-#Patch101:	01_alt_routes-2.5.50-8.diff
-#Patch102:	01_arp_prefsrc-2.5.50-5.diff <- not applied. needs checkout
-#Patch103:	05_nf_reroute-2.6.7-10.diff
-
-# http://sources.redhat.com/cluster/
-# NEED UPDATE
-#Patch200:	linux-cluster-cman.patch
-#Patch201:	linux-cluster-dlm.patch
-#Patch202:	linux-cluster-gfs.patch
-#Patch203:	linux-cluster-gnbd.patch
+Patch20:	2.6.1-rc2-VLAN-NS83820-lkml.patch
+Patch21:	2.6.5-3C920b-Tornado.patch
+Patch22:	2.6.5-i386-cmpxchg.patch
 
 # suspend/resume
 # http://softwaresuspend.berlios.de/
-Patch219:	linux-2.6-software-suspend-2.0.0.105.patch.gz
-Patch220:	linux-2.6-via-agpc-resume-suspend-support.patch
-
-# hotfixes
-Patch300:	linux-2.6-sparc-ksyms.patch
-Patch301:	linux-2.6-ppc-ksyms.patch
-Patch302:	2.6.7-kill-warnings.patch
-Patch303:	%{name}-hotfixes.patch
+Patch500:	linux-2.6-software-suspend-2.0.0.105.patch.gz
+Patch501:	linux-2.6-via-agpc-resume-suspend-support.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -586,119 +463,21 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 bzcat %{SOURCE4} | patch -p1 -s
 %endif
 
-%patch0 -p1
 
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
-#patch5 -p1
-%patch6 -p1
-
-%patch8 -p1
-%patch9 -p1
-
-%patch12 -p1
-%patch13 -p1
-%patch14 -p1
-
-%patch16 -p1
-%patch17 -p1
-%patch18 -p1
-%patch19 -p1
+%patch10 -p1
 %patch20 -p1
 %patch21 -p1
 %patch22 -p1
-%patch23 -p1
-#patch24 -p1
-%patch25 -p1
-%patch26 -p1
 
-#patch30 -p1
-
-%patch32 -p1
-%patch33 -p1
-
-%patch41 -p1
-
-# netfilter
-%patch50 -p1
-%patch51 -p1
-%patch52 -p1
-%patch53 -p1
-%patch54 -p1
-%patch55 -p1
-%patch56 -p1
-
-#patch60 -p1
-%patch61 -p1
-
-%patch70 -p1
-
-%if %{with fbsplash}
-%patch72 -p1
-%endif
-%patch73 -p1
-%if %{with parmfs}
-%patch74 -p1
-%endif
-%patch75 -p1
-%patch76 -p1
-# see TODO
-#patch77 -p1
-#patch78 -p1
-
-#cp -f pwc-%{pwc_version}/2.6/pwc* drivers/usb/media
-rm -rf pwc-%{pwc_version}
-
-#grsec
-%ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
-%if %{with grsec}
-# see TODO
-#patch90 -p1
-%endif
-%endif
-
-%if %{with execshield}
-install %{PATCH91} exec-shield.patch
-%if %{with grsec}
-patch -s exec-shield.patch < %{PATCH92}
-%endif
-patch -p1 -s < exec-shield.patch
-%endif
-
-# routers
-#patch100 -p1
-#patch101 -p1
-#patch102 -p1 # <- not applayed need checkout
-#patch103 -p1
-
-# cluster
-#patch200 -p1
-#patch201 -p1
-#patch202 -p1
-#patch203 -p1
-
-# suspend/resume
-%if %{with swsuspend}
 %ifarch %{ix86}
-%patch219 -p1
+%patch500 -p1
 %endif
-%patch220 -p1
-%endif
-
-# hotfixes
-%patch300 -p1
-%patch301 -p1
-%patch302 -p1
-%patch303 -p1
+%patch501 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
 
 sed -i 's:\-pipe::' arch/*/Makefile
-
-# on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
-sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 
 %build
 TuneUpConfigForIX86 () {
@@ -724,7 +503,7 @@ TuneUpConfigForIX86 () {
     %ifarch athlon
 	sed -i 's:# CONFIG_MK7 is not set:CONFIG_MK7=y:' $1
     %endif
-    %ifarch pentium3 pentium4 athlon
+    %ifarch i686 pentium3 pentium4 athlon
 #	kernel-i386-smp.config contains 64G support by default.
 	%if %{with up}
 	    sed -i "s:CONFIG_HIGHMEM4G=y:# CONFIG_HIGHMEM4G is not set:" $1
