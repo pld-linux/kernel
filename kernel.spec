@@ -456,6 +456,7 @@ Group:		Base/Kernel
 Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
 PreReq:		%{name}-up = %{version}-%{release}
 Requires(postun):	%{name}-up = %{version}-%{release}
+Requires(per):	%{name}-up = %{version}-%{release}
 
 %description pcmcia-cs
 PCMCIA-CS modules (%{pcmcia_version}).
@@ -470,6 +471,7 @@ Group:		Base/Kernel
 Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
 PreReq:		%{name}-smp = %{version}-%{release}
 Requires(postun):	%{name}-smp = %{version}-%{release}
+Requires(pre):	%{name}-smp = %{version}-%{release}
 
 %description smp-pcmcia-cs
 PCMCIA-CS modules for SMP kernel (%{pcmcia_version}).
@@ -484,6 +486,7 @@ Group:		Base/Kernel
 Provides:       %{name}-drm = %{drm_xfree_version}
 PreReq:		%{name}-up = %{version}-%{release}
 Requires(postun):	%{name}-up = %{version}-%{release}
+Requires(pre):	%{name}-up = %{version}-%{release}
 
 %description drm
 DRM kernel modules (%{drm_xfree_version}).
@@ -498,6 +501,7 @@ Group:		Base/Kernel
 Provides:       %{name}-drm = %{drm_xfree_version}
 PreReq:		%{name}-smp = %{version}-%{release}
 Requires(postun):	%{name}-smp = %{version}-%{release}
+Requires(pre):	%{name}-smp = %{version}-%{release}
 
 %description smp-drm
 DRM SMP kernel modules (%{drm_xfree_version}).
