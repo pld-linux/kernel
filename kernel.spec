@@ -50,8 +50,8 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.3-rc1.tar.bz2
-# Source0-md5:	2a745088acba366f22f8bd3e284a84d4
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc1.tar.bz2
+# Source0-md5:	83ec5b31acc8e64b6b62a34294585e98
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -70,8 +70,6 @@ Source99:	%{name}-sound-oss.config
 Source100:	%{name}-misc.config
 
 Patch0:		2.6.0-ksyms-add.patch
-
-Patch1:		patch-2.6.3-rc1.bz2
 
 %if "%{_cset}" != "0"
 # http://www.kernel.org/pub/linux/kernel/v2.5/testing/cset/
@@ -462,10 +460,10 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-2.6.3-rc1
+%setup -q -n linux-%{version}-rc1
 
 %patch0 -p1
-%patch1 -p1
+
 %if "%{_cset}" != "0"
 %patch2 -p1
 %endif
