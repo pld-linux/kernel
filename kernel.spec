@@ -134,6 +134,7 @@ Patch123:	xquad_portio.fix
 # 
 Patch124:	linux-proc_net_dev-counter-fix.patch
 Patch125:	01-sigxfs-vs-blkdev.patch
+Patch127:	kernel-2.4.18-SPARC64-PLD.patch
 Patch129:	kernel-Makefile-include-fix.patch
 Patch130:	kernel-2.4.17-netsyms-export-fix.patch
 Patch131:	kernel-2.4.18-personality.patch
@@ -492,9 +493,8 @@ echo Installing Net Dev Random patch
 
 # fixed SPARC64 compilation
 %ifarch sparc64
-echo Fixed SYSCALL errors for SPARC 64 arch.
-#%patch127 -p1
-#cp include/asm-sparc/vfc_ioctls.h include/asm-sparc64/vfc_ioctls.h
+echo Fixed SPARC 64 compilation.
+%patch127 -p1
 %endif
 
 #fixed AXP compilation
