@@ -49,7 +49,7 @@
 %define		_oprofile_ver		0.5.3
 %define		_squashfs_ver		2.1
 
-%define		_rel		4.14%{?with_mosix:m}
+%define		_rel		4.15%{?with_mosix:m}
 %define		_cset		20040707_0722
 %define		_apply_cset	0
 %define		_subversion	.1
@@ -312,6 +312,9 @@ Patch780:	http://www.gargan.org/linux/snd-bt-sco/kernel-2.6.7-8.24-08-04.patch
 Patch790:	2.6.8-advansys_not_broken.patch
 
 Patch800:	IPS-backport_from_2_6_10.patch
+
+# from http://evlog.sourceforge.net/
+Patch810:	evlog-2.6.8-PLD.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -864,6 +867,8 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch790 -p1
 
 %patch800 -p1
+
+%patch810 -p1
 
 ## Add ALL patches before this section !!
 
