@@ -1,3 +1,24 @@
+This patch against 2.6.9 adds a DAC ownership check to the existing MAC
+permission checks when setting the security.selinux attribute via
+setxattr.  In the past, the MAC permission checks were viewed as
+sufficient for controlling relabeling operations, but experience in the
+Fedora SELinux integration has shown that a DAC check is also
+appropriate here, particularly under targeted policy.
+
+Signed-off-by:  Stephen Smalley <sds@epoch.ncsc.mil>
+
+--- linux-2.6.9/security/selinux/hooks.c.orig	2004-10-20 10:32:18.653598056 -0400
++++ linux-2.6.9/security/selinux/hooks.c	2004-10-20 10:32:39.712396632 -0400
+@@ -2243,6 +2243,9 @@ static int selinux_inode_setxattr(struct
+ 	if (sbsec->behavior == SECURITY_FS_USE_MNTPOINT)
+ 		return -EOPNOTSUPP;
+ 
++	if ((current->fsuid != inode->i_uid) && !capable(CAP_FOWNER))
++		return -EPERM;
++
+ 	AVC_AUDIT_DATA_INIT(&ad,FS);
+ 	ad.u.fs.dentry = dentry;
+ 
 --- linux-2.6.8-rc3/arch/i386/crypto/Makefile.orig	2004-08-07 14:54:25.000000000 +0200
 +++ linux-2.6.8-rc3/arch/i386/crypto/Makefile	2004-08-07 18:41:49.000000000 +0200
 @@ -6,4 +6,4 @@
