@@ -16,7 +16,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	4
+Release:	5pre1
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
