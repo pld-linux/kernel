@@ -389,7 +389,7 @@ for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
 echo -e $ANS | ./runme)
 
 # LIDS
-patch -p1 -s <lids-%{lids_version}-2.4.2/lids-%{lids_version}-2.4.2.patch
+patch -p1 -s <lids-%{lids_version}-%{version}/lids-%{lids_version}-%{version}.patch
 
 # IPVS
 for i in ipvs-%{ipvs_version}/*.diff ; do
