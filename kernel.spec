@@ -78,7 +78,7 @@ Provides:	%{name}(rawio) = %{version}
 Autoreqprov:	no
 Prereq:		fileutils
 Prereq:		modutils
-Prereq:		genromfs
+Prereq:		geninitrd
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha
 %ifarch		%{ix86}
@@ -574,10 +574,13 @@ mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
 
+geninitrd /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
+mv -f /boot/initrd /boot/initrd.old
+ln -sf initrd-%{version}-%{release}.gz /boot/initrd
+
 if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
 	/sbin/lilo 1>&2 || :
 fi
-genromfs /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
 
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release} /lib/modules/%{version}
@@ -588,10 +591,13 @@ mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}smp /boot/System.map
 
+geninitrd /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
+mv -f /boot/initrd /boot/initrd.old
+ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
+
 if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
 	/sbin/lilo 1>&2 || :
 fi
-genromfs /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
 
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
