@@ -576,6 +576,7 @@ echo "Scheduler din't work on ARCH diffetern than Intel x86"
 
 # XFree DRM
 rm -rf drivers/char/drm
+cp -f drm/Makefile.kernel drm/Makefile
 mv -f drm drivers/char
 
 # Tekram DC395/315 U/UW SCSI host driver
