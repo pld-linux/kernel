@@ -687,7 +687,7 @@ BuildKernel() {
 		%{?with_verbose:V=1}
 %endif
 %else
-	%{__make} $Opts $Opts \
+	%{__make} $Opts \
 		%{?with_verbose:V=1}
 %endif
 }
