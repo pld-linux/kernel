@@ -86,6 +86,8 @@ Patch50:	2.6.0-t3-oprofile-1of3-lkml.patch
 Patch51:	2.6.0-t3-oprofile-2of3-lkml.patch
 Patch52:	2.6.0-t3-oprofile-3of3-lkml.patch
 
+Patch53:	2.6.0-t4-PPC-ENODEV.patch
+
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -331,6 +333,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 #%patch50 -p1
 #%patch51 -p1
 #%patch52 -p1
+%patch53 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
