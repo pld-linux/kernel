@@ -278,7 +278,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -n11 -n linux
+%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -n linux
 %patch9 -p1
 # kerneli patch
 %patch0 -p1
