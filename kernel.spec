@@ -10,14 +10,15 @@
 %define		test_build		0
 #
 %define		pre_version		pre1
-%define		ipvs_version		0.9.8
-%define		freeswan_version	1.92
+%define		ipvs_version		1.0.0
+%define		freeswan_version	1.95
 %define		wlan_version		0.1.12
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		IPperson_version	20010724-2.4.7
 %define		grsec_version		1.9.2-2.4.17
 %define		aic_version		6.2.3-2.4.7
 %define		jfs_version		2.4-1.0.14
+%define		lvm_version		1.0.3
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -68,8 +69,9 @@ Source1999:	%{name}-preemptive.config
 
 Patch0:		%{name}-pldfblogo.patch
 # ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
-Patch1:		patch-int-2.4.17.0.gz
-Patch2:		linux-%{version}-freeswan-%{freeswan_version}.patch.gz
+Patch1:		patch-int-%{version}.0.bz2
+# ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
+Patch2:		freeswan-%{freeswan_version}-%{version}.patch.gz
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.17.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
@@ -118,7 +120,7 @@ Patch117:	linux-2.4.3-rawio.patch
 Patch120:	linux-2.4.10-aironet.patch
 Patch121:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
-Patch122:	linux-lvm-1.0.1-%{version}.patch
+Patch122:	lvm-%{lvm_version}-%{version}.patch
 # fixed xquad_portio
 Patch123:	xquad_portio.fix
 # 
@@ -331,6 +333,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #%patch1000 -p1
 #%patch0 -p1
 %patch1 -p1
+%patch907 -p1
 %patch2 -p1
 %patch4 -p1
 %patch5 -p1
@@ -377,7 +380,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch900 -p0
 %patch901 -p0
 %patch904 -p0
-%patch907 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 echo Adding Tekram DC395/315 driver
