@@ -28,7 +28,7 @@
 %define		ntfs_version		2.1.4a
 %define		drm_xfree_version	4.3.0
 %define		hostap_version		0.0.2
-%define		netfilter_snap		20030605
+%define		netfilter_snap		20030914
 %define		iptables_version	1.2.8
 %define		ACL_version		0.8.56
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -372,7 +372,7 @@ Patch2003:	linux-2.4.20-nethashfix2.patch
 Patch2004:	linux-2.4.20-nfsd-xdr-secfix.patch
 Patch2005:	linux-2.4.20-sunrpc-noudpreuse.patch
 Patch2006:	linux-2.4.20-tty-fixes-grsec.patch
-Patch2007:	linux-2.4.20-tty-fixes.patch
+##Patch2007:	linux-2.4.20-tty-fixes.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -949,8 +949,7 @@ echo AXP patches ...
 %patch2004 -p1
 %patch2005 -p1
 
-%{!?_without_grsec:%patch2006 -p1}
-%{?_without_grsec:%patch2007 -p1}
+%patch2006 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
