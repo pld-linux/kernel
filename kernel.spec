@@ -26,8 +26,8 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.5
-%define		_cset		20040120_1032
+%define		_rel		0.6
+%define		_cset		20040120_2208
 
 ## netfilter snap 
 %define		_netfilter_snap		20040114
@@ -570,7 +570,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch84 -p1
 
-%patch86 -p1
+#%%patch86 -p1
 
 #%%patch90 -p1
 
