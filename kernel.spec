@@ -7,7 +7,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Name:		kernel
 %define		_ver	2.6.6
 Version:	%{_ver}+grsec
-Release:	1.3
+Release:	1.4
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{_ver}.tar.bz2
@@ -24,7 +24,8 @@ Patch4:		2.6.0-t8-swap-include-lkml.patch
 Patch5:		2.6.0-t9-acpi_osl-lkml.patch
 Patch6:		2.6.1-squashfs1.3r3.patch
 Patch7:		2.6.6-pramfs.patch
-Patch8:		%{name}-Makefile.patch
+#Patch8:		%{name}-Makefile.patch
+Patch8:		%{name}-ssp.patch
 Patch9:		linux-kbuild-extmod.patch
 Patch10:	2.6.4-esfq.patch
 Patch11:	2.6.4-imq.patch
