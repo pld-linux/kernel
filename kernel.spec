@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 ## netfilter snap 
-%define		_netfilter_snap		20031226
+%define		_netfilter_snap		20040105
 ## Program required by kernel to work.
 %define		_binutils_ver		2.12
 %define		_util-linux_ver		2.10o
