@@ -2,7 +2,6 @@
 # If you define the following as 1, only kernel, -headers and -source
 # packages will be built
 #
-# _with_lids		- build LIDS enabled kernels
 # _without_grsec	- build kernel without grsecurity patch
 # _with_preemptive	- build with Preemptive patch
 # _without_smp		- don't build SMP kernel
@@ -12,7 +11,7 @@
 %define		pre_version		pre1
 %define		ipvs_version		0.9.8
 %define		freeswan_version	snap2001sep23b
-%define		wlan_version		0.1.10
+%define		wlan_version		0.1.12
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		IPperson_version	20010724-2.4.7
 %define		grsec_version		1.9.2-2.4.17
@@ -574,7 +573,7 @@ install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{version}}
 KERNEL_BUILD_DIR=`pwd`
 cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
 
-for i in "" "-lids" smp smp-lids ; do
+for i in "" smp ; do
 	if [ -e  $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i ] ; then
 		rm -f $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
 		ln -sf /usr/src/linux-%{version} $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
