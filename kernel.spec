@@ -5,7 +5,7 @@
 %define		test_build		0
 #
 %define		pre_version		pre6
-%define		lids_version		1.0.7
+%define		lids_version		1.0.7-2.4.3
 %define		ipvs_version		0.2.8
 %define		freeswan_version	snap2001feb24b
 %define 	aacraid_version		1.0.6
@@ -30,7 +30,7 @@ Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
 Source7:	linux-netfilter-patches-20010421.tar.gz
-Source8:	http://www.lids.org/download/lids-%{lids_version}-%{version}.tar.gz
+Source8:	http://www.lids.org/download/lids-%{lids_version}.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source10:	http://www.linux-wlan.com/linux-wlan/linux-wlan-ng-%{wlan_version}.tar.gz
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
@@ -123,6 +123,8 @@ Patch32:	rl2-include.patch
 Patch33:	linux-abi-2.4.3.0-PLD.diff
 Patch34:	http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 
+# patch for fix LIDS install
+Patch90:	linux-lids-1.0.7-PLD.fix
 Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.4-%{pre_version}.gz
 
 ExclusiveOS:	Linux
@@ -341,7 +343,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch4 -p0 
 %patch5 -p0
 %patch6 -p1
-%patch8 -p1
+#%patch8 -p1
 %patch9 -p1
 %patch10 -p0
 %patch11 -p1
@@ -388,7 +390,8 @@ for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
 echo -e $ANS | ./runme)
 
 # LIDS
-#patch -p1 -s <lids-%{lids_version}-%{version}/lids-%{lids_version}-%{version}.patch
+%patch90 -p0
+patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
 
 # IPVS
 for i in ipvs-%{ipvs_version}/*.diff ; do
@@ -428,7 +431,7 @@ rm -rf %{sym_ncr_version}
 #%patch32 -p1
 
 ## must be here, in other time make errors with LIDS
-#%patch33 -p1
+%patch33 -p1
 
 %build
 BuildKernel() {
