@@ -174,10 +174,7 @@ Patch140:	linux-2.4.18-tridentfb.patch
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
 Patch900:	ide-EXPORT_SYMBOL.fix
-Patch902:	netfilter-ctnetlink-fix.patch
-Patch903:	netfilter-ftp-fxp-fix.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
-Patch905:	netfilter-pptp-conntrack-nat-fix.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
 Patch907:	linux-loop-hvr-2.4.16.0.patch
@@ -512,13 +509,9 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 #patch -p1 -s <linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
 
 # Netfilter
-echo Adding Netfilter
-#
-# Baggins please check and fix this patches !!!
-#
+echo Adding Netfilter snapshot from 15.04.2002
 (KERNEL_DIR=`pwd` ; export KERNEL_DIR
 cd netfilter-patches/patch-o-matic/extra
-#%patch903 -p0
 cd ..
 ANS=""
 for suite in submitted pending base extra pld ; do
