@@ -5,12 +5,11 @@
 #
 Summary:	The Linux kernel (the core of the Linux operating system)
 Name:		kernel
-%define		_ver	2.6.6
-Version:	%{_ver}+grsec
+Version:	2.6.6
 Release:	1.8
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{_ver}.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
 # Source0-md5:	5218790bc3db41e77a7422969639a9ad
 Source1:	grsecurity-2.0-2.6.6-unofficial.patch
 Source2:	%{name}-config-nondist
@@ -67,9 +66,9 @@ Most hardware is instead supported by modules loaded after booting.
 %package headers
 Summary:	Header files for the Linux kernel
 Group:		Base/Kernel
-Provides:	kernel-headers(agpgart) = %{_ver}
-Provides:	kernel-headers(reiserfs) = %{_ver}
-Provides:	kernel-headers(bridging) = %{_ver}
+Provides:	kernel-headers(agpgart) = %{version}
+Provides:	kernel-headers(reiserfs) = %{version}
+Provides:	kernel-headers(bridging) = %{version}
 Provides:	kernel-i2c-devel
 Provides:	kernel-headers(netfilter) = %{_netfilter_snap}
 Provides:	kernel-headers(alsa-drivers)
@@ -95,7 +94,7 @@ also build a custom kernel that is better tuned to your particular
 hardware.
 
 %prep
-%setup -q -n linux-%{_ver}
+%setup -q -n linux-%{version}
 %if "%{_cset}" != "0"
 %patch0 -p1
 %endif
@@ -119,6 +118,7 @@ hardware.
 %patch32 -p1
 
 %build
+sed -i 's:EXTRAVERSION =.*:EXTRAVERSION =:gi' Makefile
 find include/ -type d -maxdepth 1 -name "asm-*" ! -name asm-i386 ! -name asm-generic | xargs rm -rf
 mv arch/{x86_64,i386}/kernel/early_printk.c
 find arch/* -type d -maxdepth 0 ! -name i386 | xargs rm -rf
