@@ -53,7 +53,7 @@
 %define		_post_ver	%{nil}
 %define		_rel		0.10HEAD
 %define		_cset		20041009_2106
-%define		_apply_cset	1
+%define		_apply_cset	0
 
 %define		_netfilter_snap		20040629
 
@@ -74,13 +74,15 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-%define		_rc	-rc3
+%define		_rc	-rc4
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	53939eed5c3699fdcaa28735b0ffb12d
+# Source0-md5:	6ff7c672c2cdea3201220f7e3d5a27d0
+# Source0-size:	36265012
 # Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
 # Source4-md5:	4ce22d04af5c0b8d5ec01fda136bc123
+# Source4-size:	343793
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
