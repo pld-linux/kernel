@@ -32,7 +32,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	3.1%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	3.2%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -82,6 +82,9 @@ Source1670:	%{name}-wrr.config
 Source1671:	%{name}-squashfs.config
 Source1672:	%{name}-ACL.config
 Source1673:	%{name}-IMQ.config
+Source1674:	%{name}-dm.config
+Source1675:	%{name}-audigy.config
+Source1676:	%{name}-aic79xx.config
 Source1999:	%{name}-preemptive.config
 Source2000:	%{name}-win4lin.config
 
@@ -137,7 +140,8 @@ Patch18:	linux-2.4.20-dm-9.patch.bz2
 # EVMS support (http://www.sourceforge.net/projects/evms/)
 Patch19:	linux-2.4.20-evms-1.9.0.patch.bz2
 
-#Patch20:
+# from ???
+Patch20:	linux-2.4.20-audigy.patch.bz2
 
 # from http://www.promise.com/support/file/driver/promise-patch-2.4.19.gz
 Patch21:	linux-2.4.20-promise.patch.bz2
@@ -180,8 +184,11 @@ Patch37:	linux-2.4.20-davfs-_FUNCTION_.patch
 
 # from http://www.noc.uoa.gr/~avel/page.php?page=nokia&lang=en
 Patch38:	linux-2.4.20-Nokia5510.patch
-#Patch39:	
-#Patch40:	
+
+#from ??
+Patch39:	linux-2.4.20-aic79xx.patch.bz2
+
+Patch40:	linux-2.4.20-i810_audio.patch
 #Patch41:	
 #Patch42:	
 #Patch43:	
@@ -595,7 +602,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 echo Added Device-mapper support ...
 %patch18 -p1
 %patch19 -p1
-#%patch20 -p1
 %patch23 -p1
 %patch26 -p1
 %patch27 -p1
@@ -743,6 +749,18 @@ echo Added davFS support
 echo Added Nokia5510 support
 %patch38 -p1
 
+# Audigy
+echo Added Audigy SoundBlaster support ...
+%patch20 -p1
+
+# AIC79XX
+echo Added Adapter AIC79XX controler support ...
+%patch39 -p1
+
+# i810 audio
+echo Fixed I810 Sound ...
+%patch40 -p1
+
 echo Added ARCH specific patches....
 %ifarch %{ix86}
 echo Ix86 patches ...
@@ -858,6 +876,9 @@ BuildKernel() {
 	cat %{SOURCE1671} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1672} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1673} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1674} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1675} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1676} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1667} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1668} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1669} >> arch/%{base_arch}/defconfig
@@ -1064,6 +1085,9 @@ cat %{SOURCE1670} >> .config
 cat %{SOURCE1671} >> .config
 cat %{SOURCE1672} >> .config
 cat %{SOURCE1673} >> .config
+cat %{SOURCE1674} >> .config
+cat %{SOURCE1675} >> .config
+cat %{SOURCE1676} >> .config
 
 %ifarch %{ix86}
 cat %{SOURCE2000} >> .config
@@ -1122,6 +1146,9 @@ cat %{SOURCE1670} >> .config
 cat %{SOURCE1671} >> .config
 cat %{SOURCE1672} >> .config
 cat %{SOURCE1673} >> .config
+cat %{SOURCE1674} >> .config
+cat %{SOURCE1675} >> .config
+cat %{SOURCE1676} >> .config
 
 %ifarch %{ix86}
 cat %{SOURCE2000} >> .config
