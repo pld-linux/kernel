@@ -1074,7 +1074,7 @@ fi
 /boot/vmlinuz-%{version}-%{release}
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
-/lib/modules/%{version}-%{release}/kernel
+/lib/modules/%{version}-%{release}/kernel/[^drivers/pcmcia]*
 /lib/modules/%{version}-%{release}/build
 /lib/modules/%{version}-%{release}/modules.dep
 /lib/modules/%{version}-%{release}/modules.[^pic]*map
@@ -1088,14 +1088,16 @@ fi
 %ifarch %{ix86}
 /lib/modules/%{version}-%{release}/pcmcia
 %endif
+/lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}smp/modules.pcimap
 
 %if%{?_without_smp:0}%{!?_without_smp:1}
 %files pcmcia-cs-smp
 %defattr(644,root,root,755)
 %ifarch %{ix86}
-/lib/modules/%{version}-%{release}/pcmcia
+/lib/modules/%{version}-%{release}smp/pcmcia
 %endif
+/lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}smp/modules.pcimap
 
 %files smp
@@ -1106,7 +1108,7 @@ fi
 /boot/vmlinuz-%{version}-%{release}smp
 /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
-/lib/modules/%{version}-%{release}smp/kernel
+/lib/modules/%{version}-%{release}smp/kernel/[^drivers/pcmcia]*
 /lib/modules/%{version}-%{release}smp/build
 /lib/modules/%{version}-%{release}smp/modules.dep
 /lib/modules/%{version}-%{release}smp/modules.[^pci]*map
