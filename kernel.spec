@@ -12,7 +12,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.19
-Release:	15
+Release:	16
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
