@@ -220,16 +220,16 @@ Provides:	%{name}-smp = %{epoch}:%{version}-%{release}
 Provides:	module-info
 Provides:	%{name}(netfilter) = %{_netfilter_snap}
 Conflicts:	binutils < %{_binutils_ver}
-Conflicts:	util-linux < %{_util-linux_ver}
-Conflicts:	module-init-tool < %{_module-init-tool_ver}
+Conflicts:	util-linux < %{_util_linux_ver}
+Conflicts:	module-init-tool < %{_module_init_tool_ver}
 Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
 Conflicts:	jfsutils < %{_jfsutils_ver}
 Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
 Conflicts:	xfsprogs < %{_xfsprogs_ver}
-Conflicts:	quota-tools < %{_quota-tools_ver}
+Conflicts:	quota-tools < %{_quota_tools_ver}
 Conflicts:	PPP < %{_PPP_ver}
-Conflicts:	isdn4k-utils < %{_isdn4k-utils_ver}
-Conflicts:	nfs-utils < %{_nfs-utils_ver}
+Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
+Conflicts:	nfs-utils < %{_nfs_utils_ver}
 Conflicts:	procps < %{_procps_ver}
 Conflicts:	oprofile < %{_oprofile_ver}
 Autoreqprov:	no
@@ -291,7 +291,7 @@ PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	%{name}-pcmcia = %{pcmcia_version}
 Provides:	kernel(pcmcia)
-Conflicts:	pcmcia-cs < %{_pcmcia-cs_ver}
+Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
 
 %description pcmcia
 PCMCIA modules (%{pcmcia_version}).
@@ -307,7 +307,7 @@ PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Provides:	%{name}-pcmcia = %{pcmcia_version}
 Provides:	kernel(pcmcia)
-Conflicts:	pcmcia-cs < %{_pcmcia-cs_ver}
+Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
 
 %description smp-pcmcia
 PCMCIA modules for SMP kernel (%{pcmcia_version}).
