@@ -49,8 +49,6 @@
 ## netfilter snap 
 %define		_netfilter_snap		20040518
 
-%define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/pentium./i386/;s/amd64/x86_64/')
-
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
 
@@ -74,8 +72,8 @@ Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
 # Source3-md5:	5a1774238297c4209f9989478c5bb663
 
-Source20:	%{name}-ia32.config
-Source21:	%{name}-ia32-smp.config
+Source20:	%{name}-i386.config
+Source21:	%{name}-i386-smp.config
 Source30:	%{name}-amd64.config
 Source31:	%{name}-amd64-smp.config
 Source50:	%{name}-sparc.config
@@ -193,12 +191,13 @@ Patch96:	2.6.6-lirc_i2c.diff
 Patch97:	%{name}-pts.patch
 
 URL:		http://www.kernel.org/
-BuildRequires:	module-init-tools
-BuildRequires:	perl-base
 BuildRequires:	binutils >= 2.14.90.0.7
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
+BuildRequires:	module-init-tools
+BuildRequires:	perl-base
+BuildRequires:	rpmbuild(macros) >= 1.153
 Autoreqprov:	no
 PreReq:		coreutils
 PreReq:		module-init-tools >= 0.9.9
@@ -664,55 +663,45 @@ BuildConfig (){
 	smp=
 	[ "$1" = "BOOT" -o "$2" = "BOOT" ] && BOOT=yes
 	[ "$1" = "smp" -o "$2" = "smp" ] && smp=yes
-%ifarch %{ix86}
 	if [ "$smp" = "yes" ]; then
-		Config="ia32-smp"
+		Config="%{_target_base_arch}-smp"
 	else
-		Config="ia32"
+		Config="%{_target_base_arch}"
 	fi
-%else
-	if [ "$smp" = "yes" ]; then
-		Config="%{_target_cpu}-smp"
-	else
-		Config="%{_target_cpu}"
-	fi
-%endif
 	if [ "$BOOT" = "yes" ]; then
 		KernelVer=%{version}-%{release}BOOT
 	else
 		KernelVer=%{version}-%{release}$1
 	fi
 	echo "Building config file for KERNEL $1..."
-:> arch/%{base_arch}/defconfig
-	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/%{base_arch}/defconfig
+	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
 %ifarch i386
-	echo "CONFIG_M386=y" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_M386=y" >> arch/%{_target_base_arch}/defconfig
 %endif
 %ifarch i486
-	echo "CONFIG_M486=y" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_M486=y" >> arch/%{_target_base_arch}/defconfig
 %endif
 %ifarch i586
-	echo "CONFIG_M586=y" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_M586=y" >> arch/%{_target_base_arch}/defconfig
 %endif
 %ifarch i686
-	echo "CONFIG_M686=y" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_M686=y" >> arch/%{_target_base_arch}/defconfig
 %endif
 %ifarch athlon
-	echo "CONFIG_MK7=y" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_MK7=y" >> arch/%{_target_base_arch}/defconfig
 %endif
 
 %ifarch i386 i486
-	mv -f arch/%{base_arch}/defconfig arch/%{base_arch}/defconfig.orig
-	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
-		arch/%{base_arch}/defconfig.orig > arch/%{base_arch}/defconfig
+	sed -i 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
+		arch/%{_target_base_arch}/defconfig
 %endif
 
-	cat %{SOURCE80} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE80} >> arch/%{_target_base_arch}/defconfig
 
 #grsec
-cat %{SOURCE90} >> arch/%{base_arch}/defconfig
+cat %{SOURCE90} >> arch/%{_target_base_arch}/defconfig
 
-	ln -sf arch/%{base_arch}/defconfig .config
+	ln -sf arch/%{_target_base_arch}/defconfig .config
 
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
 	%{__make} include/linux/autoconf.h
@@ -725,77 +714,71 @@ cat %{SOURCE90} >> arch/%{base_arch}/defconfig
 
 ConfigBOOT()
 {
-%ifarch %{ix86}
-		Config="ia32"
-%else
-		Config="%{_target_cpu}"
-%endif
-:> arch/%{base_arch}/defconfig
-	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/%{base_arch}/defconfig
+	Config="%{_target_base_arch}"
+	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
 %ifarch i386
-	echo "CONFIG_M386=y" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_M386=y" >> arch/%{_target_base_arch}/defconfig
 %endif
 %ifarch i486
-	echo "CONFIG_M486=y" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_M486=y" >> arch/%{_target_base_arch}/defconfig
 %endif
 %ifarch i386 i486
-	mv -f arch/%{base_arch}/defconfig arch/%{base_arch}/defconfig.orig
-	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
-		arch/%{base_arch}/defconfig.orig > arch/%{base_arch}/defconfig
+	sed -i 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
+		arch/%{_target_base_arch}/defconfig
 %endif
-
-	echo "# CONFIG_APM is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_ACPI is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_ACPI_BOOT is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_MTD is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_NETFILTER is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_WAN is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_ATM is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_HOTPLUG_PCI is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_NET_SCHED is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_X86_MCE is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_MTRR is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_PM is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_CPU_FREQ is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_DRM is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_FTAPE is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_WATCHDOG is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_DVB is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_DVB_CORE is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_VIDEO_DEV is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_SECURITY is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_SOUND is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_USB_AUDIO is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_INPUT_JOYSTICK is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_OMNIBOOK is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_NET_RADIO is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_HOTPLUG is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_QUOTA is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_REGPARM is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_SCSI_LOGGING is not set" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_PACKET=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_UNIX=m" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_DEV_APPLETALK is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_ECONET_AUNUDP is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_HIPPI is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_TR is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_INPUT_MISC is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_INPUT_TOUCHSCREEN is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_PROFILING is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_DEBUG_KERNEL is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_DEBUG_SPINLOCK_SLEEP is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_FRAME_POINTER is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_LBD is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_SLIP is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_PPP is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_PLIP is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_FDDI is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_HAMRADIO is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_NETPOLL_RX is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_NETPOLL_TRAP is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_FB is not set" >> arch/%{base_arch}/defconfig
-	echo "" >> arch/%{base_arch}/defconfig
-	ln -sf arch/%{base_arch}/defconfig .config
+	cat <<EOF >>arch/%{_target_base_arch}/defconfig
+	# CONFIG_APM is not set
+	# CONFIG_ACPI is not set
+	# CONFIG_ACPI_BOOT is not set
+	# CONFIG_MTD is not set
+	# CONFIG_NETFILTER is not set
+	# CONFIG_WAN is not set
+	# CONFIG_ATM is not set
+	# CONFIG_HOTPLUG_PCI is not set
+	# CONFIG_NET_SCHED is not set
+	# CONFIG_X86_MCE is not set
+	# CONFIG_MTRR is not set
+	# CONFIG_PM is not set
+	# CONFIG_CPU_FREQ is not set
+	# CONFIG_DRM is not set
+	# CONFIG_FTAPE is not set
+	# CONFIG_WATCHDOG is not set
+	# CONFIG_DVB is not set
+	# CONFIG_DVB_CORE is not set
+	# CONFIG_VIDEO_DEV is not set
+	# CONFIG_SECURITY is not set
+	# CONFIG_SOUND is not set
+	# CONFIG_USB_AUDIO is not set
+	# CONFIG_INPUT_JOYSTICK is not set
+	# CONFIG_OMNIBOOK is not set
+	# CONFIG_NET_RADIO is not set
+	# CONFIG_HOTPLUG is not set
+	# CONFIG_QUOTA is not set
+	# CONFIG_REGPARM is not set
+	# CONFIG_SCSI_LOGGING is not set
+	CONFIG_PACKET=m
+	CONFIG_UNIX=m
+	# CONFIG_DEV_APPLETALK is not set
+	# CONFIG_ECONET_AUNUDP is not set
+	# CONFIG_HIPPI is not set
+	# CONFIG_TR is not set
+	# CONFIG_INPUT_MISC is not set
+	# CONFIG_INPUT_TOUCHSCREEN is not set
+	# CONFIG_PROFILING is not set
+	# CONFIG_DEBUG_KERNEL is not set
+	# CONFIG_DEBUG_SPINLOCK_SLEEP is not set
+	# CONFIG_FRAME_POINTER is not set
+	# CONFIG_LBD is not set
+	# CONFIG_SLIP is not set
+	# CONFIG_PPP is not set
+	# CONFIG_PLIP is not set
+	# CONFIG_FDDI is not set
+	# CONFIG_HAMRADIO is not set
+	# CONFIG_NETPOLL_RX is not set
+	# CONFIG_NETPOLL_TRAP is not set
+	# CONFIG_FB is not set
+	EOF
+	ln -sf arch/%{_target_base_arch}/defconfig .config
 
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
 	%{__make} include/linux/autoconf.h
@@ -811,7 +794,7 @@ BuildKernel() {
 	echo "Building kernel $1 ..."	
 	%{__make} mrproper \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
-	ln -sf arch/%{base_arch}/defconfig .config
+	ln -sf arch/%{_target_base_arch}/defconfig .config
 
 %ifarch sparc
 	sparc32 %{__make} clean \
@@ -846,19 +829,11 @@ PreInstallKernel (){
 	smp=
 	[ "$1" = "BOOT" -o "$2" = "BOOT" ] && BOOT=yes
 	[ "$1" = "smp" -o "$2" = "smp" ] && smp=yes
-%ifarch %{ix86}
 	if [ "$smp" = "yes" ]; then
-		Config="ia32-smp"
+		Config="%{_target_base_arch}-smp"
 	else
-		Config="ia32"
+		Config="%{_target_base_arch}"
 	fi
-%else
-	if [ "$smp" = "yes" ]; then
-		Config="%{_target_cpu}-smp"
-	else
-		Config="%{_target_cpu}"
-	fi
-%endif
 	if [ "$BOOT" = "yes" ]; then
 		KernelVer=%{version}-%{release}BOOT
 	else
@@ -959,11 +934,7 @@ cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 find -name "*~" -exec rm -f "{}" ";"
 find -name "*.orig" -exec rm -f "{}" ";"
 
-%ifarch %{ix86}
-cat $RPM_SOURCE_DIR/kernel-ia32.config > .config
-%else
-install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
-%endif
+install $RPM_SOURCE_DIR/kernel-%{_target_base_arch}.config .config
 
 %ifarch i386
 echo "CONFIG_M386=y" >> .config
@@ -986,11 +957,7 @@ cat %{SOURCE90} >> .config
 
 cp .config config-up
 
-%ifarch %{ix86}
-cat $RPM_SOURCE_DIR/kernel-ia32-smp.config >> .config
-%else
-install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config .config
-%endif
+install $RPM_SOURCE_DIR/kernel-%{_target_base_arch}-smp.config .config
 
 %ifarch i386
 echo "CONFIG_M386=y" >> .config
@@ -1030,7 +997,10 @@ $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 %endif
 
 %{__make} mrproper
-ln -sf asm-%{base_arch} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
+
+# temporary disabled (crosscompialation -> symlink to wrong arch).
+#ln -sf asm-%{base_arch} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
+
 %{__make} include/linux/version.h
 install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
 
