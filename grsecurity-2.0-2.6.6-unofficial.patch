@@ -15202,15 +15202,6 @@ diff -uNr linux-2.6.6/kernel/timer.c linux-2.6.6.grsec/kernel/timer.c
 diff -uNr linux-2.6.6/Makefile linux-2.6.6.grsec/Makefile
 --- linux-2.6.6/Makefile	2004-05-13 16:55:38.000000000 +0200
 +++ linux-2.6.6.grsec/Makefile	2004-05-13 16:52:26.000000000 +0200
-@@ -1,7 +1,7 @@
- VERSION = 2
- PATCHLEVEL = 6
- SUBLEVEL = 6
--EXTRAVERSION =
-+EXTRAVERSION = -grsec
- NAME=Zonked Quokka
- 
- # *DOCUMENTATION*
 @@ -484,7 +484,7 @@
  
  
@@ -16395,12 +16386,12 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  	vma->vm_ops = NULL;
  	vma->vm_pgoff = 0;
 diff -uNr linux-2.6.6/mm/mprotect.c linux-2.6.6.grsec/mm/mprotect.c
---- linux-2.6.6/mm/mprotect.c	2004-05-10 04:33:22.000000000 +0200
-+++ linux-2.6.6.grsec/mm/mprotect.c	2004-05-13 16:52:26.000000000 +0200
-@@ -16,6 +16,12 @@
- #include <linux/fs.h>
+--- linux-2.6.6/mm/mprotect.c.orig	2004-05-24 13:47:27.774918224 +0200
++++ linux-2.6.6/mm/mprotect.c	2004-05-24 13:48:22.155651096 +0200
+@@ -17,6 +17,12 @@
  #include <linux/highmem.h>
  #include <linux/security.h>
+ #include <linux/mempolicy.h>
 +#include <linux/grsecurity.h>
 +
 +#ifdef CONFIG_PAX_MPROTECT
@@ -16410,8 +16401,8 @@ diff -uNr linux-2.6.6/mm/mprotect.c linux-2.6.6.grsec/mm/mprotect.c
  
  #include <asm/uaccess.h>
  #include <asm/pgalloc.h>
-@@ -151,6 +157,46 @@
- 	return 1;
+@@ -108,6 +114,46 @@
+ 	return;
  }
  
 +#if defined(CONFIG_PAX_SEGMEXEC) || defined(CONFIG_PAX_RANDEXEC)
@@ -16457,7 +16448,7 @@ diff -uNr linux-2.6.6/mm/mprotect.c linux-2.6.6.grsec/mm/mprotect.c
  static int
  mprotect_fixup(struct vm_area_struct *vma, struct vm_area_struct **pprev,
  	unsigned long start, unsigned long end, unsigned int newflags)
-@@ -164,6 +210,7 @@
+@@ -122,6 +168,7 @@
  		*pprev = vma;
  		return 0;
  	}
@@ -16465,7 +16456,7 @@ diff -uNr linux-2.6.6/mm/mprotect.c linux-2.6.6.grsec/mm/mprotect.c
  
  	/*
  	 * If we make a private mapping writable we increase our commit;
-@@ -183,6 +230,12 @@
+@@ -140,6 +187,12 @@
  		}
  	}
  
@@ -16477,8 +16468,8 @@ diff -uNr linux-2.6.6/mm/mprotect.c linux-2.6.6.grsec/mm/mprotect.c
 +
  	newprot = protection_map[newflags & 0xf];
  
- 	if (start == vma->vm_start) {
-@@ -223,6 +276,69 @@
+ 	/*
+@@ -185,6 +238,69 @@
  	return error;
  }
  
@@ -16548,7 +16539,7 @@ diff -uNr linux-2.6.6/mm/mprotect.c linux-2.6.6.grsec/mm/mprotect.c
  asmlinkage long
  sys_mprotect(unsigned long start, size_t len, unsigned long prot)
  {
-@@ -240,6 +356,17 @@
+@@ -202,6 +318,17 @@
  	end = start + len;
  	if (end < start)
  		return -ENOMEM;
@@ -16566,9 +16557,9 @@ diff -uNr linux-2.6.6/mm/mprotect.c linux-2.6.6.grsec/mm/mprotect.c
  	if (prot & ~(PROT_READ | PROT_WRITE | PROT_EXEC | PROT_SEM))
  		return -EINVAL;
  	if (end == start)
-@@ -272,6 +399,16 @@
- 		}
- 	}
+@@ -236,6 +363,16 @@
+ 	if (start > vma->vm_start)
+ 		prev = vma;
  
 +	if (!gr_acl_handle_mprotect(vma->vm_file, prot)) {
 +		error = -EACCES;
@@ -16582,8 +16573,8 @@ diff -uNr linux-2.6.6/mm/mprotect.c linux-2.6.6.grsec/mm/mprotect.c
 +
  	for (nstart = start ; ; ) {
  		unsigned int newflags;
- 		int last = 0;
-@@ -290,6 +427,12 @@
+ 
+@@ -253,6 +390,12 @@
  			goto out;
  		}
  
