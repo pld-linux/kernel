@@ -17,7 +17,7 @@
 %define		_rel		0.1
 %define		test_ver	4
 %define		patch_level	0
-%define		_bk_ver		5
+%define		_bk_ver		6
 
 %if %{test_ver} != 0
 %define		test	test%{test_ver}
