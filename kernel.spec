@@ -746,6 +746,13 @@ mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
 
+if [ ! -L /lib/modules/%{version} ] ; then
+	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
+fi
+rm -f /lib/modules/%{version}
+ln -snf %{version}-%{release} /lib/modules/%{version}
+depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+
 geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}.gz /boot/initrd
@@ -754,19 +761,19 @@ if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
-if [ ! -L /lib/modules/%{version} ] ; then
-	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
-fi
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release} /lib/modules/%{version}
-depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
-
 %if%{?_without_smp:0}%{!?_without_smp:1}
 %post smp
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}smp /boot/System.map
+
+if [ ! -L /lib/modules/%{version} ] ; then
+	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
+fi
+rm -f /lib/modules/%{version}
+ln -snf %{version}-%{release}smp /lib/modules/%{version}
+depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
 
 geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
 mv -f /boot/initrd /boot/initrd.old
@@ -776,11 +783,6 @@ if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
-if [ ! -L /lib/modules/%{version} ] ; then
-	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
-fi
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release}smp /lib/modules/%{version}
 %endif			# %{_without_smp}
 
 %post BOOT
