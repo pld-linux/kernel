@@ -17,7 +17,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.5.70
-Release:	0.1
+Release:	0.2
 License:	GPL
 Group:		Base/Kernel
 # Source0-md5:	8d3ee29e86c728a0de2151328164269b
@@ -36,6 +36,7 @@ Source21:	%{name}-ia32-smp.config
 Patch0:		http://piorun.ds.pg.gda.pl/~blues/linux-2.5.67-genrtc_fix.patch
 # LSM/SELinux
 #Patch10:	linux-2.5.69-lsm-20030528.patch.bz2
+Patch1:		linux-fix_missing_symb.patch
 Patch10:	linux-2.5.70-selinux-1.patch.bz2
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -262,6 +263,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %prep
 %setup -q -n linux-%{version}
 %patch0 -p0
+%patch1 -p1
 %{!?_without_lsm:%patch10 -p1}
 
 # Fix EXTRAVERSION and CC in main Makefile
