@@ -44,8 +44,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.5
-%define		_cset		20040528_0912
+%define		_rel		0.6
+%define		_cset		20040529_0506
 
 %define		_netfilter_snap		20040518
 
@@ -70,7 +70,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc1
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	0a5a69f7d0170b7f73673b1e6cd37b6d
+# Source3-md5:	9f517c958f516679067b98dd0fc6f9e9
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
