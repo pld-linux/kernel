@@ -26,7 +26,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.23
-Release:	0.3
+Release:	0.4
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-2.4.22.tar.bz2
@@ -262,7 +262,7 @@ Patch3008:	linux-drm-4.2.0-force-cmpxchg.patch
 Patch3010:	linux-2.4.21-ipsec-sparc64.patch
 Patch3011:	linux-2.4.22-gcc33-inline.patch
 Patch3012:	linux-2.4.22-gcc-ext3.patch
-
+Patch3013:	linux-2.4.23-ppc-symbols.patch
 # Security patches/fixes
 
 Patch4000:	grsecurity-2.0-rc3-2.4.22-O1.patch
@@ -740,8 +740,9 @@ cd ../../..
 
 %patch3011 -p1
 %patch3012 -p1
+%patch3013 -p1
 
-# XXX: UPDATE (proc in 2.4.23 was converted to seq_file so bigger changes are needed)
+# XXX: finish update (one (not very important) issue with seq_file not resolved)
 %{?with_grsec:%patch4000 -p1}
 
 mv -f drivers/scsi/sym53c8xx.c drivers/scsi/sym53c8xx_old.c
