@@ -47,7 +47,7 @@ Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
-# Source3-md5:	b2a4bc176e9f29b0c439ef9a53a62a1a
+# Source3-md5:	8ed492197244b6a772270417c66214d3
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 # Source4-md5:	b2a4bc176e9f29b0c439ef9a53a62a1a
 Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
