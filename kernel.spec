@@ -30,7 +30,7 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1.1
+%define		_rel		1
 %define		_rc		rc1
 %define		_cset		20040101_0206
 
@@ -48,7 +48,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.6.1
-Release:	%{_rc}.%{_rel}
+Release:	1.%{_rc}.%{_rel}
 Epoch:		1
 License:	GPL
 Group:		Base/Kernel
@@ -117,6 +117,9 @@ Patch62:	2.6.0-t11-EPoX-sound-lkml.patch
 Patch64:	bootsplash-3.1.3-2.6.0-test9.diff
 
 Patch66:	2.6.0-t11-AIC_and_db4-lkml.patch
+
+# http://bytesex.org/patches/2.6.0-1/patch-2.6.0-kraxel.gz
+Patch68:	patch-2.6.0-kraxel.gz
 
 Patch70:	2.6.0-t11-r8169-getstats.patch
 
@@ -516,6 +519,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch64 -p1
 
 %patch66 -p1
+
+%patch68 -p1
 
 %patch70 -p1
 
