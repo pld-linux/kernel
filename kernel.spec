@@ -48,9 +48,9 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.34
+%define		_rel		0.40
 %define		_cset		20040808_0805
-%define		_apply_cset	1
+%define		_apply_cset	0
 
 %define		_netfilter_snap		20040629
 
@@ -73,10 +73,10 @@ Epoch:		3
 License:	GPL
 Group:		Base/Kernel
 #define		_rc	%{nil}
-%define		_rc	-rc3
+%define		_rc	-rc4
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
 Source0:	http://kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	e89c3f85c38f460dec8ec9044e44f02a
+# Source0-md5:	6bf8c5a9ebcb0b7568321a5c8da2e602
 Source1:	%{name}-autoconf.h
 Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 # Source2-md5:	85bdb0205de53b7787966f0932fd8dd9
@@ -114,7 +114,7 @@ Patch12:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch13:	2.6.2-Initio9100U-Kconfig.patch
 # http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
 Patch14:	2.6.1-all-in-1.patch
-
+Patch15:	2.6.x-apm-disabled.patch
 Patch16:	linux-alpha-isa.patch
 Patch17:	2.6.4-psion-5mx.patch
 Patch18:	2.6.5-sparc64-missing-include.patch
@@ -564,7 +564,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch12 -p1
 %patch13 -p1
 %patch14 -p1
-
+%patch15 -p1
 %patch16 -p1
 %patch17 -p1
 %patch18 -p1
