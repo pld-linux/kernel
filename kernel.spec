@@ -456,7 +456,7 @@ Group:		Base/Kernel
 Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
 PreReq:		%{name}-up = %{version}-%{release}
 Requires(postun):	%{name}-up = %{version}-%{release}
-Requires(per):	%{name}-up = %{version}-%{release}
+Requires(pre):	%{name}-up = %{version}-%{release}
 
 %description pcmcia-cs
 PCMCIA-CS modules (%{pcmcia_version}).
@@ -526,8 +526,8 @@ Provides:	%{name}-headers(netfilter) = %{iptables_version}
 Provides:	%{name}-headers(grsecurity) = %{grsec_version}
 Provides:	%{name}-headers(freeswan) = %{freeswan_version}
 Provides:	%{name}-headers(evms)
-Provides:	%{name}(cdrw)
-Provides:	%{name}(cdmrw)
+Provides:	%{name}-headers(cdrw)
+Provides:	%{name}-headers(cdmrw)
 Provides:	%{name}-headers(hostap) = %{hostap_version}
 Autoreqprov:	no
 
