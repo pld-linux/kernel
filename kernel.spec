@@ -197,6 +197,8 @@ Provides:	bttv = 0.7.83
 Provides:	%{name}_netfilter = 1.2.7a
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
+Provides:	%{name}(cdrw)
+Provides:	%{name}(cdmrw)
 Autoreqprov:	no
 Prereq:		fileutils
 Prereq:		modutils
@@ -243,6 +245,8 @@ Provides:	i2c = 2.6.1
 Provides:	bttv = 0.7.83
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
+Provides:	%{name}(cdrw)
+Provides:	%{name}(cdmrw)
 Provides:	%{name}_netfilter = 1.2.7a
 Prereq:		modutils
 Autoreqprov:	no
