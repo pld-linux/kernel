@@ -6,7 +6,7 @@
 #
 %define		test_build		0
 #
-%define		pre_version		pre3
+%define		pre_version		pre6
 %define		lids_version		1.0.11-2.4.6
 %define		ipvs_version		0.9.2
 %define		freeswan_version	snap2001jun14R
