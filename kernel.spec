@@ -14,7 +14,7 @@ Release:	1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-2.4.1.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%version.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
@@ -216,9 +216,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %prep
 %setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -n linux
 
-# Pre patch
-%patch5 -p1
-
 #kerneli patch
 %patch0 -p1
 
@@ -385,8 +382,6 @@ gzip -dc %{SOURCE7} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 # install i8255 fix patch
 patch -s -p0 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <%{PATCH4}
-# install AC patch
-gzip -dc %{PATCH5} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 #install FORE patch
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/ <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
 
