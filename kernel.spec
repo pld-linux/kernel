@@ -2,14 +2,21 @@
 # If you define the following as 1, only kernel, -headers and -source
 # packages will be built
 #
+#	TODO
+# - check I2C
+# - check netfilter
+# - check squashfs
+# - fix config problem
+#
+# BCOND:
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 # _without_source	- don't build source
 # _without_lsm		- don't build LSM/SELinux kernel
 
-%define		_rel		0
+%define		_rel		1
 %define		test_ver	3
-%define		patch_level	3
+%define		patch_level	0
 
 %if	%{test_ver} != 0
 %define		test		test%{test_ver}
@@ -30,9 +37,9 @@ Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.6.0
 %if %{patch_level} != 0
-Release:	%{_rel}%{test}pl%{patch_level}
+Release:	%{test}_r%{_rel}pl%{patch_level}
 %else
-Release:	%{_rel}
+Release:	%{test}_r%{_rel}
 %endif
 License:	GPL
 Group:		Base/Kernel
@@ -239,7 +246,7 @@ Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
 Provides:	i2c-devel = 2.6.1
-#%%Provides:	%{name}-headers(netfilter) = 1.2.7a
+Provides:	%{name}-headers(netfilter) = 1.2.8
 Provides:	%{name}-headers(alsa-drivers)
 Provides:	alsa-driver-devel
 Autoreqprov:	no
