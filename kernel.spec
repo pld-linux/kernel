@@ -55,8 +55,8 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.15
-%define		_cset		20050118_1713
+%define		_rel		0.10
+%define		_cset		20050124_0106
 %define		_apply_cset	0
 
 %define		_netfilter_snap		20041118
@@ -79,9 +79,9 @@ Epoch:		3
 License:	GPL
 Group:		Base/Kernel
 #%define		_rc	%{nil}
-%define		_rc	-rc1
+%define		_rc	-rc2
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	94d052c4b7ec8e508a22359bbfea19b0
+# Source0-md5:	f18456c9da900820fba98576832d598c
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 
@@ -168,8 +168,8 @@ Source92:	%{name}-vserver.config
 #Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 
 # http://dev.gentoo.org/~spock/projects/gensplash/
-Patch72:	fbsplash-0.9.1-2.6.11-rc1.patch
-#Patch73:	squashfs2.1-patch
+#Patch72:	fbsplash-0.9.1-2.6.11-rc1.patch
+Patch73:	squashfs2.1-patch
 #Patch74:	linux-static-dev.patch
 #Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
 #Patch76:	linux-2.6-lirc-0.7.patch
@@ -576,9 +576,9 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 #%patch70 -p1
 
-%patch72 -p1
+#%patch72 -p1
 
-#%patch73 -p1
+%patch73 -p1
 #%patch74 -p1
 #%patch75 -p1
 #%patch76 -p1
