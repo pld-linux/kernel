@@ -210,6 +210,11 @@ Patch139:	linux-2.4.20-v4l2.patch.bz2
 # PWC USB Webcam Driver update (only for 2.4.20; 2.4.21 should have this fix)
 Patch140:	linux-2.4.20-pwc.patch
 
+# rivafb - fix for text background in 16bpp modes
+Patch141:	linux-rivafb16.patch
+# misc tdfxfb fixes - detailed description inside
+Patch142:	linux-tdfxfb-fixes.patch
+
 # Patches fixing other patches or 3rd party sources ;)
 # This patch allows to create more than one sound device using alsa
 # and devfs with two or more sound cards
@@ -569,6 +574,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch136 -p0
 #%patch137 -p1
 %patch140 -p1
+%patch141 -p1
+%patch142 -p1
 
 %patch200 -p1
 
