@@ -1,12 +1,4 @@
 #
-# SEE PLD-doc/maintainers file before you edit this file!!
-#
-# If you define the following as 1, only kernel, -headers and -source
-# packages will be built
-#
-#	TODO
-# - check I2C
-#
 # Conditional build:
 %bcond_without	BOOT		# don't build BOOT kernel
 %bcond_without	smp		# don't build SMP kernel
@@ -19,7 +11,6 @@
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	bootsplash	# build with bootsplash
 %bcond_with	swsuspend	# build with software suspend
-
 %bcond_with	mosix		# build with openMosix support
 
 %{?debug:%define with_verbose 1}
