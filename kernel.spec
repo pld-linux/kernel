@@ -403,7 +403,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %if%{?_with_grsec:1}%{!?_with_grsec:0}
 %patch10 -p1
 %endif
-%patch9 -p1
+#%patch9 -p1
 
 %patch101 -p0
 %patch102 -p0
