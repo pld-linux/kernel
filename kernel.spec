@@ -1,64 +1,64 @@
-%define		ow_version	2.2.17-ow1
-%define		pcmcia_version	3.1.20
-%define		freeswan_version	1.5
+#%define		ow_version	2.2.17-ow1
+#%define		pcmcia_version	3.1.20
+#%define		freeswan_version	1.5
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.2.17
-Release:	2
+Version:	2.4.0
+Release:	1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
-Source1:	%{name}-autoconf.h
-Source10:	%{name}-i386.config
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
+#Source1:	%{name}-autoconf.h
+#Source10:	%{name}-i386.config
 #Source11:	%{name}-i386-fb.config
-Source12:	%{name}-i386-BOOT.config
-Source13:	%{name}-i586.config
+#Source12:	%{name}-i386-BOOT.config
+#Source13:	%{name}-i586.config
 #Source14:	%{name}-i586-fb.config
-Source15:	%{name}-i586-smp.config
+#Source15:	%{name}-i586-smp.config
 #Source16:	%{name}-i586-smp-fb.config
-Source17:	%{name}-i686.config
+#Source17:	%{name}-i686.config
 #Source18:	%{name}-i686-fb.config
-Source19:	%{name}-i686-smp.config
+#Source19:	%{name}-i686-smp.config
 #Source20:	%{name}-i686-smp-fb.config
-Source21:	%{name}-sparc.config
-Source22:	%{name}-sparc-smp.config
-Source23:	%{name}-sparc-BOOT.config
-Source24:	%{name}-sparc64.config
+#Source21:	%{name}-sparc.config
+#Source22:	%{name}-sparc-smp.config
+#Source23:	%{name}-sparc-BOOT.config
+#Source24:	%{name}-sparc64.config
 #Source25:	%{name}-sparc64-smp.config
 #Source26:	%{name}-sparc64-BOOT.config
-Source27:	%{name}-alpha.config
-Source28:	%{name}-alpha-smp.config
-Source29:	%{name}-alpha-BOOT.config
-Source30:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
-Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-127.tar.gz
-Source32:	%{name}-BuildASM.sh
-Source33:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
-Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.17+.gz
+#Source27:	%{name}-alpha.config
+#Source28:	%{name}-alpha-smp.config
+#Source29:	%{name}-alpha-BOOT.config
+#Source30:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
+#Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-127.tar.gz
+#Source32:	%{name}-BuildASM.sh
+#Source33:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
+#Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.17+.gz
 # NFS server patches
-Source40:	http://download.sourceforge.net/nfs/dhiggen_merge-4.1.tar.gz
-Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.17.2.gz
-Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.17-reiserfs-3.5.25-patch.gz
-Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
-Patch3:		linux-tasks.patch
+#Source40:	http://download.sourceforge.net/nfs/dhiggen_merge-4.1.tar.gz
+#Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.17.2.gz
+#Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.17-reiserfs-3.5.25-patch.gz
+#Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
+#Patch3:		linux-tasks.patch
 # patch based on http://www.redhat.com/~mingo/raid-patches/
-Patch4:		raid-2.2.17-A0.gz
-Patch5:		http://www.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.17/ide.2.2.17.all.20000904.patch.bz2
-Patch6:		%{name}-pldfblogo.patch
-Patch7:		linux-2.2.16-freeswan-%{freeswan_version}.patch
-Patch8:		wanrouter-v2215.patch.gz
-Patch10:	linux-newagpdist.patch
-Patch11:	linux-agphjlfixes.patch
-Patch12:	linux-agpgart-2.4-compat.patch
+#Patch4:		raid-2.2.17-A0.gz
+#Patch5:		http://www.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.17/ide.2.2.17.all.20000904.patch.bz2
+#Patch6:		%{name}-pldfblogo.patch
+#Patch7:		linux-2.2.16-freeswan-%{freeswan_version}.patch
+#Patch8:		wanrouter-v2215.patch.gz
+#Patch10:	linux-newagpdist.patch
+#Patch11:	linux-agphjlfixes.patch
+#Patch12:	linux-agpgart-2.4-compat.patch
 #Patch14:	http://www.linux.org.uk/VERSION/2.2.16combo
-Patch15:	linux-ipv6-addrconf.patch
+#Patch15:	linux-ipv6-addrconf.patch
 # NFS client patch
-Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
+#Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
 # patch for console daemon.
-Patch21:	wait_any_vt.diff
+#Patch21:	wait_any_vt.diff
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -265,36 +265,37 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a30 -a31 -a33 -n linux
-%patch0 -p1
-%patch20 -p1
-%patch1 -p1
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
+%setup -q -n linux
+#%setup -q -a30 -a31 -a33 -n linux
+#%patch0 -p1
+#%patch20 -p1
+#%patch1 -p1
+#%patch2 -p1
+#%patch3 -p1
+#%patch4 -p1
 %ifarch %{ix86}
-%patch5 -p1
+#%patch5 -p1
 %endif
-%patch6 -p1
-%patch7 -p1
-%patch8 -p1
-%patch10 -p1
-%patch11 -p1
-%patch12 -p1
-#%patch13 -p1 .serek
-#%patch14 -p1 
-%patch15 -p1
+#%patch6 -p1
+#%patch7 -p1
+#%patch8 -p1
+#%patch10 -p1
+#%patch11 -p1
+#%patch12 -p1
+##%patch13 -p1 .serek
+##%patch14 -p1 
+#%patch15 -p1
+#
+#tar zxf %{SOURCE40} dhiggen-over-0.23.1
+#patch -p2 -s <dhiggen-over-0.23.1
 
-tar zxf %{SOURCE40} dhiggen-over-0.23.1
-patch -p2 -s <dhiggen-over-0.23.1
-
-patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
+#patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 # Tekram DC395/315 U/UW SCSI host driver
-patch -p1 -s <dc395/dc395-integ22.diff
-install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
-zcat %{SOURCE34} > drivers/net/3c59x.c
+#patch -p1 -s <dc395/dc395-integ22.diff
+#install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
+#zcat %{SOURCE34} > drivers/net/3c59x.c
 
-patch21 -p1
+#patch21 -p1
 
 %build
 BuildKernel() {
