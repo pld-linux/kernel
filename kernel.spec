@@ -627,22 +627,21 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 %{!?_without_grsec:%patch910 -p1}
 
 # hostap
-echo Installing Host AP support
+#echo Installing Host AP support
 #patch -p1 -s < hostap-%{hostap_version}/kernel-patches/hostap-linux-2.4.19-rc3.patch
 #cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 
-%ifarch sparc
-%endif
-
-%ifarch sparc64
-%endif
-
-echo Sysctl support for PAX nod installed.
+#echo Sysctl support for PAX nod installed.
 #%patch912 -p1
 
 # Konica USB camera support
 echo Installing Konica Support
 %patch33 -p1
+
+# Changing DRM source ....
+echo Installing NEW DRM Source ...
+rm -f drivers/char/drm/*
+cp drm/* drivers/char/drm
 
 # WRR
 echo Installing WRR Support
