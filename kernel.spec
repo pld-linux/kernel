@@ -412,7 +412,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch904 -p0
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
 %ifarch %{ix86}
-%patch906 -p1
+##%patch906 -p1
 %endif
 %endif
 
