@@ -759,7 +759,6 @@ patch -p1 -s < exec-shield.patch
 %patch462 -p1
 %patch463 -p1
 %patch464 -p1
-%patch465 -p1
 %endif
 
 # Fix EXTRAVERSION and CC in main Makefile
