@@ -18,7 +18,7 @@ Summary(ru):	Ядро Linux
 Summary(uk):	Ядро Linux
 Name:		kernel
 Version:	2.2.21
-Release:	6
+Release:	7
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -53,7 +53,7 @@ Source35:	%{name}-alpha-BOOT.config
 Source36:	%{name}-ppc.config
 Source37:	%{name}-ppc-smp.config
 Source38:	%{name}-ppc-BOOT.config
-Patch0:		patch-2.2.22-rc1.bz2
+Patch0:		patch-2.2.22-rc2.bz2
 Patch1:		2.2.22-undo_extraversion.patch
 Patch2:		%{name}-pldfblogo.patch
 Patch3:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
@@ -110,7 +110,7 @@ Patch113:	linux-2.2.21-mppe.patch
 Patch114:	wrr-linux-2.2.18.patch
 Patch115:	2.2.21-wrr-pkt_bridged.patch
 
-Patch302:	ow1-fix-2.2.22-rc1.patch
+Patch302:	ow1-fix-2.2.22-rc2.patch
 
 Patch500:	2.2.20-reiserfs_ppc.patch
 Patch501:	2.2.21-ppc-smp.patch
