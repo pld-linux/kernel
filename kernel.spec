@@ -83,7 +83,6 @@ Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
 # Source3-md5:	a49474ba40cac5704b603ed11b4af48c
 # http://lkml.org/lkml/2004/6/2/228
-## Source6:	http://prdownloads.sourceforge.net/swsusp/software-suspend-2.0.0.81-for-2.6.6.tar.bz2
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source30:	%{name}-x86_64.config
@@ -192,7 +191,7 @@ Patch203:	linux-cluster-gnbd.patch
 
 # suspend/resume
 # http://softwaresuspend.berlios.de/
-Patch219:	linux-2.6.8-rc3-software-suspend-2.0.0.103-for-2.6.7.patch.gz
+Patch219:	linux-2.6.8-rc3-software-suspend-2.0.0.103.patch.gz
 Patch220:	linux-2.6-via-agpc-resume-suspend-support.patch
 Patch221:	linux-2.6-via-rhine-suspend-resume.patch
 
