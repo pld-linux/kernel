@@ -55,8 +55,8 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.22
-%define		_cset		20050208_0609
+%define		_rel		0.23
+%define		_cset		20050208_1719
 %define		_apply_cset	0
 
 %define		_netfilter_snap		20041118
@@ -144,7 +144,7 @@ Patch1:		linux-2.6-alsa-1.0.8-silent-output.patch
 #Patch30:		2.6.x-ppp_mppe.patch
 
 #Patch32:		2.6.x-TGA-fbdev-lkml.patch
-#Patch33:		linux-kbuild-extmod.patch
+Patch33:		linux-kbuild-extmod.patch
 
 # framebuffer fixes
 #Patch41:		linux-fbcon-margins.patch
@@ -548,7 +548,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 #patch30 -p1
 
 #patch32 -p1	NEEDS UPDATE
-#%patch33 -p1
+%patch33 -p1
 
 #%patch41 -p1
 
