@@ -18,7 +18,7 @@ Summary(ru):	ñÄÒÏ Linux
 Summary(uk):	ñÄÒÏ Linux
 Name:		kernel
 Version:	2.2.22
-Release:	5
+Release:	6
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -697,7 +697,7 @@ cd ../..
 
 # Build Realtek CardBus 10/100 Ethernet Card for PCMCIA
 # extract and go to realtek_cb-1.07 directory
-tar -zxvf %SOURCE14
+tar -jxvf %SOURCE14
 cd realtek_cb-1.07
 mv -f Makefile Makefile.bak
 sed "s/^KERN_VER.*/KERN_VER = $KernelVer/" Makefile.bak > Makefile.bak2
