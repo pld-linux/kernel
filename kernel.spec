@@ -87,6 +87,10 @@ Patch26:	linux-2.4.x-parisc-PCI-support.patch
 Patch27:	ir242_sock_detach.diff
 Patch28:	cs89x0-driver.patch
 
+# from LKL 2001.03.04
+Patch29:	linux-2.4-fix-kapm.patch
+Patch30:	smc-mca-2.4.2-ac.diff
+
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
 ExclusiveOS:	Linux
@@ -333,6 +337,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch26 -p1
 %patch27 -p1
 %patch28 -p1
+%patch29 -p1
+%patch30 -p0
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -599,6 +605,8 @@ patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH25}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH26}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH27}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH28}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH29}
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH30}
 
 ## SymBios/NCR drivers install
 mv $RPM_BUILD_ROOT/usr/src/linux-%{version}/%{sym_ncr_version}/*.{c,h} $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi
