@@ -188,7 +188,7 @@ Patch200:	grsecurity-2.1.3-2.6.11-200503091157.patch
 
 # linux vserver
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
-#Patch250:	linux-2.6-vs.patch
+Patch250:	linux-2.6-vs.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -593,7 +593,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %endif
 
 %if %{with vserver}
-#%patch250 -p1
+%patch250 -p1
 %endif
 
 # </bconded_patches
