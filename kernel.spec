@@ -413,9 +413,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch108 -p1
 
 # 802.1Q VLANs
-#cd vlan.%{vlan_version}
-#%patch33 -p1
-#cd ..
 patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
 
 cd serial-5.05
