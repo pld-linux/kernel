@@ -126,9 +126,10 @@ Patch120:	linux-2.4.10-aironet.patch
 Patch121:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
 Patch122:	linux-2.4.16-lvm-1.0.1rc4.patch
-
 # fixed xquad_portio
 Patch123:	xquad_portio.fix
+# 
+Patch124:	linux-proc_net_dev-counter-fix.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -404,6 +405,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch121 -p1
 %patch122 -p0
 %patch123 -p1
+%patch124 -p1
 
 %patch900 -p0
 %patch904 -p0
