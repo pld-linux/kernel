@@ -4,6 +4,7 @@
 # TODO:
 #		- fix lirc_sasem (usb api)
 #		- update grsecurity patch
+#		- update fbslpash (wait for 2.6.10 release)
 #		- add distcc support (and don't break crossbuild!)
 #
 # Conditional build:
