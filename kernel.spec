@@ -34,6 +34,7 @@ Source20:	%{name}-sparc.config
 Source21:	%{name}-sparc-smp.config
 Source22:	%{name}-autoconf.h
 Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc6.bz2
+Patch1:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/linux-2.4/2.4.21/patch-2.4.21-rc6-ac1.bz2
 ExclusiveOS:	Linux
 Autoreqprov:	no
 URL:		http://www.kernel.org/
@@ -276,6 +277,7 @@ Modu³y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 %prep
 %setup -q -n linux-%{version}
 %patch0 -p1
+%patch1 -p1
 
 find  -name "*~" -print | xargs rm -f
 find  -name "*.orig" -print | xargs rm -f
