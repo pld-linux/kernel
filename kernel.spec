@@ -63,6 +63,16 @@ This package contains the Linux kernel that is used to boot and run
 your system. It contains few device drivers for specific hardware.
 Most hardware is instead supported by modules loaded after booting.
 
+%package doc
+Summary:	Kernel documentation
+Group:		Base/Kernel
+Requires:	kernel-headers = %{epoch}:%{version}-%{release}
+Autoreqprov:	no
+
+%description doc
+This is the documentation for the Linux kernel, as found in
+/usr/src/linux/Documentation directory.
+
 %package headers
 Summary:	Header files for the Linux kernel
 Group:		Base/Kernel
@@ -80,12 +90,21 @@ These are the C header files for the Linux kernel, which define
 structures and constants that are needed when rebuilding the kernel or
 building kernel modules.
 
+%package module-build
+Summary:	Development files for building kernel modules
+Group:		Base/Kernel
+Requires:	kernel-headers = %{epoch}:%{version}-%{release}
+Autoreqprov:	no
+
+%description module-build
+Development files from kernel source tree needed to build Linux kernel
+modules from external packages.
+
 %package source
 Summary:	Kernel source tree
 Group:		Base/Kernel
+Requires:	kernel-module-build = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
-Requires:	kernel-headers = %{version}-%{release}
-Provides:	kernel-module-build
 
 %description source
 This is the source code for the Linux kernel. It is required to build
@@ -127,8 +146,6 @@ make mrproper
 
 cat << EOF > cleanup-nondist-kernel.sh
 #!/bin/sh
-CWD=\`pwd\`
-cd %{_kernelsrcdir}
 if [ -r ".config" ]; then
     mv .config config-nondist
 fi
@@ -145,9 +162,8 @@ if [ -r "config-nondist" ]; then
     chmod 644 include/linux/version.h
     rm .config
 else
-    echo "error: %{_kernelsrcdir}/(.config or config-nondist) - file not found!"
+    echo "error: config-nondist - file not found!"
 fi
-cd \$CWD
 EOF
 
 %install
@@ -158,40 +174,70 @@ cp -R . $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}/
 install %{SOURCE2} $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}/config-nondist
 
 %clean
-rm -rf $RPM_BUILD_ROOT
+#rm -rf $RPM_BUILD_ROOT
 
 %post headers
 rm -f %{_kernelsrcdir}
 ln -snf linux-%{version} %{_kernelsrcdir}
 
+%preun headers
+cd %{_kernelsrcdir}
+make mrproper
+rm -f config-nondist include/linux/autoconf-nondist.h
+
 %postun headers
 if [ -L %{_kernelsrcdir} ]; then
-	if [ "`ls -l %{_kernelsrcdir} | awk '{ print $10 }'`" = "linux-%{version}" ]; then
-		if [ "$1" = "0" ]; then
-			rm -f %{_kernelsrcdir}
-		fi
+    if [ "`ls -l %{_kernelsrcdir} | awk '{ print $10 }'`" = "linux-%{version}" ]; then
+	if [ "$1" = "0" ]; then
+	    rm -f %{_kernelsrcdir}
 	fi
+    fi
 fi
 
 %preun source
 cd %{_kernelsrcdir}
 make mrproper
-rm -f config-nondist include/linux/autoconf-nondist.h
 
 %post source
 echo
 echo "You need to configure your kernel now."
 echo
 
+%files doc
+%defattr(644,root,root,755)
+%{_kernelsrcdir}-%{version}/Documentation
+
 %files headers
 %defattr(644,root,root,755)
 %dir %{_kernelsrcdir}-%{version}
 %{_kernelsrcdir}-%{version}/include
+%{_kernelsrcdir}-%{version}/config-nondist
+
+%files module-build
+%defattr(644,root,root,755)
+%dir %{_kernelsrcdir}-%{version}/arch
+%dir %{_kernelsrcdir}-%{version}/arch/i386
+%dir %{_kernelsrcdir}-%{version}/arch/i386/kernel
+%{_kernelsrcdir}-%{version}/arch/i386/Makefile
+%{_kernelsrcdir}-%{version}/arch/i386/kernel/Makefile
+%{_kernelsrcdir}-%{version}/arch/i386/kernel/asm-offsets.c
+%{_kernelsrcdir}-%{version}/arch/i386/kernel/sigframe.h
+%dir %{_kernelsrcdir}-%{version}/scripts
+%{_kernelsrcdir}-%{version}/scripts/Makefile
+%{_kernelsrcdir}-%{version}/scripts/Makefile.*
+%{_kernelsrcdir}-%{version}/scripts/basic
+%{_kernelsrcdir}-%{version}/scripts/*.c
+%{_kernelsrcdir}-%{version}/scripts/*.h
+%{_kernelsrcdir}-%{version}/scripts/*.sh
+%{_kernelsrcdir}-%{version}/Makefile
+%attr(744,root,root) %{_kernelsrcdir}-%{version}/cleanup-nondist-kernel.sh
 
 %files source
 %defattr(644,root,root,755)
-%{_kernelsrcdir}-%{version}/Documentation
-%{_kernelsrcdir}-%{version}/arch
+%{_kernelsrcdir}-%{version}/arch/i386/[!Mk]*
+%{_kernelsrcdir}-%{version}/arch/i386/kernel/[!M]*
+%exclude %{_kernelsrcdir}-%{version}/arch/i386/kernel/asm-offsets.c
+%exclude %{_kernelsrcdir}-%{version}/arch/i386/kernel/sigframe.h
 %{_kernelsrcdir}-%{version}/crypto
 %{_kernelsrcdir}-%{version}/drivers
 %{_kernelsrcdir}-%{version}/fs
@@ -202,15 +248,18 @@ echo
 %{_kernelsrcdir}-%{version}/lib
 %{_kernelsrcdir}-%{version}/mm
 %{_kernelsrcdir}-%{version}/net
-%{_kernelsrcdir}-%{version}/scripts
+%{_kernelsrcdir}-%{version}/scripts/*
+%exclude %{_kernelsrcdir}-%{version}/scripts/Makefile
+%exclude %{_kernelsrcdir}-%{version}/scripts/Makefile.*
+%exclude %{_kernelsrcdir}-%{version}/scripts/basic
+%exclude %{_kernelsrcdir}-%{version}/scripts/*.c
+%exclude %{_kernelsrcdir}-%{version}/scripts/*.h
+%exclude %{_kernelsrcdir}-%{version}/scripts/*.sh
 %{_kernelsrcdir}-%{version}/sound
 %{_kernelsrcdir}-%{version}/security
 %{_kernelsrcdir}-%{version}/usr
-%{_kernelsrcdir}-%{version}/Makefile
 %{_kernelsrcdir}-%{version}/COPYING
 %{_kernelsrcdir}-%{version}/CREDITS
 %{_kernelsrcdir}-%{version}/MAINTAINERS
 %{_kernelsrcdir}-%{version}/README
 %{_kernelsrcdir}-%{version}/REPORTING-BUGS
-%attr(744,root,root) %{_kernelsrcdir}-%{version}/cleanup-nondist-kernel.sh
-%{_kernelsrcdir}-%{version}/config-nondist
