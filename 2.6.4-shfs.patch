@@ -1,0 +1,3923 @@
+diff -uNr linux-2.6.4/include/linux.orig/shfs_fs.h linux-2.6.4/include/linux/shfs_fs.h
+--- linux-2.6.4/include/linux.orig/shfs_fs.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.4/include/linux/shfs_fs.h	2004-04-06 05:59:16.258298800 +0200
+@@ -0,0 +1,117 @@
++#ifndef _SHFS_FS_H
++#define _SHFS_FS_H
++
++#include <linux/shfs.h>
++
++#define SHFS_IOC_NEWCONN	_IOW('s', 2, int)
++
++#ifdef __KERNEL__
++
++#include <linux/ioctl.h>
++#include <linux/pagemap.h>
++
++#define SHFS_MAX_AGE(info)	(((info)->ttl * HZ) / 1000)
++#define SOCKBUF_SIZE		(SHFS_PATH_MAX * 10)
++#define READLNBUF_SIZE		(SHFS_PATH_MAX * 10)
++
++#define SHFS_FCACHE_PAGES	16	/* should be 2^x */
++#define SHFS_FCACHE_SIZE	((unsigned)(SHFS_FCACHE_PAGES * PAGE_SIZE))
++
++struct shfs_sb_info;
++
++struct shfs_cache_head {
++//	time_t		mtime;	/* unused */
++	unsigned long	time;	/* cache age */
++	unsigned long	end;	/* last valid fpos in cache */
++	int		eof;
++};
++
++#define SHFS_DIRCACHE_SIZE	((int)(PAGE_CACHE_SIZE/sizeof(struct dentry *)))
++union shfs_dir_cache {
++	struct shfs_cache_head   head;
++	struct dentry           *dentry[SHFS_DIRCACHE_SIZE];
++};
++
++#define SHFS_FIRSTCACHE_SIZE	((int)((SHFS_DIRCACHE_SIZE * \
++	sizeof(struct dentry *) - sizeof(struct shfs_cache_head)) / \
++	sizeof(struct dentry *)))
++
++#define SHFS_DIRCACHE_START      (SHFS_DIRCACHE_SIZE - SHFS_FIRSTCACHE_SIZE)
++
++struct shfs_cache_control {
++	struct  shfs_cache_head		head;
++	struct  page			*page;
++	union   shfs_dir_cache		*cache;
++	unsigned long			fpos, ofs;
++	int				filled, valid, idx;
++};
++
++/* use instead of CURRENT_TIME since precision is minutes, not seconds */
++#define ROUND_TO_MINS(x) do { (x).tv_sec = ((x).tv_sec / 60) * 60; (x).tv_nsec = 0; } while (0)
++
++/* shfs/dir.c */
++extern struct dentry_operations shfs_dentry_operations;
++extern struct file_operations shfs_dir_operations;
++extern struct inode_operations shfs_dir_inode_operations;
++extern void shfs_new_dentry(struct dentry *dentry);
++extern void shfs_age_dentry(struct shfs_sb_info *info, struct dentry *dentry);
++extern void shfs_renew_times(struct dentry * dentry);
++
++/* shfs/file.c */
++extern struct file_operations shfs_file_operations;
++extern struct file_operations shfs_slow_operations;
++extern struct inode_operations shfs_file_inode_operations;
++extern struct address_space_operations shfs_file_aops;
++
++/* shfs/symlink.c */
++extern struct inode_operations shfs_symlink_inode_operations;
++
++/* shfs/dcache.c */
++void shfs_invalid_dir_cache(struct inode * dir);
++void shfs_invalidate_dircache_entries(struct dentry *parent);
++struct dentry *shfs_dget_fpos(struct dentry*, struct dentry*, unsigned long);
++int shfs_fill_cache(struct file*, void*, filldir_t, struct shfs_cache_control*, struct qstr*, struct shfs_fattr*);
++
++/* shfs/fcache.c */
++#include <linux/slab.h>
++extern kmem_cache_t *file_cache;
++extern kmem_cache_t *dir_head_cache;
++extern kmem_cache_t *dir_entry_cache;
++extern kmem_cache_t *dir_name_cache;
++void fcache_init(void);
++void fcache_finish(void);
++int fcache_file_open(struct file*);
++int fcache_file_sync(struct file*);
++int fcache_file_close(struct file*);
++int fcache_file_clear(struct inode*);
++int fcache_file_read(struct file*, unsigned, unsigned, char*);
++int fcache_file_write(struct file*, unsigned, unsigned, char*);
++
++/* shfs/ioctl.c */
++int shfs_ioctl(struct inode *inode, struct file *f, unsigned int cmd, unsigned long arg);
++
++#include <linux/statfs.h>
++
++/* shfs/proc.c */
++int parse_options(struct shfs_sb_info *info, char *opts);
++int sock_write(struct shfs_sb_info *info, const void *buf, int count);
++int sock_read(struct shfs_sb_info *info, void *buffer, int count);
++int sock_readln(struct shfs_sb_info *info, char *buffer, int count);
++int reply(char *s);
++void set_garbage(struct shfs_sb_info *info, int write, int count);
++int get_name(struct dentry *d, char *name);
++int shfs_notify_change(struct dentry *dentry, struct iattr *attr);
++int shfs_statfs(struct super_block *sb, struct kstatfs *attr);
++	
++/* shfs/inode.c */
++void shfs_set_inode_attr(struct inode *inode, struct shfs_fattr *fattr);
++struct inode *shfs_iget(struct super_block*, struct shfs_fattr*);
++int shfs_revalidate_inode(struct dentry*);
++int shfs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat);
++
++/* shfs/shell.c */
++extern struct shfs_fileops shell_fops;
++
++#endif  /* __KERNEL__ */
++
++#endif	/* _SHFS_FS_H */
+diff -uNr linux-2.6.4/include/linux.orig/shfs_fs_i.h linux-2.6.4/include/linux/shfs_fs_i.h
+--- linux-2.6.4/include/linux.orig/shfs_fs_i.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.4/include/linux/shfs_fs_i.h	2004-03-22 16:00:03.000000000 +0100
+@@ -0,0 +1,20 @@
++/*
++ *  shfs_fs_i.h
++ */
++
++#ifndef _SHFS_FS_I_H
++#define _SHFS_FS_I_H
++
++#ifdef __KERNEL__
++#include <linux/types.h>
++
++struct shfs_file;
++
++struct shfs_inode_info {
++	unsigned long oldmtime;		/* last time refreshed */
++	struct shfs_file *cache;	/* readahead cache */
++};
++
++#endif
++
++#endif
+diff -uNr linux-2.6.4/include/linux.orig/shfs_fs_sb.h linux-2.6.4/include/linux/shfs_fs_sb.h
+--- linux-2.6.4/include/linux.orig/shfs_fs_sb.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.4/include/linux/shfs_fs_sb.h	2004-03-22 16:00:03.000000000 +0100
+@@ -0,0 +1,62 @@
++#ifndef _SHFS_FS_SB_H
++#define _SHFS_FS_SB_H
++
++#include <linux/types.h>
++
++#ifdef __KERNEL__
++
++struct shfs_fileops {
++	int (*readdir)(struct shfs_sb_info *info, char *dir, struct file *filp, void *dirent, filldir_t filldir, struct shfs_cache_control *ctl);
++	int (*stat)(struct shfs_sb_info *info, char *file, struct shfs_fattr *fattr);
++	int (*open)(struct shfs_sb_info *info, char *file, int mode);
++	int (*read)(struct shfs_sb_info *info, char *file, unsigned offset,
++		    unsigned count, char *buffer, unsigned long ino);
++	int (*write)(struct shfs_sb_info *info, char *file, unsigned offset,
++		     unsigned count, char *buffer, unsigned long ino);
++	int (*mkdir)(struct shfs_sb_info *info, char *dir);
++	int (*rmdir)(struct shfs_sb_info *info, char *dir);
++	int (*rename)(struct shfs_sb_info *info, char *old, char *new);
++	int (*unlink)(struct shfs_sb_info *info, char *file);
++	int (*create)(struct shfs_sb_info *info, char *file, int mode);
++	int (*link)(struct shfs_sb_info *info, char *old, char *new);
++	int (*symlink)(struct shfs_sb_info *info, char *old, char *new);
++	int (*readlink)(struct shfs_sb_info *info, char *name, char *real_name);
++	int (*chmod)(struct shfs_sb_info *info, char *file, umode_t mode);
++	int (*chown)(struct shfs_sb_info *info, char *file, uid_t user);
++	int (*chgrp)(struct shfs_sb_info *info, char *file, gid_t group);
++	int (*trunc)(struct shfs_sb_info *info, char *file, loff_t size);
++	int (*settime)(struct shfs_sb_info *info, char *file, int atime, int mtime, struct timespec *time);
++	int (*statfs)(struct shfs_sb_info *info, struct kstatfs *attr);
++	int (*finish)(struct shfs_sb_info *info);
++};
++
++#define info_from_inode(inode) ((struct shfs_sb_info *)(inode)->i_sb->s_fs_info)
++#define info_from_dentry(dentry) ((struct shfs_sb_info *)(dentry)->d_sb->s_fs_info)
++#define info_from_sb(sb) ((struct shfs_sb_info *)(sb)->s_fs_info)
++
++struct shfs_sb_info {
++	struct shfs_fileops fops;
++	int version;
++	int ttl;
++	__kernel_uid_t uid;
++	__kernel_gid_t gid;
++	__kernel_mode_t root_mode;
++	__kernel_mode_t fmask;
++	char mount_point[SHFS_PATH_MAX];
++	struct semaphore sock_sem;	/* next 4 vars are guarded */
++	struct file *sock;
++	char *sockbuf;
++	char *readlnbuf;
++	int readlnbuf_len;
++	int garbage_read;
++	int garbage_write;
++	int garbage:1;
++	int readonly:1;
++	int preserve_own:1;
++	int disable_fcache:1;
++	int stable_symlinks:1;
++};
++
++#endif /* __KERNEL__ */
++
++#endif /* _SHFS_FS_SB_H */
+diff -uNr linux-2.6.4/fs.orig/Kconfig linux-2.6.4/fs/Kconfig
+--- linux-2.6.4/fs.orig/Kconfig	2004-04-06 03:46:07.000000000 +0200
++++ linux-2.6.4/fs/Kconfig	2004-04-06 05:59:16.240301536 +0200
+@@ -1633,6 +1633,23 @@
+ 
+ 	  If unsure, say N.
+ 
++config SH_FS
++	tristate "SSH File System support (SHFS) (Experimental)"
++	depends on INET && EXPERIMENTAL
++	help
++	  SHFS is a simple and easy to use Linux kernel module which
++	  allows you to mount remote filesystems using plain shell (ssh/rsh)
++	  connection. It supports some nice features like number of different
++	  caches for access speedup, target system optimisations, etc.
++	  
++	  Further information on mounting ssh shares and the options
++	  available can be found at http://shfs.sourceforge.net.
++	  
++	  If you want to compile the SSH support as a module ( = code which
++	  can be inserted in and removed from the running kernel whenever you
++	  want), say M here and read Documentation/modules.txt. The module
++	  will be called shfs.o. Most people say N, however.
++
+ config RXRPC
+ 	tristate
+ 
+diff -uNr linux-2.6.4/fs.orig/Makefile linux-2.6.4/fs/Makefile
+--- linux-2.6.4/fs.orig/Makefile	2004-04-06 03:46:05.000000000 +0200
++++ linux-2.6.4/fs/Makefile	2004-04-06 05:59:16.242301232 +0200
+@@ -93,3 +93,4 @@
+ obj-$(CONFIG_XFS_FS)		+= xfs/
+ obj-$(CONFIG_AFS_FS)		+= afs/
+ obj-$(CONFIG_BEFS_FS)		+= befs/
++obj-$(CONFIG_SH_FS)		+= shfs/
+diff -uNr linux-2.6.4/fs.orig/shfs/dcache.c linux-2.6.4/fs/shfs/dcache.c
+--- linux-2.6.4/fs.orig/shfs/dcache.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.4/fs/shfs/dcache.c	2004-04-06 05:59:16.243301080 +0200
+@@ -0,0 +1,210 @@
++/*
++ * cache.c
++ *
++ * Copyright (C) 1997 by Bill Hawes
++ * Copyright (C) 2004 Miroslav Spousta
++ *
++ * Routines to support directory cacheing using the page cache.
++ * This cache code is almost directly taken from smbfs/ncpfs.
++ *
++ */
++
++#ifdef MODVERSIONS
++#include <linux/modversions.h>
++#endif
++
++#include <linux/sched.h>
++#include <linux/errno.h>
++#include <linux/kernel.h>
++#include <linux/mm.h>
++#include <linux/dirent.h>
++#include <linux/pagemap.h>
++#include <asm/page.h>
++
++#include <linux/shfs_fs.h>
++#include <linux/shfs_fs_sb.h>
++#include "shfs_debug.h"
++
++/*
++ * Force the next attempt to use the cache to be a timeout.
++ * If we can't find the page that's fine, it will cause a refresh.
++ */
++void
++shfs_invalid_dir_cache(struct inode * dir)
++{
++	struct shfs_sb_info *info = info_from_inode(dir);
++	union  shfs_dir_cache *cache = NULL;
++	struct page *page = NULL;
++
++	page = grab_cache_page(&dir->i_data, 0);
++	if (!page)
++		goto out;
++
++	if (!PageUptodate(page))
++		goto out_unlock;
++
++	cache = kmap(page);
++	cache->head.time = jiffies - SHFS_MAX_AGE(info);
++
++	kunmap(page);
++	SetPageUptodate(page);
++out_unlock:
++	unlock_page(page);
++	page_cache_release(page);
++out:
++	return;
++}
++
++/*
++ * Mark all dentries for 'parent' as invalid, forcing them to be re-read
++ */
++void
++shfs_invalidate_dircache_entries(struct dentry *parent)
++{
++	struct shfs_sb_info *info = info_from_dentry(parent);
++	struct list_head *next;
++	struct dentry *dentry;
++
++	spin_lock(&dcache_lock);
++	next = parent->d_subdirs.next;
++	while (next != &parent->d_subdirs) {
++		dentry = list_entry(next, struct dentry, d_child);
++		dentry->d_fsdata = NULL;
++		shfs_age_dentry(info, dentry);
++		next = next->next;
++	}
++	spin_unlock(&dcache_lock);
++}
++
++/*
++ * dget, but require that fpos and parent matches what the dentry contains.
++ * dentry is not known to be a valid pointer at entry.
++ */
++struct dentry *
++shfs_dget_fpos(struct dentry *dentry, struct dentry *parent, unsigned long fpos)
++{
++	struct dentry *dent = dentry;
++	struct list_head *next;
++
++	if (d_validate(dent, parent)) {
++		if ((unsigned long)dent->d_fsdata == fpos) {
++			if (!dent->d_inode) {
++				dput(dent);
++				dent = NULL;
++			}
++			return dent;
++		}
++		dput(dent);
++	}
++
++	/* If a pointer is invalid, we search the dentry. */
++	spin_lock(&dcache_lock);
++	next = parent->d_subdirs.next;
++	while (next != &parent->d_subdirs) {
++		dent = list_entry(next, struct dentry, d_child);
++		if ((unsigned long)dent->d_fsdata == fpos) {
++			if (dent->d_inode)
++				dget_locked(dent);
++			else
++				dent = NULL;
++			goto out_unlock;
++		}
++		next = next->next;
++	}
++	dent = NULL;
++out_unlock:
++	spin_unlock(&dcache_lock);
++	return dent;
++}
++
++/*
++ * Create dentry/inode for this file and add it to the dircache.
++ */
++int
++shfs_fill_cache(struct file *filp, void *dirent, filldir_t filldir,
++	       struct shfs_cache_control *ctrl, struct qstr *qname,
++	       struct shfs_fattr *entry)
++{
++	struct dentry *newdent, *dentry = filp->f_dentry;
++	struct inode *newino, *inode = dentry->d_inode;
++	struct shfs_cache_control ctl = *ctrl;
++	int valid = 0;
++	int hashed = 0;
++	ino_t ino = 0;
++
++	qname->hash = full_name_hash(qname->name, qname->len);
++
++	if (dentry->d_op && dentry->d_op->d_hash)
++		if (dentry->d_op->d_hash(dentry, qname) != 0)
++			goto end_advance;
++
++	newdent = d_lookup(dentry, qname);
++
++	if (!newdent) {
++		newdent = d_alloc(dentry, qname);
++		if (!newdent)
++			goto end_advance;
++	} else {
++		hashed = 1;
++		memcpy((char *) newdent->d_name.name, qname->name,
++		       newdent->d_name.len);
++	}
++
++	if (!newdent->d_inode) {
++		shfs_renew_times(newdent);
++		entry->f_ino = iunique(inode->i_sb, 2);
++		newino = shfs_iget(inode->i_sb, entry);
++		if (newino) {
++			shfs_new_dentry(newdent);
++			d_instantiate(newdent, newino);
++			if (!hashed)
++				d_rehash(newdent);
++		}
++	} else {
++		shfs_set_inode_attr(newdent->d_inode, entry);
++	}
++
++        if (newdent->d_inode) {
++		ino = newdent->d_inode->i_ino;
++		newdent->d_fsdata = (void *) ctl.fpos;
++		shfs_new_dentry(newdent);
++	}
++
++	if (ctl.idx >= SHFS_DIRCACHE_SIZE) {
++		if (ctl.page) {
++			kunmap(ctl.page);
++			SetPageUptodate(ctl.page);
++			unlock_page(ctl.page);
++			page_cache_release(ctl.page);
++		}
++		ctl.cache = NULL;
++		ctl.idx  -= SHFS_DIRCACHE_SIZE;
++		ctl.ofs  += 1;
++		ctl.page  = grab_cache_page(&inode->i_data, ctl.ofs);
++		if (ctl.page)
++			ctl.cache = kmap(ctl.page);
++	}
++	if (ctl.cache) {
++		ctl.cache->dentry[ctl.idx] = newdent;
++		valid = 1;
++	}
++	dput(newdent);
++
++end_advance:
++	if (!valid)
++		ctl.valid = 0;
++	if (!ctl.filled && (ctl.fpos == filp->f_pos)) {
++		if (!ino)
++			ino = find_inode_number(dentry, qname);
++		if (!ino)
++			ino = iunique(inode->i_sb, 2);
++		ctl.filled = filldir(dirent, qname->name, qname->len,
++				     filp->f_pos, ino, DT_UNKNOWN);
++		if (!ctl.filled)
++			filp->f_pos += 1;
++	}
++	ctl.fpos += 1;
++	ctl.idx  += 1;
++	*ctrl = ctl;
++	return (ctl.valid || !ctl.filled);
++}
+diff -uNr linux-2.6.4/fs.orig/shfs/dir.c linux-2.6.4/fs/shfs/dir.c
+--- linux-2.6.4/fs.orig/shfs/dir.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.4/fs/shfs/dir.c	2004-04-06 05:59:16.245300776 +0200
+@@ -0,0 +1,503 @@
++/*
++ * dcache.c
++ *
++ * Directory & dentry operations, partialy inspired by smbfs/ncpfs.
++ */
++
++#ifdef MODVERSIONS
++#include <linux/modversions.h>
++#endif
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <asm/uaccess.h>
++#include <linux/smp_lock.h>
++
++#include <linux/shfs_fs.h>
++#include "shfs_debug.h"
++#include "proc.h"
++
++static int
++shfs_dir_open(struct inode *inode, struct file *filp)
++{
++	struct dentry *dentry = filp->f_dentry;
++	int result = 0;
++
++	DEBUG("%s\n", dentry->d_name.name);
++	/* always open root dir (ioctl()) */
++	if (IS_ROOT(dentry))
++		return 0;
++	result = shfs_revalidate_inode(dentry);
++	if (result < 0)
++		VERBOSE("failed (%d)\n", result);
++	return result;
++}
++
++/*
++ * Read a directory, using filldir to fill the dirent memory.
++ * info->fops.readdir does the actual reading from the shfs server.
++ *
++ * The cache code is almost directly taken from shfs/ncpfs
++ */
++static int 
++shfs_readdir(struct file *filp, void *dirent, filldir_t filldir)
++{
++	struct dentry *dentry = filp->f_dentry;
++	struct shfs_sb_info *info = info_from_dentry(dentry);
++	struct inode *dir = dentry->d_inode;
++	char name[SHFS_PATH_MAX];
++	union shfs_dir_cache *cache = NULL;
++	struct shfs_cache_control ctl;
++	struct page *page = NULL;
++	int result;
++
++	ctl.page = NULL;
++	ctl.cache = NULL;
++
++	DEBUG("%s (%d)\n", dentry->d_name.name, (unsigned int)filp->f_pos);
++
++	result = 0;
++	switch ((unsigned int) filp->f_pos) {
++	case 0:
++		DEBUG("f_pos=0\n");
++		if (filldir(dirent, ".", 1, 0, dir->i_ino, DT_DIR) < 0)
++			goto out;
++		filp->f_pos = 1;
++		/* fallthrough */
++	case 1:
++		DEBUG("f_pos=1\n");
++		if (filldir(dirent, "..", 2, 1, dentry->d_parent->d_inode->i_ino, DT_DIR) < 0)
++			goto out;
++		filp->f_pos = 2;
++	}
++
++	/*
++	 * Make sure our inode is up-to-date.
++	 */
++	result = shfs_revalidate_inode(dentry);
++	if (result)
++		goto out;
++
++
++	page = grab_cache_page(&dir->i_data, 0);
++	if (!page)
++		goto read_really;
++
++	ctl.cache = cache = kmap(page);
++	ctl.head = cache->head;
++
++	if (!PageUptodate(page) || !ctl.head.eof) {
++		DEBUG("%s, page uptodate=%d, eof=%d\n", dentry->d_name.name, PageUptodate(page), ctl.head.eof);
++		goto init_cache;
++	}
++
++	if (filp->f_pos == 2) {
++		if (jiffies - ctl.head.time >= SHFS_MAX_AGE(info))
++			goto init_cache;
++	}
++
++	if (filp->f_pos > ctl.head.end)
++		goto finished;
++
++	ctl.fpos = filp->f_pos + (SHFS_DIRCACHE_START - 2);
++	ctl.ofs  = ctl.fpos / SHFS_DIRCACHE_SIZE;
++	ctl.idx  = ctl.fpos % SHFS_DIRCACHE_SIZE;
++
++	for (;;) {
++		if (ctl.ofs != 0) {
++			ctl.page = find_lock_page(&dir->i_data, ctl.ofs);
++			if (!ctl.page)
++				goto invalid_cache;
++			ctl.cache = kmap(ctl.page);
++			if (!PageUptodate(ctl.page))
++				goto invalid_cache;
++		}
++		while (ctl.idx < SHFS_DIRCACHE_SIZE) {
++			struct dentry *dent;
++			int res;
++
++			dent = shfs_dget_fpos(ctl.cache->dentry[ctl.idx],
++					     dentry, filp->f_pos);
++			if (!dent)
++				goto invalid_cache;
++			res = filldir(dirent, dent->d_name.name,
++				      dent->d_name.len, filp->f_pos,
++				      dent->d_inode->i_ino, DT_UNKNOWN);
++			dput(dent);
++			if (res)
++				goto finished;
++			filp->f_pos += 1;
++			ctl.idx += 1;
++			if (filp->f_pos > ctl.head.end)
++				goto finished;
++		}
++		if (ctl.page) {
++			kunmap(ctl.page);
++			SetPageUptodate(ctl.page);
++			unlock_page(ctl.page);
++			page_cache_release(ctl.page);
++			ctl.page = NULL;
++		}
++		ctl.idx  = 0;
++		ctl.ofs += 1;
++	}
++invalid_cache:
++	if (ctl.page) {
++		kunmap(ctl.page);
++		unlock_page(ctl.page);
++		page_cache_release(ctl.page);
++		ctl.page = NULL;
++	}
++	ctl.cache = cache;
++init_cache:
++	shfs_invalidate_dircache_entries(dentry);
++	ctl.head.time = jiffies;
++	ctl.head.eof = 0;
++	ctl.fpos = 2;
++	ctl.ofs = 0;
++	ctl.idx = SHFS_DIRCACHE_START;
++	ctl.filled = 0;
++	ctl.valid  = 1;
++read_really:
++	result = -ENAMETOOLONG;
++	if (get_name(dentry, name) < 0)
++		goto out;
++	result = info->fops.readdir(info, name, filp, dirent, filldir, &ctl);
++	if (ctl.idx == -1)
++		goto invalid_cache;	/* retry */
++	ctl.head.end = ctl.fpos - 1;
++	ctl.head.eof = ctl.valid;
++finished:
++	if (page) {
++		cache->head = ctl.head;
++		kunmap(page);
++		SetPageUptodate(page);
++		unlock_page(page);
++		page_cache_release(page);
++	}
++	if (ctl.page) {
++		kunmap(ctl.page);
++		SetPageUptodate(ctl.page);
++		unlock_page(ctl.page);
++		page_cache_release(ctl.page);
++	}
++out:
++	return result;
++}
++
++/*
++ * shouldn't be called too often since we instantiate dentry
++ * in fill_cache()
++ */
++static struct dentry*
++shfs_lookup(struct inode *dir, struct dentry *dentry, struct nameidata *namei)
++{
++	struct shfs_sb_info *info = info_from_dentry(dentry);
++	char name[SHFS_PATH_MAX];
++	struct shfs_fattr fattr;
++	struct inode *inode;
++	int result;
++	
++	DEBUG("%s\n", dentry->d_name.name);
++	if (get_name(dentry, name) < 0)
++		return ERR_PTR(-ENAMETOOLONG);
++
++	result = info->fops.stat(info, name, &fattr);
++	if (result < 0) {
++		DEBUG("!%d\n", result);
++		dentry->d_op = &shfs_dentry_operations;
++		d_add(dentry, NULL);
++		shfs_renew_times(dentry);
++		if (result == -EINTR)
++			return ERR_PTR(result);
++		return NULL; 
++	}
++
++	fattr.f_ino = iunique(dentry->d_sb, 2);
++	inode = shfs_iget(dir->i_sb, &fattr);
++	if (inode) {
++		dentry->d_op = &shfs_dentry_operations;
++		d_add(dentry, inode);
++		shfs_renew_times(dentry);
++	}
++	
++	return NULL; 
++}
++
++static int
++shfs_instantiate(struct dentry *dentry, char *name)
++{
++	struct shfs_sb_info *info = info_from_dentry(dentry);
++	struct shfs_fattr fattr;
++	struct inode *inode;
++	int result;
++	
++	DEBUG("%s\n", dentry->d_name.name);
++
++	result = info->fops.stat(info, name, &fattr);
++	if (result < 0) {
++		VERBOSE("!%d\n", result);
++		goto out;
++	}
++
++	shfs_renew_times(dentry);
++	fattr.f_ino = iunique(dentry->d_sb, 2);
++	inode = shfs_iget(dentry->d_sb, &fattr);
++	result = -EACCES;
++	if (!inode)
++		goto out;
++	dentry->d_op = &shfs_dentry_operations;
++	d_instantiate(dentry, inode);
++	result = 0;
++out:
++	return result;	
++}
++
++static int
++shfs_mkdir(struct inode *dir, struct dentry *dentry, int mode)
++{
++	struct shfs_sb_info *info = info_from_dentry(dentry);
++	char name[SHFS_PATH_MAX];
++	int result;
++	
++	if (info->readonly)
++		return -EROFS;
++	if (get_name(dentry, name) < 0)
++		return -ENAMETOOLONG;
++
++	result = info->fops.mkdir(info, name);
++	if (result < 0)
++		return result;
++
++	shfs_invalid_dir_cache(dir);
++	return shfs_instantiate(dentry, name);
++}
++
++static int
++shfs_create(struct inode* dir, struct dentry *dentry, int mode, struct nameidata *namei)
++{
++	struct shfs_sb_info *info = info_from_dentry(dentry);
++	char name[SHFS_PATH_MAX];
++	int result;
++	
++	if (info->readonly)
++		return -EROFS;
++	if (get_name(dentry, name) < 0)
++		return -ENAMETOOLONG;
++
++	result = info->fops.create(info, name, mode);
++	if (result < 0)
++		return result;
++	
++	shfs_invalid_dir_cache(dir);
++	return shfs_instantiate(dentry, name);
++}
++
++static int
++shfs_rmdir(struct inode* dir, struct dentry *dentry)
++{
++	struct shfs_sb_info *info = info_from_dentry(dentry);
++	char name[SHFS_PATH_MAX];
++	int result;
++
++	if (info->readonly)
++		return -EROFS;
++	if (!d_unhashed(dentry))
++		return -EBUSY;
++	if (get_name(dentry, name) < 0)
++		return -ENAMETOOLONG;
++
++	result = info->fops.rmdir(info, name);
++	if (!result)
++		shfs_renew_times(dentry);
++	shfs_invalid_dir_cache(dir);
++	return result;
++}
++
++static int
++shfs_rename(struct inode *old_dir, struct dentry *old_dentry, struct inode *new_dir, struct dentry *new_dentry)
++{
++	struct shfs_sb_info *info = info_from_dentry(old_dentry);
++	char old[SHFS_PATH_MAX], new[SHFS_PATH_MAX];
++	int result;
++	
++	if (info->readonly)
++		return -EROFS;
++
++	if (get_name(old_dentry, old) < 0)
++		return -ENAMETOOLONG;
++	if (get_name(new_dentry, new) < 0)
++		return -ENAMETOOLONG;
++	if (new_dentry->d_inode)
++		d_delete(new_dentry);
++	
++	result = info->fops.rename(info, old, new);
++	if (!result) {
++		shfs_renew_times(old_dentry);
++		shfs_renew_times(new_dentry);
++	}
++	shfs_invalid_dir_cache(old_dir);
++	shfs_invalid_dir_cache(new_dir);
++	return result;
++}
++
++static int
++shfs_unlink(struct inode *dir, struct dentry *dentry)
++{
++	struct shfs_sb_info *info = info_from_dentry(dentry);
++	char name[SHFS_PATH_MAX];
++	int result;
++
++	if (info->readonly)
++		return -EROFS;
++	if (get_name(dentry, name) < 0)
++		return -ENAMETOOLONG;
++
++	result = info->fops.unlink(info, name);
++	if (!result)
++		shfs_renew_times(dentry);
++	shfs_invalid_dir_cache(dir);
++	return result;
++}
++
++static int
++shfs_link(struct dentry *old_dentry, struct inode *dir, struct dentry *new_dentry)
++{
++	struct shfs_sb_info *info = info_from_dentry(old_dentry);
++	char old[SHFS_PATH_MAX], new[SHFS_PATH_MAX];
++	int result;
++
++	if (info->readonly)
++		return -EROFS;
++
++	if (get_name(old_dentry, old) < 0)
++		return -ENAMETOOLONG;
++	if (get_name(new_dentry, new) < 0)
++		return -ENAMETOOLONG;
++	
++	result = info->fops.link(info, old, new);
++	if (result < 0)
++		return result;
++	shfs_invalid_dir_cache(dir);
++	return shfs_instantiate(new_dentry, new);
++}
++
++static int
++shfs_symlink(struct inode *dir, struct dentry *dentry, const char *oldname)
++{
++	struct shfs_sb_info *info = info_from_dentry(dentry);
++	char old[SHFS_PATH_MAX], new[SHFS_PATH_MAX];
++	int result;
++
++	if (info->readonly)
++		return -EROFS;
++
++	if (get_name(dentry, new) < 0)
++		return -ENAMETOOLONG;
++	if (strlen(oldname) + 1 > SHFS_PATH_MAX)
++		return -ENAMETOOLONG;
++	strcpy(old, oldname);
++	
++	result = info->fops.symlink(info, old, new);
++	if (result < 0)
++		return result;
++
++	shfs_invalid_dir_cache(dir);
++	return shfs_instantiate(dentry, new);
++}
++
++/*
++ * Initialize a new dentry
++ */
++void
++shfs_new_dentry(struct dentry *dentry)
++{
++	dentry->d_op = &shfs_dentry_operations;
++	dentry->d_time = jiffies;
++}
++
++void
++shfs_age_dentry(struct shfs_sb_info *info, struct dentry *dentry)
++{
++	dentry->d_time = jiffies - SHFS_MAX_AGE(info);
++}
++
++/*
++ * Whenever a lookup succeeds, we know the parent directories
++ * are all valid, so we want to update the dentry timestamps.
++ * N.B. Move this to dcache?
++ */
++void
++shfs_renew_times(struct dentry * dentry)
++{
++	for (;;) {
++		dentry->d_time = jiffies;
++		if (IS_ROOT(dentry))
++			break;
++		dentry = dentry->d_parent;
++	}
++}
++
++static int
++shfs_d_revalidate(struct dentry *dentry, struct nameidata *namei)
++{
++	struct shfs_sb_info *info = info_from_dentry(dentry);
++	struct inode *inode = dentry->d_inode;
++	unsigned long age;
++	int result;
++
++	DEBUG("%s\n", dentry->d_name.name);
++	age = jiffies - dentry->d_time;
++	
++	result = (age <= SHFS_MAX_AGE(info));
++	DEBUG("valid: %d\n", result);
++	if (!inode)
++		return result;	/* negative dentry */
++	lock_kernel();
++	if (is_bad_inode(inode))
++		result = 0;
++	else if (!result)
++		result = (shfs_revalidate_inode(dentry) == 0);
++	unlock_kernel();
++	return result;
++}
++
++static int
++shfs_d_delete(struct dentry *dentry)
++{
++	if (dentry->d_inode) {
++		if (is_bad_inode(dentry->d_inode)) {
++			DEBUG("bad inode, unhashing\n");
++			return 1;
++		}
++	} else {
++		/* ??? */
++	}
++	return 0;
++}
++
++static struct dentry_operations shfs_dentry_operations = {
++	.d_revalidate	= shfs_d_revalidate,
++	.d_delete 	= shfs_d_delete,
++};
++
++struct file_operations shfs_dir_operations = {
++	.read		= generic_read_dir,
++	.readdir	= shfs_readdir,
++	.ioctl		= shfs_ioctl,
++	.open		= shfs_dir_open,
++};
++
++struct inode_operations shfs_dir_inode_operations = {
++	.create		= shfs_create,
++	.lookup		= shfs_lookup,
++	.link		= shfs_link,
++	.unlink		= shfs_unlink,
++	.symlink	= shfs_symlink,
++	.mkdir		= shfs_mkdir,
++	.rmdir		= shfs_rmdir,
++	.rename		= shfs_rename,
++	.getattr	= shfs_getattr,
++	.setattr	= shfs_notify_change,
++};
++
+diff -uNr linux-2.6.4/fs.orig/shfs/fcache.c linux-2.6.4/fs/shfs/fcache.c
+--- linux-2.6.4/fs.orig/shfs/fcache.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.4/fs/shfs/fcache.c	2004-04-06 05:59:16.247300472 +0200
+@@ -0,0 +1,385 @@
++/*
++ * fcache.c
++ *
++ * File cache: read/write operations are grouped together in chunks
++ * and done together.
++ */
++
++#ifdef MODVERSIONS
++#include <linux/modversions.h>
++#endif
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/vmalloc.h>
++
++#include <linux/shfs_fs.h>
++#include <linux/shfs_fs_sb.h>
++#include <linux/shfs_fs_i.h>
++#include "shfs_debug.h"
++
++#define SHFS_FCACHE_HASH	10
++
++#define SHFS_FCACHE_READ  	0
++#define SHFS_FCACHE_WRITE 	1
++
++struct shfs_file {
++	int		type:2;		/* why does gcc complain for 1-bit? */
++	int		new:1;
++	off_t		offset;
++	unsigned long	count;
++	char          	*data;
++};
++
++kmem_cache_t	*file_cache = NULL;
++
++void
++fcache_init(void)
++{
++	file_cache = kmem_cache_create("shfs_file", sizeof(struct shfs_file), 0, 0, NULL, NULL);
++	DEBUG("file_cache: %p\n", file_cache);
++}
++
++void
++fcache_finish(void)
++{
++	kmem_cache_destroy(file_cache);
++}
++
++static int
++alloc_fcache(struct shfs_file **p)
++{
++	struct shfs_file *cache;
++
++	*p = NULL;
++	cache = (struct shfs_file *)KMEM_ALLOC("fcache", file_cache, GFP_KERNEL);
++	if (!cache)
++		return -ENOMEM;
++	cache->data = vmalloc(SHFS_FCACHE_SIZE);
++	if (!cache->data) {
++		KMEM_FREE("fcache", file_cache, cache);
++		return -ENOMEM;
++	}
++	cache->type = SHFS_FCACHE_READ;
++	cache->new = 1;
++	cache->offset = 0;
++	cache->count = 0;
++
++	*p = cache;
++	return 0;
++}
++
++static int
++free_fcache(struct shfs_file *cache)
++{
++	DEBUG("release\n");
++	vfree(cache->data);
++	KMEM_FREE("fcache", file_cache, cache);
++	return 0;
++}	
++
++int 
++fcache_file_open(struct file *f)
++{
++	struct inode *inode;
++	struct shfs_inode_info *p;
++
++	if (!f->f_dentry || !(inode = f->f_dentry->d_inode)) {
++		VERBOSE("invalid\n");
++		return -EINVAL;
++	}
++	DEBUG("ino: %lu\n", inode->i_ino);
++	if (S_ISDIR(inode->i_mode)) {
++		VERBOSE("dir in file cache?\n");
++		return -EINVAL;
++	}
++	p = (struct shfs_inode_info *)inode->u.generic_ip;
++	if (!p) {
++		VERBOSE("inode without info\n");
++		return -EINVAL;
++	}
++	if (p->cache)
++		return 0;
++	return alloc_fcache(&p->cache);
++}
++
++int 
++fcache_file_sync(struct file *f)
++{
++	struct inode *inode;
++	struct shfs_inode_info *p;
++	struct shfs_file *cache;
++	int result;
++
++	if (!f->f_dentry || !(inode = f->f_dentry->d_inode)) {
++		VERBOSE("invalid\n");
++		return -EINVAL;
++	}
++	DEBUG("ino: %lu\n", inode->i_ino);
++	if (S_ISDIR(inode->i_mode)) {
++		VERBOSE("dir in file cache?\n");
++		return -EINVAL;
++	}
++	p = (struct shfs_inode_info *)inode->u.generic_ip;
++	if (!p) {
++		VERBOSE("inode without info\n");
++		return -EINVAL;
++	}
++	if (!p->cache)
++		return 0;
++
++	cache = p->cache;
++	result = 0;
++	if (cache->count && cache->type == SHFS_FCACHE_WRITE) {
++		char name[SHFS_PATH_MAX];
++		struct shfs_sb_info *info = info_from_dentry(f->f_dentry);
++
++		DEBUG("sync\n");
++		if (get_name(f->f_dentry, name) < 0)
++			return -ENAMETOOLONG;
++		result = info->fops.write(info, name, cache->offset, cache->count, cache->data, inode->i_ino);
++		cache->type = SHFS_FCACHE_READ;
++		cache->count = 0;
++	}
++	return result < 0 ? result : 0;
++}
++
++int 
++fcache_file_close(struct file *f)
++{
++	int result;
++
++	result = fcache_file_sync(f);
++	if (result == 0) {
++		struct shfs_inode_info *p;
++
++		p = (struct shfs_inode_info *)f->f_dentry->d_inode->u.generic_ip;
++		if (!p) {
++			VERBOSE("inode without info\n");
++			return -EINVAL;
++		}
++		if (!p->cache)
++			return 0;
++		result = free_fcache(p->cache);
++		p->cache = NULL;
++	}
++	return result < 0 ? result : 0;
++}
++
++int
++fcache_file_clear(struct inode *inode)
++{
++	struct shfs_inode_info *p;
++	struct shfs_file *cache;
++
++	if (!inode || S_ISDIR(inode->i_mode)) {
++		DEBUG("invalid\n");
++		return -EINVAL;
++	}
++	DEBUG("ino: %lu\n", inode->i_ino);
++	p = (struct shfs_inode_info *)inode->u.generic_ip;
++	if (!p) {
++		VERBOSE("inode without info\n");
++		return -EINVAL;
++	}
++	if (!p->cache)
++		return 0;
++
++	cache = p->cache;
++	if (cache->count) {
++		if (cache->type == SHFS_FCACHE_WRITE) {
++			VERBOSE("Aieeee, out of sync\n");
++		} else {
++			cache->count = 0;
++		}
++	}
++	return 0;
++}
++
++int 
++fcache_file_read(struct file *f, unsigned offset, unsigned count, char *buffer)
++{
++	char name[SHFS_PATH_MAX];
++	struct shfs_sb_info *info;
++	unsigned readahead, c, o, x, y, z, read = 0;
++	struct inode *inode;
++	struct shfs_inode_info *p;
++	struct shfs_file *cache;
++	int result = 0;
++
++	DEBUG("[%u, %u]\n", offset, count);
++	if (!f->f_dentry || !(inode = f->f_dentry->d_inode)) {
++		VERBOSE("invalid\n");
++		return -1;
++	}
++	if (get_name(f->f_dentry, name) < 0)
++		return -ENAMETOOLONG;
++	DEBUG("ino: %lu\n", inode->i_ino);
++	if (S_ISDIR(inode->i_mode)) {
++		VERBOSE("dir in file cache?\n");
++		return -1;
++	}
++	p = (struct shfs_inode_info *)inode->u.generic_ip;
++	if (!p) {
++		VERBOSE("inode without info\n");
++		return -EINVAL;
++	}
++	if (!p->cache) {
++		result = alloc_fcache(&p->cache);
++		if (result < 0)
++			return result;
++	}
++
++	info = info_from_dentry(f->f_dentry);
++	cache = p->cache;
++	/* hit? */
++	if (offset >= cache->offset && offset < (cache->offset + cache->count)) {
++		o = offset - cache->offset;
++		c = count > cache->count - o ? cache->count - o : count;
++		memcpy(buffer, cache->data + o, c);
++		buffer += c;
++		offset += c;
++		count -= c;
++		read += c;
++	}
++
++	if (count && cache->type == SHFS_FCACHE_WRITE) {
++		info->fops.write(info, name, cache->offset, cache->count, cache->data, inode->i_ino);
++		cache->type = SHFS_FCACHE_READ;
++		cache->offset = offset;
++		cache->count = 0;
++	}
++
++	while (count) {
++		o = offset & PAGE_MASK;
++		x = offset - o;
++		if (cache->offset + cache->count == offset)
++			readahead = cache->count;
++		else {
++			cache->offset = o;
++			cache->count = 0;
++			readahead = 0;
++		}
++		if (readahead < (x + count))
++			readahead = x + count;
++		readahead = (readahead+PAGE_SIZE-1) & PAGE_MASK;
++		if (readahead > SHFS_FCACHE_SIZE)
++			readahead = SHFS_FCACHE_SIZE;
++		if (o % readahead) {	 /* HD */
++			y = o, z = readahead;
++			while (y && z)
++				if (y > z) y %= z; else z %= y;
++			readahead = y > z ? y : z;
++		}
++		if (cache->count + readahead > SHFS_FCACHE_SIZE) {
++			cache->offset = o;
++			cache->count = 0;
++		}
++		DEBUG("[%u, %u]\n", o, readahead);
++		result = info->fops.read(info, name, o, readahead, cache->data+cache->count, 0);
++		if (result < 0) {
++			cache->count = 0;
++			return result;
++		}
++
++		c = result - x;
++		if (c > count)
++			c = count;
++		memcpy(buffer, cache->data + cache->count + x, c);
++		buffer += c;
++		offset += c;
++		count -= c;
++		read += c;
++		cache->count += result;
++	}
++	return read;
++}
++
++int 
++fcache_file_write(struct file *f, unsigned offset, unsigned count, char *buffer)
++{
++	struct dentry *dentry = f->f_dentry;
++	char name[SHFS_PATH_MAX];
++	struct shfs_sb_info *info;
++	unsigned o, c, wrote = 0;
++	struct inode *inode;
++	struct shfs_inode_info *p;
++	struct shfs_file *cache;
++	int result = 0;
++
++	DEBUG("[%u, %u]\n", offset, count);
++	if (!(inode = dentry->d_inode)) {
++		VERBOSE("invalid\n");
++		return -1;
++	}
++	if (get_name(dentry, name) < 0)
++		return -ENAMETOOLONG;
++	DEBUG("ino: %lu\n", inode->i_ino);
++	if (S_ISDIR(inode->i_mode)) {
++		VERBOSE("dir in file cache?\n");
++		return -1;
++	}
++	p = (struct shfs_inode_info *)inode->u.generic_ip;
++	if (!p) {
++		VERBOSE("inode without info\n");
++		return -EINVAL;
++	}
++	if (!p->cache) {
++		result = alloc_fcache(&p->cache);
++		if (result < 0)
++			return result;
++	}
++
++	info = info_from_dentry(dentry);
++	cache = p->cache;
++	if (cache->type == SHFS_FCACHE_READ) {
++		cache->offset = offset;
++		cache->count = 0;
++		cache->type = SHFS_FCACHE_WRITE;
++	}
++
++	DEBUG("1 [%lu, %lu]\n", cache->offset, cache->count);
++	if (offset >= cache->offset && offset < (cache->offset + cache->count)) {
++		o = offset - cache->offset;
++		c = count > SHFS_FCACHE_SIZE - o ? SHFS_FCACHE_SIZE - o : count;
++		memcpy(cache->data + o, buffer, c);
++		if (o + c > cache->count)
++			cache->count = o + c;
++		buffer += c;
++		offset += c;
++		count -= c;
++		wrote += c;
++	}
++	DEBUG("2 [%lu, %lu]\n", cache->offset, cache->count);
++	if (count && offset == cache->offset+cache->count) {
++		o = offset - cache->offset;
++		c = count > SHFS_FCACHE_SIZE - cache->count ? SHFS_FCACHE_SIZE - cache->count : count;
++		memcpy(cache->data + o, buffer, c);
++		cache->count += c;
++		buffer += c;
++		offset += c;
++		count -= c;
++		wrote += c;
++	}
++	DEBUG("3 [%lu, %lu]\n", cache->offset, cache->count);
++	while (count) {
++		result = info->fops.write(info, name, cache->offset, cache->count, cache->data, inode->i_ino);
++		if (result < 0)
++			break;
++		c = count > SHFS_FCACHE_SIZE ? SHFS_FCACHE_SIZE : count;
++		memcpy(cache->data, buffer, c);
++		cache->offset = offset;
++		cache->count = c;
++		buffer += c;
++		offset += c;
++		count -= c;
++		wrote += c;
++	}
++	DEBUG("4 [%lu, %lu]\n", cache->offset, cache->count);
++	if (cache->new && wrote) {
++		result = info->fops.write(info, name, cache->offset, 1, cache->data, inode->i_ino);
++		cache->new = 0;
++	}
++
++	return result >= 0 ? wrote : result;
++}
+diff -uNr linux-2.6.4/fs.orig/shfs/file.c linux-2.6.4/fs/shfs/file.c
+--- linux-2.6.4/fs.orig/shfs/file.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.4/fs/shfs/file.c	2004-04-06 05:59:16.248300320 +0200
+@@ -0,0 +1,334 @@
++#ifdef MODVERSIONS
++#include <linux/modversions.h>
++#endif
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/pagemap.h>
++#include <asm/uaccess.h>
++#include <asm/fcntl.h>
++#include <linux/smp_lock.h>
++
++#include <linux/shfs_fs.h>
++#include <linux/shfs_fs_sb.h>
++#include <linux/shfs_fs_i.h>
++#include "shfs_debug.h"
++#include "proc.h"
++
++static int
++shfs_file_readpage(struct file *f, struct page *p)
++{
++	struct dentry *dentry = f->f_dentry;
++	struct shfs_sb_info *info = info_from_dentry(dentry);
++	char *buffer;
++	unsigned long offset, count;
++	int result;
++	
++	get_page(p);
++
++	buffer = kmap(p);
++	offset = p->index << PAGE_CACHE_SHIFT;
++	count = PAGE_SIZE;
++
++	lock_kernel();
++	do {
++		DEBUG("\n");
++		if (!info->disable_fcache) {
++			result = fcache_file_read(f, offset, count, buffer);
++		} else {
++			char name[SHFS_PATH_MAX];
++			if (get_name(f->f_dentry, name) < 0) {
++				unlock_kernel();
++				result = -ENAMETOOLONG;
++				goto io_error;
++			}
++			result = info->fops.read(info, name, offset, count, buffer, 0);
++		}
++		if (result < 0) {
++			VERBOSE("!%d\n", result);
++			unlock_kernel();
++			goto io_error;
++		}
++		count -= result;
++		offset += result;
++		buffer += result;
++		dentry->d_inode->i_atime = CURRENT_TIME;
++		ROUND_TO_MINS(dentry->d_inode->i_atime);
++		if (!result)
++			break;
++	} while (count);
++
++	unlock_kernel();
++	memset(buffer, 0, count);
++	flush_dcache_page(p);
++	SetPageUptodate(p);
++	result = 0;
++io_error:
++	kunmap(p);
++	unlock_page(p);	
++	put_page(p);
++	return result;
++}
++
++static int
++shfs_file_writepage(struct page *p, struct writeback_control *wbc)
++{
++	return -EFAULT;
++}
++
++static int
++shfs_file_preparewrite(struct file *f, struct page *p, unsigned offset, unsigned to)
++{
++	DEBUG("[%p, %u, %u]\n", p, offset, to);
++	return 0;
++}
++
++static int
++shfs_file_commitwrite(struct file *f, struct page *p, unsigned offset, unsigned to)
++{
++	struct dentry *dentry = f->f_dentry;
++	struct shfs_sb_info *info = info_from_dentry(dentry);
++	struct inode *inode = p->mapping->host;
++	struct shfs_inode_info *i = (struct shfs_inode_info *)inode->u.generic_ip;
++	char *buffer = kmap(p) + offset;
++	int written = 0, result;
++	unsigned count = to - offset;
++	struct timespec time;
++	
++	DEBUG("[%p, %u, %u]\n", p, offset, to);
++	offset += p->index << PAGE_CACHE_SHIFT;
++	lock_kernel();
++	if (info->readonly) {
++		result = -EROFS;
++		goto error;
++	}
++
++	do {
++		if (!info->disable_fcache) {
++			result = fcache_file_write(f, offset, count, buffer);
++		} else {
++			char name[SHFS_PATH_MAX];
++			if (get_name(dentry, name) < 0) {
++				result = -ENAMETOOLONG;
++				goto error;
++			}
++			result = info->fops.write(info, name, offset, count, buffer, dentry->d_inode->i_ino);
++		}
++		if (result < 0) {
++			VERBOSE("!%d\n", result);
++			goto error;
++		}
++		count -= result;
++		offset += result;
++		buffer += result;
++		written += result;
++		if (!result)
++			break;
++
++	} while (count);
++
++	memset(buffer, 0, count);
++	result = 0;
++error:
++	unlock_kernel();
++	kunmap(p);
++
++	DEBUG("[%u, %lld]\n", offset, inode->i_size);
++	time = CURRENT_TIME;
++	ROUND_TO_MINS(time);
++	if (!timespec_equal(&time, &inode->i_mtime)) {
++		inode->i_atime = inode->i_mtime = time;
++		if (i)
++			i->oldmtime = 0;        /* force inode reload */
++	}
++	if (offset > inode->i_size) {
++		inode->i_size = offset;
++		if (i)
++			i->oldmtime = 0;        /* force inode reload */
++	}
++	return result;
++}
++
++static int
++shfs_file_permission(struct inode *inode, int mask, struct nameidata *namei)
++{
++	int mode = inode->i_mode;
++
++	mode >>= 6;
++	if ((mode & 7 & mask) != mask)
++		return -EACCES;
++	return 0;
++}
++
++static int
++shfs_file_open(struct inode *inode, struct file *f)
++{
++	struct dentry *dentry = f->f_dentry;
++	struct shfs_sb_info *info = info_from_dentry(dentry);
++	int mode = f->f_flags & O_ACCMODE;
++	char name[SHFS_PATH_MAX];
++	int result = 0;
++
++	DEBUG("%s\n", dentry->d_name.name);
++	if ((mode == O_WRONLY || mode == O_RDWR) && info->readonly)
++		return -EROFS;
++	if (!get_name(dentry, name))
++		return -ENAMETOOLONG;
++
++	result = info->fops.open(info, name, mode);
++
++	switch (result) {
++	case 1:			/* install special read handler for this file */
++		if (dentry->d_inode)
++			f->f_op = &shfs_slow_operations;
++		result = 0;
++		/* fallthrough */
++	case 0:
++		if (!info->disable_fcache)
++			fcache_file_open(f);
++		break;
++	default:		/* error */
++		DEBUG("!%d\n", result);
++		break;
++	}
++	if (result >= 0)
++		shfs_renew_times(dentry);
++
++	return result;
++}
++
++static int
++shfs_file_flush(struct file *f)
++{
++	struct dentry *dentry = f->f_dentry;
++	struct shfs_sb_info *info = info_from_dentry(dentry);
++	int result = 0;
++
++	DEBUG("%s\n", dentry->d_name.name);
++	if (!info->disable_fcache) {
++		result = fcache_file_sync(f);
++		if (result < 0)
++			shfs_invalid_dir_cache(dentry->d_parent->d_inode);
++		if (!result) {
++			/* last reference */
++			lock_kernel();
++			filemap_fdatawrite(dentry->d_inode->i_mapping);
++			filemap_fdatawait(dentry->d_inode->i_mapping);
++			unlock_kernel();
++		}
++	}
++	return result < 0 ? result : 0;
++}
++
++static int
++shfs_file_release(struct inode *inode, struct file *f)
++{
++	struct dentry *dentry = f->f_dentry;
++	struct shfs_sb_info *info = info_from_dentry(dentry);
++	int result;
++
++	DEBUG("%s\n", dentry->d_name.name);
++	if (!info->disable_fcache) {
++		result = fcache_file_close(f);
++		if (result < 0)
++			shfs_invalid_dir_cache(dentry->d_parent->d_inode);
++		if (!result) {
++			/* last reference */
++			lock_kernel();
++			filemap_fdatawrite(dentry->d_inode->i_mapping);
++			filemap_fdatawait(dentry->d_inode->i_mapping);
++			unlock_kernel();
++		}
++	}
++	return 0;	/* ignored */
++}
++
++static ssize_t 
++shfs_slow_read(struct file *f, char *buf, size_t count, loff_t *ppos)
++{
++	struct dentry *dentry = f->f_dentry;
++	struct shfs_sb_info *info = info_from_dentry(dentry);
++	char name[SHFS_PATH_MAX];
++	unsigned long page;
++	int result;
++	
++	DEBUG("%s\n", dentry->d_name.name);
++
++	lock_kernel();
++	page = __get_free_page(GFP_KERNEL);
++	if (!page) {
++		result = -ENOMEM;
++		goto out;
++	}
++	if (get_name(dentry, name) < 0) {
++		result = -ENAMETOOLONG;
++		goto error;
++	}
++	count = count > PAGE_SIZE ? PAGE_SIZE : count;
++	result = info->fops.read(info, name, *ppos, count, (char *)page, dentry->d_inode->i_ino);
++	if (result < 0) {
++		VERBOSE("!%d\n", result);
++		goto error;
++	}
++	if (result != 0) {
++		copy_to_user(buf, (char *)page, result);
++		*ppos += result;
++	}
++error:
++	free_page(page);
++out:
++	unlock_kernel();
++	return result;
++}
++
++static ssize_t 
++shfs_slow_write(struct file *f, const char *buf, size_t count, loff_t *offset)
++{
++	int written = 0;
++	int result;
++	
++	DEBUG("\n");
++	written = generic_file_write(f, buf, count, offset);
++	if (written > 0) {
++		result = shfs_file_flush(f);
++		written = result < 0 ? result: written;
++	}
++	
++	return written;
++}
++
++struct file_operations shfs_file_operations = {
++	.llseek		= generic_file_llseek,
++	.read		= generic_file_read,
++	.write		= generic_file_write,
++	.ioctl		= shfs_ioctl,
++	.mmap		= generic_file_mmap,
++	.open		= shfs_file_open,
++	.flush		= shfs_file_flush,
++	.release	= shfs_file_release,
++};
++
++struct file_operations shfs_slow_operations = {
++	.llseek		= generic_file_llseek,
++	.read		= shfs_slow_read,
++	.write		= shfs_slow_write,
++	.ioctl		= shfs_ioctl,
++	.mmap		= generic_file_mmap,
++	.open		= shfs_file_open,
++	.flush		= shfs_file_flush,
++	.release	= shfs_file_release,
++};
++
++struct inode_operations shfs_file_inode_operations = {
++	.permission	= shfs_file_permission,
++	.getattr	= shfs_getattr,
++	.setattr	= shfs_notify_change,
++};
++
++struct address_space_operations shfs_file_aops = {
++	.readpage	= shfs_file_readpage,
++	.writepage	= shfs_file_writepage,
++	.prepare_write	= shfs_file_preparewrite,
++	.commit_write	= shfs_file_commitwrite,
++};
++
+diff -uNr linux-2.6.4/fs.orig/shfs/inode.c linux-2.6.4/fs/shfs/inode.c
+--- linux-2.6.4/fs.orig/shfs/inode.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.4/fs/shfs/inode.c	2004-04-06 05:59:16.250300016 +0200
+@@ -0,0 +1,381 @@
++/*
++ * inode.c
++ * 
++ * Inode/superblock operations, partialy inspired by smbfs/ncpfs.
++ */
++
++#ifdef MODVERSIONS
++#include <linux/modversions.h>
++#endif
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/init.h>
++#include <asm/uaccess.h>
++#include <linux/file.h>
++#include <linux/smp_lock.h>
++
++#include <linux/shfs_fs.h>
++#include <linux/shfs_fs_sb.h>
++#include <linux/shfs_fs_i.h>
++#include "shfs_debug.h"
++#include "proc.h"
++
++MODULE_AUTHOR("Zemljanka core team");
++MODULE_DESCRIPTION("SHell File System");
++
++int debug_level;
++#ifdef ENABLE_DEBUG
++	unsigned long alloc;
++#endif
++
++kmem_cache_t	*inode_cache = NULL;
++
++void 
++shfs_set_inode_attr(struct inode *inode, struct shfs_fattr *fattr)
++{
++	struct shfs_sb_info *info = info_from_inode(inode);
++	struct shfs_inode_info *i = inode->u.generic_ip;
++	struct timespec last_time = inode->i_mtime;
++	loff_t last_size = inode->i_size;
++
++	inode->i_mode 	= fattr->f_mode;
++	inode->i_nlink	= fattr->f_nlink;
++	if (info->preserve_own) {
++		inode->i_uid = fattr->f_uid;
++		inode->i_gid = fattr->f_gid;
++	} else {
++		inode->i_uid = info->uid;
++		inode->i_gid = info->gid;
++	}
++	inode->i_rdev	= fattr->f_rdev;
++	inode->i_ctime	= fattr->f_ctime;
++	inode->i_atime	= fattr->f_atime;
++	inode->i_mtime	= fattr->f_mtime;
++	inode->i_blksize= fattr->f_blksize;
++	inode->i_blocks	= fattr->f_blocks;
++	inode->i_size	= fattr->f_size;
++
++	i->oldmtime = jiffies;
++
++	if (!timespec_equal(&inode->i_mtime, &last_time) || inode->i_size != last_size) {
++		DEBUG("inode changed (%ld/%ld, %lu/%lu)\n", inode->i_mtime.tv_sec, last_time.tv_sec, (unsigned long)inode->i_size, (unsigned long)last_size);
++		invalidate_inode_pages(inode->i_mapping);
++		fcache_file_clear(inode);
++	}
++}
++
++struct inode*
++shfs_iget(struct super_block *sb, struct shfs_fattr *fattr)
++{
++	struct inode *inode;
++	struct shfs_inode_info *i;
++
++	inode = new_inode(sb);
++	if (!inode)
++		return NULL;
++	inode->i_ino = fattr->f_ino;
++	i = inode->u.generic_ip = (struct shfs_inode_info *)KMEM_ALLOC("inode", inode_cache, GFP_KERNEL);
++	if (!i)
++		return NULL;
++	i->cache = NULL;
++	shfs_set_inode_attr(inode, fattr);
++
++	DEBUG("ino: %lu\n", inode->i_ino);
++	if (S_ISDIR(inode->i_mode)) {
++		DEBUG("dir\n");
++		inode->i_op = &shfs_dir_inode_operations;
++		inode->i_fop = &shfs_dir_operations;
++	} else if (S_ISLNK(inode->i_mode)) { 
++		DEBUG("link\n");
++		inode->i_op = &shfs_symlink_inode_operations;
++	} else if (S_ISREG(inode->i_mode) || S_ISBLK(inode->i_mode) || S_ISCHR(inode->i_mode)) {
++		DEBUG("file/block/char\n");
++		inode->i_op = &shfs_file_inode_operations;
++		inode->i_fop = &shfs_file_operations;
++		inode->i_data.a_ops = &shfs_file_aops;
++	}
++	
++	insert_inode_hash(inode);
++	return inode;
++}
++
++static void 
++shfs_delete_inode(struct inode *inode)
++{
++	struct shfs_inode_info *i;
++
++	DEBUG("ino: %lu\n", inode->i_ino);
++	i = (struct shfs_inode_info *)inode->u.generic_ip;
++	if (!i) {
++		VERBOSE("invalid inode\n");
++		goto out;
++	}
++	if (i->cache) {
++		VERBOSE("file cache not free!\n");
++		/* TODO: free it now? */
++	}
++	KMEM_FREE("inode", inode_cache, i);
++out:
++	clear_inode(inode);
++}
++
++/* borrowed from smbfs */
++static int
++shfs_refresh_inode(struct dentry *dentry)
++{
++	struct shfs_sb_info *info = info_from_dentry(dentry);
++	struct inode *inode = dentry->d_inode;
++	struct shfs_fattr fattr;
++	char name[SHFS_PATH_MAX];
++	int result;
++
++	if (inode->i_ino == 2) {
++		shfs_renew_times(dentry);
++		return 0;
++	}
++	if (get_name(dentry, name) < 0)
++		return -ENAMETOOLONG;
++
++	result = info->fops.stat(info, name, &fattr);
++	if (result < 0)
++		goto out;
++
++	shfs_renew_times(dentry);
++	if (S_ISLNK(inode->i_mode))
++		goto out;
++	if ((inode->i_mode & S_IFMT) == (fattr.f_mode & S_IFMT)) {
++		shfs_set_inode_attr(inode, &fattr);
++	} else {
++		/* big touble */
++		fattr.f_mode = inode->i_mode; /* save mode */
++		make_bad_inode(inode);
++		inode->i_mode = fattr.f_mode; /* restore mode */
++		/*
++		 * No need to worry about unhashing the dentry: the
++		 * lookup validation will see that the inode is bad.
++		 * But we do want to invalidate the caches ...
++		 */
++		if (!S_ISDIR(inode->i_mode))
++			invalidate_inode_pages(inode->i_mapping);
++		else
++			shfs_invalid_dir_cache(inode);
++		result = -EIO;
++	}
++out:
++	return result;
++}
++
++int
++shfs_revalidate_inode(struct dentry *dentry)
++{
++	struct shfs_sb_info *info = info_from_dentry(dentry);
++	struct inode *inode = dentry->d_inode;
++	struct shfs_inode_info *i = (struct shfs_inode_info *)inode->u.generic_ip;
++	int result;
++
++        DEBUG("%s\n", dentry->d_name.name);
++	result = 0;
++
++	lock_kernel();
++	if (is_bad_inode(inode))
++		goto out;
++	if (inode->i_sb->s_magic != SHFS_SUPER_MAGIC)
++		goto out;
++	if (time_before(jiffies, i->oldmtime + SHFS_MAX_AGE(info)))
++		goto out;
++		
++	result = shfs_refresh_inode(dentry);
++out:
++	unlock_kernel();
++	DEBUG("%d\n", result);
++	return result;
++}
++
++int
++shfs_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
++{
++	int result = shfs_revalidate_inode(dentry);
++	if (!result)
++		generic_fillattr(dentry->d_inode, stat);
++	return result;
++}
++
++static void
++shfs_put_super(struct super_block *sb)
++{
++	struct shfs_sb_info *info = info_from_sb(sb);
++	int result;
++
++	result = info->fops.finish(info);
++	fput(info->sock);
++	if (!sock_lock(info)) {
++		VERBOSE("Cannot free caches!\n");
++		return;
++	}
++	kfree(info->sockbuf);
++	kfree(info->readlnbuf);
++	kfree(info);
++	DEBUG("Super block discarded!\n");
++}
++
++struct super_operations shfs_sops = {
++	.drop_inode	= generic_delete_inode,
++	.delete_inode	= shfs_delete_inode,
++	.put_super	= shfs_put_super,
++	.statfs		= shfs_statfs,
++};
++
++static void
++init_root_dirent(struct shfs_sb_info *server, struct shfs_fattr *fattr)
++{
++	memset(fattr, 0, sizeof(*fattr));
++	fattr->f_nlink = 1;
++	fattr->f_uid = server->uid;
++	fattr->f_gid = server->gid;
++	fattr->f_blksize = 512;
++
++	fattr->f_ino = 2;
++	fattr->f_mtime = CURRENT_TIME;
++	fattr->f_mode = server->root_mode;
++	fattr->f_size = 512;
++	fattr->f_blocks = 0;
++}
++
++static int
++shfs_read_super(struct super_block *sb, void *opts, int silent)
++{
++	struct shfs_sb_info *info;
++	struct shfs_fattr root;
++	struct inode *root_inode;
++	int result;
++	
++	info = (struct shfs_sb_info*)kmalloc(sizeof(struct shfs_sb_info), GFP_KERNEL);
++	if (!info) {
++		printk(KERN_NOTICE "Not enough kmem!\n");
++		goto out;
++	}
++
++	memset(info, 0, sizeof(struct shfs_sb_info));
++
++	sb->s_fs_info = info;
++	sb->s_blocksize = 4096;
++	sb->s_blocksize_bits = 12;
++	sb->s_magic = SHFS_SUPER_MAGIC;
++	sb->s_op = &shfs_sops;
++	sb->s_flags = 0;
++	
++	/* fill-in default values */
++	info->fops = shell_fops;
++	info->version = 0;
++	info->ttl = SHFS_DEFAULT_TTL;
++	info->uid = current->uid;
++	info->gid = current->gid;
++	info->root_mode = (S_IRUSR | S_IWUSR | S_IXUSR | S_IFDIR);
++	info->fmask = 00177777;
++	info->mount_point[0] = 0;
++	init_MUTEX(&info->sock_sem);
++	info->sock = NULL;
++	info->sockbuf = (char *)kmalloc(SOCKBUF_SIZE, GFP_KERNEL);
++	if (!info->sockbuf) {
++		printk(KERN_NOTICE "Not enough kmem!\n");
++		goto out_no_mem;
++	}
++	info->readlnbuf_len = 0;
++	info->readlnbuf = (char *)kmalloc(READLNBUF_SIZE, GFP_KERNEL);
++	if (!info->readlnbuf) {
++		printk(KERN_NOTICE "Not enough kmem!\n");
++		kfree(info->sockbuf);
++		goto out_no_mem;
++	}
++	info->garbage_read = 0;
++	info->garbage_write = 0;
++	info->garbage = 0;
++	info->readonly = 0;
++	info->preserve_own = 0;
++	info->disable_fcache = 0;
++	info->stable_symlinks = 0;
++
++	debug_level = 0;
++	result = parse_options(info, (char *)opts);
++	if (result < 0)
++		goto out_no_opts;
++	if (!info->sock) {
++		VERBOSE("Socket not specified\n");
++		goto out_no_opts;
++	}
++	if (info->version != PROTO_VERSION) {
++		printk(KERN_NOTICE "shfs: version mismatch (module: %d, mount: %d)\n", PROTO_VERSION, info->version);
++		goto out_no_opts;
++	}
++
++	init_root_dirent(info, &root);
++	root_inode = shfs_iget(sb, &root);
++	if (!root_inode) 
++		goto out_no_root;
++	sb->s_root = d_alloc_root(root_inode);
++	if (!sb->s_root) 
++		goto out_no_root;
++	shfs_new_dentry(sb->s_root);
++
++	DEBUG("ok\n");
++	return 0;
++
++out_no_root:
++	iput(root_inode);
++out_no_opts:
++	kfree(info->sockbuf);
++	kfree(info->readlnbuf);
++out_no_mem:
++	kfree(info);
++out:
++	DEBUG("failed\n");
++	return -EINVAL;
++}
++
++static struct super_block *
++shfs_get_sb(struct file_system_type *fs_type,
++	    int flags, const char *dev_name, void *data)
++{
++	return get_sb_nodev(fs_type, flags, data, shfs_read_super);
++}
++
++static struct file_system_type sh_fs_type = {
++	.owner		= THIS_MODULE,
++	.name		= "shfs",
++	.get_sb		= shfs_get_sb,
++	.kill_sb	= kill_anon_super,
++};
++
++static int __init 
++init_shfs(void)
++{
++	printk(KERN_NOTICE "SHell File System, (c) 2002-2004 Miroslav Spousta\n");
++	fcache_init();
++	inode_cache = kmem_cache_create("shfs_inode", sizeof(struct shfs_inode_info), 0, 0, NULL, NULL);
++	
++	debug_level = 0;
++#ifdef ENABLE_DEBUG
++	alloc = 0;
++#endif
++	return register_filesystem(&sh_fs_type);
++}
++
++static void __exit 
++exit_shfs(void)
++{
++	VERBOSE("Unregistering shfs.\n");
++#ifdef ENABLE_DEBUG
++	if (alloc)
++		VERBOSE("Memory leak (%lu)!\n", alloc);
++#endif
++	unregister_filesystem(&sh_fs_type);
++	kmem_cache_destroy(inode_cache);
++	fcache_finish();
++}
++
++module_init(init_shfs);
++module_exit(exit_shfs);
++
++MODULE_LICENSE("GPL");
++
+diff -uNr linux-2.6.4/fs.orig/shfs/ioctl.c linux-2.6.4/fs/shfs/ioctl.c
+--- linux-2.6.4/fs.orig/shfs/ioctl.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.4/fs/shfs/ioctl.c	2004-04-06 05:59:16.251299864 +0200
+@@ -0,0 +1,49 @@
++/*
++ * ioctl.c
++ *
++ * ioctl() call for persistent connection support. 
++ */
++
++#ifdef MODVERSIONS
++#include <linux/modversions.h>
++#endif
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <asm/uaccess.h>
++#include <asm/fcntl.h>
++#include <linux/file.h>
++#include <linux/fs.h>
++#include <linux/mm.h>
++#include <linux/errno.h>
++#include <linux/ioctl.h>
++
++#include <linux/shfs_fs.h>
++#include <linux/shfs_fs_sb.h>
++#include "shfs_debug.h"
++
++int
++shfs_ioctl(struct inode *inode, struct file *f,
++	   unsigned int cmd, unsigned long arg)
++{
++	struct shfs_sb_info *info = info_from_inode(inode);
++	int result = -EINVAL;
++
++	switch (cmd) {
++	case SHFS_IOC_NEWCONN:
++		VERBOSE("Reconnect (%ld)\n", arg);
++		if (info->sock)
++			fput(info->sock);
++		info->sock = fget(arg);
++		info->garbage = 0;
++		info->garbage_read = 0;
++		info->garbage_write = 0;
++		VERBOSE(">%p\n", info->sock);
++		result = 0;
++		break;
++	default:
++		break;
++	}
++
++	return result;
++}
+diff -uNr linux-2.6.4/fs.orig/shfs/proc.c linux-2.6.4/fs/shfs/proc.c
+--- linux-2.6.4/fs.orig/shfs/proc.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.4/fs/shfs/proc.c	2004-04-06 05:59:16.252299712 +0200
+@@ -0,0 +1,551 @@
++/*
++ * proc.c
++ *
++ * Miscellaneous routines, socket read/write.
++ */
++
++#ifdef MODVERSIONS
++#include <linux/modversions.h>
++#endif
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/ctype.h>
++#include <linux/string.h>
++#include <asm/uaccess.h>
++#include <asm/fcntl.h>
++#include <linux/file.h>
++#include <linux/smp_lock.h>
++#include <linux/fs.h>
++#include <linux/mm.h>
++#include <linux/uio.h>
++#include <net/sock.h>
++#include <linux/sched.h>
++#include <linux/init_task.h>
++
++#include <linux/shfs_fs.h>
++#include <linux/shfs_fs_sb.h>
++#include "shfs_debug.h"
++#include "proc.h"
++
++/* our life would be too simple without RH */
++#ifdef INIT_SIGHAND
++#define	SIGLOCK(flags) do { spin_lock_irqsave(&current->sighand->siglock, (flags)); } while (0)
++#define	SIGRECALC do { recalc_sigpending(); } while (0)
++#define SIGUNLOCK(flags) do { spin_unlock_irqrestore(&current->sighand->siglock, (flags)); } while (0)
++#else
++#define SIGLOCK(flags) do { spin_lock_irqsave(&current->sigmask_lock, (flags)); } while (0)
++#define SIGRECALC do { recalc_sigpending(current); } while (0)
++#define SIGUNLOCK(flags) do { spin_unlock_irqrestore(&current->sigmask_lock, (flags)); } while (0)
++#endif
++
++static int
++parse_mode(char *mode)
++{
++	return ((mode[0]-'0')<<6) + ((mode[1]-'0')<<3) + (mode[2]-'0');
++}
++
++int
++parse_options(struct shfs_sb_info *info, char *opts)
++{
++	char *p, *q;
++	int i;
++
++	if (!opts) 
++		return -1;
++
++	while ((p = strsep(&opts, ","))) {
++		if (strncmp(p, "mnt=", 4) == 0) {
++			if (strlen(p+4) + 1 > SHFS_PATH_MAX)
++				goto ugly_opts;
++			strcpy(info->mount_point, p+4);
++		} else if (strncmp(p, "ro", 2) == 0) {
++			info->readonly = 1;
++		} else if (strncmp(p, "rw", 2) == 0) {
++			info->readonly = 0;
++		} else if (strncmp(p, "suid", 4) == 0) {
++			info->fmask |= S_ISUID|S_ISGID;
++		} else if (strncmp(p, "nosuid", 6) == 0) {
++			info->fmask &= ~(S_ISUID|S_ISGID);
++		} else if (strncmp(p, "dev", 3) == 0) {
++			info->fmask |= S_IFCHR|S_IFBLK;
++		} else if (strncmp(p, "nodev", 5) == 0) {
++			info->fmask &= ~(S_IFCHR|S_IFBLK);
++		} else if (strncmp(p, "exec", 4) == 0) {
++			info->fmask |= S_IXUSR|S_IXGRP|S_IXOTH;
++		} else if (strncmp(p, "noexec", 6) == 0) {
++			info->fmask &= ~(S_IXUSR|S_IXGRP|S_IXOTH);
++		} else if (strncmp(p, "nocache", 7) == 0) {
++			info->disable_fcache = 1;
++		} else if (strncmp(p, "preserve", 8) == 0) {
++			info->preserve_own = 1;
++		} else if (strncmp(p, "debug=", 6) == 0) {
++			if (strlen(p+6) > 5)
++				goto ugly_opts;
++			q = p+6;
++			i = simple_strtoul(q, &q, 10);
++			debug_level = i;
++		} else if (strncmp(p, "ttl=", 4) == 0) {
++			if (strlen(p+4) > 10)
++				goto ugly_opts;
++			q = p+4;
++			i = simple_strtoul(q, &q, 10);
++			info->ttl = i * 1000;
++		} else if (strncmp(p, "uid=", 4) == 0) {
++			if (strlen(p+4) > 10)
++				goto ugly_opts;
++			q = p+4;
++			i = simple_strtoul(q, &q, 10);
++			info->uid = i; 
++		} else if (strncmp(p, "gid=", 4) == 0) {
++			if (strlen(p+4) > 10)
++				goto ugly_opts;
++			q = p+4;
++			i = simple_strtoul(q, &q, 10);
++			info->gid = i; 
++		} else if (strncmp(p, "rmode=", 6) == 0) {
++			if (strlen(p+6) > 3)
++				goto ugly_opts;
++			info->root_mode = S_IFDIR | (parse_mode(p+6) & (S_IRWXU | S_IRWXG | S_IRWXO));
++		} else if (strncmp(p, "fd=", 3) == 0) {
++			if (strlen(p+3) > 5)
++				goto ugly_opts;
++			q = p+3;
++			i = simple_strtoul(q, &q, 10);
++			info->sock = fget(i);
++		} else if (strncmp(p, "version=", 8) == 0) {
++			if (strlen(p+8) > 5)
++				goto ugly_opts;
++			q = p+8;
++			i = simple_strtoul(q, &q, 10);
++			info->version = i;
++		}
++	}
++	return 0;
++	
++ugly_opts:
++	VERBOSE("Invalid option: %s\n", p);
++	return -1;
++}
++
++static int clear_garbage(struct shfs_sb_info *);
++
++/* sock_lock held */
++int
++sock_write(struct shfs_sb_info *info, const void *buffer, int count)
++{
++	struct file *f = info->sock;
++	mm_segment_t fs;
++	int c, result = 0;
++	unsigned long flags, sigpipe;
++	sigset_t old_set;
++
++	if (!f)
++		return -EIO;
++	if (info->garbage) {
++		result = clear_garbage(info);
++		if (result < 0)
++			return result;
++	}
++	
++	c = count;
++
++	fs = get_fs();
++	set_fs(get_ds());
++
++	SIGLOCK(flags);
++	sigpipe = sigismember(&current->pending.signal, SIGPIPE);
++	old_set = current->blocked;
++	siginitsetinv(&current->blocked, sigmask(SIGKILL)|sigmask(SIGSTOP));
++	SIGRECALC;
++	SIGUNLOCK(flags);
++
++	do {
++		struct iovec vec[1];
++
++		vec[0].iov_base = (void *)buffer;
++		vec[0].iov_len = c;
++		result = f->f_op->writev(f, (const struct iovec *) &vec, 1, &f->f_pos);
++		if (result < 0) {
++			if (result == -EAGAIN)
++				continue;
++			break;
++		}
++		buffer += result;
++		c -= result;
++	} while (c > 0);
++
++	SIGLOCK(flags);
++	if (result == -EPIPE && !sigpipe) {
++		sigdelset(&current->pending.signal, SIGPIPE);
++		result = -EIO;
++	}
++	current->blocked = old_set;
++	SIGRECALC;
++	SIGUNLOCK(flags);
++
++	set_fs(fs);
++
++	DEBUG(">%d\n", result);
++	if (result < 0)
++		set_garbage(info, 1, c);
++	else
++		result = count;
++	return result;
++}
++
++#define BUFFER info->readlnbuf
++#define LEN    info->readlnbuf_len
++
++/* sock_lock held */
++int
++sock_read(struct shfs_sb_info *info, void *buffer, int count)
++{
++	struct file *f = info->sock;
++	mm_segment_t fs;
++	int c, result = 0;
++	unsigned long flags, sigpipe;
++	sigset_t old_set;
++
++	if (!f)
++		return -EIO;
++	if (info->garbage) {
++		result = clear_garbage(info);
++		if (result < 0)
++			return result;
++	}
++	c = count;
++	if (LEN > 0) {
++		if (count > LEN)
++			c = LEN;
++		memcpy(buffer, BUFFER, c);
++		buffer += c;
++		LEN -= c;
++		if (LEN > 0)
++			memmove(BUFFER, BUFFER+c, LEN);
++		c = count - c;
++	}
++
++	/* don't block reading 0 bytes */
++	if (c == 0)
++		return count;
++
++	SIGLOCK(flags);
++	sigpipe = sigismember(&current->pending.signal, SIGPIPE);
++	old_set = current->blocked;
++	siginitsetinv(&current->blocked, sigmask(SIGKILL)|sigmask(SIGSTOP));
++	SIGRECALC;
++	SIGUNLOCK(flags);
++	
++	fs = get_fs();
++	set_fs(get_ds());
++
++	do {
++		struct iovec vec[1];
++
++		vec[0].iov_base = buffer;
++		vec[0].iov_len = c;
++		result = f->f_op->readv(f, (const struct iovec *)&vec, 1, &f->f_pos);
++		if (result < 0) {
++			if (result == -EAGAIN)
++				continue;
++			break;
++		}
++		buffer += result;
++		c -= result;
++	} while (c > 0);
++
++	SIGLOCK(flags);
++	if (result == -EPIPE && !sigpipe) {
++		sigdelset(&current->pending.signal, SIGPIPE);
++		result = -EIO;
++	}
++	current->blocked = old_set;
++	SIGRECALC;
++	SIGUNLOCK(flags);
++
++	set_fs(fs);
++	
++	DEBUG("<%d\n", result);
++	if (result < 0)
++		set_garbage(info, 0, c);
++	else
++		result = count;
++	return result;
++}
++ 
++/* sock_lock held */
++int 
++sock_readln(struct shfs_sb_info *info, char *buffer, int count)
++{
++	struct file *f = info->sock;
++	mm_segment_t fs;
++	int c, l = 0, result;
++	char *nl;
++	unsigned long flags, sigpipe;
++	sigset_t old_set;
++
++	if (!f)
++		return -EIO;
++	if (info->garbage) {
++		result = clear_garbage(info);
++		if (result < 0)
++			return result;
++	}
++	while (1) {
++		struct iovec vec[1];
++
++		nl = memchr(BUFFER, '\n', LEN);
++		if (nl) {
++			*nl = '\0';
++			strncpy(buffer, BUFFER, count-1);
++			buffer[count-1] = '\0';
++			c = LEN-(nl-BUFFER+1);
++			if (c > 0)
++				memmove(BUFFER, nl+1, c);
++			LEN = c;
++
++			DEBUG("<%s\n", buffer);
++			return strlen(buffer);
++		}
++		DEBUG("miss(%d)\n", LEN);
++		c = READLNBUF_SIZE - LEN;
++		if (c == 0) {
++			BUFFER[READLNBUF_SIZE-1] = '\n';
++			continue;
++		}
++
++		SIGLOCK(flags);
++		sigpipe = sigismember(&current->pending.signal, SIGPIPE);
++		old_set = current->blocked;
++		siginitsetinv(&current->blocked, sigmask(SIGKILL)|sigmask(SIGSTOP));
++		SIGRECALC;
++		SIGUNLOCK(flags);
++
++		fs = get_fs();
++		set_fs(get_ds());
++
++		vec[0].iov_base = BUFFER+LEN;
++		vec[0].iov_len = c;
++		result = f->f_op->readv(f, (const struct iovec *)&vec, 1, &f->f_pos);
++		SIGLOCK(flags);
++		if (result == -EPIPE && !sigpipe) {
++			sigdelset(&current->pending.signal, SIGPIPE);
++			result = -EIO;
++		}
++		current->blocked = old_set;
++		SIGRECALC;
++		SIGUNLOCK(flags);
++
++		set_fs(fs);
++
++		DEBUG("<%d\n", result);
++		if (result < 0) {
++			if (result == -EAGAIN)
++				continue;
++			set_garbage(info, 0, c);
++			return result;
++		}
++		LEN += result;
++
++		/* do not lock while reading 0 bytes */
++		if (l++ > READLNBUF_SIZE && LEN == 0)
++			return -EINVAL;
++	}
++}
++
++int
++reply(char *s)
++{
++	if (strncmp(s, "### ", 4))
++		return 0;
++	return simple_strtoul(s+4, NULL, 10);
++}
++
++static int
++clear_garbage(struct shfs_sb_info *info)
++{
++	static unsigned long seq = 12345;
++	char buffer[256];
++	int i, c, state, garbage;
++	int result;
++
++	garbage = info->garbage_write;
++	if (garbage)
++		memset(buffer, ' ', sizeof(buffer));
++	DEBUG(">%d\n", garbage);
++	while (garbage > 0) {
++		c = garbage < sizeof(buffer) ? garbage : sizeof(buffer);
++		info->garbage = 0;
++		result = sock_write(info, buffer, c);
++		if (result < 0) {
++			info->garbage_write = garbage;
++			goto error;
++		}
++		garbage -= result;
++	}
++	info->garbage_write = 0;
++	garbage = info->garbage_read;
++	DEBUG("<%d\n", garbage);
++	while (garbage > 0) {
++		c = garbage < sizeof(buffer) ? garbage : sizeof(buffer);
++		info->garbage = 0;
++		result = sock_read(info, buffer, c);
++		if (result < 0) {
++			info->garbage_read = garbage;
++			goto error;
++		}
++		garbage -= result;
++	}
++	info->garbage_read = 0;
++		
++	info->garbage = 0;
++	sprintf(buffer, "\n\ns_ping %lu", seq);
++	result = sock_write(info, (void *)buffer, strlen(buffer));
++	if (result < 0)
++		goto error;
++	DEBUG("reading..\n");
++	state = 0;
++	for (i = 0; i < 100000; i++) {
++		info->garbage = 0;
++		result = sock_readln(info, buffer, sizeof(buffer));
++		if (result < 0)
++			goto error;
++		if (((state == 0) || (state == 1)) && reply(buffer) == REP_PRELIM) {
++			state = 1;
++		} else if (state == 1 && simple_strtoul(buffer, NULL, 10) == (seq-1)) {
++			state = 2;
++		} else if (state == 2 && reply(buffer) == REP_NOP) {
++			DEBUG("cleared\n");
++			return 0;
++		} else {
++			state = 0;
++		}
++	}
++error:
++	info->garbage = 1;
++	DEBUG("failed\n");
++	return result;
++}
++
++void
++set_garbage(struct shfs_sb_info *info, int write, int count)
++{
++	info->garbage = 1;
++	if (write)
++		info->garbage_write = count;
++	else
++		info->garbage_read = count;
++}
++
++int
++get_name(struct dentry *d, char *name)
++{
++	int len = 0;
++	struct dentry *p;
++
++	for (p = d; !IS_ROOT(p); p = p->d_parent)
++		len += p->d_name.len + 1;
++		
++	if (len + 1 > SHFS_PATH_MAX) 
++		return 0;
++	if (len == 0) {
++		name[0] = '/';
++		name[1] = '\0';
++		return 1;
++	}
++	
++	name[len] = '\0';
++	for (p = d; !IS_ROOT(p); p = p->d_parent) {
++		len -= p->d_name.len;
++		strncpy(&(name[len]), p->d_name.name, p->d_name.len);
++		len--;
++		name[len] = '/';
++	}
++
++	return 1;
++}
++
++int
++shfs_notify_change(struct dentry *dentry, struct iattr *attr)
++{
++	struct inode *inode = dentry->d_inode;
++	struct shfs_sb_info *info = info_from_inode(inode);
++	char file[SHFS_PATH_MAX];
++	int result;
++
++	DEBUG("\n");
++	if (get_name(dentry, file) < 0)
++		return -ENAMETOOLONG;
++	result = inode_change_ok(inode, attr);
++	if (result < 0)
++		return result;
++	if (info->readonly)
++		return -EROFS;
++
++	if (attr->ia_valid & ATTR_MODE) {
++		result = info->fops.chmod(info, file, attr->ia_mode);
++		if (result < 0)
++			goto error;
++		inode->i_mode = attr->ia_mode;
++	}
++	if (attr->ia_valid & ATTR_UID) {
++		result = info->fops.chown(info, file, attr->ia_uid);
++		if (result < 0)
++			goto error;
++		inode->i_uid = info->preserve_own ? info->uid : attr->ia_uid;
++	}
++	if (attr->ia_valid & ATTR_GID) {
++		result = info->fops.chgrp(info, file, attr->ia_gid);
++		if (result < 0)
++			goto error;
++		inode->i_gid = info->preserve_own ? info->gid : attr->ia_gid;
++	}
++	if (attr->ia_valid & ATTR_SIZE) {
++                filemap_fdatawrite(inode->i_mapping);
++                filemap_fdatawait(inode->i_mapping);
++		result = info->fops.trunc(info, file, attr->ia_size);
++		if (result < 0)
++			goto error;
++		result = vmtruncate(inode, attr->ia_size);
++		if (result != 0)
++			goto error;
++		inode->i_size = attr->ia_size;
++		mark_inode_dirty(inode);
++	}
++	/* optimisation: call settime once when setting both atime and mtime */
++	if (attr->ia_valid & ATTR_ATIME && attr->ia_valid & ATTR_MTIME
++	    && attr->ia_atime.tv_sec == attr->ia_mtime.tv_sec
++	    && attr->ia_atime.tv_nsec == attr->ia_mtime.tv_nsec) {
++		result = info->fops.settime(info, file, 1, 1, &attr->ia_atime);
++		if (result < 0)
++			goto error;
++		inode->i_atime = attr->ia_atime;
++		inode->i_mtime = attr->ia_mtime;
++	} else {
++		if (attr->ia_valid & ATTR_ATIME) {
++			result = info->fops.settime(info, file, 1, 0, &attr->ia_atime);
++			if (result < 0)
++				goto error;
++			inode->i_atime = attr->ia_atime;
++		}
++		if (attr->ia_valid & ATTR_MTIME) {
++			result = info->fops.settime(info, file, 0, 1, &attr->ia_mtime);
++			if (result < 0)
++				goto error;
++			inode->i_mtime = attr->ia_mtime;
++		}
++	}
++error:
++	return result;
++}
++
++int
++shfs_statfs(struct super_block *sb, struct kstatfs *attr)
++{
++	struct shfs_sb_info *info = info_from_sb(sb);
++
++	DEBUG("\n");
++	return info->fops.statfs(info, attr);
++}
++
+diff -uNr linux-2.6.4/fs.orig/shfs/proc.h linux-2.6.4/fs/shfs/proc.h
+--- linux-2.6.4/fs.orig/shfs/proc.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.4/fs/shfs/proc.h	2004-04-06 05:59:16.253299560 +0200
+@@ -0,0 +1,23 @@
++#ifndef _PROC_H
++#define _PROC_H
++
++#include <linux/shfs_fs_sb.h>
++
++static inline int
++sock_lock(struct shfs_sb_info *info)
++{
++	int result;
++	DEBUG("?\n");
++	result = down_interruptible(&(info->sock_sem));
++	DEBUG("!\n");
++	return (result != -EINTR);
++}
++
++static inline void
++sock_unlock(struct shfs_sb_info *info)
++{
++	up(&(info->sock_sem));
++	DEBUG("\n");
++}
++
++#endif	/* _PROC_H */
+diff -uNr linux-2.6.4/fs.orig/shfs/shell.c linux-2.6.4/fs/shfs/shell.c
+--- linux-2.6.4/fs.orig/shfs/shell.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.4/fs/shfs/shell.c	2004-04-06 05:59:16.256299104 +0200
+@@ -0,0 +1,1020 @@
++/*
++ * shell.c
++ *
++ * "Shell" client implementation.
++ */
++
++#ifdef MODVERSIONS
++#include <linux/modversions.h>
++#endif
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/ctype.h>
++#include <linux/string.h>
++#include <asm/uaccess.h>
++#include <asm/fcntl.h>
++#include <linux/file.h>
++#include <linux/smp_lock.h>
++#include <linux/fs.h>
++#include <linux/mm.h>
++#include <linux/uio.h>
++#include <net/sock.h>
++
++#include <linux/shfs_fs.h>
++#include <linux/shfs_fs_sb.h>
++#include "shfs_debug.h"
++#include "proc.h"
++
++/* directory list fields (ls -lan) */
++#define DIR_COLS   9
++#define DIR_PERM   0
++#define DIR_NLINK  1
++#define DIR_UID    2
++#define DIR_GID    3
++#define DIR_SIZE   4
++#define DIR_MONTH  5
++#define DIR_DAY    6
++#define DIR_YEAR   7
++#define DIR_NAME   8
++
++/* aaa'aaa -> aaa'\''aaa */
++static int
++replace_quote(char *name)
++{
++	char *s;
++	char *r = name;
++	int q = 0;
++	
++	while (*r) {
++		if (*r == '\'')
++			q++;
++		r++;
++	}
++	s = r+(3*q);
++	if ((s-name+1) > SHFS_PATH_MAX)
++		return -1;
++	
++	*(s--) = '\0';
++	r--;
++	while (q) {
++		if (*r == '\'') {
++			s -= 3;
++			s[0] = '\'';
++			s[1] = '\\';
++			s[2] = '\'';
++			s[3] = '\'';
++			q--;
++		} else {
++			*s = *r;
++		}
++		s--;
++		r--;
++	}
++	return 0;
++}
++
++static int
++check_path(char *path)
++{
++	if (replace_quote(path) < 0)
++		return 0;
++	return 1;
++}
++
++/* returns NULL if not enough space */
++static char *
++get_ugid(struct shfs_sb_info *info, char *str, int max)
++{
++	char buffer[1024];
++	char *s = str;
++	
++	if (max < 2)
++		return NULL;
++	strcpy(s, " "); s++;
++	if (info->preserve_own) {
++		int i;
++		snprintf(buffer, sizeof(buffer), "%d '", current->uid);
++		if (s - str + strlen(buffer)+1 > max)
++			return NULL;
++		strcpy(s, buffer); s += strlen(buffer);
++#ifdef get_group_info
++		/* 2.6.4rc1+ */
++		get_group_info(current->group_info);
++		for (i = 0; i < current->group_info->ngroups; i++) {
++			snprintf(buffer, sizeof(buffer), "%d ", GROUP_AT(current->group_info, i));
++			if (s - str + strlen(buffer)+2 > max)
++				return NULL;
++			strcpy(s, buffer), s += strlen(buffer);
++		}
++		put_group_info(current->group_info);
++#else
++		for (i = 0; i < current->ngroups; i++) {
++			snprintf(buffer, sizeof(buffer), "%d ", current->groups[i]);
++			if (s - str + strlen(buffer)+2 > max)
++				return NULL;
++			strcpy(s, buffer), s += strlen(buffer);
++		}
++#endif
++		strcpy(s-1, "' "); s++;
++	}
++	return s;
++}
++
++static int 
++do_command(struct shfs_sb_info *info, char *cmd, char *args, ...)
++{
++	va_list ap;
++	int result;
++	char *s;
++
++	if (!sock_lock(info))
++		return -EINTR;
++	
++	s = info->sockbuf;
++	strcpy(s, cmd); s += strlen(cmd);
++	s = get_ugid(info, s, SOCKBUF_SIZE - strlen(cmd));
++	if (!s) {
++		result = -ENAMETOOLONG;
++		goto error;
++	}
++	va_start(ap, args);
++	result = vsnprintf(s, SOCKBUF_SIZE - (s - info->sockbuf), args, ap);
++	va_end(ap);
++	if (result < 0 || strlen(info->sockbuf) + 2 > SOCKBUF_SIZE) {
++		result = -ENAMETOOLONG;
++		goto error;
++	}
++	s += result;
++	strcpy(s, "\n");
++
++	DEBUG("#%s", info->sockbuf);
++	result = sock_write(info, (void *)info->sockbuf, strlen(info->sockbuf));
++	if (result < 0)
++		goto error;
++	sock_readln(info, info->sockbuf, SOCKBUF_SIZE);
++	switch (reply(info->sockbuf)) {
++	case REP_COMPLETE:
++		result = 0;
++		break;
++	case REP_EPERM:
++		result = -EPERM;
++		break;
++	case REP_ENOENT:
++		result = -ENOENT;
++		break;
++	case REP_NOTEMPTY:
++		result = 1;
++		break;
++	default:
++		result = -EIO;
++		break;
++	}
++
++error:
++	sock_unlock(info);
++	return result;
++}
++
++static unsigned int
++get_this_year(void)
++{
++	unsigned long s_per_year = 365*24*3600;
++	unsigned long delta_s = 24*3600;
++
++	unsigned int year = CURRENT_TIME.tv_sec / (s_per_year + delta_s/4);
++	return 1970 + year; 
++}
++
++static unsigned int
++get_this_month(void) 
++{
++	int month = -1;
++	long secs = CURRENT_TIME.tv_sec % (365*24*3600+24*3600/4);
++	static long days_month[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
++	if (get_this_year() % 4) {
++		days_month[1] = 28;
++	} else {
++		days_month[1] = 29;
++	}
++	while (month < 11 && secs >= 0) {
++		month++;
++		secs-=24*3600*days_month[month];
++	}
++	return (unsigned int)month;
++}
++
++static unsigned int
++get_month(char *mon)
++{
++	static char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
++	unsigned int i;
++
++	for (i = 0; i<12; i++)
++		if(strcmp(mon, months[i]) == 0) {
++			DEBUG("%s: %u\n", mon, i);
++			return i;
++		}
++
++	return 0;
++}
++
++static int
++parse_dir(char *s, char **col)
++{
++	int c = 0;
++	int is_space = 1;
++	int device = 0;
++
++	while (*s) {
++		if (c == DIR_COLS)
++			break;
++		
++		if (*s == ' ') {
++			if (!is_space) {
++				if ((c-1 == DIR_SIZE) && device) {
++					while (*s && (*s == ' '))
++						s++;
++					while (*s && (*s != ' '))
++						s++;
++				}
++				*s = '\0';
++				is_space = 1;
++			}
++		} else {
++			if (is_space) {
++				/* (b)lock/(c)haracter device hack */
++				col[c++] = s;
++				is_space = 0;
++				if ((c-1 == DIR_PERM) && ((*s == 'b')||(*s == 'c'))) {
++					device = 1;
++				}
++
++			}
++		}
++		s++;
++	}
++	return c;
++}
++
++static int
++do_ls(struct shfs_sb_info *info, char *file, struct shfs_fattr *entry,
++      struct file *filp, void *dirent, filldir_t filldir, struct shfs_cache_control *ctl)
++{
++	char *col[DIR_COLS];
++	struct shfs_fattr fattr;
++	struct qstr name;
++	unsigned int year, mon, day, hour, min;
++	unsigned int this_year = get_this_year();
++	unsigned int this_month = get_this_month();
++	int device;
++	umode_t mode;
++	char *b, *s, *command = entry ? "s_stat" : "s_lsdir";
++	int result;
++	
++	if (!check_path(file))
++		return -ENAMETOOLONG;
++	if (!sock_lock(info))
++		return -EINTR;
++
++	s = info->sockbuf;
++	strcpy(s, command); s += strlen(command);
++	s = get_ugid(info, s, SOCKBUF_SIZE - strlen(command));
++	if (!s) {
++		result = -ENAMETOOLONG;
++		goto out;
++	}
++	if (s - info->sockbuf + strlen(file) + 4 > SOCKBUF_SIZE) {
++		result = -ENAMETOOLONG;
++		goto out;
++	}
++	strcpy(s, "'"); s++;
++	strcpy(s, file); s += strlen(file);
++	strcpy(s, "'"); s++;
++	strcpy(s, "\n");
++
++	DEBUG(">%s\n", info->sockbuf);
++	result = sock_write(info, (void *)info->sockbuf, strlen(info->sockbuf));
++	if (result < 0)
++		goto out;
++
++	while ((result = sock_readln(info, info->sockbuf, SOCKBUF_SIZE)) > 0) {
++		switch (reply(info->sockbuf)) {
++		case REP_COMPLETE:
++			result = 0;
++			goto out;
++		case REP_EPERM:
++			result = -EPERM;
++			goto out;
++		case REP_ENOENT:
++			result = -ENOENT;
++			goto out;
++		case REP_ERROR:
++			result = -EIO;
++			goto out;
++		}
++
++		result = parse_dir(info->sockbuf, col);
++		if (result != DIR_COLS)
++			continue;		/* skip `total xx' line */
++		
++		memset(&fattr, 0, sizeof(fattr));
++		s = col[DIR_NAME];
++		if (!strcmp(s, ".") || !strcmp(s, ".."))
++			continue;
++		name.name = s;
++		/* name.len is assigned later */
++
++		s = col[DIR_PERM];
++		mode = 0; device = 0;
++		switch (s[0]) {
++		case 'b':
++			device = 1;
++			if ((info->fmask & S_IFMT) & S_IFBLK)
++				mode = S_IFBLK;
++			else
++				mode = S_IFREG;
++			break;
++		case 'c':
++			device = 1;
++			if ((info->fmask & S_IFMT) & S_IFCHR)
++				mode = S_IFCHR;
++			else
++				mode = S_IFREG;
++		break;
++		case 's':
++		case 'S':			/* IRIX64 socket */
++			mode = S_IFSOCK;
++			break;
++		case 'd':
++			mode = S_IFDIR;
++			break;
++		case 'l':
++			mode = S_IFLNK;
++			break;
++		case '-':
++			mode = S_IFREG;
++			break;
++		case 'p':
++			mode = S_IFIFO;
++			break;
++		}
++		if (s[1] == 'r') mode |= S_IRUSR;
++		if (s[2] == 'w') mode |= S_IWUSR;
++		if (s[3] == 'x') mode |= S_IXUSR;
++		if (s[3] == 's') mode |= S_IXUSR | S_ISUID;
++		if (s[3] == 'S') mode |= S_ISUID;
++		if (s[4] == 'r') mode |= S_IRGRP;
++		if (s[5] == 'w') mode |= S_IWGRP;
++		if (s[6] == 'x') mode |= S_IXGRP;
++		if (s[6] == 's') mode |= S_IXGRP | S_ISGID;
++		if (s[6] == 'S') mode |= S_ISGID;
++		if (s[7] == 'r') mode |= S_IROTH;
++		if (s[8] == 'w') mode |= S_IWOTH;
++		if (s[9] == 'x') mode |= S_IXOTH;
++		if (s[9] == 't') mode |= S_ISVTX | S_IXOTH;
++		if (s[9] == 'T') mode |= S_ISVTX;
++		fattr.f_mode = S_ISREG(mode) ? mode & info->fmask : mode;
++
++		fattr.f_uid = simple_strtoul(col[DIR_UID], NULL, 10);
++		fattr.f_gid = simple_strtoul(col[DIR_GID], NULL, 10);
++		
++		if (!device) {
++			fattr.f_size = simple_strtoul(col[DIR_SIZE], NULL, 10);
++		} else {
++			unsigned short major, minor;
++			fattr.f_size = 0;
++			major = (unsigned short) simple_strtoul(col[DIR_SIZE], &s, 10);
++			while (*s && (!isdigit(*s)))
++				s++;
++			minor = (unsigned short) simple_strtoul(s, NULL, 10);
++			fattr.f_rdev = MKDEV(major, minor);
++		}
++		fattr.f_nlink = simple_strtoul(col[DIR_NLINK], NULL, 10);
++		fattr.f_blksize = 4096;
++		fattr.f_blocks = (fattr.f_size + 4095) >> 11;
++
++		mon = get_month(col[DIR_MONTH]);
++		day = simple_strtoul(col[DIR_DAY], NULL, 10);
++		
++		s = col[DIR_YEAR];
++		if (!strchr(s, ':')) {
++			year = simple_strtoul(s, NULL, 10);
++			hour = 12;
++			min = 0;
++		} else {
++			year = this_year;
++			if (mon > this_month) 
++				year--;
++			b = strchr(s, ':');
++			*b = 0;
++			hour = simple_strtoul(s, NULL, 10);
++			min = simple_strtoul(++b, NULL, 10);
++		}
++		fattr.f_atime.tv_sec = fattr.f_mtime.tv_sec = fattr.f_ctime.tv_sec = mktime(year, mon + 1, day, hour, min, 0);
++		fattr.f_atime.tv_nsec = fattr.f_mtime.tv_nsec = fattr.f_ctime.tv_nsec = 0;
++
++		if (S_ISLNK(mode) && ((s = strstr(name.name, " -> "))))
++			*s = '\0';
++		name.len = strlen(name.name);
++		DEBUG("Name: %s, mode: %o, size: %lu, nlink: %d, month: %d, day: %d, year: %d, hour: %d, min: %d (time: %lu)\n", name.name, fattr.f_mode, fattr.f_size, fattr.f_nlink, mon, day, year, hour, min, fattr.f_atime.tv_sec);
++
++		if (entry) {
++			*entry = fattr;
++		} else {
++			result = shfs_fill_cache(filp, dirent, filldir, ctl, &name, &fattr);
++			if (!result)
++				break;
++		}
++	}
++out:
++	sock_unlock(info);
++	return result;
++}
++
++static int
++shell_readdir(struct shfs_sb_info *info, char *dir,
++	      struct file *filp, void *dirent, filldir_t filldir, struct shfs_cache_control *ctl)
++{
++	return do_ls(info, dir, NULL, filp, dirent, filldir, ctl);
++}
++
++static int
++shell_stat(struct shfs_sb_info *info, char *file, struct shfs_fattr *fattr)
++{
++	return do_ls(info, file, fattr, NULL, NULL, NULL, NULL);
++}
++
++/* returns 1 if file is "non-empty" but has zero size */
++static int
++shell_open(struct shfs_sb_info *info, char *file, int mode)
++{
++	char bufmode[3] = "";
++
++	if (!check_path(file))
++		return -ENAMETOOLONG;
++
++	if (mode == O_RDONLY)
++		strcpy(bufmode, "R");
++	else if (mode == O_WRONLY)
++		strcpy(bufmode, "W");
++	else
++		strcpy(bufmode, "RW");
++
++	DEBUG("Open: %s (%s)\n", file, bufmode);
++	return do_command(info, "s_open", "'%s' %s", file, bufmode);
++}
++
++/* data should be aligned (offset % count == 0), ino == 0 => normal read, != 0 => slow read */
++static int
++shell_read(struct shfs_sb_info *info, char *file, unsigned offset,
++	   unsigned count, char *buffer, unsigned long ino)
++{
++	unsigned bs = 1, offset2 = offset, count2 = count;
++	int result;
++	char *s;
++
++	DEBUG("<%s[%u, %u]\n", file, (unsigned)offset, (unsigned)count);
++
++	if (!check_path(file))
++		return -ENAMETOOLONG;
++	/* read speedup if possible */
++	if (count && !(offset % count)) {
++		bs = count;
++		offset2 = offset / count;
++		count2 = 1;
++	}
++
++	if (!sock_lock(info))
++		return -EINTR;
++	
++	s = info->sockbuf;
++	if (ino) {
++		strcpy(s, "s_sread"); s += strlen("s_sread");
++	} else {
++		strcpy(s, "s_read"); s += strlen("s_read");
++	}
++	s = get_ugid(info, s, SOCKBUF_SIZE - strlen(info->sockbuf));
++	if (!s) {
++		result = -ENAMETOOLONG;
++		goto error;
++	}
++	if (ino) {
++		result = snprintf(s, SOCKBUF_SIZE - (s - info->sockbuf), 
++			"'%s' %u %u %u %u %u %lu\n", file, offset, count, bs, offset2, count2, ino);
++	} else {
++		result = snprintf(s, SOCKBUF_SIZE - (s - info->sockbuf), 
++			"'%s' %u %u %u %u %u\n", file, offset, count, bs, offset2, count2);
++	}
++	if (result < 0) {
++		result = -ENAMETOOLONG;
++		goto error;
++	}
++
++	DEBUG("<%s", info->sockbuf);
++	result = sock_write(info, (void *)info->sockbuf, strlen(info->sockbuf));
++	if (result < 0)
++		goto error;
++
++	result = sock_readln(info, info->sockbuf, SOCKBUF_SIZE);
++	if (result < 0) {
++		set_garbage(info, 0, count);
++		goto error;
++	}
++	switch (reply(info->sockbuf)) {
++	case REP_PRELIM:
++		break;
++	case REP_EPERM:
++		result = -EPERM;
++		goto error;
++	case REP_ENOENT:
++		result = -ENOENT;
++		goto error;
++	default:
++		set_garbage(info, 0, count);
++		result = -EIO;
++		goto error;
++	}
++	if (ino) {
++		result = sock_readln(info, info->sockbuf, SOCKBUF_SIZE);
++		if (result < 0)
++			goto error;
++		count = simple_strtoul(info->sockbuf, NULL, 10);
++	}
++
++	result = sock_read(info, buffer, count);
++	if (result < 0)
++		goto error;
++	result = sock_readln(info, info->sockbuf, SOCKBUF_SIZE);
++	if (result < 0)
++		goto error;
++	switch (reply(info->sockbuf)) {
++	case REP_COMPLETE:
++		break;
++	case REP_EPERM:
++		result = -EPERM;
++		goto error;
++	case REP_ENOENT:
++		result = -ENOENT;
++		goto error;
++	default:
++		result = -EIO;
++		goto error;
++	}
++
++	result = count;
++error:
++	sock_unlock(info);
++	DEBUG("<%u\n", result);
++	return result;
++}
++
++static int
++shell_write(struct shfs_sb_info *info, char *file, unsigned offset,
++	    unsigned count, char *buffer, unsigned long ino)
++{
++	unsigned offset2 = offset, bs = 1;
++	int result;
++	char *s;
++	
++	if (!check_path(file))
++		return -ENAMETOOLONG;
++#if 0
++	if (!count)
++		return 0;
++#endif	
++	DEBUG(">%s[%u, %u]\n", file, (unsigned)offset, (unsigned)count);
++	if (offset % SHFS_FCACHE_SIZE == 0) {
++		offset2 = offset / SHFS_FCACHE_SIZE;
++		bs = SHFS_FCACHE_SIZE;
++	}
++		
++	if (!sock_lock(info))
++		return -EINTR;
++
++	s = info->sockbuf;
++	strcpy(s, "s_write"); s += strlen("s_write");
++	s = get_ugid(info, s, SOCKBUF_SIZE - strlen(info->sockbuf));
++	if (!s) {
++		result = -ENAMETOOLONG;
++		goto error;
++	}
++
++	result = snprintf(s, SOCKBUF_SIZE - (s - info->sockbuf), 
++		"'%s' %u %u %u %u %lu\n", file, offset, count, bs, offset2, ino);
++	if (result < 0) {
++		result = -ENAMETOOLONG;
++		goto error;
++	}
++
++	DEBUG(">%s", info->sockbuf);
++	result = sock_write(info, (void *)info->sockbuf, strlen(info->sockbuf));
++	if (result < 0)
++		goto error;
++	result = sock_readln(info, info->sockbuf, SOCKBUF_SIZE);
++	if (result < 0) {
++		set_garbage(info, 1, count);
++		goto error;
++	}
++	switch (reply(info->sockbuf)) {
++	case REP_PRELIM:
++		break;
++	case REP_EPERM:
++		result = -EPERM;
++		goto error;
++	case REP_ENOENT:
++		result = -ENOENT;
++		goto error;
++	default:
++		result = -EIO;
++		goto error;
++	}
++
++	result = sock_write(info, buffer, count);
++	if (result < 0)
++		goto error;
++	result = sock_readln(info, info->sockbuf, SOCKBUF_SIZE);
++	if (result < 0)
++		goto error;
++	switch (reply(info->sockbuf)) {
++	case REP_COMPLETE:
++		break;
++	case REP_EPERM:
++		result = -EPERM;
++		goto error;
++	case REP_ENOENT:
++		result = -ENOENT;
++		goto error;
++	case REP_ENOSPC:
++		result = -ENOSPC;
++		set_garbage(info, 1, count);
++		goto error;
++	default:
++		result = -EIO;
++		goto error;
++	}
++
++	result = count;
++error:
++	sock_unlock(info);
++	DEBUG(">%u\n", result);
++	return result;
++}
++
++static int
++shell_mkdir(struct shfs_sb_info *info, char *dir)
++{
++	if (!check_path(dir))
++		return -ENAMETOOLONG;
++
++	DEBUG("Mkdir %s\n", dir);
++	return do_command(info, "s_mkdir", "'%s'", dir);
++}
++
++static int
++shell_rmdir(struct shfs_sb_info *info, char *dir)
++{
++	if (!check_path(dir))
++		return -ENAMETOOLONG;
++
++	DEBUG("Rmdir %s\n", dir);
++	return do_command(info, "s_rmdir", "'%s'", dir);
++}
++
++static int
++shell_rename(struct shfs_sb_info *info, char *old, char *new)
++{
++	if (!check_path(old) || !check_path(new))
++		return -ENAMETOOLONG;
++
++	DEBUG("Rename %s -> %s\n", old, new);
++	return do_command(info, "s_mv", "'%s' '%s'", old, new);
++}
++
++static int
++shell_unlink(struct shfs_sb_info *info, char *file)
++{
++	if (!check_path(file))
++		return -ENAMETOOLONG;
++
++	DEBUG("Remove %s\n", file);
++	return do_command(info, "s_rm", "'%s'", file);
++}
++
++static int
++shell_create(struct shfs_sb_info *info, char *file, int mode)
++{
++	if (!check_path(file))
++		return -ENAMETOOLONG;
++
++	DEBUG("Create %s (%o)\n", file, mode);
++	return do_command(info, "s_creat", "'%s' %o", file, mode & S_IALLUGO);
++}
++
++static int
++shell_link(struct shfs_sb_info *info, char *old, char *new)
++{
++	if (!check_path(old) || !check_path(new))
++		return -ENAMETOOLONG;
++
++	DEBUG("Link %s -> %s\n", old, new);
++	return do_command(info, "s_ln", "'%s' '%s'", old, new);
++}
++
++static int
++shell_symlink(struct shfs_sb_info *info, char *old, char *new)
++{
++	if (!check_path(old) || !check_path(new))
++		return -ENAMETOOLONG;
++
++	DEBUG("Symlink %s -> %s\n", old, new);
++	return do_command(info, "s_sln", "'%s' '%s'", old, new);
++}
++
++static int
++shell_readlink(struct shfs_sb_info *info, char *name, char *real_name)
++{
++	char *s;
++	int result = 0;
++
++	if (!check_path(name) || !check_path(real_name))
++		return -ENAMETOOLONG;
++
++	if (!sock_lock(info))
++		return -EINTR;
++
++	s = info->sockbuf;
++	strcpy(s, "s_readlink"); s += strlen("s_readlink");
++	s = get_ugid(info, s, SOCKBUF_SIZE - strlen(info->sockbuf));
++	if (!s) {
++		result = -ENAMETOOLONG;
++		goto error;
++	}
++	if (s - info->sockbuf + strlen(name) + 4 > SOCKBUF_SIZE) {
++		result = -ENAMETOOLONG;
++		goto error;
++	}
++	strcpy(s, "'"); s++;
++	strcpy(s, name); s += strlen(name);
++	strcpy(s, "'"); s++;
++	strcpy(s, "\n");
++
++	DEBUG("Readlink %s\n", info->sockbuf);
++	result = sock_write(info, (void *)info->sockbuf, strlen(info->sockbuf));
++	if (result < 0)
++		goto error;
++	result = sock_readln(info, info->sockbuf, SOCKBUF_SIZE);
++	if (result < 0)
++		goto error;
++
++	switch (reply(info->sockbuf)) {
++	case REP_COMPLETE:
++		result = -EIO;
++		goto error;
++	case REP_EPERM:
++		result = -EPERM;
++		goto error;
++	}
++
++	strncpy(real_name, info->sockbuf, SHFS_PATH_MAX-1);
++	real_name[SHFS_PATH_MAX-1] = '\0';
++
++	result = sock_readln(info, info->sockbuf, SOCKBUF_SIZE);
++	if (result < 0)
++		goto error;
++	switch (reply(info->sockbuf)) {
++	case REP_COMPLETE:
++		result = 0;
++		break;
++	case REP_EPERM:
++		result = -EPERM;
++		goto error;
++	default:
++		info->garbage = 1;
++		result = -EIO;
++		goto error;
++	}
++error:
++	sock_unlock(info);
++	return result;
++}
++
++static int
++shell_chmod(struct shfs_sb_info *info, char *file, umode_t mode)
++{
++	if (!check_path(file))
++		return -ENAMETOOLONG;
++
++	DEBUG("Chmod %o %s\n", mode, file);
++	return do_command(info, "s_chmod", "'%s' %o", file, mode);
++}
++
++static int
++shell_chown(struct shfs_sb_info *info, char *file, uid_t user)
++{
++	if (!check_path(file))
++		return -ENAMETOOLONG;
++
++	DEBUG("Chown %u %s\n", user, file);
++	return do_command(info, "s_chown", "'%s' %u", file, user);
++}
++
++static int
++shell_chgrp(struct shfs_sb_info *info, char *file, gid_t group)
++{
++	if (!check_path(file))
++		return -ENAMETOOLONG;
++
++	DEBUG("Chgrp %u %s\n", group, file);
++	return do_command(info, "s_chgrp", "'%s' %u", file, group);
++}
++
++static int
++shell_trunc(struct shfs_sb_info *info, char *file, loff_t size)
++{
++	unsigned seek = 1;
++
++	if (!check_path(file))
++		return -ENAMETOOLONG;
++
++	DEBUG("Truncate %s %u\n", file, (unsigned)size);
++	/* dd doesn't like bs=0 */
++	if (size == 0) {
++		seek = 0;
++		size = 1;
++	}
++	return do_command(info, "s_trunc", "'%s' %u %u", file, (unsigned) size, seek);
++}
++
++/* this code is borrowed from dietlibc */
++
++static int
++__isleap(int year) {
++  /* every fourth year is a leap year except for century years that are
++   * not divisible by 400. */
++/*  return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)); */
++  return (!(year%4) && ((year%100) || !(year%400)));
++}
++
++/* days per month -- nonleap! */
++const short __spm[12] =
++  { 0,
++    (31),
++    (31+28),
++    (31+28+31),
++    (31+28+31+30),
++    (31+28+31+30+31),
++    (31+28+31+30+31+30),
++    (31+28+31+30+31+30+31),
++    (31+28+31+30+31+30+31+31),
++    (31+28+31+30+31+30+31+31+30),
++    (31+28+31+30+31+30+31+31+30+31),
++    (31+28+31+30+31+30+31+31+30+31+30),
++  };
++
++/* seconds per day */
++#define SPD 24*60*60
++
++static char *
++strctime(const struct timespec *timep, char *s)
++{
++	time_t i;
++	int sec, min, hour;
++	int day, month, year;
++	time_t work = timep->tv_sec % (SPD);
++	
++	sec = work % 60; work /= 60;
++	min = work % 60; hour = work / 60;
++	work = timep->tv_sec / (SPD);
++
++	for (i = 1970; ; i++) {
++		time_t k = __isleap(i) ? 366 : 365;
++		if (work >= k)
++			work -= k;
++		else
++			break;
++	}
++	year = i;
++
++	day=1;
++	if (__isleap(i) && (work > 58)) {
++		if (work == 59)
++			day = 2; /* 29.2. */
++		work -= 1;
++	}
++
++	for (i = 11; i && (__spm[i] > work); i--)
++		;
++	month = i;
++ 	day += work - __spm[i];
++
++	sprintf(s, "%.4d%.2d%.2d%.2d%.2d.%.2d", year, month+1, day, hour, min, sec);
++
++	return s;
++}
++
++static int
++shell_settime(struct shfs_sb_info *info, char *file, int atime, int mtime, struct timespec *time)
++{
++	char str[20];
++	
++	if (!check_path(file))
++		return -ENAMETOOLONG;
++
++	strctime(time, str);
++	DEBUG("Settime %s (%s%s) %s\n", str, atime ? "a" : "", mtime ? "m" : "", file);
++	return do_command(info, "s_settime", "'%s' %s%s %s", file, atime ? "a" : "", mtime ? "m" : "", str);
++}
++
++static int
++shell_statfs(struct shfs_sb_info *info, struct kstatfs *attr)
++{
++	char *s, *p;
++	int result = 0;
++
++	attr->f_type = SHFS_SUPER_MAGIC;
++	attr->f_bsize = 1024;
++	attr->f_blocks = 0;
++	attr->f_bfree = 0;
++	attr->f_bavail = 0;
++	attr->f_files = 1;
++	attr->f_bavail = 1;
++	attr->f_namelen = SHFS_PATH_MAX;
++
++	if (!sock_lock(info))
++		return -EINTR;
++
++	s = info->sockbuf;
++	strcpy(s, "s_statfs"); s += strlen("s_statfs");
++	s = get_ugid(info, s, SOCKBUF_SIZE - strlen(info->sockbuf));
++	if (!s) {
++		result = -ENAMETOOLONG;
++		goto error;
++	}
++	strcpy(s, "\n");
++
++	DEBUG("Statfs %s\n", info->sockbuf);
++	result = sock_write(info, (void *)info->sockbuf, strlen(info->sockbuf));
++	if (result < 0)
++		goto error;
++	result = sock_readln(info, info->sockbuf, SOCKBUF_SIZE);
++	if (result < 0)
++		goto error;
++
++	s = info->sockbuf;
++	if ((p = strsep(&s, " ")))
++		attr->f_blocks = simple_strtoul(p, NULL, 10);
++	if ((p = strsep(&s, " ")))
++		attr->f_bfree = attr->f_blocks - simple_strtoul(p, NULL, 10);
++	if ((p = strsep(&s, " ")))
++		attr->f_bavail = simple_strtoul(p, NULL, 10);
++
++	result = sock_readln(info, info->sockbuf, SOCKBUF_SIZE);
++	if (result < 0)
++		goto error;
++	switch (reply(info->sockbuf)) {
++	case REP_COMPLETE:
++		result = 0;
++		break;
++	case REP_EPERM:
++		result = -EPERM;
++		goto error;
++	default:
++		info->garbage = 1;
++		result = -EIO;
++		goto error;
++	}
++error:
++	sock_unlock(info);
++	return result;
++}
++
++static int
++shell_finish(struct shfs_sb_info *info)
++{
++	DEBUG("Finish\n");
++	return do_command(info, "s_finish", "");
++}
++
++struct shfs_fileops shell_fops = {
++	readdir:	shell_readdir,
++	stat:		shell_stat,
++	open:		shell_open,
++	read:		shell_read,
++	write:		shell_write,
++	mkdir:		shell_mkdir,
++	rmdir:		shell_rmdir,
++	rename:		shell_rename,
++	unlink:		shell_unlink,
++	create:		shell_create,
++	link:		shell_link,
++	symlink:	shell_symlink,
++	readlink:	shell_readlink,
++	chmod:		shell_chmod,
++	chown:		shell_chown,
++	chgrp:		shell_chgrp,
++	trunc:		shell_trunc,
++	settime:	shell_settime,
++	statfs:		shell_statfs,
++	finish:		shell_finish,
++};
+diff -uNr linux-2.6.4/fs.orig/shfs/shfs_debug.h linux-2.6.4/fs/shfs/shfs_debug.h
+--- linux-2.6.4/fs.orig/shfs/shfs_debug.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.4/fs/shfs/shfs_debug.h	2004-03-22 16:00:03.000000000 +0100
+@@ -0,0 +1,57 @@
++#ifndef _SHFS_DEBUG_H
++#define _SHFS_DEBUG_H
++
++#define ENABLE_DEBUG
++
++#define SHFS_VERBOSE 1
++#define SHFS_ALLOC 2
++#define SHFS_DEBUG 3
++
++extern int debug_level;
++
++#ifdef ENABLE_DEBUG
++
++#define DEBUG(x...) do { if (debug_level >= SHFS_DEBUG) { printk(KERN_DEBUG "%s: ", __FUNCTION__); printk(x); } } while (0)
++
++#define VERBOSE(x...) do { if (debug_level >= SHFS_VERBOSE) { printk(KERN_NOTICE "%s: ", __FUNCTION__); printk(x); } } while (0)
++
++#include <linux/slab.h>
++extern unsigned long alloc;
++
++static inline void *
++__kmem_malloc_debug(char *s, kmem_cache_t *cache, int flags)
++{
++	if (debug_level >= SHFS_ALLOC) {
++		void *x = kmem_cache_alloc(cache, flags);
++		alloc += (unsigned long) x;
++		VERBOSE("alloc (%s): %p\n", s, x);
++		return x;
++	} else {
++		return kmem_cache_alloc(cache, flags);
++	}
++}
++
++static inline void
++__kmem_free_debug(char *s, kmem_cache_t *cache, void *p)
++{
++	if (debug_level >= SHFS_ALLOC) {
++		VERBOSE("free (%s): %p\n", s, p);
++		alloc -= (unsigned long) p;
++	}
++	kmem_cache_free(cache, p);
++}
++
++#define KMEM_ALLOC(s, cache, flags) __kmem_malloc_debug(s, cache, flags);
++#define KMEM_FREE(s, cache, p) __kmem_free_debug(s, cache, p);
++
++#else
++
++#define DEBUG(x...) ;
++#define VERBOSE(x...) ;
++
++#define KMEM_ALLOC(s, cache, flags) kmem_cache_alloc(cache, flags)
++#define KMEM_FREE(s, cache, p) kmem_cache_free(cache, p)
++
++#endif
++
++#endif	/* _SHFS_DEBUG_H */
+diff -uNr linux-2.6.4/fs.orig/shfs/shfs.h linux-2.6.4/fs/shfs/shfs.h
+--- linux-2.6.4/fs.orig/shfs/shfs.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.4/fs/shfs/shfs.h	2004-03-22 16:00:03.000000000 +0100
+@@ -0,0 +1,44 @@
++#ifndef _SHFS_H
++#define _SHFS_H
++
++#define PROTO_VERSION 2
++
++/* response code */
++#define REP_PRELIM	100
++#define REP_COMPLETE	200
++#define REP_NOP 	201
++#define REP_NOTEMPTY	202		/* file with zero size but not empty */
++#define REP_CONTINUE	300
++#define REP_TRANSIENT	400
++#define REP_ERROR	500
++#define REP_EPERM	501
++#define REP_ENOSPC	502
++#define REP_ENOENT	503
++
++#ifdef __KERNEL__
++
++#define SHFS_DEFAULT_TTL 20000
++#define SHFS_SUPER_MAGIC 0xD0D0
++
++#define SHFS_PATH_MAX 512
++
++#include <linux/types.h>
++
++struct shfs_fattr {
++	unsigned long 	f_ino;
++	umode_t		f_mode;
++	nlink_t		f_nlink;
++	uid_t		f_uid;
++	gid_t		f_gid;
++	dev_t		f_rdev;
++	off_t		f_size;
++	struct timespec	f_atime;
++	struct timespec	f_mtime;
++	struct timespec	f_ctime;
++	unsigned long 	f_blksize;
++	unsigned long	f_blocks;
++};
++
++#endif  /* __KERNEL__ */
++
++#endif	/* _SHFS_H */
+diff -uNr linux-2.6.4/fs.orig/shfs/symlink.c linux-2.6.4/fs/shfs/symlink.c
+--- linux-2.6.4/fs.orig/shfs/symlink.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.4/fs/shfs/symlink.c	2004-04-06 05:59:16.257298952 +0200
+@@ -0,0 +1,72 @@
++/*
++ * symlink.c
++ *
++ * Symlink resolving implementation.
++ */
++
++#ifdef MODVERSIONS
++#include <linux/modversions.h>
++#endif
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <asm/uaccess.h>
++#include <linux/smp_lock.h>
++
++#include <linux/shfs_fs.h>
++#include <linux/shfs_fs_sb.h>
++#include "shfs_debug.h"
++#include "proc.h"
++
++static int
++shfs_readlink(struct dentry *dentry, char *buffer, int bufflen)
++{
++	struct shfs_sb_info *info = info_from_dentry(dentry);
++	char name[SHFS_PATH_MAX];
++	char real_name[SHFS_PATH_MAX];
++	int result;
++	
++	DEBUG("%s\n", dentry->d_name.name);
++
++	result = -ENAMETOOLONG;
++	if (get_name(dentry, name) < 0)
++		goto error;
++
++	result = info->fops.readlink(info, name, real_name);
++	if (result < 0)
++		goto error;
++	DEBUG("%s\n", real_name);
++	result = vfs_readlink(dentry, buffer, bufflen, real_name);
++error:
++	return result;
++}
++
++static int
++shfs_follow_link(struct dentry *dentry, struct nameidata *nd)
++{
++	struct shfs_sb_info *info = info_from_dentry(dentry);
++	char name[SHFS_PATH_MAX];
++	char real_name[SHFS_PATH_MAX];
++	int result;
++	
++	DEBUG("%s\n", dentry->d_name.name);
++
++	result = -ENAMETOOLONG;
++	if (get_name(dentry, name) < 0)
++		goto error;
++
++	result = info->fops.readlink(info, name, real_name);
++	if (result < 0)
++		goto error;
++	DEBUG("%s\n", real_name);
++	result = vfs_follow_link(nd, real_name);
++error:
++	return result;
++}
++
++struct inode_operations shfs_symlink_inode_operations = {
++	.readlink	= shfs_readlink,
++	.follow_link	= shfs_follow_link,
++	.getattr	= shfs_getattr,
++	.setattr	= shfs_notify_change,
++};
