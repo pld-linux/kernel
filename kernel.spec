@@ -5,6 +5,7 @@
 #		- fix vserver against new grsec
 #		- update reiserfs4
 #		- wait for l7 memleak fix
+#		- add valid conntrack-pptp to the netfiler
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -44,7 +45,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.2
+%define		_rel		1
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -741,7 +742,6 @@ PreInstallKernel (){
 %ifarch ia64
 	gzip -cfv vmlinux > vmlinuz
 	install -d $KERNEL_INSTALL_DIR/boot/efi
-#?	install vmlinux $KERNEL_INSTALL_DIR/boot/efi/vmlinux-$KernelVer
 	install vmlinuz $KERNEL_INSTALL_DIR/boot/efi/vmlinuz-$KernelVer
 	ln -sf efi/vmlinuz-$KernelVer $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
