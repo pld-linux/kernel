@@ -2,7 +2,6 @@
 %define		lids_version		1.0.5
 %define		ipvs_version		0.2.3
 %define		ac_version		ac2
-%define		zerocopy_version	3
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -46,7 +45,6 @@ Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.3.gz
 #Patch3:		linux-ipv6-addrconf.patch
 Patch4:		kernel-i8255-asm-fix.patch
 Patch5:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.1-%{ac_version}.gz
-Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/cavem/zerocopy-%{version}-%{zerocopy_version}.diff.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -209,7 +207,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a8 -a9 -n linux
+%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -n linux
 
 #kerneli patch
 %patch0 -p1
@@ -219,7 +217,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch5 -p1
 
 # Fore 200e ATM NIC
-patch -p1 <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
+#patch -p1 <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
 #patch -p1 <linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
 
 # Tekram DC395/315 U/UW SCSI host driver
@@ -235,9 +233,6 @@ cd netfilter-patches/patch-o-matic
 ANS=""
 for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
 echo -e $ANS | ./runme)
-
-#zerocopy
-%patch6 -p1
 
 # IPVS
 #for i in ipvs-%{ipvs_version}/*.diff ; do
