@@ -15,7 +15,7 @@
 %define		ipvs_version		1.0.4
 %define		freeswan_version	1.97
 %define		IPperson_version	20020427-2.4.18
-%define		grsec_version		1.9.8-rc1-2.4.20
+%define		grsec_version		1.9.8-rc1
 %define		jfs_version		2.4-1.0.24
 %define		lvm_version		1.0.5
 %define		evms_version		1.2.0
@@ -97,7 +97,7 @@ Patch4:		linux-2.4.20-xfs-1.2pre3.patch.bz2
 Patch5:		linux-abi-2.4.20.0.patch.bz2
 
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
-Patch6:		grsecurity-%{grsec_version}.patch.bz2
+Patch6:		grsecurity-%{grsec_version}-%{version}.patch.bz2
 
 # Preemptive kernel  patch
 Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.20-1.patch
@@ -275,6 +275,7 @@ Provides:	module-info
 Provides:	i2c = 2.7.0
 Provides:	bttv = 0.7.83
 Provides:	%{name}_netfilter = 1.2.7a
+Provides:	%{name}(grsecurity) = %{grsec_version}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
 Provides:	%{name}(cdrw)
@@ -324,6 +325,7 @@ Provides:	%{name}-smp = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.7.0
 Provides:	bttv = 0.7.83
+Provides:	%{name}(grsecurity) = %{grsec_version}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
 Provides:	%{name}(cdrw)
