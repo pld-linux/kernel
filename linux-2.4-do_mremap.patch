@@ -1,20 +1,17 @@
-[PATCH] Andrea Arcangeli: malicious users of mremap() syscall can gain priviledges
-
-All diffs for ChangeSet 1.1136.92.4
-diff -Nru a/mm/mremap.c b/mm/mremap.c
---- a/mm/mremap.c	Mon Jan  5 06:14:39 2004
-+++ b/mm/mremap.c	Mon Jan  5 06:14:39 2004
-@@ -241,6 +241,13 @@
- 
+--- linux-2.4.22/mm/mremap.c	2004-02-14 03:16:22.000000000 +0100
++++ linux-2.4.22/mm/mremap.c.new	2004-02-14 03:30:23.000000000 +0100
+@@ -256,6 +256,14 @@
  		if (new_len > TASK_SIZE || new_addr > TASK_SIZE - new_len)
  			goto out;
-+		/*
+ 
++		/* security fix (CAN-2003-0985)
 +		 * Allow new_len == 0 only if new_addr == addr
 +		 * to preserve truncation in place (that was working
 +		 * safe and some app may depend on it).
-+		 */
++		 * */
 +		if (unlikely(!new_len && new_addr != addr))
 +			goto out;
- 
++		
  		/* Check if the location we're moving into overlaps the
  		 * old location at all, and fail if it does.
+ 		 */
