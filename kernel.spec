@@ -24,8 +24,6 @@
 %ifarch sparc
 # sparc32 is missing important updates from 2.5 cycle - won't build
 %undefine	with_smp
-# linking needs fix.
-%undefine	with_grsec
 %endif
 
 %ifarch i586 i686 pentium3 pentium4 athlon
