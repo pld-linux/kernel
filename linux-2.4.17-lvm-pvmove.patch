@@ -1,0 +1,556 @@
+diff -urNp linux-1251/drivers/md/lvm.c linux-1252/drivers/md/lvm.c
+--- linux-1251/drivers/md/lvm.c	
++++ linux-1252/drivers/md/lvm.c	
+@@ -239,6 +239,7 @@
+ 
+ #include <linux/slab.h>
+ #include <linux/init.h>
++#include <linux/mempool.h>
+ 
+ #include <linux/hdreg.h>
+ #include <linux/stat.h>
+@@ -264,6 +265,7 @@
+ 
+ #include <linux/errno.h>
+ #include <linux/lvm.h>
++#include <linux/iobuf.h>
+ 
+ #include "lvm-internal.h"
+ 
+@@ -296,7 +298,6 @@ static int lvm_chr_open(struct inode *, 
+ static int lvm_chr_close(struct inode *, struct file *);
+ static int lvm_chr_ioctl(struct inode *, struct file *, uint, ulong);
+ 
+-
+ /* End external function prototypes */
+ 
+ 
+@@ -324,6 +325,7 @@ static int lvm_do_lv_status_byindex(vg_t
+ static int lvm_do_lv_status_bydev(vg_t *, void *);
+ 
+ static int lvm_do_pe_lock_unlock(vg_t *r, void *);
++static int lvm_do_pe_locked_copy(vg_t *r, void *);
+ 
+ static int lvm_do_pv_change(vg_t*, void*);
+ static int lvm_do_pv_status(vg_t *, void *);
+@@ -334,8 +336,11 @@ static int lvm_do_vg_extend(vg_t *, void
+ static int lvm_do_vg_reduce(vg_t *, void *);
+ static int lvm_do_vg_rename(vg_t *, void *);
+ static int lvm_do_vg_remove(int);
++static int lvm_push_callback(lv_t *, int, struct buffer_head *);
++static void lvm_bh_callback(struct buffer_head *, int);
+ static void lvm_geninit(struct gendisk *);
+ static void __update_hardsectsize(lv_t *lv);
++static int __do_le_remap(vg_t *, lv_t *, kdev_t, kdev_t, uint, uint);
+ 
+ 
+ static void _queue_io(struct buffer_head *bh, int rw);
+@@ -359,7 +364,6 @@ ushort lvm_iop_version = LVM_DRIVER_IOP_
+ int loadtime = 0;
+ const char *const lvm_name = LVM_NAME;
+ 
+-
+ /* volume group descriptor area pointers */
+ vg_t *vg[ABS_MAX_VG + 1];
+ 
+@@ -369,6 +373,12 @@ static struct {
+ 	int lv_number;
+ } vg_lv_map[ABS_MAX_LV];
+ 
++/* cache a buffer_head end_io callback state */
++typedef struct {
++	struct buffer_head bh_io;
++	lv_t *lv;
++	struct buffer_head *bh_orig;
++} callback_t;
+ 
+ /* Request structures (lvm_chr_ioctl()) */
+ static pv_change_req_t pv_change_req;
+@@ -419,6 +429,8 @@ static int lvm_blocksizes[MAX_LV];
+ static int lvm_hardsectsizes[MAX_LV];
+ static int lvm_size[MAX_LV];
+ 
++static mempool_t *lvm_callback_mempool;
++
+ static struct gendisk lvm_gendisk =
+ {
+ 	major:		MAJOR_NR,
+@@ -431,25 +443,45 @@ static struct gendisk lvm_gendisk =
+ };
+ 
+ 
++static void * lvm_callback_alloc(int gfp_flags, void *data)
++{
++	callback_t *callback;
++
++	callback = kmalloc(sizeof *callback, gfp_flags);
++	return callback;
++}
++
++static void lvm_callback_free(void *callback, void *data)
++{
++	kfree(callback);
++}
++
+ /*
+  * Driver initialization...
+  */
+ int lvm_init(void)
+ {
++	int err = -EIO;
++	
+ 	if (devfs_register_chrdev(LVM_CHAR_MAJOR,
+ 				  lvm_name, &lvm_chr_fops) < 0) {
+ 		printk(KERN_ERR "%s -- devfs_register_chrdev failed\n",
+ 		       lvm_name);
+-		return -EIO;
++		goto out_err;
+ 	}
+ 	if (devfs_register_blkdev(MAJOR_NR, lvm_name, &lvm_blk_dops) < 0)
+ 	{
+ 		printk("%s -- devfs_register_blkdev failed\n", lvm_name);
+-		if (devfs_unregister_chrdev(LVM_CHAR_MAJOR, lvm_name) < 0)
+-			printk(KERN_ERR
+-			       "%s -- devfs_unregister_chrdev failed\n",
+-			       lvm_name);
+-		return -EIO;
++		goto out_unreg_char;
++	}
++
++	err = -ENOMEM;
++	lvm_callback_mempool = mempool_create(NR_LVM_CALLBACK,
++					      lvm_callback_alloc,
++					      lvm_callback_free, NULL);
++	if (!lvm_callback_mempool) {
++		printk("%s -- out of memory for callback pool\n", lvm_name);
++		goto out_unreg_block;
+ 	}
+ 
+ 	lvm_init_fs();
+@@ -482,6 +514,18 @@ int lvm_init(void)
+ #endif
+ 
+ 	return 0;
++
++out_unreg_block:
++	if (devfs_unregister_blkdev(MAJOR_NR, lvm_name) < 0)
++		printk(KERN_ERR "%s -- devfs_unregister_blkdev failed\n",
++		       lvm_name);
++out_unreg_char:
++	if (devfs_unregister_chrdev(LVM_CHAR_MAJOR, lvm_name) < 0)
++		printk(KERN_ERR
++		       "%s -- devfs_unregister_chrdev failed\n",
++		       lvm_name);
++out_err:
++	return err;
+ } /* lvm_init() */
+ 
+ /*
+@@ -497,7 +541,7 @@ static void lvm_cleanup(void)
+ 		printk(KERN_ERR "%s -- devfs_unregister_blkdev failed\n",
+ 		       lvm_name);
+ 
+-
++	mempool_destroy(lvm_callback_mempool);
+ 
+ 	/* delete our gendisk from chain */
+ 	del_gendisk(&lvm_gendisk);
+@@ -658,6 +702,11 @@ static int lvm_chr_ioctl(struct inode *i
+ 		   physical volume (move's done in user space's pvmove) */
+ 		return lvm_do_pe_lock_unlock(vg_ptr,arg);
+ 
++	case PE_LOCKED_COPY:
++		/* lock/unlock i/o to a physical extent to move it to another
++		   physical volume (move's done in user space's pvmove) */
++		return lvm_do_pe_locked_copy(vg_ptr,arg);
++
+ 	case VG_CREATE_OLD:
+ 		/* create a VGDA */
+ 		return lvm_do_vg_create(arg, minor);
+@@ -1213,7 +1262,7 @@ static int lvm_map(struct buffer_head *b
+ 	kdev_t rdev_map;
+ 	vg_t *vg_this = vg[VG_BLK(minor)];
+ 	lv_t *lv = vg_this->lv[LV_BLK(minor)];
+-
++	int ret;
+ 
+ 	down_read(&lv->lv_lock);
+ 	if (!(lv->lv_status & LV_ACTIVE)) {
+@@ -1328,8 +1377,9 @@ static int lvm_map(struct buffer_head *b
+  out:
+ 	bh->b_rdev = rdev_map;
+ 	bh->b_rsector = rsector_map;
++	ret = lvm_push_callback(lv, rw, bh);
+ 	up_read(&lv->lv_lock);
+-	return 1;
++	return ret;
+ 
+  bad:
+ 	if (bh->b_end_io)
+@@ -1343,6 +1393,65 @@ static int lvm_map(struct buffer_head *b
+  * internal support functions
+  */
+ 
++/*
++ * Handle LVM callbacks on buffer_head IO completion: push an IO
++ * completion onto an existing buffer_head.  preserve b_private by
++ * creating a new buffer_head for the mapped IO. 
++ */
++static int lvm_push_callback(lv_t *lv, int rw, struct buffer_head *bh)
++{
++	callback_t *callback;
++	struct buffer_head *nbh;
++	
++	callback = mempool_alloc(lvm_callback_mempool, GFP_NOIO);
++
++	callback->lv = lv;
++	callback->bh_orig = bh;
++	
++	nbh = &callback->bh_io;
++	
++	nbh->b_blocknr    = bh->b_blocknr;
++	nbh->b_dev        = bh->b_dev;
++	nbh->b_rdev	  = bh->b_rdev;
++	nbh->b_rsector	  = bh->b_rsector;
++	nbh->b_state      = (1<<BH_Req) | (1<<BH_Dirty) |
++		(1<<BH_Mapped) | (1<<BH_Lock);
++	atomic_set(&nbh->b_count, 1);
++	nbh->b_size       = bh->b_size;
++	nbh->b_page	  = bh->b_page;
++	nbh->b_data	  = bh->b_data;
++	nbh->b_list       = 0;
++	nbh->b_reqnext	  = NULL;
++	
++	nbh->b_end_io	  = lvm_bh_callback;
++	nbh->b_private	  = callback;
++
++	down_read(&lv->lv_io_sem);
++	generic_make_request(rw, nbh);
++	
++	return 0; /* Tell generic_make_request not to pursue the
++		     original buffer_head any further now that we've
++		     submitted a new one. */
++}
++
++static void lvm_bh_callback(struct buffer_head *bh, int uptodate)
++{
++	callback_t *callback;
++	struct buffer_head *obh;
++	lv_t *lv;
++	
++	callback = bh->b_private;
++	lv = callback->lv;
++	obh = callback->bh_orig;
++	
++	up_read(&lv->lv_io_sem);
++	
++	mempool_free(callback, lvm_callback_mempool);
++	if (obh->b_end_io)
++		obh->b_end_io(obh, uptodate);
++}
++
++
+ #ifdef LVM_HD_NAME
+ /*
+  * generate "hard disk" name
+@@ -1407,13 +1516,49 @@ lock_try_again:
+ } /* lvm_do_lock_lvm */
+ 
+ 
++static int do_pe_lock(kdev_t lv, kdev_t pv, uint32_t offset)
++{
++	down_write(&_pe_lock);
++	if (pe_lock_req.lock == LOCK_PE) {
++		up_write(&_pe_lock);
++		return -EBUSY;
++	}
++
++	/* Should we do to_kdev_t() on the pv_dev and lv_dev??? */
++	pe_lock_req.lock = LOCK_PE;
++	pe_lock_req.data.lv_dev = lv;
++	pe_lock_req.data.pv_dev = pv;
++	pe_lock_req.data.pv_offset = offset;
++	up_write(&_pe_lock);
++	return 0;
++}
++
++static void do_pe_unlock(void)
++{
++	struct buffer_head *bh;
++
++	down_write(&_pe_lock);
++	pe_lock_req.lock = UNLOCK_PE;
++	pe_lock_req.data.lv_dev = 0;
++	pe_lock_req.data.pv_dev = 0;
++	pe_lock_req.data.pv_offset = 0;
++	bh = _dequeue_io();
++	up_write(&_pe_lock);
++
++	/* handle all deferred io for this PE */
++	/* TODO: Eek, what about attaching callbacks to _flush_io()
++	   deferred requests?  --sct */
++	_flush_io(bh);
++}
++
++
+ /*
+  * character device support function lock/unlock physical extend
+  */
+ static int lvm_do_pe_lock_unlock(vg_t *vg_ptr, void *arg)
+ {
+ 	pe_lock_req_t new_lock;
+-	struct buffer_head *bh;
++	int err;
+ 	uint p;
+ 
+ 	if (vg_ptr == NULL) return -ENXIO;
+@@ -1430,42 +1575,30 @@ static int lvm_do_pe_lock_unlock(vg_t *v
+ 		if (p == vg_ptr->pv_max) return -ENXIO;
+ 
+ 		/*
+-		 * this sync releaves memory pressure to lessen the
+-		 * likelyhood of pvmove being paged out - resulting in
++		 * this sync relieves memory pressure to lessen the
++		 * likelihood of pvmove being paged out - resulting in
+ 		 * deadlock.
+ 		 *
+-		 * This method of doing a pvmove is broken
++		 * This method of doing a pvmove is *highly* broken for
++		 * several reasons.  It deadlocks, it does not
++		 * synchronise correctly with outstanding write IO, and
++		 * it defers the actual copy to a user mode app which
++		 * has no cache coherency with the LV devices.
+ 		 */
+ 		fsync_dev(pe_lock_req.data.lv_dev);
+ 
+-		down_write(&_pe_lock);
+-		if (pe_lock_req.lock == LOCK_PE) {
+-			up_write(&_pe_lock);
+-			return -EBUSY;
+-		}
+-
+-		/* Should we do to_kdev_t() on the pv_dev and lv_dev??? */
+-		pe_lock_req.lock = LOCK_PE;
+-		pe_lock_req.data.lv_dev = new_lock.data.lv_dev;
+-		pe_lock_req.data.pv_dev = new_lock.data.pv_dev;
+-		pe_lock_req.data.pv_offset = new_lock.data.pv_offset;
+-		up_write(&_pe_lock);
++		err = do_pe_lock(new_lock.data.lv_dev,
++				 new_lock.data.pv_dev,
++				 new_lock.data.pv_offset);
++		if (err)
++			return err;
+ 
+ 		/* some requests may have got through since the fsync */
+ 		fsync_dev(pe_lock_req.data.pv_dev);
+ 		break;
+ 
+ 	case UNLOCK_PE:
+-		down_write(&_pe_lock);
+-		pe_lock_req.lock = UNLOCK_PE;
+-		pe_lock_req.data.lv_dev = 0;
+-		pe_lock_req.data.pv_dev = 0;
+-		pe_lock_req.data.pv_offset = 0;
+-		bh = _dequeue_io();
+-		up_write(&_pe_lock);
+-
+-		/* handle all deferred io for this PE */
+-		_flush_io(bh);
++		do_pe_unlock();
+ 		break;
+ 
+ 	default:
+@@ -1476,6 +1609,103 @@ static int lvm_do_pe_lock_unlock(vg_t *v
+ 
+ 
+ /*
++ * character device support function: safe, locked PE copy
++ */
++static int lvm_do_pe_locked_copy(vg_t *vg_ptr, void *arg)
++{
++	pe_copy_req_t pe_copy_req;
++	int err;
++	lv_t *lv_ptr = NULL;
++	pv_t *pv_ptr = NULL;
++	int i;
++	unsigned long old_offset, new_offset;
++	
++	if (vg_ptr == NULL) return -ENXIO;
++	if (copy_from_user(&pe_copy_req, arg,
++			   sizeof(pe_copy_req_t)) != 0)
++		return -EFAULT;
++	if (pe_copy_req.cookie != PE_COPY_MAGIC_COOKIE)
++		return -EINVAL;
++	
++	/* First find the logical volume for the request... */
++
++	for (i = 0; i < vg_ptr->lv_max; i++) {
++		lv_ptr = vg_ptr->lv[i];
++		if (lv_ptr != NULL &&
++		    strcmp(lv_ptr->lv_name, pe_copy_req.lv_name) == 0)
++			break;
++	}
++	
++	if (i == vg_ptr->lv_max)
++		return -EINVAL;
++
++	/* ... and the physical volume. */
++
++	for (i = 0; i < vg_ptr->pv_max; i++) {
++		pv_ptr = vg_ptr->pv[i];
++		if (pv_ptr->pv_dev == pe_copy_req.old_dev)
++			break;
++	}
++	
++	if (i == vg_ptr->pv_max)
++		return -EINVAL;
++
++	/* We'll take the lock on the source extent in the LV first.  We
++           mutex out ALL IO to the entire logical volume before doing
++           this, so we can be absolutely certain that there is no
++           outstanding IO to this PE once the lock is in place.  (We
++           can't mutex just one PE without tracking outstanding IO on a
++           per-extent basis.) */
++
++	down_write(&lv_ptr->lv_io_sem);
++	err = do_pe_lock(lv_ptr->lv_dev,
++			 pe_copy_req.old_dev, 
++			 pe_copy_req.old_pe);
++	up_write(&lv_ptr->lv_io_sem);
++
++	if (err)
++		return err;
++	
++	/* All prep done, we can copy the bits now */
++
++	err = lvm_do_bulk_copy(pe_copy_req.old_dev, pe_copy_req.new_dev, 
++			       pe_copy_req.old_pe, pe_copy_req.new_pe, 
++			       vg_ptr->pe_size);
++
++	if (!err)
++		err = __do_le_remap(vg_ptr, lv_ptr, 
++				    pe_copy_req.old_dev, pe_copy_req.new_dev, 
++				    pe_copy_req.old_pe, pe_copy_req.new_pe);
++	
++out:
++	do_pe_unlock();
++	return err;
++}
++
++static int __do_le_remap(vg_t *vg_ptr, lv_t *lv_ptr, 
++			 kdev_t old_dev, kdev_t new_dev, 
++			 uint old_pe, uint new_pe)
++{
++	uint le;
++	
++	down_write(&lv_ptr->lv_lock);
++	for (le = 0; le < lv_ptr->lv_allocated_le; le++) {
++		if (lv_ptr->lv_current_pe[le].dev == old_dev &&
++		    lv_ptr->lv_current_pe[le].pe == old_pe) {
++			lv_ptr->lv_current_pe[le].dev = new_dev;
++			lv_ptr->lv_current_pe[le].pe = new_pe;
++		
++			up_write(&lv_ptr->lv_lock);
++			__update_hardsectsize(lv_ptr);
++			return 0;
++		}
++	}
++	up_write(&lv_ptr->lv_lock);
++	return -EINVAL;
++}
++
++
++/*
+  * character device support function logical extend remap
+  */
+ static int lvm_do_le_remap(vg_t *vg_ptr, void *arg)
+@@ -1495,23 +1725,11 @@ static int lvm_do_le_remap(vg_t *vg_ptr,
+ 			continue;
+ 
+ 		if (strcmp(lv_ptr->lv_name, le_remap_req.lv_name) == 0) {
+-			down_write(&lv_ptr->lv_lock);
+-			for (le = 0; le < lv_ptr->lv_allocated_le; le++) {
+-				if (lv_ptr->lv_current_pe[le].dev ==
+-				    le_remap_req.old_dev &&
+-				    lv_ptr->lv_current_pe[le].pe ==
+-				    le_remap_req.old_pe) {
+-					lv_ptr->lv_current_pe[le].dev =
+-					    le_remap_req.new_dev;
+-					lv_ptr->lv_current_pe[le].pe =
+-					    le_remap_req.new_pe;
+-					__update_hardsectsize(lv_ptr);
+-					up_write(&lv_ptr->lv_lock);
+-					return 0;
+-				}
+-			}
+-			up_write(&lv_ptr->lv_lock);
+-			return -EINVAL;
++			return __do_le_remap(vg_ptr, lv_ptr,
++					   le_remap_req.old_dev,
++					   le_remap_req.new_dev,
++					   le_remap_req.old_pe,
++					   le_remap_req.new_pe);
+ 		}
+ 	}
+ 	return -ENXIO;
+@@ -2023,7 +2241,8 @@ static int lvm_do_lv_create(int minor, c
+ 	lv_ptr->lv_snapshot_hash_table_size = 0;
+ 	lv_ptr->lv_snapshot_hash_mask = 0;
+ 	init_rwsem(&lv_ptr->lv_lock);
+-
++	init_rwsem(&lv_ptr->lv_io_sem);
++	
+ 	lv_ptr->lv_snapshot_use_rate = 0;
+ 
+ 	vg_ptr->lv[l] = lv_ptr;
+diff -urNp linux-1251/include/linux/lvm.h linux-1252/include/linux/lvm.h
+--- linux-1251/include/linux/lvm.h	
++++ linux-1252/include/linux/lvm.h	
+@@ -153,6 +153,11 @@ struct list_head {
+ #define SECTOR_SIZE	512
+ #endif
+ 
++/*
++ * Number of guaranteed callback structs in case of extreme VM load:
++ */
++#define	NR_LVM_CALLBACK 256
++
+ /* structure version */
+ #define LVM_STRUCT_VERSION 1
+ 
+@@ -339,6 +344,7 @@ struct list_head {
+ 
+ /* physical extent */
+ #define	PE_LOCK_UNLOCK          _IOW ( 0xfe, 0x50, 1)
++#define	PE_LOCKED_COPY          _IOW ( 0xfe, 0x51, 1)
+ 
+ /* i/o protocol version */
+ #define	LVM_GET_IOP_VERSION     _IOR ( 0xfe, 0x98, 1)
+@@ -571,6 +577,8 @@ typedef struct lv_v5 {
+ 	struct vg_v3	*vg;
+ 
+ 	uint lv_allocated_snapshot_le;
++
++	struct rw_semaphore lv_io_sem;
+ #else
+ 	char dummy[200];
+ #endif
+@@ -689,6 +697,18 @@ typedef struct {
+ } pe_lock_req_t;
+ 
+ 
++/* Request structure PE_COPY */
++#define PE_COPY_MAGIC_COOKIE 0xD0D4FF95  /* 4 bytes out of /dev/random */
++typedef struct {
++	uint32_t cookie; /* Cookie to guard against reuse of this ioctl */
++	char lv_name[NAME_LEN];
++	kdev_t old_dev;
++	kdev_t new_dev;
++	uint32_t old_pe;
++	uint32_t new_pe;
++} pe_copy_req_t;
++
++
+ /* Request structure LV_STATUS_BYNAME */
+ typedef struct {
+ 	char lv_name[NAME_LEN];
