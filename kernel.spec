@@ -427,7 +427,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch1502 -p1
 %endif
 %patch1503 -p1
-%patch1503 -p1
+
 %build
 BuildKernel() {
 	%{?verbose:set -x}
