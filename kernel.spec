@@ -44,8 +44,8 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_post_ver	%{nil}
-%define		_rel		0.7HEAD
-%define		_cset		20041003_0206
+%define		_rel		0.8HEAD
+%define		_cset		20041005_1606
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -73,7 +73,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 # Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
-# Source4-md5:	fd3d8affc3d15cd8b1879c8db4171953
+# Source4-md5:	a69b8822d095c463a35dd0beb28f3f34
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -98,7 +98,7 @@ Source91:	%{name}-grsec+pax.config
 
 
 # http://members.optusnet.com.au/ckolivas/kernel/
-Patch10:	patch-2.6.9-rc3-ck1.bz2
+Patch10:	patch-2.6.9-rc3-ck2.bz2
 # http://kem.p.lodz.pl/~peter/qnet/
 Patch15:	patch-2.6.8.1-qnet2.bz2
 
