@@ -1,8 +1,6 @@
 #
 # TODO:
-#	check:	pramfs, swsuspend
-#	add:	fbsplash
-#	replace:pwcx
+#	check:	 swsuspend
 #
 # Conditional build:
 %bcond_without	BOOT		# don't build BOOT kernel
@@ -186,7 +184,9 @@ Patch78:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2
 Patch80:	http://www.elektronikschule.de/~genannt/kernel-patche/lirc/lirc-2.6.5-20040404
 
 # from http://www.smcc.demon.nl/webcam/release.html
-Patch82:        2.6.7-pwc-9.0.1.patch
+#Patch82:        2.6.7-pwc-9.0.1.patch
+# from http://www.saillard.org/pwc/
+Patch82:	http://www.saillard.org/pwc/linux-2.6.8_pwc-10.0.4.patch.bz2
 
 Patch84:	2.6.6-serial-fifo-lkml.patch
 
