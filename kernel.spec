@@ -81,7 +81,7 @@ Patch3:		linux-2.4.9-aacraid-20010816.patch
 Patch4:		br2684-against2.4.15.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/patches/2.4.16/
 # based on file xfs-2.4.16-all.bz2
-#Patch5:		linux-xfs-2.4.16-PLD.patch.gz
+Patch5:		linux-xfs-2.4.16-PLD.patch
 # Homepage of ABI : http://linux-abi.sourceforge.net/
 # http://prdownloads.sourceforge.net/linux-abi/
 #Patch7:		linux-abi-2.4.3-PLD.patch
@@ -132,6 +132,8 @@ Patch133:	xquad_portio.fix
 
 # Patches fixing other patches or 3rd party sources ;)
 
+# patch to fix missing EXPORT_SYMBOLS from IDE patch
+Patch900:	ide-EXPORT_SYMBOL.fix
 # patch fixing problem with ABI and LIDS
 Patch901:	linux-lids-with-abi.patch
 Patch902:	linux-vlan-fixpatch.patch
@@ -374,7 +376,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-##%patch5 -p1
+#%patch5 -p1
 #%patch7 -p1
 %patch8 -p1
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
@@ -505,6 +507,10 @@ echo Installing Preemptive patch
 %endif
 
 %patch133 -p1
+%patch900 -p0
+
+# XFS
+%patch5 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
