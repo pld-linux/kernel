@@ -142,6 +142,8 @@ Patch130:	linux-PPC-SMP.patch
 Patch131:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch132:	ide-EXPORT_SYMBOL.fix
 Patch133:	linux-proc_get_inode.patch
+# added support for VIA8235
+Patch134:	vt8235-2.4.19.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -462,6 +464,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch131 -p0
 %patch132 -p0
 %patch133 -p1
+%patch134 -p1
 
 %patch905 -p1
 
