@@ -43,8 +43,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		3
-%define		_cset		20040518_0506
+%define		_rel		0.1
+%define		_cset		20040525_0509
 
 ## netfilter snap 
 %define		_netfilter_snap		20040518
@@ -62,13 +62,13 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.6.6
+Version:	2.6.7
 Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
-# Source0-md5:	5218790bc3db41e77a7422969639a9ad
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc1.tar.bz2
+# Source0-md5:	50c53b665f6f9febc06b4d27d74b594b
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 
@@ -525,7 +525,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version} -a2
+%setup -q -n linux-%{version}-rc1 -a2
 
 %patch0 -p1
 
@@ -555,7 +555,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch24 -p1
 
 ## bootsplash
-%patch26 -p1
+echo Bootsplash not available NOW.
+#%patch26 -p1
 
 %patch28 -p1
 
@@ -567,7 +568,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch36 -p1
 
-%patch38 -p1
+##%patch38 -p1
 
 %patch40 -p1
 
@@ -639,7 +640,7 @@ cp drivers/usb/media/libpwcx.a_mipsel drivers/usb/media/libpwcx.a_
 %patch90 -p1
 
 #grsec
-%patch94 -p1
+##%patch94 -p1
 
 %patch96 -p1
 %patch97 -p1
