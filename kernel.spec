@@ -50,9 +50,9 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.42
+%define		_rel		0.90
 %define		_cset		20040813_0507
-%define		_apply_cset	1
+%define		_apply_cset	0
 
 %define		_netfilter_snap		20040629
 
@@ -74,17 +74,21 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-#define		_rc	%{nil}
-%define		_rc	-rc4
-#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
-Source0:	http://kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	6bf8c5a9ebcb0b7568321a5c8da2e602
+%define		_rc	%{nil}
+#define		_rc	-rc4
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
+# Source0-md5:	2f8b0030ce970f3c1a460faf5d2b1cec
+#Source0:	http://kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 # Source2-md5:	85bdb0205de53b7787966f0932fd8dd9
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
 # Source3-md5:	37ccb34f8812ae89d9833758e7388bb5
 Source4:	dpt_i2o-2.5.0-2331.tgz
+# Source4-md5:	573cff0f9cb9fc489d0139888d7ce17d
+Source5:	ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.8/acpi-20040715-2.6.8.diff.gz
+# Source5-md5:	d8162768783a9007603f5a2d2ffb4697
+
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source30:	%{name}-x86_64.config
@@ -111,7 +115,7 @@ Patch7:		2.6.0-t8-appletalk-SYSCTL-lkml.patch
 Patch8:		2.6.0-t8-umsdos-lkml.patch
 Patch9:		2.6.0-t9-acpi_osl-lkml.patch
 Patch10:	2.6.0-t11-AIC_and_db4-lkml.patch
-#Patch11:	2.6.1-rc2-ini9100u-lkml.patch
+
 Patch12:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch13:	2.6.2-Initio9100U-Kconfig.patch
 # http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
@@ -141,8 +145,6 @@ Patch34:	2.6.8-cpu_feature.patch
 Patch40:	linux-tdfxfb-fillrect.patch
 Patch41:	linux-fbcon-margins.patch
 Patch42:	linux-tdfxfb-interlace+double.patch
-#Patch43:	linux-2.6-rivafb16.patch
-#Patch44:	linux-fbcon-con2fb-crash-workaround.patch
 
 # netfilter
 Patch50:	2.6.7-pom-ng-%{_netfilter_snap}.patch
@@ -161,7 +163,7 @@ Patch61:	%{name}-MAX_INIT_ARGS.patch
 
 # http://tahoe.pl/patch.htm
 Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
-#Patch71:	linux-tahoe9xx-hdlc-update.patch
+
 # http://www.bootsplash.de/files/bootsplash-3.1.4-sp3-2.6.7.diff
 Patch72:	bootsplash-3.1.4-sp3-2.6.8pld.patch
 Patch73:	squashfs2.0-patch
@@ -169,9 +171,8 @@ Patch73:	squashfs2.0-patch
 Patch74:	pramfs-2.6.4.patch
 Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
 # http://lirc.sourceforge.net/software/snapshots/lirc-0.7.0pre7.tar.bz2
-# extracted and adapterized.
 Patch76:	2.6.8-lirc-0.7.0-pre7.patch
-
+# i2o/dpt
 Patch77:	2.6.8-i2o-proc_full_seq_file.patch
 Patch78:	2.6.8-i2o-pae_support.patch
 Patch79:	dpt_i2o-2.5.0-2331-fixes.patch
@@ -187,9 +188,6 @@ Patch92:	exec-shield-make-peace-with-grsecurity.patch
 #Patch101:	01_alt_routes-2.5.50-8.diff
 #Patch102:	01_arp_prefsrc-2.5.50-5.diff <- not applied. needs checkout
 #Patch103:	05_nf_reroute-2.6.7-10.diff
-
-# acpi
-#Patch110:	ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.7/acpi-20040326-2.6.7.diff.gz
 
 # http://sources.redhat.com/cluster/
 Patch200:	linux-cluster-cman.patch
@@ -208,7 +206,6 @@ Patch300:	linux-2.6-sparc-ksyms.patch
 Patch301:	linux-2.6-ppc-ksyms.patch
 Patch302:	2.6.7-kill-warnings.patch
 Patch303:	%{name}-hotfixes.patch
-Patch304:	linux-2.6-acpi-s3-pae.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -557,6 +554,9 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 zcat %{SOURCE3} | patch -p1 -s
 %endif
 
+# ACPI
+zcat %{SOURCE5} | patch -p1 -s
+
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
@@ -568,7 +568,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
-#patch11 -p1
+
 %patch12 -p1
 %patch13 -p1
 %patch14 -p1
@@ -596,8 +596,6 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch40 -p1
 %patch41 -p1
 %patch42 -p1
-#patch43 -p1
-#patch44 -p1
 
 # netfilter
 %patch50 -p1
@@ -612,7 +610,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch61 -p1
 
 %patch70 -p1
-#patch71 -p1
+
 %if %{with bootsplash}
 %patch72 -p1
 %endif
@@ -654,9 +652,6 @@ patch -p1 -s < exec-shield.patch
 #patch102 -p1 # <- not applayed need checkout
 #patch103 -p1
 
-# acpi
-#patch110 -p1
-
 # cluster
 %patch200 -p1
 %patch201 -p1
@@ -675,7 +670,6 @@ patch -p1 -s < exec-shield.patch
 %patch301 -p1
 %patch302 -p1
 %patch303 -p1
-%patch304 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
