@@ -12,7 +12,6 @@
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	mosix		# build with openMosix support
-%bcond_with	fbsplash	# build with fbsplash support
 
 %{?debug:%define with_verbose 1}
 
@@ -48,7 +47,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		4%{?with_mosix:m}
+%define		_rel		4.1%{?with_mosix:m}
 %define		_cset		20040707_0722
 %define		_apply_cset	0
 %define		_subversion	.1
@@ -773,9 +772,7 @@ zcat %{SOURCE3} | patch -p1 -s
 
 %patch460 -p1
 
-%if %{with fbsplash}
 %patch490 -p1
-%endif
 
 # software suspend
 %if %{with swsuspend}
