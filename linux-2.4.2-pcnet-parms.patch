@@ -1,0 +1,35 @@
+diff -durN linux-2.4.2.orig/drivers/net/pcnet32.c linux-2.4.2/drivers/net/pcnet32.c
+--- linux-2.4.2.orig/drivers/net/pcnet32.c	Tue Feb 13 22:15:05 2001
++++ linux-2.4.2/drivers/net/pcnet32.c	Wed Mar  7 11:11:36 2001
+@@ -1483,6 +1483,8 @@
+     id_table: pcnet32_pci_tbl,
+ };
+ 
++MODULE_PARM(io, "i");
++MODULE_PARM(irq, "i");
+ MODULE_PARM(debug, "i");
+ MODULE_PARM(max_interrupt_work, "i");
+ MODULE_PARM(rx_copybreak, "i");
+@@ -1495,6 +1497,8 @@
+ /* An additional parameter that may be passed in... */
+ static int debug = -1;
+ static int tx_start_pt = -1;
++static int io = 0;
++static int irq = 0;
+ 
+ static int __init pcnet32_init_module(void)
+ {
+@@ -1505,6 +1509,13 @@
+ 	pcnet32_debug = debug;
+     if ((tx_start_pt >= 0) && (tx_start_pt <= 3))
+ 	tx_start = tx_start_pt;
++    
++    if (io > 0x1ff) {
++	if (check_region(io, PCNET32_TOTAL_SIZE) == 0)
++	    return pcnet32_probe1(io, irq, 0, 0, NULL);
++	else
++	    return -ENODEV;
++    }
+     
+     pcnet32_dev = NULL;
+     /* find the PCI devices */
