@@ -27,8 +27,7 @@ Source7:	linux-netfilter-patches-20010223.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}-2.4.1.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source10:	http://www.linux-wlan.com/linux-wlan/linux-wlan-ng-%{wlan_version}.tar.gz
-Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/
-%{sym_ncr_version}.tar.gz
+Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
