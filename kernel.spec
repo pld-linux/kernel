@@ -129,6 +129,8 @@ Patch1500:     linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	%{name}-sparc-zs.h.patch
 Patch1502:	%{name}-sym53c8xx.patch
 Patch1503:	%{name}-sparc_netsyms.patch
+Patch1504:	%{name}-sparc64-inw_p.patch
+Patch1505:	%{name}-sparc64-egcs64.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -533,6 +535,8 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %ifarch sparc sparc64
 %patch1500 -p1
 %patch1501 -p1
+%patch1504 -p1
+%patch1505 -p1
 %endif
 %ifarch sparc64
 %patch1503 -p1
@@ -902,6 +906,8 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH511}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1500}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1501}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1502}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1504}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1505}
 %endif
 %ifarch sparc64
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1503}
