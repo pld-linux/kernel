@@ -23,7 +23,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.24
-Release:	0.3
+Release:	0.4
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -53,30 +53,30 @@ Source2000:	%{name}-win4lin.config
 
 # Essential stuff
 
-Patch0:		%{name}-pldfblogo.patch
+Patch0:		patch-2.4.25-pre6.bz2
+
+Patch1:		%{name}-pldfblogo.patch
 
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hvr/testing/
 Patch10:	patch-cryptoloop-jari-2.4.22-rc2.0
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch12:	linux-2.4.23-freeswan-2.04.patch.gz
-Patch15:	linux-2.4.23-sched-O1.patch
+Patch15:	linux-2.4.25-sched-O1.patch
 # http://dl.sourceforge.net/user-mode-linux/uml-patch-2.4.20-6.bz2
 Patch20:	uml-patch-2.4.20-6-21.bz2
 Patch21:	linux-2.4.21-uml-o1.patch
 # http://dl.sourceforge.net/user-mode-linux/host-skas3.patch
 Patch22:	linux-2.4.20-uml-host-skas3.patch
 # http://www.kernel.org/pub/linux/kernel/people/jgarzik/libata/
-Patch23:	2.4.23-libata2.patch.bz2
+Patch23:	2.4.25-pre4-libata1.patch.bz2
 # missing <linux/mm.h> include in libata-core.c (needed on alpha)
 Patch24:	linux-2.4.23-libata1-include.patch
 
 # New filesystems
 
-# http://linux-xfs.sgi.com/projects/xfs/
-Patch25:	linux-2.4.23-xfs-2003-12-01.patch.gz
 # http://acl.bestbits.at/
 Patch31:	linux-2.4.21-jfs-acl.patch
-Patch32:	linux-2.4.22-ea+acl+nfsacl-0.8.60.diff.gz
+Patch32:	linux-2.4.25-ea-acl-nfsacl-2.4.23-0.8.65.diff.gz
 # http://dl.sourceforge.net/linux-ntfs/
 Patch40:	linux-2.4.23-ntfs-2.1.5a.patch.bz2
 # FC01_davfs_0.2.4.patch
@@ -234,7 +234,6 @@ Patch1401:	linux-2.4.0-nonintconfig.patch
 # Add an ioctl to the block layer so we can be EFI compliant
 Patch1402:	linux-2.4.2-blkioctl-sector.patch
 Patch1403:	linux-2.4.3-pcipenalty.patch
-Patch1404:	linux-2.4.3-rawio.patch
 Patch1405:	linux-2.4.7-suspend.patch
 Patch1407:	kernel-Makefile-include-fix.patch
 Patch1408:	kernel-pswscancode.patch
@@ -270,11 +269,9 @@ Patch3013:	linux-2.4.23-ppc-symbols.patch
 
 # modified http://www.hardrock.org/kernel/current-updates/linux-2.4.23-updates.patch
 # since we already have some of these fixes applied
-Patch3500:	http://www.hardrock.org/kernel/current-updates/linux-2.4.24-updates.patch
-# ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.4.24/acpi-20031203-2.4.24.diff.bz2
-Patch3510:      acpi-20031203-2.4.24.diff.bz2
+#Patch3500:	http://www.hardrock.org/kernel/current-updates/linux-2.4.24-updates.patch
 Patch3600:	linux-2.4-sysctl-empty.patch
-Patch4000:	grsecurity-2.0-rc4-2.4.24-O1.patch
+Patch4000:	grsecurity-2.0-rc4-2.4.25-O1.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -623,6 +620,7 @@ Este pacote contém documentação para o kernel Linux.
 rm -fr fs/jfs
 gzip -dc %{SOURCE7} | tar -xf -
 %patch0 -p1
+%patch1 -p1
 %patch10 -p1
 %patch12 -p1
 %patch15 -p1
@@ -631,7 +629,6 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch22 -p1
 %patch23 -p1
 %patch24 -p1
-%patch25 -p1
 #%patch26 -p1
 %patch32 -p1
 # XXX: TODO - update patch
@@ -639,11 +636,13 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch40 -p1
 %patch50 -p1
 %patch55 -p1
-%patch60 -p1
-%patch61 -p1
+# update from ftp://ftp.suse.com/pub/people/jeffm/reiserfs/aclea/2.4.23/
+#%patch60 -p1
+#%patch61 -p1
 %patch65 -p1
 %patch70 -p1
-%patch80 -p1
+# UPDATEME
+#%patch80 -p1
 %patch100 -p1
 %patch101 -p1
 %patch102 -p1
@@ -664,9 +663,10 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch227 -p1
 %patch235 -p1
 %patch240 -p1
-%patch255 -p1
-%patch256 -p1
-%patch257 -p1
+# UPDATEME
+#%patch255 -p1
+#%patch256 -p1
+#%patch257 -p1
 %patch265 -p1
 %patch275 -p1
 %patch301 -p1
@@ -712,7 +712,6 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch1401 -p1
 %patch1402 -p1
 %patch1403 -p1
-%patch1404 -p1
 %patch1405 -p1
 %patch1407 -p1
 %patch1408 -p1
@@ -748,11 +747,10 @@ cd ../../..
 %endif
 
 %patch3011 -p1
-%patch3012 -p1
+#%patch3012 -p1
 %patch3013 -p1
 
-%patch3500 -p1
-%patch3510 -p1
+#%patch3500 -p1
 %patch3600 -p1
 %{?with_grsec:%patch4000 -p1}
 
