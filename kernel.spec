@@ -6,7 +6,6 @@
 %bcond_without	source		# don't build source
 %bcond_without	doc		# don't build documentation package
 %bcond_without	grsec		# don't apply grsecurity patch
-%bcond_without	kheaders	# build without support for glibc-kernel-headers
 %bcond_with	win4lin		# apply the Win4lin patches
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/amd64/x86_64/')
@@ -1414,8 +1413,6 @@ fi
 %defattr(644,root,root,755)
 %dir %{_prefix}/src/linux-%{version}
 %{_prefix}/src/linux-%{version}/include
-%{!?with_kheaders:%{_includedir}/asm}
-%{!?with_kheaders:%{_includedir}/linux}
 
 %if %{with doc}
 %files doc
