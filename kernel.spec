@@ -25,7 +25,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	0.2
+Release:	0.3
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -37,7 +37,7 @@ Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 # based on cvs cvs@pserver.samba.org:/cvsroot netfilter
-Source7:	linux-2.4.17-netfilter-20020204.tar.gz
+Source7:	linux-%{version}-netfilter.tar.gz
 Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_version}.tar.gz
 # new -> ftp://ftp.tux.org/pub/roudier/drivers/portable/sym-2.1.x/sym-2.1.16-20011028.tar.gz
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
@@ -69,14 +69,13 @@ Source1999:	%{name}-preemptive.config
 
 Patch0:		%{name}-pldfblogo.patch
 # ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
-Patch1:		patch-int-%{version}.0.bz2
+Patch1:		patch-int-%{version}.1.bz2
 # ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch2:		freeswan-%{freeswan_version}-%{version}.patch.gz
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.17.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
-#Patch5:		xfs-2.4.18-02032002.patch.gz
-Patch5:		xfs-2.4.18-05.03.2002.patch.gz
+Patch5:		xfs-2.4.18-07.03.2002.patch.gz
 # Homepage of ABI : http://linux-abi.sourceforge.net/
 #ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2
 Patch7:		linux-abi-2.4.17.0.patch.bz2
@@ -137,6 +136,7 @@ Patch129:	kernel-Makefile-include-fix.patch
 Patch130:	kernel-2.4.17-netsyms-export-fix.patch
 Patch131:	kernel-2.4.18-personality.patch
 
+Patch132:	linux-2.4.18.secfix.patch
 # Patches fixing other patches or 3rd party sources ;)
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
@@ -339,6 +339,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #%patch0 -p1
 %patch1 -p1
 %patch907 -p1
+%patch132 -p1
 %patch2 -p1
 %patch4 -p1
 %patch5 -p1
