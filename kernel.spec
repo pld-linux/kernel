@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	1.1%{?_with_preemptive:_pr}
+Release:	1.2%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -97,8 +97,8 @@ Patch5:		linux-abi-2.4.20.0.patch.bz2
 Patch6:		grsecurity-%{grsec_version}.patch.bz2
 
 # Preemptive kernel  patch
-Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.19-rc5-3.patch
-Patch8:		preempt_sched_O1_ck3_2.4.19.patch.bz2
+Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.20-1.patch
+#Patch8:		
 Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-2.4.18-1.patch
 Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-2.4.18-1.patch
 
@@ -236,10 +236,6 @@ Patch917:	linux-2.4.19-EXPORT_SYMBOL-netsyms.c-rm.patch
 Patch918:	linux-2.4.20-ext3.patch
 Patch919:	linux-2.4.20-ntfs.patch
 Patch920:	linux-2.4.20-squashfs.patch
-
-# Marcelo's -pre
-Patch1000:	patch-2.4.21-pre2.bz2
-Patch2000:	sched-2.4.20-A0.patch.bz2
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -508,7 +504,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch907 -p1
 %endif
 %{?_with_preemptive:echo Installing Preemptible patch}
-%{?_with_preemptive:%patch8 -p1}
+%{?_with_preemptive:%patch7 -p1}
 #%patch9 -p1
 #%patch10 -p1
 %patch11 -p1
@@ -528,7 +524,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 #%patch28 -p1
 #%patch29 -p1
 #%patch30 -p1
-
 
 %patch100 -p0
 %patch101 -p1
@@ -659,35 +654,12 @@ echo SPARC64 patches ...
 %ifarch sparc
 echo SPARC patches ...
 %patch202 -p1
+%patch911 -p1
 %endif
 %ifarch alpha
 echo AXP patches ...
 %patch203 -p1
 %patch204 -p1
-%endif
-
-echo Prepatch #2 for 2.4.21
-%patch1000 -p1
-
-%if %{?_with_o1:1}%{!?_with_o1:0}
-echo O(1) Scheduler.
-#%patch2000 -p1
-%ifarch ppc
-echo Not included NOW.
-%endif
-%ifarch ppc64
-echo Not included NOW.
-%endif
-%ifarch sparc
-echo Not included NOW.
-%patch911 -p1
-%endif
-%ifarch sparc64
-echo Not included NOW.
-%endif
-%ifarch alpha
-echo Not included NOW.
-%endif
 %endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
@@ -1183,7 +1155,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.o*
 %endif
 %ifnarch alpha ppc sparc
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/ide/legacy/ide-cs.o*
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/ide/ide-cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o*
@@ -1205,7 +1177,7 @@ fi
 /lib/modules/%{version}-%{release}/kernel/drivers/parport/*_cs.o*
 /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.o*
 %ifnarch ppc
-/lib/modules/%{version}-%{release}/kernel/drivers/ide/legacy/ide-cs.o*
+/lib/modules/%{version}-%{release}/kernel/drivers/ide/ide-cs.o*
 /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
 /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o*
 /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o*
@@ -1239,7 +1211,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.o*
 %endif
 %ifnarch alpha ppc sparc
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/legacy/ide-cs.o*
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/ide-cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o*
@@ -1261,7 +1233,7 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/*_cs.o*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/dtl1_cs.o*
 %ifnarch ppc
-/lib/modules/%{version}-%{release}smp/kernel/drivers/ide/legacy/ide-cs.o*
+/lib/modules/%{version}-%{release}smp/kernel/drivers/ide/ide-cs.o*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o*
