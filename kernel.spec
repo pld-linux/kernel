@@ -183,7 +183,7 @@ Patch116:	linux-2.6-null-tty-driver-oops.patch
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
 Patch200:	linux-2.6-vs.patch
 # em8300
-Patch201:	linux-em8300-2.6.10.patch
+Patch201:	linux-em8300-2.6.11.2.patch
 
 Patch399:	%{name}-gcc4.patch
 Patch400:	%{name}-hotfixes.patch
