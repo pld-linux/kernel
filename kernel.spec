@@ -15,13 +15,20 @@
 # _without_lsm		- don't build LSM/SELinux kernel
 
 %define		_rel		0
-%define		test_ver	4bk2
+%define		test_ver	4
 %define		patch_level	0
+%define		_bk_ver		2
 
-%if	%{test_ver} != 0
+%if %{test_ver} != 0
 %define		test	test%{test_ver}
 %else
-%define		test	
+%define		test	%{nill}
+%endif
+
+%if %{_bk_ver} != 0
+%define		bk_i	bk%{_bk_ver}
+%else
+%define		bk_i	%{nill}
 %endif
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
@@ -39,9 +46,9 @@ Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.6.0
 %if	%{patch_level} != 0
-Release:	%{test}rel%{_rel}pl%{patch_level}
+Release:	%{test}%{bk_i}rel%{_rel}pl%{patch_level}
 %else
-Release:	%{test}rel%{_rel}
+Release:	%{test}%{bk_i}rel%{_rel}
 %endif
 License:	GPL
 Group:		Base/Kernel
