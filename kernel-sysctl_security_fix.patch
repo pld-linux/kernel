@@ -19,21 +19,21 @@ diff -Naur -X /home/greg/linux/dontdiff linux-2.2.18/include/linux/sysctl.h linu
  			 void *oldval, size_t *oldlenp,
  			 void *newval, size_t newlen,
  			 void **context);
-@@ -484,12 +484,12 @@
+@@ -517,12 +517,12 @@
  extern int proc_dointvec_jiffies(ctl_table *, int, struct file *,
  				 void *, size_t *);
-
+ 
 -extern int do_sysctl (int *name, int nlen,
 +extern int do_sysctl (int *name, unsigned nlen,
  		      void *oldval, size_t *oldlenp,
  		      void *newval, size_t newlen);
-
- extern int do_sysctl_strategy (ctl_table *table,
+ 
+ extern int do_sysctl_strategy (ctl_table *table, 
 -			       int *name, int nlen,
 +			       int *name, unsigned nlen,
  			       void *oldval, size_t *oldlenp,
  			       void *newval, size_t newlen, void ** context);
-
+ 
 diff -Naur -X /home/greg/linux/dontdiff linux-2.2.18/kernel/sysctl.c linux-2.2.18-greg/kernel/sysctl.c
 --- linux-2.2.18/kernel/sysctl.c	Sun Dec 10 16:49:44 2000
 +++ linux-2.2.18-greg/kernel/sysctl.c	Fri Jan 26 10:31:38 2001
@@ -48,8 +48,8 @@ diff -Naur -X /home/greg/linux/dontdiff linux-2.2.18/kernel/sysctl.c linux-2.2.1
  		  void *buffer, size_t *lenp);
 @@ -320,7 +320,7 @@
  }
-
-
+ 
+ 
 -int do_sysctl (int *name, int nlen,
 +int do_sysctl (int *name, unsigned nlen,
  	       void *oldval, size_t *oldlenp,
@@ -60,7 +60,7 @@ diff -Naur -X /home/greg/linux/dontdiff linux-2.2.18/kernel/sysctl.c linux-2.2.1
  	if (nlen == 0 || nlen >= CTL_MAXNAME)
  		return -ENOTDIR;
 -	
--	if (oldval)
+-	if (oldval) 
 -	{
 -		int old_len;
 +
@@ -75,16 +75,16 @@ diff -Naur -X /home/greg/linux/dontdiff linux-2.2.18/kernel/sysctl.c linux-2.2.1
 @@ -387,7 +389,7 @@
  	return test_perm(table->mode, op);
  }
-
+ 
 -static int parse_table(int *name, int nlen,
 +static int parse_table(int *name, unsigned nlen,
  		       void *oldval, size_t *oldlenp,
  		       void *newval, size_t newlen,
  		       ctl_table *table, void **context)
 @@ -430,11 +432,12 @@
-
+ 
  /* Perform the actual read/write of a sysctl table entry. */
- int do_sysctl_strategy (ctl_table *table,
+ int do_sysctl_strategy (ctl_table *table, 
 -			int *name, int nlen,
 +			int *name, unsigned nlen,
  			void *oldval, size_t *oldlenp,
@@ -93,7 +93,7 @@ diff -Naur -X /home/greg/linux/dontdiff linux-2.2.18/kernel/sysctl.c linux-2.2.1
 -	int op = 0, rc, len;
 +	int op = 0, rc;
 +	size_t len;
-
+ 
  	if (oldval)
  		op |= 004;
 @@ -458,6 +461,8 @@
@@ -166,8 +166,8 @@ diff -Naur -X /home/greg/linux/dontdiff linux-2.2.18/kernel/sysctl.c linux-2.2.1
  		if (newlen % sizeof(int) != 0)
 @@ -1051,7 +1060,7 @@
  }
-
- /* Strategy function to convert jiffies to seconds */
+ 
+ /* Strategy function to convert jiffies to seconds */ 
 -int sysctl_jiffies(ctl_table *table, int *name, int nlen,
 +int sysctl_jiffies(ctl_table *table, int *name, unsigned nlen,
  		void *oldval, size_t *oldlenp,
