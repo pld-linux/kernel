@@ -962,8 +962,8 @@ rm -f scripts/mkdep
 rm -rf drivers/char/hfmodem/gentbl
 
 # add a rc-boot info
-#install -d $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/rc-boot/images
-#cat >$RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/rc-boot/images/pld-%{version}-%{release} <<EOF
+#install -d $RPM_BUILD_ROOT/etc/sysconfig/rc-boot/images
+#cat >$RPM_BUILD_ROOT/etc/sysconfig/rc-boot/images/pld-%{version}-%{release} <<EOF
 #TYPE=linux
 #ROOT=auto
 #KERNEL=/boot/vmlinuz-%{version}-%{release}
@@ -1103,7 +1103,7 @@ fi
 /lib/modules/%{version}-%{release}/usb
 /lib/modules/%{version}-%{release}/video
 %endif
-#%config(missingok) %{_sysconfdir}/sysconfig/rc-boot/images
+#%config(missingok) /etc/sysconfig/rc-boot/images
 
 %files pcmcia-cs
 %defattr(644,root,root,755)
@@ -1140,7 +1140,7 @@ fi
 /lib/modules/%{version}-%{release}smp/usb
 /lib/modules/%{version}-%{release}smp/video
 %endif
-#%config(missingok) %{_sysconfdir}/sysconfig/rc-boot/images
+#%config(missingok) /etc/sysconfig/rc-boot/images
 
 %files -n kernel-smp-pcmcia-cs
 %defattr(644,root,root,755)
