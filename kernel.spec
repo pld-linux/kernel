@@ -110,6 +110,7 @@ Patch113:	linux-2.2.20-lfs.patch
 Patch114:	linux-2.2.21-mppe.patch
 Patch115:	wrr-linux-2.2.18.patch
 Patch116:	2.2.21-wrr-pkt_bridged.patch
+Patch117:	2.2.21-mm_afunix.patch
 
 Patch302:	ow2-fix-2.2.21-rc3.patch
 
@@ -521,6 +522,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch114 -p1
 %patch115 -p1
 %patch116 -p1
+%patch117 -p1
 
 %ifarch sparc sparc64
 %patch1500 -p1
@@ -864,6 +866,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH509}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH114}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH115}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH116}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH117}
 
 %ifarch sparc sparc64
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1500}
