@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	2.1%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	2.2%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -223,7 +223,8 @@ Patch143:	linux-2.4.20-reiserfs-quota.patch.bz2
 Patch144:	linux-2.4.20-kt400.patch
 #i2c - version 2.7.0
 Patch145:	linux-2.4.20-i2c-2.7.0.patch.gz
-
+#usb patches from ftp://ftp.kernel.org/pub/linux/people/gregkh/usb/*-2.4.20.*
+Patch146:	linux-2.4.20-USB.patch.bz2
 # Patches fixing other patches or 3rd party sources ;)
 # This patch allows to create more than one sound device using alsa
 # and devfs with two or more sound cards
@@ -691,6 +692,9 @@ echo Added support for V4L2
 
 %patch143 -p1
 %patch145 -p1
+
+# USB patches
+%patch146 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
