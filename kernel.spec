@@ -643,8 +643,8 @@ echo Added ACL support
 %patch919 -p1
 %patch920 -p1
 
-# 
-echo Added supprot
+# NetMos support
+echo Added NetMos card supprot
 %patch46 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
@@ -750,7 +750,12 @@ BuildKernel() {
 	%{__make} dep clean
 %endif
 	%{__make} include/linux/version.h
-	
+
+# making  table for soundmodem.
+	(cd drivers/net/hamradio/soundmodem; \
+	%{__cc} -o gentbl -lm gentbl.c; \
+	./gentbl)	
+
 %ifarch %{ix86}
 	%{__make} bzImage
 %endif
