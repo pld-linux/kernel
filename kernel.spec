@@ -26,7 +26,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:        http://www.openwall.com/linux/linux-%{ow_version}.tar.gz
-# Source3-md5:	0ff48567fc27c329d28965e057c2c8a6
+# Source3-md5:	55d6ce3e95bfd88632987c170c360aed
 Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-133.tar.gz
 # Source4-md5:	36c4e0a426064dede25d16018427b00f
 Source5:	ftp://ftp.sourceforge.net/pub/sourceforge/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
