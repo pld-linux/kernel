@@ -21,11 +21,12 @@
 #
 Summary:	The Linux kernel (the core of the Linux operating system)
 Name:		kernel
-Version:	2.6.4
-Release:	0.6
+%define		_ver	2.6.4
+Version:	%{_ver}+grsec
+Release:	1
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{_ver}.tar.bz2
 # Source0-md5:	335f06eba1e5372ba38a0d2b253629bd
 Patch0:		2.6.0-ksyms-add.patch
 Patch1:		2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
@@ -55,7 +56,7 @@ Autoreqprov:	no
 PreReq:		coreutils
 PreReq:		module-init-tools >= 0.9.9
 Provides:	module-info
-Provides:	%{name}(netfilter) = %{_netfilter_snap}
+Provides:	kernel(netfilter) = %{_netfilter_snap}
 Obsoletes:	kernel-modules
 Conflicts:	util-linux < %{_util_linux_ver}
 Conflicts:	module-init-tool < %{_module_init_tool_ver}
@@ -81,12 +82,12 @@ Most hardware is instead supported by modules loaded after booting.
 %package headers
 Summary:	Header files for the Linux kernel
 Group:		Base/Kernel
-Provides:	%{name}-headers(agpgart) = %{version}
-Provides:	%{name}-headers(reiserfs) = %{version}
-Provides:	%{name}-headers(bridging) = %{version}
+Provides:	kernel-headers(agpgart) = %{_ver}
+Provides:	kernel-headers(reiserfs) = %{_ver}
+Provides:	kernel-headers(bridging) = %{_ver}
 Provides:	kernel-i2c-devel
-Provides:	%{name}-headers(netfilter) = %{_netfilter_snap}
-Provides:	%{name}-headers(alsa-drivers)
+Provides:	kernel-headers(netfilter) = %{_netfilter_snap}
+Provides:	kernel-headers(alsa-drivers)
 Obsoletes:	kernel-i2c-devel
 Autoreqprov:	no
 
@@ -99,8 +100,8 @@ building kernel modules.
 Summary:	Kernel source tree
 Group:		Base/Kernel
 Autoreqprov:	no
-Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
-Provides:	%{name}-module-build
+Requires:	kernel-headers = %{version}-%{release}
+Provides:	kernel-module-build
 
 %description source
 This is the source code for the Linux kernel. It is required to build
@@ -109,7 +110,7 @@ also build a custom kernel that is better tuned to your particular
 hardware.
 
 %prep
-%setup -q -n linux-%{version}
+%setup -q -n linux-%{_ver}
 
 %patch0 -p1
 %patch1 -p1
@@ -136,13 +137,35 @@ hardware.
 %patch51 -p1
 
 %build
-sed -i 's/EXTRAVERSION =.*/EXTRAVERSION =/g' Makefile
+cat << EOF > cleanup-nondist-kernel.sh
+#!/bin/sh
+CWD=\`pwd\`
+cd /usr/src/linux
+if [ -r ".config" ]; then
+    mv .config config-nondist
+fi
+if [ -r "config-nondist" ]; then
+    cp config-nondist .config
+    make include/linux/autoconf.h
+    mv include/linux/autoconf{,-nondist}.h
+    make mrproper
+    cd include/linux
+    ln -sf autoconf{-nondist,}.h
+    cd ../..
+    cp config-nondist .config
+    make include/linux/version.h
+    chmod 644 include/linux/version.h
+    rm .config
+else
+    echo "error: /usr/src/linux/(.config or config-nondist) - file not found!"
+fi
+cd \$CWD
+EOF
 
 %install
 rm -rf $RPM_BUILD_ROOT
 umask 022
 install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 cp -R . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 find include/ -type d -maxdepth 1 -name "asm-*" ! -name asm-i386 ! -name asm-generic | xargs rm -rf
@@ -163,6 +186,16 @@ if [ -L %{_prefix}/src/linux ]; then
 		fi
 	fi
 fi
+
+%preun source
+cd /usr/src/linux
+make mrproper
+rm -f config-nondist include/linux/autoconf-nondist.h
+
+%post source
+echo
+echo "You need to configure your kernel now."
+echo
 
 %files headers
 %defattr(644,root,root,755)
@@ -193,3 +226,4 @@ fi
 %{_prefix}/src/linux-%{version}/MAINTAINERS
 %{_prefix}/src/linux-%{version}/README
 %{_prefix}/src/linux-%{version}/REPORTING-BUGS
+%attr(744,root,root) %{_prefix}/src/linux-%{version}/cleanup-nondist-kernel.sh
