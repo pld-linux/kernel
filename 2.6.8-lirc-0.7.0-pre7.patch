@@ -1625,7 +1625,7 @@ diff -uNr linux-2.6.8-rc4.orig/drivers/char/lirc/lirc_dev.c linux-2.6.8-rc4/driv
 +#ifdef LIRC_HAVE_DEVFS
 +	sprintf (name, DEV_LIRC "/%d", ir->p.minor);
 +	ir->devfs_handle = devfs_register(NULL, name, DEVFS_FL_DEFAULT,
-+					  IRCTL_DEV_MAJOR, ir->p.minor,
++					  CONFIG_LIRC_IRCTL_DEV_MAJOR, ir->p.minor,
 +					  S_IFCHR | S_IRUSR | S_IWUSR,
 +					  &fops, NULL);
 +#endif
@@ -2022,9 +2022,9 @@ diff -uNr linux-2.6.8-rc4.orig/drivers/char/lirc/lirc_dev.c linux-2.6.8-rc4/driv
 +	}
 +
 +#ifndef LIRC_HAVE_DEVFS
-+ 	i = register_chrdev(IRCTL_DEV_MAJOR,
++ 	i = register_chrdev(CONFIG_LIRC_IRCTL_DEV_MAJOR,
 +#else
-+	i = devfs_register_chrdev(IRCTL_DEV_MAJOR,
++	i = devfs_register_chrdev(CONFIG_LIRC_IRCTL_DEV_MAJOR,
 +#endif
 +				   IRCTL_DEV_NAME,
 +				   &fops);
@@ -2035,7 +2035,7 @@ diff -uNr linux-2.6.8-rc4.orig/drivers/char/lirc/lirc_dev.c linux-2.6.8-rc4/driv
 +	}
 +	
 +	printk("lirc_dev: IR Remote Control driver registered, at major %d \n", 
-+	       IRCTL_DEV_MAJOR);
++	       CONFIG_LIRC_IRCTL_DEV_MAJOR);
 +
 +	return SUCCESS;
 +}
@@ -2068,9 +2068,9 @@ diff -uNr linux-2.6.8-rc4.orig/drivers/char/lirc/lirc_dev.c linux-2.6.8-rc4/driv
 +	int ret;
 +	
 +#ifndef LIRC_HAVE_DEVFS
-+ 	ret = unregister_chrdev(IRCTL_DEV_MAJOR, IRCTL_DEV_NAME);
++ 	ret = unregister_chrdev(CONFIG_LIRC_IRCTL_DEV_MAJOR, IRCTL_DEV_NAME);
 +#else
-+	ret = devfs_unregister_chrdev(IRCTL_DEV_MAJOR, IRCTL_DEV_NAME);
++	ret = devfs_unregister_chrdev(CONFIG_LIRC_IRCTL_DEV_MAJOR, IRCTL_DEV_NAME);
 +#endif
 + 
 +	if (0 > ret){
@@ -5664,11 +5664,11 @@ diff -uNr linux-2.6.8-rc4.orig/drivers/char/lirc/lirc_parallel.c linux-2.6.8-rc4
 + *************************   Globale Variablen   ***********************
 + ***********************************************************************/
 +
-+unsigned int irq = LIRC_IRQ;
-+unsigned int io = LIRC_PORT;
-+#ifdef LIRC_TIMER
++unsigned int irq = CONFIG_LIRC_IRQ_PARALLEL;
++unsigned int io = CONFIG_LIRC_PORT_PARALLEL;
++#ifdef CONFIG_LIRC_TIMER
 +unsigned int timer = 0;
-+unsigned int default_timer = LIRC_TIMER;
++unsigned int default_timer = CONFIG_LIRC_TIMER;
 +#endif
 +
 +#define WBUF_SIZE (256)
@@ -7172,8 +7172,8 @@ diff -uNr linux-2.6.8-rc4.orig/drivers/char/lirc/lirc_serial.c linux-2.6.8-rc4/d
 +
 +static spinlock_t lirc_lock = SPIN_LOCK_UNLOCKED;
 +
-+static int io = LIRC_PORT;
-+static int irq = LIRC_IRQ;
++static int io = CONFIG_LIRC_PORT_SERIAL;
++static int irq = CONFIG_LIRC_IRQ_SERIAL;
 +
 +static struct timeval lasttv = {0, 0};
 +
@@ -8179,8 +8179,8 @@ diff -uNr linux-2.6.8-rc4.orig/drivers/char/lirc/lirc_sir.c linux-2.6.8-rc4/driv
 +#define SIR_TIMEOUT	(HZ*5/100)
 +
 +#ifndef LIRC_ON_SA1100
-+static int io = LIRC_PORT;
-+static int irq = LIRC_IRQ;
++static int io = CONFIG_LIRC_PORT_SIR;
++static int irq = CONFIG_LIRC_IRQ_SIR;
 +static int threshold = 3;
 +#endif
 +
