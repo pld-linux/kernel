@@ -173,7 +173,7 @@ diff -urN linux-2.4.22/fs/reiserfs/inode.c linux-2.4.22-aclea/fs/reiserfs/inode.
 +            goto out_inserted_sd;
 +        }
 +    } else if (inode->i_sb->s_flags & MS_POSIXACL) {
-+        reiserfs_warning ("ACLs aren't enabled in the fs, but vfs thinks they are!\n");
++        reiserfs_warning (inode->i_sb, "ACLs aren't enabled in the fs, but vfs thinks they are!\n");
 +    }
 +
      insert_inode_hash (inode);
@@ -560,10 +560,11 @@ diff -urN linux-2.4.22/fs/reiserfs/namei.c linux-2.4.22-aclea/fs/reiserfs/namei.
 diff -urN linux-2.4.22/fs/reiserfs/super.c linux-2.4.22-aclea/fs/reiserfs/super.c
 --- linux-2.4.22/fs/reiserfs/super.c	2003-08-25 13:44:43.000000000 +0200
 +++ linux-2.4.22-aclea/fs/reiserfs/super.c	2003-09-12 17:19:43.000000000 +0200
-@@ -9,6 +9,8 @@
+@@ -9,6 +9,9 @@
  #include <linux/vmalloc.h>
  #include <asm/uaccess.h>
  #include <linux/reiserfs_fs.h>
++#include <linux/reiserfs_fs_sb.h>
 +#include <linux/reiserfs_acl.h>
 +#include <linux/reiserfs_xattr.h>
  #include <linux/smp_lock.h>
@@ -1097,7 +1098,7 @@ diff -urN linux-2.4.22/fs/reiserfs/xattr.c linux-2.4.22-aclea/fs/reiserfs/xattr.
 +	ih = de.de_ih;
 +
 +	if (!is_direntry_le_ih(ih)) {
-+reiserfs_warning("not direntry %h\n", ih);
++reiserfs_warning(inode->i_sb, "not direntry %h\n", ih);
 +	    break;
 +        }
 +	copy_item_head(&tmp_ih, ih);
@@ -1473,7 +1474,7 @@ diff -urN linux-2.4.22/fs/reiserfs/xattr.c linux-2.4.22-aclea/fs/reiserfs/xattr.
 +        goto out_file;
 +
 +    if (!is_reiserfs_priv_object (file->d_inode)) {
-+        reiserfs_warning ("trying to delete objectid %08x, which isn't an xattr!\n", le32_to_cpu (INODE_PKEY (file->d_inode)->k_objectid));
++        reiserfs_warning (file->d_inode->i_sb, "trying to delete objectid %08x, which isn't an xattr!\n", le32_to_cpu (INODE_PKEY (file->d_inode)->k_objectid));
 +        dput (file);
 +        return -EIO;
 +    }
@@ -1570,7 +1571,7 @@ diff -urN linux-2.4.22/fs/reiserfs/xattr.c linux-2.4.22-aclea/fs/reiserfs/xattr.
 +        reiserfs_write_unlock_xattrs (inode->i_sb);
 +        dput (root);
 +    } else {
-+        reiserfs_warning ("Couldn't remove all entries in directory\n");
++        reiserfs_warning (inode->i_sb, "Couldn't remove all entries in directory\n");
 +    }
 +    unlock_kernel ();
 +
@@ -1959,7 +1960,7 @@ diff -urN linux-2.4.22/fs/reiserfs/xattr.c linux-2.4.22-aclea/fs/reiserfs/xattr.
 +    /* We need generation numbers to ensure that the oid mapping is correct
 +     * v3.5 filesystems don't have them. */
 +    if (old_format_only (s)) {
-+      reiserfs_warning ("reiserfs: xattrs/ACLs not supported on pre v3.6 "
++      reiserfs_warning (s, "reiserfs: xattrs/ACLs not supported on pre v3.6 "
 +                        "format filesystem. Failing mount.\n");
 +      err = -EOPNOTSUPP;
 +      goto error;
@@ -1979,7 +1980,7 @@ diff -urN linux-2.4.22/fs/reiserfs/xattr.c linux-2.4.22-aclea/fs/reiserfs/xattr.
 +            }
 +
 +            if (dentry && dentry->d_inode)
-+                reiserfs_warning ("reiserfs: Created %s on %s - reserved for "
++                reiserfs_warning (s, "reiserfs: Created %s on %s - reserved for "
 +                                  "xattr storage.\n", PRIVROOT_NAME, 
 +                                  bdevname (inode->i_sb->s_dev));
 +        }
@@ -1995,7 +1996,7 @@ diff -urN linux-2.4.22/fs/reiserfs/xattr.c linux-2.4.22-aclea/fs/reiserfs/xattr.
 +           * created. Not an error -- just no xattrs on the fs. We'll
 +           * check again if we go read-write */
 +          if (!(mount_flags & MS_RDONLY)) {
-+              reiserfs_warning ("reiserfs: xattrs/ACLs enabled and couldn't "
++              reiserfs_warning (s, "reiserfs: xattrs/ACLs enabled and couldn't "
 +                             "find/create .reiserfs_priv. Failing mount.\n");
 +            err = -EOPNOTSUPP;
 +            goto error;
