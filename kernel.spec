@@ -49,7 +49,7 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_rel		1.11
-%define		_cset		20040625_0611
+%define		_cset		20040626_2310
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040624
@@ -80,13 +80,13 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	264c9c39bf0a86b416537241116d5706
+# Source3-md5:	3dcea80121c27f17aea0fc6a00df2c5e
 # http://lkml.org/lkml/2004/6/2/228
-Source4:	http://redhat.com/~mingo/nx-patches/nx-2.6.7-rc2-bk2-AF
-# Source4-md5:	9d45d98ad5e27747c6e930a46dc9e37f
+Source4:	http://people.redhat.com/mingo/nx-patches/nx-2.6.7-A2
+# Source4-md5:	a6f6f85a511cfad6bf79ffc1c67d70a9
 # http://lkml.org/lkml/2004/6/2/233
-Source5:	http://redhat.com/~mingo/exec-shield/exec-shield-on-nx-2.6.7-rc2-bk2-A9
-# Source5-md5:	1566f42e3b3018d1e86db0d1e00be0ab
+Source5:	http://people.redhat.com/mingo/exec-shield/exec-shield-nx-2.6.7-A0
+# Source5-md5:	ba236ecfe687f5cc2f611797fbcf52e9
 Source6:	exec-shield-make-peace-with-grsecurity.patch
 ## Source6:	http://prdownloads.sourceforge.net/swsusp/software-suspend-2.0.0.81-for-2.6.6.tar.bz2
 Source20:	%{name}-i386.config
@@ -700,16 +700,12 @@ echo "Not fixed !!"
 # NX is NX and it has noting to do with exec-shield beside
 # exec-shield using NX feature
 patch -p1 -s < %{SOURCE4}
-%if %{with grsec}
 %if %{with execshield}
 install %{SOURCE5} exec-shield.patch
+%if %{with grsec}
 patch -s exec-shield.patch < %{SOURCE6}
-patch -p1 -s < exec-shield.patch
 %endif
-%else
-%if %{with execshield}
-patch -p1 -s < %{SOURCE5}
-%endif	
+patch -p1 -s < exec-shield.patch
 %endif
 
 %patch96 -p1
