@@ -118,9 +118,8 @@ Patch20:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/in
 
 Patch21:	linux-2.4.18-hpfs.patch
 
-Patch22:	ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/linux-2.4.18-mppe-include.patch
-Patch23:	ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/linux-2.4.18-mppe-make.patch
-Patch24:	ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/linux-2.4.18-mppe-pad.patch
+# ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
+Patch22:	linux-2.4.18-mppe.patch
 
 # Assorted bugfixes
 
@@ -666,8 +665,6 @@ echo Updating VIA Southbridge
 
 # MPPE (ppp)
 %patch22 -p1
-%patch23 -p1
-%patch24 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
