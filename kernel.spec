@@ -891,6 +891,8 @@ BuildKernel() {
 %ifarch i386
 	perl -pi -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
 		arch/%{base_arch}/defconfig
+	perl -pi -e 's/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/' \
+		arch/%{base_arch}/defconfig
 %endif
 
 	%{__make} mrproper
