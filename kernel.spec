@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	1.8%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	2%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -685,10 +685,13 @@ echo Added support for V4L2
 %{!?_without_grsec:%patch921 -p1}
 
 %patch143 -p1
-%patch144 -p1
 %patch145 -p1
 
 echo Added ARCH specific patches....
+%ifarch %{ix86}
+echo Ix86 patches ...
+%patch144 -p1
+%endif
 %ifarch ppc
 echo PPC patches ...
 %patch205 -p1
