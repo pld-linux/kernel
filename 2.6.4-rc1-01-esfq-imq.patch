@@ -1239,11 +1239,10 @@ diff -uNr linux-2.6.4-rc1/net.orig/sched/sch_generic.c linux-2.6.4-rc1/net/sched
  #include <linux/rcupdate.h>
  #include <linux/list.h>
  #include <net/sock.h>
-@@ -135,11 +138,14 @@
- 			spin_unlock(&dev->queue_lock);
+@@ -136,7 +139,11 @@
  
  			if (!netif_queue_stopped(dev)) {
--				int ret;
+ 				int ret;
 +#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
 +				if (netdev_nit && !(skb->imq_flags & IMQ_F_ENQUEUE))
 +#else
@@ -1251,8 +1250,4 @@ diff -uNr linux-2.6.4-rc1/net.orig/sched/sch_generic.c linux-2.6.4-rc1/net/sched
 +#endif
  					dev_queue_xmit_nit(skb, dev);
  
--				ret = dev->hard_start_xmit(skb, dev);
-+				int ret = dev->hard_start_xmit(skb, dev);
- 				if (ret == NETDEV_TX_OK) { 
- 					if (!nolock) {
- 						dev->xmit_lock_owner = -1;
+ 				ret = dev->hard_start_xmit(skb, dev);
