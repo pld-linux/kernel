@@ -945,7 +945,7 @@ KERNEL_BUILD_DIR=`pwd`
 KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
 rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
-
+exit 1
 # make drivers/scsi/ missing files
 	(cd drivers/scsi; make -f M)
 	
@@ -965,6 +965,8 @@ rm -rf $KERNEL_INSTALL_DIR
 %install
 rm -rf $RPM_BUILD_ROOT
 umask 022
+echo "Target CPU: %{_target_cpu}"
+echo "Base arch: %{base_arch}"
 
 install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{version}}
 
@@ -986,21 +988,28 @@ ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
 ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 
 %ifarch sparc sparc64
-ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
-ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
-sh %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}
-cp -a %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
+ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT/usr/include/asm-sparc
+ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT/usr/include/asm-sparc64
 %else
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 %endif
 
 cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
 
+%ifarch sparc sparc64
+sh %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}
+cp -a %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
+%endif
+
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+echo "Target CPU: %{_target_cpu}"
+echo "Base arch: %{base_arch}"
 
 %{__make} mrproper
 find  -name "*~" -print | xargs rm -f
 find  -name "*.orig" -print | xargs rm -f
+echo "Target CPU: %{_target_cpu}"
+echo "Base arch: %{base_arch}"
 
 
 %ifarch %{ix86}
