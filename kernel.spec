@@ -193,6 +193,8 @@ Patch250:	linux-2.6-vs.patch
 
 # iRiverFS support from http://dl.sourceforge.net/sourceforge/ifp-driver/
 Patch260:	iriverfs-r0.1.0.1.patch.gz
+Patch261:	linux-2.6-bdi-provide-backing-device-capability-information.patch
+Patch262:	linux-2.6-iriver-backing-device-capability-information-fix.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -587,6 +589,8 @@ bzcat %{SOURCE4} | patch -p1 -s
 #%patch110 -p1
 
 %patch260 -p1
+%patch261 -p1
+%patch262 -p1
 
 # <bconded_patches>
 
