@@ -10,7 +10,7 @@
 # _without_up		- don't build UP kernel
 #
 %define		test_build		0
-%define		krelease		2.38
+%define		krelease		2.39
 #
 %define base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 #
@@ -382,7 +382,7 @@ Group(pl):	Podstawowe/Kernel
 Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
 Prereq:		%{name}-smp = %{version}-%{release}
 
-%description -n smp-pcmcia-cs
+%description smp-pcmcia-cs
 PCMCIA-CS modules for SMP kernel.
 
 %description -l pl smp-pcmcia-cs
