@@ -17,7 +17,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.5.67
-Release:	0.6
+Release:	0.7
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
@@ -35,10 +35,10 @@ Source21:	%{name}-ia32-smp.config
 #Source74:	%{name}-ppc-smp.config
 Patch0:		http://piorun.ds.pg.gda.pl/~blues/linux-2.5.67-genrtc_fix.patch
 # SELinux:
-Patch1:		http://www.nsa.gov/selinux/patches/linux-2.5-2003040709.patch.gz
+#Patch1:		http://www.nsa.gov/selinux/patches/linux-2.5-2003040709.patch.gz
+Patch1:		lsm-%{version}.patch.gz
 # FBDEV fixes:
-Patch2:		http://phoenix.infradead.org/~jsimmons/fbdev.diff.gz
-Patch3:		http://piorun.ds.pg.gda.pl/~blues/%{name}-2.5.67-radeonfb.patch
+Patch2:		http://piorun.ds.pg.gda.pl/~blues/%{name}-2.5.67-radeonfb.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -55,7 +55,7 @@ Provides:	module-info
 Autoreqprov:	no
 Prereq:		fileutils
 Prereq:		module-init-tools
-Prereq:		geninitrd >= 2.21
+Prereq:		geninitrd >= 2.26
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 
@@ -272,7 +272,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch0 -p0
 %patch1 -p1
 %patch2 -p1
-%patch3 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -484,6 +483,12 @@ mv include/linux/autoconf.h include/linux/autoconf-smp.h
 cp .config config-smp
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
+
+# install SELinux headers
+install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/{linux,asm-i386}/flask
+install security/lids/include/linux/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
+install security/selinux/include/linux/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/flask
+install security/selinux/include/asm-i386/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/asm-i386/flask
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
