@@ -24,7 +24,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.17
-Release:	2.5
+Release:	3
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -147,6 +147,7 @@ Patch910:	dc395-PLD.fix
 Patch911:	linux-o1-sched-grsec-pre.patch
 Patch912:	linux-o1-sched-grsec-post.patch
 Patch913:	linux-o1-sched-abi.patch
+Patch914:	netfilter-conntrack_irc.patch
 
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
@@ -377,6 +378,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch901 -p0
 %patch904 -p0
 %patch907 -p1
+
+# netfilter conntrack_irc security fix
+%patch914 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 echo Adding Tekram DC395/315 driver
