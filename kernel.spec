@@ -296,23 +296,11 @@ zcat %{SOURCE34} > drivers/net/3c59x.c
 BuildKernel() {
 	# is this a special kernel we want to build?
 	if [ -n "$1" ] ; then
-		if [ "%{_target_cpu}" = "i586" -o \
-			"%{_target_cpu}" = "i686" -o \
-			"%{_target_cpu}" = "sparc64" ]; then
-			Config="%{_target_cpu}"-$1
-		else
-			Config=$RPM_ARCH-$1
-		fi
+		Config="%{_target_cpu}"-$1
 		KernelVer=%{version}-%{release}$1
 		echo BUILDING A KERNEL FOR $1...
 	else
-		if [ "%{_target_cpu}" = "i586" -o \
-			"%{_target_cpu}" = "i686" -o \
-			"%{_target_cpu}" = "sparc64" ] ; then
-			Config="%{_target_cpu}"
-		else
-			Config=$RPM_ARCH
-		fi
+		Config="%{_target_cpu}"
 		KernelVer=%{version}-%{release}
 		echo BUILDING THE NORMAL KERNEL...
 	fi
@@ -488,18 +476,13 @@ cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 find  -name "*~" -print | xargs rm -f
 find  -name "*.orig" -print | xargs rm -f
 
-%ifarch %{ix86}
-install $RPM_SOURCE_DIR/kernel-i586.config .config
-%else
-install $RPM_SOURCE_DIR/kernel-$RPM_ARCH.config .config
-%endif
+install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
+
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
-%ifarch %{ix86}
-install $RPM_SOURCE_DIR/kernel-i586-smp.config .config
-%else
-install $RPM_SOURCE_DIR/kernel-$RPM_ARCH-smp.config .config
-%endif
+
+install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config .config
+
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
 
