@@ -524,11 +524,6 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/arch/i386/kernel/process.c linux-2.
  }
  
  /*
-@@ -775,4 +823,3 @@
- 		return -EFAULT;
- 	return 0;
- }
--
 diff -Nur --exclude '*.orig' linux-2.6.7.org/arch/i386/kernel/vm86.c linux-2.6.7/arch/i386/kernel/vm86.c
 --- linux-2.6.7.org/arch/i386/kernel/vm86.c	2004-09-02 14:41:31.337331408 +0200
 +++ linux-2.6.7/arch/i386/kernel/vm86.c	2004-09-02 14:51:12.898920608 +0200
@@ -666,7 +661,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/arch/ppc/kernel/entry.S linux-2.6.7
 +	b	fetch_syscall
 +local_syscall_load:
 +#endif /* CONFIG_OPENMOSIX */
- 	cmpli	0,r0,NR_syscalls
+ 	cmplwi	0,r0,NR_syscalls
  	lis	r10,sys_call_table@h
  	ori	r10,r10,sys_call_table@l
  	slwi	r0,r0,2
@@ -8649,9 +8644,9 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/include/linux/sched.h linux-2.6.7/i
 +#ifdef CONFIG_OPENMOSIX
 +	atomic_t mm_realusers;		/* nb of processes that uses this mm */
 +#endif /* CONFIG_MOSIX */
- };
  
- extern int mmlist_nr;
+ #ifdef CONFIG_PAX_DLRESOLVE
+ 	unsigned long call_dl_resolve;
 @@ -515,7 +522,10 @@
  
  	unsigned long ptrace_message;
@@ -8924,9 +8919,9 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/mm/mlock.c linux-2.6.7/mm/mlock.c
 --- linux-2.6.7.org/mm/mlock.c	2004-09-02 14:42:22.289585488 +0200
 +++ linux-2.6.7/mm/mlock.c	2004-09-02 14:48:47.742987664 +0200
 @@ -8,6 +8,11 @@
+ 
  #include <linux/mman.h>
  #include <linux/mm.h>
- 
 +#ifdef CONFIG_OPENMOSIX
 +#include <hpc/hpc.h>
 +#include <hpc/task.h>
@@ -8934,7 +8929,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/mm/mlock.c linux-2.6.7/mm/mlock.c
 +
  #include <linux/grsecurity.h>
  
- static int mlock_fixup(struct vm_area_struct * vma, 
+ #if defined(CONFIG_PAX_SEGMEXEC) || defined(CONFIG_PAX_RANDEXEC)
 @@ -125,6 +130,10 @@
  	gr_learn_resource(current, RLIMIT_MEMLOCK, locked, 1);
  	if (locked <= lock_limit)
