@@ -1015,7 +1015,8 @@ fi
 %ifnarch sparc
 %files pcmcia
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
+%dir /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
+%attr(644,root,root) /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia/*
 /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
 /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko
 /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko
@@ -1026,7 +1027,8 @@ fi
 %ifnarch sparc
 %files drm
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/drivers/char/drm
+%dir /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
+%attr(644, root,root) /lib/modules/%{version}-%{release}/kernel/drivers/char/drm/*
 %endif 			
 %endif			# %%{with up}
 
@@ -1077,7 +1079,8 @@ fi
 %ifnarch sparc
 %files -n kernel-smp-pcmcia
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
+%dir /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
+%attr(644,root,root) /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia/*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
 /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko
 /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko
@@ -1088,7 +1091,8 @@ fi
 %ifnarch sparc
 %files -n kernel-smp-drm
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
+%dir /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
+%attr(644,root,root) /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm/*
 %endif			
 %endif			# %%{with smp}
 
@@ -1149,7 +1153,8 @@ fi
 %ifnarch sparc
 %files sound-oss
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/sound/oss
+%dir /lib/modules/%{version}-%{release}/kernel/sound/oss
+%attr(644,root,root) /lib/modules/%{version}-%{release}/kernel/sound/oss/*
 %endif  		
 
 %files sound-alsa
@@ -1172,7 +1177,8 @@ fi
 %ifnarch sparc
 %files smp-sound-oss
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/sound/oss
+%dir /lib/modules/%{version}-%{release}smp/kernel/sound/oss
+%attr(644,root,root) /lib/modules/%{version}-%{release}smp/kernel/sound/oss/*
 %endif
 
 %files smp-sound-alsa
