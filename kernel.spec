@@ -110,7 +110,7 @@ Patch117:	2.2.21-ppc-smp.patch
 Patch118:	ide.2.2.21_2.4.19pre7-VIA.patch
 Patch119:	ide-probe.patch
 Patch220:	2.2.20-reiserfs_ppc.patch
-Patch221:	ide-2.2.21-ppc-pmac.patch
+Patch221:	ide.2.2.21-ppc-pmac.patch
 
 Patch300:	patch-2.2.21-rc3.gz
 Patch320:	fix-prename.patch
