@@ -284,6 +284,7 @@ Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
 Provides:	%{name}(cdrw)
 Provides:	%{name}(cdmrw)
+Provides:	%{name}(hostap)
 Autoreqprov:	no
 Prereq:		fileutils
 Prereq:		modutils
@@ -329,12 +330,13 @@ Provides:	%{name}-smp = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.7.0
 Provides:	bttv = 0.7.83
+Provides:	%{name}(netfilter) = 1.2.7a
 Provides:	%{name}(grsecurity) = %{grsec_version}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
 Provides:	%{name}(cdrw)
 Provides:	%{name}(cdmrw)
-Provides:	%{name}(netfilter) = 1.2.7a
+Provides:	%{name}(hostap)
 Prereq:		fileutils
 Prereq:		modutils
 Prereq:		geninitrd >= 2.21
