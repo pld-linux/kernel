@@ -13,7 +13,7 @@
 
 %bcond_without	oss	# with old OSS 
 
-%define		_rel		1
+%define		_rel		2
 %define		_test_ver	7
 %define		_cset		20031017_0506
 
@@ -71,6 +71,12 @@ Patch12:	2.6.0-t5-PPC-Kconfig.patch
 Patch14:	2.6.0-t7-netfilter-20031010.patch
 Patch16:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
 Patch18:	2.6.0-t6-usb-irq.patch
+
+Patch20:	2.6.0-t7-memleak-lkml.patch
+Patch21:	2.6.0-t7-memleak2-lkml.patch
+
+Patch22:	fbdev.diff.gz
+Patch23:	2.6.0-t7-radeonfb-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -373,6 +379,12 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch16 -p1
 %patch18 -p1
+
+%patch20 -p1
+%patch21 -p1
+
+%patch22 -p1
+%patch23 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
