@@ -377,6 +377,22 @@ Provides:	%{name}-pcmcia-cs=%{pcmcia_version}
 %description pcmcia-cs-smp
 %description -l pl pcmcia-cs-smp
 
+%package drm
+Summary:	DRM kernel modules
+Summary(pl):	Sterowniki DRM
+Group:		Base/Kernel
+Group(pl):	Podstawowe/Kernel
+%description drm
+%description -l pl drm
+
+%package drm-smp
+Summary:	DRM SMP kernel modules
+Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
+Group:		Base/Kernel
+Group(pl):	Podstawowe/Kernel
+%description drm-smp
+%description -l pl drm-smp
+
 %package headers
 Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra
@@ -913,7 +929,6 @@ cat %{SOURCE1667} >> .config
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
 
-
 %ifarch %{ix86}
 cat $RPM_SOURCE_DIR/kernel-ia32-smp.config >> .config
 %else
@@ -1087,6 +1102,12 @@ depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
 %postun pcmcia-cs-smp
 depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
 
+%postun drm
+depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+
+%post drm-smp
+depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
+
 %if %{?_without_up:0}%{!?_without_up:1}
 %files
 %defattr(644,root,root,755)
@@ -1098,6 +1119,7 @@ depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
 /lib/modules/%{version}-%{release}/kernel
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
 %endif			# %{_without_up}
@@ -1111,6 +1133,10 @@ depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
 %endif
 /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 
+%files drm
+%defattr(644,root,root,755)
+/lib/modules/%{version}-%{release}/kernel/drivers/char/drm
+
 %if%{?_without_smp:0}%{!?_without_smp:1}
 %files pcmcia-cs-smp
 %defattr(644,root,root,755)
@@ -1118,6 +1144,10 @@ depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
 /lib/modules/%{version}-%{release}smp/pcmcia
 %endif
 /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
+
+%files drm-smp
+%defattr(644,root,root,755)
+/lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 
 %files smp
 %defattr(644,root,root,755)
@@ -1129,6 +1159,7 @@ depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
 %dir /lib/modules/%{version}-%{release}smp
 /lib/modules/%{version}-%{release}smp/kernel
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
 %endif			# %{_without_smp}
