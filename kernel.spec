@@ -5,6 +5,7 @@
 # _with_preemptive	- build with Preemptible patch
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
+# _without_source	- don't build source
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -25,7 +26,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	1.15%{?_with_preemptive:_pr}
+Release:	2%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -35,7 +36,7 @@ Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
-Source5:	linux-2.4.19-netfilter-20020923.tar.gz
+Source5:	linux-2.4.19-netfilter-20021020.tar.bz2
 #Source6:	
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
@@ -527,7 +528,7 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # Netfilter
 (KERNEL_DIR=`pwd` ; export KERNEL_DIR ; cd netfilter-patch-o-matic ; ./runme --batch userspace)
-%patch906 -p1
+#%patch906 -p1
 
 # IP personality
 #echo Adding IP Personality 
@@ -1128,6 +1129,7 @@ fi
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Documentation
 
+%if %{?_without_source:0}%{!?_without_source:1}
 %files source
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/abi
@@ -1155,3 +1157,4 @@ fi
 %{_prefix}/src/linux-%{version}/REPORTING-BUGS
 %{_prefix}/src/linux-%{version}/Rules.make
 %{_prefix}/src/linux-%{version}/config*
+%endif
