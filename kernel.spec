@@ -59,7 +59,7 @@ Patch6:		http://milosch.net/pub/beos/2.2.18-pre2-beos09032000.patch
 Patch7:		http://www.kernel.org/pub/linux/kernel/people/mingo/raid-patches/raid-2.2.19-A1
 Patch8:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.19-reiserfs-%{reiserfs_version}-patch.bz2
 Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.19/ide.2.2.19.05042001.patch.bz2
-Patch10:	http://www.math.leidenuniv.nl/~buytenh/bridge/patches/bridge-0.0.9-against-2.2.19.diff
+Patch10:	http://bridge.sourceforge.net/patches/bridge-0.0.9-against-2.2.19.diff
 Patch11:	http://download.sourceforge.net/linux1394/ieee1394-2.2.19-20010527.gz
 Patch12:	ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
 Patch13:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
