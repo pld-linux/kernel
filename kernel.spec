@@ -148,10 +148,13 @@ Patch100:	2.6.0-sysfs-1of4-lkml.patch
 Patch101:	2.6.0-sysfs-3of4-lkml.patch
 Patch102:	2.6.0-sysfs-4of4-lkml.patch
 
-Patch106:	2.6.0-NF-time-%{_netfilter_snap}.patch
+Patch106:	2.6.0-NF-time-20031226.patch
 
 Patch110:	linux-2.6-xfs-cvs-20040102.patch
 Patch111:	linux-2.6-xfs-secure-attr.patch
+
+Patch114:	2.6.1-rc1-NF-u32-%{_netfilter_snap}.patch
+Patch116:	2.6.1-rc1-NF-osf-%{_netfilter_snap}.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -547,6 +550,9 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch110 -p1
 %patch111 -p1
+
+%patch114 -p1
+%patch116 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
