@@ -253,6 +253,8 @@ Patch921:	linux-2.4.20-grsecurity-1.9.8-dev_mem.patch
 
 # Win4Lin
 Patch1000:	linux-2.4.20-Win4Lin.PLD.patch.bz2
+Patch1001:	linux-2.4.20-Win4Lin.nogrsec.PLD.patch.bz2
+
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -698,7 +700,8 @@ echo AXP patches ...
 
 %ifarch %{ix86}
 echo Win4Lin patch ...
-%patch1000 -p1
+%{?_wihtout_grsec:%patch1000 -p1}
+%{!?_without_grsec:%patch1001 -p1}
 %endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
