@@ -15,41 +15,38 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 # Netfilter snap.
-%define		_netfilter_snap		20040415
+%define		_netfilter_snap		20040419
 #
 %define		no_install_post_strip	1
 #
 Summary:	The Linux kernel (the core of the Linux operating system)
 Name:		kernel
-%define		_ver	2.6.4
+%define		_ver	2.6.5
 Version:	%{_ver}+grsec
-Release:	3
+Release:	0.9
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{_ver}.tar.bz2
-# Source0-md5:	335f06eba1e5372ba38a0d2b253629bd
-Source1:	%{name}-config-nondist
+# Source0-md5:	9a76bf64c1151369b250f967d83077aa
+Source1:	http://www.grsecurity.net/grsecurity-2.0-2.6.5.patch
+# Source1-md5:	306e6b7e719abea88012da2b47f6d4cb
+Source2:	%{name}-config-nondist
 Patch0:		2.6.0-ksyms-add.patch
 Patch1:		2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
 Patch2:		2.6.0-t6-usb-irq.patch
 Patch3:		2.6.0-t7-memleak-lkml.patch
 Patch4:		2.6.0-t7-memleak2-lkml.patch
-Patch5:		2.6.0-t8-clean-mtd-lkml.patch
-Patch6:		2.6.0-t8-swap-include-lkml.patch
-Patch7:		2.6.0-t9-acpi_osl-lkml.patch
-Patch8:		2.6.1-kbuild-out-of-tree.diff
-Patch9:		2.6.1-squashfs1.3r3.patch
-Patch20:	2.6.4-paxgrsec.patch
-Patch21:	2.6.4-paxgrsec-gcc34.patch
-Patch30:	2.6.4-esfq.patch
-Patch31:	2.6.4-imq.patch
-Patch32:	2.6.4-imq-nat.patch
-Patch33:	2.6.4-wrr.patch
-Patch34:	2.6.4-hfsc.patch
-Patch50:	2.6.4-pom-ng-%{_netfilter_snap}.patch
-Patch51:	%{name}-ip_dst_output.patch
-Patch52:	%{name}-netfilter-ipt_osf.patch
-Patch53:	%{name}-netfilter-ipt_string.patch
+Patch5:		2.6.0-t8-swap-include-lkml.patch
+Patch6:		2.6.0-t9-acpi_osl-lkml.patch
+Patch7:		2.6.1-squashfs1.3r3.patch
+#Patch8:		2.6.4-paxgrsec-gcc34.patch
+Patch9:		2.6.4-esfq.patch
+Patch10:	2.6.4-imq.patch
+Patch11:	2.6.4-imq-nat.patch
+Patch12:	2.6.4-wrr.patch
+# netfilter
+Patch50:	2.6.5-pom-ng-%{_netfilter_snap}.patch
+#Patch51:	%{name}-netfilter.patch
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 BuildRequires:	module-init-tools
@@ -122,22 +119,15 @@ hardware.
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
-%patch8 -p1
+patch -p1 < %{SOURCE1}
+#%patch8 -p1
 %patch9 -p1
-
-%patch20 -p1
-%patch21 -p1
-
-%patch30 -p1
-%patch31 -p1
-%patch32 -p1
-%patch33 -p1
-%patch34 -p1
+%patch10 -p1
+%patch11 -p1
+%patch12 -p1
 
 %patch50 -p1
-%patch51 -p1
-%patch52 -p1
-%patch53 -p1
+#%patch51 -p1
 
 %build
 cat << EOF > cleanup-nondist-kernel.sh
