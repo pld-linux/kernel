@@ -209,6 +209,7 @@ Patch304:	linux-2.6-radeonfb-fix-rom-enable-disable.patch
 Patch305:	linux-2.6-radeonfb-fix-section-usage.patch
 Patch306:	linux-2.6-fix-ooops-unmounting-a-defect-dvd.patch
 Patch307:	linux-2.6-long-standing-xattr-sharing.patch
+Patch308:	linux-2.6-nvidia-pci-ids.patch
 
 # em8300
 Patch400:	linux-em8300-2.6.10.patch
@@ -629,6 +630,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch305 -p1
 %patch306 -p1
 %patch307 -p1
+%patch308 -p1
 
 %if %{with em8300}
 %patch400 -p1
@@ -825,6 +827,7 @@ PreInstallKernel (){
 
 KERNEL_BUILD_DIR=`pwd`
 echo "-%{release}" > localversion
+install %{SOURCE40} FAQ-pl
 
 # UP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
@@ -849,8 +852,6 @@ CrossOpts=""
 %endif
 
 install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-
-install %{SOURCE40} FAQ-pl
 
 KERNEL_BUILD_DIR=`pwd`
 
