@@ -66,9 +66,6 @@ Source71:	%{name}-alpha-smp.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
 
-Source99:	%{name}-sound-oss.config
-Source100:	%{name}-misc.config
-
 Patch0:		2.6.0-ksyms-add.patch
 
 %if "%{_cset}" != "0"
@@ -588,10 +585,6 @@ BuildConfig (){
 		arch/%{base_arch}/defconfig.orig > arch/%{base_arch}/defconfig
 %endif
 
-	cat %{SOURCE100} >> arch/%{base_arch}/defconfig
-%ifnarch sparc
-	cat %{SOURCE99} >> arch/%{base_arch}/defconfig
-%endif	
 	ln -sf arch/%{base_arch}/defconfig .config
 
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
@@ -764,8 +757,6 @@ echo "CONFIG_M686=y" >> .config
 echo "CONFIG_MK7=y" >> .config
 %endif
 
-cat %{SOURCE100} >> .config
-
 cp .config config-up
 
 %ifarch %{ix86}
@@ -787,10 +778,7 @@ echo "CONFIG_M686=y" >> .config
 echo "CONFIG_MK7=y" >> .config
 %endif
 
-cat %{SOURCE100} >> .config
-
 cp .config config-smp
-
 
 if [ -e $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h ]; then
 install $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h \
