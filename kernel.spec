@@ -13,6 +13,7 @@
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	regparm		# (ix86) use register arguments (this break binary-only modules)
+%bcond_with	em8300		# DXR3/Hollywood
 
 %{?debug:%define with_verbose 1}
 
@@ -97,6 +98,7 @@ Source80:	%{name}-netfilter.config
 Source90:	%{name}-grsec.config
 Source91:	%{name}-grsec+pax.config
 Source92:	%{name}-vserver.config
+Source93:	%{name}-em8300.config
 
 Patch0:		2.6.0-ksyms-add.patch
 Patch1:		linux-2.6-version.patch
@@ -196,6 +198,9 @@ Patch302:	linux-2.6-scsi-block.patch
 Patch303:	linux-2.6-ntfs-printk-DoS.patch
 Patch304:	linux-2.6-radeonfb-fix-rom-enable-disable.patch
 Patch305:	linux-2.6-radeonfb-fix-section-usage.patch
+
+# em8300
+Patch400:	linux-em8300-2.6.10.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -612,6 +617,10 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch304 -p1
 %patch305 -p1
 
+%if %{with em8300}
+%patch400 -p1
+%endif
+
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
 
@@ -695,6 +704,9 @@ BuildConfig (){
 %endif
 #	vserver
 	cat %{SOURCE92} >> arch/%{_target_base_arch}/defconfig
+%if %{with em8300}
+	cat %{SOURCE93} >> arch/%{_target_base_arch}/defconfig
+%endif
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
