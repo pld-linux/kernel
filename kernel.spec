@@ -319,6 +319,7 @@ rm -rf $RPM_BUILD_ROOT/usr
 install -d $RPM_BUILD_ROOT/usr/{include,src}
 
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT/usr/include/linux
+ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 
 tar Ixf %{SOURCE0} -C $RPM_BUILD_ROOT/usr/src/
 mv -f $RPM_BUILD_ROOT/usr/src/linux $RPM_BUILD_ROOT/usr/src/linux-%{version}
@@ -523,6 +524,7 @@ fi
 %defattr(644,root,root,755)
 %dir /usr/src/linux-%{version}
 /usr/src/linux-%{version}/include
+%{_includedir}/asm
 %{_includedir}/linux
 
 %files source
