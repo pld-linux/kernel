@@ -37,8 +37,8 @@ diff --new-file -ur linux-2.4.20/fs/squashfs/Makefile linux/fs/squashfs/Makefile
 +include $(TOPDIR)/Rules.make
 diff --new-file -ur linux-2.4.20/fs/squashfs/inode.c linux/fs/squashfs/inode.c
 --- linux-2.4.20/fs/squashfs/inode.c	Thu Jan  1 01:00:00 1970
-+++ linux/fs/squashfs/inode.c	Wed Jan  8 10:31:31 2003
-@@ -0,0 +1,935 @@
++++ linux/fs/squashfs/inode.c	Tue Jan 14 04:44:35 2003
+@@ -0,0 +1,923 @@
 +/*
 + * Squashfs - a compressed read only filesystem for Linux
 + *
@@ -670,27 +670,6 @@ diff --new-file -ur linux-2.4.20/fs/squashfs/inode.c linux/fs/squashfs/inode.c
 +}
 +
 +
-+static int squashfs_push_page(int *bytes, struct page *page)
-+{
-+	struct inode *inode = page->mapping->host;
-+	squashfs_sb_info *msBlk = &inode->i_sb->u.squashfs_sb;
-+	squashfs_super_block *sBlk = &msBlk->sBlk;
-+	int mask = (1 << (sBlk->block_log - PAGE_CACHE_SHIFT)) - 1;
-+	int byte_offset = (page->index & mask) << PAGE_CACHE_SHIFT;
-+
-+	TRACE("Entered squashfs_push_page, page index %d, start block %x\n", page->index,
-+		inode->u.squashfs_i.start_block);
-+
-+	memcpy(page_address(page), msBlk->read_page + byte_offset, *bytes);
-+	memset(page_address(page) + *bytes, 0, PAGE_CACHE_SIZE - *bytes);
-+	flush_dcache_page(page);
-+	SetPageUptodate(page);
-+	UnlockPage(page);
-+
-+	return 0;
-+}
-+
-+	
 +#define SIZE 1024
 +static int squashfs_readpage(struct file *file, struct page *page)
 +{
@@ -737,7 +716,7 @@ diff --new-file -ur linux-2.4.20/fs/squashfs/inode.c linux/fs/squashfs/inode.c
 +		int mask = (1 << (sBlk->block_log - PAGE_CACHE_SHIFT)) - 1;
 +		int start_index = page->index & ~mask;
 +		int end_index = start_index | mask;
-+		int byte_offset = (start_index & mask) << PAGE_CACHE_SHIFT;
++		int byte_offset = 0;
 +
 +		down(&msBlk->read_page_mutex);
 +		if(!(bytes = read_data(inode->i_sb, msBlk->read_page, block, *block_listp, NULL))) {
@@ -756,9 +735,18 @@ diff --new-file -ur linux-2.4.20/fs/squashfs/inode.c linux/fs/squashfs/inode.c
 +				flush_dcache_page(page);
 +				SetPageUptodate(page);
 +				UnlockPage(page);
-+			}  else 
-+				page_cache_release(read_cache_page(page->mapping, i, (filler_t *) squashfs_push_page,
-+							&available_bytes));
++			}  else {
++				struct page *push_page;
++
++				if(push_page = grab_cache_page_nowait(page->mapping, i)) {
++					memcpy(page_address(push_page), msBlk->read_page + byte_offset, available_bytes);
++					memset(page_address(push_page) + available_bytes, 0, PAGE_CACHE_SIZE - available_bytes);
++					flush_dcache_page(push_page);
++					SetPageUptodate(push_page);
++					UnlockPage(push_page);
++					page_cache_release(push_page);
++				}
++			}
 +		}
 +		up( &msBlk->read_page_mutex);
 +
@@ -976,7 +964,7 @@ diff --new-file -ur linux-2.4.20/fs/squashfs/inode.c linux/fs/squashfs/inode.c
 +MODULE_LICENSE("GPL");
 diff --new-file -ur linux-2.4.20/include/linux/fs.h linux/include/linux/fs.h
 --- linux-2.4.20/include/linux/fs.h	Thu Nov 28 23:53:15 2002
-+++ linux/include/linux/fs.h	Sun Dec  1 05:40:22 2002
++++ linux/include/linux/fs.h	Thu Jan  9 03:50:56 2003
 @@ -320,6 +320,7 @@
  #include <linux/usbdev_fs_i.h>
  #include <linux/jffs2_fs_i.h>
@@ -1011,7 +999,7 @@ diff --new-file -ur linux-2.4.20/include/linux/fs.h linux/include/linux/fs.h
  	/*
 diff --new-file -ur linux-2.4.20/include/linux/squashfs_fs.h linux/include/linux/squashfs_fs.h
 --- linux-2.4.20/include/linux/squashfs_fs.h	Thu Jan  1 01:00:00 1970
-+++ linux/include/linux/squashfs_fs.h	Wed Jan  8 10:31:31 2003
++++ linux/include/linux/squashfs_fs.h	Thu Jan  9 03:50:51 2003
 @@ -0,0 +1,304 @@
 +#ifndef SQUASHFS_FS
 +#define SQUASHFS_FS
@@ -1344,7 +1332,7 @@ diff --new-file -ur linux-2.4.20/include/linux/squashfs_fs_i.h linux/include/lin
 +#endif
 diff --new-file -ur linux-2.4.20/include/linux/squashfs_fs_sb.h linux/include/linux/squashfs_fs_sb.h
 --- linux-2.4.20/include/linux/squashfs_fs_sb.h	Thu Jan  1 01:00:00 1970
-+++ linux/include/linux/squashfs_fs_sb.h	Wed Jan  8 10:31:31 2003
++++ linux/include/linux/squashfs_fs_sb.h	Thu Jan  9 03:50:51 2003
 @@ -0,0 +1,41 @@
 +#ifndef SQUASHFS_FS_SB
 +#define SQUASHFS_FS_SB
