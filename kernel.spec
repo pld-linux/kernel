@@ -30,7 +30,7 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		2
+%define		_rel		3
 %define		_test_ver	11
 %define		_cset		20031209_2107
 
@@ -108,6 +108,8 @@ Patch36:	2.6.0-t9-NLS-module-lkml.patch
 Patch38:	2.6.0-t9-acpi_osl-lkml.patch
 
 Patch40:	2.6.0-t9-forcedeth-lkml.patch
+
+Patch42:	2.6.0-t11-ipp2p-0.5a.patch
 
 Patch44:	2.6.0-t9-PPC-smp.patch
 
@@ -492,6 +494,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch38 -p1
 
 %patch40 -p1
+
+%patch42 -p1
 
 %patch44 -p1
 
