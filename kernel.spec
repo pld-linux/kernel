@@ -21,7 +21,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.5.71
-Release:	0.1
+Release:	0.2
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
@@ -40,6 +40,7 @@ Source21:	%{name}-ia32-smp.config
 Patch0:		linux-2.5.67-genrtc_fix.patch
 Patch1:		linux-2.5.70-fix_missing_symb.patch
 Patch2:		linux-2.5-miscfix.patch
+Patch3:		http://piorun.ds.pg.gda.pl/~blues/patches/kernel-2.5.71-thor_sunrpc.patch
 # LSM/SELinux
 Patch10:	linux-2.5.70-lsm-20030605.patch.bz2
 ExclusiveOS:	Linux
@@ -269,6 +270,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch0 -p0
 %patch1 -p1
 %patch2 -p1
+%patch3 -p1
 %{!?_without_lsm:%patch10 -p1}
 
 # Fix EXTRAVERSION and CC in main Makefile
