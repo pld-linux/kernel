@@ -237,7 +237,7 @@ Patch304:	2.6.7-ppc-ipr-div.patch
 Patch305:	2.6.7-ppc-proxydict-workaround.patch
 
 Patch310:	linux-2.6-sparc-ksyms.patch
-Patch311:	linux-2.6-gfs-noswitch64.patch
+
 Patch312:	linux-2.6-ppc-ksyms.patch
 
 Patch400:	2.6.7-kill-warnings.patch
@@ -733,9 +733,7 @@ patch -p1 -s < exec-shield.patch
 %patch305 -p1
 
 %patch310 -p1
-%ifarch ppc sparc
-%patch311 -p1
-%endif
+
 %patch312 -p1
 
 %patch400 -p1
