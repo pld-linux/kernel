@@ -18,7 +18,7 @@ Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
 Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
-# Don't use following patch, it may hang the NIC
+# Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
 Source7:	linux-netfilter-patches-20010223.tar.gz
@@ -41,6 +41,7 @@ Source62:	%{name}-sparc64-BOOT.config
 Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
+Source1000:	%{name}-lids.config
 Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.3.gz
 #Patch1:		%{name}-pldfblogo.patch
 #Patch2:		linux-2.4.0-freeswan-%{freeswan_version}.patch
@@ -53,6 +54,7 @@ Patch7:		ftp://ftp.winds.org/linux/patches/2.4.1/aacraid-2.4.1-%{aacraid_version
 Patch8:		linux-fix-win-vj.patch
 # Loopback fix
 Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/axboe/patches/2.4.2-pre4/loop-6.gz
+Patch10:	ipvs-ip_select_ident.patch
 
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
@@ -95,6 +97,28 @@ allocation de process, entrée/sortie de peripheriques, etc.
 Pakiet zawiera j±dro Linuxa niezbêdne do prawid³owego dzia³ania
 Twojego komputera.
 
+%package lids
+Summary:	LIDS enabled kernel version %{version}
+Group:		Base/Kernel
+Group(pl):	Podstawowe/J±dro
+Provides:	%{name} = %{version}
+Provides:	%{name}(reiserfs) = %{version}
+Provides:	%{name}(agpgart) = %{version}
+Prereq:		modutils
+Autoreqprov:	no
+
+%description lids
+This package includes a LIDS enabled version of the Linux %{version} kernel.
+It is required only when you want maximum security.
+
+See http://www.lids.org/ for details.
+
+%description -l pl lids
+Pakiet zawiera j±dro Linuksa w wersji %{version} z w³±czonym LIDS.
+Jest ono wymagane jedynie gdy potrzebne jest maksymalne bezpieczeñstwo.
+
+Szczegó³y pod http://www.lids.org/.
+
 %package smp
 Summary:	Kernel version %{version} compiled for SMP machines
 Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
@@ -127,6 +151,30 @@ plus, il peut quand même fonctionner pour les système mono-processeur.
 Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono wymagane
 przez komputery zawieraj±ce dwa lub wiêcej procesorów. Powinno równie¿ dobrze 
 dzia³aæ na maszynach z jednym procesorem.
+
+%package lids-smp
+Summary:	LIDS enabled kernel version %{version} compiled for SMP machines
+Group:		Base/Kernel
+Group(pl):	Podstawowe/J±dro
+Provides:	%{name} = %{version}
+Provides:	%{name}(reiserfs) = %{version}
+Provides:	%{name}(agpgart) = %{version}
+Prereq:		modutils
+Autoreqprov:	no
+
+%description lids-smp
+This package includes a LIDS enabled SMP version of the Linux %{version}
+kernel. It is required only on machines with two or more CPUs, when you want
+maximum security.
+
+See http://www.lids.org/ for details.
+
+%description -l pl lids-smp
+Pakiet zawiera j±dro SMP Linuksa w wersji %{version} z w³±czonym LIDS.
+Jest ono wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów,
+jedynie gdy wymagane jest maksymalne bezpieczeñstwo.
+
+Szczegó³y pod http://www.lids.org/.
 
 %package BOOT
 Summary:	Kernel version %{version} used on the installation boot disks
@@ -235,8 +283,8 @@ patch -p1 -s <dc395/dc395-integ24.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # Fore 200e ATM NIC
-patch -p1 <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
-#patch -p1 <linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
+patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
+#patch -p1 -s <linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
 
 # Netfilter
 for i in netfilter-patches/* ; do
@@ -249,15 +297,16 @@ for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
 echo -e $ANS | ./runme)
 
 # LIDS
-patch -p1 <lids-%{lids_version}-2.4.1/lids-%{lids_version}-2.4.1.patch
+patch -p1 -s <lids-%{lids_version}-2.4.1/lids-%{lids_version}-2.4.1.patch
 
 # IPVS
 for i in ipvs-%{ipvs_version}/*.diff ; do
-	patch -p1 <$i
+	patch -p1 -s <$i
 done
 mkdir net/ipv4/ipvs
 cp ipvs-%{ipvs_version}/ipvs/*.{c,h,in} net/ipv4/ipvs
 cp ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile net/ipv4/ipvs/Makefile
+patch -p1 -s < %{PATCH10}
 
 # Remove -g from drivers/atm/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
@@ -277,17 +326,30 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
 %build
 BuildKernel() {
 	%{?verbose:set -x}
+	# is this a LIDS enabled kernel?
+	if [ "$1" = "lids" ] ; then
+		LIDS="lids"
+		shift
+	else
+		LIDS=""
+	fi
 	# is this a special kernel we want to build?
 	if [ -n "$1" ] ; then
 		Config="%{_target_cpu}"-$1
 		KernelVer=%{version}-%{release}$1
 		echo BUILDING A KERNEL FOR $1...
+		shift
 	else
 		Config="%{_target_cpu}"
 		KernelVer=%{version}-%{release}
 		echo BUILDING THE NORMAL KERNEL...
 	fi
 	cp $RPM_SOURCE_DIR/kernel-$Config.config arch/$RPM_ARCH/defconfig
+	if [ "$LIDS" = "lids" ] ; then
+		echo ENABLING LIDS...
+		cat %{SOURCE1000} >> arch/$RPM_ARCH/defconfig
+		KernelVer="${KernelVer}-lids"
+	fi
 
 	%{__make} mrproper
 	ln -sf arch/$RPM_ARCH/defconfig .config
@@ -335,13 +397,17 @@ KERNEL_BUILD_DIR=`pwd`
 rm -rf $KERNEL_BUILD_DIR-installed
 install -d $KERNEL_BUILD_DIR-installed
 
-# NORMAL KERNEL
+# UP KERNEL
 BuildKernel
 
-# SMP-ENABLED KERNEL
-%ifnarch i386
+# SMP KERNEL
 BuildKernel smp
-%endif
+
+# UP LIDS KERNEL
+BuildKernel lids
+
+# SMP LIDS KERNEL
+BuildKernel lids smp
 
 # BOOT kernel
 %ifnarch i586 i686
@@ -381,13 +447,13 @@ gzip -dc %{SOURCE10} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 # Pre patch
 #gzip -dc %{PATCH100} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
-gzip -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH0} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
-gzip -dc %{PATCH9} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH9} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/dc395/dc395-integ24.diff
@@ -410,6 +476,8 @@ echo -e $ANS | ./runme))
 
 # LIDS
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/lids-%{lids_version}-2.4.1/lids-%{lids_version}-2.4.1.patch
+install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config $RPM_BUILD_ROOT/usr/src/linux-%{version}/.config.lids
+cat %{SOURCE1000} >> $RPM_BUILD_ROOT/usr/src/linux-%{version}/.config.lids
 
 # IPVS
 for i in $RPM_BUILD_ROOT/usr/src/linux-%{version}/ipvs-%{ipvs_version}/*.diff ; do
@@ -418,6 +486,7 @@ done
 mkdir net/ipv4/ipvs
 cp $RPM_BUILD_ROOT/usr/src/linux-%{version}/ipvs-%{ipvs_version}/ipvs/*.{c,h,in} $RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipv4/ipvs
 cp $RPM_BUILD_ROOT/usr/src/linux-%{version}/ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile $RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipv4/ipvs/Makefile
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
 
 # Remove -g from drivers/atm/Makefile
 mv -f $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/atm/Makefile \
@@ -604,7 +673,20 @@ fi
 /lib/modules/%{version}-%{release}/kernel
 /lib/modules/%{version}-%{release}/build
 
-%ifnarch i386
+%files lids
+%defattr(644,root,root,755)
+%ifarch alpha sparc
+/boot/vmlinux-%{version}-%{release}lids
+%endif
+/boot/vmlinuz-%{version}-%{release}lids
+/boot/System.map-%{version}-%{release}lids
+%dir /lib/modules/%{version}-%{release}lids
+%ifarch %{ix86}
+/lib/modules/%{version}-%{release}lids/pcmcia
+%endif
+/lib/modules/%{version}-%{release}lids/kernel
+/lib/modules/%{version}-%{release}lids/build
+
 %files smp
 %defattr(644,root,root,755)
 %ifarch alpha sparc
@@ -618,7 +700,20 @@ fi
 %endif
 /lib/modules/%{version}-%{release}smp/kernel
 /lib/modules/%{version}-%{release}smp/build
+
+%files lids-smp
+%defattr(644,root,root,755)
+%ifarch alpha sparc
+/boot/vmlinux-%{version}-%{release}lids-smp
 %endif
+/boot/vmlinuz-%{version}-%{release}lids-smp
+/boot/System.map-%{version}-%{release}lids-smp
+%dir /lib/modules/%{version}-%{release}lids-smp
+%ifarch %{ix86}
+/lib/modules/%{version}-%{release}lids-smp/pcmcia
+%endif
+/lib/modules/%{version}-%{release}lids-smp/kernel
+/lib/modules/%{version}-%{release}lids-smp/build
 
 %ifnarch i586 i686
 %files BOOT
