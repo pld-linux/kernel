@@ -19,6 +19,8 @@
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	bootsplash	# build with bootsplash
 
+%bcond_with	mosix		# build with openMosix support
+
 %{?debug:%define with_verbose 1}
 
 %ifarch sparc
@@ -48,7 +50,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		2
+%define		_rel		4%{with mosix:m}
 %define		_cset		20040707_0722
 %define		_apply_cset	1
 
@@ -98,6 +100,8 @@ Source74:	%{name}-ppc-smp.config
 Source80:	%{name}-netfilter.config
 
 Source90:	%{name}-grsec.config
+
+Source100:	%{name}-openMosix.config
 
 Patch0:		2.6.0-ksyms-add.patch
 
@@ -241,6 +245,9 @@ Patch310:	linux-2.6-sparc-ksyms.patch
 Patch312:	linux-2.6-ppc-ksyms.patch
 
 Patch400:	2.6.7-kill-warnings.patch
+
+# openMosix support
+Patch420:	openMosix-2.6.7-PLD.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -740,6 +747,8 @@ patch -p1 -s < exec-shield.patch
 
 %patch114 -p1
 
+%patch420 -p1
+
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's#EXTRAVERSION =.*#EXTRAVERSION =#g' \
@@ -818,6 +827,15 @@ BuildConfig (){
 	sed -i 's:# CONFIG_PREEMPT is not set:CONFIG_PREEMPT=y:' arch/%{_target_base_arch}/defconfig
 %endif
 
+%ifarch %{ix86} 
+    %if %{with_mosix}
+	cat %{SOURCE100} >> arch/%{_target_base_arch}/defconfig
+	%if %{with preemptive}
+		sed -i 's:CONFIG_PREEMPT=y:# CONFIG_PREEMPT is not set:' arch/%{_target_base_arch}/defconfig
+	%endif
+    %endif
+%endif
+	
 #	netfilter	
 	cat %{SOURCE80} >> arch/%{_target_base_arch}/defconfig
 #	grsecurity
