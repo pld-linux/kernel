@@ -137,6 +137,7 @@ ExclusiveArch:	%{ix86} sparc sparc64 alpha
 %ifarch		%{ix86}
 BuildRequires:	bin86
 %endif
+BuildRequires:	kernel-headers
 
 %description
 This package contains the Linux kernel that is used to boot and run
