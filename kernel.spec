@@ -67,7 +67,7 @@ Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
-#Source1000:	%{name}-lsm.config
+Source1000:	%{name}-lsm.config
 Source1001:	%{name}-abi.config
 Source1002:	%{name}-addon.config
 Source1003:	%{name}-netfilter.config
