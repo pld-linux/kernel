@@ -30,7 +30,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	2.21
+Release:	2.22
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
@@ -175,6 +175,7 @@ Patch140:	linux-2.4.18-tridentfb.patch
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
 Patch900:	ide-EXPORT_SYMBOL.fix
 Patch901:	netfilter-ip_nat_pptp.patch
+Patch902:	linux-2.4.19pre7-VIA.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
@@ -608,6 +609,10 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 # Trident FB
 echo Replacing Trident FB module .
 %patch140 -p1
+
+# VIA Southbridge update
+echo Updating VIA Southbridge
+%patch902 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
