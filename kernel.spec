@@ -648,7 +648,7 @@ echo Added ACL support
 echo Added NetMos card supprot
 %patch46 -p1
 
-%if %{?_with_o1:1}
+%if %{?_with_o1:1}%{!?_with_o1:0}
 echo O(1) Scheduler.
 #%patch2000 -p1
 %ifarch ppc
