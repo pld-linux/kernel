@@ -1,0 +1,53 @@
+--- linux-2.6.5/net/ipv4/ip_output.c.orig	2004-04-29 15:11:24.000000000 +0200
++++ linux-2.6.5/net/ipv4/ip_output.c	2004-04-29 15:28:26.159293360 +0200
+@@ -124,15 +124,6 @@
+ 	return ttl;
+ }
+ 
+-#ifdef CONFIG_NETFILTER
+-/* out-of-line copy is only required with netfilter */
+-int ip_dst_output(struct sk_buff *skb)
+-{
+-	return NF_HOOK_COND(PF_INET, NF_IP_POST_ROUTING, skb, NULL,
+-	                    skb->dst->dev, dst_output, skb->dst->xfrm != NULL);
+-}
+-#endif
+-
+ /* 
+  *		Add an ip header to a skbuff and send it out.
+  *
+--- linux-2.6.5/include/net/ip.h.orig	2004-04-29 15:11:24.000000000 +0200
++++ linux-2.6.5/include/net/ip.h	2004-04-29 15:42:56.958911696 +0200
+@@ -227,7 +227,7 @@
+ 		__ip_select_ident(iph, dst, more);
+ }
+ 
+-extern inline int ip_dst_output(struct sk_buff *skb)
++static inline int ip_dst_output(struct sk_buff *skb)
+ {
+ 	return NF_HOOK_COND(PF_INET, NF_IP_POST_ROUTING, skb, NULL,
+ 	                    skb->dst->dev, dst_output, skb->dst->xfrm != NULL);
+--- linux-2.6.5/net/ipv4/netfilter/ipt_NETLINK.c.orig	2004-04-29 15:11:24.000000000 +0200
++++ linux-2.6.5/net/ipv4/netfilter/ipt_NETLINK.c	2004-04-29 15:39:58.614024240 +0200
+@@ -112,7 +112,7 @@
+ {
+ 	DEBUGP("ipt_NETLINK: cleanup_module\n");
+ 	ipt_unregister_target(&ipt_netlink_reg);
+-	if(ipfwsk->socket) sock_release(ipfwsk->socket);
++	if(ipfwsk->sk_socket) sock_release(ipfwsk->sk_socket);
+ }
+ 
+ module_init(init);
+--- linux-2.6.5/net/ipv4/netfilter/ipt_osf.c.orig	2004-04-29 15:11:24.000000000 +0200
++++ linux-2.6.5/net/ipv4/netfilter/ipt_osf.c	2004-04-29 15:38:23.428494640 +0200
+@@ -844,8 +844,8 @@
+ 	
+ 	remove_proc_entry("sys/net/ipv4/osf", NULL);
+ 	ipt_unregister_match(&osf_match);
+-	if (nts && nts->socket)
+-		sock_release(nts->socket);
++	if (nts && nts->sk_socket)
++		sock_release(nts->sk_socket);
+ 
+ 	list_for_each_safe(ent, n, &finger_list)
+ 	{
