@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	2.3%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	2.4%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -621,8 +621,8 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 %patch8 -p1
 
 # IP personality
-#echo Adding IP Personality 
-#patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020427-linux-2.4.18.diff
+echo Adding IP Personality 
+patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020819-linux-2.4.19.diff
 
 %ifarch ppc
 %patch909 -p1
@@ -632,9 +632,9 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 %{!?_without_grsec:%patch910 -p1}
 
 # hostap
-#echo Installing Host AP support
-#patch -p1 -s < hostap-%{hostap_version}/kernel-patches/hostap-linux-2.4.19-rc3.patch
-#cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
+echo Installing Host AP support
+patch -p1 -s < hostap-%{hostap_version}/kernel-patches/hostap-linux-2.4.19-rc3.patch
+cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 
 #echo Sysctl support for PAX nod installed.
 #%patch912 -p1
