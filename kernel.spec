@@ -203,8 +203,8 @@ Patch84:	2.6.6-serial-fifo-lkml.patch
 Patch88:	2.6.6-qsort-updated-lkml.patch
 Patch90:	2.6.6-xfs-qsort-lkml.patch
 
-#Patch94:	grsecurity-2.0-2.6.6-unofficial.patch
-Patch94:	%{name}-grsec.patch
+Patch94:	grsecurity-2.0-2.6.6-unofficial.patch
+#Patch94:	%{name}-grsec.patch
 
 Patch96:	2.6.6-lirc_i2c.diff
 # for older glibc:
@@ -599,8 +599,8 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch24 -p1
 
 ## bootsplash
-%if %{with bootsplash
-echo Not fixed !!
+%if %{with bootsplash}
+echo "Not fixed !!"
 %patch26 -p1
 %endif
 
