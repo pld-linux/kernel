@@ -32,7 +32,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	3.7%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	3.8%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -95,6 +95,7 @@ Patch50:	linux-2.4.20-davfs-0.2.4.patch.bz2
 Patch55:	linux-2.4.20-davfs-_FUNCTION_.patch
 # quota for reiserfs
 Patch60:	linux-2.4.20-reiserfs-quota.patch.bz2
+# http://dl.sourceforge.net/squashfs/squashfs-1.1b.tar.gz
 Patch65:	linux-2.4.20-squashfs.patch
 #Patch70:	linux-2.4.20-afs.patch.bz2
 
@@ -169,7 +170,7 @@ Patch270:	dc395-tab.patch
 # and/or are on bcond and/or are ifarch
 
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
-Patch800:	grsecurity-%{grsec_version}-%{version}.patch
+Patch800:	grsecurity-%{grsec_version}-%{version}.patch.bz2
 Patch801:	PPC-grsecurity-pgtable.h.patch
 Patch802:	linux-2.4.20-grsecurity-%{grsec_version}-kmem.patch
 
@@ -316,7 +317,12 @@ BuildRequires:	bin86
 %endif
 Conflicts:	iptables < 1.2.7a
 Conflicts:	lvm < 1.0.4
-Conflicts:	xfsprogs < 2.0.0
+Conflicts:	xfsprogs < 2.1.0
+Conflicts:	reiserfsprogs < 3.6.3
+Conflicts:	e2fsprogs < 1.25
+Conflicts:	jfsutils < 1.0.12
+Conflicts:	util-linux < 2.10o
+Conflicts:	modutils < 2.4.2
 Conflicts:	quota < 3.06
 
 %description
@@ -363,7 +369,12 @@ Prereq:		geninitrd >= 2.21
 Autoreqprov:	no
 Conflicts:	iptables < 1.2.7a
 Conflicts:	lvm < 1.0.4
-Conflicts:	xfsprogs < 2.0.0
+Conflicts:	xfsprogs < 2.1.0
+Conflicts:	reiserfsprogs < 3.6.3
+Conflicts:	e2fsprogs < 1.25
+Conflicts:	jfsutils < 1.0.12
+Conflicts:	util-linux < 2.10o
+Conflicts:	modutils < 2.4.2
 Conflicts:	quota < 3.06
 
 %description smp
@@ -478,7 +489,7 @@ Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
 Provides:	i2c-devel = 2.7.0
-Provides:	%{name}_netfilter = 1.2.7a
+Provides:	%{name}(netfilter) = 1.2.7a-%{netfilter_snap}
 Autoreqprov:	no
 
 %description headers
