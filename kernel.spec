@@ -64,7 +64,7 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.30
+%define		_rel		0.31
 %define		_cset		20041210_0507
 %define		_apply_cset	1
 
@@ -175,7 +175,7 @@ Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 Patch71:	vesafb-tng-0.9-rc4-r3-2.6.9-rc3.patch
 # http://dev.gentoo.org/~spock/projects/gensplash/
 Patch72:	fbsplash-0.9-r8-2.6.9-rc3.patch
-Patch73:	squashfs2.0-patch
+Patch73:	squashfs2.1-patch
 # http://dl.sourceforge.net/pramfs/
 Patch74:	pramfs-2.6.4.patch
 Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
