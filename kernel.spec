@@ -62,7 +62,7 @@ Source100:	%{name}-misc.config
 Patch1:		linux-2.6-miscfix.patch
 Patch2:		2.6.0-t3-swim3.patch
 
-Patch5:		2.6.0-t3-64-bit_kdev-fix-lkml.patch
+Patch5:		2.6.0-t4-sis190.patch
 Patch6:		2.6.0-t3-eisa-bus.c-lkml.patch
 Patch7:		2.6.0-t3-initrd_load-lkml.patch
 
@@ -316,7 +316,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 #%patch1 -p1
 %patch2 -p1
 
-#%patch5 -p1
+%patch5 -p1
 %patch6 -p1
 #%patch7 -p1
 
