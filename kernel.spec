@@ -109,7 +109,9 @@ Patch901:	dc395-patch-PLD-fix.patch
 Patch902:	http://domsch.com/linux/aacraid/linux-2.4.4-axboe-scsi-max-sec.patch
 Patch903:	rl2-include.patch
 # patch to fix LIDS stupidity
-Patch904:	linux-lids-fixpatch.patch
+#Patch904:	linux-lids-fixpatch.patch
+# patch to fix problem wit ABI and LIDS
+Patch904:	linux-lids-with-abi.patch
 Patch905:	linux-vlan-fixpatch.patch
 
 # Linus's -pre
@@ -388,7 +390,7 @@ echo -e $ANS | ./runme)
 %if %{!?_without_lids:1}%{?_without_lids:0}
 # LIDS
 cd lids-%{lids_version}
-#%patch904 -p1
+%patch904 -p1
 cd ..
 patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
 %endif
@@ -417,9 +419,6 @@ rm -rf %{sym_ncr_version}
 ## install RangeLAN2 driver
 #mv rl2-1.7.1 drivers/net/rl2
 #%patch903 -p1
-
-## must be here, in other time make errors with LIDS
-#%patch9 -p1
 
 # 802.1Q VLANs
 cd vlan.%{vlan_version}
