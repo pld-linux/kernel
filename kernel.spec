@@ -826,7 +826,7 @@ fi
 %endif
 %{_libdir}/bootdisk/lib/modules/%{version}/fs
 #%{_libdir}/bootdisk/lib/modules/%{version}/ipv4
-#%{_libdir}/bootdisk/lib/modules/%{version}/ipv6
+%{_libdir}/bootdisk/lib/modules/%{version}/ipv6
 %{_libdir}/bootdisk/lib/modules/%{version}/misc
 %{_libdir}/bootdisk/lib/modules/%{version}/net
 %{_libdir}/bootdisk/lib/modules/%{version}/scsi
