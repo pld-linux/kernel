@@ -15,7 +15,7 @@
 # _without_lsm		- don't build LSM/SELinux kernel
 
 %define		_rel		0
-%define		test_ver	4
+%define		test_ver	4bk2
 %define		patch_level	0
 
 %if	%{test_ver} != 0
@@ -61,32 +61,33 @@ Source74:	%{name}-ppc-smp.config
 
 Source100:	%{name}-misc.config
 
-Patch1:		patch-2.6.0-test4-bk1
-Patch2:		2.6.0-t3-swim3.patch
-Patch3:		squashfs1.3-patch
+# ftp://ftp.kernel.org:/pub/linux/kernel/v2.6/snapshots/
+Patch1:		patch-2.6.0-test4-bk2
 
-Patch5:		2.6.0-t4-sis190.patch
-Patch6:		2.6.0-t3-eisa-bus.c-lkml.patch
-Patch7:		2.6.0-t3-initrd_load-lkml.patch
+Patch22:		2.6.0-t3-swim3.patch
+Patch23:		squashfs1.3-patch
 
-Patch10:	2.6.0-t3-pmac_ide-lkml.patch
-Patch11:	2.6.0-t3-sysfs_mem-lkml.patch
-Patch12:	2.6.0-t3-trival-lkml.patch
-Patch13:	2.6.0-t4-pcmcia-sound-vx-bk.patch
+Patch25:		2.6.0-t4-sis190.patch
+Patch26:		2.6.0-t3-eisa-bus.c-lkml.patch
+Patch27:		2.6.0-t3-initrd_load-lkml.patch
 
-Patch20:	2.6.0-t3.c99.Documentation-lkml.patch
-Patch21:	2.6.0-t3.c99.arch-lkml.patch
-Patch22:	2.6.0-t3.c99.arch.ia64-lkml.patch
-Patch23:	2.6.0-t3.c99.arch.mips-lkml.patch
-Patch24:	2.6.0-t3.c99.arch.sh-lkml.patch
-Patch25:	2.6.0-t3.c99.drivers-lkml.patch
-Patch26:	2.6.0-t3.c99.fs-lkml.patch
-Patch27:	2.6.0-t3.c99.include-lkml.patch
-Patch28:	2.6.0-t3.c99.sound-lkml.patch
+Patch30:	2.6.0-t3-pmac_ide-lkml.patch
+Patch31:	2.6.0-t3-sysfs_mem-lkml.patch
+Patch32:	2.6.0-t3-trival-lkml.patch
 
-Patch30:	2.6.0-t3-oprofile-1of3-lkml.patch
-Patch31:	2.6.0-t3-oprofile-2of3-lkml.patch
-Patch32:	2.6.0-t3-oprofile-3of3-lkml.patch
+Patch40:	2.6.0-t3.c99.Documentation-lkml.patch
+Patch41:	2.6.0-t3.c99.arch-lkml.patch
+Patch42:	2.6.0-t3.c99.arch.ia64-lkml.patch
+Patch43:	2.6.0-t3.c99.arch.mips-lkml.patch
+Patch44:	2.6.0-t3.c99.arch.sh-lkml.patch
+Patch45:	2.6.0-t3.c99.drivers-lkml.patch
+Patch46:	2.6.0-t3.c99.fs-lkml.patch
+Patch47:	2.6.0-t3.c99.include-lkml.patch
+Patch48:	2.6.0-t3.c99.sound-lkml.patch
+
+Patch50:	2.6.0-t3-oprofile-1of3-lkml.patch
+Patch51:	2.6.0-t3-oprofile-2of3-lkml.patch
+Patch52:	2.6.0-t3-oprofile-3of3-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -317,31 +318,31 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %prep
 %setup -q -n linux-%{version}-%{test}
 %patch1 -p1
-%patch2 -p1
-%patch3 -p1
 
-%patch5 -p1
-%patch6 -p1
-#%patch7 -p1
-
-%patch10 -p1
-%patch11 -p1
-#%patch12 -p1
-%patch13 -p1
-
-%patch20 -p1
-%patch21 -p1
 %patch22 -p1
 %patch23 -p1
-%patch24 -p1
-#%patch25 -p1
-%patch26 -p1
-%patch27 -p1
-#%patch28 -p1
 
-#%patch30 -p1
-#%patch31 -p1
+%patch25 -p1
+%patch26 -p1
+#%patch27 -p1
+
+%patch30 -p1
+%patch31 -p1
 #%patch32 -p1
+
+%patch40 -p1
+%patch41 -p1
+%patch42 -p1
+%patch43 -p1
+%patch44 -p1
+#%patch45 -p1
+%patch46 -p1
+%patch47 -p1
+#%patch48 -p1
+
+#%patch50 -p1
+#%patch51 -p1
+#%patch52 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
