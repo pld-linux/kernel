@@ -17,7 +17,7 @@
 %define		_rel		0.2
 %define		test_ver	5
 %define		patch_level	0
-%define		_cset		0
+%define		_cset		20030909_2219
 
 %if "%{test_ver}" != "0"
 %define		test	test%{test_ver}
