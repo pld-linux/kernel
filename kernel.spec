@@ -51,15 +51,15 @@ Name:		kernel
 Version:	2.6.1
 %if "%{_rc}" != "0"
 %if "%{_cset}" != "0"
-Release:	1.rc%{_rc}.%{_rel}.cset%{_cset}
+Release:	0.rc%{_rc}.%{_rel}.cset%{_cset}
 %else
-Release:	1.rc%{_rc}.%{_rel}
+Release:	0.rc%{_rc}.%{_rel}
 %endif
 %else
 %if "%{_cset}" != "0"
-Release:	1.%{_rel}.cset%{_cset}
+Release:	%{_rel}.cset%{_cset}
 %else
-Release:	1.%{_rel}
+Release:	%{_rel}
 %endif
 %endif
 
