@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	1.6%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	1.7%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -210,12 +210,13 @@ Patch138:	http://www.uwsg.indiana.edu/hypermail/linux/kernel/0212.0/att-1445/01-
 Patch139:	linux-2.4.20-v4l2.patch.bz2 
 # PWC USB Webcam Driver update (only for 2.4.20; 2.4.21 should have this fix)
 Patch140:	linux-2.4.20-pwc.patch
-
 # rivafb - fix for text background in 16bpp modes
 Patch141:	linux-rivafb16.patch
 # misc tdfxfb fixes - detailed description inside
 Patch142:	linux-tdfxfb-fixes.patch
 Patch143:	linux-2.4.20-reiserfs-quota.patch.bz2
+#support for VIA KT400 chipset in agpgart
+Patch144:	linux-2.4.20-kt400.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 # This patch allows to create more than one sound device using alsa
@@ -681,6 +682,7 @@ echo Added support for V4L2
 %{!?_without_grsec:%patch921 -p1}
 
 %patch143 -p1
+%patch144 -p1
 
 echo Added ARCH specific patches....
 %ifarch ppc
