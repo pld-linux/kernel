@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		5
+%define		_rel		6
 %define		_test_ver	8
 %define		_cset		0
 
@@ -93,6 +93,9 @@ Patch38:	2.6.0-t8-uc0.patch
 
 Patch40:	2.6.0-t8-VLSI-ix86-lkml.patch
 Patch42:	2.6.0-t8-quota-locking-fix-lkml.patch
+
+Patch44:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
+Patch46:	2.6.0-t8-sis900_net-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -418,6 +421,9 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch40 -p1
 %patch42 -p1
+
+%patch44 -p1
+%patch46 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
