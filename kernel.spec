@@ -700,9 +700,6 @@ BuildKernel BOOT
 %endif
 %endif
 
-# building i8255 module
-%{__make} -C i8255
-
 %install
 umask 022
 rm -rf $RPM_BUILD_ROOT
