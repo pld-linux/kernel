@@ -152,7 +152,7 @@ Patch62:	linux-2.6-lirc-0.7.patch
 # http://ifp-driver.sourceforge.net/
 Patch63:	iriverfs-r0.1.0.1.patch
 Patch64:	squashfs2.1-patch
-#Patch65:	linux-reiser4.patch.bz2
+Patch65:	linux-reiser4-2.6.11-mm4.patch.bz2
 
 # http://grsecurity.net
 Patch70:	grsecurity-2.1.3-2.6.11-200503111604.patch
@@ -549,7 +549,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch62 -p1
 %patch63 -p1
 %patch64 -p1
-#patch65 -p1		NEEDS UPDATE
+%patch65 -p1
 
 %patch70 -p1
 
