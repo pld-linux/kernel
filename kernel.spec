@@ -72,7 +72,7 @@ Patch5:		br2684-against2.4.4.diff
 # Compressed iso9660 filesystem
 Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/filemap-2.4.4-1.diff.gz
 Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-2.4.5-pre1-5.diff.gz
-Patch11:	linux-abi-2.4.3.0-PLD.diff
+Patch11:	linux-abi-2.4.3.0-PLD.patch
 Patch12:	http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 
 # Assorted bugfixes
@@ -380,8 +380,8 @@ for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
 echo -e $ANS | ./runme)
 
 # LIDS
-#%patch905 -p0
-#patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
+%patch905 -p0
+patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
 
 # IPVS
 for i in ipvs-%{ipvs_version}/*.diff ; do
@@ -421,7 +421,7 @@ rm -rf %{sym_ncr_version}
 #%patch903 -p1
 
 ## must be here, in other time make errors with LIDS
-#%patch11 -p1
+%patch11 -p1
 
 %build
 BuildKernel() {
