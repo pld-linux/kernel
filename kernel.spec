@@ -122,7 +122,7 @@ Patch48:	2.6.1-rc2-ini9100u-lkml.patch
 
 Patch50:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 
-Patch52:	laptop-mode-2.6.1-7.patch
+Patch52:	laptop-mode.patch
 
 Patch56:	kbuild-out-of-tree.diff
 
@@ -164,6 +164,8 @@ Patch98:	2.6.5-sparc64-missing-include.patch
 Patch100:	2.6.5-3C920b-Tornado.patch
 
 Patch102:	2.6.5-rc3-EXPORT_SYMBOL.patch
+
+Patch104:	2.6.5-i386-cmpxchg.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -543,7 +545,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch50 -p1
 
-##%patch52 -p1
+%patch52 -p1
 
 #%%patch56 -p1
 
@@ -584,6 +586,10 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch100 -p1
 
 %patch102 -p1
+
+%ifarch i386
+%patch104 -p1
+%endif
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -642,6 +648,34 @@ BuildConfig (){
 %endif
 
 	cat %{SOURCE80} >> arch/%{base_arch}/defconfig
+
+if [ "$BOOT" = "yes" ]; then
+%ifarch %{ix86}
+		Config="ia32"
+%else
+		Config="%{_target_cpu}"
+%endif
+:> arch/%{base_arch}/defconfig
+	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/%{base_arch}/defconfig
+%ifarch i386
+	echo "CONFIG_M386=y" >> arch/%{base_arch}/defconfig
+	mv -f arch/%{base_arch}/defconfig arch/%{base_arch}/defconfig.orig
+	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
+		arch/%{base_arch}/defconfig.orig > arch/%{base_arch}/defconfig
+%endif
+
+	echo "# CONFIG_APM is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_ACPI is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_MTD is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_NETFILTER is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_WAN is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_ATM is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_HOTPLUG_PCI is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_NET_SCHED is not set" >> arch/%{base_arch}/defconfig
+	echo "" >> arch/%{base_arch}/defconfig
+	echo "" >> arch/%{base_arch}/defconfig
+	echo "" >> arch/%{base_arch}/defconfig
+fi
 
 	ln -sf arch/%{base_arch}/defconfig .config
 
@@ -761,12 +795,13 @@ BuildConfig smp
 %{?with_smp:PreInstallKernel smp}
 
 # BOOT kernel
-#%%ifnarch i586 i686 athlon
-#%KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
-#%rm -rf $KERNEL_INSTALL_DIR
-#%%{?with_boot:BuildKernel BOOT}
-#%%{?with_boot:PreInstallKernel boot}
-#%%endif
+%ifnarch i586 i686 athlon
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
+rm -rf $KERNEL_INSTALL_DIR
+BuildConfig BOOT
+%{?with_boot:BuildKernel BOOT}
+%{?with_boot:PreInstallKernel boot}
+%endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
