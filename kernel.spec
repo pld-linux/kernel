@@ -165,7 +165,6 @@ Patch138:	dmasound.patch.bz2
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
 Patch900:	ide-EXPORT_SYMBOL.fix
-Patch901:	jfs-fix.patch
 Patch902:	netfilter-ctnetlink-fix.patch
 Patch903:	netfilter-ftp-fxp-fix.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
@@ -428,7 +427,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch124 -p1
 
 #%patch900 -p0
-#%patch901 -p0
 %patch904 -p0
 
 # Tekram DC395/315 U/UW SCSI host driver
