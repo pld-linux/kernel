@@ -10,7 +10,7 @@
 %define		pre_version		pre9
 %define		lids_version		1.0.11-2.4.6
 %define		ipvs_version		0.9.4
-%define		freeswan_version	snap2001jun14R
+%define		freeswan_version	snap2001sep27b
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.9
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
@@ -69,7 +69,7 @@ Source1007:	%{name}-ippersonality.config
 Patch0:		%{name}-pldfblogo.patch
 #Patch1:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
 Patch1:		patch-int-2.4.5.0.gz
-Patch2:		linux-2.4.5-freeswan-%{freeswan_version}.patch.gz
+Patch2:		linux-2.4.7-freeswan-%{freeswan_version}.patch.gz
 # http://domsch.com/linux/aacraid/linux-2.4.4-aacraid-043001.patch
 Patch3:		linux-2.4.4-aacraid-043001.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
