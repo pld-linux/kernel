@@ -17,7 +17,7 @@
 %define		IPperson_version	20010724-2.4.7
 %define		grsec_version		1.9.2-2.4.17
 %define		aic_version		6.2.3-2.4.7
-%define		jfs_version		2.4-1.0.14
+%define		jfs_version		2.4-1.0.15
 %define		lvm_version		1.0.3
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -25,7 +25,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	0.1
+Release:	0.2
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -75,7 +75,7 @@ Patch2:		freeswan-%{freeswan_version}-%{version}.patch.gz
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.17.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
-Patch5:		linux-2.4.17-xfs-20020204.patch.gz
+Patch5:		xfs-2.4.18-02032002.patch.gz
 # Homepage of ABI : http://linux-abi.sourceforge.net/
 #ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2
 Patch7:		linux-abi-2.4.17.0.patch.bz2
@@ -83,11 +83,11 @@ Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # http://grsecurity.net/grsecurity-%{grsec_version}.patch
 Patch9:		grsecurity-%{grsec_version}.patch
 # Preemptive kernel  patch
-Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-%{version}-1.patch
+Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-%{version}-2.patch
 
 Patch11:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-%{version}-1.patch
 Patch12:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-%{version}-1.patch
-Patch13:	http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.16-ipvs-%{ipvs_version}.patch.gz
+Patch13:	http://www.linuxvirtualserver.org/software/kernel-2.4/linux-%{version}-ipvs-%{ipvs_version}.patch.gz
 Patch14:	http://people.redhat.com/mingo/O(1)-scheduler/sched-O1-2.4.17-K2.patch
 
 # Assorted bugfixes
@@ -99,7 +99,8 @@ Patch102:	PCI_ISA_bridge.patch
 Patch103:	linux-2.4.2-nvram-hdd.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch105:	linux-2.4.2-pcnet-parms.patch
-Patch106:	http://linuxdiskcert.org/ide.2.4.16.12102001.patch.bz2
+#Patch106:	http://linuxdiskcert.org/ide.2.4.16.12102001.patch.bz2
+Patch106:	http://www.kernel.org/pub/linux/kernel/people/hedrick/ide-%{version}/ide.%{version}-rc1.02152002.patch.bz2
 Patch107:	linux-reiserfs-rename.patch
 Patch108:	linux-alpha-nfs-2.4.2.patch
 Patch109:	linux-2.4-string.patch
@@ -120,7 +121,7 @@ Patch117:	linux-2.4.3-rawio.patch
 Patch120:	linux-2.4.10-aironet.patch
 Patch121:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
-Patch122:	lvm-%{lvm_version}-%{version}.patch
+Patch122:	lvm-%{lvm_version}-%{version}.patch.gz
 # fixed xquad_portio
 Patch123:	xquad_portio.fix
 # 
@@ -337,23 +338,23 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch2 -p1
 %patch4 -p1
 %patch5 -p1
-%patch7 -p1
-%if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
-%patch14 -p1
-%patch913 -p1
-%else
-%patch8 -p1
-%endif
-%ifarch {ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
-%patch911 -p1
-%endif
-%if%{?_without_grsec:0}%{!?_without_grsec:1}
-%patch9 -p1
-%patch906 -p1
-%endif
-%ifarch{ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
-%patch912 -p1
-%endif
+#%patch7 -p1
+#%if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+#%patch14 -p1
+#%patch913 -p1
+#%else
+#%patch8 -p1
+#%endif
+#%ifarch {ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+#%patch911 -p1
+#%endif
+#%if%{?_without_grsec:0}%{!?_without_grsec:1}
+#%patch9 -p1
+#%patch906 -p1
+#%endif
+#%ifarch{ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+#%patch912 -p1
+#%endif
 
 %patch100 -p0
 %patch101 -p1
@@ -362,7 +363,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch105 -p1
 %patch106 -p1
 #%patch107 -p1
-%patch108 -p1
+#%patch108 -p1
 %patch109 -p1
 %patch110 -p1
 %patch111 -p1
@@ -377,7 +378,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch123 -p1
 %patch124 -p1
 
-%patch900 -p0
+#%patch900 -p0
 %patch901 -p0
 %patch904 -p0
 
