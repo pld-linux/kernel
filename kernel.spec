@@ -21,7 +21,7 @@
 %define		grsec_version		1.9.9c
 %define		jfs_version		2.4-1.0.24
 %define		lvm_version		1.0.5
-%define		evms_version		1.2.0
+%define		evms_version		1.2.1
 %define		ntfs_version		2.1.0a
 %define		drm_xfree_version	4.2.99
 %define		hostap_version		2002-10-12
@@ -132,10 +132,12 @@ Patch16:	linux-2.4.18-mppe.patch
 #from: 	http://dl.sourceforge.net/linux-hfsplus/hfsplus-patch-20020606.patch
 Patch17:	hfsplus-20020606.patch.bz2
 
+# from http://people.sistina.com/~thornber/patches/2.4-stable/2.4.20/2.4.20-dm-9.tar.bz2DM-9 patch
+Patch18:	linux-2.4.20-dm-9.patch.bz2
 # EVMS support (http://www.sourceforge.net/projects/evms/)
-Patch18:	evms-%{evms_version}-linux-2.4.patch
-Patch19:	evms-linux-2.4.20-common-files.patch
-Patch20:	linux-2.4.19-pre8-VFS-lock.patch
+Patch19:	linux-2.4.20-evms-1.9.0.patch.bz2
+
+#Patch20:
 
 # from http://www.promise.com/support/file/driver/promise-patch-2.4.19.gz
 Patch21:	linux-2.4.20-promise.patch.bz2
@@ -590,9 +592,10 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch15 -p1
 %patch16 -p1
 %patch17 -p1
+echo Added Device-mapper support ...
 %patch18 -p1
 %patch19 -p1
-%patch20 -p1
+#%patch20 -p1
 %patch23 -p1
 %patch26 -p1
 %patch27 -p1
@@ -691,13 +694,13 @@ echo Installing WRR Support
 %patch35 -p1
 
 # added missing MODULE_LICENSE, MODULE_DESCRIPTION, MODULE_AUTHOR
-%patch914 -p1
+# do poprawy %patch914 -p1
 
 # ACL support
 echo Added ACL support
 %patch45 -p1
 
-%patch918 -p1
+# do poprawy %patch918 -p1
 %patch919 -p1
 
 #squashfs
