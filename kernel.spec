@@ -687,7 +687,7 @@ patch -p1 -s < exec-shield.patch
 %patch303 -p1
 
 # Fix EXTRAVERSION in main Makefile
-#sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
+sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
 
 sed -i 's:\-pipe::' arch/*/Makefile
 
