@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	1.5%{?_with_preemptive:_pr}
+Release:	1.6%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -75,6 +75,7 @@ Source1671:	%{name}-squashfs.config
 Source1672:	%{name}-ACL.config
 Source1673:	%{name}-IMQ.config
 Source1999:	%{name}-preemptive.config
+Source2000:	%{name}-win4lin.config
 
 # New features
 
@@ -250,6 +251,8 @@ Patch919:	linux-2.4.20-ntfs.patch
 Patch920:	linux-2.4.20-squashfs.patch
 Patch921:	linux-2.4.20-grsecurity-1.9.8-dev_mem.patch
 
+# Win4Lin
+Patch1000:	linux-2.4.20-Win4Lin.PLD.patch.bz2
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -693,6 +696,11 @@ echo AXP patches ...
 %patch204 -p1
 %endif
 
+%ifarch %{ix86}
+echo Win4Lin patch ...
+%patch1000 -p1
+%endif
+
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
@@ -773,6 +781,12 @@ BuildKernel() {
 		echo "# CONFIG_NET_SCH_WRR is not set" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_HOSTAP is not set" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_USB_KONICAWC is not set">> arch/%{base_arch}/defconfig
+%ifnarch %{ix86}
+		echo "# CONFIG_IP_NF_MATCH_FUZZY is not set">> arch/%{base_arch}/defconfig
+%endif	
+%ifarch %{ix86}
+		echo "# CONFIG_MKI is not set" >> arch/%{base_arch}/defconfig
+%endif
 	else
 		cat %{SOURCE1667} >> arch/%{base_arch}/defconfig
 		cat %{SOURCE1666} >> arch/%{base_arch}/defconfig
@@ -782,7 +796,11 @@ BuildKernel() {
 	fi
 %ifnarch %{ix86}
 		echo "# CONFIG_IP_NF_MATCH_FUZZY is not set">> arch/%{base_arch}/defconfig
-%endif		
+%endif	
+%ifarch %{ix86}
+		cat %{SOURCE2000} >> arch/%{base_arch}/defconfig
+%endif
+
 %ifarch i386
 	mv -f arch/%{base_arch}/defconfig arch/%{base_arch}/defconfig.orig
 	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
