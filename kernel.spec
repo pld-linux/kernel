@@ -137,7 +137,6 @@ Provides:	%{name}-up = %{version}
 %ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(i2c) = %{i2c_version}
-Provides:	i2c-devel = %{i2c_version}
 Provides:       i2c = %{i2c_version}
 Provides:	bttv = %{bttv_version}
 %endif
@@ -151,7 +150,6 @@ Prereq:		geninitrd
 Obsoletes:	kernel-modules
 
 #i2c and bttv packages are obsolete
-Obsoletes:	i2c-devel
 Obsoletes:	kernel-i2c
 Obsoletes:	bttv
 Obsoletes:	kernel-misc-bttv
@@ -196,7 +194,6 @@ Provides:	%{name} = %{version}
 %ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:       %{name}(i2c) = %{i2c_version}
-Provides:       i2c-devel = %{i2c_version}
 Provides:       i2c = %{i2c_version}
 Provides:	bttv = %{bttv_version}
 
@@ -210,7 +207,6 @@ Prereq:		geninitrd
 Obsoletes:      kernel-modules
 
 #i2c and bttv packages are obsolete
-Obsoletes:      i2c-devel
 Obsoletes:      kernel-smp-i2c
 Obsoletes:      bttv
 Obsoletes:      kernel-smp-misc-bttv
@@ -243,7 +239,6 @@ Provides:	%{name} = %{version}
 %ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:       %{name}(i2c) = %{i2c_version}
-Provides:       i2c-devel = %{i2c_version}
 Provides:       i2c = %{i2c_version}
 Provides:	bttv = %{bttv_version}
 %endif
@@ -256,7 +251,6 @@ Prereq:		geninitrd
 Obsoletes:      kernel-modules
 
 #i2c and bttv packages are obsolete
-Obsoletes:      i2c-devel
 Obsoletes:      kernel-smp-i2c
 Obsoletes:      bttv
 Obsoletes:      kernel-smp-misc-bttv
@@ -286,7 +280,6 @@ Provides:	%{name} = %{version}
 %ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:       %{name}(i2c) = %{i2c_version}
-Provides:       i2c-devel = %{i2c_version}
 Provides:       i2c = %{i2c_version}
 Provides:       bttv = %{bttv_version}
 %endif
@@ -299,7 +292,6 @@ Prereq:		geninitrd
 Obsoletes:      kernel-modules
 
 #i2c and bttv packages are obsolete
-Obsoletes:      i2c-devel
 Obsoletes:      kernel-smp-i2c
 Obsoletes:      bttv
 Obsoletes:      kernel-smp-misc-bttv
@@ -369,6 +361,7 @@ Provides:	i2c-devel = %{i2c_version}
 Provides:	%{name}-headers(ipvs) = %{version}
 Provides:	%{name}-headers(rawio) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
+Obsoletes:	i2c-devel
 Autoreqprov:	no
 
 %description headers
