@@ -9,7 +9,7 @@
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 #
-%define		krelease		5.900
+%define		krelease		5.901
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -197,8 +197,8 @@ Patch143:	linux-ppc-procesor.patch
 Patch144:	amd762_irq_router.patch
 
 # pathces required for iptables 1.2.7
-Patch145:	netfilter_ipv4-iptables-1.2.7.patch
-Patch146:	netfilter_ipv6-iptables-1.2.7.patch
+#Patch145:	netfilter_ipv4-iptables-1.2.7.patch
+#Patch146:	netfilter_ipv6-iptables-1.2.7.patch
 
 Patch147:	http://www.hojdpunkten.ac.se/054/samba/00-smbfs-2.4.18-codepage.patch.gz
 
