@@ -1,0 +1,200 @@
+ # From RH: TIOCCONS fix and /dev/console write fix
+ # One of them probably fixes CAN-2002-0247, but which??? They didn't tell :/
+diff -urN S21-rh/drivers/char/tty_io.c S21-rh-tty/drivers/char/tty_io.c
+--- S21-rh/drivers/char/tty_io.c	Sat May 17 11:31:48 2003
++++ S21-rh-tty/drivers/char/tty_io.c	Sat May 17 11:32:35 2003
+@@ -127,12 +127,6 @@
+ extern struct tty_driver pts_driver[];	/* Unix98 pty slaves;  for /dev/ptmx */
+ #endif
+ 
+-/*
+- * redirect is the pseudo-tty that console output
+- * is redirected to if asked by TIOCCONS.
+- */
+-struct tty_struct * redirect;
+-
+ static void initialize_tty_struct(struct tty_struct *tty);
+ 
+ static ssize_t tty_read(struct file *, char *, size_t, loff_t *);
+@@ -430,6 +424,8 @@
+ 	release:	tty_release,
+ };
+ 
++static spinlock_t redirect_lock = SPIN_LOCK_UNLOCKED;
++static struct file *redirect;
+ /*
+  * This can be called by the "eventd" kernel thread.  That is process synchronous,
+  * but doesn't hold any locks, so we need to make sure we have the appropriate
+@@ -439,6 +435,7 @@
+ {
+ 	struct tty_struct *tty = (struct tty_struct *) data;
+ 	struct file * cons_filp = NULL;
++	struct file *f = NULL;
+ 	struct task_struct *p;
+ 	struct list_head *l;
+ 	int    closecount = 0, n;
+@@ -449,6 +446,15 @@
+ 
+ 	/* inuse_filps is protected by the single kernel lock */
+ 	lock_kernel();
++
++	spin_lock(&redirect_lock);
++	if (redirect && redirect->private_data == tty) {
++		f = redirect;
++		redirect = NULL;
++	}
++	spin_unlock(&redirect_lock);
++	if (f)
++		fput(f);
+ 	
+ 	check_tty_count(tty, "do_tty_hangup");
+ 	file_list_lock();
+@@ -748,11 +754,7 @@
+ {
+ 	int is_console;
+ 	struct tty_struct * tty;
+-	struct inode *inode;
+-
+-	/* Can't seek (pwrite) on ttys.  */
+-	if (ppos != &file->f_pos)
+-		return -ESPIPE;
++	struct inode *inode = file->f_dentry->d_inode;
+ 
+ 	/*
+ 	 *      For now, we redirect writes from /dev/console as
+@@ -762,10 +764,28 @@
+ 	is_console = (inode->i_rdev == SYSCONS_DEV ||
+ 		      inode->i_rdev == CONSOLE_DEV);
+ 
+-	if (is_console && redirect)
+-		tty = redirect;
+-	else
+-		tty = (struct tty_struct *)file->private_data;
++	if (is_console) {
++		struct file *p = NULL;
++
++		spin_lock(&redirect_lock);
++		if (redirect) {
++			get_file(redirect);
++			p = redirect;
++		}
++		spin_unlock(&redirect_lock);
++
++		if (p) {
++			ssize_t res = p->f_op->write(p, buf, count, ppos);
++			fput(p);
++			return res;
++		}
++	}
++
++	/* Can't seek (pwrite) on ttys.  */
++	if (ppos != &file->f_pos)
++		return -ESPIPE;
++
++	tty = (struct tty_struct *)file->private_data;
+ 	if (tty_paranoia_check(tty, inode->i_rdev, "tty_write"))
+ 		return -EIO;
+ 	if (!tty || !tty->driver.write || (test_bit(TTY_IO_ERROR, &tty->flags)))
+@@ -1231,7 +1251,7 @@
+ 	/*
+ 	 * If _either_ side is closing, make sure there aren't any
+ 	 * processes that still think tty or o_tty is their controlling
+-	 * tty.  Also, clear redirect if it points to either tty.
++	 * tty.
+ 	 */
+ 	if (tty_closing || o_tty_closing) {
+ 		struct task_struct *p;
+@@ -1245,9 +1265,6 @@
+ 			for_each_task_pid(o_tty->session, PIDTYPE_SID, p,l, pid)
+ 				p->tty = NULL;
+ 		read_unlock(&tasklist_lock);
+-
+-		if (redirect == tty || (o_tty && redirect == o_tty))
+-			redirect = NULL;
+ 	}
+ 
+ 	/* check whether both sides are closing ... */
+@@ -1526,19 +1543,29 @@
+ 	return 0;
+ }
+ 
+-static int tioccons(struct inode *inode,
+-	struct tty_struct *tty, struct tty_struct *real_tty)
++static int tioccons(struct inode *inode, struct file *file)
+ {
+ 	if (inode->i_rdev == SYSCONS_DEV ||
+ 	    inode->i_rdev == CONSOLE_DEV) {
++		struct file *f;
+ 		if (!suser())
+ 			return -EPERM;
++		spin_lock(&redirect_lock);
++		f = redirect;
+ 		redirect = NULL;
++		spin_unlock(&redirect_lock);
++		if (f)
++			fput(f);
+ 		return 0;
+ 	}
+-	if (redirect)
++	spin_lock(&redirect_lock);
++	if (redirect) {
++		spin_unlock(&redirect_lock);
+ 		return -EBUSY;
+-	redirect = real_tty;
++	}
++	get_file(file);
++	redirect = file;
++	spin_unlock(&redirect_lock);
+ 	return 0;
+ }
+ 
+@@ -1759,7 +1786,7 @@
+ 		case TIOCSWINSZ:
+ 			return tiocswinsz(tty, real_tty, (struct winsize *) arg);
+ 		case TIOCCONS:
+-			return tioccons(inode, tty, real_tty);
++			return real_tty!=tty ? -EINVAL : tioccons(inode, file);
+ 		case FIONBIO:
+ 			return fionbio(file, (int *) arg);
+ 		case TIOCEXCL:
+diff -urN S21-rh/include/linux/tty.h S21-rh-tty/include/linux/tty.h
+--- S21-rh/include/linux/tty.h	Sat May 17 11:31:52 2003
++++ S21-rh-tty/include/linux/tty.h	Sat May 17 11:32:35 2003
+@@ -341,7 +341,6 @@
+ extern void tty_write_flush(struct tty_struct *);
+ 
+ extern struct termios tty_std_termios;
+-extern struct tty_struct * redirect;
+ extern struct tty_ldisc ldiscs[];
+ extern int fg_console, last_console, want_console;
+ 
+--- drivers/char/tty_io.c	Sat May 17 11:14:02 2003
++++ linux/drivers/char/tty_io.c	Sun May 25 07:49:08 2003
+@@ -751,6 +751,10 @@
+ 	struct tty_struct * tty;
+ 	struct inode *inode = file->f_dentry->d_inode;
+ 
++	/* Can't seek (pwrite) on ttys.  */
++	if (ppos != &file->f_pos)
++		return -ESPIPE;
++
+ 	/*
+ 	 *      For now, we redirect writes from /dev/console as
+ 	 *      well as /dev/tty0.
+@@ -770,15 +774,11 @@
+ 		spin_unlock(&redirect_lock);
+ 
+ 		if (p) {
+-			ssize_t res = p->f_op->write(p, buf, count, ppos);
++			ssize_t res = p->f_op->write(p, buf, count, &p->f_pos);
+ 			fput(p);
+ 			return res;
+ 		}
+ 	}
+-
+-	/* Can't seek (pwrite) on ttys.  */
+-	if (ppos != &file->f_pos)
+-		return -ESPIPE;
+ 
+ 	tty = (struct tty_struct *)file->private_data;
+ 	if (tty_paranoia_check(tty, inode->i_rdev, "tty_write"))
