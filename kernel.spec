@@ -3,13 +3,12 @@
 # packages will be built
 #
 # _with_preemptible	- build with Preemptible patch
-# _with_o1_sched	- build with new O(1) scheduler
 # _with_acpi		- build with acpi support
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 # _without_wrr		- don't build WRR support
 #
-%define		krelease		5.910
+%define		krelease		6.001
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -20,7 +19,7 @@
 %define		wlan_version		0.1.13
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		IPperson_version	20020427-2.4.18
-%define		grsec_version		1.9.4-2.4.18
+%define		grsec_version		1.9.5-2.4.18
 %define		aic_version		6.2.3-2.4.7
 %define		jfs_version		2.4-1.0.20
 %define		lvm_version		1.0.4
@@ -34,7 +33,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	%{krelease}%{?_with_preemptible:_pr}%{?_with_o1_sched:_o1}%{?_with_acpi:_acpi}%{?_without_wrr:_nowrr}
+Release:	%{krelease}%{?_with_preemptible:_pr}%{?_with_acpi:_acpi}%{?_without_wrr:_nowrr}
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
@@ -91,7 +90,7 @@ Source1999:	%{name}-preemptive.config
 
 Patch0:		%{name}-pldfblogo.patch
 # from ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
-Patch1:		patch-int-%{version}.0.bz2
+Patch1:		patch-int-%{version}.3.bz2
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch2:		linux-%{version}-freeswan-%{freeswan_version}.patch.gz
 # from  http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
@@ -105,15 +104,15 @@ Patch6:		linux-%{version}-ext3-0.9.18.patch
 Patch7:		linux-abi-2.4.17.0.patch.bz2
 Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
-Patch9:		grsecurity-%{grsec_version}.patch
+Patch9:		grsecurity-%{grsec_version}.patch.bz2
 # Preemptive kernel  patch
 Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-%{name}-rml-%{version}-4.patch
 
 Patch11:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-%{version}-1.patch
 Patch12:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-%{version}-1.patch
 Patch13:	http://www.linuxvirtualserver.org/software/kernel-2.4/linux-%{version}-ipvs-%{ipvs_version}.patch.gz
-Patch14:	http://people.redhat.com/mingo/O(1)-scheduler/sched-O1-%{version}-pre8-K3.patch
-
+# from http://people.redhat.com/mingo/O(1)-scheduler/sched-%{version}-A1.patch
+Patch14:	sched-%{version}-A1.patch.bz2
 Patch15:	http://luxik.cdi.cz/~devik/qos/htb/v2/htb2_2.4.17.diff
 
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/dwmw2/linux-2.4.19-shared-zlib.bz2
@@ -145,8 +144,7 @@ Patch103:	linux-2.4.2-nvram-hdd.patch
 Patch104:	linux-2.4-module.fix.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch105:	linux-2.4.2-pcnet-parms.patch
-#Patch106:	http://www.kernel.org/pub/linux/kernel/people/hedrick/ide-%{version}/ide.%{version}-rc1.02152002.patch.bz2
-Patch106:	ide.patch
+Patch106:	http://www.kernel.org/pub/linux/kernel/people/hedrick/ide-%{version}/ide.%{version}-rc1.02152002.patch.bz2
 Patch107:	linux-reiserfs-rename.patch
 Patch108:	linux-alpha-nfs-2.4.2.patch
 Patch109:	linux-2.4-string.patch
@@ -165,7 +163,7 @@ Patch115:	linux-2.4.12-scsi_scan.patch
 Patch116:	linux-2.4.3-pcnet32.patch
 # fix rawio
 Patch117:	linux-2.4.3-rawio.patch
-#	patch118
+Patch118:	linux-2.4.18-HPT366.patch
 #	patch119
 Patch120:	linux-2.4.10-aironet.patch
 Patch121:	linux-2.4.10-cpqfc.patch
@@ -214,11 +212,11 @@ Patch147:	http://www.hojdpunkten.ac.se/054/samba/00-smbfs-2.4.18-codepage.patch.
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
 Patch900:	ide-EXPORT_SYMBOL.fix
-#Patch901:	netfilter-ip_nat_pptp.patch
+Patch901:	linux-o1-sched-sys.c-fix.patch
 Patch902:	linux-2.4.19pre7-VIA.patch
 Patch903:	linux-PPC-SMP.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
-Patch905:	ippersonality-applay-fix.patch
+#Patch905:	ippersonality-applay-fix.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
 Patch907:	loop-jari-2.4.18.0.patch
@@ -574,39 +572,9 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch918 -p1
 %patch6 -p1
 %patch19 -p1
-#%patch7 -p1
-%if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
-%ifarch %{ix86}
-# patch o1-scheduler-pre
-%patch914 -p1
-# O(1) scheduler patch
 %patch14 -p1
-# patch o1-scheduler-post
-%patch915 -p1
-%else
-echo "Scheduler didn't work on ARCH different than Intel x86"
-%endif
-%else
-%patch8 -p1
-%endif
-%if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
-%ifarch%{ix86}
-%patch911 -p1
-%else
-echo "Scheduler didn't work on ARCH different than Intel x86"
-%endif
-%endif
-# grsecurity patch
 %patch9 -p1
-%patch906 -p1
-%if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
-%ifarch%{ix86}
-# linux-o1-grsec-post
-%patch912 -p1
-%else
-echo "Scheduler didn't work on ARCH different than Intel x86"
-%endif
-%endif
+%patch901 -p1
 %patch15 -p1
 %patch24 -p1
 %patch17 -p1
@@ -617,6 +585,7 @@ echo "Scheduler didn't work on ARCH different than Intel x86"
 %patch103 -p0
 %patch105 -p1
 %patch106 -p1
+%patch118 -p0
 #%patch107 -p1
 #%patch108 -p1
 %patch109 -p1
@@ -652,7 +621,6 @@ install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 # Fore 200e ATM NIC
 echo Adding FORE 200e ATM driver
 patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
-#patch -p1 -s <linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
 
 # Netfilter
 echo Adding Netfilter snapshot from 25.06.2002
@@ -667,7 +635,6 @@ done
 echo -e $ANS | ./runme pld )
 
 patch -p1 < netfilter-patches/patch-o-matic/pld/log.patch
-#%patch917 -p0
 
 # IPVS
 echo Adding IPVS
@@ -690,9 +657,8 @@ rm -rf %{sym_ncr_version}
 
 # IP personality
 echo Adding IP Personality 
-#%patch905 -p0
 patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020427-linux-2.4.18.diff
-#%patch908 -p1
+%patch908 -p1
 
 # JFS
 echo Adding JFS
@@ -730,7 +696,8 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 # Fided include path
 %patch129 -p0
 
-#Fixed sysctl export symbols.
+# Fixed sysctl export symbols.
+echo Fixed export sysctl symbols
 %patch130 -p0
 
 %patch133 -p0
@@ -744,10 +711,9 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 echo Installing EVMS patch 
 %patch136 -p1
 %patch137 -p1
-%{?_with_o1_sched:%patch916 -p1}
+%patch916 -p1
 
 %ifarch %{ix86}
-echo 
 %patch139 -p1
 %endif
 
@@ -757,9 +723,8 @@ echo Replacing Trident FB module.
 
 # VIA Southbridge update
 echo Updating VIA Southbridge
-#%patch902 -p1
+%patch902 -p1
 
-echo
 %patch903 -p0
 
 %ifarch ppc
@@ -984,22 +949,24 @@ ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
 ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 
 %ifarch sparc sparc64
-ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
-ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
-sh %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}
-cp -a %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
+ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT/usr/include/asm-sparc
+ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT/usr/include/asm-sparc64
 %else
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 %endif
 
 cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
 
+%ifarch sparc sparc64
+sh %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}
+cp -a %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
+%endif
+
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 %{__make} mrproper
 find  -name "*~" -print | xargs rm -f
 find  -name "*.orig" -print | xargs rm -f
-
 
 %ifarch %{ix86}
 cat $RPM_SOURCE_DIR/kernel-ia32.config > .config
