@@ -16,7 +16,7 @@
 %define		wlan_version		0.1.10
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		IPperson_version	20010724-2.4.7
-%define		grsec_version		1.9-2.4.16
+%define		grsec_version		1.9.2-2.4.17
 %define		aic_version		6.2.3-2.4.7
 %define		jfs_version		2.4-1.0.10
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -77,16 +77,16 @@ Patch4:		br2684-against2.4.17.diff
 Patch5:		linux-%{version}-xfs-20011230.patch.bz2
 # Homepage of ABI : http://linux-abi.sourceforge.net/
 #ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2
-Patch7:		linux-abi-2.4.15.0.patch.bz2
+Patch7:		linux-abi-2.4.17.0.patch.bz2
 Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
 # http://grsecurity.net/grsecurity-%{grsec_version}.patch
 Patch9:		grsecurity-%{grsec_version}.patch
 # Preemptive kernel  patch
-Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.16-1.patch
+Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-%{version}-1.patch
 
-Patch11:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-2.4.16-1.patch
-Patch12:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-2.4.16-1.patch
+Patch11:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-%{version}-1.patch
+Patch12:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-%{version}-1.patch
 Patch13:	http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.16-ipvs-%{ipvs_version}.patch.gz
 
 # Assorted bugfixes
