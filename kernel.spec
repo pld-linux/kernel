@@ -325,7 +325,7 @@ Patch910:	linux-2.4.21-pre4-ac4-via82cxxx_audio.patch.bz2
 Patch914:	linux-2.4.20-MODULE_XXX.patch
 #Patch915:	linux-2.4.19-usb-digitalcams.patch
 #Patch916:	
-#Patch917:	
+Patch917:	linux-2.4.20-nogrsec.patch
 Patch918:	linux-2.4.20-ext3.patch
 Patch919:	linux-2.4.20-ntfs.patch
 Patch920:	linux-2.4.20-squashfs.patch
@@ -800,6 +800,8 @@ echo Added LVM support version %{lvm_version}
 # JFS - xattr+acl
 echo Added xattr for JFS ...
 %patch103 -p1
+
+%{?_without_grsec:%patch917 -p1}
 
 # SLM
 #echo Added LSM support...
