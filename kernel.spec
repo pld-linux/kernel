@@ -81,8 +81,7 @@ Patch12:	http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # Assorted bugfixes
 
 # Quota fixes
-# ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.4-2.diff
-Patch100:	quota-fix-2.4.5.diff.gz
+Patch100:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.5-1.diff.gz
 # from LKML
 Patch101:	linux-scsi-debug-bug.patch
 Patch102:	linux-2.4.5-oom-killer.patch
