@@ -1077,6 +1077,8 @@ for i in "" smp ; do
 	fi
 done
 
+install -d $RPM_BUILD_ROOT/lib/modules-%{version}-%{release}{,smp}/misc
+
 ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 
 find . ! -name "build-done" -maxdepth 1 -exec cp -a "{}" "$RPM_BUILD_ROOT/usr/src/linux-%{version}/" ";"
@@ -1305,6 +1307,7 @@ fi
 %endif
 
 /lib/modules/%{version}-%{release}/build
+%dir /lib/modules/%{version}-%{release}/misc
 %ghost /lib/modules/%{version}-%{release}/modules.*
 
 %ifnarch sparc sparc64
@@ -1388,6 +1391,7 @@ fi
 %endif
 
 /lib/modules/%{version}-%{release}smp/build
+%dir /lib/modules/%{version}-%{release}smp/misc
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
 
 %ifnarch sparc sparc64
