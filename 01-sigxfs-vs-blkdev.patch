@@ -10,13 +10,27 @@ diff -u3 -r linux/fs/buffer.c linux.pdh/fs/buffer.c
  		send_sig(SIGXFSZ, current, 0);
  		goto out;
  	}
+diff -u3 -r linux/mm/filemap.c linux.pdh/mm/filemap.c
+--- linux/mm/filemap.c	Mon Feb 25 19:38:13 2002
++++ linux.pdh/mm/filemap.c	Tue Mar 19 19:21:17 2002
+@@ -2885,8 +2885,8 @@
+ 	 * Check whether we've reached the file size limit.
+ 	 */
+ 	err = -EFBIG;
+-	
+-	if (limit != RLIM_INFINITY) {
++
++	if (limit != RLIM_INFINITY && !S_ISBLK(inode->i_mode)) {
+ 		if (pos >= limit) {
+ 			send_sig(SIGXFSZ, current, 0);
+ 			goto out;
 diff -u3 -r linux/mm/memory.c linux.pdh/mm/memory.c
 --- linux/mm/memory.c	Mon Feb 25 19:38:13 2002
 +++ linux.pdh/mm/memory.c	Tue Mar 19 19:22:45 2002
 @@ -1059,7 +1059,7 @@
+ 
  do_expand:
  	limit = current->rlim[RLIMIT_FSIZE].rlim_cur;
- 	gr_learn_resource(current, RLIMIT_FSIZE, offset);
 -	if (limit != RLIM_INFINITY && offset > limit)
 +	if (limit != RLIM_INFINITY && offset > limit && !S_ISBLK(inode->i_mode))
  		goto out_sig;
@@ -31,6 +45,7 @@ diff -u3 -r linux/mm/shmem.c linux.pdh/mm/shmem.c
  	err = -EFBIG;
 -	if (limit != RLIM_INFINITY) {
 +	if (limit != RLIM_INFINITY && !S_ISBLK(inode->i_mode)) {
- 		gr_learn_resource(current, RLIMIT_FSIZE, pos);
-
  		if (pos >= limit) {
+ 			send_sig(SIGXFSZ, current, 0);
+ 			goto out;
+
