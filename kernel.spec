@@ -281,8 +281,9 @@ Patch3003:	linux-2.4.20-missing-license-tags.patch
 Patch3004:	linux-2.4.20-sym53c8xx_old.patch
 Patch3005:	linux-2.4.21-gcc33.patch
 Patch3006:	linux-2.4.21-sparc-gcc3.patch
-Patch3007:	linux-2.4.20-gcc33.patch
+Patch3007:	linux-2.4.21-gcc33-math-emu.patch
 Patch3008:	linux-drm-4.2.0-force-cmpxchg.patch
+Patch3009:	linux-2.4.21-alpha-gcc33.patch
 
 # Security patches/fixes
 
@@ -766,6 +767,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch3005 -p1
 %patch3006 -p1
 %patch3007 -p1
+%patch3009 -p1
 cd drivers/char/drm
 %patch3008 -p1
 cd ../../..
