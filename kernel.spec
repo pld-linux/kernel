@@ -679,7 +679,6 @@ zcat %{SOURCE3} | patch -p1 -s
 %if %{with execshield}
 patch -p1 -s < %{SOURCE4}
 patch -p1 -s < %{SOURCE5}
-%endif
 
 #grsec
 %ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
@@ -687,6 +686,7 @@ patch -p1 -s < %{SOURCE5}
 %patch94 -p1
 %endif
 %endif
+%endif		
 
 %patch96 -p1
 %patch97 -p1
