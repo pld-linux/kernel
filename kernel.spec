@@ -4,7 +4,6 @@
 # TODO:
 #		- fix lirc_sasem (usb api)
 #		- update grsecurity patch
-#		- update fbsplash (wait for 2.6.10 release)
 #		- add distcc support (and don't break crossbuild!)
 #
 # Conditional build:
@@ -172,9 +171,9 @@ Patch61:	%{name}-MAX_INIT_ARGS.patch
 # http://tahoe.pl/patch.htm
 Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 # http://dev.gentoo.org/~spock/projects/vesafb-tng/
-Patch71:	vesafb-tng-0.9-rc4-r3-2.6.9-rc3.patch
+Patch71:	vesafb-tng-0.9-rc5-2.6.10-rc1-mm2.patch
 # http://dev.gentoo.org/~spock/projects/gensplash/
-Patch72:	fbsplash-0.9-r8-2.6.9-rc3.patch
+Patch72:	fbsplash-0.9.1-2.6.10-rc3-bk6.patch
 Patch73:	squashfs2.1-patch
 Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
 # http://lirc.sourceforge.net/software/snapshots/lirc-0.7.0pre7.tar.bz2
@@ -607,16 +606,16 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %patch70 -p1
 
-%if %{with fbsplash}
+%ifarch %{ix86}
+%if %{without smp}
 %patch71 -p1
+%endif
+%endif
+%if %{with fbsplash}
 %patch72 -p1
 %endif
 
 %patch73 -p1
-
-%if %{with parmfs}
-%patch74 -p1
-%endif
 
 %patch75 -p1
 %patch76 -p1
