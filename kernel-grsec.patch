@@ -16036,14 +16036,15 @@ diff -urN linux-2.6.7/include/asm-i386/desc.h linux-2.6.7/include/asm-i386/desc.
  extern void set_intr_gate(unsigned int irq, void * addr);
  
  #define _set_tssldt_desc(n,addr,limit,type) \
-@@ -42,18 +102,35 @@
+@@ -42,19 +102,36 @@
  	"rorl $16,%%eax" \
  	: "=m"(*(n)) : "a" (addr), "r"(n), "ir"(limit), "i"(type))
  
 -static inline void __set_tss_desc(unsigned int cpu, unsigned int entry, void *addr)
 +static inline void __set_tss_desc(unsigned int cpu, unsigned int entry, const void *addr)
  {
- 	_set_tssldt_desc(&cpu_gdt_table[cpu][entry], (int)addr, 235, 0x89);
+ 	_set_tssldt_desc(&cpu_gdt_table[cpu][entry], (int)addr,
+ 		offsetof(struct tss_struct, __cacheline_filler) - 1, 0x89);
  }
  
  #define set_tss_desc(cpu,addr) __set_tss_desc(cpu, GDT_ENTRY_TSS, addr)
