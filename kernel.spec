@@ -27,9 +27,9 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1.2
+%define		_rel		1
 %define		_rc		0
-%define		_cset		20040113_0214
+%define		_cset		20040115_0622
 
 ## netfilter snap 
 %define		_netfilter_snap		20040114
@@ -122,8 +122,6 @@ Patch28:	2.6.0-t8-pci_dma_sync_to_device-lkml.patch
 Patch30:	2.6.0-t8-umsdos-lkml.patch
 
 Patch32:	2.6.0-t9-acpi_osl-lkml.patch
-
-Patch34:	2.6.0-t9-forcedeth-lkml.patch
 
 Patch36:	2.6.0-t9-PPC-smp.patch
 
@@ -542,8 +540,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch30 -p1
 
 %patch32 -p1
-
-%patch34 -p1
 
 %patch36 -p1
 
