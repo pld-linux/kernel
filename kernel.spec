@@ -94,10 +94,10 @@ Patch80:	linux-2.4.22-intermezzo-acl.patch
 
 # Networking
 
-# new version of netfilter.
-# DO NOT INCLUDE PATCHES FROM patch-o-matic/userspace/ since
-# adding these can cause incompatiblitiy problems with userspace tools
-Patch100:	linux-2.4.23-netfilter-%{netfilter_snap}.patch.gz
+# Temporary: use released pom, instead of CVS snapshot
+# (problems with user chains).
+Patch100:       linux-2.4.23-netfilter-pom-20031209.patch.gz
+#Patch100:	linux-2.4.23-netfilter-%{netfilter_snap}.patch.gz
 Patch101:	linux-2.4.23-netfilter-IMQ-target.patch
 # http://rnvs.informatik.uni-leipzig.de/ipp2p/index_en.html
 # http://rnvs.informatik.uni-leipzig.de/ipp2p/downloads/ipp2p-0.5a_vs_2.4.22.diff.gz
