@@ -112,15 +112,15 @@ diff -uNr a/drivers/input/mouse/trackpoint.c b/drivers/input/mouse/trackpoint.c
 + */
 +static void trackpoint_read(struct psmouse *psmouse, unsigned char loc, unsigned char *results)
 +{
-+	psmouse_command(psmouse, NULL, MAKE_PS2_CMD(0, 0, TP_COMMAND));
-+	psmouse_command(psmouse, results, MAKE_PS2_CMD(0, 1, loc));
++	ps2_command(&psmouse->ps2dev, NULL, MAKE_PS2_CMD(0, 0, TP_COMMAND));
++	ps2_command(&psmouse->ps2dev, results, MAKE_PS2_CMD(0, 1, loc));
 +}
 +
 +static void trackpoint_write(struct psmouse *psmouse, unsigned char loc, unsigned char val)
 +{	
-+	psmouse_command(psmouse, NULL, MAKE_PS2_CMD(0, 0, TP_COMMAND));
-+	psmouse_command(psmouse, NULL, MAKE_PS2_CMD(0,0, TP_WRITE_MEM));
-+	psmouse_command(psmouse, &val, MAKE_PS2_CMD(1,0, loc));
++	ps2_command(&psmouse->ps2dev, NULL, MAKE_PS2_CMD(0, 0, TP_COMMAND));
++	ps2_command(&psmouse->ps2dev, NULL, MAKE_PS2_CMD(0,0, TP_WRITE_MEM));
++	ps2_command(&psmouse->ps2dev, &val, MAKE_PS2_CMD(1,0, loc));
 +}
 +
 +static int trackpoint_toggle_bit(struct psmouse *psmouse, unsigned char loc, unsigned char mask)
@@ -129,9 +129,9 @@ diff -uNr a/drivers/input/mouse/trackpoint.c b/drivers/input/mouse/trackpoint.c
 +	if(loc < 0x20 || loc >= 0x2F)
 +		return -1;
 +	
-+	psmouse_command(psmouse, NULL, MAKE_PS2_CMD(0, 0, TP_COMMAND));
-+	psmouse_command(psmouse, NULL, MAKE_PS2_CMD(0, 0, TP_TOGGLE));
-+	psmouse_command(psmouse, &mask, MAKE_PS2_CMD(1, 0, loc));
++	ps2_command(&psmouse->ps2dev, NULL, MAKE_PS2_CMD(0, 0, TP_COMMAND));
++	ps2_command(&psmouse->ps2dev, NULL, MAKE_PS2_CMD(0, 0, TP_TOGGLE));
++	ps2_command(&psmouse->ps2dev, &mask, MAKE_PS2_CMD(1, 0, loc));
 +	
 +	return 0;
 +}
@@ -428,13 +428,13 @@ diff -uNr a/drivers/input/mouse/trackpoint.c b/drivers/input/mouse/trackpoint.c
 +	/* The real driver disables, queries and 
 +	   then enables so we'll do that too
 +	*/
-+	psmouse_command(psmouse, param, MAKE_PS2_CMD(0, 2, TP_DISABLE));
++	ps2_command(&psmouse->ps2dev, param, MAKE_PS2_CMD(0, 2, TP_DISABLE));
 +
-+	psmouse_command(psmouse, param, MAKE_PS2_CMD(0, 2, TP_READ_ID));
++	ps2_command(&psmouse->ps2dev, param, MAKE_PS2_CMD(0, 2, TP_READ_ID));
 +	if(param[0] != TP_MAGIC_IDENT) 
 +		return -1;
 +
-+	psmouse_command(psmouse, param, MAKE_PS2_CMD(0, 2, TP_ENABLE));
++	ps2_command(&psmouse->ps2dev, param, MAKE_PS2_CMD(0, 2, TP_ENABLE));
 +
 +	psmouse->private = priv = kmalloc(sizeof(struct trackpoint_data), GFP_KERNEL);
 +
