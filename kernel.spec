@@ -917,6 +917,7 @@ fi
 
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
+ln -snf %{version}-%{release}smp /lib/modules/%{version}smp
 
 depmod -a -F /boot/System.map %{version}-%{release}smp
 
