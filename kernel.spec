@@ -32,7 +32,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	2.11%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	2.12%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -96,8 +96,8 @@ Patch1:		patch-int-2.4.20.1.bz2
 Patch2:		linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
 
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/Release-1.2pre5/kernel_patches/
-Patch3:		linux-2.4.20-core-xfs-1.2pre5.patch.bz2
-Patch4:		linux-2.4.20-xfs-1.2pre5.patch.bz2
+Patch3:		linux-2.4.20-core-xfs-1.2.0.patch.bz2
+Patch4:		linux-2.4.20-xfs-1.2.0.patch.bz2
 
 # Homepage of ABI:	http://linux-abi.sourceforge.net/
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.18.0.patch.bz2 
