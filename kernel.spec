@@ -4,7 +4,7 @@
 #
 # _without_smp		- don't build SMP kernel
 #
-%define		test_build		0
+%define		test_build		1
 #
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -37,6 +37,7 @@ Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
 
 Patch1:		%{name}-net_divert.patch
+Patch2:		kernel-setup_per_cpu_areas.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -142,6 +143,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %prep
 %setup -q -n linux-%{version}
 %patch1 -p1
+%patch2 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
