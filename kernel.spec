@@ -163,7 +163,7 @@ cp -R . $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}/
 cd $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}
 find include/ -type d -maxdepth 1 -name "asm-*" ! -name asm-i386 ! -name asm-generic | xargs rm -rf
 %{__make} mrproper
-install %{SOURCE1} config-nondist
+install %{SOURCE2} config-nondist
 
 %clean
 rm -rf $RPM_BUILD_ROOT
