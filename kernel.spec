@@ -37,7 +37,7 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1
+%define		_rel		0.1
 %define		_cset		0
 
 ## netfilter snap 
@@ -56,13 +56,13 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.6.5
+Version:	2.6.6
 Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
-# Source0-md5:	9a76bf64c1151369b250f967d83077aa
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc1.tar.bz2
+# Source0-md5:	98d19a536d4e6906ee32cdf281d580e8
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -1333,17 +1333,17 @@ fi
 
 %files sound-alsa
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/sound/core
-/lib/modules/%{version}-%{release}/kernel/sound/drivers
+%dir /lib/modules/%{version}-%{release}/kernel/sound/core
+%dir /lib/modules/%{version}-%{release}/kernel/sound/drivers
 %ifnarch sparc sparc64
-/lib/modules/%{version}-%{release}/kernel/sound/i2c
-/lib/modules/%{version}-%{release}/kernel/sound/isa
-/lib/modules/%{version}-%{release}/kernel/sound/pci
-/lib/modules/%{version}-%{release}/kernel/sound/synth
-/lib/modules/%{version}-%{release}/kernel/sound/usb
+%dir /lib/modules/%{version}-%{release}/kernel/sound/i2c
+%dir /lib/modules/%{version}-%{release}/kernel/sound/isa
+%dir /lib/modules/%{version}-%{release}/kernel/sound/pci
+%dir /lib/modules/%{version}-%{release}/kernel/sound/synth
+%dir /lib/modules/%{version}-%{release}/kernel/sound/usb
 %endif			
 %ifarch sparc sparc64
-/lib/modules/%{version}-%{release}/kernel/sound/sparc
+%dir /lib/modules/%{version}-%{release}/kernel/sound/sparc
 %endif			
 %endif
 
@@ -1357,16 +1357,16 @@ fi
 
 %files smp-sound-alsa
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/sound/core
-/lib/modules/%{version}-%{release}smp/kernel/sound/drivers
+%dir /lib/modules/%{version}-%{release}smp/kernel/sound/core
+%dir /lib/modules/%{version}-%{release}smp/kernel/sound/drivers
 %ifnarch sparc sparc64
-/lib/modules/%{version}-%{release}smp/kernel/sound/i2c
-/lib/modules/%{version}-%{release}smp/kernel/sound/isa
-/lib/modules/%{version}-%{release}smp/kernel/sound/pci
-/lib/modules/%{version}-%{release}smp/kernel/sound/synth
-/lib/modules/%{version}-%{release}smp/kernel/sound/usb
+%dir /lib/modules/%{version}-%{release}smp/kernel/sound/i2c
+%dir /lib/modules/%{version}-%{release}smp/kernel/sound/isa
+%dir /lib/modules/%{version}-%{release}smp/kernel/sound/pci
+%dir /lib/modules/%{version}-%{release}smp/kernel/sound/synth
+%dir /lib/modules/%{version}-%{release}smp/kernel/sound/usb
 %endif 
 %ifarch sparc sparc64
-/lib/modules/%{version}-%{release}smp/kernel/sound/sparc
+%dir /lib/modules/%{version}-%{release}smp/kernel/sound/sparc
 %endif
 %endif 
