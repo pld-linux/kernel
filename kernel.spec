@@ -48,7 +48,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		4.7%{?with_mosix:m}
+%define		_rel		4.8%{?with_mosix:m}
 %define		_cset		20040707_0722
 %define		_apply_cset	0
 %define		_subversion	.1
@@ -302,6 +302,7 @@ Patch720:	kernel-it82xx-raid.patch
 Patch740:	linux-abi-2.6.8.1.patch
 Patch750:	kernel-VLAN_3c59x-3c90x.patch
 Patch760:	kernel-2.6.8.1-memleak-cdaudio.patch
+Patch770:	mISDN-2004-11-20.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -835,6 +836,8 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch714 -p1
 
 %patch760 -p1
+
+%patch770 -p1
 
 %ifarch %{ix86} amd64
 %patch720 -p1
