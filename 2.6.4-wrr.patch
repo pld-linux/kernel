@@ -1272,8 +1272,8 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +
 +    if ((retvalue=qdisc->enqueue(skb, qdisc)) == ENQUEUE_SUCCESS) {
 +      // Successfull
-+      sch->stats.bytes += skb->len;
-+      sch->stats.packets++;
++      sch->bstats.bytes += skb->len;
++      sch->bstats.packets++;
 +      sch->q.qlen++;
 +        
 +      // Insert band into heap if not already there:
@@ -1298,7 +1298,7 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +  
 +  if(retvalue!=ENQUEUE_SUCCESS) {
 +    // Packet not enqued:
-+    sch->stats.drops++;
++    sch->qstats.drops++;
 +  }
 +  
 +  return retvalue;
@@ -1374,7 +1374,7 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +  if(band<0) { 
 +    // Who should now free the pakcet?
 +    printk(KERN_DEBUG "sch_wrr: Oops - packet requed could never have been queued.\n");
-+    sch->stats.drops++; 
++    sch->qstats.drops++; 
 +    return ENQUEUE_FAIL; 
 +  }
 +
@@ -1395,7 +1395,7 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +    
 +    return ENQUEUE_SUCCESS;
 +  } else {
-+    sch->stats.drops++;
++    sch->qstats.drops++;
 +    return ret;
 +  }
 +}    
