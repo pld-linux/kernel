@@ -52,7 +52,7 @@ Source25:	%{name}-sparc64-BOOT.config
 Source26:	%{name}-alpha.config
 Source27:	%{name}-alpha-smp.config
 Source28:	%{name}-alpha-BOOT.config
-Source50:	http://www.netroedge.com/~lm78/archive/i2c-%{i2c-version}.tar.gz
+Source50:	http://www.netroedge.com/~lm78/archive/i2c-%{i2c_version}.tar.gz
 # in this place i will include Patches
 
 Patch0:		%{name}-pldfblogo.patch
