@@ -491,7 +491,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch8 -p1
 #%%patch10 -p1
 
-%patch12 -p1
+#%%patch12 -p1
 
 %patch14 -p1
 %patch16 -p1
