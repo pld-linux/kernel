@@ -251,3 +251,131 @@ diff -Nur --exclude='*.orig' linux-2.4.20.org/net/ipv4/netfilter/ip_nat_core.c l
  				ret = helper->help(ct, exp, info, ctinfo, 
  						   hooknum, pskb);
  				if (ret != NF_ACCEPT) {
+diff -Nur --exclude='*.orig' --exclude='*.org' linux-2.4.20.org/drivers/net/tokenring/olympic.c linux-2.4.20/drivers/net/tokenring/olympic.c
+--- linux-2.4.20.org/drivers/net/tokenring/olympic.c	2002-11-28 23:53:14.000000000 +0000
++++ linux-2.4.20/drivers/net/tokenring/olympic.c	2003-06-20 12:23:35.000000000 +0000
+@@ -655,8 +655,8 @@
+ 	printk(" stat_ring[7]: %p\n", &(olympic_priv->olympic_rx_status_ring[7])  );
+ 
+ 	printk("RXCDA: %x, rx_ring[0]: %p\n",readl(olympic_mmio+RXCDA),&olympic_priv->olympic_rx_ring[0]);
+-	printk("Rx_ring_dma_addr = %08x, rx_status_dma_addr =
+-%08x\n",olympic_priv->rx_ring_dma_addr,olympic_priv->rx_status_ring_dma_addr) ; 
++	printk("Rx_ring_dma_addr = %08x, rx_status_dma_addr =%08x\n",
++		olympic_priv->rx_ring_dma_addr,olympic_priv->rx_status_ring_dma_addr) ; 
+ #endif
+ 
+ 	writew((((readw(olympic_mmio+RXENQ)) & 0x8000) ^ 0x8000) | i,olympic_mmio+RXENQ);
+diff -Nur --exclude='*.orig' --exclude='*.org' linux-2.4.20.org/drivers/net/wan/sbni.c linux-2.4.20/drivers/net/wan/sbni.c
+--- linux-2.4.20.org/drivers/net/wan/sbni.c	2002-11-28 23:53:14.000000000 +0000
++++ linux-2.4.20/drivers/net/wan/sbni.c	2003-06-20 12:47:13.000000000 +0000
+@@ -1547,88 +1547,6 @@
+ 
+ /* -------------------------------------------------------------------------- */
+ 
+-#ifdef ASM_CRC
+-
+-static u32
+-calc_crc32( u32  crc,  u8  *p,  u32  len )
+-{
+-	register u32  _crc __asm ( "ax" );
+-	_crc = crc;
+-	
+-	__asm __volatile (
+-		"xorl	%%ebx, %%ebx\n"
+-		"movl	%1, %%esi\n" 
+-		"movl	%2, %%ecx\n" 
+-		"movl	$crc32tab, %%edi\n"
+-		"shrl	$2, %%ecx\n"
+-		"jz	1f\n"
+-
+-		".align 4\n"
+-	"0:\n"
+-		"movb	%%al, %%bl\n"
+-		"movl	(%%esi), %%edx\n"
+-		"shrl	$8, %%eax\n"
+-		"xorb	%%dl, %%bl\n"
+-		"shrl	$8, %%edx\n"
+-		"xorl	(%%edi,%%ebx,4), %%eax\n"
+-
+-		"movb	%%al, %%bl\n"
+-		"shrl	$8, %%eax\n"
+-		"xorb	%%dl, %%bl\n"
+-		"shrl	$8, %%edx\n"
+-		"xorl	(%%edi,%%ebx,4), %%eax\n"
+-
+-		"movb	%%al, %%bl\n"
+-		"shrl	$8, %%eax\n"
+-		"xorb	%%dl, %%bl\n"
+-		"movb	%%dh, %%dl\n" 
+-		"xorl	(%%edi,%%ebx,4), %%eax\n"
+-
+-		"movb	%%al, %%bl\n"
+-		"shrl	$8, %%eax\n"
+-		"xorb	%%dl, %%bl\n"
+-		"addl	$4, %%esi\n"
+-		"xorl	(%%edi,%%ebx,4), %%eax\n"
+-
+-		"decl	%%ecx\n"
+-		"jnz	0b\n"
+-
+-	"1:\n"
+-		"movl	%2, %%ecx\n"
+-		"andl	$3, %%ecx\n"
+-		"jz	2f\n"
+-
+-		"movb	%%al, %%bl\n"
+-		"shrl	$8, %%eax\n"
+-		"xorb	(%%esi), %%bl\n"
+-		"xorl	(%%edi,%%ebx,4), %%eax\n"
+-
+-		"decl	%%ecx\n"
+-		"jz	2f\n"
+-
+-		"movb	%%al, %%bl\n"
+-		"shrl	$8, %%eax\n"
+-		"xorb	1(%%esi), %%bl\n"
+-		"xorl	(%%edi,%%ebx,4), %%eax\n"
+-
+-		"decl	%%ecx\n"
+-		"jz	2f\n"
+-
+-		"movb	%%al, %%bl\n"
+-		"shrl	$8, %%eax\n"
+-		"xorb	2(%%esi), %%bl\n"
+-		"xorl	(%%edi,%%ebx,4), %%eax\n"
+-	"2:\n"
+-		:
+-		: "a" (_crc), "g" (p), "g" (len)
+-		: "ax", "bx", "cx", "dx", "si", "di"
+-	);
+-
+-	return  _crc;
+-}
+-
+-#else	/* ASM_CRC */
+-
+ static u32
+ calc_crc32( u32  crc,  u8  *p,  u32  len )
+ {
+@@ -1638,8 +1556,6 @@
+ 	return  crc;
+ }
+ 
+-#endif	/* ASM_CRC */
+-
+ 
+ static u32  crc32tab[] __attribute__ ((aligned(8))) = {
+ 	0xD202EF8D,  0xA505DF1B,  0x3C0C8EA1,  0x4B0BBE37,
+diff -Nur --exclude='*.orig' --exclude='*.org' linux-2.4.20.org/drivers/net/wan/sdla_chdlc.c linux-2.4.20/drivers/net/wan/sdla_chdlc.c
+--- linux-2.4.20.org/drivers/net/wan/sdla_chdlc.c	2003-06-20 12:41:46.000000000 +0000
++++ linux-2.4.20/drivers/net/wan/sdla_chdlc.c	2003-06-20 12:41:03.000000000 +0000
+@@ -591,8 +591,7 @@
+ 	
+ 
+ 		if (chdlc_set_intr_mode(card, APP_INT_ON_TIMER)){
+-			printk (KERN_INFO "%s: 
+-				Failed to set interrupt triggers!\n",
++			printk (KERN_INFO "%s: Failed to set interrupt triggers!\n",
+ 				card->devname);
+ 			return -EIO;	
+         	}
