@@ -257,6 +257,8 @@ Patch1421:	linux-2.4.21-bttv-typo.patch
 Patch1422:	linux-2.4.21-ipt_TRACE-typo.patch
 Patch1423:	linux-2.4.22-alpha-kmap_types.patch
 
+Patch1430:	linux-2.4.22-file-sharing-initrd.patch
+
 # http://www.hardrock.org/kernel/current-updates/
 # taken at 20031008 (update this date if you update patch)
 # also rememver to remove EXTRAVERSION from this patch
@@ -752,6 +754,8 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1421 -p1
 %patch1422 -p1
 %patch1423 -p1
+
+%patch1430 -p1
 
 %patch1424 -p1
 
