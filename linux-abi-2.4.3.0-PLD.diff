@@ -3918,31 +3918,27 @@ diff -uNr --exclude-from=dontdiff linux-2.4.3/Documentation/abi/TODO.ibcs linux/
 diff -uNr --exclude-from=dontdiff linux-2.4.3/Makefile linux/Makefile
 --- linux-2.4.3/Makefile	Fri Mar 30 14:48:20 2001
 +++ linux/Makefile	Fri Mar 30 17:25:23 2001
-@@ -118,14 +118,15 @@
+@@ -118,10 +118,11 @@
  
  CORE_FILES	=kernel/kernel.o mm/mm.o fs/fs.o ipc/ipc.o
  NETWORKS	=net/network.o
 +ABI		=abi/abi.o
  CRYPTO		=crypto/crypto.o
- DRIVERS		=drivers/block/block.o \
- 		 drivers/char/char.o \
- 		 drivers/misc/misc.o \
- 		 drivers/net/net.o \
- 		 drivers/media/media.o
+ 
  LIBS		=$(TOPDIR)/lib/lib.a
 -SUBDIRS		=kernel drivers mm fs net ipc lib crypto
 +SUBDIRS		=kernel drivers mm fs net ipc lib crypto abi
  
  DRIVERS-n :=
  DRIVERS-y :=
-@@ -250,6 +251,7 @@
- 		$(DRIVERS) \
- 		$(NETWORKS) \
- 		$(LIBS) \
-+		$(ABI) \
- 		--end-group \
- 		-o vmlinux
- 	$(NM) vmlinux | grep -v '\(compiled\)\|\(\.o$$\)\|\( [aUw] \)\|\(\.\.ng$$\)\|\(LASH[RL]DI\)' | sort > System.map
+@@ -267,6 +272,7 @@
+ 			$(NETWORKS) \
+ 			$(CRYPTO) \
+ 			$(LIBS) \
++			$(ABI) \
+ 			--end-group
+ ifeq ($(CONFIG_KALLSYMS),y)
+ LD_VMLINUX_KALLSYMS	:= $(TMPPREFIX).tmp_kallsyms3.o
 diff -uNr --exclude-from=dontdiff linux-2.4.3/abi/Config.in linux/abi/Config.in
 --- linux-2.4.3/abi/Config.in	Thu Jan  1 01:00:00 1970
 +++ linux/abi/Config.in	Fri Mar 30 16:13:20 2001
@@ -23152,12 +23148,6 @@ diff -uNr --exclude-from=dontdiff linux-2.4.3/include/asm-sparc/elf.h linux/incl
 diff -uNr --exclude-from=dontdiff linux-2.4.3/include/asm-sparc64/elf.h linux/include/asm-sparc64/elf.h
 --- linux-2.4.3/include/asm-sparc64/elf.h	Fri Mar 30 14:48:47 2001
 +++ linux/include/asm-sparc64/elf.h	Fri Mar 30 17:25:23 2001
-@@ -1,4 +1,4 @@
--/* $Id$ */
-+/* $Id$ */
- #ifndef __ASM_SPARC64_ELF_H
- #define __ASM_SPARC64_ELF_H
- 
 @@ -56,10 +56,10 @@
     instruction set this cpu supports.  */
  
@@ -23358,11 +23348,10 @@ diff -uNr --exclude-from=dontdiff linux-2.4.3/kernel/ksyms.c linux/kernel/ksyms.
  extern int sys_tz;
  extern int request_dma(unsigned int dmanr, char * deviceID);
  extern void free_dma(unsigned int dmanr);
-@@ -576,3 +580,7 @@
- #endif
- #endif
- #endif
-+
-+/* sysconfig support */
-+/* EXPORT_SYMBOL(nr_free_pages); */
+@@ -576,3 +576,6 @@
+ 
+ EXPORT_SYMBOL(tasklist_lock);
+ EXPORT_SYMBOL(pidhash);
++  
 +EXPORT_SYMBOL(max_threads);
++
