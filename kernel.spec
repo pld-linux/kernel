@@ -43,6 +43,7 @@ Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
 Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
 Source10:	http://hostap.epitest.fi/releases/hostap-2002-09-12.tar.gz
+Source11:	squashfs1.0b.tar.gz
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source50:	%{name}-sparc.config
@@ -66,6 +67,7 @@ Source1667:	%{name}-int.config
 Source1668:	%{name}-hostap.config
 Source1669:	%{name}-konicawc.config
 Source1670:	%{name}-wrr.config
+Source1671:	%{name}-squashfs.config
 Source1999:	%{name}-preemptive.config
 
 # New features
@@ -115,8 +117,7 @@ Patch32:	ebtables-v2.0-rc1_vs_2.4.18.patch
 Patch33:	linux-2.4.19-pre8-konicawc.patch
 Patch34:	wrr-linux-2.4.9.patch
 Patch35:	%{name}-pswscancode.patch
-Patch36:	usb-ehci-2.4.20-pre11.patch
-Patch37:	usb-visor-2.4.20-pre11.patch
+Patch36:	linux-2.4.20-rc1-USB.patch
 
 # Assorted bugfixes
 
@@ -189,6 +190,8 @@ Patch909:	linux-2.4.19-PPC-agpgart_be.patch
 Patch910:	linux-2.4.19-grsecurity-1.9.7-fix.patch
 Patch911:	linux-2.4.19-SPARC.patch
 Patch912:	linux-2.4.19-grsec-1.9.7-PAX-sysctl.patch
+Patch913:	squashfs1.0b-fix.patch
+#Patch914:
 
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
@@ -439,7 +442,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -a3 -a4 -a5  -a7 -a8 -a9 -a10 -n linux-%{version}
+%setup -q -a3 -a4 -a5  -a7 -a8 -a9 -a10 -a11 -n linux-%{version}
 #%patch1000 -p1
 %patch0 -p1
 %patch1 -p1
@@ -571,9 +574,11 @@ echo Installing WRR Support
 # scancode
 %patch35 -p1
 
+#squashfs
+%patch913 -p0
+patch -p1 -s < squashfs1.0b/squashfs-patch
 # USB 2.0 patch
 %patch36 -p1
-%patch37 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
@@ -641,6 +646,7 @@ BuildKernel() {
 	cat %{SOURCE1007} >> arch/%{base_arch}/defconfig
 %endif
 	cat %{SOURCE1008} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1671} >> arch/%{base_arch}/defconfig
 	
 	if [ "$BOOT" = "yes" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
@@ -807,6 +813,7 @@ cat %{SOURCE1008} >> .config
 cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
+cat %{SOURCE1671} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
@@ -847,6 +854,7 @@ cat %{SOURCE1008} >> .config
 cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
+cat %{SOURCE1671} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
