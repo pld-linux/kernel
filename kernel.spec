@@ -14,7 +14,7 @@
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
 #
-%define		pre_version		rc2
+%define		pre_version		rc3
 %define		netfilter_snap		20031009
 %define		i2c_version		2.8.0
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -130,7 +130,7 @@ Patch152:	linux-2.4.22-fore200e-0.2f.patch
 # New devices/drivers
 
 # http://people.sistina.com/~thornber/patches/2.4-stable/
-Patch200:	linux-2.4.22-dm-1.patch
+Patch200:	linux-2.4.23-dm-3.patch
 
 # EVMS support (http://www.sourceforge.net/projects/evms/)
 # Disabled due to conflicts with LVM2 and device mapper tools
