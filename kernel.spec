@@ -132,7 +132,6 @@ Patch133:	xquad_portio.fix
 
 # Patches fixing other patches or 3rd party sources ;)
 
-Patch900:	kernel-i8255-asm-fix.patch
 # patch fixing problem with ABI and LIDS
 Patch901:	linux-lids-with-abi.patch
 Patch902:	linux-vlan-fixpatch.patch
@@ -406,7 +405,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch121 -p1
 ##%patch122 -p1
 
-%patch900 -p0 
 %patch904 -p0
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
 %ifarch %{ix86}
