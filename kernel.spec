@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	0.1%{?_with_preemptive:_pr}%{?_with_acpi:_acpi}
+Release:	0.2%{?_with_preemptive:_pr}%{?_with_acpi:_acpi}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -146,6 +146,7 @@ Patch132:	ide-EXPORT_SYMBOL.fix
 
 # tweaks for grsecurity, description inside patch
 Patch900:	loop-jari-2.4.18.0.patch
+Patch901:	linux-proc_get_inode.patch
 # DRM (note that this doesn't fix drm when running on 386 or 486 CPU!)
 Patch902:	linux-drm-%{drm_xfree_version}-force-cmpxchg.patch
 Patch903:	linux-drm-2.4.19-mm.patch
@@ -490,6 +491,8 @@ echo Adding NCR/Symbios controler
 mv %{sym_ncr_version}/*.{c,h} drivers/scsi
 mv %{sym_ncr_version}/{README,ChangeLog}.* Documentation
 rm -rf %{sym_ncr_version}
+
+%patch901 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
