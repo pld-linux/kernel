@@ -8,8 +8,9 @@
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 # _without_wrr		- don't build WRR support
+# _with_newdrm		- build with new DRM modules
 #
-%define		krelease		5.906
+%define		krelease		5.907
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -34,7 +35,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	%{krelease}%{?_with_preemptible:_pr}%{?_with_o1_sched:_o1}%{?_with_acpi:_acpi}%{?_without_wrr:_nowrr}
+Release:	%{krelease}%{?_with_preemptible:_pr}%{?_with_o1_sched:_o1}%{?_with_acpi:_acpi}%{?_without_wrr:_nowrr}%{?_with_newdrm:_newdrm}
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
@@ -636,9 +637,12 @@ echo "Scheduler didn't work on ARCH different than Intel x86"
 %ifarch %{ix86}
 %patch950 -p0
 %endif
+%if %{?_with_newdrm:1}%{!?_with_newdrm:0}
+echo Added new kernel DRM modules...
 rm -rf drivers/char/drm
 cp -f drm/Makefile.kernel drm/Makefile
 mv -f drm drivers/char
+%endif
 
 # Tekram DC395/315 U/UW SCSI host driver
 echo Adding Tekram DC395/315 driver
