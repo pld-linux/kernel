@@ -866,6 +866,8 @@ ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
 %{__make} clean
 cp $KERNEL_BUILD_DIR/scripts/modpost scripts
 
+rm -f $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/.config
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -885,10 +887,6 @@ ln -snf %{version}-%{release} /lib/modules/%{version}
 /sbin/geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}.gz /boot/initrd
-
-if [ -f %{_prefix}/src/linux-%{version}/config-up ] ; then
-	cp -f %{_prefix}/src/linux-%{version}/config-up %{_prefix}/src/linux-%{version}/.config
-fi
 
 if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
@@ -910,10 +908,6 @@ ln -snf %{version}-%{release}smp /lib/modules/%{version}
 /sbin/geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
-
-if [ -f %{_prefix}/src/linux-%{version}/config-smp ] ; then
-	cp -f %{_prefix}/src/linux-%{version}/config-smp %{_prefix}/src/linux-%{version}/.config
-fi
 
 if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
