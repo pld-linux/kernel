@@ -66,7 +66,7 @@
  diff -urPX nopatch linux-2.2.25/fs/namei.c linux/fs/namei.c
  --- linux-2.2.25/fs/namei.c	Fri Nov  2 19:39:08 2001
  +++ linux/fs/namei.c	Thu Mar 20 14:07:47 2003
-@@ -1568,11 +1523,11 @@
+@@ -1568,11 +1523,20 @@
   	start = NULL;
   	dp = (struct proc_dir_entry *) inode->u.generic_ip;
   	
@@ -78,10 +78,19 @@
   		free_page(page);
   		return -EIO;
 + 	}
++@@ -1555,7 +1567,7 @@
++ 		free_page(page);
++ 		return length;
++ 	}
++-	if (pid && process_unauthorized(type, pid)) {
+++	if (pid && process_unauthorized(type, pid, inode)) {
++ 		free_page(page);
++ 		return -EIO;
++ 	}
  diff -urPX nopatch linux-2.2.25/fs/proc/base.c linux/fs/proc/base.c
  --- linux-2.2.25/fs/proc/base.c	Sun Mar 25 20:30:58 2001
  +++ linux/fs/proc/base.c	Thu Mar 20 14:07:47 2003
-@@ -1678,41 +1633,6 @@
+@@ -1678,41 +1642,6 @@
   	proc_scsi = create_proc_entry("scsi", S_IFDIR, 0);
   #ifdef CONFIG_SYSCTL
   	proc_register(&proc_root, &proc_sys_root);
@@ -123,7 +132,7 @@
  diff -urPX nopatch linux-2.2.25/include/asm-i386/a.out.h linux/include/asm-i386/a.out.h
  --- linux-2.2.25/include/asm-i386/a.out.h	Sun Mar 25 20:31:05 2001
  +++ linux/include/asm-i386/a.out.h	Thu Mar 20 14:07:47 2003
-@@ -2028,29 +1948,6 @@
+@@ -2028,29 +1957,6 @@
   	addr = PAGE_ALIGN(addr);
   
   	for (vmm = find_vma(current->mm, addr); ; vmm = vmm->vm_next) {
