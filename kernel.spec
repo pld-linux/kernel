@@ -637,7 +637,9 @@ BuildConfig (){
 %endif
 
 	cat %{SOURCE100} >> arch/%{base_arch}/defconfig
+%ifnarch sparc
 	cat %{SOURCE99} >> arch/%{base_arch}/defconfig
+%endif	
 	ln -sf arch/%{base_arch}/defconfig .config
 
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
@@ -710,9 +712,13 @@ PreInstallKernel (){
 	gzip -cfv vmlinux > vmlinuz
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
-%ifarch sparc sparc64
+%ifarch sparc
+	elftoaout arch/sparc/boot/image -o vmlinux.aout
+	install vmlinux.aout $KERNEL_INSTALL_DIR/boot/vmlinux.aout-$KernelVer
+%endif
+%ifarch sparc64
 	elftoaout vmlinux -o vmlinux.aout
-	install vmlinuz.aout $KERNEL_INSTALL_DIR/boot/vmlinuz.aout-$KernelVer
+	install vmlinux.aout $KERNEL_INSTALL_DIR/boot/vmlinux.aout-$KernelVer
 %endif
 %endif
 
