@@ -18,7 +18,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.5.68
-Release:	0.5
+Release:	0.6
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
@@ -406,16 +406,8 @@ for i in "" smp ; do
 			$RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
 	fi
 done
-ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
-ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 
-ln -sf ../src/linux/include/asm-generic $RPM_BUILD_ROOT%{_includedir}/asm-generic
-%ifarch sparc sparc64
-ln -sf ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
-ln -sf ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
-%else
-ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT%{_includedir}/asm
-%endif
+ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 
 cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
 
@@ -604,12 +596,44 @@ fi
 %post headers
 rm -f /usr/src/linux
 ln -snf linux-%{version} /usr/src/linux
+if [ ! -L %{_includedir}/linux ]; then
+        ln -sf ../src/linux/include/linux %{_includedir}/linux
+fi
+if [ ! -L %{_includedir}/asm-generic ]; then
+	ln -sf ../src/linux/include/asm-generic %{_includedir}/asm-generic
+fi
+%ifarch sparc sparc64
+if [ ! -L %{_includedir}/asm-sparc ] && [ ! -L %{_includedir}/asm-sparc64 ]; then
+	ln -sf ../src/linux/include/asm-sparc %{_includedir}/asm-sparc
+	ln -sf ../src/linux/include/asm-sparc64 %{_includedir}/asm-sparc64
+fi
+%else
+if [ ! -L %{_includedir}/asm ]; then
+	ln -sf ../src/linux/include/asm %{_includedir}/asm
+fi
+%endif
+%ifarch %{ix86}
+ln -sf asm-i386 %{_prefix}/src/linux-%{version}/include/asm
+%endif
+
+%preun headers
+%ifnarch sparc sparc64
+rm -f %{_prefix}/src/linux-%{version}/include/asm
+%endif
 
 %postun headers
-if [ -L /usr/src/linux ]; then
-	if [ "`ls -l /usr/src/linux | awk '{ print $11 }'`" = "linux-%{version}" ]; then
+rm -f %{_includedir}/linux
+rm -f %{_includedir}/asm-generic
+%ifarch sparc sparc64
+rm -f %{_includedir}/asm-sparc
+rm -f %{_includedir}/asm-sparc64
+%else
+rm -f %{_includedir}/asm
+%endif
+if [ -L %{_prefix}/src/linux ]; then
+	if [ "`ls -l %{_prefix}/src/linux | awk '{ print $11 }'`" = "linux-%{version}" ]; then
 		if [ "$1" = "0" ]; then
-			rm -f /usr/src/linux
+			rm -f %{_prefix}/src/linux
 		fi
 	fi
 fi
@@ -691,9 +715,6 @@ fi
 %defattr(644,root,root,755)
 %dir %{_prefix}/src/linux-%{version}
 %{_prefix}/src/linux-%{version}/include
-%{_includedir}/asm
-%{_includedir}/asm-generic
-%{_includedir}/linux
 
 %files doc
 %defattr(644,root,root,755)
