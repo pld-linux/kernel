@@ -49,7 +49,7 @@
 ## netfilter snap 
 %define		_netfilter_snap		20040518
 
-%define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/pentium3/i386/;s/pentium4/i386/;s/amd64/x86_64/')
+%define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/pentium./i386/;s/amd64/x86_64/')
 
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
@@ -687,6 +687,9 @@ BuildConfig (){
 %ifarch i386
 	echo "CONFIG_M386=y" >> arch/%{base_arch}/defconfig
 %endif
+%ifarch i486
+	echo "CONFIG_M486=y" >> arch/%{base_arch}/defconfig
+%endif
 %ifarch i586
 	echo "CONFIG_M586=y" >> arch/%{base_arch}/defconfig
 %endif
@@ -697,7 +700,7 @@ BuildConfig (){
 	echo "CONFIG_MK7=y" >> arch/%{base_arch}/defconfig
 %endif
 
-%ifarch i386
+%ifarch i386 i486
 	mv -f arch/%{base_arch}/defconfig arch/%{base_arch}/defconfig.orig
 	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
 		arch/%{base_arch}/defconfig.orig > arch/%{base_arch}/defconfig
@@ -730,6 +733,11 @@ ConfigBOOT()
 	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/%{base_arch}/defconfig
 %ifarch i386
 	echo "CONFIG_M386=y" >> arch/%{base_arch}/defconfig
+%endif
+%ifarch i486
+	echo "CONFIG_M486=y" >> arch/%{base_arch}/defconfig
+%endif
+%ifarch i386 i486
 	mv -f arch/%{base_arch}/defconfig arch/%{base_arch}/defconfig.orig
 	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
 		arch/%{base_arch}/defconfig.orig > arch/%{base_arch}/defconfig
@@ -959,6 +967,9 @@ install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
 %ifarch i386
 echo "CONFIG_M386=y" >> .config
 %endif
+%ifarch i486
+echo "CONFIG_M486=y" >> .config
+%endif
 %ifarch i586
 echo "CONFIG_M586=y" >> .config
 %endif
@@ -982,6 +993,9 @@ install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config .config
 
 %ifarch i386
 echo "CONFIG_M386=y" >> .config
+%endif
+%ifarch i486
+echo "CONFIG_M486=y" >> .config
 %endif
 %ifarch i586
 echo "CONFIG_M586=y" >> .config
