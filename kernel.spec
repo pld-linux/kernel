@@ -39,7 +39,7 @@ Source33:	ftp://sourceforge.org/pcmcia/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x.c-2.2.16-pre4-6.gz
 # NFS server patches
 Source40:	http://download.sourceforge.net/nfs/kernel-nfs-dhiggen_merge-3.0.tar.gz
-Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.16.2.gz
+Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.16.4.gz
 Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.16-reiserfs-3.5.22-patch.gz
 Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
 Patch3:		linux-tasks.patch
