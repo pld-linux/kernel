@@ -1,6 +1,6 @@
 diff -urN linux.orig/arch/ppc/kernel/chrp_setup.c linux/arch/ppc/kernel/chrp_setup.c
 --- linux.orig/arch/ppc/kernel/chrp_setup.c	Sun Mar 25 18:31:49 2001
-+++ linux/arch/ppc/kernel/chrp_setup.c	Tue Aug 20 16:36:58 2002
++++ linux/arch/ppc/kernel/chrp_setup.c	Tue Aug 27 15:46:50 2002
 @@ -4,6 +4,7 @@
   *  Copyright (C) 1995  Linus Torvalds
   *  Adapted from 'alpha' version by Gary Thomas
@@ -102,7 +102,7 @@ diff -urN linux.orig/arch/ppc/kernel/chrp_setup.c linux/arch/ppc/kernel/chrp_set
  
 diff -urN linux.orig/arch/ppc/kernel/open_pic.c linux/arch/ppc/kernel/open_pic.c
 --- linux.orig/arch/ppc/kernel/open_pic.c	Sun Mar 25 18:31:49 2001
-+++ linux/arch/ppc/kernel/open_pic.c	Tue Aug 20 16:27:23 2002
++++ linux/arch/ppc/kernel/open_pic.c	Tue Aug 27 15:46:50 2002
 @@ -11,116 +11,45 @@
  #include <linux/signal.h>
  #include <linux/openpic.h>
@@ -245,7 +245,7 @@ diff -urN linux.orig/arch/ppc/kernel/open_pic.c linux/arch/ppc/kernel/open_pic.c
  };
 diff -urN linux.orig/arch/ppc/kernel/open_pic.h linux/arch/ppc/kernel/open_pic.h
 --- linux.orig/arch/ppc/kernel/open_pic.h	Sun Mar 25 18:31:49 2001
-+++ linux/arch/ppc/kernel/open_pic.h	Mon Aug 19 23:29:37 2002
++++ linux/arch/ppc/kernel/open_pic.h	Tue Aug 27 15:46:50 2002
 @@ -6,7 +6,6 @@
  
  extern struct hw_interrupt_type open_pic;
@@ -256,7 +256,7 @@ diff -urN linux.orig/arch/ppc/kernel/open_pic.h linux/arch/ppc/kernel/open_pic.h
  void do_openpic_setup_cpu(void);
 diff -urN linux.orig/arch/ppc/kernel/openpic.c linux/arch/ppc/kernel/openpic.c
 --- linux.orig/arch/ppc/kernel/openpic.c	Fri Nov  2 17:39:05 2001
-+++ linux/arch/ppc/kernel/openpic.c	Tue Aug 20 16:30:22 2002
++++ linux/arch/ppc/kernel/openpic.c	Tue Aug 27 15:46:50 2002
 @@ -10,6 +10,9 @@
   *  to avoid bogus interrupts and to make sure the disable function exits with
   *  the interrupt actually masked. --BenH
@@ -422,8 +422,17 @@ diff -urN linux.orig/arch/ppc/kernel/openpic.c linux/arch/ppc/kernel/openpic.c
  	}
 diff -urN linux.orig/arch/ppc/kernel/pmac_pic.c linux/arch/ppc/kernel/pmac_pic.c
 --- linux.orig/arch/ppc/kernel/pmac_pic.c	Sun Mar 25 18:31:49 2001
-+++ linux/arch/ppc/kernel/pmac_pic.c	Mon Aug 19 23:18:34 2002
-@@ -385,7 +385,7 @@
++++ linux/arch/ppc/kernel/pmac_pic.c	Tue Aug 27 15:47:42 2002
+@@ -32,6 +32,8 @@
+ 
+ extern u_int openpic_read(volatile u_int *addr);
+ 
++extern void chrp_do_IRQ(struct pt_regs *,int , int);
++
+ #define MAXCOUNT 10000000
+ 
+ #define GATWICK_IRQ_POOL_SIZE        10
+@@ -385,7 +387,7 @@
  		    irq_desc[i].ctl = &open_pic;
  		    irq_desc[i].level = 0;
  		}
@@ -434,7 +443,7 @@ diff -urN linux.orig/arch/ppc/kernel/pmac_pic.c linux/arch/ppc/kernel/pmac_pic.c
  #ifdef CONFIG_XMON
 diff -urN linux.orig/arch/ppc/kernel/prep_pci.c linux/arch/ppc/kernel/prep_pci.c
 --- linux.orig/arch/ppc/kernel/prep_pci.c	Sun Mar 25 18:31:49 2001
-+++ linux/arch/ppc/kernel/prep_pci.c	Mon Aug 19 23:18:34 2002
++++ linux/arch/ppc/kernel/prep_pci.c	Tue Aug 27 15:46:50 2002
 @@ -5,6 +5,9 @@
   * rewritten and updated by Cort Dougan (cort@cs.nmt.edu)
   *
