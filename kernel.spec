@@ -9,20 +9,20 @@
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 #
-%define		krelease		4.01
+%define		krelease		4.02
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 #
 %define		pre_version		pre1
-%define		ipvs_version		1.0.0
+%define		ipvs_version		1.0.3
 %define		freeswan_version	1.97
 %define		wlan_version		0.1.13
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		IPperson_version	20020427-2.4.18
 %define		grsec_version		1.9.4-2.4.18
 %define		aic_version		6.2.3-2.4.7
-%define		jfs_version		2.4-1.0.18
+%define		jfs_version		2.4-1.0.19
 %define		lvm_version		1.0.4
 %define		evms_version		1.0.1
 %define		tridentfb_version	0.7.0
@@ -95,7 +95,6 @@ Patch2:		linux-%{version}-freeswan-%{freeswan_version}.patch.gz
 # from  http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.17.diff
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
-#Patch5:		linux-%{version}-xfs-19062002.patch.gz
 Patch5:		linux-2.4.18-xfs-20020517.patch.gz
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/sct/ext3/v2.4/
 Patch6:		linux-%{version}-ext3-0.9.18.patch
