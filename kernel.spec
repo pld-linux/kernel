@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		1
+%define		_rel		2
 %define		_test_ver	9
 %define		_cset		20031120_2007
 
@@ -96,7 +96,9 @@ Patch40:	2.6.0-t9-forcedeth-lkml.patch
 
 Patch42:	2.6.0-t9-netfilter-p2p.patch
 
-Patch43:	2.6.0-t9-PPC-ksyms.patch
+Patch44:	2.6.0-t9-PPC-ksyms.patch
+
+Patch46:	2.6.0-t9-IDE-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -433,7 +435,9 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch42 -p1
 
-%patch43 -p1
+%patch44 -p1
+
+%patch46 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
