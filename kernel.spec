@@ -9,7 +9,7 @@
 # _without_up		- don't build UP kernel
 #
 %define		test_build		0
-%define		krelease		2.33
+%define		krelease		2.34
 #
 %define base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 #
@@ -207,6 +207,7 @@ Patch912:	linux-o1-sched-grsec-post.patch
 Patch913:	linux-o1-sched-abi.patch
 Patch914:	linux-o1-sched-pre.patch
 Patch915:	linux-o1-sched-post.patch
+Patch916:	linux-o1-sched-evms.patch
 
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
@@ -641,6 +642,7 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 # EVMS
 %patch136 -p1
 %patch137 -p1
+%{?_with_o1_sched:%patch916 -p1}
 
 %ifarch %{ix86}
 %patch139 -p1
