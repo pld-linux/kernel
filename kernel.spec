@@ -143,9 +143,9 @@ Patch22:	linux-2.4.20-promise-st6000.patch.bz2
 #Patch23:
 # from MDK kernel DV08__i810fb.patch
 Patch24:	linux-2.4.20-I810FB.patch.bz2
+Patch25:	linux-2.4.20-I820FB_lock_page_fix.patch
 
 # Support for CDRW packet writing
-#Patch25:	
 Patch26:	%{name}-cdrw-packet.patch
 Patch27:	%{name}-cd-mrw-2.patch
 # PC Speaker driver
@@ -710,6 +710,7 @@ echo Promise driver patch
 # I810FB
 echo Added Intel 810 FB support
 %patch24 -p1
+%patch25 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
