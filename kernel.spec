@@ -423,7 +423,7 @@ for suite in pending base extra pld ; do
 		ANS="${ANS}y\n"
 	done
 done
-echo -e $ANS | sh -x ./runme pld)
+echo -e $ANS | ./runme pld)
 
 %if %{?_with_lids:1}%{!?_with_lids:0}
 # LIDS
