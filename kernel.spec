@@ -26,7 +26,7 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-
+%define		_rel		0.2
 %define		_cset		20040116_0629
 
 ## netfilter snap 
@@ -46,7 +46,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.6.1
-Release:	0.1
+Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
@@ -164,6 +164,8 @@ Patch92:	2.6.1-NF-20040114.patch
 Patch94:	ir260_ircom_ioctl-2.diff
 
 Patch96:	2.6.1-sysfs4oss-lkml.patch
+
+Patch98:	2.6.1-serial_updates-lkml.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -580,6 +582,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch94 -p1
 
 %patch96 -p1
+
+%patch98 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
