@@ -9,11 +9,11 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.18
-Release:	0.pre24.1
+Release:	1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-2.2.17.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
@@ -37,16 +37,15 @@ Source73:	%{name}-sparc64-BOOT.config
 Source81:	%{name}-alpha.config
 Source82:	%{name}-alpha-smp.config
 Source83:	%{name}-alpha-BOOT.config
-Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.2.18pre/pre-patch-2.2.18-24.gz
-Patch1:		%{name}-pldfblogo.patch
-Patch2:		linux-2.2.16-freeswan-%{freeswan_version}.patch
-Patch3:		wanrouter-v2215.patch.gz
-Patch4:		linux-ipv6-addrconf.patch
-Patch5:		%{name}-3c90x.patch
-Patch6:		linux-ipv6-glibc2.2.patch
-Patch7:		http://milosch.net/pub/beos/2.2.18-pre2-beos09032000.patch
-Patch8:		ftp://ftp.kernel.org/pub/linux/kernel/people/mingo/raid-patches/raid-2.2.18-A2
-Patch9:		linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
+Patch0:		%{name}-pldfblogo.patch
+Patch1:		linux-2.2.16-freeswan-%{freeswan_version}.patch
+Patch2:		wanrouter-v2215.patch.gz
+Patch3:		linux-ipv6-addrconf.patch
+Patch4:		%{name}-3c90x.patch
+Patch5:		linux-ipv6-glibc2.2.patch
+Patch6:		http://milosch.net/pub/beos/2.2.18-pre2-beos09032000.patch
+Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/mingo/raid-patches/raid-2.2.18-A2
+Patch8:		linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
 
 #Patch:	ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.17.10.gz
 #Patch:		linux-2.2.18pre21.ext3.diff
@@ -293,9 +292,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
-%patch7 -p1
-#%patch8 -p1
-%patch9 -p1
+#%patch7 -p1
+%patch8 -p1
 
 %ifarch %{ix86}
 cd ..
@@ -466,15 +464,15 @@ bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/
 mv -f $RPM_BUILD_ROOT/usr/src/linux $RPM_BUILD_ROOT/usr/src/linux-%{version}
 ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
 
-gzip -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH0}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH1}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH2}
-gzip -dc %{PATCH3} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH3}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
+gzip -dc %{PATCH8} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
 
