@@ -484,7 +484,7 @@ patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
 
 # IPVS
 echo Adding IPVS
-#%patch908 -p1
+%patch908 -p1
 for i in ipvs-%{ipvs_version}/*.diff ; do
 	patch -p1 -s <$i
 done
