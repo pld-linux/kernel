@@ -7,7 +7,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.17
-Release:	1
+Release:	2
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -39,7 +39,7 @@ Source32:	%{name}-BuildASM.sh
 Source33:	ftp://sourceforge.org/pcmcia/pcmcia-cs-%{pcmcia_version}.tar.gz
 #Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.17-pre18
 # NFS server patches
-Source40:	http://download.sourceforge.net/nfs/%{name}-nfs-dhiggen_merge-3.0.tar.gz
+Source40:	http://download.sourceforge.net/nfs/dhiggen_merge-4.1.tar.gz
 Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.16.4.gz
 Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.17-reiserfs-3.5.25-patch.gz
 Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
@@ -56,7 +56,7 @@ Patch12:	linux-agpgart-2.4-compat.patch
 Patch14:	http://www.linux.org.uk/VERSION/2.2.16combo
 Patch15:	linux-ipv6-addrconf.patch
 # NFS client patch
-Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17pre19-nfsv3-0.22.5.dif.bz2
+Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
