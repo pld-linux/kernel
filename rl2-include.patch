@@ -1,0 +1,236 @@
+diff -Nur drivers/net.org/Config.in drivers/net/Config.in
+--- drivers/net.org/Config.in	Mon Mar 26 14:11:32 2001
++++ drivers/net/Config.in	Mon Mar 26 13:58:21 2001
+@@ -100,6 +100,7 @@
+    if [ "$CONFIG_ISA" = "y" -o "$CONFIG_EISA" = "y" -o "$CONFIG_PCI" = "y" ]; then
+       tristate '  HP 10/100VG PCLAN (ISA, EISA, PCI) support' CONFIG_HP100
+    fi
++   tristate '  RangeLAN2 support' CONFIG_RL2 
+    dep_bool '  Other ISA cards' CONFIG_NET_ISA $CONFIG_ISA
+    if [ "$CONFIG_NET_ISA" = "y" ]; then
+       tristate '    Cabletron E21xx support' CONFIG_E2100
+diff -Nur drivers/net.org/Makefile drivers/net/Makefile
+--- drivers/net.org/Makefile	Sun Jan  7 04:45:14 2001
++++ drivers/net/Makefile	Mon Mar 26 14:00:13 2001
+@@ -36,10 +36,13 @@
+ subdir-$(CONFIG_APPLETALK) += appletalk
+ subdir-$(CONFIG_SK98LIN) += sk98lin
+ subdir-$(CONFIG_SKFP) += skfp
++subdir-$(CONFIG_RL2) += rl2
+ 
+ #
+ # link order important here
+ #
++obj-$(CONFIG_RL2) += rlmod.o
++
+ obj-$(CONFIG_PLIP) += plip.o
+ 
+ obj-$(CONFIG_ROADRUNNER) += rrunner.o
+diff -Nur drivers/net.org/rl2/Makefile drivers/net/rl2/Makefile
+--- drivers/net.org/rl2/Makefile	Mon Jan  8 17:30:18 2001
++++ drivers/net/rl2/Makefile	Mon Mar 26 14:14:49 2001
+@@ -1,192 +1,5 @@
+-#-------------------------------------------------------------------------
+-# Nothing user configurable.  'make modules' automatically runs a
+-# configuration script.  Do 'make config' to force a reconfiguration.
+-#-------------------------------------------------------------------------
+-SHELL 		= /bin/sh
+-MODNAME		= rlmod.o
+-include		config.mk
++export-objs := lls.o qsm.o
++O_TARGET := rlmod.o
+ 
+-#-------------------------------------------------------------------------
+-# For experimentation
+-#-------------------------------------------------------------------------
+-#dangerous to change to y!!!
+-SPOOF5V		= n
+-NO_INT		= y
++include $(TOPDIR)/Rules.make
+ 
+-#-------------------------------------------------------------------------
+-# gcc Compiler options
+-#-------------------------------------------------------------------------
+-CFLAGS = -Wall -Wstrict-prototypes 
+-#CFLAGS += -Werror 
+-CFLAGS += -O2 -fomit-frame-pointer -pipe
+-
+-#-------------------------------------------------------------------------
+-# Linux specific options
+-#-------------------------------------------------------------------------
+-CFLAGS += -D__KERNEL__ -DMODULE
+-CFLAGS += -I${LINUXH} 
+-
+-#-------------------------------------------------------------------------
+-# set per config.mk
+-#-------------------------------------------------------------------------
+-CFLAGS += -DCARDTYPE=${CARDTYPEVAL}
+-ifeq ($(BUFFER),y) 
+-	CFLAGS += -DBUFFER
+-endif
+-ifeq ($(PCCARD),y) 
+-	CFLAGS += -DPCCARD -I${PCCARDH}
+-endif
+-ifeq ($(CONFIG_MODVERSIONS),y) 
+-	CFLAGS += -DCONFIG_MODVERSIONS -include $(LINUXH)/linux/modversions.h
+-endif
+-ifeq ($(USBCARD),y) 
+-	LIBRARY	= liblldusb.a
+-	LINKLIB = lldusb
+-	DO_USB	= y
+-	CFLAGS += -DUSBCARD
+-else
+-	LIBRARY	= liblld.a
+-	LINKLIB = lld
+-	DO_USB	= n
+-endif
+-ifeq ($(SPOOF5V),y) 
+-	CFLAGS += -DSPOOF5V
+-endif
+-ifeq ($(NO_INT),y) 
+-	CFLAGS += -DNO_INT
+-endif
+-ifeq (diaglls.c,$(wildcard diaglls.c))
+-	CFLAGS += -DPROX_DIAG
+-	DIAGLLS = diaglls.o
+-	DO_DIAG = y
+-	POSTDIAG = -diag
+-	PROXDIAG = proxdiag
+-else
+-	DO_DIAG = n
+-endif
+-
+-#-------------------------------------------------------------------------
+-# Revision info
+-#-------------------------------------------------------------------------
+-CLLDVERSION	= 1.7
+-ifeq ($(DO_DIAG),y) 
+-	VERSION	= .1${POSTDIAG}
+-else
+-	VERSION	= .1
+-endif
+-MKDATE		= 01/08/01
+-OWNER		= Dave Koberstein \(davek@komacke.com\)
+-DISTNAME        = rl2-${CLLDVERSION}${VERSION}
+-CFLAGS 		+= -DRL2VERSION=\"${VERSION}\"
+-
+-#-------------------------------------------------------------------------
+-# Directives start here
+-#-------------------------------------------------------------------------
+-usage:
+-	@echo "make <option>"
+-	@echo "Options:"
+-	@echo "  config                 Configure environment for your distribution."
+-	@echo "  modules                Make the modules and the configuration executable."
+-	@echo "  modules_install        Install the modules and executables."
+-	@echo "  clean                  Remove *.o and executables."
+-	@echo "  real_clean             As above but do library also."
+-	@echo "  qrl                    Reload the interface."
+-	@echo "  distribution           Make a distribution tar ball."
+-	@echo "  usage                  This screen."
+-
+-modules: makelib ${MODNAME} proxcfg proxnet ${PROXDIAG}
+-
+-${MODNAME}: ${LIBRARY} version.h lls.o asm.o ${DIAGLLS}
+-	ld -r -o ${MODNAME} lls.o ${DIAGLLS} asm.o -L. -l${LINKLIB}
+-
+-proxcfg.o: proxcfg.h asm.h lld.h
+-
+-proxnet.o: proxcfg.h asm.h lld.h proxnet.c
+-
+-lls.o ${DIAGLLS}: lls.h lld.h asm.h proxcfg.h
+-
+-asm.o: asm.h
+-
+-makelib:
+-	@cd ../library;\
+-	${MAKE} ${LIBRARY} DO_USB=${DO_USB} LINUXH=${LINUXH} DO_DIAG=${DO_DIAG}
+-
+-clean:
+-	rm -f *.o proxcfg proxnet ${PROXDIAG} version.h 
+-
+-real_clean: clean
+-	@if [ -d ../library ]; then cd ../library; ${MAKE} clean; fi;
+-
+-modules_install:
+-	@if [ "fooREDHAT" = "foo${MODDIR}" ]; then \
+-		install -d -g root -m 755 /lib/modules/"`uname -r`"/net; \
+-		echo "install -d -g root -m 755 /lib/modules/`uname -r`/net"; \
+-		install -g root -m 644 ${MODNAME} /lib/modules/"`uname -r`"/net; \
+-		echo "install -g root -m 644 ${MODNAME} /lib/modules/`uname -r`/net"; \
+-	else \
+-		install -d -g root -m 755 ${MODDIR}; \
+-		echo "install -d -g root -m 755 ${MODDIR}"; \
+-		install -g root -m 644 ${MODNAME} ${MODDIR}/${MODNAME}; \
+-		echo "install -g root -m 644 ${MODNAME} ${MODDIR}/${MODNAME}"; \
+-	fi
+-	install -g root -m 755 proxcfg ${BINDIR}/proxcfg
+-	install -g root -m 755 proxnet ${BINDIR}/proxnet
+-	install -g root -m 755 testlink ${BINDIR}/testlink
+-
+-qrl:
+-	@./quickreload $(shell ifconfig | grep 00:20:A6 | cut -d " " -f 1)
+-
+-distribution: 
+-	@if [ -d ../library ]; then \
+-		${MAKE} real_clean makelib; \
+-		${MAKE} real_clean makelib DO_USB=n; \
+-	fi; \
+-	cd ..; \
+-	if [ ! -d $(DISTNAME) ]; then mkdir $(DISTNAME); fi; \
+-	if [ ! -d $(DISTNAME)/docs ]; then mkdir $(DISTNAME)/docs; fi; \
+-	rm -f $(DISTNAME)/*; \
+-	rm -f $(DISTNAME)/docs/*; \
+-	rm -f *.tgz; \
+-	(cp -f lls/* lls/.* $(DISTNAME) 2> /dev/null; exit 0); \
+-	(cp -f docs/* docs/.* $(DISTNAME)/docs 2> /dev/null; exit 0); \
+-	(cp -f README.1st $(DISTNAME) 2> /dev/null; exit 0); \
+-	cp -f /lib/modules/"`uname -r`"/net/$(MODNAME) $(DISTNAME); \
+-	rm -f $(DISTNAME)/config.mk; \
+-	tar vzcf $(DISTNAME).tgz $(DISTNAME); \
+-	cd lls; \
+-	${MAKE} real_clean
+-
+-tarsource:
+-	@cd ..;\
+-	if [ -d library ]; then \
+-		${MAKE} real_clean;\
+-		rm lls/config.mk;\
+-		rm ../src.tgz;\
+-		tar vzcf ../src.tgz * lls/.config.mk;\
+-	fi;\
+-
+-config.mk: .config.mk
+-	@echo "Apparently this is the first time you have run 'make config'."; \
+-	./Configure; \
+-	echo "'make config' is completed.  You must rerun make with other"; \
+-	echo "targets for this config to take effect properly."; \
+-	echo; \
+-	echo "Executing 'make clean'." ;\
+-	${MAKE} real_clean ;\
+-	echo; \
+-	echo "Ignore the error that follows."; \
+-	echo; \
+-	exit 1
+-
+-config: real_clean
+-	@./Configure; \
+-	echo "'make config' is completed.  You must rerun make with other"; \
+-	echo "targets for this config to take effect properly."; \
+-	echo; \
+-	echo "Ignore the error that follows."; \
+-	echo; \
+-	exit 1
+-
+-version.h:
+-	@echo static const char *version = \"rlmod.o: \
+-		 v$(CLLDVERSION)$(VERSION), $(MKDATE), $(OWNER)\\n\"\; > version.h
+diff -Nur drivers/net.org/rl2/Makefile~ drivers/net/rl2/Makefile~
+--- drivers/net.org/rl2/Makefile~	Thu Jan  1 01:00:00 1970
++++ drivers/net/rl2/Makefile~	Mon Mar 26 14:03:07 2001
+@@ -0,0 +1,4 @@
++export-objs := lls.o qsm.o
++O_TARGET := rlmod.o
++
++include $(TOPDIR)/Rules.make
+\ No newline at end of file
