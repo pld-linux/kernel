@@ -40,7 +40,7 @@ Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.14.1.gz
 Patch1:		ftp://ftp.botik.ru/rented/namesys/ftp/pub/linux+reiserfs/linux-2.2.14-reiserfs-3.5.20-patch.gz
 Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
 Patch3:		linux-tasks.patch
-Patch4:		http://www.redhat.com/~mingo/raid-patches/raid-2.2.15-A0
+Patch4:		http://www.redhat.com/~mingo/raid-patches/raid-2.2.15-A0.gz
 Patch5:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide.2.2.15.20000504.patch.bz2
 Patch6:		%{name}-pldfblogo.patch
 Patch7:		linux-2.2.14-freeswan-1.3.patch
