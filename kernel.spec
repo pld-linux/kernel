@@ -74,7 +74,7 @@ Patch0:		2.6.0-ksyms-add.patch
 # http://www.kernel.org/pub/linux/kernel/v2.5/testing/cset/
 Patch2:		cset-%{_cset}.txt.gz
 %endif
-
+Patch3:		2.6.3-rc3-aty128fb-fix-lkml.patch
 Patch4:		squashfs1.3r2-patch
 
 Patch6:		2.6.0-t4-PPC-ENODEV.patch
@@ -462,7 +462,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %if "%{_cset}" != "0"
 %patch2 -p1
 %endif
-
+%patch3 -p1
 %patch4 -p1
 
 %patch6 -p1
