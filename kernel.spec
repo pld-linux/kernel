@@ -172,6 +172,9 @@ Patch139:	http://www.uwsg.iu.edu/hypermail/linux/kernel/0201.2/att-1802/01-neofb
 
 # from http://prdownloads.sourceforge.net/tridentfb/tridentfb-%{tridentfb_version}.tgz 
 Patch140:	linux-2.4.18-tridentfb.patch
+Patch141:	linux-tulip-vlan.patch
+Patch142:	linux-modules-fixed.patch
+Patch143:	linux-ppc-procesor.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -633,7 +636,11 @@ echo Updating VIA Southbridge
 
 %ifarch ppc
 %patch138 -p1
+%patch143 -p0
 %endif
+
+%patch141 -p1
+%patch142 -p0
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
