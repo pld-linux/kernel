@@ -17,6 +17,10 @@
 
 %{?debug:%define with_verbose 1}
 
+%ifnarch %{ix86}
+%undefine	with_swsuspend
+%endif
+
 # not fixed yet
 %if %{with swsuspend}
 %undefine	with_grsec
@@ -726,14 +730,12 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch440 -p1
 
 # software suspend
-%ifarch %{ix86}
 %if %{with swsuspend}
 %patch460 -p1
 %patch461 -p1
 %patch462 -p1
 %patch463 -p1
 %patch464 -p1
-%endif
 %endif
 
 #grsec
