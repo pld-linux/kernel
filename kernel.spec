@@ -27,7 +27,6 @@ Source7:	http://www.linux-wlan.com/linux-wlan/linux-wlan-%{wlan_version}.tar.gz
 Source8:	http://www.dandelion.com/Linux/DAC960-2.2.10.tar.gz
 Source9:	serial-5.05.tar.gz
 Source10:	http://vtun.sourceforge.net/tun/tun-%{tun_version}.tar.gz
-Source13:       http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -75,6 +74,8 @@ Patch26:	linux-2.2.19-pci.patch
 Patch27:	%{name}-flip.patch 
 Patch28:	%{name}-flip-serial5.05.patch
 Patch29:	%{name}-serial-initialisation.patch
+# Original patch from http://scry.wanfear.com/~greear/vlan/vlan.1.0.1.tar.gz
+Patch30:	vlan_2.2.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -360,6 +361,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch25 -p1
 %patch26 -p1
 %patch27 -p1
+%patch30 -p1
 
 cd  serial-5.05
 %patch28 -p1
@@ -381,12 +383,6 @@ install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 mv sym-1.7.3-ncr-3.4.3/*.{c,h} drivers/scsi
 mv sym-1.7.3-ncr-3.4.3/{README,ChangeLog}.* Documentation
 rm -rf sym-1.7.3-ncr-3.4.3
-
-# 802.1Q VLANs
-cd vlan.%{vlan_version}
-#%patch905 -p1
-cd ..
-patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
 
 %build
 BuildKernel() {
