@@ -36,18 +36,11 @@ Source21:	%{name}-sparc.config
 Source22:	%{name}-sparc-smp.config
 Source23:	%{name}-autoconf.h
 Source24:	http://dl.sourceforge.net/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
-
+Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc2.bz2
 Patch3:		patch-linux-2.4.20-xfs.bz2
-
 ExclusiveOS:	Linux
+Autoreqprov:	no
 URL:		http://www.kernel.org/
-BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
-BuildRequires:	rpm-build >= 4.0.2-53
-%ifarch sparc64
-BuildRequires:	egcs64
-%else
-BuildRequires:	%{kgcc_package}
-%endif
 %ifarch sparc
 BuildRequires:	sparc32
 %endif
@@ -56,16 +49,9 @@ Autoreqprov:	no
 PreReq:		modutils
 PreReq:		fileutils
 PreReq:		geninitrd
-#Prereq:		rc-boot
+#Prereq:	rc-boot
+BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Obsoletes:	kernel-modules
-
-ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
-%ifarch		%{ix86}
-BuildRequires:	bin86
-BuildRequires:	autoconf
-BuildRequires:	automake
-%endif
-Autoreqprov:	no
 
 %description
 This package contains the Linux kernel that is used to boot and run
@@ -107,41 +93,40 @@ Twojego komputera.
 ôÁËÏÖ ÃÅÊ ÐÁËÅÔ Í¦ÓÔÉÔØ ÍÏÄÕÌ¦, ÝÏ ÚÁÂÅÚÐÅÞÕÀÔØ Ð¦ÄÔÒÉÍËÕ ×Ó¦È
 ÐÅÒÉÆÅÒ¦ÊÎÉÈ ÐÒÉÓÔÒÏ¦×, ÑË¦ Linux Ð¦ÄÔÒÉÍÕ¤ ÎÁ ÓØÏÇÏÄÎÑÛÎ¦Ê ÄÅÎØ.
 
-#%package smp
-#Summary:	Kernel version %{version} compiled for SMP machines
-#Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
-#Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
-#Summary(pl):	Kernel %{version} skompilowany na maszyny SMP
-#Group:		Base/Kernel
-#Provides:	%{name} = %{version}-%{release}
-#PreReq:		modutils
-#PreReq:		fileutils
-#PreReq:		geninitrd
-#Prereq:		rc-boot
-#Obsoletes:	kernel-modules
-
+%package smp
+Summary:	Kernel version %{version} compiled for SMP machines
+Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
+Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
+Summary(pl):	Kernel %{version} skompilowany na maszyny SMP
+Group:		Base/Kernel
+Provides:	%{name} = %{version}-%{release}
+PreReq:		modutils
+PreReq:		fileutils
+PreReq:		geninitrd
+Prereq:		rc-boot
+Obsoletes:	kernel-modules
 Autoreqprov:	no
 
-#%description smp
-#This package includes a SMP version of the Linux %{version} kernel. It
-#is required only on machines with two or more CPUs, although it should
-#work fine on single-CPU boxes.
+%description smp
+This package includes a SMP version of the Linux %{version} kernel. It
+is required only on machines with two or more CPUs, although it should
+work fine on single-CPU boxes.
 
-#%description smp -l de
-#Dieses Paket enthält eine SMP (Multiprozessor)-Version von
-#Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
-#Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
-#CPU laufen.
+%description smp -l de
+Dieses Paket enthält eine SMP (Multiprozessor)-Version von
+Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
+Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
+CPU laufen.
 
-#%description smp -l fr
-#Ce package inclu une version SMP du noyau de Linux version {version}.
-#Il et nécessaire seulement pour les machine avec deux processeurs ou
-#plus, il peut quand même fonctionner pour les système mono-processeur.
+%description smp -l fr
+Ce package inclu une version SMP du noyau de Linux version {version}.
+Il et nécessaire seulement pour les machine avec deux processeurs ou
+plus, il peut quand même fonctionner pour les système mono-processeur.
 
-#%description smp -l pl
-#Ten pakiet zawiera wersjê SMP j±dra Linuksa w wersji %{version}. Jest
-#wymagany wy³±cznie na maszynach z dwoma b±d¼ wiêksz± liczb± CPU,
-#jednak¿e powinien dzia³aæ prawid³owo tak¿e na jednoprocesorowych.
+%description smp -l pl
+Ten pakiet zawiera wersjê SMP j±dra Linuksa w wersji %{version}. Jest
+wymagany wy³±cznie na maszynach z dwoma b±d¼ wiêksz± liczb± CPU,
+jednak¿e powinien dzia³aæ prawid³owo tak¿e na jednoprocesorowych.
 
 %package BOOT
 Summary:	Kernel version %{version} used on the installation boot disks
@@ -272,25 +257,24 @@ PCMCIA-CS modules (%{pcmcia_version}).
 %description -l pl pcmcia-cs
 Modu³y PCMCIA-CS (%{pcmcia_version}).
 
-#%package smp-pcmcia-cs
-#Summary:	PCMCIA-CS modules for SMP kernel
-#Summary(pl):	Modu³y PCMCIA-CS dla maszyn SMP
-#Group:		Base/Kernel
-#Group(pl):	Podstawowe/Kernel
-#Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
-#Requires(post):		%{name}-smp = %{version}-%{release}
-#Requires(postun):	%{name}-smp = %{version}-%{release}
+%package smp-pcmcia-cs
+Summary:	PCMCIA-CS modules for SMP kernel
+Summary(pl):	Modu³y PCMCIA-CS dla maszyn SMP
+Group:		Base/Kernel
+Group(pl):	Podstawowe/Kernel
+Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
+Requires(post):		%{name}-smp = %{version}-%{release}
+Requires(postun):	%{name}-smp = %{version}-%{release}
 
-#%description smp-pcmcia-cs
-#PCMCIA-CS modules for SMP kernel (%{pcmcia_version}).
+%description smp-pcmcia-cs
+PCMCIA-CS modules for SMP kernel (%{pcmcia_version}).
 
-#%description -l pl smp-pcmcia-cs
-#Modu³y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
+%description -l pl smp-pcmcia-cs
+Modu³y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 
 %prep
 %setup -q -n linux-%{version}
-
-%patch3 -p1
+%patch0 -p1
 
 %build
 BuildKernel() {
@@ -329,13 +313,6 @@ BuildKernel() {
 	%{__make} dep
 %endif
 	make include/linux/version.h
-
-%ifarch %{ix86} alpha sparc
-	KERNELCC="%{kgcc}"
-%endif
-%ifarch sparc64
-	KERNELCC="sparc64-linux-gcc"
-%endif
 
 %ifarch %{ix86}
 	%{__make} bzImage EXTRAVERSION="-%{release}"
@@ -532,28 +509,28 @@ depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 %post pcmcia-cs
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
-#%post smp
-#mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-#mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
-#ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
-#ln -sf System.map-%{version}-%{release}smp /boot/System.map
+%post smp
+mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
+mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
+ln -sf System.map-%{version}-%{release}smp /boot/System.map
 
-#rm -f /lib/modules/%{version}
-#ln -snf %{version}-%{release}smp /lib/modules/%{version}
-#ln -snf %{version}-%{release}smp /lib/modules/%{version}smp
+rm -f /lib/modules/%{version}
+ln -snf %{version}-%{release}smp /lib/modules/%{version}
+ln -snf %{version}-%{release}smp /lib/modules/%{version}smp
 
-#depmod -a -F /boot/System.map %{version}-%{release}smp
+depmod -a -F /boot/System.map %{version}-%{release}smp
 
-#geninitrd /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
-#test ! -f /boot/initrd || mv -f /boot/initrd /boot/initrd.old 2> /dev/null > /dev/null
-#ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
+geninitrd /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
+test ! -f /boot/initrd || mv -f /boot/initrd /boot/initrd.old 2> /dev/null > /dev/null
+ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 
-#if [ -x /sbin/rc-boot ] ; then
-#	/sbin/rc-boot 1>&2 || :
-#fi
+if [ -x /sbin/rc-boot ] ; then
+	/sbin/rc-boot 1>&2 || :
+fi
 
-#%post smp-pcmcia-cs
-#/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
+%post smp-pcmcia-cs
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
 
 %postun
 if [ -L /lib/modules/%{version} ]; then
@@ -568,18 +545,18 @@ rm -f /boot/initrd-%{version}-%{release}.gz
 %postun pcmcia-cs
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
-#%postun smp
-#if [ -L /lib/modules/%{version} ]; then
-#	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp" ]; then
-#		if [ "$1" = "0" ]; then
-#			rm -f /lib/modules/%{version}
-#		fi
-#	fi
-#fi
-#rm -f /boot/initrd-%{version}-%{release}smp.gz
+%postun smp
+if [ -L /lib/modules/%{version} ]; then
+	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp" ]; then
+		if [ "$1" = "0" ]; then
+			rm -f /lib/modules/%{version}
+		fi
+	fi
+fi
+rm -f /boot/initrd-%{version}-%{release}smp.gz
 
-#%postun smp-pcmcia-cs
-#/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
+%postun smp-pcmcia-cs
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
 
 %post headers
 rm -f /usr/src/linux
