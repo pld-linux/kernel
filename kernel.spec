@@ -61,7 +61,7 @@ Patch5:		dc395-patch-PLD-fix.patch
 Patch6:		linux-2.4.1-disable-message-printing.patch
 ## orginal are here: http://domsch.com/linux/aacraid/linux-2.4.1-aacraid-030101.patch
 ## this need small changes to applay in PLD.
-Patch7:		linux-2.4.1-aacraid-030101.patch
+Patch7:		linux-2.4.3-aacraid-030101.patch
 # work around bugs in windows95/2000 VJ header compression implementations.
 Patch8:		linux-fix-win-vj.patch
 Patch9:		ipvs-ip_select_ident.patch
@@ -110,7 +110,7 @@ Patch30:	http://home.sch.bme.hu/~cell/br2684/dist/010109/br2684-against2.4.0.dif
 Patch31:	http://home.sch.bme.hu/~cell/br2684/dist/010109/br2684-common.c-spin_unlock.diff
 
 # aacraid fix
-Patch32:	http://domsch.com/linux/aacraid/linux-2.4.1-axboe-scsi-max-sec.patch
+Patch32:	http://domsch.com/linux/aacraid/linux-2.4.3-axboe-scsi-max-sec.patch
 
 # Kernel crashes during making reiser-module:
 Patch33:	%{name}-reiser.patch
@@ -339,9 +339,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch4 -p0 
 %patch5 -p0
 %patch6 -p1
-#%patch7 -p1
+%patch7 -p1
 %patch8 -p1
-%patch10 -p1
+#%patch10 -p1
 %patch11 -p1
 %patch12 -p0
 %patch13 -p0
