@@ -26,7 +26,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.14
-Release:	0.3
+Release:	0.4
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -139,6 +139,8 @@ Patch129:	ir243_ttp_sock_races-2.diff
 Patch130:	ir243_usb_descr.diff
 # 
 Patch131:	kernel-real_root_dev-s390.patch
+# Preemptible kernel  patch
+Patch132:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/2.4/preemtp-kernel-rml-2.4.14-2.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -515,6 +517,9 @@ cp -f tulip-%{tulip_version}/src/ChangeLog drivers/net/tulip
 %patch908 -p0
 # fix 53c7,8xx build
 %patch909 -p0
+
+#preemptible kernel patch
+%patch132 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
