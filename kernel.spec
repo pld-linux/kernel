@@ -481,7 +481,7 @@ echo "CONFIG_MK7=y" >> .config
 cp .config config-smp
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
-install $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/* $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
+install $KERNEL_BUILD_DIR-installed/usr/src/linux-%{version}/include/linux/* $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 
 %ifarch %{ix86}
 ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
