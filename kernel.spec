@@ -21,9 +21,9 @@ Source17:	kernel-i686.config
 #Source18:	kernel-i686-fb.config
 Source19:	kernel-i686-smp.config
 #Source20:	kernel-i686-smp-fb.config
-#Source21:	kernel-sparc.config
-#Source22:	kernel-sparc-smp.config
-#Source23:	kernel-sparc-BOOT.config
+Source21:	kernel-sparc.config
+Source22:	kernel-sparc-smp.config
+Source23:	kernel-sparc-BOOT.config
 #Source24:	kernel-sparc64.config
 #Source25:	kernel-sparc64-smp.config
 #Source26:	kernel-sparc64-BOOT.config
@@ -222,7 +222,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
+%ifarch %{ix86}
 %patch5 -p1
+%endif
 patch -p1 -s <linux-%{ow_ver}/linux-%{ow_ver}.diff
 
 %build
@@ -246,51 +248,27 @@ BuildKernel() {
 	echo BUILDING THE NORMAL KERNEL...
     fi
     cp $RPM_SOURCE_DIR/kernel-$Config.config arch/$RPM_ARCH/defconfig
-    # make sure EXTRAVERSION says what we want it to say
-#    perl -p -i -e "s/^EXTRAVERSION.*/EXTRAVERSION = -%{release}$1/" Makefile
-    perl -p -i -e "s/-m386//" arch/i386/Makefile
-    perl -p -i -e "s/-m486//" arch/i386/Makefile
-    if [ "$1" = "BOOT" ]; then
-#	SIZE_OPT_FLAGS=`echo "$RPM_OPT_FLAGS" | sed -e s/-O[0-9]//`
-#	SIZE_OPT_FLAGS="$SIZE_OPT_FLAGS -g0 -O -Os -fomit-frame-pointer -fno-exceptions -fno-rtti -s -funroll-all-loops"
-# Due to the RISC core nature of recent CPUs, optimized binaries are generally
-# a bit larger than non-optimized ones. Therefore, we completely ignore
-# RPM_OPT_FLAGS settings for the boot kernel, and replace them with the ones
-# known to produce the smallest binaries.
-	SIZE_OPT_FLAGS="-g0 -O -fomit-frame-pointer -fno-exceptions -fno-rtti -funroll-all-loops -ffast-math -m386 -march=i386 -pipe -s -Os"
-        perl -p -i -e "s/^HOSTCFLAGS.*/HOSTCFLAGS = $SIZE_OPT_FLAGS/" Makefile
-        perl -p -i -e "s/^CFLAGS_NSR.*/CFLAGS_NSR := $SIZE_OPT_FLAGS/" arch/i386/Makefile
-#	Doesn't seem to work well: perl -p -i -e "s/-malign-loops=2 -malign-jumps=2 -malign-functions=2/-malign-loops=0 -malign-jumps=0 -malign-functions=0/" arch/i386/Makefile
-    else
-        perl -p -i -e "s/^HOSTCFLAGS.*/HOSTCFLAGS = $RPM_OPT_FLAGS/" Makefile
-        perl -p -i -e "s/^CFLAGS_NSR.*/CFLAGS_NSR := $RPM_OPT_FLAGS/" arch/i386/Makefile
-	# undo damage from BOOT 
-#	perl -p -i -e "s/-malign-loops=0 -malign-jumps=0 -malign-functions=0/-malign-loops=2 -malign-jumps=2 -malign-functions=2/" arch/i386/Makefile
-   fi
-    rm -f .config
     make mrproper
-    ln -s arch/$RPM_ARCH/defconfig .config
+    ln -sf arch/$RPM_ARCH/defconfig .config
 
-    export CFLAGS="$RPM_OPT_FLAGS"
-    export CXXFLAGS="$RPM_OPT_FLAGS"
     make oldconfig
     make dep 
     make include/linux/version.h 
 %ifarch %{ix86}
-    make bzImage
+    make bzImage EXTRAVERSION="-%{release}"
 %else
-    make boot
+    make boot EXTRAVERSION="-%{release}"
 %endif
-    make modules 
+    make modules EXTRAVERSION="-%{release}"
     mkdir -p $RPM_BUILD_ROOT/boot
-    install -m 644 System.map $RPM_BUILD_ROOT/boot/System.map-$KernelVer
+    install System.map $RPM_BUILD_ROOT/boot/System.map-$KernelVer
 %ifarch %{ix86}
      cp arch/i386/boot/bzImage $RPM_BUILD_ROOT/boot/vmlinuz-$KernelVer
 %endif
 %ifarch alpha sparc
      gzip -cfv vmlinux > vmlinuz
-     install -m 755 vmlinux $RPM_BUILD_ROOT/boot/vmlinux-$KernelVer
-     install -m 644 vmlinuz $RPM_BUILD_ROOT/boot/vmlinuz-$KernelVer
+     install vmlinux $RPM_BUILD_ROOT/boot/vmlinux-$KernelVer
+     install vmlinuz $RPM_BUILD_ROOT/boot/vmlinuz-$KernelVer
 %endif
      mkdir -p $RPM_BUILD_ROOT/lib/modules/$KernelVer/{block,cdrom,fs,ipv4,misc,net,scsi}
      make INSTALL_MOD_PATH=$RPM_BUILD_ROOT modules_install KERNELRELEASE=$KernelVer
@@ -327,12 +305,15 @@ ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 tar Ixf %{SOURCE0} -C $RPM_BUILD_ROOT/usr/src/
 mv -f $RPM_BUILD_ROOT/usr/src/linux $RPM_BUILD_ROOT/usr/src/linux-%{version}
 ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
+
 gzip -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH1} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH3} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+%ifarch %{ix86}
 gzip -dc %{PATCH5} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+%endif
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-%{ow_ver}/linux-%{ow_ver}.diff
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
@@ -340,7 +321,7 @@ cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 find  -name "*~" -print | xargs rm -f
 find  -name "*.orig" -print | xargs rm -f
 
-install %{SOURCE10} .config
+install $RPM_SOURCE_DIR/kernel-$RPM_ARCH.config .config
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
@@ -422,23 +403,23 @@ ln -snf %{version}-%{release}BOOT /lib/modules/%{version}
 
 %postun
 if [ -L /lib/modules/%{version} ]; then 
-    if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}" ]; then
-	 [ $1 = 0 ] && rm -f /lib/modules/%{version}
-    fi
+	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}" ]; then
+		[ $1 = 0 ] && rm -f /lib/modules/%{version}
+	fi
 fi
 
 %postun smp
 if [ -L /lib/modules/%{version} ]; then 
-    if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp" ]; then
-	 [ $1 = 0 ] && rm -f /lib/modules/%{version}
-    fi
+	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp" ]; then
+		[ $1 = 0 ] && rm -f /lib/modules/%{version}
+	fi
 fi
 
 %postun BOOT
 if [ -L /lib/modules/%{version} ]; then 
-    if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}BOOT" ]; then
-	 [ $1 = 0 ] && rm -f /lib/modules/%{version}
-    fi
+	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}BOOT" ]; then
+		[ $1 = 0 ] && rm -f /lib/modules/%{version}
+	fi
 fi
 
 %post headers
@@ -447,9 +428,9 @@ ln -snf linux-%{version} /usr/src/linux
 
 %postun headers
 if [ -L /usr/src/linux ]; then 
-    if [ "`ls -l /usr/src/linux | awk '{ print $11 }'`" = "linux-%{version}" ]; then
-	 [ $1 = 0 ] && rm -f /usr/src/linux
-    fi
+	if [ "`ls -l /usr/src/linux | awk '{ print $11 }'`" = "linux-%{version}" ]; then
+		[ $1 = 0 ] && rm -f /usr/src/linux
+	fi
 fi
 
 %files
