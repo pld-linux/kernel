@@ -26,7 +26,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	1.1%{?_with_preemptive:_pr}
+Release:	1.2%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -84,7 +84,7 @@ Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/net
 Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-2.4.18-1.patch
 # http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
 Patch11:	linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
-Patch12:	http://luxik.cdi.cz/~devik/qos/htb/v2/htb2_2.4.17.diff
+Patch12:	htb3.6-2.4.17.patch.bz2
 Patch13:	http://luxik.cdi.cz/~devik/qos/imq-2.4.18.diff-10
 # http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4.18-patch
 Patch14:	jfs-2.4.19-patch
