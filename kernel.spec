@@ -66,6 +66,8 @@ Source71:	%{name}-alpha-smp.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
 
+Source80:	%{name}-netfilter.config
+
 Patch0:		2.6.0-ksyms-add.patch
 
 %if "%{_cset}" != "0"
@@ -577,6 +579,8 @@ BuildConfig (){
 		arch/%{base_arch}/defconfig.orig > arch/%{base_arch}/defconfig
 %endif
 
+	cat %{SOURCE80} >> arch/%{base_arch}/defconfig
+
 	ln -sf arch/%{base_arch}/defconfig .config
 
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
@@ -748,6 +752,7 @@ echo "CONFIG_M686=y" >> .config
 %ifarch athlon
 echo "CONFIG_MK7=y" >> .config
 %endif
+cat %{SOURCE80} >> .config
 
 cp .config config-up
 
@@ -769,6 +774,7 @@ echo "CONFIG_M686=y" >> .config
 %ifarch athlon
 echo "CONFIG_MK7=y" >> .config
 %endif
+cat %{SOURCE80} >> .config
 
 cp .config config-smp
 
