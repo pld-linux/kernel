@@ -9,7 +9,6 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	grsec		# build without grsec
-%bcond_without	fbsplash	# build without fbsplash
 %bcond_with	pax		# enable PaX
 %bcond_with	execshield	# build with exec-shield
 %bcond_with	verbose		# verbose build (V=1)
@@ -573,9 +572,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %patch70 -p1
 
-%if %{with fbsplash}
 %patch72 -p1
-%endif
 
 %patch73 -p1
 %patch74 -p1
