@@ -55,7 +55,7 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.20
+%define		_rel		0.21
 %define		_cset		20050207_1746
 %define		_apply_cset	0
 
@@ -516,11 +516,11 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 bzcat %{SOURCE4} | patch -p1 -s
 %endif
 
-%patch0 -p1
+#%patch0 -p1
 %patch1 -p1
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
+#%patch2 -p1
+#%patch3 -p1
+#%patch4 -p1
 #%patch6 -p1
 
 #%patch8 -p1
