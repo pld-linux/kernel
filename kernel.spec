@@ -2,6 +2,7 @@
 %define		pcmcia_version	3.1.23
 %define		reiserfs_version	3.6.24
 %define		freeswan_version	1.8
+%define		atm_version		0.78
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -41,6 +42,8 @@ Source33:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_versio
 #Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.17+.gz
 # NFS server patches
 #Source40:	http://download.sourceforge.net/nfs/dhiggen_merge-4.1.tar.gz
+Source50:	i8255-0.2.tar.gz
+Source51:	ftp://icaftp.epfl.ch/linux/atm/dist/atm-%{atm_version}.tar.gz
 Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.1.gz
 Patch100:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac2.bz2
 Patch101:		%{name}-%{version}-dc395-patch-fix.patch
@@ -272,7 +275,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a31 -a33 -n linux
+%setup -q -a31 -a33 -a50 -n linux
 #%setup -q -a30 -a31 -a33 -n linux
 %patch0 -p1
 #%patch100 -p1
