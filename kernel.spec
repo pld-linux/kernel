@@ -94,6 +94,7 @@ BuildRequires:	egcs
 %ifarch sparc
 BuildRequires:	sparc32
 %endif
+Provides:	%{name}-up = %{version}
 %ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(i2c) = %{i2c_version}
