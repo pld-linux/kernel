@@ -168,6 +168,7 @@ Provides:	bttv = %{bttv_version}
 %endif
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
+Provides:	%{name}(freeswan) = %{freeswan_version}
 Autoreqprov:	no
 PreReq:		modutils
 PreReq:		fileutils
@@ -244,6 +245,7 @@ Provides:	bttv = %{bttv_version}
 %endif
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
+Provides:	%{name}(freeswan) = %{freeswan_version}
 PreReq:		modutils
 PreReq:		fileutils
 PreReq:		geninitrd
@@ -324,6 +326,7 @@ Provides:	i2c-devel = %{i2c_version}
 Provides:	%{name}-headers(ipvs) = %{version}
 Provides:	%{name}-headers(rawio) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
+Provides:	%{name}-headers(freeswan) = %{freeswan_version}
 Obsoletes:	i2c-devel
 Autoreqprov:	no
 
