@@ -7,6 +7,7 @@
 # _without_boot		- don't build BOOT kernel
 # _without_source	- don't build source
 # _without_doc		- don't build documentation package
+# _without_grsec	- don't apply grsecurity patch
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -28,7 +29,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.4.21
-Release:	0.6
+Release:	0.7
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -61,6 +62,7 @@ Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
 Source1000:	%{name}-addon.config
 Source1001:	%{name}-netfilter.config
+Source1002:	%{name}-grsec.config
 Source2000:	%{name}-win4lin.config
 
 # New features/updates/backports
@@ -263,7 +265,10 @@ Patch3003:	linux-2.4.20-missing-license-tags.patch
 Patch3004:	linux-2.4.20-sym53c8xx_old.patch
 Patch3005:	linux-2.4.21-gcc33.patch
 
-# Security fixes
+# Security patches/fixes
+
+Patch4000:	linux-2.4.21-ow1-stack.patch
+Patch4001:	grsecurity-nopax-2.0-rc1-2.4.21.patch
 
 #Patch10000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc6.bz2
 
@@ -277,6 +282,7 @@ BuildRequires:	egcs64
 %endif
 BuildRequires:	modutils
 Buildrequires:	perl
+BuildRequires:	sed >= 3.95
 Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.7.0
@@ -661,6 +667,9 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch3004 -p1
 %patch3005 -p1
 
+%patch4000 -p1
+%{!?_without_grsec:%patch4001 -p1}
+
 mv -f drivers/scsi/sym53c8xx.c drivers/scsi/sym53c8xx_old.c
 
 # Tekram DC395/315 U/UW SCSI host driver
@@ -684,18 +693,15 @@ cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 %endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
-mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
-sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
-mv -f net/ipsec/Makefile net/ipsec/Makefile.orig
-sed -e 's/EXTRA_CFLAGS.*-g//g' net/ipsec/Makefile.orig > net/ipsec/Makefile
+sed -i -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile
+sed -i -e 's/EXTRA_CFLAGS.*-g//g' net/ipsec/Makefile
 
 # Fix EXTRAVERSION and CC in main Makefile
-mv -f Makefile Makefile.orig
-sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
+sed -i -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
 %ifarch sparc64
     -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
 %endif
-    Makefile.orig >Makefile
+    Makefile
 
 %build
 BuildKernel() {
@@ -743,6 +749,9 @@ BuildKernel() {
 	
 	if [ "$BOOT" = "yes" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
+	else
+		:;
+		%{!?_without_grsec:cat %{SOURCE1002} >> arch/%{base_arch}/defconfig}
 	fi
 %ifarch %{ix86}
 	cat %{SOURCE2000} >> arch/%{base_arch}/defconfig
@@ -750,8 +759,8 @@ BuildKernel() {
 
 %ifarch i386
 	mv -f arch/%{base_arch}/defconfig arch/%{base_arch}/defconfig.orig
-	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
-		arch/%{base_arch}/defconfig.orig > arch/%{base_arch}/defconfig
+	sed -i -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
+		arch/%{base_arch}/defconfig
 %endif
 
 	%{__make} mrproper
@@ -904,6 +913,7 @@ echo "CONFIG_MK7=y" >> .config
 %endif
 cat %{SOURCE1000} >> .config
 cat %{SOURCE1001} >> .config
+%{!?_without_grsec:cat %{SOURCE1002} >> .config}
 
 %ifarch %{ix86}
 cat %{SOURCE2000} >> .config
@@ -939,6 +949,7 @@ echo "CONFIG_MK7=y" >> .config
 
 cat %{SOURCE1000} >> .config
 cat %{SOURCE1001} >> .config
+%{!?_without_grsec:cat %{SOURCE1002} >> .config}
 
 %ifarch %{ix86}
 cat %{SOURCE2000} >> .config
@@ -972,11 +983,7 @@ echo "#include <linux/modsetver.h>" > include/linux/modversions.h
 %if %{?_without_source:0}%{!?_without_source:1}
 %{__make} depend 
 find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
-while read file ; do
-	mv $file $file.old
-	sed -e "s|$RPM_BUILD_ROOT\(/usr/src/linux\)|\1|g" < $file.old > $file
-	rm -f $file.old
-done
+	xargs sed -i -e "s|$RPM_BUILD_ROOT\(/usr/src/linux\)|\1|g"
 
 %{__make} clean
 rm -f scripts/mkdep
@@ -1276,6 +1283,7 @@ fi
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
 %{_prefix}/src/linux-%{version}/init
+%{!?_without_grsec:%{_prefix}/src/linux-%{version}/grsecurity}
 %{_prefix}/src/linux-%{version}/ipc
 #%{_prefix}/src/linux-%{version}/kdb
 %{_prefix}/src/linux-%{version}/kernel
