@@ -166,7 +166,7 @@ Patch50:	2.6.11.3-pom-ng-%{_netfilter_snap}.patch
 #Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 
 # http://dev.gentoo.org/~spock/projects/gensplash/
-Patch72:	fbsplash-0.9.1-r2-2.6.11-rc4.patch
+Patch72:	fbsplash-0.9.2-2.6.11.patch  
 Patch73:	squashfs2.1-patch
 Patch74:	linux-static-dev.patch
 Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
