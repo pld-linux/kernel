@@ -757,7 +757,8 @@ BuildKernel() {
 %ifarch sparc64
 	%{__make} image\
 		%{?with_verbose:V=1}
-	%{__make modules\
+
+	%{__make} modules\
 		%{?with_verbose:V=1}
 %else
 	sparc32 %{__make} \
