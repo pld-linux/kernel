@@ -18,7 +18,7 @@
 %bcond_with	pramfs		# build pramfs support (EXPERIMENTAL)
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
-%bcond_without	bootsplash	# build with bootsplash
+%bcond_with	bootsplash	# build without bootsplash
 
 %{?debug:%define with_verbose 1}
 
@@ -603,7 +603,6 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch70 -p1
 #patch71 -p1
 %if %{with bootsplash}
-echo "Not fixed !!"
 %patch72 -p1
 %endif
 %patch73 -p1
@@ -928,25 +927,7 @@ KERNEL_BUILD_DIR=`pwd`
 
 # UP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
-rm -rf $KERNEL_INSTALL_DIR
-BuildConfig
-%{?with_up:BuildKernel}
-%{?with_up:PreInstallKernel}
-
-# SMP KERNEL
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
-rm -rf $KERNEL_INSTALL_DIR
 BuildConfig smp
-%{?with_smp:BuildKernel smp}
-%{?with_smp:PreInstallKernel smp}
-
-%if %{with BOOT}
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
-rm -rf $KERNEL_INSTALL_DIR
-ConfigBOOT
-BuildKernel BOOT
-PreInstallKernel BOOT
-%endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
