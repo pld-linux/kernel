@@ -1,0 +1,140 @@
+diff -uNr linux-2.6.8-rc4.i2o.orig/drivers/message/i2o/i2o_block.c linux-2.6.8-rc4.i2o/drivers/message/i2o/i2o_block.c
+--- linux-2.6.8-rc4.i2o.orig/drivers/message/i2o/i2o_block.c	2004-08-10 04:23:21.000000000 +0200
++++ linux-2.6.8-rc4.i2o/drivers/message/i2o/i2o_block.c	2004-08-12 14:36:23.182162760 +0200
+@@ -316,6 +316,11 @@
+ 	i2o_raw_writel( offset & 0xFFFFFFFF, msg+24);
+ 	i2o_raw_writel(offset>>32, msg+28);
+ 	mptr=msg+32;
++	if((sizeof(dma_addr_t) > 4) && (c->pae_support)) {
++		i2o_raw_writel((0x7C<<24)+(2<<16)+0x02, mptr);
++		i2o_raw_writel(1 << PAGE_SHIFT, mptr + 4);
++		mptr += 8;
++	}
+ 	
+ 	sg = ireq->sg_table;
+ 	if(rq_data_dir(req) == READ)
+@@ -328,8 +333,15 @@
+ 				i2o_raw_writel(0x10000000|sg_dma_len(sg), mptr);
+ 			else
+ 				i2o_raw_writel(0xD0000000|sg_dma_len(sg), mptr);
+-			i2o_raw_writel(sg_dma_address(sg), mptr+4);
+-			mptr += 8;	
++			if(c->pae_support) {
++				dma_addr_t addr = sg_dma_address(sg);
++				i2o_raw_writel(i2o_low_ptr_to_u32((void *)addr), mptr+4);
++				i2o_raw_writel(i2o_high_ptr_to_u32((void *)addr), mptr+8);
++				mptr += 12;
++			} else {
++				i2o_raw_writel(sg_dma_address(sg), mptr+4);
++				mptr += 8;
++			}
+ 			count -= sg_dma_len(sg);
+ 			sg++;
+ 		}
+diff -uNr linux-2.6.8-rc4.i2o.orig/drivers/message/i2o/i2o_core.c linux-2.6.8-rc4.i2o/drivers/message/i2o/i2o_core.c
+--- linux-2.6.8-rc4.i2o.orig/drivers/message/i2o/i2o_core.c	2004-08-10 04:23:20.000000000 +0200
++++ linux-2.6.8-rc4.i2o/drivers/message/i2o/i2o_core.c	2004-08-12 14:38:01.700185744 +0200
+@@ -1799,6 +1799,7 @@
+ 		return -ETIMEDOUT;
+ 	msg=(u32 *)(c->msg_virt+m);
+ 	
++	pci_set_dma_mask(c->pdev, (dma_addr_t)0xFFFFFFFF);
+ 	status = pci_alloc_consistent(c->pdev, 4, &status_phys);
+ 	if(status == NULL) {
+ 		printk(KERN_ERR "IOP reset failed - no free memory.\n");
+@@ -1887,6 +1888,7 @@
+ 			i2o_enable_controller(iop);
+ 
+ 	pci_free_consistent(c->pdev, 4, status, status_phys);
++	pci_set_dma_mask(c->pdev, (dma_addr_t)0xFFFFFFFFFFFFFFFFULL);
+ 	return 0;
+ }
+ 
+@@ -1910,8 +1912,12 @@
+ 
+ 	if (c->status_block == NULL) 
+ 	{
++		if(c->pae_support)
++			pci_set_dma_mask(c->pdev, (dma_addr_t) 0xffffffff);
+ 		c->status_block = (i2o_status_block *)
+ 			pci_alloc_consistent(c->pdev, sizeof(i2o_status_block), &c->status_block_phys);
++		if(c->pae_support)
++			pci_set_dma_mask(c->pdev, (dma_addr_t) 0xffffffffffffffffULL);
+ 		if (c->status_block == NULL)
+ 		{
+ 			printk(KERN_CRIT "%s: Get Status Block failed; Out of memory.\n",
+@@ -2452,7 +2458,11 @@
+ 
+ 	do {
+ 		if (c->lct == NULL) {
++			if(c->pae_support)
++				pci_set_dma_mask(c->pdev, (dma_addr_t)0xffffffffffffffff);
+ 			c->lct = pci_alloc_consistent(c->pdev, size, &c->lct_phys);
++			if(c->pae_support)
++				pci_set_dma_mask(c->pdev, (dma_addr_t)0xffffffffffffffffULL);
+ 			if(c->lct == NULL) {
+ 				printk(KERN_CRIT "%s: Lct Get failed. Out of memory.\n",
+ 					c->name);
+@@ -2622,7 +2632,7 @@
+ 		sys_tbl->iops[count].iop_capabilities = 
+ 				iop->status_block->iop_capabilities;
+ 		sys_tbl->iops[count].inbound_low = (u32)iop->post_port;
+-		sys_tbl->iops[count].inbound_high = 0;	// FIXME: 64-bit support
++		sys_tbl->iops[count].inbound_high = (u32)(iop->post_port >> 32);
+ 
+ 		count++;
+ 	}
+@@ -3660,6 +3670,12 @@
+ 	c->short_req = 0;
+ 	c->pdev = dev;
+ 
++	if(sizeof(dma_addr_t) > 4) {
++		pci_set_dma_mask(dev, (dma_addr_t)0xFFFFFFFFFFFFFFFFULL);
++		c->pae_support = 1;
++	} else
++		c->pae_support = 0;
++
+ #if BITS_PER_LONG == 64
+ 	c->context_list_lock = SPIN_LOCK_UNLOCKED;
+ #endif
+diff -uNr linux-2.6.8-rc4.i2o.orig/include/linux/i2o.h linux-2.6.8-rc4.i2o/include/linux/i2o.h
+--- linux-2.6.8-rc4.i2o.orig/include/linux/i2o.h	2004-08-10 04:22:31.000000000 +0200
++++ linux-2.6.8-rc4.i2o/include/linux/i2o.h	2004-08-12 14:36:23.197160480 +0200
+@@ -147,6 +147,7 @@
+ 
+ 	void *page_frame;			/* Message buffers */
+ 	dma_addr_t page_frame_map;		/* Cache map */
++	int pae_support;			/* PAE support for Adaptec */
+ #if BITS_PER_LONG == 64
+ 	spinlock_t context_list_lock;		/* lock for context_list */
+ 	struct i2o_context_list_element *context_list; /* list of context id's
+@@ -345,6 +346,14 @@
+ extern u32 i2o_context_list_add(void *, struct i2o_controller *);
+ extern void *i2o_context_list_get(u32, struct i2o_controller *);
+ extern u32 i2o_context_list_remove(void *, struct i2o_controller *);
++
++static inline u32 i2o_high_ptr_to_u32(void *ptr) {
++	return (u32)((u64)ptr >> 32);
++}
++
++static inline u32 i2o_low_ptr_to_u32(void *ptr) {
++	return (u32)(u64)ptr;
++}
+ #else
+ static inline u32 i2o_context_list_add(void *ptr, struct i2o_controller *c)
+ {
+@@ -360,6 +369,14 @@
+ {
+ 	return (u32)ptr;
+ }
++
++static inline u32 i2o_high_ptr_to_u32(void *ptr) {
++	return 0;
++}
++
++static inline u32 i2o_low_ptr_to_u32(void *ptr) {
++	return ptr;
++}
+ #endif
+ 
+ /*
