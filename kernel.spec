@@ -663,7 +663,11 @@ PreInstallKernel (){
 	%{?debug:V=1} \
      	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 	KERNELRELEASE=$KernelVer
-	echo KERNEL RELEASE $KernelVer
+
+	echo "CHECKING DEPENDENCIES FOR KERNEL MODULES"
+	depmod --basedir $KERNEL_INSTALL_DIR -ae -F $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer $KernelVer || echo
+
+	echo "KERNEL RELEASE $KernelVer DONE"
 
 }
 
