@@ -162,6 +162,7 @@ Patch124:	linux-proc_net_dev-counter-fix.patch
 Patch125:	01-sigxfs-vs-blkdev.patch
 Patch126:	linux-2.4.18-SPARC64-ide.h-fix.patch
 Patch127:	%{name}-2.4.18-SPARC64-PLD.patch
+Patch128:	linux-AXP.patch
 Patch129:	%{name}-Makefile-include-fix.patch
 Patch130:	%{name}-2.4.17-netsyms-export-fix.patch
 Patch131:	%{name}-2.4.18-personality.patch
@@ -635,7 +636,7 @@ echo Fixed SPARC 64 compilation.
 #fixed AXP compilation
 %ifarch alpha
 echo Fixed SYSCALL errors for DEC Alpha arch.
-#%patch128 -p0
+%patch128 -p0
 %endif
 
 # Fided include path
