@@ -69,6 +69,7 @@ Patch7:		2.6.0-t3-initrd_load-lkml.patch
 Patch10:	2.6.0-t3-pmac_ide-lkml.patch
 Patch11:	2.6.0-t3-sysfs_mem-lkml.patch
 Patch12:	2.6.0-t3-trival-lkml.patch
+Patch13:	2.6.0-t4-pcmcia-sound-vx-bk.patch
 
 Patch20:	2.6.0-t3.c99.Documentation-lkml.patch
 Patch21:	2.6.0-t3.c99.arch-lkml.patch
@@ -322,6 +323,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch10 -p1
 %patch11 -p1
 #%patch12 -p1
+%patch13 -p1
 
 %patch20 -p1
 %patch21 -p1
