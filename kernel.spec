@@ -95,6 +95,7 @@ Patch52:	2.6.0-t3-oprofile-3of3-lkml.patch
 Patch53:	2.6.0-t4-PPC-ENODEV.patch
 Patch54:	2.6.0-t5-PPC-fix.patch
 Patch55:	kernel-siimage-rqsize.patch
+Patch56:	2.6.0-t5-PPC-Kconfig.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -348,6 +349,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch53 -p1
 %patch54 -p1
 %patch55 -p1
+%patch56 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
