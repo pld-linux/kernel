@@ -169,8 +169,6 @@ Patch59:	2.6.7-alpha_compile.patch
 Patch60:	2.6.4-rc1-01-esfq-imq.patch
 Patch61:	2.6.4-rc1-02-imq-nat-support.patch
 
-Patch64:	2.6.4-psion-5mx.patch
-
 #from:		http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
 Patch66:	2.6.1-all-in-1.patch
 
@@ -659,8 +657,6 @@ echo "Not fixed !!"
 %patch60 -p1
 %patch61 -p1
 
-%patch64 -p1
-
 %patch66 -p1
 
 %patch68 -p1
@@ -823,8 +819,8 @@ BuildConfig (){
 	sed -i 's:# CONFIG_PREEMPT is not set:CONFIG_PREEMPT=y:' arch/%{_target_base_arch}/defconfig
 %endif
 
-%ifarch %{ix86} 
-    %if %{with_mosix}
+%ifarch %{ix86}
+    %if %{with mosix}
 	cat %{SOURCE100} >> arch/%{_target_base_arch}/defconfig
 	%if %{with preemptive}
 		sed -i 's:CONFIG_PREEMPT=y:# CONFIG_PREEMPT is not set:' arch/%{_target_base_arch}/defconfig
