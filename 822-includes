@@ -1,6 +1,6 @@
 diff -ruN 822-includes-old/include/asm-i386/suspend.h 822-includes-new/include/asm-i386/suspend.h
---- 822-includes-old/include/asm-i386/suspend.h	2004-09-07 21:58:58.000000000 +1000
-+++ 822-includes-new/include/asm-i386/suspend.h	2004-09-24 22:44:33.000000000 +1000
+--- 822-includes-old/include/asm-i386/suspend.h	2004-08-30 16:01:15.000000000 +1000
++++ 822-includes-new/include/asm-i386/suspend.h	2004-09-27 23:05:50.000000000 +1000
 @@ -3,6 +3,7 @@
   * Based on code
   * Copyright 2001 Patrick Mochel <mochel@osdl.org>
@@ -10,8 +10,8 @@ diff -ruN 822-includes-old/include/asm-i386/suspend.h 822-includes-new/include/a
  #include <asm/i387.h>
  
 diff -ruN 822-includes-old/include/linux/suspend.h 822-includes-new/include/linux/suspend.h
---- 822-includes-old/include/linux/suspend.h	2004-09-07 21:59:00.000000000 +1000
-+++ 822-includes-new/include/linux/suspend.h	2004-09-27 20:01:28.000000000 +1000
+--- 822-includes-old/include/linux/suspend.h	2004-08-30 16:01:17.000000000 +1000
++++ 822-includes-new/include/linux/suspend.h	2004-10-02 20:57:46.481475000 +1000
 @@ -1,74 +1,127 @@
  #ifndef _LINUX_SWSUSP_H
  #define _LINUX_SWSUSP_H
@@ -58,7 +58,7 @@ diff -ruN 822-includes-old/include/linux/suspend.h 822-includes-new/include/linu
 -	suspend_pagedir_t *suspend_pagedir;
 -	unsigned int num_pbes;
 -};
-+#define SUSPEND_CORE_VERSION "2.0.0.109"
++#define SUSPEND_CORE_VERSION "2.1-rc1"
 +#ifndef KERNEL_POWER_SWSUSP_C
 +#define name_suspend "Software Suspend " SUSPEND_CORE_VERSION ": "
 +#endif
@@ -197,7 +197,7 @@ diff -ruN 822-includes-old/include/linux/suspend.h 822-includes-new/include/linu
  
  #ifdef CONFIG_SMP
  extern void disable_nonboot_cpus(void);
-@@ -84,10 +137,113 @@
+@@ -84,10 +137,127 @@
  asmlinkage void do_magic_suspend_1(void);
  asmlinkage void do_magic_suspend_2(void);
  
@@ -275,7 +275,7 @@ diff -ruN 822-includes-old/include/linux/suspend.h 822-includes-new/include/linu
 +	void (* resume2) (void);
 +	
 +	void (* free_pool_pages) (struct page *page, unsigned int order);
-+	struct page * (* get_pool_page) (unsigned int gfp_mask, unsigned int order);
++	struct page * (* get_pool_pages) (unsigned int gfp_mask, unsigned int order);
 +
 +	unsigned long (* get_grabbed_pages) (int order);
 +	void (* cleanup_finished_io) (void);
@@ -295,7 +295,11 @@ diff -ruN 822-includes-old/include/linux/suspend.h 822-includes-new/include/linu
 +#define software_suspend_try_resume()	do { } while(0)
 +#endif
 +
-+#else
++#define suspend2_free_pool_pages(page, order)	suspend2_core_ops->free_pool_pages(page, order)
++#define suspend2_get_pool_pages(mask, order)	suspend2_core_ops->get_pool_pages(mask, order)
++#define suspend2_get_grabbed_pages(order)	suspend2_core_ops->get_grabbed_pages(order)
++
++#else /* CONFIG_PM off */
 +
 +#define software_suspend_pending()	do { } while(0)
 +#define suspend_task			(0)
@@ -307,6 +311,16 @@ diff -ruN 822-includes-old/include/linux/suspend.h 822-includes-new/include/linu
 +#define restore_suspend_state(saved_state) do { } while(0)
 +#define software_suspend_try_resume()	do { } while(0)
 +
++static inline int suspend_bug(void)
++{
++	BUG();
++	return 0;
++}
++
++#define suspend2_free_pool_pages(page, order) suspend_bug()
++#define suspend2_get_pool_pages(mask, order) (struct page *) suspend_bug()
++#define suspend2_get_grabbed_pages(order) (struct page *) suspend_bug()
++
 +static inline int software_suspend(void)
 +{
 +	printk("Warning: fake suspend called\n");
@@ -317,8 +331,8 @@ diff -ruN 822-includes-old/include/linux/suspend.h 822-includes-new/include/linu
  
  #endif /* _LINUX_SWSUSP_H */
 diff -ruN 822-includes-old/kernel/power/disk.c 822-includes-new/kernel/power/disk.c
---- 822-includes-old/kernel/power/disk.c	2004-09-27 20:22:02.000000000 +1000
-+++ 822-includes-new/kernel/power/disk.c	2004-09-25 20:24:54.000000000 +1000
+--- 822-includes-old/kernel/power/disk.c	2004-10-02 21:45:26.932621048 +1000
++++ 822-includes-new/kernel/power/disk.c	2004-09-27 23:05:50.000000000 +1000
 @@ -17,6 +17,7 @@
  #include <linux/string.h>
  #include <linux/delay.h>
@@ -329,7 +343,7 @@ diff -ruN 822-includes-old/kernel/power/disk.c 822-includes-new/kernel/power/dis
  
 diff -ruN 822-includes-old/kernel/power/pageflags.h 822-includes-new/kernel/power/pageflags.h
 --- 822-includes-old/kernel/power/pageflags.h	1970-01-01 10:00:00.000000000 +1000
-+++ 822-includes-new/kernel/power/pageflags.h	2004-09-24 19:09:41.000000000 +1000
++++ 822-includes-new/kernel/power/pageflags.h	2004-09-27 23:05:50.000000000 +1000
 @@ -0,0 +1,53 @@
 +/*
 + * kernel/power/pageflags.h
@@ -386,7 +400,7 @@ diff -ruN 822-includes-old/kernel/power/pageflags.h 822-includes-new/kernel/powe
 +extern void clear_map(unsigned long * pagemap);
 diff -ruN 822-includes-old/kernel/power/plugins.h 822-includes-new/kernel/power/plugins.h
 --- 822-includes-old/kernel/power/plugins.h	1970-01-01 10:00:00.000000000 +1000
-+++ 822-includes-new/kernel/power/plugins.h	2004-09-27 19:27:03.000000000 +1000
++++ 822-includes-new/kernel/power/plugins.h	2004-09-27 23:05:50.000000000 +1000
 @@ -0,0 +1,174 @@
 +/*
 + * kernel/power/plugin.h
@@ -563,8 +577,8 @@ diff -ruN 822-includes-old/kernel/power/plugins.h 822-includes-new/kernel/power/
 +extern void cleanup_suspend_plugins(void);
 +
 diff -ruN 822-includes-old/kernel/power/pmdisk.c 822-includes-new/kernel/power/pmdisk.c
---- 822-includes-old/kernel/power/pmdisk.c	2004-09-27 20:22:02.000000000 +1000
-+++ 822-includes-new/kernel/power/pmdisk.c	2004-09-25 20:24:54.000000000 +1000
+--- 822-includes-old/kernel/power/pmdisk.c	2004-10-02 21:45:26.808639896 +1000
++++ 822-includes-new/kernel/power/pmdisk.c	2004-09-27 23:05:50.000000000 +1000
 @@ -33,7 +33,7 @@
  #include <asm/mmu_context.h>
  
@@ -576,7 +590,7 @@ diff -ruN 822-includes-old/kernel/power/pmdisk.c 822-includes-new/kernel/power/p
  
 diff -ruN 822-includes-old/kernel/power/proc.h 822-includes-new/kernel/power/proc.h
 --- 822-includes-old/kernel/power/proc.h	1970-01-01 10:00:00.000000000 +1000
-+++ 822-includes-new/kernel/power/proc.h	2004-09-24 19:09:41.000000000 +1000
++++ 822-includes-new/kernel/power/proc.h	2004-09-27 23:05:50.000000000 +1000
 @@ -0,0 +1,67 @@
 +/*
 + * kernel/power/proc.h
@@ -647,7 +661,7 @@ diff -ruN 822-includes-old/kernel/power/proc.h 822-includes-new/kernel/power/pro
 +
 diff -ruN 822-includes-old/kernel/power/range.h 822-includes-new/kernel/power/range.h
 --- 822-includes-old/kernel/power/range.h	1970-01-01 10:00:00.000000000 +1000
-+++ 822-includes-new/kernel/power/range.h	2004-09-24 19:09:41.000000000 +1000
++++ 822-includes-new/kernel/power/range.h	2004-09-27 23:05:50.000000000 +1000
 @@ -0,0 +1,105 @@
 +/*
 + * kernel/power/range.h
@@ -754,9 +768,20 @@ diff -ruN 822-includes-old/kernel/power/range.h 822-includes-new/kernel/power/ra
 +#define swap_entry_to_range_val(swp_entry) (swp_entry.val)
 +#define range_val_to_swap_entry(val) (swp_entry_t) { (val) }
 +
+diff -ruN 822-includes-old/kernel/power/smp.c 822-includes-new/kernel/power/smp.c
+--- 822-includes-old/kernel/power/smp.c	2004-08-30 16:01:19.000000000 +1000
++++ 822-includes-new/kernel/power/smp.c	2004-10-02 20:59:50.514619816 +1000
+@@ -15,6 +15,7 @@
+ #include <linux/module.h>
+ #include <asm/atomic.h>
+ #include <asm/tlbflush.h>
++#include "suspend.h"
+ 
+ static atomic_t cpu_counter, freeze;
+ 
 diff -ruN 822-includes-old/kernel/power/suspend.h 822-includes-new/kernel/power/suspend.h
 --- 822-includes-old/kernel/power/suspend.h	1970-01-01 10:00:00.000000000 +1000
-+++ 822-includes-new/kernel/power/suspend.h	2004-09-27 20:17:43.000000000 +1000
++++ 822-includes-new/kernel/power/suspend.h	2004-10-02 21:11:47.887562552 +1000
 @@ -0,0 +1,279 @@
 +/*
 + * kernel/power/suspend2.h
@@ -853,7 +878,7 @@ diff -ruN 822-includes-old/kernel/power/suspend.h 822-includes-new/kernel/power/
 +void __save_processor_state(struct saved_context *ctxt);
 +void __restore_processor_state(struct saved_context *ctxt);
 +
-+struct page * get_suspend_pool_page(unsigned int gfp_mask, unsigned int order);
++struct page * get_suspend_pool_pages(unsigned int gfp_mask, unsigned int order);
 +void free_suspend_pool_pages(struct page *page, unsigned int order);
 +extern void schedule_suspend_message(int message_number);
 +extern int suspend_min_free;
@@ -1038,8 +1063,8 @@ diff -ruN 822-includes-old/kernel/power/suspend.h 822-includes-new/kernel/power/
 +
 +extern struct partial_device_tree * suspend_device_tree;
 diff -ruN 822-includes-old/kernel/power/swsusp.c 822-includes-new/kernel/power/swsusp.c
---- 822-includes-old/kernel/power/swsusp.c	2004-09-27 20:22:02.000000000 +1000
-+++ 822-includes-new/kernel/power/swsusp.c	2004-09-25 20:24:54.000000000 +1000
+--- 822-includes-old/kernel/power/swsusp.c	2004-10-02 21:45:26.936620440 +1000
++++ 822-includes-new/kernel/power/swsusp.c	2004-09-27 23:05:50.000000000 +1000
 @@ -36,6 +36,8 @@
   * For TODOs,FIXMEs also look in Documentation/power/swsusp.txt
   */

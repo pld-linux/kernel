@@ -1,33 +1,33 @@
 diff -ruN 815-add-suspend-memory-pool-hooks-old/mm/page_alloc.c 815-add-suspend-memory-pool-hooks-new/mm/page_alloc.c
---- 815-add-suspend-memory-pool-hooks-old/mm/page_alloc.c	2004-09-24 22:20:38.000000000 +1000
-+++ 815-add-suspend-memory-pool-hooks-new/mm/page_alloc.c	2004-09-24 22:20:44.000000000 +1000
-@@ -279,6 +279,11 @@
- 
- 	arch_free_page(page, order);
+--- 815-add-suspend-memory-pool-hooks-old/mm/page_alloc.c	2004-10-02 21:46:57.114911256 +1000
++++ 815-add-suspend-memory-pool-hooks-new/mm/page_alloc.c	2004-10-02 16:54:21.962700000 +1000
+@@ -281,6 +281,11 @@
+ 	LIST_HEAD(list);
+ 	int i;
  
 +	if (unlikely(test_suspend_state(SUSPEND_USE_MEMORY_POOL))) {
-+		suspend2_core_ops->free_pool_pages(page, order);
++		suspend2_free_pool_pages(page, order);
 +		return;
 +	}
 +
  	mod_page_state(pgfree, 1 << order);
  	for (i = 0 ; i < (1 << order) ; ++i)
  		free_pages_check(__FUNCTION__, page + i);
-@@ -509,6 +514,11 @@
- 
- 	arch_free_page(page, 0);
+@@ -511,6 +516,11 @@
+ 	struct per_cpu_pages *pcp;
+ 	unsigned long flags;
  
 +	if (unlikely(test_suspend_state(SUSPEND_USE_MEMORY_POOL))) {
-+		suspend2_core_ops->free_pool_pages(page, 0);
++		suspend2_free_pool_pages(page, 0);
 +		return;
 +	}
 +
  	kernel_map_pages(page, 1, 0);
  	inc_page_state(pgfree);
- 	if (PageAnon(page))
-@@ -611,6 +621,20 @@
+ 	free_pages_check(__FUNCTION__, page);
+@@ -610,6 +620,20 @@
+ 	int alloc_type;
  	int do_retry;
- 	int can_try_harder;
  
 +	if (unlikely(test_suspend_state(SUSPEND_USE_MEMORY_POOL))) {
 +		/*
@@ -40,9 +40,9 @@ diff -ruN 815-add-suspend-memory-pool-hooks-old/mm/page_alloc.c 815-add-suspend-
 +		 * suspend, so the demand should be very
 +		 * predicatable.
 +		 */
-+		return suspend2_core_ops->get_pool_page(gfp_mask, order);
++		return suspend2_get_pool_pages(gfp_mask, order);
 +	}
 +
  	might_sleep_if(wait);
  
- 	/*
+ 	zones = zonelist->zones;  /* the list of zones suitable for gfp_mask */

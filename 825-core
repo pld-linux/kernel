@@ -1,6 +1,6 @@
 diff -ruN 825-core-old/kernel/power/io.c 825-core-new/kernel/power/io.c
 --- 825-core-old/kernel/power/io.c	1970-01-01 10:00:00.000000000 +1000
-+++ 825-core-new/kernel/power/io.c	2004-09-25 23:10:40.000000000 +1000
++++ 825-core-new/kernel/power/io.c	2004-09-27 23:05:50.000000000 +1000
 @@ -0,0 +1,1071 @@
 +/*
 + * kernel/power/io.c
@@ -1075,7 +1075,7 @@ diff -ruN 825-core-old/kernel/power/io.c 825-core-new/kernel/power/io.c
 +}
 diff -ruN 825-core-old/kernel/power/memory_pool.c 825-core-new/kernel/power/memory_pool.c
 --- 825-core-old/kernel/power/memory_pool.c	1970-01-01 10:00:00.000000000 +1000
-+++ 825-core-new/kernel/power/memory_pool.c	2004-09-25 23:10:40.000000000 +1000
++++ 825-core-new/kernel/power/memory_pool.c	2004-10-02 16:53:48.758747816 +1000
 @@ -0,0 +1,340 @@
 +/*
 + * kernel/power/memory_pool.c
@@ -1325,7 +1325,7 @@ diff -ruN 825-core-old/kernel/power/memory_pool.c 825-core-new/kernel/power/memo
 +	spin_unlock_irqrestore(&suspend_memory_pool_lock, flags);
 +}
 +
-+/* get_suspend_pool_page()
++/* get_suspend_pool_pages()
 + * 
 + * Description:	Our equivalent to __alloc_pages (minus zone mask).
 + * 		May be called from interrupt context.
@@ -1334,7 +1334,7 @@ diff -ruN 825-core-old/kernel/power/memory_pool.c 825-core-new/kernel/power/memo
 + * 		order:		The number of pages (1 << order) wanted.
 + * Returns:	struct page *:	Pointer (possibly NULL) to pages allocated.
 + */
-+struct page * get_suspend_pool_page(unsigned int gfp_mask, unsigned int order)
++struct page * get_suspend_pool_pages(unsigned int gfp_mask, unsigned int order)
 +{
 +	unsigned long flags;
 +	struct page * page;
@@ -1419,7 +1419,7 @@ diff -ruN 825-core-old/kernel/power/memory_pool.c 825-core-new/kernel/power/memo
 +EXPORT_SYMBOL(suspend_memory_pool_level);
 diff -ruN 825-core-old/kernel/power/pagedir.c 825-core-new/kernel/power/pagedir.c
 --- 825-core-old/kernel/power/pagedir.c	1970-01-01 10:00:00.000000000 +1000
-+++ 825-core-new/kernel/power/pagedir.c	2004-09-25 16:33:45.000000000 +1000
++++ 825-core-new/kernel/power/pagedir.c	2004-09-27 23:05:50.000000000 +1000
 @@ -0,0 +1,434 @@
 +/*
 + * kernel/power/pagedir.c
@@ -1857,7 +1857,7 @@ diff -ruN 825-core-old/kernel/power/pagedir.c 825-core-new/kernel/power/pagedir.
 +}
 diff -ruN 825-core-old/kernel/power/plugins.c 825-core-new/kernel/power/plugins.c
 --- 825-core-old/kernel/power/plugins.c	1970-01-01 10:00:00.000000000 +1000
-+++ 825-core-new/kernel/power/plugins.c	2004-09-24 20:18:03.000000000 +1000
++++ 825-core-new/kernel/power/plugins.c	2004-09-27 23:05:50.000000000 +1000
 @@ -0,0 +1,338 @@
 +/*
 + * kernel/power/plugin.c
@@ -2199,7 +2199,7 @@ diff -ruN 825-core-old/kernel/power/plugins.c 825-core-new/kernel/power/plugins.
 +#endif
 diff -ruN 825-core-old/kernel/power/prepare_image.c 825-core-new/kernel/power/prepare_image.c
 --- 825-core-old/kernel/power/prepare_image.c	1970-01-01 10:00:00.000000000 +1000
-+++ 825-core-new/kernel/power/prepare_image.c	2004-09-25 23:10:40.000000000 +1000
++++ 825-core-new/kernel/power/prepare_image.c	2004-09-27 23:05:50.000000000 +1000
 @@ -0,0 +1,1049 @@
 +/*
 + * kernel/power/prepare_image.c
@@ -3252,7 +3252,7 @@ diff -ruN 825-core-old/kernel/power/prepare_image.c 825-core-new/kernel/power/pr
 +EXPORT_SYMBOL(suspend_amount_grabbed);
 diff -ruN 825-core-old/kernel/power/range.c 825-core-new/kernel/power/range.c
 --- 825-core-old/kernel/power/range.c	1970-01-01 10:00:00.000000000 +1000
-+++ 825-core-new/kernel/power/range.c	2004-09-24 19:09:41.000000000 +1000
++++ 825-core-new/kernel/power/range.c	2004-09-27 23:05:50.000000000 +1000
 @@ -0,0 +1,772 @@
 +/* Suspend2 routines for manipulating ranges.
 + *
@@ -4028,8 +4028,8 @@ diff -ruN 825-core-old/kernel/power/range.c 825-core-new/kernel/power/range.c
 +EXPORT_SYMBOL(add_to_range_chain);
 diff -ruN 825-core-old/kernel/power/suspend.c 825-core-new/kernel/power/suspend.c
 --- 825-core-old/kernel/power/suspend.c	1970-01-01 10:00:00.000000000 +1000
-+++ 825-core-new/kernel/power/suspend.c	2004-09-27 20:17:17.000000000 +1000
-@@ -0,0 +1,1804 @@
++++ 825-core-new/kernel/power/suspend.c	2004-10-02 23:26:52.024546000 +1000
+@@ -0,0 +1,1805 @@
 +/*
 + * kernel/power/suspend2.c
 + *
@@ -4088,6 +4088,7 @@ diff -ruN 825-core-old/kernel/power/suspend.c 825-core-new/kernel/power/suspend.
 +#include <linux/version.h>
 +#include <linux/device.h>
 +#include <linux/highmem.h>
++#include <asm/uaccess.h>
 +
 +#include "suspend.h"
 +#include "block_io.h"
@@ -5777,7 +5778,7 @@ diff -ruN 825-core-old/kernel/power/suspend.c 825-core-new/kernel/power/suspend.
 +	.suspend1 = do_suspend2_suspend_1, 
 +	.suspend2 = do_suspend2_suspend_2, 
 +	.free_pool_pages = free_suspend_pool_pages,
-+	.get_pool_page = get_suspend_pool_page,
++	.get_pool_pages = get_suspend_pool_pages,
 +	.get_grabbed_pages = get_grabbed_pages,
 +	.cleanup_finished_io = cleanup_finished_suspend_io,
 +	.suspend_message = __suspend_message,
@@ -5836,7 +5837,7 @@ diff -ruN 825-core-old/kernel/power/suspend.c 825-core-new/kernel/power/suspend.
 +#endif
 diff -ruN 825-core-old/kernel/power/suspend_ui.c 825-core-new/kernel/power/suspend_ui.c
 --- 825-core-old/kernel/power/suspend_ui.c	1970-01-01 10:00:00.000000000 +1000
-+++ 825-core-new/kernel/power/suspend_ui.c	2004-09-25 16:54:53.000000000 +1000
++++ 825-core-new/kernel/power/suspend_ui.c	2004-09-28 09:16:49.000000000 +1000
 @@ -0,0 +1,662 @@
 +/*
 + * kernel/power/ui.c
@@ -6291,7 +6292,7 @@ diff -ruN 825-core-old/kernel/power/suspend_ui.c 825-core-new/kernel/power/suspe
 + */
 +void request_abort_suspend(void)
 +{
-+	if ((SUSPEND_NOW_RESUMING) || (TEST_RESULT_STATE(SUSPEND_ABORT_REQUESTED)))
++	if (test_suspend_state(SUSPEND_NOW_RESUMING) || (TEST_RESULT_STATE(SUSPEND_ABORT_REQUESTED)))
 +		return;
 +
 +	if (TEST_RESULT_STATE(SUSPEND_ABORTED)) {
@@ -6502,7 +6503,7 @@ diff -ruN 825-core-old/kernel/power/suspend_ui.c 825-core-new/kernel/power/suspe
 +EXPORT_SYMBOL(abort_suspend);
 diff -ruN 825-core-old/kernel/power/utility.c 825-core-new/kernel/power/utility.c
 --- 825-core-old/kernel/power/utility.c	1970-01-01 10:00:00.000000000 +1000
-+++ 825-core-new/kernel/power/utility.c	2004-09-24 20:19:35.000000000 +1000
++++ 825-core-new/kernel/power/utility.c	2004-09-27 23:05:50.000000000 +1000
 @@ -0,0 +1,149 @@
 +/*
 + * kernel/power/utility.c

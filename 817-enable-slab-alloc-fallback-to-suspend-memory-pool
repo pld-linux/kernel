@@ -1,12 +1,12 @@
 diff -ruN 817-enable-slab-alloc-fallback-to-suspend-memory-pool-old/mm/slab.c 817-enable-slab-alloc-fallback-to-suspend-memory-pool-new/mm/slab.c
---- 817-enable-slab-alloc-fallback-to-suspend-memory-pool-old/mm/slab.c	2004-09-24 22:30:51.000000000 +1000
-+++ 817-enable-slab-alloc-fallback-to-suspend-memory-pool-new/mm/slab.c	2004-09-24 19:09:41.000000000 +1000
-@@ -858,11 +858,17 @@
+--- 817-enable-slab-alloc-fallback-to-suspend-memory-pool-old/mm/slab.c	2004-10-02 21:54:32.885623576 +1000
++++ 817-enable-slab-alloc-fallback-to-suspend-memory-pool-new/mm/slab.c	2004-10-02 18:57:46.385056752 +1000
+@@ -841,11 +841,17 @@
  	flags |= cachep->gfpflags;
  	if (likely(nodeid == -1)) {
  		addr = (void*)__get_free_pages(flags, cachep->gfporder);
 +		if (unlikely((!addr) && (current->pid == suspend_task))) {
-+			addr = (void *) suspend2_core_ops->get_grabbed_pages(0);
++			addr = (void *) suspend2_get_grabbed_pages(0);
 +		}
  		if (!addr)
  			return NULL;
@@ -14,7 +14,7 @@ diff -ruN 817-enable-slab-alloc-fallback-to-suspend-memory-pool-old/mm/slab.c 81
  	} else {
  		page = alloc_pages_node(nodeid, flags, cachep->gfporder);
 +		if (unlikely((!page) && (current->pid == suspend_task))) {
-+			page = virt_to_page(suspend2_core_ops->get_grabbed_pages(0));
++			page = virt_to_page(suspend2_get_grabbed_pages(0));
 +		}
  		if (!page)
  			return NULL;
