@@ -14,13 +14,13 @@ Group(pl):	Podstawowe/J±dro
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
-Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
-Source5:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
-Source6:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
-Source7:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
-Source8:	linux-netfilter-patches-20010108.tar.gz
-Source10:	http://www.lids.org/download/lids-%{lids_version}-2.4.0.tar.gz
-Source11:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
+Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
+Source4:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
+Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
+Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
+Source7:	linux-netfilter-patches-20010201.tar.gz
+Source8:	http://www.lids.org/download/lids-%{lids_version}-2.4.0.tar.gz
+Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -37,14 +37,11 @@ Source62:	%{name}-sparc64-BOOT.config
 Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
-Source100:	ftp://download.sourceforge.net/pub/sourceforge/xmlprocfs/linux-2.4-xmlprocfs-0.1.tar.gz
-
-#manual update 
-Patch0:		patch-int-2.4.0.3.gz
-
-Patch7:		kernel-i8255-asm-fix.patch
-
-Patch100:	xmlprocfs-fix.patch
+Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.3.gz
+#Patch1:		%{name}-pldfblogo.patch
+#Patch2:		linux-2.4.0-freeswan-%{freeswan_version}.patch
+#Patch3:		linux-ipv6-addrconf.patch
+#Patch4:		kernel-i8255-asm-fix.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -207,10 +204,41 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a4 -a5 -a6 -a7 -a8 -a10 -a11 -a100 -n linux
+%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -n linux
 
 #kerneli patch
 %patch0 -p1
+#i8255 fix
+#%patch4 -p0 
+
+
+# Fore 200e ATM NIC
+patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
+
+# Tekram DC395/315 U/UW SCSI host driver
+#patch -p1 -s <dc395/dc395-integ24.diff
+#install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
+
+# Netfilter
+for i in netfilter-patches/* ; do
+       [ -f $i -a "$i" != "netfilter-patches/isapplied" ] && patch -p1 -s <$i
+done
+(KERNEL_DIR=`pwd` ; export KERNEL_DIR
+cd netfilter-patches/patch-o-matic
+ANS=""
+for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
+echo -e $ANS | ./runme)
+
+# IPVS
+for i in ipvs-%{ipvs_version}/*.diff ; do
+	patch -p1 <$i
+done
+mkdir net/ipv4/ipvs
+cp ipvs-%{ipvs_version}/ipvs/*.{c,in} net/ipv4/ipvs
+cp ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile net/ipv4/ipvs/Makefile
+
+# LIDS
+patch -p1 <lids-1.0.4-2.4.0/lids-1.0.4-2.4.0.patch
 
 # Remove -g from drivers/atm/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
@@ -226,19 +254,6 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
     -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
 %endif
     Makefile.orig >Makefile
-
-# Patch IPVS
-patch -p1 <ipvs-%{ipvs_version}/linux-2.4.0_kernel_ksyms_c.diff
-
-#xmlprocfs patch
-%patch100 -p0
-patch -p1 <xmlprocfs.patch
-
-#LIDS patch
-patch -p1 <lids-1.0.4-2.4.0/lids-1.0.4-2.4.0.patch
-
-#i8255 fix
-%patch7 -p0 
 
 %build
 BuildKernel() {
