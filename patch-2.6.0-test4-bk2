@@ -1,0 +1,2739 @@
+diff -Nru a/arch/ppc/8260_io/uart.c b/arch/ppc/8260_io/uart.c
+--- a/arch/ppc/8260_io/uart.c	Wed Jun 11 12:32:53 2003
++++ b/arch/ppc/8260_io/uart.c	Thu Aug 21 16:54:31 2003
+@@ -50,6 +50,10 @@
+ #include <asm/cpm_8260.h>
+ #include <asm/irq.h>
+ 
++#ifdef CONFIG_MAGIC_SYSRQ
++#include <linux/sysrq.h>
++#endif
++
+ #ifdef CONFIG_SERIAL_CONSOLE
+ #include <linux/console.h>
+ 
+@@ -77,6 +81,14 @@
+ static struct tty_driver *serial_driver;
+ static int serial_console_setup(struct console *co, char *options);
+ 
++static void serial_console_write(struct console *c, const char *s,
++		                                unsigned count);
++static kdev_t serial_console_device(struct console *c);
++
++#if defined(CONFIG_SERIAL_CONSOLE) && defined(CONFIG_MAGIC_SYSRQ)
++static unsigned long break_pressed; /* break, really ... */
++#endif
++
+ /*
+  * Serial driver configuration section.  Here are the various options:
+  */
+@@ -208,6 +220,15 @@
+ 	cbd_t			*tx_cur;
+ } ser_info_t;
+ 
++static struct console sercons = {
++	.name =		"ttyS",
++	.write =	serial_console_write,
++	.device =	serial_console_device,
++	.setup =	serial_console_setup,
++	.flags =	CON_PRINTBUFFER,
++	.index =	CONFIG_SERIAL_CONSOLE_PORT,
++};
++
+ static void change_speed(ser_info_t *info);
+ static void rs_8xx_wait_until_sent(struct tty_struct *tty, int timeout);
+ 
+@@ -328,7 +349,7 @@
+ 	schedule_work(&info->tqueue);
+ }
+ 
+-static _INLINE_ void receive_chars(ser_info_t *info)
++static _INLINE_ void receive_chars(ser_info_t *info, struct pt_regs *regs)
+ {
+ 	struct tty_struct *tty = info->tty;
+ 	unsigned char ch, *cp;
+@@ -450,6 +471,19 @@
+ 					}
+ 				}
+ 			}
++
++#if defined(CONFIG_SERIAL_CONSOLE) && defined(CONFIG_MAGIC_SYSRQ)
++			if (break_pressed && info->line == sercons.index) {
++				if (ch != 0 && time_before(jiffies,
++							break_pressed + HZ*5)) {
++					handle_sysrq(ch, regs, NULL, NULL);
++					break_pressed = 0;
++					goto ignore_char;
++				} else
++					break_pressed = 0;
++			}
++#endif
++			
+ 			if (tty->flip.count >= TTY_FLIPBUF_SIZE)
+ 				break;
+ 
+@@ -458,6 +492,10 @@
+ 			tty->flip.count++;
+ 		}
+ 
++#if defined(CONFIG_SERIAL_CONSOLE) && defined(CONFIG_MAGIC_SYSRQ)
++	ignore_char:
++#endif
++
+ 		/* This BD is ready to be used again.  Clear status.
+ 		 * Get next BD.
+ 		 */
+@@ -475,7 +513,36 @@
+ 	schedule_delayed_work(&tty->flip.work, 1);
+ }
+ 
+-static _INLINE_ void transmit_chars(ser_info_t *info)
++static _INLINE_ void receive_break(ser_info_t *info, struct pt_regs *regs)
++{
++	struct tty_struct *tty = info->tty;
++
++	info->state->icount.brk++;
++
++#if defined(CONFIG_SERIAL_CONSOLE) && defined(CONFIG_MAGIC_SYSRQ)
++	if (info->line == sercons.index) {
++		if (!break_pressed) {
++			break_pressed = jiffies;
++			return;
++		} else
++			break_pressed = 0;
++	}
++#endif
++
++	/* Check to see if there is room in the tty buffer for
++	 * the break.  If not, we exit now, losing the break.  FIXME
++	 */
++	if ((tty->flip.count + 1) >= TTY_FLIPBUF_SIZE)
++		return;
++	*(tty->flip.flag_buf_ptr++) = TTY_BREAK;
++	*(tty->flip.char_buf_ptr++) = 0;
++	tty->flip.count++;
++
++	queue_task(&tty->flip.tqueue, &tq_timer);
++}
++
++
++static _INLINE_ void transmit_chars(ser_info_t *info, struct pt_regs *regs)
+ {
+ 	
+ 	if (info->flags & TX_WAKEUP) {
+@@ -575,19 +642,23 @@
+ 	if ((idx = info->state->smc_scc_num) < SCC_NUM_BASE) {
+ 		smcp = &immr->im_smc[idx];
+ 		events = smcp->smc_smce;
++		if (events & SMCM_BRKE)
++			receive_break(info, regs);
+ 		if (events & SMCM_RX)
+-			receive_chars(info);
++			receive_chars(info, regs);
+ 		if (events & SMCM_TX)
+-			transmit_chars(info);
++			transmit_chars(info, regs);
+ 		smcp->smc_smce = events;
+ 	}
+ 	else {
+ 		sccp = &immr->im_scc[idx - SCC_IDX_BASE];
+ 		events = sccp->scc_scce;
++		if (events & SMCM_BRKE)
++			receive_break(info, regs);
+ 		if (events & SCCM_RX)
+-			receive_chars(info);
++			receive_chars(info, regs);
+ 		if (events & SCCM_TX)
+-			transmit_chars(info);
++			transmit_chars(info, regs);
+ 		sccp->scc_scce = events;
+ 	}
+ 	
+@@ -2207,7 +2278,7 @@
+ static void serial_console_write(struct console *c, const char *s,
+ 				unsigned count)
+ {
+-#if defined(CONFIG_KGDB) && !defined(CONFIG_USE_SERIAL2_KGDB)
++#if defined(CONFIG_KGDB_CONSOLE) && !defined(CONFIG_USE_SERIAL2_KGDB)
+ 	/* Try to let stub handle output. Returns true if it did. */ 
+ 	if (kgdb_output_string(s, count))
+ 		return;
+@@ -2396,16 +2467,6 @@
+ 	*index = c->index;
+ 	return serial_driver;
+ }
+-
+-
+-static struct console sercons = {
+-	.name =		"ttyS",
+-	.write =	serial_console_write,
+-	.device =	serial_console_device,
+-	.setup =	serial_console_setup,
+-	.flags =	CON_PRINTBUFFER,
+-	.index =	CONFIG_SERIAL_CONSOLE_PORT,
+-};
+ 
+ /*
+  *	Register console.
+diff -Nru a/arch/ppc/8xx_io/uart.c b/arch/ppc/8xx_io/uart.c
+--- a/arch/ppc/8xx_io/uart.c	Wed Jun 11 12:32:54 2003
++++ b/arch/ppc/8xx_io/uart.c	Thu Aug 21 15:10:37 2003
+@@ -1068,7 +1068,7 @@
+ 	volatile cbd_t *bdp;
+ 	unsigned char	*cp;
+ 
+-#ifdef CONFIG_KGDB
++#ifdef CONFIG_KGDB_CONSOLE
+         /* Try to let stub handle output. Returns true if it did. */ 
+         if (kgdb_output_string(buf, count))
+             return ret;
+@@ -2271,7 +2271,7 @@
+ static void serial_console_write(struct console *c, const char *s,
+ 				unsigned count)
+ {
+-#ifdef CONFIG_KGDB
++#ifdef CONFIG_KGDB_CONSOLE
+ 	/* Try to let stub handle output. Returns true if it did. */ 
+ 	if (kgdb_output_string(s, count))
+ 		return;
+diff -Nru a/arch/ppc/Kconfig b/arch/ppc/Kconfig
+--- a/arch/ppc/Kconfig	Mon Aug  4 16:10:57 2003
++++ b/arch/ppc/Kconfig	Thu Aug 21 15:10:37 2003
+@@ -1426,20 +1426,12 @@
+ config KGDB
+ 	bool "Include kgdb kernel debugger"
+ 	depends on DEBUG_KERNEL
++	select DEBUG_INFO
+ 	help
+ 	  Include in-kernel hooks for kgdb, the Linux kernel source level
+ 	  debugger.  See <http://kgdb.sourceforge.net/> for more information.
+ 	  Unless you are intending to debug the kernel, say N here.
+ 
+-config DEBUG_INFO
+-	bool "Compile the kernel with debug info"
+-	depends on DEBUG_KERNEL
+-	help
+-          If you say Y here the resulting kernel image will include
+-	  debugging info resulting in a larger kernel image.
+-	  Say Y here only if you plan to use gdb to debug the kernel.
+-	  If you don't debug the kernel, you can say N.
+-	  
+ choice
+ 	prompt "Serial Port"
+ 	depends on KGDB
+@@ -1459,6 +1451,14 @@
+ 
+ endchoice
+ 
++config KGDB_CONSOLE
++	bool "Enable serial console thru kgdb port"
++	depends on KGDB && 8xx || 8260
++	help
++	  If you enable this, all serial console messages will be sent
++	  over the gdb stub.
++	  If unsure, say N.
++
+ config XMON
+ 	bool "Include xmon kernel debugger"
+ 	depends on DEBUG_KERNEL
+@@ -1474,18 +1474,16 @@
+ 	  Unless you are intending to debug the kernel with one of these
+ 	  machines, say N here.
+ 
+-config MORE_COMPILE_OPTIONS
+-	bool "Add any additional compile options"
+-	depends on DEBUG_KERNEL && (KGDB || XMON || BDI_SWITCH)
++config DEBUG_INFO
++	bool "Compile the kernel with debug info"
++	depends on DEBUG_KERNEL
++	default y if BDI_SWITCH || XMON
+ 	help
+-	  If you want to add additional CFLAGS to the kernel build, such as -g
+-	  for KGDB or the BDI2000, enable this option and then enter what you
+-	  would like to add in the next question.
+-
+-config COMPILE_OPTIONS
+-	string "Additional compile arguments"
+-	depends on MORE_COMPILE_OPTIONS
+-	default "-g -ggdb"
++          If you say Y here the resulting kernel image will include
++	  debugging info resulting in a larger kernel image.
++	  Say Y here only if you plan to use some sort of debugger to
++	  debug the kernel.
++	  If you don't debug the kernel, you can say N.
+ 
+ config BOOTX_TEXT
+ 	bool "Support for early boot text console (BootX or OpenFirmware only)"
+diff -Nru a/arch/ppc/Makefile b/arch/ppc/Makefile
+--- a/arch/ppc/Makefile	Sun Jul 27 15:52:30 2003
++++ b/arch/ppc/Makefile	Thu Aug 21 15:10:37 2003
+@@ -22,9 +22,6 @@
+ 
+ cflags-$(CONFIG_4xx)		+= -Wa,-m405
+ cflags-$(CONFIG_PPC64BRIDGE)	+= -Wa,-mppc64bridge
+-# Use sed to remove the quotes.
+-cflags-$(CONFIG_MORE_COMPILE_OPTIONS) += \
+-	$(shell echo $(CONFIG_COMPILE_OPTIONS) | sed -e 's/"//g')
+ 
+ CFLAGS += $(cflags-y)
+ 
+diff -Nru a/arch/ppc/boot/common/ns16550.c b/arch/ppc/boot/common/ns16550.c
+--- a/arch/ppc/boot/common/ns16550.c	Sat Jun 28 11:06:53 2003
++++ b/arch/ppc/boot/common/ns16550.c	Wed Aug 20 10:24:16 2003
+@@ -60,7 +60,7 @@
+ 	else {
+ 		/* Input clock. */
+ 		outb(com_port + (UART_DLL << shift),
+-		     (BASE_BAUD / SERIAL_BAUD));
++		     (BASE_BAUD / SERIAL_BAUD) & 0xFF);
+ 		outb(com_port + (UART_DLM << shift),
+ 		     (BASE_BAUD / SERIAL_BAUD) >> 8);
+ 		/* 8 data, 1 stop, no parity */
+diff -Nru a/arch/ppc/boot/common/util.S b/arch/ppc/boot/common/util.S
+--- a/arch/ppc/boot/common/util.S	Tue Feb 25 11:37:43 2003
++++ b/arch/ppc/boot/common/util.S	Thu Aug 21 10:17:00 2003
+@@ -160,9 +160,22 @@
+ 	blr
+ 
+ 
++/* udelay (on non-601 processors) needs to know the period of the
++ * timebase in nanoseconds.  This used to be hardcoded to be 60ns
++ * (period of 66MHz/4).  Now a variable is used that is initialized to
++ * 60 for backward compatibility, but it can be overridden as necessary
++ * with code something like this:
++ *    extern unsigned long timebase_period_ns;
++ *    timebase_period_ns = 1000000000 / bd->bi_tbfreq;
++ */
++	.data
++	.globl timebase_period_ns
++timebase_period_ns:
++	.long	60
++
++	.text
+ /*
+  * Delay for a number of microseconds
+- * -- Use the BUS timer (assumes 66MHz)
+  */
+ 	.globl	udelay
+ udelay:
+@@ -180,8 +193,13 @@
+ 
+ .udelay_not_601:
+ 	mulli	r4,r3,1000	/* nanoseconds */
+-	addi	r4,r4,59
+-	li	r5,60
++	/*  Change r4 to be the number of ticks using:	
++	 *	(nanoseconds + (timebase_period_ns - 1 )) / timebase_period_ns
++	 *  timebase_period_ns defaults to 60 (16.6MHz) */
++	lis	r5,timebase_period_ns@h
++	lwz	r5,timebase_period_ns@l(r5)
++	addi	r4,r4,r5
++	addi	r4,r4,-1
+ 	divw	r4,r4,r5	/* BUS ticks */
+ 1:	mftbu	r5
+ 	mftb	r6
+diff -Nru a/arch/ppc/boot/simple/Makefile b/arch/ppc/boot/simple/Makefile
+--- a/arch/ppc/boot/simple/Makefile	Tue Jul  1 17:01:18 2003
++++ b/arch/ppc/boot/simple/Makefile	Mon Aug 18 09:44:01 2003
+@@ -22,7 +22,6 @@
+ # get_mem_size(), which is memory controller dependent.  Add in the correct
+ # XXX_memory.o file for this to work, as well as editing the $(MISC) file.
+ 
+-boot: zImage
+ 
+ boot				:= arch/ppc/boot
+ common				:= $(boot)/common
+@@ -32,86 +31,90 @@
+ 
+ # Normally, we use the 'misc.c' file for decompress_kernel and
+ # whatnot.  Sometimes we need to override this however.
+-MISC				:= misc.o
+-ifeq ($(CONFIG_IBM_OPENBIOS),y)
+-ZIMAGE				:= zImage-TREE
+-ZIMAGEINITRD			:= zImage.initrd-TREE
+-END				:= treeboot
+-TFTPIMAGE			:= /tftpboot/zImage.$(END)
+-MISC				:= misc-embedded.o
+-endif
+-ifeq ($(CONFIG_EMBEDDEDBOOT),y)
+-TFTPIMAGE			:= /tftpboot/zImage.embedded
+-MISC				:= misc-embedded.o
+-endif
+-ifeq ($(CONFIG_EBONY),y)
+-ZIMAGE				:= zImage-TREE
+-ZIMAGEINITRD			:= zImage.initrd-TREE
+-END				:= ebony
+-ENTRYPOINT			:= 0x01000000
+-TFTPIMAGE			:= /tftpboot/zImage.$(END)
+-endif
+-ifeq ($(CONFIG_EV64260),y)
+-EXTRA				:= misc-ev64260.o
+-TFTPIMAGE			:= /tftpboot/zImage.ev64260
+-endif
+-ifeq ($(CONFIG_GEMINI),y)
+-ZIMAGE				:= zImage-STRIPELF
+-ZIMAGEINITRD			:= zImage.initrd-STRIPELF
+-END				:= gemini
+-TFTPIMAGE			:= /tftpboot/zImage.$(END)
+-endif
+-ifeq ($(CONFIG_K2),y)
+-EXTRA				:= legacy.o
+-TFTPIMAGE			:= /tftpboot/zImage.k2
+-endif
+-# kbuild-2.4 'feature', only one of these will ever by 'y' at a time.
++misc-y	:= misc.o
++
++#
++# See arch/ppc/kconfig and arch/ppc/platforms/Kconfig
++# for definition of what platform each config option refer to.
++#----------------------------------------------------------------------------
++      zimage-$(CONFIG_IBM_OPENBIOS)	:= zImage-TREE
++zimageinitrd-$(CONFIG_IBM_OPENBIOS)	:= zImage.initrd-TREE
++         end-$(CONFIG_IBM_OPENBIOS)	:= treeboot
++   tftpimage-$(CONFIG_IBM_OPENBIOS)	:= /tftpboot/zImage.$(end-y)
++        misc-$(CONFIG_IBM_OPENBIOS)	:= misc-embedded.o
++
++   tftpimage-$(CONFIG_EMBEDDEDBOOT)	:=  /tftpboot/zImage.embedded
++        misc-$(CONFIG_EMBEDDEDBOOT)	:= misc-embedded.o
++
++      zimage-$(CONFIG_EBONY)		:= zImage-TREE
++zimageinitrd-$(CONFIG_EBONY)		:= zImage.initrd-TREE
++     extra.o-$(CONFIG_EBONY)		:= direct.o
++         end-$(CONFIG_EBONY)		:= ebony
++  entrypoint-$(CONFIG_EBONY)		:= 0x01000000
++   tftpimage-$(CONFIG_EBONY)		:= /tftpboot/zImage.$(end-y)
++
++     extra.o-$(CONFIG_EV64260)		:= direct.o misc-ev64260.o
++   tftpimage-$(CONFIG_EV64260)		:= /tftpboot/zImage.ev64260
++
++      zimage-$(CONFIG_GEMINI)		:= zImage-STRIPELF
++zimageinitrd-$(CONFIG_GEMINI)		:= zImage.initrd-STRIPELF
++         end-$(CONFIG_GEMINI)		:= gemini
++   tftpimage-$(CONFIG_GEMINI)		:= /tftpboot/zImage.$(end-y)
++
++     extra.o-$(CONFIG_K2)		:= legacy.o
++   tftpimage-$(CONFIG_K2)		:= /tftpboot/zImage.k2
++
++# kconfig 'feature', only one of these will ever by 'y' at a time.
+ # The rest will be unset.
+-ifeq ($(CONFIG_MCPN765)$(CONFIG_MVME5100)$(CONFIG_PRPMC750)$(CONFIG_PRPMC800)$(CONFIG_LOPEC)$(CONFIG_PPLUS),y)
+-ZIMAGE				:= zImage-PPLUS
+-ZIMAGEINITRD			:= zImage.initrd-PPLUS
+-TFTPIMAGE			:= /tftpboot/zImage.pplus
+-ZNETBOOT			:= zImage.pplus
+-ZNETBOOTRD			:= zImage.initrd.pplus
+-endif
+-ifeq ($(CONFIG_PPLUS),y)
+-EXTRA				:= legacy.o
+-endif
+-ifeq ($(CONFIG_PCORE)$(CONFIG_POWERPMC250),y)
+-ZIMAGE				:= zImage-STRIPELF
+-ZIMAGEINITRD			:= zImage.initrd-STRIPELF
+-EXTRA				:= chrpmap.o
+-END				:= pcore
+-TFTPIMAGE			:= /tftpboot/zImage.$(END)
+-endif
+-ifeq ($(CONFIG_SANDPOINT),y)
+-TFTPIMAGE			:= /tftpboot/zImage.sandpoint
+-endif
+-ifeq ($(CONFIG_SPRUCE),y)
+-ZIMAGE				:= zImage-TREE
+-ZIMAGEINITRD			:= zImage.initrd-TREE
+-END				:= spruce
+-ENTRYPOINT			:= 0x00800000
+-MISC				:= misc-spruce.o
+-TFTPIMAGE			:= /tftpboot/zImage.$(END)
+-endif
+-ifeq ($(CONFIG_SMP),y)
+-TFTPIMAGE			+= .smp
+-endif
+-ifeq ($(CONFIG_REDWOOD_4),y)
++multi := $(CONFIG_MCPN765)$(CONFIG_MVME5100)$(CONFIG_PRPMC750) \
++$(CONFIG_PRPMC800)$(CONFIG_LOPEC)$(CONFIG_PPLUS)
++      zimage-$(multi)			:= zImage-PPLUS
++zimageinitrd-$(multi)			:= zImage.initrd-PPLUS
++   tftpimage-$(multi)			:= /tftpboot/zImage.pplus
++    znetboot-$(multi)			:= zImage.pplus
++  znetbootrd-$(multi)			:= zImage.initrd.pplus
++
++# Overrides previous assingment
++     extra.o-$(CONFIG_PPLUS)		:= legacy.o
++
++      zimage-$(CONFIG_PCORE)		:= zImage-STRIPELF
++zimageinitrd-$(CONFIG_PCORE)		:= zImage.initrd-STRIPELF
++     extra.o-$(CONFIG_PCORE)		:= chrpmap.o
++         end-$(CONFIG_PCORE)		:= pcore
++   tftpimage-$(CONFIG_PCORE)		:= /tftpboot/zImage.$(end-y)
++
++      zimage-$(CONFIG_POWERPMC250)	:= zImage-STRIPELF
++zimageinitrd-$(CONFIG_POWERPMC250)	:= zImage.initrd-STRIPELF
++     extra.o-$(CONFIG_POWERPMC250)	:= chrpmap.o
++         end-$(CONFIG_POWERPMC250)	:= pcore
++   tftpimage-$(CONFIG_POWERPMC250)	:= /tftpboot/zImage.$(end-y)
++
++   tftpimage-$(CONFIG_SANDPOINT)	:= /tftpboot/zImage.sandpoint
++
++      zimage-$(CONFIG_SPRUCE)		:= zImage-TREE
++zimageinitrd-$(CONFIG_SPRUCE)		:= zImage.initrd-TREE
++         end-$(CONFIG_SPRUCE)		:= spruce
++  entrypoint-$(CONFIG_SPRUCE)		:= 0x00800000
++        misc-$(CONFIG_SPRUCE)		:= misc-spruce.o
++   tftpimage-$(CONFIG_SPRUCE)		:= /tftpboot/zImage.$(end-y)
++
++
++# tftp image is prefixed with .smp if compiled for SMP
++tftpimage-$(CONFIG_SMP)	+= .smp
++
+ # This is a treeboot that needs init functions until the
+ # boot rom is sorted out (i.e. this is short lived)
+-EXTRA_AFLAGS			:= -Wa,-m405
+-EXTRA				:= rw4/rw4_init.o rw4/rw4_init_brd.o
+-endif
++extra-aflags-$(CONFIG_REDWOOD_4)	:= -Wa,-m405
++extra.o-$(CONFIG_REDWOOD_4)		:= rw4/rw4_init.o rw4/rw4_init_brd.o
++EXTRA_AFLAGS := $(extra-aflags-y)
+ 
+ # Linker args.  This specifies where the image will be run at.
+-LD_ARGS				= -T $(boot)/ld.script \
+-					-Ttext $(CONFIG_BOOT_LOAD) -Bstatic
++LD_ARGS				:= -T $(boot)/ld.script \
++				   -Ttext $(CONFIG_BOOT_LOAD) -Bstatic
+ OBJCOPY_ARGS			:= -O elf32-powerpc
+ 
+ # head.o and relocate.o must be at the start.
+-boot-y				:= head.o relocate.o $(EXTRA) $(MISC) 
++boot-y				:= head.o relocate.o $(extra.o-y) $(misc-y) 
+ boot-$(CONFIG_40x)		+= embed_config.o
+ boot-$(CONFIG_8xx)		+= embed_config.o
+ boot-$(CONFIG_8260)		+= embed_config.o
+@@ -160,40 +163,40 @@
+ 		-R .stabstr -R .sysmap
+ 
+ # Sort-of dummy rules, that let us format the image we want.
+-zImage: $(images)/$(ZIMAGE) $(obj)/zvmlinux
++zImage: $(images)/$(zimage-y) $(obj)/zvmlinux
+ 	cp -f $(obj)/zvmlinux $(images)/zImage.elf
+ 	rm -f $(obj)/zvmlinux
+ 
+-zImage.initrd: $(images)/$(ZIMAGEINITRD) $(obj)/zvmlinux.initrd
++zImage.initrd: $(images)/$(zimageinitrd-y) $(obj)/zvmlinux.initrd
+ 	cp -f $(obj)/zvmlinux.initrd $(images)/zImage.initrd.elf
+ 	rm -f $(obj)/zvmlinux.initrd
+ 
+ znetboot: zImage
+ ifneq ($(ZNETBOOT),)
+-	cp $(images)/$(ZNETBOOT) $(TFTPIMAGE)
++	cp $(images)/$(ZNETBOOT) $(tftpimage-y)
+ else
+-	cp $(images)/zImage.* $(TFTPIMAGE)
++	cp $(images)/zImage.* $(tftpimage-y)
+ endif
+ 
+ znetboot.initrd: zImage.initrd
+-ifneq ($(ZNETBOOTRD),)
+-	cp $(images)/$(ZNETBOOTRD) $(TFTPIMAGE)
++ifneq ($(znetbootrd-y),)
++	cp $(images)/$(znetbootrd-y) $(tftpimage-y)
+ else
+-	cp $(images)/zImage.* $(TFTPIMAGE)
++	cp $(images)/zImage.* $(tftpimage-y)
+ endif
+ 
+ $(images)/zImage-STRIPELF: $(obj)/zvmlinux
+-	dd if=$(obj)/zvmlinux of=$(images)/zImage.$(END) skip=64 bs=1k
++	dd if=$(obj)/zvmlinux of=$(images)/zImage.$(end-y) skip=64 bs=1k
+ 
+ $(images)/zImage.initrd-STRIPELF: $(obj)/zvmlinux.initrd
+-	dd if=$(obj)/zvmlinux.initrd of=$(images)/zImage.initrd.$(END) \
++	dd if=$(obj)/zvmlinux.initrd of=$(images)/zImage.initrd.$(end-y) \
+ 		skip=64 bs=1k
+ 
+ $(images)/zImage-TREE: $(obj)/zvmlinux $(MKTREE)
+-	$(MKTREE) $(obj)/zvmlinux $(images)/zImage.$(END) $(ENTRYPOINT)
++	$(MKTREE) $(obj)/zvmlinux $(images)/zImage.$(end-y) $(ENTRYPOINT)
+ 
+ $(images)/zImage.initrd-TREE: $(obj)/zvmlinux.initrd $(MKTREE)
+-	$(MKTREE) $(obj)/zvmlinux.initrd $(images)/zImage.initrd.$(END) \
++	$(MKTREE) $(obj)/zvmlinux.initrd $(images)/zImage.initrd.$(end-y) \
+ 		$(ENTRYPOINT)
+ 
+ $(images)/zImage-PPLUS: $(obj)/zvmlinux $(MKPREP) $(MKBUGBOOT)
+diff -Nru a/arch/ppc/boot/simple/embed_config.c b/arch/ppc/boot/simple/embed_config.c
+--- a/arch/ppc/boot/simple/embed_config.c	Sat Mar 22 17:18:48 2003
++++ b/arch/ppc/boot/simple/embed_config.c	Thu Aug 21 10:17:00 2003
+@@ -20,6 +20,7 @@
+ #ifdef CONFIG_40x
+ #include <asm/io.h>
+ #endif
++extern unsigned long timebase_period_ns;
+ 
+ /* For those boards that don't provide one.
+ */
+@@ -768,6 +769,7 @@
+ #if defined(CONFIG_REDWOOD_5) || defined (CONFIG_REDWOOD_6)
+ 	bd->bi_tbfreq = 27 * 1000 * 1000;
+ #endif
++	timebase_period_ns = 1000000000 / bd->bi_tbfreq;
+ }
+ #endif /* CONFIG_BEECH */
+ #endif /* CONFIG_IBM_OPENBIOS */
+diff -Nru a/arch/ppc/boot/simple/misc-embedded.c b/arch/ppc/boot/simple/misc-embedded.c
+--- a/arch/ppc/boot/simple/misc-embedded.c	Thu Jun  5 18:06:12 2003
++++ b/arch/ppc/boot/simple/misc-embedded.c	Wed Aug 20 15:44:31 2003
+@@ -75,7 +75,7 @@
+ extern void embed_config(bd_t **bp);
+ 
+ unsigned long
+-decompress_kernel(unsigned long load_addr, int num_words, unsigned long cksum, bd_t *bp)
++load_kernel(unsigned long load_addr, int num_words, unsigned long cksum, bd_t *bp)
+ {
+ 	char *cp, ch;
+ 	int timer = 0, zimage_size;
+diff -Nru a/arch/ppc/boot/simple/misc-spruce.c b/arch/ppc/boot/simple/misc-spruce.c
+--- a/arch/ppc/boot/simple/misc-spruce.c	Tue Feb 11 15:48:52 2003
++++ b/arch/ppc/boot/simple/misc-spruce.c	Wed Aug 20 15:44:31 2003
+@@ -147,7 +147,7 @@
+ #define MEM_B2EA	0x60
+ 
+ unsigned long
+-decompress_kernel(unsigned long load_addr, int num_words, unsigned long cksum)
++load_kernel(unsigned long load_addr, int num_words, unsigned long cksum)
+ {
+ 	int timer = 0;
+ 	char *cp, ch;
+diff -Nru a/arch/ppc/boot/simple/misc.c b/arch/ppc/boot/simple/misc.c
+--- a/arch/ppc/boot/simple/misc.c	Tue Feb 11 15:48:52 2003
++++ b/arch/ppc/boot/simple/misc.c	Wed Aug 20 15:44:31 2003
+@@ -252,3 +252,10 @@
+ 
+ 	return (struct bi_record *)rec_loc;
+ }
++
++/* Allow decompress_kernel to be hooked into.  This is the default. */
++void * __attribute__ ((weak))
++load_kernel(unsigned long load_addr, int num_words, unsigned long cksum)
++{
++		return decompress_kernel(load_addr, num_words, cksum);
++}
+diff -Nru a/arch/ppc/boot/simple/relocate.S b/arch/ppc/boot/simple/relocate.S
+--- a/arch/ppc/boot/simple/relocate.S	Tue Feb 11 15:48:52 2003
++++ b/arch/ppc/boot/simple/relocate.S	Wed Aug 20 15:44:31 2003
+@@ -183,7 +183,7 @@
+ 	mr	r4,r7		/* Program length */
+ 	mr	r5,r6		/* Checksum */
+ 	mr	r6,r11		/* Residual data */
+-	bl	decompress_kernel
++	bl	load_kernel
+ 
+ 	/*
+ 	 * Make sure the kernel knows we don't have things set in
+diff -Nru a/arch/ppc/boot/utils/mktree.c b/arch/ppc/boot/utils/mktree.c
+--- a/arch/ppc/boot/utils/mktree.c	Sun Sep 15 21:51:58 2002
++++ b/arch/ppc/boot/utils/mktree.c	Thu Aug 21 15:00:42 2003
+@@ -86,7 +86,7 @@
+ 	}
+ 
+ 	cksum = 0;
+-	cp = (uint *)&bt;
++	cp = (void *)&bt;
+ 	for (i=0; i<sizeof(bt)/sizeof(uint); i++)
+ 		cksum += *cp++;
+ 	
+diff -Nru a/arch/ppc/configs/common_defconfig b/arch/ppc/configs/common_defconfig
+--- a/arch/ppc/configs/common_defconfig	Sat Aug  2 13:06:57 2003
++++ b/arch/ppc/configs/common_defconfig	Sat Aug 23 02:33:38 2003
+@@ -9,6 +9,7 @@
+ # Code maturity level options
+ #
+ CONFIG_EXPERIMENTAL=y
++# CONFIG_BROKEN is not set
+ 
+ #
+ # General setup
+@@ -18,9 +19,15 @@
+ # CONFIG_BSD_PROCESS_ACCT is not set
+ CONFIG_SYSCTL=y
+ CONFIG_LOG_BUF_SHIFT=14
++CONFIG_IKCONFIG=y
++CONFIG_IKCONFIG_PROC=y
+ # CONFIG_EMBEDDED is not set
++CONFIG_KALLSYMS=y
+ CONFIG_FUTEX=y
+ CONFIG_EPOLL=y
++CONFIG_IOSCHED_NOOP=y
++CONFIG_IOSCHED_AS=y
++CONFIG_IOSCHED_DEADLINE=y
+ 
+ #
+ # Loadable module support
+@@ -86,8 +93,8 @@
+ CONFIG_PCI=y
+ CONFIG_PCI_DOMAINS=y
+ CONFIG_KCORE_ELF=y
+-CONFIG_BINFMT_ELF=y
+ CONFIG_KERNEL_ELF=y
++CONFIG_BINFMT_ELF=y
+ CONFIG_BINFMT_MISC=m
+ CONFIG_PCI_LEGACY_PROC=y
+ CONFIG_PCI_NAMES=y
+@@ -126,6 +133,11 @@
+ CONFIG_BOOT_LOAD=0x00800000
+ 
+ #
++# Generic Driver Options
++#
++# CONFIG_FW_LOADER is not set
++
++#
+ # Memory Technology Devices (MTD)
+ #
+ # CONFIG_MTD is not set
+@@ -144,10 +156,12 @@
+ # CONFIG_BLK_DEV_DAC960 is not set
+ # CONFIG_BLK_DEV_UMEM is not set
+ CONFIG_BLK_DEV_LOOP=y
++# CONFIG_BLK_DEV_CRYPTOLOOP is not set
+ # CONFIG_BLK_DEV_NBD is not set
+ CONFIG_BLK_DEV_RAM=y
+ CONFIG_BLK_DEV_RAM_SIZE=4096
+ CONFIG_BLK_DEV_INITRD=y
++CONFIG_LBD=y
+ 
+ #
+ # Multi-device support (RAID and LVM)
+@@ -155,40 +169,38 @@
+ # CONFIG_MD is not set
+ 
+ #
+-# ATA/IDE/MFM/RLL support
++# ATA/ATAPI/MFM/RLL support
+ #
+ CONFIG_IDE=y
+-
+-#
+-# IDE, ATA and ATAPI Block devices
+-#
+ CONFIG_BLK_DEV_IDE=y
+ 
+ #
+ # Please see Documentation/ide.txt for help/info on IDE drives
+ #
+-# CONFIG_BLK_DEV_HD is not set
+ CONFIG_BLK_DEV_IDEDISK=y
+ # CONFIG_IDEDISK_MULTI_MODE is not set
+ # CONFIG_IDEDISK_STROKE is not set
+ CONFIG_BLK_DEV_IDECD=y
++# CONFIG_BLK_DEV_IDETAPE is not set
+ CONFIG_BLK_DEV_IDEFLOPPY=y
+ CONFIG_BLK_DEV_IDESCSI=y
+ # CONFIG_IDE_TASK_IOCTL is not set
++# CONFIG_IDE_TASKFILE_IO is not set
+ 
+ #
+ # IDE chipset support/bugfixes
+ #
+ CONFIG_BLK_DEV_IDEPCI=y
+-CONFIG_BLK_DEV_GENERIC=y
+ CONFIG_IDEPCI_SHARE_IRQ=y
++# CONFIG_BLK_DEV_OFFBOARD is not set
++CONFIG_BLK_DEV_GENERIC=y
++# CONFIG_BLK_DEV_OPTI621 is not set
++CONFIG_BLK_DEV_SL82C105=y
+ CONFIG_BLK_DEV_IDEDMA_PCI=y
+ # CONFIG_BLK_DEV_IDE_TCQ is not set
+-# CONFIG_BLK_DEV_OFFBOARD is not set
+ # CONFIG_BLK_DEV_IDEDMA_FORCED is not set
+ CONFIG_IDEDMA_PCI_AUTO=y
+ # CONFIG_IDEDMA_ONLYDISK is not set
+-CONFIG_BLK_DEV_IDEDMA=y
+ # CONFIG_IDEDMA_PCI_WIP is not set
+ CONFIG_BLK_DEV_ADMA=y
+ # CONFIG_BLK_DEV_AEC62XX is not set
+@@ -198,12 +210,12 @@
+ # CONFIG_BLK_DEV_TRIFLEX is not set
+ # CONFIG_BLK_DEV_CY82C693 is not set
+ # CONFIG_BLK_DEV_CS5520 is not set
++# CONFIG_BLK_DEV_CS5530 is not set
+ # CONFIG_BLK_DEV_HPT34X is not set
+ # CONFIG_BLK_DEV_HPT366 is not set
+ # CONFIG_BLK_DEV_SC1200 is not set
+ # CONFIG_BLK_DEV_PIIX is not set
+ # CONFIG_BLK_DEV_NS87415 is not set
+-# CONFIG_BLK_DEV_OPTI621 is not set
+ # CONFIG_BLK_DEV_PDC202XX_OLD is not set
+ CONFIG_BLK_DEV_PDC202XX_NEW=y
+ # CONFIG_PDC202XX_FORCE is not set
+@@ -212,15 +224,17 @@
+ # CONFIG_BLK_DEV_SLC90E66 is not set
+ # CONFIG_BLK_DEV_TRM290 is not set
+ # CONFIG_BLK_DEV_VIA82CXXX is not set
+-CONFIG_BLK_DEV_SL82C105=y
+ CONFIG_BLK_DEV_IDE_PMAC=y
+ CONFIG_BLK_DEV_IDEDMA_PMAC=y
+ CONFIG_BLK_DEV_IDEDMA_PMAC_AUTO=y
+-CONFIG_IDEDMA_AUTO=y
++CONFIG_BLK_DEV_IDEDMA=y
+ # CONFIG_IDEDMA_IVB is not set
++CONFIG_IDEDMA_AUTO=y
++# CONFIG_DMA_NONPCI is not set
++# CONFIG_BLK_DEV_HD is not set
+ 
+ #
+-# SCSI support
++# SCSI device support
+ #
+ CONFIG_SCSI=y
+ 
+@@ -260,8 +274,6 @@
+ # CONFIG_SCSI_AIC79XX is not set
+ # CONFIG_SCSI_DPT_I2O is not set
+ CONFIG_SCSI_ADVANSYS=m
+-# CONFIG_SCSI_IN2000 is not set
+-# CONFIG_SCSI_AM53C974 is not set
+ # CONFIG_SCSI_MEGARAID is not set
+ # CONFIG_SCSI_BUSLOGIC is not set
+ # CONFIG_SCSI_CPQFCTS is not set
+@@ -270,11 +282,8 @@
+ # CONFIG_SCSI_EATA_PIO is not set
+ # CONFIG_SCSI_FUTURE_DOMAIN is not set
+ # CONFIG_SCSI_GDTH is not set
+-# CONFIG_SCSI_GENERIC_NCR5380 is not set
+-# CONFIG_SCSI_GENERIC_NCR5380_MMIO is not set
+ # CONFIG_SCSI_INITIO is not set
+ # CONFIG_SCSI_INIA100 is not set
+-# CONFIG_SCSI_NCR53C7xx is not set
+ CONFIG_SCSI_SYM53C8XX_2=y
+ CONFIG_SCSI_SYM53C8XX_DMA_ADDRESSING_MODE=0
+ CONFIG_SCSI_SYM53C8XX_DEFAULT_TAGS=16
+@@ -287,7 +296,6 @@
+ # CONFIG_SCSI_QLOGIC_1280 is not set
+ # CONFIG_SCSI_DC395x is not set
+ # CONFIG_SCSI_DC390T is not set
+-# CONFIG_SCSI_U14_34F is not set
+ # CONFIG_SCSI_NSP32 is not set
+ # CONFIG_SCSI_DEBUG is not set
+ CONFIG_SCSI_MESH=y
+@@ -321,8 +329,6 @@
+ CONFIG_PACKET=y
+ # CONFIG_PACKET_MMAP is not set
+ # CONFIG_NETLINK_DEV is not set
+-CONFIG_NETFILTER=y
+-# CONFIG_NETFILTER_DEBUG is not set
+ CONFIG_UNIX=y
+ # CONFIG_NET_KEY is not set
+ CONFIG_INET=y
+@@ -340,6 +346,16 @@
+ # CONFIG_INET_IPCOMP is not set
+ 
+ #
++# IP: Virtual Server Configuration
++#
++# CONFIG_IP_VS is not set
++# CONFIG_IPV6 is not set
++# CONFIG_DECNET is not set
++# CONFIG_BRIDGE is not set
++CONFIG_NETFILTER=y
++# CONFIG_NETFILTER_DEBUG is not set
++
++#
+ # IP: Netfilter Configuration
+ #
+ CONFIG_IP_NF_CONNTRACK=m
+@@ -355,6 +371,7 @@
+ CONFIG_IP_NF_MATCH_MARK=m
+ CONFIG_IP_NF_MATCH_MULTIPORT=m
+ CONFIG_IP_NF_MATCH_TOS=m
++CONFIG_IP_NF_MATCH_RECENT=m
+ CONFIG_IP_NF_MATCH_ECN=m
+ CONFIG_IP_NF_MATCH_DSCP=m
+ CONFIG_IP_NF_MATCH_AH_ESP=m
+@@ -386,8 +403,6 @@
+ # CONFIG_IP_NF_ARPTABLES is not set
+ CONFIG_IP_NF_COMPAT_IPCHAINS=m
+ # CONFIG_IP_NF_COMPAT_IPFWADM is not set
+-# CONFIG_IPV6 is not set
+-# CONFIG_XFRM_USER is not set
+ 
+ #
+ # SCTP Configuration (EXPERIMENTAL)
+@@ -397,8 +412,6 @@
+ # CONFIG_ATM is not set
+ # CONFIG_VLAN_8021Q is not set
+ # CONFIG_LLC is not set
+-# CONFIG_DECNET is not set
+-# CONFIG_BRIDGE is not set
+ # CONFIG_X25 is not set
+ # CONFIG_LAPB is not set
+ # CONFIG_NET_DIVERT is not set
+@@ -482,6 +495,7 @@
+ # CONFIG_HAMACHI is not set
+ # CONFIG_YELLOWFIN is not set
+ # CONFIG_R8169 is not set
++# CONFIG_SIS190 is not set
+ # CONFIG_SK98LIN is not set
+ # CONFIG_TIGON3 is not set
+ 
+@@ -553,7 +567,7 @@
+ # Graphics support
+ #
+ CONFIG_FB=y
+-CONFIG_FB_CIRRUS=y
++# CONFIG_FB_CIRRUS is not set
+ # CONFIG_FB_PM2 is not set
+ # CONFIG_FB_CYBER2000 is not set
+ CONFIG_FB_OF=y
+@@ -606,11 +620,6 @@
+ CONFIG_LOGO_LINUX_CLUT224=y
+ 
+ #
+-# Old CD-ROM drivers (not SCSI, not IDE)
+-#
+-# CONFIG_CD_NO_IDESCSI is not set
+-
+-#
+ # Input device support
+ #
+ CONFIG_INPUT=y
+@@ -636,6 +645,7 @@
+ CONFIG_SERIO_I8042=y
+ # CONFIG_SERIO_SERPORT is not set
+ # CONFIG_SERIO_CT82C710 is not set
++# CONFIG_SERIO_PCIPS2 is not set
+ 
+ #
+ # Input Device Drivers
+@@ -703,10 +713,12 @@
+ #
+ # I2C Hardware Sensors Mainboard support
+ #
++# CONFIG_I2C_ALI1535 is not set
+ # CONFIG_I2C_ALI15X3 is not set
+ # CONFIG_I2C_AMD756 is not set
+ # CONFIG_I2C_AMD8111 is not set
+ # CONFIG_I2C_I801 is not set
++# CONFIG_I2C_NFORCE2 is not set
+ # CONFIG_I2C_PIIX4 is not set
+ # CONFIG_I2C_SIS96X is not set
+ # CONFIG_I2C_VIAPRO is not set
+@@ -718,6 +730,7 @@
+ # CONFIG_SENSORS_IT87 is not set
+ # CONFIG_SENSORS_LM75 is not set
+ # CONFIG_SENSORS_LM85 is not set
++# CONFIG_SENSORS_LM78 is not set
+ # CONFIG_SENSORS_VIA686A is not set
+ # CONFIG_SENSORS_W83781D is not set
+ # CONFIG_I2C_SENSOR is not set
+@@ -913,13 +926,70 @@
+ # Sound
+ #
+ CONFIG_SOUND=m
+-CONFIG_DMASOUND_AWACS=m
+-CONFIG_DMASOUND=m
++# CONFIG_DMASOUND_AWACS is not set
+ 
+ #
+ # Advanced Linux Sound Architecture
+ #
+-# CONFIG_SND is not set
++CONFIG_SND=m
++CONFIG_SND_SEQUENCER=m
++# CONFIG_SND_SEQ_DUMMY is not set
++CONFIG_SND_OSSEMUL=y
++CONFIG_SND_MIXER_OSS=m
++CONFIG_SND_PCM_OSS=m
++CONFIG_SND_SEQUENCER_OSS=y
++# CONFIG_SND_VERBOSE_PRINTK is not set
++# CONFIG_SND_DEBUG is not set
++
++#
++# Generic devices
++#
++# CONFIG_SND_DUMMY is not set
++# CONFIG_SND_VIRMIDI is not set
++# CONFIG_SND_MTPAV is not set
++# CONFIG_SND_SERIAL_U16550 is not set
++# CONFIG_SND_MPU401 is not set
++
++#
++# PCI devices
++#
++# CONFIG_SND_ALI5451 is not set
++# CONFIG_SND_AZT3328 is not set
++# CONFIG_SND_CS46XX is not set
++# CONFIG_SND_CS4281 is not set
++# CONFIG_SND_EMU10K1 is not set
++# CONFIG_SND_KORG1212 is not set
++# CONFIG_SND_NM256 is not set
++# CONFIG_SND_RME32 is not set
++# CONFIG_SND_RME96 is not set
++# CONFIG_SND_RME9652 is not set
++# CONFIG_SND_HDSP is not set
++# CONFIG_SND_TRIDENT is not set
++# CONFIG_SND_YMFPCI is not set
++# CONFIG_SND_ALS4000 is not set
++# CONFIG_SND_CMIPCI is not set
++# CONFIG_SND_ENS1370 is not set
++# CONFIG_SND_ENS1371 is not set
++# CONFIG_SND_ES1938 is not set
++# CONFIG_SND_ES1968 is not set
++# CONFIG_SND_MAESTRO3 is not set
++# CONFIG_SND_FM801 is not set
++# CONFIG_SND_ICE1712 is not set
++# CONFIG_SND_ICE1724 is not set
++# CONFIG_SND_INTEL8X0 is not set
++# CONFIG_SND_SONICVIBES is not set
++# CONFIG_SND_VIA82XX is not set
++# CONFIG_SND_VX222 is not set
++
++#
++# ALSA PowerMac devices
++#
++CONFIG_SND_POWERMAC=m
++
++#
++# ALSA USB devices
++#
++CONFIG_SND_USB_AUDIO=m
+ 
+ #
+ # Open Sound System
+@@ -998,6 +1068,7 @@
+ #
+ # USB Network adaptors
+ #
++# CONFIG_USB_AX8817X is not set
+ # CONFIG_USB_CATC is not set
+ # CONFIG_USB_KAWETH is not set
+ # CONFIG_USB_PEGASUS is not set
+@@ -1074,7 +1145,6 @@
+ # Kernel hacking
+ #
+ # CONFIG_DEBUG_KERNEL is not set
+-CONFIG_KALLSYMS=y
+ CONFIG_BOOTX_TEXT=y
+ 
+ #
+diff -Nru a/arch/ppc/configs/ibmchrp_defconfig b/arch/ppc/configs/ibmchrp_defconfig
+--- a/arch/ppc/configs/ibmchrp_defconfig	Tue Jul  1 17:01:18 2003
++++ b/arch/ppc/configs/ibmchrp_defconfig	Sat Aug 23 02:33:38 2003
+@@ -9,6 +9,7 @@
+ # Code maturity level options
+ #
+ CONFIG_EXPERIMENTAL=y
++# CONFIG_BROKEN is not set
+ 
+ #
+ # General setup
+@@ -18,9 +19,15 @@
+ # CONFIG_BSD_PROCESS_ACCT is not set
+ CONFIG_SYSCTL=y
+ CONFIG_LOG_BUF_SHIFT=14
++CONFIG_IKCONFIG=y
++CONFIG_IKCONFIG_PROC=y
+ # CONFIG_EMBEDDED is not set
++CONFIG_KALLSYMS=y
+ CONFIG_FUTEX=y
+ CONFIG_EPOLL=y
++CONFIG_IOSCHED_NOOP=y
++CONFIG_IOSCHED_AS=y
++CONFIG_IOSCHED_DEADLINE=y
+ 
+ #
+ # Loadable module support
+@@ -83,8 +90,8 @@
+ CONFIG_PCI=y
+ CONFIG_PCI_DOMAINS=y
+ CONFIG_KCORE_ELF=y
+-CONFIG_BINFMT_ELF=y
+ CONFIG_KERNEL_ELF=y
++CONFIG_BINFMT_ELF=y
+ CONFIG_BINFMT_MISC=y
+ CONFIG_PCI_LEGACY_PROC=y
+ CONFIG_PCI_NAMES=y
+@@ -116,6 +123,10 @@
+ CONFIG_BOOT_LOAD=0x00800000
+ 
+ #
++# Generic Driver Options
++#
++
++#
+ # Memory Technology Devices (MTD)
+ #
+ # CONFIG_MTD is not set
+@@ -134,10 +145,12 @@
+ # CONFIG_BLK_DEV_DAC960 is not set
+ # CONFIG_BLK_DEV_UMEM is not set
+ CONFIG_BLK_DEV_LOOP=y
++# CONFIG_BLK_DEV_CRYPTOLOOP is not set
+ # CONFIG_BLK_DEV_NBD is not set
+ CONFIG_BLK_DEV_RAM=y
+ CONFIG_BLK_DEV_RAM_SIZE=4096
+ CONFIG_BLK_DEV_INITRD=y
++CONFIG_LBD=y
+ 
+ #
+ # Multi-device support (RAID and LVM)
+@@ -145,12 +158,12 @@
+ # CONFIG_MD is not set
+ 
+ #
+-# ATA/IDE/MFM/RLL support
++# ATA/ATAPI/MFM/RLL support
+ #
+ # CONFIG_IDE is not set
+ 
+ #
+-# SCSI support
++# SCSI device support
+ #
+ CONFIG_SCSI=y
+ 
+@@ -183,8 +196,6 @@
+ # CONFIG_SCSI_AIC79XX is not set
+ # CONFIG_SCSI_DPT_I2O is not set
+ # CONFIG_SCSI_ADVANSYS is not set
+-# CONFIG_SCSI_IN2000 is not set
+-# CONFIG_SCSI_AM53C974 is not set
+ # CONFIG_SCSI_MEGARAID is not set
+ # CONFIG_SCSI_BUSLOGIC is not set
+ # CONFIG_SCSI_CPQFCTS is not set
+@@ -193,11 +204,8 @@
+ # CONFIG_SCSI_EATA_PIO is not set
+ # CONFIG_SCSI_FUTURE_DOMAIN is not set
+ # CONFIG_SCSI_GDTH is not set
+-# CONFIG_SCSI_GENERIC_NCR5380 is not set
+-# CONFIG_SCSI_GENERIC_NCR5380_MMIO is not set
+ # CONFIG_SCSI_INITIO is not set
+ # CONFIG_SCSI_INIA100 is not set
+-# CONFIG_SCSI_NCR53C7xx is not set
+ CONFIG_SCSI_SYM53C8XX_2=y
+ CONFIG_SCSI_SYM53C8XX_DMA_ADDRESSING_MODE=0
+ CONFIG_SCSI_SYM53C8XX_DEFAULT_TAGS=16
+@@ -210,7 +218,6 @@
+ # CONFIG_SCSI_QLOGIC_1280 is not set
+ # CONFIG_SCSI_DC395x is not set
+ # CONFIG_SCSI_DC390T is not set
+-# CONFIG_SCSI_U14_34F is not set
+ # CONFIG_SCSI_NSP32 is not set
+ # CONFIG_SCSI_DEBUG is not set
+ # CONFIG_SCSI_MESH is not set
+@@ -242,8 +249,6 @@
+ CONFIG_PACKET=y
+ # CONFIG_PACKET_MMAP is not set
+ # CONFIG_NETLINK_DEV is not set
+-CONFIG_NETFILTER=y
+-# CONFIG_NETFILTER_DEBUG is not set
+ CONFIG_UNIX=y
+ # CONFIG_NET_KEY is not set
+ CONFIG_INET=y
+@@ -261,6 +266,16 @@
+ # CONFIG_INET_IPCOMP is not set
+ 
+ #
++# IP: Virtual Server Configuration
++#
++# CONFIG_IP_VS is not set
++# CONFIG_IPV6 is not set
++# CONFIG_DECNET is not set
++# CONFIG_BRIDGE is not set
++CONFIG_NETFILTER=y
++# CONFIG_NETFILTER_DEBUG is not set
++
++#
+ # IP: Netfilter Configuration
+ #
+ CONFIG_IP_NF_CONNTRACK=m
+@@ -276,6 +291,7 @@
+ CONFIG_IP_NF_MATCH_MARK=m
+ CONFIG_IP_NF_MATCH_MULTIPORT=m
+ CONFIG_IP_NF_MATCH_TOS=m
++CONFIG_IP_NF_MATCH_RECENT=m
+ CONFIG_IP_NF_MATCH_ECN=m
+ CONFIG_IP_NF_MATCH_DSCP=m
+ CONFIG_IP_NF_MATCH_AH_ESP=m
+@@ -306,10 +322,9 @@
+ CONFIG_IP_NF_TARGET_TCPMSS=m
+ CONFIG_IP_NF_ARPTABLES=m
+ CONFIG_IP_NF_ARPFILTER=m
++CONFIG_IP_NF_ARP_MANGLE=m
+ CONFIG_IP_NF_COMPAT_IPCHAINS=m
+ # CONFIG_IP_NF_COMPAT_IPFWADM is not set
+-# CONFIG_IPV6 is not set
+-# CONFIG_XFRM_USER is not set
+ 
+ #
+ # SCTP Configuration (EXPERIMENTAL)
+@@ -319,8 +334,6 @@
+ # CONFIG_ATM is not set
+ # CONFIG_VLAN_8021Q is not set
+ # CONFIG_LLC is not set
+-# CONFIG_DECNET is not set
+-# CONFIG_BRIDGE is not set
+ # CONFIG_X25 is not set
+ # CONFIG_LAPB is not set
+ # CONFIG_NET_DIVERT is not set
+@@ -396,6 +409,7 @@
+ # CONFIG_HAMACHI is not set
+ # CONFIG_YELLOWFIN is not set
+ # CONFIG_R8169 is not set
++# CONFIG_SIS190 is not set
+ # CONFIG_SK98LIN is not set
+ # CONFIG_TIGON3 is not set
+ 
+@@ -495,11 +509,6 @@
+ CONFIG_LOGO_LINUX_CLUT224=y
+ 
+ #
+-# Old CD-ROM drivers (not SCSI, not IDE)
+-#
+-# CONFIG_CD_NO_IDESCSI is not set
+-
+-#
+ # Input device support
+ #
+ CONFIG_INPUT=y
+@@ -525,6 +534,7 @@
+ CONFIG_SERIO_I8042=y
+ CONFIG_SERIO_SERPORT=y
+ # CONFIG_SERIO_CT82C710 is not set
++# CONFIG_SERIO_PCIPS2 is not set
+ 
+ #
+ # Input Device Drivers
+@@ -791,7 +801,6 @@
+ # Kernel hacking
+ #
+ # CONFIG_DEBUG_KERNEL is not set
+-CONFIG_KALLSYMS=y
+ # CONFIG_BOOTX_TEXT is not set
+ 
+ #
+diff -Nru a/arch/ppc/configs/mcpn765_defconfig b/arch/ppc/configs/mcpn765_defconfig
+--- a/arch/ppc/configs/mcpn765_defconfig	Tue Jul  1 17:01:18 2003
++++ b/arch/ppc/configs/mcpn765_defconfig	Mon Jul 21 09:05:22 2003
+@@ -19,6 +19,7 @@
+ CONFIG_SYSCTL=y
+ CONFIG_LOG_BUF_SHIFT=14
+ # CONFIG_EMBEDDED is not set
++CONFIG_KALLSYMS=y
+ CONFIG_FUTEX=y
+ CONFIG_EPOLL=y
+ 
+@@ -74,8 +75,8 @@
+ CONFIG_PCI=y
+ CONFIG_PCI_DOMAINS=y
+ CONFIG_KCORE_ELF=y
+-CONFIG_BINFMT_ELF=y
+ CONFIG_KERNEL_ELF=y
++CONFIG_BINFMT_ELF=y
+ # CONFIG_BINFMT_MISC is not set
+ # CONFIG_PCI_LEGACY_PROC is not set
+ # CONFIG_PCI_NAMES is not set
+@@ -104,6 +105,11 @@
+ CONFIG_BOOT_LOAD=0x00800000
+ 
+ #
++# Generic Driver Options
++#
++# CONFIG_FW_LOADER is not set
++
++#
+ # Memory Technology Devices (MTD)
+ #
+ # CONFIG_MTD is not set
+@@ -122,10 +128,12 @@
+ # CONFIG_BLK_DEV_DAC960 is not set
+ # CONFIG_BLK_DEV_UMEM is not set
+ CONFIG_BLK_DEV_LOOP=y
++# CONFIG_BLK_DEV_CRYPTOLOOP is not set
+ # CONFIG_BLK_DEV_NBD is not set
+ CONFIG_BLK_DEV_RAM=y
+ CONFIG_BLK_DEV_RAM_SIZE=4096
+ CONFIG_BLK_DEV_INITRD=y
++# CONFIG_LBD is not set
+ 
+ #
+ # Multi-device support (RAID and LVM)
+@@ -133,12 +141,12 @@
+ # CONFIG_MD is not set
+ 
+ #
+-# ATA/IDE/MFM/RLL support
++# ATA/ATAPI/MFM/RLL support
+ #
+ # CONFIG_IDE is not set
+ 
+ #
+-# SCSI support
++# SCSI device support
+ #
+ # CONFIG_SCSI is not set
+ 
+@@ -320,11 +328,6 @@
+ # CONFIG_FB is not set
+ 
+ #
+-# Old CD-ROM drivers (not SCSI, not IDE)
+-#
+-# CONFIG_CD_NO_IDESCSI is not set
+-
+-#
+ # Input device support
+ #
+ # CONFIG_INPUT is not set
+@@ -526,7 +529,6 @@
+ # Kernel hacking
+ #
+ # CONFIG_DEBUG_KERNEL is not set
+-# CONFIG_KALLSYMS is not set
+ # CONFIG_SERIAL_TEXT_DEBUG is not set
+ 
+ #
+diff -Nru a/arch/ppc/configs/pmac_defconfig b/arch/ppc/configs/pmac_defconfig
+--- a/arch/ppc/configs/pmac_defconfig	Sat Aug  2 13:06:57 2003
++++ b/arch/ppc/configs/pmac_defconfig	Sat Aug 23 02:33:38 2003
+@@ -9,6 +9,7 @@
+ # Code maturity level options
+ #
+ CONFIG_EXPERIMENTAL=y
++# CONFIG_BROKEN is not set
+ 
+ #
+ # General setup
+@@ -18,9 +19,15 @@
+ # CONFIG_BSD_PROCESS_ACCT is not set
+ CONFIG_SYSCTL=y
+ CONFIG_LOG_BUF_SHIFT=14
++CONFIG_IKCONFIG=y
++CONFIG_IKCONFIG_PROC=y
+ # CONFIG_EMBEDDED is not set
++CONFIG_KALLSYMS=y
+ CONFIG_FUTEX=y
+ CONFIG_EPOLL=y
++CONFIG_IOSCHED_NOOP=y
++CONFIG_IOSCHED_AS=y
++CONFIG_IOSCHED_DEADLINE=y
+ 
+ #
+ # Loadable module support
+@@ -79,6 +86,7 @@
+ # CONFIG_TAU_INT is not set
+ # CONFIG_TAU_AVERAGE is not set
+ CONFIG_CPU_FREQ=y
++CONFIG_CPU_FREQ_TABLE=y
+ CONFIG_CPU_FREQ_PROC_INTF=y
+ CONFIG_CPU_FREQ_24_API=y
+ CONFIG_CPU_FREQ_PMAC=y
+@@ -90,8 +98,8 @@
+ CONFIG_PCI=y
+ CONFIG_PCI_DOMAINS=y
+ CONFIG_KCORE_ELF=y
+-CONFIG_BINFMT_ELF=y
+ CONFIG_KERNEL_ELF=y
++CONFIG_BINFMT_ELF=y
+ CONFIG_BINFMT_MISC=m
+ CONFIG_PCI_LEGACY_PROC=y
+ CONFIG_PCI_NAMES=y
+@@ -101,9 +109,9 @@
+ # PCMCIA/CardBus support
+ #
+ CONFIG_PCMCIA=m
++CONFIG_YENTA=m
+ CONFIG_CARDBUS=y
+ CONFIG_I82092=m
+-CONFIG_I82365=m
+ CONFIG_TCIC=m
+ 
+ #
+@@ -131,6 +139,11 @@
+ CONFIG_BOOT_LOAD=0x00800000
+ 
+ #
++# Generic Driver Options
++#
++# CONFIG_FW_LOADER is not set
++
++#
+ # Memory Technology Devices (MTD)
+ #
+ # CONFIG_MTD is not set
+@@ -149,10 +162,12 @@
+ # CONFIG_BLK_DEV_DAC960 is not set
+ # CONFIG_BLK_DEV_UMEM is not set
+ CONFIG_BLK_DEV_LOOP=y
++# CONFIG_BLK_DEV_CRYPTOLOOP is not set
+ # CONFIG_BLK_DEV_NBD is not set
+ CONFIG_BLK_DEV_RAM=y
+ CONFIG_BLK_DEV_RAM_SIZE=4096
+ CONFIG_BLK_DEV_INITRD=y
++CONFIG_LBD=y
+ 
+ #
+ # Multi-device support (RAID and LVM)
+@@ -160,41 +175,39 @@
+ # CONFIG_MD is not set
+ 
+ #
+-# ATA/IDE/MFM/RLL support
++# ATA/ATAPI/MFM/RLL support
+ #
+ CONFIG_IDE=y
+-
+-#
+-# IDE, ATA and ATAPI Block devices
+-#
+ CONFIG_BLK_DEV_IDE=y
+ 
+ #
+ # Please see Documentation/ide.txt for help/info on IDE drives
+ #
+-# CONFIG_BLK_DEV_HD is not set
+ CONFIG_BLK_DEV_IDEDISK=y
+ # CONFIG_IDEDISK_MULTI_MODE is not set
+ # CONFIG_IDEDISK_STROKE is not set
+ CONFIG_BLK_DEV_IDECS=m
+ CONFIG_BLK_DEV_IDECD=y
++# CONFIG_BLK_DEV_IDETAPE is not set
+ CONFIG_BLK_DEV_IDEFLOPPY=y
+ CONFIG_BLK_DEV_IDESCSI=y
+ # CONFIG_IDE_TASK_IOCTL is not set
++# CONFIG_IDE_TASKFILE_IO is not set
+ 
+ #
+ # IDE chipset support/bugfixes
+ #
+ CONFIG_BLK_DEV_IDEPCI=y
+-CONFIG_BLK_DEV_GENERIC=y
+ CONFIG_IDEPCI_SHARE_IRQ=y
++# CONFIG_BLK_DEV_OFFBOARD is not set
++CONFIG_BLK_DEV_GENERIC=y
++# CONFIG_BLK_DEV_OPTI621 is not set
++CONFIG_BLK_DEV_SL82C105=y
+ CONFIG_BLK_DEV_IDEDMA_PCI=y
+ # CONFIG_BLK_DEV_IDE_TCQ is not set
+-# CONFIG_BLK_DEV_OFFBOARD is not set
+ # CONFIG_BLK_DEV_IDEDMA_FORCED is not set
+ CONFIG_IDEDMA_PCI_AUTO=y
+ # CONFIG_IDEDMA_ONLYDISK is not set
+-CONFIG_BLK_DEV_IDEDMA=y
+ # CONFIG_IDEDMA_PCI_WIP is not set
+ CONFIG_BLK_DEV_ADMA=y
+ # CONFIG_BLK_DEV_AEC62XX is not set
+@@ -204,12 +217,12 @@
+ # CONFIG_BLK_DEV_TRIFLEX is not set
+ # CONFIG_BLK_DEV_CY82C693 is not set
+ # CONFIG_BLK_DEV_CS5520 is not set
++# CONFIG_BLK_DEV_CS5530 is not set
+ # CONFIG_BLK_DEV_HPT34X is not set
+ # CONFIG_BLK_DEV_HPT366 is not set
+ # CONFIG_BLK_DEV_SC1200 is not set
+ # CONFIG_BLK_DEV_PIIX is not set
+ # CONFIG_BLK_DEV_NS87415 is not set
+-# CONFIG_BLK_DEV_OPTI621 is not set
+ # CONFIG_BLK_DEV_PDC202XX_OLD is not set
+ CONFIG_BLK_DEV_PDC202XX_NEW=y
+ # CONFIG_PDC202XX_FORCE is not set
+@@ -218,15 +231,17 @@
+ # CONFIG_BLK_DEV_SLC90E66 is not set
+ # CONFIG_BLK_DEV_TRM290 is not set
+ # CONFIG_BLK_DEV_VIA82CXXX is not set
+-CONFIG_BLK_DEV_SL82C105=y
+ CONFIG_BLK_DEV_IDE_PMAC=y
+ CONFIG_BLK_DEV_IDEDMA_PMAC=y
+ CONFIG_BLK_DEV_IDEDMA_PMAC_AUTO=y
+-CONFIG_IDEDMA_AUTO=y
++CONFIG_BLK_DEV_IDEDMA=y
+ # CONFIG_IDEDMA_IVB is not set
++CONFIG_IDEDMA_AUTO=y
++# CONFIG_DMA_NONPCI is not set
++# CONFIG_BLK_DEV_HD is not set
+ 
+ #
+-# SCSI support
++# SCSI device support
+ #
+ CONFIG_SCSI=y
+ 
+@@ -266,8 +281,6 @@
+ # CONFIG_SCSI_AIC79XX is not set
+ # CONFIG_SCSI_DPT_I2O is not set
+ CONFIG_SCSI_ADVANSYS=m
+-# CONFIG_SCSI_IN2000 is not set
+-# CONFIG_SCSI_AM53C974 is not set
+ # CONFIG_SCSI_MEGARAID is not set
+ # CONFIG_SCSI_BUSLOGIC is not set
+ # CONFIG_SCSI_CPQFCTS is not set
+@@ -276,11 +289,8 @@
+ # CONFIG_SCSI_EATA_PIO is not set
+ # CONFIG_SCSI_FUTURE_DOMAIN is not set
+ # CONFIG_SCSI_GDTH is not set
+-# CONFIG_SCSI_GENERIC_NCR5380 is not set
+-# CONFIG_SCSI_GENERIC_NCR5380_MMIO is not set
+ # CONFIG_SCSI_INITIO is not set
+ # CONFIG_SCSI_INIA100 is not set
+-# CONFIG_SCSI_NCR53C7xx is not set
+ CONFIG_SCSI_SYM53C8XX_2=y
+ CONFIG_SCSI_SYM53C8XX_DMA_ADDRESSING_MODE=0
+ CONFIG_SCSI_SYM53C8XX_DEFAULT_TAGS=16
+@@ -293,7 +303,6 @@
+ # CONFIG_SCSI_QLOGIC_1280 is not set
+ # CONFIG_SCSI_DC395x is not set
+ # CONFIG_SCSI_DC390T is not set
+-# CONFIG_SCSI_U14_34F is not set
+ # CONFIG_SCSI_NSP32 is not set
+ # CONFIG_SCSI_DEBUG is not set
+ CONFIG_SCSI_MESH=y
+@@ -361,8 +370,6 @@
+ CONFIG_PACKET=y
+ # CONFIG_PACKET_MMAP is not set
+ # CONFIG_NETLINK_DEV is not set
+-CONFIG_NETFILTER=y
+-# CONFIG_NETFILTER_DEBUG is not set
+ CONFIG_UNIX=y
+ # CONFIG_NET_KEY is not set
+ CONFIG_INET=y
+@@ -380,6 +387,16 @@
+ # CONFIG_INET_IPCOMP is not set
+ 
+ #
++# IP: Virtual Server Configuration
++#
++# CONFIG_IP_VS is not set
++# CONFIG_IPV6 is not set
++# CONFIG_DECNET is not set
++# CONFIG_BRIDGE is not set
++CONFIG_NETFILTER=y
++# CONFIG_NETFILTER_DEBUG is not set
++
++#
+ # IP: Netfilter Configuration
+ #
+ CONFIG_IP_NF_CONNTRACK=m
+@@ -395,6 +412,7 @@
+ CONFIG_IP_NF_MATCH_MARK=m
+ CONFIG_IP_NF_MATCH_MULTIPORT=m
+ CONFIG_IP_NF_MATCH_TOS=m
++CONFIG_IP_NF_MATCH_RECENT=m
+ CONFIG_IP_NF_MATCH_ECN=m
+ CONFIG_IP_NF_MATCH_DSCP=m
+ CONFIG_IP_NF_MATCH_AH_ESP=m
+@@ -425,10 +443,9 @@
+ CONFIG_IP_NF_TARGET_TCPMSS=m
+ CONFIG_IP_NF_ARPTABLES=m
+ CONFIG_IP_NF_ARPFILTER=m
++CONFIG_IP_NF_ARP_MANGLE=m
+ CONFIG_IP_NF_COMPAT_IPCHAINS=m
+ # CONFIG_IP_NF_COMPAT_IPFWADM is not set
+-# CONFIG_IPV6 is not set
+-# CONFIG_XFRM_USER is not set
+ 
+ #
+ # SCTP Configuration (EXPERIMENTAL)
+@@ -438,8 +455,6 @@
+ # CONFIG_ATM is not set
+ # CONFIG_VLAN_8021Q is not set
+ # CONFIG_LLC is not set
+-# CONFIG_DECNET is not set
+-# CONFIG_BRIDGE is not set
+ # CONFIG_X25 is not set
+ # CONFIG_LAPB is not set
+ # CONFIG_NET_DIVERT is not set
+@@ -516,6 +531,7 @@
+ # CONFIG_HAMACHI is not set
+ # CONFIG_YELLOWFIN is not set
+ # CONFIG_R8169 is not set
++# CONFIG_SIS190 is not set
+ # CONFIG_SK98LIN is not set
+ # CONFIG_TIGON3 is not set
+ 
+@@ -568,6 +584,7 @@
+ CONFIG_PCMCIA_HERMES=m
+ # CONFIG_AIRO_CS is not set
+ # CONFIG_PCMCIA_ATMEL is not set
++# CONFIG_PCMCIA_WL3501 is not set
+ CONFIG_NET_WIRELESS=y
+ 
+ #
+@@ -637,25 +654,18 @@
+ #
+ # Old SIR device drivers
+ #
+-# CONFIG_IRTTY_OLD is not set
+ # CONFIG_IRPORT_SIR is not set
+ 
+ #
+ # Old Serial dongle support
+ #
+-# CONFIG_DONGLE_OLD is not set
+ 
+ #
+ # FIR device drivers
+ #
+ # CONFIG_USB_IRDA is not set
+-# CONFIG_NSC_FIR is not set
+-# CONFIG_WINBOND_FIR is not set
+ # CONFIG_TOSHIBA_OLD is not set
+ # CONFIG_TOSHIBA_FIR is not set
+-# CONFIG_SMC_IRCC_OLD is not set
+-# CONFIG_SMC_IRCC_FIR is not set
+-# CONFIG_ALI_FIR is not set
+ # CONFIG_VLSI_FIR is not set
+ 
+ #
+@@ -721,11 +731,6 @@
+ CONFIG_LOGO_LINUX_CLUT224=y
+ 
+ #
+-# Old CD-ROM drivers (not SCSI, not IDE)
+-#
+-# CONFIG_CD_NO_IDESCSI is not set
+-
+-#
+ # Input device support
+ #
+ CONFIG_INPUT=y
+@@ -766,7 +771,7 @@
+ CONFIG_PMAC_PBOOK=y
+ CONFIG_PMAC_APM_EMU=y
+ CONFIG_PMAC_BACKLIGHT=y
+-CONFIG_MAC_FLOPPY=y
++# CONFIG_MAC_FLOPPY is not set
+ CONFIG_MAC_SERIAL=y
+ CONFIG_ADB=y
+ CONFIG_ADB_MACIO=y
+@@ -808,10 +813,12 @@
+ #
+ # I2C Hardware Sensors Mainboard support
+ #
++# CONFIG_I2C_ALI1535 is not set
+ # CONFIG_I2C_ALI15X3 is not set
+ # CONFIG_I2C_AMD756 is not set
+ # CONFIG_I2C_AMD8111 is not set
+ # CONFIG_I2C_I801 is not set
++# CONFIG_I2C_NFORCE2 is not set
+ # CONFIG_I2C_PIIX4 is not set
+ # CONFIG_I2C_SIS96X is not set
+ # CONFIG_I2C_VIAPRO is not set
+@@ -823,6 +830,7 @@
+ # CONFIG_SENSORS_IT87 is not set
+ # CONFIG_SENSORS_LM75 is not set
+ # CONFIG_SENSORS_LM85 is not set
++# CONFIG_SENSORS_LM78 is not set
+ # CONFIG_SENSORS_VIA686A is not set
+ # CONFIG_SENSORS_W83781D is not set
+ # CONFIG_I2C_SENSOR is not set
+@@ -1028,8 +1036,7 @@
+ # Sound
+ #
+ CONFIG_SOUND=m
+-CONFIG_DMASOUND_AWACS=m
+-CONFIG_DMASOUND=m
++# CONFIG_DMASOUND_AWACS is not set
+ 
+ #
+ # Advanced Linux Sound Architecture
+@@ -1168,6 +1175,7 @@
+ #
+ # USB Network adaptors
+ #
++# CONFIG_USB_AX8817X is not set
+ # CONFIG_USB_CATC is not set
+ # CONFIG_USB_KAWETH is not set
+ # CONFIG_USB_PEGASUS is not set
+@@ -1231,7 +1239,6 @@
+ # Kernel hacking
+ #
+ # CONFIG_DEBUG_KERNEL is not set
+-CONFIG_KALLSYMS=y
+ CONFIG_BOOTX_TEXT=y
+ 
+ #
+diff -Nru a/arch/ppc/configs/power3_defconfig b/arch/ppc/configs/power3_defconfig
+--- a/arch/ppc/configs/power3_defconfig	Tue Jul  1 17:01:18 2003
++++ b/arch/ppc/configs/power3_defconfig	Sat Aug 23 02:33:38 2003
+@@ -9,6 +9,7 @@
+ # Code maturity level options
+ #
+ CONFIG_EXPERIMENTAL=y
++# CONFIG_BROKEN is not set
+ 
+ #
+ # General setup
+@@ -18,9 +19,15 @@
+ # CONFIG_BSD_PROCESS_ACCT is not set
+ CONFIG_SYSCTL=y
+ CONFIG_LOG_BUF_SHIFT=15
++CONFIG_IKCONFIG=y
++CONFIG_IKCONFIG_PROC=y
+ # CONFIG_EMBEDDED is not set
++CONFIG_KALLSYMS=y
+ CONFIG_FUTEX=y
+ CONFIG_EPOLL=y
++CONFIG_IOSCHED_NOOP=y
++CONFIG_IOSCHED_AS=y
++CONFIG_IOSCHED_DEADLINE=y
+ 
+ #
+ # Loadable module support
+@@ -82,8 +89,8 @@
+ CONFIG_PCI=y
+ CONFIG_PCI_DOMAINS=y
+ CONFIG_KCORE_ELF=y
+-CONFIG_BINFMT_ELF=y
+ CONFIG_KERNEL_ELF=y
++CONFIG_BINFMT_ELF=y
+ CONFIG_BINFMT_MISC=y
+ CONFIG_PCI_LEGACY_PROC=y
+ CONFIG_PCI_NAMES=y
+@@ -121,6 +128,10 @@
+ CONFIG_BOOT_LOAD=0x00800000
+ 
+ #
++# Generic Driver Options
++#
++
++#
+ # Memory Technology Devices (MTD)
+ #
+ # CONFIG_MTD is not set
+@@ -140,10 +151,12 @@
+ # CONFIG_BLK_DEV_DAC960 is not set
+ # CONFIG_BLK_DEV_UMEM is not set
+ CONFIG_BLK_DEV_LOOP=y
++# CONFIG_BLK_DEV_CRYPTOLOOP is not set
+ # CONFIG_BLK_DEV_NBD is not set
+ CONFIG_BLK_DEV_RAM=y
+ CONFIG_BLK_DEV_RAM_SIZE=4096
+ CONFIG_BLK_DEV_INITRD=y
++CONFIG_LBD=y
+ 
+ #
+ # Multi-device support (RAID and LVM)
+@@ -156,14 +169,15 @@
+ CONFIG_MD_RAID5=y
+ # CONFIG_MD_MULTIPATH is not set
+ CONFIG_BLK_DEV_DM=y
++CONFIG_DM_IOCTL_V4=y
+ 
+ #
+-# ATA/IDE/MFM/RLL support
++# ATA/ATAPI/MFM/RLL support
+ #
+ # CONFIG_IDE is not set
+ 
+ #
+-# SCSI support
++# SCSI device support
+ #
+ CONFIG_SCSI=y
+ 
+@@ -196,8 +210,6 @@
+ # CONFIG_SCSI_AIC79XX is not set
+ # CONFIG_SCSI_DPT_I2O is not set
+ # CONFIG_SCSI_ADVANSYS is not set
+-# CONFIG_SCSI_IN2000 is not set
+-# CONFIG_SCSI_AM53C974 is not set
+ # CONFIG_SCSI_MEGARAID is not set
+ # CONFIG_SCSI_BUSLOGIC is not set
+ # CONFIG_SCSI_CPQFCTS is not set
+@@ -206,13 +218,10 @@
+ # CONFIG_SCSI_EATA_PIO is not set
+ # CONFIG_SCSI_FUTURE_DOMAIN is not set
+ # CONFIG_SCSI_GDTH is not set
+-# CONFIG_SCSI_GENERIC_NCR5380 is not set
+-# CONFIG_SCSI_GENERIC_NCR5380_MMIO is not set
+ # CONFIG_SCSI_INITIO is not set
+ # CONFIG_SCSI_INIA100 is not set
+ # CONFIG_SCSI_PPA is not set
+ # CONFIG_SCSI_IMM is not set
+-# CONFIG_SCSI_NCR53C7xx is not set
+ CONFIG_SCSI_SYM53C8XX_2=y
+ CONFIG_SCSI_SYM53C8XX_DMA_ADDRESSING_MODE=1
+ CONFIG_SCSI_SYM53C8XX_DEFAULT_TAGS=16
+@@ -225,7 +234,6 @@
+ # CONFIG_SCSI_QLOGIC_1280 is not set
+ # CONFIG_SCSI_DC395x is not set
+ # CONFIG_SCSI_DC390T is not set
+-# CONFIG_SCSI_U14_34F is not set
+ # CONFIG_SCSI_NSP32 is not set
+ # CONFIG_SCSI_DEBUG is not set
+ # CONFIG_SCSI_MESH is not set
+@@ -257,7 +265,6 @@
+ CONFIG_PACKET=y
+ # CONFIG_PACKET_MMAP is not set
+ # CONFIG_NETLINK_DEV is not set
+-# CONFIG_NETFILTER is not set
+ CONFIG_UNIX=y
+ # CONFIG_NET_KEY is not set
+ CONFIG_INET=y
+@@ -274,7 +281,9 @@
+ # CONFIG_INET_ESP is not set
+ # CONFIG_INET_IPCOMP is not set
+ # CONFIG_IPV6 is not set
+-# CONFIG_XFRM_USER is not set
++# CONFIG_DECNET is not set
++# CONFIG_BRIDGE is not set
++# CONFIG_NETFILTER is not set
+ 
+ #
+ # SCTP Configuration (EXPERIMENTAL)
+@@ -284,8 +293,6 @@
+ # CONFIG_ATM is not set
+ # CONFIG_VLAN_8021Q is not set
+ # CONFIG_LLC is not set
+-# CONFIG_DECNET is not set
+-# CONFIG_BRIDGE is not set
+ # CONFIG_X25 is not set
+ # CONFIG_LAPB is not set
+ # CONFIG_NET_DIVERT is not set
+@@ -362,6 +369,7 @@
+ # CONFIG_HAMACHI is not set
+ # CONFIG_YELLOWFIN is not set
+ # CONFIG_R8169 is not set
++# CONFIG_SIS190 is not set
+ # CONFIG_SK98LIN is not set
+ # CONFIG_TIGON3 is not set
+ 
+@@ -464,11 +472,6 @@
+ CONFIG_LOGO_LINUX_CLUT224=y
+ 
+ #
+-# Old CD-ROM drivers (not SCSI, not IDE)
+-#
+-# CONFIG_CD_NO_IDESCSI is not set
+-
+-#
+ # Input device support
+ #
+ CONFIG_INPUT=y
+@@ -495,6 +498,7 @@
+ CONFIG_SERIO_SERPORT=y
+ # CONFIG_SERIO_CT82C710 is not set
+ # CONFIG_SERIO_PARKBD is not set
++# CONFIG_SERIO_PCIPS2 is not set
+ 
+ #
+ # Input Device Drivers
+@@ -554,9 +558,8 @@
+ #
+ CONFIG_I2C=y
+ CONFIG_I2C_ALGOBIT=y
++# CONFIG_I2C_PROSAVAGE is not set
+ # CONFIG_I2C_PHILIPSPAR is not set
+-# CONFIG_I2C_ELV is not set
+-# CONFIG_I2C_VELLEMAN is not set
+ # CONFIG_SCx200_ACB is not set
+ CONFIG_I2C_ALGOPCF=y
+ # CONFIG_I2C_ELEKTOR is not set
+@@ -566,10 +569,12 @@
+ #
+ # I2C Hardware Sensors Mainboard support
+ #
++# CONFIG_I2C_ALI1535 is not set
+ # CONFIG_I2C_ALI15X3 is not set
+ # CONFIG_I2C_AMD756 is not set
+ # CONFIG_I2C_AMD8111 is not set
+ # CONFIG_I2C_I801 is not set
++# CONFIG_I2C_NFORCE2 is not set
+ # CONFIG_I2C_PIIX4 is not set
+ # CONFIG_I2C_SIS96X is not set
+ # CONFIG_I2C_VIAPRO is not set
+@@ -581,6 +586,7 @@
+ # CONFIG_SENSORS_IT87 is not set
+ # CONFIG_SENSORS_LM75 is not set
+ # CONFIG_SENSORS_LM85 is not set
++# CONFIG_SENSORS_LM78 is not set
+ # CONFIG_SENSORS_VIA686A is not set
+ # CONFIG_SENSORS_W83781D is not set
+ # CONFIG_I2C_SENSOR is not set
+@@ -843,7 +849,6 @@
+ # Kernel hacking
+ #
+ # CONFIG_DEBUG_KERNEL is not set
+-CONFIG_KALLSYMS=y
+ CONFIG_BOOTX_TEXT=y
+ 
+ #
+diff -Nru a/arch/ppc/defconfig b/arch/ppc/defconfig
+--- a/arch/ppc/defconfig	Sat Aug  2 12:59:32 2003
++++ b/arch/ppc/defconfig	Sat Aug 23 02:33:38 2003
+@@ -9,6 +9,7 @@
+ # Code maturity level options
+ #
+ CONFIG_EXPERIMENTAL=y
++# CONFIG_BROKEN is not set
+ 
+ #
+ # General setup
+@@ -18,9 +19,15 @@
+ # CONFIG_BSD_PROCESS_ACCT is not set
+ CONFIG_SYSCTL=y
+ CONFIG_LOG_BUF_SHIFT=14
++CONFIG_IKCONFIG=y
++CONFIG_IKCONFIG_PROC=y
+ # CONFIG_EMBEDDED is not set
++CONFIG_KALLSYMS=y
+ CONFIG_FUTEX=y
+ CONFIG_EPOLL=y
++CONFIG_IOSCHED_NOOP=y
++CONFIG_IOSCHED_AS=y
++CONFIG_IOSCHED_DEADLINE=y
+ 
+ #
+ # Loadable module support
+@@ -78,6 +85,7 @@
+ # CONFIG_TAU_INT is not set
+ # CONFIG_TAU_AVERAGE is not set
+ CONFIG_CPU_FREQ=y
++CONFIG_CPU_FREQ_TABLE=y
+ CONFIG_CPU_FREQ_PROC_INTF=y
+ CONFIG_CPU_FREQ_24_API=y
+ CONFIG_CPU_FREQ_PMAC=y
+@@ -89,8 +97,8 @@
+ CONFIG_PCI=y
+ CONFIG_PCI_DOMAINS=y
+ CONFIG_KCORE_ELF=y
+-CONFIG_BINFMT_ELF=y
+ CONFIG_KERNEL_ELF=y
++CONFIG_BINFMT_ELF=y
+ CONFIG_BINFMT_MISC=m
+ CONFIG_PCI_LEGACY_PROC=y
+ CONFIG_PCI_NAMES=y
+@@ -128,6 +136,11 @@
+ CONFIG_BOOT_LOAD=0x00800000
+ 
+ #
++# Generic Driver Options
++#
++# CONFIG_FW_LOADER is not set
++
++#
+ # Memory Technology Devices (MTD)
+ #
+ # CONFIG_MTD is not set
+@@ -146,10 +159,12 @@
+ # CONFIG_BLK_DEV_DAC960 is not set
+ # CONFIG_BLK_DEV_UMEM is not set
+ CONFIG_BLK_DEV_LOOP=y
++# CONFIG_BLK_DEV_CRYPTOLOOP is not set
+ # CONFIG_BLK_DEV_NBD is not set
+ CONFIG_BLK_DEV_RAM=y
+ CONFIG_BLK_DEV_RAM_SIZE=4096
+ CONFIG_BLK_DEV_INITRD=y
++CONFIG_LBD=y
+ 
+ #
+ # Multi-device support (RAID and LVM)
+@@ -157,40 +172,38 @@
+ # CONFIG_MD is not set
+ 
+ #
+-# ATA/IDE/MFM/RLL support
++# ATA/ATAPI/MFM/RLL support
+ #
+ CONFIG_IDE=y
+-
+-#
+-# IDE, ATA and ATAPI Block devices
+-#
+ CONFIG_BLK_DEV_IDE=y
+ 
+ #
+ # Please see Documentation/ide.txt for help/info on IDE drives
+ #
+-# CONFIG_BLK_DEV_HD is not set
+ CONFIG_BLK_DEV_IDEDISK=y
+ # CONFIG_IDEDISK_MULTI_MODE is not set
+ # CONFIG_IDEDISK_STROKE is not set
+ CONFIG_BLK_DEV_IDECD=y
++# CONFIG_BLK_DEV_IDETAPE is not set
+ CONFIG_BLK_DEV_IDEFLOPPY=y
+ CONFIG_BLK_DEV_IDESCSI=y
+ # CONFIG_IDE_TASK_IOCTL is not set
++# CONFIG_IDE_TASKFILE_IO is not set
+ 
+ #
+ # IDE chipset support/bugfixes
+ #
+ CONFIG_BLK_DEV_IDEPCI=y
+-CONFIG_BLK_DEV_GENERIC=y
+ CONFIG_IDEPCI_SHARE_IRQ=y
++# CONFIG_BLK_DEV_OFFBOARD is not set
++CONFIG_BLK_DEV_GENERIC=y
++# CONFIG_BLK_DEV_OPTI621 is not set
++CONFIG_BLK_DEV_SL82C105=y
+ CONFIG_BLK_DEV_IDEDMA_PCI=y
+ # CONFIG_BLK_DEV_IDE_TCQ is not set
+-# CONFIG_BLK_DEV_OFFBOARD is not set
+ # CONFIG_BLK_DEV_IDEDMA_FORCED is not set
+ CONFIG_IDEDMA_PCI_AUTO=y
+ # CONFIG_IDEDMA_ONLYDISK is not set
+-CONFIG_BLK_DEV_IDEDMA=y
+ # CONFIG_IDEDMA_PCI_WIP is not set
+ CONFIG_BLK_DEV_ADMA=y
+ # CONFIG_BLK_DEV_AEC62XX is not set
+@@ -200,12 +213,12 @@
+ # CONFIG_BLK_DEV_TRIFLEX is not set
+ # CONFIG_BLK_DEV_CY82C693 is not set
+ # CONFIG_BLK_DEV_CS5520 is not set
++# CONFIG_BLK_DEV_CS5530 is not set
+ # CONFIG_BLK_DEV_HPT34X is not set
+ # CONFIG_BLK_DEV_HPT366 is not set
+ # CONFIG_BLK_DEV_SC1200 is not set
+ # CONFIG_BLK_DEV_PIIX is not set
+ # CONFIG_BLK_DEV_NS87415 is not set
+-# CONFIG_BLK_DEV_OPTI621 is not set
+ # CONFIG_BLK_DEV_PDC202XX_OLD is not set
+ # CONFIG_BLK_DEV_PDC202XX_NEW is not set
+ # CONFIG_BLK_DEV_SVWKS is not set
+@@ -213,15 +226,17 @@
+ # CONFIG_BLK_DEV_SLC90E66 is not set
+ # CONFIG_BLK_DEV_TRM290 is not set
+ # CONFIG_BLK_DEV_VIA82CXXX is not set
+-CONFIG_BLK_DEV_SL82C105=y
+ CONFIG_BLK_DEV_IDE_PMAC=y
+ CONFIG_BLK_DEV_IDEDMA_PMAC=y
+ CONFIG_BLK_DEV_IDEDMA_PMAC_AUTO=y
+-CONFIG_IDEDMA_AUTO=y
++CONFIG_BLK_DEV_IDEDMA=y
+ # CONFIG_IDEDMA_IVB is not set
++CONFIG_IDEDMA_AUTO=y
++# CONFIG_DMA_NONPCI is not set
++# CONFIG_BLK_DEV_HD is not set
+ 
+ #
+-# SCSI support
++# SCSI device support
+ #
+ CONFIG_SCSI=y
+ 
+@@ -261,8 +276,6 @@
+ # CONFIG_SCSI_AIC79XX is not set
+ # CONFIG_SCSI_DPT_I2O is not set
+ CONFIG_SCSI_ADVANSYS=m
+-# CONFIG_SCSI_IN2000 is not set
+-# CONFIG_SCSI_AM53C974 is not set
+ # CONFIG_SCSI_MEGARAID is not set
+ # CONFIG_SCSI_BUSLOGIC is not set
+ # CONFIG_SCSI_CPQFCTS is not set
+@@ -271,11 +284,8 @@
+ # CONFIG_SCSI_EATA_PIO is not set
+ # CONFIG_SCSI_FUTURE_DOMAIN is not set
+ # CONFIG_SCSI_GDTH is not set
+-# CONFIG_SCSI_GENERIC_NCR5380 is not set
+-# CONFIG_SCSI_GENERIC_NCR5380_MMIO is not set
+ # CONFIG_SCSI_INITIO is not set
+ # CONFIG_SCSI_INIA100 is not set
+-# CONFIG_SCSI_NCR53C7xx is not set
+ CONFIG_SCSI_SYM53C8XX_2=y
+ CONFIG_SCSI_SYM53C8XX_DMA_ADDRESSING_MODE=0
+ CONFIG_SCSI_SYM53C8XX_DEFAULT_TAGS=16
+@@ -288,7 +298,6 @@
+ # CONFIG_SCSI_QLOGIC_1280 is not set
+ # CONFIG_SCSI_DC395x is not set
+ # CONFIG_SCSI_DC390T is not set
+-# CONFIG_SCSI_U14_34F is not set
+ # CONFIG_SCSI_NSP32 is not set
+ # CONFIG_SCSI_DEBUG is not set
+ CONFIG_SCSI_MESH=y
+@@ -322,8 +331,6 @@
+ CONFIG_PACKET=y
+ # CONFIG_PACKET_MMAP is not set
+ # CONFIG_NETLINK_DEV is not set
+-CONFIG_NETFILTER=y
+-# CONFIG_NETFILTER_DEBUG is not set
+ CONFIG_UNIX=y
+ # CONFIG_NET_KEY is not set
+ CONFIG_INET=y
+@@ -341,6 +348,16 @@
+ # CONFIG_INET_IPCOMP is not set
+ 
+ #
++# IP: Virtual Server Configuration
++#
++# CONFIG_IP_VS is not set
++# CONFIG_IPV6 is not set
++# CONFIG_DECNET is not set
++# CONFIG_BRIDGE is not set
++CONFIG_NETFILTER=y
++# CONFIG_NETFILTER_DEBUG is not set
++
++#
+ # IP: Netfilter Configuration
+ #
+ CONFIG_IP_NF_CONNTRACK=m
+@@ -356,6 +373,7 @@
+ CONFIG_IP_NF_MATCH_MARK=m
+ CONFIG_IP_NF_MATCH_MULTIPORT=m
+ CONFIG_IP_NF_MATCH_TOS=m
++CONFIG_IP_NF_MATCH_RECENT=m
+ CONFIG_IP_NF_MATCH_ECN=m
+ CONFIG_IP_NF_MATCH_DSCP=m
+ CONFIG_IP_NF_MATCH_AH_ESP=m
+@@ -386,10 +404,9 @@
+ CONFIG_IP_NF_TARGET_TCPMSS=m
+ CONFIG_IP_NF_ARPTABLES=m
+ CONFIG_IP_NF_ARPFILTER=m
++CONFIG_IP_NF_ARP_MANGLE=m
+ CONFIG_IP_NF_COMPAT_IPCHAINS=m
+ # CONFIG_IP_NF_COMPAT_IPFWADM is not set
+-# CONFIG_IPV6 is not set
+-# CONFIG_XFRM_USER is not set
+ 
+ #
+ # SCTP Configuration (EXPERIMENTAL)
+@@ -399,8 +416,6 @@
+ # CONFIG_ATM is not set
+ # CONFIG_VLAN_8021Q is not set
+ # CONFIG_LLC is not set
+-# CONFIG_DECNET is not set
+-# CONFIG_BRIDGE is not set
+ # CONFIG_X25 is not set
+ # CONFIG_LAPB is not set
+ # CONFIG_NET_DIVERT is not set
+@@ -477,6 +492,7 @@
+ # CONFIG_HAMACHI is not set
+ # CONFIG_YELLOWFIN is not set
+ # CONFIG_R8169 is not set
++# CONFIG_SIS190 is not set
+ # CONFIG_SK98LIN is not set
+ # CONFIG_TIGON3 is not set
+ 
+@@ -548,7 +564,7 @@
+ # Graphics support
+ #
+ CONFIG_FB=y
+-CONFIG_FB_CIRRUS=y
++# CONFIG_FB_CIRRUS is not set
+ # CONFIG_FB_PM2 is not set
+ # CONFIG_FB_CYBER2000 is not set
+ CONFIG_FB_OF=y
+@@ -602,11 +618,6 @@
+ CONFIG_LOGO_LINUX_CLUT224=y
+ 
+ #
+-# Old CD-ROM drivers (not SCSI, not IDE)
+-#
+-# CONFIG_CD_NO_IDESCSI is not set
+-
+-#
+ # Input device support
+ #
+ CONFIG_INPUT=y
+@@ -632,6 +643,7 @@
+ CONFIG_SERIO_I8042=y
+ CONFIG_SERIO_SERPORT=y
+ # CONFIG_SERIO_CT82C710 is not set
++# CONFIG_SERIO_PCIPS2 is not set
+ 
+ #
+ # Input Device Drivers
+@@ -698,10 +710,12 @@
+ #
+ # I2C Hardware Sensors Mainboard support
+ #
++# CONFIG_I2C_ALI1535 is not set
+ # CONFIG_I2C_ALI15X3 is not set
+ # CONFIG_I2C_AMD756 is not set
+ # CONFIG_I2C_AMD8111 is not set
+ # CONFIG_I2C_I801 is not set
++# CONFIG_I2C_NFORCE2 is not set
+ # CONFIG_I2C_PIIX4 is not set
+ # CONFIG_I2C_SIS96X is not set
+ # CONFIG_I2C_VIAPRO is not set
+@@ -713,6 +727,7 @@
+ # CONFIG_SENSORS_IT87 is not set
+ # CONFIG_SENSORS_LM75 is not set
+ # CONFIG_SENSORS_LM85 is not set
++# CONFIG_SENSORS_LM78 is not set
+ # CONFIG_SENSORS_VIA686A is not set
+ # CONFIG_SENSORS_W83781D is not set
+ # CONFIG_I2C_SENSOR is not set
+@@ -1047,6 +1062,7 @@
+ #
+ # USB Network adaptors
+ #
++# CONFIG_USB_AX8817X is not set
+ # CONFIG_USB_CATC is not set
+ # CONFIG_USB_KAWETH is not set
+ # CONFIG_USB_PEGASUS is not set
+@@ -1123,7 +1139,6 @@
+ # Kernel hacking
+ #
+ # CONFIG_DEBUG_KERNEL is not set
+-CONFIG_KALLSYMS=y
+ CONFIG_BOOTX_TEXT=y
+ 
+ #
+diff -Nru a/arch/ppc/kernel/misc.S b/arch/ppc/kernel/misc.S
+--- a/arch/ppc/kernel/misc.S	Tue Jul 15 04:47:19 2003
++++ b/arch/ppc/kernel/misc.S	Fri Aug 22 19:15:18 2003
+@@ -1380,3 +1380,4 @@
+ 	.long sys_utimes
+ 	.long sys_statfs64
+ 	.long sys_fstatfs64
++	.long ppc_fadvise64_64
+diff -Nru a/arch/ppc/kernel/ppc-stub.c b/arch/ppc/kernel/ppc-stub.c
+--- a/arch/ppc/kernel/ppc-stub.c	Mon Jun 30 10:10:33 2003
++++ b/arch/ppc/kernel/ppc-stub.c	Thu Aug 21 15:10:37 2003
+@@ -106,6 +106,7 @@
+ #include <linux/smp.h>
+ #include <linux/smp_lock.h>
+ 
++#include <asm/cacheflush.h>
+ #include <asm/system.h>
+ #include <asm/signal.h>
+ #include <asm/kgdb.h>
+@@ -186,7 +187,7 @@
+  * return 0.
+  */
+ static unsigned char *
+-mem2hex(char *mem, char *buf, int count)
++mem2hex(const char *mem, char *buf, int count)
+ {
+ 	unsigned char ch;
+ 	unsigned short tmp_s;
+@@ -828,11 +829,11 @@
+ 		return;
+ 	}
+ 
+-	asm("	.globl breakinst
+-	     breakinst: .long 0x7d821008
+-	    ");
++	asm("	.globl breakinst	\n\
++	     breakinst: .long 0x7d821008");
+ }
+ 
++#ifdef CONFIG_KGDB_CONSOLE
+ /* Output string in GDB O-packet format if GDB has connected. If nothing
+    output, returns 0 (caller must then handle output). */
+ int
+@@ -852,3 +853,4 @@
+ 
+ 	return 1;
+ }
++#endif
+diff -Nru a/arch/ppc/kernel/ppc_ksyms.c b/arch/ppc/kernel/ppc_ksyms.c
+--- a/arch/ppc/kernel/ppc_ksyms.c	Tue Jul  1 10:57:22 2003
++++ b/arch/ppc/kernel/ppc_ksyms.c	Thu Aug 21 10:51:40 2003
+@@ -200,6 +200,7 @@
+ EXPORT_SYMBOL(flush_icache_user_range);
+ EXPORT_SYMBOL(flush_dcache_page);
+ EXPORT_SYMBOL(flush_tlb_kernel_range);
++EXPORT_SYMBOL(flush_tlb_page);
+ #ifdef CONFIG_ALTIVEC
+ EXPORT_SYMBOL(last_task_used_altivec);
+ EXPORT_SYMBOL(giveup_altivec);
+diff -Nru a/arch/ppc/kernel/smp.c b/arch/ppc/kernel/smp.c
+--- a/arch/ppc/kernel/smp.c	Mon Aug 18 19:46:23 2003
++++ b/arch/ppc/kernel/smp.c	Fri Aug 22 19:58:08 2003
+@@ -47,8 +47,8 @@
+ DEFINE_PER_CPU(unsigned int, prof_multiplier);
+ DEFINE_PER_CPU(unsigned int, prof_counter);
+ unsigned long cache_decay_ticks = HZ/100;
+-unsigned long cpu_online_map = cpumask_of_cpu(0);
+-unsigned long cpu_possible_map = 1UL;
++cpumask_t cpu_online_map;
++cpumask_t cpu_possible_map;
+ int smp_hw_index[NR_CPUS];
+ struct thread_info *secondary_ti;
+ 
+@@ -336,7 +336,7 @@
+ 
+ void __init smp_prepare_cpus(unsigned int max_cpus)
+ {
+-	int num_cpus;
++	int num_cpus, i;
+ 
+ 	/* Fixup boot cpu */
+         smp_store_cpu_info(smp_processor_id());
+@@ -350,7 +350,8 @@
+ 
+ 	/* Probe platform for CPUs: always linear. */
+ 	num_cpus = smp_ops->probe();
+-	cpu_possible_map = (1 << num_cpus)-1;
++	for (i = 0; i < num_cpus; ++i)
++		cpu_set(i, cpu_possible_map);
+ 
+ 	/* Backup CPU 0 state */
+ 	__save_cpu_setup();
+diff -Nru a/arch/ppc/kernel/syscalls.c b/arch/ppc/kernel/syscalls.c
+--- a/arch/ppc/kernel/syscalls.c	Tue Jul 15 04:49:49 2003
++++ b/arch/ppc/kernel/syscalls.c	Fri Aug 22 19:15:18 2003
+@@ -262,4 +262,14 @@
+ 	return error;
+ }
+ 
++/*
++ * We put the arguments in a different order so we only use 6
++ * registers for arguments, rather than 7 as sys_fadvise64_64 needs
++ * (because `offset' goes in r5/r6).
++ */
++long ppc_fadvise64_64(int fd, int advice, loff_t offset, loff_t len)
++{
++	return sys_fadvise64_64(fd, offset, len, advice);
++}
++
+ cond_syscall(sys_pciconfig_iobase);
+diff -Nru a/arch/ppc/platforms/mcpn765_serial.h b/arch/ppc/platforms/mcpn765_serial.h
+--- a/arch/ppc/platforms/mcpn765_serial.h	Tue Feb 11 15:48:53 2003
++++ b/arch/ppc/platforms/mcpn765_serial.h	Mon Jul 21 09:05:22 2003
+@@ -30,7 +30,8 @@
+ #endif
+ 
+ /* Rate for the 1.8432 Mhz clock for the onboard serial chip */
+-#define BASE_BAUD ( 1843200 / 16 )
++#define BASE_BAUD	( 1843200 / 16 )
++#define UART_CLK	1843200
+ 
+ #ifdef CONFIG_SERIAL_DETECT_IRQ
+ #define STD_COM_FLAGS (ASYNC_BOOT_AUTOCONF|ASYNC_SKIP_TEST|ASYNC_AUTO_IRQ)
+diff -Nru a/arch/ppc/platforms/mcpn765_setup.c b/arch/ppc/platforms/mcpn765_setup.c
+--- a/arch/ppc/platforms/mcpn765_setup.c	Wed Apr 23 00:49:34 2003
++++ b/arch/ppc/platforms/mcpn765_setup.c	Mon Jul 21 09:05:22 2003
+@@ -31,6 +31,9 @@
+ #include <linux/ide.h>
+ #include <linux/seq_file.h>
+ #include <linux/root_dev.h>
++#include <linux/serial.h>
++#include <linux/tty.h>	/* for linux/serial_core.h */
++#include <linux/serial_core.h>
+ 
+ #include <asm/system.h>
+ #include <asm/pgtable.h>
+@@ -49,36 +52,94 @@
+ #include <asm/pplus.h>
+ 
+ #include "mcpn765.h"
++#include "mcpn765_serial.h"
++
+ 
+ static u_char mcpn765_openpic_initsenses[] __initdata = {
+-	0,	/* 16: i8259 cascade (active high) */
+-	1,	/* 17: COM1,2,3,4 */
+-	1,	/* 18: Enet 1 (front panel) */
+-	1,	/* 19: HAWK WDT XXXX */
+-	1,	/* 20: 21554 PCI-PCI bridge */
+-	1,	/* 21: cPCI INTA# */
+-	1,	/* 22: cPCI INTB# */
+-	1,	/* 23: cPCI INTC# */
+-	1,	/* 24: cPCI INTD# */
+-	1,	/* 25: PMC1 INTA#, PMC2 INTB# */
+-	1,	/* 26: PMC1 INTB#, PMC2 INTC# */
+-	1,	/* 27: PMC1 INTC#, PMC2 INTD# */
+-	1,	/* 28: PMC1 INTD#, PMC2 INTA# */
+-	1,	/* 29: Enet 2 (connected to J3) */
+-	1,	/* 30: Abort Switch */
+-	1,	/* 31: RTC Alarm */
++	(IRQ_SENSE_EDGE  | IRQ_POLARITY_POSITIVE),/* 16: i8259 cascade */
++	(IRQ_SENSE_LEVEL | IRQ_POLARITY_NEGATIVE),/* 17: COM1,2,3,4 */
++	(IRQ_SENSE_LEVEL | IRQ_POLARITY_NEGATIVE),/* 18: Enet 1 (front) */
++	(IRQ_SENSE_LEVEL | IRQ_POLARITY_NEGATIVE),/* 19: HAWK WDT XXXX */
++	(IRQ_SENSE_LEVEL | IRQ_POLARITY_NEGATIVE),/* 20: 21554 bridge */
++	(IRQ_SENSE_LEVEL | IRQ_POLARITY_NEGATIVE),/* 21: cPCI INTA# */
++	(IRQ_SENSE_LEVEL | IRQ_POLARITY_NEGATIVE),/* 22: cPCI INTB# */
++	(IRQ_SENSE_LEVEL | IRQ_POLARITY_NEGATIVE),/* 23: cPCI INTC# */
++	(IRQ_SENSE_LEVEL | IRQ_POLARITY_NEGATIVE),/* 24: cPCI INTD# */
++	(IRQ_SENSE_LEVEL | IRQ_POLARITY_NEGATIVE),/* 25: PMC1 INTA#,PMC2 INTB#*/
++	(IRQ_SENSE_LEVEL | IRQ_POLARITY_NEGATIVE),/* 26: PMC1 INTB#,PMC2 INTC#*/
++	(IRQ_SENSE_LEVEL | IRQ_POLARITY_NEGATIVE),/* 27: PMC1 INTC#,PMC2 INTD#*/
++	(IRQ_SENSE_LEVEL | IRQ_POLARITY_NEGATIVE),/* 28: PMC1 INTD#,PMC2 INTA#*/
++	(IRQ_SENSE_LEVEL | IRQ_POLARITY_NEGATIVE),/* 29: Enet 2 (J3) */
++	(IRQ_SENSE_LEVEL | IRQ_POLARITY_NEGATIVE),/* 30: Abort Switch */
++	(IRQ_SENSE_LEVEL | IRQ_POLARITY_NEGATIVE),/* 31: RTC Alarm */
+ };
+ 
+ 
+ extern u_int openpic_irq(void);
+ extern char cmd_line[];
+ 
++extern void gen550_progress(char *, unsigned short);
++extern void gen550_init(int, struct uart_port *);
++
+ int use_of_interrupt_tree = 0;
+ 
+ static void mcpn765_halt(void);
+ 
+ TODC_ALLOC();
+ 
++#if defined(CONFIG_SERIAL_8250) && \
++	(defined(CONFIG_KGDB) || defined(CONFIG_SERIAL_TEXT_DEBUG))
++static void __init
++mcpn765_early_serial_map(void)
++{
++	struct uart_port serial_req;
++
++	/* Setup serial port access */
++	memset(&serial_req, 0, sizeof(serial_req));
++	serial_req.uartclk = UART_CLK;
++	serial_req.irq = 17;
++	serial_req.flags = STD_COM_FLAGS;
++	serial_req.iotype = SERIAL_IO_MEM;
++	serial_req.membase = (u_char *)MCPN765_SERIAL_1;
++	serial_req.regshift = 4;
++
++	gen550_init(0, &serial_req);
++
++	if (early_serial_setup(&serial_req) != 0)
++		printk(KERN_ERR "Early serial init of port 0 failed\n");
++
++	/* Assume early_serial_setup() doesn't modify serial_req */
++	serial_req.line = 1;
++	serial_req.irq = 17;
++	serial_req.membase = (u_char *)MCPN765_SERIAL_2;
++
++	gen550_init(1, &serial_req);
++
++	if (early_serial_setup(&serial_req) != 0)
++		printk(KERN_ERR "Early serial init of port 1 failed\n");
++
++	/* Assume early_serial_setup() doesn't modify serial_req */
++	serial_req.line = 2;
++	serial_req.irq = 17;
++	serial_req.membase = (u_char *)MCPN765_SERIAL_3;
++
++	gen550_init(2, &serial_req);
++
++	if (early_serial_setup(&serial_req) != 0)
++		printk(KERN_ERR "Early serial init of port 2 failed\n");
++
++	/* Assume early_serial_setup() doesn't modify serial_req */
++	serial_req.line = 3;
++	serial_req.irq = 17;
++	serial_req.membase = (u_char *)MCPN765_SERIAL_4;
++
++	gen550_init(3, &serial_req);
++
++	if (early_serial_setup(&serial_req) != 0)
++		printk(KERN_ERR "Early serial init of port 3 failed\n");
++}
++#endif
++
+ static void __init
+ mcpn765_setup_arch(void)
+ {
+@@ -187,12 +248,12 @@
+ 	if ( ppc_md.progress )
+ 		ppc_md.progress("init_irq: enter", 0);
+ 
+-	openpic_init(1, NUM_8259_INTERRUPTS, NULL, -1);
++	openpic_init(NUM_8259_INTERRUPTS);
+ 
+ 	for(i=0; i < NUM_8259_INTERRUPTS; i++)
+ 		irq_desc[i].handler = &i8259_pic;
+ 
+-	i8259_init(NULL);
++	i8259_init(0);
+ 
+ 	if ( ppc_md.progress )
+ 		ppc_md.progress("init_irq: exit", 0);
+@@ -361,65 +422,15 @@
+ static __inline__ void
+ mcpn765_set_bat(void)
+ {
+-	unsigned long   bat3u, bat3l;
+-	static int	mapping_set = 0;
+-
+-	if (!mapping_set) {
+-
+-		__asm__ __volatile__(
+-		" lis %0,0xf000\n \
+-		  ori %1,%0,0x002a\n \
+-		  ori %0,%0,0x1ffe\n \
+-		  mtspr 0x21e,%0\n \
+-		  mtspr 0x21f,%1\n \
+-		  isync\n \
+-		  sync "
+-		: "=r" (bat3u), "=r" (bat3l));
+-
+-		mapping_set = 1;
+-	}
+-
+-	return;
+-}
+-
+-#ifdef CONFIG_SERIAL_TEXT_DEBUG
+-#include <linux/serialP.h>
+-#include <linux/serial_reg.h>
+-#include <asm/serial.h>
+-
+-static struct serial_state rs_table[RS_TABLE_SIZE] = {
+-	SERIAL_PORT_DFNS	/* Defined in <asm/serial.h> */
+-};
+-
+-static void
+-mcpn765_progress(char *s, unsigned short hex)
+-{
+-	volatile char c;
+-	volatile unsigned long com_port;
+-	u16 shift;
+-
+-	com_port = rs_table[0].port;
+-	shift = rs_table[0].iomem_reg_shift;
+-
+-	while ((c = *s++) != 0) {
+-		while ((*((volatile unsigned char *)com_port +
+-				(UART_LSR << shift)) & UART_LSR_THRE) == 0)
+-		                ;
+-	        *(volatile unsigned char *)com_port = c;
+-
+-		if (c == '\n') {
+-			while ((*((volatile unsigned char *)com_port +
+-				(UART_LSR << shift)) & UART_LSR_THRE) == 0)
+-					;
+-	        	*(volatile unsigned char *)com_port = '\r';
+-		}
+-	}
++	mb();
++	mtspr(DBAT1U, 0xfe8000fe);
++	mtspr(DBAT1L, 0xfe80002a);
++	mb();
+ }
+-#endif	/* CONFIG_SERIAL_TEXT_DEBUG */
+ 
+ void __init
+ platform_init(unsigned long r3, unsigned long r4, unsigned long r5,
+-	      unsigned long r6, unsigned long r7)
++		unsigned long r6, unsigned long r7)
+ {
+ 	parse_bootinfo(find_bootinfo());
+ 
+@@ -458,11 +469,13 @@
+ 	ppc_md.heartbeat_reset = 0;
+ 	ppc_md.heartbeat_count = 0;
+ 
+-#ifdef	CONFIG_SERIAL_TEXT_DEBUG
+-	ppc_md.progress = mcpn765_progress;
+-#else	/* !CONFIG_SERIAL_TEXT_DEBUG */
+-	ppc_md.progress = NULL;
+-#endif	/* CONFIG_SERIAL_TEXT_DEBUG */
++#if defined(CONFIG_SERIAL_8250) && \
++	(defined(CONFIG_KGDB) || defined(CONFIG_SERIAL_TEXT_DEBUG))
++	mcpn765_early_serial_map();
++#ifdef CONFIG_SERIAL_TEXT_DEBUG
++	ppc_md.progress = gen550_progress;
++#endif
++#endif
+ 
+ #if defined(CONFIG_BLK_DEV_IDE) || defined(CONFIG_BLK_DEV_IDE_MODULE)
+         ppc_ide_md.default_irq = mcpn765_ide_default_irq;
+diff -Nru a/arch/ppc/platforms/sandpoint.c b/arch/ppc/platforms/sandpoint.c
+--- a/arch/ppc/platforms/sandpoint.c	Tue Jul  1 10:56:46 2003
++++ b/arch/ppc/platforms/sandpoint.c	Thu Aug 21 10:19:10 2003
+@@ -357,6 +357,21 @@
+ }
+ 
+ /*
++ * Fix IDE interrupts.
++ */
++static int __init
++sandpoint_fix_winbond_83553(void)
++{
++	/* Make all 8259 interrupt level sensitive */
++	outb(0xf8, 0x4d0);
++	outb(0xde, 0x4d1);
++
++	return 0;
++}
++
++arch_initcall(sandpoint_fix_winbond_83553);
++
++/*
+  * Initialize the ISA devices on the Nat'l PC87308VUL SuperIO chip.
+  */
+ static int __init
+@@ -390,21 +405,6 @@
+ }
+ 
+ arch_initcall(sandpoint_setup_natl_87308);
+-
+-/*
+- * Fix IDE interrupts.
+- */
+-static int __init
+-sandpoint_fix_winbond_83553(void)
+-{
+-	/* Make all 8259 interrupt level sensitive */
+-	outb(0xf8, 0x4d0);
+-	outb(0xde, 0x4d1);
+-
+-	return 0;
+-}
+-
+-arch_initcall(sandpoint_fix_winbond_83553);
+ 
+ static int __init
+ sandpoint_request_io(void)
+diff -Nru a/arch/ppc/platforms/sandpoint.h b/arch/ppc/platforms/sandpoint.h
+--- a/arch/ppc/platforms/sandpoint.h	Tue Jul  1 10:56:46 2003
++++ b/arch/ppc/platforms/sandpoint.h	Thu Aug 21 10:19:10 2003
+@@ -61,9 +61,9 @@
+ #define UART_CLK			1843200
+ 
+ #ifdef CONFIG_SERIAL_DETECT_IRQ
+-#define STD_COM_FLAGS (ASYNC_BOOT_AUTOCONF|ASYNC_SKIP_TEST|ASYNC_AUTO_IRQ)
++#define STD_COM_FLAGS (ASYNC_BOOT_AUTOCONF|ASYNC_AUTO_IRQ)
+ #else
+-#define STD_COM_FLAGS (ASYNC_BOOT_AUTOCONF|ASYNC_SKIP_TEST)
++#define STD_COM_FLAGS (ASYNC_BOOT_AUTOCONF)
+ #endif
+ 
+ #define STD_SERIAL_PORT_DFNS \
+diff -Nru a/drivers/ide/ide-cd.c b/drivers/ide/ide-cd.c
+--- a/drivers/ide/ide-cd.c	Wed Aug 20 09:01:03 2003
++++ b/drivers/ide/ide-cd.c	Fri Aug 22 18:04:49 2003
+@@ -794,16 +794,16 @@
+ 			   request or data protect error.*/
+ 			ide_dump_status (drive, "command error", stat);
+ 			do_end_request = 1;
+-		} else if ((err & ~ABRT_ERR) != 0) {
+-			/* Go to the default handler
+-			   for other errors. */
+-			DRIVER(drive)->error(drive, "cdrom_decode_status",stat);
+-			return 1;
+ 		} else if (sense_key == MEDIUM_ERROR) {
+ 			/* No point in re-trying a zillion times on a bad 
+ 			 * sector...  If we got here the error is not correctable */
+ 			ide_dump_status (drive, "media error (bad sector)", stat);
+ 			do_end_request = 1;
++		} else if ((err & ~ABRT_ERR) != 0) {
++			/* Go to the default handler
++			   for other errors. */
++			DRIVER(drive)->error(drive, "cdrom_decode_status",stat);
++			return 1;
+ 		} else if ((++rq->errors > ERROR_MAX)) {
+ 			/* We've racked up too many retries.  Abort. */
+ 			do_end_request = 1;
+diff -Nru a/drivers/input/input.c b/drivers/input/input.c
+--- a/drivers/input/input.c	Tue Aug 12 13:29:25 2003
++++ b/drivers/input/input.c	Sat Aug 23 05:16:28 2003
+@@ -280,7 +280,7 @@
+ 			if (id->id.product != dev->id.product)
+ 				continue;
+ 		
+-		if (id->flags & INPUT_DEVICE_ID_MATCH_BUS)
++		if (id->flags & INPUT_DEVICE_ID_MATCH_VERSION)
+ 			if (id->id.version != dev->id.version)
+ 				continue;
+ 
+diff -Nru a/include/asm-ppc/cpm_8260.h b/include/asm-ppc/cpm_8260.h
+--- a/include/asm-ppc/cpm_8260.h	Sun Sep 15 21:52:03 2002
++++ b/include/asm-ppc/cpm_8260.h	Thu Aug 21 15:26:43 2003
+@@ -195,7 +195,7 @@
+ 
+ /* SMC uart mode register (Internal memory map).
+ */
+-#define	SMCMR_REN	((ushort)0x0001)
++#define SMCMR_REN	((ushort)0x0001)
+ #define SMCMR_TEN	((ushort)0x0002)
+ #define SMCMR_DM	((ushort)0x000c)
+ #define SMCMR_SM_GCI	((ushort)0x0000)
+@@ -212,10 +212,12 @@
+ 
+ /* SMC Event and Mask register.
+ */
+-#define	SMCM_TXE	((unsigned char)0x10)
+-#define	SMCM_BSY	((unsigned char)0x04)
+-#define	SMCM_TX		((unsigned char)0x02)
+-#define	SMCM_RX		((unsigned char)0x01)
++#define SMCM_BRKE       ((unsigned char)0x40)   /* When in UART Mode */
++#define SMCM_BRK        ((unsigned char)0x10)   /* When in UART Mode */
++#define SMCM_TXE	((unsigned char)0x10)
++#define SMCM_BSY	((unsigned char)0x04)
++#define SMCM_TX		((unsigned char)0x02)
++#define SMCM_RX		((unsigned char)0x01)
+ 
+ /* Baud rate generators.
+ */
+@@ -314,10 +316,10 @@
+ 
+ /* SCC Event and Mask register.
+ */
+-#define	SCCM_TXE	((unsigned char)0x10)
+-#define	SCCM_BSY	((unsigned char)0x04)
+-#define	SCCM_TX		((unsigned char)0x02)
+-#define	SCCM_RX		((unsigned char)0x01)
++#define SCCM_TXE	((unsigned char)0x10)
++#define SCCM_BSY	((unsigned char)0x04)
++#define SCCM_TX		((unsigned char)0x02)
++#define SCCM_RX		((unsigned char)0x01)
+ 
+ typedef struct scc_param {
+ 	ushort	scc_rbase;	/* Rx Buffer descriptor base address */
+diff -Nru a/include/asm-ppc/processor.h b/include/asm-ppc/processor.h
+--- a/include/asm-ppc/processor.h	Wed Jul 16 20:41:10 2003
++++ b/include/asm-ppc/processor.h	Fri Aug 22 05:26:16 2003
+@@ -654,6 +654,7 @@
+  */
+ #define EISA_bus 0
+ #define MCA_bus 0
++#define MCA_bus__is_a_macro
+ 
+ /* Lazy FPU handling on uni-processor */
+ extern struct task_struct *last_task_used_math;
+diff -Nru a/include/asm-ppc/unistd.h b/include/asm-ppc/unistd.h
+--- a/include/asm-ppc/unistd.h	Tue Jul 15 04:47:19 2003
++++ b/include/asm-ppc/unistd.h	Fri Aug 22 19:15:18 2003
+@@ -258,8 +258,9 @@
+ #define __NR_utimes		251
+ #define __NR_statfs64		252
+ #define __NR_fstatfs64		253
++#define __NR_fadvise64_64	254
+ 
+-#define __NR_syscalls		254
++#define __NR_syscalls		255
+ 
+ #define __NR(n)	#n
+ 
+diff -Nru a/sound/pcmcia/vx/vx_entry.c b/sound/pcmcia/vx/vx_entry.c
+--- a/sound/pcmcia/vx/vx_entry.c	Tue Jun 10 07:32:30 2003
++++ b/sound/pcmcia/vx/vx_entry.c	Fri Aug 22 05:02:18 2003
+@@ -34,10 +34,8 @@
+ static int vxpocket_event(event_t event, int priority, event_callback_args_t *args);
+ 
+ 
+-static void vxpocket_release(u_long arg)
++static void vxpocket_release(dev_link_t* link)
+ {
+-	dev_link_t *link = (dev_link_t *)arg;
+-	
+ 	if (link->state & DEV_CONFIG) {
+ 		/* release cs resources */
+ 		CardServices(ReleaseConfiguration, link->handle);
+@@ -56,7 +54,7 @@
+ 	struct snd_vxp_entry *hw;
+ 	dev_link_t *link = &vxp->link;
+ 
+-	vxpocket_release((u_long)link);
++	vxpocket_release(link);
+ 
+ 	/* Break the link with Card Services */
+ 	if (link->handle)
+@@ -148,9 +146,6 @@
+ 	link->irq.Handler = &snd_vx_irq_handler;
+ 	link->irq.Instance = chip;
+ 
+-	link->release.function = &vxpocket_release;
+-	link->release.data = (u_long)link;
+-
+ 	link->conf.Attributes = CONF_ENABLE_IRQ;
+ 	link->conf.Vcc = 50;
+ 	link->conf.IntType = INT_MEMORY_AND_IO;
+@@ -229,8 +224,6 @@
+ {
+ 	vx_core_t *chip = snd_magic_cast(vx_core_t, link->priv, return);
+ 
+-	del_timer(&link->release);
+-
+ 	snd_printdd(KERN_DEBUG "vxpocket_detach called\n");
+ 	/* Remove the interface data from the linked list */
+ 	if (hw) {
+@@ -326,7 +319,6 @@
+ 		snd_printdd(KERN_DEBUG "CARD_REMOVAL..\n");
+ 		link->state &= ~DEV_PRESENT;
+ 		if (link->state & DEV_CONFIG) {
+-			mod_timer(&link->release, jiffies + HZ/20);
+ 			chip->chip_status |= VX_STAT_IS_STALE;
+ 		}
+ 		break;
