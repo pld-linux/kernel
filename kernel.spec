@@ -23,7 +23,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.24
-Release:	0.4
+Release:	0.5
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -83,13 +83,22 @@ Patch40:	linux-2.4.23-ntfs-2.1.5a.patch.bz2
 Patch50:	linux-2.4.20-davfs-0.2.4.patch.bz2
 # FC02_davfs__FUNCTION__.patch
 Patch55:	linux-2.4.20-davfs-_FUNCTION_.patch
-Patch60:	linux-2.4.22-data-loging+quota.patch
-Patch61:	linux-2.4.22-acl+xattr.patch
+# ftp://ftp.suse.com/pub/people/mason/patches/data-logging/2.4.23/
+# ftp://ftp.suse.com/pub/people/jeffm/reiserfs/aclea/2.4.23/
+Patch56:	01-reiserfs-free-blocks.diff.gz
+Patch57:	02-akpm-b_journal_head-1.diff.gz
+Patch58:	03-reiserfs-sync_fs-5.diff.gz
+Patch59:	04-data-logging-40.diff.gz
+Patch60:	05-reiserfs-quota-28.diff.gz
+Patch61:	06-kinoded-9.diff.gz
+Patch62:	06-write_times.diff.gz
+Patch63:	01-reiserfs-xattrs-2.4.23+datalogging+quota-03
+Patch64:	02-reiserfs-acl-2.4.23+datalogging+quota-03
 # http://dl.sourceforge.net/squashfs/squashfs-1.3.tar.gz
 Patch65:	squashfs1.3-2.4.21-patch
 #from http://sci.felk.cvut.cz/nwd/linux/nwd-patch-2.4.19
 Patch70:	nwd-2.4.21.patch
-Patch80:	linux-2.4.22-intermezzo-acl.patch
+Patch80:	linux-2.4.25-intermezzo-acl.patch
 
 # Networking
 
@@ -122,10 +131,10 @@ Patch152:	linux-2.4.22-fore200e-0.2f.patch
 # New devices/drivers
 
 # http://people.sistina.com/~thornber/patches/2.4-stable/
-Patch200:	linux-2.4.23-dm-3.patch
+Patch200:	linux-2.4.25-dm-3.patch
 
 # EVMS additional patches (http://www.sourceforge.net/projects/evms/)
-Patch205:	linux-2.4.22-evms-2.1.1.patch
+Patch205:	linux-2.4.25-evms-2.2.1.patch
 
 #from http://dl.sourceforge.net/i810fb/linux-2.4.20-i810fb.diff.bz2
 Patch210:	linux-2.4.21-I810FB.patch.gz
@@ -636,13 +645,18 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch40 -p1
 %patch50 -p1
 %patch55 -p1
-# update from ftp://ftp.suse.com/pub/people/jeffm/reiserfs/aclea/2.4.23/
-#%patch60 -p1
-#%patch61 -p1
+%patch56 -p1
+%patch57 -p1
+%patch58 -p1
+%patch59 -p1
+%patch60 -p1
+%patch61 -p1
+%patch62 -p1
+%patch63 -p1
+%patch64 -p1
 %patch65 -p1
 %patch70 -p1
-# UPDATEME
-#%patch80 -p1
+%patch80 -p1
 %patch100 -p1
 %patch101 -p1
 %patch102 -p1
