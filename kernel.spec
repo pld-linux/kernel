@@ -1,5 +1,5 @@
 %define		ow_version		2.2.18-ow2
-%define		pcmcia_version		3.1.23
+%define		pcmcia_version		3.1.24
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.29
 %define		i2c_version		2.5.4
@@ -10,7 +10,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.18
-Release:	11
+Release:	12
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -315,6 +315,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch15 -p1
 %patch16 -p1
 %patch18 -p1
+%patch19 -p1
 %ifarch %{ix86}
 cd ..
 rm -rf i2c-%{i2c_version}
@@ -524,7 +525,6 @@ gzip -dc %{PATCH9} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH11} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH12} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH13} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH16}
