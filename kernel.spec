@@ -106,8 +106,8 @@ Patch110:	%{name}-nfs-fixes.patch
 Patch111:	linux-2.2.20-pcilynx_unresolved.patch
 Patch112:	bigmem-2.2.21-0.1.bz2
 # based on ftp://ftp.kernel.org/people/andrea/kernels/v2.2/2.2.20pre9aa2/40_lfs-2.2.20pre9aa2-27.bz2
-#Patch113:	linux-2.2.20-lfs.patch
-Patch113:	40_lfs-2.2.20pre10aa1-28
+Patch113:	linux-2.2.20-lfs.patch
+#Patch113:	40_lfs-2.2.20pre10aa1-28
 Patch114:	linux-2.2.21-mppe.patch
 Patch115:	wrr-linux-2.2.18.patch
 Patch116:	2.2.21-wrr-pkt_bridged.patch
