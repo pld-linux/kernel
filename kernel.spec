@@ -62,8 +62,8 @@ Patch11:	linux-2.4.2-qreboot.patch
 Patch12:	linux-2.4.2-irda3.patch
 Patch13:	linux-2.4.2-irda4.patch
 ## from LKL 28.II - 01.III
-Patch14:	linux-2.4.2-mqestro3-dma-fix.patch
-Patch15:	linux2.4.2-advantech-wdt-driver.patch
+Patch14:	linux-2.4.2-maestro3-dma-fix.patch
+Patch15:	linux-2.4.2-advantech-wdt-driver.patch
 Patch16:	linux-scsi-debug-bug.patch
 Patch17:	linux-smaller-parport_pc-non-pci-box.patch
 
