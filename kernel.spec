@@ -736,7 +736,6 @@ cd ../../..
 %patch3012 -p1
 %patch3013 -p1
 
-# XXX: finish update (one (not very important) issue with seq_file not resolved)
 %{?with_grsec:%patch4000 -p1}
 
 mv -f drivers/scsi/sym53c8xx.c drivers/scsi/sym53c8xx_old.c
