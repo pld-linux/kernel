@@ -351,6 +351,9 @@ Patch919:	linux-2.4.20-ntfs.patch
 Patch920:	linux-2.4.20-squashfs.patch
 Patch921:	linux-2.4.20-grsecurity-1.9.9e-kmem.patch
 
+# alpha specific initrd patch
+Patch1000:	http://cvs.gentoo.org/~wwoods/linux-2.4.20-alpha-initrd.patch
+
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -907,6 +910,8 @@ echo AXP patches ...
 #EXPORT_SYBMOL for AXP
 #%%patch203 -p1
 %patch204 -p1
+#initrd patch for AXP
+%patch1000 -p0
 %endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
