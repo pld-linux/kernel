@@ -32,7 +32,7 @@
 %define		_e2fsprogs_ver		1.29
 %define		_jfsutils_ver		1.1.3
 %define		_reiserfsprogs_ver	3.6.3
-%define		_xfsprogs_ver		2.1.0
+%define		_xfsprogs_ver		2.6.0
 %define		_pcmcia_cs_ver		3.1.21
 %define		_quota_tools_ver	3.09
 %define		_PPP_ver		2.4.0
