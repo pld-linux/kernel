@@ -43,8 +43,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.4
-%define		_cset		20040527_1508
+%define		_rel		0.5
+%define		_cset		20040528_0912
 
 %define		_netfilter_snap		20040518
 
@@ -69,7 +69,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc1
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	5a1774238297c4209f9989478c5bb663
+# Source3-md5:	0a5a69f7d0170b7f73673b1e6cd37b6d
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -688,11 +688,17 @@ BuildConfig (){
 %ifarch i686
 	echo "CONFIG_M686=y" >> arch/%{_target_base_arch}/defconfig
 %endif
+%ifarch pentium3
+	echo "CONFIG_PENTIUMIII=y" >> arch/%{_target_base_arch}/defconfig
+%endif
+%ifarch pentium4
+	echo "CONFIG_PENTIUM4=y" >> arch/%{_target_base_arch}/defconfig
+%endif
 %ifarch athlon
 	echo "CONFIG_MK7=y" >> arch/%{_target_base_arch}/defconfig
 %endif
 
-%ifarch i386 i486
+%ifarch i386 i486 i586
 	sed -i 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
 		arch/%{_target_base_arch}/defconfig
 %endif
@@ -723,7 +729,7 @@ ConfigBOOT()
 %ifarch i486
 	echo "CONFIG_M486=y" >> arch/%{_target_base_arch}/defconfig
 %endif
-%ifarch i386 i486
+%ifarch i386 i486 i586
 	sed -i 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
 		arch/%{_target_base_arch}/defconfig
 %endif
@@ -843,12 +849,7 @@ PreInstallKernel (){
 
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
-%ifarch %{ix86}
-	cp arch/i386/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
-%endif
-%ifarch amd64
-	cp arch/x86_64/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
-%endif
+	install arch/%{_target_base_arch}/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 
 %ifarch alpha sparc sparc64
 	gzip -cfv vmlinux > vmlinuz
@@ -868,7 +869,7 @@ PreInstallKernel (){
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
-     %{__make} modules_install \
+	%{__make} modules_install \
 	%{?with_verbose:V=1} \
      	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 	KERNELRELEASE=$KernelVer
@@ -949,9 +950,16 @@ echo "CONFIG_M586=y" >> .config
 %ifarch i686
 echo "CONFIG_M686=y" >> .config
 %endif
+%ifarch pentium3
+echo "CONFIG_PENTIUMIII=y" >> .config
+%endif
+%ifarch pentium4
+echo "CONFIG_PENTIUM4=y" >> .config
+%endif
 %ifarch athlon
 echo "CONFIG_MK7=y" >> .config
 %endif
+
 cat %{SOURCE80} >> .config
 #grsec
 cat %{SOURCE90} >> .config
@@ -972,9 +980,16 @@ echo "CONFIG_M586=y" >> .config
 %ifarch i686
 echo "CONFIG_M686=y" >> .config
 %endif
+%ifarch pentium3
+echo "CONFIG_PENTIUMIII=y" >> .config
+%endif
+%ifarch pentium4
+echo "CONFIG_PENTIUM4=y" >> .config
+%endif
 %ifarch athlon
 echo "CONFIG_MK7=y" >> .config
 %endif
+
 cat %{SOURCE80} >> .config
 #grsec
 cat %{SOURCE90} >> .config
