@@ -1015,8 +1015,8 @@ fi
 %attr(600,root,root) /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
 %ifnarch sparc sparc64
-%endif
 /lib/modules/%{version}-%{release}smp/atm
+%endif
 /lib/modules/%{version}-%{release}smp/block
 /lib/modules/%{version}-%{release}smp/cdrom
 %ifarch sparc sparc64
