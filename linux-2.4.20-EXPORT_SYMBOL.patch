@@ -1,17 +1,7 @@
---- linux/kernel/ksyms.c.org	Tue Aug 20 12:02:25 2002
-+++ linux/kernel/ksyms.c	Tue Aug 20 12:15:31 2002
-@@ -384,6 +384,7 @@
- EXPORT_SYMBOL(proc_dointvec_minmax);
- EXPORT_SYMBOL(proc_doulongvec_ms_jiffies_minmax);
- EXPORT_SYMBOL(proc_doulongvec_minmax);
-+EXPORT_SYMBOL(proc_get_inode);
- 
- /* interrupt handling */
- EXPORT_SYMBOL(add_timer);
-diff -urN linux-2.4.20/arch/ppc/kernel/ppc_ksyms.c linux-2.4.20-o1-preempt/arch/ppc/kernel/ppc_ksyms.c
---- linux-2.4.20/arch/ppc/kernel/ppc_ksyms.c	Fri Nov 29 00:53:11 2002
-+++ linux-2.4.20-o1-preempt/arch/ppc/kernel/ppc_ksyms.c	Tue Feb 18 03:51:29 2003
-@@ -236,6 +236,7 @@
+diff -urN linux-2.4.22.org/arch/ppc/kernel/ppc_ksyms.c linux-2.4.22/arch/ppc/kernel/ppc_ksyms.c
+--- linux-2.4.22.org/arch/ppc/kernel/ppc_ksyms.c	2003-11-21 20:40:54.000000000 +0100
++++ linux-2.4.22/arch/ppc/kernel/ppc_ksyms.c	2003-11-21 20:42:26.000000000 +0100
+@@ -254,6 +254,7 @@
  #ifdef CONFIG_PMAC_BACKLIGHT
  EXPORT_SYMBOL(get_backlight_level);
  EXPORT_SYMBOL(set_backlight_level);
@@ -19,24 +9,87 @@ diff -urN linux-2.4.20/arch/ppc/kernel/ppc_ksyms.c linux-2.4.20-o1-preempt/arch/
  EXPORT_SYMBOL(set_backlight_enable);
  EXPORT_SYMBOL(register_backlight_controller);
  #endif /* CONFIG_PMAC_BACKLIGHT */
-@@ -366,3 +366,4 @@
+@@ -384,3 +385,6 @@
+ extern unsigned long agp_special_page;
  EXPORT_SYMBOL_NOVERS(agp_special_page);
  #endif /* defined(CONFIG_ALL_PPC) */
- 
++
 +EXPORT_SYMBOL(ioremap_bot);
---- linux-2.4.21/drivers/video/Makefile.orig	Thu Jul  3 18:13:51 2003
-+++ linux-2.4.21/drivers/video/Makefile	Thu Jul  3 18:13:33 2003
-@@ -15,7 +15,7 @@
- 		  fbcon-iplan2p8.o fbcon-vga-planes.o fbcon-cfb16.o \
- 		  fbcon-cfb2.o fbcon-cfb24.o fbcon-cfb32.o fbcon-cfb4.o \
- 		  fbcon-cfb8.o fbcon-mac.o fbcon-mfb.o \
--		  cyber2000fb.o sa1100fb.o fbcon-hga.o fbgen.o
-+		  cyber2000fb.o sa1100fb.o fbcon-hga.o fbgen.o macmodes.o
++
+diff -urN linux-2.4.22.org/arch/sparc/kernel/sparc_ksyms.c linux-2.4.22/arch/sparc/kernel/sparc_ksyms.c
+--- linux-2.4.22.org/arch/sparc/kernel/sparc_ksyms.c	2003-11-21 20:40:44.000000000 +0100
++++ linux-2.4.22/arch/sparc/kernel/sparc_ksyms.c	2003-11-21 20:41:45.000000000 +0100
+@@ -282,6 +282,7 @@
+ /* Moving data to/from userspace. */
+ EXPORT_SYMBOL(__copy_user);
+ EXPORT_SYMBOL(__strncpy_from_user);
++EXPORT_SYMBOL(__strnlen_user);
  
- # Each configuration option enables a list of files.
+ /* Networking helper routines. */
+ /* XXX This is NOVERS because C_LABEL_STR doesn't get the version number. -DaveM */
+diff -urN linux-2.4.22.org/arch/sparc64/kernel/sparc64_ksyms.c linux-2.4.22/arch/sparc64/kernel/sparc64_ksyms.c
+--- linux-2.4.22.org/arch/sparc64/kernel/sparc64_ksyms.c	2003-11-21 20:41:01.000000000 +0100
++++ linux-2.4.22/arch/sparc64/kernel/sparc64_ksyms.c	2003-11-21 20:41:45.000000000 +0100
+@@ -20,6 +20,7 @@
+ #include <linux/interrupt.h>
+ #include <linux/fs_struct.h>
+ #include <linux/mm.h>
++#include <linux/tty.h>
  
---- linux-2.4.21/drivers/video/macmodes.c.orig	Thu Jul  3 18:08:15 2003
-+++ linux-2.4.21/drivers/video/macmodes.c	Thu Jul  3 18:33:48 2003
+ #include <asm/oplib.h>
+ #include <asm/delay.h>
+@@ -347,6 +348,8 @@
+ EXPORT_SYMBOL(phys_base);
+ EXPORT_SYMBOL(sparc64_valid_addr_bitmap);
+ 
++EXPORT_SYMBOL(screen_info);
++
+ /* No version information on this, heavily used in inline asm,
+  * and will always be 'void __ret_efault(void)'.
+  */
+@@ -370,4 +373,9 @@
+ EXPORT_SYMBOL(do_BUG);
+ #endif
+ 
++#if CONFIG_SUN_CONSOLE
++extern void (*prom_palette)(int);
++EXPORT_SYMBOL(prom_palette);
++#endif
++
+ EXPORT_SYMBOL(tick_ops);
+diff -urN linux-2.4.22.org/drivers/sbus/char/Makefile linux-2.4.22/drivers/sbus/char/Makefile
+--- linux-2.4.22.org/drivers/sbus/char/Makefile	2003-11-21 20:40:09.000000000 +0100
++++ linux-2.4.22/drivers/sbus/char/Makefile	2003-11-21 20:41:45.000000000 +0100
+@@ -9,7 +9,7 @@
+ 
+ O_TARGET := sunchar.o
+ 
+-export-objs := su.o bbc_i2c.o
++export-objs := su.o bbc_i2c.o sunserial.o
+ obj-y := sunkbd.o sunkbdmap.o sunmouse.o sunserial.o zs.o
+ 
+ list-multi := vfc.o bbc.o
+diff -urN linux-2.4.22.org/drivers/sbus/char/sunserial.c linux-2.4.22/drivers/sbus/char/sunserial.c
+--- linux-2.4.22.org/drivers/sbus/char/sunserial.c	2003-11-21 20:40:09.000000000 +0100
++++ linux-2.4.22/drivers/sbus/char/sunserial.c	2003-11-21 20:41:45.000000000 +0100
+@@ -25,11 +25,13 @@
+ int serial_console;
+ int stop_a_enabled = 1;
+ 
+-int __init con_is_present(void)
++int con_is_present(void)
+ {
+ 	return serial_console ? 0 : 1;
+ }
+ 
++EXPORT_SYMBOL(con_is_present);
++
+ static void __init nop_rs_kgdb_hook(int channel)
+ {
+ 	printk("Oops: %s called\n", __FUNCTION__);
+diff -urN linux-2.4.22.org/drivers/video/macmodes.c linux-2.4.22/drivers/video/macmodes.c
+--- linux-2.4.22.org/drivers/video/macmodes.c	2003-11-21 20:40:11.000000000 +0100
++++ linux-2.4.22/drivers/video/macmodes.c	2003-11-21 20:41:45.000000000 +0100
 @@ -19,6 +19,7 @@
  #include <linux/errno.h>
  #include <linux/fb.h>
@@ -87,70 +140,26 @@ diff -urN linux-2.4.20/arch/ppc/kernel/ppc_ksyms.c linux-2.4.20-o1-preempt/arch/
  			&mac_modedb[DEFAULT_MODEDB_INDEX], default_bpp);
  }
 +EXPORT_SYMBOL(mac_find_mode);
---- linux-2.4.21/arch/sparc/kernel/sparc_ksyms.c~	Fri Jun 13 16:51:32 2003
-+++ linux-2.4.21/arch/sparc/kernel/sparc_ksyms.c	Thu Jul  3 09:56:25 2003
-@@ -282,6 +282,7 @@
- /* Moving data to/from userspace. */
- EXPORT_SYMBOL(__copy_user);
- EXPORT_SYMBOL(__strncpy_from_user);
-+EXPORT_SYMBOL(__strnlen_user);
+diff -urN linux-2.4.22.org/drivers/video/Makefile linux-2.4.22/drivers/video/Makefile
+--- linux-2.4.22.org/drivers/video/Makefile	2003-11-21 20:40:10.000000000 +0100
++++ linux-2.4.22/drivers/video/Makefile	2003-11-21 20:41:45.000000000 +0100
+@@ -15,7 +15,7 @@
+ 		  fbcon-iplan2p8.o fbcon-vga-planes.o fbcon-cfb16.o \
+ 		  fbcon-cfb2.o fbcon-cfb24.o fbcon-cfb32.o fbcon-cfb4.o \
+ 		  fbcon-cfb8.o fbcon-mac.o fbcon-mfb.o \
+-		  cyber2000fb.o sa1100fb.o fbcon-hga.o fbgen.o
++		  cyber2000fb.o sa1100fb.o fbcon-hga.o fbgen.o macmodes.o
  
- /* Networking helper routines. */
- /* XXX This is NOVERS because C_LABEL_STR doesn't get the version number. -DaveM */
---- linux-2.4.21/drivers/sbus/char/sunserial.c~	Sat Aug  3 02:39:44 2002
-+++ linux-2.4.21/drivers/sbus/char/sunserial.c	Mon Aug 18 19:00:37 2003
-@@ -25,11 +25,13 @@
- int serial_console;
- int stop_a_enabled = 1;
+ # Each configuration option enables a list of files.
  
--int __init con_is_present(void)
-+int con_is_present(void)
- {
- 	return serial_console ? 0 : 1;
- }
+diff -urN linux-2.4.22.org/kernel/ksyms.c linux-2.4.22/kernel/ksyms.c
+--- linux-2.4.22.org/kernel/ksyms.c	2003-11-21 20:38:46.000000000 +0100
++++ linux-2.4.22/kernel/ksyms.c	2003-11-21 20:41:45.000000000 +0100
+@@ -384,6 +384,7 @@
+ EXPORT_SYMBOL(proc_dointvec_minmax);
+ EXPORT_SYMBOL(proc_doulongvec_ms_jiffies_minmax);
+ EXPORT_SYMBOL(proc_doulongvec_minmax);
++EXPORT_SYMBOL(proc_get_inode);
  
-+EXPORT_SYMBOL(con_is_present);
-+
- static void __init nop_rs_kgdb_hook(int channel)
- {
- 	printk("Oops: %s called\n", __FUNCTION__);
---- linux-2.4.21/drivers/sbus/char/Makefile~	Sat Apr 28 00:40:39 2001
-+++ linux-2.4.21/drivers/sbus/char/Makefile	Mon Aug 18 19:01:57 2003
-@@ -9,7 +9,7 @@
- 
- O_TARGET := sunchar.o
- 
--export-objs := su.o bbc_i2c.o
-+export-objs := su.o bbc_i2c.o sunserial.o
- obj-y := sunkbd.o sunkbdmap.o sunmouse.o sunserial.o zs.o
- 
- list-multi := vfc.o bbc.o
---- linux-2.4.21/arch/sparc64/kernel/sparc64_ksyms.c~	Mon Aug 18 18:51:31 2003
-+++ linux-2.4.21/arch/sparc64/kernel/sparc64_ksyms.c	Mon Aug 18 19:05:07 2003
-@@ -20,6 +20,7 @@
- #include <linux/interrupt.h>
- #include <linux/fs_struct.h>
- #include <linux/mm.h>
-+#include <linux/tty.h>
- 
- #include <asm/oplib.h>
- #include <asm/delay.h>
-@@ -347,6 +347,8 @@
- EXPORT_SYMBOL(phys_base);
- EXPORT_SYMBOL(sparc64_valid_addr_bitmap);
- 
-+EXPORT_SYMBOL(screen_info);
-+
- /* No version information on this, heavily used in inline asm,
-  * and will always be 'void __ret_efault(void)'.
-  */
-@@ -372,4 +372,9 @@
- EXPORT_SYMBOL(do_BUG);
- #endif
- 
-+#if CONFIG_SUN_CONSOLE
-+extern void (*prom_palette)(int);
-+EXPORT_SYMBOL(prom_palette);
-+#endif
-+
- EXPORT_SYMBOL(tick_ops);
+ /* interrupt handling */
+ EXPORT_SYMBOL(add_timer);
