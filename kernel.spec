@@ -1152,11 +1152,14 @@ fi
 %dir %{_prefix}/src/linux-%{version}/arch/*
 %{_prefix}/src/linux-%{version}/arch/*/Makefile*
 %dir %{_prefix}/src/linux-%{version}/arch/*/kernel
+%{_prefix}/src/linux-%{version}/arch/*/kernel/Makefile
 %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
+%{_prefix}/src/linux-%{version}/arch/*/kernel/sigframe.h
 %dir %{_prefix}/src/linux-%{version}/scripts
 %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %{_prefix}/src/linux-%{version}/scripts/*.c
 %{_prefix}/src/linux-%{version}/scripts/*.h
+%{_prefix}/src/linux-%{version}/scripts/*.sh
 
 %files doc
 %defattr(644,root,root,755)
@@ -1167,8 +1170,9 @@ fi
 %files source
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/arch/*/[!Mk]*
-%{_prefix}/src/linux-%{version}/arch/*/kernel/*
+%{_prefix}/src/linux-%{version}/arch/*/kernel/[!M]*
 %exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
+%exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/sigframe.h
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
@@ -1182,6 +1186,7 @@ fi
 %exclude %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.c
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.h
+%exclude %{_prefix}/src/linux-%{version}/scripts/*.sh
 %{_prefix}/src/linux-%{version}/sound
 %{_prefix}/src/linux-%{version}/security
 %{_prefix}/src/linux-%{version}/usr
