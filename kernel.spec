@@ -76,6 +76,8 @@ Patch0:		2.6.0-ksyms-add.patch
 Patch1:		cset-%{_cset}.txt.gz
 %endif
 
+Patch3:		http://www.13thfloor.at/vserver/e_patches/vs-26x/patch-2.6.2-rc1-vs0.05.diff
+
 Patch4:		squashfs1.3r2-patch
 
 Patch6:		2.6.0-t3-sysfs_mem-lkml.patch
@@ -104,9 +106,6 @@ Patch30:	2.6.0-t8-umsdos-lkml.patch
 Patch32:	2.6.0-t9-acpi_osl-lkml.patch
 
 Patch36:	2.6.0-t9-PPC-smp.patch
-
-Patch38:	2.6.0-t10-POSIX_message_queues-1of2-lkml.patch
-Patch39:	2.6.0-t10-POSIX_message_queues-2of2-lkml.patch
 
 Patch42:	2.6.0-t11-EPoX-sound-lkml.patch
 
@@ -493,6 +492,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch1 -p1
 %endif
 
+%patch3 -p1
+
 %patch4 -p1
 
 #%%patch6 -p1
@@ -521,9 +522,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch32 -p1
 
 %patch36 -p1
-
-%patch38 -p1
-%patch39 -p1
 
 %patch42 -p1
 
