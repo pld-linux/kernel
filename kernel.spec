@@ -30,7 +30,7 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_rel		0.1
-%define		_cset		0
+%define		_cset		20040228_0207
 
 ## netfilter snap 
 %define		_netfilter_snap		20040225
@@ -147,8 +147,6 @@ Patch74:	2.6.x-SGI_VW-fbdev-lkml.patch
 Patch76:	2.6.x-TGA-fbdev-lkml.patch
 
 Patch78:	linux-alpha-isa.patch
-
-Patch80:	linux-nfsd-locks_remove_posix.patch
 
 Patch82:	2.6.3-ini9100u-fix.patch
 
@@ -559,8 +557,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch76 -p1
 
 %patch78 -p1
-
-%patch80 -p1
 
 %patch82 -p1
 
