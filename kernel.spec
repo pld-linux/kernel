@@ -34,7 +34,7 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.90
+%define		_rel		0.91
 %define		_cset		0
 
 ## netfilter snap 
@@ -1014,7 +1014,7 @@ fi
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
 /lib/modules/%{version}-%{release}/kernel
-%ifnarch sparc
+%ifnarch sparc sparc64
 #pcmcia stuff
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
@@ -1023,32 +1023,32 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko
 %endif 
-%ifnarch sparc
+%ifnarch sparc sparc64
 #drm stuff
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 %endif
-%ifnarch sparc
+%ifnarch sparc sparc64
 #oss sound stuff
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/oss
 %endif
 #alsa sound stuff
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/core
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/drivers
-%ifnarch sparc
+%ifnarch sparc sparc64
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/i2c
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/isa
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/pci
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/synth
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/usb
 %endif 
-%ifarch sparc
+%ifarch sparc sparc64
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/sparc
 %endif 
 
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
 
-%ifnarch sparc
+%ifnarch sparc sparc64
 %files pcmcia
 %defattr(644,root,root,755)
 %dir /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
@@ -1060,7 +1060,7 @@ fi
 /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko
 %endif 			
 
-%ifnarch sparc
+%ifnarch sparc sparc64
 %files drm
 %defattr(644,root,root,755)
 %dir /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
@@ -1078,7 +1078,7 @@ fi
 /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
 /lib/modules/%{version}-%{release}smp/kernel
-%ifnarch sparc
+%ifnarch sparc sparc64
 #pcmcia stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
@@ -1087,32 +1087,32 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko
 %endif
-%ifnarch sparc
+%ifnarch sparc sparc64
 #drm stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 %endif
-%ifarch sparc
+%ifarch sparc sparc64
 #oss sound stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/oss
 %endif
 #alsa sound stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/core
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/drivers
-%ifnarch sparc
+%ifnarch sparc sparc64
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/i2c
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/isa
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/pci
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/synth
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/usb
 %endif 
-%ifarch sparc
+%ifarch sparc sparc64
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/sparc
 %endif 
 
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
 
-%ifnarch sparc
+%ifnarch sparc sparc64
 %files -n kernel-smp-pcmcia
 %defattr(644,root,root,755)
 %dir /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
@@ -1124,7 +1124,7 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko
 %endif 			
 
-%ifnarch sparc
+%ifnarch sparc sparc64
 %files -n kernel-smp-drm
 %defattr(644,root,root,755)
 %dir /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
@@ -1208,7 +1208,7 @@ fi
 %endif
 
 %if %{with up}
-%ifnarch sparc
+%ifnarch sparc sparc64
 %files sound-oss
 %defattr(644,root,root,755)
 %dir /lib/modules/%{version}-%{release}/kernel/sound/oss
@@ -1219,20 +1219,20 @@ fi
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/sound/core
 /lib/modules/%{version}-%{release}/kernel/sound/drivers
-%ifnarch sparc
+%ifnarch sparc sparc64
 /lib/modules/%{version}-%{release}/kernel/sound/i2c
 /lib/modules/%{version}-%{release}/kernel/sound/isa
 /lib/modules/%{version}-%{release}/kernel/sound/pci
 /lib/modules/%{version}-%{release}/kernel/sound/synth
 /lib/modules/%{version}-%{release}/kernel/sound/usb
 %endif			
-%ifarch sparc
+%ifarch sparc sparc64
 /lib/modules/%{version}-%{release}/kernel/sound/sparc
 %endif			
 %endif
 
 %if %{with smp}
-%ifnarch sparc
+%ifnarch sparc sparc64
 %files smp-sound-oss
 %defattr(644,root,root,755)
 %dir /lib/modules/%{version}-%{release}smp/kernel/sound/oss
@@ -1243,14 +1243,14 @@ fi
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/sound/core
 /lib/modules/%{version}-%{release}smp/kernel/sound/drivers
-%ifnarch sparc
+%ifnarch sparc sparc64
 /lib/modules/%{version}-%{release}smp/kernel/sound/i2c
 /lib/modules/%{version}-%{release}smp/kernel/sound/isa
 /lib/modules/%{version}-%{release}smp/kernel/sound/pci
 /lib/modules/%{version}-%{release}smp/kernel/sound/synth
 /lib/modules/%{version}-%{release}smp/kernel/sound/usb
 %endif 
-%ifarch sparc
+%ifarch sparc sparc64
 /lib/modules/%{version}-%{release}smp/kernel/sound/sparc
 %endif
 %endif 
