@@ -29,7 +29,7 @@
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
-Summary(pl):	J±dro Linuxa
+Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.4.21
 Release:	0.%{pre_version}.%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}.1
@@ -363,7 +363,7 @@ fonctions basiques d'un système d'exploitation: allocation mémoire,
 allocation de process, entrée/sortie de peripheriques, etc.
 
 %description -l pl
-Pakiet zawiera j±dro Linuxa niezbêdne do prawid³owego dzia³ania
+Pakiet zawiera j±dro Linuksa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takich jak karty muzyczne, sterowniki dysków, etc.
 
@@ -371,6 +371,7 @@ siê w komputerze, takich jak karty muzyczne, sterowniki dysków, etc.
 Summary:	Kernel version %{version} compiled for SMP machines
 Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
+Summary(pl):	J±dro Linuksa %{version} skompilowane dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Provides:	%{name}-smp = %{version}-%{release}
 Provides:	module-info
@@ -402,18 +403,18 @@ This package includes a SMP version of the Linux %{version} kernel. It
 is required only on machines with two or more CPUs, although it should
 work fine on single-CPU boxes.
 
-%description -l de smp
+%description smp -l de
 Dieses Paket enthält eine SMP (Multiprozessor)-Version von
 Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
 Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
 CPU laufen.
 
-%description -l fr smp
+%description smp -l fr
 Ce package inclu une version SMP du noyau de Linux version {version}.
 Il et nécessaire seulement pour les machine avec deux processeurs ou
 plus, il peut quand même fonctionner pour les système mono-processeur.
 
-%description -l pl smp
+%description smp -l pl
 Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono
 wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
 Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
@@ -422,6 +423,7 @@ Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
 Summary:	Kernel version %{version} used on the installation boot disks
 Summary(de):	Kernel version %{version} für Installationsdisketten
 Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation
+Summary(pl):	J±dro Linuksa %{version} dla bootkietek instalacyjnych
 Group:		Base/Kernel
 Prereq:		modutils
 Autoreqprov:	no
@@ -432,14 +434,14 @@ kernel. This kernel is used on the installation boot disks only and
 should not be used for an installed system, as many features in this
 kernel are turned off because of the size constraints.
 
-%description -l de BOOT
+%description BOOT -l de
 Dieses Paket enthält eine verkleinerte Version vom Linux-Kernel
 version %{version}. Dieser Kernel wird auf den
 Installations-Bootdisketten benutzt und sollte nicht auf einem
 installierten System verwendet werden, da viele Funktionen wegen der
 Platzprobleme abgeschaltet sind.
 
-%description -l pl BOOT
+%description BOOT -l pl
 Pakiet zawiera j±dro Linuksa dedykowane dyskietkom startowym i powinno
 byæ u¿ywane jedynie podczas instalacji systemu. Wiele u¿ytecznych
 opcji zosta³o wy³±czonych, aby jak najbardziej zmniejszyæ jego
@@ -456,7 +458,7 @@ Requires(postun):	%{name}-up = %{version}-%{release}
 %description pcmcia-cs
 PCMCIA-CS modules (%{pcmcia_version}).
 
-%description -l pl pcmcia-cs
+%description pcmcia-cs -l pl
 Modu³y PCMCIA-CS (%{pcmcia_version}).
 
 %package smp-pcmcia-cs
@@ -470,7 +472,7 @@ Requires(postun):	%{name}-smp = %{version}-%{release}
 %description smp-pcmcia-cs
 PCMCIA-CS modules for SMP kernel (%{pcmcia_version}).
 
-%description -l pl smp-pcmcia-cs
+%description smp-pcmcia-cs -l pl
 Modu³y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 
 %package drm
@@ -484,7 +486,7 @@ Requires(postun):	%{name}-up = %{version}-%{release}
 %description drm
 DRM kernel modules (%{drm_xfree_version}).
 
-%description -l pl drm
+%description drm -l pl
 Sterowniki DRM (%{drm_xfree_version}).
 
 %package smp-drm
@@ -498,7 +500,7 @@ Requires(postun):	%{name}-smp = %{version}-%{release}
 %description smp-drm
 DRM SMP kernel modules (%{drm_xfree_version}).
 
-%description -l pl smp-drm
+%description smp-drm -l pl
 Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
 
 %package headers
@@ -518,12 +520,12 @@ structures and constants that are needed when building most standard
 programs under Linux, as well as to rebuild the kernel.
 
 %description headers -l pl
-Pakiet zawiera pliki nag³ówkowe j±dra, niezbedne do rekompilacji j±dra
+Pakiet zawiera pliki nag³ówkowe j±dra, niezbêdne do rekompilacji j±dra
 oraz niektórych programów.
 
 %package source
 Summary:	Kernel source tree
-Summary(pl):	Kod ¼ród³owy j±dra Linuxa
+Summary(pl):	Kod ¼ród³owy j±dra Linuksa
 Group:		Base/Kernel
 Autoreqprov:	no
 Requires:	%{name}-headers = %{version}-%{release}
@@ -537,7 +539,7 @@ most C programs as they depend on constants defined in here. You can
 also build a custom kernel that is better tuned to your particular
 hardware.
 
-%description -l de source
+%description source -l de
 Das Kernel-Source-Paket enthält den source code (C/Assembler-Code) des
 Linux-Kernels. Die Source-Dateien werden gebraucht, um viele
 C-Programme zu compilieren, da sie auf Konstanten zurückgreifen, die
@@ -545,7 +547,7 @@ im Kernel-Source definiert sind. Die Source-Dateien können auch
 benutzt werden, um einen Kernel zu compilieren, der besser auf Ihre
 Hardware ausgerichtet ist.
 
-%description -l fr source
+%description source -l fr
 Le package pour le kernel-source contient le code source pour le noyau
 linux. Ces sources sont nécessaires pour compiler la plupart des
 programmes C, car il dépend de constantes définies dans le code
@@ -554,11 +556,11 @@ personnalisé pour avoir de meilleures performances sur des matériels
 particuliers.
 
 %description source -l pl
-Pakiet zawiera kod ¼ród³owy jadra systemu.
+Pakiet zawiera kod ¼ród³owy j±dra systemu.
 
 %package doc
 Summary:	Kernel documentation
-Summary(pl):	Dokumentacja do kernela
+Summary(pl):	Dokumentacja do j±dra Linuksa
 Group:		Base/Kernel
 Provides:	%{name}-doc = %{version}
 Autoreqprov:	no
@@ -567,7 +569,7 @@ Autoreqprov:	no
 This is the documentation for the Linux kernel, as found in
 /usr/src/linux/Documentation directory.
 
-%description -l pl doc
+%description doc -l pl
 Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
@@ -1089,7 +1091,7 @@ cp -rdp $KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk/* $RPM_BUILD_ROOT/%{_lib
 
 %clean
 rm -rf $RPM_BUILD_ROOT
-rm -rf $RPM_BUILD_DIR/linux-installed
+rm -rf $RPM_BUILD_DIR/linux-%{version}-installed
 
 %post
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null 
