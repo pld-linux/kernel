@@ -309,7 +309,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -n linux
+%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -n linux
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
@@ -492,9 +492,9 @@ cd ../..
 
 cd tun-%{tun_version}
 %configure \
-	--kernel-ver=$KERNEL_BUILD_DIR
+	--with-kernel="$KERNEL_BUILD_DIR"
 make
-install linux/tun.o $KERNEL_BUILD_ROT-installed/lib/modules/$KernelVer/net
+install linux/tun.o "$KERNEL_BUILD_DIR-installed/lib/modules/$KernelVer/net"
 cd ..
 
 }
