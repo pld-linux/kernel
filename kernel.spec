@@ -8,12 +8,12 @@
 %define		test_build		0
 #
 %define		pre_version		pre11
-%define		lids_version		1.0.11-2.4.6
+%define		lids_version		1.0.14-2.4.9
 %define		ipvs_version		0.9.4
 %define		freeswan_version	snap2001sep23b
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.9
-%define		sym_ncr_version		sym-1.7.3-ncr-3.4.3
+%define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		vlan_version		1.4
 %define		IPperson_version	20010724-2.4.7
 %define		grsec_version		1.7.2-2.4.9
@@ -131,6 +131,10 @@ Patch120:	linux-2.4.3-sb.patch
 Patch121:	linux-2.4.10-ideraid.patch
 # another sb16 pnp id
 Patch122:	linux-2.4.6-sb_id.patch
+Patch123:	linux-2.4.10-quotaiput-fix.patch
+Patch124:	linux-2.4.10-aironet.patch
+Patch125:	linux-2.4.10-cpqfc.patch
+Patch126:	linux-2.4.10-SAA9730-mips-only.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
