@@ -1,0 +1,2520 @@
+diff -urPX nopatch linux-2.4.22/Documentation/Configure.help linux-2.4.22-ow1/Documentation/Configure.help
+--- linux-2.4.22/Documentation/Configure.help	Mon Aug 25 15:44:39 2003
++++ linux-2.4.22-ow1/Documentation/Configure.help	Thu Aug 28 06:23:03 2003
+@@ -4200,6 +4200,12 @@
+   will be called binfmt_elf.o. Saying M or N here is dangerous because
+   some crucial programs on your system might be in ELF format.
+ 
++ELF binaries with a.out format interpreters or a.out libraries
++CONFIG_BINFMT_ELF_AOUT
++  The kernel may support ELF executables which use an a.out format
++  interpreter (dynamic linker) and/or a.out shared libraries, in
++  addition to the usual ELF-ELF setups. You shouldn't need this.
++
+ Kernel support for a.out binaries
+ CONFIG_BINFMT_AOUT
+   A.out (Assembler.OUTput) is a set of formats for libraries and
+@@ -4213,13 +4219,11 @@
+   warrant removing support. However its removal is a good idea if you
+   wish to ensure that absolutely none of your programs will use this
+   older executable format. If you don't know what to answer at this
+-  point then answer Y. If someone told you "You need a kernel with
++  point then answer N. If someone told you "You need a kernel with
+   QMAGIC support" then you'll have to say Y here. You may answer M to
+   compile a.out support as a module and later load the module when you
+   want to use a program or library in a.out format. The module will be
+-  called binfmt_aout.o. Saying M or N here is dangerous though,
+-  because some crucial programs on your system might still be in A.OUT
+-  format.
++  called binfmt_aout.o.
+ 
+ OSF/1 v4 readv/writev compatibility
+ CONFIG_OSF4_COMPAT
+@@ -27486,6 +27490,96 @@
+ 
+ CONFIG_CRYPTO_TEST
+   Quick & dirty crypto test module.
++
++Non-executable user stack area
++CONFIG_HARDEN_STACK
++  Most buffer overflow exploits are based on overwriting a function's
++  return address on the stack to point to some arbitrary code, which is
++  also put onto the stack. If the stack area is non-executable, buffer
++  overflow vulnerabilities become harder to exploit. However, a few
++  programs depend on the stack being executable, and might stop working
++  unless you also enable GCC trampolines autodetection and emulation
++  below, or enable the stack area execution permission for every such
++  program separately using chstk.c. If you don't know what all this is
++  about, or don't care about security that much, say N.
++
++Autodetect and emulate GCC trampolines
++CONFIG_HARDEN_STACK_SMART
++  GCC generates trampolines on the stack to correctly pass control to
++  nested functions when calling from outside. Normally, this requires
++  the stack being executable. When this option is enabled, the kernel
++  will trap faults resulting from trampoline calls, and will emulate the
++  trampolines. However, in some cases this autodetection can be fooled
++  in a buffer overflow exploit, so, if you've got no programs that use
++  GCC trampolines, it is more secure to disable this option. If you're
++  too lazy to find that out, answer Y. Note: if you're using glibc 2.0
++  (and not libc 5 or glibc 2.1+), you have to say Y here, or the system
++  won't even boot.
++
++Restricted links in /tmp
++CONFIG_HARDEN_LINK
++  There's a very common attack that involves a malicious user creating
++  a symbolic link in /tmp, with a carefully chosen name, pointing at
++  another user's file. When the victim then writes to that file name,
++  without the required precautions, they inadvertently write to the
++  wrong file. Enabling this option reduces the impact of this class of
++  holes (some get fixed, many others allow for DoS attacks only, most
++  of the rest become harder to exploit) by preventing a process from
++  following a link which is in a +t directory, unless the link owner
++  is trusted (that is, it's the user we're running as or the directory
++  owner). To prevent from using a hard link in an attack instead, this
++  option does not allow users to create hard links to files they don't
++  own, unless they could read and write the file. This might break
++  things. Say Y if security is more important.
++
++Restricted FIFOs in /tmp
++CONFIG_HARDEN_FIFO
++  In addition to restricting links, you might also want to restrict
++  writes into untrusted FIFOs (named pipes), to make data spoofing
++  attacks harder. Enabling this option disallows writing into FIFOs
++  not owned by the user in +t directories, unless the owner is the
++  same as that of the directory or the FIFO is opened without the
++  O_CREAT flag.
++
++Restricted /proc
++CONFIG_HARDEN_PROC
++  This option restricts the permissions on directories in /proc so
++  that non-root users can see their own processes only, and nothing
++  about active network connections, unless they're in a special group.
++  This group's id is specified via the gid= mount option, and is 0 by
++  default. (Note: if you're using identd, you will need to edit the
++  inetd.conf line to run identd as this special group.) Also, this
++  disables dmesg(8) for the users. You might want to use this on an ISP
++  shell server where privacy is an issue.
++
++Enforce RLIMIT_NPROC on execve(2)
++CONFIG_HARDEN_RLIMIT_NPROC
++  Linux lets you set a limit on how many processes a user can have, via
++  a setrlimit(2) call with RLIMIT_NPROC. Unfortunately, this limit is
++  only looked at when a new process is created on fork(2). If a process
++  changes its UID, it might exceed the limit for its new UID. This is
++  not a security issue by itself, as changing the UID is a privileged
++  operation. However, there're privileged programs that want to switch
++  to a user's context, including setting up some resource limits. The
++  only fork(2) required (if at all) is done before switching the UID,
++  and thus doesn't result in a check against RLIMIT_NPROC. Enable this
++  option to enforce RLIMIT_NPROC on execve(2) calls.
++
++Destroy shared memory segments not in use
++CONFIG_HARDEN_SHM
++  Linux lets you set resource limits, including on how much memory one
++  process can consume, via setrlimit(2). Unfortunately, shared memory
++  segments are allowed to exist without association with any process,
++  and thus might not be counted against any resource limits. This option
++  automatically destroys shared memory segments when their attach count
++  becomes zero after a detach or a process termination. It will also
++  destroy segments that were created, but never attached to, on exit from
++  the process. (In case you're curious, the only use left for IPC_RMID is
++  to immediately destroy an unattached segment.) Of course, this breaks
++  the way things are defined, so some applications might stop working.
++  Note that this feature will do you no good unless you also configure
++  your resource limits (in particular, RLIMIT_AS and RLIMIT_NPROC). Most
++  systems don't need this.
+ 
+ #
+ # A couple of things I keep forgetting:
+diff -urPX nopatch linux-2.4.22/arch/alpha/config.in linux-2.4.22-ow1/arch/alpha/config.in
+--- linux-2.4.22/arch/alpha/config.in	Mon Aug 25 15:44:39 2003
++++ linux-2.4.22-ow1/arch/alpha/config.in	Thu Aug 28 06:20:31 2003
+@@ -314,6 +314,9 @@
+ fi
+ 
+ tristate 'Kernel support for ELF binaries' CONFIG_BINFMT_ELF
++if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
++   bool '  ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
++fi
+ tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+ tristate 'Kernel support for Linux/Intel ELF binaries' CONFIG_BINFMT_EM86
+ source drivers/parport/Config.in
+@@ -435,6 +438,8 @@
+ source drivers/usb/Config.in
+ 
+ source net/bluetooth/Config.in
++
++source security/Config.in
+ 
+ mainmenu_option next_comment
+ comment 'Kernel hacking'
+diff -urPX nopatch linux-2.4.22/arch/alpha/defconfig linux-2.4.22-ow1/arch/alpha/defconfig
+--- linux-2.4.22/arch/alpha/defconfig	Fri Jun 13 18:51:29 2003
++++ linux-2.4.22-ow1/arch/alpha/defconfig	Thu Aug 28 06:20:31 2003
+@@ -72,6 +72,7 @@
+ # CONFIG_KCORE_AOUT is not set
+ # CONFIG_BINFMT_AOUT is not set
+ CONFIG_BINFMT_ELF=y
++# CONFIG_BINFMT_ELF_AOUT is not set
+ # CONFIG_BINFMT_MISC is not set
+ # CONFIG_BINFMT_EM86 is not set
+ 
+@@ -787,6 +788,15 @@
+ # Bluetooth support
+ #
+ # CONFIG_BLUEZ is not set
++
++#
++# Security
++#
++CONFIG_HARDEN_LINK=y
++CONFIG_HARDEN_FIFO=y
++# CONFIG_HARDEN_PROC is not set
++CONFIG_HARDEN_RLIMIT_NPROC=y
++# CONFIG_HARDEN_SHM is not set
+ 
+ #
+ # Kernel hacking
+diff -urPX nopatch linux-2.4.22/arch/arm/config.in linux-2.4.22-ow1/arch/arm/config.in
+--- linux-2.4.22/arch/arm/config.in	Mon Aug 25 15:44:39 2003
++++ linux-2.4.22-ow1/arch/arm/config.in	Thu Aug 28 06:25:19 2003
+@@ -499,6 +499,9 @@
+ 	 A.OUT		CONFIG_KCORE_AOUT" ELF
+ tristate 'Kernel support for a.out binaries' CONFIG_BINFMT_AOUT
+ tristate 'Kernel support for ELF binaries' CONFIG_BINFMT_ELF
++if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
++   bool '  ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
++fi
+ tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+ dep_bool 'Power Management support (experimental)' CONFIG_PM $CONFIG_EXPERIMENTAL
+ dep_tristate 'RISC OS personality' CONFIG_ARTHUR $CONFIG_CPU_32
+@@ -697,6 +700,8 @@
+ if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
+    source net/bluetooth/Config.in
+ fi
++
++source security/Config.in
+ 
+ mainmenu_option next_comment
+ comment 'Kernel hacking'
+diff -urPX nopatch linux-2.4.22/arch/arm/defconfig linux-2.4.22-ow1/arch/arm/defconfig
+--- linux-2.4.22/arch/arm/defconfig	Sun May 20 04:43:05 2001
++++ linux-2.4.22-ow1/arch/arm/defconfig	Thu Aug 28 06:20:31 2003
+@@ -83,8 +83,9 @@
+ CONFIG_NWFPE=y
+ CONFIG_KCORE_ELF=y
+ # CONFIG_KCORE_AOUT is not set
+-CONFIG_BINFMT_AOUT=y
++# CONFIG_BINFMT_AOUT is not set
+ CONFIG_BINFMT_ELF=y
++# CONFIG_BINFMT_ELF_AOUT is not set
+ # CONFIG_BINFMT_MISC is not set
+ # CONFIG_PM is not set
+ # CONFIG_ARTHUR is not set
+@@ -499,6 +500,15 @@
+ # USB support
+ #
+ # CONFIG_USB is not set
++
++#
++# Security
++#
++CONFIG_HARDEN_LINK=y
++CONFIG_HARDEN_FIFO=y
++# CONFIG_HARDEN_PROC is not set
++CONFIG_HARDEN_RLIMIT_NPROC=y
++# CONFIG_HARDEN_SHM is not set
+ 
+ #
+ # Kernel hacking
+diff -urPX nopatch linux-2.4.22/arch/cris/config.in linux-2.4.22-ow1/arch/cris/config.in
+--- linux-2.4.22/arch/cris/config.in	Mon Aug 25 15:44:39 2003
++++ linux-2.4.22-ow1/arch/cris/config.in	Thu Aug 28 06:20:31 2003
+@@ -31,6 +31,9 @@
+ bool 'Sysctl support' CONFIG_SYSCTL
+ 
+ tristate 'Kernel support for ELF binaries' CONFIG_BINFMT_ELF
++if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
++   bool '  ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
++fi
+ 
+ string 'Kernel command line' CONFIG_ETRAX_CMDLINE "root=/dev/mtdblock3"
+ 
+@@ -262,6 +265,8 @@
+ endmenu
+ 
+ source drivers/usb/Config.in
++
++source security/Config.in
+ 
+ mainmenu_option next_comment
+ comment 'Kernel hacking'
+diff -urPX nopatch linux-2.4.22/arch/cris/defconfig linux-2.4.22-ow1/arch/cris/defconfig
+--- linux-2.4.22/arch/cris/defconfig	Mon Aug 25 15:44:39 2003
++++ linux-2.4.22-ow1/arch/cris/defconfig	Thu Aug 28 06:20:31 2003
+@@ -18,6 +18,7 @@
+ # CONFIG_BSD_PROCESS_ACCT is not set
+ # CONFIG_SYSCTL is not set
+ CONFIG_BINFMT_ELF=y
++# CONFIG_BINFMT_ELF_AOUT is not set
+ # CONFIG_ETRAX_KGDB is not set
+ # CONFIG_ETRAX_WATCHDOG is not set
+ 
+@@ -513,6 +514,15 @@
+ # USB support
+ #
+ # CONFIG_USB is not set
++
++#
++# Security
++#
++CONFIG_HARDEN_LINK=y
++CONFIG_HARDEN_FIFO=y
++# CONFIG_HARDEN_PROC is not set
++CONFIG_HARDEN_RLIMIT_NPROC=y
++# CONFIG_HARDEN_SHM is not set
+ 
+ #
+ # Kernel hacking
+diff -urPX nopatch linux-2.4.22/arch/i386/config.in linux-2.4.22-ow1/arch/i386/config.in
+--- linux-2.4.22/arch/i386/config.in	Mon Aug 25 15:44:39 2003
++++ linux-2.4.22-ow1/arch/i386/config.in	Thu Aug 28 06:20:31 2003
+@@ -322,6 +322,9 @@
+ fi
+ tristate 'Kernel support for a.out binaries' CONFIG_BINFMT_AOUT
+ tristate 'Kernel support for ELF binaries' CONFIG_BINFMT_ELF
++if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
++   bool '  ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
++fi
+ tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+ 
+ bool 'Power Management support' CONFIG_PM
+@@ -461,6 +464,18 @@
+ source drivers/usb/Config.in
+ 
+ source net/bluetooth/Config.in
++
++mainmenu_option next_comment
++comment 'Security options'
++
++bool 'Non-executable user stack area' CONFIG_HARDEN_STACK
++if [ "$CONFIG_HARDEN_STACK" = "y" ]; then
++   bool '  Autodetect and emulate GCC trampolines' CONFIG_HARDEN_STACK_SMART
++fi
++
++source security/Common.in
++
++endmenu
+ 
+ mainmenu_option next_comment
+ comment 'Kernel hacking'
+diff -urPX nopatch linux-2.4.22/arch/i386/defconfig linux-2.4.22-ow1/arch/i386/defconfig
+--- linux-2.4.22/arch/i386/defconfig	Fri Nov 29 02:53:09 2002
++++ linux-2.4.22-ow1/arch/i386/defconfig	Thu Aug 28 06:20:31 2003
+@@ -104,9 +104,10 @@
+ CONFIG_SYSCTL=y
+ CONFIG_KCORE_ELF=y
+ # CONFIG_KCORE_AOUT is not set
+-CONFIG_BINFMT_AOUT=y
++# CONFIG_BINFMT_AOUT is not set
+ CONFIG_BINFMT_ELF=y
+-CONFIG_BINFMT_MISC=y
++# CONFIG_BINFMT_ELF_AOUT is not set
++# CONFIG_BINFMT_MISC is not set
+ CONFIG_PM=y
+ # CONFIG_APM is not set
+ 
+@@ -874,6 +875,17 @@
+ # Bluetooth support
+ #
+ # CONFIG_BLUEZ is not set
++
++#
++# Security
++#
++CONFIG_HARDEN_STACK=y
++CONFIG_HARDEN_STACK_SMART=y
++CONFIG_HARDEN_LINK=y
++CONFIG_HARDEN_FIFO=y
++# CONFIG_HARDEN_PROC is not set
++CONFIG_HARDEN_RLIMIT_NPROC=y
++# CONFIG_HARDEN_SHM is not set
+ 
+ #
+ # Kernel hacking
+diff -urPX nopatch linux-2.4.22/arch/i386/kernel/head.S linux-2.4.22-ow1/arch/i386/kernel/head.S
+--- linux-2.4.22/arch/i386/kernel/head.S	Fri Jun 13 18:51:29 2003
++++ linux-2.4.22-ow1/arch/i386/kernel/head.S	Thu Aug 28 06:20:31 2003
+@@ -433,7 +433,11 @@
+ 	.quad 0x0000000000000000	/* not used */
+ 	.quad 0x00cf9a000000ffff	/* 0x10 kernel 4GB code at 0x00000000 */
+ 	.quad 0x00cf92000000ffff	/* 0x18 kernel 4GB data at 0x00000000 */
++#ifdef CONFIG_HARDEN_STACK
++	.quad 0x00cbfa000000f7ff	/* 0x23 user   3GB-8MB code at 0 */
++#else
+ 	.quad 0x00cffa000000ffff	/* 0x23 user   4GB code at 0x00000000 */
++#endif
+ 	.quad 0x00cff2000000ffff	/* 0x2b user   4GB data at 0x00000000 */
+ 	.quad 0x0000000000000000	/* not used */
+ 	.quad 0x0000000000000000	/* not used */
+diff -urPX nopatch linux-2.4.22/arch/i386/kernel/signal.c linux-2.4.22-ow1/arch/i386/kernel/signal.c
+--- linux-2.4.22/arch/i386/kernel/signal.c	Sat Aug  3 04:39:42 2002
++++ linux-2.4.22-ow1/arch/i386/kernel/signal.c	Thu Aug 28 06:20:31 2003
+@@ -421,11 +421,15 @@
+ 	if (ka->sa.sa_flags & SA_RESTORER) {
+ 		err |= __put_user(ka->sa.sa_restorer, &frame->pretcode);
+ 	} else {
++#ifdef CONFIG_HARDEN_STACK
++		err |= __put_user(MAGIC_SIGRETURN, &frame->pretcode);
++#else
+ 		err |= __put_user(frame->retcode, &frame->pretcode);
+ 		/* This is popl %eax ; movl $,%eax ; int $0x80 */
+ 		err |= __put_user(0xb858, (short *)(frame->retcode+0));
+ 		err |= __put_user(__NR_sigreturn, (int *)(frame->retcode+2));
+ 		err |= __put_user(0x80cd, (short *)(frame->retcode+6));
++#endif
+ 	}
+ 
+ 	if (err)
+@@ -496,11 +500,15 @@
+ 	if (ka->sa.sa_flags & SA_RESTORER) {
+ 		err |= __put_user(ka->sa.sa_restorer, &frame->pretcode);
+ 	} else {
++#ifdef CONFIG_HARDEN_STACK
++		err |= __put_user(MAGIC_RT_SIGRETURN, &frame->pretcode);
++#else
+ 		err |= __put_user(frame->retcode, &frame->pretcode);
+ 		/* This is movl $,%eax ; int $0x80 */
+ 		err |= __put_user(0xb8, (char *)(frame->retcode+0));
+ 		err |= __put_user(__NR_rt_sigreturn, (int *)(frame->retcode+1));
+ 		err |= __put_user(0x80cd, (short *)(frame->retcode+5));
++#endif
+ 	}
+ 
+ 	if (err)
+diff -urPX nopatch linux-2.4.22/arch/i386/kernel/traps.c linux-2.4.22-ow1/arch/i386/kernel/traps.c
+--- linux-2.4.22/arch/i386/kernel/traps.c	Fri Nov 29 02:53:09 2002
++++ linux-2.4.22-ow1/arch/i386/kernel/traps.c	Thu Aug 28 06:20:31 2003
+@@ -397,13 +397,202 @@
+ DO_ERROR(12, SIGBUS,  "stack segment", stack_segment)
+ DO_ERROR_INFO(17, SIGBUS, "alignment check", alignment_check, BUS_ADRALN, get_cr2())
+ 
++#if defined(CONFIG_HARDEN_STACK) && defined(CONFIG_HARDEN_STACK_SMART)
++/*
++ * These two functions aren't performance critical (trampolines are
++ * extremely rare and slow even without emulation).
++ */
++static unsigned long *get_reg(struct pt_regs *regs, unsigned char regnum)
++{
++	switch (regnum) {
++		case 0: return &regs->eax;
++		case 1: return &regs->ecx;
++		case 2: return &regs->edx;
++		case 3: return &regs->ebx;
++		case 4: return &regs->esp;
++		case 5: return &regs->ebp;
++		case 6: return &regs->esi;
++		case 7: return &regs->edi;
++	}
++
++	return NULL;
++}
++
++static unsigned long get_modrm(struct pt_regs *regs, int *err)
++{
++	unsigned char modrm, sib;
++	signed char rel8;
++	unsigned long rel32;
++	int size, regnum, scale;
++	unsigned long index, base, addr, value;
++
++	*err |= __get_user(modrm, (unsigned char *)(regs->eip + 1));
++	size = 2;
++	regnum = modrm & 7;
++	addr = *get_reg(regs, regnum);
++	if (regnum == 4 && (modrm & 0xC0) != 0xC0) {
++		*err |= __get_user(sib, (unsigned char *)(regs->eip + 2));
++		size = 3;
++		scale = sib >> 6;
++		index = *get_reg(regs, (sib >> 3) & 7);
++		base = *get_reg(regs, sib & 7);
++		addr = base + (index << scale);
++	}
++
++	switch (modrm & 0xC0) {
++	case 0x00:
++		if (regnum == 5) {
++			*err |= __get_user(addr,
++				(unsigned long *)(regs->eip + 2));
++			size = 6;
++		}
++		*err |= get_user(value, (unsigned long *)addr);
++		break;
++
++	case 0x40:
++		*err |= __get_user(rel8, (signed char *)(regs->eip + size));
++		size++;
++		addr += rel8;
++		*err |= get_user(value, (unsigned long *)addr);
++		break;
++
++	case 0x80:
++		*err |= __get_user(rel32, (unsigned long *)(regs->eip + size));
++		size += 4;
++		addr += rel32;
++		*err |= get_user(value, (unsigned long *)addr);
++		break;
++
++	case 0xC0:
++	default:
++		value = addr;
++	}
++
++	if (*err) return 0;
++	regs->eip += size;
++	return value;
++}
++#endif
++
+ asmlinkage void do_general_protection(struct pt_regs * regs, long error_code)
+ {
++#ifdef CONFIG_HARDEN_STACK
++	unsigned long addr;
++	unsigned char insn;
++#ifdef CONFIG_HARDEN_STACK_SMART
++	int err, count;
++#endif
++#endif
++
+ 	if (regs->eflags & VM_MASK)
+ 		goto gp_in_vm86;
+ 
+ 	if (!(regs->xcs & 3))
+ 		goto gp_in_kernel;
++
++#ifdef CONFIG_HARDEN_STACK
++	if ((regs->xcs & 0xFFFF) != __USER_CS ||
++	    __get_user(insn, (unsigned char *)regs->eip))
++		goto gp_in_user;
++
++/* Check if it was a return instruction */
++	if (insn == 0xC3) {
++		if (get_user(addr, (unsigned long *)regs->esp))
++			goto gp_in_user;
++
++/* Check if it was return from a signal handler */
++		if ((addr & 0xFFFFFFFE) == MAGIC_SIGRETURN) {
++/* Call sys_sigreturn() or sys_rt_sigreturn() to restore the context */
++			regs->esp += 8;
++			__asm__("movl %3,%%esi\n\t"
++				"subl %1,%%esp\n\t"
++				"movl %2,%%ecx\n\t"
++				"movl %%esp,%%edi\n\t"
++				"rep; movsl\n\t"
++				"testl $1,%4\n\t"
++				"jnz 1f\n\t"
++				"call sys_sigreturn\n\t"
++				"leal %3,%%edi\n\t"
++				"jmp 2f\n\t"
++				"1:\n\t"
++				"call sys_rt_sigreturn\n\t"
++				"leal %3,%%edi\n\t"
++				"2:\n\t"
++				"addl %1,%%edi\n\t"
++				"movl %%esp,%%esi\n\t"
++				"movl %2,%%ecx\n\t"
++				"movl (%%edi),%%edi\n\t"
++				"rep; movsl\n\t"
++				"movl %%esi,%%esp"
++			:
++/* %eax is returned separately */
++			"=a" (regs->eax)
++			:
++			"i" (sizeof(*regs)),
++			"i" (sizeof(*regs) >> 2),
++			"m" (regs),
++			"r" (addr)
++			:
++			"cx", "dx", "si", "di", "cc", "memory");
++			return;
++		}
++
++/*
++ * Check if we're returning to the stack area, which is only likely to happen
++ * when attempting to exploit a buffer overflow.
++ */
++		if (addr >= PAGE_OFFSET - _STK_LIM && addr < PAGE_OFFSET)
++			security_alert("return onto stack running as "
++				"UID %d, EUID %d, process %s:%d",
++				"returns onto stack",
++				current->uid, current->euid,
++				current->comm, current->pid);
++	}
++
++#ifdef CONFIG_HARDEN_STACK_SMART
++/* Check if it could have been a trampoline call */
++	else
++	if (insn == 0xFF &&
++	    !__get_user(insn, (unsigned char *)(regs->eip + 1)) &&
++	    (insn & 0x38) == 0x10 && insn != 0xD4) {	/* call mod r/m */
++/* First, emulate the call */
++		err = 0;
++		addr = get_modrm(regs, &err);
++		if (!err) {
++			regs->esp -= 4;
++			err = put_user(regs->eip, (unsigned long *)regs->esp);
++			regs->eip = addr;
++		}
++/* Then, start emulating the trampoline itself */
++		count = 0;
++		while (!err && !__get_user(insn, (unsigned char *)regs->eip++))
++		if ((insn & 0xF8) == 0xB8) {		/* movl imm32,%reg */
++/* We only have 8 GP registers, no reason to initialize one twice */
++			if (count++ >= 8) break;
++			err |= __get_user(addr, (unsigned long *)regs->eip);
++			regs->eip += 4;
++			*get_reg(regs, insn & 7) = addr;
++		} else
++		if (insn == 0xFF) {
++			err |= __get_user(insn, (unsigned char *)regs->eip);
++			if ((insn & 0xF8) == 0xE0) {	/* jmp *%reg */
++				regs->eip = *get_reg(regs, insn & 7);
++				if (err) break; else return;
++			}
++			break;
++		} else
++		if (insn == 0xE9) {			/* jmp rel32 */
++			err |= __get_user(addr, (unsigned long *)regs->eip);
++			if (err) break;
++			regs->eip += 4 + addr;
++			return;
++		} else
++			break;
++	}
++#endif
++
++gp_in_user:
++#endif
+ 
+ 	current->thread.error_code = error_code;
+ 	current->thread.trap_no = 13;
+diff -urPX nopatch linux-2.4.22/arch/ia64/config.in linux-2.4.22-ow1/arch/ia64/config.in
+--- linux-2.4.22/arch/ia64/config.in	Mon Aug 25 15:44:39 2003
++++ linux-2.4.22-ow1/arch/ia64/config.in	Thu Aug 28 06:20:31 2003
+@@ -97,6 +97,9 @@
+ bool 'BSD Process Accounting' CONFIG_BSD_PROCESS_ACCT
+ bool 'Sysctl support' CONFIG_SYSCTL
+ tristate 'Kernel support for ELF binaries' CONFIG_BINFMT_ELF
++if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
++   bool '  ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
++fi
+ tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+ 
+ if [ "$CONFIG_IA64_HP_SIM" = "n" ]; then
+@@ -262,6 +265,7 @@
+   endmenu
+ fi
+ 
++source security/Config.in
+ 
+ mainmenu_option next_comment
+ comment 'Kernel hacking'
+diff -urPX nopatch linux-2.4.22/arch/ia64/defconfig linux-2.4.22-ow1/arch/ia64/defconfig
+--- linux-2.4.22/arch/ia64/defconfig	Mon Aug 25 15:44:39 2003
++++ linux-2.4.22-ow1/arch/ia64/defconfig	Thu Aug 28 06:20:31 2003
+@@ -59,6 +59,7 @@
+ # CONFIG_BSD_PROCESS_ACCT is not set
+ CONFIG_SYSCTL=y
+ CONFIG_BINFMT_ELF=y
++# CONFIG_BINFMT_ELF_AOUT is not set
+ # CONFIG_BINFMT_MISC is not set
+ CONFIG_ACPI=y
+ CONFIG_ACPI_EFI=y
+@@ -960,6 +961,15 @@
+ # CONFIG_HP_SIMETH is not set
+ # CONFIG_HP_SIMSERIAL is not set
+ # CONFIG_HP_SIMSCSI is not set
++
++#
++# Security
++#
++CONFIG_HARDEN_LINK=y
++CONFIG_HARDEN_FIFO=y
++# CONFIG_HARDEN_PROC is not set
++CONFIG_HARDEN_RLIMIT_NPROC=y
++# CONFIG_HARDEN_SHM is not set
+ 
+ #
+ # Kernel hacking
+diff -urPX nopatch linux-2.4.22/arch/ia64/ia32/sys_ia32.c linux-2.4.22-ow1/arch/ia64/ia32/sys_ia32.c
+--- linux-2.4.22/arch/ia64/ia32/sys_ia32.c	Mon Aug 25 15:44:39 2003
++++ linux-2.4.22-ow1/arch/ia64/ia32/sys_ia32.c	Thu Aug 28 06:20:31 2003
+@@ -109,6 +109,8 @@
+ 			*ap++ = (char *) A(addr);
+ 		arg += sizeof(unsigned int);
+ 		n++;
++		if (n >= (MAX_ARG_PAGES * PAGE_SIZE) / sizeof(char *))
++			return -E2BIG;
+ 	} while (addr);
+ 	return n - 1;
+ }
+diff -urPX nopatch linux-2.4.22/arch/m68k/config.in linux-2.4.22-ow1/arch/m68k/config.in
+--- linux-2.4.22/arch/m68k/config.in	Mon Aug 25 15:44:39 2003
++++ linux-2.4.22-ow1/arch/m68k/config.in	Thu Aug 28 06:20:31 2003
+@@ -99,6 +99,9 @@
+ fi
+ tristate 'Kernel support for a.out binaries' CONFIG_BINFMT_AOUT
+ tristate 'Kernel support for ELF binaries' CONFIG_BINFMT_ELF
++if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
++   bool '  ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
++fi
+ tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+ 
+ if [ "$CONFIG_AMIGA" = "y" ]; then
+@@ -549,6 +552,8 @@
+    source drivers/video/Config.in
+    endmenu
+ fi
++
++source security/Config.in
+ 
+ mainmenu_option next_comment
+ comment 'Kernel hacking'
+diff -urPX nopatch linux-2.4.22/arch/m68k/defconfig linux-2.4.22-ow1/arch/m68k/defconfig
+--- linux-2.4.22/arch/m68k/defconfig	Mon Jun 19 23:56:08 2000
++++ linux-2.4.22-ow1/arch/m68k/defconfig	Thu Aug 28 06:20:31 2003
+@@ -44,8 +44,9 @@
+ CONFIG_SYSCTL=y
+ CONFIG_KCORE_ELF=y
+ # CONFIG_KCORE_AOUT is not set
+-CONFIG_BINFMT_AOUT=y
++# CONFIG_BINFMT_AOUT is not set
+ CONFIG_BINFMT_ELF=y
++# CONFIG_BINFMT_ELF_AOUT is not set
+ # CONFIG_BINFMT_MISC is not set
+ CONFIG_ZORRO=y
+ # CONFIG_AMIGA_PCMCIA is not set
+@@ -322,6 +323,15 @@
+ CONFIG_FONT_8x8=y
+ CONFIG_FONT_8x16=y
+ CONFIG_FONT_PEARL_8x8=y
++
++#
++# Security
++#
++CONFIG_HARDEN_LINK=y
++CONFIG_HARDEN_FIFO=y
++# CONFIG_HARDEN_PROC is not set
++CONFIG_HARDEN_RLIMIT_NPROC=y
++# CONFIG_HARDEN_SHM is not set
+ 
+ #
+ # Kernel hacking
+diff -urPX nopatch linux-2.4.22/arch/mips/config-shared.in linux-2.4.22-ow1/arch/mips/config-shared.in
+--- linux-2.4.22/arch/mips/config-shared.in	Mon Aug 25 15:44:39 2003
++++ linux-2.4.22-ow1/arch/mips/config-shared.in	Thu Aug 28 06:20:31 2003
+@@ -874,6 +874,9 @@
+ define_bool CONFIG_KCORE_AOUT n
+ define_bool CONFIG_BINFMT_AOUT n
+ tristate 'Kernel support for ELF binaries' CONFIG_BINFMT_ELF
++if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
++   bool '  ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
++fi
+ dep_bool 'Kernel support for Linux/MIPS 32-bit binary compatibility' CONFIG_MIPS32_COMPAT $CONFIG_MIPS64
+ dep_bool 'Kernel support for o32 binaries' CONFIG_MIPS32_O32 $CONFIG_MIPS32_COMPAT
+ dep_bool 'Kernel support for n32 binaries' CONFIG_MIPS32_N32 $CONFIG_MIPS32_COMPAT
+@@ -1025,6 +1028,8 @@
+ source drivers/usb/Config.in
+ 
+ source net/bluetooth/Config.in
++
++source security/Config.in
+ 
+ mainmenu_option next_comment
+ comment 'Kernel hacking'
+diff -urPX nopatch linux-2.4.22/arch/mips/defconfig linux-2.4.22-ow1/arch/mips/defconfig
+--- linux-2.4.22/arch/mips/defconfig	Mon Aug 25 15:44:39 2003
++++ linux-2.4.22-ow1/arch/mips/defconfig	Thu Aug 28 06:20:31 2003
+@@ -132,6 +132,7 @@
+ # CONFIG_KCORE_AOUT is not set
+ # CONFIG_BINFMT_AOUT is not set
+ CONFIG_BINFMT_ELF=y
++# CONFIG_BINFMT_ELF_AOUT is not set
+ # CONFIG_MIPS32_COMPAT is not set
+ # CONFIG_MIPS32_O32 is not set
+ # CONFIG_MIPS32_N32 is not set
+@@ -666,6 +667,15 @@
+ # Bluetooth support
+ #
+ # CONFIG_BLUEZ is not set
++
++#
++# Security
++#
++CONFIG_HARDEN_LINK=y
++CONFIG_HARDEN_FIFO=y
++# CONFIG_HARDEN_PROC is not set
++CONFIG_HARDEN_RLIMIT_NPROC=y
++# CONFIG_HARDEN_SHM is not set
+ 
+ #
+ # Kernel hacking
+diff -urPX nopatch linux-2.4.22/arch/mips/kernel/irixelf.c linux-2.4.22-ow1/arch/mips/kernel/irixelf.c
+--- linux-2.4.22/arch/mips/kernel/irixelf.c	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/mips/kernel/irixelf.c	Thu Aug 28 06:20:31 2003
+@@ -8,6 +8,7 @@
+  * Copyright 1993, 1994: Eric Youngdale (ericy@cais.com).
+  */
+ 
++#include <linux/config.h>
+ #include <linux/module.h>
+ 
+ #include <linux/fs.h>
+@@ -48,7 +49,12 @@
+ extern int dump_fpu (elf_fpregset_t *);
+ 
+ static struct linux_binfmt irix_format = {
+-	NULL, THIS_MODULE, load_irix_binary, load_irix_library,
++	NULL, THIS_MODULE, load_irix_binary,
++#ifdef CONFIG_BINFMT_ELF_AOUT
++	load_irix_library,
++#else
++	NULL,
++#endif
+ 	irix_core_dump, PAGE_SIZE
+ };
+ 
+@@ -787,6 +793,7 @@
+ 	goto out;
+ }
+ 
++#ifdef CONFIG_BINFMT_ELF_AOUT
+ /* This is really simpleminded and specialized - we are loading an
+  * a.out library that is given an ELF header.
+  */
+@@ -863,6 +870,7 @@
+ 	kfree(elf_phdata);
+ 	return 0;
+ }
++#endif
+ 
+ /* Called through irix_syssgi() to map an elf image given an FD,
+  * a phdr ptr USER_PHDRP in userspace, and a count CNT telling how many
+diff -urPX nopatch linux-2.4.22/arch/mips64/defconfig linux-2.4.22-ow1/arch/mips64/defconfig
+--- linux-2.4.22/arch/mips64/defconfig	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/mips64/defconfig	Thu Aug 28 06:20:31 2003
+@@ -132,6 +132,7 @@
+ # CONFIG_KCORE_AOUT is not set
+ # CONFIG_BINFMT_AOUT is not set
+ CONFIG_BINFMT_ELF=y
++# CONFIG_BINFMT_ELF_AOUT is not set
+ CONFIG_MIPS32_COMPAT=y
+ CONFIG_MIPS32_O32=y
+ # CONFIG_MIPS32_N32 is not set
+@@ -591,6 +592,15 @@
+ # Bluetooth support
+ #
+ # CONFIG_BLUEZ is not set
++
++#
++# Security
++#
++CONFIG_HARDEN_LINK=y
++CONFIG_HARDEN_FIFO=y
++# CONFIG_HARDEN_PROC is not set
++CONFIG_HARDEN_RLIMIT_NPROC=y
++# CONFIG_HARDEN_SHM is not set
+ 
+ #
+ # Kernel hacking
+diff -urPX nopatch linux-2.4.22/arch/mips64/kernel/linux32.c linux-2.4.22-ow1/arch/mips64/kernel/linux32.c
+--- linux-2.4.22/arch/mips64/kernel/linux32.c	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/mips64/kernel/linux32.c	Thu Aug 28 06:32:24 2003
+@@ -366,6 +366,22 @@
+ 	if (IS_ERR(dentry))
+ 		return retval;
+ 
++#ifdef CONFIG_HARDEN_RLIMIT_NPROC
++/*
++ * This check is similar to that done in kernel/fork.c, except that we
++ * are not going to allocate a new task slot here.
++ *
++ * Note that we can only exceed the limit if our UID has changed.
++ */
++	if (current->user)
++	if (atomic_read(&current->user->processes) >
++	    current->rlim[RLIMIT_NPROC].rlim_cur &&
++	    !capable(CAP_SYS_ADMIN) && !capable(CAP_SYS_RESOURCE)) {
++		dput(dentry);
++		return -EAGAIN;
++	}
++#endif
++
+ 	bprm.dentry = dentry;
+ 	bprm.filename = filename;
+ 	bprm.sh_bang = 0;
+@@ -455,6 +471,8 @@
+ 			*ap++ = (char *) A(addr);
+ 		arg += sizeof(unsigned int);
+ 		n++;
++		if (n >= (MAX_ARG_PAGES * PAGE_SIZE) / sizeof(char *))
++			return -E2BIG;
+ 	} while (addr);
+ 	return n - 1;
+ }
+diff -urPX nopatch linux-2.4.22/arch/parisc/config.in linux-2.4.22-ow1/arch/parisc/config.in
+--- linux-2.4.22/arch/parisc/config.in	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/parisc/config.in	Thu Aug 28 06:20:31 2003
+@@ -85,6 +85,9 @@
+ bool 'Sysctl support' CONFIG_SYSCTL
+ define_bool CONFIG_KCORE_ELF y
+ tristate 'Kernel support for ELF binaries' CONFIG_BINFMT_ELF
++if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
++   bool '  ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
++fi
+ tristate 'Kernel support for SOM binaries' CONFIG_BINFMT_SOM
+ tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+ 
+@@ -188,6 +191,8 @@
+ if [ "$CONFIG_SUPERIO" = "y" ]; then
+     source drivers/usb/Config.in
+ fi
++
++source security/Config.in
+ 
+ mainmenu_option next_comment
+ comment 'Kernel hacking'
+diff -urPX nopatch linux-2.4.22/arch/parisc/defconfig linux-2.4.22-ow1/arch/parisc/defconfig
+--- linux-2.4.22/arch/parisc/defconfig	Fri Jun 13 18:51:31 2003
++++ linux-2.4.22-ow1/arch/parisc/defconfig	Thu Aug 28 06:20:31 2003
+@@ -56,6 +56,7 @@
+ CONFIG_SYSCTL=y
+ CONFIG_KCORE_ELF=y
+ CONFIG_BINFMT_ELF=y
++# CONFIG_BINFMT_ELF_AOUT is not set
+ CONFIG_BINFMT_SOM=y
+ # CONFIG_BINFMT_MISC is not set
+ # CONFIG_PM is not set
+@@ -782,6 +783,15 @@
+ # USB support
+ #
+ # CONFIG_USB is not set
++
++#
++# Security
++#
++CONFIG_HARDEN_LINK=y
++CONFIG_HARDEN_FIFO=y
++# CONFIG_HARDEN_PROC is not set
++CONFIG_HARDEN_RLIMIT_NPROC=y
++# CONFIG_HARDEN_SHM is not set
+ 
+ #
+ # Kernel hacking
+diff -urPX nopatch linux-2.4.22/arch/parisc/kernel/sys_parisc32.c linux-2.4.22-ow1/arch/parisc/kernel/sys_parisc32.c
+--- linux-2.4.22/arch/parisc/kernel/sys_parisc32.c	Fri Jun 13 18:51:31 2003
++++ linux-2.4.22-ow1/arch/parisc/kernel/sys_parisc32.c	Thu Aug 28 06:20:31 2003
+@@ -189,6 +189,23 @@
+ 
+ 	DBG(("do_execve32(%s, %p, %p, %p)\n", filename, argv, envp, regs));
+ 
++#ifdef CONFIG_HARDEN_RLIMIT_NPROC
++/*
++ * This check is similar to that done in kernel/fork.c, except that we
++ * are not going to allocate a new task slot here.
++ *
++ * Note that we can only exceed the limit if our UID has changed.
++ */
++	if (current->user)
++	if (atomic_read(&current->user->processes) >
++	    current->rlim[RLIMIT_NPROC].rlim_cur &&
++	    !capable(CAP_SYS_ADMIN) && !capable(CAP_SYS_RESOURCE)) {
++		allow_write_access(file);
++		fput(file);
++		return -EAGAIN;
++	}
++#endif
++
+ 	bprm.file = file;
+ 	bprm.filename = filename;
+ 	bprm.sh_bang = 0;
+diff -urPX nopatch linux-2.4.22/arch/ppc/config.in linux-2.4.22-ow1/arch/ppc/config.in
+--- linux-2.4.22/arch/ppc/config.in	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/ppc/config.in	Thu Aug 28 06:20:31 2003
+@@ -208,6 +208,7 @@
+ fi
+ define_bool CONFIG_BINFMT_ELF y
+ define_bool CONFIG_KERNEL_ELF y
++bool 'ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
+ tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+ 
+ source drivers/pci/Config.in
+@@ -439,6 +440,8 @@
+ 
+ source crypto/Config.in
+ source lib/Config.in
++
++source security/Config.in
+ 
+ mainmenu_option next_comment
+ comment 'Kernel hacking'
+diff -urPX nopatch linux-2.4.22/arch/ppc/defconfig linux-2.4.22-ow1/arch/ppc/defconfig
+--- linux-2.4.22/arch/ppc/defconfig	Fri Jun 13 18:51:31 2003
++++ linux-2.4.22-ow1/arch/ppc/defconfig	Thu Aug 28 06:20:31 2003
+@@ -58,8 +58,9 @@
+ # CONFIG_BSD_PROCESS_ACCT is not set
+ CONFIG_KCORE_ELF=y
+ CONFIG_BINFMT_ELF=y
++# CONFIG_BINFMT_ELF_AOUT is not set
+ CONFIG_KERNEL_ELF=y
+-CONFIG_BINFMT_MISC=m
++# CONFIG_BINFMT_MISC is not set
+ CONFIG_PCI_NAMES=y
+ CONFIG_HOTPLUG=y
+ 
+@@ -1051,6 +1052,15 @@
+ #
+ CONFIG_ZLIB_INFLATE=y
+ CONFIG_ZLIB_DEFLATE=y
++
++#
++# Security
++#
++CONFIG_HARDEN_LINK=y
++CONFIG_HARDEN_FIFO=y
++# CONFIG_HARDEN_PROC is not set
++CONFIG_HARDEN_RLIMIT_NPROC=y
++# CONFIG_HARDEN_SHM is not set
+ 
+ #
+ # Kernel hacking
+diff -urPX nopatch linux-2.4.22/arch/ppc64/config.in linux-2.4.22-ow1/arch/ppc64/config.in
+--- linux-2.4.22/arch/ppc64/config.in	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/ppc64/config.in	Thu Aug 28 06:34:13 2003
+@@ -79,6 +79,9 @@
+ fi
+ 
+ bool 'Kernel support for 64 bit ELF binaries' CONFIG_BINFMT_ELF
++if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
++   bool '  ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
++fi
+ 
+ tristate 'Kernel support for 32 bit ELF binaries' CONFIG_BINFMT_ELF32
+ 
+@@ -237,6 +240,8 @@
+ source lib/Config.in
+ 
+ source crypto/Config.in
++
++source security/Config.in
+ 
+ mainmenu_option next_comment
+ comment 'Kernel hacking'
+diff -urPX nopatch linux-2.4.22/arch/ppc64/defconfig linux-2.4.22-ow1/arch/ppc64/defconfig
+--- linux-2.4.22/arch/ppc64/defconfig	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/ppc64/defconfig	Thu Aug 28 06:20:31 2003
+@@ -53,6 +53,7 @@
+ # CONFIG_BSD_PROCESS_ACCT is not set
+ CONFIG_KCORE_ELF=y
+ CONFIG_BINFMT_ELF=y
++# CONFIG_BINFMT_ELF_AOUT is not set
+ CONFIG_BINFMT_ELF32=y
+ # CONFIG_BINFMT_MISC is not set
+ CONFIG_PCI_NAMES=y
+@@ -725,6 +726,15 @@
+ #
+ # CONFIG_ZLIB_INFLATE is not set
+ # CONFIG_ZLIB_DEFLATE is not set
++
++#
++# Security
++#
++CONFIG_HARDEN_LINK=y
++CONFIG_HARDEN_FIFO=y
++# CONFIG_HARDEN_PROC is not set
++CONFIG_HARDEN_RLIMIT_NPROC=y
++# CONFIG_HARDEN_SHM is not set
+ 
+ #
+ # Kernel hacking
+diff -urPX nopatch linux-2.4.22/arch/ppc64/kernel/sys_ppc32.c linux-2.4.22-ow1/arch/ppc64/kernel/sys_ppc32.c
+--- linux-2.4.22/arch/ppc64/kernel/sys_ppc32.c	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/ppc64/kernel/sys_ppc32.c	Thu Aug 28 06:20:31 2003
+@@ -3902,6 +3902,23 @@
+ 	if (IS_ERR(file))
+ 		return retval;
+ 
++#ifdef CONFIG_HARDEN_RLIMIT_NPROC
++/*
++ * This check is similar to that done in kernel/fork.c, except that we
++ * are not going to allocate a new task slot here.
++ *
++ * Note that we can only exceed the limit if our UID has changed.
++ */
++	if (current->user)
++	if (atomic_read(&current->user->processes) >
++	    current->rlim[RLIMIT_NPROC].rlim_cur &&
++	    !capable(CAP_SYS_ADMIN) && !capable(CAP_SYS_RESOURCE)) {
++		allow_write_access(file);
++		fput(file);
++		return -EAGAIN;
++	}
++#endif
++
+ 	bprm.file = file;
+ 	bprm.filename = filename;
+ 	bprm.sh_bang = 0;
+diff -urPX nopatch linux-2.4.22/arch/s390/config.in linux-2.4.22-ow1/arch/s390/config.in
+--- linux-2.4.22/arch/s390/config.in	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/s390/config.in	Thu Aug 28 06:20:31 2003
+@@ -55,6 +55,9 @@
+ bool 'Sysctl support' CONFIG_SYSCTL
+ define_bool CONFIG_KCORE_ELF y
+ tristate 'Kernel support for ELF binaries' CONFIG_BINFMT_ELF
++if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
++   bool '  ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
++fi
+ tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+ bool 'Show crashed user process info' CONFIG_PROCESS_DEBUG
+ bool 'Pseudo page fault support' CONFIG_PFAULT
+@@ -68,6 +71,8 @@
+ fi
+ 
+ source fs/Config.in
++
++source security/Config.in
+ 
+ mainmenu_option next_comment
+ comment 'Kernel hacking'
+diff -urPX nopatch linux-2.4.22/arch/s390/defconfig linux-2.4.22-ow1/arch/s390/defconfig
+--- linux-2.4.22/arch/s390/defconfig	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/s390/defconfig	Thu Aug 28 06:38:24 2003
+@@ -43,6 +43,7 @@
+ CONFIG_SYSCTL=y
+ CONFIG_KCORE_ELF=y
+ CONFIG_BINFMT_ELF=y
++# CONFIG_BINFMT_ELF_AOUT is not set
+ # CONFIG_BINFMT_MISC is not set
+ # CONFIG_PROCESS_DEBUG is not set
+ CONFIG_PFAULT=y
+@@ -408,6 +409,15 @@
+ # CONFIG_NLS_KOI8_R is not set
+ # CONFIG_NLS_KOI8_U is not set
+ # CONFIG_NLS_UTF8 is not set
++
++#
++# Security
++#
++CONFIG_HARDEN_LINK=y
++CONFIG_HARDEN_FIFO=y
++# CONFIG_HARDEN_PROC is not set
++CONFIG_HARDEN_RLIMIT_NPROC=y
++# CONFIG_HARDEN_SHM is not set
+ 
+ #
+ # Kernel hacking
+diff -urPX nopatch linux-2.4.22/arch/s390x/config.in linux-2.4.22-ow1/arch/s390x/config.in
+--- linux-2.4.22/arch/s390x/config.in	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/s390x/config.in	Thu Aug 28 06:20:31 2003
+@@ -58,6 +58,9 @@
+ bool 'Sysctl support' CONFIG_SYSCTL
+ define_bool CONFIG_KCORE_ELF y
+ tristate 'Kernel support for ELF binaries' CONFIG_BINFMT_ELF
++if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
++   bool '  ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
++fi
+ tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+ bool 'Show crashed user process info' CONFIG_PROCESS_DEBUG
+ bool 'Pseudo page fault support' CONFIG_PFAULT
+@@ -72,6 +75,8 @@
+ fi
+ 
+ source fs/Config.in
++
++source security/Config.in
+ 
+ mainmenu_option next_comment
+ comment 'Kernel hacking'
+diff -urPX nopatch linux-2.4.22/arch/s390x/defconfig linux-2.4.22-ow1/arch/s390x/defconfig
+--- linux-2.4.22/arch/s390x/defconfig	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/s390x/defconfig	Thu Aug 28 06:39:39 2003
+@@ -44,6 +44,7 @@
+ CONFIG_SYSCTL=y
+ CONFIG_KCORE_ELF=y
+ CONFIG_BINFMT_ELF=y
++# CONFIG_BINFMT_ELF_AOUT is not set
+ # CONFIG_BINFMT_MISC is not set
+ # CONFIG_PROCESS_DEBUG is not set
+ CONFIG_PFAULT=y
+@@ -352,6 +353,15 @@
+ # CONFIG_NLS_KOI8_R is not set
+ # CONFIG_NLS_KOI8_U is not set
+ # CONFIG_NLS_UTF8 is not set
++
++#
++# Security
++#
++CONFIG_HARDEN_LINK=y
++CONFIG_HARDEN_FIFO=y
++# CONFIG_HARDEN_PROC is not set
++CONFIG_HARDEN_RLIMIT_NPROC=y
++# CONFIG_HARDEN_SHM is not set
+ 
+ #
+ # Kernel hacking
+diff -urPX nopatch linux-2.4.22/arch/s390x/kernel/linux32.c linux-2.4.22-ow1/arch/s390x/kernel/linux32.c
+--- linux-2.4.22/arch/s390x/kernel/linux32.c	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/s390x/kernel/linux32.c	Thu Aug 28 06:20:31 2003
+@@ -3218,6 +3218,23 @@
+ 	if (IS_ERR(file))
+ 		return retval;
+ 
++#ifdef CONFIG_HARDEN_RLIMIT_NPROC
++/*
++ * This check is similar to that done in kernel/fork.c, except that we
++ * are not going to allocate a new task slot here.
++ *
++ * Note that we can only exceed the limit if our UID has changed.
++ */
++	if (current->user)
++	if (atomic_read(&current->user->processes) >
++	    current->rlim[RLIMIT_NPROC].rlim_cur &&
++	    !capable(CAP_SYS_ADMIN) && !capable(CAP_SYS_RESOURCE)) {
++		allow_write_access(file);
++		fput(file);
++		return -EAGAIN;
++	}
++#endif
++
+ 	bprm.file = file;
+ 	bprm.filename = filename;
+ 	bprm.sh_bang = 0;
+diff -urPX nopatch linux-2.4.22/arch/sh/config.in linux-2.4.22-ow1/arch/sh/config.in
+--- linux-2.4.22/arch/sh/config.in	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/sh/config.in	Thu Aug 28 06:20:31 2003
+@@ -263,6 +263,9 @@
+ 	 A.OUT		CONFIG_KCORE_AOUT" ELF
+ fi
+ tristate 'Kernel support for ELF binaries' CONFIG_BINFMT_ELF
++if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
++   bool '  ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
++fi
+ tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+ 
+ source drivers/parport/Config.in
+@@ -429,6 +432,8 @@
+    source drivers/sound/Config.in
+ fi
+ endmenu
++
++source security/Config.in
+ 
+ mainmenu_option next_comment
+ comment 'Kernel hacking'
+diff -urPX nopatch linux-2.4.22/arch/sh/defconfig linux-2.4.22-ow1/arch/sh/defconfig
+--- linux-2.4.22/arch/sh/defconfig	Tue Oct 16 00:36:48 2001
++++ linux-2.4.22-ow1/arch/sh/defconfig	Thu Aug 28 06:20:31 2003
+@@ -48,6 +48,7 @@
+ CONFIG_KCORE_ELF=y
+ # CONFIG_KCORE_AOUT is not set
+ CONFIG_BINFMT_ELF=y
++# CONFIG_BINFMT_ELF_AOUT is not set
+ # CONFIG_BINFMT_MISC is not set
+ 
+ #
+@@ -195,6 +196,15 @@
+ # Sound
+ #
+ # CONFIG_SOUND is not set
++
++#
++# Security
++#
++CONFIG_HARDEN_LINK=y
++CONFIG_HARDEN_FIFO=y
++# CONFIG_HARDEN_PROC is not set
++CONFIG_HARDEN_RLIMIT_NPROC=y
++# CONFIG_HARDEN_SHM is not set
+ 
+ #
+ # Kernel hacking
+diff -urPX nopatch linux-2.4.22/arch/sparc/config.in linux-2.4.22-ow1/arch/sparc/config.in
+--- linux-2.4.22/arch/sparc/config.in	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/sparc/config.in	Thu Aug 28 06:20:31 2003
+@@ -70,6 +70,9 @@
+ fi
+ tristate 'Kernel support for a.out binaries' CONFIG_BINFMT_AOUT
+ tristate 'Kernel support for ELF binaries' CONFIG_BINFMT_ELF
++if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
++   bool '  ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
++fi
+ tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+ bool 'SunOS binary emulation' CONFIG_SUNOS_EMUL
+ source drivers/parport/Config.in
+@@ -260,6 +263,8 @@
+ 
+ tristate 'Software watchdog' CONFIG_SOFT_WATCHDOG
+ endmenu
++
++source security/Config.in
+ 
+ mainmenu_option next_comment
+ comment 'Kernel hacking'
+diff -urPX nopatch linux-2.4.22/arch/sparc/defconfig linux-2.4.22-ow1/arch/sparc/defconfig
+--- linux-2.4.22/arch/sparc/defconfig	Sat Aug  3 04:39:43 2002
++++ linux-2.4.22-ow1/arch/sparc/defconfig	Thu Aug 28 06:20:31 2003
+@@ -49,9 +49,10 @@
+ # CONFIG_BSD_PROCESS_ACCT is not set
+ CONFIG_SYSCTL=y
+ CONFIG_KCORE_ELF=y
+-CONFIG_BINFMT_AOUT=y
++# CONFIG_BINFMT_AOUT is not set
+ CONFIG_BINFMT_ELF=y
+-CONFIG_BINFMT_MISC=m
++# CONFIG_BINFMT_ELF_AOUT is not set
++# CONFIG_BINFMT_MISC is not set
+ CONFIG_SUNOS_EMUL=y
+ 
+ #
+@@ -411,6 +412,15 @@
+ # Watchdog
+ #
+ # CONFIG_SOFT_WATCHDOG is not set
++
++#
++# Security
++#
++CONFIG_HARDEN_LINK=y
++CONFIG_HARDEN_FIFO=y
++# CONFIG_HARDEN_PROC is not set
++CONFIG_HARDEN_RLIMIT_NPROC=y
++# CONFIG_HARDEN_SHM is not set
+ 
+ #
+ # Kernel hacking
+diff -urPX nopatch linux-2.4.22/arch/sparc64/config.in linux-2.4.22-ow1/arch/sparc64/config.in
+--- linux-2.4.22/arch/sparc64/config.in	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/sparc64/config.in	Thu Aug 28 06:20:31 2003
+@@ -73,6 +73,9 @@
+    bool '  Kernel support for 32-bit (ie. SunOS) a.out binaries' CONFIG_BINFMT_AOUT32
+ fi
+ tristate 'Kernel support for 64-bit ELF binaries' CONFIG_BINFMT_ELF
++if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
++   bool '  ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
++fi
+ tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+ bool 'SunOS binary emulation' CONFIG_SUNOS_EMUL
+ if [ "$CONFIG_EXPERIMENTAL" = "y" ]; then
+@@ -290,6 +293,8 @@
+ 
+ tristate 'Software watchdog' CONFIG_SOFT_WATCHDOG
+ endmenu
++
++source security/Config.in
+ 
+ mainmenu_option next_comment
+ comment 'Kernel hacking'
+diff -urPX nopatch linux-2.4.22/arch/sparc64/defconfig linux-2.4.22-ow1/arch/sparc64/defconfig
+--- linux-2.4.22/arch/sparc64/defconfig	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/sparc64/defconfig	Thu Aug 28 06:20:31 2003
+@@ -55,7 +55,8 @@
+ CONFIG_BINFMT_ELF32=y
+ # CONFIG_BINFMT_AOUT32 is not set
+ CONFIG_BINFMT_ELF=y
+-CONFIG_BINFMT_MISC=m
++# CONFIG_BINFMT_ELF_AOUT is not set
++# CONFIG_BINFMT_MISC is not set
+ # CONFIG_SUNOS_EMUL is not set
+ CONFIG_SOLARIS_EMUL=m
+ 
+@@ -1018,6 +1019,15 @@
+ # Watchdog
+ #
+ # CONFIG_SOFT_WATCHDOG is not set
++
++#
++# Security
++#
++CONFIG_HARDEN_LINK=y
++CONFIG_HARDEN_FIFO=y
++# CONFIG_HARDEN_PROC is not set
++CONFIG_HARDEN_RLIMIT_NPROC=y
++# CONFIG_HARDEN_SHM is not set
+ 
+ #
+ # Kernel hacking
+diff -urPX nopatch linux-2.4.22/arch/sparc64/kernel/sys_sparc32.c linux-2.4.22-ow1/arch/sparc64/kernel/sys_sparc32.c
+--- linux-2.4.22/arch/sparc64/kernel/sys_sparc32.c	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/sparc64/kernel/sys_sparc32.c	Thu Aug 28 06:20:31 2003
+@@ -3243,6 +3243,23 @@
+ 	if (IS_ERR(file))
+ 		return retval;
+ 
++#ifdef CONFIG_HARDEN_RLIMIT_NPROC
++/*
++ * This check is similar to that done in kernel/fork.c, except that we
++ * are not going to allocate a new task slot here.
++ *
++ * Note that we can only exceed the limit if our UID has changed.
++ */
++	if (current->user)
++	if (atomic_read(&current->user->processes) >
++	    current->rlim[RLIMIT_NPROC].rlim_cur &&
++	    !capable(CAP_SYS_ADMIN) && !capable(CAP_SYS_RESOURCE)) {
++		allow_write_access(file);
++		fput(file);
++		return -EAGAIN;
++	}
++#endif
++
+ 	bprm.file = file;
+ 	bprm.filename = filename;
+ 	bprm.sh_bang = 0;
+diff -urPX nopatch linux-2.4.22/arch/x86_64/config.in linux-2.4.22-ow1/arch/x86_64/config.in
+--- linux-2.4.22/arch/x86_64/config.in	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/x86_64/config.in	Thu Aug 28 06:41:49 2003
+@@ -106,6 +106,9 @@
+ fi
+ #tristate 'Kernel support for a.out binaries' CONFIG_BINFMT_AOUT
+ tristate 'Kernel support for ELF binaries' CONFIG_BINFMT_ELF
++if [ "$CONFIG_BINFMT_ELF" != "n" ]; then
++   bool '  ELF binaries with a.out format interpreters or a.out libraries' CONFIG_BINFMT_ELF_AOUT
++fi
+ tristate 'Kernel support for MISC binaries' CONFIG_BINFMT_MISC
+ 
+ bool 'Power Management support' CONFIG_PM
+@@ -228,6 +231,8 @@
+ source net/bluetooth/Config.in
+ 
+ source crypto/Config.in
++
++source security/Config.in
+ 
+ mainmenu_option next_comment
+ comment 'Kernel hacking'
+diff -urPX nopatch linux-2.4.22/arch/x86_64/defconfig linux-2.4.22-ow1/arch/x86_64/defconfig
+--- linux-2.4.22/arch/x86_64/defconfig	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/x86_64/defconfig	Thu Aug 28 06:20:31 2003
+@@ -62,6 +62,7 @@
+ CONFIG_SYSCTL=y
+ CONFIG_KCORE_ELF=y
+ CONFIG_BINFMT_ELF=y
++# CONFIG_BINFMT_ELF_AOUT is not set
+ # CONFIG_BINFMT_MISC is not set
+ CONFIG_PM=y
+ CONFIG_IA32_EMULATION=y
+@@ -701,6 +702,15 @@
+ # Bluetooth support
+ #
+ # CONFIG_BLUEZ is not set
++
++#
++# Security
++#
++CONFIG_HARDEN_LINK=y
++CONFIG_HARDEN_FIFO=y
++# CONFIG_HARDEN_PROC is not set
++CONFIG_HARDEN_RLIMIT_NPROC=y
++# CONFIG_HARDEN_SHM is not set
+ 
+ #
+ # Kernel hacking
+diff -urPX nopatch linux-2.4.22/arch/x86_64/ia32/sys_ia32.c linux-2.4.22-ow1/arch/x86_64/ia32/sys_ia32.c
+--- linux-2.4.22/arch/x86_64/ia32/sys_ia32.c	Mon Aug 25 15:44:40 2003
++++ linux-2.4.22-ow1/arch/x86_64/ia32/sys_ia32.c	Thu Aug 28 06:20:31 2003
+@@ -2135,7 +2135,7 @@
+ 			dst[cnt] = (char *)(u64)val; 
+ 		cnt++;
+ 		src += 4;
+-		if (cnt >= (MAX_ARG_PAGES*PAGE_SIZE)/sizeof(void*))
++		if (cnt >= (MAX_ARG_PAGES * PAGE_SIZE) / sizeof(char *))
+ 			return -E2BIG; 
+ 	} while(val); 
+ 	if (dst)
+diff -urPX nopatch linux-2.4.22/drivers/scsi/st.c linux-2.4.22-ow1/drivers/scsi/st.c
+--- linux-2.4.22/drivers/scsi/st.c	Mon Aug 25 15:44:42 2003
++++ linux-2.4.22-ow1/drivers/scsi/st.c	Thu Aug 28 06:44:05 2003
+@@ -1639,7 +1639,7 @@
+ 							if (STps->drv_block >= 0)
+ 								STps->drv_block += 1;
+ 							(STp->buffer)->buffer_bytes = 0;
+-							return (-ENOMEM);
++							return (-EIO);
+ 						}
+ 						(STp->buffer)->buffer_bytes = bytes - transfer;
+ 					} else {
+diff -urPX nopatch linux-2.4.22/fs/binfmt_aout.c linux-2.4.22-ow1/fs/binfmt_aout.c
+--- linux-2.4.22/fs/binfmt_aout.c	Sat Nov  3 04:39:20 2001
++++ linux-2.4.22-ow1/fs/binfmt_aout.c	Thu Aug 28 06:20:52 2003
+@@ -4,6 +4,7 @@
+  *  Copyright (C) 1991, 1992, 1996  Linus Torvalds
+  */
+ 
++#include <linux/config.h>
+ #include <linux/module.h>
+ 
+ #include <linux/sched.h>
+@@ -307,6 +308,9 @@
+ 	current->mm->mmap = NULL;
+ 	compute_creds(bprm);
+  	current->flags &= ~PF_FORKNOEXEC;
++#ifdef CONFIG_HARDEN_STACK
++	if (N_FLAGS(ex) & F_STACKEXEC) current->flags |= PF_STACKEXEC;
++#endif
+ #ifdef __sparc__
+ 	if (N_MAGIC(ex) == NMAGIC) {
+ 		loff_t pos = fd_offset;
+diff -urPX nopatch linux-2.4.22/fs/binfmt_elf.c linux-2.4.22-ow1/fs/binfmt_elf.c
+--- linux-2.4.22/fs/binfmt_elf.c	Mon Aug 25 15:44:43 2003
++++ linux-2.4.22-ow1/fs/binfmt_elf.c	Thu Aug 28 06:46:34 2003
+@@ -9,6 +9,7 @@
+  * Copyright 1993, 1994: Eric Youngdale (ericy@cais.com).
+  */
+ 
++#include <linux/config.h>
+ #include <linux/module.h>
+ 
+ #include <linux/fs.h>
+@@ -43,7 +44,9 @@
+ #include <linux/elf.h>
+ 
+ static int load_elf_binary(struct linux_binprm * bprm, struct pt_regs * regs);
++#ifdef CONFIG_BINFMT_ELF_AOUT
+ static int load_elf_library(struct file*);
++#endif
+ static unsigned long elf_map (struct file *, unsigned long, struct elf_phdr *, int, int);
+ extern int dump_fpu (struct pt_regs *, elf_fpregset_t *);
+ extern void dump_thread(struct pt_regs *, struct user *);
+@@ -73,8 +76,17 @@
+ #define ELF_PAGEOFFSET(_v) ((_v) & (ELF_MIN_ALIGN-1))
+ #define ELF_PAGEALIGN(_v) (((_v) + ELF_MIN_ALIGN - 1) & ~(ELF_MIN_ALIGN - 1))
+ 
+-static struct linux_binfmt elf_format = {
+-	NULL, THIS_MODULE, load_elf_binary, load_elf_library, elf_core_dump, ELF_EXEC_PAGESIZE
++#ifndef CONFIG_HARDEN_STACK
++static
++#endif
++struct linux_binfmt elf_format = {
++	NULL, THIS_MODULE, load_elf_binary,
++#ifdef CONFIG_BINFMT_ELF_AOUT
++	load_elf_library,
++#else
++	NULL,
++#endif
++	elf_core_dump, ELF_EXEC_PAGESIZE
+ };
+ 
+ #define BAD_ADDR(x)	((unsigned long)(x) > TASK_SIZE)
+@@ -369,6 +381,7 @@
+ 	return error;
+ }
+ 
++#ifdef CONFIG_BINFMT_ELF_AOUT
+ static unsigned long load_aout_interp(struct exec * interp_ex,
+ 			     struct file * interpreter)
+ {
+@@ -413,6 +426,7 @@
+ out:
+ 	return elf_entry;
+ }
++#endif
+ 
+ /*
+  * These are the functions used to load ELF style executables and shared
+@@ -420,7 +434,9 @@
+  */
+ 
+ #define INTERPRETER_NONE 0
++#ifdef CONFIG_BINFMT_ELF_AOUT
+ #define INTERPRETER_AOUT 1
++#endif
+ #define INTERPRETER_ELF 2
+ 
+ 
+@@ -443,7 +459,9 @@
+ 	struct elfhdr elf_ex;
+ 	struct elfhdr interp_elf_ex;
+   	struct exec interp_ex;
++#ifdef CONFIG_BINFMT_ELF_AOUT
+ 	char passed_fileno[6];
++#endif
+ 	struct files_struct *files;
+ 	
+ 	/* Get the exec-header */
+@@ -554,6 +572,7 @@
+ 
+ 	/* Some simple consistency checks for the interpreter */
+ 	if (elf_interpreter) {
++#ifdef CONFIG_BINFMT_ELF_AOUT
+ 		interpreter_type = INTERPRETER_ELF | INTERPRETER_AOUT;
+ 
+ 		/* Now figure out which format our binary is */
+@@ -561,6 +580,9 @@
+ 		    (N_MAGIC(interp_ex) != ZMAGIC) &&
+ 		    (N_MAGIC(interp_ex) != QMAGIC))
+ 			interpreter_type = INTERPRETER_ELF;
++#else
++		interpreter_type = INTERPRETER_ELF;
++#endif
+ 
+ 		if (memcmp(interp_elf_ex.e_ident, ELFMAG, SELFMAG) != 0)
+ 			interpreter_type &= ~INTERPRETER_ELF;
+@@ -569,6 +591,7 @@
+ 		if (!interpreter_type)
+ 			goto out_free_dentry;
+ 
++#ifdef CONFIG_BINFMT_ELF_AOUT
+ 		/* Make sure only one type was selected */
+ 		if ((interpreter_type & INTERPRETER_ELF) &&
+ 		     interpreter_type != INTERPRETER_ELF) {
+@@ -576,6 +599,7 @@
+ 			// printk(KERN_WARNING "ELF: Ambiguous type, using ELF\n");
+ 			interpreter_type = INTERPRETER_ELF;
+ 		}
++#endif
+ 	} else {
+ 		/* Executables without an interpreter also need a personality  */
+ 		SET_PERSONALITY(elf_ex, ibcs2_interpreter);
+@@ -584,6 +608,7 @@
+ 	/* OK, we are done with that, now set up the arg stuff,
+ 	   and then start this sucker up */
+ 
++#ifdef CONFIG_BINFMT_ELF_AOUT
+ 	if (!bprm->sh_bang) {
+ 		char * passed_p;
+ 
+@@ -599,6 +624,7 @@
+ 		  }
+ 		}
+ 	}
++#endif
+ 
+ 	/* Flush all traces of the currently running executable */
+ 	retval = flush_old_exec(bprm);
+@@ -618,6 +644,9 @@
+ 	current->mm->end_code = 0;
+ 	current->mm->mmap = NULL;
+ 	current->flags &= ~PF_FORKNOEXEC;
++#ifdef CONFIG_HARDEN_STACK
++	if (elf_ex.e_flags & EF_STACKEXEC) current->flags |= PF_STACKEXEC;
++#endif
+ 	elf_entry = (unsigned long) elf_ex.e_entry;
+ 
+ 	/* Do this so that we can load the interpreter, if need be.  We will
+@@ -714,10 +743,12 @@
+ 	end_data += load_bias;
+ 
+ 	if (elf_interpreter) {
++#ifdef CONFIG_BINFMT_ELF_AOUT
+ 		if (interpreter_type == INTERPRETER_AOUT)
+ 			elf_entry = load_aout_interp(&interp_ex,
+ 						     interpreter);
+ 		else
++#endif
+ 			elf_entry = load_elf_interp(&interp_elf_ex,
+ 						    interpreter,
+ 						    &interp_load_addr);
+@@ -735,7 +766,9 @@
+ 
+ 	kfree(elf_phdata);
+ 
++#ifdef CONFIG_BINFMT_ELF_AOUT
+ 	if (interpreter_type != INTERPRETER_AOUT)
++#endif
+ 		sys_close(elf_exec_fileno);
+ 
+ 	set_binfmt(&elf_format);
+@@ -749,10 +782,14 @@
+ 			&elf_ex,
+ 			load_addr, load_bias,
+ 			interp_load_addr,
++#ifdef CONFIG_BINFMT_ELF_AOUT
+ 			(interpreter_type == INTERPRETER_AOUT ? 0 : 1));
+ 	/* N.B. passed_fileno might not be initialized? */
+ 	if (interpreter_type == INTERPRETER_AOUT)
+ 		current->mm->arg_start += strlen(passed_fileno) + 1;
++#else
++			1);
++#endif
+ 	current->mm->start_brk = current->mm->brk = elf_brk;
+ 	current->mm->end_code = end_code;
+ 	current->mm->start_code = start_code;
+@@ -825,9 +862,9 @@
+ 	goto out;
+ }
+ 
++#ifdef CONFIG_BINFMT_ELF_AOUT
+ /* This is really simpleminded and specialized - we are loading an
+    a.out library that is given an ELF header. */
+-
+ static int load_elf_library(struct file *file)
+ {
+ 	struct elf_phdr *elf_phdata;
+@@ -898,6 +935,7 @@
+ out:
+ 	return error;
+ }
++#endif
+ 
+ /*
+  * Note that some platforms still use traditional core dumps and not
+diff -urPX nopatch linux-2.4.22/fs/exec.c linux-2.4.22-ow1/fs/exec.c
+--- linux-2.4.22/fs/exec.c	Mon Aug 25 15:44:43 2003
++++ linux-2.4.22-ow1/fs/exec.c	Thu Aug 28 06:20:52 2003
+@@ -108,6 +108,7 @@
+  */
+ asmlinkage long sys_uselib(const char * library)
+ {
++#if defined(CONFIG_BINFMT_AOUT) || defined(CONFIG_BINFMT_ELF_AOUT)
+ 	struct file * file;
+ 	struct nameidata nd;
+ 	int error;
+@@ -154,6 +155,9 @@
+ exit:
+ 	path_release(&nd);
+ 	goto out;
++#else
++	return -ENOSYS;
++#endif
+ }
+ 
+ /*
+@@ -610,6 +614,10 @@
+ 	}
+ 	current->comm[i] = '\0';
+ 
++#ifdef CONFIG_HARDEN_STACK
++	current->flags &= ~PF_STACKEXEC;
++#endif
++
+ 	flush_thread();
+ 
+ 	de_thread(current);
+@@ -747,6 +755,8 @@
+ 		    || atomic_read(&current->fs->count) > 1
+ 		    || atomic_read(&current->files->count) > 1
+ 		    || atomic_read(&current->sig->count) > 1) {
++			/* XXX: should fail rather than execute with no raised
++			 * effective privileges */
+ 			if(!capable(CAP_SETUID)) {
+ 				bprm->e_uid = current->uid;
+ 				bprm->e_gid = current->gid;
+@@ -913,6 +923,23 @@
+ 	retval = PTR_ERR(file);
+ 	if (IS_ERR(file))
+ 		return retval;
++
++#ifdef CONFIG_HARDEN_RLIMIT_NPROC
++/*
++ * This check is similar to that done in kernel/fork.c, except that we
++ * are not going to allocate a new task slot here.
++ *
++ * Note that we can only exceed the limit if our UID has changed.
++ */
++	if (current->user)
++	if (atomic_read(&current->user->processes) >
++	    current->rlim[RLIMIT_NPROC].rlim_cur &&
++	    !capable(CAP_SYS_ADMIN) && !capable(CAP_SYS_RESOURCE)) {
++		allow_write_access(file);
++		fput(file);
++		return -EAGAIN;
++	}
++#endif
+ 
+ 	bprm.p = PAGE_SIZE*MAX_ARG_PAGES-sizeof(void *);
+ 	memset(bprm.page, 0, MAX_ARG_PAGES*sizeof(bprm.page[0])); 
+diff -urPX nopatch linux-2.4.22/fs/namei.c linux-2.4.22-ow1/fs/namei.c
+--- linux-2.4.22/fs/namei.c	Mon Aug 25 15:44:43 2003
++++ linux-2.4.22-ow1/fs/namei.c	Thu Aug 28 06:20:52 2003
+@@ -14,6 +14,7 @@
+ /* [Feb-Apr 2000, AV] Rewrite to the new namespace architecture.
+  */
+ 
++#include <linux/config.h>
+ #include <linux/init.h>
+ #include <linux/slab.h>
+ #include <linux/fs.h>
+@@ -325,6 +326,40 @@
+ 	return result;
+ }
+ 
++#ifdef CONFIG_HARDEN_LINK
++/* Keep this code separately (non-inline) */
++static void security_alert_symlink(struct inode *inode)
++{
++	security_alert("not followed symlink of %d.%d "
++		"by UID %d, EUID %d, process %s:%d",
++		"symlinks not followed",
++		inode->i_uid, inode->i_gid,
++		current->uid, current->euid, current->comm, current->pid);
++}
++
++static inline int check_link(struct dentry *dentry)
++{
++	struct inode *inode, *dir;
++
++	inode = dentry->d_inode;
++	/* XXX: no locking, races possible */
++	dir = dentry->d_parent->d_inode;
++
++	/*
++	 * Don't follow links that we don't own in +t directories,
++	 * unless the link is owned by the owner of the directory.
++	 */
++	if ((dir->i_mode & S_ISVTX) &&
++	    inode->i_uid != dir->i_uid &&
++	    current->fsuid != inode->i_uid) {
++		security_alert_symlink(inode);
++		return -EACCES;
++	}
++
++	return 0;
++}
++#endif
++
+ /*
+  * This limits recursive symlink follows to 8, while
+  * limiting consecutive symlinks to 40.
+@@ -335,10 +370,15 @@
+ static inline int do_follow_link(struct dentry *dentry, struct nameidata *nd)
+ {
+ 	int err;
+-	if (current->link_count >= 5)
++	if (current->link_count >= 8)
+ 		goto loop;
+ 	if (current->total_link_count >= 40)
+ 		goto loop;
++#ifdef CONFIG_HARDEN_LINK
++	err = check_link(dentry);
++	if (err)
++		goto out;
++#endif
+ 	if (current->need_resched) {
+ 		current->state = TASK_RUNNING;
+ 		schedule();
+@@ -350,8 +390,10 @@
+ 	current->link_count--;
+ 	return err;
+ loop:
++	err = -ELOOP;
++out:
+ 	path_release(nd);
+-	return -ELOOP;
++	return err;
+ }
+ 
+ static inline int __follow_up(struct vfsmount **mnt, struct dentry **base)
+@@ -1064,6 +1106,32 @@
+ 	/*
+ 	 * It already exists.
+ 	 */
++
++#ifdef CONFIG_HARDEN_FIFO
++	/*
++	 * Don't write to FIFOs that we don't own in +t directories,
++	 * unless the FIFO is owned by the owner of the directory.
++	 *
++	 * Do this check early while we hold the directory.
++	 */
++	inode = dentry->d_inode;
++	if (S_ISFIFO(inode->i_mode) && !(flag & O_EXCL) &&
++	    (dir->d_inode->i_mode & S_ISVTX) &&
++	    inode->i_uid != dir->d_inode->i_uid &&
++	    current->fsuid != inode->i_uid) {
++		up(&dir->d_inode->i_sem);
++		if (!permission(inode, acc_mode))
++		security_alert("denied writing FIFO of %d.%d "
++			"by UID %d, EUID %d, process %s:%d",
++			"writes into a FIFO denied",
++			inode->i_uid, inode->i_gid,
++			current->uid, current->euid,
++			current->comm, current->pid);
++		error = -EACCES;
++		goto exit_dput;
++	}
++#endif
++
+ 	up(&dir->d_inode->i_sem);
+ 
+ 	error = -EEXIST;
+@@ -1184,6 +1252,11 @@
+ 	 * stored in nd->last.name and we will have to putname() it when we
+ 	 * are done. Procfs-like symlinks just set LAST_BIND.
+ 	 */
++#ifdef CONFIG_HARDEN_LINK
++	error = check_link(dentry);
++	if (error)
++		goto exit_dput;
++#endif
+ 	UPDATE_ATIME(dentry->d_inode);
+ 	error = dentry->d_inode->i_op->follow_link(dentry, nd);
+ 	dput(dentry);
+@@ -1605,6 +1678,32 @@
+ 	inode = old_dentry->d_inode;
+ 	if (!inode)
+ 		goto exit_lock;
++
++#ifdef CONFIG_HARDEN_LINK
++	/*
++	 * Don't allow users to create hard links to files they don't own,
++	 * unless they could read and write the file or have CAP_FOWNER.
++	 *
++	 * The real UID check is here as a workaround for atd(8) only, to
++	 * be removed one day.
++	 */
++	error = -EPERM;
++	if (current->fsuid != inode->i_uid &&
++	    (!S_ISREG(inode->i_mode) ||
++	    (inode->i_mode & S_ISUID) ||
++	    ((inode->i_mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP)) ||
++	    (error = permission(inode, MAY_READ | MAY_WRITE))) &&
++	    !capable(CAP_FOWNER) &&
++	    current->uid) {
++		security_alert("denied hard link to %d.%d "
++			"for UID %d, EUID %d, process %s:%d",
++			"hard links denied",
++			inode->i_uid, inode->i_gid,
++			current->uid, current->euid,
++			current->comm, current->pid);
++		goto exit_lock;
++	}
++#endif
+ 
+ 	error = may_create(dir, new_dentry);
+ 	if (error)
+diff -urPX nopatch linux-2.4.22/fs/proc/base.c linux-2.4.22-ow1/fs/proc/base.c
+--- linux-2.4.22/fs/proc/base.c	Mon Aug 25 15:44:43 2003
++++ linux-2.4.22-ow1/fs/proc/base.c	Thu Aug 28 07:10:20 2003
+@@ -167,15 +167,16 @@
+ 	if (mm)
+ 		atomic_inc(&mm->mm_users);
+ 	task_unlock(task);
+-	if (mm) {
+-		unsigned int len = mm->env_end - mm->env_start;
++	if (mm && mm->env_start && mm->env_start < mm->env_end) {
++		unsigned long len = mm->env_end - mm->env_start;
+ 		if (len > PAGE_SIZE)
+ 			len = PAGE_SIZE;
+ 		res = access_process_vm(task, mm->env_start, buffer, len, 0);
+-		if (!may_ptrace_attach(task))
++		if (res >= 0 && !may_ptrace_attach(task))
+ 			res = -ESRCH;
+-		mmput(mm);
+ 	}
++	if (mm)
++		mmput(mm);
+ 	return res;
+ }
+ 
+@@ -188,31 +189,30 @@
+ 	if (mm)
+ 		atomic_inc(&mm->mm_users);
+ 	task_unlock(task);
+-	if (mm) {
+-		int len = mm->arg_end - mm->arg_start;
++	if (mm && mm->arg_start && mm->arg_start < mm->arg_end) {
++		unsigned long len = mm->arg_end - mm->arg_start;
+ 		if (len > PAGE_SIZE)
+ 			len = PAGE_SIZE;
+ 		res = access_process_vm(task, mm->arg_start, buffer, len, 0);
+-		// If the nul at the end of args has been overwritten, then
+-		// assume application is using setproctitle(3).
+-		if ( res > 0 && buffer[res-1] != '\0' )
+-		{
+-			len = strnlen( buffer, res );
+-			if ( len < res )
+-			{
+-			    res = len;
+-			}
+-			else
+-			{
++		/* If the nul at the end of args has been overwritten, then
++		   assume application is using setproctitle(3). */
++		if (res > 0 && buffer[res - 1] != '\0') {
++			len = strnlen(buffer, res);
++			if (len < res) {
++				res = len;
++			} else
++			if (mm->env_start < mm->env_end && res <= PAGE_SIZE) {
+ 				len = mm->env_end - mm->env_start;
+ 				if (len > PAGE_SIZE - res)
+ 					len = PAGE_SIZE - res;
+ 				res += access_process_vm(task, mm->env_start, buffer+res, len, 0);
+-				res = strnlen( buffer, res );
+-			}
++				res = strnlen(buffer, res);
++			} else
++				res = 0;
+ 		}
+-		mmput(mm);
+ 	}
++	if (mm)
++		mmput(mm);
+ 	return res;
+ }
+ 
+@@ -750,7 +750,12 @@
+ 	inode->i_gid = 0;
+ 	if (ino == PROC_PID_INO || task_dumpable(task)) {
+ 		inode->i_uid = task->euid;
++#ifdef CONFIG_HARDEN_PROC
++		if (inode->i_sb->s_root)
++			inode->i_gid = inode->i_sb->s_root->d_inode->i_gid;
++#else
+ 		inode->i_gid = task->egid;
++#endif
+ 	}
+ 
+ out:
+@@ -1062,7 +1067,11 @@
+ 
+ 	if (!inode)
+ 		goto out;
++#ifdef CONFIG_HARDEN_PROC
++	inode->i_mode = S_IFDIR|S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP;
++#else
+ 	inode->i_mode = S_IFDIR|S_IRUGO|S_IXUGO;
++#endif
+ 	inode->i_op = &proc_base_inode_operations;
+ 	inode->i_fop = &proc_base_operations;
+ 	inode->i_nlink = 3;
+diff -urPX nopatch linux-2.4.22/fs/proc/generic.c linux-2.4.22-ow1/fs/proc/generic.c
+--- linux-2.4.22/fs/proc/generic.c	Fri Jun 13 18:51:37 2003
++++ linux-2.4.22-ow1/fs/proc/generic.c	Thu Aug 28 06:20:52 2003
+@@ -391,7 +391,9 @@
+ static void proc_kill_inodes(struct proc_dir_entry *de)
+ {
+ 	struct list_head *p;
+-	struct super_block *sb = proc_mnt->mnt_sb;
++	struct super_block *sb = proc_super;
++
++	if (!sb) return;
+ 
+ 	/*
+ 	 * Actually it's a partial revoke().
+@@ -485,12 +487,12 @@
+ 	return ent;
+ }
+ 
+-struct proc_dir_entry *proc_mkdir(const char *name, struct proc_dir_entry *parent)
++struct proc_dir_entry *proc_mkdir_mode(const char *name, mode_t mode,
++		struct proc_dir_entry *parent)
+ {
+ 	struct proc_dir_entry *ent;
+ 
+-	ent = proc_create(&parent,name,
+-			  (S_IFDIR | S_IRUGO | S_IXUGO),2);
++	ent = proc_create(&parent, name, S_IFDIR | mode, 2);
+ 	if (ent) {
+ 		ent->proc_fops = &proc_dir_operations;
+ 		ent->proc_iops = &proc_dir_inode_operations;
+@@ -501,6 +503,12 @@
+ 		}
+ 	}
+ 	return ent;
++}
++
++struct proc_dir_entry *proc_mkdir(const char *name,
++		struct proc_dir_entry *parent)
++{
++	return proc_mkdir_mode(name, S_IRUGO | S_IXUGO, parent);
+ }
+ 
+ struct proc_dir_entry *create_proc_entry(const char *name, mode_t mode,
+diff -urPX nopatch linux-2.4.22/fs/proc/inode.c linux-2.4.22-ow1/fs/proc/inode.c
+--- linux-2.4.22/fs/proc/inode.c	Fri Jun 13 18:51:37 2003
++++ linux-2.4.22-ow1/fs/proc/inode.c	Thu Aug 28 06:21:10 2003
+@@ -4,6 +4,7 @@
+  *  Copyright (C) 1991, 1992  Linus Torvalds
+  */
+ 
++#include <linux/config.h>
+ #include <linux/sched.h>
+ #include <linux/proc_fs.h>
+ #include <linux/kernel.h>
+@@ -73,8 +74,6 @@
+ 	}
+ }
+ 
+-struct vfsmount *proc_mnt;
+-
+ static void proc_read_inode(struct inode * inode)
+ {
+ 	inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
+@@ -153,6 +152,10 @@
+ 			inode->i_mode = de->mode;
+ 			inode->i_uid = de->uid;
+ 			inode->i_gid = de->gid;
++#ifdef CONFIG_HARDEN_PROC
++			if (sb->s_root)
++				inode->i_gid = sb->s_root->d_inode->i_gid;
++#endif
+ 		}
+ 		if (de->size)
+ 			inode->i_size = de->size;
+@@ -176,6 +179,8 @@
+ 	goto out;
+ }			
+ 
++struct super_block *proc_super = NULL;
++
+ struct super_block *proc_read_super(struct super_block *s,void *data, 
+ 				    int silent)
+ {
+@@ -200,6 +205,10 @@
+ 	if (!s->s_root)
+ 		goto out_no_root;
+ 	parse_options(data, &root_inode->i_uid, &root_inode->i_gid);
++	if (!proc_super) {
++		s->s_count++;
++		proc_super = s;
++	}
+ 	return s;
+ 
+ out_no_root:
+diff -urPX nopatch linux-2.4.22/fs/proc/proc_tty.c linux-2.4.22-ow1/fs/proc/proc_tty.c
+--- linux-2.4.22/fs/proc/proc_tty.c	Sat Apr 22 02:17:57 2000
++++ linux-2.4.22-ow1/fs/proc/proc_tty.c	Thu Aug 28 06:20:52 2003
+@@ -128,7 +128,7 @@
+ }
+ 
+ /*
+- * Thsi function is called by register_tty_driver() to handle
++ * This function is called by tty_register_driver() to handle
+  * registering the driver's /proc handler into /proc/tty/driver/<foo>
+  */
+ void proc_tty_register_driver(struct tty_driver *driver)
+@@ -151,7 +151,7 @@
+ }
+ 
+ /*
+- * This function is called by unregister_tty_driver()
++ * This function is called by tty_unregister_driver()
+  */
+ void proc_tty_unregister_driver(struct tty_driver *driver)
+ {
+@@ -174,7 +174,13 @@
+ 	if (!proc_mkdir("tty", 0))
+ 		return;
+ 	proc_tty_ldisc = proc_mkdir("tty/ldisc", 0);
+-	proc_tty_driver = proc_mkdir("tty/driver", 0);
++	/*
++	 * /proc/tty/driver/serial reveals the exact character counts for
++	 * serial links which is just too easy to abuse for inferring
++	 * password lengths and inter-keystroke timings during password
++	 * entry.
++	 */
++	proc_tty_driver = proc_mkdir_mode("tty/driver", S_IRUSR | S_IXUSR, 0);
+ 
+ 	create_proc_read_entry("tty/ldiscs", 0, 0, tty_ldiscs_read_proc,NULL);
+ 	create_proc_read_entry("tty/drivers", 0, 0, tty_drivers_read_proc,NULL);
+diff -urPX nopatch linux-2.4.22/fs/proc/root.c linux-2.4.22-ow1/fs/proc/root.c
+--- linux-2.4.22/fs/proc/root.c	Sat Aug  3 04:39:45 2002
++++ linux-2.4.22-ow1/fs/proc/root.c	Thu Aug 28 06:20:52 2003
+@@ -8,6 +8,7 @@
+ 
+ #include <asm/uaccess.h>
+ 
++#include <linux/config.h>
+ #include <linux/errno.h>
+ #include <linux/sched.h>
+ #include <linux/proc_fs.h>
+@@ -30,14 +31,12 @@
+ 	int err = register_filesystem(&proc_fs_type);
+ 	if (err)
+ 		return;
+-	proc_mnt = kern_mount(&proc_fs_type);
+-	err = PTR_ERR(proc_mnt);
+-	if (IS_ERR(proc_mnt)) {
+-		unregister_filesystem(&proc_fs_type);
+-		return;
+-	}
+ 	proc_misc_init();
++#ifdef CONFIG_HARDEN_PROC
++	proc_net = proc_mkdir_mode("net", S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP, 0);
++#else
+ 	proc_net = proc_mkdir("net", 0);
++#endif
+ #ifdef CONFIG_SYSVIPC
+ 	proc_mkdir("sysvipc", 0);
+ #endif
+diff -urPX nopatch linux-2.4.22/include/asm-i386/a.out.h linux-2.4.22-ow1/include/asm-i386/a.out.h
+--- linux-2.4.22/include/asm-i386/a.out.h	Fri Jun 16 22:33:06 1995
++++ linux-2.4.22-ow1/include/asm-i386/a.out.h	Thu Aug 28 06:20:52 2003
+@@ -19,7 +19,16 @@
+ 
+ #ifdef __KERNEL__
+ 
++#include <linux/config.h>
++
++#ifdef CONFIG_HARDEN_STACK
++#define STACK_TOP ( \
++	(current->flags & PF_STACKEXEC) \
++	? TASK_SIZE - _STK_LIM \
++	: TASK_SIZE )
++#else
+ #define STACK_TOP	TASK_SIZE
++#endif
+ 
+ #endif
+ 
+diff -urPX nopatch linux-2.4.22/include/asm-i386/processor.h linux-2.4.22-ow1/include/asm-i386/processor.h
+--- linux-2.4.22/include/asm-i386/processor.h	Mon Aug 25 15:44:43 2003
++++ linux-2.4.22-ow1/include/asm-i386/processor.h	Thu Aug 28 06:20:52 2003
+@@ -261,10 +261,28 @@
+  */
+ #define TASK_SIZE	(PAGE_OFFSET)
+ 
++/*
++ * Magic addresses to return to the kernel from signal handlers. These two
++ * should be beyond user code segment limit, adjacent, and MAGIC_SIGRETURN
++ * should be even.
++ */
++#define MAGIC_SIGRETURN		(PAGE_OFFSET + 0xDE0000)
++#define MAGIC_RT_SIGRETURN	(PAGE_OFFSET + 0xDE0001)
++
+ /* This decides where the kernel will search for a free chunk of vm
+  * space during mmap's.
+  */
++#if defined(CONFIG_HARDEN_STACK) && defined(CONFIG_BINFMT_ELF)
++extern struct linux_binfmt elf_format;
++#define TASK_UNMAPPED_BASE(size) ( \
++	current->binfmt == &elf_format && \
++	!(current->flags & PF_STACKEXEC) && \
++	(size) < 0x00ef0000UL \
++	? 0x00110000UL \
++	: TASK_SIZE / 3 )
++#else
+ #define TASK_UNMAPPED_BASE	(TASK_SIZE / 3)
++#endif
+ 
+ /*
+  * Size of io_bitmap in longwords: 32 is ports 0-0x3ff.
+diff -urPX nopatch linux-2.4.22/include/linux/a.out.h linux-2.4.22-ow1/include/linux/a.out.h
+--- linux-2.4.22/include/linux/a.out.h	Thu Nov 22 22:46:18 2001
++++ linux-2.4.22-ow1/include/linux/a.out.h	Thu Aug 28 06:20:52 2003
+@@ -37,6 +37,9 @@
+   M_MIPS2 = 152		/* MIPS R6000/R4000 binary */
+ };
+ 
++/* Constants for the N_FLAGS field */
++#define F_STACKEXEC	1	/* Executable stack area forced */
++
+ #if !defined (N_MAGIC)
+ #define N_MAGIC(exec) ((exec).a_info & 0xffff)
+ #endif
+diff -urPX nopatch linux-2.4.22/include/linux/binfmts.h linux-2.4.22-ow1/include/linux/binfmts.h
+--- linux-2.4.22/include/linux/binfmts.h	Thu Nov 22 22:46:19 2001
++++ linux-2.4.22-ow1/include/linux/binfmts.h	Thu Aug 28 06:20:52 2003
+@@ -1,6 +1,7 @@
+ #ifndef _LINUX_BINFMTS_H
+ #define _LINUX_BINFMTS_H
+ 
++#include <linux/config.h>
+ #include <linux/ptrace.h>
+ #include <linux/capability.h>
+ 
+diff -urPX nopatch linux-2.4.22/include/linux/elf.h linux-2.4.22-ow1/include/linux/elf.h
+--- linux-2.4.22/include/linux/elf.h	Fri Nov 29 02:53:15 2002
++++ linux-2.4.22-ow1/include/linux/elf.h	Thu Aug 28 06:20:52 2003
+@@ -255,6 +255,8 @@
+ #define R_MIPS_LOVENDOR		100
+ #define R_MIPS_HIVENDOR		127
+ 
++/* Constants for the e_flags field */
++#define EF_STACKEXEC	1	/* Executable stack area forced */
+ 
+ /*
+  * Sparc ELF relocation types
+diff -urPX nopatch linux-2.4.22/include/linux/kernel.h linux-2.4.22-ow1/include/linux/kernel.h
+--- linux-2.4.22/include/linux/kernel.h	Fri Nov 29 02:53:15 2002
++++ linux-2.4.22-ow1/include/linux/kernel.h	Thu Aug 28 06:20:52 2003
+@@ -71,14 +71,17 @@
+ extern long long simple_strtoll(const char *,char **,unsigned int);
+ extern int sprintf(char * buf, const char * fmt, ...)
+ 	__attribute__ ((format (printf, 2, 3)));
+-extern int vsprintf(char *buf, const char *, va_list);
++extern int vsprintf(char *buf, const char *, va_list)
++	__attribute__ ((format (printf, 2, 0)));
+ extern int snprintf(char * buf, size_t size, const char * fmt, ...)
+ 	__attribute__ ((format (printf, 3, 4)));
+-extern int vsnprintf(char *buf, size_t size, const char *fmt, va_list args);
++extern int vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
++	__attribute__ ((format (printf, 3, 0)));
+ 
+ extern int sscanf(const char *, const char *, ...)
+-	__attribute__ ((format (scanf,2,3)));
+-extern int vsscanf(const char *, const char *, va_list);
++	__attribute__ ((format (scanf, 2, 3)));
++extern int vsscanf(const char *, const char *, va_list)
++	__attribute__ ((format (scanf, 2, 0)));
+ 
+ extern int get_option(char **str, int *pint);
+ extern char *get_options(char *str, int nints, int *ints);
+@@ -170,6 +173,26 @@
+ 	({ type __x = (x); type __y = (y); __x < __y ? __x: __y; })
+ #define max_t(type,x,y) \
+ 	({ type __x = (x); type __y = (y); __x > __y ? __x: __y; })
++
++#define security_alert(normal_msg, flood_msg, args...) \
++({ \
++	static unsigned long warning_time = 0, no_flood_yet = 0; \
++	static spinlock_t security_alert_lock = SPIN_LOCK_UNLOCKED; \
++\
++	spin_lock(&security_alert_lock); \
++\
++/* Make sure at least one minute passed since the last warning logged */ \
++	if (!warning_time || jiffies - warning_time > 60 * HZ) { \
++		warning_time = jiffies; no_flood_yet = 1; \
++		printk(KERN_ALERT "Security: " normal_msg "\n", ## args); \
++	} else if (no_flood_yet) { \
++		warning_time = jiffies; no_flood_yet = 0; \
++		printk(KERN_ALERT "Security: more " flood_msg \
++			", logging disabled for a minute\n"); \
++	} \
++\
++	spin_unlock(&security_alert_lock); \
++})
+ 
+ extern void __out_of_line_bug(int line) ATTRIB_NORET;
+ #define out_of_line_bug() __out_of_line_bug(__LINE__)
+diff -urPX nopatch linux-2.4.22/include/linux/proc_fs.h linux-2.4.22-ow1/include/linux/proc_fs.h
+--- linux-2.4.22/include/linux/proc_fs.h	Sat Aug  3 04:39:45 2002
++++ linux-2.4.22-ow1/include/linux/proc_fs.h	Thu Aug 28 06:20:52 2003
+@@ -94,7 +94,7 @@
+ 						struct proc_dir_entry *parent);
+ extern void remove_proc_entry(const char *name, struct proc_dir_entry *parent);
+ 
+-extern struct vfsmount *proc_mnt;
++extern struct super_block *proc_super;
+ extern struct super_block *proc_read_super(struct super_block *,void *,int);
+ extern struct inode * proc_get_inode(struct super_block *, int, struct proc_dir_entry *);
+ 
+@@ -142,6 +142,8 @@
+ 		struct proc_dir_entry *, const char *);
+ extern struct proc_dir_entry *proc_mknod(const char *,mode_t,
+ 		struct proc_dir_entry *,kdev_t);
++extern struct proc_dir_entry *proc_mkdir_mode(const char *,mode_t,
++		struct proc_dir_entry *);
+ extern struct proc_dir_entry *proc_mkdir(const char *,struct proc_dir_entry *);
+ 
+ static inline struct proc_dir_entry *create_proc_read_entry(const char *name,
+diff -urPX nopatch linux-2.4.22/include/linux/sched.h linux-2.4.22-ow1/include/linux/sched.h
+--- linux-2.4.22/include/linux/sched.h	Fri Jun 13 18:51:39 2003
++++ linux-2.4.22-ow1/include/linux/sched.h	Thu Aug 28 06:20:52 2003
+@@ -435,6 +435,8 @@
+ 
+ #define PF_USEDFPU	0x00100000	/* task used FPU this quantum (SMP) */
+ 
++#define PF_STACKEXEC	0x01000000	/* Executable stack area forced */
++
+ /*
+  * Ptrace flags
+  */
+diff -urPX nopatch linux-2.4.22/ipc/shm.c linux-2.4.22-ow1/ipc/shm.c
+--- linux-2.4.22/ipc/shm.c	Sat Aug  3 04:39:46 2002
++++ linux-2.4.22-ow1/ipc/shm.c	Thu Aug 28 06:20:52 2003
+@@ -149,13 +149,40 @@
+ 	shp->shm_lprid = current->pid;
+ 	shp->shm_dtim = CURRENT_TIME;
+ 	shp->shm_nattch--;
++#ifdef CONFIG_HARDEN_SHM
++	if(shp->shm_nattch == 0) {
++		shp->shm_flags |= SHM_DEST;
++		shm_destroy (shp);
++	}
++#else
+ 	if(shp->shm_nattch == 0 &&
+ 	   shp->shm_flags & SHM_DEST)
+ 		shm_destroy (shp);
++#endif
+ 	else
+ 		shm_unlock(id);
+ 	up (&shm_ids.sem);
+ }
++
++#ifdef CONFIG_HARDEN_SHM
++void shm_exit (void)
++{
++	int i;
++	struct shmid_kernel *shp;
++
++	for (i = 0; i <= shm_ids.max_id; i++) {
++		shp = shm_get(i);
++		if (!shp) continue;
++
++		if (shp->shm_cprid != current->pid) continue;
++
++		if (shp->shm_nattch <= 0) {
++			shp->shm_flags |= SHM_DEST;
++			shm_destroy (shp);
++		}
++	}
++}
++#endif
+ 
+ static int shm_mmap(struct file * file, struct vm_area_struct * vma)
+ {
+diff -urPX nopatch linux-2.4.22/ipc/util.c linux-2.4.22-ow1/ipc/util.c
+--- linux-2.4.22/ipc/util.c	Mon Aug 25 15:44:44 2003
++++ linux-2.4.22-ow1/ipc/util.c	Thu Aug 28 06:20:52 2003
+@@ -346,8 +346,15 @@
+ 
+ void sem_exit (void)
+ {
+-    return;
++	return;
+ }
++
++#ifdef CONFIG_HARDEN_SHM
++void shm_exit (void)
++{
++	return;
++}
++#endif
+ 
+ asmlinkage long sys_semget (key_t key, int nsems, int semflg)
+ {
+diff -urPX nopatch linux-2.4.22/kernel/exit.c linux-2.4.22-ow1/kernel/exit.c
+--- linux-2.4.22/kernel/exit.c	Fri Nov 29 02:53:15 2002
++++ linux-2.4.22-ow1/kernel/exit.c	Thu Aug 28 06:20:52 2003
+@@ -22,6 +22,9 @@
+ #include <asm/mmu_context.h>
+ 
+ extern void sem_exit (void);
++#ifdef CONFIG_HARDEN_SHM
++extern void shm_exit (void);
++#endif
+ extern struct task_struct *child_reaper;
+ 
+ int getrusage(struct task_struct *, int, struct rusage *);
+@@ -443,6 +446,9 @@
+ 
+ 	lock_kernel();
+ 	sem_exit();
++#ifdef CONFIG_HARDEN_SHM
++	shm_exit();
++#endif
+ 	__exit_files(tsk);
+ 	__exit_fs(tsk);
+ 	exit_namespace(tsk);
+diff -urPX nopatch linux-2.4.22/kernel/printk.c linux-2.4.22-ow1/kernel/printk.c
+--- linux-2.4.22/kernel/printk.c	Mon Aug 25 15:44:44 2003
++++ linux-2.4.22-ow1/kernel/printk.c	Thu Aug 28 06:20:52 2003
+@@ -294,8 +294,13 @@
+ 
+ asmlinkage long sys_syslog(int type, char * buf, int len)
+ {
++#ifdef CONFIG_HARDEN_PROC
++	if (!capable(CAP_SYS_ADMIN))
++		return -EPERM;
++#else
+ 	if ((type != 3) && !capable(CAP_SYS_ADMIN))
+ 		return -EPERM;
++#endif
+ 	return do_syslog(type, buf, len);
+ }
+ 
+diff -urPX nopatch linux-2.4.22/kernel/sysctl.c linux-2.4.22-ow1/kernel/sysctl.c
+--- linux-2.4.22/kernel/sysctl.c	Mon Aug 25 15:44:44 2003
++++ linux-2.4.22-ow1/kernel/sysctl.c	Thu Aug 28 06:20:52 2003
+@@ -352,6 +352,9 @@
+ 		int old_len;
+ 		if (!oldlenp || get_user(old_len, oldlenp))
+ 			return -EFAULT;
++		/* XXX: insufficient for SMP, but should be redundant anyway */
++		if ((ssize_t)old_len < 0)
++			return -EINVAL;
+ 	}
+ 	tmp = &root_table_header.ctl_entry;
+ 	do {
+diff -urPX nopatch linux-2.4.22/mm/mmap.c linux-2.4.22-ow1/mm/mmap.c
+--- linux-2.4.22/mm/mmap.c	Fri Jun 13 18:51:39 2003
++++ linux-2.4.22-ow1/mm/mmap.c	Thu Aug 28 06:20:52 2003
+@@ -3,6 +3,7 @@
+  *
+  * Written by obz.
+  */
++#include <linux/config.h>
+ #include <linux/slab.h>
+ #include <linux/shm.h>
+ #include <linux/mman.h>
+@@ -626,7 +627,11 @@
+ 		    (!vma || addr + len <= vma->vm_start))
+ 			return addr;
+ 	}
++#if defined(CONFIG_HARDEN_STACK) && defined(CONFIG_BINFMT_ELF)
++	addr = PAGE_ALIGN(TASK_UNMAPPED_BASE(len));
++#else
+ 	addr = PAGE_ALIGN(TASK_UNMAPPED_BASE);
++#endif
+ 
+ 	for (vma = find_vma(current->mm, addr); ; vma = vma->vm_next) {
+ 		/* At this point:  (!vma || addr < vma->vm_end). */
+diff -urPX nopatch linux-2.4.22/mm/swapfile.c linux-2.4.22-ow1/mm/swapfile.c
+--- linux-2.4.22/mm/swapfile.c	Mon Aug 25 15:44:44 2003
++++ linux-2.4.22-ow1/mm/swapfile.c	Thu Aug 28 06:20:52 2003
+@@ -738,8 +738,10 @@
+ 	for (type = swap_list.head; type >= 0; type = swap_info[type].next) {
+ 		p = swap_info + type;
+ 		if ((p->flags & SWP_WRITEOK) == SWP_WRITEOK) {
+-			if (p->swap_file == nd.dentry)
+-			  break;
++			if (p->swap_file == nd.dentry ||
++			    (S_ISBLK(nd.dentry->d_inode->i_mode) &&
++			    p->swap_device == nd.dentry->d_inode->i_rdev))
++				break;
+ 		}
+ 		prev = type;
+ 	}
+diff -urPX nopatch linux-2.4.22/net/socket.c linux-2.4.22-ow1/net/socket.c
+--- linux-2.4.22/net/socket.c	Mon Aug 25 15:44:44 2003
++++ linux-2.4.22-ow1/net/socket.c	Thu Aug 28 06:20:52 2003
+@@ -1305,10 +1305,18 @@
+ asmlinkage long sys_getsockopt(int fd, int level, int optname, char *optval, int *optlen)
+ {
+ 	int err;
++	int len;
+ 	struct socket *sock;
+ 
+ 	if ((sock = sockfd_lookup(fd, &err))!=NULL)
+ 	{
++		/* XXX: insufficient for SMP, but should be redundant anyway */
++		if (get_user(len, optlen))
++			err = -EFAULT;
++		else
++		if (len < 0)
++			err = -EINVAL;
++		else
+ 		if (level == SOL_SOCKET)
+ 			err=sock_getsockopt(sock,level,optname,optval,optlen);
+ 		else
+diff -urPX nopatch linux-2.4.22/security/Common.in linux-2.4.22-ow1/security/Common.in
+--- linux-2.4.22/security/Common.in	Thu Jan  1 03:00:00 1970
++++ linux-2.4.22-ow1/security/Common.in	Thu Aug 28 06:20:52 2003
+@@ -0,0 +1,11 @@
++#
++# Security options common to all architectures
++#
++
++bool 'Restricted links in /tmp' CONFIG_HARDEN_LINK
++bool 'Restricted FIFOs in /tmp' CONFIG_HARDEN_FIFO
++bool 'Restricted /proc' CONFIG_HARDEN_PROC
++bool 'Enforce RLIMIT_NPROC on execve(2)' CONFIG_HARDEN_RLIMIT_NPROC
++if [ "$CONFIG_SYSVIPC" = "y" ]; then
++   bool 'Destroy shared memory segments not in use' CONFIG_HARDEN_SHM
++fi
+diff -urPX nopatch linux-2.4.22/security/Config.in linux-2.4.22-ow1/security/Config.in
+--- linux-2.4.22/security/Config.in	Thu Jan  1 03:00:00 1970
++++ linux-2.4.22-ow1/security/Config.in	Thu Aug 28 06:20:52 2003
+@@ -0,0 +1,9 @@
++#
++# Security options
++#
++mainmenu_option next_comment
++comment 'Security options'
++
++source security/Common.in
++
++endmenu
