@@ -38,7 +38,7 @@ Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
-Source7:	linux-2.4.12-netfilter-20011021.tar.gz
+Source7:	linux-2.4.12-netfilter-20011023.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_version}.tar.gz
@@ -127,6 +127,8 @@ Patch120:	linux-2.4.10-aironet.patch
 Patch121:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
 Patch122:	linux-2.4.13-pre6-lvm-1.0.1rc4cvs.patch
+# someone (davem?) broke acenic in 2.4.13-pre
+Patch123:	linux-2.4.13-acenic-rollback.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -138,7 +140,8 @@ Patch902:	linux-vlan-fixpatch.patch
 #Patch903:	linux-lids-fixpatch.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch905:	linux-ipvs+ext3.patch
-Patch906:	linux-ext3-quota.patch
+# tweaks for grsecurity, description inside patch
+Patch906:	linux-grsecurity-fixes.patch
 
 # Linus's -pre
 Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.13-%{pre_version}.gz
@@ -397,6 +400,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
+%patch123 -p1 -R
 
 %patch900 -p0 
 %patch904 -p0
