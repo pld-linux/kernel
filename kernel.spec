@@ -175,6 +175,7 @@ Patch76:	2.6.8-lirc-0.7.0-pre7.patch
 # derived from official grsecurity-2.1.0-2.6.10-200501071049.patch
 Patch90:	grsecurity-2.1.0-2.6.10-200501071049.patch
 Patch91:	linux-2.6.10-secfix-200501071130.patch
+Patch92:	linux-2.6.10-grsec_sparc.patch
 
 # frpm http://www.ssi.bg/~ja/#routers
 Patch100:	routes-2.6.10-11.diff
@@ -581,6 +582,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %if %{with grsec}
 %patch90 -p1
 %patch91 -p1
+%patch92 -p1
 %endif
 %endif
 
