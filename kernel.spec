@@ -96,8 +96,6 @@ Patch10:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.5-247.gz
 # http://sci.felk.cvut.cz/nwd/linux-2.4/
 Patch11:	nwd-1.4-2.4.7-PLD.patch
 Patch12:	nwd-1.4-pre.common.patch
-# http://www.dandelion.com/Linux/DAC960-2.4.11.tar.gz
-Patch13:	DAC960-2.4.11.patch.gz
 
 # Assorted bugfixes
 
@@ -555,10 +553,6 @@ echo Network disk device support
 %patch11 -p1
 %patch12 -p1
 %endif
-
-# DAC960 drivers update
-echo Update DAC960 driver
-%patch13 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
