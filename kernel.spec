@@ -29,7 +29,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.4.21
-Release:	0.7
+Release:	1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -290,11 +290,11 @@ Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.7.0
 Provides:	bttv = 0.7.83
-Provides:	%{name}(netfilter) = 1.2.7a-%{netfilter_snap}
+Provides:	%{name}(netfilter) = 1.2.8-%{netfilter_snap}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
-Provides:	%{name}(cdrw)
-Provides:	%{name}(cdmrw)
+#Provides:	%{name}(cdrw)
+#Provides:	%{name}(cdmrw)
 Provides:	%{name}(hostap)
 Autoreqprov:	no
 Prereq:		fileutils
@@ -305,7 +305,7 @@ ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
 BuildRequires:	bin86
 %endif
-Conflicts:	iptables < 1.2.7a
+Conflicts:	iptables < 1.2.8
 Conflicts:	lvm < 1.0.4
 Conflicts:	xfsprogs < 2.1.0
 Conflicts:	reiserfsprogs < 3.6.3
@@ -348,17 +348,17 @@ Provides:	%{name}-smp = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.7.0
 Provides:	bttv = 0.7.83
-Provides:	%{name}(netfilter) = 1.2.7a-%{netfilter_snap}
+Provides:	%{name}(netfilter) = 1.2.8-%{netfilter_snap}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
-Provides:	%{name}(cdrw)
-Provides:	%{name}(cdmrw)
+#Provides:	%{name}(cdrw)
+#Provides:	%{name}(cdmrw)
 Provides:	%{name}(hostap)
 Prereq:		fileutils
 Prereq:		modutils
 Prereq:		geninitrd >= 2.21
 Autoreqprov:	no
-Conflicts:	iptables < 1.2.7a
+Conflicts:	iptables < 1.2.8
 Conflicts:	lvm < 1.0.4
 Conflicts:	xfsprogs < 2.1.0
 Conflicts:	reiserfsprogs < 3.6.3
@@ -482,7 +482,7 @@ Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
 Provides:	i2c-devel = 2.7.0
-Provides:	%{name}(netfilter) = 1.2.7a-%{netfilter_snap}
+Provides:	%{name}(netfilter) = 1.2.8-%{netfilter_snap}
 Autoreqprov:	no
 
 %description headers
