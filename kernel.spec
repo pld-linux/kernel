@@ -19,14 +19,14 @@
 %define		grsec_version		1.8.7-2.4.14
 %define		tulip_version		1.1.8
 %define		aic_version		6.2.3-2.4.7
-%define		jfs_version		2.4-1.0.7
+%define		jfs_version		2.4-1.0.9
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.14
-Release:	0.1
+Release:	0.2
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -127,8 +127,6 @@ Patch120:	linux-2.4.10-aironet.patch
 Patch121:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
 Patch122:	linux-2.4.14-lvm-1.0.1rc4cvs.patch
-# davem broke acenic in 2.4.13-pre
-Patch123:	linux-acenic-dma64.patch
 # HTP360/370 driver update
 Patch124:	linux-drivers_ide_hpt366.c.diff
 Patch125:	linux-2.4.13-usb-ohci.patch
@@ -153,6 +151,7 @@ Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch905:	linux-ipvs+ext3.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
+Patch907:	jfs_defconfig.fix
 
 # Linus's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.13-%{pre_version}.gz
@@ -414,9 +413,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
-%patch123 -p1
 %patch124 -p1
-%patch125 -p1
+#%patch125 -p1
 
 # IRDA patches
 %patch127 -p1
@@ -426,11 +424,11 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %patch900 -p0 
 %patch904 -p0
-%if%{?_without_grsec:0}%{!?_without_grsec:1}
-%ifarch %{ix86}
-%patch906 -p1
-%endif
-%endif
+#%if%{?_without_grsec:0}%{!?_without_grsec:1}
+#%ifarch %{ix86}
+#%patch906 -p1
+#%endif
+#%endif
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -487,12 +485,12 @@ mv %{sym_ncr_version}/*.{c,h} drivers/scsi
 mv %{sym_ncr_version}/{README,ChangeLog}.* Documentation
 rm -rf %{sym_ncr_version}
 
-# 802.1Q VLANs
-echo Adding VLANs
-cd vlan
-%patch902 -p1
-cd ..
-patch -p1 -s <vlan/vlan_2.4.patch
+## 802.1Q VLANs
+#echo Adding VLANs
+#cd vlan
+#%patch902 -p1
+#cd ..
+#patch -p1 -s <vlan/vlan_2.4.patch
 
 # IP personality
 echo Adding IP Personality 
@@ -500,8 +498,9 @@ patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010724-l
 
 # JFS
 echo Adding JFS
-patch -p1 -s <jfs-2.4.common-1.0.7-patch
-patch -p1 -s <jfs-2.4.7-1.0.7-patch
+%patch907 -p0
+patch -p1 -s <jfs-2.4.common-1.0.9-patch
+patch -p1 -s <jfs-2.4.7-1.0.9-patch
 
 # Tulip driver installed.
 echo Replaced Tulip driver
