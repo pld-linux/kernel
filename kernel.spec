@@ -479,8 +479,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %endif
 %{?_with_preemptive:echo Installing Preemptible patch}
 %{?_with_preemptive:%patch8 -p1}
-%patch9 -p1
-%patch10 -p1
+#%patch9 -p1
+#%patch10 -p1
 %patch11 -p1
 %patch12 -p1
 %patch13 -p1
