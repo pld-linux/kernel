@@ -40,7 +40,6 @@ Autoreqprov:	no
 PreReq:		coreutils
 PreReq:		module-init-tools >= 0.9.9
 Provides:	module-info
-
 Provides:	kernel(netfilter) = %{_netfilter_snap}
 Obsoletes:	kernel-modules
 Conflicts:	PPP < 2.4.0
@@ -120,7 +119,7 @@ hardware.
 find include/ -type d -maxdepth 1 -name "asm-*" ! -name asm-i386 ! -name asm-generic | xargs rm -rf
 mv arch/{x86_64,i386}/kernel/early_printk.c
 find arch/* -type d -maxdepth 0 ! -name i386 | xargs rm -rf
-%{__make} mrproper
+make mrproper
 
 cat << EOF > cleanup-nondist-kernel.sh
 #!/bin/sh
@@ -136,7 +135,9 @@ if [ -r "config-nondist" ]; then
     make mrproper
     cd include/linux
     ln -sf autoconf{-nondist,}.h
-    cd ../..
+    cd ..
+    ln -sf asm-i386 asm
+    cd ..
     cp config-nondist .config
     make include/linux/version.h
     chmod 644 include/linux/version.h
@@ -158,20 +159,20 @@ install %{SOURCE2} $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}/config-nondist
 rm -rf $RPM_BUILD_ROOT
 
 %post headers
-rm -f /usr/src/linux
-ln -snf linux-%{version} /usr/src/linux
+rm -f %{_kernelsrcdir}
+ln -snf linux-%{version} %{_kernelsrcdir}
 
 %postun headers
-if [ -L %{_prefix}/src/linux ]; then
-	if [ "`ls -l %{_prefix}/src/linux | awk '{ print $10 }'`" = "linux-%{version}" ]; then
+if [ -L %{_kernelsrcdir} ]; then
+	if [ "`ls -l %{_kernelsrcdir} | awk '{ print $10 }'`" = "linux-%{version}" ]; then
 		if [ "$1" = "0" ]; then
-			rm -f %{_prefix}/src/linux
+			rm -f %{_kernelsrcdir}
 		fi
 	fi
 fi
 
 %preun source
-cd /usr/src/linux
+cd %{_kernelsrcdir}
 make mrproper
 rm -f config-nondist include/linux/autoconf-nondist.h
 
@@ -202,7 +203,7 @@ echo
 %{_kernelsrcdir}-%{version}/scripts
 %{_kernelsrcdir}-%{version}/sound
 %{_kernelsrcdir}-%{version}/security
-%{_kernelsrcdir}-%{version}%{_prefix}
+%{_kernelsrcdir}-%{version}/usr
 %{_kernelsrcdir}-%{version}/Makefile
 %{_kernelsrcdir}-%{version}/COPYING
 %{_kernelsrcdir}-%{version}/CREDITS
