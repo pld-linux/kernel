@@ -5,11 +5,12 @@
 # _without_grsec	- build kernel without grsecurity patch
 # _with_preemptible	- build with Preemptible patch
 # _with_o1_sched	- build with new O(1) scheduler
+# _with_ACPI		- build with ACPI support
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 #
 %define		test_build		0
-%define		krelease		2.37
+%define		krelease		2.38
 #
 %define base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 #
@@ -775,6 +776,18 @@ BuildKernel() {
 	cat %{SOURCE1004} >> arch/%{base_arch}/defconfig
 %if%{?_with_preemptive:1}%{!?_with_preemptive:0}
 	cat %{SOURCE1999} >> arch/%{base_arch}/defconfig
+%endif
+%if%{?_with_ACPI:1}%{!?_with_ACPI}
+	echo "CONFIG_ACPI=y">>arch/%{base_arch}/defconfig
+	echo "# CONFIG_ACPI_DEBUG is not set">>arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_BUSMGR=m">>arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_SYS=m">>arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_CPU=m">>arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_BUTTON=m">>arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_AC=m">>arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_EC=m">>arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_CMBATT=m">>arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_THERMAL=m">>arch/%{base_arch}/defconfig
 %endif
 	if [ "$BOOT" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
