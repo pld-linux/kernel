@@ -388,7 +388,7 @@ Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
 Provides:	i2c-devel
-Provides:	%{name}-headers(netfilter) = %{_nstfilter_snap}
+Provides:	%{name}-headers(netfilter) = %{_netfilter_snap}
 Provides:	%{name}-headers(alsa-drivers)
 Provides:	alsa-driver-devel
 Obsoletes:	alsa-driver-devel
