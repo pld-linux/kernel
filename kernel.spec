@@ -55,9 +55,11 @@ Patch13:	linux-ipv6-addrconf.patch
 Patch14:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
 # Linux Virtual Server: http://www.linuxvirtualserver.org/software/
 Patch15:	linux-ipvs-0.9.16-%{version}.patch
-Patch16:	kernel-3c90x.patch
+Patch16:	%{name}-3c90x.patch
 # raw-io patch
 Patch17:	ftp://ftp.kernel.org/pub/linux/kernel/people/sct/raw-io/raw-2.2.17.diff
+# modularization FB for Permedia2 (patch from RH)
+Patch18:	%{name}-fb-modules.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -72,6 +74,7 @@ BuildRequires:	sparc32
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
 Provides:	%{name}(ipvs) = %{version}
+Provides:	%{name}(rawio) = %{version}
 Autoreqprov:	no
 Prereq:		fileutils
 Prereq:		modutils
@@ -111,6 +114,8 @@ Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
+Provides:	%{name}(ipvs) = %{version}
+Provides:	%{name}(rawio) = %{version}
 Prereq:		modutils
 Autoreqprov:	no
 
@@ -139,6 +144,8 @@ Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
+Provides:	%{name}(ipvs) = %{version}
+Provides:	%{name}(rawio) = %{version}
 Prereq:		modutils
 Autoreqprov:	no
 
@@ -163,6 +170,8 @@ Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
+Provides:	%{name}(ipvs) = %{version}
+Provides:	%{name}(rawio) = %{version}
 Prereq:		modutils
 Autoreqprov:	no
 
@@ -222,6 +231,7 @@ Group(pl):	Podstawowe/J±dro
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(ipvs) = %{version}
+Provides:	%{name}-headers(rawio) = %{version}
 Autoreqprov:	no
 
 %description headers
@@ -290,6 +300,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch15 -p1
 %patch16 -p1
 %patch17 -p1
+%patch18 -p1
 
 tar zxf %{SOURCE6} dhiggen-over-0.23.1
 patch -p2 -s <dhiggen-over-0.23.1
@@ -473,6 +484,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH16}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH17}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH18}
 
 tar zxf %{SOURCE6} dhiggen-over-0.23.1 -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
