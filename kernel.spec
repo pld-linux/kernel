@@ -37,7 +37,7 @@ Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-126.tar.gz
 Source32:	kernel-BuildASM.sh
 Source33:	ftp://sourceforge.org/pcmcia/pcmcia-cs-%{pcmcia_version}.tar.gz
 Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.14.1.gz
-Patch1:		ftp://ftp.botik.ru/rented/namesys/ftp/pub/linux+reiserfs/linux-2.2.14-reiserfs-3.5.20-patch.gz
+Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.15-reiserfs-3.5.21-patch.gz
 Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
 Patch3:		linux-tasks.patch
 Patch4:		http://www.redhat.com/~mingo/raid-patches/raid-2.2.15-A0.gz
