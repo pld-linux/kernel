@@ -484,9 +484,9 @@ ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
 %if %{?_without_lsm:0}%{!?_without_lsm:1}
 install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/{linux,asm-i386}/flask
 install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/flask
-install security/lids/include/linux/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
-install security/selinux/include/linux/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/flask
-install security/selinux/include/asm-i386/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/asm-i386/flask
+#install security/lids/include/linux/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
+#install security/selinux/include/linux/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/flask
+#install security/selinux/include/asm-i386/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/asm-i386/flask
 %endif			# _without_lsm
 
 %{__make} include/linux/version.h
