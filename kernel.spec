@@ -16,7 +16,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	4pre2
+Release:	4
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -97,7 +97,7 @@ Patch42:	%{name}-serial-initialisation.patch
 Patch100:	bridge-include.patch
 Patch101:	bridge-netsyms.patch
 Patch102:	%{name}-ipsec-bridge.patch
-#Patch103:	%{name}-bridge-extraversion.patch
+
 Patch104:	jfs-2.2.20-v%{jfs_version}-patch
 Patch105:	%{name}-wanrouter-bridge.patch
 Patch106:	linux-netdrivers_vlan.patch
@@ -105,13 +105,10 @@ Patch107:	linux-atm.patch
 Patch108:	atm-unresolved.patch
 Patch109:	af-unresolved.patch
 Patch110:	linux-2.2.20-pcmcia-without-iee1394.patch.bz2
-Patch111:	%{name}-mach64.patch
-
-# hap linux based on http://www.theaimsgroup.com/~hlein/hap-linux/hap-linux-2.2.20-2.diff
-Patch200:	hap-linux-2.2.20-2.diff
+Patch120:	bttv-makefile.patch
 
 # HTB from http://luxik.cdi.cz/~devik/qos/htb/
-Patch210:	htb2_2.2.17.diff
+Patch200:	htb2_2.2.17.diff
 
 Patch300:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/v2.2/2.2.21pre/patch-2.2.21-pre2.bz2
 Patch320:	fix-prename.patch
@@ -312,6 +309,7 @@ Group(de):	Grundsätzlich/Kern
 Group(pl):	Podstawowe/J±dro
 %ifarch %{x86}
 Provides:	%{name}-headers(reiserfs) = %{version}
+Provides:	i2c-devel = 2.6.1
 %endif
 Provides:	%{name}-headers(ipvs) = %{version}
 Provides:	%{name}-headers(rawio) = %{version}
@@ -404,7 +402,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
-#%patch103 -p1
 
 %patch20 -p1
 %patch21 -p1
@@ -429,7 +426,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch108 -p1
 %patch109 -p1
 %patch110 -p1
-#%patch111 -p1
 
 # 802.1Q VLANs
 patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
@@ -439,6 +435,10 @@ cd serial-5.05
 %patch42 -p1
 ./install-in-kernel ../
 cd .. 
+
+# Dac drivers
+mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
+mv DAC960.[ch] drivers/block
 
 # i2c
 %ifarch %{ix86}
@@ -451,19 +451,23 @@ cd ..
 %patch321 -p1
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 
-# hap linux
-#%patch200 -p1
+# symbios drivers
+mv sym-%{symncr_version}/*.{c,h} drivers/scsi
+mv sym-%{symncr_version}/{README,ChangeLog}.* Documentation
 
 # Tekram DC395/315 U/UW SCSI host driver
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # JFS 1.0.5
+# make a copy of README
 %patch104 -p1
 patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 
 %patch107 -p1
 
-%patch210 -p1
+%patch200 -p1
+
+%patch120 -p1
 
 %build
 BuildKernel() {
@@ -616,13 +620,18 @@ make
 install linux/tun.o "$KERNEL_INSTALL_DIR/lib/modules/$KernelVer/net"
 cd ..
 
-# bttv
-#cd bttv-%{bttv_version}
-#%{__make} EXTRA_CFLAGS="$RPM_OPT_FLAGS"
-#%{__make} -C driver install DESTDIR=$KERNEL_INSTALL_DIR
-#cd ..
+#  bttv
+cd bttv-%{bttv_version}
+cd driver/
+cp Makefile Makefile.new
+sed -e "s/^CURRENT[	]*:=.*/CURRENT := $KernelVer/" Makefile.new > Makefile
+cd ..
+%{__make} EXTRA_CFLAGS="$RPM_OPT_FLAGS"
+%{__make} -C driver install DESTDIR=$KERNEL_INSTALL_DIR
+cd ..
 
 }
+
 
 KERNEL_BUILD_DIR=`pwd`
 KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
@@ -707,14 +716,12 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH40}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH100}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH102}
-#patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH103}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH105}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH106}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH108}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH109}
-#patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH111}
 
 # VLAN
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <vlan.%{vlan_version}/vlan_2.2.patch
@@ -739,9 +746,8 @@ mkpatch/mkpatch.pl . $RPM_BUILD_ROOT/usr/src/linux-%{version} | (cd $RPM_BUILD_R
 cd ..
 %endif
 
-# 2.2.20ow & hap-linux
+# 2.2.20ow
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
-#patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH200}
 
 # symbios drivers
 tar zxf %{SOURCE6}
@@ -753,10 +759,9 @@ rm -rf sym-%{symncr_version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH104}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < jfs-2.2.common-v%{jfs_version}-patch
 
-
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH107}
 
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH210}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH200}
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
