@@ -5,6 +5,7 @@
 # _with_lids		- build LIDS enabled kernels
 # _without_grsec	- build kernel without grsecurity patch
 # _with_preemptive	- build with Preemptive patch
+# _without_smp		- don't build SMP kernel
 #
 %define		test_build		0
 #
@@ -218,6 +219,7 @@ Jest ono wymagane jedynie gdy potrzebne jest maksymalne bezpieczeñstwo.
 Szczegó³y pod http://www.lids.org/.
 %endif
 
+%if%{?_without_smp:0}%{!?_without_smp:1}
 %package smp
 Summary:	Kernel version %{version} compiled for SMP machines
 Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
@@ -275,6 +277,7 @@ Jest ono wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów,
 jedynie gdy wymagane jest maksymalne bezpieczeñstwo.
 
 Szczegó³y pod http://www.lids.org/.
+%endif
 %endif
 
 %package BOOT
@@ -541,16 +544,16 @@ BuildKernel() {
 		echo BUILDING THE NORMAL KERNEL...
 	fi
 	:> arch/$RPM_ARCH/defconfig
+	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/$RPM_ARCH/defconfig
 %ifarch i386
-	echo "CONFIG_M386=y" > arch/$RPM_ARCH/defconfig
+	echo "CONFIG_M386=y" >> arch/$RPM_ARCH/defconfig
 %endif
 %ifarch i586
-	echo "CONFIG_M586=y" > arch/$RPM_ARCH/defconfig
+	echo "CONFIG_M586=y" >> arch/$RPM_ARCH/defconfig
 %endif
 %ifarch i686
-	echo "CONFIG_M686=y" > arch/$RPM_ARCH/defconfig
+	echo "CONFIG_M686=y" >> arch/$RPM_ARCH/defconfig
 %endif
-	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1001} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1002} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1003} >> arch/$RPM_ARCH/defconfig
@@ -632,14 +635,18 @@ BuildKernel
 
 %if !%{test_build}
 # SMP KERNEL
+%if %{?_with_lids:1}%{!?_with_lids:0}
 BuildKernel smp
+%endif
 
 %if %{?_with_lids:1}%{!?_with_lids:0}
 # UP LIDS KERNEL
 BuildKernel lids
 
+%if%{?_without_smp:0}%{!?_without_smp:1}
 # SMP LIDS KERNEL
 BuildKernel lids smp
+%endif
 %endif
 
 # BOOT kernel
@@ -809,6 +816,7 @@ rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}-lids /lib/modules/%{version}
 %endif
 
+%if%{?_without_smp:0}%{!?_without_smp:1}
 %post smp
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
@@ -850,6 +858,7 @@ fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp-lids /lib/modules/%{version}
 %endif
+%endif
 
 %post BOOT
 if [ ! -L %{_libdir}/bootdisk/lib/modules/%{version} ] ; then
@@ -885,6 +894,7 @@ fi
 rm -f /boot/initrd-%{version}-%{release}-lids.gz
 %endif
 
+%if%{?_without_smp:0}%{!?_without_smp:1}
 %postun smp
 if [ -L /lib/modules/%{version} ]; then 
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp" ]; then
@@ -905,6 +915,7 @@ if [ -L /lib/modules/%{version} ]; then
 	fi
 fi
 rm -f /boot/initrd-%{version}-%{release}smp-lids.gz
+%endif
 %endif
 
 %postun BOOT
@@ -966,6 +977,7 @@ fi
 /lib/modules/%{version}-%{release}-lids/modules.generic_string
 %endif
 
+%if%{?_without_smp:0}%{!?_without_smp:1}
 %files smp
 %defattr(644,root,root,755)
 %ifarch alpha sparc
@@ -1000,6 +1012,7 @@ fi
 /lib/modules/%{version}-%{release}smp-lids/modules.dep
 /lib/modules/%{version}-%{release}smp-lids/modules.*map
 /lib/modules/%{version}-%{release}smp-lids/modules.generic_string
+%endif
 %endif
 
 %ifnarch i586 i686
