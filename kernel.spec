@@ -70,9 +70,9 @@ Patch0:		%{name}-pldfblogo.patch
 Patch1:		patch-int-2.4.18.3.bz2
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch2:		linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
-# from ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
 Patch3:		http://people.redhat.com/mingo/O(1)-scheduler/sched-2.4.19-rc2-A4
-Patch4:		linux-2.4.19-xfs-20020808.patch.gz
+# from ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
+Patch4:		linux-2.4.19-xfs-20020812.patch.gz
 # Homepage of ABI:	http://linux-abi.sourceforge.net/
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2 
 Patch5:		linux-abi-2.4.19.0.patch.bz2
