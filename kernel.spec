@@ -243,12 +243,13 @@ BuildRequires:	%{kgcc_package}
 %endif
 BuildRequires:	modutils
 Buildrequires:	perl
-BuildRequires:	rpm >= 4.0.4
+BuildRequires:	rpm >= 4.0.2-75
 Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.6.1
 Provides:	bttv = 0.7.83
-Provides:	%{name}_netfilter = 1.2.7
+# From unstable kernel remainder ...
+#Provides:	%{name}_netfilter = 1.2.7
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
 Autoreqprov:	no
@@ -260,7 +261,8 @@ ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
 BuildRequires:	bin86
 %endif
-Conflicts:	iptables < 1.2.7
+# From unstable ...
+#Conflicts:	iptables < 1.2.7
 Conflicts:	lvm < 1.0.4
 Conflicts:	xfsprogs < 2.0.0
 
@@ -312,7 +314,8 @@ Provides:	i2c = 2.6.1
 Provides:	bttv = 0.7.83
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
-Provides:	%{name}_netfilter = 1.2.7
+# From unstable ...
+#Provides:	%{name}_netfilter = 1.2.7
 Prereq:		modutils
 Autoreqprov:	no
 
@@ -462,7 +465,8 @@ Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
 Provides:	i2c-devel = 2.6.1
-Provides:	%{name}_netfilter = 1.2.7
+# From unstable ...
+#Provides:	%{name}_netfilter = 1.2.7
 Autoreqprov:	no
 
 %description headers
@@ -734,11 +738,13 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 %endif
 
 # EVMS
+echo Installing EVMS patch 
 %patch136 -p1
 %patch137 -p1
 %{?_with_o1_sched:%patch916 -p1}
 
 %ifarch %{ix86}
+echo 
 %patch139 -p1
 %endif
 
@@ -750,6 +756,7 @@ echo Replacing Trident FB module.
 echo Updating VIA Southbridge
 %patch902 -p1
 
+echo
 %patch903 -p0
 
 %ifarch ppc
@@ -761,6 +768,7 @@ echo Updating VIA Southbridge
 %patch142 -p1
 
 #HPFS fix.
+echo Fixed HPFS
 %patch21 -p1
 
 # MPPE (ppp)
@@ -770,6 +778,7 @@ echo Updating VIA Southbridge
 %patch23 -p1
 
 # ADM router
+echo Added patch fot ADM router
 %patch144 -p1
 
 #%patch145 -p1
