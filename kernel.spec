@@ -1,29 +1,29 @@
 #
 %define		_netfilter_snap		20040518
-%define		_cset			20040522_2209
+%define		_cset			20040524_0509
+%define		_rc			rc1
 %define		no_install_post_strip	1
 #
 Summary:	The Linux kernel (the core of the Linux operating system)
 Name:		kernel
-Version:	2.6.6
-Release:	1.10
+Version:	2.6.7
+Release:	0.1
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-2.6.6.tar.bz2
 # Source0-md5:	5218790bc3db41e77a7422969639a9ad
-Source1:	grsecurity-2.0-2.6.6-unofficial.patch
-Source2:	%{name}-config-nondist
-%if "%{_cset}" != "0"
-Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-%endif
-Patch1:		2.6.0-t6-usb-irq.patch
-Patch2:		2.6.0-t7-memleak-lkml.patch
-Patch3:		2.6.0-t7-memleak2-lkml.patch
-Patch4:		2.6.0-t8-swap-include-lkml.patch
-Patch5:		2.6.0-t9-acpi_osl-lkml.patch
-Patch6:		2.6.6-squashfs2.0.patch
-Patch7:		2.6.6-pramfs.patch
-Patch8:		linux-kbuild-extmod.patch
+Source1:		%{name}-config-nondist
+Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/patch-2.6.7-%{_rc}.bz2
+Patch1:		ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
+Patch2:		grsecurity-2.0-2.6.6-unofficial.patch
+Patch3:		linux-kbuild-extmod.patch
+Patch4:		2.6.0-t6-usb-irq.patch
+Patch5:		2.6.0-t7-memleak-lkml.patch
+Patch6:		2.6.0-t7-memleak2-lkml.patch
+Patch7:		2.6.0-t8-swap-include-lkml.patch
+Patch8:		2.6.0-t9-acpi_osl-lkml.patch
+Patch9:		2.6.6-squashfs2.0.patch
+Patch10:	2.6.6-pramfs.patch
 Patch20:	2.6.4-esfq.patch
 Patch21:	2.6.4-imq.patch
 Patch22:	2.6.4-imq-nat.patch
@@ -113,19 +113,22 @@ also build a custom kernel that is better tuned to your particular
 hardware.
 
 %prep
-%setup -q -n linux-%{version}
+%setup -q -n linux-2.6.6
 %if "%{_cset}" != "0"
 %patch0 -p1
 %endif
-%{__patch} -p1 -s < %{SOURCE1}
+%if "%{_rc}" != "0"
 %patch1 -p1
-%patch2 -p1
+%endif
+#patch2 -p1
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
+%patch9 -p1
+%patch10 -p1
 
 %patch20 -p1
 %patch21 -p1
@@ -172,7 +175,7 @@ fi
 EOF
 chmod 744 regen-version.sh
 
-install %{SOURCE2} config-nondist
+install %{SOURCE1} config-nondist
 ./regen-autoconf.sh
 ./regen-version.sh
 
@@ -187,6 +190,8 @@ rm -rf $RPM_BUILD_ROOT
 %post headers
 rm -f %{_kernelsrcdir}
 ln -snf linux-%{version} %{_kernelsrcdir}
+touch %{_kernelsrcdir}/config-nondist
+touch %{_kernelsrcdir}/include/linux/autoconf-nondist.h
 
 %postun headers
 if [ -L %{_kernelsrcdir} ]; then
