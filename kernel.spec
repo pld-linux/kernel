@@ -25,7 +25,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.16
-Release:	0.1
+Release:	0.2
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -37,7 +37,7 @@ Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 # based on cvs cvs@pserver.samba.org:/cvsroot netfilter
-Source7:	linux-2.4.16-netfilter-20011129.tar.gz
+Source7:	linux-2.4.16-netfilter-20011201.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_version}.tar.gz
@@ -423,7 +423,7 @@ for suite in pending base extra pld ; do
 		ANS="${ANS}y\n"
 	done
 done
-echo -e $ANS | ./runme pld)
+echo -e $ANS | sh -x ./runme pld)
 
 %if %{?_with_lids:1}%{!?_with_lids:0}
 # LIDS
