@@ -825,13 +825,22 @@ rm -f scripts/mkdep
 rm -rf drivers/char/hfmodem/gentbl
 
 # add a rc-boot info
-#install -d $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/rc-boot/images
-#cat >$RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/rc-boot/images/pld-%{version}-%{release} <<EOF
-#TYPE=linux
-#ROOT=auto
-#KERNEL=/boot/vmlinuz-%{version}-%{release}
-#INITRD=/boot/initrd-%{version}-%{release}.gz
-#EOF
+install -d $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/rc-boot/images
+
+cat >$RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/rc-boot/images/pld-%{version}-%{release} <<EOF
+TYPE=linux
+ROOT=auto
+KERNEL=/boot/vmlinuz-%{version}-%{release}
+INITRD=/boot/initrd-%{version}-%{release}.gz
+EOF
+
+cat >$RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/rc-boot/images/pld-%{version}-%{release}smp <<EOF
+TYPE=linux
+ROOT=auto
+KERNEL=/boot/vmlinuz-%{version}-%{release}smp
+INITRD=/boot/initrd-%{version}-%{release}smp.gz
+EOF
+
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -941,7 +950,8 @@ fi
 %ifarch %{ix86}
 /lib/modules/%{version}-%{release}/pcmcia
 %endif
-#%config(missingok) %{_sysconfdir}/sysconfig/rc-boot/images
+%config(missingok) %{_sysconfdir}/sysconfig/rc-boot/images/pld-%{version}-%{release}
+
 
 %files smp
 %defattr(644,root,root,755)
@@ -973,7 +983,7 @@ fi
 %ifarch %{ix86}
 /lib/modules/%{version}-%{release}smp/pcmcia
 %endif
-#%config(missingok) %{_sysconfdir}/sysconfig/rc-boot/images
+%config(missingok) %{_sysconfdir}/sysconfig/rc-boot/images/pld-%{version}-%{release}smp
 
 %ifnarch i586 i686
 %files BOOT
