@@ -44,7 +44,7 @@ diff -urN ../v2.2.21/linux/include/linux/pkt_sched.h linux/include/linux/pkt_sch
  
  struct tc_ratespec
  {
-@@ -188,8 +189,63 @@
+@@ -188,6 +189,61 @@
  	unsigned char   Wlog;		/* log(W)		*/
  	unsigned char   Plog;		/* log(P_max/(qth_max-qth_min))	*/
  	unsigned char   Scell_log;	/* cell size for idle damping */
@@ -66,53 +66,50 @@ diff -urN ../v2.2.21/linux/include/linux/pkt_sched.h linux/include/linux/pkt_sch
 +
 +enum
 +{
-+       TCA_GRED_UNSPEC,
-+       TCA_GRED_PARMS,
-+       TCA_GRED_STAB,
-+       TCA_GRED_DPS,
++    TCA_GRED_UNSPEC,
++    TCA_GRED_PARMS,
++    TCA_GRED_STAB,
++    TCA_GRED_DPS,
 +};
 +
 +#define TCA_SET_OFF TCA_GRED_PARMS
 +struct tc_gred_qopt
 +{
-+       __u32           limit;          /* HARD maximal queue length (bytes)    
++    __u32           limit;          /* HARD maximal queue length (bytes)    
 +*/
-+       __u32           qth_min;        /* Min average length threshold (bytes) 
++    __u32           qth_min;        /* Min average length threshold (bytes) 
 +*/
-+       __u32           qth_max;        /* Max average length threshold (bytes) 
++    __u32           qth_max;        /* Max average length threshold (bytes) 
 +*/
-+       __u32           DP;             /* upto 2^32 DPs */
-+       __u32           backlog;        
-+       __u32           qave;   
-+       __u32           forced; 
-+       __u32           early;  
-+       __u32           other;  
-+       __u32           pdrop;  
++    __u32           DP;             /* upto 2^32 DPs */
++    __u32           backlog;        
++    __u32           qave;   
++    __u32           forced; 
++    __u32           early;  
++    __u32           other;  
++    __u32           pdrop;  
 +
-+       unsigned char   Wlog;           /* log(W)               */
-+       unsigned char   Plog;           /* log(P_max/(qth_max-qth_min)) */
-+       unsigned char   Scell_log;      /* cell size for idle damping */
-+       __u8            prio;		/* prio of this VQ */
-+       __u32	packets;
-+       __u32	bytesin;
++    unsigned char   Wlog;           /* log(W)               */
++    unsigned char   Plog;           /* log(P_max/(qth_max-qth_min)) */
++    unsigned char   Scell_log;      /* cell size for idle damping */
++    __u8            prio;		/* prio of this VQ */
++    __u32	packets;
++    __u32	bytesin;
 +};
 +/* gred setup */
 +struct tc_gred_sopt
 +{
-+       __u32           DPs;
-+       __u32           def_DP;
-+       __u8            grio;
- };
- 
++    __u32           DPs;
++    __u32           def_DP;
++    __u8            grio;
 +
- /* CBQ section */
- 
- #define TC_CBQ_MAXPRIO		8
-@@ -273,5 +329,19 @@
  };
+ 
+ /* HTB section */
+@@ -323,6 +379,20 @@
  
  #define TCA_CBQ_MAX	TCA_CBQ_POLICE
-+
+ 
 +
 +/* dsmark section */
 +
@@ -126,23 +123,25 @@ diff -urN ../v2.2.21/linux/include/linux/pkt_sched.h linux/include/linux/pkt_sch
 +};
 +
 +#define TCA_DSMARK_MAX TCA_DSMARK_VALUE
++
+ /* ATM  section */
  
- #endif
+ enum {
 diff -urN ../v2.2.21/linux/include/linux/skbuff.h linux/include/linux/skbuff.h
 --- ../v2.2.21/linux/include/linux/skbuff.h	Sat Oct 21 12:11:03 2000
 +++ linux/include/linux/skbuff.h	Wed Jul 31 00:00:59 2002
-@@ -112,6 +112,11 @@
+@@ -115,6 +115,11 @@
  		__u32	ifield;
  	} private;
  #endif
 +
 +#ifdef CONFIG_NET_SCHED
-+       __u32           tc_index;               /* traffic control index */
++    __u32           tc_index;               /* traffic control index */
 +#endif
 +
- };
+ #if defined(CONFIG_ATM) && !defined(CONFIG_ATM_SKB)
  
- /* These are just the default values. This is run time configurable.
+ /* ----- For updated drivers ----------------------------------------------- */
 diff -urN ../v2.2.21/linux/include/net/dsfield.h linux/include/net/dsfield.h
 --- ../v2.2.21/linux/include/net/dsfield.h	Thu Jan  1 00:00:00 1970
 +++ linux/include/net/dsfield.h	Wed Jul 31 00:00:59 2002
