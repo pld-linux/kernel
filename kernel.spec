@@ -945,7 +945,7 @@ KERNEL_BUILD_DIR=`pwd`
 KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
 rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
-exit 1
+
 # make drivers/scsi/ missing files
 	(cd drivers/scsi; make -f M)
 	
@@ -965,8 +965,6 @@ rm -rf $KERNEL_INSTALL_DIR
 %install
 rm -rf $RPM_BUILD_ROOT
 umask 022
-echo "Target CPU: %{_target_cpu}"
-echo "Base arch: %{base_arch}"
 
 install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{version}}
 
@@ -1002,15 +1000,10 @@ cp -a %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
 %endif
 
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-echo "Target CPU: %{_target_cpu}"
-echo "Base arch: %{base_arch}"
 
 %{__make} mrproper
 find  -name "*~" -print | xargs rm -f
 find  -name "*.orig" -print | xargs rm -f
-echo "Target CPU: %{_target_cpu}"
-echo "Base arch: %{base_arch}"
-
 
 %ifarch %{ix86}
 cat $RPM_SOURCE_DIR/kernel-ia32.config > .config
