@@ -128,6 +128,7 @@ Patch126:	linux-%{version}-cramfs.patch
 Patch127:	linux-%{version}-sparc64-fix.patch
 Patch128:	linux-%{version}-AXP-fix.patch
 Patch129:	kernel-Makefile-include-fix.patch
+Patch130:	kernel-2.4.17-netsyms-export-fix.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -474,6 +475,9 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 
 # Fided include path
 %patch129 -p0
+
+#Fixed sysctl export symbols.
+%patch130 -p0
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
