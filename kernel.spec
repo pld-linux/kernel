@@ -1026,6 +1026,12 @@ if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
+echo "******************************************************************"
+echo " The serial port driver is compiled into the kernel.              "
+echo " You will have to release the port you want to use for LIRC with: "
+echo "    setserial /dev/ttySx uart none                                "
+echo "******************************************************************"
+
 %postun
 if [ -L /lib/modules/%{version} ]; then
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $10 }'`" = "%{version}-%{release}" ]; then
@@ -1080,6 +1086,12 @@ ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
+
+echo "******************************************************************"
+echo " The serial port driver is compiled into the kernel.              "
+echo " You will have to release the port you want to use for LIRC with: "
+echo "    setserial /dev/ttySx uart none                                "
+echo "******************************************************************"
 
 %postun smp
 if [ -L /lib/modules/%{version} ]; then
