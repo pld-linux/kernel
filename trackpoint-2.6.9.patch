@@ -5,21 +5,21 @@ diff -uNr a/drivers/input/mouse/Makefile b/drivers/input/mouse/Makefile
  obj-$(CONFIG_MOUSE_SERIAL)	+= sermouse.o
  obj-$(CONFIG_MOUSE_VSXXXAA)	+= vsxxxaa.o
  
--psmouse-objs  := psmouse-base.o logips2pp.o synaptics.o
-+psmouse-objs  := psmouse-base.o logips2pp.o synaptics.o trackpoint.o
+-psmouse-objs  := psmouse-base.o alps.o logips2pp.o synaptics.o
++psmouse-objs  := psmouse-base.o alps.o logips2pp.o synaptics.o trackpoint.o
 diff -uNr a/drivers/input/mouse/psmouse-base.c b/drivers/input/mouse/psmouse-base.c
 --- a/drivers/input/mouse/psmouse-base.c	2004-10-18 17:53:43.000000000 -0400
 +++ b/drivers/input/mouse/psmouse-base.c	2004-11-07 00:28:29.000000000 -0500
-@@ -21,6 +21,7 @@
- #include "psmouse.h"
+@@ -24,6 +24,7 @@
  #include "synaptics.h"
  #include "logips2pp.h"
+ #include "alps.h"
 +#include "trackpoint.h"
  
  #define DRIVER_DESC	"PS/2 mouse driver"
  
-@@ -468,6 +469,16 @@
- 	int synaptics_hardware = 0;
+@@ -427,6 +428,16 @@
+ 		return PSMOUSE_THINKPS;
  
  /*
 + * Try to initialize the IBM TrackPoint
@@ -34,7 +34,7 @@ diff -uNr a/drivers/input/mouse/psmouse-base.c b/drivers/input/mouse/psmouse-bas
 +/*
   * Try Synaptics TouchPad
   */
- 	if (max_proto > PSMOUSE_PS2 && synaptics_detect(psmouse)) {
+ 	if (max_proto > PSMOUSE_PS2 && synaptics_detect(psmouse, set_properties) == 0) {
 diff -uNr a/drivers/input/mouse/trackpoint.c b/drivers/input/mouse/trackpoint.c
 --- a/drivers/input/mouse/trackpoint.c	1969-12-31 19:00:00.000000000 -0500
 +++ b/drivers/input/mouse/trackpoint.c	2004-12-01 18:52:16.000000000 -0500
