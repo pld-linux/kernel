@@ -1,0 +1,961 @@
+diff -u -p linux/include/net/irda/irlmp.d2.h linux/include/net/irda/irlmp.h
+--- linux/include/net/irda/irlmp.d2.h	Fri Nov  2 14:11:19 2001
++++ linux/include/net/irda/irlmp.h	Mon Nov  5 18:46:49 2001
+@@ -11,6 +11,7 @@
+  * 
+  *     Copyright (c) 1998-1999 Dag Brattli <dagb@cs.uit.no>, 
+  *     All Rights Reserved.
++ *     Copyright (c) 2000-2001 Jean Tourrilhes <jt@hpl.hp.com>
+  *     
+  *     This program is free software; you can redistribute it and/or 
+  *     modify it under the terms of the GNU General Public License as 
+@@ -131,7 +132,6 @@ struct lap_cb {
+ 
+ 	struct irlap_cb *irlap;   /* Instance of IrLAP layer */
+ 	hashbin_t *lsaps;         /* LSAP associated with this link */
+-	int refcount;
+ 
+ 	__u8  caddr;  /* Connection address */
+  	__u32 saddr;  /* Source device address */
+diff -u -p linux/include/net/irda/irlmp_event.d2.h linux/include/net/irda/irlmp_event.h
+--- linux/include/net/irda/irlmp_event.d2.h	Fri Nov  2 18:47:47 2001
++++ linux/include/net/irda/irlmp_event.h	Mon Nov  5 18:47:05 2001
+@@ -11,6 +11,7 @@
+  * 
+  *     Copyright (c) 1997, 1999 Dag Brattli <dagb@cs.uit.no>, 
+  *     All Rights Reserved.
++ *     Copyright (c) 2000-2001 Jean Tourrilhes <jt@hpl.hp.com>
+  *     
+  *     This program is free software; you can redistribute it and/or 
+  *     modify it under the terms of the GNU General Public License as 
+@@ -102,10 +103,6 @@ extern const char *irlsap_state[];
+ void irlmp_watchdog_timer_expired(void *data);
+ void irlmp_discovery_timer_expired(void *data);
+ void irlmp_idle_timer_expired(void *data);
+-
+-void irlmp_next_station_state(IRLMP_STATE state);
+-void irlmp_next_lsap_state(struct lsap_cb *self, LSAP_STATE state);
+-void irlmp_next_lap_state(struct lap_cb *self, IRLMP_STATE state);
+ 
+ void irlmp_do_lap_event(struct lap_cb *self, IRLMP_EVENT event, 
+ 			struct sk_buff *skb);
+diff -u -p linux/include/net/irda/irlap_event.d2.h linux/include/net/irda/irlap_event.h
+--- linux/include/net/irda/irlap_event.d2.h	Fri Nov  2 18:47:12 2001
++++ linux/include/net/irda/irlap_event.h	Mon Nov  5 18:46:30 2001
+@@ -12,6 +12,7 @@
+  * 
+  *     Copyright (c) 1998-1999 Dag Brattli <dagb@cs.uit.no>, 
+  *     All Rights Reserved.
++ *     Copyright (c) 2000-2001 Jean Tourrilhes <jt@hpl.hp.com>
+  *     
+  *     This program is free software; you can redistribute it and/or 
+  *     modify it under the terms of the GNU General Public License as 
+@@ -103,6 +104,7 @@ typedef enum {
+ 	DISCOVERY_TIMER_EXPIRED,
+ 	WD_TIMER_EXPIRED,
+ 	BACKOFF_TIMER_EXPIRED,
++	MEDIA_BUSY_TIMER_EXPIRED,
+ } IRLAP_EVENT;
+ 
+ /*
+diff -u -p linux/include/net/irda/timer.d2.h linux/include/net/irda/timer.h
+--- linux/include/net/irda/timer.d2.h	Mon Nov  5 14:12:40 2001
++++ linux/include/net/irda/timer.h	Mon Nov  5 18:48:00 2001
+@@ -11,6 +11,7 @@
+  * 
+  *     Copyright (c) 1997, 1998-1999 Dag Brattli <dagb@cs.uit.no>, 
+  *     All Rights Reserved.
++ *     Copyright (c) 2000-2001 Jean Tourrilhes <jt@hpl.hp.com>
+  *     
+  *     This program is free software; you can redistribute it and/or 
+  *     modify it under the terms of the GNU General Public License as 
+@@ -47,7 +48,9 @@
+  *  duration of the P-timer.
+  */
+ #define WD_TIMEOUT          (POLL_TIMEOUT*2)
++
+ #define MEDIABUSY_TIMEOUT   (500*HZ/1000)    /* 500 msec */
++#define SMALLBUSY_TIMEOUT   (100*HZ/1000)    /* 100 msec - IrLAP 6.13.4 */
+ 
+ /*
+  *  Slot timer must never exceed 85 ms, and must always be at least 25 ms, 
+@@ -75,7 +78,7 @@ inline void irlap_start_final_timer(stru
+ inline void irlap_start_wd_timer(struct irlap_cb *self, int timeout);
+ inline void irlap_start_backoff_timer(struct irlap_cb *self, int timeout);
+ 
+-void irlap_start_mbusy_timer(struct irlap_cb *);
++void irlap_start_mbusy_timer(struct irlap_cb *self, int timeout);
+ void irlap_stop_mbusy_timer(struct irlap_cb *);
+ 
+ struct lsap_cb;
+diff -u -p linux/include/net/irda/irda.d2.h linux/include/net/irda/irda.h
+--- linux/include/net/irda/irda.d2.h	Mon Nov  5 14:07:34 2001
++++ linux/include/net/irda/irda.h	Mon Nov  5 18:46:05 2001
+@@ -10,6 +10,7 @@
+  * Modified by:   Dag Brattli <dagb@cs.uit.no>
+  * 
+  *     Copyright (c) 1998-2000 Dag Brattli, All Rights Reserved.
++ *     Copyright (c) 2000-2001 Jean Tourrilhes <jt@hpl.hp.com>
+  *      
+  *     This program is free software; you can redistribute it and/or 
+  *     modify it under the terms of the GNU General Public License as 
+@@ -42,6 +43,11 @@ typedef __u32 magic_t;
+ 
+ #ifndef FALSE 
+ #define FALSE 0
++#endif
++
++/* Hack to do small backoff when setting media busy in IrLAP */
++#ifndef SMALL
++#define SMALL 5
+ #endif
+ 
+ #ifndef IRDA_MIN /* Lets not mix this MIN with other header files */
+diff -u -p linux/net/irda/irlmp.d2.c linux/net/irda/irlmp.c
+--- linux/net/irda/irlmp.d2.c	Wed Oct 31 15:44:59 2001
++++ linux/net/irda/irlmp.c	Mon Nov  5 18:43:34 2001
+@@ -11,6 +11,7 @@
+  * 
+  *     Copyright (c) 1998-2000 Dag Brattli <dagb@cs.uit.no>, 
+  *     All Rights Reserved.
++ *     Copyright (c) 2000-2001 Jean Tourrilhes <jt@hpl.hp.com>
+  *     
+  *     This program is free software; you can redistribute it and/or 
+  *     modify it under the terms of the GNU General Public License as 
+@@ -75,7 +76,7 @@ int irlmp_proc_read(char *buf, char **st
+  */
+ int __init irlmp_init(void)
+ {
+-	IRDA_DEBUG(0, __FUNCTION__ "()\n");
++	IRDA_DEBUG(1, __FUNCTION__ "()\n");
+ 	/* Initialize the irlmp structure. */
+ 	irlmp = kmalloc( sizeof(struct irlmp_cb), GFP_KERNEL);
+ 	if (irlmp == NULL)
+@@ -170,14 +171,14 @@ struct lsap_cb *irlmp_open_lsap(__u8 sls
+ #endif /* CONFIG_IRDA_ULTRA */
+ 	} else
+ 		self->dlsap_sel = LSAP_ANY;
+-	self->connected = FALSE;
++	/* self->connected = FALSE; -> already NULL via memset() */
+ 
+ 	init_timer(&self->watchdog_timer);
+ 
+ 	ASSERT(notify->instance != NULL, return NULL;);
+ 	self->notify = *notify;
+ 
+-	irlmp_next_lsap_state(self, LSAP_DISCONNECTED);
++	self->lsap_state = LSAP_DISCONNECTED;
+ 	
+ 	/* Insert into queue of unconnected LSAPs */
+ 	hashbin_insert(irlmp->unconnected_lsaps, (irda_queue_t *) self, (int) self, 
+@@ -237,6 +238,7 @@ void irlmp_close_lsap(struct lsap_cb *se
+ 		ASSERT(lap->magic == LMP_LAP_MAGIC, return;);
+ 		lsap = hashbin_remove(lap->lsaps, (int) self, NULL);
+ 	}
++	self->lap = NULL;
+ 	/* Check if we found the LSAP! If not then try the unconnected lsaps */
+ 	if (!lsap) {
+ 		lsap = hashbin_remove(irlmp->unconnected_lsaps, (int) self, 
+@@ -281,7 +283,7 @@ void irlmp_register_link(struct irlap_cb
+ 	lap->daddr = DEV_ADDR_ANY;
+ 	lap->lsaps = hashbin_new(HB_GLOBAL);
+ 
+-	irlmp_next_lap_state(lap, LAP_STANDBY);
++	lap->lap_state = LAP_STANDBY;
+ 	
+ 	init_timer(&lap->idle_timer);
+ 
+@@ -346,7 +348,7 @@ int irlmp_connect_request(struct lsap_cb
+ 	      "(), slsap_sel=%02x, dlsap_sel=%02x, saddr=%08x, daddr=%08x\n", 
+ 	      self->slsap_sel, dlsap_sel, saddr, daddr);
+ 	
+-	if (self->connected) 
++	if (test_bit(0, &self->connected))
+ 		return -EISCONN;
+ 	
+ 	/* Client must supply destination device address */
+@@ -435,7 +437,7 @@ int irlmp_connect_request(struct lsap_cb
+ 
+ 	hashbin_insert(self->lap->lsaps, (irda_queue_t *) self, (int) self, NULL);
+ 
+-	self->connected = TRUE;
++	set_bit(0, &self->connected);	/* TRUE */
+ 	
+ 	/*
+ 	 *  User supplied qos specifications?
+@@ -481,6 +483,8 @@ void irlmp_connect_indication(struct lsa
+ 		self->notify.connect_indication(self->notify.instance, self, 
+ 						&self->qos, max_seg_size, 
+ 						max_header_size, skb);
++	else
++		dev_kfree_skb(skb);
+ }
+ 
+ /*
+@@ -495,7 +499,7 @@ int irlmp_connect_response(struct lsap_c
+ 	ASSERT(self->magic == LMP_LSAP_MAGIC, return -1;);
+ 	ASSERT(userdata != NULL, return -1;);
+ 
+-	self->connected = TRUE;
++	set_bit(0, &self->connected);	/* TRUE */
+ 
+ 	IRDA_DEBUG(2, __FUNCTION__ "(), slsap_sel=%02x, dlsap_sel=%02x\n", 
+ 		   self->slsap_sel, self->dlsap_sel);
+@@ -543,7 +547,8 @@ void irlmp_connect_confirm(struct lsap_c
+ 		self->notify.connect_confirm(self->notify.instance, self,
+ 					     &self->qos, max_seg_size,
+ 					     max_header_size, skb);
+-	}
++	} else
++		dev_kfree_skb(skb);
+ }
+ 
+ /*
+@@ -598,16 +603,18 @@ int irlmp_disconnect_request(struct lsap
+ 
+ 	ASSERT(self != NULL, return -1;);
+ 	ASSERT(self->magic == LMP_LSAP_MAGIC, return -1;);
++	ASSERT(userdata != NULL, return -1;);
+ 
+-	/* Already disconnected? */
+-	if (!self->connected) {
+-		WARNING(__FUNCTION__ "(), already disconnected!\n");
++	/* Already disconnected ?
++	 * There is a race condition between irlmp_disconnect_indication()
++	 * and us that might mess up the hashbins below. This fixes it.
++	 * Jean II */
++	if (! test_and_clear_bit(0, &self->connected)) {
++		IRDA_DEBUG(0, __FUNCTION__ "(), already disconnected!\n");
++		dev_kfree_skb(userdata);
+ 		return -1;
+ 	}
+ 
+-	ASSERT(userdata != NULL, return -1;);
+-	ASSERT(self->connected == TRUE, return -1;);
+-	
+ 	skb_push(userdata, LMP_CONTROL_HEADER);
+ 
+ 	/* 
+@@ -634,7 +641,6 @@ int irlmp_disconnect_request(struct lsap
+ 		       NULL);
+ 	
+ 	/* Reset some values */
+-	self->connected = FALSE;
+ 	self->dlsap_sel = LSAP_ANY;
+ 	self->lap = NULL;
+ 	
+@@ -651,16 +657,23 @@ void irlmp_disconnect_indication(struct 
+ {
+ 	struct lsap_cb *lsap;
+ 
+-	IRDA_DEBUG(1, __FUNCTION__ "(), reason=%s\n", lmp_reasons[reason]);	
++	IRDA_DEBUG(1, __FUNCTION__ "(), reason=%s\n", lmp_reasons[reason]);
+ 	ASSERT(self != NULL, return;);
+ 	ASSERT(self->magic == LMP_LSAP_MAGIC, return;);
+- 	ASSERT(self->connected == TRUE, return;); 
+ 
+ 	IRDA_DEBUG(3, __FUNCTION__ "(), slsap_sel=%02x, dlsap_sel=%02x\n", 
+ 		   self->slsap_sel, self->dlsap_sel);
+ 
+-	self->connected = FALSE;
+-	self->dlsap_sel = LSAP_ANY;
++	/* Already disconnected ?
++	 * There is a race condition between irlmp_disconnect_request()
++	 * and us that might mess up the hashbins below. This fixes it.
++	 * Jean II */
++	if (! test_and_clear_bit(0, &self->connected)) {
++		IRDA_DEBUG(0, __FUNCTION__ "(), already disconnected!\n");
++		if (userdata)
++			dev_kfree_skb(userdata);
++		return;
++	}
+ 
+ #ifdef CONFIG_IRDA_CACHE_LAST_LSAP
+ 	irlmp->cache.valid = FALSE;
+@@ -679,6 +692,7 @@ void irlmp_disconnect_indication(struct 
+ 	hashbin_insert(irlmp->unconnected_lsaps, (irda_queue_t *) lsap, (int) lsap, 
+ 		       NULL);
+ 
++	self->dlsap_sel = LSAP_ANY;
+ 	self->lap = NULL;
+ 	
+ 	/*
+@@ -689,7 +703,8 @@ void irlmp_disconnect_indication(struct 
+ 						   self, reason, userdata);
+ 	else {
+ 		IRDA_DEBUG(0, __FUNCTION__ "(), no handler\n");
+-		dev_kfree_skb(userdata);
++		if (userdata)
++			dev_kfree_skb(userdata);
+ 	}
+ }
+ 
+@@ -1401,7 +1416,7 @@ __u32 irlmp_register_client(__u16 hint_m
+ 	irlmp_client_t *client;
+ 	__u32 handle;
+ 
+-	IRDA_DEBUG(0, __FUNCTION__ "()\n");
++	IRDA_DEBUG(1, __FUNCTION__ "()\n");
+ 	ASSERT(irlmp != NULL, return 0;);
+ 	
+ 	/* Get a unique handle for this client */
+@@ -1673,14 +1688,15 @@ int irlmp_proc_read(char *buf, char **st
+ 
+ 		len += sprintf(buf+len, "saddr: %#08x, daddr: %#08x, ",
+ 			       lap->saddr, lap->daddr); 
+-		len += sprintf(buf+len, "refcount: %d", lap->refcount);
++		len += sprintf(buf+len, "num lsaps: %d",
++			       HASHBIN_GET_SIZE(lap->lsaps));
+ 		len += sprintf(buf+len, "\n");
+ 
+-		len += sprintf(buf+len, "\nConnected LSAPs:\n");
++		len += sprintf(buf+len, "\n  Connected LSAPs:\n");
+ 		self = (struct lsap_cb *) hashbin_get_first(lap->lsaps);
+ 		while (self != NULL) {
+ 			ASSERT(self->magic == LMP_LSAP_MAGIC, return 0;);
+-			len += sprintf(buf+len, "lsap state: %s, ", 
++			len += sprintf(buf+len, "  lsap state: %s, ", 
+ 				       irlsap_state[ self->lsap_state]);
+ 			len += sprintf(buf+len, 
+ 				       "slsap_sel: %#02x, dlsap_sel: %#02x, ",
+diff -u -p linux/net/irda/irlmp_event.d2.c linux/net/irda/irlmp_event.c
+--- linux/net/irda/irlmp_event.d2.c	Fri Nov  2 13:55:19 2001
++++ linux/net/irda/irlmp_event.c	Mon Nov  5 18:43:56 2001
+@@ -11,6 +11,7 @@
+  * 
+  *     Copyright (c) 1998-1999 Dag Brattli <dagb@cs.uit.no>, 
+  *     All Rights Reserved.
++ *     Copyright (c) 2000-2001 Jean Tourrilhes <jt@hpl.hp.com>
+  *     
+  *     This program is free software; you can redistribute it and/or 
+  *     modify it under the terms of the GNU General Public License as 
+@@ -114,6 +115,25 @@ static int (*lsap_state[])( struct lsap_
+ 	irlmp_state_setup_pend
+ };
+ 
++static inline void irlmp_next_lap_state(struct lap_cb *self,
++					IRLMP_STATE state) 
++{
++	/*
++	IRDA_DEBUG(4, __FUNCTION__ "(), LMP LAP = %s\n", irlmp_state[state]);
++	*/
++	self->lap_state = state;
++}
++
++static inline void irlmp_next_lsap_state(struct lsap_cb *self,
++					 LSAP_STATE state) 
++{
++	/*
++	ASSERT(self != NULL, return;);
++	IRDA_DEBUG(4, __FUNCTION__ "(), LMP LSAP = %s\n", irlsap_state[state]);
++	*/
++	self->lsap_state = state;
++}
++
+ /* Do connection control events */
+ int irlmp_do_lsap_event(struct lsap_cb *self, IRLMP_EVENT event, 
+ 			struct sk_buff *skb)
+@@ -223,7 +243,6 @@ static void irlmp_state_standby(struct l
+ 		IRDA_DEBUG(4, __FUNCTION__ "() LS_CONNECT_REQUEST\n");
+ 
+ 		irlmp_next_lap_state(self, LAP_U_CONNECT);
+-		self->refcount++;
+ 
+ 		/* FIXME: need to set users requested QoS */
+ 		irlap_connect_request(self->irlap, self->daddr, NULL, 0);
+@@ -278,12 +297,12 @@ static void irlmp_state_u_connect(struct
+ 		 * the lsaps may already have gone. This avoid getting stuck
+ 		 * forever in LAP_ACTIVE state - Jean II */
+ 		if (HASHBIN_GET_SIZE(self->lsaps) == 0) {
++			IRDA_DEBUG(0, __FUNCTION__ "() NO LSAPs !\n");
+ 			irlmp_start_idle_timer(self, LM_IDLE_TIMEOUT);
+ 		}
+ 		break;
+ 	case LM_LAP_CONNECT_REQUEST:
+ 		/* Already trying to connect */
+-		self->refcount++;
+ 		break;
+ 	case LM_LAP_CONNECT_CONFIRM:
+ 		/* For all lsap_ce E Associated do LS_Connect_confirm */
+@@ -298,12 +317,13 @@ static void irlmp_state_u_connect(struct
+ 		 * the lsaps may already have gone. This avoid getting stuck
+ 		 * forever in LAP_ACTIVE state - Jean II */
+ 		if (HASHBIN_GET_SIZE(self->lsaps) == 0) {
++			IRDA_DEBUG(0, __FUNCTION__ "() NO LSAPs !\n");
+ 			irlmp_start_idle_timer(self, LM_IDLE_TIMEOUT);
+ 		}
+ 		break;
+ 	case LM_LAP_DISCONNECT_INDICATION:
++		IRDA_DEBUG(4, __FUNCTION__ "(), LM_LAP_DISCONNECT_INDICATION\n");
+ 		irlmp_next_lap_state(self, LAP_STANDBY);
+-		self->refcount = 0;
+ 
+ 		/* Send disconnect event to all LSAPs using this link */
+ 		lsap = (struct lsap_cb *) hashbin_get_first( self->lsaps);
+@@ -322,9 +342,11 @@ static void irlmp_state_u_connect(struct
+ 	case LM_LAP_DISCONNECT_REQUEST:
+ 		IRDA_DEBUG(4, __FUNCTION__ "(), LM_LAP_DISCONNECT_REQUEST\n");
+ 
+-		self->refcount--;
+-		if (self->refcount == 0)
+-			irlmp_next_lap_state(self, LAP_STANDBY);
++		/* One of the LSAP did timeout or was closed, if it was
++		 * the last one, try to get out of here - Jean II */
++		if (HASHBIN_GET_SIZE(self->lsaps) <= 1) {
++			irlap_disconnect_request(self->irlap);
++		}
+ 		break;
+ 	default:
+ 		IRDA_DEBUG(0, __FUNCTION__ "(), Unknown event %s\n",
+@@ -352,7 +374,6 @@ static void irlmp_state_active(struct la
+  	switch (event) {
+ 	case LM_LAP_CONNECT_REQUEST:
+ 		IRDA_DEBUG(4, __FUNCTION__ "(), LS_CONNECT_REQUEST\n");
+-		self->refcount++;
+ 
+ 		/*
+ 		 *  LAP connection allready active, just bounce back! Since we 
+@@ -379,8 +400,6 @@ static void irlmp_state_active(struct la
+ 		/* Keep state */
+ 		break;
+ 	case LM_LAP_DISCONNECT_REQUEST:
+-		self->refcount--;
+-
+ 		/*
+ 		 *  Need to find out if we should close IrLAP or not. If there
+ 		 *  is only one LSAP connection left on this link, that LSAP 
+@@ -419,7 +438,6 @@ static void irlmp_state_active(struct la
+ 		break;
+ 	case LM_LAP_DISCONNECT_INDICATION:
+ 		irlmp_next_lap_state(self, LAP_STANDBY);		
+-		self->refcount = 0;
+ 		
+ 		/* In some case, at this point our side has already closed
+ 		 * all lsaps, and we are waiting for the idle_timer to
+@@ -517,6 +535,8 @@ static int irlmp_state_disconnected(stru
+ 		 * If we receive this event while our LAP is closing down,
+ 		 * the LM_LAP_CONNECT_REQUEST get lost and we get stuck in
+ 		 * CONNECT_PEND state forever.
++		 * The other cause of getting stuck down there is if the
++		 * higher layer never reply to the CONNECT_INDICATION.
+ 		 * Anyway, it make sense to make sure that we always have
+ 		 * a backup plan. 1 second is plenty (should be immediate).
+ 		 * Jean II */
+@@ -577,9 +597,8 @@ static int irlmp_state_connect(struct ls
+ 		 * Jean II */
+ 		IRDA_DEBUG(0, __FUNCTION__ "() WATCHDOG_TIMEOUT!\n");
+ 
+-		/* Here, we should probably disconnect proper */
++		/* Disconnect, get out... - Jean II */
+ 		self->dlsap_sel = LSAP_ANY;
+-		self->conn_skb = NULL;
+ 		irlmp_next_lsap_state(self, LSAP_DISCONNECTED);
+ 		break;
+ 	default:
+@@ -612,15 +631,6 @@ static int irlmp_state_connect_pend(stru
+ 	case LM_CONNECT_REQUEST:
+ 		/* Keep state */
+ 		break;
+-	case LM_CONNECT_INDICATION:
+-		/* Will happen in some rare cases when the socket get stuck,
+-		 * the other side retries the connect request.
+-		 * We just unstuck the socket - Jean II */
+-		IRDA_DEBUG(0, __FUNCTION__ "(), LM_CONNECT_INDICATION, "
+-			   "LSAP stuck in CONNECT_PEND state...\n");
+-		/* Keep state */
+-		irlmp_do_lap_event(self->lap, LM_LAP_CONNECT_REQUEST, NULL);
+-		break;
+ 	case LM_CONNECT_RESPONSE:
+ 		IRDA_DEBUG(0, __FUNCTION__ "(), LM_CONNECT_RESPONSE, "
+ 			   "no indication issued yet\n");
+@@ -648,6 +658,8 @@ static int irlmp_state_connect_pend(stru
+ 
+ 		/* Go back to disconnected mode, keep the socket waiting */
+ 		self->dlsap_sel = LSAP_ANY;
++		if(self->conn_skb)
++ 			dev_kfree_skb(self->conn_skb);
+ 		self->conn_skb = NULL;
+ 		irlmp_next_lsap_state(self, LSAP_DISCONNECTED);
+ 		break;
+@@ -856,7 +868,7 @@ static int irlmp_state_setup_pend(struct
+ 		irlmp_next_lsap_state(self, LSAP_SETUP);
+ 		break;
+ 	case LM_WATCHDOG_TIMEOUT:
+-		IRDA_DEBUG(0, __FUNCTION__ "() WATCHDOG_TIMEOUT!\n");
++		IRDA_DEBUG(0, __FUNCTION__ "() : WATCHDOG_TIMEOUT !\n");
+ 
+ 		ASSERT(self->lap != NULL, return -1;);
+ 		irlmp_do_lap_event(self->lap, LM_LAP_DISCONNECT_REQUEST, NULL);
+@@ -881,18 +893,4 @@ static int irlmp_state_setup_pend(struct
+ 		break;	
+ 	}
+ 	return ret;
+-}
+-
+-void irlmp_next_lap_state(struct lap_cb *self, IRLMP_STATE state) 
+-{
+-	IRDA_DEBUG(4, __FUNCTION__ "(), LMP LAP = %s\n", irlmp_state[state]);
+-	self->lap_state = state;
+-}
+-
+-void irlmp_next_lsap_state(struct lsap_cb *self, LSAP_STATE state) 
+-{
+-	ASSERT(self != NULL, return;);
+-
+-	IRDA_DEBUG(4, __FUNCTION__ "(), LMP LSAP = %s\n", irlsap_state[state]);
+-	self->lsap_state = state;
+ }
+diff -u -p linux/net/irda/irlmp_frame.d2.c linux/net/irda/irlmp_frame.c
+--- linux/net/irda/irlmp_frame.d2.c	Thu Nov  1 15:07:57 2001
++++ linux/net/irda/irlmp_frame.c	Mon Nov  5 18:44:14 2001
+@@ -11,6 +11,7 @@
+  * 
+  *     Copyright (c) 1998-1999 Dag Brattli <dagb@cs.uit.no>
+  *     All Rights Reserved.
++ *     Copyright (c) 2000-2001 Jean Tourrilhes <jt@hpl.hp.com>
+  *     
+  *     This program is free software; you can redistribute it and/or 
+  *     modify it under the terms of the GNU General Public License as 
+@@ -34,9 +35,6 @@
+ #include <net/irda/irlmp_frame.h>
+ #include <net/irda/discovery.h>
+ 
+-#define	DISCO_SMALL_DELAY	250	/* Delay for some discoveries in ms */
+-struct timer_list disco_delay;		/* The timer associated */
+-
+ static struct lsap_cb *irlmp_find_lsap(struct lap_cb *self, __u8 dlsap, 
+ 				       __u8 slsap, int status, hashbin_t *);
+ 
+@@ -343,28 +341,6 @@ void irlmp_link_connect_confirm(struct l
+ }
+ 
+ /*
+- * Function irlmp_discovery_timeout (priv)
+- *
+- *    Create a discovery event to the state machine (called after a delay)
+- *
+- * Note : irlmp_do_lap_event will handle the very rare case where the LAP
+- * is destroyed while we were sleeping.
+- */
+-static void irlmp_discovery_timeout(u_long	priv)
+-{
+-	struct lap_cb *self;
+-
+-	IRDA_DEBUG(2, __FUNCTION__ "()\n");
+-
+-	self = (struct lap_cb *) priv;
+-	ASSERT(self != NULL, return;);
+-
+-	/* Just handle it the same way as a discovery confirm,
+-	 * bypass the LM_LAP state machine (see below) */
+-	irlmp_discovery_confirm(irlmp->cachelog);
+-}
+-
+-/*
+  * Function irlmp_link_discovery_indication (self, log)
+  *
+  *    Device is discovering us
+@@ -379,25 +355,16 @@ static void irlmp_discovery_timeout(u_lo
+  *	o Make faster discovery, statistically divide time of discovery
+  *	  events by 2 (important for the latency aspect and user feel)
+  *	o Even is we do active discovery, the other node might not
+- *	  answer our discoveries (ex: Palm).
++ *	  answer our discoveries (ex: Palm). The Palm will just perform
++ *	  one active discovery and connect directly to us.
+  *
+  * However, when both devices discover each other, they might attempt to
+  * connect to each other following the discovery event, and it would create
+  * collisions on the medium (SNRM battle).
+- * The trick here is to defer the event by a little delay to avoid both
+- * devices to jump in exactly at the same time...
+- *
+- * The delay is currently set to 0.25s, which leave enough time to perform
+- * a connection and don't interfer with next discovery (the lowest discovery
+- * period/timeout that may be set is 1s). The message triggering this
+- * event was the last of the discovery, so the medium is now free...
+- * Maybe more testing is needed to get the value right...
+-
+- * One more problem : the other node might do only a single discovery
+- * and connect immediately to us, and we would receive only a single
+- * discovery indication event, and because of the delay, it will arrive
+- * while the LAP is connected. That's another good reason to
+- * bypass the LM_LAP state machine ;-)
++ * The "fix" for that is to disable all connection requests in IrLAP
++ * for 100ms after a discovery indication by setting the media_busy flag.
++ * Previously, we used to postpone the event which was quite ugly. Now
++ * that IrLAP takes care of this problem, just pass the event up...
+  *
+  * Jean II
+  */
+@@ -409,14 +376,9 @@ void irlmp_link_discovery_indication(str
+ 
+ 	irlmp_add_discovery(irlmp->cachelog, discovery);
+ 	
+-	/* If delay was activated, kill it! */
+-	if(timer_pending(&disco_delay))
+-		del_timer(&disco_delay);
+-	/* Set delay timer to expire in 0.25s. */
+-	disco_delay.expires = jiffies + (DISCO_SMALL_DELAY * HZ/1000);
+-	disco_delay.function = irlmp_discovery_timeout;
+-	disco_delay.data = (unsigned long) self;
+-	add_timer(&disco_delay);
++	/* Just handle it the same way as a discovery confirm,
++	 * bypass the LM_LAP state machine (see below) */
++	irlmp_discovery_confirm(irlmp->cachelog);
+ }
+ 
+ /*
+@@ -435,10 +397,6 @@ void irlmp_link_discovery_confirm(struct
+ 	ASSERT(self->magic == LMP_LAP_MAGIC, return;);
+ 	
+ 	irlmp_add_discovery_log(irlmp->cachelog, log);
+-
+-	/* If discovery delay was activated, kill it! */
+-	if(timer_pending(&disco_delay))
+-		del_timer(&disco_delay);
+ 
+ 	/* Propagate event to various LSAPs registered for it.
+ 	 * We bypass the LM_LAP state machine because
+diff -u -p linux/net/irda/irlap.d2.c linux/net/irda/irlap.c
+--- linux/net/irda/irlap.d2.c	Fri Nov  2 17:23:04 2001
++++ linux/net/irda/irlap.c	Mon Nov  5 18:41:34 2001
+@@ -10,6 +10,7 @@
+  * Modified by:   Dag Brattli <dagb@cs.uit.no>
+  * 
+  *     Copyright (c) 1998-1999 Dag Brattli, All Rights Reserved.
++ *     Copyright (c) 2000-2001 Jean Tourrilhes <jt@hpl.hp.com>
+  *     
+  *     This program is free software; you can redistribute it and/or 
+  *     modify it under the terms of the GNU General Public License as 
+@@ -502,10 +503,17 @@ void irlap_discovery_request(struct irla
+ 		IRDA_DEBUG(4, __FUNCTION__ 
+ 			   "(), discovery only possible in NDM mode\n");
+ 		irlap_discovery_confirm(self, NULL);
++		/* Note : in theory, if we are not in NDM, we could postpone
++		 * the discovery like we do for connection request.
++		 * In practice, it's not worth it. If the media was busy,
++		 * it's likely next time around it won't be busy. If we are
++		 * in REPLY state, we will get passive discovery info & event.
++		 * Jean II */
+ 		return;
+ 	}
+ 
+-	/* Check if last discovery request finished in time */
++	/* Check if last discovery request finished in time, or if
++	 * it was aborted due to the media busy flag. */
+ 	if (self->discovery_log != NULL) {
+ 		hashbin_delete(self->discovery_log, (FREE_FUNC) kfree);
+ 		self->discovery_log = NULL;
+@@ -555,10 +563,16 @@ void irlap_discovery_confirm(struct irla
+ 	
+ 	/* 
+ 	 * Check for successful discovery, since we are then allowed to clear 
+-	 * the media busy condition (irlap p.94). This should allow us to make 
+-	 * connection attempts much easier.
++	 * the media busy condition (IrLAP 6.13.4 - p.94). This should allow
++	 * us to make connection attempts much faster and easier (i.e. no
++	 * collisions).
++	 * Setting media busy to false will also generate an event allowing
++	 * to process pending events in NDM state machine.
++	 * Note : the spec doesn't define what's a successful discovery is.
++	 * If we want Ultra to work, it's successful even if there is
++	 * nobody discovered - Jean II
+ 	 */
+-	if (discovery_log && HASHBIN_GET_SIZE(discovery_log) > 0)
++	if (discovery_log)
+ 		irda_device_set_media_busy(self->netdev, FALSE);
+ 	
+ 	/* Inform IrLMP */
+@@ -580,7 +594,18 @@ void irlap_discovery_indication(struct i
+ 	ASSERT(discovery != NULL, return;);
+ 
+ 	ASSERT(self->notify.instance != NULL, return;);
+-	
++
++	/* A device is very likely to connect immediately after it performs
++	 * a successful discovery. This means that in our case, we are much
++	 * more likely to receive a connection request over the medium.
++	 * So, we backoff to avoid collisions.
++	 * IrLAP spec 6.13.4 suggest 100ms...
++	 * Note : this little trick actually make a *BIG* difference. If I set
++	 * my Linux box with discovery enabled and one Ultra frame sent every
++	 * second, my Palm has no trouble connecting to it every time !
++	 * Jean II */
++	irda_device_set_media_busy(self->netdev, SMALL);
++
+ 	irlmp_link_discovery_indication(self->notify.instance, discovery);
+ }
+ 
+diff -u -p linux/net/irda/irlap_event.d2.c linux/net/irda/irlap_event.c
+--- linux/net/irda/irlap_event.d2.c	Fri Nov  2 16:28:13 2001
++++ linux/net/irda/irlap_event.c	Mon Nov  5 18:42:55 2001
+@@ -12,6 +12,7 @@
+  *     Copyright (c) 1998-2000 Dag Brattli <dag@brattli.net>,
+  *     Copyright (c) 1998      Thomas Davis <ratbert@radiks.net>
+  *     All Rights Reserved.
++ *     Copyright (c) 2000-2001 Jean Tourrilhes <jt@hpl.hp.com>
+  *     
+  *     This program is free software; you can redistribute it and/or 
+  *     modify it under the terms of the GNU General Public License as 
+@@ -114,6 +115,7 @@ static const char *irlap_event[] = {
+ 	"DISCOVERY_TIMER_EXPIRED",
+ 	"WD_TIMER_EXPIRED",
+ 	"BACKOFF_TIMER_EXPIRED",
++	"MEDIA_BUSY_TIMER_EXPIRED",
+ };
+ 
+ const char *irlap_state[] = {
+@@ -263,15 +265,7 @@ void irlap_do_event(struct irlap_cb *sel
+ 						    NULL, NULL);
+ 		}
+ 		break;
+-	case LAP_NDM:
+-		/* Check if we should try to connect */
+-		if ((self->connect_pending) && !self->media_busy) {
+-			self->connect_pending = FALSE;
+-			
+-			ret = (*state[self->state])(self, CONNECT_REQUEST, 
+-						    NULL, NULL);
+-		}
+-		break;
++/*	case LAP_NDM: */
+ /* 	case LAP_CONN: */
+ /* 	case LAP_RESET_WAIT: */
+ /* 	case LAP_RESET_CHECK: */
+@@ -305,17 +299,6 @@ void irlap_next_state(struct irlap_cb *s
+ 	if ((state != LAP_XMIT_P) && (state != LAP_XMIT_S))
+ 		self->bytes_left = self->line_capacity;
+ #endif /* CONFIG_IRDA_DYNAMIC_WINDOW */
+-#ifdef CONFIG_IRDA_ULTRA
+-	/* Send any pending Ultra frames if any */
+-	/* The higher layers may have sent a few Ultra frames while we
+-	 * were doing discovery (either query or reply). Those frames
+-	 * have been queued, but were never sent. It is now time to
+-	 * send them...
+-	 * Jean II */
+-	if ((state == LAP_NDM) && (!skb_queue_empty(&self->txq_ultra)))
+-		/* Force us to listen 500 ms before sending Ultra */
+-		irda_device_set_media_busy(self->netdev, TRUE);
+-#endif /* CONFIG_IRDA_ULTRA */
+ }
+ 
+ /*
+@@ -339,6 +322,9 @@ static int irlap_state_ndm(struct irlap_
+ 		ASSERT(self->netdev != NULL, return -1;);
+ 
+ 		if (self->media_busy) {
++			/* Note : this will never happen, because we test
++			 * media busy in irlap_connect_request() and
++			 * postpone the event... - Jean II */
+ 			IRDA_DEBUG(0, __FUNCTION__
+ 				   "(), CONNECT_REQUEST: media busy!\n");
+ 			
+@@ -379,6 +365,9 @@ static int irlap_state_ndm(struct irlap_
+ 						
+ 			/* This will make IrLMP try again */
+  			irlap_discovery_confirm(self, NULL);
++			/* Note : the discovery log is not cleaned up here,
++			 * it will be done in irlap_discovery_request()
++			 * Jean II */
+ 			return 0;
+ 	 	} 
+ 		
+@@ -417,8 +406,7 @@ static int irlap_state_ndm(struct irlap_
+ 			 */
+ 			irlap_start_query_timer(self, QUERY_TIMEOUT*info->S);
+ 			irlap_next_state(self, LAP_REPLY);
+-		}
+-		else {
++		} else {
+ 		/* This is the final slot. How is it possible ?
+ 		 * This would happen is both discoveries are just slightly
+ 		 * offset (if they are in sync, all packets are lost).
+@@ -440,6 +428,54 @@ static int irlap_state_ndm(struct irlap_
+ 			irlap_discovery_indication(self, info->discovery); 
+ 		}
+ 		break;
++	case MEDIA_BUSY_TIMER_EXPIRED:
++		/* A bunch of events may be postponed because the media is
++		 * busy (usually immediately after we close a connection),
++		 * or while we are doing discovery (state query/reply).
++		 * In all those cases, the media busy flag will be cleared
++		 * when it's OK for us to process those postponed events.
++		 * This event is not mentioned in the state machines in the
++		 * IrLAP spec. It's because they didn't consider Ultra and
++		 * postponing connection request is optional.
++		 * Jean II */
++#ifdef CONFIG_IRDA_ULTRA
++		/* Send any pending Ultra frames if any */
++		if (!skb_queue_empty(&self->txq_ultra)) {
++			/* We don't send the frame, just post an event.
++			 * Also, previously this code was in timer.c...
++			 * Jean II */
++			ret = (*state[self->state])(self, SEND_UI_FRAME, 
++						    NULL, NULL);
++		}
++#endif /* CONFIG_IRDA_ULTRA */
++		/* Check if we should try to connect.
++		 * This code was previously in irlap_do_event() */
++		if (self->connect_pending) {
++			self->connect_pending = FALSE;
++
++			/* This one *should* not pend in this state, except
++			 * if a socket try to connect and immediately
++			 * disconnect. - clear - Jean II */
++			if (self->disconnect_pending)
++				irlap_disconnect_indication(self, LAP_DISC_INDICATION);
++			else
++				ret = (*state[self->state])(self,
++							    CONNECT_REQUEST, 
++							    NULL, NULL);
++			self->disconnect_pending = FALSE;
++		}
++		/* Note : one way to test if this code works well (including
++		 * media busy and small busy) is to create a user space
++		 * application generating an Ultra packet every 3.05 sec (or
++		 * 2.95 sec) and to see how it interact with discovery.
++		 * It's fairly easy to check that no packet is lost, that the
++		 * packets are postponed during discovery and that after
++		 * discovery indication you have a 100ms "gap".
++		 * As connection request and Ultra are now processed the same
++		 * way, this avoid the tedious job of trying IrLAP connection
++		 * in all those cases...
++		 * Jean II */
++		break;
+ #ifdef CONFIG_IRDA_ULTRA
+ 	case SEND_UI_FRAME:
+ 		/* Only allowed to repeat an operation twice */
+@@ -735,8 +771,10 @@ static int irlap_state_conn(struct irlap
+ 
+ 		break;		
+ 	case DISCONNECT_REQUEST:
++		IRDA_DEBUG(0, __FUNCTION__ "(), Disconnect request!\n");
+ 		irlap_send_dm_frame(self);
+-		irlap_next_state( self, LAP_CONN);
++		irlap_next_state( self, LAP_NDM);
++		irlap_disconnect_indication(self, LAP_DISC_INDICATION);
+ 		break;
+ 	default:
+ 		IRDA_DEBUG(1, __FUNCTION__ "(), Unknown event %d, %s\n", event,
+@@ -1417,13 +1455,12 @@ static int irlap_state_nrm_p(struct irla
+ 		irlap_start_final_timer(self, self->final_timeout);
+ 		break;
+ 	case RECV_RD_RSP:
+-		IRDA_DEBUG(0, __FUNCTION__ "(), RECV_RD_RSP\n");
++		IRDA_DEBUG(1, __FUNCTION__ "(), RECV_RD_RSP\n");
+ 
+-		irlap_next_state(self, LAP_PCLOSE);
+-		irlap_send_disc_frame(self);
+ 		irlap_flush_all_queues(self);
+-		irlap_start_final_timer(self, self->final_timeout);
+-		self->retry_count = 0;
++		irlap_next_state(self, LAP_XMIT_P);
++		/* Call back the LAP state machine to do a proper disconnect */
++		irlap_disconnect_request(self);
+ 		break;
+ 	default:
+ 		IRDA_DEBUG(1, __FUNCTION__ "(), Unknown event %s\n", 
+diff -u -p linux/net/irda/irlap_frame.d2.c linux/net/irda/irlap_frame.c
+--- linux/net/irda/irlap_frame.d2.c	Fri Nov  2 18:15:13 2001
++++ linux/net/irda/irlap_frame.c	Mon Nov  5 18:43:15 2001
+@@ -11,6 +11,7 @@
+  * 
+  *     Copyright (c) 1998-2000 Dag Brattli <dagb@cs.uit.no>, 
+  *     All Rights Reserved.
++ *     Copyright (c) 2000-2001 Jean Tourrilhes <jt@hpl.hp.com>
+  *     
+  *     This program is free software; you can redistribute it and/or 
+  *     modify it under the terms of the GNU General Public License as 
+@@ -696,7 +697,7 @@ static void irlap_recv_srej_frame(struct
+ static void irlap_recv_disc_frame(struct irlap_cb *self, struct sk_buff *skb, 
+ 				  struct irlap_info *info, int command)
+ {
+-	IRDA_DEBUG(0, __FUNCTION__ "()\n");
++	IRDA_DEBUG(2, __FUNCTION__ "()\n");
+ 
+ 	/* Check if this is a command or a response frame */
+ 	if (command)
+diff -u -p linux/net/irda/timer.d2.c linux/net/irda/timer.c
+--- linux/net/irda/timer.d2.c	Fri Nov  2 18:04:22 2001
++++ linux/net/irda/timer.c	Mon Nov  5 18:45:23 2001
+@@ -11,6 +11,7 @@
+  * 
+  *     Copyright (c) 1997, 1999 Dag Brattli <dagb@cs.uit.no>, 
+  *     All Rights Reserved.
++ *     Copyright (c) 2000-2001 Jean Tourrilhes <jt@hpl.hp.com>
+  *     
+  *     This program is free software; you can redistribute it and/or 
+  *     modify it under the terms of the GNU General Public License as 
+@@ -94,29 +95,24 @@ void irlap_start_backoff_timer(struct ir
+ 			 irlap_backoff_timer_expired);
+ }
+ 
+-void irlap_start_mbusy_timer(struct irlap_cb *self)
++void irlap_start_mbusy_timer(struct irlap_cb *self, int timeout)
+ {
+-	irda_start_timer(&self->media_busy_timer, MEDIABUSY_TIMEOUT, 
++	irda_start_timer(&self->media_busy_timer, timeout, 
+ 			 (void *) self, irlap_media_busy_expired);
+ }
+ 
+ void irlap_stop_mbusy_timer(struct irlap_cb *self)
+ {
+ 	/* If timer is activated, kill it! */
+-	if(timer_pending(&self->media_busy_timer))
+-		del_timer(&self->media_busy_timer);
++	del_timer(&self->media_busy_timer);
+ 
+-#ifdef CONFIG_IRDA_ULTRA
+-	/* Send any pending Ultra frames if any */
+-	if (!skb_queue_empty(&self->txq_ultra))
+-		/* Note : we don't send the frame, just post an event.
+-		 * Frames will be sent only if we are in NDM mode (see
+-		 * irlap_event.c).
+-		 * Also, moved this code from irlap_media_busy_expired()
+-		 * to here to catch properly all cases...
+-		 * Jean II */
+-		irlap_do_event(self, SEND_UI_FRAME, NULL, NULL);
+-#endif /* CONFIG_IRDA_ULTRA */
++	/* If we are in NDM, there is a bunch of events in LAP that
++	 * that be pending due to the media_busy condition, such as
++	 * CONNECT_REQUEST and SEND_UI_FRAME. If we don't generate
++	 * an event, they will wait forever...
++	 * Jean II */
++	if (self->state == LAP_NDM)
++		irlap_do_event(self, MEDIA_BUSY_TIMER_EXPIRED, NULL, NULL);
+ }
+ 
+ void irlmp_start_watchdog_timer(struct lsap_cb *self, int timeout) 
+@@ -237,5 +233,7 @@ void irlap_media_busy_expired(void* data
+ 	ASSERT(self != NULL, return;);
+ 
+ 	irda_device_set_media_busy(self->netdev, FALSE);
+-	/* Note : will deal with Ultra frames */
++	/* Note : the LAP event will be send in irlap_stop_mbusy_timer(),
++	* to catch other cases where the flag is cleared (for example
++	* after a discovery) - Jean II */
+ }
+diff -u -p linux/net/irda/irda_device.d2.c linux/net/irda/irda_device.c
+--- linux/net/irda/irda_device.d2.c	Fri Nov  2 18:04:40 2001
++++ linux/net/irda/irda_device.c	Mon Nov  5 18:40:43 2001
+@@ -10,6 +10,7 @@
+  * Modified by:   Dag Brattli <dagb@cs.uit.no>
+  * 
+  *     Copyright (c) 1999-2000 Dag Brattli, All Rights Reserved.
++ *     Copyright (c) 2000-2001 Jean Tourrilhes <jt@hpl.hp.com>
+  *     
+  *     This program is free software; you can redistribute it and/or 
+  *     modify it under the terms of the GNU General Public License as 
+@@ -181,7 +182,10 @@ void irda_device_set_media_busy(struct n
+ 
+ 	if (status) {
+ 		self->media_busy = TRUE;
+-		irlap_start_mbusy_timer(self);
++		if (status == SMALL)
++			irlap_start_mbusy_timer(self, SMALLBUSY_TIMEOUT);
++		else
++			irlap_start_mbusy_timer(self, MEDIABUSY_TIMEOUT);
+ 		IRDA_DEBUG( 4, "Media busy!\n");
+ 	} else {
+ 		self->media_busy = FALSE;
+

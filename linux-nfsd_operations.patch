@@ -1,0 +1,2326 @@
+diff -urN linux/fs/dcache.c linux.nfsdops/fs/dcache.c
+--- linux/fs/dcache.c	Tue May 22 18:35:42 2001
++++ linux.nfsdops/fs/dcache.c	Wed May 30 20:35:35 2001
+@@ -262,6 +262,53 @@
+ 	return NULL;
+ }
+ 
++/**
++ * d_make_alias - find or make a hashed alias of an inode
++ * @inode: inode in question
++ *
++ * If d_find_alias() succeeds on the inode, then the alias found
++ * is returned.  Otherwise as new dentry is allocated, marked
++ * as %DCACHE_NFSD_DISCONNECTED, and made to be a hashed alias
++ * for the inode.
++ *
++ * To guard against multiple aliases being added to a directory
++ * inode, the i_zombie semphore is held while checking for
++ * aliases and adding a new one.
++ *
++ * This is particularly used by filesystems which support exporting
++ * via knfsd, and need to build a dcache path from the bottom
++ * up.
++ *
++ * %NULL may be returned if a memory allocation fails, in which case
++ * the inode should probably be released by the caller
++ */
++
++struct dentry * d_make_alias(struct inode *inode)
++{
++	struct dentry *alias;
++	down(&inode->i_zombie);
++	/* NOTE: if inode == inode->i_sb->s_root->d_inode, then
++	 * d_find_alias wont work as s_root isn't hashed..
++	 */
++	if (inode == inode->i_sb->s_root->d_inode)
++		alias = dget(inode->i_sb->s_root);
++	else
++		alias = d_find_alias(inode);
++	if (!alias) {
++		alias = d_alloc_root(inode);
++		if (alias) {
++			d_rehash(alias);
++			alias->d_flags |= DCACHE_NFSD_DISCONNECTED;
++		}
++	}
++	else
++		if (atomic_dec_and_test(&inode->i_count))
++			BUG();
++		       
++	up(&inode->i_zombie);
++	return alias;
++}
++
+ /*
+  *	Try to kill dentries associated with this inode.
+  * WARNING: you must own a reference to inode.
+@@ -914,16 +961,67 @@
+ 	list_del(&dentry->d_child);
+ 	list_del(&target->d_child);
+ 
+-	/* Switch the parents and the names.. */
++	/* Switch the names.. */
+ 	switch_names(dentry, target);
+-	do_switch(dentry->d_parent, target->d_parent);
+ 	do_switch(dentry->d_name.len, target->d_name.len);
+ 	do_switch(dentry->d_name.hash, target->d_name.hash);
+ 
+-	/* And add them back to the (new) parent lists */
+-	list_add(&target->d_child, &target->d_parent->d_subdirs);
++	/* ... and switch the parents */
++	if (IS_ROOT(dentry)) {
++		dentry->d_parent = target->d_parent;
++		target->d_parent = target;
++		INIT_LIST_HEAD(&target->d_child);
++	} else {
++		do_switch(dentry->d_parent, target->d_parent);
++		
++		/* And add them back to the (new) parent lists */
++		list_add(&target->d_child, &target->d_parent->d_subdirs);
++	}
+ 	list_add(&dentry->d_child, &dentry->d_parent->d_subdirs);
+ 	spin_unlock(&dcache_lock);
++}
++
++/**
++ * d_splice_alias - splice a disconnected dentry into the tree if one exists
++ * @inode:  the inode which may have a disconnected dentry
++ * @dentry: a negative dentry which we want to point to the inode.
++ *
++ * If inode has a 'disconnected' dentry (i.e. IS_ROOT and DCACHE_NFSD_DISCONNECTED),
++ * then d_move that in place of the given dentry and return it,
++ * else simply d_add the inode to the dentry and return NULL.
++ *
++ * This is needed in the lookup routine of any filesystem that is exportable
++ * via knfsd so that knfsd can build dcache paths to directories effectively.
++ *
++ * As we cannot lock the parent of the disconnected dentry (there being none),
++ * 'd_move'ing it is only race-free if we can be certain that the inode
++ * only has one parent.  This means that it is only safe on directories.
++ *
++ */
++struct dentry *d_splice_alias(struct inode *inode, struct dentry *dentry)
++{
++	struct dentry *new = NULL;
++
++	down(&inode->i_zombie);
++	if (S_ISDIR(inode->i_mode) &&
++	    (new = d_find_alias(inode))) {
++		if (IS_ROOT(new) &&
++		    (new->d_flags & DCACHE_NFSD_DISCONNECTED)) {
++			if (atomic_dec_and_test(&inode->i_count))
++				BUG();
++			d_move(new, dentry);
++			/* dentry was probably not hashed, so .. */
++			d_rehash(new);
++		} else {
++			dput(new);
++			new = NULL;
++		}
++	}
++	if (new == NULL)
++		/* use the dentry we were given */
++		d_add(dentry, inode);
++	up(&inode->i_zombie);
++	return new;
+ }
+ 
+ /**
+diff -urN linux/fs/efs/inode.c linux.nfsdops/fs/efs/inode.c
+--- linux/fs/efs/inode.c	Mon May  8 20:11:29 2000
++++ linux.nfsdops/fs/efs/inode.c	Wed May 30 20:35:53 2001
+@@ -91,6 +91,9 @@
+ 	inode->i_atime = be32_to_cpu(efs_inode->di_atime);
+ 	inode->i_mtime = be32_to_cpu(efs_inode->di_mtime);
+ 	inode->i_ctime = be32_to_cpu(efs_inode->di_ctime);
++	inode->i_generation = be32_to_cpu(efs_inode->di_gen);
++	if (inode->i_mode == 0 || inode->i_nlink == 0)
++		goto badinode;
+ 
+ 	/* this is the number of blocks in the file */
+ 	if (inode->i_size == 0) {
+@@ -163,6 +166,7 @@
+         
+ read_inode_error:
+ 	printk(KERN_WARNING "EFS: failed to read inode %lu\n", inode->i_ino);
++ badinode:
+ 	make_bad_inode(inode);
+ 
+ 	return;
+diff -urN linux/fs/efs/namei.c linux.nfsdops/fs/efs/namei.c
+--- linux/fs/efs/namei.c	Wed Jun  2 08:25:48 1999
++++ linux.nfsdops/fs/efs/namei.c	Wed May 30 20:35:53 2001
+@@ -70,7 +70,32 @@
+ 			return ERR_PTR(-EACCES);
+ 	}
+ 
++	if (inode)
++		return d_splice_alias(inode, dentry);
++	
+ 	d_add(dentry, inode);
+ 	return NULL;
+ }
+ 
++struct dentry *efs_get_parent(struct dentry *child)
++{
++	struct super_block *sb;
++	struct inode *inode = NULL;
++	efs_ino_t inodenum;
++	struct dentry *parent;
++
++	sb = child->d_inode->i_sb;
++
++	inodenum = efs_find_entry(child->d_inode, "..", 2);
++	if (inodenum)
++		inode = iget(sb, inodenum);
++	if (!inode)
++		return ERR_PTR(-EACCES);
++
++	parent = d_make_alias(inode);
++	if (!parent) {
++		iput(inode);
++		parent = ERR_PTR(-ENOMEM);
++	}
++	return parent;
++}
+diff -urN linux/fs/efs/super.c linux.nfsdops/fs/efs/super.c
+--- linux/fs/efs/super.c	Wed Apr 18 08:16:38 2001
++++ linux.nfsdops/fs/efs/super.c	Wed May 30 20:35:53 2001
+@@ -12,6 +12,7 @@
+ #include <linux/efs_fs.h>
+ #include <linux/efs_vh.h>
+ #include <linux/efs_fs_sb.h>
++#include <linux/nfsd/interface.h>
+ 
+ static DECLARE_FSTYPE_DEV(efs_fs_type, "efs", efs_read_super);
+ 
+@@ -20,6 +21,13 @@
+ 	statfs:		efs_statfs,
+ };
+ 
++extern struct dentry *efs_get_parent(struct dentry *child);
++
++static struct nfsd_operations efs_nfsd_operations = {
++	get_parent:	efs_get_parent,
++};
++
++
+ static int __init init_efs_fs(void) {
+ 	printk("EFS: "EFS_VERSION" - http://aeschi.ch.eu.org/efs/\n");
+ 	return register_filesystem(&efs_fs_type);
+@@ -186,6 +194,7 @@
+ 		s->s_flags |= MS_RDONLY;
+ 	}
+ 	s->s_op   = &efs_superblock_operations;
++	s->s_nfsd_op = &efs_nfsd_operations;
+ 	s->s_root = d_alloc_root(iget(s, EFS_ROOTINODE));
+  
+ 	if (!(s->s_root)) {
+diff -urN linux/fs/ext2/namei.c linux.nfsdops/fs/ext2/namei.c
+--- linux/fs/ext2/namei.c	Thu Feb 15 21:32:21 2001
++++ linux.nfsdops/fs/ext2/namei.c	Wed May 30 20:35:35 2001
+@@ -179,9 +179,37 @@
+ 		if (!inode)
+ 			return ERR_PTR(-EACCES);
+ 	}
++	if (inode)
++		return d_splice_alias(inode, dentry);
++
+ 	d_add(dentry, inode);
+ 	return NULL;
+ }
++
++struct dentry *ext2_get_parent(struct dentry *child)
++{
++	struct buffer_head * bh;
++	struct ext2_dir_entry_2 *de;
++	unsigned long ino;
++	struct dentry *parent;
++	struct inode *inode;
++
++	bh = ext2_find_entry (child->d_inode, "..", 2, &de);
++	if (!bh)
++		return ERR_PTR(-ENOENT);
++	ino = le32_to_cpu(de->inode);
++	brelse (bh);
++	inode = iget(child->d_inode->i_sb, ino);
++	
++	if (!inode)
++		return ERR_PTR(-EACCES);
++	parent = d_make_alias(inode);
++	if (!parent) {
++		iput(inode);
++		parent = ERR_PTR(-ENOMEM);
++	}
++	return parent;
++} 
+ 
+ #define S_SHIFT 12
+ static unsigned char ext2_type_by_mode[S_IFMT >> S_SHIFT] = {
+diff -urN linux/fs/ext2/super.c linux.nfsdops/fs/ext2/super.c
+--- linux/fs/ext2/super.c	Wed May 16 19:31:27 2001
++++ linux.nfsdops/fs/ext2/super.c	Wed May 30 20:35:35 2001
+@@ -25,6 +25,7 @@
+ #include <linux/init.h>
+ #include <linux/locks.h>
+ #include <linux/blkdev.h>
++#include <linux/nfsd/interface.h>
+ #include <asm/uaccess.h>
+ 
+ 
+@@ -154,6 +155,16 @@
+ 	remount_fs:	ext2_remount,
+ };
+ 
++/* Yes, most of these are left as NULL!!
++ * A NULL value implies the default, which works with ext2-like file
++ * systems, but can be improved upon.
++ * Currently only get_parent is required.
++ */
++struct dentry *ext2_get_parent(struct dentry *child);
++static struct nfsd_operations ext2_nfsd_ops = {
++	get_parent: ext2_get_parent,
++};
++
+ /*
+  * This function has been shamelessly adapted from the msdos fs
+  */
+@@ -641,6 +652,7 @@
+ 	 * set up enough so that it can read an inode
+ 	 */
+ 	sb->s_op = &ext2_sops;
++	sb->s_nfsd_op = &ext2_nfsd_ops;
+ 	sb->s_root = d_alloc_root(iget(sb, EXT2_ROOT_INO));
+ 	if (!sb->s_root) {
+ 		for (i = 0; i < db_count; i++)
+diff -urN linux/fs/isofs/inode.c linux.nfsdops/fs/isofs/inode.c
+--- linux/fs/isofs/inode.c	Wed Apr 18 20:49:13 2001
++++ linux.nfsdops/fs/isofs/inode.c	Wed May 30 20:35:45 2001
+@@ -28,6 +28,7 @@
+ #include <linux/ctype.h>
+ #include <linux/smp_lock.h>
+ #include <linux/blkdev.h>
++#include <linux/nfsd/interface.h>
+ 
+ #include <asm/system.h>
+ #include <asm/uaccess.h>
+@@ -82,6 +83,9 @@
+ 	statfs:		isofs_statfs,
+ };
+ 
++static struct nfsd_operations isofs_nfsd_ops = {
++};
++
+ static struct dentry_operations isofs_dentry_ops[] = {
+ 	{
+ 		d_hash:		isofs_hash,
+@@ -750,6 +754,7 @@
+ 	}
+ #endif
+ 	s->s_op = &isofs_sops;
++	s->s_nfsd_op = &isofs_nfsd_ops;
+ 	s->u.isofs_sb.s_mapping = opt.map;
+ 	s->u.isofs_sb.s_rock = (opt.rock == 'y' ? 2 : 0);
+ 	s->u.isofs_sb.s_cruft = opt.cruft;
+diff -urN linux/fs/nfsd/Makefile linux.nfsdops/fs/nfsd/Makefile
+--- linux/fs/nfsd/Makefile	Fri Dec 29 23:07:23 2000
++++ linux.nfsdops/fs/nfsd/Makefile	Wed May 30 20:35:35 2001
+@@ -9,6 +9,7 @@
+ 
+ O_TARGET := nfsd.o
+ 
++export-objs := nfsfh.o
+ obj-y :=    nfssvc.o nfsctl.o nfsproc.o nfsfh.o vfs.o \
+ 	    export.o auth.o lockd.o nfscache.o nfsxdr.o \
+ 	    stats.o
+diff -urN linux/fs/nfsd/export.c linux.nfsdops/fs/nfsd/export.c
+--- linux/fs/nfsd/export.c	Fri Feb  9 20:29:44 2001
++++ linux.nfsdops/fs/nfsd/export.c	Wed May 30 20:35:35 2001
+@@ -212,8 +212,7 @@
+ 		goto finish;
+ 
+ 	err = -EINVAL;
+-	if (!(inode->i_sb->s_type->fs_flags & FS_REQUIRES_DEV) ||
+-	    inode->i_sb->s_op->read_inode == NULL) {
++	if (inode->i_sb->s_nfsd_op == NULL) {
+ 		dprintk("exp_export: export of invalid fs type.\n");
+ 		goto finish;
+ 	}
+diff -urN linux/fs/nfsd/nfsctl.c linux.nfsdops/fs/nfsd/nfsctl.c
+--- linux/fs/nfsd/nfsctl.c	Wed May 16 19:04:25 2001
++++ linux.nfsdops/fs/nfsd/nfsctl.c	Wed May 30 20:35:35 2001
+@@ -312,8 +312,11 @@
+ EXPORT_NO_SYMBOLS;
+ MODULE_AUTHOR("Olaf Kirch <okir@monad.swb.de>");
+ 
++#undef nfsd_find_fh_dentry
++
+ struct nfsd_linkage nfsd_linkage_s = {
+ 	do_nfsservctl: handle_sys_nfsservctl,
++	find_fh_dentry: nfsd_find_fh_dentry,
+ };
+ 
+ /*
+diff -urN linux/fs/nfsd/nfsfh.c linux.nfsdops/fs/nfsd/nfsfh.c
+--- linux/fs/nfsd/nfsfh.c	Sun May 20 02:47:55 2001
++++ linux.nfsdops/fs/nfsd/nfsfh.c	Wed May 30 20:35:35 2001
+@@ -6,6 +6,7 @@
+  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
+  * Portions Copyright (C) 1999 G. Allen Morris III <gam3@acm.org>
+  * Extensive rewrite by Neil Brown <neilb@cse.unsw.edu.au> Southern-Spring 1999
++ * ... and again Southern-Winter 2000 to support nfsd_operations
+  */
+ 
+ #include <linux/sched.h>
+@@ -15,6 +16,7 @@
+ #include <linux/string.h>
+ #include <linux/stat.h>
+ #include <linux/dcache.h>
++#include <linux/module.h>
+ #include <asm/pgtable.h>
+ 
+ #include <linux/sunrpc/svc.h>
+@@ -28,9 +30,13 @@
+ static int nfsd_nr_verified;
+ static int nfsd_nr_put;
+ 
++extern struct nfsd_operations nfsd_op_default;
++
++#define	CALL(ops,fun) ((ops->fun)?(ops->fun):nfsd_op_default.fun)
++
+ 
+ struct nfsd_getdents_callback {
+-	struct qstr *name;	/* name that was found. name->name already points to a buffer */
++	char *name;		/* name that was found. It already points to a buffer NAME_MAX+1 is size */
+ 	unsigned long ino;	/* the inum we are looking for */
+ 	int found;		/* inode matched? */
+ 	int sequence;		/* sequence counter */
+@@ -44,8 +50,6 @@
+ 			off_t pos, ino_t ino, unsigned int d_type)
+ {
+ 	struct nfsd_getdents_callback *buf = __buf;
+-	struct qstr *qs = buf->name;
+-	char *nbuf = (char*)qs->name; /* cast is to get rid of "const" */
+ 	int result = 0;
+ 
+ 	buf->sequence++;
+@@ -53,22 +57,25 @@
+ dprintk("filldir_one: seq=%d, ino=%ld, name=%s\n", buf->sequence, ino, name);
+ #endif
+ 	if (buf->ino == ino) {
+-		qs->len = len;
+-		memcpy(nbuf, name, len);
+-		nbuf[len] = '\0';
++		memcpy(buf->name, name, len);
++		buf->name[len] = '\0';
+ 		buf->found = 1;
+ 		result = -1;
+ 	}
+ 	return result;
+ }
+ 
+-/*
+- * Read a directory and return the name of the specified entry.
+- * i_sem is already down().
+- * The whole thing is a total BS. It should not be done via readdir(), damnit!
+- * Oh, well, as soon as it will be in filesystems...
++/**
++ * nfsd_get_name - default nfsd_operations->get_name function
++ * @dentry: the directory in which to find a name
++ * @name:   a pointer to a %NAME_MAX+1 char buffer to store the name
++ * @child:  the dentry for the child directory.
++ *
++ * calls readdir on the parent until it finds an entry with
++ * the same inode number as the child, and returns that.
+  */
+-static int get_ino_name(struct dentry *dentry, struct qstr *name, unsigned long ino)
++static int nfsd_get_name(struct dentry *dentry, char *name,
++		  struct dentry *child)
+ {
+ 	struct inode *dir = dentry->d_inode;
+ 	int error;
+@@ -92,12 +99,12 @@
+ 		goto out_close;
+ 
+ 	buffer.name = name;
+-	buffer.ino = ino;
++	buffer.ino = child->d_inode->i_ino;
+ 	buffer.found = 0;
+ 	buffer.sequence = 0;
+ 	while (1) {
+ 		int old_seq = buffer.sequence;
+-		error = file.f_op->readdir(&file, &buffer, filldir_one);
++		error = vfs_readdir(&file, filldir_one, &buffer);
+ 		if (error < 0)
+ 			break;
+ 
+@@ -116,375 +123,391 @@
+ 	return error;
+ }
+ 
+-/* this should be provided by each filesystem in an nfsd_operations interface as
+- * iget isn't really the right interface
++/**
++ * nfsd_get_dentry - default nfsd_operations->get_dentry function
++ * sb: 	super_block of target file system.
++ * inump: pointer to 32bit inode number followed by 32bit generation number
++ *
++ * This function abuses iget() to find the inode with a given
++ * inode number, and checks that the generation number is correct.
++ * It assumes that the filesystems read_inode function will return
++ * a "bad_inode" if the inode number is invalid.
++ *
++ * If the inode is found and it has at least one dentry, the first dentry
++ * is returned.
++ * If there are no dentrys, one is allocated using d_alloc_root, and
++ * it is returned with the DCACHE_NFSD_DISCONNECTED flag set.
++ *
++ * If a filesystem choses to use this as its get_dentry function, its
++ * read_inode() but be able to reliably locate an inode given the inode number,
++ * and must also be able to detect an inactive inode, and make the inode structure
++ * as bad using make_bad_inode.  Further, the delete_inode() function must be
++ * able to detect and ignore a "bad inode".
++ *
++ * Finally, the filesystem must not depend in have d_op set for a dentry, as
++ * this routine may allocate one without setting d_op. 
+  */
+-static struct dentry *nfsd_iget(struct super_block *sb, unsigned long ino, __u32 generation)
++static struct dentry *nfsd_get_dentry(struct super_block *sb, void *inump)
+ {
+-
+-	/* iget isn't really right if the inode is currently unallocated!!
+-	 * This should really all be done inside each filesystem
+-	 *
+-	 * ext2fs' read_inode has been strengthed to return a bad_inode if the inode
+-	 *   had been deleted.
+-	 *
+-	 * Currently we don't know the generation for parent directory, so a generation
+-	 * of 0 means "accept any"
+-	 */
++	struct dentry *dentry;
+ 	struct inode *inode;
+-	struct list_head *lp;
+-	struct dentry *result;
++
++	__u32 *u32p;
++	unsigned long ino;
++	__u32 generation;
++
++	u32p = (__u32*)inump;
++
++	ino = *u32p++;
++	generation = *u32p;
++
++	if (ino == 0)
++		return NULL;
++	
+ 	inode = iget(sb, ino);
+ 	if (is_bad_inode(inode)
+ 	    || (generation && inode->i_generation != generation)
+ 		) {
+ 		/* we didn't find the right inode.. */
+-		dprintk("fh_verify: Inode %lu, Bad count: %d %d or version  %u %u\n",
++		dprintk("nfsd_get_dentry: Inode %lu, Bad count: %d %d or version  %u %u\n",
+ 			inode->i_ino,
+ 			inode->i_nlink, atomic_read(&inode->i_count),
+ 			inode->i_generation,
+ 			generation);
+ 
+ 		iput(inode);
+-		return ERR_PTR(-ESTALE);
++		return NULL;
+ 	}
+-	/* now to find a dentry.
+-	 * If possible, get a well-connected one
+-	 */
+-	spin_lock(&dcache_lock);
+-	for (lp = inode->i_dentry.next; lp != &inode->i_dentry ; lp=lp->next) {
+-		result = list_entry(lp,struct dentry, d_alias);
+-		if (! (result->d_flags & DCACHE_NFSD_DISCONNECTED)) {
+-			dget_locked(result);
+-			result->d_vfs_flags |= DCACHE_REFERENCED;
+-			spin_unlock(&dcache_lock);
+-			iput(inode);
+-			return result;
+-		}
+-	}
+-	spin_unlock(&dcache_lock);
+-	result = d_alloc_root(inode);
+-	if (result == NULL) {
++
++	dentry = d_make_alias(inode);
++	if (!dentry) {
+ 		iput(inode);
+-		return ERR_PTR(-ENOMEM);
++		dentry = ERR_PTR(-ENOMEM);
+ 	}
+-	result->d_flags |= DCACHE_NFSD_DISCONNECTED;
+-	d_rehash(result); /* so a dput won't loose it */
+-	return result;
++	return dentry;
+ }
+ 
+-/* this routine links an IS_ROOT dentry into the dcache tree.  It gains "parent"
+- * as a parent and "name" as a name
+- * It should possibly go in dcache.c
+- */
+-int d_splice(struct dentry *target, struct dentry *parent, struct qstr *name)
+-{
+-	struct dentry *tdentry;
+-#ifdef NFSD_PARANOIA
+-	if (!IS_ROOT(target))
+-		printk("nfsd: d_splice with no-root target: %s/%s\n", parent->d_name.name, name->name);
+-	if (!(target->d_flags & DCACHE_NFSD_DISCONNECTED))
+-		printk("nfsd: d_splice with non-DISCONNECTED target: %s/%s\n", parent->d_name.name, name->name);
+-#endif
+-	name->hash = full_name_hash(name->name, name->len);
+-	tdentry = d_alloc(parent, name);
+-	if (tdentry == NULL)
+-		return -ENOMEM;
+-	d_move(target, tdentry);
+ 
+-	/* tdentry will have been made a "child" of target (the parent of target)
+-	 * make it an IS_ROOT instead
+-	 */
+-	spin_lock(&dcache_lock);
+-	list_del(&tdentry->d_child);
+-	tdentry->d_parent = tdentry;
+-	spin_unlock(&dcache_lock);
+-	d_rehash(target);
+-	dput(tdentry);
++/**
++ * nfsd_find_fh_dentry - helper routine to implement nfsd_operations->decode_fh
++ * @sb:		The &super_block identifying the filesystem
++ * @obj:	An opaque identifier of the object to be found - passed to get_inode
++ * @parent:	An optional opqaue identifier of the parent of the object.
++ * @acceptable:	A function used to test possible &dentries to see of they are acceptable
++ * @context:	A parameter to @acceptable so that it knows on what basis to judge.
++ *
++ * nfsd_find_fh_dentry is the central helper routine to enable file systems to provide
++ * the decode_fh() nfsd_operation.  It's main task is to take an inode, find or create an
++ * appropriate &dentry structure, and possibly splice this into the dcache in the
++ * correct place.
++ *
++ * The decode_fh() operation provided by the filesystem should call nfsd_find_fh_dentry()
++ * with the same parameters that it received except that instead of the file handle fragment,
++ * pointers to opaque identifiers for the object and optionally its parent are passed.
++ * The default decode_fh routine passes one pointer to the start of the filehandle fragment, and
++ * one 8 bytes in to the fragment.  It is expected that most filesystems will take this
++ * approach, though the offset to the parent identifier may well be different.
++ *
++ * nfsd_find_fh_dentry() will call get_dentry to get an dentry pointer from the file system.  If
++ * any &dentry in the d_alias list is acceptable, it will be returned.  Otherwise
++ * nfsd_find_fh_dentry() will attempt to splice a new &dentry into the dcache using get_name() and
++ * get_parent() to find the appropriate place.
++ *
++ */
++#ifdef CONFIG_NFSD_MODULE
++/* for any other code, nfsd_find_fh_dentry is a macro that
++ * dives through nfsd_linkage, but for us, it is a real function
++ */
+ 
+-	/* if parent is properly connected, then we can assert that
+-	 * the children are connected, but it must be a singluar (non-forking)
+-	 * branch
+-	 */
+-	if (!(parent->d_flags & DCACHE_NFSD_DISCONNECTED)) {
+-		while (target) {
+-			target->d_flags &= ~DCACHE_NFSD_DISCONNECTED;
+-			parent = target;
+-			spin_lock(&dcache_lock);
+-			if (list_empty(&parent->d_subdirs))
+-				target = NULL;
+-			else {
+-				target = list_entry(parent->d_subdirs.next, struct dentry, d_child);
+-#ifdef NFSD_PARANOIA
+-				/* must be only child */
+-				if (target->d_child.next != &parent->d_subdirs
+-				    || target->d_child.prev != &parent->d_subdirs)
+-					printk("nfsd: d_splice found non-singular disconnected branch: %s/%s\n",
+-					       parent->d_name.name, target->d_name.name);
++#undef nfsd_find_fh_dentry
+ #endif
+-			}
+-			spin_unlock(&dcache_lock);
+-		}
+-	}
+-	return 0;
+-}
+ 
+-/* this routine finds the dentry of the parent of a given directory
+- * it should be in the filesystem accessed by nfsd_operations
+- * it assumes lookup("..") works.
+- */
+-struct dentry *nfsd_findparent(struct dentry *child)
+-{
+-	struct dentry *tdentry, *pdentry;
+-	tdentry = d_alloc(child, &(const struct qstr) {"..", 2, 0});
+-	if (!tdentry)
+-		return ERR_PTR(-ENOMEM);
++struct dentry *
++nfsd_find_fh_dentry(struct super_block *sb, void *obj, void *parent,
++		    int (*acceptable)(void *context, struct dentry *de),
++		    void *context)
++{
++	struct dentry *result = NULL;
++	struct dentry *target_dir;
++	int err;
++	struct nfsd_operations *nops = sb->s_nfsd_op;
++	struct list_head *le, *head;
++	int noprogress;
+ 
+-	/* I'm going to assume that if the returned dentry is different, then
+-	 * it is well connected.  But nobody returns different dentrys do they?
+-	 */
+-	pdentry = child->d_inode->i_op->lookup(child->d_inode, tdentry);
+-	d_drop(tdentry); /* we never want ".." hashed */
+-	if (!pdentry && tdentry->d_inode == NULL) {
+-		/* File system cannot find ".." ... sad but possible */
+-		dput(tdentry);
+-		pdentry = ERR_PTR(-EINVAL);
+-	}
+-	if (!pdentry) {
+-		/* I don't want to return a ".." dentry.
+-		 * I would prefer to return an unconnected "IS_ROOT" dentry,
+-		 * though a properly connected dentry is even better
+-		 */
+-		/* if first or last of alias list is not tdentry, use that
+-		 * else make a root dentry
+-		 */
+-		struct list_head *aliases = &tdentry->d_inode->i_dentry;
+-		spin_lock(&dcache_lock);
+-		if (aliases->next != aliases) {
+-			pdentry = list_entry(aliases->next, struct dentry, d_alias);
+-			if (pdentry == tdentry)
+-				pdentry = list_entry(aliases->prev, struct dentry, d_alias);
+-			if (pdentry == tdentry)
+-				pdentry = NULL;
+-			if (pdentry) dget_locked(pdentry);
+-		}
+-		spin_unlock(&dcache_lock);
+-		if (pdentry == NULL) {
+-			pdentry = d_alloc_root(igrab(tdentry->d_inode));
+-			if (pdentry) {
+-				pdentry->d_flags |= DCACHE_NFSD_DISCONNECTED;
+-				d_rehash(pdentry);
+-			}
+-		}
+-		if (pdentry == NULL)
+-			pdentry = ERR_PTR(-ENOMEM);
+-	}
+-	dput(tdentry); /* it is not hashed, it will be discarded */
+-	return pdentry;
+-}
+-
+-static struct dentry *splice(struct dentry *child, struct dentry *parent)
+-{
+-	int err = 0;
+-	struct qstr qs;
+-	char namebuf[256];
+-	struct list_head *lp;
+-	struct dentry *tmp;
+-	/* child is an IS_ROOT (anonymous) dentry, but it is hypothesised that
+-	 * it should be a child of parent.
+-	 * We see if we can find a name and, if we can - splice it in.
+-	 * We hold the i_sem on the parent the whole time to try to follow locking protocols.
+-	 */
+-	qs.name = namebuf;
+-	down(&parent->d_inode->i_sem);
+-
+-	/* Now, things might have changed while we waited.
+-	 * Possibly a friendly filesystem found child and spliced it in in response
+-	 * to a lookup (though nobody does this yet).  In this case, just succeed.
+-	 */
+-	if (child->d_parent == parent) goto out;
+-	/* Possibly a new dentry has been made for this child->d_inode in
+-	 * parent by a lookup.  In this case return that dentry. caller must
+-	 * notice and act accordingly
+-	 */
+-	spin_lock(&dcache_lock);
+-	for (lp = child->d_inode->i_dentry.next; lp != &child->d_inode->i_dentry ; lp=lp->next) {
+-		tmp = list_entry(lp,struct dentry, d_alias);
+-		if (tmp->d_parent == parent) {
+-			child = dget_locked(tmp);
+-			spin_unlock(&dcache_lock);
+-			goto out;
+-		}
+-	}
+-	spin_unlock(&dcache_lock);
+-	/* well, if we can find a name for child in parent, it should be safe to splice it in */
+-	err = get_ino_name(parent, &qs, child->d_inode->i_ino);
+-	if (err)
+-		goto out;
+-	tmp = d_lookup(parent, &qs);
+-	if (tmp) {
+-		/* Now that IS odd.  I wonder what it means... */
+-		err = -EEXIST;
+-		printk("nfsd-fh: found a name that I didn't expect: %s/%s\n", parent->d_name.name, qs.name);
+-		dput(tmp);
+-		goto out;
+-	}
+-	err = d_splice(child, parent, &qs);
+-	dprintk("nfsd_fh: found name %s for ino %ld\n", child->d_name.name, child->d_inode->i_ino);
+- out:
+-	up(&parent->d_inode->i_sem);
+-	if (err)
+-		return ERR_PTR(err);
+-	else
+-		return child;
+-}
+-
+-/*
+- * This is the basic lookup mechanism for turning an NFS file handle
+- * into a dentry.
+- * We use nfsd_iget and if that doesn't return a suitably connected dentry,
+- * we try to find the parent, and the parent of that and so-on until a
+- * connection if made.
+- */
+-static struct dentry *
+-find_fh_dentry(struct super_block *sb, ino_t ino, int generation, ino_t dirino, int needpath)
+-{
+-	struct dentry *dentry, *result = NULL;
+-	struct dentry *tmp;
+-	int  found =0;
+-	int err = -ESTALE;
+-	/* the sb->s_nfsd_free_path_sem semaphore is needed to make sure that only one unconnected (free)
+-	 * dcache path ever exists, as otherwise two partial paths might get
+-	 * joined together, which would be very confusing.
+-	 * If there is ever an unconnected non-root directory, then this lock
+-	 * must be held.
+-	 */
+ 
+-
+-	nfsdstats.fh_lookup++;
+ 	/*
+ 	 * Attempt to find the inode.
+ 	 */
+- retry:
+-	down(&sb->s_nfsd_free_path_sem);
+-	result = nfsd_iget(sb, ino, generation);
+-	if (IS_ERR(result)
+-	    || !(result->d_flags & DCACHE_NFSD_DISCONNECTED)
+-	    || (!S_ISDIR(result->d_inode->i_mode) && ! needpath)) {
+-		up(&sb->s_nfsd_free_path_sem);
+-	    
++	result = CALL(sb->s_nfsd_op,get_dentry)(sb,obj);
++	err = -ESTALE;
++	if (result == NULL)
++		goto err_out;
++	if (IS_ERR(result)) {
+ 		err = PTR_ERR(result);
+-		if (IS_ERR(result))
+-			goto err_out;
+-		if ((result->d_flags & DCACHE_NFSD_DISCONNECTED))
+-			nfsdstats.fh_anon++;
+-		return result;
++		goto err_out;
+ 	}
+-
+-	/* It's a directory, or we are required to confirm the file's
+-	 * location in the tree.
+-	 */
+-	dprintk("nfs_fh: need to look harder for %d/%ld\n",sb->s_dev,ino);
+-
+-	found = 0;
+-	if (!S_ISDIR(result->d_inode->i_mode)) {
+-		nfsdstats.fh_nocache_nondir++;
+-		if (dirino == 0)
+-			goto err_result; /* don't know how to find parent */
+-		else {
+-			/* need to iget dirino and make sure this inode is in that directory */
+-			dentry = nfsd_iget(sb, dirino, 0);
+-			err = PTR_ERR(dentry);
+-			if (IS_ERR(dentry))
+-				goto err_result;
+-			err = -ESTALE;
+-			if (!dentry->d_inode
+-			    || !S_ISDIR(dentry->d_inode->i_mode)) {
+-				goto err_dentry;
+-			}
+-			if (!(dentry->d_flags & DCACHE_NFSD_DISCONNECTED))
+-				found = 1;
+-			tmp = splice(result, dentry);
+-			err = PTR_ERR(tmp);
+-			if (IS_ERR(tmp))
+-				goto err_dentry;
+-			if (tmp != result) {
+-				/* it is safe to just use tmp instead, but we must discard result first */
+-				d_drop(result);
++	if (S_ISDIR(result->d_inode->i_mode) &&
++	    (result->d_flags & DCACHE_NFSD_DISCONNECTED)) {
++		/* it is an unconnected directory, we must connect it */
++		;
++	} else {
++		struct dentry *toput = NULL;
++		if (acceptable(context, result))
++			return result;
++		if (S_ISDIR(result->d_inode->i_mode)) {
++			/* there is no other dentry, so fail */
++			goto err_result;
++		}
++		/* try any other aliases */
++		spin_lock(&dcache_lock);
++		head = &result->d_inode->i_dentry;
++		list_for_each(le, head) {
++			struct dentry *dentry = list_entry(le, struct dentry, d_alias);
++			dget_locked(dentry);
++			spin_unlock(&dcache_lock);
++			if (toput)
++				dput(toput);
++			toput = NULL;
++			if (dentry != result &&
++			    acceptable(context, dentry)) {
+ 				dput(result);
+-				result = tmp;
+-				/* If !found, then this is really weird, but it shouldn't hurt */
++				dentry->d_vfs_flags |= DCACHE_REFERENCED;
++				return dentry;
+ 			}
++			spin_lock(&dcache_lock);
++			toput = dentry;
+ 		}
+-	} else {
+-		nfsdstats.fh_nocache_dir++;
+-		dentry = dget(result);
+-	}
++		spin_unlock(&dcache_lock);
++		if (toput)
++			dput(toput);
++	}			
+ 
+-	while(!found) {
+-		/* LOOP INVARIANT */
+-		/* haven't found a place in the tree yet, but we do have a free path
+-		 * from dentry down to result, and dentry is a directory.
+-		 * Have a hold on dentry and result */
+-		struct dentry *pdentry;
+-		struct inode *parent;
+-
+-		pdentry = nfsd_findparent(dentry);
+-		err = PTR_ERR(pdentry);
+-		if (IS_ERR(pdentry))
+-			goto err_dentry;
+-		parent = pdentry->d_inode;
+-		err = -EACCES;
+-		if (!parent) {
+-			dput(pdentry);
+-			goto err_dentry;
+-		}
++	/* It's a directory, or we are required to confirm the file's
++	 * location in the tree based on the parent information
++ 	 */
++	dprintk("nfs_fh: need to look harder for %d/%d\n",sb->s_dev,*(int*)obj);
++	if (S_ISDIR(result->d_inode->i_mode))
++		target_dir = dget(result);
++	else {
++		if (parent == NULL)
++			goto err_result;
++
++		target_dir = CALL(sb->s_nfsd_op,get_dentry)(sb,parent);
++		if (IS_ERR(target_dir))
++			err = PTR_ERR(target_dir);
++		if (target_dir == NULL || IS_ERR(target_dir))
++			goto err_result;
++	}
++	/*
++	 * Now we need to make sure that target_dir is properly connected.
++	 * It may already be, as the flag isn't always updated when connection
++	 * happens.
++	 * So, we walk up parent links until we find a connected directory,
++	 * or we run out of directories.  Then we find the parent, find
++	 * the name of the child in that parent, and do a lookup.
++	 * This should connect the child into the parent
++	 * We then repeat.
++	 */
++
++	/* it is possible that a confused file system might no let up complete the
++	 * path to the root.  For example, if get_parent returns a directory
++	 * in which we cannot find a name for the child.  While this implies a very
++	 * sick filesystem we don't want it to cause knfsd to spin.  Hence the noprogress
++	 * counter.  If we go through the loop 10 times (2 is probably enough) without
++	 * getting anywhere, we just give up
++	 */
++	noprogress= 0;
++	while (target_dir->d_flags & DCACHE_NFSD_DISCONNECTED && noprogress++ < 10) {
++		struct dentry *pd = target_dir;
++		spin_lock(&dcache_lock);
++		while (!IS_ROOT(pd) &&
++		       (pd->d_parent->d_flags & DCACHE_NFSD_DISCONNECTED))
++			pd = pd->d_parent;
+ 
+-		if (!(dentry->d_flags & DCACHE_NFSD_DISCONNECTED))
+-			found = 1;
++		dget_locked(pd);
++		spin_unlock(&dcache_lock);
+ 
+-		tmp = splice(dentry, pdentry);
+-		if (tmp != dentry) {
+-			/* Something wrong.  We need to drop thw whole dentry->result path
+-			 * whatever it was
++		if (!IS_ROOT(pd)) {
++			/* must have found a connected parent - great */
++			pd->d_flags &= ~DCACHE_NFSD_DISCONNECTED;
++			noprogress = 0;
++		} else if (pd == sb->s_root) {
++			printk("nfsd: Eeek filesystem root is not connected, impossible\n");
++			pd->d_flags &= ~DCACHE_NFSD_DISCONNECTED;
++			noprogress = 0;
++		} else {
++			/* we have hit the top of a disconnected path.  Try
++			 * to find parent and connect
++			 * note: racing with some other process renaming a
++			 * directory isn't much of a problem here.  If someone
++			 * renames the directory, it will end up properly connected,
++			 * which is what we want
+ 			 */
+-			struct dentry *d;
+-			for (d=result ; d ; d=(d->d_parent == d)?NULL:d->d_parent)
+-				d_drop(d);
++			struct dentry *ppd;
++			struct dentry *npd;
++			char nbuf[NAME_MAX+1];
++
++			down(&pd->d_inode->i_sem);
++			ppd = CALL(nops,get_parent)(pd);
++			up(&pd->d_inode->i_sem);
++
++			if (IS_ERR(ppd)) {
++				err = PTR_ERR(ppd);
++				dprintk("nfsfh: get_parent of %ld failed, err %d\n",
++					pd->d_inode->i_ino, err);
++				dput(pd);
++				break;
++			}
++			dprintk("nfsfh: find name of %lu in %lu\n", pd->d_inode->i_ino, ppd->d_inode->i_ino);
++			err = CALL(nops,get_name)(ppd, nbuf, pd);
++			if (err) {
++				dput(ppd);
++				if (err == -ENOENT)
++					/* some race between get_parent and get_name?
++					 * just try again
++					 */
++					continue;
++				dput(pd);
++				break;
++			}
++			dprintk("nfsfh: found name: %s\n", nbuf);
++			down(&ppd->d_inode->i_sem);
++			npd = lookup_one_len(nbuf, ppd, strlen(nbuf));
++			up(&ppd->d_inode->i_sem);
++			if (IS_ERR(npd)) {
++				err = PTR_ERR(npd);
++				dprintk("nfsfh: lookup failed: %d\n", err);
++				dput(ppd);
++				dput(pd);
++				break;
++			}
++			/* we didn't really want npd, we really wanted
++			 * a side-effect of the lookup.
++			 * hopefully, npd == pd, though it isn't really
++			 * a problem if it isn't
++			 */
++			if (npd == pd)
++				noprogress = 0;
++			else
++				printk("nfsd: npd != pd\n");
++			dput(npd);
++			dput(ppd);
++			if (IS_ROOT(pd)) {
++				/* something went wrong, we will have to give up */
++				dput(pd);
++				break;
++			}
+ 		}
+-		if (IS_ERR(tmp)) {
+-			err = PTR_ERR(tmp);
+-			dput(pdentry);
+-			goto err_dentry;
++		dput(pd);
++	}
++
++	if (target_dir->d_flags & DCACHE_NFSD_DISCONNECTED) {
++		/* something went wrong - oh-well */
++		if (!err)
++			err = -ESTALE;
++		goto err_target;
++	}
++	/* if we weren't after a directory, have one more step to go */
++	if (result != target_dir) {
++		struct dentry *nresult;
++		char nbuf[NAME_MAX+1];
++		err = CALL(nops,get_name)(target_dir, nbuf, result);
++		if (!err) {
++			down(&target_dir->d_inode->i_sem);
++			nresult = lookup_one_len(nbuf, target_dir, strlen(nbuf));
++			up(&target_dir->d_inode->i_sem);
++			if (!IS_ERR(nresult)) {
++				if (nresult->d_inode) {
++					dput(result);
++					result = nresult;
++				} else
++					dput(nresult);
++			}
+ 		}
+-		if (tmp != dentry) {
+-			/* we lost a race,  try again
+-			 */
+-			dput(pdentry);
+-			dput(tmp);
+-			dput(dentry);
+-			dput(result);	/* this will discard the whole free path, so we can up the semaphore */
+-			up(&sb->s_nfsd_free_path_sem);
+-			goto retry;
++	}
++	dput(target_dir);
++	/* now result is properly connected, it is our best bet */
++	if (acceptable(context, result))
++		return result;
++	/* one last try of the aliases.. */
++	spin_lock(&dcache_lock);
++	head = &result->d_inode->i_dentry;
++	list_for_each(le, head) {
++		struct dentry *dentry = list_entry(le, struct dentry, d_alias);
++		if (dentry != result &&
++		    acceptable(context, dentry)) {
++			dget_locked(dentry);
++			spin_unlock(&dcache_lock);
++			dput(result);
++			return dentry;
+ 		}
+-		dput(dentry);
+-		dentry = pdentry;
+ 	}
+-	dput(dentry);
+-	up(&sb->s_nfsd_free_path_sem);
+-	return result;
++	spin_unlock(&dcache_lock);
+ 
+-err_dentry:
+-	dput(dentry);
+-err_result:
++	/* drat - I just cannot find anything acceptable */
+ 	dput(result);
+-	up(&sb->s_nfsd_free_path_sem);
+-err_out:
++	return ERR_PTR(-ESTALE);
++
++ err_target:
++	dput(target_dir);
++ err_result:
++	dput(result);
++ err_out:
+ 	if (err == -ESTALE)
+ 		nfsdstats.fh_stale++;
+ 	return ERR_PTR(err);
+ }
+ 
++
++/**
++ * nfsd_decode_fh - default nfsd_operations->decode_fh function
++ * sb:  The superblock
++ * fh:  pointer to the file handle fragment
++ * fh_len: length of file handle fragment
++ * acceptable: function for testing acceptability of dentrys
++ * context:   context for @acceptable
++ *
++ * This default decode_fh() function assumes that the object identifier
++ * is at the start of the fragment, and that the parent identifier, if
++ * present, is 8 bytes in.
++ */
++struct dentry *nfsd_decode_fh(struct super_block *sb, char *fh, int fh_len,
++			 int (*acceptable)(void *context, struct dentry *de),
++			 void *context)
++{
++	char *parent = fh+8;
++	if (fh_len <=8)
++		parent = NULL;
++	return nfsd_find_fh_dentry(sb, fh, parent,
++				   acceptable, context);
++}
++
++/*
++ * our acceptability function.
++ * if NOSUBTREECHECK, accept anything
++ * if not, require that we can walk up to exp->ex_dentry
++ * doing some checks on the 'x' bits
++ */
++int nfsd_acceptable(void *expv, struct dentry *dentry)
++{
++	struct svc_export *exp = expv;
++	struct dentry *tdentry;
++	if (exp->ex_flags & NFSEXP_NOSUBTREECHECK)
++		return 1;
++
++	for (tdentry = dentry;
++	     tdentry != exp->ex_dentry && ! IS_ROOT(tdentry);
++	     tdentry = tdentry->d_parent) {
++		/* make sure parents give x permission to user */
++		if (permission(tdentry->d_parent->d_inode, S_IXOTH)<0)
++			break;
++	}
++	if (tdentry != exp->ex_dentry)
++		dprintk("nfsd_acceptable failed at %p %s\n", tdentry, tdentry->d_name.name);
++	return tdentry == exp->ex_dentry;
++}
++
++
+ /*
+  * Perform sanity checks on the dentry in a client's file handle.
+  *
+@@ -549,7 +572,6 @@
+ 
+ 		if (!exp) {
+ 			/* export entry revoked */
+-			nfsdstats.fh_stale++;
+ 			goto out;
+ 		}
+ 
+@@ -569,44 +591,43 @@
+ 		/*
+ 		 * Look up the dentry using the NFS file handle.
+ 		 */
+-		error = nfserr_stale;
+-		if (rqstp->rq_vers == 3)
+-			error = nfserr_badhandle;
+ 
+ 		if (fh->fh_version == 1) {
+-			/* if fileid_type != 0, and super_operations provide fh_to_dentry lookup,
+-			 *  then should use that */
+-			switch (fh->fh_fileid_type) {
+-			case 0:
++			if (fh->fh_fileid_type == 0)
+ 				dentry = dget(exp->ex_dentry);
+-				break;
+-			case 1:
+-				if ((data_left-=2)<0) goto out;
+-				dentry = find_fh_dentry(exp->ex_dentry->d_inode->i_sb,
+-							datap[0], datap[1],
+-							0,
+-							!(exp->ex_flags & NFSEXP_NOSUBTREECHECK));
+-				break;
+-			case 2:
+-				if ((data_left-=3)<0) goto out;
+-				dentry = find_fh_dentry(exp->ex_dentry->d_inode->i_sb,
+-							datap[0], datap[1],
+-							datap[2],
+-							!(exp->ex_flags & NFSEXP_NOSUBTREECHECK));
+-				break;
+-			default: goto out;
++			else {
++				struct nfsd_operations *nop = exp->ex_mnt->mnt_sb->s_nfsd_op;
++				int len = fh->fh_fileid_type;
++				/* compatibility with earlier code.. */
++				switch(len) {
++				case 1: len = 8; break;
++				case 2: len = 12; break;
++				}
++				if (len > data_left*4) len = data_left*4;
++				dentry  = CALL(nop,decode_fh)(exp->ex_mnt->mnt_sb,
++							      (char*)datap, len,
++							      nfsd_acceptable, exp);
++				
++				nfsdstats.fh_lookup++;
+ 			}
+ 		} else {
+-
+-			dentry = find_fh_dentry(exp->ex_dentry->d_inode->i_sb,
+-						fh->ofh_ino, fh->ofh_generation,
+-						fh->ofh_dirino,
+-						!(exp->ex_flags & NFSEXP_NOSUBTREECHECK));
++			struct nfsd_operations *nop = exp->ex_mnt->mnt_sb->s_nfsd_op;
++			__u32 handle[4];
++			handle[0] = fh->ofh_ino;
++			handle[1] = fh->ofh_generation;
++			handle[2] = fh->ofh_dirino;
++			handle[3] = 0;
++			dentry = CALL(nop,decode_fh)(exp->ex_mnt->mnt_sb,
++						     (char*)handle, fh->ofh_dirino?12:8,
++						     nfsd_acceptable, exp);
++			nfsdstats.fh_lookup++;
+ 		}
+-		if (IS_ERR(dentry)) {
+-			error = nfserrno(PTR_ERR(dentry));
++
++		error = nfserr_stale;
++		if (rqstp->rq_vers == 3 && dentry == NULL)
++			error = nfserr_badhandle;
++		if (dentry == NULL || IS_ERR(dentry))
+ 			goto out;
+-		}
+ #ifdef NFSD_PARANOIA
+ 		if (S_ISDIR(dentry->d_inode->i_mode) &&
+ 		    (dentry->d_flags & DCACHE_NFSD_DISCONNECTED)) {
+@@ -636,7 +657,7 @@
+ 	 * write call).
+ 	 */
+ 
+-	/* When is type ever negative? */
++	/* Type can be negative when creating hardlinks - not to a dir */
+ 	if (type > 0 && (inode->i_mode & S_IFMT) != type) {
+ 		error = (type == S_IFDIR)? nfserr_notdir : nfserr_isdir;
+ 		goto out;
+@@ -646,58 +667,58 @@
+ 		goto out;
+ 	}
+ 
+-	/*
+-	 * Security: Check that the export is valid for dentry <gam3@acm.org>
+-	 */
+-	error = 0;
+-
+-	if (!(exp->ex_flags & NFSEXP_NOSUBTREECHECK)) {
+-		if (exp->ex_dentry != dentry) {
+-			struct dentry *tdentry = dentry;
+-
+-			do {
+-				tdentry = tdentry->d_parent;
+-				if (exp->ex_dentry == tdentry)
+-					break;
+-				/* executable only by root and we can't be root */
+-				if (current->fsuid
+-				    && (exp->ex_flags & NFSEXP_ROOTSQUASH)
+-				    && !(tdentry->d_inode->i_uid
+-					 && (tdentry->d_inode->i_mode & S_IXUSR))
+-				    && !(tdentry->d_inode->i_gid
+-					 && (tdentry->d_inode->i_mode & S_IXGRP))
+-				    && !(tdentry->d_inode->i_mode & S_IXOTH)
+-					) {
+-					error = nfserr_stale;
+-					nfsdstats.fh_stale++;
+-					dprintk("fh_verify: no root_squashed access.\n");
+-				}
+-			} while ((tdentry != tdentry->d_parent));
+-			if (exp->ex_dentry != tdentry) {
+-				error = nfserr_stale;
+-				nfsdstats.fh_stale++;
+-				printk("nfsd Security: %s/%s bad export.\n",
+-				       dentry->d_parent->d_name.name,
+-				       dentry->d_name.name);
+-				goto out;
+-			}
+-		}
+-	}
+-
+ 	/* Finally, check access permissions. */
+-	if (!error) {
+-		error = nfsd_permission(exp, dentry, access);
+-	}
+-#ifdef NFSD_PARANOIA
++	error = nfsd_permission(exp, dentry, access);
++#ifdef NFSD_PARANOIA_EXTREME
+ 	if (error) {
+ 		printk("fh_verify: %s/%s permission failure, acc=%x, error=%d\n",
+ 		       dentry->d_parent->d_name.name, dentry->d_name.name, access, (error >> 24));
+ 	}
+ #endif
+ out:
++	if (error == nfserr_stale)
++		nfsdstats.fh_stale++;
+ 	return error;
+ }
+ 
++
++
++/**
++ * nfsd_encode_fh - default nfsd_operations->encode_fh function
++ * dentry:  the dentry to encode
++ * fh:      where to stor the file handle fragment
++ * max_len: maximum length to store there
++ * connectable: whether to store parent infomation
++ *
++ * This default encode_fh function assumes that the 32 inode number
++ * is suitable for locating an inode, and that the generation number
++ * can be used to check that it is still valid.  It places them in the
++ * filehandle fragment where nfsd_decode_fh expects to find them.
++ */
++int nfsd_encode_fh(struct dentry *dentry, char *fh, int max_len,
++		   int connectable)
++{
++	struct inode * inode = dentry->d_inode;
++	struct inode *parent = dentry->d_parent->d_inode;
++	__u32 new[4];
++	int cnt = 8;
++	
++	if (max_len < 8 || (connectable && max_len < 16))
++		return -ENOSPC;
++
++	new[0] = inode->i_ino;
++	new[1] = inode->i_generation;
++	if (connectable && !S_ISDIR(inode->i_mode)) {
++		new[2] = parent->i_ino;
++		new[3] = parent->i_generation;
++		cnt= 16;
++	}
++	memcpy(fh, new, cnt);
++	return cnt;
++}
++
++
++
+ /*
+  * Compose a file handle for an NFS reply.
+  *
+@@ -708,20 +729,24 @@
+ inline int _fh_update(struct dentry *dentry, struct svc_export *exp,
+ 		      __u32 **datapp, int maxsize)
+ {
+-	__u32 *datap= *datapp;
++	struct nfsd_operations *nop = exp->ex_mnt->mnt_sb->s_nfsd_op;
++	int len, len2;
++	char *datap = (char*) *datapp;
++	
+ 	if (dentry == exp->ex_dentry)
+ 		return 0;
+-	/* if super_operations provides dentry_to_fh lookup, should use that */
+-	
+-	*datap++ = ino_t_to_u32(dentry->d_inode->i_ino);
+-	*datap++ = dentry->d_inode->i_generation;
+-	if (S_ISDIR(dentry->d_inode->i_mode) || (exp->ex_flags & NFSEXP_NOSUBTREECHECK)){
+-		*datapp = datap;
+-		return 1;
+-	}
+-	*datap++ = ino_t_to_u32(dentry->d_parent->d_inode->i_ino);
+-	*datapp = datap;
+-	return 2;
++
++	len = CALL(nop,encode_fh)(dentry, datap, maxsize,
++			     !(exp->ex_flags&NFSEXP_NOSUBTREECHECK));
++	if (len<0)
++		return len;
++
++	/* round to four-byte boundry */
++	len2=len;
++	while (len2&3)
++		datap[len2++] = 0;
++	*datapp = (__u32*) (datap+len2);
++	return len;
+ }
+ 
+ int
+@@ -730,6 +755,7 @@
+ 	struct inode * inode = dentry->d_inode;
+ 	struct dentry *parent = dentry->d_parent;
+ 	__u32 *datap;
++	int err;
+ 
+ 	dprintk("nfsd: fh_compose(exp %x/%ld %s/%s, ino=%ld)\n",
+ 		exp->ex_dev, (long) exp->ex_ino,
+@@ -755,16 +781,16 @@
+ 	*datap++ = htonl((MAJOR(exp->ex_dev)<<16)| MINOR(exp->ex_dev));
+ 	*datap++ = ino_t_to_u32(exp->ex_ino);
+ 
+-	if (inode)
+-		fhp->fh_handle.fh_fileid_type =
+-			_fh_update(dentry, exp, &datap, fhp->fh_maxsize-3);
++	if (inode) {
++		err = _fh_update(dentry, exp, &datap, fhp->fh_maxsize-3*4);
++		if (err < 0)
++			return nfserr_opnotsupp;
++		fhp->fh_handle.fh_fileid_type = err;
++	}
+ 
+ 	fhp->fh_handle.fh_size = (datap-fhp->fh_handle.fh_auth+1)*4;
+ 
+-
+ 	nfsd_nr_verified++;
+-	if (fhp->fh_handle.fh_fileid_type == 255)
+-		return nfserr_opnotsupp;
+ 	return 0;
+ }
+ 
+@@ -777,6 +803,7 @@
+ {
+ 	struct dentry *dentry;
+ 	__u32 *datap;
++	int err;
+ 	
+ 	if (!fhp->fh_dentry)
+ 		goto out_bad;
+@@ -788,8 +815,10 @@
+ 		goto out_uptodate;
+ 	datap = fhp->fh_handle.fh_auth+
+ 		          fhp->fh_handle.fh_size/4 -1;
+-	fhp->fh_handle.fh_fileid_type =
+-		_fh_update(dentry, fhp->fh_export, &datap, fhp->fh_maxsize-fhp->fh_handle.fh_size);
++	err =_fh_update(dentry, fhp->fh_export, &datap, fhp->fh_maxsize-fhp->fh_handle.fh_size);
++	if (err < 0)
++		return nfserr_opnotsupp;
++	fhp->fh_handle.fh_fileid_type = err;
+ 	fhp->fh_handle.fh_size = (datap-fhp->fh_handle.fh_auth+1)*4;
+ out:
+ 	return 0;
+@@ -822,3 +851,30 @@
+ 	}
+ 	return;
+ }
++
++static struct dentry *nfsd_get_parent(struct dentry *child)
++{
++	/* get_parent cannot be supported generically, the locking
++	 * is too icky.
++	 * instead, we just return EACCES.  If server reboots or inodes
++	 * get flused, you lose
++	 */
++	return ERR_PTR(-EACCES);
++}
++
++
++struct nfsd_operations nfsd_op_default = {
++	decode_fh:	nfsd_decode_fh,
++	encode_fh:	nfsd_encode_fh,
++
++	get_name:	nfsd_get_name,
++	get_parent:	nfsd_get_parent,
++	get_dentry:	nfsd_get_dentry,
++};
++
++#ifndef CONFIG_NFSD_MODULE
++/* we don't export this when compiling as a module, as
++ * we use the nfsd_linkage structure for linkage instead
++ */
++EXPORT_SYMBOL(nfsd_find_fh_dentry);
++#endif
+diff -urN linux/fs/reiserfs/inode.c linux.nfsdops/fs/reiserfs/inode.c
+--- linux/fs/reiserfs/inode.c	Fri Apr 27 23:18:08 2001
++++ linux.nfsdops/fs/reiserfs/inode.c	Wed May 30 20:35:41 2001
+@@ -918,7 +918,6 @@
+ 
+ 
+     copy_key (INODE_PKEY (inode), &(ih->ih_key));
+-    inode->i_generation = INODE_PKEY (inode)->k_dir_id;
+     inode->i_blksize = PAGE_SIZE;
+ 
+     if (stat_data_v1 (ih)) {
+@@ -936,6 +935,7 @@
+ 	inode->i_ctime = le32_to_cpu (sd->sd_ctime);
+ 
+ 	inode->i_blocks = le32_to_cpu (sd->u.sd_blocks);
++	inode->i_generation = INODE_PKEY (inode)->k_dir_id;
+ 	blocks = (inode->i_size + 511) >> 9;
+ 	blocks = _ROUND_UP (blocks, inode->i_blksize >> 9);
+ 	if (inode->i_blocks > blocks) {
+@@ -970,6 +970,10 @@
+ 	inode->i_ctime = le32_to_cpu (sd->sd_ctime);
+ 	inode->i_blocks = le32_to_cpu (sd->sd_blocks);
+ 	rdev = le32_to_cpu (sd->u.sd_rdev);
++	if( S_ISCHR( inode -> i_mode ) || S_ISBLK( inode -> i_mode ) )
++	    inode->i_generation = INODE_PKEY (inode)->k_dir_id;
++	else
++	    inode->i_generation = le32_to_cpu( sd->u.sd_generation );
+     }
+ 
+     /* nopack = 0, by default */
+@@ -1007,8 +1011,11 @@
+     sd_v2->sd_atime = cpu_to_le32 (inode->i_atime);
+     sd_v2->sd_ctime = cpu_to_le32 (inode->i_ctime);
+     sd_v2->sd_blocks = cpu_to_le32 (inode->i_blocks);
+-    if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
++    if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode)) {
+ 	sd_v2->u.sd_rdev = cpu_to_le32 (inode->i_rdev);
++    } else {
++	sd_v2->u.sd_generation = cpu_to_le32( inode -> i_generation );
++    }
+ }
+ 
+ 
+@@ -1422,6 +1429,18 @@
+       U32_MAX/*NO_BYTES_IN_DIRECT_ITEM*/;
+ 
+     if (old_format_only (sb))
++      /* not a perfect generation count, as object ids can be reused, but this
++      ** is as good as reiserfs can do right now
++      */
++      inode->i_generation = INODE_PKEY (inode)->k_dir_id;
++    else
++#if defined( USE_INODE_GENERATION_COUNTER )
++      inode->i_generation = 
++	le32_to_cpu( sb -> u.reiserfs_sb.s_rs -> s_inode_generation );
++#else
++      inode->i_generation = ++event;
++#endif
++    if (old_format_only (sb))
+ 	inode2sd_v1 (&sd, inode);
+     else
+ 	inode2sd (&sd, inode);
+@@ -1468,10 +1487,6 @@
+ 	return NULL;
+     }
+ 
+-    /* not a perfect generation count, as object ids can be reused, but this
+-    ** is as good as reiserfs can do right now
+-    */
+-    inode->i_generation = INODE_PKEY (inode)->k_dir_id;
+     insert_inode_hash (inode);
+     // we do not mark inode dirty: on disk content matches to the
+     // in-core one
+diff -urN linux/fs/reiserfs/namei.c linux.nfsdops/fs/reiserfs/namei.c
+--- linux/fs/reiserfs/namei.c	Fri Apr 27 23:18:08 2001
++++ linux.nfsdops/fs/reiserfs/namei.c	Wed May 30 20:35:41 2001
+@@ -18,6 +18,7 @@
+ #include <linux/bitops.h>
+ #include <linux/reiserfs_fs.h>
+ #include <linux/smp_lock.h>
++#include <linux/nfsd/interface.h>
+ 
+ #else
+ 
+@@ -25,6 +26,41 @@
+ 
+ #endif
+ 
++typedef struct __r5fs_nfs_fh_nogen
++{
++  __u32 objectid;
++  __u32 dirid;
++} __attribute__((__packed__)) __r5fs_nfs_fh_nogen;
++
++typedef struct __r5fs_nfs_fh_full
++{
++  __r5fs_nfs_fh_nogen base;
++  __u32               generation;
++} __attribute__((__packed__)) __r5fs_nfs_fh_full;
++
++typedef union __r5fs_nfs_subfh
++{
++  __r5fs_nfs_fh_nogen nogen;
++  __r5fs_nfs_fh_full  full;
++} __attribute__((__packed__)) __r5fs_nfs_subfh;
++
++typedef struct __r5fs_nfs_fh
++{
++  __r5fs_nfs_fh_full  object;
++  __r5fs_nfs_subfh    parent;
++} __attribute__((__packed__)) __r5fs_nfs_fh;
++
++typedef enum { full_subfh, nogen_subfh } subfh_type;
++typedef struct __r5fs_nfs_subfh_wrapper
++{
++  subfh_type       type;
++  __r5fs_nfs_subfh subfh;
++} __attribute__((__packed__)) __r5fs_nfs_subfh_wrapper;
++
++#if !defined( CONFIG_NFSD ) && !defined( CONFIG_NFSD_MODULE )
++static char no_knfsd_support_panic[] = "reiserfs: %s called w/o CONFIG_NFSD\n";
++#endif
++
+ 				/* there should be an overview right
+                                    here, as there should be in every
+                                    conceptual grouping of code.  This
+@@ -387,10 +423,99 @@
+         }
+     }
+ 
++    /* added for knfsd support */
++    if (inode)
++        return d_splice_alias(inode, dentry) ;
++
+     d_add(dentry, inode);
+     return NULL;
+ }
++/*
++** reiserfs_get_dentry: inump is a pointer to __r5fs_nfs_subfh_wrapper,
++** set up by reiserfs_decode_fh().
++**
++** taken from nfsd_get_dentry
++*/
++struct dentry *reiserfs_get_dentry(struct super_block *s, void *inump)
++{
++    struct dentry *dentry;
++    struct inode *inode;
++    __r5fs_nfs_subfh_wrapper *fh;
++    unsigned long ino;
++    struct reiserfs_iget4_args args ;
++
++    fh = ( __r5fs_nfs_subfh_wrapper * )inump;
++
++    ino = fh -> subfh.nogen.objectid;
++    args.objectid = fh -> subfh.nogen.dirid;
++    if (ino == 0)
++	return NULL;
++    
++    inode = iget4(s, ino, 0, (void *)(&args));
++    if (!inode) {
++	printk("reiserfs_get_dentry: iget4 returned NULL\n") ;
++	return NULL ;
++    }
++    if ( is_bad_inode( inode ) ||
++	 ( ( fh -> type == full_subfh ) &&
++	   fh -> subfh.full.generation && 
++	   ( inode -> i_generation != fh -> subfh.full.generation ) ) ) {
++      /* we didn't find the right inode.. */
++      printk( "reiserfs: knfsd-fh-mismatch: %s:%s:%i " 
++	      "%s inode %lx, count: %d %d [%i %i]/[%x %x]\n",
++	      __FUNCTION__, __FILE__, __LINE__,
++	      is_bad_inode( inode ) ? "bad" : "ok",
++	      inode->i_ino,
++	      inode->i_nlink, atomic_read(&inode->i_count),
++	      fh -> subfh.full.generation, inode->i_generation,
++	      fh -> subfh.nogen.dirid, inode -> u.reiserfs_i.i_key[ 1 ] );
++
++	iput(inode);
++	return NULL;
++    }
++    dentry = d_make_alias(inode);
++    if (!dentry) {
++	iput(inode);
++	dentry = ERR_PTR(-ENOMEM);
++    }
++    return dentry;
++}
+ 
++/* 
++** looks up the dentry of the parent directory for child.
++** taken from ext2_get_parent
++*/
++struct dentry *reiserfs_get_parent(struct dentry *child)
++{
++    int retval;
++    struct inode * inode = NULL;
++    struct reiserfs_dir_entry de;
++    INITIALIZE_PATH (path_to_entry);
++    struct dentry *parent;
++    struct inode *dir = child->d_inode ;
++
++    reiserfs_check_lock_depth("reiserfs_get_parent") ;
++
++    if (dir->i_nlink == 0) {
++	return ERR_PTR(-ENOENT);
++    }
++    de.de_gen_number_bit_string = 0;
++    retval = reiserfs_find_entry (dir, "..", 2, &path_to_entry, &de);
++    pathrelse (&path_to_entry);
++    if (retval == NAME_FOUND) {
++	inode = reiserfs_iget (dir->i_sb, (struct cpu_key *)&(de.de_dir_id));
++	if (!inode) {
++	    return ERR_PTR(-EACCES);
++        }
++	parent = d_make_alias(inode);
++	if (!parent) {
++		iput(inode);
++		parent = ERR_PTR(-ENOMEM);
++        }
++	return parent;
++    }
++    return ERR_PTR(-ENOENT);
++} 
+ 
+ //
+ // a portion of this function, particularly the VFS interface portion,
+@@ -1229,5 +1354,83 @@
+     pop_journal_writer(windex) ;
+     journal_end(&th, old_dir->i_sb, jbegin_count) ;
+     return 0;
++}
++
++/* this is not best file to place following functions in, 
++   but they don't worth creation of new one. */
++
++/* our file-handle fragment format is __r5fs_nfs_fh */
++struct dentry *reiserfs_decode_fh( struct super_block *sb, 
++				   char *fh, int fh_len,
++				   int ( *acceptable )( void *context, 
++							struct dentry *de ),
++				   void *context )
++{
++#if defined( CONFIG_NFSD ) || defined( CONFIG_NFSD_MODULE )
++
++  __r5fs_nfs_fh *handle;
++  __r5fs_nfs_subfh_wrapper object;
++  __r5fs_nfs_subfh_wrapper parent;
++
++  handle = ( __r5fs_nfs_fh * ) fh;
++
++  object.type = full_subfh;
++  object.subfh.full = handle -> object;
++  if( fh_len >= sizeof object.subfh.full + sizeof parent.subfh.nogen )
++    {
++      parent.subfh.nogen = handle -> parent.nogen;
++    }
++  if( fh_len >= 2 * sizeof( __r5fs_nfs_fh_full ) )
++    {
++      parent.subfh.full.generation = handle -> parent.full.generation;
++      parent.type = full_subfh;
++    }
++  else
++    {
++      parent.type = nogen_subfh;
++    }
++  return nfsd_find_fh_dentry
++    ( sb, &object, 
++      ( fh_len >= sizeof object.subfh.full + sizeof parent.subfh.nogen ) ? 
++      &parent : NULL, 
++      acceptable, context );
++#else
++  panic( no_knfsd_support_panic, __func__ );
++#endif
++}
++
++int reiserfs_encode_fh( struct dentry *dentry, char *fh, int max_len, 
++			int connectable )
++{
++#if defined( CONFIG_NFSD ) || defined( CONFIG_NFSD_MODULE )
++	struct inode * inode = dentry->d_inode;
++	struct inode *parent = dentry->d_parent->d_inode;
++	__r5fs_nfs_fh new;
++	int cnt = sizeof new.object;
++
++	if( max_len < cnt || 
++	    ( connectable && 
++	      max_len < sizeof new.object + sizeof new.parent.nogen ) )
++	  return -ENOSPC;
++
++	new.object.base.objectid = inode -> i_ino;
++	new.object.base.dirid = inode -> u.reiserfs_i.i_key[ 0 ];
++	new.object.generation = inode -> i_generation;
++	if(connectable) {
++	  new.parent.nogen.objectid = parent -> i_ino;
++	  new.parent.nogen.dirid = parent -> u.reiserfs_i.i_key[ 0 ];
++	  cnt += sizeof new.parent.nogen;
++	  /* generation of parent doesn't fit into NFSv2 file-handle */
++	  if( max_len >= 2 * sizeof( __r5fs_nfs_fh_full ) )
++	    {
++	      new.parent.full.generation = parent -> i_generation;
++	      cnt += sizeof new.parent.full.generation;
++	    }
++	}
++	memcpy(fh, &new, cnt);
++	return cnt;
++#else
++	panic( no_knfsd_support_panic, __func__ );
++#endif
+ }
+ 
+diff -urN linux/fs/reiserfs/stree.c linux.nfsdops/fs/reiserfs/stree.c
+--- linux/fs/reiserfs/stree.c	Sat Apr 14 05:26:07 2001
++++ linux.nfsdops/fs/reiserfs/stree.c	Wed May 30 20:35:41 2001
+@@ -1560,6 +1560,17 @@
+         reiserfs_warning("clm-4001: deleting inode with link count==%d\n", inode->i_nlink) ;
+     }
+ #endif
++#if defined( USE_INODE_GENERATION_COUNTER )
++    if( !old_format_only ( th -> t_super ) )
++      {
++       __u32 *inode_generation;
++       
++       inode_generation = 
++         &th -> t_super -> u.reiserfs_sb.s_rs -> s_inode_generation;
++       *inode_generation = cpu_to_le32( le32_to_cpu( *inode_generation ) + 1 );
++      }
++/* USE_INODE_GENERATION_COUNTER */
++#endif
+     reiserfs_delete_solid_item (th, INODE_PKEY (inode));
+ }
+ 
+diff -urN linux/fs/reiserfs/super.c linux.nfsdops/fs/reiserfs/super.c
+--- linux/fs/reiserfs/super.c	Fri Apr 27 23:18:08 2001
++++ linux.nfsdops/fs/reiserfs/super.c	Wed May 30 20:35:41 2001
+@@ -21,6 +21,7 @@
+ #include <linux/smp_lock.h>
+ #include <linux/locks.h>
+ #include <linux/init.h>
++#include <linux/nfsd/interface.h>
+ 
+ #else
+ 
+@@ -151,6 +152,23 @@
+ 
+ };
+ 
++struct dentry *reiserfs_get_parent(struct dentry *) ;
++struct dentry *reiserfs_get_dentry(struct super_block *, void *) ;
++struct dentry *reiserfs_decode_fh( struct super_block *sb, 
++								   char *fh, int fh_len,
++								   int ( *acceptable )( void *context, 
++														struct dentry *de ),
++								   void *context );
++int reiserfs_encode_fh( struct dentry *dentry, char *fh, int max_len, 
++						int connectable );
++
++static struct nfsd_operations reiserfs_nfsd_ops = {
++  encode_fh: reiserfs_encode_fh,
++  decode_fh: reiserfs_decode_fh,
++  get_parent: reiserfs_get_parent,
++  get_dentry: reiserfs_get_dentry,
++} ;
++
+ /* this was (ext2)parse_options */
+ static int parse_options (char * options, unsigned long * mount_options, unsigned long * blocks)
+ {
+@@ -413,6 +431,7 @@
+     SB_BUFFER_WITH_SB (s) = bh;
+     SB_DISK_SUPER_BLOCK (s) = rs;
+     s->s_op = &reiserfs_sops;
++    s->s_nfsd_op = &reiserfs_nfsd_ops;
+     return 0;
+ }
+ #endif
+@@ -493,6 +512,7 @@
+     SB_BUFFER_WITH_SB (s) = bh;
+     SB_DISK_SUPER_BLOCK (s) = rs;
+     s->s_op = &reiserfs_sops;
++    s->s_nfsd_op = &reiserfs_nfsd_ops;
+ 
+     /* new format is limited by the 32 bit wide i_blocks field, want to
+     ** be one full block below that.
+diff -urN linux/fs/super.c linux.nfsdops/fs/super.c
+--- linux/fs/super.c	Fri May 25 21:38:52 2001
++++ linux.nfsdops/fs/super.c	Wed May 30 20:35:35 2001
+@@ -689,7 +689,6 @@
+ 		init_rwsem(&s->s_umount);
+ 		sema_init(&s->s_lock, 1);
+ 		sema_init(&s->s_vfs_rename_sem,1);
+-		sema_init(&s->s_nfsd_free_path_sem,1);
+ 		sema_init(&s->s_dquot.dqio_sem, 1);
+ 		sema_init(&s->s_dquot.dqoff_sem, 1);
+ 	}
+diff -urN linux/fs/ufs/ialloc.c linux.nfsdops/fs/ufs/ialloc.c
+--- linux/fs/ufs/ialloc.c	Thu Nov 16 22:18:26 2000
++++ linux.nfsdops/fs/ufs/ialloc.c	Wed May 30 20:35:48 2001
+@@ -272,6 +272,7 @@
+ 	inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
+ 	inode->u.ufs_i.i_flags = dir->u.ufs_i.i_flags;
+ 	inode->u.ufs_i.i_lastfrag = 0;
++	inode->i_generation = event++;
+ 
+ 	insert_inode_hash(inode);
+ 	mark_inode_dirty(inode);
+diff -urN linux/fs/ufs/inode.c linux.nfsdops/fs/ufs/inode.c
+--- linux/fs/ufs/inode.c	Tue Dec  5 04:00:54 2000
++++ linux.nfsdops/fs/ufs/inode.c	Wed May 30 20:35:48 2001
+@@ -562,13 +562,13 @@
+ 	if (inode->i_ino < UFS_ROOTINO || 
+ 	    inode->i_ino > (uspi->s_ncg * uspi->s_ipg)) {
+ 		ufs_warning (sb, "ufs_read_inode", "bad inode number (%lu)\n", inode->i_ino);
+-		return;
++		goto bad_inode;
+ 	}
+ 	
+ 	bh = bread (sb->s_dev, uspi->s_sbbase + ufs_inotofsba(inode->i_ino), sb->s_blocksize);
+ 	if (!bh) {
+ 		ufs_warning (sb, "ufs_read_inode", "unable to read inode %lu\n", inode->i_ino);
+-		return;
++		goto bad_inode;
+ 	}
+ 	ufs_inode = (struct ufs_inode *) (bh->b_data + sizeof(struct ufs_inode) * ufs_inotofsbo(inode->i_ino));
+ 
+@@ -577,9 +577,12 @@
+ 	 */
+ 	inode->i_mode = SWAB16(ufs_inode->ui_mode);
+ 	inode->i_nlink = SWAB16(ufs_inode->ui_nlink);
+-	if (inode->i_nlink == 0)
++	if (inode->i_nlink == 0) {
++		/* probably NFSd with a stale file handle, not an error
+ 		ufs_error (sb, "ufs_read_inode", "inode %lu has zero nlink\n", inode->i_ino);
+-	
++		*/
++		goto bad_inode;
++	}
+ 	/*
+ 	 * Linux now has 32-bit uid and gid, so we can support EFT.
+ 	 */
+@@ -619,6 +622,8 @@
+ 			inode->u.ufs_i.i_u1.i_symlink[i] = ufs_inode->ui_u2.ui_symlink[i];
+ 	}
+ 
++	inode->i_generation = inode->u.ufs_i.i_gen;
++
+ 
+ 	if (S_ISREG(inode->i_mode)) {
+ 		inode->i_op = &ufs_file_inode_operations;
+@@ -643,7 +648,10 @@
+ #ifdef UFS_INODE_DEBUG_MORE
+ 	ufs_print_inode (inode);
+ #endif
+-	UFSD(("EXIT\n"))
++	UFSD(("EXIT\n"));
++ bad_inode:
++	make_bad_inode(inode);
++	return;
+ }
+ 
+ static int ufs_update_inode(struct inode * inode, int do_sync)
+@@ -690,6 +698,7 @@
+ 	ufs_inode->ui_mtime.tv_usec = SWAB32(0);
+ 	ufs_inode->ui_blocks = SWAB32(inode->i_blocks);
+ 	ufs_inode->ui_flags = SWAB32(inode->u.ufs_i.i_flags);
++	inode->u.ufs_i.i_gen = inode->i_generation;
+ 	ufs_inode->ui_gen = SWAB32(inode->u.ufs_i.i_gen);
+ 
+ 	if ((flags & UFS_UID_MASK) == UFS_UID_EFT) {
+@@ -738,11 +747,14 @@
+ {
+ 	/*inode->u.ufs_i.i_dtime = CURRENT_TIME;*/
+ 	lock_kernel();
+-	mark_inode_dirty(inode);
+-	ufs_update_inode(inode, IS_SYNC(inode));
+-	inode->i_size = 0;
+-	if (inode->i_blocks)
+-		ufs_truncate (inode);
+-	ufs_free_inode (inode);
++	if (!is_bad_inode(inode)) {
++		mark_inode_dirty(inode);
++		ufs_update_inode(inode, IS_SYNC(inode));
++		inode->i_size = 0;
++		if (inode->i_blocks)
++			ufs_truncate (inode);
++		ufs_free_inode (inode);
++	} else
++		clear_inode(inode);
+ 	unlock_kernel();
+ }
+diff -urN linux/fs/ufs/namei.c linux.nfsdops/fs/ufs/namei.c
+--- linux/fs/ufs/namei.c	Tue Sep  5 23:07:30 2000
++++ linux.nfsdops/fs/ufs/namei.c	Wed May 30 20:35:48 2001
+@@ -208,9 +208,45 @@
+ 		if (!inode) 
+ 			return ERR_PTR(-EACCES);
+ 	}
++	if (inode)
++		return d_splice_alias(inode, dentry);
++	
+ 	d_add(dentry, inode);
+ 	UFSD(("EXIT\n"))
+ 	return NULL;
++}
++
++struct dentry *ufs_get_parent(struct dentry *child)
++{
++	struct super_block * sb;
++	struct inode * inode;
++	struct ufs_dir_entry * de;
++	struct buffer_head * bh;
++	struct dentry *parent;
++	unsigned swab;
++	
++	UFSD(("ENTER\n"))
++	
++	sb = child->d_inode->i_sb;
++	swab = sb->u.ufs_sb.s_swab;
++	
++
++	bh = ufs_find_entry (child->d_inode, "..", 2, &de);
++	inode = NULL;
++	if (bh) {
++		unsigned long ino = SWAB32(de->d_ino);
++		brelse (bh);
++		inode = iget(sb, ino);
++	}
++	if (!inode) 
++		return ERR_PTR(-EACCES);
++	parent = d_make_alias(inode);
++	if (!parent) {
++		iput(inode);
++		parent = ERR_PTR(-ENOMEM);
++	}
++	UFSD(("EXIT\n"))
++	return parent;
+ }
+ 
+ /*
+diff -urN linux/fs/ufs/super.c linux.nfsdops/fs/ufs/super.c
+--- linux/fs/ufs/super.c	Wed May 16 19:31:27 2001
++++ linux.nfsdops/fs/ufs/super.c	Wed May 30 20:35:48 2001
+@@ -80,6 +80,7 @@
+ #include <linux/locks.h>
+ #include <linux/blkdev.h>
+ #include <linux/init.h>
++#include <linux/nfsd/interface.h>
+ 
+ #include "swab.h"
+ #include "util.h"
+@@ -177,6 +178,7 @@
+ #endif /* UFS_SUPER_DEBUG_MORE */
+ 
+ static struct super_operations ufs_super_ops;
++static struct nfsd_operations ufs_nfsd_ops;
+ 
+ static char error_buf[1024];
+ 
+@@ -735,6 +737,7 @@
+ 	sb->s_blocksize =  SWAB32(usb1->fs_fsize);
+ 	sb->s_blocksize_bits = SWAB32(usb1->fs_fshift);
+ 	sb->s_op = &ufs_super_ops;
++	sb->s_nfsd_op = &ufs_nfsd_ops;
+ 	sb->dq_op = NULL; /***/
+ 	sb->s_magic = SWAB32(usb3->fs_magic);
+ 
+@@ -977,6 +980,12 @@
+ 	write_super:	ufs_write_super,
+ 	statfs:		ufs_statfs,
+ 	remount_fs:	ufs_remount,
++};
++
++extern struct dentry *ufs_get_parent(struct dentry *child);
++
++static struct nfsd_operations ufs_nfsd_ops = {
++	get_parent:	ufs_get_parent,
+ };
+ 
+ static DECLARE_FSTYPE_DEV(ufs_fs_type, "ufs", ufs_read_super);
+diff -urN linux/include/linux/dcache.h linux.nfsdops/include/linux/dcache.h
+--- linux/include/linux/dcache.h	Sat May 26 03:01:26 2001
++++ linux.nfsdops/include/linux/dcache.h	Wed May 30 20:35:35 2001
+@@ -116,12 +116,17 @@
+ 					 * renamed" and has to be
+ 					 * deleted on the last dput()
+ 					 */
+-#define	DCACHE_NFSD_DISCONNECTED 0x0004	/* This dentry is not currently connected to the
+-					 * dcache tree. Its parent will either be itself,
+-					 * or will have this flag as well.
+-					 * If this dentry points to a directory, then
+-					 * s_nfsd_free_path semaphore will be down
+-					 */
++#define	DCACHE_NFSD_DISCONNECTED 0x0004
++     /* This dentry is possibly not currently connected to the dcache tree,
++      * in which case its parent will either be itself, or will have this
++      * flag as well.  nfsd will not use a dentry with this bit set, but will
++      * first endeavour to clear the bit either by discovering that it is
++      * connected, or by performing lookup operations.   Any filesystem which
++      * supports nfsd_operations MUST have a lookup function which, if it finds
++      * a directory inode with a DCACHE_NFSD_DISCONNECTED dentry, will d_move
++      * that dentry into place and return that dentry rather than the passed one.
++      */
++
+ #define DCACHE_REFERENCED	0x0008  /* Recently used, don't discard. */
+ 
+ extern spinlock_t dcache_lock;
+@@ -212,6 +217,11 @@
+ 
+ /* used for rename() and baskets */
+ extern void d_move(struct dentry *, struct dentry *);
++
++/* used in ->lookup in filesystems that play nice with knfsd */
++extern struct dentry *d_splice_alias(struct inode *inode, struct dentry *dentry);
++extern struct dentry *d_make_alias(struct inode *inode);
++   
+ 
+ /* appendix may either be NULL or be used for transname suffixes */
+ extern struct dentry * d_lookup(struct dentry *, struct qstr *);
+diff -urN linux/include/linux/fs.h linux.nfsdops/include/linux/fs.h
+--- linux/include/linux/fs.h	Sat May 26 03:01:28 2001
++++ linux.nfsdops/include/linux/fs.h	Wed May 30 20:35:35 2001
+@@ -667,6 +667,7 @@
+ 	struct file_system_type	*s_type;
+ 	struct super_operations	*s_op;
+ 	struct dquot_operations	*dq_op;
++	struct nfsd_operations	*s_nfsd_op;
+ 	unsigned long		s_flags;
+ 	unsigned long		s_magic;
+ 	struct dentry		*s_root;
+@@ -711,15 +712,6 @@
+ 	 * even looking at it. You had been warned.
+ 	 */
+ 	struct semaphore s_vfs_rename_sem;	/* Kludge */
+-
+-	/* The next field is used by knfsd when converting a (inode number based)
+-	 * file handle into a dentry. As it builds a path in the dcache tree from
+-	 * the bottom up, there may for a time be a subpath of dentrys which is not
+-	 * connected to the main tree.  This semaphore ensure that there is only ever
+-	 * one such free path per filesystem.  Note that unconnected files (or other
+-	 * non-directories) are allowed, but not unconnected diretories.
+-	 */
+-	struct semaphore s_nfsd_free_path_sem;
+ };
+ 
+ /*
+diff -urN linux/include/linux/nfsd/interface.h linux.nfsdops/include/linux/nfsd/interface.h
+--- linux/include/linux/nfsd/interface.h	Tue Sep  5 21:56:51 2000
++++ linux.nfsdops/include/linux/nfsd/interface.h	Wed May 30 20:35:35 2001
+@@ -12,12 +12,151 @@
+ 
+ #include <linux/config.h>
+ 
++/**
++ * &nfsd_operations - for nfsd to communicate with file systems
++ * decode_fh:      decode a file handle fragment and return a &struct dentry
++ * encode_fh:      encode a file handle fragment from a dentry
++ * get_name:       find the name for a given inode in a given directory
++ * get_parent:     find the parent of a given directory
++ * get_dentry:     find a dentry for the inode given a file handle sub-fragment
++ *
++ * Description:
++ *    The nfsd_operations structure provides a means for nfsd to communicate
++ *    with a particular exported file system  - particularly enabling nfsd and
++ *    the filesystem to co-operate when dealing with file handles.
++ *
++ *    nfsd_operations contains two basic operation for dealing with file handles,
++ *    decode_fh() and encode_fh(), and allows for some other operations to be defined
++ *    which standard helper routines use to get specific information from the
++ *    filesystem.
++ *
++ *    nfsd encodes information use to determine which filesystem a filehandle
++ *    applies to in the initial part of the file handle.  The remainder, termed a
++ *    file handle fragment, is controlled completely by the filesystem.
++ *    The standard helper routines assume that this fragment will contain one or two
++ *    sub-fragments, one which identifies the file, and one which may be used to
++ *    identify the (a) directory containing the file.
++ *
++ *    In some situations, nfsd needs to get a dentry which is connected into a
++ *    specific part of the file tree.  To allow for this, it passes the function
++ *    acceptable() together with a @context which can be used to see if the dentry
++ *    is acceptable.  As there can be multiple dentrys for a given file, the filesystem
++ *    should check each one for acceptability before looking for the next.  As soon
++ *    as an acceptable one is found, it should be returned.
++ *
++ * decode_fh:
++ *    @decode_fh is given a &struct super_block (@sb), a file handle fragment (@fh, @fh_len)
++ *    and an acceptability testing function (@acceptable, @context).  It should return
++ *    a &struct dentry which refers to the same file that the file handle fragment refers
++ *    to,  and which passes the acceptability test.  If it cannot, it should return
++ *    a %NULL pointer if the file was found but no acceptable &dentries were available, or
++ *    a %ERR_PTR error code indicating why it couldn't be found (e.g. %ENOENT or %ENOMEM).
++ *
++ * encode_fh:
++ *    @encode_fh should store in the file handle fragment @fh (using at most @max_len bytes)
++ *    information that can be used by @decode_fh to recover the file refered to by the
++ *    &struct dentry @de.  If the @connectable flag is set, the encode_fh() should store
++ *    sufficient information so that a good attempt can be made to find not only
++ *    the file but also it's place in the filesystem.   This typically means storing
++ *    a reference to de->d_parent in the filehandle fragment.
++ *    encode_fh() should return the number of bytes stored or a negative error code
++ *    such as %-ENOSPC
++ *
++ * get_name:
++ *    @get_name should find a name for the given @child in the given @parent directory.
++ *    The name should be stored in the @name (with the understanding that it is already
++ *    pointing to a a %NAME_MAX+1 sized buffer.   get_name() should return %0 on success,
++ *    a negative error code.
++ *    @get_name will be called without @parent->i_sem held.
++ *
++ * get_parent:
++ *    @get_parent should find the parent directory for the given @child which is also
++ *    a directory.  In the event that it cannot be found, or storage space cannot be
++ *    allocated, a %ERR_PTR should be returned.
++ *
++ * get_dentry:
++ *    Given a &super_block (@sb) and a pointer to a file-system specific inode identifier,
++ *    possibly an inode number, (@inump) get_dentry() should find the identified inode and
++ *    return a dentry for that inode.
++ *    Any suitable dentry can be returned including, if necessary, a new dentry created
++ *    with d_alloc_root.  The caller can then find any other extant dentrys by following the
++ *    d_alias links.  If a new dentry was created using d_alloc_root, DCACHE_NFSD_DISCONNECTED
++ *    should be set, and the dentry should be d_rehash()ed.
++ *
++ *    If the inode cannot be found, either a %NULL pointer or an %ERR_PTR code can be returned.
++ *    The @inump will be whatever was passed to nfsd_find_fh_dentry() in either the
++ *    @obj or @parent parameters.
++ */
++
++struct nfsd_operations {
++	struct dentry *(*decode_fh)(struct super_block *sb, char *fh, int fh_len,
++			 int (*acceptable)(void *context, struct dentry *de),
++			 void *context);
++	int (*encode_fh)(struct dentry *de, char *fh, int max_len,
++			 int connectable);
++
++	/* the following are only called from the filesystem itself */
++	int (*get_name)(struct dentry *parent, char *name,
++			struct dentry *child);
++	struct dentry * (*get_parent)(struct dentry *child);
++	struct dentry * (*get_dentry)(struct super_block *sb, void *inump);
++
++};
++
++
++
++/**
++ * &nfsd_linkage - structure for nfsd to register it's presence
++ * do_nfsservctl:  handler for sys_nfsservctl syscall
++ * find_fh_dentry: helper for finding dentry from filehandle
++ *
++ * When nfsd is compiled as a module, it registers it's presence
++ * by setting the global variable $nfsd_linkage to be a pointer to
++ * an appropriate &struct nfsd_linkage.  This currently has two fields.
++ *
++ * @do_nfsservctl should contain a pointer to the implementation of
++ * the sy_nfsservctl system call.
++ *
++ * @find_fh_dentry is a helper function that filesystems may use
++ * to help convert a filehandle into a &dentry.  It inturn calls the
++ * private entry points in the &nfsd_operations structure: get_name,
++ * get_parent and get_inode.
++ *
++ * When nfsd is compiled in the the kernel, or not included at all,
++ * this structure is not used and the linkage to these routines is
++ * more direct.
++ **/
++
++struct dentry * nfsd_find_fh_dentry(struct super_block *sb, void *obj, void *parent,
++				    int (*acceptable)(void *context, struct dentry *de),
++				    void *context);
++
++
++
++
+ #ifdef CONFIG_NFSD_MODULE
+ 
+ extern struct nfsd_linkage {
+ 	long (*do_nfsservctl)(int cmd, void *argp, void *resp);
++    	struct dentry * (*find_fh_dentry)(struct super_block *sb, void *obj, void *parent,
++					  int (*acceptable)(void *context, struct dentry *de),
++					  void *context);
+ } * nfsd_linkage;
+ 
++/* filesystems that include this will get to use the linkage point
++ * if knfsd is a module.  nfsd/?*.c will need to #undef this if they want
++ * to use it.
++ */
++# define nfsd_find_fh_dentry (nfsd_linkage->find_fh_dentry)
++
++#else
++# ifndef CONFIG_NFSD
++#  define nfsd_find_fh_dentry(a,b,c,d,e) *((char*)0)=0
++/* filesystems can use "#ifndef NO_CONFIG_NFSD" to exclude code that is only needed
++ * by knfsd
++ */
++#  define NO_CONFIG_NFSD
++# endif
+ #endif
+ 
+ #endif /* LINUX_NFSD_INTERFACE_H */
+diff -urN linux/include/linux/reiserfs_fs.h linux.nfsdops/include/linux/reiserfs_fs.h
+--- linux/include/linux/reiserfs_fs.h	Fri Apr 27 23:18:08 2001
++++ linux.nfsdops/include/linux/reiserfs_fs.h	Wed May 30 20:35:41 2001
+@@ -65,6 +65,8 @@
+ /* enable journalling */
+ #define ENABLE_JOURNAL
+ 
++#define USE_INODE_GENERATION_COUNTER
++
+ #ifdef __KERNEL__
+ 
+ /* #define REISERFS_CHECK */
+@@ -708,6 +710,7 @@
+     __u32 sd_blocks;
+     union {
+ 	__u32 sd_rdev;
++	__u32 sd_generation;
+       //__u32 sd_first_direct_byte; 
+       /* first byte of file which is stored in a
+ 				       direct item: except that if it equals 1
+diff -urN linux/include/linux/reiserfs_fs_sb.h linux.nfsdops/include/linux/reiserfs_fs_sb.h
+--- linux/include/linux/reiserfs_fs_sb.h	Sat May 26 03:01:28 2001
++++ linux.nfsdops/include/linux/reiserfs_fs_sb.h	Wed May 30 20:35:41 2001
+@@ -60,7 +60,8 @@
+                                    don't need to save bytes in the
+                                    superblock. -Hans */
+   __u16 s_reserved;
+-  char s_unused[128] ;			/* zero filled by mkreiserfs */
++  __u32 s_inode_generation;
++  char s_unused[124] ;			/* zero filled by mkreiserfs */
+ } __attribute__ ((__packed__));
+ 
+ #define SB_SIZE (sizeof(struct reiserfs_super_block))
+diff -urN linux/kernel/ksyms.c linux.nfsdops/kernel/ksyms.c
+--- linux/kernel/ksyms.c	Fri May 25 00:20:18 2001
++++ linux.nfsdops/kernel/ksyms.c	Wed May 30 20:35:35 2001
+@@ -159,6 +159,8 @@
+ EXPORT_SYMBOL(d_rehash);
+ EXPORT_SYMBOL(d_invalidate);	/* May be it will be better in dcache.h? */
+ EXPORT_SYMBOL(d_move);
++EXPORT_SYMBOL(d_splice_alias);
++EXPORT_SYMBOL(d_make_alias);
+ EXPORT_SYMBOL(d_instantiate);
+ EXPORT_SYMBOL(d_alloc);
+ EXPORT_SYMBOL(d_lookup);

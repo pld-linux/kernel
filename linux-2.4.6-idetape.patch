@@ -1,0 +1,20 @@
+--- linux/drivers/ide/ide-tape.c.0	Tue Jul  3 11:34:31 2001
++++ linux/drivers/ide/ide-tape.c	Tue Jul  3 13:17:48 2001
+@@ -4098,9 +4098,14 @@
+ 	}
+ 	if (rq_ptr->errors == IDETAPE_ERROR_EOD)
+ 		return 0;
+-	else if (rq_ptr->errors == IDETAPE_ERROR_FILEMARK)
++	if (rq_ptr->errors == IDETAPE_ERROR_FILEMARK) {
++		idetape_switch_buffers (tape, tape->first_stage);
+ 		set_bit (IDETAPE_FILEMARK, &tape->flags);
+-	else {
++#if USE_IOTRACE
++		IO_trace(IO_IDETAPE_FIFO, tape->pipeline_head, tape->buffer_head, tape->tape_head, tape->minor);
++#endif
++		calculate_speeds(drive);
++	} else {
+ 		idetape_switch_buffers (tape, tape->first_stage);
+ 		if (rq_ptr->errors == IDETAPE_ERROR_GENERAL) {
+ #if ONSTREAM_DEBUG
+

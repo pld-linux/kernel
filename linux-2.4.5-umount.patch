@@ -1,0 +1,35 @@
+
+
+On Sat, 26 May 2001, Gavin wrote:
+
+> Hi,
+> Hope this is enough info :P
+> 
+> Unmounting file systems: journal_begin called without kernel lock held
+> kernel BUG at journal.c:423!
+
+
+--- fs/super.c	Fri May 25 21:51:14 2001
++++ fs/super.c.new	Sun May 27 00:21:53 2001
+@@ -873,6 +873,7 @@
+ 	}
+ 	spin_unlock(&dcache_lock);
+ 	down_write(&sb->s_umount);
++	lock_kernel();
+ 	sb->s_root = NULL;
+ 	/* Need to clean after the sucker */
+ 	if (fs->fs_flags & FS_LITTER)
+@@ -901,6 +902,7 @@
+ 	put_filesystem(fs);
+ 	sb->s_type = NULL;
+ 	unlock_super(sb);
++	unlock_kernel();
+ 	up_write(&sb->s_umount);
+ 	if (bdev) {
+ 		blkdev_put(bdev, BDEV_FS);
+
+-
+To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at  http://www.tux.org/lkml/

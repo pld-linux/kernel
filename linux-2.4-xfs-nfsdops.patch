@@ -1,0 +1,89 @@
+--- linux/fs/xfs/linux/xfs_iops.c.orig	Wed May  2 01:10:46 2001
++++ linux/fs/xfs/linux/xfs_iops.c	Fri May  4 01:33:05 2001
+@@ -174,8 +174,55 @@
+ 		linvfs_set_inode_ops(ip);
+ 		error = linvfs_revalidate_core(ip, ATTR_COMM);
+ 	}
++
++	if (ip)
++		return d_splice_alias(ip, dentry);
++
+ 	d_add(dentry, ip);	/* Negative entry goes in if ip is NULL */
+ 	return NULL;
++}
++
++
++struct dentry * linvfs_get_parent(struct dentry *child)
++{
++	int		error;
++	vnode_t		*vp, *cvp;
++	pathname_t	pn;
++	pathname_t      *pnp = &pn;
++	struct inode	*ip = NULL;
++	struct dentry	*parent;
++
++	vp = LINVFS_GET_VP(child->d_inode);
++	ASSERT(vp);
++
++	/*
++	 * Initialize a pathname_t to pass down.
++	 */
++	bzero(pnp, sizeof(pathname_t));
++	pnp->pn_complen = 2;
++	pnp->pn_path = "..";
++
++	cvp = NULL;
++
++	VOP_LOOKUP(vp, "..", &cvp, pnp, 0, NULL, NULL, error);
++	if (!error) {
++		ASSERT(cvp);
++		ip = LINVFS_GET_IP(cvp);
++		if (!ip) {
++			VN_RELE(cvp);
++			return ERR_PTR(-EACCES);
++		}
++		linvfs_set_inode_ops(ip);
++		error = linvfs_revalidate_core(ip, ATTR_COMM);
++	}
++
++	parent = d_make_alias(ip);
++	if (!parent) {
++		VN_RELE(cvp);
++		parent = ERR_PTR(-ENOMEM);
++	}
++
++	return parent;
+ }
+ 
+ 
+--- linux/fs/xfs/linux/xfs_super.c.orig	Wed May  2 01:10:46 2001
++++ linux/fs/xfs/linux/xfs_super.c	Fri May  4 01:35:49 2001
+@@ -38,6 +38,7 @@
+ #include <linux/blkdev.h>
+ #include <linux/init.h>
+ #include <linux/page_buf.h>
++#include <linux/nfsd/interface.h>
+ 
+ /* xfs_vfs[ops].c */
+ extern void vfsinit(void);
+@@ -49,6 +50,12 @@
+ 
+ static struct super_operations linvfs_sops;
+ 
++extern struct dentry *linvfs_get_parent(struct dentry *child);
++
++static struct nfsd_operations xfs_nfsd_operations = {
++	get_parent:     linvfs_get_parent,
++};
++
+ 
+ #define	MS_DATA		0x04
+ 
+@@ -414,6 +421,7 @@
+ 	set_blocksize(sb->s_dev, 512);
+ 
+ 	sb->s_op = &linvfs_sops;
++	sb->s_nfsd_op = &xfs_nfsd_operations;
+ 	sb->dq_op = NULL;
+ 
+ 	LINVFS_SET_VFS(sb, vfsp);

@@ -1,0 +1,22 @@
+--- linux/net/atm/common.c.old	Sat Jan  6 23:03:50 2001
++++ linux/net/atm/common.c	Tue Jan  9 05:49:29 2001
+@@ -785,13 +785,17 @@
+ 	}
+ #if defined(CONFIG_PPPOATM) || defined(CONFIG_PPPOATM_MODULE)
+ 	if (pppoatm_ioctl_hook &&
+-	    (error = pppoatm_ioctl_hook(vcc, cmd, arg)) != -ENOIOCTLCMD)
++	    (error = pppoatm_ioctl_hook(vcc, cmd, arg)) != -ENOIOCTLCMD) {
++		spin_unlock (&atm_dev_lock); 
+ 		return error;
++	}
+ #endif
+ #if defined(CONFIG_ATM_BR2684) || defined(CONFIG_ATM_BR2684_MODULE)
+ 	if (br2684_ioctl_hook &&
+-	    (error = br2684_ioctl_hook(vcc, cmd, arg)) != -ENOIOCTLCMD)
++	    (error = br2684_ioctl_hook(vcc, cmd, arg)) != -ENOIOCTLCMD) {
++		spin_unlock (&atm_dev_lock); 
+ 		return error;
++	}
+ #endif
+ 	if (get_user(buf,&((struct atmif_sioc *) arg)->arg)) {
+ 		ret_val = -EFAULT;

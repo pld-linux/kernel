@@ -1,0 +1,24 @@
+--- ../../SOURCES/kaio-kern-1.3-2.4.0.org	Thu Mar  8 11:04:26 2001
++++ ../../SOURCES/kaio-kern-1.3-2.4.0	Thu Mar  8 12:05:55 2001
+@@ -586,9 +586,9 @@
+ +	void *kaio_info;
+ +#endif
+ +
+- };
+- 
+- /*
++ #ifdef CONFIG_LIDS
++ 	/* LIDS reference box */
++ 	struct lids_sys_acl *lids_sys_acl;
+ diff --exclude-from=/build1/ananth/aio-exclude -Naur /build1/ananth/linux-2.4.0/linux/init/main.c /build1/ananth/linux-2.4.0-aio/linux/init/main.c
+ --- /build1/ananth/linux-2.4.0/linux/init/main.c	Wed Jan  3 20:45:26 2001
+ +++ /build1/ananth/linux-2.4.0-aio/linux/init/main.c	Thu Jan 25 11:42:42 2001
+@@ -1607,7 +1607,7 @@
+ +		 * hash after allocation).
+ +		 */
+ +		if (!page_cache) {
+-+			page_cache = page_cache_alloc();
+++			page_cache = page_cache_alloc(NULL);
+ +			spin_unlock(&pagecache_lock);
+ +			/*
+ +			 * That could have slept, so go around to the

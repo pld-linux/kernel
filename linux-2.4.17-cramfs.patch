@@ -1,0 +1,1963 @@
+diff -ur linux-orig/Documentation/filesystems/cramfs.txt linux/Documentation/filesystems/cramfs.txt
+--- linux-orig/Documentation/filesystems/cramfs.txt	Thu Jul 19 16:14:53 2001
++++ linux/Documentation/filesystems/cramfs.txt	Tue Jan  8 00:27:30 2002
+@@ -19,9 +19,7 @@
+ File sizes are limited to less than 16MB.
+ 
+ Maximum filesystem size is a little over 256MB.  (The last file on the
+-filesystem is allowed to extend past 256MB.)  (Comments in mkcramfs.c
+-suggest that ROM sizes may be limited to 64MB, though that's not a
+-limitation in cramfs code.)
++filesystem is allowed to extend past 256MB.)
+ 
+ Only the low 8 bits of gid are stored.  The current version of
+ mkcramfs simply truncates to 8 bits, which is a potential security
+@@ -48,18 +46,28 @@
+ 
+ 
+ For /usr/share/magic
+-------------------
++--------------------
+ 
+-0	long	0x28cd3d45	Linux cramfs
+->4	long	x		size %d
+->8	long	x		flags 0x%x
+->12	long	x		future 0x%x
++0	ulelong	0x28cd3d45	Linux cramfs offset 0
++>4	ulelong	x		size %d
++>8	ulelong	x		flags 0x%x
++>12	ulelong	x		future 0x%x
+ >16	string	>\0		signature "%.16s"
+->32	long	x		fsid.crc 0x%x
+->36	long	x		fsid.edition %d
+->40	long	x		fsid.blocks %d
+->44	long	x		fsid.files %d
++>32	ulelong	x		fsid.crc 0x%x
++>36	ulelong	x		fsid.edition %d
++>40	ulelong	x		fsid.blocks %d
++>44	ulelong	x		fsid.files %d
+ >48	string	>\0		name "%.16s"
++512	ulelong	0x28cd3d45	Linux cramfs offset 512
++>516	ulelong	x		size %d
++>520	ulelong	x		flags 0x%x
++>524	ulelong	x		future 0x%x
++>528	string	>\0		signature "%.16s"
++>544	ulelong	x		fsid.crc 0x%x
++>548	ulelong	x		fsid.edition %d
++>552	ulelong	x		fsid.blocks %d
++>556	ulelong	x		fsid.files %d
++>560	string	>\0		name "%.16s"
+ 
+ 
+ Hacker Notes
+diff -ur linux-orig/fs/cramfs/README linux/fs/cramfs/README
+--- linux-orig/fs/cramfs/README	Thu Jul 19 16:14:53 2001
++++ linux/fs/cramfs/README	Sat Jan 12 22:15:55 2002
+@@ -29,6 +29,10 @@
+ lines); put another way, the same order as `find -type d -exec
+ ls -AU1 {} \;'.
+ 
++Beginning in 2.4.7, directory entries are sorted.  This optimization
++allows cramfs_lookup to return more quickly when a filename does not
++exist, speeds up user-space directory sorts, etc.
++
+ <data>:
+ 	One <file_data> for each file that's either a symlink or a
+ 	 regular file of non-zero st_size.
+@@ -63,17 +67,22 @@
+ This kernel supports cramfs holes (i.e. [efficient representation of]
+ blocks in uncompressed data consisting entirely of NUL bytes), but by
+ default mkcramfs doesn't test for & create holes, since cramfs in
+-kernels up to at least 2.3.39 didn't support holes.  Compile mkcramfs
+-with -DDO_HOLES if you want it to create files that can have holes in
+-them.
++kernels up to at least 2.3.39 didn't support holes.  Run mkcramfs
++with -z if you want it to create files that can have holes in them.
+ 
+ 
+ Tools
+ -----
+ 
++The cramfsck program included in the scripts/cramfs directory can (and
++perhaps even should) be used to test cramfs filesystems, although it
++does not try to fix errors since cramfs is a read-only filesystem and
++you can just re-run mkcramfs after fixing any bugs.  cramfsck can also
++extract cramfs filesystems without mounting them.
++
+ If you're hacking on cramfs, you might find useful some tools for
+-testing cramfs at <http://cvs.bofh.asn.au/cramfs/>, including a
+-rudimentary fsck for cramfs.
++testing cramfs at <http://cvs.bofh.asn.au/cramfs/>.  Note: the
++cramfsck located there is superseded by the one in scripts/cramfs.
+ 
+ 
+ Future Development
+@@ -103,8 +112,8 @@
+ PAGE_CACHE_SIZE (4096)' to `#include <asm/page.h>'.  The disadvantage
+ is that the generated cramfs cannot always be shared between different
+ kernels, not even necessarily kernels of the same architecture if
+-PAGE_CACHE_SIZE is subject to change between kernel versions.
+-
++PAGE_CACHE_SIZE is subject to change between kernel versions
++(currently possible with arm and ia64).
+ 
+ The remaining options try to make cramfs more sharable.
+ 
+diff -ur linux-orig/include/linux/cramfs_fs.h linux/include/linux/cramfs_fs.h
+--- linux-orig/include/linux/cramfs_fs.h	Thu Jul 19 16:14:53 2001
++++ linux/include/linux/cramfs_fs.h	Tue Jan  8 00:29:38 2002
+@@ -24,6 +24,12 @@
+ #define CRAMFS_OFFSET_WIDTH 26
+ 
+ /*
++ * Since inode.namelen is a unsigned 6-bit number, the maximum cramfs
++ * path length is 63 << 2 = 252.
++ */
++#define CRAMFS_MAXPATHLEN (((1 << CRAMFS_NAMELEN_WIDTH) - 1) << 2)
++
++/*
+  * Reasonably terse representation of the inode data.
+  */
+ struct cramfs_inode {
+@@ -52,14 +58,14 @@
+  * Superblock information at the beginning of the FS.
+  */
+ struct cramfs_super {
+-	u32 magic;		/* 0x28cd3d45 - random number */
+-	u32 size;		/* length in bytes */
+-	u32 flags;		/* 0 */
+-	u32 future;		/* 0 */
+-	u8 signature[16];	/* "Compressed ROMFS" */
++	u32 magic;			/* 0x28cd3d45 - random number */
++	u32 size;			/* length in bytes */
++	u32 flags;			/* feature flags */
++	u32 future;			/* reserved for future use */
++	u8 signature[16];		/* "Compressed ROMFS" */
+ 	struct cramfs_info fsid;	/* unique filesystem info */
+-	u8 name[16];		/* user-defined name */
+-	struct cramfs_inode root;	/* Root inode data */
++	u8 name[16];			/* user-defined name */
++	struct cramfs_inode root;	/* root inode data */
+ };
+ 
+ /*
+@@ -79,7 +85,10 @@
+  * if (flags & ~CRAMFS_SUPPORTED_FLAGS).  Maybe that should be
+  * changed to test super.future instead.
+  */
+-#define CRAMFS_SUPPORTED_FLAGS (0x7ff)
++#define CRAMFS_SUPPORTED_FLAGS	( 0x000000ff \
++				| CRAMFS_FLAG_HOLES \
++				| CRAMFS_FLAG_WRONG_SIGNATURE \
++				| CRAMFS_FLAG_SHIFTED_ROOT_OFFSET )
+ 
+ /* Uncompression interfaces to the underlying zlib */
+ int cramfs_uncompress_block(void *dst, int dstlen, void *src, int srclen);
+diff -ur linux-orig/scripts/cramfs/cramfsck.c linux/scripts/cramfs/cramfsck.c
+--- linux-orig/scripts/cramfs/cramfsck.c	Thu Jul 19 16:14:53 2001
++++ linux/scripts/cramfs/cramfsck.c	Sat Jan 12 22:19:44 2002
+@@ -1,7 +1,7 @@
+ /*
+  * cramfsck - check a cramfs file system
+  *
+- * Copyright (C) 2000-2001 Transmeta Corporation
++ * Copyright (C) 2000-2002 Transmeta Corporation
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+@@ -28,11 +28,14 @@
+  * 2000/07/11: Daniel Quinlan (file length tests, start at offset 0 or 512,
+  *                            fsck-compatible exit codes)
+  * 2000/07/15: Daniel Quinlan (initial support for block devices)
++ * 2002/01/10: Daniel Quinlan (additional checks, test more return codes,
++ *                            use read if mmap fails, standardize messages)
+  */
+ 
+ /* compile-time options */
+ #define INCLUDE_FS_TESTS	/* include cramfs checking and extraction */
+ 
++#define _GNU_SOURCE
+ #include <sys/types.h>
+ #include <stdio.h>
+ #include <sys/stat.h>
+@@ -43,7 +46,6 @@
+ #include <stdlib.h>
+ #include <errno.h>
+ #include <string.h>
+-#include <assert.h>
+ #include <getopt.h>
+ #include <sys/sysmacros.h>
+ #include <utime.h>
+@@ -53,25 +55,34 @@
+ #include <linux/cramfs_fs.h>
+ #include <zlib.h>
+ 
++/* Exit codes used by fsck-type programs */
++#define FSCK_OK          0	/* No errors */
++#define FSCK_NONDESTRUCT 1	/* File system errors corrected */
++#define FSCK_REBOOT      2	/* System should be rebooted */
++#define FSCK_UNCORRECTED 4	/* File system errors left uncorrected */
++#define FSCK_ERROR       8	/* Operational error */
++#define FSCK_USAGE       16	/* Usage or syntax error */
++#define FSCK_LIBRARY     128	/* Shared library error */
++
++#define PAD_SIZE 512
++#define PAGE_CACHE_SIZE (4096)
++
+ static const char *progname = "cramfsck";
+ 
+ static int fd;			/* ROM image file descriptor */
+ static char *filename;		/* ROM image filename */
+-struct cramfs_super *super;	/* just find the cramfs superblock once */
++struct cramfs_super super;	/* just find the cramfs superblock once */
+ static int opt_verbose = 0;	/* 1 = verbose (-v), 2+ = very verbose (-vv) */
+ #ifdef INCLUDE_FS_TESTS
+-static int opt_extract = 0;	/* extract cramfs (-x) */
+-char *extract_dir = NULL;	/* extraction directory (-x) */
+-
+-unsigned long start_inode = 1 << 28;	/* start of first non-root inode */
+-unsigned long end_inode = 0;		/* end of the directory structure */
+-unsigned long start_data = 1 << 28;	/* start of the data (256 MB = max) */
+-unsigned long end_data = 0;		/* end of the data */
+-/* true?  cramfs_super < start_inode < end_inode <= start_data <= end_data */
++static int opt_extract = 0;		/* extract cramfs (-x) */
++static char *extract_dir = "root";	/* extraction directory (-x) */
+ static uid_t euid;			/* effective UID */
+ 
+-#define PAD_SIZE 512
+-#define PAGE_CACHE_SIZE (4096)
++/* (cramfs_super + start) <= start_dir < end_dir <= start_data <= end_data */
++static unsigned long start_dir = ~0UL;	/* start of first non-root inode */
++static unsigned long end_dir = 0;	/* end of the directory structure */
++static unsigned long start_data = ~0UL;	/* start of the data (256 MB = max) */
++static unsigned long end_data = 0;	/* end of the data */
+ 
+ /* Guarantee access to at least 8kB at a time */
+ #define ROMBUFFER_BITS	13
+@@ -82,8 +93,10 @@
+ 
+ /* Uncompressing data structures... */
+ static char outbuffer[PAGE_CACHE_SIZE*2];
+-z_stream stream;
++static z_stream stream;
+ 
++/* Prototypes */
++static void expand_fs(char *, struct cramfs_inode *);
+ #endif /* INCLUDE_FS_TESTS */
+ 
+ /* Input status of 0 to print help and exit without an error. */
+@@ -100,8 +113,159 @@
+ 	exit(status);
+ }
+ 
++static void die(int status, int syserr, const char *fmt, ...)
++{
++	va_list arg_ptr;
++	int save = errno;
++
++	fflush(0);
++	va_start(arg_ptr, fmt);
++	fprintf(stderr, "%s: ", progname);
++	vfprintf(stderr, fmt, arg_ptr);
++	if (syserr) {
++		fprintf(stderr, ": %s", strerror(save));
++	}
++	fprintf(stderr, "\n");
++	va_end(arg_ptr);
++	exit(status);
++}
++
++static void test_super(int *start, size_t *length) {
++	struct stat st;
++
++	/* find the physical size of the file or block device */
++	if (stat(filename, &st) < 0) {
++		die(FSCK_ERROR, 1, "stat failed: %s", filename);
++	}
++	fd = open(filename, O_RDONLY);
++	if (fd < 0) {
++		die(FSCK_ERROR, 1, "open failed: %s", filename);
++	}
++	if (S_ISBLK(st.st_mode)) {
++		if (ioctl(fd, BLKGETSIZE, length) < 0) {
++			die(FSCK_ERROR, 1, "ioctl failed: unable to determine device size: %s", filename);
++		}
++		*length = *length * 512;
++	}
++	else if (S_ISREG(st.st_mode)) {
++		*length = st.st_size;
++	}
++	else {
++		die(FSCK_ERROR, 0, "not a block device or file: %s", filename);
++	}
++
++	if (*length < sizeof(struct cramfs_super)) {
++		die(FSCK_UNCORRECTED, 0, "file length too short");
++	}
++
++	/* find superblock */
++	if (read(fd, &super, sizeof(super)) != sizeof(super)) {
++		die(FSCK_ERROR, 1, "read failed: %s", filename);
++	}
++	if (super.magic == CRAMFS_MAGIC) {
++		*start = 0;
++	}
++	else if (*length >= (PAD_SIZE + sizeof(super))) {
++		lseek(fd, PAD_SIZE, SEEK_SET);
++		if (read(fd, &super, sizeof(super)) != sizeof(super)) {
++			die(FSCK_ERROR, 1, "read failed: %s", filename);
++		}
++		if (super.magic == CRAMFS_MAGIC) {
++			*start = PAD_SIZE;
++		}
++	}
++
++	/* superblock tests */
++	if (super.magic != CRAMFS_MAGIC) {
++		die(FSCK_UNCORRECTED, 0, "superblock magic not found");
++	}
++	if (super.flags & ~CRAMFS_SUPPORTED_FLAGS) {
++		die(FSCK_ERROR, 0, "unsupported filesystem features");
++	}
++	if (super.size < PAGE_CACHE_SIZE) {
++		die(FSCK_UNCORRECTED, 0, "superblock size (%d) too small", super.size);
++	}
++	if (super.flags & CRAMFS_FLAG_FSID_VERSION_2) {
++		if (super.fsid.files == 0) {
++			die(FSCK_UNCORRECTED, 0, "zero file count");
++		}
++		if (*length < super.size) {
++			die(FSCK_UNCORRECTED, 0, "file length too short");
++		}
++		else if (*length > super.size) {
++			fprintf(stderr, "warning: file extends past end of filesystem\n");
++		}
++	}
++	else {
++		fprintf(stderr, "warning: old cramfs format\n");
++	}
++}
++
++static void test_crc(int start)
++{
++	void *buf;
++	u32 crc;
++
++	if (!(super.flags & CRAMFS_FLAG_FSID_VERSION_2)) {
++#ifdef INCLUDE_FS_TESTS
++		return;
++#else /* not INCLUDE_FS_TESTS */
++		die(FSCK_USAGE, 0, "unable to test CRC: old cramfs format");
++#endif /* not INCLUDE_FS_TESTS */
++	}
++
++	crc = crc32(0L, Z_NULL, 0);
++
++	buf = mmap(NULL, super.size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
++	if (buf == MAP_FAILED) {
++		buf = mmap(NULL, super.size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
++		if (buf != MAP_FAILED) {
++			lseek(fd, 0, SEEK_SET);
++			read(fd, buf, super.size);
++		}
++	}
++	if (buf != MAP_FAILED) {
++		((struct cramfs_super *) (buf+start))->fsid.crc = crc32(0L, Z_NULL, 0);
++		crc = crc32(crc, buf+start, super.size-start);
++		munmap(buf, super.size);
++	}
++	else {
++		int retval;
++		size_t length = 0;
++
++		buf = malloc(4096);
++		if (!buf) {
++			die(FSCK_ERROR, 1, "malloc failed");
++		}
++		lseek(fd, start, SEEK_SET);
++		for (;;) {
++			retval = read(fd, buf, 4096);
++			if (retval < 0) {
++				die(FSCK_ERROR, 1, "read failed: %s", filename);
++			}
++			else if (retval == 0) {
++				break;
++			}
++			if (length == 0) {
++				((struct cramfs_super *) buf)->fsid.crc = crc32(0L, Z_NULL, 0);
++			}
++			length += retval;
++			if (length > (super.size-start)) {
++				crc = crc32(crc, buf, retval - (length - (super.size-start)));
++				break;
++			}
++			crc = crc32(crc, buf, retval);
++		}
++		free(buf);
++	}
++
++	if (crc != super.fsid.crc) {
++		die(FSCK_UNCORRECTED, 0, "crc error");
++	}
++}
++
+ #ifdef INCLUDE_FS_TESTS
+-void print_node(char type, struct cramfs_inode *i, char *name)
++static void print_node(char type, struct cramfs_inode *i, char *name)
+ {
+ 	char info[10];
+ 
+@@ -135,6 +299,10 @@
+ static struct cramfs_inode *cramfs_iget(struct cramfs_inode * i)
+ {
+ 	struct cramfs_inode *inode = malloc(sizeof(struct cramfs_inode));
++
++	if (!inode) {
++		die(FSCK_ERROR, 1, "malloc failed");
++	}
+ 	*inode = *i;
+ 	return inode;
+ }
+@@ -144,27 +312,27 @@
+ 	return cramfs_iget(romfs_read(ino));
+ }
+ 
+-void iput(struct cramfs_inode *inode)
++static void iput(struct cramfs_inode *inode)
+ {
+ 	free(inode);
+ }
+ 
+ /*
+- * Return the offset of the root directory,
+- * or 0 if none.
++ * Return the offset of the root directory
+  */
+ static struct cramfs_inode *read_super(void)
+ {
+-	unsigned long offset;
++	unsigned long offset = super.root.offset << 2;
+ 
+-	offset = super->root.offset << 2;
+-	if (super->magic != CRAMFS_MAGIC)
+-		return NULL;
+-	if (memcmp(super->signature, CRAMFS_SIGNATURE, sizeof(super->signature)) != 0)
+-		return NULL;
+-	if (offset < sizeof(super))
+-		return NULL;
+-	return cramfs_iget(&super->root);
++	if (!S_ISDIR(super.root.mode))
++		die(FSCK_UNCORRECTED, 0, "root inode is not directory");
++	if (!(super.flags & CRAMFS_FLAG_SHIFTED_ROOT_OFFSET) &&
++	    ((offset != sizeof(struct cramfs_super)) &&
++	     (offset != PAD_SIZE + sizeof(struct cramfs_super))))
++	{
++		die(FSCK_UNCORRECTED, 0, "bad root offset (%lu)", offset);
++	}
++	return cramfs_iget(&super.root);
+ }
+ 
+ static int uncompress_block(void *src, int len)
+@@ -179,38 +347,177 @@
+ 
+ 	inflateReset(&stream);
+ 
++	if (len > PAGE_CACHE_SIZE*2) {
++		die(FSCK_UNCORRECTED, 0, "data block too large");
++	}
+ 	err = inflate(&stream, Z_FINISH);
+ 	if (err != Z_STREAM_END) {
+-		fprintf(stderr, "%s: error %d while decompressing! %p(%d)\n",
+-			filename, err, src, len);
+-		exit(4);
++		die(FSCK_UNCORRECTED, 0, "decompression error %p(%d): %s",
++		    zError(err), src, len);
+ 	}
+ 	return stream.total_out;
+ }
+ 
++static void do_uncompress(char *path, int fd, unsigned long offset, unsigned long size)
++{
++	unsigned long curr = offset + 4 * ((size + PAGE_CACHE_SIZE - 1) / PAGE_CACHE_SIZE);
++
++	do {
++		unsigned long out = PAGE_CACHE_SIZE;
++		unsigned long next = *(u32 *) romfs_read(offset);
++
++		if (next > end_data) {
++			end_data = next;
++		}
++
++		offset += 4;
++		if (curr == next) {
++			if (opt_verbose > 1) {
++				printf("  hole at %ld (%d)\n", curr, PAGE_CACHE_SIZE);
++			}
++			if (size < PAGE_CACHE_SIZE)
++				out = size;
++			memset(outbuffer, 0x00, out);
++		}
++		else {
++			if (opt_verbose > 1) {
++				printf("  uncompressing block at %ld to %ld (%ld)\n", curr, next, next - curr);
++			}
++			out = uncompress_block(romfs_read(curr), next - curr);
++		}
++		if (size >= PAGE_CACHE_SIZE) {
++			if (out != PAGE_CACHE_SIZE) {
++				die(FSCK_UNCORRECTED, 0, "non-block (%ld) bytes", out);
++			}
++		} else {
++			if (out != size) {
++				die(FSCK_UNCORRECTED, 0, "non-size (%ld vs %ld) bytes", out, size);
++			}
++		}
++		size -= out;
++		if (opt_extract) {
++			if (write(fd, outbuffer, out) < 0) {
++				die(FSCK_ERROR, 1, "write failed: %s", path);
++			}
++		}
++		curr = next;
++	} while (size);
++}
++
+ static void change_file_status(char *path, struct cramfs_inode *i)
+ {
+ 	struct utimbuf epoch = { 0, 0 };
+ 
+ 	if (euid == 0) {
+ 		if (lchown(path, i->uid, i->gid) < 0) {
+-			perror(path);
+-			exit(8);
++			die(FSCK_ERROR, 1, "lchown failed: %s", path);
+ 		}
+ 		if (S_ISLNK(i->mode))
+ 			return;
+ 		if ((S_ISUID | S_ISGID) & i->mode) {
+ 			if (chmod(path, i->mode) < 0) {
+-				perror(path);
+-				exit(8);
++				die(FSCK_ERROR, 1, "chown failed: %s", path);
+ 			}
+ 		}
+ 	}
+ 	if (S_ISLNK(i->mode))
+ 		return;
+ 	if (utime(path, &epoch) < 0) {
+-		perror(path);
+-		exit(8);
++		die(FSCK_ERROR, 1, "utime failed: %s", path);
++	}
++}
++
++static void do_directory(char *path, struct cramfs_inode *i)
++{
++	int pathlen = strlen(path);
++	int count = i->size;
++	unsigned long offset = i->offset << 2;
++	char *newpath = malloc(pathlen + 256);
++
++	if (!newpath) {
++		die(FSCK_ERROR, 1, "malloc failed");
++	}
++	if (offset == 0 && count != 0) {
++		die(FSCK_UNCORRECTED, 0, "directory inode has zero offset and non-zero size: %s", path);
++	}
++	if (offset != 0 && offset < start_dir) {
++		start_dir = offset;
++	}
++	/* TODO: Do we need to check end_dir for empty case? */
++	memcpy(newpath, path, pathlen);
++	newpath[pathlen] = '/';
++	pathlen++;
++	if (opt_verbose) {
++		print_node('d', i, path);
++	}
++	if (opt_extract) {
++		if (mkdir(path, i->mode) < 0) {
++			die(FSCK_ERROR, 1, "mkdir failed: %s", path);
++		}
++		change_file_status(path, i);
++	}
++	while (count > 0) {
++		struct cramfs_inode *child = iget(offset);
++		int size;
++		int newlen = child->namelen << 2;
++
++		size = sizeof(struct cramfs_inode) + newlen;
++		count -= size;
++
++		offset += sizeof(struct cramfs_inode);
++
++		memcpy(newpath + pathlen, romfs_read(offset), newlen);
++		newpath[pathlen + newlen] = 0;
++		if (newlen == 0) {
++			die(FSCK_UNCORRECTED, 0, "filename length is zero");
++		}
++		if ((pathlen + newlen) - strlen(newpath) > 3) {
++			die(FSCK_UNCORRECTED, 0, "bad filename length");
++		}
++		expand_fs(newpath, child);
++
++		offset += newlen;
++
++		if (offset <= start_dir) {
++			die(FSCK_UNCORRECTED, 0, "bad inode offset");
++		}
++		if (offset > end_dir) {
++			end_dir = offset;
++		}
++		iput(child); /* free(child) */
++	}
++	free(newpath);
++}
++
++static void do_file(char *path, struct cramfs_inode *i)
++{
++	unsigned long offset = i->offset << 2;
++	int fd = 0;
++
++	if (offset == 0 && i->size != 0) {
++		die(FSCK_UNCORRECTED, 0, "file inode has zero offset and non-zero size");
++	}
++	if (i->size == 0 && offset != 0) {
++		die(FSCK_UNCORRECTED, 0, "file inode has zero size and non-zero offset");
++	}
++	if (offset != 0 && offset < start_data) {
++		start_data = offset;
++	}
++	if (opt_verbose) {
++		print_node('f', i, path);
++	}
++	if (opt_extract) {
++		fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, i->mode);
++		if (fd < 0) {
++			die(FSCK_ERROR, 1, "open failed: %s", path);
++		}
++	}
++	if (i->size) {
++		do_uncompress(path, fd, offset, i->size);
++	}
++	if (opt_extract) {
++		close(fd);
++		change_file_status(path, i);
+ 	}
+ }
+ 
+@@ -221,32 +528,39 @@
+ 	unsigned long next = *(u32 *) romfs_read(offset);
+ 	unsigned long size;
+ 
++	if (offset == 0) {
++		die(FSCK_UNCORRECTED, 0, "symbolic link has zero offset");
++	}
++	if (i->size == 0) {
++		die(FSCK_UNCORRECTED, 0, "symbolic link has zero size");
++	}
++
++	if (offset < start_data) {
++		start_data = offset;
++	}
+ 	if (next > end_data) {
+ 		end_data = next;
+ 	}
+ 
+ 	size = uncompress_block(romfs_read(curr), next - curr);
+ 	if (size != i->size) {
+-		fprintf(stderr, "%s: size error in symlink `%s'\n",
+-			filename, path);
+-		exit(4);
++		die(FSCK_UNCORRECTED, 0, "size error in symlink: %s", path);
+ 	}
+ 	outbuffer[size] = 0;
+ 	if (opt_verbose) {
+ 		char *str;
+ 
+-		str = malloc(strlen(outbuffer) + strlen(path) + 5);
+-		strcpy(str, path);
+-		strncat(str, " -> ", 4);
+-		strncat(str, outbuffer, size);
+-
++		asprintf(&str, "%s -> %s", path, outbuffer);
+ 		print_node('l', i, str);
+ 		if (opt_verbose > 1) {
+ 			printf("  uncompressing block at %ld to %ld (%ld)\n", curr, next, next - curr);
+ 		}
++		free(str);
+ 	}
+ 	if (opt_extract) {
+-		symlink(outbuffer, path);
++		if (symlink(outbuffer, path) < 0) {
++			die(FSCK_ERROR, 1, "symlink failed: %s", path);
++		}
+ 		change_file_status(path, i);
+ 	}
+ }
+@@ -256,6 +570,9 @@
+ 	dev_t devtype = 0;
+ 	char type;
+ 
++	if (i->offset) {	/* no need to shift offset */
++		die(FSCK_UNCORRECTED, 0, "special file has non-zero offset: %s", path);
++	}
+ 	if (S_ISCHR(i->mode)) {
+ 		devtype = i->size;
+ 		type = 'c';
+@@ -264,13 +581,21 @@
+ 		devtype = i->size;
+ 		type = 'b';
+ 	}
+-	else if (S_ISFIFO(i->mode))
++	else if (S_ISFIFO(i->mode)) {
++		if (i->size != 0) {
++			die(FSCK_UNCORRECTED, 0, "fifo has non-zero size: %s", path);
++		}
+ 		type = 'p';
+-	else if (S_ISSOCK(i->mode))
++	}
++	else if (S_ISSOCK(i->mode)) {
++		if (i->size != 0) {
++			die(FSCK_UNCORRECTED, 0, "socket has non-zero size: %s", path);
++		}
+ 		type = 's';
++	}
+ 	else {
+-		fprintf(stderr, "%s: bogus mode on `%s' (%o)\n", filename, path, i->mode);
+-		exit(4);
++		die(FSCK_UNCORRECTED, 0, "bogus mode: %s (%o)", path, i->mode);
++		return;		/* not reached */
+ 	}
+ 
+ 	if (opt_verbose) {
+@@ -279,155 +604,62 @@
+ 
+ 	if (opt_extract) {
+ 		if (mknod(path, i->mode, devtype) < 0) {
+-			perror(path);
+-			exit(8);
++			die(FSCK_ERROR, 1, "mknod failed: %s", path);
+ 		}
+ 		change_file_status(path, i);
+ 	}
+ }
+ 
+-static void do_uncompress(int fd, unsigned long offset, unsigned long size)
++static void expand_fs(char *path, struct cramfs_inode *inode)
+ {
+-	unsigned long curr = offset + 4 * ((size + PAGE_CACHE_SIZE - 1) / PAGE_CACHE_SIZE);
+-
+-	do {
+-		unsigned long out = PAGE_CACHE_SIZE;
+-		unsigned long next = *(u32 *) romfs_read(offset);
+-
+-		if (next > end_data) {
+-			end_data = next;
+-		}
+-
+-		offset += 4;
+-		if (curr == next) {
+-			if (opt_verbose > 1) {
+-				printf("  hole at %ld (%d)\n", curr, PAGE_CACHE_SIZE);
+-			}
+-			if (size < PAGE_CACHE_SIZE)
+-				out = size;
+-			memset(outbuffer, 0x00, out);
+-		}
+-		else {
+-			if (opt_verbose > 1) {
+-				printf("  uncompressing block at %ld to %ld (%ld)\n", curr, next, next - curr);
+-			}
+-			out = uncompress_block(romfs_read(curr), next - curr);
+-		}
+-		if (size >= PAGE_CACHE_SIZE) {
+-			if (out != PAGE_CACHE_SIZE) {
+-				fprintf(stderr, "%s: Non-block (%ld) bytes\n", filename, out);
+-				exit(4);
+-			}
+-		} else {
+-			if (out != size) {
+-				fprintf(stderr, "%s: Non-size (%ld vs %ld) bytes\n", filename, out, size);
+-				exit(4);
+-			}
+-		}
+-		size -= out;
+-		if (opt_extract) {
+-			write(fd, outbuffer, out);
+-		}
+-		curr = next;
+-	} while (size);
++	if (S_ISDIR(inode->mode)) {
++		do_directory(path, inode);
++	}
++	else if (S_ISREG(inode->mode)) {
++		do_file(path, inode);
++	}
++	else if (S_ISLNK(inode->mode)) {
++		do_symlink(path, inode);
++	}
++	else {
++		do_special_inode(path, inode);
++	}
+ }
+ 
+-static void expand_fs(int pathlen, char *path, struct cramfs_inode *inode)
++static void test_fs(int start)
+ {
+-	if (S_ISDIR(inode->mode)) {
+-		int count = inode->size;
+-		unsigned long offset = inode->offset << 2;
+-		char *newpath = malloc(pathlen + 256);
+-
+-		if (count > 0 && offset < start_inode) {
+-			start_inode = offset;
+-		}
+-		/* XXX - need to check end_inode for empty case? */
+-		memcpy(newpath, path, pathlen);
+-		newpath[pathlen] = '/';
+-		pathlen++;
+-		if (opt_verbose) {
+-			print_node('d', inode, path);
+-		}
+-		if (opt_extract) {
+-			mkdir(path, inode->mode);
+-			change_file_status(path, inode);
+-		}
+-		while (count > 0) {
+-			struct cramfs_inode *child = iget(offset);
+-			int size;
+-			int newlen = child->namelen << 2;
+-
+-			size = sizeof(struct cramfs_inode) + newlen;
+-			count -= size;
+-
+-			offset += sizeof(struct cramfs_inode);
+-
+-			memcpy(newpath + pathlen, romfs_read(offset), newlen);
+-			newpath[pathlen + newlen] = 0;
+-			if ((pathlen + newlen) - strlen(newpath) > 3) {
+-				fprintf(stderr, "%s: invalid cramfs--bad path length\n", filename);
+-				exit(4);
+-			}
+-			expand_fs(strlen(newpath), newpath, child);
+-
+-			offset += newlen;
+-
+-			if (offset > end_inode) {
+-				end_inode = offset;
+-			}
+-		}
+-		return;
+-	}
+-	if (S_ISREG(inode->mode)) {
+-		int fd = 0;
+-		unsigned long offset = inode->offset << 2;
++	struct cramfs_inode *root;
+ 
+-		if (offset > 0 && offset < start_data) {
+-			start_data = offset;
+-		}
+-		if (opt_verbose) {
+-			print_node('f', inode, path);
+-		}
+-		if (opt_extract) {
+-			fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, inode->mode);
+-		}
+-		if (inode->size) {
+-			do_uncompress(fd, offset, inode->size);
++	root = read_super();
++	umask(0);
++	euid = geteuid();
++	stream.next_in = NULL;
++	stream.avail_in = 0;
++	inflateInit(&stream);
++	expand_fs(extract_dir, root);
++	inflateEnd(&stream);
++	if (start_data != ~0UL) {
++		if (start_data < (sizeof(struct cramfs_super) + start)) {
++			die(FSCK_UNCORRECTED, 0, "directory data start (%ld) < sizeof(struct cramfs_super) + start (%ld)", start_data, sizeof(struct cramfs_super) + start);
+ 		}
+-		if (opt_extract) {
+-			close(fd);
+-			change_file_status(path, inode);
++		if (end_dir != start_data) {
++			die(FSCK_UNCORRECTED, 0, "directory data end (%ld) != file data start (%ld)", end_dir, start_data);
+ 		}
+-		return;
+ 	}
+-	if (S_ISLNK(inode->mode)) {
+-		unsigned long offset = inode->offset << 2;
+-
+-		if (offset < start_data) {
+-			start_data = offset;
++	if (super.flags & CRAMFS_FLAG_FSID_VERSION_2) {
++		if (end_data > super.size) {
++			die(FSCK_UNCORRECTED, 0, "invalid file data offset");
+ 		}
+-		do_symlink(path, inode);
+-		return;
+-	}
+-	else {
+-		do_special_inode(path, inode);
+-		return;
+ 	}
++	iput(root);		/* free(root) */
+ }
+ #endif /* INCLUDE_FS_TESTS */
+ 
+ int main(int argc, char **argv)
+ {
+-	void *buf;
+-	size_t length;
+-	struct stat st;
+-	u32 crc_old, crc_new;
+-#ifdef INCLUDE_FS_TESTS
+-	struct cramfs_inode *root;
+-#endif /* INCLUDE_FS_TESTS */
+ 	int c;			/* for getopt */
+ 	int start = 0;
++	size_t length;
+ 
+ 	if (argc)
+ 		progname = argv[0];
+@@ -436,17 +668,14 @@
+ 	while ((c = getopt(argc, argv, "hx:v")) != EOF) {
+ 		switch (c) {
+ 		case 'h':
+-			usage(0);
++			usage(FSCK_OK);
+ 		case 'x':
+ #ifdef INCLUDE_FS_TESTS
+ 			opt_extract = 1;
+-			extract_dir = malloc(strlen(optarg) + 1);
+-			strcpy(extract_dir, optarg);
++			extract_dir = optarg;
+ 			break;
+-#else /*  not INCLUDE_FS_TESTS */
+-			fprintf(stderr, "%s: compiled without -x support\n",
+-				progname);
+-			exit(16);
++#else /* not INCLUDE_FS_TESTS */
++			die(FSCK_USAGE, 0, "compiled without -x support");
+ #endif /* not INCLUDE_FS_TESTS */
+ 		case 'v':
+ 			opt_verbose++;
+@@ -455,134 +684,24 @@
+ 	}
+ 
+ 	if ((argc - optind) != 1)
+-		usage(16);
++		usage(FSCK_USAGE);
+ 	filename = argv[optind];
+ 
+-	/* find the physical size of the file or block device */
+-	if (lstat(filename, &st) < 0) {
+-		perror(filename);
+-		exit(8);
+-	}
+-	fd = open(filename, O_RDONLY);
+-	if (fd < 0) {
+-		perror(filename);
+-		exit(8);
+-	}
+-	if (S_ISBLK(st.st_mode)) {
+-		if (ioctl(fd, BLKGETSIZE, &length) < 0) {
+-			fprintf(stderr, "%s: warning--unable to determine filesystem size \n", filename);
+-			exit(4);
+-		}
+-		length = length * 512;
+-	}
+-	else if (S_ISREG(st.st_mode)) {
+-		length = st.st_size;
+-	}
+-	else {
+-		fprintf(stderr, "%s is not a block device or file\n", filename);
+-		exit(8);
+-	}
+-
+-	if (length < sizeof(struct cramfs_super)) {
+-		fprintf(stderr, "%s: invalid cramfs--file length too short\n", filename);
+-		exit(4);
+-	}
+-
+-	if (S_ISBLK(st.st_mode)) {
+-		/* nasty because mmap of block devices fails */
+-		buf = mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+-		read(fd, buf, length);
+-	}
+-	else {
+-		/* nice and easy */
+-		buf = mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+-	}
+-
+-	/* XXX - this could be cleaner... */
+-	if (((struct cramfs_super *) buf)->magic == CRAMFS_MAGIC) {
+-		start = 0;
+-		super = (struct cramfs_super *) buf;
+-	}
+-	else if (length >= (PAD_SIZE + sizeof(struct cramfs_super)) &&
+-		 ((((struct cramfs_super *) (buf + PAD_SIZE))->magic == CRAMFS_MAGIC)))
+-	{
+-		start = PAD_SIZE;
+-		super = (struct cramfs_super *) (buf + PAD_SIZE);
+-	}
+-	else {
+-		fprintf(stderr, "%s: invalid cramfs--wrong magic\n", filename);
+-		exit(4);
+-	}
+-
+-	if (super->flags & CRAMFS_FLAG_FSID_VERSION_2) {
+-		/* length test */
+-		if (length < super->size) {
+-			fprintf(stderr, "%s: invalid cramfs--file length too short\n", filename);
+-			exit(4);
+-		}
+-		else if (length > super->size) {
+-			fprintf(stderr, "%s: warning--file length too long, padded image?\n", filename);
+-		}
+-
+-		/* CRC test */
+-		crc_old = super->fsid.crc;
+-		super->fsid.crc = crc32(0L, Z_NULL, 0);
+-		crc_new = crc32(0L, Z_NULL, 0);
+-		crc_new = crc32(crc_new, (unsigned char *) buf+start, super->size - start);
+-		if (crc_new != crc_old) {
+-			fprintf(stderr, "%s: invalid cramfs--crc error\n", filename);
+-			exit(4);
+-		}
+-	}
+-	else {
+-		fprintf(stderr, "%s: warning--old cramfs image, no CRC\n",
+-			filename);
+-	}
+-
++	test_super(&start, &length);
++	test_crc(start);
+ #ifdef INCLUDE_FS_TESTS
+-	super = (struct cramfs_super *) malloc(sizeof(struct cramfs_super));
+-	if (((struct cramfs_super *) buf)->magic == CRAMFS_MAGIC) {
+-		memcpy(super, buf, sizeof(struct cramfs_super));
+-	}
+-	else if (length >= (PAD_SIZE + sizeof(struct cramfs_super)) &&
+-		 ((((struct cramfs_super *) (buf + PAD_SIZE))->magic == CRAMFS_MAGIC)))
+-	{
+-		memcpy(super, (buf + PAD_SIZE), sizeof(struct cramfs_super));
+-	}
+-
+-	munmap(buf, length);
+-
+-	/* file format test, uses fake "blocked" accesses */
+-	root = read_super();
+-	umask(0);
+-	euid = geteuid();
+-	if (!root) {
+-		fprintf(stderr, "%s: invalid cramfs--bad superblock\n",
+-			filename);
+-		exit(4);
+-	}
+-	stream.next_in = NULL;
+-	stream.avail_in = 0;
+-	inflateInit(&stream);
+-
+-	if (!extract_dir) {
+-		extract_dir = "root";
+-	}
+-
+-	expand_fs(strlen(extract_dir), extract_dir, root);
+-	inflateEnd(&stream);
++	test_fs(start);
++#endif /* INCLUDE_FS_TESTS */
+ 
+-	if (start_data != 1 << 28  && end_inode != start_data) {
+-		fprintf(stderr, "%s: invalid cramfs--directory data end (%ld) != file data start (%ld)\n", filename, end_inode, start_data);
+-		exit(4);
+-	}
+-	if (super->flags & CRAMFS_FLAG_FSID_VERSION_2) {
+-		if (end_data > super->size) {
+-			fprintf(stderr, "%s: invalid cramfs--invalid file data offset\n", filename);
+-			exit(4);
+-		}
++	if (opt_verbose) {
++		printf("%s: OK\n", filename);
+ 	}
+-#endif /* INCLUDE_FS_TESTS */
+ 
+-	exit(0);
++	exit(FSCK_OK);
+ }
++
++/*
++ * Local variables:
++ * c-file-style: "linux"
++ * End:
++ */
+diff -ur linux-orig/scripts/cramfs/mkcramfs.c linux/scripts/cramfs/mkcramfs.c
+--- linux-orig/scripts/cramfs/mkcramfs.c	Thu Jul 19 16:14:53 2001
++++ linux/scripts/cramfs/mkcramfs.c	Sun Jan 13 21:40:58 2002
+@@ -1,7 +1,7 @@
+ /*
+  * mkcramfs - make a cramfs file system
+  *
+- * Copyright (C) 1999-2001 Transmeta Corporation
++ * Copyright (C) 1999-2002 Transmeta Corporation
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+@@ -18,6 +18,10 @@
+  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  */
+ 
++/*
++ * If you change the disk format of cramfs, please update fs/cramfs/README.
++ */
++
+ #include <sys/types.h>
+ #include <stdio.h>
+ #include <sys/stat.h>
+@@ -28,39 +32,47 @@
+ #include <stdlib.h>
+ #include <errno.h>
+ #include <string.h>
+-#include <assert.h>
+ #include <getopt.h>
++#include <stdarg.h>
+ #include <linux/cramfs_fs.h>
+ #include <zlib.h>
+ 
+-#define PAD_SIZE 512		/* only 0 and 512 supported by kernel */
+-
+-static const char *progname = "mkcramfs";
++/* Exit codes used by mkfs-type programs */
++#define MKFS_OK          0	/* No errors */
++#define MKFS_ERROR       8	/* Operational error */
++#define MKFS_USAGE       16	/* Usage or syntax error */
+ 
+-/* N.B. If you change the disk format of cramfs, please update fs/cramfs/README. */
++/* The kernel only supports PAD_SIZE of 0 and 512. */
++#define PAD_SIZE 512
+ 
+-/* Input status of 0 to print help and exit without an error. */
+-static void usage(int status)
+-{
+-	FILE *stream = status ? stderr : stdout;
++/* The kernel assumes PAGE_CACHE_SIZE as block size. */
++#define PAGE_CACHE_SIZE (4096)
+ 
+-	fprintf(stream, "usage: %s [-h] [-e edition] [-i file] [-n name] dirname outfile\n"
+-		" -h         print this help\n"
+-		" -E         make all warnings errors (non-zero exit status)\n"
+-		" -e edition set edition number (part of fsid)\n"
+-		" -i file    insert a file image into the filesystem (requires >= 2.4.0)\n"
+-		" -n name    set name of cramfs filesystem\n"
+-		" -p         pad by %d bytes for boot code\n"
+-		" -s         sort directory entries (old option, ignored)\n"
+-		" -z         make explicit holes (requires >= 2.3.39)\n"
+-		" dirname    root of the filesystem to be compressed\n"
+-		" outfile    output file\n", progname, PAD_SIZE);
++/*
++ * The longest filename component to allow for in the input directory tree.
++ * ext2fs (and many others) allow up to 255 bytes.  A couple of filesystems
++ * allow longer (e.g. smbfs 1024), but there isn't much use in supporting
++ * >255-byte names in the input directory tree given that such names get
++ * truncated to CRAMFS_MAXPATHLEN (252 bytes) when written to cramfs.
++ *
++ * Old versions of mkcramfs generated corrupted filesystems if any input
++ * filenames exceeded CRAMFS_MAXPATHLEN (252 bytes), however old
++ * versions of cramfsck seem to have been able to detect the corruption.
++ */
++#define MAX_INPUT_NAMELEN 255
+ 
+-	exit(status);
+-}
++/*
++ * Maximum size fs you can create is roughly 256MB.  (The last file's
++ * data must begin within 256MB boundary but can extend beyond that.)
++ *
++ * Note that if you want it to fit in a ROM then you're limited to what the
++ * hardware and kernel can support.
++ */
++#define MAXFSLEN ((((1 << CRAMFS_OFFSET_WIDTH) - 1) << 2) /* offset */ \
++		  + (1 << CRAMFS_SIZE_WIDTH) - 1 /* filesize */ \
++		  + (1 << CRAMFS_SIZE_WIDTH) * 4 / PAGE_CACHE_SIZE /* block pointers */ )
+ 
+-#define PAGE_CACHE_SIZE (4096)
+-/* The kernel assumes PAGE_CACHE_SIZE as block size. */
++static const char *progname = "mkcramfs";
+ static unsigned int blksize = PAGE_CACHE_SIZE;
+ static long total_blocks = 0, total_nodes = 1; /* pre-count the root node */
+ static int image_length = 0;
+@@ -72,31 +84,30 @@
+  *
+  * Note that kernels up to at least 2.3.39 don't support cramfs holes,
+  * which is why this is turned off by default.
++ *
++ * If opt_verbose is 1, be verbose.  If it is higher, be even more verbose.
+  */
+-static int opt_edition = 0;
++static u32 opt_edition = 0;
+ static int opt_errors = 0;
+ static int opt_holes = 0;
+ static int opt_pad = 0;
++static int opt_verbose = 0;
+ static char *opt_image = NULL;
+ static char *opt_name = NULL;
+ 
+ static int warn_dev, warn_gid, warn_namelen, warn_skip, warn_size, warn_uid;
+ 
+-#ifndef MIN
+-# define MIN(_a,_b) ((_a) < (_b) ? (_a) : (_b))
+-#endif
+-
+ /* In-core version of inode / directory entry. */
+ struct entry {
+ 	/* stats */
+-	char *name;
++	unsigned char *name;
+ 	unsigned int mode, size, uid, gid;
+ 
+ 	/* FS data */
+ 	void *uncompressed;
+-        /* points to other identical file */
+-        struct entry *same;
+-        unsigned int offset;            /* pointer to compressed data in archive */
++	/* points to other identical file */
++	struct entry *same;
++	unsigned int offset;		/* pointer to compressed data in archive */
+ 	unsigned int dir_offset;	/* Where in the archive is the directory entry? */
+ 
+ 	/* organization */
+@@ -104,34 +115,67 @@
+ 	struct entry *next;
+ };
+ 
+-/*
+- * The longest file name component to allow for in the input directory tree.
+- * Ext2fs (and many others) allow up to 255 bytes.  A couple of filesystems
+- * allow longer (e.g. smbfs 1024), but there isn't much use in supporting
+- * >255-byte names in the input directory tree given that such names get
+- * truncated to 255 bytes when written to cramfs.
+- */
+-#define MAX_INPUT_NAMELEN 255
++/* Input status of 0 to print help and exit without an error. */
++static void usage(int status)
++{
++	FILE *stream = status ? stderr : stdout;
++
++	fprintf(stream, "usage: %s [-h] [-e edition] [-i file] [-n name] dirname outfile\n"
++		" -h         print this help\n"
++		" -E         make all warnings errors (non-zero exit status)\n"
++		" -e edition set edition number (part of fsid)\n"
++		" -i file    insert a file image into the filesystem (requires >= 2.4.0)\n"
++		" -n name    set name of cramfs filesystem\n"
++		" -p         pad by %d bytes for boot code\n"
++		" -s         sort directory entries (old option, ignored)\n"
++		" -v         be more verbose\n"
++		" -z         make explicit holes (requires >= 2.3.39)\n"
++		" dirname    root of the directory tree to be compressed\n"
++		" outfile    output file\n", progname, PAD_SIZE);
++
++	exit(status);
++}
++
++static void die(int status, int syserr, const char *fmt, ...)
++{
++	va_list arg_ptr;
++	int save = errno;
++
++	fflush(0);
++	va_start(arg_ptr, fmt);
++	fprintf(stderr, "%s: ", progname);
++	vfprintf(stderr, fmt, arg_ptr);
++	if (syserr) {
++		fprintf(stderr, ": %s", strerror(save));
++	}
++	fprintf(stderr, "\n");
++	va_end(arg_ptr);
++	exit(status);
++}
+ 
+ static int find_identical_file(struct entry *orig,struct entry *newfile)
+ {
+-        if(orig==newfile) return 1;
+-        if(!orig) return 0;
+-        if(orig->size==newfile->size && orig->uncompressed && !memcmp(orig->uncompressed,newfile->uncompressed,orig->size)) {
+-                newfile->same=orig;
+-                return 1;
+-        }
+-        return find_identical_file(orig->child,newfile) ||
+-                   find_identical_file(orig->next,newfile);
++	if (orig == newfile)
++		return 1;
++	if (!orig)
++		return 0;
++	if (orig->size == newfile->size && orig->uncompressed &&
++	    !memcmp(orig->uncompressed, newfile->uncompressed, orig->size))
++	{
++		newfile->same = orig;
++		return 1;
++	}
++	return (find_identical_file(orig->child,newfile) ||
++		find_identical_file(orig->next,newfile));
+ }
+ 
+ static void eliminate_doubles(struct entry *root,struct entry *orig) {
+-        if(orig) {
+-                if(orig->size && orig->uncompressed)
++	if (orig) {
++		if (orig->size && orig->uncompressed)
+ 			find_identical_file(root,orig);
+-                eliminate_doubles(root,orig->child);
+-                eliminate_doubles(root,orig->next);
+-        }
++		eliminate_doubles(root,orig->child);
++		eliminate_doubles(root,orig->next);
++	}
+ }
+ 
+ /*
+@@ -155,20 +199,18 @@
+ 	/* TODO: Reuse the parent's buffer to save memcpy'ing and duplication. */
+ 	path = malloc(len + 1 + MAX_INPUT_NAMELEN + 1);
+ 	if (!path) {
+-		perror(NULL);
+-		exit(8);
++		die(MKFS_ERROR, 1, "malloc failed");
+ 	}
+ 	memcpy(path, name, len);
+ 	endpath = path + len;
+ 	*endpath = '/';
+ 	endpath++;
+ 
+-        /* read in the directory and sort */
+-        dircount = scandir(name, &dirlist, 0, cramsort);
++	/* read in the directory and sort */
++	dircount = scandir(name, &dirlist, 0, cramsort);
+ 
+ 	if (dircount < 0) {
+-		perror(name);
+-		exit(8);
++		die(MKFS_ERROR, 1, "scandir failed: %s", name);
+ 	}
+ 
+ 	/* process directory */
+@@ -192,36 +234,38 @@
+ 		}
+ 		namelen = strlen(dirent->d_name);
+ 		if (namelen > MAX_INPUT_NAMELEN) {
+-			fprintf(stderr,
+-				"Very long (%u bytes) filename `%s' found.\n"
+-				" Please increase MAX_INPUT_NAMELEN in mkcramfs.c and recompile.  Exiting.\n",
++			die(MKFS_ERROR, 0,
++				"very long (%u bytes) filename found: %s\n"
++				"please increase MAX_INPUT_NAMELEN in mkcramfs.c and recompile",
+ 				namelen, dirent->d_name);
+-			exit(8);
+ 		}
+ 		memcpy(endpath, dirent->d_name, namelen + 1);
+ 
+ 		if (lstat(path, &st) < 0) {
+-			perror(endpath);
+ 			warn_skip = 1;
+ 			continue;
+ 		}
+ 		entry = calloc(1, sizeof(struct entry));
+ 		if (!entry) {
+-			perror(NULL);
+-			exit(8);
++			die(MKFS_ERROR, 1, "calloc failed");
+ 		}
+ 		entry->name = strdup(dirent->d_name);
+ 		if (!entry->name) {
+-			perror(NULL);
+-			exit(8);
++			die(MKFS_ERROR, 1, "strdup failed");
+ 		}
+-		if (namelen > 255) {
+-			/* Can't happen when reading from ext2fs. */
+-
+-			/* TODO: we ought to avoid chopping in half
+-			   multi-byte UTF8 characters. */
+-			entry->name[namelen = 255] = '\0';
++		/* truncate multi-byte UTF-8 filenames on character boundary */
++		if (namelen > CRAMFS_MAXPATHLEN) {
++			namelen = CRAMFS_MAXPATHLEN;
+ 			warn_namelen = 1;
++			/* the first lost byte must not be a trail byte */
++			while ((entry->name[namelen] & 0xc0) == 0x80) {
++				namelen--;
++				/* are we reasonably certain it was UTF-8 ? */
++				if (entry->name[namelen] < 0x80 || !namelen) {
++					die(MKFS_ERROR, 0, "cannot truncate filenames not encoded in UTF-8");
++				}
++			}
++			entry->name[namelen] = '\0';
+ 		}
+ 		entry->mode = st.st_mode;
+ 		entry->size = st.st_size;
+@@ -231,10 +275,10 @@
+ 		entry->gid = st.st_gid;
+ 		if (entry->gid >= 1 << CRAMFS_GID_WIDTH)
+ 			/* TODO: We ought to replace with a default
+-                           gid instead of truncating; otherwise there
+-                           are security problems.  Maybe mode should
+-                           be &= ~070.  Same goes for uid once Linux
+-                           supports >16-bit uids. */
++			   gid instead of truncating; otherwise there
++			   are security problems.  Maybe mode should
++			   be &= ~070.  Same goes for uid once Linux
++			   supports >16-bit uids. */
+ 			warn_gid = 1;
+ 		size = sizeof(struct cramfs_inode) + ((namelen + 3) & ~3);
+ 		*fslen_ub += size;
+@@ -252,7 +296,6 @@
+ 			   (which would just save a little memory). */
+ 			int fd = open(path, O_RDONLY);
+ 			if (fd < 0) {
+-				perror(path);
+ 				warn_skip = 1;
+ 				continue;
+ 			}
+@@ -263,39 +306,38 @@
+ 				}
+ 
+ 				entry->uncompressed = mmap(NULL, entry->size, PROT_READ, MAP_PRIVATE, fd, 0);
+-				if (-1 == (int) (long) entry->uncompressed) {
+-					perror("mmap");
+-					exit(8);
++				if (entry->uncompressed == MAP_FAILED) {
++					die(MKFS_ERROR, 1, "mmap failed");
+ 				}
+ 			}
+ 			close(fd);
+ 		} else if (S_ISLNK(st.st_mode)) {
+ 			entry->uncompressed = malloc(entry->size);
+ 			if (!entry->uncompressed) {
+-				perror(NULL);
+-				exit(8);
++				die(MKFS_ERROR, 1, "malloc failed");
+ 			}
+ 			if (readlink(path, entry->uncompressed, entry->size) < 0) {
+-				perror(path);
+ 				warn_skip = 1;
+ 				continue;
+ 			}
+ 		} else if (S_ISFIFO(st.st_mode) || S_ISSOCK(st.st_mode)) {
+ 			/* maybe we should skip sockets */
+ 			entry->size = 0;
+-		} else {
++		} else if (S_ISCHR(st.st_mode) || S_ISBLK(st.st_mode)) {
+ 			entry->size = st.st_rdev;
+ 			if (entry->size & -(1<<CRAMFS_SIZE_WIDTH))
+ 				warn_dev = 1;
++		} else {
++			die(MKFS_ERROR, 0, "bogus file type: %s", entry->name);
+ 		}
+ 
+ 		if (S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)) {
+ 			int blocks = ((entry->size - 1) / blksize + 1);
+ 
+ 			/* block pointers & data expansion allowance + data */
+-			if(entry->size)
++			if (entry->size)
+ 				*fslen_ub += (4+26)*blocks + entry->size + 3;
+-                }
++		}
+ 
+ 		/* Link it into the list */
+ 		*prev = entry;
+@@ -313,9 +355,7 @@
+ 	struct cramfs_super *super = (struct cramfs_super *) base;
+ 	unsigned int offset = sizeof(struct cramfs_super) + image_length;
+ 
+-	if (opt_pad) {
+-		offset += opt_pad;
+-	}
++	offset += opt_pad;	/* 0 if no padding */
+ 
+ 	super->magic = CRAMFS_MAGIC;
+ 	super->flags = CRAMFS_FLAG_FSID_VERSION_2 | CRAMFS_FLAG_SORTED_DIRS;
+@@ -349,27 +389,66 @@
+ static void set_data_offset(struct entry *entry, char *base, unsigned long offset)
+ {
+ 	struct cramfs_inode *inode = (struct cramfs_inode *) (base + entry->dir_offset);
+-#ifdef DEBUG
+-	assert ((offset & 3) == 0);
+-#endif /* DEBUG */
++
++	if ((offset & 3) != 0) {
++		die(MKFS_ERROR, 0, "illegal offset of %lu bytes", offset);
++	}
+ 	if (offset >= (1 << (2 + CRAMFS_OFFSET_WIDTH))) {
+-		fprintf(stderr, "filesystem too big.  Exiting.\n");
+-		exit(8);
++		die(MKFS_ERROR, 0, "filesystem too big");
+ 	}
+ 	inode->offset = (offset >> 2);
+ }
+ 
++/*
++ * TODO: Does this work for chars >= 0x80?  Most filesystems use UTF-8
++ * encoding for filenames, whereas the console is a single-byte
++ * character set like iso-latin-1.
++ */
++static void print_node(struct entry *e)
++{
++	char info[10];
++	char type = '?';
++
++	if (S_ISREG(e->mode)) type = 'f';
++	else if (S_ISDIR(e->mode)) type = 'd';
++	else if (S_ISLNK(e->mode)) type = 'l';
++	else if (S_ISCHR(e->mode)) type = 'c';
++	else if (S_ISBLK(e->mode)) type = 'b';
++	else if (S_ISFIFO(e->mode)) type = 'p';
++	else if (S_ISSOCK(e->mode)) type = 's';
++
++	if (S_ISCHR(e->mode) || (S_ISBLK(e->mode))) {
++		/* major/minor numbers can be as high as 2^12 or 4096 */
++		snprintf(info, 10, "%4d,%4d", major(e->size), minor(e->size));
++	}
++	else {
++		/* size be as high as 2^24 or 16777216 */
++		snprintf(info, 10, "%9d", e->size);
++	}
++
++	printf("%c %04o %s %5d:%-3d %s\n",
++	       type, e->mode & ~S_IFMT, info, e->uid, e->gid, e->name);
++}
+ 
+ /*
+  * We do a width-first printout of the directory
+  * entries, using a stack to remember the directories
+  * we've seen.
+  */
+-#define MAXENTRIES (100)
+ static unsigned int write_directory_structure(struct entry *entry, char *base, unsigned int offset)
+ {
+ 	int stack_entries = 0;
+-	struct entry *entry_stack[MAXENTRIES];
++	int stack_size = 64;
++	struct entry **entry_stack;
++
++	entry_stack = malloc(stack_size * sizeof(struct entry *));
++	if (!entry_stack) {
++		die(MKFS_ERROR, 1, "malloc failed");
++	}
++
++	if (opt_verbose) {
++		printf("root:\n");
++	}
+ 
+ 	for (;;) {
+ 		int dir_start = stack_entries;
+@@ -398,15 +477,16 @@
+ 			inode->namelen = len >> 2;
+ 			offset += len;
+ 
+-			/* TODO: this may get it wrong for chars >= 0x80.
+-			   Most filesystems use UTF8 encoding for filenames,
+-			   whereas the console is a single-byte character
+-			   set like iso-latin-1. */
+-			printf("  %s\n", entry->name);
++			if (opt_verbose)
++				print_node(entry);
++
+ 			if (entry->child) {
+-				if (stack_entries >= MAXENTRIES) {
+-					fprintf(stderr, "Exceeded MAXENTRIES.  Raise this value in mkcramfs.c and recompile.  Exiting.\n");
+-					exit(8);
++				if (stack_entries >= stack_size) {
++					stack_size *= 2;
++					entry_stack = realloc(entry_stack, stack_size * sizeof(struct entry *));
++					if (!entry_stack) {
++						die(MKFS_ERROR, 1, "realloc failed");
++					}
+ 				}
+ 				entry_stack[stack_entries] = entry;
+ 				stack_entries++;
+@@ -416,9 +496,9 @@
+ 
+ 		/*
+ 		 * Reverse the order the stack entries pushed during
+-                 * this directory, for a small optimization of disk
+-                 * access in the created fs.  This change makes things
+-                 * `ls -UR' order.
++		 * this directory, for a small optimization of disk
++		 * access in the created fs.  This change makes things
++		 * `ls -UR' order.
+ 		 */
+ 		{
+ 			struct entry **lo = entry_stack + dir_start;
+@@ -439,29 +519,27 @@
+ 		entry = entry_stack[stack_entries];
+ 
+ 		set_data_offset(entry, base, offset);
+-		printf("'%s':\n", entry->name);
++		if (opt_verbose) {
++			printf("%s:\n", entry->name);
++		}
+ 		entry = entry->child;
+ 	}
++	free(entry_stack);
+ 	return offset;
+ }
+ 
+ static int is_zero(char const *begin, unsigned len)
+ {
+-	if (opt_holes)
+-		/* Returns non-zero iff the first LEN bytes from BEGIN are
+-		   all NULs. */
+-		return (len-- == 0 ||
+-			(begin[0] == '\0' &&
+-			 (len-- == 0 ||
+-			  (begin[1] == '\0' &&
+-			   (len-- == 0 ||
+-			    (begin[2] == '\0' &&
+-			     (len-- == 0 ||
+-			      (begin[3] == '\0' &&
+-			       memcmp(begin, begin + 4, len) == 0))))))));
+-	else
+-		/* Never create holes. */
+-		return 0;
++	/* Returns non-zero iff the first LEN bytes from BEGIN are all NULs. */
++	return (len-- == 0 ||
++		(begin[0] == '\0' &&
++		 (len-- == 0 ||
++		  (begin[1] == '\0' &&
++		   (len-- == 0 ||
++		    (begin[2] == '\0' &&
++		     (len-- == 0 ||
++		      (begin[3] == '\0' &&
++		       memcmp(begin, begin + 4, len) == 0))))))));
+ }
+ 
+ /*
+@@ -488,19 +566,23 @@
+ 	do {
+ 		unsigned long len = 2 * blksize;
+ 		unsigned int input = size;
++		int err;
++
+ 		if (input > blksize)
+ 			input = blksize;
+ 		size -= input;
+-		if (!is_zero (uncompressed, input)) {
+-			compress(base + curr, &len, uncompressed, input);
++		if (!(opt_holes && is_zero (uncompressed, input))) {
++			err = compress2(base + curr, &len, uncompressed, input, Z_BEST_COMPRESSION);
++			if (err != Z_OK) {
++				die(MKFS_ERROR, 0, "compression error: %s", zError(err));
++			}
+ 			curr += len;
+ 		}
+ 		uncompressed += input;
+ 
+ 		if (len > blksize*2) {
+ 			/* (I don't think this can happen with zlib.) */
+-			printf("AIEEE: block \"compressed\" to > 2*blocklength (%ld)\n", len);
+-			exit(8);
++			die(MKFS_ERROR, 0, "AIEEE: block \"compressed\" to > 2*blocklength (%ld)", len);
+ 		}
+ 
+ 		*(u32 *) (base + offset) = curr;
+@@ -513,8 +595,10 @@
+ 	   st_blocks * 512.  But if you say that then perhaps
+ 	   administrative data should also be included in both. */
+ 	change = new_size - original_size;
+-	printf("%6.2f%% (%+d bytes)\t%s\n",
+-	       (change * 100) / (double) original_size, change, name);
++	if (opt_verbose > 1) {
++		printf("%6.2f%% (%+d bytes)\t%s\n",
++		       (change * 100) / (double) original_size, change, name);
++	}
+ 
+ 	return curr;
+ }
+@@ -529,18 +613,19 @@
+ {
+ 	do {
+ 		if (entry->uncompressed) {
+-                        if(entry->same) {
+-                                set_data_offset(entry, base, entry->same->offset);
+-                                entry->offset=entry->same->offset;
+-                        } else {
+-                                set_data_offset(entry, base, offset);
+-                                entry->offset=offset;
+-                                offset = do_compress(base, offset, entry->name, entry->uncompressed, entry->size);
+-                        }
++			if (entry->same) {
++				set_data_offset(entry, base, entry->same->offset);
++				entry->offset = entry->same->offset;
++			}
++			else {
++				set_data_offset(entry, base, offset);
++				entry->offset = offset;
++				offset = do_compress(base, offset, entry->name, entry->uncompressed, entry->size);
++			}
+ 		}
+ 		else if (entry->child)
+ 			offset = write_data(entry->child, base, offset);
+-                entry=entry->next;
++		entry=entry->next;
+ 	} while (entry);
+ 	return offset;
+ }
+@@ -552,10 +637,12 @@
+ 
+ 	fd = open(file, O_RDONLY);
+ 	if (fd < 0) {
+-		perror(file);
+-		exit(8);
++		die(MKFS_ERROR, 1, "open failed: %s", file);
+ 	}
+ 	buf = mmap(NULL, image_length, PROT_READ, MAP_PRIVATE, fd, 0);
++	if (buf == MAP_FAILED) {
++		die(MKFS_ERROR, 1, "mmap failed");
++	}
+ 	memcpy(base + offset, buf, image_length);
+ 	munmap(buf, image_length);
+ 	close (fd);
+@@ -567,27 +654,6 @@
+ 	return (offset + image_length);
+ }
+ 
+-/*
+- * Maximum size fs you can create is roughly 256MB.  (The last file's
+- * data must begin within 256MB boundary but can extend beyond that.)
+- *
+- * Note that if you want it to fit in a ROM then you're limited to what the
+- * hardware and kernel can support (64MB?).
+- */
+-#define MAXFSLEN ((((1 << CRAMFS_OFFSET_WIDTH) - 1) << 2) /* offset */ \
+-		  + (1 << CRAMFS_SIZE_WIDTH) - 1 /* filesize */ \
+-		  + (1 << CRAMFS_SIZE_WIDTH) * 4 / PAGE_CACHE_SIZE /* block pointers */ )
+-
+-
+-/*
+- * Usage:
+- *
+- *      mkcramfs directory-name outfile
+- *
+- * where "directory-name" is simply the root of the directory
+- * tree that we want to generate a compressed filesystem out
+- * of.
+- */
+ int main(int argc, char **argv)
+ {
+ 	struct stat st;		/* used twice... */
+@@ -598,8 +664,9 @@
+ 	/* initial guess (upper-bound) of required filesystem size */
+ 	loff_t fslen_ub = sizeof(struct cramfs_super);
+ 	char const *dirname, *outfile;
+-	u32 crc = crc32(0L, Z_NULL, 0);
++	u32 crc;
+ 	int c;			/* for getopt */
++	char *ep;		/* for strtoul */
+ 
+ 	total_blocks = 0;
+ 
+@@ -607,21 +674,23 @@
+ 		progname = argv[0];
+ 
+ 	/* command line options */
+-	while ((c = getopt(argc, argv, "hEe:i:n:psz")) != EOF) {
++	while ((c = getopt(argc, argv, "hEe:i:n:psvz")) != EOF) {
+ 		switch (c) {
+ 		case 'h':
+-			usage(0);
++			usage(MKFS_OK);
+ 		case 'E':
+ 			opt_errors = 1;
+ 			break;
+ 		case 'e':
+-			opt_edition = atoi(optarg);
++			errno = 0;
++			opt_edition = strtoul(optarg, &ep, 10);
++			if (errno || optarg[0] == '\0' || *ep != '\0')
++				usage(MKFS_USAGE);
+ 			break;
+ 		case 'i':
+ 			opt_image = optarg;
+ 			if (lstat(opt_image, &st) < 0) {
+-				perror(opt_image);
+-				exit(16);
++				die(MKFS_ERROR, 1, "lstat failed: %s", opt_image);
+ 			}
+ 			image_length = st.st_size; /* may be padded later */
+ 			fslen_ub += (image_length + 3); /* 3 is for padding */
+@@ -636,6 +705,9 @@
+ 		case 's':
+ 			/* old option, ignored */
+ 			break;
++		case 'v':
++			opt_verbose++;
++			break;
+ 		case 'z':
+ 			opt_holes = 1;
+ 			break;
+@@ -643,20 +715,21 @@
+ 	}
+ 
+ 	if ((argc - optind) != 2)
+-		usage(16);
++		usage(MKFS_USAGE);
+ 	dirname = argv[optind];
+ 	outfile = argv[optind + 1];
+ 
+ 	if (stat(dirname, &st) < 0) {
+-		perror(dirname);
+-		exit(16);
++		die(MKFS_USAGE, 1, "stat failed: %s", dirname);
+ 	}
+ 	fd = open(outfile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
++	if (fd < 0) {
++		die(MKFS_USAGE, 1, "open failed: %s", outfile);
++	}
+ 
+ 	root_entry = calloc(1, sizeof(struct entry));
+ 	if (!root_entry) {
+-		perror(NULL);
+-		exit(8);
++		die(MKFS_ERROR, 1, "calloc failed");
+ 	}
+ 	root_entry->mode = st.st_mode;
+ 	root_entry->uid = st.st_uid;
+@@ -665,35 +738,34 @@
+ 	root_entry->size = parse_directory(root_entry, dirname, &root_entry->child, &fslen_ub);
+ 
+ 	/* always allocate a multiple of blksize bytes because that's
+-           what we're going to write later on */
++	   what we're going to write later on */
+ 	fslen_ub = ((fslen_ub - 1) | (blksize - 1)) + 1;
+ 
+ 	if (fslen_ub > MAXFSLEN) {
+ 		fprintf(stderr,
+-			"warning: guestimate of required size (upper bound) is %LdMB, but maximum image size is %uMB.  We might die prematurely.\n",
++			"warning: estimate of required size (upper bound) is %LdMB, but maximum image size is %uMB, we might die prematurely\n",
+ 			fslen_ub >> 20,
+ 			MAXFSLEN >> 20);
+ 		fslen_ub = MAXFSLEN;
+ 	}
+ 
+-        /* find duplicate files. TODO: uses the most inefficient algorithm
+-           possible. */
+-        eliminate_doubles(root_entry,root_entry);
++	/* find duplicate files. TODO: uses the most inefficient algorithm
++	   possible. */
++	eliminate_doubles(root_entry,root_entry);
+ 
+ 	/* TODO: Why do we use a private/anonymous mapping here
+-           followed by a write below, instead of just a shared mapping
+-           and a couple of ftruncate calls?  Is it just to save us
+-           having to deal with removing the file afterwards?  If we
+-           really need this huge anonymous mapping, we ought to mmap
+-           in smaller chunks, so that the user doesn't need nn MB of
+-           RAM free.  If the reason is to be able to write to
+-           un-mmappable block devices, then we could try shared mmap
+-           and revert to anonymous mmap if the shared mmap fails. */
++	   followed by a write below, instead of just a shared mapping
++	   and a couple of ftruncate calls?  Is it just to save us
++	   having to deal with removing the file afterwards?  If we
++	   really need this huge anonymous mapping, we ought to mmap
++	   in smaller chunks, so that the user doesn't need nn MB of
++	   RAM free.  If the reason is to be able to write to
++	   un-mmappable block devices, then we could try shared mmap
++	   and revert to anonymous mmap if the shared mmap fails. */
+ 	rom_image = mmap(NULL, fslen_ub?fslen_ub:1, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+ 
+-	if (-1 == (int) (long) rom_image) {
+-		perror("ROM image map");
+-		exit(8);
++	if (rom_image == MAP_FAILED) {
++		die(MKFS_ERROR, 1, "mmap failed");
+ 	}
+ 
+ 	/* Skip the first opt_pad bytes for boot loader code */
+@@ -715,7 +787,7 @@
+ 	offset = write_data(root_entry, rom_image, offset);
+ 
+ 	/* We always write a multiple of blksize bytes, so that
+-           losetup works. */
++	   losetup works. */
+ 	offset = ((offset - 1) | (blksize - 1)) + 1;
+ 	printf("Everything: %d kilobytes\n", offset >> 10);
+ 
+@@ -724,53 +796,58 @@
+ 	printf("Super block: %d bytes\n", sizeof(struct cramfs_super));
+ 
+ 	/* Put the checksum in. */
++	crc = crc32(0L, Z_NULL, 0);
+ 	crc = crc32(crc, (rom_image+opt_pad), (offset-opt_pad));
+ 	((struct cramfs_super *) (rom_image+opt_pad))->fsid.crc = crc;
+ 	printf("CRC: %x\n", crc);
+ 
+ 	/* Check to make sure we allocated enough space. */
+ 	if (fslen_ub < offset) {
+-		fprintf(stderr, "not enough space allocated for ROM image (%Ld allocated, %d used)\n",
+-			fslen_ub, offset);
+-		exit(8);
++		die(MKFS_ERROR, 0, "not enough space allocated for ROM image (%Ld allocated, %d used)", fslen_ub, offset);
+ 	}
+ 
+ 	written = write(fd, rom_image, offset);
+ 	if (written < 0) {
+-		perror("ROM image");
+-		exit(8);
++		die(MKFS_ERROR, 1, "write failed");
+ 	}
+ 	if (offset != written) {
+-		fprintf(stderr, "ROM image write failed (%d %d)\n", written, offset);
+-		exit(8);
++		die(MKFS_ERROR, 0, "ROM image write failed (wrote %d of %d bytes)", written, offset);
+ 	}
+ 
+ 	/* (These warnings used to come at the start, but they scroll off the
+-           screen too quickly.) */
+-	if (warn_namelen) /* (can't happen when reading from ext2fs) */
+-		fprintf(stderr, /* bytes, not chars: think UTF8. */
+-			"warning: filenames truncated to 255 bytes.\n");
++	   screen too quickly.) */
++	if (warn_namelen)
++		fprintf(stderr, /* bytes, not chars: think UTF-8. */
++			"warning: filenames truncated to %d bytes (possibly less if multi-byte UTF-8)\n",
++			CRAMFS_MAXPATHLEN);
+ 	if (warn_skip)
+-		fprintf(stderr, "warning: files were skipped due to errors.\n");
++		fprintf(stderr, "warning: files were skipped due to errors\n");
+ 	if (warn_size)
+ 		fprintf(stderr,
+-			"warning: file sizes truncated to %luMB (minus 1 byte).\n",
++			"warning: file sizes truncated to %luMB (minus 1 byte)\n",
+ 			1L << (CRAMFS_SIZE_WIDTH - 20));
+ 	if (warn_uid) /* (not possible with current Linux versions) */
+ 		fprintf(stderr,
+-			"warning: uids truncated to %u bits.  (This may be a security concern.)\n",
++			"warning: uids truncated to %u bits (this may be a security concern)\n",
+ 			CRAMFS_UID_WIDTH);
+ 	if (warn_gid)
+ 		fprintf(stderr,
+-			"warning: gids truncated to %u bits.  (This may be a security concern.)\n",
++			"warning: gids truncated to %u bits (this may be a security concern)\n",
+ 			CRAMFS_GID_WIDTH);
+ 	if (warn_dev)
+ 		fprintf(stderr,
+-			"WARNING: device numbers truncated to %u bits.  This almost certainly means\n"
+-			"that some device files will be wrong.\n",
++			"WARNING: device numbers truncated to %u bits (this almost certainly means\n"
++			"that some device files will be wrong)\n",
+ 			CRAMFS_OFFSET_WIDTH);
+ 	if (opt_errors &&
+ 	    (warn_namelen||warn_skip||warn_size||warn_uid||warn_gid||warn_dev))
+-		exit(8);
+-	return 0;
++		exit(MKFS_ERROR);
++
++	exit(MKFS_OK);
+ }
++
++/*
++ * Local variables:
++ * c-file-style: "linux"
++ * End:
++ */
+

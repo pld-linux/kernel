@@ -1,0 +1,80 @@
+--- linux-2.4.2-0.1.19.sectlimit/drivers/scsi/hosts.c.~1~	Fri Mar  2 16:46:28 2001
++++ linux-2.4.2-0.1.19.sectlimit/drivers/scsi/hosts.c	Fri Mar  2 16:46:51 2001
+@@ -233,6 +233,8 @@
+ 
+     retval->select_queue_depths = tpnt->select_queue_depths;
+ 
++    retval->max_sectors = tpnt->max_sectors;
++
+     if(!scsi_hostlist)
+ 	scsi_hostlist = retval;
+     else {
+--- linux-2.4.2-0.1.19.sectlimit/drivers/scsi/hosts.h.~1~	Fri Mar  2 16:46:08 2001
++++ linux-2.4.2-0.1.19.sectlimit/drivers/scsi/hosts.h	Fri Mar  2 16:46:17 2001
+@@ -242,6 +242,11 @@
+     short unsigned int sg_tablesize;
+ 
+     /*
++     * if the host adapter has limitations beside segment count
++     */
++    short unsigned int max_sectors;
++
++    /*
+      * True if this host adapter can make good use of linked commands.
+      * This will allow more than one command to be queued to a given
+      * unit on a given host.  Set this to the maximum number of command
+@@ -379,6 +384,7 @@
+     int can_queue;
+     short cmd_per_lun;
+     short unsigned int sg_tablesize;
++    short unsigned int max_sectors;
+ 
+     unsigned in_recovery:1;
+     unsigned unchecked_isa_dma:1;
+--- linux-2.4.2-0.1.19.sectlimit/drivers/scsi/scsi.c.~1~	Fri Mar  2 16:46:08 2001
++++ linux-2.4.2-0.1.19.sectlimit/drivers/scsi/scsi.c	Fri Mar  2 16:46:17 2001
+@@ -1827,6 +1827,11 @@
+ 		return 1;	/* Must be already loaded, or
+ 				 * no detect routine available
+ 				 */
++
++	/* If max_sectors isn't set, default to max */
++	if (!tpnt->max_sectors)
++		tpnt->max_sectors = MAX_SECTORS;
++
+ 	pcount = next_scsi_host;
+ 
+ 	/* The detect routine must carefully spinunlock/spinlock if 
+--- linux-2.4.2-0.1.19.sectlimit/drivers/scsi/scsi_merge.c.~1~	Fri Mar  2 16:46:08 2001
++++ linux-2.4.2-0.1.19.sectlimit/drivers/scsi/scsi_merge.c	Fri Mar  2 16:46:17 2001
+@@ -417,6 +417,9 @@
+ 		max_segments = 64;
+ #endif
+ 
++	if ((req->nr_sectors + (bh->b_size >> 9)) > SHpnt->max_sectors)
++		return 0;
++
+ 	if (use_clustering) {
+ 		/* 
+ 		 * See if we can do this without creating another
+@@ -473,6 +476,9 @@
+ 		max_segments = 64;
+ #endif
+ 
++	if ((req->nr_sectors + (bh->b_size >> 9)) > SHpnt->max_sectors)
++		return 0;
++
+ 	if (use_clustering) {
+ 		/* 
+ 		 * See if we can do this without creating another
+@@ -624,6 +630,10 @@
+ 		return 0;
+ 	}
+ #endif
++
++	if ((req->nr_sectors + next->nr_sectors) > SHpnt->max_sectors)
++		return 0;
++
+ 	/*
+ 	 * The main question is whether the two segments at the boundaries
+ 	 * would be considered one or two.

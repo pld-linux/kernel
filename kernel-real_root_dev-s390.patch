@@ -1,0 +1,38 @@
+diff -ur -X dontdiff linux-2.4.9-13.1/drivers/block/rd.c linux-2.4.9-13.1pt1/drivers/block/rd.c
+--- linux-2.4.9-13.1/drivers/block/rd.c	Tue Nov  6 19:19:21 2001
++++ linux-2.4.9-13.1pt1/drivers/block/rd.c	Tue Nov  6 23:43:49 2001
+@@ -704,9 +704,6 @@
+ 
+ static void __init rd_load_disk(int n)
+ {
+-#ifdef CONFIG_BLK_DEV_INITRD
+-	extern kdev_t real_root_dev;
+-#endif
+ 
+ 	if (rd_doload == 0)
+ 		return;
+diff -ur -X dontdiff linux-2.4.9-13.1/include/linux/fs.h linux-2.4.9-13.1pt1/include/linux/fs.h
+--- linux-2.4.9-13.1/include/linux/fs.h	Tue Nov  6 19:19:10 2001
++++ linux-2.4.9-13.1pt1/include/linux/fs.h	Tue Nov  6 23:46:44 2001
+@@ -1471,7 +1471,7 @@
+ extern void mount_root(void);
+ 
+ #ifdef CONFIG_BLK_DEV_INITRD
+-extern kdev_t real_root_dev;
++extern unsigned int real_root_dev;
+ extern int change_root(kdev_t, const char *);
+ #endif
+ 
+diff -ur -X dontdiff linux-2.4.9-13.1/init/main.c linux-2.4.9-13.1pt1/init/main.c
+--- linux-2.4.9-13.1/init/main.c	Tue Nov  6 19:19:19 2001
++++ linux-2.4.9-13.1pt1/init/main.c	Tue Nov  6 23:46:12 2001
+@@ -126,7 +126,7 @@
+ int rows, cols;
+ 
+ #ifdef CONFIG_BLK_DEV_INITRD
+-kdev_t real_root_dev;
++unsigned int real_root_dev;	/* do_proc_dointvec cannot handle kdev_t */
+ #endif
+ 
+ int root_mountflags = MS_RDONLY;
+

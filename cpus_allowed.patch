@@ -1,0 +1,164 @@
+--- linux-2.4.1/include/linux/proc_fs_i.h	Sat Apr  8 06:38:00 2000
++++ linux-akpm/include/linux/proc_fs_i.h	Fri Feb  2 01:50:40 2001
+@@ -1,9 +1,10 @@
+ struct proc_inode_info {
+ 	struct task_struct *task;
+ 	int type;
+-	union {
++	struct {
+ 		int (*proc_get_link)(struct inode *, struct dentry **, struct vfsmount **);
+ 		int (*proc_read)(struct task_struct *task, char *page);
++		int (*proc_write)(struct task_struct *task, char *page, size_t nbytes);
+ 	} op;
+ 	struct file *file;
+ };
+--- linux-2.4.1/include/linux/capability.h	Sun Oct 15 01:27:46 2000
++++ linux-akpm/include/linux/capability.h	Fri Feb  2 01:55:00 2001
+@@ -231,6 +231,7 @@
+ /* Allow enabling/disabling tagged queuing on SCSI controllers and sending
+    arbitrary SCSI commands */
+ /* Allow setting encryption key on loopback filesystem */
++/* Allow bonding of tasks to CPUs */
+ 
+ #define CAP_SYS_ADMIN        21
+ 
+--- linux-2.4.1/fs/proc/base.c	Tue Nov 21 20:11:21 2000
++++ linux-akpm/fs/proc/base.c	Fri Feb  2 02:41:51 2001
+@@ -39,6 +39,8 @@
+ int proc_pid_status(struct task_struct*,char*);
+ int proc_pid_statm(struct task_struct*,char*);
+ int proc_pid_cpu(struct task_struct*,char*);
++int proc_pid_cpus_allowed_read(struct task_struct *task, char * buffer);
++int proc_pid_cpus_allowed_write(struct task_struct *task, char * buffer, size_t nbytes);
+ 
+ static int proc_fd_link(struct inode *inode, struct dentry **dentry, struct vfsmount **mnt)
+ {
+@@ -305,8 +307,44 @@
+ 	return count;
+ }
+ 
++static ssize_t proc_info_write(struct file * file, const char * buf,
++			  size_t count, loff_t *ppos)
++{
++	struct inode * inode = file->f_dentry->d_inode;
++	unsigned long page;
++	ssize_t ret;
++	struct task_struct *task = inode->u.proc_i.task;
++
++	ret = -EINVAL;
++	if (inode->u.proc_i.op.proc_write == NULL)
++		goto out;
++	if (count > PAGE_SIZE - 1)
++		goto out;
++
++	ret = -ENOMEM;
++	if (!(page = __get_free_page(GFP_KERNEL)))
++		goto out;
++
++	ret = -EFAULT;
++	if (copy_from_user((char *)page, buf, count))
++		goto out_free_page;
++
++	((char *)page)[count] = '\0';
++	ret = inode->u.proc_i.op.proc_write(task, (char*)page, count);
++	if (ret < 0)
++		goto out_free_page;
++
++	*ppos += ret;
++
++out_free_page:
++	free_page(page);
++out:
++	return ret;
++}
++
+ static struct file_operations proc_info_file_operations = {
+ 	read:		proc_info_read,
++	write:		proc_info_write,
+ };
+ 
+ #define MAY_PTRACE(p) \
+@@ -495,6 +533,7 @@
+ 	PROC_PID_STATM,
+ 	PROC_PID_MAPS,
+ 	PROC_PID_CPU,
++	PROC_PID_CPUS_ALLOWED,
+ 	PROC_PID_FD_DIR = 0x8000,	/* 0x8000-0xffff */
+ };
+ 
+@@ -507,7 +550,8 @@
+   E(PROC_PID_STAT,	"stat",		S_IFREG|S_IRUGO),
+   E(PROC_PID_STATM,	"statm",	S_IFREG|S_IRUGO),
+ #ifdef CONFIG_SMP
+-  E(PROC_PID_CPU,	"cpu",		S_IFREG|S_IRUGO),
++  E(PROC_PID_CPU,		"cpu",		S_IFREG|S_IRUGO),
++  E(PROC_PID_CPUS_ALLOWED,	"cpus_allowed",	S_IFREG|S_IRUGO|S_IWUSR),
+ #endif
+   E(PROC_PID_MAPS,	"maps",		S_IFREG|S_IRUGO),
+   E(PROC_PID_MEM,	"mem",		S_IFREG|S_IRUSR|S_IWUSR),
+@@ -854,6 +894,11 @@
+ 		case PROC_PID_CPU:
+ 			inode->i_fop = &proc_info_file_operations;
+ 			inode->u.proc_i.op.proc_read = proc_pid_cpu;
++			break;
++		case PROC_PID_CPUS_ALLOWED:
++			inode->i_fop = &proc_info_file_operations;
++			inode->u.proc_i.op.proc_read = proc_pid_cpus_allowed_read;
++			inode->u.proc_i.op.proc_write = proc_pid_cpus_allowed_write;
+ 			break;
+ #endif
+ 		case PROC_PID_MEM:
+--- linux-2.4.1/fs/proc/array.c	Tue Nov 21 20:11:21 2000
++++ linux-akpm/fs/proc/array.c	Fri Feb  2 02:05:39 2001
+@@ -50,6 +50,8 @@
+  * Al Viro & Jeff Garzik :  moved most of the thing into base.c and
+  *			 :  proc_misc.c. The rest may eventually go into
+  *			 :  base.c too.
++ *
++ * Andrew Morton     : cpus_allowed
+  */
+ 
+ #include <linux/config.h>
+@@ -695,5 +697,42 @@
+ 			task->per_cpu_stime[cpu_logical_map(i)]);
+ 
+ 	return len;
++}
++
++int proc_pid_cpus_allowed_read(struct task_struct *task, char * buffer)
++{
++	int len;
++
++	len = sprintf(buffer, "%08lx\n", task->cpus_allowed);
++	return len;
++}
++
++/*
++ * FIXME: cpu_online_map should be used, but not all archs have it.
++ */
++
++int proc_pid_cpus_allowed_write(struct task_struct *task, char * buffer, size_t nbytes)
++{
++	unsigned long new_mask;
++	char *endp;
++	int ret;
++	unsigned long flags;
++
++	ret = -EPERM;
++	if (!capable(CAP_SYS_ADMIN))
++		goto out;
++
++	new_mask = simple_strtoul(buffer, &endp, 16);
++	ret = endp - buffer;
++
++	spin_lock_irqsave(&runqueue_lock, flags);	/* token effort to not be racy */
++	if ((((1 << smp_num_cpus) - 1) & new_mask) == 0)
++		ret = -EINVAL;
++	else
++		task->cpus_allowed = new_mask;
++	spin_unlock_irqrestore(&runqueue_lock, flags);
++
++out:
++	return ret;
+ }
+ #endif
