@@ -234,7 +234,6 @@ Patch212:	exec-shield-make-peace-with-grsecurity.patch
 Patch300:	2.6.7-ppc-asm-defs.patch
 
 Patch302:	2.6.7-ppc-cciss-div.patch
-Patch303:	2.6.7-lkml-saa7146-memory-variable.patch
 Patch304:	2.6.7-ppc-ipr-div.patch
 Patch305:	2.6.7-ppc-proxydict-workaround.patch
 
@@ -731,7 +730,6 @@ patch -p1 -s < exec-shield.patch
 %patch300 -p1
 
 %patch302 -p1
-%patch303 -p1
 %patch304 -p1
 %patch305 -p1
 
