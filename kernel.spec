@@ -44,8 +44,8 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_post_ver	%{nil}
-%define		_rel		0.6HEAD
-%define		_cset		20041001_2206
+%define		_rel		0.7HEAD
+%define		_cset		20041002_0111
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -73,7 +73,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 # Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
-# Source4-md5:	0e468b1830ff9e64c375f840a4aaff21
+# Source4-md5:	1cf41151af704bfbfed2d9b33f9c56c6
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
