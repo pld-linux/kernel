@@ -7048,6 +7048,15 @@ diff -urN linux-2.4.20/net/atm/common.c linux-2.4.20-atm/net/atm/common.c
  	vcc = ATM_SD(sock);
  	switch (cmd) {
  		case SIOCOUTQ:
+@@ -581,7 +661,7 @@
+ 				goto done;
+ 			}
+ 			ret_val =  put_user(vcc->sk->sndbuf-
+-			    atomic_read(&vcc->sk->wmem_alloc)-ATM_PDU_OVHD,
++			    atomic_read(&vcc->sk->wmem_alloc),
+ 			    (int *) arg) ? -EFAULT : 0;
+ 			goto done;
+ 		case SIOCINQ:
 @@ -601,13 +689,14 @@
  				goto done;
  			}
@@ -7581,21 +7590,6 @@ diff -urN linux-2.4.20/net/atm/lec.c linux-2.4.20-atm/net/atm/lec.c
  };
  
  /*
-@@ -630,6 +619,14 @@
-         return;
- }
- 
-+static void lec_set_multicast_list(struct net_device *dev)
-+{
-+	/* by default, all multicast frames arrive over the bus.
-+         * eventually support selective multicast service
-+         */
-+        return;
-+}
-+
- static void 
- lec_init(struct net_device *dev)
- {
 @@ -726,6 +723,7 @@
                  skb->protocol = eth_type_trans(skb, dev);
                  priv->stats.rx_packets++;
