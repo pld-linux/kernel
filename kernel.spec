@@ -30,7 +30,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	2.1
+Release:	2.2
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
@@ -174,6 +174,7 @@ Patch140:	linux-2.4.18-tridentfb.patch
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
 Patch900:	ide-EXPORT_SYMBOL.fix
+Patch901:	netfilter_pptp-EXPORT_SYMBOL-fix.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
@@ -522,6 +523,7 @@ done
 echo -e $ANS | ./runme pld)
 
 patch -p1 < netfilter-patches/patch-o-matic/pld/log.patch
+%patch901 -p0
 
 # IPVS
 echo Adding IPVS
