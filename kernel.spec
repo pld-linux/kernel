@@ -95,87 +95,74 @@ Patch4:		squashfs1.3r3-patch
 
 Patch6:		2.6.0-t4-PPC-ENODEV.patch
 
-Patch8:		2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
-Patch10:	2.6.0-t6-usb-irq.patch
+Patch8:		2.6.0-t6-usb-irq.patch
 
-Patch12:	2.6.0-t7-memleak-lkml.patch
-Patch13:	2.6.0-t7-memleak2-lkml.patch
+Patch10:	2.6.0-t7-memleak-lkml.patch
+Patch11:	2.6.0-t7-memleak2-lkml.patch
 
-Patch18:	2.6.0-t8-swap-include-lkml.patch
+Patch14:	2.6.0-t8-swap-include-lkml.patch
 
-Patch22:	2.6.0-t8-VLSI-ix86-lkml.patch
+Patch16:	2.6.0-t8-VLSI-ix86-lkml.patch
 
-Patch24:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
+Patch18:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
 
-Patch28:	2.6.0-t8-umsdos-lkml.patch
+Patch20:	2.6.0-t8-umsdos-lkml.patch
 
-Patch30:	2.6.0-t9-acpi_osl-lkml.patch
+Patch22:	2.6.0-t9-acpi_osl-lkml.patch
 
-Patch32:	%{name}-nls_default.patch
+Patch24:	%{name}-nls_default.patch
 
 # rewriten based on: ftp://ftp.suse.com/pub/people/stepan/bootsplash/kernel/bootsplash-3.1.4-2.6.3.diff
-Patch36:	bootsplash-3.1.4-2.6.5.patch
+Patch26:	bootsplash-3.1.4-2.6.5.patch
 
-Patch38:	2.6.0-t11-AIC_and_db4-lkml.patch
+Patch28:	2.6.0-t11-AIC_and_db4-lkml.patch
 
-Patch40:	2.6.0-t11-r8169-getstats.patch
+Patch30:	linux-tdfxfb-fillrect.patch
+Patch31:	linux-fbcon-margins.patch
+Patch32:	linux-tdfxfb-interlace+double.patch
 
-Patch42:	2.6.0-t11-ALI-M1563-lkml.patch
+Patch34:	2.6.1-rc2-ini9100u-lkml.patch
 
-Patch44:	linux-tdfxfb-fillrect.patch
-Patch45:	linux-fbcon-margins.patch
-Patch46:	linux-tdfxfb-interlace+double.patch
+Patch36:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 
-Patch48:	2.6.1-rc2-ini9100u-lkml.patch
+Patch38:	linux-kbuild-extmod.patch
 
-Patch50:	2.6.1-rc2-VLAN-NS83820-lkml.patch
+Patch40:	2.6.x-PD6729-lkml.patch
 
-Patch52:	laptop-mode-2.6.1-7.patch
+Patch42:	2.6.x-ppp_mppe.patch
 
-Patch56:	linux-kbuild-extmod.patch
+Patch44:	2.6.2-Initio9100U-Kconfig.patch
 
-Patch58:	2.6.x-PD6729-lkml.patch
+# netfilter
+Patch46:	2.6.6-rc3-pom-ng-%{_netfilter_snap}.patch
 
-Patch64:	2.6.x-ppp_mppe.patch
-
-Patch66:	2.6.2-Initio9100U-Kconfig.patch
-
-Patch68:	2.6.6-rc3-pom-ng-%{_netfilter_snap}.patch
-
-Patch70:	2.6.3-sparc32-fix.patch
+Patch48:	2.6.3-sparc32-fix.patch
 
 # http://www.tahoe.pl/drivers/tahoe9xx-2.6.2.patch
-Patch72:	tahoe9xx-2.6.2.patch
-Patch73:	linux-tahoe9xx-hdlc-update.patch
+Patch50:	tahoe9xx-2.6.2.patch
+Patch51:	linux-tahoe9xx-hdlc-update.patch
 
-Patch74:	2.6.x-SGI_VW-fbdev-lkml.patch
+Patch54:	2.6.x-SGI_VW-fbdev-lkml.patch
 
-Patch76:	2.6.x-TGA-fbdev-lkml.patch
+Patch56:	2.6.x-TGA-fbdev-lkml.patch
 
-Patch78:	linux-alpha-isa.patch
+Patch58:	linux-alpha-isa.patch
 
-Patch82:	2.6.3-ini9100u-fix.patch
+Patch60:	2.6.4-rc1-01-esfq-imq.patch
+Patch61:	2.6.4-rc1-02-imq-nat-support.patch
 
-Patch85:	2.6.4-rc1-01-esfq-imq.patch
-Patch86:	2.6.4-rc1-02-imq-nat-support.patch
-Patch87:	2.6.4-rc1-03-CONNMARK.patch
-
-Patch90:	2.6.4-psion-5mx.patch
+Patch64:	2.6.4-psion-5mx.patch
 
 #from:		http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
-Patch96:	2.6.1-all-in-1.patch
+Patch66:	2.6.1-all-in-1.patch
 
-Patch98:	2.6.5-sparc64-missing-include.patch
+Patch68:	2.6.5-sparc64-missing-include.patch
 
-Patch100:	2.6.5-3C920b-Tornado.patch
+Patch70:	2.6.5-3C920b-Tornado.patch
 
-Patch102:	2.6.5-rc3-EXPORT_SYMBOL.patch
+Patch72:	2.6.5-i386-cmpxchg.patch
 
-Patch104:	2.6.5-i386-cmpxchg.patch
-
-Patch106:	2.6.4-wrr.patch
-
-Patch108:	kbuild-improved-external-module-support.patch
+Patch74:	2.6.4-wrr.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -520,78 +507,74 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch6 -p1
 
-%patch10 -p1
+%patch8 -p1
 
-%patch12 -p1
-%patch13 -p1
+%patch10 -p1
+%patch11 -p1
+
+%patch14 -p1
+
+%patch16 -p1
 
 %patch18 -p1
+
+%patch20 -p1
 
 %patch22 -p1
 
 %patch24 -p1
 
+## bootsplash
+%patch26 -p1
+
 %patch28 -p1
 
 %patch30 -p1
-
+%patch31 -p1
 %patch32 -p1
 
-## bootsplash
+%patch34 -p1
+
 %patch36 -p1
 
 %patch38 -p1
 
+%patch40 -p1
+
+%patch42 -p1
+
 %patch44 -p1
-%patch45 -p1
+
+## netfilter
 %patch46 -p1
 
 %patch48 -p1
 
 %patch50 -p1
+%patch51 -p1
+
+%patch54 -p1
 
 %patch56 -p1
 
 %patch58 -p1
 
+%patch60 -p1
+%patch61 -p1
+
 %patch64 -p1
 
 %patch66 -p1
 
-## netfilter
 %patch68 -p1
 
 %patch70 -p1
 
-%patch72 -p1
-%patch73 -p1
-
-%patch74 -p1
-
-%patch76 -p1
-
-%patch78 -p1
-
-%patch85 -p1
-%patch86 -p1
-
-%patch90 -p1
-
-%patch96 -p1
-
-%patch98 -p1
-
-%patch100 -p1
-
-##%patch102 -p1
-
 %ifarch i386
-%patch104 -p1
+%patch72 -p1
 %endif
 
-%patch106 -p1
-
-#%patch108 -p1
+%patch74 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
