@@ -4,6 +4,7 @@
 #
 # _with_lids		- build LIDS enabled kernels
 # _without_grsec	- build kernel without grsecurity patch
+# _with_preemptive	- build with Preemptive patch
 #
 %define		test_build		0
 #
@@ -522,7 +523,9 @@ cp -f tulip-%{tulip_version}/src/ChangeLog drivers/net/tulip
 %patch909 -p0
 
 #preemptible kernel patch
+%if %{?_with_preemptive:1}%{!?_with_preemptive:0}
 %patch132 -p1
+#endif
 
 %patch133 -p1
 %patch134 -p0
