@@ -147,7 +147,7 @@ Patch190:	hostap-2.4.19-rc3-patch.patch
 
 # New devices/drivers
 
-# taken at 2003-07-19
+# taken at 2003-08-22
 # ftp://ftp.sistina.com/pub/LVM2/device-mapper/patches-version4/
 Patch200:	combined-linux-2.4.21-devmapper-ioctl.patch
 Patch201:	linux-2.4.21-dm-fls-redefined.patch
