@@ -85,6 +85,7 @@ Patch33:	%{name}-ipsec-bridge.patch
 Patch34:	%{name}-wanrouter-bridge.patch
 Patch35:	linux-netdrivers_vlan.patch
 Patch36:	atm-unresolved.patch
+Patch37:	%{name}-mca.patch
 Patch38:	linux-2.2.20-pcmcia-without-iee1394.patch.bz2
 # based on ftp://ftp.kernel.org/people/andrea/kernels/v2.2/2.2.20pre9aa2/40_lfs-2.2.20pre9aa2-27.bz2
 Patch40:	2.2.21-pre2_Makefile.patch
@@ -454,6 +455,7 @@ Modu³y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 %patch34 -p1
 %patch35 -p1
 %patch36 -p1
+%patch37 -p1
 %patch38 -p1
 %patch40 -p1
 %patch44 -p1
