@@ -298,7 +298,6 @@ BuildRequires:	egcs64
 %endif
 BuildRequires:	modutils
 BuildRequires:	perl-base
-BuildRequires:	sed
 Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.7.0
