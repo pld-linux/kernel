@@ -1,0 +1,224 @@
+diff -Naur -X /home/greg/linux/dontdiff linux-2.2.18/include/linux/sysctl.h linux-2.2.18-greg/include/linux/sysctl.h
+--- linux-2.2.18/include/linux/sysctl.h	Sun Dec 10 16:49:44 2000
++++ linux-2.2.18-greg/include/linux/sysctl.h	Fri Jan 26 10:28:40 2001
+@@ -30,7 +30,7 @@
+
+ struct __sysctl_args {
+ 	int *name;
+-	int nlen;
++	unsigned nlen;
+ 	void *oldval;
+ 	size_t *oldlenp;
+ 	void *newval;
+@@ -465,7 +465,7 @@
+
+ typedef struct ctl_table ctl_table;
+
+-typedef int ctl_handler (ctl_table *table, int *name, int nlen,
++typedef int ctl_handler (ctl_table *table, int *name, unsigned nlen,
+ 			 void *oldval, size_t *oldlenp,
+ 			 void *newval, size_t newlen,
+ 			 void **context);
+@@ -517,12 +517,12 @@
+ extern int proc_dointvec_jiffies(ctl_table *, int, struct file *,
+ 				 void *, size_t *);
+ 
+-extern int do_sysctl (int *name, int nlen,
++extern int do_sysctl (int *name, unsigned nlen,
+ 		      void *oldval, size_t *oldlenp,
+ 		      void *newval, size_t newlen);
+ 
+ extern int do_sysctl_strategy (ctl_table *table, 
+-			       int *name, int nlen,
++			       int *name, unsigned nlen,
+ 			       void *oldval, size_t *oldlenp,
+ 			       void *newval, size_t newlen, void ** context);
+ 
+diff -Naur -X /home/greg/linux/dontdiff linux-2.2.18/kernel/sysctl.c linux-2.2.18-greg/kernel/sysctl.c
+--- linux-2.2.18/kernel/sysctl.c	Sun Dec 10 16:49:44 2000
++++ linux-2.2.18-greg/kernel/sysctl.c	Fri Jan 26 10:31:38 2001
+@@ -77,7 +77,7 @@
+
+ extern int pgt_cache_water[];
+
+-static int parse_table(int *, int, void *, size_t *, void *, size_t,
++static int parse_table(int *, unsigned, void *, size_t *, void *, size_t,
+ 		       ctl_table *, void **);
+ static int proc_doutsstring(ctl_table *table, int write, struct file *filp,
+ 		  void *buffer, size_t *lenp);
+@@ -320,7 +320,7 @@
+ }
+ 
+ 
+-int do_sysctl (int *name, int nlen,
++int do_sysctl (int *name, unsigned nlen,
+ 	       void *oldval, size_t *oldlenp,
+ 	       void *newval, size_t newlen)
+ {
+@@ -330,10 +330,12 @@
+ 	
+ 	if (nlen == 0 || nlen >= CTL_MAXNAME)
+ 		return -ENOTDIR;
+-	
+-	if (oldval) 
+-	{
+-		int old_len;
++
++	if ((ssize_t)newlen < 0)
++		return -EINVAL;	
++
++	if (oldval) {
++		size_t old_len;
+ 		if (!oldlenp)
+ 			return -EFAULT;
+ 		if(get_user(old_len, oldlenp))
+@@ -387,7 +389,7 @@
+ 	return test_perm(table->mode, op);
+ }
+ 
+-static int parse_table(int *name, int nlen,
++static int parse_table(int *name, unsigned nlen,
+ 		       void *oldval, size_t *oldlenp,
+ 		       void *newval, size_t newlen,
+ 		       ctl_table *table, void **context)
+@@ -430,11 +432,12 @@
+ 
+ /* Perform the actual read/write of a sysctl table entry. */
+ int do_sysctl_strategy (ctl_table *table, 
+-			int *name, int nlen,
++			int *name, unsigned nlen,
+ 			void *oldval, size_t *oldlenp,
+ 			void *newval, size_t newlen, void **context)
+ {
+-	int op = 0, rc, len;
++	int op = 0, rc;
++	size_t len;
+ 
+ 	if (oldval)
+ 		op |= 004;
+@@ -458,6 +461,8 @@
+ 		if (oldval && oldlenp) {
+ 			get_user(len, oldlenp);
+ 			if (len) {
++				if (len < 0)
++					return -EINVAL;
+ 				if (len > table->maxlen)
+ 					len = table->maxlen;
+ 				if(copy_to_user(oldval, table->data, len))
+@@ -642,7 +647,7 @@
+ int proc_dostring(ctl_table *table, int write, struct file *filp,
+ 		  void *buffer, size_t *lenp)
+ {
+-	int len;
++	size_t len;
+ 	char *p, c;
+ 	
+ 	if (!table->data || !table->maxlen || !*lenp ||
+@@ -710,7 +715,8 @@
+ static int do_proc_dointvec(ctl_table *table, int write, struct file *filp,
+ 		  void *buffer, size_t *lenp, int conv, int op)
+ {
+-	int *i, vleft, first=1, len, left, neg, val;
++	int *i, neg, val;
++	size_t len, left, vleft, first=1;
+ 	#define TMPBUFLEN 20
+ 	char buf[TMPBUFLEN], *p;
+ 	
+@@ -832,7 +838,8 @@
+ int proc_dointvec_minmax(ctl_table *table, int write, struct file *filp,
+ 		  void *buffer, size_t *lenp)
+ {
+-	int *i, *min, *max, vleft, first=1, len, left, neg, val;
++	int *i, *min, *max, neg, val;
++	size_t len, left, vleft, first=1;
+ 	#define TMPBUFLEN 20
+ 	char buf[TMPBUFLEN], *p;
+ 	
+@@ -974,11 +981,12 @@
+  */
+
+ /* The generic string strategy routine: */
+-int sysctl_string(ctl_table *table, int *name, int nlen,
++int sysctl_string(ctl_table *table, int *name, unsigned nlen,
+ 		  void *oldval, size_t *oldlenp,
+ 		  void *newval, size_t newlen, void **context)
+ {
+-	int l, len;
++	unsigned l;
++	size_t len;
+ 	
+ 	if (!table->data || !table->maxlen)
+ 		return -ENOTDIR;
+@@ -1017,11 +1025,12 @@
+  * are between the minimum and maximum values given in the arrays
+  * table->extra1 and table->extra2, respectively.
+  */
+-int sysctl_intvec(ctl_table *table, int *name, int nlen,
++int sysctl_intvec(ctl_table *table, int *name, unsigned nlen,
+ 		void *oldval, size_t *oldlenp,
+ 		void *newval, size_t newlen, void **context)
+ {
+-	int i, length, *vec, *min, *max;
++	int *vec, *min, *max;
++	size_t i, length;
+
+ 	if (newval && newlen) {
+ 		if (newlen % sizeof(int) != 0)
+@@ -1051,7 +1060,7 @@
+ }
+ 
+ /* Strategy function to convert jiffies to seconds */ 
+-int sysctl_jiffies(ctl_table *table, int *name, int nlen,
++int sysctl_jiffies(ctl_table *table, int *name, unsigned nlen,
+ 		void *oldval, size_t *oldlenp,
+ 		void *newval, size_t newlen, void **context)
+ {
+@@ -1159,21 +1168,21 @@
+ 	return -ENOSYS;
+ }
+
+-int sysctl_string(ctl_table *table, int *name, int nlen,
++int sysctl_string(ctl_table *table, int *name, unsigned nlen,
+ 		  void *oldval, size_t *oldlenp,
+ 		  void *newval, size_t newlen, void **context)
+ {
+ 	return -ENOSYS;
+ }
+
+-int sysctl_intvec(ctl_table *table, int *name, int nlen,
++int sysctl_intvec(ctl_table *table, int *name, unsigned nlen,
+ 		void *oldval, size_t *oldlenp,
+ 		void *newval, size_t newlen, void **context)
+ {
+ 	return -ENOSYS;
+ }
+
+-int sysctl_jiffies(ctl_table *table, int *name, int nlen,
++int sysctl_jiffies(ctl_table *table, int *name, unsigned nlen,
+ 		void *oldval, size_t *oldlenp,
+ 		void *newval, size_t newlen, void **context)
+ {
+diff -Naur -X /home/greg/linux/dontdiff linux-2.2.18/net/ipv4/route.c linux-2.2.18-greg/net/ipv4/route.c
+--- linux-2.2.18/net/ipv4/route.c	Sun Dec 10 16:49:44 2000
++++ linux-2.2.18-greg/net/ipv4/route.c	Fri Jan 26 10:28:40 2001
+@@ -1927,7 +1927,7 @@
+ 		return -EINVAL;
+ }
+
+-static int ipv4_sysctl_rtcache_flush_strategy(ctl_table *table, int *name, int nlen,
++static int ipv4_sysctl_rtcache_flush_strategy(ctl_table *table, int *name, unsigned nlen,
+ 			 void *oldval, size_t *oldlenp,
+ 			 void *newval, size_t newlen,
+ 			 void **context)
+diff -Naur -X /home/greg/linux/dontdiff linux-2.2.18/net/ipv4/sysctl_net_ipv4.c linux-2.2.18-greg/net/ipv4/sysctl_net_ipv4.c
+--- linux-2.2.18/net/ipv4/sysctl_net_ipv4.c	Sun Dec 10 16:49:44 2000
++++ linux-2.2.18-greg/net/ipv4/sysctl_net_ipv4.c	Fri Jan 26 10:28:40 2001
+@@ -87,7 +87,7 @@
+ 	return ret;
+ }
+
+-static int ipv4_sysctl_forward_strategy(ctl_table *table, int *name, int nlen,
++static int ipv4_sysctl_forward_strategy(ctl_table *table, int *name, unsigned nlen,
+ 			 void *oldval, size_t *oldlenp,
+ 			 void *newval, size_t newlen,
+ 			 void **context)

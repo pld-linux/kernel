@@ -1,4 +1,4 @@
-%define		ow_version		2.2.23-ow1
+%define		ow_version		2.2.25-ow1
 %define		pcmcia_version		3.1.30
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.35
@@ -17,14 +17,14 @@ Summary(pl):	J±dro Linuksa
 Summary(ru):	Òƒ“œ Linux
 Summary(uk):	Òƒ“œ Linux
 Name:		kernel
-Version:	2.2.23
-Release:	1
+Version:	2.2.25
+Release:	2
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
-Source3:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
+Source3:        http://www.openwall.com/linux/linux-%{ow_version}.tar.gz
 Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-133.tar.gz
 Source5:	ftp://ftp.sourceforge.net/pub/sourceforge/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source6:	ftp://ftp.tux.org/tux/roudier/drivers/linux/stable/sym-%{symncr_version}.tar.gz
@@ -55,8 +55,6 @@ Source36:	%{name}-ppc.config
 Source37:	%{name}-ppc-smp.config
 Source38:	%{name}-ppc-BOOT.config
 
-Patch0:		patch-2.2.24-rc2.bz2
-Patch1:		rename-2.2.24.patch
 Patch2:		%{name}-pldfblogo.patch
 Patch3:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
 Patch4:		http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
@@ -432,8 +430,6 @@ Modu≥y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 %prep
 %setup -q -a3 -a4 -a5 -a6 -a7 -a9 -a10 -a11 -a13 -n linux
 
-%patch0 -p1
-%patch1 -p1
 %patch2 -p1
 %patch3 -p0
 # disable aic7xxx patch on sparc (this must be reported to aic7xxx driver maintainer)
@@ -803,8 +799,6 @@ ln -sf linux-%{version} $RPM_BUILD_ROOT%{_kernelsrcdir}
 gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
-bzip2 -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2}
 %ifnarch sparc sparc64 ppc
 gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
