@@ -46,15 +46,15 @@ Patch5:		linux-ipv6-glibc2.2.patch
 Patch6:		http://milosch.net/pub/beos/2.2.18-pre2-beos09032000.patch
 Patch7:		kernel-autoraidraid.patch
 Patch8:		ftp://ftp.reiserfs.org/linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
-Patch9: 	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.18/ide.2.2.18.1209.patch.gz
+Patch9: 	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.18/ide.2.2.18.1221.patch.gz
 Patch10:	http://www.math.leidenuniv.nl/~buytenh/bridge/patches/bridge-0.0.9-against-2.2.18.diff
-Patch11:	http://download.sourceforge.net/linux1394/ieee1394-2.2.18-20001209.patch.gz
+Patch11:	http://download.sourceforge.net/linux1394/ieee1394-2.2.18-20001223.gz
 Patch12:	ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
 Patch13:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
 Patch14:	linux-tasks.patch
-#Patch:		linux-2.2.18pre21.ext3.diff
 # Linux Virtual Server: http://www.linuxvirtualserver.org/software/
-#Patch:		%{name}-ipvs-1.0.0-%{version}.patch
+Patch15:	%{name}-ipvs-1.0.3-2.2.18.patch
+#Patch:		linux-2.2.18pre21.ext3.diff
 # raw-io patch
 #Patch:		ftp://ftp.kernel.org/pub/linux/kernel/people/sct/raw-io/raw-2.2.17.diff
 
@@ -300,7 +300,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch12 -p1
 %patch13 -p1
 %patch14 -p1
-
+%patch15 -p1
 %ifarch %{ix86}
 cd ..
 rm -rf i2c-%{i2c_version}
@@ -481,10 +481,12 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
 gzip -dc %{PATCH8} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH9} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
+gzip -dc %{PATCH11} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH12} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH13} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
 
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
 
