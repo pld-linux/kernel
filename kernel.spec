@@ -704,7 +704,30 @@ ConfigBOOT()
 	echo "# CONFIG_NET_RADIO is not set">> arch/%{base_arch}/defconfig
 	echo "# CONFIG_HOTPLUG is not set">> arch/%{base_arch}/defconfig
 	echo "# CONFIG_QUOTA is not set">> arch/%{base_arch}/defconfig
-	
+	echo "# CONFIG_REGPARM is not set">> arch/%{base_arch}/defconfig
+	echo "# CONFIG_SCSI_LOGGING is not set" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_PACKET=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_UNIX=m" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_DEV_APPLETALK is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_ECONET_AUNUDP is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_HIPPI is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_TR is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_INPUT_MISC is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_INPUT_TOUCHSCREEN is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_PROFILING is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_DEBUG_KERNEL is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_DEBUG_SPINLOCK_SLEEP is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_FRAME_POINTER is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_LBD is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_SLIP is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_PPP is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_PLIP is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_FDDI is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_HAMRADIO is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_NETPOLL_RX is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_NETPOLL_TRAP is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_FB is not set" >> arch/%{base_arch}/defconfig
+	echo "" >> arch/%{base_arch}/defconfig
 	ln -sf arch/%{base_arch}/defconfig .config
 
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
@@ -827,7 +850,7 @@ BuildConfig smp
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
 rm -rf $KERNEL_INSTALL_DIR
 ConfigBOOT
-%{?with_BOOT:BuildKernel BOOT}
+##%%{?with_BOOT:BuildKernel BOOT}
 %{?with_BOOT:PreInstallKernel BOOT}
 %endif
 
