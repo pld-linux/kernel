@@ -26,7 +26,7 @@
 %endif
 
 %if "%{_cset}" != "0"
-%define		cset	cset%{_cset}
+%define		cset	.cset%{_cset}
 %else
 %define		cset	%{nil}
 %endif
@@ -46,9 +46,9 @@ Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.6.0
 %if	%{patch_level} != 0
-Release:	%{test}%{cset}rel%{_rel}pl%{patch_level}
+Release:	%{test}%{cset}.rel%{_rel}pl%{patch_level}
 %else
-Release:	%{test}%{cset}rel%{_rel}
+Release:	%{test}%{cset}.rel%{_rel}
 %endif
 License:	GPL
 Group:		Base/Kernel
@@ -71,7 +71,9 @@ Source100:	%{name}-misc.config
 # ftp://ftp.kernel.org:/pub/linux/kernel/v2.6/snapshots/
 #Patch1:		patch-2.6.0-test4-bk%{_bk_ver}
 # http://www.kernel.org/pub/linux/kernel/v2.5/testing/cset/
+%if "%{_cset}" != "0"
 Patch1:		cset-%{_cset}.txt.gz
+%endif
 
 Patch22:	2.6.0-t3-swim3.patch
 Patch23:	squashfs1.3-patch
