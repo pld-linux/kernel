@@ -649,9 +649,11 @@ Modu³y PCMCIA-CS (%{pcmcia_kernel_version}).
 %patch116 -p1
 %patch117 -p1
 %patch118 -p1
-%patch119 -p1
-%patch120 -p1
-%patch121 -p1
+# don't build now, need to "workaround" - new qlogic scsi subsustem isn't
+# priority task now
+#%patch119 -p1
+#%patch120 -p1
+#%patch121 -p1
 %patch122 -p1
 %patch123 -p1
 %patch124 -p1
