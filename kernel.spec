@@ -33,7 +33,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.4.18
+Version:	2.4.19
 Release:	%{krelease}%{?_with_preemptible:_pr}%{?_with_o1_sched:_o1}%{?_with_acpi:_acpi}
 License:	GPL
 Group:		Base/Kernel
@@ -110,7 +110,7 @@ Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/pr
 Patch11:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-%{version}-1.patch
 Patch12:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-%{version}-1.patch
 Patch13:	http://www.linuxvirtualserver.org/software/kernel-2.4/linux-%{version}-ipvs-%{ipvs_version}.patch.gz
-Patch14:	http://people.redhat.com/mingo/O(1)-scheduler/sched-O1-%{version}-pre8-K3.patch
+Patch14:	http://people.redhat.com/mingo/O(1)-scheduler/sched-%{version}-rc2-A4
 
 Patch15:	http://luxik.cdi.cz/~devik/qos/htb/v2/htb2_2.4.17.diff
 Patch24:	http://luxik.cdi.cz/~devik/qos/imq_2.4.12.diff
