@@ -293,6 +293,7 @@ Patch921:	linux-2.4.20-grsecurity-%{grsec_version}-kmem.patch
 # Win4Lin
 Patch1000:	linux-2.4.20-Win4Lin.PLD.patch.bz2
 Patch1001:	linux-2.4.20-Win4Lin-mki-adapter.patch.bz2
+Patch1002:	linux-2.4.20-Win4Lin-EXPORT_SYMBOL.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -761,6 +762,7 @@ echo AXP patches ...
 echo Win4Lin patch ...
 %patch1000 -p1
 %patch1001 -p1
+%patch1002 -p1
 %endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
