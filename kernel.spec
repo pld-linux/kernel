@@ -12,7 +12,7 @@
 # _without_w4l		- don't build Win4Lin support
 #
 
-%define		patch_level	8
+%define		patch_level	9
 %define		_rel		5
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -27,7 +27,7 @@
 %define		lvm_version		1.0.7
 %define		evms_version		2.0.0
 %define		ntfs_version		2.1.2a
-%define		drm_xfree_version	4.2.99
+%define		drm_xfree_version	4.3.0
 %define		hostap_version		2002-10-12
 %define		netfilter_snap		20030326
 %define		ACL_version		0.8.56
@@ -53,7 +53,7 @@ Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 Source6:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
-Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.bz2
+Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
 Source10:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
 #Source11:	
 Source12:	linux-2.4.20-aacraid.tar.bz2
