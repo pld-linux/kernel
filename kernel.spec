@@ -34,8 +34,8 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.20
-%define		_cset		20040326_0710
+%define		_rel		0.21
+%define		_cset		20040327_0210
 
 ## netfilter snap 
 %define		_netfilter_snap		20040322
@@ -106,7 +106,7 @@ Patch30:	2.6.0-t9-acpi_osl-lkml.patch
 
 Patch32:	%{name}-nls_default.patch
 
-Patch36:	bootsplash-3.1.3-2.6.5.patch
+Patch36:	bootsplash-3.1.4-2.6.3.diff
 
 Patch38:	2.6.0-t11-AIC_and_db4-lkml.patch
 
@@ -526,7 +526,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch32 -p1
 
 ## bootsplash
-##%%patch36 -p1
+%patch36 -p1
 
 %patch38 -p1
 
