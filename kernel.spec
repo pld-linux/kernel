@@ -17,7 +17,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.5.70
-Release:	0.3
+Release:	0.4
 License:	GPL
 Group:		Base/Kernel
 # Source0-md5:	8d3ee29e86c728a0de2151328164269b
@@ -33,12 +33,11 @@ Source21:	%{name}-ia32-smp.config
 #Source71:	%{name}-alpha-smp.config
 #Source73:	%{name}-ppc.config
 #Source74:	%{name}-ppc-smp.config
-Patch0:		http://piorun.ds.pg.gda.pl/~blues/linux-2.5.67-genrtc_fix.patch
+Patch0:		linux-2.5.67-genrtc_fix.patch
+Patch1:		linux-2.5.70-fix_missing_symb.patch
+Patch2:		linux-2.5.70-mga.patch.bz2
 # LSM/SELinux
-#Patch10:	linux-2.5.69-lsm-20030528.patch.bz2
-Patch1:		linux-fix_missing_symb.patch
-Patch2:		mga-2.5.70.bz2
-Patch10:	linux-2.5.70-selinux-1.patch.bz2
+Patch10:	linux-2.5.70-lsm-20030529.patch.bz2
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -473,11 +472,11 @@ ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
 %endif
 
 %if %{?_without_lsm:0}%{!?_without_lsm:1}
-#install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/{linux,asm-i386}/flask
-#install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/flask
-#install security/lids/include/linux/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
-#install security/selinux/include/linux/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/flask
-#install security/selinux/include/asm-i386/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/asm-i386/flask
+install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/{linux,asm-i386}/flask
+install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/flask
+install security/lids/include/linux/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
+install security/selinux/include/linux/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/flask
+install security/selinux/include/asm-i386/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/asm-i386/flask
 %endif			# _without_lsm
 
 %{__make} include/linux/version.h
