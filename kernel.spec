@@ -147,7 +147,7 @@ Patch1:		linux-2.6-alsa-1.0.8-silent-output.patch
 Patch33:		linux-kbuild-extmod.patch
 
 # framebuffer fixes
-#Patch41:		linux-fbcon-margins.patch
+Patch41:		linux-fbcon-margins.patch
 
 # netfilter
 #Patch50:	2.6.10-pom-ng-%{_netfilter_snap}.patch
@@ -550,7 +550,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 #patch32 -p1	NEEDS UPDATE
 %patch33 -p1
 
-#%patch41 -p1
+%patch41 -p1
 
 # netfilter
 #%patch50 -p1
