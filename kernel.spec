@@ -14,7 +14,7 @@
 
 %define		_rel		1
 %define		_test_ver	9
-%define		_cset		20031030_0208
+%define		_cset		20031031_2006
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -92,7 +92,6 @@ Patch72:	2.6.0-t9-NLS-module-lkml.patch
 
 Patch74:	2.6.0-t9-acpi_osl-lkml.patch
 Patch78:	2.6.0-test9-nforce-ideata133.patch
-Patch80:	2.6.0-test9-promise20378.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -416,7 +415,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch74 -p1
 %patch78 -p1
-%patch80 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
