@@ -48,7 +48,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.99
+%define		_rel		2
 %define		_cset		20040707_0722
 %define		_apply_cset	1
 
