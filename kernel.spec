@@ -199,6 +199,8 @@ Patch144:	amd762_irq_router.patch
 Patch145:	netfilter_ipv4-iptables-1.2.7.patch
 Patch146:	netfilter_ipv6-iptables-1.2.7.patch
 
+Patch147:	linux-o1-sched-xfs.patch
+
 # Patches fixing other patches or 3rd party sources ;)
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
@@ -761,6 +763,8 @@ echo Updating VIA Southbridge
 
 %patch145 -p1
 #%patch146 -p1
+
+%patch147 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
