@@ -17,7 +17,6 @@
 %bcond_without	source		# don't build kernel-source package
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
-%bcond_with	reiser4		# build with reiser4 support
 
 %{?debug:%define with_verbose 1}
 
@@ -126,8 +125,7 @@ Patch551:	linux-cluster-dlm.patch
 Patch552:	linux-cluster-gfs.patch
 Patch553:	linux-cluster-gnbd.patch
 
-Patch700:	linux-reiser4.patch
-Patch701:	linux-squashfs2.0.patch
+Patch570:	linux-2.6-savagefb.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -491,19 +489,14 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %patch30 -p1
 
-%ifarch %{ix86}
 %patch500 -p1
-%endif
 
 %patch550 -p1
 %patch551 -p1
 %patch552 -p1
 %patch553 -p1
 
-%if %{with reiser4}
-%patch700 -p1
-%endif
-%patch701 -p1
+%patch570 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i -e 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
