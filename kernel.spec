@@ -14,7 +14,7 @@
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.9
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
-%define		vlan_version		1.0.1
+%define		vlan_version		1.4
 %define		IPperson_version	20010724-2.4.7
 %define		grsec_version		1.6-2.4.7
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -78,8 +78,7 @@ Patch4:		br2684-against2.4.7.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/
 Patch5:		linux-2.4.7-xfs-20010726.patch.gz
 # Compressed iso9660 filesystem
-Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/filemap-2.4.4-1.diff.gz
-Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-2.4.5-pre1-8.diff.gz
+Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs+filemap-2.4.7-1.diff.gz
 Patch8:		linux-abi-2.4.3-PLD.patch
 Patch9:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
@@ -400,7 +399,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch100 -p1
 %patch5 -p1
 %patch6 -p1
-%patch7 -p1
 %patch8 -p1
 %patch9 -p1
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
