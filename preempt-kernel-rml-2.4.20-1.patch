@@ -1,0 +1,2696 @@
+ CREDITS                           |    2 
+ Documentation/Configure.help      |   11 ++++
+ Documentation/preempt-locking.txt |  104 ++++++++++++++++++++++++++++++++++++++
+ MAINTAINERS                       |    8 ++
+ arch/arm/config.in                |    2 
+ arch/arm/kernel/entry-armv.S      |   40 ++++++++++++++
+ arch/arm/tools/getconstants.c     |    6 ++
+ arch/i386/config.in               |    8 ++
+ arch/i386/kernel/entry.S          |   49 +++++++++++++++++
+ arch/i386/kernel/i387.c           |    3 +
+ arch/i386/kernel/smp.c            |   24 ++++++--
+ arch/i386/kernel/traps.c          |    2 
+ arch/i386/lib/dec_and_lock.c      |    1 
+ arch/mips/config-shared.in        |    1 
+ arch/mips/kernel/i8259.c          |    1 
+ arch/mips/kernel/irq.c            |   29 ++++++++++
+ arch/mips/mm/extable.c            |    1 
+ arch/ppc/config.in                |    2 
+ arch/ppc/kernel/entry.S           |   35 ++++++++++++
+ arch/ppc/kernel/irq.c             |   28 ++++++++++
+ arch/ppc/kernel/mk_defs.c         |    3 +
+ arch/ppc/kernel/setup.c           |   14 +++++
+ arch/ppc/lib/dec_and_lock.c       |    1 
+ arch/sh/config.in                 |    1 
+ arch/sh/kernel/entry.S            |  104 +++++++++++++++++++++++++++++++++++---
+ arch/sh/kernel/irq.c              |   17 ++++++
+ drivers/ieee1394/csr.c            |    1 
+ drivers/sound/sound_core.c        |    1 
+ fs/adfs/map.c                     |    1 
+ fs/exec.c                         |    2 
+ fs/fat/cache.c                    |    1 
+ fs/nls/nls_base.c                 |    1 
+ include/asm-arm/dma.h             |    1 
+ include/asm-arm/hardirq.h         |    1 
+ include/asm-arm/pgalloc.h         |    8 ++
+ include/asm-arm/smplock.h         |   11 ++++
+ include/asm-arm/softirq.h         |    8 +-
+ include/asm-arm/system.h          |    7 ++
+ include/asm-i386/hardirq.h        |   14 +++--
+ include/asm-i386/highmem.h        |    7 ++
+ include/asm-i386/hw_irq.h         |   19 +++++-
+ include/asm-i386/i387.h           |    3 -
+ include/asm-i386/pgalloc.h        |   12 ++++
+ include/asm-i386/smplock.h        |   14 +++++
+ include/asm-i386/softirq.h        |    8 +-
+ include/asm-i386/spinlock.h       |   18 +++---
+ include/asm-i386/system.h         |    7 ++
+ include/asm-mips/smplock.h        |   15 +++++
+ include/asm-mips/softirq.h        |    3 +
+ include/asm-mips/system.h         |   14 +++++
+ include/asm-ppc/dma.h             |    1 
+ include/asm-ppc/hardirq.h         |    1 
+ include/asm-ppc/highmem.h         |    6 +-
+ include/asm-ppc/hw_irq.h          |    6 ++
+ include/asm-ppc/mmu_context.h     |    4 +
+ include/asm-ppc/pgalloc.h         |    9 +++
+ include/asm-ppc/smplock.h         |   14 +++++
+ include/asm-ppc/softirq.h         |   10 +++
+ include/asm-sh/hardirq.h          |    2 
+ include/asm-sh/smplock.h          |   85 ++++++++++++++++++++++++++++---
+ include/asm-sh/softirq.h          |    3 +
+ include/asm-sh/system.h           |   13 ++++
+ include/linux/brlock.h            |   10 +--
+ include/linux/dcache.h            |   56 +++++++++++---------
+ include/linux/fs_struct.h         |   13 +++-
+ include/linux/sched.h             |   12 ++++
+ include/linux/smp_lock.h          |    2 
+ include/linux/spinlock.h          |   82 +++++++++++++++++++++++++++--
+ include/linux/tqueue.h            |   31 ++++++-----
+ kernel/exit.c                     |    7 ++
+ kernel/fork.c                     |    7 ++
+ kernel/ksyms.c                    |    3 +
+ kernel/sched.c                    |   48 ++++++++++++++++-
+ lib/dec_and_lock.c                |    1 
+ mm/slab.c                         |    3 -
+ net/core/dev.c                    |    6 ++
+ net/core/skbuff.c                 |   30 ++++++----
+ net/socket.c                      |    2 
+ net/sunrpc/pmap_clnt.c            |    1 
+ 79 files changed, 1011 insertions(+), 131 deletions(-)
+
+
+diff -urN linux-2.4.20/arch/arm/config.in linux/arch/arm/config.in
+--- linux-2.4.20/arch/arm/config.in	2002-11-28 18:53:09.000000000 -0500
++++ linux/arch/arm/config.in	2002-12-11 02:34:47.000000000 -0500
+@@ -372,7 +372,7 @@
+ else
+    define_bool CONFIG_DISCONTIGMEM n
+ fi
+-
++dep_bool 'Preemptible Kernel' CONFIG_PREEMPT $CONFIG_CPU_32
+ endmenu
+ 
+ mainmenu_option next_comment
+diff -urN linux-2.4.20/arch/arm/kernel/entry-armv.S linux/arch/arm/kernel/entry-armv.S
+--- linux-2.4.20/arch/arm/kernel/entry-armv.S	2002-08-02 20:39:42.000000000 -0400
++++ linux/arch/arm/kernel/entry-armv.S	2002-12-11 02:34:47.000000000 -0500
+@@ -697,6 +697,12 @@
+ 		add	r4, sp, #S_SP
+ 		mov	r6, lr
+ 		stmia	r4, {r5, r6, r7, r8, r9}	@ save sp_SVC, lr_SVC, pc, cpsr, old_ro
++#ifdef CONFIG_PREEMPT
++		get_current_task r9
++		ldr	r8, [r9, #TSK_PREEMPT]
++		add	r8, r8, #1
++		str	r8, [r9, #TSK_PREEMPT]
++#endif
+ 1:		get_irqnr_and_base r0, r6, r5, lr
+ 		movne	r1, sp
+ 		@
+@@ -704,6 +710,25 @@
+ 		@
+ 		adrsvc	ne, lr, 1b
+ 		bne	do_IRQ
++#ifdef CONFIG_PREEMPT
++2:		ldr	r8, [r9, #TSK_PREEMPT]
++		subs	r8, r8, #1
++		bne	3f
++		ldr	r7, [r9, #TSK_NEED_RESCHED]
++		teq	r7, #0
++		beq	3f
++		ldr	r6, .LCirqstat
++		ldr	r0, [r6, #IRQSTAT_BH_COUNT]
++		teq	r0, #0
++		bne	3f
++		mov	r0, #MODE_SVC
++		msr	cpsr_c, r0		@ enable interrupts
++		bl	SYMBOL_NAME(preempt_schedule)
++		mov	r0, #I_BIT | MODE_SVC
++		msr	cpsr_c, r0              @ disable interrupts
++		b	2b
++3:		str	r8, [r9, #TSK_PREEMPT]
++#endif
+ 		ldr	r0, [sp, #S_PSR]		@ irqs are already disabled
+ 		msr	spsr, r0
+ 		ldmia	sp, {r0 - pc}^			@ load r0 - pc, cpsr
+@@ -761,6 +786,9 @@
+ .LCprocfns:	.word	SYMBOL_NAME(processor)
+ #endif
+ .LCfp:		.word	SYMBOL_NAME(fp_enter)
++#ifdef CONFIG_PREEMPT
++.LCirqstat:	.word	SYMBOL_NAME(irq_stat)
++#endif
+ 
+ 		irq_prio_table
+ 
+@@ -801,6 +829,12 @@
+ 		stmdb	r8, {sp, lr}^
+ 		alignment_trap r4, r7, __temp_irq
+ 		zero_fp
++		get_current_task tsk
++#ifdef CONFIG_PREEMPT
++		ldr	r0, [tsk, #TSK_PREEMPT]
++		add	r0, r0, #1
++		str	r0, [tsk, #TSK_PREEMPT]
++#endif
+ 1:		get_irqnr_and_base r0, r6, r5, lr
+ 		movne	r1, sp
+ 		adrsvc	ne, lr, 1b
+@@ -808,8 +842,12 @@
+ 		@ routine called with r0 = irq number, r1 = struct pt_regs *
+ 		@
+ 		bne	do_IRQ
++#ifdef CONFIG_PREEMPT
++		ldr	r0, [tsk, #TSK_PREEMPT]
++		sub	r0, r0, #1
++		str	r0, [tsk, #TSK_PREEMPT]
++#endif
+ 		mov	why, #0
+-		get_current_task tsk
+ 		b	ret_to_user
+ 
+ 		.align	5
+diff -urN linux-2.4.20/arch/arm/tools/getconstants.c linux/arch/arm/tools/getconstants.c
+--- linux-2.4.20/arch/arm/tools/getconstants.c	2001-10-11 12:04:57.000000000 -0400
++++ linux/arch/arm/tools/getconstants.c	2002-12-11 02:34:47.000000000 -0500
+@@ -13,6 +13,7 @@
+ 
+ #include <asm/pgtable.h>
+ #include <asm/uaccess.h>
++#include <asm/hardirq.h>
+ 
+ /*
+  * Make sure that the compiler and target are compatible.
+@@ -39,6 +40,11 @@
+ DEFN("TSS_SAVE",		OFF_TSK(thread.save));
+ DEFN("TSS_FPESAVE",		OFF_TSK(thread.fpstate.soft.save));
+ 
++#ifdef CONFIG_PREEMPT
++DEFN("TSK_PREEMPT",		OFF_TSK(preempt_count));
++DEFN("IRQSTAT_BH_COUNT",	(unsigned long)&(((irq_cpustat_t *)0)->__local_bh_count));
++#endif
++
+ #ifdef CONFIG_CPU_32
+ DEFN("TSS_DOMAIN",		OFF_TSK(thread.domain));
+ 
+diff -urN linux-2.4.20/arch/i386/config.in linux/arch/i386/config.in
+--- linux-2.4.20/arch/i386/config.in	2002-11-28 18:53:09.000000000 -0500
++++ linux/arch/i386/config.in	2002-12-11 02:34:47.000000000 -0500
+@@ -206,6 +206,7 @@
+ bool 'Math emulation' CONFIG_MATH_EMULATION
+ bool 'MTRR (Memory Type Range Register) support' CONFIG_MTRR
+ bool 'Symmetric multi-processing support' CONFIG_SMP
++bool 'Preemptible Kernel' CONFIG_PREEMPT
+ if [ "$CONFIG_SMP" != "y" ]; then
+    bool 'Local APIC support on uniprocessors' CONFIG_X86_UP_APIC
+    dep_bool 'IO-APIC support on uniprocessors' CONFIG_X86_UP_IOAPIC $CONFIG_X86_UP_APIC
+@@ -224,9 +225,12 @@
+    define_bool CONFIG_X86_TSC y
+ fi
+ 
+-if [ "$CONFIG_SMP" = "y" -a "$CONFIG_X86_CMPXCHG" = "y" ]; then
+-   define_bool CONFIG_HAVE_DEC_LOCK y
++if [ "$CONFIG_SMP" = "y" -o "$CONFIG_PREEMPT" = "y" ]; then
++   if [ "$CONFIG_X86_CMPXCHG" = "y" ]; then
++      define_bool CONFIG_HAVE_DEC_LOCK y
++   fi
+ fi
++
+ endmenu
+ 
+ mainmenu_option next_comment
+diff -urN linux-2.4.20/arch/i386/kernel/entry.S linux/arch/i386/kernel/entry.S
+--- linux-2.4.20/arch/i386/kernel/entry.S	2002-11-28 18:53:09.000000000 -0500
++++ linux/arch/i386/kernel/entry.S	2002-12-11 02:34:47.000000000 -0500
+@@ -73,7 +73,7 @@
+  * these are offsets into the task-struct.
+  */
+ state		=  0
+-flags		=  4
++preempt_count	=  4
+ sigpending	=  8
+ addr_limit	= 12
+ exec_domain	= 16
+@@ -81,8 +81,28 @@
+ tsk_ptrace	= 24
+ processor	= 52
+ 
++/* These are offsets into the irq_stat structure
++ * There is one per cpu and it is aligned to 32
++ * byte boundry (we put that here as a shift count)
++ */
++irq_array_shift                 = CONFIG_X86_L1_CACHE_SHIFT
++
++irq_stat_local_irq_count        = 4
++irq_stat_local_bh_count         = 8
++
+ ENOSYS = 38
+ 
++#ifdef CONFIG_SMP
++#define GET_CPU_INDX	movl processor(%ebx),%eax;  \
++                        shll $irq_array_shift,%eax
++#define GET_CURRENT_CPU_INDX GET_CURRENT(%ebx); \
++                             GET_CPU_INDX
++#define CPU_INDX (,%eax)
++#else
++#define GET_CPU_INDX
++#define GET_CURRENT_CPU_INDX GET_CURRENT(%ebx)
++#define CPU_INDX
++#endif
+ 
+ #define SAVE_ALL \
+ 	cld; \
+@@ -255,12 +275,30 @@
+ 	ALIGN
+ ENTRY(ret_from_intr)
+ 	GET_CURRENT(%ebx)
++#ifdef CONFIG_PREEMPT
++	cli
++	decl preempt_count(%ebx)
++#endif
+ ret_from_exception:
+ 	movl EFLAGS(%esp),%eax		# mix EFLAGS and CS
+ 	movb CS(%esp),%al
+ 	testl $(VM_MASK | 3),%eax	# return to VM86 mode or non-supervisor?
+ 	jne ret_from_sys_call
++#ifdef CONFIG_PREEMPT
++	cmpl $0,preempt_count(%ebx)
++	jnz restore_all
++	cmpl $0,need_resched(%ebx)
++	jz restore_all
++	movl SYMBOL_NAME(irq_stat)+irq_stat_local_bh_count CPU_INDX,%ecx
++	addl SYMBOL_NAME(irq_stat)+irq_stat_local_irq_count CPU_INDX,%ecx
++	jnz restore_all
++	incl preempt_count(%ebx)
++	sti
++	call SYMBOL_NAME(preempt_schedule)
++	jmp ret_from_intr
++#else
+ 	jmp restore_all
++#endif
+ 
+ 	ALIGN
+ reschedule:
+@@ -297,6 +335,9 @@
+ 	GET_CURRENT(%ebx)
+ 	call *%edi
+ 	addl $8,%esp
++#ifdef CONFIG_PREEMPT
++	cli
++#endif
+ 	jmp ret_from_exception
+ 
+ ENTRY(coprocessor_error)
+@@ -316,12 +357,18 @@
+ 	movl %cr0,%eax
+ 	testl $0x4,%eax			# EM (math emulation bit)
+ 	jne device_not_available_emulate
++#ifdef CONFIG_PREEMPT
++	cli
++#endif
+ 	call SYMBOL_NAME(math_state_restore)
+ 	jmp ret_from_exception
+ device_not_available_emulate:
+ 	pushl $0		# temporary storage for ORIG_EIP
+ 	call  SYMBOL_NAME(math_emulate)
+ 	addl $4,%esp
++#ifdef CONFIG_PREEMPT
++	cli
++#endif
+ 	jmp ret_from_exception
+ 
+ ENTRY(debug)
+diff -urN linux-2.4.20/arch/i386/kernel/i387.c linux/arch/i386/kernel/i387.c
+--- linux-2.4.20/arch/i386/kernel/i387.c	2002-08-02 20:39:42.000000000 -0400
++++ linux/arch/i386/kernel/i387.c	2002-12-11 02:34:47.000000000 -0500
+@@ -10,6 +10,7 @@
+ 
+ #include <linux/config.h>
+ #include <linux/sched.h>
++#include <linux/spinlock.h>
+ #include <linux/init.h>
+ #include <asm/processor.h>
+ #include <asm/i387.h>
+@@ -89,6 +90,8 @@
+ {
+ 	struct task_struct *tsk = current;
+ 
++	preempt_disable();
++	
+ 	if (tsk->flags & PF_USEDFPU) {
+ 		__save_init_fpu(tsk);
+ 		return;
+diff -urN linux-2.4.20/arch/i386/kernel/smp.c linux/arch/i386/kernel/smp.c
+--- linux-2.4.20/arch/i386/kernel/smp.c	2002-11-28 18:53:09.000000000 -0500
++++ linux/arch/i386/kernel/smp.c	2002-12-11 02:34:47.000000000 -0500
+@@ -357,10 +357,13 @@
+ 
+ asmlinkage void smp_invalidate_interrupt (void)
+ {
+-	unsigned long cpu = smp_processor_id();
++	unsigned long cpu;
++        
++	preempt_disable();
+ 
++	cpu = smp_processor_id();
+ 	if (!test_bit(cpu, &flush_cpumask))
+-		return;
++		goto out;
+ 		/* 
+ 		 * This was a BUG() but until someone can quote me the
+ 		 * line from the intel manual that guarantees an IPI to
+@@ -381,6 +384,8 @@
+ 	}
+ 	ack_APIC_irq();
+ 	clear_bit(cpu, &flush_cpumask);
++out:
++	preempt_enable();
+ }
+ 
+ static void flush_tlb_others (unsigned long cpumask, struct mm_struct *mm,
+@@ -430,17 +435,22 @@
+ void flush_tlb_current_task(void)
+ {
+ 	struct mm_struct *mm = current->mm;
+-	unsigned long cpu_mask = mm->cpu_vm_mask & ~(1 << smp_processor_id());
++	unsigned long cpu_mask;
+ 
++        preempt_disable();
++        cpu_mask = mm->cpu_vm_mask & ~(1UL << smp_processor_id());
+ 	local_flush_tlb();
+ 	if (cpu_mask)
+ 		flush_tlb_others(cpu_mask, mm, FLUSH_ALL);
++        preempt_enable();
+ }
+ 
+ void flush_tlb_mm (struct mm_struct * mm)
+ {
+-	unsigned long cpu_mask = mm->cpu_vm_mask & ~(1 << smp_processor_id());
++	unsigned long cpu_mask;
+ 
++        preempt_disable();
++        cpu_mask = mm->cpu_vm_mask & ~(1UL << smp_processor_id());
+ 	if (current->active_mm == mm) {
+ 		if (current->mm)
+ 			local_flush_tlb();
+@@ -449,13 +459,16 @@
+ 	}
+ 	if (cpu_mask)
+ 		flush_tlb_others(cpu_mask, mm, FLUSH_ALL);
++        preempt_enable();
+ }
+ 
+ void flush_tlb_page(struct vm_area_struct * vma, unsigned long va)
+ {
+ 	struct mm_struct *mm = vma->vm_mm;
+-	unsigned long cpu_mask = mm->cpu_vm_mask & ~(1 << smp_processor_id());
++	unsigned long cpu_mask;
+ 
++        preempt_disable();
++        cpu_mask = mm->cpu_vm_mask & ~(1UL << smp_processor_id());
+ 	if (current->active_mm == mm) {
+ 		if(current->mm)
+ 			__flush_tlb_one(va);
+@@ -465,6 +478,7 @@
+ 
+ 	if (cpu_mask)
+ 		flush_tlb_others(cpu_mask, mm, va);
++        preempt_enable();
+ }
+ 
+ static inline void do_flush_tlb_all_local(void)
+diff -urN linux-2.4.20/arch/i386/kernel/traps.c linux/arch/i386/kernel/traps.c
+--- linux-2.4.20/arch/i386/kernel/traps.c	2002-11-28 18:53:09.000000000 -0500
++++ linux/arch/i386/kernel/traps.c	2002-12-11 02:34:47.000000000 -0500
+@@ -751,6 +751,8 @@
+  *
+  * Careful.. There are problems with IBM-designed IRQ13 behaviour.
+  * Don't touch unless you *really* know how it works.
++ *
++ * Must be called with kernel preemption disabled.
+  */
+ asmlinkage void math_state_restore(struct pt_regs regs)
+ {
+diff -urN linux-2.4.20/arch/i386/lib/dec_and_lock.c linux/arch/i386/lib/dec_and_lock.c
+--- linux-2.4.20/arch/i386/lib/dec_and_lock.c	2000-07-07 21:20:16.000000000 -0400
++++ linux/arch/i386/lib/dec_and_lock.c	2002-12-11 02:34:47.000000000 -0500
+@@ -8,6 +8,7 @@
+  */
+ 
+ #include <linux/spinlock.h>
++#include <linux/sched.h>
+ #include <asm/atomic.h>
+ 
+ int atomic_dec_and_lock(atomic_t *atomic, spinlock_t *lock)
+diff -urN linux-2.4.20/arch/mips/config-shared.in linux/arch/mips/config-shared.in
+--- linux-2.4.20/arch/mips/config-shared.in	2002-11-28 18:53:09.000000000 -0500
++++ linux/arch/mips/config-shared.in	2002-12-11 02:34:47.000000000 -0500
+@@ -615,6 +615,7 @@
+    define_bool CONFIG_HOTPLUG_PCI n
+ fi
+ 
++dep_bool 'Preemptible Kernel' CONFIG_PREEMPT $CONFIG_NEW_IRQ
+ bool 'System V IPC' CONFIG_SYSVIPC
+ bool 'BSD Process Accounting' CONFIG_BSD_PROCESS_ACCT
+ bool 'Sysctl support' CONFIG_SYSCTL
+diff -urN linux-2.4.20/arch/mips/kernel/i8259.c linux/arch/mips/kernel/i8259.c
+--- linux-2.4.20/arch/mips/kernel/i8259.c	2002-11-28 18:53:10.000000000 -0500
++++ linux/arch/mips/kernel/i8259.c	2002-12-11 02:34:47.000000000 -0500
+@@ -8,6 +8,7 @@
+  * Copyright (C) 1992 Linus Torvalds
+  * Copyright (C) 1994 - 2000 Ralf Baechle
+  */
++#include <linux/sched.h>
+ #include <linux/delay.h>
+ #include <linux/init.h>
+ #include <linux/ioport.h>
+diff -urN linux-2.4.20/arch/mips/kernel/irq.c linux/arch/mips/kernel/irq.c
+--- linux-2.4.20/arch/mips/kernel/irq.c	2002-11-28 18:53:10.000000000 -0500
++++ linux/arch/mips/kernel/irq.c	2002-12-11 02:34:47.000000000 -0500
+@@ -8,6 +8,8 @@
+  * Copyright (C) 1992 Linus Torvalds
+  * Copyright (C) 1994 - 2000 Ralf Baechle
+  */
++
++#include <linux/sched.h>
+ #include <linux/config.h>
+ #include <linux/kernel.h>
+ #include <linux/delay.h>
+@@ -19,11 +21,13 @@
+ #include <linux/slab.h>
+ #include <linux/mm.h>
+ #include <linux/random.h>
+-#include <linux/sched.h>
++#include <linux/spinlock.h>
++#include <linux/ptrace.h>
+ 
+ #include <asm/atomic.h>
+ #include <asm/system.h>
+ #include <asm/uaccess.h>
++#include <asm/debug.h>
+ 
+ /*
+  * Controller mappings for all interrupt sources:
+@@ -429,6 +433,8 @@
+ 	struct irqaction * action;
+ 	unsigned int status;
+ 
++	preempt_disable();
++
+ 	kstat.irqs[cpu][irq]++;
+ 	spin_lock(&desc->lock);
+ 	desc->handler->ack(irq);
+@@ -490,6 +496,27 @@
+ 
+ 	if (softirq_pending(cpu))
+ 		do_softirq();
++
++#if defined(CONFIG_PREEMPT)
++	while (--current->preempt_count == 0) {
++		db_assert(intr_off());
++		db_assert(!in_interrupt());
++
++		if (current->need_resched == 0) {
++			break;
++		}
++
++		current->preempt_count ++;
++		sti();
++		if (user_mode(regs)) {
++			schedule();
++		} else {
++			preempt_schedule();
++		}
++		cli();
++	}
++#endif
++
+ 	return 1;
+ }
+ 
+diff -urN linux-2.4.20/arch/mips/mm/extable.c linux/arch/mips/mm/extable.c
+--- linux-2.4.20/arch/mips/mm/extable.c	2002-11-28 18:53:10.000000000 -0500
++++ linux/arch/mips/mm/extable.c	2002-12-11 02:34:47.000000000 -0500
+@@ -3,6 +3,7 @@
+  */
+ #include <linux/config.h>
+ #include <linux/module.h>
++#include <linux/sched.h>
+ #include <linux/spinlock.h>
+ #include <asm/uaccess.h>
+ 
+diff -urN linux-2.4.20/arch/ppc/config.in linux/arch/ppc/config.in
+--- linux-2.4.20/arch/ppc/config.in	2002-11-28 18:53:11.000000000 -0500
++++ linux/arch/ppc/config.in	2002-12-11 02:34:47.000000000 -0500
+@@ -112,6 +112,8 @@
+   bool '  Distribute interrupts on all CPUs by default' CONFIG_IRQ_ALL_CPUS
+ fi
+ 
++bool 'Preemptible kernel support' CONFIG_PREEMPT
++
+ if [ "$CONFIG_6xx" = "y" -a "$CONFIG_8260" = "n" ];then
+   bool 'AltiVec Support' CONFIG_ALTIVEC
+   bool 'Thermal Management Support' CONFIG_TAU
+diff -urN linux-2.4.20/arch/ppc/kernel/entry.S linux/arch/ppc/kernel/entry.S
+--- linux-2.4.20/arch/ppc/kernel/entry.S	2002-11-28 18:53:11.000000000 -0500
++++ linux/arch/ppc/kernel/entry.S	2002-12-11 02:34:47.000000000 -0500
+@@ -278,6 +278,41 @@
+ 	 */
+ 	cmpi	0,r3,0
+ 	beq	restore
++#ifdef CONFIG_PREEMPT
++	lwz	r3,PREEMPT_COUNT(r2)
++	cmpi	0,r3,1
++	bge	ret_from_except
++	lwz	r5,_MSR(r1)
++	andi.	r5,r5,MSR_PR
++	bne	do_signal_ret
++	lwz	r5,NEED_RESCHED(r2)
++	cmpi	0,r5,0
++	beq	ret_from_except
++	lis	r3,irq_stat@h
++	ori	r3,r3,irq_stat@l
++	lwz	r5,4(r3)
++	lwz	r3,8(r3)
++	add	r3,r3,r5
++	cmpi	0,r3,0
++	bne	ret_from_except
++	lwz	r3,PREEMPT_COUNT(r2)
++	addi	r3,r3,1
++	stw	r3,PREEMPT_COUNT(r2)
++	mfmsr	r0
++	ori	r0,r0,MSR_EE
++	mtmsr	r0
++	sync
++	bl	preempt_schedule
++	mfmsr	r0
++	rlwinm	r0,r0,0,17,15
++	mtmsr	r0
++	sync
++	lwz	r3,PREEMPT_COUNT(r2)
++	subi	r3,r3,1
++	stw	r3,PREEMPT_COUNT(r2)
++	li	r3,1
++	b	ret_from_intercept
++#endif /* CONFIG_PREEMPT */
+ 	.globl	ret_from_except
+ ret_from_except:
+ 	lwz	r3,_MSR(r1)	/* Returning to user mode? */
+diff -urN linux-2.4.20/arch/ppc/kernel/irq.c linux/arch/ppc/kernel/irq.c
+--- linux-2.4.20/arch/ppc/kernel/irq.c	2002-11-28 18:53:11.000000000 -0500
++++ linux/arch/ppc/kernel/irq.c	2002-12-11 02:34:47.000000000 -0500
+@@ -556,6 +556,34 @@
+ 	return 1; /* lets ret_from_int know we can do checks */
+ }
+ 
++#ifdef CONFIG_PREEMPT
++int
++preempt_intercept(struct pt_regs *regs)
++{
++	int ret;
++
++	preempt_disable();
++
++	switch(regs->trap) {
++	case 0x500:
++		ret = do_IRQ(regs);
++		break;
++#ifndef CONFIG_4xx
++	case 0x900:
++#else
++	case 0x1000:
++#endif
++		ret = timer_interrupt(regs);
++		break;
++	default:
++		BUG();
++	}
++
++	preempt_enable();
++	return ret;
++}
++#endif /* CONFIG_PREEMPT */
++
+ unsigned long probe_irq_on (void)
+ {
+ 	return 0;
+diff -urN linux-2.4.20/arch/ppc/kernel/mk_defs.c linux/arch/ppc/kernel/mk_defs.c
+--- linux-2.4.20/arch/ppc/kernel/mk_defs.c	2001-08-28 09:58:33.000000000 -0400
++++ linux/arch/ppc/kernel/mk_defs.c	2002-12-11 02:34:47.000000000 -0500
+@@ -42,6 +42,9 @@
+ 	DEFINE(SIGPENDING, offsetof(struct task_struct, sigpending));
+ 	DEFINE(THREAD, offsetof(struct task_struct, thread));
+ 	DEFINE(MM, offsetof(struct task_struct, mm));
++#ifdef CONFIG_PREEMPT
++	DEFINE(PREEMPT_COUNT, offsetof(struct task_struct, preempt_count));
++#endif
+ 	DEFINE(ACTIVE_MM, offsetof(struct task_struct, active_mm));
+ 	DEFINE(TASK_STRUCT_SIZE, sizeof(struct task_struct));
+ 	DEFINE(KSP, offsetof(struct thread_struct, ksp));
+diff -urN linux-2.4.20/arch/ppc/kernel/setup.c linux/arch/ppc/kernel/setup.c
+--- linux-2.4.20/arch/ppc/kernel/setup.c	2002-11-28 18:53:11.000000000 -0500
++++ linux/arch/ppc/kernel/setup.c	2002-12-11 02:34:47.000000000 -0500
+@@ -498,6 +498,20 @@
+ 	strcpy(cmd_line, CONFIG_CMDLINE);
+ #endif /* CONFIG_CMDLINE */
+ 
++#ifdef CONFIG_PREEMPT
++	/* Override the irq routines for external & timer interrupts here,
++	 * as the MMU has only been minimally setup at this point and
++	 * there are no protections on page zero.
++	 */
++	{
++		extern int preempt_intercept(struct pt_regs *);
++	
++		do_IRQ_intercept = (unsigned long) &preempt_intercept;
++		timer_interrupt_intercept = (unsigned long) &preempt_intercept;
++
++	}
++#endif /* CONFIG_PREEMPT */
++
+ 	platform_init(r3, r4, r5, r6, r7);
+ 
+ 	if (ppc_md.progress)
+diff -urN linux-2.4.20/arch/ppc/lib/dec_and_lock.c linux/arch/ppc/lib/dec_and_lock.c
+--- linux-2.4.20/arch/ppc/lib/dec_and_lock.c	2001-11-16 13:10:08.000000000 -0500
++++ linux/arch/ppc/lib/dec_and_lock.c	2002-12-11 02:34:47.000000000 -0500
+@@ -1,4 +1,5 @@
+ #include <linux/module.h>
++#include <linux/sched.h>
+ #include <linux/spinlock.h>
+ #include <asm/atomic.h>
+ #include <asm/system.h>
+diff -urN linux-2.4.20/arch/sh/config.in linux/arch/sh/config.in
+--- linux-2.4.20/arch/sh/config.in	2002-11-28 18:53:11.000000000 -0500
++++ linux/arch/sh/config.in	2002-12-11 02:34:47.000000000 -0500
+@@ -124,6 +124,7 @@
+    hex 'Physical memory start address' CONFIG_MEMORY_START 08000000
+    hex 'Physical memory size' CONFIG_MEMORY_SIZE 00400000
+ fi
++bool 'Preemptible Kernel' CONFIG_PREEMPT
+ endmenu
+ 
+ if [ "$CONFIG_SH_HP690" = "y" ]; then
+diff -urN linux-2.4.20/arch/sh/kernel/entry.S linux/arch/sh/kernel/entry.S
+--- linux-2.4.20/arch/sh/kernel/entry.S	2002-08-02 20:39:43.000000000 -0400
++++ linux/arch/sh/kernel/entry.S	2002-12-11 02:34:47.000000000 -0500
+@@ -60,10 +60,18 @@
+ /*
+  * These are offsets into the task-struct.
+  */
+-flags		=  4
++preempt_count	=  4
+ sigpending	=  8
+ need_resched	= 20
+ tsk_ptrace	= 24
++flags		= 84
++
++/*
++ * These offsets are into irq_stat.
++ * (Find irq_cpustat_t in asm-sh/hardirq.h)
++ */
++local_irq_count =  8
++local_bh_count  = 12
+ 
+ PT_TRACESYS  = 0x00000002
+ PF_USEDFPU   = 0x00100000
+@@ -143,7 +151,7 @@
+ 	mov.l	__INV_IMASK, r11;	\
+ 	stc	sr, r10;		\
+ 	and	r11, r10;		\
+-	stc	k_g_imask, r11;	\
++	stc	k_g_imask, r11;		\
+ 	or	r11, r10;		\
+ 	ldc	r10, sr
+ 
+@@ -304,8 +312,8 @@
+ 	mov.l	@(tsk_ptrace,r0), r0	! Is current PTRACE_SYSCALL'd?
+ 	mov	#PT_TRACESYS, r1
+ 	tst	r1, r0
+-	bt	ret_from_syscall
+-	bra	syscall_ret_trace
++	bf	syscall_ret_trace
++	bra	ret_from_syscall
+ 	 nop	 
+ 
+ 	.align	2
+@@ -505,8 +513,6 @@
+ 	.long	syscall_ret_trace
+ __syscall_ret:
+ 	.long	syscall_ret
+-__INV_IMASK:
+-	.long	0xffffff0f	! ~(IMASK)
+ 
+ 
+ 	.align	2
+@@ -518,7 +524,84 @@
+ 	.align	2
+ 1:	.long	SYMBOL_NAME(schedule)
+ 
++#ifdef CONFIG_PREEMPT	
++	!
++	! Returning from interrupt during kernel mode: check if
++	! preempt_schedule should be called. If need_resched flag
++	! is set, preempt_count is zero, and we're not currently
++	! in an interrupt handler (local irq or bottom half) then
++	! call preempt_schedule. 
++	!
++	! Increment preempt_count to prevent a nested interrupt
++	! from reentering preempt_schedule, then decrement after
++	! and drop through to regular interrupt return which will
++	! jump back and check again in case such an interrupt did
++	! come in (and didn't preempt due to preempt_count).
++	!
++	! NOTE:	because we just checked that preempt_count was
++	! zero before getting to the call, can't we use immediate
++	! values (1 and 0) rather than inc/dec? Also, rather than
++	! drop through to ret_from_irq, we already know this thread
++	! is kernel mode, can't we go direct to ret_from_kirq? In
++	! fact, with proper interrupt nesting and so forth could
++	! the loop simply be on the need_resched w/o checking the
++	! other stuff again? Optimize later...
++	!
++	.align	2
++ret_from_kirq:
++	! Nonzero preempt_count prevents scheduling
++	stc	k_current, r1
++	mov.l	@(preempt_count,r1), r0
++	cmp/eq	#0, r0
++	bf	restore_all
++	! Zero need_resched prevents scheduling
++	mov.l	@(need_resched,r1), r0
++	cmp/eq	#0, r0
++	bt	restore_all
++	! If in_interrupt(), don't schedule
++	mov.l	__irq_stat, r1
++	mov.l	@(local_irq_count,r1), r0
++	mov.l	@(local_bh_count,r1), r1
++	or	r1, r0
++	cmp/eq	#0, r0
++	bf	restore_all
++	! Allow scheduling using preempt_schedule
++	! Adjust preempt_count and SR as needed.
++	stc	k_current, r1
++	mov.l	@(preempt_count,r1), r0	! Could replace this ...
++	add	#1, r0			! ... and this w/mov #1?
++	mov.l	r0, @(preempt_count,r1)
++	STI()
++	mov.l	__preempt_schedule, r0
++	jsr	@r0
++	 nop	
++	/* CLI */
++	stc	sr, r0
++	or	#0xf0, r0
++	ldc	r0, sr
++	!
++	stc	k_current, r1
++	mov.l	@(preempt_count,r1), r0	! Could replace this ...
++	add	#-1, r0			! ... and this w/mov #0?
++	mov.l	r0, @(preempt_count,r1)
++	! Maybe should bra ret_from_kirq, or loop over need_resched?
++	! For now, fall through to ret_from_irq again...
++#endif /* CONFIG_PREEMPT */
++	
+ ret_from_irq:
++	mov	#OFF_SR, r0
++	mov.l	@(r0,r15), r0	! get status register
++	shll	r0
++	shll	r0		! kernel space?
++#ifndef CONFIG_PREEMPT
++	bt	restore_all	! Yes, it's from kernel, go back soon
++#else /* CONFIG_PREEMPT */
++	bt	ret_from_kirq	! From kernel: maybe preempt_schedule
++#endif /* CONFIG_PREEMPT */
++	!
++	bra	ret_from_syscall
++	 nop
++
+ ret_from_exception:
+ 	mov	#OFF_SR, r0
+ 	mov.l	@(r0,r15), r0	! get status register
+@@ -564,6 +647,13 @@
+ 	.long	SYMBOL_NAME(do_signal)
+ __irq_stat:
+ 	.long	SYMBOL_NAME(irq_stat)
++#ifdef CONFIG_PREEMPT
++__preempt_schedule:
++	.long	SYMBOL_NAME(preempt_schedule)
++#endif /* CONFIG_PREEMPT */	
++__INV_IMASK:
++	.long	0xffffff0f	! ~(IMASK)
++
+ 
+ 	.align 2
+ restore_all:
+@@ -679,7 +769,7 @@
+ __fpu_prepare_fd:
+ 	.long	SYMBOL_NAME(fpu_prepare_fd)
+ __init_task_flags:
+-	.long	SYMBOL_NAME(init_task_union)+4
++	.long	SYMBOL_NAME(init_task_union)+flags
+ __PF_USEDFPU:
+ 	.long	PF_USEDFPU
+ #endif
+diff -urN linux-2.4.20/arch/sh/kernel/irq.c linux/arch/sh/kernel/irq.c
+--- linux-2.4.20/arch/sh/kernel/irq.c	2001-09-08 15:29:09.000000000 -0400
++++ linux/arch/sh/kernel/irq.c	2002-12-11 02:34:47.000000000 -0500
+@@ -229,6 +229,14 @@
+ 	struct irqaction * action;
+ 	unsigned int status;
+ 
++	/*
++	 * At this point we're now about to actually call handlers,
++	 * and interrupts might get reenabled during them... bump
++	 * preempt_count to prevent any preemption while the handler
++ 	 * called here is pending...
++ 	 */
++ 	preempt_disable();
++
+ 	/* Get IRQ number */
+ 	asm volatile("stc	r2_bank, %0\n\t"
+ 		     "shlr2	%0\n\t"
+@@ -298,8 +306,17 @@
+ 	desc->handler->end(irq);
+ 	spin_unlock(&desc->lock);
+ 
++
+ 	if (softirq_pending(cpu))
+ 		do_softirq();
++
++	/*
++	 * We're done with the handlers, interrupts should be
++	 * currently disabled; decrement preempt_count now so
++	 * as we return preemption may be allowed...
++	 */
++	preempt_enable_no_resched();
++
+ 	return 1;
+ }
+ 
+diff -urN linux-2.4.20/CREDITS linux/CREDITS
+--- linux-2.4.20/CREDITS	2002-11-28 18:53:08.000000000 -0500
++++ linux/CREDITS	2002-12-11 02:34:47.000000000 -0500
+@@ -1001,8 +1001,8 @@
+ 
+ N: Nigel Gamble
+ E: nigel@nrg.org
+-E: nigel@sgi.com
+ D: Interrupt-driven printer driver
++D: Preemptible kernel
+ S: 120 Alley Way
+ S: Mountain View, California 94040
+ S: USA
+diff -urN linux-2.4.20/Documentation/Configure.help linux/Documentation/Configure.help
+--- linux-2.4.20/Documentation/Configure.help	2002-11-28 18:53:08.000000000 -0500
++++ linux/Documentation/Configure.help	2002-12-11 02:34:47.000000000 -0500
+@@ -279,6 +279,17 @@
+   If you have a system with several CPUs, you do not need to say Y
+   here: the local APIC will be used automatically.
+ 
++Preemptible Kernel
++CONFIG_PREEMPT
++  This option reduces the latency of the kernel when reacting to
++  real-time or interactive events by allowing a low priority process to
++  be preempted even if it is in kernel mode executing a system call.
++  This allows applications to run more reliably even when the system is
++  under load.
++
++  Say Y here if you are building a kernel for a desktop, embedded or
++  real-time system.  Say N if you are unsure.
++
+ Kernel math emulation
+ CONFIG_MATH_EMULATION
+   Linux can emulate a math coprocessor (used for floating point
+diff -urN linux-2.4.20/Documentation/preempt-locking.txt linux/Documentation/preempt-locking.txt
+--- linux-2.4.20/Documentation/preempt-locking.txt	1969-12-31 19:00:00.000000000 -0500
++++ linux/Documentation/preempt-locking.txt	2002-12-11 02:34:47.000000000 -0500
+@@ -0,0 +1,104 @@
++		  Proper Locking Under a Preemptible Kernel:
++		       Keeping Kernel Code Preempt-Safe
++			  Robert Love <rml@tech9.net>
++			   Last Updated: 22 Jan 2002
++
++
++INTRODUCTION
++
++
++A preemptible kernel creates new locking issues.  The issues are the same as
++those under SMP: concurrency and reentrancy.  Thankfully, the Linux preemptible
++kernel model leverages existing SMP locking mechanisms.  Thus, the kernel
++requires explicit additional locking for very few additional situations.
++
++This document is for all kernel hackers.  Developing code in the kernel
++requires protecting these situations.
++ 
++
++RULE #1: Per-CPU data structures need explicit protection
++
++
++Two similar problems arise. An example code snippet:
++
++	struct this_needs_locking tux[NR_CPUS];
++	tux[smp_processor_id()] = some_value;
++	/* task is preempted here... */
++	something = tux[smp_processor_id()];
++
++First, since the data is per-CPU, it may not have explicit SMP locking, but
++require it otherwise.  Second, when a preempted task is finally rescheduled,
++the previous value of smp_processor_id may not equal the current.  You must
++protect these situations by disabling preemption around them.
++
++
++RULE #2: CPU state must be protected.
++
++
++Under preemption, the state of the CPU must be protected.  This is arch-
++dependent, but includes CPU structures and state not preserved over a context
++switch.  For example, on x86, entering and exiting FPU mode is now a critical
++section that must occur while preemption is disabled.  Think what would happen
++if the kernel is executing a floating-point instruction and is then preempted.
++Remember, the kernel does not save FPU state except for user tasks.  Therefore,
++upon preemption, the FPU registers will be sold to the lowest bidder.  Thus,
++preemption must be disabled around such regions.
++
++Note, some FPU functions are already explicitly preempt safe.  For example,
++kernel_fpu_begin and kernel_fpu_end will disable and enable preemption.
++However, math_state_restore must be called with preemption disabled.
++
++
++RULE #3: Lock acquire and release must be performed by same task
++
++
++A lock acquired in one task must be released by the same task.  This
++means you can't do oddball things like acquire a lock and go off to
++play while another task releases it.  If you want to do something
++like this, acquire and release the task in the same code path and
++have the caller wait on an event by the other task.
++
++
++SOLUTION
++
++
++Data protection under preemption is achieved by disabling preemption for the
++duration of the critical region.
++
++preempt_enable()		decrement the preempt counter
++preempt_disable()		increment the preempt counter
++preempt_enable_no_resched()	decrement, but do not immediately preempt
++preempt_get_count()		return the preempt counter
++
++The functions are nestable.  In other words, you can call preempt_disable
++n-times in a code path, and preemption will not be reenabled until the n-th
++call to preempt_enable.  The preempt statements define to nothing if
++preemption is not enabled.
++
++Note that you do not need to explicitly prevent preemption if you are holding
++any locks or interrupts are disabled, since preemption is implicitly disabled
++in those cases.
++
++Example:
++
++	cpucache_t *cc; /* this is per-CPU */
++	preempt_disable();
++	cc = cc_data(searchp);
++	if (cc && cc->avail) {
++		__free_block(searchp, cc_entry(cc), cc->avail);
++		cc->avail = 0;
++	}
++	preempt_enable();
++	return 0;
++
++Notice how the preemption statements must encompass every reference of the
++critical variables.  Another example:
++
++	int buf[NR_CPUS];
++	set_cpu_val(buf);
++	if (buf[smp_processor_id()] == -1) printf(KERN_INFO "wee!\n");
++	spin_lock(&buf_lock);
++	/* ... */
++
++This code is not preempt-safe, but see how easily we can fix it by simply
++moving the spin_lock up two lines.
+diff -urN linux-2.4.20/drivers/ieee1394/csr.c linux/drivers/ieee1394/csr.c
+--- linux-2.4.20/drivers/ieee1394/csr.c	2002-11-28 18:53:13.000000000 -0500
++++ linux/drivers/ieee1394/csr.c	2002-12-11 02:34:47.000000000 -0500
+@@ -10,6 +10,7 @@
+  */
+ 
+ #include <linux/string.h>
++#include <linux/sched.h>
+ 
+ #include "ieee1394_types.h"
+ #include "hosts.h"
+diff -urN linux-2.4.20/drivers/sound/sound_core.c linux/drivers/sound/sound_core.c
+--- linux-2.4.20/drivers/sound/sound_core.c	2001-09-30 15:26:08.000000000 -0400
++++ linux/drivers/sound/sound_core.c	2002-12-11 02:34:47.000000000 -0500
+@@ -37,6 +37,7 @@
+ #include <linux/config.h>
+ #include <linux/module.h>
+ #include <linux/init.h>
++#include <linux/sched.h>
+ #include <linux/slab.h>
+ #include <linux/types.h>
+ #include <linux/kernel.h>
+diff -urN linux-2.4.20/fs/adfs/map.c linux/fs/adfs/map.c
+--- linux-2.4.20/fs/adfs/map.c	2001-10-25 16:53:53.000000000 -0400
++++ linux/fs/adfs/map.c	2002-12-11 02:34:47.000000000 -0500
+@@ -12,6 +12,7 @@
+ #include <linux/fs.h>
+ #include <linux/adfs_fs.h>
+ #include <linux/spinlock.h>
++#include <linux/sched.h>
+ 
+ #include "adfs.h"
+ 
+diff -urN linux-2.4.20/fs/exec.c linux/fs/exec.c
+--- linux-2.4.20/fs/exec.c	2002-11-28 18:53:15.000000000 -0500
++++ linux/fs/exec.c	2002-12-11 02:34:47.000000000 -0500
+@@ -440,8 +440,8 @@
+ 		active_mm = current->active_mm;
+ 		current->mm = mm;
+ 		current->active_mm = mm;
+-		task_unlock(current);
+ 		activate_mm(active_mm, mm);
++		task_unlock(current);
+ 		mm_release();
+ 		if (old_mm) {
+ 			if (active_mm != old_mm) BUG();
+diff -urN linux-2.4.20/fs/fat/cache.c linux/fs/fat/cache.c
+--- linux-2.4.20/fs/fat/cache.c	2001-10-12 16:48:42.000000000 -0400
++++ linux/fs/fat/cache.c	2002-12-11 02:34:47.000000000 -0500
+@@ -14,6 +14,7 @@
+ #include <linux/string.h>
+ #include <linux/stat.h>
+ #include <linux/fat_cvf.h>
++#include <linux/sched.h>
+ 
+ #if 0
+ #  define PRINTK(x) printk x
+diff -urN linux-2.4.20/fs/nls/nls_base.c linux/fs/nls/nls_base.c
+--- linux-2.4.20/fs/nls/nls_base.c	2002-08-02 20:39:45.000000000 -0400
++++ linux/fs/nls/nls_base.c	2002-12-11 02:34:47.000000000 -0500
+@@ -18,6 +18,7 @@
+ #ifdef CONFIG_KMOD
+ #include <linux/kmod.h>
+ #endif
++#include <linux/sched.h>
+ #include <linux/spinlock.h>
+ 
+ static struct nls_table *tables;
+diff -urN linux-2.4.20/include/asm-arm/dma.h linux/include/asm-arm/dma.h
+--- linux-2.4.20/include/asm-arm/dma.h	2001-08-12 14:14:00.000000000 -0400
++++ linux/include/asm-arm/dma.h	2002-12-11 02:34:47.000000000 -0500
+@@ -5,6 +5,7 @@
+ 
+ #include <linux/config.h>
+ #include <linux/spinlock.h>
++#include <linux/sched.h>
+ #include <asm/system.h>
+ #include <asm/memory.h>
+ #include <asm/scatterlist.h>
+diff -urN linux-2.4.20/include/asm-arm/hardirq.h linux/include/asm-arm/hardirq.h
+--- linux-2.4.20/include/asm-arm/hardirq.h	2001-10-11 12:04:57.000000000 -0400
++++ linux/include/asm-arm/hardirq.h	2002-12-11 02:34:47.000000000 -0500
+@@ -34,6 +34,7 @@
+ #define irq_exit(cpu,irq)	(local_irq_count(cpu)--)
+ 
+ #define synchronize_irq()	do { } while (0)
++#define release_irqlock(cpu)	do { } while (0)
+ 
+ #else
+ #error SMP not supported
+diff -urN linux-2.4.20/include/asm-arm/pgalloc.h linux/include/asm-arm/pgalloc.h
+--- linux-2.4.20/include/asm-arm/pgalloc.h	2001-08-12 14:14:00.000000000 -0400
++++ linux/include/asm-arm/pgalloc.h	2002-12-11 02:34:47.000000000 -0500
+@@ -57,40 +57,48 @@
+ {
+ 	unsigned long *ret;
+ 
++	preempt_disable();
+ 	if ((ret = pgd_quicklist) != NULL) {
+ 		pgd_quicklist = (unsigned long *)__pgd_next(ret);
+ 		ret[1] = ret[2];
+ 		clean_dcache_entry(ret + 1);
+ 		pgtable_cache_size--;
+ 	}
++	preempt_enable();
+ 	return (pgd_t *)ret;
+ }
+ 
+ static inline void free_pgd_fast(pgd_t *pgd)
+ {
++	preempt_disable();
+ 	__pgd_next(pgd) = (unsigned long) pgd_quicklist;
+ 	pgd_quicklist = (unsigned long *) pgd;
+ 	pgtable_cache_size++;
++	preempt_enable();
+ }
+ 
+ static inline pte_t *pte_alloc_one_fast(struct mm_struct *mm, unsigned long address)
+ {
+ 	unsigned long *ret;
+ 
++	preempt_disable();
+ 	if((ret = pte_quicklist) != NULL) {
+ 		pte_quicklist = (unsigned long *)__pte_next(ret);
+ 		ret[0] = 0;
+ 		clean_dcache_entry(ret);
+ 		pgtable_cache_size--;
+ 	}
++	preempt_enable();
+ 	return (pte_t *)ret;
+ }
+ 
+ static inline void free_pte_fast(pte_t *pte)
+ {
++	preempt_disable();
+ 	__pte_next(pte) = (unsigned long) pte_quicklist;
+ 	pte_quicklist = (unsigned long *) pte;
+ 	pgtable_cache_size++;
++	preempt_enable();
+ }
+ 
+ #else	/* CONFIG_NO_PGT_CACHE */
+diff -urN linux-2.4.20/include/asm-arm/smplock.h linux/include/asm-arm/smplock.h
+--- linux-2.4.20/include/asm-arm/smplock.h	2001-08-12 14:14:00.000000000 -0400
++++ linux/include/asm-arm/smplock.h	2002-12-11 02:34:47.000000000 -0500
+@@ -3,12 +3,17 @@
+  *
+  * Default SMP lock implementation
+  */
++#include <linux/config.h>
+ #include <linux/interrupt.h>
+ #include <linux/spinlock.h>
+ 
+ extern spinlock_t kernel_flag;
+ 
++#ifdef CONFIG_PREEMPT
++#define kernel_locked()		preempt_get_count()
++#else
+ #define kernel_locked()		spin_is_locked(&kernel_flag)
++#endif
+ 
+ /*
+  * Release global kernel lock and global interrupt lock
+@@ -40,8 +45,14 @@
+  */
+ static inline void lock_kernel(void)
+ {
++#ifdef CONFIG_PREEMPT
++	if (current->lock_depth == -1)
++		spin_lock(&kernel_flag);
++	++current->lock_depth;
++#else
+ 	if (!++current->lock_depth)
+ 		spin_lock(&kernel_flag);
++#endif
+ }
+ 
+ static inline void unlock_kernel(void)
+diff -urN linux-2.4.20/include/asm-arm/softirq.h linux/include/asm-arm/softirq.h
+--- linux-2.4.20/include/asm-arm/softirq.h	2001-09-08 15:02:31.000000000 -0400
++++ linux/include/asm-arm/softirq.h	2002-12-11 02:34:47.000000000 -0500
+@@ -5,20 +5,22 @@
+ #include <asm/hardirq.h>
+ 
+ #define __cpu_bh_enable(cpu) \
+-		do { barrier(); local_bh_count(cpu)--; } while (0)
++		do { barrier(); local_bh_count(cpu)--; preempt_enable(); } while (0)
+ #define cpu_bh_disable(cpu) \
+-		do { local_bh_count(cpu)++; barrier(); } while (0)
++		do { preempt_disable(); local_bh_count(cpu)++; barrier(); } while (0)
+ 
+ #define local_bh_disable()	cpu_bh_disable(smp_processor_id())
+ #define __local_bh_enable()	__cpu_bh_enable(smp_processor_id())
+ 
+ #define in_softirq()		(local_bh_count(smp_processor_id()) != 0)
+ 
+-#define local_bh_enable()						\
++#define _local_bh_enable()						\
+ do {									\
+ 	unsigned int *ptr = &local_bh_count(smp_processor_id());	\
+ 	if (!--*ptr && ptr[-2])						\
+ 		__asm__("bl%? __do_softirq": : : "lr");/* out of line */\
+ } while (0)
+ 
++#define local_bh_enable() do { _local_bh_enable(); preempt_enable(); } while (0)
++
+ #endif	/* __ASM_SOFTIRQ_H */
+diff -urN linux-2.4.20/include/asm-arm/system.h linux/include/asm-arm/system.h
+--- linux-2.4.20/include/asm-arm/system.h	2000-11-27 20:07:59.000000000 -0500
++++ linux/include/asm-arm/system.h	2002-12-11 02:34:47.000000000 -0500
+@@ -62,6 +62,13 @@
+ #define local_irq_disable()	__cli()
+ #define local_irq_enable()	__sti()
+ 
++#define irqs_disabled()				\
++({						\
++        unsigned long cpsr_val;			\
++        asm ("mrs %0, cpsr" : "=r" (cpsr_val));	\
++        cpsr_val & 128;				\
++})
++
+ #ifdef CONFIG_SMP
+ #error SMP not supported
+ 
+diff -urN linux-2.4.20/include/asm-i386/hardirq.h linux/include/asm-i386/hardirq.h
+--- linux-2.4.20/include/asm-i386/hardirq.h	2001-11-22 14:46:19.000000000 -0500
++++ linux/include/asm-i386/hardirq.h	2002-12-11 02:34:47.000000000 -0500
+@@ -19,12 +19,16 @@
+ 
+ /*
+  * Are we in an interrupt context? Either doing bottom half
+- * or hardware interrupt processing?
++ * or hardware interrupt processing?  Note the preempt check,
++ * this is both a bugfix and an optimization.  If we are
++ * preemptible, we cannot be in an interrupt.
+  */
+-#define in_interrupt() ({ int __cpu = smp_processor_id(); \
+-	(local_irq_count(__cpu) + local_bh_count(__cpu) != 0); })
++#define in_interrupt() (preempt_is_disabled() && \
++	({unsigned long __cpu = smp_processor_id(); \
++	(local_irq_count(__cpu) + local_bh_count(__cpu) != 0); }))
+ 
+-#define in_irq() (local_irq_count(smp_processor_id()) != 0)
++#define in_irq() (preempt_is_disabled() && \
++        (local_irq_count(smp_processor_id()) != 0))
+ 
+ #ifndef CONFIG_SMP
+ 
+@@ -36,6 +40,8 @@
+ 
+ #define synchronize_irq()	barrier()
+ 
++#define release_irqlock(cpu)	do { } while (0)
++
+ #else
+ 
+ #include <asm/atomic.h>
+diff -urN linux-2.4.20/include/asm-i386/highmem.h linux/include/asm-i386/highmem.h
+--- linux-2.4.20/include/asm-i386/highmem.h	2002-08-02 20:39:45.000000000 -0400
++++ linux/include/asm-i386/highmem.h	2002-12-11 02:34:47.000000000 -0500
+@@ -88,6 +88,7 @@
+ 	enum fixed_addresses idx;
+ 	unsigned long vaddr;
+ 
++	preempt_disable();
+ 	if (page < highmem_start_page)
+ 		return page_address(page);
+ 
+@@ -109,8 +110,10 @@
+ 	unsigned long vaddr = (unsigned long) kvaddr;
+ 	enum fixed_addresses idx = type + KM_TYPE_NR*smp_processor_id();
+ 
+-	if (vaddr < FIXADDR_START) // FIXME
++	if (vaddr < FIXADDR_START) { // FIXME
++		preempt_enable();
+ 		return;
++	}
+ 
+ 	if (vaddr != __fix_to_virt(FIX_KMAP_BEGIN+idx))
+ 		out_of_line_bug();
+@@ -122,6 +125,8 @@
+ 	pte_clear(kmap_pte-idx);
+ 	__flush_tlb_one(vaddr);
+ #endif
++
++	preempt_enable();
+ }
+ 
+ #endif /* __KERNEL__ */
+diff -urN linux-2.4.20/include/asm-i386/hw_irq.h linux/include/asm-i386/hw_irq.h
+--- linux-2.4.20/include/asm-i386/hw_irq.h	2001-11-22 14:46:18.000000000 -0500
++++ linux/include/asm-i386/hw_irq.h	2002-12-11 02:34:47.000000000 -0500
+@@ -95,6 +95,18 @@
+ #define __STR(x) #x
+ #define STR(x) __STR(x)
+ 
++#define GET_CURRENT \
++	"movl %esp, %ebx\n\t" \
++	"andl $-8192, %ebx\n\t"
++
++#ifdef CONFIG_PREEMPT
++#define BUMP_LOCK_COUNT \
++	GET_CURRENT \
++	"incl 4(%ebx)\n\t"
++#else
++#define BUMP_LOCK_COUNT
++#endif
++
+ #define SAVE_ALL \
+ 	"cld\n\t" \
+ 	"pushl %es\n\t" \
+@@ -108,15 +120,12 @@
+ 	"pushl %ebx\n\t" \
+ 	"movl $" STR(__KERNEL_DS) ",%edx\n\t" \
+ 	"movl %edx,%ds\n\t" \
+-	"movl %edx,%es\n\t"
++	"movl %edx,%es\n\t" \
++	BUMP_LOCK_COUNT
+ 
+ #define IRQ_NAME2(nr) nr##_interrupt(void)
+ #define IRQ_NAME(nr) IRQ_NAME2(IRQ##nr)
+ 
+-#define GET_CURRENT \
+-	"movl %esp, %ebx\n\t" \
+-	"andl $-8192, %ebx\n\t"
+-
+ /*
+  *	SMP has a few special interrupts for IPI messages
+  */
+diff -urN linux-2.4.20/include/asm-i386/i387.h linux/include/asm-i386/i387.h
+--- linux-2.4.20/include/asm-i386/i387.h	2002-08-02 20:39:45.000000000 -0400
++++ linux/include/asm-i386/i387.h	2002-12-11 02:34:47.000000000 -0500
+@@ -12,6 +12,7 @@
+ #define __ASM_I386_I387_H
+ 
+ #include <linux/sched.h>
++#include <linux/spinlock.h>
+ #include <asm/processor.h>
+ #include <asm/sigcontext.h>
+ #include <asm/user.h>
+@@ -24,7 +25,7 @@
+ extern void restore_fpu( struct task_struct *tsk );
+ 
+ extern void kernel_fpu_begin(void);
+-#define kernel_fpu_end() stts()
++#define kernel_fpu_end() do { stts(); preempt_enable(); } while(0)
+ 
+ 
+ #define unlazy_fpu( tsk ) do { \
+diff -urN linux-2.4.20/include/asm-i386/pgalloc.h linux/include/asm-i386/pgalloc.h
+--- linux-2.4.20/include/asm-i386/pgalloc.h	2002-08-02 20:39:45.000000000 -0400
++++ linux/include/asm-i386/pgalloc.h	2002-12-11 02:34:47.000000000 -0500
+@@ -75,20 +75,26 @@
+ {
+ 	unsigned long *ret;
+ 
++	preempt_disable();
+ 	if ((ret = pgd_quicklist) != NULL) {
+ 		pgd_quicklist = (unsigned long *)(*ret);
+ 		ret[0] = 0;
+ 		pgtable_cache_size--;
+-	} else
++		preempt_enable();
++	} else {
++		preempt_enable();
+ 		ret = (unsigned long *)get_pgd_slow();
++	}
+ 	return (pgd_t *)ret;
+ }
+ 
+ static inline void free_pgd_fast(pgd_t *pgd)
+ {
++	preempt_disable();
+ 	*(unsigned long *)pgd = (unsigned long) pgd_quicklist;
+ 	pgd_quicklist = (unsigned long *) pgd;
+ 	pgtable_cache_size++;
++	preempt_enable();
+ }
+ 
+ static inline void free_pgd_slow(pgd_t *pgd)
+@@ -119,19 +125,23 @@
+ {
+ 	unsigned long *ret;
+ 
++	preempt_disable();
+ 	if ((ret = (unsigned long *)pte_quicklist) != NULL) {
+ 		pte_quicklist = (unsigned long *)(*ret);
+ 		ret[0] = ret[1];
+ 		pgtable_cache_size--;
+ 	}
++	preempt_enable();
+ 	return (pte_t *)ret;
+ }
+ 
+ static inline void pte_free_fast(pte_t *pte)
+ {
++	preempt_disable();
+ 	*(unsigned long *)pte = (unsigned long) pte_quicklist;
+ 	pte_quicklist = (unsigned long *) pte;
+ 	pgtable_cache_size++;
++	preempt_enable();
+ }
+ 
+ static __inline__ void pte_free_slow(pte_t *pte)
+diff -urN linux-2.4.20/include/asm-i386/smplock.h linux/include/asm-i386/smplock.h
+--- linux-2.4.20/include/asm-i386/smplock.h	2002-08-02 20:39:45.000000000 -0400
++++ linux/include/asm-i386/smplock.h	2002-12-11 02:34:47.000000000 -0500
+@@ -11,7 +11,15 @@
+ extern spinlock_cacheline_t kernel_flag_cacheline;  
+ #define kernel_flag kernel_flag_cacheline.lock      
+ 
++#ifdef CONFIG_SMP
+ #define kernel_locked()		spin_is_locked(&kernel_flag)
++#else
++#ifdef CONFIG_PREEMPT
++#define kernel_locked()		preempt_get_count()
++#else
++#define kernel_locked()		1
++#endif
++#endif
+ 
+ /*
+  * Release global kernel lock and global interrupt lock
+@@ -43,6 +51,11 @@
+  */
+ static __inline__ void lock_kernel(void)
+ {
++#ifdef CONFIG_PREEMPT
++	if (current->lock_depth == -1)
++		spin_lock(&kernel_flag);
++	++current->lock_depth;
++#else
+ #if 1
+ 	if (!++current->lock_depth)
+ 		spin_lock(&kernel_flag);
+@@ -55,6 +68,7 @@
+ 		:"=m" (__dummy_lock(&kernel_flag)),
+ 		 "=m" (current->lock_depth));
+ #endif
++#endif
+ }
+ 
+ static __inline__ void unlock_kernel(void)
+diff -urN linux-2.4.20/include/asm-i386/softirq.h linux/include/asm-i386/softirq.h
+--- linux-2.4.20/include/asm-i386/softirq.h	2002-08-02 20:39:45.000000000 -0400
++++ linux/include/asm-i386/softirq.h	2002-12-11 02:34:48.000000000 -0500
+@@ -5,9 +5,9 @@
+ #include <asm/hardirq.h>
+ 
+ #define __cpu_bh_enable(cpu) \
+-		do { barrier(); local_bh_count(cpu)--; } while (0)
++		do { barrier(); local_bh_count(cpu)--; preempt_enable(); } while (0)
+ #define cpu_bh_disable(cpu) \
+-		do { local_bh_count(cpu)++; barrier(); } while (0)
++		do { preempt_disable(); local_bh_count(cpu)++; barrier(); } while (0)
+ 
+ #define local_bh_disable()	cpu_bh_disable(smp_processor_id())
+ #define __local_bh_enable()	__cpu_bh_enable(smp_processor_id())
+@@ -22,7 +22,7 @@
+  * If you change the offsets in irq_stat then you have to
+  * update this code as well.
+  */
+-#define local_bh_enable()						\
++#define _local_bh_enable()						\
+ do {									\
+ 	unsigned int *ptr = &local_bh_count(smp_processor_id());	\
+ 									\
+@@ -45,4 +45,6 @@
+ 		/* no registers clobbered */ );				\
+ } while (0)
+ 
++#define local_bh_enable() do { _local_bh_enable(); preempt_enable(); } while (0)
++
+ #endif	/* __ASM_SOFTIRQ_H */
+diff -urN linux-2.4.20/include/asm-i386/spinlock.h linux/include/asm-i386/spinlock.h
+--- linux-2.4.20/include/asm-i386/spinlock.h	2002-11-28 18:53:15.000000000 -0500
++++ linux/include/asm-i386/spinlock.h	2002-12-11 02:34:48.000000000 -0500
+@@ -77,7 +77,7 @@
+ 		:"=m" (lock->lock) : : "memory"
+ 
+ 
+-static inline void spin_unlock(spinlock_t *lock)
++static inline void _raw_spin_unlock(spinlock_t *lock)
+ {
+ #if SPINLOCK_DEBUG
+ 	if (lock->magic != SPINLOCK_MAGIC)
+@@ -97,7 +97,7 @@
+ 		:"=q" (oldval), "=m" (lock->lock) \
+ 		:"0" (oldval) : "memory"
+ 
+-static inline void spin_unlock(spinlock_t *lock)
++static inline void _raw_spin_unlock(spinlock_t *lock)
+ {
+ 	char oldval = 1;
+ #if SPINLOCK_DEBUG
+@@ -113,7 +113,7 @@
+ 
+ #endif
+ 
+-static inline int spin_trylock(spinlock_t *lock)
++static inline int _raw_spin_trylock(spinlock_t *lock)
+ {
+ 	char oldval;
+ 	__asm__ __volatile__(
+@@ -123,7 +123,7 @@
+ 	return oldval > 0;
+ }
+ 
+-static inline void spin_lock(spinlock_t *lock)
++static inline void _raw_spin_lock(spinlock_t *lock)
+ {
+ #if SPINLOCK_DEBUG
+ 	__label__ here;
+@@ -179,7 +179,7 @@
+  */
+ /* the spinlock helpers are in arch/i386/kernel/semaphore.c */
+ 
+-static inline void read_lock(rwlock_t *rw)
++static inline void _raw_read_lock(rwlock_t *rw)
+ {
+ #if SPINLOCK_DEBUG
+ 	if (rw->magic != RWLOCK_MAGIC)
+@@ -188,7 +188,7 @@
+ 	__build_read_lock(rw, "__read_lock_failed");
+ }
+ 
+-static inline void write_lock(rwlock_t *rw)
++static inline void _raw_write_lock(rwlock_t *rw)
+ {
+ #if SPINLOCK_DEBUG
+ 	if (rw->magic != RWLOCK_MAGIC)
+@@ -197,10 +197,10 @@
+ 	__build_write_lock(rw, "__write_lock_failed");
+ }
+ 
+-#define read_unlock(rw)		asm volatile("lock ; incl %0" :"=m" ((rw)->lock) : : "memory")
+-#define write_unlock(rw)	asm volatile("lock ; addl $" RW_LOCK_BIAS_STR ",%0":"=m" ((rw)->lock) : : "memory")
++#define _raw_read_unlock(rw)		asm volatile("lock ; incl %0" :"=m" ((rw)->lock) : : "memory")
++#define _raw_write_unlock(rw)	asm volatile("lock ; addl $" RW_LOCK_BIAS_STR ",%0":"=m" ((rw)->lock) : : "memory")
+ 
+-static inline int write_trylock(rwlock_t *lock)
++static inline int _raw_write_trylock(rwlock_t *lock)
+ {
+ 	atomic_t *count = (atomic_t *)lock;
+ 	if (atomic_sub_and_test(RW_LOCK_BIAS, count))
+diff -urN linux-2.4.20/include/asm-i386/system.h linux/include/asm-i386/system.h
+--- linux-2.4.20/include/asm-i386/system.h	2002-11-28 18:53:15.000000000 -0500
++++ linux/include/asm-i386/system.h	2002-12-11 02:34:48.000000000 -0500
+@@ -322,6 +322,13 @@
+ /* used in the idle loop; sti takes one instruction cycle to complete */
+ #define safe_halt()		__asm__ __volatile__("sti; hlt": : :"memory")
+ 
++#define irqs_disabled()			\
++({					\
++	unsigned long flags;		\
++	__save_flags(flags);		\
++	!(flags & (1<<9));		\
++})
++
+ /* For spinlocks etc */
+ #define local_irq_save(x)	__asm__ __volatile__("pushfl ; popl %0 ; cli":"=g" (x): /* no input */ :"memory")
+ #define local_irq_restore(x)	__restore_flags(x)
+diff -urN linux-2.4.20/include/asm-mips/smplock.h linux/include/asm-mips/smplock.h
+--- linux-2.4.20/include/asm-mips/smplock.h	2002-08-02 20:39:45.000000000 -0400
++++ linux/include/asm-mips/smplock.h	2002-12-11 02:34:48.000000000 -0500
+@@ -5,12 +5,21 @@
+  *
+  * Default SMP lock implementation
+  */
++#include <linux/config.h>
+ #include <linux/interrupt.h>
+ #include <linux/spinlock.h>
+ 
+ extern spinlock_t kernel_flag;
+ 
++#ifdef CONFIG_SMP
+ #define kernel_locked()		spin_is_locked(&kernel_flag)
++#else
++#ifdef CONFIG_PREEMPT
++#define kernel_locked()         preempt_get_count()
++#else
++#define kernel_locked()         1
++#endif
++#endif
+ 
+ /*
+  * Release global kernel lock and global interrupt lock
+@@ -42,8 +51,14 @@
+  */
+ extern __inline__ void lock_kernel(void)
+ {
++#ifdef CONFIG_PREEMPT
++	if (current->lock_depth == -1)
++		spin_lock(&kernel_flag);
++	++current->lock_depth;
++#else
+ 	if (!++current->lock_depth)
+ 		spin_lock(&kernel_flag);
++#endif
+ }
+ 
+ extern __inline__ void unlock_kernel(void)
+diff -urN linux-2.4.20/include/asm-mips/softirq.h linux/include/asm-mips/softirq.h
+--- linux-2.4.20/include/asm-mips/softirq.h	2002-11-28 18:53:15.000000000 -0500
++++ linux/include/asm-mips/softirq.h	2002-12-11 02:34:48.000000000 -0500
+@@ -15,6 +15,7 @@
+ 
+ static inline void cpu_bh_disable(int cpu)
+ {
++	preempt_disable();
+ 	local_bh_count(cpu)++;
+ 	barrier();
+ }
+@@ -23,6 +24,7 @@
+ {
+ 	barrier();
+ 	local_bh_count(cpu)--;
++	preempt_enable();
+ }
+ 
+ 
+@@ -36,6 +38,7 @@
+ 	cpu = smp_processor_id();				\
+ 	if (!--local_bh_count(cpu) && softirq_pending(cpu))	\
+ 		do_softirq();					\
++	preempt_enable();                                       \
+ } while (0)
+ 
+ #define in_softirq() (local_bh_count(smp_processor_id()) != 0)
+diff -urN linux-2.4.20/include/asm-mips/system.h linux/include/asm-mips/system.h
+--- linux-2.4.20/include/asm-mips/system.h	2002-11-28 18:53:15.000000000 -0500
++++ linux/include/asm-mips/system.h	2002-12-11 02:34:48.000000000 -0500
+@@ -322,4 +322,18 @@
+ #define die_if_kernel(msg, regs)					\
+ 	__die_if_kernel(msg, regs, __FILE__ ":", __FUNCTION__, __LINE__)
+ 
++extern __inline__ int intr_on(void)
++{
++	unsigned long flags;
++	save_flags(flags);
++	return flags & 1;
++}
++
++extern __inline__ int intr_off(void)
++{
++	return ! intr_on();
++}
++
++#define irqs_disabled()	intr_off()
++
+ #endif /* _ASM_SYSTEM_H */
+diff -urN linux-2.4.20/include/asm-ppc/dma.h linux/include/asm-ppc/dma.h
+--- linux-2.4.20/include/asm-ppc/dma.h	2001-05-21 18:02:06.000000000 -0400
++++ linux/include/asm-ppc/dma.h	2002-12-11 02:34:48.000000000 -0500
+@@ -14,6 +14,7 @@
+ #include <linux/config.h>
+ #include <asm/io.h>
+ #include <linux/spinlock.h>
++#include <linux/sched.h>
+ #include <asm/system.h>
+ 
+ /*
+diff -urN linux-2.4.20/include/asm-ppc/hardirq.h linux/include/asm-ppc/hardirq.h
+--- linux-2.4.20/include/asm-ppc/hardirq.h	2002-11-28 18:53:15.000000000 -0500
++++ linux/include/asm-ppc/hardirq.h	2002-12-11 02:34:48.000000000 -0500
+@@ -48,6 +48,7 @@
+ #define hardirq_exit(cpu)	(local_irq_count(cpu)--)
+ 
+ #define synchronize_irq()	do { } while (0)
++#define release_irqlock(cpu)	do { } while (0)
+ 
+ #else /* CONFIG_SMP */
+ 
+diff -urN linux-2.4.20/include/asm-ppc/highmem.h linux/include/asm-ppc/highmem.h
+--- linux-2.4.20/include/asm-ppc/highmem.h	2001-07-02 17:34:57.000000000 -0400
++++ linux/include/asm-ppc/highmem.h	2002-12-11 02:34:48.000000000 -0500
+@@ -84,6 +84,7 @@
+ 	unsigned int idx;
+ 	unsigned long vaddr;
+ 
++	preempt_disable();
+ 	if (page < highmem_start_page)
+ 		return page_address(page);
+ 
+@@ -105,8 +106,10 @@
+ 	unsigned long vaddr = (unsigned long) kvaddr;
+ 	unsigned int idx = type + KM_TYPE_NR*smp_processor_id();
+ 
+-	if (vaddr < KMAP_FIX_BEGIN) // FIXME
++	if (vaddr < KMAP_FIX_BEGIN) { // FIXME
++		preempt_enable();
+ 		return;
++	}
+ 
+ 	if (vaddr != KMAP_FIX_BEGIN + idx * PAGE_SIZE)
+ 		BUG();
+@@ -118,6 +121,7 @@
+ 	pte_clear(kmap_pte+idx);
+ 	flush_tlb_page(0, vaddr);
+ #endif
++	preempt_enable();
+ }
+ 
+ #endif /* __KERNEL__ */
+diff -urN linux-2.4.20/include/asm-ppc/hw_irq.h linux/include/asm-ppc/hw_irq.h
+--- linux-2.4.20/include/asm-ppc/hw_irq.h	2002-11-28 18:53:15.000000000 -0500
++++ linux/include/asm-ppc/hw_irq.h	2002-12-11 02:34:48.000000000 -0500
+@@ -22,6 +22,12 @@
+ #define __save_flags(flags) __save_flags_ptr((unsigned long *)&flags)
+ #define __save_and_cli(flags) ({__save_flags(flags);__cli();})
+ 
++#define mfmsr()		({unsigned int rval; \
++			asm volatile("mfmsr %0" : "=r" (rval)); rval;})
++#define mtmsr(v)	asm volatile("mtmsr %0" : : "r" (v))
++
++#define irqs_disabled()	((mfmsr() & MSR_EE) == 0)
++
+ extern void do_lost_interrupts(unsigned long);
+ 
+ #define mask_irq(irq) ({if (irq_desc[irq].handler && irq_desc[irq].handler->disable) irq_desc[irq].handler->disable(irq);})
+diff -urN linux-2.4.20/include/asm-ppc/mmu_context.h linux/include/asm-ppc/mmu_context.h
+--- linux-2.4.20/include/asm-ppc/mmu_context.h	2001-10-02 12:12:44.000000000 -0400
++++ linux/include/asm-ppc/mmu_context.h	2002-12-11 02:34:48.000000000 -0500
+@@ -158,6 +158,10 @@
+ static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next,
+ 			     struct task_struct *tsk, int cpu)
+ {
++#ifdef CONFIG_PREEMPT
++	if (preempt_get_count() == 0)
++		BUG();
++#endif
+ 	tsk->thread.pgdir = next->pgd;
+ 	get_mmu_context(next);
+ 	set_context(next->context, next->pgd);
+diff -urN linux-2.4.20/include/asm-ppc/pgalloc.h linux/include/asm-ppc/pgalloc.h
+--- linux-2.4.20/include/asm-ppc/pgalloc.h	2001-05-21 18:02:06.000000000 -0400
++++ linux/include/asm-ppc/pgalloc.h	2002-12-11 02:34:48.000000000 -0500
+@@ -68,20 +68,25 @@
+ {
+         unsigned long *ret;
+ 
++	preempt_disable();
+         if ((ret = pgd_quicklist) != NULL) {
+                 pgd_quicklist = (unsigned long *)(*ret);
+                 ret[0] = 0;
+                 pgtable_cache_size--;
++		preempt_enable();
+         } else
++		preempt_enable();
+                 ret = (unsigned long *)get_pgd_slow();
+         return (pgd_t *)ret;
+ }
+ 
+ extern __inline__ void free_pgd_fast(pgd_t *pgd)
+ {
++	preempt_disable();
+         *(unsigned long **)pgd = pgd_quicklist;
+         pgd_quicklist = (unsigned long *) pgd;
+         pgtable_cache_size++;
++	preempt_enable();
+ }
+ 
+ extern __inline__ void free_pgd_slow(pgd_t *pgd)
+@@ -120,19 +125,23 @@
+ {
+         unsigned long *ret;
+ 
++	preempt_disable();
+         if ((ret = pte_quicklist) != NULL) {
+                 pte_quicklist = (unsigned long *)(*ret);
+                 ret[0] = 0;
+                 pgtable_cache_size--;
+ 	}
++	preempt_enable();
+         return (pte_t *)ret;
+ }
+ 
+ extern __inline__ void pte_free_fast(pte_t *pte)
+ {
++	preempt_disable();
+         *(unsigned long **)pte = pte_quicklist;
+         pte_quicklist = (unsigned long *) pte;
+         pgtable_cache_size++;
++	preempt_enable();
+ }
+ 
+ extern __inline__ void pte_free_slow(pte_t *pte)
+diff -urN linux-2.4.20/include/asm-ppc/smplock.h linux/include/asm-ppc/smplock.h
+--- linux-2.4.20/include/asm-ppc/smplock.h	2001-11-02 20:43:54.000000000 -0500
++++ linux/include/asm-ppc/smplock.h	2002-12-11 02:34:48.000000000 -0500
+@@ -15,7 +15,15 @@
+ 
+ extern spinlock_t kernel_flag;
+ 
++#ifdef CONFIG_SMP
+ #define kernel_locked()		spin_is_locked(&kernel_flag)
++#else
++#ifdef CONFIG_PREEMPT
++#define kernel_locked()		preempt_get_count()
++#else
++#define kernel_locked()		1
++#endif
++#endif
+ 
+ /*
+  * Release global kernel lock and global interrupt lock
+@@ -47,8 +55,14 @@
+  */
+ static __inline__ void lock_kernel(void)
+ {
++#ifdef CONFIG_PREEMPT
++	if (current->lock_depth == -1)
++		spin_lock(&kernel_flag);
++	++current->lock_depth;
++#else
+ 	if (!++current->lock_depth)
+ 		spin_lock(&kernel_flag);
++#endif
+ }
+ 
+ static __inline__ void unlock_kernel(void)
+diff -urN linux-2.4.20/include/asm-ppc/softirq.h linux/include/asm-ppc/softirq.h
+--- linux-2.4.20/include/asm-ppc/softirq.h	2001-09-08 15:02:31.000000000 -0400
++++ linux/include/asm-ppc/softirq.h	2002-12-11 02:34:48.000000000 -0500
+@@ -10,6 +10,7 @@
+ 
+ #define local_bh_disable()			\
+ do {						\
++	preempt_disable();			\
+ 	local_bh_count(smp_processor_id())++;	\
+ 	barrier();				\
+ } while (0)
+@@ -18,9 +19,10 @@
+ do {						\
+ 	barrier();				\
+ 	local_bh_count(smp_processor_id())--;	\
++	preempt_enable();			\
+ } while (0)
+ 
+-#define local_bh_enable()				\
++#define _local_bh_enable()				\
+ do {							\
+ 	if (!--local_bh_count(smp_processor_id())	\
+ 	    && softirq_pending(smp_processor_id())) {	\
+@@ -28,6 +30,12 @@
+ 	}						\
+ } while (0)
+ 
++#define local_bh_enable()			\
++do {						\
++	_local_bh_enable();			\
++	preempt_enable();			\
++} while (0)
++
+ #define in_softirq() (local_bh_count(smp_processor_id()) != 0)
+ 
+ #endif	/* __ASM_SOFTIRQ_H */
+diff -urN linux-2.4.20/include/asm-sh/hardirq.h linux/include/asm-sh/hardirq.h
+--- linux-2.4.20/include/asm-sh/hardirq.h	2001-09-08 15:29:09.000000000 -0400
++++ linux/include/asm-sh/hardirq.h	2002-12-11 02:34:48.000000000 -0500
+@@ -34,6 +34,8 @@
+ 
+ #define synchronize_irq()	barrier()
+ 
++#define release_irqlock(cpu)	do { } while (0)
++
+ #else
+ 
+ #error Super-H SMP is not available
+diff -urN linux-2.4.20/include/asm-sh/smplock.h linux/include/asm-sh/smplock.h
+--- linux-2.4.20/include/asm-sh/smplock.h	2001-09-08 15:29:09.000000000 -0400
++++ linux/include/asm-sh/smplock.h	2002-12-11 02:34:48.000000000 -0500
+@@ -9,15 +9,88 @@
+ 
+ #include <linux/config.h>
+ 
+-#ifndef CONFIG_SMP
+-
++#if !defined(CONFIG_SMP) && !defined(CONFIG_PREEMPT)
++/*
++ * Should never happen, since linux/smp_lock.h catches this case;
++ * but in case this file is included directly with neither SMP nor
++ * PREEMPT configuration, provide same dummys as linux/smp_lock.h
++ */
+ #define lock_kernel()				do { } while(0)
+ #define unlock_kernel()				do { } while(0)
+-#define release_kernel_lock(task, cpu, depth)	((depth) = 1)
+-#define reacquire_kernel_lock(task, cpu, depth)	do { } while(0)
++#define release_kernel_lock(task, cpu)		do { } while(0)
++#define reacquire_kernel_lock(task)		do { } while(0)
++#define kernel_locked()		1
++
++#else /* CONFIG_SMP || CONFIG_PREEMPT */
++
++#if CONFIG_SMP
++#error "We do not support SMP on SH yet"
++#endif
++/*
++ * Default SMP lock implementation (i.e. the i386 version)
++ */
++
++#include <linux/interrupt.h>
++#include <linux/spinlock.h>
++
++extern spinlock_t kernel_flag;
++#define lock_bkl() spin_lock(&kernel_flag)
++#define unlock_bkl() spin_unlock(&kernel_flag)
+ 
++#ifdef CONFIG_SMP
++#define kernel_locked()		spin_is_locked(&kernel_flag)
++#elif  CONFIG_PREEMPT
++#define kernel_locked()		preempt_get_count()
++#else  /* neither */
++#define kernel_locked()		1
++#endif
++
++/*
++ * Release global kernel lock and global interrupt lock
++ */
++#define release_kernel_lock(task, cpu) \
++do { \
++	if (task->lock_depth >= 0) \
++		spin_unlock(&kernel_flag); \
++	release_irqlock(cpu); \
++	__sti(); \
++} while (0)
++
++/*
++ * Re-acquire the kernel lock
++ */
++#define reacquire_kernel_lock(task) \
++do { \
++	if (task->lock_depth >= 0) \
++		spin_lock(&kernel_flag); \
++} while (0)
++
++/*
++ * Getting the big kernel lock.
++ *
++ * This cannot happen asynchronously,
++ * so we only need to worry about other
++ * CPU's.
++ */
++static __inline__ void lock_kernel(void)
++{
++#ifdef CONFIG_PREEMPT
++	if (current->lock_depth == -1)
++		spin_lock(&kernel_flag);
++	++current->lock_depth;
+ #else
+-#error "We do not support SMP on SH"
+-#endif /* CONFIG_SMP */
++	if (!++current->lock_depth)
++		spin_lock(&kernel_flag);
++#endif
++}
++
++static __inline__ void unlock_kernel(void)
++{
++	if (current->lock_depth < 0)
++		BUG();
++	if (--current->lock_depth < 0)
++		spin_unlock(&kernel_flag);
++}
++#endif /* CONFIG_SMP || CONFIG_PREEMPT */
+ 
+ #endif /* __ASM_SH_SMPLOCK_H */
+diff -urN linux-2.4.20/include/asm-sh/softirq.h linux/include/asm-sh/softirq.h
+--- linux-2.4.20/include/asm-sh/softirq.h	2001-09-08 15:29:09.000000000 -0400
++++ linux/include/asm-sh/softirq.h	2002-12-11 02:34:48.000000000 -0500
+@@ -6,6 +6,7 @@
+ 
+ #define local_bh_disable()			\
+ do {						\
++	preempt_disable();			\
+ 	local_bh_count(smp_processor_id())++;	\
+ 	barrier();				\
+ } while (0)
+@@ -14,6 +15,7 @@
+ do {						\
+ 	barrier();				\
+ 	local_bh_count(smp_processor_id())--;	\
++	preempt_enable();			\
+ } while (0)
+ 
+ #define local_bh_enable()				\
+@@ -23,6 +25,7 @@
+ 	    && softirq_pending(smp_processor_id())) {	\
+ 		do_softirq();				\
+ 	}						\
++	preempt_enable();				\
+ } while (0)
+ 
+ #define in_softirq() (local_bh_count(smp_processor_id()) != 0)
+diff -urN linux-2.4.20/include/asm-sh/system.h linux/include/asm-sh/system.h
+--- linux-2.4.20/include/asm-sh/system.h	2001-09-08 15:29:09.000000000 -0400
++++ linux/include/asm-sh/system.h	2002-12-11 02:34:48.000000000 -0500
+@@ -285,4 +285,17 @@
+ void disable_hlt(void);
+ void enable_hlt(void);
+ 
++/*
++ * irqs_disabled - are interrupts disabled?
++ */
++static inline int irqs_disabled(void) 
++{
++	unsigned long flags;
++
++	__save_flags(flags);
++	if (flags & 0x000000f0)
++		return 1;
++	return 0;
++}
++
+ #endif
+diff -urN linux-2.4.20/include/linux/brlock.h linux/include/linux/brlock.h
+--- linux-2.4.20/include/linux/brlock.h	2002-11-28 18:53:15.000000000 -0500
++++ linux/include/linux/brlock.h	2002-12-11 02:34:48.000000000 -0500
+@@ -171,11 +171,11 @@
+ }
+ 
+ #else
+-# define br_read_lock(idx)	((void)(idx))
+-# define br_read_unlock(idx)	((void)(idx))
+-# define br_write_lock(idx)	((void)(idx))
+-# define br_write_unlock(idx)	((void)(idx))
+-#endif
++# define br_read_lock(idx)	({ (void)(idx); preempt_disable(); })
++# define br_read_unlock(idx)	({ (void)(idx); preempt_enable(); })
++# define br_write_lock(idx)	({ (void)(idx); preempt_disable(); })
++# define br_write_unlock(idx)	({ (void)(idx); preempt_enable(); })
++#endif	/* CONFIG_SMP */
+ 
+ /*
+  * Now enumerate all of the possible sw/hw IRQ protected
+diff -urN linux-2.4.20/include/linux/dcache.h linux/include/linux/dcache.h
+--- linux-2.4.20/include/linux/dcache.h	2002-11-28 18:53:15.000000000 -0500
++++ linux/include/linux/dcache.h	2002-12-11 02:34:48.000000000 -0500
+@@ -127,31 +127,6 @@
+ 
+ extern spinlock_t dcache_lock;
+ 
+-/**
+- * d_drop - drop a dentry
+- * @dentry: dentry to drop
+- *
+- * d_drop() unhashes the entry from the parent
+- * dentry hashes, so that it won't be found through
+- * a VFS lookup any more. Note that this is different
+- * from deleting the dentry - d_delete will try to
+- * mark the dentry negative if possible, giving a
+- * successful _negative_ lookup, while d_drop will
+- * just make the cache lookup fail.
+- *
+- * d_drop() is used mainly for stuff that wants
+- * to invalidate a dentry for some reason (NFS
+- * timeouts or autofs deletes).
+- */
+-
+-static __inline__ void d_drop(struct dentry * dentry)
+-{
+-	spin_lock(&dcache_lock);
+-	list_del(&dentry->d_hash);
+-	INIT_LIST_HEAD(&dentry->d_hash);
+-	spin_unlock(&dcache_lock);
+-}
+-
+ static __inline__ int dname_external(struct dentry *d)
+ {
+ 	return d->d_name.name != d->d_iname; 
+@@ -276,3 +251,34 @@
+ #endif /* __KERNEL__ */
+ 
+ #endif	/* __LINUX_DCACHE_H */
++
++#if !defined(__LINUX_DCACHE_H_INLINES) && defined(_TASK_STRUCT_DEFINED)
++#define __LINUX_DCACHE_H_INLINES
++
++#ifdef __KERNEL__
++/**
++ * d_drop - drop a dentry
++ * @dentry: dentry to drop
++ *
++ * d_drop() unhashes the entry from the parent
++ * dentry hashes, so that it won't be found through
++ * a VFS lookup any more. Note that this is different
++ * from deleting the dentry - d_delete will try to
++ * mark the dentry negative if possible, giving a
++ * successful _negative_ lookup, while d_drop will
++ * just make the cache lookup fail.
++ *
++ * d_drop() is used mainly for stuff that wants
++ * to invalidate a dentry for some reason (NFS
++ * timeouts or autofs deletes).
++ */
++
++static __inline__ void d_drop(struct dentry * dentry)
++{
++	spin_lock(&dcache_lock);
++	list_del(&dentry->d_hash);
++	INIT_LIST_HEAD(&dentry->d_hash);
++	spin_unlock(&dcache_lock);
++}
++#endif
++#endif
+diff -urN linux-2.4.20/include/linux/fs_struct.h linux/include/linux/fs_struct.h
+--- linux-2.4.20/include/linux/fs_struct.h	2001-07-13 18:10:44.000000000 -0400
++++ linux/include/linux/fs_struct.h	2002-12-11 02:34:48.000000000 -0500
+@@ -20,6 +20,15 @@
+ extern void exit_fs(struct task_struct *);
+ extern void set_fs_altroot(void);
+ 
++struct fs_struct *copy_fs_struct(struct fs_struct *old);
++void put_fs_struct(struct fs_struct *fs);
++
++#endif
++#endif
++
++#if !defined(_LINUX_FS_STRUCT_H_INLINES) && defined(_TASK_STRUCT_DEFINED)
++#define _LINUX_FS_STRUCT_H_INLINES
++#ifdef __KERNEL__
+ /*
+  * Replace the fs->{rootmnt,root} with {mnt,dentry}. Put the old values.
+  * It can block. Requires the big lock held.
+@@ -65,9 +74,5 @@
+ 		mntput(old_pwdmnt);
+ 	}
+ }
+-
+-struct fs_struct *copy_fs_struct(struct fs_struct *old);
+-void put_fs_struct(struct fs_struct *fs);
+-
+ #endif
+ #endif
+diff -urN linux-2.4.20/include/linux/sched.h linux/include/linux/sched.h
+--- linux-2.4.20/include/linux/sched.h	2002-11-28 18:53:15.000000000 -0500
++++ linux/include/linux/sched.h	2002-12-11 02:34:48.000000000 -0500
+@@ -91,6 +91,7 @@
+ #define TASK_UNINTERRUPTIBLE	2
+ #define TASK_ZOMBIE		4
+ #define TASK_STOPPED		8
++#define PREEMPT_ACTIVE		0x4000000
+ 
+ #define __set_task_state(tsk, state_value)		\
+ 	do { (tsk)->state = (state_value); } while (0)
+@@ -157,6 +158,9 @@
+ #define	MAX_SCHEDULE_TIMEOUT	LONG_MAX
+ extern signed long FASTCALL(schedule_timeout(signed long timeout));
+ asmlinkage void schedule(void);
++#ifdef CONFIG_PREEMPT
++asmlinkage void preempt_schedule(void);
++#endif
+ 
+ extern int schedule_task(struct tq_struct *task);
+ extern void flush_scheduled_tasks(void);
+@@ -289,7 +293,7 @@
+ 	 * offsets of these are hardcoded elsewhere - touch with care
+ 	 */
+ 	volatile long state;	/* -1 unrunnable, 0 runnable, >0 stopped */
+-	unsigned long flags;	/* per process flags, defined below */
++	int preempt_count;	/* 0 => preemptable, <0 => BUG */
+ 	int sigpending;
+ 	mm_segment_t addr_limit;	/* thread address space:
+ 					 	0-0xBFFFFFFF for user-thead
+@@ -331,6 +335,7 @@
+ 	struct mm_struct *active_mm;
+ 	struct list_head local_pages;
+ 	unsigned int allocation_order, nr_local_pages;
++	unsigned long flags;
+ 
+ /* task state */
+ 	struct linux_binfmt *binfmt;
+@@ -955,5 +960,10 @@
+ 		__cond_resched();
+ }
+ 
++#define _TASK_STRUCT_DEFINED
++#include <linux/dcache.h>
++#include <linux/tqueue.h>
++#include <linux/fs_struct.h>
++
+ #endif /* __KERNEL__ */
+ #endif
+diff -urN linux-2.4.20/include/linux/smp_lock.h linux/include/linux/smp_lock.h
+--- linux-2.4.20/include/linux/smp_lock.h	2001-11-22 14:46:27.000000000 -0500
++++ linux/include/linux/smp_lock.h	2002-12-11 02:34:48.000000000 -0500
+@@ -3,7 +3,7 @@
+ 
+ #include <linux/config.h>
+ 
+-#ifndef CONFIG_SMP
++#if !defined(CONFIG_SMP) && !defined(CONFIG_PREEMPT)
+ 
+ #define lock_kernel()				do { } while(0)
+ #define unlock_kernel()				do { } while(0)
+diff -urN linux-2.4.20/include/linux/spinlock.h linux/include/linux/spinlock.h
+--- linux-2.4.20/include/linux/spinlock.h	2002-11-28 18:53:15.000000000 -0500
++++ linux/include/linux/spinlock.h	2002-12-11 02:34:48.000000000 -0500
+@@ -2,6 +2,7 @@
+ #define __LINUX_SPINLOCK_H
+ 
+ #include <linux/config.h>
++#include <linux/compiler.h>
+ 
+ /*
+  * These are the generic versions of the spinlocks and read-write
+@@ -62,8 +63,10 @@
+ 
+ #if (DEBUG_SPINLOCKS < 1)
+ 
++#ifndef CONFIG_PREEMPT
+ #define atomic_dec_and_lock(atomic,lock) atomic_dec_and_test(atomic)
+ #define ATOMIC_DEC_AND_LOCK
++#endif
+ 
+ /*
+  * Your basic spinlocks, allowing only a single CPU anywhere
+@@ -80,11 +83,11 @@
+ #endif
+ 
+ #define spin_lock_init(lock)	do { } while(0)
+-#define spin_lock(lock)		(void)(lock) /* Not "unused variable". */
++#define _raw_spin_lock(lock)	(void)(lock) /* Not "unused variable". */
+ #define spin_is_locked(lock)	(0)
+-#define spin_trylock(lock)	({1; })
++#define _raw_spin_trylock(lock)	({1; })
+ #define spin_unlock_wait(lock)	do { } while(0)
+-#define spin_unlock(lock)	do { } while(0)
++#define _raw_spin_unlock(lock)	do { } while(0)
+ 
+ #elif (DEBUG_SPINLOCKS < 2)
+ 
+@@ -144,13 +147,78 @@
+ #endif
+ 
+ #define rwlock_init(lock)	do { } while(0)
+-#define read_lock(lock)		(void)(lock) /* Not "unused variable". */
+-#define read_unlock(lock)	do { } while(0)
+-#define write_lock(lock)	(void)(lock) /* Not "unused variable". */
+-#define write_unlock(lock)	do { } while(0)
++#define _raw_read_lock(lock)	(void)(lock) /* Not "unused variable". */
++#define _raw_read_unlock(lock)	do { } while(0)
++#define _raw_write_lock(lock)	(void)(lock) /* Not "unused variable". */
++#define _raw_write_unlock(lock)	do { } while(0)
+ 
+ #endif /* !SMP */
+ 
++#ifdef CONFIG_PREEMPT
++
++#define preempt_get_count()	(current->preempt_count)
++#define preempt_is_disabled()	(preempt_get_count() != 0)
++
++#define preempt_disable() \
++do { \
++	++current->preempt_count; \
++	barrier(); \
++} while (0)
++
++#define preempt_enable_no_resched() \
++do { \
++	--current->preempt_count; \
++	barrier(); \
++} while (0)
++
++#define preempt_enable() \
++do { \
++	--current->preempt_count; \
++	barrier(); \
++	if (unlikely(current->preempt_count < current->need_resched)) \
++		preempt_schedule(); \
++} while (0)
++
++#define spin_lock(lock)	\
++do { \
++	preempt_disable(); \
++	_raw_spin_lock(lock); \
++} while(0)
++
++#define spin_trylock(lock)	({preempt_disable(); _raw_spin_trylock(lock) ? \
++				1 : ({preempt_enable(); 0;});})
++#define spin_unlock(lock) \
++do { \
++	_raw_spin_unlock(lock); \
++	preempt_enable(); \
++} while (0)
++
++#define read_lock(lock)		({preempt_disable(); _raw_read_lock(lock);})
++#define read_unlock(lock)	({_raw_read_unlock(lock); preempt_enable();})
++#define write_lock(lock)	({preempt_disable(); _raw_write_lock(lock);})
++#define write_unlock(lock)	({_raw_write_unlock(lock); preempt_enable();})
++#define write_trylock(lock)	({preempt_disable();_raw_write_trylock(lock) ? \
++				1 : ({preempt_enable(); 0;});})
++
++#else
++
++#define preempt_get_count()	(0)
++#define preempt_is_disabled()	(1)
++#define preempt_disable()	do { } while (0)
++#define preempt_enable_no_resched()	do {} while(0)
++#define preempt_enable()	do { } while (0)
++
++#define spin_lock(lock)		_raw_spin_lock(lock)
++#define spin_trylock(lock)	_raw_spin_trylock(lock)
++#define spin_unlock(lock)	_raw_spin_unlock(lock)
++
++#define read_lock(lock)		_raw_read_lock(lock)
++#define read_unlock(lock)	_raw_read_unlock(lock)
++#define write_lock(lock)	_raw_write_lock(lock)
++#define write_unlock(lock)	_raw_write_unlock(lock)
++#define write_trylock(lock)	_raw_write_trylock(lock)
++#endif
++
+ /* "lock on reference count zero" */
+ #ifndef ATOMIC_DEC_AND_LOCK
+ #include <asm/atomic.h>
+diff -urN linux-2.4.20/include/linux/tqueue.h linux/include/linux/tqueue.h
+--- linux-2.4.20/include/linux/tqueue.h	2001-11-22 14:46:19.000000000 -0500
++++ linux/include/linux/tqueue.h	2002-12-11 02:34:48.000000000 -0500
+@@ -94,6 +94,22 @@
+ extern spinlock_t tqueue_lock;
+ 
+ /*
++ * Call all "bottom halfs" on a given list.
++ */
++
++extern void __run_task_queue(task_queue *list);
++
++static inline void run_task_queue(task_queue *list)
++{
++	if (TQ_ACTIVE(*list))
++		__run_task_queue(list);
++}
++
++#endif /* _LINUX_TQUEUE_H */
++
++#if !defined(_LINUX_TQUEUE_H_INLINES) && defined(_TASK_STRUCT_DEFINED)
++#define _LINUX_TQUEUE_H_INLINES
++/*
+  * Queue a task on a tq.  Return non-zero if it was successfully
+  * added.
+  */
+@@ -109,17 +125,4 @@
+ 	}
+ 	return ret;
+ }
+-
+-/*
+- * Call all "bottom halfs" on a given list.
+- */
+-
+-extern void __run_task_queue(task_queue *list);
+-
+-static inline void run_task_queue(task_queue *list)
+-{
+-	if (TQ_ACTIVE(*list))
+-		__run_task_queue(list);
+-}
+-
+-#endif /* _LINUX_TQUEUE_H */
++#endif
+diff -urN linux-2.4.20/kernel/exit.c linux/kernel/exit.c
+--- linux-2.4.20/kernel/exit.c	2002-11-28 18:53:15.000000000 -0500
++++ linux/kernel/exit.c	2002-12-11 02:34:48.000000000 -0500
+@@ -313,8 +313,8 @@
+ 		/* more a memory barrier than a real lock */
+ 		task_lock(tsk);
+ 		tsk->mm = NULL;
+-		task_unlock(tsk);
+ 		enter_lazy_tlb(mm, current, smp_processor_id());
++		task_unlock(tsk);
+ 		mmput(mm);
+ 	}
+ }
+@@ -435,6 +435,11 @@
+ 	tsk->flags |= PF_EXITING;
+ 	del_timer_sync(&tsk->real_timer);
+ 
++	if (unlikely(preempt_get_count()))
++		printk(KERN_INFO "note: %s[%d] exited with preempt_count %d\n",
++				current->comm, current->pid,
++				preempt_get_count());
++
+ fake_volatile:
+ #ifdef CONFIG_BSD_PROCESS_ACCT
+ 	acct_process(code);
+diff -urN linux-2.4.20/kernel/fork.c linux/kernel/fork.c
+--- linux-2.4.20/kernel/fork.c	2002-11-28 18:53:15.000000000 -0500
++++ linux/kernel/fork.c	2002-12-11 02:34:48.000000000 -0500
+@@ -629,6 +629,13 @@
+ 	if (p->binfmt && p->binfmt->module)
+ 		__MOD_INC_USE_COUNT(p->binfmt->module);
+ 
++#ifdef CONFIG_PREEMPT
++	/*
++	 * Continue with preemption disabled as part of the context
++	 * switch, so start with preempt_count set to 1.
++	 */
++	p->preempt_count = 1;
++#endif
+ 	p->did_exec = 0;
+ 	p->swappable = 0;
+ 	p->state = TASK_UNINTERRUPTIBLE;
+diff -urN linux-2.4.20/kernel/ksyms.c linux/kernel/ksyms.c
+--- linux-2.4.20/kernel/ksyms.c	2002-11-28 18:53:15.000000000 -0500
++++ linux/kernel/ksyms.c	2002-12-11 02:34:48.000000000 -0500
+@@ -450,6 +450,9 @@
+ EXPORT_SYMBOL(interruptible_sleep_on);
+ EXPORT_SYMBOL(interruptible_sleep_on_timeout);
+ EXPORT_SYMBOL(schedule);
++#ifdef CONFIG_PREEMPT
++EXPORT_SYMBOL(preempt_schedule);
++#endif
+ EXPORT_SYMBOL(schedule_timeout);
+ EXPORT_SYMBOL(yield);
+ EXPORT_SYMBOL(__cond_resched);
+diff -urN linux-2.4.20/kernel/sched.c linux/kernel/sched.c
+--- linux-2.4.20/kernel/sched.c	2002-11-28 18:53:15.000000000 -0500
++++ linux/kernel/sched.c	2002-12-11 02:34:48.000000000 -0500
+@@ -489,7 +489,7 @@
+ 	task_lock(prev);
+ 	task_release_cpu(prev);
+ 	mb();
+-	if (prev->state == TASK_RUNNING)
++	if (task_on_runqueue(prev))
+ 		goto needs_resched;
+ 
+ out_unlock:
+@@ -519,7 +519,7 @@
+ 			goto out_unlock;
+ 
+ 		spin_lock_irqsave(&runqueue_lock, flags);
+-		if ((prev->state == TASK_RUNNING) && !task_has_cpu(prev))
++		if (task_on_runqueue(prev) && !task_has_cpu(prev))
+ 			reschedule_idle(prev);
+ 		spin_unlock_irqrestore(&runqueue_lock, flags);
+ 		goto out_unlock;
+@@ -532,6 +532,7 @@
+ asmlinkage void schedule_tail(struct task_struct *prev)
+ {
+ 	__schedule_tail(prev);
++	preempt_enable();
+ }
+ 
+ /*
+@@ -551,9 +552,10 @@
+ 	struct list_head *tmp;
+ 	int this_cpu, c;
+ 
+-
+ 	spin_lock_prefetch(&runqueue_lock);
+ 
++	preempt_disable();
++
+ 	BUG_ON(!current->active_mm);
+ need_resched_back:
+ 	prev = current;
+@@ -581,6 +583,14 @@
+ 			move_last_runqueue(prev);
+ 		}
+ 
++#ifdef CONFIG_PREEMPT
++	/*
++	 * entering from preempt_schedule, off a kernel preemption,
++	 * go straight to picking the next task.
++	 */
++	if (unlikely(preempt_get_count() & PREEMPT_ACTIVE))
++		goto treat_like_run;
++#endif
+ 	switch (prev->state) {
+ 		case TASK_INTERRUPTIBLE:
+ 			if (signal_pending(prev)) {
+@@ -591,6 +601,9 @@
+ 			del_from_runqueue(prev);
+ 		case TASK_RUNNING:;
+ 	}
++#ifdef CONFIG_PREEMPT
++	treat_like_run:
++#endif
+ 	prev->need_resched = 0;
+ 
+ 	/*
+@@ -699,9 +712,31 @@
+ 	reacquire_kernel_lock(current);
+ 	if (current->need_resched)
+ 		goto need_resched_back;
++	preempt_enable_no_resched();
+ 	return;
+ }
+ 
++#ifdef CONFIG_PREEMPT
++/*
++ * this is is the entry point to schedule() from in-kernel preemption
++ */
++asmlinkage void preempt_schedule(void)
++{
++	if (unlikely(irqs_disabled()))
++			return;
++
++need_resched:
++	current->preempt_count += PREEMPT_ACTIVE;
++	schedule();
++	current->preempt_count -= PREEMPT_ACTIVE;
++
++	/* we could miss a preemption opportunity between schedule and now */
++	barrier();
++	if (unlikely(current->need_resched))
++		goto need_resched;
++}
++#endif /* CONFIG_PREEMPT */
++
+ /*
+  * The core wakeup function.  Non-exclusive wakeups (nr_exclusive == 0) just wake everything
+  * up.  If it's an exclusive wakeup (nr_exclusive == small +ve number) then we wake all the
+@@ -1327,6 +1362,13 @@
+ 	sched_data->curr = current;
+ 	sched_data->last_schedule = get_cycles();
+ 	clear_bit(current->processor, &wait_init_idle);
++#ifdef CONFIG_PREEMPT
++	/*
++	 * fix up the preempt_count for non-CPU0 idle threads
++	 */
++	if (current->processor)
++		current->preempt_count = 0;
++#endif
+ }
+ 
+ extern void init_timervecs (void);
+diff -urN linux-2.4.20/lib/dec_and_lock.c linux/lib/dec_and_lock.c
+--- linux-2.4.20/lib/dec_and_lock.c	2001-10-03 12:11:26.000000000 -0400
++++ linux/lib/dec_and_lock.c	2002-12-11 02:34:48.000000000 -0500
+@@ -1,5 +1,6 @@
+ #include <linux/module.h>
+ #include <linux/spinlock.h>
++#include <linux/sched.h>
+ #include <asm/atomic.h>
+ 
+ /*
+diff -urN linux-2.4.20/MAINTAINERS linux/MAINTAINERS
+--- linux-2.4.20/MAINTAINERS	2002-11-28 18:53:08.000000000 -0500
++++ linux/MAINTAINERS	2002-12-11 02:34:48.000000000 -0500
+@@ -1310,6 +1310,14 @@
+ M:	mostrows@styx.uwaterloo.ca
+ S:	Maintained
+ 
++PREEMPTIBLE KERNEL
++P:	Robert M. Love
++M:	rml@tech9.net
++L:	linux-kernel@vger.kernel.org
++L:	kpreempt-tech@lists.sourceforge.net
++W:	http://tech9.net/rml/linux
++S:	Supported
++
+ PROMISE DC4030 CACHING DISK CONTROLLER DRIVER
+ P:	Peter Denison
+ M:	promise@pnd-pc.demon.co.uk
+diff -urN linux-2.4.20/mm/slab.c linux/mm/slab.c
+--- linux-2.4.20/mm/slab.c	2002-11-28 18:53:15.000000000 -0500
++++ linux/mm/slab.c	2002-12-11 02:34:48.000000000 -0500
+@@ -49,7 +49,8 @@
+  *  constructors and destructors are called without any locking.
+  *  Several members in kmem_cache_t and slab_t never change, they
+  *	are accessed without any locking.
+- *  The per-cpu arrays are never accessed from the wrong cpu, no locking.
++ *  The per-cpu arrays are never accessed from the wrong cpu, no locking,
++ *  	and local interrupts are disabled so slab code is preempt-safe.
+  *  The non-constant members are protected with a per-cache irq spinlock.
+  *
+  * Further notes from the original documentation:
+diff -urN linux-2.4.20/net/core/dev.c linux/net/core/dev.c
+--- linux-2.4.20/net/core/dev.c	2002-11-28 18:53:15.000000000 -0500
++++ linux/net/core/dev.c	2002-12-11 02:34:48.000000000 -0500
+@@ -1049,9 +1049,15 @@
+ 		int cpu = smp_processor_id();
+ 
+ 		if (dev->xmit_lock_owner != cpu) {
++			/*
++			 * The spin_lock effectivly does a preempt lock, but 
++			 * we are about to drop that...
++			 */
++			preempt_disable();
+ 			spin_unlock(&dev->queue_lock);
+ 			spin_lock(&dev->xmit_lock);
+ 			dev->xmit_lock_owner = cpu;
++			preempt_enable();
+ 
+ 			if (!netif_queue_stopped(dev)) {
+ 				if (netdev_nit)
+diff -urN linux-2.4.20/net/core/skbuff.c linux/net/core/skbuff.c
+--- linux-2.4.20/net/core/skbuff.c	2002-08-02 20:39:46.000000000 -0400
++++ linux/net/core/skbuff.c	2002-12-11 02:34:48.000000000 -0500
+@@ -111,33 +111,37 @@
+ 
+ static __inline__ struct sk_buff *skb_head_from_pool(void)
+ {
+-	struct sk_buff_head *list = &skb_head_pool[smp_processor_id()].list;
++	struct sk_buff_head *list;
++	struct sk_buff *skb = NULL;
++	unsigned long flags;
+ 
+-	if (skb_queue_len(list)) {
+-		struct sk_buff *skb;
+-		unsigned long flags;
++	local_irq_save(flags);
+ 
+-		local_irq_save(flags);
++	list = &skb_head_pool[smp_processor_id()].list;
++
++	if (skb_queue_len(list))
+ 		skb = __skb_dequeue(list);
+-		local_irq_restore(flags);
+-		return skb;
+-	}
+-	return NULL;
++
++	local_irq_restore(flags);
++	return skb;
+ }
+ 
+ static __inline__ void skb_head_to_pool(struct sk_buff *skb)
+ {
+-	struct sk_buff_head *list = &skb_head_pool[smp_processor_id()].list;
++	struct sk_buff_head *list;
++	unsigned long flags;
+ 
+-	if (skb_queue_len(list) < sysctl_hot_list_len) {
+-		unsigned long flags;
++	local_irq_save(flags);
++	list = &skb_head_pool[smp_processor_id()].list;
+ 
+-		local_irq_save(flags);
++	if (skb_queue_len(list) < sysctl_hot_list_len) {
+ 		__skb_queue_head(list, skb);
+ 		local_irq_restore(flags);
+ 
+ 		return;
+ 	}
++
++	local_irq_restore(flags);
+ 	kmem_cache_free(skbuff_head_cache, skb);
+ }
+ 
+diff -urN linux-2.4.20/net/socket.c linux/net/socket.c
+--- linux-2.4.20/net/socket.c	2002-11-28 18:53:16.000000000 -0500
++++ linux/net/socket.c	2002-12-11 02:34:48.000000000 -0500
+@@ -132,7 +132,7 @@
+ 
+ static struct net_proto_family *net_families[NPROTO];
+ 
+-#ifdef CONFIG_SMP
++#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT)
+ static atomic_t net_family_lockct = ATOMIC_INIT(0);
+ static spinlock_t net_family_lock = SPIN_LOCK_UNLOCKED;
+ 
+diff -urN linux-2.4.20/net/sunrpc/pmap_clnt.c linux/net/sunrpc/pmap_clnt.c
+--- linux-2.4.20/net/sunrpc/pmap_clnt.c	2002-08-02 20:39:46.000000000 -0400
++++ linux/net/sunrpc/pmap_clnt.c	2002-12-11 02:34:48.000000000 -0500
+@@ -12,6 +12,7 @@
+ #include <linux/config.h>
+ #include <linux/types.h>
+ #include <linux/socket.h>
++#include <linux/sched.h>
+ #include <linux/kernel.h>
+ #include <linux/errno.h>
+ #include <linux/uio.h>
