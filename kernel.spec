@@ -91,6 +91,8 @@ Patch32:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
 Patch40:	%{name}-flip.patch
 Patch41:	%{name}-flip-serial5.05.patch
 Patch42:	%{name}-serial-initialisation.patch
+#i2o patch from ftp://ftp.adaptec.com/raid/asr/unix/asr_linux_v242_drv.rpm 
+Patch43:	dpt_i2o-2.2.19.diff
 
 # in this place will be PLD patches
 
@@ -137,7 +139,6 @@ Provides:	%{name}-up = %{version}
 %ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(i2c) = %{i2c_version}
-Provides:	i2c-devel = %{i2c_version}
 Provides:       i2c = %{i2c_version}
 Provides:	bttv = %{bttv_version}
 %endif
@@ -196,7 +197,6 @@ Provides:	%{name} = %{version}
 %ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:       %{name}(i2c) = %{i2c_version}
-Provides:       i2c-devel = %{i2c_version}
 Provides:       i2c = %{i2c_version}
 Provides:	bttv = %{bttv_version}
 
@@ -243,7 +243,6 @@ Provides:	%{name} = %{version}
 %ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:       %{name}(i2c) = %{i2c_version}
-Provides:       i2c-devel = %{i2c_version}
 Provides:       i2c = %{i2c_version}
 Provides:	bttv = %{bttv_version}
 %endif
@@ -286,7 +285,6 @@ Provides:	%{name} = %{version}
 %ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:       %{name}(i2c) = %{i2c_version}
-Provides:       i2c-devel = %{i2c_version}
 Provides:       i2c = %{i2c_version}
 Provides:       bttv = %{bttv_version}
 %endif
@@ -527,6 +525,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 
 #%patch111 -p1
 %patch101 -p1
+%patch43 -p1
 
 %build
 BuildKernel() {
@@ -830,6 +829,7 @@ bzip2 -dc %{PATCH121} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ve
 
 #patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH111}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH43}
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
