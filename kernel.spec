@@ -366,7 +366,7 @@ Summary(pl):	Modu³y PCMCIA-CS
 Group:		Base/Kernel
 Group(pl):	Podstawowe/Kernel
 Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
-Requires:	%{name}-up = %{version}-%{release}
+Prereq:		%{name}-up = %{version}-%{release}
 
 %description pcmcia-cs
 PCMCIA-CS modules.
@@ -380,7 +380,7 @@ Summary(pl):	Modu³y PCMCIA-CS dla maszyn SMP
 Group:		Base/Kernel
 Group(pl):	Podstawowe/Kernel
 Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
-Requires:       %{name}-smp = %{version}-%{release}
+Prereq:		%{name}-smp = %{version}-%{release}
 
 %description pcmcia-cs-smp
 PCMCIA-CS modules for SMP kernel.
@@ -394,7 +394,7 @@ Summary(pl):	Sterowniki DRM
 Group:		Base/Kernel
 Group(pl):	Podstawowe/Kernel
 Provides:       %{name}-drm = %{drm_xfree_version}
-Requires:       %{name}-up = %{version}-%{release}
+Prereq:		%{name}-up = %{version}-%{release}
 
 %description drm
 DRM kernel modules.
@@ -408,7 +408,7 @@ Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Group(pl):	Podstawowe/Kernel
 Provides:       %{name}-drm = %{drm_xfree_version}
-Requires:       %{name}-smp = %{version}-%{release}
+Prereq:		%{name}-smp = %{version}-%{release}
 
 %description drm-smp
 DRM SMP kernel modules.
