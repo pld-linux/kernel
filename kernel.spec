@@ -23,7 +23,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.23
-Release:	0.9.3
+Release:	0.9.4
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -168,7 +168,7 @@ Patch900:	linux-2.4.20-Win4Lin.PLD.patch.bz2
 Patch901:	linux-2.4.20-Win4Lin-mki-adapter.patch.bz2
 
 # http://openipmi.sourceforge.net/
-Patch950:	linux-2.4.23-ipmi-v27.patch
+Patch950:	linux-2.4.23-ipmi-v28.patch
 
 # Assorted bugfixes
 
