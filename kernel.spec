@@ -148,6 +148,8 @@ Patch42:	2.6.x-ppp_mppe.patch
 
 Patch44:	2.6.2-Initio9100U-Kconfig.patch
 
+Patch45:	%{name}-cdrecord.patch
+
 # netfilter
 Patch46:	2.6.7-pom-ng-%{_netfilter_snap}.patch
 # http://www.barbara.eu.org/~quaker/ipt_account/
@@ -638,6 +640,8 @@ echo "Not fixed !!"
 %patch42 -p1
 
 %patch44 -p1
+
+%patch45 -p1
 
 # netfilter
 %patch46 -p1
