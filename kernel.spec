@@ -43,7 +43,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.1
+%define		_rel		0.2
 %define		_cset		20040525_0509
 
 ## netfilter snap 
@@ -637,8 +637,7 @@ cp drivers/usb/media/libpwcx.a_mipsel drivers/usb/media/libpwcx.a_
 %patch90 -p1
 
 #grsec
-%ifarch alpha %{ix86} ppc sparc amd64
-# ia64 and sparc64 NFY.
+%ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
 %patch94 -p1
 %endif
 
