@@ -35,7 +35,7 @@
 ## netfilter snap 
 %define		_netfilter_snap		20040225
 
-%define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/amd64/x86_64/')
+%define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/pentium3/i386/;s/amd64/x86_64/')
 
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
