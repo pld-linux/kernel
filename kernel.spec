@@ -15,7 +15,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	0.3	
+Release:	0.4	
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -78,6 +78,9 @@ Patch24:	%{name}-panaview_kbd.patch
 Patch25:	linux-2.2.19-pci.patch
 Patch26:	%{name}-sysctl-ipv6.patch
 Patch27:	%{name}-udf.patch
+
+# based on	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.19/ide.2.2.19.05042001.patch.bz2
+Patch30:	ide.2.2.20.11242001.patch.bz2
 
 # in this place will be PLD patches
 
@@ -382,6 +385,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch26 -p1
 %patch27 -p1
 
+%patch30 -p1
+
 %patch100 -p1
 %patch101 -p1
 %patch102 -p1
@@ -625,6 +630,8 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH24}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH25}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH26}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH27}
+
+bzip2 -dc %{PATCH30} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH100}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
