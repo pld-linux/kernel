@@ -599,7 +599,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch240 -p1
 %patch245 -p1
 %patch246 -p1
-%patch255 -p1
+#%patch255 -p1
 %patch260 -p1
 %patch265 -p1
 %patch1000 -p1
