@@ -18,7 +18,7 @@ Summary(ru):	Ядро Linux
 Summary(uk):	Ядро Linux
 Name:		kernel
 Version:	2.2.21
-Release:	1.3
+Release:	1.9
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -102,9 +102,9 @@ Patch108:	linux-2.2.20-agp_backport.patch.bz2
 Patch109:	dc395-MAINTAINERS.patch
 Patch110:	%{name}-nfs-fixes.patch
 Patch111:	linux-2.2.20-pcilynx_unresolved.patch
+Patch112:	bigmem-2.2.21-0.1.bz2
 # based on ftp://ftp.kernel.org/people/andrea/kernels/v2.2/2.2.20pre9aa2/40_lfs-2.2.20pre9aa2-27.bz2
-Patch112:	linux-2.2.20-lfs.patch
-Patch113:	bigmem-2.2.21-0.1.bz2
+Patch113:	linux-2.2.20-lfs.patch
 Patch114:	linux-2.2.21-mppe.patch
 Patch115:	wrr-linux-2.2.18.patch
 
@@ -501,7 +501,10 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch108 -p1
 %patch110 -p1
 %patch111 -p1
+%ifnarch ppc sparc sparc64
 %patch112 -p1
+%endif
+%patch113 -p1
 
 %ifarch ppc
 %patch500 -p1
@@ -512,10 +515,6 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch505 -p1
 %patch507 -p1
 %patch509 -p1
-%endif
-
-%ifnarch ppc sparc sparc64
-%patch113 -p1
 %endif
 
 %patch114 -p1
@@ -844,7 +843,10 @@ bzip2 -dc %{PATCH107} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ve
 bzip2 -dc %{PATCH108} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH110}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH111}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH112}
+%ifnarch ppc sparc sparc64
+bzip2 -dc %{PATCH112} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+%endif
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH113}
 
 %ifarch ppc
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH500}
@@ -855,10 +857,6 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH504}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH505}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH507}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH509}
-%endif
-
-%ifnarch ppc sparc sparc64
-bzip2 -dc %{PATCH113} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 %endif
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH114}
