@@ -69,7 +69,7 @@ Patch8:		2.6.0-t4-PPC-ENODEV.patch
 Patch10:	kernel-siimage-rqsize.patch
 Patch12:	2.6.0-t5-PPC-Kconfig.patch
 
-Patch14:	2.6.0-t7-netfilter-20031010.patch
+Patch14:	2.6.0-t9-netfilter-20031026.patch
 Patch16:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
 Patch18:	2.6.0-t6-usb-irq.patch
 
@@ -390,7 +390,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %if "%{_cset}" != "0"
 %patch1 -p1
 %endif
-exit 0
+
 %patch4 -p1
 
 %patch6 -p1
