@@ -6,13 +6,12 @@
 #
 %define		test_build		0
 #
-# Kernel vannilized
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.5.8
+Version:	2.5.9
 Release:	0.1
 License:	GPL
 Group:		Base/Kernel
@@ -38,7 +37,6 @@ Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
 
 Patch1:		%{name}-net_divert.patch
-Patch2:		linux-setup_per_cpus.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -144,7 +142,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %prep
 %setup -q -n linux-%{version}
 %patch1 -p1
-%patch2 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
