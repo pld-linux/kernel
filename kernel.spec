@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		1
+%define		_rel		2
 %define		_test_ver	9
 %define		_cset		0
 
@@ -77,19 +77,15 @@ Patch20:	2.6.0-t7-memleak-lkml.patch
 Patch21:	2.6.0-t7-memleak2-lkml.patch
 
 Patch22:	fbdev.diff.gz
-Patch23:	2.6.0-t7-radeonfb-lkml.patch
 
-Patch26:	2.6.0-t8-LLC2-PROC_FS-lkml.patch
 Patch28:	2.6.0-t8-clean-mtd-lkml.patch
 Patch32:	2.6.0-t8-swap-include-lkml.patch
-Patch34:	2.6.0-t8-toshiba-PROC_FS-lkml.patch
 Patch36:	2.6.0-t8-h8300-lkml.patch
 
 # based on http://www.uclinux.org/pub/uClinux/uClinux-2.6.x/linux-2.6.0-test8-uc0.patch.gz
 Patch38:	2.6.0-t8-uc0.patch
 
 Patch40:	2.6.0-t8-VLSI-ix86-lkml.patch
-Patch42:	2.6.0-t8-quota-locking-fix-lkml.patch
 
 Patch44:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
 Patch46:	2.6.0-t8-sis900_net-lkml.patch
@@ -99,6 +95,10 @@ Patch52:	2.6.0-t8-pci_dma_sync_to_device-lkml.patch
 Patch54:	2.6.0-t8-ISAPnP-lkml.patch
 
 Patch64:	2.6.0-t8-x86_64-declaration_fix-lkml.patch
+Patch66:	2.6.0-t8-__div64_32-lkml.patch
+Patch68:	2.6.0-t8-umsdos-lkml.patch
+Patch70:	2.6.0-t9-ibmtr_cs-lkml.patch
+Patch72:	2.6.0-t9-NLS-module-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -390,7 +390,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %if "%{_cset}" != "0"
 %patch1 -p1
 %endif
-
+exit 0
 %patch4 -p1
 
 %patch6 -p1
@@ -424,6 +424,11 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch54 -p1
 %patch64 -p1
+
+%patch66 -p1
+%patch68 -p1
+%patch70 -p1
+%patch72 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
