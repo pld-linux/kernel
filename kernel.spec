@@ -29,11 +29,11 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.10
-%define		_cset		0
+%define		_rel		0.12
+%define		_cset		20040305_0712
 
 ## netfilter snap 
-%define		_netfilter_snap		20040304
+%define		_netfilter_snap		20040305
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/pentium3/i386/;s/amd64/x86_64/')
 
@@ -144,8 +144,6 @@ Patch74:	2.6.x-SGI_VW-fbdev-lkml.patch
 Patch76:	2.6.x-TGA-fbdev-lkml.patch
 
 Patch78:	linux-alpha-isa.patch
-
-Patch80:	2.6.4-rc1-sparc-sys_ioperm-fix.patch
 
 Patch82:	2.6.3-ini9100u-fix.patch
 
@@ -486,10 +484,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-echo "Kernel is not ready!"
-echo "don't build!"
-echo "don't touch anything in kernel.spec!!!!!!!!!"
-exit 1 
 %setup -q -n linux-%{version}-rc2
 
 %patch0 -p1
@@ -563,8 +557,6 @@ exit 1
 %patch76 -p1
 
 %patch78 -p1
-
-%patch80 -p1
 
 %patch82 -p1
 
