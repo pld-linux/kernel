@@ -9,7 +9,7 @@
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 #
-%define		krelease		5.901
+%define		krelease		5.902
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -196,10 +196,6 @@ Patch142:	linux-modules-fixed.patch
 Patch143:	linux-ppc-procesor.patch
 Patch144:	amd762_irq_router.patch
 
-# pathces required for iptables 1.2.7
-#Patch145:	netfilter_ipv4-iptables-1.2.7.patch
-#Patch146:	netfilter_ipv6-iptables-1.2.7.patch
-
 Patch147:	http://www.hojdpunkten.ac.se/054/samba/00-smbfs-2.4.18-codepage.patch.gz
 
 # Patches fixing other patches or 3rd party sources ;)
@@ -248,8 +244,6 @@ Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.6.1
 Provides:	bttv = 0.7.83
-# From unstable kernel remainder ...
-#Provides:	%{name}_netfilter = 1.2.7
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
 Autoreqprov:	no
@@ -261,8 +255,6 @@ ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
 BuildRequires:	bin86
 %endif
-# From unstable ...
-#Conflicts:	iptables < 1.2.7
 Conflicts:	lvm < 1.0.4
 Conflicts:	xfsprogs < 2.0.0
 
@@ -314,8 +306,6 @@ Provides:	i2c = 2.6.1
 Provides:	bttv = 0.7.83
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
-# From unstable ...
-#Provides:	%{name}_netfilter = 1.2.7
 Prereq:		modutils
 Autoreqprov:	no
 
@@ -596,7 +586,7 @@ echo "Scheduler didn't work on ARCH different than Intel x86"
 %endif
 # grsecurity patch
 %patch9 -p1
-%patch906 -p0
+%patch906 -p1
 %if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %ifarch%{ix86}
 # linux-o1-grsec-post
@@ -780,9 +770,6 @@ echo Fixed HPFS
 # ADM router
 echo Added patch fot ADM router
 %patch144 -p1
-
-#%patch145 -p1
-#%patch146 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
