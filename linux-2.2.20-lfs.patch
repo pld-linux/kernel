@@ -1386,12 +1386,12 @@ diff -Naur linux/fs/ext2/inode.c linux-p/fs/ext2/inode.c
  	}
  	if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
  		raw_inode->i_block[0] = cpu_to_le32(kdev_t_to_nr(inode->i_rdev));
-@@ -724,22 +712,19 @@
+@@ -724,21 +712,18 @@
  	}
  
  	if (iattr->ia_valid & ATTR_SIZE) {
 -		off_t size = iattr->ia_size;
-+		loff_t size = iattr->ia_size;
++ 		loff_t size = iattr->ia_size;
  		unsigned long limit = current->rlim[RLIMIT_FSIZE].rlim_cur;
  
  		if (size < 0)
@@ -1401,17 +1401,15 @@ diff -Naur linux/fs/ext2/inode.c linux-p/fs/ext2/inode.c
  			return -EFBIG;
 -#endif
 -		if (limit < RLIM_INFINITY && size > limit) {
-+		if (limit != RLIM_INFINITY && size > limit) {
++ 		if (limit != RLIM_INFINITY && size > limit) {
  			send_sig(SIGXFSZ, current, 0);
  			return -EFBIG;
  		}
  
 -#if BITS_PER_LONG == 64	
--		if (size >> 33) {
-+		if (size >> 31) {
+ 		if (size >> 31) {
  			struct super_block *sb = inode->i_sb;
  			struct ext2_super_block *es = sb->u.ext2_sb.s_es;
- 			if (!(es->s_feature_ro_compat &
 @@ -751,7 +736,6 @@
  				mark_buffer_dirty(sb->u.ext2_sb.s_sbh, 1);
  			}
