@@ -1117,6 +1117,7 @@ BuildKernel() {
 	%{__make} modules
 %endif
 
+if [ ! "$BOOT" = "yes" ] ; then
 # ipt_p2p for netfilter
 #
 cd ipt_p2p-0.2.3/kernel
@@ -1125,7 +1126,7 @@ mv Makefile-2.4 Makefile-2.4.bak
 sed "s/^KERNELDIR := .*/KERNELDIR := $kernelbase/" Makefile-2.4.bak > Makefile-2.4
 %{__make} -f Makefile-2.4
 cd ../..
-
+fi
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
 
@@ -1154,7 +1155,9 @@ cd ../..
 %endif
 
 # install ipt_p2p
+if [ ! "$BOOT" = "yes" ] ; then
 cp $KERNEL_BUILD_DIR/ipt_p2p-0.2.3/kernel/ipt_p2p.o $KERNEL_INSTALL_DIR/lib/modules/$KernelVer/kernel/net/ipv4/netfilter/
+fi
 
 } # BuildKernel
 
