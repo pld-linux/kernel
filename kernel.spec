@@ -6,7 +6,7 @@
 #
 %define		test_build		0
 #
-%define		pre_version		pre3
+%define		pre_version		pre5
 %define		lids_version		1.0.9-2.4.5
 %define		ipvs_version		0.9.0
 %define		freeswan_version	snap2001jun14R
@@ -80,8 +80,8 @@ Patch10:	http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # Assorted bugfixes
 
 # Quota fixes
-# Patch100:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.5-1.diff.gz
-Patch100:	quota-fix-2.4.6-pre3.diff.gz
+# Patch100:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.6-2.diff.gz
+Patch100:	quota-fix-2.4.6-2.diff.gz
 # from LKML
 Patch101:	linux-scsi-debug-bug.patch
 Patch102:	linux-2.4.5-oom-killer.patch
