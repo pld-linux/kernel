@@ -39,7 +39,8 @@ Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
-Source7:	linux-2.4.12-netfilter-20011023.tar.gz
+# based on cvs cvs@pserver.samba.org:/cvsroot netfilter
+Source7:	linux-2.4.15-netfilter-PLD.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_version}.tar.gz
@@ -131,7 +132,8 @@ Patch122:	linux-2.4.14-lvm-1.0.1rc4cvs.patch
 # HTP360/370 driver update
 Patch124:	linux-drivers_ide_hpt366.c.diff
 Patch125:	linux-2.4.13-usb-ohci.patch
-Patch126:	kernel-deactivate_page-fix.patch
+
+# Not needed Patch126:	kernel-deactivate_page-fix.patch
 # IRDA patches.
 Patch127:	ir243_endian_fix.diff
 Patch128:	ir243_lap_lmp_races-2.diff
@@ -385,7 +387,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %{!?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
 #%patch1000 -p1
 #%patch0 -p1
-%patch126 -p1
+#%patch126 -p1
 %patch131 -p1
 %patch1 -p1
 %patch2 -p1
