@@ -9,7 +9,7 @@
 # _without_up		- don't build UP kernel
 #
 %define		test_build		0
-%define		krelease		2.34
+%define		krelease		2.35
 #
 %define base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 #
@@ -356,12 +356,21 @@ rozmiar.
 
 %package pcmcia-cs
 Summary:	PCMCIA-CS modules
-Summary(pl):	Modó³y PCMCIA-CS
+Summary(pl):	Modó³y PCMCIA-CS 
 Group:		Base/Kernel
 Group(pl):	Podstawowe/Kernel
 Provides:	%{name}-pcmcia-cs=%{pcmcia_version}
 %description pcmcia-cs
 %description -l pl pcmcia-cs
+
+%package pcmcia-cs-smp
+Summary:	PCMCIA-CS modules for SMP kernel
+Summary(pl):	Modó³y PCMCIA-CS dla maszyn SMP
+Group:		Base/Kernel
+Group(pl):	Podstawowe/Kernel
+Provides:	%{name}-pcmcia-cs=%{pcmcia_version}
+%description pcmcia-cs-smp
+%description -l pl pcmcia-cs-smp
 
 %package headers
 Summary:	Header files for the Linux kernel
@@ -1068,7 +1077,7 @@ fi
 /lib/modules/%{version}-%{release}/kernel
 /lib/modules/%{version}-%{release}/build
 /lib/modules/%{version}-%{release}/modules.dep
-/lib/modules/%{version}-%{release}/modules.*map
+/lib/modules/%{version}-%{release}/modules.[^pic]*map
 /lib/modules/%{version}-%{release}/modules.generic_string
 %endif			# %{_without_up}
 
@@ -1079,8 +1088,16 @@ fi
 %ifarch %{ix86}
 /lib/modules/%{version}-%{release}/pcmcia
 %endif
+/lib/modules/%{version}-%{release}smp/modules.pcimap
 
 %if%{?_without_smp:0}%{!?_without_smp:1}
+%files pcmcia-cs-smp
+%defattr(644,root,root,755)
+%ifarch %{ix86}
+/lib/modules/%{version}-%{release}/pcmcia
+%endif
+/lib/modules/%{version}-%{release}smp/modules.pcimap
+
 %files smp
 %defattr(644,root,root,755)
 %ifarch alpha sparc ppc
@@ -1089,13 +1106,10 @@ fi
 /boot/vmlinuz-%{version}-%{release}smp
 /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
-%ifarch %{ix86}
-/lib/modules/%{version}-%{release}smp/pcmcia
-%endif
 /lib/modules/%{version}-%{release}smp/kernel
 /lib/modules/%{version}-%{release}smp/build
 /lib/modules/%{version}-%{release}smp/modules.dep
-/lib/modules/%{version}-%{release}smp/modules.*map
+/lib/modules/%{version}-%{release}smp/modules.[^pci]*map
 /lib/modules/%{version}-%{release}smp/modules.generic_string
 %endif			# %{_without_smp}
 
