@@ -259,7 +259,7 @@ Patch917:	linux-2.4.19-EXPORT_SYMBOL-netsyms.c-rm.patch
 Patch918:	linux-2.4.20-ext3.patch
 Patch919:	linux-2.4.20-ntfs.patch
 Patch920:	linux-2.4.20-squashfs.patch
-Patch921:	linux-2.4.20-grsecurity-%{grsec_ver}-kmem.patch
+Patch921:	linux-2.4.20-grsecurity-%{grsec_version}-kmem.patch
 
 # Win4Lin
 Patch1000:	linux-2.4.20-Win4Lin.PLD.patch.bz2
@@ -805,27 +805,27 @@ BuildKernel() {
 	cat %{SOURCE1672} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1673} >> arch/%{base_arch}/defconfig
 	
-	if [ "$BOOT" = "yes" ] ; then
-		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
-		echo "# CONFIG_CRYPTO is not set" >> arch/%{base_arch}/defconfig
-		echo "CONFIG_ROMFS_FS=y" >> arch/%{base_arch}/defconfig
-		echo "# CONFIG_IP_NF_MATCH_STEALTH is not set">> arch/%{base_arch}/defconfig
-		echo "# CONFIG_NET_SCH_WRR is not set" >> arch/%{base_arch}/defconfig
-		echo "# CONFIG_HOSTAP is not set" >> arch/%{base_arch}/defconfig
-		echo "# CONFIG_USB_KONICAWC is not set">> arch/%{base_arch}/defconfig
+#	if [ "$BOOT" = "yes" ] ; then
+#		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
+#		echo "# CONFIG_CRYPTO is not set" >> arch/%{base_arch}/defconfig
+#		echo "CONFIG_ROMFS_FS=y" >> arch/%{base_arch}/defconfig
+#		echo "# CONFIG_IP_NF_MATCH_STEALTH is not set">> arch/%{base_arch}/defconfig
+#		echo "# CONFIG_NET_SCH_WRR is not set" >> arch/%{base_arch}/defconfig
+#		echo "# CONFIG_HOSTAP is not set" >> arch/%{base_arch}/defconfig
+#		echo "# CONFIG_USB_KONICAWC is not set">> arch/%{base_arch}/defconfig
 %ifnarch %{ix86}
-		echo "# CONFIG_IP_NF_MATCH_FUZZY is not set">> arch/%{base_arch}/defconfig
+#		echo "# CONFIG_IP_NF_MATCH_FUZZY is not set">> arch/%{base_arch}/defconfig
 %endif	
 %ifarch %{ix86}
-		echo "# CONFIG_MKI is not set" >> arch/%{base_arch}/defconfig
+#		echo "# CONFIG_MKI is not set" >> arch/%{base_arch}/defconfig
 %endif
-	else
+#	else
 		cat %{SOURCE1667} >> arch/%{base_arch}/defconfig
 		cat %{SOURCE1666} >> arch/%{base_arch}/defconfig
 		cat %{SOURCE1668} >> arch/%{base_arch}/defconfig
 		cat %{SOURCE1669} >> arch/%{base_arch}/defconfig
 		cat %{SOURCE1670} >> arch/%{base_arch}/defconfig
-	fi
+#	fi
 %ifnarch %{ix86}
 		echo "# CONFIG_IP_NF_MATCH_FUZZY is not set">> arch/%{base_arch}/defconfig
 %endif	
