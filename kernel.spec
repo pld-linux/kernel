@@ -810,7 +810,6 @@ fi
 %{_libdir}/bootdisk/lib/modules/%{version}/scsi
 %ifarch %{ix86} 
 %{_libdir}/bootdisk/lib/modules/%{version}/usb
-%{_libdir}/bootdisk/lib/modules/%{version}/video
 %endif
 %ifarch i386
 %{_libdir}/bootdisk/lib/modules/%{version}/pcmcia
