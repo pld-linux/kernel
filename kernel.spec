@@ -136,7 +136,7 @@ BuildRequires:	egcs
 BuildRequires:	sparc32
 %endif
 Provides:	%{name}-up = %{version}
-%ifarch %{x86}
+%ifarch %{ix86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(i2c) = %{i2c_version}
 Provides:       i2c = %{i2c_version}
@@ -194,7 +194,7 @@ Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
-%ifarch %{x86}
+%ifarch %{ix86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:       %{name}(i2c) = %{i2c_version}
 Provides:       i2c = %{i2c_version}
@@ -240,7 +240,7 @@ Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
-%ifarch %{x86}
+%ifarch %{ix86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:       %{name}(i2c) = %{i2c_version}
 Provides:       i2c = %{i2c_version}
@@ -282,7 +282,7 @@ Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
-%ifarch %{x86}
+%ifarch %{ix86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:       %{name}(i2c) = %{i2c_version}
 Provides:       i2c = %{i2c_version}
@@ -360,7 +360,7 @@ Summary(pl):	Pliki nag³ówkowe j±dra
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
 Group(pl):	Podstawowe/J±dro
-%ifarch %{x86}
+%ifarch %{ix86}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	i2c-devel = %{i2c_version}
 %endif
