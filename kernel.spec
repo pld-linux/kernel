@@ -569,7 +569,11 @@ BuildKernel() {
 %else
 		Config="%{_target_cpu}"
 %endif
-		KernelVer=%{version}-%{release}
+	if [ "$BOOT" ] ; then
+		KernelVer=%{version}-%{release}-BOOT
+	else
+		KernelVer=%{version}=%{release}
+	fi	
 		echo BUILDING THE NORMAL KERNEL...
 	fi
 	:> arch/%{base_arch}/defconfig
