@@ -382,7 +382,7 @@ BuildKernel() {
 	%{?verbose:set -x}
 	# is this a special kernel we want to build?
 	if [ "$1" = "BOOT" ]; then
-		Config="%{_target_cpu}"
+		Config="%{_target_cpu}-BOOT"
 		KernelVer=%{version}
 		echo BUILDING A KERNEL FOR BOOT...
 	elif [ -n "$1" ] ; then
