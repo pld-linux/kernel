@@ -66,7 +66,7 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.11
+%define		_rel		0.12
 %define		_cset		20040829_0610
 %define		_apply_cset	1
 
