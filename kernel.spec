@@ -123,6 +123,7 @@ Patch123:	xquad_portio.fix
 Patch124:	linux-proc_net_dev-counter-fix.patch
 Patch125:	linux-%{version}-devfs-v199.7.patch
 Patch126:	linux-%{version}-cramfs.patch
+Patch127:	linux-%{version}-sparc64-fix.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -441,6 +442,12 @@ echo Installing DEVFS patch
 # cramfs patch
 echo Installing cramfs patch 
 %patch126 -p1 
+
+# fixed SPARC64 compilation
+%ifarch sparc64
+echo Fixed SYSCALL errors for SPARC 64 arch.
+%patch127 -p1
+%endif
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
