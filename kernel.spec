@@ -6,7 +6,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.16
-Release:	3
+Release:	4
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -37,6 +37,8 @@ Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-127.tar.gz
 Source32:	kernel-BuildASM.sh
 Source33:	ftp://sourceforge.org/pcmcia/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x.c-2.2.16-pre4-6.gz
+# NFS server patches
+Source40:	http://download.sourceforge.net/nfs/kernel-nfs-dhiggen_merge-3.0.tar.gz
 Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.16.2.gz
 Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.16-reiserfs-3.5.22-patch.gz
 Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
@@ -56,6 +58,10 @@ Patch11:	linux-agphjlfixes.patch
 # Wiget: I remove md fix because is in raid patch
 Patch14:	http://www.linux.org.uk/VERSION/2.2.16combo
 Patch15:	linux-ipv6-addrconf.patch
+# NFS client patch
+Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.16-nfsv3-0.21.3.dif.bz2
+# don't use this
+#Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.16-nfsv3-0.22.0.dif.bz2
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -246,6 +252,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %prep
 %setup -q -a30 -a31 -a33 -n linux
 %patch0 -p1
+%patch20 -p1
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
@@ -262,6 +269,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #%patch13 -p1 -R -b .wiget
 %patch14 -p1 
 %patch15 -p1
+
+tar zxf %{SOURCE40} dhiggen-over-0.21.3
+patch -p2 -s <dhiggen-over-0.21.3
 
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 # Tekram DC395/315 U/UW SCSI host driver
@@ -411,11 +421,18 @@ tar Ixf %{SOURCE0} -C $RPM_BUILD_ROOT/usr/src/
 mv -f $RPM_BUILD_ROOT/usr/src/linux $RPM_BUILD_ROOT/usr/src/linux-%{version}
 ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
 
+# NFS patches must go first
+bzip2 -dc %{PATCH20} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+tar zxf %{SOURCE40} dhiggen-over-0.21.3
+patch -s -p2 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < dhiggen-over-0.21.3
+rm -f dhiggen-over-0.21.3
+
 gzip -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH1} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH8} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+
 %ifarch %{ix86}
 bzip2 -dc %{PATCH5} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 %endif
