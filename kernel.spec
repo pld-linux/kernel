@@ -701,7 +701,7 @@ echo Added support for V4L2
 
 # DVB
 echo Adding DVB support
-%patch47 -p1
+#%patch47 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
