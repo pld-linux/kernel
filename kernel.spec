@@ -396,8 +396,6 @@ Group:		Base/Kernel
 PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	alsa-driver
-Obsoletes:	alsa-driver
-Obsoletes:	alsa-driver-up
 Autoreqprov:	no
 
 %description sound-alsa
