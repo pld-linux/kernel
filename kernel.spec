@@ -1,33 +1,35 @@
 %define		ow_version		2.2.19-ow1
-%define		pcmcia_version		3.1.27
+%define		pcmcia_version		3.1.26
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.32
 %define		i2c_version		2.5.5
 %define		wlan_version		0.3.4
 %define		tun_version		1.1
 %define         vlan_version            1.0.1
+%define		symncr_version		1.7.3c-ncr-3.4.3b
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.19
-Release:	17
+Release:	18
 License:	GPL
 Group:		Base/Kernel
+Group(de):	Grundsätzlich/Kern
 Group(pl):	Podstawowe/J±dro
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-2.2.19.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
 Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
 Source5:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
-Source6:	ftp://ftp.tux.org/tux/roudier/drivers/linux/stable/sym-1.7.3-ncr-3.4.3.tar.gz 	
+Source6:	ftp://ftp.tux.org/tux/roudier/drivers/linux/stable/sym-1.7.3c-ncr-3.4.3b.tar.gz
 Source7:	http://www.linux-wlan.com/linux-wlan/linux-wlan-%{wlan_version}.tar.gz
 Source8:	http://www.dandelion.com/Linux/DAC960-2.2.10.tar.gz
 Source9:	serial-5.05.tar.gz
 Source10:	http://vtun.sourceforge.net/tun/tun-%{tun_version}.tar.gz
-Source13:       http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
+Source13:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -52,10 +54,10 @@ Patch4:		%{name}-3c90x.patch
 Patch5:		linux-ipv6-glibc2.2.patch
 Patch6:		http://milosch.net/pub/beos/2.2.18-pre2-beos09032000.patch
 Patch7:		http://www.kernel.org/pub/linux/kernel/people/mingo/raid-patches/raid-2.2.19-A1
-Patch8:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.19-reiserfs-3.5.32-patch.bz2
-Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.19/ide.2.2.19.04092001.patch.bz2 		
-Patch10:	http://www.math.leidenuniv.nl/~buytenh/bridge/patches/bridge-0.0.9-against-2.2.19.diff	
-Patch11:	http://download.sourceforge.net/linux1394/ieee1394-2.2.18-20010228.gz
+Patch8:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.19-reiserfs-3.5.33-patch.bz2
+Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.19/ide.2.2.19.05042001.patch.bz2
+Patch10:	http://www.math.leidenuniv.nl/~buytenh/bridge/patches/bridge-0.0.9-against-2.2.19.diff
+Patch11:	http://download.sourceforge.net/linux1394/ieee1394-2.2.19-20010527.gz
 Patch12:	ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
 Patch13:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
 Patch14:	linux-tasks.patch
@@ -69,10 +71,10 @@ Patch20:	%{name}-wanrouter-bridge.patch
 Patch21:	%{name}-ipsec-bridge.patch
 Patch22:	%{name}-bridge-extraversion.patch
 Patch23:	%{name}-panaview_kbd.patch
-Patch24:	http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-6.1.13-2.2.19.patch.gz
+Patch24:	http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-6.2.0-2.2.19.patch.gz
 Patch25:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.2.20pre/pre-patch-2.2.20-1.bz2
-Patch26:	linux-2.2.19-pci.patch 
-Patch27:	%{name}-flip.patch 
+Patch26:	linux-2.2.19-pci.patch
+Patch27:	%{name}-flip.patch
 Patch28:	%{name}-flip-serial5.05.patch
 Patch29:	%{name}-serial-initialisation.patch
 Patch31:	%{name}-sysctl-ipv6.patch
@@ -80,6 +82,7 @@ Patch32:	%{name}-arp.patch
 Patch33:	linux-vlan-fixpatch.patch
 Patch34:	%{name}-sparc-zs.h.patch
 Patch35:	%{name}-sym53c8xx.patch
+Patch36:	ip_masq_irc-2.2.19-dcc_check-3.diff
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -134,6 +137,7 @@ Summary:	Kernel version %{version} compiled for SMP machines
 Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
 Group:		Base/Kernel
+Group(de):	Grundsätzlich/Kern
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
 %ifarch %{x86}
@@ -168,6 +172,7 @@ Summary:	Kernel version %{version} with framebuffer support
 Summary(de):	Kernel version %{version} mit Framebuffer-Support
 Summary(fr):	Kernel version %{version} avec framebuffer
 Group:		Base/Kernel
+Group(de):	Grundsätzlich/Kern
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
 %ifarch %{x86}
@@ -198,6 +203,7 @@ Summary:	Kernel version %{version} compiled for SMP machines with fb
 Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen mit framebuffer
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur avec fb
 Group:		Base/Kernel
+Group(de):	Grundsätzlich/Kern
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
 %ifarch %{x86}
@@ -235,6 +241,7 @@ Summary:	Kernel version %{version} used on the installation boot disks
 Summary(de):	Kernel version %{version} für Installationsdisketten
 Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation
 Group:		Base/Kernel
+Group(de):	Grundsätzlich/Kern
 Group(pl):	Podstawowe/J±dro
 Prereq:		modutils
 Prereq:		fileutils
@@ -264,6 +271,7 @@ Platzprobleme abgeschaltet sind.
 Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra
 Group:		Base/Kernel
+Group(de):	Grundsätzlich/Kern
 Group(pl):	Podstawowe/J±dro
 %ifarch %{x86}
 Provides:	%{name}-headers(reiserfs) = %{version}
@@ -286,6 +294,7 @@ oraz niektórych programów.
 Summary:	Kernel documentation
 Summary(pl):	Dokumentacja j±dra
 Group:		Base/Kernel
+Group(de):	Grundsätzlich/Kern
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name}-doc = %{version}
 Autoreqprov:	no
@@ -295,12 +304,14 @@ This is the documentation for the Linux kernel, as found in
 /usr/src/linux/Documentation directory.
 
 %description doc -l pl
-Pakiet zawiera dokumentacjê j±dra z katalogu /usr/src/linux/Documentation.
+Pakiet zawiera dokumentacjê j±dra z katalogu
+/usr/src/linux/Documentation.
 
 %package source
 Summary:	Kernel source tree
 Summary(pl):	Kod ¼ród³owy j±dra Linuxa
 Group:		Base/Kernel
+Group(de):	Grundsätzlich/Kern
 Group(pl):	Podstawowe/J±dro
 Autoreqprov:	no
 Requires:	%{name}-headers = %{version}
@@ -394,12 +405,13 @@ patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # move symbios drivers to proper place
-mv sym-1.7.3-ncr-3.4.3/*.{c,h} drivers/scsi
-mv sym-1.7.3-ncr-3.4.3/{README,ChangeLog}.* Documentation
-rm -rf sym-1.7.3-ncr-3.4.3
+mv sym-1.7.3c-ncr-3.4.3b/*.{c,h} drivers/scsi
+mv sym-1.7.3c-ncr-3.4.3b/{README,ChangeLog}.* Documentation
+rm -rf sym-1.7.3c-ncr-3.4.3b
 
 %patch34 -p1
 %patch35 -p1
+%patch36 -p1
 
 %build
 BuildKernel() {
@@ -538,7 +550,7 @@ cd driver
 cd ../..
 
 cd tun-%{tun_version}
-%configure \
+%configure2_13 \
 	--with-kernel="$KERNEL_BUILD_DIR"
 make
 install linux/tun.o "$KERNEL_INSTALL_DIR/lib/modules/$KernelVer/net"
@@ -589,37 +601,37 @@ cp -a $KERNEL_INSTALL_DIR/* $RPM_BUILD_ROOT
 
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
 
-bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/
+bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/
 
-mv -f $RPM_BUILD_ROOT/usr/src/linux $RPM_BUILD_ROOT/usr/src/linux-%{version}
-ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
+mv -f $RPM_BUILD_ROOT%{_prefix}/src/linux $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 
-gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH0}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH1}
-gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH3}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH0}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1}
+gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH3}
 #patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
-bzip2 -dc %{PATCH8} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-bzip2 -dc %{PATCH9} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
-gzip -dc %{PATCH11} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH12} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH13} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH16}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH18}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH19}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH20}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH21}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH22}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH5}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH6}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH7}
+bzip2 -dc %{PATCH8} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+bzip2 -dc %{PATCH9} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH10}
+gzip -dc %{PATCH11} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+gzip -dc %{PATCH12} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+gzip -dc %{PATCH13} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH14}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH15}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH16}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH18}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH19}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH20}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH21}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH22}
 %ifarch %{x86}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH23}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH23}
 %endif
 %ifnarch sparc sparc64
 gzip -dc %{PATCH24} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
@@ -643,9 +655,9 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/li
 
 # symbios drivers
 tar zxf %{SOURCE6}
-mv sym-1.7.3-ncr-3.4.3/*.{c,h} $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi
-mv sym-1.7.3-ncr-3.4.3/{README,ChangeLog}.* $RPM_BUILD_ROOT/usr/src/linux-%{version}/Documentation
-rm -rf sym-1.7.3-ncr-3.4.3
+mv sym-1.7.3c-ncr-3.4.3b/*.{c,h} $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi
+mv sym-1.7.3c-ncr-3.4.3b/{README,ChangeLog}.* $RPM_BUILD_ROOT/usr/src/linux-%{version}/Documentation
+rm -rf sym-1.7.3c-ncr-3.4.3b
 
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH34}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH35}
