@@ -1,26 +1,12 @@
- When using register_serial the xmit_fifo_size parameter is accepted by the
- 8250 driver, and copied to the uart_port fifosize parameter, however
- autoconfigure then comes along and overrides this from the
- dfl_xmit_fifo_size,
- 
- this patch checks if fifosize is 0 and if it is updates from the default,
- otherwise it accepts the value,
- 
- ignore the 2.6.4 in the patch, it is against 2.6.6.
- 
- Dave.
- 
- 
---- linux26/drivers/serial/8250.c	2004-05-11 10:42:56.000000000 +1000
-+++ linux-2.6.4/drivers/serial/8250.c	2004-05-11 14:02:45.000000000 +1000
-@@ -697,7 +697,8 @@
+--- linux-2.6.9-rc2/drivers/serial/8250.c.orig	2004-09-13 07:31:29.000000000 +0200
++++ linux-2.6.9-rc2/drivers/serial/8250.c	2004-09-14 10:14:11.653931304 +0200
+@@ -733,7 +733,8 @@
  #endif
  	serial_outp(up, UART_LCR, save_lcr);
  
--	up->port.fifosize = uart_config[up->port.type].dfl_xmit_fifo_size;
-+	if (up->port.fifosize==0)
-+		up->port.fifosize = uart_config[up->port.type].dfl_xmit_fifo_size;
+-	up->port.fifosize = uart_config[up->port.type].fifo_size;
++	if (up->port.fifosize == 0)
++		up->port.fifosize = uart_config[up->port.type].fifo_size;
  	up->capabilities = uart_config[up->port.type].flags;
+ 	up->tx_loadsz = uart_config[up->port.type].tx_loadsz;
  
- 	if (up->port.type == PORT_UNKNOWN)
-

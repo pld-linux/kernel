@@ -37,9 +37,9 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  #include <asm/io.h>
 -#include <video/tgafb.h>
 +#include <video/tga.h>
+ #include <linux/selection.h>
  
  /*
-  * Local functions.
 @@ -41,6 +41,7 @@
  static void tgafb_imageblit(struct fb_info *, const struct fb_image *);
  static void tgafb_fillrect(struct fb_info *, const struct fb_fillrect *);
@@ -387,7 +387,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  
  	/* Request the mem regions.  */
  	bar0_start = pci_resource_start(pdev, 0);
-@@ -1416,24 +1465,22 @@
+@@ -1416,25 +1465,23 @@
  
  	/* Grab info about the card.  */
  	tga_type = (readl(mem_base) >> 12) & 0x0f;
@@ -405,13 +405,15 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
 +	pci_read_config_byte(pdev, PCI_REVISION_ID, par->tga_chip_rev);
  
  	/* Setup framebuffer.  */
--	all->info.flags = FBINFO_FLAG_DEFAULT;
+-	all->info.flags = FBINFO_DEFAULT | FBINFO_HWACCEL_COPYAREA |
+-                          FBINFO_HWACCEL_IMAGEBLIT | FBINFO_HWACCEL_FILLRECT;
 -	all->info.fbops = &tgafb_ops;
 -	all->info.screen_base = (char *) all->par.tga_fb_base;
 -	all->info.currcon = -1;
 -	all->info.par = &all->par;
 -	all->info.pseudo_palette = all->pseudo_palette;
-+	info->flags = FBINFO_FLAG_DEFAULT;
++	info->flags = FBINFO_DEFAULT | FBINFO_HWACCEL_COPYAREA |
++                     FBINFO_HWACCEL_IMAGEBLIT | FBINFO_HWACCEL_FILLRECT;
 +	info->fbops = &tgafb_ops;
 +	info->screen_base = (char *) par->tga_fb_base;
 +	info->pseudo_palette = par->pseudo_palette;

@@ -1,0 +1,26 @@
+--- linux-2.6.3/include/asm-alpha/io.h.orig	2004-02-18 04:59:27.000000000 +0100
++++ linux-2.6.3/include/asm-alpha/io.h	2004-02-25 13:42:10.000000000 +0100
+@@ -17,6 +17,7 @@
+ #ifdef __KERNEL__
+ #include <linux/config.h>
+ #include <linux/kernel.h>
++#include <linux/mm.h>		/* for mem_map, used in page_to_pa */
+ #include <asm/system.h>
+ #include <asm/pgtable.h>
+ #include <asm/machvec.h>
+@@ -118,6 +119,15 @@
+ 	return (long)address <= 0 ? NULL : virt;
+ }
+ 
++#define isa_virt_to_bus virt_to_bus
++#define isa_bus_to_virt bus_to_virt
++static inline unsigned long isa_page_to_bus(struct page *page)
++{
++	unsigned long phys = page_to_phys(page);
++	unsigned long bus = phys + __direct_map_base;
++	return phys <= __direct_map_size ? bus : 0;
++}
++
+ #else /* !__KERNEL__ */
+ 
+ /*
