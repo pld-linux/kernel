@@ -24,17 +24,17 @@
  extern int			netdev_dropping;
 --- linux-2.2.17orig/net/core/skbuff.c	Sun Mar  7 19:12:18 1999
 +++ linux-2.2/net/core/skbuff.c	Mon Oct 15 21:06:41 2001
-@@ -185,6 +185,9 @@ static inline void skb_headerinit(void *
+@@ -196,6 +196,9 @@
+ 
  	skb->destructor = NULL;
  	skb->pkt_type = PACKET_HOST;	/* Default type */
- 	skb->pkt_bridged = 0;		/* Not bridged */
 +#ifdef CONFIG_IMQ
-+	skb->from_imq = 0;
++ 	skb->from_imq = 0;
 +#endif
  	skb->prev = skb->next = NULL;
  	skb->list = NULL;
  	skb->sk = NULL;
-@@ -301,6 +304,9 @@ struct sk_buff *skb_copy(struct sk_buff 
+@@ -312,6 +315,9 @@
  	n->is_clone=0;
  	atomic_set(&n->users, 1);
  	n->pkt_type=skb->pkt_type;
@@ -44,7 +44,7 @@
  	n->stamp=skb->stamp;
  	n->destructor = NULL;
  	n->security=skb->security;
-@@ -350,6 +356,9 @@ struct sk_buff *skb_realloc_headroom(str
+@@ -361,6 +367,9 @@
  	n->is_clone=0;
  	atomic_set(&n->users, 1);
  	n->pkt_type=skb->pkt_type;
@@ -79,11 +79,11 @@
  endif
 --- linux-2.2.17orig/Documentation/Configure.help	Sun Sep  9 22:23:46 2001
 +++ linux-2.2/Documentation/Configure.help	Mon Oct 15 22:04:15 2001
-@@ -12401,6 +12593,14 @@ CONFIG_DISPLAY7SEG
+@@ -16738,6 +16738,14 @@
    If you do not have a CompactPCI model CP1400 or CP1500, or 
    another UltraSPARC-IIi-cEngine boardset with digital display,
    you should say N to this option.
-+
++ 
 +Intermediate queue device (IMQ)
 +CONFIG_IMQ
 +  This is virtual network device which is mainly used as placeholder
@@ -91,9 +91,9 @@
 +  before they go to their 'home' qdisc.
 +  It enables qdisc to treat network devices as classes and distribute
 +  bandwidth among them.
-    
- #
- # A couple of things I keep forgetting:
+ 
+ CP1XXX Hardware Watchdog support
+ CONFIG_WATCHDOG_CP1XXX
 --- linux-2.2.17orig/drivers/net/Space.c	Sun Sep  9 22:23:47 2001
 +++ linux-2.2/drivers/net/Space.c	Mon Oct 15 22:34:03 2001
 @@ -979,6 +979,14 @@ static struct device tr0_dev = {
