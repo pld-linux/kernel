@@ -762,6 +762,9 @@ sed -e 's#EXTRAVERSION =.*#EXTRAVERSION =#g' \
 
 sed -i 's:\-pipe::' arch/*/Makefile
 
+# on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
+sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
+
 %build
 TuneUpConfigForIX86 () {
 %ifarch %{ix86}
