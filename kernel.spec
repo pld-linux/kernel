@@ -91,6 +91,8 @@ Patch69:	2.6.0-t5-enbd-2.4.31_20030506.patch
 Patch70:	2.6.0-t6-usb-irq.patch
 Patch71:	2.6.0-t6-asus_acpi.patch
 
+Patch75:	2.6.0-t6-s390-lkml.patch
+
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -359,6 +361,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 #%%patch69 -p1
 %patch70 -p1
 #%patch71 -p1
+
+%patch75 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
