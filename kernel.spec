@@ -55,8 +55,8 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.19
-%define		_cset		20050203_1913
+%define		_rel		0.20
+%define		_cset		20050207_1746
 %define		_apply_cset	0
 
 %define		_netfilter_snap		20041118
@@ -168,7 +168,7 @@ Patch1:			linux-2.6-alsa-1.0.8-silent-output.patch
 #Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 
 # http://dev.gentoo.org/~spock/projects/gensplash/
-#Patch72:	fbsplash-0.9.1-2.6.11-rc1.patch
+Patch72:	fbsplash-0.9.1-r1-2.6.11-rc1-bk8.patch
 Patch73:	squashfs2.1-patch
 #Patch74:	linux-static-dev.patch
 #Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
@@ -576,7 +576,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 #%patch70 -p1
 
-#%patch72 -p1
+%patch72 -p1
 
 %patch73 -p1
 #%patch74 -p1
