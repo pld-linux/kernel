@@ -12,7 +12,7 @@
 # _without_glibc23	- build without support for glibc-kernel-headers
 #
 
-%define		patch_level	2
+%define		patch_level	3
 %define		_rel		9
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -207,8 +207,8 @@ Patch38:	linux-2.4.20-Nokia5510.patch
 
 #from http://people.freebsd.org/~gibbs/linux/SRC/
 #last: aic79xx-linux-2.4-20030410-tar.gz
-Patch39:	linux-2.4.20-aic79xx.patch.bz2
-#Patch39:	linux-2.4-aic79xx-20030603.patch.gz
+#Patch39:	linux-2.4.20-aic79xx.patch.bz2
+Patch39:	linux-2.4-aic79xx-20030603.patch.gz
 Patch40:	linux-2.4.20-i810_audio.patch
 # from : RedHat 2.4.20-13.9
 Patch41:	linux-2.4.20-afs.patch
@@ -843,7 +843,7 @@ echo Added xattr for JFS ...
 %patch105 -p1
 
 # to fix compile on gcc-3.3
-%patch904 -p1
+#%patch904 -p1    -- someone with gcc3.3 please, fix
 
 # Hash FiX. Initial by Qboosh, ipdated by me.
 %patch112 -p1
