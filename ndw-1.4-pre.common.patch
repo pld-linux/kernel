@@ -1,0 +1,1704 @@
+diff -Nur linux.orig/drivers/block/ndw/Makefile linux/drivers/block/ndw/Makefile
+--- linux.orig/drivers/block/ndw/Makefile	Thu Jan  1 01:00:00 1970
++++ linux/drivers/block/ndw/Makefile	Mon Sep  3 21:04:07 2001
+@@ -0,0 +1,17 @@
++#
++# Makefile for the Network disk client driver (NWD)
++#
++# Note 1! Dependencies are done automagically by 'make dep', which also
++# removes any old dependencies. DON'T put your own dependencies here
++# unless it's something special (ie not a .c file).
++#
++# Note 2! The CFLAGS definitions are now in the main makefile...
++#
++#
++
++O_TARGET := nwd.o
++
++obj-y				+= nwd_clt.o nwd_xdr.o
++obj-$(CONFIG_BLK_DEV_NWD)	+= $(O_TARGET)
++
++include $(TOPDIR)/Rules.make
+diff -Nur linux.orig/drivers/block/ndw/nwd_clt.c linux/drivers/block/ndw/nwd_clt.c
+--- linux.orig/drivers/block/ndw/nwd_clt.c	Thu Jan  1 01:00:00 1970
++++ linux/drivers/block/ndw/nwd_clt.c	Fri Sep 14 10:51:32 2001
+@@ -0,0 +1,1034 @@
++/*
++ * Network disk client
++ * Kernel block device driver
++ *
++ * Copyright (c) 1996 Petr Salinger
++ * Copyright (c) 1999 Libor Bus <l.bus@sh.cvut.cz>
++ * Copyright (c) 2001 Lubomir Bulej <pallas@kadan.cz>
++ *
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
++ *
++ */
++
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/errno.h>
++
++#include <linux/net.h>			/* struct net_proto for inet.h	*/
++#include <linux/inet.h>			/* in_aton, in_ntoa		*/
++
++#include <linux/init.h>			/* __init, __exit and stuff	*/
++#include <linux/slab.h>			/* kmalloc, kfree		*/
++#include <linux/reboot.h>		/* register_reboot_notifier	*/
++#include <linux/devfs_fs_kernel.h>	/* devfs_register/unregister	*/
++
++#include <linux/sunrpc/clnt.h>		/* rpc_call, xprt stuff, etc.	*/
++
++#include <asm/uaccess.h>		/* verify_area, get/put_user	*/
++
++#define MAJOR_NR NWD_MAJOR		/* required for blk.h		*/
++#include <linux/blk.h>			/* block device macros		*/
++#include <linux/blkpg.h>		/* blk_ioctl			*/
++
++#include <linux/nwd.h>
++#include "nwd_xdr.h"
++#include "nwd_dbg.h"
++
++
++/*****************************************************************************\
++| PRIVATE GLOBALS                                                             |
++\*****************************************************************************/
++
++static int *		nwd_sizes;			/* block device sizes in KiB	*/
++static int *		nwd_blksizes;			/* device block/sector sizes	*/
++
++static int 		nwd_maxdevs = NWD_MAX_DEVICES;	/* max number of devices	*/
++static nwd_device_t *	nwd_devices;			/* device structures 		*/
++static struct semaphore	nwd_mxdev;			/* whole device structure mutex	*/
++
++static devfs_handle_t	devfs_handle;			/* devfs directory handle	*/
++
++
++/*****************************************************************************\
++| DEVICE OPERATIONS                                                           |
++\*****************************************************************************/
++   
++static 
++int nwd_disconnect (nwd_device_t * device)
++{	
++	if (device->client == NULL)
++		return 0;
++	if (rpc_shutdown_client (device->client) != 0)
++		eprintk ("unable to shutdown RPC client for device %d\n", device->devnum);
++			
++	/* disconnected device must have device->client == NULL */
++	nwd_sizes [device->devnum] = 0;
++	device->client = NULL;
++	return 0;
++} /* nwd_disconnect */
++
++
++static 
++int nwd_connect_opt (nwd_device_t * device, int ver, int proto)
++{
++	int 			error;
++	char *			pname;
++	struct rpc_xprt * 	p_xprt;
++	nwd_lookupres 		lookup_res;
++
++	/* refuse to connect on already connected device */
++	if (device->client != NULL)
++		return -EISCONN;
++
++			
++	/* make string with server name */
++	memset (device->sname, 0, NWD_MAX_SNLEN);
++	strncpy (device->sname, in_ntoa (device->server.saddr.sin_addr.s_addr), NWD_MAX_SNLEN);
++	pname = (proto == IPPROTO_TCP) ? "TCP" : "UDP";
++
++
++	/* create protocol */
++	p_xprt = xprt_create_proto (proto, & device->server.saddr, NULL);
++ 	if (p_xprt == NULL) {
++		eprintk ("could not create RPC/%s transport\n", pname);
++		return -EACCES;
++  	}
++
++	
++	/* create client & set options */
++  	device->client = rpc_create_client (p_xprt, device->sname, & nwd_program, ver, RPC_AUTH_NULL);
++  	if (device->client == NULL) {
++		xprt_destroy (p_xprt);
++		eprintk ("could not create RPC client\n");
++		return -EACCES;
++  	}
++
++	device->client->cl_intr     = 1;
++	device->client->cl_chatty   = 0;
++	device->client->cl_autobind = 1;
++	device->client->cl_softrtry = 1;
++  	
++
++  	/* lookup file id on server & fill in device size in blocks */
++	error = rpc_call (device->client, NWDPROC_LOOKUP, & device->server.devid, & lookup_res, 0);
++	if (error < 0) {
++		nwd_disconnect (device);
++		eprintk ("lookup failed on device %d: version %d, proto %s, devid %d, error %d\n", 
++			device->devnum, ver, pname, device->server.devid, abs (error));
++		return error;
++	}
++
++	nwd_sizes [device->devnum] = lookup_res.size >> BLOCK_SIZE_BITS;
++	device->remid = lookup_res.file;
++	
++	iprintk ("lookup successful on device %d: version %d, proto %s, remid %d, blocks %d\n",
++		device->devnum, ver, pname, device->remid, nwd_sizes [device->devnum]);
++	return 0;
++} /* nwd_connect_opt */
++
++
++static
++int nwd_connect (nwd_device_t * device)
++{
++	int error;
++	int proto = IPPROTO_UDP;
++	
++	/*
++	 * Try to connect using NWD protocol version 2 first.
++	 * If that fails, fall back to version 1.
++	 */
++	proto = (device->options & NWD_OPT_PROTO_TCP) ? IPPROTO_TCP : IPPROTO_UDP;
++	error = nwd_connect_opt (device, NWD_VERSION_2, proto);
++	if (error == 0)
++		return 0;
++		
++	return nwd_connect_opt (device, NWD_VERSION_1, proto);
++} /* nwd_connect */
++
++
++static
++int nwd_dispose (nwd_device_t * device)
++{
++	nwd_res result;
++	if (device->client == NULL)
++		return -ENOTCONN;
++		
++	return rpc_call (device->client, NWDPROC_DISPOSE, & device->remid, & result, 0);
++} /* nwd_dispose */
++
++
++static
++int nwd_sync (nwd_device_t * device)
++{
++	nwd_res result;
++	if (device->client == NULL)
++		return -ENOTCONN;
++	if (device->client->cl_vers < 2)
++		return 0;
++		
++	return rpc_call (device->client, NWDPROC_SYNC, & device->remid, & result, 0);
++} /* nwd_sync */
++
++
++/*****************************************************************************\
++| REQUEST PROCESSING                                                          |
++\*****************************************************************************/
++
++static inline
++int nwd_devnum (kdev_t kdev)
++{
++	int devnum = DEVICE_NR (kdev);
++	if (devnum >= nwd_maxdevs) {
++		static int limit = 0;
++		if (limit++ < 5)
++			wprintk ("invalid device number (%d)", devnum);
++		
++		return -1;
++	}
++	
++	return devnum;
++} /* nwd_devnum */
++
++
++static
++request_queue_t * nwd_find_queue (kdev_t kdev)
++{
++	int devnum = nwd_devnum (kdev);
++	if (devnum == -1)
++		return NULL;
++		
++	return & nwd_devices [devnum].queue;
++} /* nwd_find_queue */
++
++
++static inline
++nwd_device_t * nwd_find_device (kdev_t kdev)
++{
++	int devnum = nwd_devnum (kdev);
++	if (devnum == -1)
++		return NULL;
++
++	return nwd_devices + devnum;
++} /* nwd_find_device */
++	
++
++static inline
++int nwd_transfer (nwd_device_t * device, const struct request * req)
++{
++	u32		dgmlen;		/* datagram length in bytes	*/
++	u32	 	reqlen;		/* request length in bytes	*/
++	u64		offset;		/* request offset in bytes	*/
++	char * 		buffer;
++	
++	/* request attributes */
++	reqlen = req->current_nr_sectors << NWD_SEC_BITS;
++	offset = (u64) req->sector << NWD_SEC_BITS;
++	buffer = req->buffer;
++
++
++	/* 
++	 * Split the request into chunks/datagrams handled by individual 
++	 * calls. For the request to be successful, all remote calls must
++	 * return without errors.
++	 */
++	dgmlen = NWD_MAX_DGLEN;
++	while (reqlen > 0) {
++		int 		result;		/* remote call result	*/
++		int 		retries;	/* call retry counter	*/
++		nwd_res 	res;		/* write result		*/
++		nwd_rwargs	args;		/* R/W arguments	*/
++		nwd_readres	rdres;		/* read result		*/
++
++		if (reqlen < dgmlen)
++			dgmlen = reqlen;
++				
++		/* remote call arguments */
++		args.file   = device->remid;
++		args.offset = offset;
++		args.count  = dgmlen;
++		args.buffer = buffer;
++			
++		retries = 0;
++retry_call:	switch (req->cmd) {
++			case READ:
++				result = rpc_call (device->client, NWDPROC_READ, & args, & rdres, 0);
++				break;
++					
++			case WRITE:
++				result = rpc_call (device->client, NWDPROC_WRITE, & args, & res, 0);
++				break;
++
++			default:
++				/* should not really happen */
++				eprintk ("invalid request command: %d\n", req->cmd);
++				return 0;
++		} /* command switch */
++
++		
++		/* 
++		 * Repeat the call in case of timeout. Prolong the timeout
++		 * for initial retries & bail out with error when the number
++		 * of retries reached its limit.
++		 */
++		if (result == -ETIMEDOUT) {
++			if (retries == 0)
++				device->client->cl_timeout.to_initval <<= 1;
++
++			if (retries++ < NWD_MAX_RETRIES) {
++				wprintk ("server not responding, retrying (%d)\n", retries);
++				goto retry_call;
++			}
++		}
++			
++		/* fail if errors persist (including too many timeouts) */
++		if (result < 0) {
++			eprintk ("request for %ld sectors at %ld failed, error %d\n",
++				req->current_nr_sectors, req->sector, abs (result));
++			return 0;
++		}
++			
++			
++		/* next chunk */
++		offset += dgmlen;
++		buffer += dgmlen;
++		reqlen -= dgmlen;
++	} /* request loop */
++
++	return 1;
++} /* nwd_transfer */
++
++
++static 
++void nwd_request (request_queue_t * rq)
++{
++	/* lookup device, io_request_lock held */
++	struct request * req = blkdev_entry_next_request (& rq->queue_head);
++	nwd_device_t * device = nwd_find_device (req->rq_dev);
++	if (device == NULL)
++		goto fail_request;
++	if (device->client == NULL)
++		goto fail_request;	
++	
++	/* 
++	 * Process the request(s). The assumption behind this code is
++	 * that the rpc_call will sleep while waiting for RPC response 
++	 * (correct me if I'm wrong, please), therefore we drop the 
++	 * io_request_lock to allow processing of other requests and
++	 * also (if rpc_call sleeps) because we must not hold it.
++	 */
++	while (! list_empty (& rq->queue_head)) {
++		int status;
++		
++		/* pull request from queue & release io_request_lock */
++		req = blkdev_entry_next_request (& rq->queue_head);
++		blkdev_dequeue_request (req);
++		spin_unlock_irq (& io_request_lock);
++		
++		/* process buffers in the request */
++		do {
++			status = nwd_transfer (device, req);
++		} while (end_that_request_first (req, status, DEVICE_NAME));
++		
++		/* grab io_request_lock & finish the request */
++		spin_lock_irq (& io_request_lock);
++		end_that_request_last (req);
++	} /* request loop */
++	return;
++
++	
++	/* 
++	 * Make the request fail if the device was not found
++	 * or the device was not connected.
++	 */
++fail_request:
++	while (end_that_request_first (req, 0, DEVICE_NAME));
++	blkdev_dequeue_request (req);
++	end_that_request_last (req);
++} /* nwd_request */
++					
++	
++/*****************************************************************************\
++| BLOCK DEVICE OPERATIONS                                                     |
++\*****************************************************************************/
++
++static 
++int nwd_open (struct inode * inode, struct file * filp)
++{
++	int error;
++	nwd_device_t * device = nwd_find_device (inode->i_rdev);
++	if (device == NULL)
++		return -ENODEV;
++
++	MOD_INC_USE_COUNT;
++
++
++	/* 
++	 * The code for several ioctls requires that the ioctl issuer be the 
++	 * only one having the device opened. The code checks device->users 
++	 * so we must not change it behind its back.
++	 */
++	error = down_interruptible (& device->mxctl);
++	if (error) {
++		MOD_DEC_USE_COUNT;
++		return error;
++	}
++	
++	device->users++;
++	up (& device->mxctl);
++	return 0;
++} /* nwd_open */
++
++
++static 
++int nwd_release (struct inode * inode, struct file * filp)
++{
++	int		error;
++	nwd_device_t *	device;
++	
++	device = nwd_find_device (inode->i_rdev);
++	if (device == NULL)
++		return -ENODEV;
++
++
++	/*
++	 * Process NWD client options when last user releases the device. As 
++	 * in the case of nwd_open, we grab the device->mxctl mutex before 
++	 * updating device->users because we can sleep while issuing remote
++	 * calls, and don't want anybody opening the device at that time.
++	 *
++	 * We also don't want anyone changing the options under us.
++	 */
++	error = down_interruptible (& device->mxctl);
++	if (error)
++		return error;
++	
++	device->users--;	
++	if (device->users == 0 && device->client != NULL) {
++		if (device->options & (NWD_OPT_DISPOSE | NWD_OPT_DISCONNECT))
++			invalidate_device (inode->i_rdev, 1);
++			
++		/* get rid of changes made on device */
++		if (device->options & NWD_OPT_DISPOSE) {
++			if (nwd_dispose (device))
++				wprintk ("failed to dispose changes on device %d\n", device->devnum);
++		}
++
++		/* disconnect from server */	
++		if (device->options & NWD_OPT_DISCONNECT)
++			nwd_disconnect (device);
++	} /* release actions */
++
++	up (& device->mxctl);	
++	MOD_DEC_USE_COUNT;
++	return 0;
++} /* nwd_release */
++
++
++static
++int nwd_check_server (nwd_peer_t * server, nwd_device_t * device)
++{
++	int devnum;
++	
++	/* skip INADDR_ANY servers telling us to disconnect only*/
++	if (server->saddr.sin_addr.s_addr == INADDR_ANY)
++		return 0;
++	
++	/* check other devices except the one we are setting peer on */
++	for (devnum = 0; devnum < nwd_maxdevs; devnum++) {
++		if (devnum == device->devnum)
++			continue;
++		if (memcmp (server, & nwd_devices [devnum].server, sizeof (nwd_peer_t)) == 0)
++			return -EADDRINUSE;
++	}
++	
++	return 0;
++} /* nwd_check_server */
++
++
++static
++int nwd_ioctl (struct inode * inode, struct file * filp,
++		      unsigned int cmd, unsigned long arg)
++{
++	int		error;
++	long		longv;
++	long * 		longp;
++	nwd_peer_t	server;
++	nwd_device_t *	device;
++	
++	device = nwd_find_device (inode->i_rdev);
++	if (device == NULL)
++		return -ENODEV;
++
++
++	longp = (long *) arg;
++	switch (cmd) {
++		case NWD_CTL_SETPEER:
++		case NWD_CTL_DISPOSE:
++			/*
++			 * First, the user must have sufficient privileges to
++			 * set/change peer or dispose changes on the device.
++			 */
++			if (! capable (CAP_SYS_ADMIN))
++				return -EPERM;
++				
++			error = verify_area (VERIFY_READ, longp, sizeof (nwd_peer_t));
++			if (error)
++				return error;
++
++			/*
++			 * Second, make sure nobody is going to open the device
++			 * while we are doing this. We also make sure to be the
++			 * only ones having the device opened -- we don't want 
++			 * to do this under active users.
++			 */
++			error = down_interruptible (& device->mxctl);
++			if (error)
++				return error;
++				
++			error = -EBUSY;
++			if (device->users > 1)
++				goto setpeer_exit_mxctl;
++
++				
++			/*
++			 * Third, make sure we are the only ones doing this 
++			 * kind of ioctl, because we want to check that we are 
++			 * not setting server:devid pair used on other devices.
++			 */
++			if (cmd == NWD_CTL_SETPEER) {
++				__copy_from_user (& server, longp, sizeof (nwd_peer_t));
++				
++				error = down_interruptible (& nwd_mxdev);
++				if (error)
++					goto setpeer_exit_mxctl;
++					
++				error = nwd_check_server (& server, device);
++				if (error)
++					goto setpeer_exit_mxdev;
++			}
++
++
++			/*
++			 * Fourth, invalidate the device. After that, no new
++			 * requests should arrive because it's only us having
++			 * the device opened. Then we can safely disconnect
++			 * from server and connect to new one or dispose of
++			 * changes made on the device.
++			 */
++			invalidate_device (inode->i_rdev, 1);
++			
++			if (cmd == NWD_CTL_SETPEER) {
++				error = nwd_disconnect (device);
++				if (server.saddr.sin_addr.s_addr != INADDR_ANY) {
++					device->server = server;
++					error = nwd_connect (device);
++				}
++			} else
++				error = nwd_dispose (device);
++				
++				
++		setpeer_exit_mxdev:
++			if (cmd == NWD_CTL_SETPEER)
++				up (& nwd_mxdev);
++		setpeer_exit_mxctl:
++			up (& device->mxctl);
++			return error;
++			
++			
++		case NWD_CTL_GETPEER:
++			error = verify_area (VERIFY_WRITE, longp, sizeof (nwd_peer_t));
++			if (error)
++				return error;
++				
++			/*
++			 * Make sure the peer is not being changed.
++			 */
++			error = down_interruptible (& device->mxctl);
++			if (error)
++				return error;
++			 
++			/* report disconnected device to have peer 0.0.0.0 */
++			server = device->server;
++			if (device->client == NULL)
++				server.saddr.sin_addr.s_addr = INADDR_ANY;
++
++			/* store peer structure to user space */
++			__copy_to_user (longp, & server, sizeof (nwd_peer_t));
++			up (& device->mxctl);
++			return 0;
++			
++			
++		case NWD_CTL_SETOPTS:
++			/* must have sufficient privileges first */
++			if (! capable (CAP_SYS_ADMIN))
++				return -EPERM;
++				
++			/*
++			 * Make sure we are not changing the options
++			 * under anybody reading them.
++			 */
++			error = down_interruptible (& device->mxctl);
++			if (error)
++				return error;
++				
++			device->options = arg;
++			up (& device->mxctl);
++			return error;
++			
++			
++		case NWD_CTL_GETOPTS:
++			/*
++			 * Make sure the options are not being changed.
++			 */
++			error = down_interruptible (& device->mxctl);
++			if (error)
++				return error;
++			
++			error = put_user (device->options, longp);
++			up (& device->mxctl);
++			return error;
++			
++		
++		case BLKGETSIZE:
++			/*
++			 * Make sure the size is not being changed.
++			 */
++			error = down_interruptible (& device->mxctl);
++			if (error)
++				return error;
++				
++			/* return device size in sectors */
++			longv = nwd_sizes [device->devnum] << abs (NWD_B2S_SHIFT);
++			if (NWD_B2S_SHIFT < 0)
++				longv = nwd_sizes [device->devnum] >> abs (NWD_B2S_SHIFT);
++				
++			error = put_user (longv, longp);
++			up (& device->mxctl);
++			return error;
++			
++			
++		case BLKRRPART:
++			/* partition re-reading is not supported */
++			return -ENOTTY;
++			
++			
++		case BLKFLSBUF:
++			/* flush device locally */
++			error = blk_ioctl (inode->i_rdev, cmd, arg);
++			if (error)
++				return error;
++				
++			/* fsync remote file */
++			return nwd_sync (device);
++			
++			
++		default:
++			/* let block layer handle other ioctls */
++			return blk_ioctl (inode->i_rdev, cmd, arg);
++	} /* command switch */
++	
++	return -ENOTTY;
++} /* nwd_ioctl */
++
++
++static struct block_device_operations nwd_bdops = {
++	open:		nwd_open,
++	release:	nwd_release,
++	ioctl:		nwd_ioctl,
++}; /* nwd_bdops */
++
++
++/*****************************************************************************\
++| INITIALIZATION & FINALIZATION                                               |
++\*****************************************************************************/
++  
++void nwd_cleanup (void)
++{
++	/* devfs cleanup */
++	if (devfs_handle != NULL)
++		devfs_unregister (devfs_handle);
++		
++	/* memory cleanup */
++	if (nwd_blksizes != NULL)
++		kfree (nwd_blksizes);		
++	if (nwd_sizes != NULL)
++		kfree (nwd_sizes);
++	if (nwd_devices != NULL)
++		kfree (nwd_devices);
++		
++	/* stop RPC I/O daemon */
++	rpciod_down ();
++} /* nwd_cleanup */
++
++
++int __init nwd_init (void)
++{
++	int error;
++	int devnum;
++
++	/* start RPC I/O daemon */
++	error = rpciod_up ();
++	if (error) {
++		eprintk ("failed to start RPC I/O daemon\n");
++		return error;
++	}
++	
++	
++	/* register block device and create devfs entries */
++	error = devfs_register_blkdev (MAJOR_NR, DEVICE_NAME, & nwd_bdops);
++	if (error) {
++		eprintk ("unable to register as major %d block device\n", MAJOR_NR);
++		nwd_cleanup ();
++		return error;
++	}
++	
++	devfs_handle = devfs_mk_dir (NULL, "nwd", NULL);
++	devfs_register_series (devfs_handle, "%u", nwd_maxdevs, DEVFS_FL_DEFAULT,
++		MAJOR_NR, 0, S_IFBLK | S_IRUSR | S_IWUSR, & nwd_bdops, NULL); 
++	
++
++	/* alloc memory for device structures */
++	if (nwd_maxdevs < 1 || nwd_maxdevs > 255) {
++		wprintk ("invalid nwd_maxdevs (%d), using default (%d)\n", nwd_maxdevs, NWD_MAX_DEVICES);
++		nwd_maxdevs = NWD_MAX_DEVICES;
++	}
++	
++	nwd_devices  = kmalloc (nwd_maxdevs * sizeof (nwd_device_t), GFP_KERNEL);
++	nwd_sizes    = kmalloc (nwd_maxdevs * sizeof (int), GFP_KERNEL);
++	nwd_blksizes = kmalloc (nwd_maxdevs * sizeof (int), GFP_KERNEL);
++	if (!nwd_devices || !nwd_sizes || !nwd_blksizes) {
++		/* unregister device */
++		if (devfs_unregister_blkdev (MAJOR_NR, DEVICE_NAME) != 0)
++			wprintk ("failed to unregister block device\n");
++			
++		eprintk ("unable to allocate memory for device structures\n");
++		nwd_cleanup ();
++		return -ENOMEM;
++	}
++	
++	
++	/* 
++	 * Initialize device structures & queues. The assumption behind
++	 * multiple queues is that rpc_call sleeps while waiting for the
++	 * remote call to return (correct me if I'm wrong). Therefore with
++	 * per-device queues we can process requests to different devices 
++	 * (which might possibly send remote calls through different network 
++	 * interfaces) independently.
++	 */
++	init_MUTEX (& nwd_mxdev);
++	memset (nwd_sizes, 0, nwd_maxdevs * sizeof (nwd_sizes));
++	memset (nwd_devices, 0, nwd_maxdevs * sizeof (nwd_device_t));
++	for (devnum = 0; devnum < nwd_maxdevs; devnum++) {
++		nwd_devices [devnum].devnum = devnum;
++		nwd_devices [devnum].options = NWD_DFL_OPTIONS;
++		
++		nwd_blksizes [devnum] = NWD_SEC_SIZE;
++		
++		init_MUTEX (& nwd_devices [devnum].mxctl);
++		
++		blk_init_queue (& nwd_devices [devnum].queue, DEVICE_REQUEST);
++		blk_queue_headactive (& nwd_devices [devnum].queue, 0);
++	}
++	
++	blk_dev [MAJOR_NR].queue = & nwd_find_queue;
++	blksize_size [MAJOR_NR] = nwd_blksizes;
++	blk_size [MAJOR_NR] = nwd_sizes;
++
++
++	/* register disks */			
++	for (devnum = 0; devnum < nwd_maxdevs; devnum++)
++		register_disk (NULL, MKDEV (MAJOR_NR, devnum), 1, & nwd_bdops, 0);
++
++	iprintk ("version 1.4, block major %d, devices %d\n", MAJOR_NR, nwd_maxdevs);
++	return 0;
++} /* nwd_init */
++
++
++void __exit nwd_exit (void)
++{
++	int devnum;
++	
++	/* must-have-been-initialized stuff */
++	for (devnum = 0; devnum < nwd_maxdevs; devnum++)
++		invalidate_device (MKDEV (MAJOR_NR, devnum), 1);
++		
++	if (devfs_unregister_blkdev (MAJOR_NR, DEVICE_NAME) != 0)
++		wprintk ("failed to unregister block device\n");
++	
++	for (devnum = 0; devnum < nwd_maxdevs; devnum++)
++		blk_cleanup_queue (& nwd_devices [devnum].queue);
++
++	blk_dev [MAJOR_NR].queue = NULL;
++	blksize_size [MAJOR_NR] = NULL;
++	blk_size [MAJOR_NR] = NULL;
++	
++	/* might-have-been-initialized stuff */
++	nwd_cleanup ();
++	iprintk ("driver module removed\n");
++} /* nwd_exit */
++
++
++
++#ifdef MODULE
++
++/*****************************************************************************\
++| BUILT-AS-MODULE INTERFACE                                                   |
++\*****************************************************************************/
++
++MODULE_AUTHOR ("Petr Salinger, Libor Bus, Lubomir Bulej");
++MODULE_DESCRIPTION ("Network Disk driver v1.4");
++MODULE_SUPPORTED_DEVICE ("nwd");
++
++MODULE_PARM (nwd_maxdevs, "i");
++MODULE_PARM_DESC (nwd_maxdevs, "Maximum number of NWD devices (1-255).");
++
++module_init (nwd_init);
++module_exit (nwd_exit);
++
++#else /* not a module */
++
++/*****************************************************************************\
++| BUILT-IN-KERNEL INTERFACE                                                   |
++\*****************************************************************************/
++
++static int 			nwd_ini_port 	__initdata = 0;
++static int			nwd_ini_dispose __initdata = NWD_DFL_INIDISPOSE;
++static int 			nwd_ini_devid	__initdata = NWD_DFL_DEVID;
++static int			nwd_ini_options	__initdata = NWD_DFL_OPTIONS;
++static struct in_addr		nwd_ini_server	__initdata = { INADDR_ANY };
++static struct notifier_block	nwd_notifier;
++
++
++static 
++int nwd_reboot (struct notifier_block * nb, unsigned long event, void * buf)
++{
++	struct inode	inode;
++	nwd_device_t *	device;
++
++	/* ignore other devices & uninteresting events */
++	if (MAJOR (ROOT_DEV) != NWD_MAJOR)
++		return NOTIFY_DONE;
++		
++	if (event != SYS_RESTART && event != SYS_HALT && event != SYS_POWER_OFF)
++		return NOTIFY_DONE;
++		
++	device = nwd_find_device (ROOT_DEV);
++	if (device == NULL)
++		return NOTIFY_BAD;
++
++		
++	/* release the device before reboot */
++	iprintk ("releasing root filesystem at %s (devid=%d)\n",
++		in_ntoa (device->server.saddr.sin_addr.s_addr), 
++		device->server.devid);
++		
++	inode.i_rdev = ROOT_DEV;
++	nwd_release (& inode, NULL);
++
++
++	/* unlink from notifier chain */
++	unregister_reboot_notifier (& nwd_notifier);
++	return NOTIFY_OK;
++} /* nwd_reboot */
++
++
++static struct notifier_block nwd_notifier = { 
++	notifier_call:	nwd_reboot, 
++	next:		NULL,
++	priority:	0,
++}; /* nwd_notifier */
++
++
++int __init nwd_boot_init (void)
++{
++	int		error;
++	nwd_res		result;
++	nwd_device_t *	device;
++	
++	error = nwd_init ();
++	if (error)
++		return error;
++		
++	/* ignore other devices */
++	if (MAJOR (ROOT_DEV) != NWD_MAJOR)
++		return 0;
++
++	device = nwd_find_device (ROOT_DEV);
++	if (device == NULL)
++		return -ENODEV;
++
++
++	/* fill the device structure with init info */
++	device->options 		= nwd_ini_options;
++	device->server.devid 		= nwd_ini_devid;
++	device->server.saddr.sin_family	= AF_INET;
++	device->server.saddr.sin_addr	= nwd_ini_server;
++	device->server.saddr.sin_port	= htons (nwd_ini_port);
++	
++	if (nwd_ini_server.s_addr == INADDR_ANY) {
++		wprintk ("server address not specified, cannot connect\n");
++		return -EDESTADDRREQ;
++	}
++
++
++	/* connect to the server */
++	iprintk ("connecting to server at %s:%d (devid=%d)\n", 
++		in_ntoa (nwd_ini_server.s_addr), nwd_ini_port, nwd_ini_devid);
++		
++	error = nwd_connect (device);
++	if (error)
++		return error;
++
++	
++	/* initial dispose requested? */		
++	if (nwd_ini_dispose)
++		nwd_dispose (device);
++			
++	register_reboot_notifier (& nwd_notifier);
++	return error;
++} /* nwd_boot_init */
++
++
++/*****************************************************************************\
++| KERNEL BOOT COMMAND-LINE                                                    |
++\*****************************************************************************/
++
++static
++void __init nwd_adjust_bit (int mask, char * str, int * where)
++{
++	if ((*str == 'Y') || (*str == 'y') || (*str == '1'))
++		* where |= mask;
++	if ((*str == 'N') || (*str == 'n') || (*str == '0'))
++		* where &= ~mask;
++} /* nwd_adjust_bit */		
++
++
++static 
++int __init nwd_devid_setup (char * str)
++{
++	nwd_ini_devid = simple_strtol (str, NULL, 0);
++	return 1;
++} /* nwd_devid_setup */
++
++
++static 
++int __init nwd_server_setup (char * str)
++{
++	char * pstr;
++	nwd_ini_server.s_addr = in_aton (str);
++	if ((pstr = strchr (str, ':')))
++		nwd_ini_port = simple_strtol (pstr + 1, NULL, 0);
++
++	return 1;
++} /* nwd_server_setup */
++
++
++static 
++int __init nwd_maxdevs_setup (char * str)
++{
++	nwd_maxdevs = simple_strtol (str, NULL, 0);
++	return 1;
++} /* nwd_maxdevs_setup */
++
++
++static 
++int __init nwd_ini_dispose_setup (char * str)
++{
++	nwd_adjust_bit (1, str, & nwd_ini_dispose);
++	return 1;		
++} /* nwd_ini_dispose_setup */
++
++
++static 
++int __init nwd_opt_dispose_setup (char * str)
++{
++	nwd_adjust_bit (NWD_OPT_DISPOSE, str, & nwd_ini_options);
++	return 1;
++} /* nwd_opt_dispose_setup */
++
++
++static 
++int __init nwd_opt_disconnect_setup (char * str)
++{
++	nwd_adjust_bit (NWD_OPT_DISCONNECT, str, & nwd_ini_options);
++	return 1;		
++} /* nwd_opt_disconnect_setup */
++
++
++static
++int __init nwd_opt_proto_tcp_setup (char * str)
++{
++	nwd_adjust_bit (NWD_OPT_PROTO_TCP, str, & nwd_ini_options);
++	return 1;
++} /* nwd_opt_proto_tcp_setup */	
++
++
++static struct nwd_option {
++	char *	str;
++	int	(* parse) (char *);
++} nwd_options [] __initdata = {
++	{ "disconnect=",  nwd_opt_disconnect_setup },
++	{ "inidispose=", nwd_ini_dispose_setup },
++	{ "dispose=", nwd_opt_dispose_setup },
++	{ "maxdevs=", nwd_maxdevs_setup },
++	{ "server=", nwd_server_setup },
++	{ "devid=", nwd_devid_setup },
++	{ "tcp=", nwd_opt_proto_tcp_setup },
++}; /* nwd_options */
++
++	
++static
++int __init nwd_parse_options (char * options)
++{
++	char * optstr;
++	
++	optstr = strsep (& options, ",");
++	while (optstr != NULL) {
++		int 			num;
++		int			len;
++		struct nwd_option *	opt;
++		
++		for (num = 0; num < ARRAY_SIZE (nwd_options); num++) {
++			opt = nwd_options + num;
++			len = strlen (opt->str);
++			if (strncmp (optstr, opt->str, len) == 0)
++				break;
++		}
++		
++		if (num < ARRAY_SIZE (nwd_options))
++			opt->parse (optstr + len);
++			
++		optstr = strsep (& options, ",");
++	}
++	
++	return 1;
++} /* nwd_parse_options */
++		
++
++/*****************************************************************************\
++| COMMAND-LINE PARAMETER HOOKS                                                |
++\*****************************************************************************/
++
++/* new style options */
++__setup ("nwd:", nwd_parse_options);
++
++/* backward compatible options */
++__setup ("nwddispose=", nwd_ini_dispose_setup);
++__setup ("nwdserver=", nwd_server_setup);
++__setup ("nwddevid=", nwd_devid_setup);
++
++#endif /* not a module */
+diff -Nur linux.orig/drivers/block/ndw/nwd_dbg.h linux/drivers/block/ndw/nwd_dbg.h
+--- linux.orig/drivers/block/ndw/nwd_dbg.h	Thu Jan  1 01:00:00 1970
++++ linux/drivers/block/ndw/nwd_dbg.h	Fri Sep 14 11:01:53 2001
+@@ -0,0 +1,45 @@
++/*
++ * Network disk client
++ * Debugging support
++ *
++ * Copyright (c) 1996 Petr Salinger
++ * Copyright (c) 1999 Libor Bus <l.bus@sh.cvut.cz>
++ * Copyright (c) 2001 Lubomir Bulej <pallas@kadan.cz>
++ *
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
++ *
++ */
++
++#ifndef _NWD_DEBUG_H
++#define _NWD_DEBUG_H
++
++#include <linux/kernel.h>
++
++#if 0
++#define dprintk(args...)	printk (KERN_DEBUG "nwd: " args)
++#define denterfn(args...)	printk (KERN_DEBUG "nwd: enter " __FUNCTION__ args)
++#define	dleavefn(args...)	printk (KERN_DEBUG "nwd: leave " __FUNCTION__ args)
++#else
++#define dprintk(args...)
++#define denterfn(args...)
++#define dleavefn(args...)
++#endif
++
++#define iprintk(args...)	printk (KERN_INFO "nwd: " args)
++#define eprintk(args...)	printk (KERN_ERR "nwd: error: " args)
++#define wprintk(args...)	printk (KERN_WARNING "nwd: warning: " args)
++
++#endif /* _NWD_DEBUG_H */
+diff -Nur linux.orig/drivers/block/ndw/nwd_xdr.c linux/drivers/block/ndw/nwd_xdr.c
+--- linux.orig/drivers/block/ndw/nwd_xdr.c	Thu Jan  1 01:00:00 1970
++++ linux/drivers/block/ndw/nwd_xdr.c	Wed Aug 29 01:48:41 2001
+@@ -0,0 +1,370 @@
++/*
++ * Network disk client
++ * Server RPC info, XDR routines
++ *
++ * Copyright (c) 1996 Petr Salinger
++ * Copyright (c) 2001 Lubomir Bulej <pallas@kadan.cz>
++ *
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
++ *
++ */
++
++#include <linux/kernel.h>
++#include <linux/sunrpc/clnt.h>
++
++#include "nwd_xdr.h"
++#include "nwd_dbg.h"
++
++
++/* 
++ * Space requirements for procedure arguments and 
++ * return types, all sizes are in 32-bit words
++ */
++
++#define NWD_null_sz		0
++#define NWD_res_sz		1
++#define NWD_handle_sz		1
++#define NWD_readargs1_sz	3
++#define NWD_readargs2_sz	4
++#define NWD_readres_sz		2
++#define NWD_writeargs1_sz	3
++#define NWD_writeargs2_sz	4
++#define NWD_lookupres1_sz	3
++#define NWD_lookupres2_sz	4
++
++
++/*****************************************************************************\
++| XDR HELPER FUNCTIONS                                                        |
++\*****************************************************************************/
++
++static inline
++u32 * xdr_encode_int (u32 * p, __u32 val)
++{
++	* p++ = htonl (val);
++	return p;
++} /* xdr_encode_int */
++
++
++static inline
++u32 * xdr_decode_int (u32 * p, __u32 * val)
++{
++	* val = ntohl (* p++);
++	return p;
++} /* xdr_decode_int */
++
++
++static inline
++u32 * xdr_encode_h2int (u32 * p, __u64 val)
++{
++	* p++ = htonl (val & 0xFFFFFFFF);
++	return p;
++} /* xdr_encode_h2int */
++
++
++static inline
++u32 * xdr_decode_int2h (u32 * p, __u64 * val)
++{
++	* val = (__u64) ntohl (* p++);
++	return p;
++} /* xdr_decode_int2h */
++
++
++/*****************************************************************************\
++| NWD XDR FUNCTIONS                                                           |
++\*****************************************************************************/
++
++static
++int nwd_xdr_null (struct rpc_rqst * req, u32 * p, void * dummy)
++{
++	return -EIO;
++} /* nwd_xdr_null */
++
++
++/*
++ * Decode result status
++ */
++ 
++static
++int nwd_xdr_res (struct rpc_rqst * req, u32 * p, nwd_res * res)
++{
++	p = xdr_decode_int (p, res);
++	if (* res != NWD_OK)
++		return -(* res);
++	return 0;
++} /* nwd_xdr_res */
++
++
++/*
++ * Encode remote file handle
++ */
++
++static
++int nwd_xdr_handle (struct rpc_rqst * req, u32 * p, nwd_handle * hnd)
++{
++	p = xdr_encode_int (p, * hnd);
++	req->rq_slen = xdr_adjust_iovec (req->rq_svec, p);
++	return 0;
++} /* nwd_xdr_handle */
++
++
++/*
++ * Encode READ arguments
++ *
++ * We read data directly into request buffer so we setup the
++ * recv iovec [1] buffer base to point at the request buffer.
++ *
++ * Note: auth->au_rslack contains estimate of the size of verf part of RPC
++ * reply. Together with RPC reply header size and the size of (non file-data) 
++ * fields of procedure result it determines the "offset" of file data in the
++ * reply. Knowing that we can align the receive iovecs so that the file-data 
++ * part of the reply ends up in the request buffer.
++ */
++ 
++static inline
++int nwd_xdr_readargs (struct rpc_rqst * req, u32 * p, nwd_rwargs * args, const int ver)
++{
++	struct rpc_auth * auth = req->rq_task->tk_auth;
++	int replen = (RPC_REPHDRSIZE + auth->au_rslack + NWD_readres_sz) << 2;
++	
++	p = xdr_encode_int (p, args->file);
++	if (ver == NWD_VERSION_1)
++		p = xdr_encode_h2int (p, args->offset);
++	else if (ver == NWD_VERSION_2)
++		p = xdr_encode_hyper (p, args->offset);
++	else {
++		eprintk ("cannot encode readargs for version %d\n", ver);
++		return -EINVAL;
++	}
++		
++	p = xdr_encode_int (p, args->count);
++	req->rq_slen = xdr_adjust_iovec (req->rq_svec, p);
++
++
++	/* set up reply iovec */
++	req->rq_rvec [0].iov_len = replen;
++	req->rq_rvec [1].iov_len = args->count;
++	req->rq_rvec [1].iov_base = args->buffer;
++	req->rq_rlen = replen + args->count;
++	req->rq_rnr = 2;
++	return 0;
++} /* nwd_xdr_readargs */
++
++
++static
++int nwd_xdr_readargs1 (struct rpc_rqst * req, u32 * p, nwd_rwargs * args)
++{
++	return nwd_xdr_readargs (req, p, args, NWD_VERSION_1);
++} /* nwd_xdr_readargs1 */
++
++
++static
++int nwd_xdr_readargs2 (struct rpc_rqst * req, u32 * p, nwd_rwargs * args)
++{
++	return nwd_xdr_readargs (req, p, args, NWD_VERSION_2);
++} /* nwd_xdr_readargs2 */
++
++
++/* 
++ * Decode READ result 
++ *
++ * Note: The file data are optional and valid only if the operation 
++ * result status was NWD_OK. In that case, the file data were written
++ * directly into request buffer, for which recv iovec [1] was configured.
++ */
++
++static
++int nwd_xdr_readres (struct rpc_rqst * req, u32 * p, nwd_readres * res)
++{
++	int hdlen, recvd;
++	
++	p = xdr_decode_int (p, & res->status);
++	if (res->status != NWD_OK)
++		return -res->status;
++		
++	p = xdr_decode_int (p, & res->count);
++	
++	/* check length of returned data */
++	hdlen = (u8 *) p - (u8 *) req->rq_rvec [0].iov_base;
++	recvd = req->rq_rlen - hdlen;
++	if (res->count > recvd) {
++		wprintk ("server cheating in read reply: count (%d) > recvd (%d)\n", res->count, recvd);
++		res->count = recvd;
++	}
++	
++	return res->count;
++} /* nwd_xdr_readres */
++
++
++/* 
++ * Encode WRITE arguments
++ *
++ * We send the data directly from request buffer, so we setup the
++ * send iovec [1] buffer base to point at the request buffer.
++ */
++ 
++static inline
++int nwd_xdr_writeargs (struct rpc_rqst * req, u32 * p, nwd_rwargs * args, const int ver)
++{
++	p = xdr_encode_int (p, args->file);
++	if (ver == NWD_VERSION_1)
++		p = xdr_encode_h2int (p, args->offset);
++	else if (ver == NWD_VERSION_2)
++		p = xdr_encode_hyper (p, args->offset);
++	else {
++		eprintk ("cannot encode writeargs for version %d\n", ver);
++		return -EINVAL;
++	}
++	
++	p = xdr_encode_int (p, args->count);
++	req->rq_slen = xdr_adjust_iovec (req->rq_svec, p);
++	
++	req->rq_svec [1].iov_base = args->buffer;
++	req->rq_svec [1].iov_len = args->count;
++	req->rq_slen += args->count;
++	req->rq_snr = 2;
++	return 0;
++} /* nwd_xdr_writeargs */
++
++
++static
++int nwd_xdr_writeargs1 (struct rpc_rqst * req, u32 * p, nwd_rwargs * args)
++{
++	return nwd_xdr_writeargs (req, p, args, NWD_VERSION_1);
++} /* nwd_xdr_writeargs1 */
++
++
++static
++int nwd_xdr_writeargs2 (struct rpc_rqst * req, u32 * p, nwd_rwargs * args)
++{
++	return nwd_xdr_writeargs (req, p, args, NWD_VERSION_2);
++} /* nwd_xdr_writeargs2 */
++
++
++/* 
++ * Decode LOOKUP result 
++ *
++ * Note: The file lookup info is optional and valid only if the 
++ * operation result status was NWD_OK.
++ */
++
++static inline
++int nwd_xdr_lookupres (struct rpc_rqst * req, u32 * p, nwd_lookupres * res, const int ver)
++{
++	p = xdr_decode_int (p, & res->status);
++	if (res->status != NWD_OK)
++		return -res->status;
++	
++	p = xdr_decode_int (p, & res->file);
++	if (ver == NWD_VERSION_1)
++		p = xdr_decode_int2h (p, & res->size);
++	else if (ver == NWD_VERSION_2)
++		p = xdr_decode_hyper (p, & res->size);
++	else {
++		eprintk ("cannot decode lookupres for version %d\n", ver);
++		return -EINVAL;
++	}
++	
++	return 0;
++} /* nwd_xdr_lookupres */
++
++
++static
++int nwd_xdr_lookupres1 (struct rpc_rqst * req, u32 * p, nwd_lookupres * res)
++{
++	return nwd_xdr_lookupres (req, p, res, NWD_VERSION_1);
++} /* nwd_xdr_lookupres1 */
++
++
++static
++int nwd_xdr_lookupres2 (struct rpc_rqst * req, u32 * p, nwd_lookupres * res)
++{
++	return nwd_xdr_lookupres (req, p, res, NWD_VERSION_2);
++} /* nwd_xdr_lookupres2 */
++
++
++/*****************************************************************************\
++| XDR ENCODE/DECODE STRUCTURES                                                |
++\*****************************************************************************/
++
++#ifndef MAX
++# define MAX(a, b)		(((a) > (b)) ? (a) : (b))
++#endif
++
++/* 
++ * Template for RPC procinfo structure
++ */
++
++#define PROC(proc, atype, rtype)						\
++{ 									\
++	p_procname:	"nwdproc_" #proc,				\
++	p_encode:	(kxdrproc_t) nwd_xdr_##atype, 			\
++	p_decode:	(kxdrproc_t) nwd_xdr_##rtype,			\
++	p_bufsiz:	MAX (NWD_##atype##_sz, NWD_##rtype##_sz) << 2,	\
++	p_count:	0						\
++}
++
++
++static struct rpc_procinfo nwd_procedures_1 [] = {
++	PROC (null,	null,		null),
++	PROC (dispose,	handle,		res),
++	PROC (read,	readargs1,	readres),
++	PROC (write,	writeargs1,	res),
++	PROC (lookup,	handle,		lookupres1)
++}; /* nwd_procedures_1 */
++
++
++static struct rpc_procinfo nwd_procedures_2 [] = {
++	PROC (null,	null,		null),
++	PROC (dispose,	handle,		res),
++	PROC (read,	readargs2,	readres),
++	PROC (write,	writeargs2,	res),
++	PROC (lookup,	handle,		lookupres2),
++	PROC (sync,	handle,		res)
++}; /* nwd_procedures_2 */
++
++
++static struct rpc_version nwd_version_1 = {
++	number:		NWD_VERSION_1,
++	nrprocs:	ARRAY_SIZE (nwd_procedures_1),
++	procs:		nwd_procedures_1
++}; /* nwd_version_1 */
++
++
++static struct rpc_version nwd_version_2 = {
++	number:		NWD_VERSION_2,
++	nrprocs:	ARRAY_SIZE (nwd_procedures_2),
++	procs:		nwd_procedures_2
++}; /* nwd_version_2 */
++
++
++
++static struct rpc_version * nwd_versions [] = {
++	NULL,
++	& nwd_version_1,
++	& nwd_version_2
++}; /* nwd_versions */
++
++
++static struct rpc_stat nwd_rpcstat;
++
++
++struct rpc_program nwd_program = {
++	name:		"nwd",
++	number:		NWD_PROGRAM,
++	nrvers:		ARRAY_SIZE (nwd_versions),
++	version:	nwd_versions,
++	stats:		& nwd_rpcstat
++}; /* nwd_program */
+diff -Nur linux.orig/drivers/block/ndw/nwd_xdr.h linux/drivers/block/ndw/nwd_xdr.h
+--- linux.orig/drivers/block/ndw/nwd_xdr.h	Thu Jan  1 01:00:00 1970
++++ linux/drivers/block/ndw/nwd_xdr.h	Sun Sep  9 23:22:15 2001
+@@ -0,0 +1,78 @@
++/*
++ * Network disk client
++ * Server RPC info, XDR routines
++ *
++ * Copyright (c) 1996 Petr Salinger
++ * Copyright (c) 1999 Libor Bus <l.bus@sh.cvut.cz>
++ * Copyright (c) 2001 Lubomir Bulej <pallas@kadan.cz>
++ *
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
++ */
++
++#ifndef _NWD_XDR_H
++#define _NWD_XDR_H
++
++#include <linux/errno.h>
++#include <linux/types.h>
++
++
++#define NWD_PROGRAM 		0x21050003
++#define NWD_VERSION_1 		1
++#define NWD_VERSION_2		2
++
++#define	NWD_OK			0
++#define NWD_ENOENT		ENOENT
++#define NWD_EIO			EIO
++#define	NWD_EINVAL		EINVAL
++#define NWD_ENOSPC		ENOSPC
++
++#define NWDPROC_NULL 		0
++#define NWDPROC_DISPOSE		1
++#define NWDPROC_READ 		2
++#define NWDPROC_WRITE		3
++#define NWDPROC_LOOKUP		4
++#define NWDPROC_SYNC		5
++
++
++typedef __s32  nwd_res;
++typedef __s32  nwd_handle;
++
++
++typedef struct nwd_rwargs {
++	nwd_handle	file;
++	__u64		offset;
++	__u32		count;
++	void *		buffer;
++} nwd_rwargs;
++
++
++typedef struct nwd_readres {
++	nwd_res		status;
++	__u32		count;
++} nwd_readres;
++
++
++typedef struct nwd_lookupres {
++	nwd_res		status;
++	nwd_handle	file;
++	__u64		size;
++} nwd_lookupres;
++
++
++extern struct rpc_stat		nwd_rpcstat;
++extern struct rpc_program	nwd_program;
++
++#endif /* _NWD_XDR_H */
+diff -Nur linux.orig/fs/Config.in linux/fs/Config.in
+--- linux.orig/fs/Config.in	Mon Oct 22 14:57:05 2001
++++ linux/fs/Config.in	Mon Oct 22 15:08:52 2001
+@@ -113,17 +113,25 @@
+    dep_mbool '  Provide NFSv3 server support' CONFIG_NFSD_V3 $CONFIG_NFSD
+ 
+    if [ "$CONFIG_NFS_FS" = "y" -o "$CONFIG_NFSD" = "y" ]; then
+-      define_tristate CONFIG_SUNRPC y
+       define_tristate CONFIG_LOCKD y
+    else
+       if [ "$CONFIG_NFS_FS" = "m" -o "$CONFIG_NFSD" = "m" ]; then
+-	 define_tristate CONFIG_SUNRPC m
+ 	 define_tristate CONFIG_LOCKD m
+-   else
+-	 define_tristate CONFIG_SUNRPC n
+-	 define_tristate CONFIG_LOCKD n
++      else
++         define_tristate CONFIG_LOCKD n
+       fi
+    fi
++   
++   if [ "$CONFIG_NFS_FS" = "y" -o "$CONFIG_NFSD" = "y" -o "$CONFIG_BLK_DEV_NWD" = "y" ]; then
++     define_tristate CONFIG_SUNRPC y
++   else
++     if [ "$CONFIG_NFS_FS" = "m" -o "$CONFIG_NFSD" = "m" -o "$CONFIG_BLK_DEV_NWD" = "m" ]; then
++       define_tristate CONFIG_SUNRPC m
++     else
++       define_tristate CONFIG_SUNRPC n
++     fi
++   fi
++   
+    if [ "$CONFIG_NFSD_V3" = "y" -o "$CONFIG_NFS_V3" = "y" ]; then
+      define_bool CONFIG_LOCKD_V4 y
+    fi
+diff -Nur linux.orig/include/linux/nwd.h linux/include/linux/nwd.h
+--- linux.orig/include/linux/nwd.h	Thu Jan  1 01:00:00 1970
++++ linux/include/linux/nwd.h	Fri Sep 14 01:26:34 2001
+@@ -0,0 +1,102 @@
++/*
++ * Network disk client
++ * Kernel block device driver
++ *
++ * Copyright (c) 1996 Petr Salinger
++ * Copyright (c) 1999 Libor Bus <l.bus@sh.cvut.cz>
++ * Copyright (c) 2001 Lubomir Bulej <pallas@kadan.cz>
++ *
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
++ *
++ */
++
++#ifndef _LINUX_NWD_H
++#define _LINUX_NWD_H
++
++#include <linux/ioctl.h>
++
++
++/*****************************************************************************\
++| KERNEL & USER SPACE                                                         |
++\*****************************************************************************/
++
++#define NWD_IOCTL_CHAR		'N'
++#define NWD_CTL_SETPEER		_IOW (NWD_IOCTL_CHAR, 0, nwd_peer_t)
++#define NWD_CTL_GETPEER		_IOR (NWD_IOCTL_CHAR, 1, nwd_peer_t)
++#define NWD_CTL_SETOPTS		_IO (NWD_IOCTL_CHAR, 3)
++#define NWD_CTL_GETOPTS		_IO (NWD_IOCTL_CHAR, 4)
++#define NWD_CTL_DISPOSE		_IO (NWD_IOCTL_CHAR, 5)
++
++#define	NWD_OPT_DISPOSE		0x1				/* dispose changes on release		*/
++#define	NWD_OPT_DISCONNECT	0x2				/* disconnect from server on release	*/
++#define NWD_OPT_PROTO_TCP	0x4				/* use TCP for RPC transport		*/
++
++typedef struct nwd_peer {
++	struct sockaddr_in	saddr;				/* socket address of the server		*/
++	int 			devid;				/* requested identification for lookup	*/
++} nwd_peer_t;
++
++
++/*****************************************************************************\
++| KERNEL ONLY                                                                 |
++\*****************************************************************************/
++
++#ifdef __KERNEL__
++
++#include <linux/fs.h>
++#include <asm/semaphore.h>
++#include <linux/sunrpc/clnt.h>
++
++#define NWD_MAJOR		62
++
++#define NWD_DFL_DEVID		1
++#define NWD_DFL_OPTIONS		(NWD_OPT_DISPOSE)
++#define NWD_DFL_INIDISPOSE	1
++
++#define NWD_SEC_BITS		9				/* device sector size in bits		*/
++#define NWD_SEC_SIZE		(1U << NWD_SEC_BITS)		/* sector size (must be power of 2)	*/
++#define NWD_B2S_SHIFT		(BLOCK_SIZE_BITS-NWD_SEC_BITS)	/* shift to convert blocks to sectors	*/
++
++
++/*
++ * NWD_MAX_DGLEN determines the number of fragments per datagram
++ *	1024 - one fragment is enough; this is usually used for ext2
++ *	4096 - more fragments; useful for paging
++ */
++ 
++#define NWD_MAX_DGLEN		(4 * NWD_SEC_SIZE)		/* must be multiple of NWD_SEC_SIZE	*/
++#define NWD_MAX_SNLEN		20				/* max. length of server name		*/
++#define NWD_MAX_DEVICES		8				/* default number of nwd devices	*/
++#define NWD_MAX_RETRIES		10				/* how many times we retry the request	*/
++
++
++typedef struct nwd_device {
++	int 			remid;    			/* id of remote file disk operations	*/
++	int			devnum;				/* NWD device number			*/
++	int 			options;			/* NWD device options			*/
++	nwd_peer_t		server;				/* server address & lookup id		*/
++	struct rpc_clnt *	client;  			/* RPC client				*/
++	char			sname [NWD_MAX_SNLEN];		/* server name for debug messages	*/
++
++	int			users;				/* reference counter			*/
++	struct semaphore	mxctl;				/* device control mutex			*/
++	
++	request_queue_t		queue;				/* device request queue			*/
++} nwd_device_t;
++
++#endif /* __KERNEL__ */
++
++#endif /* _LINUX_NWD_H */
