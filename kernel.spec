@@ -1,7 +1,6 @@
-%define		pcmcia_version		3.1.24
 %define		lids_version		1.0.5
 %define		ipvs_version		0.2.3
-%define		ac_version		ac9
+%define		pre_version		pre3
 %define 	aacraid_version		1.0.6
 %define		lm_sensors_version	2.5.5
 %define		wlan_version		0.1.7
@@ -10,22 +9,21 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.4.1
-Release:	2
+Version:	2.4.2
+Release:	1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-2.4.1.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
-Source4:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
 Source7:	linux-netfilter-patches-20010201.tar.gz
-Source8:	http://www.lids.org/download/lids-%{lids_version}-%{version}.tar.gz
+Source8:	http://www.lids.org/download/lids-%{lids_version}-2.4.1.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source10:	http://www.linux-wlan.com/linux-wlan/linux-wlan-ng-%{wlan_version}.tar.gz
 #Source11:	http://www2.lm-sensors.nu/~lm/archive/lm_sensors-%{lm_sensors_version}.tar.gz
@@ -50,10 +48,10 @@ Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.3.gz
 #Patch2:		linux-2.4.0-freeswan-%{freeswan_version}.patch
 #Patch3:		linux-ipv6-addrconf.patch
 Patch4:		kernel-i8255-asm-fix.patch
-Patch5:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.1-%{ac_version}.gz
+Patch5:		ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.2-%{pre_version}.gz
 Patch6:		dc395-patch-PLD-fix.patch
 Patch7:		linux-2.4.1-disable-message-printing.patch
-Patch8:		ftp://ftp.winds.org/linux/patches/2.4.1/aacraid-%{version}-%{aacraid_version}.patch
+Patch8:		ftp://ftp.winds.org/linux/patches/2.4.1/aacraid-2.4.1-%{aacraid_version}.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -216,15 +214,16 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -n linux
+%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -n linux
+
+# Pre patch
+%patch5 -p1
 
 #kerneli patch
 %patch0 -p1
 
 #i8255 fix
 %patch4 -p0 
-
-%patch5 -p1
 
 # Fore 200e ATM NIC
 patch -p1 <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
@@ -246,15 +245,15 @@ for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
 echo -e $ANS | ./runme)
 
 # IPVS
-#for i in ipvs-%{ipvs_version}/*.diff ; do
-#	patch -p1 <$i
-#done
-#mkdir net/ipv4/ipvs
-#cp ipvs-%{ipvs_version}/ipvs/*.{c,h,in} net/ipv4/ipvs
-#cp ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile net/ipv4/ipvs/Makefile
+for i in ipvs-%{ipvs_version}/*.diff ; do
+	patch -p1 <$i
+done
+mkdir net/ipv4/ipvs
+cp ipvs-%{ipvs_version}/ipvs/*.{c,h,in} net/ipv4/ipvs
+cp ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile net/ipv4/ipvs/Makefile
 
 # LIDS
-#patch -p1 <lids-%{lids_version}-%version/lids-%{lids_version}-%version.patch
+patch -p1 <lids-%{lids_version}-2.4.1/lids-%{lids_version}-2.4.1.patch
 
 # disable message printing
 %patch7 -p1
