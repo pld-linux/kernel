@@ -1,6 +1,6 @@
-diff -urNp linux-1080/fs/nfs/dir.c linux-1090/fs/nfs/dir.c
---- linux-1080/fs/nfs/dir.c	
-+++ linux-1090/fs/nfs/dir.c	
+diff -urN linux-2.4.22.org/fs/nfs/dir.c linux-2.4.22/fs/nfs/dir.c
+--- linux-2.4.22.org/fs/nfs/dir.c	2003-11-21 19:45:07.000000000 +0100
++++ linux-2.4.22/fs/nfs/dir.c	2003-11-21 19:52:27.000000000 +0100
 @@ -34,6 +34,7 @@
  #define NFS_PARANOIA 1
  /* #define NFS_DEBUG_VERBOSE 1 */
@@ -9,7 +9,7 @@ diff -urNp linux-1080/fs/nfs/dir.c linux-1090/fs/nfs/dir.c
  static int nfs_readdir(struct file *, void *, filldir_t);
  static struct dentry *nfs_lookup(struct inode *, struct dentry *);
  static int nfs_create(struct inode *, struct dentry *, int);
-@@ -48,6 +49,7 @@ static int nfs_rename(struct inode *, st
+@@ -48,6 +49,7 @@
  static int nfs_fsync_dir(struct file *, struct dentry *, int);
  
  struct file_operations nfs_dir_operations = {
@@ -17,8 +17,8 @@ diff -urNp linux-1080/fs/nfs/dir.c linux-1090/fs/nfs/dir.c
  	read:		generic_read_dir,
  	readdir:	nfs_readdir,
  	open:		nfs_open,
-@@ -70,6 +72,25 @@ struct inode_operations nfs_dir_inode_op
- 	setattr:	nfs_notify_change,
+@@ -74,6 +76,25 @@
+ 	removexattr:	nfs_removexattr,
  };
  
 +static loff_t nfs_dir_llseek(struct file *file, loff_t offset, int origin)
@@ -43,10 +43,10 @@ diff -urNp linux-1080/fs/nfs/dir.c linux-1090/fs/nfs/dir.c
  typedef u32 * (*decode_dirent_t)(u32 *, struct nfs_entry *, int);
  typedef struct {
  	struct file	*file;
-diff -urNp linux-1080/fs/nfs/nfs2xdr.c linux-1090/fs/nfs/nfs2xdr.c
---- linux-1080/fs/nfs/nfs2xdr.c	
-+++ linux-1090/fs/nfs/nfs2xdr.c	
-@@ -369,7 +369,7 @@ nfs_xdr_readdirargs(struct rpc_rqst *req
+diff -urN linux-2.4.22.org/fs/nfs/nfs2xdr.c linux-2.4.22/fs/nfs/nfs2xdr.c
+--- linux-2.4.22.org/fs/nfs/nfs2xdr.c	2003-11-21 19:45:07.000000000 +0100
++++ linux-2.4.22/fs/nfs/nfs2xdr.c	2003-11-21 19:52:27.000000000 +0100
+@@ -369,7 +369,7 @@
  		count = count >> 2;
  
  	p = xdr_encode_fhandle(p, args->fh);
@@ -55,7 +55,7 @@ diff -urNp linux-1080/fs/nfs/nfs2xdr.c linux-1090/fs/nfs/nfs2xdr.c
  	*p++ = htonl(count); /* see above */
  	req->rq_slen = xdr_adjust_iovec(req->rq_svec, p);
  
-@@ -466,7 +466,7 @@ nfs_decode_dirent(u32 *p, struct nfs_ent
+@@ -466,7 +466,7 @@
  	entry->name	  = (const char *) p;
  	p		 += XDR_QUADLEN(entry->len);
  	entry->prev_cookie	  = entry->cookie;
@@ -64,10 +64,10 @@ diff -urNp linux-1080/fs/nfs/nfs2xdr.c linux-1090/fs/nfs/nfs2xdr.c
  	entry->eof	  = !p[0] && p[1];
  
  	return p;
-diff -urNp linux-1080/fs/nfs/nfs3xdr.c linux-1090/fs/nfs/nfs3xdr.c
---- linux-1080/fs/nfs/nfs3xdr.c	
-+++ linux-1090/fs/nfs/nfs3xdr.c	
-@@ -465,6 +465,13 @@ nfs3_xdr_linkargs(struct rpc_rqst *req, 
+diff -urN linux-2.4.22.org/fs/nfs/nfs3xdr.c linux-2.4.22/fs/nfs/nfs3xdr.c
+--- linux-2.4.22.org/fs/nfs/nfs3xdr.c	2003-11-21 19:45:07.000000000 +0100
++++ linux-2.4.22/fs/nfs/nfs3xdr.c	2003-11-21 19:52:52.000000000 +0100
+@@ -471,6 +471,13 @@
  	return 0;
  }
  
@@ -81,7 +81,7 @@ diff -urNp linux-1080/fs/nfs/nfs3xdr.c linux-1090/fs/nfs/nfs3xdr.c
  /*
   * Encode arguments to readdir call
   */
-@@ -476,7 +483,7 @@ nfs3_xdr_readdirargs(struct rpc_rqst *re
+@@ -482,7 +489,7 @@
  	u32 count = args->count;
  
  	p = xdr_encode_fhandle(p, args->fh);
@@ -90,15 +90,16 @@ diff -urNp linux-1080/fs/nfs/nfs3xdr.c linux-1090/fs/nfs/nfs3xdr.c
  	*p++ = args->verf[0];
  	*p++ = args->verf[1];
  	if (args->plus) {
-@@ -600,6 +607,7 @@ u32 *
+@@ -605,6 +612,8 @@
+ u32 *
  nfs3_decode_dirent(u32 *p, struct nfs_entry *entry, int plus)
  {
- 	struct nfs_entry old = *entry;
-+	u64 cookie;
- 
++    	u64 cookie;
++
  	if (!*p++) {
  		if (!*p)
-@@ -613,7 +621,8 @@ nfs3_decode_dirent(u32 *p, struct nfs_en
+ 			return ERR_PTR(-EAGAIN);
+@@ -617,7 +626,8 @@
  	entry->name = (const char *) p;
  	p += XDR_QUADLEN(entry->len);
  	entry->prev_cookie = entry->cookie;
@@ -107,4 +108,4 @@ diff -urNp linux-1080/fs/nfs/nfs3xdr.c linux-1090/fs/nfs/nfs3xdr.c
 +	entry->cookie = nfs_transform_cookie64(cookie);
  
  	if (plus) {
- 		p = xdr_decode_post_op_attr(p, &entry->fattr);
+ 		struct nfs_fattr fattr;
