@@ -73,7 +73,7 @@ Patch27:	%{name}-udf.patch
 # based on	http://people.redhat.com/mingo/raid-patches/raid-2.2.20-A0
 Patch28:	raid-2.2.20-A0.patch.bz2
 # based on	http://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.20/ide-2.2.20.01102002.patch.bz2
-Patch29:	ide-2.2.20.01102002.patch.bz2
+Patch29:	ide-2.2.21.03152002.patch.bz2
 Patch30:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
 Patch31:	%{name}-flip.patch
 Patch33:	%{name}-ipsec-bridge.patch
