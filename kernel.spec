@@ -203,6 +203,9 @@ Patch134:	vt8235-2.4.19.patch
 Patch135:	linux-2.4.19-reiserfs-quota-22.patch.gz
 Patch136:	piix-ide-fix.patch
 Patch137:	linux-2.4.19-truncate-fix.patch
+Patch138:	http://www.uwsg.indiana.edu/hypermail/linux/kernel/0212.0/att-1445/01-sound.diff
+# Video 4 Linux 2
+Patch139:	linux-2.4.20-v4l2.patch.bz2
 
 # Patches fixing other patches or 3rd party sources ;)
 # This patch allows to create more than one sound device using alsa
@@ -645,6 +648,11 @@ echo Added ACL support
 # NetMos support
 echo Added NetMos card supprot
 %patch46 -p1
+
+%patch138 -p1
+
+echo Added support for V4L2
+%patch139 -p1
 
 echo Added ARCH specific patches....
 %ifarch sparc64
