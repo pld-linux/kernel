@@ -11,7 +11,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.19
-Release:	7
+Release:	8
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -72,7 +72,7 @@ Patch25:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.2.20pre/pre-patch-2
 Patch26:	linux-2.2.19-pci.patch 
 Patch27:	%{name}-flip.patch 
 Patch28:	%{name}-flip-serial5.05.patch
-
+Patch29:	%{name}-serial-initialisation.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -357,6 +357,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 cd  serial-5.05
 %patch28 -p1
+%patch29 -p1
 ./install-in-kernel ../
 cd .. 
 
