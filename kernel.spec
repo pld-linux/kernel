@@ -117,6 +117,8 @@ Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/pr
 Patch8:		linux-2.4.20-netfilter-%{netfilter_snap}.patch.bz2
 
 Patch9:		linux-2.4.20-initrd-close-console.patch
+
+#from http://unc.dl.sourceforge.net/sourceforge/user-mode-linux/host-skas3.patch
 Patch10:	host-skas3.patch
 
 # http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
