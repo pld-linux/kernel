@@ -55,7 +55,7 @@
 
 %define		_post_ver	.5
 #define		_post_ver	%{nil}
-%define		_rel		1
+%define		_rel		1.2
 %define		_cset		20050302_0807
 %define		_apply_cset	0
 
@@ -164,7 +164,7 @@ Patch54:	linux-2.6.11.3-imq1.patch
 #Patch61:	%{name}-MAX_INIT_ARGS.patch
 
 # http://tahoe.pl/patch.htm
-Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
+Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.10.patch
 
 # http://dev.gentoo.org/~spock/projects/gensplash/
 Patch72:	fbsplash-0.9.2-2.6.11.patch  
