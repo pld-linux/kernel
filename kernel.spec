@@ -279,6 +279,7 @@ Patch544:	829-gzip
 Patch545:	830-blockwriter
 Patch546:	831-swapwriter
 Patch550:	2.6.8.1-sws2-include.patch
+Patch551:	2.6.8.1-sws2-segfault-fix.patch
 
 Patch600:	%{name}-grsec.patch
 
@@ -809,6 +810,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch545 -p1
 %patch546 -p1
 %patch550 -p1
+%patch551 -p1
 %endif
 
 #grsec
