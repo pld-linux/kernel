@@ -97,7 +97,6 @@ Patch100:	linux-scsi-debug-bug.patch
 Patch101:	linux-2.4.2-raw-ip.patch
 Patch102:	PCI_ISA_bridge.patch
 Patch103:	linux-2.4.2-nvram-hdd.patch
-Patch104:	linux-2.4-fix-kapm.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch105:	linux-2.4.2-pcnet-parms.patch
 Patch106:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.6-p1.06062001.patch.gz
@@ -380,7 +379,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch101 -p1
 %patch102 -p0
 %patch103 -p0
-%patch104 -p1
 %patch105 -p1
 #%patch106 -p1
 %patch107 -p1
