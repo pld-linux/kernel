@@ -104,6 +104,9 @@ Patch50:	2.6.0-modular-IDE.patch
 Patch52:	2.6.0-t10-POSIX_message_queues-1of2-lkml.patch
 Patch53:	2.6.0-t10-POSIX_message_queues-2of2-lkml.patch
 
+# http://bytesex.org/patches/2.6.0-test10-2/
+Patch60:	patch-2.6.0-test10-kraxel.gz
+
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -449,6 +452,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch52 -p1
 %patch53 -p1
+
+%patch60 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
