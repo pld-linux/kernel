@@ -495,10 +495,12 @@ BuildKernel() {
 %else
 %ifarch sparc
 	sparc32 %{__make} boot EXTRAVERSION="-%{release}"
+%else
 %ifarch ppc
-    %{__make} vmlinux EXTRAVERSION="-%{release}"
+	%{__make} vmlinux EXTRAVERSION="-%{release}"
 %else
 	%{__make} boot EXTRAVERSION="-%{release}"
+%endif
 %endif
 %endif
 %ifarch sparc
