@@ -1,4 +1,4 @@
-%define		ow_version		2.2.20-ow1
+%define		ow_version		2.2.20-ow2
 %define		pcmcia_version		3.1.30
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.34
@@ -107,10 +107,12 @@ Patch115:	ide-2.2.21-printk.patch
 # based on ftp://ftp.kernel.org/people/andrea/kernels/v2.2/2.2.20pre9aa2/40_lfs-2.2.20pre9aa2-27.bz2
 Patch116:	linux-2.2.20-lfs.patch
 Patch117:	2.2.21-ppc-smp.patch
+Patch118:	ide.2.2.21_2.4.19pre7-VIA.patch
+Patch119:	ide-probe.patch
 
 Patch300:	patch-2.2.21-rc3.gz
 Patch320:	fix-prename.patch
-Patch321:	ow1-fix-2.2.21-pre1.patch
+Patch321:	ow2-fix-2.2.21-rc3.patch
 
 Patch1500:	linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	%{name}-sparc-zs.h.patch
@@ -448,6 +450,8 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch116 -p1
 %endif
 %patch117 -p1
+%patch118 -p1
+%patch119 -p1
 
 %ifarch sparc sparc64
 %patch1500 -p1
@@ -785,6 +789,8 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH115}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH116}
 %endif
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH117}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH118}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH119}
 
 %ifarch sparc sparc64
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1500}
