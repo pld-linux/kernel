@@ -1,5 +1,3 @@
-%define		pcmcia_version		3.2.3
-
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -35,9 +33,7 @@ Source20:	%{name}-sparc-BOOT.config
 Source21:	%{name}-sparc.config
 Source22:	%{name}-sparc-smp.config
 Source23:	%{name}-autoconf.h
-Source24:	http://dl.sourceforge.net/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
 Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc2.bz2
-Patch3:		patch-linux-2.4.20-xfs.bz2
 ExclusiveOS:	Linux
 Autoreqprov:	no
 URL:		http://www.kernel.org/
@@ -52,6 +48,12 @@ PreReq:		geninitrd
 #Prereq:	rc-boot
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Obsoletes:	kernel-modules
+
+%define		no_install_post_strip                   yes
+%define		no_install_post_compress_modules        yes
+%ifarch i586 i686 athlon
+%define		_without_boot				1
+%endif
 
 %description
 This package contains the Linux kernel that is used to boot and run
@@ -346,58 +348,8 @@ BuildKernel() {
 	%{__make} INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR modules_install KERNELRELEASE=$KernelVer
 }
 
-BuildPCMCIA() {
-if [ "$1" = "BOOT" ]; then
-	PCMCIA_APM=--apm
-	KernelVer=%{version}
-	echo BUILDING A KERNEL PCMCIA MODULES FOR BOOT...
-elif [ -n "$1" ] ; then
-	PCMCIA_APM=--apm
-	KernelVer=%{version}-%{release}$1
-	echo BUILDING A KERNEL PCMCIA MODULES FOR $1...
-else
-	PCMCIA_APM=--noapm
-	KernelVer=%{version}-%{release}
-	echo BUILDING THE NORMAL KERNEL PCMCIA MODULES...
-fi
-gzip -dc %{SOURCE5} | tar -xf -
-cd pcmcia-cs-%{pcmcia_version}
-%{__make} clean
-./Configure \
-	--noprompt \
-	--trust \
-	--cardbus \
-	--current \
-	--pnp \
-	--srctree \
-	$PCMCIA_APM \
-	--kernel=$KERNEL_BUILD_DIR \
-	--moddir=/lib/modules/$KernelVer \
-	--kflags="-march=%{_target_cpu}" \
-	--target=$KERNEL_INSTALL_DIR
-
-mv -f config.mk config.mk.bak
-mv -f Makefile Makefile.bak
-mv -f clients/Makefile clients/Makefile.bak
-sed "s/^MODDIR=.*/MODDIR=\/lib\/modules\/$KernelVer/" config.mk.bak > config.mk
-sed "s/^DIRS =.*//" Makefile.bak > Makefile
-sed "s/.*= 8390\..$//" clients/Makefile.bak > clients/Makefile.bak2
-sed "s/(MODDIR)\/net/(MODDIR)\/kernel\/drivers\/net/g" clients/Makefile.bak2 > clients/Makefile
-
-%{__make} all
-#	CC=%{kgcc} \
-#	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
-#	MFLAG="$RPM_OPT_FLAGS -O"
-
-#	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNEL_BUILD_DIR/include -D__KERNEL__ -DEXPORT_SYMTAB"
-
-%{__make} PREFIX=$KERNEL_INSTALL_DIR install
-cd ..
-
-}
-
 KERNEL_BUILD_DIR=`pwd`
-KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
+KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR/build
 
 rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
@@ -405,19 +357,16 @@ install -d $KERNEL_INSTALL_DIR
 # NORMAL KERNEL
 BuildKernel
 %ifarch %{ix86}
-BuildPCMCIA
 %endif
 
 # SMP-ENABLED KERNEL
-#BuildKernel smp
-#%ifarch %{ix86}
-#BuildPCMCIA smp
-#%endif
+BuildKernel smp
+%ifarch %{ix86}
+%endif
 
 # BOOT kernel
-%ifnarch i586 i686 ppc
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk"
-rm -rf $KERNEL_INSTALL_DIR
+%if %{?_with_boot:1}0
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build/%{_libdir}/bootdisk"
 install -d $KERNEL_INSTALL_DIR
 
 BuildKernel BOOT
@@ -425,12 +374,10 @@ BuildKernel BOOT
 
 %install
 rm -rf $RPM_BUILD_ROOT
-umask 022
-
 install -d $RPM_BUILD_ROOT%{_prefix}/{include,src}
 
 KERNEL_BUILD_DIR=`pwd`
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed"
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build"
 cp -a $KERNEL_INSTALL_DIR/* $RPM_BUILD_ROOT
 
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
@@ -443,7 +390,6 @@ cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 %{__make} mrproper
 find  -name "*~" -print | xargs rm -f
 find  -name "*.orig" -print | xargs rm -f
-
 
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
 
@@ -477,7 +423,6 @@ rm -f drivers/net/hamradio/soundmodem/gentbl
 
 %clean
 rm -rf $RPM_BUILD_ROOT
-rm -rf $RPM_BUILD_DIR/linux-%{version}-installed
 
 %post
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
@@ -602,7 +547,7 @@ fi
 #/lib/modules/%{version}-%{release}smp/pcmcia
 #%endif
 
-%ifnarch i586 i686 athlon
+%if %{?_with_boot:1}0
 %files BOOT
 %defattr(644,root,root,755)
 %{_libdir}/bootdisk/boot/vmlinuz-%{version}
