@@ -80,7 +80,7 @@ Patch3:		linux-2.4.4-aacraid-043001.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.7.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/
-Patch5:		linux-2.4.7-pre6-xfs-20010717.patch.gz
+Patch5:		linux-2.4.7-xfs-20010723.patch.gz
 # Compressed iso9660 filesystem
 Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/filemap-2.4.4-1.diff.gz
 Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-2.4.5-pre1-8.diff.gz
@@ -396,14 +396,14 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch3 -p1
 %patch4 -p1
 %patch100 -p1
-#%patch5 -p1 - need fixup.
+%patch5 -p1
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
-#%patch9 -p1
 %if%{?_with_grsec:1}%{!?_with_grsec:0}
 %patch10 -p1
 %endif
+%patch9 -p1
 
 %patch101 -p0
 %patch102 -p0
@@ -520,9 +520,9 @@ patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010703-l
 
 # JFS
 echo Adding JFS
-#%patch907 -p0
-#patch -p1 -s <jfs-common-v1.0.1-patch
-#patch -p1 -s <jfs-2.4.5-v1.0.1-patch
+%patch907 -p0
+patch -p1 -s <jfs-common-v1.0.1-patch
+patch -p1 -s <jfs-2.4.5-v1.0.1-patch
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
