@@ -5,6 +5,7 @@
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.7
 %define		sym_ncr_version		sym-1.7.3-ncr-3.4.3
+%define		kaio_version		1.3-2.4.0
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -106,6 +107,10 @@ Patch40:	smbfs-re-open-fixes.patch
 
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch41:	linux-2.4.2-pcnet-parms.patch
+
+# Asynchronous I/O support
+Patch42:	kaio-kern-PLD-fix.patch
+Patch43:	http://oss.sgi.com/projects/kaio/download/kaio-kern-%{kaio_version}
 
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
@@ -386,6 +391,10 @@ echo -e $ANS | ./runme)
 
 # LIDS
 patch -p1 -s <lids-%{lids_version}-2.4.1/lids-%{lids_version}-2.4.1.patch
+
+## !!!!!! Must be HERE !!!
+%patch42 -p0
+%patch43 -p5
 
 # IPVS
 for i in ipvs-%{ipvs_version}/*.diff ; do
