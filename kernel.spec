@@ -162,6 +162,8 @@ Patch255:	linux-2.4.20-i2c-2.7.0.patch.gz
 # from ftp://ftp.lsil.com/pub/symchips/scsi/FusionMPT/Linux/2.03.00/mptlinux-2.03.00-src.tar.gz
 Patch260:	linux-2.4.20-mptlinux-2.03.00.patch.bz2
 Patch265:	linux-2.4.20-e820.patch
+# Syntax bug
+Patch270:	dc395-tab.patch
 
 # The following go last as they touch a lot of code
 # and/or are on bcond and/or are ifarch
@@ -688,6 +690,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 echo Adding Tekram DC395/315 driver
 patch -p1 -s <dc395/dc395-integ24.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
+%patch270 -p0
 
 # IP personality
 #echo Adding IP Personality 
