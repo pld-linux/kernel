@@ -1,0 +1,1688 @@
+diff -Nur linux-2.6.8.1.org/include/linux/device.h linux-2.6.8.1/include/linux/device.h
+--- linux-2.6.8.1.org/include/linux/device.h	2005-03-02 12:00:34.158312680 +0100
++++ linux-2.6.8.1/include/linux/device.h	2005-03-02 13:17:48.124842688 +0100
+@@ -21,6 +21,7 @@
+ #include <linux/pm.h>
+ #include <asm/semaphore.h>
+ #include <asm/atomic.h>
++#include <linux/printkat.h>
+ 
+ #define DEVICE_NAME_SIZE	50
+ #define DEVICE_NAME_HALF	__stringify(20)	/* Less than half to accommodate slop */
+@@ -401,7 +402,8 @@
+ 
+ /* debugging and troubleshooting/diagnostic helpers. */
+ #define dev_printk(level, dev, format, arg...)	\
+-	printk(level "%s %s: " format , (dev)->driver ? (dev)->driver->name : "" , (dev)->bus_id , ## arg)
++	printkat(level "{driver}%s {busid}%s: " format "{{line}%d}" , \
++    		(dev)->driver->name , (dev)->bus_id , ## arg , __LINE__)
+ 
+ #ifdef DEBUG
+ #define dev_dbg(dev, format, arg...)		\
+diff -Nur linux-2.6.8.1.org/include/linux/evlog.h linux-2.6.8.1/include/linux/evlog.h
+--- linux-2.6.8.1.org/include/linux/evlog.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.8.1/include/linux/evlog.h	2005-03-02 13:11:31.855044392 +0100
+@@ -0,0 +1,134 @@
++/*
++ * Linux Event Logging
++ * Copyright (C) International Business Machines Corp., 2001
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
++ *
++ *  Please send e-mail to kenistoj@users.sourceforge.net if you have
++ *  questions or comments.
++ *
++ *  Project Website:  http://evlog.sourceforge.net/
++ */
++
++#ifndef _LINUX_EVLOG_H
++#define _LINUX_EVLOG_H
++
++#include <stdarg.h>
++#include <linux/types.h>
++#include <asm/types.h>
++
++/* Values for log_flags member */
++#define EVL_TRUNCATE		0x1
++#define EVL_KERNEL_EVENT	0x2
++#define EVL_INITIAL_BOOT_EVENT	0x4
++#define EVL_KERNTIME_LOCAL	0x8
++#define EVL_INTERRUPT		0x10	/* Logged from interrupt context */
++#define EVL_PRINTK		0x20	/* Strip leading <n> when formatting */
++#define EVL_EVTYCRC		0x40	/* Daemon will set event type = CRC */
++					/* of format string. */
++
++/* Formats for optional portion of record. */
++#define EVL_NODATA    0
++#define EVL_BINARY    1
++#define EVL_STRING    2
++#define EVL_PRINTF    3
++
++/* Maximum length of variable portion of record */
++#define EVL_ENTRY_MAXLEN (8 * 1024)
++
++/* Facility (e.g., driver) names are truncated to 15+null. */
++#define FACILITY_MAXLEN 16
++
++/* struct kern_log_entry - kernel record header */
++struct kern_log_entry {
++	__u16	log_kmagic;	/* always LOGREC_KMAGIC */
++	__u16	log_kversion;	/* which version of this struct? */
++	__u16	log_size;	/* # bytes in variable part of record */
++	__s8	log_format;	/* BINARY, STRING, PRINTF, NODATA */
++	__s8	log_severity;	/* DEBUG, INFO, NOTICE, WARN, etc. */
++	__s32	log_event_type;	/* facility-specific event ID */
++	__u32	log_flags;	/* EVL_TRUNCATE, etc. */
++	__s32	log_processor;	/* CPU ID */
++	time_t	log_time_sec;
++	__s32	log_time_nsec;
++	uid_t	log_uid;	/* event context... */
++	gid_t	log_gid;
++	pid_t	log_pid;
++	pid_t	log_pgrp;
++	char	log_facility[FACILITY_MAXLEN];	/* e.g., driver name */
++}; 
++
++#define LOGREC_KMAGIC	0x7af8
++#define LOGREC_KVERSION	3
++
++/* Reserved Event Types */
++#define EVL_BUFFER_OVERRUN	0x6
++
++#ifdef __KERNEL__
++/*
++ * severities, AKA priorities
++ */
++#define LOG_EMERG   0   /* system is unusable */
++#define LOG_ALERT   1   /* action must be taken immediately */
++#define LOG_CRIT    2   /* critical conditions */
++#define LOG_ERR     3   /* error conditions */
++#define LOG_WARNING 4   /* warning conditions */
++#define LOG_NOTICE  5   /* normal but significant condition */
++#define LOG_INFO    6   /* informational */
++#define LOG_DEBUG   7   /* debug-level messages */
++
++/*
++ * A buffer to pack with data, one value at a time.  By convention, b_tail
++ * reflects the total amount you've attempted to add, and so may be past b_end.
++ */
++struct evl_recbuf {
++	char *b_buf;	/* start of buffer */
++	char *b_tail;	/* add next data here */
++	char *b_end;	/* b_buf + buffer size */
++	char *b_argsz;	/* points to argsz word in EVL_PRINTF-format record */
++	char *b_zapped_nl;	/* where terminating newline was */
++};
++
++#ifdef CONFIG_EVLOG
++extern int evl_write(const char *facility, int event_type,
++	int severity, const void *buf, size_t len, uint flags, int format);
++extern int evl_printk(const char *facility, int event_type, int sev,
++	const char *fmt, ...);
++extern int evl_vprintk(const char *facility, int event_type, int sev,
++	const char *fmt, va_list args);
++
++/* Functions for hand-constructing event records */
++extern void evl_init_recbuf(struct evl_recbuf *b, char *buf, size_t size);
++extern void evl_put(struct evl_recbuf *b, const void *data, size_t datasz);
++extern void evl_puts(struct evl_recbuf *b, const char *s, int null);
++extern void evl_zap_newline(struct evl_recbuf *b);
++extern void evl_end_fmt(struct evl_recbuf *b);
++extern void evl_pack_args(struct evl_recbuf *b, const char *fmt, va_list args);
++extern void evl_end_args(struct evl_recbuf *b);
++#else	/* ! CONFIG_EVLOG */
++static inline int evl_write(const char *facility, int event_type,
++	int severity, const void *buf, size_t len, uint flags, int format)
++	{ return -ENOSYS; }
++static inline int evl_printk(const char *facility, int event_type, int sev,
++	const char *fmt, ...);
++	{ return -ENOSYS; }
++static inline int evl_vprintk(const char *facility, int event_type, int sev,
++	const char *fmt, va_list args)
++	{ return -ENOSYS; }
++#endif	/* CONFIG_EVLOG */
++
++#endif	/* __KERNEL__ */
++
++#endif	/* _LINUX_EVLOG_H */
+diff -Nur linux-2.6.8.1.org/include/linux/netdevice.h linux-2.6.8.1/include/linux/netdevice.h
+--- linux-2.6.8.1.org/include/linux/netdevice.h	2004-08-14 12:56:22.000000000 +0200
++++ linux-2.6.8.1/include/linux/netdevice.h	2005-03-02 13:18:28.970633184 +0100
+@@ -37,6 +37,7 @@
+ #include <linux/config.h>
+ #include <linux/device.h>
+ #include <linux/percpu.h>
++#include <linux/printkat.h>
+ 
+ struct divert_blk;
+ struct vlan_group;
+@@ -477,6 +478,9 @@
+ 	struct divert_blk	*divert;
+ #endif /* CONFIG_NET_DIVERT */
+ 
++	/* NETIF_MSG_* flags to control the types of events we log */
++	int msg_enable;
++
+ 	/* class/net/name entry */
+ 	struct class_device	class_dev;
+ 	struct net_device_stats* (*last_stats)(struct net_device *);
+@@ -778,6 +782,7 @@
+ 	NETIF_MSG_PKTDATA	= 0x1000,
+ 	NETIF_MSG_HW		= 0x2000,
+ 	NETIF_MSG_WOL		= 0x4000,
++	NETIF_MSG_ALL		= -1,		/* always log message */
+ };
+ 
+ #define netif_msg_drv(p)	((p)->msg_enable & NETIF_MSG_DRV)
+@@ -946,6 +951,49 @@
+ extern char *net_sysctl_strdup(const char *s);
+ #endif
+ 
++/* debugging and troubleshooting/diagnostic helpers. */
++/**
++ * netdev_printk() - Log message with interface name, gated by message level
++ * @sevlevel: severity level -- e.g., KERN_INFO
++ * @netdev: net_device pointer
++ * @msglevel: a standard message-level flag with the NETIF_MSG_ prefix removed.
++ *	Unless msglevel is ALL, log the message only if that flag is set in
++ *	netdev->msg_enable.
++ * @format: as with printk
++ * @args: as with printk
++ */
++extern int __netdev_printk(const char *sevlevel,
++	const struct net_device *netdev, int msglevel, const char *format, ...);
++#define netdev_printk(sevlevel, netdev, msglevel, format, arg...)	\
++do {									\
++	if (__netdev_printk(sevlevel , netdev , NETIF_MSG_##msglevel ,	\
++	    format , ## arg) == 0) {					\
++		printkat_noprintk(sevlevel				\
++			"{netdev}%s ({driver}%s {busid}%s) {msglvl}%s: "\
++			format "{{line}%d}" , netdev->name ,		\
++			netdev->class_dev.dev->driver->name ,		\
++			netdev->class_dev.dev->bus_id , #msglevel ,	\
++			## arg , __LINE__);				\
++	}								\
++} while (0)
++#ifdef DEBUG
++#define netdev_dbg(netdev, msglevel, format, arg...)		\
++	netdev_printk(KERN_DEBUG , netdev , msglevel , format , ## arg)
++#else
++#define netdev_dbg(netdev, msglevel, format, arg...) do {} while (0)
++#endif
++
++#define netdev_err(netdev, msglevel, format, arg...)		\
++	netdev_printk(KERN_ERR , netdev , msglevel , format , ## arg)
++#define netdev_info(netdev, msglevel, format, arg...)		\
++	netdev_printk(KERN_INFO , netdev , msglevel , format , ## arg)
++#define netdev_warn(netdev, msglevel, format, arg...)		\
++	netdev_printk(KERN_WARNING , netdev , msglevel , format , ## arg)
++
++/* report fatal error unconditionally; msglevel ignored for now */
++#define netdev_fatal(netdev, msglevel, format, arg...)		\
++	netdev_printk(KERN_ERR , netdev , ALL , format , ## arg)
++
+ #endif /* __KERNEL__ */
+ 
+ #endif	/* _LINUX_DEV_H */
+diff -Nur linux-2.6.8.1.org/include/linux/printkat.h linux-2.6.8.1/include/linux/printkat.h
+--- linux-2.6.8.1.org/include/linux/printkat.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.8.1/include/linux/printkat.h	2005-03-02 13:18:40.092942336 +0100
+@@ -0,0 +1,98 @@
++/*
++ * Linux Event Logging for the Enterprise
++ * Copyright (C) International Business Machines Corp., 2002
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
++ *
++ *  Please send e-mail to kenistoj@users.sourceforge.net if you have
++ *  questions or comments.
++ *
++ *  Project Website:  http://evlog.sourceforge.net/
++ */
++
++#ifndef _LINUX_PRINTKAT_H
++#define _LINUX_PRINTKAT_H
++
++extern int __printkat(const char *facname, int call_printk,
++	const char *fmt, ...);
++
++#ifndef CONFIG_EVLOG
++
++/* Just strip {id} constructs and call printk. */
++#define printkat(fmt, arg...) __printkat((const char*)0, 1, fmt, ## arg)
++#define printkat_noprintk(fmt, arg...) do {} while(0)
++
++#else	/* CONFIG_EVLOG */
++
++#include <linux/stringify.h>
++#include <linux/kernel.h>
++#include <linux/evlog.h>
++
++/*
++ * Facility name defaults to the name of the module, as set in the kernel
++ * build, or to kern (the kernel default) if the module name is not set.
++ * Define EVL_FACILITY_NAME before including this file (or redefine it
++ * before calling printkat) if that's unsatisfactory.
++ *
++ * In a device driver, EVL_FACILITY_NAME should be the driver name (without
++ * quotes).
++ */
++#ifndef EVL_FACILITY_NAME
++#ifdef KBUILD_MODNAME
++#define EVL_FACILITY_NAME KBUILD_MODNAME
++#else
++#define EVL_FACILITY_NAME kern
++#endif
++#endif
++
++/* Bloat doesn't matter: this doesn't end up in vmlinux. */
++struct log_position {
++   int line;
++   char function[64 - sizeof(int)];
++   char file[128];
++};
++
++#define _LOG_POS { __LINE__, __FUNCTION__, __FILE__ }
++
++/*
++ * Information about a printkat() message.
++ * Again, bloat doesn't matter: this doesn't end up in vmlinux.
++ * Note that, because of default alignment in the .log section,
++ * sizeof(struct log_info) should be a multiple of 32.
++ */
++struct log_info {
++   char format[128+64];
++   char facility[64];
++   struct log_position pos;
++};
++
++#define printkat(fmt, arg...) \
++({ \
++   static struct log_info __attribute__((section(".log"),unused)) ___ \
++      = { fmt, __stringify(EVL_FACILITY_NAME), _LOG_POS }; \
++   __printkat(__stringify(EVL_FACILITY_NAME) , 1, fmt , ## arg); \
++})
++
++/* Same as printkat, but don't call printk. */
++#define printkat_noprintk(fmt, arg...) \
++({ \
++   static struct log_info __attribute__((section(".log"),unused)) ___ \
++      = { fmt, __stringify(EVL_FACILITY_NAME), _LOG_POS }; \
++   __printkat(__stringify(EVL_FACILITY_NAME) , 0, fmt , ## arg); \
++})
++
++#endif /* CONFIG_EVLOG */
++
++#endif /*_LINUX_PRINTKAT_H*/
+diff -Nur linux-2.6.8.1.org/init/Kconfig linux-2.6.8.1/init/Kconfig
+--- linux-2.6.8.1.org/init/Kconfig	2005-03-02 12:00:38.994577456 +0100
++++ linux-2.6.8.1/init/Kconfig	2005-03-02 13:11:31.857044088 +0100
+@@ -197,6 +197,19 @@
+ 	  agent" (/sbin/hotplug) to load modules and set up software needed
+ 	  to use devices as you hotplug them.
+ 
++config EVLOG
++	bool "Event logging support"
++	---help---
++	  This enables support for event logging based upon the draft
++	  POSIX 1003.25 standard.  Enabling this feature does not
++	  affect the operation of the klog/syslog package in any way.
++	  In order to fully utilize this feature, user must also install
++	  the companion evlog package in user-space.
++
++	  For more information see http://evlog.sourceforge.net
++
++	  If you don't know what to do here, say N.
++
+ config IKCONFIG
+ 	bool "Kernel .config support"
+ 	---help---
+diff -Nur linux-2.6.8.1.org/kernel/Makefile linux-2.6.8.1/kernel/Makefile
+--- linux-2.6.8.1.org/kernel/Makefile	2005-03-02 12:00:29.913957920 +0100
++++ linux-2.6.8.1/kernel/Makefile	2005-03-02 13:13:03.103172568 +0100
+@@ -20,6 +20,7 @@
+ obj-$(CONFIG_COMPAT) += compat.o
+ obj-$(CONFIG_IKCONFIG) += configs.o
+ obj-$(CONFIG_IKCONFIG_PROC) += configs.o
++obj-$(CONFIG_EVLOG) += evlbuf.o evlapi.o
+ obj-$(CONFIG_STOP_MACHINE) += stop_machine.o
+ obj-$(CONFIG_AUDIT) += audit.o
+ obj-$(CONFIG_AUDITSYSCALL) += auditsc.o
+diff -Nur linux-2.6.8.1.org/kernel/evlapi.c linux-2.6.8.1/kernel/evlapi.c
+--- linux-2.6.8.1.org/kernel/evlapi.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.8.1/kernel/evlapi.c	2005-03-02 13:18:40.093942184 +0100
+@@ -0,0 +1,499 @@
++/*
++ * Linux Event Logging
++ * Copyright (C) International Business Machines Corp., 2003
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
++ *
++ *  Please send e-mail to kenistoj@users.sourceforge.net if you have
++ *  questions or comments.
++ *
++ *  Project Website:  http://evlog.sourceforge.net/
++ */
++
++#include <linux/config.h>
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/stddef.h>
++#include <linux/spinlock.h>
++#include <linux/string.h>
++#include <linux/ctype.h>
++#include <linux/evlog.h>
++
++extern void evl_mk_rechdr(struct kern_log_entry *hdr,
++	const char *facility, int event_type, int severity, size_t size,
++	uint flags, int format);
++extern int evl_writeh(struct kern_log_entry *hdr, const char *vardata);
++extern void evl_unbrace(char *dest, const char *src, int bufsz);
++
++/**
++ * evl_write() - write header + optional buffer to event handler
++ *
++ * @buf: optional variable-length data
++ * other args as per evl_mk_rechdr()
++ */
++int
++evl_write(const char *facility, int event_type, int severity, const void *buf,
++	size_t size, uint flags, int format)
++{
++	struct kern_log_entry hdr;
++
++	evl_mk_rechdr(&hdr, facility, event_type, severity, size, flags,
++		format);
++	return evl_writeh(&hdr, buf);
++}
++
++void
++evl_init_recbuf(struct evl_recbuf *b, char *buf, size_t size)
++{
++	b->b_buf = buf;
++	b->b_tail = buf;
++	b->b_end = buf + size;
++	b->b_zapped_nl = NULL;
++	b->b_argsz = NULL;
++}
++
++/**
++ * evl_put() - Append data to buffer; handle overflow.
++ * @b - describes buffer; updated to reflect data appended
++ * @data - data to append
++ * @datasz - data length in bytes
++ */
++void
++evl_put(struct evl_recbuf *b, const void *data, size_t datasz)
++{
++	ptrdiff_t room = b->b_end - b->b_tail;
++	if (room > 0) {
++		(void) memcpy(b->b_tail, data, min(datasz, (size_t)room));
++	}
++	b->b_tail += datasz;
++}
++
++/**
++ * evl_puts() - Append string to buffer; handle overflow.
++ * Append a string to the buffer.  If null == 1, we include the terminating
++ * null.  If the string extends over the end of the buffer, terminate the
++ * buffer with a null.
++ *
++ * @b - describes buffer; updated to reflect data appended
++ * @s - null-terminated string
++ * @null - 1 if we append the terminating null, 0 otherwise
++ */
++void
++evl_puts(struct evl_recbuf *b, const char *s, int null)
++{
++	char *old_tail = b->b_tail;
++	evl_put(b, s, strlen(s) + null);
++	if (b->b_tail > b->b_end && old_tail < b->b_end) {
++		*(b->b_end - 1) = '\0';
++	}
++}
++
++/**
++ * evl_zap_newline() - Delete newline at end of format string.
++ * Called after the format string has been copied into b.
++ * If the format ends in a newline, remove it.  We remove the
++ * terminating newline to increase flexibility when formatting
++ * the record for viewing.
++ */
++void
++evl_zap_newline(struct evl_recbuf *b)
++{
++	char *nl = b->b_tail - 2;
++	if (b->b_buf <= nl && nl < b->b_end && *nl == '\n') {
++		*nl = '\0';
++		b->b_tail--;
++		b->b_zapped_nl = nl;
++	}
++}
++
++/**
++ * evl_unzap_newline() - Replace previously zapped newline.
++ * NOTE: Replacing the newline (and advancing the terminating null)
++ * renders useless the contents of the record beyond the format string.
++ */
++void
++evl_unzap_newline(struct evl_recbuf *b)
++{
++	if (b->b_zapped_nl) {
++		b->b_zapped_nl[0] = '\n';
++		b->b_zapped_nl[1] = '\0';
++	}
++}
++
++/**
++ * evl_end_fmt() - Make and remember room for argsz word in EVL_PRINTF rec.
++ * Called after the format string has been copied in, but before the args.
++ * Store zero for now; evl_end_args() will store the actual size later.
++ */
++void
++evl_end_fmt(struct evl_recbuf *b)
++{
++	int argsz = 0;
++	b->b_argsz = b->b_tail;
++	evl_put(b, &argsz, sizeof(int));
++}
++
++/**
++ * evl_end_args() - For EVL_PRINTF record, store the argsz.
++ * Called after the args have been copied in.
++ */
++void
++evl_end_args(struct evl_recbuf *b)
++{
++	char *args;
++	int argsz;
++
++	if (! b->b_argsz) {
++		/* Nobody called evl_end_fmt(). */
++		return;
++	}
++	args = b->b_argsz + sizeof(int);
++	if (args > b->b_end) {
++		/* VERY long format string: even argsz is off end of record. */
++		return;
++	}
++	argsz = b->b_tail - args;
++	memcpy(b->b_argsz, &argsz, sizeof(int));
++}
++
++static inline void
++skip_atoi(const char **s)
++{
++	while (isdigit(**s)) {
++		(*s)++;
++	}
++}
++
++/**
++ * parse_printf_fmt() - Parse printf/printk conversion spec.
++ * fmt points to the '%' in a printk conversion specification.  Advance
++ * fmt past any flags, width and/or precision specifiers, and qualifiers
++ * such as 'l' and 'L'.  Return a pointer to the conversion character.
++ * Stores the qualifier character (or -1, if there is none) at *pqualifier.
++ * *wp is set to flags indicating whether the width and/or precision are '*'.
++ * For example, given
++ *      %*.2lx
++ * *pqualifier is set to 'l', *wp is set to 0x1, and a pointer to the 'x'
++ * is returned.
++ *
++ * Note: This function is derived from vsnprintf() (see lib/vsprintf.c),
++ * and should be kept in sync with that function.
++ *
++ * @fmt - points to '%' in conversion spec
++ * @pqualifier - *pqualifier is set to conversion spec's qualifier, or -1.
++ * @wp - Bits in *wp are set if the width or/and precision are '*'.
++ */
++const char *
++parse_printf_fmt(const char *fmt, int *pqualifier, int *wp)
++{
++	int qualifier = -1;
++	*wp = 0;
++
++	/* process flags */
++	repeat:
++		++fmt;          /* this also skips first '%' */
++		switch (*fmt) {
++			case '-':
++			case '+':
++			case ' ':
++			case '#':
++			case '0':
++				goto repeat;
++		}
++
++	/* get field width */
++	if (isdigit(*fmt))
++		skip_atoi(&fmt);
++	else if (*fmt == '*') {
++		++fmt;
++		/* it's the next argument */
++		*wp |= 0x1;
++	}
++
++	/* get the precision */
++	if (*fmt == '.') {
++		++fmt;
++		if (isdigit(*fmt))
++			skip_atoi(&fmt);
++		else if (*fmt == '*') {
++			++fmt;
++			/* it's the next argument */
++			*wp |= 0x2;
++		}
++	}
++
++	/* get the conversion qualifier */
++	if (*fmt == 'h' || *fmt == 'l' || *fmt == 'L' ||
++	    *fmt == 'Z' || *fmt == 'z') {
++		qualifier = *fmt;
++		++fmt;
++		if (qualifier == 'l' && *fmt == 'l') {
++			qualifier = 'L';
++			++fmt;
++		}
++	}
++
++	*pqualifier = qualifier;
++	return fmt;
++}
++
++/**
++ * evl_pack_args() - Pack args into buffer, guided by format string.
++ * b describes a buffer.  fmt and args are as passed to vsnprintf().  Using
++ * fmt as a guide, copy the args into b's buffer.
++ *
++ * @b - describes buffer; updated to reflect data added
++ * @fmt - printf/printk-style format string
++ * @args - values to be packed into buffer
++ */
++void
++evl_pack_args(struct evl_recbuf *b, const char *fmt, va_list args)
++{
++#define COPYARG(type) \
++    do { type v=va_arg(args,type); evl_put(b,&v,sizeof(v)); } while(0)
++
++	const char *s;
++	int qualifier;
++
++	for (; *fmt ; ++fmt) {
++		int wp = 0x0;
++		if (*fmt != '%') {
++			continue;
++		}
++
++		fmt = parse_printf_fmt(fmt, &qualifier, &wp);
++		if (wp & 0x1) {
++			/* width is '*' (next arg) */
++			COPYARG(int);
++		}
++		if (wp & 0x2) {
++			/* ditto precision */
++			COPYARG(int);
++		}
++
++		switch (*fmt) {
++			case 'c':
++				COPYARG(int);
++				continue;
++
++			case 's':
++				s = va_arg(args, char *);
++				evl_puts(b, s, 1);
++				continue;
++
++			case 'p':
++				COPYARG(void*);
++				continue;
++
++			case 'n':
++				/* Skip over the %n arg. */
++				if (qualifier == 'l') {
++					(void) va_arg(args, long *);
++				} else if (qualifier == 'Z' || qualifier == 'z') {
++					(void) va_arg(args, size_t *);
++				} else {
++					(void) va_arg(args, int *);
++				}
++				continue;
++
++			case '%':
++				continue;
++
++				/* integer number formats - handle outside switch */
++			case 'o':
++			case 'X':
++			case 'x':
++			case 'd':
++			case 'i':
++			case 'u':
++				break;
++
++			default:
++				/* Bogus conversion.  Pass thru unchanged. */
++				if (*fmt == '\0')
++					--fmt;
++				continue;
++		}
++		if (qualifier == 'L') {
++			COPYARG(long long);
++		} else if (qualifier == 'l') {
++			COPYARG(long);
++		} else if (qualifier == 'Z' || qualifier == 'z') {
++			COPYARG(size_t);
++		} else if (qualifier == 'h') {
++			COPYARG(int);
++		} else {
++			COPYARG(int);
++		}
++	}
++}
++
++/*
++ * Scratch buffer for constructing event records.  This is static because
++ * (1) we want events to be logged even in low-memory situations; and
++ * (2) the buffer is too big to be an auto variable.
++ */
++static spinlock_t msgbuf_lock = SPIN_LOCK_UNLOCKED;
++static char msgbuf[EVL_ENTRY_MAXLEN];
++
++/**
++ * evl_send_printf() - Format and log a PRINTF-format message.
++ * Create and log a PRINTF-format event record whose contents are:
++ *	format string
++ *	int containing args size
++ *	args
++ * @hdr - pre-constructed record header, which we adjust as needed
++ * @fmt - format string
++ * @args - arg list
++ */
++static int
++evl_send_printf(struct kern_log_entry *hdr, const char *fmt, va_list args)
++{
++	int ret;
++	struct evl_recbuf b;
++	unsigned long iflags;
++
++	spin_lock_irqsave(&msgbuf_lock, iflags);
++	evl_init_recbuf(&b, msgbuf, EVL_ENTRY_MAXLEN);
++	evl_puts(&b, fmt, 1);
++	evl_zap_newline(&b);
++	evl_end_fmt(&b);
++	evl_pack_args(&b, fmt, args);
++	evl_end_args(&b);
++
++	hdr->log_size = b.b_tail - b.b_buf;
++	/* Note: If size > EVL_ENTRY_MAXLEN, evl_writeh() will handle it. */
++	
++	ret = evl_writeh(hdr, b.b_buf);
++	spin_unlock_irqrestore(&msgbuf_lock, iflags);
++	return ret;
++}
++
++/**
++ * evl_vprintk() - Format and log a PRINTF-format record.
++ * @fmt - format string
++ * @args - arg list
++ * other args as per evl_mk_rechdr().  If event_type == 0, set flag to
++ *	request that recipient set event type.
++ */
++int
++evl_vprintk(const char *facility, int event_type, int severity,
++	const char *fmt, va_list args)
++{
++	struct kern_log_entry hdr;
++	unsigned int flags = 0;
++	if (event_type == 0) {
++		flags |= EVL_EVTYCRC;
++	}
++	evl_mk_rechdr(&hdr, facility, event_type, severity, 1 /*size TBD*/,
++		flags, EVL_PRINTF);
++	
++	return evl_send_printf(&hdr, fmt, args);
++}
++
++/**
++ * evl_printk() - Format and log a PRINTF-format record.
++ * @fmt - format string
++ * other args as per evl_mk_rechdr()
++ */
++int
++evl_printk(const char *facility, int event_type, int severity,
++	const char *fmt, ...)
++{
++	va_list args;
++	int ret;
++	va_start(args, fmt);
++	ret = evl_vprintk(facility, event_type, severity, fmt, args);
++	va_end(args);
++	return ret;
++}
++
++/*** printkat support ***/
++
++static int
++try_extract_severity(const char *msg)
++{
++	if (msg[0] == '<'
++	    && msg[1] >= '0' && msg[1] <= '7'
++	    && msg[2] == '>') {
++		return msg[1] - '0';
++	}
++	return -1;
++}
++
++static int
++extract_severity(const char *fmt, va_list args)
++{
++	int sev = try_extract_severity(fmt);
++	if (sev == -1 && (fmt[0] == '<' || fmt[0] == '%')) {
++		/* Handle stuff like "<%d>..." and "%s..." */
++		char prefix[4];
++		(void) vsnprintf(prefix, 4, fmt, args);
++		sev = try_extract_severity(prefix);
++	}
++	return sev;
++}
++
++/**
++ * evl_printkat() - Log a PRINTF-format record, stripping attribute names.
++ * @facility: facility name (e.g., "kern", driver name)
++ * @buf, @buflen: a scratch buffer in which we construct the record
++ * @fmt: format string, possibly including severity-level prefix.
++ *	Any attribute names in curly braces will be stripped out by
++ *	evl_unbrace().
++ * other args as per printk()
++ * 
++ * On return, buf contains the format string, purged of {id} constructs
++ * and the "{{" trailer, if any.
++ */
++int
++evl_printkat(const char *facility, char *buf, size_t buflen, const char *fmt,
++	va_list args)
++{
++	int ret;
++	int severity;
++	struct evl_recbuf b;
++	struct kern_log_entry hdr;
++
++	evl_init_recbuf(&b, buf, buflen);
++	evl_unbrace(b.b_buf, fmt, (int) buflen);
++	b.b_tail = b.b_buf + strlen(b.b_buf) + 1;
++	evl_zap_newline(&b);
++	evl_end_fmt(&b);
++
++	evl_pack_args(&b, fmt, args);
++	evl_end_args(&b);
++
++	severity = extract_severity(b.b_buf, args);
++	if (severity < 0) {
++		/* See kernel.h and printk.c */
++		severity = default_message_loglevel;
++	}
++
++	evl_mk_rechdr(&hdr, facility, 0, severity, b.b_tail - b.b_buf,
++		EVL_EVTYCRC, EVL_PRINTF);
++	/* Note: If size > EVL_ENTRY_MAXLEN, evl_writeh() will handle it. */
++	
++	ret = evl_writeh(&hdr, b.b_buf);
++
++	/* Put the newline back in case caller calls printk(). */
++	evl_unzap_newline(&b);
++	return ret;
++}
++
++EXPORT_SYMBOL(evl_write);
++EXPORT_SYMBOL(evl_printk);
++EXPORT_SYMBOL(evl_vprintk);
++EXPORT_SYMBOL(evl_printkat);
+diff -Nur linux-2.6.8.1.org/kernel/evlbuf.c linux-2.6.8.1/kernel/evlbuf.c
+--- linux-2.6.8.1.org/kernel/evlbuf.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.8.1/kernel/evlbuf.c	2005-03-02 13:11:31.861043480 +0100
+@@ -0,0 +1,523 @@
++/*
++ * Linux Event Logging
++ * Copyright (C) International Business Machines Corp., 2003
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
++ *
++ *  Please send e-mail to kenistoj@users.sourceforge.net if you have
++ *  questions or comments.
++ *
++ *  Project Website:  http://evlog.sourceforge.net/
++ */
++
++#include <linux/config.h>
++#include <linux/kernel.h>
++#include <linux/stddef.h>
++#include <linux/spinlock.h>
++#include <linux/time.h>
++#include <linux/smp.h>
++#include <linux/string.h>
++#include <linux/interrupt.h>
++#include <asm/uaccess.h>
++#include <asm/semaphore.h>
++#include <linux/module.h>
++#include <linux/ctype.h>
++#include <linux/evlog.h>
++
++#define REC_HDR_SIZE sizeof(struct kern_log_entry)
++
++extern struct timezone sys_tz;
++
++/* Use same buffer size as printk's, but at least 2x the max rec length. */
++#define EVL_BUF_SIZE (1 << CONFIG_LOG_BUF_SHIFT)
++#if (EVL_BUF_SIZE < 2*EVL_ENTRY_MAXLEN)
++#undef EVL_BUF_SIZE
++#define EVL_BUF_SIZE (2*EVL_ENTRY_MAXLEN)
++#endif
++
++/*
++ * After buffer overflows, require at most this much free space before
++ * logging events again.
++ */
++#define EVL_BUF_DRAINAGE (16*1024U)
++
++/*
++ * This data structure describes the circular buffer that is written into
++ * by evl_writeh() and drained by evl_kbufread().
++ *
++ * bf_buf, bf_len, and bf_end are the start, length, and end of the buffer,
++ * and in the current implementation these remain constant.
++ *
++ * bf_tail advances as event records are logged to the buffer, and bf_head
++ * advances as records are drained from the buffer.  bf_dropped maintains
++ * a count of records that have been dropped due to buffer overrun.
++ * By convention:
++ * - (bf_head == bf_tail) indicates an empty buffer.
++ * - bf_head can take any value from bf_buf through bf_end.
++ * - bf_tail starts out equal to bf_buf, but once the first record is written
++ *	to the buffer, bf_tail never equals bf_buf.  It can equal bf_end.
++ *
++ * It is possible for one task to be draining the buffer while another
++ * is writing to it.  Only evl_kbufread() advances bf_head, and only
++ * copy_rec_to_cbuf() advances bf_tail.  Each advances its respective
++ * pointer only after completing its operation.
++ */
++struct cbuf {
++	char		*bf_buf;	/* base buffer address */
++	unsigned int	bf_len;		/* buffer length */
++	unsigned int	bf_dropped;	/* (internal) dropped count */
++	char		*bf_head;	/* head-pointer for circ. buf */
++	char		*bf_tail;	/* tail-pointer for circ. buf */
++	char		*bf_end;	/* end buffer address */
++};
++ 
++static char evl_buffer[EVL_BUF_SIZE + sizeof(long)];
++
++static struct cbuf ebuf = {
++	evl_buffer,
++	EVL_BUF_SIZE,
++	0,
++	evl_buffer, 
++	evl_buffer,
++	evl_buffer + EVL_BUF_SIZE
++};
++
++/*
++ * evl_read_sem serializes reads of the evlog buffer into user space (although
++ * only the logging daemon should be running evl_kbufread()).
++ *
++ * readq allows the reader to sleep until there's at least one record in
++ * the buffer to read.
++ *
++ * ebuf_lock serializes writes to the evlog buffer.
++ */
++static DECLARE_MUTEX(evl_read_sem);
++static DECLARE_WAIT_QUEUE_HEAD(readq);
++static spinlock_t ebuf_lock = SPIN_LOCK_UNLOCKED;
++
++/*
++ * A region of the evlog circular buffer, possibly split into 2 chunks
++ * due to wraparound.
++ */
++struct cbregion {
++	char	*rg_head;
++	char	*rg_tail;
++	size_t	rg_chunk1;
++	size_t	rg_chunk2;
++};
++
++/**
++ * set_region() - Establish region to be written to or read from.
++ * Caller wants to write to or read from an nbytes-byte region (of the
++ * evlog circular buffer) starting at head.  Figure out whether the
++ * region needs to be 1 chunk (typical) or 2 (due to wraparound),
++ * and populate the region struct accordingly.
++ *
++ * @rg: region struct to be populated
++ * @head: beginning of region to be read/written.  If this is beyond the
++ *	end of the buffer, wrap it around to the beginning.
++ * @nbytes: size of region
++ */
++static void
++set_region(struct cbregion *rg, char *head, size_t nbytes)
++{
++	if (head >= ebuf.bf_end) {
++		head -= ebuf.bf_len;
++	}
++	rg->rg_head = head;
++	rg->rg_tail = head + nbytes;
++	if (rg->rg_tail > ebuf.bf_end) {
++		rg->rg_chunk1 = ebuf.bf_end - head;
++		rg->rg_chunk2 = nbytes - rg->rg_chunk1;
++		rg->rg_tail = ebuf.bf_buf + rg->rg_chunk2;
++	} else {
++		rg->rg_chunk1 = nbytes;
++		rg->rg_chunk2 = 0;
++	}
++}
++
++static void
++copy_from_cbuf(const struct cbregion *rg, char *dest)
++{
++	memcpy(dest, rg->rg_head, rg->rg_chunk1);
++	if (rg->rg_chunk2 != 0) {
++		memcpy(dest + rg->rg_chunk1, ebuf.bf_buf, rg->rg_chunk2);
++	}
++}
++
++static int
++copy_cbuf_to_user(const struct cbregion *rg, char *ubuf)
++{
++	int status;
++	status = copy_to_user(ubuf, rg->rg_head, rg->rg_chunk1);
++	if (rg->rg_chunk2 != 0 && status == 0) {
++		status = copy_to_user(ubuf + rg->rg_chunk1, ebuf.bf_buf,
++			rg->rg_chunk2);
++	}
++	return status;
++}
++
++static void
++copy_to_cbuf(const struct cbregion *rg, const char *src)
++{
++	memcpy(rg->rg_head, src, rg->rg_chunk1);
++	if (rg->rg_chunk2 != 0) {
++		memcpy(ebuf.bf_buf, src + rg->rg_chunk1, rg->rg_chunk2);
++	}
++}
++
++/**
++ * copy_rec_to_cbuf() - Log event (hdr + vardata) to buffer.
++ * Caller has verified that there's enough room.
++ */
++static void
++copy_rec_to_cbuf(const struct kern_log_entry *hdr, const char *vardata)
++{
++	struct cbregion rg;
++	char *tail = ebuf.bf_tail;
++
++	set_region(&rg, tail, REC_HDR_SIZE);
++	copy_to_cbuf(&rg, (const char*) hdr);
++
++	if (hdr->log_size != 0) {
++		set_region(&rg, tail + REC_HDR_SIZE, hdr->log_size);
++		copy_to_cbuf(&rg, vardata);
++	}
++
++	ebuf.bf_tail = rg.rg_tail;
++}
++
++/**
++ * evl_mk_rechdr() - Populate evlog record header.
++ * @facility: facility name (e.g., "kern", driver name)
++ * @event_type: event type (event ID assigned by programmer; may also be
++ *	computed by recipient -- e.g., CRC of format string)
++ * @severity: severity level (e.g., LOG_INFO)
++ * @size: length, in bytes, of variable data
++ * @flags: event flags (e.g., EVL_TRUNCATE, EVL_EVTYCRC)
++ * @format: format of variable data (e.g., EVL_STRING)
++ */
++void
++evl_mk_rechdr(struct kern_log_entry *rec_hdr,
++		const char *facility,
++		int	event_type,
++		int	severity,
++		size_t	size,
++		uint	flags,
++		int	format)
++{
++	struct timespec ts;
++
++	flags |= EVL_KERNEL_EVENT;
++	if (in_interrupt()) {
++		flags |= EVL_INTERRUPT;
++	}
++
++	rec_hdr->log_kmagic		=  LOGREC_KMAGIC;
++	rec_hdr->log_kversion		=  LOGREC_KVERSION;
++	rec_hdr->log_size		=  (__u16) size;
++	rec_hdr->log_format		=  (__s8) format;
++	rec_hdr->log_event_type		=  (__s32) event_type;
++	rec_hdr->log_severity		=  (__s8) severity;
++	rec_hdr->log_uid		=  current->uid;
++	rec_hdr->log_gid		=  current->gid;
++	rec_hdr->log_pid		=  current->pid;
++	rec_hdr->log_pgrp		=  process_group(current);
++	rec_hdr->log_flags		=  (__u32) flags;
++	rec_hdr->log_processor		=  (__s32) smp_processor_id();
++
++	strlcpy(rec_hdr->log_facility, facility, FACILITY_MAXLEN);
++
++	if (get_seconds() == 0) {
++		rec_hdr->log_flags |= EVL_INITIAL_BOOT_EVENT;
++	} else {
++#if defined(__i386__)
++		if (sys_tz.tz_minuteswest == 0) {
++			/* localtime */
++			rec_hdr->log_flags |= EVL_KERNTIME_LOCAL;
++		}
++#endif
++	}
++	ts = CURRENT_TIME;
++	rec_hdr->log_time_sec = (time_t) ts.tv_sec;
++	rec_hdr->log_time_nsec = (__s32) ts.tv_nsec;
++}
++
++/**
++ * normalize_header() - Fix up rec header, handling overflow, null vardata, etc.
++ * In case of sloppiness on the part of the caller, we clean it up rather
++ * than failing, since the caller is unlikely to handle failure.
++ */
++static void
++normalize_header(struct kern_log_entry *hdr, const void *vardata)
++{
++	if (hdr->log_severity < 0 || hdr->log_severity > LOG_DEBUG) {
++		hdr->log_severity = LOG_WARNING;
++	}
++	if (vardata == NULL
++	    || hdr->log_size == 0
++	    || hdr->log_format == EVL_NODATA) {
++		hdr->log_size = 0;
++		hdr->log_format = EVL_NODATA;
++	}
++	if (hdr->log_size > EVL_ENTRY_MAXLEN) {
++		hdr->log_size = EVL_ENTRY_MAXLEN;
++		hdr->log_flags |= EVL_TRUNCATE;
++	}
++}
++
++/**
++ * log_dropped_recs_event() - Log message about previously dropped records.
++ * The evlog circular buffer had been full and caused later records to be
++ * dropped.  Now the buffer has some free space again.  Log an event reporting
++ * the number of records dropped.  Caller has verified that there's at least
++ * enough room for this event record.
++ */
++static void
++log_dropped_recs_event(void)
++{
++#define DROP_MSG_SIZE 80
++	char sbuf[DROP_MSG_SIZE];
++	struct kern_log_entry drechdr;
++
++	snprintf(sbuf, DROP_MSG_SIZE,
++		"%d event records dropped due to EVL buffer overflow.", 
++		ebuf.bf_dropped);
++	ebuf.bf_dropped = 0;
++	evl_mk_rechdr(&drechdr, "kern", EVL_BUFFER_OVERRUN, LOG_INFO,
++		strlen(sbuf) + 1, 0, EVL_STRING);
++	copy_rec_to_cbuf(&drechdr, sbuf);
++}
++
++/**
++ * evl_check_buf() - Check for space in evlog buffer.
++ * If buffer free space is sufficient to log the indicated record,
++ * return 0.  If not, return -1.
++ *
++ * Once the buffer becomes full and one or more messages are discarded,
++ * a significant portion of the buffer must be drained before we permit
++ * messages to be buffered again.  We count the number of discards
++ * in the meantime and report them when we resume logging events.
++ * If we resumed logging with a nearly full buffer, then there could
++ * be a thrashing of stops and starts, making the discarded-message
++ * reporting annoying.
++ *
++ * @hdr: The header of the record caller intends to log.
++ */
++static int
++evl_check_buf(const struct kern_log_entry *hdr)
++{
++	char *head, *tail;
++	size_t water_mark, avail, recsize;
++
++	recsize = REC_HDR_SIZE + hdr->log_size;
++	head    = ebuf.bf_head;
++	tail	= ebuf.bf_tail;
++	avail   = (head <= tail) ?
++		  (ebuf.bf_len - (tail - head)) :
++		  (head - tail);
++
++	if (ebuf.bf_dropped != 0) {
++		/*
++		 * Still recovering from buffer overflow.
++		 * Apply the low water mark.
++		 */
++		water_mark = min(EVL_BUF_DRAINAGE, ebuf.bf_len / 2);
++		/*
++		 * Just in case recsize is huge and/or somebody cranks the
++		 * buffer size and/or EVL_BUF_DRAINAGE way down, make
++		 * sure we have room for this record AND the "records dropped"
++		 * message.
++		 */
++		water_mark = max(water_mark,
++			recsize + REC_HDR_SIZE + DROP_MSG_SIZE);
++	} else {
++		/* +1 because bf_tail must never catch up with bf_head. */
++		water_mark = recsize + 1;
++	}
++
++	if (avail < water_mark) {
++		return -1;
++	}
++
++	/* There's enough free buffer space.  Return success. */
++	if (ebuf.bf_dropped != 0) {
++		log_dropped_recs_event();
++	}
++	return 0;
++}
++
++/**
++ * evl_kbufread() - Copy records from evlog circular buffer into user space.
++ * If successful, returns the number of bytes copied; else returns a
++ * negative error code.
++ *
++ * @retbuf: pointer to the buffer to be filled with the event records
++ * @bufsize: length, in bytes, of retbuf
++ */
++int
++evl_kbufread(char *retbuf, size_t bufsize)
++{
++	char *rec;
++	size_t rec_size;
++	int error = 0;
++	int retbuflen = 0;
++	char *tail, *buf = retbuf;
++
++	if (bufsize < REC_HDR_SIZE) {
++		return -EINVAL;
++	}
++
++	if (ebuf.bf_head == ebuf.bf_tail && ebuf.bf_dropped != 0) {
++		/*
++		 * Probable scenario:
++		 * 1. Somebody logged a huge burst of events and overflowed
++		 * the buffer.  At this point, there was no room for the
++		 * "records dropped" message.
++		 * 2. evlogd drained the buffer, and is now back for more.
++		 */
++		unsigned long iflags;
++		spin_lock_irqsave(&ebuf_lock, iflags);
++		log_dropped_recs_event();
++		spin_unlock_irqrestore(&ebuf_lock, iflags);
++	}
++
++	/* 
++	 * We expect that only the logging daemon will be running here,
++	 * but serialize access just in case.
++	 */
++	error = down_interruptible(&evl_read_sem);
++	if (error == -EINTR) {
++		return -EINTR;
++	}
++	/* Go to sleep if the buffer is empty.  */
++	error = wait_event_interruptible(readq, 
++		(ebuf.bf_head != ebuf.bf_tail));
++	if (error) {
++		up(&evl_read_sem);
++		return error;
++	}
++	/*
++	 * Assemble message(s) into the user buffer, as many as will
++	 * fit.  On running out of space in the buffer, try to copy
++	 * the header for the overflowing message.  This means that
++	 * there will always be at least a header returned.  The caller
++	 * must compare the numbers of bytes returned (remaining) with
++	 * the length of the message to see if the entire message is
++	 * present.  A subsequent read will get the entire message,
++	 * including the header (again).
++	 *
++	 * For simplicity, take a snapshot of bf_tail, and don't read
++	 * past that even if evl_writeh() pours in more records while
++	 * we're draining.  We'll get those new records next time around.
++	 */
++	tail = ebuf.bf_tail;
++	rec = ebuf.bf_head;
++	if (rec == tail) { 
++		/* Should not happen. Buffer must have at least one record. */
++		error = -EFAULT;
++		goto out;
++	}
++
++	do {
++		struct cbregion rg;
++		__u16 vardata_size;	/* type must match rec.log_size */
++
++		if (bufsize < REC_HDR_SIZE) {
++			break;
++		}
++
++		/*
++		 * Extract log_size from header, which could be split due to
++		 * wraparound, or misaligned.
++		 */
++		set_region(&rg, rec+offsetof(struct kern_log_entry, log_size),
++			sizeof(vardata_size));
++		copy_from_cbuf(&rg, (char*) &vardata_size);
++		rec_size = REC_HDR_SIZE + vardata_size;
++
++		if (bufsize < rec_size) {
++			/* 
++			 * Copyout only the header 'cause user buffer can't
++			 * hold full record.
++			 */
++			set_region(&rg, rec, REC_HDR_SIZE);
++			error = copy_cbuf_to_user(&rg, buf);
++			if (error) {
++				error = -EFAULT;
++				break;
++			}
++			bufsize -= REC_HDR_SIZE;
++			retbuflen += REC_HDR_SIZE;
++			break;
++		}
++		set_region(&rg, rec, rec_size);
++		error = copy_cbuf_to_user(&rg, buf);
++		if (error) {
++			error = -EFAULT;
++			break;
++		}
++		rec = rg.rg_tail;
++		buf += rec_size;
++		bufsize -= rec_size;
++		retbuflen += rec_size;
++	} while (rec != tail);
++
++	if (error == 0) {
++		ebuf.bf_head = rec;
++		error = retbuflen;
++	}
++
++out:
++	up(&evl_read_sem);
++	return(error);
++}
++
++/**
++ * evl_writeh() - Log event, given a pre-constructed header.
++ * Returns 0 on success, or a negative error code otherwise.
++ * For caller's convenience, we normalize the header as needed.
++ */
++int
++evl_writeh(struct kern_log_entry *hdr, const char *vardata)
++{
++	char *oldtail = ebuf.bf_tail;
++	unsigned long iflags;	/* for spin_lock_irqsave() */
++
++	normalize_header(hdr, vardata);
++	
++	spin_lock_irqsave(&ebuf_lock, iflags);
++	if (evl_check_buf(hdr) < 0) {
++		ebuf.bf_dropped++;
++		spin_unlock_irqrestore(&ebuf_lock, iflags);
++		return -ENOSPC;
++	}
++
++	copy_rec_to_cbuf(hdr, vardata);
++	/*
++	 * If the variable portion is a truncated string, make sure it
++	 * ends with a null character.
++	 */
++	if ((hdr->log_flags & EVL_TRUNCATE) && hdr->log_format == EVL_STRING) {
++		*(ebuf.bf_tail - 1) = '\0';
++	}
++
++	if ((ebuf.bf_head == oldtail) &&
++	    (ebuf.bf_head != ebuf.bf_tail)) {
++		wake_up_interruptible(&readq);
++	}
++	spin_unlock_irqrestore(&ebuf_lock, iflags);
++	return 0;
++}
+diff -Nur linux-2.6.8.1.org/kernel/printk.c linux-2.6.8.1/kernel/printk.c
+--- linux-2.6.8.1.org/kernel/printk.c	2005-03-02 12:00:39.012574720 +0100
++++ linux-2.6.8.1/kernel/printk.c	2005-03-02 13:25:03.524651856 +0100
+@@ -34,6 +34,16 @@
+ 
+ #include <asm/uaccess.h>
+ 
++#include <string.h>
++#include <ctype.h>
++#ifdef CONFIG_EVLOG
++#include <linux/evlog.h>
++extern int evl_printkat(const char *facname, char *buf, size_t buflen, const char *fmt, va_list args);
++#define PRINTKAT_BUFLEN EVL_ENTRY_MAXLEN
++#else
++#define PRINTKAT_BUFLEN 512
++#endif
++
+ #define __LOG_BUF_LEN	(1 << CONFIG_LOG_BUF_SHIFT)
+ 
+ /* printk's without a loglevel use this.. */
+@@ -111,6 +121,10 @@
+ static struct console_cmdline console_cmdline[MAX_CMDLINECONSOLES];
+ static int preferred_console = -1;
+ 
++#ifdef CONFIG_EVLOG
++extern int evl_kbufread(char *, size_t);
++#endif
++
+ /* Flag: console code may call schedule() */
+ static int console_may_schedule;
+ 
+@@ -242,6 +256,7 @@
+  *	8 -- Set level of messages printed to console
+  *	9 -- Return number of unread characters in the log buffer
+  *     10 -- Return size of the log buffer
++ *     20 -- Read from event logging buffer
+  */
+ int do_syslog(int type, char __user * buf, int len)
+ {
+@@ -366,6 +381,17 @@
+ 	case 9:		/* Number of chars in the log buffer */
+ 		error = log_end - log_start;
+ 		break;
++	case 20:
++#ifdef CONFIG_EVLOG
++		error = verify_area(VERIFY_WRITE, buf, len);
++		if (error) {
++			goto out;
++		}
++		error = evl_kbufread(buf, len);
++#else
++		error = -EIO;
++#endif
++		break;
+ 	case 10:	/* Size of the log buffer */
+ 		error = log_buf_len;
+ 		break;
+@@ -511,9 +537,20 @@
+  * then changes console_loglevel may break. This is because console_loglevel
+  * is inspected when the actual printing occurs.
+  */
++int vprintk(const char *fmt, va_list args);
++
+ asmlinkage int printk(const char *fmt, ...)
+ {
++	int status;
+ 	va_list args;
++	va_start(args, fmt);
++	status = vprintk(fmt, args);
++	va_end(args);
++	return status;
++}
++
++int vprintk(const char *fmt, va_list args)
++{
+ 	unsigned long flags;
+ 	int printed_len;
+ 	char *p;
+@@ -527,9 +564,7 @@
+ 	spin_lock_irqsave(&logbuf_lock, flags);
+ 
+ 	/* Emit the output into the temporary buffer */
+-	va_start(args, fmt);
+ 	printed_len = vscnprintf(printk_buf, sizeof(printk_buf), fmt, args);
+-	va_end(args);
+ 
+ 	/*
+ 	 * Copy the output into log_buf.  If the caller didn't provide
+@@ -900,4 +935,104 @@
+ 	return __printk_ratelimit(printk_ratelimit_jiffies,
+ 				printk_ratelimit_burst);
+ }
++
++static char printkat_buf[PRINTKAT_BUFLEN];
++static spinlock_t printkat_lock = SPIN_LOCK_UNLOCKED;
++
++/*
++ * Copy src to dest, replacing strings of the form "{id}%" with "%".
++ * If src contains "{{", strip out that and anything beyond it.
++ * dest is a buffer of size bufsz.  Make sure we don't overflow it.
++ */
++void evl_unbrace(char *dest, const char *src, int bufsz)
++{
++	const char *copy_this = src, *scan_this = src;
++	const char *c, *lcb, *rcb, *cut_here;
++	int copy_len, dlen = 0;
++
++	cut_here = strstr(src, "{{");
++	dest[0] = '\0';
++	for (;;) {
++		lcb = strchr(scan_this, '{');
++		if (!lcb) {
++			goto done;
++		}
++		rcb = strstr(lcb+2, "}%");
++		if (!rcb) {
++			goto done;
++		}
++		if (cut_here && cut_here < rcb) {
++			goto done;
++		}
++		/* Is it a valid identifier between the { and } ? */
++		c = lcb+1;
++		if (*c != '_' && !isalpha(*c)) {
++			goto scan_again;
++		}
++		for (c++; c < rcb; c++) {
++			if (*c != '_' && !isalnum(*c)) {
++				goto scan_again;
++			}
++		}
++		copy_len = min(lcb - copy_this, bufsz-(dlen+1));
++		strncat(dest + dlen, copy_this, copy_len);
++		dlen += copy_len;
++		copy_this = rcb+1;
++scan_again:
++		scan_this = rcb+2;
++	}
++done:
++	if (cut_here) {
++		copy_len = min(cut_here - copy_this, bufsz-(dlen+1));
++	} else {
++		copy_len = bufsz-(dlen+1);
++	}
++	strncat(dest + dlen, copy_this, copy_len);
++	return;
++}
++
++/**
++ * printkat - Log message to printk and/or evlog, stripping {id}s.
++ * @facname: facility name (e.g., driver name) for evlog event
++ * @call_printk: 0 -> don't call printk
++ * fmt and subsequent args are as with printk.  Log the message to printk
++ * (via vprintk), and (if EVLOG is configured) also to evlog as an
++ * EVL_PRINTF-format record.  Strip {id}s from the message, and also
++ * anything following "{{".
++ */
++/*ARGSUSED*/
++int __printkat(const char *facname, int call_printk,  const char *fmt, ...)
++{
++	int status;
++	unsigned long flags;
++	va_list args;
++
++	va_start(args, fmt);
++#ifdef CONFIG_EVLOG
++	spin_lock_irqsave(&printkat_lock, flags);
++	status = evl_printkat(facname, printkat_buf, PRINTKAT_BUFLEN, fmt,
++		args);
++	if (call_printk) {
++		(void) vprintk(printkat_buf, args);
++	}
++	spin_unlock_irqrestore(&printkat_lock, flags);
++#else
++	/* EVLOG disabled.  Just call printk, stripping {id}s as needed. */
++	if (!call_printk) {
++		return 0;
++	}
++	if (strstr(fmt, "}%") || strstr(fmt, "{{")) {
++		spin_lock_irqsave(&printkat_lock, flags);
++		evl_unbrace(printkat_buf, fmt, PRINTKAT_BUFLEN);
++		status = vprintk(printkat_buf, args);
++		spin_unlock_irqrestore(&printkat_lock, flags);
++	} else {
++		status = vprintk(fmt, args);
++	}
++#endif
++	va_end(args);
++
++	return status;
++}
++EXPORT_SYMBOL(__printkat);
+ EXPORT_SYMBOL(printk_ratelimit);
+diff -Nur linux-2.6.8.1.org/net/core/dev.c linux-2.6.8.1/net/core/dev.c
+--- linux-2.6.8.1.org/net/core/dev.c	2005-03-02 12:00:34.020333656 +0100
++++ linux-2.6.8.1/net/core/dev.c	2005-03-02 13:18:28.973632728 +0100
+@@ -3337,6 +3337,87 @@
+ 
+ subsys_initcall(net_dev_init);
+ 
++static spinlock_t netdev_printk_lock = SPIN_LOCK_UNLOCKED;
++/**
++ * __netdev_printk() - Log message with interface name, gated by message level
++ * @sevlevel: severity level -- e.g., KERN_INFO
++ * @netdev: net_device pointer
++ * @msglevel: a standard message-level flag such as NETIF_MSG_PROBE.
++ *	Unless msglevel is NETIF_MSG_ALL, log the message only if
++ *	that flag is set in netdev->msg_enable.
++ * @format: as with printk
++ * @args: as with printk
++ *
++ * Does the work for the netdev_printk macro.
++ * For a lot of network drivers, the probe function looks like
++ *	...
++ *	netdev = alloc_netdev(...);	// or alloc_etherdev(...)
++ *	SET_NETDEV_DEV(netdev, dev);
++ *	...
++ *	register_netdev(netdev);
++ *	...
++ * netdev_printk and its wrappers (e.g., netdev_err) can be used as
++ * soon as you have a valid net_device pointer -- e.g., from alloc_netdev,
++ * alloc_etherdev, or init_etherdev.  (Before that, use dev_printk and
++ * its wrappers to report device errors.)  It's common for an interface to
++ * have a name like "eth%d" until the device is successfully configured,
++ * and the call to register_netdev changes it to a "real" name like "eth0".
++ *
++ * If the interface's reg_state is NETREG_REGISTERED, we assume that it has
++ * been successfully set up in sysfs, and we prepend only the interface name
++ * to the message -- e.g., "eth0: NIC Link is Down".  The interface
++ * name can be used to find eth0's driver, bus ID, etc. in sysfs.
++ *
++ * For any other value of reg_state, we prepend the driver name and bus ID
++ * as well as the (possibly incomplete) interface name -- e.g.,
++ * "eth%d (e100 0000:00:03.0): Failed to map PCI address..."
++ *
++ * Probe functions that alloc and register in one step (via init_etherdev),
++ * or otherwise register the device before the probe completes successfully,
++ * may need to take other steps to ensure that the failing device is clearly
++ * identified.
++ *
++ * Returns:
++ *	negative number on error
++ *	1 if we didn't log the event because of the msglevel
++ *	2 if we logged the message but the struct device pointer is null
++ *	0 on success
++ */
++int __netdev_printk(const char *sevlevel, const struct net_device *netdev,
++	int msglevel, const char *format, ...)
++{
++	int ret = 1;	/* not logged */
++	if (!netdev || !format) {
++		return -EINVAL;
++	}
++	if (msglevel == NETIF_MSG_ALL || (netdev->msg_enable & msglevel)) {
++		static char msg[512];	/* protected by netdev_printk_lock */
++		unsigned long flags;
++		va_list args;
++		struct device *dev = netdev->class_dev.dev;
++		
++		spin_lock_irqsave(&netdev_printk_lock, flags);
++		va_start(args, format);
++		vsnprintf(msg, 512, format, args);
++		va_end(args);
++
++		if (!sevlevel) {
++			sevlevel = "";
++		}
++
++		if (netdev->reg_state == NETREG_REGISTERED || !dev) {
++			printk("%s%s: %s", sevlevel, netdev->name, msg);
++		} else {
++			printk("%s%s (%s %s): %s", sevlevel, netdev->name,
++				dev->driver->name, dev->bus_id, msg);
++		}
++		spin_unlock_irqrestore(&netdev_printk_lock, flags);
++		ret = dev ? 0 : 2;
++	}
++	return ret;
++}
++
++EXPORT_SYMBOL(__netdev_printk);
+ EXPORT_SYMBOL(__dev_get);
+ EXPORT_SYMBOL(__dev_get_by_flags);
+ EXPORT_SYMBOL(__dev_get_by_index);
