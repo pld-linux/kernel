@@ -191,6 +191,8 @@ Patch90:	2.6.6-xfs-qsort-lkml.patch
 Patch94:	grsecurity-2.0-2.6.6-unofficial.patch
 
 Patch96:	2.6.6-lirc_i2c.diff
+# for older glibc:
+Patch97:	kernel-pts.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -640,6 +642,7 @@ cp drivers/usb/media/libpwcx.a_mipsel drivers/usb/media/libpwcx.a_
 %patch94 -p1
 
 %patch96 -p1
+%patch97 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
