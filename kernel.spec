@@ -293,7 +293,6 @@ BuildKernel() {
 		KernelVer=%{version}-%{release}
 		echo BUILDING THE NORMAL KERNEL...
 	fi
-	cp $RPM_SOURCE_DIR/kernel-$Config.config arch/$RPM_ARCH/defconfig
 
 %ifarch %{ix86}
 	perl -p -i -e "s/-m486//" arch/i386/Makefile
@@ -301,18 +300,15 @@ BuildKernel() {
 	perl -p -i -e "s/-DCPU=586/-mpentium -DCPU=586/" arch/i386/Makefile
 	perl -p -i -e "s/-DCPU=686/-mpentiumpro -DCPU=686/" arch/i386/Makefile
 %endif
-
 	%{__make} mrproper
-	ln -sf arch/$RPM_ARCH/defconfig .config
+	cp $RPM_SOURCE_DIR/kernel-$Config.config .config
 
+	for target in oldconfig dep include/linux/version.h; do
 %ifarch sparc
-	sparc32 %{__make} oldconfig
-	sparc32 %{__make} dep
-%else
-	%{__make} oldconfig
-	%{__make} dep
+		sparc32 \
 %endif
-	make include/linux/version.h
+		%{__make} $target
+	done
 
 %ifarch %{ix86}
 	%{__make} bzImage EXTRAVERSION="-%{release}"
