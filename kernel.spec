@@ -100,7 +100,7 @@ Patch108:	linux-2.2.20-agp_backport.patch.bz2
 Patch109:	dc395-MAINTAINERS.patch
 Patch110:	linux-2.2.20-rivafb.patch.bz2
 
-Patch300:	patch-2.2.21-pre3.bz2
+Patch300:	patch-2.2.21-pre4.bz2
 Patch320:	fix-prename.patch
 Patch321:	ow1-fix-2.2.21-pre1.patch
 
