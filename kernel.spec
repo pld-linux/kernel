@@ -4,29 +4,26 @@
 #
 # _without_grsec	- build kernel without grsecurity patch
 # _with_preemptible	- build with Preemptible patch
-# _with_o1_sched	- build with new O(1) scheduler
 # _with_acpi		- build with acpi support
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
-#
-%define		krelease		5.03
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 #
 %define		pre_version		pre1
-%define		ipvs_version		1.0.3
+%define		ipvs_version		1.0.4
 %define		freeswan_version	1.97
 %define		wlan_version		0.1.13
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		IPperson_version	20020427-2.4.18
-%define		grsec_version		1.9.4-2.4.18
+%define		grsec_version		1.9.6-2.4.19
 %define		aic_version		6.2.3-2.4.7
 %define		jfs_version		2.4-1.0.20
-%define		lvm_version		1.0.4
+%define		lvm_version		1.0.5
 %define		evms_version		1.0.1
 %define		tridentfb_version	0.7.0
-%define		ntfs_version		2.0.7d	
+%define		ntfs_version		2.0.23b
 %define		drm_xfree_version	4.2.0
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -34,7 +31,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	%{krelease}%{?_with_preemptible:_pr}%{?_with_o1_sched:_o1}%{?_with_acpi:_acpi}
+Release:	0.1%{?_with_preemptible:_pr}%{?_with_acpi:_acpi}
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
@@ -89,44 +86,40 @@ Source1999:	%{name}-preemptive.config
 
 Patch0:		%{name}-pldfblogo.patch
 # from ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
-Patch1:		patch-int-%{version}.3.bz2
+Patch1:		patch-int-2.4.18.3.bz2
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
-Patch2:		linux-%{version}-freeswan-%{freeswan_version}.patch.gz
-# from  http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
-Patch4:		br2684-against2.4.17.diff
+Patch2:		linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
-Patch5:		linux-2.4.18-xfs-20020517.patch.gz
-# from ftp://ftp.kernel.org/pub/linux/kernel/people/sct/ext3/v2.4/
-Patch6:		linux-%{version}-ext3-0.9.18.patch
+Patch3:		http://people.redhat.com/mingo/O(1)-scheduler/sched-2.4.19-rc2-A4
+Patch5:		linux-2.4.19-xfs-20020807.patch.gz
+Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/sct/ext3/v2.4/ext3-0.9.18-2.4.19pre8.patch
 # Homepage of ABI:	http://linux-abi.sourceforge.net/
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2 
 Patch7:		linux-abi-2.4.17.0.patch.bz2
-Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
-Patch9:		grsecurity-%{grsec_version}.patch
+Patch9:		grsecurity-%{grsec_version}.patch.gz
 # Preemptive kernel  patch
-Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-%{name}-rml-%{version}-4.patch
+Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.19-rc5-3.patch
 
-Patch11:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-%{version}-1.patch
-Patch12:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-%{version}-1.patch
-Patch13:	http://www.linuxvirtualserver.org/software/kernel-2.4/linux-%{version}-ipvs-%{ipvs_version}.patch.gz
-Patch14:	http://people.redhat.com/mingo/O(1)-scheduler/sched-%{version}-rc2-A4
+Patch11:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-2.4.18-1.patch
+Patch12:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-2.4.18-1.patch
+# http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
+Patch13:	linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
 
 Patch15:	http://luxik.cdi.cz/~devik/qos/htb/v2/htb2_2.4.17.diff
 Patch24:	http://luxik.cdi.cz/~devik/qos/imq_2.4.12.diff
 
-# from ftp://ftp.kernel.org/pub/linux/kernel/people/dwmw2/linux-2.4.19-shared-zlib.bz2
-Patch16:	linux-2.4.19-shared-zlib.bz2
 Patch17:	%{name}-gcc31.patch
-Patch18:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{version}-patch
-Patch19:	http://unc.dl.sourceforge.net/sourceforge/linux-ntfs/linux-2.4.18-ntfs-%{ntfs_version}.patch.bz2
+# http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4.18-patch
+Patch18:	jfs-2.4.19-patch
+Patch19:	http://unc.dl.sourceforge.net/sourceforge/linux-ntfs/linux-2.4.19-ntfs-%{ntfs_version}.patch.bz2
 
-Patch20:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/ingo-O1-sched/preempt-%{name}-rml-%{version}-rc1-ingo-K3-1.patch
+Patch20:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/ingo-O1-sched/preempt-%{name}-rml-2.4.18-rc1-ingo-K3-1.patch
 
-Patch21:	linux-%{version}-hpfs.patch
+Patch21:	linux-2.4.18-hpfs.patch
 
 # ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
-Patch22:	linux-%{version}-mppe.patch
+Patch22:	linux-2.4.18-mppe.patch
 
 Patch23:	hfsplus-20011213.patch
 
@@ -138,43 +131,30 @@ Patch101:	linux-2.4.2-raw-ip.patch
 Patch102:	PCI_ISA_bridge.patch
 Patch103:	linux-2.4.2-nvram-hdd.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
-Patch105:	linux-2.4.2-pcnet-parms.patch
-Patch106:	http://www.kernel.org/pub/linux/kernel/people/hedrick/ide-%{version}/ide.%{version}-rc1.02152002.patch.bz2
-Patch107:	linux-reiserfs-rename.patch
-Patch108:	linux-alpha-nfs-2.4.2.patch
+Patch105:	linux-2.4.19-pcnet-parms.patch
+Patch108:	linux-alpha-nfs-2.4.19.patch
 Patch109:	linux-2.4-string.patch
 # raid5 xor fix for PIII/P4, should go away shortly
 Patch110:	linux-2.4.0-raid5xor.patch
 # disable some networking printk's
 Patch111:	linux-2.4.1-netdebug.patch
-# SCSI Reset patch for clustering stuff
-Patch112:	linux-2.4.1-scsi-reset.patch
 # Add an ioctl to the block layer so we can be EFI compliant
 Patch113:	linux-2.4.2-blkioctl-sector.patch
 # fix lun probing on multilun RAID chassis
 Patch115:	linux-2.4.12-scsi_scan.patch
-# fix pcnet32 networkdriver load vs ifconfig races
-Patch116:	linux-2.4.3-pcnet32.patch
 # fix rawio
 Patch117:	linux-2.4.3-rawio.patch
 Patch120:	linux-2.4.10-aironet.patch
 Patch121:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
-Patch122:	lvm-%{lvm_version}-%{version}.patch.gz
-# fixed xquad_portio
-Patch123:	xquad_portio.fix
-# 
+Patch122:	http://people.sistina.com/~mauelshagen/lvm_patches/lvm_%{lvm_version}+_25.07.2002.patch
 Patch124:	linux-proc_net_dev-counter-fix.patch
 Patch125:	01-sigxfs-vs-blkdev.patch
-Patch126:	linux-2.4.18-SPARC64-ide.h-fix.patch
 Patch127:	%{name}-2.4.18-SPARC64-PLD.patch
 Patch128:	linux-AXP.patch
 Patch129:	%{name}-Makefile-include-fix.patch
 Patch130:	%{name}-2.4.17-netsyms-export-fix.patch
-Patch131:	%{name}-2.4.18-personality.patch
-
-Patch132:	linux-2.4.18.secfix.patch
-Patch133:	linux-2.4.18-netsyms-fix.patch
+Patch131:	%{name}-2.4.19-personality.patch
 
 Patch134:	linux-2.4.12-riva-ppc.patch.bz2
 Patch135:	linux-2.4.18-pre4-agp_uninorth-ppc.patch.bz2
@@ -200,8 +180,6 @@ Patch144:	amd762_irq_router.patch
 Patch145:	netfilter_ipv4-iptables-1.2.7.patch
 Patch146:	netfilter_ipv6-iptables-1.2.7.patch
 
-Patch147:	http://www.hojdpunkten.ac.se/054/samba/00-smbfs-2.4.18-codepage.patch.gz
-
 # Patches fixing other patches or 3rd party sources ;)
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
@@ -210,22 +188,13 @@ Patch900:	ide-EXPORT_SYMBOL.fix
 Patch902:	linux-2.4.19pre7-VIA.patch
 Patch903:	linux-PPC-SMP.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
-Patch905:	ippersonality-applay-fix.patch
 # tweaks for grsecurity, description inside patch
-Patch906:	linux-grsecurity-fixes.patch
 Patch907:	loop-jari-2.4.18.0.patch
-Patch908:	ippersonality-post.patch
 Patch909:	linux-53c7,8xx-build.fix
 Patch910:	dc395-PLD.fix
-Patch911:	linux-o1-sched-grsec-pre.patch
-Patch912:	linux-o1-sched-grsec-post.patch
 Patch913:	linux-o1-sched-abi.patch
-Patch914:	linux-o1-sched-pre.patch
-Patch915:	linux-o1-sched-post.patch
 Patch916:	linux-o1-sched-evms.patch
 Patch917:	netfilter-Makefile-fix.patch
-# Fix xfs mmap issue
-Patch918:	linux-2.4.18-xfs-mmap.patch
 
 # DRM (note that this doesn't fix drm when running on 386 or 486 CPU!)
 Patch950:	linux-drm-%{drm_xfree_version}-force-cmpxchg.patch
@@ -554,52 +523,19 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -a3 -a5 -a7 -a10 -a11 -a12 -a13 -a14 -n linux
+%setup -q -a3 -a5 -a7 -a10 -a11 -a12 -a13 -a14 -n linux-%{version}
 #%patch1000 -p1
 #%patch0 -p1
-%patch16 -p1
 %patch1 -p1
 %patch907 -p1
-%patch132 -p1
 %patch2 -p1
-%patch4 -p1
+%patch3 -p1
 %patch5 -p1
-%patch918 -p1
-%patch6 -p1
+%patch6 -p0
 %patch19 -p1
 #%patch7 -p1
-%if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
-%ifarch %{ix86}
-# patch o1-scheduler-pre
-%patch914 -p1
-# O(1) scheduler patch
-%patch14 -p1
-# patch o1-scheduler-post
-%patch915 -p1
-%else
-echo "Scheduler didn't work on ARCH different than Intel x86"
-%endif
-%else
-%patch8 -p1
-%endif
-%if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
-%ifarch%{ix86}
-%patch911 -p1
-%else
-echo "Scheduler didn't work on ARCH different than Intel x86"
-%endif
-%endif
 # grsecurity patch
 %patch9 -p1
-%patch906 -p0		
-%if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
-%ifarch%{ix86}
-# linux-o1-grsec-post
-%patch912 -p1
-%else
-echo "Scheduler didn't work on ARCH different than Intel x86"
-%endif
-%endif
 %patch15 -p1
 %patch24 -p1
 %patch17 -p1
@@ -609,22 +545,17 @@ echo "Scheduler didn't work on ARCH different than Intel x86"
 %patch102 -p0
 %patch103 -p0
 %patch105 -p1
-%patch106 -p1
-#%patch107 -p1
 #%patch108 -p1
 %patch109 -p1
 %patch110 -p1
 %patch111 -p1
-%patch112 -p2
 %patch113 -p1
 %patch115 -p1
-%patch116 -p1
 %patch117 -p1
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
 %patch124 -p1
-%patch147 -p1
 
 %patch904 -p0
 
@@ -659,7 +590,7 @@ done
 echo -e $ANS | ./runme pld )
 
 patch -p1 < netfilter-patches/patch-o-matic/pld/log.patch
-%patch917 -p0
+#%patch917 -p0
 
 # IPVS
 echo Adding IPVS
@@ -668,9 +599,6 @@ echo Adding IPVS
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
-
-# Free S/Wan
-echo Adding Free S/Wan
 mv -f net/ipsec/Makefile net/ipsec/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*-g//g' net/ipsec/Makefile.orig > net/ipsec/Makefile
 
@@ -682,9 +610,7 @@ rm -rf %{sym_ncr_version}
 
 # IP personality
 echo Adding IP Personality 
-%patch905 -p0
 patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020427-linux-2.4.18.diff
-#%patch908 -p1
 
 # JFS
 echo Adding JFS
@@ -696,13 +622,12 @@ echo Fixed compile process for 53c7,8xx driver
 
 #preemptble kernel patch
 %{?_with_preemptible:echo Installing Preemptible patch}
-%{?_with_preemptible:%{?_with_o1_sched:%patch20 -p1}}
-%{?_with_preemptible:%{!?_with_o1_sched:%patch10 -p1}}
+%{?_with_preemptible:%patch20 -p1}
 
 # netdev-random
 echo Installing Net Dev Random patch
-%patch11 -p1
-%patch12 -p1
+#%patch11 -p1
+#%patch12 -p1
 
 %patch125 -p1
 
@@ -725,8 +650,6 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 #Fixed sysctl export symbols.
 %patch130 -p0
 
-%patch133 -p0
-
 %ifarch ppc
 %patch134 -p1
 %patch135 -p1
@@ -735,7 +658,7 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 # EVMS
 %patch136 -p1
 %patch137 -p1
-%{?_with_o1_sched:%patch916 -p1}
+%patch916 -p1
 
 %ifarch %{ix86}
 %patch139 -p1
