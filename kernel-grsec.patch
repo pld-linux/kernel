@@ -11520,7 +11520,7 @@ diff -uNr linux-2.6.7-rc1.orig/include/asm-ppc/a.out.h linux-2.6.7-rc1/include/a
 diff -uNr linux-2.6.7-rc1.orig/include/asm-ppc/pgtable.h linux-2.6.7-rc1/include/asm-ppc/pgtable.h
 --- linux-2.6.7-rc1.orig/include/asm-ppc/pgtable.h	2004-05-23 07:53:46.000000000 +0200
 +++ linux-2.6.7-rc1/include/asm-ppc/pgtable.h	2004-05-25 14:33:59.178363848 +0200
-@@ -349,11 +349,21 @@
+@@ -349,12 +349,15 @@
  
  #define PAGE_NONE	__pgprot(_PAGE_BASE)
  #define PAGE_READONLY	__pgprot(_PAGE_BASE | _PAGE_USER)
@@ -11532,20 +11532,14 @@ diff -uNr linux-2.6.7-rc1.orig/include/asm-ppc/pgtable.h linux-2.6.7-rc1/include
  #define PAGE_COPY	__pgprot(_PAGE_BASE | _PAGE_USER)
 -#define PAGE_COPY_X	__pgprot(_PAGE_BASE | _PAGE_USER | _PAGE_EXEC)
 +#define PAGE_COPY_X	__pgprot(_PAGE_BASE | _PAGE_USER | _PAGE_EXEC | _PAGE_HWEXEC)
-+
-+#if defined(CONFIG_PAX_PAGEEXEC) && !defined(CONFIG_40x) && !defined(CONFIG_44x)
-+# define PAGE_SHARED_NOEXEC	__pgprot(_PAGE_BASE | _PAGE_USER | _PAGE_RW | _PAGE_GUARDED)
-+# define PAGE_COPY_NOEXEC	__pgprot(_PAGE_BASE | _PAGE_USER | _PAGE_GUARDED)
-+# define PAGE_READONLY_NOEXEC	__pgprot(_PAGE_BASE | _PAGE_USER | _PAGE_GUARDED)
-+#else
-+# define PAGE_SHARED_NOEXEC	PAGE_SHARED
-+# define PAGE_COPY_NOEXEC	PAGE_COPY
-+# define PAGE_READONLY_NOEXEC	PAGE_READONLY
-+#endif
  
++#define PAGE_SHARED_NOEXEC	PAGE_SHARED
++#define PAGE_COPY_NOEXEC	PAGE_COPY
++#define PAGE_READONLY_NOEXEC	PAGE_READONLY
  #define PAGE_KERNEL		__pgprot(_PAGE_RAM)
  #define PAGE_KERNEL_NOCACHE	__pgprot(_PAGE_IO)
-@@ -365,21 +375,21 @@
+ 
+@@ -365,21 +368,21 @@
   * This is the closest we can get..
   */
  #define __P000	PAGE_NONE
@@ -11746,18 +11740,12 @@ diff -uNr linux-2.6.7-rc1.orig/include/asm-x86_64/pgtable.h linux-2.6.7-rc1/incl
 diff -uNr linux-2.6.7-rc1.orig/include/linux/a.out.h linux-2.6.7-rc1/include/linux/a.out.h
 --- linux-2.6.7-rc1.orig/include/linux/a.out.h	2004-05-23 07:54:21.000000000 +0200
 +++ linux-2.6.7-rc1/include/linux/a.out.h	2004-05-25 14:33:59.296345912 +0200
-@@ -7,6 +7,16 @@
+@@ -7,6 +7,10 @@
  
  #include <asm/a.out.h>
  
-+#ifdef CONFIG_PAX_RANDUSTACK
-+#define __DELTA_STACK (current->mm->delta_stack)
-+#else
-+#define __DELTA_STACK 0UL
-+#endif
-+
 +#ifndef STACK_TOP
-+#define STACK_TOP	(__STACK_TOP - __DELTA_STACK)
++#define STACK_TOP	__STACK_TOP
 +#endif
 +
  #endif /* __STRUCT_EXEC_OVERRIDE__ */
@@ -12763,18 +12751,10 @@ diff -uNr linux-2.6.7-rc1.orig/include/linux/mm.h linux-2.6.7-rc1/include/linux/
  
  #ifndef MM_VM_SIZE
  #define MM_VM_SIZE(mm)	TASK_SIZE
-@@ -135,6 +136,18 @@
+@@ -135,6 +136,10 @@
  #define VM_HUGETLB	0x00400000	/* Huge TLB Page VM */
  #define VM_NONLINEAR	0x00800000	/* Is non-linear (remap_file_pages) */
  
-+#if defined(CONFIG_PAX_SEGMEXEC) || defined(CONFIG_PAX_RANDEXEC)
-+#define VM_MIRROR	0x01000000	/* vma is mirroring another */
-+#endif
-+
-+#ifdef CONFIG_PAX_MPROTECT
-+#define VM_MAYNOTWRITE	0x02000000	/* vma cannot be granted VM_WRITE any more */
-+#endif
-+
 +#ifdef __VM_STACK_FLAGS
 +#define VM_STACK_DEFAULT_FLAGS (0x00000033 | __VM_STACK_FLAGS)
 +#endif
@@ -12782,7 +12762,7 @@ diff -uNr linux-2.6.7-rc1.orig/include/linux/mm.h linux-2.6.7-rc1/include/linux/
  #ifndef VM_STACK_DEFAULT_FLAGS		/* arch can override this */
  #define VM_STACK_DEFAULT_FLAGS VM_DATA_DEFAULT_FLAGS
  #endif
-@@ -643,21 +656,48 @@
+@@ -643,6 +648,8 @@
  	unsigned long len, unsigned long prot,
  	unsigned long flag, unsigned long pgoff);
  
@@ -12791,40 +12771,7 @@ diff -uNr linux-2.6.7-rc1.orig/include/linux/mm.h linux-2.6.7-rc1/include/linux/
  static inline unsigned long do_mmap(struct file *file, unsigned long addr,
  	unsigned long len, unsigned long prot,
  	unsigned long flag, unsigned long offset)
- {
- 	unsigned long ret = -EINVAL;
-+
-+#ifdef CONFIG_PAX_SEGMEXEC
-+	if ((current->flags & PF_PAX_SEGMEXEC) &&
-+	    (len > SEGMEXEC_TASK_SIZE || (addr && addr > SEGMEXEC_TASK_SIZE-len)))
-+		goto out;
-+#endif
-+
- 	if ((offset + PAGE_ALIGN(len)) < offset)
- 		goto out;
- 	if (!(offset & ~PAGE_MASK))
- 		ret = do_mmap_pgoff(file, addr, len, prot, flag, offset >> PAGE_SHIFT);
-+
-+#ifdef CONFIG_PAX_SEGMEXEC
-+	if ((current->flags & PF_PAX_SEGMEXEC) && ret < TASK_SIZE && ((flag & MAP_TYPE) == MAP_PRIVATE)
-+
-+#ifdef CONFIG_PAX_MPROTECT
-+	    && (!(current->flags & PF_PAX_MPROTECT) || ((prot & PROT_EXEC) && file && !(prot & PROT_WRITE)))
-+#endif
-+
-+	   )
-+	{
-+		unsigned long ret_m;
-+		prot = prot & PROT_EXEC ? prot : PROT_NONE;
-+		ret_m = do_mmap_pgoff(NULL, ret + SEGMEXEC_TASK_SIZE, 0UL, prot, flag | MAP_MIRROR | MAP_FIXED, ret);
-+		if (ret_m >= TASK_SIZE) {
-+			do_munmap(current->mm, ret, len);
-+			ret = ret_m;
-+		}
-+	}
-+#endif
-+
- out:
+@@ -656,8 +663,6 @@
  	return ret;
  }
  
