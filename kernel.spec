@@ -592,6 +592,9 @@ BuildKernel() {
 %ifarch sparc
 	sparc32 %{__make} boot
 %else
+%ifarch ppc
+	%{__make}
+%else
 	%{__make} boot
 %endif
 %endif
