@@ -36,7 +36,6 @@ URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 BuildRequires:	module-init-tools
 BuildRequires:	sed >= 4.0
-Autoreqprov:	no
 PreReq:		coreutils
 PreReq:		module-init-tools >= 0.9.9
 Provides:	module-info
@@ -54,6 +53,7 @@ Conflicts:	quota-tools < 3.09
 Conflicts:	reiserfsprogs < 3.6.3
 Conflicts:	util-linux < 2.10o
 Conflicts:	xfsprogs < 2.1.0
+Autoreqprov:	no
 ExclusiveArch:	%{ix86}
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -174,15 +174,13 @@ cp -R . $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}/
 install %{SOURCE2} $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}/config-nondist
 
 %clean
-#rm -rf $RPM_BUILD_ROOT
+rm -rf $RPM_BUILD_ROOT
 
 %post headers
 rm -f %{_kernelsrcdir}
 ln -snf linux-%{version} %{_kernelsrcdir}
 
 %preun headers
-cd %{_kernelsrcdir}
-make mrproper
 rm -f config-nondist include/linux/autoconf-nondist.h
 
 %postun headers
@@ -193,6 +191,10 @@ if [ -L %{_kernelsrcdir} ]; then
 	fi
     fi
 fi
+
+%preun module-build
+cd %{_kernelsrcdir}
+make mrproper
 
 %preun source
 cd %{_kernelsrcdir}
