@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		1
+%define		_rel		2
 %define		_test_ver	10
 %define		_cset		20031125_0507
 
@@ -75,8 +75,8 @@ Patch19:	2.6.0-t7-memleak2-lkml.patch
 Patch22:	2.6.0-t8-clean-mtd-lkml.patch
 Patch24:	2.6.0-t8-swap-include-lkml.patch
 
-# based on http://www.uclinux.org/pub/uClinux/uClinux-2.6.x/linux-2.6.0-test8-uc0.patch.gz
-Patch26:	2.6.0-t8-uc0.patch
+Patch26:	http://www.uclinux.org/pub/uClinux/uClinux-2.6.x/linux-2.6.0-test10-uc0.patch.gz
+#Patch26:	linux-2.6.0-test10-uc0.patch.gz
 
 Patch28:	2.6.0-t8-VLSI-ix86-lkml.patch
 
