@@ -150,18 +150,15 @@ Patch225:	wrr-linux-2.4.9.patch
 Patch226:	linux-2.4.18-esfq.diff
 Patch227:	layer7-kernel2.4patch-v0.1.4.patch
 
-# http://people.FreeBSD.org/~gibbs/linux/SRC/aic79xx-linux-2.4-20030603-tar.gz
-Patch230:	linux-2.4-aic79xx-20030603.patch.gz
 Patch231:	linux-2.4.21-aic7xxx-mmapio.patch
 Patch235:	linux-2.4.20-audigy.patch.bz2
 Patch240:	linux-2.4.20-ecc.patch
 Patch245:	linux-2.4.20-01-edd.patch
 Patch246:	linux-2.4.20-02-edd-allocate.patch
 # i2c - version 2.8.0
-Patch255:	linux-2.4.21-i2c-%{i2c_version}.patch.gz
+Patch255:	linux-2.4.22-i2c-%{i2c_version}.patch
 Patch256:	linux-2.4.21-i2c-headers.patch
 Patch257:	linux-2.4.21-i2c-sparc64.patch
-Patch258:	linux-2.4.21-i2c-keywest.patch
 Patch265:	linux-2.4.20-e820.patch
 # Syntax bug
 Patch270:	dc395-tab.patch
@@ -183,14 +180,12 @@ Patch991:	linux-2.4.20-Win4Lin-mki-adapter.patch.bz2
 Patch1000:	jam-04-clone-detached.patch
 Patch1002:	jam-06-force-inline.patch
 Patch1003:	jam-07-scsi-error-tmout.patch
-Patch1004:	jam-08-memparam.patch
 Patch1006:	jam-10-highpage-init.patch
 Patch1007:	jam-11-self_exec_id.patch
 Patch1008:	jam-15-fast-csum-D.patch
 Patch1009:	jam-21-mem-barriers.patch
 Patch1010:	jam-30-smptimers-A0.patch
 
-Patch1100:	linux-2.4.21-lvm-VFSlock.patch
 Patch1102:	linux-2.4.20-lvm-updates.patch
 
 # IrDA patch for broken IBM Latpops
@@ -207,7 +202,6 @@ Patch1111:	linux-sound_core.patch
 # rivafb - fix for text background in 16bpp modes
 Patch1150:	linux-rivafb16.patch
 Patch1152:	linux-2.4.20-agp_uninorth.patch
-Patch1153:	linux-2.4.20-radeonfb_clean.patch
 Patch1154:	linux-2.4.20-drm-Makefile.patch
 
 Patch1201:	linux-2.4.21-cpqfc.patch
@@ -244,13 +238,11 @@ Patch1402:	linux-2.4.2-blkioctl-sector.patch
 Patch1403:	linux-2.4.3-pcipenalty.patch
 Patch1404:	linux-2.4.3-rawio.patch
 Patch1405:	linux-2.4.7-suspend.patch
-Patch1406:	linux-2.4.7-quotareturn.patch
 Patch1407:	kernel-Makefile-include-fix.patch
 Patch1408:	kernel-pswscancode.patch
-Patch1409:	linux-2.4.18-dmi-hall-of-shame.patch
 Patch1410:	linux-2.4.18-input-35215.patch
 Patch1411:	linux-2.4.18-kiobuf.patch
-Patch1413:	linux-2.4.21-andrea-9980_fix-pausing-5.patch
+Patch1413:	linux-2.4.22-andrea-9980_fix-pausing-6.patch
 Patch1414:	linux-2.4.21-oopsmeharder.patch
 Patch1415:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch1416:	linux-2.4.21-no-FPU.patch
@@ -683,7 +675,6 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch225 -p1
 %patch226 -p1
 %patch227 -p1
-%patch230 -p1
 %patch231 -p1
 %patch235 -p1
 %patch240 -p1
@@ -692,20 +683,17 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch255 -p1
 %patch256 -p1
 %patch257 -p1
-%patch258 -p1
 %patch265 -p1
 %patch275 -p1
 %patch280 -p1
 %patch1000 -p1
 %patch1002 -p1
 %patch1003 -p1
-%patch1004 -p1
 %patch1006 -p1
 %patch1007 -p1
 #%patch1008 -p1
 %patch1009 -p1
 %patch1010 -p1
-%patch1100 -p1
 %patch1102 -p1
 %patch1104 -p0
 %patch1105 -p1
@@ -713,7 +701,6 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1111 -p1
 %patch1150 -p1
 %patch1152 -p1
-%patch1153 -p1
 %patch1154 -p1
 %patch1201 -p1
 %patch1203 -p1
@@ -739,22 +726,21 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1403 -p1
 %patch1404 -p1
 %patch1405 -p1
-%patch1406 -p1
 %patch1407 -p1
 %patch1408 -p1
-%patch1409 -p1
 %patch1410 -p1
 %patch1411 -p1
 #%patch1413 -p1
 %patch1414 -p1
 %patch1415 -p0
 %patch1416 -p1
-%patch1417 -p1
-%patch1418 -p1
+#%patch1417 -p1
+#%patch1418 -p1
 %patch1419 -p1
 %patch1420 -p1
 %patch1421 -p1
 %patch1422 -p1
+exit
 %patch1500 -p1
 %patch1501 -p1
 
