@@ -49,7 +49,7 @@ Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
-#Source5:	
+Source5:	http://mega.ist.utl.pt/~filipe/ipt_p2p/ipt_p2p-0.2.2.tgz
 Source6:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-%{jfs_version}.tar.gz
@@ -657,7 +657,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -a3 -a4 -a6 -a7 -a8 -a9 -a12 -n linux-%{version}
+%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a12 -n linux-%{version}
 %patch0 -p1
 %patch1 -p1
 %patch900 -p1
@@ -1117,8 +1117,20 @@ BuildKernel() {
 	%{__make} modules
 %endif
 
+# ipt_p2p for netfilter
+#
+cd ipt_p2p-0.2.2/kernel
+kernelbase=`echo $KERNEL_BUILD_DIR| sed -e "sm/m\\\\\/mg"`
+mv Makefile-2.4 Makefile-2.4.bak
+sed "s/^KERNELDIR := .*/KERNELDIR := $kernelbase/" Makefile-2.4.bak > Makefile-2.4
+%{__make} -f Makefile-2.4
+cp ipt_p2p.o $KERNEL_INSTALL_DIR/lib/modules/$KernelVer/kernel/net/ipv4/netfilter/
+cd ../..
+rm -rf ipt_p2p-0.2.2
+
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
+
 %ifarch %{ix86}
 	cp arch/i386/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
