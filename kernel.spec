@@ -34,7 +34,7 @@ Source21:	%{name}-ia32-smp.config
 #Source74:	%{name}-ppc-smp.config
 Patch0:		http://piorun.ds.pg.gda.pl/~blues/linux-2.5.67-genrtc_fix.patch
 # SELinux
-Patch1:		http://www.nsa.gov/selinux/lk/2.5.68-selinux1.patch.gz
+Patch1:		http://www.nsa.gov/selinux/lk/2.5.69-selinux0.patch.gz
 Patch2:		http://www.nsa.gov/selinux/lk/libfs.patch.gz
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
