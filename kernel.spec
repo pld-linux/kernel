@@ -47,7 +47,8 @@ Source74:	%{name}-ppc-smp.config
 Patch0:		patch-2.6.0-test1-ac2.bz2
 Patch1:		2.6.0-test1-lkml.patch
 
-#Patch10:	2.6.0-t1-v850-lkml.patch.bz2
+Patch5:		2.6.0-test1-axp-alsa.patch
+Patch10:	2.6.0-t1-v850-lkml.patch.bz2
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -274,7 +275,11 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %prep
 %setup -q -n linux-%{version}-test1
 %patch0 -p1
-#%patch1 -p1
+%patch1 -p1
+
+%patch5 -p1
+
+%patch10 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
