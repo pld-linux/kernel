@@ -43,10 +43,9 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.3
+%define		_rel		0.4
 %define		_cset		20040527_1508
 
-## netfilter snap 
 %define		_netfilter_snap		20040518
 
 %define		no_install_post_strip	1
@@ -74,8 +73,8 @@ Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
-Source30:	%{name}-amd64.config
-Source31:	%{name}-amd64-smp.config
+Source30:	%{name}-x86_64.config
+Source31:	%{name}-x86_64-smp.config
 Source50:	%{name}-sparc.config
 Source51:	%{name}-sparc-smp.config
 Source60:	%{name}-sparc64.config
