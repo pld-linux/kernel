@@ -67,7 +67,7 @@ Source1999:	%{name}-preemptive.config
 
 Patch0:		%{name}-pldfblogo.patch
 # ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
-Patch1:		patch-int-2.4.15.0.gz
+Patch1:		patch-int-2.4.17.0.gz
 Patch2:		linux-%{version}-freeswan-%{freeswan_version}.patch.gz
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.17.diff
@@ -122,6 +122,8 @@ Patch123:	xquad_portio.fix
 # 
 Patch124:	linux-proc_net_dev-counter-fix.patch
 Patch125:	linux-%{version}-devfs-v199.7.patch
+Patch126:	linux-%{version}-cramfs.patch
+Patch127:	linux-%{version}-pthread_support.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -134,6 +136,7 @@ Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch905:	netfilter-pptp-conntrack-nat-fix.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
+Patch907:	loop-hvr-2.4.16.0.patch
 Patch909:	linux-53c7,8xx-build.fix
 Patch910:	dc395-PLD.fix
 
@@ -356,6 +359,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch900 -p0
 %patch901 -p0
 %patch904 -p0
+%patch907 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 echo Adding Tekram DC395/315 driver
@@ -434,6 +438,9 @@ echo Installing Net Dev Random patch
 # devfs patch
 echo Installing DEVFS patch
 %patch125 -p1
+
+%patch126 -p1
+%patch127 -p2
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
