@@ -37,6 +37,7 @@ Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc2.bz2
 ExclusiveOS:	Linux
 Autoreqprov:	no
 URL:		http://www.kernel.org/
+BuildRequires:	byacc
 %ifarch sparc
 BuildRequires:	sparc32
 %endif
@@ -399,8 +400,6 @@ rm -f drivers/net/hamradio/soundmodem/gentbl
 rm -rf $RPM_BUILD_ROOT{,-build}
 
 %post
-mv -f /boot/vmlinuz{,old}
-mv -f /boot/System.map{,old}
 ln -sf vmlinuz{-%{version}-%{release},}
 ln -sf System.map{-%{version}-%{release},}
 
@@ -423,8 +422,6 @@ depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
 %post smp
-mv -f /boot/vmlinuz{,old}
-mv -f /boot/System.map{,old}
 ln -sf vmlinuz{-%{version}-%{release}smp,}
 ln -sf System.map{-%{version}-%{release}smp,}
 
@@ -432,7 +429,7 @@ rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}smp
 
-depmod -a -F /boot/System.map %{version}-%{release}smp
+depmod -a -F /boot/System.map%{version}-%{release}smp %{version}-%{release}smp
 
 geninitrd /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
 test ! -f /boot/initrd || mv -f /boot/initrd /boot/initrd.old 2> /dev/null > /dev/null
