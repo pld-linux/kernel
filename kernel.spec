@@ -131,7 +131,6 @@ Patch124:	linux-drivers_ide_hpt366.c.diff
 Patch132:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/2.4/preempt-kernel-rml-2.4.14-2.patch
 # fixed xquad_portio
 Patch133:	xquad_portio.fix
-Patch134:	linux-LVM-EXPORT_SYMBOL.fix
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -508,7 +507,6 @@ echo Installing Preemptive patch
 %endif
 
 %patch133 -p1
-%patch134 -p0
 
 # install 8139too driver
 echo Updated RTL 8139 Driver
