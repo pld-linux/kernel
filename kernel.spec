@@ -15,7 +15,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	0.1	
+Release:	0.2	
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -75,6 +75,8 @@ Patch10:	bridge-1.0.1-against-2.2.20.diff
 Patch100:	bridge-include.patch
 Patch101:	bridge-netsyms.patch
 Patch102:	%{name}-ipsec-bridge.patch
+#Patch103:	some patch
+#Patch104:	some patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
