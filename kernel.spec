@@ -16,7 +16,7 @@
 %define		sym_ncr_version		sym-1.7.3-ncr-3.4.3
 %define		vlan_version		1.4
 %define		IPperson_version	20010724-2.4.7
-%define		grsec_version		1.7.2-2.4.9
+%define		grsec_version		1.8-2.4.10
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -90,12 +90,17 @@ Patch10:	http://prdownloads.sourceforge.net/linuxcompressed/patch-comp-cache-2.4
 # EXT3
 # http://www.uow.edu.au/~andrewm/linux/ext3/
 Patch11:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.10-2410.gz
+# Netdevice random 
+# http://tech9.net/rml/linux/
+Patch12:	http://tech9.net/rml/linux/patch-rml-2.4.10-netdev-random-1
+Patch13:	http://tech9.net/rml/linux/patch-rml-2.4.10-netdev-random-2
+
 
 # Assorted bugfixes
 
 # Quota fixes
 # Patch100:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.6-2.diff.gz
-Patch100:	quota-fix-2.4.10-pre11-1.diff.gz
+#Patch100:	quota-fix-2.4.10-pre11-1.diff.gz
 # from LKML
 Patch101:	linux-scsi-debug-bug.patch
 Patch102:	linux-2.4.2-raw-ip.patch
@@ -372,7 +377,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch3 -p1
 %patch4 -p1
 %patch11 -p1
-%patch100 -p1
+#%patch100 -p1
 %patch5 -p1
 %patch6 -p1
 #%patch7 -p1
