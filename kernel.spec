@@ -101,7 +101,7 @@ Patch102:	htb2_2.2.17.diff
 Patch103:	bridge-netsyms.patch
 #i2o patch from ftp://ftp.adaptec.com/raid/asr/unix/asr_linux_v242_drv.rpm 
 Patch104:	dpt_i2o-2.2.19.diff
-Patch105	linux-2.2.19-bttv-%{bttv_version}.patch.bz2
+Patch105:	linux-2.2.19-bttv-%{bttv_version}.patch.bz2
 Patch1500:	linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	%{name}-sparc-zs.h.patch
 Patch1502:	%{name}-sparc_netsyms.patch
