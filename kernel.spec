@@ -137,6 +137,8 @@ Patch120:	linux-2.4.3-sb.patch
 Patch121:	linux-2.4.10-ideraid.patch
 # another sb16 pnp id
 Patch122:	linux-2.4.6-sb_id.patch
+# fixed TASK_UNMAPPED_BASE in mmap.c
+Patch123:	kernel-mmap.fix
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -492,6 +494,9 @@ patch -p1 -s <jfs-2.4.7-v1.0.5-patch
 echo Network Device Random
 %patch12 -p1
 %patch13 -p1
+
+# mmap fix
+%patch123 -p0
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
