@@ -97,7 +97,7 @@ Patch34:	patch-uk2
 Patch35:	patch-uk3
 Patch36:	patch-uk5
 Patch37:	patch-uk6
-Patch38:	athlon-smp-1.patch
+Patch38:	athlon-smp-1
 
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
