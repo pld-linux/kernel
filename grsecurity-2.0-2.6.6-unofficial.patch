@@ -14605,17 +14605,17 @@ diff -uNr linux-2.6.6/kernel/configs.c linux-2.6.6.grsec/kernel/configs.c
  		return -ENOMEM;
  
 diff -uNr linux-2.6.6/kernel/exit.c linux-2.6.6.grsec/kernel/exit.c
---- linux-2.6.6/kernel/exit.c	2004-05-10 04:33:19.000000000 +0200
-+++ linux-2.6.6.grsec/kernel/exit.c	2004-05-13 16:52:26.000000000 +0200
-@@ -22,6 +22,7 @@
- #include <linux/profile.h>
+--- linux-2.6.6/kernel/exit.c.orig	2004-05-24 14:40:24.000000000 +0200
++++ linux-2.6.6/kernel/exit.c	2004-05-24 16:32:29.738590936 +0200
+@@ -23,6 +23,7 @@
  #include <linux/mount.h>
  #include <linux/proc_fs.h>
+ #include <linux/mempolicy.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
- #include <asm/pgtable.h>
-@@ -231,6 +232,13 @@
+ #include <asm/unistd.h>
+@@ -233,6 +234,13 @@
  {
  	write_lock_irq(&tasklist_lock);
  
@@ -14629,7 +14629,7 @@ diff -uNr linux-2.6.6/kernel/exit.c linux-2.6.6.grsec/kernel/exit.c
  	ptrace_unlink(current);
  	/* Reparent to init */
  	REMOVE_LINKS(current);
-@@ -238,6 +246,8 @@
+@@ -240,6 +248,8 @@
  	current->real_parent = child_reaper;
  	SET_LINKS(current);
  
@@ -14638,7 +14638,7 @@ diff -uNr linux-2.6.6/kernel/exit.c linux-2.6.6.grsec/kernel/exit.c
  	/* Set the exit signal to SIGCHLD so we signal init on exit */
  	current->exit_signal = SIGCHLD;
  
-@@ -332,6 +342,15 @@
+@@ -334,6 +344,15 @@
  	vsnprintf(current->comm, sizeof(current->comm), name, args);
  	va_end(args);
  
@@ -14654,7 +14654,7 @@ diff -uNr linux-2.6.6/kernel/exit.c linux-2.6.6.grsec/kernel/exit.c
  	/*
  	 * If we were started as result of loading a module, close all of the
  	 * user space pages.  We don't need them, and if we didn't close them
-@@ -783,6 +802,11 @@
+@@ -785,6 +804,11 @@
  	}
  
  	acct_process(code);
