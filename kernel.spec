@@ -208,6 +208,7 @@ Patch137:	linux-2.4.19-truncate-fix.patch
 # and devfs with two or more sound cards
 Patch200:	linux-sound_core.patch
 Patch201:	linux-2.4.20-SPARC64.patch
+Patch202:	linux-2.4.20-EXPORT_SYMBOL.patch
 
 # tweaks for grsecurity, description inside patch
 Patch900:	loop-jari-2.4.20.0.patch
@@ -564,7 +565,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 #%patch137 -p1
 
 %patch200 -p1
-%patch201 -p1
 
 %patch905 -p1
 
@@ -649,6 +649,16 @@ echo Added ACL support
 # NetMos support
 echo Added NetMos card supprot
 %patch46 -p1
+
+echo Added ARCH specific patches....
+%ifarch sparc64
+echo SPARC64 patches ...
+%patch201 -p1
+%endif
+%ifarch sparc
+echo SPARC patches ...
+%patch202 -p1
+%endif
 
 %if %{?_with_o1:1}%{!?_with_o1:0}
 echo O(1) Scheduler.
