@@ -115,7 +115,6 @@ Patch13:	http://www.linuxvirtualserver.org/software/kernel-2.4/linux-%{version}-
 Patch14:	http://people.redhat.com/mingo/O(1)-scheduler/sched-O1-%{version}-pre8-K3.patch
 
 Patch15:	http://luxik.cdi.cz/~devik/qos/htb/v2/htb2_2.4.17.diff
-Patch24:	http://luxik.cdi.cz/~devik/qos/imq_2.4.12.diff
 
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/dwmw2/linux-2.4.19-shared-zlib.bz2
 Patch16:	linux-2.4.19-shared-zlib.bz2
@@ -132,7 +131,9 @@ Patch22:	linux-%{version}-mppe.patch
 
 Patch23:	hfsplus-20011213.patch
 
-Patch24:	wrr-linux-2.4.9.patch
+Patch24:	http://luxik.cdi.cz/~devik/qos/imq_2.4.12.diff
+
+Patch25:	wrr-linux-2.4.9.patch
 
 # Assorted bugfixes
 
@@ -598,6 +599,7 @@ echo "Scheduler didn't work on ARCH different than Intel x86"
 %endif
 %endif
 %patch15 -p1
+%patch24 -p1
 %patch17 -p1
 
 %patch100 -p0
@@ -774,7 +776,7 @@ echo Added patch fot ADM router
 
 # WRR support
 %{!?_without_wrr:echo Added WRR support}
-%{!?_without_wrr:%patch24 -p1}
+%{!?_without_wrr:%patch25 -p1}
 
 
 # Fix EXTRAVERSION and CC in main Makefile
