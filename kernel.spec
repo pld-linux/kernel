@@ -26,7 +26,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.23
-Release:	0.8.3
+Release:	0.8.4
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -271,6 +271,7 @@ Patch3013:	linux-2.4.23-ppc-symbols.patch
 # modified http://www.hardrock.org/kernel/current-updates/linux-2.4.23-updates.patch
 # since we already have some of these fixes applied
 Patch3500:	http://www.hardrock.org/kernel/current-updates/linux-2.4.23-updates.patch
+Patch3600:	linux-2.4-sysctl-empty.patch
 Patch4000:	grsecurity-2.0-rc3-2.4.22-O1.patch
 
 ExclusiveOS:	Linux
@@ -748,6 +749,7 @@ cd ../../..
 %patch3013 -p1
 
 %patch3500 -p1
+%patch3600 -p1
 %{?with_grsec:%patch4000 -p1}
 
 mv -f drivers/scsi/sym53c8xx.c drivers/scsi/sym53c8xx_old.c
