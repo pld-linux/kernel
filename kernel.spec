@@ -16,7 +16,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	4.1
+Release:	4.2
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -85,7 +85,7 @@ Patch27:	%{name}-udf.patch
 # based on	http://people.redhat.com/mingo/raid-patches/raid-2.2.20-A0
 Patch30:	raid-2.2.20-A0.patch.bz2
 # based on	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.19/ide.2.2.19.05042001.patch.bz2
-Patch31:	ide.2.2.20.01052002.patch.bz2
+Patch31:	ide.2.2.21.05042001-Ole.patch.gz
 Patch32:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
 
 Patch40:	%{name}-flip.patch
@@ -107,6 +107,7 @@ Patch109:	af-unresolved.patch
 Patch110:	linux-2.2.20-pcmcia-without-iee1394.patch.bz2
 Patch120:	bttv-makefile.patch
 Patch121:	tulip-patch-0.91.patch.bz2
+Patch122:       bttv-symbols.patch.bz2
 
 # HTB from http://luxik.cdi.cz/~devik/qos/htb/
 Patch200:	htb2_2.2.17.diff
@@ -470,6 +471,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 
 %patch120 -p1
 %patch121 -p1
+%patch122 -p1
 
 %build
 BuildKernel() {
@@ -710,7 +712,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH26}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH27}
 
 bzip2 -dc %{PATCH30} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-bzip2 -dc %{PATCH31} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+gzip -dc %{PATCH31} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 gzip -dc %{PATCH32} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH40}
