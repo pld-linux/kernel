@@ -170,6 +170,7 @@ Patch265:	linux-2.4.20-e820.patch
 Patch270:	dc395-tab.patch
 # http://www.qlogic.com/
 Patch275:	linux-2.4.20-qla2x00-v6.04.00-fo.patch.gz
+Patch280:	ftp://ftp.lsil.com/pub/linux-megaraid/drivers/patches/megaraid-118f-118i.patch.gz
 
 # The following go last as they touch a lot of code
 # and/or are on bcond and/or are ifarch
@@ -607,6 +608,9 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch255 -p1
 %patch265 -p1
 %patch275 -p1
+cd drivers/scsi
+%patch280 -p1
+cd ../..
 %patch1000 -p1
 %patch1002 -p1
 %patch1003 -p1
@@ -675,7 +679,9 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch3005 -p1
 %patch3006 -p1
 %patch3007 -p1
+cd drivers/char/drm
 %patch3008 -p1
+cd ../../..
 
 %patch4000 -p1
 %{!?_without_grsec:%patch4001 -p1}
