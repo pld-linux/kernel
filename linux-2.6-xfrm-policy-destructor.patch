@@ -1,0 +1,43 @@
+the patch below fixes a bug that i encountered while running a 
+PREEMPT_RT kernel, but i believe it should be fixed in the generic 
+kernel too. xfrm_policy_kill() queues a destroyed policy structure to 
+the GC list, and unlocks the policy->lock spinlock _after_ that point.  
+This created a scenario where GC processing got to the new structure 
+first, and kfree()d it - then the write_unlock_bh() was done on the 
+already kfreed structure. There is no guarantee that GC processing will 
+be done after policy->lock has been dropped and softirq processing has 
+been enabled.
+
+Signed-off-by: Ingo Molnar <mingo@elte.hu>
+
+--- linux/net/xfrm/xfrm_policy.c.orig
++++ linux/net/xfrm/xfrm_policy.c
+@@ -301,18 +301,22 @@ static void xfrm_policy_gc_task(void *da
+ static void xfrm_policy_kill(struct xfrm_policy *policy)
+ {
+ 	write_lock_bh(&policy->lock);
+-	if (policy->dead)
+-		goto out;
+-
++	if (policy->dead) {
++		write_unlock_bh(&policy->lock);
++		return;
++	}
+ 	policy->dead = 1;
+ 
+ 	spin_lock(&xfrm_policy_gc_lock);
+ 	list_add(&policy->list, &xfrm_policy_gc_list);
++	/*
++	 * Unlock the policy (out of order unlocking), to make sure
++	 * the GC context does not free it with an active lock:
++	 */
++	write_unlock_bh(&policy->lock);
+ 	spin_unlock(&xfrm_policy_gc_lock);
+-	schedule_work(&xfrm_policy_gc_work);
+ 
+-out:
+-	write_unlock_bh(&policy->lock);
++	schedule_work(&xfrm_policy_gc_work);
+ }
+ 
+ /* Generate new index... KAME seems to generate them ordered by cost
