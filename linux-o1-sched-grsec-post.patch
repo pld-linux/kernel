@@ -1,0 +1,19 @@
+--- linux/kernel/sys.c~	Sun Feb  3 20:21:09 2002
++++ linux/kernel/sys.c	Sun Feb  3 20:21:40 2002
+@@ -230,14 +230,14 @@
+ 			error = 0;
+ #ifdef CONFIG_GRKERNSEC_CHROOT_NICE
+ 		if(grsec_enable_chroot_nice && (!have_same_root(p,current)
+-		   || (have_same_root(p,current) && (niceval < p->nice) && proc_is_chrooted(current)))) {
++		   || (have_same_root(p,current) && (niceval < p->__nice) && proc_is_chrooted(current)))) {
+ 				security_alert("attempted priority change of "
+ 				"process (%.16s:%d) by " DEFAULTSECMSG,
+ 				"attempted priority changes",p->comm,p->pid,DEFAULTSECARGS);
+ 				return -ESRCH; /* be stealthy */
+ 		}
+ #endif
+-		if (niceval < p->nice && !capable(CAP_SYS_NICE))
++		if (niceval < p->__nice && !capable(CAP_SYS_NICE))
+ 			error = -EACCES;
+ 		else
+ 			set_user_nice(p, niceval);
