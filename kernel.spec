@@ -6,7 +6,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.16
-Release:	5
+Release:	6
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -372,7 +372,7 @@ sed "s/.*= 8390\..$//" clients/Makefile.bak > clients/Makefile
 	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
 	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNELDIR/include -D__KERNEL__ -DEXPORT_SYMTAB"
 
-%{__make} install
+%{__make} PREFIX=$RPM_BUILD_ROOT install
 cd ..
 }
 
