@@ -17,7 +17,7 @@
 %define		_rel		0.1
 %define		test_ver	4
 %define		patch_level	0
-%define		_bk_ver		4
+%define		_bk_ver		5
 
 %if %{test_ver} != 0
 %define		test	test%{test_ver}
@@ -69,7 +69,7 @@ Source74:	%{name}-ppc-smp.config
 Source100:	%{name}-misc.config
 
 # ftp://ftp.kernel.org:/pub/linux/kernel/v2.6/snapshots/
-Patch1:		patch-2.6.0-test4-bk4
+Patch1:		patch-2.6.0-test4-bk%{_bk_ver}
 
 Patch22:		2.6.0-t3-swim3.patch
 Patch23:		squashfs1.3-patch
@@ -322,13 +322,13 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 #%patch22 -p1
 %patch23 -p1
 
-%patch26 -p1
+#%patch26 -p1
 #%patch27 -p1
 
 %patch31 -p1
 #%patch32 -p1
 
-%patch40 -p1
+#%patch40 -p1
 
 #%patch50 -p1
 #%patch51 -p1
