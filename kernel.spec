@@ -115,7 +115,8 @@ Patch12:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch13:	2.6.2-Initio9100U-Kconfig.patch
 # http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
 Patch14:	2.6.1-all-in-1.patch
-
+# http://lkml.org/lkml/2004/7/21/43
+Patch15:	2.6.8-pty-leak-lkml.patch
 Patch16:	linux-alpha-isa.patch
 Patch17:	2.6.4-psion-5mx.patch
 Patch18:	2.6.5-sparc64-missing-include.patch
@@ -558,7 +559,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch12 -p1
 %patch13 -p1
 %patch14 -p1
-
+%patch15 -p1
 %patch16 -p1
 %patch17 -p1
 %patch18 -p1
