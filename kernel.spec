@@ -536,7 +536,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch1500 -p1
 %patch1501 -p1
 %patch1504 -p1
-%patch1505 -p1
+%patch1505 -p0
 %endif
 %ifarch sparc64
 %patch1503 -p1
@@ -907,7 +907,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1500}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1501}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1502}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1504}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1505}
+patch -s -p0 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1505}
 %endif
 %ifarch sparc64
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1503}
