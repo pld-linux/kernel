@@ -83,7 +83,7 @@ Patch5:		linux-2.4.7-pre6-xfs-20010717.patch.gz
 # Compressed iso9660 filesystem
 Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/filemap-2.4.4-1.diff.gz
 Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-2.4.5-pre1-8.diff.gz
-Patch8:		linux-abi-2.4.3-PLD.diff
+Patch8:		linux-abi-2.4.3-PLD.patch
 Patch9:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
 Patch10:	linux-grsecurity-1.4-PLD-2.4.7-pre6.patch
