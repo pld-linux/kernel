@@ -30,7 +30,7 @@
 
 %define		_rel		1
 %define		_rc		0
-%define		_cset		20040109_2011
+%define		_cset		20040113_0214
 
 ## netfilter snap 
 %define		_netfilter_snap		20040107
@@ -180,6 +180,10 @@ Patch90:	2.6.1-rc2-NF-psd-%{_netfilter_snap}.patch
 Patch92:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 
 Patch94:	laptop-mode-2.6.1-7.patch
+
+Patch96:	2.6.1-hash_table_size-lkml.patch
+
+Patch98:	2.6.1-sii3512-lkml.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -596,6 +600,9 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch94 -p1
 
+%patch96 -p1
+
+%patch98 -p1
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
