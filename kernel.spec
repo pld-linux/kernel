@@ -3,6 +3,7 @@
 # packages will be built
 #
 # _without_grsec	- build without grsecurity patch
+# _with_preemptive	- build with Preemptible patch
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 # _without_boot		- don't build BOOT kernel
@@ -11,8 +12,8 @@
 # _without_glibc23	- build without support for glibc-kernel-headers
 #
 
-%define		patch_level	0
-%define		_rel		11
+%define		patch_level	6
+%define		_rel		9
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 #
@@ -26,7 +27,8 @@
 %define		evms_version		2.0.0
 %define		ntfs_version		2.1.4a
 %define		drm_xfree_version	4.3.0
-%define		netfilter_snap		20030605
+%define		hostap_version		0.0.2
+%define		netfilter_snap		20030924
 %define		iptables_version	1.2.8
 %define		ACL_version		0.8.56
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -36,9 +38,9 @@ Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
 %if %{patch_level} !=0
-Release:	%{_rel}pl%{patch_level}%{?_without_grsec:_nogrsec}
+Release:	%{_rel}pl%{patch_level}%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 %else
-Release:	%{_rel}%{?_without_grsec:_nogrsec}
+Release:	%{_rel}%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 %endif
 License:	GPL
 Group:		Base/Kernel
@@ -48,11 +50,12 @@ Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
-Source5:	http://mega.ist.utl.pt/~filipe/ipt_p2p/ipt_p2p-0.2.3.tgz
+#Source5:	
 Source6:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-%{jfs_version}.tar.gz
 Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
+Source10:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
 #Source11:	
 Source12:	linux-2.4.20-aacraid.tar.bz2
 
@@ -87,6 +90,7 @@ Source1012:	%{name}-i810fb.config
 Source1013:	%{name}-davfs.config
 Source1666:	%{name}-grsec.config
 Source1667:	%{name}-int.config
+Source1668:	%{name}-hostap.config
 Source1669:	%{name}-konicawc.config
 Source1670:	%{name}-wrr.config
 Source1671:	%{name}-squashfs.config
@@ -118,11 +122,14 @@ Patch4:		linux-2.4.20-xfs-1.2.0.patch.bz2
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
 Patch6:		grsecurity-%{grsec_version}-%{version}.patch.gz
 
+# Preemptive kernel  patch
+Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.20-1.patch
+
 # new version of netfilter.
 %if %{netfilter_snap} != 0
-Patch8:		linux-2.4.20-netfilter-%{iptables_version}_%{netfilter_snap}.patch.gz
+Patch8:		linux-2.4.20-netfilter-%{iptables_version}_%{netfilter_snap}.patch
 %else
-Patch8:		linux-2.4.20-netfilter-%{iptables_version}.patch.gz
+Patch8:		linux-2.4.20-netfilter-%{iptables_version}.patch
 %endif
 
 Patch9:		linux-2.4.20-initrd-close-console.patch
@@ -312,10 +319,6 @@ Patch145:	linux-2.4.20-i2c-2.7.0.patch.gz
 #usb patches from ftp://ftp.kernel.org/pub/linux/people/gregkh/usb/*-2.4.20.*
 Patch146:	linux-2.4.20-USB.patch.bz2
 
-# oops in grsecurity caused by numeric sysctl on dirs removed from /proc
-# (even if grsecurity is whole disabled, only patch applied)
-Patch147:	linux-2.4-sysctl-empty.patch
-
 # Patches fixing other patches or 3rd party sources ;)
 # This patch allows to create more than one sound device using alsa
 # and devfs with two or more sound cards
@@ -335,7 +338,7 @@ Patch252:	http://luxik.cdi.cz/~devik/qos/htb/v3/htb_killdbg_2421.diff
 Patch260:	linux-2.4.18-esfq.diff
 
 Patch888:	linux-2.4.20-netfilter-1.2.8_20030914-fix.patch
-
+	
 # tweaks for grsecurity, description inside patch
 Patch900:	loop-jari-2.4.20.0.patch
 Patch901:	dc395-tab.patch
@@ -352,8 +355,8 @@ Patch910:	linux-2.4.21-pre4-ac4-via82cxxx_audio.patch.bz2
 #Patch912:	
 #Patch913:	
 Patch914:	linux-2.4.20-MODULE_XXX.patch
-Patch915:	linux-2.4.20-netfilter_and_grsec-EXPORT_SYMBOL.patch
-Patch916:	linux-2.4.20-st6000-1.34.patch
+#Patch915:	linux-2.4.19-usb-digitalcams.patch
+#Patch916:	
 Patch917:	linux-2.4.20-nogrsec.patch
 Patch918:	linux-2.4.20-ext3.patch
 Patch919:	linux-2.4.20-ntfs.patch
@@ -372,8 +375,6 @@ Patch2004:	linux-2.4.20-nfsd-xdr-secfix.patch
 Patch2005:	linux-2.4.20-sunrpc-noudpreuse.patch
 Patch2006:	linux-2.4.20-tty-fixes-grsec.patch
 ##Patch2007:	linux-2.4.20-tty-fixes.patch
-Patch2008:	linux-do_brk-bound-check.patch
-Patch2009:	linux-2.4-do_mremap.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -400,6 +401,7 @@ Provides:	%{name}(agpgart) = %{version}
 Provides:	%{name}(freeswan) = %{freeswan_version}
 Provides:	%{name}(cdrw)
 Provides:	%{name}(cdmrw)
+Provides:	%{name}(hostap) = %{hostap_version}
 Provides:	%{name}(evms)
 Autoreqprov:	no
 Prereq:		fileutils
@@ -410,7 +412,7 @@ ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
 BuildRequires:	bin86
 %endif
-##BuildRequires:	module-init-tools
+BuildRequires:	module-init-tools
 Conflicts:	iptables < 1.2.7a
 Conflicts:	lvm < 1.0.7
 Conflicts:	xfsprogs < 2.0.0
@@ -459,6 +461,7 @@ Provides:	%{name}(agpgart) = %{version}
 Provides:	%{name}(freeswan) = %{freeswan_version}
 Provides:	%{name}(cdrw)
 Provides:	%{name}(cdmrw)
+Provides:	%{name}(hostap) = %{hostap_version}
 Provides:	%{name}(evms)
 Prereq:		fileutils
 Prereq:		modutils
@@ -518,35 +521,35 @@ byæ u¿ywane jedynie podczas instalacji systemu. Wiele u¿ytecznych
 opcji zosta³o wy³±czonych, aby jak najbardziej zmniejszyæ jego
 rozmiar.
 
-%package pcmcia
-Summary:	PCMCIA modules
-Summary(pl):	Modu³y PCMCIA
+%package pcmcia-cs
+Summary:	PCMCIA-CS modules
+Summary(pl):	Modu³y PCMCIA-CS 
 Group:		Base/Kernel
-Provides:	%{name}-pcmcia = %{pcmcia_version}
+Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
 PreReq:		%{name}-up = %{version}-%{release}
 Requires(postun):	%{name}-up = %{version}-%{release}
 Requires(pre):	%{name}-up = %{version}-%{release}
 
-%description pcmcia
-PCMCIA modules (%{pcmcia_version}).
+%description pcmcia-cs
+PCMCIA-CS modules (%{pcmcia_version}).
 
-%description -l pl pcmcia
-Modu³y PCMCIA (%{pcmcia_version}).
+%description -l pl pcmcia-cs
+Modu³y PCMCIA-CS (%{pcmcia_version}).
 
-%package smp-pcmcia
-Summary:	PCMCIA modules for SMP kernel
-Summary(pl):	Modu³y PCMCIA dla maszyn SMP
+%package smp-pcmcia-cs
+Summary:	PCMCIA-CS modules for SMP kernel
+Summary(pl):	Modu³y PCMCIA-CS dla maszyn SMP
 Group:		Base/Kernel
-Provides:	%{name}-pcmcia = %{pcmcia_version}
+Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
 PreReq:		%{name}-smp = %{version}-%{release}
 Requires(postun):	%{name}-smp = %{version}-%{release}
 Requires(pre):	%{name}-smp = %{version}-%{release}
 
-%description smp-pcmcia
-PCMCIA modules for SMP kernel (%{pcmcia_version}).
+%description smp-pcmcia-cs
+PCMCIA-CS modules for SMP kernel (%{pcmcia_version}).
 
-%description -l pl smp-pcmcia
-Modu³y PCMCIA dla maszyn SMP (%{pcmcia_version}).
+%description -l pl smp-pcmcia-cs
+Modu³y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 
 %package drm
 Summary:	DRM kernel modules
@@ -597,6 +600,7 @@ Provides:	%{name}-headers(freeswan) = %{freeswan_version}
 Provides:	%{name}-headers(evms)
 Provides:	%{name}-headers(cdrw)
 Provides:	%{name}-headers(cdmrw)
+Provides:	%{name}-headers(hostap) = %{hostap_version}
 Autoreqprov:	no
 
 %description headers
@@ -659,16 +663,13 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a12 -n linux-%{version}
+%setup -q -a3 -a4 -a6 -a7 -a8 -a9 -a10 -a12 -n linux-%{version}
 %patch0 -p1
 %patch1 -p1
 %patch900 -p1
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-# CAN-2003-0985 fix (apply before grsec)
-%patch2009 -p1
-# grsecurity
 %patch6 -p1
 %ifarch ppc
 %patch907 -p1
@@ -735,10 +736,15 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # Netfilter
 %patch8 -p1
-#%patch888 -p1
+#%%patch888 -p1
 
 %patch32 -p1
 %patch31 -p1
+
+# hostap
+echo Installing Host AP support
+patch -p1 -s < hostap-%{hostap_version}/kernel-patches/hostap-linux-%{version}.patch
+cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 
 # Konica USB camera support
 echo Installing Konica Support
@@ -783,8 +789,8 @@ echo Added NetMos card supprot
 
 %patch138 -p1
 
-# control of /dev/{k,}mem access by sysctl
-echo Sysctl for /dev/{k,}mem access control
+# sysctl controll of /dev/mem
+echo Sysctl controll access to /dev/kmem 
 %patch921 -p1 
 
 %patch143 -p1
@@ -792,9 +798,6 @@ echo Sysctl for /dev/{k,}mem access control
 
 # USB patches
 %patch146 -p1
-
-#
-%patch147 -p1
 
 # VIA82Cxxx
 echo Fixed VIA82Cxxx Audio ...
@@ -951,10 +954,6 @@ echo AXP patches ...
 %patch2005 -p1
 
 %patch2006 -p1
-%patch2008 -p1
-
-%patch916  -p1
-%patch915 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
@@ -1016,6 +1015,7 @@ BuildKernel() {
 	cat %{SOURCE1004} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1005} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1006} >> arch/%{base_arch}/defconfig
+	%{?_with_preemptive:cat %{SOURCE1999} >> arch/%{base_arch}/defconfig}
 %ifnarch i386 i486
 	cat %{SOURCE1007} >> arch/%{base_arch}/defconfig
 %endif
@@ -1035,6 +1035,7 @@ BuildKernel() {
 	cat %{SOURCE1678} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1679} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1667} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1668} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1669} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1670} >> arch/%{base_arch}/defconfig
 	
@@ -1075,6 +1076,7 @@ BuildKernel() {
 		echo "CONFIG_ROMFS_FS=y" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_IP_NF_MATCH_STEALTH is not set">> arch/%{base_arch}/defconfig
 		echo "# CONFIG_NET_SCH_WRR is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_HOSTAP is not set" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_USB_KONICAWC is not set">> arch/%{base_arch}/defconfig
 	fi
 
@@ -1128,19 +1130,8 @@ BuildKernel() {
 	%{__make} modules
 %endif
 
-if [ ! "$BOOT" = "yes" ] ; then
-# ipt_p2p for netfilter
-#
-cd ipt_p2p-0.2.3/kernel
-kernelbase=`echo $KERNEL_BUILD_DIR| sed -e "sm/m\\\\\/mg"`
-mv Makefile-2.4 Makefile-2.4.bak
-sed "s/^KERNELDIR := .*/KERNELDIR := $kernelbase/" Makefile-2.4.bak > Makefile-2.4
-%{__make} -f Makefile-2.4
-cd ../..
-fi
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
-
 %ifarch %{ix86}
 	cp arch/i386/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
@@ -1164,18 +1155,13 @@ fi
 	KERNELRELEASE=$KernelVer
 	echo KERNEL RELEASE $KernelVer
 %endif
-
-# install ipt_p2p
-if [ ! "$BOOT" = "yes" ] ; then
-cp $KERNEL_BUILD_DIR/ipt_p2p-0.2.3/kernel/ipt_p2p.o $KERNEL_INSTALL_DIR/lib/modules/$KernelVer/kernel/net/ipv4/netfilter/
-fi
-
 } # BuildKernel
 
 KERNEL_BUILD_DIR=`pwd`
 KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
 rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
+
 # make drivers/scsi/ missing files
 #	(cd drivers/scsi; make -f M)
 
@@ -1266,6 +1252,7 @@ cat %{SOURCE1005} >> .config
 cat %{SOURCE1006} >> .config
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
+%{?_with_preemptive:cat %{SOURCE1999} >> .config}
 %ifnarch i386 i486
 	cat %{SOURCE1007} >> .config
 %endif
@@ -1275,6 +1262,7 @@ cat %{SOURCE1010} >> .config
 cat %{SOURCE1011} >> .config
 cat %{SOURCE1012} >> .config
 cat %{SOURCE1013} >> .config
+cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
 cat %{SOURCE1671} >> .config
@@ -1322,6 +1310,7 @@ cat %{SOURCE1005} >> .config
 cat %{SOURCE1006} >> .config
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
+%{?_with_preemptive:cat %{SOURCE1999} >> .config}
 %ifnarch i386 i486
 	cat %{SOURCE1007} >> .config
 %endif
@@ -1331,6 +1320,7 @@ cat %{SOURCE1010} >> .config
 cat %{SOURCE1011} >> .config
 cat %{SOURCE1012} >> .config
 cat %{SOURCE1013} >> .config
+cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
 cat %{SOURCE1671} >> .config
@@ -1466,10 +1456,10 @@ if [ -L /lib/modules/%{version} ]; then
 fi
 rm -f /boot/initrd-%{version}-%{release}.gz
 
-%post pcmcia
+%post pcmcia-cs
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
-%postun pcmcia
+%postun pcmcia-cs
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release} > /dev/null 2>&1
 
 %post drm
@@ -1488,10 +1478,10 @@ if [ -L /lib/modules/%{version} ]; then
 fi
 rm -f /boot/initrd-%{version}-%{release}smp.gz
 
-%post smp-pcmcia
+%post smp-pcmcia-cs
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
 
-%postun smp-pcmcia
+%postun smp-pcmcia-cs
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp > /dev/null 2>&1
 
 %post smp-drm
@@ -1556,7 +1546,7 @@ fi
 %ghost /lib/modules/%{version}-%{release}/modules.*
 
 %ifnarch sparc sparc64
-%files pcmcia
+%files pcmcia-cs
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}/kernel/drivers/net/pcmcia
@@ -1616,7 +1606,7 @@ fi
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
 
 %ifnarch sparc sparc64
-%files -n kernel-smp-pcmcia
+%files -n kernel-smp-pcmcia-cs
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}smp/kernel/drivers/net/pcmcia
