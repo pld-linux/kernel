@@ -1,0 +1,72 @@
+diff -urNp linux-400/Makefile linux-600/Makefile
+--- linux-400/Makefile	
++++ linux-600/Makefile	
+@@ -305,6 +305,9 @@ symlinks:
+ oldconfig: symlinks
+ 	$(CONFIG_SHELL) scripts/Configure -d arch/$(ARCH)/config.in
+ 
++oldconfig_nonint: symlinks
++	$(CONFIG_SHELL) scripts/Configure -D arch/$(ARCH)/config.in
++
+ xconfig: symlinks
+ 	$(MAKE) -C scripts kconfig.tk
+ 	wish -f scripts/kconfig.tk
+diff -urNp linux-400/scripts/Configure linux-600/scripts/Configure
+--- linux-400/scripts/Configure	
++++ linux-600/scripts/Configure	
+@@ -122,8 +122,14 @@ function readln () {
+ 	else
+ 		echo -n "$1"
+ 		[ -z "$3" ] && echo -n "(NEW) "
+-		IFS='@' read ans || exit 1
+-		[ -z "$ans" ] && ans=$2
++		if [ "$NONINTERACTIVE" = "y" ]; then
++			echo "$1" >> nodefaults
++			broken="y"
++			ans="n"
++		else
++			IFS='@' read ans || exit 1
++			[ -z "$ans" ] && ans=$2
++		fi
+ 	fi
+ }
+ 
+@@ -510,6 +516,7 @@ function choice () {
+ CONFIG=.tmpconfig
+ CONFIG_H=.tmpconfig.h
+ trap "rm -f $CONFIG $CONFIG_H ; exit 1" 1 2
++trap "rm -f nodefaults ; exit 1" 1 2
+ 
+ #
+ # Make sure we start out with a clean slate.
+@@ -524,11 +531,20 @@ echo " */" >> $CONFIG_H
+ echo "#define AUTOCONF_INCLUDED" >> $CONFIG_H
+ 
+ DEFAULT=""
++NONINTERACTIVE=""
++
+ if [ "$1" = "-d" ] ; then
+ 	DEFAULT="-d"
+ 	shift
+ fi
+ 
++if [ "$1" = "-D" ] ; then
++# non interactive oldconfig
++	DEFAULT="-d"
++	NONINTERACTIVE="y"
++	shift
++fi
++
+ CONFIG_IN=./config.in
+ if [ "$1" != "" ] ; then
+ 	CONFIG_IN=$1
+@@ -572,4 +588,9 @@ else
+ fi
+ echo
+ 
++if [ "$broken" = "y" ] ; then
++ echo "The following defaults are missing:"
++ cat nodefaults
++ exit 1
++fi
+ exit 0
