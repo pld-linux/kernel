@@ -49,8 +49,8 @@ Patch5:		linux-ipv6-glibc2.2.patch
 Patch6:		http://milosch.net/pub/beos/2.2.18-pre2-beos09032000.patch
 Patch7:		%{name}-autoraidraid.patch
 Patch8:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.19-reiserfs-3.5.32-patch.bz2
-Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.19/ide.2.2.19.03252001.patch.bz2 
-Patch10:	http://www.math.leidenuniv.nl/~buytenh/bridge/patches/bridge-0.0.9-against-2.2.18.diff
+Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.19/ide.2.2.19.04092001.patch.bz2 		
+Patch10:	http://www.math.leidenuniv.nl/~buytenh/bridge/patches/bridge-0.0.9-against-2.2.19.diff	
 Patch11:        http://download.sourceforge.net/linux1394/ieee1394-2.2.18-20001223.gz
 Patch12:	ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
 Patch13:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
@@ -320,7 +320,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #%patch7 -p1
 %patch8 -p1
 %patch9 -p1
-#%patch10 -p1
+%patch10 -p1
 %patch11 -p1
 %patch12 -p1
 #%patch13 -p1
@@ -544,7 +544,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
 #patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
 gzip -dc %{PATCH8} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 bzip2 -dc %{PATCH9} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
 gzip -dc %{PATCH11} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH12} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 #gzip -dc %{PATCH13} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
