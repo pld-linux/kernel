@@ -9,7 +9,7 @@ diff -urNp linux-5270/arch/alpha/kernel/sys_sable.c linux-10010/arch/alpha/kerne
 +sable_map_irq(struct pci_dev *dev, u8 slota, u8 pin)
  {
 +	int slot=slota;
-         static char irq_tab[9][5] __initdata = {
+ 	static char irq_tab[9][5] __initdata = {
  		/*INT    INTA   INTB   INTC   INTD */
  		{ 32+0,  32+0,  32+0,  32+0,  32+0},  /* IdSel 0,  TULIP  */
 diff -urNp linux-5270/arch/alpha/kernel/sys_titan.c linux-10010/arch/alpha/kernel/sys_titan.c
@@ -38,24 +38,6 @@ diff -urNp linux-5270/arch/alpha/kernel/sys_wildfire.c linux-10010/arch/alpha/ke
  	static char irq_tab[8][5] __initdata = {
  		/*INT    INTA   INTB   INTC   INTD */
  		{ -1,    -1,    -1,    -1,    -1}, /* IdSel 0 ISA Bridge */
-diff -urNp linux-5270/drivers/atm/ambassador.c linux-10010/drivers/atm/ambassador.c
---- linux-5270/drivers/atm/ambassador.c	2001-09-14 00:21:32.000000000 +0200
-+++ linux-10010/drivers/atm/ambassador.c	
-@@ -290,12 +290,11 @@ static inline void __init show_version (
- /********** microcode **********/
- 
- #ifdef AMB_NEW_MICROCODE
--#define UCODE(x) UCODE1(atmsar12.,x)
-+#define UCODE(x) UCODE2(atmsar12.x)
- #else
--#define UCODE(x) UCODE1(atmsar11.,x)
-+#define UCODE(x) UCODE2(atmsar11.x)
- #endif
- #define UCODE2(x) #x
--#define UCODE1(x,y) UCODE2(x ## y)
- 
- static u32 __initdata ucode_start = 
- #include UCODE(start)
 diff -urNp linux-5270/drivers/block/blkpg.c linux-10010/drivers/block/blkpg.c
 --- linux-5270/drivers/block/blkpg.c	
 +++ linux-10010/drivers/block/blkpg.c	
@@ -130,18 +112,6 @@ diff -urNp linux-5270/drivers/net/ns83820.c linux-10010/drivers/net/ns83820.c
  #include <linux/pci.h>
  #include <linux/netdevice.h>
  #include <linux/etherdevice.h>
-diff -urNp linux-5270/drivers/net/pcmcia/wavelan_cs.h linux-10010/drivers/net/pcmcia/wavelan_cs.h
---- linux-5270/drivers/net/pcmcia/wavelan_cs.h	
-+++ linux-10010/drivers/net/pcmcia/wavelan_cs.h	
-@@ -489,7 +489,7 @@
- #undef DEBUG_RX_INFO		/* Header of the transmitted packet */
- #undef DEBUG_RX_FAIL		/* Normal failure conditions */
- #define DEBUG_RX_ERROR		/* Unexpected conditions */
--#undef DEBUG_PACKET_DUMP	32	/* Dump packet on the screen */
-+#undef DEBUG_PACKET_DUMP /* 32	 Dump packet on the screen */
- #undef DEBUG_IOCTL_TRACE	/* Misc call by Linux */
- #undef DEBUG_IOCTL_INFO		/* Various debug info */
- #define DEBUG_IOCTL_ERROR	/* What's going wrong */
 diff -urNp linux-5270/drivers/net/plip.c linux-10010/drivers/net/plip.c
 --- linux-5270/drivers/net/plip.c	2001-09-30 21:26:07.000000000 +0200
 +++ linux-10010/drivers/net/plip.c	
@@ -776,9 +746,9 @@ diff -urNp linux-5270/net/wanrouter/wanproc.c linux-10010/net/wanrouter/wanproc.
  #include <linux/agp_backend.h>
  #include <linux/types.h>
 +#include <linux/vmalloc.h>
- 
  #include <asm/uaccess.h>
  
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,0)
 --- linux-2.4.21/arch/sparc64/solaris/misc.c.orig	2003-08-17 00:07:27.000000000 +0200
 +++ linux-2.4.21/arch/sparc64/solaris/misc.c	2003-08-17 00:07:34.000000000 +0200
 @@ -15,6 +15,7 @@
