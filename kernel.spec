@@ -40,7 +40,8 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 #Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.17+.gz
 # NFS server patches
 #Source40:	http://download.sourceforge.net/nfs/dhiggen_merge-4.1.tar.gz
-#Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.17.2.gz
+Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.1.bz2
+Patch1:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac2.bz2
 #Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.17-reiserfs-3.5.25-patch.gz
 #Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
 #Patch3:		linux-tasks.patch
@@ -267,7 +268,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %prep
 %setup -q -n linux
 #%setup -q -a30 -a31 -a33 -n linux
-#%patch0 -p1
+%patch0 -p1
 #%patch20 -p1
 #%patch1 -p1
 #%patch2 -p1
