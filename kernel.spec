@@ -178,6 +178,10 @@ Patch113:	linux-2.6-xfrm-policy-destructor.patch
 Patch114:	linux-2.6-dst-cache-overflow.patch
 Patch115:	linux-2.6-invalid-mac-address-after-reboot.patch
 Patch116:	linux-2.6-null-tty-driver-oops.patch
+Patch117:	linux-2.6-sata-sil-mod15write-workaround.patch
+Patch118:	linux-2.6-ext2-corruption.patch
+Patch119:	linux-2.6-quota-dropfix.patch
+Patch120:	linux-2.6-quota-format.patch
 
 # linux vserver
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
@@ -581,6 +585,10 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch114 -p1
 %patch115 -p1
 %patch116 -p1
+%patch117 -p1
+%patch118 -p1
+%patch119 -p1
+%patch120 -p1
 
 %if %{with vserver}
 %patch200 -p1
