@@ -132,6 +132,13 @@ Patch123:	linux-acenic-dma64.patch
 Patch124:	linux-drivers_ide_hpt366.c.diff
 Patch125:	linux-2.4.13-usb-ohci.patch
 Patch126:	kernel-deactivate_page-fix.patch
+# IRDA patches.
+Patch127:	ir243_endian_fix.diff
+Patch128:	ir243_lap_lmp_races-2.diff
+Patch129:	ir243_ttp_sock_races-2.diff
+Patch130:	ir243_usb_descr.diff
+# 
+Patch131:	kernel-real_root_dev-s390.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
