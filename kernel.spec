@@ -39,7 +39,6 @@ Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 # based on cvs cvs@pserver.samba.org:/cvsroot netfilter
 Source7:	linux-2.4.16-netfilter-20011201.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}.tar.gz
-Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_version}.tar.gz
 # new -> ftp://ftp.tux.org/pub/roudier/drivers/portable/sym-2.1.x/sym-2.1.16-20011028.tar.gz
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
@@ -90,6 +89,7 @@ Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/pr
 
 Patch11:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-2.4.16-1.patch
 Patch12:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-2.4.16-1.patch
+Patch13:	http://www.linuxvirtualserver.org/software/kernel-2.4/linux-%{version}-ipvs-%{ipvs_version}.patch.gz
 
 # Assorted bugfixes
 
@@ -365,8 +365,8 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%{?_with_lids:%setup -q -a3 -a5 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -n linux}
-%{!?_with_lids:%setup -q -a3 -a5 -a7 -a9 -a10 -a11 -a12 -a13 -n linux}
+%{?_with_lids:%setup -q -a3 -a5 -a7 -a8 -a10 -a11 -a12 -a13 -n linux}
+%{!?_with_lids:%setup -q -a3 -a5 -a7 -a10 -a11 -a12 -a13 -n linux}
 #%patch1000 -p1
 #%patch0 -p1
 %patch1 -p1
@@ -444,12 +444,7 @@ patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
 
 # IPVS
 echo Adding IPVS
-for i in ipvs-%{ipvs_version}/*.diff ; do
-	patch -p1 -s <$i
-done
-mkdir net/ipv4/ipvs
-cp ipvs-%{ipvs_version}/ipvs/*.{c,h,in} net/ipv4/ipvs
-cp ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile net/ipv4/ipvs/Makefile
+%patch13 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
