@@ -10,7 +10,7 @@
 # _without_doc		- don't build documentation package
 #
 
-%define		patch_level	5
+%define		patch_level	6
 %define		_rel		6
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -674,7 +674,7 @@ cp drm/*.{c,h} drivers/char/drm/
 
 ## Preemptive
 %ifnarch sparc sparc64
-%patch40 -p1
+#%%patch40 -p1
 %endif
 
 
