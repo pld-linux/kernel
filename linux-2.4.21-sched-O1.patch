@@ -5961,6 +5961,39 @@ diff -urN linux-2.4.20/include/asm-sparc/bitops.h linux-2.4.20-o1/include/asm-sp
  /*
   * ffs: find first bit set. This is defined the same way as
   * the libc and compiler builtin ffs routines, therefore
+@@ -323,6 +323,32 @@
+ #define find_first_zero_bit(addr, size) \
+         find_next_zero_bit((addr), (size), 0)
+ 
++/**
++ * find_next_bit - find the first set bit in a memory region
++ * @addr: The address to base the search on
++ * @offset: The bitnumber to start searching at
++ * @size: The maximum size to search
++ *
++ * Scheduler induced bitop, do not use.
++ */
++static __inline__ int find_next_bit(unsigned long *addr, int size, int offset)
++{
++	unsigned long *p = addr + (offset >> 5);
++	int num = offset & ~0x1f;
++	unsigned long word;
++
++	word = *p++;
++	word &= ~((1 << (offset & 0x1f)) - 1);
++	while (num < size) {
++		if (word != 0) {
++			return __ffs(word) + num;
++		}
++		word = *p++;
++		num += 0x20;
++	}
++	return num;
++}
++
+ static __inline__ int test_le_bit(int nr, __const__ void * addr)
+ {
+ 	__const__ unsigned char *ADDR = (__const__ unsigned char *) addr;
 diff -urN linux-2.4.20/include/asm-sparc/system.h linux-2.4.20-o1-preempt/include/asm-sparc/system.h
 --- linux-2.4.20/include/asm-sparc/system.h	Wed Oct 31 00:08:11 2001
 +++ linux-2.4.20-o1-preempt/include/asm-sparc/system.h	Tue Feb 18 03:51:30 2003
