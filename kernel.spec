@@ -882,6 +882,8 @@ BuildKernel() {
 		arch/%{base_arch}/defconfig
 	perl -pi -e 's/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/' \
 		arch/%{base_arch}/defconfig
+	perl -pi -e 's/CONFIG_DIGEST_SHA1=m/# CONFIG_DIGEST_SHA1 is not set/' \
+		arch/%{base_arch}/defconfig
 %endif
 
 	if [ "$BOOT" = "yes" ] ; then
@@ -1056,6 +1058,8 @@ cat %{SOURCE1001} >> .config
 		arch/%{base_arch}/defconfig
 	perl -pi -e 's/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/' \
 		arch/%{base_arch}/defconfig
+	perl -pi -e 's/CONFIG_DIGEST_SHA1=m/# CONFIG_DIGEST_SHA1 is not set/' \
+		arch/%{base_arch}/defconfig
 %endif
 
 %ifarch %{ix86}
@@ -1098,6 +1102,8 @@ cat %{SOURCE1001} >> .config
 	perl -pi -e 's/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/' \
 		arch/%{base_arch}/defconfig
 	perl -pi -e 's/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/' \
+		arch/%{base_arch}/defconfig
+	perl -pi -e 's/CONFIG_DIGEST_SHA1=m/# CONFIG_DIGEST_SHA1 is not set/' \
 		arch/%{base_arch}/defconfig
 %endif
 
