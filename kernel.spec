@@ -54,6 +54,7 @@ Source100:	%{name}-misc.config
 Patch0:		2.6.0-ksyms-add.patch
 
 %if "%{_cset}" != "0"
+# http://www.kernel.org/pub/linux/kernel/v2.5/testing/cset/
 Patch1:		cset-%{_cset}.txt.gz
 %endif
 
