@@ -134,7 +134,7 @@ Patch125:	linux-2.4.18-mppe.patch
 # http://christophe.lizzi.free.fr/linux/linux-2.4.0-test9-fore200e-0.3.tar.gz
 # ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/
 Patch150:	linux-2.4.21-atm_diffs.patch
-Patch151:	ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr-kernel-diffs
+Patch151:	ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 
 # patch for patch in Source9 
 Patch190:	hostap-2.4.19-rc3-patch.patch
