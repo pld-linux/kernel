@@ -325,7 +325,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -n linux
+%setup -q -a3 -a4 -a5 -a6 -a7 -a9 -a10 -a11 -a13 -n linux
 
 %patch0 -p1
 %patch1 -p0
@@ -366,7 +366,16 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #%patch39 -p1
 %patch40 -p1
 %patch44 -p1
-%patch45 -p1
+#%patch45 -p1
+
+# preparing linux/README file to backup
+mv README README.kernel
+# unpacking %{SOURCE12}
+tar zxvf %{SOURCE12}
+# move jfs README file to README.jfs
+mv README README.jfs
+# back kernel README file
+mv README.kernel README
 
 # 802.1Q VLANs
 %patch43 -p1
@@ -396,9 +405,7 @@ mv sym-%{symncr_version}/{README,ChangeLog}.* Documentation
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # JFS 1.0.5
-# make a copy of README
-#%patch104 -p1
-#patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
+patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 
 %patch101 -p1
 %patch102 -p1
@@ -651,7 +658,16 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH38}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH40}
 bzip2 -dc %{PATCH44} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH37}
-bzip2 -dc %{PATCH45} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+#bzip2 -dc %{PATCH45} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+
+# preparing linux/README file to backup
+mv $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README.kernel
+# unpacking %{SOURCE12}
+gzip -dc %{SOURCE12} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+# move jfs README file to README.jfs
+mv $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README.jfs
+# back kernel README file
+mv $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README.kernel $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README
 
 # VLAN
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH43}
@@ -687,7 +703,7 @@ rm -rf sym-%{symncr_version}
 
 # jfs 1.0.5
 #patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH104}
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < jfs-2.2.common-v%{jfs_version}-patch
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < jfs-2.2.common-v%{jfs_version}-patch
 
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
