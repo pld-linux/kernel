@@ -30,9 +30,9 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		2
+%define		_rel		1
 %define		_test_ver	11
-%define		_cset		20031214_0707
+%define		_cset		20031215_0306
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -136,6 +136,12 @@ Patch75:	2.6.0-t11-ide2.patch
 Patch76:	2.6.0-t11-ide3.patch
 
 Patch78:	2.6.0-t11-misc.patch
+
+Patch80:	linux-tdfxfb-fillrect.patch
+Patch81:	linux-fbcon-margins.patch
+Patch82:	linux-tdfxfb-interlace+double.patch
+
+Patch84:	linux-sound-oss-devinit-oops.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -525,6 +531,12 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch76 -p1
 
 %patch78 -p1
+
+%patch80 -p1
+%patch81 -p1
+%patch82 -p1
+
+%patch84 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
