@@ -164,7 +164,10 @@ Patch135:	linux-2.4.18-pre4-agp_uninorth-ppc.patch.bz2
 Patch136:	evms-%{evms_version}-linux-2.4.patch
 Patch137:	evms-linux-2.4.18-common-files.patch
 
-#from http://www.drfruitcake.com/linux/dma-bp.html
+# 
+Patch138:	http://www.cymes.de/members/joker/projects/kernel/pbbuttons.patch
+
+# from http://www.drfruitcake.com/linux/dma-bp.html
 Patch139:	http://www.uwsg.iu.edu/hypermail/linux/kernel/0201.2/att-1802/01-neofb-0.3.1-linux-2.4.18-pre6.patch
 
 # from http://prdownloads.sourceforge.net/tridentfb/tridentfb-%{tridentfb_version}.tgz 
@@ -612,7 +615,7 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 %endif
 
 # Trident FB
-echo Replacing Trident FB module .
+echo Replacing Trident FB module.
 %patch140 -p1
 
 # VIA Southbridge update
@@ -620,6 +623,10 @@ echo Updating VIA Southbridge
 %patch902 -p1
 
 %patch903 -p0
+
+%ifarch ppc
+%patch138 -p1
+%endif
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
