@@ -4,10 +4,10 @@
 #
 %define		test_build		0
 #
-%define		pre_version		pre1
+%define		pre_version		pre3
 %define		lids_version		1.0.8-2.4.4
 %define		ipvs_version		0.9.0
-%define		freeswan_version	snap2001may30E
+%define		freeswan_version	snap2001jun14R
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.7
 %define		sym_ncr_version		sym-1.7.3-ncr-3.4.3
@@ -18,7 +18,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.5
-Release:	1
+Release:	2
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -63,25 +63,23 @@ Patch1:		patch-int-2.4.5.0.gz
 Patch2:		linux-2.4.5-freeswan-%{freeswan_version}.patch.gz
 # http://domsch.com/linux/aacraid/linux-2.4.4-aacraid-043001.patch
 Patch3:		linux-2.4.4-aacraid-043001.patch
-# Reiserfs/NFS patches
-Patch4:		linux-nfsd_operations.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
-Patch5:		br2684-against2.4.5.diff
+Patch4:		br2684-against2.4.5.diff
 # XFS patches
-#Patch6:		ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4.4-core-xfs-1.0.patch.gz
-#Patch7:		ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4-xfs-1.0.patch.gz
-Patch7:		linux-2.4.5-xfs-20010530.patch.gz
-Patch8:		linux-2.4-xfs-nfsdops.patch
+#Patch5:		ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4.4-core-xfs-1.0.patch.gz
+#Patch6:		ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4-xfs-1.0.patch.gz
+Patch6:		linux-2.4.6-pre3-xfs-20010616.patch.gz
 # Compressed iso9660 filesystem
-Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/filemap-2.4.4-1.diff.gz
-Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-2.4.5-pre1-8.diff.gz
-Patch11:	linux-abi-2.4.3.0-PLD.diff
-Patch12:	http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
+Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/filemap-2.4.4-1.diff.gz
+Patch8:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-2.4.5-pre1-8.diff.gz
+Patch9:		linux-abi-2.4.3.0-PLD.diff
+Patch10:	http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 
 # Assorted bugfixes
 
 # Quota fixes
-Patch100:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.5-1.diff.gz
+# Patch100:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.5-1.diff.gz
+Patch100:	quota-fix-2.4.6-pre3.diff.gz
 # from LKML
 Patch101:	linux-scsi-debug-bug.patch
 Patch102:	linux-2.4.5-oom-killer.patch
@@ -89,21 +87,17 @@ Patch103:	linux-2.4.2-raw-ip.patch
 Patch104:	PCI_ISA_bridge.patch
 Patch105:	linux-2.4.2-nvram-hdd.patch
 Patch106:	linux-2.4-fix-kapm.patch
-Patch107:	patch-uk3
-Patch108:	patch-uk5
-Patch109:	epca-fix-missing-unregister-driver.patch
-Patch110:	ramdisk-VM.fix
-Patch111:	linux-ram-disk-free.patch
+Patch107:	epca-fix-missing-unregister-driver.patch
+Patch108:	ramdisk-VM.fix
+Patch109:	linux-ram-disk-free.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
-Patch112:	linux-2.4.2-pcnet-parms.patch
+Patch110:	linux-2.4.2-pcnet-parms.patch
 # Kernel crashes during making reiser-module:
-Patch113:	%{name}-reiser.patch
-#Patch114:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.5-p1.05132001.patch.gz
-Patch114:	ide.2.4.5-05302001.patch.gz
-Patch115:	http://www.eax.com/patches/linux-245-ov511-diff
-Patch116:	linux-2.4.5-umount.patch
-Patch117:	linux-reiserfs-rename.patch
-Patch118:	linux-2.4.5-rd_ioctl.patch
+Patch111:	%{name}-reiser.patch
+Patch112:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.6-p1.06062001.patch.gz
+Patch113:	linux-reiserfs-rename.patch
+Patch114:	linux-via-timer.patch
+Patch115:	linux-udf-quota-fix.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -117,7 +111,7 @@ Patch904:	linux-lids-fixpatch.patch
 Patch905:	linux-vlan-fixpatch.patch
 
 # Linus's -pre
-#Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.6-%{pre_version}.gz
+Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.6-%{pre_version}.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -268,7 +262,7 @@ Ce package inclut une version allégée du noyau de Linux version
 d'installation et ne doivent pas être utilisées pour un système
 classique, beaucoup d'options dans le kernel ont étaient désactivées a
 cause de la contrainte d'espace.
-
+#'
 %description -l pl BOOT
 Pakiet zawiera j±dro Linuksa dedykowane dyskietkom startowym i powinno 
 byæ u¿ywane jedynie podczas instalacji systemu. Wiele u¿ytecznych opcji
@@ -330,20 +324,18 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -n linux
-#%patch1000 -p1
-%patch0 -p1
+%patch1000 -p1
+#%patch0 -p1
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-%patch5 -p1
 %patch100 -p1
-#%patch6 -p1
+#%patch5 -p1
+%patch6 -p1
 %patch7 -p1
 %patch8 -p1
-%patch9 -p1
 %patch10 -p1
-%patch12 -p1
 
 %patch101 -p0
 %patch102 -p0
@@ -355,14 +347,11 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch108 -p1
 %patch109 -p1
 %patch110 -p1
-%patch111 -p1
+%patch111 -p4
 %patch112 -p1
-%patch113 -p4
-%patch114 -p1
+%patch113 -p1
+%patch114 -p0
 %patch115 -p1
-%patch116 -p0
-%patch117 -p1
-%patch118 -p1
 
 %patch900 -p0 
 %patch901 -p0
@@ -420,7 +409,7 @@ rm -rf %{sym_ncr_version}
 #%patch903 -p1
 
 ## must be here, in other time make errors with LIDS
-#%patch11 -p1
+#%patch9 -p1
 
 # 802.1Q VLANs
 cd vlan.%{vlan_version}
@@ -565,21 +554,19 @@ gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{SOURCE13} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
 # Pre patch
-#gzip -dc %{PATCH1000} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH1000} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH0}
 gzip -dc %{PATCH1} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH2} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH3}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
 gzip -dc %{PATCH100} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-#gzip -dc %{PATCH6} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+#gzip -dc %{PATCH5} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH6} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH7} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
-gzip -dc %{PATCH9} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH10} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
+gzip -dc %{PATCH8} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
 
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH101}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH102}
@@ -591,14 +578,11 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH107}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH108}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH109}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH110}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH111}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH112}
-patch -p4 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH113}
-gzip -dc %{PATCH114} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -p4 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH111}
+gzip -dc %{PATCH112} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH113}
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH114}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH115}
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH116}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH117}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH118}
 
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH900}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH901}
@@ -660,7 +644,7 @@ rm -rf $RPM_BUILD_ROOT/usr/src/linux-%{version}/%{sym_ncr_version}
 #%patch903 -p1
 
 ## must be here, in other time make errors with LIDS
-#patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
+#patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH9}
 
 # 802.1Q VLANs
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/vlan.%{vlan_version} < %{PATCH905}
