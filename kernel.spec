@@ -8,6 +8,7 @@
 #		- check I2C
 #		- fix lirc_sasem (usb api)
 #		- update HP-OmniBook patchset (2.6.1-all-in-1.patch)
+#		- reiserfs4
 #
 # Conditional build:
 %bcond_without	BOOT		# don't build BOOT kernel
@@ -55,9 +56,10 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_post_ver	1
+#define		_post_ver	.1
+%define		_post_ver	%{nil}
 %define		_rel		0.94
-%define		_cset		20040823_0405
+%define		_cset		20040825_0707
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -75,16 +77,16 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.6.8.%{_post_ver}
+Version:	2.6.9%{_post_ver}
 Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-%define		_rc	%{nil}
-#define		_rc	-rc4
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
-# Source0-md5:	9517ca999e822b898fbdc7e72796b1aa
-#Source0:	http://kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
+#define		_rc	%{nil}
+%define		_rc	-rc1
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
+# Source0-md5:	3ab9f09dcc012eb3d927c4f0af8a2819
+#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 # Source2-md5:	85bdb0205de53b7787966f0932fd8dd9
@@ -206,7 +208,6 @@ Patch203:	linux-cluster-gnbd.patch
 # http://softwaresuspend.berlios.de/
 Patch219:	linux-2.6-software-suspend-2.0.0.104.patch.gz
 Patch220:	linux-2.6-via-agpc-resume-suspend-support.patch
-Patch221:	linux-2.6-via-rhine-suspend-resume.patch
 
 # hotfixes
 Patch300:	linux-2.6-sparc-ksyms.patch
@@ -663,7 +664,6 @@ patch -p1 -s < exec-shield.patch
 %patch219 -p1
 %endif
 %patch220 -p1
-%patch221 -p1
 
 # hotfixes
 %patch300 -p1
