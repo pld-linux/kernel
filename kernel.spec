@@ -92,6 +92,7 @@ Patch41:	%{name}-serial-initialisation.patch
 Patch42:	%{name}-flip-serial5.05.patch
 Patch43:	%{name}-vlan_bridge.patch
 Patch44:	tulip-patch-0.91.patch.bz2
+Patch45:	linux-2.2.20-bttv-%{bttv_version}.patch.bz2
 
 Patch100:	jfs-2.2.20-v%{jfs_version}-patch
 Patch101:	linux-atm.patch
@@ -99,7 +100,6 @@ Patch102:	htb2_2.2.17.diff
 Patch103:	bridge-netsyms.patch
 #i2o patch from ftp://ftp.adaptec.com/raid/asr/unix/asr_linux_v242_drv.rpm 
 Patch104:	dpt_i2o-2.2.19.diff
-Patch105:	linux-2.2.20-bttv-%{bttv_version}.patch.bz2
 Patch1500:	linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	%{name}-sparc-zs.h.patch
 Patch1502:	%{name}-sparc_netsyms.patch
@@ -366,6 +366,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #%patch39 -p1
 %patch40 -p1
 %patch44 -p1
+%patch45 -p1
 
 # 802.1Q VLANs
 %patch43 -p1
@@ -403,7 +404,6 @@ install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 %patch102 -p1
 %patch103 -p1
 %patch104 -p1
-%patch105 -p1
 
 %patch1500 -p1
 %patch1501 -p1
@@ -651,6 +651,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH38}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH40}
 bzip2 -dc %{PATCH44} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH37}
+bzip2 -dc %{PATCH45} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 # VLAN
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH43}
@@ -693,7 +694,6 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH102}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH103}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH104}
-bzip2 -dc %{PATCH105} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1500}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1501}
