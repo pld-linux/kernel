@@ -4,7 +4,7 @@
 %define		ac_version		ac9
 %define 	aacraid_version		1.0.6
 %define		lm_sensors_version	2.5.5
-#define		wlan_version		0.1.7
+%define		wlan_version		0.1.7
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -27,7 +27,7 @@ Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
 Source7:	linux-netfilter-patches-20010201.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}-%{version}.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
-#Source10:	http://www.linux-wlan.com/linux-wlan/linux-wlan-ng-%{wlan_version}.tar.gz
+Source10:	http://www.linux-wlan.com/linux-wlan/linux-wlan-ng-%{wlan_version}.tar.gz
 #Source11:	http://www2.lm-sensors.nu/~lm/archive/lm_sensors-%{lm_sensors_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
