@@ -832,12 +832,12 @@ BuildConfig (){
 		install include/linux/autoconf.h \
 			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
 		install .config \
-			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/config-smp.h
+			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/config-smp
 	else
 		install include/linux/autoconf.h \
 			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
 		install .config \
-			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/config-up.h
+			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/config-up
 	fi
 }
 
