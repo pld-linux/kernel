@@ -23,7 +23,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.17
-Release:	0.2
+Release:	0.3
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -422,12 +422,6 @@ echo Installing Preemptive patch
 echo Installing Net Dev Random patch
 %patch11 -p1
 %patch12 -p1
-
-# ABI
-%ifarch %{x86}
-echo Installing Linux-ABI Support
-%patch7 -p1
-%endif
 
 # devfs patch
 echo Installing DEVFS patch
