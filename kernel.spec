@@ -51,8 +51,8 @@ Obsoletes:	kernel-modules
 
 %define		no_install_post_strip                   yes
 %define		no_install_post_compress_modules        yes
-%ifarch i586 i686 athlon
-%define		_without_boot				1
+%ifarch i386 sparc sparcv9 sparcv9 alpha
+%define		_with_boot				1
 %endif
 
 %description
@@ -276,34 +276,30 @@ Modu³y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 %setup -q -n linux-%{version}
 %patch0 -p1
 
-%build
-BuildKernel() {
-	%{?verbose:set -x}
-	# is this a special kernel we want to build?
-	if [ "$1" = "BOOT" ]; then
-		Config="%{_target_cpu}-BOOT"
-		KernelVer=%{version}
-		echo BUILDING A KERNEL FOR BOOT...
-	elif [ -n "$1" ] ; then
-		Config="%{_target_cpu}"-$1
-		KernelVer=%{version}-%{release}$1
-		echo BUILDING A KERNEL FOR $1...
-	else
-		Config="%{_target_cpu}"
-		KernelVer=%{version}-%{release}
-		echo BUILDING THE NORMAL KERNEL...
-	fi
-
+find  -name "*~" -print | xargs rm -f
+find  -name "*.orig" -print | xargs rm -f
 %ifarch %{ix86}
 	perl -p -i -e "s/-m486//" arch/i386/Makefile
 	perl -p -i -e "s/-DCPU=486/-m486 -DCPU=486/" arch/i386/Makefile
 	perl -p -i -e "s/-DCPU=586/-mpentium -DCPU=586/" arch/i386/Makefile
 	perl -p -i -e "s/-DCPU=686/-mpentiumpro -DCPU=686/" arch/i386/Makefile
 %endif
-	%{__make} mrproper
+
+%build
+BuildKernel() {
+	%{?verbose:set -x}
+	# is this a special kernel we want to build?
+	echo BUILDING THE $1 KERNEL...
+	if [ -n "$1" ]; then
+		Config="%{_target_cpu}-$1"
+	else
+		Config="%{_target_cpu}"
+	fi
+	KernelVer=%{version}$1
+
 	cp $RPM_SOURCE_DIR/kernel-$Config.config .config
 
-	for target in oldconfig dep include/linux/version.h; do
+	for target in clean oldconfig dep include/linux/version.h; do
 %ifarch sparc
 		sparc32 \
 %endif
@@ -312,23 +308,13 @@ BuildKernel() {
 
 %ifarch %{ix86}
 	%{__make} bzImage EXTRAVERSION="-%{release}"
-%else
-%ifarch sparc
+%endif
+%ifarch sparc sparc64 sparcv9 alpha
 	sparc32 %{__make} boot EXTRAVERSION="-%{release}"
-%else
+%endif
 %ifarch ppc
 	%{__make} vmlinux EXTRAVERSION="-%{release}"
-%else
-	%{__make} boot EXTRAVERSION="-%{release}"
 %endif
-%endif
-%endif
-%ifarch sparc
-	sparc32 %{__make} modules EXTRAVERSION="-%{release}"
-%else
-	%{__make} modules EXTRAVERSION="-%{release}"
-%endif
-
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
 %ifarch %{ix86}
@@ -339,78 +325,61 @@ BuildKernel() {
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
-
 %ifarch ppc
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
 
-	%{__make} INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR modules_install KERNELRELEASE=$KernelVer
+%ifarch sparc
+	sparc32 \
+%endif
+	%{__make} modules EXTRAVERSION="-%{release}"
+	%{__make} modules_install \
+		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
+		KERNELRELEASE=$KernelVer
+	rm -rf $KERNEL_INSTALL_DIR/lib/modules/*/pcmcia
 }
 
 KERNEL_BUILD_DIR=`pwd`
-KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR/build
-
-rm -rf $KERNEL_INSTALL_DIR
+KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-build
 install -d $KERNEL_INSTALL_DIR
 
-# NORMAL KERNEL
 BuildKernel
-%ifarch %{ix86}
-%endif
-
-# SMP-ENABLED KERNEL
 BuildKernel smp
-%ifarch %{ix86}
-%endif
 
 # BOOT kernel
 %if %{?_with_boot:1}0
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build/%{_libdir}/bootdisk"
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-build/%{_libdir}/bootdisk"
 install -d $KERNEL_INSTALL_DIR
-
 BuildKernel BOOT
 %endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT%{_prefix}/{include,src}
+install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{version}}
 
 KERNEL_BUILD_DIR=`pwd`
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build"
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-build"
+
 cp -a $KERNEL_INSTALL_DIR/* $RPM_BUILD_ROOT
 
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT%{_includedir}/asm
 
-bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/
-
-cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
-
-%{__make} mrproper
-find  -name "*~" -print | xargs rm -f
-find  -name "*.orig" -print | xargs rm -f
-
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
 
-%{__make} oldconfig
-mv include/linux/autoconf.h include/linux/autoconf-up.h
-install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config .config
-%{__make} oldconfig
-mv include/linux/autoconf.h include/linux/autoconf-smp.h
+for target in clean oldconfig dep include/linux/version.h; do
+%ifarch sparc
+	sparc32 \
+%endif
+	%{__make} $target
+done
 
-install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux--%{version}/include/linux/autoconf.h
+cp -ar . $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
-# this generates modversions info which we want to include and we may as
-# well include the depends stuff as well
-#%{__make} symlinks
-%{__make} include/linux/version.h
+cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
-# this generates modversions info which we want to include and we may as
-# well include the depends stuff as well, after we fix the paths
-
-#%{__make} depend
-find $RPM_BUILD_ROOT/usr/src/linux--%{version} -name ".*depend" | \
+find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
 while read file ; do
 	mv $file $file.old
 sed -e "s|$RPM_BUILD_ROOT\(/usr/src/linux-\)|\1|g" < $file.old > $file
@@ -422,7 +391,7 @@ rm -f scripts/mkdep
 rm -f drivers/net/hamradio/soundmodem/gentbl
 
 %clean
-rm -rf $RPM_BUILD_ROOT
+rm -rf $RPM_BUILD_ROOT{,-build}
 
 %post
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
