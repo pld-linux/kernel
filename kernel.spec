@@ -62,6 +62,7 @@ Patch17:	linux-i815-support.patch
 Patch18:	kernel-ide-geometry.patch
 Patch19:	kernel-pcmcia.patch
 Patch20:	linux-sparc_ide_fix.patch
+Patch21:	linux-Config.in-CONFIG_AMIGA_PARTITION.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -319,6 +320,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch18 -p1
 %patch19 -p1
 %patch20 -p1
+%patch21 -p1
 %ifarch %{ix86}
 cd ..
 rm -rf i2c-%{i2c_version}
@@ -534,6 +536,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH16}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH17}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH18}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH20}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH21}
 
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
 
