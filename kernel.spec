@@ -73,7 +73,7 @@ Name:		kernel
 Version:	2.6.10%{_post_ver}
 Release:	%{_rel}
 Epoch:		3
-License:	GPL
+License:	GPL v2
 Group:		Base/Kernel
 %define		_rc	%{nil}
 Source0:	http://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
