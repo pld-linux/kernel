@@ -78,7 +78,7 @@ Patch24:	linux-2.4.23-libata1-include.patch
 Patch31:	linux-2.4.21-jfs-acl.patch
 Patch32:	linux-2.4.25-ea-acl-nfsacl-2.4.23-0.8.65.diff.gz
 # http://dl.sourceforge.net/linux-ntfs/
-Patch40:	linux-2.4.23-ntfs-2.1.5a.patch.bz2
+Patch40:	linux-2.4.24-ntfs-2.1.6a.patch.bz2
 # FC01_davfs_0.2.4.patch
 Patch50:	linux-2.4.20-davfs-0.2.4.patch.bz2
 # FC02_davfs__FUNCTION__.patch
