@@ -34,11 +34,11 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.13
+%define		_rel		0.14
 %define		_cset		20040322_0508
 
 ## netfilter snap 
-%define		_netfilter_snap		20040316
+%define		_netfilter_snap		20040322
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/pentium3/i386/;s/amd64/x86_64/')
 
@@ -132,7 +132,7 @@ Patch64:	2.6.x-ppp_mppe.patch
 
 Patch66:	2.6.2-Initio9100U-Kconfig.patch
 
-Patch68:	2.6.5-rc1-patch-o-matic-ng-base-%{_netfilter_snap}.patch
+Patch68:	%{version}-patch-o-matic-ng-base-%{_netfilter_snap}.patch
 
 Patch70:	2.6.3-sparc32-fix.patch
 
@@ -547,6 +547,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch66 -p1
 
+# netfilter - base
 %patch68 -p1
 
 %patch70 -p1
@@ -567,6 +568,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch90 -p1
 
+## netfilter - extra
 %patch94 -p1
 
 %patch96 -p1
