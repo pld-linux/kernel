@@ -82,11 +82,9 @@ Patch7:		linux-abi-2.4.3-PLD.patch
 Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
 Patch9:		linux-grsecurity-%{grsec_version}.patch
-# Linux Compressed cache
-Patch101:	http://prdownloads.sourceforge.net/linuxcompressed/patch-comp-cache-2.4.6-0.17.bz2
 # EXT3
 # http://www.uow.edu.au/~andrewm/linux/ext3/
-Patch11:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.5-247.gz
+Patch10:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.5-247.gz
 
 # Assorted bugfixes
 
@@ -393,7 +391,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-%patch11 -p1
+%patch10 -p1
 %patch100 -p1
 %patch5 -p1
 %patch6 -p1
