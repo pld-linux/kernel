@@ -1160,6 +1160,7 @@ fi
 %dir %{_prefix}/src/linux-%{version}/scripts
 %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %{_prefix}/src/linux-%{version}/scripts/*.c
+%{_prefix}/src/linux-%{version}/scripts/*.h
 
 %files doc
 %defattr(644,root,root,755)
@@ -1184,6 +1185,7 @@ fi
 %{_prefix}/src/linux-%{version}/scripts/*
 %exclude %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.c
+%exclude %{_prefix}/src/linux-%{version}/scripts/*.h
 %{_prefix}/src/linux-%{version}/sound
 %{_prefix}/src/linux-%{version}/security
 %{_prefix}/src/linux-%{version}/usr
