@@ -15,7 +15,7 @@
 
 %define		_rel		1
 %define		_test_ver	6
-%define		_cset		20031002_0604
+%define		_cset		20031002_1507
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -324,7 +324,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %prep
 %setup -q -n linux-%{version}-test%{_test_ver}
 %if "%{_cset}" != "0"
-%patch1 -p1
+#%patch1 -p1
 %endif
 
 #%patch2 -p1
@@ -358,7 +358,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch68 -p1
 #%%patch69 -p1
 %patch70 -p1
-%patch71 -p1
+#%patch71 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
