@@ -272,6 +272,7 @@ Patch1419:	linux-2.4.21-agp-num_of_masks.patch
 # fix spare disk counting for raid 5
 Patch1420:	linux-raid5-spare-counting.patch
 Patch1421:	linux-2.4.21-bttv-typo.patch
+Patch1422:	linux-2.4.21-ipt_TRACE-typo.patch
 
 # htb
 # http://luxik.cdi.cz/~devik/qos/htb/v3/
@@ -768,6 +769,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1419 -p1
 %patch1420 -p1
 %patch1421 -p1
+%patch1422 -p1
 %patch1500 -p1
 %patch1501 -p1
 
