@@ -36,6 +36,7 @@ Patch1:		ftp://ftp.botik.ru/rented/namesys/ftp/pub/linux+reiserfs/linux-2.2.14-r
 Patch2:		linux-2.2.14-atm-0.59-fore200e-0.1e.patch.gz
 Patch3:		linux-tasks.patch
 Patch4:		raid-2.2.14-B1.gz
+Patch5:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide.2.2.14.20000124.patch.gz
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	/tmp/%{name}-%{version}-root
@@ -164,6 +165,22 @@ Dieser Kernel wird auf den Installations-Bootdisketten benutzt und sollte
 nicht auf einem installierten System verwendet werden, da viele Funktionen
 wegen der Platzprobleme abgeschaltet sind.
 
+%package headers
+Summary:	Header files for the Linux kernel.
+Summary(pl):	Pliki nag³owkowe j±dra
+Group:		Base/Kernel
+Group(pl):	Podstawowe/J±dro
+Autoreqprov:	no
+
+%description headers
+These are the C header files for the Linux kernel, which define structures
+and constants that are needed when building most standard programs under
+Linux, as well as to rebuild the kernel.
+
+%description headers -l pl
+Pakiet zawiera pliki nag³ówkowe j±dra, niezbedne do rekompilacji j±dra
+oraz niektórych programów.
+
 %package source
 Summary:	Kernel source tree
 Summary(pl):	Kod ¼ród³owy j±dra Linuxa
@@ -181,21 +198,6 @@ most C programs as they depend on constants defined in here. You can
 also build a custom kernel that is better tuned to your particular
 hardware.
 
-%description source -l pl
-Pakiet zawiera kod ¼ród³owy jadra systemu.
-
-%package headers
-Summary:	Header files for the Linux kernel.
-Summary(pl):	Pliki nag³owkowe j±dra
-Group:		Base/Kernel
-Group(pl):	Podstawowe/J±dro
-Autoreqprov:	no
-
-%description headers
-These are the C header files for the Linux kernel, which define structures
-and constants that are needed when building most standard programs under
-Linux, as well as to rebuild the kernel.
-
 %description -l de source
 Das Kernel-Source-Paket enthält den source code (C/Assembler-Code) des
 Linux-Kernels. Die Source-Dateien werden gebraucht, um viele C-Programme zu
@@ -210,9 +212,8 @@ dépend de constantes définies dans le code source. Les sources peuvent être
 aussi utilisée pour compiler un noyau personnalisé pour avoir de meilleures
 performances sur des matériels particuliers. 
 
-%description headers -l pl
-Pakiet zawiera pliki nag³ówkowe j±dra, niezbedne do rekompilacji j±dra
-oraz niektórych programów.
+%description source -l pl
+Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -a30 -n linux
@@ -221,6 +222,7 @@ oraz niektórych programów.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
+%patch5 -p1
 patch -p1 -s <linux-%{ow_ver}/linux-%{ow_ver}.diff
 
 %build
@@ -330,6 +332,7 @@ gzip -dc %{PATCH1} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH3} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH5} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-%{ow_ver}/linux-%{ow_ver}.diff
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
