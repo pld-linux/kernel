@@ -8,7 +8,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.17
-Release:	4
+Release:	5
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -59,6 +59,7 @@ Patch13:	linux-ipv6-addrconf.patch
 Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
 # patch from Console Daemon
 #Patch21:	wait_any_vt.diff
+Patch22:	linux-ipvs-0.9.16-2.2.17.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -293,6 +294,7 @@ install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 zcat %{SOURCE34} > drivers/net/3c59x.c
 
 #patch21 -p1
+%patch22 -p1
 
 %build
 BuildKernel() {
