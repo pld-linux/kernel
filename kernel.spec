@@ -23,7 +23,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.25
-Release:	0.1
+Release:	0.2
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-2.4.24.tar.bz2
@@ -171,6 +171,9 @@ Patch350:	linux-2.4.24-aic79xxx-20031222.patch
 # I18N stuff
 # Adds a sysctl for controlling the default iocharset
 Patch400:	%{name}-nls_default.patch
+
+# ftp://ftp.suse.com/pub/people/stepan/bootsplash/kernel/
+Patch450:	bootsplash-3.0.7-2.4.25.patch
 
 # The following go last as they touch a lot of code
 # and/or are on bcond and/or are ifarch
@@ -778,6 +781,8 @@ echo Adding Tekram DC395/315 driver
 patch -p1 -s < dc395/dc395-integ24.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 %patch270 -p1
+
+%patch450 -p1
 
 # The following go last as they touch a lot of code
 # and/or are on bcond and/or are ifarch
