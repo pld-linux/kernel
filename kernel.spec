@@ -234,7 +234,7 @@ for i in ipvs-%{ipvs_version}/*.diff ; do
 	patch -p1 <$i
 done
 mkdir net/ipv4/ipvs
-cp ipvs-%{ipvs_version}/ipvs/*.{c,in} net/ipv4/ipvs
+cp ipvs-%{ipvs_version}/ipvs/*.{c,h,in} net/ipv4/ipvs
 cp ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile net/ipv4/ipvs/Makefile
 
 # LIDS
@@ -329,11 +329,8 @@ BuildKernel smp
 BuildKernel BOOT
 %endif
 
-# building IPVS
-(cd ipvs-%{ipvs_version}/ipvs;make;make -C ipvsadm)
-
 # building i8255 module
-{cd i8255;make)
+%{__make} -C i8255
 
 %install
 rm -rf $RPM_BUILD_ROOT
