@@ -1078,6 +1078,7 @@ fi
 /lib/modules/%{version}-%{release}/kernel
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}/build
+%ghost /lib/modules/%{version}-%{release}/modules.*
 %endif			# %{_without_up}
 
 #%if !%{test_build}
@@ -1108,6 +1109,7 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}smp/build
+%ghost /lib/modules/%{version}-%{release}smp/modules.*
 %endif			# %{_without_smp}
 
 %ifnarch i586 i686 		# narch
@@ -1124,6 +1126,7 @@ fi
 %endif				# i386_arch
 %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/kernel
 %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/build
+%ghost %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.*
 %endif				# narch
 
 %files headers
