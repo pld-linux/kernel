@@ -44,7 +44,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		4.1
+%define		_rel		4.2
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -160,6 +160,9 @@ Patch70:	grsecurity-2.1.3-2.6.11-200503111604.patch
 Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 # psmouse extension for ThinkPad laptops from http://www.clarkson.edu/~evanchsa/
 Patch81:	trackpoint-2.6.11.patch
+
+# acpi from http://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.11/
+Patch90:	acpi-20050309-2.6.11.diff
 
 Patch100:	linux-2.6-nvidia-pci-ids.patch
 Patch101:	linux-2.6-pty-is-losing-bytes.patch
@@ -568,6 +571,8 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %patch80 -p1
 %patch81 -p1
+
+%patch90 -p1
 
 %patch100 -p1
 %patch101 -p1
