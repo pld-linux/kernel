@@ -9,7 +9,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.18
-Release:	3
+Release:	4
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -54,9 +54,9 @@ Patch13:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
 Patch14:	linux-tasks.patch
 # Linux Virtual Server: http://www.linuxvirtualserver.org/software/
 Patch15:	%{name}-ipvs-1.0.3-2.2.18.patch
+# based on ftp://ftp.kernel.org/pub/linux/kernel/people/sct/raw-io/kiobuf-2.2.18pre24.tar.gz
+Patch16:	linux-raw.patch
 #Patch:		linux-2.2.18pre21.ext3.diff
-# raw-io patch
-#Patch:		ftp://ftp.kernel.org/pub/linux/kernel/people/sct/raw-io/raw-2.2.17.diff
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -78,6 +78,7 @@ Provides:	%{name}(rawio) = %{version}
 Autoreqprov:	no
 Prereq:		fileutils
 Prereq:		modutils
+Prereq:		genromfs
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha
 %ifarch		%{ix86}
@@ -301,6 +302,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch13 -p1
 %patch14 -p1
 %patch15 -p1
+%patch16 -p1
 %ifarch %{ix86}
 cd ..
 rm -rf i2c-%{i2c_version}
@@ -487,6 +489,7 @@ gzip -dc %{PATCH13} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH16}
 
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
 
@@ -574,6 +577,7 @@ ln -sf System.map-%{version}-%{release} /boot/System.map
 if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
 	/sbin/lilo 1>&2 || :
 fi
+genromfs /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
 
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release} /lib/modules/%{version}
@@ -587,6 +591,7 @@ ln -sf System.map-%{version}-%{release}smp /boot/System.map
 if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
 	/sbin/lilo 1>&2 || :
 fi
+genromfs /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
 
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
@@ -612,6 +617,7 @@ if [ -L /lib/modules/%{version} ]; then
 		fi
 	fi
 fi
+rm -f /boot/initrd-%{version}-%{release}.gz
 
 %postun smp
 if [ -L /lib/modules/%{version} ]; then 
@@ -621,6 +627,7 @@ if [ -L /lib/modules/%{version} ]; then
 		fi
 	fi
 fi
+rm -f /boot/initrd-%{version}-%{release}smp.gz
 
 %postun BOOT
 if [ -L /lib/modules/%{version} ]; then 
