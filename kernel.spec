@@ -27,7 +27,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	2%{?_with_preemptive:_pr}
+Release:	2.5%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -115,6 +115,8 @@ Patch32:	ebtables-v2.0-rc1_vs_2.4.18.patch
 Patch33:	linux-2.4.19-pre8-konicawc.patch
 Patch34:	wrr-linux-2.4.9.patch
 Patch35:	%{name}-pswscancode.patch
+Patch36:	usb-ehci-2.4.20-pre11.patch
+Patch37:	usb-visor-2.4.20-pre11.patch
 
 # Assorted bugfixes
 
@@ -568,6 +570,10 @@ echo Installing WRR Support
 
 # scancode
 %patch35 -p1
+
+# USB 2.0 patch
+%patch36 -p1
+%patch37 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
