@@ -88,7 +88,7 @@ Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 Patch9:		linux-grsecurity-%{grsec_version}.patch
 # EXT3
 # http://www.uow.edu.au/~andrewm/linux/ext3/
-Patch10:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.13-2413.gz
+Patch10:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.15-2414.gz
 
 # Assorted bugfixes
 
