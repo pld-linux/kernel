@@ -1607,19 +1607,11 @@ diff -uNr linux-2.6.7-rc1.orig/fs/open.c linux-2.6.7-rc1/fs/open.c
 diff -uNr linux-2.6.7-rc1.orig/fs/proc/array.c linux-2.6.7-rc1/fs/proc/array.c
 --- linux-2.6.7-rc1.orig/fs/proc/array.c	2004-05-23 07:54:21.000000000 +0200
 +++ linux-2.6.7-rc1/fs/proc/array.c	2004-05-25 14:33:58.797421760 +0200
-@@ -323,6 +323,20 @@
+@@ -323,6 +323,12 @@
  
  	wchan = get_wchan(task);
  
-+#ifdef CONFIG_GRKERNSEC_PROC_MEMMAP
-+// FIXME
-+//	if (PAX_RAND_FLAGS) {
-+		eip = 0;
-+		esp = 0;
-+		wchan = 0;
-+//	}
-+#endif
-+#ifdef CONFIG_GRKERNSEC_HIDESYM
++#if defined(CONFIG_GRKERNSEC_PROC_MEMMAP) || defined(CONFIG_GRKERNSEC_HIDESYM)
 +	wchan = 0;
 +	eip =0;
 +	esp =0;
@@ -1628,7 +1620,7 @@ diff -uNr linux-2.6.7-rc1.orig/fs/proc/array.c linux-2.6.7-rc1/fs/proc/array.c
  	sigemptyset(&sigign);
  	sigemptyset(&sigcatch);
  	read_lock(&tasklist_lock);
-@@ -424,3 +438,14 @@
+@@ -424,3 +430,14 @@
  	return sprintf(buffer,"%d %d %d %d %d %d %d\n",
  		       size, resident, shared, text, lib, data, 0);
  }
@@ -13065,3 +13057,15 @@ diff -uNr linux-2.6.7-rc1.orig/security/security.c linux-2.6.7-rc1/security/secu
  EXPORT_SYMBOL(capable);
 +EXPORT_SYMBOL(capable_nolog);
  EXPORT_SYMBOL(security_ops);
+diff -uNr linux-2.6.7-rc1.orig/Makefile linux-2.6.7-rc1/Makefile
+--- linux-2.6.7-rc1.orig/Makefile	2004-05-26 00:38:42.000000000 +0200
++++ linux-2.6.7-rc1/Makefile	2004-05-26 01:23:28.424806592 +0200
+@@ -484,7 +484,7 @@
+ 
+ 
+ ifeq ($(KBUILD_EXTMOD),)
+-core-y		+= kernel/ mm/ fs/ ipc/ security/ crypto/
++core-y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ grsecurity/
+ 
+ vmlinux-dirs	:= $(patsubst %/,%,$(filter %/, $(init-y) $(init-m) \
+ 		     $(core-y) $(core-m) $(drivers-y) $(drivers-m) \
