@@ -45,7 +45,7 @@
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
-Summary(pl):	J±dro Linuxa
+Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.6.0
 Release:	%{_rel}
@@ -155,22 +155,20 @@ Patch94:	acpi-20031203-2.6.0.diff.gz
 Patch96:	2.6.0-mount-rainier-lkml.patch
 Patch97:	2.6.0-mount-rainier-fix-lkml.patch
 
-ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
-BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 BuildRequires:	module-init-tools
-Buildrequires:	perl-base
+BuildRequires:	perl-base
 BuildRequires:	binutils >= 2.14.90.0.7
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
+Autoreqprov:	no
+PreReq:		coreutils
+PreReq:		module-init-tools >= 0.9.9
+PreReq:		geninitrd >= 2.57
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	module-info
 Provides:	%{name}(netfilter) = %{_netfilter_snap}
-Autoreqprov:	no
-Prereq:		coreutils
-Prereq:		module-init-tools >= 0.9.9
-Prereq:		geninitrd >= 2.57
 Obsoletes:	kernel-modules
 Conflicts:	binutils < %{_binutils_ver}
 Conflicts:	util-linux < %{_util-linux_ver}
@@ -185,8 +183,9 @@ Conflicts:	isdn4k-utils < %{_isdn4k-utils_ver}
 Conflicts:	nfs-utils < %{_nfs-utils_ver}
 Conflicts:	procps < %{_procps_ver}
 Conflicts:	oprofile < %{_oprofile_ver}
-
 ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
+ExclusiveOS:	Linux
+BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
 This package contains the Linux kernel that is used to boot and run
@@ -206,22 +205,22 @@ fonctions basiques d'un système d'exploitation: allocation mémoire,
 allocation de process, entrée/sortie de peripheriques, etc.
 
 %description -l pl
-Pakiet zawiera j±dro Linuxa niezbêdne do prawid³owego dzia³ania
+Pakiet zawiera j±dro Linuksa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
-siê w komputerze, takich jak karty muzyczne, sterowniki dysków, etc.
+siê w komputerze, takiego jak sterowniki dysków itp.
 
 %package smp
 Summary:	Kernel version %{version} compiled for SMP machines
 Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
-Summary(pl):	J±dro Linuxa w wersji %{version} dla maszyn wieloprocesorowych
+Summary(pl):	J±dro Linuksa w wersji %{version} dla maszyn wieloprocesorowych
 Group:		Base/Kernel
+PreReq:		coreutils
+PreReq:		module-init-tools >= 0.9.9
+PreReq:		geninitrd >= 2.26
 Provides:	%{name}-smp = %{epoch}:%{version}-%{release}
 Provides:	module-info
 Provides:	%{name}(netfilter) = %{_netfilter_snap}
-Prereq:		coreutils
-Prereq:		module-init-tools >= 0.9.9
-Prereq:		geninitrd >= 2.26
 Conflicts:	binutils < %{_binutils_ver}
 Conflicts:	util-linux < %{_util-linux_ver}
 Conflicts:	module-init-tool < %{_module-init-tool_ver}
@@ -262,9 +261,9 @@ Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
 Summary:	Kernel version %{version} used on the installation boot disks
 Summary(de):	Kernel version %{version} für Installationsdisketten
 Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation
-Summary(pl):	J±dro Linuxa w wersji %{version} dla dyskietek startowych
+Summary(pl):	J±dro Linuksa w wersji %{version} dla dyskietek startowych
 Group:		Base/Kernel
-Prereq:		module-init-tools
+PreReq:		module-init-tools
 Autoreqprov:	no
 
 %description BOOT
@@ -290,11 +289,11 @@ rozmiar.
 Summary:	PCMCIA modules
 Summary(pl):	Modu³y PCMCIA
 Group:		Base/Kernel
+PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	%{name}-pcmcia = %{pcmcia_version}
 Provides:	kernel(pcmcia)
-PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
 Conflicts:	pcmcia-cs < %{_pcmcia-cs_ver}
-Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 
 %description pcmcia
 PCMCIA modules (%{pcmcia_version}).
@@ -306,11 +305,11 @@ Modu³y PCMCIA (%{pcmcia_version}).
 Summary:	PCMCIA modules for SMP kernel
 Summary(pl):	Modu³y PCMCIA dla maszyn SMP
 Group:		Base/Kernel
+PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Provides:	%{name}-pcmcia = %{pcmcia_version}
 Provides:	kernel(pcmcia)
-PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
 Conflicts:	pcmcia-cs < %{_pcmcia-cs_ver}
-Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 
 %description smp-pcmcia
 PCMCIA modules for SMP kernel (%{pcmcia_version}).
@@ -322,9 +321,9 @@ Modu³y PCMCIA dla maszyn SMP (%{pcmcia_version}).
 Summary:	DRM kernel modules
 Summary(pl):	Sterowniki DRM
 Group:		Base/Kernel
-Provides:	%{name}-drm = %{drm_xfree_version}
 PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
+Provides:	%{name}-drm = %{drm_xfree_version}
 
 %description drm
 DRM kernel modules (%{drm_xfree_version}).
@@ -336,9 +335,9 @@ Sterowniki DRM (%{drm_xfree_version}).
 Summary:	DRM SMP kernel modules
 Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
 Group:		Base/Kernel
-Provides:	%{name}-drm = %{drm_xfree_version}
 PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
+Provides:	%{name}-drm = %{drm_xfree_version}
 
 %description smp-drm
 DRM SMP kernel modules (%{drm_xfree_version}).
@@ -354,10 +353,10 @@ PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 
 %description sound-oss
-OSS Sound driver.
+OSS (Open Sound System) drivers.
 
 %description sound-oss -l pl
-Sterowniki OSS.
+Sterowniki d¼wiêku OSS (Open Sound System).
 
 %package smp-sound-oss
 Summary:	OSS SMP kernel modules
@@ -367,10 +366,10 @@ PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 
 %description smp-sound-oss
-OSS SMP Sound driver.
+OSS (Open Sound System) SMP sound drivers.
 
 %description smp-sound-oss -l pl
-Sterowniki OSS dla maszyn wieloprocesorowych.
+Sterowniki OSS (Open Sound System) dla maszyn wieloprocesorowych.
 
 %package sound-alsa
 Summary:	ALSA kernel modules
@@ -383,10 +382,10 @@ Obsoletes:	alsa-driver
 Obsoletes:	alsa-driver-up
 
 %description sound-alsa
-ALSA Sound driver.
+ALSA (Advanced Linux Sound Architecture) sound drivers.
 
 %description sound-alsa -l pl
-Sterowniki ALSA.
+Sterowniki d¼wiêku ALSA (Advanced Linux Sound Architecture).
 
 %package smp-sound-alsa
 Summary:	ALSA SMP kernel modules
@@ -399,14 +398,15 @@ Obsoletes:	alsa-driver
 Obsoletes:	alsa-driver-smp
 
 %description smp-sound-alsa
-ALSA SMP Sound driver.
+ALSA (Advanced Linux Sound Architecture) SMP sound drivers.
 
 %description smp-sound-alsa -l pl
-Sterowniki ALSA dla maszyn wieloprocesorowych.
+Sterowniki d¼wiêku ALSA (Advanced Linux Sound Architecture) dla maszyn
+wieloprocesorowych.
 
 %package headers
 Summary:	Header files for the Linux kernel
-Summary(pl):	Pliki nag³ówkowe j±dra
+Summary(pl):	Pliki nag³ówkowe j±dra Linuksa
 Group:		Base/Kernel
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
@@ -414,20 +414,21 @@ Provides:	%{name}-headers(bridging) = %{version}
 Provides:	kernel-i2c-devel
 Provides:	%{name}-headers(netfilter) = %{_netfilter_snap}
 Provides:	%{name}-headers(alsa-drivers)
+Obsoletes:	kernel-i2c-devel
 Autoreqprov:	no
 
 %description headers
 These are the C header files for the Linux kernel, which define
-structures and constants that are needed when building most standard
-programs under Linux, as well as to rebuild the kernel.
+structures and constants that are needed when rebuilding the kernel
+or building kernel modules.
 
 %description headers -l pl
 Pakiet zawiera pliki nag³ówkowe j±dra, niezbêdne do rekompilacji j±dra
-oraz niektórych programów.
+oraz budowania modu³ów j±dra.
 
 %package source
 Summary:	Kernel source tree
-Summary(pl):	Kod ¼ród³owy j±dra Linuxa
+Summary(pl):	Kod ¼ród³owy j±dra Linuksa
 Group:		Base/Kernel
 Autoreqprov:	no
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
@@ -462,7 +463,7 @@ Pakiet zawiera kod ¼ród³owy j±dra systemu.
 
 %package doc
 Summary:	Kernel documentation
-Summary(pl):	Dokumentacja do kernela
+Summary(pl):	Dokumentacja do j±dra Linuksa
 Group:		Base/Kernel
 Provides:	%{name}-doc = %{version}
 Autoreqprov:	no
@@ -472,7 +473,7 @@ This is the documentation for the Linux kernel, as found in
 /usr/src/linux/Documentation directory.
 
 %description doc -l pl
-Pakiet zawiera dokumentacjê j±dra z katalogu
+Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
