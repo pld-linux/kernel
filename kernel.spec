@@ -9,7 +9,7 @@
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 #
-%define		krelease		3.07
+%define		krelease		4
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -95,9 +95,9 @@ Patch2:		linux-%{version}-freeswan-%{freeswan_version}.patch.gz
 # from  http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.17.diff
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
-Patch5:		xfs.patch
+Patch5:		linux-%{version}-xfs-19062002.patch.gz
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/sct/ext3/v2.4/
-Patch6:		linux-2.4.18-ext3-0.9.18.patch
+Patch6:		linux-%{version}-ext3-0.9.18.patch
 # Homepage of ABI:	http://linux-abi.sourceforge.net/
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2 
 Patch7:		linux-abi-2.4.17.0.patch.bz2
@@ -110,7 +110,7 @@ Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/pr
 Patch11:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-%{version}-1.patch
 Patch12:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-%{version}-1.patch
 Patch13:	http://www.linuxvirtualserver.org/software/kernel-2.4/linux-%{version}-ipvs-%{ipvs_version}.patch.gz
-Patch14:	http://people.redhat.com/mingo/O(1)-scheduler/sched-O1-2.4.18-pre8-K3.patch
+Patch14:	http://people.redhat.com/mingo/O(1)-scheduler/sched-O1-%{version}-pre8-K3.patch
 
 Patch15:	http://luxik.cdi.cz/~devik/qos/htb/v2/htb2_2.4.17.diff
 
@@ -122,10 +122,10 @@ Patch19:	http://unc.dl.sourceforge.net/sourceforge/linux-ntfs/linux-2.4.18-ntfs-
 
 Patch20:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/ingo-O1-sched/preempt-%{name}-rml-%{version}-rc1-ingo-K3-1.patch
 
-Patch21:	linux-2.4.18-hpfs.patch
+Patch21:	linux-%{version}-hpfs.patch
 
 # ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
-Patch22:	linux-2.4.18-mppe.patch
+Patch22:	linux-%{version}-mppe.patch
 
 Patch23:	hfsplus-20011213.patch
 
