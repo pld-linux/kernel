@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		1
+%define		_rel		2
 %define		_test_ver	9
 %define		_cset		20031112_0607
 
@@ -68,7 +68,7 @@ Patch6:		2.6.0-t3-sysfs_mem-lkml.patch
 Patch8:		2.6.0-t4-PPC-ENODEV.patch
 Patch10:	kernel-siimage-rqsize.patch
 
-Patch12:	2.6.0-t9-netfilter-20031026.patch
+Patch12:	2.6.0-t9-netfilter-20031113.patch
 Patch14:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
 Patch16:	2.6.0-t6-usb-irq.patch
 
