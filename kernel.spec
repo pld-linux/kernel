@@ -597,14 +597,14 @@ PreInstallKernel (){
 KERNEL_BUILD_DIR=`pwd`
 
 # UP KERNEL
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build/UP"
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/UP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig
 %{?with_up:BuildKernel}
 %{?with_up:PreInstallKernel}
 
 # SMP KERNEL
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build/SMP"
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/SMP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig smp
 %{?with_smp:BuildKernel smp}
@@ -612,7 +612,7 @@ BuildConfig smp
 
 # BOOT kernel
 %ifnarch i586 i686 athlon
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build/BOOT"
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
 rm -rf $KERNEL_INSTALL_DIR
 %{?with_boot:BuildKernel BOOT}
 %{?with_boot:PreInstallKernel boot}
@@ -627,11 +627,11 @@ install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 KERNEL_BUILD_DIR=`pwd`
 
 %if %{with up}
-cp -a $KERNEL_BUILD_DIR/build/UP/* $RPM_BUILD_ROOT
+cp -a $KERNEL_BUILD_DIR/build-done/UP/* $RPM_BUILD_ROOT
 %endif
 
 %if %{with smp}
-cp -a $KERNEL_BUILD_DIR/build/SMP/* $RPM_BUILD_ROOT
+cp -a $KERNEL_BUILD_DIR/build-done/SMP/* $RPM_BUILD_ROOT
 %endif
 
 for i in "" smp ; do
@@ -644,7 +644,7 @@ done
 
 ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 
-cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
+find . ! -name "build-done" -maxdepth 1 -exec cp -a "{}" "$RPM_BUILD_ROOT/usr/src/linux-%{version}/" ";"
 
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
@@ -700,19 +700,19 @@ cp .config config-smp
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
-if [ -e $KERNEL_BUILD_DIR/build/UP/usr/src/linux-%{version}/include/linux/autoconf-up.h ]; then
-install $KERNEL_BUILD_DIR/build/UP/usr/src/linux-%{version}/include/linux/autoconf-up.h \
+if [ -e $KERNEL_BUILD_DIR/build-done/UP/usr/src/linux-%{version}/include/linux/autoconf-up.h ]; then
+install $KERNEL_BUILD_DIR/build-done/UP/usr/src/linux-%{version}/include/linux/autoconf-up.h \
 $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 fi
 
-if [ -e $KERNEL_BUILD_DIR/build/SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h ]; then
-install $KERNEL_BUILD_DIR/build/SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h \
+if [ -e $KERNEL_BUILD_DIR/build-done/SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h ]; then
+install $KERNEL_BUILD_DIR/build-done/SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h \
 $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 fi
 
 %if %{with up} || %{with smp}
 # UP or SMP
-install $KERNEL_BUILD_DIR/build/*P/usr/src/linux-%{version}/include/linux/* \
+install $KERNEL_BUILD_DIR/build-done/*P/usr/src/linux-%{version}/include/linux/* \
 $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 %endif
 
