@@ -513,7 +513,11 @@ BuildKernel() {
 		LIDS=""
 	fi
 	# is this a special kernel we want to build?
+	BOOT=
 	if [ -n "$1" ] ; then
+		if [ "$1" = "BOOT" ] ; then
+			BOOT=yes
+		fi
 %ifarch %{ix86}
 		if [ "$1" = "BOOT" ] ; then
 			Config="%{_target_cpu}"-$1
@@ -551,7 +555,11 @@ BuildKernel() {
 	cat %{SOURCE1003} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1004} >> arch/$RPM_ARCH/defconfig
 %ifarch %{ix86}
-	cat %{SOURCE1666} >> arch/$RPM_ARCH/defconfig
+	if [ "$BOOT" ] ; then
+		echo "# CONFIG_GRKERNSEC is not set" >> arch/$RPM_ARCH/defconfig
+	else
+		cat %{SOURCE1666} >> arch/$RPM_ARCH/defconfig
+	fi
 %endif
 	if [ "$LIDS" = "lids" ] ; then
 		echo ENABLING LIDS...
@@ -591,24 +599,25 @@ BuildKernel() {
 	%{__make} modules
 %endif
 
-	mkdir -p $KERNEL_BUILD_DIR-installed/boot
-	install System.map $KERNEL_BUILD_DIR-installed/boot/System.map-$KernelVer
+	mkdir -p $KERNEL_INSTALL_DIR/boot
+	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
 %ifarch %{ix86}
-	cp arch/i386/boot/bzImage $KERNEL_BUILD_DIR-installed/boot/vmlinuz-$KernelVer
+	cp arch/i386/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
 %ifarch alpha sparc sparc64
 	gzip -cfv vmlinux > vmlinuz
-	install vmlinux $KERNEL_BUILD_DIR-installed/boot/vmlinux-$KernelVer
-	install vmlinuz $KERNEL_BUILD_DIR-installed/boot/vmlinuz-$KernelVer
+	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
+	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
      %{__make} modules_install \
-     	INSTALL_MOD_PATH=$KERNEL_BUILD_DIR-installed \
+     	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 	KERNELRELEASE=$KernelVer
 }
 
 KERNEL_BUILD_DIR=`pwd`
-rm -rf $KERNEL_BUILD_DIR-installed
-install -d $KERNEL_BUILD_DIR-installed
+KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
+rm -rf $KERNEL_INSTALL_DIR
+install -d $KERNEL_INSTALL_DIR
 
 # UP KERNEL
 BuildKernel 
@@ -627,6 +636,8 @@ BuildKernel lids smp
 
 # BOOT kernel
 %ifnarch i586 i686
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk"
+rm -rf $KERNEL_INSTALL_DIR
 BuildKernel BOOT
 %endif
 %endif
@@ -642,7 +653,7 @@ install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{version}}
 KERNEL_BUILD_DIR=`pwd`
 cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
 
-for i in "" "-lids" smp smp-lids BOOT ; do
+for i in "" "-lids" smp smp-lids ; do
 	if [ -e  $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i ] ; then
 		rm -f $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
 		ln -sf /usr/src/linux-%{version} $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
@@ -749,21 +760,6 @@ cat %{SOURCE1000} >> $RPM_BUILD_ROOT/usr/src/linux-%{version}/.config.lids
 rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_DIR/linux-installed
 
-# do this for upgrades...in case the old modules get removed we have
-# loopback in the kernel so that mkinitrd will work.
-#%pre modules
-%pre
-/sbin/modprobe loop 2> /dev/null > /dev/null
-exit 0
-
-%pre smp
-/sbin/modprobe loop 2> /dev/null > /dev/null
-exit 0
-
-%pre BOOT
-/sbin/modprobe loop 2> /dev/null > /dev/null
-exit 0
-
 %post
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null 
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
@@ -849,21 +845,11 @@ ln -snf %{version}-%{release}smp-lids /lib/modules/%{version}
 %endif
 
 %post BOOT
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
-ln -sf vmlinuz-%{version}-%{release}BOOT /boot/vmlinuz
-ln -sf System.map-%{version}-%{release}BOOT /boot/System.map
-
-
-if [ -x /sbin/rc-boot ] ; then
-	/sbin/rc-boot 1>&2 || :
+if [ ! -L %{_libdir}/bootdisk/lib/modules/%{version} ] ; then
+	mv -f %{_libdir}/bootdisk/lib/modules/%{version} %{_libdir}/bootdisk/lib/modules/%{version}.rpmsave
 fi
-
-if [ ! -L /lib/modules/%{version} ] ; then
-	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
-fi
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release}BOOT /lib/modules/%{version}
+rm -f %{_libdir}/bootdisk/lib/modules/%{version}
+ln -snf %{version}-%{release}BOOT %{_libdir}/bootdisk/lib/modules/%{version}
 
 %postun
 if [ -L /lib/modules/%{version} ]; then 
@@ -910,10 +896,10 @@ rm -f /boot/initrd-%{version}-%{release}smp-lids.gz
 %endif
 
 %postun BOOT
-if [ -L /lib/modules/%{version} ]; then 
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}BOOT" ]; then
+if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then 
+	if [ "`ls -l %{_libdir}/bootdisk/lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}BOOT" ]; then
 		if [ "$1" = "0" ]; then
-			rm -f /lib/modules/%{version}
+			rm -f %{_libdir}/bootdisk/lib/modules/%{version}
 		fi
 	fi
 fi
@@ -1008,19 +994,19 @@ fi
 %files BOOT
 %defattr(644,root,root,755)
 %ifarch alpha sparc
-/boot/vmlinux-%{version}-%{release}BOOT
+%{_libdir}/bootdisk/boot/vmlinux-%{version}-%{release}BOOT
 %endif
-/boot/vmlinuz-%{version}-%{release}BOOT
-/boot/System.map-%{version}-%{release}BOOT
-%dir /lib/modules/%{version}-%{release}BOOT
+%{_libdir}/bootdisk/boot/vmlinuz-%{version}-%{release}BOOT
+%{_libdir}/bootdisk/boot/System.map-%{version}-%{release}BOOT
+%dir %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT
 %ifarch i386
-/lib/modules/%{version}-%{release}BOOT/pcmcia
+%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/pcmcia
 %endif
-/lib/modules/%{version}-%{release}BOOT/kernel
-/lib/modules/%{version}-%{release}BOOT/build
-/lib/modules/%{version}-%{release}BOOT/modules.dep
-/lib/modules/%{version}-%{release}BOOT/modules.*map
-/lib/modules/%{version}-%{release}BOOT/modules.generic_string
+%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/kernel
+%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/build
+%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.dep
+%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.*map
+%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.generic_string
 %endif
 %endif
 
