@@ -1,32 +1,24 @@
-diff -uNr linux/arch/sparc64/config.in linux-2.2.19/arch/sparc64/config.in
---- linux/arch/sparc64/config.in	Sun May 20 18:10:13 2001
-+++ linux-2.2.19/arch/sparc64/config.in	Sun May 20 17:39:10 2001
-@@ -133,6 +133,7 @@
- 	  define_bool CONFIG_IDEDMA_AUTO y
- 	  define_bool CONFIG_BLK_DEV_NS87415 y
- 	  define_bool CONFIG_BLK_DEV_CMD64X y
-+	  define_bool CONFIG_BLK_DEV_IDE_MODES y
- 	fi
- fi
- 
-diff -uNr linux/drivers/block/cmd64x.c linux-2.2.19/drivers/block/cmd64x.c
---- linux/drivers/block/cmd64x.c	Sun May 20 18:10:14 2001
-+++ linux-2.2.19/drivers/block/cmd64x.c	Sun May 20 17:39:10 2001
-@@ -19,9 +19,9 @@
+diff -ur linux.orig/drivers/ide/cmd64x.c linux/drivers/ide/cmd64x.c
+--- linux.orig/drivers/ide/cmd64x.c	Sun Nov 17 16:55:16 2002
++++ linux/drivers/ide/cmd64x.c	Sun Nov 17 16:58:56 2002
+@@ -19,10 +19,10 @@
+ #include <linux/pci.h>
  #include <linux/delay.h>
- #include <linux/init.h>
  #include <linux/hdreg.h>
 -#include <linux/ide.h>
+ #include <linux/init.h>
  
  #include <asm/io.h>
 +#include <linux/ide.h>
  
  #include "ide_modes.h"
  
-diff -uNr linux/drivers/block/ide-cd.c linux-2.2.19/drivers/block/ide-cd.c
---- linux/drivers/block/ide-cd.c	Sun May 20 18:10:14 2001
-+++ linux-2.2.19/drivers/block/ide-cd.c	Sun May 20 17:39:10 2001
-@@ -299,13 +299,13 @@
+Only in linux/drivers/ide: cmd64x.c.orig
+Only in linux/drivers/ide: cmd64x.c~
+diff -ur linux.orig/drivers/ide/ide-cd.c linux/drivers/ide/ide-cd.c
+--- linux.orig/drivers/ide/ide-cd.c	Sun Nov 17 16:55:16 2002
++++ linux/drivers/ide/ide-cd.c	Sun Nov 17 16:58:56 2002
+@@ -307,13 +307,13 @@
  #include <linux/interrupt.h>
  #include <linux/errno.h>
  #include <linux/cdrom.h>
@@ -41,12 +33,12 @@ diff -uNr linux/drivers/block/ide-cd.c linux-2.2.19/drivers/block/ide-cd.c
  
  #include "ide-cd.h"
  
-diff -uNr linux/drivers/block/ide-disk.c linux-2.2.19/drivers/block/ide-disk.c
---- linux/drivers/block/ide-disk.c	Sun May 20 18:10:14 2001
-+++ linux-2.2.19/drivers/block/ide-disk.c	Sun May 20 17:39:10 2001
-@@ -48,12 +48,12 @@
+diff -ur linux.orig/drivers/ide/ide-disk.c linux/drivers/ide/ide-disk.c
+--- linux.orig/drivers/ide/ide-disk.c	Sun Nov 17 16:55:16 2002
++++ linux/drivers/ide/ide-disk.c	Sun Nov 17 17:00:44 2002
+@@ -49,12 +49,12 @@
  #include <linux/genhd.h>
- #include <linux/malloc.h>
+ #include <linux/slab.h>
  #include <linux/delay.h>
 -#include <linux/ide.h>
  
@@ -55,12 +47,14 @@ diff -uNr linux/drivers/block/ide-disk.c linux-2.2.19/drivers/block/ide-disk.c
  #include <asm/uaccess.h>
  #include <asm/io.h>
 +#include <linux/ide.h>
- #include <asm/ide.h>
  
  #ifdef CONFIG_BLK_DEV_PDC4030
-diff -uNr linux/drivers/block/ide-dma.c linux-2.2.19/drivers/block/ide-dma.c
---- linux/drivers/block/ide-dma.c	Sun May 20 18:10:14 2001
-+++ linux-2.2.19/drivers/block/ide-dma.c	Sun May 20 17:39:10 2001
+ #define IS_PDC4030_DRIVE (HWIF(drive)->chipset == ide_pdc4030)
+Only in linux/drivers/ide: ide-disk.c.orig
+Only in linux/drivers/ide: ide-disk.c~
+diff -ur linux.orig/drivers/ide/ide-dma.c linux/drivers/ide/ide-dma.c
+--- linux.orig/drivers/ide/ide-dma.c	Sun Nov 17 16:55:16 2002
++++ linux/drivers/ide/ide-dma.c	Sun Nov 17 16:58:56 2002
 @@ -86,10 +86,10 @@
  #include <linux/interrupt.h>
  #include <linux/pci.h>
@@ -71,12 +65,12 @@ diff -uNr linux/drivers/block/ide-dma.c linux-2.2.19/drivers/block/ide-dma.c
  #include <asm/irq.h>
 +#include <linux/ide.h>
  
- #define CONFIG_BLK_DEV_IDEDMA_TIMEOUT
+ #include <linux/kcomp.h>
  
-diff -uNr linux/drivers/block/ide-features.c linux-2.2.19/drivers/block/ide-features.c
---- linux/drivers/block/ide-features.c	Sun May 20 18:10:14 2001
-+++ linux-2.2.19/drivers/block/ide-features.c	Sun May 20 17:39:10 2001
-@@ -28,13 +28,13 @@
+diff -ur linux.orig/drivers/ide/ide-features.c linux/drivers/ide/ide-features.c
+--- linux.orig/drivers/ide/ide-features.c	Sun Nov 17 16:55:16 2002
++++ linux/drivers/ide/ide-features.c	Sun Nov 17 16:58:56 2002
+@@ -30,13 +30,13 @@
  #include <linux/pci.h>
  #include <linux/delay.h>
  #include <linux/hdreg.h>
@@ -91,18 +85,18 @@ diff -uNr linux/drivers/block/ide-features.c linux-2.2.19/drivers/block/ide-feat
  
  /*
   * A Verbose noise maker for debugging on the attempted transfer rates.
-diff -uNr linux/drivers/block/ide-floppy.c linux-2.2.19/drivers/block/ide-floppy.c
---- linux/drivers/block/ide-floppy.c	Sun May 20 18:10:14 2001
-+++ linux-2.2.19/drivers/block/ide-floppy.c	Sun May 20 17:39:10 2001
-@@ -62,7 +62,6 @@
+diff -ur linux.orig/drivers/ide/ide-floppy.c linux/drivers/ide/ide-floppy.c
+--- linux.orig/drivers/ide/ide-floppy.c	Sun Nov 17 16:55:16 2002
++++ linux/drivers/ide/ide-floppy.c	Sun Nov 17 16:58:56 2002
+@@ -97,7 +97,6 @@
  #include <linux/genhd.h>
- #include <linux/malloc.h>
+ #include <linux/slab.h>
  #include <linux/cdrom.h>
 -#include <linux/ide.h>
  
  #include <asm/byteorder.h>
  #include <asm/irq.h>
-@@ -70,6 +69,7 @@
+@@ -105,6 +104,7 @@
  #include <asm/io.h>
  #include <asm/unaligned.h>
  #include <asm/bitops.h>
@@ -110,23 +104,24 @@ diff -uNr linux/drivers/block/ide-floppy.c linux-2.2.19/drivers/block/ide-floppy
  
  /*
   *	The following are used to debug the driver.
-diff -uNr linux/drivers/block/ide-geometry.c linux-2.2.19/drivers/block/ide-geometry.c
---- linux/drivers/block/ide-geometry.c	Sun May 20 18:10:14 2001
-+++ linux-2.2.19/drivers/block/ide-geometry.c	Sun May 20 17:53:23 2001
-@@ -5,8 +5,8 @@
- #ifdef __i386__
- #include <linux/mc146818rtc.h>
- #endif
+diff -ur linux.orig/drivers/ide/ide-geometry.c linux/drivers/ide/ide-geometry.c
+--- linux.orig/drivers/ide/ide-geometry.c	Sun Nov 17 16:55:16 2002
++++ linux/drivers/ide/ide-geometry.c	Sun Nov 17 17:00:19 2002
+@@ -2,9 +2,9 @@
+  * linux/drivers/ide/ide-geometry.c
+  */
+ #include <linux/config.h>
 -#include <linux/ide.h>
+ #include <linux/mc146818rtc.h>
  #include <asm/io.h>
 +#include <linux/ide.h>
  
- /*
-  * We query CMOS about hard disks : it could be that we have a SCSI/ESDI/etc
-diff -uNr linux/drivers/block/ide-pci.c linux-2.2.19/drivers/block/ide-pci.c
---- linux/drivers/block/ide-pci.c	Sun May 20 18:10:14 2001
-+++ linux-2.2.19/drivers/block/ide-pci.c	Sun May 20 17:39:10 2001
-@@ -20,10 +20,10 @@
+ #ifdef CONFIG_BLK_DEV_IDE
+ 
+diff -ur linux.orig/drivers/ide/ide-pci.c linux/drivers/ide/ide-pci.c
+--- linux.orig/drivers/ide/ide-pci.c	Sun Nov 17 16:55:16 2002
++++ linux/drivers/ide/ide-pci.c	Sun Nov 17 16:58:56 2002
+@@ -28,10 +28,10 @@
  #include <linux/interrupt.h>
  #include <linux/pci.h>
  #include <linux/init.h>
@@ -136,12 +131,12 @@ diff -uNr linux/drivers/block/ide-pci.c linux-2.2.19/drivers/block/ide-pci.c
  #include <asm/irq.h>
 +#include <linux/ide.h>
  
- #define DEVID_PIIXa	((ide_pci_devid_t){PCI_VENDOR_ID_INTEL,   PCI_DEVICE_ID_INTEL_82371FB_0})
- #define DEVID_PIIXb	((ide_pci_devid_t){PCI_VENDOR_ID_INTEL,   PCI_DEVICE_ID_INTEL_82371FB_1})
-diff -uNr linux/drivers/block/ide-probe.c linux-2.2.19/drivers/block/ide-probe.c
---- linux/drivers/block/ide-probe.c	Sun May 20 18:10:14 2001
-+++ linux-2.2.19/drivers/block/ide-probe.c	Sun May 20 17:39:10 2001
-@@ -41,12 +41,12 @@
+ #include "idecomp.h"
+ 
+diff -ur linux.orig/drivers/ide/ide-probe.c linux/drivers/ide/ide-probe.c
+--- linux.orig/drivers/ide/ide-probe.c	Sun Nov 17 16:55:17 2002
++++ linux/drivers/ide/ide-probe.c	Sun Nov 17 16:58:56 2002
+@@ -46,12 +46,12 @@
  #include <linux/malloc.h>
  #include <linux/delay.h>
  #include <linux/mc146818rtc.h> /* CMOS defines */
@@ -155,9 +150,9 @@ diff -uNr linux/drivers/block/ide-probe.c linux-2.2.19/drivers/block/ide-probe.c
  
  static inline void do_identify (ide_drive_t *drive, byte cmd)
  {
-diff -uNr linux/drivers/block/ide-proc.c linux-2.2.19/drivers/block/ide-proc.c
---- linux/drivers/block/ide-proc.c	Sun May 20 18:10:14 2001
-+++ linux-2.2.19/drivers/block/ide-proc.c	Sun May 20 17:39:10 2001
+diff -ur linux.orig/drivers/ide/ide-proc.c linux/drivers/ide/ide-proc.c
+--- linux.orig/drivers/ide/ide-proc.c	Sun Nov 17 16:55:17 2002
++++ linux/drivers/ide/ide-proc.c	Sun Nov 17 16:58:56 2002
 @@ -65,9 +65,9 @@
  #include <linux/mm.h>
  #include <linux/pci.h>
@@ -167,30 +162,30 @@ diff -uNr linux/drivers/block/ide-proc.c linux-2.2.19/drivers/block/ide-proc.c
  #include <asm/io.h>
 +#include <linux/ide.h>
  
- #ifndef MIN
- #define MIN(a,b) (((a) < (b)) ? (a) : (b))
-diff -uNr linux/drivers/block/ide-tape.c linux-2.2.19/drivers/block/ide-tape.c
---- linux/drivers/block/ide-tape.c	Sun May 20 18:10:14 2001
-+++ linux-2.2.19/drivers/block/ide-tape.c	Sun May 20 17:39:10 2001
-@@ -411,7 +411,6 @@
+ #include "idecomp.h"
+ 
+diff -ur linux.orig/drivers/ide/ide-tape.c linux/drivers/ide/ide-tape.c
+--- linux.orig/drivers/ide/ide-tape.c	Sun Nov 17 16:55:17 2002
++++ linux/drivers/ide/ide-tape.c	Sun Nov 17 16:58:56 2002
+@@ -417,7 +417,6 @@
  #include <linux/genhd.h>
- #include <linux/malloc.h>
+ #include <linux/slab.h>
  #include <linux/pci.h>
 -#include <linux/ide.h>
  
  #include <asm/byteorder.h>
  #include <asm/irq.h>
-@@ -419,6 +418,7 @@
+@@ -425,6 +424,7 @@
  #include <asm/io.h>
  #include <asm/unaligned.h>
  #include <asm/bitops.h>
 +#include <linux/ide.h>
  
- #define NO_LONGER_REQUIRED	(1)
  
-diff -uNr linux/drivers/block/ide-taskfile.c linux-2.2.19/drivers/block/ide-taskfile.c
---- linux/drivers/block/ide-taskfile.c	Sun May 20 18:10:14 2001
-+++ linux-2.2.19/drivers/block/ide-taskfile.c	Sun May 20 17:39:10 2001
+ #define NO_LONGER_REQUIRED	(1)
+diff -ur linux.orig/drivers/ide/ide-taskfile.c linux/drivers/ide/ide-taskfile.c
+--- linux.orig/drivers/ide/ide-taskfile.c	Sun Nov 17 16:55:17 2002
++++ linux/drivers/ide/ide-taskfile.c	Sun Nov 17 16:58:56 2002
 @@ -25,13 +25,13 @@
  #include <linux/pci.h>
  #include <linux/delay.h>
@@ -204,34 +199,35 @@ diff -uNr linux/drivers/block/ide-taskfile.c linux-2.2.19/drivers/block/ide-task
  #include <asm/bitops.h>
 +#include <linux/ide.h>
  
- #define DEBUG_TASKFILE	0	/* unset when fixed */
- 
-diff -uNr linux/drivers/block/ide.c linux-2.2.19/drivers/block/ide.c
---- linux/drivers/block/ide.c	Sun May 20 18:10:14 2001
-+++ linux-2.2.19/drivers/block/ide.c	Sun May 20 17:39:10 2001
-@@ -138,13 +138,13 @@
+ #ifdef CONFIG_IDE_TASKFILE_IO
+ #  define __TASKFILE__IO
+diff -ur linux.orig/drivers/ide/ide.c linux/drivers/ide/ide.c
+--- linux.orig/drivers/ide/ide.c	Sun Nov 17 16:55:17 2002
++++ linux/drivers/ide/ide.c	Sun Nov 17 16:59:43 2002
+@@ -145,13 +145,13 @@
  #endif /* MODULE */
  #include <linux/pci.h>
  #include <linux/delay.h>
 -#include <linux/ide.h>
+ #include <linux/reboot.h>
  
  #include <asm/byteorder.h>
  #include <asm/irq.h>
  #include <asm/uaccess.h>
  #include <asm/io.h>
- #include <asm/bitops.h>
 +#include <linux/ide.h>
+ #include <asm/bitops.h>
  
  #include "ide_modes.h"
- 
-diff -uNr linux/drivers/block/ns87415.c linux-2.2.19/drivers/block/ns87415.c
---- linux/drivers/block/ns87415.c	Sun May 20 18:10:14 2001
-+++ linux-2.2.19/drivers/block/ns87415.c	Sun May 20 17:39:10 2001
-@@ -17,9 +17,9 @@
+diff -ur linux.orig/drivers/ide/ns87415.c linux/drivers/ide/ns87415.c
+--- linux.orig/drivers/ide/ns87415.c	Sun Nov 17 16:55:17 2002
++++ linux/drivers/ide/ns87415.c	Sun Nov 17 17:00:02 2002
+@@ -19,10 +19,10 @@
  #include <linux/hdreg.h>
  #include <linux/pci.h>
  #include <linux/delay.h>
 -#include <linux/ide.h>
+ #include <linux/init.h>
  
  #include <asm/io.h>
 +#include <linux/ide.h>
