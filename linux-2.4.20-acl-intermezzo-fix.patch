@@ -1,11 +1,58 @@
---- linux-2.4.20/fs/intermezzo/vfs.c.orig	Fri Nov 29 00:53:15 2002
-+++ linux-2.4.20/fs/intermezzo/vfs.c	Fri Apr 18 22:16:29 2003
-@@ -467,7 +467,7 @@
+--- linux-2.4.20/fs/intermezzo/vfs.c.orig	Sat Apr 19 01:54:50 2003
++++ linux-2.4.20/fs/intermezzo/vfs.c	Sat Apr 19 01:56:33 2003
+@@ -74,7 +74,7 @@
+ #ifdef CONFIG_FS_EXT_ATTR
+ # include <linux/ext_attr.h>
+ 
+-# ifdef CONFIG_FS_POSIX_ACL
++# ifdef CONFIG_INTERMEZZO_FS_POSIX_ACL
+ #  include <linux/posix_acl.h>
+ # endif
+ #endif
+@@ -466,8 +466,8 @@
+         struct dentry *dentry;
          struct presto_file_set *fset;
          int error;
- #ifdef  CONFIG_FS_POSIX_ACL
+-#ifdef  CONFIG_FS_POSIX_ACL
 -        int (*set_posix_acl)(struct inode *, int type, posix_acl_t *)=NULL;
++#ifdef  CONFIG_INTERMEZZO_FS_POSIX_ACL
 +        int (*set_posix_acl)(struct inode *, int type, struct posix_acl *)=NULL;
  #endif
  
          ENTRY;
+@@ -507,7 +507,7 @@
+                                  (dentry->d_inode->i_mode & ~S_IALLUGO);
+                 CDEBUG(D_PIOCTL, "chmod: orig %#o, set %#o, result %#o\n",
+                        dentry->d_inode->i_mode, set_mode, iattr->ia_mode);
+-#ifdef CONFIG_FS_POSIX_ACL
++#ifdef CONFIG_INTERMEZZO_FS_POSIX_ACL
+                 /* ACl code interacts badly with setattr 
+                  * since it tries to modify the ACL using 
+                  * set_ext_attr which recurses back into presto.  
+@@ -535,7 +535,7 @@
+                 }
+         }
+ 
+-#ifdef CONFIG_FS_POSIX_ACL
++#ifdef CONFIG_INTERMEZZO_FS_POSIX_ACL
+         /* restore the inode_operations if we changed them*/
+         if (iattr->ia_valid & ATTR_MODE) 
+                 dentry->d_inode->i_op->set_posix_acl=set_posix_acl;
+@@ -2271,7 +2271,7 @@
+ 
+ #ifdef CONFIG_FS_EXT_ATTR
+ 
+-#ifdef CONFIG_FS_POSIX_ACL
++#ifdef CONFIG_INTERMEZZO_FS_POSIX_ACL
+ /* Posix ACL code changes i_mode without using a notify_change (or
+  * a mark_inode_dirty!). We need to duplicate this at the reintegrator
+  * which is done by this function. This function also takes care of 
+@@ -2414,7 +2414,7 @@
+                 goto exit;
+         }
+ 
+-#ifdef CONFIG_FS_POSIX_ACL
++#ifdef CONFIG_INTERMEZZO_FS_POSIX_ACL
+         /* Reset mode if specified*/
+         /* XXX: when we do native acl support, move this code out! */
+         if (mode != NULL) {
