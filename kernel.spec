@@ -302,7 +302,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a8 -n linux
+%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -n linux
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
@@ -345,10 +345,6 @@ install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 mv sym-1.7.2-ncr-3.4.2/*.{c,h} drivers/scsi
 mv sym-1.7.2-ncr-3.4.2/{README,ChangeLog}.* Documentation
 rm -rf sym-1.7.2-ncr-3.4.2
-
-# Drivers for wireless PCMCIA cards
-rm -rf linux-wlan-%{wlan_version}
-tar zxf %{SOURCE8}
 
 %build
 BuildKernel() {
