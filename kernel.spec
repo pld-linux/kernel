@@ -405,24 +405,25 @@ Pakiet zawiera pliki nag³ówkowe j±dra, niezbêdne do rekompilacji j±dra
 oraz budowania modu³ów j±dra.
 
 %package module-build
-Summary:	Sources for build kernel module
-Summary(pl):	Kod ¼ród³owy do budowy modó³ów
+Summary:	Development files for building kernel modules
+Summary(pl):	Pliki s³u¿±ce do budowania modu³ów j±dra
 Group:		Base/Kernel
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
 
 %description module-build
+Development files from kernel source tree needed to build Linux kernel
+modules from external packages.
+
 %description module-build -l pl
-Pliki ¿ród³owe niezbedne do budowy zewnêtrzych modó³ów.
+Pliki ze drzewa ¼róde³ j±dra potrzebne do budowania modu³ów j±dra
+Linuksa z zewnêtrznych pakietów.
 
 %package source
 Summary:	Kernel source tree
 Summary(pl):	Kod ¼ród³owy j±dra Linuksa
 Group:		Base/Kernel
 Autoreqprov:	no
-Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
-%ifarch %{ix86}
-Requires:	bin86
-%endif
+Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
 
 %description source
 This is the source code for the Linux kernel. It is required to build
