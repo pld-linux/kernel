@@ -141,7 +141,7 @@ Patch125:	linux-2.4.18-mppe.patch
 Patch150:	linux-2.4.21-atm_diffs.patch
 Patch151:	ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 
-# patch for patch in Source9 
+# patch for patch in Source9
 Patch190:	hostap-2.4.19-rc3-patch.patch
 
 # New devices/drivers
@@ -482,7 +482,7 @@ são desabilitadas para diminuir o tamanho final do kernel a ser utilizado.
 
 %package pcmcia-cs
 Summary:	PCMCIA-CS modules
-Summary(pl):	Modu³y PCMCIA-CS 
+Summary(pl):	Modu³y PCMCIA-CS
 Group:		Base/Kernel
 PreReq:		%{name}-up = %{version}-%{release}
 Requires(postun):	%{name}-up = %{version}-%{release}
@@ -514,7 +514,7 @@ Summary(pl):	Sterowniki DRM
 Group:		Base/Kernel
 PreReq:		%{name}-up = %{version}-%{release}
 Requires(postun):	%{name}-up = %{version}-%{release}
-Provides:       %{name}-drm = %{drm_xfree_version}
+Provides:	%{name}-drm = %{drm_xfree_version}
 
 %description drm
 DRM kernel modules (%{drm_xfree_version}).
@@ -528,7 +528,7 @@ Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 PreReq:		%{name}-smp = %{version}-%{release}
 Requires(postun):	%{name}-smp = %{version}-%{release}
-Provides:       %{name}-drm = %{drm_xfree_version}
+Provides:	%{name}-drm = %{drm_xfree_version}
 
 %description smp-drm
 DRM SMP kernel modules (%{drm_xfree_version}).
@@ -648,7 +648,7 @@ Este pacote contém documentação para o kernel Linux.
 %prep
 %setup -q -a3 -a8 -a9 -n linux-%{version}
 cd hostap-2002-10-12
-%patch190 -p1  
+%patch190 -p1
 cd ..
 # JFS 1.1.1
 rm -fr fs/jfs
@@ -1089,7 +1089,7 @@ install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoco
 %if %{?_without_source:0}%{!?_without_source:1}
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
-%{__make} symlinks 
+%{__make} symlinks
 %{__make} include/linux/version.h
 #%{__make} "`pwd`/include/linux/modversions.h"
 %endif
@@ -1101,7 +1101,7 @@ echo "#include <linux/modsetver.h>" > include/linux/modversions.h
 # well include the depends stuff as well, after we fix the paths
 
 %if %{?_without_source:0}%{!?_without_source:1}
-%{__make} depend 
+%{__make} depend
 find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
 	xargs perl -pi -e "s|$RPM_BUILD_ROOT\(/usr/src/linux\)|\1|g"
 
@@ -1123,7 +1123,7 @@ rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_DIR/linux-%{version}-installed
 
 %post
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null 
+mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
@@ -1185,7 +1185,7 @@ rm -f %{_libdir}/bootdisk/boot/vmlinuz-%{version}
 ln -snf vmlinuz-%{version}-%{release}BOOT %{_libdir}/bootdisk/boot/vmlinuz-%{version}
 
 %postun
-if [ -L /lib/modules/%{version} ]; then 
+if [ -L /lib/modules/%{version} ]; then
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f /lib/modules/%{version}
@@ -1207,7 +1207,7 @@ rm -f /boot/initrd-%{version}-%{release}.gz
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release} > /dev/null 2>&1
 
 %postun smp
-if [ -L /lib/modules/%{version} ]; then 
+if [ -L /lib/modules/%{version} ]; then
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f /lib/modules/%{version}
@@ -1229,7 +1229,7 @@ rm -f /boot/initrd-%{version}-%{release}smp.gz
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp > /dev/null 2>&1
 
 %postun BOOT
-if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then 
+if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then
 	if [ "`ls -l %{_libdir}/bootdisk/lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}BOOT" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f %{_libdir}/bootdisk/lib/modules/%{version}
@@ -1242,7 +1242,7 @@ rm -f /usr/src/linux
 ln -snf linux-%{version} /usr/src/linux
 
 %postun headers
-if [ -L /usr/src/linux ]; then 
+if [ -L /usr/src/linux ]; then
 	if [ "`ls -l /usr/src/linux | awk '{ print $11 }'`" = "linux-%{version}" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f /usr/src/linux
