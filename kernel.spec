@@ -28,7 +28,7 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1
+%define		_rel		1.1
 %define		_rc		0
 %define		_cset		0
 
@@ -178,6 +178,8 @@ Patch88:	2.6.1-rc2-request_firmware-lkml.patch
 Patch90:	2.6.1-rc2-NF-psd-%{_netfilter_snap}.patch
 
 Patch92:	2.6.1-rc2-VLAN-NS83820-lkml.patch
+
+Patch94:	laptop-mode-2.6.1-7.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -591,6 +593,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch90 -p1
 
 %patch92 -p1
+
+%patch94 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
