@@ -16,7 +16,7 @@
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		vlan_version		1.5
 %define		IPperson_version	20010724-2.4.7
-%define		grsec_version		1.8.4-2.4.12
+%define		grsec_version		1.8.7-2.4.14
 %define		tulip_version		1.1.8
 %define		aic_version		6.2.3-2.4.7
 %define		jfs_version		2.4-1.0.7
@@ -77,8 +77,9 @@ Patch3:		linux-2.4.9-aacraid-20010816.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.10.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/
+# based on file xfs-2.4.14-all.bz2
 #Patch5:		linux-2.4.13-xfs-20011026.patch.gz
-Patch5:		linux-2.4.14-xfs-2001-11-07.patch.bz2
+Patch5:		linux-xfs-2.4.14-PLD.patch.gz
 # Compressed iso9660 filesystem
 Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-unified-2.4.12.diff.gz
 # Homepage of ABI : http://linux-abi.sourceforge.net/
@@ -381,7 +382,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch3 -p1
 %patch4 -p1
 %patch10 -p1
-#%patch5 -p1
+%patch5 -p1
 #%patch6 -p1
 #%patch7 -p1
 %patch8 -p1
@@ -436,7 +437,7 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 echo Adding Netfilter
 for i in netfilter-patches/* ; do
 	if [ -f $i -a "$i" != "netfilter-patches/isapplied" ] ; then
-		patch -p1 <$i
+	patch -p1 <$i
 	fi
 done
 (KERNEL_DIR=`pwd` ; export KERNEL_DIR
