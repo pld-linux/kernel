@@ -188,7 +188,7 @@ Patch78:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2
 Patch80:	http://www.elektronikschule.de/~genannt/kernel-patche/lirc/lirc-2.6.5-20040404
 
 # from http://www.smcc.demon.nl/webcam/pwcx-9.0-beta-2.tar.gz
-Patch82:	2.6.6-pwcx.patch
+Patch82:	2.6.7-pwcx.patch
 
 Patch84:	2.6.6-serial-fifo-lkml.patch
 
