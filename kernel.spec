@@ -30,8 +30,8 @@ Release:	%{_rel}
 %endif
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-test2.tar.bz2
-# Source0-md5:	7d274d5fcd3d86a8d95c2749a702f830
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-test3.tar.bz2
+# Source0-md5:	b7eb2c72aacb289b1448a8ea574ceab3
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -283,7 +283,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}-test2
+%setup -q -n linux-%{version}-test3
 #%patch0 -p1
 #%patch1 -p1
 
@@ -295,8 +295,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch20 -p1 
 %patch21 -p1
-%patch22 -p1
-%patch23 -p1
+#%patch22 -p1
+#%patch23 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
