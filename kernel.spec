@@ -120,7 +120,7 @@ Patch50:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 
 Patch52:	laptop-mode-2.6.1-7.patch
 
-Patch54:	2.6.3-amd64-fix.patch
+#Patch54:	2.6.3-amd64-fix.patch
 
 Patch56:	kbuild-out-of-tree.diff
 
@@ -1101,9 +1101,18 @@ fi
 %files headers
 %defattr(644,root,root,755)
 %dir %{_prefix}/src/linux-%{version}
+%{_prefix}/src/linux-%{version}/Makefile
+%dir %{_prefix}/src/linux-%{version}/arch
+%dir %{_prefix}/src/linux-%{version}/arch/*
+%{_prefix}/src/linux-%{version}/arch/*/Makefile*
+%dir %{_prefix}/src/linux-%{version}/arch/*/kernel
+%{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
 %{_prefix}/src/linux-%{version}/include
 %{_prefix}/src/linux-%{version}/config-smp
 %{_prefix}/src/linux-%{version}/config-up
+%dir %{_prefix}/src/linux-%{version}/scripts
+%{_prefix}/src/linux-%{version}/scripts/Makefile*
+%{_prefix}/src/linux-%{version}/scripts/*.c
 
 %files doc
 %defattr(644,root,root,755)
@@ -1113,7 +1122,9 @@ fi
 %if %{with source}
 %files source
 %defattr(644,root,root,755)
-%{_prefix}/src/linux-%{version}/arch
+%{_prefix}/src/linux-%{version}/arch/*/[!Mk]*
+%{_prefix}/src/linux-%{version}/arch/*/kernel/*
+%exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
@@ -1123,14 +1134,15 @@ fi
 %{_prefix}/src/linux-%{version}/lib
 %{_prefix}/src/linux-%{version}/mm
 %{_prefix}/src/linux-%{version}/net
-%{_prefix}/src/linux-%{version}/scripts
+%{_prefix}/src/linux-%{version}/scripts/*
+%exclude %{_prefix}/src/linux-%{version}/scripts/Makefile*
+%exclude %{_prefix}/src/linux-%{version}/scripts/*.c
 %{_prefix}/src/linux-%{version}/sound
 %{_prefix}/src/linux-%{version}/security
 %{_prefix}/src/linux-%{version}/usr
 %{_prefix}/src/linux-%{version}/COPYING
 %{_prefix}/src/linux-%{version}/CREDITS
 %{_prefix}/src/linux-%{version}/MAINTAINERS
-%{_prefix}/src/linux-%{version}/Makefile
 %{_prefix}/src/linux-%{version}/README
 %{_prefix}/src/linux-%{version}/REPORTING-BUGS
 %endif
@@ -1140,7 +1152,7 @@ fi
 %files sound-oss
 %defattr(644,root,root,755)
 %dir /lib/modules/%{version}-%{release}/kernel/sound/oss
-%attr(644,root,root) /lib/modules/%{version}-%{release}/kernel/sound/oss/*
+/lib/modules/%{version}-%{release}/kernel/sound/oss/*
 %endif  		
 
 %files sound-alsa
@@ -1164,7 +1176,7 @@ fi
 %files smp-sound-oss
 %defattr(644,root,root,755)
 %dir /lib/modules/%{version}-%{release}smp/kernel/sound/oss
-%attr(644,root,root) /lib/modules/%{version}-%{release}smp/kernel/sound/oss/*
+/lib/modules/%{version}-%{release}smp/kernel/sound/oss/*
 %endif
 
 %files smp-sound-alsa
