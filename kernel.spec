@@ -32,7 +32,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	3.3%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	3.4%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -85,6 +85,9 @@ Source1673:	%{name}-IMQ.config
 Source1674:	%{name}-dm.config
 Source1675:	%{name}-audigy.config
 Source1676:	%{name}-aic79xx.config
+Source1677:	%{name}-e820.config
+Source1678:	%{name}-ecc.config
+Source1679:	%{name}-afs.config
 Source1999:	%{name}-preemptive.config
 Source2000:	%{name}-win4lin.config
 
@@ -882,6 +885,9 @@ BuildKernel() {
 	cat %{SOURCE1674} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1675} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1676} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1677} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1678} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1679} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1667} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1668} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1669} >> arch/%{base_arch}/defconfig
@@ -1091,6 +1097,9 @@ cat %{SOURCE1673} >> .config
 cat %{SOURCE1674} >> .config
 cat %{SOURCE1675} >> .config
 cat %{SOURCE1676} >> .config
+cat %{SOURCE1677} >> .config
+cat %{SOURCE1678} >> .config
+cat %{SOURCE1679} >> .config
 
 %ifarch %{ix86}
 cat %{SOURCE2000} >> .config
@@ -1152,6 +1161,9 @@ cat %{SOURCE1673} >> .config
 cat %{SOURCE1674} >> .config
 cat %{SOURCE1675} >> .config
 cat %{SOURCE1676} >> .config
+cat %{SOURCE1677} >> .config
+cat %{SOURCE1678} >> .config
+cat %{SOURCE1679} >> .config
 
 %ifarch %{ix86}
 cat %{SOURCE2000} >> .config
