@@ -236,6 +236,7 @@ Patch303:	%{name}-hotfixes.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
+BuildRequires:	diffutils
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
