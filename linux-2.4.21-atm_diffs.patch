@@ -5107,6 +5107,23 @@ diff -urN linux-2.4.20/drivers/atm/he.h linux-2.4.20-atm/drivers/atm/he.h
 diff -urN linux-2.4.20/drivers/atm/horizon.c linux-2.4.20-atm/drivers/atm/horizon.c
 --- linux-2.4.20/drivers/atm/horizon.c	Sat Aug  3 02:39:43 2002
 +++ linux-2.4.20-atm/drivers/atm/horizon.c	Wed May 28 01:58:41 2003
+@@ -1765,13 +1765,13 @@
+   
+   {
+     unsigned int tx_len = skb->len;
+-    unsigned int tx_iovcnt = ATM_SKB(skb)->iovcnt;
++    unsigned int tx_nr_frags = skb_shinfo(skb)->nr_frags;
+     // remember this so we can free it later
+     dev->tx_skb = skb;
+     
+-    if (tx_iovcnt) {
++    if (tx_nr_frags) {
+       // scatter gather transfer
+-      dev->tx_regions = tx_iovcnt;
++      dev->tx_regions = tx_nr_frags;
+       dev->tx_iovec = (struct iovec *) skb->data;
+       dev->tx_bytes = 0;
+       PRINTD (DBG_TX|DBG_BUS, "TX start scatter-gather transfer (iovec %p, len %d)",
 @@ -2189,14 +2189,6 @@
    }
  #endif
@@ -5560,6 +5577,14 @@ diff -urN linux-2.4.20/drivers/atm/lanai.c linux-2.4.20-atm/drivers/atm/lanai.c
  	return left;
  }
  #endif /* CONFIG_PROC_FS */
+@@ -2842,7 +2842,6 @@
+ 	phy_get:	NULL,
+ 	feedback:	NULL,
+ 	change_qos:	lanai_change_qos,
+-	free_rx_skb:	NULL,
+ 	proc_read:	lanai_proc_read
+ };
+ 
 diff -urN linux-2.4.20/drivers/atm/nicstar.c linux-2.4.20-atm/drivers/atm/nicstar.c
 --- linux-2.4.20/drivers/atm/nicstar.c	Wed May 28 01:53:45 2003
 +++ linux-2.4.20-atm/drivers/atm/nicstar.c	Wed May 28 01:58:41 2003
@@ -5837,6 +5862,19 @@ diff -urN linux-2.4.20/drivers/atm/nicstar.h linux-2.4.20-atm/drivers/atm/nicsta
 diff -urN linux-2.4.20/drivers/atm/zatm.c linux-2.4.20-atm/drivers/atm/zatm.c
 --- linux-2.4.20/drivers/atm/zatm.c	Fri Sep 14 23:40:00 2001
 +++ linux-2.4.20-atm/drivers/atm/zatm.c	Wed May 28 01:58:41 2003
+@@ -827,10 +827,10 @@
+ 	vcc = ATM_SKB(skb)->vcc;
+ 	zatm_dev = ZATM_DEV(vcc->dev);
+ 	zatm_vcc = ZATM_VCC(vcc);
+-	EVENT("iovcnt=%d\n",ATM_SKB(skb)->iovcnt,0);
++	EVENT("nr_frags=%d\n",skb_shinfo(skb)->nr_frags,0);
+ 	save_flags(flags);
+ 	cli();
+-	if (!ATM_SKB(skb)->iovcnt) {
++	if (!skb_shinfo(skb)->nr_frags) {
+ 		if (zatm_vcc->txing == RING_ENTRIES-1) {
+ 			restore_flags(flags);
+ 			return RING_BUSY;
 @@ -1579,8 +1579,6 @@
  	DPRINTK(">zatm_open\n");
  	zatm_dev = ZATM_DEV(vcc->dev);
