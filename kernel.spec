@@ -158,7 +158,7 @@ Patch111:	linux-2.4.1-netdebug.patch
 Patch112:	linux-2.4.1-scsi-reset.patch
 # Add an ioctl to the block layer so we can be EFI compliant
 Patch113:	linux-2.4.2-blkioctl-sector.patch
-#	patch114
+Patch114:	linux-2.4.18-sparc-sunlance.patch
 # fix lun probing on multilun RAID chassis
 Patch115:	linux-2.4.12-scsi_scan.patch
 # fix pcnet32 networkdriver load vs ifconfig races
@@ -799,6 +799,12 @@ echo Fixed small bug in modules
 %patch104 -p1
 
 %patch1001 -p0
+
+# fixed SUNlance drivers card
+%ifarch sparc
+echo Fixed SUN Lande dirver
+%patch114 -p0
+%endif
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
