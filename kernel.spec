@@ -9,7 +9,7 @@
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 #
-%define		krelease		3.06
+%define		krelease		3.07
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -95,7 +95,7 @@ Patch2:		linux-%{version}-freeswan-%{freeswan_version}.patch.gz
 # from  http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.17.diff
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
-Patch5:		xfs-03062002.patch.gz
+Patch5:		xfs-12062002.patch.gz
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/sct/ext3/v2.4/
 Patch6:		linux-2.4.18-ext3-0.9.18.patch
 # Homepage of ABI:	http://linux-abi.sourceforge.net/
@@ -567,9 +567,10 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 #%patch7 -p1
 %if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %ifarch %{ix86}
-%patch914 -p1
-%patch14 -p1
-%patch915 -p1
+%patch147 -p1		# patch to allow compile scheduler with XFS
+%patch914 -p1		# patch o1-scheduler-pre
+%patch14 -p1		# O(1) scheduler patch
+%patch915 -p1		# patch o1-scheduler-post
 %else
 echo "Scheduler didn't work on ARCH different than Intel x86"
 %endif
@@ -578,16 +579,17 @@ echo "Scheduler didn't work on ARCH different than Intel x86"
 %endif
 %if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %ifarch%{ix86}
-%patch911 -p1
+%patch147 -p1		# patch to allow compile scheduler with XFS
+%patch911 -p1		# linux-o1-grsec-pre 
 %else
 echo "Scheduler didn't work on ARCH different than Intel x86"
 %endif
 %endif
-%patch9 -p1
-%patch906 -p0
+%patch9 -p1		# grsecurity patch
+%patch906 -p0		#
 %if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %ifarch%{ix86}
-%patch912 -p1
+%patch912 -p1		# linux-o1-grsec-post
 %else
 echo "Scheduler didn't work on ARCH different than Intel x86"
 %endif
@@ -764,7 +766,6 @@ echo Updating VIA Southbridge
 %patch145 -p1
 #%patch146 -p1
 
-%patch147 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
