@@ -27,7 +27,7 @@ Source19:	%{name}-i686-smp.config
 Source21:	%{name}-sparc.config
 Source22:	%{name}-sparc-smp.config
 Source23:	%{name}-sparc-BOOT.config
-#Source24:	%{name}-sparc64.config
+Source24:	%{name}-sparc64.config
 #Source25:	%{name}-sparc64-smp.config
 #Source26:	%{name}-sparc64-BOOT.config
 Source27:	%{name}-alpha.config
@@ -294,52 +294,67 @@ zcat %{SOURCE34} > drivers/net/3c59x.c
 
 %build
 BuildKernel() {
-    # is this a special kernel we want to build?
-    if [ -n "$1" ] ; then
-	if [ "%{_target_cpu}" = "i586" -o "%{_target_cpu}" = "i686" ] ; then
-	    Config="%{_target_cpu}"-$1
+	# is this a special kernel we want to build?
+	if [ -n "$1" ] ; then
+		if [ "%{_target_cpu}" = "i586" -o \
+			"%{_target_cpu}" = "i686" -o \
+			"%{_target_cpu}" = "sparc64" ]; then
+			Config="%{_target_cpu}"-$1
+		else
+			Config=$RPM_ARCH-$1
+		fi
+		KernelVer=%{version}-%{release}$1
+		echo BUILDING A KERNEL FOR $1...
 	else
-	    Config=$RPM_ARCH-$1
+		if [ "%{_target_cpu}" = "i586" -o \
+			"%{_target_cpu}" = "i686" -o \
+			"%{_target_cpu}" = "sparc64" ] ; then
+			Config="%{_target_cpu}"
+		else
+			Config=$RPM_ARCH
+		fi
+		KernelVer=%{version}-%{release}
+		echo BUILDING THE NORMAL KERNEL...
 	fi
-	KernelVer=%{version}-%{release}$1
-	echo BUILDING A KERNEL FOR $1...
-    else
-	if [ "%{_target_cpu}" = "i586" -o "%{_target_cpu}" = "i686" ] ; then
-	    Config="%{_target_cpu}"
-	else
-	    Config=$RPM_ARCH
-	fi
-	KernelVer=%{version}-%{release}
-	echo BUILDING THE NORMAL KERNEL...
-    fi
-    cp $RPM_SOURCE_DIR/kernel-$Config.config arch/$RPM_ARCH/defconfig
-%ifarch %{ix86}
-    perl -p -i -e "s/-m486//" arch/i386/Makefile
-    perl -p -i -e "s/-DCPU=486/-m486 -DCPU=486/" arch/i386/Makefile
-    perl -p -i -e "s/-DCPU=586/-mpentium -DCPU=586/" arch/i386/Makefile
-    perl -p -i -e "s/-DCPU=686/-mpentiumpro -DCPU=686/" arch/i386/Makefile
-%endif
-    %{__make} mrproper
-    ln -sf arch/$RPM_ARCH/defconfig .config
+	cp $RPM_SOURCE_DIR/kernel-$Config.config arch/$RPM_ARCH/defconfig
 
-    %{__make} oldconfig
-    %{__make} dep 
-    make include/linux/version.h 
 %ifarch %{ix86}
-    %{__make} bzImage EXTRAVERSION="-%{release}" CC="egcs -D__KERNEL__ -I\$(HPATH)"
+	perl -p -i -e "s/-m486//" arch/i386/Makefile
+	perl -p -i -e "s/-DCPU=486/-m486 -DCPU=486/" arch/i386/Makefile
+	perl -p -i -e "s/-DCPU=586/-mpentium -DCPU=586/" arch/i386/Makefile
+	perl -p -i -e "s/-DCPU=686/-mpentiumpro -DCPU=686/" arch/i386/Makefile
+%endif
+
+	%{__make} mrproper
+	ln -sf arch/$RPM_ARCH/defconfig .config
+
+	%{__make} oldconfig
+	%{__make} dep 
+	make include/linux/version.h 
+
+%ifarch %{ix86} alpha sparc
+	KERNELCC="egcs"
+%endif
+%ifarch sparc64
+	KERNELCC="sparc64-linux-gcc"
+%endif
+
+%ifarch %{ix86}
+	%{__make} bzImage EXTRAVERSION="-%{release}"
 %else
-    %{__make} boot EXTRAVERSION="-%{release}" CC="egcs -D__KERNEL__ -I\$(HPATH)"
+	%{__make} boot EXTRAVERSION="-%{release}"
 %endif
-    %{__make} modules EXTRAVERSION="-%{release}" CC="egcs -D__KERNEL__ -I\$(HPATH)"
-    mkdir -p $KERNEL_BUILD_DIR-installed/boot
-    install System.map $KERNEL_BUILD_DIR-installed/boot/System.map-$KernelVer
+	%{__make} modules EXTRAVERSION="-%{release}"
+
+	mkdir -p $KERNEL_BUILD_DIR-installed/boot
+	install System.map $KERNEL_BUILD_DIR-installed/boot/System.map-$KernelVer
 %ifarch %{ix86}
-     cp arch/i386/boot/bzImage $KERNEL_BUILD_DIR-installed/boot/vmlinuz-$KernelVer
+	cp arch/i386/boot/bzImage $KERNEL_BUILD_DIR-installed/boot/vmlinuz-$KernelVer
 %endif
-%ifarch alpha sparc
-     gzip -cfv vmlinux > vmlinuz
-     install vmlinux $KERNEL_BUILD_DIR-installed/boot/vmlinux-$KernelVer
-     install vmlinuz $KERNEL_BUILD_DIR-installed/boot/vmlinuz-$KernelVer
+%ifarch alpha sparc sparc64
+	gzip -cfv vmlinux > vmlinuz
+	install vmlinux $KERNEL_BUILD_DIR-installed/boot/vmlinux-$KernelVer
+	install vmlinuz $KERNEL_BUILD_DIR-installed/boot/vmlinuz-$KernelVer
 %endif
      %{__make} INSTALL_MOD_PATH=$KERNEL_BUILD_DIR-installed modules_install KERNELRELEASE=$KernelVer
 }
