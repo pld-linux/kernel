@@ -52,7 +52,7 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.96
+%define		_rel		0.97
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -171,6 +171,9 @@ Patch74:	linux-static-dev.patch
 Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
 # http://lirc.sourceforge.net/software/snapshots/lirc-0.7.0pre7.tar.bz2
 Patch76:	2.6.8-lirc-0.7.0-pre7.patch
+
+# psmouse extension for ThinkPad laptops from http://www.clarkson.edu/~evanchsa/
+Patch80:	trackpoint-2.6.9.patch
 
 # derived from official grsecurity-2.1.0-2.6.10-200501071049.patch
 Patch90:	grsecurity-2.1.0-2.6.10-200501071049.patch
@@ -576,6 +579,8 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch74 -p1
 %patch75 -p1
 %patch76 -p1
+
+%patch80 -p1
 
 #grsec
 %ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
