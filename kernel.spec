@@ -88,8 +88,6 @@ Source3:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.%{_post_ver
 # Source3-md5:	824b7d88ab2fabc031f1a6c1e6e288ee
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
 # Source4-md5:	37ccb34f8812ae89d9833758e7388bb5
-#Source5:	dpt_i2o-2.5.0-2331.tgz
-# Source5-md5:	573cff0f9cb9fc489d0139888d7ce17d
 Source6:	ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.8/acpi-20040715-2.6.8.diff.gz
 # Source6-md5:	d8162768783a9007603f5a2d2ffb4697
 Source7:	ftp://ftp.alsa-project.org/pub/kernel-patches/alsa-bk-2004-08-15.patch.gz
@@ -178,11 +176,8 @@ Patch74:	pramfs-2.6.4.patch
 Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
 # http://lirc.sourceforge.net/software/snapshots/lirc-0.7.0pre7.tar.bz2
 Patch76:	2.6.8-lirc-0.7.0-pre7.patch
-# i2o/dpt
+# http://i2o.shadowconnect.com/
 Patch77:	2.6.8-i2o-build_105.patch.gz
-#Patch77:	2.6.8-i2o-proc_full_seq_file.patch
-#Patch78:	2.6.8-i2o-pae_support.patch
-#Patch79:	dpt_i2o-2.5.0-2331-fixes.patch
 
 # derived from grsecurity-2.0-2.6.6-unofficial.patch
 Patch90:	%{name}-grsec.patch
@@ -632,13 +627,7 @@ zcat %{SOURCE7} | patch -p1 -s
 %endif
 %patch75 -p1
 %patch76 -p1
-
 %patch77 -p1
-#patch78 -p1
-#rm -rf drivers/scsi/dpt*
-#cd dpt_i2o && cp -ar * ../drivers/scsi && cd -
-#rm -rf dpt_i2o
-#%patch79 -p1
 
 cp -f pwc-%{pwc_version}/2.6/pwc* drivers/usb/media
 rm -rf pwc-%{pwc_version}
