@@ -13,6 +13,11 @@
 
 %{?debug:%define with_verbose 1}
 
+%ifarch sparc
+# sparc32 is missing important updates from 2.5 cycle - won't build
+%undefine	with_smp
+%endif
+
 ## Program required by kernel to work.
 %define		_binutils_ver		2.12
 %define		_util_linux_ver		2.10o
