@@ -677,6 +677,7 @@ patch -p1 -s < exec-shield.patch
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
+sed -i 's#CC.*$(CROSS_COMPILE)gcc#CC		= %{_target_platform}-gcc#g' Makefile
 sed -i 's:\-pipe::' arch/*/Makefile
 
 # on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
@@ -719,7 +720,7 @@ TuneUpConfigForIX86 () {
 %endif
 }
 
-CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_platform}-"
+#CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_platform}-"
 
 BuildConfig (){
 	%{?_debug:set -x}
@@ -957,7 +958,7 @@ PreInstallKernel BOOT
 %install
 rm -rf $RPM_BUILD_ROOT
 umask 022
-CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_platform}-"
+#CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_platform}-"
 
 install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 install -d $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}{,smp}/misc
