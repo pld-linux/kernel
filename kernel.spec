@@ -26,7 +26,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	1.10%{?_with_preemptive:_pr}
+Release:	1.11%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -101,7 +101,7 @@ Patch19:	evms-linux-2.4.19-rc3-common-files.patch
 Patch20:	linux-2.4.19-pre8-VFS-lock.patch
 # Support for CDRW packet writing
 Patch26:	%{name}-cdrw-packet.patch
-Patch27:	kernel-cd-mrw-2.patch
+Patch27:	%{name}-cd-mrw-2.patch
 # PC Speaker driver
 Patch28:	pcsp1.4-ss4-2.4.19.diff
 # Wireless Extensions
@@ -451,6 +451,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch19 -p1
 %patch20 -p1
 %patch26 -p1
+%patch27 -p1
 # fixme
 #%patch28 -p1
 %patch29 -p1
