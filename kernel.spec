@@ -17,7 +17,7 @@
 %define		IPperson_version	20010724-2.4.7
 %define		grsec_version		1.9.2-2.4.17
 %define		aic_version		6.2.3-2.4.7
-%define		jfs_version		2.4-1.0.12
+%define		jfs_version		2.4-1.0.14
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -433,8 +433,8 @@ patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010724-l
 
 # JFS
 echo Adding JFS
-patch -p1 -s <jfs-2.4.common-1.0.12-patch
-patch -p1 -s <jfs-2.4.7-1.0.12-patch
+patch -p1 -s <jfs-2.4.common-1.0.14-patch
+patch -p1 -s <jfs-2.4.17-1.0.14-patch
 
 echo Fixed compile process for 53c7,8xx driver
 # fix 53c7,8xx build
