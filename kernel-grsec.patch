@@ -13638,9 +13638,27 @@ diff -uNr linux-2.6.7-rc1.orig/kernel/sched.c linux-2.6.7-rc1/kernel/sched.c
  #include <linux/kthread.h>
 +#include <linux/grsecurity.h>
  
- #include <asm/unistd.h>
+ #ifdef CONFIG_NUMA
+ #define cpu_to_node_mask(cpu) node_to_cpumask(cpu_to_node(cpu))
+@@ -2159,6 +2160,8 @@
+ }
+ #endif
  
-@@ -2613,6 +2614,8 @@
++void __sched_text_start(void) {}
++
+ /*
+  * schedule() is the main scheduler function.
+  */
+@@ -2538,6 +2541,8 @@
+ 
+ EXPORT_SYMBOL(sleep_on_timeout);
+ 
++void __sched_text_end(void) {}
++
+ void set_user_nice(task_t *p, long nice)
+ {
+ 	unsigned long flags;
+@@ -2611,6 +2616,8 @@
  			return -EPERM;
  		if (increment < -40)
  			increment = -40;
@@ -13649,6 +13667,15 @@ diff -uNr linux-2.6.7-rc1.orig/kernel/sched.c linux-2.6.7-rc1/kernel/sched.c
  	}
  	if (increment > 40)
  		increment = 40;
+@@ -3868,8 +3875,6 @@
+ 
+ int in_sched_functions(unsigned long addr)
+ {
+-	/* Linker adds these: start and end of __sched functions */
+-	extern char __sched_text_start[], __sched_text_end[];
+ 	return addr >= (unsigned long)__sched_text_start
+ 		&& addr < (unsigned long)__sched_text_end;
+ }
 diff -uNr linux-2.6.7-rc1.orig/kernel/signal.c linux-2.6.7-rc1/kernel/signal.c
 --- linux-2.6.7-rc1.orig/kernel/signal.c	2004-05-23 07:53:57.000000000 +0200
 +++ linux-2.6.7-rc1/kernel/signal.c	2004-05-25 14:33:59.518312168 +0200
