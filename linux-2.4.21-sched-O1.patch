@@ -5961,6 +5961,27 @@ diff -urN linux-2.4.20/include/asm-sparc/bitops.h linux-2.4.20-o1/include/asm-sp
  /*
   * ffs: find first bit set. This is defined the same way as
   * the libc and compiler builtin ffs routines, therefore
+diff -urN linux-2.4.20/include/asm-sparc/system.h linux-2.4.20-o1-preempt/include/asm-sparc/system.h
+--- linux-2.4.20/include/asm-sparc/system.h	Wed Oct 31 00:08:11 2001
++++ linux-2.4.20-o1-preempt/include/asm-sparc/system.h	Tue Feb 18 03:51:30 2003
+@@ -88,7 +88,7 @@
+  *
+  * SWITCH_ENTER and SWITH_DO_LAZY_FPU do not work yet (e.g. SMP does not work)
+  */
+-#define prepare_to_switch() do { \
++#define prepare_arch_switch(rq, next) do { \
+ 	__asm__ __volatile__( \
+ 	".globl\tflush_patch_switch\nflush_patch_switch:\n\t" \
+ 	"save %sp, -0x40, %sp; save %sp, -0x40, %sp; save %sp, -0x40, %sp\n\t" \
+@@ -96,6 +96,8 @@
+ 	"save %sp, -0x40, %sp\n\t" \
+ 	"restore; restore; restore; restore; restore; restore; restore"); \
+ } while(0)
++#define finish_arch_switch(rq, next)	do{ }while(0)
++#define task_running(rq, p)		((rq)->curr == (p))
+ 
+ 	/* Much care has gone into this code, do not touch it.
+ 	 *
 diff -urN linux-2.4.20/include/asm-sparc64/bitops.h linux-2.4.20-o1/include/asm-sparc64/bitops.h
 --- linux-2.4.20/include/asm-sparc64/bitops.h	Fri Dec 21 18:42:03 2001
 +++ linux-2.4.20-o1/include/asm-sparc64/bitops.h	Wed Mar 12 00:41:43 2003
