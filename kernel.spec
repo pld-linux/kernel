@@ -123,6 +123,11 @@ Patch32:	rl2-include.patch
 Patch33:	linux-abi-2.4.3.0-PLD.patch
 Patch34:	http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 
+# XFS patches
+Patch35:	ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4.4-core-xfs-1.0.patch.gz
+Patch36:	ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4-xfs-1.0.patch.gz
+#Patch37:	linux-2.4-xfs-nfsdops.patch
+
 # patch for fix LIDS install
 Patch90:	linux-lids-1.0.7-PLD.fix
 Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.4-%{pre_version}.gz
@@ -368,6 +373,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch30 -p1
 %patch31 -p1
 %patch34 -p1
+%patch35 -p1
+%patch36 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -593,6 +600,8 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH30}
 gzip -dc %{PATCH31} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH32}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH34}
+gzip -dc %{PATCH35} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH36} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/dc395/dc395-integ24.diff
