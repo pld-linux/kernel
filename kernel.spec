@@ -3,7 +3,6 @@
 # packages will be built
 #
 # _with_preemptible	- build with Preemptible patch
-# _with_o1_sched	- build with new O(1) scheduler
 # _with_acpi		- build with acpi support
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
@@ -34,7 +33,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	%{krelease}%{?_with_preemptible:_pr}%{?_with_o1_sched:_o1}%{?_with_acpi:_acpi}%{?_without_wrr:_nowrr}
+Release:	%{krelease}%{?_with_preemptible:_pr}%{?_with_acpi:_acpi}%{?_without_wrr:_nowrr}
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
@@ -213,7 +212,7 @@ Patch147:	http://www.hojdpunkten.ac.se/054/samba/00-smbfs-2.4.18-codepage.patch.
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
 Patch900:	ide-EXPORT_SYMBOL.fix
-#Patch901:	
+Patch901:	linux-o1-sched-sys.c-fix.patch
 Patch902:	linux-2.4.19pre7-VIA.patch
 Patch903:	linux-PPC-SMP.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
@@ -573,39 +572,9 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch918 -p1
 %patch6 -p1
 %patch19 -p1
-#%patch7 -p1
-#%if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
-#%ifarch %{ix86}
-# patch o1-scheduler-pre
-#%patch914 -p1
-# O(1) scheduler patch
 %patch14 -p1
-# patch o1-scheduler-post
-#%patch915 -p1
-#%else
-#echo "Scheduler didn't work on ARCH different than Intel x86"
-#%endif
-#%else
-#%patch8 -p1
-#%endif
-#%if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
-#%ifarch%{ix86}
-#%patch911 -p1
-#%else
-#echo "Scheduler didn't work on ARCH different than Intel x86"
-#%endif
-#%endif
-# grsecurity patch
 %patch9 -p1
-#%patch906 -p1
-#%if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
-#%ifarch%{ix86}
-# linux-o1-grsec-post
-#%patch912 -p1
-#%else
-#echo "Scheduler didn't work on ARCH different than Intel x86"
-#%endif
-#%endif
+%patch901 -p1
 %patch15 -p1
 %patch24 -p1
 %patch17 -p1
