@@ -233,6 +233,7 @@ Patch212:	exec-shield-make-peace-with-grsecurity.patch
 Patch300:	2.6.7-ppc-asm-defs.patch
 Patch301:	2.6.7-ppc-strncasecmp.patch
 Patch302:	2.6.7-ppc-cciss-div.patch
+Patch303:	2.6.7-ppc-saa7146-workaround.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -734,6 +735,7 @@ patch -p1 -s < exec-shield.patch
 %patch300 -p1
 %patch301 -p1
 %patch302 -p1
+%patch303 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
