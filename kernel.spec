@@ -350,7 +350,7 @@ rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT%{_prefix}/{include,src}
 
 KERNEL_BUILD_DIR=`pwd`
-cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
+#cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
 
 for i in "" smp BOOT ; do
 	if [ -e  $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i ] ; then
@@ -364,12 +364,36 @@ bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/
 mv -f $RPM_BUILD_ROOT/usr/src/linux $RPM_BUILD_ROOT/usr/src/linux-%{version}
 ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
 
+# install dc395 source
+gzip -dc %{SOURCE3} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
+# install FORE source
+gzip -dc %{SOURCE5} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
+#install i8255 chip source
+gzip -dc %{SOURCE6} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
+#install netfilter source
 gzip -dc %{SOURCE7} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{SOURCE100} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
+
+# install Kerneli patch
 gzip -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -s -p0 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
-patch -s -p0 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH100}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/xmlprocfs.patch
+# install i8255 fix patch
+patch -s -p0 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <%{PATCH4}
+# install AC patch
+gzip -dc %{PATCH5} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+#install FORE patch
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/ <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
+
+#install dc395 patch
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/ <%{PATCH6}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/ <\
+$RPM_BUILD_ROOT/usr/src/linux-%{version}/dc395/dc395-integ24.diff
+install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
+
+#install disable message printing patch
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/ < %{PATCH7}
+
+#gzip -dc %{SOURCE100} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
+#patch -s -p0 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
+#patch -s -p0 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH100}
 
 # Remove -g from drivers/atm/Makefile
 mv -f $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/atm/Makefile \
