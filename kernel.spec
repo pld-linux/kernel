@@ -9,7 +9,7 @@
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 #
-%define		krelease		4.02
+%define		krelease		4.03
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -113,6 +113,7 @@ Patch13:	http://www.linuxvirtualserver.org/software/kernel-2.4/linux-%{version}-
 Patch14:	http://people.redhat.com/mingo/O(1)-scheduler/sched-O1-%{version}-pre8-K3.patch
 
 Patch15:	http://luxik.cdi.cz/~devik/qos/htb/v2/htb2_2.4.17.diff
+Patch24:	http://luxik.cdi.cz/~devik/qos/imq_2.4.12.diff
 
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/dwmw2/linux-2.4.19-shared-zlib.bz2
 Patch16:	linux-2.4.19-shared-zlib.bz2
@@ -200,6 +201,8 @@ Patch145:	netfilter_ipv4-iptables-1.2.7.patch
 Patch146:	netfilter_ipv6-iptables-1.2.7.patch
 
 Patch147:	linux-o1-sched-xfs.patch
+
+Patch148:	http://www.hojdpunkten.ac.se/054/samba/00-smbfs-2.4.18-codepage.patch.gz
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -603,6 +606,7 @@ echo "Scheduler didn't work on ARCH different than Intel x86"
 %endif
 %endif
 %patch15 -p1
+%patch24 -p1
 %patch17 -p1
 
 %patch100 -p0
@@ -625,6 +629,7 @@ echo "Scheduler didn't work on ARCH different than Intel x86"
 %patch121 -p1
 %patch122 -p1
 %patch124 -p1
+%patch148 -p1
 
 %patch904 -p0
 
