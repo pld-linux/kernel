@@ -524,7 +524,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch20 -p1
 # broken
 %patch26 -p1
-#%patch27 -p1
+%patch27 -p1
 # fixme
 #%patch28 -p1
 #%patch29 -p1
