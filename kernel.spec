@@ -15,6 +15,7 @@
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	bootsplash	# build with bootsplash
+%bcond_with	exec-shield	# build with exec-shield
 
 %{?debug:%define with_verbose 1}
 
@@ -593,7 +594,9 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch24 -p1
 
 ## bootsplash
+%if %{with bootsplash}
 %patch26 -p1
+%endif
 
 %patch28 -p1
 
@@ -672,8 +675,10 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch88 -p1
 %patch90 -p1
 
+%if %{with exec-shield}
 patch -p1 -s < %{SOURCE4}
 patch -p1 -s < %{SOURCE5}
+%endif
 
 #grsec
 %ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
