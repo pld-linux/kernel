@@ -41,8 +41,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.22
-%define		_cset		20040429_0110
+%define		_rel		0.23
+%define		_cset		20040430_0609
 
 ## netfilter snap 
 %define		_netfilter_snap		20040429
@@ -140,7 +140,7 @@ Patch64:	2.6.x-ppp_mppe.patch
 
 Patch66:	2.6.2-Initio9100U-Kconfig.patch
 
-Patch68:	2.6.6-rc3-patch-o-matic-ng-base-%{_netfilter_snap}.patch
+Patch68:	2.6.6-rc3-pom-ng-%{_netfilter_snap}.patch
 
 Patch70:	2.6.3-sparc32-fix.patch
 
@@ -161,8 +161,6 @@ Patch86:	2.6.4-rc1-02-imq-nat-support.patch
 Patch87:	2.6.4-rc1-03-CONNMARK.patch
 
 Patch90:	2.6.4-psion-5mx.patch
-
-Patch94:	2.6.6-rc3-patch-o-matic-ng-extra-%{_netfilter_snap}.patch
 
 #from:		http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
 Patch96:	2.6.1-all-in-1.patch
@@ -560,7 +558,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch66 -p1
 
-# netfilter - base
+## netfilter
 %patch68 -p1
 
 %patch70 -p1
@@ -578,9 +576,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch86 -p1
 
 %patch90 -p1
-
-# netfilter - extra
-%patch94 -p1
 
 %patch96 -p1
 
