@@ -122,7 +122,7 @@ Patch902:	rl2-include.patch
 # patch to fix problem wit ABI and LIDS
 Patch903:	linux-lids-with-abi.patch
 Patch904:	linux-vlan-fixpatch-2.4.7-pre6.patch
-Patch905:	linux-mtd-missing-include-fix.patch
+Patch905:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch906:	linux-UDF.fix
 
 # Linus's -pre
