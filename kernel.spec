@@ -37,7 +37,7 @@ Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-133.tar.gz
 Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
-# Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
+Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
 Source7:	linux-2.4.12-netfilter-20011023.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
