@@ -1,114 +1,8 @@
-# Make the VFS call down into the FS on flock calls.
-diff -urN -p linux-2.6.7/fs/locks.c linux/fs/locks.c
---- linux-2.6.7/fs/locks.c	2004-06-16 12:00:44.567463632 -0500
-+++ linux/fs/locks.c	2004-06-16 12:01:58.844205936 -0500
-@@ -1294,6 +1294,27 @@ out_unlock:
- 	return error;
- }
- 
-+/*
-+ * Wrapper function around the file_operations lock routine when called for
-+ * flock().  The lock routine is called for both fcntl() and flock(), so
-+ * the flock parameters must be translated to an equivalent fcntl()-like
-+ * lock.
-+ *
-+ * Don't use locks_alloc_lock() (or flock_make_lock()) here, as
-+ * this is just a temporary lock structure.  We especially don't
-+ * want to fail because we couldn't allocate a lock structure if
-+ * this is an unlock operation.
-+ */
-+int flock_fs_file(struct file *filp, int type, int wait)
-+{
-+	struct file_lock fl = { .fl_flags = FL_FLOCK,
-+				.fl_type = type };
-+
-+	return filp->f_op->lock(filp,
-+				(wait) ? F_SETLKW : F_SETLK,
-+				&fl);
-+}
-+
- /**
-  *	sys_flock: - flock() system call.
-  *	@fd: the file descriptor to lock.
-@@ -1342,6 +1363,50 @@ asmlinkage long sys_flock(unsigned int f
- 	if (error)
- 		goto out_free;
- 
-+	/*
-+	 * Execute any filesystem-specific flock routines.  The filesystem may
-+	 * maintain supplemental locks.  This code allows the supplemental locks
-+	 * to be kept in sync with the vfs flock lock.  If flock() is called on
-+	 * a lock already held for the given filp, the current flock lock is
-+	 * dropped before obtaining the requested lock.  This unlock operation
-+	 * must be completed for the any filesystem specific locks and the vfs
-+	 * flock lock before proceeding with obtaining the requested lock.  When
-+	 * the filesystem routine drops a lock for such a request, it must
-+	 * return -EDEADLK, allowing the vfs lock to be dropped, and the
-+	 * filesystem code is then re-executed to obtain the lock.
-+	 *
-+	 * A non-blocking request that returns EWOULDBLOCK also causes any vfs
-+	 * flock lock to be released, but then returns the error to the caller.
-+	 */
-+	if (filp->f_op && filp->f_op->lock) {
-+ repeat:
-+		error = flock_fs_file(filp, lock->fl_type, can_sleep);
-+		if (error < 0) {
-+			/*
-+			 * We may have dropped a lock.  We need to
-+			 * finish unlocking before returning or
-+			 * continuing with lock acquisition.
-+			 */
-+			if (error != -ENOLCK)
-+				flock_lock_file(filp, &(struct file_lock){.fl_type = F_UNLCK});
-+
-+			/*
-+			 * We already held the lock in some mode, and
-+			 * had to drop filesystem-specific locks before
-+			 * proceeding.  We come back through this
-+			 * routine to unlock the vfs flock lock.  Now go
-+			 * back and try again.  Using EAGAIN as the
-+			 * error here would be better, but the one valid
-+			 * error value defined for flock(), EWOULDBLOCK,
-+			 * is defined as EAGAIN.
-+			 */
-+			if (error == -EDEADLK)
-+				goto repeat;
-+
-+			goto out_free;
-+		}
-+	}
-+
- 	for (;;) {
- 		error = flock_lock_file(filp, lock);
- 		if ((error != -EAGAIN) || !can_sleep)
-@@ -1354,6 +1419,13 @@ asmlinkage long sys_flock(unsigned int f
- 		break;
- 	}
- 
-+	/*
-+	 * If we failed to get the vfs flock, we need to clean up any
-+	 * filesystem-specific lock state that we previously obtained.
-+	 */
-+	if (error && filp->f_op && filp->f_op->lock)
-+		flock_fs_file(filp, F_UNLCK, 1);
-+
-  out_free:
- 	if (list_empty(&lock->fl_link)) {
- 		locks_free_lock(lock);
-@@ -1714,6 +1786,8 @@ void locks_remove_flock(struct file *fil
- 		if (fl->fl_file == filp) {
- 			if (IS_FLOCK(fl)) {
- 				locks_delete_lock(before);
-+				if (filp->f_op && filp->f_op->lock)
-+					flock_fs_file(filp, F_UNLCK, 1);
- 				continue;
- 			}
- 			if (IS_LEASE(fl)) {
 # Add lock harness to the build system.
-diff -urN -p linux-2.6.7/fs/Kconfig linux/fs/Kconfig
---- linux-2.6.7/fs/Kconfig	2004-06-16 12:00:44.558465722 -0500
-+++ linux/fs/Kconfig	2004-06-16 12:02:02.401379449 -0500
-@@ -1669,6 +1669,14 @@ config AFS_FS
+diff -urN -p linux-2.6.9-rc1-mm3/fs/Kconfig linux/fs/Kconfig
+--- linux-2.6.9-rc1-mm3/fs/Kconfig	2004-09-03 13:48:43.462073082 -0500
++++ linux/fs/Kconfig	2004-09-03 13:48:46.109467766 -0500
+@@ -1779,6 +1779,14 @@ config AFS_FS
  config RXRPC
  	tristate
  
@@ -123,17 +17,19 @@ diff -urN -p linux-2.6.7/fs/Kconfig linux/fs/Kconfig
  endmenu
  
  menu "Partition Types"
-diff -urN -p linux-2.6.7/fs/Makefile linux/fs/Makefile
---- linux-2.6.7/fs/Makefile	2004-06-16 12:00:44.558465722 -0500
-+++ linux/fs/Makefile	2004-06-16 12:02:02.402379216 -0500
-@@ -91,3 +91,4 @@ obj-$(CONFIG_JFS_FS)		+= jfs/
- obj-$(CONFIG_XFS_FS)		+= xfs/
- obj-$(CONFIG_AFS_FS)		+= afs/
- obj-$(CONFIG_BEFS_FS)		+= befs/
+diff -urN -p linux-2.6.9-rc1-mm3/fs/Makefile linux/fs/Makefile
+--- linux-2.6.9-rc1-mm3/fs/Makefile	2004-09-03 13:48:43.462073082 -0500
++++ linux/fs/Makefile	2004-09-03 13:48:46.110467538 -0500
+@@ -94,4 +94,6 @@
+ obj-$(CONFIG_HOSTFS)		+= hostfs/
+ obj-$(CONFIG_HPPFS)		+= hppfs/
+ obj-$(CONFIG_SUPERMOUNT)	+= supermount/
 +obj-$(CONFIG_LOCK_HARNESS)	+= gfs_locking/
-diff -urN -p linux-2.6.7/fs/gfs_locking/Makefile linux/fs/gfs_locking/Makefile
---- linux-2.6.7/fs/gfs_locking/Makefile	1969-12-31 18:00:00.000000000 -0600
-+++ linux/fs/gfs_locking/Makefile	2004-06-16 12:02:02.402379216 -0500
++obj-$(CONFIG_GFS_FS)		+= gfs/
+ 
+diff -urN -p linux-2.6.9-rc1-mm3/fs/gfs_locking/Makefile linux/fs/gfs_locking/Makefile
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/Makefile	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/Makefile	2004-09-03 13:48:46.110467538 -0500
 @@ -0,0 +1,14 @@
 +###############################################################################
 +###############################################################################
@@ -149,9 +45,9 @@ diff -urN -p linux-2.6.7/fs/gfs_locking/Makefile linux/fs/gfs_locking/Makefile
 +
 +obj-$(CONFIG_LOCK_HARNESS)	+= lock_harness/
 +
-diff -urN -p linux-2.6.7/fs/gfs_locking/lock_harness/Makefile linux/fs/gfs_locking/lock_harness/Makefile
---- linux-2.6.7/fs/gfs_locking/lock_harness/Makefile	1969-12-31 18:00:00.000000000 -0600
-+++ linux/fs/gfs_locking/lock_harness/Makefile	2004-06-16 12:02:02.402379216 -0500
+diff -urN -p linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_harness/Makefile linux/fs/gfs_locking/lock_harness/Makefile
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_harness/Makefile	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_harness/Makefile	2004-09-03 13:48:46.110467538 -0500
 @@ -0,0 +1,16 @@
 +###############################################################################
 +###############################################################################
@@ -170,26 +66,26 @@ diff -urN -p linux-2.6.7/fs/gfs_locking/lock_harness/Makefile linux/fs/gfs_locki
 +lock_harness-y	:= main.o
 +
 # Add GFS to the build system.
-diff -urN -p linux-2.6.7/fs/Kconfig linux/fs/Kconfig
---- linux-2.6.7/fs/Kconfig	2004-06-25 13:57:24.435829621 -0500
-+++ linux/fs/Kconfig	2004-06-25 13:59:16.786347614 -0500
-@@ -316,13 +316,13 @@ config JFS_STATISTICS
+diff -urN -p linux-2.6.9-rc1-mm3/fs/Kconfig linux/fs/Kconfig
+--- linux-2.6.9-rc1-mm3/fs/Kconfig	2004-09-03 13:48:49.783627367 -0500
++++ linux/fs/Kconfig	2004-09-03 13:48:49.795624622 -0500
+@@ -285,13 +285,13 @@ config JFS_STATISTICS
  	  to be made available to the user in the /proc/fs/jfs/ directory.
  
  config FS_POSIX_ACL
 -# Posix ACL utility routines (for now, only ext2/ext3/jfs/reiserfs)
-+# Posix ACL utility routines (for now, only ext2/ext3/jfs/reiserfs/GFS)
++# Posix ACL utility routines (for now, only ext2/ext3/jfs/reiserfs/gfs)
  #
  # NOTE: you can implement Posix ACLs without these helpers (XFS does).
  # 	Never use this symbol for ifdefs.
  #
  	bool
--	depends on EXT2_FS_POSIX_ACL || EXT3_FS_POSIX_ACL || JFS_POSIX_ACL || REISERFS_FS_POSIX_ACL
-+	depends on EXT2_FS_POSIX_ACL || EXT3_FS_POSIX_ACL || JFS_POSIX_ACL || REISERFS_FS_POSIX_ACL || GFS_FS
+-	depends on EXT2_FS_POSIX_ACL || EXT3_FS_POSIX_ACL || JFS_POSIX_ACL || REISERFS_FS_POSIX_ACL || NFSD_V4
++	depends on EXT2_FS_POSIX_ACL || EXT3_FS_POSIX_ACL || JFS_POSIX_ACL || REISERFS_FS_POSIX_ACL || GFS_FS || NFSD_V4
  	default y
  
  config XFS_FS
-@@ -1677,6 +1677,20 @@ config LOCK_HARNESS
+@@ -1787,6 +1787,20 @@ config LOCK_HARNESS
  
  	  If you want to use GFS (a cluster filesystem) say Y here.
  
@@ -210,18 +106,10 @@ diff -urN -p linux-2.6.7/fs/Kconfig linux/fs/Kconfig
  endmenu
  
  menu "Partition Types"
-diff -urN -p linux-2.6.7/fs/Makefile linux/fs/Makefile
---- linux-2.6.7/fs/Makefile	2004-06-25 13:57:24.436829391 -0500
-+++ linux/fs/Makefile	2004-06-25 13:57:24.447826863 -0500
-@@ -92,3 +92,4 @@ obj-$(CONFIG_XFS_FS)		+= xfs/
- obj-$(CONFIG_AFS_FS)		+= afs/
- obj-$(CONFIG_BEFS_FS)		+= befs/
- obj-$(CONFIG_LOCK_HARNESS)	+= gfs_locking/
-+obj-$(CONFIG_GFS_FS)		+= gfs/
-diff -urN -p linux-2.6.7/fs/gfs/Makefile linux/fs/gfs/Makefile
---- linux-2.6.7/fs/gfs/Makefile	1969-12-31 18:00:00.000000000 -0600
-+++ linux/fs/gfs/Makefile	2004-06-25 13:57:24.448826633 -0500
-@@ -0,0 +1,51 @@
+diff -urN -p linux-2.6.9-rc1-mm3/fs/gfs/Makefile linux/fs/gfs/Makefile
+--- linux-2.6.9-rc1-mm3/fs/gfs/Makefile	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/Makefile	2004-09-03 13:48:49.795624622 -0500
+@@ -0,0 +1,50 @@
 +###############################################################################
 +###############################################################################
 +##
@@ -244,7 +132,6 @@ diff -urN -p linux-2.6.7/fs/gfs/Makefile linux/fs/gfs/Makefile
 +		dir.o \
 +		eattr.o \
 +		file.o \
-+		flock.o \
 +		glock.o \
 +		glops.o \
 +		inode.o \
@@ -274,10 +161,10 @@ diff -urN -p linux-2.6.7/fs/gfs/Makefile linux/fs/gfs/Makefile
 +		util.o
 +
 # Add lock_nolock to the build system.
-diff -urN -p linux-2.6.7/fs/Kconfig linux/fs/Kconfig
---- linux-2.6.7/fs/Kconfig	2004-06-16 12:02:09.563715325 -0500
-+++ linux/fs/Kconfig	2004-06-16 12:02:09.574712769 -0500
-@@ -1691,6 +1691,12 @@ config GFS_FS
+diff -urN -p linux-2.6.9-rc1-mm3/fs/Kconfig linux/fs/Kconfig
+--- linux-2.6.9-rc1-mm3/fs/Kconfig	2004-09-03 13:48:53.622748847 -0500
++++ linux/fs/Kconfig	2004-09-03 13:48:53.633746330 -0500
+@@ -1801,6 +1801,12 @@ config GFS_FS
  	  GFS is perfect consistency -- changes made to the filesystem on one
  	  machine show up immediately on all other machines in the cluster.
  
@@ -290,18 +177,18 @@ diff -urN -p linux-2.6.7/fs/Kconfig linux/fs/Kconfig
  endmenu
  
  menu "Partition Types"
-diff -urN -p linux-2.6.7/fs/gfs_locking/Makefile linux/fs/gfs_locking/Makefile
---- linux-2.6.7/fs/gfs_locking/Makefile	2004-06-16 12:02:05.985546690 -0500
-+++ linux/fs/gfs_locking/Makefile	2004-06-16 12:02:09.574712769 -0500
+diff -urN -p linux-2.6.9-rc1-mm3/fs/gfs_locking/Makefile linux/fs/gfs_locking/Makefile
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/Makefile	2004-09-03 13:48:49.784627138 -0500
++++ linux/fs/gfs_locking/Makefile	2004-09-03 13:48:53.634746101 -0500
 @@ -11,4 +11,5 @@
  ###############################################################################
  
  obj-$(CONFIG_LOCK_HARNESS)	+= lock_harness/
 +obj-$(CONFIG_LOCK_NOLOCK)	+= lock_nolock/
  
-diff -urN -p linux-2.6.7/fs/gfs_locking/lock_nolock/Makefile linux/fs/gfs_locking/lock_nolock/Makefile
---- linux-2.6.7/fs/gfs_locking/lock_nolock/Makefile	1969-12-31 18:00:00.000000000 -0600
-+++ linux/fs/gfs_locking/lock_nolock/Makefile	2004-06-16 12:02:09.575712537 -0500
+diff -urN -p linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_nolock/Makefile linux/fs/gfs_locking/lock_nolock/Makefile
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_nolock/Makefile	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_nolock/Makefile	2004-09-03 13:48:53.634746101 -0500
 @@ -0,0 +1,16 @@
 +###############################################################################
 +###############################################################################
@@ -320,10 +207,10 @@ diff -urN -p linux-2.6.7/fs/gfs_locking/lock_nolock/Makefile linux/fs/gfs_lockin
 +lock_nolock-y	:= main.o
 +
 # Add lock_dlm to the build system.
-diff -urN -p linux-2.6.7/fs/Kconfig linux/fs/Kconfig
---- linux-2.6.7/fs/Kconfig	2004-06-16 12:02:13.145883030 -0500
-+++ linux/fs/Kconfig	2004-06-16 12:02:13.157880243 -0500
-@@ -1697,6 +1697,12 @@ config LOCK_NOLOCK
+diff -urN -p linux-2.6.9-rc1-mm3/fs/Kconfig linux/fs/Kconfig
+--- linux-2.6.9-rc1-mm3/fs/Kconfig	2004-09-03 13:48:57.245919384 -0500
++++ linux/fs/Kconfig	2004-09-03 13:48:57.256916866 -0500
+@@ -1807,6 +1807,12 @@ config LOCK_NOLOCK
  	help
  	  A "fake" lock module that allows GFS to run as a local filesystem.
  
@@ -336,18 +223,18 @@ diff -urN -p linux-2.6.7/fs/Kconfig linux/fs/Kconfig
  endmenu
  
  menu "Partition Types"
-diff -urN -p linux-2.6.7/fs/gfs_locking/Makefile linux/fs/gfs_locking/Makefile
---- linux-2.6.7/fs/gfs_locking/Makefile	2004-06-16 12:02:13.146882798 -0500
-+++ linux/fs/gfs_locking/Makefile	2004-06-16 12:02:13.157880243 -0500
+diff -urN -p linux-2.6.9-rc1-mm3/fs/gfs_locking/Makefile linux/fs/gfs_locking/Makefile
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/Makefile	2004-09-03 13:48:57.245919384 -0500
++++ linux/fs/gfs_locking/Makefile	2004-09-03 13:48:57.256916866 -0500
 @@ -12,4 +12,5 @@
  
  obj-$(CONFIG_LOCK_HARNESS)	+= lock_harness/
  obj-$(CONFIG_LOCK_NOLOCK)	+= lock_nolock/
 +obj-$(CONFIG_LOCK_DLM)		+= lock_dlm/
  
-diff -urN -p linux-2.6.7/fs/gfs_locking/lock_dlm/Makefile linux/fs/gfs_locking/lock_dlm/Makefile
---- linux-2.6.7/fs/gfs_locking/lock_dlm/Makefile	1969-12-31 18:00:00.000000000 -0600
-+++ linux/fs/gfs_locking/lock_dlm/Makefile	2004-06-16 12:02:13.157880243 -0500
+diff -urN -p linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_dlm/Makefile linux/fs/gfs_locking/lock_dlm/Makefile
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_dlm/Makefile	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_dlm/Makefile	2004-09-03 13:48:57.257916637 -0500
 @@ -0,0 +1,16 @@
 +###############################################################################
 +###############################################################################
@@ -366,10 +253,10 @@ diff -urN -p linux-2.6.7/fs/gfs_locking/lock_dlm/Makefile linux/fs/gfs_locking/l
 +lock_dlm-y	:= main.o group.o lock.o mount.o thread.o plock.o
 +
 # Add lock_gulm to the build system.
-diff -urN -p linux-2.6.7/fs/Kconfig linux/fs/Kconfig
---- linux-2.6.7/fs/Kconfig	2004-06-16 12:02:16.816030294 -0500
-+++ linux/fs/Kconfig	2004-06-16 12:02:16.827027739 -0500
-@@ -1703,6 +1703,12 @@ config LOCK_DLM
+diff -urN -p linux-2.6.9-rc1-mm3/fs/Kconfig linux/fs/Kconfig
+--- linux-2.6.9-rc1-mm3/fs/Kconfig	2004-09-03 13:49:00.962068274 -0500
++++ linux/fs/Kconfig	2004-09-03 13:49:00.973065755 -0500
+@@ -1813,6 +1813,12 @@ config LOCK_DLM
  	help
  	  A lock module that allows GFS to use a Distributed Lock Manager.
  
@@ -382,19 +269,19 @@ diff -urN -p linux-2.6.7/fs/Kconfig linux/fs/Kconfig
  endmenu
  
  menu "Partition Types"
-diff -urN -p linux-2.6.7/fs/gfs_locking/Makefile linux/fs/gfs_locking/Makefile
---- linux-2.6.7/fs/gfs_locking/Makefile	2004-06-16 12:02:16.817030062 -0500
-+++ linux/fs/gfs_locking/Makefile	2004-06-16 12:02:16.828027507 -0500
+diff -urN -p linux-2.6.9-rc1-mm3/fs/gfs_locking/Makefile linux/fs/gfs_locking/Makefile
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/Makefile	2004-09-03 13:49:00.962068274 -0500
++++ linux/fs/gfs_locking/Makefile	2004-09-03 13:49:00.973065755 -0500
 @@ -13,4 +13,5 @@
  obj-$(CONFIG_LOCK_HARNESS)	+= lock_harness/
  obj-$(CONFIG_LOCK_NOLOCK)	+= lock_nolock/
  obj-$(CONFIG_LOCK_DLM)		+= lock_dlm/
 +obj-$(CONFIG_LOCK_GULM)		+= lock_gulm/
  
-diff -urN -p linux-2.6.7/fs/gfs_locking/lock_gulm/Makefile linux/fs/gfs_locking/lock_gulm/Makefile
---- linux-2.6.7/fs/gfs_locking/lock_gulm/Makefile	1969-12-31 18:00:00.000000000 -0600
-+++ linux/fs/gfs_locking/lock_gulm/Makefile	2004-06-16 12:02:16.828027507 -0500
-@@ -0,0 +1,33 @@
+diff -urN -p linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/Makefile linux/fs/gfs_locking/lock_gulm/Makefile
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/Makefile	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/Makefile	2004-09-03 13:49:00.973065755 -0500
+@@ -0,0 +1,32 @@
 +###############################################################################
 +###############################################################################
 +##
@@ -423,14 +310,13 @@ diff -urN -p linux-2.6.7/fs/gfs_locking/lock_gulm/Makefile linux/fs/gfs_locking/
 +		util.o \
 +		utils_crc.o \
 +		utils_tostr.o \
-+		utils_verb_flags.o \
 +		xdr_base.o \
 +		xdr_io.o \
 +		xdr_socket.o
 +
-diff -urN linux-orig/fs/gfs/acl.c linux-patched/fs/gfs/acl.c
---- linux-orig/fs/gfs/acl.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/acl.c	2004-06-20 22:48:17.946947249 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/acl.c linux/fs/gfs/acl.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/acl.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/acl.c	2004-09-07 16:26:15.728555458 -0500
 @@ -0,0 +1,397 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -829,9 +715,9 @@ diff -urN linux-orig/fs/gfs/acl.c linux-patched/fs/gfs/acl.c
 +
 +	return error;
 +}
-diff -urN linux-orig/fs/gfs/acl.h linux-patched/fs/gfs/acl.h
---- linux-orig/fs/gfs/acl.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/acl.h	2004-06-20 22:48:17.946947249 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/acl.h linux/fs/gfs/acl.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/acl.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/acl.h	2004-09-07 16:26:15.728555458 -0500
 @@ -0,0 +1,28 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -861,9 +747,9 @@ diff -urN linux-orig/fs/gfs/acl.h linux-patched/fs/gfs/acl.h
 +void gfs_acl_set_mode(struct gfs_inode *ip, struct posix_acl *acl);
 +
 +#endif /* __ACL_DOT_H__ */
-diff -urN linux-orig/fs/gfs/bits.c linux-patched/fs/gfs/bits.c
---- linux-orig/fs/gfs/bits.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/bits.c	2004-06-20 22:48:17.946947249 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/bits.c linux/fs/gfs/bits.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/bits.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/bits.c	2004-09-07 16:26:15.729555238 -0500
 @@ -0,0 +1,183 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -1048,9 +934,9 @@ diff -urN linux-orig/fs/gfs/bits.c linux-patched/fs/gfs/bits.c
 +
 +	return count;
 +}
-diff -urN linux-orig/fs/gfs/bits.h linux-patched/fs/gfs/bits.h
---- linux-orig/fs/gfs/bits.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/bits.h	2004-06-20 22:48:17.946947249 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/bits.h linux/fs/gfs/bits.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/bits.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/bits.h	2004-09-07 16:26:15.729555238 -0500
 @@ -0,0 +1,32 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -1084,9 +970,9 @@ diff -urN linux-orig/fs/gfs/bits.h linux-patched/fs/gfs/bits.h
 +		      unsigned char state);
 +
 +#endif /* __BITS_DOT_H__ */
-diff -urN linux-orig/fs/gfs/bmap.c linux-patched/fs/gfs/bmap.c
---- linux-orig/fs/gfs/bmap.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/bmap.c	2004-06-20 22:48:17.947946967 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/bmap.c linux/fs/gfs/bmap.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/bmap.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/bmap.c	2004-09-07 16:26:15.731554797 -0500
 @@ -0,0 +1,1404 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -2492,9 +2378,9 @@ diff -urN linux-orig/fs/gfs/bmap.c linux-patched/fs/gfs/bmap.c
 +
 +	return error;
 +}
-diff -urN linux-orig/fs/gfs/bmap.h linux-patched/fs/gfs/bmap.h
---- linux-orig/fs/gfs/bmap.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/bmap.h	2004-06-20 22:48:17.947946967 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/bmap.h linux/fs/gfs/bmap.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/bmap.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/bmap.h	2004-09-07 16:26:15.731554797 -0500
 @@ -0,0 +1,48 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -2544,9 +2430,9 @@ diff -urN linux-orig/fs/gfs/bmap.h linux-patched/fs/gfs/bmap.h
 +int gfs_get_file_meta(struct gfs_inode *ip, struct gfs_user_buffer *ub);
 +
 +#endif /* __BMAP_DOT_H__ */
-diff -urN linux-orig/fs/gfs/daemon.c linux-patched/fs/gfs/daemon.c
---- linux-orig/fs/gfs/daemon.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/daemon.c	2004-06-20 22:48:17.947946967 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/daemon.c linux/fs/gfs/daemon.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/daemon.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/daemon.c	2004-09-07 16:26:15.732554576 -0500
 @@ -0,0 +1,259 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -2807,9 +2693,9 @@ diff -urN linux-orig/fs/gfs/daemon.c linux-patched/fs/gfs/daemon.c
 +
 +	return 0;
 +}
-diff -urN linux-orig/fs/gfs/daemon.h linux-patched/fs/gfs/daemon.h
---- linux-orig/fs/gfs/daemon.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/daemon.h	2004-06-20 22:48:17.947946967 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/daemon.h linux/fs/gfs/daemon.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/daemon.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/daemon.h	2004-09-07 16:26:15.732554576 -0500
 @@ -0,0 +1,24 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -2835,9 +2721,9 @@ diff -urN linux-orig/fs/gfs/daemon.h linux-patched/fs/gfs/daemon.h
 +int gfs_inoded(void *data);
 +
 +#endif /* __DAEMON_DOT_H__ */
-diff -urN linux-orig/fs/gfs/dio.c linux-patched/fs/gfs/dio.c
---- linux-orig/fs/gfs/dio.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/dio.c	2004-06-20 22:48:17.947946967 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/dio.c linux/fs/gfs/dio.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/dio.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/dio.c	2004-09-07 16:26:15.733554356 -0500
 @@ -0,0 +1,1302 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -4141,9 +4027,9 @@ diff -urN linux-orig/fs/gfs/dio.c linux-patched/fs/gfs/dio.c
 + out:
 +	brelse(first_bh);
 +}
-diff -urN linux-orig/fs/gfs/dio.h linux-patched/fs/gfs/dio.h
---- linux-orig/fs/gfs/dio.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/dio.h	2004-06-20 22:48:17.947946967 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/dio.h linux/fs/gfs/dio.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/dio.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/dio.h	2004-09-07 16:26:15.734554135 -0500
 @@ -0,0 +1,195 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -4340,9 +4226,9 @@ diff -urN linux-orig/fs/gfs/dio.h linux-patched/fs/gfs/dio.h
 +}
 +
 +#endif				/*  __DIO_DOT_H__  */
-diff -urN linux-orig/fs/gfs/dir.c linux-patched/fs/gfs/dir.c
---- linux-orig/fs/gfs/dir.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/dir.c	2004-06-20 22:48:17.947946967 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/dir.c linux/fs/gfs/dir.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/dir.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/dir.c	2004-09-07 16:26:15.737553474 -0500
 @@ -0,0 +1,2273 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -5275,7 +5161,7 @@ diff -urN linux-orig/fs/gfs/dir.c linux-patched/fs/gfs/dir.c
 + */
 +
 +static int
-+compare_dents(void *a, void *b)
++compare_dents(const void *a, const void *b)
 +{
 +	struct gfs_dirent *dent_a, *dent_b;
 +	uint32_t hash_a, hash_b;
@@ -6617,9 +6503,9 @@ diff -urN linux-orig/fs/gfs/dir.c linux-patched/fs/gfs/dir.c
 +	GFS_ASSERT_INODE(dip->i_di.di_type == GFS_FILE_DIR, dip,);
 +	return foreach_leaf(dip, do_gdm, ub);
 +}
-diff -urN linux-orig/fs/gfs/dir.h linux-patched/fs/gfs/dir.h
---- linux-orig/fs/gfs/dir.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/dir.h	2004-06-20 22:48:17.947946967 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/dir.h linux/fs/gfs/dir.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/dir.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/dir.h	2004-09-07 16:26:15.737553474 -0500
 @@ -0,0 +1,55 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -6676,9 +6562,9 @@ diff -urN linux-orig/fs/gfs/dir.h linux-patched/fs/gfs/dir.h
 +int gfs_get_dir_meta(struct gfs_inode *ip, struct gfs_user_buffer *ub);
 +
 +#endif /* __DIR_DOT_H__ */
-diff -urN linux-orig/fs/gfs/eattr.c linux-patched/fs/gfs/eattr.c
---- linux-orig/fs/gfs/eattr.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/eattr.c	2004-06-20 22:48:17.948946686 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/eattr.c linux/fs/gfs/eattr.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/eattr.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/eattr.c	2004-09-07 16:26:15.740552812 -0500
 @@ -0,0 +1,2340 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -9020,9 +8906,9 @@ diff -urN linux-orig/fs/gfs/eattr.c linux-patched/fs/gfs/eattr.c
 +
 +	return error;
 +}
-diff -urN linux-orig/fs/gfs/eattr.h linux-patched/fs/gfs/eattr.h
---- linux-orig/fs/gfs/eattr.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/eattr.h	2004-06-20 22:48:17.948946686 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/eattr.h linux/fs/gfs/eattr.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/eattr.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/eattr.h	2004-09-07 16:26:15.740552812 -0500
 @@ -0,0 +1,90 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -9114,9 +9000,9 @@ diff -urN linux-orig/fs/gfs/eattr.h linux-patched/fs/gfs/eattr.h
 +int gfs_ea_read_permission(struct gfs_eaget_io *req, struct gfs_inode *ip);
 +
 +#endif /* __EATTR_DOT_H__ */
-diff -urN linux-orig/fs/gfs/file.c linux-patched/fs/gfs/file.c
---- linux-orig/fs/gfs/file.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/file.c	2004-06-20 22:48:17.948946686 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/file.c linux/fs/gfs/file.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/file.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/file.c	2004-09-07 16:26:15.741552591 -0500
 @@ -0,0 +1,382 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -9500,9 +9386,9 @@ diff -urN linux-orig/fs/gfs/file.c linux-patched/fs/gfs/file.c
 +		goto out;
 +	return error;
 +}
-diff -urN linux-orig/fs/gfs/file.h linux-patched/fs/gfs/file.h
---- linux-orig/fs/gfs/file.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/file.h	2004-06-20 22:48:17.948946686 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/file.h linux/fs/gfs/file.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/file.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/file.h	2004-09-07 16:26:15.741552591 -0500
 @@ -0,0 +1,51 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -9555,9 +9441,9 @@ diff -urN linux-orig/fs/gfs/file.h linux-patched/fs/gfs/file.h
 +}
 +
 +#endif /* __FILE_DOT_H__ */
-diff -urN linux-orig/fs/gfs/fixed_div64.h linux-patched/fs/gfs/fixed_div64.h
---- linux-orig/fs/gfs/fixed_div64.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/fixed_div64.h	2004-06-20 22:48:17.948946686 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/fixed_div64.h linux/fs/gfs/fixed_div64.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/fixed_div64.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/fixed_div64.h	2004-09-07 16:26:15.741552591 -0500
 @@ -0,0 +1,142 @@
 +/*
 + * Copyright (c) 2000-2003 Silicon Graphics, Inc.  All Rights Reserved.
@@ -9701,135 +9587,9 @@ diff -urN linux-orig/fs/gfs/fixed_div64.h linux-patched/fs/gfs/fixed_div64.h
 +#define do_mod(a, b)	fixed_div64_do_mod(&(a), (b), sizeof(a))
 +
 +#endif /* __FIXED_DIV64_DOT_H__ */
-diff -urN linux-orig/fs/gfs/flock.c linux-patched/fs/gfs/flock.c
---- linux-orig/fs/gfs/flock.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/flock.c	2004-06-20 22:48:17.948946686 -0500
-@@ -0,0 +1,98 @@
-+/******************************************************************************
-+*******************************************************************************
-+**
-+**  Copyright (C) Sistina Software, Inc.  1997-2003  All rights reserved.
-+**  Copyright (C) 2004 Red Hat, Inc.  All rights reserved.
-+**
-+**  This copyrighted material is made available to anyone wishing to use,
-+**  modify, copy, or redistribute it subject to the terms and conditions
-+**  of the GNU General Public License v.2.
-+**
-+*******************************************************************************
-+******************************************************************************/
-+
-+#include <linux/sched.h>
-+#include <linux/slab.h>
-+#include <linux/smp_lock.h>
-+#include <linux/spinlock.h>
-+#include <asm/semaphore.h>
-+#include <linux/completion.h>
-+#include <linux/buffer_head.h>
-+
-+#include "gfs.h"
-+#include "flock.h"
-+#include "glock.h"
-+#include "glops.h"
-+
-+/**
-+ * gfs_flock - Acquire a flock on a file
-+ * @fp: the file
-+ * @ex: exclusive lock
-+ * @wait: wait for lock
-+ *
-+ * Returns: 0 on success, -EXXX on failure
-+ */
-+
-+int
-+gfs_flock(struct gfs_file *fp, int ex, int wait)
-+{
-+	struct gfs_holder *fl_gh = &fp->f_fl_gh;
-+	struct gfs_inode *ip = fp->f_inode;
-+	struct gfs_sbd *sdp = ip->i_sbd;
-+	struct gfs_glock *gl;
-+	int error = 0;
-+
-+	down(&fp->f_fl_lock);
-+
-+	if (fl_gh->gh_gl) {
-+		gfs_glock_dq_uninit(fl_gh);
-+		error = -EDEADLK;
-+		goto out;
-+	}
-+
-+	error = gfs_glock_get(sdp,
-+			      ip->i_num.no_formal_ino, &gfs_flock_glops,
-+			      CREATE, &gl);
-+	if (error)
-+		goto out;
-+
-+	gfs_holder_init(gl, (ex) ? LM_ST_EXCLUSIVE : LM_ST_SHARED,
-+			((wait) ? 0 : LM_FLAG_TRY) | GL_EXACT | GL_NOCACHE,
-+			fl_gh);
-+	fl_gh->gh_owner = NULL;
-+
-+	gfs_glock_put(gl);
-+
-+	error = gfs_glock_nq(fl_gh);
-+	if (error) {
-+		gfs_holder_uninit(fl_gh);
-+		if (error == GLR_TRYFAILED) {
-+			GFS_ASSERT_INODE(!wait, ip,);
-+			error = -EAGAIN;
-+		}
-+	}
-+
-+ out:
-+	up(&fp->f_fl_lock);
-+
-+	return error;
-+}
-+
-+/**
-+ * gfs_funlock - Release a flock on a file
-+ * @fp: the file
-+ *
-+ */
-+
-+int
-+gfs_funlock(struct gfs_file *fp)
-+{
-+	struct gfs_holder *fl_gh = &fp->f_fl_gh;
-+
-+	down(&fp->f_fl_lock);
-+	if (fl_gh->gh_gl)
-+		gfs_glock_dq_uninit(fl_gh);
-+	up(&fp->f_fl_lock);
-+
-+	return 0;
-+}
-diff -urN linux-orig/fs/gfs/flock.h linux-patched/fs/gfs/flock.h
---- linux-orig/fs/gfs/flock.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/flock.h	2004-06-20 22:48:17.948946686 -0500
-@@ -0,0 +1,20 @@
-+/******************************************************************************
-+*******************************************************************************
-+**
-+**  Copyright (C) Sistina Software, Inc.  1997-2003  All rights reserved.
-+**  Copyright (C) 2004 Red Hat, Inc.  All rights reserved.
-+**
-+**  This copyrighted material is made available to anyone wishing to use,
-+**  modify, copy, or redistribute it subject to the terms and conditions
-+**  of the GNU General Public License v.2.
-+**
-+*******************************************************************************
-+******************************************************************************/
-+
-+#ifndef __FLOCK_DOT_H__
-+#define __FLOCK_DOT_H__
-+
-+int gfs_flock(struct gfs_file *fp, int ex, int wait);
-+int gfs_funlock(struct gfs_file *fp);
-+
-+#endif /* __FLOCK_DOT_H__ */
-diff -urN linux-orig/fs/gfs/format.h linux-patched/fs/gfs/format.h
---- linux-orig/fs/gfs/format.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/format.h	2004-06-20 22:48:17.948946686 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/format.h linux/fs/gfs/format.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/format.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/format.h	2004-09-07 16:26:15.742552371 -0500
 @@ -0,0 +1,30 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -9861,9 +9621,9 @@ diff -urN linux-orig/fs/gfs/format.h linux-patched/fs/gfs/format.h
 +};
 +
 +#endif /* __FORMAT_DOT_H__ */
-diff -urN linux-orig/fs/gfs/gfs.h linux-patched/fs/gfs/gfs.h
---- linux-orig/fs/gfs/gfs.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/gfs.h	2004-06-20 22:48:17.948946686 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/gfs.h linux/fs/gfs/gfs.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/gfs.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/gfs.h	2004-09-07 16:26:15.742552371 -0500
 @@ -0,0 +1,130 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -9995,9 +9755,9 @@ diff -urN linux-orig/fs/gfs/gfs.h linux-patched/fs/gfs/gfs.h
 +while (0)
 +
 +#endif /* __GFS_DOT_H__ */
-diff -urN linux-orig/fs/gfs/glock.c linux-patched/fs/gfs/glock.c
---- linux-orig/fs/gfs/glock.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/glock.c	2004-06-20 22:48:17.949946404 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/glock.c linux/fs/gfs/glock.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/glock.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/glock.c	2004-09-07 16:26:15.745551709 -0500
 @@ -0,0 +1,2524 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -10107,8 +9867,8 @@ diff -urN linux-orig/fs/gfs/glock.c linux-patched/fs/gfs/glock.c
 +{
 +	if (atomic_read(&gl->gl_count) == 1)
 +		gfs_glock_schedule_for_reclaim(gl);
++	GFS_ASSERT_GLOCK(atomic_read(&gl->gl_count) > 0, gl,);
 +	atomic_dec(&gl->gl_count);
-+	GFS_ASSERT_GLOCK(atomic_read(&gl->gl_count) >= 0, gl,);
 +}
 +
 +/**
@@ -11587,7 +11347,7 @@ diff -urN linux-orig/fs/gfs/glock.c linux-patched/fs/gfs/glock.c
 + */
 +
 +static int
-+glock_compare(void *arg_a, void *arg_b)
++glock_compare(const void *arg_a, const void *arg_b)
 +{
 +	struct gfs_holder *gh_a = *(struct gfs_holder **)arg_a;
 +	struct gfs_holder *gh_b = *(struct gfs_holder **)arg_b;
@@ -12523,9 +12283,9 @@ diff -urN linux-orig/fs/gfs/glock.c linux-patched/fs/gfs/glock.c
 +
 +	return error;
 +}
-diff -urN linux-orig/fs/gfs/glock.h linux-patched/fs/gfs/glock.h
---- linux-orig/fs/gfs/glock.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/glock.h	2004-06-20 22:48:17.949946404 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/glock.h linux/fs/gfs/glock.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/glock.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/glock.h	2004-09-07 16:26:15.745551709 -0500
 @@ -0,0 +1,134 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -12661,9 +12421,9 @@ diff -urN linux-orig/fs/gfs/glock.h linux-patched/fs/gfs/glock.h
 +int gfs_dump_lockstate(struct gfs_sbd *sdp, struct gfs_user_buffer *ub);
 +
 +#endif /* __GFS_GLOCK_DOT_H__ */
-diff -urN linux-orig/fs/gfs/glops.c linux-patched/fs/gfs/glops.c
---- linux-orig/fs/gfs/glops.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/glops.c	2004-06-20 22:48:17.949946404 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/glops.c linux/fs/gfs/glops.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/glops.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/glops.c	2004-09-07 16:26:15.746551489 -0500
 @@ -0,0 +1,526 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -13191,9 +12951,9 @@ diff -urN linux-orig/fs/gfs/glops.c linux-patched/fs/gfs/glops.c
 +      .go_demote_ok = quota_go_demote_ok,
 +      .go_type = LM_TYPE_QUOTA
 +};
-diff -urN linux-orig/fs/gfs/glops.h linux-patched/fs/gfs/glops.h
---- linux-orig/fs/gfs/glops.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/glops.h	2004-06-20 22:48:17.949946404 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/glops.h linux/fs/gfs/glops.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/glops.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/glops.h	2004-09-07 16:26:15.746551489 -0500
 @@ -0,0 +1,26 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -13221,9 +12981,9 @@ diff -urN linux-orig/fs/gfs/glops.h linux-patched/fs/gfs/glops.h
 +extern struct gfs_glock_operations gfs_quota_glops;
 +
 +#endif /* __GLOPS_DOT_H__ */
-diff -urN linux-orig/fs/gfs/incore.h linux-patched/fs/gfs/incore.h
---- linux-orig/fs/gfs/incore.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/incore.h	2004-06-20 22:48:17.950946122 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/incore.h linux/fs/gfs/incore.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/incore.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/incore.h	2004-09-07 16:26:15.747551268 -0500
 @@ -0,0 +1,726 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -13951,10 +13711,10 @@ diff -urN linux-orig/fs/gfs/incore.h linux-patched/fs/gfs/incore.h
 +};
 +
 +#endif /* __INCORE_DOT_H__ */
-diff -urN linux-orig/fs/gfs/inode.c linux-patched/fs/gfs/inode.c
---- linux-orig/fs/gfs/inode.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/inode.c	2004-06-20 22:48:17.950946122 -0500
-@@ -0,0 +1,1993 @@
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/inode.c linux/fs/gfs/inode.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/inode.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/inode.c	2004-09-07 16:26:15.749550827 -0500
+@@ -0,0 +1,2001 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -14342,8 +14102,8 @@ diff -urN linux-orig/fs/gfs/inode.c linux-patched/fs/gfs/inode.c
 +void
 +gfs_inode_put(struct gfs_inode *ip)
 +{
++	GFS_ASSERT_INODE(atomic_read(&ip->i_count) > 0, ip,);
 +	atomic_dec(&ip->i_count);
-+	GFS_ASSERT_INODE(atomic_read(&ip->i_count) >= 0, ip,);
 +}
 +
 +/**
@@ -15089,31 +14849,39 @@ diff -urN linux-orig/fs/gfs/inode.c linux-patched/fs/gfs/inode.c
 +	struct posix_acl *acl = NULL;
 +	struct gfs_alloc *al;
 +	struct gfs_inode *ip;
-+	unsigned int gid;
++	unsigned int uid, gid;
 +	int alloc_required;
 +	int error;
 +
-+	error = gfs_setup_new_acl(dip, type, &mode, &acl);
-+	if (error)
-+		return error;
++	if (sdp->sd_args.ar_suiddir &&
++	    (dip->i_di.di_mode & S_ISUID) &&
++	    dip->i_di.di_uid) {
++		if (type == GFS_FILE_DIR)
++			mode |= S_ISUID;
++		else if (dip->i_di.di_uid != current->fsuid)
++			mode &= ~07111;
++		uid = dip->i_di.di_uid;
++	} else
++		uid = current->fsuid;
 +
 +	if (dip->i_di.di_mode & S_ISGID) {
 +		if (type == GFS_FILE_DIR)
 +			mode |= S_ISGID;
 +		gid = dip->i_di.di_gid;
-+	}
-+	else
++	} else
 +		gid = current->fsgid;
++
++	error = gfs_setup_new_acl(dip, type, &mode, &acl);
++	if (error)
++		return error;
 +
 +	al = gfs_alloc_get(dip);
 +
-+	error = gfs_quota_lock_m(dip,
-+				 current->fsuid,
-+				 gid);
++	error = gfs_quota_lock_m(dip, uid, gid);
 +	if (error)
 +		goto fail;
 +
-+	error = gfs_quota_check(dip, current->fsuid, gid);
++	error = gfs_quota_check(dip, uid, gid);
 +	if (error)
 +		goto fail_gunlock_q;
 +
@@ -15163,13 +14931,13 @@ diff -urN linux-orig/fs/gfs/inode.c linux-patched/fs/gfs/inode.c
 +	if (error)
 +		goto fail_end_trans;
 +
-+	error = make_dinode(dip, gl, inum, type, mode, current->fsuid, gid);
++	error = make_dinode(dip, gl, inum, type, mode, uid, gid);
 +	if (error)
 +		goto fail_end_trans;
 +
 +	al->al_ul = gfs_trans_add_unlinked(sdp, GFS_LOG_DESC_IDA,
 +					   &(struct gfs_inum){0, inum->no_addr});
-+	gfs_trans_add_quota(sdp, +1, current->fsuid, gid);
++	gfs_trans_add_quota(sdp, +1, uid, gid);
 +
 +	/* Gfs_inode_get() can't fail here.  But then again, it shouldn't be
 +	   here (it should be in gfs_createi()).  Gfs_init_acl() has no
@@ -15647,7 +15415,7 @@ diff -urN linux-orig/fs/gfs/inode.c linux-patched/fs/gfs/inode.c
 + */
 +
 +static int
-+glock_compare_atime(void *arg_a, void *arg_b)
++glock_compare_atime(const void *arg_a, const void *arg_b)
 +{
 +	struct gfs_holder *gh_a = *(struct gfs_holder **)arg_a;
 +	struct gfs_holder *gh_b = *(struct gfs_holder **)arg_b;
@@ -15948,9 +15716,9 @@ diff -urN linux-orig/fs/gfs/inode.c linux-patched/fs/gfs/inode.c
 +{
 +	return inode_alloc_hidden(sdp, &sdp->sd_sb.sb_license_di);
 +}
-diff -urN linux-orig/fs/gfs/inode.h linux-patched/fs/gfs/inode.h
---- linux-orig/fs/gfs/inode.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/inode.h	2004-06-20 22:48:17.950946122 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/inode.h linux/fs/gfs/inode.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/inode.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/inode.h	2004-09-07 16:26:15.750550606 -0500
 @@ -0,0 +1,68 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -16020,9 +15788,9 @@ diff -urN linux-orig/fs/gfs/inode.h linux-patched/fs/gfs/inode.h
 +}
 +
 +#endif /* __INODE_DOT_H__ */
-diff -urN linux-orig/fs/gfs/ioctl.c linux-patched/fs/gfs/ioctl.c
---- linux-orig/fs/gfs/ioctl.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/ioctl.c	2004-06-20 22:48:17.950946122 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/ioctl.c linux/fs/gfs/ioctl.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/ioctl.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/ioctl.c	2004-09-07 16:26:15.751550386 -0500
 @@ -0,0 +1,983 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -17007,9 +16775,9 @@ diff -urN linux-orig/fs/gfs/ioctl.c linux-patched/fs/gfs/ioctl.c
 +
 +	return error;
 +}
-diff -urN linux-orig/fs/gfs/ioctl.h linux-patched/fs/gfs/ioctl.h
---- linux-orig/fs/gfs/ioctl.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/ioctl.h	2004-06-20 22:48:17.950946122 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/ioctl.h linux/fs/gfs/ioctl.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/ioctl.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/ioctl.h	2004-09-07 16:26:15.751550386 -0500
 @@ -0,0 +1,21 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -17032,9 +16800,9 @@ diff -urN linux-orig/fs/gfs/ioctl.h linux-patched/fs/gfs/ioctl.h
 +int gfs_ioctli(struct gfs_inode *ip, unsigned int cmd, void *arg);
 +
 +#endif /* __IOCTL_DOT_H__ */
-diff -urN linux-orig/fs/gfs/locking.c linux-patched/fs/gfs/locking.c
---- linux-orig/fs/gfs/locking.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/locking.c	2004-06-20 22:48:17.950946122 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/locking.c linux/fs/gfs/locking.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/locking.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/locking.c	2004-09-07 16:26:15.752550165 -0500
 @@ -0,0 +1,114 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -17150,9 +16918,9 @@ diff -urN linux-orig/fs/gfs/locking.c linux-patched/fs/gfs/locking.c
 +{
 +	lm_unmount(&sdp->sd_lockstruct);
 +}
-diff -urN linux-orig/fs/gfs/locking.h linux-patched/fs/gfs/locking.h
---- linux-orig/fs/gfs/locking.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/locking.h	2004-06-20 22:48:17.950946122 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/locking.h linux/fs/gfs/locking.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/locking.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/locking.h	2004-09-07 16:26:15.752550165 -0500
 @@ -0,0 +1,20 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -17174,10 +16942,10 @@ diff -urN linux-orig/fs/gfs/locking.h linux-patched/fs/gfs/locking.h
 +void gfs_unmount_lockproto(struct gfs_sbd *sdp);
 +
 +#endif /* __LOCKING_DOT_H__ */
-diff -urN linux-orig/fs/gfs/log.c linux-patched/fs/gfs/log.c
---- linux-orig/fs/gfs/log.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/log.c	2004-06-20 22:48:17.951945841 -0500
-@@ -0,0 +1,1315 @@
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/log.c linux/fs/gfs/log.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/log.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/log.c	2004-09-07 16:26:15.753549945 -0500
+@@ -0,0 +1,1318 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -17694,6 +17462,8 @@ diff -urN linux-orig/fs/gfs/log.c linux-patched/fs/gfs/log.c
 +	GFS_ASSERT_SBD(segments == tr->tr_seg_reserved, sdp,);
 +
 +	if (sdp->sd_log_dump_last) {
++		int diff;
++
 +		head_off = tr->tr_first_head +
 +			tr->tr_seg_reserved * sdp->sd_sb.sb_seg_size;
 +		head_wrap = sdp->sd_log_wrap;
@@ -17706,7 +17476,8 @@ diff -urN linux-orig/fs/gfs/log.c linux-patched/fs/gfs/log.c
 +		dump_off = sdp->sd_log_dump_last;
 +		dump_wrap = sdp->sd_log_dump_last_wrap;
 +
-+		switch (head_wrap - dump_wrap) {
++		diff = (int)(head_wrap - dump_wrap);
++		switch (diff) {
 +		case 0:
 +			break;
 +
@@ -18493,9 +18264,9 @@ diff -urN linux-orig/fs/gfs/log.c linux-patched/fs/gfs/log.c
 +
 +	return error;
 +}
-diff -urN linux-orig/fs/gfs/log.h linux-patched/fs/gfs/log.h
---- linux-orig/fs/gfs/log.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/log.h	2004-06-20 22:48:17.951945841 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/log.h linux/fs/gfs/log.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/log.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/log.h	2004-09-07 16:26:15.754549724 -0500
 @@ -0,0 +1,79 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -18576,9 +18347,9 @@ diff -urN linux-orig/fs/gfs/log.h linux-patched/fs/gfs/log.h
 +		      struct buffer_head *unlock);
 +
 +#endif /* __LOG_DOT_H__ */
-diff -urN linux-orig/fs/gfs/lops.c linux-patched/fs/gfs/lops.c
---- linux-orig/fs/gfs/lops.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/lops.c	2004-06-20 22:48:17.951945841 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/lops.c linux/fs/gfs/lops.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/lops.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/lops.c	2004-09-07 16:26:15.776544872 -0500
 @@ -0,0 +1,1563 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -20143,9 +19914,9 @@ diff -urN linux-orig/fs/gfs/lops.c linux-patched/fs/gfs/lops.c
 +	&gfs_quota_lops,
 +	NULL
 +};
-diff -urN linux-orig/fs/gfs/lops.h linux-patched/fs/gfs/lops.h
---- linux-orig/fs/gfs/lops.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/lops.h	2004-06-20 22:48:17.951945841 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/lops.h linux/fs/gfs/lops.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/lops.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/lops.h	2004-09-07 16:26:15.777544652 -0500
 @@ -0,0 +1,179 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -20326,9 +20097,9 @@ diff -urN linux-orig/fs/gfs/lops.h linux-patched/fs/gfs/lops.h
 +while (0)
 +
 +#endif /* __LOPS_DOT_H__ */
-diff -urN linux-orig/fs/gfs/lvb.c linux-patched/fs/gfs/lvb.c
---- linux-orig/fs/gfs/lvb.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/lvb.c	2004-06-20 22:48:17.951945841 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/lvb.c linux/fs/gfs/lvb.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/lvb.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/lvb.c	2004-09-07 16:26:15.777544652 -0500
 @@ -0,0 +1,148 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -20478,9 +20249,9 @@ diff -urN linux-orig/fs/gfs/lvb.c linux-patched/fs/gfs/lvb.c
 +	pv(qb, qb_warn, "%"PRIu64);
 +	pv(qb, qb_value, "%"PRId64);
 +}
-diff -urN linux-orig/fs/gfs/lvb.h linux-patched/fs/gfs/lvb.h
---- linux-orig/fs/gfs/lvb.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/lvb.h	2004-06-20 22:48:17.951945841 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/lvb.h linux/fs/gfs/lvb.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/lvb.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/lvb.h	2004-09-07 16:26:15.777544652 -0500
 @@ -0,0 +1,48 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -20530,9 +20301,9 @@ diff -urN linux-orig/fs/gfs/lvb.h linux-patched/fs/gfs/lvb.h
 +void gfs_quota_lvb_print(struct gfs_quota_lvb *qb);
 +
 +#endif /* __LVB_DOT_H__ */
-diff -urN linux-orig/fs/gfs/main.c linux-patched/fs/gfs/main.c
---- linux-orig/fs/gfs/main.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/main.c	2004-06-20 22:48:17.951945841 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/main.c linux/fs/gfs/main.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/main.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/main.c	2004-09-07 16:26:15.778544431 -0500
 @@ -0,0 +1,142 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -20676,10 +20447,10 @@ diff -urN linux-orig/fs/gfs/main.c linux-patched/fs/gfs/main.c
 +module_init(init_gfs_fs);
 +module_exit(exit_gfs_fs);
 +
-diff -urN linux-orig/fs/gfs/mount.c linux-patched/fs/gfs/mount.c
---- linux-orig/fs/gfs/mount.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/mount.c	2004-06-20 22:48:17.951945841 -0500
-@@ -0,0 +1,212 @@
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/mount.c linux/fs/gfs/mount.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/mount.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/mount.c	2004-09-07 16:26:15.778544431 -0500
+@@ -0,0 +1,215 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -20810,6 +20581,9 @@ diff -urN linux-orig/fs/gfs/mount.c linux-patched/fs/gfs/mount.c
 +		else if (!strcmp(x, "acl"))
 +			args->ar_posixacls = TRUE;
 +
++		else if (!strcmp(x, "suiddir"))
++			args->ar_suiddir = TRUE;
++
 +		/*  Unknown  */
 +
 +		else {
@@ -20892,9 +20666,9 @@ diff -urN linux-orig/fs/gfs/mount.c linux-patched/fs/gfs/mount.c
 +	module_put(THIS_MODULE);
 +	return error;
 +}
-diff -urN linux-orig/fs/gfs/mount.h linux-patched/fs/gfs/mount.h
---- linux-orig/fs/gfs/mount.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/mount.h	2004-06-20 22:48:17.951945841 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/mount.h linux/fs/gfs/mount.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/mount.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/mount.h	2004-09-07 16:26:15.778544431 -0500
 @@ -0,0 +1,27 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -20923,9 +20697,9 @@ diff -urN linux-orig/fs/gfs/mount.h linux-patched/fs/gfs/mount.h
 +		   unsigned long count, void *data);
 +
 +#endif /* __MOUNT_DOT_H__ */
-diff -urN linux-orig/fs/gfs/ondisk.c linux-patched/fs/gfs/ondisk.c
---- linux-orig/fs/gfs/ondisk.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/ondisk.c	2004-06-20 22:48:17.951945841 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/ondisk.c linux/fs/gfs/ondisk.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/ondisk.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/ondisk.c	2004-09-07 16:26:15.779544211 -0500
 @@ -0,0 +1,28 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -20955,9 +20729,9 @@ diff -urN linux-orig/fs/gfs/ondisk.c linux-patched/fs/gfs/ondisk.c
 +#define WANT_GFS_CONVERSION_FUNCTIONS
 +#include <linux/gfs_ondisk.h>
 +
-diff -urN linux-orig/fs/gfs/ops_address.c linux-patched/fs/gfs/ops_address.c
---- linux-orig/fs/gfs/ops_address.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/ops_address.c	2004-06-20 22:48:17.951945841 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/ops_address.c linux/fs/gfs/ops_address.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/ops_address.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/ops_address.c	2004-09-07 16:26:15.779544211 -0500
 @@ -0,0 +1,476 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -21435,9 +21209,9 @@ diff -urN linux-orig/fs/gfs/ops_address.c linux-patched/fs/gfs/ops_address.c
 +	.bmap = gfs_bmap,
 +	.direct_IO = gfs_direct_IO,
 +};
-diff -urN linux-orig/fs/gfs/ops_address.h linux-patched/fs/gfs/ops_address.h
---- linux-orig/fs/gfs/ops_address.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/ops_address.h	2004-06-20 22:48:17.952945559 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/ops_address.h linux/fs/gfs/ops_address.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/ops_address.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/ops_address.h	2004-09-07 16:26:15.780543990 -0500
 @@ -0,0 +1,19 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -21458,9 +21232,9 @@ diff -urN linux-orig/fs/gfs/ops_address.h linux-patched/fs/gfs/ops_address.h
 +extern struct address_space_operations gfs_file_aops;
 +
 +#endif /* __OPS_ADDRESS_DOT_H__ */
-diff -urN linux-orig/fs/gfs/ops_dentry.c linux-patched/fs/gfs/ops_dentry.c
---- linux-orig/fs/gfs/ops_dentry.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/ops_dentry.c	2004-06-20 22:48:17.952945559 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/ops_dentry.c linux/fs/gfs/ops_dentry.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/ops_dentry.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/ops_dentry.c	2004-09-07 16:26:15.780543990 -0500
 @@ -0,0 +1,124 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -21586,9 +21360,9 @@ diff -urN linux-orig/fs/gfs/ops_dentry.c linux-patched/fs/gfs/ops_dentry.c
 +struct dentry_operations gfs_dops = {
 +	.d_revalidate = gfs_drevalidate,
 +};
-diff -urN linux-orig/fs/gfs/ops_dentry.h linux-patched/fs/gfs/ops_dentry.h
---- linux-orig/fs/gfs/ops_dentry.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/ops_dentry.h	2004-06-20 22:48:17.952945559 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/ops_dentry.h linux/fs/gfs/ops_dentry.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/ops_dentry.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/ops_dentry.h	2004-09-07 16:26:15.780543990 -0500
 @@ -0,0 +1,19 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -21609,9 +21383,9 @@ diff -urN linux-orig/fs/gfs/ops_dentry.h linux-patched/fs/gfs/ops_dentry.h
 +extern struct dentry_operations gfs_dops;
 +
 +#endif /* __OPS_DENTRY_DOT_H__ */
-diff -urN linux-orig/fs/gfs/ops_export.c linux-patched/fs/gfs/ops_export.c
---- linux-orig/fs/gfs/ops_export.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/ops_export.c	2004-06-20 22:48:17.952945559 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/ops_export.c linux/fs/gfs/ops_export.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/ops_export.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/ops_export.c	2004-09-07 16:26:15.781543770 -0500
 @@ -0,0 +1,415 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -22028,9 +21802,9 @@ diff -urN linux-orig/fs/gfs/ops_export.c linux-patched/fs/gfs/ops_export.c
 +	.get_dentry = gfs_get_dentry,
 +};
 +
-diff -urN linux-orig/fs/gfs/ops_export.h linux-patched/fs/gfs/ops_export.h
---- linux-orig/fs/gfs/ops_export.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/ops_export.h	2004-06-20 22:48:17.952945559 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/ops_export.h linux/fs/gfs/ops_export.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/ops_export.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/ops_export.h	2004-09-07 16:26:15.781543770 -0500
 @@ -0,0 +1,19 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -22051,10 +21825,10 @@ diff -urN linux-orig/fs/gfs/ops_export.h linux-patched/fs/gfs/ops_export.h
 +extern struct export_operations gfs_export_ops;
 +
 +#endif /* __OPS_EXPORT_DOT_H__ */
-diff -urN linux-orig/fs/gfs/ops_file.c linux-patched/fs/gfs/ops_file.c
---- linux-orig/fs/gfs/ops_file.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/ops_file.c	2004-06-20 22:48:17.952945559 -0500
-@@ -0,0 +1,1552 @@
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/ops_file.c linux/fs/gfs/ops_file.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/ops_file.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/ops_file.c	2004-09-07 16:26:39.160387807 -0500
+@@ -0,0 +1,1646 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -22086,7 +21860,6 @@ diff -urN linux-orig/fs/gfs/ops_file.c linux-patched/fs/gfs/ops_file.c
 +#include "dio.h"
 +#include "dir.h"
 +#include "file.h"
-+#include "flock.h"
 +#include "glock.h"
 +#include "glops.h"
 +#include "inode.h"
@@ -23271,6 +23044,50 @@ diff -urN linux-orig/fs/gfs/ops_file.c linux-patched/fs/gfs/ops_file.c
 +}
 +
 +/**
++ * gfs_mmap - We don't support shared writable mappings right now
++ * @file: The file to map
++ * @vma: The VMA which described the mapping
++ *
++ * Returns: 0 or error code
++ */
++
++static int
++gfs_mmap(struct file *file, struct vm_area_struct *vma)
++{
++	struct gfs_inode *ip = vn2ip(file->f_mapping->host);
++	struct gfs_holder i_gh;
++	int error;
++
++	atomic_inc(&ip->i_sbd->sd_ops_file);
++
++	gfs_holder_init(ip->i_gl, LM_ST_SHARED, GL_ATIME, &i_gh);
++	error = gfs_glock_nq_atime(&i_gh);
++	if (error) {
++		gfs_holder_uninit(&i_gh);
++		return error;
++	}
++
++	if (gfs_is_jdata(ip)) {
++		if (vma->vm_flags & VM_MAYSHARE)
++			error = -ENOSYS;
++		else
++			vma->vm_ops = &gfs_vm_ops_private;
++	} else {
++		/* This is VM_MAYWRITE instead of VM_WRITE because a call
++		   to mprotect() can turn on VM_WRITE later. */
++
++		if ((vma->vm_flags & (VM_MAYSHARE | VM_MAYWRITE)) == (VM_MAYSHARE | VM_MAYWRITE))
++			vma->vm_ops = &gfs_vm_ops_sharewrite;
++		else
++			vma->vm_ops = &gfs_vm_ops_private;
++	}
++
++	gfs_glock_dq_uninit(&i_gh);
++
++	return error;
++}
++
++/**
 + * gfs_open - open a file
 + * @inode: the inode to open
 + * @file: the struct file for this opening
@@ -23411,93 +23228,70 @@ diff -urN linux-orig/fs/gfs/ops_file.c linux-patched/fs/gfs/ops_file.c
 +}
 +
 +/**
-+ * gfs_lock - acquire/release a flock or posix lock on a file
++ * do_plock - acquire/release a posix lock on a file
 + * @file: the file pointer
 + * @cmd: either modify or retrieve lock state, possibly wait
 + * @fl: type and range of lock
 + *
-+ * Returns: 0 on success, -EXXX on failure
++ * Returns: errno
++ */
++
++static int
++do_plock(struct file *file, int cmd, struct file_lock *fl)
++{
++	struct gfs_inode *ip = vn2ip(file->f_mapping->host);
++	struct gfs_sbd *sdp = ip->i_sbd;
++	struct lm_lockname name =
++		{ .ln_number = ip->i_num.no_formal_ino,
++		  .ln_type = LM_TYPE_PLOCK };
++
++	if (sdp->sd_args.ar_localflocks) {
++		if (IS_GETLK(cmd))
++			return LOCK_USE_CLNT;
++		return posix_lock_file_wait(file, fl);
++	}
++
++	if (IS_GETLK(cmd))
++		return sdp->sd_lockstruct.ls_ops->lm_plock_get(
++			sdp->sd_lockstruct.ls_lockspace,
++			&name, file, fl);
++
++	else if (fl->fl_type == F_UNLCK)
++		return sdp->sd_lockstruct.ls_ops->lm_punlock(
++			sdp->sd_lockstruct.ls_lockspace,
++			&name, file, fl);
++
++	else
++		return sdp->sd_lockstruct.ls_ops->lm_plock(
++			sdp->sd_lockstruct.ls_lockspace,
++			&name, file, cmd, fl);
++}
++
++/**
++ * gfs_lock - acquire/release a posix lock on a file
++ * @file: the file pointer
++ * @cmd: either modify or retrieve lock state, possibly wait
++ * @fl: type and range of lock
++ *
++ * Returns: errno
 + */
 +
 +static int
 +gfs_lock(struct file *file, int cmd, struct file_lock *fl)
 +{
 +	struct gfs_inode *ip = vn2ip(file->f_mapping->host);
-+	struct gfs_sbd *sdp = ip->i_sbd;
-+	struct lm_lockname name;
-+	uint64_t start = fl->fl_start, end = fl->fl_end;
-+	pid_t pid = fl->fl_pid;
-+	int plock = (fl->fl_flags & FL_POSIX);
-+	int flock = (fl->fl_flags & FL_FLOCK);
-+	int get, set, wait, ex, sh, un;
-+	int error;
++	int error = 0;
 +
-+	atomic_inc(&sdp->sd_ops_file);
-+
-+	if (sdp->sd_args.ar_localflocks)
-+		return LOCK_USE_CLNT;
++	atomic_inc(&ip->i_sbd->sd_ops_file);
 +
 +	if ((ip->i_di.di_mode & (S_ISGID | S_IXGRP)) == S_ISGID)
 +		return -ENOLCK;
 +
-+	if (!flock && !plock)
-+		return -ENOLCK;
++	if (fl->fl_flags & FL_POSIX)
++		error = do_plock(file, cmd, fl);
 +
-+	get = (IS_GETLK(cmd)) ? TRUE : FALSE;
-+	set = (IS_SETLK(cmd)) ? TRUE : FALSE;
-+	wait = (IS_SETLKW(cmd)) ? TRUE : FALSE;
-+
-+	if ((flock && (get || (!set && !wait))) ||
-+	    (plock && (!get && !set && !wait)))
-+		return -EINVAL;
-+
-+	ex = (fl->fl_type == F_WRLCK) ? TRUE : FALSE;
-+	sh = (fl->fl_type == F_RDLCK) ? TRUE : FALSE;
-+	un = (fl->fl_type == F_UNLCK) ? TRUE : FALSE;
-+
-+	if (!ex && !sh && !un)
-+		return -EINVAL;
-+
-+	if (flock) {
-+		struct gfs_file *fp = vf2fp(file);
-+		GFS_ASSERT(fp,);
-+
-+		if (un)
-+			error = gfs_funlock(fp);
-+		else
-+			error = gfs_flock(fp, ex, wait);
-+	} else {
-+		name.ln_number = ip->i_num.no_formal_ino;
-+		name.ln_type = LM_TYPE_PLOCK;
-+		if (get) {
-+			error = sdp->sd_lockstruct.ls_ops->lm_plock_get(
-+					sdp->sd_lockstruct.ls_lockspace,
-+					&name, (unsigned long)fl->fl_owner,
-+					&start, &end, &ex, (unsigned long*)&pid);
-+			if (error < 0)
-+				return error;
-+
-+			fl->fl_type = F_UNLCK;
-+			if (!error)
-+				return error;
-+
-+			fl->fl_start = start;
-+			fl->fl_end = end;
-+			fl->fl_pid = pid;
-+			fl->fl_type = (ex) ? F_WRLCK : F_RDLCK;
-+
-+			error = 0;
-+		} else if (un)
-+			error = sdp->sd_lockstruct.ls_ops->lm_punlock(
-+					sdp->sd_lockstruct.ls_lockspace,
-+					&name, (unsigned long)fl->fl_owner,
-+					start, end);
-+		else
-+			error = sdp->sd_lockstruct.ls_ops->lm_plock(
-+					sdp->sd_lockstruct.ls_lockspace,
-+					&name, (unsigned long)fl->fl_owner,
-+					wait, ex, start, end);
-+	}
++	else
++		error = -ENOLCK;
 +
 +	return error;
 +}
@@ -23543,45 +23337,117 @@ diff -urN linux-orig/fs/gfs/ops_file.c linux-patched/fs/gfs/ops_file.c
 +}
 +
 +/**
-+ * gfs_mmap - We don't support shared writable mappings right now
-+ * @file: The file to map
-+ * @vma: The VMA which described the mapping
++ * do_flock - Acquire a flock on a file
++ * @file:
++ * @cmd:
++ * @fl:
 + *
-+ * Returns: 0 or error code
++ * Returns: errno
 + */
 +
 +static int
-+gfs_mmap(struct file *file, struct vm_area_struct *vma)
++do_flock(struct file *file, int cmd, struct file_lock *fl)
++{
++	struct gfs_file *fp = vf2fp(file);
++	struct gfs_holder *fl_gh = &fp->f_fl_gh;
++	struct gfs_inode *ip = fp->f_inode;
++	struct gfs_glock *gl;
++	unsigned int state;
++	int flags;
++	int error = 0;
++
++	state = (fl->fl_type == F_WRLCK) ? LM_ST_EXCLUSIVE : LM_ST_SHARED;
++	flags = ((IS_SETLKW(cmd)) ? 0 : LM_FLAG_TRY) | GL_EXACT | GL_NOCACHE;
++
++	down(&fp->f_fl_lock);
++
++	gl = fl_gh->gh_gl;
++	if (gl) {
++		if (fl_gh->gh_state == state)
++			goto out;
++		gfs_glock_hold(gl);
++		flock_lock_file_wait(file,
++				     &(struct file_lock){.fl_type = F_UNLCK});		
++		gfs_glock_dq_uninit(fl_gh);
++	} else {
++		error = gfs_glock_get(ip->i_sbd,
++				      ip->i_num.no_formal_ino, &gfs_flock_glops,
++				      CREATE, &gl);
++		if (error)
++			goto out;
++	}
++
++	gfs_holder_init(gl, state, flags, fl_gh);
++	gfs_glock_put(gl);
++
++	error = gfs_glock_nq(fl_gh);
++	if (error) {
++		gfs_holder_uninit(fl_gh);
++		if (error == GLR_TRYFAILED) {
++			GFS_ASSERT_INODE(flags & LM_FLAG_TRY, ip,);
++			error = -EAGAIN;
++		}
++	} else {
++		error = flock_lock_file_wait(file, fl);
++		if (error)
++			printk("%s: local flock dropped\n",
++			       ip->i_sbd->sd_fsname);
++	}
++
++ out:
++	up(&fp->f_fl_lock);
++
++	return error;
++}
++
++/**
++ * do_unflock - Release a flock on a file
++ * @file: the file
++ * @fl:
++ *
++ */
++
++static void
++do_unflock(struct file *file, struct file_lock *fl)
++{
++	struct gfs_file *fp = vf2fp(file);
++	struct gfs_holder *fl_gh = &fp->f_fl_gh;
++
++	down(&fp->f_fl_lock);
++	flock_lock_file_wait(file, fl);
++	if (fl_gh->gh_gl)
++		gfs_glock_dq_uninit(fl_gh);
++	up(&fp->f_fl_lock);
++}
++
++/**
++ * gfs_flock - acquire/release a flock lock on a file
++ * @file: the file pointer
++ * @cmd: either modify or retrieve lock state, possibly wait
++ * @fl: type and range of lock
++ *
++ * Returns: errno
++ */
++
++static int
++gfs_flock(struct file *file, int cmd, struct file_lock *fl)
 +{
 +	struct gfs_inode *ip = vn2ip(file->f_mapping->host);
-+	struct gfs_holder i_gh;
-+	int error;
++	int error = 0;
 +
 +	atomic_inc(&ip->i_sbd->sd_ops_file);
 +
-+	gfs_holder_init(ip->i_gl, LM_ST_SHARED, GL_ATIME, &i_gh);
-+	error = gfs_glock_nq_atime(&i_gh);
-+	if (error) {
-+		gfs_holder_uninit(&i_gh);
-+		return error;
-+	}
++	if ((ip->i_di.di_mode & (S_ISGID | S_IXGRP)) == S_ISGID)
++		return -ENOLCK;
 +
-+	if (gfs_is_jdata(ip)) {
-+		if (vma->vm_flags & VM_MAYSHARE)
-+			error = -ENOSYS;
++	if (fl->fl_flags & FL_FLOCK) {
++		if (fl->fl_type == F_UNLCK)
++			do_unflock(file, fl);
 +		else
-+			vma->vm_ops = &gfs_vm_ops_private;
-+	} else {
-+		/* This is VM_MAYWRITE instead of VM_WRITE because a call
-+		   to mprotect() can turn on VM_WRITE later. */
++			error = do_flock(file, cmd, fl);
 +
-+		if ((vma->vm_flags & (VM_MAYSHARE | VM_MAYWRITE)) == (VM_MAYSHARE | VM_MAYWRITE))
-+			vma->vm_ops = &gfs_vm_ops_sharewrite;
-+		else
-+			vma->vm_ops = &gfs_vm_ops_private;
-+	}
-+
-+	gfs_glock_dq_uninit(&i_gh);
++	} else
++		error = -ENOLCK;
 +
 +	return error;
 +}
@@ -23597,6 +23463,7 @@ diff -urN linux-orig/fs/gfs/ops_file.c linux-patched/fs/gfs/ops_file.c
 +	.fsync = gfs_fsync,
 +	.lock = gfs_lock,
 +	.sendfile = gfs_sendfile,
++	.flock = gfs_flock,
 +};
 +
 +struct file_operations gfs_dir_fops = {
@@ -23606,10 +23473,11 @@ diff -urN linux-orig/fs/gfs/ops_file.c linux-patched/fs/gfs/ops_file.c
 +	.release = gfs_close,
 +	.fsync = gfs_fsync,
 +	.lock = gfs_lock,
++	.flock = gfs_flock,
 +};
-diff -urN linux-orig/fs/gfs/ops_file.h linux-patched/fs/gfs/ops_file.h
---- linux-orig/fs/gfs/ops_file.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/ops_file.h	2004-06-20 22:48:17.952945559 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/ops_file.h linux/fs/gfs/ops_file.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/ops_file.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/ops_file.h	2004-09-07 16:26:15.783543329 -0500
 @@ -0,0 +1,20 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -23631,10 +23499,10 @@ diff -urN linux-orig/fs/gfs/ops_file.h linux-patched/fs/gfs/ops_file.h
 +extern struct file_operations gfs_dir_fops;
 +
 +#endif /* __OPS_FILE_DOT_H__ */
-diff -urN linux-orig/fs/gfs/ops_fstype.c linux-patched/fs/gfs/ops_fstype.c
---- linux-orig/fs/gfs/ops_fstype.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/ops_fstype.c	2004-06-20 22:48:17.952945559 -0500
-@@ -0,0 +1,626 @@
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/ops_fstype.c linux/fs/gfs/ops_fstype.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/ops_fstype.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/ops_fstype.c	2004-09-07 16:26:15.784543108 -0500
+@@ -0,0 +1,607 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -23782,18 +23650,12 @@ diff -urN linux-orig/fs/gfs/ops_fstype.c linux-patched/fs/gfs/ops_fstype.c
 +	/*  Set up the buffer cache and fill in some fake values
 +	   to allow us to read in the superblock.  */
 +
-+	sdp->sd_sb.sb_bsize = bdev_hardsect_size(sb->s_bdev);
-+	if (sdp->sd_sb.sb_bsize < GFS_BASIC_BLOCK)
-+		sdp->sd_sb.sb_bsize = GFS_BASIC_BLOCK;
-+	sdp->sd_sb.sb_bsize_shift = ffs(sdp->sd_sb.sb_bsize) - 1;
++	sdp->sd_sb.sb_bsize = sb_min_blocksize(sb, GFS_BASIC_BLOCK);
++	sdp->sd_sb.sb_bsize_shift = sb->s_blocksize_bits;
 +	sdp->sd_fsb2bb_shift = sdp->sd_sb.sb_bsize_shift - GFS_BASIC_BLOCK_SHIFT;
 +	sdp->sd_fsb2bb = 1 << sdp->sd_fsb2bb_shift;
 +
 +	GFS_ASSERT_SBD(sizeof(struct gfs_sb) <= sdp->sd_sb.sb_bsize, sdp,);
-+
-+	set_blocksize(sb->s_bdev, sdp->sd_sb.sb_bsize);
-+	sb->s_blocksize = sdp->sd_sb.sb_bsize;
-+	sb->s_blocksize_bits = sdp->sd_sb.sb_bsize_shift;
 +
 +	error = gfs_mount_lockproto(sdp, silent);
 +	if (error)
@@ -23893,9 +23755,7 @@ diff -urN linux-orig/fs/gfs/ops_fstype.c linux-patched/fs/gfs/ops_fstype.c
 +	sb_gh.gh_gl->gl_ops->go_inval(sb_gh.gh_gl, DIO_METADATA | DIO_DATA);
 +	sb_gh.gh_gl->gl_aspace->i_blkbits = sdp->sd_sb.sb_bsize_shift;
 +
-+	set_blocksize(sb->s_bdev, sdp->sd_sb.sb_bsize);
-+	sb->s_blocksize = sdp->sd_sb.sb_bsize;
-+	sb->s_blocksize_bits = sdp->sd_sb.sb_bsize_shift;
++	sb_set_blocksize(sb, sdp->sd_sb.sb_bsize);
 +
 +	/*  Read in journal index inode  */
 +
@@ -24243,27 +24103,16 @@ diff -urN linux-orig/fs/gfs/ops_fstype.c linux-patched/fs/gfs/ops_fstype.c
 +	return get_sb_bdev(fs_type, flags, dev_name, data, fill_super);
 +}
 +
-+/**
-+ * gfs_kill_sb - 
-+ * @sb:
-+ *
-+ */
-+
-+void gfs_kill_sb(struct super_block *sb)
-+{
-+	kill_block_super(sb);
-+}
-+
 +struct file_system_type gfs_fs_type = {
 +	.name = "gfs",
-+	.fs_flags = FS_REQUIRES_DEV /*| FS_REVAL_DOT*/,
++	.fs_flags = FS_REQUIRES_DEV,
 +	.get_sb = gfs_get_sb,
-+	.kill_sb = gfs_kill_sb,
++	.kill_sb = kill_block_super,
 +	.owner = THIS_MODULE,
 +};
-diff -urN linux-orig/fs/gfs/ops_fstype.h linux-patched/fs/gfs/ops_fstype.h
---- linux-orig/fs/gfs/ops_fstype.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/ops_fstype.h	2004-06-20 22:48:17.952945559 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/ops_fstype.h linux/fs/gfs/ops_fstype.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/ops_fstype.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/ops_fstype.h	2004-09-07 16:26:15.785542887 -0500
 @@ -0,0 +1,19 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -24284,9 +24133,9 @@ diff -urN linux-orig/fs/gfs/ops_fstype.h linux-patched/fs/gfs/ops_fstype.h
 +extern struct file_system_type gfs_fs_type;
 +
 +#endif /* __OPS_FSTYPE_DOT_H__ */
-diff -urN linux-orig/fs/gfs/ops_inode.c linux-patched/fs/gfs/ops_inode.c
---- linux-orig/fs/gfs/ops_inode.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/ops_inode.c	2004-06-20 22:48:17.953945277 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/ops_inode.c linux/fs/gfs/ops_inode.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/ops_inode.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/ops_inode.c	2004-09-07 16:26:15.787542446 -0500
 @@ -0,0 +1,1723 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -26011,9 +25860,9 @@ diff -urN linux-orig/fs/gfs/ops_inode.c linux-patched/fs/gfs/ops_inode.c
 +	.removexattr = gfs_removexattr,
 +};
 +
-diff -urN linux-orig/fs/gfs/ops_inode.h linux-patched/fs/gfs/ops_inode.h
---- linux-orig/fs/gfs/ops_inode.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/ops_inode.h	2004-06-20 22:48:17.953945277 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/ops_inode.h linux/fs/gfs/ops_inode.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/ops_inode.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/ops_inode.h	2004-09-07 16:26:15.787542446 -0500
 @@ -0,0 +1,22 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -26037,10 +25886,10 @@ diff -urN linux-orig/fs/gfs/ops_inode.h linux-patched/fs/gfs/ops_inode.h
 +extern struct inode_operations gfs_dev_iops;
 +
 +#endif /* __OPS_INODE_DOT_H__ */
-diff -urN linux-orig/fs/gfs/ops_super.c linux-patched/fs/gfs/ops_super.c
---- linux-orig/fs/gfs/ops_super.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/ops_super.c	2004-06-20 22:48:17.953945277 -0500
-@@ -0,0 +1,416 @@
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/ops_super.c linux/fs/gfs/ops_super.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/ops_super.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/ops_super.c	2004-09-07 16:26:15.788542226 -0500
+@@ -0,0 +1,418 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -26441,6 +26290,8 @@ diff -urN linux-orig/fs/gfs/ops_super.c linux-patched/fs/gfs/ops_super.c
 +		seq_printf(s, ",num_glockd=%u", args->ar_num_glockd);
 +	if (args->ar_posixacls)
 +		seq_printf(s, ",acl");
++	if (args->ar_suiddir)
++		seq_printf(s, ",suiddir");
 +
 +	return 0;
 +}
@@ -26457,9 +26308,9 @@ diff -urN linux-orig/fs/gfs/ops_super.c linux-patched/fs/gfs/ops_super.c
 +	.clear_inode = gfs_clear_inode,
 +	.show_options = gfs_show_options,
 +};
-diff -urN linux-orig/fs/gfs/ops_super.h linux-patched/fs/gfs/ops_super.h
---- linux-orig/fs/gfs/ops_super.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/ops_super.h	2004-06-20 22:48:17.953945277 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/ops_super.h linux/fs/gfs/ops_super.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/ops_super.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/ops_super.h	2004-09-07 16:26:15.788542226 -0500
 @@ -0,0 +1,19 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -26480,9 +26331,9 @@ diff -urN linux-orig/fs/gfs/ops_super.h linux-patched/fs/gfs/ops_super.h
 +extern struct super_operations gfs_super_ops;
 +
 +#endif /* __OPS_SUPER_DOT_H__ */
-diff -urN linux-orig/fs/gfs/ops_vm.c linux-patched/fs/gfs/ops_vm.c
---- linux-orig/fs/gfs/ops_vm.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/ops_vm.c	2004-06-20 22:48:17.953945277 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/ops_vm.c linux/fs/gfs/ops_vm.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/ops_vm.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/ops_vm.c	2004-09-07 16:26:15.789542005 -0500
 @@ -0,0 +1,212 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -26696,9 +26547,9 @@ diff -urN linux-orig/fs/gfs/ops_vm.c linux-patched/fs/gfs/ops_vm.c
 +	.nopage = gfs_sharewrite_nopage,
 +};
 +
-diff -urN linux-orig/fs/gfs/ops_vm.h linux-patched/fs/gfs/ops_vm.h
---- linux-orig/fs/gfs/ops_vm.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/ops_vm.h	2004-06-20 22:48:17.953945277 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/ops_vm.h linux/fs/gfs/ops_vm.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/ops_vm.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/ops_vm.h	2004-09-07 16:26:15.789542005 -0500
 @@ -0,0 +1,20 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -26720,9 +26571,9 @@ diff -urN linux-orig/fs/gfs/ops_vm.h linux-patched/fs/gfs/ops_vm.h
 +extern struct vm_operations_struct gfs_vm_ops_sharewrite;
 +
 +#endif /* __OPS_VM_DOT_H__ */
-diff -urN linux-orig/fs/gfs/page.c linux-patched/fs/gfs/page.c
---- linux-orig/fs/gfs/page.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/page.c	2004-06-20 22:48:17.953945277 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/page.c linux/fs/gfs/page.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/page.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/page.c	2004-09-07 16:26:15.790541785 -0500
 @@ -0,0 +1,276 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -27000,9 +26851,9 @@ diff -urN linux-orig/fs/gfs/page.c linux-patched/fs/gfs/page.c
 +
 +	return error;
 +}
-diff -urN linux-orig/fs/gfs/page.h linux-patched/fs/gfs/page.h
---- linux-orig/fs/gfs/page.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/page.h	2004-06-20 22:48:17.953945277 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/page.h linux/fs/gfs/page.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/page.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/page.h	2004-09-07 16:26:15.790541785 -0500
 @@ -0,0 +1,26 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -27030,9 +26881,9 @@ diff -urN linux-orig/fs/gfs/page.h linux-patched/fs/gfs/page.h
 +int gfs_truncator_page(struct gfs_inode *ip, uint64_t size);
 +
 +#endif /* __PAGE_DOT_H__ */
-diff -urN linux-orig/fs/gfs/quota.c linux-patched/fs/gfs/quota.c
---- linux-orig/fs/gfs/quota.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/quota.c	2004-06-20 22:48:17.953945277 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/quota.c linux/fs/gfs/quota.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/quota.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/quota.c	2004-09-07 16:26:15.791541564 -0500
 @@ -0,0 +1,1146 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -27474,7 +27325,7 @@ diff -urN linux-orig/fs/gfs/quota.c linux-patched/fs/gfs/quota.c
 + */
 +
 +static int
-+sort_qd(void *a, void *b)
++sort_qd(const void *a, const void *b)
 +{
 +	struct gfs_quota_data *qd_a = *(struct gfs_quota_data **)a;
 +	struct gfs_quota_data *qd_b = *(struct gfs_quota_data **)b;
@@ -28180,9 +28031,9 @@ diff -urN linux-orig/fs/gfs/quota.c linux-patched/fs/gfs/quota.c
 +
 +	return error;
 +}
-diff -urN linux-orig/fs/gfs/quota.h linux-patched/fs/gfs/quota.h
---- linux-orig/fs/gfs/quota.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/quota.h	2004-06-20 22:48:17.953945277 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/quota.h linux/fs/gfs/quota.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/quota.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/quota.h	2004-09-07 16:26:15.792541344 -0500
 @@ -0,0 +1,40 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -28224,9 +28075,9 @@ diff -urN linux-orig/fs/gfs/quota.h linux-patched/fs/gfs/quota.h
 +int gfs_quota_read(struct gfs_sbd *sdp, void *arg);
 +
 +#endif /* __QUOTA_DOT_H__ */
-diff -urN linux-orig/fs/gfs/recovery.c linux-patched/fs/gfs/recovery.c
---- linux-orig/fs/gfs/recovery.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/recovery.c	2004-06-20 22:48:17.954944996 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/recovery.c linux/fs/gfs/recovery.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/recovery.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/recovery.c	2004-09-07 16:26:15.793541123 -0500
 @@ -0,0 +1,749 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -28977,9 +28828,9 @@ diff -urN linux-orig/fs/gfs/recovery.c linux-patched/fs/gfs/recovery.c
 +
 +	return error;
 +}
-diff -urN linux-orig/fs/gfs/recovery.h linux-patched/fs/gfs/recovery.h
---- linux-orig/fs/gfs/recovery.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/recovery.h	2004-06-20 22:48:17.954944996 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/recovery.h linux/fs/gfs/recovery.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/recovery.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/recovery.h	2004-09-07 16:26:15.793541123 -0500
 @@ -0,0 +1,36 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -29017,9 +28868,9 @@ diff -urN linux-orig/fs/gfs/recovery.h linux-patched/fs/gfs/recovery.h
 +int gfs_recover_dump(struct gfs_sbd *sdp);
 +
 +#endif /* __RECOVERY_DOT_H__ */
-diff -urN linux-orig/fs/gfs/rgrp.c linux-patched/fs/gfs/rgrp.c
---- linux-orig/fs/gfs/rgrp.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/rgrp.c	2004-06-20 22:48:17.954944996 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/rgrp.c linux/fs/gfs/rgrp.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/rgrp.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/rgrp.c	2004-09-07 16:26:15.795540682 -0500
 @@ -0,0 +1,1932 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -30953,9 +30804,9 @@ diff -urN linux-orig/fs/gfs/rgrp.c linux-patched/fs/gfs/rgrp.c
 + fail:
 +	return error;
 +}
-diff -urN linux-orig/fs/gfs/rgrp.h linux-patched/fs/gfs/rgrp.h
---- linux-orig/fs/gfs/rgrp.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/rgrp.h	2004-06-20 22:48:17.954944996 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/rgrp.h linux/fs/gfs/rgrp.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/rgrp.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/rgrp.h	2004-09-07 16:26:15.796540461 -0500
 @@ -0,0 +1,75 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -31032,9 +30883,9 @@ diff -urN linux-orig/fs/gfs/rgrp.h linux-patched/fs/gfs/rgrp.h
 +int gfs_reclaim_metadata(struct gfs_sbd *sdp, struct gfs_reclaim_stats *stats);
 +
 +#endif /* __RGRP_DOT_H__ */
-diff -urN linux-orig/fs/gfs/super.c linux-patched/fs/gfs/super.c
---- linux-orig/fs/gfs/super.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/super.c	2004-06-20 22:48:17.954944996 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/super.c linux/fs/gfs/super.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/super.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/super.c	2004-09-07 16:26:15.797540241 -0500
 @@ -0,0 +1,1035 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -32071,9 +31922,9 @@ diff -urN linux-orig/fs/gfs/super.c linux-patched/fs/gfs/super.c
 +
 +	up(&sdp->sd_freeze_lock);
 +}
-diff -urN linux-orig/fs/gfs/super.h linux-patched/fs/gfs/super.h
---- linux-orig/fs/gfs/super.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/super.h	2004-06-20 22:48:17.954944996 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/super.h linux/fs/gfs/super.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/super.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/super.h	2004-09-07 16:26:15.797540241 -0500
 @@ -0,0 +1,53 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -32128,9 +31979,9 @@ diff -urN linux-orig/fs/gfs/super.h linux-patched/fs/gfs/super.h
 +void gfs_unfreeze_fs(struct gfs_sbd *sdp);
 +
 +#endif /* __SUPER_DOT_H__ */
-diff -urN linux-orig/fs/gfs/trans.c linux-patched/fs/gfs/trans.c
---- linux-orig/fs/gfs/trans.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/trans.c	2004-06-20 22:48:17.954944996 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/trans.c linux/fs/gfs/trans.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/trans.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/trans.c	2004-09-07 16:26:15.798540020 -0500
 @@ -0,0 +1,410 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -32542,9 +32393,9 @@ diff -urN linux-orig/fs/gfs/trans.c linux-patched/fs/gfs/trans.c
 +		tr->tr_num_q++;
 +	}
 +}
-diff -urN linux-orig/fs/gfs/trans.h linux-patched/fs/gfs/trans.h
---- linux-orig/fs/gfs/trans.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/trans.h	2004-06-20 22:48:17.954944996 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/trans.h linux/fs/gfs/trans.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/trans.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/trans.h	2004-09-07 16:26:15.798540020 -0500
 @@ -0,0 +1,37 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -32583,9 +32434,9 @@ diff -urN linux-orig/fs/gfs/trans.h linux-patched/fs/gfs/trans.h
 +			 uint32_t gid);
 +
 +#endif /* __TRANS_DOT_H__ */
-diff -urN linux-orig/fs/gfs/unlinked.c linux-patched/fs/gfs/unlinked.c
---- linux-orig/fs/gfs/unlinked.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/unlinked.c	2004-06-20 22:48:17.955944714 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/unlinked.c linux/fs/gfs/unlinked.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/unlinked.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/unlinked.c	2004-09-07 16:26:15.799539800 -0500
 @@ -0,0 +1,427 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -33014,9 +32865,9 @@ diff -urN linux-orig/fs/gfs/unlinked.c linux-patched/fs/gfs/unlinked.c
 +		printk("GFS: fsid=%s: error deallocating inodes: %d\n",
 +		       sdp->sd_fsname, error);
 +}
-diff -urN linux-orig/fs/gfs/unlinked.h linux-patched/fs/gfs/unlinked.h
---- linux-orig/fs/gfs/unlinked.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/unlinked.h	2004-06-20 22:48:17.955944714 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/unlinked.h linux/fs/gfs/unlinked.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/unlinked.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/unlinked.h	2004-09-07 16:26:15.799539800 -0500
 @@ -0,0 +1,32 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -33050,10 +32901,10 @@ diff -urN linux-orig/fs/gfs/unlinked.h linux-patched/fs/gfs/unlinked.h
 +void gfs_unlinked_dealloc(struct gfs_sbd *sdp);
 +
 +#endif /* __UNLINKED_DOT_H__ */
-diff -urN linux-orig/fs/gfs/util.c linux-patched/fs/gfs/util.c
---- linux-orig/fs/gfs/util.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/util.c	2004-06-20 22:48:17.955944714 -0500
-@@ -0,0 +1,317 @@
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/util.c linux/fs/gfs/util.c
+--- linux-2.6.9-rc1-mm3/fs/gfs/util.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/util.c	2004-09-07 16:26:15.800539579 -0500
+@@ -0,0 +1,324 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -33187,47 +33038,54 @@ diff -urN linux-orig/fs/gfs/util.c linux-patched/fs/gfs/util.c
 +	return h;
 +}
 +
++/* Byte-wise swap two items of size SIZE. */
++
++#define SWAP(a, b, size) \
++do { \
++	register size_t __size = (size); \
++        register char *__a = (a), *__b = (b); \
++        do { \
++		char __tmp = *__a; \
++		*__a++ = *__b; \
++		*__b++ = __tmp; \
++	} while (__size-- > 1); \
++} while (0)
++
 +/**
-+ * gfs_sort - Sort base array using bubble sort algorithm
-+ * @array: the input array
-+ * @num: number of elements in array
++ * gfs_sort - Sort base array using shell sort algorithm
++ * @base: the input array
++ * @num_elem: number of elements in array
 + * @size: size of each element in array
-+ * @compare: fxn to compare array elements (returns negative for lt, 0 for eq, and positive for gt)
++ * @compar: fxn to compare array elements (returns negative
++ *          for lt, 0 for eq, and positive for gt
 + *
 + * Sorts the array passed in using the compar fxn to compare elements using
-+ * the bubble sort algorithm
++ * the shell sort algorithm
 + */
 +
 +void
-+gfs_sort(void *array, unsigned int num, unsigned int size,
-+	 int (*compare) (void *, void *))
++gfs_sort(void *base, unsigned int num_elem, unsigned int size,
++	 int (*compar) (const void *, const void *))
 +{
-+	char buf[size];
-+	char *p1, *p2;
-+	int changed;
-+	unsigned int x;
-+
-+	if (num <= 1)
-+		return;
-+
-+	do {
-+		changed = FALSE;
-+		p1 = (char *)array;
-+		p2 = (char *)array + size;
-+
-+		for (x = num - 1; x--;) {
-+			if (compare(p1, p2) > 0) {
-+				memcpy(buf, p1, size);
-+				memcpy(p1, p2, size);
-+				memcpy(p2, buf, size);
-+				changed = TRUE;
++	register char *pbase = (char *)base;
++	int i, j, k, h;
++	int cols[16] = {1391376, 463792, 198768, 86961, 33936, 13776, 4592,
++			1968, 861, 336, 112, 48, 21, 7, 3, 1};
++	
++	for (k = 0; k < 16; k++) {
++		h = cols[k];
++		for (i = h; i < num_elem; i++) {
++			j = i;
++			while (j >= h &&
++			       (*compar)((void *)(pbase + size * (j - h)),
++					 (void *)(pbase + size * j)) > 0) {
++				SWAP(pbase + size * j,
++				     pbase + size * (j - h),
++				     size);
++				j = j - h;
 +			}
-+
-+			p1 = p2;
-+			p2 += size;
 +		}
 +	}
-+	while (changed);
 +}
 +
 +/**
@@ -33371,9 +33229,9 @@ diff -urN linux-orig/fs/gfs/util.c linux-patched/fs/gfs/util.c
 +	return p;
 +}
 +
-diff -urN linux-orig/fs/gfs/util.h linux-patched/fs/gfs/util.h
---- linux-orig/fs/gfs/util.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs/util.h	2004-06-20 22:48:17.955944714 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs/util.h linux/fs/gfs/util.h
+--- linux-2.6.9-rc1-mm3/fs/gfs/util.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs/util.h	2004-09-07 16:26:15.801539359 -0500
 @@ -0,0 +1,156 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -33400,8 +33258,8 @@ diff -urN linux-orig/fs/gfs/util.h linux-patched/fs/gfs/util.h
 +uint32_t gfs_hash(const void *data, unsigned int len);
 +uint32_t gfs_hash_more(const void *data, unsigned int len, uint32_t hash);
 +
-+void gfs_sort(void *array, unsigned int num, unsigned int size,
-+	      int (*compare) (void *, void *));
++void gfs_sort(void *base, unsigned int num_elem, unsigned int size,
++	      int (*compar) (const void *, const void *));
 +
 +void bitch_about(struct gfs_sbd *sdp, unsigned long *last, char *about);
 +
@@ -33531,10 +33389,10 @@ diff -urN linux-orig/fs/gfs/util.h linux-patched/fs/gfs/util.h
 +
 +
 +#endif /* __UTIL_DOT_H__ */
-diff -urN linux-orig/include/linux/gfs_ioctl.h linux-patched/include/linux/gfs_ioctl.h
---- linux-orig/include/linux/gfs_ioctl.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/include/linux/gfs_ioctl.h	2004-06-20 22:48:17.949946404 -0500
-@@ -0,0 +1,218 @@
+diff -urN linux-2.6.9-rc1-mm3/include/linux/gfs_ioctl.h linux/include/linux/gfs_ioctl.h
+--- linux-2.6.9-rc1-mm3/include/linux/gfs_ioctl.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/include/linux/gfs_ioctl.h	2004-09-07 16:26:15.801539359 -0500
+@@ -0,0 +1,219 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -33750,12 +33608,13 @@ diff -urN linux-orig/include/linux/gfs_ioctl.h linux-patched/include/linux/gfs_i
 +	unsigned int ar_num_glockd;
 +
 +	int ar_posixacls;	/* Enable posix acls */
++	int ar_suiddir;         /* suiddir support */
 +};
 +
 +#endif /* ___GFS_IOCTL_DOT_H__ */
-diff -urN linux-orig/include/linux/gfs_ondisk.h linux-patched/include/linux/gfs_ondisk.h
---- linux-orig/include/linux/gfs_ondisk.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/include/linux/gfs_ondisk.h	2004-06-20 22:48:17.949946404 -0500
+diff -urN linux-2.6.9-rc1-mm3/include/linux/gfs_ondisk.h linux/include/linux/gfs_ondisk.h
+--- linux-2.6.9-rc1-mm3/include/linux/gfs_ondisk.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/include/linux/gfs_ondisk.h	2004-09-07 16:26:15.804538697 -0500
 @@ -0,0 +1,1720 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -35479,8 +35338,8 @@ diff -urN linux-orig/include/linux/gfs_ondisk.h linux-patched/include/linux/gfs_
 +
 diff -urN linux-orig/fs/gfs_locking/lock_dlm/group.c linux-patched/fs/gfs_locking/lock_dlm/group.c
 --- linux-orig/fs/gfs_locking/lock_dlm/group.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_dlm/group.c	2004-06-16 12:03:17.967822065 -0500
-@@ -0,0 +1,776 @@
++++ linux-patched/fs/gfs_locking/lock_dlm/group.c	2004-08-27 12:42:19.597199439 -0500
+@@ -0,0 +1,814 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -35494,12 +35353,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/group.c linux-patched/fs/gfs_lockin
 +*******************************************************************************
 +******************************************************************************/
 +
-+#include <linux/socket.h>
-+#include <net/sock.h>
-+
 +#include "lock_dlm.h"
-+#include <cluster/cnxman.h>
-+#include <cluster/service.h>
 +
 +
 +struct kcl_service_ops mg_ops;
@@ -35563,7 +35417,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/group.c linux-patched/fs/gfs_lockin
 +		goto fail_put;
 +
 +	lp = (dlm_lock_t *) lock;
-+	set_bit(LFL_IDLOCK, &lp->flags);
++	set_bit(LFL_INLOCK, &lp->flags);
++	set_bit(LFL_NOBAST, &lp->flags);
 +
 + retry:
 +
@@ -35689,7 +35544,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/group.c linux-patched/fs/gfs_lockin
 +		goto out_put;
 +
 +	lp = (dlm_lock_t *) lock;
-+	set_bit(LFL_IDLOCK, &lp->flags);
++	set_bit(LFL_INLOCK, &lp->flags);
++	set_bit(LFL_NOBAST, &lp->flags);
 +
 +      retry:
 +
@@ -35874,10 +35730,31 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/group.c linux-patched/fs/gfs_lockin
 +{
 +	dlm_node_t *node;
 +	uint32_t nodeid;
-+	int last_stop, last_start, error, i, new = FALSE, found;
++	int last_stop, last_start, last_finish;
++	int error, i, new = FALSE, found;
 +
++	/*
++	 * when the initial sequence of callbacks is start/stop/start the
++	 * second start has the same event id (the first doesn't count)
++	 */
 +
-+	log_debug("start c %d type %d e %d", ds->count, ds->type, ds->event_id);
++	spin_lock(&dlm->async_lock);
++	last_stop = dlm->mg_last_stop;
++	last_start = dlm->mg_last_start;
++	last_finish = dlm->mg_last_finish;
++
++	if (!last_finish && last_stop) {
++		log_debug("reset stop %d start %d finish %d",
++			  last_stop, last_start, last_finish);
++		dlm->mg_last_stop = 0;
++		last_stop = 0;
++	}
++	spin_unlock(&dlm->async_lock);
++
++	log_debug("recover last_stop %d last_start %d last_finish %d",
++		  last_stop, last_start, last_finish);
++	log_debug("recover count %d type %d event %d flags %lx",
++		  ds->count, ds->type, ds->event_id, dlm->flags);
 +
 +	/*
 +	 * gfs won't do journal recoveries once it's sent us an unmount
@@ -35889,19 +35766,32 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/group.c linux-patched/fs/gfs_lockin
 +		goto out;
 +	}
 +
-+	/* 
-+	 * check if first start
++	/*
++	 * a couple special things to take care of on the first start (mount)
 +	 */
 +
-+	if (!test_and_set_bit(DFL_GOT_NODEID, &dlm->flags)) {
++	if (!test_and_set_bit(DFL_GOT_NODEID, &dlm->flags))
 +		get_our_nodeid(dlm);
-+		if (ds->count == 1)
-+			set_bit(DFL_FIRST_MOUNT, &dlm->flags);
-+	}
++
++	if (test_bit(DFL_MOUNT, &dlm->flags) && (ds->count == 1))
++		set_bit(DFL_FIRST_MOUNT, &dlm->flags);
 +
 +	down(&dlm->mg_nodes_lock);
 +
-+	/* 
++	/*
++	 * while mounting, cancelled starts are discarded
++	 * (normally, (uninterrupted starts) mg_nodes is empty at this point)
++	 */
++
++	if (test_bit(DFL_MOUNT, &dlm->flags)) {
++		dlm_node_t *safe;
++		list_for_each_entry_safe(node, safe, &dlm->mg_nodes, list) {
++			list_del(&node->list);
++			kfree(node);
++		}
++	}
++
++	/*
 +	 * find nodes which are gone
 +	 */
 +
@@ -35949,7 +35839,6 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/group.c linux-patched/fs/gfs_lockin
 +			continue;
 +
 +		DLM_RETRY(node = kmalloc(sizeof(dlm_node_t), GFP_KERNEL), node);
-+
 +		memset(node, 0, sizeof(dlm_node_t));
 +
 +		node->nodeid = nodeid;
@@ -35984,8 +35873,10 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/group.c linux-patched/fs/gfs_lockin
 +		last_start = dlm->mg_last_start;
 +		spin_unlock(&dlm->async_lock);
 +
-+		if (last_stop >= ds->event_id)
++		if (last_stop >= ds->event_id) {
++			log_debug("start %d aborted", ds->event_id);
 +			break;
++		}
 +
 +		error = discover_jids(dlm);
 +		if (error) {
@@ -36015,11 +35906,15 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/group.c linux-patched/fs/gfs_lockin
 +		}
 +		up(&dlm->mg_nodes_lock);
 +
++		log_debug("call start_done %d: %d", ds->event_id, !error);
++
 +		if (!error)
 +			kcl_start_done(dlm->mg_local_id, ds->event_id);
-+	}
++	} else
++		log_debug("start %d stopped %d", ds->event_id, last_stop);
 +
 + out:
++	clear_bit(DFL_RECOVER, &dlm->flags);
 +	kfree(ds->nodeids);
 +	kfree(ds);
 +}
@@ -36061,6 +35956,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/group.c linux-patched/fs/gfs_lockin
 +	}
 +	up(&dlm->mg_nodes_lock);
 +
++	clear_bit(DFL_MOUNT, &dlm->flags);
 +	wake_up(&dlm->wait);
 +}
 +
@@ -36080,8 +35976,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/group.c linux-patched/fs/gfs_lockin
 +
 +	dlm->mg_local_id = id;
 +
-+	/* BLOCK_LOCKS is cleared when the join is finished */
++	/* MOUNT and BLOCK_LOCKS are cleared when the join is finished */
 +	set_bit(DFL_BLOCK_LOCKS, &dlm->flags);
++	set_bit(DFL_MOUNT, &dlm->flags);
 +
 +	error = kcl_join_service(id);
 +	if (error)
@@ -36259,8 +36156,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/group.c linux-patched/fs/gfs_lockin
 +};
 diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking/lock_dlm/lock.c
 --- linux-orig/fs/gfs_locking/lock_dlm/lock.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_dlm/lock.c	2004-06-16 12:03:17.967822065 -0500
-@@ -0,0 +1,561 @@
++++ linux-patched/fs/gfs_locking/lock_dlm/lock.c	2004-08-27 12:42:19.598199208 -0500
+@@ -0,0 +1,611 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -36284,7 +36181,18 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +{
 +	dlm_t *dlm = lp->dlm;
 +
++	if (!test_bit(LFL_WAIT_COMPLETE, &lp->flags)) {
++		printk("lock_dlm: extra completion %x,%"PRIx64" %d,%d id %x\n",
++		       lp->lockname.ln_type, lp->lockname.ln_number,
++		       lp->cur, lp->req, lp->lksb.sb_lkid);
++		return;
++	}
++
 +	clear_bit(LFL_WAIT_COMPLETE, &lp->flags);
++
++	log_debug("qc %x,%"PRIx64" %d,%d id %x sts %d",
++		  lp->lockname.ln_type, lp->lockname.ln_number,
++		  lp->cur, lp->req, lp->lksb.sb_lkid, lp->lksb.sb_status);
 +
 +	spin_lock(&dlm->async_lock);
 +	list_add_tail(&lp->clist, &dlm->complete);
@@ -36303,6 +36211,12 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +		/* printk("lock_dlm: bast before complete %x,%"PRIx64" "
 +		       "gr=%d rq=%d bast=%d\n", lp->lockname.ln_type,
 +		       lp->lockname.ln_number, lp->cur, lp->req, mode); */
++		return;
++	}
++
++	if (!mode) {
++		printk("lock_dlm: bast mode zero %x,%"PRIx64"\n",
++			lp->lockname.ln_type, lp->lockname.ln_number);
 +		return;
 +	}
 +
@@ -36493,9 +36407,40 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +	lp->lockname = *name;
 +	lp->dlm = dlm;
 +	lp->cur = DLM_LOCK_IV;
++	lp->lvb = NULL;
 +	init_completion(&lp->uast_wait);
 +	*lpp = lp;
 +	return 0;
++}
++
++void delete_lp(dlm_lock_t *lp)
++{
++	spin_lock(&lp->dlm->async_lock);
++	if (test_bit(LFL_CLIST, &lp->flags)) {
++		printk("lock_dlm: dlm_put_lock lp on clist num=%x,%"PRIx64"\n",
++		       lp->lockname.ln_type, lp->lockname.ln_number);
++		list_del(&lp->clist);
++	}
++	if (test_bit(LFL_BLIST, &lp->flags)) {
++		/*
++		printk("lock_dlm: dlm_put_lock lp on blist num=%x,%"PRIx64"\n",
++		       lp->lockname.ln_type, lp->lockname.ln_number);
++		*/
++		list_del(&lp->blist);
++	}
++	if (test_bit(LFL_DLIST, &lp->flags)) {
++		printk("lock_dlm: dlm_put_lock lp on dlist num=%x,%"PRIx64"\n",
++		       lp->lockname.ln_type, lp->lockname.ln_number);
++		list_del(&lp->dlist);
++	}
++	if (test_bit(LFL_SLIST, &lp->flags)) {
++		printk("lock_dlm: dlm_put_lock lp on slist num=%x,%"PRIx64"\n",
++		       lp->lockname.ln_type, lp->lockname.ln_number);
++		list_del(&lp->slist);
++	}
++	spin_unlock(&lp->dlm->async_lock);
++
++	kfree(lp);
 +}
 +
 +/**
@@ -36519,48 +36464,6 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +	return error;
 +}
 +
-+int do_unlock(dlm_lock_t *lp)
-+{
-+	int error;
-+
-+	init_completion(&lp->uast_wait);
-+
-+	set_bit(LFL_DLM_UNLOCK, &lp->flags);
-+
-+	error = dlm_unlock(lp->dlm->gdlm_lsp, lp->lksb.sb_lkid, 0, &lp->lksb,
-+			    (void *) lp);
-+
-+	DLM_ASSERT(!error, printk("%s: error=%d num=%x,%"PRIx64"\n",
-+			      lp->dlm->fsname, error, lp->lockname.ln_type,
-+			      lp->lockname.ln_number););
-+
-+	wait_for_completion(&lp->uast_wait);
-+
-+	spin_lock(&lp->dlm->async_lock);
-+	if (test_bit(LFL_CLIST, &lp->flags)) {
-+		printk("lock_dlm: dlm_put_lock lp on clist num=%x,%"PRIx64"\n",		       lp->lockname.ln_type, lp->lockname.ln_number);
-+		list_del(&lp->clist);
-+	}
-+	if (test_bit(LFL_BLIST, &lp->flags)) {
-+		printk("lock_dlm: dlm_put_lock lp on blist num=%x,%"PRIx64"\n",
-+		        lp->lockname.ln_type, lp->lockname.ln_number);
-+		list_del(&lp->blist);
-+	}
-+	if (test_bit(LFL_DLIST, &lp->flags)) {
-+		printk("lock_dlm: dlm_put_lock lp on dlist num=%x,%"PRIx64"\n",
-+		       lp->lockname.ln_type, lp->lockname.ln_number);
-+		list_del(&lp->dlist);
-+	}
-+	if (test_bit(LFL_SLIST, &lp->flags)) {
-+		printk("lock_dlm: dlm_put_lock lp on slist num=%x,%"PRIx64"\n",
-+		       lp->lockname.ln_type, lp->lockname.ln_number);
-+		list_del(&lp->slist);
-+	}
-+	spin_unlock(&lp->dlm->async_lock);
-+
-+	return 0;
-+}
-+
 +/**
 + * dlm_put_lock - get rid of a lock structure
 + * @lock: the lock to throw away
@@ -36570,24 +36473,45 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +void lm_dlm_put_lock(lm_lock_t *lock)
 +{
 +	dlm_lock_t *lp = (dlm_lock_t *) lock;
-+
-+	if (lp->cur != DLM_LOCK_IV) {
-+		do_unlock(lp);
-+		kfree(lp);
-+	}
++	DLM_ASSERT(!lp->lvb,);
++	delete_lp(lp);
 +}
 +
-+/**
-+ * do_lock - acquire a lock
-+ * @lp: the DLM lock 
-+ * @range: optional range
-+ */
++void do_dlm_unlock(dlm_lock_t *lp)
++{
++	unsigned int lkf = 0;
++	int error;
 +
-+void do_lock(dlm_lock_t *lp, struct dlm_range *range)
++	set_bit(LFL_DLM_UNLOCK, &lp->flags);
++	set_bit(LFL_WAIT_COMPLETE, &lp->flags);
++
++	if (lp->lvb)
++		lkf = DLM_LKF_VALBLK;
++
++	log_debug("un %x,%"PRIx64" id %x cur %d %x", lp->lockname.ln_type,
++		  lp->lockname.ln_number, lp->lksb.sb_lkid, lp->cur, lkf);
++
++	error = dlm_unlock(lp->dlm->gdlm_lsp, lp->lksb.sb_lkid, lkf, &lp->lksb,
++			    (void *) lp);
++
++	DLM_ASSERT(!error, printk("%s: error=%d num=%x,%"PRIx64"\n",
++			      lp->dlm->fsname, error, lp->lockname.ln_type,
++			      lp->lockname.ln_number););
++}
++
++void do_dlm_unlock_sync(dlm_lock_t *lp)
++{
++	set_bit(LFL_UNLOCK_SYNC, &lp->flags);
++	init_completion(&lp->uast_wait);
++	do_dlm_unlock(lp);
++	wait_for_completion(&lp->uast_wait);
++}
++
++void do_dlm_lock(dlm_lock_t *lp, struct dlm_range *range)
 +{
 +	dlm_t *dlm = lp->dlm;
 +	strname_t str;
-+	int error;
++	int error, bast = 1;
 +
 +	/*
 +	 * When recovery is in progress, delay lock requests for submission
@@ -36605,13 +36529,20 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +	 * Submit the actual lock request.
 +	 */
 +
++	if (lp->posix || test_bit(LFL_NOBAST, &lp->flags))
++		bast = 0;
++
 +	make_strname(&lp->lockname, &str);
 +
 +	set_bit(LFL_WAIT_COMPLETE, &lp->flags);
 +
++	log_debug("lk %x,%"PRIx64" id %x %d,%d %x", lp->lockname.ln_type,
++		  lp->lockname.ln_number, lp->lksb.sb_lkid,
++		  lp->cur, lp->req, lp->lkf);
++
 +	error = dlm_lock(dlm->gdlm_lsp, lp->req, &lp->lksb, lp->lkf, str.name,
 +			  str.namelen, 0, lock_ast, (void *) lp,
-+			  lp->posix ? NULL : lock_bast, range);
++			  bast ? lock_bast : NULL, range);
 +
 +	if ((error == -EAGAIN) && (lp->lkf & DLM_LKF_NOQUEUE)) {
 +		lp->lksb.sb_status = -EAGAIN;
@@ -36624,6 +36555,15 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +			  dlm->fsname, lp->lockname.ln_type,
 +			  lp->lockname.ln_number, error, lp->cur, lp->req,
 +			  lp->lkf););
++}
++
++int do_dlm_lock_sync(dlm_lock_t *lp, struct dlm_range *range)
++{
++	init_completion(&lp->uast_wait);
++	do_dlm_lock(lp, range);
++	wait_for_completion(&lp->uast_wait);
++
++	return lp->lksb.sb_status;
 +}
 +
 +/**
@@ -36648,7 +36588,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +	lp->req = make_mode(req_state);
 +	lp->lkf = make_flags(lp, flags, lp->cur, lp->req);
 +
-+	do_lock(lp, NULL);
++	do_dlm_lock(lp, NULL);
 +	return LM_OUT_ASYNC;
 +}
 +
@@ -36676,12 +36616,16 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +{
 +	dlm_lock_t *lp = (dlm_lock_t *) lock;
 +
-+	check_cur_state(lp, cur_state);
-+	lp->req = DLM_LOCK_NL;
-+	lp->lkf = make_flags(lp, 0, lp->cur, lp->req);
-+
-+	do_lock(lp, NULL);
-+
++	if (lp->lvb) {
++		check_cur_state(lp, cur_state);
++		lp->req = DLM_LOCK_NL;
++		lp->lkf = make_flags(lp, 0, lp->cur, lp->req);
++		do_dlm_lock(lp, NULL);
++	} else {
++		if (lp->cur == DLM_LOCK_IV)
++			return 0;
++		do_dlm_unlock(lp);
++	}
 +	return LM_OUT_ASYNC;
 +}
 +
@@ -36758,6 +36702,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +void lm_dlm_unhold_lvb(lm_lock_t *lock, char *lvb)
 +{
 +	dlm_lock_t *lp = (dlm_lock_t *) lock;
++
++	if (lp->cur == DLM_LOCK_NL)
++		do_dlm_unlock_sync(lp);
 +	kfree(lvb);
 +	lp->lvb = NULL;
 +	lp->lksb.sb_lvbptr = NULL;
@@ -36783,7 +36730,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +	lp->req = DLM_LOCK_EX;
 +	lp->lkf = make_flags(lp, 0, lp->cur, lp->req);
 +
-+	do_lock(lp, NULL);
++	do_dlm_lock(lp, NULL);
 +	wait_for_completion(&lp->uast_wait);
 +}
 +
@@ -36820,12 +36767,12 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +		r = &range;
 +	}
 +
-+	do_lock(lp, r);
++	do_dlm_lock(lp, r);
 +}
 diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock_dlm.h linux-patched/fs/gfs_locking/lock_dlm/lock_dlm.h
 --- linux-orig/fs/gfs_locking/lock_dlm/lock_dlm.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_dlm/lock_dlm.h	2004-06-16 12:03:17.967822065 -0500
-@@ -0,0 +1,323 @@
++++ linux-patched/fs/gfs_locking/lock_dlm/lock_dlm.h	2004-08-27 12:42:19.598199208 -0500
+@@ -0,0 +1,358 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -36849,7 +36796,11 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock_dlm.h linux-patched/fs/gfs_loc
 +#include <linux/types.h>
 +#include <linux/string.h>
 +#include <linux/list.h>
++#include <linux/socket.h>
++#include <net/sock.h>
 +#include <linux/lm_interface.h>
++#include <cluster/cnxman.h>
++#include <cluster/service.h>
 +#include <cluster/dlm.h>
 +
 +/* We take a shortcut and use lm_lockname structs for internal locks.  This
@@ -36868,6 +36819,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock_dlm.h linux-patched/fs/gfs_loc
 +#define LOCK_DLM_STRNAME_BYTES	(24)
 +
 +#define LOCK_DLM_MAX_NODES	(128)
++
++#define DROP_LOCKS_COUNT	(10000)
++#define DROP_LOCKS_TIME		(60)
 +
 +struct dlm;
 +struct dlm_lock;
@@ -36888,8 +36842,10 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock_dlm.h linux-patched/fs/gfs_loc
 +#define DFL_HAVE_JID            4
 +#define DFL_BLOCK_LOCKS         5
 +#define DFL_START_ERROR         6
-+#define DFL_UMOUNT		7
-+#define DFL_NEED_STARTDONE	8
++#define DFL_MOUNT		7
++#define DFL_UMOUNT		8
++#define DFL_NEED_STARTDONE	9
++#define DFL_RECOVER		10
 +
 +struct dlm {
 +	uint32_t		jid;
@@ -36917,6 +36873,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock_dlm.h linux-patched/fs/gfs_loc
 +
 +	wait_queue_head_t	wait;
 +	atomic_t		threads;
++	atomic_t		lock_count;
++	unsigned long		drop_time;
 +
 +	int			mg_local_id;
 +	int			mg_last_start;
@@ -36955,19 +36913,20 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock_dlm.h linux-patched/fs/gfs_loc
 +
 +#define LFL_NOBLOCK             0
 +#define LFL_NOCACHE             1
-+#define LFL_UNLOCK_RECOVERY     2
-+#define LFL_DLM_UNLOCK          3
-+#define LFL_TRYFAILED           4
-+#define LFL_SYNC_LVB            5
-+#define LFL_FORCE_PROMOTE       6
-+#define LFL_REREQUEST           7
-+#define LFL_WAIT_COMPLETE       8
-+#define LFL_CLIST               9
-+#define LFL_BLIST               10
-+#define LFL_DLIST               11
-+#define LFL_SLIST               12
-+#define LFL_IDLOCK              13
-+#define LFL_CANCEL              14
++#define LFL_DLM_UNLOCK          2
++#define LFL_TRYFAILED           3
++#define LFL_SYNC_LVB            4
++#define LFL_FORCE_PROMOTE       5
++#define LFL_REREQUEST           6
++#define LFL_WAIT_COMPLETE       7
++#define LFL_CLIST               8
++#define LFL_BLIST               9
++#define LFL_DLIST               10
++#define LFL_SLIST               11
++#define LFL_INLOCK              12
++#define LFL_CANCEL              13
++#define LFL_UNLOCK_SYNC         14
++#define LFL_NOBAST              15
 +
 +struct dlm_lock {
 +	dlm_t *			dlm;
@@ -37060,41 +37019,47 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock_dlm.h linux-patched/fs/gfs_loc
 +
 +/* group.c */
 +
-+int init_mountgroup(dlm_t * dlm);
-+void release_mountgroup(dlm_t * dlm);
-+void process_start(dlm_t * dlm, dlm_start_t * ds);
-+void process_finish(dlm_t * dlm);
-+void jid_recovery_done(dlm_t * dlm, unsigned int jid, unsigned int message);
++int init_mountgroup(dlm_t *dlm);
++void release_mountgroup(dlm_t *dlm);
++void process_start(dlm_t *dlm, dlm_start_t *ds);
++void process_finish(dlm_t *dlm);
++void jid_recovery_done(dlm_t *dlm, unsigned int jid, unsigned int message);
 +
 +/* thread.c */
 +
-+int init_async_thread(dlm_t * dlm);
-+void release_async_thread(dlm_t * dlm);
++int init_async_thread(dlm_t *dlm);
++void release_async_thread(dlm_t *dlm);
 +
 +/* lock.c */
 +
 +int16_t make_lmstate(int16_t dlmmode);
-+void queue_delayed(dlm_lock_t * lp, int type);
-+void process_submit(dlm_lock_t * lp);
++void queue_delayed(dlm_lock_t *lp, int type);
++void process_submit(dlm_lock_t *lp);
 +int create_lp(dlm_t *dlm, struct lm_lockname *name, dlm_lock_t **lpp);
-+void do_lock(dlm_lock_t *lp, struct dlm_range *range);
-+int do_unlock(dlm_lock_t *lp);
++void delete_lp(dlm_lock_t *lp);
 +
-+int lm_dlm_get_lock(lm_lockspace_t * lockspace, struct lm_lockname * name,
-+		 lm_lock_t ** lockp);
-+void lm_dlm_put_lock(lm_lock_t * lock);
-+unsigned int lm_dlm_lock(lm_lock_t * lock, unsigned int cur_state,
-+		      unsigned int req_state, unsigned int flags);
-+int lm_dlm_lock_sync(lm_lock_t * lock, unsigned int cur_state,
-+		  unsigned int req_state, unsigned int flags);
-+unsigned int lm_dlm_unlock(lm_lock_t * lock, unsigned int cur_state);
-+void lm_dlm_unlock_sync(lm_lock_t * lock, unsigned int cur_state);
-+void lm_dlm_cancel(lm_lock_t * lock);
-+int lm_dlm_hold_lvb(lm_lock_t * lock, char **lvbp);
-+void lm_dlm_unhold_lvb(lm_lock_t * lock, char *lvb);
-+void lm_dlm_sync_lvb(lm_lock_t * lock, char *lvb);
-+void lm_dlm_recovery_done(lm_lockspace_t * lockspace, unsigned int jid,
-+		       unsigned int message);
++int lm_dlm_get_lock(lm_lockspace_t *lockspace, struct lm_lockname *name,
++		    lm_lock_t **lockp);
++void lm_dlm_put_lock(lm_lock_t *lock);
++
++void do_dlm_lock(dlm_lock_t *lp, struct dlm_range *range);
++int do_dlm_lock_sync(dlm_lock_t *lp, struct dlm_range *range);
++void do_dlm_unlock(dlm_lock_t *lp);
++void do_dlm_unlock_sync(dlm_lock_t *lp);
++
++unsigned int lm_dlm_lock(lm_lock_t *lock, unsigned int cur_state,
++			 unsigned int req_state, unsigned int flags);
++int lm_dlm_lock_sync(lm_lock_t *lock, unsigned int cur_state,
++		     unsigned int req_state, unsigned int flags);
++unsigned int lm_dlm_unlock(lm_lock_t *lock, unsigned int cur_state);
++void lm_dlm_unlock_sync(lm_lock_t *lock, unsigned int cur_state);
++
++void lm_dlm_cancel(lm_lock_t *lock);
++int lm_dlm_hold_lvb(lm_lock_t *lock, char **lvbp);
++void lm_dlm_unhold_lvb(lm_lock_t *lock, char *lvb);
++void lm_dlm_sync_lvb(lm_lock_t *lock, char *lvb);
++void lm_dlm_recovery_done(lm_lockspace_t *lockspace, unsigned int jid,
++		          unsigned int message);
 +
 +/* plock.c */
 +
@@ -37123,10 +37088,26 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock_dlm.h linux-patched/fs/gfs_loc
 +#define log_debug(fmt, args...)
 +#endif
 +
++#define log_all(fmt, args...) \
++	do { \
++		printk("lock_dlm: " fmt "\n", ##args); \
++		lock_dlm_debug_log(fmt, ##args); \
++	} while (0)
++
++#define log_error log_all
++
++
++static inline int check_timeout(unsigned long stamp, unsigned int seconds)
++{
++    return time_after(jiffies, stamp + seconds * HZ);
++}
++
 +#define DLM_ASSERT(x, do) \
 +{ \
 +  if (!(x)) \
 +  { \
++    dlm_locks_dump(); \
++    dlm_debug_dump(); \
 +    lock_dlm_debug_dump(); \
 +    printk("\nlock_dlm:  Assertion failed on line %d of file %s\n" \
 +           "lock_dlm:  assertion:  \"%s\"\n" \
@@ -37134,6 +37115,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock_dlm.h linux-patched/fs/gfs_loc
 +	   __LINE__, __FILE__, #x, jiffies); \
 +    {do} \
 +    printk("\n"); \
++    BUG(); \
 +    panic("lock_dlm:  Record message above and reboot.\n"); \
 +  } \
 +}
@@ -37151,8 +37133,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock_dlm.h linux-patched/fs/gfs_loc
 +#endif
 diff -urN linux-orig/fs/gfs_locking/lock_dlm/main.c linux-patched/fs/gfs_locking/lock_dlm/main.c
 --- linux-orig/fs/gfs_locking/lock_dlm/main.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_dlm/main.c	2004-06-16 12:03:17.967822065 -0500
-@@ -0,0 +1,192 @@
++++ linux-patched/fs/gfs_locking/lock_dlm/main.c	2004-08-27 12:42:19.598199208 -0500
+@@ -0,0 +1,194 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -37171,7 +37153,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/main.c linux-patched/fs/gfs_locking
 +#include <linux/proc_fs.h>
 +
 +#if defined(LOCK_DLM_DEBUG)
-+#define LOCK_DLM_DEBUG_SIZE     (1024)
++#define LOCK_DLM_DEBUG_SIZE     (4096)
 +#define MAX_DEBUG_MSG_LEN       (64)
 +#else
 +#define LOCK_DLM_DEBUG_SIZE     (0)
@@ -37275,6 +37257,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/main.c linux-patched/fs/gfs_locking
 +	spin_unlock(&debug_lock);
 +}
 +
++EXPORT_SYMBOL(lock_dlm_debug_dump);
++
 +#ifdef CONFIG_PROC_FS
 +int lock_dlm_debug_info(char *b, char **start, off_t offset, int length)
 +{
@@ -37347,8 +37331,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/main.c linux-patched/fs/gfs_locking
 +MODULE_LICENSE("GPL");
 diff -urN linux-orig/fs/gfs_locking/lock_dlm/mount.c linux-patched/fs/gfs_locking/lock_dlm/mount.c
 --- linux-orig/fs/gfs_locking/lock_dlm/mount.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_dlm/mount.c	2004-06-16 12:03:17.967822065 -0500
-@@ -0,0 +1,335 @@
++++ linux-patched/fs/gfs_locking/lock_dlm/mount.c	2004-08-27 12:42:19.599198976 -0500
+@@ -0,0 +1,337 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -37528,7 +37512,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/mount.c linux-patched/fs/gfs_lockin
 +
 +static int release_gdlm(dlm_t *dlm)
 +{
-+	dlm_release_lockspace(dlm->gdlm_lsp, 1);
++	dlm_release_lockspace(dlm->gdlm_lsp, 2);
 +	return 0;
 +}
 +
@@ -37555,6 +37539,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/mount.c linux-patched/fs/gfs_lockin
 +	INIT_LIST_HEAD(&dlm->resources);
 +
 +	init_waitqueue_head(&dlm->wait);
++	atomic_set(&dlm->lock_count, 0);
++	dlm->drop_time = jiffies;
 +
 +	INIT_LIST_HEAD(&dlm->mg_nodes);
 +	init_MUTEX(&dlm->mg_nodes_lock);
@@ -37686,8 +37672,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/mount.c linux-patched/fs/gfs_lockin
 +};
 diff -urN linux-orig/fs/gfs_locking/lock_dlm/plock.c linux-patched/fs/gfs_locking/lock_dlm/plock.c
 --- linux-orig/fs/gfs_locking/lock_dlm/plock.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_dlm/plock.c	2004-06-16 12:03:17.967822065 -0500
-@@ -0,0 +1,1037 @@
++++ linux-patched/fs/gfs_locking/lock_dlm/plock.c	2004-08-27 12:42:19.599198976 -0500
+@@ -0,0 +1,1034 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -37736,14 +37722,12 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/plock.c linux-patched/fs/gfs_lockin
 +	if (error)
 +		return error;
 +
-+	set_bit(LFL_IDLOCK, &lp->flags);
++	set_bit(LFL_NOBAST, &lp->flags);
++	set_bit(LFL_INLOCK, &lp->flags);
 +	lp->req = DLM_LOCK_EX;
-+	do_lock(lp, NULL);
-+	wait_for_completion(&lp->uast_wait);
-+
-+	error = lp->lksb.sb_status;
++	error = do_dlm_lock_sync(lp, NULL);
 +	if (error) {
-+		kfree(lp);
++		delete_lp(lp);
 +		lp = NULL;
 +	}
 +
@@ -37753,8 +37737,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/plock.c linux-patched/fs/gfs_lockin
 +
 +static void unlock_resource(struct dlm_resource *r)
 +{
-+	do_unlock(r->update);
-+	kfree(r->update);
++	do_dlm_unlock_sync(r->update);
++	delete_lp(r->update);
 +}
 +
 +static struct dlm_resource *search_resource(dlm_t *dlm, struct lm_lockname *name)
@@ -37954,7 +37938,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/plock.c linux-patched/fs/gfs_lockin
 +	po->count--;
 +	if (po->count == 0) {
 +		kfree(po);
-+		kfree(lp);
++		delete_lp(lp);
 +	}
 +}
 +
@@ -38008,7 +37992,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/plock.c linux-patched/fs/gfs_lockin
 +static void do_range_lock(dlm_lock_t *lp)
 +{
 +	struct dlm_range range = { lp->posix->start, lp->posix->end };
-+	do_lock(lp, &range);
++	do_dlm_lock(lp, &range);
 +}
 +
 +static void request_lock(dlm_lock_t *lp, int wait)
@@ -38018,7 +38002,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/plock.c linux-patched/fs/gfs_lockin
 +		  lp->posix->ex ? "ex" : "sh", lp->posix->start,
 +		  lp->posix->end, current->pid, wait);
 +
-+	set_bit(LFL_IDLOCK, &lp->flags);
++	set_bit(LFL_INLOCK, &lp->flags);
 +	lp->req = lp->posix->ex ? DLM_LOCK_EX : DLM_LOCK_PR;
 +	lp->lkf = make_flags_posix(lp, wait);
 +
@@ -38101,7 +38085,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/plock.c linux-patched/fs/gfs_lockin
 +	log_debug("remove %x,%"PRIx64" %u",
 +		  r->name.ln_type, r->name.ln_number, current->pid);
 +
-+	do_unlock(lp);
++	do_dlm_unlock_sync(lp);
 +	put_lock(lp);
 +	put_resource(r);
 +	return 0;
@@ -38582,9 +38566,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/plock.c linux-patched/fs/gfs_lockin
 +		goto ret;
 +
 +	lp->req = DLM_LOCK_NL;
-+	set_bit(LFL_IDLOCK, &lp->flags);
-+	do_lock(lp, NULL);
-+	wait_for_completion(&lp->uast_wait);
++	set_bit(LFL_INLOCK, &lp->flags);
++	do_dlm_lock_sync(lp, NULL);
 +
 +	/* do query, repeating if insufficient space */
 +
@@ -38646,7 +38629,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/plock.c linux-patched/fs/gfs_lockin
 +	kfree(qinfo.gqi_lockinfo);
 +
 + out:
-+	do_unlock(lp);
++	do_dlm_unlock_sync(lp);
 +	kfree(lp);
 + ret:
 +	return error;
@@ -38727,8 +38710,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/plock.c linux-patched/fs/gfs_lockin
 +
 diff -urN linux-orig/fs/gfs_locking/lock_dlm/thread.c linux-patched/fs/gfs_locking/lock_dlm/thread.c
 --- linux-orig/fs/gfs_locking/lock_dlm/thread.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_dlm/thread.c	2004-06-16 12:03:17.967822065 -0500
-@@ -0,0 +1,388 @@
++++ linux-patched/fs/gfs_locking/lock_dlm/thread.c	2004-08-27 12:42:19.599198976 -0500
+@@ -0,0 +1,400 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -38814,15 +38797,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/thread.c linux-patched/fs/gfs_locki
 +	 */
 +
 +	if (test_and_clear_bit(LFL_DLM_UNLOCK, &lp->flags)) {
-+
-+		/* FIXME: Add an assertion to catch NOFAIL promotions from
-+		 * non-NL modes? */
-+
 +		if (lp->lksb.sb_status == -DLM_ECANCEL) {
-+
-+			/* lp->cur remains the same, is there anything to clear
-+			 * or reset to put this lp into an "ordinary" state? */
-+
 +			printk("lock_dlm: -DLM_ECANCEL num=%x,%"PRIx64"\n",
 +			       lp->lockname.ln_type, lp->lockname.ln_number);
 +		} else {
@@ -38832,7 +38807,13 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/thread.c linux-patched/fs/gfs_locki
 +					  lp->lockname.ln_number,
 +					  lp->lksb.sb_status););
 +			lp->cur = DLM_LOCK_IV;
++			lp->req = DLM_LOCK_IV;
++			lp->lksb.sb_lkid = 0;
++			atomic_dec(&dlm->lock_count);
 +		}
++
++		if (!test_and_clear_bit(LFL_UNLOCK_SYNC, &lp->flags))
++			goto out;
 +
 +		complete(&lp->uast_wait);
 +		return;
@@ -38892,7 +38873,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/thread.c linux-patched/fs/gfs_locki
 +		lp->req = lp->prev_req;
 +		lp->prev_req = DLM_LOCK_IV;
 +		lp->lkf &= ~DLM_LKF_CONVDEADLK;
-+		lp->lkf |= DLM_LKF_QUECVT;
++		if (!(lp->lkf & DLM_LKF_EXPEDITE))
++			lp->lkf |= DLM_LKF_QUECVT;
 +
 +		set_bit(LFL_NOCACHE, &lp->flags);
 +
@@ -38940,10 +38922,10 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/thread.c linux-patched/fs/gfs_locki
 +      out:
 +
 +	/*
-+	 * This is an internal lock_dlm lock used for managing JIDs.
++	 * This is an internal lock_dlm lock (for jid's or plock's)
 +	 */
 +
-+	if (test_bit(LFL_IDLOCK, &lp->flags)) {
++	if (test_bit(LFL_INLOCK, &lp->flags)) {
 +		clear_bit(LFL_NOBLOCK, &lp->flags);
 +		lp->cur = lp->req;
 +		complete(&lp->uast_wait);
@@ -38963,6 +38945,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/thread.c linux-patched/fs/gfs_locki
 +	if (!test_and_clear_bit(LFL_NOCACHE, &lp->flags) &&
 +	    (lp->cur > DLM_LOCK_NL) && (prev_mode > DLM_LOCK_NL))
 +		acb.lc_ret |= LM_OUT_CACHEABLE;
++
++	if (prev_mode == DLM_LOCK_IV && lp->cur > DLM_LOCK_IV)
++		atomic_inc(&dlm->lock_count);
 +
 +	dlm->fscb(dlm->fsdata, LM_CB_ASYNC, &acb);
 +}
@@ -39002,7 +38987,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/thread.c linux-patched/fs/gfs_locki
 +	dlm_t *dlm = (dlm_t *) data;
 +	dlm_lock_t *lp = NULL;
 +	dlm_start_t *ds = NULL;
-+	uint8_t complete, blocking, submit, start, finish;
++	uint8_t complete, blocking, submit, start, finish, drop;
 +	DECLARE_WAITQUEUE(wait, current);
 +
 +	daemonize("lock_dlm");
@@ -39016,7 +39001,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/thread.c linux-patched/fs/gfs_locki
 +		remove_wait_queue(&dlm->wait, &wait);
 +		current->state = TASK_RUNNING;
 +
-+		complete = blocking = submit = start = finish = 0;
++		complete = blocking = submit = start = finish = drop = 0;
 +
 +		spin_lock(&dlm->async_lock);
 +
@@ -39036,14 +39021,21 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/thread.c linux-patched/fs/gfs_locki
 +			list_del(&lp->slist);
 +			clear_bit(LFL_SLIST, &lp->flags);
 +			submit = 1;
-+		} else if (!list_empty(&dlm->starts)) {
++		} else if (!test_bit(DFL_RECOVER, &dlm->flags) &&
++			   !list_empty(&dlm->starts)) {
 +			ds = list_entry(dlm->starts.next, dlm_start_t, list);
 +			list_del(&ds->list);
++			set_bit(DFL_RECOVER, &dlm->flags);
 +			start = 1;
 +		} else if (test_and_clear_bit(DFL_MG_FINISH, &dlm->flags)) {
 +			finish = 1;
 +		}
 +
++		if (check_timeout(dlm->drop_time, DROP_LOCKS_TIME)) {
++			dlm->drop_time = jiffies;
++			if (atomic_read(&dlm->lock_count) >= DROP_LOCKS_COUNT)
++				drop = 1;
++		}
 +		spin_unlock(&dlm->async_lock);
 +
 +		if (complete)
@@ -39060,6 +39052,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/thread.c linux-patched/fs/gfs_locki
 +
 +		else if (finish)
 +			process_finish(dlm);
++
++		if (drop)
++			dlm->fscb(dlm->fsdata, LM_CB_DROPLOCKS, NULL);
 +
 +		schedule();
 +	}
@@ -39117,9 +39112,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/thread.c linux-patched/fs/gfs_locki
 +		schedule();
 +	}
 +}
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/gio_wiretypes.h linux-patched/fs/gfs_locking/lock_gulm/gio_wiretypes.h
---- linux-orig/fs/gfs_locking/lock_gulm/gio_wiretypes.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/gio_wiretypes.h	2004-06-16 12:03:21.956895230 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gio_wiretypes.h linux/fs/gfs_locking/lock_gulm/gio_wiretypes.h
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gio_wiretypes.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/gio_wiretypes.h	2004-09-07 16:17:31.772505390 -0500
 @@ -0,0 +1,404 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -39525,10 +39520,10 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gio_wiretypes.h linux-patched/fs/g
 +
 +#endif /*__gio_wiretypes_h__*/
 +/* vim: set ai cin et sw=3 ts=3 : */
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm.h linux-patched/fs/gfs_locking/lock_gulm/gulm.h
---- linux-orig/fs/gfs_locking/lock_gulm/gulm.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/gulm.h	2004-06-16 12:03:21.957894998 -0500
-@@ -0,0 +1,288 @@
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm.h linux/fs/gfs_locking/lock_gulm/gulm.h
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/gulm.h	2004-09-07 16:17:31.773505171 -0500
+@@ -0,0 +1,291 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -39561,6 +39556,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm.h linux-patched/fs/gfs_lockin
 +#include <linux/smp_lock.h>
 +#include <linux/ctype.h>
 +#include <linux/string.h>
++#include <linux/fs.h>
 +
 +#ifndef TRUE
 +#define TRUE (1)
@@ -39634,7 +39630,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm.h linux-patched/fs/gfs_lockin
 +/* Some fixed length constants.
 + * Some of these should be made dynamic in size in the future.
 + */
-+#define GIO_KEY_SIZE  (46)
++#define GIO_KEY_SIZE  (48)
 +#define GIO_LVB_SIZE  (32)
 +#define GIO_NAME_SIZE (32)
 +#define GIO_NAME_LEN  (GIO_NAME_SIZE-1)
@@ -39786,6 +39782,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm.h linux-patched/fs/gfs_lockin
 +/* cross pollenate prototypes */
 +
 +/* from gulm_lt.c */
++int pack_lock_key(uint8_t *key, uint16_t keylen, uint8_t type,
++		uint8_t *fsname, uint8_t *pk, uint8_t pklen);
 +void lt_logout (void);
 +int lt_login (void);
 +int get_mount_lock (gulm_fs_t * fs, int *first);
@@ -39817,9 +39815,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm.h linux-patched/fs/gfs_lockin
 +
 +#endif				/*  GULM_DOT_H  */
 +/* vim: set ai cin noet sw=8 ts=8 : */
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_core.c linux-patched/fs/gfs_locking/lock_gulm/gulm_core.c
---- linux-orig/fs/gfs_locking/lock_gulm/gulm_core.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/gulm_core.c	2004-06-16 12:03:21.957894998 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm_core.c linux/fs/gfs_locking/lock_gulm/gulm_core.c
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm_core.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/gulm_core.c	2004-09-07 16:17:31.773505171 -0500
 @@ -0,0 +1,255 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -40076,10 +40074,10 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_core.c linux-patched/fs/gfs_l
 +	return err;
 +}
 +/* vim: set ai cin noet sw=8 ts=8 : */
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_fs.c linux-patched/fs/gfs_locking/lock_gulm/gulm_fs.c
---- linux-orig/fs/gfs_locking/lock_gulm/gulm_fs.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/gulm_fs.c	2004-06-16 12:03:21.957894998 -0500
-@@ -0,0 +1,613 @@
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm_fs.c linux/fs/gfs_locking/lock_gulm/gulm_fs.c
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm_fs.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/gulm_fs.c	2004-09-07 16:17:31.774504952 -0500
+@@ -0,0 +1,620 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -40417,11 +40415,17 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_fs.c linux-patched/fs/gfs_loc
 +	    unsigned int min_lvb_size, struct lm_lockstruct *lockstruct)
 +{
 +	gulm_fs_t *gulm;
-+	char work[256], *tbln;
++	char *work=NULL, *tbln;
 +	int first;
 +	int error = -1;
 +	struct list_head *lltmp;
 +
++	work = kmalloc(256, GFP_KERNEL);
++	if(work == NULL ) {
++		log_err("Out of Memory.\n");
++		error = -ENOMEM;
++		goto fail;
++	}
 +	strncpy (work, table_name, 256);
 +
 +	tbln = strstr (work, ":");
@@ -40450,10 +40454,10 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_fs.c linux-patched/fs/gfs_loc
 +	 * A better fix to this will happen when I actually get dynamic key
 +	 * lengths working.
 +	 */
-+	if (strlen (tbln) > MIN (GIO_NAME_LEN, (GIO_KEY_SIZE - 13))) {
++	if (strlen (tbln) > MIN (GIO_NAME_LEN, (GIO_KEY_SIZE - 15))) {
 +		log_err
 +		    ("Warning! lockspace name (%s) is longer than %d chars!\n",
-+		     tbln, MIN (GIO_NAME_LEN, (GIO_KEY_SIZE - 13)));
++		     tbln, MIN (GIO_NAME_LEN, (GIO_KEY_SIZE - 15)));
 +		error = -EPROTO;
 +		goto fail;
 +	}
@@ -40565,6 +40569,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_fs.c linux-patched/fs/gfs_loc
 +
 +      fail:
 +
++	if(work != NULL ) kfree(work);
 +	gulm_cm.starts = FALSE;
 +	log_msg (lgm_Always, "fsid=%s: Exiting gulm_mount with errors %d\n",
 +		 table_name, error);
@@ -40652,7 +40657,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_fs.c linux-patched/fs/gfs_loc
 +{
 +	gulm_fs_t *fs = (gulm_fs_t *) lockspace;
 +	int err;
-+	uint8_t name[256];
++	uint8_t name[64];
 +
 +	if (message != LM_RD_SUCCESS) {
 +		/* Need to start thinking about how I want to use this... */
@@ -40661,7 +40666,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_fs.c linux-patched/fs/gfs_loc
 +
 +	if (jid == fs->fsJID) {	/* this may be drifting crud through. */
 +		/* hey! its me! */
-+		strncpy (name, gulm_cm.myName, 256);
++		strncpy (name, gulm_cm.myName, 64);
 +	} else if (lookup_name_by_jid (fs, jid, name) != 0) {
 +		log_msg (lgm_JIDMap,
 +			 "fsid=%s: Could not find a client for jid %d\n",
@@ -40693,10 +40698,10 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_fs.c linux-patched/fs/gfs_loc
 +
 +}
 +/* vim: set ai cin noet sw=8 ts=8 : */
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c linux-patched/fs/gfs_locking/lock_gulm/gulm_jid.c
---- linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/gulm_jid.c	2004-06-16 12:03:21.957894998 -0500
-@@ -0,0 +1,806 @@
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm_jid.c linux/fs/gfs_locking/lock_gulm/gulm_jid.c
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm_jid.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/gulm_jid.c	2004-09-07 16:17:31.797499912 -0500
+@@ -0,0 +1,817 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -40779,12 +40784,12 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c linux-patched/fs/gfs_lo
 +jid_get_header_name (uint8_t * fsname, uint8_t * key, uint16_t * keylen)
 +{
 +	int len;
-+	len = strlen (fsname);
-+	if ((len + 11) > *keylen)
-+		return -EINVAL;
-+	memcpy (key, "JHeader\0\0\0", 10);
-+	memcpy (&key[10], fsname, len + 1);
-+	*keylen = len + 11;
++
++	len = pack_lock_key(key, *keylen, 'J', fsname, "Header\0\0\0", 9);
++	if( len <=0 ) return len;
++
++	*keylen = len;
++
 +	return 0;
 +}
 +
@@ -40792,12 +40797,12 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c linux-patched/fs/gfs_lo
 +jid_get_listlock_name (uint8_t * fsname, uint8_t * key, uint16_t * keylen)
 +{
 +	int len;
-+	len = strlen (fsname);
-+	if ((len + 11) > *keylen)
-+		return -EINVAL;
-+	memcpy (key, "JLlistlock", 10);
-+	memcpy (&key[10], fsname, len + 1);
-+	*keylen = len + 11;
++
++	len = pack_lock_key(key, *keylen, 'J', fsname, "Llistlock", 9);
++	if( len <=0 ) return len;
++
++	*keylen = len;
++
 +	return 0;
 +}
 +
@@ -40818,21 +40823,23 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c linux-patched/fs/gfs_lo
 +		   uint16_t * keylen)
 +{
 +	int len;
-+	len = strlen (fsname);
-+	if ((len + 11) > *keylen)
-+		return -EINVAL;
-+	key[0] = 'J';
-+	key[1] = 'M';
-+	key[5] = (jid >> 24) & 0xff;
-+	key[4] = (jid >> 16) & 0xff;
-+	key[3] = (jid >> 8) & 0xff;
-+	key[2] = (jid >> 0) & 0xff;
-+	key[6] = 0;
-+	key[7] = 0;
-+	key[8] = 0;
-+	key[9] = 0;
-+	memcpy (&key[10], fsname, len + 1);
-+	*keylen = len + 11;
++	uint8_t temp[9];
++
++	temp[0] = 'M';
++	temp[1] = (jid >> 0) & 0xff;
++	temp[2] = (jid >> 8) & 0xff;
++	temp[3] = (jid >> 16) & 0xff;
++	temp[4] = (jid >> 24) & 0xff;
++	temp[5] = 0;
++	temp[6] = 0;
++	temp[7] = 0;
++	temp[8] = 0;
++
++	len = pack_lock_key(key, *keylen, 'J', fsname, temp, 9);
++	if( len <=0 ) return len;
++
++	*keylen = len;
++
 +	return 0;
 +}
 +
@@ -40954,7 +40961,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c linux-patched/fs/gfs_lo
 +			uint32_t flags, uint8_t * lvb, uint16_t lvblen)
 +{
 +	jid_lookup_item_t jp;
-+	GULM_ASSERT (keylen > 6,);
++	GULM_ASSERT (keylen > 6,
++			printk("keylen: %d\n", keylen););
 +	jp.key = key;
 +	jp.keylen = keylen;
 +	jp.lvb = lvb;
@@ -41047,7 +41055,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c linux-patched/fs/gfs_lo
 +jid_hold_list_lock (gulm_fs_t * fs)
 +{
 +	uint8_t key[GIO_KEY_SIZE];
-+	uint16_t keylen;
++	uint16_t keylen = GIO_KEY_SIZE;
 +
 +	down (&jid_listlock);
 +
@@ -41068,7 +41076,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c linux-patched/fs/gfs_lo
 +jid_release_list_lock (gulm_fs_t * fs)
 +{
 +	uint8_t key[GIO_KEY_SIZE];
-+	uint16_t keylen;
++	uint16_t keylen = GIO_KEY_SIZE;
 +
 +	keylen = sizeof (key);
 +	jid_get_listlock_name (fs->fs_name, key, &keylen);
@@ -41124,7 +41132,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c linux-patched/fs/gfs_lo
 +	jidc |= (uint32_t) (lvb[1]) << 8;
 +	jidc |= (uint32_t) (lvb[2]) << 16;
 +	jidc |= (uint32_t) (lvb[3]) << 24;
-+	jidc += 10;
++	jidc += 300;
 +	lvb[3] = (jidc >> 24) & 0xff;
 +	lvb[2] = (jidc >> 16) & 0xff;
 +	lvb[1] = (jidc >> 8) & 0xff;
@@ -41151,7 +41159,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c linux-patched/fs/gfs_lo
 +lookup_name_by_jid (gulm_fs_t * fs, uint32_t jid, uint8_t * name)
 +{
 +	uint8_t key[GIO_KEY_SIZE], lvb[64];
-+	uint16_t keylen = 64;
++	uint16_t keylen = GIO_KEY_SIZE;
 +	int err = 0;
 +
 +	if (jid >= fs->JIDcount) {
@@ -41191,7 +41199,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c linux-patched/fs/gfs_lo
 +release_JID (gulm_fs_t * fs, uint32_t jid, int nop)
 +{
 +	uint8_t key[GIO_KEY_SIZE], lvb[64];
-+	uint16_t keylen = 64;
++	uint16_t keylen = GIO_KEY_SIZE;
 +
 +	/* there is no such, so this becomes a nop. */
 +	if (jid >= fs->JIDcount)
@@ -41229,9 +41237,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c linux-patched/fs/gfs_lo
 +void
 +get_journalID (gulm_fs_t * fs)
 +{
-+	uint32_t i = 0;
++	uint32_t i = 0, jifc;
 +	uint8_t key[GIO_KEY_SIZE], lvb[64];
-+	uint16_t keylen;
++	uint16_t keylen = GIO_KEY_SIZE;
 +	int first_clear = -1;
 +
 +      retry:
@@ -41291,7 +41299,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c linux-patched/fs/gfs_lo
 +{
 +	uint32_t i, found = -1;
 +	uint8_t key[GIO_KEY_SIZE], lvb[64];
-+	uint16_t keylen;
++	uint16_t keylen = GIO_KEY_SIZE;
 +
 +	/* grab list lock */
 +	jid_hold_list_lock (fs);
@@ -41330,7 +41338,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c linux-patched/fs/gfs_lo
 +{
 +	uint32_t i;
 +	uint8_t key[GIO_KEY_SIZE], lvb[64];
-+	uint16_t keylen;
++	uint16_t keylen = GIO_KEY_SIZE;
 +	unsigned int ujid;
 +
 +	/* grab list lock */
@@ -41384,7 +41392,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c linux-patched/fs/gfs_lo
 +{
 +	uint32_t i;
 +	uint8_t key[GIO_KEY_SIZE];
-+	uint16_t keylen;
++	uint16_t keylen = GIO_KEY_SIZE;
 +	for (i = 0; i < fs->JIDcount; i++) {
 +		keylen = sizeof (key);
 +		jid_get_lock_name (fs->fs_name, i, key, &keylen);
@@ -41407,7 +41415,13 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c linux-patched/fs/gfs_lo
 +void
 +jid_unlock_callback (void *d)
 +{
++	uint8_t key[GIO_KEY_SIZE];
++	uint16_t keylen = GIO_KEY_SIZE;
++
 +	gulm_fs_t *fs = (gulm_fs_t *) d;
++	jid_get_header_name (fs->fs_name, key, &keylen);
++	jid_get_lock_state (key, keylen, lg_lock_state_Unlock);
++
 +	jid_rehold_lvbs (fs);
 +}
 +
@@ -41443,15 +41457,12 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c linux-patched/fs/gfs_lo
 +{
 +	int len;
 +
-+	key[0] = 'J';
-+	key[1] = 'N';
-+	len = strlen (gulm_cm.myName) + 1;
-+	memset (&key[2], 0, 8);
-+	memcpy ((&key[2]), gulm_cm.myName, MIN (len, 8));
-+	/* fsname starts at byte 10 so the dropexp pattern will find it. */
-+	memcpy ((&key[10]), fsname, strlen (fsname) + 1);
++	len = strlen(gulm_cm.myName);
++	len = pack_lock_key(key, *keylen, 'N', fsname, gulm_cm.myName,
++			MIN(64,len));
++	if( len <=0 ) return len;
 +
-+	*keylen = 10 + strlen (fsname) + 1;
++	*keylen = len;
 +
 +	return 0;
 +}
@@ -41466,16 +41477,21 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c linux-patched/fs/gfs_lo
 +void
 +jid_lockstate_reserve (gulm_fs_t * fs, int first)
 +{
-+	uint8_t key[GIO_KEY_SIZE];
-+	uint16_t keylen;
++	uint8_t key[5 + 32 + 64];
++	uint16_t keylen = 5 + 32 + 64;
++	/* 5 bytes for stuff in key (lengths and type bytes)
++	 * 32 for fs name
++	 * 64 for node name.
++	 */
 +
 +	jid_get_lsresv_name (fs->fs_name, key, &keylen);
 +
-+	/* if we are expired, this will block until someone else has cleaned our
-+	 * last mess up.
++	/* if we are expired, this will block until someone else has
++	 * cleaned our last mess up.
 +	 *
-+	 * Will very well may need to put in some kind of timeout otherwise this
-+	 * may do a forever lockup much like the FirstMounter lock had.
++	 * Will very well may need to put in some kind of timeout
++	 * otherwise this may do a forever lockup much like the
++	 * FirstMounter lock had.
 +	 */
 +	jid_get_lock_state_inr (key, keylen, lg_lock_state_Exclusive,
 +			first?lg_lock_flag_IgnoreExp:0, NULL, 0);
@@ -41492,8 +41508,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c linux-patched/fs/gfs_lo
 +void
 +jid_lockstate_release (gulm_fs_t * fs)
 +{
-+	uint8_t key[GIO_KEY_SIZE];
-+	uint16_t keylen;
++	uint8_t key[5 + 32 + 64];
++	uint16_t keylen = 5 + 32 + 64;
 +
 +	jid_get_lsresv_name (fs->fs_name, key, &keylen);
 +
@@ -41503,9 +41519,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.c linux-patched/fs/gfs_lo
 +
 +
 +/* vim: set ai cin noet sw=8 ts=8 : */
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.h linux-patched/fs/gfs_locking/lock_gulm/gulm_jid.h
---- linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/gulm_jid.h	2004-06-16 12:03:21.957894998 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm_jid.h linux/fs/gfs_locking/lock_gulm/gulm_jid.h
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm_jid.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/gulm_jid.h	2004-09-07 16:17:31.797499912 -0500
 @@ -0,0 +1,41 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -41548,9 +41564,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_jid.h linux-patched/fs/gfs_lo
 +void jid_action_reply (uint8_t * key, uint16_t keylen);
 +void jid_header_lock_drop (uint8_t * key, uint16_t keylen);
 +#endif /*__GULM_JID_H__*/
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_log_msg_bits.h linux-patched/fs/gfs_locking/lock_gulm/gulm_log_msg_bits.h
---- linux-orig/fs/gfs_locking/lock_gulm/gulm_log_msg_bits.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/gulm_log_msg_bits.h	2004-06-16 12:03:21.957894998 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm_log_msg_bits.h linux/fs/gfs_locking/lock_gulm/gulm_log_msg_bits.h
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm_log_msg_bits.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/gulm_log_msg_bits.h	2004-09-07 16:17:31.797499912 -0500
 @@ -0,0 +1,40 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -41592,10 +41608,10 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_log_msg_bits.h linux-patched/
 +#define lgm_BitFieldSize (32)
 +
 +#endif /*__gulm_log_msg_bits_h__*/
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_lt.c linux-patched/fs/gfs_locking/lock_gulm/gulm_lt.c
---- linux-orig/fs/gfs_locking/lock_gulm/gulm_lt.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/gulm_lt.c	2004-06-16 12:03:21.957894998 -0500
-@@ -0,0 +1,1937 @@
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm_lt.c linux/fs/gfs_locking/lock_gulm/gulm_lt.c
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm_lt.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/gulm_lt.c	2004-09-07 16:18:11.108886960 -0500
+@@ -0,0 +1,2021 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -41745,6 +41761,109 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_lt.c linux-patched/fs/gfs_loc
 +
 +/****************************************************************************/
 +/**
++ * pack_lock_key - 
++ * @key: 
++ * @keylen: 
++ * 
++ * key is: <type><fsname len><fsname>\0<pk len><pk>\0
++ * <type> is: G J F N
++ * <fsname len> is 0-256
++ * 
++ * Returns: int
++ */
++int pack_lock_key(uint8_t *key, uint16_t keylen, uint8_t type,
++		uint8_t *fsname, uint8_t *pk, uint8_t pklen)
++{
++	int fsnlen;
++	fsnlen = strlen(fsname);
++
++	if( keylen <= (fsnlen + pklen + 5) ) return -1;
++
++	memset (key, 0, keylen);
++
++	key[0] = type;
++
++	key[1] = fsnlen;
++	memcpy(&key[2], fsname, fsnlen);
++	key[2 + fsnlen] = 0;
++
++	key[3 + fsnlen] = pklen;
++
++	memcpy(&key[4 + fsnlen], pk, pklen);
++
++	key[4 + fsnlen + pklen] = 0;
++
++	return fsnlen + pklen + 5;
++}
++
++/**
++ * unpack_lock_key - 
++ * @key: <
++ * @keylen: <
++ * @type: >
++ * @fsname: >
++ * @fsnlen: >
++ * @pk: >
++ * @pklen: >
++ * 
++ * if you're gonna fiddle with bytes returned here, copy first!
++ *
++ * this is broken. do I even really need this?
++ * 
++ * Returns: int
++ */
++int unpack_lock_key(uint8_t *key, uint16_t keylen, uint8_t *type,
++		uint8_t **fsname, uint8_t *fsnlen,
++		uint8_t **pk, uint8_t *pklen)
++{
++	int fsnl, pkl;
++	if( type != NULL )
++		*type = key[0];
++
++	fsnl = key[1];
++	if( fsnlen != NULL && *fsname != NULL ) {
++		*fsnlen = key[1];
++		*fsname = &key[2];
++	}
++
++	/* 0 = key[2 + fsnl] */
++
++	pkl = key[3 + fsnl];
++	if( pklen != NULL && *pk != NULL ) {
++		*pklen = key[3 + fsnl];
++		*pk = &key[4 + fsnl];
++	}
++
++	/* 0 = key[4 + fsnl + *pklen] */
++
++	return fsnl + pkl + 5;
++}
++
++/**
++ * pack_drop_mask - 
++ * @mask: 
++ * @fsname: 
++ * 
++ * 
++ * Returns: int
++ */
++int pack_drop_mask(uint8_t *mask, uint16_t mlen, uint8_t *fsname)
++{
++	int fsnlen;
++	fsnlen = strlen(fsname);
++
++	memset (mask, 0, GIO_KEY_SIZE);
++
++	mask[0] = 0xff;
++	mask[1] = fsnlen;
++	memcpy(&mask[2], fsname, fsnlen);
++	mask[2 + fsnlen] = 0;
++	/* rest should be 0xff */
++
++	return 3 + fsnlen;
++}
++
++/**
 + * find_and_mark_lock - 
 + * @key: 
 + * @keylen: 
@@ -41836,18 +41955,31 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_lt.c linux-patched/fs/gfs_loc
 +
 +/****************************************************************************/
 +
++/**
++ * gulm_key_to_lm_lockname - 
++ * @key: 
++ * @lockname: 
++ * 
++ */
 +void
 +gulm_key_to_lm_lockname (uint8_t * key, struct lm_lockname *lockname)
 +{
-+	(*lockname).ln_number = (u64) (key[9]) << 0;
-+	(*lockname).ln_number |= (u64) (key[8]) << 8;
-+	(*lockname).ln_number |= (u64) (key[7]) << 16;
-+	(*lockname).ln_number |= (u64) (key[6]) << 24;
-+	(*lockname).ln_number |= (u64) (key[5]) << 32;
-+	(*lockname).ln_number |= (u64) (key[4]) << 40;
-+	(*lockname).ln_number |= (u64) (key[3]) << 48;
-+	(*lockname).ln_number |= (u64) (key[2]) << 56;
-+	(*lockname).ln_type = key[1];
++	int pos;
++
++	pos = key[1] + 4;
++	/* pos now points to the first byte of the GFS lockname that was
++	 * embedded in the gulm lock key
++	 */
++
++	(*lockname).ln_type = key[pos];
++	(*lockname).ln_number  = (u64) (key[pos+1]) << 56;
++	(*lockname).ln_number |= (u64) (key[pos+2]) << 48;
++	(*lockname).ln_number |= (u64) (key[pos+3]) << 40;
++	(*lockname).ln_number |= (u64) (key[pos+4]) << 32;
++	(*lockname).ln_number |= (u64) (key[pos+5]) << 24;
++	(*lockname).ln_number |= (u64) (key[pos+6]) << 16;
++	(*lockname).ln_number |= (u64) (key[pos+7]) << 8;
++	(*lockname).ln_number |= (u64) (key[pos+8]) << 0;
 +}
 +
 +void
@@ -41855,15 +41987,12 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_lt.c linux-patched/fs/gfs_loc
 +{
 +	unsigned int type;
 +	struct lm_lockname lockname;
-+	/* i might want to shove most of this function into the new lockcallback
-+	 * handing queue.
++	/* i might want to shove most of this function into the new
++	 * lockcallback handing queue.
 +	 * later.
 +	 */
 +
 +	/* don't do callbacks on the gulm mount lock.
-+	 * I need to someday come up with a cleaner way of seperating the
-+	 * firstmounter lock and the rest of gfs's locks.
-+	 * i duno, this first byte is pretty clean.
 +	 * */
 +	if (key[0] != 'G') {
 +		return;
@@ -41914,6 +42043,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_lt.c linux-patched/fs/gfs_loc
 +		return;
 +	}
 +
++	if( lck->key[0] != 'G' ) return;
++
 +	gulm_key_to_lm_lockname (lck->key, &lockname);
 +
 +	qu_async_rpl (&fs->cq, fs->cb, fs->fsdata, &lockname, lck->result);
@@ -41933,22 +42064,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_lt.c linux-patched/fs/gfs_loc
 +	int err, len;
 +	uint8_t mask[GIO_KEY_SIZE];
 +
-+	memset (mask, 0, GIO_KEY_SIZE);
-+	/* pack key mask */
-+	mask[0] = 0xff;		/* minor lock type. 'G', 'F', 'J'. */
-+	mask[1] = 0xff;		/* GFS lock type. */
-+	mask[2] = 0xff;		/* next 8 are lock number */
-+	mask[3] = 0xff;
-+	mask[4] = 0xff;
-+	mask[5] = 0xff;
-+	mask[6] = 0xff;
-+	mask[7] = 0xff;
-+	mask[8] = 0xff;
-+	mask[9] = 0xff;
-+	/* Now stick the fsname into the remaining space. */
-+	len = strlen (fs->fs_name);
-+	strncpy (&mask[10], fs->fs_name, GIO_KEY_SIZE - 16);
-+	len += 11;		/* 10 for the encoded buf, 1 for the '\0' after the fs name */
++	len = pack_drop_mask(mask, GIO_KEY_SIZE, fs->fs_name); 
 +
 +	err = lg_lock_drop_exp (gulm_cm.hookup, name, mask, len);
 +
@@ -42524,7 +42640,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_lt.c linux-patched/fs/gfs_loc
 +{
 +	gulm_lock_t *lck;
 +
-+	if (key[0] == 'J') {
++	if (key[0] == 'J' || key[0] == 'N' ) {
 +		jid_state_reply (key, keylen, LVB, LVBlen);
 +		return 0;
 +	}
@@ -42862,35 +42978,28 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_lt.c linux-patched/fs/gfs_loc
 +{
 +	int err, len;
 +	gulm_fs_t *fs = (gulm_fs_t *) lockspace;
-+	uint8_t key[GIO_KEY_SIZE];
++	uint8_t key[GIO_KEY_SIZE]; uint8_t temp[9];
 +
-+	/* i could add a per fs lock to force only one gulm_get_lock at a time.
-+	 */
 +	down (&fs->get_lock);
 +
-+	memset (key, 0, GIO_KEY_SIZE);
-+	/* pack lockname */
-+	key[0] = 'G';		/* G: fs lock, F: First mounter, J: JID mapping lock */
-+	key[1] = name->ln_type & 0xff;
-+	key[2] = (name->ln_number >> 56) & 0xff;
-+	key[3] = (name->ln_number >> 48) & 0xff;
-+	key[4] = (name->ln_number >> 40) & 0xff;
-+	key[5] = (name->ln_number >> 32) & 0xff;
-+	key[6] = (name->ln_number >> 24) & 0xff;
-+	key[7] = (name->ln_number >> 16) & 0xff;
-+	key[8] = (name->ln_number >> 8) & 0xff;
-+	key[9] = (name->ln_number >> 0) & 0xff;
 +
-+	/* Now stick the fsname into the remaining space. */
-+	len = strlen (fs->fs_name);
-+	strncpy (&key[10], fs->fs_name, GIO_KEY_SIZE - 16);
++	temp[0] = name->ln_type & 0xff;
++	temp[1] = (name->ln_number >> 56) & 0xff;
++	temp[2] = (name->ln_number >> 48) & 0xff;
++	temp[3] = (name->ln_number >> 40) & 0xff;
++	temp[4] = (name->ln_number >> 32) & 0xff;
++	temp[5] = (name->ln_number >> 24) & 0xff;
++	temp[6] = (name->ln_number >> 16) & 0xff;
++	temp[7] = (name->ln_number >> 8) & 0xff;
++	temp[8] = (name->ln_number >> 0) & 0xff;
 +
-+	len = MIN (len, GIO_KEY_SIZE - 16);
-+	len += 11;		/* 10 for the encoded buf, 1 for the '\0' after the fs name */
++	len = pack_lock_key(key, GIO_KEY_SIZE, 'G', fs->fs_name, temp, 9);
++	if( len <=0 ) {err = len; goto exit;}
++
 +	err = internal_gulm_get_lock (fs, key, len, (gulm_lock_t **) lockp);
 +
 +	up (&fs->get_lock);
-+
++exit:
 +	return err;
 +}
 +
@@ -43287,25 +43396,24 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_lt.c linux-patched/fs/gfs_loc
 +/*****************************************************************************/
 +static int
 +gulm_plock_get (lm_lockspace_t * lockspace,
-+		struct lm_lockname *name, unsigned long owner,
-+		uint64_t * start, uint64_t * end, int *exclusive,
-+		unsigned long *rowner)
++		struct lm_lockname *name,
++		struct file *file, struct file_lock *fl)
 +{
 +	return -ENOSYS;
 +}
 +
 +static int
 +gulm_plock (lm_lockspace_t * lockspace,
-+	    struct lm_lockname *name, unsigned long owner,
-+	    int wait, int exclusive, uint64_t start, uint64_t end)
++	    struct lm_lockname *name,
++	    struct file *file, int cmd, struct file_lock *fl)
 +{
 +	return -ENOSYS;
 +}
 +
 +static int
 +gulm_punlock (lm_lockspace_t * lockspace,
-+	      struct lm_lockname *name, unsigned long owner,
-+	      uint64_t start, uint64_t end)
++	      struct lm_lockname *name,
++	      struct file *file, struct file_lock *fl)
 +{
 +	return -ENOSYS;
 +}
@@ -43327,16 +43435,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_lt.c linux-patched/fs/gfs_loc
 +	gulm_lock_t *lck = NULL;
 +	uint8_t key[GIO_KEY_SIZE];
 +
-+	/* pack lockname */
-+	memset (key, 0, GIO_KEY_SIZE);
-+	/* The F at the beginning doesn't mash with the G that prefixes every fs
-+	 * lock.
-+	 */
-+	memcpy (key, "FirstMount", 10);
-+	len = strlen (fs->fs_name);
-+	strncpy (&key[10], fs->fs_name, GIO_KEY_SIZE - 21);
-+	len = MIN (len, GIO_KEY_SIZE - 21);
-+	len += 11;
++	len = pack_lock_key(key, GIO_KEY_SIZE, 'F', fs->fs_name, "irstMount", 9);
++	if( len <= 0 ) return NULL;
 +
 +	err = internal_gulm_get_lock (fs, key, len, &lck);
 +
@@ -43533,9 +43633,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_lt.c linux-patched/fs/gfs_loc
 +      lm_owner:THIS_MODULE,
 +};
 +/* vim: set ai cin noet sw=8 ts=8 : */
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_prints.h linux-patched/fs/gfs_locking/lock_gulm/gulm_prints.h
---- linux-orig/fs/gfs_locking/lock_gulm/gulm_prints.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/gulm_prints.h	2004-06-16 12:03:21.957894998 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm_prints.h linux/fs/gfs_locking/lock_gulm/gulm_prints.h
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm_prints.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/gulm_prints.h	2004-09-07 16:17:31.800499255 -0500
 @@ -0,0 +1,45 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -43582,9 +43682,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_prints.h linux-patched/fs/gfs
 +#define TICK printk("TICK==>" PROTO_NAME ": [%s:%d] pid:%ld\n",__FILE__,__LINE__,osi_pid())
 +
 +#endif /*__gulm_prints_h__*/
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_procinfo.c linux-patched/fs/gfs_locking/lock_gulm/gulm_procinfo.c
---- linux-orig/fs/gfs_locking/lock_gulm/gulm_procinfo.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/gulm_procinfo.c	2004-06-16 12:03:21.957894998 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm_procinfo.c linux/fs/gfs_locking/lock_gulm/gulm_procinfo.c
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm_procinfo.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/gulm_procinfo.c	2004-09-07 16:17:31.801499036 -0500
 @@ -0,0 +1,165 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -43751,9 +43851,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_procinfo.c linux-patched/fs/g
 +	remove_proc_entry ("core", gulm_proc_dir);
 +	remove_proc_entry ("gulm", &proc_root);
 +}
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_procinfo.h linux-patched/fs/gfs_locking/lock_gulm/gulm_procinfo.h
---- linux-orig/fs/gfs_locking/lock_gulm/gulm_procinfo.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/gulm_procinfo.h	2004-06-16 12:03:21.958894765 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm_procinfo.h linux/fs/gfs_locking/lock_gulm/gulm_procinfo.h
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/gulm_procinfo.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/gulm_procinfo.h	2004-09-07 16:17:31.801499036 -0500
 @@ -0,0 +1,22 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -43777,9 +43877,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/gulm_procinfo.h linux-patched/fs/g
 +int init_proc_dir (void);
 +void remove_proc_dir (void);
 +#endif /*__procinfo_h__*/
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/handler.c linux-patched/fs/gfs_locking/lock_gulm/handler.c
---- linux-orig/fs/gfs_locking/lock_gulm/handler.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/handler.c	2004-06-16 12:03:21.958894765 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/handler.c linux/fs/gfs_locking/lock_gulm/handler.c
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/handler.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/handler.c	2004-09-07 16:17:31.802498817 -0500
 @@ -0,0 +1,343 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -44124,9 +44224,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/handler.c linux-patched/fs/gfs_loc
 +	}
 +	return 0;
 +}
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/handler.h linux-patched/fs/gfs_locking/lock_gulm/handler.h
---- linux-orig/fs/gfs_locking/lock_gulm/handler.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/handler.h	2004-06-16 12:03:21.958894765 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/handler.h linux/fs/gfs_locking/lock_gulm/handler.h
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/handler.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/handler.h	2004-09-07 16:17:31.802498817 -0500
 @@ -0,0 +1,42 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -44170,9 +44270,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/handler.h linux-patched/fs/gfs_loc
 +void display_handler_queue (callback_qu_t * cq);
 +
 +#endif /*__handler_c__*/
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/lg_core.c linux-patched/fs/gfs_locking/lock_gulm/lg_core.c
---- linux-orig/fs/gfs_locking/lock_gulm/lg_core.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/lg_core.c	2004-06-16 12:03:21.958894765 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/lg_core.c linux/fs/gfs_locking/lock_gulm/lg_core.c
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/lg_core.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/lg_core.c	2004-09-07 16:17:31.803498598 -0500
 @@ -0,0 +1,724 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -44898,9 +44998,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/lg_core.c linux-patched/fs/gfs_loc
 +	up (&lg->core_sender);
 +	return err;
 +}
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/lg_lock.c linux-patched/fs/gfs_locking/lock_gulm/lg_lock.c
---- linux-orig/fs/gfs_locking/lock_gulm/lg_lock.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/lg_lock.c	2004-06-16 12:03:21.958894765 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/lg_lock.c linux/fs/gfs_locking/lock_gulm/lg_lock.c
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/lg_lock.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/lg_lock.c	2004-09-07 16:17:31.804498378 -0500
 @@ -0,0 +1,667 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -45569,9 +45669,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/lg_lock.c linux-patched/fs/gfs_loc
 +	up (&lg->lock_sender);
 +	return err;
 +}
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/lg_main.c linux-patched/fs/gfs_locking/lock_gulm/lg_main.c
---- linux-orig/fs/gfs_locking/lock_gulm/lg_main.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/lg_main.c	2004-06-16 12:03:21.958894765 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/lg_main.c linux/fs/gfs_locking/lock_gulm/lg_main.c
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/lg_main.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/lg_main.c	2004-09-07 16:17:31.804498378 -0500
 @@ -0,0 +1,209 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -45782,9 +45882,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/lg_main.c linux-patched/fs/gfs_loc
 +
 +	return 0;
 +}
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/lg_priv.h linux-patched/fs/gfs_locking/lock_gulm/lg_priv.h
---- linux-orig/fs/gfs_locking/lock_gulm/lg_priv.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/lg_priv.h	2004-06-16 12:03:21.958894765 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/lg_priv.h linux/fs/gfs_locking/lock_gulm/lg_priv.h
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/lg_priv.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/lg_priv.h	2004-09-07 16:17:31.805498159 -0500
 @@ -0,0 +1,86 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -45872,9 +45972,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/lg_priv.h linux-patched/fs/gfs_loc
 +#endif
 +
 +#endif /*__lg_priv_h__*/
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/libgulm.h linux-patched/fs/gfs_locking/lock_gulm/libgulm.h
---- linux-orig/fs/gfs_locking/lock_gulm/libgulm.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/libgulm.h	2004-06-16 12:03:21.958894765 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/libgulm.h linux/fs/gfs_locking/lock_gulm/libgulm.h
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/libgulm.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/libgulm.h	2004-09-07 16:17:31.805498159 -0500
 @@ -0,0 +1,191 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -46067,9 +46167,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/libgulm.h linux-patched/fs/gfs_loc
 +#define lg_err_NoSuchName      (1018)
 +
 +#endif /*__libgulm_h__*/
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/linux_gulm_main.c linux-patched/fs/gfs_locking/lock_gulm/linux_gulm_main.c
---- linux-orig/fs/gfs_locking/lock_gulm/linux_gulm_main.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/linux_gulm_main.c	2004-06-16 12:03:21.958894765 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/linux_gulm_main.c linux/fs/gfs_locking/lock_gulm/linux_gulm_main.c
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/linux_gulm_main.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/linux_gulm_main.c	2004-09-07 16:17:31.806497940 -0500
 @@ -0,0 +1,109 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -46180,10 +46280,10 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/linux_gulm_main.c linux-patched/fs
 +EXPORT_SYMBOL (lg_lock_action_req);
 +EXPORT_SYMBOL (lg_lock_drop_exp);
 +EXPORT_SYMBOL (lg_lock_status);
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/load_info.c linux-patched/fs/gfs_locking/lock_gulm/load_info.c
---- linux-orig/fs/gfs_locking/lock_gulm/load_info.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/load_info.c	2004-06-16 12:03:21.958894765 -0500
-@@ -0,0 +1,96 @@
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/load_info.c linux/fs/gfs_locking/lock_gulm/load_info.c
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/load_info.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/load_info.c	2004-09-07 16:17:31.806497940 -0500
+@@ -0,0 +1,95 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -46207,7 +46307,6 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/load_info.c linux-patched/fs/gfs_l
 +#include <linux/utsname.h>	/* for extern system_utsname */
 +
 +#include "util.h"
-+#include "utils_verb_flags.h"
 +
 +gulm_cm_t gulm_cm;
 +
@@ -46271,7 +46370,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/load_info.c linux-patched/fs/gfs_l
 +	 * find another way to set them. (modprobe options for example.)
 +	 * */
 +	gulm_cm.handler_threads = 2;
-+	set_verbosity ("Default", &gulm_cm.verbosity);
++	gulm_cm.verbosity = lgm_Network | lgm_Stomith | lgm_Forking;
 +
 +	init_ltpx ();
 +
@@ -46280,9 +46379,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/load_info.c linux-patched/fs/gfs_l
 +	return err;
 +}
 +/* vim: set ai cin noet sw=8 ts=8 : */
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/load_info.h linux-patched/fs/gfs_locking/lock_gulm/load_info.h
---- linux-orig/fs/gfs_locking/lock_gulm/load_info.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/load_info.h	2004-06-16 12:03:21.958894765 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/load_info.h linux/fs/gfs_locking/lock_gulm/load_info.h
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/load_info.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/load_info.h	2004-09-07 16:17:31.806497940 -0500
 @@ -0,0 +1,17 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -46301,9 +46400,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/load_info.h linux-patched/fs/gfs_l
 +#define __load_info_h__
 +int load_info (char *);
 +#endif /*__load_info_h__*/
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/util.c linux-patched/fs/gfs_locking/lock_gulm/util.c
---- linux-orig/fs/gfs_locking/lock_gulm/util.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/util.c	2004-06-16 12:03:21.958894765 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/util.c linux/fs/gfs_locking/lock_gulm/util.c
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/util.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/util.c	2004-09-07 16:17:31.807497721 -0500
 @@ -0,0 +1,109 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -46321,7 +46420,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/util.c linux-patched/fs/gfs_lockin
 +#include <linux/kernel.h>
 +#include <linux/types.h>
 +#include <linux/string.h>
-+#include "utils_crc.h"
++#include <linux/crc32.h>
 +
 +/**
 + * atoi
@@ -46411,12 +46510,12 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/util.c linux-patched/fs/gfs_lockin
 +
 +uint32_t __inline__
 +hash_lock_key (uint8_t * in, uint8_t len)
-+{				/* other hash function was to variable */
-+	return crc32 (in, len, hash_init_val);
++{
++   return crc32 (hash_init_val, in, len);
 +}
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/util.h linux-patched/fs/gfs_locking/lock_gulm/util.h
---- linux-orig/fs/gfs_locking/lock_gulm/util.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/util.h	2004-06-16 12:03:21.959894533 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/util.h linux/fs/gfs_locking/lock_gulm/util.h
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/util.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/util.h	2004-09-07 16:17:31.807497721 -0500
 @@ -0,0 +1,29 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -46447,9 +46546,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/util.h linux-patched/fs/gfs_lockin
 +__inline__ void clearbit (uint16_t bit, uint8_t * set);
 +
 +#endif				/*  __UTIL_DOT_H__  */
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/utils_crc.c linux-patched/fs/gfs_locking/lock_gulm/utils_crc.c
---- linux-orig/fs/gfs_locking/lock_gulm/utils_crc.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/utils_crc.c	2004-06-16 12:03:21.959894533 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/utils_crc.c linux/fs/gfs_locking/lock_gulm/utils_crc.c
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/utils_crc.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/utils_crc.c	2004-09-07 16:17:31.808497502 -0500
 @@ -0,0 +1,92 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -46543,9 +46642,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/utils_crc.c linux-patched/fs/gfs_l
 +
 +	return hash;
 +}
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/utils_crc.h linux-patched/fs/gfs_locking/lock_gulm/utils_crc.h
---- linux-orig/fs/gfs_locking/lock_gulm/utils_crc.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/utils_crc.h	2004-06-16 12:03:21.959894533 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/utils_crc.h linux/fs/gfs_locking/lock_gulm/utils_crc.h
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/utils_crc.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/utils_crc.h	2004-09-07 16:17:31.808497502 -0500
 @@ -0,0 +1,17 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -46564,9 +46663,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/utils_crc.h linux-patched/fs/gfs_l
 +#define __utils_crc_h__
 +uint32_t crc32 (const char *data, int len, uint32_t init);
 +#endif /*__utils_crc_h__*/
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/utils_tostr.c linux-patched/fs/gfs_locking/lock_gulm/utils_tostr.c
---- linux-orig/fs/gfs_locking/lock_gulm/utils_tostr.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/utils_tostr.c	2004-06-16 12:03:21.959894533 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/utils_tostr.c linux/fs/gfs_locking/lock_gulm/utils_tostr.c
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/utils_tostr.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/utils_tostr.c	2004-09-07 16:17:31.808497502 -0500
 @@ -0,0 +1,207 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -46775,9 +46874,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/utils_tostr.c linux-patched/fs/gfs
 +		break;
 +	}
 +}
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/utils_tostr.h linux-patched/fs/gfs_locking/lock_gulm/utils_tostr.h
---- linux-orig/fs/gfs_locking/lock_gulm/utils_tostr.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/utils_tostr.h	2004-06-16 12:03:21.959894533 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/utils_tostr.h linux/fs/gfs_locking/lock_gulm/utils_tostr.h
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/utils_tostr.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/utils_tostr.h	2004-09-07 16:17:31.808497502 -0500
 @@ -0,0 +1,22 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -46801,306 +46900,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/utils_tostr.h linux-patched/fs/gfs
 +char *gio_license_states (int x);
 +char *gio_opcodes (int x);
 +#endif /*__utils_tostr_h__*/
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/utils_verb_flags.c linux-patched/fs/gfs_locking/lock_gulm/utils_verb_flags.c
---- linux-orig/fs/gfs_locking/lock_gulm/utils_verb_flags.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/utils_verb_flags.c	2004-06-16 12:03:21.959894533 -0500
-@@ -0,0 +1,271 @@
-+/******************************************************************************
-+*******************************************************************************
-+**
-+**  Copyright (C) Sistina Software, Inc.  1997-2003  All rights reserved.
-+**  Copyright (C) 2004 Red Hat, Inc.  All rights reserved.
-+**
-+**  This copyrighted material is made available to anyone wishing to use,
-+**  modify, copy, or redistribute it subject to the terms and conditions
-+**  of the GNU General Public License v.2.
-+**
-+*******************************************************************************
-+******************************************************************************/
-+
-+#ifdef __linux__
-+#include <linux/kernel.h>
-+#include <linux/sched.h>
-+#define __KERNEL_SYSCALLS__
-+#include <linux/unistd.h>
-+#endif /*__linux__*/
-+
-+#include "gulm_log_msg_bits.h"
-+
-+static __inline__ int
-+strncasecmp (const char *s1, const char *s2, size_t l)
-+{
-+	char c1 = '\0', c2 = '\0';
-+
-+	while (*s1 && *s2 && l-- > 0) {
-+		c1 = *s1++;
-+		c2 = *s2++;
-+
-+		if (c1 >= 'A' && c1 <= 'Z')
-+			c1 += 'a' - 'A';
-+
-+		if (c2 >= 'A' && c2 <= 'Z')
-+			c2 += 'a' - 'A';
-+
-+		if (c1 != c2)
-+			break;
-+	}
-+	return (c1 - c2);
-+}
-+
-+static int bit_array[16] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
-+
-+#define BITCOUNT(x) (bit_array[x & 0x000F] + \
-+                     bit_array[(x >> 4) & 0x000F] + \
-+                     bit_array[(x >> 8) & 0x000F] + \
-+                     bit_array[(x >> 12) & 0x000F] + \
-+                     bit_array[(x >> 16) & 0x000F] + \
-+                     bit_array[(x >> 20) & 0x000F] + \
-+                     bit_array[(x >> 24) & 0x000F] + \
-+                     bit_array[(x >> 28) & 0x000F])
-+
-+struct {
-+	char *name;
-+	uint32_t val;
-+} verbose_flags[] = {
-+	{
-+	"Network", lgm_Network,}, {
-+	"Network2", lgm_Network2,}, {
-+	"Network3", lgm_Network3,}, {
-+	"Fencing", lgm_Stomith,}, {
-+	"Heartbeat", lgm_Heartbeat,}, {
-+	"Locking", lgm_locking,}, {
-+	"Forking", lgm_Forking,}, {
-+	"JIDMap", lgm_JIDMap,}, {
-+	"JIDUpdates", lgm_JIDUpdates,}, {
-+	"Subscribers", lgm_Subscribers,}, {
-+	"LockUpdates", lgm_LockUpdates,}, {
-+	"LoginLoops", lgm_LoginLoops,}, {
-+	"ServerState", lgm_ServerState,}, {
-+	"Default", lgm_Network | lgm_Stomith | lgm_Forking,},
-+/* Since I really don't want people really doing *all* flags with all,
-+ * there is AlmostAll, which users really get, and ReallyAll, which is all
-+ * bits on.
-+ * This is mostly due to Network3, which dumps messages on nearly
-+ * every packet. (should actually be every packet.)
-+ * Also drop the slave updates, since that is on every packet as well.
-+ */
-+	{
-+	"All",
-+		    (lgm_ReallyAll &
-+			     ~(lgm_Network3 | lgm_JIDUpdates |
-+				       lgm_LockUpdates)),}, {
-+	"AlmostAll",
-+		    lgm_ReallyAll & ~(lgm_Network3 | lgm_JIDUpdates |
-+					      lgm_LockUpdates),}, {
-+	"ReallyAll", lgm_ReallyAll,}
-+};
-+
-+static int
-+add_string (char *name, size_t * cur, char *str, size_t slen)
-+{
-+	size_t nl;
-+
-+	nl = strlen (name);
-+	if (*cur + nl > slen) {
-+		memcpy (str + *cur, "...", 3);
-+		cur += 3;
-+		str[*cur] = '\0';
-+		return -1;
-+	}
-+	memcpy (str + *cur, name, nl);
-+	*cur += nl;
-+	str[*cur] = ',';
-+	*cur += 1;
-+
-+	return 0;
-+}
-+
-+/**
-+ * get_verbosity_string - 
-+ * @str: 
-+ * @verb: 
-+ * 
-+ * 
-+ * Returns: int
-+ */
-+int
-+get_verbosity_string (char *str, size_t slen, uint32_t verb)
-+{
-+	int i, vlen = sizeof (verbose_flags) / sizeof (verbose_flags[0]);
-+	size_t cur = 0;
-+	int combo_match = -1, error = 0;
-+
-+	memset (str, 0, slen);
-+	slen -= 4;		/* leave room for dots and null */
-+
-+	if (verb == 0) {
-+		error = add_string ("Quiet", &cur, str, slen);
-+		goto end;
-+	}
-+
-+	/* Combo verb flag phase */
-+	for (i = 0; i < vlen; i++) {
-+		if (BITCOUNT (verbose_flags[i].val) > 1) {
-+			/* check to see if this flag matches exclusively */
-+			if ((verbose_flags[i].val ^ verb) == 0) {
-+				error =
-+				    add_string (verbose_flags[i].name, &cur,
-+						str, slen);
-+				goto end;
-+			}
-+
-+			if ((verbose_flags[i].val & verb) ==
-+			    verbose_flags[i].val) {
-+				if (combo_match < 0) {
-+					combo_match = i;
-+				} else {
-+					/* Compare this combo with the one in combo_match */
-+					if (BITCOUNT (verbose_flags[i].val) >
-+					    BITCOUNT (verbose_flags
-+						      [combo_match].val)) {
-+						combo_match = i;
-+					}
-+				}
-+
-+			}
-+		}
-+	}
-+	/* Add the best combo to the string */
-+	if (combo_match > -1) {
-+		if (add_string
-+		    (verbose_flags[combo_match].name, &cur, str, slen) == -1) {
-+			error = -1;
-+			goto end;
-+		}
-+	}
-+
-+	/* Single verb flag phase */
-+	for (i = 0; i < vlen; i++) {
-+		if (BITCOUNT (verbose_flags[i].val) == 1) {
-+			if (combo_match > -1) {
-+				if ((verbose_flags[combo_match].
-+				     val & verbose_flags[i].val) ==
-+				    verbose_flags[i].val) {
-+					continue;
-+				}
-+			}
-+
-+			if ((verbose_flags[i].val & verb) ==
-+			    verbose_flags[i].val) {
-+				if (add_string
-+				    (verbose_flags[i].name, &cur, str,
-+				     slen) == -1) {
-+					error = -1;
-+					goto end;
-+				}
-+			}
-+		}
-+	}
-+      end:
-+	/* Clear trailing ',' */
-+	if (str[cur - 1] == ',') {
-+		str[cur - 1] = '\0';
-+	}
-+	return error;
-+}
-+
-+/**
-+ * set_verbosity - 
-+ * @str: 
-+ * @verb: 
-+ *
-+ * toggle bits according to the `rules' in the str.
-+ * str is a list of verb flags. can be prefexed with '+' or '-'
-+ * No prefix is the same as '+' prefix
-+ * '+' sets bits
-+ * '-' unsets bits.
-+ * special 'clear' unsets all.
-+ */
-+void
-+set_verbosity (char *str, uint32_t * verb)
-+{
-+	char *token, *next;
-+	int i, wl, tl, len = sizeof (verbose_flags) / sizeof (verbose_flags[0]);
-+
-+	if (str == NULL)
-+		return;
-+
-+	wl = strlen (str);
-+	if (wl == 0)
-+		return;
-+	for (token = str, tl = 0; tl < wl &&
-+	     token[tl] != ',' &&
-+	     token[tl] != ' ' && token[tl] != '|' && token[tl] != '\0'; tl++) ;
-+	next = token + tl + 1;
-+
-+	for (;;) {
-+		if (token[0] == '-') {
-+			token++;
-+			for (i = 0; i < len; i++) {
-+				if (strncasecmp
-+				    (token, verbose_flags[i].name, tl) == 0) {
-+					(*verb) &= ~(verbose_flags[i].val);
-+				}
-+			}
-+		} else if (token[0] == '+') {
-+			token++;
-+			for (i = 0; i < len; i++) {
-+				if (strncasecmp
-+				    (token, verbose_flags[i].name, tl) == 0) {
-+					(*verb) |= verbose_flags[i].val;
-+				}
-+			}
-+		} else {
-+			if (strncasecmp (token, "clear", tl) == 0) {
-+				(*verb) = 0;
-+			} else {
-+				for (i = 0; i < len; i++) {
-+					if (strncasecmp
-+					    (token, verbose_flags[i].name,
-+					     tl) == 0) {
-+						(*verb) |= verbose_flags[i].val;
-+					}
-+				}
-+			}
-+		}
-+
-+		if (next >= str + wl)
-+			return;
-+		for (token = next, tl = 0;
-+		     tl < wl &&
-+		     token[tl] != ',' &&
-+		     token[tl] != ' ' &&
-+		     token[tl] != '|' && token[tl] != '\0'; tl++) ;
-+		next = token + tl + 1;
-+
-+	}
-+}
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/utils_verb_flags.h linux-patched/fs/gfs_locking/lock_gulm/utils_verb_flags.h
---- linux-orig/fs/gfs_locking/lock_gulm/utils_verb_flags.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/utils_verb_flags.h	2004-06-16 12:03:21.959894533 -0500
-@@ -0,0 +1,18 @@
-+/******************************************************************************
-+*******************************************************************************
-+**
-+**  Copyright (C) Sistina Software, Inc.  1997-2003  All rights reserved.
-+**  Copyright (C) 2004 Red Hat, Inc.  All rights reserved.
-+**
-+**  This copyrighted material is made available to anyone wishing to use,
-+**  modify, copy, or redistribute it subject to the terms and conditions
-+**  of the GNU General Public License v.2.
-+**
-+*******************************************************************************
-+******************************************************************************/
-+
-+#ifndef __utils_verb_flags_h__
-+#define __utils_verb_flags_h__
-+int get_verbosity_string (char *str, size_t slen, uint32_t verb);
-+void set_verbosity (char *str, uint32_t * verb);
-+#endif /*__utils_verb_flags_h__*/
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/xdr.h linux-patched/fs/gfs_locking/lock_gulm/xdr.h
---- linux-orig/fs/gfs_locking/lock_gulm/xdr.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/xdr.h	2004-06-16 12:03:21.959894533 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/xdr.h linux/fs/gfs_locking/lock_gulm/xdr.h
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/xdr.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/xdr.h	2004-09-07 16:17:31.809497283 -0500
 @@ -0,0 +1,98 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -47200,9 +47002,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/xdr.h linux-patched/fs/gfs_locking
 +int xdr_dec_list_stop (xdr_dec_t * xdr);
 +
 +#endif /*__gulm_xdr_h__*/
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/xdr_base.c linux-patched/fs/gfs_locking/lock_gulm/xdr_base.c
---- linux-orig/fs/gfs_locking/lock_gulm/xdr_base.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/xdr_base.c	2004-06-16 12:03:21.959894533 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/xdr_base.c linux/fs/gfs_locking/lock_gulm/xdr_base.c
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/xdr_base.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/xdr_base.c	2004-09-07 16:17:31.810497064 -0500
 @@ -0,0 +1,904 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -48108,9 +47910,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/xdr_base.c linux-patched/fs/gfs_lo
 +	*(xdr->stream) = XDR_NULL;
 +	return 0;
 +}
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/xdr_io.c linux-patched/fs/gfs_locking/lock_gulm/xdr_io.c
---- linux-orig/fs/gfs_locking/lock_gulm/xdr_io.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/xdr_io.c	2004-06-16 12:03:21.959894533 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/xdr_io.c linux/fs/gfs_locking/lock_gulm/xdr_io.c
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/xdr_io.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/xdr_io.c	2004-09-07 16:17:31.810497064 -0500
 @@ -0,0 +1,169 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -48281,9 +48083,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/xdr_io.c linux-patched/fs/gfs_lock
 +}
 +
 +#endif /*__KERNEL__*/
-diff -urN linux-orig/fs/gfs_locking/lock_gulm/xdr_socket.c linux-patched/fs/gfs_locking/lock_gulm/xdr_socket.c
---- linux-orig/fs/gfs_locking/lock_gulm/xdr_socket.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_gulm/xdr_socket.c	2004-06-16 12:03:21.959894533 -0500
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/xdr_socket.c linux/fs/gfs_locking/lock_gulm/xdr_socket.c
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_gulm/xdr_socket.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_gulm/xdr_socket.c	2004-09-07 16:17:31.811496845 -0500
 @@ -0,0 +1,82 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -48367,10 +48169,10 @@ diff -urN linux-orig/fs/gfs_locking/lock_gulm/xdr_socket.c linux-patched/fs/gfs_
 +}
 +
 +#endif /*__KERNEL__*/
-diff -urN linux-orig/fs/gfs_locking/lock_harness/main.c linux-patched/fs/gfs_locking/lock_harness/main.c
---- linux-orig/fs/gfs_locking/lock_harness/main.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_harness/main.c	2004-06-16 12:03:10.006671787 -0500
-@@ -0,0 +1,226 @@
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_harness/main.c linux/fs/gfs_locking/lock_harness/main.c
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_harness/main.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_harness/main.c	2004-09-07 16:14:25.844078942 -0500
+@@ -0,0 +1,227 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -48391,6 +48193,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_harness/main.c linux-patched/fs/gfs_loc
 +#include <linux/wait.h>
 +#include <linux/sched.h>
 +#include <linux/kmod.h>
++#include <linux/fs.h>
 +#include <linux/lm_interface.h>
 +
 +#define RELEASE_NAME "<CVS>"
@@ -48597,10 +48400,10 @@ diff -urN linux-orig/fs/gfs_locking/lock_harness/main.c linux-patched/fs/gfs_loc
 +EXPORT_SYMBOL_GPL(lm_unregister_proto);
 +EXPORT_SYMBOL_GPL(lm_mount);
 +EXPORT_SYMBOL_GPL(lm_unmount);
-diff -urN linux-orig/include/linux/lm_interface.h linux-patched/include/linux/lm_interface.h
---- linux-orig/include/linux/lm_interface.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/include/linux/lm_interface.h	2004-06-16 12:03:10.005672019 -0500
-@@ -0,0 +1,193 @@
+diff -urN linux-2.6.9-rc1-mm3/include/linux/lm_interface.h linux/include/linux/lm_interface.h
+--- linux-2.6.9-rc1-mm3/include/linux/lm_interface.h	1969-12-31 18:00:00.000000000 -0600
++++ linux/include/linux/lm_interface.h	2004-09-07 16:14:25.845078724 -0500
+@@ -0,0 +1,191 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -48750,18 +48553,16 @@ diff -urN linux-orig/include/linux/lm_interface.h linux-patched/include/linux/lm
 +	/* Posix Lock oriented operations  */
 +
 +	int (*lm_plock_get) (lm_lockspace_t *lockspace,
-+			     struct lm_lockname *name, unsigned long owner,
-+			     uint64_t *start, uint64_t *end, int *exclusive,
-+			     unsigned long *rowner);
++			     struct lm_lockname *name,
++			     struct file *file, struct file_lock *fl);
 +
 +	int (*lm_plock) (lm_lockspace_t *lockspace,
-+			 struct lm_lockname *name, unsigned long owner,
-+			 int wait, int exclusive, uint64_t start,
-+			 uint64_t end);
++			 struct lm_lockname *name,
++			 struct file *file, int cmd, struct file_lock *fl);
 +
 +	int (*lm_punlock) (lm_lockspace_t *lockspace,
-+			   struct lm_lockname *name, unsigned long owner,
-+			   uint64_t start, uint64_t end);
++			   struct lm_lockname *name,
++			   struct file *file, struct file_lock *fl);
 +
 +	/* Client oriented operations */
 +
@@ -48794,10 +48595,10 @@ diff -urN linux-orig/include/linux/lm_interface.h linux-patched/include/linux/lm
 +void lm_unmount(struct lm_lockstruct *lockstruct);
 +
 +#endif /* __LM_INTERFACE_DOT_H__ */
-diff -urN linux-orig/fs/gfs_locking/lock_nolock/main.c linux-patched/fs/gfs_locking/lock_nolock/main.c
---- linux-orig/fs/gfs_locking/lock_nolock/main.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-patched/fs/gfs_locking/lock_nolock/main.c	2004-06-16 12:03:13.918762838 -0500
-@@ -0,0 +1,350 @@
+diff -urN linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_nolock/main.c linux/fs/gfs_locking/lock_nolock/main.c
+--- linux-2.6.9-rc1-mm3/fs/gfs_locking/lock_nolock/main.c	1969-12-31 18:00:00.000000000 -0600
++++ linux/fs/gfs_locking/lock_nolock/main.c	2004-09-07 16:16:55.823371100 -0500
+@@ -0,0 +1,346 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -48816,6 +48617,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_nolock/main.c linux-patched/fs/gfs_lock
 +#include <linux/module.h>
 +#include <linux/init.h>
 +#include <linux/types.h>
++#include <linux/fs.h>
 +#include <linux/lm_interface.h>
 +
 +#define RELEASE_NAME "<CVS>"
@@ -49019,60 +48821,55 @@ diff -urN linux-orig/fs/gfs_locking/lock_nolock/main.c linux-patched/fs/gfs_lock
 + * nolock_plock_get - 
 + * @lockspace: the lockspace
 + * @name:
-+ * @owner:
-+ * @start:
-+ * @end:
-+ * @exclusive:
-+ * @rowner:
++ * @file:
++ * @fl:
 + *
++ * Returns: errno
 + */
 +
 +static int
 +nolock_plock_get(lm_lockspace_t *lockspace,
-+		 struct lm_lockname *name, unsigned long owner,
-+		 uint64_t *start, uint64_t *end, int *exclusive,
-+		 unsigned long *rowner)
++		 struct lm_lockname *name,
++		 struct file *file, struct file_lock *fl)
 +{
-+	return -ENOSYS;
++	return LOCK_USE_CLNT;
 +}
 +
 +/**
 + * nolock_plock -
 + * @lockspace: the lockspace
 + * @name:
-+ * @owner:
-+ * @wait:
-+ * @exclusive:
-+ * @start:
-+ * @end:
++ * @file:
++ * @cmd:
++ * @fl:
 + *
++ * Returns: errno
 + */
 +
 +static int
 +nolock_plock(lm_lockspace_t *lockspace,
-+	     struct lm_lockname *name, unsigned long owner,
-+	     int wait, int exclusive, uint64_t start,
-+	     uint64_t end)
++	     struct lm_lockname *name,
++	     struct file *file, int cmd, struct file_lock *fl)
 +{
-+	return -ENOSYS;
++	return posix_lock_file_wait(file, fl);
 +}
 +
 +/**
 + * nolock_punlock -
 + * @lockspace: the lockspace
 + * @name:
-+ * @owner:
-+ * @start:
-+ * @end:
++ * @file:
++ * @fl:
 + *
++ * Returns: errno
 + */
 +
 +static int
 +nolock_punlock(lm_lockspace_t *lockspace,
-+	       struct lm_lockname *name, unsigned long owner,
-+	       uint64_t start, uint64_t end)
++	       struct lm_lockname *name,
++	       struct file *file, struct file_lock *fl)
 +{
-+	return -ENOSYS;
++	return posix_lock_file_wait(file, fl);
 +}
 +
 +/**
