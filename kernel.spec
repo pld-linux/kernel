@@ -311,7 +311,7 @@ Group(de):	Grundsätzlich/Kern
 Group(pl):	Podstawowe/J±dro
 %ifarch %{x86}
 Provides:	%{name}-headers(reiserfs) = %{version}
-Provides:	i2c-devel = 2.6.1
+Provides:	i2c-devel = %{i2c_version}
 %endif
 Provides:	%{name}-headers(ipvs) = %{version}
 Provides:	%{name}-headers(rawio) = %{version}
