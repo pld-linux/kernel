@@ -6,6 +6,7 @@
 # - check I2C
 #
 # Conditional build:
+%bcond_without	BOOT	# don't build BOOT kernel
 %bcond_without	smp	# don't build SMP kernel
 %bcond_without	up	# don't build UP kernel
 %bcond_without	source	# don't build kernel-source package
@@ -649,7 +650,19 @@ BuildConfig (){
 
 	cat %{SOURCE80} >> arch/%{base_arch}/defconfig
 
-if [ "$BOOT" = "yes" ]; then
+	ln -sf arch/%{base_arch}/defconfig .config
+
+	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
+	%{__make} include/linux/autoconf.h
+	if [ "$smp" = "yes" ]; then
+		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
+	else
+		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
+	fi
+}
+
+ConfigBOOT()
+{
 %ifarch %{ix86}
 		Config="ia32"
 %else
@@ -672,10 +685,6 @@ if [ "$BOOT" = "yes" ]; then
 	echo "# CONFIG_ATM is not set" >> arch/%{base_arch}/defconfig
 	echo "# CONFIG_HOTPLUG_PCI is not set" >> arch/%{base_arch}/defconfig
 	echo "# CONFIG_NET_SCHED is not set" >> arch/%{base_arch}/defconfig
-	echo "" >> arch/%{base_arch}/defconfig
-	echo "" >> arch/%{base_arch}/defconfig
-	echo "" >> arch/%{base_arch}/defconfig
-fi
 
 	ln -sf arch/%{base_arch}/defconfig .config
 
@@ -798,9 +807,9 @@ BuildConfig smp
 %ifnarch i586 i686 athlon
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
 rm -rf $KERNEL_INSTALL_DIR
-BuildConfig BOOT
-%{?with_boot:BuildKernel BOOT}
-%{?with_boot:PreInstallKernel BOOT}
+ConfigBOOT
+%{?with_BOOT:BuildKernel BOOT}
+%{?with_BOOT:PreInstallKernel BOOT}
 %endif
 
 %install
