@@ -116,9 +116,6 @@ Source80:	%{name}-netfilter.config
 Source90:	%{name}-grsec.config
 Source91:	%{name}-grsec+pax.config
 
-Source700:	%{name}-reiser4.config
-Source750:	%{name}-squashfs2.0.config
-
 Patch0:		2.6.0-ksyms-add.patch
 
 Patch2:		2.6.0-t6-usb-irq.patch
@@ -736,9 +733,6 @@ BuildConfig (){
 %else
 	cat %{SOURCE91} >> arch/%{_target_base_arch}/defconfig
 %endif
-
-#	reiser4
-	cat %{SOURCE700} >> arch/%{_target_base_arch}/defconfig
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
