@@ -348,7 +348,7 @@ Patch910:	linux-2.4.21-pre4-ac4-via82cxxx_audio.patch.bz2
 #Patch912:	
 #Patch913:	
 Patch914:	linux-2.4.20-MODULE_XXX.patch
-#Patch915:	linux-2.4.19-usb-digitalcams.patch
+Patch915:	linux-2.4.20-netfilter_and_grsec-EXPORT_SYMBOL.patch
 Patch916:	linux-2.4.20-st6000-1.34.patch
 Patch917:	linux-2.4.20-nogrsec.patch
 Patch918:	linux-2.4.20-ext3.patch
@@ -941,6 +941,7 @@ echo AXP patches ...
 %patch2006 -p1
 
 %patch916  -p1
+%patch915 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
