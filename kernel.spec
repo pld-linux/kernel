@@ -43,7 +43,7 @@ Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
 Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
 Source10:	http://hostap.epitest.fi/releases/hostap-2002-09-12.tar.gz
-Source11:	squashfs1.0b.tar.gz
+Source11:	http://download.sourceforge.net/squashfs/squashfs1.0c.tar.gz
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source50:	%{name}-sparc.config
@@ -198,7 +198,7 @@ Patch909:	linux-2.4.19-PPC-agpgart_be.patch
 Patch910:	linux-2.4.19-grsecurity-1.9.7-fix.patch
 Patch911:	linux-2.4.19-SPARC.patch
 Patch912:	linux-2.4.19-grsec-1.9.7-PAX-sysctl.patch
-Patch913:	squashfs1.0b-fix.patch
+Patch913:	squashfs1.0c-fix.patch
 Patch914:	linux-2.4.19-MODULE_XXX.patch
 Patch915:	linux-2.4.19-usb-digitalcams.patch
 
@@ -592,7 +592,7 @@ echo Installing WRR Support
 
 #squashfs
 %patch913 -p0
-patch -p1 -s < squashfs1.0b/squashfs-patch
+patch -p1 -s < squashfs1.0c/squashfs-patch
 
 # USB 2.0 patch
 echo USB 2.0 Support from Linux-2.4.20-rc1.
