@@ -8,7 +8,6 @@
 #
 # TODO:
 # - everything
-# - activate reiser4 in configs for platforms other than i386 w/o SMP
 #
 # Conditional build:
 %bcond_without	BOOT		# don't build BOOT kernel
@@ -52,7 +51,7 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_post_ver	%{nil}
-%define		_rel		0.13HEAD
+%define		_rel		0.14jpc
 %define		_cset		20041014_0511
 %define		_apply_cset	0
 
@@ -102,9 +101,9 @@ Source33:	%{name}-ia64-smp.config
 Source40:	%{name}.FAQ-pl
 
 Source80:	%{name}-netfilter.config
-Source90:	%{name}-grsec.config
-Source91:	%{name}-grsec+pax.config
 
+Source700:	%{name}-reiser4.config
+Source750:	%{name}-squashfs2.0.config
 
 # http://kem.p.lodz.pl/~peter/qnet/
 Patch15:	patch-2.6.8.1-qnet2.bz2
@@ -127,8 +126,10 @@ Patch551:	linux-cluster-dlm.patch
 Patch552:	linux-cluster-gfs.patch
 Patch553:	linux-cluster-gnbd.patch
 
-Patch700:	linux-reiser4.patch
-Patch701:	linux-squashfs2.0.patch
+# http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.9/2.6.9-mm1/broken-out/
+Patch700:	linux-reiser4-mm1.patch.bz2
+
+Patch750:	linux-squashfs2.0.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -502,7 +503,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch553 -p1
 
 %patch700 -p1
-%patch701 -p1
+%patch750 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i -e 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
@@ -584,12 +585,11 @@ BuildConfig (){
 
 #	netfilter	
 	cat %{SOURCE80} >> arch/%{_target_base_arch}/defconfig
-#	grsecurity
-%if !%{with pax}
-	cat %{SOURCE90} >> arch/%{_target_base_arch}/defconfig
-%else
-	cat %{SOURCE91} >> arch/%{_target_base_arch}/defconfig
-%endif
+
+#	reiser4
+	cat %{SOURCE700} >> arch/%{_target_base_arch}/defconfig
+#	squashfs
+	cat %{SOURCE750} >> arch/%{_target_base_arch}/defconfig
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
@@ -1269,9 +1269,6 @@ fi
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
-%if %{with grsec}
-%{_prefix}/src/linux-%{version}/grsecurity
-%endif
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
 %{_prefix}/src/linux-%{version}/kernel
