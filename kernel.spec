@@ -149,6 +149,11 @@ Patch131:	linux-2.4.6-nohighmem.patch
 Patch132:	linux-2.4.6-sb_id.patch
 # DAC960 build fix
 Patch133:	linux-2.4.7-DAC960-completion.patch
+# Reiserfs fixes
+Patch134:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/2.4.7.pending/2.4.7-old-format.dif.bz2
+Patch135:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/2.4.7.pending/2.4.7-unlink-truncate-rename-rmdir.dif.bz2
+Patch136:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/2.4.7.pending/journal-replay.patch
+Patch137:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/2.4.7.pending/panic-in-reiserfs_read_super.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -433,6 +438,10 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch131 -p1
 %patch132 -p1
 %patch133 -p1
+%patch134 -p1
+%patch135 -p1
+%patch136 -p1
+%patch137 -p1
 
 %patch900 -p0 
 %patch901 -p0
@@ -715,6 +724,10 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH130}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH131}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH132}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH133}
+bzip2 -dc %{PATCH134} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+bzip2 -dc %{PATCH135} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH136}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH137}
 
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH900}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH901}
