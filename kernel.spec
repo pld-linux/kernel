@@ -17,11 +17,11 @@
 %define		freeswan_version	1.97
 %define		wlan_version		0.1.13
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
-%define		IPperson_version	20010724-2.4.7
+%define		IPperson_version	20020427-2.4.18
 %define		grsec_version		1.9.4-2.4.18
 %define		aic_version		6.2.3-2.4.7
 %define		jfs_version		2.4-1.0.17
-%define		lvm_version		1.0.3
+%define		lvm_version		1.0.4
 %define		evms_version		1.0.1
 %define		tridentfb_version	0.7.0
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -30,7 +30,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	2.26
+Release:	2.27
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
@@ -223,8 +223,9 @@ ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
 BuildRequires:	bin86
 %endif
+# conflicts section
 Conflicts:	iptables < 1.2.6
-#BuildRequires:	kernel-headers
+Conflicts:	lvm < 1.0.4
 
 %description
 This package contains the Linux kernel that is used to boot and run
@@ -575,7 +576,7 @@ rm -rf %{sym_ncr_version}
 
 # IP personality
 echo Adding IP Personality 
-patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010724-linux-2.4.7.diff
+patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020427-linux-2.4.18.diff
 %patch908 -p1
 
 # JFS
