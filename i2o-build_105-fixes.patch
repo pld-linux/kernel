@@ -1,0 +1,17 @@
+--- linux-2.6.8/drivers/message/i2o/driver.c.orig	2004-08-18 17:59:08.000000000 +0200
++++ linux-2.6.8/drivers/message/i2o/driver.c	2004-08-18 20:31:27.451288416 +0200
+@@ -102,7 +102,13 @@
+ 	DBG("Register driver %s\n", drv->name);
+ 
+ 	if(drv->event) {
+-		drv->event_queue = create_workqueue(drv->name);
++/*
++ * create_workqueue(name, freezer_flag)
++ *                        ^^ PF_SYNCTHREAD if needed for syncing data to disk.
++ *                           PF_NOFREEZE if also needed for writing the image.
++ *                           0 otherwise.
++ */
++		drv->event_queue = create_workqueue(drv->name, 0);
+ 		if(!drv->event_queue)
+ 		{
+ 			printk(KERN_ERR "i2o: Could not initialize event queue "
