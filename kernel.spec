@@ -27,7 +27,7 @@
 %define		ntfs_version		2.1.3a
 %define		drm_xfree_version	4.3.0
 %define		hostap_version		0.0.1
-%define		netfilter_snap		20030425
+%define		netfilter_snap		20030428
 %define		iptables_version	1.2.8
 %define		ACL_version		0.8.56
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -100,16 +100,16 @@ Source1999:	%{name}-preemptive.config
 
 Patch0:		%{name}-pldfblogo.patch
 
-# -> Crypto
+## -> Crypto
 # from ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/testing/
 Patch1:		patch-int-2.4.20.1.bz2
 Patch2:		loop-jari-2.4.20.0.patch
 
-# -> general bugfix.
+## -> general bugfix.
 Patch5:		linux-2.4.20-initrd-close-console.patch
 Patch6:		linux-2.4.20-no-FPU.patch
 
-# -> grsecurity and other security 
+## -> grsecurity and other security 
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
 Patch10:	grsecurity-%{grsec_version}-%{version}.patch.gz
 #made by Qboosh
@@ -118,51 +118,116 @@ Patch12:	linux-2.4.20-nogrsec.patch
 Patch13:	linux-2.4.20-grsecurity-1.9.9e-kmem.patch
 #Patch14:	PPC-grsecurity-pgtable.h.patch
 
+## -> Security and network
 #from: ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch17:	linux-2.4-freeswan-%{freeswan_version}.patch.gz
 
-# -> New filesystems.
+
+## -> New filesystems.
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/Release-1.2pre5/kernel_patches/
 Patch20:	linux-2.4.20-xfs-1.2.0.patch.gz
-
 # http://unc.dl.sourceforge.net/sourceforge/linux-ntfs/
 Patch21:	linux-2.4.20-ntfs-%{ntfs_version}.patch.gz
-
-#from: 	http://dl.sourceforge.net/linux-hfsplus/hfsplus-patch-20020606.patch
+# from: 	http://dl.sourceforge.net/linux-hfsplus/hfsplus-patch-20020606.patch
 Patch22:	hfsplus-20020606.patch.bz2
-
 # from http://people.sistina.com/~thornber/patches/2.4-stable/2.4.20/2.4.20-dm-10.tar.bz2
 Patch23:	linux-2.4.20-dm-10.patch.gz
 # EVMS support (http://www.sourceforge.net/projects/evms/)
 Patch24:	linux-2.4.20-evms-%{evms_version}.patch.gz
-
 # from MDK kernel
 # davfs2-0.2.1.tar.gz
 Patch25:	linux-2.4.20-davfs-0.2.4.patch.bz2
-# FC02_davfs__FUNCTION__.patch
+# based on FC02_davfs__FUNCTION__.patch and small fix
 Patch26:	linux-2.4.20-davfs-fix.patch
-
+# from:
 Patch27:	linux-2.4.20-afs.patch.bz2
-
 # from http://acl.bestbits.at/
 Patch28:	linux-2.4.20-ACL-%{ACL_version}.patch.gz
-
+# from:
 Patch29:	jfs-2.4.20.patch
-
 # from http://www-124.ibm.com/developerworks/oss/jfs/
 # JFS for Linux [patch ID 399]
 Patch30:	linux-2.4.20-jfs-1.1.2-xattr.patch.gz
-
+# from:
 Patch31:	linux-2.4.20-squashfs.patch
-
+# from:
 # quota for reiserfs
 Patch32:	linux-2.4.20-reiserfs-quota.patch.bz2
-
+# from:
 Patch33:	linux-2.4.20-ext3.patch
-
+# from ftp://ftp.sistina.com/pub/LVM/1.0/lvm_%{lvm_version}.tar.gz
 # Created from lvm.tgz:LVM/PATCHES by doing make
-#from ftp://ftp.sistina.com/pub/LVM/1.0/lvm_%{lvm_version}.tar.gz
-#Patch33:	linux-2.4.20-LVM-%{lvm_version}.patch.bz2
+Patch34:	linux-2.4.20-LVM-%{lvm_version}.patch.bz2
+
+
+## -> Preemptive kernel  patch
+# from:
+Patch40:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.20-1.patch
+
+
+## -> Network
+# from: cvs -d :pserver:cvs@pserver.netfilter.org:/cvspublic co netfilter
+%if %{netfilter_snap} != 0
+Patch45:		linux-2.4.20-netfilter-%{iptables_version}_%{netfilter_snap}.patch.gz
+%else
+Patch45:		linux-2.4.20-netfilter-%{iptables_version}.patch.gz
+%endif
+# from:
+Patch46:	http://luxik.cdi.cz/~devik/qos/imq-2.4.18.diff-10
+# from http://users.pandora.be/bart.de.schuymer/ebtables/sourcecode.html
+#		ebtables_v2.0.003_vs_2.4.20.diff
+Patch47:	ebtables-v2.0.003_vs_2.4.20.patch.bz2
+#		bridge-nf-0.0.10-against-2.4.20.diff
+Patch48:	linux-2.4.20-bridge-nf-0.0.10.patch.gz
+
+
+## -> sound
+# from: ???
+Patch55:	linux-2.4.20-audigy.patch.bz2
+# from:
+Patch56:	linux-2.4.20-i810_audio.patch
+
+## -> drivers
+# from http://www.promise.com/support/file/driver/promise-patch-2.4.19.gz
+Patch60:	linux-2.4.20-promise.patch.bz2
+# from http://www.promise.com/support/file/driver/st6000src_1.30_01_0326.tgz
+Patch61:	linux-2.4.20-promise-st6000.patch.bz2
+# PC Speaker driver
+# from: http://www.geocities.com/stssppnn/pcsn-kernel-2.4.20.diff.gz
+Patch62:	linux-2.4.20-pcsp.patch.gz
+#usb patches from ftp://ftp.kernel.org/pub/linux/people/gregkh/usb/*-2.4.20.*
+Patch63:	linux-2.4.20-USB.patch.bz2
+#from http://people.freebsd.org/~gibbs/linux/SRC/
+#last: aic79xx-linux-2.4-20030424-tar.gz
+Patch64:	linux-2.4.20-aic79xx.patch.gz
+# from MDK kernel DV08__i810fb.patch
+Patch65:	linux-2.4.20-I810FB.patch.bz2
+Patch66:	linux-2.4.20-I810FB_lock_page_fix.patch
+Patch67:	linux-2.4.20-radeonfb_clean.patch
+Patch68:	linux-2.4.20-agp_uninorth.patch
+# rivafb - fix for text background in 16bpp modes
+Patch69:	linux-rivafb16.patch
+
+# misc tdfxfb fixes - detailed description inside
+Patch70:	linux-tdfxfb-fixes.patch
+#support for VIA KT400 chipset in agpgart
+Patch71:	linux-2.4.20-kt400.patch
+#i2c - version 2.7.0
+Patch72:	linux-2.4.20-i2c-2.7.0.patch.gz
+
+#from http://kernel.bkbits.net/~david-b/gadget24-0331.patch
+Patch73:	linux-2.4-USB-gadget-20030331.patch.bz2
+
+
+
+
+
+
+
+
+
+
+
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -486,6 +551,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch25 -p1
 #fix for davfs
 %patch26 -p1
+#afs
+#%patch27 -p1
 #ACL
 %patch28 -p1
 #jfs
@@ -498,7 +565,60 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch32 -p1
 #ext3
 %patch33 -p1
+#LVM
+%patch34 -p1
 
+
+## Preemptive
+%patch40 -p1
+
+
+## Network
+#netfilter
+%patch45 -p1
+#imq
+%patch46 -p1
+#ebtables
+%patch47 -p1
+#bridge-nf
+%patch48 -p1
+
+## Sound
+#Audigy
+%patch55 -p1
+#i810-audio
+%patch56 -p1
+
+
+## Drivers
+#promise
+%patch60 -p1
+#promise ST6000
+%patch61 -p1
+# PC Speaker
+%patch62 -p1
+#USB
+%patch63 -p1
+#AIC79XX
+%patch64 -p1
+#i810FB
+%patch65 -p1
+#i810FB fix
+%patch66 -p1
+#RadeonFB clean
+%patch67 -p1
+#AGP Uninorth
+%patch68 -p1
+#RivaFB
+%patch69 -p1
+#tdfxfb fix
+%patch70 -p1
+#KT400
+%patch71 -p1
+#i2c
+%patch72 -p1
+#USB gadget
+%patch73 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
