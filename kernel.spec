@@ -765,7 +765,7 @@ BuildKernel() {
 
 %ifarch i386
 	sed -i -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
-	       -e 's/CONFIG_DRM_NEW=y/# CONFIG_DRM_NEW is not set/' \
+	       -e 's/CONFIG_DRM_\(.*\)=[ym]/# CONFIG_DRM_\1 is not set/' \
 		arch/%{base_arch}/defconfig
 %endif
 
