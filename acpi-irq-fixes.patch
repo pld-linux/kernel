@@ -1095,3 +1095,31 @@ diff -puN include/linux/acpi.h~acpi-irq-fixes include/linux/acpi.h
  			printk(KERN_INFO "PCI: if you experience problems, try using option 'pci=noacpi' or even 'acpi=off'\n");
 
 
+--- 2.6.0-test5-mm3/drivers/acpi/pci_link.c~acpi_pci_irq_fix	2003-09-22 10:00:16.000000000 -0700
++++ 2.6.0-test5-mm3/drivers/acpi/pci_link.c	2003-09-22 10:10:06.000000000 -0700
+@@ -500,15 +500,15 @@ static int acpi_pci_link_allocate(struct
+ 		irq = link->irq.active;
+ 	} else {
+ 		irq = link->irq.possible[0];
+-	}
+ 
+-	/* 
+-	 * Select the best IRQ.  This is done in reverse to promote 
+-	 * the use of IRQs 9, 10, 11, and >15.
+-	 */
+-	for (i=(link->irq.possible_count-1); i>0; i--) {
+-		if (acpi_irq_penalty[irq] > acpi_irq_penalty[link->irq.possible[i]])
+-			irq = link->irq.possible[i];
++		/* 
++		 * Select the best IRQ.  This is done in reverse to promote 
++		 * the use of IRQs 9, 10, 11, and >15.
++		 */
++		for (i=(link->irq.possible_count-1); i>0; i--) {
++			if (acpi_irq_penalty[irq] > acpi_irq_penalty[link->irq.possible[i]])
++				irq = link->irq.possible[i];
++		}
+ 	}
+ 
+ 	/* Attempt to enable the link device at this IRQ. */
+
+
