@@ -44,8 +44,8 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_post_ver	%{nil}
-%define		_rel		0.5HEAD
-%define		_cset		20040928_1714
+%define		_rel		0.6HEAD
+%define		_cset		20041001_1806
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -67,13 +67,13 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-%define		_rc	-rc2
+%define		_rc	-rc3
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	b3d4a5c384d56ab974d1ac864b995ac4
+# Source0-md5:	53939eed5c3699fdcaa28735b0ffb12d
 # Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
-# Source4-md5:	ff49c7a96a8c933ce2bb23c660e27c87
+# Source4-md5:	dbc262a660d467a1cf86d1ce619b07ea
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -98,7 +98,7 @@ Source91:	%{name}-grsec+pax.config
 
 
 # http://members.optusnet.com.au/ckolivas/kernel/
-Patch10:	patch-2.6.9-rc2-ck2.bz2
+Patch10:	patch-2.6.9-rc3-ck1.bz2
 # http://kem.p.lodz.pl/~peter/qnet/
 Patch15:	patch-2.6.8.1-qnet2.bz2
 
@@ -110,7 +110,7 @@ Patch22:	2.6.5-i386-cmpxchg.patch
 
 # suspend/resume
 # http://softwaresuspend.berlios.de/
-Patch500:	linux-2.6-software-suspend-2.0.0.108.patch.gz
+Patch500:	linux-2.6-software-suspend-2.0.0.109.patch.gz
 Patch501:	linux-2.6-software-suspend-fixes.patch
 Patch502:	linux-2.6-via-agpc-resume-suspend-support.patch
 
