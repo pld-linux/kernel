@@ -44,6 +44,8 @@ Source21:	%{name}-ia32-smp.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
 
+Source100:	%{name}-misc.config
+
 Patch0:		patch-2.6.0-test1-ac2.bz2
 Patch1:		2.6.0-test1-lkml.patch
 
@@ -212,7 +214,8 @@ Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
 Provides:	i2c-devel = 2.6.1
-Provides:	%{name}_netfilter = 1.2.7a
+Provides:	%{name}-headers(netfilter) = 1.2.7a
+Provides:	%{name}-headers(alsa-drivers)
 Autoreqprov:	no
 
 %description headers
@@ -343,6 +346,8 @@ BuildKernel() {
 		arch/%{base_arch}/defconfig.orig > arch/%{base_arch}/defconfig
 %endif
 
+	cat %{SOURCE100} >> arch/%{base_arch}/defconfig
+	
 	%{__make} mrproper
 	ln -sf arch/%{base_arch}/defconfig .config
 
@@ -464,6 +469,8 @@ echo "CONFIG_M686=y" >> .config
 echo "CONFIG_MK7=y" >> .config
 %endif
 
+cat %{SOURCE100} >> .config
+
 cp .config config-up
 
 %ifarch %{ix86}
@@ -484,6 +491,8 @@ echo "CONFIG_M686=y" >> .config
 %ifarch athlon
 echo "CONFIG_MK7=y" >> .config
 %endif
+
+cat %{SOURCE100} >> .config
 
 cp .config config-smp
 
