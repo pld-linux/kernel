@@ -44,7 +44,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		4
+%define		_rel		4.1
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -182,6 +182,7 @@ Patch117:	linux-2.6-sata-sil-mod15write-workaround.patch
 Patch118:	linux-2.6-ext2-corruption.patch
 Patch119:	linux-2.6-quota-dropfix.patch
 Patch120:	linux-2.6-quota-format.patch
+Patch121:	linux-2.6-procfs-hardlink-counts.patch
 
 # linux vserver
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
@@ -589,6 +590,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch118 -p1
 %patch119 -p1
 %patch120 -p1
+%patch121 -p1
 
 %if %{with vserver}
 %patch200 -p1

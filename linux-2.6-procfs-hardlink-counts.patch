@@ -1,0 +1,47 @@
+The pid directories in /proc/ currently return the wrong hardlink count - 3, 
+when there are actually 4 : ".", "..", "fd", and "task".
+
+This is easy to notice using find(1):
+	cd /proc/<pid>
+	find
+
+In the output, you'll see a message similar to:
+find: WARNING: Hard link count is wrong for .: this may be a bug in your 
+filesystem driver.  Automatically turning on find's -noleaf option.  Earlier 
+results may have failed to include directories that should have been searched.
+
+I also noticed that CONFIG_SECURITY can add a 5th: attr, and performed a 
+similar fix on the task directories too.
+
+Signed-off-by: Daniel Drake <dsd@gentoo.org>
+
+--- a/fs/proc/base.c	2005-04-01 14:06:43.000000000 +0100
++++ b/fs/proc/base.c	2005-04-01 14:35:39.000000000 +0100
+@@ -1702,8 +1702,12 @@ struct dentry *proc_pid_lookup(struct in
+ 	inode->i_mode = S_IFDIR|S_IRUGO|S_IXUGO;
+ 	inode->i_op = &proc_tgid_base_inode_operations;
+ 	inode->i_fop = &proc_tgid_base_operations;
+-	inode->i_nlink = 3;
+ 	inode->i_flags|=S_IMMUTABLE;
++#ifdef CONFIG_SECURITY
++	inode->i_nlink = 5;
++#else
++	inode->i_nlink = 4;
++#endif
+ 
+ 	dentry->d_op = &pid_base_dentry_operations;
+ 
+@@ -1757,8 +1761,12 @@ static struct dentry *proc_task_lookup(s
+ 	inode->i_mode = S_IFDIR|S_IRUGO|S_IXUGO;
+ 	inode->i_op = &proc_tid_base_inode_operations;
+ 	inode->i_fop = &proc_tid_base_operations;
+-	inode->i_nlink = 3;
+ 	inode->i_flags|=S_IMMUTABLE;
++#ifdef CONFIG_SECURITY
++	inode->i_nlink = 4;
++#else
++	inode->i_nlink = 3;
++#endif
+ 
+ 	dentry->d_op = &pid_base_dentry_operations;
+ 
