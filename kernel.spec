@@ -26,7 +26,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.23
-Release:	0.7.1
+Release:	0.7.2
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -102,6 +102,10 @@ Patch80:	linux-2.4.22-intermezzo-acl.patch
 # new version of netfilter.
 Patch100:	linux-2.4.23-netfilter-%{netfilter_snap}.patch.gz
 Patch101:	linux-2.4.23-netfilter-IMQ-target.patch
+# http://rnvs.informatik.uni-leipzig.de/ipp2p/index_en.html
+# http://rnvs.informatik.uni-leipzig.de/ipp2p/downloads/ipp2p-0.5a_vs_2.4.22.diff.gz
+Patch102:	ipp2p-0.5a_vs_2.4.22.diff.gz
+
 # http://ebtables.sourceforge.net/
 Patch110:	ebtables-brnf-3_vs_2.4.22.diff.gz
 # http://trash.net/~kaber/imq/
@@ -631,6 +635,7 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch80 -p1
 %patch100 -p1
 %patch101 -p1
+%patch102 -p1
 %patch110 -p1
 %patch120 -p1
 %patch125 -p1
