@@ -508,6 +508,18 @@ diff -urN linux-2.4.20/arch/alpha/config.in linux-2.4.20-o1-preempt/arch/alpha/c
  if [ "$CONFIG_PROC_FS" = "y" ]; then
     choice 'Kernel core (/proc/kcore) format' \
  	"ELF		CONFIG_KCORE_ELF	\
+--- linux-2.4.20/arch/alpha/kernel/entry.S.orig	Fri Mar  7 16:13:50 2003
++++ linux-2.4.20/arch/alpha/kernel/entry.S	Fri Mar  7 16:43:09 2003
+@@ -695,7 +695,9 @@
+ ret_from_fork:
+ 	lda	$26,ret_from_sys_call
+ 	mov	$17,$16
++#if CONFIG_SMP
+ 	jsr	$31,schedule_tail
++#endif
+ .end ret_from_fork
+ 
+ .align 3
 diff -urN linux-2.4.20/arch/alpha/kernel/process.c linux-2.4.20-o1-preempt/arch/alpha/kernel/process.c
 --- linux-2.4.20/arch/alpha/kernel/process.c	Sun Sep 30 21:26:08 2001
 +++ linux-2.4.20-o1-preempt/arch/alpha/kernel/process.c	Tue Feb 18 03:51:29 2003
