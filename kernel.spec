@@ -23,7 +23,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.7
-Release:	6
+Release:	7
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
