@@ -9,7 +9,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.18
-Release:	6
+Release:	7
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -77,8 +77,8 @@ Provides:	%{name}(i2c) = %{i2c_version}
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
 Autoreqprov:	no
-Prereq:		fileutils
 Prereq:		modutils
+Prereq:		fileutils
 Prereq:		geninitrd
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha
@@ -120,6 +120,8 @@ Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
 Prereq:		modutils
+Prereq:		fileutils
+Prereq:		geninitrd
 Autoreqprov:	no
 
 %description smp
@@ -151,6 +153,8 @@ Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
 Prereq:		modutils
+Prereq:		fileutils
+Prereq:		geninitrd
 Autoreqprov:	no
 
 %description fb
@@ -178,6 +182,8 @@ Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
 Prereq:		modutils
+Prereq:		fileutils
+Prereq:		geninitrd
 Autoreqprov:	no
 
 %description smp-fb
@@ -206,6 +212,7 @@ Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installati
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Prereq:		modutils
+Prereq:		fileutils
 Autoreqprov:	no
 
 %description BOOT
