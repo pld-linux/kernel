@@ -76,6 +76,7 @@ Patch28:	%{name}-flip-serial5.05.patch
 Patch29:	%{name}-serial-initialisation.patch
 # Original patch from http://scry.wanfear.com/~greear/vlan/vlan.1.0.1.tar.gz
 Patch30:	vlan_2.2.patch
+Patch31:	kernel-sysctl-ipv6.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -362,6 +363,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch26 -p1
 %patch27 -p1
 %patch30 -p1
+%patch31 -p1
 
 cd  serial-5.05
 %patch28 -p1
