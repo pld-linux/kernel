@@ -1,0 +1,128 @@
+This patch fixes bugs related to machine endianess (harmless on
+little-endians, but causing that some of conntrack modules don't
+work on big-endian machines) in netfilter/ip_nat code.
+Bugs are similar to those fixed in
+linux-2.4.20-netfilter-conntrack-endian.patch (which fixed
+netfilter/ip_conntrack code).
+
+The way that ip_conntrack_manip_proto unions (separately and in
+ip_conntrack_tuple struct) were initialized was wrong - in compound
+literals and initializers port number was "catched" by the first
+union element, which is int32_t (so port was stored in 2 least
+significant bytes, i.e. 2 bytes after beginning of tcp or udp
+element on big-endian machines).
+This fix uses C99 field specifiers.
+
+Aternative way to fix can be zeroing whole structure and then
+setting wanted fields in separate statements (like in some
+other ip_nat_* or ip_conntrack_* modules).
+
+
+	Jakub Bogusz <qboosh@pld.org.pl>
+
+--- linux-2.4.20/net/ipv4/netfilter/ip_nat_amanda.c.orig	Tue May 20 11:18:23 2003
++++ linux-2.4.20/net/ipv4/netfilter/ip_nat_amanda.c	Thu May 22 09:53:49 2003
+@@ -84,7 +84,7 @@
+ 		mr.range[0].flags |= IP_NAT_RANGE_PROTO_SPECIFIED;
+ 		mr.range[0].min = mr.range[0].max
+ 			= ((union ip_conntrack_manip_proto)
+-				{ htons(port) });
++				{ .udp = { htons(port) } });
+ 	}
+ 
+ 	return ip_nat_setup_info(ct, &mr, hooknum);
+--- linux-2.4.20/net/ipv4/netfilter/ip_nat_ftp.c.orig	Fri Nov 29 00:53:15 2002
++++ linux-2.4.20/net/ipv4/netfilter/ip_nat_ftp.c	Thu May 22 09:30:36 2003
+@@ -84,7 +84,7 @@
+ 		mr.range[0].flags |= IP_NAT_RANGE_PROTO_SPECIFIED;
+ 		mr.range[0].min = mr.range[0].max
+ 			= ((union ip_conntrack_manip_proto)
+-				{ htons(exp_ftp_info->port) });
++				{ .tcp = { htons(exp_ftp_info->port) } });
+ 	}
+ 	return ip_nat_setup_info(ct, &mr, hooknum);
+ }
+--- linux-2.4.20/net/ipv4/netfilter/ip_nat_h323.c.orig	Thu May 22 10:46:47 2003
++++ linux-2.4.20/net/ipv4/netfilter/ip_nat_h323.c	Thu May 22 10:01:11 2003
+@@ -129,7 +129,7 @@
+ 		mr.range[0].flags |= IP_NAT_RANGE_PROTO_SPECIFIED;
+ 		mr.range[0].min = mr.range[0].max
+ 			= ((union ip_conntrack_manip_proto)
+-				{ port });
++				{ .tcp = { port } });
+ 	}
+ 
+ 	ret = ip_nat_setup_info(ct, &mr, hooknum);
+@@ -390,9 +390,9 @@
+ 	  "H.225",					/* name */
+ 	  IP_NAT_HELPER_F_ALWAYS, 			/* flags */
+ 	  THIS_MODULE,					/* module */
+-	  { { 0, { __constant_htons(H225_PORT) } },	/* tuple */
++	  { { 0, { .tcp = { __constant_htons(H225_PORT) } } },	/* tuple */
+ 	    { 0, { 0 }, IPPROTO_TCP } },
+-	  { { 0, { 0xFFFF } },				/* mask */
++	  { { 0, { .tcp = { 0xFFFF } } },				/* mask */
+ 	    { 0, { 0 }, 0xFFFF } },
+ 	  h225_nat_help,				/* helper */
+ 	  h225_nat_expected				/* expectfn */
+--- linux-2.4.20/net/ipv4/netfilter/ip_nat_snmp_basic.c.orig	Fri Nov 29 00:53:15 2002
++++ linux-2.4.20/net/ipv4/netfilter/ip_nat_snmp_basic.c	Thu May 22 10:27:06 2003
+@@ -1309,9 +1309,9 @@
+ 	"snmp",
+ 	IP_NAT_HELPER_F_STANDALONE,
+ 	THIS_MODULE,
+-	{ { 0, { __constant_htons(SNMP_PORT) } },
++	{ { 0, { .udp = { __constant_htons(SNMP_PORT) } } },
+ 	  { 0, { 0 }, IPPROTO_UDP } },
+-	{ { 0, { 0xFFFF } },
++	{ { 0, { .udp = { 0xFFFF } } },
+ 	  { 0, { 0 }, 0xFFFF } },
+ 	nat_help, NULL };
+  
+@@ -1320,9 +1320,9 @@
+ 	"snmp_trap",
+ 	IP_NAT_HELPER_F_STANDALONE,
+ 	THIS_MODULE,
+-	{ { 0, { __constant_htons(SNMP_TRAP_PORT) } },
++	{ { 0, { .udp = { __constant_htons(SNMP_TRAP_PORT) } } },
+ 	  { 0, { 0 }, IPPROTO_UDP } },
+-	{ { 0, { 0xFFFF } },
++	{ { 0, { .udp = { 0xFFFF } } },
+ 	  { 0, { 0 }, 0xFFFF } },
+ 	nat_help, NULL };
+ 
+--- linux-2.4.20/net/ipv4/netfilter/ip_nat_talk.c.orig	Tue May 20 11:18:24 2003
++++ linux-2.4.20/net/ipv4/netfilter/ip_nat_talk.c	Thu May 22 10:36:17 2003
+@@ -335,9 +335,9 @@
+             "talk",					/* name */
+             IP_NAT_HELPER_F_ALWAYS, 			/* flags */
+             THIS_MODULE,				/* module */
+-            { { 0, { __constant_htons(TALK_PORT) } },	/* tuple */
++            { { 0, { .udp = { __constant_htons(TALK_PORT) } } },	/* tuple */
+               { 0, { 0 }, IPPROTO_UDP } },
+-            { { 0, { 0xFFFF } },			/* mask */
++            { { 0, { .udp = { 0xFFFF } } },		/* mask */
+               { 0, { 0 }, 0xFFFF } },
+             help, 					/* helper */
+             talk_nat_expected },			/* expectfn */
+@@ -345,9 +345,9 @@
+             "ntalk", 					/* name */
+             IP_NAT_HELPER_F_ALWAYS, 			/* flags */
+             THIS_MODULE,					/* module */
+-            { { 0, { __constant_htons(NTALK_PORT) } },	/* tuple */
++            { { 0, { .udp = { __constant_htons(NTALK_PORT) } } },	/* tuple */
+               { 0, { 0 }, IPPROTO_UDP } },
+-            { { 0, { 0xFFFF } },				/* mask */
++            { { 0, { .udp = { 0xFFFF } } },		/* mask */
+               { 0, { 0 }, 0xFFFF } },
+             nhelp, 					/* helper */
+             talk_nat_expected }				/* expectfn */
+@@ -431,7 +431,7 @@
+ 		mr.range[0].flags |= IP_NAT_RANGE_PROTO_SPECIFIED;
+ 		mr.range[0].min = mr.range[0].max
+ 			= ((union ip_conntrack_manip_proto)
+-				{ port });
++				{ .udp = { port } });
+ 	}
+ 	ret = ip_nat_setup_info(ct, &mr, hooknum);
+ 
