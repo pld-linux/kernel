@@ -36,7 +36,7 @@ Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 # Source3-md5:	8ed492197244b6a772270417c66214d3
 Source4:	linux-2.4.22-netfilter-%{netfilter_snap}.tar.gz
-# Source4-md5:	6b6cff7293a7b75474c97c9740628bf4
+# Source4-md5:	20c49be2eaf88622f52cb985989ac1d7
 Source5:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
 # Source5-md5:	b8f2f7a268a5cb75fabcaec3b5d45fcd
 Source7:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-1.1.2.tar.gz
