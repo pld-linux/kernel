@@ -1,4 +1,4 @@
-%define		ow_version		2.2.19-ow4
+%define		ow_version		2.2.20-ow1
 %define		pcmcia_version		3.1.29
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.34
@@ -15,8 +15,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.2.19
-Release:	26
+Version:	2.2.20
+Release:	1	
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -90,7 +90,7 @@ Patch34:	%{name}-sparc-zs.h.patch
 Patch35:	%{name}-sym53c8xx.patch
 Patch36:	ip_masq_irc-2.2.19-dcc_check-3.diff
 Patch37:	%{name}-udf.patch
-Patch38:	jfs-%{version}-v%{jfs_version}-patch
+#Patch38:	jfs-%{version}-v%{jfs_version}-patch
 Patch39:	pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
 Patch40:	%{name}-2.2.19-ide_sparc32.patch
 Patch41:	%{name}-symbios-makefile.patch
@@ -368,21 +368,21 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
-%patch7 -p1
+#%patch7 -p1
 %patch8 -p1
-%patch9 -p1
-%patch10 -p1
+#%patch9 -p1
+#%patch10 -p1
 %patch11 -p1
 %patch12 -p1
-%patch13 -p1
+#%patch13 -p1
 %patch14 -p1
 %patch15 -p1
 %patch16 -p1
-%patch18 -p1
+#%patch18 -p1
 %patch19 -p1
 %patch20 -p1
 %patch21 -p1
-%patch22 -p1
+#%patch22 -p1
 %ifarch %{x86}
 %patch23 -p1
 %endif
@@ -390,7 +390,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %ifnarch sparc sparc64
 %patch24 -p1
 %endif
-%patch25 -p1
+#%patch25 -p1
 %patch26 -p1
 %patch27 -p1
 %patch39 -p0
@@ -399,23 +399,23 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %endif
 
 # 802.1Q VLANs
-cd vlan.%{vlan_version}
-%patch33 -p1
-cd ..
-patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
+#cd vlan.%{vlan_version}
+#%patch33 -p1
+#cd ..
+#patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
 
 %patch31 -p1
-%patch32 -p1
+#%patch32 -p1
 
-cd serial-5.05
-%patch28 -p1
-%patch29 -p1
-./install-in-kernel ../
-cd .. 
+#cd serial-5.05
+#%patch28 -p1
+#%patch29 -p1
+#./install-in-kernel ../
+#cd .. 
 
 #DAC960-2.2.10
-mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
-mv DAC960.[ch] drivers/block
+#mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
+#mv DAC960.[ch] drivers/block
 
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 
@@ -433,14 +433,14 @@ rm -rf Common FreeBSD Linux NetBSD MakePatches MakeTar README-sym-2
 
 %patch34 -p1
 %patch35 -p1
-%patch36 -p1
+#%patch36 -p1
 %patch37 -p1
 
 # JFS
-patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
-%patch38 -p1
+#patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
+#%patch38 -p1
 
-%patch41 -p1
+#%patch41 -p1
 
 %build
 BuildKernel() {
@@ -652,38 +652,38 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH3}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH5}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH6}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH7}
+#patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH7}
 bzip2 -dc %{PATCH8} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-bzip2 -dc %{PATCH9} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH10}
+#bzip2 -dc %{PATCH9} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+#patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH10}
 gzip -dc %{PATCH11} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 gzip -dc %{PATCH12} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-gzip -dc %{PATCH13} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+#gzip -dc %{PATCH13} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH14}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH15}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH16}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH18}
+#patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH18}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH19}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH20}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH21}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH22}
+#patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH22}
 %ifarch %{x86}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH23}
 %endif
 %ifnarch sparc sparc64
 gzip -dc %{PATCH24} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 %endif
-bzip2 -dc %{PATCH25} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} 
+#bzip2 -dc %{PATCH25} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} 
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH26}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH27}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <vlan.%{vlan_version}/vlan_2.2.patch
+#patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <vlan.%{vlan_version}/vlan_2.2.patch
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH31}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH32}
-cd serial-5.05
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH28}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH29}
-./install-in-kernel $RPM_BUILD_ROOT/usr/src/linux-%{version}
-cd ..
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH32}
+#cd serial-5.05
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH28}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH29}
+#./install-in-kernel $RPM_BUILD_ROOT/usr/src/linux-%{version}
+#cd ..
 
 tar xfz %{SOURCE8}
 mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
@@ -702,14 +702,14 @@ rm -rf Common FreeBSD Linux NetBSD MakePatches MakeTar README-sym-2
 
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH34}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH35}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH36}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH36}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH37}
 
 # JFS
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < jfs-2.2.common-v%{jfs_version}-patch
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH38}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < jfs-2.2.common-v%{jfs_version}-patch
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH38}
 
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH41}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH41}
 
 %ifarch sparc sparc64
 ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
@@ -952,7 +952,7 @@ fi
 %{_prefix}/src/linux-%{version}/modules
 %{_prefix}/src/linux-%{version}/net
 %{_prefix}/src/linux-%{version}/scripts
-%{_prefix}/src/linux-%{version}/security
+#%{_prefix}/src/linux-%{version}/security
 %{_prefix}/src/linux-%{version}/.config
 %{_prefix}/src/linux-%{version}/.depend
 %{_prefix}/src/linux-%{version}/.hdepend
