@@ -58,6 +58,7 @@
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
+%define		no_install_post_compress_modules	1
 %define		no_install_post_chrpath			1
 
 %define		pcmcia_version		3.1.22
