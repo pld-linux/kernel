@@ -276,7 +276,7 @@ fonctions basiques d'un système d'exploitation: allocation mémoire,
 allocation de process, entrée/sortie de peripheriques, etc.
 
 %description -l pl
-Pakiet zawiera j±dro Linuxa niezbêdne do prawid³owego dzia³ania
+Pakiet zawiera j±dro Linuksa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takich jak karty muzyczne, sterowniki dysków, etc.
 
