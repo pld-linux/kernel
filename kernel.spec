@@ -27,7 +27,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.22
-Release:	0.2
+Release:	0.3
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -129,6 +129,7 @@ Patch130:	linux-2.4.22-tun-new-style.patch
 # ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/
 Patch150:	linux-2.4.21-atm_diffs.patch
 Patch151:	ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
+Patch152:	linux-2.4.22-fore200e-0.2f.patch
 
 # patch for patch in Source9
 Patch190:	hostap-2.4.19-rc3-patch.patch
@@ -266,6 +267,7 @@ Patch2000:	linux-PPC-SMP.patch
 Patch2001:	linux-2.4-ppc-procesor.patch
 Patch2002:	kernel-2.4.18-SPARC64-PLD.patch
 Patch2003:	linux-2.4.20-AXP-avma1_cs.patch
+Patch2004:	linux-2.4.22-ppc-amd8111e.patch
 
 Patch3000:	linux-2.4.1-compilefailure.patch
 Patch3002:	linux-2.4.20-EXPORT_SYMBOL.patch
@@ -672,6 +674,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch130 -p1
 #%patch150 -p1
 %patch151 -p1
+%patch152 -p1
 %patch200 -p1
 %patch205 -p1
 %patch210 -p1
@@ -754,6 +757,9 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch2001 -p1
 %patch2002 -p1
 %patch2003 -p1
+%ifarch ppc
+%patch2004 -p1
+%endif
 
 %patch3000 -p1
 %patch3002 -p1
@@ -1035,9 +1041,9 @@ cat %{SOURCE1001} >> .config
 
 %ifarch sparc64
 	echo -e ',s/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/g\n,w' | \
-		ed arch/%{base_arch}/defconfig
+		ed .config
 	echo -e ',s/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/g\n,w' | \
-		ed arch/%{base_arch}/defconfig
+		ed .config
 %endif
 
 %ifarch %{ix86}
@@ -1078,9 +1084,9 @@ cat %{SOURCE1001} >> .config
 
 %ifarch sparc64
 	echo -e ',s/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/g\n,w' | \
-		ed arch/%{base_arch}/defconfig
+		ed .config
 	echo -e ',s/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/g\n,w' | \
-		ed arch/%{base_arch}/defconfig
+		ed .config
 %endif
 
 %ifarch %{ix86}
