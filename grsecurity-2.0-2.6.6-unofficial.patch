@@ -15788,17 +15788,17 @@ diff -uNr linux-2.6.6/mm/mlock.c linux-2.6.6.grsec/mm/mlock.c
  		ret = do_mlockall(flags);
  out:
 diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
---- linux-2.6.6/mm/mmap.c	2004-05-10 04:32:52.000000000 +0200
-+++ linux-2.6.6.grsec/mm/mmap.c	2004-05-13 16:52:26.000000000 +0200
-@@ -21,6 +21,7 @@
- #include <linux/profile.h>
- #include <linux/module.h>
+--- linux-2.6.6/mm/mmap.c.orig	2004-05-24 13:47:27.772918528 +0200
++++ linux-2.6.6/mm/mmap.c	2004-05-24 14:32:53.126601792 +0200
+@@ -23,6 +23,7 @@
  #include <linux/mount.h>
+ #include <linux/mempolicy.h>
+ #include <linux/rmap.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
  #include <asm/pgalloc.h>
-@@ -121,6 +122,7 @@
+@@ -137,6 +138,7 @@
  
  	/* Check against rlimit.. */
  	rlim = current->rlim[RLIMIT_DATA].rlim_cur;
@@ -15806,20 +15806,18 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  	if (rlim < RLIM_INFINITY && brk - mm->start_data > rlim)
  		goto out;
  
-@@ -327,6 +329,12 @@
+@@ -485,6 +487,10 @@
  static inline int is_mergeable_vma(struct vm_area_struct *vma,
  			struct file *file, unsigned long vm_flags)
  {
-+
 +#if defined(CONFIG_PAX_SEGMEXEC) || defined(CONFIG_PAX_RANDEXEC)
 +	if ((vma->vm_flags | vm_flags) & VM_MIRROR)
 +		return 0;
 +#endif
-+
- 	if (vma->vm_ops && vma->vm_ops->close)
+ 	if (vma->vm_flags != vm_flags)
  		return 0;
  	if (vma->vm_file != file)
-@@ -484,6 +492,43 @@
+@@ -714,6 +720,43 @@
  			unsigned long len, unsigned long prot,
  			unsigned long flags, unsigned long pgoff)
  {
@@ -15863,7 +15861,7 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  	struct mm_struct * mm = current->mm;
  	struct vm_area_struct * vma, * prev;
  	struct inode *inode;
-@@ -494,6 +539,28 @@
+@@ -724,6 +767,28 @@
  	int accountable = 1;
  	unsigned long charged = 0;
  
@@ -15892,7 +15890,7 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  	if (file) {
  		if (is_file_hugepages(file))
  			accountable = 0;
-@@ -535,6 +602,30 @@
+@@ -766,6 +831,30 @@
  	vm_flags = calc_vm_prot_bits(prot) | calc_vm_flag_bits(flags) |
  			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
  
@@ -15923,7 +15921,7 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  	if (flags & MAP_LOCKED) {
  		if (!capable(CAP_IPC_LOCK))
  			return -EPERM;
-@@ -544,6 +635,7 @@
+@@ -775,6 +864,7 @@
  	if (vm_flags & VM_LOCKED) {
  		unsigned long locked = mm->locked_vm << PAGE_SHIFT;
  		locked += len;
@@ -15931,7 +15929,7 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  		if (locked > current->rlim[RLIMIT_MEMLOCK].rlim_cur)
  			return -EAGAIN;
  	}
-@@ -599,6 +691,9 @@
+@@ -833,6 +923,9 @@
  	if (error)
  		return error;
  		
@@ -15941,7 +15939,7 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  	/* Clear old maps */
  	error = -ENOMEM;
  munmap_back:
-@@ -610,6 +705,7 @@
+@@ -844,6 +937,7 @@
  	}
  
  	/* Check against address space limit. */
@@ -15949,7 +15947,7 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  	if ((mm->total_vm << PAGE_SHIFT) + len
  	    > current->rlim[RLIMIT_AS].rlim_cur)
  		return -ENOMEM;
-@@ -650,6 +746,13 @@
+@@ -890,6 +984,13 @@
  	vma->vm_start = addr;
  	vma->vm_end = addr + len;
  	vma->vm_flags = vm_flags;
@@ -15961,9 +15959,9 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
 +#endif
 +
  	vma->vm_page_prot = protection_map[vm_flags & 0x0f];
- 	vma->vm_ops = NULL;
  	vma->vm_pgoff = pgoff;
-@@ -679,6 +782,14 @@
+ 
+@@ -914,6 +1015,14 @@
  			goto free_vma;
  	}
  
@@ -15978,7 +15976,7 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  	/* We set VM_ACCOUNT in a shared mapping's vm_flags, to inform
  	 * shmem_zero_setup (perhaps called through /dev/zero's ->mmap)
  	 * that memory reservation must be checked; but that reservation
-@@ -738,6 +849,7 @@
+@@ -974,6 +1083,7 @@
  }
  
  EXPORT_SYMBOL(do_mmap_pgoff);
@@ -15986,7 +15984,7 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  
  /* Get an address range which is currently unmapped.
   * For shmat() with addr=0.
-@@ -759,12 +871,28 @@
+@@ -995,12 +1105,28 @@
  	struct vm_area_struct *vma;
  	unsigned long start_addr;
  
@@ -16015,7 +16013,7 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  		if (TASK_SIZE - len >= addr &&
  		    (!vma || addr + len <= vma->vm_start))
  			return addr;
-@@ -779,6 +907,17 @@
+@@ -1015,6 +1141,17 @@
  			 * Start a new search - just in case we missed
  			 * some holes.
  			 */
@@ -16033,12 +16031,10 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  			if (start_addr != TASK_UNMAPPED_BASE) {
  				start_addr = addr = TASK_UNMAPPED_BASE;
  				goto full_search;
-@@ -939,10 +1078,18 @@
- 		spin_unlock(&vma->vm_mm->page_table_lock);
+@@ -1183,9 +1320,17 @@
  		return -ENOMEM;
  	}
--	
-+
+ 	
 +	gr_learn_resource(current, RLIMIT_STACK, address - vma->vm_start, 1);
 +	gr_learn_resource(current, RLIMIT_AS, (vma->vm_mm->total_vm + grow) << PAGE_SHIFT, 1);
 +	if (vma->vm_flags & VM_LOCKED)
@@ -16051,11 +16047,11 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
 +			((vma->vm_flags & VM_LOCKED) &&
 +			((vma->vm_mm->locked_vm + grow) << PAGE_SHIFT) >
 +			current->rlim[RLIMIT_MEMLOCK].rlim_cur)) {
- 		spin_unlock(&vma->vm_mm->page_table_lock);
+ 		anon_vma_unlock(vma);
  		vm_unacct_memory(grow);
  		return -ENOMEM;
-@@ -993,10 +1140,62 @@
- 		spin_unlock(&vma->vm_mm->page_table_lock);
+@@ -1243,10 +1388,62 @@
+ 		anon_vma_unlock(vma);
  		return -ENOMEM;
  	}
 -	
@@ -16116,10 +16112,10 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
 +			((vma->vm_flags & VM_LOCKED) &&
 +			((vma->vm_mm->locked_vm + grow) << PAGE_SHIFT) >
 +			current->rlim[RLIMIT_MEMLOCK].rlim_cur)) {
- 		spin_unlock(&vma->vm_mm->page_table_lock);
+ 		anon_vma_unlock(vma);
  		vm_unacct_memory(grow);
  		return -ENOMEM;
-@@ -1108,15 +1307,15 @@
+@@ -1358,15 +1555,15 @@
  {
  	size_t len = area->vm_end - area->vm_start;
  
@@ -16137,9 +16133,9 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
 +				area->vm_start < mm->free_area_cache)
 +	      mm->free_area_cache = area->vm_start;
  
- 	remove_shared_vm_struct(area);
- 
-@@ -1178,21 +1377,73 @@
+ 	remove_vm_struct(area);
+ }
+@@ -1420,21 +1617,73 @@
   */
  static void
  detach_vmas_to_be_unmapped(struct mm_struct *mm, struct vm_area_struct *vma,
@@ -16215,7 +16211,7 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  }
  
  /*
-@@ -1262,6 +1513,10 @@
+@@ -1496,6 +1745,10 @@
  	unsigned long end;
  	struct vm_area_struct *mpnt, *prev, *last;
  
@@ -16226,7 +16222,7 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  	if ((start & ~PAGE_MASK) || start > TASK_SIZE || len > TASK_SIZE-start)
  		return -EINVAL;
  
-@@ -1298,6 +1553,20 @@
+@@ -1532,6 +1785,20 @@
  	 * places tmp vma above, and higher split_vma places tmp vma below.
  	 */
  	if (start > mpnt->vm_start) {
@@ -16247,7 +16243,7 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  		if (split_vma(mm, mpnt, start, 0))
  			return -ENOMEM;
  		prev = mpnt;
-@@ -1306,6 +1575,20 @@
+@@ -1540,6 +1807,20 @@
  	/* Does it split the last one? */
  	last = find_vma(mm, end);
  	if (last && end > last->vm_start) {
@@ -16268,16 +16264,16 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  		if (split_vma(mm, last, end, 1))
  			return -ENOMEM;
  	}
-@@ -1315,7 +1598,7 @@
+@@ -1548,7 +1829,7 @@
+ 	/*
  	 * Remove the vma's, and unmap the actual pages
  	 */
- 	spin_lock(&mm->page_table_lock);
 -	detach_vmas_to_be_unmapped(mm, mpnt, prev, end);
 +	detach_vmas_to_be_unmapped(mm, mpnt, prev, &start, &end);
+ 	spin_lock(&mm->page_table_lock);
  	unmap_region(mm, mpnt, prev, start, end);
  	spin_unlock(&mm->page_table_lock);
- 
-@@ -1332,6 +1615,12 @@
+@@ -1566,6 +1847,12 @@
  	int ret;
  	struct mm_struct *mm = current->mm;
  
@@ -16290,15 +16286,15 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  	down_write(&mm->mmap_sem);
  	ret = do_munmap(mm, addr, len);
  	up_write(&mm->mmap_sem);
-@@ -1343,7 +1632,31 @@
+@@ -1577,8 +1864,32 @@
   *  anonymous maps.  eventually we may be able to do some
   *  brk-specific accounting here.
   */
 +#if defined(CONFIG_PAX_SEGMEXEC) && defined(CONFIG_PAX_MPROTECT)
 +unsigned long __do_brk(unsigned long addr, unsigned long len);
 +
-+unsigned long do_brk(unsigned long addr, unsigned long len)
-+{
+ unsigned long do_brk(unsigned long addr, unsigned long len)
+ {
 +	unsigned long ret;
 +
 +	ret = __do_brk(addr, len);
@@ -16317,12 +16313,13 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
 +
 +unsigned long __do_brk(unsigned long addr, unsigned long len)
 +#else
- unsigned long do_brk(unsigned long addr, unsigned long len)
++unsigned long do_brk(unsigned long addr, unsigned long len)
 +#endif
- {
++{
  	struct mm_struct * mm = current->mm;
  	struct vm_area_struct * vma, * prev;
-@@ -1354,6 +1667,13 @@
+ 	unsigned long flags;
+@@ -1589,6 +1900,13 @@
  	if (!len)
  		return addr;
  
@@ -16336,7 +16333,7 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  	if ((addr + len) > TASK_SIZE || (addr + len) < addr)
  		return -EINVAL;
  
-@@ -1363,6 +1683,7 @@
+@@ -1598,6 +1916,7 @@
  	if (mm->def_flags & VM_LOCKED) {
  		unsigned long locked = mm->locked_vm << PAGE_SHIFT;
  		locked += len;
@@ -16344,7 +16341,7 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  		if (locked > current->rlim[RLIMIT_MEMLOCK].rlim_cur)
  			return -EAGAIN;
  	}
-@@ -1379,6 +1700,7 @@
+@@ -1614,6 +1933,7 @@
  	}
  
  	/* Check against address space limits *after* clearing old maps... */
@@ -16352,7 +16349,7 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
  	if ((mm->total_vm << PAGE_SHIFT) + len
  	    > current->rlim[RLIMIT_AS].rlim_cur)
  		return -ENOMEM;
-@@ -1391,6 +1713,18 @@
+@@ -1626,6 +1946,18 @@
  
  	flags = VM_DATA_DEFAULT_FLAGS | VM_ACCOUNT | mm->def_flags;
  
@@ -16368,12 +16365,12 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
 +	}
 +#endif
 +
- 	/* Can we just expand an old anonymous mapping? */
- 	if (rb_parent && vma_merge(mm, prev, rb_parent, addr, addr + len,
- 					flags, NULL, 0))
-@@ -1409,6 +1743,13 @@
- 	vma->vm_start = addr;
+ 	/* Can we just expand an old private anonymous mapping? */
+ 	if (vma_merge(mm, prev, addr, addr + len, flags,
+ 					NULL, NULL, pgoff, NULL))
+@@ -1646,6 +1978,13 @@
  	vma->vm_end = addr + len;
+ 	vma->vm_pgoff = pgoff;
  	vma->vm_flags = flags;
 +
 +#ifdef CONFIG_PAX_PAGEEXEC
@@ -16383,8 +16380,8 @@ diff -uNr linux-2.6.6/mm/mmap.c linux-2.6.6.grsec/mm/mmap.c
 +#endif
 +
  	vma->vm_page_prot = protection_map[flags & 0x0f];
- 	vma->vm_ops = NULL;
- 	vma->vm_pgoff = 0;
+ 	vma_link(mm, vma, prev, rb_link, rb_parent);
+ out:
 diff -uNr linux-2.6.6/mm/mprotect.c linux-2.6.6.grsec/mm/mprotect.c
 --- linux-2.6.6/mm/mprotect.c.orig	2004-05-24 13:47:27.774918224 +0200
 +++ linux-2.6.6/mm/mprotect.c	2004-05-24 13:48:22.155651096 +0200
