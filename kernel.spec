@@ -10,13 +10,14 @@
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
-%bcond_without	pramfs		# build pramfs support (EXPERIMENTAL)
-%bcond_without	gfs		# build GFS support
+%bcond_without	pramfs		# don't build pramfs support (EXPERIMENTAL)
+%bcond_without	gfs		# don't build GFS support
+%bcond_without	reiser4		# don't build ReiserFS4 support
+%bcond_without	preemptive	# build without preemptive kernel
+%bcond_without	bootsplash	# build without bootsplash
 %bcond_without	grsec		# build without grsec
 %bcond_without	execshield	# build without exec-shield
 %bcond_with	verbose		# verbose build (V=1)
-%bcond_with	preemptive	# build preemptive kernel
-%bcond_with	bootsplash	# build with bootsplash
 
 %{?debug:%define with_verbose 1}
 
