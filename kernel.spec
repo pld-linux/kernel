@@ -1,6 +1,4 @@
 #
-# SEE PLD-doc/maintainers file before you edit this file!!
-#
 # TODO:
 #		- fix lirc_sasem (usb api)
 #		- update grsecurity patch
