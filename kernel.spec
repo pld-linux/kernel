@@ -9,7 +9,7 @@
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 #
-%define		krelease		3.03
+%define		krelease		3.04
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -95,7 +95,7 @@ Patch2:		linux-%{version}-freeswan-%{freeswan_version}.patch.gz
 # from  http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.17.diff
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
-Patch5:		linux-2.4.18-xfs-20020517.patch.gz
+Patch5:		linux-2.4.18-xfs-20020526.patch.gz
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/sct/ext3/v2.4/
 Patch6:		linux-2.4.18-ext3-0.9.18.patch
 # Homepage of ABI:	http://linux-abi.sourceforge.net/
