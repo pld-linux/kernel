@@ -638,20 +638,11 @@ BuildKernel() {
 %endif
 	%{__make} %{?debug:V=1} include/linux/version.h
 
-%ifarch %{ix86}
-	%{__make} %{?debug:V=1} bzImage
-%endif
+# make does vmlinux, modules and bzImage at once
 %ifarch sparc
-	sparc32 %{__make} %{?debug:V=1} image
+	sparc32 %{__make} %{?debug:V=1}
 %else
-%ifnarch %{ix86}
 	%{__make} %{?debug:V=1}
-%endif
-%endif
-%ifarch sparc
-	sparc32 %{__make} %{?debug:V=1} modules
-%else
-	%{__make} %{?debug:V=1} modules
 %endif
 }
 
