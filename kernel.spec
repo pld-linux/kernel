@@ -224,8 +224,7 @@ Patch203:	linux-cluster-gnbd.patch
 
 # suspend/resume
 # http://softwaresuspend.berlios.de/
-# NEEDS UPDATE
-Patch219:	linux-2.6-software-suspend-2.0.0.104.patch.gz
+Patch219:	linux-2.6-software-suspend-2.0.0.105.patch.gz
 Patch220:	linux-2.6-via-agpc-resume-suspend-support.patch
 
 # hotfixes
@@ -681,8 +680,7 @@ patch -p1 -s < exec-shield.patch
 
 # suspend/resume
 %ifarch %{ix86}
-# see TODO
-#patch219 -p1
+%patch219 -p1
 %endif
 %patch220 -p1
 
