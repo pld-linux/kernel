@@ -49,12 +49,14 @@ Patch2:		%{name}-%{version}-dc395-patch-fix.patch
 #Patch4:		linux-2.4.0-freeswan-%{freeswan_version}.patch
 #Patch5:		linux-ipv6-addrconf.patch
 Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac9.bz2
-Patch10:	lids-%{lids_version}-fix.patch # empty
+#Patch10:	lids-%{lids_version}-fix.patch # empty
 Patch11:	reiserfs-fix-3.6.patch
 Patch12:	stackguard.patch
 Patch1000:	linux-2.4-misc.patch
 
 Patch1001:	http://oss.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}-patch.tar.gz
+Patch1002:	bug-report-2.4.0.patch
+
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -261,7 +263,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a4 -a6 -a7 -a8 -a10 -n linux
+%setup -q -a4 -a6 -a7 -a8 -a10 -a1001 -n linux
 %patch100 -p1
 %patch0 -p1
 # conflict with other patches - commented.
@@ -306,6 +308,9 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
     -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
 %endif
     Makefile.orig >Makefile
+
+#LIDS patch
+patch -p1 <lids-1.0.4-2.4.0/lids-1.0.4-2.4.0.patch
 
 %build
 BuildKernel() {
