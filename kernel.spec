@@ -198,7 +198,7 @@ Patch221:	linux-2.6-via-rhine-suspend-resume.patch
 Patch300:	linux-2.6-sparc-ksyms.patch
 Patch301:	linux-2.6-ppc-ksyms.patch
 Patch302:	2.6.7-kill-warnings.patch
-#Patch303:	%{name}-hotfixes.patch
+Patch303:	%{name}-hotfixes.patch
 Patch304:	linux-2.6-acpi-s3-pae.patch
 
 URL:		http://www.kernel.org/
@@ -657,7 +657,7 @@ patch -p1 -s < exec-shield.patch
 %patch300 -p1
 %patch301 -p1
 %patch302 -p1
-#patch303 -p1
+%patch303 -p1
 %patch304 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
