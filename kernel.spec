@@ -1034,6 +1034,9 @@ install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/
 %clean
 rm -rf $RPM_BUILD_ROOT
 
+%preun
+rm -f /lib/modules/%{version}-%{release}/modules.*
+
 %post
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
@@ -1088,6 +1091,9 @@ rm -f /boot/initrd-%{version}-%{release}.gz
 
 %postun sound-oss
 %depmod %{version}-%{release}
+
+%preun smp
+rm -f /lib/modules/%{version}-%{release}smp/modules.*
 
 %post smp
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
