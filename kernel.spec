@@ -571,8 +571,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch86 -p1
 
-%patch88 -p1
-
 %patch90 -p1
 
 %patch92 -p1
