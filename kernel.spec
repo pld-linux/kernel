@@ -294,7 +294,8 @@ Patch600:	%{name}-grsec.patch
 Patch700:	openMosix-2.6.7-PLD.patch
 
 Patch710:	kernel-SPARC64-binfmt_elf.patch
-Patch711:	kernel-ppc_asm_and_initializers-from-rc3-bk9.patch
+Patch714:	kernel-ppc_asm_and_initializers-from-rc3-bk9.patch
+Patch720:	kernel-it82xx-raid.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -829,7 +830,11 @@ zcat %{SOURCE3} | patch -p1 -s
 %endif
 %endif
 
-%patch711 -p1
+%patch714 -p1
+
+%ifarch %{ix86} amd64
+%patch720 -p1
+%ndif
 
 ## Add ALL patches before this section !!
 
