@@ -8,7 +8,7 @@
 # _without_lsm		- don't build LSM/SELinux kernel
 
 %define		_rel		0
-%define		patch_level	2
+%define		patch_level	3
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -41,10 +41,10 @@ Source21:	%{name}-ia32-smp.config
 #Source61:	%{name}-sparc64-smp.config
 #Source70:	%{name}-alpha.config
 #Source71:	%{name}-alpha-smp.config
-#Source73:	%{name}-ppc.config
-#Source74:	%{name}-ppc-smp.config
+Source73:	%{name}-ppc.config
+Source74:	%{name}-ppc-smp.config
 
-Patch0:		patch-2.6.0-test1-ac1.bz2
+Patch0:		patch-2.6.0-test1-ac2.bz2
 Patch1:		2.6.0-test1-lkml.patch
 
 ExclusiveOS:	Linux
