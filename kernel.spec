@@ -267,7 +267,7 @@ Patch3013:	linux-2.4.23-ppc-symbols.patch
 
 # modified http://www.hardrock.org/kernel/current-updates/linux-2.4.23-updates.patch
 # since we already have some of these fixes applied
-Patch3500:	http://www.hardrock.org/kernel/current-updates/linux-2.4.23-updates.patch
+Patch3500:	http://www.hardrock.org/kernel/current-updates/linux-2.4.24-updates.patch
 # ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.4.24/acpi-20031203-2.4.24.diff.bz2
 Patch3510:      acpi-20031203-2.4.24.diff.bz2
 Patch3600:	linux-2.4-sysctl-empty.patch
