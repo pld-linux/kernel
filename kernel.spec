@@ -12,6 +12,7 @@
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	mosix		# build with openMosix support
+%bcond_with	fbsplash	# build with fbsplash support
 
 %{?debug:%define with_verbose 1}
 
@@ -29,6 +30,10 @@
 %if %{with mosix}
 # openMosix not compile with SMP 
 %undefine	with_smp
+%endif
+
+%if %{with fbsplash}
+%undefine	with_grsec
 %endif
 
 ## Program required by kernel to work.
@@ -772,7 +777,9 @@ zcat %{SOURCE3} | patch -p1 -s
 
 %patch460 -p1
 
-#patch490 -p1
+%if %{with fbsplash}
+%patch490 -p1
+%endif
 
 # software suspend
 %if %{with swsuspend}
