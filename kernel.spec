@@ -9,7 +9,7 @@
 # _without_up		- don't build UP kernel
 #
 %define		test_build		0
-%define		krelease		2.32
+%define		krelease		2.33
 #
 %define base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 #
@@ -25,7 +25,7 @@
 %define		lvm_version		1.0.4
 %define		evms_version		1.0.1
 %define		tridentfb_version	0.7.0
-%define		ntfs_version		2.0.7c
+%define		ntfs_version		2.0.7d	
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
