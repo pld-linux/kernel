@@ -494,12 +494,6 @@ fi
 /lib/modules/%{version}-%{release}/modules.*map
 /lib/modules/%{version}-%{release}/modules.generic_string
 
-%files pcmcia-cs
-%defattr(644,root,root,755)
-%ifarch %{ix86}
-/lib/modules/%{version}-%{release}/pcmcia
-%endif
-
 #%files smp
 #%defattr(644,root,root,755)
 #%attr(600,root,root) /boot/vmlinuz-%{version}-%{release}smp
@@ -510,12 +504,6 @@ fi
 #/lib/modules/%{version}-%{release}smp/modules.dep
 #/lib/modules/%{version}-%{release}smp/modules.*map
 #/lib/modules/%{version}-%{release}smp/modules.generic_string
-
-#%files -n kernel-smp-pcmcia-cs
-#%defattr(644,root,root,755)
-#%ifarch %{ix86}
-#/lib/modules/%{version}-%{release}smp/pcmcia
-#%endif
 
 %if %{?_with_boot:1}0
 %files BOOT
