@@ -70,6 +70,8 @@ Patch24:	%{name}-bridge-extraversion.patch
 Patch25:	%{name}-panaview_kbd.patch
 Patch26:	http://people.FreeBSD.org/~gibbs/linux/linux-aic7xxx-6.1.8-2.2.18.patch.gz
 Patch27:	kernel-toshiba-2.2.19.patch
+Patch28:	linux-2.2.19-pci.patch 
+
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -336,6 +338,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %endif
 #%patch26 -p1
 %patch27 -p1
+%patch28 -p1
 
 #DAC960-2.2.10
 mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
