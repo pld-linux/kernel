@@ -124,6 +124,7 @@ Patch122:	linux-lvm-1.0.1-%{version}.patch
 Patch123:	xquad_portio.fix
 # 
 Patch124:	linux-proc_net_dev-counter-fix.patch
+Patch125:	linux-%{version}-devfs-v199.7.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -422,9 +423,15 @@ echo Installing Net Dev Random patch
 %patch11 -p1
 %patch12 -p1
 
+# ABI
 %ifarch %{x86}
+echo Installing Linux-ABI Support
 %patch7 -p1
 %endif
+
+# devfs patch
+echo Installing DEVFS patch
+%patch125 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
