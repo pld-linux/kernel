@@ -1,0 +1,116 @@
+diff -u -p linux/net/irda/irlmp_event.d7.c linux/net/irda/irlmp_event.c
+--- linux/net/irda/irlmp_event.d7.c	Tue Feb 20 14:14:33 2001
++++ linux/net/irda/irlmp_event.c	Tue Feb 20 14:41:31 2001
+@@ -472,8 +472,6 @@ static int irlmp_state_disconnected(stru
+ 		irlmp_start_watchdog_timer(self, 5*HZ);
+ 		break;
+ 	case LM_CONNECT_INDICATION:
+-		irlmp_next_lsap_state(self, LSAP_CONNECT_PEND);
+-
+ 		if (self->conn_skb) {
+ 			WARNING(__FUNCTION__ 
+ 				"(), busy with another request!\n");
+@@ -481,6 +479,8 @@ static int irlmp_state_disconnected(stru
+ 		}
+ 		self->conn_skb = skb;
+ 
++		irlmp_next_lsap_state(self, LSAP_CONNECT_PEND);
++
+ 		irlmp_do_lap_event(self->lap, LM_LAP_CONNECT_REQUEST, NULL);
+ 		break;
+ 	default:
+@@ -562,6 +562,15 @@ static int irlmp_state_connect_pend(stru
+ 	switch (event) {
+ 	case LM_CONNECT_REQUEST:
+ 		/* Keep state */
++		break;
++	case LM_CONNECT_INDICATION:
++		/* Will happen in some rare cases when the socket get stuck,
++		 * the other side retries the connect request.
++		 * We just unstuck the socket - Jean II */
++		IRDA_DEBUG(0, __FUNCTION__ "(), LM_CONNECT_INDICATION, "
++			   "LSAP stuck in CONNECT_PEND state...\n");
++		/* Keep state */
++		irlmp_do_lap_event(self->lap, LM_LAP_CONNECT_REQUEST, NULL);
+ 		break;
+ 	case LM_CONNECT_RESPONSE:
+ 		IRDA_DEBUG(0, __FUNCTION__ "(), LM_CONNECT_RESPONSE, "
+
+diff -u -p linux/drivers/net/irda/nsc-ircc.j1.c linux/drivers/net/irda/nsc-ircc.c
+--- linux/drivers/net/irda/nsc-ircc.j1.c	Fri Feb 23 15:56:05 2001
++++ linux/drivers/net/irda/nsc-ircc.c	Fri Feb 23 16:01:20 2001
+@@ -251,9 +251,14 @@ static int nsc_ircc_open(int i, chipio_t
+ 
+ 	IRDA_DEBUG(2, __FUNCTION__ "()\n");
+ 
++	MESSAGE("%s, Found chip at base=0x%03x\n", driver_name,
++		info->cfg_base);
++
+ 	if ((nsc_ircc_setup(info)) == -1)
+ 		return -1;
+ 
++	MESSAGE("%s, driver loaded (Dag Brattli)\n", driver_name);
++
+ 	/* Allocate new instance of the driver */
+ 	self = kmalloc(sizeof(struct nsc_ircc_cb), GFP_KERNEL);
+ 	if (self == NULL) {
+@@ -699,8 +704,6 @@ static int nsc_ircc_setup(chipio_t *info
+ 		ERROR("%s, Wrong chip version %02x\n", driver_name, version);
+ 		return -1;
+ 	}
+-	MESSAGE("%s, Found chip at base=0x%03x\n", driver_name, 
+-		info->cfg_base);
+ 
+ 	/* Switch to advanced mode */
+ 	switch_bank(iobase, BANK2);
+@@ -729,8 +732,6 @@ static int nsc_ircc_setup(chipio_t *info
+ 	outb(0x0d, iobase+2); /* Set SIR pulse width to 1.6us */
+ 	outb(0x2a, iobase+4); /* Set beginning frag, and preamble length */
+ 
+-	MESSAGE("%s, driver loaded (Dag Brattli)\n", driver_name);
+-
+ 	/* Enable receive interrupts */
+ 	switch_bank(iobase, BANK0);
+ 	outb(IER_RXHDL_IE, iobase+IER);
+@@ -1859,7 +1860,7 @@ static int nsc_ircc_net_open(struct net_
+ 	if (request_dma(self->io.dma, dev->name)) {
+ 		WARNING("%s, unable to allocate dma=%d\n", driver_name, 
+ 			self->io.dma);
+-		free_irq(self->io.irq, self);
++		free_irq(self->io.irq, dev);
+ 		return -EAGAIN;
+ 	}
+ 	
+@@ -2011,18 +2012,10 @@ static void nsc_ircc_suspend(struct nsc_
+ 
+ static void nsc_ircc_wakeup(struct nsc_ircc_cb *self)
+ {
+-	int iobase;
+-
+ 	if (!self->io.suspended)
+ 		return;
+ 
+-	iobase = self->io.fir_base;
+-
+-	/* Switch to advanced mode */
+-	switch_bank(iobase, BANK2);
+-	outb(ECR1_EXT_SL, iobase+ECR1);
+-	switch_bank(iobase, BANK0);
+-
++	nsc_ircc_setup(&self->io);
+ 	nsc_ircc_net_open(self->netdev);
+ 	
+ 	MESSAGE("%s, Waking up\n", driver_name);
+
+diff -urpN linux-2.4.1-pre8/init/main.c linux-2.4.1-pre8-irda-patch/init/main.c
+--- linux-2.4.1-pre8/init/main.c	Thu Jan  4 05:45:26 2001
++++ linux-2.4.1-pre8-irda-patch/init/main.c	Mon Jan 22 00:53:49 2001
+@@ -726,6 +726,7 @@ static void __init do_basic_setup(void)
+ 	filesystem_setup();
+ 
+ #ifdef CONFIG_IRDA
++	irda_proto_init();
+ 	irda_device_init(); /* Must be done after protocol initialization */
+ #endif
+ #ifdef CONFIG_PCMCIA
+
