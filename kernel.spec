@@ -76,6 +76,7 @@ Patch27:	%{name}-flip.patch
 Patch28:	%{name}-flip-serial5.05.patch
 Patch29:	%{name}-serial-initialisation.patch
 Patch31:	%{name}-sysctl-ipv6.patch
+Patch32:	%{name}-arp.patch
 Patch905:       linux-vlan-fixpatch.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -369,6 +370,7 @@ cd vlan.%{vlan_version}
 cd ..
 patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
 %patch31 -p1
+%patch32 -p1
 
 cd  serial-5.05
 %patch28 -p1
@@ -615,6 +617,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH26}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH27}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <vlan.%{vlan_version}/vlan_2.2.patch
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH31}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH32}
 cd serial-5.05
 ./install-in-kernel $RPM_BUILD_ROOT/usr/src/linux-%{version}
 cd ..
