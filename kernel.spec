@@ -156,7 +156,6 @@ Patch138:	linux-quota-bug.patch
 Patch139:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch140:	linux-UDF.fix
 Patch141:	http://people.FreeBSD.org/~gibbs/linux/linux-aic7xxx-%{aic_version}.patch.gz
-Patch142:	ftp://vger.timepanogas.net/nefs/nwfs0901-00.tar.gz
 
 # Patches fixing other patches or 3rd party sources ;)
 
