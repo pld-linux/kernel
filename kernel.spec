@@ -551,7 +551,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 #patch30 -p1
 %patch31 -p1
-#patch32 -p1	NEEDS UPDATE
+%patch32 -p1
 %patch33 -p1
 
 %patch41 -p1
