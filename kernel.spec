@@ -79,6 +79,8 @@ Patch4:		br2684-against2.4.7.diff
 #Patch5:		linux-2.4.10pre9-xfs-20010915.patch.gz
 # Compressed iso9660 filesystem
 Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs+filemap-2.4.7-1.diff.gz
+# Homepage of ABI : http://linux-abi.sourceforge.net/
+# http://prdownloads.sourceforge.net/linux-abi/
 Patch8:		linux-abi-2.4.3-PLD.patch
 Patch9:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
