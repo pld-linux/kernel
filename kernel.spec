@@ -83,7 +83,7 @@ Group:		Base/Kernel
 %define		_rc	%{nil}
 #define		_rc	-rc4
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.%{_post_ver}.tar.bz2
-# Source0-md5:	2f8b0030ce970f3c1a460faf5d2b1cec
+# Source0-md5:	9517ca999e822b898fbdc7e72796b1aa
 #Source0:	http://kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
