@@ -319,6 +319,7 @@ PreReq:		geninitrd >= 2.26
 Provides:	%{name} = %{epoch}:%{version}-%{release}
 Provides:	module-info
 Provides:	%{name}(netfilter) = %{_netfilter_snap}
+Obsoletes:	kernel-smp-net-ipp2p
 Conflicts:	util-linux < %{_util_linux_ver}
 Conflicts:	module-init-tool < %{_module_init_tool_ver}
 Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
