@@ -760,7 +760,7 @@ echo Updating VIA Southbridge
 %patch144 -p1
 
 %patch145 -p1
-%patch146 -p1
+#%patch146 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
