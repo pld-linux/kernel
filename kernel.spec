@@ -27,7 +27,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	0.5%{?_with_preemptive:_pr}
+Release:	0.6%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -102,6 +102,9 @@ Patch26:	%{name}-cdrw-packet.patch
 Patch27:	kernel-cd-mrw-2.patch
 # PC Speaker driver
 Patch28:	pcsp1.4-ss4-2.4.19.diff
+# Wireless Extensions
+Patch29:	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw_handlers.w14-5.diff
+Patch30:	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw252_we15-5.diff
 
 # Assorted bugfixes
 
@@ -525,6 +528,9 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
 %patch26 -p1
 
 %patch28 -p1
+
+%patch29 -p1
+%patch30 -p1
 
 %build
 BuildKernel() {
