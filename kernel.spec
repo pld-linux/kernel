@@ -17,7 +17,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.5.67
-Release:	0.3
+Release:	0.4
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
@@ -265,7 +265,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %prep
 %setup -q -n linux-%{version}
-%patch0 -p1
+%patch0 -p0
 %patch1 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
