@@ -625,7 +625,7 @@ BuildKernel smp
 %endif			# %{_without_smp}
 
 # BOOT kernel
-%ifnarch i586 i686
+%ifnarch i586 i686 ppc
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk"
 rm -rf $KERNEL_INSTALL_DIR
 BuildKernel BOOT
