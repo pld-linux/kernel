@@ -8,10 +8,10 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	grsec		# build without grsec
+%bcond_without	swsuspend	# build without swsuspend support
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	mosix		# build with openMosix support
-%bcond_with	swsuspend	# build with swsuspend support
 
 %{?debug:%define with_verbose 1}
 
