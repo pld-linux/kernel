@@ -40,7 +40,7 @@ Source8:	http://www.lids.org/download/lids-%{lids_version}.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source10:	http://www.linux-wlan.com/linux-wlan/linux-wlan-ng-%{wlan_version}.tar.gz
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
-Source12:	http://www.komacke.com/ftp/rl2isa-driver/rl2_driver.tgz
+#Source12:	http://www.komacke.com/ftp/rl2isa-driver/rl2_driver.tgz
 Source13:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
 Source14:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source15:	http://www10.software.ibm.com/developer/opensource/pub/jfs-1.0.1-patch.tar.gz
@@ -158,7 +158,7 @@ Patch137:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/2.4.7.pending/panic-in-rei
 Patch900:	kernel-i8255-asm-fix.patch
 Patch901:	dc395-patch-PLD-fix.patch
 # aacraid fix
-Patch902:	rl2-include.patch
+#Patch902:	rl2-include.patch
 # patch to fix LIDS stupidity
 #Patch904:	linux-lids-fixpatch.patch
 # patch to fix problem wit ABI and LIDS
