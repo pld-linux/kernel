@@ -25,14 +25,14 @@
 %define		ntfs_version		2.1.0a
 %define		drm_xfree_version	4.2.99
 %define		hostap_version		2002-10-12
-%define		netfilter_snap		20030205
+%define		netfilter_snap		20030306
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	3.4%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	3.5%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -40,9 +40,7 @@ Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
-# Don't use following patch, it may hang the NIC (baggins)
-#Source4:	http://christophe.lizzi.free.fr/linux/linux-2.4.0-test9-fore200e-0.3.tar.gz
-Source5:	linux-2.4.20-netfilter-%{netfilter_snap}.tar.bz2
+#Source5:	
 Source6:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
@@ -118,13 +116,13 @@ Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/pr
 # new version of netfilter.
 Patch8:		linux-2.4.20-netfilter-%{netfilter_snap}.patch.bz2
 
-#Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-2.4.18-1.patch
-#Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-2.4.18-1.patch
+#Patch9:
+#Patch10:
 
 # http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
 Patch11:	linux-2.4.20-ipvs-%{ipvs_version}.patch.bz2
-# included in kernel.
-#Patch12:	htb3.6-2.4.17.patch.bz2
+
+#Patch12:	
 Patch13:	http://luxik.cdi.cz/~devik/qos/imq-2.4.18.diff-10
 
 Patch14:	jfs-2.4.20.patch
@@ -165,9 +163,8 @@ Patch27:	%{name}-cd-mrw-2.patch
 # PC Speaker driver
 #Patch28:	pcsp1.4-ss4-2.4.19.diff
 
-# Wireless Extensions
-#Patch29:	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw_handlers.w14-5.diff
-#Patch30:	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw252_we15-5.diff
+#Patch29:
+#patch30:
 
 # from http://users.pandora.be/bart.de.schuymer/ebtables/sourcecode.html
 #		bridge-nf-0.0.10-against-2.4.20.diff
@@ -205,10 +202,10 @@ Patch46:	linux-2.4.19-netmos_pci_parallel_n_serial.patch
 Patch100:	linux-scsi-debug-bug.patch
 Patch101:	linux-2.4.2-raw-ip.patch
 Patch102:	PCI_ISA_bridge.patch
-#Patch103:	linux-2.4.2-nvram-hdd.patch
+#Patch103:	
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch104:	linux-2.4.19-pcnet-parms.patch
-#Patch105:	linux-alpha-nfs-2.4.19.patch
+#Patch105:	
 Patch106:	linux-2.4.20-lkml-ppp_filter-outbound-fix.patch
 # raid5 xor fix for PIII/P4, should go away shortly
 Patch107:	linux-2.4.0-raid5xor.patch
@@ -293,7 +290,7 @@ Patch902:	linux-2.4.20-drm-Makefile.patch
 Patch903:	linux-2.4-ppc-procesor.patch
 Patch904:	linux-abi-put_user.patch
 Patch905:	linux-abi-fl_ibcs_to_linux.patch
-#Patch906:	linux-netfilter-newnat-conntrack-nat-udp.patch
+#Patch906:
 Patch907:	PPC-grsecurity-pgtable.h.patch
 #Patch908:
 #Patch909:	
@@ -577,7 +574,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -a12 -n linux-%{version}
+%setup -q -a3 -a4 -a6 -a7 -a8 -a9 -a10 -a12 -n linux-%{version}
 %patch0 -p1
 %patch1 -p1
 %patch900 -p1
@@ -590,12 +587,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %ifarch ppc
 %patch907 -p1
 %endif
-%{?_with_preemptive:echo Installing Preemptible patch}
-%{?_with_preemptive:%patch7 -p1}
-#%patch9 -p1
-#%patch10 -p1
 %patch11 -p1
-#%patch12 -p1
 %patch13 -p1
 %patch14 -p1
 %patch15 -p1
@@ -607,18 +599,11 @@ echo Added Device-mapper support ...
 %patch23 -p1
 %patch26 -p1
 %patch27 -p1
-# fixme
-#%patch28 -p1
-#%patch29 -p1
-#%patch30 -p1
 
 %patch100 -p0
 %patch101 -p1
 %patch102 -p0
-#%patch103 -p0
 %patch104 -p1
-# Tru64 NFS kludge
-#%patch105 -p1
 %patch106 -p1
 %patch107 -p1
 %patch108 -p1
@@ -626,8 +611,6 @@ echo Added Device-mapper support ...
 %patch110 -p1
 %patch111 -p1
 %patch113 -p1
-#%patch114 -p1
-#%patch115 -p0
 %patch116 -p1
 %patch117 -p1
 %patch120 -p0
@@ -635,14 +618,12 @@ echo Added Device-mapper support ...
 %patch123 -p1
 %patch124 -p1
 %patch125 -p1
-#%patch126 -p1
 %patch127 -p1
 %patch128 -p1
 %patch129 -p0
 %patch131 -p0
 %patch132 -p0
 %patch133 -p1
-#%patch134 -p1
 %patch135 -p1
 %patch136 -p0
 %patch140 -p1
@@ -667,16 +648,9 @@ cp aacraid/* drivers/scsi/aacraid/
 # Fore 200e ATM NIC
 echo Adding FORE 200e ATM driver
 patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
-#patch -p1 -s <linux-2.4.0-test9-fore200e-0.3/linux-2.4.0-test9-fore200e-0.3.patch
 
 # Netfilter
-#(KERNEL_DIR=`pwd` ; export KERNEL_DIR ; cd netfilter-patch-o-matic ; ./runme --batch userspace)
-#%patch906 -p1
 %patch8 -p1
-
-# IP personality
-#echo Adding IP Personality 
-#patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020819-linux-2.4.19.diff
 
 %patch32 -p1
 
@@ -702,13 +676,13 @@ echo Installing WRR Support
 %patch35 -p1
 
 # added missing MODULE_LICENSE, MODULE_DESCRIPTION, MODULE_AUTHOR
-# do poprawy %patch914 -p1
+%patch914 -p1
 
 # ACL support
 echo Added ACL support
 %patch45 -p1
 
-# do poprawy %patch918 -p1
+%patch918 -p1
 %patch919 -p1
 
 #squashfs
@@ -719,9 +693,6 @@ echo Added NetMos card supprot
 %patch46 -p1
 
 %patch138 -p1
-
-echo Added support for V4L2
-#%patch139 -p1
 
 # sysctl controll of /dev/mem
 echo Sysctl controll access to /dev/kmem 
@@ -763,7 +734,6 @@ echo Added Adapter AIC79XX controler support ...
 echo Fixed I810 Sound ...
 %patch40 -p1
 
-#%patch41 -p1
 %patch42 -p1
 %patch43 -p1
 
