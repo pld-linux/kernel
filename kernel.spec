@@ -416,6 +416,7 @@ ln -sf ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc6
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT%{_includedir}/asm
 %endif
 %ifarch %{ix86}
+install -d $RPM_BUILD_ROOT%{_prefix}/src/linux/include/asm-i386
 ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux/include/asm
 %endif
 
