@@ -517,7 +517,7 @@ TuneUpConfigForIX86 () {
     %ifarch athlon
 	sed -i 's:# CONFIG_MK7 is not set:CONFIG_MK7=y:' $1
     %endif
-    %ifarch i686 pentium3 pentium4 athlon
+    %ifarch pentium3 pentium4 athlon
 #	kernel-i386-smp.config contains 64G support by default.
 	%if %{with up}
 	    sed -i "s:CONFIG_HIGHMEM4G=y:# CONFIG_HIGHMEM4G is not set:" $1
