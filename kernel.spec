@@ -55,8 +55,8 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.98
-%define		_cset		20041220_1904
+%define		_rel		0.10
+%define		_cset		20050115_0106
 %define		_apply_cset	0
 
 %define		_netfilter_snap		20041118
@@ -73,16 +73,16 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.6.10%{_post_ver}
+Version:	2.6.11
 Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-%define		_rc	%{nil}
-#define		_rc	-rc3
-#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	cffcd2919d9c8ef793ce1ac07a440eda
+#%define		_rc	%{nil}
+%define		_rc	-rc1
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
+# Source0-md5:	94d052c4b7ec8e508a22359bbfea19b0
+#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
@@ -109,95 +109,95 @@ Source90:	%{name}-grsec.config
 Source91:	%{name}-grsec+pax.config
 Source92:	%{name}-vserver.config
 
-Patch0:		2.6.0-ksyms-add.patch
+#Patch0:		2.6.0-ksyms-add.patch
 
-Patch2:		2.6.0-t6-usb-irq.patch
-Patch3:		2.6.0-t7-memleak-lkml.patch
-Patch4:		2.6.0-t7-memleak2-lkml.patch
+#Patch2:		2.6.0-t6-usb-irq.patch
+#Patch3:		2.6.0-t7-memleak-lkml.patch
+#Patch4:		2.6.0-t7-memleak2-lkml.patch
 #Patch5:	2.6.0-t8-swap-include-lkml.patch
-Patch6:		2.6.0-t8-VLSI-ix86-lkml.patch
+#Patch6:		2.6.0-t8-VLSI-ix86-lkml.patch
 
-Patch8:		2.6.0-t8-umsdos-lkml.patch
-Patch9:		2.6.0-t9-acpi_osl-lkml.patch
+#Patch8:		2.6.0-t8-umsdos-lkml.patch
+#Patch9:		2.6.0-t9-acpi_osl-lkml.patch
 
 # http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
-Patch10:	2.6.0-powernow-k7.patch
-Patch11:	2.6.0-enable-radeon-igp-rendering.patch
-Patch12:	2.6.0-omnikeys.patch
+#Patch10:	2.6.0-powernow-k7.patch
+#Patch11:	2.6.0-enable-radeon-igp-rendering.patch
+#Patch12:	2.6.0-omnikeys.patch
 
-Patch13:	2.6.1-rc2-VLAN-NS83820-lkml.patch
-Patch14:	linux-2.6-omnibook-20040916.patch
-Patch15:	linux-2.6-enable-broken-advansys.patch
-Patch16:	linux-alpha-isa.patch
-Patch17:	2.6.4-psion-5mx.patch
-Patch18:	2.6.5-sparc64-missing-include.patch
-Patch19:	2.6.5-3C920b-Tornado.patch
-Patch20:	2.6.5-i386-cmpxchg.patch
-Patch21:	2.6.6-serial-fifo-lkml.patch
-Patch22:	2.6.6-qsort-updated-lkml.patch
-Patch23:	2.6.6-xfs-qsort-lkml.patch
+#Patch13:	2.6.1-rc2-VLAN-NS83820-lkml.patch
+#Patch14:	linux-2.6-omnibook-20040916.patch
+#Patch15:	linux-2.6-enable-broken-advansys.patch
+#Patch16:	linux-alpha-isa.patch
+#Patch17:	2.6.4-psion-5mx.patch
+#Patch18:	2.6.5-sparc64-missing-include.patch
+#Patch19:	2.6.5-3C920b-Tornado.patch
+#Patch20:	2.6.5-i386-cmpxchg.patch
+#Patch21:	2.6.6-serial-fifo-lkml.patch
+#Patch22:	2.6.6-qsort-updated-lkml.patch
+#Patch23:	2.6.6-xfs-qsort-lkml.patch
 #Patch24:	2.6.7-bridge_sysfs-lkml.patch
-Patch25:	2.6.7-alpha_compile.patch
-Patch26:	2.6.7-ppc-asm-defs.patch
-Patch27:	linux-ppc-oops.patch
-Patch28:	linux-2.6-sparc-ksyms.patch
+#Patch25:	2.6.7-alpha_compile.patch
+#Patch26:	2.6.7-ppc-asm-defs.patch
+#Patch27:	linux-ppc-oops.patch
+#Patch28:	linux-2.6-sparc-ksyms.patch
 
 #Patch30:	2.6.x-ppp_mppe.patch
 
-Patch32:	2.6.x-TGA-fbdev-lkml.patch
-Patch33:	linux-kbuild-extmod.patch
+#Patch32:	2.6.x-TGA-fbdev-lkml.patch
+#Patch33:	linux-kbuild-extmod.patch
 
 # framebuffer fixes
-Patch41:	linux-fbcon-margins.patch
+#Patch41:	linux-fbcon-margins.patch
 
 # netfilter
-Patch50:	2.6.10-pom-ng-%{_netfilter_snap}.patch
+#Patch50:	2.6.10-pom-ng-%{_netfilter_snap}.patch
 # http://l7-filter.sourceforge.net/
-Patch52:	2.6.8-ipt_layer7.patch
-Patch53:	2.6.10-esfq.patch
+#Patch52:	2.6.8-ipt_layer7.patch
+#Patch53:	2.6.10-esfq.patch
 # http://www.linuximq.net/patchs/linux-2.6.9-imq1.diff
-Patch54:	2.6.10-imq.patch
-Patch55:	2.6.4-wrr.patch
-Patch56:	linux-2.6-netfilter-syms.patch
+#Patch54:	2.6.10-imq.patch
+#Patch55:	2.6.4-wrr.patch
+#Patch56:	linux-2.6-netfilter-syms.patch
 
 # pseudo terminal fix for older glibc
 #Patch60:	%{name}-pts.patch
-Patch61:	%{name}-MAX_INIT_ARGS.patch
+#Patch61:	%{name}-MAX_INIT_ARGS.patch
 
 # http://tahoe.pl/patch.htm
-Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
+#Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 
 # http://dev.gentoo.org/~spock/projects/gensplash/
-Patch72:	fbsplash-0.9.1-2.6.10-rc3-bk6.patch
-Patch73:	squashfs2.1-patch
-Patch74:	linux-static-dev.patch
-Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
-Patch76:	linux-2.6-lirc-0.7.patch
-Patch77:	linux-2.6-alsa-1.0.8.patch
+#Patch72:	fbsplash-0.9.1-2.6.10-rc3-bk6.patch
+#Patch73:	squashfs2.1-patch
+#Patch74:	linux-static-dev.patch
+#Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
+#Patch76:	linux-2.6-lirc-0.7.patch
+#Patch77:	linux-2.6-alsa-1.0.8.patch
 #Patch78:	linux-2.6-expand-stack-race.patch
 
 # psmouse extension for ThinkPad laptops from http://www.clarkson.edu/~evanchsa/
-Patch80:	trackpoint-2.6.9.patch
+#Patch80:	trackpoint-2.6.9.patch
 
 # http://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.10/
-Patch90:	acpi-20041210-2.6.10.diff
+#Patch90:	acpi-20041210-2.6.10.diff
 
 # frpm http://www.ssi.bg/~ja/#routers
-Patch100:	routes-2.6.10-11.diff
+#Patch100:	routes-2.6.10-11.diff
 
 # http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.10-rc2/2.6.10-rc-mm2/broken-out
-Patch110:	linux-reiser4.patch.bz2
+#Patch110:	linux-reiser4.patch.bz2
 
-Patch200:	grsecurity-2.1.1-2.6.10-200501131222.patch
-Patch201:	linux-2.6.10-secfix-200501071130.patch
+#Patch200:	grsecurity-2.1.1-2.6.10-200501131222.patch
+#Patch201:	linux-2.6.10-secfix-200501071130.patch
 
 # linux vserver
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
-Patch250:	linux-2.6-vs.patch
+#Patch250:	linux-2.6-vs.patch
 
 # hotfixes
-Patch300:	%{name}-hotfixes.patch
-Patch301:	%{name}-gcc4.patch
+#Patch300:	%{name}-hotfixes.patch
+#Patch301:	%{name}-gcc4.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -525,94 +525,94 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 bzcat %{SOURCE4} | patch -p1 -s
 %endif
 
-%patch0 -p1
+#%patch0 -p1
 
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
+#%patch2 -p1
+#%patch3 -p1
+#%patch4 -p1
 #patch5 -p1
-%patch6 -p1
+#%patch6 -p1
 
-%patch8 -p1
-%patch9 -p1
-%patch10 -p1
-%patch11 -p1
-%patch12 -p1
-%patch13 -p1
-%patch14 -p1
-%patch15 -p1
-%patch16 -p1
-%patch17 -p1
-%patch18 -p1
-%patch19 -p1
-%patch20 -p1
-%patch21 -p1
-%patch22 -p1
-%patch23 -p1
+#%patch8 -p1
+#%patch9 -p1
+#%patch10 -p1
+#%patch11 -p1
+#%patch12 -p1
+#%patch13 -p1
+#%patch14 -p1
+#%patch15 -p1
+#%patch16 -p1
+#%patch17 -p1
+#%patch18 -p1
+#%patch19 -p1
+#%patch20 -p1
+#%patch21 -p1
+#%patch22 -p1
+#%patch23 -p1
 #patch24 -p1
-%patch25 -p1
-%patch26 -p1
-%patch27 -p1
-%patch28 -p1
+#%patch25 -p1
+#%patch26 -p1
+#%patch27 -p1
+#%patch28 -p1
 
 #patch30 -p1
 
 #patch32 -p1	NEEDS UPDATE
-%patch33 -p1
+#%patch33 -p1
 
-%patch41 -p1
+#%patch41 -p1
 
 # netfilter
-%patch50 -p1
+#%patch50 -p1
 
-%patch52 -p1
-%patch53 -p1
-%patch54 -p1
-%patch55 -p1
-%patch56 -p1
+#%patch52 -p1
+#%patch53 -p1
+#%patch54 -p1
+#%patch55 -p1
+#%patch56 -p1
 
 #patch60 -p1
-%patch61 -p1
+#%patch61 -p1
 
-%patch70 -p1
+#%patch70 -p1
 
-%patch72 -p1
+#%patch72 -p1
 
-%patch73 -p1
-%patch74 -p1
-%patch75 -p1
-%patch76 -p1
-%patch77 -p1
+#%patch73 -p1
+#%patch74 -p1
+#%patch75 -p1
+#%patch76 -p1
+#%patch77 -p1
 #patch78 -p1
 
-%patch80 -p1
+#%patch80 -p1
 
-%patch90 -p1
+#%patch90 -p1
 
 # routers
-%patch100 -p1
+#%patch100 -p1
 
-%patch110 -p1
+#%patch110 -p1
 
 # <bconded_patches>
 
 #grsec
-%ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
-%if %{with grsec}
-%patch200 -p1
-%patch201 -p1
-%endif
-%endif
+#%ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
+#%if %{with grsec}
+#%patch200 -p1
+#%patch201 -p1
+#%endif
+#%endif
 
-%if %{with vserver}
-%patch250 -p1
-%endif
+#%if %{with vserver}
+#%patch250 -p1
+#%endif
 
 # </bconded_patches
 
 # hotfixes
-%patch300 -p1
-%patch301 -p1
+#%patch300 -p1
+#%patch301 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
