@@ -94,7 +94,7 @@ Patch0:		2.6.0-ksyms-add.patch
 %if "%{_cset}" != "0"
 # http://www.kernel.org/pub/linux/kernel/v2.6/testing/cset/
 # http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/
-Patch2:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
+Patch2:		http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
 %endif
 
 # from http://dl.sf.net/sourceforge/squashfs/
