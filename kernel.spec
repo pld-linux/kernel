@@ -16,7 +16,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	16
+Release:	17
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -64,7 +64,7 @@ Patch12:	2.2.21-pre2_VIA.patch
 Patch13:	2.2.21-pre2_ati.patch
 Patch14:	2.2.21-pre2_doc_and_maintainers.patch
 Patch15:	2.2.21-pre2_zImage.patch
-Patch16:	2.2.21-pre2_page_alloc_race_fix.patch
+Patch16:	2.2.21-rc1_zlib.patch
 Patch17:	2.2.21-pre2_sym53x8xx.patch
 Patch18:	2.2.21-pre2_8139too_tune.patch
 Patch19:	2.2.21-pre2_menuconfig_fix.patch
@@ -354,8 +354,7 @@ do twojego sprzêtu.
 %patch13 -p1
 %patch14 -p1
 %patch15 -p1
-# need testing
-#%patch16 -p1
+%patch16 -p1
 %patch17 -p1
 %patch18 -p1
 %patch19 -p1
@@ -656,7 +655,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH12}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH13}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH14}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH15}
-#patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH16}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH16}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH17}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH18}
 gzip -dc %{PATCH20} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
