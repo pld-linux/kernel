@@ -41,8 +41,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.25
-%define		_cset		6
+%define		_rel		0.26
+%define		_cset		20040505_0212
 
 ## netfilter snap 
 %define		_netfilter_snap		20040429
@@ -87,8 +87,7 @@ Patch0:		2.6.0-ksyms-add.patch
 
 %if "%{_cset}" != "0"
 # http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/
-Patch2:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}-rc3-bk%{_cset}.gz
-# Patch2-md5:	3d6cf688348219237c6372cc7442961c
+Patch2:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
 %endif
 
 # from http://dl.sf.net/sourceforge/squashfs/
