@@ -11,7 +11,7 @@
 # _without_doc		- don't build documentation package
 #
 
-%define		patch_level	0
+%define		patch_level	2
 %define		_rel		7
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -27,7 +27,7 @@
 %define		ntfs_version		2.1.4a
 %define		drm_xfree_version	4.3.0
 %define		hostap_version		0.0.2
-%define		netfilter_snap		20030518
+%define		netfilter_snap		20030605
 %define		iptables_version	1.2.8
 %define		ACL_version		0.8.56
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -117,7 +117,7 @@ Patch2:		linux-2.4-freeswan-%{freeswan_version}.patch.gz
 Patch3:		linux-2.4.20-core-xfs-1.2.0.patch.bz2
 Patch4:		linux-2.4.20-xfs-1.2.0.patch.bz2
 
-Patch5:		linux-2.4.20-netfilter-nat-endian.patch
+#Patch5:		
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
 Patch6:		grsecurity-%{grsec_version}-%{version}.patch.gz
 
@@ -234,6 +234,7 @@ Patch55:	linux-2.4.20-sym53c8xx_2.patch
 # from: LKML
 Patch56:	linux-2.4.20-new_IO_scheduler.patch
 
+Patch57:	linux-2.4.20-iForce2.patch
 # Assorted bugfixes
 
 # from LKML
@@ -270,7 +271,7 @@ Patch118:	%{name}-2.4.18-SPARC64-PLD.patch
 Patch119:	linux-AXP.patch
 Patch120:	%{name}-Makefile-include-fix.patch
 Patch121:	%{name}-2.4.17-netsyms-export-fix.patch
-Patch122:	linux-2.4.20-netfilter-conntrack-endian.patch
+#Patch122:	
 Patch123:	linux-2.4.20-agp_uninorth.patch
 Patch124:	%{name}-gcc31.patch
 Patch125:	linux-2.4.18-hpfs.patch
@@ -708,7 +709,6 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # Netfilter
 %patch8 -p1
-%patch5 -p1
 
 %patch32 -p1
 %patch31 -p1
@@ -826,9 +826,6 @@ echo Added xattr for JFS ...
 # Hash FiX. Initial by Qboosh, ipdated by me.
 %patch112 -p1
 
-# fix for netfilter for endian
-%patch122 -p1
-
 # smell cleanup with crc32.
 %patch126 -p1
 
@@ -852,6 +849,9 @@ echo Added xattr for JFS ...
 
 #new IO scheduler
 %patch56 -p1
+
+#iForce joystick
+%patch57 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
@@ -992,6 +992,37 @@ BuildKernel() {
 	cat %{SOURCE1670} >> arch/%{base_arch}/defconfig
 	
 	if [ "$BOOT" = "yes" ] ; then
+		echo "# CONFIG_MTRR is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_HOTPLUG_PCI is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_PM is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_MTD is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_PARPORT is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_BRIDGE is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_IPSEC is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_IPV6 is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_KHTTPD is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_PHONE is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_I2O is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_FDDI is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_PPP is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_SLIP is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_HAMRADIO is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_INPUT_GAMEPORT is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_INPUT_SERIO is not set" >> arch/%{base_arch}/defconfig
+!!!!		echo "# CONFIG_JOYSTICK_IFORCE is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_IPMI_HANDLER is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_WATCHDOG is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_AGPGART is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_DRM is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_VIDEO_DEV is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_FB is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_SOUND is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_IP_NF_CONNTRACK is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_IP_NF_QUEUE is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_IP_NF_IPTABLES is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_IP_VS is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_NETFILTER is not set" >> arch/%{base_arch}/defconfig
+	
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_CRYPTO is not set" >> arch/%{base_arch}/defconfig
 		echo "CONFIG_ROMFS_FS=y" >> arch/%{base_arch}/defconfig
