@@ -55,7 +55,7 @@
 
 %define		_post_ver	.3
 #define		_post_ver	%{nil}
-%define		_rel		0.41
+%define		_rel		0.42
 %define		_cset		20050302_0807
 %define		_apply_cset	0
 
@@ -154,8 +154,8 @@ Patch50:	2.6.11.3-pom-ng-%{_netfilter_snap}.patch
 # http://l7-filter.sourceforge.net/
 #Patch52:	2.6.8-ipt_layer7.patch
 #Patch53:	2.6.10-esfq.patch
-# http://www.linuximq.net/patchs/linux-2.6.9-imq1.diff
-#Patch54:	2.6.10-imq.patch
+# from http://www.linuximq.net/patchs/linux-2.6.9-imq1.diff
+Patch54:	linux-2.6.11.3-imq1.patch
 #Patch55:	2.6.4-wrr.patch
 #Patch56:	linux-2.6-netfilter-syms.patch
 
@@ -561,7 +561,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 #%patch52 -p1
 #%patch53 -p1
-#%patch54 -p1
+%patch54 -p1
 #%patch55 -p1
 #%patch56 -p1
 
