@@ -26,8 +26,8 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.22
-%define		_cset		20040202_0305
+%define		_rel		0.23
+%define		_cset		20040203_0106
 
 ## netfilter snap 
 %define		_netfilter_snap		20040130
@@ -142,9 +142,19 @@ Patch68:	2.6.x-cpu_2_node-lkml.patch
 
 Patch70:	2.6.x-neofb-trivial-fix-lkml.patch
 
-Patch72:	2.6.x-parport-C99-lkml.patch
+Patch72:	2.6.x-memleak-while-coredumping-lkml.patch
 
-Patch74:	2.6.x-memleak-while-coredumping-lkml.patch
+Patch74:	2.6.x-DVB-compile-fix-lkml.patch
+Patch75:	2.6.x-SELinux-compile-fix-lkml.patch
+Patch76:	2.6.x-hisax-compile-fix-lkml.patch
+Patch77:	2.6.x-istalion-compile-fix-lkml.patch
+Patch78:	2.6.x-moxa-compile-fix-lkml.patch
+Patch79:	2.6.x-specialix-compile-fix-lkml.patch
+
+Patch82:	2.6.2-rc3-syscalls.diff
+
+Patch84:	2.6.x-IBM-RAS-service-procesor-1of2-lkml.patch
+Patch85:	2.6.x-IBM-RAS-service-procesor-2of2-lkml.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -539,9 +549,19 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch70 -p1
 
-#%%patch72 -p1
+%patch72 -p1
 
 %patch74 -p1
+%patch75 -p1
+%patch76 -p1
+%patch77 -p1
+%patch78 -p1
+%patch79 -p1
+
+%patch82 -p1
+
+%patch84 -p1
+%patch85 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
