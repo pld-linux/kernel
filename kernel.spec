@@ -14,15 +14,6 @@
 # _without_source	- don't build source
 # _without_lsm		- don't build LSM/SELinux kernel
 
-%define		_rel		0.1
-%define		test_ver	4
-%define		patch_level	0
-
-%if	%{test_ver} != 0
-%define		test		test%{test_ver}
-%else
-%define		test		%{nil}
-%endif
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
@@ -36,11 +27,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.6.0
-%if %{patch_level} != 0
-Release:	%{test}_r%{_rel}pl%{patch_level}
-%else
-Release:	%{test}_r%{_rel}
-%endif
+Release:	0.5
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-test4.tar.bz2
