@@ -782,13 +782,11 @@ cd ..
 
 }
 
-
 KERNEL_BUILD_DIR=`pwd`
 KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
 
 rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
-
 
 # NORMAL KERNEL
 BuildKernel
@@ -925,7 +923,6 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT%{_pre
 # remove all jfs patches from linux/ directory
 rm -f $RPM_BUILD_ROOT/usr/src/linux-%{version}/jfs-*
 
-
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH102}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH103}
@@ -1031,8 +1028,7 @@ rm -rf drivers/char/hfmodem/gentbl
 
 %clean
 rm -rf $RPM_BUILD_ROOT
-rm -rf $RPM_BUILD_DIR/linux-installed
-
+rm -rf $RPM_BUILD_DIR/linux-%{version}-installed
 
 %post
 test ! -f /boot/vmlinuz || mv -f /boot/vmlinuz /boot/vmlinuz.old
@@ -1062,7 +1058,6 @@ echo "we don't prepare correct 2.2.x linux kernel image."
 
 %post pcmcia-cs
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
-
 
 %post smp
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
