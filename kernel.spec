@@ -17,7 +17,7 @@
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		vlan_version		1.5
 %define		IPperson_version	20010724-2.4.7
-%define		grsec_version		1.8.9-2.4.15
+%define		grsec_version		1.9-2.4.16
 %define		tulip_version		1.1.8
 %define		aic_version		6.2.3-2.4.7
 %define		jfs_version		2.4-1.0.9
