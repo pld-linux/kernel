@@ -24,6 +24,7 @@
 %define		drm_xfree_version	4.3.0
 %define		hostap_version		2002-10-12
 %define		netfilter_snap		20030616
+%define		i2c_version		2.8.0
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(es):	Núcleo (Kernel) linux genérico
@@ -171,7 +172,7 @@ Patch240:	linux-2.4.20-ecc.patch
 Patch245:	linux-2.4.20-01-edd.patch
 Patch246:	linux-2.4.20-02-edd-allocate.patch
 # i2c - version 2.8.0
-Patch255:	linux-2.4.21-i2c-2.8.0.patch.gz
+Patch255:	linux-2.4.21-i2c-%{i2c_version}.patch.gz
 Patch265:	linux-2.4.20-e820.patch
 # Syntax bug
 Patch270:	dc395-tab.patch
@@ -298,7 +299,9 @@ Patch5000:	linux-2.4.22-security.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
-BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+%ifarch		%{ix86}
+BuildRequires:	bin86
+%endif
 %ifarch sparc64
 BuildRequires:	egcs64
 #%else
@@ -306,9 +309,14 @@ BuildRequires:	egcs64
 %endif
 BuildRequires:	modutils
 BuildRequires:	perl-base
+Autoreqprov:	no
+PreReq:		modutils
+PreReq:		geninitrd >= 2.40
+Requires(post,postun):	fileutils
+Requires(postun):	awk
 Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
-Provides:	i2c = 2.8.0
+Provides:	i2c = %{i2c_version}
 Provides:	bttv = 0.7.83
 Provides:	%{name}(netfilter) = 1.2.8-%{netfilter_snap}
 Provides:	%{name}(reiserfs) = %{version}
@@ -316,15 +324,9 @@ Provides:	%{name}(agpgart) = %{version}
 #Provides:	%{name}(cdrw)
 #Provides:	%{name}(cdmrw)
 Provides:	%{name}(hostap)
-Autoreqprov:	no
-Prereq:		fileutils
-Prereq:		modutils
-Prereq:		geninitrd >= 2.40
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
-%ifarch		%{ix86}
-BuildRequires:	bin86
-%endif
+BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Conflicts:	iptables < 1.2.8
 Conflicts:	lvm < 1.0.4
 Conflicts:	xfsprogs < 2.1.0
@@ -378,9 +380,14 @@ Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeu
 Summary(pl):	J±dro Linuksa %{version} skompilowane dla maszyn wieloprocesorowych
 Summary(pt_BR):	Kernel compilado para máquinas SMP
 Group:		Base/Kernel
+Autoreqprov:	no
+PreReq:		modutils
+PreReq:		geninitrd >= 2.21
+Requires(post,postun):	fileutils
+Requires(postun):	awk
 Provides:	%{name}-smp = %{version}-%{release}
 Provides:	module-info
-Provides:	i2c = 2.8.0
+Provides:	i2c = %{i2c_version}
 Provides:	bttv = 0.7.83
 Provides:	%{name}(netfilter) = 1.2.8-%{netfilter_snap}
 Provides:	%{name}(reiserfs) = %{version}
@@ -388,10 +395,6 @@ Provides:	%{name}(agpgart) = %{version}
 #Provides:	%{name}(cdrw)
 #Provides:	%{name}(cdmrw)
 Provides:	%{name}(hostap)
-Prereq:		fileutils
-Prereq:		modutils
-Prereq:		geninitrd >= 2.21
-Autoreqprov:	no
 Conflicts:	iptables < 1.2.8
 Conflicts:	lvm < 1.0.4
 Conflicts:	xfsprogs < 2.1.0
@@ -440,8 +443,10 @@ Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installati
 Summary(pl):	J±dro Linuksa %{version} dla bootkietek instalacyjnych
 Summary(pt_BR):	Kernel Linux utilizado no disco de instalação
 Group:		Base/Kernel
-Prereq:		modutils
 Autoreqprov:	no
+PreReq:		modutils
+Requires(post,postun):	fileutils
+Requires(postun):	awk
 
 %description BOOT
 This package includes a trimmed down version of the Linux %{version}
@@ -475,9 +480,9 @@ são desabilitadas para diminuir o tamanho final do kernel a ser utilizado.
 Summary:	PCMCIA-CS modules
 Summary(pl):	Modu³y PCMCIA-CS 
 Group:		Base/Kernel
-Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
 PreReq:		%{name}-up = %{version}-%{release}
 Requires(postun):	%{name}-up = %{version}-%{release}
+Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
 
 %description pcmcia-cs
 PCMCIA-CS modules (%{pcmcia_version}).
@@ -489,9 +494,9 @@ Modu³y PCMCIA-CS (%{pcmcia_version}).
 Summary:	PCMCIA-CS modules for SMP kernel
 Summary(pl):	Modu³y PCMCIA-CS dla maszyn SMP
 Group:		Base/Kernel
-Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
 PreReq:		%{name}-smp = %{version}-%{release}
 Requires(postun):	%{name}-smp = %{version}-%{release}
+Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
 
 %description smp-pcmcia-cs
 PCMCIA-CS modules for SMP kernel (%{pcmcia_version}).
@@ -503,9 +508,9 @@ Modu³y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 Summary:	DRM kernel modules
 Summary(pl):	Sterowniki DRM
 Group:		Base/Kernel
-Provides:       %{name}-drm = %{drm_xfree_version}
 PreReq:		%{name}-up = %{version}-%{release}
 Requires(postun):	%{name}-up = %{version}-%{release}
+Provides:       %{name}-drm = %{drm_xfree_version}
 
 %description drm
 DRM kernel modules (%{drm_xfree_version}).
@@ -517,9 +522,9 @@ Sterowniki DRM (%{drm_xfree_version}).
 Summary:	DRM SMP kernel modules
 Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
 Group:		Base/Kernel
-Provides:       %{name}-drm = %{drm_xfree_version}
 PreReq:		%{name}-smp = %{version}-%{release}
 Requires(postun):	%{name}-smp = %{version}-%{release}
+Provides:       %{name}-drm = %{drm_xfree_version}
 
 %description smp-drm
 DRM SMP kernel modules (%{drm_xfree_version}).
@@ -533,12 +538,14 @@ Summary(es):	Archivos de inclusión para núcleo (kernel) Linux.
 Summary(pl):	Pliki nag³ówkowe j±dra
 Summary(pt_BR):	Arquivos de inclusão para o kernel Linux.
 Group:		Base/Kernel
+Autoreqprov:	no
+Requires(post,postun):	fileutils
+Requires(postun):	awk
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
-Provides:	i2c-devel = 2.8.0
+Provides:	i2c-devel = %{i2c_version}
 Provides:	%{name}-headers(netfilter) = 1.2.8-%{netfilter_snap}
-Autoreqprov:	no
 
 %description headers
 These are the C header files for the Linux kernel, which define
