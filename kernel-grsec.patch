@@ -11151,17 +11151,17 @@ diff -uNr linux-2.6.7-rc1.orig/include/linux/proc_fs.h linux-2.6.7-rc1/include/l
  {
  }
 diff -uNr linux-2.6.7-rc1.orig/include/linux/sched.h linux-2.6.7-rc1/include/linux/sched.h
---- linux-2.6.7-rc1.orig/include/linux/sched.h	2004-05-23 07:53:34.000000000 +0200
-+++ linux-2.6.7-rc1/include/linux/sched.h	2004-05-25 14:33:59.399330256 +0200
+--- linux-2.6.7-rc2/include/linux/sched.h.orig	2004-06-02 23:31:55.729266024 +0200
++++ linux-2.6.7-rc2/include/linux/sched.h	2004-06-02 23:34:05.803491736 +0200
 @@ -31,6 +31,7 @@
  #include <linux/percpu.h>
  
  struct exec_domain;
 +struct linux_binprm;
- 
- /*
-  * cloning flags:
-@@ -513,6 +514,21 @@
+ extern int exec_shield;
+ extern int exec_shield_randomize;
+ extern int print_fatal_signals;
+@@ -518,6 +519,21 @@
    	struct mempolicy *mempolicy;
    	short il_next;		/* could be shared with used_math */
  #endif
@@ -11183,7 +11183,7 @@ diff -uNr linux-2.6.7-rc1.orig/include/linux/sched.h linux-2.6.7-rc1/include/lin
  };
  
  static inline pid_t process_group(struct task_struct *tsk)
-@@ -809,14 +825,29 @@
+@@ -816,14 +832,29 @@
  		: on_sig_stack(sp) ? SS_ONSTACK : 0);
  }
  
@@ -12122,8 +12122,8 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mlock.c linux-2.6.7-rc1/mm/mlock.c
  		ret = do_mlockall(flags);
  out:
 diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
---- linux-2.6.7-rc1.orig/mm/mmap.c	2004-05-23 07:54:21.000000000 +0200
-+++ linux-2.6.7-rc1/mm/mmap.c	2004-05-25 14:33:59.579302896 +0200
+--- linux-2.6.7-rc2/mm/mmap.c.orig	2004-06-02 23:45:34.377812528 +0200
++++ linux-2.6.7-rc2/mm/mmap.c	2004-06-02 23:54:52.740928432 +0200
 @@ -23,6 +23,7 @@
  #include <linux/mount.h>
  #include <linux/mempolicy.h>
@@ -12140,17 +12140,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  	if (rlim < RLIM_INFINITY && brk - mm->start_data > rlim)
  		goto out;
  
-@@ -766,6 +768,9 @@
- 	vm_flags = calc_vm_prot_bits(prot) | calc_vm_flag_bits(flags) |
- 			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
- 
-+	if (file && (file->f_vfsmnt->mnt_flags & MNT_NOEXEC))
-+		vm_flags &= ~VM_MAYEXEC;
-+
- 	if (flags & MAP_LOCKED) {
- 		if (!capable(CAP_IPC_LOCK))
- 			return -EPERM;
-@@ -775,6 +780,7 @@
+@@ -781,6 +786,7 @@
  	if (vm_flags & VM_LOCKED) {
  		unsigned long locked = mm->locked_vm << PAGE_SHIFT;
  		locked += len;
@@ -12158,7 +12148,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  		if (locked > current->rlim[RLIMIT_MEMLOCK].rlim_cur)
  			return -EAGAIN;
  	}
-@@ -833,6 +839,9 @@
+@@ -839,6 +845,9 @@
  	if (error)
  		return error;
  		
@@ -12168,7 +12158,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  	/* Clear old maps */
  	error = -ENOMEM;
  munmap_back:
-@@ -844,6 +853,7 @@
+@@ -850,6 +859,7 @@
  	}
  
  	/* Check against address space limit. */
@@ -12176,31 +12166,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  	if ((mm->total_vm << PAGE_SHIFT) + len
  	    > current->rlim[RLIMIT_AS].rlim_cur)
  		return -ENOMEM;
-@@ -890,6 +900,7 @@
- 	vma->vm_start = addr;
- 	vma->vm_end = addr + len;
- 	vma->vm_flags = vm_flags;
-+
- 	vma->vm_page_prot = protection_map[vm_flags & 0x0f];
- 	vma->vm_pgoff = pgoff;
- 
-@@ -1001,6 +1012,7 @@
- 	if (addr) {
- 		addr = PAGE_ALIGN(addr);
- 		vma = find_vma(mm, addr);
-+
- 		if (TASK_SIZE - len >= addr &&
- 		    (!vma || addr + len <= vma->vm_start))
- 			return addr;
-@@ -1015,6 +1027,7 @@
- 			 * Start a new search - just in case we missed
- 			 * some holes.
- 			 */
-+
- 			if (start_addr != TASK_UNMAPPED_BASE) {
- 				start_addr = addr = TASK_UNMAPPED_BASE;
- 				goto full_search;
-@@ -1183,9 +1196,17 @@
+@@ -1197,9 +1210,17 @@
  		return -ENOMEM;
  	}
  	
@@ -12209,7 +12175,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
 +	if (vma->vm_flags & VM_LOCKED)
 +		gr_learn_resource(current, RLIMIT_MEMLOCK, (vma->vm_mm->locked_vm + grow) << PAGE_SHIFT, 1);	
 +
- 	if (address - vma->vm_start > current->rlim[RLIMIT_STACK].rlim_cur ||
+ 	if (over_stack_limit(address - vma->vm_start) ||
  			((vma->vm_mm->total_vm + grow) << PAGE_SHIFT) >
 -			current->rlim[RLIMIT_AS].rlim_cur) {
 +			current->rlim[RLIMIT_AS].rlim_cur ||
@@ -12219,18 +12185,16 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  		anon_vma_unlock(vma);
  		vm_unacct_memory(grow);
  		return -ENOMEM;
-@@ -1243,10 +1264,18 @@
- 		anon_vma_unlock(vma);
+@@ -1258,9 +1279,17 @@
  		return -ENOMEM;
  	}
--	
-+
+ 	
 +	gr_learn_resource(current, RLIMIT_STACK, vma->vm_end - address, 1);
 +	gr_learn_resource(current, RLIMIT_AS, (vma->vm_mm->total_vm + grow) << PAGE_SHIFT, 1);
 +	if (vma->vm_flags & VM_LOCKED)
 +		gr_learn_resource(current, RLIMIT_MEMLOCK, (vma->vm_mm->locked_vm + grow) << PAGE_SHIFT, 1);
 +
- 	if (vma->vm_end - address > current->rlim[RLIMIT_STACK].rlim_cur ||
+ 	if (over_stack_limit(vma->vm_end - address) ||
  			((vma->vm_mm->total_vm + grow) << PAGE_SHIFT) >
 -			current->rlim[RLIMIT_AS].rlim_cur) {
 +			current->rlim[RLIMIT_AS].rlim_cur ||
@@ -12240,73 +12204,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  		anon_vma_unlock(vma);
  		vm_unacct_memory(grow);
  		return -ENOMEM;
-@@ -1358,15 +1387,15 @@
- {
- 	size_t len = area->vm_end - area->vm_start;
- 
--	area->vm_mm->total_vm -= len >> PAGE_SHIFT;
-+	mm->total_vm -= len >> PAGE_SHIFT;
- 	if (area->vm_flags & VM_LOCKED)
--		area->vm_mm->locked_vm -= len >> PAGE_SHIFT;
-+		mm->locked_vm -= len >> PAGE_SHIFT;
- 	/*
- 	 * Is this a new hole at the lowest possible address?
- 	 */
- 	if (area->vm_start >= TASK_UNMAPPED_BASE &&
--				area->vm_start < area->vm_mm->free_area_cache)
--	      area->vm_mm->free_area_cache = area->vm_start;
-+				area->vm_start < mm->free_area_cache)
-+	      mm->free_area_cache = area->vm_start;
- 
- 	remove_vm_struct(area);
- }
-@@ -1420,7 +1449,7 @@
-  */
- static void
- detach_vmas_to_be_unmapped(struct mm_struct *mm, struct vm_area_struct *vma,
--	struct vm_area_struct *prev, unsigned long end)
-+	struct vm_area_struct *prev, unsigned long *start, unsigned long *end)
- {
- 	struct vm_area_struct **insertion_point;
- 	struct vm_area_struct *tail_vma = NULL;
-@@ -1429,9 +1458,10 @@
- 	do {
- 		rb_erase(&vma->vm_rb, &mm->mm_rb);
- 		mm->map_count--;
-+
- 		tail_vma = vma;
- 		vma = vma->vm_next;
--	} while (vma && vma->vm_start < end);
-+	} while (vma && vma->vm_start < *end);
- 	*insertion_point = vma;
- 	tail_vma->vm_next = NULL;
- 	mm->mmap_cache = NULL;		/* Kill the cache. */
-@@ -1532,6 +1562,7 @@
- 	 * places tmp vma above, and higher split_vma places tmp vma below.
- 	 */
- 	if (start > mpnt->vm_start) {
-+
- 		if (split_vma(mm, mpnt, start, 0))
- 			return -ENOMEM;
- 		prev = mpnt;
-@@ -1540,6 +1571,7 @@
- 	/* Does it split the last one? */
- 	last = find_vma(mm, end);
- 	if (last && end > last->vm_start) {
-+
- 		if (split_vma(mm, last, end, 1))
- 			return -ENOMEM;
- 	}
-@@ -1548,7 +1580,7 @@
- 	/*
- 	 * Remove the vma's, and unmap the actual pages
- 	 */
--	detach_vmas_to_be_unmapped(mm, mpnt, prev, end);
-+	detach_vmas_to_be_unmapped(mm, mpnt, prev, &start, &end);
- 	spin_lock(&mm->page_table_lock);
- 	unmap_region(mm, mpnt, prev, start, end);
- 	spin_unlock(&mm->page_table_lock);
-@@ -1598,6 +1630,7 @@
+@@ -1623,6 +1655,7 @@
  	if (mm->def_flags & VM_LOCKED) {
  		unsigned long locked = mm->locked_vm << PAGE_SHIFT;
  		locked += len;
@@ -12314,7 +12212,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  		if (locked > current->rlim[RLIMIT_MEMLOCK].rlim_cur)
  			return -EAGAIN;
  	}
-@@ -1614,6 +1647,7 @@
+@@ -1639,6 +1672,7 @@
  	}
  
  	/* Check against address space limits *after* clearing old maps... */
@@ -12322,14 +12220,6 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  	if ((mm->total_vm << PAGE_SHIFT) + len
  	    > current->rlim[RLIMIT_AS].rlim_cur)
  		return -ENOMEM;
-@@ -1646,6 +1680,7 @@
- 	vma->vm_end = addr + len;
- 	vma->vm_pgoff = pgoff;
- 	vma->vm_flags = flags;
-+
- 	vma->vm_page_prot = protection_map[flags & 0x0f];
- 	vma_link(mm, vma, prev, rb_link, rb_parent);
- out:
 diff -uNr linux-2.6.7-rc1.orig/mm/mprotect.c linux-2.6.7-rc1/mm/mprotect.c
 --- linux-2.6.7-rc1.orig/mm/mprotect.c	2004-05-23 07:55:03.000000000 +0200
 +++ linux-2.6.7-rc1/mm/mprotect.c	2004-05-25 14:33:59.581302592 +0200
