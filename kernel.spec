@@ -142,6 +142,7 @@ Patch100:	linux-scsi-debug-bug.patch
 Patch101:	linux-2.4.2-raw-ip.patch
 Patch102:	PCI_ISA_bridge.patch
 Patch103:	linux-2.4.2-nvram-hdd.patch
+Patch104:	linux-2.4-module.fix.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch105:	linux-2.4.2-pcnet-parms.patch
 Patch106:	http://www.kernel.org/pub/linux/kernel/people/hedrick/ide-%{version}/ide.%{version}-rc1.02152002.patch.bz2
@@ -156,12 +157,15 @@ Patch111:	linux-2.4.1-netdebug.patch
 Patch112:	linux-2.4.1-scsi-reset.patch
 # Add an ioctl to the block layer so we can be EFI compliant
 Patch113:	linux-2.4.2-blkioctl-sector.patch
+#	patch114
 # fix lun probing on multilun RAID chassis
 Patch115:	linux-2.4.12-scsi_scan.patch
 # fix pcnet32 networkdriver load vs ifconfig races
 Patch116:	linux-2.4.3-pcnet32.patch
 # fix rawio
 Patch117:	linux-2.4.3-rawio.patch
+#	patch118
+#	patch119
 Patch120:	linux-2.4.10-aironet.patch
 Patch121:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
@@ -783,6 +787,10 @@ echo Added patch fot ADM router
 # fixed iptables building process
 echo Patch to fixing iptables building process ...
 %patch145 -p0
+
+#patch from LKML to fix small bug in kernel/module.c
+echo Fixed small bug in modules
+%patch104 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
