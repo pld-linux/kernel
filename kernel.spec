@@ -68,7 +68,7 @@ Patch14:	linux-tasks.patch
 Patch15:	%{name}-ipvs-1.0.8-2.2.19.patch
 # based on ftp://ftp.kernel.org/pub/linux/kernel/people/sct/raw-io/kiobuf-2.2.18pre24.tar.gz
 Patch16:	linux-raw.patch
-Patch18:	linux-sparc_ide_fix.patch
+Patch18:	linux-sparc_ide_fix.patch.2.2.19
 Patch19:	%{name}-Config.in-CONFIG_AMIGA_PARTITION.patch
 Patch20:	%{name}-wanrouter-bridge.patch
 Patch21:	%{name}-ipsec-bridge.patch
