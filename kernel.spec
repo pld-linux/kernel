@@ -28,9 +28,9 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1.2
-%define		_rc		2
-%define		_cset		20040107_0505
+%define		_rel		1
+%define		_rc		3
+%define		_cset		0
 
 ## netfilter snap 
 %define		_netfilter_snap		20040107
@@ -49,19 +49,19 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.6.1
-#%%if "%{_rc}" != "0"
-#%%if "%{_cset}" != "0"
+%if "%{_rc}" != "0"
+%if "%{_cset}" != "0"
 Release:	1.rc%{_rc}.%{_rel}.cset%{_cset}
-#%else
-#Release:	1.rc%{_rc}.%{_rel}
-#%%endif
-#%%else
-#%%if "%{_cset}" != "0"
-#Release:	1.%{_rel}.cset%{_cset}
-#%%else
-#Release:	1.%{_rel}
-#%%endif
-#%%endif
+%else
+Release:	1.rc%{_rc}.%{_rel}
+%endif
+%else
+%if "%{_cset}" != "0"
+Release:	1.%{_rel}.cset%{_cset}
+%else
+Release:	1.%{_rel}
+%endif
+%endif
 
 Epoch:		1
 License:	GPL
@@ -72,7 +72,7 @@ Group:		Base/Kernel
 #%%define		_kernel_location	linux-%{version}.tar.bz2
 #%%endif
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/%{_kernel_location}
-# Source0-md5:	0b4e662aaec673604387f59e4c4a7703
+# Source0-md5:	ce211776fe26f474cf87867cdb48dd1a
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
