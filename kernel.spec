@@ -26,7 +26,7 @@ Source6:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 Source7:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
 Source8:	linux-netfilter-patches-20010108.tar.gz
 Source10:	http://www.lids.org/download/lids-%{lids_version}-%{version}.tar.gz
-Source11:	http://www.linuxvirtualserver.org/software/kernel-%{version}/ipvs-%{ipvs_version}.tar.gz
+Source11:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
