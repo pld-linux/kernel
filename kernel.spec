@@ -562,11 +562,11 @@ BuildKernel() {
 			smp=yes
 		fi
 %ifarch %{ix86}
-	if [ "$smp" ] || [ "$BOOT" ]; then
+	if [ "$smp" ]; then
 		Config="ia32"-$1
 	fi
 %else
-	if [ "$smp" ] || [ "$BOOT" ]; then
+	if [ "$smp" ]; then
 		Config="%{_target_cpu}"-$1
 	fi
 %endif
@@ -577,7 +577,11 @@ BuildKernel() {
 		Config="%{_target_cpu}"
 %endif
 	fi
+	if [ "$BOOT" ]; then
+	KernelVer=%{version}-%{release}BOOT
+	else
 	KernelVer=%{version}-%{release}$1
+	fi
 	echo BUILDING THE NORMAL KERNEL $1...
 	:> arch/%{base_arch}/defconfig
 	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/%{base_arch}/defconfig
