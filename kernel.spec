@@ -159,6 +159,7 @@ Patch1502:	%{name}-sym53c8xx.patch
 Patch1503:	%{name}-sparc_netsyms.patch
 Patch1504:	%{name}-sparc64-inw_p.patch
 Patch1505:	%{name}-sparc64-egcs64.patch
+Patch1506:	%{name}-fwait-2.2.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -606,6 +607,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch1503 -p1
 %endif
 %patch1502 -p1
+%patch1506 -p1
 
 %build
 BuildKernel() {
