@@ -628,13 +628,13 @@ echo "Not fixed !!"
 %patch32 -p1
 #patch33 -p1
 
-##%patch34 -p1
+#patch34 -p1
 
 %patch36 -p1
 
 %patch38 -p1
 
-#%patch40 -p1
+#patch40 -p1
 
 %patch42 -p1
 
@@ -1447,7 +1447,7 @@ fi
 %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %{_prefix}/src/linux-%{version}/scripts/basic
 %{_prefix}/src/linux-%{version}/scripts/*.c
-##%{_prefix}/src/linux-%{version}/scripts/*.h
+#%%{_prefix}/src/linux-%{version}/scripts/*.h
 %{_prefix}/src/linux-%{version}/scripts/*.sh
 
 %files doc
@@ -1469,7 +1469,7 @@ fi
 %if %{with grsec}
 %{_prefix}/src/linux-%{version}/grsecurity
 %endif
-%if %{witn mosix}
+%if %{with mosix}
 %{_prefix}/src/linux-%{version}/hpc
 %endif
 %{_prefix}/src/linux-%{version}/init
