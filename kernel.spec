@@ -12,7 +12,7 @@
 # _with_glibc23		- build with support for glibc-kernel-headers
 #
 
-%define		patch_level	1
+%define		patch_level	2
 %define		_rel		9
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -332,6 +332,9 @@ Patch205:	linux-2.4.20-PPC-EXPORT_SYMBOL.patch
 Patch250:	linux-2.4.20to21-htb.patch
 Patch251:	http://luxik.cdi.cz/~devik/qos/htb/v3/htb_3.10_3.12_2.diff
 Patch252:	http://luxik.cdi.cz/~devik/qos/htb/v3/htb_killdbg_2421.diff
+
+#esfq
+Patch260:	linux-2.4.18-esfq.diff
 
 # tweaks for grsecurity, description inside patch
 Patch900:	loop-jari-2.4.20.0.patch
@@ -745,6 +748,9 @@ echo Installing WRR Support
 %patch250 -p1
 %patch251 -p1
 %patch252 -p1
+
+# esfq
+%patch260 -p1
 
 # scancode
 %patch35 -p1
