@@ -25,7 +25,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	0.5
+Release:	0.6
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -91,6 +91,9 @@ Patch13:	http://www.linuxvirtualserver.org/software/kernel-2.4/linux-%{version}-
 Patch14:	http://people.redhat.com/mingo/O(1)-scheduler/sched-O1-2.4.17-K2.patch
 
 Patch15:	http://luxik.cdi.cz/~devik/qos/htb/v2/htb2_2.4.17.diff
+
+# ftp://ftp.kernel.org/pub/linux/kernel/people/dwmw2/linux-2.4.19-shared-zlib.bz2
+Patch16:	linux-2.4.19-shared-zlib.bz2
 
 # Assorted bugfixes
 
@@ -338,6 +341,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %setup -q -a3 -a5 -a7 -a10 -a11 -a12 -a13 -n linux
 #%patch1000 -p1
 #%patch0 -p1
+%patch16 -p1
 %patch1 -p1
 %patch907 -p1
 %patch132 -p1
