@@ -300,7 +300,6 @@ BuildRequires:	bin86
 #BuildRequires:	%{kgcc_package}
 BuildRequires:	modutils
 BuildRequires:	ed
-Autoreqprov:	no
 PreReq:		modutils
 PreReq:		geninitrd >= 2.40
 Requires(post,postun):	fileutils
@@ -314,9 +313,8 @@ Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
 #Provides:	%{name}(cdrw)
 #Provides:	%{name}(cdmrw)
+AutoReqProv:	no
 Obsoletes:	kernel-modules
-ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
-BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Conflicts:	iptables < 1.2.9rc1
 Conflicts:	lvm < 1.0.4
 Conflicts:	xfsprogs < 2.1.0
@@ -328,6 +326,8 @@ Conflicts:	modutils < 2.4.2
 Conflicts:	quota < 3.06
 Conflicts:	linux-atm < 2.4.1
 Conflicts:	device-mapper < 1.00.05
+ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
+BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
 This package contains the Linux kernel that is used to boot and run
@@ -371,7 +371,6 @@ Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeu
 Summary(pl):	J±dro Linuksa %{version} skompilowane dla maszyn wieloprocesorowych
 Summary(pt_BR):	Kernel compilado para máquinas SMP
 Group:		Base/Kernel
-Autoreqprov:	no
 PreReq:		modutils
 PreReq:		geninitrd >= 2.21
 Requires(post,postun):	fileutils
@@ -385,6 +384,7 @@ Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
 #Provides:	%{name}(cdrw)
 #Provides:	%{name}(cdmrw)
+AutoReqProv:	no
 Conflicts:	iptables < 1.2.9rc1
 Conflicts:	lvm < 1.0.4
 Conflicts:	xfsprogs < 2.1.0
@@ -434,10 +434,10 @@ Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installati
 Summary(pl):	J±dro Linuksa %{version} dla bootkietek instalacyjnych
 Summary(pt_BR):	Kernel Linux utilizado no disco de instalação
 Group:		Base/Kernel
-Autoreqprov:	no
 PreReq:		modutils
 Requires(post,postun):	fileutils
 Requires(postun):	awk
+AutoReqProv:	no
 
 %description BOOT
 This package includes a trimmed down version of the Linux %{version}
@@ -529,7 +529,6 @@ Summary(es):	Archivos de inclusión para núcleo (kernel) Linux.
 Summary(pl):	Pliki nag³ówkowe j±dra
 Summary(pt_BR):	Arquivos de inclusão para o kernel Linux.
 Group:		Base/Kernel
-Autoreqprov:	no
 Requires(post,postun):	fileutils
 Requires(postun):	awk
 Provides:	%{name}-headers(agpgart) = %{version}
@@ -537,6 +536,7 @@ Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
 Provides:	i2c-devel = %{i2c_version}
 Provides:	%{name}-headers(netfilter) = 1.2.9rc1-%{netfilter_snap}
+AutoReqProv:	no
 
 %description headers
 These are the C header files for the Linux kernel, which define
@@ -565,11 +565,11 @@ Summary(es):	Fuentes del núcleo (kernel) Linux
 Summary(pl):	Kod ¼ród³owy j±dra Linuksa
 Summary(pt_BR):	Fontes do kernel Linux
 Group:		Base/Kernel
-Autoreqprov:	no
 Requires:	%{name}-headers = %{version}-%{release}
 %ifarch %{ix86}
 Requires:	bin86
 %endif
+AutoReqProv:	no
 
 %description source
 This is the source code for the Linux kernel. It is required to build
@@ -616,7 +616,7 @@ Summary(pl):	Dokumentacja do j±dra Linuksa
 Summary(pt_BR):	Documentação para os arquivos fontes do kernel Linux
 Group:		Base/Kernel
 Provides:	%{name}-doc = %{version}
-Autoreqprov:	no
+AutoReqProv:	no
 
 %description doc
 This is the documentation for the Linux kernel, as found in
