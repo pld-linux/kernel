@@ -20,7 +20,7 @@
 %define		jfs_version		2.4-1.1.2
 %define		lvm_version		1.0.5
 %define		evms_version		2.0.1
-%define		ntfs_version		2.1.4a
+%define		ntfs_version		2.1.4c
 %define		drm_xfree_version	4.3.0
 %define		hostap_version		2002-10-12
 %define		netfilter_snap		20030616
@@ -74,9 +74,8 @@ Source2000:	%{name}-win4lin.config
 # Essential stuff
 
 Patch0:		%{name}-pldfblogo.patch
-# from ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/testing/
-Patch10:	patch-int-2.4.20.1.bz2
-Patch11:	loop-jari-2.4.21.0.patch
+# from ftp://ftp.kernel.org/pub/linux/kernel/people/hvr/testing/
+Patch10:	patch-cryptoloop-jari-2.4.22-rc2.0
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch12:	linux-2.4.21-freeswan-%{freeswan_version}.patch.gz
 Patch15:	linux-2.4.21-sched-O1.patch
@@ -90,32 +89,28 @@ Patch23:	linux-bigger-printk-buffer.patch
 # New filesystems
 
 # http://linux-xfs.sgi.com/projects/xfs/
-Patch25:	linux-2.4.21-core-xfs-1.3.0.patch.gz
-Patch26:	linux-xfs-1.3.0pre5.patch.gz
+#Patch25:	linux-2.4.21-core-xfs-1.3.0.patch.gz
+#Patch26:	linux-xfs-1.3.0pre5.patch.gz
+Patch25:	linux-2.4.22-xfs-2003-09-03.patch.gz
 # http://acl.bestbits.at/
 Patch30:	linux-2.4.21-jfs-xattr.patch
 Patch31:	linux-2.4.21-jfs-acl.patch
-Patch32:	linux-2.4.21-ea+acl+nfsacl-0.8.58.diff.gz
+Patch32:	linux-2.4.22-ea+acl+nfsacl-0.8.60.diff.gz
 # http://dl.sourceforge.net/linux-ntfs/
-Patch40:	linux-2.4.21-ntfs-%{ntfs_version}.patch.gz
-# http://dl.sourceforge.net/linux-hfsplus/hfsplus-patch-20020606.patch
-Patch45:	hfsplus-20020606.patch.bz2
+Patch40:	linux-2.4.22-ntfs-%{ntfs_version}.patch.gz
 # FC01_davfs_0.2.4.patch
 Patch50:	linux-2.4.20-davfs-0.2.4.patch.bz2
 # FC02_davfs__FUNCTION__.patch
 Patch55:	linux-2.4.20-davfs-_FUNCTION_.patch
+# ftp://ftp.suse.com/pub/people/jeffm/reiserfs/aclea/
+Patch60:	linux-2.4.22-reiserfs-acl+ea.patch
 # data logging and quota for reiserfs
 # ftp://ftp.suse.com/pub/people/mason/patches/data-logging/2.4.21/
-Patch60:	linux-2.4.21-reiserfs-data-logging+quota.patch.gz
-# ftp://ftp.suse.com/pub/people/jeffm/reiserfs/aclea/
-#Patch35:	reiserfs-xattrs
-#Patch36:	reiserfs-acl
-#Patch37:	reiserfs-trusted
+Patch61:	linux-2.4.22-reiserfs-data-logging+quota.patch.gz
 # http://dl.sourceforge.net/squashfs/squashfs-1.3.tar.gz
 Patch65:	squashfs1.3-2.4.21-patch
-#Patch70:	linux-2.4.20-afs.patch.bz2
 #from http://sci.felk.cvut.cz/nwd/linux/nwd-patch-2.4.19
-Patch75:	nwd-2.4.21.patch
+Patch70:	nwd-2.4.21.patch
 
 # Networking
 
@@ -667,7 +662,6 @@ bzip2 -dc %{SOURCE10} | tar -xf - -C drivers/scsi/
 cp -f drm/*.{c,h} drivers/char/drm/
 %patch0 -p1
 %patch10 -p1
-%patch11 -p1
 %patch12 -p1
 %patch15 -p1
 %patch20 -p1
@@ -675,29 +669,25 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch22 -p1
 %patch23 -p1
 %patch25 -p1
-%patch26 -p1
+#%patch26 -p1
 %patch30 -p1
 %patch32 -p1
 %patch31 -p1
 %patch40 -p1
-%patch45 -p1
 %patch50 -p1
 %patch55 -p1
 %patch60 -p1
-#%patch35 -p1
-#%patch36 -p1
-#%patch37 -p1
+%patch61 -p1
 %patch65 -p1
-#%patch70 -p1
-%patch75 -p1
-%patch100 -p1
-%patch110 -p1
-%patch111 -p1
-%patch115 -p1
-%patch120 -p1
-%patch125 -p1
-%patch150 -p1
-%patch151 -p1
+%patch70 -p1
+#%patch100 -p1
+#%patch110 -p1
+#%patch111 -p1
+#%patch115 -p1
+#%patch120 -p1
+#%patch125 -p1
+#%patch150 -p1
+#%patch151 -p1
 %patch200 -p1
 %patch201 -p1
 #%patch205 -p1
