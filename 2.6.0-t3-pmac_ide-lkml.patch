@@ -1,0 +1,31 @@
+--- old/drivers/ide/ppc/pmac.c	2003-08-11 11:45:27.000000000 +0200
++++ linux-2.6.0-test3/drivers/ide/ppc/pmac.c	2003-08-11 11:40:11.000000000 
++0200
+@@ -942,7 +942,7 @@
+ 	if (hwif->sg_dma_active)
+ 		BUG();
+ 		
+-	nents = blk_rq_map_sg(&drive->queue, rq, sg);
++	nents = blk_rq_map_sg(drive->queue, rq, sg);
+ 		
+ 	if (rq_data_dir(rq) == READ)
+ 		pmif->sg_dma_direction = PCI_DMA_FROMDEVICE;
+@@ -1589,7 +1589,7 @@
+ 		HWGROUP(drive)->busy = 1;
+ 		pmac_ide_dma_check(drive);
+ 		HWGROUP(drive)->busy = 0;
+-		if (!list_empty(&drive->queue.queue_head))
++		if (!list_empty(&drive->queue->queue_head))
+ 			ide_do_request(HWGROUP(drive), 0);
+ 		spin_unlock_irq(&ide_lock);
+ 	}
+@@ -1673,7 +1673,7 @@
+ 	/* We resume processing on the HW group */
+ 	spin_lock_irqsave(&ide_lock, flags);
+ 	HWGROUP(drive)->busy = 0;
+-	if (!list_empty(&drive->queue.queue_head))
++	if (!list_empty(&drive->queue->queue_head))
+ 		ide_do_request(HWGROUP(drive), 0);
+ 	spin_unlock_irqrestore(&ide_lock, flags);
+ }
+

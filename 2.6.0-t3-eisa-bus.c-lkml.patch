@@ -1,0 +1,105 @@
+diff -urN linux-2.6.0-test3-bk/arch/i386/kernel/i386_ksyms.c linux/arch/i386/kernel/i386_ksyms.c
+--- linux-2.6.0-test3-bk/arch/i386/kernel/i386_ksyms.c	2003-07-27 13:11:42.000000000 -0400
++++ linux/arch/i386/kernel/i386_ksyms.c	2003-08-12 07:58:01.268653760 -0400
+@@ -62,9 +62,6 @@
+ 
+ /* platform dependent support */
+ EXPORT_SYMBOL(boot_cpu_data);
+-#ifdef CONFIG_EISA
+-EXPORT_SYMBOL(EISA_bus);
+-#endif
+ EXPORT_SYMBOL(MCA_bus);
+ #ifdef CONFIG_DISCONTIGMEM
+ EXPORT_SYMBOL(node_data);
+diff -urN linux-2.6.0-test3-bk/arch/i386/kernel/traps.c linux/arch/i386/kernel/traps.c
+--- linux-2.6.0-test3-bk/arch/i386/kernel/traps.c	2003-07-27 12:57:49.000000000 -0400
++++ linux/arch/i386/kernel/traps.c	2003-08-12 07:58:01.273653000 -0400
+@@ -829,11 +829,6 @@
+ 	_set_gate(idt_table+n,5,0,0,(gdt_entry<<3));
+ }
+ 
+-
+-#ifdef CONFIG_EISA
+-int EISA_bus;
+-#endif
+-
+ void __init trap_init(void)
+ {
+ #ifdef CONFIG_EISA
+diff -urN linux-2.6.0-test3-bk/arch/mips/kernel/mips_ksyms.c linux/arch/mips/kernel/mips_ksyms.c
+--- linux-2.6.0-test3-bk/arch/mips/kernel/mips_ksyms.c	2003-08-09 02:49:56.000000000 -0400
++++ linux/arch/mips/kernel/mips_ksyms.c	2003-08-12 07:58:01.285651176 -0400
+@@ -43,10 +43,6 @@
+ 
+ EXPORT_SYMBOL(mips_machtype);
+ 
+-#ifdef CONFIG_EISA
+-EXPORT_SYMBOL(EISA_bus);
+-#endif
+-
+ /*
+  * String functions
+  */
+diff -urN linux-2.6.0-test3-bk/arch/mips/kernel/setup.c linux/arch/mips/kernel/setup.c
+--- linux-2.6.0-test3-bk/arch/mips/kernel/setup.c	2003-08-09 02:49:56.000000000 -0400
++++ linux/arch/mips/kernel/setup.c	2003-08-12 07:58:01.291650264 -0400
+@@ -44,15 +44,6 @@
+ struct screen_info screen_info;
+ #endif
+ 
+-/*
+- * Set if box has EISA slots.
+- */
+-#ifdef CONFIG_EISA
+-int EISA_bus;
+-
+-EXPORT_SYMBOL(EISA_bus);
+-#endif
+-
+ #if defined(CONFIG_BLK_DEV_FD) || defined(CONFIG_BLK_DEV_FD_MODULE)
+ extern struct fd_ops no_fd_ops;
+ struct fd_ops *fd_ops;
+diff -urN linux-2.6.0-test3-bk/arch/parisc/kernel/parisc_ksyms.c linux/arch/parisc/kernel/parisc_ksyms.c
+--- linux-2.6.0-test3-bk/arch/parisc/kernel/parisc_ksyms.c	2003-07-27 13:11:56.000000000 -0400
++++ linux/arch/parisc/kernel/parisc_ksyms.c	2003-08-12 07:58:01.301648744 -0400
+@@ -41,9 +41,6 @@
+ #include <asm/processor.h>
+ EXPORT_SYMBOL(kernel_thread);
+ EXPORT_SYMBOL(boot_cpu_data);
+-#ifdef CONFIG_EISA
+-EXPORT_SYMBOL(EISA_bus);
+-#endif
+ 
+ #include <linux/pm.h>
+ EXPORT_SYMBOL(pm_power_off);
+diff -urN linux-2.6.0-test3-bk/arch/parisc/kernel/setup.c linux/arch/parisc/kernel/setup.c
+--- linux-2.6.0-test3-bk/arch/parisc/kernel/setup.c	2003-07-27 13:10:24.000000000 -0400
++++ linux/arch/parisc/kernel/setup.c	2003-08-12 07:58:01.306647984 -0400
+@@ -52,10 +52,6 @@
+ struct proc_dir_entry * proc_runway_root = NULL;
+ struct proc_dir_entry * proc_gsc_root = NULL;
+ 
+-#ifdef CONFIG_EISA
+-int EISA_bus;	/* This has to go somewhere in architecture specific code. */
+-#endif
+-
+ void __init setup_cmdline(char **cmdline_p)
+ {
+ 	extern unsigned int boot_args[];
+diff -urN linux-2.6.0-test3-bk/drivers/eisa/eisa-bus.c linux/drivers/eisa/eisa-bus.c
+--- linux-2.6.0-test3-bk/drivers/eisa/eisa-bus.c	2003-07-27 12:59:37.000000000 -0400
++++ linux/drivers/eisa/eisa-bus.c	2003-08-12 07:58:01.317646312 -0400
+@@ -15,6 +15,12 @@
+ #include <linux/slab.h>
+ #include <linux/ioport.h>
+ #include <asm/io.h>
++#include <asm/processor.h> /* for EISA_bus define */
++
++#ifndef EISA_bus
++int EISA_bus;
++EXPORT_SYMBOL(EISA_bus);
++#endif
+ 
+ #define SLOT_ADDRESS(r,n) (r->bus_base_addr + (0x1000 * n))
+ 
+
