@@ -15,7 +15,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	4
+Release:	4pre1
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -94,7 +94,7 @@ Patch42:	%{name}-serial-initialisation.patch
 Patch100:	bridge-include.patch
 Patch101:	bridge-netsyms.patch
 Patch102:	%{name}-ipsec-bridge.patch
-Patch103:	%{name}-bridge-extraversion.patch
+#Patch103:	%{name}-bridge-extraversion.patch
 Patch104:	jfs-2.2.20-v%{jfs_version}-patch
 Patch105:	%{name}-wanrouter-bridge.patch
 Patch106:	linux-netdrivers_vlan.patch
@@ -109,6 +109,10 @@ Patch200:	hap-linux-2.2.20-2.diff
 
 # HTB from http://luxik.cdi.cz/~devik/qos/htb/
 Patch210:	htb2_2.2.17.diff
+
+Patch300:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/v2.2/2.2.21pre/patch-2.2.21-pre1.bz2
+Patch320:	fix-prename.patch
+Patch321:	ow1-fix-2.2.21-pre1.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -380,6 +384,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 # here patch will be executabling, for now we have just patch in the 
 # tar.gz sources
 
+%patch300 -p1
+%patch320 -p1
+
 %patch0 -p1
 %patch1 -p0
 # disable aic7xxx patch on sparc (this must be reported to aic7xxx driver maintainer)
@@ -394,7 +401,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
-%patch103 -p1
+#%patch103 -p1
 
 %patch20 -p1
 %patch21 -p1
@@ -438,10 +445,11 @@ cd ..
 %endif
 
 # 2.2.20ow1
+%patch321 -p1
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 
 # hap linux
-%patch200 -p1
+#%patch200 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
@@ -709,6 +717,14 @@ cd ..
 tar xfz %{SOURCE8}
 mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
 mv DAC960.[ch] drivers/block
+
+# i2c
+%ifarch %{ix86}
+tar xfz %{SOURCE50}
+cd i2c-%{i2c_version}
+mkpatch/mkpatch.pl . $RPM_BUILD_ROOT/usr/src/linux-%{version} | (cd $RPM_BUILD_ROOT/usr/src/linux-%{version}; patch -p1 -s)
+cd ..
+%endif
 
 # 2.2.20ow & hap-linux
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
