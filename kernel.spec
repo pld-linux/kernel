@@ -5,10 +5,13 @@
 #	TODO
 # - check I2C
 #
-# BCOND:
-%bcond_without smp	# don't build SMP kernel
-%bcond_without up	# don't build UP kernel
-%bcond_without source	# don't build kernel-source package
+# Conditional build:
+%bcond_without	smp	# don't build SMP kernel
+%bcond_without	up	# don't build UP kernel
+%bcond_without	source	# don't build kernel-source package
+%bcond_with	verbose	# verbose build (V=1)
+
+%{?debug:%define with_verbose 1}
 
 ## Program required by kernel to work.
 %define		_binutils_ver		2.12
@@ -622,13 +625,15 @@ BuildKernel() {
 	%{__make} clean \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 %endif
-	%{__make} %{?debug:V=1} include/linux/version.h
+	%{__make} V=1 include/linux/version.h
 
 # make does vmlinux, modules and bzImage at once
 %ifarch sparc
-	sparc32 %{__make} %{?debug:V=1}
+	sparc32 %{__make} \
+		%{?with_verbose:V=1}
 %else
-	%{__make} %{?debug:V=1}
+	%{__make} \
+		%{?with_verbose:V=1}
 %endif
 }
 
@@ -684,7 +689,7 @@ PreInstallKernel (){
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
      %{__make} modules_install \
-	%{?debug:V=1} \
+	%{?with_verbose:V=1} \
      	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 	KERNELRELEASE=$KernelVer
 
