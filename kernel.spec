@@ -149,11 +149,12 @@ Patch190:	hostap-2.4.19-rc3-patch.patch
 # taken at 2003-07-19
 # ftp://ftp.sistina.com/pub/LVM2/device-mapper/patches-version4/
 Patch200:	combined-linux-2.4.21-devmapper-ioctl.patch
+Patch201:	linux-2.4.21-dm-fls-redefined.patch
 
 # EVMS support (http://www.sourceforge.net/projects/evms/)
 # Disabled due to conflicts with LVM2 and device mapper tools
-Patch201:	linux-2.4.21-evms-2.0.1.patch.gz
-Patch202:	linux-2.4.21-evms-o1.patch
+Patch205:	linux-2.4.21-evms-2.0.1.patch.gz
+Patch206:	linux-2.4.21-evms-o1.patch
 
 #from http://prdownloads.sourceforge.net/i810fb/linux-2.4.20-i810fb.diff.bz2
 Patch210:	linux-2.4.21-I810FB.patch.gz
@@ -695,8 +696,9 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch150 -p1
 %patch151 -p1
 %patch200 -p1
-#%patch201 -p1
-#%patch202 -p1
+%patch201 -p1
+#%patch205 -p1
+#%patch206 -p1
 %patch210 -p1
 #%patch215 -p1
 #%patch216 -p1
