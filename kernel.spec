@@ -97,6 +97,7 @@ Patch15:	http://luxik.cdi.cz/~devik/qos/htb/v2/htb2_2.4.17.diff
 
 # ftp://ftp.kernel.org/pub/linux/kernel/people/dwmw2/linux-2.4.19-shared-zlib.bz2
 Patch16:	linux-2.4.19-shared-zlib.bz2
+Patch17:	kernel-gcc31.patch
 
 # Assorted bugfixes
 
@@ -384,6 +385,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #%endif
 
 %patch15 -p1
+%patch17 -p1
 
 %patch100 -p0
 %patch101 -p1
