@@ -575,9 +575,9 @@ mv DAC960.[ch] drivers/block
 
 # symbios drivers
 tar zxf %{SOURCE6}
-mv sym-1.7.2-ncr-3.4.2/*.{c,h} drivers/scsi
-mv sym-1.7.2-ncr-3.4.2/{README,ChangeLog}.* Documentation
-rm -rf sym-1.7.2-ncr-3.4.2
+mv sym-1.7.3-ncr-3.4.3/*.{c,h} drivers/scsi
+mv sym-1.7.3-ncr-3.4.3/{README,ChangeLog}.* Documentation
+rm -rf sym-1.7.3-ncr-3.4.3
 
 %ifarch sparc sparc64
 ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
