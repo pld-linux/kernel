@@ -1,0 +1,3152 @@
+diff -uNr linux-2.6.8-rc4.i2o.orig/drivers/message/i2o/i2o_proc.c linux-2.6.8-rc4.i2o/drivers/message/i2o/i2o_proc.c
+--- linux-2.6.8-rc4.i2o.orig/drivers/message/i2o/i2o_proc.c	2004-08-10 04:23:20.000000000 +0200
++++ linux-2.6.8-rc4.i2o/drivers/message/i2o/i2o_proc.c	2004-08-12 14:29:37.998760000 +0200
+@@ -63,9 +63,7 @@
+ {
+ 	char *name;			/* entry name */
+ 	mode_t mode;			/* mode */
+-	read_proc_t *read_proc;		/* read func */
+-	write_proc_t *write_proc;	/* write func */
+-	struct file_operations *fops_proc;	/* file operations func */
++	struct file_operations *fops;	/* file operations */
+ } i2o_proc_entry;
+ 
+ // #define DRIVERDEBUG
+@@ -74,27 +72,27 @@
+ static int i2o_seq_show_hrt(struct seq_file *, void *);
+ static int i2o_seq_show_status(struct seq_file *, void *);
+ 
+-static int i2o_proc_read_hw(char *, char **, off_t, int, int *, void *);
+-static int i2o_proc_read_ddm_table(char *, char **, off_t, int, int *, void *);
+-static int i2o_proc_read_driver_store(char *, char **, off_t, int, int *, void *);
+-static int i2o_proc_read_drivers_stored(char *, char **, off_t, int, int *, void *);
+-
+-static int i2o_proc_read_groups(char *, char **, off_t, int, int *, void *);
+-static int i2o_proc_read_phys_device(char *, char **, off_t, int, int *, void *);
+-static int i2o_proc_read_claimed(char *, char **, off_t, int, int *, void *);
+-static int i2o_proc_read_users(char *, char **, off_t, int, int *, void *);
+-static int i2o_proc_read_priv_msgs(char *, char **, off_t, int, int *, void *);
+-static int i2o_proc_read_authorized_users(char *, char **, off_t, int, int *, void *);
+-
+-static int i2o_proc_read_dev_name(char *, char **, off_t, int, int *, void *);
+-static int i2o_proc_read_dev_identity(char *, char **, off_t, int, int *, void *);
+-static int i2o_proc_read_ddm_identity(char *, char **, off_t, int, int *, void *);
+-static int i2o_proc_read_uinfo(char *, char **, off_t, int, int *, void *);
+-static int i2o_proc_read_sgl_limits(char *, char **, off_t, int, int *, void *);
++static int i2o_seq_show_hw(struct seq_file *, void *);
++static int i2o_seq_show_ddm_table(struct seq_file *, void *);
++static int i2o_seq_show_driver_store(struct seq_file *, void *);
++static int i2o_seq_show_drivers_stored(struct seq_file *, void *);
++
++static int i2o_seq_show_groups(struct seq_file *, void *);
++static int i2o_seq_show_phys_device(struct seq_file *, void *);
++static int i2o_seq_show_claimed(struct seq_file *, void *);
++static int i2o_seq_show_users(struct seq_file *, void *);
++static int i2o_seq_show_priv_msgs(struct seq_file *, void *);
++static int i2o_seq_show_authorized_users(struct seq_file *, void *);
++
++static int i2o_seq_show_dev_name(struct seq_file *, void *);
++static int i2o_seq_show_dev_identity(struct seq_file *, void *);
++static int i2o_seq_show_ddm_identity(struct seq_file *, void *);
++static int i2o_seq_show_uinfo(struct seq_file *, void *);
++static int i2o_seq_show_sgl_limits(struct seq_file *, void *);
+ 
+-static int i2o_proc_read_sensors(char *, char **, off_t, int, int *, void *);
++static int i2o_seq_show_sensors(struct seq_file *, void *);
+ 
+-static int print_serial_number(char *, int, u8 *, int);
++static int print_serial_number(struct seq_file *, u8 *, int);
+ 
+ static int i2o_proc_create_entries(void *, i2o_proc_entry *,
+ 				   struct proc_dir_entry *);
+@@ -110,32 +108,19 @@
+ static void i2o_proc_new_dev(struct i2o_controller *, struct i2o_device *);
+ static void i2o_proc_dev_del(struct i2o_controller *, struct i2o_device *);
+ 
+-static int i2o_proc_read_lan_dev_info(char *, char **, off_t, int, int *,
+-				      void *);
+-static int i2o_proc_read_lan_mac_addr(char *, char **, off_t, int, int *,
+-				      void *);
+-static int i2o_proc_read_lan_mcast_addr(char *, char **, off_t, int, int *,
+-					void *);
+-static int i2o_proc_read_lan_batch_control(char *, char **, off_t, int, int *,
+-					   void *);
+-static int i2o_proc_read_lan_operation(char *, char **, off_t, int, int *,
+-				       void *);
+-static int i2o_proc_read_lan_media_operation(char *, char **, off_t, int,
+-					     int *, void *);
+-static int i2o_proc_read_lan_alt_addr(char *, char **, off_t, int, int *,
+-				      void *);
+-static int i2o_proc_read_lan_tx_info(char *, char **, off_t, int, int *,
+-				     void *);
+-static int i2o_proc_read_lan_rx_info(char *, char **, off_t, int, int *,
+-				     void *);
+-static int i2o_proc_read_lan_hist_stats(char *, char **, off_t, int, int *,
+-					void *);
+-static int i2o_proc_read_lan_eth_stats(char *, char **, off_t, int,
+-				       int *, void *);
+-static int i2o_proc_read_lan_tr_stats(char *, char **, off_t, int, int *,
+-				      void *);
+-static int i2o_proc_read_lan_fddi_stats(char *, char **, off_t, int, int *,
+-					void *);
++static int i2o_seq_show_lan_dev_info(struct seq_file *, void *);
++static int i2o_seq_show_lan_mac_addr(struct seq_file *, void *);
++static int i2o_seq_show_lan_mcast_addr(struct seq_file *, void *);
++static int i2o_seq_show_lan_batch_control(struct seq_file *, void *);
++static int i2o_seq_show_lan_operation(struct seq_file *, void *);
++static int i2o_seq_show_lan_media_operation(struct seq_file *, void *);
++static int i2o_seq_show_lan_alt_addr(struct seq_file *, void *);
++static int i2o_seq_show_lan_tx_info(struct seq_file *, void *);
++static int i2o_seq_show_lan_rx_info(struct seq_file *, void *);
++static int i2o_seq_show_lan_hist_stats(struct seq_file *, void *);
++static int i2o_seq_show_lan_eth_stats(struct seq_file *, void *);
++static int i2o_seq_show_lan_tr_stats(struct seq_file *, void *);
++static int i2o_seq_show_lan_fddi_stats(struct seq_file *, void *);
+ 
+ static struct proc_dir_entry *i2o_proc_dir_root;
+ 
+@@ -158,35 +143,383 @@
+ 	return single_open(file, i2o_seq_show_hrt, PDE(inode)->data);
+ };
+ 
+-struct file_operations i2o_seq_fops_hrt = {
+-	.open	= i2o_seq_open_hrt,
+-	.read	= seq_read,
+-	.llseek	= seq_lseek,
+-	.release = single_release
+-};
+-
+ static int i2o_seq_open_lct(struct inode *inode, struct file *file)
+ {
+ 	return single_open(file, i2o_seq_show_lct, PDE(inode)->data);
+ };
+ 
+-struct file_operations i2o_seq_fops_lct = {
+-	.open	= i2o_seq_open_lct,
+-	.read	= seq_read,
+-	.llseek	= seq_lseek,
+-	.release = single_release
+-};
+-
+ static int i2o_seq_open_status(struct inode *inode, struct file *file)
+ {
+ 	return single_open(file, i2o_seq_show_status, PDE(inode)->data);
+ };
+ 
+-struct file_operations i2o_seq_fops_status = {
+-	.open	= i2o_seq_open_status,
+-	.read	= seq_read,
+-	.llseek	= seq_lseek,
+-	.release = single_release
++static int i2o_seq_open_hw(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_hw, PDE(inode)->data);
++};
++
++static int i2o_seq_open_ddm_table(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_ddm_table, PDE(inode)->data);
++};
++
++static int i2o_seq_open_driver_store(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_driver_store, PDE(inode)->data);
++};
++
++static int i2o_seq_open_drivers_stored(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_drivers_stored, PDE(inode)->data);
++};
++
++static int i2o_seq_open_groups(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_groups, PDE(inode)->data);
++};
++
++static int i2o_seq_open_phys_device(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_phys_device, PDE(inode)->data);
++};
++
++static int i2o_seq_open_claimed(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_claimed, PDE(inode)->data);
++};
++
++static int i2o_seq_open_users(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_users, PDE(inode)->data);
++};
++
++static int i2o_seq_open_priv_msgs(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_priv_msgs, PDE(inode)->data);
++};
++
++static int i2o_seq_open_authorized_users(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_authorized_users, PDE(inode)->data);
++};
++
++static int i2o_seq_open_dev_identity(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_dev_identity, PDE(inode)->data);
++};
++
++static int i2o_seq_open_ddm_identity(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_ddm_identity, PDE(inode)->data);
++};
++
++static int i2o_seq_open_uinfo(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_uinfo, PDE(inode)->data);
++};
++
++static int i2o_seq_open_sgl_limits(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_sgl_limits, PDE(inode)->data);
++};
++
++static int i2o_seq_open_sensors(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_sensors, PDE(inode)->data);
++};
++
++static int i2o_seq_open_dev_name(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_dev_name, PDE(inode)->data);
++};
++
++static int i2o_seq_open_lan_dev_info(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_lan_dev_info, PDE(inode)->data);
++};
++
++static int i2o_seq_open_lan_mac_addr(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_lan_mac_addr, PDE(inode)->data);
++};
++
++static int i2o_seq_open_lan_mcast_addr(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_lan_mcast_addr, PDE(inode)->data);
++};
++
++static int i2o_seq_open_lan_batch_control(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_lan_batch_control, PDE(inode)->data);
++};
++
++static int i2o_seq_open_lan_operation(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_lan_operation, PDE(inode)->data);
++};
++
++static int i2o_seq_open_lan_media_operation(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_lan_media_operation, PDE(inode)->data);
++};
++
++static int i2o_seq_open_lan_alt_addr(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_lan_alt_addr, PDE(inode)->data);
++};
++
++static int i2o_seq_open_lan_tx_info(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_lan_tx_info, PDE(inode)->data);
++};
++
++static int i2o_seq_open_lan_rx_info(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_lan_rx_info, PDE(inode)->data);
++};
++
++static int i2o_seq_open_lan_hist_stats(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_lan_hist_stats, PDE(inode)->data);
++};
++
++static int i2o_seq_open_lan_eth_stats(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_lan_eth_stats, PDE(inode)->data);
++};
++
++static int i2o_seq_open_lan_tr_stats(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_lan_tr_stats, PDE(inode)->data);
++};
++
++static int i2o_seq_open_lan_fddi_stats(struct inode *inode, struct file *file)
++{
++	return single_open(file, i2o_seq_show_lan_fddi_stats, PDE(inode)->data);
++};
++
++static struct file_operations i2o_seq_fops_lct = {
++	.open = i2o_seq_open_lct,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_hrt = {
++	.open = i2o_seq_open_hrt,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_status = {
++	.open = i2o_seq_open_status,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_hw = {
++	.open = i2o_seq_open_hw,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_ddm_table = {
++	.open = i2o_seq_open_ddm_table,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_driver_store = {
++	.open = i2o_seq_open_driver_store,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_drivers_stored = {
++	.open = i2o_seq_open_drivers_stored,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_groups = {
++	.open = i2o_seq_open_groups,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_phys_device = {
++	.open = i2o_seq_open_phys_device,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_claimed = {
++	.open = i2o_seq_open_claimed,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_users = {
++	.open = i2o_seq_open_users,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_priv_msgs = {
++	.open = i2o_seq_open_priv_msgs,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_authorized_users = {
++	.open = i2o_seq_open_authorized_users,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_dev_name = {
++	.open = i2o_seq_open_dev_name,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_dev_identity = {
++	.open = i2o_seq_open_dev_identity,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_ddm_identity = {
++	.open = i2o_seq_open_ddm_identity,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_uinfo = {
++	.open = i2o_seq_open_uinfo,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_sgl_limits = {
++	.open = i2o_seq_open_sgl_limits,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_sensors = {
++	.open = i2o_seq_open_sensors,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_lan_dev_info = {
++	.open = i2o_seq_open_lan_dev_info,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_lan_mac_addr = {
++	.open = i2o_seq_open_lan_mac_addr,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_lan_mcast_addr = {
++	.open = i2o_seq_open_lan_mcast_addr,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_lan_batch_control = {
++	.open = i2o_seq_open_lan_batch_control,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_lan_operation = {
++	.open = i2o_seq_open_lan_operation,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_lan_media_operation = {
++	.open = i2o_seq_open_lan_media_operation,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_lan_alt_addr = {
++	.open = i2o_seq_open_lan_alt_addr,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_lan_tx_info = {
++	.open = i2o_seq_open_lan_tx_info,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_lan_rx_info = {
++	.open = i2o_seq_open_lan_rx_info,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_lan_hist_stats = {
++	.open = i2o_seq_open_lan_hist_stats,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_lan_eth_stats = {
++	.open = i2o_seq_open_lan_eth_stats,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_lan_tr_stats = {
++	.open = i2o_seq_open_lan_tr_stats,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
++};
++
++static struct file_operations i2o_seq_fops_lan_fddi_stats = {
++	.open = i2o_seq_open_lan_fddi_stats,
++	.read = seq_read,
++	.llseek = seq_lseek,
++	.release = single_release,
+ };
+ 
+ /*
+@@ -195,14 +528,14 @@
+  */
+ static i2o_proc_entry generic_iop_entries[] = 
+ {
+-	{"hrt", S_IFREG|S_IRUGO, NULL, NULL, &i2o_seq_fops_hrt},
+-	{"lct", S_IFREG|S_IRUGO, NULL, NULL, &i2o_seq_fops_lct},
+-	{"status", S_IFREG|S_IRUGO, NULL, NULL, &i2o_seq_fops_status},
+-	{"hw", S_IFREG|S_IRUGO, i2o_proc_read_hw, NULL, NULL},
+-	{"ddm_table", S_IFREG|S_IRUGO, i2o_proc_read_ddm_table, NULL, NULL},
+-	{"driver_store", S_IFREG|S_IRUGO, i2o_proc_read_driver_store, NULL, NULL},
+-	{"drivers_stored", S_IFREG|S_IRUGO, i2o_proc_read_drivers_stored, NULL, NULL},
+-	{NULL, 0, NULL, NULL, NULL}
++	{"hrt", S_IFREG|S_IRUGO, &i2o_seq_fops_hrt},
++	{"lct", S_IFREG|S_IRUGO, &i2o_seq_fops_lct},
++	{"status", S_IFREG|S_IRUGO, &i2o_seq_fops_status},
++	{"hw", S_IFREG|S_IRUGO, &i2o_seq_fops_hw},
++	{"ddm_table", S_IFREG|S_IRUGO, &i2o_seq_fops_ddm_table},
++	{"driver_store", S_IFREG|S_IRUGO, &i2o_seq_fops_driver_store},
++	{"drivers_stored", S_IFREG|S_IRUGO, &i2o_seq_fops_drivers_stored},
++	{NULL, 0, NULL}
+ };
+ 
+ /*
+@@ -210,18 +543,18 @@
+  */
+ static i2o_proc_entry generic_dev_entries[] = 
+ {
+-	{"groups", S_IFREG|S_IRUGO, i2o_proc_read_groups, NULL, NULL},
+-	{"phys_dev", S_IFREG|S_IRUGO, i2o_proc_read_phys_device, NULL, NULL},
+-	{"claimed", S_IFREG|S_IRUGO, i2o_proc_read_claimed, NULL, NULL},
+-	{"users", S_IFREG|S_IRUGO, i2o_proc_read_users, NULL, NULL},
+-	{"priv_msgs", S_IFREG|S_IRUGO, i2o_proc_read_priv_msgs, NULL, NULL},
+-	{"authorized_users", S_IFREG|S_IRUGO, i2o_proc_read_authorized_users, NULL, NULL},
+-	{"dev_identity", S_IFREG|S_IRUGO, i2o_proc_read_dev_identity, NULL, NULL},
+-	{"ddm_identity", S_IFREG|S_IRUGO, i2o_proc_read_ddm_identity, NULL, NULL},
+-	{"user_info", S_IFREG|S_IRUGO, i2o_proc_read_uinfo, NULL, NULL},
+-	{"sgl_limits", S_IFREG|S_IRUGO, i2o_proc_read_sgl_limits, NULL, NULL},
+-	{"sensors", S_IFREG|S_IRUGO, i2o_proc_read_sensors, NULL, NULL},
+-	{NULL, 0, NULL, NULL, NULL}
++	{"groups", S_IFREG|S_IRUGO, &i2o_seq_fops_groups},
++	{"phys_dev", S_IFREG|S_IRUGO, &i2o_seq_fops_phys_device},
++	{"claimed", S_IFREG|S_IRUGO, &i2o_seq_fops_claimed},
++	{"users", S_IFREG|S_IRUGO, &i2o_seq_fops_users},
++	{"priv_msgs", S_IFREG|S_IRUGO, &i2o_seq_fops_priv_msgs},
++	{"authorized_users", S_IFREG|S_IRUGO, &i2o_seq_fops_authorized_users},
++	{"dev_identity", S_IFREG|S_IRUGO, &i2o_seq_fops_dev_identity},
++	{"ddm_identity", S_IFREG|S_IRUGO, &i2o_seq_fops_ddm_identity},
++	{"user_info", S_IFREG|S_IRUGO, &i2o_seq_fops_uinfo},
++	{"sgl_limits", S_IFREG|S_IRUGO, &i2o_seq_fops_sgl_limits},
++	{"sensors", S_IFREG|S_IRUGO, &i2o_seq_fops_sensors},
++	{NULL, 0, NULL}
+ };
+ 
+ /*
+@@ -229,8 +562,8 @@
+  */
+ static i2o_proc_entry rbs_dev_entries[] = 
+ {
+-	{"dev_name", S_IFREG|S_IRUGO, i2o_proc_read_dev_name, NULL, NULL},
+-	{NULL, 0, NULL, NULL}
++	{"dev_name", S_IFREG|S_IRUGO, &i2o_seq_fops_dev_name},
++	{NULL, 0, NULL}
+ };
+ 
+ #define SCSI_TABLE_SIZE	13
+@@ -261,21 +594,18 @@
+  */
+ static i2o_proc_entry lan_entries[] = 
+ {
+-	{"lan_dev_info", S_IFREG|S_IRUGO, i2o_proc_read_lan_dev_info, NULL, NULL},
+-	{"lan_mac_addr", S_IFREG|S_IRUGO, i2o_proc_read_lan_mac_addr, NULL, NULL},
+-	{"lan_mcast_addr", S_IFREG|S_IRUGO|S_IWUSR,
+-	 i2o_proc_read_lan_mcast_addr, NULL, NULL},
+-	{"lan_batch_ctrl", S_IFREG|S_IRUGO|S_IWUSR,
+-	 i2o_proc_read_lan_batch_control, NULL, NULL},
+-	{"lan_operation", S_IFREG|S_IRUGO, i2o_proc_read_lan_operation, NULL, NULL},
+-	{"lan_media_operation", S_IFREG|S_IRUGO,
+-	 i2o_proc_read_lan_media_operation, NULL, NULL},
+-	{"lan_alt_addr", S_IFREG|S_IRUGO, i2o_proc_read_lan_alt_addr, NULL, NULL},
+-	{"lan_tx_info", S_IFREG|S_IRUGO, i2o_proc_read_lan_tx_info, NULL, NULL},
+-	{"lan_rx_info", S_IFREG|S_IRUGO, i2o_proc_read_lan_rx_info, NULL, NULL},
++	{"lan_dev_info", S_IFREG|S_IRUGO, &i2o_seq_fops_lan_dev_info},
++	{"lan_mac_addr", S_IFREG|S_IRUGO, &i2o_seq_fops_lan_mac_addr},
++	{"lan_mcast_addr", S_IFREG|S_IRUGO|S_IWUSR, &i2o_seq_fops_lan_mcast_addr},
++	{"lan_batch_ctrl", S_IFREG|S_IRUGO|S_IWUSR, &i2o_seq_fops_lan_batch_control},
++	{"lan_operation", S_IFREG|S_IRUGO, &i2o_seq_fops_lan_operation},
++	{"lan_media_operation", S_IFREG|S_IRUGO, &i2o_seq_fops_lan_media_operation},
++	{"lan_alt_addr", S_IFREG|S_IRUGO, &i2o_seq_fops_lan_alt_addr},
++	{"lan_tx_info", S_IFREG|S_IRUGO, &i2o_seq_fops_lan_tx_info},
++	{"lan_rx_info", S_IFREG|S_IRUGO, &i2o_seq_fops_lan_rx_info},
+ 
+-	{"lan_hist_stats", S_IFREG|S_IRUGO, i2o_proc_read_lan_hist_stats, NULL, NULL},
+-	{NULL, 0, NULL, NULL, NULL}
++	{"lan_hist_stats", S_IFREG|S_IRUGO, &i2o_seq_fops_lan_hist_stats},
++	{NULL, 0, NULL}
+ };
+ 
+ /*
+@@ -284,20 +614,20 @@
+  */
+ static i2o_proc_entry lan_eth_entries[] = 
+ {
+-	{"lan_eth_stats", S_IFREG|S_IRUGO, i2o_proc_read_lan_eth_stats, NULL, NULL},
+-	{NULL, 0, NULL, NULL, NULL}
++	{"lan_eth_stats", S_IFREG|S_IRUGO, &i2o_seq_fops_lan_eth_stats},
++	{NULL, 0, NULL}
+ };
+ 
+ static i2o_proc_entry lan_tr_entries[] = 
+ {
+-	{"lan_tr_stats", S_IFREG|S_IRUGO, i2o_proc_read_lan_tr_stats, NULL, NULL},
+-	{NULL, 0, NULL, NULL, NULL}
++	{"lan_tr_stats", S_IFREG|S_IRUGO, &i2o_seq_fops_lan_tr_stats},
++	{NULL, 0, NULL}
+ };
+ 
+ static i2o_proc_entry lan_fddi_entries[] = 
+ {
+-	{"lan_fddi_stats", S_IFREG|S_IRUGO, i2o_proc_read_lan_fddi_stats, NULL, NULL},
+-	{NULL, 0, NULL, NULL, NULL}
++	{"lan_fddi_stats", S_IFREG|S_IRUGO, &i2o_seq_fops_lan_fddi_stats},
++	{NULL, 0, NULL}
+ };
+ 
+ 
+@@ -308,18 +638,18 @@
+         return strncat(tmp, (char *)chars, n);
+ }
+ 
+-static int i2o_report_query_status(char *buf, int block_status, char *group)
++static int i2o_report_query_status(struct seq_file *seq, int block_status, char *group)
+ {
+ 	switch (block_status)
+ 	{
+ 	case -ETIMEDOUT:
+-		return sprintf(buf, "Timeout reading group %s.\n",group);
++		return seq_printf(seq, "Timeout reading group %s.\n",group);
+ 	case -ENOMEM:
+-		return sprintf(buf, "No free memory to read the table.\n");
++		return seq_printf(seq, "No free memory to read the table.\n");
+ 	case -I2O_PARAMS_STATUS_INVALID_GROUP_ID:
+-		return sprintf(buf, "Group %s not supported.\n", group);
++		return seq_printf(seq, "Group %s not supported.\n", group);
+ 	default:
+-		return sprintf(buf, "Error reading group %s. BlockStatus 0x%02X\n",
++		return seq_printf(seq, "Error reading group %s. BlockStatus 0x%02X\n",
+ 			       group, -block_status);
+ 	}
+ }
+@@ -336,8 +666,6 @@
+ 	"CARDBUS"
+ };
+ 
+-static spinlock_t i2o_proc_lock = SPIN_LOCK_UNLOCKED;
+-
+ int i2o_seq_show_hrt(struct seq_file *seq, void *v)
+ {
+ 	struct i2o_controller *c = (struct i2o_controller *)seq->private;
+@@ -565,7 +893,7 @@
+ 	
+ 	i2o_status_get(c); // reread the status block
+ 
+-	seq_printf(seq, "Organization ID        : %0#6x\n",
++	seq_printf(seq, "Organization ID        : %0#6x\n", 
+ 				c->status_block->org_id);
+ 
+ 	version = c->status_block->i2o_version;
+@@ -751,10 +1079,9 @@
+ 	return 0;
+ }
+ 
+-int i2o_proc_read_hw(char *buf, char **start, off_t offset, int len, 
+-		     int *eof, void *data)
++int i2o_seq_show_hw(struct seq_file *seq, void *v)
+ {
+-	struct i2o_controller *c = (struct i2o_controller*)data;
++	struct i2o_controller *c = (struct i2o_controller*)seq->private;
+ 	static u32 work32[5];
+ 	static u8 *work8 = (u8*)work32;
+ 	static u16 *work16 = (u16*)work32;
+@@ -773,54 +1100,46 @@
+ 		"Intel x86 series"
+ 	};
+ 
+-	spin_lock(&i2o_proc_lock);
+-
+-	len = 0;
+-
+ 	token = i2o_query_scalar(c, ADAPTER_TID, 0x0000, -1, &work32, sizeof(work32));
+ 
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0x0000 IOP Hardware");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token, "0x0000 IOP Hardware");
++		return 0;
+ 	}
+ 
+-	len += sprintf(buf+len, "I2O Vendor ID    : %0#6x\n", work16[0]);
+-	len += sprintf(buf+len, "Product ID       : %0#6x\n", work16[1]);
+-	len += sprintf(buf+len, "CPU              : ");
++	seq_printf(seq, "I2O Vendor ID    : %0#6x\n", work16[0]);
++	seq_printf(seq, "Product ID       : %0#6x\n", work16[1]);
++	seq_printf(seq, "CPU              : ");
+ 	if(work8[16] > 8)
+-		len += sprintf(buf+len, "Unknown\n");
++		seq_printf(seq, "Unknown\n");
+ 	else
+-		len += sprintf(buf+len, "%s\n", cpu_table[work8[16]]);
++		seq_printf(seq, "%s\n", cpu_table[work8[16]]);
+ 	/* Anyone using ProcessorVersion? */
+ 	
+-	len += sprintf(buf+len, "RAM              : %dkB\n", work32[1]>>10);
+-	len += sprintf(buf+len, "Non-Volatile Mem : %dkB\n", work32[2]>>10);
++	seq_printf(seq, "RAM              : %dkB\n", work32[1]>>10);
++	seq_printf(seq, "Non-Volatile Mem : %dkB\n", work32[2]>>10);
+ 
+ 	hwcap = work32[3];
+-	len += sprintf(buf+len, "Capabilities : 0x%08x\n", hwcap);
+-	len += sprintf(buf+len, "   [%s] Self booting\n",
++	seq_printf(seq, "Capabilities : 0x%08x\n", hwcap);
++	seq_printf(seq, "   [%s] Self booting\n",
+ 			(hwcap&0x00000001) ? "+" : "-");
+-	len += sprintf(buf+len, "   [%s] Upgradable IRTOS\n",
++	seq_printf(seq, "   [%s] Upgradable IRTOS\n",
+ 			(hwcap&0x00000002) ? "+" : "-");
+-	len += sprintf(buf+len, "   [%s] Supports downloading DDMs\n",
++	seq_printf(seq, "   [%s] Supports downloading DDMs\n",
+ 			(hwcap&0x00000004) ? "+" : "-");
+-	len += sprintf(buf+len, "   [%s] Supports installing DDMs\n",
++	seq_printf(seq, "   [%s] Supports installing DDMs\n",
+ 			(hwcap&0x00000008) ? "+" : "-");
+-	len += sprintf(buf+len, "   [%s] Battery-backed RAM\n",
++	seq_printf(seq, "   [%s] Battery-backed RAM\n",
+ 			(hwcap&0x00000010) ? "+" : "-");
+ 
+-	spin_unlock(&i2o_proc_lock);
+-
+-	return len;
++	return 0;
+ }
+ 
+ 
+ /* Executive group 0003h - Executing DDM List (table) */
+-int i2o_proc_read_ddm_table(char *buf, char **start, off_t offset, int len, 
+-			    int *eof, void *data)
++int i2o_seq_show_ddm_table(struct seq_file *seq, void *v)
+ {
+-	struct i2o_controller *c = (struct i2o_controller*)data;
++	struct i2o_controller *c = (struct i2o_controller*)seq->private;
+ 	int token;
+ 	int i;
+ 
+@@ -853,9 +1172,6 @@
+ 	if(!result)
+ 		return -ENOMEM;
+ 
+-	spin_lock(&i2o_proc_lock);
+-	len = 0;
+-
+ 	token = i2o_query_table(I2O_PARAMS_TABLE_GET,
+ 				c, ADAPTER_TID, 
+ 				0x0003, -1,
+@@ -863,78 +1179,68 @@
+ 				result, sizeof(*result));
+ 
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0x0003 Executing DDM List");
++		i2o_report_query_status(seq, token, "0x0003 Executing DDM List");
+ 		goto out;
+ 	}
+ 
+-	len += sprintf(buf+len, "Tid   Module_type     Vendor Mod_id  Module_name             Vrs  Data_size Code_size\n");
++	seq_printf(seq, "Tid   Module_type     Vendor Mod_id  Module_name             Vrs  Data_size Code_size\n");
+ 	ddm_table=result->ddm_table[0];
+ 
+ 	for(i=0; i < result->row_count; ddm_table=result->ddm_table[++i])
+ 	{
+-		len += sprintf(buf+len, "0x%03x ", ddm_table.ddm_tid & 0xFFF);
++		seq_printf(seq, "0x%03x ", ddm_table.ddm_tid & 0xFFF);
+ 
+ 		switch(ddm_table.module_type)
+ 		{
+ 		case 0x01:
+-			len += sprintf(buf+len, "Downloaded DDM  ");
++			seq_printf(seq, "Downloaded DDM  ");
+ 			break;			
+ 		case 0x22:
+-			len += sprintf(buf+len, "Embedded DDM    ");
++			seq_printf(seq, "Embedded DDM    ");
+ 			break;
+ 		default:
+-			len += sprintf(buf+len, "                ");
++			seq_printf(seq, "                ");
+ 		}
+ 
+-		len += sprintf(buf+len, "%-#7x", ddm_table.i2o_vendor_id);
+-		len += sprintf(buf+len, "%-#8x", ddm_table.module_id);
+-		len += sprintf(buf+len, "%-29s", chtostr(ddm_table.module_name_version, 28));
+-		len += sprintf(buf+len, "%9d  ", ddm_table.data_size);
+-		len += sprintf(buf+len, "%8d", ddm_table.code_size);
++		seq_printf(seq, "%-#7x", ddm_table.i2o_vendor_id);
++		seq_printf(seq, "%-#8x", ddm_table.module_id);
++		seq_printf(seq, "%-29s", chtostr(ddm_table.module_name_version, 28));
++		seq_printf(seq, "%9d  ", ddm_table.data_size);
++		seq_printf(seq, "%8d", ddm_table.code_size);
+ 
+-		len += sprintf(buf+len, "\n");
++		seq_printf(seq, "\n");
+ 	}
+ out:
+-	spin_unlock(&i2o_proc_lock);
+ 	kfree(result);
+-	return len;
++	return 0;
+ }
+ 
+ 
+ /* Executive group 0004h - Driver Store (scalar) */
+-int i2o_proc_read_driver_store(char *buf, char **start, off_t offset, int len, 
+-		     int *eof, void *data)
++int i2o_seq_show_driver_store(struct seq_file *seq, void *v)
+ {
+-	struct i2o_controller *c = (struct i2o_controller*)data;
++	struct i2o_controller *c = (struct i2o_controller*)seq->private;
+ 	u32 work32[8];
+ 	int token;
+ 
+-	spin_lock(&i2o_proc_lock);
+-
+-	len = 0;
+-
+ 	token = i2o_query_scalar(c, ADAPTER_TID, 0x0004, -1, &work32, sizeof(work32));
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0x0004 Driver Store");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token, "0x0004 Driver Store");
++		return 0;
+ 	}
+ 
+-	len += sprintf(buf+len, "Module limit  : %d\n"
++	seq_printf(seq, "Module limit  : %d\n"
+ 				"Module count  : %d\n"
+ 				"Current space : %d kB\n"
+ 				"Free space    : %d kB\n", 
+ 			work32[0], work32[1], work32[2]>>10, work32[3]>>10);
+ 
+-	spin_unlock(&i2o_proc_lock);
+-
+-	return len;
++	return 0;
+ }
+ 
+ 
+ /* Executive group 0005h - Driver Store Table (table) */
+-int i2o_proc_read_drivers_stored(char *buf, char **start, off_t offset,
+-				 int len, int *eof, void *data)
++int i2o_seq_show_drivers_stored(struct seq_file *seq, void *v)
+ {
+ 	typedef struct _i2o_driver_store {
+ 		u16 stored_ddm_index;
+@@ -949,7 +1255,7 @@
+ 		u32 module_flags;
+ 	} i2o_driver_store_table;
+ 
+-	struct i2o_controller *c = (struct i2o_controller*)data;
++	struct i2o_controller *c = (struct i2o_controller*)seq->private;
+ 	int token;
+ 	int i;
+ 
+@@ -969,73 +1275,66 @@
+ 	i2o_driver_store_table *dst;
+ 
+ 
+-	len = 0;
+-	
+ 	result = kmalloc(sizeof(i2o_driver_result_table), GFP_KERNEL);
+ 	if(result == NULL)
+ 		return -ENOMEM;
+ 
+-	spin_lock(&i2o_proc_lock);
+-
+ 	token = i2o_query_table(I2O_PARAMS_TABLE_GET,
+ 				c, ADAPTER_TID, 0x0005, -1, NULL, 0, 
+ 				result, sizeof(*result));
+ 
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0x0005 DRIVER STORE TABLE");
+-		spin_unlock(&i2o_proc_lock);
++		i2o_report_query_status(seq, token,"0x0005 DRIVER STORE TABLE");
+ 		kfree(result);
+-		return len;
++		return 0;
+ 	}
+ 
+-	len += sprintf(buf+len, "#  Module_type     Vendor Mod_id  Module_name             Vrs"  
++	seq_printf(seq, "#  Module_type     Vendor Mod_id  Module_name             Vrs"  
+ 				"Date     Mod_size Par_size Flags\n");
+ 	for(i=0, dst=&result->dst[0]; i < result->row_count; dst=&result->dst[++i])
+ 	{
+-		len += sprintf(buf+len, "%-3d", dst->stored_ddm_index);
++		seq_printf(seq, "%-3d", dst->stored_ddm_index);
+ 		switch(dst->module_type)
+ 		{
+ 		case 0x01:
+-			len += sprintf(buf+len, "Downloaded DDM  ");
++			seq_printf(seq, "Downloaded DDM  ");
+ 			break;			
+ 		case 0x22:
+-			len += sprintf(buf+len, "Embedded DDM    ");
++			seq_printf(seq, "Embedded DDM    ");
+ 			break;
+ 		default:
+-			len += sprintf(buf+len, "                ");
++			seq_printf(seq, "                ");
+ 		}
+ 
+ #if 0
+ 		if(c->i2oversion == 0x02)
+-			len += sprintf(buf+len, "%-d", dst->module_state);
++			seq_printf(seq, "%-d", dst->module_state);
+ #endif
+ 
+-		len += sprintf(buf+len, "%-#7x", dst->i2o_vendor_id);
+-		len += sprintf(buf+len, "%-#8x", dst->module_id);
+-		len += sprintf(buf+len, "%-29s", chtostr(dst->module_name_version,28));
+-		len += sprintf(buf+len, "%-9s", chtostr(dst->date,8));
+-		len += sprintf(buf+len, "%8d ", dst->module_size);
+-		len += sprintf(buf+len, "%8d ", dst->mpb_size);
+-		len += sprintf(buf+len, "0x%04x", dst->module_flags);
++		seq_printf(seq, "%-#7x", dst->i2o_vendor_id);
++		seq_printf(seq, "%-#8x", dst->module_id);
++		seq_printf(seq, "%-29s", chtostr(dst->module_name_version,28));
++		seq_printf(seq, "%-9s", chtostr(dst->date,8));
++		seq_printf(seq, "%8d ", dst->module_size);
++		seq_printf(seq, "%8d ", dst->mpb_size);
++		seq_printf(seq, "0x%04x", dst->module_flags);
+ #if 0
+ 		if(c->i2oversion == 0x02)
+-			len += sprintf(buf+len, "%d",
++			seq_printf(seq, "%d",
+ 				       dst->notification_level);
+ #endif
+-		len += sprintf(buf+len, "\n");
++		seq_printf(seq, "\n");
+ 	}
+ 
+-	spin_unlock(&i2o_proc_lock);
+ 	kfree(result);
+-	return len;
++	return 0;
+ }
+ 
+ 
+ /* Generic group F000h - Params Descriptor (table) */
+-int i2o_proc_read_groups(char *buf, char **start, off_t offset, int len, 
+-			 int *eof, void *data)
++int i2o_seq_show_groups(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	int token;
+ 	int i;
+ 	u8 properties;
+@@ -1065,55 +1364,49 @@
+ 	if(!result)
+ 		return -ENOMEM;
+ 
+-	spin_lock(&i2o_proc_lock);
+-
+-	len = 0;
+-
+ 	token = i2o_query_table(I2O_PARAMS_TABLE_GET,
+ 				d->controller, d->lct_data.tid, 0xF000, -1, NULL, 0,
+ 				result, sizeof(*result));
+ 
+ 	if (token < 0) {
+-		len = i2o_report_query_status(buf+len, token, "0xF000 Params Descriptor");
++		i2o_report_query_status(seq, token, "0xF000 Params Descriptor");
+ 		goto out;
+ 	}
+ 
+-	len += sprintf(buf+len, "#  Group   FieldCount RowCount Type   Add Del Clear\n");
++	seq_printf(seq, "#  Group   FieldCount RowCount Type   Add Del Clear\n");
+ 
+ 	for (i=0; i < result->row_count; i++)
+ 	{
+-		len += sprintf(buf+len, "%-3d", i);
+-		len += sprintf(buf+len, "0x%04X ", result->group[i].group_number);
+-		len += sprintf(buf+len, "%10d ", result->group[i].field_count);
+-		len += sprintf(buf+len, "%8d ",  result->group[i].row_count);
++		seq_printf(seq, "%-3d", i);
++		seq_printf(seq, "0x%04X ", result->group[i].group_number);
++		seq_printf(seq, "%10d ", result->group[i].field_count);
++		seq_printf(seq, "%8d ",  result->group[i].row_count);
+ 
+ 		properties = result->group[i].properties;
+-		if (properties & 0x1)	len += sprintf(buf+len, "Table  ");
+-				else	len += sprintf(buf+len, "Scalar ");
+-		if (properties & 0x2)	len += sprintf(buf+len, " + ");
+-				else	len += sprintf(buf+len, " - ");
+-		if (properties & 0x4)	len += sprintf(buf+len, "  + ");
+-				else	len += sprintf(buf+len, "  - ");
+-		if (properties & 0x8)	len += sprintf(buf+len, "  + ");
+-				else	len += sprintf(buf+len, "  - ");
++		if (properties & 0x1)	seq_printf(seq, "Table  ");
++				else	seq_printf(seq, "Scalar ");
++		if (properties & 0x2)	seq_printf(seq, " + ");
++				else	seq_printf(seq, " - ");
++		if (properties & 0x4)	seq_printf(seq, "  + ");
++				else	seq_printf(seq, "  - ");
++		if (properties & 0x8)	seq_printf(seq, "  + ");
++				else	seq_printf(seq, "  - ");
+ 
+-		len += sprintf(buf+len, "\n");
++		seq_printf(seq, "\n");
+ 	}
+ 
+ 	if (result->more_flag)
+-		len += sprintf(buf+len, "There is more...\n");
++		seq_printf(seq, "There is more...\n");
+ out:
+-	spin_unlock(&i2o_proc_lock);
+ 	kfree(result);
+-	return len;
++	return 0;
+ }
+ 
+ 
+ /* Generic group F001h - Physical Device Table (table) */
+-int i2o_proc_read_phys_device(char *buf, char **start, off_t offset, int len,
+-			      int *eof, void *data)
++int i2o_seq_show_phys_device(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	int token;
+ 	int i;
+ 
+@@ -1129,41 +1422,35 @@
+ 		u32 adapter_id[64];
+ 	} result;
+ 
+-	spin_lock(&i2o_proc_lock);
+-	len = 0;
+-
+ 	token = i2o_query_table(I2O_PARAMS_TABLE_GET,
+ 				d->controller, d->lct_data.tid,
+ 				0xF001, -1, NULL, 0,
+ 				&result, sizeof(result));
+ 
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0xF001 Physical Device Table");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token, "0xF001 Physical Device Table");
++		return 0;
+ 	}
+ 
+ 	if (result.row_count)
+-		len += sprintf(buf+len, "#  AdapterId\n");
++		seq_printf(seq, "#  AdapterId\n");
+ 
+ 	for (i=0; i < result.row_count; i++)
+ 	{
+-		len += sprintf(buf+len, "%-2d", i);
+-		len += sprintf(buf+len, "%#7x\n", result.adapter_id[i]);
++		seq_printf(seq, "%-2d", i);
++		seq_printf(seq, "%#7x\n", result.adapter_id[i]);
+ 	}
+ 
+ 	if (result.more_flag)
+-		len += sprintf(buf+len, "There is more...\n");
++		seq_printf(seq, "There is more...\n");
+ 
+-	spin_unlock(&i2o_proc_lock);
+-	return len;
++	return 0;
+ }
+ 
+ /* Generic group F002h - Claimed Table (table) */
+-int i2o_proc_read_claimed(char *buf, char **start, off_t offset, int len,
+-			  int *eof, void *data)
++int i2o_seq_show_claimed(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	int token;
+ 	int i;
+ 
+@@ -1178,41 +1465,35 @@
+ 		u16 claimed_tid[64];
+ 	} result;
+ 
+-	spin_lock(&i2o_proc_lock);
+-	len = 0;
+-
+ 	token = i2o_query_table(I2O_PARAMS_TABLE_GET,
+ 				d->controller, d->lct_data.tid,
+ 				0xF002, -1, NULL, 0,
+ 				&result, sizeof(result));
+ 
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0xF002 Claimed Table");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token, "0xF002 Claimed Table");
++		return 0;
+ 	}
+ 
+ 	if (result.row_count)
+-		len += sprintf(buf+len, "#  ClaimedTid\n");
++		seq_printf(seq, "#  ClaimedTid\n");
+ 
+ 	for (i=0; i < result.row_count; i++)
+ 	{
+-		len += sprintf(buf+len, "%-2d", i);
+-		len += sprintf(buf+len, "%#7x\n", result.claimed_tid[i]);
++		seq_printf(seq, "%-2d", i);
++		seq_printf(seq, "%#7x\n", result.claimed_tid[i]);
+ 	}
+ 
+ 	if (result.more_flag)
+-		len += sprintf(buf+len, "There is more...\n");
++		seq_printf(seq, "There is more...\n");
+ 
+-	spin_unlock(&i2o_proc_lock);
+-	return len;
++	return 0;
+ }
+ 
+ /* Generic group F003h - User Table (table) */
+-int i2o_proc_read_users(char *buf, char **start, off_t offset, int len,
+-			int *eof, void *data)
++int i2o_seq_show_users(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	int token;
+ 	int i;
+ 
+@@ -1241,42 +1522,37 @@
+ 	if(!result)
+ 		return -ENOMEM;
+ 
+-	spin_lock(&i2o_proc_lock);
+-	len = 0;
+-
+ 	token = i2o_query_table(I2O_PARAMS_TABLE_GET,
+ 				d->controller, d->lct_data.tid,
+ 				0xF003, -1, NULL, 0,
+ 				result, sizeof(*result));
+ 
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0xF003 User Table");
++		i2o_report_query_status(seq, token,"0xF003 User Table");
+ 		goto out;
+ 	}
+ 
+-	len += sprintf(buf+len, "#  Instance UserTid ClaimType\n");
++	seq_printf(seq, "#  Instance UserTid ClaimType\n");
+ 
+ 	for(i=0; i < result->row_count; i++)
+ 	{
+-		len += sprintf(buf+len, "%-3d", i);
+-		len += sprintf(buf+len, "%#8x ", result->user[i].instance);
+-		len += sprintf(buf+len, "%#7x ", result->user[i].user_tid);
+-		len += sprintf(buf+len, "%#9x\n", result->user[i].claim_type);
++		seq_printf(seq, "%-3d", i);
++		seq_printf(seq, "%#8x ", result->user[i].instance);
++		seq_printf(seq, "%#7x ", result->user[i].user_tid);
++		seq_printf(seq, "%#9x\n", result->user[i].claim_type);
+ 	}
+ 
+ 	if (result->more_flag)
+-		len += sprintf(buf+len, "There is more...\n");
++		seq_printf(seq, "There is more...\n");
+ out:
+-	spin_unlock(&i2o_proc_lock);
+ 	kfree(result);
+-	return len;
++	return 0;
+ }
+ 
+ /* Generic group F005h - Private message extensions (table) (optional) */
+-int i2o_proc_read_priv_msgs(char *buf, char **start, off_t offset, int len, 
+-			    int *eof, void *data)
++int i2o_seq_show_priv_msgs(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	int token;
+ 	int i;
+ 
+@@ -1299,10 +1575,6 @@
+ 		i2o_private extension[64];
+ 	} result;
+ 
+-	spin_lock(&i2o_proc_lock);
+-
+-	len = 0;
+-
+ 	token = i2o_query_table(I2O_PARAMS_TABLE_GET,
+ 				d->controller, d->lct_data.tid,
+ 				0xF000, -1,
+@@ -1310,36 +1582,32 @@
+ 				&result, sizeof(result));
+ 
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0xF005 Private Message Extensions (optional)");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token,"0xF005 Private Message Extensions (optional)");
++		return 0;
+ 	}
+ 	
+-	len += sprintf(buf+len, "Instance#  OrgId  FunctionCode\n");
++	seq_printf(seq, "Instance#  OrgId  FunctionCode\n");
+ 
+ 	for(i=0; i < result.row_count; i++)
+ 	{
+-		len += sprintf(buf+len, "%0#9x ", result.extension[i].ext_instance);
+-		len += sprintf(buf+len, "%0#6x ", result.extension[i].organization_id);
+-		len += sprintf(buf+len, "%0#6x",  result.extension[i].x_function_code);
++		seq_printf(seq, "%0#9x ", result.extension[i].ext_instance);
++		seq_printf(seq, "%0#6x ", result.extension[i].organization_id);
++		seq_printf(seq, "%0#6x",  result.extension[i].x_function_code);
+ 
+-		len += sprintf(buf+len, "\n");
++		seq_printf(seq, "\n");
+ 	}
+ 
+ 	if(result.more_flag)
+-		len += sprintf(buf+len, "There is more...\n");
++		seq_printf(seq, "There is more...\n");
+ 
+-	spin_unlock(&i2o_proc_lock);
+-
+-	return len;
++	return 0;
+ }
+ 
+ 
+ /* Generic group F006h - Authorized User Table (table) */
+-int i2o_proc_read_authorized_users(char *buf, char **start, off_t offset, int len,
+-				   int *eof, void *data)
++int i2o_seq_show_authorized_users(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	int token;
+ 	int i;
+ 
+@@ -1355,9 +1623,6 @@
+ 		u32 alternate_tid[64];
+ 	} result;
+ 
+-	spin_lock(&i2o_proc_lock);
+-	len = 0;
+-
+ 	token = i2o_query_table(I2O_PARAMS_TABLE_GET,
+ 				d->controller, d->lct_data.tid,
+ 				0xF006, -1,
+@@ -1365,95 +1630,83 @@
+ 				&result, sizeof(result));
+ 
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0xF006 Autohorized User Table");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token,"0xF006 Autohorized User Table");
++		return 0;
+ 	}
+ 
+ 	if (result.row_count)
+-		len += sprintf(buf+len, "#  AlternateTid\n");
++		seq_printf(seq, "#  AlternateTid\n");
+ 
+ 	for(i=0; i < result.row_count; i++)
+ 	{
+-		len += sprintf(buf+len, "%-2d", i);
+-		len += sprintf(buf+len, "%#7x ", result.alternate_tid[i]);
++		seq_printf(seq, "%-2d", i);
++		seq_printf(seq, "%#7x ", result.alternate_tid[i]);
+ 	}
+ 
+ 	if (result.more_flag)
+-		len += sprintf(buf+len, "There is more...\n");
++		seq_printf(seq, "There is more...\n");
+ 
+-	spin_unlock(&i2o_proc_lock);
+-	return len;
++	return 0;
+ }
+ 
+ 
+ /* Generic group F100h - Device Identity (scalar) */
+-int i2o_proc_read_dev_identity(char *buf, char **start, off_t offset, int len, 
+-			       int *eof, void *data)
++int i2o_seq_show_dev_identity(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	static u32 work32[128];		// allow for "stuff" + up to 256 byte (max) serial number
+ 					// == (allow) 512d bytes (max)
+ 	static u16 *work16 = (u16*)work32;
+ 	int token;
+ 
+-	spin_lock(&i2o_proc_lock);
+-	
+-	len = 0;
+-
+ 	token = i2o_query_scalar(d->controller, d->lct_data.tid,
+ 				0xF100,	-1,
+ 				&work32, sizeof(work32));
+ 
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token ,"0xF100 Device Identity");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token, "0xF100 Device Identity");
++		return 0;
+ 	}
+ 	
+-	len += sprintf(buf,     "Device Class  : %s\n", i2o_get_class_name(work16[0]));
+-	len += sprintf(buf+len, "Owner TID     : %0#5x\n", work16[2]);
+-	len += sprintf(buf+len, "Parent TID    : %0#5x\n", work16[3]);
+-	len += sprintf(buf+len, "Vendor info   : %s\n", chtostr((u8 *)(work32+2), 16));
+-	len += sprintf(buf+len, "Product info  : %s\n", chtostr((u8 *)(work32+6), 16));
+-	len += sprintf(buf+len, "Description   : %s\n", chtostr((u8 *)(work32+10), 16));
+-	len += sprintf(buf+len, "Product rev.  : %s\n", chtostr((u8 *)(work32+14), 8));
++	seq_printf(seq, "Device Class  : %s\n", i2o_get_class_name(work16[0]));
++	seq_printf(seq, "Owner TID     : %0#5x\n", work16[2]);
++	seq_printf(seq, "Parent TID    : %0#5x\n", work16[3]);
++	seq_printf(seq, "Vendor info   : %s\n", chtostr((u8 *)(work32+2), 16));
++	seq_printf(seq, "Product info  : %s\n", chtostr((u8 *)(work32+6), 16));
++	seq_printf(seq, "Description   : %s\n", chtostr((u8 *)(work32+10), 16));
++	seq_printf(seq, "Product rev.  : %s\n", chtostr((u8 *)(work32+14), 8));
+ 
+-	len += sprintf(buf+len, "Serial number : ");
+-	len = print_serial_number(buf, len,
++	seq_printf(seq, "Serial number : ");
++	print_serial_number(seq,
+ 			(u8*)(work32+16),
+ 						/* allow for SNLen plus
+ 						 * possible trailing '\0'
+ 						 */
+ 			sizeof(work32)-(16*sizeof(u32))-2
+ 				);
+-	len +=  sprintf(buf+len, "\n");
++	seq_printf(seq, "\n");
+ 
+-	spin_unlock(&i2o_proc_lock);
+-
+-	return len;
++	return 0;
+ }
+ 
+ 
+-int i2o_proc_read_dev_name(char *buf, char **start, off_t offset, int len,
+-	int *eof, void *data)
++int i2o_seq_show_dev_name(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 
+ 	if ( d->dev_name[0] == '\0' )
+ 		return 0;
+ 
+-	len = sprintf(buf, "%s\n", d->dev_name);
++	seq_printf(seq, "%s\n", d->dev_name);
+ 
+-	return len;
++	return 0;
+ }
+ 
+ 
+ /* Generic group F101h - DDM Identity (scalar) */
+-int i2o_proc_read_ddm_identity(char *buf, char **start, off_t offset, int len, 
+-			      int *eof, void *data)
++int i2o_seq_show_ddm_identity(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	int token;
+ 
+ 	struct
+@@ -1466,40 +1719,32 @@
+ 		u8 pad[256]; // allow up to 256 byte (max) serial number
+ 	} result;	
+ 
+-	spin_lock(&i2o_proc_lock);
+-	
+-	len = 0;
+-
+ 	token = i2o_query_scalar(d->controller, d->lct_data.tid, 
+ 				0xF101,	-1,
+ 				&result, sizeof(result));
+ 
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0xF101 DDM Identity");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token, "0xF101 DDM Identity");
++		return 0;
+ 	}
+ 
+-	len += sprintf(buf,     "Registering DDM TID : 0x%03x\n", result.ddm_tid);
+-	len += sprintf(buf+len, "Module name         : %s\n", chtostr(result.module_name, 24));
+-	len += sprintf(buf+len, "Module revision     : %s\n", chtostr(result.module_rev, 8));
++	seq_printf(seq, "Registering DDM TID : 0x%03x\n", result.ddm_tid);
++	seq_printf(seq, "Module name         : %s\n", chtostr(result.module_name, 24));
++	seq_printf(seq, "Module revision     : %s\n", chtostr(result.module_rev, 8));
+ 
+-	len += sprintf(buf+len, "Serial number       : ");
+-	len = print_serial_number(buf, len, result.serial_number, sizeof(result)-36);
++	seq_printf(seq, "Serial number       : ");
++	print_serial_number(seq, result.serial_number, sizeof(result)-36);
+ 				/* allow for SNLen plus possible trailing '\0' */
+ 
+-	len += sprintf(buf+len, "\n");
++	seq_printf(seq, "\n");
+ 
+-	spin_unlock(&i2o_proc_lock);
+-
+-	return len;
++	return 0;
+ }
+ 
+ /* Generic group F102h - User Information (scalar) */
+-int i2o_proc_read_uinfo(char *buf, char **start, off_t offset, int len, 
+-			int *eof, void *data)
++int i2o_seq_show_uinfo(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	int token;
+ 
+  	struct
+@@ -1510,85 +1755,71 @@
+ 		u8 instance_number[4];
+ 	} result;
+ 
+-	spin_lock(&i2o_proc_lock);
+-	len = 0;
+-
+ 	token = i2o_query_scalar(d->controller, d->lct_data.tid,
+ 				0xF102,	-1,
+ 				&result, sizeof(result));
+ 
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0xF102 User Information");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token,"0xF102 User Information");
++		return 0;
+ 	}
+ 
+-	len += sprintf(buf,     "Device name     : %s\n", chtostr(result.device_name, 64));
+-	len += sprintf(buf+len, "Service name    : %s\n", chtostr(result.service_name, 64));
+-	len += sprintf(buf+len, "Physical name   : %s\n", chtostr(result.physical_location, 64));
+-	len += sprintf(buf+len, "Instance number : %s\n", chtostr(result.instance_number, 4));
++	seq_printf(seq, "Device name     : %s\n", chtostr(result.device_name, 64));
++	seq_printf(seq, "Service name    : %s\n", chtostr(result.service_name, 64));
++	seq_printf(seq, "Physical name   : %s\n", chtostr(result.physical_location, 64));
++	seq_printf(seq, "Instance number : %s\n", chtostr(result.instance_number, 4));
+ 
+-	spin_unlock(&i2o_proc_lock);
+-	return len;
++	return 0;
+ }
+ 
+ /* Generic group F103h - SGL Operating Limits (scalar) */
+-int i2o_proc_read_sgl_limits(char *buf, char **start, off_t offset, int len, 
+-			     int *eof, void *data)
++int i2o_seq_show_sgl_limits(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	static u32 work32[12];
+ 	static u16 *work16 = (u16 *)work32;
+ 	static u8 *work8 = (u8 *)work32;
+ 	int token;
+ 
+-	spin_lock(&i2o_proc_lock);
+-	
+-	len = 0;
+-
+ 	token = i2o_query_scalar(d->controller, d->lct_data.tid, 
+ 				 0xF103, -1,
+ 				 &work32, sizeof(work32));
+ 
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0xF103 SGL Operating Limits");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token,"0xF103 SGL Operating Limits");
++		return 0;
+ 	}
+ 
+-	len += sprintf(buf,     "SGL chain size        : %d\n", work32[0]);
+-	len += sprintf(buf+len, "Max SGL chain size    : %d\n", work32[1]);
+-	len += sprintf(buf+len, "SGL chain size target : %d\n", work32[2]);
+-	len += sprintf(buf+len, "SGL frag count        : %d\n", work16[6]);
+-	len += sprintf(buf+len, "Max SGL frag count    : %d\n", work16[7]);
+-	len += sprintf(buf+len, "SGL frag count target : %d\n", work16[8]);
++	seq_printf(seq, "SGL chain size        : %d\n", work32[0]);
++	seq_printf(seq, "Max SGL chain size    : %d\n", work32[1]);
++	seq_printf(seq, "SGL chain size target : %d\n", work32[2]);
++	seq_printf(seq, "SGL frag count        : %d\n", work16[6]);
++	seq_printf(seq, "Max SGL frag count    : %d\n", work16[7]);
++	seq_printf(seq, "SGL frag count target : %d\n", work16[8]);
+ 
+ 	if (d->i2oversion == 0x02)
+ 	{
+-		len += sprintf(buf+len, "SGL data alignment    : %d\n", work16[8]);
+-		len += sprintf(buf+len, "SGL addr limit        : %d\n", work8[20]);
+-		len += sprintf(buf+len, "SGL addr sizes supported : ");
++		seq_printf(seq, "SGL data alignment    : %d\n", work16[8]);
++		seq_printf(seq, "SGL addr limit        : %d\n", work8[20]);
++		seq_printf(seq, "SGL addr sizes supported : ");
+ 		if (work8[21] & 0x01)
+-			len += sprintf(buf+len, "32 bit ");
++			seq_printf(seq, "32 bit ");
+ 		if (work8[21] & 0x02)
+-			len += sprintf(buf+len, "64 bit ");
++			seq_printf(seq, "64 bit ");
+ 		if (work8[21] & 0x04)
+-			len += sprintf(buf+len, "96 bit ");
++			seq_printf(seq, "96 bit ");
+ 		if (work8[21] & 0x08)
+-			len += sprintf(buf+len, "128 bit ");
+-		len += sprintf(buf+len, "\n");
++			seq_printf(seq, "128 bit ");
++		seq_printf(seq, "\n");
+ 	}
+ 
+-	spin_unlock(&i2o_proc_lock);
+-
+-	return len;
++	return 0;
+ }
+ 
+ /* Generic group F200h - Sensors (scalar) */
+-int i2o_proc_read_sensors(char *buf, char **start, off_t offset, int len,
+-			  int *eof, void *data)
++int i2o_seq_show_sensors(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	int token;
+ 
+ 	struct
+@@ -1619,131 +1850,126 @@
+ 		u16 event_enable;
+ 	} result;
+ 	
+-	spin_lock(&i2o_proc_lock);	
+-	len = 0;
+-
+ 	token = i2o_query_scalar(d->controller, d->lct_data.tid,
+ 				 0xF200, -1,
+ 				 &result, sizeof(result));
+ 
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0xF200 Sensors (optional)");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token,"0xF200 Sensors (optional)");
++		return 0;
+ 	}
+ 	
+-	len += sprintf(buf+len, "Sensor instance       : %d\n", result.sensor_instance);
++	seq_printf(seq, "Sensor instance       : %d\n", result.sensor_instance);
+ 
+-	len += sprintf(buf+len, "Component             : %d = ", result.component);
++	seq_printf(seq, "Component             : %d = ", result.component);
+ 	switch (result.component)
+ 	{
+-	case 0:	len += sprintf(buf+len, "Other");		
++	case 0:	seq_printf(seq, "Other");		
+ 		break;
+-	case 1: len += sprintf(buf+len, "Planar logic Board");
++	case 1: seq_printf(seq, "Planar logic Board");
+ 		break;
+-	case 2: len += sprintf(buf+len, "CPU");
++	case 2: seq_printf(seq, "CPU");
+ 		break;
+-	case 3: len += sprintf(buf+len, "Chassis");
++	case 3: seq_printf(seq, "Chassis");
+ 		break;
+-	case 4: len += sprintf(buf+len, "Power Supply");
++	case 4: seq_printf(seq, "Power Supply");
+ 		break;
+-	case 5: len += sprintf(buf+len, "Storage");
++	case 5: seq_printf(seq, "Storage");
+ 		break;
+-	case 6: len += sprintf(buf+len, "External");
++	case 6: seq_printf(seq, "External");
+ 		break;
+ 	}		
+-	len += sprintf(buf+len,"\n");
++	seq_printf(seq,"\n");
+ 
+-	len += sprintf(buf+len, "Component instance    : %d\n", result.component_instance);
+-	len += sprintf(buf+len, "Sensor class          : %s\n",
++	seq_printf(seq, "Component instance    : %d\n", result.component_instance);
++	seq_printf(seq, "Sensor class          : %s\n",
+ 				result.sensor_class ? "Analog" : "Digital");
+ 	
+-	len += sprintf(buf+len, "Sensor type           : %d = ",result.sensor_type);
++	seq_printf(seq, "Sensor type           : %d = ",result.sensor_type);
+ 	switch (result.sensor_type)
+ 	{
+-	case 0:	len += sprintf(buf+len, "Other\n");
++	case 0:	seq_printf(seq, "Other\n");
+ 		break;
+-	case 1: len += sprintf(buf+len, "Thermal\n");
++	case 1: seq_printf(seq, "Thermal\n");
+ 		break;
+-	case 2: len += sprintf(buf+len, "DC voltage (DC volts)\n");
++	case 2: seq_printf(seq, "DC voltage (DC volts)\n");
+ 		break;
+-	case 3: len += sprintf(buf+len, "AC voltage (AC volts)\n");
++	case 3: seq_printf(seq, "AC voltage (AC volts)\n");
+ 		break;
+-	case 4: len += sprintf(buf+len, "DC current (DC amps)\n");
++	case 4: seq_printf(seq, "DC current (DC amps)\n");
+ 		break;
+-	case 5: len += sprintf(buf+len, "AC current (AC volts)\n");
++	case 5: seq_printf(seq, "AC current (AC volts)\n");
+ 		break;
+-	case 6: len += sprintf(buf+len, "Door open\n");
++	case 6: seq_printf(seq, "Door open\n");
+ 		break;
+-	case 7: len += sprintf(buf+len, "Fan operational\n");
++	case 7: seq_printf(seq, "Fan operational\n");
+ 		break;
+  	}			
+ 
+-	len += sprintf(buf+len, "Scaling exponent      : %d\n", result.scaling_exponent);
+-	len += sprintf(buf+len, "Actual reading        : %d\n", result.actual_reading);
+-	len += sprintf(buf+len, "Minimum reading       : %d\n", result.minimum_reading);
+-	len += sprintf(buf+len, "Low2LowCat treshold   : %d\n", result.low2lowcat_treshold);
+-	len += sprintf(buf+len, "LowCat2Low treshold   : %d\n", result.lowcat2low_treshold);
+-	len += sprintf(buf+len, "LowWarn2Low treshold  : %d\n", result.lowwarn2low_treshold);
+-	len += sprintf(buf+len, "Low2LowWarn treshold  : %d\n", result.low2lowwarn_treshold);
+-	len += sprintf(buf+len, "Norm2LowWarn treshold : %d\n", result.norm2lowwarn_treshold);
+-	len += sprintf(buf+len, "LowWarn2Norm treshold : %d\n", result.lowwarn2norm_treshold);
+-	len += sprintf(buf+len, "Nominal reading       : %d\n", result.nominal_reading);
+-	len += sprintf(buf+len, "HiWarn2Norm treshold  : %d\n", result.hiwarn2norm_treshold);
+-	len += sprintf(buf+len, "Norm2HiWarn treshold  : %d\n", result.norm2hiwarn_treshold);
+-	len += sprintf(buf+len, "High2HiWarn treshold  : %d\n", result.high2hiwarn_treshold);
+-	len += sprintf(buf+len, "HiWarn2High treshold  : %d\n", result.hiwarn2high_treshold);
+-	len += sprintf(buf+len, "HiCat2High treshold   : %d\n", result.hicat2high_treshold);
+-	len += sprintf(buf+len, "High2HiCat treshold   : %d\n", result.hi2hicat_treshold);
+-	len += sprintf(buf+len, "Maximum reading       : %d\n", result.maximum_reading);
++	seq_printf(seq, "Scaling exponent      : %d\n", result.scaling_exponent);
++	seq_printf(seq, "Actual reading        : %d\n", result.actual_reading);
++	seq_printf(seq, "Minimum reading       : %d\n", result.minimum_reading);
++	seq_printf(seq, "Low2LowCat treshold   : %d\n", result.low2lowcat_treshold);
++	seq_printf(seq, "LowCat2Low treshold   : %d\n", result.lowcat2low_treshold);
++	seq_printf(seq, "LowWarn2Low treshold  : %d\n", result.lowwarn2low_treshold);
++	seq_printf(seq, "Low2LowWarn treshold  : %d\n", result.low2lowwarn_treshold);
++	seq_printf(seq, "Norm2LowWarn treshold : %d\n", result.norm2lowwarn_treshold);
++	seq_printf(seq, "LowWarn2Norm treshold : %d\n", result.lowwarn2norm_treshold);
++	seq_printf(seq, "Nominal reading       : %d\n", result.nominal_reading);
++	seq_printf(seq, "HiWarn2Norm treshold  : %d\n", result.hiwarn2norm_treshold);
++	seq_printf(seq, "Norm2HiWarn treshold  : %d\n", result.norm2hiwarn_treshold);
++	seq_printf(seq, "High2HiWarn treshold  : %d\n", result.high2hiwarn_treshold);
++	seq_printf(seq, "HiWarn2High treshold  : %d\n", result.hiwarn2high_treshold);
++	seq_printf(seq, "HiCat2High treshold   : %d\n", result.hicat2high_treshold);
++	seq_printf(seq, "High2HiCat treshold   : %d\n", result.hi2hicat_treshold);
++	seq_printf(seq, "Maximum reading       : %d\n", result.maximum_reading);
+ 
+-	len += sprintf(buf+len, "Sensor state          : %d = ", result.sensor_state);
++	seq_printf(seq, "Sensor state          : %d = ", result.sensor_state);
+ 	switch (result.sensor_state)
+ 	{
+-	case 0:	 len += sprintf(buf+len, "Normal\n");
++	case 0:	 seq_printf(seq, "Normal\n");
+ 		 break;
+-	case 1:  len += sprintf(buf+len, "Abnormal\n");
++	case 1:  seq_printf(seq, "Abnormal\n");
+ 		 break;
+-	case 2:  len += sprintf(buf+len, "Unknown\n");
++	case 2:  seq_printf(seq, "Unknown\n");
+ 		 break;
+-	case 3:  len += sprintf(buf+len, "Low Catastrophic (LoCat)\n");
++	case 3:  seq_printf(seq, "Low Catastrophic (LoCat)\n");
+ 		 break;
+-	case 4:  len += sprintf(buf+len, "Low (Low)\n");
++	case 4:  seq_printf(seq, "Low (Low)\n");
+ 		 break;
+-	case 5:  len += sprintf(buf+len, "Low Warning (LoWarn)\n");
++	case 5:  seq_printf(seq, "Low Warning (LoWarn)\n");
+ 		 break;
+-	case 6:  len += sprintf(buf+len, "High Warning (HiWarn)\n");
++	case 6:  seq_printf(seq, "High Warning (HiWarn)\n");
+ 		 break;
+-	case 7:  len += sprintf(buf+len, "High (High)\n");
++	case 7:  seq_printf(seq, "High (High)\n");
+ 		 break;
+-	case 8:  len += sprintf(buf+len, "High Catastrophic (HiCat)\n");
++	case 8:  seq_printf(seq, "High Catastrophic (HiCat)\n");
+ 		 break;
+ 	}			
+ 
+-	len += sprintf(buf+len, "Event_enable : 0x%02X\n", result.event_enable);
+-	len += sprintf(buf+len, "    [%s] Operational state change. \n",
++	seq_printf(seq, "Event_enable : 0x%02X\n", result.event_enable);
++	seq_printf(seq, "    [%s] Operational state change. \n",
+ 			(result.event_enable & 0x01) ? "+" : "-" );
+-	len += sprintf(buf+len, "    [%s] Low catastrophic. \n",
++	seq_printf(seq, "    [%s] Low catastrophic. \n",
+ 			(result.event_enable & 0x02) ? "+" : "-" );
+-	len += sprintf(buf+len, "    [%s] Low reading. \n",
++	seq_printf(seq, "    [%s] Low reading. \n",
+ 			(result.event_enable & 0x04) ? "+" : "-" );
+-	len += sprintf(buf+len, "    [%s] Low warning. \n",
++	seq_printf(seq, "    [%s] Low warning. \n",
+ 			(result.event_enable & 0x08) ? "+" : "-" );
+-	len += sprintf(buf+len, "    [%s] Change back to normal from out of range state. \n",
++	seq_printf(seq, "    [%s] Change back to normal from out of range state. \n",
+ 			(result.event_enable & 0x10) ? "+" : "-" );
+-	len += sprintf(buf+len, "    [%s] High warning. \n",
++	seq_printf(seq, "    [%s] High warning. \n",
+ 			(result.event_enable & 0x20) ? "+" : "-" );
+-	len += sprintf(buf+len, "    [%s] High reading. \n",
++	seq_printf(seq, "    [%s] High reading. \n",
+ 			(result.event_enable & 0x40) ? "+" : "-" );
+-	len += sprintf(buf+len, "    [%s] High catastrophic. \n",
++	seq_printf(seq, "    [%s] High catastrophic. \n",
+ 			(result.event_enable & 0x80) ? "+" : "-" );
+ 
+-	spin_unlock(&i2o_proc_lock);
+-	return len;
++	return 0;
+ }
+ 
+ 
+-static int print_serial_number(char *buff, int pos, u8 *serialno, int max_len)
++static int print_serial_number(struct seq_file *seq, u8 *serialno, int max_len)
+ {
+ 	int i;
+ 
+@@ -1760,10 +1986,10 @@
+ 	switch(serialno[0])
+ 	{
+ 		case I2O_SNFORMAT_BINARY:		/* Binary */
+-			pos += sprintf(buff+pos, "0x");
++			seq_printf(seq, "0x");
+ 			for(i = 0; i < serialno[1]; i++)
+ 			{
+-				pos += sprintf(buff+pos, "%02X", serialno[2+i]);
++				seq_printf(seq, "%02X", serialno[2+i]);
+ 			}
+ 			break;
+ 	
+@@ -1775,24 +2001,24 @@
+ 				serialno[1+max_len] = '\0';
+ 
+ 				/* just print it */
+-				pos += sprintf(buff+pos, "%s", &serialno[2]);
++				seq_printf(seq, "%s", &serialno[2]);
+ 			}
+ 			else
+ 			{
+ 				/* print chars for specified length */
+ 				for(i = 0; i < serialno[1]; i++)
+ 				{
+-					pos += sprintf(buff+pos, "%c", serialno[2+i]);
++					seq_printf(seq, "%c", serialno[2+i]);
+ 				}
+ 			}
+ 			break;
+ 
+ 		case I2O_SNFORMAT_UNICODE:		/* UNICODE */
+-			pos += sprintf(buff+pos, "UNICODE Format.  Can't Display\n");
++			seq_printf(seq, "UNICODE Format.  Can't Display\n");
+ 			break;
+ 
+ 		case I2O_SNFORMAT_LAN48_MAC:		/* LAN-48 MAC Address */
+-			pos += sprintf(buff+pos, 
++			seq_printf(seq, 
+ 						"LAN-48 MAC address @ %02X:%02X:%02X:%02X:%02X:%02X",
+ 						serialno[2], serialno[3],
+ 						serialno[4], serialno[5],
+@@ -1801,13 +2027,13 @@
+ 
+ 		case I2O_SNFORMAT_WAN:			/* WAN MAC Address */
+ 			/* FIXME: Figure out what a WAN access address looks like?? */
+-			pos += sprintf(buff+pos, "WAN Access Address");
++			seq_printf(seq, "WAN Access Address");
+ 			break;
+ 
+ /* plus new in v2.0 */
+ 		case I2O_SNFORMAT_LAN64_MAC:		/* LAN-64 MAC Address */
+ 			/* FIXME: Figure out what a LAN-64 address really looks like?? */
+-			pos += sprintf(buff+pos, 
++			seq_printf(seq, 
+ 						"LAN-64 MAC address @ [?:%02X:%02X:?] %02X:%02X:%02X:%02X:%02X:%02X",
+ 						serialno[8], serialno[9],
+ 						serialno[2], serialno[3],
+@@ -1817,7 +2043,7 @@
+ 
+ 
+ 		case I2O_SNFORMAT_DDM:			/* I2O DDM */
+-			pos += sprintf(buff+pos, 
++			seq_printf(seq, 
+ 						"DDM: Tid=%03Xh, Rsvd=%04Xh, OrgId=%04Xh",
+ 						*(u16*)&serialno[2],
+ 						*(u16*)&serialno[4],
+@@ -1827,7 +2053,7 @@
+ 		case I2O_SNFORMAT_IEEE_REG64:		/* IEEE Registered (64-bit) */
+ 		case I2O_SNFORMAT_IEEE_REG128:		/* IEEE Registered (128-bit) */
+ 			/* FIXME: Figure if this is even close?? */
+-			pos += sprintf(buff+pos, 
++			seq_printf(seq, 
+ 						"IEEE NodeName(hi,lo)=(%08Xh:%08Xh), PortName(hi,lo)=(%08Xh:%08Xh)\n",
+ 						*(u32*)&serialno[2],
+ 						*(u32*)&serialno[6],
+@@ -1839,12 +2065,12 @@
+ 		case I2O_SNFORMAT_UNKNOWN:		/* Unknown 0    */
+ 		case I2O_SNFORMAT_UNKNOWN2:		/* Unknown 0xff */
+ 		default:
+-			pos += sprintf(buff+pos, "Unknown data format (0x%02x)",
++			seq_printf(seq, "Unknown data format (0x%02x)",
+ 				       serialno[0]);
+ 			break;
+ 	}
+ 
+-	return pos;
++	return 0;
+ }
+ 
+ const char * i2o_get_connector_type(int conn)
+@@ -2056,219 +2282,205 @@
+ 
+ 
+ /* LAN group 0000h - Device info (scalar) */
+-int i2o_proc_read_lan_dev_info(char *buf, char **start, off_t offset, int len, 
+-			       int *eof, void *data)
++int i2o_seq_show_lan_dev_info(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	static u32 work32[56];
+ 	static u8 *work8 = (u8*)work32;
+ 	static u16 *work16 = (u16*)work32;
+ 	static u64 *work64 = (u64*)work32;
+ 	int token;
+ 
+-	spin_lock(&i2o_proc_lock);
+-	len = 0;
+-
+ 	token = i2o_query_scalar(d->controller, d->lct_data.tid,
+ 				 0x0000, -1, &work32, 56*4);
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token, "0x0000 LAN Device Info");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token, "0x0000 LAN Device Info");
++		return 0;
+ 	}
+ 
+-	len += sprintf(buf, "LAN Type            : ");
++	seq_printf(seq, "LAN Type            : ");
+ 	switch (work16[0])
+ 	{
+ 	case 0x0030:
+-		len += sprintf(buf+len, "Ethernet, ");
++		seq_printf(seq, "Ethernet, ");
+ 		break;
+ 	case 0x0040:
+-		len += sprintf(buf+len, "100Base VG, ");
++		seq_printf(seq, "100Base VG, ");
+ 		break;
+ 	case 0x0050:
+-		len += sprintf(buf+len, "Token Ring, ");
++		seq_printf(seq, "Token Ring, ");
+ 		break;
+ 	case 0x0060:
+-		len += sprintf(buf+len, "FDDI, ");
++		seq_printf(seq, "FDDI, ");
+ 		break;
+ 	case 0x0070:
+-		len += sprintf(buf+len, "Fibre Channel, ");
++		seq_printf(seq, "Fibre Channel, ");
+ 		break;
+ 	default:
+-		len += sprintf(buf+len, "Unknown type (0x%04x), ", work16[0]);
++		seq_printf(seq, "Unknown type (0x%04x), ", work16[0]);
+ 		break;
+ 	}
+ 
+ 	if (work16[1]&0x00000001)
+-		len += sprintf(buf+len, "emulated LAN, ");
++		seq_printf(seq, "emulated LAN, ");
+ 	else
+-		len += sprintf(buf+len, "physical LAN port, ");
++		seq_printf(seq, "physical LAN port, ");
+ 
+ 	if (work16[1]&0x00000002)
+-		len += sprintf(buf+len, "full duplex\n");
++		seq_printf(seq, "full duplex\n");
+ 	else
+-		len += sprintf(buf+len, "simplex\n");
++		seq_printf(seq, "simplex\n");
+ 
+-	len += sprintf(buf+len, "Address format      : ");
++	seq_printf(seq, "Address format      : ");
+ 	switch(work8[4]) {
+ 	case 0x00:
+-		len += sprintf(buf+len, "IEEE 48bit\n");
++		seq_printf(seq, "IEEE 48bit\n");
+ 		break;
+ 	case 0x01:
+-		len += sprintf(buf+len, "FC IEEE\n");
++		seq_printf(seq, "FC IEEE\n");
+ 		break;
+ 	default:
+-		len += sprintf(buf+len, "Unknown (0x%02x)\n", work8[4]);
++		seq_printf(seq, "Unknown (0x%02x)\n", work8[4]);
+ 		break;
+ 	}
+ 
+-	len += sprintf(buf+len, "State               : ");
++	seq_printf(seq, "State               : ");
+ 	switch(work8[5])
+ 	{
+ 	case 0x00:
+-		len += sprintf(buf+len, "Unknown\n");
++		seq_printf(seq, "Unknown\n");
+ 		break;
+ 	case 0x01:
+-		len += sprintf(buf+len, "Unclaimed\n");
++		seq_printf(seq, "Unclaimed\n");
+ 		break;
+ 	case 0x02:
+-		len += sprintf(buf+len, "Operational\n");
++		seq_printf(seq, "Operational\n");
+ 		break;
+ 	case 0x03:
+-		len += sprintf(buf+len, "Suspended\n");
++		seq_printf(seq, "Suspended\n");
+ 		break;
+ 	case 0x04:
+-		len += sprintf(buf+len, "Resetting\n");
++		seq_printf(seq, "Resetting\n");
+ 		break;
+ 	case 0x05:
+-		len += sprintf(buf+len, "ERROR: ");
++		seq_printf(seq, "ERROR: ");
+ 		if(work16[3]&0x0001)
+-			len += sprintf(buf+len, "TxCU inoperative ");
++			seq_printf(seq, "TxCU inoperative ");
+ 		if(work16[3]&0x0002)
+-			len += sprintf(buf+len, "RxCU inoperative ");
++			seq_printf(seq, "RxCU inoperative ");
+ 		if(work16[3]&0x0004)
+-			len += sprintf(buf+len, "Local mem alloc ");
+-		len += sprintf(buf+len, "\n");
++			seq_printf(seq, "Local mem alloc ");
++		seq_printf(seq, "\n");
+ 		break;
+ 	case 0x06:
+-		len += sprintf(buf+len, "Operational no Rx\n");
++		seq_printf(seq, "Operational no Rx\n");
+ 		break;
+ 	case 0x07:
+-		len += sprintf(buf+len, "Suspended no Rx\n");
++		seq_printf(seq, "Suspended no Rx\n");
+ 		break;
+ 	default:
+-		len += sprintf(buf+len, "Unspecified\n");
++		seq_printf(seq, "Unspecified\n");
+ 		break;
+ 	}
+ 
+-	len += sprintf(buf+len, "Min packet size     : %d\n", work32[2]);
+-	len += sprintf(buf+len, "Max packet size     : %d\n", work32[3]);
+-	len += sprintf(buf+len, "HW address          : "
++	seq_printf(seq, "Min packet size     : %d\n", work32[2]);
++	seq_printf(seq, "Max packet size     : %d\n", work32[3]);
++	seq_printf(seq, "HW address          : "
+ 		       "%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\n",
+ 		       work8[16],work8[17],work8[18],work8[19],
+ 		       work8[20],work8[21],work8[22],work8[23]);
+ 
+-	len += sprintf(buf+len, "Max Tx wire speed   : %d bps\n", (int)work64[3]);
+-	len += sprintf(buf+len, "Max Rx wire speed   : %d bps\n", (int)work64[4]);
++	seq_printf(seq, "Max Tx wire speed   : %d bps\n", (int)work64[3]);
++	seq_printf(seq, "Max Rx wire speed   : %d bps\n", (int)work64[4]);
+ 
+-	len += sprintf(buf+len, "Min SDU packet size : 0x%08x\n", work32[10]);
+-	len += sprintf(buf+len, "Max SDU packet size : 0x%08x\n", work32[11]);
++	seq_printf(seq, "Min SDU packet size : 0x%08x\n", work32[10]);
++	seq_printf(seq, "Max SDU packet size : 0x%08x\n", work32[11]);
+ 
+-	spin_unlock(&i2o_proc_lock);
+-	return len;
++	return 0;
+ }
+ 
+ /* LAN group 0001h - MAC address table (scalar) */
+-int i2o_proc_read_lan_mac_addr(char *buf, char **start, off_t offset, int len, 
+-			       int *eof, void *data)
++int i2o_seq_show_lan_mac_addr(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	static u32 work32[48];
+ 	static u8 *work8 = (u8*)work32;
+ 	int token;
+ 
+-	spin_lock(&i2o_proc_lock);	
+-	len = 0;
+-
+ 	token = i2o_query_scalar(d->controller, d->lct_data.tid,
+ 				 0x0001, -1, &work32, 48*4);
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0x0001 LAN MAC Address");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token,"0x0001 LAN MAC Address");
++		return 0;
+ 	}
+ 
+-	len += sprintf(buf,     "Active address          : "
++	seq_printf(seq, "Active address          : "
+ 		       "%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\n",
+ 		       work8[0],work8[1],work8[2],work8[3],
+ 		       work8[4],work8[5],work8[6],work8[7]);
+-	len += sprintf(buf+len, "Current address         : "
++	seq_printf(seq, "Current address         : "
+ 		       "%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\n",
+ 		       work8[8],work8[9],work8[10],work8[11],
+ 		       work8[12],work8[13],work8[14],work8[15]);
+-	len += sprintf(buf+len, "Functional address mask : "
++	seq_printf(seq, "Functional address mask : "
+ 		       "%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\n",
+ 		       work8[16],work8[17],work8[18],work8[19],
+ 		       work8[20],work8[21],work8[22],work8[23]);
+ 
+-	len += sprintf(buf+len,"HW/DDM capabilities : 0x%08x\n", work32[7]);
+-	len += sprintf(buf+len,"    [%s] Unicast packets supported\n",
++	seq_printf(seq,"HW/DDM capabilities : 0x%08x\n", work32[7]);
++	seq_printf(seq,"    [%s] Unicast packets supported\n",
+ 		       (work32[7]&0x00000001)?"+":"-");
+-	len += sprintf(buf+len,"    [%s] Promiscuous mode supported\n",
++	seq_printf(seq,"    [%s] Promiscuous mode supported\n",
+ 		       (work32[7]&0x00000002)?"+":"-");
+-	len += sprintf(buf+len,"    [%s] Promiscuous multicast mode supported\n",
++	seq_printf(seq,"    [%s] Promiscuous multicast mode supported\n",
+ 		       (work32[7]&0x00000004)?"+":"-");
+-	len += sprintf(buf+len,"    [%s] Broadcast reception disabling supported\n",
++	seq_printf(seq,"    [%s] Broadcast reception disabling supported\n",
+ 		       (work32[7]&0x00000100)?"+":"-");
+-	len += sprintf(buf+len,"    [%s] Multicast reception disabling supported\n",
++	seq_printf(seq,"    [%s] Multicast reception disabling supported\n",
+ 		       (work32[7]&0x00000200)?"+":"-");
+-	len += sprintf(buf+len,"    [%s] Functional address disabling supported\n",
++	seq_printf(seq,"    [%s] Functional address disabling supported\n",
+ 		       (work32[7]&0x00000400)?"+":"-");
+-	len += sprintf(buf+len,"    [%s] MAC reporting supported\n",
++	seq_printf(seq,"    [%s] MAC reporting supported\n",
+ 		       (work32[7]&0x00000800)?"+":"-");
+ 
+-	len += sprintf(buf+len,"Filter mask : 0x%08x\n", work32[6]);
+-	len += sprintf(buf+len,"    [%s] Unicast packets disable\n",
++	seq_printf(seq,"Filter mask : 0x%08x\n", work32[6]);
++	seq_printf(seq,"    [%s] Unicast packets disable\n",
+ 		(work32[6]&0x00000001)?"+":"-");
+-	len += sprintf(buf+len,"    [%s] Promiscuous mode enable\n",
++	seq_printf(seq,"    [%s] Promiscuous mode enable\n",
+ 		(work32[6]&0x00000002)?"+":"-");
+-	len += sprintf(buf+len,"    [%s] Promiscuous multicast mode enable\n",
++	seq_printf(seq,"    [%s] Promiscuous multicast mode enable\n",
+ 		(work32[6]&0x00000004)?"+":"-");	
+-	len += sprintf(buf+len,"    [%s] Broadcast packets disable\n",
++	seq_printf(seq,"    [%s] Broadcast packets disable\n",
+ 		(work32[6]&0x00000100)?"+":"-");
+-	len += sprintf(buf+len,"    [%s] Multicast packets disable\n",
++	seq_printf(seq,"    [%s] Multicast packets disable\n",
+ 		(work32[6]&0x00000200)?"+":"-");
+-	len += sprintf(buf+len,"    [%s] Functional address disable\n",
++	seq_printf(seq,"    [%s] Functional address disable\n",
+ 		       (work32[6]&0x00000400)?"+":"-");
+ 		       
+ 	if (work32[7]&0x00000800) {
+-		len += sprintf(buf+len, "    MAC reporting mode : ");
++		seq_printf(seq, "    MAC reporting mode : ");
+ 		if (work32[6]&0x00000800)
+-			len += sprintf(buf+len, "Pass only priority MAC packets to user\n");
++			seq_printf(seq, "Pass only priority MAC packets to user\n");
+ 		else if (work32[6]&0x00001000)
+-			len += sprintf(buf+len, "Pass all MAC packets to user\n");
++			seq_printf(seq, "Pass all MAC packets to user\n");
+ 		else if (work32[6]&0x00001800)
+-			len += sprintf(buf+len, "Pass all MAC packets (promiscuous) to user\n");
++			seq_printf(seq, "Pass all MAC packets (promiscuous) to user\n");
+ 		else
+-			len += sprintf(buf+len, "Do not pass MAC packets to user\n");
++			seq_printf(seq, "Do not pass MAC packets to user\n");
+ 	}
+-	len += sprintf(buf+len, "Number of multicast addresses : %d\n", work32[8]);
+-	len += sprintf(buf+len, "Perfect filtering for max %d multicast addresses\n",
++	seq_printf(seq, "Number of multicast addresses : %d\n", work32[8]);
++	seq_printf(seq, "Perfect filtering for max %d multicast addresses\n",
+ 		       work32[9]);
+-	len += sprintf(buf+len, "Imperfect filtering for max %d multicast addresses\n",
++	seq_printf(seq, "Imperfect filtering for max %d multicast addresses\n",
+ 		       work32[10]);
+ 
+-	spin_unlock(&i2o_proc_lock);
+-
+-	return len;
++	return 0;
+ }
+ 
+ /* LAN group 0002h - Multicast MAC address table (table) */
+-int i2o_proc_read_lan_mcast_addr(char *buf, char **start, off_t offset,
+-				 int len, int *eof, void *data)
++int i2o_seq_show_lan_mcast_addr(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	int token;
+ 	int i;
+ 	u8 mc_addr[8];
+@@ -2289,15 +2501,12 @@
+ 	if(!result)
+ 		return -ENOMEM;
+ 
+-	spin_lock(&i2o_proc_lock);	
+-	len = 0;
+-
+ 	token = i2o_query_table(I2O_PARAMS_TABLE_GET,
+ 				d->controller, d->lct_data.tid, 0x0002, -1, 
+ 				NULL, 0, result, sizeof(*result));
+ 
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0x002 LAN Multicast MAC Address");
++		i2o_report_query_status(seq, token,"0x002 LAN Multicast MAC Address");
+ 		goto out;
+ 	}
+ 
+@@ -2305,124 +2514,110 @@
+ 	{
+ 		memcpy(mc_addr, result->mc_addr[i], 8);
+ 
+-		len += sprintf(buf+len, "MC MAC address[%d]: "
++		seq_printf(seq, "MC MAC address[%d]: "
+ 			       "%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\n",
+ 			       i, mc_addr[0], mc_addr[1], mc_addr[2],
+ 			       mc_addr[3], mc_addr[4], mc_addr[5],
+ 			       mc_addr[6], mc_addr[7]);
+ 	}
+ out:
+-	spin_unlock(&i2o_proc_lock);
+ 	kfree(result);
+-	return len;
++	return 0;
+ }
+ 
+ /* LAN group 0003h - Batch Control (scalar) */
+-int i2o_proc_read_lan_batch_control(char *buf, char **start, off_t offset,
+-				    int len, int *eof, void *data)
++int i2o_seq_show_lan_batch_control(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	static u32 work32[9];
+ 	int token;
+ 
+-	spin_lock(&i2o_proc_lock);	
+-	len = 0;
+-
+ 	token = i2o_query_scalar(d->controller, d->lct_data.tid,
+ 				 0x0003, -1, &work32, 9*4);
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0x0003 LAN Batch Control");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token,"0x0003 LAN Batch Control");
++		return 0;
+ 	}
+ 
+-	len += sprintf(buf, "Batch mode ");
++	seq_printf(seq, "Batch mode ");
+ 	if (work32[0]&0x00000001)
+-		len += sprintf(buf+len, "disabled");
++		seq_printf(seq, "disabled");
+ 	else
+-		len += sprintf(buf+len, "enabled");
++		seq_printf(seq, "enabled");
+ 	if (work32[0]&0x00000002)
+-		len += sprintf(buf+len, " (current setting)");
++		seq_printf(seq, " (current setting)");
+ 	if (work32[0]&0x00000004)
+-		len += sprintf(buf+len, ", forced");
++		seq_printf(seq, ", forced");
+ 	else
+-		len += sprintf(buf+len, ", toggle");
+-	len += sprintf(buf+len, "\n");
++		seq_printf(seq, ", toggle");
++	seq_printf(seq, "\n");
+ 
+-	len += sprintf(buf+len, "Max Rx batch count : %d\n", work32[5]);
+-	len += sprintf(buf+len, "Max Rx batch delay : %d\n", work32[6]);
+-	len += sprintf(buf+len, "Max Tx batch delay : %d\n", work32[7]);
+-	len += sprintf(buf+len, "Max Tx batch count : %d\n", work32[8]);
++	seq_printf(seq, "Max Rx batch count : %d\n", work32[5]);
++	seq_printf(seq, "Max Rx batch delay : %d\n", work32[6]);
++	seq_printf(seq, "Max Tx batch delay : %d\n", work32[7]);
++	seq_printf(seq, "Max Tx batch count : %d\n", work32[8]);
+ 
+-	spin_unlock(&i2o_proc_lock);
+-	return len;
++	return 0;
+ }
+ 
+ /* LAN group 0004h - LAN Operation (scalar) */
+-int i2o_proc_read_lan_operation(char *buf, char **start, off_t offset, int len,
+-				int *eof, void *data)
++int i2o_seq_show_lan_operation(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	static u32 work32[5];
+ 	int token;
+ 
+-	spin_lock(&i2o_proc_lock);	
+-	len = 0;
+-
+ 	token = i2o_query_scalar(d->controller, d->lct_data.tid,
+ 				 0x0004, -1, &work32, 20);
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0x0004 LAN Operation");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token, "0x0004 LAN Operation");
++		return 0;
+ 	}
+ 
+-	len += sprintf(buf, "Packet prepadding (32b words) : %d\n", work32[0]);
+-	len += sprintf(buf+len, "Transmission error reporting  : %s\n",
++	seq_printf(seq, "Packet prepadding (32b words) : %d\n", work32[0]);
++	seq_printf(seq, "Transmission error reporting  : %s\n",
+ 		       (work32[1]&1)?"on":"off");
+-	len += sprintf(buf+len, "Bad packet handling           : %s\n",
++	seq_printf(seq, "Bad packet handling           : %s\n",
+ 				(work32[1]&0x2)?"by host":"by DDM");
+-	len += sprintf(buf+len, "Packet orphan limit           : %d\n", work32[2]);
++	seq_printf(seq, "Packet orphan limit           : %d\n", work32[2]);
+ 
+-	len += sprintf(buf+len, "Tx modes : 0x%08x\n", work32[3]);
+-	len += sprintf(buf+len, "    [%s] HW CRC suppression\n",
++	seq_printf(seq, "Tx modes : 0x%08x\n", work32[3]);
++	seq_printf(seq, "    [%s] HW CRC suppression\n",
+ 			(work32[3]&0x00000004) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] HW IPv4 checksum\n",
++	seq_printf(seq, "    [%s] HW IPv4 checksum\n",
+ 			(work32[3]&0x00000100) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] HW TCP checksum\n",
++	seq_printf(seq, "    [%s] HW TCP checksum\n",
+ 			(work32[3]&0x00000200) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] HW UDP checksum\n",
++	seq_printf(seq, "    [%s] HW UDP checksum\n",
+ 			(work32[3]&0x00000400) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] HW RSVP checksum\n",
++	seq_printf(seq, "    [%s] HW RSVP checksum\n",
+ 			(work32[3]&0x00000800) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] HW ICMP checksum\n",
++	seq_printf(seq, "    [%s] HW ICMP checksum\n",
+ 			(work32[3]&0x00001000) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] Loopback suppression enable\n",
++	seq_printf(seq, "    [%s] Loopback suppression enable\n",
+ 			(work32[3]&0x00002000) ? "+" : "-");
+ 
+-	len += sprintf(buf+len, "Rx modes : 0x%08x\n", work32[4]);
+-	len += sprintf(buf+len, "    [%s] FCS in payload\n",
++	seq_printf(seq, "Rx modes : 0x%08x\n", work32[4]);
++	seq_printf(seq, "    [%s] FCS in payload\n",
+ 			(work32[4]&0x00000004) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] HW IPv4 checksum validation\n",
++	seq_printf(seq, "    [%s] HW IPv4 checksum validation\n",
+ 			(work32[4]&0x00000100) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] HW TCP checksum validation\n",
++	seq_printf(seq, "    [%s] HW TCP checksum validation\n",
+ 			(work32[4]&0x00000200) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] HW UDP checksum validation\n",
++	seq_printf(seq, "    [%s] HW UDP checksum validation\n",
+ 			(work32[4]&0x00000400) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] HW RSVP checksum validation\n",
++	seq_printf(seq, "    [%s] HW RSVP checksum validation\n",
+ 			(work32[4]&0x00000800) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] HW ICMP checksum validation\n",
++	seq_printf(seq, "    [%s] HW ICMP checksum validation\n",
+ 			(work32[4]&0x00001000) ? "+" : "-");
+  
+-	spin_unlock(&i2o_proc_lock);
+-	return len;
++	return 0;
+ }
+ 
+ /* LAN group 0005h - Media operation (scalar) */
+-int i2o_proc_read_lan_media_operation(char *buf, char **start, off_t offset,
+-				      int len, int *eof, void *data)
++int i2o_seq_show_lan_media_operation(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	int token;
+ 
+ 	struct
+@@ -2439,72 +2634,66 @@
+ 		u32 connection_type_target;
+ 	} result;	
+ 
+-	spin_lock(&i2o_proc_lock);	
+-	len = 0;
+-
+ 	token = i2o_query_scalar(d->controller, d->lct_data.tid,
+ 				 0x0005, -1, &result, sizeof(result));
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token, "0x0005 LAN Media Operation");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token, "0x0005 LAN Media Operation");
++		return 0;
+ 	}
+ 
+-	len += sprintf(buf, "Connector type         : %s\n",
++	seq_printf(seq, "Connector type         : %s\n",
+ 		       i2o_get_connector_type(result.connector_type));
+-	len += sprintf(buf+len, "Connection type        : %s\n",
++	seq_printf(seq, "Connection type        : %s\n",
+ 		       i2o_get_connection_type(result.connection_type));
+ 
+-	len += sprintf(buf+len, "Current Tx wire speed  : %d bps\n", (int)result.current_tx_wire_speed);
+-	len += sprintf(buf+len, "Current Rx wire speed  : %d bps\n", (int)result.current_rx_wire_speed);
+-	len += sprintf(buf+len, "Duplex mode            : %s duplex\n",
++	seq_printf(seq, "Current Tx wire speed  : %d bps\n", (int)result.current_tx_wire_speed);
++	seq_printf(seq, "Current Rx wire speed  : %d bps\n", (int)result.current_rx_wire_speed);
++	seq_printf(seq, "Duplex mode            : %s duplex\n",
+ 			(result.duplex_mode)?"Full":"Half");
+ 			
+-	len += sprintf(buf+len, "Link status            : ");
++	seq_printf(seq, "Link status            : ");
+ 	switch (result.link_status)
+ 	{
+ 	case 0x00:
+-		len += sprintf(buf+len, "Unknown\n");
++		seq_printf(seq, "Unknown\n");
+ 		break;
+ 	case 0x01:
+-		len += sprintf(buf+len, "Normal\n");
++		seq_printf(seq, "Normal\n");
+ 		break;
+ 	case 0x02:
+-		len += sprintf(buf+len, "Failure\n");
++		seq_printf(seq, "Failure\n");
+ 		break;
+ 	case 0x03:
+-		len += sprintf(buf+len, "Reset\n");
++		seq_printf(seq, "Reset\n");
+ 		break;
+ 	default:
+-		len += sprintf(buf+len, "Unspecified\n");
++		seq_printf(seq, "Unspecified\n");
+ 	}
+ 	
+-	len += sprintf(buf+len, "Duplex mode target     : ");
++	seq_printf(seq, "Duplex mode target     : ");
+ 	switch (result.duplex_mode_target){
+ 		case 0:
+-			len += sprintf(buf+len, "Half duplex\n");
++			seq_printf(seq, "Half duplex\n");
+ 			break;
+ 		case 1:
+-			len += sprintf(buf+len, "Full duplex\n");
++			seq_printf(seq, "Full duplex\n");
+ 			break;
+ 		default:
+-			len += sprintf(buf+len, "\n");
++			seq_printf(seq, "\n");
+ 	}
+ 
+-	len += sprintf(buf+len, "Connector type target  : %s\n",
++	seq_printf(seq, "Connector type target  : %s\n",
+ 		       i2o_get_connector_type(result.connector_type_target));
+-	len += sprintf(buf+len, "Connection type target : %s\n",
++	seq_printf(seq, "Connection type target : %s\n",
+ 		       i2o_get_connection_type(result.connection_type_target));
+ 
+-	spin_unlock(&i2o_proc_lock);
+-	return len;
++	return 0;
+ }
+ 
+ /* LAN group 0006h - Alternate address (table) (optional) */
+-int i2o_proc_read_lan_alt_addr(char *buf, char **start, off_t offset, int len,
+-			       int *eof, void *data)
++int i2o_seq_show_lan_alt_addr(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	int token;
+ 	int i;
+ 	u8 alt_addr[8];
+@@ -2524,136 +2713,120 @@
+ 	if(!result)
+ 		return -ENOMEM;
+ 
+-	spin_lock(&i2o_proc_lock);	
+-	len = 0;
+-
+ 	token = i2o_query_table(I2O_PARAMS_TABLE_GET,
+ 				d->controller, d->lct_data.tid,
+ 				0x0006, -1, NULL, 0, result, sizeof(*result));
+ 
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token, "0x0006 LAN Alternate Address (optional)");
++		i2o_report_query_status(seq, token, "0x0006 LAN Alternate Address (optional)");
+ 		goto out;
+ 	}
+ 
+ 	for (i=0; i < result->row_count; i++)
+ 	{
+ 		memcpy(alt_addr,result->alt_addr[i],8);
+-		len += sprintf(buf+len, "Alternate address[%d]: "
++		seq_printf(seq, "Alternate address[%d]: "
+ 			       "%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\n",
+ 			       i, alt_addr[0], alt_addr[1], alt_addr[2],
+ 			       alt_addr[3], alt_addr[4], alt_addr[5],
+ 			       alt_addr[6], alt_addr[7]);
+ 	}
+ out:
+-	spin_unlock(&i2o_proc_lock);
+ 	kfree(result);
+-	return len;
++	return 0;
+ }
+ 
+ 
+ /* LAN group 0007h - Transmit info (scalar) */
+-int i2o_proc_read_lan_tx_info(char *buf, char **start, off_t offset, int len, 
+-			      int *eof, void *data)
++int i2o_seq_show_lan_tx_info(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	static u32 work32[8];
+ 	int token;
+ 
+-	spin_lock(&i2o_proc_lock);	
+-	len = 0;
+-
+ 	token = i2o_query_scalar(d->controller, d->lct_data.tid,
+ 				 0x0007, -1, &work32, 8*4);
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0x0007 LAN Transmit Info");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token,"0x0007 LAN Transmit Info");
++		return 0;
+ 	}
+ 
+-	len += sprintf(buf,     "Tx Max SG elements per packet : %d\n", work32[0]);
+-	len += sprintf(buf+len, "Tx Max SG elements per chain  : %d\n", work32[1]);
+-	len += sprintf(buf+len, "Tx Max outstanding packets    : %d\n", work32[2]);
+-	len += sprintf(buf+len, "Tx Max packets per request    : %d\n", work32[3]);
++	seq_printf(seq, "Tx Max SG elements per packet : %d\n", work32[0]);
++	seq_printf(seq, "Tx Max SG elements per chain  : %d\n", work32[1]);
++	seq_printf(seq, "Tx Max outstanding packets    : %d\n", work32[2]);
++	seq_printf(seq, "Tx Max packets per request    : %d\n", work32[3]);
+ 
+-	len += sprintf(buf+len, "Tx modes : 0x%08x\n", work32[4]);
+-	len += sprintf(buf+len, "    [%s] No DA in SGL\n",
++	seq_printf(seq, "Tx modes : 0x%08x\n", work32[4]);
++	seq_printf(seq, "    [%s] No DA in SGL\n",
+ 				(work32[4]&0x00000002) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] CRC suppression\n",
++	seq_printf(seq, "    [%s] CRC suppression\n",
+ 				(work32[4]&0x00000004) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] MAC insertion\n",
++	seq_printf(seq, "    [%s] MAC insertion\n",
+ 				(work32[4]&0x00000010) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] RIF insertion\n",
++	seq_printf(seq, "    [%s] RIF insertion\n",
+ 				(work32[4]&0x00000020) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] IPv4 checksum generation\n",
++	seq_printf(seq, "    [%s] IPv4 checksum generation\n",
+ 				(work32[4]&0x00000100) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] TCP checksum generation\n",
++	seq_printf(seq, "    [%s] TCP checksum generation\n",
+ 				(work32[4]&0x00000200) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] UDP checksum generation\n",
++	seq_printf(seq, "    [%s] UDP checksum generation\n",
+ 				(work32[4]&0x00000400) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] RSVP checksum generation\n",
++	seq_printf(seq, "    [%s] RSVP checksum generation\n",
+ 				(work32[4]&0x00000800) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] ICMP checksum generation\n",
++	seq_printf(seq, "    [%s] ICMP checksum generation\n",
+ 				(work32[4]&0x00001000) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] Loopback enabled\n",
++	seq_printf(seq, "    [%s] Loopback enabled\n",
+ 				(work32[4]&0x00010000) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] Loopback suppression enabled\n",
++	seq_printf(seq, "    [%s] Loopback suppression enabled\n",
+ 				(work32[4]&0x00020000) ? "+" : "-");
+ 
+-	spin_unlock(&i2o_proc_lock);
+-	return len;
++	return 0;
+ }
+ 
+ /* LAN group 0008h - Receive info (scalar) */
+-int i2o_proc_read_lan_rx_info(char *buf, char **start, off_t offset, int len, 
+-			      int *eof, void *data)
++int i2o_seq_show_lan_rx_info(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	static u32 work32[8];
+ 	int token;
+ 
+-	spin_lock(&i2o_proc_lock);	
+-	len = 0;
+-
+ 	token = i2o_query_scalar(d->controller, d->lct_data.tid,
+ 				 0x0008, -1, &work32, 8*4);
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0x0008 LAN Receive Info");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token,"0x0008 LAN Receive Info");
++		return 0;
+ 	}
+ 
+-	len += sprintf(buf     ,"Rx Max size of chain element : %d\n", work32[0]);
+-	len += sprintf(buf+len, "Rx Max Buckets               : %d\n", work32[1]);
+-	len += sprintf(buf+len, "Rx Max Buckets in Reply      : %d\n", work32[3]);
+-	len += sprintf(buf+len, "Rx Max Packets in Bucket     : %d\n", work32[4]);
+-	len += sprintf(buf+len, "Rx Max Buckets in Post       : %d\n", work32[5]);
++	seq_printf(seq, "Rx Max size of chain element : %d\n", work32[0]);
++	seq_printf(seq, "Rx Max Buckets               : %d\n", work32[1]);
++	seq_printf(seq, "Rx Max Buckets in Reply      : %d\n", work32[3]);
++	seq_printf(seq, "Rx Max Packets in Bucket     : %d\n", work32[4]);
++	seq_printf(seq, "Rx Max Buckets in Post       : %d\n", work32[5]);
+ 
+-	len += sprintf(buf+len, "Rx Modes : 0x%08x\n", work32[2]);
+-	len += sprintf(buf+len, "    [%s] FCS reception\n",
++	seq_printf(seq, "Rx Modes : 0x%08x\n", work32[2]);
++	seq_printf(seq, "    [%s] FCS reception\n",
+ 				(work32[2]&0x00000004) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] IPv4 checksum validation \n",
++	seq_printf(seq, "    [%s] IPv4 checksum validation \n",
+ 				(work32[2]&0x00000100) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] TCP checksum validation \n",
++	seq_printf(seq, "    [%s] TCP checksum validation \n",
+ 				(work32[2]&0x00000200) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] UDP checksum validation \n",
++	seq_printf(seq, "    [%s] UDP checksum validation \n",
+ 				(work32[2]&0x00000400) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] RSVP checksum validation \n",
++	seq_printf(seq, "    [%s] RSVP checksum validation \n",
+ 				(work32[2]&0x00000800) ? "+" : "-");
+-	len += sprintf(buf+len, "    [%s] ICMP checksum validation \n",
++	seq_printf(seq, "    [%s] ICMP checksum validation \n",
+ 				(work32[2]&0x00001000) ? "+" : "-");
+ 
+-	spin_unlock(&i2o_proc_lock);
+-	return len;
++	return 0;
+ }
+ 
+-static int i2o_report_opt_field(char *buf, char *field_name,
++static int i2o_report_opt_field(struct seq_file *seq, char *field_name,
+ 				int field_nbr, int supp_fields, u64 *value)
+ {
+ 	if (supp_fields & (1 << field_nbr))
+-		return sprintf(buf, "%-24s : " FMT_U64_HEX "\n", field_name, U64_VAL(value));
++		return seq_printf(seq, "%-24s : " FMT_U64_HEX "\n", field_name, U64_VAL(value));
+ 	else	
+-		return sprintf(buf, "%-24s : Not supported\n", field_name);	
++		return seq_printf(seq, "%-24s : Not supported\n", field_name);	
+ }
+ 
+ /* LAN group 0100h - LAN Historical statistics (scalar) */
+@@ -2661,10 +2834,9 @@
+ /* LAN group 0182h - Optional Non Media Specific Transmit Historical Statistics (scalar) */
+ /* LAN group 0183h - Optional Non Media Specific Receive Historical Statistics (scalar) */
+ 
+-int i2o_proc_read_lan_hist_stats(char *buf, char **start, off_t offset, int len,
+-				 int *eof, void *data)
++int i2o_seq_show_lan_hist_stats(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	int token;
+ 
+ 	struct
+@@ -2729,34 +2901,30 @@
+ 		u64 icmp_validate_errors;
+ 	} chksum_stats;			// 0x0184
+ 
+-	spin_lock(&i2o_proc_lock);	
+-	len = 0;
+-
+ 	token = i2o_query_scalar(d->controller, d->lct_data.tid,
+ 				 0x0100, -1, &stats, sizeof(stats));
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0x100 LAN Statistics");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token, "0x100 LAN Statistics");
++		return 0;
+ 	}
+ 
+-	len += sprintf(buf+len, "Tx packets       : " FMT_U64_HEX "\n",
++	seq_printf(seq, "Tx packets       : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&stats.tx_packets));
+-	len += sprintf(buf+len, "Tx bytes         : " FMT_U64_HEX "\n",
++	seq_printf(seq, "Tx bytes         : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&stats.tx_bytes));
+-	len += sprintf(buf+len, "Rx packets       : " FMT_U64_HEX "\n",
++	seq_printf(seq, "Rx packets       : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&stats.rx_packets));
+-	len += sprintf(buf+len, "Rx bytes         : " FMT_U64_HEX "\n",
++	seq_printf(seq, "Rx bytes         : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&stats.rx_bytes));
+-	len += sprintf(buf+len, "Tx errors        : " FMT_U64_HEX "\n",
++	seq_printf(seq, "Tx errors        : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&stats.tx_errors));
+-	len += sprintf(buf+len, "Rx errors        : " FMT_U64_HEX "\n",
++	seq_printf(seq, "Rx errors        : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&stats.rx_errors));
+-	len += sprintf(buf+len, "Rx dropped       : " FMT_U64_HEX "\n",
++	seq_printf(seq, "Rx dropped       : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&stats.rx_dropped));
+-	len += sprintf(buf+len, "Adapter resets   : " FMT_U64_HEX "\n",
++	seq_printf(seq, "Adapter resets   : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&stats.adapter_resets));
+-	len += sprintf(buf+len, "Adapter suspends : " FMT_U64_HEX "\n",
++	seq_printf(seq, "Adapter suspends : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&stats.adapter_suspends));
+ 
+ 	/* Optional statistics follows */
+@@ -2766,9 +2934,8 @@
+ 				 0x0180, -1, &supp_groups, sizeof(supp_groups));
+ 	
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token, "0x180 LAN Supported Optional Statistics");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token, "0x180 LAN Supported Optional Statistics");
++		return 0; 
+ 	}
+ 
+ 	if (supp_groups[1]) /* 0x0182 */
+@@ -2777,30 +2944,29 @@
+ 				 	0x0182, -1, &tx_stats, sizeof(tx_stats));
+ 
+ 		if (token < 0) {
+-			len += i2o_report_query_status(buf+len, token,"0x182 LAN Optional Tx Historical Statistics");
+-			spin_unlock(&i2o_proc_lock);
+-			return len;
++			i2o_report_query_status(seq, token,"0x182 LAN Optional Tx Historical Statistics");
++			return 0;
+ 		}
+ 
+-		len += sprintf(buf+len, "==== Optional TX statistics (group 0182h)\n");
++		seq_printf(seq, "==== Optional TX statistics (group 0182h)\n");
+ 
+-		len += i2o_report_opt_field(buf+len, "Tx RetryCount",
++		i2o_report_opt_field(seq, "Tx RetryCount",
+ 					0, supp_groups[1], &tx_stats.tx_retries);
+-		len += i2o_report_opt_field(buf+len, "Tx DirectedBytes",
++		i2o_report_opt_field(seq, "Tx DirectedBytes",
+ 					1, supp_groups[1], &tx_stats.tx_directed_bytes);
+-		len += i2o_report_opt_field(buf+len, "Tx DirectedPackets",
++		i2o_report_opt_field(seq, "Tx DirectedPackets",
+ 					2, supp_groups[1], &tx_stats.tx_directed_packets);
+-		len += i2o_report_opt_field(buf+len, "Tx MulticastBytes",
++		i2o_report_opt_field(seq, "Tx MulticastBytes",
+ 					3, supp_groups[1], &tx_stats.tx_multicast_bytes);
+-		len += i2o_report_opt_field(buf+len, "Tx MulticastPackets",
++		i2o_report_opt_field(seq, "Tx MulticastPackets",
+ 					4, supp_groups[1], &tx_stats.tx_multicast_packets);
+-		len += i2o_report_opt_field(buf+len, "Tx BroadcastBytes",
++		i2o_report_opt_field(seq, "Tx BroadcastBytes",
+ 					5, supp_groups[1], &tx_stats.tx_broadcast_bytes);
+-		len += i2o_report_opt_field(buf+len, "Tx BroadcastPackets",
++		i2o_report_opt_field(seq, "Tx BroadcastPackets",
+ 					6, supp_groups[1], &tx_stats.tx_broadcast_packets);
+-		len += i2o_report_opt_field(buf+len, "Tx TotalGroupAddrPackets",
++		i2o_report_opt_field(seq, "Tx TotalGroupAddrPackets",
+ 					7, supp_groups[1], &tx_stats.tx_group_addr_packets);
+-		len += i2o_report_opt_field(buf+len, "Tx TotalPacketsTooShort",
++		i2o_report_opt_field(seq, "Tx TotalPacketsTooShort",
+ 					8, supp_groups[1], &tx_stats.tx_short_packets);
+ 	}
+ 
+@@ -2809,34 +2975,33 @@
+ 		token = i2o_query_scalar(d->controller, d->lct_data.tid,
+ 					 0x0183, -1, &rx_stats, sizeof(rx_stats));
+ 		if (token < 0) {
+-			len += i2o_report_query_status(buf+len, token,"0x183 LAN Optional Rx Historical Stats");
+-			spin_unlock(&i2o_proc_lock);
+-			return len;
++			i2o_report_query_status(seq, token,"0x183 LAN Optional Rx Historical Stats");
++			return 0;
+ 		}
+ 
+-		len += sprintf(buf+len, "==== Optional RX statistics (group 0183h)\n");
++		seq_printf(seq, "==== Optional RX statistics (group 0183h)\n");
+ 
+-		len += i2o_report_opt_field(buf+len, "Rx CRCErrorCount",
++		i2o_report_opt_field(seq, "Rx CRCErrorCount",
+ 					0, supp_groups[2], &rx_stats.rx_crc_errors);
+-		len += i2o_report_opt_field(buf+len, "Rx DirectedBytes",
++		i2o_report_opt_field(seq, "Rx DirectedBytes",
+ 					1, supp_groups[2], &rx_stats.rx_directed_bytes);
+-		len += i2o_report_opt_field(buf+len, "Rx DirectedPackets",
++		i2o_report_opt_field(seq, "Rx DirectedPackets",
+ 					2, supp_groups[2], &rx_stats.rx_directed_packets);
+-		len += i2o_report_opt_field(buf+len, "Rx MulticastBytes",
++		i2o_report_opt_field(seq, "Rx MulticastBytes",
+ 					3, supp_groups[2], &rx_stats.rx_multicast_bytes);
+-		len += i2o_report_opt_field(buf+len, "Rx MulticastPackets",
++		i2o_report_opt_field(seq, "Rx MulticastPackets",
+ 					4, supp_groups[2], &rx_stats.rx_multicast_packets);
+-		len += i2o_report_opt_field(buf+len, "Rx BroadcastBytes",
++		i2o_report_opt_field(seq, "Rx BroadcastBytes",
+ 					5, supp_groups[2], &rx_stats.rx_broadcast_bytes);
+-		len += i2o_report_opt_field(buf+len, "Rx BroadcastPackets",
++		i2o_report_opt_field(seq, "Rx BroadcastPackets",
+ 					6, supp_groups[2], &rx_stats.rx_broadcast_packets);
+-		len += i2o_report_opt_field(buf+len, "Rx TotalGroupAddrPackets",
++		i2o_report_opt_field(seq, "Rx TotalGroupAddrPackets",
+ 					7, supp_groups[2], &rx_stats.rx_group_addr_packets);
+-		len += i2o_report_opt_field(buf+len, "Rx TotalPacketsTooShort",
++		i2o_report_opt_field(seq, "Rx TotalPacketsTooShort",
+ 					8, supp_groups[2], &rx_stats.rx_short_packets);
+-		len += i2o_report_opt_field(buf+len, "Rx TotalPacketsTooLong",
++		i2o_report_opt_field(seq, "Rx TotalPacketsTooLong",
+ 					9, supp_groups[2], &rx_stats.rx_long_packets);
+-		len += i2o_report_opt_field(buf+len, "Rx TotalPacketsRunt",
++		i2o_report_opt_field(seq, "Rx TotalPacketsRunt",
+ 					10, supp_groups[2], &rx_stats.rx_runt_packets);
+ 	}
+ 	
+@@ -2846,56 +3011,53 @@
+ 				 	0x0184, -1, &chksum_stats, sizeof(chksum_stats));
+ 
+ 		if (token < 0) {
+-			len += i2o_report_query_status(buf+len, token,"0x184 LAN Optional Chksum Historical Stats");
+-			spin_unlock(&i2o_proc_lock);
+-			return len;
++			i2o_report_query_status(seq, token,"0x184 LAN Optional Chksum Historical Stats");
++			return 0;
+ 		}
+ 
+-		len += sprintf(buf+len, "==== Optional CHKSUM statistics (group 0x0184)\n");
++		seq_printf(seq, "==== Optional CHKSUM statistics (group 0x0184)\n");
+ 
+-		len += i2o_report_opt_field(buf+len, "IPv4 Generate",
++		i2o_report_opt_field(seq, "IPv4 Generate",
+ 					0, supp_groups[3], &chksum_stats.ipv4_generate);
+-		len += i2o_report_opt_field(buf+len, "IPv4 ValidateSuccess",
++		i2o_report_opt_field(seq, "IPv4 ValidateSuccess",
+ 					1, supp_groups[3], &chksum_stats.ipv4_validate_success);
+-		len += i2o_report_opt_field(buf+len, "IPv4 ValidateError",
++		i2o_report_opt_field(seq, "IPv4 ValidateError",
+ 					2, supp_groups[3], &chksum_stats.ipv4_validate_errors);
+-		len += i2o_report_opt_field(buf+len, "TCP  Generate",
++		i2o_report_opt_field(seq, "TCP  Generate",
+ 					3, supp_groups[3], &chksum_stats.tcp_generate);
+-		len += i2o_report_opt_field(buf+len, "TCP  ValidateSuccess",
++		i2o_report_opt_field(seq, "TCP  ValidateSuccess",
+ 					4, supp_groups[3], &chksum_stats.tcp_validate_success);
+-		len += i2o_report_opt_field(buf+len, "TCP  ValidateError",
++		i2o_report_opt_field(seq, "TCP  ValidateError",
+ 					5, supp_groups[3], &chksum_stats.tcp_validate_errors);
+-		len += i2o_report_opt_field(buf+len, "UDP  Generate",
++		i2o_report_opt_field(seq, "UDP  Generate",
+ 					6, supp_groups[3], &chksum_stats.udp_generate);
+-		len += i2o_report_opt_field(buf+len, "UDP  ValidateSuccess",
++		i2o_report_opt_field(seq, "UDP  ValidateSuccess",
+ 					7, supp_groups[3], &chksum_stats.udp_validate_success);
+-		len += i2o_report_opt_field(buf+len, "UDP  ValidateError",
++		i2o_report_opt_field(seq, "UDP  ValidateError",
+ 					8, supp_groups[3], &chksum_stats.udp_validate_errors);
+-		len += i2o_report_opt_field(buf+len, "RSVP Generate",
++		i2o_report_opt_field(seq, "RSVP Generate",
+ 					9, supp_groups[3], &chksum_stats.rsvp_generate);
+-		len += i2o_report_opt_field(buf+len, "RSVP ValidateSuccess",
++		i2o_report_opt_field(seq, "RSVP ValidateSuccess",
+ 					10, supp_groups[3], &chksum_stats.rsvp_validate_success);
+-		len += i2o_report_opt_field(buf+len, "RSVP ValidateError",
++		i2o_report_opt_field(seq, "RSVP ValidateError",
+ 					11, supp_groups[3], &chksum_stats.rsvp_validate_errors);
+-		len += i2o_report_opt_field(buf+len, "ICMP Generate",
++		i2o_report_opt_field(seq, "ICMP Generate",
+ 					12, supp_groups[3], &chksum_stats.icmp_generate);
+-		len += i2o_report_opt_field(buf+len, "ICMP ValidateSuccess",
++		i2o_report_opt_field(seq, "ICMP ValidateSuccess",
+ 					13, supp_groups[3], &chksum_stats.icmp_validate_success);
+-		len += i2o_report_opt_field(buf+len, "ICMP ValidateError",
++		i2o_report_opt_field(seq, "ICMP ValidateError",
+ 					14, supp_groups[3], &chksum_stats.icmp_validate_errors);
+ 	}
+ 
+-	spin_unlock(&i2o_proc_lock);
+-	return len;
++	return 0;
+ }
+ 
+ /* LAN group 0200h - Required Ethernet Statistics (scalar) */
+ /* LAN group 0280h - Optional Ethernet Statistics Supported (scalar) */
+ /* LAN group 0281h - Optional Ethernet Historical Statistics (scalar) */
+-int i2o_proc_read_lan_eth_stats(char *buf, char **start, off_t offset,
+-				int len, int *eof, void *data)
++int i2o_seq_show_lan_eth_stats(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	int token;
+ 
+ 	struct
+@@ -2918,33 +3080,29 @@
+ 		u64 tx_heartbeat_failure;	
+ 	} hist_stats;
+ 
+-	spin_lock(&i2o_proc_lock);	
+-	len = 0;
+-
+ 	token = i2o_query_scalar(d->controller, d->lct_data.tid,
+ 				 0x0200, -1, &stats, sizeof(stats));
+ 
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0x0200 LAN Ethernet Statistics");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token, "0x0200 LAN Ethernet Statistics");
++		return 0;
+ 	}
+ 
+-	len += sprintf(buf+len, "Rx alignment errors    : " FMT_U64_HEX "\n",
++	seq_printf(seq, "Rx alignment errors    : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&stats.rx_align_errors));
+-	len += sprintf(buf+len, "Tx one collisions      : " FMT_U64_HEX "\n",
++	seq_printf(seq, "Tx one collisions      : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&stats.tx_one_collisions));
+-	len += sprintf(buf+len, "Tx multicollisions     : " FMT_U64_HEX "\n",
++	seq_printf(seq, "Tx multicollisions     : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&stats.tx_multiple_collisions));
+-	len += sprintf(buf+len, "Tx deferred            : " FMT_U64_HEX "\n",
++	seq_printf(seq, "Tx deferred            : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&stats.tx_deferred));
+-	len += sprintf(buf+len, "Tx late collisions     : " FMT_U64_HEX "\n",
++	seq_printf(seq, "Tx late collisions     : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&stats.tx_late_collisions));
+-	len += sprintf(buf+len, "Tx max collisions      : " FMT_U64_HEX "\n",
++	seq_printf(seq, "Tx max collisions      : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&stats.tx_max_collisions));
+-	len += sprintf(buf+len, "Tx carrier lost        : " FMT_U64_HEX "\n",
++	seq_printf(seq, "Tx carrier lost        : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&stats.tx_carrier_lost));
+-	len += sprintf(buf+len, "Tx excessive deferrals : " FMT_U64_HEX "\n",
++	seq_printf(seq, "Tx excessive deferrals : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&stats.tx_excessive_deferrals));
+ 
+ 	/* Optional Ethernet statistics follows  */
+@@ -2954,9 +3112,8 @@
+ 				 0x0280, -1, &supp_fields, sizeof(supp_fields));
+ 
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0x0280 LAN Supported Optional Ethernet Statistics");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token, "0x0280 LAN Supported Optional Ethernet Statistics");
++		return 0;
+ 	}
+ 
+ 	if (supp_fields) /* 0x0281 */
+@@ -2965,31 +3122,28 @@
+ 					 0x0281, -1, &stats, sizeof(stats));
+ 
+ 		if (token < 0) {
+-			len += i2o_report_query_status(buf+len, token,"0x0281 LAN Optional Ethernet Statistics");
+-			spin_unlock(&i2o_proc_lock);
+-			return len;
++			i2o_report_query_status(seq, token, "0x0281 LAN Optional Ethernet Statistics");
++			return 0;
+ 		}
+ 
+-		len += sprintf(buf+len, "==== Optional ETHERNET statistics (group 0x0281)\n");
++		seq_printf(seq, "==== Optional ETHERNET statistics (group 0x0281)\n");
+ 
+-		len += i2o_report_opt_field(buf+len, "Rx Overrun",
++		i2o_report_opt_field(seq, "Rx Overrun",
+ 					0, supp_fields, &hist_stats.rx_overrun);
+-		len += i2o_report_opt_field(buf+len, "Tx Underrun",
++		i2o_report_opt_field(seq, "Tx Underrun",
+ 					1, supp_fields, &hist_stats.tx_underrun);
+-		len += i2o_report_opt_field(buf+len, "Tx HeartbeatFailure",
++		i2o_report_opt_field(seq, "Tx HeartbeatFailure",
+ 					2, supp_fields, &hist_stats.tx_heartbeat_failure);
+ 	}
+ 
+-	spin_unlock(&i2o_proc_lock);
+-	return len;
++	return 0;
+ }
+ 
+ /* LAN group 0300h - Required Token Ring Statistics (scalar) */
+ /* LAN group 0380h, 0381h - Optional Statistics not yet defined (TODO) */
+-int i2o_proc_read_lan_tr_stats(char *buf, char **start, off_t offset,
+-			       int len, int *eof, void *data)
++int i2o_seq_show_lan_tr_stats(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	static u64 work64[13];
+ 	int token;
+ 
+@@ -3013,54 +3167,48 @@
+ 		"Signal Loss"
+ 	};
+ 
+-	spin_lock(&i2o_proc_lock);	
+-	len = 0;
+-
+ 	token = i2o_query_scalar(d->controller, d->lct_data.tid,
+ 				 0x0300, -1, &work64, sizeof(work64));
+ 
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0x0300 Token Ring Statistics");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token, "0x0300 Token Ring Statistics");
++		return 0;
+ 	}
+ 
+-	len += sprintf(buf,     "LineErrors          : " FMT_U64_HEX "\n",
++	seq_printf(seq, "LineErrors          : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&work64[0]));
+-	len += sprintf(buf+len, "LostFrames          : " FMT_U64_HEX "\n",
++	seq_printf(seq, "LostFrames          : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&work64[1]));
+-	len += sprintf(buf+len, "ACError             : " FMT_U64_HEX "\n",
++	seq_printf(seq, "ACError             : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&work64[2]));
+-	len += sprintf(buf+len, "TxAbortDelimiter    : " FMT_U64_HEX "\n",
++	seq_printf(seq, "TxAbortDelimiter    : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&work64[3]));
+-	len += sprintf(buf+len, "BursErrors          : " FMT_U64_HEX "\n",
++	seq_printf(seq, "BursErrors          : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&work64[4]));
+-	len += sprintf(buf+len, "FrameCopiedErrors   : " FMT_U64_HEX "\n",
++	seq_printf(seq, "FrameCopiedErrors   : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&work64[5]));
+-	len += sprintf(buf+len, "FrequencyErrors     : " FMT_U64_HEX "\n",
++	seq_printf(seq, "FrequencyErrors     : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&work64[6]));
+-	len += sprintf(buf+len, "InternalErrors      : " FMT_U64_HEX "\n",
++	seq_printf(seq, "InternalErrors      : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&work64[7]));
+-	len += sprintf(buf+len, "LastRingStatus      : %s\n", ring_status[work64[8]]);
+-	len += sprintf(buf+len, "TokenError          : " FMT_U64_HEX "\n",
++	seq_printf(seq, "LastRingStatus      : %s\n", ring_status[work64[8]]);
++	seq_printf(seq, "TokenError          : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&work64[9]));
+-	len += sprintf(buf+len, "UpstreamNodeAddress : " FMT_U64_HEX "\n",
++	seq_printf(seq, "UpstreamNodeAddress : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&work64[10]));
+-	len += sprintf(buf+len, "LastRingID          : " FMT_U64_HEX "\n",
++	seq_printf(seq, "LastRingID          : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&work64[11]));
+-	len += sprintf(buf+len, "LastBeaconType      : " FMT_U64_HEX "\n",
++	seq_printf(seq, "LastBeaconType      : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&work64[12]));
+ 
+-	spin_unlock(&i2o_proc_lock);
+-	return len;
++	return 0;
+ }
+ 
+ /* LAN group 0400h - Required FDDI Statistics (scalar) */
+ /* LAN group 0480h, 0481h - Optional Statistics, not yet defined (TODO) */
+-int i2o_proc_read_lan_fddi_stats(char *buf, char **start, off_t offset,
+-				 int len, int *eof, void *data)
++int i2o_seq_show_lan_fddi_stats(struct seq_file *seq, void *v)
+ {
+-	struct i2o_device *d = (struct i2o_device*)data;
++	struct i2o_device *d = (struct i2o_device*)seq->private;
+ 	static u64 work64[11];
+ 	int token;
+ 
+@@ -3107,39 +3255,34 @@
+ 		"Maintenance"
+ 	};
+ 
+-	spin_lock(&i2o_proc_lock);
+-	len = 0;
+-
+ 	token = i2o_query_scalar(d->controller, d->lct_data.tid,
+ 				 0x0400, -1, &work64, sizeof(work64));
+ 
+ 	if (token < 0) {
+-		len += i2o_report_query_status(buf+len, token,"0x0400 FDDI Required Statistics");
+-		spin_unlock(&i2o_proc_lock);
+-		return len;
++		i2o_report_query_status(seq, token, "0x0400 FDDI Required Statistics");
++		return 0;
+ 	}
+ 
+-	len += sprintf(buf+len, "ConfigurationState : %s\n", conf_state[work64[0]]);
+-	len += sprintf(buf+len, "UpstreamNode       : " FMT_U64_HEX "\n",
++	seq_printf(seq, "ConfigurationState : %s\n", conf_state[work64[0]]);
++	seq_printf(seq, "UpstreamNode       : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&work64[1]));
+-	len += sprintf(buf+len, "DownStreamNode     : " FMT_U64_HEX "\n",
++	seq_printf(seq, "DownStreamNode     : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&work64[2]));
+-	len += sprintf(buf+len, "FrameErrors        : " FMT_U64_HEX "\n",
++	seq_printf(seq, "FrameErrors        : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&work64[3]));
+-	len += sprintf(buf+len, "FramesLost         : " FMT_U64_HEX "\n",
++	seq_printf(seq, "FramesLost         : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&work64[4]));
+-	len += sprintf(buf+len, "RingMgmtState      : %s\n", ring_state[work64[5]]);
+-	len += sprintf(buf+len, "LCTFailures        : " FMT_U64_HEX "\n",
++	seq_printf(seq, "RingMgmtState      : %s\n", ring_state[work64[5]]);
++	seq_printf(seq, "LCTFailures        : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&work64[6]));
+-	len += sprintf(buf+len, "LEMRejects         : " FMT_U64_HEX "\n",
++	seq_printf(seq, "LEMRejects         : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&work64[7]));
+-	len += sprintf(buf+len, "LEMCount           : " FMT_U64_HEX "\n",
++	seq_printf(seq, "LEMCount           : " FMT_U64_HEX "\n",
+ 		       U64_VAL(&work64[8]));
+-	len += sprintf(buf+len, "LConnectionState   : %s\n",
++	seq_printf(seq, "LConnectionState   : %s\n",
+ 		       link_state[work64[9]]);
+ 
+-	spin_unlock(&i2o_proc_lock);
+-	return len;
++	return 0;
+ }
+ 
+ static int i2o_proc_create_entries(void *data, i2o_proc_entry *pentry,
+@@ -3153,12 +3296,7 @@
+ 		if(!ent) return -1;
+ 
+ 		ent->data = data;
+-		ent->read_proc = pentry->read_proc;
+-		ent->write_proc = pentry->write_proc;
+-		if(pentry->fops_proc)
+-			ent->proc_fops = pentry->fops_proc;
+-
+-		ent->nlink = 1;
++		ent->proc_fops = pentry->fops;
+ 
+ 		pentry++;
+ 	}
+@@ -3198,10 +3336,10 @@
+ 		sprintf(buff, "%0#5x", dev->lct_data.tid);
+ 
+ 		dir1 = proc_mkdir(buff, dir);
+-		dev->proc_entry = dir1;
+ 
+ 		if(!dir1)
+ 			printk(KERN_INFO "i2o_proc: Could not allocate proc dir\n");
++		dev->proc_entry = dir1;
+ 
+ 		i2o_proc_add_device(dev, dir1);
+ 	}
+@@ -3225,7 +3363,6 @@
+ 		printk(KERN_WARNING "i2o: Could not allocate procdir!\n");
+ 		return;
+ 	}
+-
+ 	i2o_proc_add_device(d, d->proc_entry);
+ }
+ 
+@@ -3273,14 +3410,11 @@
+ 	for(dev=pctrl->devices; dev; dev=dev->next)
+ 		i2o_proc_remove_device(dev);
+ 
+-	if(!atomic_read(&pctrl->proc_entry->count))
+-	{
+-		sprintf(buff, "iop%d", pctrl->unit);
++	sprintf(buff, "iop%d", pctrl->unit);
+ 
+-		i2o_proc_remove_entries(generic_iop_entries, pctrl->proc_entry);
+-		remove_proc_entry(buff, parent);
+-		pctrl->proc_entry = NULL;
+-	}
++	i2o_proc_remove_entries(generic_iop_entries, pctrl->proc_entry);
++	remove_proc_entry(buff, parent);
++	pctrl->proc_entry = NULL;
+ }
+ 
+ void i2o_proc_remove_device(struct i2o_device *dev)
+@@ -3292,7 +3426,7 @@
+ 
+ 	i2o_device_notify_off(dev, &i2o_proc_handler);
+ 	/* Would it be safe to remove _files_ even if they are in use? */
+-	if((de) && (!atomic_read(&de->count)))
++	if(de)
+ 	{
+ 		i2o_proc_remove_entries(generic_dev_entries, de);
+ 		switch(dev->lct_data.class_id)
+@@ -3340,6 +3474,7 @@
+ 	i2o_proc_dir_root = proc_mkdir("i2o", NULL);
+ 	if(!i2o_proc_dir_root)
+ 		return -1;
++	
+ 	i2o_proc_dir_root->owner = THIS_MODULE;
+ 
+ 	for(i = 0; i < MAX_I2O_CONTROLLERS; i++)
+@@ -3370,12 +3505,7 @@
+ 		}
+ 	}
+ 
+-	if(!atomic_read(&i2o_proc_dir_root->count))
+-		remove_proc_entry("i2o", NULL);
+-	else
+-		return -1;
+-
+-	return 0;
++	remove_proc_entry("i2o", NULL);
+ }
+ 
+ int __init i2o_proc_init(void)
