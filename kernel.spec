@@ -44,6 +44,7 @@ Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
 Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
 Source10:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
+#Source11:
 Source12:	linux-2.4.20-aacraid.tar.bz2
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -779,6 +780,9 @@ BuildKernel() {
 		cat %{SOURCE1669} >> arch/%{base_arch}/defconfig
 		cat %{SOURCE1670} >> arch/%{base_arch}/defconfig
 	fi
+%ifnarch %{ix86}
+		cat "# CONFIG_IP_NF_MATCH_FUZZY is not set">> arch/%{base_arch}/defconfig
+%endif		
 %ifarch i386
 	mv -f arch/%{base_arch}/defconfig arch/%{base_arch}/defconfig.orig
 	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
