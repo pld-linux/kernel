@@ -4,8 +4,6 @@
 #		- add distcc support (and don't break crossbuild!)
 #		- fix vserver against new grsec
 #		- backport patch78 (expand-stack-race).
-#		- fix SMP version - it looks for modules in /lib/modules/2.6.X-Y
-#		  instead of 2.6.X-Ysmp
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -55,7 +53,7 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.98
+%define		_rel		0.99
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -110,7 +108,7 @@ Source91:	%{name}-grsec+pax.config
 Source92:	%{name}-vserver.config
 
 Patch0:		2.6.0-ksyms-add.patch
-
+Patch1:		linux-2.6-version.patch
 Patch2:		2.6.0-t6-usb-irq.patch
 Patch3:		2.6.0-t7-memleak-lkml.patch
 Patch4:		2.6.0-t7-memleak2-lkml.patch
@@ -526,7 +524,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %endif
 
 %patch0 -p1
-
+%patch1 -p0
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
@@ -897,11 +895,6 @@ ln -sf vmlinuz-%{version}-%{release} /boot/efi/vmlinuz
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
 
-if [ ! -L /lib/modules/%{version} ] ; then
-	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave > /dev/null 2>&1
-fi
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release} /lib/modules/%{version}
 %depmod %{version}-%{release}
 
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}.gz %{version}-%{release}
@@ -913,13 +906,6 @@ if [ -x /sbin/rc-boot ] ; then
 fi
 
 %postun
-if [ -L /lib/modules/%{version} ]; then
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $10 }'`" = "%{version}-%{release}" ]; then
-		if [ "$1" = "0" ]; then
-			rm -f /lib/modules/%{version}
-		fi
-	fi
-fi
 rm -f %{initrd_dir}/initrd-%{version}-%{release}.gz
 
 %post drm
@@ -961,11 +947,6 @@ ln -sf vmlinuz-%{version}-%{release}smp /boot/efi/vmlinuz
 ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}smp /boot/System.map
 
-if [ ! -L /lib/modules/%{version} ] ; then
-	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave > /dev/null 2>&1
-fi
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release}smp /lib/modules/%{version}
 %depmod %{version}-%{release}smp
 
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
@@ -977,13 +958,6 @@ if [ -x /sbin/rc-boot ] ; then
 fi
 
 %postun smp
-if [ -L /lib/modules/%{version} ]; then
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $10 }'`" = "%{version}-%{release}smp" ]; then
-		if [ "$1" = "0" ]; then
-			rm -f /lib/modules/%{version}
-		fi
-	fi
-fi
 rm -f %{initrd_dir}/initrd-%{version}-%{release}smp.gz
 
 %post smp-drm
