@@ -1002,7 +1002,6 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/i2c
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/isa
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/pci
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/synth
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/usb
 %endif 
@@ -1065,7 +1064,6 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/i2c
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/isa
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/pci
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/synth
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/usb
 %endif 
@@ -1162,7 +1160,6 @@ fi
 /lib/modules/%{version}-%{release}/kernel/sound/i2c
 /lib/modules/%{version}-%{release}/kernel/sound/isa
 /lib/modules/%{version}-%{release}/kernel/sound/pci
-/lib/modules/%{version}-%{release}/kernel/sound/pcmcia
 /lib/modules/%{version}-%{release}/kernel/sound/synth
 /lib/modules/%{version}-%{release}/kernel/sound/usb
 %endif			
@@ -1186,7 +1183,6 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/sound/i2c
 /lib/modules/%{version}-%{release}smp/kernel/sound/isa
 /lib/modules/%{version}-%{release}smp/kernel/sound/pci
-/lib/modules/%{version}-%{release}smp/kernel/sound/pcmcia
 /lib/modules/%{version}-%{release}smp/kernel/sound/synth
 /lib/modules/%{version}-%{release}smp/kernel/sound/usb
 %endif 
