@@ -6528,7 +6528,7 @@ diff -urN linux-2.4.22.org/include/linux/sched.h linux-2.4.22/include/linux/sche
 -	unsigned long sleep_time;
 +	unsigned int cpu;
 +	int prio, static_prio;
-+	list_t run_list;
++	struct list_head run_list;
 +	prio_array_t *array;
  
 -	struct task_struct *next_task, *prev_task;
@@ -7552,7 +7552,7 @@ diff -urN linux-2.4.22.org/kernel/sched.c linux-2.4.22/kernel/sched.c
 +struct prio_array {
 +	int nr_active;
 +	unsigned long bitmap[BITMAP_SIZE];
-+	list_t queue[MAX_PRIO];
++	struct list_head queue[MAX_PRIO];
 +};
  
 -#define idle_task(cpu) (init_tasks[cpu_number_map(cpu)])
@@ -7575,7 +7575,7 @@ diff -urN linux-2.4.22.org/kernel/sched.c linux-2.4.22/kernel/sched.c
 +	long last_jiffy;
 +	int prev_nr_running[NR_CPUS];
 +	task_t *migration_thread;
-+	list_t migration_queue;
++	struct list_head migration_queue;
 +#endif
 +} ____cacheline_aligned;
  
@@ -8420,7 +8420,7 @@ diff -urN linux-2.4.22.org/kernel/sched.c linux-2.4.22/kernel/sched.c
 +	task_t *tmp;
 +	runqueue_t *busiest, *rq_src;
 +	prio_array_t *array;
-+	list_t *head, *curr;
++	struct list_head *head, *curr;
 +	int resched;
  
  	/*
@@ -8781,7 +8781,7 @@ diff -urN linux-2.4.22.org/kernel/sched.c linux-2.4.22/kernel/sched.c
 +	task_t *prev, *next;
 +	runqueue_t *rq;
 +	prio_array_t *array;
-+	list_t *queue;
++	struct list_head *queue;
 +	int idx;
 +
 +	if (unlikely(in_interrupt()))
@@ -9590,7 +9590,7 @@ diff -urN linux-2.4.22.org/kernel/sched.c linux-2.4.22/kernel/sched.c
 + */
 +
 +typedef struct {
-+	list_t list;
++	struct list_head list;
 +	task_t *task;
 +	struct completion done;
 +} migration_req_t;
