@@ -43,7 +43,7 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.101
+%define		_rel		0.102
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -193,6 +193,8 @@ Patch300:	%{name}-hotfixes.patch
 Patch301:	%{name}-gcc4.patch
 Patch302:	linux-2.6-scsi-block.patch
 Patch303:	linux-2.6-ntfs-printk-DoS.patch
+Patch304:	linux-2.6-radeonfb-fix-rom-enable-disable.patch
+Patch305:	linux-2.6-radeonfb-fix-section-usage.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -606,6 +608,8 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch301 -p1
 %patch302 -p1
 %patch303 -p1
+%patch304 -p1
+%patch305 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
