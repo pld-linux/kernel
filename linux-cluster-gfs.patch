@@ -35469,7 +35469,7 @@ diff -urN linux-orig/include/linux/gfs_ondisk.h linux-patched/include/linux/gfs_
 +
 diff -urN linux-orig/fs/gfs_locking/lock_dlm/group.c linux-patched/fs/gfs_locking/lock_dlm/group.c
 --- linux-orig/fs/gfs_locking/lock_dlm/group.c	1970-01-01 07:30:00.000000000 +0730
-+++ linux-patched/fs/gfs_locking/lock_dlm/group.c	2004-07-13 18:57:22.000000000 +0800
++++ linux-patched/fs/gfs_locking/lock_dlm/group.c	2004-07-29 11:39:37.000000000 +0800
 @@ -0,0 +1,771 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -36244,8 +36244,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/group.c linux-patched/fs/gfs_lockin
 +};
 diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking/lock_dlm/lock.c
 --- linux-orig/fs/gfs_locking/lock_dlm/lock.c	1970-01-01 07:30:00.000000000 +0730
-+++ linux-patched/fs/gfs_locking/lock_dlm/lock.c	2004-07-13 18:57:22.000000000 +0800
-@@ -0,0 +1,592 @@
++++ linux-patched/fs/gfs_locking/lock_dlm/lock.c	2004-07-29 11:39:37.000000000 +0800
+@@ -0,0 +1,599 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -36489,6 +36489,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +	lp->lockname = *name;
 +	lp->dlm = dlm;
 +	lp->cur = DLM_LOCK_IV;
++	lp->lvb = NULL;
 +	init_completion(&lp->uast_wait);
 +	*lpp = lp;
 +	return 0;
@@ -36525,12 +36526,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +{
 +	dlm_lock_t *lp = (dlm_lock_t *) lock;
 +
-+	/*
-+	if (lp->cur != DLM_LOCK_IV)
-+		do_unlock(lp);
-+	*/
++	DLM_ASSERT(!lp->lvb,);
 +
-+	/* FIXME: get rid of these checks */
 +	spin_lock(&lp->dlm->async_lock);
 +	if (test_bit(LFL_CLIST, &lp->flags)) {
 +		printk("lock_dlm: dlm_put_lock lp on clist num=%x,%"PRIx64"\n",
@@ -36538,8 +36535,10 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +		list_del(&lp->clist);
 +	}
 +	if (test_bit(LFL_BLIST, &lp->flags)) {
++		/*
 +		printk("lock_dlm: dlm_put_lock lp on blist num=%x,%"PRIx64"\n",
 +		       lp->lockname.ln_type, lp->lockname.ln_number);
++		*/
 +		list_del(&lp->blist);
 +	}
 +	if (test_bit(LFL_DLIST, &lp->flags)) {
@@ -36559,15 +36558,19 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +
 +void do_dlm_unlock(dlm_lock_t *lp)
 +{
++	unsigned int lkf = 0;
 +	int error;
 +
 +	set_bit(LFL_DLM_UNLOCK, &lp->flags);
 +	set_bit(LFL_WAIT_COMPLETE, &lp->flags);
 +
-+	log_debug("un %x,%"PRIx64" id %x cur %d", lp->lockname.ln_type,
-+		  lp->lockname.ln_number, lp->lksb.sb_lkid, lp->cur);
++	if (lp->lvb)
++		lkf = DLM_LKF_VALBLK;
 +
-+	error = dlm_unlock(lp->dlm->gdlm_lsp, lp->lksb.sb_lkid, 0, &lp->lksb,
++	log_debug("un %x,%"PRIx64" id %x cur %d %x", lp->lockname.ln_type,
++		  lp->lockname.ln_number, lp->lksb.sb_lkid, lp->cur, lkf);
++
++	error = dlm_unlock(lp->dlm->gdlm_lsp, lp->lksb.sb_lkid, lkf, &lp->lksb,
 +			    (void *) lp);
 +
 +	DLM_ASSERT(!error, printk("%s: error=%d num=%x,%"PRIx64"\n",
@@ -36577,6 +36580,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +
 +void do_dlm_unlock_sync(dlm_lock_t *lp)
 +{
++	set_bit(LFL_UNLOCK_SYNC, &lp->flags);
 +	init_completion(&lp->uast_wait);
 +	do_dlm_unlock(lp);
 +	wait_for_completion(&lp->uast_wait);
@@ -36688,16 +36692,16 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +{
 +	dlm_lock_t *lp = (dlm_lock_t *) lock;
 +
-+	/*
-+	check_cur_state(lp, cur_state);
-+	lp->req = DLM_LOCK_NL;
-+	lp->lkf = make_flags(lp, 0, lp->cur, lp->req);
-+	do_dlm_lock(lp, NULL);
-+	*/
-+
-+	if (lp->cur == DLM_LOCK_IV)
-+		return 0;
-+	do_dlm_unlock(lp);
++	if (lp->lvb) {
++		check_cur_state(lp, cur_state);
++		lp->req = DLM_LOCK_NL;
++		lp->lkf = make_flags(lp, 0, lp->cur, lp->req);
++		do_dlm_lock(lp, NULL);
++	} else {
++		if (lp->cur == DLM_LOCK_IV)
++			return 0;
++		do_dlm_unlock(lp);
++	}
 +	return LM_OUT_ASYNC;
 +}
 +
@@ -36774,6 +36778,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +void lm_dlm_unhold_lvb(lm_lock_t *lock, char *lvb)
 +{
 +	dlm_lock_t *lp = (dlm_lock_t *) lock;
++
++	if (lp->cur == DLM_LOCK_NL)
++		do_dlm_unlock_sync(lp);
 +	kfree(lvb);
 +	lp->lvb = NULL;
 +	lp->lksb.sb_lvbptr = NULL;
@@ -36840,8 +36847,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock.c linux-patched/fs/gfs_locking
 +}
 diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock_dlm.h linux-patched/fs/gfs_locking/lock_dlm/lock_dlm.h
 --- linux-orig/fs/gfs_locking/lock_dlm/lock_dlm.h	1970-01-01 07:30:00.000000000 +0730
-+++ linux-patched/fs/gfs_locking/lock_dlm/lock_dlm.h	2004-07-13 18:57:22.000000000 +0800
-@@ -0,0 +1,332 @@
++++ linux-patched/fs/gfs_locking/lock_dlm/lock_dlm.h	2004-07-29 11:39:37.000000000 +0800
+@@ -0,0 +1,345 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -36888,6 +36895,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock_dlm.h linux-patched/fs/gfs_loc
 +#define LOCK_DLM_STRNAME_BYTES	(24)
 +
 +#define LOCK_DLM_MAX_NODES	(128)
++
++#define DROP_LOCKS_COUNT	(10000)
++#define DROP_LOCKS_TIME		(60)
 +
 +struct dlm;
 +struct dlm_lock;
@@ -36937,6 +36947,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock_dlm.h linux-patched/fs/gfs_loc
 +
 +	wait_queue_head_t	wait;
 +	atomic_t		threads;
++	atomic_t		lock_count;
++	unsigned long		drop_time;
 +
 +	int			mg_local_id;
 +	int			mg_last_start;
@@ -36988,6 +37000,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock_dlm.h linux-patched/fs/gfs_loc
 +#define LFL_SLIST               12
 +#define LFL_IDLOCK              13
 +#define LFL_CANCEL              14
++#define LFL_UNLOCK_SYNC		15
 +
 +struct dlm_lock {
 +	dlm_t *			dlm;
@@ -37148,10 +37161,16 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock_dlm.h linux-patched/fs/gfs_loc
 +#define log_debug(fmt, args...)
 +#endif
 +
++static inline int check_timeout(unsigned long stamp, unsigned int seconds)
++{
++    return time_after(jiffies, stamp + seconds * HZ);
++}
++
 +#define DLM_ASSERT(x, do) \
 +{ \
 +  if (!(x)) \
 +  { \
++    dlm_debug_dump(); \
 +    lock_dlm_debug_dump(); \
 +    printk("\nlock_dlm:  Assertion failed on line %d of file %s\n" \
 +           "lock_dlm:  assertion:  \"%s\"\n" \
@@ -37159,6 +37178,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock_dlm.h linux-patched/fs/gfs_loc
 +	   __LINE__, __FILE__, #x, jiffies); \
 +    {do} \
 +    printk("\n"); \
++    BUG(); \
 +    panic("lock_dlm:  Record message above and reboot.\n"); \
 +  } \
 +}
@@ -37176,7 +37196,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/lock_dlm.h linux-patched/fs/gfs_loc
 +#endif
 diff -urN linux-orig/fs/gfs_locking/lock_dlm/main.c linux-patched/fs/gfs_locking/lock_dlm/main.c
 --- linux-orig/fs/gfs_locking/lock_dlm/main.c	1970-01-01 07:30:00.000000000 +0730
-+++ linux-patched/fs/gfs_locking/lock_dlm/main.c	2004-07-13 18:57:22.000000000 +0800
++++ linux-patched/fs/gfs_locking/lock_dlm/main.c	2004-07-29 11:39:37.000000000 +0800
 @@ -0,0 +1,192 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -37372,8 +37392,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/main.c linux-patched/fs/gfs_locking
 +MODULE_LICENSE("GPL");
 diff -urN linux-orig/fs/gfs_locking/lock_dlm/mount.c linux-patched/fs/gfs_locking/lock_dlm/mount.c
 --- linux-orig/fs/gfs_locking/lock_dlm/mount.c	1970-01-01 07:30:00.000000000 +0730
-+++ linux-patched/fs/gfs_locking/lock_dlm/mount.c	2004-07-13 18:57:22.000000000 +0800
-@@ -0,0 +1,335 @@
++++ linux-patched/fs/gfs_locking/lock_dlm/mount.c	2004-07-29 11:39:37.000000000 +0800
+@@ -0,0 +1,337 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -37580,6 +37600,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/mount.c linux-patched/fs/gfs_lockin
 +	INIT_LIST_HEAD(&dlm->resources);
 +
 +	init_waitqueue_head(&dlm->wait);
++	atomic_set(&dlm->lock_count, 0);
++	dlm->drop_time = jiffies;
 +
 +	INIT_LIST_HEAD(&dlm->mg_nodes);
 +	init_MUTEX(&dlm->mg_nodes_lock);
@@ -37711,7 +37733,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/mount.c linux-patched/fs/gfs_lockin
 +};
 diff -urN linux-orig/fs/gfs_locking/lock_dlm/plock.c linux-patched/fs/gfs_locking/lock_dlm/plock.c
 --- linux-orig/fs/gfs_locking/lock_dlm/plock.c	1970-01-01 07:30:00.000000000 +0730
-+++ linux-patched/fs/gfs_locking/lock_dlm/plock.c	2004-07-13 18:57:22.000000000 +0800
++++ linux-patched/fs/gfs_locking/lock_dlm/plock.c	2004-07-29 11:39:37.000000000 +0800
 @@ -0,0 +1,1033 @@
 +/******************************************************************************
 +*******************************************************************************
@@ -38748,8 +38770,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/plock.c linux-patched/fs/gfs_lockin
 +
 diff -urN linux-orig/fs/gfs_locking/lock_dlm/thread.c linux-patched/fs/gfs_locking/lock_dlm/thread.c
 --- linux-orig/fs/gfs_locking/lock_dlm/thread.c	1970-01-01 07:30:00.000000000 +0730
-+++ linux-patched/fs/gfs_locking/lock_dlm/thread.c	2004-07-13 18:57:22.000000000 +0800
-@@ -0,0 +1,385 @@
++++ linux-patched/fs/gfs_locking/lock_dlm/thread.c	2004-07-29 11:39:37.000000000 +0800
+@@ -0,0 +1,398 @@
 +/******************************************************************************
 +*******************************************************************************
 +**
@@ -38847,13 +38869,14 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/thread.c linux-patched/fs/gfs_locki
 +			lp->cur = DLM_LOCK_IV;
 +			lp->req = DLM_LOCK_IV;
 +			lp->lksb.sb_lkid = 0;
++			atomic_dec(&dlm->lock_count);
 +		}
 +
-+		/*
++		if (!test_and_clear_bit(LFL_UNLOCK_SYNC, &lp->flags))
++			goto out;
++
 +		complete(&lp->uast_wait);
 +		return;
-+		*/
-+		goto out;
 +	}
 +
 +	/*
@@ -38910,7 +38933,8 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/thread.c linux-patched/fs/gfs_locki
 +		lp->req = lp->prev_req;
 +		lp->prev_req = DLM_LOCK_IV;
 +		lp->lkf &= ~DLM_LKF_CONVDEADLK;
-+		lp->lkf |= DLM_LKF_QUECVT;
++		if (!(lp->lkf & DLM_LKF_EXPEDITE))
++			lp->lkf |= DLM_LKF_QUECVT;
 +
 +		set_bit(LFL_NOCACHE, &lp->flags);
 +
@@ -38982,6 +39006,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/thread.c linux-patched/fs/gfs_locki
 +	    (lp->cur > DLM_LOCK_NL) && (prev_mode > DLM_LOCK_NL))
 +		acb.lc_ret |= LM_OUT_CACHEABLE;
 +
++	if (prev_mode == DLM_LOCK_IV && lp->cur > DLM_LOCK_IV)
++		atomic_inc(&dlm->lock_count);
++
 +	dlm->fscb(dlm->fsdata, LM_CB_ASYNC, &acb);
 +}
 +
@@ -39020,7 +39047,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/thread.c linux-patched/fs/gfs_locki
 +	dlm_t *dlm = (dlm_t *) data;
 +	dlm_lock_t *lp = NULL;
 +	dlm_start_t *ds = NULL;
-+	uint8_t complete, blocking, submit, start, finish;
++	uint8_t complete, blocking, submit, start, finish, drop;
 +	DECLARE_WAITQUEUE(wait, current);
 +
 +	daemonize("lock_dlm");
@@ -39034,7 +39061,7 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/thread.c linux-patched/fs/gfs_locki
 +		remove_wait_queue(&dlm->wait, &wait);
 +		current->state = TASK_RUNNING;
 +
-+		complete = blocking = submit = start = finish = 0;
++		complete = blocking = submit = start = finish = drop = 0;
 +
 +		spin_lock(&dlm->async_lock);
 +
@@ -39062,6 +39089,11 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/thread.c linux-patched/fs/gfs_locki
 +			finish = 1;
 +		}
 +
++		if (check_timeout(dlm->drop_time, DROP_LOCKS_TIME)) {
++			dlm->drop_time = jiffies;
++			if (atomic_read(&dlm->lock_count) >= DROP_LOCKS_COUNT)
++				drop = 1;
++		}
 +		spin_unlock(&dlm->async_lock);
 +
 +		if (complete)
@@ -39078,6 +39110,9 @@ diff -urN linux-orig/fs/gfs_locking/lock_dlm/thread.c linux-patched/fs/gfs_locki
 +
 +		else if (finish)
 +			process_finish(dlm);
++
++		if (drop)
++			dlm->fscb(dlm->fsdata, LM_CB_DROPLOCKS, NULL);
 +
 +		schedule();
 +	}
