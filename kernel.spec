@@ -156,7 +156,7 @@ Patch35:	%{name}-pswscancode.patch
 #Patch41:	
 #Patch42:	
 #Patch43:	
-Patch44:	kernel-2.4-NTfix.patch
+#Patch44:	
 # from http://acl.bestbits.at/
 Patch45:	linux-2.4.20-ACL-0.8.54.patch.bz2
 Patch46:	linux-2.4.19-netmos_pci_parallel_n_serial.patch
@@ -254,8 +254,8 @@ Patch911:	linux-2.4.19-SPARC.patch
 Patch913:	linux-2.4.20-no_grsec-pre-netfilter.patch
 Patch914:	linux-2.4.20-MODULE_XXX.patch
 Patch915:	linux-2.4.19-usb-digitalcams.patch
-Patch916:	linux-2.4.19-ksyms-sys_sched_yield-rm.patch
-Patch917:	linux-2.4.19-EXPORT_SYMBOL-netsyms.c-rm.patch
+#Patch916:	
+#Patch917:	
 Patch918:	linux-2.4.20-ext3.patch
 Patch919:	linux-2.4.20-ntfs.patch
 Patch920:	linux-2.4.20-squashfs.patch
@@ -659,21 +659,13 @@ echo Installing WRR Support
 # added missing MODULE_LICENSE, MODULE_DESCRIPTION, MODULE_AUTHOR
 %patch914 -p1
 
-# IDE subsystem
-#%patch43 -p1
-
-# security BUG
-#%patch44 -p1
-
-#%patch916 -p1
-#%{!?_without_grsec:%patch917 -p1}
-
 # ACL support
 echo Added ACL support
 %patch45 -p1
 
 %patch918 -p1
 %patch919 -p1
+
 #squashfs
 %patch920 -p1
 
@@ -687,7 +679,7 @@ echo Added support for V4L2
 #%patch139 -p1
 
 # sysctl controll of /dev/mem
-#%{!?_without_grsec:%patch921 -p1}
+%{!?_without_grsec:%patch921 -p1}
 
 %patch143 -p1
 %patch145 -p1
