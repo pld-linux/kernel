@@ -15,7 +15,7 @@
 %define		no_install_post_compress_modules	1
 #
 %define		pre_version		rc3
-%define		netfilter_snap		20031009
+%define		netfilter_snap		20031121
 %define		i2c_version		2.8.0
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -34,14 +34,10 @@ Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 # Source3-md5:	8ed492197244b6a772270417c66214d3
-Source4:	linux-2.4.22-netfilter-%{netfilter_snap}.tar.gz
-# Source4-md5:	20c49be2eaf88622f52cb985989ac1d7
 Source5:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
 # Source5-md5:	b8f2f7a268a5cb75fabcaec3b5d45fcd
-Source7:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-1.1.2.tar.gz
-# Source7-md5:	2473f345c66683a03ad27ff132d405b7
-Source10:	linux-2.4.20-aacraid.tar.bz2
-# Source10-md5:	3da1f4b229685766cb4f2f5ce242c0d2
+Source7:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-1.1.4.tar.gz
+# Source7-md5:	ea33c28ca1d3afa448b20f337b615b48
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source50:	%{name}-sparc.config
@@ -88,7 +84,6 @@ Patch23:	linux-bigger-printk-buffer.patch
 #Patch26:	linux-xfs-1.3.0pre5.patch.gz
 Patch25:	linux-2.4.23-xfs-2003-11-11.patch.gz
 # http://acl.bestbits.at/
-Patch30:	linux-2.4.21-jfs-xattr.patch
 Patch31:	linux-2.4.21-jfs-acl.patch
 Patch32:	linux-2.4.22-ea+acl+nfsacl-0.8.60.diff.gz
 # http://dl.sourceforge.net/linux-ntfs/
@@ -108,7 +103,7 @@ Patch80:	linux-2.4.22-intermezzo-acl.patch
 # Networking
 
 # new version of netfilter.
-Patch100:	linux-2.4.22-netfilter-%{netfilter_snap}.patch.gz
+Patch100:	linux-2.4.23-netfilter-%{netfilter_snap}.patch.gz
 # http://ebtables.sourceforge.net/
 Patch110:	ebtables-brnf-2_vs_2.4.22.diff.gz
 # http://trash.net/~kaber/imq/
@@ -613,12 +608,9 @@ Este pacote contém documentação para o kernel Linux.
 %prep
 %setup -q -a3 -n linux-2.4.22
 %patch1 -p1
-# JFS 1.1.1
+# new JFS
 rm -fr fs/jfs
 gzip -dc %{SOURCE7} | tar -xf -
-# Adaptec AACRaid new drivers
-rm -fr drivers/scsi/aacraid
-bzip2 -dc %{SOURCE10} | tar -xf - -C drivers/scsi/
 %patch0 -p1
 %patch10 -p1
 %patch12 -p1
@@ -629,9 +621,9 @@ bzip2 -dc %{SOURCE10} | tar -xf - -C drivers/scsi/
 %patch23 -p1
 %patch25 -p1
 #%patch26 -p1
-%patch30 -p1
 %patch32 -p1
-%patch31 -p1
+# XXX: TODO - update patch
+#%patch31 -p1
 # XXX: TODO - update patch
 #%patch40 -p1
 %patch50 -p1
@@ -641,8 +633,7 @@ bzip2 -dc %{SOURCE10} | tar -xf - -C drivers/scsi/
 %patch65 -p1
 %patch70 -p1
 %patch80 -p1
-# XXX: TODO - update patch
-#%patch100 -p1
+%patch100 -p1
 %patch110 -p1
 %patch120 -p1
 %patch125 -p1
