@@ -26,7 +26,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.23
-Release:	0.7
+Release:	0.7.1
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -162,7 +162,10 @@ Patch303:	30_btaudio-2.4.23-pre7.diff
 
 # Win4Lin
 Patch900:	linux-2.4.20-Win4Lin.PLD.patch.bz2
-Patch991:	linux-2.4.20-Win4Lin-mki-adapter.patch.bz2
+Patch901:	linux-2.4.20-Win4Lin-mki-adapter.patch.bz2
+
+# http://openipmi.sourceforge.net/
+Patch950:	linux-2.4.23-ipmi-v27.patch
 
 # Assorted bugfixes
 
@@ -654,6 +657,7 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch301 -p1
 %patch302 -p1
 %patch303 -p1
+%patch950 -p1
 %patch1000 -p1
 %patch1002 -p1
 %patch1003 -p1
@@ -747,7 +751,7 @@ install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 %if %{with win4lin}
 echo Win4Lin patch ...
 %patch900 -p1
-%patch991 -p1
+%patch901 -p1
 %endif
 %endif
 
