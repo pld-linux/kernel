@@ -44,7 +44,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1
+%define		_rel		2
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -175,6 +175,9 @@ Patch110:	linux-2.6-bdi-provide-backing-device-capability-information.patch
 Patch111:	linux-2.6-iriver-backing-device-capability-information-fix.patch
 Patch112:	linux-2.6-sata-sil-corruption-lockup.patch
 Patch113:	linux-2.6-xfrm-policy-destructor.patch
+Patch114:	linux-2.6-dst-cache-overflow.patch
+Patch115:	linux-2.6-invalid-mac-address-after-reboot.patch
+Patch116:	linux-2.6-null-tty-driver-oops.patch
 
 # linux vserver
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
@@ -575,6 +578,9 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch111 -p1
 %patch112 -p1
 %patch113 -p1
+%patch114 -p1
+%patch115 -p1
+%patch116 -p1
 
 %if %{with vserver}
 %patch200 -p1
