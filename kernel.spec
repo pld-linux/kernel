@@ -52,8 +52,8 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_post_ver	%{nil}
-%define		_rel		0.1HEAD
-%define		_cset		20041115_2103
+%define		_rel		0.4HEAD
+%define		_cset		20041222_0104
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -75,12 +75,12 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-%define		_rc	-rc2
+%define		_rc	-rc3
 Source0:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	cbefa7b4012682fe8b5cbb207ecb559c
+# Source0-md5:	a106fbe90fb55448331efeb40d7572a9
 Source1:	%{name}-autoconf.h
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
-# Source4-md5:	d9e5cc45b31620c17436b13fedcc3475
+# Source4-md5:	771942f3fa1918a74c44e18159f09429
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -117,7 +117,7 @@ Patch30:	kernel-vmalloc-reserve.patch
 
 # suspend/resume
 # http://softwaresuspend.berlios.de/
-Patch500:	linux-2.6-software-suspend-2.1.5.patch.gz
+Patch500:	linux-2.6-software-suspend-2.1.5.8.patch.gz
 
 # http://sources.redhat.com/cluster/
 Patch550:	linux-cluster-cman.patch
@@ -769,19 +769,23 @@ PreInstallKernel (){
 
 KERNEL_BUILD_DIR=`pwd`
 
+%if %{with up}
 # UP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig
-%{?with_up:BuildKernel}
-%{?with_up:PreInstallKernel}
+BuildKernel
+PreInstallKernel
+%endif
 
+%if %{with smp}
 # SMP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig smp
-%{?with_smp:BuildKernel smp}
-%{?with_smp:PreInstallKernel smp}
+BuildKernel smp
+PreInstallKernel smp
+%endif
 
 %if %{with BOOT}
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
@@ -828,7 +832,7 @@ done
 
 ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 
-find . ! -name "build-done" ! -name "." -maxdepth 1 -exec cp -a "{}" "$RPM_BUILD_ROOT/usr/src/linux-%{version}/" ";"
+find . -maxdepth 1 ! -name "build-done" ! -name "." -exec cp -a "{}" "$RPM_BUILD_ROOT/usr/src/linux-%{version}/" ";"
 
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
@@ -1224,8 +1228,8 @@ fi
 %defattr(644,root,root,755)
 %dir %{_prefix}/src/linux-%{version}
 %{_prefix}/src/linux-%{version}/include
-%{_prefix}/src/linux-%{version}/config-smp
-%{_prefix}/src/linux-%{version}/config-up
+%{?with_smp:%{_prefix}/src/linux-%{version}/config-smp}
+%{?with_up:%{_prefix}/src/linux-%{version}/config-up}
 
 %files module-build
 %defattr(644,root,root,755)
