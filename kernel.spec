@@ -4,11 +4,12 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.5.24
-Release:	1.0
+Version:	2.5.25
+Release:	1.2
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
+#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
+Source0:        ftp://ftp.task.gda.pl/mirror/ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -21,12 +22,13 @@ Source27:	%{name}-athlon.config
 Source28:	%{name}-athlon-smp.config
 Source30:	%{name}-ppc.config
 
-Patch1: 	http://www.kernel.org/pub/linux/kernel/people/davej/patches/2.5/%{version}/patch-%{version}-dj2.diff.gz
-Patch2:		patch-agp-dj2
+#Patch1: 	http://www.kernel.org/pub/linux/kernel/people/davej/patches/2.5/%{version}/patch-%{version}-dj2.diff.gz
+Patch1:		ftp://ftp.task.gda.pl/mirror/ftp.kernel.org/pub/linux/kernel/people/davej/patches/2.5/2.5.25/patch-2.5.25-dj2.diff.gz
+Patch2:		kernel-agpgart8x0.patch
 Patch3:		patch-ide_exports
+Patch4:		ide-clean-97.diff
+Patch5:		kernel-fslink.patch
 
-#This shit is because now only x86 is supported
-# /shit
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -212,6 +214,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
+%patch4 -p1
+%patch5 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
