@@ -41,8 +41,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.30
-%define		_cset		20040508_0113
+%define		_rel		0.90
+%define		_cset		0
 
 ## netfilter snap 
 %define		_netfilter_snap		20040429
@@ -65,8 +65,8 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc3.tar.bz2
-# Source0-md5:	f3df7688e6c0d4b9feb168835c4193db
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
+# Source0-md5:	5218790bc3db41e77a7422969639a9ad
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -502,7 +502,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}-rc3
+%setup -q -n linux-%{version}
 
 %patch0 -p1
 
@@ -848,7 +848,7 @@ BuildConfig
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig smp
-##%{?with_smp:BuildKernel smp}
+%{?with_smp:BuildKernel smp}
 %{?with_smp:PreInstallKernel smp}
 
 %if %{with BOOT}
