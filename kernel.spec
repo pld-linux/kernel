@@ -98,6 +98,9 @@ Patch35:	patch-uk3
 Patch36:	patch-uk5
 Patch38:	athlon-smp-1
 
+# from LKL 2001.03.06
+Patch39:	epca-fix-missing-unregister-driver.patch
+
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
 ExclusiveOS:	Linux
@@ -353,6 +356,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch35 -p1
 %patch36 -p1
 %patch38 -p1
+%patch39 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -628,6 +632,7 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH34}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH35}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH36}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH38}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH39}
 
 ## SymBios/NCR drivers install
 mv $RPM_BUILD_ROOT/usr/src/linux-%{version}/%{sym_ncr_version}/*.{c,h} $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi
