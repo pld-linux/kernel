@@ -816,10 +816,10 @@ BuildKernel() {
 # make does vmlinux, modules and bzImage at once
 %ifarch sparc sparc64
 %ifarch sparc64
-	%{__make} image\
+	%{__make} image \
 		%{?with_verbose:V=1}
 
-	%{__make} modules\
+	%{__make} modules \
 		%{?with_verbose:V=1}
 %else
 	sparc32 %{__make} \
@@ -849,8 +849,9 @@ PreInstallKernel (){
 
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
+%ifarch %{ix86} amd64
 	install arch/%{_target_base_arch}/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
-
+%endif
 %ifarch alpha sparc sparc64
 	gzip -cfv vmlinux > vmlinuz
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
