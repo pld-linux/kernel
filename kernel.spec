@@ -26,7 +26,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	1.2%{?_with_preemptive:_pr}
+Release:	1.3%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -144,7 +144,7 @@ Patch124:	%{name}-gcc31.patch
 Patch125:	linux-2.4.18-hpfs.patch
 Patch126:	linux-tulip-vlan.patch
 Patch127:	linux-modules-fixed.patch
-#Patch128:	
+Patch128:	hpt3xx.patch
 Patch129:	linux-53c7,8xx-build.fix
 Patch130:	linux-PPC-SMP.patch
 Patch131:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
@@ -469,6 +469,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch125 -p1
 %patch126 -p1
 %patch127 -p1
+%patch128 -p1
 %patch129 -p0
 %patch130 -p0
 %patch131 -p0
