@@ -1,24 +1,3 @@
-This patch against 2.6.9 adds a DAC ownership check to the existing MAC
-permission checks when setting the security.selinux attribute via
-setxattr.  In the past, the MAC permission checks were viewed as
-sufficient for controlling relabeling operations, but experience in the
-Fedora SELinux integration has shown that a DAC check is also
-appropriate here, particularly under targeted policy.
-
-Signed-off-by:  Stephen Smalley <sds@epoch.ncsc.mil>
-
---- linux-2.6.9/security/selinux/hooks.c.orig	2004-10-20 10:32:18.653598056 -0400
-+++ linux-2.6.9/security/selinux/hooks.c	2004-10-20 10:32:39.712396632 -0400
-@@ -2243,6 +2243,9 @@ static int selinux_inode_setxattr(struct
- 	if (sbsec->behavior == SECURITY_FS_USE_MNTPOINT)
- 		return -EOPNOTSUPP;
- 
-+	if ((current->fsuid != inode->i_uid) && !capable(CAP_FOWNER))
-+		return -EPERM;
-+
- 	AVC_AUDIT_DATA_INIT(&ad,FS);
- 	ad.u.fs.dentry = dentry;
- 
 --- linux-2.6.8/drivers/scsi/scsi_sysfs.c.orig	2004-08-14 14:36:42.953272032 +0200
 +++ linux-2.6.8/drivers/scsi/scsi_sysfs.c	2004-08-14 14:36:47.490582256 +0200
 @@ -190,6 +190,7 @@
@@ -53,70 +32,6 @@ linux-new/arch/i386/mm/init.c
  
  DEFINE_PER_CPU(struct mmu_gather, mmu_gathers);
  unsigned long highstart_pfn, highend_pfn;
-diff -uNr linux-2.6.9.orig/arch/i386/kernel/irq.c linux-2.6.9/arch/i386/kernel/irq.c
---- linux-2.6.9/arch/i386/kernel/irq.c.orig	2004-10-20 18:26:32.738937568 +0200
-+++ linux-2.6.9/arch/i386/kernel/irq.c	2004-10-20 18:29:14.241385464 +0200
-@@ -85,7 +85,7 @@
- 		/* build the stack frame on the IRQ stack */
- 		isp = (u32*) ((char*)irqctx + sizeof(*irqctx));
- 		irqctx->tinfo.task = curctx->tinfo.task;
--		irqctx->tinfo.previous_esp = current_stack_pointer();
-+		irqctx->tinfo.previous_esp = current_stack_pointer;
- 
- 		*--isp = (u32) &regs;
- 		*--isp = (u32) irq;
-@@ -168,7 +168,7 @@
- 		curctx = current_thread_info();
- 		irqctx = softirq_ctx[smp_processor_id()];
- 		irqctx->tinfo.task = curctx->task;
--		irqctx->tinfo.previous_esp = current_stack_pointer();
-+		irqctx->tinfo.previous_esp = current_stack_pointer;
- 
- 		/* build the stack frame on the softirq stack */
- 		isp = (u32*) ((char*)irqctx + sizeof(*irqctx));
-diff -uNr linux-2.6.9.orig/include/asm-i386/thread_info.h linux-2.6.9/include/asm-i386/thread_info.h
---- linux-2.6.9/include/asm-i386/thread_info.h.orig	2004-10-20 18:33:35.330693856 +0200
-+++ linux-2.6.9/include/asm-i386/thread_info.h	2004-10-20 18:34:06.293986720 +0200
-@@ -92,12 +92,7 @@
- }
- 
- /* how to get the current stack pointer from C */
--static inline unsigned long current_stack_pointer(void)
--{
--	unsigned long ti;
--	__asm__("movl %%esp,%0; ":"=r" (ti) : );
--	return ti;
--}
-+register unsigned long current_stack_pointer asm("esp");
- 
- /* thread information allocation */
- #ifdef CONFIG_DEBUG_STACK_USAGE
---- linux-2.6.9-bk4-orig/drivers/i2c/busses/i2c-s3c2410.c	2004-10-20 15:50:29.000000000 +0100
-+++ linux-2.6.9-bk4/drivers/i2c/busses/i2c-s3c2410.c	2004-10-20 16:29:03.000000000 +0100
-@@ -36,6 +36,7 @@
- 
- #include <asm/hardware.h>
- #include <asm/irq.h>
-+#include <asm/io.h>
- 
- #include <asm/hardware/clock.h>
- #include <asm/arch/regs-gpio.h>
-@@ -534,7 +535,6 @@
- 
- static struct i2c_algorithm s3c24xx_i2c_algorithm = {
- 	.name			= "S3C2410-I2C-Algorithm",
--	.id			= I2C_ALGO_S3C2410,
- 	.master_xfer		= s3c24xx_i2c_xfer,
- };
- 
-@@ -543,7 +543,6 @@
- 	.wait	= __WAIT_QUEUE_HEAD_INITIALIZER(s3c24xx_i2c.wait),
- 	.adap	= {
- 		.name			= "s3c2410-i2c",
--		.id			= I2C_ALGO_S3C2410,
- 		.algo			= &s3c24xx_i2c_algorithm,
- 		.retries		= 2,
- 	},
 --- linux-2.6.10-rc1/drivers/scsi/Kconfig.orig	2004-10-22 23:40:27.000000000 +0200
 +++ linux-2.6.10-rc1/drivers/scsi/Kconfig	2004-10-31 03:06:57.228702256 +0100
 @@ -374,7 +374,7 @@
@@ -128,27 +43,3 @@ diff -uNr linux-2.6.9.orig/include/asm-i386/thread_info.h linux-2.6.9/include/as
  	help
  	  This is a driver for all SCSI host adapters manufactured by
  	  AdvanSys. It is documented in the kernel source in
---- linux-2.6.10-rc1/fs/Kconfig.orig	2004-11-01 16:07:34.000000000 +0100
-+++ linux-2.6.10-rc1/fs/Kconfig	2004-11-01 17:26:46.952319696 +0100
-@@ -809,8 +809,8 @@
- 	  programs depend on this, so everyone should say Y here.
- 
- config PROC_KCORE
--	bool
--	default y if !ARM
-+	bool "/proc/kcore support" if !ARM
-+	depends on PROC_FS
- 
- config SYSFS
- 	bool "sysfs file system support" if EMBEDDED
---- linux-2.6.10-rc1/include/linux/proc_fs.h.orig	2004-11-01 23:14:17.711749776 +0100
-+++ linux-2.6.10-rc1/include/linux/proc_fs.h	2004-11-01 23:14:22.375040848 +0100
-@@ -227,7 +227,7 @@
- 
- #endif /* CONFIG_PROC_FS */
- 
--#if !defined(CONFIG_PROC_FS)
-+#if !defined(CONFIG_PROC_KCORE)
- static inline void kclist_add(struct kcore_list *new, void *addr, size_t size)
- {
- }
