@@ -119,11 +119,11 @@ Patch3:		2.6.0-t7-memleak-lkml.patch
 Patch4:		2.6.0-t7-memleak2-lkml.patch
 #Patch5:	2.6.0-t8-swap-include-lkml.patch
 Patch6:		2.6.0-t8-VLSI-ix86-lkml.patch
-Patch7:		2.6.0-t8-appletalk-SYSCTL-lkml.patch
+#Patch7:		2.6.0-t8-appletalk-SYSCTL-lkml.patch	-- obsolete
 Patch8:		2.6.0-t8-umsdos-lkml.patch
 Patch9:		2.6.0-t9-acpi_osl-lkml.patch
 Patch10:	2.6.0-t11-AIC_and_db4-lkml.patch
-Patch11:	2.6.8.1-qos-and-routing-conflict.patch
+#Patch11:	2.6.8.1-qos-and-routing-conflict.patch	-- obsolete
 Patch12:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch13:	2.6.2-Initio9100U-Kconfig.patch
 # http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
@@ -140,25 +140,27 @@ Patch23:	2.6.6-xfs-qsort-lkml.patch
 #Patch24:	2.6.7-bridge_sysfs-lkml.patch
 Patch25:	2.6.7-alpha_compile.patch
 Patch26:	2.6.7-ppc-asm-defs.patch
-Patch27:	2.6.7-ppc-cciss-div.patch
+#Patch27:	2.6.7-ppc-cciss-div.patch	-- obsolete
 Patch28:	2.6.7-ppc-ipr-div.patch
 
 #Patch30:	2.6.x-ppp_mppe.patch
-Patch31:	2.6.x-SGI_VW-fbdev-lkml.patch
+#Patch31:	2.6.x-SGI_VW-fbdev-lkml.patch	-- obsolete
 Patch32:	2.6.x-TGA-fbdev-lkml.patch
 Patch33:	linux-kbuild-extmod.patch
 Patch34:	2.6.8-cpu_feature.patch
 
 # framebuffer fixes
-Patch40:	linux-tdfxfb-fillrect.patch
+#Patch40:	linux-tdfxfb-fillrect.patch	-- obsolete
 Patch41:	linux-fbcon-margins.patch
-Patch42:	linux-tdfxfb-interlace+double.patch
+#Patch42:	linux-tdfxfb-interlace+double.patch	-- obsolete
 
 # netfilter
+# NEEDS UPDATE
 Patch50:	2.6.7-pom-ng-%{_netfilter_snap}.patch
 # http://www.barbara.eu.org/~quaker/ipt_account/
 Patch51:	2.6.6-ipt_account.patch
 # http://l7-filter.sourceforge.net/
+# NEEDS UPDATE
 Patch52:	2.6.8-ipt_layer7.patch
 Patch53:	2.6.4-rc1-01-esfq-imq.patch
 Patch54:	2.6.4-rc1-02-imq-nat-support.patch
@@ -176,7 +178,7 @@ Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 # http://www.bootsplash.de/files/bootsplash-3.1.4-sp3-2.6.7.diff
 Patch72:	bootsplash-3.1.4-sp3-2.6.8pld.patch
 Patch73:	squashfs2.0-patch
-# http://dl.sourceforge.net/sourceforge/pramfs/
+# http://dl.sourceforge.net/pramfs/
 Patch74:	pramfs-2.6.4.patch
 Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
 # http://lirc.sourceforge.net/software/snapshots/lirc-0.7.0pre7.tar.bz2
@@ -243,9 +245,15 @@ Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
 Conflicts:	nfs-utils < %{_nfs_utils_ver}
 Conflicts:	procps < %{_procps_ver}
 Conflicts:	oprofile < %{_oprofile_ver}
-ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc amd64
+ExclusiveArch:	%{ix86} alpha amd64 ia64 ppc sparc sparc64
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+
+%ifarch ia64
+%define		initrd_dir	/boot/efi
+%else
+%define		initrd_dir	/boot
+%endif
 
 %description
 This package contains the Linux kernel that is used to boot and run
@@ -569,11 +577,11 @@ zcat %{SOURCE4} | patch -p1 -s
 %patch4 -p1
 #patch5 -p1
 %patch6 -p1
-%patch7 -p1
+
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
-%patch11 -p1
+
 %patch12 -p1
 %patch13 -p1
 %patch14 -p1
@@ -589,18 +597,16 @@ zcat %{SOURCE4} | patch -p1 -s
 #patch24 -p1
 %patch25 -p1
 %patch26 -p1
-%patch27 -p1
+
 %patch28 -p1
 
 #patch30 -p1
-%patch31 -p1
+
 %patch32 -p1
 %patch33 -p1
 %patch34 -p1
 
-%patch40 -p1
 %patch41 -p1
-%patch42 -p1
 
 # netfilter
 %patch50 -p1
@@ -918,10 +924,16 @@ PreInstallKernel (){
 	install vmlinux.aout $KERNEL_INSTALL_DIR/boot/vmlinux.aout-$KernelVer
 %endif
 %endif
-
 %ifarch ppc
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%endif
+%ifarch ia64
+	gzip -cfv vmlinux > vmlinuz
+	install -d $KERNEL_INSTALL_DIR/boot/efi
+#?	install vmlinux $KERNEL_INSTALL_DIR/boot/efi/vmlinux-$KernelVer
+	install vmlinuz $KERNEL_INSTALL_DIR/boot/efi/vmlinuz-$KernelVer
+	ln -sf efi/vmlinuz-$KernelVer $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
 	%{__make} $CrossOpts modules_install \
 		%{?with_verbose:V=1} \
@@ -1029,8 +1041,14 @@ rm -rf $RPM_BUILD_ROOT
 rm -f /lib/modules/%{version}-%{release}/modules.*
 
 %post
+%ifarch ia64
+mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
+%endif
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+%ifarch ia64
+ln -sf vmlinuz-%{version}-%{release} /boot/efi/vmlinuz
+%endif
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
 
@@ -1041,9 +1059,9 @@ rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release} /lib/modules/%{version}
 %depmod %{version}-%{release}
 
-/sbin/geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
-mv -f /boot/initrd /boot/initrd.old
-ln -sf initrd-%{version}-%{release}.gz /boot/initrd
+/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}.gz %{version}-%{release}
+mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old
+ln -sf initrd-%{version}-%{release}.gz %{initrd_dir}/initrd
 
 if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
@@ -1057,7 +1075,7 @@ if [ -L /lib/modules/%{version} ]; then
 		fi
 	fi
 fi
-rm -f /boot/initrd-%{version}-%{release}.gz
+rm -f %{initrd_dir}/initrd-%{version}-%{release}.gz
 
 %post drm
 %depmod %{version}-%{release}
@@ -1087,8 +1105,14 @@ rm -f /boot/initrd-%{version}-%{release}.gz
 rm -f /lib/modules/%{version}-%{release}smp/modules.*
 
 %post smp
+%ifarch ia64
+mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
+%endif
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+%ifarch ia64
+ln -sf vmlinuz-%{version}-%{release}smp /boot/efi/vmlinuz
+%endif
 ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}smp /boot/System.map
 
@@ -1099,9 +1123,9 @@ rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
 %depmod %{version}-%{release}smp
 
-/sbin/geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
-mv -f /boot/initrd /boot/initrd.old
-ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
+/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
+mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old
+ln -sf initrd-%{version}-%{release}smp.gz %{initrd_dir}/initrd
 
 if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
@@ -1115,7 +1139,7 @@ if [ -L /lib/modules/%{version} ]; then
 		fi
 	fi
 fi
-rm -f /boot/initrd-%{version}-%{release}smp.gz
+rm -f %{initrd_dir}/initrd-%{version}-%{release}smp.gz
 
 %post BOOT
 if [ ! -L %{_libdir}/bootdisk/lib/modules/%{version} ] ; then
@@ -1185,6 +1209,9 @@ fi
 %ifarch sparc sparc64
 /boot/vmlinux-%{version}-%{release}
 /boot/vmlinux.aout-%{version}-%{release}
+%endif
+%ifarch ia64
+/boot/efi/vmlinuz-%{version}-%{release}
 %endif
 /boot/vmlinuz-%{version}-%{release}
 /boot/System.map-%{version}-%{release}
@@ -1270,6 +1297,9 @@ fi
 %doc FAQ-pl
 %ifarch alpha sparc sparc64 ppc
 /boot/vmlinux-%{version}-%{release}smp
+%endif
+%ifarch ia64
+/boot/efi/vmlinuz-%{version}-%{release}smp
 %endif
 /boot/vmlinuz-%{version}-%{release}smp
 /boot/System.map-%{version}-%{release}smp
