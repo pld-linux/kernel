@@ -208,6 +208,8 @@ BuildRequires:	automake
 %endif
 Autoreqprov:	no
 
+%define		_kernelsrcdir	/usr/include/linux-%{version}
+
 %description
 This package contains the Linux kernel that is used to boot and run
 your system. It contains few device drivers for specific hardware.
@@ -820,12 +822,12 @@ KERNEL_BUILD_DIR=`pwd`
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed"
 cp -a $KERNEL_INSTALL_DIR/* $RPM_BUILD_ROOT
 
-ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
-ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT%{_includedir}/asm
+ln -sf ../src/linux-%{version}/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
+ln -sf ../src/linux-%{version}/include/asm $RPM_BUILD_ROOT%{_includedir}/asm
 
 bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/
-mv -f $RPM_BUILD_ROOT%{_kernelsrcdir} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-ln -sf linux-%{version} $RPM_BUILD_ROOT%{_kernelsrcdir}
+# mv -f $RPM_BUILD_ROOT%{_kernelsrcdir} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+# ln -sf linux-%{version} $RPM_BUILD_ROOT%{_kernelsrcdir}
 gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
@@ -1009,7 +1011,7 @@ install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
 find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
 while read file ; do
 	mv -f $file $file.old
-	sed -e "s|$RPM_BUILD_ROOT\(/usr/src/linux\)|\1|g" < $file.old > $file
+	sed -e "s|$RPM_BUILD_ROOT\(/usr/src/linux-%{version}\)|\1|g" < $file.old > $file
 	rm -f $file.old
 done
 
