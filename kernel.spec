@@ -1,5 +1,6 @@
 %define		ow_version	2.2.16-ow1
 %define		pcmcia_version	3.1.17
+%define		freeswan_version	1.5
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -49,7 +50,7 @@ Patch4:		ftp://ftp.sime.com/pub/linux/raid-2.2.16-mabene
 # Wiget: WARNING: hand modified patch
 Patch5:		http://republika.pl/bkz/ide.2.2.16.patch.bz2
 Patch6:		%{name}-pldfblogo.patch
-Patch7:		linux-2.2.16-freeswan-1.4.patch
+Patch7:		linux-2.2.16-freeswan-%{freeswan_version}.patch
 Patch8:		wanrouter-v2215.patch.gz
 Patch10:	linux-newagpdist.patch
 Patch11:	linux-agphjlfixes.patch
