@@ -13,6 +13,7 @@
 %bcond_without	up	# don't build UP kernel
 %bcond_without	source	# don't build kernel-source package
 %bcond_with	verbose	# verbose build (V=1)
+%bcond_with	grsec	# add grsec support
 
 %{?debug:%define with_verbose 1}
 
@@ -86,6 +87,8 @@ Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
 
 Source80:	%{name}-netfilter.config
+
+Source90:	%{name}-grsec.config
 
 Patch0:		2.6.0-ksyms-add.patch
 
@@ -182,6 +185,10 @@ Patch84:	2.6.6-serial-fifo-lkml.patch
 Patch86:	2.6.6-NTFS-2.1.9-lkml.patch
 Patch88:	2.6.6-qsort-updated-lkml.patch
 Patch90:	2.6.6-xfs-qsort-lkml.patch
+
+Patch92:	2.6.6-pom-ng-20040429-REJECT-fix.patch
+
+Patch94:	grsecurity-20-2.6.6-unofficial.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -626,6 +633,11 @@ cp drivers/usb/media/libpwcx.a_mipsel drivers/usb/media/libpwcx.a_
 %patch88 -p1
 %patch90 -p1
 
+%patch92 -p1
+
+#grsec
+%{?with_grsec:%patch94 -p1}
+
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's#EXTRAVERSION =.*#EXTRAVERSION =#g' \
@@ -686,6 +698,9 @@ BuildConfig (){
 %endif
 
 	cat %{SOURCE80} >> arch/%{base_arch}/defconfig
+
+#grsec
+%{?with_grsec:cat %{SOURCE90} >> arch/%{base_arch}/defconfig}
 
 	ln -sf arch/%{base_arch}/defconfig .config
 
@@ -948,6 +963,8 @@ echo "CONFIG_M686=y" >> .config
 echo "CONFIG_MK7=y" >> .config
 %endif
 cat %{SOURCE80} >> .config
+#grsec
+%{?with_grsec:cat %{SOURCE90} >> .config}
 
 cp .config config-up
 
@@ -970,6 +987,8 @@ echo "CONFIG_M686=y" >> .config
 echo "CONFIG_MK7=y" >> .config
 %endif
 cat %{SOURCE80} >> .config
+#grsec
+%{?with_grsec:cat %{SOURCE90} >> .config}
 
 cp .config config-smp
 
