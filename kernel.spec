@@ -75,7 +75,7 @@ Patch2:		freeswan-%{freeswan_version}-%{version}.patch.gz
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.17.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
-Patch5:		xfs-2.4.18-02032002.patch.gz
+#Patch5:		xfs-2.4.18-02032002.patch.gz
 # Homepage of ABI : http://linux-abi.sourceforge.net/
 #ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2
 Patch7:		linux-abi-2.4.17.0.patch.bz2
@@ -126,10 +126,10 @@ Patch122:	lvm-%{lvm_version}-%{version}.patch.gz
 Patch123:	xquad_portio.fix
 # 
 Patch124:	linux-proc_net_dev-counter-fix.patch
-Patch125:	linux-%{version}-devfs-v199.7.patch
-Patch126:	linux-%{version}-cramfs.patch
-Patch127:	linux-%{version}-sparc64-fix.patch
-Patch128:	linux-%{version}-AXP-fix.patch
+#Patch125:	linux-%{version}-devfs-v199.7.patch
+#Patch126:	linux-%{version}-cramfs.patch
+#Patch127:	linux-%{version}-sparc64-fix.patch
+#Patch128:	linux-%{version}-AXP-fix.patch
 Patch129:	kernel-Makefile-include-fix.patch
 Patch130:	kernel-2.4.17-netsyms-export-fix.patch
 Patch131:	kernel-2.4.18-personality.patch
@@ -337,7 +337,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch907 -p1
 %patch2 -p1
 %patch4 -p1
-%patch5 -p1
+#%patch5 -p1
 #%patch7 -p1
 #%if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 #%patch14 -p1
