@@ -337,7 +337,7 @@ Patch252:	http://luxik.cdi.cz/~devik/qos/htb/v3/htb_killdbg_2421.diff
 #esfq
 Patch260:	linux-2.4.18-esfq.diff
 
-Patch888:	linux-2.4.20-netfilter-1.2.8_20030914-fix.paych
+Patch888:	linux-2.4.20-netfilter-1.2.8_20030914-fix.patch
 	
 # tweaks for grsecurity, description inside patch
 Patch900:	loop-jari-2.4.20.0.patch
