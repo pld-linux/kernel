@@ -10,7 +10,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.18
-Release:	15
+Release:	16
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -67,6 +67,7 @@ Patch22:	%{name}-wanrouter-bridge.patch
 Patch23:	%{name}-ipsec-bridge.patch
 Patch24:	%{name}-bridge-extraversion.patch
 Patch25:	%{name}-panaview_kbd.patch
+Patch26:	http://people.FreeBSD.org/~gibbs/linux/linux-aic7xxx-6.1.8-2.2.18.patch.gz
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -331,6 +332,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %ifarch %{x86}
 %patch25 -p1
 %endif
+%patch26 -p1
 
 #DAC960-2.2.10
 mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
@@ -543,6 +545,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH24}
 %ifarch %{x86}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH25}
 %endif
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH26}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
 
 tar xfz %{SOURCE8}
