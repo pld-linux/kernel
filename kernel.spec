@@ -54,7 +54,7 @@
 
 %define		_post_ver	%{nil}
 %define		_rel		0.1HEAD
-%define		_cset		20041023_2108
+%define		_cset		20041025_0606
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -81,7 +81,7 @@ Source0:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_
 # Source0-md5:	4689a60980f79a223aca6c2244c456e4
 Source1:	%{name}-autoconf.h
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
-# Source4-md5:	9ba2cd995576af634e6dbb29452d092f
+# Source4-md5:	cd094bec5b098c6a08ee1e6ab70689e8
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
