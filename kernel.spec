@@ -16,7 +16,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	4.3
+Release:	5
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -106,11 +106,12 @@ Patch108:	atm-unresolved.patch
 Patch109:	af-unresolved.patch
 Patch110:	linux-2.2.20-pcmcia-without-iee1394.patch.bz2
 # based on ftp://ftp.kernel.org/people/andrea/kernels/v2.2/2.2.20pre9aa2/40_lfs-2.2.20pre9aa2-27.bz2
-Patch111:	linux-2.2.20-lfs.patch
-Patch112:	%{name}-scripts-include-dir.patch
+Patch111:       linux-2.2.20-lfs.patch
+Patch112:       %{name}-scripts-include-dir.patch
 Patch120:	bttv-makefile.patch
 Patch121:	tulip-patch-0.91.patch.bz2
 Patch122:       bttv-symbols.patch.bz2
+Patch123:	bridge-module_build.patch.bz2
 
 # HTB from http://luxik.cdi.cz/~devik/qos/htb/
 Patch200:	htb2_2.2.17.diff
@@ -314,7 +315,7 @@ Group(de):	Grundsätzlich/Kern
 Group(pl):	Podstawowe/J±dro
 %ifarch %{x86}
 Provides:	%{name}-headers(reiserfs) = %{version}
-Provides:	i2c-devel = 2.6.1
+Provides:	i2c-devel = %{i2c_version}
 %endif
 Provides:	%{name}-headers(ipvs) = %{version}
 Provides:	%{name}-headers(rawio) = %{version}
@@ -476,6 +477,8 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
+%patch123 -p1
+
 %patch111 -p1
 
 %build
@@ -771,6 +774,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < jfs-2.2.common-v%{jfs
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH107}
 
 bzip2 -dc %{PATCH121} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+bzip2 -dc %{PATCH123} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH200}
 
