@@ -506,6 +506,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %ifarch %{ix86}
 %patch914 -p1
 %patch14 -p1
+%patch915 -p1
 %else
 echo "Scheduler din't work on ARCH diffetern than Intel x86"
 %endif
