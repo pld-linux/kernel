@@ -15,6 +15,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 # Source0-md5:	75dc85149b06ac9432106b8941eb9f7b
 Source1:	%{name}-autoconf.h
 Source2:        http://www.openwall.com/linux/linux-%{ow_version}.tar.gz
+# Source2-md5:	24bfc766280cb46aad1c9ff32a840e3a
 Source20:	%{name}-alpha-BOOT.config
 Source21:	%{name}-alpha.config
 Source22:	%{name}-alpha-smp.config
@@ -48,6 +49,7 @@ Patch1:		linux-2.4.22-owl_remove_extraversion.patch
 # with compilation fixes
 #
 Source100:	http://www.netfilter.org/files/patch-o-matic-20030912.tar.bz2
+# Source100-md5:	e6a7c5b00252d9ced0a6b9ab03b032d3
 
 #Patch1:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/linux-2.4/2.4.21/patch-2.4.21-rc6-ac1.bz2
 ExclusiveOS:	Linux
