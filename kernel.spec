@@ -5,7 +5,8 @@ File: kernel.spec
 	kernel-2_4_20-14         last stable 2.4.20 series with security fix
 	djurban-LINUX_2_6        ?
 	ac-2_6_5-1               2.6.5 official kernel
-	LNX26_IX86_PAXGRSEC      ?
+	LNX26_IX86_PAXGRSEC      2.6.5/ix86 nondist kernel with PaX and grsecurity
+	                         (sources only! requires manual build)
 	LINUX_2_5                dead 2.5.x branch
 	LINUX_2_6                2.6.x series on development
 	KERNEL_2_4_for_RA        ?
