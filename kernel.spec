@@ -4,9 +4,9 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J╠dro Linuksa
 Summary(ru):	Ядро Linux
 Summary(uk):	Ядро Linux
-Name:		kernel-vanilla
+Name:		kernel
 Version:	2.4.19
-Release:	0
+Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -21,7 +21,7 @@ Source25:	kernel-i686.config
 Source26:	kernel-i686-smp.config
 Source36:	kernel-ppc.config
 Source37:	kernel-ppc-smp.config
-Source38:	kernel-ppc-BOOT.config
+#Source38:	kernel-ppc-BOOT.config
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -242,7 +242,7 @@ do twojego sprzЙtu.
 ваше власне ядро, яке краще настро╓но на конф╕гурац╕ю вашо╖ машини.
 
 %prep
-%setup -q -n linux
+%setup -q -n linux-%{version}
 
 %build
 BuildKernel() {
@@ -350,6 +350,8 @@ BuildKernel BOOT
 
 %install
 rm -rf $RPM_BUILD_ROOT
+umask 022
+rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT%{_prefix}/{include,src}
 
 KERNEL_BUILD_DIR=`pwd`
@@ -357,23 +359,21 @@ KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed"
 cp -a $KERNEL_INSTALL_DIR/* $RPM_BUILD_ROOT
 
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
-ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT%{_includedir}/asm
+ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 
 bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/
-mv -f $RPM_BUILD_ROOT%{_kernelsrcdir} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-ln -sf linux-%{version} $RPM_BUILD_ROOT%{_kernelsrcdir}
 
-cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
+cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 %{__make} mrproper
-find -name "*~" -print | xargs rm -f
-find -name "*.orig" -print | xargs rm -f
+find  -name "*~" -print | xargs rm -f
+find  -name "*.orig" -print | xargs rm -f
+
 
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
-
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config .config
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
@@ -382,14 +382,13 @@ install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoco
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
-%{__make} symlinks
+#%{__make} symlinks
 %{__make} include/linux/version.h
-%{__make} "`pwd`/include/linux/modversions.h"
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well, after we fix the paths
 
-%{__make} depend
+#%{__make} depend
 find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
 while read file ; do
 	mv $file $file.old
@@ -399,40 +398,32 @@ done
 
 %{__make} clean
 rm -f scripts/mkdep
-rm -rf drivers/char/hfmodem/gentbl
-
-# add a rc-boot info
-#install -d $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/rc-boot/images
-#cat >$RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/rc-boot/images/pld-%{version}-%{release} <<EOF
-#TYPE=linux
-#ROOT=auto
-#KERNEL=/boot/vmlinuz-%{version}-%{release}
-#INITRD=/boot/initrd-%{version}-%{release}.gz
-#EOF
+rm -f drivers/net/hamradio/soundmodem/gentbl
 
 %clean
 rm -rf $RPM_BUILD_ROOT
-rm -rf $RPM_BUILD_DIR/linux-installed
-
+rm -rf $RPM_BUILD_DIR/linux-%{version}-installed
 
 %post
-test ! -f /boot/vmlinuz || mv -f /boot/vmlinuz /boot/vmlinuz.old
-test ! -f /boot/System.map || mv -f /boot/System.map /boot/System.map.old
+mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
+mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
 
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release} /lib/modules/%{version}
-
-depmod -a -F /boot/System.map %{version}-%{release}
-
-geninitrd /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
-test ! -f /boot/initrd || mv -f /boot/initrd /boot/initrd.old
+geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
+mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}.gz /boot/initrd
 
 if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
+
+if [ ! -L /lib/modules/%{version} ] ; then
+	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
+fi
+rm -f /lib/modules/%{version}
+ln -snf %{version}-%{release} /lib/modules/%{version}
+depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
 %post smp
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
@@ -453,16 +444,6 @@ ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
-
-%postun
-if [ -L /lib/modules/%{version} ]; then
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}" ]; then
-		if [ "$1" = "0" ]; then
-			rm -f /lib/modules/%{version}
-		fi
-	fi
-fi
-rm -f /boot/initrd-%{version}-%{release}.gz
 
 %postun smp
 if [ -L /lib/modules/%{version} ]; then
@@ -489,102 +470,46 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%ifarch alpha sparc ppc
-%attr(600,root,root) /boot/vmlinux-%{version}-%{release}
+%ifarch alpha sparc
+/boot/vmlinux-%{version}-%{release}
 %endif
-%attr(600,root,root) /boot/vmlinuz-%{version}-%{release}
-%attr(600,root,root) /boot/System.map-%{version}-%{release}
+/boot/vmlinuz-%{version}-%{release}
+/boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
-#%ifnarch sparc sparc64 ppc
-#/lib/modules/%{version}-%{release}/atm
-#%endif
-/lib/modules/%{version}-%{release}/block
-/lib/modules/%{version}-%{release}/cdrom
-%ifarch sparc sparc64
-/lib/modules/%{version}-%{release}/fc4
-%endif
-/lib/modules/%{version}-%{release}/fs
-/lib/modules/%{version}-%{release}/ieee1394
-/lib/modules/%{version}-%{release}/ipv4
-/lib/modules/%{version}-%{release}/ipv6
-/lib/modules/%{version}-%{release}/misc
-/lib/modules/%{version}-%{release}/net
-/lib/modules/%{version}-%{release}/scsi
-%ifarch %{ix86}
-/lib/modules/%{version}-%{release}/usb
-/lib/modules/%{version}-%{release}/video
-%endif
-#%config(missingok) %{_sysconfdir}/sysconfig/rc-boot/images
+/lib/modules/%{version}-%{release}/kernel
+/lib/modules/%{version}-%{release}/build
+/lib/modules/%{version}-%{release}/modules.dep
+/lib/modules/%{version}-%{release}/modules.*map
+/lib/modules/%{version}-%{release}/modules.generic_string
 
 %files smp
 %defattr(644,root,root,755)
-%ifarch alpha sparc ppc
-%attr(600,root,root) /boot/vmlinux-%{version}-%{release}smp
-%endif
 %attr(600,root,root) /boot/vmlinuz-%{version}-%{release}smp
 %attr(600,root,root) /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
-#%ifnarch sparc sparc64 ppc
-#/lib/modules/%{version}-%{release}smp/atm
-#%endif
-/lib/modules/%{version}-%{release}smp/block
-/lib/modules/%{version}-%{release}smp/cdrom
-%ifarch sparc sparc64
-/lib/modules/%{version}-%{release}/fc4
-%endif
-/lib/modules/%{version}-%{release}smp/fs
-/lib/modules/%{version}-%{release}smp/ieee1394
-/lib/modules/%{version}-%{release}smp/ipv4
-/lib/modules/%{version}-%{release}smp/ipv6
-/lib/modules/%{version}-%{release}smp/misc
-/lib/modules/%{version}-%{release}smp/net
-/lib/modules/%{version}-%{release}smp/scsi
-%ifarch %{ix86}
-/lib/modules/%{version}-%{release}smp/usb
-/lib/modules/%{version}-%{release}smp/video
-%endif
-#%config(missingok) %{_sysconfdir}/sysconfig/rc-boot/images
+/lib/modules/%{version}-%{release}smp/kernel
+/lib/modules/%{version}-%{release}smp/build
+/lib/modules/%{version}-%{release}smp/modules.dep
+/lib/modules/%{version}-%{release}smp/modules.*map
+/lib/modules/%{version}-%{release}smp/modules.generic_string
 
-%ifnarch i586 i686 ppc
+%ifnarch i586 i686 athlon
 %files BOOT
 %defattr(644,root,root,755)
-%ifarch alpha sparc
-%{_libdir}/bootdisk/boot/vmlinux-%{version}
-%endif
 %{_libdir}/bootdisk/boot/vmlinuz-%{version}
 %{_libdir}/bootdisk/boot/System.map-%{version}
 %dir %{_libdir}/bootdisk/lib/modules/%{version}
-#%{_libdir}/bootdisk/lib/modules/%{version}/atm
-%{_libdir}/bootdisk/lib/modules/%{version}/block
-%ifnarch sparc sparc64 alpha
-%{_libdir}/bootdisk/lib/modules/%{version}/cdrom
-%endif
-%{_libdir}/bootdisk/lib/modules/%{version}/fs
-#%{_libdir}/bootdisk/lib/modules/%{version}/ipv4
-%{_libdir}/bootdisk/lib/modules/%{version}/ipv6
-%{_libdir}/bootdisk/lib/modules/%{version}/misc
-%{_libdir}/bootdisk/lib/modules/%{version}/net
-%{_libdir}/bootdisk/lib/modules/%{version}/scsi
-%ifarch %{ix86}
-%{_libdir}/bootdisk/lib/modules/%{version}/usb
-%endif
-#%ifarch i386
-#%{_libdir}/bootdisk/lib/modules/%{version}/pcmcia
-#%endif
+%{_libdir}/bootdisk/lib/modules/%{version}/kernel
+/lib/modules/%{version}-%{release}smp/modules.dep
+/lib/modules/%{version}-%{release}smp/modules.*map
+/lib/modules/%{version}-%{release}smp/modules.generic_string
 %endif
 
 %files headers
 %defattr(644,root,root,755)
-%dir %{_prefix}/src/linux-%{version}
-%{_prefix}/src/linux-%{version}/include
+%dir %{_kernelsrcdir}-%{version}
+%{_kernelsrcdir}-%{version}/include
 %{_includedir}/asm
-#%ifarch sparc sparc64
-#%{_includedir}/asm-sparc*
-#%endif
-%ifarch ppc
-%{_kernelsrcdir}/include/asm-ppc
-%endif
-
 %{_includedir}/linux
 
 %files doc
@@ -593,26 +518,24 @@ fi
 
 %files source
 %defattr(644,root,root,755)
-%{_prefix}/src/linux-%{version}/arch
-#%{_prefix}/src/linux-%{version}/crypto
-%{_prefix}/src/linux-%{version}/drivers
-%{_prefix}/src/linux-%{version}/fs
-%{_prefix}/src/linux-%{version}/init
-%{_prefix}/src/linux-%{version}/ipc
-%{_prefix}/src/linux-%{version}/kernel
-%{_prefix}/src/linux-%{version}/lib
-%{_prefix}/src/linux-%{version}/mm
-%{_prefix}/src/linux-%{version}/modules
-%{_prefix}/src/linux-%{version}/net
-%{_prefix}/src/linux-%{version}/scripts
-#%{_prefix}/src/linux-%{version}/security
-%{_prefix}/src/linux-%{version}/.config
-%{_prefix}/src/linux-%{version}/.depend
-%{_prefix}/src/linux-%{version}/.hdepend
-%{_prefix}/src/linux-%{version}/COPYING
-%{_prefix}/src/linux-%{version}/CREDITS
-%{_prefix}/src/linux-%{version}/MAINTAINERS
-%{_prefix}/src/linux-%{version}/Makefile
-%{_prefix}/src/linux-%{version}/README
-%{_prefix}/src/linux-%{version}/REPORTING-BUGS
-%{_prefix}/src/linux-%{version}/Rules.make
+%{_kernelsrcdir}-%{version}/arch
+%{_kernelsrcdir}-%{version}/drivers
+%{_kernelsrcdir}-%{version}/fs
+%{_kernelsrcdir}-%{version}/init
+%{_kernelsrcdir}-%{version}/ipc
+%{_kernelsrcdir}-%{version}/kernel
+%{_kernelsrcdir}-%{version}/lib
+%{_kernelsrcdir}-%{version}/mm
+%{_kernelsrcdir}-%{version}/net
+%{_kernelsrcdir}-%{version}/scripts
+%{_kernelsrcdir}-%{version}/.config
+#FIXME: this should be on, but not yet
+#%{_kernelsrcdir}-%{version}/.depend
+#%{_kernelsrcdir}-%{version}/.hdepend
+%{_kernelsrcdir}-%{version}/COPYING
+%{_kernelsrcdir}-%{version}/CREDITS
+%{_kernelsrcdir}-%{version}/MAINTAINERS
+%{_kernelsrcdir}-%{version}/Makefile
+%{_kernelsrcdir}-%{version}/README
+%{_kernelsrcdir}-%{version}/REPORTING-BUGS
+%{_kernelsrcdir}-%{version}/Rules.make
