@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		1
+%define		_rel		2
 %define		_test_ver	9
 %define		_cset		20031027_0405
 
@@ -79,7 +79,6 @@ Patch22:	fbdev.diff.gz
 
 Patch28:	2.6.0-t8-clean-mtd-lkml.patch
 Patch32:	2.6.0-t8-swap-include-lkml.patch
-Patch36:	2.6.0-t9-h8300-lkml.patch
 
 # based on http://www.uclinux.org/pub/uClinux/uClinux-2.6.x/linux-2.6.0-test8-uc0.patch.gz
 Patch38:	2.6.0-t8-uc0.patch
@@ -93,8 +92,6 @@ Patch52:	2.6.0-t8-pci_dma_sync_to_device-lkml.patch
 
 Patch54:	2.6.0-t8-ISAPnP-lkml.patch
 
-Patch64:	2.6.0-t8-x86_64-declaration_fix-lkml.patch
-Patch66:	2.6.0-t8-__div64_32-lkml.patch
 Patch68:	2.6.0-t8-umsdos-lkml.patch
 Patch70:	2.6.0-t9-ibmtr_cs-lkml.patch
 Patch72:	2.6.0-t9-NLS-module-lkml.patch
@@ -416,7 +413,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch28 -p1
 %patch32 -p1
-#%%patch36 -p1
 
 %patch38 -p1
 
@@ -428,9 +424,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch52 -p1
 
 %patch54 -p1
-#%%patch64 -p1
 
-#%%patch66 -p1
 %patch68 -p1
 %patch70 -p1
 %patch72 -p1
