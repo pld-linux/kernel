@@ -39,8 +39,8 @@ BuildRoot:	/tmp/%{name}-%{version}-root
 Provides:	module-info
 Autoreqprov:	no
 Obsoletes:	kernel-modules
-ExclusiveArch:	i386 i486 i586 i686 sparc sparc64 alpha
-%ifarch		i386 i486 i586 i686
+ExclusiveArch:	%{ix86} sparc sparc64 alpha
+%ifarch		%{ix86}
 BuildRequires:	bin86
 %endif
 
@@ -163,7 +163,7 @@ Summary(pl):	Kod ¼ród³owy j±dra Linuxa
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Requires:	%{name}-headers = %{version}
-%ifarch i386 i486 i586 i686
+%ifarch %{ix86}
 Requires:	bin86
 %endif
 
@@ -253,7 +253,7 @@ BuildKernel() {
     make oldconfig
     make dep 
     make include/linux/version.h 
-%ifarch i386 i486 i586 i686
+%ifarch %{ix86}
     make bzImage
 %else
     make boot
@@ -261,7 +261,7 @@ BuildKernel() {
     make modules 
     mkdir -p $RPM_BUILD_ROOT/boot
     install -m 644 System.map $RPM_BUILD_ROOT/boot/System.map-$KernelVer
-%ifarch i386 i486 i586 i686
+%ifarch %{ix86}
      cp arch/i386/boot/bzImage $RPM_BUILD_ROOT/boot/vmlinuz-$KernelVer
 %endif
 %ifarch alpha sparc
