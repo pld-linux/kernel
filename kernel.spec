@@ -11,9 +11,11 @@
 %bcond_without source	# don't build kernel-source package
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
-%define		_rel		3
+%bcond_without	oss	# with old OSS 
+
+%define		_rel		1
 %define		_test_ver	7
-%define		_cset		20031014_2306
+%define		_cset		20031017_0506
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -254,6 +256,32 @@ OSS SMP Sound driver.
 %description smp-sound-oss -l pl
 Sterowniki OSS dla maszyn wieloprocesorowych.
 
+%package sound-alsa
+Summary:	ALSA kernel modules
+Summary(pl):	Sterowniki d¼wiêku ALSA
+Group:		Base/Kernel
+PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
+
+%description sound-alsa
+ALSA Sound driver.
+
+%description sound-alsa -l pl
+Sterowniki ALSA.
+
+%package smp-sound-alsa
+Summary:	ALSA SMP kernel modules
+Summary(pl):	Sterowniki d¼wiêku ALSA dla maszyn wieloprocesorowych
+Group:		Base/Kernel
+PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
+
+%description smp-sound-alsa
+ALSA SMP Sound driver.
+
+%description smp-sound-alsa -l pl
+Sterowniki ALSA dla maszyn wieloprocesorowych.
+
 %package headers
 Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra
@@ -413,6 +441,7 @@ BuildConfig (){
 	else
 		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
 	fi
+%{?with_oss:cat $RPM_SOURCE_DIR/kernel-sound-oss.config >> arch/%{base_arch}/defconfig}
 }
 
 BuildKernel() {
@@ -666,16 +695,28 @@ fi
 rm -f /boot/initrd-%{version}-%{release}.gz
 
 %post pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+%depmod %{version}-%{release}
 
 %postun pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release} > /dev/null 2>&1
+%depmod %{version}-%{release}
 
 %post drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+%depmod %{version}-%{release}
 
 %postun drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release} > /dev/null 2>&1
+%depmod %{version}-%{release}
+
+%post sound-oss
+%depmod %{version}-%{release}
+
+%postun sound-oss
+%depmod %{version}-%{release}
+
+%post sound-alsa
+%depmod %{version}-%{release}
+
+%postun sound-alsa
+%depmod %{version}-%{release}
 
 %postun smp
 if [ -L /lib/modules/%{version} ]; then
@@ -688,16 +729,28 @@ fi
 rm -f /boot/initrd-%{version}-%{release}smp.gz
 
 %post smp-pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
+%depmod %{version}-%{release}smp
 
 %postun smp-pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp > /dev/null 2>&1
+%depmod %{version}-%{release}smp
 
 %post smp-drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
+%depmod %{version}-%{release}smp
 
 %postun smp-drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp > /dev/null 2>&1
+%depmod %{version}-%{release}smp
+
+%post smp-sound-oss
+%depmod %{version}-%{release}smp
+
+%postun smp-sound-oss
+%depmod %{version}-%{release}smp
+
+%post smp-sound-alsa
+%depmod %{version}-%{release}smp
+
+%postun smp-sound-alsa
+%depmod %{version}-%{release}smp
 
 %postun BOOT
 if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then
@@ -738,6 +791,10 @@ fi
 #pcmcia stuff
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/netwireless/*_cs.ko
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko
 #drm stuff
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 
@@ -748,6 +805,10 @@ fi
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
+/lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko
+/lib/modules/%{version}-%{release}/kernel/drivers/netwireless/*_cs.ko
+/lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko
+/lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko
 
 %files drm
 %defattr(644,root,root,755)
@@ -767,6 +828,10 @@ fi
 #pcmcia stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/netwireless/*_cs.ko
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko
 #drm stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 /lib/modules/%{version}-%{release}smp/build
@@ -776,6 +841,10 @@ fi
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
+/lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko
+/lib/modules/%{version}-%{release}smp/kernel/drivers/netwireless/*_cs.ko
+/lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko
+/lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko
 
 %files -n kernel-smp-drm
 %defattr(644,root,root,755)
@@ -834,4 +903,28 @@ fi
 %{_prefix}/src/linux-%{version}/Makefile
 %{_prefix}/src/linux-%{version}/README
 %{_prefix}/src/linux-%{version}/REPORTING-BUGS
+%endif
+
+%if %{with oss}
+
+%if %{with up}
+%files sound-oss
+/lib/modules/%{version}-%{release}/kernel/sound/oss
+%endif
+
+%if %{with smp}
+%files smp-sound-oss
+/lib/modules/%{version}-%{release}smp/kernel/sound/oss
+%endif
+
+%endif		## with oss
+
+%if %{with smp}
+%files sound-alsa
+/lib/modules/%{version}-%{release}/kernel/sound/[^core,^oss,^soundcore]*
+%endif
+
+%if %{with smp}
+%files smp-sound-alsa
+/lib/modules/%{version}-%{release}smp/kernel/sound/[^core,^oss,^soundcore]*
 %endif
