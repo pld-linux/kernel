@@ -48,10 +48,9 @@ Patch2:		%{name}-%{version}-dc395-patch-fix.patch
 #Patch3:		%{name}-pldfblogo.patch
 #Patch4:		linux-2.4.0-freeswan-%{freeswan_version}.patch
 #Patch5:		linux-ipv6-addrconf.patch
-Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac9.bz2
-#Patch10:	lids-%{lids_version}-fix.patch # empty
 Patch11:	reiserfs-fix-3.6.patch
 Patch12:	stackguard.patch
+Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac9.bz2
 Patch1000:	linux-2.4-misc.patch
 
 Patch1001:	http://oss.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}-patch.tar.gz
