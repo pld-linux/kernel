@@ -48,11 +48,11 @@ Source100:	%{name}-misc.config
 
 Patch0:		patch-2.6.0-test1-ac2.bz2
 Patch1:		2.6.0-test1-lkml.patch
-
 Patch5:		kernel-2.6.0-test1-axp-alsa.patch
 Patch10:	2.6.0-t1-v850-lkml.patch.bz2
 Patch15:	2.6.0-t1-s390-lkml.patch.bz2
 Patch20:	2.6.0-t1-squashfs.patch
+Patch21:	2.6.0-t1-vesafb.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -291,6 +291,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch15 -p1
 
 %patch20 -p1 
+%patch21 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
