@@ -199,8 +199,8 @@ diff -Naur linux/arch/ppc/kernel/misc.S linux-p/arch/ppc/kernel/misc.S
  	.long sys_ni_syscall		/* 201 - reserved - MacOnLinux - new */
 -	.rept NR_syscalls-201
 +	.long sys_getdents64		/* 202 */
-+	.long sys_fcntl64		/* 203 */
-+	.rept NR_syscalls-203
++	.long sys_fcntl64		/* 204 */
++	.rept NR_syscalls-204
  		.long sys_ni_syscall
  	.endr
 diff -Naur linux/arch/ppc/kernel/syscalls.c linux-p/arch/ppc/kernel/syscalls.c
@@ -1291,20 +1291,20 @@ diff -Naur linux/fs/ext2/file.c linux-p/fs/ext2/file.c
 -	if (((unsigned long) pos + count) > 0x7FFFFFFFUL) {
 -		count = 0x7FFFFFFFL - pos;
 -		if (((ssize_t) count) < 0)
-+ 	/* L-F-S spec 2.2.1.27: */
-+ 	if (!(filp->f_flags & O_LARGEFILE)) {
-+ 		if (pos >= 0x7fffffffULL) /* pos@2G forbidden */
++  	/* L-F-S spec 2.2.1.27: */
++  	if (!(filp->f_flags & O_LARGEFILE)) {
++  		if (pos >= 0x7fffffffULL) /* pos@2G forbidden */
  			return -EFBIG;
-+ 
-+ 		if (pos + count > 0x7fffffffULL)
-+ 			/* Write only until end of allowed region */
-+ 			count = 0x7fffffffULL - pos;
++  
++  		if (pos + count > 0x7fffffffULL)
++  			/* Write only until end of allowed region */
++  			count = 0x7fffffffULL - pos;
  	}
 -#else
-+ 
++
  	{
 -		off_t max = ext2_max_sizes[EXT2_BLOCK_SIZE_BITS(sb)];
-+ 		loff_t max = ext2_max_sizes[EXT2_BLOCK_SIZE_BITS(sb)];
++		loff_t max = ext2_max_sizes[EXT2_BLOCK_SIZE_BITS(sb)];
  
  		if (pos >= max)
  			return -EFBIG;
@@ -1325,20 +1325,21 @@ diff -Naur linux/fs/ext2/file.c linux-p/fs/ext2/file.c
 -				send_sig(SIGXFSZ, current, 0);
 -				return -EFBIG;
 -			}
-+ 	if (limit != RLIM_INFINITY) {
-+ 		if (pos >= limit) {
-+ 			send_sig(SIGXFSZ, current, 0);
-+ 			return -EFBIG;
++  	if (limit != RLIM_INFINITY) {
++  		if (pos >= limit) {
++  			send_sig(SIGXFSZ, current, 0);
++  			return -EFBIG;
  		}
-+ 		if (pos+count > limit)
-+ 			count = limit - pos;
++  		if (pos+count > limit)
++  			count = limit - pos;
  	}
  
  	/*
-@@ -382,15 +359,3 @@
+@@ -381,16 +358,3 @@
+ 		ext2_discard_prealloc (inode);
  	return 0;
  }
- 
+-
 -#if BITS_PER_LONG < 64
 -/*
 - * Called when an inode is about to be open.
@@ -5290,7 +5291,7 @@ diff -Naur linux/include/asm-ppc/unistd.h linux-p/include/asm-ppc/unistd.h
  #define __NR_pciconfig_iobase   200
  #define __NR_multiplexer        201
 +#define __NR_getdents64		202
-+#define __NR_fcntl64		203
++#define __NR_fcntl64		204
  
  #define __NR(n)	#n
  
@@ -7072,14 +7073,14 @@ diff -Naur linux/fs/reiserfs/dir.c linux-p/fs/reiserfs/dir.c
  		    filp->f_pos = next_pos;
  		    if (local_buf != small_buf) {
 diff -Naur linux/fs/reiserfs/inode.c linux-p/fs/reiserfs/inode.c
---- linux/fs/reiserfs/inode.c	Tue Jan 15 00:08:15 2002
-+++ linux-p/fs/reiserfs/inode.c	Tue Jan 15 00:05:40 2002
+--- linux.orig/fs/reiserfs/inode.c	Fri May  3 19:26:06 2002
++++ linux/fs/reiserfs/inode.c	Fri May  3 19:39:28 2002
 @@ -220,10 +220,10 @@
      inode = file->f_dentry->d_inode;
  
      increment_i_read_sync_counter(inode) ;
--    if (has_tail (inode) && tail_offset (inode) < page->offset + PAGE_SIZE) {
-+    if (has_tail (inode) && tail_offset (inode) < page->index + PAGE_SIZE) {
+-    if (has_tail (inode) && (tail_offset (inode) & PAGE_MASK) == page->offset) {
++    if (has_tail (inode) && (tail_offset (inode) & PAGE_MASK) == page->index) {
  	/* there is a tail and it is in this page */
  	memset ((char *)page_address (page), 0, PAGE_SIZE);
 -	read_file_tail (inode, page->offset, (char *)page_address (page), PAGE_SIZE);
