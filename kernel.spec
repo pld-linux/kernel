@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	2.10%{?_with_preemptive:_pr}
+Release:	2.11%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -70,6 +70,7 @@ Source1668:	%{name}-hostap.config
 Source1669:	%{name}-konicawc.config
 Source1670:	%{name}-wrr.config
 Source1671:	%{name}-squashfs.config
+Source1672:	%{name}-ACL.config
 Source1999:	%{name}-preemptive.config
 
 # New features
@@ -126,8 +127,9 @@ Patch39:	linux-2.4.20-rc3-iforce-USB.patch
 Patch40:	linux-2.4.20-rc3-irda-usb-USB.patch
 Patch41:	linux-2.4.20-rc3-isdn-hisax-USB.patch
 Patch42:	linux-2.4.20-rc3-ticable.h-USB.patch
-Patch43:	linux-2.4.20-rc1-IDE.patch
+#Patch43:	linux-2.4.20-rc1-IDE.patch
 Patch44:	kernel-2.4-NTfix.patch
+Patch45:	linux-2.4.19-ACL-0.8.54.patch.bz2
 
 # Assorted bugfixes
 
@@ -626,7 +628,11 @@ echo USB 2.0 Support from Linux-2.4.20-rc1.
 %patch44 -p1
 
 %patch916 -p1
-%patch917 -p1
+%{!?_without_grsec:%patch917 -p1}
+
+# ACL support
+echo Added ACL support
+%patch45 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
@@ -696,6 +702,7 @@ BuildKernel() {
 	cat %{SOURCE1008} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1009} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1671} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1672} >> arch/%{base_arch}/defconfig
 	
 	if [ "$BOOT" = "yes" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
@@ -864,6 +871,7 @@ cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
 cat %{SOURCE1671} >> .config
+cat %{SOURCE1672} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
@@ -906,6 +914,7 @@ cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
 cat %{SOURCE1671} >> .config
+cat %{SOURCE1672} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
@@ -1200,7 +1209,7 @@ fi
 %{!?_without_grsec:%{_prefix}/src/linux-%{version}/grsecurity}
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
-%{_prefix}/src/linux-%{version}/kdb
+#%{_prefix}/src/linux-%{version}/kdb
 %{_prefix}/src/linux-%{version}/kernel
 %{_prefix}/src/linux-%{version}/lib
 %{_prefix}/src/linux-%{version}/mm
