@@ -655,6 +655,9 @@ cp drivers/usb/media/libpwcx.a_ppc drivers/usb/media/libpwcx.a_
 %patch88 -p1
 %patch90 -p1
 
+patch -p1 -s < %{SOURCE4}
+patch -p1 -s < %{SOURCE5}
+
 #grsec
 %ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
 %patch94 -p1
@@ -665,10 +668,6 @@ cp drivers/usb/media/libpwcx.a_ppc drivers/usb/media/libpwcx.a_
 
 %patch100 -p1
 
-%if %{with execshield}
-patch -p1 -s < %{SOURCE4}
-patch -p1 -s < %{SOURCE5}
-%endif
 
 
 # Fix EXTRAVERSION and CC in main Makefile
