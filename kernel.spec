@@ -94,6 +94,7 @@ URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 BuildRequires:	module-init-tools
 Buildrequires:	perl
+BuildRequires:	binutils >= 2.12
 Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Autoreqprov:	no
