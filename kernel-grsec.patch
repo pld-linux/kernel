@@ -619,51 +619,6 @@ diff -uNr linux-2.6.7-rc1.orig/arch/i386/kernel/vmlinux.lds.S linux-2.6.7-rc1/ar
  
    _end = . ;
  
-diff -uNr linux-2.6.7-rc1.orig/arch/i386/mm/fault.c linux-2.6.7-rc1/arch/i386/mm/fault.c
---- linux-2.6.7-rc1.orig/arch/i386/mm/fault.c	2004-05-23 07:53:29.000000000 +0200
-+++ linux-2.6.7-rc1/arch/i386/mm/fault.c	2004-05-25 14:33:57.799573456 +0200
-@@ -21,6 +21,9 @@
- #include <linux/vt_kern.h>		/* For unblank_screen() */
- #include <linux/highmem.h>
- #include <linux/module.h>
-+#include <linux/unistd.h>
-+#include <linux/compiler.h>
-+#include <linux/binfmts.h>
- 
- #include <asm/system.h>
- #include <asm/uaccess.h>
-@@ -209,22 +212,31 @@
-  *	bit 1 == 0 means read, 1 means write
-  *	bit 2 == 0 means kernel, 1 means user-mode
-  */
-+
-+#ifdef CONFIG_PAX_PAGEEXEC
-+static void do_page_fault(struct pt_regs *regs, unsigned long error_code, unsigned long address)
-+#else
- asmlinkage void do_page_fault(struct pt_regs *regs, unsigned long error_code)
-+#endif
- {
- 	struct task_struct *tsk;
- 	struct mm_struct *mm;
- 	struct vm_area_struct * vma;
-+#ifndef CONFIG_PAX_PAGEEXEC
- 	unsigned long address;
-+#endif
- 	unsigned long page;
- 	int write;
- 	siginfo_t info;
- 
-+#ifndef CONFIG_PAX_PAGEEXEC
- 	/* get the address */
- 	__asm__("movl %%cr2,%0":"=r" (address));
- 
- 	/* It's safe to allow irq's after cr2 has been saved */
- 	if (regs->eflags & (X86_EFLAGS_IF|VM_MASK))
- 		local_irq_enable();
-+#endif
- 
- 	tsk = current;
- 
 diff -uNr linux-2.6.7-rc1.orig/arch/i386/mm/init.c linux-2.6.7-rc1/arch/i386/mm/init.c
 --- linux-2.6.7-rc1.orig/arch/i386/mm/init.c	2004-05-23 07:54:29.000000000 +0200
 +++ linux-2.6.7-rc1/arch/i386/mm/init.c	2004-05-25 14:33:57.802573000 +0200
