@@ -485,11 +485,16 @@ Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
 Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra
 Group:		Base/Kernel
+Provides:	i2c-devel = 2.7.0
+Provides:	bttv = 0.7.83
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
-Provides:	i2c-devel = 2.7.0
-Provides:	%{name}_netfilter = 1.2.7a
+Provides:	%{name}(netfilter) = 1.2.7a-%{netfilter_snap}
+Provides:	%{name}(grsecurity) = %{grsec_version}
+Provides:	%{name}(cdrw)
+Provides:	%{name}(cdmrw)
+Provides:	%{name}(hostap)
 Autoreqprov:	no
 
 %description headers
