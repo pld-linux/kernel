@@ -29,7 +29,6 @@ Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{_ver}.tar.bz2
 # Source0-md5:	5218790bc3db41e77a7422969639a9ad
 Source1:	grsecurity-2.0-2.6.6-unofficial.patch
-# Source1-md5:	be087f7e902801ff6368f1cb88d7bbe7
 Source2:	%{name}-config-nondist
 Patch0:		2.6.0-t6-usb-irq.patch
 Patch1:		2.6.0-t7-memleak-lkml.patch
