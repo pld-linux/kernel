@@ -10,9 +10,6 @@
 # _without_grsec	- don't apply grsecurity patch
 # _without_kheaders	- build without support for glibc-kernel-headers
 #
-
-%define _without_grsec 1
-
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
@@ -284,7 +281,7 @@ Patch3011:	linux-2.4.22-gcc33-inline.patch
 # Security patches/fixes
 
 Patch4000:	linux-2.4.22-ow1-stack.patch
-Patch4001:	grsecurity-nopax-2.0-rc2-2.4.21.patch
+Patch4001:	grsecurity-nopax-2.0-rc3-2.4.22.patch
 
 Patch5000:	linux-2.4.22-security.patch
 
