@@ -1255,6 +1255,9 @@ fi
 %if %{with grsec}
 %{_prefix}/src/linux-%{version}/grsecurity
 %endif
+%if %{with mosix}
+%{_prefix}/src/linux-%{version}/hpc
+%endif
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
 %{_prefix}/src/linux-%{version}/kernel
