@@ -48,14 +48,14 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.6.1
-%if "_rc" != "0"
-%if "_cset" != "0"
+%if "%{_rc}" != "0"
+%if "%{_cset}" != "0"
 Release:	1.rc%{_rc}.%{_rel}.cset%{_cset}
 %else
 Release:	1.rc%{_rc}.%{_rel}
 %endif
 %else
-%if "_cset" != "0"
+%if "%{_cset}" != "0"
 Release:	1.%{_rel}.cset%{_cset}
 %else
 Release:	1.%{_rel}
@@ -65,7 +65,7 @@ Release:	1.%{_rel}
 Epoch:		1
 License:	GPL
 Group:		Base/Kernel
-%if "_rc" != "0"
+%if "%{_rc}" != "0"
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc%{_rc}.tar.bz2
 %else
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
