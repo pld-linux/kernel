@@ -12,7 +12,7 @@
 # _without_glibc23	- build without support for glibc-kernel-headers
 #
 
-%define		patch_level	8
+%define		patch_level	10
 %define		_rel		9
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -27,7 +27,7 @@
 %define		evms_version		2.0.0
 %define		ntfs_version		2.1.4a
 %define		drm_xfree_version	4.3.0
-%define		netfilter_snap		20030914
+%define		netfilter_snap		20030605
 %define		iptables_version	1.2.8
 %define		ACL_version		0.8.56
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -730,7 +730,7 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # Netfilter
 %patch8 -p1
-%patch888 -p1
+#%patch888 -p1
 
 %patch32 -p1
 %patch31 -p1
