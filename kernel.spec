@@ -290,7 +290,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
-%patch8 -p1
+#%patch8 -p1
 
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 # Tekram DC395/315 U/UW SCSI host driver
@@ -459,7 +459,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
 
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
 
@@ -636,7 +636,7 @@ fi
 /lib/modules/%{version}-%{release}/misc
 /lib/modules/%{version}-%{release}/net
 /lib/modules/%{version}-%{release}/scsi
-%ifarch %{ix86} alpha
+%ifarch %{ix86}
 /lib/modules/%{version}-%{release}/usb
 /lib/modules/%{version}-%{release}/video
 %endif
@@ -663,7 +663,7 @@ fi
 /lib/modules/%{version}-%{release}smp/misc
 /lib/modules/%{version}-%{release}smp/net
 /lib/modules/%{version}-%{release}smp/scsi
-%ifarch %{ix86} alpha
+%ifarch %{ix86} 
 /lib/modules/%{version}-%{release}smp/usb
 /lib/modules/%{version}-%{release}smp/video
 %endif
@@ -691,7 +691,7 @@ fi
 /lib/modules/%{version}-%{release}BOOT/misc
 /lib/modules/%{version}-%{release}BOOT/net
 /lib/modules/%{version}-%{release}BOOT/scsi
-%ifarch %{ix86} alpha
+%ifarch %{ix86} 
 /lib/modules/%{version}-%{release}/usb
 /lib/modules/%{version}-%{release}/video
 %endif
