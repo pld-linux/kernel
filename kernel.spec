@@ -47,13 +47,11 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-#define		_post_ver	.1
-%define		_post_ver	%{nil}
-%define		_rel		0.111
+%define		_rel		0.1
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
-%define		_netfilter_snap		20041118
+%define		_netfilter_snap		20050311
 %define		_l7_ver			1.0
 
 %define		_enable_debug_packages			0
@@ -68,7 +66,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.6.10%{_post_ver}
+Version:	2.6.11.2
 Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
@@ -77,7 +75,7 @@ Group:		Base/Kernel
 #define		_rc	-rc3
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	cffcd2919d9c8ef793ce1ac07a440eda
+# Source0-md5:	61ade860849e8661f14bd754f5a90986
 Source1:	%{name}-autoconf.h
 
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
@@ -147,7 +145,7 @@ Patch33:	linux-kbuild-extmod.patch
 Patch41:	linux-fbcon-margins.patch
 
 # netfilter
-Patch50:	2.6.10-pom-ng-%{_netfilter_snap}.patch
+Patch50:	linux-2.6-pom-ng-%{_netfilter_snap}.patch
 # http://l7-filter.sourceforge.net/
 Patch52:	%{name}-2.6-layer7-%{_l7_ver}.patch
 Patch53:	2.6.10-esfq.patch
@@ -546,6 +544,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch4 -p1
 #patch5 -p1
 %patch6 -p1
+exit 1
 
 %patch8 -p1
 %patch9 -p1
