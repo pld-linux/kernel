@@ -20,7 +20,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.6
-Release:	1
+Release:	2
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -77,10 +77,10 @@ Patch6:		linux-2.4.7-pre3-xfs-20010709.patch.gz
 # Compressed iso9660 filesystem
 Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/filemap-2.4.4-1.diff.gz
 Patch8:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-2.4.5-pre1-8.diff.gz
-Patch9:		linux-abi-2.4.3.0-PLD.diff
+Patch9:		linux-abi-PLD-2.4.7-pre6.diff
 Patch10:	http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
-Patch11:	linux-grsecurity-1.4-2.4.5-PLD.patch
+Patch11:	linux-grsecurity-1.4-PLD-2.4.7-pre6.patch
 
 # Assorted bugfixes
 
@@ -115,7 +115,7 @@ Patch902:	rl2-include.patch
 #Patch904:	linux-lids-fixpatch.patch
 # patch to fix problem wit ABI and LIDS
 Patch903:	linux-lids-with-abi.patch
-Patch904:	linux-vlan-fixpatch.patch
+Patch904:	linux-vlan-fixpatch-2.4.7-pre6.patch
 
 # Linus's -pre
 Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.7-%{pre_version}.gz
@@ -344,15 +344,15 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch4 -p1
 %patch100 -p1
 #%patch5 -p1
-%patch6 -p1
+#%patch6 -p1 - error 
 %patch7 -p1
 %patch8 -p1
-#%patch9 -p1
+%patch9 -p1
 %patch10 -p1
-#%patch11 -p1
+%patch11 -p1
 
 %patch101 -p0
-%patch102 -p0
+#%patch102 -p0
 %patch103 -p1
 %patch104 -p0
 %patch105 -p0
@@ -378,6 +378,7 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 #patch -p1 -s <linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
 
 # Netfilter
+echo Adding Netfilter
 for i in netfilter-patches/* ; do
 	if [ -f $i -a "$i" != "netfilter-patches/isapplied" ] ; then
 		patch -p1 <$i
@@ -391,6 +392,7 @@ echo -e $ANS | ./runme)
 
 %if %{?_with_lids:1}%{!?_with_lids:0}
 # LIDS
+echo Adding LIDS
 cd lids-%{lids_version}
 %patch903 -p1
 cd ..
@@ -398,6 +400,7 @@ patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
 %endif
 
 # IPVS
+echo Adding IPVS
 for i in ipvs-%{ipvs_version}/*.diff ; do
 	patch -p1 -s <$i
 done
@@ -410,23 +413,27 @@ mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
 
 # Free S/Wan
+echo Adding Free S/Wan
 mv -f net/ipsec/Makefile net/ipsec/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*-g//g' net/ipsec/Makefile.orig > net/ipsec/Makefile
 
-## install NCR/Symbios controler
+# install NCR/Symbios controler
+echo Adding NCR/Symbios controler
 mv %{sym_ncr_version}/*.{c,h} drivers/scsi
 mv %{sym_ncr_version}/{README,ChangeLog}.* Documentation
 rm -rf %{sym_ncr_version}
 
-## install RangeLAN2 driver
+# install RangeLAN2 driver
+#echo Adding RangeLAN2 
 #mv rl2-1.7.1 drivers/net/rl2
 #%patch902 -p1
 
-## 802.1Q VLANs
-#cd vlan.%{vlan_version}
-#%patch904 -p1
-#cd ..
-#patch -p1 -s <vlan.%{vlan_version}/vlan_2.4.patch
+# 802.1Q VLANs
+echo Adding VLANs
+cd vlan.%{vlan_version}
+%patch904 -p1
+cd ..
+patch -p1 -s <vlan.%{vlan_version}/vlan_2.4.patch
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
