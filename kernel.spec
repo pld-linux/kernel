@@ -23,7 +23,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.24
-Release:	0.2
+Release:	0.3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -138,7 +138,6 @@ Patch226:	linux-2.4.18-esfq.diff
 # http://l7-filter.sourceforge.net/
 Patch227:	layer7-kernel2.4patch-v0.4.1a.patch.gz
 
-Patch231:	linux-2.4.21-aic7xxx-mmapio.patch
 Patch235:	linux-2.4.20-audigy.patch.bz2
 Patch240:	linux-2.4.20-ecc.patch
 # i2c - http://secure.netroedge.com/~lm78/
@@ -155,6 +154,10 @@ Patch275:	linux-2.4.20-qla2x00-v6.04.00-fo.patch.gz
 Patch301:	20_v4l2-2.4.23-pre7.diff.gz
 Patch302:	30_bt832-2.4.23-pre7.diff
 Patch303:	30_btaudio-2.4.23-pre7.diff
+
+# AIC7XXX
+# based on http://people.freebsd.org/~gibbs/linux/SRC/aic79xx-linux-2.4-20031222-tar.gz
+Patch350:	linux-2.4.24-aic79xxx-20031222.patch
 
 # I18N stuff
 # Adds a sysctl for controlling the default iocharset
@@ -659,7 +662,6 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch225 -p1
 %patch226 -p1
 %patch227 -p1
-%patch231 -p1
 %patch235 -p1
 %patch240 -p1
 %patch255 -p1
@@ -670,6 +672,7 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch301 -p1
 %patch302 -p1
 %patch303 -p1
+%patch350 -p1
 %patch400 -p1
 %patch950 -p1
 %patch1000 -p1
