@@ -23,7 +23,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.23
-Release:	0.9.4
+Release:	0.9.5
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -66,7 +66,7 @@ Patch21:	linux-2.4.21-uml-o1.patch
 # http://dl.sourceforge.net/user-mode-linux/host-skas3.patch
 Patch22:	linux-2.4.20-uml-host-skas3.patch
 # http://www.kernel.org/pub/linux/kernel/people/jgarzik/libata/
-Patch23:	2.4.23-libata1.patch.bz2
+Patch23:	2.4.23-libata2.patch.bz2
 # missing <linux/mm.h> include in libata-core.c (needed on alpha)
 Patch24:	linux-2.4.23-libata1-include.patch
 
