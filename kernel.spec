@@ -34,11 +34,11 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.31
+%define		_rel		0.32
 %define		_cset		0
 
 ## netfilter snap 
-%define		_netfilter_snap		20040322
+%define		_netfilter_snap		20040330
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/pentium3/i386/;s/amd64/x86_64/')
 
@@ -572,7 +572,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch90 -p1
 
-## netfilter - extra
+# netfilter - extra
 %patch94 -p1
 
 %patch96 -p1
