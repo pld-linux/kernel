@@ -1445,33 +1445,33 @@ diff --new-file -ur linux-2.4.21/init/do_mounts.c linux-2.4.21-squashfs1.3/init/
 --- linux-2.4.21/init/do_mounts.c	Fri Jun 13 15:51:39 2003
 +++ linux-2.4.21-squashfs1.3/init/do_mounts.c	Tue Jul 29 03:15:06 2003
 @@ -15,6 +15,7 @@
- #include <linux/minix_fs.h>
  #include <linux/ext2_fs.h>
  #include <linux/romfs_fs.h>
+ #include <linux/cramfs_fs.h>
 +#include <linux/squashfs_fs.h>
  
  #define BUILD_CRAMDISK
  
 @@ -475,6 +476,7 @@
-  * 	ext2
   *	romfs
+  * 	cram
   * 	gzip
 + * 	squashfs
   */
  static int __init 
  identify_ramdisk_image(int fd, int start_block)
 @@ -483,6 +485,7 @@
- 	struct minix_super_block *minixsb;
  	struct ext2_super_block *ext2sb;
  	struct romfs_super_block *romfsb;
+ 	struct cramfs_super *cramfsb;
 +	struct squashfs_super_block *squashfsb;
  	int nblocks = -1;
  	unsigned char *buf;
  
 @@ -493,6 +496,7 @@
- 	minixsb = (struct minix_super_block *) buf;
  	ext2sb = (struct ext2_super_block *) buf;
  	romfsb = (struct romfs_super_block *) buf;
+ 	cramfsb = (struct cramfs_super *) buf;
 +	squashfsb = (struct squashfs_super_block *) buf;
  	memset(buf, 0xe5, size);
  
@@ -1495,12 +1495,13 @@ diff --new-file -ur linux-2.4.21/init/do_mounts.c linux-2.4.21-squashfs1.3/init/
 diff --new-file -ur linux-2.4.21/lib/Config.in linux-2.4.21-squashfs1.3/lib/Config.in
 --- linux-2.4.21/lib/Config.in	Thu Nov 28 23:53:15 2002
 +++ linux-2.4.21-squashfs1.3/lib/Config.in	Tue Jul 29 03:15:06 2003
-@@ -8,12 +8,14 @@
+@@ -8,14 +8,16 @@
  # Do we need the compression support?
  #
  if [ "$CONFIG_CRAMFS" = "y" -o \
 +     "$CONFIG_SQUASHFS" = "y" -o \
       "$CONFIG_PPP_DEFLATE" = "y" -o \
+      "$CONFIG_CRYPTO_DEFLATE" = "y" -o \
       "$CONFIG_JFFS2_FS" = "y" -o \
       "$CONFIG_ZISOFS_FS" = "y" ]; then
     define_tristate CONFIG_ZLIB_INFLATE y
@@ -1508,5 +1509,6 @@ diff --new-file -ur linux-2.4.21/lib/Config.in linux-2.4.21-squashfs1.3/lib/Conf
    if [ "$CONFIG_CRAMFS" = "m" -o \
 +       "$CONFIG_SQUASHFS" = "m" -o \
         "$CONFIG_PPP_DEFLATE" = "m" -o \
+        "$CONFIG_CRYPTO_DEFLATE" = "m" -o \
         "$CONFIG_JFFS2_FS" = "m" -o \
         "$CONFIG_ZISOFS_FS" = "m" ]; then

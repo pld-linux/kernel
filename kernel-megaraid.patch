@@ -530,20 +530,15 @@ diff -Nur linux-2.4.21.org/drivers/scsi/megaraid.c linux-2.4.21/drivers/scsi/meg
  				}
  			}
  		}
-@@ -4923,9 +4977,10 @@
- 		down(&mimd_ioctl_sem);
- 
+@@ -4923,7 +4977,7 @@
  		if( !scsicmd->result && outlen ) {
--			if (copy_to_user(uaddr, kvaddr, length))
--				ret = -EFAULT;
+ 			if (copy_to_user(uaddr, kvaddr, length)) {
+ 				ret = -EFAULT;
 -				goto out;
-+			if (copy_to_user(uaddr, kvaddr, length)) {
-+				return -EFAULT;
 +				goto out_ioctl_cmd_new;
-+			}
+ 			}
  		}
  
- 		/*
 @@ -4944,7 +4999,8 @@
  			put_user (scsicmd->result, &uioc->mbox[17]);
  		}
