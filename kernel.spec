@@ -2,7 +2,6 @@
 %define		pcmcia_version		3.1.23
 %define		reiserfs_version	3.6.24
 %define		freeswan_version	1.8
-%define		NVIDIA_version		0.9-5
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -22,9 +21,8 @@ Source5:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version
 Source6:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 Source7:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
 Source8:	linux-netfilter-patches-20010107.tar.gz
-Source9:	ftp://ftp1.detonator.nvidia.com/pub/drivers/english/XFree86_40/%{NVIDIA_version}/NVIDIA_kernel-%{NVIDIA_version}.tar.gz
 Source20:	%{name}-i386.config
-Source21:	%{name}-i586-smp.config
+Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
 Source30:	%{name}-i586.config
 Source31:	%{name}-i586-smp.config
@@ -48,9 +46,9 @@ Patch3:		%{name}-pldfblogo.patch
 # patch for console daemon.
 Patch6:		wait_any_vt.diff
 #Patch7:		i8255-chip.patch
-# This will soon become obsolete, NVIDIA is working on new driver
-Patch99:	NVIDIA-linux-2.4.patch
 Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac3.bz2
+
+Patch1000:	linux-2.4-misc.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -258,7 +256,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a4 -a6 -a7 -a8 -a9 -n linux
+%setup -q -a4 -a6 -a7 -a8 -n linux
 %patch100 -p1
 %patch0 -p1
 %patch1 -p1
@@ -266,8 +264,10 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #%patch3 -p1
 #%patch4 -p1
 #%patch5 -p1
-%patch6 -p1
+#%patch6 -p1
 #%patch7 -p1
+
+%patch1000 -p1
 
 #patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 
@@ -278,6 +278,7 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 patch -p1 -s <dc395/dc395-integ24.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
+# Netfilter
 for i in netfilter-patches/* ; do
 	[ -f $i -a "$i" != "netfilter-patches/isapplied" ] && patch -p1 -s <$i
 done
@@ -286,6 +287,21 @@ cd netfilter-patches/patch-o-matic
 ANS=""
 for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
 echo -e $ANS | ./runme)
+
+# Remove -g from drivers/atm/Makefile
+mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
+sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
+
+# Fix EXTRAVERSION and CC in main Makefile
+mv -f Makefile Makefile.orig
+sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
+%ifarch %{ix86} alpha sparc
+    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= egcs/g' \
+%endif
+%ifarch sparc64
+    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
+%endif
+    Makefile.orig >Makefile
 
 %build
 BuildKernel() {
@@ -302,45 +318,31 @@ BuildKernel() {
 	fi
 	cp $RPM_SOURCE_DIR/kernel-$Config.config arch/$RPM_ARCH/defconfig
 
-%ifarch %{ix86}
-	perl -p -i -e "s/-m486//" arch/i386/Makefile
-	perl -p -i -e "s/-DCPU=486/-m486 -DCPU=486/" arch/i386/Makefile
-	perl -p -i -e "s/-DCPU=586/-mpentium -DCPU=586/" arch/i386/Makefile
-	perl -p -i -e "s/-DCPU=686/-mpentiumpro -DCPU=686/" arch/i386/Makefile
-%endif
-
 	%{__make} mrproper
 	ln -sf arch/$RPM_ARCH/defconfig .config
 
 %ifarch sparc
 	sparc32 %{__make} oldconfig
-	sparc32 %{__make} dep 
+	sparc32 %{__make} dep
 %else
 	%{__make} oldconfig
 	%{__make} dep
 %endif
-	make include/linux/version.h 
-
-%ifarch %{ix86} alpha sparc
-	KERNELCC="egcs"
-%endif
-%ifarch sparc64
-	KERNELCC="sparc64-linux-gcc"
-%endif
+	%{__make} include/linux/version.h
 
 %ifarch %{ix86}
-	%{__make} bzImage EXTRAVERSION="-%{release}"
+	%{__make} bzImage
 %else
 %ifarch sparc
-	sparc32 %{__make} boot EXTRAVERSION="-%{release}"
+	sparc32 %{__make} boot
 %else
-	%{__make} boot EXTRAVERSION="-%{release}"
+	%{__make} boot
 %endif
 %endif
 %ifarch sparc
-	sparc32 %{__make} modules EXTRAVERSION="-%{release}"
+	sparc32 %{__make} modules
 %else
-	%{__make} modules EXTRAVERSION="-%{release}"
+	%{__make} modules
 %endif
 
 	mkdir -p $KERNEL_BUILD_DIR-installed/boot
@@ -353,7 +355,9 @@ BuildKernel() {
 	install vmlinux $KERNEL_BUILD_DIR-installed/boot/vmlinux-$KernelVer
 	install vmlinuz $KERNEL_BUILD_DIR-installed/boot/vmlinuz-$KernelVer
 %endif
-     %{__make} INSTALL_MOD_PATH=$KERNEL_BUILD_DIR-installed modules_install KERNELRELEASE=$KernelVer
+     %{__make} modules_install \
+     	INSTALL_MOD_PATH=$KERNEL_BUILD_DIR-installed \
+	KERNELRELEASE=$KernelVer
 }
 
 KERNEL_BUILD_DIR=`pwd`
@@ -386,20 +390,25 @@ install -d $RPM_BUILD_ROOT%{_prefix}/{include,src}
 KERNEL_BUILD_DIR=`pwd`
 cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
 
+for i in "" smp BOOT ; do
+	if [ -e  $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i ] ; then
+		rm -f $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
+		ln -sf /usr/src/linux-%{version} $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
+	fi
+done
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
 
 bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/
 mv -f $RPM_BUILD_ROOT/usr/src/linux $RPM_BUILD_ROOT/usr/src/linux-%{version}
 ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
 
-gzip -dc %{PATCH100} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+bzip2 -dc %{PATCH100} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH1} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH2}
 #patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH3}
 #patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
 #patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
 #patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
 
 #patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
@@ -408,8 +417,38 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
 
 # Tekram DC395/315 U/UW SCSI host driver
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <dc395/dc395-integ22.diff
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH2}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <dc395/dc395-integ24.diff
 install dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi/
+
+# Netfilter
+for i in netfilter-patches/* ; do
+	if [ -f $i -a "$i" != "netfilter-patches/isapplied" ] ; then
+		patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <$i
+	fi
+done
+(KERNEL_DIR=$RPM_BUILD_ROOT/usr/src/linux-%{version} ; export KERNEL_DIR
+cd netfilter-patches/patch-o-matic
+ANS=""
+for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
+echo -e $ANS | ./runme)
+
+# Remove -g from drivers/atm/Makefile
+mv -f $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/atm/Makefile \
+	$RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/atm/Makefile.orig
+sed -e 's/EXTRA_CFLAGS.*//g' $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/atm/Makefile.orig \
+	> $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/atm/Makefile
+
+# Fix EXTRAVERSION and CC in main Makefile
+mv -f $RPM_BUILD_ROOT/usr/src/linux-%{version}/Makefile $RPM_BUILD_ROOT/usr/src/linux-%{version}/Makefile.orig
+sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
+%ifarch %{ix86} alpha sparc
+    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= egcs/g' \
+%endif
+%ifarch sparc64
+    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
+%endif
+    $RPM_BUILD_ROOT/usr/src/linux-%{version}/Makefile.orig >$RPM_BUILD_ROOT/usr/src/linux-%{version}/Makefile
 
 %ifarch sparc sparc64
 ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
