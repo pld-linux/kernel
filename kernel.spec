@@ -12,7 +12,7 @@
 # _without_w4l		- don't build Win4Lin support
 #
 
-%define		patch_level	5
+%define		patch_level	6
 %define		_rel		5
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -24,7 +24,7 @@
 %define		IPperson_version	20020819-2.4.19
 %define		grsec_version		2.0.0
 %define		jfs_version		2.4-1.0.24
-%define		lvm_version		1.0.5
+%define		lvm_version		1.0.7
 %define		evms_version		1.2.1
 %define		ntfs_version		2.1.0a
 %define		drm_xfree_version	4.2.99
@@ -236,7 +236,8 @@ Patch111:	linux-2.4.3-rawio.patch
 #Patch112:
 Patch113:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
-#Patch114:	http://people.sistina.com/~mauelshagen/lvm_patches/lvm_%{lvm_version}+_25.07.2002.patch
+#from ftp://ftp.sistina.com/pub/LVM/1.0/lvm_%{lvm_version}.tar.gz
+Patch114:	linux-2.4.20-LVM-%{lvm_version}.patch.bz2
 #Patch115:	ftp://ftp.kernel.org/pub/linux/kernel/people/sct/ext3/v2.4/ext3-0.9.18-2.4.19pre8.patch
 Patch116:	linux-proc_net_dev-counter-fix.patch
 Patch117:	01-sigxfs-vs-blkdev.patch
@@ -360,7 +361,7 @@ ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 BuildRequires:	bin86
 %endif
 Conflicts:	iptables < 1.2.7a
-Conflicts:	lvm < 1.0.4
+Conflicts:	lvm < 1.0.7
 Conflicts:	xfsprogs < 2.0.0
 Conflicts:	quota < 3.06
 
@@ -408,7 +409,7 @@ Prereq:		modutils
 Prereq:		geninitrd >= 2.21
 Autoreqprov:	no
 Conflicts:	iptables < 1.2.7a
-Conflicts:	lvm < 1.0.4
+Conflicts:	lvm < 1.0.7
 Conflicts:	xfsprogs < 2.0.0
 Conflicts:	quota < 3.06
 
@@ -761,13 +762,16 @@ echo Fixed I810 Sound ...
 
 %patch29 -p1
 
-
 # USB bluesooth
 %patch44 -p1
 
 # vlan patch
-echo updated 3Con drivers for VLAN ...
+echo Updated 3Com drivers for VLAN ...
 %patch47 -p1
+
+# LVM 1.0.7
+echo Added LVM support version %{lvm_version}
+%patch114 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
