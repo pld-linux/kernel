@@ -41,8 +41,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.24
-%define		_cset		20040503_1609
+%define		_rel		0.25
+%define		_cset		6
 
 ## netfilter snap 
 %define		_netfilter_snap		20040429
@@ -68,6 +68,11 @@ Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc3.tar.bz2
 # Source0-md5:	f3df7688e6c0d4b9feb168835c4193db
 Source1:	%{name}-autoconf.h
+%if "%{_cset}" != "0"
+# http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/
+Source2:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}-rc3-bk%{_cset}.gz
+# Source2-md5:	3d6cf688348219237c6372cc7442961c
+%endif
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source30:	%{name}-amd64.config
@@ -85,10 +90,6 @@ Source80:	%{name}-netfilter.config
 
 Patch0:		2.6.0-ksyms-add.patch
 
-%if "%{_cset}" != "0"
-# http://www.kernel.org/pub/linux/kernel/v2.6/testing/cset/
-Patch2:		cset-%{_cset}.txt.gz
-%endif
 
 # from http://dl.sf.net/sourceforge/squashfs/
 Patch4:		squashfs1.3r3-patch
@@ -513,7 +514,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch0 -p1
 
 %if "%{_cset}" != "0"
-%patch2 -p1
+patch -p1 -q < %{SOURCE2}
 %endif
 
 %patch4 -p1
@@ -550,7 +551,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch50 -p1
 
-##%patch56 -p1
+%patch56 -p1
 
 %patch58 -p1
 
