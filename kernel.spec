@@ -67,7 +67,7 @@ Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
-Source1000:	%{name}-lsm.config
+#Source1000:	%{name}-lsm.config
 Source1001:	%{name}-abi.config
 Source1002:	%{name}-addon.config
 Source1003:	%{name}-netfilter.config
@@ -310,7 +310,7 @@ Patch902:	linux-2.4.20-drm-Makefile.patch
 Patch903:	linux-2.4-ppc-procesor.patch
 Patch904:	linux-abi-put_user.patch
 Patch905:	linux-abi-fl_ibcs_to_linux.patch
-Patch906:	linux-2.4.20-LSM.patch.gz
+#Patch906:	linux-2.4.20-LSM.patch.gz
 Patch907:	PPC-grsecurity-pgtable.h.patch
 #Patch908:
 #Patch909:	
@@ -786,8 +786,8 @@ echo Added xattr for JFS ...
 %patch103 -p1
 
 # SLM
-echo Added LSM support...
-%patch906 -p1
+#echo Added LSM support...
+#%patch906 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
