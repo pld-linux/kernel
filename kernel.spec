@@ -4,6 +4,7 @@
 %define		freeswan_version	1.8
 %define		lids_version		1.0.4
 %define		jfs_version		0.1.3
+%define		ipvs_version		0.2.1
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -24,6 +25,8 @@ Source6:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 Source7:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
 Source8:	linux-netfilter-patches-20010108.tar.gz
 Source10:	http://www.lids.org/download/lids-%{lids_version}-%{version}.tar.gz
+#Linux Virtual Server
+Source11:		http://www.linuxvirtualserver.org/software/kernel-%{version}/ipvs-%{ipvs_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -47,9 +50,10 @@ Patch2:		%{name}-%{version}-dc395-patch-fix.patch
 #Patch3:		%{name}-pldfblogo.patch
 #Patch4:		linux-2.4.0-freeswan-%{freeswan_version}.patch
 #Patch5:		linux-ipv6-addrconf.patch
+Patch10:	ipvs-PLD-fix.patch
 Patch11:	reiserfs-fix-3.6.patch
 Patch12:	stackguard.patch
-Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac9.bz2
+Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac10.bz2
 Patch1000:	linux-2.4-misc.patch
 
 Patch1001:	http://oss.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}-patch.tar.gz
@@ -262,7 +266,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a4 -a6 -a7 -a8 -a10 -n linux
+%setup -q -a4 -a6 -a7 -a8 -a10 -a11 -n linux
 %patch100 -p1
 %patch0 -p1
 # conflict with other patches - commented.
@@ -313,6 +317,10 @@ patch -p1 <lids-1.0.4-2.4.0/lids-1.0.4-2.4.0.patch
 
 #i8255 patch
 %patch1003 -p0
+
+# Patch IPVS
+%patch10 -p0
+patch -p1 <ipvs-%{ipvs_version}/linux-2.4.0_kernel_ksyms_c.diff
 
 %build
 BuildKernel() {
