@@ -851,7 +851,7 @@ diff -uNr linux-2.6.4-rc1/net.orig/sched/sch_esfq.c linux-2.6.4-rc1/net/sched/sc
 +
 +static unsigned int esfq_drop(struct Qdisc *sch)
 +{
-+	struct esfq_sched_data *q = (struct esfq_sched_data *)sch->data;
++	struct esfq_sched_data *q = qdisc_priv(sch);
 +	esfq_index d = q->max_depth;
 +	struct sk_buff *skb;
 +
@@ -890,7 +890,7 @@ diff -uNr linux-2.6.4-rc1/net.orig/sched/sch_esfq.c linux-2.6.4-rc1/net/sched/sc
 +static int
 +esfq_enqueue(struct sk_buff *skb, struct Qdisc* sch)
 +{
-+	struct esfq_sched_data *q = (struct esfq_sched_data *)sch->data;
++	struct esfq_sched_data *q = qdisc_priv(sch);
 +	unsigned hash = esfq_hash(q, skb);
 +	unsigned depth = q->depth;
 +	esfq_index x;
@@ -926,7 +926,7 @@ diff -uNr linux-2.6.4-rc1/net.orig/sched/sch_esfq.c linux-2.6.4-rc1/net/sched/sc
 +static int
 +esfq_requeue(struct sk_buff *skb, struct Qdisc* sch)
 +{
-+	struct esfq_sched_data *q = (struct esfq_sched_data *)sch->data;
++	struct esfq_sched_data *q = qdisc_priv(sch);
 +	unsigned hash = esfq_hash(q, skb);
 +	unsigned depth = q->depth;
 +	esfq_index x;
@@ -963,7 +963,7 @@ diff -uNr linux-2.6.4-rc1/net.orig/sched/sch_esfq.c linux-2.6.4-rc1/net/sched/sc
 +static struct sk_buff *
 +esfq_dequeue(struct Qdisc* sch)
 +{
-+	struct esfq_sched_data *q = (struct esfq_sched_data *)sch->data;
++	struct esfq_sched_data *q = qdisc_priv(sch);
 +	struct sk_buff *skb;
 +	unsigned depth = q->depth;
 +	esfq_index a, old_a;
@@ -1009,7 +1009,7 @@ diff -uNr linux-2.6.4-rc1/net.orig/sched/sch_esfq.c linux-2.6.4-rc1/net/sched/sc
 +static void esfq_perturbation(unsigned long arg)
 +{
 +	struct Qdisc *sch = (struct Qdisc*)arg;
-+	struct esfq_sched_data *q = (struct esfq_sched_data *)sch->data;
++	struct esfq_sched_data *q = qdisc_priv(sch);
 +
 +	q->perturbation = net_random()&0x1F;
 +	q->perturb_timer.expires = jiffies + q->perturb_period;
@@ -1022,7 +1022,7 @@ diff -uNr linux-2.6.4-rc1/net.orig/sched/sch_esfq.c linux-2.6.4-rc1/net/sched/sc
 +
 +static int esfq_change(struct Qdisc *sch, struct rtattr *opt)
 +{
-+	struct esfq_sched_data *q = (struct esfq_sched_data *)sch->data;
++	struct esfq_sched_data *q = qdisc_priv(sch);
 +	struct tc_sfq_qopt *ctl = RTA_DATA(opt);
 +	int old_perturb = q->perturb_period;
 +	
@@ -1062,7 +1062,7 @@ diff -uNr linux-2.6.4-rc1/net.orig/sched/sch_esfq.c linux-2.6.4-rc1/net/sched/sc
 +
 +static int esfq_init(struct Qdisc *sch, struct rtattr *opt)
 +{
-+	struct esfq_sched_data *q = (struct esfq_sched_data *)sch->data;
++	struct esfq_sched_data *q = qdisc_priv(sch);
 +	struct tc_sfq_qopt *ctl;
 +	esfq_index p = ~0UL/2;
 +	int i;
@@ -1156,7 +1156,7 @@ diff -uNr linux-2.6.4-rc1/net.orig/sched/sch_esfq.c linux-2.6.4-rc1/net/sched/sc
 +
 +static void esfq_destroy(struct Qdisc *sch)
 +{
-+	struct esfq_sched_data *q = (struct esfq_sched_data *)sch->data;
++	struct esfq_sched_data *q = qdisc_priv(sch);
 +	del_timer(&q->perturb_timer);
 +	if(q->ht)
 +		kfree(q->ht);
@@ -1175,7 +1175,7 @@ diff -uNr linux-2.6.4-rc1/net.orig/sched/sch_esfq.c linux-2.6.4-rc1/net/sched/sc
 +
 +static int esfq_dump(struct Qdisc *sch, struct sk_buff *skb)
 +{
-+	struct esfq_sched_data *q = (struct esfq_sched_data *)sch->data;
++	struct esfq_sched_data *q = qdisc_priv(sch);
 +	unsigned char	 *b = skb->tail;
 +	struct tc_sfq_qopt opt;
 +
