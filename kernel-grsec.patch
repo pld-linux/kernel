@@ -168,7 +168,7 @@ diff -uNr linux-2.6.7-rc1.orig/arch/i386/kernel/sys_i386.c linux-2.6.7-rc1/arch/
 diff -uNr linux-2.6.7-rc1.orig/arch/i386/kernel/traps.c linux-2.6.7-rc1/arch/i386/kernel/traps.c
 --- linux-2.6.7-rc1.orig/arch/i386/kernel/traps.c	2004-05-23 07:53:46.000000000 +0200
 +++ linux-2.6.7-rc1/arch/i386/kernel/traps.c	2004-05-25 14:33:57.779576496 +0200
-@@ -122,12 +117,14 @@
+@@ -122,13 +117,15 @@
  			 unsigned long ebp)
  {
  	unsigned long addr;
@@ -177,9 +177,10 @@ diff -uNr linux-2.6.7-rc1.orig/arch/i386/kernel/traps.c linux-2.6.7-rc1/arch/i38
 -	while (!kstack_end(stack)) {
 +	while (i && !kstack_end(stack)) {
  		addr = *stack++;
- 		if (kernel_text_address(addr)) {
- 			printk(" [<%08lx>] ", addr);
- 			print_symbol("%s\n", addr);
+ 		if (__kernel_text_address(addr)) {
+ 			printk(" [<%08lx>]", addr);
+ 			print_symbol(" %s", addr);
+			printk("\n");
 +			--i;
  		}
  	}
@@ -11242,18 +11243,18 @@ diff -uNr linux-2.6.7-rc1.orig/include/linux/sysctl.h linux-2.6.7-rc1/include/li
 diff -uNr linux-2.6.7-rc1.orig/include/net/ip.h linux-2.6.7-rc1/include/net/ip.h
 --- linux-2.6.7-rc1.orig/include/net/ip.h	2004-05-25 14:25:40.000000000 +0200
 +++ linux-2.6.7-rc1/include/net/ip.h	2004-05-25 14:33:59.430325544 +0200
-@@ -35,6 +35,11 @@
- #include <net/route.h>
+@@ -34,6 +34,11 @@
  #include <net/arp.h>
+ #include <net/snmp.h>
  
 +#ifdef CONFIG_GRKERNSEC_RANDID
 +extern int grsec_enable_randid;
 +extern __u16 ip_randomid(void);
 +#endif
 +
- #ifndef _SNMP_H
- #include <net/snmp.h>
- #endif
+ struct sock;
+ 
+ struct inet_skb_parm
 @@ -191,6 +196,13 @@
  
  static inline void ip_select_ident(struct iphdr *iph, struct dst_entry *dst, struct sock *sk)
