@@ -16,8 +16,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.4.2
-Release:	7
+Version:	2.4.3
+Release:	1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -355,64 +355,65 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -n linux
-%patch9 -p1
+#%patch9 -p1
 # kerneli patch
 %patch0 -p1
-%patch2 -p1
-# i8255 fix
-%patch4 -p0 
+#%patch2 -p1
+## i8255 fix
+#%patch4 -p0 
+#Patched Tekram patch
 %patch5 -p0
-# disable message printing
-%patch6 -p1
-# Adaptec RAID patch
-%patch7 -p1
-%patch8 -p1
-# patches from Linux kernel list
-%patch12 -p1
-%patch13 -p1
-# next patches
-%patch14 -p1
-%patch15 -p1
-%patch16 -p0
-%patch17 -p0
-# quota fixes
-%patch18 -p1
-# reiserfs/NFS patches
-%patch19 -p1
-%patch20 -p1
-# LKL 2001.03.02
-%patch21 -p0
-%patch22 -p1
-# LKL 2001.03.03
-%patch23 -p1
-%patch24 -p0
-%patch25 -p0
-%patch27 -p1
-%patch28 -p1
-%patch29 -p1
-%patch30 -p0
-%patch31 -p1
-%patch32 -p1
-%patch33 -p1
-%patch34 -p1
-%patch35 -p1
-%patch36 -p1
-%patch38 -p1
-%patch39 -p1
-%patch40 -p1
-%patch41 -p1
-%patch42 -p1
-%patch43 -p1
-%patch44 -p1
-%patch45 -p0
-%patch46 -p1
-%patch47 -p1
-%patch48 -p1
-%patch49 -p1
-%patch50 -p4
-%patch51 -p1
-%patch52 -p1
-%patch53 -p1
+## disable message printing
+#%patch6 -p1
+## Adaptec RAID patch
+#%patch7 -p1
+#%patch8 -p1
+## patches from Linux kernel list
+#%patch12 -p1
+#%patch13 -p1
+## next patches
+#%patch14 -p1
+#%patch15 -p1
+#%patch16 -p0
+#%patch17 -p0
+## quota fixes
+#%patch18 -p1
+## reiserfs/NFS patches
+#%patch19 -p1
+#%patch20 -p1
+## LKL 2001.03.02
+#%patch21 -p0
+#%patch22 -p1
+## LKL 2001.03.03
+#%patch23 -p1
+#%patch24 -p0
+#%patch25 -p0
+#%patch27 -p1
+#%patch28 -p1
+#%patch29 -p1
+#%patch30 -p0
+#%patch31 -p1
+#%patch32 -p1
+#%patch33 -p1
+#%patch34 -p1
+#%patch35 -p1
+#%patch36 -p1
+#%patch38 -p1
+#%patch39 -p1
+#%patch40 -p1
+#%patch41 -p1
+#%patch42 -p1
+#%patch43 -p1
+#%patch44 -p1
+#%patch45 -p0
+#%patch46 -p1
+#%patch47 -p1
+#%patch48 -p1
+#%patch49 -p1
+#%patch50 -p4
+#%patch51 -p1
+#%patch52 -p1
+#%patch53 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -450,8 +451,9 @@ patch -p1 -s < %{PATCH10}
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
 
-mv -f net/ipsec/Makefile net/ipsec/Makefile.orig
-sed -e 's/EXTRA_CFLAGS.*-g//g' net/ipsec/Makefile.orig > net/ipsec/Makefile
+# IPSEc 
+#mv -f net/ipsec/Makefile net/ipsec/Makefile.orig
+#sed -e 's/EXTRA_CFLAGS.*-g//g' net/ipsec/Makefile.orig > net/ipsec/Makefile
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
