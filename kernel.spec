@@ -41,7 +41,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		2.2%{?with_mosix:+mosix}
+%define		_rel		2.3%{?with_mosix:+mosix}
 %define		_cset		20040707_0722
 %define		_apply_cset	0
 %define		_subversion	.1
@@ -222,13 +222,14 @@ Patch312:	linux-2.6-ppc-ksyms.patch
 
 Patch400:	2.6.7-kill-warnings.patch
 
-# openMosix support
-Patch420:	openMosix-2.6.7-PLD.patch
-
 Patch440:	2.6.8.1-qdisc_run.patch
 
+Patch450:	%{name}-2.6.8.1-sch_api.patch
+
+Patch460:	linux-2.6.8.1-win-scale.patch
+
 # http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9-r6-2.6.8.1.patch
-Patch470:	fbsplash-0.9-r6-2.6.8.1.patch
+Patch490:	fbsplash-0.9-r6-2.6.8.1.patch
 
 # http://download.berlios.de/softwaresuspend/software-suspend-2.0.0.109-for-2.6.8.1.tar.bz2
 Patch500:	10-kdb-v4.4-2.6.7-common-1
@@ -283,8 +284,8 @@ Patch560:	suspend_gzip_MAX.patch
 
 Patch600:	%{name}-grsec.patch
 
-#Patch610:	%{name}-2.6.8.1-sch_ingress.patch
-Patch610:	%{name}-2.6.8.1-sch_api.patch
+# openMosix support
+Patch700:	openMosix-2.6.7-PLD.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -758,7 +759,11 @@ zcat %{SOURCE3} | patch -p1 -s
 
 %patch440 -p1
 
-#patch470 -p1
+%patch450 -p1
+
+%patch460 -p1
+
+#patch490 -p1
 
 # software suspend
 %ifarch %{ix86}
@@ -821,10 +826,8 @@ zcat %{SOURCE3} | patch -p1 -s
 %endif
 
 %if %{with mosix}
-%patch420 -p1
+%patch700 -p1
 %endif
-
-%patch610 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
