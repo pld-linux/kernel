@@ -30,7 +30,7 @@
 
 %define		_rel		1
 %define		_rc		3
-%define		_cset		0
+%define		_cset		20040109_0116
 
 ## netfilter snap 
 %define		_netfilter_snap		20040107
