@@ -61,6 +61,7 @@ Patch16:	linux-raw.patch
 Patch17:	linux-i815-support.patch
 Patch18:	kernel-ide-geometry.patch
 #Patch:		linux-2.2.18pre21.ext3.diff
+Patch19:	kernel-pcmcia.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -315,6 +316,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch15 -p1
 %patch16 -p1
 %patch18 -p1
+%patch19 -p1
 %ifarch %{ix86}
 cd ..
 rm -rf i2c-%{i2c_version}
