@@ -635,9 +635,9 @@ exit 0
 /sbin/modprobe loop 2> /dev/null > /dev/null
 exit 0
 
-%pre BOOT
-/sbin/modprobe loop 2> /dev/null > /dev/null
-exit 0
+#%pre BOOT
+#/sbin/modprobe loop 2> /dev/null > /dev/null
+#exit 0
 
 %post
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null 
@@ -708,14 +708,14 @@ if [ -L /lib/modules/%{version} ]; then
 fi
 rm -f /boot/initrd-%{version}-%{release}smp.gz
 
-%postun BOOT
-if [ -L /lib/modules/%{version} ]; then 
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}BOOT" ]; then
-		if [ "$1" = "0" ]; then
-			rm -f /lib/modules/%{version}
-		fi
-	fi
-fi
+#%postun BOOT
+#if [ -L /lib/modules/%{version} ]; then 
+#	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}BOOT" ]; then
+#		if [ "$1" = "0" ]; then
+#			rm -f /lib/modules/%{version}
+#		fi
+#	fi
+#fi
 
 %post headers
 rm -f /usr/src/linux
