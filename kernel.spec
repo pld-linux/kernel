@@ -244,32 +244,30 @@ do twojego sprz皻u.
 
 %package pcmcia-cs
 Summary:	PCMCIA-CS modules
-Summary(pl):	Modu造 PCMCIA-CS 
+Summary(pl):	Modu造 PCMCIA-CS
 Group:		Base/Kernel
-Group(pl):	Podstawowe/Kernel
 Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
-Requires(post):		%{name}-up = %{version}-%{release}
+Requires(post):	%{name}-up = %{version}-%{release}
 Requires(postun):	%{name}-up = %{version}-%{release}
 
 %description pcmcia-cs
 PCMCIA-CS modules (%{pcmcia_version}).
 
-%description -l pl pcmcia-cs
+%description pcmcia-cs -l pl
 Modu造 PCMCIA-CS (%{pcmcia_version}).
 
 %package smp-pcmcia-cs
 Summary:	PCMCIA-CS modules for SMP kernel
 Summary(pl):	Modu造 PCMCIA-CS dla maszyn SMP
 Group:		Base/Kernel
-Group(pl):	Podstawowe/Kernel
 Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
-Requires(post):		%{name}-smp = %{version}-%{release}
+Requires(post):	%{name}-smp = %{version}-%{release}
 Requires(postun):	%{name}-smp = %{version}-%{release}
 
 %description smp-pcmcia-cs
 PCMCIA-CS modules for SMP kernel (%{pcmcia_version}).
 
-%description -l pl smp-pcmcia-cs
+%description smp-pcmcia-cs -l pl
 Modu造 PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 
 %prep
@@ -343,7 +341,7 @@ BuildKernel() {
 %ifarch ppc
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
-%endif	
+%endif
 
 	%{__make} INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR modules_install KERNELRELEASE=$KernelVer
 }
@@ -436,11 +434,11 @@ KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed"
 cp -a $KERNEL_INSTALL_DIR/* $RPM_BUILD_ROOT
 
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
-ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
+ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT%{_includedir}/asm
 
 bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/
 
-cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
 %{__make} mrproper
 find  -name "*~" -print | xargs rm -f
@@ -455,7 +453,7 @@ install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config .config
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
 
-install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
+install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux--%{version}/include/linux/autoconf.h
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
@@ -466,10 +464,10 @@ install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoco
 # well include the depends stuff as well, after we fix the paths
 
 #%{__make} depend
-find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
+find $RPM_BUILD_ROOT/usr/src/linux--%{version} -name ".*depend" | \
 while read file ; do
 	mv $file $file.old
-	sed -e "s|$RPM_BUILD_ROOT\(/usr/src/linux\)|\1|g" < $file.old > $file
+sed -e "s|$RPM_BUILD_ROOT\(/usr/src/linux-\)|\1|g" < $file.old > $file
 	rm -f $file.old
 done
 
@@ -618,35 +616,35 @@ fi
 
 %files headers
 %defattr(644,root,root,755)
-%dir %{_kernelsrcdir}-%{version}
-%{_kernelsrcdir}-%{version}/include
+%dir /usr/src/linux-%{version}
+/usr/src/linux-%{version}/include
 %{_includedir}/asm
 %{_includedir}/linux
 
 %files doc
 %defattr(644,root,root,755)
-%{_prefix}/src/linux-%{version}/Documentation
+/usr/src/linux-%{version}/Documentation
 
 %files source
 %defattr(644,root,root,755)
-%{_kernelsrcdir}-%{version}/arch
-%{_kernelsrcdir}-%{version}/drivers
-%{_kernelsrcdir}-%{version}/fs
-%{_kernelsrcdir}-%{version}/init
-%{_kernelsrcdir}-%{version}/ipc
-%{_kernelsrcdir}-%{version}/kernel
-%{_kernelsrcdir}-%{version}/lib
-%{_kernelsrcdir}-%{version}/mm
-%{_kernelsrcdir}-%{version}/net
-%{_kernelsrcdir}-%{version}/scripts
-%{_kernelsrcdir}-%{version}/.config
+/usr/src/linux-%{version}/arch
+/usr/src/linux-%{version}/drivers
+/usr/src/linux-%{version}/fs
+/usr/src/linux-%{version}/init
+/usr/src/linux-%{version}/ipc
+/usr/src/linux-%{version}/kernel
+/usr/src/linux-%{version}/lib
+/usr/src/linux-%{version}/mm
+/usr/src/linux-%{version}/net
+/usr/src/linux-%{version}/scripts
+/usr/src/linux-%{version}/.config
 #FIXME: this should be on, but not yet
-#%{_kernelsrcdir}-%{version}/.depend
-#%{_kernelsrcdir}-%{version}/.hdepend
-%{_kernelsrcdir}-%{version}/COPYING
-%{_kernelsrcdir}-%{version}/CREDITS
-%{_kernelsrcdir}-%{version}/MAINTAINERS
-%{_kernelsrcdir}-%{version}/Makefile
-%{_kernelsrcdir}-%{version}/README
-%{_kernelsrcdir}-%{version}/REPORTING-BUGS
-%{_kernelsrcdir}-%{version}/Rules.make
+#/usr/src/linux-%{version}/.depend
+#/usr/src/linux-%{version}/.hdepend
+/usr/src/linux-%{version}/COPYING
+/usr/src/linux-%{version}/CREDITS
+/usr/src/linux-%{version}/MAINTAINERS
+/usr/src/linux-%{version}/Makefile
+/usr/src/linux-%{version}/README
+/usr/src/linux-%{version}/REPORTING-BUGS
+/usr/src/linux-%{version}/Rules.make
