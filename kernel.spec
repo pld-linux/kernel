@@ -11,8 +11,8 @@
 # _without_doc		- don't build documentation package
 #
 
-%define		patch_level	8
-%define		_rel		6
+%define		patch_level	0
+%define		_rel		7
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 #
@@ -43,6 +43,7 @@ Release:	%{_rel}%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 %endif
 License:	GPL
 Group:		Base/Kernel
+# Source0-md5:	c439d5c93d7fc9a1480a90842465bb97
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
@@ -116,6 +117,7 @@ Patch2:		linux-2.4-freeswan-%{freeswan_version}.patch.gz
 Patch3:		linux-2.4.20-core-xfs-1.2.0.patch.bz2
 Patch4:		linux-2.4.20-xfs-1.2.0.patch.bz2
 
+Patch5:		linux-2.4.20-netfilter-nat-endian.patch
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
 Patch6:		grsecurity-%{grsec_version}-%{version}.patch.gz
 
@@ -206,7 +208,8 @@ Patch38:	linux-2.4.20-Nokia5510.patch
 #last: aic79xx-linux-2.4-20030410-tar.gz
 Patch39:	linux-2.4.20-aic79xx.patch.gz
 Patch40:	linux-2.4.20-i810_audio.patch
-Patch41:	linux-2.4.20-afs.patch.bz2
+# from : RedHat 2.4.20-13.9
+Patch41:	linux-2.4.20-afs.patch
 Patch42:	linux-2.4.20-ecc.patch
 Patch43:	linux-2.4.20-e820.patch
 
@@ -217,6 +220,14 @@ Patch45:	linux-2.4.20-ACL-%{ACL_version}.patch.gz
 Patch46:	linux-2.4.19-netmos_pci_parallel_n_serial.patch
 
 Patch47:	linux-2.4-3com-vlan.patch
+
+Patch48:	linux-2.4.20-acpi-EXPORT_SYMBOL.patch
+# from : RedHat 2.4.20-13.9
+Patch49:	linux-2.4.20-ipmi.patch
+Patch50:	linux-2.4.20-irixnfs.patch
+Patch51:	linux-2.4.20-odirect.patch
+Patch52:	linux-2.4.20-440gx.patch
+Patch53:	linux-2.4.20-nforce2.patch
 
 # Assorted bugfixes
 
@@ -692,6 +703,7 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # Netfilter
 %patch8 -p1
+%patch5 -p1
 
 %patch32 -p1
 %patch31 -p1
@@ -798,7 +810,7 @@ echo Added LVM support version %{lvm_version}
 echo Added xattr for JFS ...
 %patch103 -p1
 
-%{?_without_grsec:%patch917 -p1}
+%patch917 -p1
 
 #ptrace fix by Qboosh
 %patch105 -p1
@@ -815,10 +827,23 @@ echo Added xattr for JFS ...
 # smell cleanup with crc32.
 %patch126 -p1
 
-#ioperm
-%patch115 -p1 
+#afs
+#%%patch41 -p1
+
+#impmi
+%patch49 -p1 
+
+#irixnfs
+%patch50 -p1
+
+#odirect
+%patch51 -p1
+
+#EXPORT_SYMBOL missing for acpi.
+%patch48 -p1
 
 echo Added ARCH specific patches....
+
 %ifarch %{ix86}
 echo Ix86 patches ...
 # I810FB
@@ -835,25 +860,39 @@ echo Added USB gadget ...
 %patch137 -p1
 #VIA8237 support
 %patch134 -p1
+#ioperm
+%patch115 -p1 
+#440gx
+%patch52 -p1
+#nforce2
+%patch53 -p1
+#EXPORT_SYMBOL for Ix86
 %endif
+
 %ifarch ppc
 echo PPC patches ...
 %patch130 -p0
+#EXPORT_SYMBOL for PPC
 %patch205 -p1
 %patch903 -p1
 %endif
+
 %ifarch sparc64
 echo SPARC64 patches ...
 %patch118 -p1
 %patch201 -p1
 %endif
+
 %ifarch sparc
 echo SPARC patches ...
+#EXPORT_SYMBOL for SPARC 
 %patch202 -p1
 %endif
+
 %ifarch alpha
 echo AXP patches ...
 %patch119 -p0
+#EXPORT_SYBMOL for AXP
 %patch203 -p1
 %patch204 -p1
 %endif
@@ -957,6 +996,14 @@ BuildKernel() {
 %ifnarch %{ix86}
 #		echo "# CONFIG_IP_NF_MATCH_FUZZY is not set">> arch/%{base_arch}/defconfig
 %endif	
+
+%ifarch sparc64
+## Temporay - on SPARC64 can't build SHA suppor
+	echo "# CONFIG_SHA1 is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_DIGEST_SHA1 is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set" >> arch/%{base_arch}/defconfig	
+%endif
+
 %{?_without_grsec:echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig}
 %{?_without_grsec:echo "# CONFIG_IP_NF_MATCH_STEALTH is not set">> arch/%{base_arch}/defconfig}
 %{!?_without_grsec:cat %{SOURCE1666} >> arch/%{base_arch}/defconfig}
@@ -1385,14 +1432,14 @@ fi
 %if %{?_without_up:0}%{!?_without_up:1}
 %files
 %defattr(644,root,root,755)
-%ifarch alpha sparc ppc
+%ifarch alpha sparc ppc sparc64
 /boot/vmlinux-%{version}-%{release}
 %endif
 /boot/vmlinuz-%{version}-%{release}
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
 /lib/modules/%{version}-%{release}/kernel
-%ifnarch sparc
+%ifnarch sparc sparc64
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/scsi/pcmcia
@@ -1401,7 +1448,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/*_cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.o*
 %endif
-%ifnarch ppc sparc
+%ifnarch ppc sparc sparc64
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/ide/ide-cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o*
 %ifnarch alpha
@@ -1409,13 +1456,13 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o*
 %endif
 %endif
-%ifnarch sparc
+%ifnarch sparc sparc64
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 %endif
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
 
-%ifnarch sparc
+%ifnarch sparc sparc64
 %files pcmcia-cs
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
@@ -1435,7 +1482,7 @@ fi
 %endif
 %endif
 
-%ifnarch sparc
+%ifnarch sparc sparc64
 %files drm
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
@@ -1445,14 +1492,14 @@ fi
 %if %{?_without_smp:0}%{!?_without_smp:1}
 %files smp
 %defattr(644,root,root,755)
-%ifarch sparc ppc
+%ifarch sparc ppc sparc64
 /boot/vmlinux-%{version}-%{release}smp
 %endif
 /boot/vmlinuz-%{version}-%{release}smp
 /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
 /lib/modules/%{version}-%{release}smp/kernel
-%ifnarch sparc
+%ifnarch sparc sparc64
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/scsi/pcmcia
@@ -1461,7 +1508,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/*_cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.o*
 %endif
-%ifnarch ppc sparc
+%ifnarch ppc sparc sparc64
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/ide-cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o*
 %ifnarch alpha
@@ -1469,13 +1516,13 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o*
 %endif
 %endif
-%ifnarch sparc
+%ifnarch sparc sparc64
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 %endif
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
 
-%ifnarch sparc
+%ifnarch sparc sparc64
 %files -n kernel-smp-pcmcia-cs
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
@@ -1495,7 +1542,7 @@ fi
 %endif
 %endif
 
-%ifnarch sparc
+%ifnarch sparc sparc64
 %files -n kernel-smp-drm
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
@@ -1506,7 +1553,7 @@ fi
 %ifnarch i586 i686 athlon 		# narch
 %files BOOT
 %defattr(644,root,root,755)
-%ifarch alpha sparc ppc		# arch
+%ifarch alpha sparc ppc sparc64		# arch
 %{_libdir}/bootdisk/boot/vmlinux-%{version}-%{release}BOOT
 %endif				#arch
 %{_libdir}/bootdisk/boot/vmlinuz-%{version}-%{release}BOOT
@@ -1522,6 +1569,8 @@ fi
 %defattr(644,root,root,755)
 %dir %{_prefix}/src/linux-%{version}
 %{_prefix}/src/linux-%{version}/include
+%{_prefix}/src/linux-%{version}/Rules.make
+%{_prefix}/src/linux-%{version}/config*
 %{_includedir}/asm
 %{_includedir}/linux
 
@@ -1555,6 +1604,4 @@ fi
 %{_prefix}/src/linux-%{version}/Makefile
 %{_prefix}/src/linux-%{version}/README
 %{_prefix}/src/linux-%{version}/REPORTING-BUGS
-%{_prefix}/src/linux-%{version}/Rules.make
-%{_prefix}/src/linux-%{version}/config*
 %endif
