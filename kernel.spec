@@ -1,8 +1,6 @@
 %define		pcmcia_version		3.1.24
-%define		freeswan_version	1.8
 %define		lids_version		1.0.4
 %define		ipvs_version		0.2.1
-%define		ac_version		ac12
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -39,22 +37,9 @@ Source62:	%{name}-sparc64-BOOT.config
 Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
-#Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.3.gz
-#Patch2:		%{name}-%{version}-dc395-patch-fix.patch
-#Patch4:		linux-2.4.0-freeswan-%{freeswan_version}.patch
-#Patch5:		linux-ipv6-addrconf.patch
-Patch10:	ipvs-PLD-fix.patch
-#Patch11:	reiserfs-fix-3.6.patch
-#Patch12:	stackguard.patch
-#Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-%{ac_version}.bz2
-#Patch1000:	linux-2.4-misc.patch
-#Patch1001:	http://oss.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}-patch.tar.gz
-#Patch1002:	bug-report-2.4.0.patch
-#Patch1003:	%{name}-%{version}-i8255-asm-fix.patch
-## from LWN
-#Patch1004:	http://www.rhdv.cistron.nl/2.4.0.timer.patch
-## from LWN
-#Patch1005:	raid5.patch
+Source100:	http://download.sourceforge.net/xmlprocfs/linux-2.4-xmlprocfs-0.1.tar.gz
+
+Patch101:	xmlprocfs-fix.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -217,65 +202,32 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a4 -a6 -a7 -a8 -a10 -a11 -n linux
-#%patch100 -p1
-#%patch0 -p1
-#%patch2 -p0
-#%patch3 -p1
-#%patch4 -p1
-#%patch5 -p1
-
-#%patch1000 -p1
-
-#patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
-
-# Fore 200e ATM NIC
-#patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
-
-# Tekram DC395/315 U/UW SCSI host driver
-#patch -p1 -s <dc395/dc395-integ24.diff
-#install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
-
-# Netfilter
-#for i in netfilter-patches/* ; do
-#	[ -f $i -a "$i" != "netfilter-patches/isapplied" ] && patch -p1 -s <$i
-#done
-#(KERNEL_DIR=`pwd` ; export KERNEL_DIR
-#cd netfilter-patches/patch-o-matic
-#ANS=""
-#for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
-#echo -e $ANS | ./runme)
+%setup -q -a4 -a5 -a6 -a7 -a8 -a10 -a11 -a100 -n linux
 
 # Remove -g from drivers/atm/Makefile
-#mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
-#sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
+mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
+sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
 
 # Fix EXTRAVERSION and CC in main Makefile
-#mv -f Makefile Makefile.orig
-#sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
-#%ifarch %{ix86} alpha sparc
-#    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= egcs/g' \
-#%endif
-#%ifarch sparc64
-#    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
-#%endif
-#    Makefile.orig >Makefile
-
-#LIDS patch
-#patch -p1 <lids-1.0.4-2.4.0/lids-1.0.4-2.4.0.patch
-
-#i8255 patch
-#%patch1003 -p0
+mv -f Makefile Makefile.orig
+sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
+%ifarch %{ix86} alpha sparc
+    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= egcs/g' \
+%endif
+%ifarch sparc64
+    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
+%endif
+    Makefile.orig >Makefile
 
 # Patch IPVS
-#%patch10 -p0
 patch -p1 <ipvs-%{ipvs_version}/linux-2.4.0_kernel_ksyms_c.diff
 
-# POSIX timer patch from LWN
-#%patch1004 -p1
+#xmlprocfs patch
+%patch101
+patch -p1 <xmlprocfs.patch
 
-# RAID5 patch from LWN
-#%patch1005 -p1
+#LIDS patch
+patch -p1 <lids-1.0.4-2.4.0/lids-1.0.4-2.4.0.patch
 
 %build
 BuildKernel() {
