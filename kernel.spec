@@ -9,7 +9,7 @@
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 #
-%define		krelease		4
+%define		krelease		4.01
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -95,7 +95,8 @@ Patch2:		linux-%{version}-freeswan-%{freeswan_version}.patch.gz
 # from  http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.17.diff
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
-Patch5:		linux-%{version}-xfs-19062002.patch.gz
+#Patch5:		linux-%{version}-xfs-19062002.patch.gz
+Patch5:		linux-2.4.18-xfs-20020517.patch.gz
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/sct/ext3/v2.4/
 Patch6:		linux-%{version}-ext3-0.9.18.patch
 # Homepage of ABI:	http://linux-abi.sourceforge.net/
@@ -223,6 +224,8 @@ Patch914:	linux-o1-sched-pre.patch
 Patch915:	linux-o1-sched-post.patch
 Patch916:	linux-o1-sched-evms.patch
 Patch917:	netfilter-Makefile-fix.patch
+# Fix xfs mmap issue
+Patch918:	linux-2.4.18-xfs-mmap.patch
 
 # DRM (note that this doesn't fix drm when running on 386 or 486 CPU!)
 Patch950:	linux-drm-%{drm_xfree_version}-force-cmpxchg.patch
@@ -562,6 +565,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch2 -p1
 %patch4 -p1
 %patch5 -p1
+%patch918 -p1
 %patch6 -p1
 %patch19 -p1
 #%patch7 -p1
