@@ -10,7 +10,7 @@
 #
 %define		pre_version		pre1
 %define		ipvs_version		0.9.8
-%define		freeswan_version	1.94
+%define		freeswan_version	1.92
 %define		wlan_version		0.1.12
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		IPperson_version	20010724-2.4.7
@@ -131,6 +131,8 @@ Patch125:	linux-%{version}-devfs-v199.7.patch
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
 Patch900:	ide-EXPORT_SYMBOL.fix
 Patch901:	jfs-fix.patch
+Patch902:	netfilter-ctnetlink-fix.patch
+Patch903:	netfilter-ftp-fxp-fix.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
@@ -372,7 +374,10 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 # Netfilter
 echo Adding Netfilter
 (KERNEL_DIR=`pwd` ; export KERNEL_DIR
-cd netfilter-patches/patch-o-matic
+cd netfilter-patches/patch-o-matic/extra
+%patch902 -p0
+%patch903 -p0
+cd ..
 ANS=""
 for suite in pending base extra pld ; do
 	for i in `echo ${suite}/*.patch.ipv6` `echo ${suite}/*.patch` ; do
