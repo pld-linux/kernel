@@ -9,7 +9,7 @@
 # _without_up		- don't build UP kernel
 # _without_wrr		- don't build WRR support
 #
-%define		krelease		5.913
+%define		krelease		5.914
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -145,9 +145,7 @@ Patch103:	linux-2.4.2-nvram-hdd.patch
 Patch104:	linux-2.4-module.fix.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch105:	linux-2.4.2-pcnet-parms.patch
-#Patch106:	http://www.kernel.org/pub/linux/kernel/people/hedrick/ide-%{version}/ide.%{version}-rc1.02152002.patch.bz2
-Patch106:	linux-2.4.19-rc1-ac7-ide.patch
-#Patch106:	ide.patch
+Patch106:	http://www.kernel.org/pub/linux/kernel/people/hedrick/ide-%{version}/ide.%{version}-rc1.02152002.patch.bz2
 Patch107:	linux-reiserfs-rename.patch
 Patch108:	linux-alpha-nfs-2.4.2.patch
 Patch109:	linux-2.4-string.patch
@@ -166,7 +164,7 @@ Patch115:	linux-2.4.12-scsi_scan.patch
 Patch116:	linux-2.4.3-pcnet32.patch
 # fix rawio
 Patch117:	linux-2.4.3-rawio.patch
-#	patch118
+Patch118:	linux-2.4.18-HPT366.patch
 #	patch119
 Patch120:	linux-2.4.10-aironet.patch
 Patch121:	linux-2.4.10-cpqfc.patch
@@ -619,6 +617,7 @@ echo "Scheduler didn't work on ARCH different than Intel x86"
 %patch105 -p1
 %{?_with_o1_sched:%patch901 -p1}
 %patch106 -p1
+%patch118 -p0
 #%patch107 -p1
 #%patch108 -p1
 %patch109 -p1
