@@ -11716,13 +11716,13 @@ diff -uNr linux-2.6.7-rc1.orig/kernel/sched.c linux-2.6.7-rc1/kernel/sched.c
 --- linux-2.6.7-rc1.orig/kernel/sched.c	2004-05-23 07:54:30.000000000 +0200
 +++ linux-2.6.7-rc1/kernel/sched.c	2004-05-25 14:33:59.504314296 +0200
 @@ -40,6 +40,7 @@
- #include <linux/cpu.h>
- #include <linux/percpu.h>
  #include <linux/kthread.h>
+ #include <asm/tlb.h>
+ 
 +#include <linux/grsecurity.h>
+ #include <asm/unistd.h>
  
  #ifdef CONFIG_NUMA
- #define cpu_to_node_mask(cpu) node_to_cpumask(cpu_to_node(cpu))
 @@ -2159,6 +2160,8 @@
  }
  #endif
@@ -12034,7 +12034,7 @@ diff -uNr linux-2.6.7-rc1.orig/kernel/timer.c linux-2.6.7-rc1/kernel/timer.c
 +
 +	gr_learn_resource(p, RLIMIT_CPU, psecs / HZ, 1);
 +
- 	if (psecs / HZ > p->rlim[RLIMIT_CPU].rlim_cur) {
+ 	if (psecs / HZ >= p->rlim[RLIMIT_CPU].rlim_cur) {
  		/* Send SIGXCPU every second.. */
  		if (!(psecs % HZ))
 diff -uNr linux-2.6.7-rc1.orig/mm/filemap.c linux-2.6.7-rc1/mm/filemap.c
@@ -12226,9 +12226,9 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mprotect.c linux-2.6.7-rc1/mm/mprotect.c
 --- linux-2.6.7-rc1.orig/mm/mprotect.c	2004-05-23 07:55:03.000000000 +0200
 +++ linux-2.6.7-rc1/mm/mprotect.c	2004-05-25 14:33:59.581302592 +0200
 @@ -17,6 +17,7 @@
- #include <linux/highmem.h>
  #include <linux/security.h>
  #include <linux/mempolicy.h>
+ #include <linux/personality.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
