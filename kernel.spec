@@ -1027,7 +1027,7 @@ fi
 %files pcmcia-cs
 %defattr(644,root,root,755)
 %ifarch %{ix86}
-/lib/modules/%{version}-%{release}/pcmcia
+#/lib/modules/%{version}-%{release}/pcmcia
 %endif
 /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}/kernel/drivers/net/pcmcia
@@ -1078,7 +1078,7 @@ fi
 %files -n kernel-smp-pcmcia-cs
 %defattr(644,root,root,755)
 %ifarch %{ix86}
-/lib/modules/%{version}-%{release}smp/pcmcia
+#/lib/modules/%{version}-%{release}smp/pcmcia
 %endif
 /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}smp/kernel/drivers/net/pcmcia
