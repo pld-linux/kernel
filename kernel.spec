@@ -1061,12 +1061,16 @@ find -name "*.orig" -exec rm -f "{}" ";"
 
 if [ -e $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h ]; then
 install $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h \
-$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
+	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
+install	$KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/config-up.h \
+	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 fi
 
 if [ -e $KERNEL_BUILD_DIR/build-done/kernel-SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h ]; then
 install $KERNEL_BUILD_DIR/build-done/kernel-SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h \
-$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
+	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
+install	$KERNEL_BUILD_DIR/build-done/kernel-SMP/usr/src/linux-%{version}/config-smp.h \
+	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 fi
 
 %if %{with up} || %{with smp}
