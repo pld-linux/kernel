@@ -75,8 +75,6 @@ Patch18:	2.6.0-t6-usb-irq.patch
 Patch20:	2.6.0-t7-memleak-lkml.patch
 Patch21:	2.6.0-t7-memleak2-lkml.patch
 
-Patch22:	fbdev.diff.gz
-
 Patch28:	2.6.0-t8-clean-mtd-lkml.patch
 Patch32:	2.6.0-t8-swap-include-lkml.patch
 
@@ -86,20 +84,15 @@ Patch38:	2.6.0-t8-uc0.patch
 Patch40:	2.6.0-t8-VLSI-ix86-lkml.patch
 
 Patch44:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
-Patch46:	2.6.0-t8-sis900_net-lkml.patch
 
 Patch52:	2.6.0-t8-pci_dma_sync_to_device-lkml.patch
 
-Patch54:	2.6.0-t8-ISAPnP-lkml.patch
-
 Patch68:	2.6.0-t8-umsdos-lkml.patch
-Patch70:	2.6.0-t9-ibmtr_cs-lkml.patch
 Patch72:	2.6.0-t9-NLS-module-lkml.patch
 
 Patch74:	2.6.0-t9-acpi_osl-lkml.patch
 Patch78:	2.6.0-test9-nforce-ideata133.patch
 Patch80:	2.6.0-test9-promise20378.patch
-Patch84:	2.6.0-test9-wintv-d.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -415,20 +408,15 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch40 -p1
 
 %patch44 -p1
-%patch46 -p1
 
 %patch52 -p1
 
-%patch54 -p1
-
 %patch68 -p1
-%patch70 -p1
 %patch72 -p1
 
 %patch74 -p1
 %patch78 -p1
 %patch80 -p1
-%patch84 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
