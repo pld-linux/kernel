@@ -3,7 +3,7 @@
 # packages will be built
 #
 # _without_grsec	- build kernel without grsecurity patch
-# _with_preemptive	- build with Preemptive patch
+# _with_preemptible	- build with Preemptible patch
 # _with_o1_sched	- build with new O(1) scheduler
 # _without_smp		- don't build SMP kernel
 #
@@ -62,7 +62,7 @@ Source1003:	%{name}-netfilter.config
 Source1004:	%{name}-ipvs.config
 Source1666:	%{name}-grsec.config
 Source1667:	%{name}-int.config
-Source1999:	%{name}-preemptive.config
+Source1999:	%{name}-preemptible.config
 
 # New features
 
@@ -441,9 +441,9 @@ echo Fixed compile process for 53c7,8xx driver
 # fix 53c7,8xx build
 %patch909 -p0
 
-#preemptive kernel patch
-%if%{?_with_preemptive:1}%{!?_with_preemptive:0}
-echo Installing Preemptive patch
+#preemptble kernel patch
+%if%{?_with_preemptible:1}%{!?_with_preemptible:0}
+echo Installing Preemptible patch
 %patch10 -p1
 %endif
 
