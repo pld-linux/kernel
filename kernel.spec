@@ -5,7 +5,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.14
-Release:	1
+Release:	2
 Copyright:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -76,6 +76,7 @@ Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen.
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur.
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
+Provides:	%{name} %{version}
 Autoreqprov:	no
 
 %description smp
@@ -99,6 +100,7 @@ Summary(de):	Kernel version %{version} mit Framebuffer-Support
 Summary(fr):	Kernel version %{version} avec framebuffer.
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
+Provides:	%{name} %{version}
 Autoreqprov:	no
 
 %description fb
@@ -118,6 +120,7 @@ Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen mit framebuf
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur avec fb.
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
+Provides:	%{name} %{version}
 Autoreqprov:	no
 
 %description smp-fb
