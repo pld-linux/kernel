@@ -829,7 +829,7 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} \
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f $RPM_BUILD_ROOT/usr/src/linux-%{version}/Makefile $RPM_BUILD_ROOT/usr/src/linux-%{version}/Makefile.orig
-sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
+sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
 %ifarch %{ix86} alpha sparc
     -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= egcs/g' \
 %endif
