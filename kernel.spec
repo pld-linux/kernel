@@ -564,11 +564,9 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch78 -p1
 
-##%%patch82 -p1
-
 %patch85 -p1
 %patch86 -p1
-
+exit 1
 # to fix
 #%patch90 -p1
 
@@ -591,7 +589,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
 %ifarch sparc64
-    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
+    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-pld-linux-gcc/g' \
 %endif
     Makefile.orig >Makefile
 
@@ -752,9 +750,14 @@ BuildKernel() {
 		%{?with_verbose:V=1}
 
 # make does vmlinux, modules and bzImage at once
-%ifarch sparc
+%ifarch sparc sparc64
+%ifarch sparc64
+	%{__make} image\
+		%{?with_verbose:V=1}
+%else
 	sparc32 %{__make} \
 		%{?with_verbose:V=1}
+%endif
 %else
 	%{__make} \
 		%{?with_verbose:V=1}
@@ -803,7 +806,7 @@ PreInstallKernel (){
 	install vmlinux.aout $KERNEL_INSTALL_DIR/boot/vmlinux.aout-$KernelVer
 %endif
 %ifarch sparc64
-	elftoaout vmlinux -o vmlinux.aout
+	elftoaout arch/sparc64/boot/image -o vmlinux.aout
 	install vmlinux.aout $KERNEL_INSTALL_DIR/boot/vmlinux.aout-$KernelVer
 %endif
 %endif
