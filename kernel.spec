@@ -18,6 +18,7 @@ Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
 Source4:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
+# Don't use following patch, it may hang the NIC
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
 Source7:	linux-netfilter-patches-20010201.tar.gz
