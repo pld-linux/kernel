@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 ## netfilter snap 
-%define		_netfilter_snap		20031226
+%define		_netfilter_snap		20031222
 ## Program required by kernel to work.
 %define		_binutils_ver		2.12
 %define		_util-linux_ver		2.10o
@@ -30,9 +30,9 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1.1
-%define		_rc		rc1
-%define		_cset		20040101_0206
+%define		_rel		1.9
+%define		_test_ver	0
+%define		_cset		0
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -47,13 +47,13 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.6.1
-Release:	%{_rc}.%{_rel}
+Version:	2.6.0
+Release:	%{_rel}
 Epoch:		1
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-rc1.tar.bz2
-# Source0-md5:	5b8cbd68b11ec012a52b07cfed404a20
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
+# Source0-md5:	c9e73737002521a347d2e6617beb56cc
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -83,6 +83,7 @@ Patch4:		squashfs1.3r2-patch
 Patch6:		2.6.0-t3-sysfs_mem-lkml.patch
 
 Patch8:		2.6.0-t4-PPC-ENODEV.patch
+Patch10:	kernel-siimage-rqsize.patch
 
 Patch14:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
 Patch16:	2.6.0-t6-usb-irq.patch
@@ -94,6 +95,7 @@ Patch22:	2.6.0-t8-clean-mtd-lkml.patch
 Patch24:	2.6.0-t8-swap-include-lkml.patch
 
 Patch26:	http://www.uclinux.org/pub/uClinux/uClinux-2.6.x/linux-2.6.0-test10-uc0.patch.gz
+#Patch26:	linux-2.6.0-test10-uc0.patch.gz
 
 Patch28:	2.6.0-t8-VLSI-ix86-lkml.patch
 
@@ -102,6 +104,7 @@ Patch30:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
 Patch32:	2.6.0-t8-pci_dma_sync_to_device-lkml.patch
 
 Patch34:	2.6.0-t8-umsdos-lkml.patch
+Patch36:	2.6.0-t9-NLS-module-lkml.patch
 
 Patch38:	2.6.0-t9-acpi_osl-lkml.patch
 
@@ -109,8 +112,13 @@ Patch40:	2.6.0-t9-forcedeth-lkml.patch
 
 Patch44:	2.6.0-t9-PPC-smp.patch
 
+Patch48:	2.6.0-t10-sis_operator_fix-lkml.patch
+
 Patch52:	2.6.0-t10-POSIX_message_queues-1of2-lkml.patch
 Patch53:	2.6.0-t10-POSIX_message_queues-2of2-lkml.patch
+
+# http://bytesex.org/patches/2.6.0-test10-2/
+Patch60:	patch-2.6.0-test11-kraxel.gz
 
 Patch62:	2.6.0-t11-EPoX-sound-lkml.patch
 
@@ -118,9 +126,17 @@ Patch64:	bootsplash-3.1.3-2.6.0-test9.diff
 
 Patch66:	2.6.0-t11-AIC_and_db4-lkml.patch
 
+Patch68:	2.6.0-t11-get_compat_timespec-lkml.patch
+
 Patch70:	2.6.0-t11-r8169-getstats.patch
 
 Patch72:	2.6.0-t11-ALI-M1563-lkml.patch
+
+Patch74:	patch-2.6.0-test11-bart1
+Patch75:	2.6.0-t11-ide2.patch
+Patch76:	2.6.0-t11-ide3.patch
+
+Patch78:	2.6.0-t11-misc.patch
 
 Patch80:	linux-tdfxfb-fillrect.patch
 Patch81:	linux-fbcon-margins.patch
@@ -140,14 +156,13 @@ Patch94:	acpi-20031203-2.6.0.diff.gz
 Patch96:	2.6.0-mount-rainier-lkml.patch
 Patch97:	2.6.0-mount-rainier-fix-lkml.patch
 
+Patch98:	x86_64-2.6.0-1-pld.patch
+
 Patch100:	2.6.0-sysfs-1of4-lkml.patch
 Patch101:	2.6.0-sysfs-3of4-lkml.patch
 Patch102:	2.6.0-sysfs-4of4-lkml.patch
 
-Patch106:	2.6.0-NF-time-%{_netfilter_snap}.patch
-
-Patch110:	linux-2.6-xfs-cvs-20040102.patch
-Patch111:	linux-2.6-xfs-secure-attr.patch
+Patch104:	2.6.0-ppdev-MODULES_ALIAS-lkml.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -471,7 +486,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}-%{_rc}
+%setup -q -n linux-%{version}
 %patch0 -p1
 %if "%{_cset}" != "0"
 %patch1 -p1
@@ -482,6 +497,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch6 -p1
 
 %patch8 -p1
+#%%patch10 -p1
 
 %patch14 -p1
 %patch16 -p1
@@ -501,6 +517,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch32 -p1
 
 %patch34 -p1
+%patch36 -p1
 
 %patch38 -p1
 
@@ -508,8 +525,12 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch44 -p1
 
+%patch48 -p1
+
 %patch52 -p1
 %patch53 -p1
+
+%patch60 -p1
 
 %patch62 -p1
 
@@ -517,9 +538,17 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch66 -p1
 
+%patch68 -p1
+
 %patch70 -p1
 
 %patch72 -p1
+
+#%%patch74 -p1
+##%%patch75 -p1
+#%%patch76 -p1
+
+#%%patch78 -p1
 
 %patch80 -p1
 %patch81 -p1
@@ -527,19 +556,25 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch84 -p1
 
+%patch86 -p1
+
+%patch88 -p1
+%patch89 -p1
+%patch90 -p1
+%patch91 -p1
+
 %patch94 -p1
 
 %patch96 -p1
 %patch97 -p0
 
+%patch98 -p1
+
 %patch100 -p1
 %patch101 -p1
 %patch102 -p1
 
-%patch106 -p1
-
-%patch110 -p1
-%patch111 -p1
+%patch104 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
