@@ -12,10 +12,10 @@ License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-2.6.6.tar.bz2
 # Source0-md5:	5218790bc3db41e77a7422969639a9ad
-Source1:		%{name}-config-nondist
+Source1:	%{name}-config-nondist
 Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/patch-2.6.7-%{_rc}.bz2
 Patch1:		ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-Patch2:		grsecurity-2.0-2.6.6-unofficial.patch
+#Patch2:		grsecurity-2.0-2.6.6-unofficial.patch
 Patch3:		linux-kbuild-extmod.patch
 Patch4:		2.6.0-t6-usb-irq.patch
 Patch5:		2.6.0-t7-memleak-lkml.patch
@@ -248,7 +248,7 @@ cd $CWD
 %{_kernelsrcdir}-%{version}/crypto
 %{_kernelsrcdir}-%{version}/drivers
 %{_kernelsrcdir}-%{version}/fs
-%{_kernelsrcdir}-%{version}/grsecurity
+#%{_kernelsrcdir}-%{version}/grsecurity
 %{_kernelsrcdir}-%{version}/init
 %{_kernelsrcdir}-%{version}/ipc
 %{_kernelsrcdir}-%{version}/kernel
