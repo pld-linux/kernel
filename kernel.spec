@@ -48,8 +48,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.15
-%define		_cset		20040702_0108
+%define		_rel		1.16
+%define		_cset		20040703_0508
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -80,7 +80,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	83193773a8181debdb2fb17c945f6118
+# Source3-md5:	9e55f8ac787b88cbd5e02f2290ccedb2
 # http://lkml.org/lkml/2004/6/2/228
 ## Source6:	http://prdownloads.sourceforge.net/swsusp/software-suspend-2.0.0.81-for-2.6.6.tar.bz2
 Source20:	%{name}-i386.config
@@ -617,7 +617,7 @@ echo "Not fixed !!"
 %patch30 -p1
 %patch31 -p1
 %patch32 -p1
-%patch33 -p1
+#patch33 -p1
 
 ##%patch34 -p1
 
