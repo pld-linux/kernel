@@ -19,7 +19,7 @@ Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
 Source4:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
-Source7:	linux-netfilter-patches-20010201.tar.gz
+#Source7:	linux-netfilter-patches-20010201.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}-2.4.0.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source20:	%{name}-i386.config
@@ -206,7 +206,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -n linux
+%setup -q -a3 -a4 -a5 -a6 -a8 -a9 -n linux
 
 #kerneli patch
 %patch0 -p1
@@ -223,14 +223,14 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 #install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # Netfilter
-for i in netfilter-patches/* ; do
-       [ -f $i -a "$i" != "netfilter-patches/isapplied" ] && patch -p1 -s <$i
-done
-(KERNEL_DIR=`pwd` ; export KERNEL_DIR
-cd netfilter-patches/patch-o-matic
-ANS=""
-for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
-echo -e $ANS | ./runme)
+#for i in netfilter-patches/* ; do
+#       [ -f $i -a "$i" != "netfilter-patches/isapplied" ] && patch -p1 -s <$i
+#done
+#(KERNEL_DIR=`pwd` ; export KERNEL_DIR
+#cd netfilter-patches/patch-o-matic
+#ANS=""
+#for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
+#echo -e $ANS | ./runme)
 
 # IPVS
 for i in ipvs-%{ipvs_version}/*.diff ; do
