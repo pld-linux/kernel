@@ -1129,7 +1129,7 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +
 +static int wrr_init(struct Qdisc *sch, struct rtattr *opt)
 +{
-+  struct wrr_sched_data *q = (struct wrr_sched_data *)sch->data;
++  struct wrr_sched_data *q = qdusc_priv(sch);
 +  int i,maciniterr;
 +  char crterr;
 +  struct tc_wrr_qdisc_crt *qopt;
@@ -1235,7 +1235,7 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +
 +static void wrr_reset(struct Qdisc* sch)
 +{
-+  struct wrr_sched_data *q = (struct wrr_sched_data *)sch->data;
++  struct wrr_sched_data *q = qdusc_priv(sch);
 +  int i;
 +  
 +  // Reset own values:
@@ -1264,7 +1264,7 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +
 +static int wrr_enqueue(struct sk_buff *skb, struct Qdisc* sch)
 +{
-+  struct wrr_sched_data *q = (struct wrr_sched_data *)sch->data;
++  struct wrr_sched_data *q = qdusc_priv(sch);
 +  int retvalue=ENQUEUE_FAIL;
 +  
 +  // The packet is in skb.
@@ -1310,7 +1310,7 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +
 +static struct sk_buff *wrr_dequeue(struct Qdisc* sch)
 +{
-+  struct wrr_sched_data *q = (struct wrr_sched_data *)sch->data;
++  struct wrr_sched_data *q = qdusc_priv(sch);
 +  struct sk_buff* skb;
 +  int band;
 +  u64 weight,priosum;
@@ -1369,7 +1369,7 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +
 +static int wrr_requeue(struct sk_buff *skb, struct Qdisc* sch)
 +{
-+  struct wrr_sched_data *q = (struct wrr_sched_data *)sch->data;
++  struct wrr_sched_data *q = qdusc_priv(sch);
 +  struct Qdisc* qdisc;
 +  int ret;
 +  
@@ -1406,7 +1406,7 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +
 +static unsigned wrr_drop(struct Qdisc* sch)
 +{
-+  struct wrr_sched_data *q = (struct wrr_sched_data *)sch->data;
++  struct wrr_sched_data *q = qdusc_priv(sch);
 +
 +  // Ugly... Drop button up in heap:
 +  int i;
@@ -1425,7 +1425,7 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +
 +static int wrr_dump(struct Qdisc *sch, struct sk_buff *skb)
 +{
-+  struct wrr_sched_data *q = (struct wrr_sched_data *)sch->data;
++  struct wrr_sched_data *q = qdusc_priv(sch);
 +  unsigned char	*b = skb->tail;
 +  struct tc_wrr_qdisc_stats opt;
 +
@@ -1458,7 +1458,7 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +
 +static int wrr_tune_std(struct Qdisc *sch, struct rtattr *opt) 
 +{
-+  struct wrr_sched_data *q = (struct wrr_sched_data *)sch->data;
++  struct wrr_sched_data *q = qdusc_priv(sch);
 +  struct tc_wrr_qdisc_modf_std *qopt = RTA_DATA(opt);
 +  
 +  if(opt->rta_len < RTA_LENGTH(sizeof(*qopt))) return -EINVAL;  
@@ -1485,7 +1485,7 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +
 +static int wrr_tune_proxy(struct Qdisc *sch, struct rtattr *opt) 
 +{
-+  struct wrr_sched_data *q = (struct wrr_sched_data *)sch->data;
++  struct wrr_sched_data *q = qdusc_priv(sch);
 +  struct tc_wrr_qdisc_modf_proxy *qopt = RTA_DATA(opt);
 +  int i;
 +
@@ -1530,7 +1530,7 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +static int wrr_graft(struct Qdisc *sch, unsigned long arg, struct Qdisc *new,
 +	             struct Qdisc **old)
 +{
-+  struct wrr_sched_data *q = (struct wrr_sched_data *)sch->data;
++  struct wrr_sched_data *q = qdusc_priv(sch);
 +  if(arg>q->bandc || arg==0)  return -EINVAL;
 +  arg--;
 +  
@@ -1553,7 +1553,7 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +// Returns the qdisc for a class:
 +static struct Qdisc * wrr_leaf(struct Qdisc *sch, unsigned long arg)
 +{
-+  struct wrr_sched_data *q = (struct wrr_sched_data *)sch->data;
++  struct wrr_sched_data *q = qdusc_priv(sch);
 +  if(arg>q->bandc || arg==0)  return NULL;
 +  arg--;
 +  return q->bands[arg].que;
@@ -1561,7 +1561,7 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +
 +static unsigned long wrr_get(struct Qdisc *sch, u32 classid)
 +{
-+  struct wrr_sched_data *q = (struct wrr_sched_data *)sch->data;
++  struct wrr_sched_data *q = qdusc_priv(sch);
 +  unsigned long band = TC_H_MIN(classid);
 +  if(band>q->bandc || band==0) return 0;
 +  return band;
@@ -1574,7 +1574,7 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +
 +static int wrr_delete(struct Qdisc *sch, unsigned long cl)
 +{
-+  struct wrr_sched_data *q = (struct wrr_sched_data *)sch->data;
++  struct wrr_sched_data *q = qdusc_priv(sch);
 +  if(cl==0 || cl>q->bandc) return -ENOENT;
 +  cl--;
 +  return 0;
@@ -1583,7 +1583,7 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +static int wrr_dump_class(struct Qdisc *sch, unsigned long cl, 
 +                          struct sk_buff *skb, struct tcmsg *tcm)
 +{
-+  struct wrr_sched_data *q = (struct wrr_sched_data *)sch->data;
++  struct wrr_sched_data *q = qdusc_priv(sch);
 +  unsigned char *b = skb->tail;
 +  struct tc_wrr_class_stats opt;
 +
@@ -1629,7 +1629,7 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +                      struct rtattr **tca, unsigned long *arg)
 +{
 +  unsigned long cl = *arg;
-+  struct wrr_sched_data *q = (struct wrr_sched_data *)sch->data;
++  struct wrr_sched_data *q = qdusc_priv(sch);
 +  struct rtattr *opt = tca[TCA_OPTIONS-1];
 +  struct tc_wrr_class_modf *copt = RTA_DATA(opt);
 +  
@@ -1650,7 +1650,7 @@ diff -uNr linux-2.6.4/net/sched.orig/sch_wrr.c linux-2.6.4/net/sched/sch_wrr.c
 +
 +static void wrr_walk(struct Qdisc *sch, struct qdisc_walker *arg)
 +{
-+  struct wrr_sched_data *q = (struct wrr_sched_data *)sch->data;
++  struct wrr_sched_data *q = qdusc_priv(sch);
 +  int prio;
 +
 +  if (arg->stop) return;
