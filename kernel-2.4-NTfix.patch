@@ -1,0 +1,23 @@
+--- linux-2.4.19/arch/i386/kernel/traps.c~	Wed Nov 13 22:55:47 2002
++++ linux-2.4.19/arch/i386/kernel/traps.c	Wed Nov 13 22:55:47 2002
+@@ -640,7 +640,7 @@
+ 	return;
+ 
+ clear_TF:
+-	regs->eflags &= ~TF_MASK;
++	regs->eflags &= ~(TF_MASK|NT_MASK);
+ 	return;
+ }
+ 
+--- linux-2.4.19/arch/i386/kernel/entry.S~	Wed Nov 13 22:55:23 2002
++++ linux-2.4.19/arch/i386/kernel/entry.S	Wed Nov 13 22:55:23 2002
+@@ -140,6 +140,9 @@
+ 	movl EIP(%esp),%eax	# due to call gates, this is eflags, not eip..
+ 	movl CS(%esp),%edx	# this is eip..
+ 	movl EFLAGS(%esp),%ecx	# and this is cs..
++       andl $~NT_MASK, %eax
++       pushl %eax
++       popfl
+ 	movl %eax,EFLAGS(%esp)	#
+ 	movl %edx,EIP(%esp)	# Now we move them to their "normal" places
+ 	movl %ecx,CS(%esp)	#
