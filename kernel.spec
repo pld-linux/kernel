@@ -113,7 +113,7 @@ Patch502:	linux-2.2.19-ieee1394-ppc.patch.bz2
 Patch503:	2.2.20-ppc_ide.patch
 Patch504:	2.2.21-enable_ibmraid-ppc.patch
 Patch505:	2.2.21-ppc_asm.patch
-Patch506:	2.2.21-ppc_7.patch
+Patch506:	2.2.21-ppc_8.patch
 Patch507:	2.2.21-ppc_ieee1394.patch
 Patch1500:	linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	%{name}-sparc-zs.h.patch
