@@ -7,6 +7,7 @@
 %define		tun_version		1.1
 %define         vlan_version            1.0.1
 %define		symncr_version		1.7.3c-ncr-3.4.3b
+%define		jfs_version		2.2-1.0.4
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -24,12 +25,13 @@ Source2:	%{name}-BuildASM.sh
 Source3:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
 Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
 Source5:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
-Source6:	ftp://ftp.tux.org/tux/roudier/drivers/linux/stable/sym-1.7.3c-ncr-3.4.3b.tar.gz
+Source6:	ftp://ftp.tux.org/tux/roudier/drivers/linux/stable/sym-%{symncr_version}.tar.gz
 Source7:	http://www.linux-wlan.com/linux-wlan/linux-wlan-%{wlan_version}.tar.gz
 Source8:	http://www.dandelion.com/Linux/DAC960-2.2.10.tar.gz
 Source9:	serial-5.05.tar.gz
 Source10:	http://vtun.sourceforge.net/tun/tun-%{tun_version}.tar.gz
 Source13:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
+Source14:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}-patch.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -407,9 +409,9 @@ patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # move symbios drivers to proper place
-mv sym-1.7.3c-ncr-3.4.3b/*.{c,h} drivers/scsi
-mv sym-1.7.3c-ncr-3.4.3b/{README,ChangeLog}.* Documentation
-rm -rf sym-1.7.3c-ncr-3.4.3b
+mv sym-%{symncr_version}/*.{c,h} drivers/scsi
+mv sym-%{symncr_version}/{README,ChangeLog}.* Documentation
+rm -rf sym-%{symncr_version}
 
 %patch34 -p1
 %patch35 -p1
@@ -663,9 +665,9 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/li
 
 # symbios drivers
 tar zxf %{SOURCE6}
-mv sym-1.7.3c-ncr-3.4.3b/*.{c,h} $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi
-mv sym-1.7.3c-ncr-3.4.3b/{README,ChangeLog}.* $RPM_BUILD_ROOT/usr/src/linux-%{version}/Documentation
-rm -rf sym-1.7.3c-ncr-3.4.3b
+mv sym-%{symncr_version}/*.{c,h} $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi
+mv sym-%{symncr_version}/{README,ChangeLog}.* $RPM_BUILD_ROOT/usr/src/linux-%{version}/Documentation
+rm -rf sym-%{symncr_version}
 
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH34}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH35}
