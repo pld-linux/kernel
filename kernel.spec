@@ -30,7 +30,7 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1
+%define		_rel		1.1
 %define		_test_ver	0
 %define		_cset		0
 
@@ -150,6 +150,8 @@ Patch88:	2.6.0-sensors-chip-update-1of4-lkml.patch
 Patch89:	2.6.0-sensors-chip-update-2of4-lkml.patch
 Patch90:	2.6.0-sensors-chip-update-3of4-lkml.patch
 Patch91:	2.6.0-sensors-chip-update-4of4-lkml.patch
+
+Patch94:	acpi-20031203-2.6.0.diff.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -552,6 +554,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch89 -p1
 %patch90 -p1
 %patch91 -p1
+
+%patch94 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
