@@ -10,6 +10,7 @@
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
+%define		_without_selinux	1
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -17,7 +18,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.5.68
-Release:	0.4
+Release:	0.5
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
@@ -415,10 +416,6 @@ ln -sf ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc6
 %else
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT%{_includedir}/asm
 %endif
-%ifarch %{ix86}
-install -d $RPM_BUILD_ROOT%{_prefix}/src/linux/include/asm-i386
-ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux/include/asm
-%endif
 
 cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
 
@@ -487,7 +484,7 @@ install security/selinux/include/asm-i386/flask/*.h $RPM_BUILD_ROOT/usr/src/linu
 
 %clean
 rm -rf $RPM_BUILD_ROOT
-rm -rf $KERNEL_BUILD_DIR-installed
+rm -rf $KERNEL_INSTALL_DIR
 
 %post
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
