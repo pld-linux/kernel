@@ -52,8 +52,8 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_post_ver	%{nil}
-%define		_rel		0.2HEAD
-%define		_cset		20041026_0606
+%define		_rel		0.3HEAD
+%define		_cset		20041029_0006
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -80,7 +80,7 @@ Source0:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_
 # Source0-md5:	4689a60980f79a223aca6c2244c456e4
 Source1:	%{name}-autoconf.h
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
-# Source4-md5:	c44d141cd595799f6c60c441e11f3747
+# Source4-md5:	6186714cfbb40550de65b3aad610b439
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -124,8 +124,6 @@ Patch550:	linux-cluster-cman.patch
 Patch551:	linux-cluster-dlm.patch
 Patch552:	linux-cluster-gfs.patch
 Patch553:	linux-cluster-gnbd.patch
-
-Patch570:	linux-2.6-savagefb.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -495,8 +493,6 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch551 -p1
 %patch552 -p1
 %patch553 -p1
-
-%patch570 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i -e 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
