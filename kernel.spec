@@ -32,12 +32,12 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
-Version:	2.4.21
-Release:	2.1
+Version:	2.4.22
+Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
-# Source0-md5:	f51e12efa18bb828cf57d9d4a81b2fb1
+# Source0-md5:	75dc85149b06ac9432106b8941eb9f7b
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
