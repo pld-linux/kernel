@@ -10,6 +10,7 @@ Copyright:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
+Source1:	kernel-autoconf.h
 Source10:	kernel-i386.config
 #Source11:	kernel-i386-fb.config
 Source12:	kernel-i386-BOOT.config
@@ -334,14 +335,24 @@ find  -name "*~" -print | xargs rm -f
 find  -name "*.orig" -print | xargs rm -f
 
 %ifarch %{ix86}
+install $RPM_SOURCE_DIR/kernel-i586.config .config
+%else
+install $RPM_SOURCE_DIR/kernel-$RPM_ARCH.config .config
+%endif
+make oldconfig
+mv include/linux/autoconf.h include/linux/autoconf-up.h
+%ifarch %{ix86}
 install $RPM_SOURCE_DIR/kernel-i586-smp.config .config
 %else
 install $RPM_SOURCE_DIR/kernel-$RPM_ARCH-smp.config .config
 %endif
+make oldconfig
+mv include/linux/autoconf.h include/linux/autoconf-smp.h
+
+install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
-make oldconfig 
 make symlinks 
 make include/linux/version.h
 make "`pwd`/include/linux/modversions.h"
