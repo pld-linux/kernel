@@ -591,6 +591,7 @@ BuildKernel() {
 	:> arch/$RPM_ARCH/defconfig
 %ifarch i386
 	echo "CONFIG_M386=y" > arch/$RPM_ARCH/defconfig
+	echo "CONFIG_MATH_EMULATION=y" >> arch/$RPM_ARCH/defconfig
 %endif
 %ifarch i586
 	echo "CONFIG_M586=y" > arch/$RPM_ARCH/defconfig
@@ -719,6 +720,7 @@ find  -name "*.orig" -print | xargs rm -f
 
 %ifarch i386
 echo "CONFIG_M386=y" > .config
+echo "CONFIG_MATH_EMULATION=y" >> .config
 %endif
 %ifarch i586
 echo "CONFIG_M586=y" > .config
@@ -746,6 +748,7 @@ mv include/linux/autoconf.h include/linux/autoconf-up.h
 
 %ifarch i386
 echo "CONFIG_M386=y" > .config
+echo "CONFIG_MATH_EMULATION=y" >> .config
 %endif
 %ifarch i586
 echo "CONFIG_M586=y" > .config
