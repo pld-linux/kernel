@@ -2,7 +2,6 @@
 # If you define the following as 1, only kernel, -headers and -source
 # packages will be built
 #
-# _without_grsec	- build kernel without grsecurity patch
 # _with_preemptive	- build with Preemptible patch
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
@@ -26,7 +25,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	1.11%{?_with_preemptive:_pr}
+Release:	1.12%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -177,6 +176,7 @@ Patch908:	linux-2.4.19-PPC-o1_scheduler.patch
 Patch909:	linux-2.4.19-PPC-agpgart_be.patch
 Patch910:	linux-2.4.19-grsecurity-1.9.7-fix.patch
 Patch911:	linux-2.4.19-SPARC.patch
+Patch912:	linux-2.4.19-grsec-1.9.7-PAX-sysctl.patch
 
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
@@ -542,6 +542,9 @@ cp hostap-2002-09-12/driver/modules/hostap*.[ch] drivers/net/wireless/
 
 %ifarch sparc64
 %endif
+
+%patch912 -p1
+
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
