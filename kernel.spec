@@ -15,7 +15,7 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 # Netfilter snap.
-%define		_netfilter_snap		20040316
+%define		_netfilter_snap		20040322
 #
 %define		no_install_post_strip	1
 #
@@ -43,9 +43,10 @@ Patch21:	2.6.4-paxgrsec-gcc34.patch
 Patch30:	2.6.4-esfq.patch
 Patch31:	2.6.4-imq.patch
 Patch32:	2.6.4-imq-nat.patch
+Patch33:	2.6.4-unclean.patch
 Patch50:	2.6.4-pom-ng-%{_netfilter_snap}-base.patch
 Patch51:	2.6.4-pom-ng-%{_netfilter_snap}-extra.patch
-Patch52:	2.6.4-unclean.patch
+Patch52:	2.6.4-pom-ng-%{_netfilter_snap}-base-osf.patch
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 BuildRequires:	module-init-tools
@@ -135,6 +136,7 @@ hardware.
 %patch30 -p1
 %patch31 -p1
 %patch32 -p1
+%patch33 -p1
 
 %patch50 -p1
 %patch51 -p1
