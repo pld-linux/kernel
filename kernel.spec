@@ -811,12 +811,12 @@ echo AXP patches ...
 %patch204 -p1
 %endif
 
-%ifarch %{ix86}
-echo Win4Lin patch ... %{?_without_w4l: not installed}
-%{!?_without_w4l:%patch1000 -p1}
-%{!?_without_w4l:%patch1001 -p1}
-%{!?_without_w4l:%patch1002 -p1}
-%endif
+#%ifarch %{ix86}
+#echo Win4Lin patch ... %{?_without_w4l: not installed}
+#%{!?_without_w4l:%patch1000 -p1}
+#%{!?_without_w4l:%patch1001 -p1}
+#%{!?_without_w4l:%patch1002 -p1}
+#%endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
