@@ -84,7 +84,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.b
 # Source0-md5:	61ade860849e8661f14bd754f5a90986
 Source1:	%{name}-autoconf.h
 
-Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
+## Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
