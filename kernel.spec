@@ -503,21 +503,27 @@ ln -snf %{version}-%{release}BOOT /lib/modules/%{version}
 %postun
 if [ -L /lib/modules/%{version} ]; then 
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}" ]; then
-		[ $1 = 0 ] && rm -f /lib/modules/%{version}
+		if [ "$1" = "0" ]; then
+			rm -f /lib/modules/%{version}
+		fi
 	fi
 fi
 
 %postun smp
 if [ -L /lib/modules/%{version} ]; then 
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp" ]; then
-		[ $1 = 0 ] && rm -f /lib/modules/%{version}
+		if [ "$1" = "0" ]; then
+			rm -f /lib/modules/%{version}
+		fi
 	fi
 fi
 
 %postun BOOT
 if [ -L /lib/modules/%{version} ]; then 
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}BOOT" ]; then
-		[ $1 = 0 ] && rm -f /lib/modules/%{version}
+		if [ "$1" = "0" ]; then
+			rm -f /lib/modules/%{version}
+		fi
 	fi
 fi
 
@@ -528,7 +534,9 @@ ln -snf linux-%{version} /usr/src/linux
 %postun headers
 if [ -L /usr/src/linux ]; then 
 	if [ "`ls -l /usr/src/linux | awk '{ print $11 }'`" = "linux-%{version}" ]; then
-		[ $1 = 0 ] && rm -f /usr/src/linux
+		if [ "$1" = "0" ]; then
+			rm -f /usr/src/linux
+		fi
 	fi
 fi
 
