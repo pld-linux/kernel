@@ -198,6 +198,8 @@ Patch300:	linux-2.6-sparc-ksyms.patch
 
 Patch303:	%{name}-hotfixes.patch
 
+Patch400:	linux-static-dev.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 BuildRequires:	diffutils
@@ -616,6 +618,8 @@ patch -p1 -s < exec-shield.patch
 %patch300 -p1
 
 %patch303 -p1
+
+%patch400 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
