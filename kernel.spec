@@ -749,9 +749,9 @@ cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 %{!?_without_grsec:%patch802 -p1}
 
 %ifarch %{ix86}
-echo Win4Lin patch ...
-%patch900 -p1
-%patch991 -p1
+%{?_with_win4lin:echo Win4Lin patch ...}
+%{?_with_win4lin:%patch900 -p1}
+%{?_with_win4lin:%patch991 -p1}
 %endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
