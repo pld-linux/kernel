@@ -237,17 +237,60 @@ Patch420:	openMosix-2.6.7-PLD.patch
 
 Patch440:	2.6.8.1-qdisc_run.patch
 
-# http://download.berlios.de/softwaresuspend/software-suspend-2.0.0.105-for-2.6.8.1.tar.bz2
-Patch460:	20-software-suspend-linux-2.6.8.1-rev1-whole
-Patch461:	21-software-suspend-linux-2.6.8.1-rev2-incremental
-Patch462:	21-software-suspend-linux-2.6.8.1-rev3-incremental
-Patch463:	30-software-suspend-core-2.0.0.104-whole
-Patch464:	31-software-suspend-core-2.0.0.105-incremental
-
 # http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9-r6-2.6.8.1.patch
 Patch470:	fbsplash-0.9-r6-2.6.8.1.patch
 
-Patch500:	%{name}-grsec.patch
+# http://download.berlios.de/softwaresuspend/software-suspend-2.0.0.109-for-2.6.8.1.tar.bz2
+Patch500:	10-kdb-v4.4-2.6.7-common-1
+Patch501:	10-kdb-v4.4-2.6.7-i386-1
+Patch502:	110-Kernel-Win4Lin3-2.6.8.1.patch
+Patch503:	110-mki-adapter26_1_3_7.patch
+Patch504:	120-bootsplash-3.1.4-sp3-2.6.8.1.diff
+Patch505:	201-ati-agp
+Patch506:	202-ne2k
+Patch507:	203-ali5451
+Patch508:	204-frame-buffer-class-support
+Patch509:	205-device-pm-trees
+Patch510:	207-find-class-by-name
+Patch511:	208-e820-table-support
+Patch512:	209-get-module-list
+Patch513:	210-workthreads
+Patch514:	300-reboot-handler-hook
+Patch515:	301-proc-acpi-sleep-activate-hook
+Patch516:	302-init-hooks
+Patch517:	400-exports
+Patch518:	401-export-vt-functions
+Patch519:	501-disable-oom-killer-when-suspending
+Patch520:	502-disable-highmem-tlb-flush-for-copyback
+Patch521:	503-disable-page-alloc-warnings-while-suspending
+Patch522:	504-disable-pdflush-during-suspend
+Patch523:	505-disable-cache-reaping-during-suspend
+Patch524:	582-refrigerator
+Patch525:	700-suspend2-lowlevel
+Patch526:	701-mac
+Patch527:	702-keyboard-and-8250-hooks
+Patch528:	810-documentation
+Patch529:	811-Kconfig-and-Makefile-for-suspend2
+Patch530:	812-suspend2-block-io-module
+Patch531:	815-add-suspend-memory-pool-hooks
+Patch532:	816-clear-swapfile-bdev-in-swapoff
+Patch533:	817-enable-slab-alloc-fallback-to-suspend-memory-pool
+Patch534:	818-tlb-flushing-functions
+Patch535:	819-export-show-task
+Patch536:	820-to-reverse
+Patch537:	821-docs
+Patch538:	822-includes
+Patch539:	824-builtin
+Patch540:	825-core
+Patch541:	826-text-ui
+Patch542:	827-suspend-bootsplash
+Patch543:	828-lzf
+Patch544:	829-gzip
+Patch545:	830-blockwriter
+Patch546:	831-swapwriter
+Patch550:	2.6.8.1-sws2-include.patch
+
+Patch600:	%{name}-grsec.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -649,7 +692,7 @@ zcat %{SOURCE3} | patch -p1 -s
 
 %patch54 -p1
 
-%patch56 -p1
+#patch56 -p1
 
 %patch58 -p1
 %patch59 -p1
@@ -724,21 +767,64 @@ zcat %{SOURCE3} | patch -p1 -s
 
 %patch440 -p1
 
+#patch470 -p1
+
 # software suspend
 %if %{with swsuspend}
-%patch460 -p1
-%patch461 -p1
-%patch462 -p1
-%patch463 -p1
-%patch464 -p1
+%patch500 -p1
+%patch501 -p1
+%patch502 -p1
+%patch503 -p1
+#%patch504 -p1
+%patch505 -p1
+%patch506 -p1
+%patch507 -p1
+%patch508 -p1
+%patch509 -p1
+%patch510 -p1
+%patch511 -p1
+%patch512 -p1
+%patch513 -p1
+%patch514 -p1
+%patch515 -p1
+%patch516 -p1
+%patch517 -p1
+%patch518 -p1
+%patch519 -p1
+%patch520 -p1
+%patch521 -p1
+%patch522 -p1
+%patch523 -p1
+%patch524 -p1
+%patch525 -p1
+%patch526 -p1
+%patch527 -p1
+%patch528 -p1
+%patch529 -p1
+%patch530 -p1
+%patch531 -p1
+%patch532 -p1
+%patch533 -p1
+%patch534 -p1
+%patch535 -p1
+%patch536 -p1
+%patch537 -p1
+%patch538 -p1
+%patch539 -p1
+%patch540 -p1
+%patch541 -p1
+#%patch542 -p1
+%patch543 -p1
+%patch544 -p1
+%patch545 -p1
+%patch546 -p1
+%patch550 -p1
 %endif
-
-%patch470 -p1
 
 #grsec
 %ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
 %if %{with grsec}
-%patch500 -p1
+%patch600 -p1
 %endif
 %endif
 
