@@ -1,14 +1,14 @@
 --- linux-2.6.6/scripts/Makefile.modpost.orig	Thu Apr 15 03:35:04 2004
 +++ linux-2.6.6/scripts/Makefile.modpost	Tue Apr 20 16:43:56 2004
-@@ -50,7 +50,7 @@
+@@ -51,7 +51,7 @@
  #  Includes step 3,4
  quiet_cmd_modpost = MODPOST
-       cmd_modpost = scripts/modpost \
+       cmd_modpost = scripts/mod/modpost \
 -	$(if $(KBUILD_EXTMOD),-i,-o) $(symverfile) \
 +	$(if $(CONFIG_MODVERSIONS),$(if $(filter vmlinux,$^),-o,-i) $(symverfile)) \
  	$(filter-out FORCE,$^)
  
- __modpost: $(if $(KBUILD_EXTMOD),,$(wildcard vmlinux)) $(modules:.ko=.o) FORCE
+ .PHONY: __modpost
 --- linux-2.6.6/Makefile.orig	2004-05-23 13:18:32.000000000 +0200
 +++ linux-2.6.6/Makefile	2004-05-23 13:20:16.759551080 +0200
 @@ -397,7 +397,6 @@
