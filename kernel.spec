@@ -700,12 +700,17 @@ echo "Not fixed !!"
 # NX is NX and it has noting to do with exec-shield beside
 # exec-shield using NX feature
 patch -p1 -s < %{SOURCE4}
-%if %{with execshield}
 %if %{with grsec}
-patch %{SOURCE5} < %{SOURCE6}
+%if %{with execshield}
+install %{SOURCE5} exec-shield.patch
+patch -s exec-shield.patch < %{SOURCE6}
+patch -p1 -s < exec-shield.patch
 %endif
+%else
+%if %{with execshield}
 patch -p1 -s < %{SOURCE5}
-%endif		
+%endif	
+%endif
 
 %patch96 -p1
 #patch97 -p1
