@@ -1,773 +1,549 @@
 
-From: Andrew de Quincey <adq_dvb@lidskialf.net>
+From: Len Brown <len.brown@intel.com>
 
-Hi, this is my next round of ACPI IRQ fixes.  Attached are patches for
-linux-2.4.23-pre3 and linux-2.6.0-test4.
+This patch updates 2.6.0-test5 to the current ACPI in 2.4.22-pre5
+If nothing explodes, I'll be releasing it to Linus shortly via BK.
 
-Please CC me on any replies.  I seem to be having issues with
-vger.kernel.org right now.
+(then I'll send a patch with the upcoming linux-acpi-test-2.6.0 changes)
 
-This patch addresses the following issues:
+The thing most 2.6 users will notice is that the CONFIG_ACPI_HT_ONLY
+scheme has been returned to the one used in 2.4.22 that people
+liked better; but several key platform fixes are included too.
 
-1) ACPI now drops back to PIC mode if configuration in APIC mode fails.
+cheers,
+-Len
 
-2) Removed 2 lines of erroneous code in mpparse.c which causes
-   IO-APICs to be misconfigured.
+It is also available here:
+http://linux-acpi.bkbits.net:8080/linux-acpi-release-2.6.0
 
-3) ACPI now supports PIC controllers properly.
+and here:
+http://prdownloads.sourceforge.net/acpi/acpi-20030916-2.6.0-test5.diff?download
 
-4) This patch includes a patch by "Jun Nakajima"
-   <jun.nakajima@intel.com> which fixes ACPI IRQ routing for all VIA
-   motherboards I have had tested so far.  I've included it in this
-   patch as it changes one of the same files.
+ChangeSet@1.1315.7.7, 2003-09-18 12:01:37-07:00, len.brown@intel.com
+  ACPI_CA_VERSION                 0x20030916
 
-5) Now retries with an extended IRQ descriptor if programming a link
-   device with a "standard" IRQ descriptor fails.
+ChangeSet@1.1315.7.6, 2003-09-18 11:59:12-07:00, len.brown@intel.com
+  remove ASUS A7V BIOS version 1011 from blacklist (Eric Valette)
 
-This has already been tested successfully by multiple people.
+ChangeSet@1.1315.7.5, 2003-09-18 11:41:51-07:00, len.brown@intel.com
+  IBM ThinkPAD T30/T40 oops (David Shaohua Li)
+  https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=98849
+
+ChangeSet@1.1315.7.4, 2003-09-18 11:29:42-07:00, len.brown@intel.com
+  Extended IRQ resource type for nForce (Andrew de Quincey)
+
+ChangeSet@1.1315.7.3, 2003-09-18 10:58:41-07:00, len.brown@intel.com
+  [ACPI] Handle systems that specify non-ACPI-compliant SCI over-rides
+(Jun Naka
+jima)
+
+ChangeSet@1.1315.7.2, 2003-09-18 10:54:11-07:00, len.brown@intel.com
+  Handle BIOS with _CRS that fails (Jun Nakajima)
+
+ChangeSet@1.1315.7.1, 2003-09-18 00:52:06-04:00, len.brown@intel.com
+  [ACPI] merge 2.4.22 cleanup into 2.6
+  Restores CONFIG_ACPI_HT_ONLY as an alternative to CONFIG_ACPI
+  rather than a prerequisite
+
+ChangeSet@1.1130.1.2, 2003-09-15 00:34:00-04:00, len.brown@intel.com
+  sync 2.4.22 changes into 2.6
+  Note that this restores CONFIG_ACPI_HT_ONLY as a sub-set of
+CONFIG_ACPI rather
+ than a dependency.
 
 
 
- arch/i386/kernel/acpi/Makefile   |    2 
- arch/i386/kernel/acpi/pic.c      |  102 ++++++++++++++++++
- arch/i386/kernel/mpparse.c       |   27 ++++
- arch/ia64/kernel/iosapic.c       |   19 +++
- arch/x86_64/kernel/acpi/Makefile |    2 
- arch/x86_64/kernel/acpi/pic.c    |  102 ++++++++++++++++++
- arch/x86_64/kernel/mpparse.c     |   22 +++
- drivers/acpi/bus.c               |    2 
- drivers/acpi/pci_irq.c           |  218 +++++++++++++++++++++++++++++----------
- drivers/acpi/pci_link.c          |   89 ++++++++++++---
- include/acpi/acpi_bus.h          |    2 
- include/acpi/acpi_drivers.h      |    8 +
- include/asm-i386/acpi.h          |    3 
- include/asm-i386/mpspec.h        |    2 
- include/asm-ia64/acpi.h          |    3 
- include/asm-ia64/iosapic.h       |    2 
- include/asm-x86_64/acpi.h        |    3 
- include/asm-x86_64/mpspec.h      |    2 
- include/linux/acpi.h             |    2 
- 19 files changed, 522 insertions(+), 90 deletions(-)
+ 25-akpm/arch/i386/kernel/acpi/boot.c   |   10 +--
+ 25-akpm/arch/i386/kernel/dmi_scan.c    |   10 +--
+ 25-akpm/arch/i386/kernel/mpparse.c     |   31 ++++-----
+ 25-akpm/arch/i386/kernel/setup.c       |    2 
+ 25-akpm/drivers/acpi/Kconfig           |  108 ++++++++++++++++++---------------
+ 25-akpm/drivers/acpi/Makefile          |    2 
+ 25-akpm/drivers/acpi/ec.c              |    7 +-
+ 25-akpm/drivers/acpi/events/evregion.c |    6 -
+ 25-akpm/drivers/acpi/pci_link.c        |   74 +++++++++++++++++-----
+ 25-akpm/include/acpi/acconfig.h        |    2 
+ 25-akpm/include/linux/acpi.h           |    6 -
+ 25-akpm/init/do_mounts.h               |    1 
+ 12 files changed, 155 insertions(+), 104 deletions(-)
 
-diff -puN arch/i386/kernel/acpi/Makefile~acpi-irq-fixes arch/i386/kernel/acpi/Makefile
---- 25/arch/i386/kernel/acpi/Makefile~acpi-irq-fixes	2003-09-06 19:47:12.000000000 -0700
-+++ 25-akpm/arch/i386/kernel/acpi/Makefile	2003-09-06 19:47:12.000000000 -0700
-@@ -1,3 +1,3 @@
--obj-$(CONFIG_ACPI_BOOT)		:= boot.o
-+obj-$(CONFIG_ACPI_BOOT)		:= boot.o pic.o
- obj-$(CONFIG_ACPI_SLEEP)	+= sleep.o wakeup.o
+diff -puN arch/i386/kernel/acpi/boot.c~acpi-20030916 arch/i386/kernel/acpi/boot.c
+--- 25/arch/i386/kernel/acpi/boot.c~acpi-20030916	Thu Sep 18 15:51:50 2003
++++ 25-akpm/arch/i386/kernel/acpi/boot.c	Thu Sep 18 15:51:50 2003
+@@ -183,8 +183,7 @@ acpi_parse_lapic_nmi (
  
-diff -puN /dev/null arch/i386/kernel/acpi/pic.c
---- /dev/null	2002-08-30 16:31:37.000000000 -0700
-+++ 25-akpm/arch/i386/kernel/acpi/pic.c	2003-09-06 19:47:12.000000000 -0700
-@@ -0,0 +1,102 @@
-+/* ----------------------------------------------------------------------- *
-+ *
-+ *   Copyright 2003 Andrew de Quincey - All Rights Reserved
-+ *
-+ *   This program is free software; you can redistribute it and/or modify
-+ *   it under the terms of the GNU General Public License as published by
-+ *   the Free Software Foundation, Inc., 675 Mass Ave, Cambridge MA 02139,
-+ *   USA; either version 2 of the License, or (at your option) any later
-+ *   version; incorporated herein by reference.
-+ *
-+ * ----------------------------------------------------------------------- */
-+
-+#include <linux/mm.h>
-+#include <linux/irq.h>
-+#include <linux/init.h>
-+#include <linux/acpi.h>
-+#include <linux/delay.h>
-+#include <linux/config.h>
-+#include <linux/bootmem.h>
-+#include <linux/smp_lock.h>
-+#include <linux/kernel_stat.h>
-+
-+#include <asm/acpi.h>
-+
-+#ifdef CONFIG_ACPI_PCI
-+
-+extern void eisa_set_level_irq(unsigned int irq);
-+
-+int __init pic_parse_prt (void)
-+{
-+	struct list_head	*node = NULL;
-+	struct acpi_prt_entry	*entry = NULL;
-+	struct acpi_prt_list	*prt_list = NULL;
-+	int			edge_level = 0;
-+	int			active_high_low = 0;
-+	int			irq = 0;
-+	int			programmed[16];
-+
-+	/* Get the current PRT */
-+	prt_list = acpi_pci_get_prt_list();
-+
-+	if (!prt_list->count) {
-+		acpi_pci_destroy_prt_list(prt_list);
-+		printk(KERN_WARNING PREFIX "ACPI tables contain no PIC PCI IRQ "
-+			"routing entries\n");
-+		return_VALUE(-ENODEV);
-+	}
-+
-+	/* mark all IRQs as unprogrammed */
-+	memset(programmed, 0, sizeof(programmed));
-+
-+	/*
-+	 * Parsing through the PCI Interrupt Routing Table (PRT) and program
-+	 * IRQs if necessary.
-+	 */
-+	list_for_each(node, &prt_list->entries) {
-+		entry = list_entry(node, struct acpi_prt_entry, node);
-+
-+		/* Need to get irq for dynamic entry */
-+		if (entry->link.handle) {
-+			irq = acpi_pci_link_get_irq(entry->link.handle, entry->link.index, &edge_level, &active_high_low);
-+			if (irq < 0) {
-+				acpi_pci_destroy_prt_list(prt_list);
-+				return -ENODEV;
-+			}
-+ 			if (!irq)
-+				continue;
-+		}
-+
-+		/* sanity check + update entry */
-+		if ((irq < 0) || (irq > 15)) {
-+			printk(KERN_ERR "Invalid IRQ (%i) passed to PIC programming code\n", irq);
-+			entry->irq = 0;
-+			continue;
-+		}
-+		entry->irq = irq;
-+
-+		/* check if it has already been dealt with */
-+		if (programmed[irq]) {
-+			printk(KERN_DEBUG "PIC: IRQ (%i) already programmed\n", irq);
-+			continue;
-+		}
-+		programmed[irq] = 1;
-+
-+		/* program it */
-+		if (edge_level) {
-+			eisa_set_level_irq(irq);
-+		}
-+
-+		printk(KERN_DEBUG "%02x:%02x:%02x[%c] -> IRQ %d Mode %d Trigger %d\n",
-+			entry->id.segment, entry->id.bus,
-+			entry->id.device, ('A' + entry->pin),
-+			entry->irq, edge_level, active_high_low);
-+	}
-+
-+	/* if we get here, the PRT was fine. commit it */
-+	acpi_pci_commit_prt_list(prt_list);
-+
-+	return 0;
-+}
-+
-+#endif /*CONFIG_ACPI_PCI*/
-diff -puN arch/i386/kernel/mpparse.c~acpi-irq-fixes arch/i386/kernel/mpparse.c
---- 25/arch/i386/kernel/mpparse.c~acpi-irq-fixes	2003-09-06 19:47:12.000000000 -0700
-+++ 25-akpm/arch/i386/kernel/mpparse.c	2003-09-06 19:47:12.000000000 -0700
-@@ -1073,10 +1073,11 @@ void __init mp_config_ioapic_for_sci(int
+ #endif /*CONFIG_X86_LOCAL_APIC*/
  
- #ifdef CONFIG_ACPI_PCI
+-#ifdef CONFIG_X86_IO_APIC
+-
++#if defined(CONFIG_X86_IO_APIC) && defined(CONFIG_ACPI_INTERPRETER)
  
--void __init mp_parse_prt (void)
-+int __init mp_parse_prt (void)
- {
- 	struct list_head	*node = NULL;
- 	struct acpi_prt_entry	*entry = NULL;
-+ 	struct acpi_prt_list	*prt_list = NULL;
- 	int			ioapic = -1;
- 	int			ioapic_pin = 0;
- 	int			irq = 0;
-@@ -1084,16 +1085,31 @@ void __init mp_parse_prt (void)
- 	int			edge_level = 0;
- 	int			active_high_low = 0;
+ static int __init
+ acpi_parse_ioapic (
+@@ -368,7 +367,6 @@ acpi_boot_init (void)
  
-+ 	/* Get the current PRT */
-+ 	prt_list = acpi_pci_get_prt_list();
-+
-+ 	if (!prt_list->count) {
-+ 		acpi_pci_destroy_prt_list(prt_list);
-+ 		printk(KERN_WARNING PREFIX "ACPI tables contain no IO-APIC PCI IRQ "
-+ 			"routing entries\n");
-+ 		return_VALUE(-ENODEV);
-+ 	}
-+
- 	/*
- 	 * Parsing through the PCI Interrupt Routing Table (PRT) and program
- 	 * routing for all entries.
- 	 */
--	list_for_each(node, &acpi_prt.entries) {
-+	list_for_each(node, &prt_list->entries) {
- 		entry = list_entry(node, struct acpi_prt_entry, node);
- 
- 		/* Need to get irq for dynamic entry */
- 		if (entry->link.handle) {
- 			irq = acpi_pci_link_get_irq(entry->link.handle, entry->link.index, &edge_level, &active_high_low);
-+			if (irq < 0) {
-+				acpi_pci_destroy_prt_list(prt_list);
-+				return -ENODEV;
-+			}
-+
- 			if (!irq)
- 				continue;
- 		}
-@@ -1113,8 +1129,6 @@ void __init mp_parse_prt (void)
- 			continue;
- 		ioapic_pin = irq - mp_ioapic_routing[ioapic].irq_start;
- 
--		if (!ioapic && (irq < 16))
--			irq += 16;
- 		/* 
- 		 * Avoid pin reprogramming.  PRTs typically include entries  
- 		 * with redundant pin->irq mappings (but unique PCI devices);
-@@ -1146,6 +1160,11 @@ void __init mp_parse_prt (void)
- 			mp_ioapic_routing[ioapic].apic_id, ioapic_pin, 
- 			entry->irq);
+ 	result = acpi_table_parse(ACPI_APIC, acpi_parse_madt);
+ 	if (!result) {
+-		printk(KERN_WARNING PREFIX "MADT not present\n");
+ 		return 0;
  	}
-+
-+ 	/* if we get here, the PRT was fine. commit it */
-+ 	acpi_pci_commit_prt_list(prt_list);
-+
-+	return 0;
- }
+ 	else if (result < 0) {
+@@ -416,7 +414,7 @@ acpi_boot_init (void)
  
- #endif /*CONFIG_ACPI_PCI*/
-diff -puN arch/ia64/kernel/iosapic.c~acpi-irq-fixes arch/ia64/kernel/iosapic.c
---- 25/arch/ia64/kernel/iosapic.c~acpi-irq-fixes	2003-09-06 19:47:12.000000000 -0700
-+++ 25-akpm/arch/ia64/kernel/iosapic.c	2003-09-06 19:47:12.000000000 -0700
-@@ -680,7 +680,7 @@ iosapic_enable_intr (unsigned int vector
+ #endif /*CONFIG_X86_LOCAL_APIC*/
  
- #ifdef CONFIG_ACPI_PCI
+-#ifdef CONFIG_X86_IO_APIC
++#if defined(CONFIG_X86_IO_APIC) && defined(CONFIG_ACPI_INTERPRETER)
  
--void __init
-+int __init
- iosapic_parse_prt (void)
- {
- 	struct acpi_prt_entry *entry;
-@@ -690,8 +690,19 @@ iosapic_parse_prt (void)
- 	char pci_id[16];
- 	struct hw_interrupt_type *irq_type = &irq_type_iosapic_level;
- 	irq_desc_t *idesc;
-+ 	struct acpi_prt_list	*prt_list = NULL;
- 
--	list_for_each(node, &acpi_prt.entries) {
-+ 	/* Get the current PRT */
-+ 	prt_list = acpi_pci_get_prt_list();
-+
-+ 	if (!prt_list->count) {
-+ 		acpi_pci_destroy_prt_list(prt_list);
-+ 		printk(KERN_WARNING PREFIX "ACPI tables contain no IO-APIC PCI IRQ "
-+ 			"routing entries\n");
-+ 		return_VALUE(-ENODEV);
-+ 	}
-+
-+	list_for_each(node, &prt_list->entries) {
- 		entry = list_entry(node, struct acpi_prt_entry, node);
- 
- 		/* We're only interested in static (non-link) entries.  */
-@@ -729,6 +740,10 @@ iosapic_parse_prt (void)
- 				      IOSAPIC_LEVEL);
- 
- 	}
-+
-+ 	/* if we get here, the PRT was fine. commit it */
-+ 	acpi_pci_commit_prt_list(prt_list);
-+	return 0;
- }
- 
- #endif /* CONFIG_ACPI */
-diff -puN arch/x86_64/kernel/acpi/Makefile~acpi-irq-fixes arch/x86_64/kernel/acpi/Makefile
---- 25/arch/x86_64/kernel/acpi/Makefile~acpi-irq-fixes	2003-09-06 19:47:12.000000000 -0700
-+++ 25-akpm/arch/x86_64/kernel/acpi/Makefile	2003-09-06 19:47:12.000000000 -0700
-@@ -1,3 +1,3 @@
--obj-$(CONFIG_ACPI_BOOT)		:= boot.o
-+obj-$(CONFIG_ACPI_BOOT)		:= boot.o pic.o
- obj-$(CONFIG_ACPI_SLEEP)	+= sleep.o wakeup.o
- 
-diff -puN /dev/null arch/x86_64/kernel/acpi/pic.c
---- /dev/null	2002-08-30 16:31:37.000000000 -0700
-+++ 25-akpm/arch/x86_64/kernel/acpi/pic.c	2003-09-06 19:47:12.000000000 -0700
-@@ -0,0 +1,102 @@
-+/* ----------------------------------------------------------------------- *
-+ *
-+ *   Copyright 2003 Andrew de Quincey - All Rights Reserved
-+ *
-+ *   This program is free software; you can redistribute it and/or modify
-+ *   it under the terms of the GNU General Public License as published by
-+ *   the Free Software Foundation, Inc., 675 Mass Ave, Cambridge MA 02139,
-+ *   USA; either version 2 of the License, or (at your option) any later
-+ *   version; incorporated herein by reference.
-+ *
-+ * ----------------------------------------------------------------------- */
-+
-+#include <linux/mm.h>
-+#include <linux/irq.h>
-+#include <linux/init.h>
-+#include <linux/acpi.h>
-+#include <linux/delay.h>
-+#include <linux/config.h>
-+#include <linux/bootmem.h>
-+#include <linux/smp_lock.h>
-+#include <linux/kernel_stat.h>
-+
-+#include <asm/acpi.h>
-+
-+#ifdef CONFIG_ACPI_PCI
-+
-+extern void eisa_set_level_irq(unsigned int irq);
-+
-+int __init pic_parse_prt (void)
-+{
-+	struct list_head	*node = NULL;
-+	struct acpi_prt_entry	*entry = NULL;
-+	struct acpi_prt_list	*prt_list = NULL;
-+	int			edge_level = 0;
-+	int			active_high_low = 0;
-+	int			irq = 0;
-+	int			programmed[16];
-+
-+	/* Get the current PRT */
-+	prt_list = acpi_pci_get_prt_list();
-+
-+	if (!prt_list->count) {
-+		acpi_pci_destroy_prt_list(prt_list);
-+		printk(KERN_WARNING PREFIX "ACPI tables contain no PIC PCI IRQ "
-+			"routing entries\n");
-+		return_VALUE(-ENODEV);
-+	}
-+
-+	/* mark all IRQs as unprogrammed */
-+	memset(programmed, 0, sizeof(programmed));
-+
-+	/*
-+	 * Parsing through the PCI Interrupt Routing Table (PRT) and program
-+	 * IRQs if necessary.
-+	 */
-+	list_for_each(node, &prt_list->entries) {
-+		entry = list_entry(node, struct acpi_prt_entry, node);
-+
-+		/* Need to get irq for dynamic entry */
-+		if (entry->link.handle) {
-+			irq = acpi_pci_link_get_irq(entry->link.handle, entry->link.index, &edge_level, &active_high_low);
-+			if (irq < 0) {
-+				acpi_pci_destroy_prt_list(prt_list);
-+				return -ENODEV;
-+			}
-+ 			if (!irq)
-+				continue;
-+		}
-+
-+		/* sanity check + update entry */
-+		if ((irq < 0) || (irq > 15)) {
-+			printk(KERN_ERR "Invalid IRQ (%i) passed to PIC programming code\n", irq);
-+			entry->irq = 0;
-+			continue;
-+		}
-+		entry->irq = irq;
-+
-+		/* check if it has already been dealt with */
-+		if (programmed[irq]) {
-+			printk(KERN_DEBUG "PIC: IRQ (%i) already programmed\n", irq);
-+			continue;
-+		}
-+		programmed[irq] = 1;
-+
-+		/* program it */
-+		if (edge_level) {
-+			eisa_set_level_irq(irq);
-+		}
-+
-+		printk(KERN_DEBUG "%02x:%02x:%02x[%c] -> IRQ %d Mode %d Trigger %d\n",
-+			entry->id.segment, entry->id.bus,
-+			entry->id.device, ('A' + entry->pin),
-+			entry->irq, edge_level, active_high_low);
-+	}
-+
-+	/* if we get here, the PRT was fine. commit it */
-+	acpi_pci_commit_prt_list(prt_list);
-+
-+	return 0;
-+}
-+
-+#endif /*CONFIG_ACPI_PCI*/
-diff -puN arch/x86_64/kernel/mpparse.c~acpi-irq-fixes arch/x86_64/kernel/mpparse.c
---- 25/arch/x86_64/kernel/mpparse.c~acpi-irq-fixes	2003-09-06 19:47:12.000000000 -0700
-+++ 25-akpm/arch/x86_64/kernel/mpparse.c	2003-09-06 19:47:12.000000000 -0700
-@@ -889,16 +889,31 @@ void __init mp_parse_prt (void)
- 	int			edge_level = 0;
- 	int			active_high_low = 0;
- 
-+ 	/* Get the current PRT */
-+ 	prt_list = acpi_pci_get_prt_list();
-+
-+ 	if (!prt_list->count) {
-+ 		acpi_pci_destroy_prt_list(prt_list);
-+ 		printk(KERN_WARNING PREFIX "ACPI tables contain no IO-APIC PCI IRQ "
-+ 			"routing entries\n");
-+ 		return_VALUE(-ENODEV);
-+ 	}
-+
- 	/*
- 	 * Parsing through the PCI Interrupt Routing Table (PRT) and program
- 	 * routing for all static (IOAPIC-direct) entries.
- 	 */
--	list_for_each(node, &acpi_prt.entries) {
-+	list_for_each(node, &acpi_prt->entries) {
- 		entry = list_entry(node, struct acpi_prt_entry, node);
- 
- 		/* Need to get irq for dynamic entry */
- 		if (entry->link.handle) {
- 			irq = acpi_pci_link_get_irq(entry->link.handle, entry->link.index, &edge_level, &active_high_low);
-+			if (irq < 0) {
-+				acpi_pci_destroy_prt_list(prt_list);
-+				return -ENODEV;
-+			}
-+
- 			if (!irq)
- 				continue;
- 		} else {
-@@ -949,8 +964,11 @@ void __init mp_parse_prt (void)
- 			mp_ioapic_routing[ioapic].apic_id, ioapic_pin, vector, 
- 			entry->irq);
- 	}
-+
-+ 	/* if we get here, the PRT was fine. commit it */
-+ 	acpi_pci_commit_prt_list(prt_list);
- 	
--	return;
-+	return 0;
- }
- 
- #endif /*CONFIG_ACPI_PCI*/
-diff -puN drivers/acpi/bus.c~acpi-irq-fixes drivers/acpi/bus.c
---- 25/drivers/acpi/bus.c~acpi-irq-fixes	2003-09-06 19:47:12.000000000 -0700
-+++ 25-akpm/drivers/acpi/bus.c	2003-09-06 19:47:12.000000000 -0700
-@@ -536,7 +536,7 @@ acpi_bus_notify (
-                              Initialization/Cleanup
-    -------------------------------------------------------------------------- */
- 
--static int __init
-+int
- acpi_bus_init_irq (void)
- {
- 	acpi_status		status = AE_OK;
-diff -puN drivers/acpi/pci_irq.c~acpi-irq-fixes drivers/acpi/pci_irq.c
---- 25/drivers/acpi/pci_irq.c~acpi-irq-fixes	2003-09-06 19:47:12.000000000 -0700
-+++ 25-akpm/drivers/acpi/pci_irq.c	2003-09-06 19:47:12.000000000 -0700
-@@ -48,7 +48,22 @@
- #define _COMPONENT		ACPI_PCI_COMPONENT
- ACPI_MODULE_NAME		("pci_irq")
- 
--struct acpi_prt_list		acpi_prt;
-+struct acpi_prt_list*		acpi_prt = NULL;
-+
-+struct acpi_prt_ref {
-+	struct list_head	node;
-+	struct acpi_device	*device;
-+	acpi_handle		handle;
-+	int segment;
-+	int bus;
-+};
-+
-+struct acpi_prt_ref_list {
-+	int			count;
-+	struct list_head	entries;
-+};
-+
-+struct acpi_prt_ref_list acpi_prt_ref_list;
- 
- #ifdef CONFIG_X86
- extern void eisa_set_level_irq(unsigned int irq);
-@@ -71,13 +86,19 @@ acpi_pci_irq_find_prt_entry (
- 
- 	ACPI_FUNCTION_TRACE("acpi_pci_irq_find_prt_entry");
- 
-+	/* ensure we're not called before the routing table has been determined */
-+	if (acpi_prt == NULL) {
-+		ACPI_DEBUG_PRINT((ACPI_DB_ERROR, "Called before acpi_prt determined"));
-+		return_PTR(NULL);
-+ 	}
-+
- 	/*
- 	 * Parse through all PRT entries looking for a match on the specified
- 	 * PCI device's segment, bus, device, and pin (don't care about func).
- 	 *
- 	 * TBD: Acquire/release lock
- 	 */
--	list_for_each(node, &acpi_prt.entries) {
-+	list_for_each(node, &acpi_prt->entries) {
- 		entry = list_entry(node, struct acpi_prt_entry, node);
- 		if ((segment == entry->id.segment) 
- 			&& (bus == entry->id.bus) 
-@@ -93,6 +114,7 @@ acpi_pci_irq_find_prt_entry (
- 
- static int
- acpi_pci_irq_add_entry (
-+	struct acpi_prt_list*		prt_list,
- 	acpi_handle			handle,
- 	int				segment,
- 	int				bus,
-@@ -149,12 +171,116 @@ acpi_pci_irq_add_entry (
- 		('A' + entry->pin), prt->source, entry->link.index));
- 
- 	/* TBD: Acquire/release lock */
--	list_add_tail(&entry->node, &acpi_prt.entries);
--	acpi_prt.count++;
-+	list_add_tail(&entry->node, &prt_list->entries);
-+	prt_list->count++;
-+
-+	return_VALUE(0);
-+}
-+
-+
-+struct acpi_prt_list*
-+acpi_pci_get_prt_list (void)
-+{
-+	acpi_status			status = AE_OK;
-+	struct acpi_buffer		buffer = {0, NULL};
-+	struct acpi_pci_routing_table	*prt = NULL;
-+	struct acpi_pci_routing_table	*entry = NULL;
-+	struct acpi_prt_list		*prt_list = NULL;
-+	struct acpi_prt_ref		*prt_ref_entry = NULL;
-+	struct list_head		*node = NULL;
-+
-+	ACPI_FUNCTION_TRACE("acpi_pci_irq_get_prt_list");
-+
-+	/* Create a brand new acpi_prt_list */
-+	prt_list = kmalloc(sizeof(struct acpi_prt_list), GFP_KERNEL);
-+	if (!prt_list)
-+		return_PTR(NULL);
-+	memset(prt_list, 0, sizeof(struct acpi_prt_list));
-+
-+	prt_list->count = 0;
-+	INIT_LIST_HEAD(&prt_list->entries);
-+
-+	/* iterate over all entries in acpi_prt_ref_list, extracting the current _PRT entries */
-+	list_for_each(node, &acpi_prt_ref_list.entries) {
-+		prt_ref_entry = list_entry(node, struct acpi_prt_ref, node);
-+
-+		/*
-+		 * Evaluate this _PRT and add its entries to our local list (prt_list).
-+		 */
-+
-+		buffer.length = 0;
-+		buffer.pointer = NULL;
-+		status = acpi_get_irq_routing_table(prt_ref_entry->handle, &buffer);
-+		if (status != AE_BUFFER_OVERFLOW) {
-+			ACPI_DEBUG_PRINT((ACPI_DB_ERROR, "Error evaluating _PRT [%s]\n",
-+				acpi_format_exception(status)));
-+			kfree(prt_list);
-+			return_PTR(NULL);
-+		}
-+
-+		prt = kmalloc(buffer.length, GFP_KERNEL);
-+		if (!prt) {
-+			kfree(prt_list);
-+			return_VALUE(NULL);
-+		}
-+		memset(prt, 0, buffer.length);
-+		buffer.pointer = prt;
-+
-+		status = acpi_get_irq_routing_table(prt_ref_entry->handle, &buffer);
-+		if (ACPI_FAILURE(status)) {
-+			ACPI_DEBUG_PRINT((ACPI_DB_ERROR, "Error evaluating _PRT [%s]\n",
-+				acpi_format_exception(status)));
-+			kfree(buffer.pointer);
-+			kfree(prt_list);
-+			return_PTR(NULL);
-+		}
-+
-+		entry = prt;
-+
-+		while (entry && (entry->length > 0)) {
-+			acpi_pci_irq_add_entry(prt_list, prt_ref_entry->handle, prt_ref_entry->segment,
-+				prt_ref_entry->bus, entry);
-+			entry = (struct acpi_pci_routing_table *)
-+				((unsigned long) entry + entry->length);
-+		}
-+
-+		kfree(prt);
-+	}
-+
-+	return_PTR(prt_list);
-+}
-+
-+int
-+acpi_pci_destroy_prt_list (struct acpi_prt_list* prt_list) {
-+	struct list_head	*node = NULL;
-+	struct list_head	*tmp = NULL;
-+	struct acpi_prt_entry	*entry = NULL;
-+
-+	ACPI_FUNCTION_TRACE("acpi_pci_irq_destroy_prt_list");
-+
-+	list_for_each_safe(node, tmp, &prt_list->entries) {
-+		entry = list_entry(node, struct acpi_prt_entry, node);
-+		list_del(node);
-+		kfree(entry);
-+	}
-+	kfree(prt_list);
- 
- 	return_VALUE(0);
- }
- 
-+int
-+acpi_pci_commit_prt_list (struct acpi_prt_list* prt_list) {
-+
-+	ACPI_FUNCTION_TRACE("acpi_pci_irq_commit_prt_list");
-+
-+	if (acpi_prt != NULL) {
-+		ACPI_DEBUG_PRINT((ACPI_DB_ERROR, "Attempt to commit acpi_prt twice\n"));
-+		return_VALUE(-ENODEV);
-+	}
-+
-+	acpi_prt = prt_list;
-+	return_VALUE(0);
-+}
- 
- int
- acpi_pci_irq_add_prt (
-@@ -162,21 +288,20 @@ acpi_pci_irq_add_prt (
- 	int			segment,
- 	int			bus)
- {
--	acpi_status			status = AE_OK;
--	char				pathname[ACPI_PATHNAME_MAX] = {0};
--	struct acpi_buffer		buffer = {0, NULL};
--	struct acpi_pci_routing_table	*prt = NULL;
--	struct acpi_pci_routing_table	*entry = NULL;
--	static int			first_time = 1;
-+	static int		first_time = 1;
-+	struct acpi_prt_ref	*entry = NULL;
-+	struct acpi_buffer	buffer = {0, NULL};
-+	char			pathname[ACPI_PATHNAME_MAX] = {0};
- 
- 	ACPI_FUNCTION_TRACE("acpi_pci_irq_add_prt");
- 
- 	if (first_time) {
--		acpi_prt.count = 0;
--		INIT_LIST_HEAD(&acpi_prt.entries);
-+		acpi_prt_ref_list.count = 0;
-+		INIT_LIST_HEAD(&acpi_prt_ref_list.entries);
- 		first_time = 0;
- 	}
- 
-+
  	/* 
- 	 * NOTE: We're given a 'handle' to the _PRT object's parent device
- 	 *       (either a PCI root bridge or PCI-PCI bridge).
-@@ -189,42 +314,19 @@ acpi_pci_irq_add_prt (
- 	printk(KERN_DEBUG "ACPI: PCI Interrupt Routing Table [%s._PRT]\n",
- 		pathname);
+ 	 * I/O APIC 
+@@ -472,7 +470,8 @@ acpi_boot_init (void)
+ 	acpi_irq_model = ACPI_IRQ_MODEL_IOAPIC;
  
--	/* 
--	 * Evaluate this _PRT and add its entries to our global list (acpi_prt).
--	 */
- 
--	buffer.length = 0;
--	buffer.pointer = NULL;
--	status = acpi_get_irq_routing_table(handle, &buffer);
--	if (status != AE_BUFFER_OVERFLOW) {
--		ACPI_DEBUG_PRINT((ACPI_DB_ERROR, "Error evaluating _PRT [%s]\n",
--			acpi_format_exception(status)));
--		return_VALUE(-ENODEV);
--	}
- 
--	prt = kmalloc(buffer.length, GFP_KERNEL);
--	if (!prt)
-+	entry = kmalloc(sizeof(struct acpi_prt_ref), GFP_KERNEL);
-+	if (!entry)
- 		return_VALUE(-ENOMEM);
--	memset(prt, 0, buffer.length);
--	buffer.pointer = prt;
--
--	status = acpi_get_irq_routing_table(handle, &buffer);
--	if (ACPI_FAILURE(status)) {
--		ACPI_DEBUG_PRINT((ACPI_DB_ERROR, "Error evaluating _PRT [%s]\n",
--			acpi_format_exception(status)));
--		kfree(buffer.pointer);
--		return_VALUE(-ENODEV);
--	}
-+	memset(entry, 0, sizeof(struct acpi_prt_ref));
- 
--	entry = prt;
--
--	while (entry && (entry->length > 0)) {
--		acpi_pci_irq_add_entry(handle, segment, bus, entry);
--		entry = (struct acpi_pci_routing_table *)
--			((unsigned long) entry + entry->length);
--	}
-+	entry->handle = handle;
-+	entry->segment = segment;
-+	entry->bus = bus;
- 
--	kfree(prt);
-+	list_add_tail(&entry->node, &acpi_prt_ref_list.entries);
-+	acpi_prt_ref_list.count++;
- 
- 	return_VALUE(0);
- }
-@@ -383,6 +485,14 @@ acpi_pci_irq_enable (
- 	return_VALUE(dev->irq);
- }
- 
-+static void __init acpi_irq_pic_mode(void)
-+{
-+	acpi_irq_model = ACPI_IRQ_MODEL_PIC;
-+	acpi_bus_init_irq();
+ 	acpi_ioapic = 1;
+-#endif /*CONFIG_X86_IO_APIC*/
 +
-+        /* recalculate penalties */
-+ 	acpi_pci_link_calc_penalties();
-+}
++#endif /* CONFIG_X86_IO_APIC && CONFIG_ACPI_INTERPRETER */
  
- int __init
- acpi_pci_irq_init (void)
-@@ -391,27 +501,27 @@ acpi_pci_irq_init (void)
- 
- 	ACPI_FUNCTION_TRACE("acpi_pci_irq_init");
- 
--	if (!acpi_prt.count) {
--		printk(KERN_WARNING PREFIX "ACPI tables contain no PCI IRQ "
--			"routing entries\n");
--		return_VALUE(-ENODEV);
--	}
- 
--	/* Make sure all link devices have a valid IRQ. */
--	if (acpi_pci_link_check()) {
--		return_VALUE(-ENODEV);
--	}
-+ 	/* Calculate IRQ penalties for each link device */
-+ 	acpi_pci_link_calc_penalties();
- 
- #ifdef CONFIG_X86_IO_APIC
- 	/* Program IOAPICs using data from PRT entries. */
- 	if (acpi_irq_model == ACPI_IRQ_MODEL_IOAPIC)
--		mp_parse_prt();
-+ 		if (mp_parse_prt())
-+ 			acpi_irq_pic_mode();
+ #ifdef CONFIG_X86_LOCAL_APIC
+ 	if (acpi_lapic && acpi_ioapic) {
+@@ -480,6 +479,7 @@ acpi_boot_init (void)
+ 		clustered_apic_check();
+ 	}
  #endif
- #ifdef CONFIG_IOSAPIC
- 	if (acpi_irq_model == ACPI_IRQ_MODEL_IOSAPIC)
--		iosapic_parse_prt();
-+ 		if (iosapic_parse_prt())
-+			return_VALUE(-ENODEV);
++
+ #ifdef CONFIG_HPET_TIMER
+ 	acpi_table_parse(ACPI_HPET, acpi_parse_hpet);
+ #endif
+diff -puN arch/i386/kernel/dmi_scan.c~acpi-20030916 arch/i386/kernel/dmi_scan.c
+--- 25/arch/i386/kernel/dmi_scan.c~acpi-20030916	Thu Sep 18 15:51:50 2003
++++ 25-akpm/arch/i386/kernel/dmi_scan.c	Thu Sep 18 15:51:50 2003
+@@ -939,11 +939,6 @@ static __initdata struct dmi_blacklist d
+ 			MATCH(DMI_BOARD_NAME, "CUR-DLS"),
+ 			NO_MATCH, NO_MATCH }},
+ 
+-	{ force_acpi_ht, "ASUS A7V", {
+-			MATCH(DMI_BOARD_VENDOR, "ASUSTeK Computer INC"),
+-			MATCH(DMI_BOARD_NAME, "<A7V>"),
+-			MATCH(DMI_BIOS_VERSION, "ASUS A7V ACPI BIOS Revision 1011"), NO_MATCH }},
+-
+ 	{ force_acpi_ht, "ABIT i440BX-W83977", {
+ 			MATCH(DMI_BOARD_VENDOR, "ABIT <http://www.abit.com>"),
+ 			MATCH(DMI_BOARD_NAME, "i440BX-W83977 (BP6)"),
+@@ -978,7 +973,10 @@ static __initdata struct dmi_blacklist d
+ 	{ disable_acpi_pci, "ASUS A7V", {
+ 			MATCH(DMI_BOARD_VENDOR, "ASUSTeK Computer INC"),
+ 			MATCH(DMI_BOARD_NAME, "<A7V>"),
+-			MATCH(DMI_BIOS_VERSION, "ASUS A7V ACPI BIOS Revision 1007"), NO_MATCH }},
++			/* newer BIOS, Revision 1011, does work */
++			MATCH(DMI_BIOS_VERSION, "ASUS A7V ACPI BIOS Revision 1007"),
++			NO_MATCH }},
++
  #endif
  
-+ 	/* This one is last, as a catchall */
-+ 	if (acpi_irq_model == ACPI_IRQ_MODEL_PIC)
-+ 		if (pic_parse_prt())
-+ 			return_VALUE(-ENODEV);
+ 	{ NULL, }
+diff -puN arch/i386/kernel/mpparse.c~acpi-20030916 arch/i386/kernel/mpparse.c
+--- 25/arch/i386/kernel/mpparse.c~acpi-20030916	Thu Sep 18 15:51:50 2003
++++ 25-akpm/arch/i386/kernel/mpparse.c	Thu Sep 18 16:00:40 2003
+@@ -830,7 +830,7 @@ void __init mp_register_lapic (
+ 	MP_processor_info(&processor);
+ }
+ 
+-#ifdef CONFIG_X86_IO_APIC
++#if defined(CONFIG_X86_IO_APIC) && defined(CONFIG_ACPI_INTERPRETER)
+ 
+ #define MP_ISA_BUS		0
+ #define MP_MAX_IOAPIC_PIN	127
+@@ -1019,10 +1019,6 @@ void __init mp_config_acpi_legacy_irqs (
+ 	}
+ }
+ 
+-#ifdef	CONFIG_ACPI
+-
+-/* Ensure the ACPI SCI interrupt level is active low, edge-triggered */
+-
+ extern FADT_DESCRIPTOR acpi_fadt;
+ 
+ void __init mp_config_ioapic_for_sci(int irq)
+@@ -1031,6 +1027,7 @@ void __init mp_config_ioapic_for_sci(int
+ 	int ioapic_pin;
+ 	struct acpi_table_madt *madt;
+ 	struct acpi_table_int_src_ovr *entry = NULL;
++	acpi_interrupt_flags flags;
+ 	void *madt_end;
+ 	acpi_status status;
+ 
+@@ -1054,15 +1051,12 @@ void __init mp_config_ioapic_for_sci(int
+ 				 * See the note at the end of ACPI 2.0b section
+ 				 * 5.2.10.8 for what this is about.
+ 				 */
+-				if (entry->bus_irq != entry->global_irq) {
+-					acpi_fadt.sci_int = entry->global_irq;
+-					irq = entry->global_irq;
+-					break;
+-				}
+-				else
+-                			return;
++				flags = entry->flags;
++				acpi_fadt.sci_int = entry->global_irq;
++				irq = entry->global_irq;
++				break;
+ 			}
+-
++			
+                 	entry = (struct acpi_table_int_src_ovr *)
+                 	        ((unsigned long) entry + entry->header.length);
+         	}
+@@ -1072,9 +1066,14 @@ void __init mp_config_ioapic_for_sci(int
+ 
+ 	ioapic_pin = irq - mp_ioapic_routing[ioapic].irq_start;
+ 
+-	io_apic_set_pci_routing(ioapic, ioapic_pin, irq, 1, 1); // Active low, level triggered
++	if (flags.polarity == 0)
++		flags.polarity = 0x3;	/* Active low */ 
++	if (flags.trigger == 0) 
++		flags.trigger = 0x3;	/* Level-triggered */
 +
- 	while ((dev = pci_find_device(PCI_ANY_ID, PCI_ANY_ID, dev)) != NULL)
- 		acpi_pci_irq_enable(dev);
++	io_apic_set_pci_routing(ioapic, ioapic_pin, irq, 
++				(flags.trigger >> 1) , (flags.polarity >> 1));
+ }
+-#endif	/* CONFIG_ACPI */
  
-diff -puN drivers/acpi/pci_link.c~acpi-irq-fixes drivers/acpi/pci_link.c
---- 25/drivers/acpi/pci_link.c~acpi-irq-fixes	2003-09-06 19:47:12.000000000 -0700
-+++ 25-akpm/drivers/acpi/pci_link.c	2003-09-06 19:47:12.000000000 -0700
-@@ -281,6 +281,32 @@ end:
+ #ifdef CONFIG_ACPI_PCI
  
+@@ -1154,5 +1153,5 @@ void __init mp_parse_prt (void)
+ }
  
+ #endif /*CONFIG_ACPI_PCI*/
+-#endif	/* CONFIG_X86_IO_APIC */
++#endif /*CONFIG_X86_IO_APIC && CONFIG_ACPI_INTERPRETER*/
+ #endif /*CONFIG_ACPI_BOOT*/
+diff -puN arch/i386/kernel/setup.c~acpi-20030916 arch/i386/kernel/setup.c
+--- 25/arch/i386/kernel/setup.c~acpi-20030916	Thu Sep 18 15:51:50 2003
++++ 25-akpm/arch/i386/kernel/setup.c	Thu Sep 18 15:51:50 2003
+@@ -64,7 +64,7 @@ struct cpuinfo_x86 boot_cpu_data = { 0, 
+ unsigned long mmu_cr4_features;
+ EXPORT_SYMBOL_GPL(mmu_cr4_features);
+ 
+-#ifdef	CONFIG_ACPI
++#ifdef	CONFIG_ACPI_INTERPRETER
+ 	int acpi_disabled __initdata = 0;
+ #else
+ 	int acpi_disabled __initdata = 1;
+diff -puN drivers/acpi/ec.c~acpi-20030916 drivers/acpi/ec.c
+--- 25/drivers/acpi/ec.c~acpi-20030916	Thu Sep 18 15:51:50 2003
++++ 25-akpm/drivers/acpi/ec.c	Thu Sep 18 15:51:50 2003
+@@ -32,7 +32,7 @@
+ #include <asm/io.h>
+ #include <acpi/acpi_bus.h>
+ #include <acpi/acpi_drivers.h>
+-
++#include <acpi/actypes.h>
+ 
+ #define _COMPONENT		ACPI_EC_COMPONENT
+ ACPI_MODULE_NAME		("acpi_ec")
+@@ -412,7 +412,10 @@ acpi_ec_space_setup (
+ 	 * The EC object is in the handler context and is needed
+ 	 * when calling the acpi_ec_space_handler.
+ 	 */
+-	*return_context = handler_context;
++	if(function == ACPI_REGION_DEACTIVATE) 
++		*return_context = NULL;
++	else 
++		*return_context = handler_context;
+ 
+ 	return AE_OK;
+ }
+diff -puN drivers/acpi/events/evregion.c~acpi-20030916 drivers/acpi/events/evregion.c
+--- 25/drivers/acpi/events/evregion.c~acpi-20030916	Thu Sep 18 15:51:50 2003
++++ 25-akpm/drivers/acpi/events/evregion.c	Thu Sep 18 15:51:50 2003
+@@ -382,7 +382,7 @@ acpi_ev_detach_region(
+ 	union acpi_operand_object       *obj_desc;
+ 	union acpi_operand_object       **last_obj_ptr;
+ 	acpi_adr_space_setup            region_setup;
+-	void                            *region_context;
++	void                            **region_context;
+ 	union acpi_operand_object       *region_obj2;
+ 	acpi_status                     status;
+ 
+@@ -394,7 +394,7 @@ acpi_ev_detach_region(
+ 	if (!region_obj2) {
+ 		return_VOID;
+ 	}
+-	region_context = region_obj2->extra.region_context;
++	region_context = &region_obj2->extra.region_context;
+ 
+ 	/* Get the address handler from the region object */
+ 
+@@ -450,7 +450,7 @@ acpi_ev_detach_region(
+ 
+ 			region_setup = handler_obj->address_space.setup;
+ 			status = region_setup (region_obj, ACPI_REGION_DEACTIVATE,
+-					  handler_obj->address_space.context, &region_context);
++					  handler_obj->address_space.context, region_context);
+ 
+ 			/* Init routine may fail, Just ignore errors */
+ 
+diff -puN drivers/acpi/Kconfig~acpi-20030916 drivers/acpi/Kconfig
+--- 25/drivers/acpi/Kconfig~acpi-20030916	Thu Sep 18 15:51:50 2003
++++ 25-akpm/drivers/acpi/Kconfig	Thu Sep 18 15:51:50 2003
+@@ -3,34 +3,14 @@
+ #
+ 
+ menu "ACPI (Advanced Configuration and Power Interface) Support"
+-
+-config ACPI_HT
+-	bool "ACPI Processor Enumeration for HT"
+-	depends on X86
+-	default y
+-	---help---
+-	  ACPI enumerates both logical (a.k.a. Hyper-Threaded -- HT)
+-	  and physical processors.  It is designed to obsolete several older
+-	  specifications, including the MultiProcessor Specification (MPS),
+-	  which supported only physical processors.
+-
+-	  CONFIG_ACPI_HT includes the minimal ACPI boot-time code
+-	  necessary to enumerate logical processors and enable HT.
+-
+-	  CONFIG_ACPI includes CONFIG_ACPI_HT, plus IO APIC enumeration,
+-	  and the hooks to run the ACPI AML interpreter for run-time events.
+-
+-	  When CONFIG_ACPI is selected, the command-line option "acpi=ht"
+-	  is available to run just the ACPI boot-time code -- just as if
+-	  only CONFIG_ACPI_HT were selected.
+-
+-	  Note that "acpi=off" can be used to disable all ACPI code in the kernel.
+-
+-config ACPI
+-	bool "Full ACPI Support"
+ 	depends on !X86_VISWS
+ 	depends on !IA64_HP_SIM
+-	depends on IA64 || (X86 || ACPI_HT)
++	depends on IA64 || X86
++
++config ACPI
++	bool "ACPI Support"
++	depends on IA64 || X86
++
+ 	default y
+ 	---help---
+ 	  Advanced Configuration and Power Interface (ACPI) support for 
+@@ -60,14 +40,47 @@ config ACPI
+ 	  available at:
+ 	  <http://www.acpi.info>
+ 
++config ACPI_HT_ONLY
++	bool "Restrict ACPI to minimum boot code to enable HT"
++	depends on X86
++	depends on ACPI
++	depends on SMP
++	default n
++	---help---
++	  ACPI enumerates both logical (a.k.a. Hyper-Threaded -- HT)
++	  and physical processors.  It is designed to obsolete several older
++	  specifications, including the MultiProcessor Specification (MPS),
++	  which supported only physical processors.
++
++	  CONFIG_ACPI_HT_ONLY includes just the minimal ACPI boot-time code
++	  necessary to enumerate logical processors and enable HT.
++
++	  CONFIG_ACPI includes this, plus IO APIC enumeration,
++	  and the hooks to run the ACPI AML interpreter for run-time events.
++
++	  When CONFIG_ACPI is selected, the command-line option "acpi=ht"
++	  is available to run just the ACPI boot-time code -- just as if
++	  only CONFIG_ACPI_HT_ONLY were selected.
++
++	  Note that "acpi=off" can be used to disable all ACPI code in the kernel.
++
++
+ config ACPI_BOOT
+ 	bool
+-	depends on ACPI || ACPI_HT
++	depends on ACPI
++	default y
++
++config ACPI_INTERPRETER
++	bool
++	depends on ACPI
++	depends on !IA64_SGI_SN
++	depends on !ACPI_HT_ONLY
+ 	default y
+ 
+ config ACPI_SLEEP
+ 	bool "Sleep States (EXPERIMENTAL)"
+ 	depends on X86 && ACPI
++	depends on ACPI_INTERPRETER
+ 	depends on EXPERIMENTAL && PM
+ 	select SOFTWARE_SUSPEND
+ 	default y
+@@ -94,7 +107,8 @@ config ACPI_SLEEP_PROC_FS
+ 
+ config ACPI_AC
+ 	tristate "AC Adapter"
+-	depends on X86 && ACPI
++	depends on X86
++	depends on ACPI_INTERPRETER
+ 	default m
+ 	help
+ 	  This driver adds support for the AC Adapter object, which indicates
+@@ -103,7 +117,8 @@ config ACPI_AC
+ 
+ config ACPI_BATTERY
+ 	tristate "Battery"
+-	depends on X86 && ACPI
++	depends on X86
++	depends on ACPI_INTERPRETER
+ 	default m
+ 	help
+ 	  This driver adds support for battery information through
+@@ -112,7 +127,7 @@ config ACPI_BATTERY
+ 
+ config ACPI_BUTTON
+ 	tristate "Button"
+-	depends on ACPI
++	depends on ACPI_INTERPRETER
+ 	depends on !IA64_SGI_SN
+ 	default m
+ 	help
+@@ -124,7 +139,7 @@ config ACPI_BUTTON
+ 
+ config ACPI_FAN
+ 	tristate "Fan"
+-	depends on ACPI
++	depends on ACPI_INTERPRETER
+ 	depends on !IA64_SGI_SN
+ 	default m
+ 	help
+@@ -133,7 +148,7 @@ config ACPI_FAN
+ 
+ config ACPI_PROCESSOR
+ 	tristate "Processor"
+-	depends on ACPI
++	depends on ACPI_INTERPRETER
+ 	depends on !IA64_SGI_SN
+ 	default m
+ 	help
+@@ -153,14 +168,15 @@ config ACPI_THERMAL
+ 
+ config ACPI_NUMA
+ 	bool "NUMA support"
+-	depends on ACPI
++	depends on ACPI_INTERPRETER
+ 	depends on NUMA
+ 	depends on !X86_64
+ 	default y if IA64_GENERIC || IA64_SGI_SN2
+ 
+ config ACPI_ASUS
+         tristate "ASUS/Medion Laptop Extras"
+-        depends on X86 && ACPI
++	depends on X86
++	depends on ACPI_INTERPRETER
+ 	default m
+         ---help---
+           This driver provides support for extra features of ACPI-compatible
+@@ -186,7 +202,8 @@ config ACPI_ASUS
+           
+ config ACPI_TOSHIBA
+ 	tristate "Toshiba Laptop Extras"
+-	depends on X86 && ACPI
++	depends on X86
++	depends on ACPI_INTERPRETER
+ 	default m
+ 	---help---
+ 	  This driver adds support for access to certain system settings
+@@ -213,7 +230,7 @@ config ACPI_TOSHIBA
+ 
+ config ACPI_DEBUG
+ 	bool "Debug Statements"
+-	depends on ACPI
++	depends on ACPI_INTERPRETER
+ 	depends on !IA64_SGI_SN
+ 	default n
+ 	help
+@@ -223,19 +240,14 @@ config ACPI_DEBUG
+ 
+ config ACPI_BUS
+ 	bool
+-	depends on ACPI
+-	depends on !IA64_SGI_SN
+-	default y
+-
+-config ACPI_INTERPRETER
+-	bool
+-	depends on ACPI
++	depends on ACPI_INTERPRETER
+ 	depends on !IA64_SGI_SN
+ 	default y
+ 
+ config ACPI_EC
+ 	bool
+-	depends on X86 && ACPI
++	depends on X86
++	depends on ACPI_INTERPRETER
+ 	default y
+ 	help
+ 	  This driver is required on some systems for the proper operation of
+@@ -244,19 +256,19 @@ config ACPI_EC
+ 
+ config ACPI_POWER
+ 	bool
+-	depends on ACPI
++	depends on ACPI_INTERPRETER
+ 	depends on !IA64_SGI_SN
+ 	default y
+ 
+ config ACPI_PCI
+ 	bool
+-	depends on ACPI
++	depends on ACPI_INTERPRETER
+ 	depends on !IA64_SGI_SN
+ 	default PCI
+ 
+ config ACPI_SYSTEM
+ 	bool
+-	depends on ACPI
++	depends on ACPI_INTERPRETER
+ 	depends on !IA64_SGI_SN
+ 	default y
+ 	help
+@@ -265,7 +277,7 @@ config ACPI_SYSTEM
+ 
+ config ACPI_EFI
+ 	bool
+-	depends on ACPI
++	depends on ACPI_INTERPRETER
+ 	depends on IA64
+ 	default y
+ 
+diff -puN drivers/acpi/Makefile~acpi-20030916 drivers/acpi/Makefile
+--- 25/drivers/acpi/Makefile~acpi-20030916	Thu Sep 18 15:51:50 2003
++++ 25-akpm/drivers/acpi/Makefile	Thu Sep 18 15:51:50 2003
+@@ -18,7 +18,7 @@ obj-$(CONFIG_ACPI)		:= acpi_ksyms.o 
+ # ACPI Boot-Time Table Parsing
+ #
+ obj-$(CONFIG_ACPI_BOOT)		+= tables.o
+-obj-$(CONFIG_ACPI)		+= blacklist.o
++obj-$(CONFIG_ACPI_INTERPRETER)	+= blacklist.o
+ 
+ #
+ # ACPI Core Subsystem (Interpreter)
+diff -puN drivers/acpi/pci_link.c~acpi-20030916 drivers/acpi/pci_link.c
+--- 25/drivers/acpi/pci_link.c~acpi-20030916	Thu Sep 18 15:51:50 2003
++++ 25-akpm/drivers/acpi/pci_link.c	Thu Sep 18 15:51:50 2003
+@@ -220,7 +220,6 @@ acpi_pci_link_check_current (
+ 	return AE_CTRL_TERMINATE;
+ }
+ 
+-
  static int
+ acpi_pci_link_get_current (
+ 	struct acpi_pci_link	*link)
+@@ -279,6 +278,28 @@ end:
+ 	return_VALUE(result);
+ }
+ 
++static int
 +acpi_pci_link_try_get_current (
 +	struct acpi_pci_link *link,
 +	int irq)
@@ -777,27 +553,22 @@ diff -puN drivers/acpi/pci_link.c~acpi-irq-fixes drivers/acpi/pci_link.c
 +	ACPI_FUNCTION_TRACE("acpi_pci_link_try_get_current");
 +
 +	result = acpi_pci_link_get_current(link);
-+	if (result && link->irq.active)
-+	{
-+		return_VALUE(result);
-+	}
++	if (result && link->irq.active) {
++ 		return_VALUE(result);
++ 	}
 +
-+	if (!link->irq.active)
-+	{
++	if (!link->irq.active) {
 +		ACPI_DEBUG_PRINT((ACPI_DB_ERROR, "No active IRQ resource found\n"));
 +		printk(KERN_WARNING "_CRS returns NULL! Using IRQ %d for device (%s [%s]).\n", irq, acpi_device_name(link->device), acpi_device_bid(link->device));
 +		link->irq.active = irq;
 +	}
-+
++	
 +	return 0;
 +}
-+
-+
-+static int
+ 
+ static int
  acpi_pci_link_set (
- 	struct acpi_pci_link	*link,
- 	int			irq)
-@@ -294,6 +320,7 @@ acpi_pci_link_set (
+@@ -294,6 +315,7 @@ acpi_pci_link_set (
  	struct acpi_buffer	buffer = {sizeof(resource)+1, &resource};
  	int			i = 0;
  	int			valid = 0;
@@ -805,7 +576,7 @@ diff -puN drivers/acpi/pci_link.c~acpi-irq-fixes drivers/acpi/pci_link.c
  
  	ACPI_FUNCTION_TRACE("acpi_pci_link_set");
  
-@@ -317,20 +344,32 @@ acpi_pci_link_set (
+@@ -317,20 +339,32 @@ acpi_pci_link_set (
  		}
  	}
  
@@ -818,7 +589,7 @@ diff -puN drivers/acpi/pci_link.c~acpi-irq-fixes drivers/acpi/pci_link.c
 +	}
 +
 +retry_programming:
-+
++   
  	memset(&resource, 0, sizeof(resource));
  
  	/* NOTE: PCI interrupts are always level / active_low / shared. But not all
@@ -836,12 +607,12 @@ diff -puN drivers/acpi/pci_link.c~acpi-irq-fixes drivers/acpi/pci_link.c
 -	}
 -	else {
 +		break;
-+
++	   
 +	case ACPI_RSTYPE_EXT_IRQ:
  		resource.res.id = ACPI_RSTYPE_EXT_IRQ;
  		resource.res.length = sizeof(struct acpi_resource);
  		resource.res.data.extended_irq.producer_consumer = ACPI_CONSUMER;
-@@ -339,11 +378,21 @@ acpi_pci_link_set (
+@@ -339,11 +373,21 @@ acpi_pci_link_set (
  		resource.res.data.extended_irq.number_of_interrupts = 1;
  		resource.res.data.extended_irq.interrupts[0] = irq;
  		/* ignore resource_source, it's optional */
@@ -858,12 +629,12 @@ diff -puN drivers/acpi/pci_link.c~acpi-irq-fixes drivers/acpi/pci_link.c
 +                printk(PREFIX "Retrying with extended IRQ descriptor\n");
 +                goto retry_programming;
 +	}
-+
++  
 +	/* check for total failure */
  	if (ACPI_FAILURE(status)) {
  		ACPI_DEBUG_PRINT((ACPI_DB_ERROR, "Error evaluating _SRS\n"));
  		return_VALUE(-ENODEV);
-@@ -361,7 +410,7 @@ acpi_pci_link_set (
+@@ -361,7 +405,7 @@ acpi_pci_link_set (
  	}
  
  	/* Make sure the active IRQ is the one we requested. */
@@ -872,44 +643,7 @@ diff -puN drivers/acpi/pci_link.c~acpi-irq-fixes drivers/acpi/pci_link.c
  	if (result) {
  		return_VALUE(result);
  	}
-@@ -401,22 +450,25 @@ acpi_pci_link_set (
-  * as 'best bets' for PCI use.
-  */
- 
--static int acpi_irq_penalty[ACPI_MAX_IRQS] = {
-+static int acpi_irq_default_penalty[ACPI_MAX_IRQS] = {
- 	1000000,  1000000,  1000000,    10000, 
- 	  10000,        0,    10000,    10000,
- 	  10000,        0,        0,        0, 
- 	  10000,   100000,   100000,   100000,
- };
- 
-+static int acpi_irq_penalty[ACPI_MAX_IRQS] = { 0 };
- 
- int
--acpi_pci_link_check (void)
-+acpi_pci_link_calc_penalties (void)
- {
- 	struct list_head	*node = NULL;
- 	struct acpi_pci_link    *link = NULL;
- 	int			i = 0;
- 
--	ACPI_FUNCTION_TRACE("acpi_pci_link_check");
-+	ACPI_FUNCTION_TRACE("acpi_pci_link_calc_penalties");
-+
-+	memcpy(&acpi_irq_penalty, &acpi_irq_default_penalty, sizeof(acpi_irq_default_penalty));
- 
- 	/*
- 	 * Update penalties to facilitate IRQ balancing.
-@@ -428,6 +480,7 @@ acpi_pci_link_check (void)
- 			ACPI_DEBUG_PRINT((ACPI_DB_ERROR, "Invalid link context\n"));
- 			continue;
- 		}
-+		link->irq.setonboot = 0;
- 
- 		if (link->irq.active)
- 			acpi_irq_penalty[link->irq.active] += 100;
-@@ -458,18 +511,18 @@ static int acpi_pci_link_allocate(struct
+@@ -458,14 +502,14 @@ static int acpi_pci_link_allocate(struct
  		irq = link->irq.possible[0];
  	}
  
@@ -921,8 +655,8 @@ diff -puN drivers/acpi/pci_link.c~acpi-irq-fixes drivers/acpi/pci_link.c
 -			if (acpi_irq_penalty[irq] > acpi_irq_penalty[link->irq.possible[i]])
 -				irq = link->irq.possible[i];
 -		}
-+	/*
-+	 * Select the best IRQ.  This is done in reverse to promote
++	/* 
++	 * Select the best IRQ.  This is done in reverse to promote 
 +	 * the use of IRQs 9, 10, 11, and >15.
 +	 */
 +	for (i=(link->irq.possible_count-1); i>0; i--) {
@@ -932,12 +666,7 @@ diff -puN drivers/acpi/pci_link.c~acpi-irq-fixes drivers/acpi/pci_link.c
  
  	/* Attempt to enable the link device at this IRQ. */
  	if (acpi_pci_link_set(link, irq)) {
--		printk(PREFIX "Unable to set IRQ for %s [%s] (likely buggy ACPI BIOS). Aborting ACPI-based IRQ routing. Try pci=noacpi or acpi=off\n",
-+		printk(PREFIX "Unable to set IRQ for %s [%s] (likely buggy ACPI BIOS, please report to acpi-devel!)\n",
- 			acpi_device_name(link->device),
- 			acpi_device_bid(link->device));
- 		return_VALUE(-ENODEV);
-@@ -574,10 +627,6 @@ acpi_pci_link_add (
+@@ -574,10 +618,6 @@ acpi_pci_link_add (
  		else
  			printk(" %d", link->irq.possible[i]);
  	}
@@ -948,139 +677,257 @@ diff -puN drivers/acpi/pci_link.c~acpi-irq-fixes drivers/acpi/pci_link.c
  	printk(")\n");
  
  	/* TBD: Acquire/release lock */
-diff -puN include/acpi/acpi_bus.h~acpi-irq-fixes include/acpi/acpi_bus.h
---- 25/include/acpi/acpi_bus.h~acpi-irq-fixes	2003-09-06 19:47:12.000000000 -0700
-+++ 25-akpm/include/acpi/acpi_bus.h	2003-09-06 19:47:12.000000000 -0700
-@@ -307,6 +307,8 @@ int acpi_bus_unregister_driver (struct a
- int acpi_create_dir(struct acpi_device *);
- void acpi_remove_dir(struct acpi_device *);
+diff -puN include/acpi/acconfig.h~acpi-20030916 include/acpi/acconfig.h
+--- 25/include/acpi/acconfig.h~acpi-20030916	Thu Sep 18 15:51:50 2003
++++ 25-akpm/include/acpi/acconfig.h	Thu Sep 18 15:51:50 2003
+@@ -64,7 +64,7 @@
  
-+int acpi_bus_init_irq (void);
-+
- #endif /*CONFIG_ACPI_BUS*/
+ /* Version string */
  
- #endif /*__ACPI_BUS_H__*/
-diff -puN include/acpi/acpi_drivers.h~acpi-irq-fixes include/acpi/acpi_drivers.h
---- 25/include/acpi/acpi_drivers.h~acpi-irq-fixes	2003-09-06 19:47:12.000000000 -0700
-+++ 25-akpm/include/acpi/acpi_drivers.h	2003-09-06 19:47:12.000000000 -0700
-@@ -26,6 +26,9 @@
- #ifndef __ACPI_DRIVERS_H__
- #define __ACPI_DRIVERS_H__
+-#define ACPI_CA_VERSION                 0x20030813
++#define ACPI_CA_VERSION                 0x20030916
  
-+/* forward definitions */
-+struct acpi_prt_list;
-+
- #include <linux/acpi.h>
- #include <acpi/acpi_bus.h>
+ /* Maximum objects in the various object caches */
  
-@@ -59,12 +62,15 @@ void acpi_pci_get_translations (struct a
+diff -puN include/linux/acpi.h~acpi-20030916 include/linux/acpi.h
+--- 25/include/linux/acpi.h~acpi-20030916	Thu Sep 18 15:51:50 2003
++++ 25-akpm/include/linux/acpi.h	Thu Sep 18 15:51:50 2003
+@@ -424,17 +424,17 @@ int ec_write(u8 addr, u8 val);
  
- /* ACPI PCI Interrupt Link (pci_link.c) */
+ #endif /*CONFIG_ACPI_EC*/
  
--int acpi_pci_link_check (void);
-+int acpi_pci_link_calc_penalties (void);
- int acpi_pci_link_get_irq (acpi_handle handle, int index, int* edge_level, int* active_high_low);
+-#ifdef CONFIG_ACPI
++#ifdef CONFIG_ACPI_INTERPRETER
  
- /* ACPI PCI Interrupt Routing (pci_irq.c) */
+ int acpi_blacklisted(void);
  
- int acpi_pci_irq_add_prt (acpi_handle handle, int segment, int bus);
-+int acpi_pci_commit_prt_list (struct acpi_prt_list* prt_list);
-+int acpi_pci_destroy_prt_list (struct acpi_prt_list* prt_list);
-+struct acpi_prt_list* acpi_pci_get_prt_list (void);
+-#else
++#else /*!CONFIG_ACPI_INTERPRETER*/
  
- /* ACPI PCI Device Binding (pci_bind.c) */
+ static inline int acpi_blacklisted(void)
+ {
+ 	return 0;
+ }
  
-diff -puN include/asm-i386/acpi.h~acpi-irq-fixes include/asm-i386/acpi.h
---- 25/include/asm-i386/acpi.h~acpi-irq-fixes	2003-09-06 19:47:12.000000000 -0700
-+++ 25-akpm/include/asm-i386/acpi.h	2003-09-06 19:47:12.000000000 -0700
-@@ -151,6 +151,9 @@ extern unsigned long acpi_wakeup_address
- /* early initialization routine */
- extern void acpi_reserve_bootmem(void);
+-#endif /*CONFIG_ACPI*/
++#endif /*!CONFIG_ACPI_INTERPRETER*/
  
-+/* ACPI-based PIC initialisation */
-+extern int pic_parse_prt (void);
-+
- #endif /*CONFIG_ACPI_SLEEP*/
+ #endif /*_LINUX_ACPI_H*/
+diff -puN init/do_mounts.h~acpi-20030916 init/do_mounts.h
+--- 25/init/do_mounts.h~acpi-20030916	Thu Sep 18 15:51:50 2003
++++ 25-akpm/init/do_mounts.h	Thu Sep 18 15:51:50 2003
+@@ -79,4 +79,3 @@ void md_run_setup(void);
+ static inline void md_run_setup(void) {}
  
- #endif /*__KERNEL__*/
-diff -puN include/asm-i386/mpspec.h~acpi-irq-fixes include/asm-i386/mpspec.h
---- 25/include/asm-i386/mpspec.h~acpi-irq-fixes	2003-09-06 19:47:12.000000000 -0700
-+++ 25-akpm/include/asm-i386/mpspec.h	2003-09-06 19:47:12.000000000 -0700
-@@ -37,7 +37,7 @@ extern void mp_register_lapic_address (u
- extern void mp_register_ioapic (u8 id, u32 address, u32 irq_base);
- extern void mp_override_legacy_irq (u8 bus_irq, u8 polarity, u8 trigger, u32 global_irq);
- extern void mp_config_acpi_legacy_irqs (void);
--extern void mp_parse_prt (void);
-+extern int mp_parse_prt (void);
- 
- #ifdef CONFIG_X86_IO_APIC
- extern void mp_config_ioapic_for_sci(int irq);
-diff -puN include/asm-ia64/acpi.h~acpi-irq-fixes include/asm-ia64/acpi.h
---- 25/include/asm-ia64/acpi.h~acpi-irq-fixes	2003-09-06 19:47:12.000000000 -0700
-+++ 25-akpm/include/asm-ia64/acpi.h	2003-09-06 19:47:12.000000000 -0700
-@@ -112,6 +112,9 @@ extern int __initdata pxm_to_nid_map[MAX
- extern int __initdata nid_to_pxm_map[NR_NODES];
  #endif
+-
+
+_
+
+From: Ramon Casellas <casellas@infres.enst.fr>
+
+Hi,
+
+Original patch from Li, Shaohua <shaohua@in...> for 2.4.22/23, ported to 
+2.6.0-test5-mm3 (with acpi 20030916), please test.
+
+[1] Bug Report 
+----------------------------------------------------------
+http://sourceforge.net/mailarchive/forum.php?thread_id=3144527&forum_id=6102
+
+[2] Answer
+-----------------------------------------------------------
+> From: Li, Shaohua <shaohua@in...> 
+> RE: Re: IBM Thinkpad and ACPI 20030916 for 2.4.23-pre4   
+2003-09-17 17:28 
+
+>Hi,
+> Patch for the battery error is available in OSDL bugzilla #1038. Pl. 
+try.
+> Thanks,
+> Shaohua
+-----------------------------------------------------------
+
+Note: Works for me.
+
+
+
+ 25-akpm/drivers/acpi/utilities/utdelete.c |   36 +++++++++++++++++++++++++++---
+ 1 files changed, 33 insertions(+), 3 deletions(-)
+
+diff -puN drivers/acpi/utilities/utdelete.c~acpi-thinkpad-fix drivers/acpi/utilities/utdelete.c
+--- 25/drivers/acpi/utilities/utdelete.c~acpi-thinkpad-fix	Fri Sep 19 11:11:57 2003
++++ 25-akpm/drivers/acpi/utilities/utdelete.c	Fri Sep 19 11:11:57 2003
+@@ -417,6 +417,8 @@ acpi_ut_update_object_reference (
+ 	union acpi_generic_state         *state_list = NULL;
+ 	union acpi_generic_state         *state;
  
-+/* ia64 machines don't have PIC controllers */
-+static inline int pic_parse_prt(void) { return -1; }
++	union acpi_operand_object        *tmp;
 +
- #endif /*__KERNEL__*/
  
- #endif /*_ASM_ACPI_H*/
-diff -puN include/asm-ia64/iosapic.h~acpi-irq-fixes include/asm-ia64/iosapic.h
---- 25/include/asm-ia64/iosapic.h~acpi-irq-fixes	2003-09-06 19:47:12.000000000 -0700
-+++ 25-akpm/include/asm-ia64/iosapic.h	2003-09-06 19:47:12.000000000 -0700
-@@ -57,7 +57,7 @@ extern void __init iosapic_init (unsigne
- 				    unsigned int gsi_base);
- extern int gsi_to_vector (unsigned int gsi);
- extern int gsi_to_irq (unsigned int gsi);
--extern void __init iosapic_parse_prt (void);
-+extern int __init iosapic_parse_prt (void);
- extern void iosapic_enable_intr (unsigned int vector);
- extern int iosapic_register_intr (unsigned int gsi, unsigned long polarity,
- 				  unsigned long trigger);
-diff -puN include/asm-x86_64/acpi.h~acpi-irq-fixes include/asm-x86_64/acpi.h
---- 25/include/asm-x86_64/acpi.h~acpi-irq-fixes	2003-09-06 19:47:12.000000000 -0700
-+++ 25-akpm/include/asm-x86_64/acpi.h	2003-09-06 19:47:12.000000000 -0700
-@@ -146,6 +146,9 @@ extern int acpi_disabled;
- #define BROKEN_ACPI_Sx		0x0001
- #define BROKEN_INIT_AFTER_S1	0x0002
+ 	ACPI_FUNCTION_TRACE_PTR ("ut_update_object_reference", object);
  
-+/* ACPI-based PIC initialisation */
-+extern int pic_parse_prt (void);
+@@ -447,9 +449,16 @@ acpi_ut_update_object_reference (
+ 		 */
+ 		switch (ACPI_GET_OBJECT_TYPE (object)) {
+ 		case ACPI_TYPE_DEVICE:
+-
+-			acpi_ut_update_ref_count (object->device.system_notify, action);
+-			acpi_ut_update_ref_count (object->device.device_notify, action);
 +
- #endif /*__KERNEL__*/
++			tmp = object->device.system_notify;
++			if(tmp && tmp->common.reference_count<=1 && action == REF_DECREMENT)
++				object->device.system_notify = NULL;
++			acpi_ut_update_ref_count (tmp, action);
++
++			tmp = object->device.device_notify;
++			if(tmp && tmp->common.reference_count <=1 && action == REF_DECREMENT)
++				object->device.device_notify = NULL;
++			acpi_ut_update_ref_count (tmp, action);
+ 			break;
  
- #endif /*_ASM_ACPI_H*/
-diff -puN include/asm-x86_64/mpspec.h~acpi-irq-fixes include/asm-x86_64/mpspec.h
---- 25/include/asm-x86_64/mpspec.h~acpi-irq-fixes	2003-09-06 19:47:12.000000000 -0700
-+++ 25-akpm/include/asm-x86_64/mpspec.h	2003-09-06 19:47:12.000000000 -0700
-@@ -189,7 +189,7 @@ extern void mp_register_lapic_address (u
- extern void mp_register_ioapic (u8 id, u32 address, u32 irq_base);
- extern void mp_override_legacy_irq (u8 bus_irq, u8 polarity, u8 trigger, u32 global_irq);
- extern void mp_config_acpi_legacy_irqs (void);
--extern void mp_parse_prt (void);
-+extern int mp_parse_prt (void);
- #endif /*CONFIG_X86_IO_APIC*/
- #endif
  
-diff -puN include/linux/acpi.h~acpi-irq-fixes include/linux/acpi.h
---- 25/include/linux/acpi.h~acpi-irq-fixes	2003-09-06 19:47:12.000000000 -0700
-+++ 25-akpm/include/linux/acpi.h	2003-09-06 19:47:12.000000000 -0700
-@@ -399,7 +399,7 @@ struct acpi_prt_list {
- 	struct list_head	entries;
- };
+@@ -467,6 +476,9 @@ acpi_ut_update_object_reference (
+ 				 */
+ 				status = acpi_ut_create_update_state_and_push (
+ 						 object->package.elements[i], action, &state_list);
++				tmp = object->package.elements[i];
++				if(tmp && tmp->common.reference_count<=1  && action == REF_DECREMENT) /*reference count didn't refresh now*/
++					object->package.elements[i] = NULL;
+ 				if (ACPI_FAILURE (status)) {
+ 					goto error_exit;
+ 				}
+@@ -478,6 +490,9 @@ acpi_ut_update_object_reference (
  
--extern struct acpi_prt_list	acpi_prt;
-+extern struct acpi_prt_list*	acpi_prt;
+ 			status = acpi_ut_create_update_state_and_push (
+ 					 object->buffer_field.buffer_obj, action, &state_list);
++			tmp = object->buffer_field.buffer_obj;
++			if( tmp && tmp->common.reference_count <=1  && action == REF_DECREMENT)/*reference count didn't refresh now*/
++				object->buffer_field.buffer_obj = NULL;
+ 			if (ACPI_FAILURE (status)) {
+ 				goto error_exit;
+ 			}
+@@ -491,6 +506,9 @@ acpi_ut_update_object_reference (
+ 			if (ACPI_FAILURE (status)) {
+ 				goto error_exit;
+ 			}
++			tmp = object->field.region_obj;
++			if( tmp && tmp->common.reference_count <=1  && action == REF_DECREMENT)/*reference count didn't refresh now*/
++				object->field.region_obj = NULL;
+ 		   break;
  
- struct pci_dev;
+ 
+@@ -501,12 +519,18 @@ acpi_ut_update_object_reference (
+ 			if (ACPI_FAILURE (status)) {
+ 				goto error_exit;
+ 			}
++			tmp = object->bank_field.bank_obj;
++			if( tmp && tmp->common.reference_count <=1  && action == REF_DECREMENT)/*reference count didn't refresh now*/
++				object->bank_field.bank_obj = NULL;
+ 
+ 			status = acpi_ut_create_update_state_and_push (
+ 					 object->bank_field.region_obj, action, &state_list);
+ 			if (ACPI_FAILURE (status)) {
+ 				goto error_exit;
+ 			}
++			tmp = object->bank_field.region_obj;
++			if( tmp && tmp->common.reference_count <=1  && action == REF_DECREMENT)/*reference count didn't refresh now*/
++				object->bank_field.region_obj = NULL;
+ 			break;
+ 
+ 
+@@ -517,12 +541,18 @@ acpi_ut_update_object_reference (
+ 			if (ACPI_FAILURE (status)) {
+ 				goto error_exit;
+ 			}
++			tmp = object->index_field.index_obj;
++			if( tmp && tmp->common.reference_count <=1  && action == REF_DECREMENT)/*reference count didn't refresh now*/
++				object->index_field.index_obj = NULL;
+ 
+ 			status = acpi_ut_create_update_state_and_push (
+ 					 object->index_field.data_obj, action, &state_list);
+ 			if (ACPI_FAILURE (status)) {
+ 				goto error_exit;
+ 			}
++			tmp = object->index_field.data_obj;
++			if( tmp && tmp->common.reference_count <=1  && action == REF_DECREMENT)/*reference count didn't refresh now*/
++				object->index_field.data_obj = NULL;
+ 			break;
+ 
  
 
---- linux-2.6.0test5-work/arch/i386/pci/acpi.c-o	2003-08-23 13:03:09.000000000 +0200
-+++ linux-2.6.0test5-work/arch/i386/pci/acpi.c	2003-09-09 21:01:49.000000000 +0200
-@@ -15,10 +15,11 @@
+_
+
+From: Andi Kleen <ak@suse.de>
+
+ACPI modules check acpi_disabled at module load time.  This fixes random
+failures to load battery.o et.al.
+
+
+
+ arch/i386/kernel/setup.c   |    4 ++--
+ arch/ia64/kernel/acpi.c    |    2 +-
+ arch/x86_64/kernel/setup.c |    2 +-
+ 3 files changed, 4 insertions(+), 4 deletions(-)
+
+diff -puN arch/i386/kernel/setup.c~acpi_disabled-fix arch/i386/kernel/setup.c
+--- 25/arch/i386/kernel/setup.c~acpi_disabled-fix	2003-09-18 20:02:17.000000000 -0700
++++ 25-akpm/arch/i386/kernel/setup.c	2003-09-18 20:02:44.000000000 -0700
+@@ -65,9 +65,9 @@ unsigned long mmu_cr4_features;
+ EXPORT_SYMBOL_GPL(mmu_cr4_features);
+ 
+ #ifdef	CONFIG_ACPI_INTERPRETER
+-	int acpi_disabled __initdata = 0;
++	int acpi_disabled = 0;
+ #else
+-	int acpi_disabled __initdata = 1;
++	int acpi_disabled = 1;
+ #endif
+ EXPORT_SYMBOL(acpi_disabled);
+ 
+diff -puN arch/ia64/kernel/acpi.c~acpi_disabled-fix arch/ia64/kernel/acpi.c
+--- 25/arch/ia64/kernel/acpi.c~acpi_disabled-fix	2003-09-18 20:02:17.000000000 -0700
++++ 25-akpm/arch/ia64/kernel/acpi.c	2003-09-18 20:02:17.000000000 -0700
+@@ -56,7 +56,7 @@ void (*pm_power_off) (void);
+ 
+ unsigned char acpi_kbd_controller_present = 1;
+ 
+-int acpi_disabled __initdata;	/* XXX this shouldn't be needed---we can't boot without ACPI! */
++int acpi_disabled;	/* XXX this shouldn't be needed---we can't boot without ACPI! */
+ 
+ const char *
+ acpi_get_sysname (void)
+diff -puN arch/x86_64/kernel/setup.c~acpi_disabled-fix arch/x86_64/kernel/setup.c
+--- 25/arch/x86_64/kernel/setup.c~acpi_disabled-fix	2003-09-18 20:02:17.000000000 -0700
++++ 25-akpm/arch/x86_64/kernel/setup.c	2003-09-18 20:02:17.000000000 -0700
+@@ -64,7 +64,7 @@ struct cpuinfo_x86 boot_cpu_data;
+ unsigned long mmu_cr4_features;
+ EXPORT_SYMBOL_GPL(mmu_cr4_features);
+ 
+-int acpi_disabled __initdata = 0;
++int acpi_disabled = 0;
+ 
+ /* For PCI or other memory-mapped resources */
+ unsigned long pci_mem_start = 0x10000000;
+
+_
+
+From: Andi Kleen <ak@suse.de>
+
+Try this (untested) patch
+
+(2.6 version untested, I tested a similar patch on the 2.4 backport of
+ACPI):
+
+
+
+ 25-akpm/arch/i386/pci/acpi.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletion(-)
+
+diff -puN arch/i386/pci/acpi.c~acpi_off-fix arch/i386/pci/acpi.c
+--- 25/arch/i386/pci/acpi.c~acpi_off-fix	Tue Sep  9 12:12:00 2003
++++ 25-akpm/arch/i386/pci/acpi.c	Tue Sep  9 12:12:00 2003
+@@ -15,10 +15,11 @@ struct pci_bus * __devinit pci_acpi_scan
  
  static int __init pci_acpi_init(void)
  {
@@ -1094,7 +941,7 @@ diff -puN include/linux/acpi.h~acpi-irq-fixes include/linux/acpi.h
  			printk(KERN_INFO "PCI: Using ACPI for IRQ routing\n");
  			printk(KERN_INFO "PCI: if you experience problems, try using option 'pci=noacpi' or even 'acpi=off'\n");
 
-
+_
 --- 2.6.0-test5-mm3/drivers/acpi/pci_link.c~acpi_pci_irq_fix	2003-09-22 10:00:16.000000000 -0700
 +++ 2.6.0-test5-mm3/drivers/acpi/pci_link.c	2003-09-22 10:10:06.000000000 -0700
 @@ -500,15 +500,15 @@ static int acpi_pci_link_allocate(struct
