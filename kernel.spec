@@ -230,7 +230,7 @@ Patch211:	http://people.redhat.com/mingo/exec-shield/exec-shield-nx-2.6.7-A0
 Patch212:	exec-shield-make-peace-with-grsecurity.patch
 
 # hotfixes
-Patch300:	2.6.7-remote-iptables-DoS.patch
+Patch300:	2.6.7-ppc-asm-defs.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -728,7 +728,8 @@ patch -p1 -s < exec-shield.patch
 %patch202 -p1
 %patch203 -p1
 
-#patch300 -p1 included in cset
+# hotfixes
+%patch300 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
