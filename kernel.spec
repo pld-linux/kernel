@@ -25,8 +25,7 @@ Source6:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 Source7:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
 Source8:	linux-netfilter-patches-20010108.tar.gz
 Source10:	http://www.lids.org/download/lids-%{lids_version}-%{version}.tar.gz
-#Linux Virtual Server
-Source11:		http://www.linuxvirtualserver.org/software/kernel-%{version}/ipvs-%{ipvs_version}.tar.gz
+Source11:	http://www.linuxvirtualserver.org/software/kernel-%{version}/ipvs-%{ipvs_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -45,9 +44,7 @@ Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
 Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.3.gz
 Patch1:		ftp://ftp.reiserfs.org/pub/2.4/linux-%{version}-ac2-reiserfs-%{reiserfs_version}-patch.gz
-#Patch1:		ftp://ftp.reiserfs.org/pub/2.4/linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
 Patch2:		%{name}-%{version}-dc395-patch-fix.patch
-#Patch3:		%{name}-pldfblogo.patch
 #Patch4:		linux-2.4.0-freeswan-%{freeswan_version}.patch
 #Patch5:		linux-ipv6-addrconf.patch
 Patch10:	ipvs-PLD-fix.patch
@@ -55,7 +52,6 @@ Patch11:	reiserfs-fix-3.6.patch
 Patch12:	stackguard.patch
 Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac10.bz2
 Patch1000:	linux-2.4-misc.patch
-
 Patch1001:	http://oss.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}-patch.tar.gz
 Patch1002:	bug-report-2.4.0.patch
 Patch1003:	%{name}-%{version}-i8255-asm-fix.patch
@@ -116,16 +112,21 @@ This package includes a SMP version of the Linux %{version} kernel. It
 is required only on machines with two or more CPUs, although it should
 work fine on single-CPU boxes.
 
-%description -l fr smp
-Ce package inclu une version SMP du noyau de Linux version {version}.
-Il et nécessaire seulement pour les machine avec deux processeurs ou
-plus, il peut quand même fonctionner pour les système mono-processeur.
-
 %description -l de smp
 Dieses Paket enthält eine SMP (Multiprozessor)-Version von
 Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
 Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
 CPU laufen.
+
+%description -l fr smp
+Ce package inclu une version SMP du noyau de Linux version {version}.
+Il et nécessaire seulement pour les machine avec deux processeurs ou
+plus, il peut quand même fonctionner pour les système mono-processeur.
+
+%description -l pl smp
+Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono wymagane
+przez komputery zawieraj±ce dwa lub wiêcej procesorów. Powinno równie¿ dobrze 
+dzia³aæ na maszynach z jednym procesorem.
 
 %package fb
 Summary:	Kernel version %{version} with framebuffer support
@@ -143,13 +144,17 @@ Autoreqprov:	no
 This package includes a version of the Linux %{version} kernel with
 framebuffer support.
 
+%description -l de fb
+Dieses Paket enthält eine Version von Linux-Kernel %{version} mit
+framebuffer-Support.
+
 %description -l fr fb
 Ce package inclu une version de Linux version %{version} avec
 framebuffer.
 
-%description -l de fb
-Dieses Paket enthält eine Version von Linux-Kernel %{version} mit
-framebuffer-Support.
+%description -l pl fb
+Pakiet zawiera j±dro linuksa w wersji %{version} z wsparciem dla
+fremebuffera.
 
 %package smp-fb
 Summary:	Kernel version %{version} compiled for SMP machines with fb
@@ -169,18 +174,24 @@ is required only on machines with two or more CPUs, although it should
 work fine on single-CPU boxes. It also contains support for
 framebuffer (graphical console) devices.
 
-%description -l fr smp-fb
-Ce package inclu une version SMP du noyau de Linux version %{version}
-avec framebuffer. Il et nécessaire seulement pour les machine avec
-deux processeurs ou plus, il peut quand même fonctionner pour les
-système mono-processeur.
-
 %description -l de smp-fb
 Dieses Paket enthält eine SMP (Multiprozessor)-Version von
 Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
 Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
 CPU laufen. Außerdem ist Support für Framebuffer-Devices (Console im
 Grafikmodus) enthalten.
+
+%description -l fr smp-fb
+Ce package inclu une version SMP du noyau de Linux version %{version}
+avec framebuffer. Il et nécessaire seulement pour les machine avec
+deux processeurs ou plus, il peut quand même fonctionner pour les
+système mono-processeur.
+
+%description -l pl smp-fb
+Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono wymagane
+przez komputery zawieraj±ce dwa lub wiêcej procesorów. Powinno równie¿ dobrze 
+dzia³aæ na maszynach z jednym procesorem. Ponadto j±dro zawiera wsparcie
+dla framebuffera.
 
 %package BOOT
 Summary:	Kernel version %{version} used on the installation boot disks
@@ -197,6 +208,13 @@ kernel. This kernel is used on the installation boot disks only and
 should not be used for an installed system, as many features in this
 kernel are turned off because of the size constraints.
 
+%description -l de BOOT
+Dieses Paket enthält eine verkleinerte Version vom Linux-Kernel
+version %{version}. Dieser Kernel wird auf den
+Installations-Bootdisketten benutzt und sollte nicht auf einem
+installierten System verwendet werden, da viele Funktionen wegen der
+Platzprobleme abgeschaltet sind.
+
 %description -l fr BOOT
 Ce package inclut une version allégée du noyau de Linux version
 %{version}. Ce kernel et utilisé pour les disquettes de boot
@@ -204,12 +222,10 @@ d'installation et ne doivent pas être utilisées pour un système
 classique, beaucoup d'options dans le kernel ont étaient désactivées a
 cause de la contrainte d'espace.
 
-%description -l de BOOT
-Dieses Paket enthält eine verkleinerte Version vom Linux-Kernel
-version %{version}. Dieser Kernel wird auf den
-Installations-Bootdisketten benutzt und sollte nicht auf einem
-installierten System verwendet werden, da viele Funktionen wegen der
-Platzprobleme abgeschaltet sind.
+%description -l pl BOOT
+Pakiet zawiera j±dro Linuksa dedykowane dyskietkom startowym i powinno 
+byæ u¿ywane jedynie podczas instalacji systemu. Wiele u¿ytecznych opcji
+zosta³o wy³±czonych, aby jak najbardziej zmniejszyæ jego rozmiar.
 
 %package headers
 Summary:	Header files for the Linux kernel
