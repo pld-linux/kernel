@@ -1,5 +1,5 @@
 %define		ow_version		2.2.19-ow1
-%define		pcmcia_version		3.1.25
+%define		pcmcia_version		3.1.26
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.32
 %define		i2c_version		2.5.5
@@ -11,7 +11,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.19
-Release:	4
+Release:	5
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -53,23 +53,22 @@ Patch7:		http://www.kernel.org/pub/linux/kernel/people/mingo/raid-patches/raid-2
 Patch8:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.19-reiserfs-3.5.32-patch.bz2
 Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.19/ide.2.2.19.04092001.patch.bz2 		
 Patch10:	http://www.math.leidenuniv.nl/~buytenh/bridge/patches/bridge-0.0.9-against-2.2.19.diff	
-Patch11:        http://download.sourceforge.net/linux1394/ieee1394-2.2.18-20001223.gz
+Patch11:	http://download.sourceforge.net/linux1394/ieee1394-2.2.18-20010228.gz
 Patch12:	ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
 Patch13:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
 Patch14:	linux-tasks.patch
 # Linux Virtual Server: http://www.linuxvirtualserver.org/software/
-Patch15:	%{name}-ipvs-1.0.7-2.2.19.patch
+Patch15:	%{name}-ipvs-1.0.8-2.2.19.patch
 # based on ftp://ftp.kernel.org/pub/linux/kernel/people/sct/raw-io/kiobuf-2.2.18pre24.tar.gz
 Patch16:	linux-raw.patch
-Patch17:	%{name}-pcmcia.patch
 Patch18:	linux-sparc_ide_fix.patch
 Patch19:	%{name}-Config.in-CONFIG_AMIGA_PARTITION.patch
 Patch20:	%{name}-wanrouter-bridge.patch
 Patch21:	%{name}-ipsec-bridge.patch
 Patch22:	%{name}-bridge-extraversion.patch
 Patch23:	%{name}-panaview_kbd.patch
-Patch24:	http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-6.1.13-2.2.19.patch.gz	
-Patch25:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.2.20pre/pre-patch-2.2.20-1.bz2 	
+Patch24:	http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-6.1.13-2.2.19.patch.gz
+Patch25:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.2.20pre/pre-patch-2.2.20-1.bz2
 Patch26:	linux-2.2.19-pci.patch 
 Patch27:	%{name}-flip.patch 
 Patch28:	%{name}-flip-serial5.05.patch
@@ -343,7 +342,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch14 -p1
 %patch15 -p1
 %patch16 -p1
-%patch17 -p1
 %patch18 -p1
 %patch19 -p1
 %patch20 -p1
@@ -353,10 +351,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch23 -p1
 %endif
 %patch24 -p1
-
-#pre20
 %patch25 -p1
-
 %patch26 -p1
 %patch27 -p1
 
