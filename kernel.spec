@@ -220,8 +220,8 @@ Patch100:	linux-scsi-debug-bug.patch
 Patch101:	linux-2.4.2-raw-ip.patch
 Patch102:	PCI_ISA_bridge.patch
 # from http://www-124.ibm.com/developerworks/oss/jfs/
-# JFS for Linux [patch ID 399+400]
-Patch103:	linux-2.4.20-jfs-1.1.2-xattr+acl.patch.gz
+# JFS for Linux [patch ID 399]
+Patch103:	linux-2.4.20-jfs-1.1.2-xattr.patch.gz
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch104:	linux-2.4.19-pcnet-parms.patch
 #Patch105:	
@@ -779,8 +779,8 @@ echo Added LVM support version %{lvm_version}
 %patch114 -p1
 
 # JFS - xattr+acl
-#echo Added xattr and ACL for JFS ...
-#%patch103 -p1
+echo Added xattr for JFS ...
+%patch103 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
