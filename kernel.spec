@@ -933,7 +933,7 @@ BuildConfig
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig smp
-##%%{?with_smp:BuildKernel smp}
+%{?with_smp:BuildKernel smp}
 %{?with_smp:PreInstallKernel smp}
 
 %if %{with BOOT}
