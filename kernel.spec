@@ -15,7 +15,7 @@
 %define		ipvs_version		1.0.4
 %define		freeswan_version	1.97
 %define		IPperson_version	20020427-2.4.18
-%define		grsec_version		1.9.7d-2.4.20
+%define		grsec_version		1.9.8-rc1-2.4.20
 %define		jfs_version		2.4-1.0.24
 %define		lvm_version		1.0.5
 %define		evms_version		1.2.0
@@ -227,6 +227,8 @@ Patch914:	linux-2.4.20-MODULE_XXX.patch
 Patch915:	linux-2.4.19-usb-digitalcams.patch
 Patch916:	linux-2.4.19-ksyms-sys_sched_yield-rm.patch
 Patch917:	linux-2.4.19-EXPORT_SYMBOL-netsyms.c-rm.patch
+Patch918:	linux-2.4.20-umount-sync-super.patch
+
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
 Patch2000:	sched-2.4.20-A0.patch.bz2
@@ -633,6 +635,8 @@ echo Added ACL support
 %patch45 -p1
 
 #%patch46 -p0
+
+%patch918 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
