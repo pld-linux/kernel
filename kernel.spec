@@ -3,6 +3,7 @@
 %define		reiserfs_version	3.6.24
 %define		freeswan_version	1.8
 %define		lids_version		1.0.4
+%define		jfs_version		0.1.3
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -39,7 +40,7 @@ Source62:	%{name}-sparc64-BOOT.config
 Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
-Source90:	ftp://fb9nt.uni-duisburg.de/pub/linux/dmsdos/dmsdos-0.9.2.3-pre2.tgz
+Source1001:	ftp://fb9nt.uni-duisburg.de/pub/linux/dmsdos/dmsdos-0.9.2.3-pre2.tgz
 Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.3.gz
 Patch1:		ftp://ftp.reiserfs.org/pub/2.4/linux-%{version}-ac2-reiserfs-%{reiserfs_version}-patch.gz
 #Patch1:		ftp://ftp.reiserfs.org/pub/2.4/linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
@@ -48,9 +49,12 @@ Patch2:		%{name}-%{version}-dc395-patch-fix.patch
 #Patch4:		linux-2.4.0-freeswan-%{freeswan_version}.patch
 #Patch5:		linux-ipv6-addrconf.patch
 Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac9.bz2
-
+Patch10:	lids-%{lids_version}-fix.patch # empty
+Patch11:	reiserfs-fix-3.6.patch
+Patch12:	stackguard.patch
 Patch1000:	linux-2.4-misc.patch
 
+Patch1001:	http://oss.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}-patch.tar.gz
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -257,7 +261,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a4 -a6 -a7 -a8 -n linux
+%setup -q -a4 -a6 -a7 -a8 -a10 -n linux
 %patch100 -p1
 %patch0 -p1
 # conflict with other patches - commented.
