@@ -34,8 +34,8 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.1
-%define		_cset		20040314_2308
+%define		_rel		0.1
+%define		_cset		0
 
 ## netfilter snap 
 %define		_netfilter_snap		20040308
@@ -53,13 +53,13 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.6.4
+Version:	2.6.5
 Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
-# Source0-md5:	335f06eba1e5372ba38a0d2b253629bd
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc1.tar.bz2
+# Source0-md5:	9004640c435dcfab071f58a8af1aab36
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -487,7 +487,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}
+%setup -q -n linux-%{version}-rc1
 
 %patch0 -p1
 
