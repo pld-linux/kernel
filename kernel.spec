@@ -164,6 +164,7 @@ Patch81:	trackpoint-2.6.9.patch
 Patch100:	linux-2.6-nvidia-pci-ids.patch
 Patch101:	linux-2.6-pty-is-losing-bytes.patch
 Patch102:	linux-2.6-esp-corruption-cpu-bug.patch
+Patch103:	linux-2.6-tty-overrun-notify.patch
 
 # linux vserver
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
@@ -551,6 +552,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch100 -p1
 %patch101 -p1
 %patch102 -p1
+%patch103 -p1
 
 %if %{with vserver}
 %patch200 -p1
