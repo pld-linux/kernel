@@ -523,7 +523,7 @@ cp -f tulip-%{tulip_version}/src/ChangeLog drivers/net/tulip
 #preemptible kernel patch
 %patch132 -p1
 
-%patch133 -p0
+%patch133 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
