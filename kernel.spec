@@ -12,7 +12,7 @@
 #
 
 %define		patch_level	0
-%define		_rel		15
+%define		_rel		16
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 #
@@ -429,6 +429,8 @@ Patch2022:	linux-2.4-sec-ext3-leak.patch
 Patch2023:	linux-2.4-sec-jfs-leak.patch
 # CAN-2004-0178
 Patch2024:	linux-2.4-sec-sb_audio.patch
+# http://linuxreviews.org/news/2004-06-11_kernel_crash/
+Patch2025:	24_kernel_ia32-and-x86_64-fix-fpu-state.patch
 
 # other stability or security-related fixes
 # fix for I/O stalls and deadlocks
@@ -1041,6 +1043,7 @@ echo AXP patches ...
 %patch2022 -p1
 %patch2023 -p1
 %patch2024 -p1
+%patch2025 -p1
 
 %patch2100 -p1
 %patch2101 -p1
