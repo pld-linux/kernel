@@ -180,18 +180,24 @@ fi
 %files module-build
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Makefile
+%{_prefix}/src/linux-%{version}/*/Makefile
+%{_prefix}/src/linux-%{version}/*/*/Makefile
+%{_prefix}/src/linux-%{version}/*/*/*/Makefile
+%{_prefix}/src/linux-%{version}/*/*/*/*/Makefile
+%{_prefix}/src/linux-%{version}/*/*/*/*/*/Makefile
 %dir %{_prefix}/src/linux-%{version}/arch
 %dir %{_prefix}/src/linux-%{version}/arch/*
-%{_prefix}/src/linux-%{version}/arch/*/Makefile*
 %dir %{_prefix}/src/linux-%{version}/arch/*/kernel
-%{_prefix}/src/linux-%{version}/arch/*/kernel/Makefile
 %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
 %{_prefix}/src/linux-%{version}/arch/*/kernel/sigframe.h
 %dir %{_prefix}/src/linux-%{version}/scripts
-%{_prefix}/src/linux-%{version}/scripts/Makefile*
 %{_prefix}/src/linux-%{version}/scripts/*.c
 %{_prefix}/src/linux-%{version}/scripts/*.h
 %{_prefix}/src/linux-%{version}/scripts/*.sh
+%{_prefix}/src/linux-%{version}/scripts/*/*.c
+%{_prefix}/src/linux-%{version}/scripts/*/*.h
+%{_prefix}/src/linux-%{version}/scripts/*/*.l
+%{_prefix}/src/linux-%{version}/scripts/*/*.y
 
 %files source
 %defattr(644,root,root,755)
@@ -211,10 +217,19 @@ fi
 %{_prefix}/src/linux-%{version}/mm
 %{_prefix}/src/linux-%{version}/net
 %{_prefix}/src/linux-%{version}/scripts/*
-%exclude %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.c
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.h
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.sh
+%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.c
+%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.h
+%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.l
+%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.y
+%exclude %{_prefix}/src/linux-%{version}/Makefile
+%exclude %{_prefix}/src/linux-%{version}/*/Makefile
+%exclude %{_prefix}/src/linux-%{version}/*/*/Makefile
+%exclude %{_prefix}/src/linux-%{version}/*/*/*/Makefile
+%exclude %{_prefix}/src/linux-%{version}/*/*/*/*/Makefile
+%exclude %{_prefix}/src/linux-%{version}/*/*/*/*/*/Makefile
 %{_prefix}/src/linux-%{version}/sound
 %{_prefix}/src/linux-%{version}/security
 %{_prefix}/src/linux-%{version}/usr
