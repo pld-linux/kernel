@@ -116,6 +116,8 @@ Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha
 %ifarch		%{ix86}
 BuildRequires:	bin86
+BuildRequires:	autoconf
+BuildRequires:	automake
 %endif
 
 %description
