@@ -4,7 +4,7 @@
 diff -urN linux-2.4.20-pre11/arch/i386/lib/Makefile linux-2.4.20-pre11csum/arch/i386/lib/Makefile
 --- linux-2.4.20-pre11/arch/i386/lib/Makefile	Mon Sep 10 12:31:30 2001
 +++ linux-2.4.20-pre11csum/arch/i386/lib/Makefile	Fri Nov  1 23:55:58 2002
-@@ -7,9 +7,16 @@
+@@ -7,9 +7,17 @@
  
  L_TARGET = lib.a
  
@@ -14,6 +14,7 @@ diff -urN linux-2.4.20-pre11/arch/i386/lib/Makefile linux-2.4.20-pre11csum/arch/
 -	memcpy.o strstr.o
 +	memcpy.o strstr.o \
 +	bench_csum.o \
++	bench_func.o \
 +	csum.o \
 +	csum_basic.o \
 +	csum_naive.o \
@@ -26,7 +27,7 @@ diff -urN linux-2.4.20-pre11/arch/i386/lib/Makefile linux-2.4.20-pre11csum/arch/
 diff -urN linux-2.4.20-pre11/arch/i386/lib/bench_csum.c linux-2.4.20-pre11csum/arch/i386/lib/bench_csum.c
 --- linux-2.4.20-pre11/arch/i386/lib/bench_csum.c	Wed Dec 31 22:00:00 1969
 +++ linux-2.4.20-pre11csum/arch/i386/lib/bench_csum.c	Sat Nov  2 11:51:40 2002
-@@ -0,0 +1,217 @@
+@@ -0,0 +1,216 @@
 +#include <linux/mm.h>		// for get_pages
 +#include <asm/uaccess.h>	// for access_ok in asm/checksum.h
 +#include <linux/in6.h>		// for in6_addr in asm/checksum.h
@@ -37,9 +38,8 @@ diff -urN linux-2.4.20-pre11/arch/i386/lib/bench_csum.c linux-2.4.20-pre11csum/a
 +#include <linux/linkage.h>	// for asmlinkage in asm/checksum.h
 +#include <linux/module.h>
 +
-+//#include "bench_csum.h"
 +#include <asm/checksum.h>
-+#include <linux/bench_func.h>
++#include "bench_func.h"
 +
 +//#define dprintk(a...)	printk(a)
 +#define dprintk(a...) ((void)0)
@@ -244,6 +244,83 @@ diff -urN linux-2.4.20-pre11/arch/i386/lib/bench_csum.c linux-2.4.20-pre11csum/a
 +MODULE_LICENSE("GPL");
 +
 +module_init(find_best_csum);
+diff -urN linux-2.4.20-pre11/arch/i386/lib/bench_func.c linux-2.4.20-pre11csum/arch/i386/lib/bench_func.c
+--- linux-2.4.20-pre11/arch/i386/lib/bench_func.c	Wed Dec 31 22:00:00 1969
++++ linux-2.4.20-pre11csum/arch/i386/lib/bench_func.c	Fri Nov  1 18:08:37 2002
+@@ -0,0 +1,53 @@
++#include <linux/kernel.h>	// for KERN_DEBUG
++
++#include <asm/bitops.h>		// for test_bit
++#include <asm/processor.h>	// cpu caps
++#include <asm/cpufeature.h>	// cpu features constants
++#include "bench_func.h"
++
++//#define dprintk(a...)	printk(a)
++#define dprintk(a...) ((void)0)
++
++// 2.4 only, already in 2.5
++extern inline int
++boot_cpu_has(int cap)
++{
++	return test_bit(cap,  boot_cpu_data.x86_capability);
++}
++
++extern inline int
++cpu_supports(int *cap)
++{
++	while(*cap != -1) {
++		if(!boot_cpu_has(*cap)) {
++			dprintk("unsupported caps: %i\n", *cap);
++			return 0;
++		}
++		cap++;
++	}
++	return 1;
++}
++
++/*
++** Call all the candidates which can be run on this CPU,
++** find the best
++*/
++struct candidate*
++find_best(bench_func *bench, char *opaque, struct candidate runner[], int count)
++{
++	int score, max = 0;
++	struct candidate *best = 0;
++	while(count--) {
++		if(!cpu_supports(runner->cpu_caps_needed)) {
++			printk("func %s skipped: not supported by CPU\n", runner->name);
++		} else {
++			score = bench(runner,opaque) * runner->weight;
++			if(max < score) {
++				max = score;
++				best = runner;
++			}
++		}
++		runner++;
++	}
++	return best;
++}
+diff -urN linux-2.4.20-pre11/arch/i386/lib/bench_func.h linux-2.4.20-pre11csum/arch/i386/lib/bench_func.h
+--- linux-2.4.20-pre11/arch/i386/lib/bench_func.h	Wed Dec 31 22:00:00 1969
++++ linux-2.4.20-pre11csum/arch/i386/lib/bench_func.h	Fri Nov  1 18:08:37 2002
+@@ -0,0 +1,16 @@
++#ifndef _BENCH_FUNC_H
++#define _BENCH_FUNC_H
++ 
++struct candidate {
++	const char	*name;
++	void 		*f;	// pointer to func
++	int		weight;
++	int		cpu_caps_needed[4];
++};
++
++typedef int bench_func(struct candidate *cand, char *opaque);
++
++struct candidate* find_best(bench_func *bench, char *opaque,
++		struct candidate runner[], int count);
++
++#endif
 diff -urN linux-2.4.20-pre11/arch/i386/lib/checksum.S linux-2.4.20-pre11csum/arch/i386/lib/checksum.S
 --- linux-2.4.20-pre11/arch/i386/lib/checksum.S	Fri Nov  1 18:06:59 2002
 +++ linux-2.4.20-pre11csum/arch/i386/lib/checksum.S	Wed Dec 31 22:00:00 1969
@@ -1169,7 +1246,7 @@ diff -urN linux-2.4.20-pre11/arch/i386/lib/csumcpy.S linux-2.4.20-pre11csum/arch
 +	testl	$2, %edi
 +	jz	40f
 +30:
-+    # 2-aligned, but not 4-aligned
++    # xxx 2-aligned, but not 4-aligned
 +	cmpl	$3, %ecx
 +	jbe	60f
 +	movw	(%esi), %bx	# eat 2 bytes
@@ -1435,7 +1512,7 @@ diff -urN linux-2.4.20-pre11/arch/i386/lib/csumcpy_sse.inc linux-2.4.20-pre11csu
 +	ret
 +
 +
-+# 16-align edi and get back
++# xxx 16-align edi and get back
 +5500:	cmp	$ITER_SZ, %ecx	# edi is 4-aligned here
 +	mov	%ecx, %edx      # edx needed at 20:
 +	jb	20b		# not worthy: too short
@@ -1557,92 +1634,3 @@ diff -urN linux-2.4.20-pre11/arch/i386/lib/csumcpy_ssemmxplus.inc linux-2.4.20-p
 +	
 +40:	andl	$3, %ecx
 +	ret
-diff -urN linux-2.4.20-pre11/include/linux/bench_func.h linux-2.4.20-pre11csum/include/linux/bench_func.h
---- linux-2.4.20-pre11/include/linux/bench_func.h	Wed Dec 31 22:00:00 1969
-+++ linux-2.4.20-pre11csum/include/linux/bench_func.h	Fri Nov  1 18:08:37 2002
-@@ -0,0 +1,16 @@
-+#ifndef _LINUX_BENCH_FUNC_H
-+#define _LINUX_BENCH_FUNC_H
-+ 
-+struct candidate {
-+	const char	*name;
-+	void 		*f;	// pointer to func
-+	int		weight;
-+	int		cpu_caps_needed[4];
-+};
-+
-+typedef int bench_func(struct candidate *cand, char *opaque);
-+
-+struct candidate* find_best(bench_func *bench, char *opaque,
-+		struct candidate runner[], int count);
-+
-+#endif
-diff -urN linux-2.4.20-pre11/kernel/Makefile linux-2.4.20-pre11csum/kernel/Makefile
---- linux-2.4.20-pre11/kernel/Makefile	Mon Sep 17 02:22:40 2001
-+++ linux-2.4.20-pre11csum/kernel/Makefile	Fri Nov  1 18:08:37 2002
-@@ -14,7 +14,7 @@
- obj-y     = sched.o dma.o fork.o exec_domain.o panic.o printk.o \
- 	    module.o exit.o itimer.o info.o time.o softirq.o resource.o \
- 	    sysctl.o acct.o capability.o ptrace.o timer.o user.o \
--	    signal.o sys.o kmod.o context.o
-+	    signal.o sys.o kmod.o context.o bench_func.o
- 
- obj-$(CONFIG_UID16) += uid16.o
- obj-$(CONFIG_MODULES) += ksyms.o
-diff -urN linux-2.4.20-pre11/kernel/bench_func.c linux-2.4.20-pre11csum/kernel/bench_func.c
---- linux-2.4.20-pre11/kernel/bench_func.c	Wed Dec 31 22:00:00 1969
-+++ linux-2.4.20-pre11csum/kernel/bench_func.c	Fri Nov  1 18:08:37 2002
-@@ -0,0 +1,53 @@
-+#include <linux/kernel.h>	// for KERN_DEBUG
-+
-+#include <asm/bitops.h>		// for test_bit
-+#include <asm/processor.h>	// cpu caps
-+#include <asm/cpufeature.h>	// cpu features constants
-+#include <linux/bench_func.h>
-+
-+//#define dprintk(a...)	printk(a)
-+#define dprintk(a...) ((void)0)
-+
-+// 2.4 only, already in 2.5
-+extern inline int
-+boot_cpu_has(int cap)
-+{
-+	return test_bit(cap,  boot_cpu_data.x86_capability);
-+}
-+
-+extern inline int
-+cpu_supports(int *cap)
-+{
-+	while(*cap != -1) {
-+		if(!boot_cpu_has(*cap)) {
-+			dprintk("unsupported caps: %i\n", *cap);
-+			return 0;
-+		}
-+		cap++;
-+	}
-+	return 1;
-+}
-+
-+/*
-+** Call all the candidates which can be run on this CPU,
-+** find the best
-+*/
-+struct candidate*
-+find_best(bench_func *bench, char *opaque, struct candidate runner[], int count)
-+{
-+	int score, max = 0;
-+	struct candidate *best = 0;
-+	while(count--) {
-+		if(!cpu_supports(runner->cpu_caps_needed)) {
-+			printk("func %s skipped: not supported by CPU\n", runner->name);
-+		} else {
-+			score = bench(runner,opaque) * runner->weight;
-+			if(max < score) {
-+				max = score;
-+				best = runner;
-+			}
-+		}
-+		runner++;
-+	}
-+	return best;
-+}
