@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	0.2%{?_with_preemptive:_pr}%{?_with_acpi:_acpi}
+Release:	0.3%{?_with_preemptive:_pr}%{?_with_acpi:_acpi}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -924,6 +924,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/*_cs.o
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/dtl1_cs.o
 %ifnarch ppc
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/ide/ide-cs.o
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o
@@ -945,6 +946,7 @@ fi
 /lib/modules/%{version}-%{release}/kernel/drivers/char/pcmcia
 /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o
 /lib/modules/%{version}-%{release}/kernel/drivers/parport/*_cs.o
+/lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/dtl1_cs.o
 %ifnarch ppc
 /lib/modules/%{version}-%{release}/kernel/drivers/ide/ide-cs.o
 /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o
@@ -973,6 +975,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.o
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/*_cs.o
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/dtl1_cs.o
 %ifnarch ppc
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/ide-cs.o
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o
@@ -994,6 +997,7 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/drivers/char/pcmcia
 /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.o
 /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/*_cs.o
+/lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/dtl1_cs.o
 %ifnarch ppc
 /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/ide-cs.o
 /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o
