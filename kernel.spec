@@ -96,7 +96,7 @@ Patch40:	2.6.0-t9-forcedeth-lkml.patch
 
 Patch42:	2.6.0-t9-netfilter-p2p.patch
 
-Patch44:	2.6.0-t9-PPC-ksyms.patch
+Patch44:	2.6.0-t9-PPC-smp.patch
 
 Patch46:	2.6.0-t9-IDE-lkml.patch
 
