@@ -5,12 +5,12 @@ Summary(pl):	J±dro Linuksa
 Summary(ru):	Òƒ“œ Linux
 Summary(uk):	Òƒ“œ Linux
 Name:		kernel
-Version:	2.4.20
-Release:	0.5
+Version:	2.4.21
+Release:	0.1
 License:	GPL
 Group:		Base/Kernel
-# Source0-md5:	c439d5c93d7fc9a1480a90842465bb97
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
+# Source0-md5:	f51e12efa18bb828cf57d9d4a81b2fb1
 Source1:	%{name}-alpha-BOOT.config
 Source2:	%{name}-alpha.config
 Source3:	%{name}-alpha-smp.config
@@ -33,8 +33,8 @@ Source19:	%{name}-sparc-BOOT.config
 Source20:	%{name}-sparc.config
 Source21:	%{name}-sparc-smp.config
 Source22:	%{name}-autoconf.h
-Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc6.bz2
-Patch1:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/linux-2.4/2.4.21/patch-2.4.21-rc6-ac1.bz2
+Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.22-pre1.bz2
+#Patch1:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/linux-2.4/2.4.21/patch-2.4.21-rc6-ac1.bz2
 ExclusiveOS:	Linux
 Autoreqprov:	no
 URL:		http://www.kernel.org/
@@ -277,7 +277,7 @@ Modu≥y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 %prep
 %setup -q -n linux-%{version}
 %patch0 -p1
-%patch1 -p1
+#%patch1 -p1
 
 find  -name "*~" -print | xargs rm -f
 find  -name "*.orig" -print | xargs rm -f
