@@ -12,9 +12,9 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		3
+%define		_rel		1
 %define		_test_ver	9
-%define		_cset		20031027_2205
+%define		_cset		20031029_0506
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
