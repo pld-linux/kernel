@@ -11,6 +11,7 @@
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	mosix		# build with openMosix support
+%bcond_with	swsuspend	# build with swsuspend support
 
 %{?debug:%define with_verbose 1}
 
@@ -46,7 +47,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		3%{?with_mosix:m}
+%define		_rel		3.1%{?with_mosix:m}
 %define		_cset		20040707_0722
 %define		_apply_cset	0
 %define		_subversion	.1
@@ -771,6 +772,7 @@ zcat %{SOURCE3} | patch -p1 -s
 #patch490 -p1
 
 # software suspend
+%if %{with swsuspend}
 %ifarch %{ix86}
 #patch500 -p1
 #patch501 -p1
@@ -821,6 +823,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch546 -p1
 %patch550 -p1
 %patch560 -p1
+%endif
 %endif
 
 #grsec
