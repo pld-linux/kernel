@@ -10,6 +10,7 @@
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
+%define		_without_lsm	1
 
 %define		pcmcia_version		3.1.22
 %define		drm_xfree_version	4.3.0
@@ -268,7 +269,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch0 -p0
 %patch1 -p1
 %patch2 -p1
-#%{!?_without_lsm:%patch10 -p1}
+%{!?_without_lsm:%patch10 -p1}
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
