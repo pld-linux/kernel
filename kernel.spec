@@ -8,7 +8,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.17
-Release:	6
+Release:	7
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -62,6 +62,9 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 BuildRequires:	egcs64
 %else
 BuildRequires:	egcs
+%endif
+%ifarch sparc
+BuildRequires:	sparc32
 %endif
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
@@ -317,8 +320,13 @@ BuildKernel() {
 	%{__make} mrproper
 	ln -sf arch/$RPM_ARCH/defconfig .config
 
+%ifarch sparc
+	sparc32 %{__make} oldconfig
+	sparc32 %{__make} dep 
+%else
 	%{__make} oldconfig
-	%{__make} dep 
+	%{__make} dep
+%endif
 	make include/linux/version.h 
 
 %ifarch %{ix86} alpha sparc
@@ -331,9 +339,17 @@ BuildKernel() {
 %ifarch %{ix86}
 	%{__make} bzImage EXTRAVERSION="-%{release}"
 %else
+%ifarch sparc
+	sparc32 %{__make} boot EXTRAVERSION="-%{release}"
+%else
 	%{__make} boot EXTRAVERSION="-%{release}"
 %endif
+%endif
+%ifarch sparc
+	sparc32 %{__make} modules EXTRAVERSION="-%{release}"
+%else
 	%{__make} modules EXTRAVERSION="-%{release}"
+%endif
 
 	mkdir -p $KERNEL_BUILD_DIR-installed/boot
 	install System.map $KERNEL_BUILD_DIR-installed/boot/System.map-$KernelVer
