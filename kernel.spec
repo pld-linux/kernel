@@ -4,7 +4,7 @@
 #
 %define		test_build		0
 #
-%define		pre_version		pre1
+%define		pre_version		pre6
 %define		lids_version		1.0.7
 %define		ipvs_version		0.2.8
 %define		freeswan_version	snap2001feb24b
@@ -29,7 +29,7 @@ Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
-Source7:	linux-netfilter-patches-20010322.tar.gz
+Source7:	linux-netfilter-patches-20010421.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}-%{version}.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source10:	http://www.linux-wlan.com/linux-wlan/linux-wlan-ng-%{wlan_version}.tar.gz
@@ -58,72 +58,72 @@ Patch2:		linux-2.4.2-freeswan-%{freeswan_version}.patch.gz
 #Patch3:		linux-ipv6-addrconf.patch
 Patch4:		kernel-i8255-asm-fix.patch
 Patch5:		dc395-patch-PLD-fix.patch
-Patch6:		linux-2.4.1-disable-message-printing.patch
-## orginal are here: http://domsch.com/linux/aacraid/linux-2.4.1-aacraid-030101.patch
+## orginal are here: http://domsch.com/linux/aacraid/linux-2.4.3-aacraid-030101.patch
 ## this need small changes to applay in PLD.
-Patch7:		linux-2.4.3-aacraid-030101.patch
+Patch6:		linux-2.4.3-aacraid-030101.patch
 # work around bugs in windows95/2000 VJ header compression implementations.
-Patch8:		linux-fix-win-vj.patch
-Patch9:		ipvs-ip_select_ident.patch
+Patch7:		ipvs-ip_select_ident.patch
 
 ## Patches from Linux Kernel List
-Patch10:	linux-2.4.2-irda3.patch
-Patch11:	linux-2.4.2-irda4.patch
+Patch8:		linux-2.4.2-irda3.patch
+Patch9: 	linux-2.4.2-irda4.patch
 ## from LKL 28.II - 01.III
-Patch12:	linux-scsi-debug-bug.patch
-Patch13:	linux-smaller-parport_pc-non-pci-box.patch
+Patch10:	linux-scsi-debug-bug.patch
 
 # Quota fixes
-Patch14:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.2-1.diff.gz
+# ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.3-1.diff
+Patch11:	quota-fix-2.4.4-1.diff.gz
 # Reiserfs/NFS patches
-Patch15:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/linux-2.4.3-reiserfs-20010327.patch.gz
-Patch16:	ftp://ftp.reiserfs.org/pub/misc-patches/linux-2.4.3-knfsd-6.g.patch.gz
+Patch12:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/linux-2.4.3-reiserfs-20010327.patch.gz
+Patch13:	ftp://ftp.reiserfs.org/pub/misc-patches/linux-2.4.4-knfsd-6.g.patch.gz
 
 # from LKL 2001.03.02
-Patch17:	linux-2.4.2-oom-killer.patch
-Patch18:	linux-2.4.2-raw-ip.patch
+Patch14:	linux-2.4.2-oom-killer.patch
+Patch15:	linux-2.4.2-raw-ip.patch
 
 # from LKL 2001.03.03
-Patch19:	PCI_ISA_bridge.patch
-Patch20:	linux-2.4.2-nvram-hdd.patch
-Patch21:	ir242_sock_detach.diff
+Patch16:	PCI_ISA_bridge.patch
+Patch17:	linux-2.4.2-nvram-hdd.patch
+Patch18:	ir242_sock_detach.diff
 
 # from LKL 2001.03.04
-Patch22:	linux-2.4-fix-kapm.patch
-Patch23:	patch-uk3
-Patch24:	patch-uk5
+Patch19:	linux-2.4-fix-kapm.patch
+Patch20:	patch-uk3
+Patch21:	patch-uk5
 
 # from LKL 2001.03.06
-Patch25:	epca-fix-missing-unregister-driver.patch
+Patch22:	epca-fix-missing-unregister-driver.patch
 
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
-Patch26:	linux-2.4.2-pcnet-parms.patch
+Patch23:	linux-2.4.2-pcnet-parms.patch
 
 # from LKL 2001.03.09
-Patch27:	ramdisk-VM.fix
+Patch24:	ramdisk-VM.fix
 # from LKL
-Patch28:	i2o-2.4.2.patch
+Patch25:	i2o-2.4.2.patch
 
-Patch29:	linux-2.4.2-Davicom-card.patch
+Patch26:	linux-2.4.2-Davicom-card.patch
 
-Patch30:	http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
+# http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
+Patch27:	br2684-against2.4.4.diff
 
 # aacraid fix
-Patch31:	http://domsch.com/linux/aacraid/linux-2.4.3-axboe-scsi-max-sec.patch
+Patch28:	http://domsch.com/linux/aacraid/linux-2.4.3-axboe-scsi-max-sec.patch
 
 # Kernel crashes during making reiser-module:
-Patch32:	%{name}-reiser.patch
+Patch29:	%{name}-reiser.patch
 
-Patch33:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.3-p4.03132001.patch.gz
+Patch30:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.3-p4.03132001.patch.gz
 
 # RAM Disk free from LKL 23.03.2001
-Patch34:	linux-ram-disk-free.patch
+Patch31:	linux-ram-disk-free.patch
 
-Patch35:	rl2-include.patch
+Patch32:	rl2-include.patch
 
-Patch36:	linux-abi-2.4.3.0-PLD.diff
+Patch33:	linux-abi-2.4.3.0-PLD.diff
+Patch34:	http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 
-#Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
+Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.4-%{pre_version}.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -335,38 +335,37 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -n linux
+%patch100 -p1
 %patch0 -p1
 %patch2 -p1
-#%patch4 -p0 
+%patch4 -p0 
 %patch5 -p0
 %patch6 -p1
-%patch7 -p1
-#%patch8 -p1
-#%patch10 -p1
-#%patch11 -p1
-#%patch12 -p0
-#%patch13 -p0
-#%patch14 -p1
+%patch8 -p1
+%patch9 -p1
+%patch10 -p0
+%patch11 -p1
+%patch12 -p1
+%patch13 -p1
+%patch14 -p0
 %patch15 -p1
-%patch16 -p1
-#%patch17 -p0
-#%patch18 -p1
-#%patch19 -p0
-#%patch20 -p0
-#%patch21 -p1
-#%patch22 -p1
-#%patch23 -p1
-#%patch24 -p1
-#%patch25 -p1
-#%patch26 -p1
-#%patch27 -p1
-#%patch28 -p1
-##%patch29 -p0
-#%patch30 -p1
+%patch16 -p0
+%patch17 -p0
+%patch18 -p1
+%patch19 -p1
+%patch20 -p1
+%patch21 -p1
+%patch22 -p1
+%patch23 -p1
+%patch24 -p1
+%patch25 -p1
+#%patch26 -p0
+%patch27 -p1
+%patch28 -p1
+%patch29 -p4
+%patch30 -p1
 %patch31 -p1
-#%patch32 -p4
-%patch33 -p1
-#%patch34 -p1
+%patch34 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -389,7 +388,7 @@ for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
 echo -e $ANS | ./runme)
 
 # LIDS
-patch -p1 -s <lids-%{lids_version}-%{version}/lids-%{lids_version}-%{version}.patch
+#patch -p1 -s <lids-%{lids_version}-%{version}/lids-%{lids_version}-%{version}.patch
 
 # IPVS
 for i in ipvs-%{ipvs_version}/*.diff ; do
@@ -398,7 +397,7 @@ done
 mkdir net/ipv4/ipvs
 cp ipvs-%{ipvs_version}/ipvs/*.{c,h,in} net/ipv4/ipvs
 cp ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile net/ipv4/ipvs/Makefile
-patch -p1 -s < %{PATCH9}
+patch -p1 -s < %{PATCH7}
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
@@ -426,10 +425,10 @@ rm -rf %{sym_ncr_version}
 
 ## install RangeLAN2 driver
 #mv rl2-1.7.1 drivers/net/rl2
-#%patch35 -p1
+#%patch32 -p1
 
 ## must be here, in other time make errors with LIDS
-%patch36 -p1
+#%patch33 -p1
 
 %build
 BuildKernel() {
@@ -556,44 +555,42 @@ gzip -dc %{SOURCE10} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
 # Pre patch
-#gzip -dc %{PATCH100} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH100} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
 gzip -dc %{PATCH0} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH2} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
 # patches from Linux kernel list
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH9}
 ## next
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
-gzip -dc %{PATCH14} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH15} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH16} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
+gzip -dc %{PATCH11} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH12} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH13} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH16}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH17}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH18}
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH19}
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH20}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH19}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH20}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH21}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH22}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH23}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH24}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH25}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH26}
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH26}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH27}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH28}
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH29}
+patch -p4 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH29}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH30}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH31}
-patch -p4 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH32}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH33}
-gzip -dc %{PATCH34} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH35}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH36}
+gzip -dc %{PATCH31} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH32}
+#patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH33}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH34}
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/dc395/dc395-integ24.diff
@@ -617,7 +614,7 @@ for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
 echo -e $ANS | ./runme))
 
 # LIDS
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/lids-%{lids_version}-2.4.1/lids-%{lids_version}-2.4.1.patch
+#patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/lids-%{lids_version}-%{version}/lids-%{lids_version}-%{version}.patch
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config $RPM_BUILD_ROOT/usr/src/linux-%{version}/.config.lids
 
 # IPVS
@@ -627,7 +624,7 @@ done
 mkdir $RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipv4/ipvs
 cp $RPM_BUILD_ROOT/usr/src/linux-%{version}/ipvs-%{ipvs_version}/ipvs/*.{c,h,in} $RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipv4/ipvs
 cp $RPM_BUILD_ROOT/usr/src/linux-%{version}/ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile $RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipv4/ipvs/Makefile
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH9}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
 
 # Remove -g from drivers/atm/Makefile
 mv -f $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/atm/Makefile \
