@@ -284,6 +284,8 @@ Patch560:	suspend_gzip_MAX.patch
 
 Patch600:	%{name}-grsec.patch
 
+Patch610:	%{name}-2.6.8.1-sch_ingress.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 %ifarch sparc sparc64
@@ -822,6 +824,8 @@ zcat %{SOURCE3} | patch -p1 -s
 %if %{with mosix}
 %patch420 -p1
 %endif
+
+%patch610 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
