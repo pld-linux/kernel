@@ -103,7 +103,7 @@ Patch116:	linux-2.2.20-lfs.patch
 Patch117:	2.2.21-ppc-smp.patch
 Patch120:	2.2.20-reiserfs_ppc.patch
 
-Patch300:	patch-2.2.21-rc3.gz
+Patch300:	patch-2.2.21-rc4.bz2
 Patch320:	fix-prename.patch
 Patch321:	ow2-fix-2.2.21-rc3.patch
 
@@ -669,7 +669,7 @@ ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
-gzip -dc %{PATCH300} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+bzip2 -dc %{PATCH300} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH320}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH0}
