@@ -142,6 +142,10 @@ Patch70:	2.6.3-sparc32-fix.patch
 # http://www.tahoe.pl/drivers/tahoe9xx-2.6.2.patch
 Patch72:	tahoe9xx-2.6.2.patch
 
+Patch74:	2.6.x-SGI_VW-fbdwv-lkml.patch
+
+Patch76:	2.6.x-TGA-fbdev-lkml.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
@@ -543,6 +547,10 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch70 -p1
 
 %patch72 -p1
+
+%patch74 -p1
+
+%patch76 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
