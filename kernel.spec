@@ -26,8 +26,8 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.5
-%define		_cset		20040221_0408
+%define		_rel		1.6
+%define		_cset		20040222_1807
 
 ## netfilter snap 
 %define		_netfilter_snap		20040219
@@ -100,7 +100,7 @@ Patch28:	2.6.0-t8-umsdos-lkml.patch
 
 Patch30:	2.6.0-t9-acpi_osl-lkml.patch
 
-Patch32:	2.6.0-t9-PPC-smp.patch
+Patch32:	%{name}-nls_default.patch
 
 Patch36:	bootsplash-3.1.3-2.6.0-test9.diff
 
@@ -135,7 +135,6 @@ Patch68:	2.6.x-patch-o-matic-ng-base-%{_netfilter_snap}.patch
 
 Patch70:	2.6.3-sparc32-fix.patch
 
-Patch72:	%{name}-nls_default.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -535,8 +534,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch68 -p1
 
 %patch70 -p1
-
-%patch72 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
