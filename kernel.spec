@@ -296,7 +296,7 @@ BuildRequires:	egcs64
 #BuildRequires:	%{kgcc_package}
 %endif
 BuildRequires:	modutils
-Buildrequires:	perl
+Buildrequires:	perl-base
 BuildRequires:	sed >= 3.95
 Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
