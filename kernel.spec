@@ -2,7 +2,6 @@
 %define		lids_version		1.0.5
 %define		ipvs_version		0.2.5
 %define 	aacraid_version		1.0.6
-%define		lm_sensors_version	2.5.5
 %define		wlan_version		0.1.7
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
