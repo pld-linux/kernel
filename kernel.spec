@@ -41,11 +41,11 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.21
+%define		_rel		0.22
 %define		_cset		20040429_0110
 
 ## netfilter snap 
-%define		_netfilter_snap		20040419
+%define		_netfilter_snap		20040429
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/pentium3/i386/;s/pentium4/i386/;s/amd64/x86_64/')
 
@@ -140,7 +140,7 @@ Patch64:	2.6.x-ppp_mppe.patch
 
 Patch66:	2.6.2-Initio9100U-Kconfig.patch
 
-Patch68:	2.6.6-rc1-patch-o-matic-ng-base-%{_netfilter_snap}.patch
+Patch68:	2.6.6-rc3-patch-o-matic-ng-base-%{_netfilter_snap}.patch
 
 Patch70:	2.6.3-sparc32-fix.patch
 
@@ -162,7 +162,7 @@ Patch87:	2.6.4-rc1-03-CONNMARK.patch
 
 Patch90:	2.6.4-psion-5mx.patch
 
-Patch94:	2.6.6-rc1-patch-o-matic-ng-extra-%{_netfilter_snap}.patch
+Patch94:	2.6.6-rc3-patch-o-matic-ng-extra-%{_netfilter_snap}.patch
 
 #from:		http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
 Patch96:	2.6.1-all-in-1.patch
