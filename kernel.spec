@@ -1298,7 +1298,7 @@ fi
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
 /lib/modules/%{version}-%{release}/kernel
-%ifnarch sparc
+%ifnarch sparc sparc64
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/ide/legacy/*-cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/mtd/maps/pcmcia*
@@ -1309,9 +1309,9 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/*_cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.o*
 %endif
-%ifnarch ppc sparc
+%ifnarch ppc sparc sparc64
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o*
-%ifnarch alpha
+%ifnarch alpha sparc64
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o*
 %endif
@@ -1322,7 +1322,7 @@ fi
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
 
-%ifnarch sparc
+%ifnarch sparc sparc64
 %files pcmcia-cs
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
@@ -1360,7 +1360,7 @@ fi
 /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
 /lib/modules/%{version}-%{release}smp/kernel
-%ifnarch sparc
+%ifnarch sparc sparc64
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/legacy/*-cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/mtd/maps/pcmcia*
@@ -1371,9 +1371,9 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/*_cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.o*
 %endif
-%ifnarch ppc sparc
+%ifnarch ppc sparc sparc64
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o*
-%ifnarch alpha
+%ifnarch alpha sparc64
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o*
 %endif
@@ -1384,7 +1384,7 @@ fi
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
 
-%ifnarch sparc
+%ifnarch sparc sparc64
 %files -n kernel-smp-pcmcia-cs
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
