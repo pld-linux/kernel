@@ -6,7 +6,6 @@
 # - check I2C
 #
 # Conditional build:
-%bcond_without	BOOT	# don't build BOOT kernel
 %bcond_without	smp	# don't build SMP kernel
 %bcond_without	up	# don't build UP kernel
 %bcond_without	source	# don't build kernel-source package
@@ -60,123 +59,20 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.6.6
+Version:	2.6.4
 Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc2.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/stable/linux-%{version}.tar.bz2
 # Source0-md5:	e50361c332f87a89ddf81399643dea3a
 Source1:	%{name}-autoconf.h
-Source20:	%{name}-ia32.config
-Source21:	%{name}-ia32-smp.config
-Source30:	%{name}-amd64.config
-Source31:	%{name}-amd64-smp.config
-Source50:	%{name}-sparc.config
-Source51:	%{name}-sparc-smp.config
-Source60:	%{name}-sparc64.config
-Source61:	%{name}-sparc64-smp.config
-Source70:	%{name}-alpha.config
-Source71:	%{name}-alpha-smp.config
-Source73:	%{name}-ppc.config
-Source74:	%{name}-ppc-smp.config
-
-Source80:	%{name}-netfilter.config
-
-Patch0:		2.6.0-ksyms-add.patch
-
-%if "%{_cset}" != "0"
-# http://www.kernel.org/pub/linux/kernel/v2.6/testing/cset/
-Patch2:		cset-%{_cset}.txt.gz
-%endif
-
-# from http://dl.sf.net/sourceforge/squashfs/
-Patch4:		squashfs1.3r3-patch
-
-Patch6:		2.6.0-t4-PPC-ENODEV.patch
-
-Patch8:		2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
-Patch10:	2.6.0-t6-usb-irq.patch
-
-Patch12:	2.6.0-t7-memleak-lkml.patch
-Patch13:	2.6.0-t7-memleak2-lkml.patch
-
-Patch18:	2.6.0-t8-swap-include-lkml.patch
-
-Patch22:	2.6.0-t8-VLSI-ix86-lkml.patch
-
-Patch24:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
-
-Patch28:	2.6.0-t8-umsdos-lkml.patch
-
-Patch30:	2.6.0-t9-acpi_osl-lkml.patch
-
-Patch32:	%{name}-nls_default.patch
-
-# rewriten based on: ftp://ftp.suse.com/pub/people/stepan/bootsplash/kernel/bootsplash-3.1.4-2.6.3.diff
-Patch36:	bootsplash-3.1.4-2.6.5.patch
-
-Patch38:	2.6.0-t11-AIC_and_db4-lkml.patch
-
-Patch40:	2.6.0-t11-r8169-getstats.patch
-
-Patch42:	2.6.0-t11-ALI-M1563-lkml.patch
-
-Patch44:	linux-tdfxfb-fillrect.patch
-Patch45:	linux-fbcon-margins.patch
-Patch46:	linux-tdfxfb-interlace+double.patch
-
-Patch48:	2.6.1-rc2-ini9100u-lkml.patch
-
-Patch50:	2.6.1-rc2-VLAN-NS83820-lkml.patch
-
-Patch52:	laptop-mode-2.6.1-7.patch
-
-Patch56:	linux-kbuild-extmod.patch
-
-Patch58:	2.6.x-PD6729-lkml.patch
-
-Patch64:	2.6.x-ppp_mppe.patch
-
-Patch66:	2.6.2-Initio9100U-Kconfig.patch
-
-Patch68:	2.6.6-rc1-patch-o-matic-ng-base-%{_netfilter_snap}.patch
-
-Patch70:	2.6.3-sparc32-fix.patch
-
-# http://www.tahoe.pl/drivers/tahoe9xx-2.6.2.patch
-Patch72:	tahoe9xx-2.6.2.patch
-Patch73:	linux-tahoe9xx-hdlc-update.patch
-
-Patch74:	2.6.x-SGI_VW-fbdev-lkml.patch
-
-Patch76:	2.6.x-TGA-fbdev-lkml.patch
-
-Patch78:	linux-alpha-isa.patch
-
-Patch82:	2.6.3-ini9100u-fix.patch
-
-Patch85:	2.6.4-rc1-01-esfq-imq.patch
-Patch86:	2.6.4-rc1-02-imq-nat-support.patch
-Patch87:	2.6.4-rc1-03-CONNMARK.patch
-
-Patch90:	2.6.4-psion-5mx.patch
-
-Patch94:	2.6.6-rc1-patch-o-matic-ng-extra-%{_netfilter_snap}.patch
-
-#from:		http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
-Patch96:	2.6.1-all-in-1.patch
-
-Patch98:	2.6.5-sparc64-missing-include.patch
-
-Patch100:	2.6.5-3C920b-Tornado.patch
-
-Patch102:	2.6.5-rc3-EXPORT_SYMBOL.patch
-
-Patch104:	2.6.5-i386-cmpxchg.patch
-
-Patch106:	2.6.4-wrr.patch
-
+##Patch0:		http://ck.kolivas.org/patches/2.6/2.6.4/2.6.4-ck2/patch-2.6.4-ck2.bz2
+Patch0:		http://ck.kolivas.org/patches/2.6/2.6.4/2.6.4-ck2/split/patch-2.6.4-am9.bz2
+Patch1:		http://ck.kolivas.org/patches/2.6/2.6.4/2.6.4-ck2/split/patch-2.6.4.batch-iso.bz2
+Patch2:		http://ck.kolivas.org/patches/2.6/2.6.4/2.6.4-ck2/split/patch-2.6.4.cfqionice-schedioprio.bz2
+Patch3:		http://ck.kolivas.org/patches/2.6/2.6.4/2.6.4-ck2/split/patch-2.6.4.sng204-bs314.bz2
+Patch4:		%{name}-alsa_1.0.4.patch.bz2
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
@@ -396,34 +292,6 @@ OSS (Open Sound System) SMP sound drivers.
 %description smp-sound-oss -l pl
 Sterowniki OSS (Open Sound System) dla maszyn wieloprocesorowych.
 
-%package BOOT
-Summary:	Kernel version %{version} used on the installation boot disks
-Summary(de):	Kernel version %{version} für Installationsdisketten
-Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation
-Summary(pl):	J±dro Linuksa w wersji %{version} dla dyskietek startowych
-Group:		Base/Kernel
-PreReq:		module-init-tools
-Autoreqprov:	no
-
-%description BOOT
-This package includes a trimmed down version of the Linux %{version}
-kernel. This kernel is used on the installation boot disks only and
-should not be used for an installed system, as many features in this
-kernel are turned off because of the size constraints.
-
-%description BOOT -l de
-Dieses Paket enthält eine verkleinerte Version vom Linux-Kernel
-version %{version}. Dieser Kernel wird auf den
-Installations-Bootdisketten benutzt und sollte nicht auf einem
-installierten System verwendet werden, da viele Funktionen wegen der
-Platzprobleme abgeschaltet sind.
-
-%description BOOT -l pl
-Pakiet zawiera j±dro Linuksa dedykowane dyskietkom startowym i powinno
-byæ u¿ywane jedynie podczas instalacji systemu. Wiele u¿ytecznych
-opcji zosta³o wy³±czonych, aby jak najbardziej zmniejszyæ jego
-rozmiar.
-
 %package headers
 Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra Linuksa
@@ -508,91 +376,13 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}-rc2
+%setup -q -n linux-%{version}
 
 %patch0 -p1
-
-%if "%{_cset}" != "0"
 %patch2 -p1
-%endif
-
+##%patch1 -p1
+%patch3 -p1
 %patch4 -p1
-
-%patch6 -p1
-
-%patch10 -p1
-
-%patch12 -p1
-%patch13 -p1
-
-%patch18 -p1
-
-%patch22 -p1
-
-%patch24 -p1
-
-%patch28 -p1
-
-%patch30 -p1
-
-%patch32 -p1
-
-## bootsplash
-%patch36 -p1
-
-%patch38 -p1
-
-%patch44 -p1
-%patch45 -p1
-%patch46 -p1
-
-%patch48 -p1
-
-%patch50 -p1
-
-%patch56 -p1
-
-%patch58 -p1
-
-%patch64 -p1
-
-%patch66 -p1
-
-# netfilter - base
-%patch68 -p1
-
-%patch70 -p1
-
-%patch72 -p1
-%patch73 -p1
-
-%patch74 -p1
-
-%patch76 -p1
-
-%patch78 -p1
-
-%patch85 -p1
-%patch86 -p1
-
-%patch90 -p1
-
-# netfilter - extra
-%patch94 -p1
-
-%patch96 -p1
-
-%patch98 -p1
-
-%patch100 -p1
-
-%patch102 -p1
-
-%ifarch i386
-%patch104 -p1
-%endif
-
-%patch106 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -602,58 +392,12 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
 %endif
     Makefile.orig >Makefile
 
-%build
 BuildConfig (){
 	%{?_debug:set -x}
 	# is this a special kernel we want to build?
-	BOOT=
 	smp=
-	[ "$1" = "BOOT" -o "$2" = "BOOT" ] && BOOT=yes
 	[ "$1" = "smp" -o "$2" = "smp" ] && smp=yes
-%ifarch %{ix86}
-	if [ "$smp" = "yes" ]; then
-		Config="ia32-smp"
-	else
-		Config="ia32"
-	fi
-%else
-	if [ "$smp" = "yes" ]; then
-		Config="%{_target_cpu}-smp"
-	else
-		Config="%{_target_cpu}"
-	fi
-%endif
-	if [ "$BOOT" = "yes" ]; then
-		KernelVer=%{version}-%{release}BOOT
-	else
-		KernelVer=%{version}-%{release}$1
-	fi
-	echo "Building config file for KERNEL $1..."
-:> arch/%{base_arch}/defconfig
-	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/%{base_arch}/defconfig
-%ifarch i386
-	echo "CONFIG_M386=y" >> arch/%{base_arch}/defconfig
-%endif
-%ifarch i586
-	echo "CONFIG_M586=y" >> arch/%{base_arch}/defconfig
-%endif
-%ifarch i686
-	echo "CONFIG_M686=y" >> arch/%{base_arch}/defconfig
-%endif
-%ifarch athlon
-	echo "CONFIG_MK7=y" >> arch/%{base_arch}/defconfig
-%endif
-
-%ifarch i386
-	mv -f arch/%{base_arch}/defconfig arch/%{base_arch}/defconfig.orig
-	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
-		arch/%{base_arch}/defconfig.orig > arch/%{base_arch}/defconfig
-%endif
-
-	cat %{SOURCE80} >> arch/%{base_arch}/defconfig
-
-	ln -sf arch/%{base_arch}/defconfig .config
-
+	%{__make} menconfig
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
 	%{__make} include/linux/autoconf.h
 	if [ "$smp" = "yes" ]; then
@@ -661,86 +405,18 @@ BuildConfig (){
 	else
 		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
 	fi
+	cp .config arch/%{base_arch}/defconfig
 }
 
-ConfigBOOT()
-{
-%ifarch %{ix86}
-		Config="ia32"
-%else
-		Config="%{_target_cpu}"
-%endif
-:> arch/%{base_arch}/defconfig
-	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/%{base_arch}/defconfig
-%ifarch i386
-	echo "CONFIG_M386=y" >> arch/%{base_arch}/defconfig
-	mv -f arch/%{base_arch}/defconfig arch/%{base_arch}/defconfig.orig
-	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
-		arch/%{base_arch}/defconfig.orig > arch/%{base_arch}/defconfig
+%if %{with up}
+BuildConfig 
+%endif 
+
+%if %{with smp}
+BuildConfig smp
 %endif
 
-	echo "# CONFIG_APM is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_ACPI is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_ACPI_BOOT is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_MTD is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_NETFILTER is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_WAN is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_ATM is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_HOTPLUG_PCI is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_NET_SCHED is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_X86_MCE is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_MTRR is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_PM is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_CPU_FREQ is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_DRM is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_FTAPE is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_WATCHDOG is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_DVB is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_DVB_CORE is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_VIDEO_DEV is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_SECURITY is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_SOUND is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_USB_AUDIO is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_INPUT_JOYSTICK is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_OMNIBOOK is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_NET_RADIO is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_HOTPLUG is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_QUOTA is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_REGPARM is not set">> arch/%{base_arch}/defconfig
-	echo "# CONFIG_SCSI_LOGGING is not set" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_PACKET=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_UNIX=m" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_DEV_APPLETALK is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_ECONET_AUNUDP is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_HIPPI is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_TR is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_INPUT_MISC is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_INPUT_TOUCHSCREEN is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_PROFILING is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_DEBUG_KERNEL is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_DEBUG_SPINLOCK_SLEEP is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_FRAME_POINTER is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_LBD is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_SLIP is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_PPP is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_PLIP is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_FDDI is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_HAMRADIO is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_NETPOLL_RX is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_NETPOLL_TRAP is not set" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_FB is not set" >> arch/%{base_arch}/defconfig
-	echo "" >> arch/%{base_arch}/defconfig
-	ln -sf arch/%{base_arch}/defconfig .config
-
-	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
-	%{__make} include/linux/autoconf.h
-	if [ "$smp" = "yes" ]; then
-		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
-	else
-		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
-	fi
-}
-
+%build
 BuildKernel() {
 	%{?_debug:set -x}
 	echo "Building kernel $1 ..."	
@@ -777,29 +453,7 @@ BuildKernel() {
 }
 
 PreInstallKernel (){
-	BOOT=
-	smp=
-	[ "$1" = "BOOT" -o "$2" = "BOOT" ] && BOOT=yes
-	[ "$1" = "smp" -o "$2" = "smp" ] && smp=yes
-%ifarch %{ix86}
-	if [ "$smp" = "yes" ]; then
-		Config="ia32-smp"
-	else
-		Config="ia32"
-	fi
-%else
-	if [ "$smp" = "yes" ]; then
-		Config="%{_target_cpu}-smp"
-	else
-		Config="%{_target_cpu}"
-	fi
-%endif
-	if [ "$BOOT" = "yes" ]; then
-		KernelVer=%{version}-%{release}BOOT
-	else
-		KernelVer=%{version}-%{release}$1
-	fi
-
+	KernelVer=%{version}-%{release}$1
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
 %ifarch %{ix86}
@@ -844,7 +498,7 @@ KERNEL_BUILD_DIR=`pwd`
 # UP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 rm -rf $KERNEL_INSTALL_DIR
-BuildConfig
+
 %{?with_up:BuildKernel}
 %{?with_up:PreInstallKernel}
 
@@ -855,13 +509,6 @@ BuildConfig smp
 %{?with_smp:BuildKernel smp}
 %{?with_smp:PreInstallKernel smp}
 
-%if %{with BOOT}
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
-rm -rf $KERNEL_INSTALL_DIR
-ConfigBOOT
-BuildKernel BOOT
-PreInstallKernel BOOT
-%endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -893,50 +540,12 @@ cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 	RCS_FIND_IGNORE='-name build-done -prune -o'
 find -name "*~" -exec rm -f "{}" ";"
 find -name "*.orig" -exec rm -f "{}" ";"
-
-%ifarch %{ix86}
-cat $RPM_SOURCE_DIR/kernel-ia32.config > .config
-%else
-install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
-%endif
-
-%ifarch i386
-echo "CONFIG_M386=y" >> .config
-%endif
-%ifarch i586
-echo "CONFIG_M586=y" >> .config
-%endif
-%ifarch i686
-echo "CONFIG_M686=y" >> .config
-%endif
-%ifarch athlon
-echo "CONFIG_MK7=y" >> .config
-%endif
-cat %{SOURCE80} >> .config
-
+%if %{with up} 
 cp .config config-up
-
-%ifarch %{ix86}
-cat $RPM_SOURCE_DIR/kernel-ia32-smp.config >> .config
-%else
-install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config .config
 %endif
-
-%ifarch i386
-echo "CONFIG_M386=y" >> .config
-%endif
-%ifarch i586
-echo "CONFIG_M586=y" >> .config
-%endif
-%ifarch i686
-echo "CONFIG_M686=y" >> .config
-%endif
-%ifarch athlon
-echo "CONFIG_MK7=y" >> .config
-%endif
-cat %{SOURCE80} >> .config
-
+%if %{with smp}
 cp .config config-smp
+%endif
 
 if [ -e $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h ]; then
 install $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h \
@@ -1052,18 +661,6 @@ if [ -L /lib/modules/%{version} ]; then
 fi
 rm -f /boot/initrd-%{version}-%{release}smp.gz
 
-%post BOOT
-if [ ! -L %{_libdir}/bootdisk/lib/modules/%{version} ] ; then
-	mv -f %{_libdir}/bootdisk/lib/modules/%{version} %{_libdir}/bootdisk/lib/modules/%{version}.rpmsave
-fi
-if [ ! -L %{_libdir}/bootdisk/boot/vmlinuz-%{version} ] ; then
-	mv -f %{_libdir}/bootdisk/boot/vmlinuz-%{version} %{_libdir}/bootdisk/boot/vmlinuz-%{version}.rpmsave
-fi
-rm -f %{_libdir}/bootdisk/lib/modules/%{version}
-ln -snf %{version}-%{release}BOOT %{_libdir}/bootdisk/lib/modules/%{version}
-rm -f %{_libdir}/bootdisk/boot/vmlinuz-%{version}
-ln -snf vmlinuz-%{version}-%{release}BOOT %{_libdir}/bootdisk/boot/vmlinuz-%{version}
-
 %post smp-drm
 %depmod %{version}-%{release}smp
 
@@ -1087,15 +684,6 @@ ln -snf vmlinuz-%{version}-%{release}BOOT %{_libdir}/bootdisk/boot/vmlinuz-%{ver
 
 %postun smp-sound-oss
 %depmod %{version}-%{release}smp
-
-%postun BOOT
-if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then
-	if [ "`ls -l %{_libdir}/bootdisk/lib/modules/%{version} | awk '{ print $10 }'`" = "%{version}-%{release}BOOT" ]; then
-		if [ "$1" = "0" ]; then
-			rm -f %{_libdir}/bootdisk/lib/modules/%{version}
-		fi
-	fi
-fi
 
 %post headers
 rm -f /usr/src/linux
@@ -1279,20 +867,6 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/sound/oss
 %endif
 %endif			# %%{with smp}
-
-%if %{with BOOT}
-%files BOOT
-%defattr(644,root,root,755)
-%ifarch alpha sparc sparc64 ppc		# arch
-%{_libdir}/bootdisk/boot/vmlinux-%{version}-%{release}BOOT
-%endif				#arch
-%{_libdir}/bootdisk/boot/vmlinuz-%{version}-%{release}BOOT
-%{_libdir}/bootdisk/boot/System.map-%{version}-%{release}BOOT
-%dir %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT
-%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/kernel
-%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/build
-%ghost %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.*
-%endif				# %%{with BOOT}
 
 %files headers
 %defattr(644,root,root,755)
