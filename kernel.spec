@@ -41,7 +41,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		2%{?with_mosix:+mosix}
+%define		_rel		2.1%{?with_mosix:+mosix}
 %define		_cset		20040707_0722
 %define		_apply_cset	0
 %define		_subversion	.1
@@ -284,7 +284,8 @@ Patch560:	suspend_gzip_MAX.patch
 
 Patch600:	%{name}-grsec.patch
 
-Patch610:	%{name}-2.6.8.1-sch_ingress.patch
+#Patch610:	%{name}-2.6.8.1-sch_ingress.patch
+Patch610:	%{name}-2.6.8.1-sch_api.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
