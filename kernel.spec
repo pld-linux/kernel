@@ -583,9 +583,6 @@ echo "Scheduler didn't work on ARCH different than Intel x86"
 %endif
 %if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %ifarch%{ix86}
-# patch to allow compile scheduler with XFS
-%patch147 -p1
-# linux-o1-grsec-pre 
 %patch911 -p1
 %else
 echo "Scheduler didn't work on ARCH different than Intel x86"
