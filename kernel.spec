@@ -1,7 +1,7 @@
 %define		ow_version	2.2.17-ow1
 %define		pcmcia_version	3.1.21
 %define		freeswan_version	1.5
-%define		reiserfs_version	3.5.26
+%define		reiserfs_version	3.5.27
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
