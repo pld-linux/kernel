@@ -98,7 +98,7 @@ Patch102:	PCI_ISA_bridge.patch
 Patch103:	linux-2.4.2-nvram-hdd.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch105:	linux-2.4.2-pcnet-parms.patch
-Patch106:	http://linuxdiskcert.org/ide.2.4.16-p1.11242001.patch.bz2
+Patch106:	http://linuxdiskcert.org/ide.2.4.16.12102001.patch.bz2
 Patch107:	linux-reiserfs-rename.patch
 Patch108:	linux-alpha-nfs-2.4.2.patch
 Patch109:	linux-2.4-string.patch
@@ -850,7 +850,7 @@ fi
 %files source
 %defattr(-,root,root,755)
 %{_prefix}/src/linux-%{version}/Documentation
-%{_prefix}/src/linux-%{version}/abi
+#%{_prefix}/src/linux-%{version}/abi
 %{_prefix}/src/linux-%{version}/arch
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
