@@ -68,8 +68,8 @@ License:	GPL
 Group:		Base/Kernel
 #define		_rc	%{nil}
 %define		_rc	-rc2
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.gz
-# Source0-md5:	835ecb6f4a5189573be21603b5a09565
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
+# Source0-md5:	7c4ce655b71985765190a0c2a2c26a03
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
