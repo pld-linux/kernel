@@ -140,7 +140,7 @@ Patch130:	ir243_usb_descr.diff
 # 
 Patch131:	kernel-real_root_dev-s390.patch
 # Preemptible kernel  patch
-Patch132:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/2.4/preemtp-kernel-rml-2.4.14-2.patch
+Patch132:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/2.4/preempt-kernel-rml-2.4.14-2.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
