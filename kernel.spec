@@ -195,10 +195,6 @@ Patch73:	squashfs2.1-patch
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
 #Patch250:	linux-2.6-vs.patch
 
-# hotfixes
-#Patch300:	%{name}-hotfixes.patch
-#Patch301:	%{name}-gcc4.patch
-
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 BuildRequires:	diffutils
@@ -610,9 +606,6 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 # </bconded_patches
 
-# hotfixes
-#%patch300 -p1
-#%patch301 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
