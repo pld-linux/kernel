@@ -12,8 +12,8 @@
 # _without_w4l		- don't build Win4Lin support
 #
 
-%define		patch_level	12
-%define		_rel		5
+%define		patch_level	0
+%define		_rel		6
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 #
