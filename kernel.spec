@@ -3,7 +3,6 @@
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.34
 %define		i2c_version		2.6.2
-#%define		bttv_version		0.7.87
 %define		bttv_version		0.7.60
 %define		wlan_version		0.3.4
 %define		tun_version		1.1
@@ -17,7 +16,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	7.1
+Release:	7.2
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -93,7 +92,6 @@ Patch41:	%{name}-serial-initialisation.patch
 Patch42:	%{name}-flip-serial5.05.patch
 Patch43:	%{name}-vlan_bridge.patch
 Patch44:	tulip-patch-0.91.patch.bz2
-#Patch45:	linux-2.2.20-bttv-%{bttv_version}.patch.bz2
 
 Patch100:	jfs-2.2.20-v%{jfs_version}-patch
 Patch101:	linux-atm.patch
@@ -102,6 +100,8 @@ Patch103:	bridge-netsyms.patch
 #i2o patch from ftp://ftp.adaptec.com/raid/asr/unix/asr_linux_v242_drv.rpm 
 Patch104:	dpt_i2o-2.2.19.diff
 Patch105:	linux-2.2.19-bttv-%{bttv_version}.patch.bz2
+Patch106:	linux-2.2.20-undo-ioport.h.patch.bz2
+
 Patch1500:	linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	%{name}-sparc-zs.h.patch
 Patch1502:	%{name}-sparc_netsyms.patch
@@ -368,7 +368,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #%patch39 -p1
 %patch40 -p1
 %patch44 -p1
-#%patch45 -p1
 
 # preparing linux/README file to backup
 mv README README.kernel
@@ -395,6 +394,7 @@ cd i2c-%{i2c_version}
 mkpatch/mkpatch.pl . ../../linux | (cd ../../linux; patch -p1 -s)
 cd ..
 %patch105 -p1
+%patch106 -p1
 %endif
 
 # 2.2.20ow1
@@ -421,6 +421,9 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch1502 -p1
 %endif
 %patch1503 -p1
+%patch105 -p1
+#%patch2000 -p1
+%patch2001 -p1
 
 %build
 BuildKernel() {
@@ -660,7 +663,6 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH37}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH40}
 bzip2 -dc %{PATCH44} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH37}
-#bzip2 -dc %{PATCH45} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 # preparing linux/README file to backup
 mv $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README.kernel
@@ -692,6 +694,7 @@ mkpatch/mkpatch.pl . $RPM_BUILD_ROOT/usr/src/linux-%{version} | (cd $RPM_BUILD_R
 cd ..
 rm -rf i2c-%{i2c_version}/
 bzip2 -dc %{PATCH105} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+bzip2 -dc %{PATCH106} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 %endif
 
 # 2.2.20ow
