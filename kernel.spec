@@ -50,7 +50,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.1%{with mosix:m}
+%define		_rel		0.1%{_with_mosix:m}
 %define		_cset		20040707_0722
 %define		_apply_cset	0
 
@@ -1447,7 +1447,7 @@ fi
 %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %{_prefix}/src/linux-%{version}/scripts/basic
 %{_prefix}/src/linux-%{version}/scripts/*.c
-%{_prefix}/src/linux-%{version}/scripts/*.h
+##%{_prefix}/src/linux-%{version}/scripts/*.h
 %{_prefix}/src/linux-%{version}/scripts/*.sh
 
 %files doc
@@ -1468,6 +1468,9 @@ fi
 %{_prefix}/src/linux-%{version}/fs
 %if %{with grsec}
 %{_prefix}/src/linux-%{version}/grsecurity
+%endif
+%if %{witn mosix}
+%{_prefix}/src/linux-%{version}/hpc
 %endif
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
