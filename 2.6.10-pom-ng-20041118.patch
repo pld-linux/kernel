@@ -4644,7 +4644,7 @@ diff -uNr linux-2.6.10-rc2.orig/net/ipv4/netfilter/ipt_account.c linux-2.6.10-rc
 diff -uNr linux-2.6.10-rc2.orig/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6.10-rc2/net/ipv4/netfilter/ipt_ACCOUNT.c
 --- linux-2.6.10-rc2.orig/net/ipv4/netfilter/ipt_ACCOUNT.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.10-rc2/net/ipv4/netfilter/ipt_ACCOUNT.c	2004-06-13 22:41:21.000000000 +0200
-@@ -0,0 +1,1105 @@
+@@ -0,0 +1,1108 @@
 +/***************************************************************************
 + *   This is a module which is used for counting packets.                  *
 + *   See http://www.intra2net.com/opensource/ipt_account                   *
@@ -5252,6 +5252,10 @@ diff -uNr linux-2.6.10-rc2.orig/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6.10-rc
 +
 +        for (a = 0; a <= 255; a++) {
 +            if (src_8->mask_16[a]) {
++                struct ipt_acc_mask_16 *src_16;
++                struct ipt_acc_mask_16 *network_16;
++                u_int32_t b;
++
 +                if ((network_8->mask_16[a] =
 +                     (void*)get_zeroed_page(GFP_ATOMIC)) == NULL) {
 +                    printk("ACCOUNT: out of memory during copy of 24 bit network"
@@ -5265,9 +5269,8 @@ diff -uNr linux-2.6.10-rc2.orig/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6.10-rc
 +                memcpy(network_8->mask_16[a], src_8->mask_16[a],
 +                       sizeof(struct ipt_acc_mask_16));
 +
-+                struct ipt_acc_mask_16 *src_16 = src_8->mask_16[a];
-+                struct ipt_acc_mask_16 *network_16 = network_8->mask_16[a];
-+                u_int32_t b;
++                src_16 = src_8->mask_16[a];
++                network_16 = network_8->mask_16[a];
 +
 +                for (b = 0; b <= 255; b++) {
 +                    if (src_16->mask_24[b]) {
@@ -12476,8 +12479,8 @@ diff -uNr linux-2.6.10-rc2.orig/net/ipv6/netfilter/ip6t_REJECT.c linux-2.6.10-rc
 +	struct dst_entry *dst = NULL;
 +	u8 proto;
 +	struct flowi fl;
-+	proto = oip6h->nexthdr;
 +	int err;
++	proto = oip6h->nexthdr;
 +
 +	if ((!(ipv6_addr_type(&oip6h->saddr) & IPV6_ADDR_UNICAST)) ||
 +	    (!(ipv6_addr_type(&oip6h->daddr) & IPV6_ADDR_UNICAST))) {
