@@ -1,0 +1,40 @@
+#	From: Kronos <kronos@kronoz.cjb.net>
+#
+#	cdrom_read_toc (ide-cd.c) always reads the TOC using MSF format.
+#	If the last session of the disk starts beyond block 1152000 (LBA)
+#	there's an overflow in the MSF format and kernel complains:
+#	"Unable to identify CD-ROM format."
+#
+#	I tried fixing it by myself setting msf_flag (cdrom_read_tocentry)
+#	to 0 and removing the MSF to LBA conversions in cdrom_read_toc.
+#	It works but I don't have a complete understanding of the code in ide-cd...
+#
+#	ide-cd.c |   10 ++++++----
+#	1 files changed, 6 insertions(+), 4 deletions(-)
+#
+--- linux-2.6.10-rc3/drivers/ide/ide-cd.c.orig	2004-12-16 23:56:02.000000000 +0100
++++ linux-2.6.10-rc3/drivers/ide/ide-cd.c	2004-12-17 18:44:17.686771216 +0100
+@@ -2359,7 +2359,7 @@
+ 	/* Read the multisession information. */
+ 	if (toc->hdr.first_track != CDROM_LEADOUT) {
+ 		/* Read the multisession information. */
+-		stat = cdrom_read_tocentry(drive, 0, 1, 1, (char *)&ms_tmp,
++		stat = cdrom_read_tocentry(drive, 0, 0, 1, (char *)&ms_tmp,
+ 					   sizeof(ms_tmp), sense);
+ 		if (stat) return stat;
+ 	} else {
+@@ -2374,9 +2374,11 @@
+ 		msf_from_bcd (&ms_tmp.ent.addr.msf);
+ #endif  /* not STANDARD_ATAPI */
+ 
+-	toc->last_session_lba = msf_to_lba (ms_tmp.ent.addr.msf.minute,
+-					    ms_tmp.ent.addr.msf.second,
+-					    ms_tmp.ent.addr.msf.frame);
++	toc->last_session_lba = be32_to_cpu(ms_tmp.ent.addr.lba);
++	printk("ide-cd: last_session_lba: %d\n", toc->last_session_lba);
++//	toc->last_session_lba = msf_to_lba (ms_tmp.ent.addr.msf.minute,
++//					    ms_tmp.ent.addr.msf.second,
++//					    ms_tmp.ent.addr.msf.frame);
+ 
+ 	toc->xa_flag = (ms_tmp.hdr.first_track != ms_tmp.hdr.last_track);
+ 
