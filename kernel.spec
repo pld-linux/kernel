@@ -18,7 +18,7 @@ Summary(ru):	Òƒ“œ Linux
 Summary(uk):	Òƒ“œ Linux
 Name:		kernel
 Version:	2.2.21
-Release:	1.9
+Release:	1.91
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -53,6 +53,8 @@ Source35:	%{name}-alpha-BOOT.config
 Source36:	%{name}-ppc.config
 Source37:	%{name}-ppc-smp.config
 Source38:	%{name}-ppc-BOOT.config
+Patch0:		2.2.21-k7_p4_vm_scheduler-update.patch
+Patch1:		2.2.21-ppc_12.patch
 Patch2:		%{name}-pldfblogo.patch
 Patch3:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
 Patch4:		http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
@@ -117,7 +119,6 @@ Patch502:	linux-2.2.19-ieee1394-ppc.patch.bz2
 Patch503:	2.2.20-ppc_ide.patch
 Patch504:	2.2.21-enable_ibmraid-ppc.patch
 Patch505:	2.2.21-ppc_asm.patch
-Patch506:	2.2.21-ppc_12.patch
 Patch507:	2.2.21-ppc_ieee1394.patch
 Patch508:	serial-5.05-ppc.patch
 Patch509:	2.2.21-ppc_macserial.patch
@@ -412,9 +413,8 @@ Modu≥y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 %prep
 %setup -q -a3 -a4 -a5 -a6 -a7 -a9 -a10 -a11 -a13 -n linux
 
-# first we should apply dzimi patch for vanilla kernel to get b50 work!
-%patch506 -p1
-
+%patch0 -p1
+%patch1 -p1
 %patch2 -p1
 %patch3 -p0
 # disable aic7xxx patch on sparc (this must be reported to aic7xxx driver maintainer)
@@ -743,8 +743,8 @@ ln -sf linux-%{version} $RPM_BUILD_ROOT%{_kernelsrcdir}
 gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH506}
-
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH0}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2}
 %ifnarch sparc sparc64 ppc
 gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
