@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	2.9.1%{?_with_preemptive:_pr}
+Release:	2.10%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -203,6 +203,7 @@ Patch912:	linux-2.4.19-grsec-1.9.7-PAX-sysctl.patch
 Patch913:	squashfs1.0c-fix.patch
 Patch914:	linux-2.4.19-MODULE_XXX.patch
 Patch915:	linux-2.4.19-usb-digitalcams.patch
+Patch916:	linux-2.4.19-ksyms-sys_sched_yield-rm.patch
 
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
@@ -623,6 +624,8 @@ echo USB 2.0 Support from Linux-2.4.20-rc1.
 
 # security BUG
 %patch44 -p1
+
+%patch916 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
