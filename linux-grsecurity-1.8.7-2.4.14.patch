@@ -2854,9 +2854,9 @@ diff -urN linux/fs/namei.c linux/fs/namei.c
 +			if(!error)
 +#endif
 +
- 			error = vfs_mkdir(nd.dentry->d_inode, dentry,
- 					  mode & ~current->fs->umask);
- 			dput(dentry);
+ 			if (!IS_POSIX_ACL(nd.dentry->d_inode))
+				mode &= ~current->fs->umask;
+			error = vfs_mkdir(nd.dentry->d_inode, dentry,
 @@ -1431,7 +1650,20 @@
  	dentry = lookup_hash(&nd.last, nd.dentry);
  	error = PTR_ERR(dentry);
@@ -4625,17 +4625,17 @@ diff -urN linux/include/linux/sched.h linux/include/linux/sched.h
  	unsigned dumpable:1;
  
  	/* Architecture-specific MM context */
-@@ -399,6 +408,10 @@
-    	u32 self_exec_id;
- /* Protection of (de-)allocation: mm, files, fs, tty */
+@@ -408,6 +418,10 @@
+ /* protection of (de-)allocation: mm, files, fs, tty */
  	spinlock_t alloc_lock;
-+#ifdef CONFIG_OBV_PROC
+ 
++#ifdef config_obv_proc
 +	struct obv_acl *obvacl;
 +#endif
 +
+ /* journalling filesystem info */
+ 	 viod *journal_info;
  };
- 
- /*
 @@ -418,6 +431,13 @@
  
  #define PF_USEDFPU	0x00100000	/* task used FPU this quantum (SMP) */
@@ -4673,9 +4673,9 @@ diff -urN linux/include/linux/sysctl.h linux/include/linux/sysctl.h
 --- linux/include/linux/sysctl.h	Mon Nov  5 15:42:13 2001
 +++ linux/include/linux/sysctl.h	Mon Nov  5 22:10:57 2001
 @@ -123,6 +123,8 @@
- 	KERN_CORE_USES_PID=52,		/* int: use core or core.%pid */
  	KERN_TAINTED=53,	/* int: various kernel tainted flags */
  	KERN_CADPID=54,		/* int: PID of the process to notify on CAD */
+ 	KERN_KDB=55,		/* int: kdb on/off */
 +        KERN_GRSECURITY=68,              /* grsecurity */
 +        KERN_OBV = 69                    /* struct obv_pw, controls oblivion*/
  };
@@ -4787,7 +4787,7 @@ diff -urN linux/init/main.c linux/init/main.c
 diff -urN linux/kernel/Makefile linux/kernel/Makefile
 --- linux/kernel/Makefile	Mon Sep 17 00:22:40 2001
 +++ linux/kernel/Makefile	Mon Nov  5 21:49:23 2001
-@@ -14,11 +14,12 @@
+@@ -14,12 +14,13 @@
  obj-y     = sched.o dma.o fork.o exec_domain.o panic.o printk.o \
  	    module.o exit.o itimer.o info.o time.o softirq.o resource.o \
  	    sysctl.o acct.o capability.o ptrace.o timer.o user.o \
@@ -4797,6 +4797,7 @@ diff -urN linux/kernel/Makefile linux/kernel/Makefile
  obj-$(CONFIG_UID16) += uid16.o
  obj-$(CONFIG_MODULES) += ksyms.o
  obj-$(CONFIG_PM) += pm.o
+ obj-$(CONFIG_KALLSYMS) += kallsyms.o
 +obj-$(CONFIG_OBV_PROC) += oblivion.o obvqsort.o obvhash.o
  
  ifneq ($(CONFIG_IA64),y)
@@ -7298,10 +7299,10 @@ diff -urN linux/kernel/sysctl.c linux/kernel/sysctl.c
  
  /* /proc declarations: */
  
-@@ -255,9 +266,196 @@
- 	{KERN_S390_USER_DEBUG_LOGGING,"userprocess_debug",
- 	 &sysctl_userprocess_debug,sizeof(int),0644,NULL,&proc_dointvec},
- #endif
+@@ -255,9 +255,196 @@
+ 	{KERN_KDB, "kdb", &kdb_on, sizeof(int),
+ 	 0644, NULL, &proc_dointvec),
+ #endif	/* CONFIG_KDB */
 +#ifdef CONFIG_GRKERNSEC_SYSCTL
 +	{KERN_GRSECURITY, "grsecurity", NULL, 0, 0550, grsecurity_table},
 +#endif
@@ -7663,7 +7664,7 @@ diff -urN linux/mm/mmap.c linux/mm/mmap.c
 diff -urN linux/mm/mprotect.c linux/mm/mprotect.c
 --- linux/mm/mprotect.c	Mon Sep 17 18:30:23 2001
 +++ linux/mm/mprotect.c	Mon Nov  5 21:49:23 2001
-@@ -300,6 +300,12 @@
+@@ -300,6 +300,13 @@
  			goto out;
  		}
  
@@ -7673,9 +7674,10 @@ diff -urN linux/mm/mprotect.c linux/mm/mprotect.c
 +			newflags &= ~VM_MAYWRITE;
 +		}
 +#endif
- 		if (vma->vm_end > end) {
- 			error = mprotect_fixup(vma, &prev, nstart, end, newflags);
- 			goto out;
++
+ #ifdef	CONFIG_XFS_DMAPI	/* Temporary until dmapi is in main kernel */
+ 		if((vma->vm_flags & VM_MAYSHARE) &&
+ 		   (newflags & PROT_WRITE) && !(vma->vm_flags & PROT_WRITE)){
 diff -urN linux/net/core/dev.c linux/net/core/dev.c
 --- linux/net/core/dev.c	Tue Oct 30 18:08:12 2001
 +++ linux/net/core/dev.c	Mon Nov  5 21:49:23 2001
