@@ -51,9 +51,6 @@ Source74:	%{name}-ppc-smp.config
 
 Source100:	%{name}-misc.config
 
-# ftp://ftp.kernel.org:/pub/linux/kernel/v2.6/snapshots/
-#Patch1:		patch-2.6.0-test4-bk%{_bk_ver}
-# http://www.kernel.org/pub/linux/kernel/v2.5/testing/cset/
 %if "%{_cset}" != "0"
 Patch1:		cset-%{_cset}.txt.gz
 %endif
@@ -61,38 +58,23 @@ Patch1:		cset-%{_cset}.txt.gz
 # ftp://ftp.kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.0-test5/2.6.0-test5-mm1/broken-out
 #Patch2:		acpi-irq-fixes.patch
 
-Patch5:		squashfs1.3-patch
+Patch4:		squashfs1.3-patch
 
-Patch26:	2.6.0-t3-eisa-bus.c-lkml.patch
-Patch27:	2.6.0-t3-initrd_load-lkml.patch
+Patch6:		2.6.0-t3-initrd_load-lkml.patch
 
-Patch31:	2.6.0-t3-sysfs_mem-lkml.patch
-Patch32:	2.6.0-t3-trival-lkml.patch
+Patch8:		2.6.0-t3-sysfs_mem-lkml.patch
 
-Patch40:	2.6.0-t3.c99.Documentation-lkml.patch
+Patch10:	2.6.0-t5-PPC-fix.patch
 
-Patch50:	2.6.0-t3-oprofile-1of3-lkml.patch
-Patch51:	2.6.0-t3-oprofile-2of3-lkml.patch
-Patch52:	2.6.0-t3-oprofile-3of3-lkml.patch
+Patch12:	2.6.0-t4-PPC-ENODEV.patch
+Patch14:	kernel-siimage-rqsize.patch
+Patch16:	2.6.0-t5-PPC-Kconfig.patch
 
-Patch53:	2.6.0-t4-PPC-ENODEV.patch
-Patch54:	2.6.0-t5-PPC-fix.patch
-Patch55:	kernel-siimage-rqsize.patch
-Patch56:	2.6.0-t5-PPC-Kconfig.patch
+Patch18:	2.6.0-t5-netfilter-1.2.8_20030923.patch
+Patch20:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
+Patch22:	2.6.0-t6-usb-irq.patch
 
-Patch62:	2.6.0-t5-memleak-NCR_Q720-lkml.patch
-Patch63:	2.6.0-t5-memleak-scsi_debug-lkml.patch
-
-Patch65:	2.6.0-t5-netfilter-1.2.8_20030923.patch
-Patch66:	2.6.0-t5-SELinux-convert_context-lkml.patch
-Patch67:	2.6.0-t5-security_inode_permission-lkml.patch
-Patch68:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
-Patch69:	2.6.0-t5-enbd-2.4.31_20030506.patch
-Patch70:	2.6.0-t6-usb-irq.patch
-Patch71:	2.6.0-t6-asus_acpi.patch
-
-Patch75:	2.6.0-t6-s390-lkml.patch
-Patch77:	2.6.0-t6-SELinux-lkml.patch
+Patch24:	2.6.0-t6-SELinux-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -327,44 +309,26 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %prep
 %setup -q -n linux-%{version}-test%{_test_ver}
 %if "%{_cset}" != "0"
-#%patch1 -p1
+%patch1 -p1
 %endif
 
-#%patch2 -p1
+%patch4 -p1
 
-#%patch4 -p1
-%patch5 -p1
+%patch6 -p1
 
-#%patch26 -p1
-#%patch27 -p1
+%patch8 -p1
 
-%patch31 -p1
-#%patch32 -p1
+%patch10 -p1
+%patch12 -p1
+%patch14 -p1
+%patch16 -p1
 
-#%patch40 -p1
+%patch18 -p1
 
-#%patch50 -p1
-#%patch51 -p1
-#%patch52 -p1
-%patch53 -p1
-#%patch54 -p1
-%patch55 -p1
-%patch56 -p1
+%patch20 -p1
+%patch22 -p1
 
-#%patch62 -p1
-#%patch63 -p1
-
-#%patch65 -p1
-
-#%patch66 -p1
-#%patch67 -p1
-%patch68 -p1
-#%%patch69 -p1
-#%patch70 -p1
-#%patch71 -p1
-
-#%patch75 -p1
-%patch77 -p1
+%patch24 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
