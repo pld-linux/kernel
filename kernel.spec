@@ -72,9 +72,9 @@ Patch2:		linux-2.4.10-freeswan-%{freeswan_version}.patch.gz
 # http://domsch.com/linux/aacraid/linux-2.4.9-aacraid-20010816.patch
 Patch3:		linux-2.4.15-aacraid-20011123.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
-Patch4:		br2684-against2.4.15.diff
+Patch4:		br2684-against2.4.17.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
-Patch5:		linux-2.4.16-xfs-20011129.patch.gz
+Patch5:		linux-%{version}-xfs-20011230.patch.bz2
 # Homepage of ABI : http://linux-abi.sourceforge.net/
 #ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2
 Patch7:		linux-abi-2.4.15.0.patch.bz2
