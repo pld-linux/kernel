@@ -32,7 +32,7 @@ Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-133.tar.gz
 Source5:	ftp://ftp.sourceforge.net/pub/sourceforge/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source6:	ftp://ftp.tux.org/tux/roudier/drivers/linux/stable/sym-%{symncr_version}.tar.gz
 Source7:	ftp://ftp.linux-wlan.com/linux-wlan/linux-wlan-%{wlan_version}.tar.gz
-Source8:	http://www.dandelion.com/Linux/DAC960-2.2.111.tar.gz
+Source8:	http://www.dandelion.com/Linux/DAC960-2.2.11.tar.gz
 Source9:	serial-5.05.tar.gz
 Source10:	http://vtun.sourceforge.net/tun/tun-%{tun_version}.tar.gz
 Source11:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
