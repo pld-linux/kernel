@@ -48,11 +48,11 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.9
-%define		_cset		20040622_1819
+%define		_rel		1.11
+%define		_cset		20040625_0611
 %define		_apply_cset	1
 
-%define		_netfilter_snap		20040608
+%define		_netfilter_snap		20040624
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
@@ -80,7 +80,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	254f7015a2188db000b8158c0dcf390d
+# Source3-md5:	264c9c39bf0a86b416537241116d5706
 # http://lkml.org/lkml/2004/6/2/228
 Source4:	http://redhat.com/~mingo/nx-patches/nx-2.6.7-rc2-bk2-AF
 # Source4-md5:	9d45d98ad5e27747c6e930a46dc9e37f
@@ -625,7 +625,7 @@ echo "Not fixed !!"
 
 # netfilter
 %patch46 -p1
-%patch47 -p1
+#patch47 -p1
 
 %patch48 -p1
 
@@ -713,7 +713,7 @@ patch -p1 -s < %{SOURCE5}
 
 #patch110 -p1
 
-%patch112 -p1
+#patch112 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -747,7 +747,14 @@ BuildConfig (){
 		KernelVer=%{version}-%{release}$1
 	fi
 	echo "Building config file for KERNEL $1..."
-	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
+
+# netfilter	
+	cat %{SOURCE80} > arch/%{_target_base_arch}/defconfig
+
+#grsec
+	cat %{SOURCE90} >> arch/%{_target_base_arch}/defconfig
+
+	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/%{_target_base_arch}/defconfig
 %ifarch i386
 	echo "CONFIG_M386=y" >> arch/%{_target_base_arch}/defconfig
 %endif
@@ -783,11 +790,6 @@ BuildConfig (){
 	sed -i 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
 		arch/%{_target_base_arch}/defconfig
 %endif
-
-	cat %{SOURCE80} >> arch/%{_target_base_arch}/defconfig
-
-#grsec
-cat %{SOURCE90} >> arch/%{_target_base_arch}/defconfig
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 
