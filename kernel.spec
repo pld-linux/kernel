@@ -9,6 +9,7 @@ File: kernel.spec
 	LINUX_2_6                2.6.x (with grsecurity) development branch
 	LINUX_2_6_8		 2.6.8 (with grsecurity) stable branch
 	KERNEL_2_4_for_RA        ?
+	HEAD                     arekm's kernel branch for his laptop
 	DEVEL                    ?
 	LINUX_2_2                2.2.x mainteance branch for Ra
 	RA-branch                tag on the above
