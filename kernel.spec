@@ -390,7 +390,7 @@ do twojego sprzêtu.
 
 %package pcmcia-cs
 Summary:	PCMCIA-CS modules
-Summary(pl):	Modu³y PCMCIA-CS 
+Summary(pl):	Modu³y PCMCIA-CS
 Group:		Base/Kernel
 Group(pl):	Podstawowe/Kernel
 Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
