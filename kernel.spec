@@ -846,6 +846,7 @@ done
 %{__make} clean
 rm -f scripts/mkdep
 rm -rf drivers/char/hfmodem/gentbl
+rm -rf drivers/net/hamradio/soundmodem/gentbl
 
 # add a rc-boot info
 #install -d $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/rc-boot/images
