@@ -216,6 +216,7 @@ Patch913:	linux-o1-sched-abi.patch
 Patch914:	linux-o1-sched-pre.patch
 Patch915:	linux-o1-sched-post.patch
 Patch916:	linux-o1-sched-evms.patch
+Patch917:	netfilter-Makefile-fix.patch
 
 # DRM (note that this doesn't fix drm when running on 386 or 486 CPU!)
 Patch950:	linux-drm-%{drm_xfree_version}-force-cmpxchg.patch
@@ -632,6 +633,7 @@ echo Adding Netfilter snapshot from 15.04.2002
 #patch -p1 < netfilter-patches/patch-o-matic/pld/log.patch
 #%patch901 -p0
 %patch23 -p1
+%patch917 -p0
 
 # IPVS
 echo Adding IPVS
