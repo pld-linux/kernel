@@ -56,8 +56,11 @@ Patch8:		linux-fix-win-vj.patch
 # Loopback fix
 Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/axboe/patches/2.4.2-pre4/loop-6.gz
 Patch10:	ipvs-ip_select_ident.patch
+
+## Patches from Linux Kernel List
 Patch11:	linux-2.4.2-qreboot.patch
 Patch12:	linux-2.4.2-irda3.patch
+Patch13:	linux-2.4.2-irda4.patch
 
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
@@ -332,6 +335,7 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
 #patches from Linux kernel list
 %patch11 -p1
 %patch12 -p1
+%patch13 -p1
 
 %build
 BuildKernel() {
@@ -527,6 +531,7 @@ ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 # patches from Linux kernel list
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
