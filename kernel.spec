@@ -119,6 +119,9 @@ Patch45:	linux-2.4.2-Davicom-card.patch
 Patch46:	http://home.sch.bme.hu/~cell/br2684/dist/010109/br2684-against2.4.0.diff
 Patch47:	http://home.sch.bme.hu/~cell/br2684/dist/010109/br2684-common.c-spin_unlock.diff
 
+# aacraid fix
+Patch48:	http://domsch.com/linux/aacraid/linux-2.4.1-axboe-scsi-max-sec.patch
+
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
 ExclusiveOS:	Linux
@@ -383,6 +386,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch45 -p0
 %patch46 -p1
 %patch47 -p1
+%patch48 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -607,6 +611,7 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH44}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH45}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH46}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH47}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH48}
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/dc395/dc395-integ24.diff
