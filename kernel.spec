@@ -29,7 +29,7 @@ Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
-Source7:	linux-netfilter-patches-20010305.tar.gz
+Source7:	linux-netfilter-patches-20010322.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}-2.4.1.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source10:	http://www.linux-wlan.com/linux-wlan/linux-wlan-ng-%{wlan_version}.tar.gz
@@ -80,7 +80,7 @@ Patch17:	linux-smaller-parport_pc-non-pci-box.patch
 # Quota fixes
 Patch18:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.2-1.diff.gz
 # Reiserfs/NFS patches
-Patch19:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/linux-2.4.2-reiserfs-20010301-full.patch.gz
+Patch19:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/linux-2.4.2-reiserfs-20010305.patch.gz
 Patch20:	ftp://ftp.reiserfs.org/pub/misc-patches/linux-2.4.2-knfsd-6.g.patch.gz
 
 # from LKL 2001.03.02
@@ -421,7 +421,9 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # Netfilter
 for i in netfilter-patches/* ; do
-       [ -f $i -a "$i" != "netfilter-patches/isapplied" ] && patch -p1 <$i
+	if [ -f $i -a "$i" != "netfilter-patches/isapplied" ] ; then
+		patch -p1 <$i
+	fi
 done
 (KERNEL_DIR=`pwd` ; export KERNEL_DIR
 cd netfilter-patches/patch-o-matic
@@ -653,7 +655,9 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/s
 # Netfilter
 (cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 for i in netfilter-patches/* ; do
-       [ -f $i -a "$i" != "netfilter-patches/isapplied" ] && patch -p1 <$i
+	if [ -f $i -a "$i" != "netfilter-patches/isapplied" ] ; then
+		patch -p1 <$i
+	fi
 done
 (KERNEL_DIR=`pwd` ; export KERNEL_DIR
 cd netfilter-patches/patch-o-matic
