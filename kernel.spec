@@ -152,6 +152,8 @@ Patch80:	2.6.4-rc1-sparc-sys_ioperm-fix.patch
 
 Patch82:	2.6.3-ini9100u-fix.patch
 
+Patch84:	2.6.4-rc1-macintosh_macserial-fix.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
@@ -563,6 +565,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch80 -p1
 
 %patch82 -p1
+
+%patch84 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
