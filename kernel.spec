@@ -75,6 +75,8 @@ Source2000:	%{name}-win4lin.config
 
 Patch0:		%{name}-pldfblogo.patch
 # from ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/testing/
+Patch5:		linux-do_brk-bound-check.patch
+
 Patch10:	patch-int-2.4.20.1.bz2
 Patch11:	loop-jari-2.4.21.0.patch
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
@@ -666,6 +668,7 @@ bzip2 -dc %{SOURCE10} | tar -xf - -C drivers/scsi/
 # Changing DRM source ....
 cp -f drm/*.{c,h} drivers/char/drm/
 %patch0 -p1
+%patch5 -p1
 %patch10 -p1
 %patch11 -p1
 %patch12 -p1
