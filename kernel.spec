@@ -1,4 +1,6 @@
 #
+# SEE PLD-doc/maintainers file before you edit this file!!
+#
 # If you define the following as 1, only kernel, -headers and -source
 # packages will be built
 #
