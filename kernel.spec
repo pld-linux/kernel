@@ -43,7 +43,6 @@ Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
 Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.3.gz
-Patch1:		ftp://ftp.reiserfs.org/pub/2.4/linux-%{version}-ac2-reiserfs-%{reiserfs_version}-patch.gz
 Patch2:		%{name}-%{version}-dc395-patch-fix.patch
 #Patch4:		linux-2.4.0-freeswan-%{freeswan_version}.patch
 #Patch5:		linux-ipv6-addrconf.patch
@@ -220,8 +219,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %setup -q -a4 -a6 -a7 -a8 -a10 -a11 -n linux
 %patch100 -p1
 %patch0 -p1
-# conflict with other patches - commented.
-#%patch1 -p1
 %patch2 -p0
 #%patch3 -p1
 #%patch4 -p1
