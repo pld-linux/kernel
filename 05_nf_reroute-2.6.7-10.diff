@@ -464,16 +464,6 @@ diff -ur v2.6.7-before-nf_reroute/linux/net/ipv4/route.c linux/net/ipv4/route.c
  	rth->rt_spec_dst= spec_dst;
  
  	rth->u.dst.input = ip_forward;
-@@ -1731,7 +1747,8 @@
- 	rth->rt_flags = flags;
- 
- #ifdef CONFIG_NET_FASTROUTE
--	if (netdev_fastroute && !(flags&(RTCF_NAT|RTCF_MASQ|RTCF_DOREDIRECT))) {
-+	if (netdev_fastroute && !(flags&(RTCF_NAT|RTCF_MASQ|RTCF_DOREDIRECT)) &&
-+	    !lsrc) {
- 		struct net_device *odev = rth->u.dst.dev;
- 		if (odev != dev &&
- 		    dev->accept_fastpath &&
 @@ -1754,6 +1771,8 @@
  brd_input:
  	if (skb->protocol != htons(ETH_P_IP))
