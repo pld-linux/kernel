@@ -778,7 +778,7 @@ echo Added LVM support version %{lvm_version}
 
 # JFS - xattr+acl
 echo Added xattr and ACL for JFS ...
-%patch103 -p1
+#%patch103 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
