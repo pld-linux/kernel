@@ -118,15 +118,15 @@ Patch9:		linux-2.4.20.patch
 
 ## -> grsecurity and other security 
 # from: http://grsecurity.net/grsecurity-%{grsec_version}.patch
-Patch10:	grsecurity-%{grsec_version}-%{version}.patch.gz
+Patch15:	grsecurity-%{grsec_version}-%{version}.patch.gz
 #made by Qboosh
-Patch11:	linux-2.4.20-ptrace.patch
-Patch12:	linux-2.4.20-nogrsec.patch
-Patch13:	linux-2.4.20-grsecurity-1.9.9e-kmem.patch
+Patch16:	linux-2.4.20-ptrace.patch
+Patch17:	linux-2.4.20-nogrsec.patch
+Patch18:	linux-2.4.20-grsecurity-1.9.9e-kmem.patch
 
 ## -> Security and network
 #from: ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
-Patch17:	linux-2.4-freeswan-%{freeswan_version}.patch.gz
+Patch19:	linux-2.4-freeswan-%{freeswan_version}.patch.gz
 
 
 ## -> New filesystems.
@@ -191,6 +191,8 @@ Patch48:	linux-2.4.20-bridge-nf-0.0.10.patch.gz
 Patch49:	wrr-linux-2.4.19.patch.gz
 # from: ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
 Patch50:	linux-2.4.18-mppe.patch
+# from: ftp://ftp.sf.net/pub/sourceforge/lcdpd/lcdp-0.2.3-linux-2.4.18.patch.gz
+Patch51:	linux-2.4.20-lcdp-0.2.3.patch.gz
 
 ## -> sound
 # from: ???
@@ -629,17 +631,14 @@ cp drm/*.{c,h} drivers/char/drm/
 %patch9 -p1
 
 ##grsecurity and other sec.
-%patch10 -p1
+%patch15 -p1
 #ptrace fix by Qboosh
-%patch11 -p1
-%{?_without_grsec:%patch12 -p1}
+%patch16 -p1
+%{?_without_grsec:%patch17 -p1}
 # sysctl controll of /dev/mem
-%patch13 -p1 
-#%ifarch ppc
-#%patch14 -p1
-#%endif
+%patch18 -p1 
 
-%patch17 -p1
+%patch19 -p1
 
 
 ## filesystems
@@ -694,7 +693,8 @@ cp drm/*.{c,h} drivers/char/drm/
 %patch49 -p1
 #mppe
 %patch50 -p1
-
+#lcdp
+%patch51 -p1
 
 ## Sound
 #Audigy
@@ -1428,7 +1428,6 @@ fi
 %if %{?_without_source:0}%{!?_without_source:1}
 %files source
 %defattr(644,root,root,755)
-%{_prefix}/src/linux-%{version}/abi
 %{_prefix}/src/linux-%{version}/arch
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
