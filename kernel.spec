@@ -34,8 +34,8 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.34
-%define		_cset		20040331_0507
+%define		_rel		0.35
+%define		_cset		20040401_0510
 
 ## netfilter snap 
 %define		_netfilter_snap		20040330
@@ -624,7 +624,6 @@ BuildConfig (){
 	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/%{base_arch}/defconfig
 %ifarch i386
 	echo "CONFIG_M386=y" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_ACPI is not set" >> arch/%{base_arch}/defconfig
 %endif
 %ifarch i586
 	echo "CONFIG_M586=y" >> arch/%{base_arch}/defconfig
@@ -808,7 +807,6 @@ install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
 
 %ifarch i386
 echo "CONFIG_M386=y" >> .config
-echo "# CONFIG_ACPI is not set" >> .config
 %endif
 %ifarch i586
 echo "CONFIG_M586=y" >> .config
@@ -831,7 +829,6 @@ install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config .config
 
 %ifarch i386
 echo "CONFIG_M386=y" >> .config
-echo "# CONFIG_ACPI is not set" >> .config
 %endif
 %ifarch i586
 echo "CONFIG_M586=y" >> .config
