@@ -57,6 +57,7 @@ Patch15:	%{name}-ipvs-1.0.3-2.2.18.patch
 # based on ftp://ftp.kernel.org/pub/linux/kernel/people/sct/raw-io/kiobuf-2.2.18pre24.tar.gz
 Patch16:	linux-raw.patch
 Patch17:	linux-i815-support.patch
+Patch18:	kernel-ide-geometry.patch
 #Patch:		linux-2.2.18pre21.ext3.diff
 
 ExclusiveOS:	Linux
@@ -311,6 +312,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch14 -p1
 %patch15 -p1
 %patch16 -p1
+%patch18 -p1
 %ifarch %{ix86}
 cd ..
 rm -rf i2c-%{i2c_version}
