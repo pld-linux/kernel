@@ -36,7 +36,7 @@ Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
-Source5:	linux-2.4.19-netfilter-20020825.tar.gz
+Source5:	linux-2.4.19-netfilter-20020808.tar.gz
 #Source6:	
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
@@ -142,7 +142,7 @@ Patch124:	%{name}-gcc31.patch
 Patch125:	linux-2.4.18-hpfs.patch
 Patch126:	linux-tulip-vlan.patch
 Patch127:	linux-modules-fixed.patch
-#Patch128:
+#Patch128:	
 Patch129:	linux-53c7,8xx-build.fix
 Patch130:	linux-PPC-SMP.patch
 Patch131:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
@@ -150,6 +150,8 @@ Patch132:	ide-EXPORT_SYMBOL.fix
 Patch133:	linux-proc_get_inode.patch
 # added support for VIA8235
 Patch134:	vt8235-2.4.19.patch
+# quota for reiserfs
+Patch135:	linux-2.4.19-reiserfs-quota-22.patch.gz
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -161,6 +163,7 @@ Patch902:	linux-drm-%{drm_xfree_version}-force-cmpxchg.patch
 Patch903:	linux-drm-2.4.19-mm.patch
 Patch904:	linux-abi-put_user.patch
 Patch905:	linux-abi-fl_ibcs_to_linux.patch
+Patch906:	linux-2.4.19-netfilter-definition.patch
 
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
@@ -407,8 +410,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-#%setup -q -a3 -a4 -a5  -a7 -a8 -a9 -n linux-%{version}
-%setup -q -a3 -a4 -a7 -a8 -a9 -n linux-%{version}
+%setup -q -a3 -a4 -a5  -a7 -a8 -a9 -n linux-%{version}
 #%patch1000 -p1
 #fixme
 %patch0 -p1
@@ -472,6 +474,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch132 -p0
 %patch133 -p1
 %patch134 -p1
+%patch135 -p1
 
 %patch905 -p1
 
@@ -497,6 +500,8 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # Netfilter
 (KERNEL_DIR=`pwd` ; export KERNEL_DIR ; cd netfilter-patch-o-matic ; ./runme --batch userspace)
+# added missing #define
+%patch906 -p1
 
 # IP personality
 #echo Adding IP Personality 
@@ -601,7 +606,7 @@ BuildKernel() {
 	sparc32 %{__make} dep clean
 %else
 	%{__make} oldconfig
-	%{__make} dep
+	%{__make} dep clean
 %endif
 	%{__make} include/linux/version.h
 	
