@@ -43,7 +43,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.91
+%define		_rel		0.92
 %define		_cset		0
 
 ## netfilter snap 
@@ -70,6 +70,8 @@ Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
 # Source0-md5:	5218790bc3db41e77a7422969639a9ad
 Source1:	%{name}-autoconf.h
+Source2:	2.6.6-pwcx.tar.bz2
+
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source30:	%{name}-amd64.config
@@ -512,7 +514,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}
+%setup -q -n linux-%{version} -a2
 
 %patch0 -p1
 
@@ -601,7 +603,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch80 -p1
 
 # Philips USB drivers.
-##%patch82 -p1
+%patch82 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
