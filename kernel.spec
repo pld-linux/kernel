@@ -6,7 +6,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.16
-Release:	2
+Release:	3
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -38,7 +38,7 @@ Source32:	kernel-BuildASM.sh
 Source33:	ftp://sourceforge.org/pcmcia/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x.c-2.2.16-pre4-6.gz
 Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.16.2.gz
-Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.15-reiserfs-3.5.21-patch.gz
+Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.16-reiserfs-3.5.22-patch.gz
 Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
 Patch3:		linux-tasks.patch
 # Wiget: Using unofficial raid patch, waiting for mingo update
