@@ -353,14 +353,7 @@ diff -urN linux-2.4.24.org/arch/i386/kernel/smpboot.c linux-2.4.24/arch/i386/ker
 diff -urN linux-2.4.24.org/arch/i386/kernel/smp.c linux-2.4.24/arch/i386/kernel/smp.c
 --- linux-2.4.24.org/arch/i386/kernel/smp.c	2004-02-04 20:50:47.312243547 +0100
 +++ linux-2.4.24/arch/i386/kernel/smp.c	2004-02-04 20:52:52.868128518 +0100
-@@ -496,13 +496,23 @@
-  * it goes straight through and wastes no time serializing
-  * anything. Worst case is that we lose a reschedule ...
-  */
--
- void smp_send_reschedule(int cpu)
- {
- 	send_IPI_mask(1 << cpu, RESCHEDULE_VECTOR);
+@@ -503,6 +503,17 @@
  }
  
  /*
@@ -2711,7 +2704,7 @@ diff -urN linux-2.4.24.org/include/asm-i386/smp.h linux-2.4.24/include/asm-i386/
 @@ -40,6 +40,7 @@
  extern void smp_flush_tlb(void);
  extern void smp_message_irq(int cpl, void *dev_id, struct pt_regs *regs);
- extern void smp_send_reschedule(int cpu);
+ extern void fastcall smp_send_reschedule(int cpu);
 +extern void smp_send_reschedule_all(void);
  extern void smp_invalidate_rcv(void);		/* Process an NMI */
  extern void (*mtrr_hook) (void);
@@ -7216,8 +7209,8 @@ diff -urN linux-2.4.24.org/kernel/fork.c linux-2.4.24/kernel/fork.c
  struct task_struct *pidhash[PIDHASH_SZ];
  
 +rwlock_t tasklist_lock __cacheline_aligned = RW_LOCK_UNLOCKED;  /* outer */
-+
- void add_wait_queue(wait_queue_head_t *q, wait_queue_t * wait)
++ 
+ void fastcall add_wait_queue(wait_queue_head_t *q, wait_queue_t * wait)
  {
  	unsigned long flags;
 @@ -700,9 +701,6 @@
@@ -7742,7 +7735,7 @@ diff -urN linux-2.4.24.org/kernel/sched.c linux-2.4.24/kernel/sched.c
 +	array->nr_active++;
 +}
  
--static void reschedule_idle(struct task_struct * p)
+-static void fastcall reschedule_idle(struct task_struct * p)
 +static inline int effective_prio(task_t *p)
  {
 -#ifdef CONFIG_SMP
@@ -8055,7 +8048,7 @@ diff -urN linux-2.4.24.org/kernel/sched.c linux-2.4.24/kernel/sched.c
 +#endif
  }
  
--inline int wake_up_process(struct task_struct * p)
+-inline int fastcall wake_up_process(struct task_struct * p)
 +int wake_up_process(task_t * p)
  {
  	return try_to_wake_up(p, 0);
@@ -8099,7 +8092,7 @@ diff -urN linux-2.4.24.org/kernel/sched.c linux-2.4.24/kernel/sched.c
 - *
 - * In all cases the return value is guaranteed to be non-negative.
 - */
--signed long schedule_timeout(signed long timeout)
+-signed long fastcall schedule_timeout(signed long timeout)
 -{
 -	struct timer_list timer;
 -	unsigned long expire;
@@ -8941,8 +8934,8 @@ diff -urN linux-2.4.24.org/kernel/sched.c linux-2.4.24/kernel/sched.c
  	}
  }
  
--void __wake_up(wait_queue_head_t *q, unsigned int mode, int nr)
-+void __wake_up(wait_queue_head_t *q, unsigned int mode, int nr_exclusive)
+-void fastcall __wake_up(wait_queue_head_t *q, unsigned int mode, int nr)
++void fastcall __wake_up(wait_queue_head_t *q, unsigned int mode, int nr_exclusive)
  {
 -	if (q) {
 -		unsigned long flags;
@@ -8960,10 +8953,10 @@ diff -urN linux-2.4.24.org/kernel/sched.c linux-2.4.24/kernel/sched.c
 +	wq_read_unlock_irqrestore(&q->lock, flags);
  }
  
--void __wake_up_sync(wait_queue_head_t *q, unsigned int mode, int nr)
+-void fastcall __wake_up_sync(wait_queue_head_t *q, unsigned int mode, int nr)
 +#if CONFIG_SMP
 +
-+void __wake_up_sync(wait_queue_head_t *q, unsigned int mode, int nr_exclusive)
++void fastcall __wake_up_sync(wait_queue_head_t *q, unsigned int mode, int nr_exclusive)
  {
 -	if (q) {
 -		unsigned long flags;
@@ -8986,7 +8979,7 @@ diff -urN linux-2.4.24.org/kernel/sched.c linux-2.4.24/kernel/sched.c
  
 +#endif
 + 
- void complete(struct completion *x)
+ void fastcall complete(struct completion *x)
  {
  	unsigned long flags;
  
@@ -8998,7 +8991,7 @@ diff -urN linux-2.4.24.org/kernel/sched.c linux-2.4.24/kernel/sched.c
 +	wq_write_unlock_irqrestore(&x->wait.lock, flags);
  }
  
- void wait_for_completion(struct completion *x)
+ void fastcall wait_for_completion(struct completion *x)
  {
 -	spin_lock_irq(&x->wait.lock);
 +	wq_write_lock_irq(&x->wait.lock);
