@@ -219,6 +219,8 @@ Patch110:	ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release
 
 Patch112:	linux-fbcon-con2fb-crash-workaround.patch
 
+Patch114:	linux-2.6-netfilter-syms.patch
+
 # http://sources.redhat.com/cluster/
 Patch200:	linux-cluster-cman.patch
 Patch201:	linux-cluster-dlm.patch
@@ -744,6 +746,8 @@ patch -p1 -s < exec-shield.patch
 %patch305 -p1
 
 %patch400 -p1
+
+%patch114 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
