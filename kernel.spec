@@ -147,6 +147,8 @@ Patch130:	linux-2.4.6-idetape.patch
 Patch131:	linux-2.4.6-nohighmem.patch
 # another sb16 pnp id
 Patch132:	linux-2.4.6-sb_id.patch
+# DAC960 build fix
+Patch133:	linux-2.4.7-DAC960-completion.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -430,6 +432,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch130 -p1
 %patch131 -p1
 %patch132 -p1
+%patch133 -p1
 
 %patch900 -p0 
 %patch901 -p0
@@ -711,6 +714,7 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH129}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH130}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH131}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH132}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH133}
 
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH900}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH901}
