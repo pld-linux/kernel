@@ -23,7 +23,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.7
-Release:	5
+Release:	6
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -395,7 +395,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-%patch12 -p1
+#%patch12 -p1
 %patch100 -p1
 %patch5 -p1
 %patch6 -p1
@@ -448,7 +448,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch901 -p0
 %patch905 -p0
 %patch906 -p0
-%patch909 -p1
+#%patch909 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -482,7 +482,7 @@ patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
 
 # IPVS
 echo Adding IPVS
-%patch908 -p1
+#%patch908 -p1
 for i in ipvs-%{ipvs_version}/*.diff ; do
 	patch -p1 -s <$i
 done
