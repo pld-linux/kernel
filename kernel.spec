@@ -177,10 +177,7 @@ Patch90:	grsecurity-2.1.0-2.6.10-200501071049.patch
 Patch91:	linux-2.6.10-secfix-200501071130.patch
 
 # frpm http://www.ssi.bg/~ja/#routers
-#Patch100:	00_static_routes-2.6.0-test1-8.diff
-#Patch101:	01_alt_routes-2.5.50-8.diff
-#Patch102:	01_arp_prefsrc-2.5.50-5.diff <- not applied. needs checkout
-#Patch103:	05_nf_reroute-2.6.7-10.diff
+Patch100:	routes-2.6.10-11.diff
 
 # http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.10-rc2/2.6.10-rc-mm2/broken-out
 Patch200:	linux-reiser4.patch.bz2
@@ -588,10 +585,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %endif
 
 # routers
-#patch100 -p1
-#patch101 -p1
-#patch102 -p1 # <- not applayed need checkout
-#patch103 -p1
+%patch100 -p1
 
 %patch200 -p1
 
