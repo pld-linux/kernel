@@ -45,9 +45,6 @@ Patch2:		%{name}-%{version}-dc395-patch-fix.patch
 #Patch3:		%{name}-pldfblogo.patch
 #Patch4:		linux-2.4.0-freeswan-%{freeswan_version}.patch
 #Patch5:		linux-ipv6-addrconf.patch
-# patch for console daemon.
-#Patch6:		wait_any_vt.diff
-#Patch7:		i8255-chip.patch
 Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac9.bz2
 
 Patch1000:	linux-2.4-misc.patch
@@ -261,13 +258,12 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %setup -q -a4 -a6 -a7 -a8 -n linux
 %patch100 -p1
 %patch0 -p1
-%patch1 -p1
+# conflict with other patches - commented.
+#%patch1 -p1
 %patch2 -p0
 #%patch3 -p1
 #%patch4 -p1
 #%patch5 -p1
-#%patch6 -p1
-#%patch7 -p1
 
 #%patch1000 -p1
 
