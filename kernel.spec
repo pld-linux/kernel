@@ -1,16 +1,14 @@
 #
-# If you define the following as 1, only kernel, -headers and -source
-# packages will be built
-
-%bcond_without smp	# don't build SMP kernel
-%bcond_without up	# don't build UP kernel
-%bcond_without boot	# don't build BOOT kernel
-%bcond_without source	# don't build source
-%bcond_without doc	# don't build documentation package
-%bcond_without grsec	# don't apply grsecurity patch
-%bcond_without kheaders	# build without support for glibc-kernel-headers
-%bcond_with win4lin	# apply the Win4lin patches
-
+# Conditional build:
+%bcond_without	smp		# don't build SMP kernel
+%bcond_without	up		# don't build UP kernel
+%bcond_without	boot		# don't build BOOT kernel
+%bcond_without	source		# don't build source
+%bcond_without	doc		# don't build documentation package
+%bcond_without	grsec		# don't apply grsecurity patch
+%bcond_without	kheaders	# build without support for glibc-kernel-headers
+%bcond_with	win4lin		# apply the Win4lin patches
+#
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/amd64/x86_64/')
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
@@ -518,8 +516,9 @@ Requires(postun):	awk
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
-Provides:	i2c-devel = %{i2c_version}
+Provides:	kernel-i2c-devel = %{i2c_version}
 Provides:	%{name}-headers(netfilter) = 1.2.9-%{netfilter_snap}
+Obsoletes:	kernel-i2c-devel
 AutoReqProv:	no
 
 %description headers
