@@ -8,6 +8,7 @@
 # _without_source	- don't build source
 # _without_doc		- don't build documentation package
 # _without_grsec	- don't apply grsecurity patch
+# _without_kheaders	- build without support for glibc-kernel-headers
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -1298,8 +1299,8 @@ fi
 %defattr(644,root,root,755)
 %dir %{_prefix}/src/linux-%{version}
 %{_prefix}/src/linux-%{version}/include
-%{_includedir}/asm
-%{_includedir}/linux
+%{?_without_kheaders:%{_includedir}/asm}
+%{?_without_kheaders:%{_includedir}/linux}
 
 %if %{?_without_doc:0}%{!?_without_doc:1}
 %files doc
