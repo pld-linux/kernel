@@ -563,18 +563,6 @@ BuildKernel() {
 		if [ "$1" = "BOOT" ] ; then
 			BOOT=yes
 		fi
-%ifarch %{ix86}
-		if [ "$1" = "BOOT" ] ; then
-			Config="%{_target_cpu}"-$1
-		else
-			Config="ia32"-$1
-		fi
-%else
-		Config="%{_target_cpu}"-$1
-%endif
-		KernelVer=%{version}-%{release}$1
-		echo BUILDING A KERNEL FOR $1...
-		shift
 	else
 %ifarch %{ix86}
 		Config="ia32"
@@ -599,13 +587,14 @@ BuildKernel() {
 	cat %{SOURCE1002} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1003} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1004} >> arch/%{base_arch}/defconfig
-	cat %{SOURCE1667} >> arch/%{base_arch}/defconfig
 %if%{?_with_preemptive:1}%{!?_with_preemptive:0}
 	cat %{SOURCE1999} >> arch/%{base_arch}/defconfig
 %endif
 	if [ "$BOOT" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_CRYPTO is not set" >> arch/%{base_arch}/defconfig
 	else
+		cat %{SOURCE1667} >> arch/%{base_arch}/defconfig
 		cat %{SOURCE1666} >> arch/%{base_arch}/defconfig
 	fi
 %ifarch i386
