@@ -1,0 +1,94 @@
+--- linux-2.4.20/arch/alpha/kernel/entry.S.org	Mon Dec  9 10:48:36 2002
++++ linux-2.4.20/arch/alpha/kernel/entry.S	Mon Dec  9 10:47:19 2002
+@@ -10,7 +10,7 @@
+ 
+ #define SIGCHLD 20
+ 
+-#define NR_SYSCALLS 382
++#define NR_SYSCALLS 394
+ 
+ /*
+  * These offsets must match with alpha_mv in <asm/machvec.h>.
+--- linux-2.4.20/arch/alpha/kernel/alpha_ksyms.c.org	Fri Dec  6 13:52:55 2002
++++ linux-2.4.20/arch/alpha/kernel/alpha_ksyms.c	Tue Dec 10 08:47:55 2002
+@@ -153,16 +153,8 @@
+ 
+ /* In-kernel system calls.  */
+ EXPORT_SYMBOL(kernel_thread);
+-EXPORT_SYMBOL(sys_open);
+-EXPORT_SYMBOL(sys_dup);
+-EXPORT_SYMBOL(sys_exit);
+-EXPORT_SYMBOL(sys_write);
+-EXPORT_SYMBOL(sys_read);
+ EXPORT_SYMBOL(sys_lseek);
+ EXPORT_SYMBOL(__kernel_execve);
+-EXPORT_SYMBOL(sys_setsid);
+-EXPORT_SYMBOL(sys_sync);
+-EXPORT_SYMBOL(sys_wait4);
+ 
+ /* Networking helper routines. */
+ EXPORT_SYMBOL(csum_tcpudp_magic);
+@@ -268,5 +260,3 @@
+ #endif
+ 
+ EXPORT_SYMBOL(plat_node_data);
+-EXPORT_SYMBOL(isa_eth_io_copy_and_sum);
+-
+--- linux-2.4.20/kernel/syscall_ksyms.c.org	Fri Dec  6 22:16:56 2002
++++ linux-2.4.20/kernel/syscall_ksyms.c	Tue Dec 10 08:50:42 2002
+@@ -44,14 +44,14 @@
+ EXPORT_SYMBOL(sys_close);
+ #if !defined(__alpha__)
+ EXPORT_SYMBOL(sys_creat);
++EXPORT_SYMBOL(sys_ftruncate64);
++EXPORT_SYMBOL(sys_truncate64);
+ #endif
+ EXPORT_SYMBOL(sys_open);
+ EXPORT_SYMBOL(sys_statfs);
+ EXPORT_SYMBOL(sys_fstatfs);
+ EXPORT_SYMBOL(sys_ftruncate);
+-EXPORT_SYMBOL(sys_ftruncate64);
+ EXPORT_SYMBOL(sys_truncate);
+-EXPORT_SYMBOL(sys_truncate64);
+ #if !defined(__alpha__) && !defined(__ia64__)
+ EXPORT_SYMBOL(sys_utime);
+ #endif
+@@ -78,10 +78,12 @@
+ EXPORT_SYMBOL(sys_setitimer);
+ EXPORT_SYMBOL(sys_gettimeofday);
+ EXPORT_SYMBOL(sys_settimeofday);
++#if !defined(__alpha__)
+ EXPORT_SYMBOL(sys_stime);
+ EXPORT_SYMBOL(sys_time);
+-#if !defined(__alpha__)
+ EXPORT_SYMBOL(sys_nice);
++EXPORT_SYMBOL(sys_sigprocmask);
++EXPORT_SYMBOL(sys_sigsuspend);
+ #endif
+ EXPORT_SYMBOL(sys_sched_setscheduler);
+ EXPORT_SYMBOL(sys_sched_setparam);
+@@ -98,8 +100,6 @@
+ EXPORT_SYMBOL(sys_rt_sigtimedwait);
+ EXPORT_SYMBOL(sys_sigaltstack);
+ EXPORT_SYMBOL(sys_sigpending);
+-EXPORT_SYMBOL(sys_sigprocmask);
+-EXPORT_SYMBOL(sys_sigsuspend);
+ EXPORT_SYMBOL(sys_gethostname);
+ EXPORT_SYMBOL(sys_sethostname);
+ EXPORT_SYMBOL(sys_setdomainname);
+@@ -130,6 +130,7 @@
+ EXPORT_SYMBOL(sys_geteuid);
+ EXPORT_SYMBOL(sys_getgid);
+ EXPORT_SYMBOL(sys_getegid);
++EXPORT_SYMBOL(sys_waitpid);
+ #endif
+ EXPORT_SYMBOL(sys_gettid);
+ EXPORT_SYMBOL(sys_nanosleep);
+@@ -140,7 +141,6 @@
+ EXPORT_SYMBOL(sys_setgroups16);
+ #endif
+ EXPORT_SYMBOL(sys_wait4);
+-EXPORT_SYMBOL(sys_waitpid);
+ EXPORT_SYMBOL(sys_sendfile);
+ EXPORT_SYMBOL(sys_brk);
+ EXPORT_SYMBOL(sys_msync);
