@@ -459,21 +459,6 @@ diff -urN linux-2.4.20/arch/arm/kernel/process.c linux-2.4.20-o1/arch/arm/kernel
  
  	while (1) {
  		void (*idle)(void) = pm_idle;
-diff -urN linux-2.4.20/arch/cris/kernel/process.c linux-2.4.20-o1/arch/cris/kernel/process.c
---- linux-2.4.20/arch/cris/kernel/process.c	Mon Feb 25 20:37:52 2002
-+++ linux-2.4.20-o1/arch/cris/kernel/process.c	Wed Mar 12 00:41:43 2003
-@@ -124,8 +124,9 @@
-  
- int cpu_idle(void *unused)
- {
--	while(1) {
--		current->counter = -100;
-+	init_idle();
-+
-+	while(1) {
- #ifdef CONFIG_ETRAX_GPIO
- 		/* This can reduce latency from 15 ms to 6 ms */
- 		etrax_gpio_wake_up_check(); /* drivers/gpio.c */
 diff -urN linux-2.4.20/arch/i386/kernel/entry.S linux-2.4.20-o1/arch/i386/kernel/entry.S
 --- linux-2.4.20/arch/i386/kernel/entry.S	Fri Nov 29 00:53:09 2002
 +++ linux-2.4.20-o1/arch/i386/kernel/entry.S	Wed Mar 12 00:41:43 2003
@@ -830,9 +815,9 @@ diff -urN linux-2.4.20/arch/ppc/kernel/smp.c linux-2.4.20-o1/arch/ppc/kernel/smp
  {
 -	int cpu = current->processor;
 +	int cpu = current->cpu;
- 	
+ 
          smp_store_cpu_info(cpu);
- 	set_dec(tb_ticks_per_jiffy);
+ 	smp_ops->setup_cpu(cpu);
 diff -urN linux-2.4.20/arch/ppc/lib/dec_and_lock.c linux-2.4.20-o1/arch/ppc/lib/dec_and_lock.c
 --- linux-2.4.20/arch/ppc/lib/dec_and_lock.c	Fri Nov 16 19:10:08 2001
 +++ linux-2.4.20-o1/arch/ppc/lib/dec_and_lock.c	Wed Mar 12 00:41:43 2003
@@ -2049,8 +2034,8 @@ diff -urN linux-2.4.20/include/asm-arm/bitops.h linux-2.4.20-o1/include/asm-arm/
 -static inline int test_bit(int nr, const void * addr)
 +static inline int ____test_bit(int nr, const void * p)
  {
--    return ((unsigned char *) addr)[nr >> 3] & (1U << (nr & 7));
-+    return ((volatile unsigned char *) p)[nr >> 3] & (1U << (nr & 7));
+-    return (((unsigned char *) addr)[nr >> 3] >> (nr & 7)) & 1;
++    return (((volatile unsigned char *) p)[nr >> 3] >> (nr & 7)) & 1;
  }	
  
  /*
@@ -2652,17 +2637,6 @@ diff -urN linux-2.4.20/include/asm-i386/mmu_context.h linux-2.4.20-o1/include/as
  			load_LDT(next);
  #ifdef CONFIG_SMP
  		cpu_tlbstate[cpu].state = TLBSTATE_OK;
-diff -urN linux-2.4.20/include/asm-i386/pgalloc.h linux-2.4.20-o1/include/asm-i386/pgalloc.h
---- linux-2.4.20/include/asm-i386/pgalloc.h	Sat Aug  3 02:39:45 2002
-+++ linux-2.4.20-o1/include/asm-i386/pgalloc.h	Wed Mar 12 00:41:43 2003
-@@ -224,6 +224,7 @@
- {
- 	struct mm_struct *active_mm;
- 	int state;
-+	char __cacheline_padding[24];
- };
- extern struct tlb_state cpu_tlbstate[NR_CPUS];
- 
 diff -urN linux-2.4.20/include/asm-i386/processor.h linux-2.4.20-o1/include/asm-i386/processor.h
 --- linux-2.4.20/include/asm-i386/processor.h	Sat Aug  3 02:39:45 2002
 +++ linux-2.4.20-o1/include/asm-i386/processor.h	Wed Mar 12 00:41:43 2003
@@ -2820,7 +2794,7 @@ diff -urN linux-2.4.20/include/asm-i386/system.h linux-2.4.20-o1/include/asm-i38
 diff -urN linux-2.4.20/include/asm-ia64/bitops.h linux-2.4.20-o1/include/asm-ia64/bitops.h
 --- linux-2.4.20/include/asm-ia64/bitops.h	Fri Nov 29 00:53:15 2002
 +++ linux-2.4.20-o1/include/asm-ia64/bitops.h	Wed Mar 12 00:41:43 2003
-@@ -2,8 +2,13 @@
+@@ -2,6 +2,9 @@
  /*
   * Copyright (C) 1998-2002 Hewlett-Packard Co
   *	David Mosberger-Tang <davidm@hpl.hp.com>
@@ -2829,11 +2803,7 @@ diff -urN linux-2.4.20/include/asm-ia64/bitops.h linux-2.4.20-o1/include/asm-ia6
 + *	    scheduler patch
   */
  
-+#include <linux/types.h>
-+
- #include <asm/system.h>
- 
- /**
+ #include <linux/types.h>
 @@ -89,6 +94,17 @@
  }
  
@@ -3027,26 +2997,6 @@ diff -urN linux-2.4.20/include/asm-mips/bitops.h linux-2.4.20-o1/include/asm-mip
  /*
   * These functions for MIPS ISA > 1 are interrupt and SMP proof and
   * interrupt friendly
-@@ -628,7 +630,8 @@
- 		"2:"
- 		: "=r" (res), "=r" (dummy), "=r" (addr)
- 		: "0" ((signed int) 0), "1" ((unsigned int) 0xffffffff),
--		  "2" (addr), "r" (size));
-+		  "2" (addr), "r" (size)
-+		: "$1");
- 
- 	return res;
- }
-@@ -663,7 +666,8 @@
- 			".set\treorder\n"
- 			"1:"
- 			: "=r" (set), "=r" (dummy)
--			: "0" (0), "1" (1 << bit), "r" (*p));
-+			: "0" (0), "1" (1 << bit), "r" (*p)
-+			: "$1");
- 		if (set < (32 - bit))
- 			return set + offset;
- 		set = 32 - bit;
 @@ -684,20 +688,29 @@
   *
   * Undefined if no zero exists, so code should check against ~0UL first.
@@ -3151,7 +3101,7 @@ diff -urN linux-2.4.20/include/asm-mips64/bitops.h linux-2.4.20-o1/include/asm-m
   * It also implies a memory barrier.
   */
 -static inline unsigned long test_and_set_bit(unsigned long nr,
--					     volatile void *addr)
+-	volatile void *addr)
 +extern __inline__ unsigned long
 +test_and_set_bit(unsigned long nr, volatile void *addr)
  {
@@ -3172,7 +3122,7 @@ diff -urN linux-2.4.20/include/asm-mips64/bitops.h linux-2.4.20-o1/include/asm-m
   * It also implies a memory barrier.
   */
 -static inline unsigned long test_and_clear_bit(unsigned long nr,
--					       volatile void *addr)
+-	volatile void *addr)
 +extern __inline__ unsigned long
 +test_and_clear_bit(unsigned long nr, volatile void *addr)
  {
@@ -3193,7 +3143,7 @@ diff -urN linux-2.4.20/include/asm-mips64/bitops.h linux-2.4.20-o1/include/asm-m
   * It also implies a memory barrier.
   */
 -static inline unsigned long test_and_change_bit(unsigned long nr,
--						volatile void *addr)
+-	volatile void *addr)
 +extern __inline__ unsigned long
 +test_and_change_bit(unsigned long nr, volatile void *addr)
  {
@@ -3213,52 +3163,12 @@ diff -urN linux-2.4.20/include/asm-mips64/bitops.h linux-2.4.20-o1/include/asm-m
   * @nr: bit number to test
   * @addr: Address to start counting from
   */
--static inline unsigned long test_bit(int nr, volatile void * addr)
+-static inline int test_bit(int nr, volatile void * addr)
 +extern __inline__ unsigned long
 +test_bit(int nr, volatile void * addr)
  {
- 	return 1UL & (((volatile unsigned long *) addr)[nr >> 6] >> (nr & 0x3f));
+ 	return 1UL & (((const volatile unsigned long *) addr)[nr >> SZLONG_LOG] >> (nr & SZLONG_MASK));
  }
-@@ -311,7 +319,8 @@
-  * Returns the bit-number of the first zero bit, not the number of the byte
-  * containing a bit.
-  */
--static inline int find_first_zero_bit (void *addr, unsigned size)
-+extern __inline__ int
-+find_first_zero_bit (void *addr, unsigned size)
- {
- 	unsigned long dummy;
- 	int res;
-@@ -347,7 +356,8 @@
- 		"2:"
- 		: "=r" (res), "=r" (dummy), "=r" (addr)
- 		: "0" ((signed int) 0), "1" ((unsigned int) 0xffffffff),
--		  "2" (addr), "r" (size));
-+		  "2" (addr), "r" (size)
-+		: "$1");
- 
- 	return res;
- }
-@@ -358,7 +368,8 @@
-  * @offset: The bitnumber to start searching at
-  * @size: The maximum size to search
-  */
--static inline int find_next_zero_bit (void * addr, int size, int offset)
-+extern __inline__ int
-+find_next_zero_bit (void * addr, int size, int offset)
- {
- 	unsigned int *p = ((unsigned int *) addr) + (offset >> 5);
- 	int set = 0, bit = offset & 31, res;
-@@ -379,7 +390,8 @@
- 			".set\treorder\n"
- 			"1:"
- 			: "=r" (set), "=r" (dummy)
--			: "0" (0), "1" (1 << bit), "r" (*p));
-+			: "0" (0), "1" (1 << bit), "r" (*p)
-+			: "$1");
- 		if (set < (32 - bit))
- 			return set + offset;
- 		set = 32 - bit;
 @@ -400,19 +412,20 @@
   *
   * Undefined if no zero exists, so code should check against ~0UL first.
@@ -3304,9 +3214,9 @@ diff -urN linux-2.4.20/include/asm-mips64/bitops.h linux-2.4.20-o1/include/asm-m
  
  #ifdef __MIPSEB__
  
--static inline int ext2_set_bit(int nr,void * addr)
+-static inline int __test_and_set_le_bit(unsigned long nr, void * addr)
 +extern inline int
-+ext2_set_bit(int nr,void * addr)
++__test_and_set_le_bit(unsigned long nr, void * addr
  {
  	int		mask, retval, flags;
  	unsigned char	*ADDR = (unsigned char *) addr;
@@ -3314,9 +3224,9 @@ diff -urN linux-2.4.20/include/asm-mips64/bitops.h linux-2.4.20-o1/include/asm-m
  	return retval;
  }
  
--static inline int ext2_clear_bit(int nr, void * addr)
+-static inline int __test_and_clear_le_bit(unsigned long nr, void * addr)
 +extern inline int
-+ext2_clear_bit(int nr, void * addr)
++__test_and_clear_le_bit(unsigned long nr, void * addr)
  {
  	int		mask, retval, flags;
  	unsigned char	*ADDR = (unsigned char *) addr;
@@ -3324,21 +3234,20 @@ diff -urN linux-2.4.20/include/asm-mips64/bitops.h linux-2.4.20-o1/include/asm-m
  	return retval;
  }
  
--static inline int ext2_test_bit(int nr, const void * addr)
+-static inline int test_le_bit(unsigned long nr, const void * addr)
 +extern inline int
-+ext2_test_bit(int nr, const void * addr)
++test_le_bit(unsigned long nr, const void * addr)
  {
  	int			mask;
  	const unsigned char	*ADDR = (const unsigned char *) addr;
-@@ -539,9 +555,8 @@
+@@ -539,8 +555,8 @@
  #define ext2_find_first_zero_bit(addr, size) \
          ext2_find_next_zero_bit((addr), (size), 0)
  
--static inline unsigned int ext2_find_next_zero_bit(void *addr,
--						   unsigned long size,
--						   unsigned long offset)
-+extern inline unsigned int
-+ext2_find_next_zero_bit(void *addr, unsigned long size, unsigned long offset)
+-static inline unsigned long find_next_zero_le_bit(void *addr,
+-	unsigned long size, unsigned long offset)
++extern inline unsigned long find_next_zero_le_bit(void *addr,
++	unsigned long size, unsigned long offset)
  {
  	unsigned int *p = ((unsigned int *) addr) + (offset >> 5);
  	unsigned int result = offset & ~31UL;
@@ -7920,7 +7829,7 @@ diff -urN linux-2.4.20/kernel/sched.c linux-2.4.20-o1/kernel/sched.c
 -				target_tsk = tsk;
 -			}
 -		} else {
--			if (oldest_idle == -1ULL) {
+-			if (oldest_idle == (cycles_t)-1) {
 -				int prio = preemption_goodness(tsk, p, cpu);
 -
 -				if (prio > max_prio) {
@@ -7932,7 +7841,7 @@ diff -urN linux-2.4.20/kernel/sched.c linux-2.4.20-o1/kernel/sched.c
 -	}
 -	tsk = target_tsk;
 -	if (tsk) {
--		if (oldest_idle != -1ULL) {
+-		if (oldest_idle != (cycles_t)-1) {
 -			best_cpu = tsk->processor;
 -			goto send_now_idle;
 -		}
