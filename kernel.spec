@@ -606,20 +606,25 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch82 -p1
 # selected library
 %ifarch %{ix86}
-cp drivers/usb/media/libpwcx.a_ix86 drivers/usb/media/libpwcx.a
+cp drivers/usb/media/libpwcx.a_ix86 drivers/usb/media/libpwcx.a_
 %endif
 %ifarch arm
-cp drivers/usb/media/libpwcx.a_arm drivers/usb/media/libpwcx.a
+cp drivers/usb/media/libpwcx.a_arm drivers/usb/media/libpwcx.a_
 %endif
 %ifarch powerpc
-cp drivers/usb/media/libpwcx.a_powerpc drivers/usb/media/libpwcx.a
+cp drivers/usb/media/libpwcx.a_powerpc drivers/usb/media/libpwcx.a_
 %endif
 %ifarch ppc
-cp drivers/usb/media/libpwcx.a_ppc drivers/usb/media/libpwcx.a
+cp drivers/usb/media/libpwcx.a_ppc drivers/usb/media/libpwcx.a_
 %endif
 %ifarch mipsel
-cp drivers/usb/media/libpwcx.a_mipsel drivers/usb/media/libpwcx.a
+cp drivers/usb/media/libpwcx.a_mipsel drivers/usb/media/libpwcx.a_
 %endif
+
+%patch84 -p1
+%patch86 -p1
+%patch88 -p1
+%patch90 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
