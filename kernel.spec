@@ -167,6 +167,7 @@ Patch102:	linux-2.6-esp-corruption-cpu-bug.patch
 Patch103:	linux-2.6-tty-overrun-notify.patch
 Patch104:	linux-2.6-tcp-unaligned-access.patch
 Patch105:	linux-2.6-wan-driver-panic.patch
+Patch106:	linux-2.6-smbfs.patch
 
 # linux vserver
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
@@ -557,6 +558,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch103 -p1
 %patch104 -p1
 %patch105 -p1
+%patch106 -p1
 
 %if %{with vserver}
 %patch200 -p1
