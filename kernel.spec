@@ -97,7 +97,7 @@ Patch10:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.5-247.gz
 Patch11:	ndw-1.4-2.4.7-PLD.patch
 Patch12:	ndw-1.4-pre.common.patch
 # http://www.dandelion.com/Linux/DAC960-2.4.11.tar.gz
-Patch13:	DAC9600-2.4.11.patch.gz
+Patch13:	DAC960-2.4.11.patch.gz
 
 # Assorted bugfixes
 
