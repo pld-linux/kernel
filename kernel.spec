@@ -697,7 +697,7 @@ BuildKernel() {
 	cat %{SOURCE1004} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1005} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1006} >> arch/%{base_arch}/defconfig
-	%{?_with_preemptive:cat %{SOURCE1999} >> arch/%{base_arch}/defconfig}
+	cat %{SOURCE1999} >> arch/%{base_arch}/defconfig
 %ifnarch i386 i486
 	cat %{SOURCE1007} >> arch/%{base_arch}/defconfig
 %endif
@@ -901,7 +901,7 @@ cat %{SOURCE1005} >> .config
 cat %{SOURCE1006} >> .config
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
-%{?_with_preemptive:cat %{SOURCE1999} >> .config}
+cat %{SOURCE1999} >> .config
 %ifnarch i386 i486
 	cat %{SOURCE1007} >> .config
 %endif
@@ -959,7 +959,7 @@ cat %{SOURCE1005} >> .config
 cat %{SOURCE1006} >> .config
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
-%{?_with_preemptive:cat %{SOURCE1999} >> .config}
+cat %{SOURCE1999} >> .config
 %ifnarch i386 i486
 	cat %{SOURCE1007} >> .config
 %endif
