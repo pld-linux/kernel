@@ -1,7 +1,7 @@
 %define		ow_version		2.2.20-ow1
 %define		pcmcia_version		3.1.29
 %define		freeswan_version	1.8
-%define		reiserfs_version	3.5.33
+%define		reiserfs_version	3.5.34
 %define		i2c_version		2.5.5
 %define		wlan_version		0.3.4
 %define		tun_version		1.1
@@ -58,7 +58,7 @@ Source28:	%{name}-alpha-BOOT.config
 Patch0:		%{name}-pldfblogo.patch
 Patch1:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
 Patch2:		http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
-Patch3:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/testing/linux-2.2.19-reiserfs-%{reiserfs_version}-with-quota-and-knfsd-support-patch.bz2
+Patch3:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.19-reiserfs-%{reiserfs_version}-patch.bz2
 Patch4:		ftp://ftp.kernel.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
 Patch5:		linux-2.2.18-freeswan-%{freeswan_version}.patch
 Patch6:		wanrouter-v2215.patch.gz
@@ -99,6 +99,7 @@ Patch104:	jfs-2.2.20-v%{jfs_version}-patch
 Patch105:	%{name}-wanrouter-bridge.patch
 Patch106:	linux-netdrivers_vlan.patch
 Patch107:	linux-atm.patch
+Patch108:	atm-unresolved.patch
 
 # hap linux based on http://www.theaimsgroup.com/~hlein/hap-linux/hap-linux-2.2.20-2.diff
 Patch200:	hap-linux-2.2.20-2.diff
@@ -409,6 +410,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch102 -p1
 %patch105 -p1
 %patch106 -p1
+%patch108 -p1
 
 # 802.1Q VLANs
 #cd vlan.%{vlan_version}
@@ -632,6 +634,7 @@ KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed"
 cp -a $KERNEL_INSTALL_DIR/* $RPM_BUILD_ROOT
 
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
+ln -sf ../src/linux/include/linux/asm $RPM_BUILD_ROOT%{_includedir}/asm
 
 bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/
 mv -f $RPM_BUILD_ROOT%{_prefix}/src/linux $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
@@ -894,7 +897,7 @@ fi
 %defattr(644,root,root,755)
 %dir %{_prefix}/src/linux-%{version}
 %{_prefix}/src/linux-%{version}/include
-#%{_includedir}/asm
+%{_includedir}/asm
 %ifarch sparc sparc64
 %{_includedir}/asm-sparc*
 %endif
