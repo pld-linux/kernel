@@ -9,7 +9,7 @@
 # _without_up		- don't build UP kernel
 # _without_wrr		- don't build WRR support
 #
-%define		krelease		5.909
+%define		krelease		5.910
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -562,7 +562,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %prep
 %setup -q -a3 -a5 -a7 -a10 -a11 -a12 -a13 -a14 -n linux
 #%patch1000 -p1
-#%patch0 -p1
+%patch0 -p0
 %patch16 -p1
 %patch1 -p1
 %patch907 -p1
