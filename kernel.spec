@@ -143,9 +143,6 @@ Patch27:	linux-ppc-oops.patch
 Patch32:	2.6.x-TGA-fbdev-lkml.patch
 Patch33:	linux-kbuild-extmod.patch
 
-# linux vserver
-#Patch35:	http://www.13thfloor.at/vserver/d_rel26/v1.9.3/patch-2.6.9-vs1.9.3.diff.bz2
-
 # framebuffer fixes
 Patch41:	linux-fbcon-margins.patch
 
@@ -188,6 +185,9 @@ Patch92:	exec-shield-make-peace-with-grsecurity.patch
 
 # http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.10-rc2/2.6.10-rc-mm2/broken-out
 Patch200:	linux-reiser4.patch.bz2
+
+# linux vserver
+#Patch250:	http://www.13thfloor.at/vserver/d_rel26/v1.9.3/patch-2.6.9-vs1.9.3.diff.bz2
 
 # hotfixes
 Patch300:	linux-2.6-sparc-ksyms.patch
@@ -555,8 +555,6 @@ bzcat %{SOURCE4} | patch -p1 -s
 #patch32 -p1	NEEDS UPDATE
 %patch33 -p1
 
-#patch35 -p1
-
 %patch41 -p1
 
 # netfilter
@@ -607,6 +605,8 @@ patch -p1 -s < exec-shield.patch
 #patch103 -p1
 
 %patch200 -p1
+
+#patch250 -p1
 
 # hotfixes
 %patch300 -p1
