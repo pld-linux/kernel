@@ -175,7 +175,7 @@ Patch76:	linux-2.6-lirc-0.7.patch
 #Patch78:	linux-2.6-expand-stack-race.patch
 
 # http://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.10/
-#Patch90:	acpi-20041210-2.6.10.diff
+Patch90:	acpi-20050309-2.6.11.diff
 
 # frpm http://www.ssi.bg/~ja/#routers
 #Patch100:	routes-2.6.10-11.diff
@@ -578,7 +578,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch76 -p1
 #patch78 -p1
 
-#%patch90 -p1
+%patch90 -p1
 
 # routers
 #%patch100 -p1
