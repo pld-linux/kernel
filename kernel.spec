@@ -560,7 +560,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch74 -p1
 
-%patch76 -p1
+#%%patch76 -p1
 
 %patch78 -p1
 
@@ -572,11 +572,11 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch86 -p1
 
-%patch90 -p1
+#%%patch90 -p1
 
 %patch92 -p1
 
-%patch94 -p1
+#%%patch94 -p1
 
 %patch96 -p1
 
