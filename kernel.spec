@@ -119,7 +119,7 @@ Patch16:	linux-alpha-isa.patch
 Patch17:	2.6.4-psion-5mx.patch
 Patch18:	2.6.5-sparc64-missing-include.patch
 Patch19:	2.6.5-3C920b-Tornado.patch
-Patch20:	2.6.8-atomic.patch
+Patch20:	2.6.5-i386-cmpxchg.patch
 Patch21:	2.6.6-serial-fifo-lkml.patch
 Patch22:	2.6.6-qsort-updated-lkml.patch
 Patch23:	2.6.6-xfs-qsort-lkml.patch
