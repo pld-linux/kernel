@@ -111,6 +111,12 @@ Patch22:	2.6.5-i386-cmpxchg.patch
 Patch500:	linux-2.6-software-suspend-2.0.0.107.patch.gz
 Patch501:	linux-2.6-via-agpc-resume-suspend-support.patch
 
+# http://sources.redhat.com/cluster/
+Patch550:	linux-cluster-cman.patch
+Patch551:	linux-cluster-dlm.patch
+Patch552:	linux-cluster-gfs.patch
+Patch553:	linux-cluster-gnbd.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 BuildRequires:	diffutils
@@ -476,6 +482,11 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch500 -p1
 %endif
 %patch501 -p1
+
+%patch550 -p1
+%patch551 -p1
+%patch552 -p1
+%patch553 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i -e 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
