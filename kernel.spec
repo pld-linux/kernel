@@ -181,6 +181,7 @@ BuildRequires:	egcs64
 %else
 BuildRequires:	egcs
 %endif
+Provides:	%{name}-up = %{version}
 Provides:	module-info
 Autoreqprov:	no
 Prereq:		fileutils
