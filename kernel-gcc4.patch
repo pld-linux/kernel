@@ -1,8 +1,10 @@
 
  Makefile                     |    4 ++--
  drivers/net/wan/pc300_drv.c  |   10 +++++-----
+ include/asm-i386/processor.h |    6 ++----
+ include/linux/fb.h           |    5 +++--
  net/ipv4/netfilter/ipt_XOR.c |    6 ++----
- 3 files changed, 9 insertions(+), 11 deletions(-)
+ 5 files changed, 14 insertions(+), 17 deletions(-)
 
 --- a/Makefile	2005-02-13 16:02:05.000000000 +0100
 +++ b/Makefile	2005-02-14 20:33:42.643412656 +0100
@@ -93,3 +95,46 @@
  
  #ifdef	PC300_DEBUG_OTHER
  	printk("pc300: cpc_close");
+--- a/include/asm-i386/processor.h	2005-02-14 20:43:24.000000000 +0100
++++ b/include/asm-i386/processor.h	2005-02-14 21:47:57.564395944 +0100
+@@ -85,10 +85,6 @@
+ extern struct cpuinfo_x86 boot_cpu_data;
+ extern struct cpuinfo_x86 new_cpu_data;
+ extern struct tss_struct doublefault_tss;
+-#if 0
+-DECLARE_PER_CPU(struct tss_struct, init_tss);
+-#endif
+-extern struct tss_struct init_tss[NR_CPUS];
+ 
+ #ifdef CONFIG_SMP
+ extern struct cpuinfo_x86 cpu_data[];
+@@ -427,6 +423,8 @@
+ 	unsigned long stack[64];
+ } __attribute__((packed));
+ 
++extern struct tss_struct init_tss[NR_CPUS];
++
+ #define ARCH_MIN_TASKALIGN	16
+ 
+ struct thread_struct {
+--- a/include/linux/fb.h	2005-02-14 20:43:19.000000000 +0100
++++ b/include/linux/fb.h	2005-02-14 22:44:26.751502424 +0100
+@@ -878,8 +878,6 @@
+ extern void fb_destroy_modedb(struct fb_videomode *modedb);
+ 
+ /* drivers/video/modedb.c */
+-#define VESA_MODEDB_SIZE 34
+-extern const struct fb_videomode vesa_modes[];
+ extern void fb_var_to_videomode(struct fb_videomode *mode,
+ 				struct fb_var_screeninfo *var);
+ extern void fb_videomode_to_var(struct fb_var_screeninfo *var,
+@@ -929,6 +927,9 @@
+ 	struct fb_videomode mode;
+ };
+ 
++#define VESA_MODEDB_SIZE 34
++extern const struct fb_videomode vesa_modes[];
++
+ extern int fb_find_mode(struct fb_var_screeninfo *var,
+ 			struct fb_info *info, const char *mode_option,
+ 			const struct fb_videomode *db,
