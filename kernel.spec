@@ -206,6 +206,9 @@ Patch1150:	linux-rivafb16.patch
 Patch1152:	linux-2.4.20-agp_uninorth.patch
 Patch1154:	linux-2.4.20-drm-Makefile.patch
 
+Patch1170:	linux-do_brk-bound-check.patch
+Patch1171:	linux-2.4-sysctl-empty.patch
+
 Patch1201:	linux-2.4.21-cpqfc.patch
 Patch1203:	linux-2.4.20-amd-golem.patch
 Patch1205:	linux-53c7,8xx-build.fix
@@ -712,6 +715,8 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1150 -p1
 %patch1152 -p1
 %patch1154 -p1
+%patch1170 -p1
+%patch1171 -p1
 %patch1201 -p1
 %patch1203 -p1
 %patch1205 -p1
