@@ -251,7 +251,7 @@ Patch909:	linux-2.4.19-PPC-agpgart_be.patch
 Patch910:	linux-2.4.20-grsec-1.9.8-EXPORT_SYMBOL.patch
 Patch911:	linux-2.4.19-SPARC.patch
 Patch912:	linux-2.4.19-grsec-1.9.7-PAX-sysctl.patch
-
+Patch913:	linux-2.4.20-no_grsec-pre-netfilter.patch
 Patch914:	linux-2.4.20-MODULE_XXX.patch
 Patch915:	linux-2.4.19-usb-digitalcams.patch
 Patch916:	linux-2.4.19-ksyms-sys_sched_yield-rm.patch
@@ -620,6 +620,7 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # Netfilter
 #(KERNEL_DIR=`pwd` ; export KERNEL_DIR ; cd netfilter-patch-o-matic ; ./runme --batch userspace)
+%{?_without_grsec:%patch913 -p1}
 #%patch906 -p1
 %patch8 -p1
 
