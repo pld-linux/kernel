@@ -89,6 +89,8 @@ Patch13:	2.6.0-t7-memleak2-lkml.patch
 Patch16:	2.6.0-t8-clean-mtd-lkml.patch
 Patch18:	2.6.0-t8-swap-include-lkml.patch
 
+Patch20:	2.6.x-x86_64-sys_wait4-EXPORT.patch
+
 Patch22:	2.6.0-t8-VLSI-ix86-lkml.patch
 
 Patch24:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
@@ -484,6 +486,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch16 -p1
 %patch18 -p1
+
+%patch20 -p1
 
 %patch22 -p1
 
