@@ -39,8 +39,8 @@ Source21:	%{name}-ia32-smp.config
 #Source51:	%{name}-sparc-smp.config
 #Source60:	%{name}-sparc64.config
 #Source61:	%{name}-sparc64-smp.config
-#Source70:	%{name}-alpha.config
-#Source71:	%{name}-alpha-smp.config
+Source70:	%{name}-alpha.config
+Source71:	%{name}-alpha-smp.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
 
@@ -63,8 +63,9 @@ Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Autoreqprov:	no
 Prereq:		coreutils
-Prereq:		module-init-tools
+Prereq:		module-init-tools >= 0.9.9
 Prereq:		geninitrd >= 2.26
+Conflicts:	quota < 3.09
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 
@@ -98,8 +99,9 @@ Group:		Base/Kernel
 Provides:	%{name}-smp = %{version}-%{release}
 Provides:	module-info
 Prereq:		coreutils
-Prereq:		module-init-tools
+Prereq:		module-init-tools >= 0.9.9
 Prereq:		geninitrd >= 2.26
+Conflicts:	quota < 3.09
 Autoreqprov:	no
 
 %description smp
