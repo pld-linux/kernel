@@ -6,13 +6,14 @@
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 # _without_source	- don't build source
+# _with_w4l		- build with Win4Lin support
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
 #
 %define		pre_version		pre1
-%define		ipvs_version		1.0.4
+%define		ipvs_version		1.0.7
 %define		freeswan_version	1.97
 %define		IPperson_version	20020819-2.4.19
 %define		grsec_version		1.9.9c
@@ -29,7 +30,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	2.8%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	2.9%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -45,7 +46,7 @@ Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
 Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.bz2
 Source10:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
-Source11:	linux-2.4.20-DVB-0.9.4.bin.tar.gz
+#Source11:	
 Source12:	linux-2.4.20-aacraid.tar.bz2
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -76,7 +77,6 @@ Source1670:	%{name}-wrr.config
 Source1671:	%{name}-squashfs.config
 Source1672:	%{name}-ACL.config
 Source1673:	%{name}-IMQ.config
-Source1674:	%{name}-DVB.config
 Source1999:	%{name}-preemptive.config
 Source2000:	%{name}-win4lin.config
 
@@ -111,7 +111,7 @@ Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/net
 Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-2.4.18-1.patch
 
 # http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
-Patch11:	linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
+Patch11:	linux-2.4.20-ipvs-%{ipvs_version}.patch.bz2
 Patch12:	htb3.6-2.4.17.patch.bz2
 Patch13:	http://luxik.cdi.cz/~devik/qos/imq-2.4.18.diff-10
 
@@ -160,7 +160,6 @@ Patch44:	kernel-2.4-NTfix.patch
 # from http://acl.bestbits.at/
 Patch45:	linux-2.4.20-ACL-0.8.54.patch.bz2
 Patch46:	linux-2.4.19-netmos_pci_parallel_n_serial.patch
-Patch47:	linux-2.4.20-DVB-0.9.4.patch.bz2
 
 # Assorted bugfixes
 
@@ -251,7 +250,7 @@ Patch908:	linux-2.4.19-PPC-o1_scheduler.patch
 Patch909:	linux-2.4.19-PPC-agpgart_be.patch
 Patch910:	linux-2.4.21-pre4-ac4-via82cxxx_audio.patch.bz2
 Patch911:	linux-2.4.19-SPARC.patch
-Patch912:	linux-2.4.19-grsec-1.9.7-PAX-sysctl.patch
+#Patch912:	
 Patch913:	linux-2.4.20-no_grsec-pre-netfilter.patch
 Patch914:	linux-2.4.20-MODULE_XXX.patch
 Patch915:	linux-2.4.19-usb-digitalcams.patch
@@ -524,7 +523,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -n linux-%{version}
+%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -a12 -n linux-%{version}
 %patch0 -p1
 %patch1 -p1
 %patch900 -p1
@@ -641,9 +640,6 @@ echo Installing Host AP support
 patch -p1 -s < hostap-%{hostap_version}/kernel-patches/hostap-linux-2.4.19-rc3.patch
 cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 
-#echo Sysctl support for PAX nod installed.
-#%patch912 -p1
-
 # Konica USB camera support
 echo Installing Konica Support
 %patch33 -p1
@@ -727,14 +723,14 @@ echo AXP patches ...
 %patch204 -p1
 %endif
 
-#%if %{?_with_w4l:1}%{!?_with_w4l:0}
+%if %{?_with_w4l:1}%{!?_with_w4l:0}
 %ifarch %{ix86}
 echo Win4Lin patch ...
 %{!?_without_grsec:%patch1000 -p1}
 %{?_without_grsec:%patch1001 -p1}
 %patch1002 -p1
 %endif
-#%endif
+%endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
@@ -808,7 +804,6 @@ BuildKernel() {
 	cat %{SOURCE1671} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1672} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1673} >> arch/%{base_arch}/defconfig
-	cat %{SOURCE1674} >> arch/%{base_arch}/defconfig
 	
 	if [ "$BOOT" = "yes" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
@@ -1008,7 +1003,6 @@ cat %{SOURCE1670} >> .config
 cat %{SOURCE1671} >> .config
 cat %{SOURCE1672} >> .config
 cat %{SOURCE1673} >> .config
-cat %{SOURCE1674} >> .config
 
 %ifarch %{ix86}
 cat %{SOURCE2000} >> .config
@@ -1064,7 +1058,6 @@ cat %{SOURCE1670} >> .config
 cat %{SOURCE1671} >> .config
 cat %{SOURCE1672} >> .config
 cat %{SOURCE1673} >> .config
-cat %{SOURCE1674} >> .config
 
 %ifarch %{ix86}
 cat %{SOURCE2000} >> .config
