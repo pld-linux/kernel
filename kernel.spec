@@ -151,10 +151,8 @@ Patch77:	2.6.x-istalion-compile-fix-lkml.patch
 Patch78:	2.6.x-moxa-compile-fix-lkml.patch
 Patch79:	2.6.x-specialix-compile-fix-lkml.patch
 
-Patch82:	2.6.2-rc3-syscalls.diff
-
-Patch84:	2.6.x-IBM-RAS-service-procesor-1of2-lkml.patch
-Patch85:	2.6.x-IBM-RAS-service-procesor-2of2-lkml.patch
+Patch82:	2.6.x-IBM-RAS-service-procesor-1of2-lkml.patch
+Patch83:	2.6.x-IBM-RAS-service-procesor-2of2-lkml.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -559,9 +557,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch79 -p1
 
 %patch82 -p1
-
-%patch84 -p1
-%patch85 -p1
+%patch83 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
