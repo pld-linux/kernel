@@ -12,7 +12,7 @@
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
-%bcond_with	grsec		# build without grsec
+%bcond_without	grsec		# build without grsec
 %bcond_with	execshield	# build without exec-shield
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
@@ -690,7 +690,7 @@ patch -p1 -s < %{SOURCE5}
 %endif		
 
 %patch96 -p1
-%patch97 -p1
+#patch97 -p1
 
 %patch100 -p1
 
@@ -700,9 +700,9 @@ patch -p1 -s < %{SOURCE5}
 #patch104 -p1 # <- not applayed need checkout
 %patch105 -p1
 
-%patch108 -p1
+#patch108 -p1
 
-%patch110 -p1
+#patch110 -p1
 
 %patch112 -p1
 
