@@ -464,6 +464,10 @@ cp .config config-smp
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
+%ifarch %{ix86}
+ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
+%endif
+
 %if %{?_without_selinux:0}%{!?_without_selinux:1}
 install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/{linux,asm-i386}/flask
 install security/lids/include/linux/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
@@ -611,14 +615,6 @@ fi
 if [ ! -L %{_includedir}/asm ]; then
 	ln -sf ../src/linux/include/asm %{_includedir}/asm
 fi
-%endif
-%ifarch %{ix86}
-ln -sf asm-i386 %{_prefix}/src/linux-%{version}/include/asm
-%endif
-
-%preun headers
-%ifnarch sparc sparc64
-rm -f %{_prefix}/src/linux-%{version}/include/asm
 %endif
 
 %postun headers
