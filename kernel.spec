@@ -3,38 +3,38 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems).
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.2.13
+Version:	2.2.14
 Release:	1
 Copyright:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
 Source10:	kernel-i386.config
-Source11:	kernel-i386-fb.config
-Source12:	kernel-i386-smp.config
-Source13:	kernel-i386-smp-fb.config
-Source14:	kernel-i386-BOOT.config
-Source15:	kernel-i586.config
-Source16:	kernel-i586-fb.config
-Source17:	kernel-i586-smp.config
-Source18:	kernel-i586-smp-fb.config
-Source19:	kernel-i586-BOOT.config
-Source20:	kernel-i686.config
-Source21:	kernel-i686-fb.config
-Source22:	kernel-i686-smp.config
-Source23:	kernel-i686-smp-fb.config
-Source24:	kernel-i686-BOOT.config
-Source25:	kernel-sparc.config
-Source26:	kernel-sparc-smp.config
-Source27:	kernel-sparc-BOOT.config
-Source28:	kernel-sparc64.config
-Source29:	kernel-sparc64-smp.config
-Source30:	kernel-sparc64-BOOT.config
-Source31:	kernel-alpha.config
-Source32:	kernel-alpha-smp.config
-Source33:	kernel-alpha-BOOT.config
-Patch0:		http://www.openwall.com/linux/linux-2.2.13-ow1.tar.gz
-Patch1:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.13.3.gz
+#Source11:	kernel-i386-fb.config
+Source12:	kernel-i386-BOOT.config
+Source13:	kernel-i586.config
+#Source14:	kernel-i586-fb.config
+Source15:	kernel-i586-smp.config
+#Source16:	kernel-i586-smp-fb.config
+Source17:	kernel-i686.config
+#Source18:	kernel-i686-fb.config
+Source19:	kernel-i686-smp.config
+#Source20:	kernel-i686-smp-fb.config
+#Source21:	kernel-sparc.config
+#Source22:	kernel-sparc-smp.config
+#Source23:	kernel-sparc-BOOT.config
+#Source24:	kernel-sparc64.config
+#Source25:	kernel-sparc64-smp.config
+#Source26:	kernel-sparc64-BOOT.config
+#Source27:	kernel-alpha.config
+#Source28:	kernel-alpha-smp.config
+#Source29:	kernel-alpha-BOOT.config
+Source30:	ftp://ftp.openwall.com/linux/linux-2.2.13-ow1.tar.gz
+Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.13.3.gz
+Patch1:		ftp://ftp.botik.ru/rented/namesys/ftp/pub/linux+reiserfs/linux-2.2.14-reiserfs-3.5.16-patch.gz
+Patch2:		linux-2.2.14-atm-0.59-fore200e-0.1e.patch.gz
+Patch3:		linux-tasks.patch
+Patch4:		raid-2.2.14-B1.gz
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	/tmp/%{name}-%{version}-root
@@ -73,6 +73,7 @@ Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen.
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur.
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
+Autoreqprov:	no
 
 %description smp
 This package includes a SMP version of the Linux %{version} kernel. It is
@@ -95,6 +96,7 @@ Summary(de):	Kernel version %{version} mit Framebuffer-Support
 Summary(fr):	Kernel version %{version} avec framebuffer.
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
+Autoreqprov:	no
 
 %description fb
 This package includes a version of the Linux %{version} kernel
@@ -113,6 +115,7 @@ Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen mit framebuf
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur avec fb.
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
+Autoreqprov:	no
 
 %description smp-fb
 This package includes a SMP version of the Linux %{version} kernel. It is
@@ -138,6 +141,7 @@ Summary(de):	Kernel version %{version} für Installationsdisketten.
 Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation.
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
+Autoreqprov:	no
 
 %description BOOT
 This package includes a trimmed down version of the Linux %{version} kernel.
@@ -164,6 +168,7 @@ Summary:	Kernel source tree
 Summary(pl):	Kod ¼ród³owy j±dra Linuxa
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
+Autoreqprov:	no
 Requires:	%{name}-headers = %{version}
 %ifarch %{ix86}
 Requires:	bin86
@@ -183,6 +188,7 @@ Summary:	Header files for the Linux kernel.
 Summary(pl):	Pliki nag³owkowe j±dra
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
+Autoreqprov:	no
 
 %description headers
 These are the C header files for the Linux kernel, which define structures
@@ -208,19 +214,31 @@ Pakiet zawiera pliki nag³ówkowe j±dra, niezbedne do rekompilacji j±dra
 oraz niektórych programów.
 
 %prep
-%setup -q -n linux
-
-install  .config
+%setup -q -a30 -n linux
+%patch0 -p1
+%patch1 -p1
+%patch2 -p1
+%patch3 -p1
+%patch4 -p1
+patch -p1 -s <linux-2.2.13-ow1/linux-2.2.13-ow1.diff
 
 %build
 BuildKernel() {
     # is this a special kernel we want to build?
     if [ -n "$1" ] ; then
-	Config=$RPM_ARCH-$1
+	if [ "%{_target_cpu}" = "i586" -o "%{_target_cpu}" = "i686" ] ; then
+	    Config="%{_target_cpu}"-$1
+	else
+	    Config=$RPM_ARCH-$1
+	fi
 	KernelVer=%{version}-%{release}$1
 	echo BUILDING A KERNEL FOR $1...
     else
-	Config=$RPM_ARCH
+	if [ "%{_target_cpu}" = "i586" -o "%{_target_cpu}" = "i686" ] ; then
+	    Config="%{_target_cpu}"
+	else
+	    Config=$RPM_ARCH
+	fi
 	KernelVer=%{version}-%{release}
 	echo BUILDING THE NORMAL KERNEL...
     fi
@@ -229,14 +247,14 @@ BuildKernel() {
     perl -p -i -e "s/^EXTRAVERSION.*/EXTRAVERSION = -%{release}$1/" Makefile
     perl -p -i -e "s/-m386//" arch/i386/Makefile
     perl -p -i -e "s/-m486//" arch/i386/Makefile
-    if [ $1 = "BOOT" ]; then
+    if [ "$1" = "BOOT" ]; then
 #	SIZE_OPT_FLAGS=`echo "$RPM_OPT_FLAGS" | sed -e s/-O[0-9]//`
 #	SIZE_OPT_FLAGS="$SIZE_OPT_FLAGS -g0 -O -Os -fomit-frame-pointer -fno-exceptions -fno-rtti -s -funroll-all-loops"
 # Due to the RISC core nature of recent CPUs, optimized binaries are generally
 # a bit larger than non-optimized ones. Therefore, we completely ignore
 # RPM_OPT_FLAGS settings for the boot kernel, and replace them with the ones
 # known to produce the smallest binaries.
-	SIZE_OPT_FLAGS="-g0 -O -fomit-frame-pointer -fno-exceptions -fno-rtti -funroll-all-loops -ffast-math -m386 -march=pentium -pipe -s -Os"
+	SIZE_OPT_FLAGS="-g0 -O -fomit-frame-pointer -fno-exceptions -fno-rtti -funroll-all-loops -ffast-math -m386 -march=i386 -pipe -s -Os"
         perl -p -i -e "s/^HOSTCFLAGS.*/HOSTCFLAGS = $SIZE_OPT_FLAGS/" Makefile
         perl -p -i -e "s/^CFLAGS_NSR.*/CFLAGS_NSR := $SIZE_OPT_FLAGS/" arch/i386/Makefile
 #	Doesn't seem to work well: perl -p -i -e "s/-malign-loops=2 -malign-jumps=2 -malign-functions=2/-malign-loops=0 -malign-jumps=0 -malign-functions=0/" arch/i386/Makefile
@@ -275,49 +293,49 @@ BuildKernel() {
      make INSTALL_MOD_PATH=$RPM_BUILD_ROOT modules_install KERNELRELEASE=$KernelVer
 }
 
+rm -rf $RPM_BUILD_ROOT
+
 # NORMAL KERNEL
 BuildKernel
 
 # FB-ENABLED KERNEL
-BuildKernel fb
+#BuildKernel fb
 
 # SMP-ENABLED KERNEL
+%ifnarch i386
 BuildKernel smp
+%endif
 
 # SMP and FB-ENABLED KERNEL
-BuildKernel smp-fb
+#BuildKernel smp-fb
 
 # BOOT kernel
+%ifnarch i586 i686
 BuildKernel BOOT
+%endif
 
 %install
-rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT/{boot,sbin,lib/modules} \
-	 $RPM_BUILD_ROOT/usr/{include,src/linux-%{version}}
+rm -rf $RPM_BUILD_ROOT/usr
+install -d $RPM_BUILD_ROOT/usr/{include,src}
 
-install System.map $RPM_BUILD_ROOT/boot/System.map-%{version}-%{release}
+ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT/usr/include/linux
 
-cp arch/i386/boot/bzImage $RPM_BUILD_ROOT/boot/vmlinuz-%{version}-%{release}
-
-make INSTALL_MOD_PATH=$RPM_BUILD_ROOT modules_install
-
-mv $RPM_BUILD_ROOT/lib/modules/%{version} \
-       $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}
-
-ln -sf %{version}-%{release} $RPM_BUILD_ROOT/lib/modules/%{version}
-
+tar Ixf %{SOURCE0} -C $RPM_BUILD_ROOT/usr/src/
+mv -f $RPM_BUILD_ROOT/usr/src/linux $RPM_BUILD_ROOT/usr/src/linux-%{version}
 ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
-
-ln -sf vmlinuz-%{version}-%{release} $RPM_BUILD_ROOT/boot/vmlinuz
-ln -sf System.map-%{version}-%{release} $RPM_BUILD_ROOT/boot/System.map
-
-make mrproper
-
-cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH1} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH3} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-2.2.13-ow1/linux-2.2.13-ow1.diff
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
-install %{SOURCE1} .config
+find  -name "*~" -print | xargs rm -f
+find  -name "*.orig" -print | xargs rm -f
+
+install %{SOURCE10} .config
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
@@ -337,6 +355,7 @@ while read file ; do
 done
 
 make clean
+rm -f scripts/mkdep
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -345,6 +364,14 @@ rm -rf $RPM_BUILD_ROOT
 # loopback in the kernel so that mkinitrd will work.
 #%pre modules
 %pre
+/sbin/modprobe loop 2> /dev/null > /dev/null
+exit 0
+
+%pre smp
+/sbin/modprobe loop 2> /dev/null > /dev/null
+exit 0
+
+%pre BOOT
 /sbin/modprobe loop 2> /dev/null > /dev/null
 exit 0
 
@@ -358,14 +385,52 @@ if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
 	/sbin/lilo 1>&2 || :
 fi
 
-#%post modules 
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release} /lib/modules/%{version}
 
-#%postun modules
+%post smp
+mv -f /boot/vmlinuz /boot/vmlinuz.old
+mv -f /boot/System.map /boot/System.map.old
+ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
+ln -sf System.map-%{version}-%{release}smp /boot/System.map
+
+if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
+	/sbin/lilo 1>&2 || :
+fi
+
+rm -f /lib/modules/%{version}
+ln -snf %{version}-%{release}smp /lib/modules/%{version}
+
+%post BOOT
+mv -f /boot/vmlinuz /boot/vmlinuz.old
+mv -f /boot/System.map /boot/System.map.old
+ln -sf vmlinuz-%{version}-%{release}BOOT /boot/vmlinuz
+ln -sf System.map-%{version}-%{release}BOOT /boot/System.map
+
+if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
+	/sbin/lilo 1>&2 || :
+fi
+
+rm -f /lib/modules/%{version}
+ln -snf %{version}-%{release}BOOT /lib/modules/%{version}
+
 %postun
 if [ -L /lib/modules/%{version} ]; then 
     if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}" ]; then
+	 [ $1 = 0 ] && rm -f /lib/modules/%{version}
+    fi
+fi
+
+%postun smp
+if [ -L /lib/modules/%{version} ]; then 
+    if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp" ]; then
+	 [ $1 = 0 ] && rm -f /lib/modules/%{version}
+    fi
+fi
+
+%postun BOOT
+if [ -L /lib/modules/%{version} ]; then 
+    if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}BOOT" ]; then
 	 [ $1 = 0 ] && rm -f /lib/modules/%{version}
     fi
 fi
@@ -382,67 +447,107 @@ if [ -L /usr/src/linux ]; then
 fi
 
 %files
+%defattr(644,root,root,755)
 %ifarch alpha sparc
-/boot/vmlinux-%{version}
+/boot/vmlinux-%{version}-%{release}
 %endif
-/boot/vmlinuz-%{version}
-/boot/System.map-%{version}
-/boot/module-info-%{version}
-/sbin/installkernel
+/boot/vmlinuz-%{version}-%{release}
+/boot/System.map-%{version}-%{release}
 %dir /lib/modules
-%dir /lib/modules/%{version}
-/lib/modules/%{version}/.rhkmvtag
-/lib/modules/%{version}/block
-/lib/modules/%{version}/cdrom
-/lib/modules/%{version}/fs
-/lib/modules/%{version}/ipv4
-/lib/modules/%{version}/misc
-/lib/modules/%{version}/net
-/lib/modules/%{version}/scsi
+%dir /lib/modules/%{version}-%{release}
+/lib/modules/%{version}-%{release}/atm
+/lib/modules/%{version}-%{release}/block
+/lib/modules/%{version}-%{release}/cdrom
+/lib/modules/%{version}-%{release}/fs
+/lib/modules/%{version}-%{release}/ipv4
+/lib/modules/%{version}-%{release}/ipv6
+/lib/modules/%{version}-%{release}/misc
+/lib/modules/%{version}-%{release}/net
+/lib/modules/%{version}-%{release}/scsi
 %ifarch i386
-/lib/modules/%{version}/video
-/lib/modules/%{version}/pcmcia
+/lib/modules/%{version}-%{release}/video
+#/lib/modules/%{version}-%{release}/pcmcia
 %endif
 
-%files fb
+%ifnarch i386
+%files smp
+%defattr(644,root,root,755)
 %ifarch alpha sparc
-/boot/vmlinux-%{version}fb
+/boot/vmlinux-%{version}-%{release}smp
 %endif
-/boot/vmlinuz-%{version}fb
-/boot/System.map-%{version}fb
-/boot/module-info-%{version}
-/sbin/installkernel
+/boot/vmlinuz-%{version}-%{release}smp
+/boot/System.map-%{version}-%{release}smp
 %dir /lib/modules
-%dir /lib/modules/%{version}fb
-/lib/modules/%{version}fb/.rhkmvtag
-/lib/modules/%{version}fb/block
-/lib/modules/%{version}fb/cdrom
-/lib/modules/%{version}fb/fs
-/lib/modules/%{version}fb/ipv4
-/lib/modules/%{version}fb/misc
-/lib/modules/%{version}fb/net
-/lib/modules/%{version}fb/scsi
-%ifarch i386
-/lib/modules/%{version}fb/video
-/lib/modules/%{version}fb/pcmcia
+%dir /lib/modules/%{version}-%{release}smp
+/lib/modules/%{version}-%{release}smp/atm
+/lib/modules/%{version}-%{release}smp/block
+/lib/modules/%{version}-%{release}smp/cdrom
+/lib/modules/%{version}-%{release}smp/fs
+/lib/modules/%{version}-%{release}smp/ipv4
+/lib/modules/%{version}-%{release}smp/ipv6
+/lib/modules/%{version}-%{release}smp/misc
+/lib/modules/%{version}-%{release}smp/net
+/lib/modules/%{version}-%{release}smp/scsi
+%ifarch %{ix86}
+/lib/modules/%{version}-%{release}smp/video
+#/lib/modules/%{version}-%{release}smp/pcmcia
 %endif
+%endif
+
+%ifnarch i586 i686
+%files BOOT
+%defattr(644,root,root,755)
+%ifarch alpha sparc
+/boot/vmlinux-%{version}-%{release}BOOT
+%endif
+/boot/vmlinuz-%{version}-%{release}BOOT
+/boot/System.map-%{version}-%{release}BOOT
+%dir /lib/modules
+%dir /lib/modules/%{version}-%{release}BOOT
+#/lib/modules/%{version}-%{release}BOOT/atm
+/lib/modules/%{version}-%{release}BOOT/block
+/lib/modules/%{version}-%{release}BOOT/cdrom
+/lib/modules/%{version}-%{release}BOOT/fs
+/lib/modules/%{version}-%{release}BOOT/ipv4
+#/lib/modules/%{version}-%{release}BOOT/ipv6
+/lib/modules/%{version}-%{release}BOOT/misc
+/lib/modules/%{version}-%{release}BOOT/net
+/lib/modules/%{version}-%{release}BOOT/scsi
+#%ifarch i386
+#/lib/modules/%{version}-%{release}BOOT/video
+#/lib/modules/%{version}-%{release}BOOT/pcmcia
+#%endif
+%endif
+
+%files headers
+%defattr(644,root,root,755)
+%dir /usr/src/linux-%{version}
+/usr/src/linux-%{version}/include
+%{_includedir}/linux
 
 %files source
-/usr/src/linux-%{kversion}/COPYING
-/usr/src/linux-%{kversion}/CREDITS
-/usr/src/linux-%{kversion}/Documentation
-/usr/src/linux-%{kversion}/MAINTAINERS
-/usr/src/linux-%{kversion}/Makefile
-/usr/src/linux-%{kversion}/README
-/usr/src/linux-%{kversion}/Rules.make
-/usr/src/linux-%{kversion}/arch/%{_target_cpu}
-/usr/src/linux-%{kversion}/drivers
-/usr/src/linux-%{kversion}/fs
-/usr/src/linux-%{kversion}/init
-/usr/src/linux-%{kversion}/ipc
-/usr/src/linux-%{kversion}/kernel
-/usr/src/linux-%{kversion}/lib
-/usr/src/linux-%{kversion}/mm
-/usr/src/linux-%{kversion}/modules
-/usr/src/linux-%{kversion}/net
-/usr/src/linux-%{kversion}/scripts
+%defattr(644,root,root,755)
+/usr/src/linux-%{version}/Documentation
+/usr/src/linux-%{version}/arch
+/usr/src/linux-%{version}/crypto
+/usr/src/linux-%{version}/drivers
+/usr/src/linux-%{version}/fs
+/usr/src/linux-%{version}/init
+/usr/src/linux-%{version}/ipc
+/usr/src/linux-%{version}/kernel
+/usr/src/linux-%{version}/lib
+/usr/src/linux-%{version}/mm
+/usr/src/linux-%{version}/modules
+/usr/src/linux-%{version}/net
+/usr/src/linux-%{version}/scripts
+/usr/src/linux-%{version}/security
+/usr/src/linux-%{version}/.config
+/usr/src/linux-%{version}/.depend
+/usr/src/linux-%{version}/.hdepend
+/usr/src/linux-%{version}/COPYING
+/usr/src/linux-%{version}/CREDITS
+/usr/src/linux-%{version}/MAINTAINERS
+/usr/src/linux-%{version}/Makefile
+/usr/src/linux-%{version}/README
+/usr/src/linux-%{version}/REPORTING-BUGS
+/usr/src/linux-%{version}/Rules.make
