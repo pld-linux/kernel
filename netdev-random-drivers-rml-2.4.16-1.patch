@@ -1,0 +1,2136 @@
+diff -urN linux-2.4.16/drivers/net/3c501.c linux/drivers/net/3c501.c
+--- linux-2.4.16/drivers/net/3c501.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/3c501.c	Mon Nov 26 16:13:35 2001
+@@ -410,7 +410,8 @@
+ 	if (el_debug > 2)
+ 		printk("%s: Doing el_open()...", dev->name);
+ 
+-	if ((retval = request_irq(dev->irq, &el_interrupt, 0, dev->name, dev)))
++	if ((retval = request_irq(dev->irq, &el_interrupt,
++				SA_SAMPLE_NET_RANDOM, dev->name, dev)))
+ 		return retval;
+ 
+ 	spin_lock_irqsave(&lp->lock, flags);
+diff -urN linux-2.4.16/drivers/net/3c503.c linux/drivers/net/3c503.c
+--- linux-2.4.16/drivers/net/3c503.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/3c503.c	Mon Nov 26 16:13:35 2001
+@@ -338,7 +338,7 @@
+ 		outb_p(0x00, E33G_IDCFR);
+ 		if (*irqp == probe_irq_off(cookie)	/* It's a good IRQ line! */
+ 		    && ((retval = request_irq(dev->irq = *irqp, 
+-		    ei_interrupt, 0, dev->name, dev)) == 0))
++		    ei_interrupt, SA_SAMPLE_NET_RANDOM, dev->name, dev)) == 0))
+ 		    break;
+ 	    }
+ 	} while (*++irqp);
+@@ -347,7 +347,7 @@
+ 	    return retval;
+ 	}
+     } else {
+-	if ((retval = request_irq(dev->irq, ei_interrupt, 0, dev->name, dev))) {
++	if ((retval = request_irq(dev->irq, ei_interrupt, SA_SAMPLE_NET_RANDOM, dev->name, dev))) {
+ 	    return retval;
+ 	}
+     }
+diff -urN linux-2.4.16/drivers/net/3c505.c linux/drivers/net/3c505.c
+--- linux-2.4.16/drivers/net/3c505.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/3c505.c	Mon Nov 26 16:13:35 2001
+@@ -897,7 +897,8 @@
+ 	/*
+ 	 * install our interrupt service routine
+ 	 */
+-	if ((retval = request_irq(dev->irq, &elp_interrupt, 0, dev->name, dev))) {
++	if ((retval = request_irq(dev->irq, &elp_interrupt,
++					SA_SAMPLE_NET_RANDOM, dev->name, dev))) {
+ 		printk(KERN_ERR "%s: could not allocate IRQ%d\n", dev->name, dev->irq);
+ 		return retval;
+ 	}
+diff -urN linux-2.4.16/drivers/net/3c507.c linux/drivers/net/3c507.c
+--- linux-2.4.16/drivers/net/3c507.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/3c507.c	Mon Nov 26 16:13:35 2001
+@@ -363,7 +363,8 @@
+ 
+ 	irq = inb(ioaddr + IRQ_CONFIG) & 0x0f;
+ 
+-	irqval = request_irq(irq, &el16_interrupt, 0, dev->name, dev);
++	irqval = request_irq(irq, &el16_interrupt, SA_SAMPLE_NET_RANDOM,
++			dev->name, dev);
+ 	if (irqval) {
+ 		printk ("unable to get IRQ %d (irqval=%d).\n", irq, irqval);
+ 		retval = -EAGAIN;
+diff -urN linux-2.4.16/drivers/net/3c509.c linux/drivers/net/3c509.c
+--- linux-2.4.16/drivers/net/3c509.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/3c509.c	Mon Nov 26 16:13:35 2001
+@@ -562,7 +562,8 @@
+ 	outw(RxReset, ioaddr + EL3_CMD);
+ 	outw(SetStatusEnb | 0x00, ioaddr + EL3_CMD);
+ 
+-	i = request_irq(dev->irq, &el3_interrupt, 0, dev->name, dev);
++	i = request_irq(dev->irq, &el3_interrupt,
++			SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (i) return i;
+ 
+ 	EL3WINDOW(0);
+diff -urN linux-2.4.16/drivers/net/3c515.c linux/drivers/net/3c515.c
+--- linux-2.4.16/drivers/net/3c515.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/3c515.c	Mon Nov 26 16:13:35 2001
+@@ -790,11 +790,13 @@
+ 		/* Corkscrew: Cannot share ISA resources. */
+ 		if (dev->irq == 0
+ 		    || dev->dma == 0
+-		    || request_irq(dev->irq, &corkscrew_interrupt, 0,
+-				   vp->product_name, dev)) return -EAGAIN;
++		    || request_irq(dev->irq, &corkscrew_interrupt,
++			       SA_SAMPLE_NET_RANDOM,
++			       vp->product_name, dev)) return -EAGAIN;
+ 		enable_dma(dev->dma);
+ 		set_dma_mode(dev->dma, DMA_MODE_CASCADE);
+-	} else if (request_irq(dev->irq, &corkscrew_interrupt, SA_SHIRQ,
++	} else if (request_irq(dev->irq, &corkscrew_interrupt, 
++			       SA_SHIRQ | SA_SAMPLE_NET_RANDOM,
+ 			       vp->product_name, dev)) {
+ 		return -EAGAIN;
+ 	}
+diff -urN linux-2.4.16/drivers/net/3c523.c linux/drivers/net/3c523.c
+--- linux-2.4.16/drivers/net/3c523.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/3c523.c	Mon Nov 26 16:13:35 2001
+@@ -280,8 +280,8 @@
+ 
+ 	elmc_id_attn586();	/* disable interrupts */
+ 
+-	ret = request_irq(dev->irq, &elmc_interrupt, SA_SHIRQ | SA_SAMPLE_RANDOM,
+-			  dev->name, dev);
++	ret = request_irq(dev->irq, &elmc_interrupt,
++		SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (ret) {
+ 		printk(KERN_ERR "%s: couldn't get irq %d\n", dev->name, dev->irq);
+ 		elmc_id_reset586();
+diff -urN linux-2.4.16/drivers/net/3c527.c linux/drivers/net/3c527.c
+--- linux-2.4.16/drivers/net/3c527.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/3c527.c	Mon Nov 26 16:13:36 2001
+@@ -401,7 +401,7 @@
+ 	 *	Grab the IRQ
+ 	 */
+ 
+-	i = request_irq(dev->irq, &mc32_interrupt, SA_SHIRQ, dev->name, dev);
++	i = request_irq(dev->irq, &mc32_interrupt, SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (i) {
+ 		release_region(dev->base_addr, MC32_IO_EXTENT);
+ 		printk(KERN_ERR "%s: unable to get IRQ %d.\n", dev->name, dev->irq);
+diff -urN linux-2.4.16/drivers/net/3c59x.c linux/drivers/net/3c59x.c
+--- linux-2.4.16/drivers/net/3c59x.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/3c59x.c	Mon Nov 26 16:13:36 2001
+@@ -1578,7 +1578,8 @@
+ 
+ 	/* Use the now-standard shared IRQ implementation. */
+ 	if ((retval = request_irq(dev->irq, vp->full_bus_master_rx ?
+-				&boomerang_interrupt : &vortex_interrupt, SA_SHIRQ, dev->name, dev))) {
++			&boomerang_interrupt : &vortex_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev))) {
+ 		printk(KERN_ERR "%s: Could not reserve IRQ %d\n", dev->name, dev->irq);
+ 		goto out;
+ 	}
+diff -urN linux-2.4.16/drivers/net/7990.c linux/drivers/net/7990.c
+--- linux-2.4.16/drivers/net/7990.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/7990.c	Mon Nov 26 16:13:36 2001
+@@ -463,7 +463,7 @@
+         DECLARE_LL;
+         
+         /* Install the Interrupt handler. Or we could shunt this out to specific drivers? */
+-        if (request_irq(lp->irq, lance_interrupt, 0, lp->name, dev))
++        if (request_irq(lp->irq, lance_interrupt, SA_SAMPLE_NET_RANDOM, lp->name, dev))
+                 return -EAGAIN;
+ 
+         res = lance_reset(dev);
+diff -urN linux-2.4.16/drivers/net/8139too.c linux/drivers/net/8139too.c
+--- linux-2.4.16/drivers/net/8139too.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/8139too.c	Mon Nov 26 16:13:36 2001
+@@ -1245,7 +1245,8 @@
+ 	void *ioaddr = tp->mmio_addr;
+ #endif
+ 
+-	retval = request_irq (dev->irq, rtl8139_interrupt, SA_SHIRQ, dev->name, dev);
++	retval = request_irq (dev->irq, rtl8139_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (retval)
+ 		return retval;
+ 
+diff -urN linux-2.4.16/drivers/net/82596.c linux/drivers/net/82596.c
+--- linux-2.4.16/drivers/net/82596.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/82596.c	Mon Nov 26 16:13:36 2001
+@@ -973,7 +973,8 @@
+ 
+ 	DEB(DEB_OPEN,printk("%s: i596_open() irq %d.\n", dev->name, dev->irq));
+ 
+-	if (request_irq(dev->irq, &i596_interrupt, 0, "i82596", dev)) {
++	if (request_irq(dev->irq, &i596_interrupt, SA_SAMPLE_NET_RANDOM,
++			"i82596", dev)) {
+ 		printk("%s: IRQ %d not free\n", dev->name, dev->irq);
+ 		return -EAGAIN;
+ 	}
+diff -urN linux-2.4.16/drivers/net/a2065.c linux/drivers/net/a2065.c
+--- linux-2.4.16/drivers/net/a2065.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/a2065.c	Mon Nov 26 16:13:36 2001
+@@ -495,8 +495,8 @@
+ 	last_dev = dev;
+ 
+ 	/* Install the Interrupt handler */
+-	ret = request_irq(IRQ_AMIGA_PORTS, lance_interrupt, SA_SHIRQ,
+-			  dev->name, dev);
++	ret = request_irq(IRQ_AMIGA_PORTS, lance_interrupt,
++			  SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (ret) return ret;
+ 
+ 	/* Stop the Lance */
+diff -urN linux-2.4.16/drivers/net/ac3200.c linux/drivers/net/ac3200.c
+--- linux-2.4.16/drivers/net/ac3200.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/ac3200.c	Mon Nov 26 16:13:36 2001
+@@ -173,7 +173,8 @@
+ 		printk(", assigning");
+ 	}
+ 
+-	retval = request_irq(dev->irq, ei_interrupt, 0, dev->name, dev);
++	retval = request_irq(dev->irq, ei_interrupt, SA_SAMPLE_NET_RANDOM,
++			dev->name, dev);
+ 	if (retval) {
+ 		printk (" nothing! Unable to get IRQ %d.\n", dev->irq);
+ 		goto out1;
+diff -urN linux-2.4.16/drivers/net/acenic.c linux/drivers/net/acenic.c
+--- linux-2.4.16/drivers/net/acenic.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/acenic.c	Mon Nov 26 16:13:36 2001
+@@ -1360,7 +1360,8 @@
+ 		goto init_error;
+ 	}
+ 
+-	ecode = request_irq(dev->irq, ace_interrupt, SA_SHIRQ, dev->name, dev);
++	ecode = request_irq(dev->irq, ace_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (ecode) {
+ 		printk(KERN_WARNING "%s: Requested IRQ %d is busy\n",
+ 		       dev->name, dev->irq);
+diff -urN linux-2.4.16/drivers/net/aironet4500_card.c linux/drivers/net/aironet4500_card.c
+--- linux-2.4.16/drivers/net/aironet4500_card.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/aironet4500_card.c	Mon Nov 26 16:13:36 2001
+@@ -213,7 +213,7 @@
+ 	dev->watchdog_timeo = AWC_TX_TIMEOUT;
+ 	
+ 
+-	i = request_irq(dev->irq,awc_interrupt, SA_SHIRQ | SA_INTERRUPT, dev->name, dev);
++	i = request_irq(dev->irq,awc_interrupt, SA_SHIRQ | SA_INTERRUPT | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (i) {
+ 		kfree(dev->priv);
+ 		dev->priv = NULL;
+diff -urN linux-2.4.16/drivers/net/am79c961a.c linux/drivers/net/am79c961a.c
+--- linux-2.4.16/drivers/net/am79c961a.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/am79c961a.c	Mon Nov 26 16:13:36 2001
+@@ -267,7 +267,8 @@
+ 
+ 	memset (&priv->stats, 0, sizeof (priv->stats));
+ 
+-	ret = request_irq(dev->irq, am79c961_interrupt, 0, dev->name, dev);
++	ret = request_irq(dev->irq, am79c961_interrupt, SA_SAMPLE_NET_RANDOM,
++			dev->name, dev);
+ 	if (ret)
+ 		return ret;
+ 
+diff -urN linux-2.4.16/drivers/net/apne.c linux/drivers/net/apne.c
+--- linux-2.4.16/drivers/net/apne.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/apne.c	Mon Nov 26 16:13:36 2001
+@@ -287,7 +287,8 @@
+     dev->base_addr = ioaddr;
+ 
+     /* Install the Interrupt handler */
+-    i = request_irq(IRQ_AMIGA_PORTS, apne_interrupt, SA_SHIRQ, dev->name, dev);
++    i = request_irq(IRQ_AMIGA_PORTS, apne_interrupt,
++		    SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+     if (i) return i;
+ 
+     /* Allocate dev->priv and fill in 8390 specific dev fields. */
+diff -urN linux-2.4.16/drivers/net/appletalk/cops.c linux/drivers/net/appletalk/cops.c
+--- linux-2.4.16/drivers/net/appletalk/cops.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/appletalk/cops.c	Mon Nov 26 16:13:36 2001
+@@ -304,7 +304,8 @@
+ 
+ 	/* Reserve any actual interrupt. */
+ 	if(dev->irq) {
+-		retval = request_irq(dev->irq, &cops_interrupt, 0, dev->name, dev);
++		retval = request_irq(dev->irq, &cops_interrupt,
++				SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 		if (retval)
+ 			goto err_out;
+ 	}
+diff -urN linux-2.4.16/drivers/net/appletalk/ltpc.c linux/drivers/net/appletalk/ltpc.c
+--- linux-2.4.16/drivers/net/appletalk/ltpc.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/appletalk/ltpc.c	Mon Nov 26 16:13:36 2001
+@@ -1200,7 +1200,8 @@
+ 
+ 	if (irq) {
+ 		/* grab it and don't let go :-) */
+-		(void) request_irq( irq, &ltpc_interrupt, 0, "ltpc", dev);
++		(void) request_irq(irq, &ltpc_interrupt,
++			SA_SAMPLE_NET_RANDOM, "ltpc", dev);
+ 		(void) inb_p(io+7);  /* enable interrupts from board */
+ 		(void) inb_p(io+7);  /* and reset irq line */
+ 	} else {
+diff -urN linux-2.4.16/drivers/net/arcnet/arc-rimi.c linux/drivers/net/arcnet/arc-rimi.c
+--- linux-2.4.16/drivers/net/arcnet/arc-rimi.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/arcnet/arc-rimi.c	Mon Nov 26 16:13:36 2001
+@@ -121,7 +121,8 @@
+ 	int mirror_size;
+ 
+ 	/* reserve the irq */  {
+-		if (request_irq(dev->irq, &arcnet_interrupt, 0, "arcnet (RIM I)", dev))
++		if (request_irq(dev->irq, &arcnet_interrupt,
++				SA_SAMPLE_NET_RANDOM, "arcnet (RIM I)", dev))
+ 			BUGMSG(D_NORMAL, "Can't get IRQ %d!\n", dev->irq);
+ 		return -ENODEV;
+ 	}
+diff -urN linux-2.4.16/drivers/net/arcnet/com20020.c linux/drivers/net/arcnet/com20020.c
+--- linux-2.4.16/drivers/net/arcnet/com20020.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/arcnet/com20020.c	Mon Nov 26 16:13:36 2001
+@@ -196,7 +196,8 @@
+ 	outb(dev->dev_addr[0], _XREG);
+ 
+ 	/* reserve the irq */
+-	if (request_irq(dev->irq, &arcnet_interrupt, shared,
++	if (request_irq(dev->irq, &arcnet_interrupt,
++			shared | SA_SAMPLE_NET_RANDOM,
+ 			"arcnet (COM20020)", dev)) {
+ 		BUGMSG(D_NORMAL, "Can't get IRQ %d!\n", dev->irq);
+ 		return -ENODEV;
+diff -urN linux-2.4.16/drivers/net/arcnet/com90io.c linux/drivers/net/arcnet/com90io.c
+--- linux-2.4.16/drivers/net/arcnet/com90io.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/arcnet/com90io.c	Mon Nov 26 16:13:36 2001
+@@ -236,7 +236,8 @@
+ 	int ioaddr = dev->base_addr;
+ 
+ 	/* Reserve the irq */
+-	if (request_irq(dev->irq, &arcnet_interrupt, 0, "arcnet (COM90xx-IO)", dev)) {
++	if (request_irq(dev->irq, &arcnet_interrupt,
++			SA_SAMPLE_NET_RANDOM, "arcnet (COM90xx-IO)", dev)) {
+ 		BUGMSG(D_NORMAL, "Can't get IRQ %d!\n", dev->irq);
+ 		return -ENODEV;
+ 	}
+diff -urN linux-2.4.16/drivers/net/arcnet/com90xx.c linux/drivers/net/arcnet/com90xx.c
+--- linux-2.4.16/drivers/net/arcnet/com90xx.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/arcnet/com90xx.c	Mon Nov 26 16:13:36 2001
+@@ -472,7 +472,8 @@
+ 	dev->dev_addr[0] = readb(lp->mem_start + 1);
+ 
+ 	/* reserve the irq */
+-	if (request_irq(airq, &arcnet_interrupt, 0, "arcnet (90xx)", dev)) {
++	if (request_irq(airq, &arcnet_interrupt, SA_SAMPLE_NET_RANDOM,
++			"arcnet (90xx)", dev)) {
+ 		BUGMSG(D_NORMAL, "Can't get IRQ %d!\n", airq);
+ 		goto err_unmap;
+ 	}
+diff -urN linux-2.4.16/drivers/net/ariadne.c linux/drivers/net/ariadne.c
+--- linux-2.4.16/drivers/net/ariadne.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/ariadne.c	Mon Nov 26 16:13:36 2001
+@@ -313,8 +313,8 @@
+ 
+     netif_start_queue(dev);
+ 
+-    i = request_irq(IRQ_AMIGA_PORTS, ariadne_interrupt, SA_SHIRQ,
+-                    dev->name, dev);
++    i = request_irq(IRQ_AMIGA_PORTS, ariadne_interrupt,
++		    SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+     if (i) return i;
+ 
+     lance->RAP = CSR0;		/* PCnet-ISA Controller Status */
+diff -urN linux-2.4.16/drivers/net/ariadne2.c linux/drivers/net/ariadne2.c
+--- linux-2.4.16/drivers/net/ariadne2.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/ariadne2.c	Mon Nov 26 16:13:36 2001
+@@ -194,7 +194,8 @@
+     dev->irq = IRQ_AMIGA_PORTS;
+ 
+     /* Install the Interrupt handler */
+-    i = request_irq(IRQ_AMIGA_PORTS, ei_interrupt, SA_SHIRQ, dev->name, dev);
++    i = request_irq(IRQ_AMIGA_PORTS, ei_interrupt,
++		    SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+     if (i) return i;
+ 
+     /* Allocate dev->priv and fill in 8390 specific dev fields. */
+diff -urN linux-2.4.16/drivers/net/arlan.c linux/drivers/net/arlan.c
+--- linux-2.4.16/drivers/net/arlan.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/arlan.c	Mon Nov 26 16:13:36 2001
+@@ -1299,7 +1299,8 @@
+ 		return ret;
+ 
+ 	arlan = ((struct arlan_private *) dev->priv)->card;
+-	ret = request_irq(dev->irq, &arlan_interrupt, 0, dev->name, dev);
++	ret = request_irq(dev->irq, &arlan_interrupt, SA_SAMPLE_NET_RANDOM,
++			dev->name, dev);
+ 	if (ret)
+ 	{
+ 		printk(KERN_ERR "%s: unable to get IRQ %d .\n",
+diff -urN linux-2.4.16/drivers/net/at1700.c linux/drivers/net/at1700.c
+--- linux-2.4.16/drivers/net/at1700.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/at1700.c	Mon Nov 26 16:13:36 2001
+@@ -439,7 +439,8 @@
+ 	lp->jumpered = is_fmv18x;
+ 	lp->mca_slot = slot;
+ 	/* Snarf the interrupt vector now. */
+-	ret = request_irq(irq, &net_interrupt, 0, dev->name, dev);
++	ret = request_irq(irq, &net_interrupt, SA_SAMPLE_NET_RANDOM,
++			dev->name, dev);
+ 	if (ret) {
+ 		printk ("  AT1700 at %#3x is unusable due to a conflict on"
+ 				"IRQ %d.\n", ioaddr, irq);
+diff -urN linux-2.4.16/drivers/net/atarilance.c linux/drivers/net/atarilance.c
+--- linux-2.4.16/drivers/net/atarilance.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/atarilance.c	Mon Nov 26 16:13:36 2001
+@@ -546,7 +546,8 @@
+ 	if (lp->cardtype == PAM_CARD ||
+ 		memaddr == (unsigned short *)0xffe00000) {
+ 		/* PAMs card and Riebl on ST use level 5 autovector */
+-		request_irq(IRQ_AUTO_5, lance_interrupt, IRQ_TYPE_PRIO,
++		request_irq(IRQ_AUTO_5, lance_interrupt,
++		            IRQ_TYPE_PRIO | SA_SAMPLE_NET_RANDOM,
+ 		            "PAM/Riebl-ST Ethernet", dev);
+ 		dev->irq = (unsigned short)IRQ_AUTO_5;
+ 	}
+@@ -560,7 +561,8 @@
+ 			printk( "Lance: request for VME interrupt failed\n" );
+ 			return( 0 );
+ 		}
+-		request_irq(irq, lance_interrupt, IRQ_TYPE_PRIO,
++		request_irq(irq, lance_interrupt,
++		            IRQ_TYPE_PRIO | SA_SAMPLE_NET_RANDOM,
+ 		            "Riebl-VME Ethernet", dev);
+ 		dev->irq = irq;
+ 	}
+diff -urN linux-2.4.16/drivers/net/atp.c linux/drivers/net/atp.c
+--- linux-2.4.16/drivers/net/atp.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/atp.c	Mon Nov 26 16:13:36 2001
+@@ -438,7 +438,8 @@
+ 	/* The interrupt line is turned off (tri-stated) when the device isn't in
+ 	   use.  That's especially important for "attached" interfaces where the
+ 	   port or interrupt may be shared. */
+-	ret = request_irq(dev->irq, &atp_interrupt, 0, dev->name, dev);
++	ret = request_irq(dev->irq, &atp_interrupt, SA_SAMPLE_NET_RANDOM,
++			dev->name, dev);
+ 	if (ret)
+ 		return ret;
+ 
+diff -urN linux-2.4.16/drivers/net/au1000_eth.c linux/drivers/net/au1000_eth.c
+--- linux-2.4.16/drivers/net/au1000_eth.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/au1000_eth.c	Mon Nov 26 16:13:36 2001
+@@ -819,7 +819,8 @@
+ 	}
+ 	netif_start_queue(dev);
+ 
+-	if ((retval = request_irq(dev->irq, &au1000_interrupt, 0, dev->name, dev))) {
++	if ((retval = request_irq(dev->irq, &au1000_interrupt,
++			SA_SAMPLE_NET_RANDOM, dev->name, dev))) {
+ 		printk(KERN_ERR "%s: unable to get IRQ %d\n", dev->name, dev->irq);
+ 		MOD_DEC_USE_COUNT;
+ 		return retval;
+diff -urN linux-2.4.16/drivers/net/bagetlance.c linux/drivers/net/bagetlance.c
+--- linux-2.4.16/drivers/net/bagetlance.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/bagetlance.c	Mon Nov 26 16:13:36 2001
+@@ -622,7 +622,8 @@
+ 	if (lp->cardtype == PAM_CARD ||
+ 		memaddr == (unsigned short *)0xffe00000) {
+ 		/* PAMs card and Riebl on ST use level 5 autovector */
+-		request_irq(BAGET_LANCE_IRQ, lance_interrupt, IRQ_TYPE_PRIO,
++		request_irq(BAGET_LANCE_IRQ, lance_interrupt,
++		            IRQ_TYPE_PRIO | SA_SAMPLE_NET_RANDOM,
+ 		            "PAM/Riebl-ST Ethernet", dev);
+ 		dev->irq = (unsigned short)BAGET_LANCE_IRQ;
+ 	}
+diff -urN linux-2.4.16/drivers/net/bmac.c linux/drivers/net/bmac.c
+--- linux-2.4.16/drivers/net/bmac.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/bmac.c	Mon Nov 26 16:13:36 2001
+@@ -1405,17 +1405,20 @@
+ 	/*     init_timer(&bp->tx_timeout); */
+ 	/*     bp->timeout_active = 0; */
+ 
+-	ret = request_irq(dev->irq, bmac_misc_intr, 0, "BMAC-misc", dev);
++	ret = request_irq(dev->irq, bmac_misc_intr, SA_SAMPLE_NET_RANDOM,
++			"BMAC-misc", dev);
+ 	if (ret) {
+ 		printk(KERN_ERR "BMAC: can't get irq %d\n", dev->irq);
+ 		goto err_out_iounmap_rx;
+ 	}
+-	ret = request_irq(bmac->intrs[1].line, bmac_txdma_intr, 0, "BMAC-txdma", dev);
++	ret = request_irq(bmac->intrs[1].line, bmac_txdma_intr,
++			SA_SAMPLE_NET_RANDOM, "BMAC-txdma", dev);
+ 	if (ret) {
+ 		printk(KERN_ERR "BMAC: can't get irq %d\n", bmac->intrs[1].line);
+ 		goto err_out_irq0;
+ 	}
+-	ret = request_irq(bmac->intrs[2].line, bmac_rxdma_intr, 0, "BMAC-rxdma", dev);
++	ret = request_irq(bmac->intrs[2].line, bmac_rxdma_intr,
++			SA_SAMPLE_NET_RANDOM, "BMAC-rxdma", dev);
+ 	if (ret) {
+ 		printk(KERN_ERR "BMAC: can't get irq %d\n", bmac->intrs[2].line);
+ 		goto err_out_irq1;
+diff -urN linux-2.4.16/drivers/net/cs89x0.c linux/drivers/net/cs89x0.c
+--- linux-2.4.16/drivers/net/cs89x0.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/cs89x0.c	Mon Nov 26 16:13:36 2001
+@@ -1057,7 +1057,7 @@
+ 
+ 		for (i = 2; i < CS8920_NO_INTS; i++) {
+ 			if ((1 << dev->irq) & lp->irq_map) {
+-				if (request_irq(i, net_interrupt, 0, dev->name, dev) == 0) {
++				if (request_irq(i, net_interrupt, SA_SAMPLE_NET_RANDOM, dev->name, dev) == 0) {
+ 					dev->irq = i;
+ 					write_irq(dev, lp->chip_type, i);
+ 					/* writereg(dev, PP_BufCFG, GENERATE_SW_INTERRUPT); */
+@@ -1086,7 +1086,8 @@
+ 		writereg(dev, PP_BusCTL, ENABLE_IRQ | MEMORY_ON);
+ #endif
+ 		write_irq(dev, lp->chip_type, dev->irq);
+-		ret = request_irq(dev->irq, &net_interrupt, 0, dev->name, dev);
++		ret = request_irq(dev->irq, &net_interrupt,
++				SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 		if (ret) {
+ 			if (net_debug)
+ 				printk(KERN_DEBUG "cs89x0: request_irq(%d) failed\n", dev->irq);
+diff -urN linux-2.4.16/drivers/net/daynaport.c linux/drivers/net/daynaport.c
+--- linux-2.4.16/drivers/net/daynaport.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/daynaport.c	Mon Nov 26 16:13:36 2001
+@@ -643,7 +643,8 @@
+ 	/*                             - funaho@jurai.org (1999-05-17) */
+ 
+ 	/* Non-slow interrupt, works around issues with the SONIC driver */
+-	ret = request_irq(dev->irq, ei_interrupt, 0, dev->name, dev); 
++	ret = request_irq(dev->irq, ei_interrupt, SA_SAMPLE_NET_RANDOM,
++			dev->name, dev); 
+ 	if (ret) {
+ 		printk ("%s: unable to get IRQ %d.\n", dev->name, dev->irq);
+ 		return ret;
+diff -urN linux-2.4.16/drivers/net/de4x5.c linux/drivers/net/de4x5.c
+--- linux-2.4.16/drivers/net/de4x5.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/de4x5.c	Mon Nov 26 16:13:36 2001
+@@ -1404,11 +1404,12 @@
+     lp->state = OPEN;
+     de4x5_dbg_open(dev);
+     
+-    if (request_irq(dev->irq, (void *)de4x5_interrupt, SA_SHIRQ, 
+-		                                     lp->adapter_name, dev)) {
++    if (request_irq(dev->irq, (void *)de4x5_interrupt,
++            SA_SHIRQ | SA_SAMPLE_NET_RANDOM, lp->adapter_name, dev)) {
+ 	printk("de4x5_open(): Requested IRQ%d is busy - attemping FAST/SHARE...", dev->irq);
+-	if (request_irq(dev->irq, de4x5_interrupt, SA_INTERRUPT | SA_SHIRQ,
+-			                             lp->adapter_name, dev)) {
++	if (request_irq(dev->irq, de4x5_interrupt,
++                SA_INTERRUPT | SA_SHIRQ | SA_SAMPLE_NET_RANDOM,
++     	        lp->adapter_name, dev)) {
+ 	    printk("\n              Cannot get IRQ- reconfigure your hardware.\n");
+ 	    disable_ast(dev);
+ 	    de4x5_free_rx_buffs(dev);
+diff -urN linux-2.4.16/drivers/net/de600.c linux/drivers/net/de600.c
+--- linux-2.4.16/drivers/net/de600.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/de600.c	Mon Nov 26 16:13:36 2001
+@@ -344,7 +344,8 @@
+ static int
+ de600_open(struct net_device *dev)
+ {
+-	int ret = request_irq(DE600_IRQ, de600_interrupt, 0, dev->name, dev);
++	int ret = request_irq(DE600_IRQ, de600_interrupt, SA_SAMPLE_NET_RANDOM,
++			dev->name, dev);
+ 	if (ret) {
+ 		printk ("%s: unable to get IRQ %d\n", dev->name, DE600_IRQ);
+ 		return ret;
+diff -urN linux-2.4.16/drivers/net/de620.c linux/drivers/net/de620.c
+--- linux-2.4.16/drivers/net/de620.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/de620.c	Mon Nov 26 16:13:36 2001
+@@ -443,7 +443,8 @@
+  */
+ static int de620_open(struct net_device *dev)
+ {
+-	int ret = request_irq(dev->irq, de620_interrupt, 0, dev->name, dev);
++	int ret = request_irq(dev->irq, de620_interrupt, SA_SAMPLE_NET_RANDOM,
++			dev->name, dev);
+ 	if (ret) {
+ 		printk (KERN_ERR "%s: unable to get IRQ %d\n", dev->name, dev->irq);
+ 		return ret;
+diff -urN linux-2.4.16/drivers/net/declance.c linux/drivers/net/declance.c
+--- linux-2.4.16/drivers/net/declance.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/declance.c	Mon Nov 26 16:13:36 2001
+@@ -800,7 +800,8 @@
+ 	netif_start_queue(dev);
+ 
+ 	/* Associate IRQ with lance_interrupt */
+-	if (request_irq(dev->irq, &lance_interrupt, 0, lp->name, dev)) {
++	if (request_irq(dev->irq, &lance_interrupt, SA_SAMPLE_NET_RANDOM,
++				lp->name, dev)) {
+ 		printk("Lance: Can't get irq %d\n", dev->irq);
+ 		return -EAGAIN;
+ 	}
+diff -urN linux-2.4.16/drivers/net/defxx.c linux/drivers/net/defxx.c
+--- linux-2.4.16/drivers/net/defxx.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/defxx.c	Mon Nov 26 16:13:36 2001
+@@ -1218,7 +1218,8 @@
+ 	
+ 	/* Register IRQ - support shared interrupts by passing device ptr */
+ 
+-	ret = request_irq(dev->irq, (void *)dfx_interrupt, SA_SHIRQ, dev->name, dev);
++	ret = request_irq(dev->irq, (void *)dfx_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (ret) {
+ 		printk(KERN_ERR "%s: Requested IRQ %d is busy\n", dev->name, dev->irq);
+ 		return ret;
+diff -urN linux-2.4.16/drivers/net/depca.c linux/drivers/net/depca.c
+--- linux-2.4.16/drivers/net/depca.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/depca.c	Mon Nov 26 16:13:36 2001
+@@ -780,7 +780,8 @@
+ 
+   depca_dbg_open(dev);
+ 
+-  if (request_irq(dev->irq, &depca_interrupt, 0, lp->adapter_name, dev)) {
++  if (request_irq(dev->irq, &depca_interrupt, SA_SAMPLE_NET_RANDOM,
++			  lp->adapter_name, dev)) {
+     printk("depca_open(): Requested IRQ%d is busy\n",dev->irq);
+     status = -EAGAIN;
+   } else {
+diff -urN linux-2.4.16/drivers/net/dgrs.c linux/drivers/net/dgrs.c
+--- linux-2.4.16/drivers/net/dgrs.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/dgrs.c	Mon Nov 26 16:13:36 2001
+@@ -1178,7 +1178,8 @@
+ 	 */
+ 	if (priv->plxreg)
+ 		OUTL(dev->base_addr + PLX_LCL2PCI_DOORBELL, 1);
+-	rc = request_irq(dev->irq, &dgrs_intr, SA_SHIRQ, "RightSwitch", dev);
++	rc = request_irq(dev->irq, &dgrs_intr, SA_SHIRQ | SA_SAMPLE_NET_RANDOM,
++			"RightSwitch", dev);
+ 	if (rc)
+ 		return (rc);
+ 
+diff -urN linux-2.4.16/drivers/net/dl2k.c linux/drivers/net/dl2k.c
+--- linux-2.4.16/drivers/net/dl2k.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/dl2k.c	Mon Nov 26 16:13:36 2001
+@@ -386,7 +386,8 @@
+ 	long ioaddr = dev->base_addr;
+ 	int i;
+ 
+-	i = request_irq (dev->irq, &rio_interrupt, SA_SHIRQ, dev->name, dev);
++	i = request_irq (dev->irq, &rio_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (i)
+ 		return i;
+ 
+diff -urN linux-2.4.16/drivers/net/dmfe.c linux/drivers/net/dmfe.c
+--- linux-2.4.16/drivers/net/dmfe.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/dmfe.c	Mon Nov 26 16:13:36 2001
+@@ -562,7 +562,8 @@
+ 
+ 	DMFE_DBUG(0, "dmfe_open", 0);
+ 
+-	ret = request_irq(dev->irq, &dmfe_interrupt, SA_SHIRQ, dev->name, dev);
++	ret = request_irq(dev->irq, &dmfe_interrupt,
++		SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (ret)
+ 		return ret;
+ 
+diff -urN linux-2.4.16/drivers/net/e2100.c linux/drivers/net/e2100.c
+--- linux-2.4.16/drivers/net/e2100.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/e2100.c	Mon Nov 26 16:13:36 2001
+@@ -261,7 +261,8 @@
+ 	short ioaddr = dev->base_addr;
+ 	int retval;
+ 
+-	if ((retval = request_irq(dev->irq, ei_interrupt, 0, dev->name, dev)))
++	if ((retval = request_irq(dev->irq, ei_interrupt,
++			SA_SAMPLE_NET_RANDOM, dev->name, dev)))
+ 		return retval;
+ 
+ 	/* Set the interrupt line and memory base on the hardware. */
+diff -urN linux-2.4.16/drivers/net/eepro.c linux/drivers/net/eepro.c
+--- linux-2.4.16/drivers/net/eepro.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/eepro.c	Mon Nov 26 16:14:10 2001
+@@ -962,7 +962,7 @@
+ 		return -EAGAIN;
+ 	}
+ 
+-	if (request_irq(dev->irq , &eepro_interrupt, 0, dev->name, dev)) {
++	if (request_irq(dev->irq , &eepro_interrupt, SA_SAMPLE_NET_RANDOM, dev->name, dev)) {
+ 		printk(KERN_ERR "%s: unable to get IRQ %d.\n", dev->name, dev->irq);
+ 		return -EAGAIN;
+ 	}
+diff -urN linux-2.4.16/drivers/net/eepro100.c linux/drivers/net/eepro100.c
+--- linux-2.4.16/drivers/net/eepro100.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/eepro100.c	Mon Nov 26 16:13:36 2001
+@@ -943,7 +943,8 @@
+ 	sp->in_interrupt = 0;
+ 
+ 	/* .. we can safely take handler calls during init. */
+-	retval = request_irq(dev->irq, &speedo_interrupt, SA_SHIRQ, dev->name, dev);
++	retval = request_irq(dev->irq, &speedo_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (retval) {
+ 		MOD_DEC_USE_COUNT;
+ 		return retval;
+diff -urN linux-2.4.16/drivers/net/eexpress.c linux/drivers/net/eexpress.c
+--- linux-2.4.16/drivers/net/eexpress.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/eexpress.c	Mon Nov 26 16:13:36 2001
+@@ -433,7 +433,8 @@
+ 	if (!dev->irq || !irqrmap[dev->irq])
+ 		return -ENXIO;
+ 
+-	ret = request_irq(dev->irq,&eexp_irq,0,dev->name,dev);
++	ret = request_irq(dev->irq,&eexp_irq,SA_SAMPLE_NET_RANDOM,
++			dev->name,dev);
+ 	if (ret) return ret;
+ 
+ 	request_region(ioaddr, EEXP_IO_EXTENT, "EtherExpress");
+diff -urN linux-2.4.16/drivers/net/epic100.c linux/drivers/net/epic100.c
+--- linux-2.4.16/drivers/net/epic100.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/epic100.c	Mon Nov 26 16:13:36 2001
+@@ -661,7 +661,8 @@
+ 	/* Soft reset the chip. */
+ 	outl(0x4001, ioaddr + GENCTL);
+ 
+-	if ((retval = request_irq(dev->irq, &epic_interrupt, SA_SHIRQ, dev->name, dev)))
++	if ((retval = request_irq(dev->irq, &epic_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev)))
+ 		return retval;
+ 
+ 	epic_init_ring(dev);
+diff -urN linux-2.4.16/drivers/net/es3210.c linux/drivers/net/es3210.c
+--- linux-2.4.16/drivers/net/es3210.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/es3210.c	Mon Nov 26 16:13:36 2001
+@@ -212,7 +212,8 @@
+ 		printk(" assigning IRQ %d", dev->irq);
+ 	}
+ 
+-	if (request_irq(dev->irq, ei_interrupt, 0, "es3210", dev)) {
++	if (request_irq(dev->irq, ei_interrupt, SA_SAMPLE_NET_RANDOM,
++			"es3210", dev)) {
+ 		printk (" unable to get IRQ %d.\n", dev->irq);
+ 		retval = -EAGAIN;
+ 		goto out;
+diff -urN linux-2.4.16/drivers/net/eth16i.c linux/drivers/net/eth16i.c
+--- linux-2.4.16/drivers/net/eth16i.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/eth16i.c	Mon Nov 26 16:13:36 2001
+@@ -521,7 +521,8 @@
+ 
+ 	/* Try to obtain interrupt vector */
+ 
+-	if ((retval = request_irq(dev->irq, (void *)&eth16i_interrupt, 0, dev->name, dev))) {
++	if ((retval = request_irq(dev->irq, (void *)&eth16i_interrupt,
++			SA_SAMPLE_NET_RANDOM, dev->name, dev))) {
+ 		printk(KERN_WARNING "%s: %s at %#3x, but is unusable due conflicting IRQ %d.\n", 
+ 		       dev->name, cardname, ioaddr, dev->irq);
+ 		goto out;
+diff -urN linux-2.4.16/drivers/net/ewrk3.c linux/drivers/net/ewrk3.c
+--- linux-2.4.16/drivers/net/ewrk3.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/ewrk3.c	Mon Nov 26 16:13:36 2001
+@@ -640,7 +640,8 @@
+ 	STOP_EWRK3;
+ 
+ 	if (!lp->hard_strapped) {
+-		if (request_irq(dev->irq, (void *) ewrk3_interrupt, 0, "ewrk3", dev)) {
++		if (request_irq(dev->irq, (void *) ewrk3_interrupt,
++				SA_SAMPLE_NET_RANDOM, "ewrk3", dev)) {
+ 			printk("ewrk3_open(): Requested IRQ%d is busy\n", dev->irq);
+ 			status = -EAGAIN;
+ 		} else {
+diff -urN linux-2.4.16/drivers/net/fc/iph5526.c linux/drivers/net/fc/iph5526.c
+--- linux-2.4.16/drivers/net/fc/iph5526.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/fc/iph5526.c	Mon Nov 26 16:13:36 2001
+@@ -3844,7 +3844,7 @@
+ 		int irqval = 0;
+ 			/* Found it, get IRQ.
+ 			 */
+-			irqval = request_irq(pci_irq_line, &tachyon_interrupt, pci_irq_line ? SA_SHIRQ : 0, fi->name, host);
++			irqval = request_irq(pci_irq_line, &tachyon_interrupt, pci_irq_line ? SA_SHIRQ : 0 | SA_SAMPLE_NET_RANDOM, fi->name, host);
+ 			if (irqval) {
+ 				printk("iph5526.c : Unable to get IRQ %d (irqval = %d).\n", pci_irq_line, irqval);
+ 				scsi_unregister(host);
+diff -urN linux-2.4.16/drivers/net/fealnx.c linux/drivers/net/fealnx.c
+--- linux-2.4.16/drivers/net/fealnx.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/fealnx.c	Mon Nov 26 16:13:36 2001
+@@ -865,7 +865,8 @@
+ 
+ 	writel(0x00000001, ioaddr + BCR);	/* Reset */
+ 
+-	if (request_irq(dev->irq, &intr_handler, SA_SHIRQ, dev->name, dev))
++	if (request_irq(dev->irq, &intr_handler,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev))
+ 		return -EAGAIN;
+ 
+ 	init_ring(dev);
+diff -urN linux-2.4.16/drivers/net/fmv18x.c linux/drivers/net/fmv18x.c
+--- linux-2.4.16/drivers/net/fmv18x.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/fmv18x.c	Mon Nov 26 16:13:36 2001
+@@ -200,7 +200,8 @@
+ 	}
+ 
+ 	/* Snarf the interrupt vector now. */
+-	retval = request_irq(irq, &net_interrupt, 0, dev->name, dev);
++	retval = request_irq(irq, &net_interrupt, SA_SAMPLE_NET_RANDOM,
++			dev->name, dev);
+ 	if (retval) {
+ 		printk ("FMV-18x found at %#3x, but it's unusable due to a conflict on"
+ 				"IRQ %d.\n", ioaddr, irq);
+diff -urN linux-2.4.16/drivers/net/gmac.c linux/drivers/net/gmac.c
+--- linux-2.4.16/drivers/net/gmac.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/gmac.c	Mon Nov 26 16:13:36 2001
+@@ -1082,7 +1082,8 @@
+ 		return -EIO;
+ 
+ 	/* Get our interrupt */
+-	ret = request_irq(dev->irq, gmac_interrupt, 0, dev->name, dev);
++	ret = request_irq(dev->irq, gmac_interrupt,
++			SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (ret) {
+ 		printk(KERN_ERR "%s can't get irq %d\n", dev->name, dev->irq);
+ 		return ret;
+diff -urN linux-2.4.16/drivers/net/gt96100eth.c linux/drivers/net/gt96100eth.c
+--- linux-2.4.16/drivers/net/gt96100eth.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/gt96100eth.c	Mon Nov 26 16:13:36 2001
+@@ -826,7 +826,8 @@
+ 		printk("%s: gt96100_open: dev=%p\n", dev->name, dev);
+ 
+ 	if ((retval = request_irq(dev->irq, &gt96100_interrupt,
+-				  SA_SHIRQ, dev->name, dev))) {
++				  SA_SHIRQ | SA_SAMPLE_NET_RANDOM,
++				  dev->name, dev))) {
+ 		printk(KERN_ERR "%s: unable to get IRQ %d\n", dev->name,
+ 		       dev->irq);
+ 		MOD_DEC_USE_COUNT;
+diff -urN linux-2.4.16/drivers/net/hamachi.c linux/drivers/net/hamachi.c
+--- linux-2.4.16/drivers/net/hamachi.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/hamachi.c	Mon Nov 26 16:13:36 2001
+@@ -849,7 +849,8 @@
+ 	u32 rx_int_var, tx_int_var;
+ 	u16 fifo_info;
+ 
+-	i = request_irq(dev->irq, &hamachi_interrupt, SA_SHIRQ, dev->name, dev);
++	i = request_irq(dev->irq, &hamachi_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (i)
+ 		return i;
+ 
+diff -urN linux-2.4.16/drivers/net/hamradio/baycom_ser_fdx.c linux/drivers/net/hamradio/baycom_ser_fdx.c
+--- linux-2.4.16/drivers/net/hamradio/baycom_ser_fdx.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/hamradio/baycom_ser_fdx.c	Mon Nov 26 16:13:36 2001
+@@ -428,7 +428,8 @@
+ 	outb(0, FCR(dev->base_addr));  /* disable FIFOs */
+ 	outb(0x0d, MCR(dev->base_addr));
+ 	outb(0, IER(dev->base_addr));
+-	if (request_irq(dev->irq, ser12_interrupt, SA_INTERRUPT | SA_SHIRQ,
++	if (request_irq(dev->irq, ser12_interrupt,
++			SA_INTERRUPT | SA_SHIRQ | SA_SAMPLE_NET_RANDOM,
+ 			"baycom_ser_fdx", dev))
+ 		return -EBUSY;
+ 	request_region(dev->base_addr, SER12_EXTENT, "baycom_ser_fdx");
+diff -urN linux-2.4.16/drivers/net/hamradio/baycom_ser_hdx.c linux/drivers/net/hamradio/baycom_ser_hdx.c
+--- linux-2.4.16/drivers/net/hamradio/baycom_ser_hdx.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/hamradio/baycom_ser_hdx.c	Mon Nov 26 16:13:36 2001
+@@ -485,7 +485,8 @@
+ 	outb(0, FCR(dev->base_addr));  /* disable FIFOs */
+ 	outb(0x0d, MCR(dev->base_addr));
+ 	outb(0, IER(dev->base_addr));
+-	if (request_irq(dev->irq, ser12_interrupt, SA_INTERRUPT | SA_SHIRQ,
++	if (request_irq(dev->irq, ser12_interrupt,
++			SA_INTERRUPT | SA_SHIRQ | SA_SAMPLE_NET_RANDOM,
+ 			"baycom_ser12", dev))
+ 		return -EBUSY;
+ 	request_region(dev->base_addr, SER12_EXTENT, "baycom_ser12");
+diff -urN linux-2.4.16/drivers/net/hamradio/dmascc.c linux/drivers/net/hamradio/dmascc.c
+--- linux-2.4.16/drivers/net/hamradio/dmascc.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/hamradio/dmascc.c	Mon Nov 26 16:13:36 2001
+@@ -712,7 +712,7 @@
+ 
+   /* Request IRQ if not already used by other channel */
+   if (!info->irq_used) {
+-    if (request_irq(dev->irq, scc_isr, 0, "dmascc", info)) {
++    if (request_irq(dev->irq, scc_isr, SA_SAMPLE_NET_RANDOM, "dmascc", info)) {
+       MOD_DEC_USE_COUNT;
+       return -EAGAIN;
+     }
+diff -urN linux-2.4.16/drivers/net/hamradio/scc.c linux/drivers/net/hamradio/scc.c
+--- linux-2.4.16/drivers/net/hamradio/scc.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/hamradio/scc.c	Mon Nov 26 16:13:36 2001
+@@ -1769,7 +1769,7 @@
+ 				
+ 			if (!Ivec[hwcfg.irq].used && hwcfg.irq)
+ 			{
+-				if (request_irq(hwcfg.irq, scc_isr, SA_INTERRUPT, "AX.25 SCC", NULL))
++				if (request_irq(hwcfg.irq, scc_isr, SA_INTERRUPT | SA_SAMPLE_NET_RANDOM, "AX.25 SCC", NULL))
+ 					printk(KERN_WARNING "z8530drv: warning, cannot get IRQ %d\n", hwcfg.irq);
+ 				else
+ 					Ivec[hwcfg.irq].used = 1;
+diff -urN linux-2.4.16/drivers/net/hamradio/soundmodem/sm_sbc.c linux/drivers/net/hamradio/soundmodem/sm_sbc.c
+--- linux-2.4.16/drivers/net/hamradio/soundmodem/sm_sbc.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/hamradio/soundmodem/sm_sbc.c	Mon Nov 26 16:13:36 2001
+@@ -436,7 +436,8 @@
+ 		kfree(sm->dma.obuf);
+ 		return -EBUSY;
+ 	}
+-	if (request_irq(dev->irq, sbc_interrupt, SA_INTERRUPT, 
++	if (request_irq(dev->irq, sbc_interrupt,
++			SA_INTERRUPT | SA_SAMPLE_NET_RANDOM, 
+ 			sm->hwdrv->hw_name, dev)) {
+ 		free_dma(dev->dma);
+ 		kfree(sm->dma.obuf);
+@@ -815,7 +816,8 @@
+ 		free_dma(dev->dma);
+ 		return -EBUSY;
+ 	}
+-	if (request_irq(dev->irq, sbcfdx_interrupt, SA_INTERRUPT, 
++	if (request_irq(dev->irq, sbcfdx_interrupt,
++			SA_INTERRUPT | SA_SAMPLE_NET_RANDOM, 
+ 			sm->hwdrv->hw_name, dev)) {
+ 		kfree(sm->dma.ibuf);
+ 		kfree(sm->dma.obuf);
+diff -urN linux-2.4.16/drivers/net/hamradio/soundmodem/sm_wss.c linux/drivers/net/hamradio/soundmodem/sm_wss.c
+--- linux-2.4.16/drivers/net/hamradio/soundmodem/sm_wss.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/hamradio/soundmodem/sm_wss.c	Mon Nov 26 16:13:36 2001
+@@ -473,7 +473,8 @@
+ 		kfree(sm->dma.obuf);
+ 		return -EBUSY;
+ 	}
+-	if (request_irq(dev->irq, wss_interrupt, SA_INTERRUPT, 
++	if (request_irq(dev->irq, wss_interrupt,
++			SA_INTERRUPT | SA_SAMPLE_NET_RANDOM,
+ 			sm->hwdrv->hw_name, dev)) {
+ 		free_dma(dev->dma);
+ 		kfree(sm->dma.obuf);
+@@ -827,7 +828,8 @@
+ 		free_dma(dev->dma);
+ 		return -EBUSY;
+ 	}
+-	if (request_irq(dev->irq, wssfdx_interrupt, SA_INTERRUPT, 
++	if (request_irq(dev->irq, wssfdx_interrupt,
++			SA_INTERRUPT | SA_SAMPLE_NET_RANDOM,
+ 			sm->hwdrv->hw_name, dev)) {
+ 		kfree(sm->dma.ibuf);
+ 		kfree(sm->dma.obuf);
+diff -urN linux-2.4.16/drivers/net/hamradio/yam.c linux/drivers/net/hamradio/yam.c
+--- linux-2.4.16/drivers/net/hamradio/yam.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/hamradio/yam.c	Mon Nov 26 16:13:36 2001
+@@ -861,7 +861,7 @@
+ 		return -EIO;
+ 	}
+ 	outb(0, IER(dev->base_addr));
+-	if (request_irq(dev->irq, yam_interrupt, SA_INTERRUPT | SA_SHIRQ, dev->name, dev)) {
++	if (request_irq(dev->irq, yam_interrupt, SA_INTERRUPT | SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev)) {
+ 		printk(KERN_ERR "%s: irq %d busy\n", dev->name, dev->irq);
+ 		return -EBUSY;
+ 	}
+diff -urN linux-2.4.16/drivers/net/hp-plus.c linux/drivers/net/hp-plus.c
+--- linux-2.4.16/drivers/net/hp-plus.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/hp-plus.c	Mon Nov 26 16:13:36 2001
+@@ -253,7 +253,8 @@
+ 	int option_reg;
+ 	int retval;
+ 
+-	if ((retval = request_irq(dev->irq, ei_interrupt, 0, dev->name, dev))) {
++	if ((retval = request_irq(dev->irq, ei_interrupt,
++			SA_SAMPLE_NET_RANDOM, dev->name, dev))) {
+ 	    return retval;
+ 	}
+ 
+diff -urN linux-2.4.16/drivers/net/hp.c linux/drivers/net/hp.c
+--- linux-2.4.16/drivers/net/hp.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/hp.c	Mon Nov 26 16:13:36 2001
+@@ -157,8 +157,7 @@
+ 				/* Twinkle the interrupt, and check if it's seen. */
+ 				outb_p(irqmap[irq] | HP_RUN, ioaddr + HP_CONFIGURE);
+ 				outb_p( 0x00 | HP_RUN, ioaddr + HP_CONFIGURE);
+-				if (irq == probe_irq_off(cookie)		 /* It's a good IRQ line! */
+-					&& request_irq (irq, ei_interrupt, 0, dev->name, dev) == 0) {
++				if (irq == probe_irq_off(cookie) /* It's a good IRQ line! */ && request_irq (irq, ei_interrupt,	SA_SAMPLE_NET_RANDOM, dev->name, dev) == 0) {
+ 					printk(" selecting IRQ %d.\n", irq);
+ 					dev->irq = *irqp;
+ 					break;
+diff -urN linux-2.4.16/drivers/net/hp100.c linux/drivers/net/hp100.c
+--- linux-2.4.16/drivers/net/hp100.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/hp100.c	Mon Nov 26 16:13:36 2001
+@@ -1124,8 +1124,9 @@
+ 
+ 	/* New: if bus is PCI or EISA, interrupts might be shared interrupts */
+ 	if (request_irq(dev->irq, hp100_interrupt,
+-			lp->bus == HP100_BUS_PCI || lp->bus ==
+-			HP100_BUS_EISA ? SA_SHIRQ : SA_INTERRUPT,
++			(lp->bus == HP100_BUS_PCI || lp->bus ==
++			HP100_BUS_EISA ? SA_SHIRQ : SA_INTERRUPT) |
++			SA_SAMPLE_NET_RANDOM,
+ 			lp->id->name, dev)) {
+ 		printk("hp100: %s: unable to get IRQ %d\n", dev->name, dev->irq);
+ 		return -EAGAIN;
+diff -urN linux-2.4.16/drivers/net/hydra.c linux/drivers/net/hydra.c
+--- linux-2.4.16/drivers/net/hydra.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/hydra.c	Mon Nov 26 16:13:36 2001
+@@ -129,8 +129,8 @@
+     dev->irq = IRQ_AMIGA_PORTS;
+ 
+     /* Install the Interrupt handler */
+-    if (request_irq(IRQ_AMIGA_PORTS, ei_interrupt, SA_SHIRQ, "Hydra Ethernet",
+-		    dev))
++    if (request_irq(IRQ_AMIGA_PORTS, ei_interrupt,
++            SA_SHIRQ | SA_SAMPLE_NET_RANDOM, "Hydra Ethernet", dev))
+ 	return -EAGAIN;
+ 
+     /* Allocate dev->priv and fill in 8390 specific dev fields. */
+diff -urN linux-2.4.16/drivers/net/ibmlana.c linux/drivers/net/ibmlana.c
+--- linux-2.4.16/drivers/net/ibmlana.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/ibmlana.c	Mon Nov 26 16:13:36 2001
+@@ -856,7 +856,7 @@
+ 
+ 	result =
+ 	    request_irq(priv->realirq, irq_handler,
+-			SA_SHIRQ | SA_SAMPLE_RANDOM, dev->name, dev);
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (result != 0) {
+ 		printk("%s: failed to register irq %d\n", dev->name,
+ 		       dev->irq);
+diff -urN linux-2.4.16/drivers/net/ioc3-eth.c linux/drivers/net/ioc3-eth.c
+--- linux-2.4.16/drivers/net/ioc3-eth.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/ioc3-eth.c	Mon Nov 26 16:13:36 2001
+@@ -1313,7 +1313,8 @@
+ {
+ 	struct ioc3_private *ip = dev->priv;
+ 
+-	if (request_irq(dev->irq, ioc3_interrupt, SA_SHIRQ, ioc3_str, dev)) {
++	if (request_irq(dev->irq, ioc3_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, ioc3_str, dev)) {
+ 		printk(KERN_ERR "%s: Can't get irq %d\n", dev->name, dev->irq);
+ 
+ 		return -EAGAIN;
+diff -urN linux-2.4.16/drivers/net/irda/ali-ircc.c linux/drivers/net/irda/ali-ircc.c
+--- linux-2.4.16/drivers/net/irda/ali-ircc.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/irda/ali-ircc.c	Mon Nov 26 16:13:36 2001
+@@ -1357,7 +1357,8 @@
+ 	iobase = self->io.fir_base;
+ 	
+ 	/* Request IRQ and install Interrupt Handler */
+-	if (request_irq(self->io.irq, ali_ircc_interrupt, 0, dev->name, dev)) 
++	if (request_irq(self->io.irq, ali_ircc_interrupt,
++			SA_SAMPLE_NET_RANDOM, dev->name, dev)) 
+ 	{
+ 		WARNING("%s, unable to allocate irq=%d\n", driver_name, 
+ 			self->io.irq);
+diff -urN linux-2.4.16/drivers/net/irda/irport.c linux/drivers/net/irda/irport.c
+--- linux-2.4.16/drivers/net/irda/irport.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/irda/irport.c	Mon Nov 26 16:13:36 2001
+@@ -783,8 +783,8 @@
+ 
+ 	iobase = self->io.sir_base;
+ 
+-	if (request_irq(self->io.irq, self->interrupt, 0, dev->name, 
+-			(void *) dev)) {
++	if (request_irq(self->io.irq, self->interrupt,
++			SA_SAMPLE_NET_RANDOM, dev->name, (void *) dev)) {
+ 		IRDA_DEBUG(0, __FUNCTION__ "(), unable to allocate irq=%d\n",
+ 			   self->io.irq);
+ 		return -EAGAIN;
+diff -urN linux-2.4.16/drivers/net/irda/nsc-ircc.c linux/drivers/net/irda/nsc-ircc.c
+--- linux-2.4.16/drivers/net/irda/nsc-ircc.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/irda/nsc-ircc.c	Mon Nov 26 16:13:36 2001
+@@ -1848,7 +1848,8 @@
+ 	
+ 	iobase = self->io.fir_base;
+ 	
+-	if (request_irq(self->io.irq, nsc_ircc_interrupt, 0, dev->name, dev)) {
++	if (request_irq(self->io.irq, nsc_ircc_interrupt,
++			SA_SAMPLE_NET_RANDOM, dev->name, dev)) {
+ 		WARNING("%s, unable to allocate irq=%d\n", driver_name, 
+ 			self->io.irq);
+ 		return -EAGAIN;
+diff -urN linux-2.4.16/drivers/net/irda/toshoboe.c linux/drivers/net/irda/toshoboe.c
+--- linux-2.4.16/drivers/net/irda/toshoboe.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/irda/toshoboe.c	Mon Nov 26 16:13:36 2001
+@@ -525,7 +525,8 @@
+     return 0;
+ 
+   if (request_irq (self->io.irq, toshoboe_interrupt,
+-                   SA_SHIRQ | SA_INTERRUPT, dev->name, (void *) self))
++                   SA_SHIRQ | SA_INTERRUPT | SA_SAMPLE_NET_RANDOM,
++		   dev->name, (void *) self))
+     {
+ 
+       return -EAGAIN;
+diff -urN linux-2.4.16/drivers/net/irda/vlsi_ir.c linux/drivers/net/irda/vlsi_ir.c
+--- linux-2.4.16/drivers/net/irda/vlsi_ir.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/irda/vlsi_ir.c	Mon Nov 26 16:13:36 2001
+@@ -832,8 +832,8 @@
+ 
+ 	outb(IRINTR_INT_MASK, ndev->base_addr+VLSI_PIO_IRINTR);
+ 
+-	if (request_irq(ndev->irq, vlsi_interrupt, SA_SHIRQ,
+-			drivername, ndev)) {
++	if (request_irq(ndev->irq, vlsi_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, drivername, ndev)) {
+ 		printk(KERN_ERR "%s: couldn't get IRQ: %d\n",
+ 			__FUNCTION__, ndev->irq);
+ 		pci_release_regions(pdev);
+diff -urN linux-2.4.16/drivers/net/isa-skeleton.c linux/drivers/net/isa-skeleton.c
+--- linux-2.4.16/drivers/net/isa-skeleton.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/isa-skeleton.c	Mon Nov 26 16:13:36 2001
+@@ -216,7 +216,8 @@
+ 		dev->irq = 9;
+ 
+ 	{
+-		int irqval = request_irq(dev->irq, &net_interrupt, 0, cardname, dev);
++		int irqval = request_irq(dev->irq, &net_interrupt,
++				SA_SAMPLE_NET_RANDOM, cardname, dev);
+ 		if (irqval) {
+ 			printk("%s: unable to get IRQ %d (irqval=%d).\n",
+ 				   dev->name, dev->irq, irqval);
+diff -urN linux-2.4.16/drivers/net/lance.c linux/drivers/net/lance.c
+--- linux-2.4.16/drivers/net/lance.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/lance.c	Mon Nov 26 16:13:36 2001
+@@ -672,7 +672,8 @@
+ 	int i;
+ 
+ 	if (dev->irq == 0 ||
+-		request_irq(dev->irq, &lance_interrupt, 0, lp->name, dev)) {
++		request_irq(dev->irq, &lance_interrupt,
++				SA_SAMPLE_NET_RANDOM, lp->name, dev)) {
+ 		return -EAGAIN;
+ 	}
+ 
+diff -urN linux-2.4.16/drivers/net/lasi_82596.c linux/drivers/net/lasi_82596.c
+--- linux-2.4.16/drivers/net/lasi_82596.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/lasi_82596.c	Mon Nov 26 16:13:36 2001
+@@ -999,7 +999,8 @@
+ 
+ 	MOD_INC_USE_COUNT;
+ 
+-	if (request_irq(dev->irq, &i596_interrupt, 0, "i82596", dev)) {
++	if (request_irq(dev->irq, &i596_interrupt, SA_SAMPLE_NET_RANDOM,
++			"i82596", dev)) {
+ 		printk("%s: IRQ %d not free\n", dev->name, dev->irq);
+ 		goto out;
+ 	}
+diff -urN linux-2.4.16/drivers/net/lne390.c linux/drivers/net/lne390.c
+--- linux-2.4.16/drivers/net/lne390.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/lne390.c	Mon Nov 26 16:13:36 2001
+@@ -197,7 +197,8 @@
+ 	}
+ 	printk(" IRQ %d,", dev->irq);
+ 
+-	if ((ret = request_irq(dev->irq, ei_interrupt, 0, dev->name, dev))) {
++	if ((ret = request_irq(dev->irq, ei_interrupt, SA_SAMPLE_NET_RANDOM,
++			dev->name, dev))) {
+ 		printk (" unable to get IRQ %d.\n", dev->irq);
+ 		kfree(dev->priv);
+ 		dev->priv = NULL;
+diff -urN linux-2.4.16/drivers/net/lp486e.c linux/drivers/net/lp486e.c
+--- linux-2.4.16/drivers/net/lp486e.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/lp486e.c	Mon Nov 26 16:13:36 2001
+@@ -844,7 +844,8 @@
+ i596_open(struct net_device *dev) {
+ 	int i;
+ 
+-	i = request_irq(dev->irq, &i596_interrupt, SA_SHIRQ, dev->name, dev);
++	i = request_irq(dev->irq, &i596_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (i) {
+ 		printk("%s: IRQ %d not free\n", dev->name, dev->irq);
+ 		return i;
+diff -urN linux-2.4.16/drivers/net/mac89x0.c linux/drivers/net/mac89x0.c
+--- linux-2.4.16/drivers/net/mac89x0.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/mac89x0.c	Mon Nov 26 16:13:36 2001
+@@ -329,7 +329,8 @@
+ 	writereg(dev, PP_BusCTL, readreg(dev, PP_BusCTL) & ~ENABLE_IRQ);
+ 
+ 	/* Grab the interrupt */
+-	if (request_irq(dev->irq, &net_interrupt, 0, "cs89x0", dev))
++	if (request_irq(dev->irq, &net_interrupt, SA_SAMPLE_NET_RANDOM,
++			"cs89x0", dev))
+ 		return -EAGAIN;
+ 
+ 	/* Set up the IRQ - Apparently magic */
+diff -urN linux-2.4.16/drivers/net/mace.c linux/drivers/net/mace.c
+--- linux-2.4.16/drivers/net/mace.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/mace.c	Mon Nov 26 16:13:36 2001
+@@ -210,13 +210,14 @@
+ 
+ 	mace_reset(dev);
+ 
+-	if (request_irq(dev->irq, mace_interrupt, 0, "MACE", dev))
++	if (request_irq(dev->irq, mace_interrupt, SA_SAMPLE_NET_RANDOM,
++			"MACE", dev))
+ 		printk(KERN_ERR "MACE: can't get irq %d\n", dev->irq);
+-	if (request_irq(mace->intrs[1].line, mace_txdma_intr, 0, "MACE-txdma",
+-			dev))
++	if (request_irq(mace->intrs[1].line, mace_txdma_intr,
++			SA_SAMPLE_NET_RANDOM, "MACE-txdma", dev))
+ 		printk(KERN_ERR "MACE: can't get irq %d\n", mace->intrs[1].line);
+-	if (request_irq(mace->intrs[2].line, mace_rxdma_intr, 0, "MACE-rxdma",
+-			dev))
++	if (request_irq(mace->intrs[2].line, mace_rxdma_intr,
++			SA_SAMPLE_NET_RANDOM, "MACE-rxdma", dev))
+ 		printk(KERN_ERR "MACE: can't get irq %d\n", mace->intrs[2].line);
+ 
+ 	mp->next_mace = mace_devs;
+diff -urN linux-2.4.16/drivers/net/macmace.c linux/drivers/net/macmace.c
+--- linux-2.4.16/drivers/net/macmace.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/macmace.c	Mon Nov 26 16:13:36 2001
+@@ -422,7 +422,8 @@
+ 	 *	The interrupt is fixed and comes off the PSC.
+ 	 */
+ 	 
+-	if (request_irq(dev->irq, mace68k_interrupt, 0, "68K MACE", dev))
++	if (request_irq(dev->irq, mace68k_interrupt,
++			SA_SAMPLE_NET_RANDOM, "68K MACE", dev))
+ 	{
+ 		printk(KERN_ERR "MACE: can't get irq %d\n", dev->irq);
+ 		return -EAGAIN;
+diff -urN linux-2.4.16/drivers/net/myri_sbus.c linux/drivers/net/myri_sbus.c
+--- linux-2.4.16/drivers/net/myri_sbus.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/myri_sbus.c	Mon Nov 26 16:13:36 2001
+@@ -1062,7 +1062,8 @@
+ 	/* Register interrupt handler now. */
+ 	DET(("Requesting MYRIcom IRQ line.\n"));
+ 	if (request_irq(dev->irq, &myri_interrupt,
+-			SA_SHIRQ, "MyriCOM Ethernet", (void *) dev)) {
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, "MyriCOM Ethernet",
++			(void *) dev)) {
+ 		printk("MyriCOM: Cannot register interrupt handler.\n");
+ 		goto err;
+ 	}
+diff -urN linux-2.4.16/drivers/net/natsemi.c linux/drivers/net/natsemi.c
+--- linux-2.4.16/drivers/net/natsemi.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/natsemi.c	Mon Nov 26 16:13:36 2001
+@@ -1018,7 +1018,8 @@
+ 	/* Reset the chip, just in case. */
+ 	natsemi_reset(dev);
+ 
+-	i = request_irq(dev->irq, &intr_handler, SA_SHIRQ, dev->name, dev);
++	i = request_irq(dev->irq, &intr_handler,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (i) return i;
+ 
+ 	if (debug > 1)
+diff -urN linux-2.4.16/drivers/net/ne.c linux/drivers/net/ne.c
+--- linux-2.4.16/drivers/net/ne.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/ne.c	Mon Nov 26 16:13:36 2001
+@@ -427,7 +427,8 @@
+ 
+ 	/* Snarf the interrupt now.  There's no point in waiting since we cannot
+ 	   share and the board will usually be enabled. */
+-	ret = request_irq(dev->irq, ei_interrupt, 0, name, dev);
++	ret = request_irq(dev->irq, ei_interrupt, SA_SAMPLE_NET_RANDOM,
++			name, dev);
+ 	if (ret) {
+ 		printk (" unable to get IRQ %d (errno=%d).\n", dev->irq, ret);
+ 		goto err_out_kfree;
+diff -urN linux-2.4.16/drivers/net/ne2.c linux/drivers/net/ne2.c
+--- linux-2.4.16/drivers/net/ne2.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/ne2.c	Mon Nov 26 16:13:36 2001
+@@ -439,7 +439,8 @@
+ 
+ 	/* Snarf the interrupt now.  There's no point in waiting since we cannot
+ 	   share and the board will usually be enabled. */
+-	retval = request_irq(dev->irq, ei_interrupt, 0, dev->name, dev);
++	retval = request_irq(dev->irq, ei_interrupt, SA_SAMPLE_NET_RANDOM,
++			dev->name, dev);
+ 	if (retval) {
+ 		printk (" unable to get IRQ %d (irqval=%d).\n", 
+ 				dev->irq, retval);
+diff -urN linux-2.4.16/drivers/net/ne2k-pci.c linux/drivers/net/ne2k-pci.c
+--- linux-2.4.16/drivers/net/ne2k-pci.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/ne2k-pci.c	Mon Nov 26 16:13:36 2001
+@@ -389,7 +389,8 @@
+ 
+ static int ne2k_pci_open(struct net_device *dev)
+ {
+-	int ret = request_irq(dev->irq, ei_interrupt, SA_SHIRQ, dev->name, dev);
++	int ret = request_irq(dev->irq, ei_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (ret)
+ 		return ret;
+ 
+diff -urN linux-2.4.16/drivers/net/ne3210.c linux/drivers/net/ne3210.c
+--- linux-2.4.16/drivers/net/ne3210.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/ne3210.c	Mon Nov 26 16:13:36 2001
+@@ -189,7 +189,8 @@
+ 	}
+ 	printk(" IRQ %d,", dev->irq);
+ 
+-	retval = request_irq(dev->irq, ei_interrupt, 0, dev->name, dev);
++	retval = request_irq(dev->irq, ei_interrupt,
++			SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (retval) {
+ 		printk (" unable to get IRQ %d.\n", dev->irq);
+ 		goto out1;
+diff -urN linux-2.4.16/drivers/net/ni5010.c linux/drivers/net/ni5010.c
+--- linux-2.4.16/drivers/net/ni5010.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/ni5010.c	Mon Nov 26 16:13:36 2001
+@@ -354,7 +354,8 @@
+ 
+ 	PRINTK2((KERN_DEBUG "%s: entering ni5010_open()\n", dev->name)); 
+ 	
+-	if (request_irq(dev->irq, &ni5010_interrupt, 0, boardname, dev)) {
++	if (request_irq(dev->irq, &ni5010_interrupt, SA_SAMPLE_NET_RANDOM,
++				boardname, dev)) {
+ 		printk(KERN_WARNING "%s: Cannot get irq %#2x\n", dev->name, dev->irq);
+ 		return -EAGAIN;
+ 	}
+diff -urN linux-2.4.16/drivers/net/ni52.c linux/drivers/net/ni52.c
+--- linux-2.4.16/drivers/net/ni52.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/ni52.c	Mon Nov 26 16:13:36 2001
+@@ -264,7 +264,8 @@
+ 	startrecv586(dev);
+ 	ni_enaint();
+ 
+-	ret = request_irq(dev->irq, &ni52_interrupt,0,dev->name,dev);
++	ret = request_irq(dev->irq, &ni52_interrupt,SA_SAMPLE_NET_RANDOM,
++			dev->name,dev);
+ 	if (ret)
+ 	{
+ 		ni_reset586();
+diff -urN linux-2.4.16/drivers/net/ni65.c linux/drivers/net/ni65.c
+--- linux-2.4.16/drivers/net/ni65.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/ni65.c	Mon Nov 26 16:13:36 2001
+@@ -269,7 +269,7 @@
+ static int ni65_open(struct net_device *dev)
+ {
+ 	struct priv *p = (struct priv *) dev->priv;
+-	int irqval = request_irq(dev->irq, &ni65_interrupt,0,
++	int irqval = request_irq(dev->irq, &ni65_interrupt,SA_SAMPLE_NET_RANDOM,
+                         cards[p->cardno].cardname,dev);
+ 	if (irqval) {
+ 		printk ("%s: unable to get IRQ %d (irqval=%d).\n",
+diff -urN linux-2.4.16/drivers/net/ns83820.c linux/drivers/net/ns83820.c
+--- linux-2.4.16/drivers/net/ns83820.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/ns83820.c	Mon Nov 26 16:13:36 2001
+@@ -1279,8 +1279,8 @@
+ 	setup_ee_mem_bitbanger(&dev->ee, (long)dev->base + MEAR, 3, 2, 1, 0,
+ 		0);
+ 
+-	err = request_irq(pci_dev->irq, ns83820_irq, SA_SHIRQ,
+-			  dev->net_dev.name, dev);
++	err = request_irq(pci_dev->irq, ns83820_irq,
++		SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->net_dev.name, dev);
+ 	if (err) {
+ 		printk(KERN_INFO "ns83820: unable to register irq %d\n",
+ 			pci_dev->irq);
+diff -urN linux-2.4.16/drivers/net/oaknet.c linux/drivers/net/oaknet.c
+--- linux-2.4.16/drivers/net/oaknet.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/oaknet.c	Mon Nov 26 16:13:36 2001
+@@ -183,7 +183,8 @@
+ 	/* Attempt to get the interrupt line */
+ 
+ 	ret = -EAGAIN;
+-	if (request_irq(dev->irq, ei_interrupt, 0, name, dev)) {
++	if (request_irq(dev->irq, ei_interrupt, SA_SAMPLE_NET_RANDOM,
++				name, dev)) {
+ 		printk("%s: unable to request interrupt %d.\n",
+ 		       dev->name, dev->irq);
+ 		goto out_priv;
+diff -urN linux-2.4.16/drivers/net/pci-skeleton.c linux/drivers/net/pci-skeleton.c
+--- linux-2.4.16/drivers/net/pci-skeleton.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/pci-skeleton.c	Mon Nov 26 16:13:36 2001
+@@ -1086,7 +1086,8 @@
+ 
+ 	DPRINTK ("ENTER\n");
+ 
+-	retval = request_irq (dev->irq, netdrv_interrupt, SA_SHIRQ, dev->name, dev);
++	retval = request_irq (dev->irq, netdrv_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (retval) {
+ 		DPRINTK ("EXIT, returning %d\n", retval);
+ 		return retval;
+diff -urN linux-2.4.16/drivers/net/pcmcia/pcnet_cs.c linux/drivers/net/pcmcia/pcnet_cs.c
+--- linux-2.4.16/drivers/net/pcmcia/pcnet_cs.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/pcmcia/pcnet_cs.c	Mon Nov 26 16:13:36 2001
+@@ -1025,7 +1025,7 @@
+     MOD_INC_USE_COUNT;
+ 
+     set_misc_reg(dev);
+-    request_irq(dev->irq, ei_irq_wrapper, SA_SHIRQ, dev_info, dev);
++    request_irq(dev->irq, ei_irq_wrapper, SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev_info, dev);
+ 
+     info->phy_id = info->eth_phy;
+     info->link_status = 0x00;
+diff -urN linux-2.4.16/drivers/net/pcmcia/xircom_tulip_cb.c linux/drivers/net/pcmcia/xircom_tulip_cb.c
+--- linux-2.4.16/drivers/net/pcmcia/xircom_tulip_cb.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/pcmcia/xircom_tulip_cb.c	Mon Nov 26 16:13:36 2001
+@@ -797,7 +797,8 @@
+ {
+ 	struct xircom_private *tp = dev->priv;
+ 
+-	if (request_irq(dev->irq, &xircom_interrupt, SA_SHIRQ, dev->name, dev))
++	if (request_irq(dev->irq, &xircom_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev))
+ 		return -EAGAIN;
+ 
+ 	xircom_init_ring(dev);
+diff -urN linux-2.4.16/drivers/net/pcnet32.c linux/drivers/net/pcnet32.c
+--- linux-2.4.16/drivers/net/pcnet32.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/pcnet32.c	Mon Nov 26 16:13:36 2001
+@@ -807,7 +807,8 @@
+ 
+     if (dev->irq == 0 ||
+ 	request_irq(dev->irq, &pcnet32_interrupt,
+-		    lp->shared_irq ? SA_SHIRQ : 0, lp->name, (void *)dev)) {
++		    lp->shared_irq ? SA_SHIRQ : 0 | SA_SAMPLE_NET_RANDOM,
++		    lp->name, (void *)dev)) {
+ 	return -EAGAIN;
+     }
+ 
+diff -urN linux-2.4.16/drivers/net/rcpci45.c linux/drivers/net/rcpci45.c
+--- linux-2.4.16/drivers/net/rcpci45.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/rcpci45.c	Mon Nov 26 16:13:37 2001
+@@ -290,7 +290,8 @@
+ 	dprintk ("(rcpci45 driver:) RCopen\n");
+ 
+ 	/* Request a shared interrupt line. */
+-	error = request_irq (dev->irq, RCinterrupt, SA_SHIRQ, dev->name, dev);
++	error = request_irq (dev->irq, RCinterrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (error) {
+ 		printk (KERN_ERR "(rcpci45 driver:) %s: unable to get IRQ %d\n",
+ 			dev->name, dev->irq);
+diff -urN linux-2.4.16/drivers/net/rrunner.c linux/drivers/net/rrunner.c
+--- linux-2.4.16/drivers/net/rrunner.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/rrunner.c	Mon Nov 26 16:13:37 2001
+@@ -1227,7 +1227,8 @@
+ 	writel(readl(&regs->HostCtrl)|HALT_NIC|RR_CLEAR_INT, &regs->HostCtrl);
+ 	spin_unlock_irqrestore(&rrpriv->lock, flags);
+ 
+-	if (request_irq(dev->irq, rr_interrupt, SA_SHIRQ, rrpriv->name, dev))
++	if (request_irq(dev->irq, rr_interrupt, SA_SHIRQ | SA_SAMPLE_NET_RANDOM,
++			rrpriv->name, dev))
+ 	{
+ 		printk(KERN_WARNING "%s: Requested IRQ %d is busy\n",
+ 		       dev->name, dev->irq);
+diff -urN linux-2.4.16/drivers/net/saa9730.c linux/drivers/net/saa9730.c
+--- linux-2.4.16/drivers/net/saa9730.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/saa9730.c	Mon Nov 26 16:13:37 2001
+@@ -786,8 +786,8 @@
+ 	    (struct lan_saa9730_private *) dev->priv;
+ 
+ 	/* Associate IRQ with lan_saa9730_interrupt */
+-	if (request_irq(dev->irq, &lan_saa9730_interrupt, 0, "SAA9730 Eth",
+-			dev)) {
++	if (request_irq(dev->irq, &lan_saa9730_interrupt, SA_SAMPLE_NET_RANDOM,
++			"SAA9730 Eth", dev)) {
+ 		printk("lan_saa9730_open: Can't get irq %d\n", dev->irq);
+ 		return -EAGAIN;
+ 	}
+diff -urN linux-2.4.16/drivers/net/sb1000.c linux/drivers/net/sb1000.c
+--- linux-2.4.16/drivers/net/sb1000.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/sb1000.c	Mon Nov 26 16:13:37 2001
+@@ -992,7 +992,8 @@
+ 	lp->rx_frame_id[1] = 0;
+ 	lp->rx_frame_id[2] = 0;
+ 	lp->rx_frame_id[3] = 0;
+-	if (request_irq(dev->irq, &sb1000_interrupt, 0, "sb1000", dev)) {
++	if (request_irq(dev->irq, &sb1000_interrupt, SA_SAMPLE_NET_RANDOM,
++			"sb1000", dev)) {
+ 		return -EAGAIN;
+ 	}
+ 
+diff -urN linux-2.4.16/drivers/net/seeq8005.c linux/drivers/net/seeq8005.c
+--- linux-2.4.16/drivers/net/seeq8005.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/seeq8005.c	Mon Nov 26 16:13:37 2001
+@@ -347,7 +347,7 @@
+ 	struct net_local *lp = (struct net_local *)dev->priv;
+ 
+ 	{
+-		 int irqval = request_irq(dev->irq, &seeq8005_interrupt, 0, "seeq8005", dev);
++		 int irqval = request_irq(dev->irq, &seeq8005_interrupt, SA_SAMPLE_NET_RANDOM, "seeq8005", dev);
+ 		 if (irqval) {
+ 			 printk ("%s: unable to get IRQ %d (irqval=%d).\n", dev->name,
+ 					 dev->irq, irqval);
+diff -urN linux-2.4.16/drivers/net/sgiseeq.c linux/drivers/net/sgiseeq.c
+--- linux-2.4.16/drivers/net/sgiseeq.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/sgiseeq.c	Mon Nov 26 16:13:37 2001
+@@ -452,7 +452,8 @@
+ 	int err;
+ 
+ 	save_flags(flags); cli();
+-	if (request_irq(dev->irq, sgiseeq_interrupt, 0, sgiseeqstr, (void *) dev)) {
++	if (request_irq(dev->irq, sgiseeq_interrupt, SA_SAMPLE_NET_RANDOM,
++			sgiseeqstr, (void *) dev)) {
+ 		printk("Seeq8003: Can't get irq %d\n", dev->irq);
+ 		restore_flags(flags);
+ 		return -EAGAIN;
+diff -urN linux-2.4.16/drivers/net/sis900.c linux/drivers/net/sis900.c
+--- linux-2.4.16/drivers/net/sis900.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/sis900.c	Mon Nov 26 16:13:37 2001
+@@ -857,7 +857,9 @@
+ 	pci_read_config_byte(sis_priv->pci_dev, PCI_CLASS_REVISION, &revision);
+ 	sis630_set_eq(net_dev, revision);
+ 
+-	ret = request_irq(net_dev->irq, &sis900_interrupt, SA_SHIRQ, net_dev->name, net_dev);
++	ret = request_irq(net_dev->irq, &sis900_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM,
++			net_dev->name, net_dev);
+ 	if (ret)
+ 		return ret;
+ 
+diff -urN linux-2.4.16/drivers/net/sk98lin/skge.c linux/drivers/net/sk98lin/skge.c
+--- linux-2.4.16/drivers/net/sk98lin/skge.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/sk98lin/skge.c	Mon Nov 26 16:13:37 2001
+@@ -867,10 +867,11 @@
+ 	spin_unlock_irqrestore(&pAC->SlowPathLock, Flags);
+ 
+ 	if (pAC->GIni.GIMacsFound == 2) {
+-		 Ret = request_irq(dev->irq, SkGeIsr, SA_SHIRQ, pAC->Name, dev);
++		Ret = request_irq(dev->irq, SkGeIsr,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, pAC->Name, dev);
+ 	} else if (pAC->GIni.GIMacsFound == 1) {
+-		Ret = request_irq(dev->irq, SkGeIsrOnePort, SA_SHIRQ,
+-			pAC->Name, dev);
++		Ret = request_irq(dev->irq, SkGeIsrOnePort,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, pAC->Name, dev);
+ 	} else {
+ 		printk(KERN_WARNING "%s: illegal number of ports: %d\n",
+ 		       dev->name, pAC->GIni.GIMacsFound);
+diff -urN linux-2.4.16/drivers/net/sk_g16.c linux/drivers/net/sk_g16.c
+--- linux-2.4.16/drivers/net/sk_g16.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/sk_g16.c	Mon Nov 26 16:13:37 2001
+@@ -947,7 +947,8 @@
+ 
+ 	do
+ 	{
+-	  irqval = request_irq(irqtab[i], &SK_interrupt, 0, "sk_g16", dev);
++	  irqval = request_irq(irqtab[i], &SK_interrupt, SA_SAMPLE_NET_RANDOM,
++			  "sk_g16", dev);
+ 	  i++;
+ 	} while (irqval && irqtab[i]);
+ 
+diff -urN linux-2.4.16/drivers/net/sk_mca.c linux/drivers/net/sk_mca.c
+--- linux-2.4.16/drivers/net/sk_mca.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/sk_mca.c	Mon Nov 26 16:13:37 2001
+@@ -861,7 +861,7 @@
+ 	/* register resources - only necessary for IRQ */
+ 	result =
+ 	    request_irq(priv->realirq, irq_handler,
+-			SA_SHIRQ | SA_SAMPLE_RANDOM, "sk_mca", dev);
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, "sk_mca", dev);
+ 	if (result != 0) {
+ 		printk("%s: failed to register irq %d\n", dev->name,
+ 		       dev->irq);
+diff -urN linux-2.4.16/drivers/net/skfp/skfddi.c linux/drivers/net/skfp/skfddi.c
+--- linux-2.4.16/drivers/net/skfp/skfddi.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/skfp/skfddi.c	Mon Nov 26 16:13:37 2001
+@@ -774,8 +774,8 @@
+ 
+ 	PRINTK(KERN_INFO "entering skfp_open\n");
+ 	/* Register IRQ - support shared interrupts by passing device ptr */
+-	if (request_irq(dev->irq, (void *) skfp_interrupt, SA_SHIRQ,
+-			dev->name, dev)) {
++	if (request_irq(dev->irq, (void *) skfp_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev)) {
+ 		printk("%s: Requested IRQ %d is busy\n", dev->name, dev->irq);
+ 		return (-EAGAIN);
+ 	}
+diff -urN linux-2.4.16/drivers/net/smc-mca.c linux/drivers/net/smc-mca.c
+--- linux-2.4.16/drivers/net/smc-mca.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/smc-mca.c	Mon Nov 26 16:13:37 2001
+@@ -325,7 +325,8 @@
+ 	int ioaddr = dev->base_addr - ULTRA_NIC_OFFSET; /* ASIC addr */
+ 	int retval;
+ 
+-	if ((retval = request_irq(dev->irq, ei_interrupt, 0, dev->name, dev)))
++	if ((retval = request_irq(dev->irq, ei_interrupt,
++			SA_SAMPLE_NET_RANDOM, dev->name, dev)))
+ 		return retval;
+ 
+ 	outb(ULTRA_MEMENB, ioaddr); /* Enable memory */
+diff -urN linux-2.4.16/drivers/net/smc-ultra.c linux/drivers/net/smc-ultra.c
+--- linux-2.4.16/drivers/net/smc-ultra.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/smc-ultra.c	Mon Nov 26 16:13:37 2001
+@@ -329,7 +329,8 @@
+ 	unsigned char irq2reg[] = {0, 0, 0x04, 0x08, 0, 0x0C, 0, 0x40,
+ 				   0, 0x04, 0x44, 0x48, 0, 0, 0, 0x4C, };
+ 
+-	retval = request_irq(dev->irq, ei_interrupt, 0, dev->name, dev);
++	retval = request_irq(dev->irq, ei_interrupt, SA_SAMPLE_NET_RANDOM,
++			dev->name, dev);
+ 	if (retval)
+ 		return retval;
+ 
+diff -urN linux-2.4.16/drivers/net/smc-ultra32.c linux/drivers/net/smc-ultra32.c
+--- linux-2.4.16/drivers/net/smc-ultra32.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/smc-ultra32.c	Mon Nov 26 16:13:37 2001
+@@ -256,6 +256,8 @@
+ 	int irq_flags = (inb(ioaddr + ULTRA32_CFG5) & 0x08) ? 0 : SA_SHIRQ;
+ 	int retval;
+ 
++	irq_flags |= SA_SAMPLE_NET_RANDOM;
++
+ 	retval = request_irq(dev->irq, ei_interrupt, irq_flags, dev->name, dev);
+ 	if (retval)
+ 		return retval;
+diff -urN linux-2.4.16/drivers/net/smc9194.c linux/drivers/net/smc9194.c
+--- linux-2.4.16/drivers/net/smc9194.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/smc9194.c	Mon Nov 26 16:13:37 2001
+@@ -1017,7 +1017,7 @@
+ 	ether_setup(dev);
+ 
+ 	/* Grab the IRQ */
+-      	retval = request_irq(dev->irq, &smc_interrupt, 0, dev->name, dev);
++      	retval = request_irq(dev->irq, &smc_interrupt, SA_SAMPLE_NET_RANDOM, dev->name, dev);
+       	if (retval) {
+ 		printk("%s: unable to get IRQ %d (irqval=%d).\n", dev->name,
+ 			dev->irq, retval);
+diff -urN linux-2.4.16/drivers/net/sonic.c linux/drivers/net/sonic.c
+--- linux-2.4.16/drivers/net/sonic.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/sonic.c	Mon Nov 26 16:13:37 2001
+@@ -42,8 +42,8 @@
+  * this glue works ok under all situations.
+  */
+ //    if (sonic_request_irq(dev->irq, &sonic_interrupt, 0, "sonic", dev)) {
+-	if (sonic_request_irq(dev->irq, &sonic_interrupt, SA_INTERRUPT,
+-	                      "sonic", dev)) {
++	if (sonic_request_irq(dev->irq, &sonic_interrupt,
++			SA_INTERRUPT | SA_SAMPLE_NET_RANDOM, "sonic", dev)) {
+ 		printk("\n%s: unable to get IRQ %d .\n", dev->name, dev->irq);
+ 		return -EAGAIN;
+ 	}
+diff -urN linux-2.4.16/drivers/net/starfire.c linux/drivers/net/starfire.c
+--- linux-2.4.16/drivers/net/starfire.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/starfire.c	Mon Nov 26 16:13:37 2001
+@@ -828,7 +828,8 @@
+ 
+ 	COMPAT_MOD_INC_USE_COUNT;
+ 
+-	retval = request_irq(dev->irq, &intr_handler, SA_SHIRQ, dev->name, dev);
++	retval = request_irq(dev->irq, &intr_handler,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (retval) {
+ 		COMPAT_MOD_DEC_USE_COUNT;
+ 		return retval;
+diff -urN linux-2.4.16/drivers/net/stnic.c linux/drivers/net/stnic.c
+--- linux-2.4.16/drivers/net/stnic.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/stnic.c	Mon Nov 26 16:13:37 2001
+@@ -135,7 +135,7 @@
+ 
+   /* Snarf the interrupt now.  There's no point in waiting since we cannot
+      share and the board will usually be enabled. */
+-  i = request_irq (dev->irq, ei_interrupt, 0, dev->name, dev);
++  i = request_irq(dev->irq, ei_interrupt, SA_SAMPLE_NET_RANDOM, dev->name, dev);
+   if (i)  {
+       printk (KERN_EMERG " unable to get IRQ %d.\n", dev->irq);
+       unregister_netdev(dev);
+diff -urN linux-2.4.16/drivers/net/sun3lance.c linux/drivers/net/sun3lance.c
+--- linux-2.4.16/drivers/net/sun3lance.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/sun3lance.c	Mon Nov 26 16:13:37 2001
+@@ -318,7 +318,8 @@
+ 
+ 	REGA(CSR0) = CSR0_STOP; 
+ 
+-	request_irq(LANCE_IRQ, lance_interrupt, 0, "SUN3 Lance", dev);
++	request_irq(LANCE_IRQ, lance_interrupt, SA_SAMPLE_NET_RANDOM,
++			"SUN3 Lance", dev);
+ 	dev->irq = (unsigned short)LANCE_IRQ;
+ 
+ 
+diff -urN linux-2.4.16/drivers/net/sunbmac.c linux/drivers/net/sunbmac.c
+--- linux-2.4.16/drivers/net/sunbmac.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/sunbmac.c	Mon Nov 26 16:13:37 2001
+@@ -904,7 +904,8 @@
+ 	struct bigmac *bp = (struct bigmac *) dev->priv;
+ 	int ret;
+ 
+-	ret = request_irq(dev->irq, &bigmac_interrupt, SA_SHIRQ, dev->name, bp);
++	ret = request_irq(dev->irq, &bigmac_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, bp);
+ 	if (ret) {
+ 		printk(KERN_ERR "BIGMAC: Can't order irq %d to go.\n", dev->irq);
+ 		return ret;
+diff -urN linux-2.4.16/drivers/net/sundance.c linux/drivers/net/sundance.c
+--- linux-2.4.16/drivers/net/sundance.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/sundance.c	Mon Nov 26 16:13:37 2001
+@@ -738,7 +738,8 @@
+ 
+ 	/* Do we need to reset the chip??? */
+ 
+-	i = request_irq(dev->irq, &intr_handler, SA_SHIRQ, dev->name, dev);
++	i = request_irq(dev->irq, &intr_handler,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (i)
+ 		return i;
+ 
+diff -urN linux-2.4.16/drivers/net/sungem.c linux/drivers/net/sungem.c
+--- linux-2.4.16/drivers/net/sungem.c	Mon Nov 26 15:56:33 2001
++++ linux/drivers/net/sungem.c	Mon Nov 26 16:13:37 2001
+@@ -1761,7 +1761,8 @@
+ 	 * on the controller
+ 	 */
+ 	if (request_irq(gp->pdev->irq, gem_interrupt,
+-			SA_SHIRQ, dev->name, (void *)dev)) {
++		SA_SHIRQ | SA_SAMPLE_NET_RANDOM,
++		dev->name, (void *)dev)) {
+ #ifdef CONFIG_ALL_PPC
+ 		if (gp->pdev->vendor == PCI_VENDOR_ID_APPLE)
+ 			gem_apple_powerdown(gp);
+diff -urN linux-2.4.16/drivers/net/sunhme.c linux/drivers/net/sunhme.c
+--- linux-2.4.16/drivers/net/sunhme.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/sunhme.c	Mon Nov 26 16:13:37 2001
+@@ -2219,7 +2219,8 @@
+ 	 */
+ 	if ((hp->happy_flags & (HFLAG_QUATTRO|HFLAG_PCI)) != HFLAG_QUATTRO) {
+ 		if (request_irq(dev->irq, &happy_meal_interrupt,
+-				SA_SHIRQ, "HAPPY MEAL", (void *)dev)) {
++				SA_SHIRQ | SA_SAMPLE_NET_RANDOM,
++				"HAPPY MEAL", (void *)dev)) {
+ 			HMD(("EAGAIN\n"));
+ #ifdef __sparc__
+ 			printk(KERN_ERR "happy_meal(SBUS): Can't order irq %s to go.\n",
+diff -urN linux-2.4.16/drivers/net/sunlance.c linux/drivers/net/sunlance.c
+--- linux-2.4.16/drivers/net/sunlance.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/sunlance.c	Mon Nov 26 16:13:37 2001
+@@ -923,7 +923,8 @@
+ 
+ 	last_dev = dev;
+ 
+-	if (request_irq(dev->irq, &lance_interrupt, SA_SHIRQ,
++	if (request_irq(dev->irq, &lance_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM,
+ 			lancestr, (void *) dev)) {
+ 		printk(KERN_ERR "Lance: Can't get irq %s\n", __irq_itoa(dev->irq));
+ 		return -EAGAIN;
+diff -urN linux-2.4.16/drivers/net/sunqe.c linux/drivers/net/sunqe.c
+--- linux-2.4.16/drivers/net/sunqe.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/sunqe.c	Mon Nov 26 16:13:37 2001
+@@ -895,7 +895,8 @@
+ 	 * for it now.
+ 	 */
+ 	if (request_irq(sdev->irqs[0], &qec_interrupt,
+-			SA_SHIRQ, "QuadEther", (void *) qecp)) {
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM,
++			"QuadEther", (void *) qecp)) {
+ 		printk(KERN_ERR "QuadEther: Can't register QEC master irq handler.\n");
+ 		res = EAGAIN;
+ 		goto qec_free_devs;
+diff -urN linux-2.4.16/drivers/net/tlan.c linux/drivers/net/tlan.c
+--- linux-2.4.16/drivers/net/tlan.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/tlan.c	Mon Nov 26 16:13:37 2001
+@@ -871,7 +871,8 @@
+ 	int		err;
+ 	
+ 	priv->tlanRev = TLan_DioRead8( dev->base_addr, TLAN_DEF_REVISION );
+-	err = request_irq( dev->irq, TLan_HandleInterrupt, SA_SHIRQ, TLanSignature, dev );
++	err = request_irq( dev->irq, TLan_HandleInterrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, TLanSignature, dev );
+ 	
+ 	if ( err ) {
+ 		printk(KERN_ERR "TLAN:  Cannot open %s because IRQ %d is already in use.\n", dev->name, dev->irq );
+diff -urN linux-2.4.16/drivers/net/tokenring/abyss.c linux/drivers/net/tokenring/abyss.c
+--- linux-2.4.16/drivers/net/tokenring/abyss.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/tokenring/abyss.c	Mon Nov 26 16:13:37 2001
+@@ -123,8 +123,8 @@
+ 		goto err_out_trdev;
+ 	}
+ 		
+-	ret = request_irq(pdev->irq, tms380tr_interrupt, SA_SHIRQ,
+-			  dev->name, dev);
++	ret = request_irq(pdev->irq, tms380tr_interrupt,
++			  SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (ret)
+ 		goto err_out_region;
+ 		
+diff -urN linux-2.4.16/drivers/net/tokenring/ibmtr.c linux/drivers/net/tokenring/ibmtr.c
+--- linux-2.4.16/drivers/net/tokenring/ibmtr.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/tokenring/ibmtr.c	Mon Nov 26 16:13:37 2001
+@@ -662,7 +662,8 @@
+ 
+ 	/* The PCMCIA has already got the interrupt line and the io port, 
+ 	   so no chance of anybody else getting it - MLP */
+-	if (request_irq(dev->irq = irq, &tok_interrupt, 0, "ibmtr", dev) != 0) {
++	if (request_irq(dev->irq = irq, &tok_interrupt,
++			SA_SAMPLE_NET_RANDOM, "ibmtr", dev) != 0) {
+ 		DPRINTK("Could not grab irq %d.  Halting Token Ring driver.\n",
+ 					irq);
+ 		iounmap(t_mmio);
+diff -urN linux-2.4.16/drivers/net/tokenring/lanstreamer.c linux/drivers/net/tokenring/lanstreamer.c
+--- linux-2.4.16/drivers/net/tokenring/lanstreamer.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/tokenring/lanstreamer.c	Mon Nov 26 16:13:37 2001
+@@ -535,7 +535,8 @@
+ 	        rc=streamer_reset(dev);
+ 	}
+ 
+-	if (request_irq(dev->irq, &streamer_interrupt, SA_SHIRQ, "lanstreamer", dev)) {
++	if (request_irq(dev->irq, &streamer_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, "lanstreamer", dev)) {
+ 		return -EAGAIN;
+ 	}
+ #if STREAMER_DEBUG
+diff -urN linux-2.4.16/drivers/net/tokenring/madgemc.c linux/drivers/net/tokenring/madgemc.c
+--- linux-2.4.16/drivers/net/tokenring/madgemc.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/tokenring/madgemc.c	Mon Nov 26 16:13:37 2001
+@@ -331,8 +331,9 @@
+ 		 */ 
+ 		outb(0, dev->base_addr + MC_CONTROL_REG0); /* sanity */
+ 		madgemc_setsifsel(dev, 1);
+-		if(request_irq(dev->irq, madgemc_interrupt, SA_SHIRQ,
+-			       "madgemc", dev)) 
++		if(request_irq(dev->irq, madgemc_interrupt,
++				SA_SHIRQ | SA_SAMPLE_NET_RANDOM,
++				"madgemc", dev)) 
+ 			goto getout;
+ 		
+ 		madgemc_chipset_init(dev); /* enables interrupts! */
+diff -urN linux-2.4.16/drivers/net/tokenring/olympic.c linux/drivers/net/tokenring/olympic.c
+--- linux-2.4.16/drivers/net/tokenring/olympic.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/tokenring/olympic.c	Mon Nov 26 16:13:37 2001
+@@ -396,7 +396,8 @@
+ 	char open_error[255] ; 
+ 	int i, open_finished = 1 ;
+ 
+-	if(request_irq(dev->irq, &olympic_interrupt, SA_SHIRQ , "olympic", dev)) {
++	if(request_irq(dev->irq, &olympic_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, "olympic", dev)) {
+ 		return -EAGAIN;
+ 	}
+ 
+diff -urN linux-2.4.16/drivers/net/tokenring/smctr.c linux/drivers/net/tokenring/smctr.c
+--- linux-2.4.16/drivers/net/tokenring/smctr.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/tokenring/smctr.c	Mon Nov 26 16:13:37 2001
+@@ -544,7 +544,8 @@
+ 			dev->irq = 15;
+                		break;
+ 	}
+-	if(request_irq(dev->irq, smctr_interrupt, SA_SHIRQ, smctr_name, dev))
++	if(request_irq(dev->irq, smctr_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, smctr_name, dev))
+                 return (-ENODEV);
+ 
+ 	/* Get RAM base */
+diff -urN linux-2.4.16/drivers/net/tokenring/tmsisa.c linux/drivers/net/tokenring/tmsisa.c
+--- linux-2.4.16/drivers/net/tokenring/tmsisa.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/tokenring/tmsisa.c	Mon Nov 26 16:13:37 2001
+@@ -184,8 +184,8 @@
+ 		for(j = 0; irqlist[j] != 0; j++)
+ 		{
+ 			dev->irq = irqlist[j];
+-			if (!request_irq(dev->irq, tms380tr_interrupt, 0, 
+-				isa_cardname, dev))
++			if (!request_irq(dev->irq, tms380tr_interrupt,
++				SA_SAMPLE_NET_RANDOM, isa_cardname, dev))
+ 				break;
+                 }
+ 		
+diff -urN linux-2.4.16/drivers/net/tokenring/tmspci.c linux/drivers/net/tokenring/tmspci.c
+--- linux-2.4.16/drivers/net/tokenring/tmspci.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/tokenring/tmspci.c	Mon Nov 26 16:13:37 2001
+@@ -123,8 +123,8 @@
+ 		goto err_out_trdev;
+ 	}
+ 
+-	ret = request_irq(pdev->irq, tms380tr_interrupt, SA_SHIRQ,
+-			  dev->name, dev);
++	ret = request_irq(pdev->irq, tms380tr_interrupt,
++			  SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (ret)
+ 		goto err_out_region;
+ 
+diff -urN linux-2.4.16/drivers/net/tulip/tulip_core.c linux/drivers/net/tulip/tulip_core.c
+--- linux-2.4.16/drivers/net/tulip/tulip_core.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/tulip/tulip_core.c	Mon Nov 26 16:13:37 2001
+@@ -506,7 +506,9 @@
+ 	int retval;
+ 	MOD_INC_USE_COUNT;
+ 
+-	if ((retval = request_irq(dev->irq, &tulip_interrupt, SA_SHIRQ, dev->name, dev))) {
++	if ((retval = request_irq(dev->irq, &tulip_interrupt,
++					SA_SHIRQ | SA_SAMPLE_NET_RANDOM,
++					dev->name, dev))) {
+ 		MOD_DEC_USE_COUNT;
+ 		return retval;
+ 	}
+diff -urN linux-2.4.16/drivers/net/via-rhine.c linux/drivers/net/via-rhine.c
+--- linux-2.4.16/drivers/net/via-rhine.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/via-rhine.c	Mon Nov 26 16:13:38 2001
+@@ -1040,7 +1040,8 @@
+ 	/* Reset the chip. */
+ 	writew(CmdReset, ioaddr + ChipCmd);
+ 
+-	i = request_irq(np->pdev->irq, &via_rhine_interrupt, SA_SHIRQ, dev->name, dev);
++	i = request_irq(np->pdev->irq, &via_rhine_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (i)
+ 		return i;
+ 
+diff -urN linux-2.4.16/drivers/net/wan/c101.c linux/drivers/net/wan/c101.c
+--- linux-2.4.16/drivers/net/wan/c101.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/wan/c101.c	Mon Nov 26 16:13:38 2001
+@@ -251,7 +251,7 @@
+ 	}
+ 	memset(card, 0, sizeof(card_t));
+ 
+-	if (request_irq(irq, sca_intr, 0, devname, card)) {
++	if (request_irq(irq, sca_intr, SA_SAMPLE_NET_RANDOM, devname, card)) {
+ 		printk(KERN_ERR "c101: could not allocate IRQ\n");
+ 		c101_destroy_card(card);
+ 		return(-EBUSY);
+diff -urN linux-2.4.16/drivers/net/wan/comx-hw-comx.c linux/drivers/net/wan/comx-hw-comx.c
+--- linux-2.4.16/drivers/net/wan/comx-hw-comx.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/wan/comx-hw-comx.c	Mon Nov 26 16:13:38 2001
+@@ -469,8 +469,8 @@
+ 		if (check_region(dev->base_addr, hw->io_extent)) {
+ 			return -EAGAIN;
+ 		}
+-		if (request_irq(dev->irq, COMX_interrupt, 0, dev->name, 
+-		   (void *)dev)) {
++		if (request_irq(dev->irq, COMX_interrupt, SA_SAMPLE_NET_RANDOM,
++				dev->name, (void *)dev)) {
+ 			printk(KERN_ERR "comx-hw-comx: unable to obtain irq %d\n", dev->irq);
+ 			return -EAGAIN;
+ 		}
+diff -urN linux-2.4.16/drivers/net/wan/comx-hw-locomx.c linux/drivers/net/wan/comx-hw-locomx.c
+--- linux-2.4.16/drivers/net/wan/comx-hw-locomx.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/wan/comx-hw-locomx.c	Mon Nov 26 16:13:38 2001
+@@ -172,8 +172,8 @@
+ 	hw->board.chanA.irqs=&z8530_nop;
+ 	hw->board.chanB.irqs=&z8530_nop;
+ 
+-	if(request_irq(dev->irq, z8530_interrupt, SA_INTERRUPT, 
+-	    dev->name, &hw->board)) {
++	if(request_irq(dev->irq, z8530_interrupt,
++		SA_INTERRUPT | SA_SAMPLE_NET_RANDOM, dev->name, &hw->board)) {
+ 		printk(KERN_ERR "%s: unable to obtain irq %d\n", dev->name, 
+ 			dev->irq);
+ 		ret=-EAGAIN;
+diff -urN linux-2.4.16/drivers/net/wan/comx-hw-mixcom.c linux/drivers/net/wan/comx-hw-mixcom.c
+--- linux-2.4.16/drivers/net/wan/comx-hw-mixcom.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/wan/comx-hw-mixcom.c	Mon Nov 26 16:13:38 2001
+@@ -518,8 +518,8 @@
+ 	}
+ 
+ 	if(hw->channel==0 && !(ch->init_status & IRQ_ALLOCATED)) {
+-		if (request_irq(dev->irq, MIXCOM_interrupt, 0, 
+-		    dev->name, (void *)dev)) {
++		if (request_irq(dev->irq, MIXCOM_interrupt,
++				SA_SAMPLE_NET_RANDOM, dev->name, (void *)dev)) {
+ 			printk(KERN_ERR "MIXCOM: unable to obtain irq %d\n", dev->irq);
+ 			ret = -EAGAIN;
+ 			goto err_release_region;
+diff -urN linux-2.4.16/drivers/net/wan/cosa.c linux/drivers/net/wan/cosa.c
+--- linux-2.4.16/drivers/net/wan/cosa.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/wan/cosa.c	Mon Nov 26 16:13:38 2001
+@@ -548,7 +548,8 @@
+ 	cosa->nchannels = 2;	/* FIXME: how to determine this? */
+ 
+ 	request_region(base, is_8bit(cosa)?2:4, cosa->type);
+-	if (request_irq(cosa->irq, cosa_interrupt, 0, cosa->type, cosa))
++	if (request_irq(cosa->irq, cosa_interrupt, SA_SAMPLE_NET_RANDOM,
++			cosa->type, cosa))
+ 		goto bad1;
+ 	if (request_dma(cosa->dma, cosa->type)) {
+ 		free_irq(cosa->irq, cosa);
+diff -urN linux-2.4.16/drivers/net/wan/cycx_main.c linux/drivers/net/wan/cycx_main.c
+--- linux-2.4.16/drivers/net/wan/cycx_main.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/wan/cycx_main.c	Mon Nov 26 16:13:38 2001
+@@ -214,7 +214,8 @@
+ 	/* Allocate IRQ */
+ 	irq = conf->irq == 2 ? 9 : conf->irq;	/* IRQ2 -> IRQ9 */
+ 
+-	if (request_irq(irq, cycx_isr, 0, wandev->name, card)) {
++	if (request_irq(irq, cycx_isr, SA_SAMPLE_NET_RANDOM,
++			wandev->name, card)) {
+ 		printk(KERN_ERR "%s: can't reserve IRQ %d!\n",
+ 				wandev->name, irq);
+ 		goto out;
+diff -urN linux-2.4.16/drivers/net/wan/dscc4.c linux/drivers/net/wan/dscc4.c
+--- linux-2.4.16/drivers/net/wan/dscc4.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/wan/dscc4.c	Mon Nov 26 16:13:38 2001
+@@ -506,7 +506,8 @@
+ 
+ 	priv = (struct dscc4_pci_priv *)pci_get_drvdata(pdev);
+ 
+-	if (request_irq(pdev->irq, &dscc4_irq, SA_SHIRQ, "dscc4", priv->root)) {
++	if (request_irq(pdev->irq, &dscc4_irq, SA_SHIRQ | SA_SAMPLE_NET_RANDOM,
++			"dscc4", priv->root)) {
+ 		printk(KERN_WARNING "dscc4: IRQ %d is busy\n", pdev->irq);
+ 		goto err_out_iounmap;
+ 	}
+diff -urN linux-2.4.16/drivers/net/wan/farsync.c linux/drivers/net/wan/farsync.c
+--- linux-2.4.16/drivers/net/wan/farsync.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/wan/farsync.c	Mon Nov 26 16:13:38 2001
+@@ -1737,7 +1737,8 @@
+         card->state = FST_RESET;
+ 
+         /* Register the interrupt handler */
+-        if ( request_irq ( card->irq, fst_intr, SA_SHIRQ, FST_DEV_NAME, card ))
++        if ( request_irq ( card->irq, fst_intr, SA_SHIRQ | SA_SAMPLE_NET_RANDOM,
++			FST_DEV_NAME, card ))
+         {
+ 
+                 printk_err ("Unable to register interrupt %d\n", card->irq );
+diff -urN linux-2.4.16/drivers/net/wan/hostess_sv11.c linux/drivers/net/wan/hostess_sv11.c
+--- linux-2.4.16/drivers/net/wan/hostess_sv11.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/wan/hostess_sv11.c	Mon Nov 26 16:13:38 2001
+@@ -254,7 +254,9 @@
+ 	/* We want a fast IRQ for this device. Actually we'd like an even faster
+ 	   IRQ ;) - This is one driver RtLinux is made for */
+ 	   
+-	if(request_irq(irq, &z8530_interrupt, SA_INTERRUPT, "Hostess SV/11", dev)<0)
++	if(request_irq(irq, &z8530_interrupt,
++			SA_INTERRUPT | SA_SAMPLE_NET_RANDOM,
++			"Hostess SV/11", dev)<0)
+ 	{
+ 		printk(KERN_WARNING "hostess: IRQ %d already in use.\n", irq);
+ 		goto fail1;
+diff -urN linux-2.4.16/drivers/net/wan/lmc/lmc_main.c linux/drivers/net/wan/lmc/lmc_main.c
+--- linux-2.4.16/drivers/net/wan/lmc/lmc_main.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/wan/lmc/lmc_main.c	Mon Nov 26 16:13:38 2001
+@@ -1178,7 +1178,8 @@
+     lmc_softreset (sc);
+ 
+     /* Since we have to use PCI bus, this should work on x86,alpha,ppc */
+-    if (request_irq (dev->irq, &lmc_interrupt, SA_SHIRQ, dev->name, dev)){
++    if (request_irq (dev->irq, &lmc_interrupt,
++		SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev)){
+         printk(KERN_WARNING "%s: could not get irq: %d\n", dev->name, dev->irq);
+         lmc_trace(dev, "lmc_open irq failed out");
+         return -EAGAIN;
+diff -urN linux-2.4.16/drivers/net/wan/n2.c linux/drivers/net/wan/n2.c
+--- linux-2.4.16/drivers/net/wan/n2.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/wan/n2.c	Mon Nov 26 16:13:38 2001
+@@ -398,7 +398,7 @@
+ 	}
+ 	card->io = io;
+ 
+-	if (request_irq(irq, &sca_intr, 0, devname, card)) {
++	if (request_irq(irq, &sca_intr, SA_SAMPLE_NET_RANDOM, devname, card)) {
+ 		printk(KERN_ERR "n2: could not allocate IRQ\n");
+ 		n2_destroy_card(card);
+ 		return(-EBUSY);
+diff -urN linux-2.4.16/drivers/net/wan/sbni.c linux/drivers/net/wan/sbni.c
+--- linux-2.4.16/drivers/net/wan/sbni.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/wan/sbni.c	Mon Nov 26 16:13:38 2001
+@@ -1168,7 +1168,8 @@
+ 			}
+ 	}
+ 
+-	if( request_irq(dev->irq, sbni_interrupt, SA_SHIRQ, dev->name, dev) ) {
++	if( request_irq(dev->irq, sbni_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev) ) {
+ 		printk( KERN_ERR "%s: unable to get IRQ %d.\n",
+ 			dev->name, dev->irq );
+ 		return  -EAGAIN;
+diff -urN linux-2.4.16/drivers/net/wan/sdla.c linux/drivers/net/wan/sdla.c
+--- linux-2.4.16/drivers/net/wan/sdla.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/wan/sdla.c	Mon Nov 26 16:13:38 2001
+@@ -1469,7 +1469,8 @@
+ 	}
+ 	dev->irq = map->irq;
+ 
+-	if (request_irq(dev->irq, &sdla_isr, 0, dev->name, dev)) 
++	if (request_irq(dev->irq, &sdla_isr, SA_SAMPLE_NET_RANDOM,
++			dev->name, dev)) 
+ 		return(-EAGAIN);
+ 
+ 	if (flp->type == SDLA_S507)
+diff -urN linux-2.4.16/drivers/net/wan/sdlamain.c linux/drivers/net/wan/sdlamain.c
+--- linux-2.4.16/drivers/net/wan/sdlamain.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/wan/sdlamain.c	Mon Nov 26 16:13:38 2001
+@@ -495,8 +495,7 @@
+ 		/* when using the S514 PCI adapter */
+ 		
+        		if(request_irq(irq, sdla_isr, 
+-		      (card->hw.type == SDLA_S514) ? SA_SHIRQ : 0, 
+-		       wandev->name, card)){
++		      (card->hw.type == SDLA_S514) ? SA_SHIRQ : 0 | SA_SAMPLE_NET_RANDOM, wandev->name, card)){
+ 
+ 			printk(KERN_INFO "%s: Can't reserve IRQ %d!\n", wandev->name, irq);
+ 			return -EINVAL;
+diff -urN linux-2.4.16/drivers/net/wan/sealevel.c linux/drivers/net/wan/sealevel.c
+--- linux-2.4.16/drivers/net/wan/sealevel.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/wan/sealevel.c	Mon Nov 26 16:13:38 2001
+@@ -281,7 +281,8 @@
+ 	/* We want a fast IRQ for this device. Actually we'd like an even faster
+ 	   IRQ ;) - This is one driver RtLinux is made for */
+    
+-	if(request_irq(irq, &z8530_interrupt, SA_INTERRUPT, "SeaLevel", dev)<0)
++	if(request_irq(irq, &z8530_interrupt,
++			SA_INTERRUPT | SA_SAMPLE_NET_RANDOM, "SeaLevel", dev)<0)
+ 	{
+ 		printk(KERN_WARNING "sealevel: IRQ %d already in use.\n", irq);
+ 		goto fail1_1;
+diff -urN linux-2.4.16/drivers/net/wavelan.c linux/drivers/net/wavelan.c
+--- linux-2.4.16/drivers/net/wavelan.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/wavelan.c	Mon Nov 26 16:13:38 2001
+@@ -3900,7 +3900,8 @@
+ 		return -ENXIO;
+ 	}
+ 
+-	if (request_irq(dev->irq, &wavelan_interrupt, 0, "WaveLAN", dev) != 0) 
++	if (request_irq(dev->irq, &wavelan_interrupt, SA_SAMPLE_NET_RANDOM,
++				"WaveLAN", dev) != 0) 
+ 	{
+ #ifdef DEBUG_CONFIG_ERROR
+ 		printk(KERN_WARNING "%s: wavelan_open(): invalid IRQ\n",
+diff -urN linux-2.4.16/drivers/net/wd.c linux/drivers/net/wd.c
+--- linux-2.4.16/drivers/net/wd.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/wd.c	Mon Nov 26 16:13:38 2001
+@@ -266,7 +266,8 @@
+ 
+ 	/* Snarf the interrupt now.  There's no point in waiting since we cannot
+ 	   share and the board will usually be enabled. */
+-	i = request_irq(dev->irq, ei_interrupt, 0, dev->name, dev);
++	i = request_irq(dev->irq, ei_interrupt,
++			SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (i) {
+ 		printk (" unable to get IRQ %d.\n", dev->irq);
+ 		kfree(dev->priv);
+diff -urN linux-2.4.16/drivers/net/winbond-840.c linux/drivers/net/winbond-840.c
+--- linux-2.4.16/drivers/net/winbond-840.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/winbond-840.c	Mon Nov 26 16:13:38 2001
+@@ -688,7 +688,8 @@
+ 	writel(0x00000001, ioaddr + PCIBusCfg);		/* Reset */
+ 
+ 	netif_device_detach(dev);
+-	i = request_irq(dev->irq, &intr_handler, SA_SHIRQ, dev->name, dev);
++	i = request_irq(dev->irq, &intr_handler,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (i)
+ 		goto out_err;
+ 
+diff -urN linux-2.4.16/drivers/net/wireless/airo.c linux/drivers/net/wireless/airo.c
+--- linux-2.4.16/drivers/net/wireless/airo.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/wireless/airo.c	Mon Nov 26 16:13:38 2001
+@@ -1191,7 +1191,8 @@
+ 	dev->irq = irq;
+ 	dev->base_addr = port;
+ 
+-	rc = request_irq( dev->irq, airo_interrupt, SA_SHIRQ, dev->name, dev );
++	rc = request_irq( dev->irq, airo_interrupt,
++		SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev );
+ 	if (rc) {
+ 		printk(KERN_ERR "airo: register interrupt %d failed, rc %d\n", irq, rc );
+ 		goto err_out_unlink;
+diff -urN linux-2.4.16/drivers/net/wireless/airport.c linux/drivers/net/wireless/airport.c
+--- linux-2.4.16/drivers/net/wireless/airport.c	Mon Nov 26 15:56:34 2001
++++ linux/drivers/net/wireless/airport.c	Mon Nov 26 16:13:38 2001
+@@ -241,7 +241,8 @@
+ 	/* Reset it before we get the interrupt */
+ 	hermes_reset(hw);
+ 
+-	if (request_irq(ndev->irq, dldwd_interrupt, 0, "Airport", (void *)priv)) {
++	if (request_irq(ndev->irq, dldwd_interrupt, SA_SAMPLE_NET_RANDOM,
++			"Airport", (void *)priv)) {
+ 		printk(KERN_ERR "airport: Couldn't get IRQ %d\n", ndev->irq);
+ 		goto failed;
+ 	}
+diff -urN linux-2.4.16/drivers/net/yellowfin.c linux/drivers/net/yellowfin.c
+--- linux-2.4.16/drivers/net/yellowfin.c	Mon Nov 26 15:56:32 2001
++++ linux/drivers/net/yellowfin.c	Mon Nov 26 16:13:38 2001
+@@ -625,7 +625,8 @@
+ 	/* Reset the chip. */
+ 	outl(0x80000000, ioaddr + DMACtrl);
+ 
+-	i = request_irq(dev->irq, &yellowfin_interrupt, SA_SHIRQ, dev->name, dev);
++	i = request_irq(dev->irq, &yellowfin_interrupt,
++			SA_SHIRQ | SA_SAMPLE_NET_RANDOM, dev->name, dev);
+ 	if (i) return i;
+ 
+ 	if (yellowfin_debug > 1)
+diff -urN linux-2.4.16/drivers/net/znet.c linux/drivers/net/znet.c
+--- linux-2.4.16/drivers/net/znet.c	Mon Nov 26 15:56:31 2001
++++ linux/drivers/net/znet.c	Mon Nov 26 16:13:38 2001
+@@ -252,7 +252,8 @@
+ 	zn.lock = SPIN_LOCK_UNLOCKED;
+ 
+ 	/* These should never fail.  You can't add devices to a sealed box! */
+-	if (request_irq(dev->irq, &znet_interrupt, 0, "ZNet", dev)
++	if (request_irq(dev->irq, &znet_interrupt, SA_SAMPLE_NET_RANDOM,
++	                "ZNet", dev)
+ 		|| request_dma(zn.rx_dma,"ZNet rx")
+ 		|| request_dma(zn.tx_dma,"ZNet tx")) {
+ 		printk(KERN_WARNING "%s: Not opened -- resource busy?!?\n", dev->name);
