@@ -62,16 +62,15 @@ Patch16:	linux-raw.patch
 Patch17:	%{name}-pcmcia.patch
 Patch18:	linux-sparc_ide_fix.patch
 Patch19:	%{name}-Config.in-CONFIG_AMIGA_PARTITION.patch
-Patch20:	%{name}-sysctl_security_fix.patch
-Patch21:	%{name}-wanrouter-bridge.patch
-Patch22:	%{name}-ipsec-bridge.patch
-Patch23:	%{name}-bridge-extraversion.patch
-Patch24:	%{name}-panaview_kbd.patch
-Patch25:	http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-6.1.11-2.2.19.patch.gz
-Patch26:	%{name}-toshiba-2.2.19.patch
-Patch27:	linux-2.2.19-pci.patch 
-Patch28:	%{name}-flip.patch 
-Patch29:	%{name}-flip-serial5.05.patch
+Patch20:	%{name}-wanrouter-bridge.patch
+Patch21:	%{name}-ipsec-bridge.patch
+Patch22:	%{name}-bridge-extraversion.patch
+Patch23:	%{name}-panaview_kbd.patch
+Patch24:	http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-6.1.11-2.2.19.patch.gz
+Patch25:	%{name}-toshiba-2.2.19.patch
+Patch26:	linux-2.2.19-pci.patch 
+Patch27:	%{name}-flip.patch 
+Patch28:	%{name}-flip-serial5.05.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -330,19 +329,18 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch18 -p1
 %patch19 -p1
 #%patch20 -p1
-#%patch21 -p1
-%patch22 -p1
-#%patch23 -p1
+%patch21 -p1
+#%patch22 -p1
 %ifarch %{x86}
-%patch24 -p1
+%patch23 -p1
 %endif
+%patch24 -p1
 %patch25 -p1
 %patch26 -p1
 %patch27 -p1
-%patch28 -p1
 
 cd  serial-5.05
-%patch29 -p1
+%patch28 -p1
 ./install-in-kernel ../
 cd .. 
 
@@ -554,18 +552,17 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH18}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH19}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH19}
 #patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH20}
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH21}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH22}
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH23}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH21}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH22}
 %ifarch %{x86}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH24}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH23}
 %endif
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH25}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH24}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH25}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH26}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH27}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH28}
 cd serial-5.05
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH29}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH28}
 ./install-in-kernel $RPM_BUILD_ROOT/usr/src/linux-%{version}
 cd ..
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
