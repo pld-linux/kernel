@@ -1,14 +1,15 @@
 %define		pcmcia_version		3.1.24
 %define		lids_version		1.0.4
 %define		ipvs_version		0.2.3
-%define		ac_version		ac1
+%define		ac_version		ac2
+%define		zerocopy_version	3
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.1
-Release:	1
+Release:	2
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -19,7 +20,7 @@ Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
 Source4:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
-#Source7:	linux-netfilter-patches-20010201.tar.gz
+Source7:	linux-netfilter-patches-20010201.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}-2.4.0.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source20:	%{name}-i386.config
@@ -44,6 +45,7 @@ Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.3.gz
 #Patch3:		linux-ipv6-addrconf.patch
 Patch4:		kernel-i8255-asm-fix.patch
 Patch5:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.1-%{ac_version}.gz
+Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/cavem/zerocopy-%{version}-%{zerocopy_version}.diff.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -223,14 +225,17 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 #install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # Netfilter
-#for i in netfilter-patches/* ; do
-#       [ -f $i -a "$i" != "netfilter-patches/isapplied" ] && patch -p1  <$i
-#done
-#(KERNEL_DIR=`pwd` ; export KERNEL_DIR
-#cd netfilter-patches/patch-o-matic
-#ANS=""
-#for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
-#echo -e $ANS | ./runme)
+for i in netfilter-patches/* ; do
+       [ -f $i -a "$i" != "netfilter-patches/isapplied" ] && patch -p1  <$i
+done
+(KERNEL_DIR=`pwd` ; export KERNEL_DIR
+cd netfilter-patches/patch-o-matic
+ANS=""
+for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
+echo -e $ANS | ./runme)
+
+#zerocopy
+%patch6 -p1
 
 # IPVS
 #for i in ipvs-%{ipvs_version}/*.diff ; do
@@ -242,6 +247,7 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # LIDS
 #patch -p1 <lids-1.0.4-2.4.0/lids-1.0.4-2.4.0.patch
+
 
 # Remove -g from drivers/atm/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
