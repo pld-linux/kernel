@@ -13,7 +13,8 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	grsec		# build without grsec
-%bcond_with	execshield	# build without exec-shield
+%bcond_with	pramfs		# build pramfs support (EXPERIMENTAL)
+%bcond_with	execshield	# build with exec-shield
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	bootsplash	# build with bootsplash
@@ -47,8 +48,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.4
-%define		_cset		20040619_0208
+%define		_rel		1.5
+%define		_cset		20040620_0609
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040608
@@ -79,7 +80,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	98ef5bcd04532e4afad1a5d109faafbe
+# Source3-md5:	2a35fe13cc4da2837044ba797616003c
 # http://lkml.org/lkml/2004/6/2/228
 Source4:	http://redhat.com/~mingo/nx-patches/nx-2.6.7-rc2-bk2-AF
 # Source4-md5:	9d45d98ad5e27747c6e930a46dc9e37f
@@ -598,7 +599,10 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch24 -p1
 
 ## bootsplash
-#patch26 -p1
+%if %{with bootsplash
+echo Not fixed !!
+%patch26 -p1
+%endif
 
 %patch28 -p1
 
@@ -653,7 +657,9 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch74 -p1
 
 #pramfs
+%if %{with parmfs}
 %patch76 -p1
+%endif
 
 %patch78 -p1
 
@@ -678,11 +684,11 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch90 -p1
 
 #grsec
-#ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
-#if %{with grsec}
-#patch94 -p1
-#endif
-#endif
+%ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
+%if %{with grsec}
+%patch94 -p1
+%endif
+%endif
 
 #if %{with execshield}
 #patch -p1 -s < %{SOURCE4}
