@@ -14,7 +14,7 @@
 # _without_source	- don't build source
 # _without_lsm		- don't build LSM/SELinux kernel
 
-%define		_rel		0
+%define		_rel		0.1
 %define		test_ver	4
 %define		patch_level	0
 %define		_bk_ver		2
@@ -361,7 +361,7 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
     Makefile.orig >Makefile
 
 %build
-BuildKernel() {
+BuildConfig (){
 	%{?_debug:set -x}
 	# is this a special kernel we want to build?
 	BOOT=
@@ -409,6 +409,19 @@ BuildKernel() {
 %endif
 
 	cat %{SOURCE100} >> arch/%{base_arch}/defconfig
+	ln -sf arch/%{base_arch}/defconfig .config
+
+	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
+	%{__make} include/linux/autoconf.h
+	if [ "$smp" = "yes" ]; then
+		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
+	else
+		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
+	fi
+}
+
+BuildKernel() {
+	%{?_debug:set -x}
 	
 	%{__make} mrproper
 	ln -sf arch/%{base_arch}/defconfig .config
@@ -456,12 +469,6 @@ BuildKernel() {
 	KERNELRELEASE=$KernelVer
 	echo KERNEL RELEASE $KernelVer
 
-	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
-	if [ "$smp" = "yes" ]; then
-		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
-	else
-		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
-	fi
 }
 
 KERNEL_BUILD_DIR=`pwd`
@@ -470,9 +477,11 @@ rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
 
 # UP KERNEL
+BuildConfig
 %{!?_without_up:BuildKernel}
 
 # SMP KERNEL
+BuildConfig smp
 %{!?_without_smp:BuildKernel smp}
 
 # BOOT kernel
