@@ -873,6 +873,13 @@ rm -rf $RPM_BUILD_ROOT
 %preun
 rm -f /lib/modules/%{version}-%{release}/modules.*
 
+%pre
+# on target system the /boot might not be mounted (it's not required for system
+# to run properly), it could be also mounted ro
+mount /boot >/dev/null 2>&1
+mount /boot -o remount,rw >/dev/null 2>&1
+exit 0
+
 %post
 %ifarch ia64
 mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
