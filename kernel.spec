@@ -16,7 +16,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	13
+Release:	14.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -49,7 +49,6 @@ Source33:	%{name}-alpha.config
 Source34:	%{name}-alpha-smp.config
 Source35:	%{name}-alpha-BOOT.config
 Source36:	%{name}-ppc.config
-
 Patch0:		%{name}-pldfblogo.patch
 Patch1:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
 Patch2:		http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
@@ -111,6 +110,7 @@ Patch1503:	%{name}-sym53c8xx.patch
 
 # ppcs patches
 Patch2000:	2.2.20-ppc_ide.patch
+Patch2001:	2.2.20-ppc_serial.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -436,6 +436,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 #some ppc hacks
 %ifarch ppc
 %patch2000 -p1
+%patch2001 -p1
 %endif
 
 %build
@@ -754,6 +755,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1503}
 
 %ifarch ppc
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2000}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2001}
 %endif
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
