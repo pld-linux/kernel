@@ -117,7 +117,7 @@ Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/pr
 Patch8:		linux-2.4.20-netfilter-%{netfilter_snap}.patch.bz2
 
 Patch9:		linux-2.4.20-initrd-close-console.patch
-#Patch10:
+Patch10:	host-skas3.patch
 
 # http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
 Patch11:	linux-2.4.20-ipvs-%{ipvs_version}.patch.bz2
@@ -750,6 +750,7 @@ echo Added Intel 810 FB support
 # KT400
 echo Added support for KT400 chipset
 %patch144 -p1
+%patch10 -p1
 %endif
 %ifarch ppc
 echo PPC patches ...
