@@ -16,7 +16,7 @@
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		vlan_version		1.4
 %define		IPperson_version	20010724-2.4.7
-%define		grsec_version		1.7.2-2.4.9
+%define		grsec_version		1.8-2.4.10
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -131,10 +131,9 @@ Patch120:	linux-2.4.3-sb.patch
 Patch121:	linux-2.4.10-ideraid.patch
 # another sb16 pnp id
 Patch122:	linux-2.4.6-sb_id.patch
-Patch123:	linux-2.4.10-quotaiput-fix.patch
-Patch124:	linux-2.4.10-aironet.patch
-Patch125:	linux-2.4.10-cpqfc.patch
-Patch126:	linux-2.4.10-SAA9730-mips-only.patch
+Patch123:	linux-2.4.10-aironet.patch
+Patch124:	linux-2.4.10-cpqfc.patch
+Patch125:	linux-2.4.10-SAA9730-mips-only.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -409,6 +408,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
+%patch123 -p1
+%patch124 -p1
+%patch125 -p1
 
 %patch900 -p0 
 %patch901 -p0
