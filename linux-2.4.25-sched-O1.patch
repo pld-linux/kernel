@@ -1,6 +1,6 @@
 diff -urN linux-2.4.24.org/arch/alpha/kernel/entry.S linux-2.4.24/arch/alpha/kernel/entry.S
---- linux-2.4.24.org/arch/alpha/kernel/entry.S	2004-01-16 16:59:08.980459766 +0100
-+++ linux-2.4.24/arch/alpha/kernel/entry.S	2004-01-16 17:01:57.915352843 +0100
+--- linux-2.4.24.org/arch/alpha/kernel/entry.S	2004-02-04 20:50:50.273627588 +0100
++++ linux-2.4.24/arch/alpha/kernel/entry.S	2004-02-04 20:52:52.801142450 +0100
 @@ -695,7 +695,9 @@
  ret_from_fork:
  	lda	$26,ret_from_sys_call
@@ -12,8 +12,8 @@ diff -urN linux-2.4.24.org/arch/alpha/kernel/entry.S linux-2.4.24/arch/alpha/ker
  
  .align 3
 diff -urN linux-2.4.24.org/arch/alpha/kernel/process.c linux-2.4.24/arch/alpha/kernel/process.c
---- linux-2.4.24.org/arch/alpha/kernel/process.c	2004-01-16 16:59:08.423575492 +0100
-+++ linux-2.4.24/arch/alpha/kernel/process.c	2004-01-16 17:01:57.918352220 +0100
+--- linux-2.4.24.org/arch/alpha/kernel/process.c	2004-02-04 20:50:48.800933904 +0100
++++ linux-2.4.24/arch/alpha/kernel/process.c	2004-02-04 20:52:52.805141619 +0100
 @@ -74,9 +74,6 @@
  cpu_idle(void)
  {
@@ -25,8 +25,8 @@ diff -urN linux-2.4.24.org/arch/alpha/kernel/process.c linux-2.4.24/arch/alpha/k
  		/* FIXME -- EV6 and LCA45 know how to power down
  		   the CPU.  */
 diff -urN linux-2.4.24.org/arch/alpha/kernel/smp.c linux-2.4.24/arch/alpha/kernel/smp.c
---- linux-2.4.24.org/arch/alpha/kernel/smp.c	2004-01-16 16:59:08.752507137 +0100
-+++ linux-2.4.24/arch/alpha/kernel/smp.c	2004-01-16 17:01:57.928350142 +0100
+--- linux-2.4.24.org/arch/alpha/kernel/smp.c	2004-02-04 20:50:49.083875053 +0100
++++ linux-2.4.24/arch/alpha/kernel/smp.c	2004-02-04 20:52:52.820138499 +0100
 @@ -81,6 +81,8 @@
  int smp_num_probed;		/* Internal processor count */
  int smp_num_cpus = 1;		/* Number that came online.  */
@@ -150,8 +150,8 @@ diff -urN linux-2.4.24.org/arch/alpha/kernel/smp.c linux-2.4.24/arch/alpha/kerne
  	atomic_inc(&init_mm.mm_count);
  	current->active_mm = &init_mm;
 diff -urN linux-2.4.24.org/arch/arm/kernel/process.c linux-2.4.24/arch/arm/kernel/process.c
---- linux-2.4.24.org/arch/arm/kernel/process.c	2004-01-16 16:59:42.874416233 +0100
-+++ linux-2.4.24/arch/arm/kernel/process.c	2004-01-16 17:01:57.933349103 +0100
+--- linux-2.4.24.org/arch/arm/kernel/process.c	2004-02-04 20:51:34.213488266 +0100
++++ linux-2.4.24/arch/arm/kernel/process.c	2004-02-04 20:52:52.824137668 +0100
 @@ -87,8 +87,6 @@
  {
  	/* endless idle loop with no priority at all */
@@ -162,8 +162,8 @@ diff -urN linux-2.4.24.org/arch/arm/kernel/process.c linux-2.4.24/arch/arm/kerne
  	while (1) {
  		void (*idle)(void) = pm_idle;
 diff -urN linux-2.4.24.org/arch/i386/kernel/entry.S linux-2.4.24/arch/i386/kernel/entry.S
---- linux-2.4.24.org/arch/i386/kernel/entry.S	2004-01-16 16:59:06.139050240 +0100
-+++ linux-2.4.24/arch/i386/kernel/entry.S	2004-01-16 17:01:57.937348272 +0100
+--- linux-2.4.24.org/arch/i386/kernel/entry.S	2004-02-04 20:50:47.376230238 +0100
++++ linux-2.4.24/arch/i386/kernel/entry.S	2004-02-04 20:52:52.828136836 +0100
 @@ -79,7 +79,7 @@
  exec_domain	= 16
  need_resched	= 20
@@ -186,8 +186,8 @@ diff -urN linux-2.4.24.org/arch/i386/kernel/entry.S linux-2.4.24/arch/i386/kerne
  	testb $0x02,tsk_ptrace(%ebx)	# PT_TRACESYS
  	jne tracesys_exit
 diff -urN linux-2.4.24.org/arch/i386/kernel/process.c linux-2.4.24/arch/i386/kernel/process.c
---- linux-2.4.24.org/arch/i386/kernel/process.c	2004-01-16 16:59:05.887102597 +0100
-+++ linux-2.4.24/arch/i386/kernel/process.c	2004-01-16 17:01:57.941347441 +0100
+--- linux-2.4.24.org/arch/i386/kernel/process.c	2004-02-04 20:50:46.799350227 +0100
++++ linux-2.4.24/arch/i386/kernel/process.c	2004-02-04 20:52:52.833135796 +0100
 @@ -84,7 +84,7 @@
  {
  	if (current_cpu_data.hlt_works_ok && !hlt_counter) {
@@ -207,7 +207,7 @@ diff -urN linux-2.4.24.org/arch/i386/kernel/process.c linux-2.4.24/arch/i386/ker
  
  	while (1) {
  		void (*idle)(void) = pm_idle;
-@@ -708,15 +705,17 @@
+@@ -665,15 +662,17 @@
  	asm volatile("movl %%gs,%0":"=m" (*(int *)&prev->gs));
  
  	/*
@@ -229,7 +229,7 @@ diff -urN linux-2.4.24.org/arch/i386/kernel/process.c linux-2.4.24/arch/i386/ker
  		loaddebug(next, 0);
  		loaddebug(next, 1);
  		loaddebug(next, 2);
-@@ -726,7 +725,7 @@
+@@ -683,7 +682,7 @@
  		loaddebug(next, 7);
  	}
  
@@ -239,11 +239,11 @@ diff -urN linux-2.4.24.org/arch/i386/kernel/process.c linux-2.4.24/arch/i386/ker
  			/*
  			 * 4 cachelines copy ... not good, but not that
 diff -urN linux-2.4.24.org/arch/i386/kernel/setup.c linux-2.4.24/arch/i386/kernel/setup.c
---- linux-2.4.24.org/arch/i386/kernel/setup.c	2004-01-16 16:59:05.884103220 +0100
-+++ linux-2.4.24/arch/i386/kernel/setup.c	2004-01-16 17:01:57.951345363 +0100
+--- linux-2.4.24.org/arch/i386/kernel/setup.c	2004-02-04 20:50:46.790352099 +0100
++++ linux-2.4.24/arch/i386/kernel/setup.c	2004-02-04 20:52:52.840134340 +0100
 @@ -3193,9 +3193,10 @@
  	load_TR(nr);
- 	load_LDT(&init_mm);
+ 	load_LDT(&init_mm.context);
  
 -	/*
 -	 * Clear all 6 debug registers:
@@ -256,8 +256,8 @@ diff -urN linux-2.4.24.org/arch/i386/kernel/setup.c linux-2.4.24/arch/i386/kerne
  #define CD(register) __asm__("movl %0,%%db" #register ::"r"(0) );
  
 diff -urN linux-2.4.24.org/arch/i386/kernel/smpboot.c linux-2.4.24/arch/i386/kernel/smpboot.c
---- linux-2.4.24.org/arch/i386/kernel/smpboot.c	2004-01-16 16:59:05.869106337 +0100
-+++ linux-2.4.24/arch/i386/kernel/smpboot.c	2004-01-16 17:01:57.955344532 +0100
+--- linux-2.4.24.org/arch/i386/kernel/smpboot.c	2004-02-04 20:50:46.762357921 +0100
++++ linux-2.4.24/arch/i386/kernel/smpboot.c	2004-02-04 20:52:52.864129350 +0100
 @@ -308,14 +308,14 @@
  			if (tsc_values[i] < avg)
  				realdelta = -realdelta;
@@ -351,8 +351,8 @@ diff -urN linux-2.4.24.org/arch/i386/kernel/smpboot.c linux-2.4.24/arch/i386/ker
  
  	/*
 diff -urN linux-2.4.24.org/arch/i386/kernel/smp.c linux-2.4.24/arch/i386/kernel/smp.c
---- linux-2.4.24.org/arch/i386/kernel/smp.c	2004-01-16 16:59:06.059066861 +0100
-+++ linux-2.4.24/arch/i386/kernel/smp.c	2004-01-16 17:01:57.960343493 +0100
+--- linux-2.4.24.org/arch/i386/kernel/smp.c	2004-02-04 20:50:47.312243547 +0100
++++ linux-2.4.24/arch/i386/kernel/smp.c	2004-02-04 20:52:52.868128518 +0100
 @@ -496,13 +496,23 @@
   * it goes straight through and wastes no time serializing
   * anything. Worst case is that we lose a reschedule ...
@@ -379,8 +379,8 @@ diff -urN linux-2.4.24.org/arch/i386/kernel/smp.c linux-2.4.24/arch/i386/kernel/
   * static memory requirements. It also looks cleaner.
   */
 diff -urN linux-2.4.24.org/arch/mips64/kernel/process.c linux-2.4.24/arch/mips64/kernel/process.c
---- linux-2.4.24.org/arch/mips64/kernel/process.c	2004-01-16 16:59:57.513374086 +0100
-+++ linux-2.4.24/arch/mips64/kernel/process.c	2004-01-16 17:01:57.964342662 +0100
+--- linux-2.4.24.org/arch/mips64/kernel/process.c	2004-02-04 20:51:53.268524907 +0100
++++ linux-2.4.24/arch/mips64/kernel/process.c	2004-02-04 20:52:52.872127686 +0100
 @@ -39,8 +39,7 @@
  {
  	/* endless idle loop with no priority at all */
@@ -392,8 +392,8 @@ diff -urN linux-2.4.24.org/arch/mips64/kernel/process.c linux-2.4.24/arch/mips64
  		while (!current->need_resched)
  			if (cpu_wait)
 diff -urN linux-2.4.24.org/arch/parisc/kernel/process.c linux-2.4.24/arch/parisc/kernel/process.c
---- linux-2.4.24.org/arch/parisc/kernel/process.c	2004-01-16 17:00:04.480926144 +0100
-+++ linux-2.4.24/arch/parisc/kernel/process.c	2004-01-16 17:01:57.968341831 +0100
+--- linux-2.4.24.org/arch/parisc/kernel/process.c	2004-02-04 20:51:58.602415484 +0100
++++ linux-2.4.24/arch/parisc/kernel/process.c	2004-02-04 20:52:52.876126854 +0100
 @@ -65,8 +65,6 @@
  {
  	/* endless idle loop with no priority at all */
@@ -404,8 +404,8 @@ diff -urN linux-2.4.24.org/arch/parisc/kernel/process.c linux-2.4.24/arch/parisc
  	while (1) {
  		while (!current->need_resched) {
 diff -urN linux-2.4.24.org/arch/ppc/8260_io/uart.c linux-2.4.24/arch/ppc/8260_io/uart.c
---- linux-2.4.24.org/arch/ppc/8260_io/uart.c	2004-01-16 16:59:32.934481864 +0100
-+++ linux-2.4.24/arch/ppc/8260_io/uart.c	2004-01-16 17:01:57.975340377 +0100
+--- linux-2.4.24.org/arch/ppc/8260_io/uart.c	2004-02-04 20:51:19.088634171 +0100
++++ linux-2.4.24/arch/ppc/8260_io/uart.c	2004-02-04 20:52:52.882125606 +0100
 @@ -1801,7 +1801,6 @@
  		printk("lsr = %d (jiff=%lu)...", lsr, jiffies);
  #endif
@@ -415,8 +415,8 @@ diff -urN linux-2.4.24.org/arch/ppc/8260_io/uart.c linux-2.4.24/arch/ppc/8260_io
  		if (signal_pending(current))
  			break;
 diff -urN linux-2.4.24.org/arch/ppc/8xx_io/uart.c linux-2.4.24/arch/ppc/8xx_io/uart.c
---- linux-2.4.24.org/arch/ppc/8xx_io/uart.c	2004-01-16 16:59:32.444583671 +0100
-+++ linux-2.4.24/arch/ppc/8xx_io/uart.c	2004-01-16 17:01:57.982338922 +0100
+--- linux-2.4.24.org/arch/ppc/8xx_io/uart.c	2004-02-04 20:51:18.484759775 +0100
++++ linux-2.4.24/arch/ppc/8xx_io/uart.c	2004-02-04 20:52:52.888124359 +0100
 @@ -1856,7 +1856,6 @@
  		printk("lsr = %d (jiff=%lu)...", lsr, jiffies);
  #endif
@@ -426,8 +426,8 @@ diff -urN linux-2.4.24.org/arch/ppc/8xx_io/uart.c linux-2.4.24/arch/ppc/8xx_io/u
  		if (signal_pending(current))
  			break;
 diff -urN linux-2.4.24.org/arch/ppc/kernel/entry.S linux-2.4.24/arch/ppc/kernel/entry.S
---- linux-2.4.24.org/arch/ppc/kernel/entry.S	2004-01-16 16:59:30.417005024 +0100
-+++ linux-2.4.24/arch/ppc/kernel/entry.S	2004-01-16 17:01:57.986338091 +0100
+--- linux-2.4.24.org/arch/ppc/kernel/entry.S	2004-02-04 20:51:15.913294629 +0100
++++ linux-2.4.24/arch/ppc/kernel/entry.S	2004-02-04 20:52:52.903121239 +0100
 @@ -269,7 +269,9 @@
  
  	.globl	ret_from_fork
@@ -439,8 +439,8 @@ diff -urN linux-2.4.24.org/arch/ppc/kernel/entry.S linux-2.4.24/arch/ppc/kernel/
  	andi.	r0,r0,PT_TRACESYS
  	bnel-	syscall_trace
 diff -urN linux-2.4.24.org/arch/ppc/kernel/idle.c linux-2.4.24/arch/ppc/kernel/idle.c
---- linux-2.4.24.org/arch/ppc/kernel/idle.c	2004-01-16 16:59:30.768931889 +0100
-+++ linux-2.4.24/arch/ppc/kernel/idle.c	2004-01-16 17:01:57.992336845 +0100
+--- linux-2.4.24.org/arch/ppc/kernel/idle.c	2004-02-04 20:51:16.300214151 +0100
++++ linux-2.4.24/arch/ppc/kernel/idle.c	2004-02-04 20:52:52.908120200 +0100
 @@ -46,9 +46,7 @@
  		do_power_save = 1;
  
@@ -453,8 +453,8 @@ diff -urN linux-2.4.24.org/arch/ppc/kernel/idle.c linux-2.4.24/arch/ppc/kernel/i
  #ifdef CONFIG_SMP
  		if (!do_power_save) {
 diff -urN linux-2.4.24.org/arch/ppc/kernel/mk_defs.c linux-2.4.24/arch/ppc/kernel/mk_defs.c
---- linux-2.4.24.org/arch/ppc/kernel/mk_defs.c	2004-01-16 16:59:29.021295068 +0100
-+++ linux-2.4.24/arch/ppc/kernel/mk_defs.c	2004-01-16 17:01:57.996336014 +0100
+--- linux-2.4.24.org/arch/ppc/kernel/mk_defs.c	2004-02-04 20:51:14.150661249 +0100
++++ linux-2.4.24/arch/ppc/kernel/mk_defs.c	2004-02-04 20:52:52.913119160 +0100
 @@ -34,8 +34,8 @@
  	/*DEFINE(KERNELBASE, KERNELBASE);*/
  	DEFINE(STATE, offsetof(struct task_struct, state));
@@ -467,8 +467,8 @@ diff -urN linux-2.4.24.org/arch/ppc/kernel/mk_defs.c linux-2.4.24/arch/ppc/kerne
  	DEFINE(THREAD, offsetof(struct task_struct, thread));
  	DEFINE(MM, offsetof(struct task_struct, mm));
 diff -urN linux-2.4.24.org/arch/ppc/kernel/process.c linux-2.4.24/arch/ppc/kernel/process.c
---- linux-2.4.24.org/arch/ppc/kernel/process.c	2004-01-16 16:59:28.960307741 +0100
-+++ linux-2.4.24/arch/ppc/kernel/process.c	2004-01-16 17:01:58.000335183 +0100
+--- linux-2.4.24.org/arch/ppc/kernel/process.c	2004-02-04 20:51:14.062679549 +0100
++++ linux-2.4.24/arch/ppc/kernel/process.c	2004-02-04 20:52:52.917118328 +0100
 @@ -281,7 +281,7 @@
  #endif
  
@@ -479,8 +479,8 @@ diff -urN linux-2.4.24.org/arch/ppc/kernel/process.c linux-2.4.24/arch/ppc/kerne
  
  	printk("\n");
 diff -urN linux-2.4.24.org/arch/ppc/kernel/smp.c linux-2.4.24/arch/ppc/kernel/smp.c
---- linux-2.4.24.org/arch/ppc/kernel/smp.c	2004-01-16 16:59:30.462995466 +0100
-+++ linux-2.4.24/arch/ppc/kernel/smp.c	2004-01-16 17:01:58.005334144 +0100
+--- linux-2.4.24.org/arch/ppc/kernel/smp.c	2004-02-04 20:51:15.993277992 +0100
++++ linux-2.4.24/arch/ppc/kernel/smp.c	2004-02-04 20:52:52.923117080 +0100
 @@ -51,6 +51,7 @@
  unsigned long cpu_online_map;
  int smp_hw_index[NR_CPUS];
@@ -524,8 +524,8 @@ diff -urN linux-2.4.24.org/arch/ppc/kernel/smp.c linux-2.4.24/arch/ppc/kernel/sm
          smp_store_cpu_info(cpu);
  	smp_ops->setup_cpu(cpu);
 diff -urN linux-2.4.24.org/arch/ppc/lib/dec_and_lock.c linux-2.4.24/arch/ppc/lib/dec_and_lock.c
---- linux-2.4.24.org/arch/ppc/lib/dec_and_lock.c	2004-01-16 16:59:32.421588449 +0100
-+++ linux-2.4.24/arch/ppc/lib/dec_and_lock.c	2004-01-16 17:01:58.009333313 +0100
+--- linux-2.4.24.org/arch/ppc/lib/dec_and_lock.c	2004-02-04 20:51:18.406775995 +0100
++++ linux-2.4.24/arch/ppc/lib/dec_and_lock.c	2004-02-04 20:52:52.927116249 +0100
 @@ -1,4 +1,5 @@
  #include <linux/module.h>
 +#include <linux/sched.h>
@@ -533,8 +533,8 @@ diff -urN linux-2.4.24.org/arch/ppc/lib/dec_and_lock.c linux-2.4.24/arch/ppc/lib
  #include <asm/atomic.h>
  #include <asm/system.h>
 diff -urN linux-2.4.24.org/arch/ppc/mm/init.c linux-2.4.24/arch/ppc/mm/init.c
---- linux-2.4.24.org/arch/ppc/mm/init.c	2004-01-16 16:59:28.829334959 +0100
-+++ linux-2.4.24/arch/ppc/mm/init.c	2004-01-16 17:01:58.015332066 +0100
+--- linux-2.4.24.org/arch/ppc/mm/init.c	2004-02-04 20:51:13.814731121 +0100
++++ linux-2.4.24/arch/ppc/mm/init.c	2004-02-04 20:52:52.931115417 +0100
 @@ -192,9 +192,9 @@
  		{
  			int iscur = 0;
@@ -549,8 +549,8 @@ diff -urN linux-2.4.24.org/arch/ppc/mm/init.c linux-2.4.24/arch/ppc/mm/init.c
  				iscur = 1;
  				printk("current");
 diff -urN linux-2.4.24.org/arch/ppc64/kernel/entry.S linux-2.4.24/arch/ppc64/kernel/entry.S
---- linux-2.4.24.org/arch/ppc64/kernel/entry.S	2004-01-16 16:59:01.511011993 +0100
-+++ linux-2.4.24/arch/ppc64/kernel/entry.S	2004-01-16 17:03:19.029495880 +0100
+--- linux-2.4.24.org/arch/ppc64/kernel/entry.S	2004-02-04 20:50:43.056128805 +0100
++++ linux-2.4.24/arch/ppc64/kernel/entry.S	2004-02-04 20:53:40.136297052 +0100
 @@ -299,7 +299,9 @@
  	blr
  
@@ -562,15 +562,16 @@ diff -urN linux-2.4.24.org/arch/ppc64/kernel/entry.S linux-2.4.24/arch/ppc64/ker
  	ld	r0,TASK_PTRACE(r4)
  	andi.	r0,r0,PT_TRACESYS
 diff -urN linux-2.4.24.org/arch/ppc64/kernel/idle.c linux-2.4.24/arch/ppc64/kernel/idle.c
---- linux-2.4.24.org/arch/ppc64/kernel/idle.c	2004-01-16 16:59:01.764959220 +0100
-+++ linux-2.4.24/arch/ppc64/kernel/idle.c	2004-01-16 17:04:31.755381926 +0100
+--- linux-2.4.24.org/arch/ppc64/kernel/idle.c	2004-02-04 20:50:43.329072034 +0100
++++ linux-2.4.24/arch/ppc64/kernel/idle.c	2004-02-04 20:55:09.907625341 +0100
 @@ -88,15 +88,12 @@
  	unsigned long CTRL;
  
  	/* endless loop with no priority at all */
 -	current->nice = 20;
 -	current->counter = -100;
- 
+-
++	
  	/* ensure iSeries run light will be out when idle */
  	current->thread.flags &= ~PPC_FLAG_RUN_LIGHT;
  	CTRL = mfspr(CTRLF);
@@ -581,8 +582,8 @@ diff -urN linux-2.4.24.org/arch/ppc64/kernel/idle.c linux-2.4.24/arch/ppc64/kern
  	lpaca = get_paca();
  
 diff -urN linux-2.4.24.org/arch/ppc64/kernel/process.c linux-2.4.24/arch/ppc64/kernel/process.c
---- linux-2.4.24.org/arch/ppc64/kernel/process.c	2004-01-16 16:59:01.165083880 +0100
-+++ linux-2.4.24/arch/ppc64/kernel/process.c	2004-01-16 17:01:58.026329780 +0100
+--- linux-2.4.24.org/arch/ppc64/kernel/process.c	2004-02-04 20:50:42.774187448 +0100
++++ linux-2.4.24/arch/ppc64/kernel/process.c	2004-02-04 20:52:52.986103980 +0100
 @@ -138,7 +138,7 @@
  #ifdef SHOW_TASK_SWITCHES
  	printk("%s/%d -> %s/%d NIP %08lx cpu %d root %x/%x\n",
@@ -593,8 +594,8 @@ diff -urN linux-2.4.24.org/arch/ppc64/kernel/process.c linux-2.4.24/arch/ppc64/k
  #endif
  #ifdef CONFIG_SMP
 diff -urN linux-2.4.24.org/arch/ppc64/kernel/smp.c linux-2.4.24/arch/ppc64/kernel/smp.c
---- linux-2.4.24.org/arch/ppc64/kernel/smp.c	2004-01-16 16:59:01.612990800 +0100
-+++ linux-2.4.24/arch/ppc64/kernel/smp.c	2004-01-16 17:01:58.029329157 +0100
+--- linux-2.4.24.org/arch/ppc64/kernel/smp.c	2004-02-04 20:50:43.176103851 +0100
++++ linux-2.4.24/arch/ppc64/kernel/smp.c	2004-02-04 20:52:52.990103148 +0100
 @@ -70,6 +70,7 @@
  extern atomic_t ipi_sent;
  spinlock_t kernel_flag __cacheline_aligned = SPIN_LOCK_UNLOCKED;
@@ -656,8 +657,8 @@ diff -urN linux-2.4.24.org/arch/ppc64/kernel/smp.c linux-2.4.24/arch/ppc64/kerne
  	current->active_mm = &init_mm;
  	smp_callin();
 diff -urN linux-2.4.24.org/arch/s390/kernel/process.c linux-2.4.24/arch/s390/kernel/process.c
---- linux-2.4.24.org/arch/s390/kernel/process.c	2004-01-16 16:59:59.093045811 +0100
-+++ linux-2.4.24/arch/s390/kernel/process.c	2004-01-16 17:01:58.033328326 +0100
+--- linux-2.4.24.org/arch/s390/kernel/process.c	2004-02-04 20:51:56.088938275 +0100
++++ linux-2.4.24/arch/s390/kernel/process.c	2004-02-04 20:52:52.994102316 +0100
 @@ -57,8 +57,7 @@
  
  	/* endless idle loop with no priority at all */
@@ -669,8 +670,8 @@ diff -urN linux-2.4.24.org/arch/s390/kernel/process.c linux-2.4.24/arch/s390/ker
  		__cli();
  		if (current->need_resched) {
 diff -urN linux-2.4.24.org/arch/s390x/kernel/process.c linux-2.4.24/arch/s390x/kernel/process.c
---- linux-2.4.24.org/arch/s390x/kernel/process.c	2004-01-16 17:00:08.580074290 +0100
-+++ linux-2.4.24/arch/s390x/kernel/process.c	2004-01-16 17:01:58.037327495 +0100
+--- linux-2.4.24.org/arch/s390x/kernel/process.c	2004-02-04 20:52:03.781338295 +0100
++++ linux-2.4.24/arch/s390x/kernel/process.c	2004-02-04 20:52:52.997101692 +0100
 @@ -57,8 +57,7 @@
  
  	/* endless idle loop with no priority at all */
@@ -682,8 +683,8 @@ diff -urN linux-2.4.24.org/arch/s390x/kernel/process.c linux-2.4.24/arch/s390x/k
  		__cli();
  		if (current->need_resched) {
 diff -urN linux-2.4.24.org/arch/sh/kernel/process.c linux-2.4.24/arch/sh/kernel/process.c
---- linux-2.4.24.org/arch/sh/kernel/process.c	2004-01-16 16:59:49.135115187 +0100
-+++ linux-2.4.24/arch/sh/kernel/process.c	2004-01-16 17:01:58.056323547 +0100
+--- linux-2.4.24.org/arch/sh/kernel/process.c	2004-02-04 20:51:43.820490054 +0100
++++ linux-2.4.24/arch/sh/kernel/process.c	2004-02-04 20:52:53.000101068 +0100
 @@ -42,8 +42,6 @@
  {
  	/* endless idle loop with no priority at all */
@@ -694,8 +695,8 @@ diff -urN linux-2.4.24.org/arch/sh/kernel/process.c linux-2.4.24/arch/sh/kernel/
  	while (1) {
  		if (hlt_counter) {
 diff -urN linux-2.4.24.org/arch/sparc/kernel/entry.S linux-2.4.24/arch/sparc/kernel/entry.S
---- linux-2.4.24.org/arch/sparc/kernel/entry.S	2004-01-16 16:59:11.576920195 +0100
-+++ linux-2.4.24/arch/sparc/kernel/entry.S	2004-01-16 17:01:58.061322508 +0100
+--- linux-2.4.24.org/arch/sparc/kernel/entry.S	2004-02-04 20:50:51.877294031 +0100
++++ linux-2.4.24/arch/sparc/kernel/entry.S	2004-02-04 20:52:53.005100028 +0100
 @@ -1471,7 +1471,9 @@
  
  	.globl	C_LABEL(ret_from_fork)
@@ -707,8 +708,8 @@ diff -urN linux-2.4.24.org/arch/sparc/kernel/entry.S linux-2.4.24/arch/sparc/ker
  	b	C_LABEL(ret_sys_call)
  	 ld	[%sp + STACKFRAME_SZ + PT_I0], %o0
 diff -urN linux-2.4.24.org/arch/sparc/kernel/process.c linux-2.4.24/arch/sparc/kernel/process.c
---- linux-2.4.24.org/arch/sparc/kernel/process.c	2004-01-16 16:59:11.486938894 +0100
-+++ linux-2.4.24/arch/sparc/kernel/process.c	2004-01-16 17:01:58.067321262 +0100
+--- linux-2.4.24.org/arch/sparc/kernel/process.c	2004-02-04 20:50:51.550362032 +0100
++++ linux-2.4.24/arch/sparc/kernel/process.c	2004-02-04 20:52:53.009099197 +0100
 @@ -74,9 +74,6 @@
  		goto out;
  
@@ -730,8 +731,8 @@ diff -urN linux-2.4.24.org/arch/sparc/kernel/process.c linux-2.4.24/arch/sparc/k
  	while(1) {
  		if(current->need_resched) {
 diff -urN linux-2.4.24.org/arch/sparc/kernel/smp.c linux-2.4.24/arch/sparc/kernel/smp.c
---- linux-2.4.24.org/arch/sparc/kernel/smp.c	2004-01-16 16:59:11.458944711 +0100
-+++ linux-2.4.24/arch/sparc/kernel/smp.c	2004-01-16 17:01:58.071320431 +0100
+--- linux-2.4.24.org/arch/sparc/kernel/smp.c	2004-02-04 20:50:51.522367854 +0100
++++ linux-2.4.24/arch/sparc/kernel/smp.c	2004-02-04 20:52:53.013098365 +0100
 @@ -57,6 +57,7 @@
  volatile int __cpu_number_map[NR_CPUS];
  volatile int __cpu_logical_map[NR_CPUS];
@@ -741,8 +742,8 @@ diff -urN linux-2.4.24.org/arch/sparc/kernel/smp.c linux-2.4.24/arch/sparc/kerne
  /* The only guaranteed locking primitive available on all Sparc
   * processors is 'ldstub [%reg + immediate], %dest_reg' which atomically
 diff -urN linux-2.4.24.org/arch/sparc/kernel/sun4d_smp.c linux-2.4.24/arch/sparc/kernel/sun4d_smp.c
---- linux-2.4.24.org/arch/sparc/kernel/sun4d_smp.c	2004-01-16 16:59:11.269983979 +0100
-+++ linux-2.4.24/arch/sparc/kernel/sun4d_smp.c	2004-01-16 17:01:58.076319392 +0100
+--- linux-2.4.24.org/arch/sparc/kernel/sun4d_smp.c	2004-02-04 20:50:51.254423586 +0100
++++ linux-2.4.24/arch/sparc/kernel/sun4d_smp.c	2004-02-04 20:52:53.027095454 +0100
 @@ -107,7 +107,6 @@
  	 * the SMP initialization the master will be just allowed
  	 * to call the scheduler code.
@@ -788,8 +789,8 @@ diff -urN linux-2.4.24.org/arch/sparc/kernel/sun4d_smp.c linux-2.4.24/arch/sparc
  
  			for (no = 0; no < linux_num_cpus; no++)
 diff -urN linux-2.4.24.org/arch/sparc/kernel/sun4m_smp.c linux-2.4.24/arch/sparc/kernel/sun4m_smp.c
---- linux-2.4.24.org/arch/sparc/kernel/sun4m_smp.c	2004-01-16 16:59:11.724889445 +0100
-+++ linux-2.4.24/arch/sparc/kernel/sun4m_smp.c	2004-01-16 17:01:58.080318561 +0100
+--- linux-2.4.24.org/arch/sparc/kernel/sun4m_smp.c	2004-02-04 20:50:52.194228110 +0100
++++ linux-2.4.24/arch/sparc/kernel/sun4m_smp.c	2004-02-04 20:52:53.030094830 +0100
 @@ -104,7 +104,6 @@
  	 * the SMP initialization the master will be just allowed
  	 * to call the scheduler code.
@@ -828,8 +829,8 @@ diff -urN linux-2.4.24.org/arch/sparc/kernel/sun4m_smp.c linux-2.4.24/arch/sparc
  
  			/* See trampoline.S for details... */
 diff -urN linux-2.4.24.org/arch/sparc64/kernel/entry.S linux-2.4.24/arch/sparc64/kernel/entry.S
---- linux-2.4.24.org/arch/sparc64/kernel/entry.S	2004-01-16 16:59:40.260959340 +0100
-+++ linux-2.4.24/arch/sparc64/kernel/entry.S	2004-01-16 17:01:58.086317314 +0100
+--- linux-2.4.24.org/arch/sparc64/kernel/entry.S	2004-02-04 20:51:29.076556726 +0100
++++ linux-2.4.24/arch/sparc64/kernel/entry.S	2004-02-04 20:52:53.039092958 +0100
 @@ -1627,7 +1627,9 @@
  		 */
  		andn		%o7, SPARC_FLAG_NEWCHILD, %l0
@@ -841,8 +842,8 @@ diff -urN linux-2.4.24.org/arch/sparc64/kernel/entry.S linux-2.4.24/arch/sparc64
  		andcc		%l0, SPARC_FLAG_PERFCTR, %g0
  		be,pt		%icc, 1f
 diff -urN linux-2.4.24.org/arch/sparc64/kernel/irq.c linux-2.4.24/arch/sparc64/kernel/irq.c
---- linux-2.4.24.org/arch/sparc64/kernel/irq.c	2004-01-16 16:59:39.391140098 +0100
-+++ linux-2.4.24/arch/sparc64/kernel/irq.c	2004-01-16 17:01:58.091316275 +0100
+--- linux-2.4.24.org/arch/sparc64/kernel/irq.c	2004-02-04 20:51:28.993573986 +0100
++++ linux-2.4.24/arch/sparc64/kernel/irq.c	2004-02-04 20:52:53.044091918 +0100
 @@ -174,7 +174,7 @@
  		tid = ((tid & UPA_CONFIG_MID) << 9);
  		tid &= IMAP_TID_UPA;
@@ -853,8 +854,8 @@ diff -urN linux-2.4.24.org/arch/sparc64/kernel/irq.c linux-2.4.24/arch/sparc64/k
  	}
  
 diff -urN linux-2.4.24.org/arch/sparc64/kernel/process.c linux-2.4.24/arch/sparc64/kernel/process.c
---- linux-2.4.24.org/arch/sparc64/kernel/process.c	2004-01-16 16:59:40.523904697 +0100
-+++ linux-2.4.24/arch/sparc64/kernel/process.c	2004-01-16 17:01:58.096315236 +0100
+--- linux-2.4.24.org/arch/sparc64/kernel/process.c	2004-02-04 20:51:29.998364993 +0100
++++ linux-2.4.24/arch/sparc64/kernel/process.c	2004-02-04 20:52:53.049090879 +0100
 @@ -54,9 +54,6 @@
  		return -EPERM;
  
@@ -883,8 +884,8 @@ diff -urN linux-2.4.24.org/arch/sparc64/kernel/process.c linux-2.4.24/arch/sparc
  		if (current->need_resched != 0) {
  			unidle_me();
 diff -urN linux-2.4.24.org/arch/sparc64/kernel/rtrap.S linux-2.4.24/arch/sparc64/kernel/rtrap.S
---- linux-2.4.24.org/arch/sparc64/kernel/rtrap.S	2004-01-16 16:59:40.520905320 +0100
-+++ linux-2.4.24/arch/sparc64/kernel/rtrap.S	2004-01-16 17:01:58.100314405 +0100
+--- linux-2.4.24.org/arch/sparc64/kernel/rtrap.S	2004-02-04 20:51:29.910383293 +0100
++++ linux-2.4.24/arch/sparc64/kernel/rtrap.S	2004-02-04 20:52:53.053090047 +0100
 @@ -140,7 +140,7 @@
  		.align			64
  		.globl			rtrap_clr_l6, rtrap, irqsz_patchme, rtrap_xcall
@@ -895,8 +896,8 @@ diff -urN linux-2.4.24.org/arch/sparc64/kernel/rtrap.S linux-2.4.24/arch/sparc64
  		or			%l2, %lo(irq_stat), %l2	! &softirq_active
  irqsz_patchme:	sllx			%l0, 0, %l0
 diff -urN linux-2.4.24.org/arch/sparc64/kernel/smp.c linux-2.4.24/arch/sparc64/kernel/smp.c
---- linux-2.4.24.org/arch/sparc64/kernel/smp.c	2004-01-16 16:59:39.265166277 +0100
-+++ linux-2.4.24/arch/sparc64/kernel/smp.c	2004-01-16 17:01:58.107312951 +0100
+--- linux-2.4.24.org/arch/sparc64/kernel/smp.c	2004-02-04 20:51:28.749624726 +0100
++++ linux-2.4.24/arch/sparc64/kernel/smp.c	2004-02-04 20:52:53.068086928 +0100
 @@ -360,7 +360,7 @@
  	printk("Entering UltraSMPenguin Mode...\n");
  	__sti();
@@ -1019,8 +1020,8 @@ diff -urN linux-2.4.24.org/arch/sparc64/kernel/smp.c linux-2.4.24/arch/sparc64/k
  {
  	struct page *p = mem_map;
 diff -urN linux-2.4.24.org/arch/sparc64/kernel/trampoline.S linux-2.4.24/arch/sparc64/kernel/trampoline.S
---- linux-2.4.24.org/arch/sparc64/kernel/trampoline.S	2004-01-16 16:59:40.497910099 +0100
-+++ linux-2.4.24/arch/sparc64/kernel/trampoline.S	2004-01-16 17:01:58.111312120 +0100
+--- linux-2.4.24.org/arch/sparc64/kernel/trampoline.S	2004-02-04 20:51:29.425484150 +0100
++++ linux-2.4.24/arch/sparc64/kernel/trampoline.S	2004-02-04 20:52:53.073085888 +0100
 @@ -250,7 +250,7 @@
  	wrpr		%o1, PSTATE_IG, %pstate
  
@@ -1031,8 +1032,8 @@ diff -urN linux-2.4.24.org/arch/sparc64/kernel/trampoline.S linux-2.4.24/arch/sp
  	or		%g5, %lo(cpu_data), %g5
  
 diff -urN linux-2.4.24.org/arch/sparc64/kernel/traps.c linux-2.4.24/arch/sparc64/kernel/traps.c
---- linux-2.4.24.org/arch/sparc64/kernel/traps.c	2004-01-16 16:59:39.031214895 +0100
-+++ linux-2.4.24/arch/sparc64/kernel/traps.c	2004-01-16 17:01:58.118310665 +0100
+--- linux-2.4.24.org/arch/sparc64/kernel/traps.c	2004-02-04 20:51:28.672640738 +0100
++++ linux-2.4.24/arch/sparc64/kernel/traps.c	2004-02-04 20:52:53.078084848 +0100
 @@ -16,6 +16,7 @@
  #include <linux/smp.h>
  #include <linux/smp_lock.h>
@@ -1092,7 +1093,7 @@ diff -urN linux-2.4.24.org/arch/sparc64/kernel/traps.c linux-2.4.24/arch/sparc64
   *
 diff -urN linux-2.4.24.org/Documentation/sched-coding.txt linux-2.4.24/Documentation/sched-coding.txt
 --- linux-2.4.24.org/Documentation/sched-coding.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.4.24/Documentation/sched-coding.txt	2004-01-16 17:01:58.123309626 +0100
++++ linux-2.4.24/Documentation/sched-coding.txt	2004-02-04 20:52:53.082084016 +0100
 @@ -0,0 +1,126 @@
 +     Reference for various scheduler-related methods in the O(1) scheduler
 +		Robert Love <rml@tech9.net>, MontaVista Software
@@ -1222,7 +1223,7 @@ diff -urN linux-2.4.24.org/Documentation/sched-coding.txt linux-2.4.24/Documenta
 +	Place the current process at the end of the runqueue and call schedule.
 diff -urN linux-2.4.24.org/Documentation/sched-design.txt linux-2.4.24/Documentation/sched-design.txt
 --- linux-2.4.24.org/Documentation/sched-design.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.4.24/Documentation/sched-design.txt	2004-01-16 17:01:58.127308795 +0100
++++ linux-2.4.24/Documentation/sched-design.txt	2004-02-04 20:52:53.088082769 +0100
 @@ -0,0 +1,165 @@
 +		   Goals, Design and Implementation of the
 +		      new ultra-scalable O(1) scheduler
@@ -1390,8 +1391,8 @@ diff -urN linux-2.4.24.org/Documentation/sched-design.txt linux-2.4.24/Documenta
 +
 +	Ingo
 diff -urN linux-2.4.24.org/drivers/char/drm-4.0/tdfx_drv.c linux-2.4.24/drivers/char/drm-4.0/tdfx_drv.c
---- linux-2.4.24.org/drivers/char/drm-4.0/tdfx_drv.c	2004-01-16 16:57:51.063651564 +0100
-+++ linux-2.4.24/drivers/char/drm-4.0/tdfx_drv.c	2004-01-16 17:01:58.149304224 +0100
+--- linux-2.4.24.org/drivers/char/drm-4.0/tdfx_drv.c	2004-02-04 20:49:21.677055474 +0100
++++ linux-2.4.24/drivers/char/drm-4.0/tdfx_drv.c	2004-02-04 20:52:53.236051992 +0100
 @@ -554,7 +554,6 @@
  					lock.context, current->pid, j,
  					dev->lock.lock_time, jiffies);
@@ -1401,8 +1402,8 @@ diff -urN linux-2.4.24.org/drivers/char/drm-4.0/tdfx_drv.c linux-2.4.24/drivers/
  				DRM_DEBUG("jiffies=%d\n", jiffies);
                          }
 diff -urN linux-2.4.24.org/drivers/char/mwave/mwavedd.c linux-2.4.24/drivers/char/mwave/mwavedd.c
---- linux-2.4.24.org/drivers/char/mwave/mwavedd.c	2004-01-16 16:57:47.308431926 +0100
-+++ linux-2.4.24/drivers/char/mwave/mwavedd.c	2004-01-16 17:01:58.186296537 +0100
+--- linux-2.4.24.org/drivers/char/mwave/mwavedd.c	2004-02-04 20:49:18.334750669 +0100
++++ linux-2.4.24/drivers/char/mwave/mwavedd.c	2004-02-04 20:52:53.321034316 +0100
 @@ -279,7 +279,6 @@
  			pDrvData->IPCs[ipcnum].bIsHere = FALSE;
  			pDrvData->IPCs[ipcnum].bIsEnabled = TRUE;
@@ -1412,8 +1413,8 @@ diff -urN linux-2.4.24.org/drivers/char/mwave/mwavedd.c linux-2.4.24/drivers/cha
  			current->priority = 0x28;	/* boost to provide priority timing */
  	#endif
 diff -urN linux-2.4.24.org/drivers/char/serial_txx927.c linux-2.4.24/drivers/char/serial_txx927.c
---- linux-2.4.24.org/drivers/char/serial_txx927.c	2004-01-16 16:57:41.439651500 +0100
-+++ linux-2.4.24/drivers/char/serial_txx927.c	2004-01-16 17:01:58.229287602 +0100
+--- linux-2.4.24.org/drivers/char/serial_txx927.c	2004-02-04 20:49:11.902088655 +0100
++++ linux-2.4.24/drivers/char/serial_txx927.c	2004-02-04 20:52:53.361025998 +0100
 @@ -1533,7 +1533,6 @@
  		printk("cisr = %d (jiff=%lu)...", cisr, jiffies);
  #endif
@@ -1423,8 +1424,8 @@ diff -urN linux-2.4.24.org/drivers/char/serial_txx927.c linux-2.4.24/drivers/cha
  		if (signal_pending(current))
  			break;
 diff -urN linux-2.4.24.org/drivers/md/md.c linux-2.4.24/drivers/md/md.c
---- linux-2.4.24.org/drivers/md/md.c	2004-01-16 16:58:52.153956480 +0100
-+++ linux-2.4.24/drivers/md/md.c	2004-01-16 17:01:58.237285940 +0100
+--- linux-2.4.24.org/drivers/md/md.c	2004-02-04 20:50:32.930234961 +0100
++++ linux-2.4.24/drivers/md/md.c	2004-02-04 20:52:53.369024334 +0100
 @@ -2939,8 +2939,6 @@
  	 * bdflush, otherwise bdflush will deadlock if there are too
  	 * many dirty RAID5 blocks.
@@ -1465,8 +1466,8 @@ diff -urN linux-2.4.24.org/drivers/md/md.c linux-2.4.24/drivers/md/md.c
  	printk(KERN_INFO "md: md%d: sync done.\n",mdidx(mddev));
  	err = 0;
 diff -urN linux-2.4.24.org/fs/binfmt_elf.c linux-2.4.24/fs/binfmt_elf.c
---- linux-2.4.24.org/fs/binfmt_elf.c	2004-01-16 16:55:58.221100822 +0100
-+++ linux-2.4.24/fs/binfmt_elf.c	2004-01-16 17:01:58.259281369 +0100
+--- linux-2.4.24.org/fs/binfmt_elf.c	2004-02-04 20:47:14.464515701 +0100
++++ linux-2.4.24/fs/binfmt_elf.c	2004-02-04 20:52:53.390019967 +0100
 @@ -1173,7 +1173,7 @@
  	psinfo.pr_state = i;
  	psinfo.pr_sname = (i < 0 || i > 5) ? '.' : "RSDZTD"[i];
@@ -1477,8 +1478,8 @@ diff -urN linux-2.4.24.org/fs/binfmt_elf.c linux-2.4.24/fs/binfmt_elf.c
  	psinfo.pr_uid = NEW_TO_OLD_UID(current->uid);
  	psinfo.pr_gid = NEW_TO_OLD_GID(current->gid);
 diff -urN linux-2.4.24.org/fs/jffs2/background.c linux-2.4.24/fs/jffs2/background.c
---- linux-2.4.24.org/fs/jffs2/background.c	2004-01-16 16:56:08.275011589 +0100
-+++ linux-2.4.24/fs/jffs2/background.c	2004-01-16 17:01:58.299273058 +0100
+--- linux-2.4.24.org/fs/jffs2/background.c	2004-02-04 20:47:24.029526165 +0100
++++ linux-2.4.24/fs/jffs2/background.c	2004-02-04 20:52:53.418014145 +0100
 @@ -106,9 +106,6 @@
  
          sprintf(current->comm, "jffs2_gcd_mtd%d", c->mtd->index);
@@ -1490,8 +1491,8 @@ diff -urN linux-2.4.24.org/fs/jffs2/background.c linux-2.4.24/fs/jffs2/backgroun
  		spin_lock_irq(&current->sigmask_lock);
  		siginitsetinv (&current->blocked, sigmask(SIGHUP) | sigmask(SIGKILL) | sigmask(SIGSTOP) | sigmask(SIGCONT));
 diff -urN linux-2.4.24.org/fs/proc/array.c linux-2.4.24/fs/proc/array.c
---- linux-2.4.24.org/fs/proc/array.c	2004-01-16 16:56:00.075715428 +0100
-+++ linux-2.4.24/fs/proc/array.c	2004-01-16 17:01:58.341264332 +0100
+--- linux-2.4.24.org/fs/proc/array.c	2004-02-04 20:47:14.980408395 +0100
++++ linux-2.4.24/fs/proc/array.c	2004-02-04 20:52:53.447008114 +0100
 @@ -339,9 +339,8 @@
  
  	/* scale priority and nice values from timeslices to -20..20 */
@@ -1514,8 +1515,8 @@ diff -urN linux-2.4.24.org/fs/proc/array.c linux-2.4.24/fs/proc/array.c
  		mmput(mm);
  	return res;
 diff -urN linux-2.4.24.org/fs/proc/proc_misc.c linux-2.4.24/fs/proc/proc_misc.c
---- linux-2.4.24.org/fs/proc/proc_misc.c	2004-01-16 16:55:59.991732880 +0100
-+++ linux-2.4.24/fs/proc/proc_misc.c	2004-01-16 17:01:58.366259138 +0100
+--- linux-2.4.24.org/fs/proc/proc_misc.c	2004-02-04 20:47:14.897425655 +0100
++++ linux-2.4.24/fs/proc/proc_misc.c	2004-02-04 20:52:53.485000212 +0100
 @@ -109,11 +109,11 @@
  	a = avenrun[0] + (FIXED_1/200);
  	b = avenrun[1] + (FIXED_1/200);
@@ -1553,8 +1554,8 @@ diff -urN linux-2.4.24.org/fs/proc/proc_misc.c linux-2.4.24/fs/proc/proc_misc.c
  		total_forks);
  
 diff -urN linux-2.4.24.org/fs/reiserfs/buffer2.c linux-2.4.24/fs/reiserfs/buffer2.c
---- linux-2.4.24.org/fs/reiserfs/buffer2.c	2004-01-16 16:56:07.930083267 +0100
-+++ linux-2.4.24/fs/reiserfs/buffer2.c	2004-01-16 17:01:58.397252697 +0100
+--- linux-2.4.24.org/fs/reiserfs/buffer2.c	2004-02-04 20:47:23.322673191 +0100
++++ linux-2.4.24/fs/reiserfs/buffer2.c	2004-02-04 20:52:53.511994597 +0100
 @@ -51,11 +51,11 @@
  struct buffer_head  * reiserfs_bread (struct super_block *super, int n_block, int n_size) 
  {
@@ -1570,8 +1571,8 @@ diff -urN linux-2.4.24.org/fs/reiserfs/buffer2.c linux-2.4.24/fs/reiserfs/buffer
      return result;
  }
 diff -urN linux-2.4.24.org/include/asm-alpha/bitops.h linux-2.4.24/include/asm-alpha/bitops.h
---- linux-2.4.24.org/include/asm-alpha/bitops.h	2004-01-16 16:56:31.207246189 +0100
-+++ linux-2.4.24/include/asm-alpha/bitops.h	2004-01-16 17:01:58.439243970 +0100
+--- linux-2.4.24.org/include/asm-alpha/bitops.h	2004-02-04 20:47:46.527846489 +0100
++++ linux-2.4.24/include/asm-alpha/bitops.h	2004-02-04 20:52:53.537989191 +0100
 @@ -3,6 +3,7 @@
  
  #include <linux/config.h>
@@ -1835,8 +1836,8 @@ diff -urN linux-2.4.24.org/include/asm-alpha/bitops.h linux-2.4.24/include/asm-a
  #define ext2_clear_bit               __test_and_clear_bit
  #define ext2_test_bit                test_bit
 diff -urN linux-2.4.24.org/include/asm-alpha/smp.h linux-2.4.24/include/asm-alpha/smp.h
---- linux-2.4.24.org/include/asm-alpha/smp.h	2004-01-16 16:56:31.806121740 +0100
-+++ linux-2.4.24/include/asm-alpha/smp.h	2004-01-16 17:01:58.473236906 +0100
+--- linux-2.4.24.org/include/asm-alpha/smp.h	2004-02-04 20:47:46.648821326 +0100
++++ linux-2.4.24/include/asm-alpha/smp.h	2004-02-04 20:52:53.540988567 +0100
 @@ -55,7 +55,7 @@
  #define cpu_logical_map(cpu)  __cpu_logical_map[cpu]
  
@@ -1847,8 +1848,8 @@ diff -urN linux-2.4.24.org/include/asm-alpha/smp.h linux-2.4.24/include/asm-alph
  extern unsigned long cpu_present_mask;
  #define cpu_online_map cpu_present_mask
 diff -urN linux-2.4.24.org/include/asm-alpha/system.h linux-2.4.24/include/asm-alpha/system.h
---- linux-2.4.24.org/include/asm-alpha/system.h	2004-01-16 16:56:30.820326592 +0100
-+++ linux-2.4.24/include/asm-alpha/system.h	2004-01-16 17:01:58.503230673 +0100
+--- linux-2.4.24.org/include/asm-alpha/system.h	2004-02-04 20:47:45.924971887 +0100
++++ linux-2.4.24/include/asm-alpha/system.h	2004-02-04 20:52:53.545987527 +0100
 @@ -131,7 +131,6 @@
  extern void halt(void) __attribute__((noreturn));
  #define __halt() __asm__ __volatile__ ("call_pal %0 #halt" : : "i" (PAL_halt))
@@ -1858,8 +1859,8 @@ diff -urN linux-2.4.24.org/include/asm-alpha/system.h linux-2.4.24/include/asm-a
  do {							\
  	unsigned long pcbb;				\
 diff -urN linux-2.4.24.org/include/asm-arm/bitops.h linux-2.4.24/include/asm-arm/bitops.h
---- linux-2.4.24.org/include/asm-arm/bitops.h	2004-01-16 16:56:47.259910371 +0100
-+++ linux-2.4.24/include/asm-arm/bitops.h	2004-01-16 17:01:58.524226309 +0100
+--- linux-2.4.24.org/include/asm-arm/bitops.h	2004-02-04 20:48:05.614876374 +0100
++++ linux-2.4.24/include/asm-arm/bitops.h	2004-02-04 20:52:53.589978377 +0100
 @@ -2,6 +2,8 @@
   * Copyright 1995, Russell King.
   * Various bits and pieces copyrights include:
@@ -2262,8 +2263,8 @@ diff -urN linux-2.4.24.org/include/asm-arm/bitops.h linux-2.4.24/include/asm-arm
  #endif /* __KERNEL__ */
  
 diff -urN linux-2.4.24.org/include/asm-cris/bitops.h linux-2.4.24/include/asm-cris/bitops.h
---- linux-2.4.24.org/include/asm-cris/bitops.h	2004-01-16 16:57:06.094996341 +0100
-+++ linux-2.4.24/include/asm-cris/bitops.h	2004-01-16 17:01:58.555219868 +0100
+--- linux-2.4.24.org/include/asm-cris/bitops.h	2004-02-04 20:48:26.679494929 +0100
++++ linux-2.4.24/include/asm-cris/bitops.h	2004-02-04 20:52:53.595977130 +0100
 @@ -22,6 +22,7 @@
  /* We use generic_ffs so get it; include guards resolve the possible
     mutually inclusion.  */
@@ -2456,8 +2457,8 @@ diff -urN linux-2.4.24.org/include/asm-cris/bitops.h linux-2.4.24/include/asm-cr
  
  #endif /* _CRIS_BITOPS_H */
 diff -urN linux-2.4.24.org/include/asm-generic/bitops.h linux-2.4.24/include/asm-generic/bitops.h
---- linux-2.4.24.org/include/asm-generic/bitops.h	2004-01-16 16:56:25.418449123 +0100
-+++ linux-2.4.24/include/asm-generic/bitops.h	2004-01-16 17:01:58.602210103 +0100
+--- linux-2.4.24.org/include/asm-generic/bitops.h	2004-02-04 20:47:40.855026441 +0100
++++ linux-2.4.24/include/asm-generic/bitops.h	2004-02-04 20:52:53.630969851 +0100
 @@ -51,6 +51,12 @@
  	return ((mask & *addr) != 0);
  }
@@ -2472,8 +2473,8 @@ diff -urN linux-2.4.24.org/include/asm-generic/bitops.h linux-2.4.24/include/asm
  
  /*
 diff -urN linux-2.4.24.org/include/asm-i386/bitops.h linux-2.4.24/include/asm-i386/bitops.h
---- linux-2.4.24.org/include/asm-i386/bitops.h	2004-01-16 16:56:25.571417336 +0100
-+++ linux-2.4.24/include/asm-i386/bitops.h	2004-01-16 17:01:58.653199507 +0100
+--- linux-2.4.24.org/include/asm-i386/bitops.h	2004-02-04 20:47:40.983999614 +0100
++++ linux-2.4.24/include/asm-i386/bitops.h	2004-02-04 20:52:53.655964653 +0100
 @@ -6,6 +6,7 @@
   */
  
@@ -2624,9 +2625,9 @@ diff -urN linux-2.4.24.org/include/asm-i386/bitops.h linux-2.4.24/include/asm-i3
   * ffs - find first bit set
   * @x: the word to search
 diff -urN linux-2.4.24.org/include/asm-i386/mmu_context.h linux-2.4.24/include/asm-i386/mmu_context.h
---- linux-2.4.24.org/include/asm-i386/mmu_context.h	2004-01-16 16:56:26.029322182 +0100
-+++ linux-2.4.24/include/asm-i386/mmu_context.h	2004-01-16 17:01:58.708188079 +0100
-@@ -27,13 +27,13 @@
+--- linux-2.4.24.org/include/asm-i386/mmu_context.h	2004-02-04 20:47:41.355922254 +0100
++++ linux-2.4.24/include/asm-i386/mmu_context.h	2004-02-04 20:57:00.389646201 +0100
+@@ -29,7 +29,7 @@
  
  static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next, struct task_struct *tsk, unsigned cpu)
  {
@@ -2634,18 +2635,20 @@ diff -urN linux-2.4.24.org/include/asm-i386/mmu_context.h linux-2.4.24/include/a
 +	if (likely(prev != next)) {
  		/* stop flush ipis for the previous mm */
  		clear_bit(cpu, &prev->cpu_vm_mask);
- 		/*
- 		 * Re-load LDT if necessary
- 		 */
--		if (prev->context.segments != next->context.segments)
-+		if (unlikely(prev->context.segments != next->context.segments))
- 			load_LDT(next);
  #ifdef CONFIG_SMP
- 		cpu_tlbstate[cpu].state = TLBSTATE_OK;
+@@ -42,7 +42,7 @@
+ 	 	/* load_LDT, if either the previous or next thread
+ 		 * has a non-default LDT.
+ 		 */
+-		if (next->context.size+prev->context.size)
++		if (unlikely(next->context.size+prev->context.size))
+ 			load_LDT(&next->context);
+ 	}
+ #ifdef CONFIG_SMP
 diff -urN linux-2.4.24.org/include/asm-i386/processor.h linux-2.4.24/include/asm-i386/processor.h
---- linux-2.4.24.org/include/asm-i386/processor.h	2004-01-16 16:56:25.519428140 +0100
-+++ linux-2.4.24/include/asm-i386/processor.h	2004-01-16 17:01:58.732183093 +0100
-@@ -495,6 +495,8 @@
+--- linux-2.4.24.org/include/asm-i386/processor.h	2004-02-04 20:47:40.967003150 +0100
++++ linux-2.4.24/include/asm-i386/processor.h	2004-02-04 20:52:53.702954879 +0100
+@@ -498,6 +498,8 @@
  
  #define cpu_relax()	rep_nop()
  
@@ -2656,7 +2659,7 @@ diff -urN linux-2.4.24.org/include/asm-i386/processor.h linux-2.4.24/include/asm
  
 diff -urN linux-2.4.24.org/include/asm-i386/smp_balance.h linux-2.4.24/include/asm-i386/smp_balance.h
 --- linux-2.4.24.org/include/asm-i386/smp_balance.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.4.24/include/asm-i386/smp_balance.h	2004-01-16 17:01:58.735182469 +0100
++++ linux-2.4.24/include/asm-i386/smp_balance.h	2004-02-04 20:52:53.705954255 +0100
 @@ -0,0 +1,66 @@
 +#ifndef _ASM_SMP_BALANCE_H
 +#define _ASM_SMP_BALANCE_H
@@ -2725,8 +2728,8 @@ diff -urN linux-2.4.24.org/include/asm-i386/smp_balance.h linux-2.4.24/include/a
 +
 +#endif /* _ASM_SMP_BALANCE_H */
 diff -urN linux-2.4.24.org/include/asm-i386/smp.h linux-2.4.24/include/asm-i386/smp.h
---- linux-2.4.24.org/include/asm-i386/smp.h	2004-01-16 16:56:25.912346490 +0100
-+++ linux-2.4.24/include/asm-i386/smp.h	2004-01-16 17:01:58.782172704 +0100
+--- linux-2.4.24.org/include/asm-i386/smp.h	2004-02-04 20:47:41.153964261 +0100
++++ linux-2.4.24/include/asm-i386/smp.h	2004-02-04 20:52:53.733948432 +0100
 @@ -40,6 +40,7 @@
  extern void smp_flush_tlb(void);
  extern void smp_message_irq(int cpl, void *dev_id, struct pt_regs *regs);
@@ -2763,8 +2766,8 @@ diff -urN linux-2.4.24.org/include/asm-i386/smp.h linux-2.4.24/include/asm-i386/
  #endif
  #endif
 diff -urN linux-2.4.24.org/include/asm-i386/system.h linux-2.4.24/include/asm-i386/system.h
---- linux-2.4.24.org/include/asm-i386/system.h	2004-01-16 16:56:25.515428971 +0100
-+++ linux-2.4.24/include/asm-i386/system.h	2004-01-16 17:01:58.810166886 +0100
+--- linux-2.4.24.org/include/asm-i386/system.h	2004-02-04 20:47:40.963003981 +0100
++++ linux-2.4.24/include/asm-i386/system.h	2004-02-04 20:52:53.759943026 +0100
 @@ -12,25 +12,22 @@
  struct task_struct;	/* one of the stranger aspects of C forward declarations.. */
  extern void FASTCALL(__switch_to(struct task_struct *prev, struct task_struct *next));
@@ -2796,8 +2799,8 @@ diff -urN linux-2.4.24.org/include/asm-i386/system.h linux-2.4.24/include/asm-i3
  
  #define _set_base(addr,base) do { unsigned long __pr; \
 diff -urN linux-2.4.24.org/include/asm-ia64/bitops.h linux-2.4.24/include/asm-ia64/bitops.h
---- linux-2.4.24.org/include/asm-ia64/bitops.h	2004-01-16 16:56:56.506988782 +0100
-+++ linux-2.4.24/include/asm-ia64/bitops.h	2004-01-16 17:01:58.848158991 +0100
+--- linux-2.4.24.org/include/asm-ia64/bitops.h	2004-02-04 20:48:16.659579072 +0100
++++ linux-2.4.24/include/asm-ia64/bitops.h	2004-02-04 20:52:53.793935955 +0100
 @@ -4,6 +4,9 @@
  /*
   * Copyright (C) 1998-2003 Hewlett-Packard Co
@@ -2950,8 +2953,8 @@ diff -urN linux-2.4.24.org/include/asm-ia64/bitops.h linux-2.4.24/include/asm-ia
  
  #endif /* _ASM_IA64_BITOPS_H */
 diff -urN linux-2.4.24.org/include/asm-m68k/bitops.h linux-2.4.24/include/asm-m68k/bitops.h
---- linux-2.4.24.org/include/asm-m68k/bitops.h	2004-01-16 16:56:33.379794723 +0100
-+++ linux-2.4.24/include/asm-m68k/bitops.h	2004-01-16 17:01:58.878152758 +0100
+--- linux-2.4.24.org/include/asm-m68k/bitops.h	2004-02-04 20:47:47.882564706 +0100
++++ linux-2.4.24/include/asm-m68k/bitops.h	2004-02-04 20:52:53.798934916 +0100
 @@ -97,6 +97,7 @@
    (__builtin_constant_p(nr) ? \
     __constant_clear_bit(nr, vaddr) : \
@@ -2990,8 +2993,8 @@ diff -urN linux-2.4.24.org/include/asm-m68k/bitops.h linux-2.4.24/include/asm-m6
  /*
   * hweightN: returns the hamming weight (i.e. the number
 diff -urN linux-2.4.24.org/include/asm-mips/bitops.h linux-2.4.24/include/asm-mips/bitops.h
---- linux-2.4.24.org/include/asm-mips/bitops.h	2004-01-16 16:56:27.405036303 +0100
-+++ linux-2.4.24/include/asm-mips/bitops.h	2004-01-16 17:01:58.904147356 +0100
+--- linux-2.4.24.org/include/asm-mips/bitops.h	2004-02-04 20:47:43.266524847 +0100
++++ linux-2.4.24/include/asm-mips/bitops.h	2004-02-04 20:52:53.820930341 +0100
 @@ -51,6 +51,8 @@
  
  #ifdef CONFIG_CPU_HAS_LLSC
@@ -3043,8 +3046,8 @@ diff -urN linux-2.4.24.org/include/asm-mips/bitops.h linux-2.4.24/include/asm-mi
  
  /*
 diff -urN linux-2.4.24.org/include/asm-mips64/bitops.h linux-2.4.24/include/asm-mips64/bitops.h
---- linux-2.4.24.org/include/asm-mips64/bitops.h	2004-01-16 16:57:00.567145059 +0100
-+++ linux-2.4.24/include/asm-mips64/bitops.h	2004-01-16 17:01:58.935140915 +0100
+--- linux-2.4.24.org/include/asm-mips64/bitops.h	2004-02-04 20:48:21.702530138 +0100
++++ linux-2.4.24/include/asm-mips64/bitops.h	2004-02-04 20:52:53.873919319 +0100
 @@ -27,6 +27,7 @@
  
  #include <asm/system.h>
@@ -3255,8 +3258,8 @@ diff -urN linux-2.4.24.org/include/asm-mips64/bitops.h linux-2.4.24/include/asm-
  {
  	unsigned int *p = ((unsigned int *) addr) + (offset >> 5);
 diff -urN linux-2.4.24.org/include/asm-ppc/bitops.h linux-2.4.24/include/asm-ppc/bitops.h
---- linux-2.4.24.org/include/asm-ppc/bitops.h	2004-01-16 16:56:42.437912406 +0100
-+++ linux-2.4.24/include/asm-ppc/bitops.h	2004-01-16 17:01:58.975132604 +0100
+--- linux-2.4.24.org/include/asm-ppc/bitops.h	2004-02-04 20:47:57.992461840 +0100
++++ linux-2.4.24/include/asm-ppc/bitops.h	2004-02-04 20:52:53.902913289 +0100
 @@ -7,6 +7,7 @@
  #define _PPC_BITOPS_H
  
@@ -3530,8 +3533,8 @@ diff -urN linux-2.4.24.org/include/asm-ppc/bitops.h linux-2.4.24/include/asm-ppc
  static __inline__ int ext2_test_bit(int nr, __const__ void * addr)
  {
 diff -urN linux-2.4.24.org/include/asm-ppc/smp.h linux-2.4.24/include/asm-ppc/smp.h
---- linux-2.4.24.org/include/asm-ppc/smp.h	2004-01-16 16:56:42.558887266 +0100
-+++ linux-2.4.24/include/asm-ppc/smp.h	2004-01-16 17:01:59.001127202 +0100
+--- linux-2.4.24.org/include/asm-ppc/smp.h	2004-02-04 20:47:58.116436054 +0100
++++ linux-2.4.24/include/asm-ppc/smp.h	2004-02-04 20:52:53.906912457 +0100
 @@ -45,7 +45,7 @@
  #define cpu_logical_map(cpu) (cpu)
  #define cpu_number_map(x) (x)
@@ -3542,8 +3545,8 @@ diff -urN linux-2.4.24.org/include/asm-ppc/smp.h linux-2.4.24/include/asm-ppc/sm
  extern int smp_hw_index[NR_CPUS];
  #define hard_smp_processor_id() (smp_hw_index[smp_processor_id()])
 diff -urN linux-2.4.24.org/include/asm-ppc64/bitops.h linux-2.4.24/include/asm-ppc64/bitops.h
---- linux-2.4.24.org/include/asm-ppc64/bitops.h	2004-01-16 16:56:16.266350963 +0100
-+++ linux-2.4.24/include/asm-ppc64/bitops.h	2004-01-16 17:01:59.058115358 +0100
+--- linux-2.4.24.org/include/asm-ppc64/bitops.h	2004-02-04 20:47:31.682934246 +0100
++++ linux-2.4.24/include/asm-ppc64/bitops.h	2004-02-04 20:52:53.961901020 +0100
 @@ -41,12 +41,12 @@
  #define smp_mb__before_clear_bit()	smp_mb()
  #define smp_mb__after_clear_bit()	smp_mb()
@@ -3659,8 +3662,8 @@ diff -urN linux-2.4.24.org/include/asm-ppc64/bitops.h linux-2.4.24/include/asm-p
  	unsigned long mask = 1UL << (nr & 0x3f);
  	unsigned long *p = ((unsigned long *)addr) + (nr >> 6);
 diff -urN linux-2.4.24.org/include/asm-s390/bitops.h linux-2.4.24/include/asm-s390/bitops.h
---- linux-2.4.24.org/include/asm-s390/bitops.h	2004-01-16 16:57:02.906658896 +0100
-+++ linux-2.4.24/include/asm-s390/bitops.h	2004-01-16 17:01:59.112104139 +0100
+--- linux-2.4.24.org/include/asm-s390/bitops.h	2004-02-04 20:48:24.809883809 +0100
++++ linux-2.4.24/include/asm-s390/bitops.h	2004-02-04 20:52:53.990894989 +0100
 @@ -47,272 +47,217 @@
  extern const char _oi_bitmap[];
  extern const char _ni_bitmap[];
@@ -4729,8 +4732,8 @@ diff -urN linux-2.4.24.org/include/asm-s390/bitops.h linux-2.4.24/include/asm-s3
  {
          unsigned long *addr = vaddr;
 diff -urN linux-2.4.24.org/include/asm-s390x/bitops.h linux-2.4.24/include/asm-s390x/bitops.h
---- linux-2.4.24.org/include/asm-s390x/bitops.h	2004-01-16 16:57:06.879833248 +0100
-+++ linux-2.4.24/include/asm-s390x/bitops.h	2004-01-16 17:01:59.144097490 +0100
+--- linux-2.4.24.org/include/asm-s390x/bitops.h	2004-02-04 20:48:28.470122479 +0100
++++ linux-2.4.24/include/asm-s390x/bitops.h	2004-02-04 20:52:54.030886671 +0100
 @@ -51,271 +51,220 @@
  extern const char _oi_bitmap[];
  extern const char _ni_bitmap[];
@@ -5826,8 +5829,8 @@ diff -urN linux-2.4.24.org/include/asm-s390x/bitops.h linux-2.4.24/include/asm-s
  {
          unsigned long *addr = vaddr;
 diff -urN linux-2.4.24.org/include/asm-sparc/bitops.h linux-2.4.24/include/asm-sparc/bitops.h
---- linux-2.4.24.org/include/asm-sparc/bitops.h	2004-01-16 16:56:36.974047822 +0100
-+++ linux-2.4.24/include/asm-sparc/bitops.h	2004-01-16 17:01:59.182089595 +0100
+--- linux-2.4.24.org/include/asm-sparc/bitops.h	2004-02-04 20:47:50.760965997 +0100
++++ linux-2.4.24/include/asm-sparc/bitops.h	2004-02-04 20:52:54.074877521 +0100
 @@ -231,6 +231,57 @@
  	return result;
  }
@@ -5920,8 +5923,8 @@ diff -urN linux-2.4.24.org/include/asm-sparc/bitops.h linux-2.4.24/include/asm-s
  {
  	__const__ unsigned char *ADDR = (__const__ unsigned char *) addr;
 diff -urN linux-2.4.24.org/include/asm-sparc/system.h linux-2.4.24/include/asm-sparc/system.h
---- linux-2.4.24.org/include/asm-sparc/system.h	2004-01-16 16:56:36.868069845 +0100
-+++ linux-2.4.24/include/asm-sparc/system.h	2004-01-16 17:01:59.220081699 +0100
+--- linux-2.4.24.org/include/asm-sparc/system.h	2004-02-04 20:47:50.644990120 +0100
++++ linux-2.4.24/include/asm-sparc/system.h	2004-02-04 20:52:54.110870035 +0100
 @@ -84,7 +84,7 @@
   *
   * SWITCH_ENTER and SWITH_DO_LAZY_FPU do not work yet (e.g. SMP does not work)
@@ -5941,8 +5944,8 @@ diff -urN linux-2.4.24.org/include/asm-sparc/system.h linux-2.4.24/include/asm-s
  	/* Much care has gone into this code, do not touch it.
  	 *
 diff -urN linux-2.4.24.org/include/asm-sparc64/bitops.h linux-2.4.24/include/asm-sparc64/bitops.h
---- linux-2.4.24.org/include/asm-sparc64/bitops.h	2004-01-16 16:56:45.579259619 +0100
-+++ linux-2.4.24/include/asm-sparc64/bitops.h	2004-01-16 17:01:59.246076297 +0100
+--- linux-2.4.24.org/include/asm-sparc64/bitops.h	2004-02-04 20:48:02.155595906 +0100
++++ linux-2.4.24/include/asm-sparc64/bitops.h	2004-02-04 20:52:54.137864420 +0100
 @@ -1,4 +1,4 @@
 -/* $Id$
 +/* $Id$
@@ -6337,8 +6340,8 @@ diff -urN linux-2.4.24.org/include/asm-sparc64/bitops.h linux-2.4.24/include/asm
  #endif /* __KERNEL__ */
  
 diff -urN linux-2.4.24.org/include/asm-sparc64/smp.h linux-2.4.24/include/asm-sparc64/smp.h
---- linux-2.4.24.org/include/asm-sparc64/smp.h	2004-01-16 16:56:43.335725836 +0100
-+++ linux-2.4.24/include/asm-sparc64/smp.h	2004-01-16 17:01:59.274070479 +0100
+--- linux-2.4.24.org/include/asm-sparc64/smp.h	2004-02-04 20:48:01.767676594 +0100
++++ linux-2.4.24/include/asm-sparc64/smp.h	2004-02-04 20:52:54.175856518 +0100
 @@ -111,7 +111,7 @@
  	}
  }
@@ -6349,8 +6352,8 @@ diff -urN linux-2.4.24.org/include/asm-sparc64/smp.h linux-2.4.24/include/asm-sp
  /* This needn't do anything as we do not sleep the cpu
   * inside of the idler task, so an interrupt is not needed
 diff -urN linux-2.4.24.org/include/asm-sparc64/system.h linux-2.4.24/include/asm-sparc64/system.h
---- linux-2.4.24.org/include/asm-sparc64/system.h	2004-01-16 16:56:43.527685946 +0100
-+++ linux-2.4.24/include/asm-sparc64/system.h	2004-01-16 17:01:59.297065701 +0100
+--- linux-2.4.24.org/include/asm-sparc64/system.h	2004-02-04 20:48:01.898649351 +0100
++++ linux-2.4.24/include/asm-sparc64/system.h	2004-02-04 20:52:54.208849656 +0100
 @@ -154,7 +154,18 @@
  
  #define flush_user_windows flushw_user
@@ -6372,8 +6375,8 @@ diff -urN linux-2.4.24.org/include/asm-sparc64/system.h linux-2.4.24/include/asm
  #ifndef CONFIG_DEBUG_SPINLOCK
  #define CHECK_LOCKS(PREV)	do { } while(0)
 diff -urN linux-2.4.24.org/include/linux/bitops.h linux-2.4.24/include/linux/bitops.h
---- linux-2.4.24.org/include/linux/bitops.h	2004-01-16 16:56:22.912969771 +0100
-+++ linux-2.4.24/include/linux/bitops.h	2004-01-16 17:01:59.340056766 +0100
+--- linux-2.4.24.org/include/linux/bitops.h	2004-02-04 20:47:38.725469391 +0100
++++ linux-2.4.24/include/linux/bitops.h	2004-02-04 20:52:54.244842170 +0100
 @@ -1,6 +1,38 @@
  #ifndef _LINUX_BITOPS_H
  #define _LINUX_BITOPS_H
@@ -6414,8 +6417,8 @@ diff -urN linux-2.4.24.org/include/linux/bitops.h linux-2.4.24/include/linux/bit
  /*
   * ffs: find first bit set. This is defined the same way as
 diff -urN linux-2.4.24.org/include/linux/kernel_stat.h linux-2.4.24/include/linux/kernel_stat.h
---- linux-2.4.24.org/include/linux/kernel_stat.h	2004-01-16 16:56:18.054979280 +0100
-+++ linux-2.4.24/include/linux/kernel_stat.h	2004-01-16 17:01:59.381048248 +0100
+--- linux-2.4.24.org/include/linux/kernel_stat.h	2004-02-04 20:47:34.063439098 +0100
++++ linux-2.4.24/include/linux/kernel_stat.h	2004-02-04 20:52:54.297831148 +0100
 @@ -31,7 +31,6 @@
  #elif !defined(CONFIG_ARCH_S390)
  	unsigned int irqs[NR_CPUS][NR_IRQS];
@@ -6425,8 +6428,8 @@ diff -urN linux-2.4.24.org/include/linux/kernel_stat.h linux-2.4.24/include/linu
  
  extern struct kernel_stat kstat;
 diff -urN linux-2.4.24.org/include/linux/sched.h linux-2.4.24/include/linux/sched.h
---- linux-2.4.24.org/include/linux/sched.h	2004-01-16 16:56:17.089179976 +0100
-+++ linux-2.4.24/include/linux/sched.h	2004-01-16 17:01:59.403043677 +0100
+--- linux-2.4.24.org/include/linux/sched.h	2004-02-04 20:47:32.755711107 +0100
++++ linux-2.4.24/include/linux/sched.h	2004-02-04 20:52:54.755735907 +0100
 @@ -6,6 +6,7 @@
  extern unsigned long event;
  
@@ -6912,7 +6915,7 @@ diff -urN linux-2.4.24.org/include/linux/sched.h linux-2.4.24/include/linux/sche
  #endif
 diff -urN linux-2.4.24.org/include/linux/smp_balance.h linux-2.4.24/include/linux/smp_balance.h
 --- linux-2.4.24.org/include/linux/smp_balance.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.4.24/include/linux/smp_balance.h	2004-01-16 17:01:59.408042638 +0100
++++ linux-2.4.24/include/linux/smp_balance.h	2004-02-04 20:52:54.758735283 +0100
 @@ -0,0 +1,15 @@
 +#ifndef _LINUX_SMP_BALANCE_H
 +#define _LINUX_SMP_BALANCE_H
@@ -6930,8 +6933,8 @@ diff -urN linux-2.4.24.org/include/linux/smp_balance.h linux-2.4.24/include/linu
 +
 +#endif /* _LINUX_SMP_BALANCE_H */
 diff -urN linux-2.4.24.org/include/linux/smp.h linux-2.4.24/include/linux/smp.h
---- linux-2.4.24.org/include/linux/smp.h	2004-01-16 16:56:22.485058693 +0100
-+++ linux-2.4.24/include/linux/smp.h	2004-01-16 17:01:59.465030795 +0100
+--- linux-2.4.24.org/include/linux/smp.h	2004-02-04 20:47:38.184581896 +0100
++++ linux-2.4.24/include/linux/smp.h	2004-02-04 20:52:54.806725301 +0100
 @@ -86,6 +86,14 @@
  #define cpu_number_map(cpu)			0
  #define smp_call_function(func,info,retry,wait)	({ 0; })
@@ -6948,8 +6951,8 @@ diff -urN linux-2.4.24.org/include/linux/smp.h linux-2.4.24/include/linux/smp.h
 +
  #endif
 diff -urN linux-2.4.24.org/include/linux/wait.h linux-2.4.24/include/linux/wait.h
---- linux-2.4.24.org/include/linux/wait.h	2004-01-16 16:56:17.630067578 +0100
-+++ linux-2.4.24/include/linux/wait.h	2004-01-16 17:01:59.496024354 +0100
+--- linux-2.4.24.org/include/linux/wait.h	2004-02-04 20:47:33.472562001 +0100
++++ linux-2.4.24/include/linux/wait.h	2004-02-04 20:52:54.861713864 +0100
 @@ -59,6 +59,7 @@
  # define wq_write_lock_irq write_lock_irq
  # define wq_write_lock_irqsave write_lock_irqsave
@@ -6967,8 +6970,8 @@ diff -urN linux-2.4.24.org/include/linux/wait.h linux-2.4.24/include/linux/wait.
  #endif
  
 diff -urN linux-2.4.24.org/init/main.c linux-2.4.24/init/main.c
---- linux-2.4.24.org/init/main.c	2004-01-16 16:56:11.529335331 +0100
-+++ linux-2.4.24/init/main.c	2004-01-16 17:01:59.529017497 +0100
+--- linux-2.4.24.org/init/main.c	2004-02-04 20:47:26.630985058 +0100
++++ linux-2.4.24/init/main.c	2004-02-04 20:52:54.909703882 +0100
 @@ -293,8 +293,6 @@
  extern void setup_arch(char **);
  extern void cpu_idle(void);
@@ -7047,8 +7050,8 @@ diff -urN linux-2.4.24.org/init/main.c linux-2.4.24/init/main.c
  	/*
  	 * Tell the world that we're going to be the grim
 diff -urN linux-2.4.24.org/kernel/capability.c linux-2.4.24/kernel/capability.c
---- linux-2.4.24.org/kernel/capability.c	2004-01-16 16:56:11.772284845 +0100
-+++ linux-2.4.24/kernel/capability.c	2004-01-16 17:01:59.589005031 +0100
+--- linux-2.4.24.org/kernel/capability.c	2004-02-04 20:47:27.302845310 +0100
++++ linux-2.4.24/kernel/capability.c	2004-02-04 20:52:54.945696396 +0100
 @@ -8,6 +8,8 @@
  #include <linux/mm.h>
  #include <asm/uaccess.h>
@@ -7059,8 +7062,8 @@ diff -urN linux-2.4.24.org/kernel/capability.c linux-2.4.24/kernel/capability.c
  
  /* Note: never hold tasklist_lock while spinning for this one */
 diff -urN linux-2.4.24.org/kernel/exit.c linux-2.4.24/kernel/exit.c
---- linux-2.4.24.org/kernel/exit.c	2004-01-16 16:56:11.763286715 +0100
-+++ linux-2.4.24/kernel/exit.c	2004-01-16 17:01:59.593004200 +0100
+--- linux-2.4.24.org/kernel/exit.c	2004-02-04 20:47:27.240858204 +0100
++++ linux-2.4.24/kernel/exit.c	2004-02-04 20:52:54.951695148 +0100
 @@ -28,49 +28,22 @@
  
  static void release_task(struct task_struct * p)
@@ -7214,8 +7217,8 @@ diff -urN linux-2.4.24.org/kernel/exit.c linux-2.4.24/kernel/exit.c
  		}
  	}
 diff -urN linux-2.4.24.org/kernel/fork.c linux-2.4.24/kernel/fork.c
---- linux-2.4.24.org/kernel/fork.c	2004-01-16 16:56:11.670306037 +0100
-+++ linux-2.4.24/kernel/fork.c	2004-01-16 17:01:59.633995681 +0100
+--- linux-2.4.24.org/kernel/fork.c	2004-02-04 20:47:26.750960103 +0100
++++ linux-2.4.24/kernel/fork.c	2004-02-04 20:52:54.987687662 +0100
 @@ -31,7 +31,6 @@
  
  /* The idle threads do not count.. */
@@ -7323,8 +7326,8 @@ diff -urN linux-2.4.24.org/kernel/fork.c linux-2.4.24/kernel/fork.c
  fork_out:
  	return retval;
 diff -urN linux-2.4.24.org/kernel/ksyms.c linux-2.4.24/kernel/ksyms.c
---- linux-2.4.24.org/kernel/ksyms.c	2004-01-16 16:56:11.644311438 +0100
-+++ linux-2.4.24/kernel/ksyms.c	2004-01-16 17:01:59.648992565 +0100
+--- linux-2.4.24.org/kernel/ksyms.c	2004-02-04 20:47:26.747960727 +0100
++++ linux-2.4.24/kernel/ksyms.c	2004-02-04 20:52:54.992686623 +0100
 @@ -461,7 +461,6 @@
  /* process management */
  EXPORT_SYMBOL(complete_and_exit);
@@ -7351,8 +7354,8 @@ diff -urN linux-2.4.24.org/kernel/ksyms.c linux-2.4.24/kernel/ksyms.c
  /* misc */
  EXPORT_SYMBOL(panic);
 diff -urN linux-2.4.24.org/kernel/printk.c linux-2.4.24/kernel/printk.c
---- linux-2.4.24.org/kernel/printk.c	2004-01-16 16:56:11.641312062 +0100
-+++ linux-2.4.24/kernel/printk.c	2004-01-16 17:01:59.673987370 +0100
+--- linux-2.4.24.org/kernel/printk.c	2004-02-04 20:47:26.744961351 +0100
++++ linux-2.4.24/kernel/printk.c	2004-02-04 20:52:55.015681840 +0100
 @@ -26,6 +26,7 @@
  #include <linux/module.h>
  #include <linux/interrupt.h>			/* For in_interrupt() */
@@ -7362,8 +7365,8 @@ diff -urN linux-2.4.24.org/kernel/printk.c linux-2.4.24/kernel/printk.c
  #include <asm/uaccess.h>
  
 diff -urN linux-2.4.24.org/kernel/ptrace.c linux-2.4.24/kernel/ptrace.c
---- linux-2.4.24.org/kernel/ptrace.c	2004-01-16 16:56:11.678304374 +0100
-+++ linux-2.4.24/kernel/ptrace.c	2004-01-16 17:01:59.701981553 +0100
+--- linux-2.4.24.org/kernel/ptrace.c	2004-02-04 20:47:26.776954696 +0100
++++ linux-2.4.24/kernel/ptrace.c	2004-02-04 20:52:55.029678928 +0100
 @@ -32,20 +32,7 @@
  		if (child->state != TASK_STOPPED)
  			return -ESRCH;
@@ -7387,8 +7390,8 @@ diff -urN linux-2.4.24.org/kernel/ptrace.c linux-2.4.24/kernel/ptrace.c
  	}
  
 diff -urN linux-2.4.24.org/kernel/sched.c linux-2.4.24/kernel/sched.c
---- linux-2.4.24.org/kernel/sched.c	2004-01-16 16:56:11.603319956 +0100
-+++ linux-2.4.24/kernel/sched.c	2004-01-16 17:01:59.750971372 +0100
+--- linux-2.4.24.org/kernel/sched.c	2004-02-04 20:47:26.741961975 +0100
++++ linux-2.4.24/kernel/sched.c	2004-02-04 20:52:55.076669155 +0100
 @@ -3,340 +3,333 @@
   *
   *  Kernel scheduler and related syscalls
@@ -9830,8 +9833,8 @@ diff -urN linux-2.4.24.org/kernel/sched.c linux-2.4.24/kernel/sched.c
 +
 +#endif /* CONFIG_SMP */
 diff -urN linux-2.4.24.org/kernel/signal.c linux-2.4.24/kernel/signal.c
---- linux-2.4.24.org/kernel/signal.c	2004-01-16 16:56:11.702299388 +0100
-+++ linux-2.4.24/kernel/signal.c	2004-01-16 17:01:59.756970125 +0100
+--- linux-2.4.24.org/kernel/signal.c	2004-02-04 20:47:26.821945338 +0100
++++ linux-2.4.24/kernel/signal.c	2004-02-04 20:52:55.082667907 +0100
 @@ -507,12 +507,9 @@
  	 * process of changing - but no harm is done by that
  	 * other than doing an extra (lightweight) IPI interrupt.
@@ -9849,8 +9852,8 @@ diff -urN linux-2.4.24.org/kernel/signal.c linux-2.4.24/kernel/signal.c
  		wake_up_process(t);
  		return;
 diff -urN linux-2.4.24.org/kernel/softirq.c linux-2.4.24/kernel/softirq.c
---- linux-2.4.24.org/kernel/softirq.c	2004-01-16 16:56:11.742291078 +0100
-+++ linux-2.4.24/kernel/softirq.c	2004-01-16 17:01:59.788963476 +0100
+--- linux-2.4.24.org/kernel/softirq.c	2004-02-04 20:47:27.211864234 +0100
++++ linux-2.4.24/kernel/softirq.c	2004-02-04 20:52:55.110662084 +0100
 @@ -364,13 +364,13 @@
  	int cpu = cpu_logical_map(bind_cpu);
  
@@ -9879,8 +9882,8 @@ diff -urN linux-2.4.24.org/kernel/softirq.c linux-2.4.24/kernel/softirq.c
  	int cpu;
  
 diff -urN linux-2.4.24.org/kernel/sys.c linux-2.4.24/kernel/sys.c
---- linux-2.4.24.org/kernel/sys.c	2004-01-16 16:56:11.601320372 +0100
-+++ linux-2.4.24/kernel/sys.c	2004-01-16 17:01:59.831954542 +0100
+--- linux-2.4.24.org/kernel/sys.c	2004-02-04 20:47:26.739962391 +0100
++++ linux-2.4.24/kernel/sys.c	2004-02-04 20:52:55.139656054 +0100
 @@ -239,10 +239,10 @@
  		}
  		if (error == -ESRCH)
@@ -9904,8 +9907,8 @@ diff -urN linux-2.4.24.org/kernel/sys.c linux-2.4.24/kernel/sys.c
  			retval = niceval;
  	}
 diff -urN linux-2.4.24.org/kernel/timer.c linux-2.4.24/kernel/timer.c
---- linux-2.4.24.org/kernel/timer.c	2004-01-16 16:56:11.733292948 +0100
-+++ linux-2.4.24/kernel/timer.c	2004-01-16 17:01:59.865947478 +0100
+--- linux-2.4.24.org/kernel/timer.c	2004-02-04 20:47:27.115884198 +0100
++++ linux-2.4.24/kernel/timer.c	2004-02-04 20:52:55.155652727 +0100
 @@ -25,6 +25,8 @@
  
  #include <asm/uaccess.h>
@@ -10056,157 +10059,9 @@ diff -urN linux-2.4.24.org/kernel/timer.c linux-2.4.24/kernel/timer.c
  	return 0;
  }
 -
-diff -urN linux-2.4.24.org/LOG linux-2.4.24/LOG
---- linux-2.4.24.org/LOG	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.4.24/LOG	2004-01-16 17:02:00.469821983 +0100
-@@ -0,0 +1,144 @@
-+patching file arch/alpha/kernel/entry.S
-+patching file arch/alpha/kernel/process.c
-+patching file arch/alpha/kernel/smp.c
-+patching file arch/arm/kernel/process.c
-+patching file arch/i386/kernel/entry.S
-+patching file arch/i386/kernel/process.c
-+patching file arch/i386/kernel/setup.c
-+Hunk #1 succeeded at 3193 (offset 3 lines).
-+patching file arch/i386/kernel/smpboot.c
-+patching file arch/i386/kernel/smp.c
-+patching file arch/mips64/kernel/process.c
-+patching file arch/parisc/kernel/process.c
-+patching file arch/ppc/8260_io/uart.c
-+patching file arch/ppc/8xx_io/uart.c
-+patching file arch/ppc/kernel/entry.S
-+patching file arch/ppc/kernel/idle.c
-+patching file arch/ppc/kernel/mk_defs.c
-+patching file arch/ppc/kernel/process.c
-+patching file arch/ppc/kernel/smp.c
-+patching file arch/ppc/lib/dec_and_lock.c
-+patching file arch/ppc/mm/init.c
-+patching file arch/ppc64/kernel/entry.S
-+Hunk #1 FAILED at 291.
-+1 out of 1 hunk FAILED -- saving rejects to file arch/ppc64/kernel/entry.S.rej
-+patching file arch/ppc64/kernel/idle.c
-+Reversed (or previously applied) patch detected!  Assume -R? [n] 
-+Apply anyway? [n] 
-+Skipping patch.
-+2 out of 2 hunks ignored -- saving rejects to file arch/ppc64/kernel/idle.c.rej
-+patching file arch/ppc64/kernel/process.c
-+Hunk #1 succeeded at 138 (offset 32 lines).
-+patching file arch/ppc64/kernel/smp.c
-+Hunk #1 succeeded at 70 (offset 1 line).
-+Hunk #2 succeeded at 637 (offset 25 lines).
-+Hunk #3 succeeded at 708 (offset 25 lines).
-+Hunk #4 succeeded at 761 (offset 25 lines).
-+Hunk #5 succeeded at 769 (offset 25 lines).
-+Hunk #6 succeeded at 787 (offset 25 lines).
-+patching file arch/s390/kernel/process.c
-+Hunk #1 succeeded at 57 with fuzz 2.
-+patching file arch/s390x/kernel/process.c
-+Hunk #1 succeeded at 57 with fuzz 2.
-+patching file arch/sh/kernel/process.c
-+patching file arch/sparc/kernel/entry.S
-+patching file arch/sparc/kernel/process.c
-+patching file arch/sparc/kernel/smp.c
-+patching file arch/sparc/kernel/sun4d_smp.c
-+patching file arch/sparc/kernel/sun4m_smp.c
-+patching file arch/sparc64/kernel/entry.S
-+patching file arch/sparc64/kernel/irq.c
-+patching file arch/sparc64/kernel/process.c
-+patching file arch/sparc64/kernel/rtrap.S
-+patching file arch/sparc64/kernel/smp.c
-+patching file arch/sparc64/kernel/trampoline.S
-+patching file arch/sparc64/kernel/traps.c
-+patching file Documentation/sched-coding.txt
-+patching file Documentation/sched-design.txt
-+patching file drivers/char/drm-4.0/tdfx_drv.c
-+patching file drivers/char/mwave/mwavedd.c
-+patching file drivers/char/serial_txx927.c
-+patching file drivers/md/md.c
-+patching file fs/binfmt_elf.c
-+patching file fs/jffs2/background.c
-+patching file fs/proc/array.c
-+patching file fs/proc/proc_misc.c
-+patching file fs/reiserfs/buffer2.c
-+patching file include/asm-alpha/bitops.h
-+patching file include/asm-alpha/smp.h
-+patching file include/asm-alpha/system.h
-+patching file include/asm-arm/bitops.h
-+patching file include/asm-cris/bitops.h
-+Hunk #3 succeeded at 61 with fuzz 1.
-+patching file include/asm-generic/bitops.h
-+patching file include/asm-i386/bitops.h
-+patching file include/asm-i386/mmu_context.h
-+patching file include/asm-i386/processor.h
-+Hunk #1 succeeded at 495 (offset 22 lines).
-+patching file include/asm-i386/smp_balance.h
-+patching file include/asm-i386/smp.h
-+patching file include/asm-i386/system.h
-+patching file include/asm-ia64/bitops.h
-+patching file include/asm-m68k/bitops.h
-+Hunk #1 succeeded at 97 with fuzz 2.
-+Hunk #2 succeeded at 239 (offset -1 lines).
-+patching file include/asm-mips/bitops.h
-+patching file include/asm-mips64/bitops.h
-+patching file include/asm-ppc/bitops.h
-+patching file include/asm-ppc/smp.h
-+patching file include/asm-ppc64/bitops.h
-+patching file include/asm-s390/bitops.h
-+patching file include/asm-s390x/bitops.h
-+patching file include/asm-sparc/bitops.h
-+patching file include/asm-sparc/system.h
-+Hunk #1 succeeded at 84 (offset -4 lines).
-+Hunk #2 succeeded at 92 (offset -4 lines).
-+patching file include/asm-sparc64/bitops.h
-+patching file include/asm-sparc64/smp.h
-+patching file include/asm-sparc64/system.h
-+patching file include/linux/bitops.h
-+patching file include/linux/kernel_stat.h
-+patching file include/linux/sched.h
-+Hunk #11 succeeded at 472 (offset 2 lines).
-+Hunk #12 succeeded at 501 (offset 2 lines).
-+Hunk #13 succeeded at 533 (offset 2 lines).
-+Hunk #14 succeeded at 543 (offset 2 lines).
-+Hunk #15 succeeded at 567 (offset 2 lines).
-+Hunk #16 succeeded at 584 (offset 2 lines).
-+Hunk #17 succeeded at 611 (offset 2 lines).
-+Hunk #18 succeeded at 693 (offset 2 lines).
-+Hunk #19 succeeded at 800 (offset 2 lines).
-+Hunk #20 succeeded at 821 (offset 2 lines).
-+Hunk #21 succeeded at 905 (offset 2 lines).
-+Hunk #22 succeeded at 920 (offset 2 lines).
-+Hunk #23 succeeded at 949 (offset 2 lines).
-+Hunk #24 succeeded at 982 (offset 2 lines).
-+patching file include/linux/smp_balance.h
-+patching file include/linux/smp.h
-+patching file include/linux/wait.h
-+patching file init/main.c
-+patching file kernel/capability.c
-+patching file kernel/exit.c
-+patching file kernel/fork.c
-+Hunk #3 succeeded at 701 (offset 3 lines).
-+Hunk #4 succeeded at 709 (offset 3 lines).
-+Hunk #5 succeeded at 726 (offset 3 lines).
-+Hunk #6 succeeded at 768 (offset 3 lines).
-+Hunk #7 succeeded at 824 (offset 3 lines).
-+patching file kernel/ksyms.c
-+Hunk #1 succeeded at 461 (offset 10 lines).
-+Hunk #2 succeeded at 473 (offset 10 lines).
-+Hunk #3 succeeded at 485 (offset 10 lines).
-+patching file kernel/printk.c
-+patching file kernel/ptrace.c
-+patching file kernel/sched.c
-+patching file kernel/signal.c
-+patching file kernel/softirq.c
-+patching file kernel/sys.c
-+patching file kernel/timer.c
-+patching file mm/oom_kill.c
-+Hunk #1 succeeded at 86 (offset -2 lines).
-+Hunk #2 FAILED at 150.
-+1 out of 2 hunks FAILED -- saving rejects to file mm/oom_kill.c.rej
-+patching file net/bluetooth/bnep/core.c
-+patching file net/bluetooth/cmtp/core.c
 diff -urN linux-2.4.24.org/mm/oom_kill.c linux-2.4.24/mm/oom_kill.c
---- linux-2.4.24.org/mm/oom_kill.c	2004-01-16 16:56:12.709090174 +0100
-+++ linux-2.4.24/mm/oom_kill.c	2004-01-16 17:05:07.190017799 +0100
+--- linux-2.4.24.org/mm/oom_kill.c	2004-02-04 20:47:28.626569974 +0100
++++ linux-2.4.24/mm/oom_kill.c	2004-02-04 20:57:30.567369583 +0100
 @@ -86,7 +86,7 @@
  	 * Niced processes are most likely less important, so double
  	 * their badness points.
@@ -10226,8 +10081,8 @@ diff -urN linux-2.4.24.org/mm/oom_kill.c linux-2.4.24/mm/oom_kill.c
  
  	/* This process has hardware access, be more careful. */
 diff -urN linux-2.4.24.org/net/bluetooth/bnep/core.c linux-2.4.24/net/bluetooth/bnep/core.c
---- linux-2.4.24.org/net/bluetooth/bnep/core.c	2004-01-16 16:57:17.899543287 +0100
-+++ linux-2.4.24/net/bluetooth/bnep/core.c	2004-01-16 17:02:00.414833410 +0100
+--- linux-2.4.24.org/net/bluetooth/bnep/core.c	2004-02-04 20:48:41.535404904 +0100
++++ linux-2.4.24/net/bluetooth/bnep/core.c	2004-02-04 20:52:55.199643577 +0100
 @@ -460,7 +460,7 @@
          sigfillset(&current->blocked);
  	flush_signals(current);
@@ -10238,8 +10093,8 @@ diff -urN linux-2.4.24.org/net/bluetooth/bnep/core.c linux-2.4.24/net/bluetooth/
          set_fs(KERNEL_DS);
  
 diff -urN linux-2.4.24.org/net/bluetooth/cmtp/core.c linux-2.4.24/net/bluetooth/cmtp/core.c
---- linux-2.4.24.org/net/bluetooth/cmtp/core.c	2004-01-16 16:57:17.606604162 +0100
-+++ linux-2.4.24/net/bluetooth/cmtp/core.c	2004-01-16 17:02:00.469821983 +0100
+--- linux-2.4.24.org/net/bluetooth/cmtp/core.c	2004-02-04 20:48:41.311451486 +0100
++++ linux-2.4.24/net/bluetooth/cmtp/core.c	2004-02-04 20:52:55.224638378 +0100
 @@ -298,7 +298,7 @@
  	sigfillset(&current->blocked);
  	flush_signals(current);
