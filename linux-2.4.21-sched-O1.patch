@@ -1210,10 +1210,11 @@ diff -urN linux-2.4.20/arch/sparc64/kernel/rtrap.S linux-2.4.20-o1/arch/sparc64/
 diff -urN linux-2.4.20/arch/sparc64/kernel/smp.c linux-2.4.20-o1/arch/sparc64/kernel/smp.c
 --- linux-2.4.20/arch/sparc64/kernel/smp.c	Fri Nov 29 00:53:12 2002
 +++ linux-2.4.20-o1/arch/sparc64/kernel/smp.c	Wed Mar 12 00:41:43 2003
-@@ -259,7 +259,6 @@
+@@ -259,7 +259,7 @@
  	printk("Entering UltraSMPenguin Mode...\n");
  	__sti();
  	smp_store_cpu_info(boot_cpu_id);
++	smp_tune_scheduling();
 -	init_idle();
  
  	if (linux_num_cpus == 1)
@@ -1232,7 +1233,7 @@ diff -urN linux-2.4.20/arch/sparc64/kernel/smp.c linux-2.4.20-o1/arch/sparc64/ke
  			unhash_process(p);
  
  			callin_flag = 0;
-@@ -1154,8 +1149,113 @@
+@@ -1154,8 +1149,94 @@
  	__cpu_number_map[boot_cpu_id] = 0;
  	prom_cpu_nodes[boot_cpu_id] = linux_cpus[0].prom_node;
  	__cpu_logical_map[0] = boot_cpu_id;
@@ -1285,44 +1286,23 @@ diff -urN linux-2.4.20/arch/sparc64/kernel/smp.c linux-2.4.20-o1/arch/sparc64/ke
 +		     p += (64 / sizeof(unsigned long)))
 +			*((volatile unsigned long *)p);
 +
-+		/* Now the real measurement. */
-+		if (!SPARC64_USE_STICK) {
-+		__asm__ __volatile__("b,pt	%%xcc, 1f\n\t"
-+				     " rd	%%tick, %0\n\t"
-+				     ".align	64\n"
-+				     "1:\tldx	[%2 + 0x000], %%g1\n\t"
-+				     "ldx	[%2 + 0x040], %%g2\n\t"
-+				     "ldx	[%2 + 0x080], %%g3\n\t"
-+				     "ldx	[%2 + 0x0c0], %%g5\n\t"
-+				     "add	%2, 0x100, %2\n\t"
-+				     "cmp	%2, %4\n\t"
++		tick1 = tick_ops->get_tick();
++
++		__asm__ __volatile__("1:\n\t"
++				     "ldx	[%0 + 0x000], %%g1\n\t"
++				     "ldx	[%0 + 0x040], %%g2\n\t"
++				     "ldx	[%0 + 0x080], %%g3\n\t"
++				     "ldx	[%0 + 0x0c0], %%g5\n\t"
++				     "add	%0, 0x100, %0\n\t"
++				     "cmp	%0, %2\n\t"
 +				     "bne,pt	%%xcc, 1b\n\t"
-+				     " nop\n\t"
-+				     "rd	%%tick, %1\n\t"
-+				     : "=&r" (tick1), "=&r" (tick2),
-+				       "=&r" (flush_base)
-+				     : "2" (flush_base),
++				     " nop"
++				     : "=&r" (flush_base)
++				     : "0" (flush_base),
 +				       "r" (flush_base + ecache_size)
 +				     : "g1", "g2", "g3", "g5");
-+		} else {
-+		__asm__ __volatile__("b,pt	%%xcc, 1f\n\t"
-+				     " rd	%%asr24, %0\n\t"
-+				     ".align	64\n"
-+				     "1:\tldx	[%2 + 0x000], %%g1\n\t"
-+				     "ldx	[%2 + 0x040], %%g2\n\t"
-+				     "ldx	[%2 + 0x080], %%g3\n\t"
-+				     "ldx	[%2 + 0x0c0], %%g5\n\t"
-+				     "add	%2, 0x100, %2\n\t"
-+				     "cmp	%2, %4\n\t"
-+				     "bne,pt	%%xcc, 1b\n\t"
-+				     " nop\n\t"
-+				     "rd	%%asr24, %1\n\t"
-+				     : "=&r" (tick1), "=&r" (tick2),
-+				       "=&r" (flush_base)
-+				     : "2" (flush_base),
-+				       "r" (flush_base + ecache_size)
-+				     : "g1", "g2", "g3", "g5");
-+		}
++
++		tick2 = tick_ops->get_tick();
 +
 +		local_irq_restore(flags);
 +
@@ -1341,6 +1321,8 @@ diff -urN linux-2.4.20/arch/sparc64/kernel/smp.c linux-2.4.20-o1/arch/sparc64/ke
 +report:
 +	/* Convert ticks/sticks to jiffies. */
 +	cache_decay_ticks = cacheflush_time / timer_tick_offset;
++	if (cache_decay_ticks < 1)
++		cache_decay_ticks = 1;
 +
 +	printk("Using heuristic of %ld cycles, %ld ticks.\n",
 +	       cacheflush_time, cache_decay_ticks);
@@ -1362,6 +1344,14 @@ diff -urN linux-2.4.20/arch/sparc64/kernel/trampoline.S linux-2.4.20-o1/arch/spa
 diff -urN linux-2.4.20/arch/sparc64/kernel/traps.c linux-2.4.20-o1/arch/sparc64/kernel/traps.c
 --- linux-2.4.20/arch/sparc64/kernel/traps.c	Fri Nov 29 00:53:12 2002
 +++ linux-2.4.20-o1/arch/sparc64/kernel/traps.c	Wed Mar 12 00:41:43 2003
+@@ -16,7 +16,6 @@
+ #include <linux/smp.h>
+ #include <linux/smp_lock.h>
+ #include <linux/mm.h>
++#include <linux/init.h>
+ 
+ #include <asm/delay.h>
+ #include <asm/system.h>
 @@ -570,6 +570,48 @@
  			       "i" (ASI_PHYS_USE_EC));
  }
