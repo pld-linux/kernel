@@ -186,6 +186,8 @@ Patch98:	2.6.1-sii3512-lkml.patch
 
 Patch100:	2.6.1-SIOCSIFNAME-lkml.patch
 
+Patch102:	2.6.1-rq-not-task_running-lkml.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
@@ -606,6 +608,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch98 -p1
 
 %patch100 -p1
+
+%patch102 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
