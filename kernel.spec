@@ -802,16 +802,17 @@ BuildKernel() {
 	cat %{SOURCE1999} >> arch/%{base_arch}/defconfig
 %endif
 %if %{?_with_acpi:1}%{!?_with_acpi:0}
-	echo "CONFIG_ACPI=y">>arch/%{base_arch}/defconfig
-	echo "# CONFIG_ACPI_DEBUG is not set">>arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_BUSMGR=m">>arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_SYS=m">>arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_CPU=m">>arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_BUTTON=m">>arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_AC=m">>arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_EC=m">>arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_CMBATT=m">>arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_THERMAL=m">>arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI=y" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_ACPI_DEBUG is not set" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_SERIAL_ACPI=y" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_BUSMGR=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_SYS=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_CPU=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_BUTTON=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_AC=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_EC=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_CMBATT=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_THERMAL=m" >> arch/%{base_arch}/defconfig
 %endif
 	if [ "$BOOT" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
