@@ -136,7 +136,7 @@ Patch68:	2.6.x-patch-o-matic-ng-base-%{_netfilter_snap}.patch
 Patch70:	2.6.3-sparc32-fix.patch
 
 # http://www.tahoe.pl/drivers/tahoe9xx-2.6.2.patch
-Patch72:	tahoe9xxx-2.6.2.patch
+Patch72:	tahoe9xx-2.6.2.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
