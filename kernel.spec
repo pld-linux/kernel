@@ -120,6 +120,8 @@ Patch50:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 
 Patch52:	laptop-mode-2.6.1-7.patch
 
+Patch54:	2.6.3-amd64-fix.patch
+
 Patch56:	kbuild-out-of-tree.diff
 
 Patch58:	2.6.x-PD6729-lkml.patch
@@ -505,6 +507,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch50 -p1
 
 %patch52 -p1
+
+%patch54 -p1
 
 %patch56 -p1
 
