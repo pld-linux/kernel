@@ -164,6 +164,7 @@ Patch54:	2.6.x-SGI_VW-fbdev-lkml.patch
 Patch56:	2.6.x-TGA-fbdev-lkml.patch
 
 Patch58:	linux-alpha-isa.patch
+Patch59:	2.6.7-alpha_compile.patch
 
 Patch60:	2.6.4-rc1-01-esfq-imq.patch
 Patch61:	2.6.4-rc1-02-imq-nat-support.patch
@@ -613,6 +614,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch56 -p1
 
 %patch58 -p1
+%patch59 -p1
 
 %patch60 -p1
 %patch61 -p1
