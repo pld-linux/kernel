@@ -15,7 +15,6 @@
 %bcond_without	grsec		# build without grsec
 %bcond_with	pax		# enable PaX
 %bcond_with	execshield	# build with exec-shield
-%bcond_with	pramfs		# build pramfs support (EXPERIMENTAL)
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	fbsplash	# build with fbsplash
@@ -177,8 +176,6 @@ Patch71:	vesafb-tng-0.9-rc4-r3-2.6.9-rc3.patch
 # http://dev.gentoo.org/~spock/projects/gensplash/
 Patch72:	fbsplash-0.9-r8-2.6.9-rc3.patch
 Patch73:	squashfs2.1-patch
-# http://dl.sourceforge.net/pramfs/
-Patch74:	pramfs-2.6.4.patch
 Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
 # http://lirc.sourceforge.net/software/snapshots/lirc-0.7.0pre7.tar.bz2
 Patch76:	2.6.8-lirc-0.7.0-pre7.patch
