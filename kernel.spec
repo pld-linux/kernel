@@ -69,6 +69,8 @@ Patch15:	linux-2.4.2-advantech-wdt-driver.patch
 Patch16:	linux-scsi-debug-bug.patch
 Patch17:	linux-smaller-parport_pc-non-pci-box.patch
 
+# Quota fixes
+Patch18:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.2-1.diff.gz
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
 ExclusiveOS:	Linux
@@ -291,6 +293,18 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 # Adaptec RAID patch
 %patch7 -p1
 %patch8 -p1
+#patches from Linux kernel list
+%patch11 -p1
+%patch12 -p1
+%patch13 -p1
+## next patches
+%patch14 -p1
+%patch15 -p1
+%patch16 -p0
+%patch17 -p0
+# quota fixes
+%patch18 -p1
+
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -339,17 +353,6 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
     -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
 %endif
     Makefile.orig >Makefile
-
-#patches from Linux kernel list
-%patch11 -p1
-%patch12 -p1
-%patch13 -p1
-
-## next patches
-%patch14 -p1
-%patch15 -p1
-%patch16 -p0
-%patch17 -p0
 
 ## install NCR/Symbios controler
 mv %{sym_ncr_version}/*.{c,h} drivers/scsi
