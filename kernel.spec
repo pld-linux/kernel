@@ -16,7 +16,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	17
+Release:	18
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -105,6 +105,7 @@ Patch107:	linux-2.2.20-icn-unresolved.patch.bz2
 Patch108:	linux-2.2.20-agp_backport.patch.bz2
 Patch109:	dc395-MAINTAINERS.patch
 Patch110:	%{name}-nfs-fixes.patch
+Patch111:	linux-2.2.20-pcilynx_unresolved.patch
 
 Patch1500:	linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	%{name}-sparc-zs.h.patch
@@ -430,6 +431,8 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch107 -p1
 %patch108 -p1
 %patch110 -p1
+%patch111 -p1
+
 %patch1500 -p1
 %patch1501 -p1
 %ifarch sparc64
@@ -743,6 +746,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH104}
 bzip2 -dc %{PATCH107} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 bzip2 -dc %{PATCH108} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH110}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH111}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1500}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1501}
