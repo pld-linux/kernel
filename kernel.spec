@@ -19,7 +19,7 @@
 %define		jfs_version		2.4-1.0.24
 %define		lvm_version		1.0.5
 %define		evms_version		1.1.0
-%define		ntfs_version		2.0.23b
+%define		ntfs_version		2.1.0a
 %define		drm_xfree_version	4.2.0
 %define		hostap_version		2002-10-12
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -35,9 +35,9 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
-#Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
+Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
-Source4:	http://christophe.lizzi.free.fr/linux/linux-2.4.0-test9-fore200e-0.3.tar.gz
+#Source4:	http://christophe.lizzi.free.fr/linux/linux-2.4.0-test9-fore200e-0.3.tar.gz
 Source5:	linux-2.4.19-netfilter-20021020.tar.bz2
 #Source6:	
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
@@ -547,8 +547,8 @@ install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # Fore 200e ATM NIC
 echo Adding FORE 200e ATM driver
-#patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
-patch -p1 -s <linux-2.4.0-test9-fore200e-0.3/linux-2.4.0-test9-fore200e-0.3.patch
+patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
+#patch -p1 -s <linux-2.4.0-test9-fore200e-0.3/linux-2.4.0-test9-fore200e-0.3.patch
 
 # Netfilter
 (KERNEL_DIR=`pwd` ; export KERNEL_DIR ; cd netfilter-patch-o-matic ; ./runme --batch userspace)
