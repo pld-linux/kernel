@@ -158,7 +158,7 @@ Patch134:	vt8235-2.4.19.patch
 # quota for reiserfs
 Patch135:	linux-2.4.19-reiserfs-quota-22.patch.gz
 Patch136:	piix-ide-fix.patch
-#Patch137:	
+Patch137:	linux-2.4.19-truncate-fix.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -490,6 +490,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch134 -p1
 %patch135 -p1
 %patch136 -p0
+%patch137 -p1
 
 %patch905 -p1
 
