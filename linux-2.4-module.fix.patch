@@ -1,0 +1,24 @@
+--- linux-2.4.17/kernel/module.c	Sun Nov 11 20:23:14 2001
++++ linux-2.4.17-modfix/kernel/module.c	Mon Jul  8 09:50:57 2002
+@@ -303,7 +303,7 @@
+ 		error = namelen;
+ 		goto err0;
+ 	}
+-	if (size < sizeof(struct module)+namelen) {
++	if (size < sizeof(struct module)+namelen+1) {
+ 		error = -EINVAL;
+ 		goto err1;
+ 	}
+@@ -482,10 +482,10 @@
+ 		error = n_namelen;
+ 		goto err2;
+ 	}
+-	if (namelen != n_namelen || strcmp(n_name, mod_tmp.name) != 0) {
++	if (namelen != n_namelen || strcmp(n_name, name_tmp) != 0) {
+ 		printk(KERN_ERR "init_module: changed module name to "
+ 				"`%s' from `%s'\n",
+-		       n_name, mod_tmp.name);
++		       n_name, name_tmp);
+ 		goto err3;
+ 	}
+ 
