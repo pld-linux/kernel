@@ -9,3 +9,35 @@
  SUB_DIRS     := core ethernet sched
  MOD_LIST_NAME := NET_MISC_MODULES
  
+--- linux/drivers/atm/Makefile~	Fri Feb 27 12:58:14 2004
++++ linux/drivers/atm/Makefile	Fri Feb 27 12:58:14 2004
+@@ -24,7 +24,8 @@
+ L_OBJS += zatm.o uPD98402.o
+ else
+   ifeq ($(CONFIG_ATM_ZATM),m)
+-  M_OBJS += zatm.o uPD98402.o
++  M_OBJS += zatm.o
++  MX_OBJS += uPD98402.o
+   endif
+ endif
+ 
+--- linux/drivers/atm/Config.in~	Fri Feb 27 13:04:44 2004
++++ linux/drivers/atm/Config.in	Fri Feb 27 13:04:44 2004
+@@ -24,7 +24,9 @@
+   tristate 'ZeitNet ZN1221/ZN1225' CONFIG_ATM_ZATM y
+   if [ ! "$CONFIG_ATM_ZATM" = "n" ]; then
+     bool '  Enable extended debugging' CONFIG_ATM_ZATM_DEBUG n
+-    bool '  Enable usec resolution timestamps' CONFIG_ATM_ZATM_EXACT_TS y
++    if [ "$CONFIG_X86" = "y" ]; then
++      bool '  Enable usec resolution timestamps' CONFIG_ATM_ZATM_EXACT_TS
++    fi
+   fi
+ #  bool 'Rolfs TI TNETA1570' CONFIG_ATM_TNETA1570 y
+ #  if [ "$CONFIG_ATM_TNETA1570" = "y" ]; then
+@@ -67,4 +69,4 @@
+     int  '  Maximum number of tx retries' CONFIG_ATM_FORE200E_TX_RETRY 16
+     int  '  Debugging level (0-3)' CONFIG_ATM_FORE200E_DEBUG 0
+   fi
+-fi
+\ No newline at end of file
++fi

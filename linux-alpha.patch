@@ -21,3 +21,59 @@
  #define KATYUSHA
  
  #include <linux/version.h>
+--- linux/include/asm-alpha/processor.h~	Thu Feb 26 08:14:48 2004
++++ linux/include/asm-alpha/processor.h	Thu Feb 26 08:14:48 2004
+@@ -79,6 +79,7 @@
+ }
+ 
+ #include <asm/ptrace.h>
++#include <linux/sched.h>
+ 
+ /*
+  * Return saved PC of a blocked thread.  This assumes the frame
+#--- linux/drivers/scsi/sym53c8xx_comm.h~	Thu Feb 26 09:20:57 2004
+#+++ linux/drivers/scsi/sym53c8xx_comm.h	Thu Feb 26 09:20:57 2004
+#@@ -283,7 +283,7 @@
+# 	base = pdev->base_address[index];
+# #if BITS_PER_LONG > 32
+# 	if ((base & 0x7) == 0x4)
+#-		*base |= (((u_long)pdev->base_address[++index]) << 32);
+#+		base |= (((u_long)pdev->base_address[++index]) << 32);
+# #endif
+# #endif
+# 	return (base & ~0x7ul);
+#--- linux/drivers/scsi/sym53c8xx.c~	Thu Feb 26 09:55:51 2004
+#+++ linux/drivers/scsi/sym53c8xx.c	Thu Feb 26 09:55:51 2004
+#@@ -464,7 +464,7 @@
+# 	base = pdev->base_address[index];
+# #if BITS_PER_LONG > 32
+# 	if ((base & 0x7) == 0x4)
+#-		*base |= (((u_long)pdev->base_address[++index]) << 32);
+#+		base |= (((u_long)pdev->base_address[++index]) << 32);
+# #endif
+# #endif
+# 	return (base & ~0x7ul);
+--- linux/drivers/scsi/seagate.c~	Thu Feb 26 17:39:05 2004
++++ linux/drivers/scsi/seagate.c	Thu Feb 26 17:39:05 2004
+@@ -530,7 +530,11 @@
+             " PARITY"
+ #endif
+ #ifdef SEAGATE_USE_ASM
++#  if defined(i386)
+             " SEAGATE_USE_ASM"
++#  else
++#    undef SEAGATE_USE_ASM
++#  endif
+ #endif
+ #ifdef SLOW_RATE
+             " SLOW_RATE"
+--- linux/drivers/isdn/hysdn/hysdn_sched.c~	Fri Feb 27 05:04:00 2004
++++ linux/drivers/isdn/hysdn/hysdn_sched.c	Fri Feb 27 05:04:00 2004
+@@ -16,6 +16,7 @@
+ #include <linux/kernel.h>
+ #include <linux/ioport.h>
+ #include <asm/io.h>
++#include <asm/spinlock.h>
+ 
+ #include "hysdn_defs.h"
+ 
