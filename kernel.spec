@@ -45,7 +45,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.22
+%define		_rel		0.23
 %define		_cset		20040609_0508
 %define		_apply_cset	1
 
@@ -155,7 +155,8 @@ Patch47:	2.6.6-ipt_account.patch
 Patch48:	2.6.3-sparc32-fix.patch
 
 # http://www.tahoe.pl/drivers/tahoe9xx-2.6.2.patch
-Patch50:	tahoe9xx-2.6.2.patch
+#Patch50:	tahoe9xx-2.6.2.patch
+Patch50:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 Patch51:	linux-tahoe9xx-hdlc-update.patch
 
 Patch54:	2.6.x-SGI_VW-fbdev-lkml.patch
@@ -605,7 +606,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch48 -p1
 
 %patch50 -p1
-%patch51 -p1
+#patch51 -p1
 
 %patch54 -p1
 
