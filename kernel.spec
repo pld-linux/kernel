@@ -44,7 +44,7 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_post_ver	%{nil}
-%define		_rel		0.3HEAD
+%define		_rel		0.4HEAD
 %define		_cset		20040926_0006
 %define		_apply_cset	1
 
