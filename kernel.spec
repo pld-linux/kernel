@@ -1,14 +1,15 @@
-%define		ow_version	2.2.17-ow1
-%define		pcmcia_version	3.1.22
+%define		ow_version		2.2.17-ow1
+%define		pcmcia_version		3.1.22
 %define		freeswan_version	1.5
 %define		reiserfs_version	3.5.27
+%define		i2c_version		2.5.4
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.18
-Release:	0.pre23.1
+Release:	0.pre23.2
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -19,6 +20,7 @@ Source3:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
 Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-127.tar.gz
 Source5:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source6:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/sym-1.7.2-ncr-3.4.2.tar.gz
+Source7:	http://www2.lm-sensors.nu/~lm78/archive/i2c-%{i2c_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -69,6 +71,7 @@ BuildRequires:	sparc32
 %endif
 %ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
+Provides:	%{name}(i2c) = %{i2c_version}
 %endif
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
@@ -291,6 +294,16 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch6 -p1
 %patch7 -p1
 #%patch8 -p1
+
+%ifarch %{ix86}
+cd ..
+rm -rf i2c-%{i2c_version}
+tar xfz %{SOURCE7}
+
+cd i2c-%{i2c_version}
+mkpatch/mkpatch.pl . ../linux | (cd ../linux; patch -p1 -s)
+cd ../linux
+%endif
 
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 # Tekram DC395/315 U/UW SCSI host driver
