@@ -293,6 +293,7 @@ Patch3006:	linux-2.4.21-sparc-gcc3.patch
 Patch3007:	linux-2.4.21-gcc33-math-emu.patch
 Patch3008:	linux-drm-4.2.0-force-cmpxchg.patch
 Patch3009:	linux-2.4.21-alpha-gcc33.patch
+Patch3010:	linux-2.4.21-ipsec-sparc64.patch
 
 # Security patches/fixes
 
@@ -788,6 +789,10 @@ cp -f drm/*.{c,h} drivers/char/drm/
 cd drivers/char/drm
 %patch3008 -p1
 cd ../../..
+
+%ifarch sparc64
+%patch3010 -p1
+%endif
 
 %patch5000 -p1
 
