@@ -4,7 +4,7 @@
 #
 %define		test_build		0
 #
-%define		pre_version		pre7
+%define		pre_version		pre1
 %define		lids_version		1.0.7-2.4.3
 %define		ipvs_version		0.2.8
 %define		freeswan_version	snap2001feb24b
@@ -64,9 +64,6 @@ Patch6:		linux-2.4.3-aacraid-030101.patch
 # work around bugs in windows95/2000 VJ header compression implementations.
 Patch7:		ipvs-ip_select_ident.patch
 
-## Patches from Linux Kernel List
-Patch8:		linux-2.4.2-irda3.patch
-Patch9: 	linux-2.4.2-irda4.patch
 ## from LKL 28.II - 01.III
 Patch10:	linux-scsi-debug-bug.patch
 
@@ -74,8 +71,7 @@ Patch10:	linux-scsi-debug-bug.patch
 # ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.3-1.diff
 Patch11:	quota-fix-2.4.4-1.diff.gz
 # Reiserfs/NFS patches
-Patch12:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/linux-2.4.3-reiserfs-20010327.patch.gz
-Patch13:	ftp://ftp.reiserfs.org/pub/misc-patches/linux-2.4.4-knfsd-6.g.patch.gz
+Patch13:	linux-nfsd_operations.patch
 
 # from LKL 2001.03.02
 Patch14:	linux-2.4.2-oom-killer.patch
@@ -84,7 +80,6 @@ Patch15:	linux-2.4.2-raw-ip.patch
 # from LKL 2001.03.03
 Patch16:	PCI_ISA_bridge.patch
 Patch17:	linux-2.4.2-nvram-hdd.patch
-Patch18:	ir242_sock_detach.diff
 
 # from LKL 2001.03.04
 Patch19:	linux-2.4-fix-kapm.patch
@@ -99,8 +94,6 @@ Patch23:	linux-2.4.2-pcnet-parms.patch
 
 # from LKL 2001.03.09
 Patch24:	ramdisk-VM.fix
-# from LKL
-Patch25:	i2o-2.4.2.patch
 
 Patch26:	linux-2.4.2-Davicom-card.patch
 
@@ -120,7 +113,7 @@ Patch31:	linux-ram-disk-free.patch
 
 Patch32:	rl2-include.patch
 
-Patch33:	linux-abi-2.4.3.0-PLD.patch
+Patch33:	linux-abi-2.4.3.0-PLD.diff
 Patch34:	http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 
 # XFS patches
@@ -130,7 +123,7 @@ Patch36:	ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4-
 
 # patch for fix LIDS install
 Patch90:	linux-lids-1.0.7-PLD.fix
-Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.4-%{pre_version}.gz
+Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.5-%{pre_version}.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -342,30 +335,25 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -n linux
-#%patch100 -p1
+%patch100 -p1
 %patch0 -p1
 %patch2 -p1
 %patch4 -p0 
 %patch5 -p0
 %patch6 -p1
-%patch8 -p1
-%patch9 -p1
 %patch10 -p0
 %patch11 -p1
-%patch12 -p1
 %patch13 -p1
 %patch14 -p0
 %patch15 -p1
 %patch16 -p0
 %patch17 -p0
-%patch18 -p1
 %patch19 -p1
 %patch20 -p1
 %patch21 -p1
 %patch22 -p1
 %patch23 -p1
 %patch24 -p1
-%patch25 -p1
 #%patch26 -p0
 %patch27 -p1
 %patch28 -p1
@@ -373,8 +361,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch30 -p1
 %patch31 -p1
 %patch34 -p1
-%patch35 -p1
-%patch36 -p1
+#%patch35 -p1
+#%patch36 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -573,25 +561,19 @@ patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
 # patches from Linux kernel list
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH9}
-## next
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
 gzip -dc %{PATCH11} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH12} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH13} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH16}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH17}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH18}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH19}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH20}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH21}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH22}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH23}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH24}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH25}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH26}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH27}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH28}
