@@ -1,6 +1,6 @@
 #
 # TODO:
-#	check:	pramfs, swsuspend
+#	check:	pramfs, swsuspend, execshield
 #	add:	fbsplash
 #
 # Conditional build:
@@ -18,6 +18,11 @@
 %bcond_with	mosix		# build with openMosix support
 
 %{?debug:%define with_verbose 1}
+
+# not fixed yet
+%if %{with swsuspend}
+%undefine	with_grsec
+%endif
 
 %ifarch sparc
 # sparc32 is missing important updates from 2.5 cycle - won't build
@@ -193,7 +198,6 @@ Patch84:	2.6.6-serial-fifo-lkml.patch
 Patch88:	2.6.6-qsort-updated-lkml.patch
 Patch90:	2.6.6-xfs-qsort-lkml.patch
 
-#Patch94:	grsecurity-2.0-2.6.6-unofficial.patch
 Patch94:	%{name}-grsec.patch
 
 Patch96:	2.6.6-lirc_i2c.diff
@@ -1073,10 +1077,9 @@ for i in "" smp ; do
 		rm -f $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
 		ln -sf %{_prefix}/src/linux-%{version} \
 			$RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
+		install -d $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/misc
 	fi
 done
-
-install -d $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}{,smp}/misc
 
 ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 
