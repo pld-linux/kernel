@@ -141,6 +141,8 @@ Patch130:	ir243_usb_descr.diff
 Patch131:	kernel-real_root_dev-s390.patch
 # Preemptible kernel  patch
 Patch132:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/2.4/preempt-kernel-rml-2.4.14-2.patch
+# fixed xquad_portio
+Patch133:	xquad_portio.fix
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -520,6 +522,8 @@ cp -f tulip-%{tulip_version}/src/ChangeLog drivers/net/tulip
 
 #preemptible kernel patch
 %patch132 -p1
+
+%patch133 -p0
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
