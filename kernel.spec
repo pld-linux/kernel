@@ -11,7 +11,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.2
-Release:	4
+Release:	5
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -423,7 +423,7 @@ sed -e 's/EXTRA_CFLAGS.*-g//g' net/ipsec/Makefile.orig > net/ipsec/Makefile
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
-sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
+sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
 %ifarch %{ix86} alpha sparc
     -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= egcs/g' \
 %endif
