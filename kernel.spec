@@ -48,8 +48,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.20
-%define		_cset		20040802_0406
+%define		_rel		0.21
+%define		_cset		20040802_2306
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -81,7 +81,7 @@ Source1:	%{name}-autoconf.h
 Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 # Source2-md5:	421476a59ed54ce3b374b0043060e354
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	f1f3c8c8e7a8825773d8001add1a607a
+# Source3-md5:	5133e99cce7118636bb776be806cee46
 # http://lkml.org/lkml/2004/6/2/228
 ## Source6:	http://prdownloads.sourceforge.net/swsusp/software-suspend-2.0.0.81-for-2.6.6.tar.bz2
 Source20:	%{name}-i386.config
