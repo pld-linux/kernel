@@ -12,13 +12,12 @@
 %define		pre_version		pre1
 %define		ipvs_version		0.9.8
 %define		freeswan_version	snap2001sep23b
-%define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.10
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		IPperson_version	20010724-2.4.7
 %define		grsec_version		1.9.2-2.4.17
 %define		aic_version		6.2.3-2.4.7
-%define		jfs_version		2.4-1.0.10
+%define		jfs_version		2.4-1.0.11
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -69,8 +68,6 @@ Patch0:		%{name}-pldfblogo.patch
 #Patch1:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
 Patch1:		patch-int-2.4.15.0.gz
 Patch2:		linux-2.4.10-freeswan-%{freeswan_version}.patch.gz
-# http://domsch.com/linux/aacraid/linux-2.4.9-aacraid-20010816.patch
-Patch3:		linux-2.4.15-aacraid-20011123.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.17.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
@@ -319,7 +316,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #%patch0 -p1
 %patch1 -p1
 %patch2 -p1
-#%patch3 -p1 # not needed ??
 %patch4 -p1
 %patch5 -p1
 #%patch7 -p1
