@@ -21,8 +21,8 @@ diff -urNp linux-5270/arch/alpha/kernel/sys_titan.c linux-10010/arch/alpha/kerne
  #else
 -	volatile unsigned long *dimB;
 +	volatile unsigned long *dimB=NULL;
- 	if (bcpu == 0) dimB = &cchip->dim0.csr;
- 	else if (bcpu == 1) dimB = &cchip->dim1.csr;
+ 	dimB = &cchip->dim0.csr;
+ 	if (bcpu == 1) dimB = &cchip->dim1.csr;
  	else if (bcpu == 2) dimB = &cchip->dim2.csr;
 diff -urNp linux-5270/arch/alpha/kernel/sys_wildfire.c linux-10010/arch/alpha/kernel/sys_wildfire.c
 --- linux-5270/arch/alpha/kernel/sys_wildfire.c	2001-03-02 20:12:07.000000000 +0100
@@ -107,18 +107,6 @@ diff -urNp linux-5270/drivers/char/Config.in linux-10010/drivers/char/Config.in
     bool 'pSeries Hypervisor Virtual Console support' CONFIG_HVC_CONSOLE
  fi
  
-diff -urNp linux-5270/drivers/media/video/msp3400.c linux-10010/drivers/media/video/msp3400.c
---- linux-5270/drivers/media/video/msp3400.c	
-+++ linux-10010/drivers/media/video/msp3400.c	
-@@ -1234,7 +1234,7 @@ static int msp_attach(struct i2c_adapter
- 	DECLARE_MUTEX_LOCKED(sem);
- 	struct msp3400c *msp;
-         struct i2c_client *c;
--	int              rev1,rev2,i;
-+	int              rev1,rev2=0,i;
- 
-         client_template.adapter = adap;
-         client_template.addr = addr;
 diff -urNp linux-5270/drivers/media/video/saa7110.c linux-10010/drivers/media/video/saa7110.c
 --- linux-5270/drivers/media/video/saa7110.c	2001-11-09 23:01:22.000000000 +0100
 +++ linux-10010/drivers/media/video/saa7110.c	
@@ -527,22 +515,6 @@ diff -urNp linux-5270/include/asm-i386/rwsem.h linux-10010/include/asm-i386/rwse
  
  struct rwsem_waiter;
  
-diff -urNp linux-5270/include/asm-i386/smpboot.h linux-10010/include/asm-i386/smpboot.h
---- linux-5270/include/asm-i386/smpboot.h	
-+++ linux-10010/include/asm-i386/smpboot.h	
-@@ -99,4 +99,12 @@ extern volatile int cpu_2_physical_apici
- #define cpu_to_boot_apicid(cpu) cpu_2_physical_apicid[cpu]
- #endif /* CONFIG_MULTIQUAD */
- 
-+static inline int cpu_to_apicid (int cpu)
-+{
-+	if (clustered_apic_mode)
-+		return cpu_to_physical_apicid(cpu);
-+	else
-+		return cpu_to_logical_apicid(cpu);
-+}
-+
- #endif
 diff -urNp linux-5270/include/linux/binfmts.h linux-10010/include/linux/binfmts.h
 --- linux-5270/include/linux/binfmts.h	
 +++ linux-10010/include/linux/binfmts.h	
