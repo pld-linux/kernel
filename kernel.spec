@@ -157,13 +157,10 @@ Patch94:	acpi-20031203-2.6.0.diff.gz
 Patch96:	2.6.0-mount-rainier-lkml.patch
 Patch97:	2.6.0-mount-rainier-fix-lkml.patch
 
-<<<<<<< kernel.spec
-Patch99:	2.6.0-coda-newapi.patch
-
-=======
 Patch98:	x86_64-2.6.0-1-pld.patch
 
->>>>>>> 1.441.2.259
+Patch99:	2.6.0-coda-newapi.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
