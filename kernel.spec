@@ -9,6 +9,7 @@
 %define         vlan_version            1.0.1
 %define		aic7xxx_version		6.2.3-2.2.19
 %define		symncr_version		1.7.3c-ncr-3.4.3b
+%define		sym2_version		2.1.16b-for-linux-2.2.20
 %define		jfs_version		1.0.5
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -54,6 +55,7 @@ Source27:	%{name}-alpha-smp.config
 Source28:	%{name}-alpha-BOOT.config
 Source50:	http://www.netroedge.com/~lm78/archive/i2c-%{i2c_version}.tar.gz
 Source51:	http://www.strusel007.de/linux/bttv/bttv-%{bttv_version}.tar.gz
+#Source52:	http://www.tux.org/pub/tux/roudier/drivers/linux/experimental/sym-%{sym2_version}.tar.gz
 
 # in this place i will include Patches
 
@@ -118,6 +120,8 @@ Patch122:       bttv-symbols.patch.bz2
 Patch1000:	%{name}-vlan_bridge.patch
 Patch1500:	linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	kernel-sparc-zs.h.patch
+Patch1502:	kernel-sparc_netsyms.patch
+Patch1503:	kernel-sym53c8xx.patch
 
 # HTB from http://luxik.cdi.cz/~devik/qos/htb/
 Patch200:	htb2_2.2.17.diff
@@ -531,6 +535,10 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 
 %patch1500 -p1
 %patch1501 -p1
+%ifarch sparc64
+%patch1502 -p1
+%endif
+%patch1503 -p1
 
 %build
 BuildKernel() {
@@ -836,6 +844,13 @@ bzip2 -dc %{PATCH121} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ve
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH43}
 
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1500}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1501}
+%ifarch sparc64
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1502}
+%endif
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1503}
+
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
 %{__make} mrproper
@@ -968,10 +983,13 @@ fi
 %attr(600,root,root) /boot/vmlinuz-%{version}-%{release}
 %attr(600,root,root) /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
-/lib/modules/%{version}-%{release}/atm
-/lib/modules/%{version}-%{release}/block
 %ifnarch sparc sparc64
+/lib/modules/%{version}-%{release}/atm
+%endif
+/lib/modules/%{version}-%{release}/block
 /lib/modules/%{version}-%{release}/cdrom
+%ifarch sparc sparc64
+/lib/modules/%{version}-%{release}/fc4
 %endif
 /lib/modules/%{version}-%{release}/fs
 /lib/modules/%{version}-%{release}/ipv4
@@ -996,10 +1014,13 @@ fi
 %attr(600,root,root) /boot/vmlinuz-%{version}-%{release}smp
 %attr(600,root,root) /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
+%ifnarch sparc sparc64
+%endif
 /lib/modules/%{version}-%{release}smp/atm
 /lib/modules/%{version}-%{release}smp/block
-%ifnarch sparc sparc64
 /lib/modules/%{version}-%{release}smp/cdrom
+%ifarch sparc sparc64
+/lib/modules/%{version}-%{release}/fc4
 %endif
 /lib/modules/%{version}-%{release}smp/fs
 /lib/modules/%{version}-%{release}smp/ipv4
@@ -1049,9 +1070,9 @@ fi
 %dir %{_prefix}/src/linux-%{version}
 %{_prefix}/src/linux-%{version}/include
 %{_includedir}/asm
-%ifarch sparc sparc64
-%{_includedir}/asm-sparc*
-%endif
+#%ifarch sparc sparc64
+#%{_includedir}/asm-sparc*
+#%endif
 %{_includedir}/linux
 
 %files doc
