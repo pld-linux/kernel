@@ -19,8 +19,6 @@ Version:	2.2.20
 Release:	11
 License:	GPL
 Group:		Base/Kernel
-Group(de):	Grundsätzlich/Kern
-Group(pl):	Podstawowe/J±dro
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
@@ -181,8 +179,6 @@ Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
 Summary(pl):	Kernel %{version} skompilowany na maszyny SMP
 Group:		Base/Kernel
-Group(de):	Grundsätzlich/Kern
-Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
 %ifarch %{ix86}
 Provides:	%{name}(reiserfs) = %{version}
@@ -232,8 +228,6 @@ Summary(de):	Kernel version %{version} für Installationsdisketten
 Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation
 Summary(pl):	Kernel %{version} u¿ywany na instalacyjnych dyskach startowych
 Group:		Base/Kernel
-Group(de):	Grundsätzlich/Kern
-Group(pl):	Podstawowe/J±dro
 PreReq:		modutils
 PreReq:		fileutils
 Autoreqprov:	no
@@ -268,8 +262,6 @@ ze wzglêdu na wymagania rozmiarowe.
 Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra
 Group:		Base/Kernel
-Group(de):	Grundsätzlich/Kern
-Group(pl):	Podstawowe/J±dro
 %ifarch %{ix86}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	i2c-devel = %{i2c_version}
@@ -292,8 +284,6 @@ oraz niektórych programów.
 Summary:	Kernel documentation
 Summary(pl):	Dokumentacja j±dra
 Group:		Base/Kernel
-Group(de):	Grundsätzlich/Kern
-Group(pl):	Podstawowe/J±dro
 Provides:	%{name}-doc = %{version}
 Autoreqprov:	no
 
@@ -309,8 +299,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 Summary:	Kernel source tree
 Summary(pl):	Kod ¼ród³owy j±dra Linuxa
 Group:		Base/Kernel
-Group(de):	Grundsätzlich/Kern
-Group(pl):	Podstawowe/J±dro
 Autoreqprov:	no
 Requires:	%{name}-headers = %{version}
 %ifarch %{ix86}
