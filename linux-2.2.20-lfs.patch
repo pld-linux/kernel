@@ -1282,60 +1282,54 @@ diff -Naur linux/fs/ext2/file.c linux-p/fs/ext2/file.c
 -	/* If the fd's pos is already greater than or equal to the file
 -	 * descriptor's offset maximum, then we need to return EFBIG for
 -	 * any non-zero count (and we already tested for zero above). */
--	if (((unsigned long) pos) >= 0x7FFFFFFFUL)
+-	if (((unsigned) pos) >= 0x7FFFFFFFUL)
 -		return -EFBIG;
 -	
 -	/* If we are about to overflow the maximum file size, we also
 -	 * need to return the error, but only if no bytes can be written
 -	 * successfully. */
--	if (((unsigned long) pos + count) > 0x7FFFFFFFUL) {
+-	if (((unsigned) pos + count) > 0x7FFFFFFFUL) {
 -		count = 0x7FFFFFFFL - pos;
--		if (((ssize_t) count) < 0)
-+ 	/* L-F-S spec 2.2.1.27: */
-+ 	if (!(filp->f_flags & O_LARGEFILE)) {
-+ 		if (pos >= 0x7fffffffULL) /* pos@2G forbidden */
+-		if (((signed) count) < 0)
++  	/* L-F-S spec 2.2.1.27: */
++  	if (!(filp->f_flags & O_LARGEFILE)) {
++  		if (pos >= 0x7fffffffULL) /* pos@2G forbidden */
  			return -EFBIG;
-+ 
-+ 		if (pos + count > 0x7fffffffULL)
-+ 			/* Write only until end of allowed region */
-+ 			count = 0x7fffffffULL - pos;
++  
++  		if (pos + count > 0x7fffffffULL)
++  			/* Write only until end of allowed region */
++  			count = 0x7fffffffULL - pos;
  	}
 -#else
-+ 
++
  	{
 -		off_t max = ext2_max_sizes[EXT2_BLOCK_SIZE_BITS(sb)];
-+ 		loff_t max = ext2_max_sizes[EXT2_BLOCK_SIZE_BITS(sb)];
++  		loff_t max = ext2_max_sizes[EXT2_BLOCK_SIZE_BITS(sb)];
  
  		if (pos >= max)
  			return -EFBIG;
-@@ -239,20 +218,18 @@
- 			mark_buffer_dirty(sb->u.ext2_sb.s_sbh, 1);
- 		}
- 	}
--#endif
- 
- 	/* From SUS: We must generate a SIGXFSZ for file size overflow
+@@ -245,14 +224,13 @@
  	 * only if no bytes were actually written to the file. --sct */
  
  	limit = current->rlim[RLIMIT_FSIZE].rlim_cur;
 -	if (limit < RLIM_INFINITY) {
--		if (((unsigned long) pos + count) >= limit) {
+-		if (((unsigned) pos+count) >= limit) {
 -			count = limit - pos;
--			if (((ssize_t) count) <= 0) {
+-			if (((signed) count) <= 0) {
 -				send_sig(SIGXFSZ, current, 0);
 -				return -EFBIG;
 -			}
-+ 	if (limit != RLIM_INFINITY) {
-+ 		if (pos >= limit) {
-+ 			send_sig(SIGXFSZ, current, 0);
-+ 			return -EFBIG;
++  	if (limit != RLIM_INFINITY) {
++  		if (pos >= limit) {
++  			send_sig(SIGXFSZ, current, 0);
++  			return -EFBIG;
  		}
-+ 		if (pos+count > limit)
-+ 			count = limit - pos;
++  		if (pos+count > limit)
++  			count = limit - pos;
  	}
  
  	/*
-@@ -382,15 +359,3 @@
+@@ -382,15 +360,3 @@
  	return 0;
  }
  
