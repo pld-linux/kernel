@@ -2825,32 +2825,6 @@ diff -urN linux.org/fs/xfs/pagebuf/page_buf.c linux/fs/xfs/pagebuf/page_buf.c
  
  	if (flags & PBF_DELWRI) {
  		pb->pb_flags &= ~(PBF_READ | PBF_WRITE | PBF_ASYNC);
-@@ -1395,7 +1510,6 @@
- 			break;
- 
- 		offset = 0;
--
- 		sector += nbytes >> BBSHIFT;
- 		size -= nbytes;
- 		total_nr_pages--;
-@@ -1403,15 +1517,11 @@
- 
- submit_io:
- 	if (likely(bio->bi_size)) {
--		if (pb->pb_flags & PBF_READ) {
--			submit_bio(READ, bio);
--		} else {
--			submit_bio(WRITE, bio);
--		}
--
-+		submit_bio((pb->pb_flags & PBF_READ) ? READ : WRITE, bio);
- 		if (size)
- 			goto next_chunk;
- 	} else {
-+		bio_put(bio);
- 		pagebuf_ioerror(pb, EIO);
- 	}
- 
 @@ -1444,7 +1554,7 @@
  pagebuf_iorequest(			/* start real I/O		*/
  	page_buf_t		*pb)	/* buffer to convey to device	*/
@@ -12689,37 +12663,6 @@ diff -urN linux.org/fs/xfs/xfs_vfsops.c linux/fs/xfs/xfs_vfsops.c
  	if (!(flags & SYNC_REMOUNT) && xfs_log_need_covered(mp)) {
  		xfs_trans_t *tp;
  		xfs_inode_t *ip;
-@@ -1598,8 +1591,9 @@
- #define MNTOPT_NORECOVERY   "norecovery"   /* don't run XFS recovery */
- #define MNTOPT_NOLOGFLUSH   "nologflush"   /* don't hard flush on log writes */
- #define MNTOPT_OSYNCISOSYNC "osyncisosync" /* o_sync is REALLY o_sync */
--#define MNTOPT_64BITINODE   "inode64"  /* inodes can be allocated anywhere */
--#define MNTOPT_IKEEP	"ikeep"		/* free empty inode clusters */
-+#define MNTOPT_64BITINODE   "inode64"	/* inodes can be allocated anywhere */
-+#define MNTOPT_IKEEP	"ikeep"		/* do not free empty inode clusters */
-+#define MNTOPT_NOIKEEP	"noikeep"	/* free empty inode clusters */
- 
- 
- int
-@@ -1614,7 +1608,9 @@
- 	int			dsunit, dswidth, vol_dsunit, vol_dswidth;
- 	int			iosize;
- 
-+#if 0	/* XXX: off by default, until some remaining issues ironed out */
- 	args->flags |= XFSMNT_IDELETE; /* default to on */
-+#endif
- 
- 	if (!options)
- 		return 0;
-@@ -1722,6 +1718,8 @@
- 			args->flags |= XFSMNT_NOLOGFLUSH;
- 		} else if (!strcmp(this_char, MNTOPT_IKEEP)) {
- 			args->flags &= ~XFSMNT_IDELETE;
-+		} else if (!strcmp(this_char, MNTOPT_NOIKEEP)) {
-+			args->flags |= XFSMNT_IDELETE;
- 		} else if (!strcmp(this_char, "osyncisdsync")) {
- 			/* no-op, this is now the default */
- printk("XFS: osyncisdsync is now the default, option is deprecated.\n");
 @@ -1784,10 +1782,14 @@
  		char	*str;
  	} xfs_info[] = {
