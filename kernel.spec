@@ -10,14 +10,13 @@
 #
 %define		pre_version		pre1
 %define		lids_version		1.0.14-2.4.9
-%define		ipvs_version		0.9.4
+%define		ipvs_version		0.9.7
 %define		freeswan_version	snap2001sep23b
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.10
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		IPperson_version	20010724-2.4.7
 %define		grsec_version		1.9-2.4.16
-%define		tulip_version		1.1.8
 %define		aic_version		6.2.3-2.4.7
 %define		jfs_version		2.4-1.0.10
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -46,7 +45,6 @@ Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_versio
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
 Source12:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source13:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}-patch.tar.gz
-Source14:	http://prdownloads.sourceforge.net/tulip/tulip-%{tulip_version}.tar.gz
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -361,8 +359,8 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%{?_with_lids:%setup -q -a3 -a5 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -n linux}
-%{!?_with_lids:%setup -q -a3 -a5 -a7 -a9 -a10 -a11 -a12 -a13 -a14 -n linux}
+%{?_with_lids:%setup -q -a3 -a5 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -n linux}
+%{!?_with_lids:%setup -q -a3 -a5 -a7 -a9 -a10 -a11 -a12 -a13 -n linux}
 #%patch1000 -p1
 #%patch0 -p1
 %patch1 -p1
@@ -470,11 +468,6 @@ patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010724-l
 echo Adding JFS
 patch -p1 -s <jfs-2.4.common-1.0.10-patch
 patch -p1 -s <jfs-2.4.7-1.0.10-patch
-
-# Tulip driver installed.
-echo Replaced Tulip driver
-#cp -f tulip-%{tulip_version}/src/*.{c,h} drivers/net/tulip
-#cp -f tulip-%{tulip_version}/src/ChangeLog drivers/net/tulip
 
 echo Fixed compile process for 53c7,8xx driver
 # fix 53c7,8xx build
