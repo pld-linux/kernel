@@ -123,7 +123,7 @@ Patch119:	linux-2.4.6-sb_id.patch
 Patch120:	linux-2.4.10-aironet.patch
 Patch121:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
-Patch122:	linux-2.4.14-lvm-1.0.1rc4cvs.patch
+Patch122:	linux-2.4.16-lvm-1.0.1rc4.patch
 
 # Preemptible kernel  patch
 Patch132:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/2.4/preempt-kernel-rml-2.4.14-2.patch
@@ -403,7 +403,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch119 -p1
 %patch120 -p1
 %patch121 -p1
-##%patch122 -p1
+%patch122 -p0
 
 %patch904 -p0
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
