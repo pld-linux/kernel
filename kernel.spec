@@ -25,7 +25,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.23
-Release:	0.1
+Release:	0.2
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-2.4.22.tar.bz2
@@ -244,6 +244,8 @@ Patch1419:	linux-2.4.21-agp-num_of_masks.patch
 Patch1420:	linux-raid5-spare-counting.patch
 Patch1421:	linux-2.4.21-bttv-typo.patch
 Patch1422:	linux-2.4.21-ipt_TRACE-typo.patch
+
+Patch1500:	linux-2.4.23-modular-ide.patch
 
 Patch2000:	linux-PPC-SMP.patch
 Patch2001:	linux-2.4-ppc-procesor.patch
@@ -622,8 +624,7 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch32 -p1
 # XXX: TODO - update patch
 #%patch31 -p1
-# XXX: TODO - update patch
-#%patch40 -p1
+%patch40 -p1
 %patch50 -p1
 %patch55 -p1
 %patch60 -p1
@@ -713,6 +714,8 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch1421 -p1
 # XXX: no TRACE in netfilter included here (at this moment)
 #%patch1422 -p1
+
+%patch1500 -p1
 
 %patch2000 -p0
 %patch2001 -p1
