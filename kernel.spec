@@ -454,13 +454,11 @@ mv README.kernel README
 %patch43 -p1
 patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
 
-%ifnarch ppc
 cd serial-5.05
 %patch41 -p1
 %patch42 -p1
 ./install-in-kernel ../
 cd ..
-%endif
 
 # i2c
 %ifarch %{ix86} ppc
@@ -781,13 +779,11 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT%{_pre
 rm -rf $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/vlan.%{vlan_version}/
 
 #serial
-%ifnarch ppc
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/serial-5.05
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH41}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH42}
 ./install-in-kernel $RPM_BUILD_ROOT/usr/src/linux-%{version}
 cd ..
-%endif
 rm -rf $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/serial-5.05/
 
 # i2c
