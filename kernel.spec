@@ -601,7 +601,6 @@ echo Installing Host AP support
 #cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 
 %ifarch sparc
-%patch911 -p1
 %endif
 
 %ifarch sparc64
@@ -676,6 +675,7 @@ echo Not included NOW.
 %endif
 %ifarch sparc
 echo Not included NOW.
+%patch911 -p1
 %endif
 %ifarch sparc64
 echo Not included NOW.
@@ -825,7 +825,7 @@ BuildKernel() {
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
 %ifarch sparc
-        sparce32 %{__make} modules_install \
+        sparc32 %{__make} modules_install \
      	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 	KERNELRELEASE=$KernelVer
 	echo KERNEL RELEASE $KernelVer
@@ -882,22 +882,24 @@ ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
 ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 
 %ifarch sparc sparc64
-ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
+ln -s /usr/src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
 ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
-sh %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}
-cp -a %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
 %else
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 %endif
 
 cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
 
+%ifarch sparc sparc64
+sh %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}
+cp -a %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
+%endif
+
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 %{__make} mrproper
 find  -name "*~" -print | xargs rm -f
 find  -name "*.orig" -print | xargs rm -f
-
 
 %ifarch %{ix86}
 cat $RPM_SOURCE_DIR/kernel-ia32.config > .config
@@ -938,7 +940,12 @@ cat %{SOURCE1671} >> .config
 cat %{SOURCE1672} >> .config
 cat %{SOURCE1673} >> .config
 
+%ifarch sparc
+sparc32 %{__make} oldconfig
+%else
 %{__make} oldconfig
+%endif
+
 mv include/linux/autoconf.h include/linux/autoconf-up.h
 cp .config config-up
 
@@ -982,7 +989,11 @@ cat %{SOURCE1671} >> .config
 cat %{SOURCE1672} >> .config
 cat %{SOURCE1673} >> .config
 
+%ifarch sparc
+sparc32 %{__make} oldconfig
+%else
 %{__make} oldconfig
+%endif
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
 cp .config config-smp
 
