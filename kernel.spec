@@ -1,3 +1,4 @@
+%define		ow_ver	2.2.14-ow2
 Summary:	The Linux kernel (the core of the Linux operating system).
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems).
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -29,7 +30,7 @@ Source19:	kernel-i686-smp.config
 #Source27:	kernel-alpha.config
 #Source28:	kernel-alpha-smp.config
 #Source29:	kernel-alpha-BOOT.config
-Source30:	ftp://ftp.openwall.com/linux/linux-2.2.14-ow1.tar.gz
+Source30:	ftp://ftp.openwall.com/linux/linux-%{ow_ver}.tar.gz
 Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.13.3.gz
 Patch1:		ftp://ftp.botik.ru/rented/namesys/ftp/pub/linux+reiserfs/linux-2.2.14-reiserfs-3.5.16-patch.gz
 Patch2:		linux-2.2.14-atm-0.59-fore200e-0.1e.patch.gz
@@ -220,7 +221,7 @@ oraz niektórych programów.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-patch -p1 -s <linux-2.2.14-ow1/linux-2.2.14-ow1.diff
+patch -p1 -s <linux-%{ow_ver}/linux-%{ow_ver}.diff
 
 %build
 BuildKernel() {
@@ -329,7 +330,7 @@ gzip -dc %{PATCH1} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH3} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-2.2.14-ow1/linux-2.2.14-ow1.diff
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-%{ow_ver}/linux-%{ow_ver}.diff
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
