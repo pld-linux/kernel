@@ -711,7 +711,7 @@ echo Fixed export sysctl symbols
 echo Installing EVMS patch 
 %patch136 -p1
 %patch137 -p1
-%{?_with_o1_sched:%patch916 -p1}
+%patch916 -p1
 
 %ifarch %{ix86}
 %patch139 -p1
