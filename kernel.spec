@@ -10,7 +10,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.2
-Release:	1
+Release:	2
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -56,6 +56,8 @@ Patch8:		linux-fix-win-vj.patch
 # Loopback fix
 Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/axboe/patches/2.4.2-pre4/loop-6.gz
 Patch10:	ipvs-ip_select_ident.patch
+Patch11:	linux-2.4.2-qreboot.patch
+Patch12:	linux-2.4.2-irda3.patch
 
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
@@ -327,6 +329,9 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
     -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
 %endif
     Makefile.orig >Makefile
+#patches from Linux kernel list
+%patch11 -p1
+%patch12 -p1
 
 %build
 BuildKernel() {
@@ -518,6 +523,10 @@ cp -a $RPM_SOURCE_DIR/kernel-BuildASM.sh $RPM_BUILD_ROOT%{_includedir}/asm/Build
 %else
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 %endif
+
+# patches from Linux kernel list
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
