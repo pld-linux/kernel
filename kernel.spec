@@ -30,8 +30,8 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		0.1
-%define		_RC		rc1
+%define		_rel		1
+%define		_rc		rc1
 %define		_cset		20040101_0206
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
@@ -48,7 +48,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.6.1
-Release:	%{_RC}%{_rel}
+Release:	%{_rc}.%{_rel}
 Epoch:		1
 License:	GPL
 Group:		Base/Kernel
@@ -468,7 +468,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}-%{_RC}
+%setup -q -n linux-%{version}-%{_rc}
 %patch0 -p1
 %if "%{_cset}" != "0"
 %patch1 -p1
