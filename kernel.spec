@@ -324,7 +324,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}-test5
+%setup -q -n linux-%{version}-%{test}
 %if "%{_cset}" != "0"
 %patch1 -p1
 %endif
