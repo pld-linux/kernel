@@ -223,7 +223,7 @@ Patch910:	linux-2.4.19-grsecurity-1.9.7-fix.patch
 Patch911:	linux-2.4.19-SPARC.patch
 Patch912:	linux-2.4.19-grsec-1.9.7-PAX-sysctl.patch
 Patch913:	squashfs1.0c-fix.patch
-Patch914:	linux-2.4.19-MODULE_XXX.patch
+Patch914:	linux-2.4.20-MODULE_XXX.patch
 Patch915:	linux-2.4.19-usb-digitalcams.patch
 Patch916:	linux-2.4.19-ksyms-sys_sched_yield-rm.patch
 Patch917:	linux-2.4.19-EXPORT_SYMBOL-netsyms.c-rm.patch
@@ -630,7 +630,7 @@ patch -p1 -s < squashfs1.0c/squashfs-patch
 
 # ACL support
 echo Added ACL support
-#%patch45 -p1
+%patch45 -p1
 
 #%patch46 -p0
 
