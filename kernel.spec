@@ -31,7 +31,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	2.30%{?_with_preemptible:_pr}%{?_with_o1_sched:_o1}
+Release:	2.31%{?_with_preemptible:_pr}%{?_with_o1_sched:_o1}
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
@@ -87,11 +87,11 @@ Patch0:		%{name}-pldfblogo.patch
 # from ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
 Patch1:		patch-int-%{version}.1.bz2
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
-Patch2:		freeswan-%{freeswan_version}-%{version}.patch.gz
+Patch2:		linux-%{version}-freeswan-%{freeswan_version}.patch.gz
 # from  http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.17.diff
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
-Patch5:		xfs-2.4.18-19042002.patch.gz
+Patch5:		linux-2.4.18-xfs-20020517.patch.gz
 # Homepage of ABI:	http://linux-abi.sourceforge.net/
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2 
 Patch7:		linux-abi-2.4.17.0.patch.bz2
@@ -504,7 +504,7 @@ echo "Scheduler din't work on ARCH diffetern than Intel x86"
 %endif
 %endif
 %patch9 -p1
-%patch906 -p1
+%patch906 -p0
 %if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %ifarch%{ix86}
 %patch912 -p1
@@ -635,8 +635,8 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 %endif
 
 # EVMS
-%patch136 -p1
-%patch137 -p1
+#%patch136 -p1
+#%patch137 -p1
 
 %ifarch %{ix86}
 %patch139 -p1
