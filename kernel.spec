@@ -9,7 +9,7 @@
 # _without_up		- don't build UP kernel
 # _without_wrr		- don't build WRR support
 #
-%define		krelease		5.912
+%define		krelease		5.913
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -215,7 +215,7 @@ Patch147:	http://www.hojdpunkten.ac.se/054/samba/00-smbfs-2.4.18-codepage.patch.
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
 Patch900:	ide-EXPORT_SYMBOL.fix
-#Patch901:	netfilter-ip_nat_pptp.patch
+Patch901:	ide_o1_sched_fix.patch
 Patch902:	linux-2.4.19pre7-VIA.patch
 Patch903:	linux-PPC-SMP.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
@@ -617,6 +617,7 @@ echo "Scheduler didn't work on ARCH different than Intel x86"
 %patch102 -p0
 %patch103 -p0
 %patch105 -p1
+%{?_with_o1_sched:%patch901 -p1}
 %patch106 -p1
 #%patch107 -p1
 #%patch108 -p1
