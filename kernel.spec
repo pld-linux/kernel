@@ -1,12 +1,12 @@
 %define		ow_version	2.2.16-ow1
-%define		pcmcia_version	3.1.15
+%define		pcmcia_version	3.1.17
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.16
-Release:	4
+Release:	5
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
