@@ -215,6 +215,8 @@ Patch103:	01_alt_routes-2.5.50-8.diff
 Patch104:	01_arp_prefsrc-2.5.50-5.diff
 Patch105:	05_nf_reroute-2.6.7-10.diff
 
+Patch108:	2.6.7-bridge_sysfs-lkml.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 %ifarch sparc sparc64
@@ -686,6 +688,8 @@ patch -p1 -s < %{SOURCE5}
 %patch103 -p1
 #patch104 -p1 # <- not applayed need checkout
 %patch105 -p1
+
+%patch108 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
