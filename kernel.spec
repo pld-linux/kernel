@@ -9,10 +9,10 @@
 # - fix config problem
 #
 # BCOND:
-# _without_smp		- don't build SMP kernel
-# _without_up		- don't build UP kernel
-# _without_source	- don't build source
-# _without_lsm		- don't build LSM/SELinux kernel
+%bcond_without smp	# don't build SMP kernel
+%bcond_without up	# don't build UP kernel
+%bcond_without source	# don't build kernel-source package
+%bcond_without lsm	# don't build LSM/SELinux kernel
 
 %define		_rel		0.2
 %define		test_ver	5
@@ -472,17 +472,17 @@ install -d $KERNEL_INSTALL_DIR
 
 # UP KERNEL
 BuildConfig
-%{!?_without_up:BuildKernel}
+%{?with_up:BuildKernel}
 
 # SMP KERNEL
 BuildConfig smp
-%{!?_without_smp:BuildKernel smp}
+%{?with_smp:BuildKernel smp}
 
 # BOOT kernel
 %ifnarch i586 i686 athlon
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk"
 rm -rf $KERNEL_INSTALL_DIR
-%{!?_without_boot:BuildKernel BOOT}
+%{?with_boot:BuildKernel BOOT}
 %endif
 
 %install
@@ -493,10 +493,9 @@ install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 KERNEL_BUILD_DIR=`pwd`
 
-KERNEL_BUILD_INSTALL=no
-%{!?_without_up:KERNEL_BUILD_INSTALL=yes}
-%{!?_without_smp:KERNEL_BUILD_INSTALL=yes}
-[ "$KERNEL_BUILD_INSTALL" = "yes" ] && cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
+%if %{with up} || %{with smp}
+cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
+%endif
 
 for i in "" smp ; do
 	if [ -e  $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i ] ; then
@@ -713,7 +712,7 @@ if [ -L %{_prefix}/src/linux ]; then
 	fi
 fi
 
-%if %{?_without_up:0}%{!?_without_up:1}
+%if %{with up}
 %files
 %defattr(644,root,root,755)
 %ifarch alpha sparc sparc64 ppc
@@ -740,9 +739,9 @@ fi
 %files drm
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
-%endif			# %%{_without_up}
+%endif			# %%{with up}
 
-%if %{?_without_smp:0}%{!?_without_smp:1}
+%if %{with smp}
 %files smp
 %defattr(644,root,root,755)
 %ifarch alpha sparc sparc64 ppc
@@ -768,9 +767,9 @@ fi
 %files -n kernel-smp-drm
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
-%endif			# %%{_without_smp}
+%endif			# %%{with smp}
 
-%if %{?_without_boot:0}%{!?_without_boot:1}
+%if %{with boot}
 %ifnarch i586 i686 athlon 		# narch
 %files BOOT
 %defattr(644,root,root,755)
@@ -784,7 +783,7 @@ fi
 %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/build
 %ghost %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.*
 %endif				# narch
-%endif				# %%{_without_boot}
+%endif				# %%{with boot}
 
 %files headers
 %defattr(644,root,root,755)
@@ -798,7 +797,7 @@ fi
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Documentation
 
-%if %{?_without_source:0}%{!?_without_source:1}
+%if %{with source}
 %files source
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/arch
