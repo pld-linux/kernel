@@ -102,6 +102,8 @@ Patch20:	linux-2.4.19-pre8-VFS-lock.patch
 # Support for CDRW packet writing
 Patch26:	%{name}-cdrw-packet.patch
 Patch27:	kernel-cd-mrw-2.patch
+# PC Speaker driver
+Patch28:	pcsp1.4-ss4-2.4.19.diff
 
 # Assorted bugfixes
 
@@ -524,6 +526,8 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
 
 %{?_with_cdrw:%patch26 -p1}
 %{?_with_cdrw:%patch27 -p1}
+
+%patch28 -p1
 
 %build
 BuildKernel() {
