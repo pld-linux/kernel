@@ -37,14 +37,14 @@ Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
 Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.1.gz
-Patch1:		ftp://ftp.reiserfs.org/pub/2.4/linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
+Patch1:		ftp://ftp.reiserfs.org/pub/2.4/linux-%{version}-ac2-reiserfs-%{reiserfs_version}-patch.gz
 Patch2:		%{name}-%{version}-dc395-patch-fix.patch
 Patch3:		%{name}-pldfblogo.patch
-Patch4:		linux-2.4.0-freeswan-%{freeswan_version}.patch
+#Patch4:		linux-2.4.0-freeswan-%{freeswan_version}.patch
 #Patch5:		linux-ipv6-addrconf.patch
 # patch for console daemon.
 Patch6:		wait_any_vt.diff
-Patch7:		i8255-chip.patch
+#Patch7:		i8255-chip.patch
 Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac2.bz2
 
 ExclusiveOS:	Linux
@@ -258,13 +258,16 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch0 -p1
 %patch1 -p1
 %patch2 -p0
-%patch3 -p1
-%patch4 -p1
+#%patch3 -p1
+#%patch4 -p1
 #%patch5 -p1
 %patch6 -p1
-%patch7 -p1
+#%patch7 -p1
 
 #patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
+
+# Fore 200e ATM NIC
+patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -272,25 +275,14 @@ install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 %build
 BuildKernel() {
+	%{?verbose:set -x}
 	# is this a special kernel we want to build?
 	if [ -n "$1" ] ; then
-		if [ "%{_target_cpu}" = "i586" -o \
-			"%{_target_cpu}" = "i686" -o \
-			"%{_target_cpu}" = "sparc64" ]; then
-			Config="%{_target_cpu}"-$1
-		else
-			Config=$RPM_ARCH-$1
-		fi
+		Config="%{_target_cpu}"-$1
 		KernelVer=%{version}-%{release}$1
 		echo BUILDING A KERNEL FOR $1...
 	else
-		if [ "%{_target_cpu}" = "i586" -o \
-			"%{_target_cpu}" = "i686" -o \
-			"%{_target_cpu}" = "sparc64" ] ; then
-			Config="%{_target_cpu}"
-		else
-			Config=$RPM_ARCH
-		fi
+		Config="%{_target_cpu}"
 		KernelVer=%{version}-%{release}
 		echo BUILDING THE NORMAL KERNEL...
 	fi
@@ -306,8 +298,13 @@ BuildKernel() {
 	%{__make} mrproper
 	ln -sf arch/$RPM_ARCH/defconfig .config
 
+%ifarch sparc
+	sparc32 %{__make} oldconfig
+	sparc32 %{__make} dep 
+%else
 	%{__make} oldconfig
-	%{__make} dep 
+	%{__make} dep
+%endif
 	make include/linux/version.h 
 
 %ifarch %{ix86} alpha sparc
@@ -320,9 +317,17 @@ BuildKernel() {
 %ifarch %{ix86}
 	%{__make} bzImage EXTRAVERSION="-%{release}"
 %else
+%ifarch sparc
+	sparc32 %{__make} boot EXTRAVERSION="-%{release}"
+%else
 	%{__make} boot EXTRAVERSION="-%{release}"
 %endif
+%endif
+%ifarch sparc
+	sparc32 %{__make} modules EXTRAVERSION="-%{release}"
+%else
 	%{__make} modules EXTRAVERSION="-%{release}"
+%endif
 
 	mkdir -p $KERNEL_BUILD_DIR-installed/boot
 	install System.map $KERNEL_BUILD_DIR-installed/boot/System.map-$KernelVer
@@ -337,55 +342,12 @@ BuildKernel() {
      %{__make} INSTALL_MOD_PATH=$KERNEL_BUILD_DIR-installed modules_install KERNELRELEASE=$KernelVer
 }
 
-BuildPCMCIA() {
-if [ -n "$1" ] ; then
-	PCMCIA_APM=--apm
-	KernelVer=%{version}-%{release}$1
-	echo BUILDING A KERNEL PCMCIA MODULES FOR $1...
-else
-	PCMCIA_APM=--noapm
-	KernelVer=%{version}-%{release}
-	echo BUILDING THE NORMAL KERNEL PCMCIA MODULES...
-fi
-cd pcmcia-cs-%{pcmcia_version}
-%{__make} clean
-./Configure \
-	--noprompt \
-	--trust \
-	--cardbus \
-	--current \
-	--pnp \
-	--srctree \
-	$PCMCIA_APM \
-	--kernel=$KERNEL_BUILD_DIR \
-	--moddir=/lib/modules/$KernelVer \
-	--target=$KERNEL_BUILD_DIR-installed
-
-mv config.mk config.mk.bak
-mv Makefile Makefile.bak
-mv clients/Makefile clients/Makefile.bak
-sed "s/^MODDIR=.*/MODDIR=\/lib\/modules\/$KernelVer/" config.mk.bak > config.mk
-sed "s/^DIRS =.*//" Makefile.bak > Makefile
-sed "s/.*= 8390\..$//" clients/Makefile.bak > clients/Makefile
-
-%{__make} all \
-	CC=egcs \
-	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
-	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNEL_BUILD_DIR/include -D__KERNEL__ -DEXPORT_SYMTAB"
-
-%{__make} PREFIX=$KERNEL_BUILD_DIR-installed install
-cd ..
-}
-
 KERNEL_BUILD_DIR=`pwd`
 rm -rf $KERNEL_BUILD_DIR-installed
 install -d $KERNEL_BUILD_DIR-installed
 
 # NORMAL KERNEL
 BuildKernel
-%ifarch %{ix86}
-BuildPCMCIA
-%endif
 
 # FB-ENABLED KERNEL
 #BuildKernel fb
@@ -393,9 +355,6 @@ BuildPCMCIA
 # SMP-ENABLED KERNEL
 %ifnarch i386
 BuildKernel smp
-%ifarch %{ix86}
-BuildPCMCIA smp
-%endif
 %endif
 
 # SMP and FB-ENABLED KERNEL
@@ -404,9 +363,6 @@ BuildPCMCIA smp
 # BOOT kernel
 %ifnarch i586 i686
 BuildKernel BOOT
-%ifarch %{ix86}
-BuildPCMCIA BOOT
-%endif
 %endif
 
 %install
@@ -418,47 +374,37 @@ cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
 
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
 
-%ifarch sparc
-ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
-ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
-mkdir $RPM_BUILD_ROOT%{_includedir}/asm
-cp -a $RPM_SOURCE_DIR/kernel-BuildASM.sh $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
-$RPM_BUILD_ROOT%{_includedir}/asm/BuildASM $RPM_BUILD_ROOT%{_includedir}
-%else
-ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
-%endif
-
-tar Ixf %{SOURCE0} -C $RPM_BUILD_ROOT/usr/src/
+bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/
 mv -f $RPM_BUILD_ROOT/usr/src/linux $RPM_BUILD_ROOT/usr/src/linux-%{version}
 ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
 
-# NFS patches must go first
-bzip2 -dc %{PATCH20} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-tar zxf %{SOURCE40} dhiggen-over-0.23.1
-patch -s -p2 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < dhiggen-over-0.23.1
-rm -f dhiggen-over-0.23.1
-
+gzip -dc %{PATCH100} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH1} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH8} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-
-%ifarch %{ix86}
-bzip2 -dc %{PATCH5} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-%endif
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH3}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH2}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH3}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
-#patch -s -p1 -R -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-%{ow_version}/linux-%{ow_version}.diff
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < dc395/dc395-integ22.diff
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
+
+#patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
+
+# Fore 200e ATM NIC
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
+
+# Tekram DC395/315 U/UW SCSI host driver
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi/
+
+%ifarch sparc sparc64
+ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
+ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
+sh $RPM_SOURCE_DIR/kernel-BuildASM.sh $RPM_BUILD_ROOT%{_includedir}
+cp -a $RPM_SOURCE_DIR/kernel-BuildASM.sh $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
+%else
+ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
+%endif
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
@@ -466,18 +412,12 @@ cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 find  -name "*~" -print | xargs rm -f
 find  -name "*.orig" -print | xargs rm -f
 
-%ifarch %{ix86}
-install $RPM_SOURCE_DIR/kernel-i586.config .config
-%else
-install $RPM_SOURCE_DIR/kernel-$RPM_ARCH.config .config
-%endif
+install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
+
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
-%ifarch %{ix86}
-install $RPM_SOURCE_DIR/kernel-i586-smp.config .config
-%else
-install $RPM_SOURCE_DIR/kernel-$RPM_ARCH-smp.config .config
-%endif
+
+install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config .config
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
 
@@ -489,8 +429,8 @@ install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoco
 %{__make} include/linux/version.h
 %{__make} "`pwd`/include/linux/modversions.h"
 
-#this generates modversions info which we want to include and we may as
-#well include the depends stuff as well, after we fix the paths
+# this generates modversions info which we want to include and we may as
+# well include the depends stuff as well, after we fix the paths
 
 %{__make} depend 
 find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
@@ -505,6 +445,7 @@ rm -f scripts/mkdep
 
 %clean
 rm -rf $RPM_BUILD_ROOT
+rm -rf $RPM_BUILD_DIR/linux-installed
 
 # do this for upgrades...in case the old modules get removed we have
 # loopback in the kernel so that mkinitrd will work.
@@ -527,6 +468,10 @@ mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
 
+geninitrd /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
+mv -f /boot/initrd /boot/initrd.old
+ln -sf initrd-%{version}-%{release}.gz /boot/initrd
+
 if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
 	/sbin/lilo 1>&2 || :
 fi
@@ -539,6 +484,10 @@ mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}smp /boot/System.map
+
+geninitrd /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
+mv -f /boot/initrd /boot/initrd.old
+ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 
 if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
 	/sbin/lilo 1>&2 || :
@@ -568,6 +517,7 @@ if [ -L /lib/modules/%{version} ]; then
 		fi
 	fi
 fi
+rm -f /boot/initrd-%{version}-%{release}.gz
 
 %postun smp
 if [ -L /lib/modules/%{version} ]; then 
@@ -577,6 +527,7 @@ if [ -L /lib/modules/%{version} ]; then
 		fi
 	fi
 fi
+rm -f /boot/initrd-%{version}-%{release}smp.gz
 
 %postun BOOT
 if [ -L /lib/modules/%{version} ]; then 
@@ -608,21 +559,11 @@ fi
 /boot/vmlinuz-%{version}-%{release}
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
-/lib/modules/%{version}-%{release}/atm
-/lib/modules/%{version}-%{release}/block
-/lib/modules/%{version}-%{release}/cdrom
-/lib/modules/%{version}-%{release}/fs
-/lib/modules/%{version}-%{release}/ipv4
-/lib/modules/%{version}-%{release}/ipv6
-/lib/modules/%{version}-%{release}/misc
-/lib/modules/%{version}-%{release}/net
-/lib/modules/%{version}-%{release}/scsi
-%ifarch %{ix86} alpha
-/lib/modules/%{version}-%{release}/video
-%endif
 %ifarch %{ix86}
 /lib/modules/%{version}-%{release}/pcmcia
 %endif
+/lib/modules/%{version}-%{release}/kernel
+/lib/modules/%{version}-%{release}/build
 
 %ifnarch i386
 %files smp
@@ -633,21 +574,11 @@ fi
 /boot/vmlinuz-%{version}-%{release}smp
 /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
-/lib/modules/%{version}-%{release}smp/atm
-/lib/modules/%{version}-%{release}smp/block
-/lib/modules/%{version}-%{release}smp/cdrom
-/lib/modules/%{version}-%{release}smp/fs
-/lib/modules/%{version}-%{release}smp/ipv4
-/lib/modules/%{version}-%{release}smp/ipv6
-/lib/modules/%{version}-%{release}smp/misc
-/lib/modules/%{version}-%{release}smp/net
-/lib/modules/%{version}-%{release}smp/scsi
-%ifarch %{ix86} alpha
-/lib/modules/%{version}-%{release}smp/video
-%endif
 %ifarch %{ix86}
 /lib/modules/%{version}-%{release}smp/pcmcia
 %endif
+/lib/modules/%{version}-%{release}smp/kernel
+/lib/modules/%{version}-%{release}smp/build
 %endif
 
 %ifnarch i586 i686
@@ -659,21 +590,11 @@ fi
 /boot/vmlinuz-%{version}-%{release}BOOT
 /boot/System.map-%{version}-%{release}BOOT
 %dir /lib/modules/%{version}-%{release}BOOT
-#/lib/modules/%{version}-%{release}BOOT/atm
-/lib/modules/%{version}-%{release}BOOT/block
-%ifnarch alpha
-/lib/modules/%{version}-%{release}BOOT/cdrom
-%endif
-/lib/modules/%{version}-%{release}BOOT/fs
-#/lib/modules/%{version}-%{release}BOOT/ipv4
-#/lib/modules/%{version}-%{release}BOOT/ipv6
-/lib/modules/%{version}-%{release}BOOT/misc
-/lib/modules/%{version}-%{release}BOOT/net
-/lib/modules/%{version}-%{release}BOOT/scsi
 %ifarch i386
-/lib/modules/%{version}-%{release}BOOT/video
 /lib/modules/%{version}-%{release}BOOT/pcmcia
 %endif
+/lib/modules/%{version}-%{release}BOOT/kernel
+/lib/modules/%{version}-%{release}BOOT/build
 %endif
 
 %files headers
@@ -695,10 +616,8 @@ fi
 %{_prefix}/src/linux-%{version}/kernel
 %{_prefix}/src/linux-%{version}/lib
 %{_prefix}/src/linux-%{version}/mm
-%{_prefix}/src/linux-%{version}/modules
 %{_prefix}/src/linux-%{version}/net
 %{_prefix}/src/linux-%{version}/scripts
-%{_prefix}/src/linux-%{version}/security
 %{_prefix}/src/linux-%{version}/.config
 %{_prefix}/src/linux-%{version}/.depend
 %{_prefix}/src/linux-%{version}/.hdepend
