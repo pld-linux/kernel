@@ -2,10 +2,12 @@
 # If you define the following as 1, only kernel, -headers and -source
 # packages will be built
 #
+# _without_lids - don't build LIDS enabled kernels
+#
 %define		test_build		0
 #
 %define		pre_version		pre3
-%define		lids_version		1.0.8-2.4.4
+%define		lids_version		1.0.9-2.4.5
 %define		ipvs_version		0.9.0
 %define		freeswan_version	snap2001jun14R
 %define 	aacraid_version		1.0.6
@@ -323,7 +325,8 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -n linux
+%{?!_without_lids:%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -n linux}
+%{?_without_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -n linux}
 %patch1000 -p1
 #%patch0 -p1
 %patch1 -p1
@@ -377,11 +380,13 @@ ANS=""
 for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
 echo -e $ANS | ./runme)
 
+%if %{!?_without_lids:1}%{?_without_lids:0}
 # LIDS
 cd lids-%{lids_version}
-%patch904 -p1
+#%patch904 -p1
 cd ..
 patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
+%endif
 
 # IPVS
 for i in ipvs-%{ipvs_version}/*.diff ; do
@@ -509,11 +514,13 @@ BuildKernel
 # SMP KERNEL
 BuildKernel smp
 
+%if %{!?_without_lids:1}%{?_without_lids:0}
 # UP LIDS KERNEL
 BuildKernel lids
 
 # SMP LIDS KERNEL
 BuildKernel lids smp
+%endif
 
 # BOOT kernel
 %ifnarch i586 i686
@@ -609,10 +616,12 @@ ANS=""
 for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
 echo -e $ANS | ./runme))
 
+%if %{!?_without_lids:1}%{?_without_lids:0}
 # LIDS
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/lids-%{lids_version} < %{PATCH904}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/lids-%{lids_version}/lids-%{lids_version}.patch
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config $RPM_BUILD_ROOT/usr/src/linux-%{version}/.config.lids
+%endif
 
 # IPVS
 for i in $RPM_BUILD_ROOT/usr/src/linux-%{version}/ipvs-%{ipvs_version}/*.diff ; do
@@ -708,8 +717,10 @@ done
 %{__make} clean
 rm -f scripts/mkdep
 
+%if %{!?_without_lids:1}%{?_without_lids:0}
 # LIDS config
 cat %{SOURCE1000} >> $RPM_BUILD_ROOT/usr/src/linux-%{version}/.config.lids
+%endif
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -906,6 +917,7 @@ fi
 /lib/modules/%{version}-%{release}/modules.generic_string
 
 %if !%{test_build}
+%if %{!?_without_lids:1}%{?_without_lids:0}
 %files lids
 %defattr(644,root,root,755)
 %ifarch alpha sparc
@@ -922,6 +934,7 @@ fi
 /lib/modules/%{version}-%{release}-lids/modules.dep
 /lib/modules/%{version}-%{release}-lids/modules.*map
 /lib/modules/%{version}-%{release}-lids/modules.generic_string
+%endif
 
 %files smp
 %defattr(644,root,root,755)
@@ -940,6 +953,7 @@ fi
 /lib/modules/%{version}-%{release}smp/modules.*map
 /lib/modules/%{version}-%{release}smp/modules.generic_string
 
+%if %{!?_without_lids:1}%{?_without_lids:0}
 %files lids-smp
 %defattr(644,root,root,755)
 %ifarch alpha sparc
@@ -956,6 +970,7 @@ fi
 /lib/modules/%{version}-%{release}smp-lids/modules.dep
 /lib/modules/%{version}-%{release}smp-lids/modules.*map
 /lib/modules/%{version}-%{release}smp-lids/modules.generic_string
+%endif
 
 %ifnarch i586 i686
 %files BOOT
@@ -1000,7 +1015,7 @@ fi
 %{_prefix}/src/linux-%{version}/net
 %{_prefix}/src/linux-%{version}/scripts
 %{_prefix}/src/linux-%{version}/.config
-%{_prefix}/src/linux-%{version}/.config.lids
+%{!?_without_lids:%{_prefix}/src/linux-%{version}/.config.lids}
 %{_prefix}/src/linux-%{version}/.depend
 %{_prefix}/src/linux-%{version}/.hdepend
 %{_prefix}/src/linux-%{version}/COPYING
