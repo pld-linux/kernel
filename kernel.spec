@@ -839,11 +839,12 @@ BuildKernel() {
 	
 %ifarch %{ix86}
 	%{__make} bzImage
-%else
+%endif
 %ifarch sparc
 	sparc32 %{__make} boot
 %else
-	%{__make} 
+%ifnarch %{ix86}
+	%{__make}
 %endif
 %endif
 %ifarch sparc
