@@ -154,7 +154,7 @@ Patch87:	2.6.4-rc1-03-CONNMARK.patch
 
 Patch90:	2.6.4-psion-5mx.patch
 
-Patch92:	2.6.4-video-fb_find_mode-export.patch
+Patch92:	2.6.5-rc1-20040317_0509-fix.patch
 
 Patch94:	2.6.5-rc1-patch-o-matic-ng-extra-%{_netfilter_snap}.patch
 
