@@ -15,7 +15,7 @@
 %define		wlan_version		0.1.12
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		IPperson_version	20010724-2.4.7
-%define		grsec_version		1.9.2-2.4.17
+%define		grsec_version		1.9.4-2.4.18
 %define		aic_version		6.2.3-2.4.7
 %define		jfs_version		2.4-1.0.15
 %define		lvm_version		1.0.3
@@ -352,10 +352,10 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #%ifarch {ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 #%patch911 -p1
 #%endif
-#%if%{?_without_grsec:0}%{!?_without_grsec:1}
-#%patch9 -p1
+%if%{?_without_grsec:0}%{!?_without_grsec:1}
+%patch9 -p1
 #%patch906 -p1
-#%endif
+%endif
 #%ifarch{ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 #%patch912 -p1
 #%endif
@@ -421,7 +421,7 @@ patch -p1 < netfilter-patches/patch-o-matic/pld/log.patch
 
 # IPVS
 echo Adding IPVS
-%patch13 -p1
+#%patch13 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
