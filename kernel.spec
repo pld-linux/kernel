@@ -110,7 +110,7 @@ Patch4:		linux-kbuild-extmod.patch
 Patch5:		%{name}-MAX_INIT_ARGS.patch
 
 Patch10:	2.6.0-powernow-k7.patch
-Patch11:	2.6.0-enable-radeon-igp-rendering.patch
+
 Patch12:	2.6.0-omnikeys.patch
 Patch13:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch14:	linux-2.6-omnibook-20040916.patch
@@ -509,7 +509,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch5 -p1
 
 %patch10 -p1
-%patch11 -p1
+
 %patch12 -p1
 %patch13 -p1
 %patch14 -p1
