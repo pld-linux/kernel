@@ -1,4 +1,5 @@
-%define		ow_ver	2.2.15-ow1
+%define		ow_version	2.2.15-ow1
+%define		pcmcia_version	3.1.14
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -31,18 +32,19 @@ Source23:	kernel-sparc-BOOT.config
 #Source27:	kernel-alpha.config
 #Source28:	kernel-alpha-smp.config
 #Source29:	kernel-alpha-BOOT.config
-Source30:	ftp://ftp.openwall.com/linux/linux-%{ow_ver}.tar.gz
+Source30:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
 Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-126.tar.gz
 Source32:	kernel-BuildASM.sh
+Source33:	ftp://sourceforge.org/pcmcia/pcmcia-cs-%{pcmcia_version}.tar.gz
 Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.14.1.gz
-Patch1:		ftp://ftp.botik.ru/rented/namesys/ftp/pub/linux+reiserfs/linux-2.2.14-reiserfs-3.5.20-pre1-patch.gz
+Patch1:		ftp://ftp.botik.ru/rented/namesys/ftp/pub/linux+reiserfs/linux-2.2.14-reiserfs-3.5.20-patch.gz
 Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
 Patch3:		linux-tasks.patch
-Patch4:		raid-2.2.14-B1.gz
+Patch4:		http://www.redhat.com/~mingo/raid-patches/raid-2.2.15-A0
 Patch5:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide.2.2.15.20000504.patch.bz2
 Patch6:		%{name}-pldfblogo.patch
 Patch7:		linux-2.2.14-freeswan-1.3.patch
-Patch8:		wanrouter-v2214.patch
+Patch8:		wanrouter-v2215.patch.gz
 Patch9:		http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.15-pre9-patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -223,7 +225,7 @@ de meilleures performances sur des matériels particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a30 -a31 -n linux
+%setup -q -a30 -a31 -a33 -n linux
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
@@ -235,9 +237,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
-%patch9  -p1
+%patch9 -p1
 
-patch -p1 -s <linux-%{ow_ver}/linux-%{ow_ver}.diff
+patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
@@ -294,10 +296,51 @@ BuildKernel() {
      make INSTALL_MOD_PATH=$RPM_BUILD_ROOT modules_install KERNELRELEASE=$KernelVer
 }
 
+BuildPCMCIA() {
+KERNELDIR=`pwd`
+if [ -n "$1" ] ; then
+	PCMCIA_APM=--apm
+	KernelVer=%{version}-%{release}$1
+	echo BUILDING A KERNEL PCMCIA MODULES FOR $1...
+else
+	PCMCIA_APM=--noapm
+	KernelVer=%{version}-%{release}
+	echo BUILDING THE NORMAL KERNEL PCMCIA MODULES...
+fi
+cd pcmcia-cs-%{pcmcia_version}
+make clean
+./Configure \
+	--noprompt \
+	--trust \
+	--cardbus \
+	--current \
+	--pnp \
+	--srctree \
+	$PCMCIA_APM \
+	--kernel=$KERNELDIR \
+	--moddir=/lib/modules/$KernelVer \
+	--target=$RPM_BUILD_ROOT
+
+mv config.mk config.mk.bak
+mv Makefile Makefile.bak
+mv clients/Makefile clients/Makefile.bak
+sed "s/^MODDIR=.*/MODDIR=\/lib\/modules\/$KernelVer/" config.mk.bak > config.mk
+sed "s/^DIRS =.*//" Makefile.bak > Makefile
+sed "s/.*= 8390\..$//" clients/Makefile.bak > clients/Makefile
+
+make all \
+	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
+	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNELDIR/include -D__KERNEL__ -DEXPORT_SYMTAB"
+
+make install
+cd ..
+}
+
 rm -rf $RPM_BUILD_ROOT
 
 # NORMAL KERNEL
 BuildKernel
+BuildPCMCIA
 
 # FB-ENABLED KERNEL
 #BuildKernel fb
@@ -305,6 +348,7 @@ BuildKernel
 # SMP-ENABLED KERNEL
 %ifnarch i386
 BuildKernel smp
+BuildPCMCIA smp
 %endif
 
 # SMP and FB-ENABLED KERNEL
@@ -313,6 +357,7 @@ BuildKernel smp
 # BOOT kernel
 %ifnarch i586 i686
 BuildKernel BOOT
+BuildPCMCIA BOOT
 %endif
 
 %install
@@ -338,16 +383,18 @@ ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
 gzip -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH1} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH8} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 %ifarch %{ix86}
-gzip -dc %{PATCH5} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+bzip2 -dc %{PATCH5} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 %endif
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH3}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH9}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-%{ow_ver}/linux-%{ow_ver}.diff
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-%{ow_version}/linux-%{ow_version}.diff
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < dc395/dc395-integ22.diff
+install -m644 dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi/
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
@@ -501,7 +548,7 @@ fi
 /lib/modules/%{version}-%{release}/scsi
 %ifarch %{ix86}
 /lib/modules/%{version}-%{release}/video
-#/lib/modules/%{version}-%{release}/pcmcia
+/lib/modules/%{version}-%{release}/pcmcia
 %endif
 
 %ifnarch i386
@@ -525,7 +572,7 @@ fi
 /lib/modules/%{version}-%{release}smp/scsi
 %ifarch %{ix86}
 /lib/modules/%{version}-%{release}smp/video
-#/lib/modules/%{version}-%{release}smp/pcmcia
+/lib/modules/%{version}-%{release}smp/pcmcia
 %endif
 %endif
 
@@ -543,15 +590,15 @@ fi
 /lib/modules/%{version}-%{release}BOOT/block
 /lib/modules/%{version}-%{release}BOOT/cdrom
 /lib/modules/%{version}-%{release}BOOT/fs
-/lib/modules/%{version}-%{release}BOOT/ipv4
+#/lib/modules/%{version}-%{release}BOOT/ipv4
 #/lib/modules/%{version}-%{release}BOOT/ipv6
 /lib/modules/%{version}-%{release}BOOT/misc
 /lib/modules/%{version}-%{release}BOOT/net
 /lib/modules/%{version}-%{release}BOOT/scsi
-#%ifarch i386
+%ifarch i386
 #/lib/modules/%{version}-%{release}BOOT/video
-#/lib/modules/%{version}-%{release}BOOT/pcmcia
-#%endif
+/lib/modules/%{version}-%{release}BOOT/pcmcia
+%endif
 %endif
 
 %files headers
