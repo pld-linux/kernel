@@ -548,7 +548,7 @@ BuildConfig (){
 	else
 		KernelVer=%{version}-%{release}$1
 	fi
-	echo "Building config file for KERNEL $*..."
+	echo "Building config file for KERNEL $1..."
 :> arch/%{base_arch}/defconfig
 	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/%{base_arch}/defconfig
 %ifarch i386
