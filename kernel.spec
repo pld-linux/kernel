@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.4.21
-Release:	0.5
+Release:	0.6
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -250,6 +250,7 @@ Patch1414:	linux-2.4.21-oopsmeharder.patch
 Patch1415:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch1416:	linux-2.4.21-no-FPU.patch
 Patch1417:	linux-2.4.21-ac4-ide.patch
+Patch1418:	linux-2.4.21-hpt372-chicken-egg-hack.patch
 
 Patch2000:	linux-PPC-SMP.patch
 Patch2001:	linux-2.4-ppc-procesor.patch
@@ -647,6 +648,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1415 -p0
 %patch1416 -p1
 %patch1417 -p1
+%patch1418 -p1
 
 %patch2000 -p0
 %patch2001 -p1
