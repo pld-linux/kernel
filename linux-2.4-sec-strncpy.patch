@@ -1,0 +1,31 @@
+Backported from 2.6.x, fixes CAN-2003-0465.
+(no NUL-padding in !x86 version of strncpy; impact unknown)
+
+--- linux-2.4.20/lib/string.c.orig	Sat Aug  3 02:39:46 2002
++++ linux-2.4.20/lib/string.c	Wed Apr 21 16:26:48 2004
+@@ -77,18 +77,19 @@
+  * @src: Where to copy the string from
+  * @count: The maximum number of bytes to copy
+  *
+- * Note that unlike userspace strncpy, this does not %NUL-pad the buffer.
+- * However, the result is not %NUL-terminated if the source exceeds
++ * The result is not %NUL-terminated if the source exceeds
+  * @count bytes.
+  */
+ char * strncpy(char * dest,const char *src,size_t count)
+ {
+ 	char *tmp = dest;
+ 
+-	while (count-- && (*dest++ = *src++) != '\0')
+-		/* nothing */;
+-
+-	return tmp;
++	while (count) {
++		if ((*tmp = *src) != 0) src++;
++		tmp++;
++		count--;
++	}
++	return dest;
+ }
+ #endif
+ 

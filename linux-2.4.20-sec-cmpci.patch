@@ -1,0 +1,90 @@
+From RH, fixes CAN-2003-0699, CAN-2003-0700
+(missing get_user to access userspace)
+
+--- linux-gingin/drivers/sound/cmpci.c	2003-04-28 21:14:56.000000000 +0200
++++ linux-rc1ac3/drivers/sound/cmpci.c	2003-04-28 21:20:44.000000000 +0200
+@@ -588,7 +588,8 @@ static void trans_ac3(struct cm_state *s
+ 	unsigned short *src = (unsigned short *)source;
+ 
+ 	do {
+-		data = (unsigned long) *src++;
++		__get_user(data, src);
++		src++;
+ 		data <<= 12;			// ok for 16-bit data
+ 		if (s->spdif_counter == 2 || s->spdif_counter == 3)
+ 			data |= 0x40000000;	// indicate AC-3 raw data
+@@ -1599,9 +1600,9 @@ static ssize_t cm_write(struct file *fil
+ 			return -ENXIO;
+ 		if (!s->dma_adc.ready && (ret = prog_dmabuf(s, 1)))
+ 			return ret;
+-		if (!access_ok(VERIFY_READ, buffer, count))
+-			return -EFAULT;
+ 	}
++	if (!access_ok(VERIFY_READ, buffer, count))
++		return -EFAULT;
+ 	ret = 0;
+ 
+ 	while (count > 0) {
+--- linux.vanilla/drivers/sound/cmpci.c	2003-06-14 00:11:37.000000000 +0100
++++ linux.22-pre5-ac1/drivers/sound/cmpci.c	2003-06-29 16:10:11.000000000 +0100
+@@ -580,15 +580,17 @@
+ 	spin_unlock_irqrestore(&s->lock, flags);
+ }
+ 
+-static void trans_ac3(struct cm_state *s, void *dest, const char *source, int size)
++static int trans_ac3(struct cm_state *s, void *dest, const char *source, int size)
+ {
+ 	int   i = size / 2;
+ 	unsigned long data;
+ 	unsigned long *dst = (unsigned long *) dest;
+ 	unsigned short *src = (unsigned short *)source;
++	int err;
+ 
+ 	do {
+-		__get_user(data, src);
++		if ((err = __get_user(data, src)))
++			return err;
+ 		src++;
+ 		data <<= 12;			// ok for 16-bit data
+ 		if (s->spdif_counter == 2 || s->spdif_counter == 3)
+@@ -606,6 +608,8 @@
+ 		if (s->spdif_counter == 384)
+ 			s->spdif_counter = 0;
+ 	} while (--i);
++
++	return 0;
+ }
+ 
+ static void set_adc_rate_unlocked(struct cm_state *s, unsigned rate)
+@@ -1655,13 +1659,16 @@
+ 			continue;
+ 		}
+ 		if (s->status & DO_AC3_SW) {
++			int err;
++
+ 			// clip exceeded data, caught by 033 and 037
+ 			if (swptr + 2 * cnt > s->dma_dac.dmasize)
+ 				cnt = (s->dma_dac.dmasize - swptr) / 2;
+-			trans_ac3(s, s->dma_dac.rawbuf + swptr, buffer, cnt);
++			if ((err = trans_ac3(s, s->dma_dac.rawbuf + swptr, buffer, cnt)))
++				return err;
+ 			swptr = (swptr + 2 * cnt) % s->dma_dac.dmasize;
+ 		} else if (s->status & DO_DUAL_DAC) {
+-			int	i;
++			int	i, err;
+ 			unsigned long *src, *dst0, *dst1;
+ 
+ 			src = (unsigned long *) buffer;
+@@ -1669,8 +1676,10 @@
+ 			dst1 = (unsigned long *) (s->dma_adc.rawbuf + swptr);
+ 			// copy left/right sample at one time
+ 			for (i = 0; i <= cnt / 4; i++) {
+-				*dst0++ = *src++;
+-				*dst1++ = *src++;
++				if ((err = __get_user(*dst0++, src++)))
++					return err;
++				if ((err = __get_user(*dst1++, src++)))
++					return err;
+ 			}
+ 			swptr = (swptr + cnt) % s->dma_dac.dmasize;
+ 		} else {

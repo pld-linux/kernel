@@ -1,0 +1,52 @@
+ Age        Author       Annotate  Comments
+ 15 months  hch@sgi.com  1.22      properly handle too long pathnames in d_path
+
+--- 1.21/fs/dcache.c	Thu Apr 22 05:34:38 2004
++++ 1.22/fs/dcache.c	Thu Apr 22 05:34:38 2004
+@@ -977,21 +977,24 @@
+ 		namelen = dentry->d_name.len;
+ 		buflen -= namelen + 1;
+ 		if (buflen < 0)
+-			break;
++			return ERR_PTR(-ENAMETOOLONG);
+ 		end -= namelen;
+ 		memcpy(end, dentry->d_name.name, namelen);
+ 		*--end = '/';
+ 		retval = end;
+ 		dentry = parent;
+ 	}
++
+ 	return retval;
++
+ global_root:
+ 	namelen = dentry->d_name.len;
+ 	buflen -= namelen;
+ 	if (buflen >= 0) {
+ 		retval -= namelen-1;	/* hit the slash */
+ 		memcpy(retval, dentry->d_name.name, namelen);
+-	}
++	} else
++		retval = ERR_PTR(-ENAMETOOLONG);
+ 	return retval;
+ }
+ 
+@@ -1040,6 +1043,10 @@
+ 		cwd = __d_path(pwd, pwdmnt, root, rootmnt, page, PAGE_SIZE);
+ 		spin_unlock(&dcache_lock);
+ 
++		error = PTR_ERR(cwd);
++		if (IS_ERR(cwd))
++			goto out;
++
+ 		error = -ERANGE;
+ 		len = PAGE_SIZE + page - cwd;
+ 		if (len <= size) {
+@@ -1049,6 +1056,8 @@
+ 		}
+ 	} else
+ 		spin_unlock(&dcache_lock);
++
++out:
+ 	dput(pwd);
+ 	mntput(pwdmnt);
+ 	dput(root);

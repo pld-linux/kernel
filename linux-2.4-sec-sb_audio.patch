@@ -1,0 +1,14 @@
+Taken from Mandrake (already in linux-2.4 bk), fixes CAN-2004-0178
+(improper sample size handling allowing users to cause crash)
+
+--- linux-2.4.22/drivers/sound/sb_audio.c.can-2004-0178	2004-03-23 12:32:03.000000000 -0700
++++ linux-2.4.22/drivers/sound/sb_audio.c	2004-03-23 13:01:40.000000000 -0700
+@@ -879,7 +879,7 @@
+ 			c -= locallen; p += locallen;
+ 		}
+ 		/* used = ( samples * 16 bits size ) */
+-		*used = len << 1;
++		*used =  (max_in  > (max_out << 1)) ? (max_out << 1) : max_in;
+ 		/* returned = ( samples * 8 bits size ) */
+ 		*returned = len;
+ 	}

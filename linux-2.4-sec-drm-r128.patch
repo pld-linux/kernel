@@ -1,0 +1,165 @@
+Based on patch from RH (rediffed), fixes CAN-2004-0003
+(missing limit checking in R128 DRI drivers).
+
+
+ChangeSet 1.1403, 2004/01/15 14:41:41-02:00, alan@lxorguk.ukuu.org.uk
+
+	[PATCH] Minimal fix for the R128 drivers
+	
+	I think this is about the minimal fix needed. I'm not entirely happy
+	with the limits picked, especially for spans, but maybe someone with
+	an R128 can verify it is ok, or change the code to loop each chunk
+	of pixels/span data.
+	
+	I've not yet looked at the new SiS allocator problems in detail. The
+	6326 really wants a different allocator anyway.
+	
+	Alan
+	
+
+# This patch includes the following deltas:
+#	           ChangeSet	1.1402  -> 1.1403 
+#	drivers/char/drm/r128_state.c	1.4     -> 1.5    
+#
+
+ r128_state.c |   21 +++++++++++++++++++++
+ 1 files changed, 21 insertions(+)
+
+
+--- linux-2.4.20/drivers/char/drm/r128_state.c.orig	Wed Apr 21 12:12:45 2004
++++ linux-2.4.20/drivers/char/drm/r128_state.c	Thu Apr 22 16:22:20 2004
+@@ -23,8 +23,22 @@
+  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+  * DEALINGS IN THE SOFTWARE.
+  *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * RED HAT AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
++ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
++ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
++ * DEALINGS IN THE SOFTWARE.
++ *
++ * THIS SOFTWARE IS NOT INTENDED FOR USE IN SAFETY CRITICAL SYSTEMS
++ *
+  * Authors:
+  *    Gareth Hughes <gareth@valinux.com>
++ *
++ * Memory allocation size checks added 14/01/2003, Alan Cox <alan@redhat.com>
++ * Memory allocation size checks enhanced 16/02/2004, Thomas Biege <thomas@suse.de>
++ *
+  */
+ 
+ #include "r128.h"
+@@ -901,6 +915,9 @@
+ 	DRM_DEBUG( "\n" );
+ 
+ 	count = depth->n;
++ 	
++	if( count > 4096 || count <= 0)
++		return -EMSGSIZE;
+ 	if ( DRM_COPY_FROM_USER( &x, depth->x, sizeof(x) ) ) {
+ 		return DRM_ERR(EFAULT);
+ 	}
+@@ -994,6 +1011,9 @@
+ 	DRM_DEBUG( "\n" );
+ 
+ 	count = depth->n;
++	
++	if( count > 4096 || count <= 0)
++		return -EMSGSIZE;
+ 
+ 	x = DRM_MALLOC( count * sizeof(*x) );
+ 	if ( x == NULL ) {
+@@ -1109,6 +1129,9 @@
+ 	DRM_DEBUG( "\n" );
+ 
+ 	count = depth->n;
++	
++	if ( count > 4096 || count <= 0)
++		return -EMSGSIZE;
+ 	if ( DRM_COPY_FROM_USER( &x, depth->x, sizeof(x) ) ) {
+ 		return DRM_ERR(EFAULT);
+ 	}
+@@ -1151,9 +1174,13 @@
+ 	DRM_DEBUG( "%s\n", __FUNCTION__ );
+ 
+ 	count = depth->n;
++	if ( count > 4096 || count <= 0)
++		return -EMSGSIZE;
+ 	if ( count > dev_priv->depth_pitch ) {
+ 		count = dev_priv->depth_pitch;
+ 	}
++	if( count * sizeof(int) <= 0 || count * sizeof(*x) <= 0 || count * sizeof(*y) <= 0)
++		return -EMSGSIZE;
+ 
+ 	x = DRM_MALLOC( count * sizeof(*x) );
+ 	if ( x == NULL ) {
+--- linux-2.4.20/drivers/char/drm-4.0/r128_state.c.orig	Mon Feb 25 20:37:57 2002
++++ linux-2.4.20/drivers/char/drm-4.0/r128_state.c	Thu Apr 22 16:40:48 2004
+@@ -23,9 +23,20 @@
+  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+  * DEALINGS IN THE SOFTWARE.
+  *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * RED HAT AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
++ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
++ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
++ * DEALINGS IN THE SOFTWARE.
++ *
++ * THIS SOFTWARE IS NOT INTENDED FOR USE IN SAFETY CRITICAL SYSTEMS
++ *
+  * Authors:
+  *    Gareth Hughes <gareth@valinux.com>
+  *
++ * Memory allocation size checks added 14/01/2003, Alan Cox <alan@redhat.com>
+  */
+ 
+ #define __NO_VERSION__
+@@ -938,6 +949,9 @@
+ 	}
+ 
+ 	count = depth->n;
++	
++	if( count > 4096 || count <= 0)
++		return -EMSGSIZE;
+ 	if ( copy_from_user( &x, depth->x, sizeof(x) ) ) {
+ 		return -EFAULT;
+ 	}
+@@ -1047,6 +1061,10 @@
+ 	}
+ 
+ 	count = depth->n;
++	
++	if( count > 4096 || count <= 0 || count * sizeof(*x) <= 0 ||
++	    count * sizeof(*y) <= 0)
++		return -EMSGSIZE;	
+ 
+ 	x = kmalloc( count * sizeof(*x), 0 );
+ 	if ( x == NULL ) {
+@@ -1178,6 +1196,9 @@
+ 	}
+ 
+ 	count = depth->n;
++	
++	if ( count > 4096 || count <= 0)
++		return -EMSGSIZE;
+ 	if ( copy_from_user( &x, depth->x, sizeof(x) ) ) {
+ 		return -EFAULT;
+ 	}
+@@ -1235,9 +1256,13 @@
+ 	}
+ 
+ 	count = depth->n;
++	if (count > 4096 || count <= 0)
++		return -EMSGSIZE;
+ 	if ( count > dev_priv->depth_pitch ) {
+ 		count = dev_priv->depth_pitch;
+ 	}
++	if( count * sizeof(int) <= 0 || count * sizeof(*x) <= 0 || count * sizeof(*y) <= 0)
++		return -EMSGSIZE;
+ 
+ 	x = kmalloc( count * sizeof(*x), 0 );
+ 	if ( x == NULL ) {

@@ -1,0 +1,57 @@
+Taken from Mandrake, fixes CAN-2004-0001.
+
+From: Andi Kleen <ak@suse.de>
+Subject: ptrace hole in x86-64
+To: vendor-sec@lst.de
+Date: Wed, 7 Jan 2004 13:32:33 +0100
+X-Mailer: Sylpheed version 0.9.7 (GTK+ 1.2.10; i686-pc-linux-gnu)
+
+
+The 32bit ptrace emulation in the x86-64 kernel has incorrect eflags checking.
+This can be most likely exploited to get a process that runs at ring zero and
+can access all memory.
+
+The problem is in all so far release x86-64 kernels.
+
+The current plan is to make this problem public on 14.1. If you're shipping an AMD64
+distribution I would recommend to prepare update kernels.
+
+Patch:
+
+--- linux-2.6.0-mm1/arch/x86_64/ia32/ptrace32.c	2003-07-18 02:39:52.000000000 +0200
++++ linux-2.6.0-mm1-ak/arch/x86_64/ia32/ptrace32.c	2003-12-24 07:02:49.000000000 +0100
+@@ -26,6 +26,10 @@
+ #include <linux/ptrace.h>
+ #include <linux/mm.h>
+ 
++/* determines which flags the user has access to. */
++/* 1 = access 0 = no access */
++#define FLAG_MASK 0x44dd5UL
++
+ #define R32(l,q) \
+ 	case offsetof(struct user32, regs.l): stack[offsetof(struct pt_regs, q)/8] = val; break
+ 
+@@ -70,9 +74,12 @@
+ 	R32(eip, rip);
+ 	R32(esp, rsp);
+ 
+-	case offsetof(struct user32, regs.eflags): 
+-		stack[offsetof(struct pt_regs, eflags)/8] = val & 0x44dd5; 
++	case offsetof(struct user32, regs.eflags): { 
++		__u64 *flags = &stack[offsetof(struct pt_regs, eflags)/8];
++		val &= FLAG_MASK;
++		*flags = val | (*flags & ~FLAG_MASK);
+ 		break;
++	}
+ 
+ 	case offsetof(struct user32, u_debugreg[4]): 
+ 	case offsetof(struct user32, u_debugreg[5]):
+
+
+
+-Andi
+_______________________________________________
+Vendor Security mailing list
+Vendor Security@lst.de
+https://www.lst.de/cgi-bin/mailman/listinfo/vendor-sec
+

@@ -1,0 +1,46 @@
+From RH, fix reference counting after initial CAN-2003-0187 fix.
+
+diff -urpN --exclude-from=/home/davej/.exclude linux-2.4.20/net/ipv4/netfilter/ip_conntrack_core.c linux-2.4.20-dj/net/ipv4/netfilter/ip_conntrack_core.c
+--- linux-2.4.20/net/ipv4/netfilter/ip_conntrack_core.c	2003-09-18 18:26:55.000000000 +0100
++++ linux-2.4.20-dj/net/ipv4/netfilter/ip_conntrack_core.c	2003-09-18 18:35:52.000000000 +0100
+@@ -257,7 +257,7 @@ static void unexpect_related(struct ip_c
+ }
+ 
+ /* delete all unconfirmed expectations for this conntrack */
+-static void remove_expectations(struct ip_conntrack *ct)
++static void remove_expectations(struct ip_conntrack *ct, int drop_refcount)
+ {
+ 	struct list_head *exp_entry, *next;
+ 	struct ip_conntrack_expect *exp;
+@@ -274,8 +274,11 @@ static void remove_expectations(struct i
+ 		 * the un-established ones only */
+ 		if (exp->sibling) {
+ 			DEBUGP("remove_expectations: skipping established %p of %p\n", exp->sibling, ct);
+-			/* Indicate that this expectations parent is dead */
+-			exp->expectant = NULL;
++			if (drop_refcount) {
++				/* Indicate that this expectations parent is dead */
++				ip_conntrack_put(exp->expectant);
++				exp->expectant = NULL;
++			}
+ 			continue;
+ 		}
+ 
+@@ -300,7 +303,7 @@ clean_from_lists(struct ip_conntrack *ct
+ 		    &ct->tuplehash[IP_CT_DIR_REPLY]);
+ 
+ 	/* Destroy all un-established, pending expectations */
+-	remove_expectations(ct);
++	remove_expectations(ct, 1);
+ }
+ 
+ static void
+@@ -1149,7 +1152,7 @@ static inline int unhelp(struct ip_connt
+ {
+ 	if (i->ctrack->helper == me) {
+ 		/* Get rid of any expected. */
+-		remove_expectations(i->ctrack);
++		remove_expectations(i->ctrack, 0);
+ 		/* And *then* set helper to NULL */
+ 		i->ctrack->helper = NULL;
+ 	}

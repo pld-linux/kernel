@@ -1,0 +1,29 @@
+Taken from RH, fixes CAN-2004-0075
+(missing copy_from_user when accessing userspace in Vicam USB driver)
+
+diff -Nru a/drivers/usb/vicam.c b/drivers/usb/vicam.c
+--- a/drivers/usb/vicam.c	Mon Jan 12 05:06:21 2004
++++ b/drivers/usb/vicam.c	Mon Jan 12 05:06:21 2004
+@@ -601,12 +601,19 @@
+ 	case VIDIOCSWIN:
+ 		{
+ 
+-			struct video_window *vw = (struct video_window *) arg;
+-			DBG("VIDIOCSWIN %d x %d\n", vw->width, vw->height);
++			struct video_window vw;
+ 
+-			if ( vw->width != 320 || vw->height != 240 )
++			if (copy_from_user(&vw, arg, sizeof(vw)))
++			{
+ 				retval = -EFAULT;
++				break;
++			}
++
++			DBG("VIDIOCSWIN %d x %d\n", vw->width, vw->height);
+ 			
++			if ( vw.width != 320 || vw.height != 240 )
++				retval = -EFAULT;
++
+ 			break;
+ 		}
+ 

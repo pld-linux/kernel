@@ -1,0 +1,13 @@
+Taken from RH, fixes CAN-2004-0177
+(information leak of kernel memory to raw device)
+
+--- linux-2.4.20/fs/jbd/journal.c~	2004-03-25 11:51:36.000000000 +0000
++++ linux-2.4.20/fs/jbd/journal.c	2004-03-25 11:51:50.000000000 +0000
+@@ -671,6 +671,7 @@
+ 
+ 	bh = getblk(journal->j_dev, blocknr, journal->j_blocksize);
+ 	lock_buffer(bh);
++	memset(bh->b_data, 0, journal->j_blocksize);
+ 	BUFFER_TRACE(bh, "return this buffer");
+ 	return journal_add_journal_head(bh);
+ }

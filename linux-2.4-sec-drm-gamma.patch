@@ -1,0 +1,220 @@
+Taken from RH, fixes missing limit checks in GAMMA DRI driver.
+
+
+--- 1/drivers/char/drm/gamma_dma.c.orig	Thu Jan  8 10:56:47 2004
++++ 2/drivers/char/drm/gamma_dma.c	Wed Jan  7 19:21:57 2004
+@@ -24,6 +24,16 @@
+  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+  * DEALINGS IN THE SOFTWARE.
+  *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * RED HAT AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
++ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
++ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
++ * DEALINGS IN THE SOFTWARE.
++ *
++ * THIS SOFTWARE IS NOT INTENDED FOR USE IN SAFETY CRITICAL SYSTEMS
++ *
+  * Authors:
+  *    Rickard E. (Rik) Faith <faith@valinux.com>
+  *
+@@ -352,6 +352,8 @@
+ 	drm_buf_t	  *buf;
+ 	drm_buf_t	  *last_buf = NULL;
+ 	drm_device_dma_t  *dma	    = dev->dma;
++	int               *drm_send_indices = NULL;
++	int               *drm_send_sizes = NULL;
+ 	DECLARE_WAITQUEUE(entry, current);
+ 
+ 				/* Turn off interrupt handling */
+@@ -371,11 +373,27 @@
+ 		++must_free;
+ 	}
+ 
++	drm_send_indices = kmalloc (d->send_count * sizeof(*drm_send_indices), GFP_KERNEL);
++	drm_send_sizes = kmalloc (d->send_count * sizeof(*drm_send_sizes), GFP_KERNEL);
++	if (! drm_send_indices || ! drm_send_sizes)
++	{
++		retcode = -ENOMEM;
++		goto cleanup;
++	}
++	if (copy_from_user(drm_send_indices, d->send_indices, 
++			   d->send_count * sizeof(*drm_send_indices)) ||
++	    copy_from_user(drm_send_sizes, d->send_sizes, 
++			   d->send_count * sizeof(*drm_send_sizes)))
++	{
++		retcode = -EFAULT;
++		goto cleanup;
++	}
++
+ 	for (i = 0; i < d->send_count; i++) {
+-		idx = d->send_indices[i];
++		idx = drm_send_indices[i];
+ 		if (idx < 0 || idx >= dma->buf_count) {
+ 			DRM_ERROR("Index %d (of %d max)\n",
+-				  d->send_indices[i], dma->buf_count - 1);
++				  drm_send_indices[i], dma->buf_count - 1);
+ 			continue;
+ 		}
+ 		buf = dma->buflist[ idx ];
+@@ -397,7 +415,7 @@
+ 				   process closes the /dev/drm? handle, so
+ 				   it can't also be doing DMA. */
+ 		buf->list	  = DRM_LIST_PRIO;
+-		buf->used	  = d->send_sizes[i];
++		buf->used	  = drm_send_sizes[i];
+ 		buf->context	  = d->context;
+ 		buf->while_locked = d->flags & _DRM_DMA_WHILE_LOCKED;
+ 		address		  = (unsigned long)buf->address;
+@@ -408,14 +426,14 @@
+ 		if (buf->pending) {
+ 			DRM_ERROR("Sending pending buffer:"
+ 				  " buffer %d, offset %d\n",
+-				  d->send_indices[i], i);
++				  drm_send_indices[i], i);
+ 			retcode = -EINVAL;
+ 			goto cleanup;
+ 		}
+ 		if (buf->waiting) {
+ 			DRM_ERROR("Sending waiting buffer:"
+ 				  " buffer %d, offset %d\n",
+-				  d->send_indices[i], i);
++				  drm_send_indices[i], i);
+ 			retcode = -EINVAL;
+ 			goto cleanup;
+ 		}
+@@ -464,6 +482,10 @@
+ 
+
+ cleanup:
++	if (drm_send_indices)
++		kfree(drm_send_indices);
++	if (drm_send_sizes)
++		kfree(drm_send_sizes);				
+ 	if (last_buf) {
+ 		gamma_dma_ready(dev);
+ 		gamma_free_buffer(dev, last_buf);
+@@ -487,7 +509,11 @@
+ 	drm_device_dma_t  *dma	    = dev->dma;
+ 
+ 	if (d->flags & _DRM_DMA_BLOCK) {
+-		last_buf = dma->buflist[d->send_indices[d->send_count-1]];
++		int lastindex;
++		if (copy_from_user(&lastindex, &d->send_indices[d->send_count-1],
++				   sizeof(lastindex)))
++			return -EFAULT;
++		last_buf = dma->buflist[lastindex];
+ 		add_wait_queue(&last_buf->dma_wait, &entry);
+ 	}
+ 
+--- 1/drivers/char/drm-4.0/gamma_dma.c.orig	Thu Jan  8 10:56:47 2004
++++ 2/drivers/char/drm-4.0/gamma_dma.c	Wed Jan  7 19:21:57 2004
+@@ -23,6 +23,16 @@
+  * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+  * DEALINGS IN THE SOFTWARE.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
++ * RED HAT AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
++ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
++ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
++ * DEALINGS IN THE SOFTWARE.
++ *
++ * THIS SOFTWARE IS NOT INTENDED FOR USE IN SAFETY CRITICAL SYSTEMS
+  * 
+  * Authors:
+  *    Rickard E. (Rik) Faith <faith@valinux.com>
+@@ -352,6 +352,8 @@
+ 	drm_buf_t	  *buf;
+ 	drm_buf_t	  *last_buf = NULL;
+ 	drm_device_dma_t  *dma	    = dev->dma;
++	int               *drm_send_indices = NULL;
++	int               *drm_send_sizes = NULL;
+ 	DECLARE_WAITQUEUE(entry, current);
+ 
+ 				/* Turn off interrupt handling */
+@@ -371,11 +373,27 @@
+ 		++must_free;
+ 	}
+ 
++	drm_send_indices = kmalloc (d->send_count * sizeof(*drm_send_indices), GFP_KERNEL);
++	drm_send_sizes = kmalloc (d->send_count * sizeof(*drm_send_sizes), GFP_KERNEL);
++	if (! drm_send_indices || ! drm_send_sizes)
++	{
++		retcode = -ENOMEM;
++		goto cleanup;
++	}
++	if (copy_from_user(drm_send_indices, d->send_indices, 
++			   d->send_count * sizeof(*drm_send_indices)) ||
++	    copy_from_user(drm_send_sizes, d->send_sizes, 
++			   d->send_count * sizeof(*drm_send_sizes)))
++	{
++		retcode = -EFAULT;
++		goto cleanup;
++	}
++
+ 	for (i = 0; i < d->send_count; i++) {
+-		idx = d->send_indices[i];
++		idx = drm_send_indices[i];
+ 		if (idx < 0 || idx >= dma->buf_count) {
+ 			DRM_ERROR("Index %d (of %d max)\n",
+-				  d->send_indices[i], dma->buf_count - 1);
++				  drm_send_indices[i], dma->buf_count - 1);
+ 			continue;
+ 		}
+ 		buf = dma->buflist[ idx ];
+@@ -397,7 +415,7 @@
+ 				   process closes the /dev/drm? handle, so
+ 				   it can't also be doing DMA. */
+ 		buf->list	  = DRM_LIST_PRIO;
+-		buf->used	  = d->send_sizes[i];
++		buf->used	  = drm_send_sizes[i];
+ 		buf->context	  = d->context;
+ 		buf->while_locked = d->flags & _DRM_DMA_WHILE_LOCKED;
+ 		address		  = (unsigned long)buf->address;
+@@ -408,14 +426,14 @@
+ 		if (buf->pending) {
+ 			DRM_ERROR("Sending pending buffer:"
+ 				  " buffer %d, offset %d\n",
+-				  d->send_indices[i], i);
++				  drm_send_indices[i], i);
+ 			retcode = -EINVAL;
+ 			goto cleanup;
+ 		}
+ 		if (buf->waiting) {
+ 			DRM_ERROR("Sending waiting buffer:"
+ 				  " buffer %d, offset %d\n",
+-				  d->send_indices[i], i);
++				  drm_send_indices[i], i);
+ 			retcode = -EINVAL;
+ 			goto cleanup;
+ 		}
+@@ -464,6 +482,10 @@
+ 
+
+ cleanup:
++	if (drm_send_indices)
++		kfree(drm_send_indices);
++	if (drm_send_sizes)
++		kfree(drm_send_sizes);				
+ 	if (last_buf) {
+ 		gamma_dma_ready(dev);
+ 		gamma_free_buffer(dev, last_buf);
+@@ -487,7 +509,11 @@
+ 	drm_device_dma_t  *dma	    = dev->dma;
+ 
+ 	if (d->flags & _DRM_DMA_BLOCK) {
+-		last_buf = dma->buflist[d->send_indices[d->send_count-1]];
++		int lastindex;
++		if (copy_from_user(&lastindex, &d->send_indices[d->send_count-1],
++				   sizeof(lastindex)))
++			return -EFAULT;
++		last_buf = dma->buflist[lastindex];
+ 		add_wait_queue(&last_buf->dma_wait, &entry);
+ 	}
+ 
+

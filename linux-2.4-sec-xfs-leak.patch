@@ -1,0 +1,14 @@
+Backport taken from HP, fixes CAN-2004-0133
+(information leak from kernel memory to raw device)
+
+--- linux/fs/xfs/xfs_log.c~	Tue Apr 13 19:44:01 2004
++++ linux/fs/xfs/xfs_log.c	Tue Apr 13 22:56:23 2004
+@@ -1258,7 +1258,7 @@
+ 			  kmem_zalloc(sizeof(xlog_in_core_t), KM_SLEEP);
+ 		iclog = *iclogp;
+ 		iclog->hic_data = (xlog_in_core_2_t *)
+-			  kmem_alloc(iclogsize, KM_SLEEP);
++			  kmem_zalloc(iclogsize, KM_SLEEP);
+ 
+ 		iclog->ic_prev = prev_iclog;
+ 		prev_iclog = iclog;

@@ -1,0 +1,40 @@
+Based on backport from Mandrake, fixes CAN-2004-0181
+(information leak through jfs from kernel memory to raw device)
+
+--- linux-2.4.20/fs/jfs/jfs_metapage.c.orig	Fri Jan 17 21:51:48 2003
++++ linux-2.4.20/fs/jfs/jfs_metapage.c	Thu Apr 22 17:00:19 2004
+@@ -448,6 +448,9 @@
+ 		}
+ 		mp->data = kmap(mp->page) + page_offset;
+ 	}
++	if (new)
++		memset(mp->data, 0, PSIZE);
++
+ 	jfs_info("__get_metapage: returning = 0x%p", mp);
+ 	return mp;
+ 
+--- linux-2.4.20/fs/jfs/super.c.orig	Tue Mar 25 17:56:05 2003
++++ linux-2.4.20/fs/jfs/super.c	Thu Apr 22 17:01:04 2004
+@@ -427,10 +427,10 @@
+ 
+ 	if ((flags & (SLAB_CTOR_VERIFY | SLAB_CTOR_CONSTRUCTOR)) ==
+ 	    SLAB_CTOR_CONSTRUCTOR) {
++		memset(jfs_ip, 0, sizeof(struct jfs_inode_info));
+ 		INIT_LIST_HEAD(&jfs_ip->anon_inode_list);
+ 		init_rwsem(&jfs_ip->rdwrlock);
+ 		init_MUTEX(&jfs_ip->commit_sem);
+-		jfs_ip->atlhead = 0;
+ 		jfs_ip->active_ag = -1;
+ 	}
+ }
+--- linux-2.4.20/fs/jfs/jfs_logmgr.c.orig	Mon Mar 10 19:37:45 2003
++++ linux-2.4.20/fs/jfs/jfs_logmgr.c	Thu Apr 22 16:49:34 2004
+@@ -1688,7 +1688,7 @@
+ 		if (lbuf == 0)
+ 			goto error;
+ 		lbuf->l_bh.b_data = lbuf->l_ldata =
+-		    (char *) __get_free_page(GFP_KERNEL);
++		    (char *) get_zeroed_page(GFP_KERNEL);
+ 		if (lbuf->l_ldata == 0) {
+ 			kfree(lbuf);
+ 			goto error;

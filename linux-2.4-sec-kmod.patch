@@ -1,0 +1,20 @@
+Taken from RH, fixes CAN-2003-1040.
+(kmod not setting uid, suid, gid, or sgid to 0 allowed local users to cause
+ crash by sending certain signals to kmod)
+
+--- linux-2.4.20/kernel/kmod.c~	2004-01-06 15:54:07.000000000 +0000
++++ linux-2.4.20/kernel/kmod.c	2004-01-06 16:43:48.000000000 +0000
+@@ -123,8 +123,11 @@
+ 	set_user(0, 0);
+ 
+ 	/* Give kmod all effective privileges.. */
+-	curtask->euid = curtask->fsuid = 0;
+-	curtask->egid = curtask->fsgid = 0;
++	curtask->euid = curtask->uid = curtask->suid = curtask->fsuid = 0;
++	curtask->egid = curtask->gid = curtask->sgid = curtask->fsgid = 0;
++
++	curtask->ngroups = 0;
++
+ 	cap_set_full(curtask->cap_effective);
+ 
+ 	/* Allow execve args to be in kernel space. */

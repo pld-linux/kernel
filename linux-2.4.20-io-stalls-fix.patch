@@ -1,0 +1,25 @@
+--- linux-2.4.20/drivers/block/ll_rw_blk.c.orig	Tue Sep  9 15:07:10 2003
++++ linux-2.4.20/drivers/block/ll_rw_blk.c	Tue Sep  9 15:21:09 2003
+@@ -590,10 +590,10 @@
+ 	register struct request *rq;
+ 	DECLARE_WAITQUEUE(wait, current);
+ 
+-	generic_unplug_device(q);
+-	add_wait_queue_exclusive(&q->wait_for_requests[rw], &wait);
++	add_wait_queue(&q->wait_for_requests[rw], &wait);
+ 	do {
+ 		set_current_state(TASK_UNINTERRUPTIBLE);
++		generic_unplug_device(q);
+ 		if (q->rq[rw].count == 0)
+ 			schedule();
+ 		spin_lock_irq(&io_request_lock);
+@@ -829,8 +829,7 @@
+ 	 */
+ 	if (q) {
+ 		list_add(&req->queue, &q->rq[rw].free);
+-		if (++q->rq[rw].count >= q->batch_requests &&
+-				waitqueue_active(&q->wait_for_requests[rw]))
++		if (++q->rq[rw].count >= q->batch_requests)
+ 			wake_up(&q->wait_for_requests[rw]);
+ 	}
+ }
