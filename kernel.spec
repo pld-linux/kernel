@@ -44,7 +44,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		4
+%define		_rel		1
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -63,7 +63,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-%define		_postver	.5
+%define		_postver	.6
 #define		_postver	%{nil}
 Version:	2.6.11%{_postver}
 Release:	%{_rel}
@@ -74,7 +74,7 @@ Group:		Base/Kernel
 #define		_rc	-rc3
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	94af162c2c5c264344f279c6946c4f59
+# Source0-md5:	91544ed14e672386bf2f76c94911afe6
 Source1:	%{name}-autoconf.h
 
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
