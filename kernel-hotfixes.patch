@@ -60,6 +60,21 @@ linux-new/arch/i386/mm/init.c
  	reiser4_exit_context(&ctx);
  	return page;
  }
+#-------------------------------------------------------------------------------
+#
+#	David Brownell <david-b@pacbell.net>
+#
+#	When drives go offline, e.g. usb-storage disconnect, the
+#	upper layers don't behave very intelligently yet:  ext3
+#	over scsi keeps retrying reads, logging three lines for
+#	each error.
+#
+#	This patch shrinks that log spam by the trivial third, getting
+#	rid of those needless blank lines.  It's not clear to me why
+#	the "no such device" errors don't immediately make ext3
+#	(or is it the block layer?) give up ... maybe someone else
+#	can make Linux not retry after those errors.
+#
 --- linux-2.6.10-rc3/fs/ext3/namei.c.orig	2004-12-03 22:53:57.000000000 +0100
 +++ linux-2.6.10-rc3/fs/ext3/namei.c	2004-12-11 15:46:33.662957768 +0100
 @@ -872,7 +872,7 @@
