@@ -223,6 +223,7 @@ Provides:	%{name}-headers(bridging) = %{version}
 Provides:	i2c-devel = 2.6.1
 Provides:	%{name}-headers(netfilter) = 1.2.7a
 Provides:	%{name}-headers(alsa-drivers)
+Provides:	alsa-driver-devel
 Autoreqprov:	no
 
 %description headers
