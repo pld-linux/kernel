@@ -1029,7 +1029,7 @@ $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 %endif
 
 %{__make} mrproper
-ln -sf asm-%{_arch} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
+ln -sf asm-%{base_arch} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
 %{__make} include/linux/version.h
 install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
 
