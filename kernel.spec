@@ -419,9 +419,9 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch1 -p1
 %patch900 -p1
 %patch2 -p1
-#ifnarch ppc
+%ifnarch ppc
 %patch3 -p1
-#endif
+%endif
 %patch4 -p1
 %patch5 -p1
 %patch904 -p1
