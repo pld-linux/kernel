@@ -205,7 +205,7 @@ Provides:	%{name}(cdmrw)
 Autoreqprov:	no
 Prereq:		fileutils
 Prereq:		modutils
-Prereq:		geninitrd >= 2.13
+Prereq:		geninitrd >= 2.21
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
