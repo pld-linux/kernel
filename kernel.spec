@@ -8,7 +8,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.17
-Release:	10
+Release:	11
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -54,7 +54,7 @@ Patch13:	linux-ipv6-addrconf.patch
 # NFS client patch
 Patch14:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
 # Linux Virtual Server: http://www.linuxvirtualserver.org/software/
-Patch15:	linux-ipvs-0.9.16-%{version}.patch
+Patch15:	%{name}-ipvs-1.0.0-%{version}.patch
 Patch16:	%{name}-3c90x.patch
 # raw-io patch
 Patch17:	ftp://ftp.kernel.org/pub/linux/kernel/people/sct/raw-io/raw-2.2.17.diff
