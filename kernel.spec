@@ -36,8 +36,7 @@ Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
-# Source5:	linux-2.4.19-netfilter-20020825.tar.gz
-# based on ftp://ftp.netfilter.org/pub/patch-o-matic/patch-o-matic-20020825.tar.gz
+Source5:	linux-2.4.19-netfilter-20020825.tar.gz
 #Source6:	
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
@@ -96,8 +95,6 @@ Patch17:	hfsplus-20011213.patch
 Patch18:	evms-%{evms_version}-linux-2.4.patch
 Patch19:	evms-linux-2.4.19-rc3-common-files.patch
 Patch20:	linux-2.4.19-pre8-VFS-lock.patch
-# based on ftp://ftp.netfilter.org/pub/patch-o-matic/patch-o-matic-20020825.tar.gz
-Patch21:	linux-2.4.19-netfilter-all-in-one-20020825.patch.gz
 # Support for CDRW packet writing
 Patch26:	%{name}-cdrw-packet.patch
 Patch27:	kernel-cd-mrw-2.patch
@@ -499,8 +496,7 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 #patch -p1 -s <linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
 
 # Netfilter
-%patch21 -p1
-#(KERNEL_DIR=`pwd` ; export KERNEL_DIR ; cd netfilter-patch-o-matic ; ./runme --batch userspace)
+(KERNEL_DIR=`pwd` ; export KERNEL_DIR ; cd netfilter-patch-o-matic ; ./runme --batch userspace)
 
 # IP personality
 #echo Adding IP Personality 
