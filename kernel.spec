@@ -143,6 +143,9 @@ Patch27:	linux-ppc-oops.patch
 Patch32:	2.6.x-TGA-fbdev-lkml.patch
 Patch33:	linux-kbuild-extmod.patch
 
+# linux vserver
+Patch35:	http://www.13thfloor.at/vserver/d_rel26/v1.9.3/patch-2.6.9-vs1.9.3.diff.bz2
+
 # framebuffer fixes
 Patch41:	linux-fbcon-margins.patch
 
@@ -551,6 +554,8 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 #patch32 -p1	NEEDS UPDATE
 %patch33 -p1
+
+%patch35 -p1
 
 %patch41 -p1
 
