@@ -17,7 +17,7 @@
 #
 %define		pre_version		%{nil}
 %define		netfilter_snap		20031206
-%define		i2c_version		2.8.0
+%define		i2c_version		2.8.1
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(es):	Núcleo (Kernel) linux genérico
@@ -26,7 +26,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.23
-Release:	0.8
+Release:	0.8.1
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -74,9 +74,7 @@ Patch23:	2.4.23-libata1.patch.bz2
 # New filesystems
 
 # http://linux-xfs.sgi.com/projects/xfs/
-#Patch25:	linux-2.4.21-core-xfs-1.3.0.patch.gz
-#Patch26:	linux-xfs-1.3.0pre5.patch.gz
-Patch25:	linux-2.4.23-xfs-2003-11-11.patch.gz
+Patch25:	linux-2.4.23-xfs-2003-12-01.patch.gz
 # http://acl.bestbits.at/
 Patch31:	linux-2.4.21-jfs-acl.patch
 Patch32:	linux-2.4.22-ea+acl+nfsacl-0.8.60.diff.gz
@@ -143,8 +141,8 @@ Patch227:	layer7-kernel2.4patch-v0.4.1a.patch.gz
 Patch231:	linux-2.4.21-aic7xxx-mmapio.patch
 Patch235:	linux-2.4.20-audigy.patch.bz2
 Patch240:	linux-2.4.20-ecc.patch
-# i2c - version 2.8.0
-Patch255:	linux-2.4.22-i2c-%{i2c_version}.patch
+# i2c - http://secure.netroedge.com/~lm78/
+Patch255:	linux-2.4.23-i2c-%{i2c_version}.patch
 Patch256:	linux-2.4.21-i2c-headers.patch
 Patch257:	linux-2.4.21-i2c-sparc64.patch
 Patch265:	linux-2.4.20-e820.patch
