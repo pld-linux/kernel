@@ -146,6 +146,7 @@ Patch23:	2.6.6-xfs-qsort-lkml.patch
 #Patch24:	2.6.7-bridge_sysfs-lkml.patch
 Patch25:	2.6.7-alpha_compile.patch
 Patch26:	2.6.7-ppc-asm-defs.patch
+Patch27:	linux-ppc-oops.patch
 
 #Patch30:	2.6.x-ppp_mppe.patch
 
@@ -584,6 +585,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 #patch24 -p1
 %patch25 -p1
 %patch26 -p1
+%patch27 -p1
 
 #patch30 -p1
 
