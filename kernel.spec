@@ -1,33 +1,40 @@
-Summary:     Generic linux kernel
-Name:        kernel
-Version:     2.0.36
-Release:     2
-Copyright:   GPL
-Group:       Base/Kernel
-Group(pl):   Bazowe/J±dro
-Source0:     ftp://ftp.kernel.org/pub/linux/kernel/v2.0/linux-%{version}.tar.bz2
-Source1:     kernel-i386.config
-Source2:     kernel-alpha.config
-Source3:     installkernel
-Patch0:      kernel-make.patch
-Patch1:      ftp://ftp.redhat.com/sound/patches-current/2.0.36-modular-1.test.patch.gz
-Patch2:      secure-linux-2.0.36.diff
-Requires:    rc-scripts >= 3.64
-ExclusiveOS: Linux
-ExclusiveArch: i386
-BuildRoot:   /tmp/buildroot-%{name}-%{version}
-Autoreqprov: no
-Obsoletes:   kernel-modules
+Summary:	Generic linux kernel
+Summary(pl):	J±dro Linuxa
+Name:		kernel
+Version:	2.2.2
+Release:	1
+Copyright:	GPL
+Group:		Base/Kernel
+Group(pl):	Bazowe/J±dro
+URL:		ftp://ftp.kernel.org/pub/linux/kernel/v2.2
+Source0:	linux-2.2.1.tar.bz2
+Source1:	kernel-i386.config
+Patch0:		linux-sockpriv.patch
+Patch1:		linux-tasks.patch
+Patch2:		soundcore-%{version}.patch
+Requires:	rc-scripts
+ExclusiveOS:	Linux
+Autoreqprov:	no
+Obsoletes:	kernel-modules
+ExclusiveArch:	i386
+BuildRoot:	/tmp/%{name}-%{version}-root
 
 %description
 This package contains the Linux kernel that is used to boot and run
 your system. It contains few device drivers for specific hardware.
 Most hardware is instead supported by modules loaded after booting.
 
-%package source
-Summary:     Kernel source tree
-Group:       Base/Kernel
-Requires:    %{name}-headers = %{version}, bin86
+%description -l pl
+Pakiet zawiera j±dro Linuxa niezbêdne do prawid³owego dzia³ania Twojego
+komputera.
+
+%package	source
+Summary:	Kernel source tree
+Summary(pl):	Kod ¼ród³owy j±dra Linuxa
+Group:		Base/Kernel
+Group(pl):	Podstawy/J±dro
+Requires:	%{name}-headers = %{version}
+Requires:	bin86
 
 %description source
 This is the source code for the Linux kernel. It is required to build
@@ -35,56 +42,58 @@ most C programs as they depend on constants defined in here. You can
 also build a custom kernel that is better tuned to your particular
 hardware.
 
-%package headers
-Summary:     Header files for the Linux kernel.
-Group:       Base/Kernel
+%description source -l pl
+Pakiet zawiera kod ¼ród³owy jadra systemu.
+
+%package	headers
+Summary:	Header files for the Linux kernel.
+Summary(pl):	Pliki nag³owkowe j±dra
+Group:		Base/Kernel
+Group(pl):	Podstawy/J±dro
 
 %description headers
 These are the C header files for the Linux kernel, which define structures
 and constants that are needed when building most standard programs under
 Linux, as well as to rebuild the kernel.
 
+%description headers -l pl
+Pakiet zawiera pliki nag³ówkowe j±dra, niezbedne do rekompilacji j±dra
+oraz niektórych programów.
+
 %prep
 %setup -q -n linux
-%patch0 -p1
+%patch0 -p0
 %patch1 -p1
-%patch2 -p1
+#%patch2 -p1
 
 %ifarch i386
 install $RPM_SOURCE_DIR/kernel-i386.config arch/i386/defconfig
 %endif
-%ifarch alpha
-install $RPM_SOURCE_DIR/kernel-alpha.config arch/alpha/defconfig
-%endif
 
 %build
-export SMP=0
 make oldconfig
 make dep
-make include/linux/version.h
-make boot modules
+
+%ifarch i386
+make bzImage modules
+%endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT/{boot,sbin,lib/modules} \
 	 $RPM_BUILD_ROOT/usr/{include,src/linux-%{version}}
 
-ln -s ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
-ln -s ../src/linux/include/linux $RPM_BUILD_ROOT/usr/include/linux
-ln -s ../src/linux/include/scsi $RPM_BUILD_ROOT/usr/include/scsi
-
 install System.map $RPM_BUILD_ROOT/boot/System.map-%{version}-%{release}
 
-install $RPM_SOURCE_DIR/installkernel $RPM_BUILD_ROOT/sbin/
-
 %ifarch i386
-cp arch/i386/boot/zImage $RPM_BUILD_ROOT/boot/vmlinuz-%{version}-%{release}
+cp arch/i386/boot/bzImage $RPM_BUILD_ROOT/boot/vmlinuz-%{version}-%{release}
 %endif
 
-make PREFIX=$RPM_BUILD_ROOT modules_install
+make INSTALL_MOD_PATH=$RPM_BUILD_ROOT modules_install
 
 mv $RPM_BUILD_ROOT/lib/modules/%{version} \
        $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}
+
 ln -sf %{version}-%{release} $RPM_BUILD_ROOT/lib/modules/%{version}
 
 ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
@@ -92,13 +101,10 @@ ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
 make mrproper
 
 cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}
+
 %ifarch i386
 install $RPM_SOURCE_DIR/kernel-i386.config \
 	$RPM_BUILD_ROOT/usr/src/linux-%{version}/arch/i386/defconfig
-%endif
-%ifarch alpha
-install $RPM_SOURCE_DIR/kernel-alpha.config \
-	$RPM_BUILD_ROOT/usr/src/linux-%{version}/arch/alpha/defconfig
 %endif
 
 # this generates modversions info which we want to include and we may as
@@ -109,6 +115,7 @@ make include/linux/version.h -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
 #this generates modversions info which we want to include and we may as
 #well include the depends stuff as well, after we fix the paths
+
 make depend -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
 while read file ; do
@@ -127,8 +134,9 @@ rm -rf $RPM_BUILD_ROOT
 exit 0
 
 %post
-ln -sf vmlinuz-%{version}-%{release} /bootvmlinuz
-ln -sf System.map-%version}-%{release} /boot/System.map
+
+ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
+ln -sf System.map-%{version}-%{release} /boot/System.map
 
 if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
 	/sbin/lilo > /dev/null 2>&1 || :
@@ -146,22 +154,23 @@ if [ -L /usr/src/linux ]; then
 fi
 
 %files
-%defattr(644, root, root, 755)
+%defattr(644,root,root,755)
 /boot/vmlinuz-*
 /boot/System.map-*
-/sbin/installkernel
+
 %dir /lib/modules
 %dir /lib/modules/%{version}-%{release}
-/lib/modules/%{version}-%{release}/scsi
+#/lib/modules/%{version}-%{release}/scsi
 /lib/modules/%{version}-%{release}/net
 /lib/modules/%{version}-%{release}/block
-/lib/modules/%{version}-%{release}/cdrom
+#/lib/modules/%{version}-%{release}/cdrom
 /lib/modules/%{version}-%{release}/fs
 /lib/modules/%{version}-%{release}/misc
 /lib/modules/%{version}-%{release}/ipv4
 
 %files source
-%defattr(644, root, root, 755)
+%defattr(644,root,root,755)
+
 %dir /usr/src/linux-%{version}
 /usr/src/linux-%{version}/COPYING
 /usr/src/linux-%{version}/CREDITS
@@ -183,7 +192,7 @@ fi
 /usr/src/linux-%{version}/scripts
 
 %files headers
-%defattr(644, root, root, 755)
+%defattr(644,root,root,755)
 %defverify(not mtime)
 %dir /usr/src/linux-%{version}
 /usr/src/linux-%{version}/include/asm
@@ -191,12 +200,26 @@ fi
 /usr/src/linux-%{version}/include/linux
 /usr/src/linux-%{version}/include/net
 /usr/src/linux-%{version}/include/scsi
+/usr/src/linux-%{version}/include/video
 /usr/src/linux-%{version}/include/asm-%{buildarch}
-/usr/include/asm
-/usr/include/linux
-/usr/include/scsi
 
 %changelog
+* Mon Jan 18 1999 Wojtek ¦lusarczyk <wojtek@shadow.eu.org>
+  [2.2.0-pre7-2d]
+- updated to 2.2.0-pre7,
+- SCSI cards are now kompiled into the kernel
+  (we still wait for installer for PLD Linux ...)
+- added linux-tasks.patch,
+  by Micha³ Zalewski <lcamtuf@ids.pl>
+- added linux-icmp.patch
+
+* Wed Dec  9 1998 Krzysztof G. Baranowski <kgb@knm.org.pl>
+  [2.1.131-1d]
+- updated for 2.1.131
+  by Wojtek Slusarczyk <wojtek@shadow.eu.org>
+- removed symlinks in /usr/include,
+- minor changes in linux-config file.
+  
 * Sat Nov 21 1998 Tomasz K³oczko <kloczek@rudy.mif.pg.gda.pl>
   [2.0.36-2]
 - adedd secure-linux-2.0.36.diff from 
