@@ -156,6 +156,8 @@ Patch111:	linux-2.6-xfs-secure-attr.patch
 Patch114:	2.6.1-rc1-NF-u32-%{_netfilter_snap}.patch
 Patch116:	2.6.1-rc1-NF-osf-%{_netfilter_snap}.patch
 
+Patch120:	http://www.saout.de/misc/dm-crypt.diff
+
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
@@ -553,6 +555,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch114 -p1
 %patch116 -p1
+
+%patch120 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
