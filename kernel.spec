@@ -168,6 +168,8 @@ Patch905:	linux-abi-fl_ibcs_to_linux.patch
 Patch906:	linux-2.4.19-iptables-1.2.7a-netfilter.patch
 Patch907:	PPC-grsecurity-pgtable.h.patch
 Patch908:	linux-2.4.19-PPC-o1_scheduler.patch
+Patch909:	linux-2.4.19-PPC-agpgart_be.patch
+
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
 
@@ -508,7 +510,9 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 %ifarch ppc
 %patch908 -p1
+%patch909 -p1
 %endif
+
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
