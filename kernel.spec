@@ -132,7 +132,8 @@ Patch27:	linux-ppc-oops.patch
 Patch28:	linux-2.6-sparc-ksyms.patch
 
 #Patch30:	2.6.x-ppp_mppe.patch
-Patch31:	linux-2.6-skge.patch
+# http://developer.osdl.org/shemminger/skge/
+Patch31:	linux-2.6-skge-0.5.patch
 Patch32:	2.6.x-TGA-fbdev-lkml.patch
 Patch33:	linux-kbuild-extmod.patch
 
