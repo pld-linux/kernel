@@ -238,12 +238,13 @@ Patch212:	exec-shield-make-peace-with-grsecurity.patch
 Patch300:	2.6.7-ppc-asm-defs.patch
 Patch301:	2.6.7-ppc-strncasecmp.patch
 Patch302:	2.6.7-ppc-cciss-div.patch
-Patch303:	2.6.7-ppc-saa7146-workaround.patch
+Patch303:	2.6.7-lkml-saa7146-memory-variable.patch
 Patch304:	2.6.7-ppc-ipr-div.patch
 Patch305:	2.6.7-ppc-proxydict-workaround.patch
 
 Patch310:	linux-2.6-sparc-ksyms.patch
 Patch311:	linux-2.6-gfs-noswitch64.patch
+Patch312:	linux-2.6-ppc-ksyms.patch
 
 Patch400:	2.6.7-kill-warnings.patch
 
@@ -764,6 +765,7 @@ patch -p1 -s < exec-shield.patch
 %ifarch ppc sparc
 %patch311 -p1
 %endif
+%patch312 -p1
 
 %patch400 -p1
 
