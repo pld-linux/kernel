@@ -20,7 +20,7 @@ Source2:	%{name}-BuildASM.sh
 Source3:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
 Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
 Source5:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
-Source6:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/sym-1.7.2-ncr-3.4.2.tar.gz
+Source6:	ftp://ftp.tux.org/tux/roudier/drivers/linux/stable/sym-1.7.3-ncr-3.4.3.tar.gz 	
 Source7:	http://www.linux-wlan.com/linux-wlan/linux-wlan-%{wlan_version}.tar.gz
 Source8:	http://www.dandelion.com/Linux/DAC960-2.2.10.tar.gz
 Source20:	%{name}-i386.config
@@ -68,7 +68,7 @@ Patch22:	%{name}-wanrouter-bridge.patch
 Patch23:	%{name}-ipsec-bridge.patch
 Patch24:	%{name}-bridge-extraversion.patch
 Patch25:	%{name}-panaview_kbd.patch
-Patch26:	http://people.FreeBSD.org/~gibbs/linux/linux-aic7xxx-6.1.8-2.2.18.patch.gz
+Patch26:	http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-6.1.11-2.2.19.patch.gz
 Patch27:	kernel-toshiba-2.2.19.patch
 Patch28:	linux-2.2.19-pci.patch 
 Patch29:	kernel-flip.patch 
@@ -338,7 +338,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %ifarch %{x86}
 %patch25 -p1
 %endif
-#%patch26 -p1
+%patch26 -p1
 %patch27 -p1
 %patch28 -p1
 %patch29 -p1
@@ -354,9 +354,9 @@ patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 #install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # move symbios drivers to proper place
-mv sym-1.7.2-ncr-3.4.2/*.{c,h} drivers/scsi
-mv sym-1.7.2-ncr-3.4.2/{README,ChangeLog}.* Documentation
-rm -rf sym-1.7.2-ncr-3.4.2
+mv sym-1.7.3-ncr-3.4.3/*.{c,h} drivers/scsi
+mv sym-1.7.3-ncr-3.4.3/{README,ChangeLog}.* Documentation
+rm -rf sym-1.7.3-ncr-3.4.3
 
 cd  serial-5.05
 %patch30 -p1
