@@ -173,6 +173,7 @@ Patch910:	dc395-PLD.fix
 Patch911:	linux-o1-sched-grsec-pre.patch
 Patch912:	linux-o1-sched-grsec-post.patch
 Patch913:	linux-o1-sched-abi.patch
+Patch913:	linux-atyfb-initdata.patch
 
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
@@ -396,6 +397,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 #%ifarch{ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 #%patch912 -p1
 #%endif
+%patch913 -p1
 
 %patch15 -p1
 %patch17 -p1
