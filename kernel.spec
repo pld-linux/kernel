@@ -23,7 +23,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Name:		kernel
 %define		_ver	2.6.6
 Version:	%{_ver}+grsec
-Release:	1
+Release:	1.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{_ver}.tar.bz2
@@ -42,7 +42,7 @@ Patch5:		2.6.0-t9-acpi_osl-lkml.patch
 Patch6:		2.6.1-squashfs1.3r3.patch
 Patch7:		2.6.6-pramfs.patch
 Patch8:		linux-kbuild-extmod.patch
-Patch9:		%{name}-arch386.patch
+
 Patch10:	2.6.4-esfq.patch
 Patch11:	2.6.4-imq.patch
 Patch12:	2.6.4-imq-nat.patch
@@ -124,7 +124,7 @@ hardware.
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
-%patch9 -p0
+
 %patch10 -p1
 %patch11 -p1
 %patch12 -p1
@@ -134,6 +134,7 @@ hardware.
 
 %build
 find include/ -type d -maxdepth 1 -name "asm-*" ! -name asm-i386 ! -name asm-generic | xargs rm -rf
+mv arch/{x86_64,i386}/kernel/early_printk.c
 find arch/* -type d -maxdepth 0 ! -name i386 | xargs rm -rf
 %{__make} mrproper
 
