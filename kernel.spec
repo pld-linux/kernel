@@ -3,6 +3,7 @@
 #		- fix lirc_sasem (usb api)
 #		- add distcc support (and don't break crossbuild!)
 #		- fix vserver against new grsec
+#		- backport patch78 (expand-stack-race).
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -171,6 +172,7 @@ Patch74:	linux-static-dev.patch
 Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
 Patch76:	linux-2.6-lirc-0.7.patch
 Patch77:	linux-2.6-alsa-1.0.8.patch
+#Patch78:	linux-2.6-expand-stack-race.patch
 
 # psmouse extension for ThinkPad laptops from http://www.clarkson.edu/~evanchsa/
 Patch80:	trackpoint-2.6.9.patch
@@ -579,6 +581,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch75 -p1
 %patch76 -p1
 %patch77 -p1
+#patch78 -p1
 
 %patch80 -p1
 
