@@ -12,7 +12,7 @@
 # _without_glibc23	- build without support for glibc-kernel-headers
 #
 
-%define		patch_level	6
+%define		patch_level	7
 %define		_rel		9
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -28,7 +28,7 @@
 %define		ntfs_version		2.1.4a
 %define		drm_xfree_version	4.3.0
 %define		hostap_version		0.0.2
-%define		netfilter_snap		20030924
+%define		netfilter_snap		20030914
 %define		iptables_version	1.2.8
 %define		ACL_version		0.8.56
 Summary:	The Linux kernel (the core of the Linux operating system)
