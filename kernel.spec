@@ -20,7 +20,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.5
-Release:	2
+Release:	3
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -56,6 +56,9 @@ Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
 Source1000:	%{name}-lids.config
+Source1001:	%{name}-abi.config
+Source1002:	%{name}-grsec.config
+Source1003:	%{name}-addon.config
 
 # New features
 
@@ -137,7 +140,7 @@ ExclusiveArch:	%{ix86} sparc sparc64 alpha
 %ifarch		%{ix86}
 BuildRequires:	bin86
 %endif
-BuildRequires:	kernel-headers
+#BuildRequires:	kernel-headers
 
 %description
 This package contains the Linux kernel that is used to boot and run
@@ -391,7 +394,6 @@ echo -e $ANS | ./runme)
 
 %if %{?_with_lids:1}%{!?_with_lids:0}
 # LIDS
-echo "LIDS"
 cd lids-%{lids_version}
 %patch904 -p1
 cd ..
@@ -411,7 +413,6 @@ mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
 
 # Free S/Wan
-echo "Free S/Wan"
 mv -f net/ipsec/Makefile net/ipsec/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*-g//g' net/ipsec/Makefile.orig > net/ipsec/Makefile
 
@@ -444,7 +445,6 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
 %endif
     Makefile.orig >Makefile
 
-echo "Ready to build"
 
 %build
 BuildKernel() {
@@ -467,6 +467,9 @@ BuildKernel() {
 		KernelVer=%{version}-%{release}
 		echo BUILDING THE NORMAL KERNEL...
 	fi
+	cat %{SOURCE1003} >> $RPM_SOURCE_DIR/kernel-$Config.config
+	cat %{SOURCE1001} >> $RPM_SOURCE_DIR/kernel-$Config.config
+	cat %{SOURCE1002} >> $RPM_SOURCE_DIR/kernel-$Config.config
 	cp $RPM_SOURCE_DIR/kernel-$Config.config arch/$RPM_ARCH/defconfig
 	if [ "$LIDS" = "lids" ] ; then
 		echo ENABLING LIDS...
@@ -632,7 +635,6 @@ echo -e $ANS | ./runme))
 
 %if %{?_with_lids:1}%{!?_with_lids:0}
 # LIDS
-echo "LIDS"
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/lids-%{lids_version} < %{PATCH904}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/lids-%{lids_version}/lids-%{lids_version}.patch
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config $RPM_BUILD_ROOT/usr/src/linux-%{version}/.config.lids
