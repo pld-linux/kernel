@@ -50,7 +50,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		4%{with mosix:m}
+%define		_rel		4%{?with_mosix:m}
 %define		_cset		20040707_0722
 %define		_apply_cset	1
 
@@ -828,7 +828,7 @@ BuildConfig (){
 %endif
 
 %ifarch %{ix86} 
-    %if %{with_mosix}
+    %if %{with mosix}
 	cat %{SOURCE100} >> arch/%{_target_base_arch}/defconfig
 	%if %{with preemptive}
 		sed -i 's:CONFIG_PREEMPT=y:# CONFIG_PREEMPT is not set:' arch/%{_target_base_arch}/defconfig
