@@ -678,6 +678,16 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH106}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH108}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH109}
 
+# VLAN
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <vlan.%{vlan_version}/vlan_2.2.patch
+
+#serial
+cd serial-5.05
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH41}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH42}
+./install-in-kernel $RPM_BUILD_ROOT/usr/src/linux-%{version}
+cd ..
+
 #DAC960 drivers
 tar xfz %{SOURCE8}
 mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
@@ -697,11 +707,6 @@ rm -rf sym-%{symncr_version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH104}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < jfs-2.2.common-v%{jfs_version}-patch
 
-cd serial-5.05
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH41}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH42}
-./install-in-kernel $RPM_BUILD_ROOT/usr/src/linux-%{version}
-cd ..
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH107}
 
