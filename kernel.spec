@@ -690,7 +690,7 @@ echo Added support for V4L2
 #%patch139 -p1
 
 # sysctl controll of /dev/mem
-%{!?_without_grsec:%patch921 -p1}
+#%{!?_without_grsec:%patch921 -p1}
 
 %patch143 -p1
 %patch145 -p1
