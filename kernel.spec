@@ -395,8 +395,8 @@ exit 0
 exit 0
 
 %post
-mv -f /boot/vmlinuz /boot/vmlinuz.old
-mv -f /boot/System.map /boot/System.map.old
+mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null 
+mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
 
@@ -408,8 +408,8 @@ rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release} /lib/modules/%{version}
 
 %post smp
-mv -f /boot/vmlinuz /boot/vmlinuz.old
-mv -f /boot/System.map /boot/System.map.old
+mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
+mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}smp /boot/System.map
 
@@ -421,8 +421,8 @@ rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
 
 %post BOOT
-mv -f /boot/vmlinuz /boot/vmlinuz.old
-mv -f /boot/System.map /boot/System.map.old
+mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
+mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release}BOOT /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}BOOT /boot/System.map
 
