@@ -106,11 +106,13 @@ Patch110:	%{name}-nfs-fixes.patch
 Patch111:	linux-2.2.20-pcilynx_unresolved.patch
 Patch112:	bigmem-2.2.21-0.1.bz2
 # based on ftp://ftp.kernel.org/people/andrea/kernels/v2.2/2.2.20pre9aa2/40_lfs-2.2.20pre9aa2-27.bz2
-Patch113:	linux-2.2.20-lfs.patch
+#Patch113:	linux-2.2.20-lfs.patch
+Patch113:	40_lfs-2.2.20pre10aa1-28
 Patch114:	linux-2.2.21-mppe.patch
 Patch115:	wrr-linux-2.2.18.patch
 Patch116:	2.2.21-wrr-pkt_bridged.patch
 Patch117:	2.2.21-mm_afunix.patch
+Patch118: 	linux-2.2.18-reiserfs-lfs-fixes.patch.bz2
 
 Patch302:	ow2-fix-2.2.21-rc3.patch
 
@@ -523,6 +525,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch115 -p1
 %patch116 -p1
 %patch117 -p1
+%patch118 -p1
 
 %ifarch sparc sparc64
 %patch1500 -p1
@@ -867,6 +870,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH114}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH115}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH116}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH117}
+bzip2 -dc %{PATCH118} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 %ifarch sparc sparc64
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1500}
