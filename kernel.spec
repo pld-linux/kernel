@@ -133,7 +133,7 @@ Patch30:	2.6.x-TGA-fbdev-lkml.patch
 Patch50:	linux-2.6-pom-ng-%{_netfilter_snap}.patch
 # http://l7-filter.sourceforge.net/
 #Patch51:	linux-2.6-layer7-%{_l7_ver}.patch	WAITING FOR MEMLEAK FIX
-Patch52:	2.6.10-esfq.patch
+Patch52:	linux-2.6-esfq.patch
 # http://www.linuximq.net/patchs/linux-2.6.9-imq1.diff
 Patch53:	2.6.10-imq.patch
 Patch54:	2.6.4-wrr.patch
