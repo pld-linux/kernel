@@ -125,7 +125,7 @@ diff -Naur host/arch/i386/kernel/ptrace.c host-ptrace/arch/i386/kernel/ptrace.c
  asmlinkage int sys_ptrace(long request, long pid, long addr, long data)
  {
  	struct task_struct *child;
-@@ -415,6 +420,53 @@
+@@ -415,9 +420,57 @@
  			child->ptrace |= PT_TRACESYSGOOD;
  		else
  			child->ptrace &= ~PT_TRACESYSGOOD;
@@ -162,7 +162,7 @@ diff -Naur host/arch/i386/kernel/ptrace.c host-ptrace/arch/i386/kernel/ptrace.c
 +		ret = modify_ldt(child, ldt.func, ldt.ptr, ldt.bytecount);
 +		break;
 +	}
-+
++#ifdef CONFIG_PROC_MM
 +	case PTRACE_SWITCH_MM: {
 +		struct mm_struct *old = child->mm;
 +		struct mm_struct *new = proc_mm_get_mm(data);
@@ -179,6 +179,10 @@ diff -Naur host/arch/i386/kernel/ptrace.c host-ptrace/arch/i386/kernel/ptrace.c
  		ret = 0;
  		break;
  	}
++#endif
+ 	default:
+ 		ret = -EIO;
+ 		break;
 diff -Naur host/arch/i386/kernel/sys_i386.c host-ptrace/arch/i386/kernel/sys_i386.c
 --- host/arch/i386/kernel/sys_i386.c	Mon Mar 19 15:35:09 2001
 +++ host-ptrace/arch/i386/kernel/sys_i386.c	Mon Nov 11 17:23:25 2002
