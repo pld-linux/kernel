@@ -196,13 +196,13 @@ Patch92:	exec-shield-make-peace-with-grsecurity.patch
 #Patch102:	01_arp_prefsrc-2.5.50-5.diff <- not applied. needs checkout
 #Patch103:	05_nf_reroute-2.6.7-10.diff
 
+# http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.10-rc2/2.6.10-rc-mm2/broken-out
+Patch200:	linux-reiser4.patch.bz2
+
 # hotfixes
 Patch300:	linux-2.6-sparc-ksyms.patch
 
 Patch303:	%{name}-hotfixes.patch
-
-# http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.10-rc2/2.6.10-rc-mm2/broken-out
-Patch700:	linux-reiser4.patch.bz2
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -644,12 +644,12 @@ patch -p1 -s < exec-shield.patch
 #patch102 -p1 # <- not applayed need checkout
 #patch103 -p1
 
+%patch200 -p1
+
 # hotfixes
 %patch300 -p1
 
 %patch303 -p1
-
-%patch700 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
