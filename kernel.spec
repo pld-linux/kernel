@@ -528,7 +528,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch0 -p1
 
 %if "%{_cset}" != "0"
-zcat %{SOURCE3} | patch -p1
+zcat %{SOURCE3} | patch -p1 -s
 %endif
 
 %patch4 -p1
@@ -1014,10 +1014,8 @@ install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{version}/include/l
 $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 %endif
 
-ln -sf asm-%{_arch} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
-
 %{__make} mrproper
-
+ln -sf asm-%{_arch} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
 %{__make} include/linux/version.h
 install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
 
