@@ -1011,7 +1011,10 @@ install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoco
 # well include the depends stuff as well
 %{__make} symlinks 
 %{__make} include/linux/version.h
-%{__make} "`pwd`/include/linux/modversions.h"
+#%{__make} "`pwd`/include/linux/modversions.h"
+rm -f include/linux/modversions.h
+echo "#include <linux/modsetver.h>" > include/linux/modversions.h
+
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well, after we fix the paths
@@ -1180,7 +1183,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.o*
 %endif
 %ifnarch alpha ppc sparc
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/ide/ide-cs.o*
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/ide/legacy/ide-cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o*
@@ -1202,7 +1205,7 @@ fi
 /lib/modules/%{version}-%{release}/kernel/drivers/parport/*_cs.o*
 /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.o*
 %ifnarch ppc
-/lib/modules/%{version}-%{release}/kernel/drivers/ide/ide-cs.o*
+/lib/modules/%{version}-%{release}/kernel/drivers/ide/legacy/ide-cs.o*
 /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
 /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o*
 /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o*
@@ -1236,7 +1239,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.o*
 %endif
 %ifnarch alpha ppc sparc
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/ide-cs.o*
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/legacy/ide-cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o*
@@ -1258,7 +1261,7 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/*_cs.o*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/dtl1_cs.o*
 %ifnarch ppc
-/lib/modules/%{version}-%{release}smp/kernel/drivers/ide/ide-cs.o*
+/lib/modules/%{version}-%{release}smp/kernel/drivers/ide/legacy/ide-cs.o*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o*
