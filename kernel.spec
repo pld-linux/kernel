@@ -11,6 +11,24 @@
 %bcond_without source	# don't build kernel-source package
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
+## netfilter snap 
+%define		_netfilter_snap		20031204
+## Program required by kernel to work.
+%define		_binutils_ver		2.12
+%define		_util-linux_ver		2.10o
+%define		_module-init-tool_ver	0.9.10
+%define		_e2fsprogs_ver		1.29
+%define		_jfsutils_ver		1.1.3
+%define		_reiserfsprogs_ver	3.6.3
+%define		_xfsprogs_ver		2.1.0
+%define		_pcmcia-cs_ver		3.1.21
+%define		_quota-tools_ver	3.09
+%define		_PPP_ver		2.4.0
+%define		_isdn4k-utils_ver	3.1pre1
+%define		_nfs-utils_ver		1.0.5
+%define		_procps_ver		3.1.13
+%define		_oprofile_ver		0.5.3
+
 
 %define		_rel		1
 %define		_test_ver	11
@@ -65,7 +83,7 @@ Patch6:		2.6.0-t3-sysfs_mem-lkml.patch
 Patch8:		2.6.0-t4-PPC-ENODEV.patch
 Patch10:	kernel-siimage-rqsize.patch
 
-Patch12:	2.6.0-t11-p2p+netfilter-20031204.patch
+Patch12:	2.6.0-t11-p2p+netfilter-%{_netfilter_snap}.patch
 Patch14:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
 Patch16:	2.6.0-t6-usb-irq.patch
 
@@ -124,12 +142,26 @@ BuildRequires:	elftoaout
 %endif
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	module-info
+Provides:	%{name}-up(netfilter) = %{_netfilter_snap}
 Autoreqprov:	no
 Prereq:		coreutils
 Prereq:		module-init-tools >= 0.9.9
 Prereq:		geninitrd >= 2.57
-Conflicts:	quota < 3.09
 Obsoletes:	kernel-modules
+Conflicts:	binutils < %{_binutils_ver}
+Conflicts:	util-linux < %{_util-linux_ver}
+Conflicts:	module-init-tool < %{_module-init-tool_ver}
+Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
+Conflicts:	jfsutils < %{_jfsutils_ver}
+Conflicts:	reiserfsprogs > = _reiserfsprogs_ver}
+Conflicts:	xfsprogs < %{_xfsprogs_ver}
+Conflicts:	quota-tools < %{_quota-tools_ver}
+Conflicts:	PPP < %{_PPP_ver}
+Conflicts:	isdn4k-utils < %{_isdn4k-utils_ver}
+Conflicts:	nfs-utils < %{_nfs-utils_ver}
+Conflicts:	procps < %{_procps_ver}
+Conflicts:	oprofile < %{_oprofile_ver}
+
 ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 
 %description
@@ -162,10 +194,23 @@ Summary(pl):	J±dro Linuxa w wersji %{version} dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Provides:	%{name}-smp = %{epoch}:%{version}-%{release}
 Provides:	module-info
+Provides:	%{name}-smp(netfilter) = %{_netfilter_snap}
 Prereq:		coreutils
 Prereq:		module-init-tools >= 0.9.9
 Prereq:		geninitrd >= 2.26
-Conflicts:	quota < 3.09
+Conflicts:	binutils < %{_binutils_ver}
+Conflicts:	util-linux < %{_util-linux_ver}
+Conflicts:	module-init-tool < %{_module-init-tool_ver}
+Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
+Conflicts:	jfsutils < %{_jfsutils_ver}
+Conflicts:	reiserfsprogs > = _reiserfsprogs_ver}
+Conflicts:	xfsprogs < %{_xfsprogs_ver}
+Conflicts:	quota-tools < %{_quota-tools_ver}
+Conflicts:	PPP < %{_PPP_ver}
+Conflicts:	isdn4k-utils < %{_isdn4k-utils_ver}
+Conflicts:	nfs-utils < %{_nfs-utils_ver}
+Conflicts:	procps < %{_procps_ver}
+Conflicts:	oprofile < %{_oprofile_ver}
 Autoreqprov:	no
 
 %description smp
@@ -224,6 +269,7 @@ Group:		Base/Kernel
 Provides:	%{name}-pcmcia = %{pcmcia_version}
 Provides:	kernel(pcmcia)
 PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
+Conflicts:	pcmcia-cs < %{_pcmcia-cs_ver}
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 
 %description pcmcia
@@ -239,6 +285,7 @@ Group:		Base/Kernel
 Provides:	%{name}-pcmcia = %{pcmcia_version}
 Provides:	kernel(pcmcia)
 PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
+Conflicts:	pcmcia-cs < %{_pcmcia-cs_ver}
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 
 %description smp-pcmcia
@@ -341,7 +388,7 @@ Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
 Provides:	i2c-devel
-Provides:	%{name}-headers(netfilter) = 1.2.9
+Provides:	%{name}-headers(netfilter) = %{_nstfilter_snap}
 Provides:	%{name}-headers(alsa-drivers)
 Provides:	alsa-driver-devel
 Obsoletes:	alsa-driver-devel
