@@ -3,16 +3,14 @@
 # packages will be built
 #
 # _without_grsec	- build without grsecurity patch
-# _with_preemptive	- build with Preemptible patch
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 # _without_boot		- don't build BOOT kernel
 # _without_source	- don't build source
 # _without_doc		- don't build documentation package
-# _without_w4l		- don't build Win4Lin support
 #
 
-%define		patch_level	4
+%define		patch_level	5
 %define		_rel		6
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -1435,7 +1433,6 @@ fi
 %{!?_without_grsec:%{_prefix}/src/linux-%{version}/grsecurity}
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
-#%%{_prefix}/src/linux-%{version}/kdb
 %{_prefix}/src/linux-%{version}/kernel
 %{_prefix}/src/linux-%{version}/lib
 %{_prefix}/src/linux-%{version}/mm
