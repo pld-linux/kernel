@@ -736,7 +736,7 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # Netfilter
 %patch8 -p1
-#%%patch888 -p1
+%patch888 -p1
 
 %patch32 -p1
 %patch31 -p1
