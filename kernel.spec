@@ -219,7 +219,6 @@ PreReq:		geninitrd >= 2.26
 Provides:	%{name}-smp = %{epoch}:%{version}-%{release}
 Provides:	module-info
 Provides:	%{name}(netfilter) = %{_netfilter_snap}
-Conflicts:	binutils < %{_binutils_ver}
 Conflicts:	util-linux < %{_util_linux_ver}
 Conflicts:	module-init-tool < %{_module_init_tool_ver}
 Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
