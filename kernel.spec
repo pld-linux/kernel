@@ -106,8 +106,7 @@ Patch28:	i2o-2.4.2.patch
 
 Patch29:	linux-2.4.2-Davicom-card.patch
 
-Patch30:	http://home.sch.bme.hu/~cell/br2684/dist/010109/br2684-against2.4.0.diff
-Patch31:	http://home.sch.bme.hu/~cell/br2684/dist/010109/br2684-common.c-spin_unlock.diff
+Patch30:	http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 
 # aacraid fix
 Patch32:	http://domsch.com/linux/aacraid/linux-2.4.3-axboe-scsi-max-sec.patch
