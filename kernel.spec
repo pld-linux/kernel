@@ -36,7 +36,7 @@ Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-126.tar.gz
 Source32:	kernel-BuildASM.sh
 Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.14.1.gz
 Patch1:		ftp://ftp.botik.ru/rented/namesys/ftp/pub/linux+reiserfs/linux-2.2.14-reiserfs-3.5.20-pre1-patch.gz
-Patch2:		linux-2.2.14-atm-0.59-fore200e-0.1f.patch.gz
+Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
 Patch3:		linux-tasks.patch
 Patch4:		raid-2.2.14-B1.gz
 Patch5:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide.2.2.15.20000504.patch.bz2
