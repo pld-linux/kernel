@@ -76,7 +76,7 @@ Patch100:	bridge-include.patch
 Patch101:	bridge-netsyms.patch
 Patch102:	%{name}-ipsec-bridge.patch
 Patch103:	%{name}-bridge-extraversion.patch
-#Patch104:	some patch
+Patch104:	jfs-2.2.20-v%{jfs_version}-patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -381,6 +381,7 @@ patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # JFS 1.0.5
+%patch104 -p1
 patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 
 %build
@@ -599,7 +600,6 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH10}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH100}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH102}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH103}
 
 #DAC960 drivers
 tar xfz %{SOURCE8}
@@ -615,6 +615,7 @@ mv sym-%{symncr_version}/{README,ChangeLog}.* $RPM_BUILD_ROOT/usr/src/linux-%{ve
 rm -rf sym-%{symncr_version}
 
 # jfs 1.0.5
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH104}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < jfs-2.2.common-v%{jfs_version}-patch
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
