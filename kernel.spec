@@ -361,6 +361,21 @@ programs under Linux, as well as to rebuild the kernel.
 Pakiet zawiera pliki nag³ówkowe j±dra, niezbedne do rekompilacji j±dra
 oraz niektórych programów.
 
+%package headers-foreign
+Summary:	Header files for the Linux kernel for non-native architectures
+Summary(pl):	Pliki nag³ówkowe j±dra dla obcych architektur
+Group:		Base/Kernel
+Requires:	%{name}-headers
+Autoreqprov:	no
+
+%description headers-foreign
+These are the C header files for the Linux kernel which contains
+architecture-dependent headers for non-native architectures.
+
+%description headers-foreign -l pl
+Pakiet zawiera zale¿ne od architektury pliki nag³ówkowe j±dra dla
+architektur innych ni¿ aktualna.
+
 %package doc
 Summary:	Kernel documentation
 Summary(pl):	Dokumentacja j±dra
@@ -1193,7 +1208,7 @@ fi
 /lib/modules/%{version}-%{release}/fc4
 %endif
 /lib/modules/%{version}-%{release}smp/fs
-%ifnarch sparc sparc64
+%ifnarch alpha sparc sparc64
 /lib/modules/%{version}-%{release}smp/ieee1394
 %endif
 /lib/modules/%{version}-%{release}smp/ipv4
@@ -1243,17 +1258,41 @@ fi
 
 %files headers
 %defattr(644,root,root,755)
-%dir %{_prefix}/src/linux-%{version}
-%{_prefix}/src/linux-%{version}/include
+%dir %{_kernelsrcdir}
+%dir %{_kernelsrcdir}/include
+%{_kernelsrcdir}/include/[!a]*
 %{_includedir}/asm
-#%ifarch sparc sparc64
-#%%{_includedir}/asm-sparc*
-#%endif
-%ifarch ppc
-%{_kernelsrcdir}/include/asm-ppc
+%{_kernelsrcdir}/include/asm-generic
+%ifarch sparc sparc64
+%{_kernelsrcdir}/include/asm-sparc*
 %endif
-
+%ifarch ppc
+%{_kernelsrcdir}/include/asm-ppc*
+%endif
+%ifarch %{ix86}
+%{_kernelsrcdir}/include/asm-i386
+%endif
+%ifarch alpha
+%{_kernelsrcdir}/include/asm-alpha
+%endif
 %{_includedir}/linux
+
+%files headers-foreign
+%defattr(644,root,root,755)
+%ifarch sparc sparc64
+%{_kernelsrcdir}/include/asm-[!gs]*
+%{_kernelsrcdir}/include/asm-s[!p]*
+%endif
+%ifarch ppc
+%{_kernelsrcdir}/include/asm-[!gp]*
+%endif
+%ifarch %{ix86}
+%{_kernelsrcdir}/include/asm-[!gi]*
+%endif
+%ifarch alpha
+%{_kernelsrcdir}/include/asm-[!ag]*
+%{_kernelsrcdir}/include/asm-a[!l]*
+%endif
 
 %files doc
 %defattr(644,root,root,755)
