@@ -57,6 +57,8 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
+Source30:	%{name}-amd64.config
+Source31:	%{name}-amd64-smp.config
 Source50:	%{name}-sparc.config
 #Source51:	%{name}-sparc-smp.config
 #Source60:	%{name}-sparc64.config
@@ -155,6 +157,8 @@ Patch94:	acpi-20031203-2.6.0.diff.gz
 Patch96:	2.6.0-mount-rainier-lkml.patch
 Patch97:	2.6.0-mount-rainier-fix-lkml.patch
 
+Patch98:	x86_64-2.6.0-1-pld.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
@@ -183,7 +187,7 @@ Conflicts:	isdn4k-utils < %{_isdn4k-utils_ver}
 Conflicts:	nfs-utils < %{_nfs-utils_ver}
 Conflicts:	procps < %{_procps_ver}
 Conflicts:	oprofile < %{_oprofile_ver}
-ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
+ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc amd64
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -562,6 +566,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch96 -p1
 %patch97 -p0
 
+%patch98 -p1
+
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
@@ -684,6 +690,10 @@ PreInstallKernel (){
 %ifarch %{ix86}
 	cp arch/i386/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
+%ifarch amd64
+	cp arch/x86_64/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%endif
+
 %ifarch alpha sparc sparc64
 	gzip -cfv vmlinux > vmlinuz
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
