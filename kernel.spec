@@ -14,7 +14,7 @@
 
 %define		_rel		2
 %define		_test_ver	9
-%define		_cset		20031027_0405
+%define		_cset		20031027_2205
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -61,7 +61,7 @@ Patch1:		cset-%{_cset}.txt.gz
 # ftp://ftp.kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.0-test5/2.6.0-test5-mm1/broken-out
 #Patch2:		acpi-irq-fixes.patch
 
-Patch4:		squashfs1.3-patch
+Patch4:		squashfs1.3r2-patch
 
 Patch6:		2.6.0-t3-sysfs_mem-lkml.patch
 
@@ -97,7 +97,6 @@ Patch70:	2.6.0-t9-ibmtr_cs-lkml.patch
 Patch72:	2.6.0-t9-NLS-module-lkml.patch
 
 Patch74:	2.6.0-t9-acpi_osl-lkml.patch
-Patch76:	2.6.0-t9-netfilter-lkml.patch
 Patch78:	2.6.0-test9-nforce-ideata133.patch
 Patch80:	2.6.0-test9-promise20378.patch
 Patch82:	2.6.0-test9-r8169-8110S.patch
@@ -430,7 +429,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch72 -p1
 
 %patch74 -p1
-%patch76 -p1
 %patch78 -p1
 %patch80 -p1
 %patch82 -p1
