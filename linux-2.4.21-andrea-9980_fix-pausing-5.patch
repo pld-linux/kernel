@@ -1,0 +1,283 @@
+diff -urNp --exclude CVS --exclude BitKeeper x-ref/drivers/block/ll_rw_blk.c x/drivers/block/ll_rw_blk.c
+--- x-ref/drivers/block/ll_rw_blk.c	2003-06-12 04:47:41.000000000 +0200
++++ x/drivers/block/ll_rw_blk.c	2003-06-12 04:47:55.000000000 +0200
+@@ -596,12 +596,20 @@ static struct request *__get_request_wai
+ 	register struct request *rq;
+ 	DECLARE_WAITQUEUE(wait, current);
+ 
+-	add_wait_queue(&q->wait_for_requests[rw], &wait);
++	add_wait_queue_exclusive(&q->wait_for_requests[rw], &wait);
+ 	do {
+ 		set_current_state(TASK_UNINTERRUPTIBLE);
+-		generic_unplug_device(q);
+-		if (q->rq[rw].count == 0)
++		if (q->rq[rw].count == 0) {
++			/*
++			 * All we care about is not to stall if any request
++			 * is been released after we set TASK_UNINTERRUPTIBLE.
++			 * This is the most efficient place to unplug the queue
++			 * in case we hit the race and we can get the request
++			 * without waiting.
++			 */
++			generic_unplug_device(q);
+ 			schedule();
++		}
+ 		spin_lock_irq(&io_request_lock);
+ 		rq = get_request(q, rw);
+ 		spin_unlock_irq(&io_request_lock);
+@@ -611,6 +619,17 @@ static struct request *__get_request_wai
+ 	return rq;
+ }
+ 
++static void get_request_wait_wakeup(request_queue_t *q, int rw)
++{
++	/*
++	 * avoid losing an unplug if a second __get_request_wait did the
++	 * generic_unplug_device while our __get_request_wait was running
++	 * w/o the queue_lock held and w/ our request out of the queue.
++	 */
++	if (q->rq[rw].count == 0 && waitqueue_active(&q->wait_for_requests[rw]))
++		__generic_unplug_device(q);
++}
++
+ /* RO fail safe mechanism */
+ 
+ static long ro_bits[MAX_BLKDEV][8];
+@@ -835,8 +854,11 @@ void blkdev_release_request(struct reque
+ 	 */
+ 	if (q) {
+ 		list_add(&req->queue, &q->rq[rw].free);
+-		if (++q->rq[rw].count >= q->batch_requests)
+-			wake_up(&q->wait_for_requests[rw]);
++		if (++q->rq[rw].count >= q->batch_requests) {
++			smp_mb();
++			if (waitqueue_active(&q->wait_for_requests[rw]))
++				wake_up(&q->wait_for_requests[rw]);
++		}
+ 	}
+ }
+ 
+@@ -907,6 +929,7 @@ static inline void attempt_front_merge(r
+ static int __make_request(request_queue_t * q, int rw,
+ 				  struct buffer_head * bh)
+ {
++	int need_unplug = 0;
+ 	unsigned int sector, count;
+ 	int max_segments = MAX_SEGMENTS;
+ 	struct request * req, *freereq = NULL;
+@@ -954,7 +977,6 @@ static int __make_request(request_queue_
+ 	 */
+ 	max_sectors = get_max_sectors(bh->b_rdev);
+ 
+-again:
+ 	req = NULL;
+ 	head = &q->queue_head;
+ 	/*
+@@ -963,6 +985,7 @@ again:
+ 	 */
+ 	spin_lock_irq(&io_request_lock);
+ 
++again:
+ 	insert_here = head->prev;
+ 	if (list_empty(head)) {
+ 		q->plug_device_fn(q, bh->b_rdev); /* is atomic */
+@@ -1048,6 +1071,9 @@ get_rq:
+ 			if (req == NULL) {
+ 				spin_unlock_irq(&io_request_lock);
+ 				freereq = __get_request_wait(q, rw);
++				head = &q->queue_head;
++				need_unplug = 1;
++				spin_lock_irq(q->queue_lock);
+ 				goto again;
+ 			}
+ 		}
+@@ -1074,6 +1100,8 @@ get_rq:
+ out:
+ 	if (freereq)
+ 		blkdev_release_request(freereq);
++	if (need_unplug)
++		get_request_wait_wakeup(q, rw);
+ 	spin_unlock_irq(&io_request_lock);
+ 	return 0;
+ end_io:
+@@ -1202,8 +1230,21 @@ void __submit_bh(int rw, struct buffer_h
+ 	bh->b_rdev = bh->b_dev;
+ 	bh->b_rsector = bh->b_blocknr * count;
+ 
++	/*
++	 * Really we could read random memory in the waitqueue
++	 * check and as worse we would trigger a false positive
++	 * queue unplug, however getting the reference
++	 * on the bh and reading allocated memory is cleaner.
++	 */
++	get_bh(bh);
+ 	generic_make_request(rw, bh);
+ 
++	/* fix race condition with wait_on_buffer() */
++	smp_mb(); /* spin_unlock may have inclusive semantics */
++	if (waitqueue_active(&bh->b_wait))
++		run_task_queue(&tq_disk);
++	put_bh(bh);
++
+ 	switch (rw) {
+ 		case WRITE:
+ 			kstat.pgpgout += count;
+diff -urNp --exclude CVS --exclude BitKeeper x-ref/fs/buffer.c x/fs/buffer.c
+--- x-ref/fs/buffer.c	2003-06-12 04:47:41.000000000 +0200
++++ x/fs/buffer.c	2003-06-12 04:47:44.000000000 +0200
+@@ -158,10 +158,23 @@ void __wait_on_buffer(struct buffer_head
+ 	get_bh(bh);
+ 	add_wait_queue(&bh->b_wait, &wait);
+ 	do {
+-		run_task_queue(&tq_disk);
+ 		set_task_state(tsk, TASK_UNINTERRUPTIBLE);
+ 		if (!buffer_locked(bh))
+ 			break;
++		/*
++		 * We must read tq_disk in TQ_ACTIVE after the
++		 * add_wait_queue effect is visible to other cpus.
++		 * We could unplug some line above it wouldn't matter
++		 * but we can't do that right after add_wait_queue
++		 * without an smp_mb() in between because spin_unlock
++		 * has inclusive semantics.
++		 * Doing it here is the most efficient place so we
++		 * don't do a suprious unplug if we get a racy
++		 * wakeup that make buffer_locked to return 0, and
++		 * doing it here avoids an explicit smp_mb() we
++		 * rely on the implicit one in set_task_state.
++		 */
++		run_task_queue(&tq_disk);
+ 		schedule();
+ 	} while (buffer_locked(bh));
+ 	tsk->state = TASK_RUNNING;
+@@ -1471,6 +1484,7 @@ static int __block_write_full_page(struc
+ 
+ 	if (!page->buffers)
+ 		create_empty_buffers(page, inode->i_dev, 1 << inode->i_blkbits);
++	BUG_ON(page_count(page) < 3);
+ 	head = page->buffers;
+ 
+ 	block = page->index << (PAGE_CACHE_SHIFT - inode->i_blkbits);
+@@ -1517,6 +1531,9 @@ static int __block_write_full_page(struc
+ 
+ 	/* Done - end_buffer_io_async will unlock */
+ 	SetPageUptodate(page);
++
++	wakeup_page_waiters(page);
++
+ 	return 0;
+ 
+ out:
+@@ -1548,6 +1565,7 @@ out:
+ 	} while (bh != head);
+ 	if (need_unlock)
+ 		UnlockPage(page);
++	wakeup_page_waiters(page);
+ 	return err;
+ }
+ 
+@@ -1721,6 +1739,7 @@ int block_read_full_page(struct page *pa
+ 	blocksize = 1 << inode->i_blkbits;
+ 	if (!page->buffers)
+ 		create_empty_buffers(page, inode->i_dev, blocksize);
++	BUG_ON(page_count(page) < 3);
+ 	head = page->buffers;
+ 
+ 	blocks = PAGE_CACHE_SIZE >> inode->i_blkbits;
+@@ -1781,6 +1800,8 @@ int block_read_full_page(struct page *pa
+ 		else
+ 			submit_bh(READ, bh);
+ 	}
++
++	wakeup_page_waiters(page);
+ 	
+ 	return 0;
+ }
+@@ -2400,6 +2421,7 @@ int brw_page(int rw, struct page *page, 
+ 
+ 	if (!page->buffers)
+ 		create_empty_buffers(page, dev, size);
++	BUG_ON(page_count(page) < 3);
+ 	head = bh = page->buffers;
+ 
+ 	/* Stage 1: lock all the buffers */
+@@ -2417,6 +2439,7 @@ int brw_page(int rw, struct page *page, 
+ 		submit_bh(rw, bh);
+ 		bh = next;
+ 	} while (bh != head);
++	wakeup_page_waiters(page);
+ 	return 0;
+ }
+ 
+diff -urNp --exclude CVS --exclude BitKeeper x-ref/fs/reiserfs/inode.c x/fs/reiserfs/inode.c
+--- x-ref/fs/reiserfs/inode.c	2003-06-12 04:47:35.000000000 +0200
++++ x/fs/reiserfs/inode.c	2003-06-12 04:47:44.000000000 +0200
+@@ -2048,6 +2048,7 @@ static int reiserfs_write_full_page(stru
+     */
+     if (nr) {
+         submit_bh_for_writepage(page, arr, nr) ;
++	wakeup_page_waiters(page);
+     } else {
+         UnlockPage(page) ;
+     }
+diff -urNp --exclude CVS --exclude BitKeeper x-ref/include/linux/pagemap.h x/include/linux/pagemap.h
+--- x-ref/include/linux/pagemap.h	2003-06-12 04:47:41.000000000 +0200
++++ x/include/linux/pagemap.h	2003-06-12 04:47:44.000000000 +0200
+@@ -98,6 +98,8 @@ static inline void wait_on_page(struct p
+ 		___wait_on_page(page);
+ }
+ 
++extern void FASTCALL(wakeup_page_waiters(struct page * page));
++
+ /*
+  * Returns locked page at given index in given cache, creating it if needed.
+  */
+diff -urNp --exclude CVS --exclude BitKeeper x-ref/kernel/ksyms.c x/kernel/ksyms.c
+--- x-ref/kernel/ksyms.c	2003-06-12 04:47:41.000000000 +0200
++++ x/kernel/ksyms.c	2003-06-12 04:47:44.000000000 +0200
+@@ -319,6 +319,7 @@ EXPORT_SYMBOL(filemap_fdatasync);
+ EXPORT_SYMBOL(filemap_fdatawait);
+ EXPORT_SYMBOL(lock_page);
+ EXPORT_SYMBOL(unlock_page);
++EXPORT_SYMBOL(wakeup_page_waiters);
+ 
+ /* device registration */
+ EXPORT_SYMBOL(register_chrdev);
+diff -urNp --exclude CVS --exclude BitKeeper x-ref/mm/filemap.c x/mm/filemap.c
+--- x-ref/mm/filemap.c	2003-06-12 04:47:41.000000000 +0200
++++ x/mm/filemap.c	2003-06-12 04:47:44.000000000 +0200
+@@ -779,6 +779,20 @@ inline wait_queue_head_t * page_waitqueu
+ 	return wait_table_hashfn(page, &pgdat->wait_table);
+ }
+ 
++/*
++ * This must be called after every submit_bh with end_io
++ * callbacks that would result into the blkdev layer waking
++ * up the page after a queue unplug.
++ */
++void wakeup_page_waiters(struct page * page)
++{
++	wait_queue_head_t * head;
++
++	head = page_waitqueue(page);
++	if (waitqueue_active(head))
++		sync_page(page);
++}
++
+ /* 
+  * Wait for a page to get unlocked.
+  *
+diff -urNp --exclude CVS --exclude BitKeeper x-ref/mm/swapfile.c x/mm/swapfile.c
+--- x-ref/mm/swapfile.c	2003-06-12 04:47:41.000000000 +0200
++++ x/mm/swapfile.c	2003-06-12 04:47:44.000000000 +0200
+@@ -984,8 +984,10 @@ asmlinkage long sys_swapon(const char * 
+ 		goto bad_swap;
+ 	}
+ 
++	get_page(virt_to_page(swap_header));
+ 	lock_page(virt_to_page(swap_header));
+ 	rw_swap_page_nolock(READ, SWP_ENTRY(type,0), (char *) swap_header);
++	put_page(virt_to_page(swap_header));
+ 
+ 	if (!memcmp("SWAP-SPACE",swap_header->magic.magic,10))
+ 		swap_header_version = 1;
