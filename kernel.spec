@@ -18,7 +18,7 @@ Summary(ru):	Ядро Linux
 Summary(uk):	Ядро Linux
 Name:		kernel
 Version:	2.2.21
-Release:	1.2
+Release:	1.3
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -103,7 +103,7 @@ Patch109:	dc395-MAINTAINERS.patch
 Patch110:	%{name}-nfs-fixes.patch
 Patch111:	linux-2.2.20-pcilynx_unresolved.patch
 Patch112:	linux-2.2.20-lfs.patch
-Patch113:	bigmem-2.2.19pre3-21.bz2
+Patch113:	bigmem-2.2.21-0.1.bz2
 
 Patch302:	ow2-fix-2.2.21-rc3.patch
 
