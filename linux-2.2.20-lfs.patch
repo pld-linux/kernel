@@ -1273,7 +1273,7 @@ diff -Naur linux/fs/ext2/file.c linux-p/fs/ext2/file.c
 +	loff_t pos;
  	long block;
  	int offset;
- 	int written, c;
+ 	size_t written, c;
 @@ -202,24 +187,18 @@
  
  	/* Check for overflow.. */
@@ -1319,19 +1319,19 @@ diff -Naur linux/fs/ext2/file.c linux-p/fs/ext2/file.c
  
  	limit = current->rlim[RLIMIT_FSIZE].rlim_cur;
 -	if (limit < RLIM_INFINITY) {
--		if (((unsigned long) pos + count) >= limit) {
+- 		if (((size_t) pos+count) >= limit) {
 -			count = limit - pos;
--			if (((ssize_t) count) <= 0) {
+- 			if (((ssize_t) count) <= 0) {
 -				send_sig(SIGXFSZ, current, 0);
 -				return -EFBIG;
 -			}
-+  	if (limit != RLIM_INFINITY) {
-+  		if (pos >= limit) {
-+  			send_sig(SIGXFSZ, current, 0);
-+  			return -EFBIG;
++   	if (limit != RLIM_INFINITY) {
++   		if (pos >= limit) {
++   			send_sig(SIGXFSZ, current, 0);
++   			return -EFBIG;
  		}
-+  		if (pos+count > limit)
-+  			count = limit - pos;
++   		if (pos+count > limit)
++   			count = limit - pos;
  	}
  
  	/*
