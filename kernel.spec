@@ -411,8 +411,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
-%ifarch %{ix86}
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
+%ifarch %{ix86}
 %patch9 -p1
 %patch907 -p1
 %endif
@@ -608,7 +608,9 @@ BuildKernel() {
 	cat %{SOURCE1004} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1005} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1006} >> arch/$RPM_ARCH/defconfig
+%ifarch %{ix86}
 	cat %{SOURCE1666} >> arch/$RPM_ARCH/defconfig
+%endif
 	if [ "$LIDS" = "lids" ] ; then
 		echo ENABLING LIDS...
 		cat %{SOURCE1000} >> arch/$RPM_ARCH/defconfig
