@@ -26,7 +26,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.23
-Release:	0.5
+Release:	0.5.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -35,8 +35,6 @@ Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 # Source3-md5:	8ed492197244b6a772270417c66214d3
-Source5:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
-# Source5-md5:	b8f2f7a268a5cb75fabcaec3b5d45fcd
 Source7:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-1.1.4.tar.gz
 # Source7-md5:	ea33c28ca1d3afa448b20f337b615b48
 Source20:	%{name}-ia32.config
@@ -73,6 +71,8 @@ Patch20:	uml-patch-2.4.20-6-21.bz2
 Patch21:	linux-2.4.21-uml-o1.patch
 # http://dl.sourceforge.net/user-mode-linux/host-skas3.patch
 Patch22:	linux-2.4.20-uml-host-skas3.patch
+# http://www.kernel.org/pub/linux/kernel/people/jgarzik/libata/ (NOT APPLIED YET)
+Patch23:	2.4.23-libata1.patch.bz2
 
 # New filesystems
 
@@ -101,10 +101,11 @@ Patch80:	linux-2.4.22-intermezzo-acl.patch
 
 # new version of netfilter.
 Patch100:	linux-2.4.23-netfilter-%{netfilter_snap}.patch.gz
+Patch101:	linux-2.4.23-netfilter-IMQ-target.patch
 # http://ebtables.sourceforge.net/
 Patch110:	ebtables-brnf-2_vs_2.4.22.diff.gz
 # http://trash.net/~kaber/imq/
-Patch120:	imq-2.4.18.diff-10
+Patch120:	linux-2.4.21-imq-1.diff
 # ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
 Patch125:	linux-2.4.18-mppe.patch
 Patch130:	linux-2.4.22-tun-new-style.patch
@@ -278,7 +279,7 @@ Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = %{i2c_version}
 Provides:	bttv = 0.7.83
-Provides:	%{name}(netfilter) = 1.2.9rc1-%{netfilter_snap}
+Provides:	%{name}(netfilter) = 1.2.9-%{netfilter_snap}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
 #Provides:	%{name}(cdrw)
@@ -614,6 +615,7 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch20 -p1
 %patch21 -p1
 %patch22 -p1
+#%patch23 -p1 NOT APPLIED, YET
 %patch25 -p1
 #%patch26 -p1
 %patch32 -p1
@@ -628,6 +630,7 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch70 -p1
 %patch80 -p1
 %patch100 -p1
+%patch101 -p1
 %patch110 -p1
 %patch120 -p1
 %patch125 -p1
