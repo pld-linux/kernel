@@ -24,7 +24,7 @@ Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
-# Source0-md5:	ab1f3c1bacc624c1b487956c3242f557
+# Source0-md5:	b14ae665d15eeb494c2b05021ee414b4
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
