@@ -767,6 +767,7 @@ fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release} /lib/modules/%{version}
 
+%if %{!?_without_lids:1}%{?_without_lids:0}
 %post lids
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
@@ -786,6 +787,7 @@ if [ ! -L /lib/modules/%{version} ] ; then
 fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}-lids /lib/modules/%{version}
+%endif
 
 %post smp
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
@@ -807,6 +809,7 @@ fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
 
+%if %{!?_without_lids:1}%{?_without_lids:0}
 %post lids-smp
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
@@ -826,6 +829,7 @@ if [ ! -L /lib/modules/%{version} ] ; then
 fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp-lids /lib/modules/%{version}
+%endif
 
 %post BOOT
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
@@ -853,6 +857,7 @@ if [ -L /lib/modules/%{version} ]; then
 fi
 rm -f /boot/initrd-%{version}-%{release}.gz
 
+%if %{!?_without_lids:1}%{?_without_lids:0}
 %postun lids
 if [ -L /lib/modules/%{version} ]; then 
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}-lids" ]; then
@@ -862,6 +867,7 @@ if [ -L /lib/modules/%{version} ]; then
 	fi
 fi
 rm -f /boot/initrd-%{version}-%{release}-lids.gz
+%endif
 
 %postun smp
 if [ -L /lib/modules/%{version} ]; then 
@@ -873,6 +879,7 @@ if [ -L /lib/modules/%{version} ]; then
 fi
 rm -f /boot/initrd-%{version}-%{release}smp.gz
 
+%if %{!?_without_lids:1}%{?_without_lids:0}
 %postun lids-smp
 if [ -L /lib/modules/%{version} ]; then 
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp-lids" ]; then
@@ -882,6 +889,7 @@ if [ -L /lib/modules/%{version} ]; then
 	fi
 fi
 rm -f /boot/initrd-%{version}-%{release}smp-lids.gz
+%endif
 
 %postun BOOT
 if [ -L /lib/modules/%{version} ]; then 
