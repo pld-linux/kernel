@@ -1,20 +1,15 @@
-#	From: Kronos <kronos@kronoz.cjb.net>
 #
-#	cdrom_read_toc (ide-cd.c) always reads the TOC using MSF format.
-#	If the last session of the disk starts beyond block 1152000 (LBA)
-#	there's an overflow in the MSF format and kernel complains:
-#	"Unable to identify CD-ROM format."
+#	Read the multi-session TOC in LBA format in order to avoid an overflow
+#	in MSF format when the last session starts beyond block 1152000 (LBA).
 #
-#	I tried fixing it by myself setting msf_flag (cdrom_read_tocentry)
-#	to 0 and removing the MSF to LBA conversions in cdrom_read_toc.
-#	It works but I don't have a complete understanding of the code in ide-cd...
+#	Signed-off-by: Luca Tettamanti <kronos@kronoz.cjb.net>
 #
-#	ide-cd.c |   10 ++++++----
-#	1 files changed, 6 insertions(+), 4 deletions(-)
+#	ide-cd.c |   24 +++++++++++++++---------
+#	1 files changed, 15 insertions(+), 9 deletions(-)
 #
---- linux-2.6.10-rc3/drivers/ide/ide-cd.c.orig	2004-12-16 23:56:02.000000000 +0100
-+++ linux-2.6.10-rc3/drivers/ide/ide-cd.c	2004-12-17 18:44:17.686771216 +0100
-@@ -2359,7 +2359,7 @@
+--- a/drivers/ide/ide-cd.c	2004-12-10 23:06:18.000000000 +0100
++++ b/drivers/ide/ide-cd.c	2004-12-17 19:30:56.000000000 +0100
+@@ -2356,25 +2356,31 @@
  	/* Read the multisession information. */
  	if (toc->hdr.first_track != CDROM_LEADOUT) {
  		/* Read the multisession information. */
@@ -22,19 +17,36 @@
 +		stat = cdrom_read_tocentry(drive, 0, 0, 1, (char *)&ms_tmp,
  					   sizeof(ms_tmp), sense);
  		if (stat) return stat;
++	
++		toc->last_session_lba = be32_to_cpu(ms_tmp.ent.addr.lba);
  	} else {
-@@ -2374,9 +2374,11 @@
+-		ms_tmp.ent.addr.msf.minute = 0;
+-		ms_tmp.ent.addr.msf.second = 2;
+-		ms_tmp.ent.addr.msf.frame  = 0;
+ 		ms_tmp.hdr.first_track = ms_tmp.hdr.last_track = CDROM_LEADOUT;
++		toc->last_session_lba = msf_to_lba(0, 2, 0); /* 0m 2s 0f */
+ 	}
+ 
+ #if ! STANDARD_ATAPI
+-	if (CDROM_CONFIG_FLAGS(drive)->tocaddr_as_bcd)
++	if (CDROM_CONFIG_FLAGS(drive)->tocaddr_as_bcd) {
++		/* Re-read multisession information using MSF format */
++		stat = cdrom_read_tocentry(drive, 0, 1, 1, (char *)&ms_tmp,
++					   sizeof(ms_tmp), sense);
++		if (stat)
++			return stat;
++
  		msf_from_bcd (&ms_tmp.ent.addr.msf);
++		toc->last_session_lba = msf_to_lba(ms_tmp.ent.addr.msf.minute,
++					  	   ms_tmp.ent.addr.msf.second,
++						   ms_tmp.ent.addr.msf.frame);
++	}
  #endif  /* not STANDARD_ATAPI */
  
 -	toc->last_session_lba = msf_to_lba (ms_tmp.ent.addr.msf.minute,
 -					    ms_tmp.ent.addr.msf.second,
 -					    ms_tmp.ent.addr.msf.frame);
-+	toc->last_session_lba = be32_to_cpu(ms_tmp.ent.addr.lba);
-+	printk("ide-cd: last_session_lba: %d\n", toc->last_session_lba);
-+//	toc->last_session_lba = msf_to_lba (ms_tmp.ent.addr.msf.minute,
-+//					    ms_tmp.ent.addr.msf.second,
-+//					    ms_tmp.ent.addr.msf.frame);
- 
+-
  	toc->xa_flag = (ms_tmp.hdr.first_track != ms_tmp.hdr.last_track);
  
+ 	/* Now try to get the total cdrom capacity. */
