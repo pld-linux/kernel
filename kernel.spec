@@ -15,7 +15,7 @@
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
 #
-%define		pre_version		rc3
+%define		pre_version		%{nil}
 %define		netfilter_snap		20031121
 %define		i2c_version		2.8.0
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -26,11 +26,11 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.23
-Release:	0.4
+Release:	0.5
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-2.4.22.tar.bz2
-# Source0-md5:	75dc85149b06ac9432106b8941eb9f7b
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
+# Source0-md5:	642af5ab5e1fc63685fde85e9ae601e4
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
@@ -62,9 +62,6 @@ Source2000:	%{name}-win4lin.config
 # Essential stuff
 
 Patch0:		%{name}-pldfblogo.patch
-
-# http://www.kernel.org/pub/linux/kernel/v2.4/testing/
-Patch1:		patch-%{version}-%{pre_version}.bz2
 
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hvr/testing/
 Patch10:	patch-cryptoloop-jari-2.4.22-rc2.0
@@ -245,8 +242,6 @@ Patch1419:	linux-2.4.21-agp-num_of_masks.patch
 Patch1420:	linux-raid5-spare-counting.patch
 Patch1421:	linux-2.4.21-bttv-typo.patch
 Patch1422:	linux-2.4.21-ipt_TRACE-typo.patch
-
-Patch1500:	linux-2.4.23-modular-ide.patch
 
 Patch2000:	linux-PPC-SMP.patch
 Patch2001:	linux-2.4-ppc-procesor.patch
@@ -608,8 +603,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 Este pacote contém documentação para o kernel Linux.
 
 %prep
-%setup -q -a3 -n linux-2.4.22
-%patch1 -p1
+%setup -q -a3 -n linux-%{version}
 # new JFS
 rm -fr fs/jfs
 gzip -dc %{SOURCE7} | tar -xf -
@@ -715,8 +709,6 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch1421 -p1
 # XXX: no TRACE in netfilter included here (at this moment)
 #%patch1422 -p1
-
-%patch1500 -p1
 
 %patch2000 -p0
 %patch2001 -p1
