@@ -38,7 +38,7 @@
 %define		_cset		20040308_0107
 
 ## netfilter snap 
-%define		_netfilter_snap		20040307
+%define		_netfilter_snap		20040308
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/pentium3/i386/;s/amd64/x86_64/')
 
@@ -149,6 +149,8 @@ Patch74:	2.6.x-SGI_VW-fbdev-lkml.patch
 Patch76:	2.6.x-TGA-fbdev-lkml.patch
 
 Patch78:	linux-alpha-isa.patch
+
+Patch80:	2.6.4-rc2-drivers-ide-Kconfig-PDC202XX-fix.patch
 
 Patch82:	2.6.3-ini9100u-fix.patch
 
@@ -560,6 +562,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch76 -p1
 
 %patch78 -p1
+
+%patch80 -p1
 
 %patch82 -p1
 
