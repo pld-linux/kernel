@@ -33,16 +33,19 @@ Release:	0.%{pre_version}.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.gz
+# Source0-md5:	4606bddce8887deec72120a9ef78f4c2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 # Source3-md5: 8ed492197244b6a772270417c66214d3
 Source4:	linux-2.4.20-netfilter-%{netfilter_snap}.tar.gz
+# Source4-md5:	56a065ad2b44b375e91679b3e0515353
 Source5:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
 # Source5-md5: b8f2f7a268a5cb75fabcaec3b5d45fcd
 Source6:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 # Source6-md5: bf0b7cb5f32916f95b00753d24bd689a
 Source7:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
+# Source7-md5:	93828aea31e72bc34e3188d64cf0518a
 Source8:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.bz2
 # Source8-md5: c2a17dbb0259505f45e4dc0ead39709c
 Source9:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
