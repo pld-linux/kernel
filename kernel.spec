@@ -41,7 +41,7 @@
 %define		_cset		0
 
 ## netfilter snap 
-%define		_netfilter_snap		20040330
+%define		_netfilter_snap		20040415
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/pentium3/i386/;s/pentium4/i386/;s/amd64/x86_64/')
 
@@ -86,7 +86,8 @@ Patch0:		2.6.0-ksyms-add.patch
 Patch2:		cset-%{_cset}.txt.gz
 %endif
 
-Patch4:		squashfs1.3r2-patch
+# from http://dl.sf.net/sourceforge/squashfs/
+Patch4:		squashfs1.3r3-patch
 
 Patch6:		2.6.0-t4-PPC-ENODEV.patch
 
@@ -135,7 +136,7 @@ Patch64:	2.6.x-ppp_mppe.patch
 
 Patch66:	2.6.2-Initio9100U-Kconfig.patch
 
-Patch68:	2.6.5-patch-o-matic-ng-base-%{_netfilter_snap}.patch
+Patch68:	2.6.6-rc1-patch-o-matic-ng-base-%{_netfilter_snap}.patch
 
 Patch70:	2.6.3-sparc32-fix.patch
 
@@ -157,7 +158,7 @@ Patch87:	2.6.4-rc1-03-CONNMARK.patch
 
 Patch90:	2.6.4-psion-5mx.patch
 
-Patch94:	2.6.5-patch-o-matic-ng-extra-%{_netfilter_snap}.patch
+#Patch94:	2.6.5-patch-o-matic-ng-extra-%{_netfilter_snap}.patch
 
 #from:		http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
 Patch96:	2.6.1-all-in-1.patch
@@ -513,7 +514,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch6 -p1
 
-##%patch8 -p1
 %patch10 -p1
 
 %patch12 -p1
@@ -536,11 +536,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch38 -p1
 
-# to fix
-#%patch40 -p1
-
-#%patch42 -p1
-
 %patch44 -p1
 %patch45 -p1
 %patch46 -p1
@@ -548,10 +543,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch48 -p1
 
 %patch50 -p1
-
-##%patch52 -p1
-
-#%%patch56 -p1
 
 %patch58 -p1
 
@@ -582,7 +573,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 #%patch90 -p1
 
 # netfilter - extra
-%patch94 -p1
+##%patch94 -p1
 
 %patch96 -p1
 
