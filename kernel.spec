@@ -55,8 +55,8 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.26
-%define		_cset		20050213_2006
+%define		_rel		0.27
+%define		_cset		20050302_0807
 %define		_apply_cset	0
 
 %define		_netfilter_snap		20041118
@@ -73,16 +73,15 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.6.11
+Version:	2.6.11%{_post_ver}
 Release:	%{_rel}
 Epoch:		3
-License:	GPL
+License:	GPL v2
 Group:		Base/Kernel
-#%define		_rc	%{nil}
-%define		_rc	-rc5
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	b0fe88d32b2580c01d58fc39298fd1df
-#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
+%define		_rc	%{nil}
+#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
+# Source0-md5:	f00fd1b5a80f52baf9d1d83acddfa325
 Source1:	%{name}-autoconf.h
 
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
