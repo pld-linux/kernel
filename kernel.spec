@@ -14,7 +14,7 @@
 
 %define		_rel		1
 %define		_test_ver	9
-%define		_cset		20031106_0107
+%define		_cset		20031107_0706
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -523,8 +523,7 @@ BuildKernel() {
 %endif
 }
 
-PreInstallKernel 
-{
+PreInstallKernel (){
 	BOOT=
 	smp=
 	[ "$1" = "BOOT" -o "$2" = "BOOT" ] && BOOT=yes
