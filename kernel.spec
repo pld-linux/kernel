@@ -14,7 +14,7 @@
 
 %define		_rel		1
 %define		_test_ver	8
-%define		_cset		20031021_0506
+%define		_cset		20031022_0506
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -94,10 +94,6 @@ Patch42:	2.6.0-t8-quota-locking-fix-lkml.patch
 
 Patch44:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
 Patch46:	2.6.0-t8-sis900_net-lkml.patch
-
-Patch48:	2.6.0-t8-linuxTV-1of3-lkml.patch
-Patch49:	2.6.0-t8-linuxTV-2of3-lkml.patch
-Patch50:	2.6.0-t8-linuxTV-3of3-lkml.patch
 
 Patch52:	2.6.0-t8-pci_dma_sync_to_device-lkml.patch
 
@@ -424,10 +420,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch44 -p1
 %patch46 -p1
-
-%patch48 -p1
-%patch49 -p1
-%patch50 -p1
 
 %patch52 -p1
 
