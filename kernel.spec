@@ -63,7 +63,7 @@ Source72:	%{name}-alpha-BOOT.config
 Source1000:	%{name}-lids.config
 Source1001:	%{name}-abi.config
 Source1002:	%{name}-grsec.config
-Source1003:	%{name}-addon-2.4.7-pre6.config
+Source1003:	%{name}-addon.config
 Source1004:	%{name}-xfs.config
 Source1005:	%{name}-netfilter.config
 Source1006:	%{name}-ipvs.config
