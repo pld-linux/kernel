@@ -26,6 +26,7 @@
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	fbsplash	# build with fbsplash
+%bcond_with	swsuspend	# build with software suspend v2 (EXPERIMENTAL)
 
 %{?debug:%define with_verbose 1}
 
@@ -71,9 +72,9 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.13
-%define		_cset		20040905_0407
-%define		_apply_cset	0
+%define		_rel		0.21
+%define		_cset		20040913_2305
+%define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
 
@@ -103,7 +104,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 Source1:	%{name}-autoconf.h
 #Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
-# Source4-md5:	98d9834bc3c6d2765e942df53c00ab97
+# Source4-md5:	3d47b367d32efe0d3031b8091cb42346
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -214,10 +215,11 @@ Patch92:	exec-shield-make-peace-with-grsecurity.patch
 #Patch103:	05_nf_reroute-2.6.7-10.diff
 
 # http://sources.redhat.com/cluster/
-Patch200:	linux-cluster-cman.patch
-Patch201:	linux-cluster-dlm.patch
-Patch202:	linux-cluster-gfs.patch
-Patch203:	linux-cluster-gnbd.patch
+# NEED UPDATE
+#Patch200:	linux-cluster-cman.patch
+#Patch201:	linux-cluster-dlm.patch
+#Patch202:	linux-cluster-gfs.patch
+#Patch203:	linux-cluster-gnbd.patch
 
 # suspend/resume
 # http://softwaresuspend.berlios.de/
@@ -671,16 +673,18 @@ patch -p1 -s < exec-shield.patch
 #patch103 -p1
 
 # cluster
-%patch200 -p1
-%patch201 -p1
-%patch202 -p1
-%patch203 -p1
+#patch200 -p1
+#patch201 -p1
+#patch202 -p1
+#patch203 -p1
 
 # suspend/resume
+%if %{with swsuspend}
 %ifarch %{ix86}
 %patch219 -p1
 %endif
 %patch220 -p1
+%endif
 
 # hotfixes
 %patch300 -p1
