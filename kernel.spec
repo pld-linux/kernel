@@ -11,7 +11,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.2
-Release:	5
+Release:	6
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -84,7 +84,6 @@ Patch22:	linux-2.4.2-raw-ip.patch
 Patch23:	linux-2.4.2-epson-1640SU-scanner.patch
 Patch24:	PCI_ISA_bridge.patch
 Patch25:	linux-2.4.2-nvram-hdd.patch
-Patch26:	linux-2.4.x-parisc-PCI-support.patch
 Patch27:	ir242_sock_detach.diff
 Patch28:	cs89x0-driver.patch
 
@@ -365,7 +364,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch23 -p1
 %patch24 -p0
 %patch25 -p0
-%patch26 -p1
 %patch27 -p1
 %patch28 -p1
 %patch29 -p1
@@ -590,7 +588,6 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH22}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH23}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH24}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH25}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH26}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH27}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH28}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH29}
