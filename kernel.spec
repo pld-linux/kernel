@@ -30,9 +30,9 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		2
+%define		_rel		1
 %define		_test_ver	11
-%define		_cset		20031215_0306
+%define		_cset		20031216_0608
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -142,6 +142,13 @@ Patch81:	linux-fbcon-margins.patch
 Patch82:	linux-tdfxfb-interlace+double.patch
 
 Patch84:	linux-sound-oss-devinit-oops.patch
+
+Patch86:	2.6.0-t11-ini9100_dma.patch
+
+Patch88:	2.6.0-sensors-chip-update-1of4-lkml.patch
+Patch89:	2.6.0-sensors-chip-update-2of4-lkml.patch
+Patch90:	2.6.0-sensors-chip-update-3of4-lkml.patch
+Patch91:	2.6.0-sensors-chip-update-4of4-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -537,6 +544,13 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch82 -p1
 
 %patch84 -p1
+
+%patch86 -p1
+
+%patch88 -p1
+%patch89 -p1
+%patch90 -p1
+%patch91 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
