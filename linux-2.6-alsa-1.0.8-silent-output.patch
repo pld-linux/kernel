@@ -1,0 +1,68 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/01/20 20:10:41+01:00 perex@suse.cz 
+#   [ALSA] Fix silent output on some machines with AD1981x codecs
+#   
+#   AC97 Codec
+#   Fixed the default state of 'Headphone Jack Sense' switch on AD1981x
+#   codecs.  Setting this on affects the output of some machines (e.g.
+#   Thindpads).
+#   
+#   The default value is set on only hardwares which are known to work.
+#   
+#   Signed-off-by: Takashi Iwai <tiwai@suse.de>
+# 
+# sound/pci/ac97/ac97_patch.c
+#   2005/01/17 06:47:20+01:00 perex@suse.cz +14 -2
+#   [ALSA] Fix silent output on some machines with AD1981x codecs
+#   
+#   D:2005/01/17 13:47:20
+#   C:AC97 Codec
+#   F:pci/ac97/ac97_patch.c:1.68->1.69 
+#   L:Fixed the default state of 'Headphone Jack Sense' switch on AD1981x
+#   L:codecs.  Setting this on affects the output of some machines (e.g.
+#   L:Thindpads).
+#   L:
+#   L:The default value is set on only hardwares which are known to work.
+#   Signed-off-by: Takashi Iwai <tiwai@suse.de>
+# 
+diff -Nru a/sound/pci/ac97/ac97_patch.c b/sound/pci/ac97/ac97_patch.c
+--- a/sound/pci/ac97/ac97_patch.c	2005-01-28 12:59:52 -08:00
++++ b/sound/pci/ac97/ac97_patch.c	2005-01-28 12:59:52 -08:00
+@@ -1107,13 +1107,25 @@
+ #endif
+ };
+ 
++static void check_ad1981_hp_jack_sense(ac97_t *ac97)
++{
++	u32 subid = ((u32)ac97->subsystem_vendor << 16) | ac97->subsystem_device;
++	switch (subid) {
++	case 0x103c0890: /* HP nc6000 */
++	case 0x103c006d: /* HP nx9105 */
++		/* enable headphone jack sense */
++		snd_ac97_update_bits(ac97, AC97_AD_JACK_SPDIF, 1<<11, 1<<11);
++		break;
++	}
++}
++
+ int patch_ad1981a(ac97_t *ac97)
+ {
+ 	patch_ad1881(ac97);
+ 	ac97->build_ops = &patch_ad1981a_build_ops;
+ 	snd_ac97_update_bits(ac97, AC97_AD_MISC, AC97_AD198X_MSPLT, AC97_AD198X_MSPLT);
+ 	ac97->flags |= AC97_STEREO_MUTES;
+-	snd_ac97_update_bits(ac97, AC97_AD_JACK_SPDIF, 1<<11, 1<<11); /* HP jack sense */
++	check_ad1981_hp_jack_sense(ac97);
+ 	return 0;
+ }
+ 
+@@ -1144,7 +1156,7 @@
+ 	ac97->build_ops = &patch_ad1981b_build_ops;
+ 	snd_ac97_update_bits(ac97, AC97_AD_MISC, AC97_AD198X_MSPLT, AC97_AD198X_MSPLT);
+ 	ac97->flags |= AC97_STEREO_MUTES;
+-	snd_ac97_update_bits(ac97, AC97_AD_JACK_SPDIF, 1<<11, 1<<11); /* HP jack sense */
++	check_ad1981_hp_jack_sense(ac97);
+ 	return 0;
+ }
+ 
