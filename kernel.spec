@@ -3,7 +3,6 @@
 # packages will be built
 #
 # _without_grsec	- build without grsecurity patch
-# _with_preemptive	- build with Preemptible patch
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 # _without_boot		- don't build BOOT kernel
@@ -12,7 +11,7 @@
 # _without_glibc23	- build without support for glibc-kernel-headers
 #
 
-%define		patch_level	10
+%define		patch_level	11
 %define		_rel		9
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -37,9 +36,9 @@ Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
 %if %{patch_level} !=0
-Release:	%{_rel}pl%{patch_level}%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	%{_rel}pl%{patch_level}%{?_without_grsec:_nogrsec}
 %else
-Release:	%{_rel}%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	%{_rel}%{?_without_grsec:_nogrsec}
 %endif
 License:	GPL
 Group:		Base/Kernel
@@ -118,9 +117,6 @@ Patch4:		linux-2.4.20-xfs-1.2.0.patch.bz2
 #Patch5:		
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
 Patch6:		grsecurity-%{grsec_version}-%{version}.patch.gz
-
-# Preemptive kernel  patch
-Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.20-1.patch
 
 # new version of netfilter.
 %if %{netfilter_snap} != 0
@@ -353,7 +349,7 @@ Patch910:	linux-2.4.21-pre4-ac4-via82cxxx_audio.patch.bz2
 #Patch913:	
 Patch914:	linux-2.4.20-MODULE_XXX.patch
 #Patch915:	linux-2.4.19-usb-digitalcams.patch
-#Patch916:	
+Patch916:	linux-2.4.20-st6000-1.34.patch
 Patch917:	linux-2.4.20-nogrsec.patch
 Patch918:	linux-2.4.20-ext3.patch
 Patch919:	linux-2.4.20-ntfs.patch
@@ -944,6 +940,8 @@ echo AXP patches ...
 
 %patch2006 -p1
 
+%patch916  -p1
+
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
@@ -1004,7 +1002,6 @@ BuildKernel() {
 	cat %{SOURCE1004} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1005} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1006} >> arch/%{base_arch}/defconfig
-	%{?_with_preemptive:cat %{SOURCE1999} >> arch/%{base_arch}/defconfig}
 %ifnarch i386 i486
 	cat %{SOURCE1007} >> arch/%{base_arch}/defconfig
 %endif
@@ -1252,7 +1249,6 @@ cat %{SOURCE1005} >> .config
 cat %{SOURCE1006} >> .config
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
-%{?_with_preemptive:cat %{SOURCE1999} >> .config}
 %ifnarch i386 i486
 	cat %{SOURCE1007} >> .config
 %endif
@@ -1309,7 +1305,6 @@ cat %{SOURCE1005} >> .config
 cat %{SOURCE1006} >> .config
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
-%{?_with_preemptive:cat %{SOURCE1999} >> .config}
 %ifnarch i386 i486
 	cat %{SOURCE1007} >> .config
 %endif
