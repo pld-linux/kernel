@@ -298,6 +298,10 @@ Patch3002:	linux-2.4.20-EXPORT_SYMBOL.patch
 Patch3003:	linux-2.4.20-missing-license-tags.patch
 Patch3004:	linux-2.4.20-sym53c8xx_old.patch
 
+# Security fixes
+
+Patch4000:	linux-2.4.20-ptrace-hole.patch
+
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -719,6 +723,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch3002 -p1
 %patch3003 -p1
 %patch3004 -p1
+%patch4000 -p1
 
 mv -f drivers/scsi/sym53c8xx.c drivers/scsi/sym53c8xx_old.c
 
