@@ -28,30 +28,30 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.4.20
-Release:	0.%{pre_version}.1
+Version:	2.4.21
+Release:	0.1
 License:	GPL
 Group:		Base/Kernel
-# Source0-md5:	c439d5c93d7fc9a1480a90842465bb97
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
+# Source0-md5:	f51e12efa18bb828cf57d9d4a81b2fb1
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
-# Source3-md5:	8ed492197244b6a772270417c66214d3
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
-# Source4-md5:	56a065ad2b44b375e91679b3e0515353
+# Source3-md5:	8ed492197244b6a772270417c66214d3
 Source4:	linux-2.4.20-netfilter-%{netfilter_snap}.tar.gz
-# Source5-md5:	b8f2f7a268a5cb75fabcaec3b5d45fcd
+# Source4-md5:	56a065ad2b44b375e91679b3e0515353
 Source5:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
-# Source6-md5:	bf0b7cb5f32916f95b00753d24bd689a
+# Source5-md5:	b8f2f7a268a5cb75fabcaec3b5d45fcd
 Source6:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
-# Source7-md5:	2473f345c66683a03ad27ff132d405b7
+# Source6-md5:	bf0b7cb5f32916f95b00753d24bd689a
 Source7:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
-# Source8-md5:	34515784c7b67f6cc9169aa9eed982c7
+# Source7-md5:	2473f345c66683a03ad27ff132d405b7
 Source8:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
-# Source9-md5:	4d5dd3fef2f5537ee07e64cdd1378e80
+# Source8-md5:	34515784c7b67f6cc9169aa9eed982c7
 Source9:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
-# Source10-md5:	3da1f4b229685766cb4f2f5ce242c0d2
+# Source9-md5:	4d5dd3fef2f5537ee07e64cdd1378e80
 Source10:	linux-2.4.20-aacraid.tar.bz2
+# Source10-md5:	3da1f4b229685766cb4f2f5ce242c0d2
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source50:	%{name}-sparc.config
@@ -77,8 +77,9 @@ Patch11:	loop-jari-2.4.21.0.patch
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch12:	linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
 Patch15:	linux-2.4.21-sched-O1.patch
-Patch20:	http://dl.sourceforge.net/user-mode-linux/uml-patch-2.4.20-1.bz2
-Patch21:	linux-2.4.20-uml-o1.patch
+# http://dl.sourceforge.net/user-mode-linux/uml-patch-2.4.20-6.bz2
+Patch20:	uml-patch-2.4.20-6-21.bz2
+Patch21:	linux-2.4.21-uml-o1.patch
 # http://unc.dl.sourceforge.net/sourceforge/user-mode-linux/host-skas3.patch
 Patch22:	linux-2.4.20-uml-host-skas3.patch
 
@@ -92,6 +93,11 @@ Patch30:	linux-2.4.21-jfs-xattr.patch
 Patch31:	linux-2.4.21-jfs-acl.patch
 Patch32:	linux-2.4.21-ea+acl+nfsacl-0.8.58.diff.gz
 Patch33:	linux-2.4.21-acl-intermezzo-fix.patch
+# ftp://ftp.suse.com/pub/people/jeffm/reiserfs/aclea/
+Patch34:	reiserfs-nesting
+Patch35:	reiserfs-xattrs
+Patch36:	reiserfs-acl
+Patch37:	reiserfs-trusted
 # http://unc.dl.sourceforge.net/sourceforge/linux-ntfs/
 Patch40:	linux-2.4.21-ntfs-%{ntfs_version}.patch.gz
 Patch41:	linux-2.4.20-ntfs.patch
@@ -256,7 +262,7 @@ Patch3004:	linux-2.4.20-sym53c8xx_old.patch
 
 # Security fixes
 
-Patch10000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc6.bz2
+#Patch10000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc6.bz2
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -526,7 +532,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %prep
 %setup -q -a3 -a6 -a8 -a9 -n linux-%{version}
-%patch10000 -p1
 # JFS 1.1.1
 rm -fr fs/jfs
 gzip -dc %{SOURCE7} | tar -xf -
@@ -540,15 +545,19 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch11 -p1
 %patch12 -p1
 %patch15 -p1
-#%patch20 -p1
-#%patch21 -p1
-#%patch22 -p1
+%patch20 -p1
+%patch21 -p1
+%patch22 -p1
 %patch25 -p1
 %patch26 -p1
 %patch30 -p1
 %patch32 -p1
 %patch31 -p1
 %patch33 -p1
+%patch34 -p1
+%patch35 -p1
+%patch36 -p1
+%patch37 -p1
 %patch40 -p1
 #%patch41 -p1
 %patch45 -p1
