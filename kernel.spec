@@ -22,14 +22,14 @@
 %define		aic_version		6.2.3-2.4.7
 %define		jfs_version		2.4-1.0.16
 %define		lvm_version		1.0.3
-%define		evms_version		0.9.2
+%define		evms_version		1.0.0
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	0.99
+Release:	0.100
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
