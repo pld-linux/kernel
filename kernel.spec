@@ -53,7 +53,7 @@ Source28:	%{name}-alpha-BOOT.config
 Patch0:		%{name}-pldfblogo.patch
 Patch1:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
 Patch2:		http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
-Patch3:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.19-reiserfs-%{reiserfs_version}-with-quota-and-knfsd-support-patch.bz2
+Patch3:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/testing/linux-2.2.19-reiserfs-%{reiserfs_version}-with-quota-and-knfsd-support-patch.bz2
 Patch4:		ftp://ftp.kernel.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
 Patch5:		linux-2.2.18-freeswan-%{freeswan_version}.patch
 Patch6:		wanrouter-v2215.patch.gz
