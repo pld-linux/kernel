@@ -5,7 +5,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.14
-Release:	3
+Release:	4
 Copyright:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -234,8 +234,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch5 -p1
 %ifarch %{ix86}
 %patch6 -p1
-%patch7 -p1
 %endif
+%patch7 -p1
 %patch8 -p1
 
 patch -p1 -s <linux-%{ow_ver}/linux-%{ow_ver}.diff
@@ -345,6 +345,7 @@ gzip -dc %{PATCH6} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 %endif
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH3}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-%{ow_ver}/linux-%{ow_ver}.diff
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
