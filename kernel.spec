@@ -26,8 +26,8 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.7
-%define		_cset		20040223_1007
+%define		_rel		1.8
+%define		_cset		20040224_0606
 
 ## netfilter snap 
 %define		_netfilter_snap		20040219
@@ -135,6 +135,8 @@ Patch68:	2.6.x-patch-o-matic-ng-base-%{_netfilter_snap}.patch
 
 Patch70:	2.6.3-sparc32-fix.patch
 
+# http://www.tahoe.pl/drivers/tahoe9xx-2.6.2.patch
+Patch72:	tahoe9xxx-2.6.2.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -534,6 +536,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch68 -p1
 
 %patch70 -p1
+
+%patch72 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
