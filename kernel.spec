@@ -27,8 +27,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.4.19
-Release:	2.12%{?_with_preemptive:_pr}
+Version:	2.4.20
+Release:	1%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -77,7 +77,7 @@ Source1999:	%{name}-preemptive.config
 
 Patch0:		%{name}-pldfblogo.patch
 # from ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/testing/
-Patch1:		patch-int-2.4.19.2.bz2
+Patch1:		patch-int-2.4.20.0.bz2
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch2:		linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/Release-1.2pre3/kernel_patches/
@@ -189,7 +189,7 @@ Patch137:	linux-2.4.19-truncate-fix.patch
 Patch200:	linux-sound_core.patch
 
 # tweaks for grsecurity, description inside patch
-Patch900:	loop-jari-2.4.18.0.patch
+Patch900:	loop-jari-2.4.20.0.patch
 Patch901:	dc395-tab.patch
 # DRM (note that this doesn't fix drm when running on 386 or 486 CPU!)
 Patch902:	linux-drm-%{drm_xfree_version}-force-cmpxchg.patch
@@ -471,9 +471,10 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch1 -p1
 %patch900 -p1
 %patch2 -p1
+exit 1
 %patch2000 -p1
 %ifarch ppc
-%patch908 -p1
+#%patch908 -p1
 %endif
 %patch3 -p1
 %patch4 -p1
@@ -606,13 +607,13 @@ patch -p1 -s < squashfs1.0c/squashfs-patch
 
 # USB 2.0 patch
 echo USB 2.0 Support from Linux-2.4.20-rc1.
-%patch36 -p1
-%patch37 -p1
-%patch38 -p1
-%patch39 -p1
-%patch40 -p1
-%patch41 -p1
-%patch42 -p1
+#%patch36 -p1
+#%patch37 -p1
+#%patch38 -p1
+#%patch39 -p1
+#%patch40 -p1
+#%patch41 -p1
+#%patch42 -p1
 
 # added missing MODULE_LICENSE, MODULE_DESCRIPTION, MODULE_AUTHOR
 %patch914 -p1
@@ -624,7 +625,7 @@ echo USB 2.0 Support from Linux-2.4.20-rc1.
 #%patch43 -p1
 
 # security BUG
-%patch44 -p1
+#%patch44 -p1
 
 %patch916 -p1
 %{!?_without_grsec:%patch917 -p1}
