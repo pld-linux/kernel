@@ -41,8 +41,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.29
-%define		_cset		20040506_1809
+%define		_rel		0.30
+%define		_cset		20040508_0113
 
 ## netfilter snap 
 %define		_netfilter_snap		20040429
@@ -848,7 +848,7 @@ BuildConfig
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig smp
-%{?with_smp:BuildKernel smp}
+##%{?with_smp:BuildKernel smp}
 %{?with_smp:PreInstallKernel smp}
 
 %if %{with BOOT}
