@@ -23,7 +23,7 @@ Version:	2.6.0
 Release:	0.1
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}-test1.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-test1.tar.bz2
 # Source0-md5:	ed4e25318e9cd18dc7e732b3483f271d
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
