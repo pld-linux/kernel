@@ -8,7 +8,6 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	grsec		# build without grsec
-%bcond_without	swsuspend	# build without swsuspend support
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	mosix		# build with openMosix support
@@ -47,7 +46,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		3.4%{?with_mosix:m}
+%define		_rel		2.3%{?with_mosix:m}
 %define		_cset		20040707_0722
 %define		_apply_cset	0
 %define		_subversion	.1
@@ -292,9 +291,6 @@ Patch600:	%{name}-grsec.patch
 
 # openMosix support
 Patch700:	openMosix-2.6.7-PLD.patch
-
-Patch710:	kernel-SPARC64-binfmt_elf.patch
-Patch711:	kernel-ppc_asm_and_initializers-from-rc3-bk9.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -775,7 +771,6 @@ zcat %{SOURCE3} | patch -p1 -s
 #patch490 -p1
 
 # software suspend
-%if %{with swsuspend}
 %ifarch %{ix86}
 #patch500 -p1
 #patch501 -p1
@@ -827,7 +822,6 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch550 -p1
 %patch560 -p1
 %endif
-%endif
 
 #grsec
 %ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
@@ -839,12 +833,6 @@ zcat %{SOURCE3} | patch -p1 -s
 %if %{with mosix}
 %patch700 -p1
 %endif
-
-%ifarch sparc64
-%patch710 -p1
-%endif
-
-%patch711 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -1551,7 +1539,7 @@ fi
 %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %{_prefix}/src/linux-%{version}/scripts/basic
 %{_prefix}/src/linux-%{version}/scripts/*.c
-%{_prefix}/src/linux-%{version}/scripts/mod
+%{_prefix}/src/linux-%{version}/scripts/mod/*
 %{_prefix}/src/linux-%{version}/scripts/*.sh
 
 %files doc
@@ -1586,7 +1574,7 @@ fi
 %exclude %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %exclude %{_prefix}/src/linux-%{version}/scripts/basic
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.c
-%exclude %{_prefix}/src/linux-%{version}/scripts/mod
+%exclude %{_prefix}/src/linux-%{version}/scripts/*
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.sh
 %{_prefix}/src/linux-%{version}/sound
 %{_prefix}/src/linux-%{version}/security
