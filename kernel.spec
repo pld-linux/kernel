@@ -12,18 +12,18 @@
 # _without_w4l		- don't build Win4Lin support
 #
 
-%define		patch_level	7
+%define		patch_level	8
 %define		_rel		5
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
-%define		no_install_post_compress_modules	1
+#%define		no_install_post_compress_modules	1
 #
 %define		pre_version		pre1
 %define		ipvs_version		1.0.7
 %define		freeswan_version	2.00-rc2
 %define		IPperson_version	20020819-2.4.19
 %define		grsec_version		2.0.0
-%define		jfs_version		2.4-1.0.24
+%define		jfs_version		2.4-1.1.2
 %define		lvm_version		1.0.7
 %define		evms_version		2.0.0
 %define		ntfs_version		2.1.2a
@@ -219,7 +219,9 @@ Patch47:	linux-2.4-3com-vlan.patch
 Patch100:	linux-scsi-debug-bug.patch
 Patch101:	linux-2.4.2-raw-ip.patch
 Patch102:	PCI_ISA_bridge.patch
-#Patch103:	
+# from http://www-124.ibm.com/developerworks/oss/jfs/
+# JFS for Linux [patch ID 399+400]
+Patch103:	linux-2.4.20-jfs-1.1.2-xattr+acl.patch.gz
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch104:	linux-2.4.19-pcnet-parms.patch
 #Patch105:	
@@ -774,6 +776,10 @@ echo Updated 3Com drivers for VLAN ...
 echo Added LVM support version %{lvm_version}
 %patch114 -p1
 
+# JFS - xattr+acl
+echo Added xattr and ACL for JFS ...
+%patch103 -p1
+
 echo Added ARCH specific patches....
 %ifarch %{ix86}
 echo Ix86 patches ...
@@ -784,8 +790,8 @@ echo Added Intel 810 FB support
 # KT400
 echo Added support for KT400 chipset
 %patch144 -p1
-echo Added patch to fix bad ram ...
-%patch10 -p1
+#echo Added patch to fix bad ram ...
+#%patch10 -p1
 #usb gadget
 echo Added USB gadget ...
 %patch30 -p1
