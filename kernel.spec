@@ -287,6 +287,7 @@ Patch3013:	linux-2.4.23-ppc-symbols.patch
 #Patch3500:	http://www.hardrock.org/kernel/current-updates/linux-2.4.24-updates.patch
 Patch3600:	linux-2.4-sysctl-empty.patch
 Patch4000:	grsecurity-2.0-rc4-2.4.25-O1.patch
+Patch4001:	linux-2.4.25-sys_i386.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -824,6 +825,7 @@ cd ../../..
 #%patch3500 -p1
 %patch3600 -p1
 %{?with_grsec:%patch4000 -p1}
+%{!?with_grsec:%patch4001 -p1}
 
 mv -f drivers/scsi/sym53c8xx.c drivers/scsi/sym53c8xx_old.c
 
