@@ -167,13 +167,16 @@ Patch56:	linux-2.6-netfilter-syms.patch
 # pseudo terminal fix for older glibc
 #Patch60:	%{name}-pts.patch
 Patch61:	%{name}-MAX_INIT_ARGS.patch
-Patch62:	alsa-1.0.6.patch
+#Patch62:	alsa-1.0.6.patch	-- obsolete
 
 # http://tahoe.pl/patch.htm
 Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 
-# http://www.bootsplash.de/files/bootsplash-3.1.4-sp3-2.6.7.diff
-Patch72:	bootsplash-3.1.4-sp3-2.6.8pld.patch
+# Spock discontinued porting bootsplash to new kernel versions
+# but he introduced a rewrite of bootsplash called gensplash.
+# http://dev.gentoo.org/~spock/projects/gensplash/
+Patch72:	fbsplash-0.9-r7-2.6.9-rc1.patch
+#Patch72:	bootsplash-3.1.4-sp3-2.6.8pld.patch	-- obsolete
 Patch73:	squashfs2.0-patch
 # http://dl.sourceforge.net/pramfs/
 Patch74:	pramfs-2.6.4.patch
@@ -612,7 +615,6 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 #patch60 -p1
 %patch61 -p1
-%patch62 -p1
 
 %patch70 -p1
 
