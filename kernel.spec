@@ -411,9 +411,11 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
+%ifarch %{ix86}
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
 %patch9 -p1
 %patch907 -p1
+%endif
 %endif
 
 %patch101 -p0
@@ -1094,7 +1096,9 @@ fi
 /usr/src/linux-%{version}-%{release}/crypto
 /usr/src/linux-%{version}-%{release}/drivers
 /usr/src/linux-%{version}-%{release}/fs
+%ifarch %{ix86}
 /usr/src/linux-%{version}-%{release}/grsecurity
+%endif
 /usr/src/linux-%{version}-%{release}/i8255
 /usr/src/linux-%{version}-%{release}/init
 /usr/src/linux-%{version}-%{release}/ipc
