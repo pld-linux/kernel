@@ -8,7 +8,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.0
-Release:	1
+Release:	2
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -46,7 +46,7 @@ Patch2:		%{name}-%{version}-dc395-patch-fix.patch
 # patch for console daemon.
 Patch6:		wait_any_vt.diff
 #Patch7:		i8255-chip.patch
-Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac3.bz2
+Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac6.bz2
 
 Patch1000:	linux-2.4-misc.patch
 
@@ -267,7 +267,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #%patch6 -p1
 #%patch7 -p1
 
-%patch1000 -p1
+#%patch1000 -p1
 
 #patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 
