@@ -202,6 +202,8 @@ Patch96:	2.6.6-lirc_i2c.diff
 # for older glibc:
 Patch97:	%{name}-pts.patch
 
+Patch100:	%{name}-MAX_INIT_ARGS.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 %ifarch sparc sparc64
@@ -667,6 +669,8 @@ cp drivers/usb/media/libpwcx.a_mipsel drivers/usb/media/libpwcx.a_
 
 %patch96 -p1
 %patch97 -p1
+
+%patch100 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
