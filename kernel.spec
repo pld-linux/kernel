@@ -114,9 +114,6 @@ Patch44:	bootsplash-3.1.3-2.6.0-test9.diff
 
 Patch46:	2.6.0-t11-AIC_and_db4-lkml.patch
 
-# http://bytesex.org/patches/2.6.0-1/patch-2.6.0-kraxel.gz
-Patch48:	patch-2.6.0-kraxel.gz
-
 Patch50:	2.6.0-t11-r8169-getstats.patch
 
 Patch52:	2.6.0-t11-ALI-M1563-lkml.patch
@@ -164,6 +161,8 @@ Patch92:	2.6.1-NF-20040114.patch
 Patch94:	2.6.1-sysfs4oss-lkml.patch
 
 Patch96:	2.6.1-modular-ide-lkml.patch
+
+Patch98:	2.6.2rc1-selinux-netif.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -532,9 +531,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch46 -p1
 
-# Arekm look into this - IMHO included in cset
-#%%patch48 -p1
-
 %patch50 -p1
 
 %patch52 -p1
@@ -579,6 +575,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 #%%patch94 -p1
 
 %patch96 -p1
+
+%patch98 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
