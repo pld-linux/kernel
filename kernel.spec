@@ -15,9 +15,9 @@
 # _without_lsm		- don't build LSM/SELinux kernel
 
 %define		_rel		0.1
-%define		test_ver	4
+%define		test_ver	5
 %define		patch_level	0
-%define		_cset		20030907_2209
+%define		_cset		0
 
 %if "%{test_ver}" != "0"
 %define		test	test%{test_ver}
@@ -52,8 +52,8 @@ Release:	%{test}%{cset}rel%{_rel}
 %endif
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-test4.tar.bz2
-# Source0-md5:	0c0472d42e56a4b571f92e58b0cf0c55
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-test5.tar.bz2
+# Source0-md5:	638fb2fbffad7ff067c178a345605d37
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -318,8 +318,10 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}-test4
+%setup -q -n linux-%{version}-test5
+%if "%{_cset}" != "0"
 %patch1 -p1
+%endif
 
 #%patch22 -p1
 %patch23 -p1
