@@ -340,10 +340,8 @@ BuildKernel() {
 	ln -sf arch/%{base_arch}/defconfig .config
 
 %ifarch sparc
-	sparc32 %{__make} oldconfig
 	sparc32 %{__make} clean
 %else
-	%{__make} oldconfig
 	%{__make} clean
 %endif
 	%{__make} include/linux/version.h
@@ -382,6 +380,13 @@ BuildKernel() {
      	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 	KERNELRELEASE=$KernelVer
 	echo KERNEL RELEASE $KernelVer
+
+	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
+	if [ "$smp" = "yes" ]; then
+		install $RPM_SOURCE_DIR/include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
+	else
+		install $RPM_SOURCE_DIR/include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
+	fi
 }
 
 KERNEL_BUILD_DIR=`pwd`
@@ -451,8 +456,7 @@ echo "CONFIG_M686=y" >> .config
 %ifarch athlon
 echo "CONFIG_MK7=y" >> .config
 %endif
-%{__make} oldconfig
-mv include/linux/autoconf.h include/linux/autoconf-up.h
+
 cp .config config-up
 
 %ifarch %{ix86}
@@ -474,11 +478,10 @@ echo "CONFIG_M686=y" >> .config
 echo "CONFIG_MK7=y" >> .config
 %endif
 
-%{__make} oldconfig
-mv include/linux/autoconf.h include/linux/autoconf-smp.h
 cp .config config-smp
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
+install $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/* $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 
 %ifarch %{ix86}
 ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
