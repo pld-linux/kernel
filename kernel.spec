@@ -137,6 +137,7 @@ Patch130:	kernel-2.4.17-netsyms-export-fix.patch
 Patch131:	kernel-2.4.18-personality.patch
 
 Patch132:	linux-2.4.18.secfix.patch
+Patch133:	linux-2.4.18-netsyms-fix.patch
 # Patches fixing other patches or 3rd party sources ;)
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
@@ -489,6 +490,8 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 
 #Fixed sysctl export symbols.
 %patch130 -p0
+
+%patch133 -p0
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
