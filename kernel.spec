@@ -18,7 +18,7 @@ Summary(ru):	Ядро Linux
 Summary(uk):	Ядро Linux
 Name:		kernel
 Version:	2.2.21
-Release:	3
+Release:	4
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
