@@ -237,7 +237,7 @@ fi
   [2.1.131-1d]
 - updated for 2.1.131
   by Wojtek Slusarczyk <wojtek@shadow.eu.org>
-- removed symlinks in /usr/include,
+- removed symlinks in %{_includedir},
 - minor changes in linux-config file.
   
 * Sat Nov 21 1998 Tomasz K³oczko <kloczek@rudy.mif.pg.gda.pl>
