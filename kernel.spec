@@ -3,6 +3,7 @@
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.34
 %define		i2c_version		2.6.2
+%define		bttv_version		0.7.86
 %define		wlan_version		0.3.4
 %define		tun_version		1.1
 %define         vlan_version            1.0.1
@@ -15,7 +16,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	4pre1
+Release:	4pre2
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -53,6 +54,8 @@ Source26:	%{name}-alpha.config
 Source27:	%{name}-alpha-smp.config
 Source28:	%{name}-alpha-BOOT.config
 Source50:	http://www.netroedge.com/~lm78/archive/i2c-%{i2c_version}.tar.gz
+Source51:	http://www.strusel007.de/linux/bttv/bttv-%{bttv_version}.tar.gz
+
 # in this place i will include Patches
 
 Patch0:		%{name}-pldfblogo.patch
@@ -82,7 +85,7 @@ Patch27:	%{name}-udf.patch
 # based on	http://people.redhat.com/mingo/raid-patches/raid-2.2.20-A0
 Patch30:	raid-2.2.20-A0.patch.bz2
 # based on	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.19/ide.2.2.19.05042001.patch.bz2
-Patch31:	ide.2.2.20.11242001.patch.bz2
+Patch31:	ide.2.2.20.01052002.patch.bz2
 Patch32:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
 
 Patch40:	%{name}-flip.patch
@@ -110,7 +113,7 @@ Patch200:	hap-linux-2.2.20-2.diff
 # HTB from http://luxik.cdi.cz/~devik/qos/htb/
 Patch210:	htb2_2.2.17.diff
 
-Patch300:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/v2.2/2.2.21pre/patch-2.2.21-pre1.bz2
+Patch300:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/v2.2/2.2.21pre/patch-2.2.21-pre2.bz2
 Patch320:	fix-prename.patch
 Patch321:	ow1-fix-2.2.21-pre1.patch
 
@@ -379,7 +382,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a50 -n linux
+%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a50 -a51 -n linux
 
 # here patch will be executabling, for now we have just patch in the 
 # tar.gz sources
@@ -426,7 +429,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch108 -p1
 %patch109 -p1
 %patch110 -p1
-%patch111 -p1
+#%patch111 -p1
 
 # 802.1Q VLANs
 patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
@@ -613,6 +616,12 @@ make
 install linux/tun.o "$KERNEL_INSTALL_DIR/lib/modules/$KernelVer/net"
 cd ..
 
+# bttv
+#cd bttv-%{bttv_version}
+#%{__make} EXTRA_CFLAGS="$RPM_OPT_FLAGS"
+#%{__make} -C driver install DESTDIR=$KERNEL_INSTALL_DIR
+#cd ..
+
 }
 
 KERNEL_BUILD_DIR=`pwd`
@@ -620,6 +629,7 @@ KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
 
 rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
+
 
 # NORMAL KERNEL
 BuildKernel
@@ -701,7 +711,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH106}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH108}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH109}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH111}
+#patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH111}
 
 # VLAN
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <vlan.%{vlan_version}/vlan_2.2.patch
