@@ -83,7 +83,6 @@ Patch4:		squashfs1.3r2-patch
 Patch6:		2.6.0-t3-sysfs_mem-lkml.patch
 
 Patch8:		2.6.0-t4-PPC-ENODEV.patch
-Patch10:	kernel-siimage-rqsize.patch
 
 Patch14:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
 Patch16:	2.6.0-t6-usb-irq.patch
@@ -95,7 +94,6 @@ Patch22:	2.6.0-t8-clean-mtd-lkml.patch
 Patch24:	2.6.0-t8-swap-include-lkml.patch
 
 Patch26:	http://www.uclinux.org/pub/uClinux/uClinux-2.6.x/linux-2.6.0-test10-uc0.patch.gz
-#Patch26:	linux-2.6.0-test10-uc0.patch.gz
 
 Patch28:	2.6.0-t8-VLSI-ix86-lkml.patch
 
@@ -104,7 +102,6 @@ Patch30:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
 Patch32:	2.6.0-t8-pci_dma_sync_to_device-lkml.patch
 
 Patch34:	2.6.0-t8-umsdos-lkml.patch
-Patch36:	2.6.0-t9-NLS-module-lkml.patch
 
 Patch38:	2.6.0-t9-acpi_osl-lkml.patch
 
@@ -112,13 +109,8 @@ Patch40:	2.6.0-t9-forcedeth-lkml.patch
 
 Patch44:	2.6.0-t9-PPC-smp.patch
 
-Patch48:	2.6.0-t10-sis_operator_fix-lkml.patch
-
 Patch52:	2.6.0-t10-POSIX_message_queues-1of2-lkml.patch
 Patch53:	2.6.0-t10-POSIX_message_queues-2of2-lkml.patch
-
-# http://bytesex.org/patches/2.6.0-test10-2/
-Patch60:	patch-2.6.0-test11-kraxel.gz
 
 Patch62:	2.6.0-t11-EPoX-sound-lkml.patch
 
@@ -126,17 +118,9 @@ Patch64:	bootsplash-3.1.3-2.6.0-test9.diff
 
 Patch66:	2.6.0-t11-AIC_and_db4-lkml.patch
 
-Patch68:	2.6.0-t11-get_compat_timespec-lkml.patch
-
 Patch70:	2.6.0-t11-r8169-getstats.patch
 
 Patch72:	2.6.0-t11-ALI-M1563-lkml.patch
-
-Patch74:	patch-2.6.0-test11-bart1
-Patch75:	2.6.0-t11-ide2.patch
-Patch76:	2.6.0-t11-ide3.patch
-
-Patch78:	2.6.0-t11-misc.patch
 
 Patch80:	linux-tdfxfb-fillrect.patch
 Patch81:	linux-fbcon-margins.patch
@@ -156,13 +140,9 @@ Patch94:	acpi-20031203-2.6.0.diff.gz
 Patch96:	2.6.0-mount-rainier-lkml.patch
 Patch97:	2.6.0-mount-rainier-fix-lkml.patch
 
-Patch98:	x86_64-2.6.0-1-pld.patch
-
 Patch100:	2.6.0-sysfs-1of4-lkml.patch
 Patch101:	2.6.0-sysfs-3of4-lkml.patch
 Patch102:	2.6.0-sysfs-4of4-lkml.patch
-
-Patch104:	2.6.0-ppdev-MODULES_ALIAS-lkml.patch
 
 Patch106:	2.6.0-NF-time-%{_netfilter_snap}.patch
 
@@ -499,7 +479,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch6 -p1
 
 %patch8 -p1
-#%%patch10 -p1
 
 %patch14 -p1
 %patch16 -p1
@@ -519,7 +498,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch32 -p1
 
 %patch34 -p1
-#%%patch36 -p1
 
 %patch38 -p1
 
@@ -527,12 +505,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch44 -p1
 
-#%%patch48 -p1
-
 %patch52 -p1
 %patch53 -p1
-
-#%%patch60 -p1
 
 %patch62 -p1
 
@@ -540,17 +514,9 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch66 -p1
 
-#%%patch68 -p1
-
 %patch70 -p1
 
 %patch72 -p1
-
-#%%patch74 -p1
-#%%patch75 -p1
-#%%patch76 -p1
-
-#%%patch78 -p1
 
 %patch80 -p1
 %patch81 -p1
@@ -558,25 +524,14 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch84 -p1
 
-#%%patch86 -p1
-
-#%%patch88 -p1
-#%%patch89 -p1
-#%%patch90 -p1
-#%%patch91 -p1
-
 %patch94 -p1
 
 %patch96 -p1
 %patch97 -p0
 
-#%%patch98 -p1
-
 %patch100 -p1
 %patch101 -p1
 %patch102 -p1
-
-#%%patch104 -p1
 
 %patch106 -p1
 
