@@ -23,6 +23,7 @@ Source5:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version
 Source6:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/sym-1.7.2-ncr-3.4.2.tar.gz
 Source7:	http://www2.lm-sensors.nu/~lm78/archive/i2c-%{i2c_version}.tar.gz
 Source8:	http://www.linux-wlan.com/linux-wlan/linux-wlan-%{wlan_version}.tar.gz
+Source9:	http://www.dandelion.com/Linux/DAC960-2.2.10.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -333,6 +334,11 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 cd ..
 rm -rf i2c-%{i2c_version}
 tar xfz %{SOURCE7}
+
+#DAC960-2.2.10
+tar xfz %{SOURCE9}
+mv RELEASE_NOTES.DAC960 README.DAC960 linux/Documentation
+mv DAC960.[ch] linux/drivers/block
 
 cd i2c-%{i2c_version}
 mkpatch/mkpatch.pl . ../linux | (cd ../linux; patch -p1 -s)
