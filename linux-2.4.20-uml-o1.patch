@@ -24,6 +24,18 @@ diff -urN linux-2.4.20-uml/arch/um/include/2_5compat.h linux-2.4.20-uml-o1/arch/
  
  #else
  
+diff -u um/arch/um/include/kern_util.h um/arch/um/include/kern_util.h
+--- um/arch/um/include/kern_util.h
++++ um/arch/um/include/kern_util.h
+@@ -106,7 +106,7 @@
+ extern void arch_switch(void);
+ extern void free_irq(unsigned int, void *);
+ extern int um_in_interrupt(void);
+-extern int cpu(void);
++extern int um_cpu(void);
+ #endif
+ 
+ /*
 diff -urN linux-2.4.20-uml/arch/um/include/user_util.h linux-2.4.20-uml-o1/arch/um/include/user_util.h
 --- linux-2.4.20-uml/arch/um/include/user_util.h	Sat Mar 15 18:34:03 2003
 +++ linux-2.4.20-uml-o1/arch/um/include/user_util.h	Sat Mar 15 19:58:20 2003
@@ -74,6 +86,60 @@ diff -urN linux-2.4.20-uml/arch/um/kernel/process.c linux-2.4.20-uml-o1/arch/um/
  /*
   * Overrides for Emacs so that we follow Linus's tabbing style.
   * Emacs will notice this stuff at the end of the file and automatically
+diff -u um/arch/um/kernel/process_kern.c um/arch/um/kernel/process_kern.c
+--- um/arch/um/kernel/process_kern.c
++++ um/arch/um/kernel/process_kern.c
+@@ -124,7 +124,7 @@
+ {
+ 	struct task_struct *task = t;
+ 
+-	cpu_tasks[task->processor] = ((struct cpu_task) 
++	cpu_tasks[task->cpu] = ((struct cpu_task) 
+ 		{ external_pid(task), task });
+ }
+ 
+@@ -360,7 +360,7 @@
+ int smp_sigio_handler(void)
+ {
+ #ifdef CONFIG_SMP
+-	int cpu = current->processor;
++	int cpu = current->cpu;
+ 
+ 	IPI_handler(cpu);
+ 	if(cpu != 0)
+@@ -374,9 +374,9 @@
+ 	return(in_interrupt());
+ }
+ 
+-int cpu(void)
++int um_cpu(void)
+ {
+-        return(current->processor);
++        return(current->cpu);
+ }
+ 
+ /*
+--- linux-2.4.20/arch/um/kernel/reboot.c~	Sun Mar 16 01:41:54 2003
++++ linux-2.4.20/arch/um/kernel/reboot.c	Sun Mar 16 03:05:25 2003
+@@ -14,15 +14,9 @@
+ #ifdef CONFIG_SMP
+ static void kill_idlers(int me)
+ {
+-	struct task_struct *p;
+-	int i;
+-
+-	for(i = 0; i < sizeof(init_tasks)/sizeof(init_tasks[0]); i++){
+-		p = init_tasks[i];
+-		if((p != NULL) && (p->thread.mode.tt.extern_pid != me) &&
+-		   (p->thread.mode.tt.extern_pid != -1))
+-			os_kill_process(p->thread.mode.tt.extern_pid, 0);
+-	}
++	if((init_task.thread.mode.tt.extern_pid != me) &&
++	   (init_task.thread.mode.tt.extern_pid != -1))
++		os_kill_process(init_task.thread.mode.tt.extern_pid, 0);
+ }
+ #endif
+ 
 diff -urN linux-2.4.20-uml/arch/um/kernel/skas/process_kern.c linux-2.4.20-uml-o1/arch/um/kernel/skas/process_kern.c
 --- linux-2.4.20-uml/arch/um/kernel/skas/process_kern.c	Sat Mar 15 18:34:03 2003
 +++ linux-2.4.20-uml-o1/arch/um/kernel/skas/process_kern.c	Sat Mar 15 20:03:07 2003
@@ -108,6 +174,99 @@ diff -urN linux-2.4.20-uml/arch/um/kernel/skas/process_kern.c linux-2.4.20-uml-o
  	current->thread.prev_sched = NULL;
  	unblock_signals();
  
+@@ -137,7 +137,7 @@
+ 
+ void init_idle_skas(void)
+ {
+-	cpu_tasks[current->processor].pid = os_getpid();
++	cpu_tasks[current->cpu].pid = os_getpid();
+ }
+ 
+ extern void start_kernel(void);
+diff -u um/arch/um/kernel/skas/trap_user.c um/arch/um/kernel/skas/trap_user.c
+--- um/arch/um/kernel/skas/trap_user.c
++++ um/arch/um/kernel/skas/trap_user.c
+@@ -42,7 +42,7 @@
+ 	struct signal_info *info;
+ 
+ 	if(sig == SIGVTALRM)
+-		missed_ticks[cpu()]++;
++		missed_ticks[um_cpu()]++;
+ 	regs->skas.is_user = 1;
+ 	regs->skas.fault_addr = 0;
+ 	regs->skas.fault_type = 0;
+--- linux-2.4.20/arch/um/kernel/smp.c~	Sat Mar 15 23:38:50 2003
++++ linux-2.4.20/arch/um/kernel/smp.c	Sun Mar 16 01:27:45 2003
+@@ -30,6 +30,8 @@
+ 
+ /* Per CPU bogomips and other parameters */
+ 
++unsigned long cache_decay_ticks = HZ/100;
++
+ /* The only piece used here is the ipi pipe, which is set before SMP is
+  * started and never changed.
+  */
+@@ -97,7 +97,7 @@
+  
+ 	printk(KERN_INFO "Stopping all CPUs...");
+ 	for(i = 0; i < ncpus; i++){
+-		if(i == current->processor)
++		if(i == current->cpu)
+ 			continue;
+ 		write(cpu_data[i].ipi_pipe[1], "S", 1);
+ 	}
+@@ -121,10 +121,9 @@
+ 	int cpu, err;
+ 
+ 	set_current(current);
+-	del_from_runqueue(current);
+ 	unhash_process(current);
+ 
+-	cpu = current->processor;
++	cpu = current->cpu;
+ 	err = os_pipe(cpu_data[cpu].ipi_pipe, 1, 1);
+ 	if(err)
+ 		panic("CPU#%d failed to create IPI pipe, errno = %d", cpu, 
+@@ -134,8 +134,8 @@
+ 		     current->thread.mode.tt.extern_pid);
+  
+ 	wmb();
+-	if (test_and_set_bit(current->processor, &smp_callin_map)) {
+-		printk("huh, CPU#%d already present??\n", current->processor);
++	if (test_and_set_bit(current->cpu, &smp_callin_map)) {
++		printk("huh, CPU#%d already present??\n", current->cpu);
+ 		BUG();
+ 	}
+ 
+@@ -142,7 +142,6 @@
+ 	while (!atomic_read(&smp_commenced))
+ 		cpu_relax();
+ 
+-	init_idle();
+ 	cpu_idle();
+ 	return(0);
+ }
+@@ -161,10 +160,8 @@
+ 
+ 	cpu_tasks[cpu].pid = new_task->thread.mode.tt.extern_pid;
+ 	cpu_tasks[cpu].task = new_task;
+-	init_tasks[cpu] = new_task;
+-	new_task->processor = cpu;
++	init_idle(new_task, cpu);
+ 	new_task->cpus_allowed = 1 << cpu;
+-	new_task->cpus_runnable = new_task->cpus_allowed;
+ 	CHOOSE_MODE(write(new_task->thread.mode.tt.switch_pipe[1], &c, 
+ 			  sizeof(c)),
+ 		    ({ panic("skas mode doesn't support SMP"); }));
+@@ -296,7 +296,7 @@
+ 	info = _info;
+ 
+ 	for (i=0;i<NR_CPUS;i++)
+-		if (i != current->processor && test_bit(i, &cpu_online_map))
++		if (i != current->cpu && test_bit(i, &cpu_online_map))
+ 			write(cpu_data[i].ipi_pipe[1], "C", 1);
+ 
+ 	while (atomic_read(&scf_started) != cpus)
 diff -urN linux-2.4.20-uml/arch/um/kernel/sys_call_table.c linux-2.4.20-uml-o1/arch/um/kernel/sys_call_table.c
 --- linux-2.4.20-uml/arch/um/kernel/sys_call_table.c	Sat Mar 15 18:34:03 2003
 +++ linux-2.4.20-uml-o1/arch/um/kernel/sys_call_table.c	Sat Mar 15 19:41:51 2003
@@ -147,6 +306,49 @@ diff -urN linux-2.4.20-uml/arch/um/kernel/sys_call_table.c linux-2.4.20-uml-o1/a
  	[ __NR_getppid ] = sys_getppid,
  	[ __NR_getpgrp ] = sys_getpgrp,
  	[ __NR_setsid ] = (syscall_handler_t *) sys_setsid,
+--- linux-2.4.20/arch/um/kernel/time_kern.c~	Sat Mar 15 23:38:50 2003
++++ linux-2.4.20/arch/um/kernel/time_kern.c	Sun Mar 16 01:20:23 2003
+@@ -37,7 +37,7 @@
+ 
+ void timer_irq(union uml_pt_regs *regs)
+ {
+-	int cpu = current->processor, ticks = missed_ticks[cpu];
++	int cpu = current->cpu, ticks = missed_ticks[cpu];
+ 
+         if(!timer_irq_inited) return;
+ 	missed_ticks[cpu] = 0;
+@@ -123,7 +123,7 @@
+ #ifdef CONFIG_SMP
+ 	update_process_times(user_context(UPT_SP(regs)));
+ #endif
+-	if(current->processor == 0)
++	if(current->cpu == 0)
+ 		timer_irq(regs);
+ }
+ 
+diff -u um/arch/um/kernel/trap_user.c um/arch/um/kernel/trap_user.c
+--- um/arch/um/kernel/trap_user.c
++++ um/arch/um/kernel/trap_user.c
+@@ -107,7 +107,7 @@
+ void alarm_handler(int sig, struct sigcontext sc)
+ {
+ 	if(!timer_irq_inited) return;
+-	missed_ticks[cpu()]++;
++	missed_ticks[um_cpu()]++;
+ 
+ 	if(sig == SIGALRM)
+ 		switch_timers(0);
+--- linux-2.4.20/arch/um/kernel/tt/exec_kern.c~	Sat Mar 15 23:38:50 2003
++++ linux-2.4.20/arch/um/kernel/tt/exec_kern.c	Sun Mar 16 01:12:57 2003
+@@ -46,7 +46,7 @@
+ 		do_exit(SIGKILL);
+ 	}
+ 
+-	if(current->processor == 0)
++	if(current->cpu == 0)
+ 		forward_interrupts(new_pid);
+ 	current->thread.request.op = OP_EXEC;
+ 	current->thread.request.u.exec.pid = new_pid;
 diff -urN linux-2.4.20-uml/arch/um/kernel/tt/process_kern.c linux-2.4.20-uml-o1/arch/um/kernel/tt/process_kern.c
 --- linux-2.4.20-uml/arch/um/kernel/tt/process_kern.c	Sat Mar 15 18:34:04 2003
 +++ linux-2.4.20-uml-o1/arch/um/kernel/tt/process_kern.c	Sat Mar 15 20:06:05 2003
@@ -161,11 +363,20 @@ diff -urN linux-2.4.20-uml/arch/um/kernel/tt/process_kern.c linux-2.4.20-uml-o1/
  
  	from = prev;
  	to = next;
+@@ -35,7 +35,7 @@
+ 
+ 	to->thread.prev_sched = from;
+ 
+-	cpu = from->processor;
++	cpu = from->cpu;
+ 	if(cpu == 0)
+ 		forward_interrupts(to->thread.mode.tt.extern_pid);
+ #ifdef CONFIG_SMP
 @@ -51,15 +47,15 @@
  	alrm = change_sig(SIGALRM, 0);
  	prof = change_sig(SIGPROF, 0);
  
-+	forward_pending_sigio(to->thread.extern_pid);
++	forward_pending_sigio(to->thread.mode.tt.extern_pid);
 +
  	c = 0;
  	set_current(to);
@@ -235,6 +446,15 @@ diff -urN linux-2.4.20-uml/arch/um/kernel/tt/process_kern.c linux-2.4.20-uml-o1/
  	current->thread.prev_sched = NULL;
  
  	free_page(current->thread.temp_stack);
+@@ -281,7 +281,7 @@
+ 		pid = thread->request.u.exec.pid;
+ 		do_exec(thread->mode.tt.extern_pid, pid);
+ 		thread->mode.tt.extern_pid = pid;
+-		cpu_tasks[task->processor].pid = pid;
++		cpu_tasks[task->cpu].pid = pid;
+ 		break;
+ 	case OP_FORK:
+ 		attach_process(thread->request.u.fork.pid);
 diff -urN linux-2.4.20-uml/include/asm-um/cache.h linux-2.4.20-uml-o1/include/asm-um/cache.h
 --- linux-2.4.20-uml/include/asm-um/cache.h	Sat Mar 15 18:34:04 2003
 +++ linux-2.4.20-uml-o1/include/asm-um/cache.h	Sat Mar 15 20:23:30 2003
