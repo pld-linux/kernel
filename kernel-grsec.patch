@@ -5799,7 +5799,7 @@ diff -urN linux-2.6.7/fs/exec.c linux-2.6.7/fs/exec.c
  		return -ENOMEM;
  	}
  
-@@ -431,9 +476,36 @@
+@@ -431,10 +476,37 @@
  			mpnt->vm_flags = VM_STACK_FLAGS & ~VM_EXEC;
  		else
  			mpnt->vm_flags = VM_STACK_FLAGS;
@@ -5810,6 +5810,7 @@ diff -urN linux-2.6.7/fs/exec.c linux-2.6.7/fs/exec.c
 +		else
 +#endif
 +
+ 		mpnt->vm_flags |= mm->def_flags;
  		mpnt->vm_page_prot = protection_map[mpnt->vm_flags & 0x7];
  		insert_vm_struct(mm, mpnt);
  		mm->total_vm = (mpnt->vm_end - mpnt->vm_start) >> PAGE_SHIFT;
@@ -5894,7 +5895,7 @@ diff -urN linux-2.6.7/fs/exec.c linux-2.6.7/fs/exec.c
  
  	file = open_exec(filename);
  
-@@ -1082,13 +1191,39 @@
+@@ -1082,7 +1191,31 @@
  
  	sched_balance_exec();
  
@@ -5912,7 +5913,6 @@ diff -urN linux-2.6.7/fs/exec.c linux-2.6.7/fs/exec.c
 +		return -EACCES;
 +	}
 +
-+
  	bprm.p = PAGE_SIZE*MAX_ARG_PAGES-sizeof(void *);
 +
 +#ifdef CONFIG_PAX_RANDUSTACK
@@ -5927,8 +5927,9 @@ diff -urN linux-2.6.7/fs/exec.c linux-2.6.7/fs/exec.c
  	memset(bprm.page, 0, MAX_ARG_PAGES*sizeof(bprm.page[0]));
  
  	bprm.file = file;
- 	bprm.filename = filename;
- 	bprm.interp = filename;
+@@ -1178,6 +1178,7 @@
+ 	bprm.interp_flags = 0;
+ 	bprm.interp_data = 0;
  	bprm.sh_bang = 0;
 +	bprm.misc = 0;
  	bprm.loader = 0;
