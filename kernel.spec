@@ -142,6 +142,7 @@ Patch94:	acpi-20031203-2.6.0.diff.gz
 
 Patch96:	2.6.0-mount-rainier-lkml.patch
 Patch97:	2.6.0-mount-rainier-fix-lkml.patch
+Patch98:	2.6.0-mount-rainier-fix-EROFS.patch
 
 Patch100:	2.6.0-sysfs-1of4-lkml.patch
 Patch101:	2.6.0-sysfs-3of4-lkml.patch
@@ -536,6 +537,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch96 -p1
 %patch97 -p0
+%patch98 -p1
 
 %patch100 -p1
 %patch101 -p1
