@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		1
+%define		_rel		2
 %define		_test_ver	11
 %define		_cset		0
 
@@ -95,17 +95,15 @@ Patch42:	2.6.0-t9-netfilter-p2p.patch
 
 Patch44:	2.6.0-t9-PPC-smp.patch
 
-Patch46:	2.6.0-t9-IDE-lkml.patch
-
 Patch48:	2.6.0-t10-sis_operator_fix-lkml.patch
-
-Patch50:	2.6.0-modular-IDE.patch
 
 Patch52:	2.6.0-t10-POSIX_message_queues-1of2-lkml.patch
 Patch53:	2.6.0-t10-POSIX_message_queues-2of2-lkml.patch
 
 # http://bytesex.org/patches/2.6.0-test10-2/
 Patch60:	patch-2.6.0-test10-kraxel.gz
+
+Patch62:	2.6.0-t11-EPoX-sound-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -444,16 +442,14 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch44 -p1
 
-%patch46 -p1
-
 %patch48 -p1
-
-#%%patch50 -p1
 
 %patch52 -p1
 %patch53 -p1
 
 %patch60 -p1
+
+%patch62 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
