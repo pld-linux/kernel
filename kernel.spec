@@ -699,7 +699,7 @@ cat %{SOURCE1001} >> .config
 cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
-cat %{SOURCE1005} >> .config
+cat %{SOURCE1666} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
@@ -724,7 +724,7 @@ cat %{SOURCE1001} >> .config
 cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
-cat %{SOURCE1005} >> .config
+cat %{SOURCE1666} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
