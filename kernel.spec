@@ -3,18 +3,21 @@
 # packages will be built
 #
 # _without_grsec	- build without grsecurity patch
+# _with_preemptive	- build with Preemptible patch
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 # _without_boot		- don't build BOOT kernel
 # _without_source	- don't build source
 # _without_doc		- don't build documentation package
+# _without_w4l		- don't build Win4Lin support
 #
 
-%define		patch_level	6
+%define		patch_level	7
 %define		_rel		6
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
-
+#
+%define		pre_version		pre1
 %define		ipvs_version		1.0.7
 %define		freeswan_version	2.00
 %define		IPperson_version	20020819-2.4.19
@@ -24,8 +27,8 @@
 %define		evms_version		2.0.0
 %define		ntfs_version		2.1.4a
 %define		drm_xfree_version	4.3.0
-%define		hostap_version		0.0.1
-%define		netfilter_snap		20030428
+%define		hostap_version		0.0.2
+%define		netfilter_snap		20030518
 %define		iptables_version	1.2.8
 %define		ACL_version		0.8.56
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -35,9 +38,9 @@ Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
 %if %{patch_level} !=0
-Release:	%{_rel}pl%{patch_level}%{?_without_grsec:_nogrsec}
+Release:	%{_rel}pl%{patch_level}%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 %else
-Release:	%{_rel}%{?_without_grsec:_nogrsec}
+Release:	%{_rel}%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 %endif
 License:	GPL
 Group:		Base/Kernel
@@ -46,13 +49,14 @@ Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
-Source5:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
-Source6:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
-Source7:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-%{jfs_version}.tar.gz
-Source8:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
-Source9:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
-Source10:	linux-2.4.20-aacraid.tar.bz2
-
+#Source5:	
+Source6:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
+Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
+Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-%{jfs_version}.tar.gz
+Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
+Source10:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
+#Source11:	
+Source12:	linux-2.4.20-aacraid.tar.bz2
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source50:	%{name}-sparc.config
@@ -63,7 +67,8 @@ Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
-
+Source1000:	%{name}-lsm.config
+Source1001:	%{name}-abi.config
 Source1002:	%{name}-addon.config
 Source1003:	%{name}-netfilter.config
 Source1004:	%{name}-ipvs.config
@@ -92,218 +97,235 @@ Source1678:	%{name}-ecc.config
 Source1679:	%{name}-afs.config
 Source1999:	%{name}-preemptive.config
 
-##
-# Patches
-##
+# New features
 
 Patch0:		%{name}-pldfblogo.patch
 
-## -> Crypto
-# from: ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/testing/
+# from ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/testing/
 Patch1:		patch-int-2.4.20.1.bz2
-Patch2:		loop-jari-2.4.20.0.patch
 
-## -> general bugfix.
-Patch4:		linux-2.4.20-initrd-close-console.patch
-Patch5:		linux-2.4.20-no-FPU.patch
-Patch6:		linux-53c7,8xx-build.fix
-Patch7:		%{name}-Makefile-include-fix.patch
-# support for new chipset ? E820
-# from:
-Patch8:		linux-2.4.20-e820.patch
-# all missing parts
-Patch9:		linux-2.4.20.patch
+# from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
+Patch2:		linux-2.4-freeswan-%{freeswan_version}.patch.gz
 
-## -> grsecurity and other security 
-# from: http://grsecurity.net/grsecurity-%{grsec_version}.patch
-Patch15:	grsecurity-%{grsec_version}-%{version}.patch.gz
-#made by Qboosh
-Patch16:	linux-2.4.20-ptrace.patch
-Patch17:	linux-2.4.20-nogrsec.patch
-Patch18:	linux-2.4.20-grsecurity-1.9.9e-kmem.patch
+# from ftp://linux-xfs.sgi.com/projects/xfs/download/Release-1.2pre5/kernel_patches/
+Patch3:		linux-2.4.20-core-xfs-1.2.0.patch.bz2
+Patch4:		linux-2.4.20-xfs-1.2.0.patch.bz2
 
-## -> Security and network
-#from: ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
-Patch19:	linux-2.4-freeswan-%{freeswan_version}.patch.gz
+# from http://grsecurity.net/grsecurity-%{grsec_version}.patch
+Patch6:		grsecurity-%{grsec_version}-%{version}.patch.gz
 
+# Preemptive kernel  patch
+Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.20-1.patch
 
-## -> New filesystems.
-# from: ftp://linux-xfs.sgi.com/projects/xfs/download/Release-1.2pre5/kernel_patches/
-Patch20:	linux-2.4.20-xfs-1.2.0.patch.gz
-# from: http://unc.dl.sourceforge.net/sourceforge/linux-ntfs/
-Patch21:	linux-2.4.20-ntfs-%{ntfs_version}.patch.gz
-# from: http://www.ardistech.com/hfsplus/hfsplus-20030507.tar.gz
-Patch22:	hfsplus-20030507.patch.gz
-# from: http://people.sistina.com/~thornber/patches/2.4-stable/2.4.20/2.4.20-dm-10.tar.bz2
-Patch23:	linux-2.4.20-dm-10.patch.gz
-# EVMS support 
-# from: http://www.sourceforge.net/projects/evms/
-Patch24:	linux-2.4.20-evms-%{evms_version}.patch.gz
-# from MDK kernel
-# davfs2-0.2.1.tar.gz
-Patch25:	linux-2.4.20-davfs-0.2.4.patch.bz2
-# based on FC02_davfs__FUNCTION__.patch and small fix
-Patch26:	linux-2.4.20-davfs-fix.patch
-# from:
-Patch27:	linux-2.4.20-afs.patch.bz2
-# from: http://acl.bestbits.at/
-Patch28:	linux-2.4.20-ACL-%{ACL_version}.patch.gz
-# from:
-Patch29:	jfs-2.4.20.patch
-# from: http://www-124.ibm.com/developerworks/oss/jfs/
-# JFS for Linux [patch ID 399]
-Patch30:	linux-2.4.20-jfs-1.1.2-xattr.patch.gz
-# from:
-Patch31:	linux-2.4.20-squashfs.patch
-# from:
-# quota for reiserfs
-Patch32:	linux-2.4.20-reiserfs-quota.patch.bz2
-# from:
-Patch33:	linux-2.4.20-ext3.patch
-# from: ftp://ftp.sistina.com/pub/LVM/1.0/lvm_%{lvm_version}.tar.gz
-# Created from lvm.tgz:LVM/PATCHES by doing make
-Patch34:	linux-2.4.20-LVM-%{lvm_version}.patch.bz2
-#hpfs fix
-Patch35:	linux-2.4.18-hpfs.patch
-
-## -> Preemptive kernel  patch
-# from:
-Patch40:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.20-3.patch
-
-
-## -> Network
-# from: cvs -d :pserver:cvs@pserver.netfilter.org:/cvspublic co netfilter
+# new version of netfilter.
 %if %{netfilter_snap} != 0
-Patch45:		linux-2.4.20-netfilter-%{iptables_version}_%{netfilter_snap}.patch.gz
+Patch8:		linux-2.4.20-netfilter-%{iptables_version}_%{netfilter_snap}.patch.gz
 %else
-Patch45:		linux-2.4.20-netfilter-%{iptables_version}.patch.gz
+Patch8:		linux-2.4.20-netfilter-%{iptables_version}.patch.gz
 %endif
-# from:
-Patch46:	http://luxik.cdi.cz/~devik/qos/imq-2.4.18.diff-10
-# from: http://users.pandora.be/bart.de.schuymer/ebtables/sourcecode.html
-#		ebtables_v2.0.003_vs_2.4.20.diff
-Patch47:	ebtables-v2.0.003_vs_2.4.20.patch.bz2
-#		bridge-nf-0.0.10-against-2.4.20.diff
-Patch48:	linux-2.4.20-bridge-nf-0.0.10.patch.gz
-# from: http://wipl-wrr.sourceforge.net/tgz-wrr/wrr-021019.tar.gz
-Patch49:	wrr-linux-2.4.19.patch.gz
-# from: ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
-Patch50:	linux-2.4.18-mppe.patch
-# from: ftp://ftp.sf.net/pub/sourceforge/lcdpd/lcdp-0.2.3-linux-2.4.18.patch.gz
-Patch51:	linux-2.4.20-lcdp-0.2.3.patch.gz
 
-## -> sound
-# from: ???
-Patch55:	linux-2.4.20-audigy.patch.bz2
-# from:
-Patch56:	linux-2.4.20-i810_audio.patch
+Patch9:		linux-2.4.20-initrd-close-console.patch
 
-## -> drivers
-# from: http://www.promise.com/support/file/driver/promise-patch-2.4.19.gz
-Patch60:	linux-2.4.20-promise.patch.bz2
-# from: http://www.promise.com/support/file/driver/st6000src_1.30_01_0326.tgz
-Patch61:	linux-2.4.20-promise-st6000.patch.bz2
+#from http://rick.vanrein.org/linux/badram/software/BadRAM-2.4.20.1.patch
+Patch10:	linux-2.4.20-badram.patch
+
+# http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
+Patch11:	linux-2.4.20-ipvs-%{ipvs_version}.patch.bz2
+
+#Patch12:	
+Patch13:	http://luxik.cdi.cz/~devik/qos/imq-2.4.18.diff-10
+
+Patch14:	jfs-2.4.20.patch
+
+# http://unc.dl.sourceforge.net/sourceforge/linux-ntfs/
+Patch15:	linux-2.4.20-ntfs-%{ntfs_version}.patch.gz
+
+# ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
+Patch16:	linux-2.4.18-mppe.patch
+
+#from: 	http://dl.sourceforge.net/linux-hfsplus/hfsplus-patch-20020606.patch
+Patch17:	hfsplus-20030507.patch.gz
+
+# from http://people.sistina.com/~thornber/patches/2.4-stable/2.4.20/2.4.20-dm-10.tar.bz2
+Patch18:	linux-2.4.20-dm-10.patch.gz
+# EVMS support (http://www.sourceforge.net/projects/evms/)
+Patch19:	linux-2.4.20-evms-%{evms_version}.patch.gz
+
+# from ???
+Patch20:	linux-2.4.20-audigy.patch.bz2
+
+# from http://www.promise.com/support/file/driver/promise-patch-2.4.19.gz
+Patch21:	linux-2.4.20-promise.patch.bz2
+# from http://www.promise.com/support/file/driver/st6000src_1.30_01_0326.tgz
+Patch22:	linux-2.4.20-promise-st6000.patch.bz2
+
+# from ftp://ftp.lsil.com/pub/symchips/scsi/FusionMPT/Linux/2.03.00/mptlinux-2.03.00-src.tar.gz
+Patch23:	linux-2.4.20-mptlinux-2.03.00.patch.bz2
+
+# from MDK kernel DV08__i810fb.patch
+Patch24:	linux-2.4.20-I810FB.patch.bz2
+Patch25:	linux-2.4.20-I810FB_lock_page_fix.patch
+
+# Support for CDRW packet writing
+Patch26:	%{name}-cdrw-packet.patch
+Patch27:	%{name}-cd-mrw-2.patch
+
 # PC Speaker driver
-# from: http://www.geocities.com/stssppnn/pcsn-kernel-2.4.20.diff.gz
-Patch62:	linux-2.4.20-pcsp.patch.gz
-#usb patches 
-# from: ftp://ftp.kernel.org/pub/linux/people/gregkh/usb/*-2.4.20.*
-Patch63:	linux-2.4.20-USB.patch.bz2
-# from: http://people.freebsd.org/~gibbs/linux/SRC/
-#last: aic79xx-linux-2.4-20030424-tar.gz
-Patch64:	linux-2.4.20-aic79xx.patch.gz
-# from: MDK kernel DV08__i810fb.patch
-Patch65:	linux-2.4.20-I810FB.patch.bz2
-Patch66:	linux-2.4.20-I810FB_lock_page_fix.patch
-Patch67:	linux-2.4.20-radeonfb_clean.patch
-Patch68:	linux-2.4.20-agp_uninorth.patch
-# rivafb - fix for text background in 16bpp modes
-Patch69:	linux-rivafb16.patch
-# misc tdfxfb fixes - detailed description inside
-Patch70:	linux-tdfxfb-fixes.patch
-#support for VIA KT400 chipset in agpgart
-Patch71:	linux-2.4.20-kt400.patch
-#i2c - version 2.7.0
-Patch72:	linux-2.4.20-i2c-2.7.0.patch.gz
-# from: http://kernel.bkbits.net/~david-b/gadget24-0331.patch
-Patch73:	linux-2.4-USB-gadget-20030331.patch.bz2
-# from: ftp://ftp.lsil.com/pub/symchips/scsi/FusionMPT/Linux/2.03.00/mptlinux-2.03.00-src.tar.gz
-Patch74:	linux-2.4.20-mptlinux-2.03.00.patch.bz2
-## DRM
-Patch75:	linux-2.4.20-drm-Makefile.patch
+Patch28:	linux-2.4.20-pcsp.patch.gz
+
+Patch29:	linux-2.4.20-no-FPU.patch
+
+#from http://kernel.bkbits.net/~david-b/gadget24-0331.patch
+Patch30:	linux-2.4-USB-gadget-20030331.patch.bz2
+
+# from http://users.pandora.be/bart.de.schuymer/ebtables/sourcecode.html
+#		bridge-nf-0.0.10-against-2.4.20.diff
+Patch31:	linux-2.4.20-bridge-nf-0.0.10.patch.gz
+#		ebtables_v2.0.003_vs_2.4.20.diff
+Patch32:	ebtables-v2.0.003_vs_2.4.20.patch.bz2
+
+Patch33:	linux-2.4.19-pre8-konicawc.patch
+Patch34:	wrr-linux-2.4.19.patch.gz
+Patch35:	%{name}-pswscancode.patch
+
+# from MDK kernel
+# FC01_davfs_0.2.4.patch
+Patch36:	linux-2.4.20-davfs-0.2.4.patch.bz2
+# FC02_davfs__FUNCTION__.patch
+Patch37:	linux-2.4.20-davfs-fix.patch
+
 # from http://www.noc.uoa.gr/~avel/page.php?page=nokia&lang=en
-Patch76:	linux-2.4.20-Nokia5510.patch
-# from:
-Patch77:	linux-2.4.20-ecc.patch
+Patch38:	linux-2.4.20-Nokia5510.patch
+
+#from http://people.freebsd.org/~gibbs/linux/SRC/
+#last: aic79xx-linux-2.4-20030410-tar.gz
+Patch39:	linux-2.4.20-aic79xx.patch.gz
+Patch40:	linux-2.4.20-i810_audio.patch
+Patch41:	linux-2.4.20-afs.patch.bz2
+Patch42:	linux-2.4.20-ecc.patch
+Patch43:	linux-2.4.20-e820.patch
+
 # from http://www.holtmann.org/linux/kernel/patch-2.4.20-mh6.gz
-Patch78:	linux-2.4.20-mh6.patch.bz2
-#fix for DC395
-Patch79:	dc395-tab.patch
+Patch44:	linux-2.4.20-mh6.patch.bz2
+# from http://acl.bestbits.at/
+Patch45:	linux-2.4.20-ACL-%{ACL_version}.patch.gz
+Patch46:	linux-2.4.19-netmos_pci_parallel_n_serial.patch
 
-## Support for CDRW packet writing
-Patch100:	%{name}-cdrw-packet.patch
-Patch101:	%{name}-cd-mrw-2.patch
+Patch47:	linux-2.4-3com-vlan.patch
 
+# Assorted bugfixes
 
+# from LKML
+Patch100:	linux-scsi-debug-bug.patch
+Patch101:	linux-2.4.2-raw-ip.patch
+Patch102:	PCI_ISA_bridge.patch
+# from http://www-124.ibm.com/developerworks/oss/jfs/
+# JFS for Linux [patch ID 399]
+Patch103:	linux-2.4.20-jfs-1.1.2-xattr.patch.gz
+# this patch adds support for "io" and "irq" options in PCNet32 driver module
+Patch104:	linux-2.4.19-pcnet-parms.patch
+Patch105:	linux-2.4.20-ptrace.patch
+Patch106:	linux-2.4.20-lkml-ppp_filter-outbound-fix.patch
+# raid5 xor fix for PIII/P4, should go away shortly
+Patch107:	linux-2.4.0-raid5xor.patch
+# disable some networking printk's
+Patch108:	linux-2.4.1-netdebug.patch
+# Add an ioctl to the block layer so we can be EFI compliant
+Patch109:	linux-2.4.2-blkioctl-sector.patch
+# fix lun probing on multilun RAID chassis
+Patch110:	linux-2.4.12-scsi_scan.patch
+# fix rawio
+Patch111:	linux-2.4.3-rawio.patch
+#Patch112:
+Patch113:	linux-2.4.10-cpqfc.patch
+# Created from lvm.tgz:LVM/PATCHES by doing make
+#from ftp://ftp.sistina.com/pub/LVM/1.0/lvm_%{lvm_version}.tar.gz
+Patch114:	linux-2.4.20-LVM-%{lvm_version}.patch.bz2
+#Patch115:	ftp://ftp.kernel.org/pub/linux/kernel/people/sct/ext3/v2.4/ext3-0.9.18-2.4.19pre8.patch
+Patch116:	linux-proc_net_dev-counter-fix.patch
+Patch117:	01-sigxfs-vs-blkdev.patch
+Patch118:	%{name}-2.4.18-SPARC64-PLD.patch
+Patch119:	linux-AXP.patch
+Patch120:	%{name}-Makefile-include-fix.patch
+Patch121:	%{name}-2.4.17-netsyms-export-fix.patch
+#Patch122:	linux-2.4.12-riva-ppc.patch.bz2
+Patch123:	linux-2.4.20-agp_uninorth.patch
+Patch124:	%{name}-gcc31.patch
+Patch125:	linux-2.4.18-hpfs.patch
+#Patch126:	linux-tulip-vlan.patch
+Patch127:	linux-modules-fixed.patch
+Patch128:	hpt3xx.patch
+Patch129:	linux-53c7,8xx-build.fix
+Patch130:	linux-PPC-SMP.patch
+Patch131:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
+Patch132:	ide-EXPORT_SYMBOL.fix
+Patch133:	linux-proc_get_inode.patch
 
+# added support for VIA8235
+#Patch134:	vt8235-2.4.19.patch
 
+Patch135:	linux-2.4.20-radeonfb_clean.patch
+Patch136:	piix-ide-fix.patch
+#Patch137:	
+Patch138:	http://www.uwsg.indiana.edu/hypermail/linux/kernel/0212.0/att-1445/01-sound.diff
 
+# Video 4 Linux 2
+#Patch139:	linux-2.4.20-v4l2.patch.bz2 
 
+# PWC USB Webcam Driver update (only for 2.4.20; 2.4.21 should have this fix)
+Patch140:	linux-2.4.20-pwc.patch
 
+# rivafb - fix for text background in 16bpp modes
+Patch141:	linux-rivafb16.patch
 
+# misc tdfxfb fixes - detailed description inside
+Patch142:	linux-tdfxfb-fixes.patch
 
+# quota for reiserfs
+Patch143:	linux-2.4.20-reiserfs-quota.patch.bz2
 
-#Patch33:	linux-2.4.19-pre8-konicawc.patch
-#Patch35:	%{name}-pswscancode.patch
-#Patch46:	linux-2.4.19-netmos_pci_parallel_n_serial.patch
-#Patch47:	linux-2.4-3com-vlan.patch
-#Patch102:	PCI_ISA_bridge.patch
-## raid5 xor fix for PIII/P4, should go away shortly
-#Patch107:	linux-2.4.0-raid5xor.patch
-## disable some networking printk's
-#Patch108:	linux-2.4.1-netdebug.patch
-#Patch118:	%{name}-2.4.18-SPARC64-PLD.patch
-#Patch119:	linux-AXP.patch
-#Patch121:	%{name}-2.4.17-netsyms-export-fix.patch
-#Patch124:	%{name}-gcc31.patch
-#Patch130:	linux-PPC-SMP.patch
-#Patch131:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
-#Patch132:	ide-EXPORT_SYMBOL.fix
-#Patch133:	linux-proc_get_inode.patch
-#Patch136:	piix-ide-fix.patch
-#Patch138:	http://www.uwsg.indiana.edu/hypermail/linux/kernel/0212.0/att-1445/01-sound.diff
-#Patch140:	linux-2.4.20-pwc.patch
-#Patch200:	linux-sound_core.patch
-#Patch201:	linux-2.4.20-SPARC64.patch
-#Patch202:	linux-2.4.20-SPARC-EXPORT_SYMBOL.patch
-#Patch203:	linux-2.4.20-AXP-EXPORT_SYMBOL.patch
-#Patch204:	linux-2.4.20-AXP-avma1_cs.patch
-#Patch205:	linux-2.4.20-PPC-EXPORT_SYMBOL.patch
-#Patch903:	linux-2.4-ppc-procesor.patch
-#Patch910:	linux-2.4.21-pre4-ac4-via82cxxx_audio.patch.bz2
+#support for VIA KT400 chipset in agpgart
+Patch144:	linux-2.4.20-kt400.patch
 
+#i2c - version 2.7.0
+Patch145:	linux-2.4.20-i2c-2.7.0.patch.gz
 
+#usb patches from ftp://ftp.kernel.org/pub/linux/people/gregkh/usb/*-2.4.20.*
+Patch146:	linux-2.4.20-USB.patch.bz2
 
+# Patches fixing other patches or 3rd party sources ;)
+# This patch allows to create more than one sound device using alsa
+# and devfs with two or more sound cards
+Patch200:	linux-sound_core.patch
+Patch201:	linux-2.4.20-SPARC64.patch
+Patch202:	linux-2.4.20-SPARC-EXPORT_SYMBOL.patch
+Patch203:	linux-2.4.20-AXP-EXPORT_SYMBOL.patch
+Patch204:	linux-2.4.20-AXP-avma1_cs.patch
+Patch205:	linux-2.4.20-PPC-EXPORT_SYMBOL.patch
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# fixed missing MODULE_{AUTHOR,DESCRIPTION,LICENSE}
-Patch995:	linux-2.4.20-missing-module.patch
-# added missinf EXPORT_SYMBOL
-Patch1000:	linux-2.4.20-EXPORT_SYMBOL.patch
+# tweaks for grsecurity, description inside patch
+Patch900:	loop-jari-2.4.20.0.patch
+Patch901:	dc395-tab.patch
+Patch902:	linux-2.4.20-drm-Makefile.patch
+Patch903:	linux-2.4-ppc-procesor.patch
+#Patch904:
+#Patch905:
+#Patch906:	linux-2.4.20-LSM.patch.gz
+Patch907:	PPC-grsecurity-pgtable.h.patch
+#Patch908:
+#Patch909:	
+Patch910:	linux-2.4.21-pre4-ac4-via82cxxx_audio.patch.bz2
+#Patch911:	
+#Patch912:	
+#Patch913:	
+Patch914:	linux-2.4.20-MODULE_XXX.patch
+#Patch915:	linux-2.4.19-usb-digitalcams.patch
+#Patch916:	
+Patch917:	linux-2.4.20-nogrsec.patch
+Patch918:	linux-2.4.20-ext3.patch
+Patch919:	linux-2.4.20-ntfs.patch
+Patch920:	linux-2.4.20-squashfs.patch
+Patch921:	linux-2.4.20-grsecurity-1.9.9e-kmem.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -591,168 +613,231 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -n linux-%{version}
+%setup -q -a3 -a4 -a6 -a7 -a8 -a9 -a10 -a12 -n linux-%{version}
+%patch0 -p1
+%patch1 -p1
+%patch900 -p1
+%patch2 -p1
+%patch3 -p1
+%patch4 -p1
+%patch6 -p1
+%ifarch ppc
+%patch907 -p1
+%endif
+%patch11 -p1
+%patch13 -p1
+%patch14 -p1
+%patch15 -p1
+%patch16 -p1
+%patch17 -p1
+echo Added Device-mapper support ...
+%patch18 -p1
+%patch19 -p1
+%patch23 -p1
+%patch26 -p1
+%patch27 -p1
 
-## Applayed patches manualy.
+%patch100 -p0
+%patch101 -p1
+%patch102 -p0
+%patch104 -p1
+%patch106 -p1
+%patch107 -p1
+%patch108 -p1
+%patch109 -p1
+%patch110 -p1
+%patch111 -p1
+%patch113 -p1
+%patch116 -p1
+%patch117 -p1
+%patch120 -p1
+%patch121 -p0
+%patch123 -p1
+%patch124 -p1
+%patch125 -p1
+%patch127 -p1
+%patch128 -p1
+%patch129 -p0
+%patch131 -p0
+%patch132 -p0
+%patch133 -p1
+%patch135 -p1
+%patch136 -p0
+%patch140 -p1
+%patch141 -p1
+%patch142 -p1
+
+%patch200 -p1
+
+#%patch905 -p1
+
 # Tekram DC395/315 U/UW SCSI host driver
+echo Adding Tekram DC395/315 driver
 patch -p1 -s <dc395/dc395-integ24.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
+%patch901 -p1
 
 # Adaptec AACRaid nev drivers
+echo Updating AAC driver ...
 rm -f drivers/scsi/aacraid/*
 cp aacraid/* drivers/scsi/aacraid/
 
 # Fore 200e ATM NIC
+echo Adding FORE 200e ATM driver
 patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
 
+# Netfilter
+%patch8 -p1
+
+%patch32 -p1
+%patch31 -p1
+
 # hostap
+echo Installing Host AP support
 patch -p1 -s < hostap-%{hostap_version}/kernel-patches/hostap-linux-%{version}.patch
 cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 
-# Changing DRM source ....
-cp drm/*.{c,h} drivers/char/drm/
-
-# end of .....
-
-%patch0 -p1
-
-## Crypto
-%patch1 -p1
-%patch2 -p1
-
-## general bugfix
-%patch4 -p1
-%patch5 -p1
-#fixed to build NCR SCSI driver
-%patch6 -p1
-#fixed includes
-%patch7 -p1
-%ifarch %{ix86}
-%patch8 -p1
-%endif
-%patch9 -p1
-
-##grsecurity and other sec.
-%patch15 -p1
-#ptrace fix by Qboosh
-%patch16 -p1
-%{?_without_grsec:%patch17 -p1}
-# sysctl controll of /dev/mem
-%patch18 -p1 
-
-%patch19 -p1
-
-
-## filesystems
-#XFS
-%patch20 -p1
-#NTFS
-%patch21 -p1
-#HFS+
-%patch22 -p1
-#DM
-%patch23 -p1
-#EVMS
-%patch24 -p1
-#DavFS
-%patch25 -p1
-#fix for davfs
-%patch26 -p1
-#afs
-#%patch27 -p1
-#ACL
-%patch28 -p1
-#jfs
-%patch29 -p1
-#xattr for jfs
-%patch30 -p1
-#squashfs
-%patch31 -p1
-#quota for reiserfs
-%patch32 -p1
-#ext3
+# Konica USB camera support
+echo Installing Konica Support
 %patch33 -p1
-#LVM
+
+# Changing DRM source ....
+echo Installing NEW DRM Source ...
+cp drm/*.{c,h} drivers/char/drm/
+%patch902 -p1
+
+# WRR
+echo Installing WRR Support
 %patch34 -p1
 
+# scancode
+%patch35 -p1
 
-## Preemptive
-%ifnarch sparc sparc64
-#%%patch40 -p1
-%endif
+# added missing MODULE_LICENSE, MODULE_DESCRIPTION, MODULE_AUTHOR
+%patch914 -p1
 
-
-## Network
-#netfilter
+# ACL support
+echo Added ACL support
 %patch45 -p1
-#imq
+
+%patch918 -p1
+%patch919 -p1
+
+#squashfs
+%patch920 -p1
+
+# NetMos support
+echo Added NetMos card supprot
 %patch46 -p1
-#ebtable
+
+%patch138 -p1
+
+# sysctl controll of /dev/mem
+echo Sysctl controll access to /dev/kmem 
+%patch921 -p1 
+
+%patch143 -p1
+%patch145 -p1
+
+# USB patches
+%patch146 -p1
+
+# VIA82Cxxx
+echo Fixed VIA82Cxxx Audio ...
+%patch910 -p1
+
+#promise patch
+echo Promise driver patch
+%patch21 -p1
+%patch22 -p1
+
+#davfs
+echo Added davFS support
+%patch36 -p1
+%patch37 -p1
+
+# Nokia 5510 
+echo Added Nokia5510 support
+%patch38 -p1
+
+# Audigy
+echo Added Audigy SoundBlaster support ...
+%patch20 -p1
+
+# AIC79XX
+echo Added Adapter AIC79XX controler support ...
+%patch39 -p1
+
+# i810 audio
+echo Fixed I810 Sound ...
+%patch40 -p1
+
+%patch42 -p1
+%patch43 -p1
+
+%patch9 -p1
+
+%patch29 -p1
+
+# USB bluesooth
+%patch44 -p1
+
+# vlan patch
+echo Updated 3Com drivers for VLAN ...
 %patch47 -p1
-#bridge-nf
-%patch48 -p1
-#wrr
-%patch49 -p1
-#mppe
-%patch50 -p1
-#lcdp
-%patch51 -p1
 
-## Sound
-#Audigy
-%patch55 -p1
-#i810-audio
-%patch56 -p1
+# LVM 1.0.7
+echo Added LVM support version %{lvm_version}
+%patch114 -p1
 
+# JFS - xattr+acl
+echo Added xattr for JFS ...
+%patch103 -p1
 
-## Drivers
-#promise
-%patch60 -p1
-#promise ST6000
-%patch61 -p1
-# PC Speaker
-%patch62 -p1
-#USB
-%patch63 -p1
-#AIC79XX
-%patch64 -p1
-#i810FB
-%patch65 -p1
-#i810FB fix
-%patch66 -p1
-#RadeonFB clean
-%patch67 -p1
-#AGP Uninorth
-%patch68 -p1
-#RivaFB
-%patch69 -p1
-#tdfxfb fix
-%patch70 -p1
-#KT400
-%patch71 -p1
-#i2c
-%patch72 -p1
-#USB gadget
-%ifnarch ppc
-## Or fix ...
-%patch73 -p1
+%{?_without_grsec:%patch917 -p1}
+
+#ptrace fix by Qboosh
+%patch105 -p1
+
+# SLM
+#echo Added LSM support...
+#%patch906 -p1
+
+echo Added ARCH specific patches....
+%ifarch %{ix86}
+echo Ix86 patches ...
+# I810FB
+echo Added Intel 810 FB support
+%patch24 -p1
+%patch25 -p1
+# KT400
+echo Added support for KT400 chipset
+%patch144 -p1
+#usb gadget
+echo Added USB gadget ...
+%patch30 -p1
 %endif
-#Fusion MPT
-%patch74 -p1
-## ->DRM
-%patch75 -p1
-#Nokia5510 patch
-%patch76 -p1
-#ecc
-%patch77 -p1
-#Bluetooth
-%patch78 -p1
-# fix for DC395
-%patch79 -p1
-
-# LAST patch
-%patch995 -p1
-%patch1000 -p1
+%ifarch ppc
+echo PPC patches ...
+%patch130 -p0
+%patch205 -p1
+%patch903 -p1
+%endif
+%ifarch sparc64
+echo SPARC64 patches ...
+%patch118 -p1
+%patch201 -p1
+%endif
+%ifarch sparc
+echo SPARC patches ...
+%patch202 -p1
+%endif
+%ifarch alpha
+echo AXP patches ...
+%patch119 -p0
+%patch203 -p1
+%patch204 -p1
+%endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
@@ -809,12 +894,14 @@ BuildKernel() {
 %ifarch athlon
 	echo "CONFIG_MK7=y" >> arch/%{base_arch}/defconfig
 %endif
+	cat %{SOURCE1000} >> arch/%{base_arch}/defconfig
+#	cat %{SOURCE1001} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1002} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1003} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1004} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1005} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1006} >> arch/%{base_arch}/defconfig
-	cat %{SOURCE1999} >> arch/%{base_arch}/defconfig
+	%{?_with_preemptive:cat %{SOURCE1999} >> arch/%{base_arch}/defconfig}
 %ifnarch i386 i486
 	cat %{SOURCE1007} >> arch/%{base_arch}/defconfig
 %endif
@@ -1011,6 +1098,8 @@ echo "CONFIG_M686=y" >> .config
 %ifarch athlon
 echo "CONFIG_MK7=y" >> .config
 %endif
+cat %{SOURCE1000} >> .config
+#cat %{SOURCE1001} >> .config
 cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
@@ -1018,7 +1107,7 @@ cat %{SOURCE1005} >> .config
 cat %{SOURCE1006} >> .config
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
-cat %{SOURCE1999} >> .config
+%{?_with_preemptive:cat %{SOURCE1999} >> .config}
 %ifnarch i386 i486
 	cat %{SOURCE1007} >> .config
 %endif
@@ -1069,6 +1158,8 @@ echo "CONFIG_M686=y" >> .config
 echo "CONFIG_MK7=y" >> .config
 %endif
 
+cat %{SOURCE1000} >> .config
+#cat %{SOURCE1001} >> .config
 cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
@@ -1076,7 +1167,7 @@ cat %{SOURCE1005} >> .config
 cat %{SOURCE1006} >> .config
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
-cat %{SOURCE1999} >> .config
+%{?_with_preemptive:cat %{SOURCE1999} >> .config}
 %ifnarch i386 i486
 	cat %{SOURCE1007} >> .config
 %endif
@@ -1223,16 +1314,16 @@ fi
 rm -f /boot/initrd-%{version}-%{release}.gz
 
 %post pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}%{?_without_grsec:_nogrsec} %{version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
 %postun pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}%{?_without_grsec:_nogrsec} %{version}-%{release} > /dev/null 2>&1
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release} > /dev/null 2>&1
 
 %post drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}%{?_without_grsec:_nogrsec} %{version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
 %postun drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}%{?_without_grsec:_nogrsec} %{version}-%{release} > /dev/null 2>&1
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release} > /dev/null 2>&1
 
 %postun smp
 if [ -L /lib/modules/%{version} ]; then 
@@ -1245,16 +1336,16 @@ fi
 rm -f /boot/initrd-%{version}-%{release}smp.gz
 
 %post smp-pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp%{?_without_grsec:_nogrsec} %{version}-%{release}smp
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
 
 %postun smp-pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp%{?_without_grsec:_nogrsec} %{version}-%{release}smp > /dev/null 2>&1
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp > /dev/null 2>&1
 
 %post smp-drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp%{?_without_grsec:_nogrsec} %{version}-%{release}smp
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
 
 %postun smp-drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp%{?_without_grsec:_nogrsec} %{version}-%{release}smp > /dev/null 2>&1
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp > /dev/null 2>&1
 
 %postun BOOT
 if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then 
