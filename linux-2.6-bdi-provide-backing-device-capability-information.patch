@@ -83,9 +83,9 @@ diff -puN drivers/char/mem.c~bdi-provide-backing-device-capability-information d
 --- 25/drivers/char/mem.c~bdi-provide-backing-device-capability-information	Tue Mar  8 16:33:20 2005
 +++ 25-akpm/drivers/char/mem.c	Tue Mar  8 16:33:20 2005
 @@ -23,6 +23,7 @@
- #include <linux/devfs_fs_kernel.h>
  #include <linux/ptrace.h>
  #include <linux/device.h>
+ #include <linux/grsecurity.h>
 +#include <linux/backing-dev.h>
  
  #include <asm/uaccess.h>
@@ -287,7 +287,7 @@ diff -puN mm/page-writeback.c~bdi-provide-backing-device-capability-information 
 @@ -713,7 +713,7 @@ int test_clear_page_dirty(struct page *p
  						page_index(page),
  						PAGECACHE_TAG_DIRTY);
- 			write_unlock_irqrestore(&mapping->tree_lock, flags);
+ 			spin_unlock_irqrestore(&mapping->tree_lock, flags);
 -			if (!mapping->backing_dev_info->memory_backed)
 +			if (mapping_cap_account_dirty(mapping))
  				dec_page_state(nr_dirty);
