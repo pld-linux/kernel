@@ -622,12 +622,12 @@ BuildConfig smp
 %{?with_smp:PreInstallKernel smp}
 
 # BOOT kernel
-%ifnarch i586 i686 athlon
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
-rm -rf $KERNEL_INSTALL_DIR
-%{?with_boot:BuildKernel BOOT}
-%{?with_boot:PreInstallKernel boot}
-%endif
+#%%ifnarch i586 i686 athlon
+#%KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
+#%rm -rf $KERNEL_INSTALL_DIR
+#%%{?with_boot:BuildKernel BOOT}
+#%%{?with_boot:PreInstallKernel boot}
+#%%endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -662,6 +662,7 @@ cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 %{__make} mrproper
 find -name "*~" -exec rm -f "{}" ";"
 find -name "*.orig" -exec rm -f "{}" ";"
+cp $KERNEL_BUILD_DIR/scripts/modpost scripts
 
 %ifarch %{ix86}
 cat $RPM_SOURCE_DIR/kernel-ia32.config > .config
@@ -1011,6 +1012,7 @@ fi
 %{_prefix}/src/linux-%{version}/include
 %{_prefix}/src/linux-%{version}/config-smp
 %{_prefix}/src/linux-%{version}/config-up
+%attr(755,root,root)	%{_prefix}/src/linux-%{version}/scripts/modpost
 #%{_prefix}/src/linux-%{version}/.config
 
 %files doc
