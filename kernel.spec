@@ -17,7 +17,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.5.68
-Release:	0.3
+Release:	0.4
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
@@ -471,7 +471,6 @@ cp .config config-smp
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
-# install SELinux headers
 %if %{?_without_selinux:0}%{!?_without_selinux:1}
 install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/{linux,asm-i386}/flask
 install security/lids/include/linux/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
@@ -625,8 +624,8 @@ fi
 %dir /lib/modules/%{version}-%{release}
 /lib/modules/%{version}-%{release}/kernel
 #pcmcia stuff
-#%exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
-#%exclude /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
 #drm stuff
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 
@@ -635,8 +634,8 @@ fi
 
 %files pcmcia-cs
 %defattr(644,root,root,755)
-#/lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
-#/lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
+/lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
+/lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
 
 %files drm
 %defattr(644,root,root,755)
@@ -654,8 +653,8 @@ fi
 %dir /lib/modules/%{version}-%{release}smp
 /lib/modules/%{version}-%{release}smp/kernel
 #pcmcia stuff
-#%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
-#%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
 #drm stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 /lib/modules/%{version}-%{release}smp/build
@@ -663,8 +662,8 @@ fi
 
 %files -n kernel-smp-pcmcia-cs
 %defattr(644,root,root,755)
-#/lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
-#/lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
+/lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
+/lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
 
 %files -n kernel-smp-drm
 %defattr(644,root,root,755)
