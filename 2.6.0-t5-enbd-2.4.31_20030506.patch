@@ -1,6 +1,73 @@
---- linux-2.5.64/drivers/block/Kconfig.pre-enbd	Mon Mar 24 15:56:52 2003
-+++ linux-2.5.64/drivers/block/Kconfig	Mon Mar 24 17:45:35 2003
-@@ -292,6 +292,15 @@
+diff -Nur linux-2.6.0-test5.org/drivers/Makefile linux-2.6.0-test5/drivers/Makefile
+--- linux-2.6.0-test5.org/drivers/Makefile	Mon Sep  8 19:50:21 2003
++++ linux-2.6.0-test5/drivers/Makefile	Thu Sep 25 10:39:41 2003
+@@ -33,6 +33,7 @@
+ obj-$(CONFIG_SBUS)		+= sbus/
+ obj-$(CONFIG_ZORRO)		+= zorro/
+ obj-$(CONFIG_MAC)		+= macintosh/
++obj-$(CONFIG_ENBD) 		+= block/enbd/
+ obj-$(CONFIG_PARIDE) 		+= block/paride/
+ obj-$(CONFIG_TC)		+= tc/
+ obj-$(CONFIG_USB)		+= usb/
+diff -Nur linux-2.6.0-test5.org/drivers/Makefile.orig linux-2.6.0-test5/drivers/Makefile.orig
+--- linux-2.6.0-test5.org/drivers/Makefile.orig	Thu Jan  1 00:00:00 1970
++++ linux-2.6.0-test5/drivers/Makefile.orig	Mon Sep  8 19:50:21 2003
+@@ -0,0 +1,51 @@
++#
++# Makefile for the Linux kernel device drivers.
++#
++# 15 Sep 2000, Christoph Hellwig <hch@infradead.org>
++# Rewritten to use lists instead of if-statements.
++#
++
++obj-$(CONFIG_PCI)		+= pci/
++obj-$(CONFIG_PARISC)		+= parisc/
++obj-$(CONFIG_ACPI_BOOT)		+= acpi/
++# PnP must come after ACPI since it will eventually need to check if acpi
++# was used and do nothing if so
++obj-$(CONFIG_PNP)		+= pnp/
++
++# char/ comes before serial/ etc so that the VT console is the boot-time
++# default.
++obj-y				+= char/
++obj-y				+= serial/
++obj-$(CONFIG_PARPORT)		+= parport/
++obj-y				+= base/ block/ misc/ net/ media/
++obj-$(CONFIG_NUBUS)		+= nubus/
++obj-$(CONFIG_ATM)		+= atm/
++obj-$(CONFIG_PPC_PMAC)		+= macintosh/
++obj-$(CONFIG_IDE)		+= ide/
++obj-$(CONFIG_FC4)		+= fc4/
++obj-$(CONFIG_SCSI)		+= scsi/
++obj-$(CONFIG_FUSION)		+= message/
++obj-$(CONFIG_IEEE1394)		+= ieee1394/
++obj-y				+= cdrom/ video/
++obj-$(CONFIG_MTD)		+= mtd/
++obj-$(CONFIG_PCMCIA)		+= pcmcia/
++obj-$(CONFIG_DIO)		+= dio/
++obj-$(CONFIG_SBUS)		+= sbus/
++obj-$(CONFIG_ZORRO)		+= zorro/
++obj-$(CONFIG_MAC)		+= macintosh/
++obj-$(CONFIG_PARIDE) 		+= block/paride/
++obj-$(CONFIG_TC)		+= tc/
++obj-$(CONFIG_USB)		+= usb/
++obj-$(CONFIG_USB_GADGET)	+= usb/gadget/
++obj-$(CONFIG_INPUT)		+= input/
++obj-$(CONFIG_GAMEPORT)		+= input/gameport/
++obj-$(CONFIG_SERIO)		+= input/serio/
++obj-$(CONFIG_I2O)		+= message/
++obj-$(CONFIG_I2C)		+= i2c/
++obj-$(CONFIG_PHONE)		+= telephony/
++obj-$(CONFIG_MD)		+= md/
++obj-$(CONFIG_BT)		+= bluetooth/
++obj-$(CONFIG_ISDN_BOOL)		+= isdn/
++obj-$(CONFIG_MCA)		+= mca/
++obj-$(CONFIG_EISA)		+= eisa/
++obj-$(CONFIG_CPU_FREQ)		+= cpufreq/
+diff -Nur linux-2.6.0-test5.org/drivers/block/Kconfig linux-2.6.0-test5/drivers/block/Kconfig
+--- linux-2.6.0-test5.org/drivers/block/Kconfig	Thu Sep 25 10:31:05 2003
++++ linux-2.6.0-test5/drivers/block/Kconfig	Thu Sep 25 10:39:41 2003
+@@ -300,6 +300,15 @@
  
  	  If unsure, say N.
  
@@ -16,9 +83,463 @@
  config BLK_DEV_RAM
  	tristate "RAM disk support"
  	---help---
---- linux-2.5.64/drivers/block/enbd/enbd_base.c.pre-enbd	Mon Mar 24 18:55:25 2003
-+++ linux-2.5.64/drivers/block/enbd/enbd_base.c	Tue Mar 25 15:44:12 2003
-@@ -0,0 +1,4172 @@
+diff -Nur linux-2.6.0-test5.org/drivers/block/Kconfig.orig linux-2.6.0-test5/drivers/block/Kconfig.orig
+--- linux-2.6.0-test5.org/drivers/block/Kconfig.orig	Thu Jan  1 00:00:00 1970
++++ linux-2.6.0-test5/drivers/block/Kconfig.orig	Thu Sep 25 10:38:06 2003
+@@ -0,0 +1,350 @@
++#
++# Block device driver configuration
++#
++
++menu "Block devices"
++
++config BLK_DEV_FD
++	tristate "Normal floppy disk support"
++	depends on !X86_PC9800
++	---help---
++	  If you want to use the floppy disk drive(s) of your PC under Linux,
++	  say Y. Information about this driver, especially important for IBM
++	  Thinkpad users, is contained in <file:Documentation/floppy.txt>.
++	  That file also contains the location of the Floppy driver FAQ as
++	  well as location of the fdutils package used to configure additional
++	  parameters of the driver at run time.
++
++	  This driver is also available as a module ( = code which can be
++	  inserted in and removed from the running kernel whenever you want).
++	  The module will be called floppy. If you want to compile it as a
++	  module, say M here and read <file:Documentation/modules.txt>.
++
++config AMIGA_FLOPPY
++	tristate "Amiga floppy support"
++	depends on AMIGA
++
++config ATARI_FLOPPY
++	tristate "Atari floppy support"
++	depends on ATARI
++
++config BLK_DEV_FD98
++	tristate "NEC PC-9800 floppy disk support"
++	depends on X86_PC9800
++	---help---
++	  If you want to use the floppy disk drive(s) of NEC PC-9801/PC-9821,
++	  say Y.
++
++config BLK_DEV_SWIM_IOP
++	bool "Macintosh IIfx/Quadra 900/Quadra 950 floppy support (EXPERIMENTAL)"
++	depends on MAC && EXPERIMENTAL
++	help
++	  Say Y here to support the SWIM (Super Woz Integrated Machine) IOP
++	  floppy controller on the Macintosh IIfx and Quadra 900/950.
++
++config BLK_DEV_PS2
++	tristate "PS/2 ESDI hard disk support"
++	depends on MCA && MCA_LEGACY
++	help
++	  Say Y here if you have a PS/2 machine with a MCA bus and an ESDI
++	  hard disk.
++
++	  If you want to compile the driver as a module ( = code which can be
++	  inserted in and removed from the running kernel whenever you want),
++	  say M here and read <file:Documentation/modules.txt>.  The module
++	  will be called ps2esdi.
++
++config AMIGA_Z2RAM
++	tristate "Amiga Zorro II ramdisk support"
++	depends on ZORRO
++	help
++	  This enables support for using Chip RAM and Zorro II RAM as a
++	  ramdisk or as a swap partition. Say Y if you want to include this
++	  driver in the kernel. This driver is also available as a module
++	  ( = code which can be inserted in and removed from the running
++	  kernel whenever you want). The module is called z2ram. If you want
++	  to compile it as a module, say M here and read
++	  <file:Documentation/modules.txt>.
++
++config ATARI_ACSI
++	tristate "Atari ACSI support"
++	depends on ATARI
++	---help---
++	  This enables support for the Atari ACSI interface. The driver
++	  supports hard disks and CD-ROMs, which have 512-byte sectors, or can
++	  be switched to that mode. Due to the ACSI command format, only disks
++	  up to 1 GB are supported. Special support for certain ACSI to SCSI
++	  adapters, which could relax that, isn't included yet. The ACSI
++	  driver is also the basis for certain other drivers for devices
++	  attached to the ACSI bus: Atari SLM laser printer, BioNet-100
++	  Ethernet, and PAMsNet Ethernet. If you want to use one of these
++	  devices, you need ACSI support, too.
++
++	  This driver is also available as a module ( = code which can be
++	  inserted in and removed from the running kernel whenever you want).
++	  The module will be called acsi.
++
++comment "Some devices (e.g. CD jukebox) support multiple LUNs"
++	depends on ATARI && ATARI_ACSI
++
++config ACSI_MULTI_LUN
++	bool "Probe all LUNs on each ACSI device"
++	depends on ATARI_ACSI
++	help
++	  If you have a ACSI device that supports more than one LUN (Logical
++	  Unit Number), e.g. a CD jukebox, you should say Y here so that all
++	  will be found by the ACSI driver. An ACSI device with multiple LUNs
++	  acts logically like multiple ACSI devices. The vast majority of ACSI
++	  devices have only one LUN, and so most people can say N here and
++	  should in fact do so, because it is safer.
++
++config ATARI_SLM
++	tristate "Atari SLM laser printer support"
++	depends on ATARI && ATARI_ACSI!=n
++	help
++	  If you have an Atari SLM laser printer, say Y to include support for
++	  it in the kernel. Otherwise, say N. This driver is also available as
++	  a module ( = code which can be inserted in and removed from the
++	  running kernel whenever you want). The module will be called
++	  acsi_slm. Be warned: the driver needs much ST-RAM and can cause
++	  problems due to that fact!
++
++config BLK_DEV_XD
++	tristate "XT hard disk support"
++	depends on ISA
++	help
++	  Very old 8 bit hard disk controllers used in the IBM XT computer
++	  will be supported if you say Y here.
++
++	  If you want to compile the driver as a module ( = code which can be
++	  inserted in and removed from the running kernel whenever you want),
++	  say M here and read <file:Documentation/modules.txt>. The module
++	  will be called xd.
++
++	  It's pretty unlikely that you have one of these: say N.
++
++config PARIDE
++	tristate "Parallel port IDE device support"
++	depends on PARPORT
++	---help---
++	  There are many external CD-ROM and disk devices that connect through
++	  your computer's parallel port. Most of them are actually IDE devices
++	  using a parallel port IDE adapter. This option enables the PARIDE
++	  subsystem which contains drivers for many of these external drives.
++	  Read <file:Documentation/paride.txt> for more information.
++
++	  If you have said Y to the "Parallel-port support" configuration
++	  option, you may share a single port between your printer and other
++	  parallel port devices. Answer Y to build PARIDE support into your
++	  kernel, or M if you would like to build it as a loadable module. If
++	  your parallel port support is in a loadable module, you must build
++	  PARIDE as a module. If you built PARIDE support into your kernel,
++	  you may still build the individual protocol modules and high-level
++	  drivers as loadable modules. If you build this support as a module,
++	  it will be called paride.
++
++	  To use the PARIDE support, you must say Y or M here and also to at
++	  least one high-level driver (e.g. "Parallel port IDE disks",
++	  "Parallel port ATAPI CD-ROMs", "Parallel port ATAPI disks" etc.) and
++	  to at least one protocol driver (e.g. "ATEN EH-100 protocol",
++	  "MicroSolutions backpack protocol", "DataStor Commuter protocol"
++	  etc.).
++
++source "drivers/block/paride/Kconfig"
++
++config BLK_CPQ_DA
++	tristate "Compaq SMART2 support"
++	depends on PCI
++	help
++	  This is the driver for Compaq Smart Array controllers.  Everyone
++	  using these boards should say Y here.  See the file
++	  <file:Documentation/cpqarray.txt> for the current list of boards
++	  supported by this driver, and for further information on the use of
++	  this driver.
++
++config BLK_CPQ_CISS_DA
++	tristate "Compaq Smart Array 5xxx support"
++	depends on PCI
++	help
++	  This is the driver for Compaq Smart Array 5xxx controllers.
++	  Everyone using these boards should say Y here.
++	  See <file:Documentation/cciss.txt> for the current list of
++	  boards supported by this driver, and for further information
++	  on the use of this driver.
++
++config CISS_SCSI_TAPE
++	bool "SCSI tape drive support for Smart Array 5xxx"
++	depends on BLK_CPQ_CISS_DA && SCSI
++	help
++	  When enabled (Y), this option allows SCSI tape drives and SCSI medium
++	  changers (tape robots) to be accessed via a Compaq 5xxx array 
++	  controller.  (See Documentation/cciss.txt for more details.)
++
++	  "SCSI support" and "SCSI tape support" must also be enabled for this 
++	  option to work.
++
++	  When this option is disabled (N), the SCSI portion of the driver 
++	  is not compiled.
++
++config BLK_DEV_DAC960
++	tristate "Mylex DAC960/DAC1100 PCI RAID Controller support"
++	depends on PCI
++	help
++	  This driver adds support for the Mylex DAC960, AcceleRAID, and
++	  eXtremeRAID PCI RAID controllers.  See the file
++	  <file:Documentation/README.DAC960> for further information about
++	  this driver.
++
++	  If you want to compile the driver as a module ( = code which can be
++	  inserted in and removed from the running kernel whenever you want),
++	  say M here and read <file:Documentation/modules.txt>.  The module
++	  will be called DAC960.
++
++config BLK_DEV_UMEM
++	tristate "Micro Memory MM5415 Battery Backed RAM support (EXPERIMENTAL)"
++	depends on PCI && EXPERIMENTAL
++	---help---
++	  Saying Y here will include support for the MM5415 family of
++	  battery backed (Non-volatile) RAM cards.
++	  http://www.umem.com/
++
++	  The cards appear as block devices that can be partitioned into
++	  as many as 15 partitions.
++
++	  If you want to compile this driver as a module ( = code which can be
++	  inserted in and removed from the running kernel whenever you want),
++	  say M here and read Documentation/modules.txt. The module will be
++	  called umem.
++
++	  The umem driver has not yet been allocated a MAJOR number, so
++	  one is chosen dynamically.  Use "devfs" or look in /proc/devices
++	  for the device number
++
++config BLK_DEV_LOOP
++	tristate "Loopback device support"
++	---help---
++	  Saying Y here will allow you to use a regular file as a block
++	  device; you can then create a file system on that block device and
++	  mount it just as you would mount other block devices such as hard
++	  drive partitions, CD-ROM drives or floppy drives. The loop devices
++	  are block special device files with major number 7 and typically
++	  called /dev/loop0, /dev/loop1 etc.
++
++	  This is useful if you want to check an ISO 9660 file system before
++	  burning the CD, or if you want to use floppy images without first
++	  writing them to floppy. Furthermore, some Linux distributions avoid
++	  the need for a dedicated Linux partition by keeping their complete
++	  root file system inside a DOS FAT file using this loop device
++	  driver.
++
++	  To use the loop device, you need the losetup utility, found in the
++	  util-linux package, see
++	  <ftp://ftp.kernel.org/pub/linux/utils/util-linux/>.
++
++	  The loop device driver can also be used to "hide" a file system in
++	  a disk partition, floppy, or regular file, either using encryption
++	  (scrambling the data) or steganography (hiding the data in the low
++	  bits of, say, a sound file). This is also safe if the file resides
++	  on a remote file server.
++
++	  There are several ways of doing this. Some of these require kernel
++	  patches. The vanilla kernel offers the cryptoloop option. If you
++	  want to use that, say Y to both LOOP and CRYPTOLOOP, and make sure
++	  you have a recent (version 2.12 or later) version of util-linux.
++
++	  Note that this loop device has nothing to do with the loopback
++	  device used for network connections from the machine to itself.
++
++	  If you want to compile this driver as a module ( = code which can be
++	  inserted in and removed from the running kernel whenever you want),
++	  say M here and read <file:Documentation/modules.txt>. The module
++	  will be called loop.
++
++	  Most users will answer N here.
++
++config BLK_DEV_CRYPTOLOOP
++	tristate "Cryptoloop Support"
++	select CRYPTO
++	depends on BLK_DEV_LOOP
++	---help---
++	  Say Y here if you want to be able to use the ciphers that are 
++	  provided by the CryptoAPI as loop transformation. This might be
++	  used as hard disk encryption.
++
++config BLK_DEV_NBD
++	tristate "Network block device support"
++	depends on NET
++	---help---
++	  Saying Y here will allow your computer to be a client for network
++	  block devices, i.e. it will be able to use block devices exported by
++	  servers (mount file systems on them etc.). Communication between
++	  client and server works over TCP/IP networking, but to the client
++	  program this is hidden: it looks like a regular local file access to
++	  a block device special file such as /dev/nd0.
++
++	  Network block devices also allows you to run a block-device in
++	  userland (making server and client physically the same computer,
++	  communicating using the loopback network device).
++
++	  Read <file:Documentation/nbd.txt> for more information, especially
++	  about where to find the server code, which runs in user space and
++	  does not need special kernel support.
++
++	  Note that this has nothing to do with the network file systems NFS
++	  or Coda; you can say N here even if you intend to use NFS or Coda.
++
++	  If you want to compile this driver as a module ( = code which can be
++	  inserted in and removed from the running kernel whenever you want),
++	  say M here and read <file:Documentation/modules.txt>. The module
++	  will be called nbd.
++
++	  If unsure, say N.
++
++config BLK_DEV_RAM
++	tristate "RAM disk support"
++	---help---
++	  Saying Y here will allow you to use a portion of your RAM memory as
++	  a block device, so that you can make file systems on it, read and
++	  write to it and do all the other things that you can do with normal
++	  block devices (such as hard drives). It is usually used to load and
++	  store a copy of a minimal root file system off of a floppy into RAM
++	  during the initial install of Linux.
++
++	  Note that the kernel command line option "ramdisk=XX" is now
++	  obsolete. For details, read <file:Documentation/ramdisk.txt>.
++
++	  If you want to compile this as a module ( = code which can be
++	  inserted in and removed from the running kernel whenever you want),
++	  say M and read <file:Documentation/modules.txt>. The module will be
++	  called rd.
++
++	  Most normal users won't need the RAM disk functionality, and can
++	  thus say N here.
++
++config BLK_DEV_RAM_SIZE
++	int "Default RAM disk size"
++	depends on BLK_DEV_RAM
++	default "4096"
++	help
++	  The default value is 4096. Only change this if you know what are
++	  you doing. If you are using IBM S/390, then set this to 8192.
++
++config BLK_DEV_INITRD
++	bool "Initial RAM disk (initrd) support"
++	help
++	  The initial RAM disk is a RAM disk that is loaded by the boot loader
++	  (loadlin or lilo) and that is mounted as root before the normal boot
++	  procedure. It is typically used to load modules needed to mount the
++	  "real" root file system, etc. See <file:Documentation/initrd.txt>
++	  for details.
++
++config LBD
++	bool "Support for Large Block Devices"
++	depends on X86 || MIPS32 || PPC32 || ARCH_S390_31 || SUPERH
++	help
++	  Say Y here if you want to attach large (bigger than 2TB) discs to
++	  your machine, or if you want to have a raid or loopback device
++	  bigger than 2TB.  Otherwise say N.
++
++endmenu
++
+diff -Nur linux-2.6.0-test5.org/drivers/block/enbd/Kconfig linux-2.6.0-test5/drivers/block/enbd/Kconfig
+--- linux-2.6.0-test5.org/drivers/block/enbd/Kconfig	Thu Jan  1 00:00:00 1970
++++ linux-2.6.0-test5/drivers/block/enbd/Kconfig	Mon Mar 24 17:32:36 2003
+@@ -0,0 +1,47 @@
++#
++# ENBD configuration
++#
++#comment  "Enhanced network block device"
++
++config BLK_DEV_ENBD
++	tristate 'Enhanced network block device driver'
++	depends on ENBD
++	---help---
++	  Saying Y here will build in support for the "enhanced network
++	  block device".  Like the plain NBD, this device proxies a remote
++	  hard disk or other block device, such as a cdrom or floppy.  The
++	  difference between ENBD and NBD is that ENBD is a much more
++	  heavyweight solution for an industrial setting - it does automatic
++	  reconnects after network brownouts, and uses multiple channels at
++	  once to carry the data.  It supports remote ioctls, removable
++	  devices, and uses an MD5 sampling technique to accelerate softRAID
++	  resyncs.  It will connect through (secure) SSL channels.  It will
++	  hide transient errors from overlying softRAID devices, etc.
++	  
++	  You will need the userspace daemons, which packages are mirrored
++	  on several places on the net.  The primary source is
++	  ftp://oboe.it.uc3m.es/pub/Programs/nbd/nbd-2.4-current.tgz.
++	  
++	  If you want to compile this driver as a module ( = code which can
++	  be inserted in and removed from the running kernel whenever you
++	  want), say M here and read <file:Documentation/modules.txt>.  The
++	  module will be called enbd.o.
++	  
++	  If unsure, say N.
++
++config BLK_DEV_ENBD_IOCTL
++	tristate 'Enhanced network block device remote ioctl support'
++	depends on BLK_DEV_ENBD
++	---help---
++          Saying Y here will build in support to ENBD for execution
++          of remote ioctls on compatible architectures. This means that
++          you can eject a CD on the other machine.
++
++	  If you want to compile this driver as a module ( = code which can
++	  be inserted in and removed from the running kernel whenever you
++	  want), say M here and read <file:Documentation/modules.txt>.  The
++	  module will be called enbd.o.
++	  
++	  If unsure, say N.
++#endmenu  
++
+diff -Nur linux-2.6.0-test5.org/drivers/block/enbd/Makefile linux-2.6.0-test5/drivers/block/enbd/Makefile
+--- linux-2.6.0-test5.org/drivers/block/enbd/Makefile	Thu Jan  1 00:00:00 1970
++++ linux-2.6.0-test5/drivers/block/enbd/Makefile	Mon Mar 24 21:52:59 2003
+@@ -0,0 +1,11 @@
++#
++# Makefile for ENBD (Peter T. Breuer ptb@it.uc3m.es)
++#
++#
++
++obj-$(CONFIG_BLK_DEV_ENBD)		+= enbd.o
++obj-$(CONFIG_BLK_DEV_ENBD_IOCTL)	+= enbd_ioctl.o
++
++enbd-objs := enbd_base.o enbd_ioctl_stub.o enbd_seqno.o enbd_md.o enbd_speed.o enbd_proc.o
++
++
+diff -Nur linux-2.6.0-test5.org/drivers/block/enbd/ccount.lst linux-2.6.0-test5/drivers/block/enbd/ccount.lst
+--- linux-2.6.0-test5.org/drivers/block/enbd/ccount.lst	Thu Jan  1 00:00:00 1970
++++ linux-2.6.0-test5/drivers/block/enbd/ccount.lst	Tue Mar 25 15:00:00 2003
+@@ -0,0 +1,12 @@
++   ccount 1.0:	  NCSS  Comnts  Funcs  Blanks  Lines
++   enbd.mod.c:	     2      0      0      3     13
++  enbd_base.c:	  1449    739     71    615   4174
++enbd_base.mod.c:	     2      0      0      3     13
++ enbd_ioctl.c:	    70     59     12     42    409
++enbd_ioctl.mod.c:	     2      0      0      3     13
++enbd_ioctl_stub.c:	    10      3      3      3     30
++    enbd_md.c:	    34      7      6     13     99
++  enbd_proc.c:	   452     32     16    133   1060
++ enbd_seqno.c:	    20     13      5      8     75
++ enbd_speed.c:	    18      4      2     14     64
++       Totals:	  2059    857    115    837   5950
+diff -Nur linux-2.6.0-test5.org/drivers/block/enbd/enbd.mod.c linux-2.6.0-test5/drivers/block/enbd/enbd.mod.c
+--- linux-2.6.0-test5.org/drivers/block/enbd/enbd.mod.c	Thu Jan  1 00:00:00 1970
++++ linux-2.6.0-test5/drivers/block/enbd/enbd.mod.c	Mon Mar 24 21:51:59 2003
+@@ -0,0 +1,13 @@
++#include <linux/module.h>
++#include <linux/vermagic.h>
++#include <linux/compiler.h>
++
++const char vermagic[]
++__attribute__((section("__vermagic"))) =
++VERMAGIC_STRING;
++
++static const char __module_depends[]
++__attribute_used__
++__attribute__((section(".modinfo"))) =
++"depends=";
++
+diff -Nur linux-2.6.0-test5.org/drivers/block/enbd/enbd_base.c linux-2.6.0-test5/drivers/block/enbd/enbd_base.c
+--- linux-2.6.0-test5.org/drivers/block/enbd/enbd_base.c	Thu Jan  1 00:00:00 1970
++++ linux-2.6.0-test5/drivers/block/enbd/enbd_base.c	Tue Mar 25 22:19:54 2003
+@@ -0,0 +1,4192 @@
 +/*
 + * (Enhanced) Network block device - make block devices work over TCP
 + *
@@ -264,28 +785,34 @@
 +   * still needed for the very rare write local/read remote mode. DOn't
 +   * worry about it in normal operation!
 +   */
++#ifndef mark_buffer_protected
 +  #define mark_buffer_protected(rbh) \
 +      { \
 +  	mark_buffer_dirty (rbh); \
 +  	mark_buffer_uptodate (rbh, 1); \
 +  	refile_buffer (rbh); \
 +       }
++#endif
 +
 +  /* PTB list interface extensions */
++#ifndef list_head
 +  #define list_head(ptr, type, member) \
 +  (list_empty(ptr)?NULL:list_entry(((struct list_head *)ptr)->next,type,member))
++#endif
++#ifndef list_tail
 +  #define list_tail(ptr, type, member) \
 +  (list_empty(ptr)?NULL:list_entry(((struct list_head *)ptr)->prev,type,member))
++#endif
 +
 +  /* PTB for arches without the atomic mask ops (and no smp, I think!)
 +   * - feel free to correct with assembler
 +   */
-+   #ifndef atomic_set_mask
-+     #define atomic_set_mask(mask, x) (x)->counter |= (mask)
-+   #endif
-+   #ifndef atomic_clear_mask
-+     #define atomic_clear_mask(mask, x) (x)->counter &= ~(mask)
-+   #endif
++#ifndef atomic_set_mask
++  #define atomic_set_mask(mask, x) (x)->counter |= (mask)
++#endif
++#ifndef atomic_clear_mask
++  #define atomic_clear_mask(mask, x) (x)->counter &= ~(mask)
++#endif
 +
 +/*                                                       *
 + * PTB --------------- compatibility ------------------- *
@@ -636,20 +1163,22 @@
 +                // countq not including itself in the count!
 +                int countq;
 +                int cmd;
++                struct nbd_acct *acct = &lo->acct;
++
 +	        cmd = rq_data_dir (req);
-+	        atomic_add (req_blks, &lo->requests_in[cmd]);
++	        atomic_add (req_blks, &acct->requests_in[cmd]);
 +
 +                // PTB do we need locks here? Apparently not.
-+	        atomic_inc (&lo->countq[cmd]);
-+                countq = atomic_read (&lo->countq[cmd]);
++	        atomic_inc (&acct->countq[cmd]);
++                countq = atomic_read (&acct->countq[cmd]);
 +
 +                // PTB the maxes are just noncritical stats
-+	        if (atomic_read (&lo->maxq[cmd]) < countq)
-+		        atomic_set (&lo->maxq[cmd], countq);
-+	        atomic_inc (&lo->req_in[cmd][req_blks]);
++	        if (atomic_read (&acct->maxq[cmd]) < countq)
++		        atomic_set (&acct->maxq[cmd], countq);
++	        atomic_inc (&acct->req_in[cmd][req_blks]);
 +                // PTB the maxes are just noncritical stats
-+	        if (atomic_read (&lo->maxreqblks) < req_blks)
-+		        atomic_set (&lo->maxreqblks, req_blks);
++	        if (atomic_read (&acct->maxreqblks) < req_blks)
++		        atomic_set (&acct->maxreqblks, req_blks);
 +        }
 +
 +	write_lock (&lo->queue_lock);
@@ -676,6 +1205,7 @@
 +nbd_remove (struct nbd_device *lo, struct request *req)
 +{
 +	int cmd;
++        struct nbd_acct *acct = &lo->acct;
 +
 +	if (!req)
 +		return -EINVAL;
@@ -684,7 +1214,7 @@
 +
 +        /* PTB accounting and nothing more */
 +	cmd = rq_data_dir (req);
-+        atomic_dec (&lo->countq[cmd]);
++        atomic_dec (&acct->countq[cmd]);
 +	return 0;
 +}
 +
@@ -782,6 +1312,7 @@
 +	struct nbd_device *lo = slot->lo;
 +	unsigned long req_blks = nr_blks (req);
 +	int cmd;
++        struct nbd_acct * acct = &lo->acct;
 +
 +	if (req_blks < 0) {
 +		NBD_ERROR ("corrupted req %p. Not touching with bargepole.\n",
@@ -800,15 +1331,15 @@
 +        /* PTB accounting and nothing more */
 +	cmd = rq_data_dir (req);
 +
-+	atomic_sub (req_blks, &lo->requests_req[cmd]);
++	atomic_sub (req_blks, &acct->requests_req[cmd]);
 +	if (req->errors != 0) {
 +                /* PTB error exit */
-+		atomic_add (req_blks, &lo->requests_err);
++		atomic_add (req_blks, &acct->requests_err);
 +		slot->err += req_blks;
 +		return;
 +	}
 +
-+	atomic_add (req_blks, &lo->requests_out[cmd]);
++	atomic_add (req_blks, &acct->requests_out[cmd]);
 +	slot->out += req_blks;
 +
 +	if (cmd != WRITE)
@@ -885,6 +1416,7 @@
 +	struct nbd_device *lo = slot->lo;
 +	unsigned long req_blks = nr_blks (req);
 +	int cmd;
++        struct nbd_acct * acct = &lo->acct;
 +
 +	if (req_blks < 0) {
 +		NBD_ERROR ("passed illegal request %p\n", req);
@@ -905,14 +1437,14 @@
 +
 +	/* PTB accounting and nothing more */
 +	cmd = rq_data_dir (req);
-+	atomic_sub (req_blks, &lo->requests_req[cmd]);
++	atomic_sub (req_blks, &acct->requests_req[cmd]);
 +
 +	slot->in -= req_blks;
 +	slot->req -= req_blks;
 +
 +	slot->req_age = 0;
 +	slot->err += req_blks;
-+	atomic_add (req_blks, &lo->requests_err);
++	atomic_add (req_blks, &acct->requests_err);
 +}
 +
 +/*
@@ -1041,6 +1573,7 @@
 +	struct nbd_device *lo = slot->lo;
 +	unsigned long req_blks = nr_blks (req);
 +	int cmd;
++        struct nbd_acct * acct = &lo->acct;
 +
 +	if (req_blks < 0)
 +		return;
@@ -1048,7 +1581,7 @@
 +        /* PTB accounting and nothing more */
 +	cmd = rq_data_dir (req);
 +
-+	atomic_add (req_blks, &lo->requests_req[cmd]);
++	atomic_add (req_blks, &acct->requests_req[cmd]);
 +	/* PTB - Note that this really is slot and not lo.
 +	 */
 +	list_add (&req->queuelist, &slot->queue);
@@ -1123,6 +1656,7 @@
 +	void *user;
 +	unsigned long req_blks = 1;
 +	struct nbd_device *lo = slot->lo;
++        struct nbd_acct * acct = &lo->acct;
 +	unsigned buflen = 0;
 +	unsigned reqlen;
 +        int cmd;
@@ -1133,7 +1667,7 @@
 +		return -EINVAL;
 +	}
 +
-+	atomic_inc (&lo->cthreads);
++	atomic_inc (&acct->cthreads);
 +	slot->flags |= NBD_SLOT_RUNNING;
 +	slot->cli_age = jiffies;
 +
@@ -1163,7 +1697,7 @@
 +			NBD_ALERT ("fatal: Bad handle %p != %p!\n",
 +			  req, xreq);
 +
-+                atomic_dec (&lo->cthreads);
++                atomic_dec (&acct->cthreads);
 +                slot->flags &= ~NBD_SLOT_RUNNING;
 +
 +                NBD_ALERT("ignoring ack of req %p which slot does not have\n", 
@@ -1335,7 +1869,7 @@
 +	 * note that nbd_commit will take a lock to do end_req
 +         */
 +	nbd_commit (slot, req);
-+	atomic_dec (&lo->cthreads);
++	atomic_dec (&acct->cthreads);
 +	slot->flags &= ~NBD_SLOT_RUNNING;
 +	return 0;
 +
@@ -1351,7 +1885,7 @@
 +        }
 +	result = result < 0 ? result : -ENODEV;
 +        // PTB one client thread leaves
-+	atomic_dec (&lo->cthreads);
++	atomic_dec (&acct->cthreads);
 +	slot->flags &= ~NBD_SLOT_RUNNING;
 +	return result;
 +}
@@ -1405,9 +1939,10 @@
 +        struct nbd_speed *wspd = &lo->wspeed;
 +        struct nbd_speed *rspd = &lo->rspeed;
 +        struct nbd_speed *tspd = &lo->tspeed;
-+	w = atomic_read (&lo->requests_in[WRITE]);
++        struct nbd_acct *acct = &lo->acct;
++	w = atomic_read (&acct->requests_in[WRITE]);
 +	wspd->update (wspd, w);
-+	r = atomic_read (&lo->requests_in[READ]);
++	r = atomic_read (&acct->requests_in[READ]);
 +	rspd->update (rspd, r);
 +        t = w + r;
 +	tspd->update (tspd, t);
@@ -1433,6 +1968,7 @@
 +	static atomic_t count;
 +	unsigned start_time = jiffies;
 +	struct nbd_device *lo = slot->lo;
++        struct nbd_acct * acct = &lo->acct;
 +	unsigned timeout = lo->req_timeo * HZ;
 +	int islot = slot->i;
 +	// PTB for the new timezone field in requests 
@@ -1441,7 +1977,7 @@
 +	unsigned long flags;
 +        struct nbd_seqno * seqno_out = &lo->seqno_out;
 +
-+	atomic_inc (&lo->cthreads);	// PTB - client thread enters
++	atomic_inc (&acct->cthreads);	// PTB - client thread enters
 +	slot->flags |= NBD_SLOT_RUNNING;
 +	slot->cli_age = jiffies;
 +
@@ -1464,13 +2000,13 @@
 +		NBD_FAIL ("Our slot has been vamooshed");
 +	}
 +
-+	atomic_inc (&lo->cwaiters);
++	atomic_inc (&acct->cwaiters);
 +	slot->flags |= NBD_SLOT_WAITING;
 +
 +	// PTB take spinlock in order to examine queue
 +	// we need to protect ourselves against the request fn too
 +	read_lock_irqsave (&lo->queue_lock, flags);
-+	atomic_dec (&lo->cwaiters);
++	atomic_dec (&acct->cwaiters);
 +	slot->flags &= ~NBD_SLOT_WAITING;
 +
 +	// PTB - now spin until request arrives to treat 
@@ -1483,22 +2019,22 @@
 +		read_unlock_irqrestore (&lo->queue_lock, flags);
 +
 +                // PTB one client thread goes to sleep
-+		atomic_inc (&lo->cwaiters);
++		atomic_inc (&acct->cwaiters);
 +		slot->flags |= NBD_SLOT_WAITING;
 +
 +		interruptible_sleep_on_timeout (&lo->wq, time_left);
 +
 +		slot->flags &= ~NBD_SLOT_WAITING;
 +                // PTB one client thread reactivates
-+		atomic_dec (&lo->cwaiters);
++		atomic_dec (&acct->cwaiters);
 +		atomic_inc (&count);
 +
 +		// PTB Have to take the spinlock again to check at the queue
-+		atomic_inc (&lo->cwaiters);
++		atomic_inc (&acct->cwaiters);
 +		slot->flags |= NBD_SLOT_WAITING;
 +		// we need to protect ourselves against the request fn too
 +		read_lock_irqsave (&lo->queue_lock, flags);
-+		atomic_dec (&lo->cwaiters);
++		atomic_dec (&acct->cwaiters);
 +		slot->flags &= ~NBD_SLOT_WAITING;
 +
 +		// PTB fail for recheck if we are inactive too long 
@@ -1727,14 +2263,14 @@
 +
 +	nbd_accept (slot, req);
 +
-+	atomic_dec (&lo->cthreads);	// PTB - client thread leaves normally 
++	atomic_dec (&acct->cthreads);	// PTB - client thread leaves normally 
 +	slot->flags &= ~NBD_SLOT_RUNNING;
 +
 +	return 0;
 +
 +      error_out:
 +	// PTB accounting - a fail to get a request is not an errored request 
-+	atomic_dec (&lo->cthreads);	// PTB - client thread leaves abnormally 
++	atomic_dec (&acct->cthreads);	// PTB - client thread leaves abnormally 
 +	slot->flags &= ~NBD_SLOT_RUNNING;
 +	result = result < 0 ? result : -ENODEV;
 +
@@ -1797,6 +2333,7 @@
 +nbd_clr_queue (struct nbd_device *lo)
 +{
 +	int count = 0;
++        struct nbd_acct * acct = &lo->acct;
 +
 +	while (count < 1000) {
 +
@@ -1818,7 +2355,7 @@
 +		req_blks = nr_blks (req);
 +
 +		req->errors += req_blks + 1;
-+		atomic_add (req_blks, &lo->requests_err);
++		atomic_add (req_blks, &acct->requests_err);
 +
 +		/* PTB - must succeed as have the spinlock */
 +		nbd_remove (lo, req);
@@ -2059,16 +2596,17 @@
 +	while (! blk_queue_empty(q)) {
 +
 +		struct nbd_device *lo;
++                struct nbd_acct * acct;
 +
 +                req = elv_next_request(q);
 +
 +		lo = req->rq_disk->private_data;
++                acct = &lo->acct;
 +
 +                /* PTB - one kernel thread enters */
-+		atomic_inc (&lo->kthreads);
-+
-+		if (atomic_read (&lo->kthreads) > atomic_read (&lo->kmax))
-+			atomic_set (&lo->kmax, atomic_read (&lo->kthreads));
++		atomic_inc (&acct->kthreads);
++		if (atomic_read (&acct->kthreads) > atomic_read (&acct->kmax))
++			atomic_set (&acct->kmax, atomic_read (&acct->kthreads));
 +
 +		if (!lo->inode || !lo->file) {
 +			NBD_FAIL ("Request when device not ready.");
@@ -2110,8 +2648,8 @@
 +                        // PTB block further reqs until these have drained
 +                        write_lock(&lo->altqueue_lock);
 +                        // PTB do not touch this flag without this lock
-+                        if (atomic_read(&lo->countq[READ])
-+                          + atomic_read(&lo->countq[WRITE]) > 0) {
++                        if (atomic_read(&acct->countq[READ])
++                          + atomic_read(&acct->countq[WRITE]) > 0) {
 +                            atomic_set_mask(NBD_QBLOCKED, &lo->flags);
 +                        }
 +                        write_unlock(&lo->altqueue_lock);
@@ -2145,7 +2683,7 @@
 +		goto accounting;
 +
 +	      accounting:
-+		atomic_dec (&lo->kthreads);
++		atomic_dec (&acct->kthreads);
 +                // PTB regain the iolock for another turn
 +                spin_lock_irq(q->queue_lock);
 +		continue;	// PTB next request
@@ -2163,8 +2701,9 @@
 +                // PTB more accounting
 +		if (lo) {
 +			int req_blks = nr_blks (req);
-+			atomic_add (req_blks, &lo->requests_err);
-+			atomic_dec (&lo->kthreads);
++                        struct nbd_acct * acct = &lo->acct;
++			atomic_add (req_blks, &acct->requests_err);
++			atomic_dec (&acct->kthreads);
 +		} else {
 +                        NBD_ALERT("failed to account one orphan errored req\n");
 +                }
@@ -2965,6 +3504,7 @@
 +        int err;
 +        struct request * req;
 +        struct completion x;
++        struct nbd_acct * acct = &lo->acct;
 +
 +	/*
 +         * PTB here we have to treat remote ioctls. We should probably make
@@ -3041,7 +3581,7 @@
 +                        if (! (req->flags & REQ_SPECIAL)) {
 +                                write_lock(&lo->altqueue_lock);
 +                                // PTB reverse inadvertent accounting in enqueue
-+                                atomic_dec (&lo->countq[rq_data_dir(req)]);
++                                atomic_dec (&acct->countq[rq_data_dir(req)]);
 +                                write_unlock(&lo->altqueue_lock);
 +                        }
 +
@@ -3214,6 +3754,7 @@
 +	struct nbd_slot *slot
 +                  = NULL;	// PTB slot pointer
 +        int err;
++        struct nbd_acct *acct = &lo->acct;
 +
 +	if (!capable(CAP_SYS_ADMIN)) {
 +		NBD_ERROR ("caller must be root.\n");
@@ -3423,10 +3964,10 @@
 +		  minor,
 +                  list_head (&lo->queue, struct request, queuelist),
 +		  list_tail (&lo->queue, struct request, queuelist),
-+		  atomic_read (&lo->requests_in[READ]) +
-+		    atomic_read (&lo->requests_in[WRITE]),
-+		  atomic_read (&lo->requests_out[READ]) +
-+		    atomic_read (&lo->requests_out[WRITE])
++		  atomic_read (&acct->requests_in[READ]) +
++		    atomic_read (&acct->requests_in[WRITE]),
++		  atomic_read (&acct->requests_out[READ]) +
++		    atomic_read (&acct->requests_out[WRITE])
 +                  );
 +		err = 0;
 +		return err;
@@ -4191,8 +4732,26 @@
 + *  (possibly with -DMODVERSIONS also). PTB
 + *  (possibly with -I/usr/src/linux-x.y.z/include also). PTB
 + */
---- linux-2.5.64/drivers/block/enbd/enbd_ioctl.c.pre-enbd	Mon Mar 24 18:55:25 2003
-+++ linux-2.5.64/drivers/block/enbd/enbd_ioctl.c	Tue Mar 25 15:45:03 2003
+diff -Nur linux-2.6.0-test5.org/drivers/block/enbd/enbd_base.mod.c linux-2.6.0-test5/drivers/block/enbd/enbd_base.mod.c
+--- linux-2.6.0-test5.org/drivers/block/enbd/enbd_base.mod.c	Thu Jan  1 00:00:00 1970
++++ linux-2.6.0-test5/drivers/block/enbd/enbd_base.mod.c	Mon Mar 24 21:51:59 2003
+@@ -0,0 +1,13 @@
++#include <linux/module.h>
++#include <linux/vermagic.h>
++#include <linux/compiler.h>
++
++const char vermagic[]
++__attribute__((section("__vermagic"))) =
++VERMAGIC_STRING;
++
++static const char __module_depends[]
++__attribute_used__
++__attribute__((section(".modinfo"))) =
++"depends=";
++
+diff -Nur linux-2.6.0-test5.org/drivers/block/enbd/enbd_ioctl.c linux-2.6.0-test5/drivers/block/enbd/enbd_ioctl.c
+--- linux-2.6.0-test5.org/drivers/block/enbd/enbd_ioctl.c	Thu Jan  1 00:00:00 1970
++++ linux-2.6.0-test5/drivers/block/enbd/enbd_ioctl.c	Tue Mar 25 14:33:55 2003
 @@ -0,0 +1,405 @@
 +#ifndef __KERNEL__
 +#include <sys/time.h>
@@ -4599,8 +5158,26 @@
 +    self->size = ioctl_size;
 +}
 +*/
---- linux-2.5.64/drivers/block/enbd/enbd_ioctl_stub.c.pre-enbd	Mon Mar 24 18:55:25 2003
-+++ linux-2.5.64/drivers/block/enbd/enbd_ioctl_stub.c	Mon Mar 24 22:51:59 2003
+diff -Nur linux-2.6.0-test5.org/drivers/block/enbd/enbd_ioctl.mod.c linux-2.6.0-test5/drivers/block/enbd/enbd_ioctl.mod.c
+--- linux-2.6.0-test5.org/drivers/block/enbd/enbd_ioctl.mod.c	Thu Jan  1 00:00:00 1970
++++ linux-2.6.0-test5/drivers/block/enbd/enbd_ioctl.mod.c	Mon Mar 24 21:51:59 2003
+@@ -0,0 +1,13 @@
++#include <linux/module.h>
++#include <linux/vermagic.h>
++#include <linux/compiler.h>
++
++const char vermagic[]
++__attribute__((section("__vermagic"))) =
++VERMAGIC_STRING;
++
++static const char __module_depends[]
++__attribute_used__
++__attribute__((section(".modinfo"))) =
++"depends=enbd";
++
+diff -Nur linux-2.6.0-test5.org/drivers/block/enbd/enbd_ioctl_stub.c linux-2.6.0-test5/drivers/block/enbd/enbd_ioctl_stub.c
+--- linux-2.6.0-test5.org/drivers/block/enbd/enbd_ioctl_stub.c	Thu Jan  1 00:00:00 1970
++++ linux-2.6.0-test5/drivers/block/enbd/enbd_ioctl_stub.c	Mon Mar 24 21:51:59 2003
 @@ -0,0 +1,30 @@
 +
 +#include <linux/stddef.h>
@@ -4632,8 +5209,9 @@
 +        return 0;
 +}
 +
---- linux-2.5.64/drivers/block/enbd/enbd_md.c.pre-enbd	Mon Mar 24 18:55:25 2003
-+++ linux-2.5.64/drivers/block/enbd/enbd_md.c	Mon Mar 24 22:51:59 2003
+diff -Nur linux-2.6.0-test5.org/drivers/block/enbd/enbd_md.c linux-2.6.0-test5/drivers/block/enbd/enbd_md.c
+--- linux-2.6.0-test5.org/drivers/block/enbd/enbd_md.c	Thu Jan  1 00:00:00 1970
++++ linux-2.6.0-test5/drivers/block/enbd/enbd_md.c	Mon Mar 24 21:51:59 2003
 @@ -0,0 +1,99 @@
 +#include <linux/enbd.h>
 +#include <linux/enbd_ioctl.h>
@@ -4734,154 +5312,10 @@
 +        md->reg = nbd_md_reg;
 +}
 +
---- linux-2.5.64/drivers/block/enbd/enbd_seqno.c.pre-enbd	Mon Mar 24 18:55:25 2003
-+++ linux-2.5.64/drivers/block/enbd/enbd_seqno.c	Mon Mar 24 23:28:41 2003
-@@ -0,0 +1,75 @@
-+#include <linux/enbd.h>
-+
-+
-+#define _NBD_GENERATION (8*sizeof(int) - __REQ_NBDSEQNO)
-+/*
-+ * PTB increment the devices seqno
-+ *
-+ *  @lo the nbd device to increment the seqno of
-+ */
-+static void
-+seqno_inc(struct nbd_seqno *nseqno)
-+{
-+	if (nseqno->seqno < (1 << _NBD_GENERATION)) {
-+		++nseqno->seqno;
-+                return;
-+        } 
-+        // PTB next generation !
-+	nseqno->seqno = 0;
-+	atomic_inc (&nseqno->seqno_gen);
-+}
-+static int
-+seqno_get (struct nbd_seqno *nseqno)
-+{
-+        return nseqno->seqno;
-+}
-+static void
-+seqno_reset (struct nbd_seqno *nseqno)
-+{
-+        nseqno->seqno = 0;
-+	atomic_set(&nseqno->seqno_gen,0);
-+}
-+/*
-+ * PTB convert a seqno number into one with an extra generation number
-+ * in the msb, so that it can be compared with others. return the
-+ * result.
-+ *
-+ * We add the current generation no. to small seqnos, and we add the
-+ * previous generation no. to large seqnos.
-+ *
-+ *   @lo the nbd device to look at
-+ *   @seqno the small sequence number to return the full seq number for
-+ */
-+static unsigned int
-+seqno_calc (struct nbd_seqno *nseqno, unsigned int seqno)
-+{
-+        unsigned int genno;
-+        static unsigned int absdiff(unsigned int x, unsigned int y) {
-+            if (x > y) {
-+                return x - y;
-+            } else {
-+                return y - x;
-+            }
-+        };
-+        genno = atomic_read (&nseqno->seqno_gen);
-+	if (absdiff(seqno,nseqno->seqno) < (1 << (_NBD_GENERATION - 1))) {
-+		return seqno + (genno << _NBD_GENERATION);
-+	}
-+        if (seqno < nseqno->seqno) {
-+		return seqno + ((genno + 1) << _NBD_GENERATION);
-+        } 
-+        return seqno + ((genno - 1) << _NBD_GENERATION);
-+}
-+
-+void nbd_init_seqno (struct nbd_seqno *nseqno) {
-+
-+        seqno_reset(nseqno);
-+
-+        nseqno->inc   = seqno_inc;
-+        nseqno->get   = seqno_get;
-+        nseqno->reset = seqno_reset;
-+        nseqno->calc  = seqno_calc;
-+}
-+
-+
-+
---- linux-2.5.64/drivers/block/enbd/enbd_speed.c.pre-enbd	Mon Mar 24 18:55:25 2003
-+++ linux-2.5.64/drivers/block/enbd/enbd_speed.c	Mon Mar 24 23:28:50 2003
-@@ -0,0 +1,64 @@
-+#include <linux/enbd.h>
-+#include <linux/enbd_ioctl.h>
-+
-+/*
-+ * PTB - update speed counters (if at least 5s has passed)
-+ *
-+ *  @spd the speed struct to update
-+ */
-+static void
-+spd_update (struct nbd_speed *spd, int distance)
-+{
-+
-+	// last time we measured
-+	int lastjiffy = atomic_read (&spd->jiffy);
-+	// jiffies since last time
-+	int djiffy = jiffies - lastjiffy;
-+
-+	// previous no we measured
-+	int lastdist = atomic_read (&spd->distance);
-+	// blocks since last time
-+	int ddistance = distance - lastdist;
-+
-+	// write every 5 second in time
-+	if (djiffy > 5 * HZ) {
-+
-+		// jiffies since first time
-+		int tjiffy = jiffies - atomic_read (&spd->frstj);
-+
-+		// max tot speed measured so far
-+		int speedmax = atomic_read (&spd->speedmax);
-+
-+		// last instantaneous speed we measured
-+		int lastspeed = atomic_read (&spd->speed);
-+
-+		// instantaneous read blocks/s
-+		int speed = djiffy ? (ddistance * HZ) / djiffy : 0;
-+
-+		// smoothed KB/s
-+		int speedsmoothed =
-+		 (djiffy * speed + HZ * lastspeed) / (djiffy + HZ);
-+
-+		// average speed to now in KB/s
-+		int speedav = tjiffy ? (distance * HZ) / tjiffy : 0;
-+
-+		// smoothing count for max
-+		int speedhi =
-+		 (speedav > speedsmoothed) ? speedav : speedsmoothed;
-+
-+		// doing settings
-+		atomic_set (&spd->speed, speedsmoothed);
-+		if (speedhi > speedmax)
-+			atomic_set (&spd->speedmax, speedhi);
-+		atomic_set (&spd->distance, distance);
-+		atomic_set (&spd->speedav, speedav);
-+		atomic_set (&spd->jiffy, jiffies);
-+	}
-+}
-+
-+void
-+nbd_init_speed(struct nbd_speed *spd) {
-+        memset(spd, 0, sizeof(*spd));
-+        spd->update = spd_update;
-+}
-+
---- linux-2.5.64/drivers/block/enbd/enbd_proc.c.pre-enbd	Tue Mar 25 15:16:33 2003
-+++ linux-2.5.64/drivers/block/enbd/enbd_proc.c	Mon Mar 24 22:52:00 2003
-@@ -0,0 +1,1059 @@
+diff -Nur linux-2.6.0-test5.org/drivers/block/enbd/enbd_proc.c linux-2.6.0-test5/drivers/block/enbd/enbd_proc.c
+--- linux-2.6.0-test5.org/drivers/block/enbd/enbd_proc.c	Thu Jan  1 00:00:00 1970
++++ linux-2.6.0-test5/drivers/block/enbd/enbd_proc.c	Tue Mar 25 22:23:57 2003
+@@ -0,0 +1,1033 @@
 +
 +#include <linux/enbd.h>
 +#include <linux/proc_fs.h>
@@ -5084,6 +5518,7 @@
 +	const int limit = MIN (PAGE_SIZE, len) - 80;
 +	static int i;
 +	struct nbd_device *lo;
++	struct nbd_acct *acct;
 +	static int last;
 +	static void *next_label;
 +	static char *next_label_name;
@@ -5124,6 +5559,7 @@
 +
 +		lo = nbd_get(i);
 +		devnam = lo->devnam;
++                acct = &lo->acct;
 +		if (lo->nslot <= 0) {
 +			next_label = NULL;
 +			continue;
@@ -5168,11 +5604,13 @@
 +
 +		len += sprintf (buf + len,
 +				"[%s] State:\t%s%s%s%s%s%s%s%s%s%s%s%slast error %d, lives %d, bp %d\n",
-+				devnam, atomic_read (&lo->flags)
++				devnam,
++                                atomic_read (&lo->flags)
 +				& NBD_INITIALISED ? "" : "uninitialized, ",
 +				atomic_read (&lo->flags)
-+				& NBD_WRITE_NOCHK ? "noverify, " :
-+				"verify, ", lo->read_only(lo) ? "ro, " : "rw, ",
++				& NBD_WRITE_NOCHK ? "noverify, " : "verify, ",
++				atomic_read (&lo->flags)
++                                & NBD_READ_ONLY ? "ro, " : "rw, ",
 +				atomic_read(&lo->merge_requests) ? "merge requests, " : "",
 +#ifndef NO_BUFFERED_WRITES
 +				atomic_read (&lo->flags)
@@ -5195,10 +5633,7 @@
 +				atomic_read (&lo->flags)
 +				& NBD_MD5SUM ? "md5sum, " : "",
 +				lo->harderror,
-+				lo->lives -
-+				((atomic_read (&lo->flags) & NBD_ENABLED) ?
-+				 1 : 0), 0	//atomic_read(&buffermem_pages)
-+		 );
++				lo->lives - ((atomic_read (&lo->flags) & NBD_ENABLED) ?  1 : 0), 0);
 +
 +		NBD_PROC_LABEL (4);
 +
@@ -5225,11 +5660,11 @@
 +			len += sprintf (buf + len,
 +					"[%s] Queued:\t+%dR/%dW curr (check %dR/%dW) +%dR/%dW max\n",
 +					devnam,
-+					atomic_read (&lo->countq[READ]),
-+					atomic_read (&lo->countq[WRITE]),
++					atomic_read (&acct->countq[READ]),
++					atomic_read (&acct->countq[WRITE]),
 +					countq[READ], countq[WRITE],
-+					atomic_read (&lo->maxq[READ]),
-+					atomic_read (&lo->maxq[WRITE]));
++					atomic_read (&acct->maxq[READ]),
++					atomic_read (&acct->maxq[WRITE]));
 +		} while (0);	// PTB end long do once block
 +
 +		NBD_PROC_LABEL (5);
@@ -5251,8 +5686,7 @@
 +		NBD_PROC_LABEL (6);
 +
 +		len +=
-+		 sprintf (buf + len, "[%s] Sockets:\t%d", devnam,
-+			  lo->nslot);
++		 sprintf (buf + len, "[%s] Sockets:\t%d", devnam, lo->nslot);
 +
 +		NBD_PROC_LABEL (7);
 +
@@ -5277,10 +5711,8 @@
 +		NBD_PROC_LABEL (8);
 +
 +		len += sprintf (buf + len, "[%s] Requested:\t%s", devnam,
-+				display (atomic_read
-+					 (&lo->requests_in[READ]) +
-+					 atomic_read (&lo->requests_in
-+						      [WRITE]), 7));
++		        display (atomic_read(&acct->requests_in[READ]) +
++				 atomic_read(&acct->requests_in[WRITE]), 7));
 +
 +		NBD_PROC_LABEL (9);
 +
@@ -5295,25 +5727,23 @@
 +			}
 +			strncpy (buff[0],
 +				 display (atomic_read
-+					  (&lo->requests_in[READ]), 6), 7);
++					  (&acct->requests_in[READ]), 6), 7);
 +			strncpy (buff[1],
 +				 display (atomic_read
-+					  (&lo->requests_in[WRITE]), 6),
++					  (&acct->requests_in[WRITE]), 6),
 +				 7);
 +			len +=
 +			 sprintf (buf + len, "\t%sR/%sW", buff[0],
 +				  buff[1]);
 +			lo->set_speed (lo);
 +			len += sprintf (buf + len, "\tmax %d",
-+					atomic_read (&lo->maxreqblks));
++					atomic_read (&acct->maxreqblks));
 +		} while (0);	// PTB end short do once block
 +
 +		len += sprintf (buf + len, "\n");
 +		len += sprintf (buf + len, "[%s] Despatched:\t%s", devnam,
-+				display (atomic_read
-+					 (&lo->requests_out[READ]) +
-+					 atomic_read (&lo->requests_out
-+						      [WRITE]), 7));
++			display (atomic_read(&acct->requests_out[READ]) +
++			         atomic_read(&acct->requests_out[WRITE]), 7));
 +
 +		NBD_PROC_LABEL (10);
 +
@@ -5327,38 +5757,28 @@
 +					  display (slotj->out, 5));
 +			}
 +			strncpy (buff[0],
-+				 display (atomic_read
-+					  (&lo->requests_out[READ]), 6),
-+				 7);
++			 display (atomic_read(&acct->requests_out[READ]), 6), 7);
 +			strncpy (buff[1],
-+				 display (atomic_read
-+					  (&lo->requests_out[WRITE]), 6),
-+				 7);
++		         display (atomic_read(&acct->requests_out[WRITE]), 6), 7);
 +			len +=
-+			 sprintf (buf + len, "\t%sR/%sW", buff[0],
-+				  buff[1]);
++			 sprintf (buf + len, "\t%sR/%sW", buff[0], buff[1]);
 +			len +=
 +			 sprintf (buf + len, "\tmd5 %sW",
-+				  display (atomic_read
-+					   (&lo->wrequests_5to), 5));
++				  display (atomic_read(&lo->wrequests_5to), 5));
 +			len +=
 +			 sprintf (buf + len, " (%s eq,",
-+				  display (atomic_read
-+					   (&lo->wrequests_5so), 5));
++				 display (atomic_read (&lo->wrequests_5so), 5));
 +			len +=
 +			 sprintf (buf + len, " %s ne,",
-+				  display (atomic_read
-+					   (&lo->wrequests_5wo), 5));
++				 display (atomic_read(&lo->wrequests_5wo), 5));
 +			len +=
 +			 sprintf (buf + len, " %s dn)",
-+				  display (atomic_read
-+					   (&lo->wrequests_5eo), 5));
++				 display (atomic_read (&lo->wrequests_5eo), 5));
 +		} while (0);	// PTB end short do once block
 +
 +		len += sprintf (buf + len, "\n");
 +		len += sprintf (buf + len, "[%s] Errored:\t%s", devnam,
-+				display (atomic_read (&lo->requests_err),
-+					 7));
++				display (atomic_read (&acct->requests_err), 7));
 +
 +		NBD_PROC_LABEL (11);
 +
@@ -5376,8 +5796,7 @@
 +			}
 +			strncpy (buff[0], display (toterrs, 6), 7);
 +			strncpy (buff[1],
-+				 display (atomic_read (&lo->requests_err) -
-+					  toterrs, 6), 7);
++		         display (atomic_read (&acct->requests_err)-toterrs, 6), 7);
 +			len +=
 +			 sprintf (buf + len, "\t%s+%s\n", buff[0],
 +				  buff[1]);
@@ -5423,8 +5842,8 @@
 +			read_unlock_irqrestore (&lo->queue_lock, flags);
 +			len +=
 +			 sprintf (buf + len, "[%s] Pending:\t%d", devnam,
-+				  atomic_read (&lo->requests_req[READ]) +
-+				  atomic_read (&lo->requests_req[WRITE]));
++				  atomic_read (&acct->requests_req[READ]) +
++				  atomic_read (&acct->requests_req[WRITE]));
 +
 +			do {	// PTB begin short do once block
 +				int j;
@@ -5439,8 +5858,8 @@
 +
 +			len += sprintf (buf + len,
 +					"\t%dR/%dW+%dR/%dW\n",
-+					atomic_read (&lo->requests_req[READ]),
-+					atomic_read (&lo->requests_req[WRITE]),
++					atomic_read (&acct->requests_req[READ]),
++					atomic_read (&acct->requests_req[WRITE]),
 +					pending_rblks, pending_wblks);
 +
 +		} while (0);	// PTB end long do once block
@@ -5452,37 +5871,26 @@
 +			int shift = lo->logblksize;
 +
 +			strncpy (buff[0],
-+				 display (atomic_read (&lo->wspeed.speed)
-+					  << shift, 5), 7);
++			 display (atomic_read (&lo->wspeed.speed) << shift, 5), 7);
 +			strncpy (buff[1],
-+				 display (atomic_read (&lo->wspeed.speedav)
-+					  << shift, 5), 7);
++			 display (atomic_read(&lo->wspeed.speedav) << shift, 5), 7);
 +			strncpy (buff[2],
-+				 display (atomic_read
-+					  (&lo->wspeed.speedmax) << shift,
++			 display (atomic_read(&lo->wspeed.speedmax) << shift,
 +					  5), 7);
 +
 +			strncpy (buff[3],
-+				 display (atomic_read (&lo->rspeed.speed)
-+					  << shift, 5), 7);
++			 display (atomic_read (&lo->rspeed.speed) << shift, 5), 7);
 +			strncpy (buff[4],
-+				 display (atomic_read (&lo->rspeed.speedav)
-+					  << shift, 5), 7);
++			 display (atomic_read (&lo->rspeed.speedav) << shift, 5), 7);
 +			strncpy (buff[5],
-+				 display (atomic_read
-+					  (&lo->rspeed.speedmax) << shift,
-+					  5), 7);
++			 display (atomic_read (&lo->rspeed.speedmax) << shift, 5), 7);
 +
 +			strncpy (buff[6],
-+				 display (atomic_read (&lo->tspeed.speed)
-+					  << shift, 5), 7);
++			 display (atomic_read (&lo->tspeed.speed) << shift, 5), 7);
 +			strncpy (buff[7],
-+				 display (atomic_read (&lo->tspeed.speedav)
-+					  << shift, 5), 7);
++			 display (atomic_read (&lo->tspeed.speedav) << shift, 5), 7);
 +			strncpy (buff[8],
-+				 display (atomic_read
-+					  (&lo->tspeed.speedmax) << shift,
-+					  5), 7);
++			 display (atomic_read (&lo->tspeed.speedmax) << shift, 5), 7);
 +
 +			len +=
 +			 sprintf (buf + len, "[%s] B/s now:", devnam);
@@ -5508,17 +5916,17 @@
 +			len +=
 +			 sprintf (buf + len, "[%s] Spectrum:", devnam);
 +			for (blks = 0;
-+			     blks <= atomic_read (&lo->maxreqblks); blks++) {
++			     blks <= atomic_read (&acct->maxreqblks); blks++) {
 +				tot_reqs +=
-+				 atomic_read (&lo->req_in[READ][blks]) +
-+				 atomic_read (&lo->req_in[WRITE][blks]);
++				 atomic_read (&acct->req_in[READ][blks]) +
++				 atomic_read (&acct->req_in[WRITE][blks]);
 +			}
 +
 +			for (blks = 0;
-+			     blks <= atomic_read (&lo->maxreqblks); blks++) {
++			     blks <= atomic_read (&acct->maxreqblks); blks++) {
 +				int req_blks =
-+				 atomic_read (&lo->req_in[READ][blks])
-+				 + atomic_read (&lo->req_in[WRITE][blks]);
++				 atomic_read (&acct->req_in[READ][blks])
++				 + atomic_read (&acct->req_in[WRITE][blks]);
 +				int percent =
 +				 tot_reqs >
 +				 0 ? (100 * req_blks) / tot_reqs : 0;
@@ -5534,18 +5942,18 @@
 +		NBD_PROC_LABEL (14);
 +
 +		len += sprintf (buf + len, "[%s] Kthreads:\t%d", devnam,
-+				atomic_read (&lo->kthreads));
++				atomic_read (&acct->kthreads));
 +		len +=
 +		 sprintf (buf + len, "\t(%d waiting/%d running/%d max)\n",
-+			  atomic_read (&lo->kwaiters),
-+			  atomic_read (&lo->kthreads) -
-+			  atomic_read (&lo->kwaiters),
-+			  atomic_read (&lo->kmax));
++			  atomic_read (&acct->kwaiters),
++			  atomic_read (&acct->kthreads) -
++			  atomic_read (&acct->kwaiters),
++			  atomic_read (&acct->kmax));
 +
 +		NBD_PROC_LABEL (15);
 +
 +		len += sprintf (buf + len, "[%s] Cthreads:\t%d", devnam,
-+				atomic_read (&lo->cthreads));
++				atomic_read (&acct->cthreads));
 +
 +		NBD_PROC_LABEL (16);
 +
@@ -5583,7 +5991,7 @@
 +
 +		last = i;
 +		len += sprintf (buf + len, "[%s] Cpids:\t%d", devnam,
-+				atomic_read (&lo->cthreads));
++				atomic_read (&acct->cthreads));
 +
 +		do {
 +			int j;
@@ -5606,7 +6014,7 @@
 +				len +=
 +				 sprintf (buf + len, "[%s] Kpids:\t%d",
 +					  devnam,
-+					  atomic_read (&lo->cthreads));
++					  atomic_read (&acct->cthreads));
 +				for (k = 0; k < lo->nslot; k++) {
 +					struct nbd_slot *slotk =
 +					 &lo->slots[k];
@@ -5941,19 +6349,157 @@
 +        res->write_proc = nbd_write_proc;
 +}
 +
---- linux-2.5.64/drivers/Makefile.pre-enbd	Wed Mar  5 04:29:33 2003
-+++ linux-2.5.64/drivers/Makefile	Mon Mar 24 17:44:04 2003
-@@ -30,6 +30,7 @@
- obj-$(CONFIG_SBUS)		+= sbus/
- obj-$(CONFIG_ZORRO)		+= zorro/
- obj-$(CONFIG_MAC)		+= macintosh/
-+obj-$(CONFIG_ENBD) 		+= block/enbd/
- obj-$(CONFIG_PARIDE) 		+= block/paride/
- obj-$(CONFIG_TC)		+= tc/
- obj-$(CONFIG_USB)		+= usb/
---- linux-2.5.64/include/linux/enbd.h.pre-enbd	Tue Mar 25 15:20:38 2003
-+++ linux-2.5.64/include/linux/enbd.h	Tue Mar 25 14:17:37 2003
-@@ -0,0 +1,517 @@
+diff -Nur linux-2.6.0-test5.org/drivers/block/enbd/enbd_seqno.c linux-2.6.0-test5/drivers/block/enbd/enbd_seqno.c
+--- linux-2.6.0-test5.org/drivers/block/enbd/enbd_seqno.c	Thu Jan  1 00:00:00 1970
++++ linux-2.6.0-test5/drivers/block/enbd/enbd_seqno.c	Mon Mar 24 22:28:41 2003
+@@ -0,0 +1,75 @@
++#include <linux/enbd.h>
++
++
++#define _NBD_GENERATION (8*sizeof(int) - __REQ_NBDSEQNO)
++/*
++ * PTB increment the devices seqno
++ *
++ *  @lo the nbd device to increment the seqno of
++ */
++static void
++seqno_inc(struct nbd_seqno *nseqno)
++{
++	if (nseqno->seqno < (1 << _NBD_GENERATION)) {
++		++nseqno->seqno;
++                return;
++        } 
++        // PTB next generation !
++	nseqno->seqno = 0;
++	atomic_inc (&nseqno->seqno_gen);
++}
++static int
++seqno_get (struct nbd_seqno *nseqno)
++{
++        return nseqno->seqno;
++}
++static void
++seqno_reset (struct nbd_seqno *nseqno)
++{
++        nseqno->seqno = 0;
++	atomic_set(&nseqno->seqno_gen,0);
++}
++/*
++ * PTB convert a seqno number into one with an extra generation number
++ * in the msb, so that it can be compared with others. return the
++ * result.
++ *
++ * We add the current generation no. to small seqnos, and we add the
++ * previous generation no. to large seqnos.
++ *
++ *   @lo the nbd device to look at
++ *   @seqno the small sequence number to return the full seq number for
++ */
++static unsigned int
++seqno_calc (struct nbd_seqno *nseqno, unsigned int seqno)
++{
++        unsigned int genno;
++        static unsigned int absdiff(unsigned int x, unsigned int y) {
++            if (x > y) {
++                return x - y;
++            } else {
++                return y - x;
++            }
++        };
++        genno = atomic_read (&nseqno->seqno_gen);
++	if (absdiff(seqno,nseqno->seqno) < (1 << (_NBD_GENERATION - 1))) {
++		return seqno + (genno << _NBD_GENERATION);
++	}
++        if (seqno < nseqno->seqno) {
++		return seqno + ((genno + 1) << _NBD_GENERATION);
++        } 
++        return seqno + ((genno - 1) << _NBD_GENERATION);
++}
++
++void nbd_init_seqno (struct nbd_seqno *nseqno) {
++
++        seqno_reset(nseqno);
++
++        nseqno->inc   = seqno_inc;
++        nseqno->get   = seqno_get;
++        nseqno->reset = seqno_reset;
++        nseqno->calc  = seqno_calc;
++}
++
++
++
+diff -Nur linux-2.6.0-test5.org/drivers/block/enbd/enbd_speed.c linux-2.6.0-test5/drivers/block/enbd/enbd_speed.c
+--- linux-2.6.0-test5.org/drivers/block/enbd/enbd_speed.c	Thu Jan  1 00:00:00 1970
++++ linux-2.6.0-test5/drivers/block/enbd/enbd_speed.c	Mon Mar 24 22:28:50 2003
+@@ -0,0 +1,64 @@
++#include <linux/enbd.h>
++#include <linux/enbd_ioctl.h>
++
++/*
++ * PTB - update speed counters (if at least 5s has passed)
++ *
++ *  @spd the speed struct to update
++ */
++static void
++spd_update (struct nbd_speed *spd, int distance)
++{
++
++	// last time we measured
++	int lastjiffy = atomic_read (&spd->jiffy);
++	// jiffies since last time
++	int djiffy = jiffies - lastjiffy;
++
++	// previous no we measured
++	int lastdist = atomic_read (&spd->distance);
++	// blocks since last time
++	int ddistance = distance - lastdist;
++
++	// write every 5 second in time
++	if (djiffy > 5 * HZ) {
++
++		// jiffies since first time
++		int tjiffy = jiffies - atomic_read (&spd->frstj);
++
++		// max tot speed measured so far
++		int speedmax = atomic_read (&spd->speedmax);
++
++		// last instantaneous speed we measured
++		int lastspeed = atomic_read (&spd->speed);
++
++		// instantaneous read blocks/s
++		int speed = djiffy ? (ddistance * HZ) / djiffy : 0;
++
++		// smoothed KB/s
++		int speedsmoothed =
++		 (djiffy * speed + HZ * lastspeed) / (djiffy + HZ);
++
++		// average speed to now in KB/s
++		int speedav = tjiffy ? (distance * HZ) / tjiffy : 0;
++
++		// smoothing count for max
++		int speedhi =
++		 (speedav > speedsmoothed) ? speedav : speedsmoothed;
++
++		// doing settings
++		atomic_set (&spd->speed, speedsmoothed);
++		if (speedhi > speedmax)
++			atomic_set (&spd->speedmax, speedhi);
++		atomic_set (&spd->distance, distance);
++		atomic_set (&spd->speedav, speedav);
++		atomic_set (&spd->jiffy, jiffies);
++	}
++}
++
++void
++nbd_init_speed(struct nbd_speed *spd) {
++        memset(spd, 0, sizeof(*spd));
++        spd->update = spd_update;
++}
++
+diff -Nur linux-2.6.0-test5.org/include/linux/enbd.h linux-2.6.0-test5/include/linux/enbd.h
+--- linux-2.6.0-test5.org/include/linux/enbd.h	Thu Jan  1 00:00:00 1970
++++ linux-2.6.0-test5/include/linux/enbd.h	Tue Mar 25 22:17:59 2003
+@@ -0,0 +1,523 @@
 +#ifndef LINUX_ENBD_H
 +#define LINUX_ENBD_H
 +
@@ -6148,6 +6694,24 @@
 +      unsigned (*calc)(struct nbd_seqno *, unsigned);
 +  };
 +
++
++  struct nbd_acct {
++      atomic_t requests_in[2];             /* PTB add - blocks put on queue */
++      atomic_t requests_out[2];            /* PTB add - blocks out from queue */
++      atomic_t requests_err;               /* PTB add - blocks erred on queue */
++      atomic_t requests_req[2];            /* PTB add - read blocks pending */
++      atomic_t kwaiters;                   /* PTB add - kernel thrds waiting */
++      atomic_t kthreads;                   /* PTB add - kernel threads in */
++      atomic_t maxq[2];                    /* PTB add - max req queue depth */
++      atomic_t countq[2];                  /* PTB add - request queue depth */
++      atomic_t cwaiters;                   /* PTB add - client thrds waiting */
++      atomic_t cthreads;                   /* PTB add - client threads in */
++      atomic_t req_in[2][1 + NBD_MAX_SECTORS/2];
++      atomic_t maxreqblks;                 /* PTB add - maximum req size seen */
++      atomic_t kmax;                       /* PTB add - max kernel threads */
++  };
++
++
 +  struct nbd_device {
 +      atomic_t refcnt;	
 +
@@ -6180,25 +6744,14 @@
 +      int nslot;                           /* PTB add - total slots */
 +      atomic_t islot;                      /* PTB add - current slot */
 +      int aslot;                           /* PTB add - total active slots*/
-+      atomic_t requests_in[2];             /* PTB add - blocks put on queue */
-+      atomic_t requests_out[2];            /* PTB add - blocks out from queue */
-+      atomic_t requests_err;               /* PTB add - blocks erred on queue */
++      struct nbd_acct acct;
 +      atomic_t wrequests_5so;              /* PTB add - write blocks md5 skip */
 +      atomic_t wrequests_5wo;              /* PTB add - write blocks md5 wr */
 +      atomic_t wrequests_5eo;              /* PTB add - write blocks md5 refus*/
 +      atomic_t wrequests_5to;              /* PTB add - write blocks md5sum */
 +      atomic_t wrequests_5co;              /* PTB add - write blocks md5 tot */
 +      atomic_t wrequests_5no;              /* PTB add - write blocks not md5 */
-+      atomic_t requests_req[2];            /* PTB add - read blocks pending */
-+      atomic_t kwaiters;                   /* PTB add - kernel thrds waiting */
-+      atomic_t kthreads;                   /* PTB add - kernel threads in */
-+      atomic_t maxq[2];                    /* PTB add - max req queue depth */
-+      atomic_t countq[2];                  /* PTB add - request queue depth */
-+      atomic_t errors;                     /* PTB add - tot requests errored */
 +      struct nbd_seqno seqno_out;          /* PTB add - seq number */
-+      atomic_t cwaiters;                   /* PTB add - client thrds waiting */
-+      atomic_t cthreads;                   /* PTB add - client threads in */
-+      atomic_t req_in[2][1 + NBD_MAX_SECTORS/2];
 +      wait_queue_head_t wq;                /* PTB add */
 +      struct nbd_slot slots[NBD_MAXCONN];  /* PTB add - client array */
 +      unsigned blksize;                    /* PTB add - device blksize in B */
@@ -6212,14 +6765,12 @@
 +      struct file * file;                  /* PTB add - for ref */
 +      struct inode * inode;                /* PTB add - for ref */
 +      int  bufsiz;                         /* PTB add - userspace buffer size */
-+      atomic_t kmax;                       /* PTB add - max kernel threads */
 +      char *blockmap;                      /* PTB add - map of block states */
 +      unsigned long disabled;              /* PTB add - when was it disabled */
 +      int req_timeo;                       /* PTB add - inactivity timeout */
 +      struct timer_list run_queue;         /* PTB add - run queue */
 +      struct work_struct task_queue;       /* PTB add - task queue */
 +      char devnam[4];                      /* PTB add - drive letters */
-+      atomic_t maxreqblks;                 /* PTB add - maximum req size seen */
 +      int max_sectors;                     /* PTB add - max req size allowed! */
 +      int lives;                           /* PTB add - # times enabled */
 +      // PTB speed measurement settings
@@ -6385,6 +6936,7 @@
 +     struct bio *bio;
 +     struct nbd_device *lo = req->rq_disk->private_data;
 +     static int rq_type(struct request *);
++     struct nbd_acct * acct = &lo->acct;
 +
 +     if (rq_type(req) == IOCTL) {
 +            // PTB this is the devices ioctl request 
@@ -6407,14 +6959,14 @@
 +            return;
 +
 +     write_lock(&lo->altqueue_lock);
-+     if (atomic_read(&lo->countq[READ])
-+       + atomic_read(&lo->countq[WRITE]) == 0) {
++     if (atomic_read(&acct->countq[READ])
++       + atomic_read(&acct->countq[WRITE]) <= 0) {
 +            if (atomic_read(&lo->flags) & NBD_QBLOCKED) {
 +                    static int nbd_requeue(struct nbd_device *);
 +                    nbd_requeue(lo);
 +                    atomic_clear_mask(NBD_QBLOCKED, &lo->flags);
-+            } 
-+     } 
++             } 
++     }
 +     write_unlock(&lo->altqueue_lock);
 +  }
 +     
@@ -6471,8 +7023,9 @@
 +#endif /* LINUX_ENBD_H */
 +
 +
---- linux-2.5.64/include/linux/enbd_ioctl.h.pre-enbd	Tue Mar 25 15:20:45 2003
-+++ linux-2.5.64/include/linux/enbd_ioctl.h	Mon Mar 24 22:52:26 2003
+diff -Nur linux-2.6.0-test5.org/include/linux/enbd_ioctl.h linux-2.6.0-test5/include/linux/enbd_ioctl.h
+--- linux-2.6.0-test5.org/include/linux/enbd_ioctl.h	Thu Jan  1 00:00:00 1970
++++ linux-2.6.0-test5/include/linux/enbd_ioctl.h	Mon Mar 24 17:48:05 2003
 @@ -0,0 +1,56 @@
 +#ifndef NBD_IOCTL_H
 +#define NBD_IOCTL_H 1
