@@ -29,7 +29,7 @@ Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
-Source7:	linux-netfilter-patches-20010421.tar.gz
+Source7:	linux-netfilter-patches-20010504.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source10:	http://www.linux-wlan.com/linux-wlan/linux-wlan-ng-%{wlan_version}.tar.gz
@@ -117,8 +117,8 @@ Patch33:	linux-abi-2.4.3.0-PLD.diff
 Patch34:	http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 
 # XFS patches
-Patch35:	ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4.4-core-xfs-1.0.patch.gz
-Patch36:	ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4-xfs-1.0.patch.gz
+#Patch35:	ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4.4-core-xfs-1.0.patch.gz
+#Patch36:	ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4-xfs-1.0.patch.gz
 #Patch37:	linux-2.4-xfs-nfsdops.patch
 
 # patch for fix LIDS install
@@ -385,8 +385,8 @@ for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
 echo -e $ANS | ./runme)
 
 # LIDS
-%patch90 -p0
-patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
+#%patch90 -p0
+#patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
 
 # IPVS
 for i in ipvs-%{ipvs_version}/*.diff ; do
@@ -426,7 +426,7 @@ rm -rf %{sym_ncr_version}
 #%patch32 -p1
 
 ## must be here, in other time make errors with LIDS
-%patch33 -p1
+#%patch33 -p1
 
 %build
 BuildKernel() {
