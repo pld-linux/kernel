@@ -64,84 +64,65 @@ Patch6:		linux-2.4.1-disable-message-printing.patch
 Patch7:		linux-2.4.1-aacraid-030101.patch
 # work around bugs in windows95/2000 VJ header compression implementations.
 Patch8:		linux-fix-win-vj.patch
-# Loopback fix
-Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/axboe/patches/2.4.2-pre4/loop-6.gz
-Patch10:	ipvs-ip_select_ident.patch
+Patch9:		ipvs-ip_select_ident.patch
 
 ## Patches from Linux Kernel List
-Patch12:	linux-2.4.2-irda3.patch
-Patch13:	linux-2.4.2-irda4.patch
+Patch10:	linux-2.4.2-irda3.patch
+Patch11:	linux-2.4.2-irda4.patch
 ## from LKL 28.II - 01.III
-Patch14:	linux-2.4.2-maestro3-dma-fix.patch
-Patch15:	linux-2.4.2-advantech-wdt-driver.patch
-Patch16:	linux-scsi-debug-bug.patch
-Patch17:	linux-smaller-parport_pc-non-pci-box.patch
+Patch12:	linux-scsi-debug-bug.patch
+Patch13:	linux-smaller-parport_pc-non-pci-box.patch
 
 # Quota fixes
-Patch18:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.2-1.diff.gz
+Patch14:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.2-1.diff.gz
 # Reiserfs/NFS patches
-Patch19:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/linux-2.4.2-reiserfs-20010305.patch.gz
-Patch20:	ftp://ftp.reiserfs.org/pub/misc-patches/linux-2.4.2-knfsd-6.g.patch.gz
+Patch15:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/linux-2.4.2-reiserfs-20010305.patch.gz
+Patch16:	ftp://ftp.reiserfs.org/pub/misc-patches/linux-2.4.2-knfsd-6.g.patch.gz
 
 # from LKL 2001.03.02
-Patch21:	linux-2.4.2-oom-killer.patch
-Patch22:	linux-2.4.2-raw-ip.patch
+Patch17:	linux-2.4.2-oom-killer.patch
+Patch18:	linux-2.4.2-raw-ip.patch
 
 # from LKL 2001.03.03
-Patch23:	linux-2.4.2-epson-1640SU-scanner.patch
-Patch24:	PCI_ISA_bridge.patch
-Patch25:	linux-2.4.2-nvram-hdd.patch
-Patch27:	ir242_sock_detach.diff
-Patch28:	cs89x0-driver.patch
+Patch19:	linux-2.4.2-epson-1640SU-scanner.patch
+Patch20:	PCI_ISA_bridge.patch
+Patch21:	linux-2.4.2-nvram-hdd.patch
+Patch22:	ir242_sock_detach.diff
 
 # from LKL 2001.03.04
-Patch29:	linux-2.4-fix-kapm.patch
-Patch30:	smc-mca-2.4.2-ac.diff
-Patch31:	linux-string-doc-addon.patch
-Patch32:	linux-perform-reboot-notif.patch
-Patch33:	patch-uk1
-Patch34:	patch-uk2
-Patch35:	patch-uk3
-Patch36:	patch-uk5
-Patch38:	athlon-smp-1
+Patch23:	linux-2.4-fix-kapm.patch
+Patch24:	patch-uk2
+Patch25:	patch-uk3
+Patch26:	patch-uk5
 
 # from LKL 2001.03.06
-Patch39:	epca-fix-missing-unregister-driver.patch
-
-# from LKL 2001.03.07
-Patch40:	smbfs-re-open-fixes.patch
+Patch27:	epca-fix-missing-unregister-driver.patch
 
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
-Patch41:	linux-2.4.2-pcnet-parms.patch
+Patch28:	linux-2.4.2-pcnet-parms.patch
 
 # from LKL 2001.03.09
-Patch42:	lanstreamer-support.patch
-Patch43:	ramdisk-VM.fix
+Patch29:	ramdisk-VM.fix
 # from LKL
-Patch44:	i2o-2.4.2.patch
+Patch30:	i2o-2.4.2.patch
 
-Patch45:	linux-2.4.2-Davicom-card.patch
+Patch31:	linux-2.4.2-Davicom-card.patch
 
-Patch46:	http://home.sch.bme.hu/~cell/br2684/dist/010109/br2684-against2.4.0.diff
-Patch47:	http://home.sch.bme.hu/~cell/br2684/dist/010109/br2684-common.c-spin_unlock.diff
+Patch32:	http://home.sch.bme.hu/~cell/br2684/dist/010109/br2684-against2.4.0.diff
+Patch33:	http://home.sch.bme.hu/~cell/br2684/dist/010109/br2684-common.c-spin_unlock.diff
 
 # aacraid fix
-Patch48:	http://domsch.com/linux/aacraid/linux-2.4.1-axboe-scsi-max-sec.patch
+Patch34:	http://domsch.com/linux/aacraid/linux-2.4.1-axboe-scsi-max-sec.patch
 
-Patch49:	linux-binutils.patch
-## Kernel crashes during making reiser-module:
-Patch50:	%{name}-reiser.patch
+# Kernel crashes during making reiser-module:
+Patch35:	%{name}-reiser.patch
 
-Patch51:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.3-p4.03132001.patch.gz
-
-# Patch for AIC-7XXX SCSI Controler Series, orginal was:
-# http://people.FreeBSD.org/~gibbs/linux/linux-aic7xxx-6.1.8-2.4.2.patch.gz
-Patch52:	linux-aic7xxx-6.1.8-2.4.2.patch.gz
+Patch36:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.3-p4.03132001.patch.gz
 
 # RAM Disk free from LKL 23.03.2001
-Patch53:	linux-ram-disk-free.patch
+Patch37:	linux-ram-disk-free.patch
 
-Patch54:	rl2-include.patch
+Patch38:	rl2-include.patch
 
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
@@ -355,65 +336,41 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -n linux
-#%patch9 -p1
-# kerneli patch
 %patch0 -p1
 #%patch2 -p1
-## i8255 fix
 #%patch4 -p0 
-#Patched Tekram patch
 %patch5 -p0
-## disable message printing
 #%patch6 -p1
-## Adaptec RAID patch
 #%patch7 -p1
 #%patch8 -p1
-## patches from Linux kernel list
-#%patch12 -p1
-#%patch13 -p1
-## next patches
+#%patch10 -p1
+#%patch11 -p1
+#%patch12 -p0
+#%patch13 -p0
 #%patch14 -p1
 #%patch15 -p1
-#%patch16 -p0
+#%patch16 -p1
 #%patch17 -p0
-## quota fixes
 #%patch18 -p1
-## reiserfs/NFS patches
 #%patch19 -p1
-#%patch20 -p1
-## LKL 2001.03.02
+#%patch20 -p0
 #%patch21 -p0
 #%patch22 -p1
-## LKL 2001.03.03
 #%patch23 -p1
-#%patch24 -p0
-#%patch25 -p0
+#%patch24 -p1
+#%patch25 -p1
+#%patch26 -p1
 #%patch27 -p1
 #%patch28 -p1
 #%patch29 -p1
-#%patch30 -p0
+#%patch30 -p1
 #%patch31 -p1
-#%patch32 -p1
+#%patch32 -p0
 #%patch33 -p1
 #%patch34 -p1
 #%patch35 -p1
-#%patch36 -p1
-#%patch38 -p1
-#%patch39 -p1
-#%patch40 -p1
-#%patch41 -p1
-#%patch42 -p1
-#%patch43 -p1
-#%patch44 -p1
-#%patch45 -p0
-#%patch46 -p1
-#%patch47 -p1
-#%patch48 -p1
-#%patch49 -p1
-#%patch50 -p4
-#%patch51 -p1
-#%patch52 -p1
-#%patch53 -p1
+#%patch36 -p4
+#%patch37 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -445,7 +402,7 @@ done
 mkdir net/ipv4/ipvs
 cp ipvs-%{ipvs_version}/ipvs/*.{c,h,in} net/ipv4/ipvs
 cp ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile net/ipv4/ipvs/Makefile
-patch -p1 -s < %{PATCH10}
+patch -p1 -s < %{PATCH9}
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
@@ -473,7 +430,7 @@ rm -rf %{sym_ncr_version}
 
 ## install RangeLAN2 driver
 mv rl2-1.7.1 drivers/net/rl2
-%patch54 -p0
+%patch38 -p1
 
 %build
 BuildKernel() {
@@ -602,7 +559,6 @@ gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 # Pre patch
 #gzip -dc %{PATCH100} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
-gzip -dc %{PATCH9} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH0} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH2} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
@@ -611,47 +567,36 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
 # patches from Linux kernel list
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
 ## next
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH16}
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
+gzip -dc %{PATCH14} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH15} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH16} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH17}
-gzip -dc %{PATCH18} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH19} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH20} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH18}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH19}
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH20}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH21}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH22}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH23}
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH24}
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH25}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH24}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH25}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH26}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH27}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH28}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH29}
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH30}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH30}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH31}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH32}
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH32}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH33}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH34}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH35}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH36}
+patch -p4 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH36}
+gzip -dc %{PATCH37} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH38}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH39}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH40}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH41}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH42}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH43}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH44}
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH45}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH46}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH47}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH48}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH49}
-patch -p4 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH50}
-gzip -dc %{PATCH51} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH52} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH53}
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/dc395/dc395-integ24.diff
@@ -685,7 +630,7 @@ done
 mkdir $RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipv4/ipvs
 cp $RPM_BUILD_ROOT/usr/src/linux-%{version}/ipvs-%{ipvs_version}/ipvs/*.{c,h,in} $RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipv4/ipvs
 cp $RPM_BUILD_ROOT/usr/src/linux-%{version}/ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile $RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipv4/ipvs/Makefile
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH9}
 
 # Remove -g from drivers/atm/Makefile
 mv -f $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/atm/Makefile \
