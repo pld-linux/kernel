@@ -5,6 +5,7 @@
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 # _without_source	- don't build source
+# _without_selinux	- don't build SELinux kernel
 #
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
@@ -16,8 +17,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.5.67
-Release:	0.7
+Version:	2.5.68
+Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
@@ -35,11 +36,9 @@ Source21:	%{name}-ia32-smp.config
 #Source74:	%{name}-ppc-smp.config
 Patch0:		http://piorun.ds.pg.gda.pl/~blues/linux-2.5.67-genrtc_fix.patch
 # FBDEV fixes:
-Patch1:		http://phoenix.infradead.org/~jsimmons/fbdev.diff.gz
-Patch2:		http://piorun.ds.pg.gda.pl/~blues/%{name}-2.5.67-radeonfb.patch
 # SELinux:
-#Patch1:		http://www.nsa.gov/selinux/patches/linux-2.5-2003040709.patch.gz
-Patch3:		lsm-%{version}.patch.gz
+#Patch3:		http://www.nsa.gov/selinux/patches/linux-2.5-2003040709.patch.gz
+Patch1:		lsm-2.5.67.patch.gz
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -270,9 +269,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %prep
 %setup -q -n linux-%{version}
 %patch0 -p0
-%patch1 -p1
-%patch2 -p1
-%patch3 -p1
+%{?_without_selinux:%patch1 -p1}
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -283,7 +280,7 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
     Makefile.orig >Makefile
 
 %build
-install %{SOURCE2} drivers/video/
+#install %{SOURCE2} drivers/video/
 BuildKernel() {
 	%{?_debug:set -x}
 	# is this a special kernel we want to build?
@@ -485,11 +482,14 @@ cp .config config-smp
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
+
 # install SELinux headers
+%if %{?_without_selinux:0}%{!?_without_selinux:1}
 install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/{linux,asm-i386}/flask
 install security/lids/include/linux/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 install security/selinux/include/linux/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/flask
 install security/selinux/include/asm-i386/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/asm-i386/flask
+%endif			# %%{_without_selinux}
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
