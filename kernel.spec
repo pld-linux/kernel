@@ -55,8 +55,8 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.12
-%define		_cset		20050116_0105
+%define		_rel		0.14
+%define		_cset		20050118_0115
 %define		_apply_cset	0
 
 %define		_netfilter_snap		20041118
@@ -1243,9 +1243,9 @@ fi
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
-%if %{with grsec}
-%{_prefix}/src/linux-%{version}/grsecurity
-%endif
+#%if %{with grsec}
+#%{_prefix}/src/linux-%{version}/grsecurity
+#%endif
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
 %{_prefix}/src/linux-%{version}/kernel
