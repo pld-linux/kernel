@@ -11,8 +11,8 @@
 # _without_doc		- don't build documentation package
 #
 
-%define		patch_level	1
-%define		_rel		0
+%define		patch_level	0
+%define		_rel		8
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 #
@@ -35,7 +35,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.4.21
+Version:	2.4.20
 %if %{patch_level} !=0
 Release:	%{_rel}pl%{patch_level}%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 %else
