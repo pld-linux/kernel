@@ -12,14 +12,14 @@
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
 #
-%define		pre_version		rc2
+%define		pre_version		rc6
 %define		ipvs_version		1.0.7
 %define		freeswan_version	1.97
 %define		IPperson_version	20020819-2.4.19
-%define		jfs_version		2.4-1.1.1
+%define		jfs_version		2.4-1.1.2
 %define		lvm_version		1.0.5
 %define		evms_version		1.2.0
-%define		ntfs_version		2.1.0a
+%define		ntfs_version		2.1.4a
 %define		drm_xfree_version	4.3.0
 %define		hostap_version		2002-10-12
 %define		netfilter_snap		20030306
@@ -88,12 +88,12 @@ Patch22:	linux-2.4.20-uml-host-skas3.patch
 Patch25:	linux-2.4.21-core-xfs-1.2.0.patch.bz2
 Patch26:	linux-2.4.20-xfs-1.2.0.patch.bz2
 # http://acl.bestbits.at/
-Patch30:	linux-2.4.20-jfs-xattr.patch
-Patch31:	linux-2.4.20-jfs-1.1.1-acl.patch
-Patch32:	linux-2.4.20-xattr+acl+trusted-0.8.55.diff.gz
+Patch30:	linux-2.4.21-jfs-xattr.patch
+Patch31:	linux-2.4.21-jfs-acl.patch
+Patch32:	linux-2.4.21-ea+acl+nfsacl-0.8.58.diff.gz
 Patch33:	linux-2.4.20-acl-intermezzo-fix.patch
 # http://unc.dl.sourceforge.net/sourceforge/linux-ntfs/
-Patch40:	linux-2.4.20-ntfs-%{ntfs_version}.patch.bz2
+Patch40:	linux-2.4.21-ntfs-%{ntfs_version}.patch.gz
 Patch41:	linux-2.4.20-ntfs.patch
 # http://dl.sourceforge.net/linux-hfsplus/hfsplus-patch-20020606.patch
 Patch45:	hfsplus-20020606.patch.bz2
@@ -104,7 +104,7 @@ Patch55:	linux-2.4.20-davfs-_FUNCTION_.patch
 # quota for reiserfs
 Patch60:	linux-2.4.20-reiserfs-quota.patch.bz2
 # http://dl.sourceforge.net/squashfs/squashfs-1.1b.tar.gz
-Patch65:	linux-2.4.20-squashfs.patch
+Patch65:	squashfs1.2-2.4.21-patch
 #Patch70:	linux-2.4.20-afs.patch.bz2
 #from http://sci.felk.cvut.cz/nwd/linux/nwd-patch-2.4.19
 Patch75:	nwd-2.4.21.patch
@@ -126,26 +126,12 @@ Patch125:	linux-2.4.18-mppe.patch
 
 # ATM bugfixes
 # Patches by Chas Williams <chas@locutus.cmf.nrl.navy.mil>
-Patch150:	atm-00-backport-2.5.patch
-Patch151:	atm-01-Makefile.patch
-Patch152:	atm-04-min-frame-size.patch
-Patch153:	atm-05-multicast-lec.patch
-Patch154:	atm-06-skb_pull.patch
-Patch155:	atm-07-atm_dev_lock-sem.patch
-Patch156:	atm-08-lane-MOD_USE_COUNT.patch
-Patch157:	atm-09-suni-MOD_USE_COUNT.patch
-Patch158:	atm-10-modular-atm.patch
-Patch159:	atm-11-correct-lec-net_device-names.patch
-Patch160:	atm-12-br2684-xmit-return.patch
-Patch161:	atm-13-atm_vcc-cleanup.patch
-Patch162:	atm-14-clip-neigh-lock.patch
-Patch180:	atm-20-fore200e-gettimeofday.patch
+# Included in Chas patch:
 # http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # http://christophe.lizzi.free.fr/linux/linux-2.4.0-test9-fore200e-0.3.tar.gz
-Patch181:	atm-21-fore200e-0.2f.patch
-# Oopses on me - baggins
-#Patch191:	atm-21-fore200e-0.3.patch
-Patch185:	atm-30-idt77105-cleanup.patch
+# ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/
+Patch150:	linux-2.4.21-atm_diffs.patch
+Patch151:	ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr-kernel-diffs
 
 # New devices/drivers
 
@@ -233,7 +219,7 @@ Patch1301:	linux-2.4.18-hpfs.patch
 Patch1302:	linux-2.4.18-nfs-default-size.patch
 Patch1303:	linux-2.4.20-irixnfs.patch
 # Tru64 NFS kludge
-Patch1304:	linux-2.4.20-tru64nfs.patch
+Patch1304:	linux-2.4.21-tru64nfs.patch
 
 Patch1350:	linux-2.4.21-nousb.patch
 # from http://www.noc.uoa.gr/~avel/page.php?page=nokia&lang=en
@@ -270,7 +256,7 @@ Patch3004:	linux-2.4.20-sym53c8xx_old.patch
 
 # Security fixes
 
-Patch10000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc2.bz2
+Patch10000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc6.bz2
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -559,17 +545,17 @@ cp -f drm/*.{c,h} drivers/char/drm/
 #%patch22 -p1
 %patch25 -p1
 %patch26 -p1
-#%patch30 -p1
-#%patch31 -p1
-#%patch32 -p1
-#%patch33 -p1
-#%patch40 -p1
+%patch30 -p1
+%patch32 -p1
+%patch31 -p1
+%patch33 -p1
+%patch40 -p1
 #%patch41 -p1
 %patch45 -p1
 %patch50 -p1
 %patch55 -p1
 #%patch60 -p1
-#%patch65 -p1
+%patch65 -p1
 #%patch70 -p1
 %patch75 -p1
 #%patch100 -p1
@@ -578,22 +564,8 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch115 -p1
 %patch120 -p1
 %patch125 -p1
-#%patch150 -p1
-#%patch151 -p1
-#%patch152 -p1
-#%patch153 -p1
-#%patch154 -p1
-#%patch155 -p1
-#%patch156 -p1
-#%patch157 -p1
-#%patch158 -p1
-#%patch159 -p1
-#%patch160 -p1
-#%patch161 -p1
-#%patch162 -p0
-#%patch180 -p1
-#%patch181 -p1
-#%patch185 -p1
+%patch150 -p1
+%patch151 -p1
 #%patch200 -p1
 #%patch201 -p1
 #%patch210 -p1
@@ -656,7 +628,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1409 -p1
 %patch1410 -p1
 %patch1411 -p1
-%patch1413 -p1
+#%patch1413 -p1
 %patch1414 -p1
 %patch1415 -p0
 #%patch1416 -p1
@@ -684,9 +656,9 @@ install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 #patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020819-linux-2.4.19.diff
 
 # hostap
-echo Installing Host AP support
-patch -p1 -s < hostap-%{hostap_version}/kernel-patches/hostap-linux-2.4.19-rc3.patch
-cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
+#echo Installing Host AP support
+#patch -p1 -s < hostap-%{hostap_version}/kernel-patches/hostap-linux-2.4.19-rc3.patch
+#cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 
 # The following go last as they touch a lot of code
 # and/or are on bcond and/or are ifarch
