@@ -690,10 +690,10 @@ BuildConfig (){
 	echo "CONFIG_M686=y" >> arch/%{_target_base_arch}/defconfig
 %endif
 %ifarch pentium3
-	echo "CONFIG_PENTIUMIII=y" >> arch/%{_target_base_arch}/defconfig
+	echo "CONFIG_MPENTIUMIII=y" >> arch/%{_target_base_arch}/defconfig
 %endif
 %ifarch pentium4
-	echo "CONFIG_PENTIUM4=y" >> arch/%{_target_base_arch}/defconfig
+	echo "CONFIG_MPENTIUM4=y" >> arch/%{_target_base_arch}/defconfig
 %endif
 %ifarch athlon
 	echo "CONFIG_MK7=y" >> arch/%{_target_base_arch}/defconfig
@@ -954,10 +954,10 @@ echo "CONFIG_M586=y" >> .config
 echo "CONFIG_M686=y" >> .config
 %endif
 %ifarch pentium3
-echo "CONFIG_PENTIUMIII=y" >> .config
+echo "CONFIG_MPENTIUMIII=y" >> .config
 %endif
 %ifarch pentium4
-echo "CONFIG_PENTIUM4=y" >> .config
+echo "CONFIG_MPENTIUM4=y" >> .config
 %endif
 %ifarch athlon
 echo "CONFIG_MK7=y" >> .config
@@ -984,10 +984,10 @@ echo "CONFIG_M586=y" >> .config
 echo "CONFIG_M686=y" >> .config
 %endif
 %ifarch pentium3
-echo "CONFIG_PENTIUMIII=y" >> .config
+echo "CONFIG_MPENTIUMIII=y" >> .config
 %endif
 %ifarch pentium4
-echo "CONFIG_PENTIUM4=y" >> .config
+echo "CONFIG_MPENTIUM4=y" >> .config
 %endif
 %ifarch athlon
 echo "CONFIG_MK7=y" >> .config
