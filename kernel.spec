@@ -60,7 +60,11 @@ Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+%ifarch sparc64
+BuildRequires:	egcs64
+%else
 BuildRequires:	egcs
+%endif
 Provides:	module-info
 Autoreqprov:	no
 Prereq:		fileutils
