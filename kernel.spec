@@ -81,7 +81,6 @@ Source1010:	%{name}-i2c.config
 Source1011:	%{name}-promise_st.config
 Source1012:	%{name}-i810fb.config
 Source1013:	%{name}-davfs.config
-Source1014:	%{name}-supermount.config
 Source1666:	%{name}-grsec.config
 Source1667:	%{name}-int.config
 Source1668:	%{name}-hostap.config
@@ -924,7 +923,6 @@ BuildKernel() {
 	cat %{SOURCE1011} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1012} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1013} >> arch/%{base_arch}/defconfig
-	cat %{SOURCE1014} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1671} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1672} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1673} >> arch/%{base_arch}/defconfig
@@ -1134,7 +1132,6 @@ cat %{SOURCE1010} >> .config
 cat %{SOURCE1011} >> .config
 cat %{SOURCE1012} >> .config
 cat %{SOURCE1013} >> .config
-cat %{SOURCE1014} >> .config
 cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
@@ -1199,7 +1196,6 @@ cat %{SOURCE1010} >> .config
 cat %{SOURCE1011} >> .config
 cat %{SOURCE1012} >> .config
 cat %{SOURCE1013} >> .config
-cat %{SOURCE1014} >> .config
 cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
