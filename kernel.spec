@@ -48,7 +48,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		4.9%{?with_mosix:m}
+%define		_rel		4.10%{?with_mosix:m}
 %define		_cset		20040707_0722
 %define		_apply_cset	0
 %define		_subversion	.1
@@ -105,7 +105,7 @@ Source110:	%{name}-abi.config
 Patch0:		2.6.0-ksyms-add.patch
 
 # from http://dl.sf.net/sourceforge/squashfs/
-Patch4:		squashfs2.0-patch
+Patch4:		squashfs2.1-patch
 
 Patch6:		2.6.0-t4-PPC-ENODEV.patch
 
