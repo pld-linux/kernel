@@ -184,10 +184,8 @@ Patch100:	routes-2.6.10-11.diff
 # http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.10-rc2/2.6.10-rc-mm2/broken-out
 Patch110:	linux-reiser4.patch.bz2
 
-# derived from official grsecurity-2.1.0-2.6.10-200501071049.patch
-Patch200:	grsecurity-2.1.0-2.6.10-200501071049.patch
+Patch200:	grsecurity-2.1.1-2.6.10-200501131222.patch
 Patch201:	linux-2.6.10-secfix-200501071130.patch
-Patch202:	linux-2.6.10-grsec_sparc.patch
 
 # linux vserver
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
@@ -598,7 +596,6 @@ bzcat %{SOURCE4} | patch -p1 -s
 %if %{with grsec}
 %patch200 -p1
 %patch201 -p1
-%patch202 -p1
 %endif
 %endif
 
