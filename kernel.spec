@@ -117,6 +117,7 @@ Patch1503:	%{name}-sym53c8xx.patch
 # ppcs patches
 Patch2000:	2.2.20-ppc_ide.patch
 Patch2001:	2.2.20-ppc_sysrq.patch
+Patch2002:	linux-2.2.19-ieee1394-ppc.patch.bz2
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -349,8 +350,8 @@ do twojego sprzêtu.
 
 %patch0 -p1
 %patch1 -p0
-# disable aic7xxx patch on sparc (this must be reported to aic7xxx driver maintainer)
-%ifnarch sparc sparc64
+# disable aic7xxx patch on sparc and ppc (this must be reported to aic7xxx driver maintainer)
+%ifnarch sparc sparc64 ppc
 %patch2 -p1
 %endif
 %patch3 -p1
@@ -457,6 +458,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %ifarch ppc
 %patch2000 -p1
 %patch2001 -p1
+%patch2002 -p1
 %endif
 
 %build
@@ -669,7 +671,7 @@ gzip -dc %{PATCH300} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ver
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH320}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH0}
-%ifnarch sparc sparc64
+%ifnarch sparc sparc64 ppc
 gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 %endif
 bzip2 -dc %{PATCH3} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
@@ -784,6 +786,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1502}
 %ifarch ppc
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2000}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2001}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2002}
 %endif
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
