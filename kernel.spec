@@ -868,7 +868,8 @@ zcat %{SOURCE3} | patch -p1 -s
 
 %patch800 -p1
 
-%patch810 -p1
+# EVLog - broken dev_err function
+##%%patch810 -p1
 
 ## Add ALL patches before this section !!
 
