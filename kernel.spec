@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		2
+%define		_rel		3
 %define		_test_ver	11
 %define		_cset		20031204_0007
 
@@ -65,7 +65,7 @@ Patch6:		2.6.0-t3-sysfs_mem-lkml.patch
 Patch8:		2.6.0-t4-PPC-ENODEV.patch
 Patch10:	kernel-siimage-rqsize.patch
 
-Patch12:	2.6.0-t9-netfilter-20031113.patch
+Patch12:	2.6.0-t11-p2p+netfilter-20031204.patch
 Patch14:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
 Patch16:	2.6.0-t6-usb-irq.patch
 
@@ -90,8 +90,6 @@ Patch36:	2.6.0-t9-NLS-module-lkml.patch
 Patch38:	2.6.0-t9-acpi_osl-lkml.patch
 
 Patch40:	2.6.0-t9-forcedeth-lkml.patch
-
-Patch42:	2.6.0-t9-netfilter-p2p.patch
 
 Patch44:	2.6.0-t9-PPC-smp.patch
 
@@ -447,8 +445,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch38 -p1
 
 %patch40 -p1
-
-%patch42 -p1
 
 %patch44 -p1
 
