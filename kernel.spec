@@ -28,9 +28,9 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1.1
+%define		_rel		1
 %define		_rc		0
-%define		_cset		20040109_2011
+%define		_cset		0
 
 ## netfilter snap 
 %define		_netfilter_snap		20040107
