@@ -25,7 +25,6 @@ Patch2:		patch-agp-dj2
 Patch3:		patch-ide_exports
 
 #This shit is because now only x86 is supported
-ExclusiveArch:	%{ix86}
 # /shit
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
