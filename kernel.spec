@@ -624,7 +624,7 @@ echo "Not fixed !!"
 
 %patch38 -p1
 
-%patch40 -p1
+#%patch40 -p1
 
 %patch42 -p1
 
