@@ -612,7 +612,7 @@ echo USB 2.0 Support from Linux-2.4.20-rc1.
 %patch915 -p1
 
 # IDE subsystem
-%patch43 -p1
+#%patch43 -p1
 
 # security BUG
 %patch44 -p1
