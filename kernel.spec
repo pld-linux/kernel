@@ -413,6 +413,7 @@ patch -p1 -s <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # JFS 1.0.5
+%patch100 -p1
 patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 
 %patch101 -p1
@@ -711,13 +712,14 @@ mv sym-%{symncr_version}/{README,ChangeLog}.* $RPM_BUILD_ROOT/usr/src/linux-%{ve
 rm -rf sym-%{symncr_version}
 
 # Tekram DC395/315 U/UW SCSI host driver
+tar zxf %{SOURCE4}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH109}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi/
 rm -rf dc395/
 
 # jfs 1.0.5
-#patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH104}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH100}
 patch -s -p1 -d  $RPM_BUILD_ROOT/usr/src/linux-%{version} < jfs-2.2.common-v%{jfs_version}-patch
 # remove all jfs patches from linux/ directory
 rm $RPM_BUILD_ROOT/usr/src/linux-%{version}/jfs-*
