@@ -206,6 +206,8 @@ Patch137:	linux-2.4.19-truncate-fix.patch
 Patch138:	http://www.uwsg.indiana.edu/hypermail/linux/kernel/0212.0/att-1445/01-sound.diff
 # Video 4 Linux 2
 Patch139:	linux-2.4.20-v4l2.patch.bz2
+# PWC USB Webcam Driver update (only for 2.4.20; 2.4.21 should have this fix)
+Patch140:	linux-2.4.20-pwc.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 # This patch allows to create more than one sound device using alsa
@@ -565,6 +567,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 #%patch135 -p1
 %patch136 -p0
 #%patch137 -p1
+%patch140 -p1
 
 %patch200 -p1
 
