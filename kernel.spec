@@ -103,6 +103,9 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 BuildRequires:	module-init-tools
 Buildrequires:	perl
 BuildRequires:	binutils >= 2.12
+%ifarch sparc sparc64
+BuildRequires:	elftoaout
+%endif
 Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Autoreqprov:	no
@@ -457,7 +460,12 @@ BuildKernel() {
 	gzip -cfv vmlinux > vmlinuz
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%ifarch sparc sparc64
+	elftoaout vmlinux -o vmlinux.aout
+	install vmlinuz.aout $KERNEL_INSTALL_DIR/boot/vmlinuz.aout-$KernelVer
 %endif
+%endif
+
 %ifarch ppc
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
@@ -720,8 +728,11 @@ fi
 %if %{with up}
 %files
 %defattr(644,root,root,755)
-%ifarch alpha sparc sparc64 ppc
+%ifarch alpha ppc
 /boot/vmlinux-%{version}-%{release}
+%endif
+%ifarch sparc sparc64
+/boot/vmlinux.aout-%{version}-%{release}
 %endif
 /boot/vmlinuz-%{version}-%{release}
 /boot/System.map-%{version}-%{release}
