@@ -542,8 +542,7 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 %patch136 -p1
 %patch137 -p1
 
-%ifarch ppc
-#%patch138 -p1
+%ifarch %{ix86}
 %patch139 -p1
 %endif
 
