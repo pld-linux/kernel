@@ -84,7 +84,7 @@ Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 # Source2-md5:	85bdb0205de53b7787966f0932fd8dd9
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
 # Source3-md5:	5b66eee22e4f84ca8a201e5b42bf3931
-# http://lkml.org/lkml/2004/6/2/228
+Source4:	dpt_i2o-2.5.0-2331.tgz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source30:	%{name}-x86_64.config
@@ -170,6 +170,9 @@ Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2
 # http://lirc.sourceforge.net/software/snapshots/lirc-0.7.0pre7.tar.bz2
 # extracted and adapterized.
 Patch76:	2.6.8-lirc-0.7.0-pre7.patch
+
+Patch77:	2.6.8-i2o-proc_full_seq_file.patch
+Patch78:	2.6.8-i2o-pae_support.patch
 
 # derived from grsecurity-2.0-2.6.6-unofficial.patch
 Patch90:	%{name}-grsec.patch
@@ -546,7 +549,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}%{_rc} -a2
+%setup -q -n linux-%{version}%{_rc} -a2 -a4
 
 %if "%{_apply_cset}" != "0"
 zcat %{SOURCE3} | patch -p1 -s
@@ -617,7 +620,14 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch75 -p1
 %patch76 -p1
 
+%patch77 -p1
+%patch78 -p1
+rm -rf drivers/scsi/dpt*
+cd dpt_i2o && cp -ar * ../drivers/scsi && cd -
+rm -rf dpt_i2o
+
 cp -f pwc-%{pwc_version}/2.6/pwc* drivers/usb/media
+rm -rf pwc-%{pwc_version}
 
 #grsec
 %ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
@@ -952,6 +962,7 @@ rm -rf $RPM_BUILD_ROOT
 umask 022
 
 install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+install -d $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}{,smp}/misc
 
 KERNEL_BUILD_DIR=`pwd`
 
