@@ -127,9 +127,6 @@ Patch56:	kbuild-out-of-tree.diff
 
 Patch58:	2.6.x-PD6729-lkml.patch
 
-Patch60:	2.6.x-IBM-RAS-service-procesor-1of2-lkml.patch
-Patch61:	2.6.x-IBM-RAS-service-procesor-2of2-lkml.patch
-
 Patch64:	2.6.x-ppp_mppe.patch
 
 Patch66:	2.6.2-Initio9100U-Kconfig.patch
@@ -545,9 +542,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch56 -p1
 
 %patch58 -p1
-
-%patch60 -p1
-%patch61 -p1
 
 %patch64 -p1
 
