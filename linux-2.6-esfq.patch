@@ -298,7 +298,7 @@ diff -uNr a/net/sched/sch_esfq.c b/net/sched/sch_esfq.c
 +		kfree_skb(skb);
 +		esfq_dec(q, x);
 +		sch->q.qlen--;
-+		sch->stats.drops++;
++		sch->qstats.drops++;
 +		return len;
 +	}
 +
@@ -314,7 +314,7 @@ diff -uNr a/net/sched/sch_esfq.c b/net/sched/sch_esfq.c
 +		esfq_dec(q, d);
 +		sch->q.qlen--;
 +		q->ht[q->hash[d]] = q->depth;
-+		sch->stats.drops++;
++		sch->qstats.drops++;
 +		return len;
 +	}
 +
@@ -348,8 +348,8 @@ diff -uNr a/net/sched/sch_esfq.c b/net/sched/sch_esfq.c
 +		}
 +	}
 +	if (++sch->q.qlen < q->limit-1) {
-+		sch->stats.bytes += skb->len;
-+		sch->stats.packets++;
++		sch->bstats.bytes += skb->len;
++		sch->bstats.packets++;
 +		return 0;
 +	}
 +
@@ -386,7 +386,7 @@ diff -uNr a/net/sched/sch_esfq.c b/net/sched/sch_esfq.c
 +	if (++sch->q.qlen < q->limit - 1)
 +		return 0;
 +
-+	sch->stats.drops++;
++	sch->qstats.drops++;
 +	esfq_drop(sch);
 +	return NET_XMIT_CN;
 +}
