@@ -975,6 +975,7 @@ cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 # remove foreign architecture files
 cd include
 mkdir _asm_keep
+mv asm-generic _asm_keep
 %ifarch sparc sparc64
 	mv asm-sparc* _asm_keep
 %else
