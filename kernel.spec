@@ -32,7 +32,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	4.1%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	4.2%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -187,8 +187,8 @@ Patch801:	PPC-grsecurity-pgtable.h.patch
 Patch802:	linux-2.4.20-grsecurity-%{grsec_version}-kmem.patch
 
 # Win4Lin
-#Patch900:	linux-2.4.20-Win4Lin.PLD.patch.bz2
-#Patch991:	linux-2.4.20-Win4Lin-mki-adapter.patch.bz2
+Patch900:	linux-2.4.20-Win4Lin.PLD.patch.bz2
+Patch991:	linux-2.4.20-Win4Lin-mki-adapter.patch.bz2
 
 # Assorted bugfixes
 
@@ -748,11 +748,11 @@ cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 %{!?_without_grsec:%patch801 -p1}
 %{!?_without_grsec:%patch802 -p1}
 
-#%ifarch %{ix86}
-#echo Win4Lin patch ...
-#%patch900 -p1
-#%patch991 -p1
-#%endif
+%ifarch %{ix86}
+echo Win4Lin patch ...
+%patch900 -p1
+%patch991 -p1
+%endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
