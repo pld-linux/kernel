@@ -265,8 +265,9 @@ Patch1417:	linux-2.4.21-ac4-ide.patch
 Patch1418:	linux-2.4.21-hpt372-chicken-egg-hack.patch
 Patch1419:	linux-2.4.21-agp-num_of_masks.patch
 # htb
-Patch1500:	http://luxik.cdi.cz/~devik/qos/htb/v3/htb_3.10_3.12_2.diff
-Patch1501:	http://luxik.cdi.cz/~devik/qos/htb/v3/htb_killdbg_2421.diff
+# http://luxik.cdi.cz/~devik/qos/htb/v3/
+Patch1500:	htb_3.10_3.12_2.diff
+Patch1501:	htb_killdbg_2421.diff
 
 
 Patch2000:	linux-PPC-SMP.patch
