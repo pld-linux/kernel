@@ -373,6 +373,7 @@ Patch2005:	linux-2.4.20-sunrpc-noudpreuse.patch
 Patch2006:	linux-2.4.20-tty-fixes-grsec.patch
 ##Patch2007:	linux-2.4.20-tty-fixes.patch
 Patch2008:	linux-do_brk-bound-check.patch
+Patch2009:	linux-2.4-do_mremap.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -665,6 +666,9 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
+# CAN-2003-0985 fix (apply before grsec)
+%patch2009 -p1
+# grsecurity
 %patch6 -p1
 %ifarch ppc
 %patch907 -p1
