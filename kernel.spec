@@ -16,12 +16,12 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.5.70
-Release:	0.6
+Version:	2.5.71
+Release:	0.1
 License:	GPL
 Group:		Base/Kernel
-# Source0-md5:	8d3ee29e86c728a0de2151328164269b
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
+# Source0-md5:	ab1f3c1bacc624c1b487956c3242f557
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -35,7 +35,6 @@ Source21:	%{name}-ia32-smp.config
 #Source74:	%{name}-ppc-smp.config
 Patch0:		linux-2.5.67-genrtc_fix.patch
 Patch1:		linux-2.5.70-fix_missing_symb.patch
-Patch2:		linux-2.5.70-mga.patch.bz2
 # LSM/SELinux
 Patch10:	linux-2.5.70-lsm-20030605.patch.bz2
 ExclusiveOS:	Linux
@@ -264,8 +263,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %setup -q -n linux-%{version}
 %patch0 -p0
 %patch1 -p1
-%patch2 -p1
-%{!?_without_lsm:%patch10 -p1}
+#%{!?_without_lsm:%patch10 -p1}
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -328,10 +326,10 @@ BuildKernel() {
 
 %ifarch sparc
 	sparc32 %{__make} oldconfig
-	sparc32 %{__make} dep clean
+	sparc32 %{__make} clean
 %else
 	%{__make} oldconfig
-	%{__make} dep clean
+	%{__make} clean
 %endif
 	%{__make} include/linux/version.h
 
