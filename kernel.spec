@@ -216,7 +216,8 @@ Patch47:	linux-2.4-3com-vlan.patch
 Patch100:	linux-scsi-debug-bug.patch
 Patch101:	linux-2.4.2-raw-ip.patch
 Patch102:	PCI_ISA_bridge.patch
-#Patch103:	
+#from 
+Patch103:	irqbalance-2.4.20-MRC.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch104:	linux-2.4.19-pcnet-parms.patch
 #Patch105:	
@@ -782,6 +783,8 @@ echo Added patch to fix bad ram ...
 #usb gadget
 echo Added USB gadget ...
 %patch30 -p1
+echo Added IRQ balance support ...
+%patch103 -p1
 %endif
 %ifarch ppc
 echo PPC patches ...
