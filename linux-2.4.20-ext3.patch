@@ -1,6 +1,6 @@
---- linux-akpm/fs/buffer.c~sync_fs	Thu Dec  5 21:33:56 2002
-+++ linux-akpm-akpm/fs/buffer.c	Thu Dec  5 21:33:56 2002
-@@ -327,6 +327,8 @@ int fsync_super(struct super_block *sb)
+--- linux-2.4.20/fs/buffer.c.orig	Thu Apr 24 10:03:13 2003
++++ linux-2.4.20/fs/buffer.c	Thu Apr 24 10:08:16 2003
+@@ -331,6 +331,8 @@
  	lock_super(sb);
  	if (sb->s_dirt && sb->s_op && sb->s_op->write_super)
  		sb->s_op->write_super(sb);
@@ -9,16 +9,16 @@
  	unlock_super(sb);
  	unlock_kernel();
  
-@@ -346,7 +348,7 @@ int fsync_dev(kdev_t dev)
+@@ -350,7 +352,7 @@
  	lock_kernel();
  	sync_inodes(dev);
- 	DQUOT_SYNC_DEV(dev);
+ 	DQUOT_SYNC(dev);
 -	sync_supers(dev);
 +	sync_supers(dev, 1);
  	unlock_kernel();
  
  	return sync_buffers(dev, 1);
-@@ -2833,7 +2835,7 @@ static int sync_old_buffers(void)
+@@ -2844,7 +2846,7 @@
  {
  	lock_kernel();
  	sync_unlocked_inodes();
@@ -27,9 +27,9 @@
  	unlock_kernel();
  
  	for (;;) {
---- linux-akpm/include/linux/fs.h~sync_fs	Thu Dec  5 21:33:56 2002
-+++ linux-akpm-akpm/include/linux/fs.h	Thu Dec  5 21:33:56 2002
-@@ -894,6 +894,7 @@ struct super_operations {
+--- linux-2.4.20/include/linux/fs.h.orig	Thu Apr 24 10:03:14 2003
++++ linux-2.4.20/include/linux/fs.h	Thu Apr 24 10:11:49 2003
+@@ -971,6 +971,7 @@
  	void (*delete_inode) (struct inode *);
  	void (*put_super) (struct super_block *);
  	void (*write_super) (struct super_block *);
@@ -37,15 +37,15 @@
  	void (*write_super_lockfs) (struct super_block *);
  	void (*unlockfs) (struct super_block *);
  	int (*statfs) (struct super_block *, struct statfs *);
-@@ -1240,7 +1241,7 @@ static inline int fsync_inode_data_buffe
+@@ -1339,7 +1340,7 @@
  extern int inode_has_buffers(struct inode *);
  extern int filemap_fdatasync(struct address_space *);
  extern int filemap_fdatawait(struct address_space *);
 -extern void sync_supers(kdev_t);
 +extern void sync_supers(kdev_t dev, int wait);
- extern void sync_supers_lockfs(kdev_t);
- extern void unlockfs(kdev_t);
  extern int bmap(struct inode *, int);
+ extern int notify_change(struct dentry *, struct iattr *);
+ extern int permission(struct inode *, int);
 --- linux-akpm/fs/super.c~sync_fs	Thu Dec  5 21:33:56 2002
 +++ linux-akpm-akpm/fs/super.c	Thu Dec  5 21:33:56 2002
 @@ -445,7 +445,7 @@ static inline void write_super(struct su
