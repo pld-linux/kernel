@@ -22,9 +22,9 @@ Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
 Source23:	%{name}-i586.config
-Source25:	%{name}-i586-smp.config
-Source23:	%{name}-i686.config
-Source25:	%{name}-i686-smp.config
+Source24:	%{name}-i586-smp.config
+Source25:	%{name}-i686.config
+Source26:	%{name}-i686-smp.config
 Source50:	%{name}-sparc.config
 Source51:	%{name}-sparc-smp.config
 Source52:	%{name}-sparc-BOOT.config
