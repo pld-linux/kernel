@@ -718,12 +718,15 @@ if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then
 fi
 
 %post headers
+rm -f /usr/src/linux
 ln -snf linux-%{version} /usr/src/linux
 
 %postun headers
 if [ -L %{_prefix}/src/linux ]; then
 	if [ "`ls -l %{_prefix}/src/linux | awk '{ print $10 }'`" = "linux-%{version}" ]; then
-		rm -f %{_prefix}/src/linux
+		if [ "$1" = "0" ]; then
+			rm -f %{_prefix}/src/linux
+		fi
 	fi
 fi
 
