@@ -106,6 +106,7 @@ Source40:	%{name}.FAQ-pl
 Source80:	%{name}-netfilter.config
 Source90:	%{name}-grsec.config
 Source91:	%{name}-grsec+pax.config
+Source92:	%{name}-vserver.config
 
 Patch0:		2.6.0-ksyms-add.patch
 
@@ -193,6 +194,8 @@ Patch200:	linux-reiser4.patch.bz2
 
 # linux vserver
 #Patch250:	http://www.13thfloor.at/vserver/d_rel26/v1.9.3/patch-2.6.9-vs1.9.3.diff.bz2
+# adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
+Patch250:	linux-2.6-vs.patch
 
 # hotfixes
 Patch300:	linux-2.6-sparc-ksyms.patch
@@ -611,7 +614,7 @@ patch -p1 -s < exec-shield.patch
 
 %patch200 -p1
 
-#patch250 -p1
+%patch250 -p1
 
 # hotfixes
 %patch300 -p1
@@ -697,6 +700,8 @@ BuildConfig (){
 %else
 	cat %{SOURCE91} >> arch/%{_target_base_arch}/defconfig
 %endif
+#	vserver
+	cat %{SOURCE92} >> arch/%{_target_base_arch}/defconfig
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
