@@ -11,7 +11,7 @@
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
-%bcond_without	grsec		# build without grsec
+#%bcond_without	grsec		# build without grsec
 %bcond_with	vserver		# enable vserver (disables grsec)
 %bcond_with	pax		# enable PaX
 %bcond_with	verbose		# verbose build (V=1)
@@ -20,9 +20,9 @@
 
 %{?debug:%define with_verbose 1}
 
-%if %{with vserver}
-%undefine	with_grsec
-%endif
+#%if %{with vserver}
+#%undefine	with_grsec
+#%endif
 
 %if !%{with grsec}
 %undefine	with_pax
@@ -55,8 +55,8 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.16
-%define		_cset		20050125_0406
+%define		_rel		0.17
+%define		_cset		20050125_1706
 %define		_apply_cset	0
 
 %define		_netfilter_snap		20041118
