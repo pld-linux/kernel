@@ -36,7 +36,7 @@ Source41:	kernel-2.2-i686-smp-fb.config
 #Requires:	rc-scripts
 ExclusiveOS:	Linux
 BuildRoot:	/tmp/%{name}-%{version}-root
-BuildPrereq:	bin86
+BuildRequires:	bin86
 Autoreqprov:	no
 #Obsoletes:	kernel-modules
 ExclusiveArch:	i386
