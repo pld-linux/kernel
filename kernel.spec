@@ -1,4 +1,4 @@
-%define		ow_version		2.2.18-ow2
+%define		ow_version		2.2.19-ow1
 %define		pcmcia_version		3.1.25
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.31
@@ -47,15 +47,15 @@ Patch4:		%{name}-3c90x.patch
 Patch5:		linux-ipv6-glibc2.2.patch
 Patch6:		http://milosch.net/pub/beos/2.2.18-pre2-beos09032000.patch
 Patch7:		%{name}-autoraidraid.patch
-Patch8:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.18-reiserfs-3.5.31-patch.gz
-Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/ata/2.2.18/ide.2.2.18.02122001.patch.bz2
+Patch8:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.19-reiserfs-3.5.32-patch.bz2
+Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.19/ide.2.2.19.03252001.patch.bz2 
 Patch10:	http://www.math.leidenuniv.nl/~buytenh/bridge/patches/bridge-0.0.9-against-2.2.18.diff
-Patch11:	http://download.sourceforge.net/linux1394/ieee1394-2.2.18-20001223.gz
+Patch11:        http://download.sourceforge.net/linux1394/ieee1394-2.2.18-20001223.gz
 Patch12:	ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
 Patch13:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
 Patch14:	linux-tasks.patch
 # Linux Virtual Server: http://www.linuxvirtualserver.org/software/
-Patch15:	%{name}-ipvs-1.0.3-2.2.18.patch
+Patch15:	%{name}-ipvs-1.0.6-2.2.19.patch
 # based on ftp://ftp.kernel.org/pub/linux/kernel/people/sct/raw-io/kiobuf-2.2.18pre24.tar.gz
 Patch16:	linux-raw.patch
 Patch17:	linux-i815-support.patch
@@ -68,6 +68,7 @@ Patch23:	%{name}-ipsec-bridge.patch
 Patch24:	%{name}-bridge-extraversion.patch
 Patch25:	%{name}-panaview_kbd.patch
 Patch26:	http://people.FreeBSD.org/~gibbs/linux/linux-aic7xxx-6.1.8-2.2.18.patch.gz
+Patch27:	kernel-toshiba-2.2.19.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -311,28 +312,29 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
-%patch7 -p1
+#%patch7 -p1
 %patch8 -p1
 %patch9 -p1
-%patch10 -p1
+#%patch10 -p1
 %patch11 -p1
 %patch12 -p1
-%patch13 -p1
+#%patch13 -p1
 %patch14 -p1
 %patch15 -p1
 %patch16 -p1
-%patch17 -p1
+#%patch17 -p1
 %patch18 -p1
 %patch19 -p1
 %patch20 -p1
-%patch21 -p1
-%patch22 -p1
+#%patch21 -p1
+#%patch22 -p1
 %patch23 -p1
-%patch24 -p1
+#%patch24 -p1
 %ifarch %{x86}
 %patch25 -p1
 %endif
-%patch26 -p1
+#%patch26 -p1
+%patch27 -p1
 
 #DAC960-2.2.10
 mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
@@ -340,8 +342,9 @@ mv DAC960.[ch] drivers/block
 
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 # Tekram DC395/315 U/UW SCSI host driver
-patch -p1 -s <dc395/dc395-integ22.diff
-install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
+
+#patch -p1 -s <dc395/dc395-integ22.diff
+#install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # move symbios drivers to proper place
 mv sym-1.7.2-ncr-3.4.2/*.{c,h} drivers/scsi
@@ -525,27 +528,28 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH3}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
 gzip -dc %{PATCH8} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 bzip2 -dc %{PATCH9} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
 gzip -dc %{PATCH11} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH12} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH13} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+#gzip -dc %{PATCH13} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH16}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH17}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH17}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH19}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH20}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH21}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH22}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH21}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH22}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH23}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH24}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH24}
 %ifarch %{x86}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH25}
 %endif
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH26}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH26}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH27}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
 
 tar xfz %{SOURCE8}
@@ -553,8 +557,8 @@ mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
 mv DAC960.[ch] drivers/block
 
 # Tekram DC395/315 U/UW SCSI host driver
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <dc395/dc395-integ22.diff
-install dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi/
+#patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <dc395/dc395-integ22.diff
+#install dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi/
 
 # symbios drivers
 tar zxf %{SOURCE6}
