@@ -26,7 +26,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	1%{?_with_preemptive:_pr}
+Release:	1.1%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -104,6 +104,7 @@ Patch28:	pcsp1.4-ss4-2.4.19.diff
 # Wireless Extensions
 Patch29:	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw_handlers.w14-5.diff
 Patch30:	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw252_we15-5.diff
+Patch31:	linux-2.4.20-pre5-ac4-drm.patch.bz2
 
 # Assorted bugfixes
 
@@ -479,13 +480,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch905 -p1
 
 # XFree DRM
-%ifarch %{ix86}
-%patch902 -p0
-%endif
-rm -rf drivers/char/drm
-cp -f drm/Makefile.kernel drm/Makefile
-mv -f drm drivers/char
-%patch903 -p1
+%patch31 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 echo Adding Tekram DC395/315 driver
