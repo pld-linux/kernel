@@ -158,6 +158,7 @@ Prereq:		fileutils
 Prereq:		modutils
 Prereq:		geninitrd
 Obsoletes:	kernel-modules
+Obsoletes:	kernel-doc
 ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
 BuildRequires:	bin86
