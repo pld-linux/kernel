@@ -626,7 +626,6 @@ fi
 /lib/modules/%{version}-%{release}/pcmcia
 %endif
 
-%ifnarch i386
 %files smp
 %defattr(644,root,root,755)
 %ifarch alpha sparc
@@ -649,7 +648,6 @@ fi
 %endif
 %ifarch %{ix86}
 /lib/modules/%{version}-%{release}smp/pcmcia
-%endif
 %endif
 
 %ifnarch i586 i686
