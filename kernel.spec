@@ -89,7 +89,7 @@ Patch22:	linux-2.4.20-uml-host-skas3.patch
 
 # http://linux-xfs.sgi.com/projects/xfs/
 Patch25:	linux-2.4.21-core-xfs-1.3.0.patch.gz
-Patch26:	linux-xfs-1.3.0pre2.patch.gz
+Patch26:	linux-xfs-1.3.0pre5.patch.gz
 # http://acl.bestbits.at/
 Patch30:	linux-2.4.21-jfs-xattr.patch
 Patch31:	linux-2.4.21-jfs-acl.patch
