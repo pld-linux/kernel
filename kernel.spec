@@ -706,7 +706,7 @@ rm -rf sym-%{symncr_version}
 
 # jfs 1.0.5
 #patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH104}
-patch -s -p1 -d  < jfs-2.2.common-v%{jfs_version}-patch
+patch -s -p1 -d  $RPM_BUILD_ROOT/usr/src/linux-%{version} < jfs-2.2.common-v%{jfs_version}-patch
 # remove all jfs patches from linux/ directory
 rm $RPM_BUILD_ROOT/usr/src/linux-%{version}/jfs-*
 
