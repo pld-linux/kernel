@@ -12,8 +12,8 @@
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
-%bcond_without	grsec		# build without grsec
-%bcond_without	execshield	# build without exec-shield
+%bcond_with	grsec		# build without grsec
+%bcond_with	execshield	# build without exec-shield
 %bcond_with	pramfs		# build pramfs support (EXPERIMENTAL)
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
@@ -48,11 +48,11 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.11
-%define		_cset		20040626_2310
+%define		_rel		1.12
+%define		_cset		20040629_0008
 %define		_apply_cset	1
 
-%define		_netfilter_snap		20040624
+%define		_netfilter_snap		20040629
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
@@ -80,7 +80,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	3dcea80121c27f17aea0fc6a00df2c5e
+# Source3-md5:	1877704da68cd3a77630426225f611d5
 # http://lkml.org/lkml/2004/6/2/228
 Source4:	http://people.redhat.com/mingo/nx-patches/nx-2.6.7-A2
 # Source4-md5:	a6f6f85a511cfad6bf79ffc1c67d70a9
@@ -629,7 +629,7 @@ echo "Not fixed !!"
 %patch42 -p1
 
 %patch44 -p1
-
+exit 0
 # netfilter
 %patch46 -p1
 #patch47 -p1
@@ -699,8 +699,8 @@ echo "Not fixed !!"
 
 # NX is NX and it has noting to do with exec-shield beside
 # exec-shield using NX feature
-patch -p1 -s < %{SOURCE4}
 %if %{with execshield}
+patch -p1 -s < %{SOURCE4}
 install %{SOURCE5} exec-shield.patch
 %if %{with grsec}
 patch -s exec-shield.patch < %{SOURCE6}
@@ -763,13 +763,7 @@ BuildConfig (){
 	fi
 	echo "Building config file for KERNEL $1..."
 
-# netfilter	
-	cat %{SOURCE80} > arch/%{_target_base_arch}/defconfig
-
-#grsec
-	cat %{SOURCE90} >> arch/%{_target_base_arch}/defconfig
-
-	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/%{_target_base_arch}/defconfig
+	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
 %ifarch i386
 	echo "CONFIG_M386=y" >> arch/%{_target_base_arch}/defconfig
 %endif
@@ -793,6 +787,13 @@ BuildConfig (){
 %endif
 %{?with_preemptive:echo "CONFIG_PREEMPT=y" >> arch/%{_target_base_arch}/defconfig}
 
+# netfilter	
+	cat %{SOURCE80} >> arch/%{_target_base_arch}/defconfig
+
+#grsec
+	cat %{SOURCE90} >> arch/%{_target_base_arch}/defconfig
+
+
 %ifarch pentium3 pentium4 athlon
 # kernel-i386-smp.config contains 64G support by default.
 %if %{with up}
@@ -809,12 +810,12 @@ BuildConfig (){
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
-	%{__make} include/linux/autoconf.h
-	if [ "$smp" = "yes" ]; then
-		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
-	else
-		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
-	fi
+#	%{__make} include/linux/autoconf.h
+#	if [ "$smp" = "yes" ]; then
+#		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
+#	else
+#		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
+#	fi
 }
 
 ConfigBOOT()
