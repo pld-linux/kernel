@@ -26,7 +26,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.7
-Release:	10
+Release:	11
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -60,12 +60,12 @@ Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
 Source1000:	%{name}-lids.config
 Source1001:	%{name}-abi.config
-Source1002:	%{name}-grsec.config
-Source1003:	%{name}-addon.config
-Source1004:	%{name}-xfs.config
-Source1005:	%{name}-netfilter.config
-Source1006:	%{name}-ipvs.config
-Source1007:	%{name}-ippersonality.config
+Source1002:	%{name}-addon.config
+Source1003:	%{name}-xfs.config
+Source1004:	%{name}-netfilter.config
+Source1005:	%{name}-ipvs.config
+Source1006:	%{name}-ippersonality.config
+Source1666:	%{name}-grsec.config
 
 # New features
 
@@ -593,7 +593,7 @@ BuildKernel() {
 	cat %{SOURCE1004} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1005} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1006} >> arch/$RPM_ARCH/defconfig
-	cat %{SOURCE1007} >> arch/$RPM_ARCH/defconfig
+	cat %{SOURCE1666} >> arch/$RPM_ARCH/defconfig
 	if [ "$LIDS" = "lids" ] ; then
 		echo ENABLING LIDS...
 		cat %{SOURCE1000} >> arch/$RPM_ARCH/defconfig
@@ -727,7 +727,7 @@ cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
 cat %{SOURCE1005} >> .config
 cat %{SOURCE1006} >> .config
-cat %{SOURCE1007} >> .config
+cat %{SOURCE1666} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
@@ -754,7 +754,7 @@ cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
 cat %{SOURCE1005} >> .config
 cat %{SOURCE1006} >> .config
-cat %{SOURCE1007} >> .config
+cat %{SOURCE1666} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
