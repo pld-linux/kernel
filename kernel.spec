@@ -533,8 +533,8 @@ patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010724-l
 
 # JFS
 echo Adding JFS
-patch -p1 -s <jfs-2.4.common-v1.0.6-patch
-patch -p1 -s <jfs-2.4.7-v1.0.6-patch
+patch -p1 -s <jfs-2.4.common-1.0.7-patch
+patch -p1 -s <jfs-2.4.7-1.0.7-patch
 
 # Tulip driver installed.
 echo Replaced Tulip driver
