@@ -18,11 +18,11 @@
 %define		ipvs_version		1.0.7
 %define		freeswan_version	2.00
 %define		IPperson_version	20020819-2.4.19
-%define		grsec_version		2.0-pre3
+%define		grsec_version		2.0-pre4
 %define		jfs_version		1.1.2
 %define		lvm_version		1.0.7
 %define		evms_version		2.0.0
-%define		ntfs_version		2.1.3a
+%define		ntfs_version		2.1.4a
 %define		drm_xfree_version	4.3.0
 %define		hostap_version		0.0.1
 %define		netfilter_snap		20030428
@@ -132,8 +132,8 @@ Patch19:	linux-2.4-freeswan-%{freeswan_version}.patch.gz
 Patch20:	linux-2.4.20-xfs-1.2.0.patch.gz
 # from: http://unc.dl.sourceforge.net/sourceforge/linux-ntfs/
 Patch21:	linux-2.4.20-ntfs-%{ntfs_version}.patch.gz
-# from: http://dl.sourceforge.net/linux-hfsplus/hfsplus-patch-20020606.patch
-Patch22:	hfsplus-20020606.patch.bz2
+# from: http://www.ardistech.com/hfsplus/hfsplus-20030507.tar.gz
+Patch22:	hfsplus-20030507.patch.gz
 # from: http://people.sistina.com/~thornber/patches/2.4-stable/2.4.20/2.4.20-dm-10.tar.bz2
 Patch23:	linux-2.4.20-dm-10.patch.gz
 # EVMS support 
