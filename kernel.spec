@@ -545,7 +545,8 @@ cp hostap-2002-09-12/driver/modules/hostap*.[ch] drivers/net/wireless/
 %ifarch sparc64
 %endif
 
-%patch912 -p1
+echo Sysctl support for PAX nod installed.
+#%patch912 -p1
 
 # Konica USB camera support
 echo Installing Konica Support
