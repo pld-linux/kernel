@@ -24,7 +24,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.25
-Release:	0.2
+Release:	0.3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-2.4.24.tar.bz2
@@ -54,7 +54,7 @@ Source2000:	%{name}-win4lin.config
 
 # Essential stuff
 
-Patch0:		patch-2.4.25-pre6.bz2
+Patch0:		patch-2.4.25-pre8.bz2
 
 Patch1:		%{name}-pldfblogo.patch
 
@@ -685,7 +685,8 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch15 -p1
 %patch20 -p1
 %patch21 -p1
-%patch22 -p1
+# drop it?
+#%patch22 -p1
 %patch23 -p1
 %patch24 -p1
 %patch32 -p1
