@@ -522,7 +522,7 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
-%ifarch %{ix86} alpha sparc
+%ifarch %{ix86} alpha sparc ppc
     -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= %{kgcc}/g' \
 %endif
 %ifarch sparc64
