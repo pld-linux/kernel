@@ -302,6 +302,7 @@ Patch720:	kernel-it82xx-raid.patch
 Patch740:	linux-abi-2.6.8.1.patch
 Patch750:	kernel-VLAN_3c59x-3c90x.patch
 Patch760:	kernel-2.6.8.1-memleak-cdaudio.patch
+Patch761:	kernel-2.6.8.1-cdaudio-lklm.patch
 Patch770:	mISDN-2004-11-20.patch
 
 # Bluetooth SCO alsa patch
@@ -850,6 +851,7 @@ zcat %{SOURCE3} | patch -p1 -s
 
 %patch750 -p1
 %patch760 -p1
+%patch761 -p1
 %patch770 -p1
 %patch780 -p1
 
