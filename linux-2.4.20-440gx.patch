@@ -1,0 +1,54 @@
+diff -urNp linux-850/arch/i386/kernel/dmi_scan.c linux-860/arch/i386/kernel/dmi_scan.c
+--- linux-850/arch/i386/kernel/dmi_scan.c	
++++ linux-860/arch/i386/kernel/dmi_scan.c	
+@@ -11,6 +11,8 @@
+ #include <asm/system.h>
+ #include <linux/bootmem.h>
+ 
++#include "pci-i386.h"
++
+ unsigned long dmi_broken;
+ int is_sony_vaio_laptop;
+ 
+@@ -447,6 +449,8 @@ static __init int swab_apm_power_in_minu
+  */
+  
+ extern int skip_ioapic_setup;
++extern int broken_440gx_bios;
++extern unsigned int pci_probe;
+ static __init int broken_pirq(struct dmi_blacklist *d)
+ {
+ 	printk(KERN_ERR " *** Possibly defective BIOS detected (irqtable)\n");
+@@ -457,6 +461,9 @@ static __init int broken_pirq(struct dmi
+ #ifdef CONFIG_X86_IO_APIC
+ 	skip_ioapic_setup = 0;
+ #endif
++	broken_440gx_bios = 1;
++	pci_probe |= PCI_BIOS_IRQ_SCAN;
++	
+ 	return 0;
+ }
+ 
+diff -urNp linux-850/arch/i386/kernel/pci-irq.c linux-860/arch/i386/kernel/pci-irq.c
+--- linux-850/arch/i386/kernel/pci-irq.c	
++++ linux-860/arch/i386/kernel/pci-irq.c	
+@@ -23,6 +23,7 @@
+ #define PIRQ_VERSION 0x0100
+ 
+ int broken_hp_bios_irq9;
++int broken_440gx_bios;
+ 
+ static struct irq_routing_table *pirq_table;
+ 
+@@ -681,7 +682,10 @@ static int pcibios_lookup_irq(struct pci
+ void __init pcibios_irq_init(void)
+ {
+ 	DBG("PCI: IRQ init\n");
+-	pirq_table = pirq_find_routing_table();
++	if (broken_440gx_bios)
++ 		pirq_table = NULL;	
++ 	else
++		pirq_table = pirq_find_routing_table();
+ #ifdef CONFIG_PCI_BIOS
+ 	if (!pirq_table && (pci_probe & PCI_BIOS_IRQ_SCAN))
+ 		pirq_table = pcibios_get_irq_routing_table();
