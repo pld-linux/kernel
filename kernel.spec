@@ -47,6 +47,7 @@ Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.3.gz
 Patch4:		kernel-i8255-asm-fix.patch
 Patch5:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.1-%{ac_version}.gz
 Patch6:		dc395-patch-PLD-fix.patch
+Patch7:		linux-2.4.1-disable-message-printing.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -247,8 +248,10 @@ echo -e $ANS | ./runme)
 #cp ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile net/ipv4/ipvs/Makefile
 
 # LIDS
-patch -p1 <lids-%{lids_version}-%version/lids-%{lids_version}-%version.patch
+#patch -p1 <lids-%{lids_version}-%version/lids-%{lids_version}-%version.patch
 
+# disable message printing
+%patch7 -p1
 
 # Remove -g from drivers/atm/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
