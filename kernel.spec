@@ -14,7 +14,7 @@
 
 %define		_rel		1
 %define		_test_ver	10
-%define		_cset		20031124_0306
+%define		_cset		0
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -58,9 +58,6 @@ Patch0:		2.6.0-ksyms-add.patch
 Patch1:		cset-%{_cset}.txt.gz
 %endif
 
-# ftp://ftp.kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.0-test5/2.6.0-test5-mm1/broken-out
-#Patch2:		acpi-irq-fixes.patch
-
 Patch4:		squashfs1.3r2-patch
 
 Patch6:		2.6.0-t3-sysfs_mem-lkml.patch
@@ -99,6 +96,10 @@ Patch42:	2.6.0-t9-netfilter-p2p.patch
 Patch44:	2.6.0-t9-PPC-smp.patch
 
 Patch46:	2.6.0-t9-IDE-lkml.patch
+
+Patch48:	2.6.0-t10-sis_operator_fix-lkml.patch
+
+Patch50:	2.6.0-modular-IDE.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -438,6 +439,10 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch44 -p1
 
 %patch46 -p1
+
+%patch48 -p1
+
+%patch50 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
