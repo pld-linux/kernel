@@ -153,7 +153,7 @@ Conflicts:	util-linux < %{_util-linux_ver}
 Conflicts:	module-init-tool < %{_module-init-tool_ver}
 Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
 Conflicts:	jfsutils < %{_jfsutils_ver}
-Conflicts:	reiserfsprogs < _reiserfsprogs_ver}
+Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
 Conflicts:	xfsprogs < %{_xfsprogs_ver}
 Conflicts:	quota-tools < %{_quota-tools_ver}
 Conflicts:	PPP < %{_PPP_ver}
@@ -203,7 +203,7 @@ Conflicts:	util-linux < %{_util-linux_ver}
 Conflicts:	module-init-tool < %{_module-init-tool_ver}
 Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
 Conflicts:	jfsutils < %{_jfsutils_ver}
-Conflicts:	reiserfsprogs < _reiserfsprogs_ver}
+Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
 Conflicts:	xfsprogs < %{_xfsprogs_ver}
 Conflicts:	quota-tools < %{_quota-tools_ver}
 Conflicts:	PPP < %{_PPP_ver}
