@@ -131,9 +131,9 @@ Summary(de):	Kernel version %{version} mit Framebuffer-Support
 Summary(fr):	Kernel version %{version} avec framebuffer
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Provides:	%{name} %{version}
-Provides:	%{name}(reiserfs) %{version}
-Provides:	%{name}(agpgart) %{version}
+Provides:	%{name} = %{version}
+Provides:	%{name}(reiserfs) = %{version}
+Provides:	%{name}(agpgart) = %{version}
 Prereq:		modutils
 Autoreqprov:	no
 
@@ -155,9 +155,9 @@ Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen mit framebuf
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur avec fb
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Provides:	%{name} %{version}
-Provides:	%{name}(reiserfs) %{version}
-Provides:	%{name}(agpgart) %{version}
+Provides:	%{name} = %{version}
+Provides:	%{name}(reiserfs) = %{version}
+Provides:	%{name}(agpgart) = %{version}
 Prereq:		modutils
 Autoreqprov:	no
 
@@ -214,8 +214,8 @@ Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Provides:	%{name}-headers(agpgart) %{version}
-Provides:	%{name}-headers(reiserfs) %{version}
+Provides:	%{name}-headers(agpgart) = %{version}
+Provides:	%{name}-headers(reiserfs) = %{version}
 Autoreqprov:	no
 
 %description headers
