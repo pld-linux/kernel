@@ -73,11 +73,11 @@
 
 %define		_post_ver	.6
 #define		_post_ver	%{nil}
-%define		_rel		5
+%define		_rel		5.1
 %define		_cset		20050302_0807
 %define		_apply_cset	0
 
-%define		_netfilter_snap		20050313
+%define		_netfilter_snap		20050405
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
@@ -170,7 +170,7 @@ Patch33:		linux-kbuild-extmod.patch
 Patch41:		linux-fbcon-margins.patch
 
 # netfilter
-Patch50:	2.6.11.3-pom-ng-%{_netfilter_snap}.patch
+Patch50:	2.6.11.6-pom-ng-%{_netfilter_snap}.patch
 # http://l7-filter.sourceforge.net/
 #Patch52:	2.6.8-ipt_layer7.patch
 #Patch53:	2.6.10-esfq.patch
