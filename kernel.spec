@@ -9,22 +9,13 @@
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
-%bcond_without	grsec		# build without grsec
-%bcond_with	vserver		# enable vserver (disables grsec)
+%bcond_with	vserver		# enable vserver
 %bcond_with	pax		# enable PaX
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	regparm		# use register arguments (this break binary-only modules)
 
 %{?debug:%define with_verbose 1}
-
-%if %{with vserver}
-%undefine	with_grsec
-%endif
-
-%if !%{with grsec}
-%undefine	with_pax
-%endif
 
 %ifarch sparc
 # sparc32 is missing important updates from 2.5 cycle - won't build
@@ -592,14 +583,9 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %patch110 -p1
 
-# <bconded_patches>
-
-#grsec
 %ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
-%if %{with grsec}
 %patch200 -p1
 %patch201 -p1
-%endif
 %endif
 
 %if %{with vserver}
@@ -1217,9 +1203,7 @@ fi
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
-%if %{with grsec}
 %{_prefix}/src/linux-%{version}/grsecurity
-%endif
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
 %{_prefix}/src/linux-%{version}/kernel
