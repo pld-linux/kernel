@@ -1,0 +1,1937 @@
+diff -urN linux-2.4.18-rc1-ingo-K3/CREDITS linux/CREDITS
+--- linux-2.4.18-rc1-ingo-K3/CREDITS	Wed Feb 13 16:24:09 2002
++++ linux/CREDITS	Wed Feb 13 16:23:44 2002
+@@ -981,8 +981,8 @@
+ 
+ N: Nigel Gamble
+ E: nigel@nrg.org
+-E: nigel@sgi.com
+ D: Interrupt-driven printer driver
++D: Preemptible kernel
+ S: 120 Alley Way
+ S: Mountain View, California 94040
+ S: USA
+diff -urN linux-2.4.18-rc1-ingo-K3/Documentation/Configure.help linux/Documentation/Configure.help
+--- linux-2.4.18-rc1-ingo-K3/Documentation/Configure.help	Wed Feb 13 16:25:06 2002
++++ linux/Documentation/Configure.help	Wed Feb 13 16:23:44 2002
+@@ -266,6 +266,17 @@
+   If you have a system with several CPUs, you do not need to say Y
+   here: the local APIC will be used automatically.
+ 
++Preemptible Kernel
++CONFIG_PREEMPT
++  This option reduces the latency of the kernel when reacting to
++  real-time or interactive events by allowing a low priority process to
++  be preempted even if it is in kernel mode executing a system call.
++  This allows applications to run more reliably even when the system is
++  under load.
++
++  Say Y here if you are building a kernel for a desktop, embedded
++  real-time system.  Say N if you are unsure.
++
+ Kernel math emulation
+ CONFIG_MATH_EMULATION
+   Linux can emulate a math coprocessor (used for floating point
+diff -urN linux-2.4.18-rc1-ingo-K3/Documentation/preempt-locking.txt linux/Documentation/preempt-locking.txt
+--- linux-2.4.18-rc1-ingo-K3/Documentation/preempt-locking.txt	Wed Dec 31 19:00:00 1969
++++ linux/Documentation/preempt-locking.txt	Wed Feb 13 16:23:44 2002
+@@ -0,0 +1,104 @@
++		  Proper Locking Under a Preemptible Kernel:
++		       Keeping Kernel Code Preempt-Safe
++			  Robert Love <rml@tech9.net>
++			   Last Updated: 22 Jan 2002
++
++
++INTRODUCTION
++
++
++A preemptible kernel creates new locking issues.  The issues are the same as
++those under SMP: concurrency and reentrancy.  Thankfully, the Linux preemptible
++kernel model leverages existing SMP locking mechanisms.  Thus, the kernel
++requires explicit additional locking for very few additional situations.
++
++This document is for all kernel hackers.  Developing code in the kernel
++requires protecting these situations.
++ 
++
++RULE #1: Per-CPU data structures need explicit protection
++
++
++Two similar problems arise. An example code snippet:
++
++	struct this_needs_locking tux[NR_CPUS];
++	tux[smp_processor_id()] = some_value;
++	/* task is preempted here... */
++	something = tux[smp_processor_id()];
++
++First, since the data is per-CPU, it may not have explicit SMP locking, but
++require it otherwise.  Second, when a preempted task is finally rescheduled,
++the previous value of smp_processor_id may not equal the current.  You must
++protect these situations by disabling preemption around them.
++
++
++RULE #2: CPU state must be protected.
++
++
++Under preemption, the state of the CPU must be protected.  This is arch-
++dependent, but includes CPU structures and state not preserved over a context
++switch.  For example, on x86, entering and exiting FPU mode is now a critical
++section that must occur while preemption is disabled.  Think what would happen
++if the kernel is executing a floating-point instruction and is then preempted.
++Remember, the kernel does not save FPU state except for user tasks.  Therefore,
++upon preemption, the FPU registers will be sold to the lowest bidder.  Thus,
++preemption must be disabled around such regions.
++
++Note, some FPU functions are already explicitly preempt safe.  For example,
++kernel_fpu_begin and kernel_fpu_end will disable and enable preemption.
++However, math_state_restore must be called with preemption disabled.
++
++
++RULE #3: Lock acquire and release must be performed by same task
++
++
++A lock acquired in one task must be released by the same task.  This
++means you can't do oddball things like acquire a lock and go off to
++play while another task releases it.  If you want to do something
++like this, acquire and release the task in the same code path and
++have the caller wait on an event by the other task.
++
++
++SOLUTION
++
++
++Data protection under preemption is achieved by disabling preemption for the
++duration of the critical region.
++
++preempt_enable()		decrement the preempt counter
++preempt_disable()		increment the preempt counter
++preempt_enable_no_resched()	decrement, but do not immediately preempt
++preempt_get_count()		return the preempt counter
++
++The functions are nestable.  In other words, you can call preempt_disable
++n-times in a code path, and preemption will not be reenabled until the n-th
++call to preempt_enable.  The preempt statements define to nothing if
++preemption is not enabled.
++
++Note that you do not need to explicitly prevent preemption if you are holding
++any locks or interrupts are disabled, since preemption is implicitly disabled
++in those cases.
++
++Example:
++
++	cpucache_t *cc; /* this is per-CPU */
++	preempt_disable();
++	cc = cc_data(searchp);
++	if (cc && cc->avail) {
++		__free_block(searchp, cc_entry(cc), cc->avail);
++		cc->avail = 0;
++	}
++	preempt_enable();
++	return 0;
++
++Notice how the preemption statements must encompass every reference of the
++critical variables.  Another example:
++
++	int buf[NR_CPUS];
++	set_cpu_val(buf);
++	if (buf[smp_processor_id()] == -1) printf(KERN_INFO "wee!\n");
++	spin_lock(&buf_lock);
++	/* ... */
++
++This code is not preempt-safe, but see how easily we can fix it by simply
++moving the spin_lock up two lines.
+diff -urN linux-2.4.18-rc1-ingo-K3/MAINTAINERS linux/MAINTAINERS
+--- linux-2.4.18-rc1-ingo-K3/MAINTAINERS	Wed Feb 13 16:24:20 2002
++++ linux/MAINTAINERS	Wed Feb 13 16:23:45 2002
+@@ -1248,6 +1248,14 @@
+ M:	mostrows@styx.uwaterloo.ca
+ S:	Maintained
+ 
++PREEMPTIBLE KERNEL
++P:	Robert M. Love
++M:	rml@tech9.net
++L:	linux-kernel@vger.kernel.org
++L:	kpreempt-tech@lists.sourceforge.net
++W:	http://tech9.net/rml/linux
++S:	Supported
++
+ PROMISE DC4030 CACHING DISK CONTROLLER DRIVER
+ P:	Peter Denison
+ M:	promise@pnd-pc.demon.co.uk
+diff -urN linux-2.4.18-rc1-ingo-K3/arch/arm/config.in linux/arch/arm/config.in
+--- linux-2.4.18-rc1-ingo-K3/arch/arm/config.in	Wed Feb 13 16:24:59 2002
++++ linux/arch/arm/config.in	Wed Feb 13 16:23:45 2002
+@@ -508,6 +508,7 @@
+ if [ "$CONFIG_ISDN" != "n" ]; then
+    source drivers/isdn/Config.in
+ fi
++dep_bool 'Preemptible Kernel' CONFIG_PREEMPT $CONFIG_CPU_32
+ endmenu
+ 
+ #
+diff -urN linux-2.4.18-rc1-ingo-K3/arch/arm/kernel/entry-armv.S linux/arch/arm/kernel/entry-armv.S
+--- linux-2.4.18-rc1-ingo-K3/arch/arm/kernel/entry-armv.S	Wed Feb 13 16:24:59 2002
++++ linux/arch/arm/kernel/entry-armv.S	Wed Feb 13 16:23:45 2002
+@@ -672,6 +672,12 @@
+ 		add	r4, sp, #S_SP
+ 		mov	r6, lr
+ 		stmia	r4, {r5, r6, r7, r8, r9}	@ save sp_SVC, lr_SVC, pc, cpsr, old_ro
++#ifdef CONFIG_PREEMPT
++		get_current_task r9
++		ldr	r8, [r9, #TSK_PREEMPT]
++		add	r8, r8, #1
++		str	r8, [r9, #TSK_PREEMPT]
++#endif
+ 1:		get_irqnr_and_base r0, r6, r5, lr
+ 		movne	r1, sp
+ 		@
+@@ -679,6 +685,25 @@
+ 		@
+ 		adrsvc	ne, lr, 1b
+ 		bne	do_IRQ
++#ifdef CONFIG_PREEMPT
++2:		ldr	r8, [r9, #TSK_PREEMPT]
++		subs	r8, r8, #1
++		bne	3f
++		ldr	r7, [r9, #TSK_NEED_RESCHED]
++		teq	r7, #0
++		beq	3f
++		ldr	r6, .LCirqstat
++		ldr	r0, [r6, #IRQSTAT_BH_COUNT]
++		teq	r0, #0
++		bne	3f
++		mov	r0, #MODE_SVC
++		msr	cpsr_c, r0		@ enable interrupts
++		bl	SYMBOL_NAME(preempt_schedule)
++		mov	r0, #I_BIT | MODE_SVC
++		msr	cpsr_c, r0              @ disable interrupts
++		b	2b
++3:		str	r8, [r9, #TSK_PREEMPT]
++#endif
+ 		ldr	r0, [sp, #S_PSR]		@ irqs are already disabled
+ 		msr	spsr, r0
+ 		ldmia	sp, {r0 - pc}^			@ load r0 - pc, cpsr
+@@ -736,6 +761,9 @@
+ .LCprocfns:	.word	SYMBOL_NAME(processor)
+ #endif
+ .LCfp:		.word	SYMBOL_NAME(fp_enter)
++#ifdef CONFIG_PREEMPT
++.LCirqstat:	.word	SYMBOL_NAME(irq_stat)
++#endif
+ 
+ 		irq_prio_table
+ 
+@@ -775,6 +803,12 @@
+ 		stmdb	r8, {sp, lr}^
+ 		alignment_trap r4, r7, __temp_irq
+ 		zero_fp
++		get_current_task tsk
++#ifdef CONFIG_PREEMPT
++		ldr	r0, [tsk, #TSK_PREEMPT]
++		add	r0, r0, #1
++		str	r0, [tsk, #TSK_PREEMPT]
++#endif
+ 1:		get_irqnr_and_base r0, r6, r5, lr
+ 		movne	r1, sp
+ 		adrsvc	ne, lr, 1b
+@@ -782,8 +816,12 @@
+ 		@ routine called with r0 = irq number, r1 = struct pt_regs *
+ 		@
+ 		bne	do_IRQ
++#ifdef CONFIG_PREEMPT
++		ldr	r0, [tsk, #TSK_PREEMPT]
++		sub	r0, r0, #1
++		str	r0, [tsk, #TSK_PREEMPT]
++#endif
+ 		mov	why, #0
+-		get_current_task tsk
+ 		b	ret_to_user
+ 
+ 		.align	5
+diff -urN linux-2.4.18-rc1-ingo-K3/arch/arm/tools/getconstants.c linux/arch/arm/tools/getconstants.c
+--- linux-2.4.18-rc1-ingo-K3/arch/arm/tools/getconstants.c	Wed Feb 13 16:25:00 2002
++++ linux/arch/arm/tools/getconstants.c	Wed Feb 13 16:23:45 2002
+@@ -13,6 +13,7 @@
+ 
+ #include <asm/pgtable.h>
+ #include <asm/uaccess.h>
++#include <asm/hardirq.h>
+ 
+ /*
+  * Make sure that the compiler and target are compatible.
+@@ -39,6 +40,11 @@
+ DEFN("TSS_SAVE",		OFF_TSK(thread.save));
+ DEFN("TSS_FPESAVE",		OFF_TSK(thread.fpstate.soft.save));
+ 
++#ifdef CONFIG_PREEMPT
++DEFN("TSK_PREEMPT",		OFF_TSK(preempt_count));
++DEFN("IRQSTAT_BH_COUNT",	(unsigned long)&(((irq_cpustat_t *)0)->__local_bh_count));
++#endif
++
+ #ifdef CONFIG_CPU_32
+ DEFN("TSS_DOMAIN",		OFF_TSK(thread.domain));
+ 
+diff -urN linux-2.4.18-rc1-ingo-K3/arch/i386/config.in linux/arch/i386/config.in
+--- linux-2.4.18-rc1-ingo-K3/arch/i386/config.in	Wed Feb 13 16:24:50 2002
++++ linux/arch/i386/config.in	Wed Feb 13 16:23:45 2002
+@@ -185,6 +185,7 @@
+ bool 'Math emulation' CONFIG_MATH_EMULATION
+ bool 'MTRR (Memory Type Range Register) support' CONFIG_MTRR
+ bool 'Symmetric multi-processing support' CONFIG_SMP
++bool 'Preemptible Kernel' CONFIG_PREEMPT
+ if [ "$CONFIG_SMP" != "y" ]; then
+    bool 'Local APIC support on uniprocessors' CONFIG_X86_UP_APIC
+    dep_bool 'IO-APIC support on uniprocessors' CONFIG_X86_UP_IOAPIC $CONFIG_X86_UP_APIC
+@@ -198,9 +199,12 @@
+    bool 'Multiquad NUMA system' CONFIG_MULTIQUAD
+ fi
+ 
+-if [ "$CONFIG_SMP" = "y" -a "$CONFIG_X86_CMPXCHG" = "y" ]; then
+-   define_bool CONFIG_HAVE_DEC_LOCK y
++if [ "$CONFIG_SMP" = "y" -o "$CONFIG_PREEMPT" = "y" ]; then
++   if [ "$CONFIG_X86_CMPXCHG" = "y" ]; then
++      define_bool CONFIG_HAVE_DEC_LOCK y
++   fi
+ fi
++
+ endmenu
+ 
+ mainmenu_option next_comment
+diff -urN linux-2.4.18-rc1-ingo-K3/arch/i386/kernel/entry.S linux/arch/i386/kernel/entry.S
+--- linux-2.4.18-rc1-ingo-K3/arch/i386/kernel/entry.S	Wed Feb 13 16:25:18 2002
++++ linux/arch/i386/kernel/entry.S	Wed Feb 13 16:23:45 2002
+@@ -71,7 +71,7 @@
+  * these are offsets into the task-struct.
+  */
+ state		=  0
+-flags		=  4
++preempt_count	=  4
+ sigpending	=  8
+ addr_limit	= 12
+ exec_domain	= 16
+@@ -79,8 +79,28 @@
+ tsk_ptrace	= 24
+ cpu		= 32
+ 
++/* These are offsets into the irq_stat structure
++ * There is one per cpu and it is aligned to 32
++ * byte boundry (we put that here as a shift count)
++ */
++irq_array_shift                 = CONFIG_X86_L1_CACHE_SHIFT
++
++irq_stat_local_irq_count        = 4
++irq_stat_local_bh_count         = 8
++
+ ENOSYS = 38
+ 
++#ifdef CONFIG_SMP
++#define GET_CPU_INDX	movl cpu(%ebx),%eax;  \
++                        shll $irq_array_shift,%eax
++#define GET_CURRENT_CPU_INDX GET_CURRENT(%ebx); \
++                             GET_CPU_INDX
++#define CPU_INDX (,%eax)
++#else
++#define GET_CPU_INDX
++#define GET_CURRENT_CPU_INDX GET_CURRENT(%ebx)
++#define CPU_INDX
++#endif
+ 
+ #define SAVE_ALL \
+ 	cld; \
+@@ -249,12 +269,30 @@
+ 	ALIGN
+ ENTRY(ret_from_intr)
+ 	GET_CURRENT(%ebx)
++#ifdef CONFIG_PREEMPT
++	cli
++	decl preempt_count(%ebx)
++#endif
+ ret_from_exception:
+ 	movl EFLAGS(%esp),%eax		# mix EFLAGS and CS
+ 	movb CS(%esp),%al
+ 	testl $(VM_MASK | 3),%eax	# return to VM86 mode or non-supervisor?
+ 	jne ret_from_sys_call
++#ifdef CONFIG_PREEMPT
++	cmpl $0,preempt_count(%ebx)
++	jnz restore_all
++	cmpl $0,need_resched(%ebx)
++	jz restore_all
++	movl SYMBOL_NAME(irq_stat)+irq_stat_local_bh_count CPU_INDX,%ecx
++	addl SYMBOL_NAME(irq_stat)+irq_stat_local_irq_count CPU_INDX,%ecx
++	jnz restore_all
++	incl preempt_count(%ebx)
++	sti
++	call SYMBOL_NAME(preempt_schedule)
++	jmp ret_from_intr
++#else
+ 	jmp restore_all
++#endif
+ 
+ 	ALIGN
+ reschedule:
+@@ -291,6 +329,9 @@
+ 	GET_CURRENT(%ebx)
+ 	call *%edi
+ 	addl $8,%esp
++#ifdef CONFIG_PREEMPT
++	cli
++#endif
+ 	jmp ret_from_exception
+ 
+ ENTRY(coprocessor_error)
+@@ -310,12 +351,18 @@
+ 	movl %cr0,%eax
+ 	testl $0x4,%eax			# EM (math emulation bit)
+ 	jne device_not_available_emulate
++#ifdef CONFIG_PREEMPT
++	cli
++#endif
+ 	call SYMBOL_NAME(math_state_restore)
+ 	jmp ret_from_exception
+ device_not_available_emulate:
+ 	pushl $0		# temporary storage for ORIG_EIP
+ 	call  SYMBOL_NAME(math_emulate)
+ 	addl $4,%esp
++#ifdef CONFIG_PREEMPT
++	cli
++#endif
+ 	jmp ret_from_exception
+ 
+ ENTRY(debug)
+diff -urN linux-2.4.18-rc1-ingo-K3/arch/i386/kernel/i387.c linux/arch/i386/kernel/i387.c
+--- linux-2.4.18-rc1-ingo-K3/arch/i386/kernel/i387.c	Wed Feb 13 16:24:50 2002
++++ linux/arch/i386/kernel/i387.c	Wed Feb 13 16:23:45 2002
+@@ -10,6 +10,7 @@
+ 
+ #include <linux/config.h>
+ #include <linux/sched.h>
++#include <linux/spinlock.h>
+ #include <asm/processor.h>
+ #include <asm/i387.h>
+ #include <asm/math_emu.h>
+@@ -65,6 +66,8 @@
+ {
+ 	struct task_struct *tsk = current;
+ 
++	preempt_disable();
++	
+ 	if (tsk->flags & PF_USEDFPU) {
+ 		__save_init_fpu(tsk);
+ 		return;
+diff -urN linux-2.4.18-rc1-ingo-K3/arch/i386/kernel/smp.c linux/arch/i386/kernel/smp.c
+--- linux-2.4.18-rc1-ingo-K3/arch/i386/kernel/smp.c	Wed Feb 13 16:25:18 2002
++++ linux/arch/i386/kernel/smp.c	Wed Feb 13 16:23:45 2002
+@@ -497,7 +497,7 @@
+ 	/*
+ 	 * The target CPU will unlock the migration spinlock:
+ 	 */
+-	spin_lock(&migration_lock);
++	_raw_spin_lock(&migration_lock);
+ 	new_task = p;
+ 	send_IPI_mask(1 << cpu, TASK_MIGRATION_VECTOR);
+ }
+@@ -511,7 +511,7 @@
+ 
+ 	ack_APIC_irq();
+ 	p = new_task;
+-	spin_unlock(&migration_lock);
++	_raw_spin_unlock(&migration_lock);
+ 	sched_task_migrated(p);
+ }
+ /*
+diff -urN linux-2.4.18-rc1-ingo-K3/arch/i386/kernel/traps.c linux/arch/i386/kernel/traps.c
+--- linux-2.4.18-rc1-ingo-K3/arch/i386/kernel/traps.c	Wed Feb 13 16:24:50 2002
++++ linux/arch/i386/kernel/traps.c	Wed Feb 13 16:23:45 2002
+@@ -694,6 +694,8 @@
+  *
+  * Careful.. There are problems with IBM-designed IRQ13 behaviour.
+  * Don't touch unless you *really* know how it works.
++ *
++ * Must be called with kernel preemption disabled.
+  */
+ asmlinkage void math_state_restore(struct pt_regs regs)
+ {
+diff -urN linux-2.4.18-rc1-ingo-K3/arch/i386/lib/dec_and_lock.c linux/arch/i386/lib/dec_and_lock.c
+--- linux-2.4.18-rc1-ingo-K3/arch/i386/lib/dec_and_lock.c	Wed Feb 13 16:24:50 2002
++++ linux/arch/i386/lib/dec_and_lock.c	Wed Feb 13 16:23:45 2002
+@@ -8,6 +8,7 @@
+  */
+ 
+ #include <linux/spinlock.h>
++#include <linux/sched.h>
+ #include <asm/atomic.h>
+ 
+ int atomic_dec_and_lock(atomic_t *atomic, spinlock_t *lock)
+diff -urN linux-2.4.18-rc1-ingo-K3/arch/sh/config.in linux/arch/sh/config.in
+--- linux-2.4.18-rc1-ingo-K3/arch/sh/config.in	Wed Feb 13 16:25:01 2002
++++ linux/arch/sh/config.in	Wed Feb 13 16:23:45 2002
+@@ -124,6 +124,7 @@
+    hex 'Physical memory start address' CONFIG_MEMORY_START 08000000
+    hex 'Physical memory size' CONFIG_MEMORY_SIZE 00400000
+ fi
++bool 'Preemptible Kernel' CONFIG_PREEMPT
+ endmenu
+ 
+ if [ "$CONFIG_SH_HP690" = "y" ]; then
+diff -urN linux-2.4.18-rc1-ingo-K3/arch/sh/kernel/entry.S linux/arch/sh/kernel/entry.S
+--- linux-2.4.18-rc1-ingo-K3/arch/sh/kernel/entry.S	Wed Feb 13 16:25:01 2002
++++ linux/arch/sh/kernel/entry.S	Wed Feb 13 16:23:45 2002
+@@ -60,10 +60,18 @@
+ /*
+  * These are offsets into the task-struct.
+  */
+-flags		=  4
++preempt_count	=  4
+ sigpending	=  8
+ need_resched	= 20
+ tsk_ptrace	= 24
++flags		= 84
++
++/*
++ * These offsets are into irq_stat.
++ * (Find irq_cpustat_t in asm-sh/hardirq.h)
++ */
++local_irq_count =  8
++local_bh_count  = 12
+ 
+ PT_TRACESYS  = 0x00000002
+ PF_USEDFPU   = 0x00100000
+@@ -143,7 +151,7 @@
+ 	mov.l	__INV_IMASK, r11;	\
+ 	stc	sr, r10;		\
+ 	and	r11, r10;		\
+-	stc	k_g_imask, r11;	\
++	stc	k_g_imask, r11;		\
+ 	or	r11, r10;		\
+ 	ldc	r10, sr
+ 
+@@ -304,8 +312,8 @@
+ 	mov.l	@(tsk_ptrace,r0), r0	! Is current PTRACE_SYSCALL'd?
+ 	mov	#PT_TRACESYS, r1
+ 	tst	r1, r0
+-	bt	ret_from_syscall
+-	bra	syscall_ret_trace
++	bf	syscall_ret_trace
++	bra	ret_from_syscall
+ 	 nop	 
+ 
+ 	.align	2
+@@ -505,8 +513,6 @@
+ 	.long	syscall_ret_trace
+ __syscall_ret:
+ 	.long	syscall_ret
+-__INV_IMASK:
+-	.long	0xffffff0f	! ~(IMASK)
+ 
+ 
+ 	.align	2
+@@ -518,7 +524,84 @@
+ 	.align	2
+ 1:	.long	SYMBOL_NAME(schedule)
+ 
++#ifdef CONFIG_PREEMPT	
++	!
++	! Returning from interrupt during kernel mode: check if
++	! preempt_schedule should be called. If need_resched flag
++	! is set, preempt_count is zero, and we're not currently
++	! in an interrupt handler (local irq or bottom half) then
++	! call preempt_schedule. 
++	!
++	! Increment preempt_count to prevent a nested interrupt
++	! from reentering preempt_schedule, then decrement after
++	! and drop through to regular interrupt return which will
++	! jump back and check again in case such an interrupt did
++	! come in (and didn't preempt due to preempt_count).
++	!
++	! NOTE:	because we just checked that preempt_count was
++	! zero before getting to the call, can't we use immediate
++	! values (1 and 0) rather than inc/dec? Also, rather than
++	! drop through to ret_from_irq, we already know this thread
++	! is kernel mode, can't we go direct to ret_from_kirq? In
++	! fact, with proper interrupt nesting and so forth could
++	! the loop simply be on the need_resched w/o checking the
++	! other stuff again? Optimize later...
++	!
++	.align	2
++ret_from_kirq:
++	! Nonzero preempt_count prevents scheduling
++	stc	k_current, r1
++	mov.l	@(preempt_count,r1), r0
++	cmp/eq	#0, r0
++	bf	restore_all
++	! Zero need_resched prevents scheduling
++	mov.l	@(need_resched,r1), r0
++	cmp/eq	#0, r0
++	bt	restore_all
++	! If in_interrupt(), don't schedule
++	mov.l	__irq_stat, r1
++	mov.l	@(local_irq_count,r1), r0
++	mov.l	@(local_bh_count,r1), r1
++	or	r1, r0
++	cmp/eq	#0, r0
++	bf	restore_all
++	! Allow scheduling using preempt_schedule
++	! Adjust preempt_count and SR as needed.
++	stc	k_current, r1
++	mov.l	@(preempt_count,r1), r0	! Could replace this ...
++	add	#1, r0			! ... and this w/mov #1?
++	mov.l	r0, @(preempt_count,r1)
++	STI()
++	mov.l	__preempt_schedule, r0
++	jsr	@r0
++	 nop	
++	/* CLI */
++	stc	sr, r0
++	or	#0xf0, r0
++	ldc	r0, sr
++	!
++	stc	k_current, r1
++	mov.l	@(preempt_count,r1), r0	! Could replace this ...
++	add	#-1, r0			! ... and this w/mov #0?
++	mov.l	r0, @(preempt_count,r1)
++	! Maybe should bra ret_from_kirq, or loop over need_resched?
++	! For now, fall through to ret_from_irq again...
++#endif /* CONFIG_PREEMPT */
++	
+ ret_from_irq:
++	mov	#OFF_SR, r0
++	mov.l	@(r0,r15), r0	! get status register
++	shll	r0
++	shll	r0		! kernel space?
++#ifndef CONFIG_PREEMPT
++	bt	restore_all	! Yes, it's from kernel, go back soon
++#else /* CONFIG_PREEMPT */
++	bt	ret_from_kirq	! From kernel: maybe preempt_schedule
++#endif /* CONFIG_PREEMPT */
++	!
++	bra	ret_from_syscall
++	 nop
++
+ ret_from_exception:
+ 	mov	#OFF_SR, r0
+ 	mov.l	@(r0,r15), r0	! get status register
+@@ -564,6 +647,13 @@
+ 	.long	SYMBOL_NAME(do_signal)
+ __irq_stat:
+ 	.long	SYMBOL_NAME(irq_stat)
++#ifdef CONFIG_PREEMPT
++__preempt_schedule:
++	.long	SYMBOL_NAME(preempt_schedule)
++#endif /* CONFIG_PREEMPT */	
++__INV_IMASK:
++	.long	0xffffff0f	! ~(IMASK)
++
+ 
+ 	.align 2
+ restore_all:
+@@ -679,7 +769,7 @@
+ __fpu_prepare_fd:
+ 	.long	SYMBOL_NAME(fpu_prepare_fd)
+ __init_task_flags:
+-	.long	SYMBOL_NAME(init_task_union)+4
++	.long	SYMBOL_NAME(init_task_union)+flags
+ __PF_USEDFPU:
+ 	.long	PF_USEDFPU
+ #endif
+diff -urN linux-2.4.18-rc1-ingo-K3/arch/sh/kernel/irq.c linux/arch/sh/kernel/irq.c
+--- linux-2.4.18-rc1-ingo-K3/arch/sh/kernel/irq.c	Wed Feb 13 16:25:01 2002
++++ linux/arch/sh/kernel/irq.c	Wed Feb 13 16:23:45 2002
+@@ -229,6 +229,14 @@
+ 	struct irqaction * action;
+ 	unsigned int status;
+ 
++	/*
++	 * At this point we're now about to actually call handlers,
++	 * and interrupts might get reenabled during them... bump
++	 * preempt_count to prevent any preemption while the handler
++ 	 * called here is pending...
++ 	 */
++ 	preempt_disable();
++
+ 	/* Get IRQ number */
+ 	asm volatile("stc	r2_bank, %0\n\t"
+ 		     "shlr2	%0\n\t"
+@@ -298,8 +306,17 @@
+ 	desc->handler->end(irq);
+ 	spin_unlock(&desc->lock);
+ 
++
+ 	if (softirq_pending(cpu))
+ 		do_softirq();
++
++	/*
++	 * We're done with the handlers, interrupts should be
++	 * currently disabled; decrement preempt_count now so
++	 * as we return preemption may be allowed...
++	 */
++	preempt_enable_no_resched();
++
+ 	return 1;
+ }
+ 
+diff -urN linux-2.4.18-rc1-ingo-K3/drivers/ieee1394/csr.c linux/drivers/ieee1394/csr.c
+--- linux-2.4.18-rc1-ingo-K3/drivers/ieee1394/csr.c	Wed Feb 13 16:24:44 2002
++++ linux/drivers/ieee1394/csr.c	Wed Feb 13 16:23:45 2002
+@@ -10,6 +10,7 @@
+  */
+ 
+ #include <linux/string.h>
++#include <linux/sched.h>
+ 
+ #include "ieee1394_types.h"
+ #include "hosts.h"
+diff -urN linux-2.4.18-rc1-ingo-K3/drivers/sound/sound_core.c linux/drivers/sound/sound_core.c
+--- linux-2.4.18-rc1-ingo-K3/drivers/sound/sound_core.c	Wed Feb 13 16:24:31 2002
++++ linux/drivers/sound/sound_core.c	Wed Feb 13 16:23:45 2002
+@@ -37,6 +37,7 @@
+ #include <linux/config.h>
+ #include <linux/module.h>
+ #include <linux/init.h>
++#include <linux/sched.h>
+ #include <linux/slab.h>
+ #include <linux/types.h>
+ #include <linux/kernel.h>
+diff -urN linux-2.4.18-rc1-ingo-K3/fs/adfs/map.c linux/fs/adfs/map.c
+--- linux-2.4.18-rc1-ingo-K3/fs/adfs/map.c	Wed Feb 13 16:24:06 2002
++++ linux/fs/adfs/map.c	Wed Feb 13 16:23:45 2002
+@@ -12,6 +12,7 @@
+ #include <linux/fs.h>
+ #include <linux/adfs_fs.h>
+ #include <linux/spinlock.h>
++#include <linux/sched.h>
+ 
+ #include "adfs.h"
+ 
+diff -urN linux-2.4.18-rc1-ingo-K3/fs/exec.c linux/fs/exec.c
+--- linux-2.4.18-rc1-ingo-K3/fs/exec.c	Wed Feb 13 16:24:05 2002
++++ linux/fs/exec.c	Wed Feb 13 16:23:45 2002
+@@ -420,8 +420,8 @@
+ 		active_mm = current->active_mm;
+ 		current->mm = mm;
+ 		current->active_mm = mm;
+-		task_unlock(current);
+ 		activate_mm(active_mm, mm);
++		task_unlock(current);
+ 		mm_release();
+ 		if (old_mm) {
+ 			if (active_mm != old_mm) BUG();
+diff -urN linux-2.4.18-rc1-ingo-K3/fs/fat/cache.c linux/fs/fat/cache.c
+--- linux-2.4.18-rc1-ingo-K3/fs/fat/cache.c	Wed Feb 13 16:24:05 2002
++++ linux/fs/fat/cache.c	Wed Feb 13 16:23:45 2002
+@@ -14,6 +14,7 @@
+ #include <linux/string.h>
+ #include <linux/stat.h>
+ #include <linux/fat_cvf.h>
++#include <linux/sched.h>
+ 
+ #if 0
+ #  define PRINTK(x) printk x
+diff -urN linux-2.4.18-rc1-ingo-K3/fs/nls/nls_base.c linux/fs/nls/nls_base.c
+--- linux-2.4.18-rc1-ingo-K3/fs/nls/nls_base.c	Wed Feb 13 16:24:06 2002
++++ linux/fs/nls/nls_base.c	Wed Feb 13 16:23:45 2002
+@@ -18,6 +18,7 @@
+ #ifdef CONFIG_KMOD
+ #include <linux/kmod.h>
+ #endif
++#include <linux/sched.h>
+ #include <linux/spinlock.h>
+ 
+ static struct nls_table *tables;
+diff -urN linux-2.4.18-rc1-ingo-K3/include/asm-arm/dma.h linux/include/asm-arm/dma.h
+--- linux-2.4.18-rc1-ingo-K3/include/asm-arm/dma.h	Wed Feb 13 16:24:14 2002
++++ linux/include/asm-arm/dma.h	Wed Feb 13 16:23:45 2002
+@@ -5,6 +5,7 @@
+ 
+ #include <linux/config.h>
+ #include <linux/spinlock.h>
++#include <linux/sched.h>
+ #include <asm/system.h>
+ #include <asm/memory.h>
+ #include <asm/scatterlist.h>
+diff -urN linux-2.4.18-rc1-ingo-K3/include/asm-arm/hardirq.h linux/include/asm-arm/hardirq.h
+--- linux-2.4.18-rc1-ingo-K3/include/asm-arm/hardirq.h	Wed Feb 13 16:24:14 2002
++++ linux/include/asm-arm/hardirq.h	Wed Feb 13 16:23:45 2002
+@@ -34,6 +34,7 @@
+ #define irq_exit(cpu,irq)	(local_irq_count(cpu)--)
+ 
+ #define synchronize_irq()	do { } while (0)
++#define release_irqlock(cpu)	do { } while (0)
+ 
+ #else
+ #error SMP not supported
+diff -urN linux-2.4.18-rc1-ingo-K3/include/asm-arm/pgalloc.h linux/include/asm-arm/pgalloc.h
+--- linux-2.4.18-rc1-ingo-K3/include/asm-arm/pgalloc.h	Wed Feb 13 16:24:14 2002
++++ linux/include/asm-arm/pgalloc.h	Wed Feb 13 16:23:45 2002
+@@ -57,40 +57,48 @@
+ {
+ 	unsigned long *ret;
+ 
++	preempt_disable();
+ 	if ((ret = pgd_quicklist) != NULL) {
+ 		pgd_quicklist = (unsigned long *)__pgd_next(ret);
+ 		ret[1] = ret[2];
+ 		clean_dcache_entry(ret + 1);
+ 		pgtable_cache_size--;
+ 	}
++	preempt_enable();
+ 	return (pgd_t *)ret;
+ }
+ 
+ static inline void free_pgd_fast(pgd_t *pgd)
+ {
++	preempt_disable();
+ 	__pgd_next(pgd) = (unsigned long) pgd_quicklist;
+ 	pgd_quicklist = (unsigned long *) pgd;
+ 	pgtable_cache_size++;
++	preempt_enable();
+ }
+ 
+ static inline pte_t *pte_alloc_one_fast(struct mm_struct *mm, unsigned long address)
+ {
+ 	unsigned long *ret;
+ 
++	preempt_disable();
+ 	if((ret = pte_quicklist) != NULL) {
+ 		pte_quicklist = (unsigned long *)__pte_next(ret);
+ 		ret[0] = 0;
+ 		clean_dcache_entry(ret);
+ 		pgtable_cache_size--;
+ 	}
++	preempt_enable();
+ 	return (pte_t *)ret;
+ }
+ 
+ static inline void free_pte_fast(pte_t *pte)
+ {
++	preempt_disable();
+ 	__pte_next(pte) = (unsigned long) pte_quicklist;
+ 	pte_quicklist = (unsigned long *) pte;
+ 	pgtable_cache_size++;
++	preempt_enable();
+ }
+ 
+ #else	/* CONFIG_NO_PGT_CACHE */
+diff -urN linux-2.4.18-rc1-ingo-K3/include/asm-arm/smplock.h linux/include/asm-arm/smplock.h
+--- linux-2.4.18-rc1-ingo-K3/include/asm-arm/smplock.h	Wed Feb 13 16:24:14 2002
++++ linux/include/asm-arm/smplock.h	Wed Feb 13 16:23:45 2002
+@@ -3,12 +3,17 @@
+  *
+  * Default SMP lock implementation
+  */
++#include <linux/config.h>
+ #include <linux/interrupt.h>
+ #include <linux/spinlock.h>
+ 
+ extern spinlock_t kernel_flag;
+ 
++#ifdef CONFIG_PREEMPT
++#define kernel_locked()		preempt_get_count()
++#else
+ #define kernel_locked()		spin_is_locked(&kernel_flag)
++#endif
+ 
+ /*
+  * Release global kernel lock and global interrupt lock
+@@ -40,8 +45,14 @@
+  */
+ static inline void lock_kernel(void)
+ {
++#ifdef CONFIG_PREEMPT
++	if (current->lock_depth == -1)
++		spin_lock(&kernel_flag);
++	++current->lock_depth;
++#else
+ 	if (!++current->lock_depth)
+ 		spin_lock(&kernel_flag);
++#endif
+ }
+ 
+ static inline void unlock_kernel(void)
+diff -urN linux-2.4.18-rc1-ingo-K3/include/asm-arm/softirq.h linux/include/asm-arm/softirq.h
+--- linux-2.4.18-rc1-ingo-K3/include/asm-arm/softirq.h	Wed Feb 13 16:24:14 2002
++++ linux/include/asm-arm/softirq.h	Wed Feb 13 16:23:45 2002
+@@ -5,20 +5,22 @@
+ #include <asm/hardirq.h>
+ 
+ #define __cpu_bh_enable(cpu) \
+-		do { barrier(); local_bh_count(cpu)--; } while (0)
++		do { barrier(); local_bh_count(cpu)--; preempt_enable(); } while (0)
+ #define cpu_bh_disable(cpu) \
+-		do { local_bh_count(cpu)++; barrier(); } while (0)
++		do { preempt_disable(); local_bh_count(cpu)++; barrier(); } while (0)
+ 
+ #define local_bh_disable()	cpu_bh_disable(smp_processor_id())
+ #define __local_bh_enable()	__cpu_bh_enable(smp_processor_id())
+ 
+ #define in_softirq()		(local_bh_count(smp_processor_id()) != 0)
+ 
+-#define local_bh_enable()						\
++#define _local_bh_enable()						\
+ do {									\
+ 	unsigned int *ptr = &local_bh_count(smp_processor_id());	\
+ 	if (!--*ptr && ptr[-2])						\
+ 		__asm__("bl%? __do_softirq": : : "lr");/* out of line */\
+ } while (0)
+ 
++#define local_bh_enable() do { _local_bh_enable(); preempt_enable(); } while (0)
++
+ #endif	/* __ASM_SOFTIRQ_H */
+diff -urN linux-2.4.18-rc1-ingo-K3/include/asm-i386/hardirq.h linux/include/asm-i386/hardirq.h
+--- linux-2.4.18-rc1-ingo-K3/include/asm-i386/hardirq.h	Wed Feb 13 16:24:09 2002
++++ linux/include/asm-i386/hardirq.h	Wed Feb 13 16:23:45 2002
+@@ -36,6 +36,8 @@
+ 
+ #define synchronize_irq()	barrier()
+ 
++#define release_irqlock(cpu)	do { } while (0)
++
+ #else
+ 
+ #include <asm/atomic.h>
+diff -urN linux-2.4.18-rc1-ingo-K3/include/asm-i386/highmem.h linux/include/asm-i386/highmem.h
+--- linux-2.4.18-rc1-ingo-K3/include/asm-i386/highmem.h	Wed Feb 13 16:24:09 2002
++++ linux/include/asm-i386/highmem.h	Wed Feb 13 16:23:45 2002
+@@ -88,6 +88,7 @@
+ 	enum fixed_addresses idx;
+ 	unsigned long vaddr;
+ 
++	preempt_disable();
+ 	if (page < highmem_start_page)
+ 		return page_address(page);
+ 
+@@ -109,8 +110,10 @@
+ 	unsigned long vaddr = (unsigned long) kvaddr;
+ 	enum fixed_addresses idx = type + KM_TYPE_NR*smp_processor_id();
+ 
+-	if (vaddr < FIXADDR_START) // FIXME
++	if (vaddr < FIXADDR_START) { // FIXME
++		preempt_enable();
+ 		return;
++	}
+ 
+ 	if (vaddr != __fix_to_virt(FIX_KMAP_BEGIN+idx))
+ 		BUG();
+@@ -122,6 +125,8 @@
+ 	pte_clear(kmap_pte-idx);
+ 	__flush_tlb_one(vaddr);
+ #endif
++
++	preempt_enable();
+ }
+ 
+ #endif /* __KERNEL__ */
+diff -urN linux-2.4.18-rc1-ingo-K3/include/asm-i386/hw_irq.h linux/include/asm-i386/hw_irq.h
+--- linux-2.4.18-rc1-ingo-K3/include/asm-i386/hw_irq.h	Wed Feb 13 16:25:18 2002
++++ linux/include/asm-i386/hw_irq.h	Wed Feb 13 16:23:45 2002
+@@ -96,6 +96,18 @@
+ #define __STR(x) #x
+ #define STR(x) __STR(x)
+ 
++#define GET_CURRENT \
++	"movl %esp, %ebx\n\t" \
++	"andl $-8192, %ebx\n\t"
++
++#ifdef CONFIG_PREEMPT
++#define BUMP_LOCK_COUNT \
++	GET_CURRENT \
++	"incl 4(%ebx)\n\t"
++#else
++#define BUMP_LOCK_COUNT
++#endif
++
+ #define SAVE_ALL \
+ 	"cld\n\t" \
+ 	"pushl %es\n\t" \
+@@ -109,15 +121,12 @@
+ 	"pushl %ebx\n\t" \
+ 	"movl $" STR(__KERNEL_DS) ",%edx\n\t" \
+ 	"movl %edx,%ds\n\t" \
+-	"movl %edx,%es\n\t"
++	"movl %edx,%es\n\t" \
++	BUMP_LOCK_COUNT
+ 
+ #define IRQ_NAME2(nr) nr##_interrupt(void)
+ #define IRQ_NAME(nr) IRQ_NAME2(IRQ##nr)
+ 
+-#define GET_CURRENT \
+-	"movl %esp, %ebx\n\t" \
+-	"andl $-8192, %ebx\n\t"
+-
+ /*
+  *	SMP has a few special interrupts for IPI messages
+  */
+diff -urN linux-2.4.18-rc1-ingo-K3/include/asm-i386/i387.h linux/include/asm-i386/i387.h
+--- linux-2.4.18-rc1-ingo-K3/include/asm-i386/i387.h	Wed Feb 13 16:24:09 2002
++++ linux/include/asm-i386/i387.h	Wed Feb 13 16:23:45 2002
+@@ -12,6 +12,7 @@
+ #define __ASM_I386_I387_H
+ 
+ #include <linux/sched.h>
++#include <linux/spinlock.h>
+ #include <asm/processor.h>
+ #include <asm/sigcontext.h>
+ #include <asm/user.h>
+@@ -24,7 +25,7 @@
+ extern void restore_fpu( struct task_struct *tsk );
+ 
+ extern void kernel_fpu_begin(void);
+-#define kernel_fpu_end() stts()
++#define kernel_fpu_end() do { stts(); preempt_enable(); } while(0)
+ 
+ 
+ #define unlazy_fpu( tsk ) do { \
+diff -urN linux-2.4.18-rc1-ingo-K3/include/asm-i386/pgalloc.h linux/include/asm-i386/pgalloc.h
+--- linux-2.4.18-rc1-ingo-K3/include/asm-i386/pgalloc.h	Wed Feb 13 16:25:18 2002
++++ linux/include/asm-i386/pgalloc.h	Wed Feb 13 16:23:45 2002
+@@ -75,20 +75,26 @@
+ {
+ 	unsigned long *ret;
+ 
++	preempt_disable();
+ 	if ((ret = pgd_quicklist) != NULL) {
+ 		pgd_quicklist = (unsigned long *)(*ret);
+ 		ret[0] = 0;
+ 		pgtable_cache_size--;
+-	} else
++		preempt_enable();
++	} else {
++		preempt_enable();
+ 		ret = (unsigned long *)get_pgd_slow();
++	}
+ 	return (pgd_t *)ret;
+ }
+ 
+ static inline void free_pgd_fast(pgd_t *pgd)
+ {
++	preempt_disable();
+ 	*(unsigned long *)pgd = (unsigned long) pgd_quicklist;
+ 	pgd_quicklist = (unsigned long *) pgd;
+ 	pgtable_cache_size++;
++	preempt_enable();
+ }
+ 
+ static inline void free_pgd_slow(pgd_t *pgd)
+@@ -119,19 +125,23 @@
+ {
+ 	unsigned long *ret;
+ 
++	preempt_disable();
+ 	if ((ret = (unsigned long *)pte_quicklist) != NULL) {
+ 		pte_quicklist = (unsigned long *)(*ret);
+ 		ret[0] = ret[1];
+ 		pgtable_cache_size--;
+ 	}
++	preempt_enable();
+ 	return (pte_t *)ret;
+ }
+ 
+ static inline void pte_free_fast(pte_t *pte)
+ {
++	preempt_disable();
+ 	*(unsigned long *)pte = (unsigned long) pte_quicklist;
+ 	pte_quicklist = (unsigned long *) pte;
+ 	pgtable_cache_size++;
++	preempt_enable();
+ }
+ 
+ static __inline__ void pte_free_slow(pte_t *pte)
+diff -urN linux-2.4.18-rc1-ingo-K3/include/asm-i386/smplock.h linux/include/asm-i386/smplock.h
+--- linux-2.4.18-rc1-ingo-K3/include/asm-i386/smplock.h	Wed Feb 13 16:24:09 2002
++++ linux/include/asm-i386/smplock.h	Wed Feb 13 16:23:45 2002
+@@ -10,7 +10,15 @@
+ 
+ extern spinlock_t kernel_flag;
+ 
++#ifdef CONFIG_SMP
+ #define kernel_locked()		spin_is_locked(&kernel_flag)
++#else
++#ifdef CONFIG_PREEMPT
++#define kernel_locked()		preempt_get_count()
++#else
++#define kernel_locked()		1
++#endif
++#endif
+ 
+ /*
+  * Release global kernel lock and global interrupt lock
+@@ -42,6 +50,11 @@
+  */
+ static __inline__ void lock_kernel(void)
+ {
++#ifdef CONFIG_PREEMPT
++	if (current->lock_depth == -1)
++		spin_lock(&kernel_flag);
++	++current->lock_depth;
++#else
+ #if 1
+ 	if (!++current->lock_depth)
+ 		spin_lock(&kernel_flag);
+@@ -54,6 +67,7 @@
+ 		:"=m" (__dummy_lock(&kernel_flag)),
+ 		 "=m" (current->lock_depth));
+ #endif
++#endif
+ }
+ 
+ static __inline__ void unlock_kernel(void)
+diff -urN linux-2.4.18-rc1-ingo-K3/include/asm-i386/softirq.h linux/include/asm-i386/softirq.h
+--- linux-2.4.18-rc1-ingo-K3/include/asm-i386/softirq.h	Wed Feb 13 16:24:09 2002
++++ linux/include/asm-i386/softirq.h	Wed Feb 13 16:23:45 2002
+@@ -6,9 +6,9 @@
+ #include <linux/stringify.h>
+ 
+ #define __cpu_bh_enable(cpu) \
+-		do { barrier(); local_bh_count(cpu)--; } while (0)
++		do { barrier(); local_bh_count(cpu)--; preempt_enable(); } while (0)
+ #define cpu_bh_disable(cpu) \
+-		do { local_bh_count(cpu)++; barrier(); } while (0)
++		do { preempt_disable(); local_bh_count(cpu)++; barrier(); } while (0)
+ 
+ #define local_bh_disable()	cpu_bh_disable(smp_processor_id())
+ #define __local_bh_enable()	__cpu_bh_enable(smp_processor_id())
+@@ -23,7 +23,7 @@
+  * If you change the offsets in irq_stat then you have to
+  * update this code as well.
+  */
+-#define local_bh_enable()						\
++#define _local_bh_enable()						\
+ do {									\
+ 	unsigned int *ptr = &local_bh_count(smp_processor_id());	\
+ 									\
+@@ -49,4 +49,6 @@
+ 		/* no registers clobbered */ );				\
+ } while (0)
+ 
++#define local_bh_enable() do { _local_bh_enable(); preempt_enable(); } while (0)
++
+ #endif	/* __ASM_SOFTIRQ_H */
+diff -urN linux-2.4.18-rc1-ingo-K3/include/asm-i386/spinlock.h linux/include/asm-i386/spinlock.h
+--- linux-2.4.18-rc1-ingo-K3/include/asm-i386/spinlock.h	Wed Feb 13 16:24:09 2002
++++ linux/include/asm-i386/spinlock.h	Wed Feb 13 16:23:45 2002
+@@ -81,7 +81,7 @@
+ 		:"=m" (lock->lock) : : "memory"
+ 
+ 
+-static inline void spin_unlock(spinlock_t *lock)
++static inline void _raw_spin_unlock(spinlock_t *lock)
+ {
+ #if SPINLOCK_DEBUG
+ 	if (lock->magic != SPINLOCK_MAGIC)
+@@ -101,7 +101,7 @@
+ 		:"=q" (oldval), "=m" (lock->lock) \
+ 		:"0" (oldval) : "memory"
+ 
+-static inline void spin_unlock(spinlock_t *lock)
++static inline void _raw_spin_unlock(spinlock_t *lock)
+ {
+ 	char oldval = 1;
+ #if SPINLOCK_DEBUG
+@@ -117,7 +117,7 @@
+ 
+ #endif
+ 
+-static inline int spin_trylock(spinlock_t *lock)
++static inline int _raw_spin_trylock(spinlock_t *lock)
+ {
+ 	char oldval;
+ 	__asm__ __volatile__(
+@@ -127,7 +127,7 @@
+ 	return oldval > 0;
+ }
+ 
+-static inline void spin_lock(spinlock_t *lock)
++static inline void _raw_spin_lock(spinlock_t *lock)
+ {
+ #if SPINLOCK_DEBUG
+ 	__label__ here;
+@@ -183,7 +183,7 @@
+  */
+ /* the spinlock helpers are in arch/i386/kernel/semaphore.c */
+ 
+-static inline void read_lock(rwlock_t *rw)
++static inline void _raw_read_lock(rwlock_t *rw)
+ {
+ #if SPINLOCK_DEBUG
+ 	if (rw->magic != RWLOCK_MAGIC)
+@@ -192,7 +192,7 @@
+ 	__build_read_lock(rw, "__read_lock_failed");
+ }
+ 
+-static inline void write_lock(rwlock_t *rw)
++static inline void _raw_write_lock(rwlock_t *rw)
+ {
+ #if SPINLOCK_DEBUG
+ 	if (rw->magic != RWLOCK_MAGIC)
+@@ -201,10 +201,10 @@
+ 	__build_write_lock(rw, "__write_lock_failed");
+ }
+ 
+-#define read_unlock(rw)		asm volatile("lock ; incl %0" :"=m" ((rw)->lock) : : "memory")
+-#define write_unlock(rw)	asm volatile("lock ; addl $" RW_LOCK_BIAS_STR ",%0":"=m" ((rw)->lock) : : "memory")
++#define _raw_read_unlock(rw)		asm volatile("lock ; incl %0" :"=m" ((rw)->lock) : : "memory")
++#define _raw_write_unlock(rw)	asm volatile("lock ; addl $" RW_LOCK_BIAS_STR ",%0":"=m" ((rw)->lock) : : "memory")
+ 
+-static inline int write_trylock(rwlock_t *lock)
++static inline int _raw_write_trylock(rwlock_t *lock)
+ {
+ 	atomic_t *count = (atomic_t *)lock;
+ 	if (atomic_sub_and_test(RW_LOCK_BIAS, count))
+diff -urN linux-2.4.18-rc1-ingo-K3/include/asm-sh/hardirq.h linux/include/asm-sh/hardirq.h
+--- linux-2.4.18-rc1-ingo-K3/include/asm-sh/hardirq.h	Wed Feb 13 16:24:15 2002
++++ linux/include/asm-sh/hardirq.h	Wed Feb 13 16:23:45 2002
+@@ -34,6 +34,8 @@
+ 
+ #define synchronize_irq()	barrier()
+ 
++#define release_irqlock(cpu)	do { } while (0)
++
+ #else
+ 
+ #error Super-H SMP is not available
+diff -urN linux-2.4.18-rc1-ingo-K3/include/asm-sh/smplock.h linux/include/asm-sh/smplock.h
+--- linux-2.4.18-rc1-ingo-K3/include/asm-sh/smplock.h	Wed Feb 13 16:24:15 2002
++++ linux/include/asm-sh/smplock.h	Wed Feb 13 16:23:45 2002
+@@ -9,15 +9,88 @@
+ 
+ #include <linux/config.h>
+ 
+-#ifndef CONFIG_SMP
+-
++#if !defined(CONFIG_SMP) && !defined(CONFIG_PREEMPT)
++/*
++ * Should never happen, since linux/smp_lock.h catches this case;
++ * but in case this file is included directly with neither SMP nor
++ * PREEMPT configuration, provide same dummys as linux/smp_lock.h
++ */
+ #define lock_kernel()				do { } while(0)
+ #define unlock_kernel()				do { } while(0)
+-#define release_kernel_lock(task, cpu, depth)	((depth) = 1)
+-#define reacquire_kernel_lock(task, cpu, depth)	do { } while(0)
++#define release_kernel_lock(task, cpu)		do { } while(0)
++#define reacquire_kernel_lock(task)		do { } while(0)
++#define kernel_locked()		1
++
++#else /* CONFIG_SMP || CONFIG_PREEMPT */
++
++#if CONFIG_SMP
++#error "We do not support SMP on SH yet"
++#endif
++/*
++ * Default SMP lock implementation (i.e. the i386 version)
++ */
++
++#include <linux/interrupt.h>
++#include <linux/spinlock.h>
++
++extern spinlock_t kernel_flag;
++#define lock_bkl() spin_lock(&kernel_flag)
++#define unlock_bkl() spin_unlock(&kernel_flag)
+ 
++#ifdef CONFIG_SMP
++#define kernel_locked()		spin_is_locked(&kernel_flag)
++#elif  CONFIG_PREEMPT
++#define kernel_locked()		preempt_get_count()
++#else  /* neither */
++#define kernel_locked()		1
++#endif
++
++/*
++ * Release global kernel lock and global interrupt lock
++ */
++#define release_kernel_lock(task, cpu) \
++do { \
++	if (task->lock_depth >= 0) \
++		spin_unlock(&kernel_flag); \
++	release_irqlock(cpu); \
++	__sti(); \
++} while (0)
++
++/*
++ * Re-acquire the kernel lock
++ */
++#define reacquire_kernel_lock(task) \
++do { \
++	if (task->lock_depth >= 0) \
++		spin_lock(&kernel_flag); \
++} while (0)
++
++/*
++ * Getting the big kernel lock.
++ *
++ * This cannot happen asynchronously,
++ * so we only need to worry about other
++ * CPU's.
++ */
++static __inline__ void lock_kernel(void)
++{
++#ifdef CONFIG_PREEMPT
++	if (current->lock_depth == -1)
++		spin_lock(&kernel_flag);
++	++current->lock_depth;
+ #else
+-#error "We do not support SMP on SH"
+-#endif /* CONFIG_SMP */
++	if (!++current->lock_depth)
++		spin_lock(&kernel_flag);
++#endif
++}
++
++static __inline__ void unlock_kernel(void)
++{
++	if (current->lock_depth < 0)
++		BUG();
++	if (--current->lock_depth < 0)
++		spin_unlock(&kernel_flag);
++}
++#endif /* CONFIG_SMP || CONFIG_PREEMPT */
+ 
+ #endif /* __ASM_SH_SMPLOCK_H */
+diff -urN linux-2.4.18-rc1-ingo-K3/include/asm-sh/softirq.h linux/include/asm-sh/softirq.h
+--- linux-2.4.18-rc1-ingo-K3/include/asm-sh/softirq.h	Wed Feb 13 16:24:15 2002
++++ linux/include/asm-sh/softirq.h	Wed Feb 13 16:23:45 2002
+@@ -6,6 +6,7 @@
+ 
+ #define local_bh_disable()			\
+ do {						\
++	preempt_disable();			\
+ 	local_bh_count(smp_processor_id())++;	\
+ 	barrier();				\
+ } while (0)
+@@ -14,6 +15,7 @@
+ do {						\
+ 	barrier();				\
+ 	local_bh_count(smp_processor_id())--;	\
++	preempt_enable();			\
+ } while (0)
+ 
+ #define local_bh_enable()				\
+@@ -23,6 +25,7 @@
+ 	    && softirq_pending(smp_processor_id())) {	\
+ 		do_softirq();				\
+ 	}						\
++	preempt_enable();				\
+ } while (0)
+ 
+ #define in_softirq() (local_bh_count(smp_processor_id()) != 0)
+diff -urN linux-2.4.18-rc1-ingo-K3/include/linux/brlock.h linux/include/linux/brlock.h
+--- linux-2.4.18-rc1-ingo-K3/include/linux/brlock.h	Wed Feb 13 16:24:09 2002
++++ linux/include/linux/brlock.h	Wed Feb 13 16:23:45 2002
+@@ -171,11 +171,11 @@
+ }
+ 
+ #else
+-# define br_read_lock(idx)	((void)(idx))
+-# define br_read_unlock(idx)	((void)(idx))
+-# define br_write_lock(idx)	((void)(idx))
+-# define br_write_unlock(idx)	((void)(idx))
+-#endif
++# define br_read_lock(idx)	({ (void)(idx); preempt_disable(); })
++# define br_read_unlock(idx)	({ (void)(idx); preempt_enable(); })
++# define br_write_lock(idx)	({ (void)(idx); preempt_disable(); })
++# define br_write_unlock(idx)	({ (void)(idx); preempt_enable(); })
++#endif	/* CONFIG_SMP */
+ 
+ /*
+  * Now enumerate all of the possible sw/hw IRQ protected
+diff -urN linux-2.4.18-rc1-ingo-K3/include/linux/dcache.h linux/include/linux/dcache.h
+--- linux-2.4.18-rc1-ingo-K3/include/linux/dcache.h	Wed Feb 13 16:24:09 2002
++++ linux/include/linux/dcache.h	Wed Feb 13 16:23:45 2002
+@@ -126,31 +126,6 @@
+ 
+ extern spinlock_t dcache_lock;
+ 
+-/**
+- * d_drop - drop a dentry
+- * @dentry: dentry to drop
+- *
+- * d_drop() unhashes the entry from the parent
+- * dentry hashes, so that it won't be found through
+- * a VFS lookup any more. Note that this is different
+- * from deleting the dentry - d_delete will try to
+- * mark the dentry negative if possible, giving a
+- * successful _negative_ lookup, while d_drop will
+- * just make the cache lookup fail.
+- *
+- * d_drop() is used mainly for stuff that wants
+- * to invalidate a dentry for some reason (NFS
+- * timeouts or autofs deletes).
+- */
+-
+-static __inline__ void d_drop(struct dentry * dentry)
+-{
+-	spin_lock(&dcache_lock);
+-	list_del(&dentry->d_hash);
+-	INIT_LIST_HEAD(&dentry->d_hash);
+-	spin_unlock(&dcache_lock);
+-}
+-
+ static __inline__ int dname_external(struct dentry *d)
+ {
+ 	return d->d_name.name != d->d_iname; 
+@@ -275,3 +250,34 @@
+ #endif /* __KERNEL__ */
+ 
+ #endif	/* __LINUX_DCACHE_H */
++
++#if !defined(__LINUX_DCACHE_H_INLINES) && defined(_TASK_STRUCT_DEFINED)
++#define __LINUX_DCACHE_H_INLINES
++
++#ifdef __KERNEL__
++/**
++ * d_drop - drop a dentry
++ * @dentry: dentry to drop
++ *
++ * d_drop() unhashes the entry from the parent
++ * dentry hashes, so that it won't be found through
++ * a VFS lookup any more. Note that this is different
++ * from deleting the dentry - d_delete will try to
++ * mark the dentry negative if possible, giving a
++ * successful _negative_ lookup, while d_drop will
++ * just make the cache lookup fail.
++ *
++ * d_drop() is used mainly for stuff that wants
++ * to invalidate a dentry for some reason (NFS
++ * timeouts or autofs deletes).
++ */
++
++static __inline__ void d_drop(struct dentry * dentry)
++{
++	spin_lock(&dcache_lock);
++	list_del(&dentry->d_hash);
++	INIT_LIST_HEAD(&dentry->d_hash);
++	spin_unlock(&dcache_lock);
++}
++#endif
++#endif
+diff -urN linux-2.4.18-rc1-ingo-K3/include/linux/fs_struct.h linux/include/linux/fs_struct.h
+--- linux-2.4.18-rc1-ingo-K3/include/linux/fs_struct.h	Wed Feb 13 16:24:09 2002
++++ linux/include/linux/fs_struct.h	Wed Feb 13 16:23:45 2002
+@@ -20,6 +20,15 @@
+ extern void exit_fs(struct task_struct *);
+ extern void set_fs_altroot(void);
+ 
++struct fs_struct *copy_fs_struct(struct fs_struct *old);
++void put_fs_struct(struct fs_struct *fs);
++
++#endif
++#endif
++
++#if !defined(_LINUX_FS_STRUCT_H_INLINES) && defined(_TASK_STRUCT_DEFINED)
++#define _LINUX_FS_STRUCT_H_INLINES
++#ifdef __KERNEL__
+ /*
+  * Replace the fs->{rootmnt,root} with {mnt,dentry}. Put the old values.
+  * It can block. Requires the big lock held.
+@@ -65,9 +74,5 @@
+ 		mntput(old_pwdmnt);
+ 	}
+ }
+-
+-struct fs_struct *copy_fs_struct(struct fs_struct *old);
+-void put_fs_struct(struct fs_struct *fs);
+-
+ #endif
+ #endif
+diff -urN linux-2.4.18-rc1-ingo-K3/include/linux/sched.h linux/include/linux/sched.h
+--- linux-2.4.18-rc1-ingo-K3/include/linux/sched.h	Wed Feb 13 16:25:18 2002
++++ linux/include/linux/sched.h	Wed Feb 13 16:23:45 2002
+@@ -91,6 +91,7 @@
+ #define TASK_UNINTERRUPTIBLE	2
+ #define TASK_ZOMBIE		4
+ #define TASK_STOPPED		8
++#define PREEMPT_ACTIVE		0x4000000
+ 
+ #define __set_task_state(tsk, state_value)		\
+ 	do { (tsk)->state = (state_value); } while (0)
+@@ -156,6 +157,9 @@
+ #define	MAX_SCHEDULE_TIMEOUT	LONG_MAX
+ extern signed long FASTCALL(schedule_timeout(signed long timeout));
+ asmlinkage void schedule(void);
++#ifdef CONFIG_PREEMPT
++asmlinkage void preempt_schedule(void);
++#endif
+ 
+ extern int schedule_task(struct tq_struct *task);
+ extern void flush_scheduled_tasks(void);
+@@ -288,7 +292,7 @@
+ 	 * offsets of these are hardcoded elsewhere - touch with care
+ 	 */
+ 	volatile long state;	/* -1 unrunnable, 0 runnable, >0 stopped */
+-	unsigned long flags;	/* per process flags, defined below */
++	int preempt_count;	/* 0 => preemptable, <0 => BUG */
+ 	int sigpending;
+ 	mm_segment_t addr_limit;	/* thread address space:
+ 					 	0-0xBFFFFFFF for user-thead
+@@ -321,6 +325,7 @@
+ 	struct list_head local_pages;
+ 
+ 	unsigned int allocation_order, nr_local_pages;
++	unsigned long flags;
+ 
+ /* task state */
+ 	struct linux_binfmt *binfmt;
+@@ -907,6 +912,11 @@
+ 	return res;
+ }
+ 
++#define _TASK_STRUCT_DEFINED
++#include <linux/dcache.h>
++#include <linux/tqueue.h>
++#include <linux/fs_struct.h>
++
+ #endif /* __KERNEL__ */
+ 
+ #endif
+diff -urN linux-2.4.18-rc1-ingo-K3/include/linux/smp.h linux/include/linux/smp.h
+--- linux-2.4.18-rc1-ingo-K3/include/linux/smp.h	Wed Feb 13 16:25:18 2002
++++ linux/include/linux/smp.h	Wed Feb 13 16:23:45 2002
+@@ -81,7 +81,9 @@
+ #define smp_processor_id()			0
+ #define hard_smp_processor_id()			0
+ #define smp_threads_ready			1
++#ifndef CONFIG_PREEMPT
+ #define kernel_lock()
++#endif
+ #define cpu_logical_map(cpu)			0
+ #define cpu_number_map(cpu)			0
+ #define smp_call_function(func,info,retry,wait)	({ 0; })
+diff -urN linux-2.4.18-rc1-ingo-K3/include/linux/smp_lock.h linux/include/linux/smp_lock.h
+--- linux-2.4.18-rc1-ingo-K3/include/linux/smp_lock.h	Wed Feb 13 16:24:09 2002
++++ linux/include/linux/smp_lock.h	Wed Feb 13 16:23:45 2002
+@@ -3,7 +3,7 @@
+ 
+ #include <linux/config.h>
+ 
+-#ifndef CONFIG_SMP
++#if !defined(CONFIG_SMP) && !defined(CONFIG_PREEMPT)
+ 
+ #define lock_kernel()				do { } while(0)
+ #define unlock_kernel()				do { } while(0)
+diff -urN linux-2.4.18-rc1-ingo-K3/include/linux/spinlock.h linux/include/linux/spinlock.h
+--- linux-2.4.18-rc1-ingo-K3/include/linux/spinlock.h	Wed Feb 13 16:24:09 2002
++++ linux/include/linux/spinlock.h	Wed Feb 13 16:23:45 2002
+@@ -2,6 +2,7 @@
+ #define __LINUX_SPINLOCK_H
+ 
+ #include <linux/config.h>
++#include <linux/compiler.h>
+ 
+ /*
+  * These are the generic versions of the spinlocks and read-write
+@@ -45,8 +46,10 @@
+ 
+ #if (DEBUG_SPINLOCKS < 1)
+ 
++#ifndef CONFIG_PREEMPT
+ #define atomic_dec_and_lock(atomic,lock) atomic_dec_and_test(atomic)
+ #define ATOMIC_DEC_AND_LOCK
++#endif
+ 
+ /*
+  * Your basic spinlocks, allowing only a single CPU anywhere
+@@ -62,11 +65,11 @@
+ #endif
+ 
+ #define spin_lock_init(lock)	do { } while(0)
+-#define spin_lock(lock)		(void)(lock) /* Not "unused variable". */
++#define _raw_spin_lock(lock)	(void)(lock) /* Not "unused variable". */
+ #define spin_is_locked(lock)	(0)
+-#define spin_trylock(lock)	({1; })
++#define _raw_spin_trylock(lock)	({1; })
+ #define spin_unlock_wait(lock)	do { } while(0)
+-#define spin_unlock(lock)	do { } while(0)
++#define _raw_spin_unlock(lock)	do { } while(0)
+ 
+ #elif (DEBUG_SPINLOCKS < 2)
+ 
+@@ -125,13 +128,76 @@
+ #endif
+ 
+ #define rwlock_init(lock)	do { } while(0)
+-#define read_lock(lock)		(void)(lock) /* Not "unused variable". */
+-#define read_unlock(lock)	do { } while(0)
+-#define write_lock(lock)	(void)(lock) /* Not "unused variable". */
+-#define write_unlock(lock)	do { } while(0)
++#define _raw_read_lock(lock)	(void)(lock) /* Not "unused variable". */
++#define _raw_read_unlock(lock)	do { } while(0)
++#define _raw_write_lock(lock)	(void)(lock) /* Not "unused variable". */
++#define _raw_write_unlock(lock)	do { } while(0)
+ 
+ #endif /* !SMP */
+ 
++#ifdef CONFIG_PREEMPT
++
++#define preempt_get_count() (current->preempt_count)
++
++#define preempt_disable() \
++do { \
++	++current->preempt_count; \
++	barrier(); \
++} while (0)
++
++#define preempt_enable_no_resched() \
++do { \
++	--current->preempt_count; \
++	barrier(); \
++} while (0)
++
++#define preempt_enable() \
++do { \
++	--current->preempt_count; \
++	barrier(); \
++	if (unlikely(current->preempt_count < current->need_resched)) \
++		preempt_schedule(); \
++} while (0)
++
++#define spin_lock(lock)	\
++do { \
++	preempt_disable(); \
++	_raw_spin_lock(lock); \
++} while(0)
++
++#define spin_trylock(lock)	({preempt_disable(); _raw_spin_trylock(lock) ? \
++				1 : ({preempt_enable(); 0;});})
++#define spin_unlock(lock) \
++do { \
++	_raw_spin_unlock(lock); \
++	preempt_enable(); \
++} while (0)
++
++#define read_lock(lock)		({preempt_disable(); _raw_read_lock(lock);})
++#define read_unlock(lock)	({_raw_read_unlock(lock); preempt_enable();})
++#define write_lock(lock)	({preempt_disable(); _raw_write_lock(lock);})
++#define write_unlock(lock)	({_raw_write_unlock(lock); preempt_enable();})
++#define write_trylock(lock)	({preempt_disable();_raw_write_trylock(lock) ? \
++				1 : ({preempt_enable(); 0;});})
++
++#else
++
++#define preempt_get_count()	do { } while (0)
++#define preempt_disable()	do { } while (0)
++#define preempt_enable_no_resched()	do {} while(0)
++#define preempt_enable()	do { } while (0)
++
++#define spin_lock(lock)		_raw_spin_lock(lock)
++#define spin_trylock(lock)	_raw_spin_trylock(lock)
++#define spin_unlock(lock)	_raw_spin_unlock(lock)
++
++#define read_lock(lock)		_raw_read_lock(lock)
++#define read_unlock(lock)	_raw_read_unlock(lock)
++#define write_lock(lock)	_raw_write_lock(lock)
++#define write_unlock(lock)	_raw_write_unlock(lock)
++#define write_trylock(lock)	_raw_write_trylock(lock)
++#endif
++
+ /* "lock on reference count zero" */
+ #ifndef ATOMIC_DEC_AND_LOCK
+ #include <asm/atomic.h>
+diff -urN linux-2.4.18-rc1-ingo-K3/include/linux/tqueue.h linux/include/linux/tqueue.h
+--- linux-2.4.18-rc1-ingo-K3/include/linux/tqueue.h	Wed Feb 13 16:24:09 2002
++++ linux/include/linux/tqueue.h	Wed Feb 13 16:23:45 2002
+@@ -94,6 +94,22 @@
+ extern spinlock_t tqueue_lock;
+ 
+ /*
++ * Call all "bottom halfs" on a given list.
++ */
++
++extern void __run_task_queue(task_queue *list);
++
++static inline void run_task_queue(task_queue *list)
++{
++	if (TQ_ACTIVE(*list))
++		__run_task_queue(list);
++}
++
++#endif /* _LINUX_TQUEUE_H */
++
++#if !defined(_LINUX_TQUEUE_H_INLINES) && defined(_TASK_STRUCT_DEFINED)
++#define _LINUX_TQUEUE_H_INLINES
++/*
+  * Queue a task on a tq.  Return non-zero if it was successfully
+  * added.
+  */
+@@ -109,17 +125,4 @@
+ 	}
+ 	return ret;
+ }
+-
+-/*
+- * Call all "bottom halfs" on a given list.
+- */
+-
+-extern void __run_task_queue(task_queue *list);
+-
+-static inline void run_task_queue(task_queue *list)
+-{
+-	if (TQ_ACTIVE(*list))
+-		__run_task_queue(list);
+-}
+-
+-#endif /* _LINUX_TQUEUE_H */
++#endif
+diff -urN linux-2.4.18-rc1-ingo-K3/kernel/exit.c linux/kernel/exit.c
+--- linux-2.4.18-rc1-ingo-K3/kernel/exit.c	Wed Feb 13 16:25:18 2002
++++ linux/kernel/exit.c	Wed Feb 13 16:23:45 2002
+@@ -366,8 +366,8 @@
+ 		/* more a memory barrier than a real lock */
+ 		task_lock(tsk);
+ 		tsk->mm = NULL;
+-		task_unlock(tsk);
+ 		enter_lazy_tlb(mm, current, smp_processor_id());
++		task_unlock(tsk);
+ 		mmput(mm);
+ 	}
+ }
+diff -urN linux-2.4.18-rc1-ingo-K3/kernel/fork.c linux/kernel/fork.c
+--- linux-2.4.18-rc1-ingo-K3/kernel/fork.c	Wed Feb 13 16:25:18 2002
++++ linux/kernel/fork.c	Wed Feb 13 16:23:45 2002
+@@ -614,6 +614,13 @@
+ 	if (p->binfmt && p->binfmt->module)
+ 		__MOD_INC_USE_COUNT(p->binfmt->module);
+ 
++#ifdef CONFIG_PREEMPT
++	/*
++	 * schedule_tail drops this_rq()->lock so compensate with a count
++	 * of 1.  Also, we want to start with kernel preemption disabled.
++	 */
++	p->preempt_count = 1;
++#endif
+ 	p->did_exec = 0;
+ 	p->swappable = 0;
+ 	p->state = TASK_UNINTERRUPTIBLE;
+diff -urN linux-2.4.18-rc1-ingo-K3/kernel/ksyms.c linux/kernel/ksyms.c
+--- linux-2.4.18-rc1-ingo-K3/kernel/ksyms.c	Wed Feb 13 16:25:18 2002
++++ linux/kernel/ksyms.c	Wed Feb 13 16:23:45 2002
+@@ -437,6 +437,9 @@
+ EXPORT_SYMBOL(interruptible_sleep_on);
+ EXPORT_SYMBOL(interruptible_sleep_on_timeout);
+ EXPORT_SYMBOL(schedule);
++#ifdef CONFIG_PREEMPT
++EXPORT_SYMBOL(preempt_schedule);
++#endif
+ EXPORT_SYMBOL(schedule_timeout);
+ EXPORT_SYMBOL(sys_sched_yield);
+ EXPORT_SYMBOL(set_user_nice);
+diff -urN linux-2.4.18-rc1-ingo-K3/kernel/sched.c linux/kernel/sched.c
+--- linux-2.4.18-rc1-ingo-K3/kernel/sched.c	Wed Feb 13 16:25:18 2002
++++ linux/kernel/sched.c	Wed Feb 13 16:23:45 2002
+@@ -159,10 +159,12 @@
+ 	struct runqueue *__rq;
+ 
+ repeat_lock_task:
++	preempt_disable();
+ 	__rq = task_rq(p);
+ 	spin_lock_irqsave(&__rq->lock, *flags);
+ 	if (unlikely(__rq != task_rq(p))) {
+ 		spin_unlock_irqrestore(&__rq->lock, *flags);
++		preempt_enable();
+ 		goto repeat_lock_task;
+ 	}
+ 	return __rq;
+@@ -171,6 +173,7 @@
+ static inline void unlock_task_rq(runqueue_t *rq, unsigned long *flags)
+ {
+ 	spin_unlock_irqrestore(&rq->lock, *flags);
++	preempt_enable();
+ }
+ 
+ /*
+@@ -251,11 +254,13 @@
+ {
+ 	int need_resched;
+ 
++	preempt_disable();
+ 	need_resched = p->need_resched;
+ 	wmb();
+ 	p->need_resched = 1;
+ 	if (!need_resched && (p->cpu != smp_processor_id()))
+ 		smp_send_reschedule(p->cpu);
++	preempt_enable();
+ }
+ 
+ #ifdef CONFIG_SMP
+@@ -270,6 +275,7 @@
+ 	runqueue_t *rq;
+ 
+ repeat:
++	preempt_disable();
+ 	rq = task_rq(p);
+ 	while (unlikely(rq->curr == p)) {
+ 		cpu_relax();
+@@ -278,9 +284,11 @@
+ 	rq = lock_task_rq(p, &flags);
+ 	if (unlikely(rq->curr == p)) {
+ 		unlock_task_rq(rq, &flags);
++		preempt_enable();
+ 		goto repeat;
+ 	}
+ 	unlock_task_rq(rq, &flags);
++	preempt_enable();
+ }
+ 
+ /*
+@@ -346,7 +354,10 @@
+ 
+ void wake_up_forked_process(task_t * p)
+ {
+-	runqueue_t *rq = this_rq();
++	runqueue_t *rq;
++	
++	preempt_disable();
++	rq = this_rq();
+ 
+ 	p->state = TASK_RUNNING;
+ 	if (!rt_task(p)) {
+@@ -363,6 +374,7 @@
+ 	p->cpu = smp_processor_id();
+ 	activate_task(p, rq);
+ 	spin_unlock_irq(&rq->lock);
++	preempt_enable();
+ }
+ 
+ /*
+@@ -743,18 +755,32 @@
+  */
+ asmlinkage void schedule(void)
+ {
+-	task_t *prev = current, *next;
+-	runqueue_t *rq = this_rq();
++	task_t *prev, *next;
++	runqueue_t *rq;
+ 	prio_array_t *array;
+ 	list_t *queue;
+ 	int idx;
+ 
+ 	if (unlikely(in_interrupt()))
+ 		BUG();
++
++	preempt_disable();
++	prev = current;
++	rq = this_rq();
++
+ 	release_kernel_lock(prev, smp_processor_id());
+ 	prev->sleep_timestamp = jiffies;
+ 	spin_lock_irq(&rq->lock);
+ 
++#ifdef CONFIG_PREEMPT
++	/*
++	 * if entering from preempt_schedule, off a kernel preemption,
++	 * go straight to picking the next task.
++	 */
++	if (unlikely(preempt_get_count() & PREEMPT_ACTIVE))
++		goto pick_next_task;
++#endif
++
+ 	switch (prev->state) {
+ 	case TASK_INTERRUPTIBLE:
+ 		if (unlikely(signal_pending(prev))) {
+@@ -766,7 +792,7 @@
+ 	case TASK_RUNNING:
+ 		;
+ 	}
+-#if CONFIG_SMP
++#if CONFIG_SMP || CONFIG_PREEMPT
+ pick_next_task:
+ #endif
+ 	if (unlikely(!rq->nr_running)) {
+@@ -814,9 +840,25 @@
+ 	spin_unlock_irq(&rq->lock);
+ 
+ 	reacquire_kernel_lock(current);
++	preempt_enable_no_resched();
+ 	return;
+ }
+ 
++#ifdef CONFIG_PREEMPT
++/*
++ * this is is the entry point to schedule() from in-kernel preemption.
++ */
++asmlinkage void preempt_schedule(void)
++{
++	do {
++		current->preempt_count += PREEMPT_ACTIVE;
++		schedule();
++		current->preempt_count -= PREEMPT_ACTIVE;
++		barrier();
++	} while (current->need_resched);
++}
++#endif /* CONFIG_PREEMPT */
++
+ /*
+  * The core wakeup function.  Non-exclusive wakeups (nr_exclusive == 0) just
+  * wake everything up.  If it's an exclusive wakeup (nr_exclusive == small +ve
+@@ -1229,12 +1271,17 @@
+ 
+ asmlinkage long sys_sched_yield(void)
+ {
+-	task_t *prev = current, *next;
+-	runqueue_t *rq = this_rq();
++	task_t *prev, *next;
++	runqueue_t *rq;
+ 	prio_array_t *array;
+ 	list_t *queue;
+ 
++	preempt_disable();
++	prev = current;
++	rq = this_rq();
++
+ 	if (unlikely(prev->state != TASK_RUNNING)) {
++		preempt_enable_no_resched();
+ 		schedule();
+ 		return 0;
+ 	}
+@@ -1286,6 +1333,7 @@
+ 	spin_unlock_irq(&rq->lock);
+ 
+ 	reacquire_kernel_lock(current);
++	preempt_enable_no_resched();
+ 
+ 	return 0;
+ }
+diff -urN linux-2.4.18-rc1-ingo-K3/lib/dec_and_lock.c linux/lib/dec_and_lock.c
+--- linux-2.4.18-rc1-ingo-K3/lib/dec_and_lock.c	Wed Feb 13 16:24:09 2002
++++ linux/lib/dec_and_lock.c	Wed Feb 13 16:23:45 2002
+@@ -1,5 +1,6 @@
+ #include <linux/module.h>
+ #include <linux/spinlock.h>
++#include <linux/sched.h>
+ #include <asm/atomic.h>
+ 
+ /*
+diff -urN linux-2.4.18-rc1-ingo-K3/mm/slab.c linux/mm/slab.c
+--- linux-2.4.18-rc1-ingo-K3/mm/slab.c	Wed Feb 13 16:24:09 2002
++++ linux/mm/slab.c	Wed Feb 13 16:23:45 2002
+@@ -49,7 +49,8 @@
+  *  constructors and destructors are called without any locking.
+  *  Several members in kmem_cache_t and slab_t never change, they
+  *	are accessed without any locking.
+- *  The per-cpu arrays are never accessed from the wrong cpu, no locking.
++ *  The per-cpu arrays are never accessed from the wrong cpu, no locking,
++ *  	and local interrupts are disabled so slab code is preempt-safe.
+  *  The non-constant members are protected with a per-cache irq spinlock.
+  *
+  * Further notes from the original documentation:
+diff -urN linux-2.4.18-rc1-ingo-K3/net/socket.c linux/net/socket.c
+--- linux-2.4.18-rc1-ingo-K3/net/socket.c	Wed Feb 13 16:25:18 2002
++++ linux/net/socket.c	Wed Feb 13 16:23:45 2002
+@@ -133,7 +133,7 @@
+ 
+ static struct net_proto_family *net_families[NPROTO];
+ 
+-#ifdef CONFIG_SMP
++#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT)
+ static atomic_t net_family_lockct = ATOMIC_INIT(0);
+ static spinlock_t net_family_lock = SPIN_LOCK_UNLOCKED;
+ 
+diff -urN linux-2.4.18-rc1-ingo-K3/net/sunrpc/pmap_clnt.c linux/net/sunrpc/pmap_clnt.c
+--- linux-2.4.18-rc1-ingo-K3/net/sunrpc/pmap_clnt.c	Wed Feb 13 16:24:20 2002
++++ linux/net/sunrpc/pmap_clnt.c	Wed Feb 13 16:23:45 2002
+@@ -12,6 +12,7 @@
+ #include <linux/config.h>
+ #include <linux/types.h>
+ #include <linux/socket.h>
++#include <linux/sched.h>
+ #include <linux/kernel.h>
+ #include <linux/errno.h>
+ #include <linux/uio.h>
