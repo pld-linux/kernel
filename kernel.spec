@@ -36,7 +36,7 @@ Patch0:		http://piorun.ds.pg.gda.pl/~blues/linux-2.5.67-genrtc_fix.patch
 Patch1:		http://www.kernel.org/pub/linux/kernel/people/alan/linux-2.5/2.5.69/patch-2.5.69-ac1.bz2
 #Patch2:		http://www.kernel.org/pub/linux/kernel/v2.5/snapshots/patch-2.5.69-bk2.bz2
 # LSM/SELinux
-Patch10:	http://www.nsa.gov/selinux/lk/2.5.69-selinux0.patch.gz
+Patch10:	http://www.nsa.gov/selinux/lk/2.5.69-selinux1.patch.gz
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
