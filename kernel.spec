@@ -47,7 +47,7 @@ Source6:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_
 Source7:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
 # Source7-md5:	93828aea31e72bc34e3188d64cf0518a
 Source8:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
-# Source8-md5: c2a17dbb0259505f45e4dc0ead39709c
+# Source8-md5: 34515784c7b67f6cc9169aa9eed982c7
 Source9:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
 # Source9-md5: 4d5dd3fef2f5537ee07e64cdd1378e80
 Source10:	linux-2.4.20-aacraid.tar.bz2
