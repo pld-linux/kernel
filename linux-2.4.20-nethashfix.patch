@@ -1,0 +1,766 @@
+# This is a BitKeeper generated patch for the following project:
+# Project Name: Linux kernel tree
+# This patch format is intended for GNU patch command version 2.5 or higher.
+# This patch includes the following deltas:
+#	           ChangeSet	1.1142  -> 1.1143 
+#	net/ipv4/netfilter/ip_conntrack_core.c	1.17    -> 1.18   
+#	include/linux/sysctl.h	1.22    -> 1.23   
+#	 net/ipv6/tcp_ipv6.c	1.21    -> 1.22   
+#	   include/net/tcp.h	1.21    -> 1.22   
+#	      net/ipv4/tcp.c	1.25    -> 1.26   
+#	 net/ipv4/tcp_ipv4.c	1.20    -> 1.21   
+#	    net/ipv4/route.c	1.21    -> 1.22   
+#	               (new)	        -> 1.1     include/linux/jhash.h
+#
+# The following is the BitKeeper ChangeSet Log
+# --------------------------------------------
+# 03/05/03	davem@nuts.ninka.net	1.1143
+# [NET]: Fix hashing exploits in ipv4 routing, IP conntrack, and TCP synq.
+# 
+# Several hash table implementations in the networking were
+# remotely exploitable.  Remote attackers could launch attacks
+# whereby, using carefully choosen forged source addresses, make
+# every routing cache entry get hashed into the same hash chain.
+# 
+# Netfilter's IP conntrack module and the TCP syn-queue implementation
+# had identical vulnerabilities and have been fixed too.
+# 
+# The choosen solution to the problem involved using Bob's Jenkins
+# hash along with a randomly choosen input.  For the ipv4 routing
+# cache we take things one step further and periodically choose a
+# new random secret.  By default this happens every 10 minutes, but
+# this is configurable by the user via sysctl knobs.
+# --------------------------------------------
+#
+diff -Nru a/include/linux/jhash.h b/include/linux/jhash.h
+--- /dev/null	Wed Dec 31 16:00:00 1969
++++ b/include/linux/jhash.h	Tue May  6 02:39:57 2003
+@@ -0,0 +1,161 @@
++#ifndef _LINUX_JHASH_H
++#define _LINUX_JHASH_H
++
++/* jhash.h: Jenkins hash support.
++ *
++ * Copyright (C) 1996 Bob Jenkins (bob_jenkins@burtleburtle.net)
++ *
++ * http://burtleburtle.net/bob/hash/
++ *
++ * These are the credits from Bob's sources:
++ *
++ * lookup2.c, by Bob Jenkins, December 1996, Public Domain.
++ * hash(), hash2(), hash3, and mix() are externally useful functions.
++ * Routines to test the hash are included if SELF_TEST is defined.
++ * You can use this free for any purpose.  It has no warranty.
++ *
++ * Copyright (C) 2003 David S. Miller (davem@redhat.com)
++ *
++ * I've modified Bob's hash to be useful in the Linux kernel, and
++ * any bugs present are surely my fault.  -DaveM
++ */
++
++/* NOTE: Arguments are modified. */
++#define __jhash_mix(a, b, c) \
++{ \
++  a -= b; a -= c; a ^= (c>>13); \
++  b -= c; b -= a; b ^= (a<<8); \
++  c -= a; c -= b; c ^= (b>>13); \
++  a -= b; a -= c; a ^= (c>>12);  \
++  b -= c; b -= a; b ^= (a<<16); \
++  c -= a; c -= b; c ^= (b>>5); \
++  a -= b; a -= c; a ^= (c>>3);  \
++  b -= c; b -= a; b ^= (a<<10); \
++  c -= a; c -= b; c ^= (b>>15); \
++}
++
++/* The golden ration: an arbitrary value */
++#define JHASH_GOLDEN_RATIO	0x9e3779b9
++
++/* The most generic version, hashes an arbitrary sequence
++ * of bytes.  No alignment or length assumptions are made about
++ * the input key.
++ */
++static __inline__ u32 jenkins_hash(void *key, u32 length, u32 initval)
++{
++	u32 a, b, c, len;
++	u8 *k = key;
++
++	len = length;
++	a = b = JHASH_GOLDEN_RATIO;
++	c = initval;
++
++	while (len >= 12) {
++		a += (k[0] +((u32)k[1]<<8) +((u32)k[2]<<16) +((u32)k[3]<<24));
++		b += (k[4] +((u32)k[5]<<8) +((u32)k[6]<<16) +((u32)k[7]<<24));
++		c += (k[8] +((u32)k[9]<<8) +((u32)k[10]<<16)+((u32)k[11]<<24));
++
++		__jhash_mix(a,b,c);
++
++		k += 12;
++		len -= 12;
++	}
++
++	c += length;
++	switch (len) {
++	case 11: c += ((u32)k[10]<<24);
++	case 10: c += ((u32)k[9]<<16);
++	case 9 : c += ((u32)k[8]<<8);
++	case 8 : b += ((u32)k[7]<<24);
++	case 7 : b += ((u32)k[6]<<16);
++	case 6 : b += ((u32)k[5]<<8);
++	case 5 : b += k[4];
++	case 4 : a += ((u32)k[3]<<24);
++	case 3 : a += ((u32)k[2]<<16);
++	case 2 : a += ((u32)k[1]<<8);
++	case 1 : a += k[0];
++	};
++
++	__jhash_mix(a,b,c);
++
++	return c;
++}
++
++/* A special optimized version that handles 1 or more of u32s.
++ * The length parameter here is the number of u32s in the key.
++ */
++static __inline__ u32 hash2(u32 *k, u32 length, u32 initval)
++{
++	u32 a, b, c, len;
++
++	a = b = JHASH_GOLDEN_RATIO;
++	c = initval;
++	len = length;
++
++	while (len >= 3) {
++		a += k[0];
++		b += k[1];
++		c += k[2];
++		__jhash_mix(a, b, c);
++		k += 3; len -= 3;
++	}
++
++	c += length * 4;
++
++	switch (len) {
++	case 2 : b += k[1];
++	case 1 : a += k[0];
++	};
++
++	__jhash_mix(a,b,c);
++
++	return c;
++}
++
++
++/* A special ultra-optimized versions that knows they are hashing exactly
++ * 3, 2 or 1 word(s).
++ *
++ * NOTE: In partilar the "c += length; __jhash_mix(a,b,c);" normally
++ *       done at the end is not done here.
++ */
++static __inline__ u32 jenkins_hash_3words(u32 a, u32 b, u32 c,
++					  u32 initval)
++{
++	a += JHASH_GOLDEN_RATIO;
++	b += JHASH_GOLDEN_RATIO;
++	c += initval;
++
++	__jhash_mix(a, b, c);
++
++	return c;
++}
++
++static __inline__ u32 jenkins_hash_2words(u32 a, u32 b, u32 initval)
++{
++	u32 c = 0;
++
++	a += JHASH_GOLDEN_RATIO;
++	b += JHASH_GOLDEN_RATIO;
++	c += initval;
++
++	__jhash_mix(a, b, c);
++
++	return c;
++}
++
++static __inline__ u32 jenkins_hash_1word(u32 a, u32 initval)
++{
++	u32 b = 0;
++	u32 c = 0;
++
++	a += JHASH_GOLDEN_RATIO;
++	b += JHASH_GOLDEN_RATIO;
++	c += initval;
++
++	__jhash_mix(a, b, c);
++
++	return c;
++}
++
++#endif /* _LINUX_JHASH_H */
+diff -Nru a/include/linux/sysctl.h b/include/linux/sysctl.h
+--- a/include/linux/sysctl.h	Tue May  6 02:39:57 2003
++++ b/include/linux/sysctl.h	Tue May  6 02:39:57 2003
+@@ -315,7 +315,8 @@
+ 	NET_IPV4_ROUTE_GC_ELASTICITY=14,
+ 	NET_IPV4_ROUTE_MTU_EXPIRES=15,
+ 	NET_IPV4_ROUTE_MIN_PMTU=16,
+-	NET_IPV4_ROUTE_MIN_ADVMSS=17
++	NET_IPV4_ROUTE_MIN_ADVMSS=17,
++	NET_IPV4_ROUTE_SECRET_INTERVAL=18,
+ };
+ 
+ enum
+diff -Nru a/include/net/tcp.h b/include/net/tcp.h
+--- a/include/net/tcp.h	Tue May  6 02:39:57 2003
++++ b/include/net/tcp.h	Tue May  6 02:39:57 2003
+@@ -1604,6 +1604,7 @@
+ 	int			qlen;
+ 	int			qlen_young;
+ 	int			clock_hand;
++	u32			hash_rnd;
+ 	struct open_request	*syn_table[TCP_SYNQ_HSIZE];
+ };
+ 
+diff -Nru a/net/ipv4/netfilter/ip_conntrack_core.c b/net/ipv4/netfilter/ip_conntrack_core.c
+--- a/net/ipv4/netfilter/ip_conntrack_core.c	Tue May  6 02:39:57 2003
++++ b/net/ipv4/netfilter/ip_conntrack_core.c	Tue May  6 02:39:57 2003
+@@ -28,6 +28,8 @@
+ #include <linux/stddef.h>
+ #include <linux/sysctl.h>
+ #include <linux/slab.h>
++#include <linux/random.h>
++#include <linux/jhash.h>
+ /* For ERR_PTR().  Yeah, I know... --RR */
+ #include <linux/fs.h>
+ 
+@@ -104,20 +106,21 @@
+ 	nf_conntrack_put(&ct->infos[0]);
+ }
+ 
+-static inline u_int32_t
++static int ip_conntrack_hash_rnd_initted;
++static unsigned int ip_conntrack_hash_rnd;
++
++static u_int32_t
+ hash_conntrack(const struct ip_conntrack_tuple *tuple)
+ {
+ #if 0
+ 	dump_tuple(tuple);
+ #endif
+-	/* ntohl because more differences in low bits. */
+-	/* To ensure that halves of the same connection don't hash
+-	   clash, we add the source per-proto again. */
+-	return (ntohl(tuple->src.ip + tuple->dst.ip
+-		     + tuple->src.u.all + tuple->dst.u.all
+-		     + tuple->dst.protonum)
+-		+ ntohs(tuple->src.u.all))
+-		% ip_conntrack_htable_size;
++	return (jenkins_hash_3words(tuple->src.ip,
++				    (tuple->dst.ip ^ tuple->dst.protonum),
++				    (tuple->src.u.all |
++				     (tuple->dst.u.all << 16)),
++				    ip_conntrack_hash_rnd)
++		% ip_conntrack_htable_size);
+ }
+ 
+ inline int
+@@ -633,11 +636,16 @@
+ {
+ 	struct ip_conntrack *conntrack;
+ 	struct ip_conntrack_tuple repl_tuple;
+-	size_t hash, repl_hash;
++	size_t hash;
+ 	struct ip_conntrack_expect *expected;
+ 	int i;
+ 	static unsigned int drop_next = 0;
+ 
++	if (!ip_conntrack_hash_rnd_initted) {
++		get_random_bytes(&ip_conntrack_hash_rnd, 4);
++		ip_conntrack_hash_rnd_initted = 1;
++	}
++
+ 	hash = hash_conntrack(tuple);
+ 
+ 	if (ip_conntrack_max &&
+@@ -661,7 +669,6 @@
+ 		DEBUGP("Can't invert tuple.\n");
+ 		return NULL;
+ 	}
+-	repl_hash = hash_conntrack(&repl_tuple);
+ 
+ 	conntrack = kmem_cache_alloc(ip_conntrack_cachep, GFP_ATOMIC);
+ 	if (!conntrack) {
+@@ -1428,7 +1435,7 @@
+ 	ip_conntrack_max = 8 * ip_conntrack_htable_size;
+ 
+ 	printk("ip_conntrack version %s (%u buckets, %d max)"
+-	       " - %d bytes per conntrack\n", IP_CONNTRACK_VERSION,
++	       " - %Zd bytes per conntrack\n", IP_CONNTRACK_VERSION,
+ 	       ip_conntrack_htable_size, ip_conntrack_max,
+ 	       sizeof(struct ip_conntrack));
+ 
+diff -Nru a/net/ipv4/route.c b/net/ipv4/route.c
+--- a/net/ipv4/route.c	Tue May  6 02:39:57 2003
++++ b/net/ipv4/route.c	Tue May  6 02:39:57 2003
+@@ -85,6 +85,7 @@
+ #include <linux/mroute.h>
+ #include <linux/netfilter_ipv4.h>
+ #include <linux/random.h>
++#include <linux/jhash.h>
+ #include <net/protocol.h>
+ #include <net/ip.h>
+ #include <net/route.h>
+@@ -117,13 +118,14 @@
+ int ip_rt_mtu_expires		= 10 * 60 * HZ;
+ int ip_rt_min_pmtu		= 512 + 20 + 20;
+ int ip_rt_min_advmss		= 256;
+-
++int ip_rt_secret_interval	= 10 * 60 * HZ;
+ static unsigned long rt_deadline;
+ 
+ #define RTprint(a...)	printk(KERN_DEBUG a)
+ 
+ static struct timer_list rt_flush_timer;
+ static struct timer_list rt_periodic_timer;
++static struct timer_list rt_secret_timer;
+ 
+ /*
+  *	Interface to generic destination cache.
+@@ -194,19 +196,17 @@
+ static struct rt_hash_bucket 	*rt_hash_table;
+ static unsigned			rt_hash_mask;
+ static int			rt_hash_log;
++static unsigned int		rt_hash_rnd;
+ 
+ struct rt_cache_stat rt_cache_stat[NR_CPUS];
+ 
+ static int rt_intern_hash(unsigned hash, struct rtable *rth,
+ 				struct rtable **res);
+ 
+-static __inline__ unsigned rt_hash_code(u32 daddr, u32 saddr, u8 tos)
++static unsigned int rt_hash_code(u32 daddr, u32 saddr, u8 tos)
+ {
+-	unsigned hash = ((daddr & 0xF0F0F0F0) >> 4) |
+-			((daddr & 0x0F0F0F0F) << 4);
+-	hash ^= saddr ^ tos;
+-	hash ^= (hash >> 16);
+-	return (hash ^ (hash >> 8)) & rt_hash_mask;
++	return (jenkins_hash_3words(daddr, saddr, (u32) tos, rt_hash_rnd)
++		& rt_hash_mask);
+ }
+ 
+ static int rt_cache_get_info(char *buffer, char **start, off_t offset,
+@@ -479,6 +479,15 @@
+ 	spin_unlock_bh(&rt_flush_lock);
+ }
+ 
++static void rt_secret_rebuild(unsigned long dummy)
++{
++	unsigned long now = jiffies;
++
++	get_random_bytes(&rt_hash_rnd, 4);
++	rt_cache_flush(0);
++	mod_timer(&rt_secret_timer, now + ip_rt_secret_interval);
++}
++
+ /*
+    Short description of GC goals.
+ 
+@@ -2414,6 +2423,15 @@
+ 		mode:		0644,
+ 		proc_handler:	&proc_dointvec,
+ 	},
++	{
++		ctl_name:	NET_IPV4_ROUTE_SECRET_INTERVAL,
++		procname:	"secret_interval",
++		data:		&ip_rt_secret_interval,
++		maxlen:		sizeof(int),
++		mode:		0644,
++		proc_handler:	&proc_dointvec_jiffies,
++		strategy:	&sysctl_jiffies,
++	},
+ 	 { 0 }
+ };
+ #endif
+@@ -2444,15 +2462,25 @@
+ 		*eof = 1;
+ 	}
+ 
+-	/* Copy first cpu. */
+-	*start = buffer;
+-	memcpy(buffer, IP_RT_ACCT_CPU(0), length);
+-
+-	/* Add the other cpus in, one int at a time */
+-	for (i = 1; i < smp_num_cpus; i++) {
+-		unsigned int j;
+-		for (j = 0; j < length/4; j++)
+-			((u32*)buffer)[j] += ((u32*)IP_RT_ACCT_CPU(i))[j];
++	offset /= sizeof(u32);
++
++	if (length > 0) {
++		u32 *src = ((u32 *) IP_RT_ACCT_CPU(0)) + offset;
++		u32 *dst = (u32 *) buffer;
++
++		/* Copy first cpu. */
++		*start = buffer;
++		memcpy(dst, src, length);
++
++		/* Add the other cpus in, one int at a time */
++		for (i = 1; i < smp_num_cpus; i++) {
++			unsigned int j;
++
++			src = ((u32 *) IP_RT_ACCT_CPU(i)) + offset;
++
++			for (j = 0; j < length/4; j++)
++				dst[j] += src[j];
++		}
+ 	}
+ 	return length;
+ }
+@@ -2462,6 +2490,9 @@
+ {
+ 	int i, order, goal;
+ 
++	rt_hash_rnd = (int) ((num_physpages ^ (num_physpages>>8)) ^
++			     (jiffies ^ (jiffies >> 7)));
++
+ #ifdef CONFIG_NET_CLS_ROUTE
+ 	for (order = 0;
+ 	     (PAGE_SIZE << order) < 256 * sizeof(struct ip_rt_acct) * NR_CPUS; order++)
+@@ -2518,6 +2549,7 @@
+ 
+ 	rt_flush_timer.function = rt_run_flush;
+ 	rt_periodic_timer.function = rt_check_expire;
++	rt_secret_timer.function = rt_secret_rebuild;
+ 
+ 	/* All the timers, started at system startup tend
+ 	   to synchronize. Perturb it a bit.
+@@ -2525,6 +2557,10 @@
+ 	rt_periodic_timer.expires = jiffies + net_random() % ip_rt_gc_interval +
+ 					ip_rt_gc_interval;
+ 	add_timer(&rt_periodic_timer);
++
++	rt_secret_timer.expires = jiffies + net_random() % ip_rt_secret_interval +
++		ip_rt_secret_interval;
++	add_timer(&rt_secret_timer);
+ 
+ 	proc_net_create ("rt_cache", 0, rt_cache_get_info);
+ 	proc_net_create ("rt_cache_stat", 0, rt_cache_stat_get_info);
+diff -Nru a/net/ipv4/tcp.c b/net/ipv4/tcp.c
+--- a/net/ipv4/tcp.c	Tue May  6 02:39:57 2003
++++ b/net/ipv4/tcp.c	Tue May  6 02:39:57 2003
+@@ -252,6 +252,7 @@
+ #include <linux/init.h>
+ #include <linux/smp_lock.h>
+ #include <linux/fs.h>
++#include <linux/random.h>
+ 
+ #include <net/icmp.h>
+ #include <net/tcp.h>
+@@ -542,6 +543,7 @@
+ 	for (lopt->max_qlen_log = 6; ; lopt->max_qlen_log++)
+ 		if ((1<<lopt->max_qlen_log) >= sysctl_max_syn_backlog)
+ 			break;
++	get_random_bytes(&lopt->hash_rnd, 4);
+ 
+ 	write_lock_bh(&tp->syn_wait_lock);
+ 	tp->listen_opt = lopt;
+diff -Nru a/net/ipv4/tcp_ipv4.c b/net/ipv4/tcp_ipv4.c
+--- a/net/ipv4/tcp_ipv4.c	Tue May  6 02:39:57 2003
++++ b/net/ipv4/tcp_ipv4.c	Tue May  6 02:39:57 2003
+@@ -56,6 +56,7 @@
+ #include <linux/fcntl.h>
+ #include <linux/random.h>
+ #include <linux/cache.h>
++#include <linux/jhash.h>
+ #include <linux/init.h>
+ 
+ #include <net/icmp.h>
+@@ -868,12 +869,10 @@
+ 	return ((struct rtable*)skb->dst)->rt_iif;
+ }
+ 
+-static __inline__ unsigned tcp_v4_synq_hash(u32 raddr, u16 rport)
++static __inline__ u32 tcp_v4_synq_hash(u32 raddr, u16 rport, u32 rnd)
+ {
+-	unsigned h = raddr ^ rport;
+-	h ^= h>>16;
+-	h ^= h>>8;
+-	return h&(TCP_SYNQ_HSIZE-1);
++	return (jenkins_hash_2words(raddr, (u32) rport, rnd)
++		& (TCP_SYNQ_HSIZE - 1));
+ }
+ 
+ static struct open_request *tcp_v4_search_req(struct tcp_opt *tp, 
+@@ -884,7 +883,7 @@
+ 	struct tcp_listen_opt *lopt = tp->listen_opt;
+ 	struct open_request *req, **prev;  
+ 
+-	for (prev = &lopt->syn_table[tcp_v4_synq_hash(raddr, rport)];
++	for (prev = &lopt->syn_table[tcp_v4_synq_hash(raddr, rport, lopt->hash_rnd)];
+ 	     (req = *prev) != NULL;
+ 	     prev = &req->dl_next) {
+ 		if (req->rmt_port == rport &&
+@@ -904,7 +903,7 @@
+ {
+ 	struct tcp_opt *tp = &sk->tp_pinfo.af_tcp;
+ 	struct tcp_listen_opt *lopt = tp->listen_opt;
+-	unsigned h = tcp_v4_synq_hash(req->af.v4_req.rmt_addr, req->rmt_port);
++	u32 h = tcp_v4_synq_hash(req->af.v4_req.rmt_addr, req->rmt_port, lopt->hash_rnd);
+ 
+ 	req->expires = jiffies + TCP_TIMEOUT_INIT;
+ 	req->retrans = 0;
+diff -Nru a/net/ipv6/tcp_ipv6.c b/net/ipv6/tcp_ipv6.c
+--- a/net/ipv6/tcp_ipv6.c	Tue May  6 02:39:57 2003
++++ b/net/ipv6/tcp_ipv6.c	Tue May  6 02:39:57 2003
+@@ -36,6 +36,7 @@
+ #include <linux/in6.h>
+ #include <linux/netdevice.h>
+ #include <linux/init.h>
++#include <linux/jhash.h>
+ #include <linux/ipsec.h>
+ 
+ #include <linux/ipv6.h>
+@@ -368,12 +369,12 @@
+  * Open request hash tables.
+  */
+ 
+-static __inline__ unsigned tcp_v6_synq_hash(struct in6_addr *raddr, u16 rport)
++static u32 tcp_v6_synq_hash(struct in6_addr *raddr, u16 rport, u32 rnd)
+ {
+-	unsigned h = raddr->s6_addr32[3] ^ rport;
+-	h ^= h>>16;
+-	h ^= h>>8;
+-	return h&(TCP_SYNQ_HSIZE-1);
++	return (jenkins_hash_3words(raddr->s6_addr32[0] ^ raddr->s6_addr32[1],
++				    raddr->s6_addr32[2] ^ raddr->s6_addr32[3],
++				    (u32) rport, rnd)
++		& (TCP_SYNQ_HSIZE - 1));
+ }
+ 
+ static struct open_request *tcp_v6_search_req(struct tcp_opt *tp,
+@@ -386,7 +387,7 @@
+ 	struct tcp_listen_opt *lopt = tp->listen_opt;
+ 	struct open_request *req, **prev;  
+ 
+-	for (prev = &lopt->syn_table[tcp_v6_synq_hash(raddr, rport)];
++	for (prev = &lopt->syn_table[tcp_v6_synq_hash(raddr, rport, lopt->hash_rnd)];
+ 	     (req = *prev) != NULL;
+ 	     prev = &req->dl_next) {
+ 		if (req->rmt_port == rport &&
+@@ -1135,7 +1136,7 @@
+ {
+ 	struct tcp_opt *tp = &sk->tp_pinfo.af_tcp;
+ 	struct tcp_listen_opt *lopt = tp->listen_opt;
+-	unsigned h = tcp_v6_synq_hash(&req->af.v6_req.rmt_addr, req->rmt_port);
++	u32 h = tcp_v6_synq_hash(&req->af.v6_req.rmt_addr, req->rmt_port, lopt->hash_rnd);
+ 
+ 	req->sk = NULL;
+ 	req->expires = jiffies + TCP_TIMEOUT_INIT;
+# This is a BitKeeper generated patch for the following project:
+# Project Name: Linux kernel tree
+# This patch format is intended for GNU patch command version 2.5 or higher.
+# This patch includes the following deltas:
+#	           ChangeSet	1.1144  -> 1.1145 
+#	net/ipv4/netfilter/ip_conntrack_core.c	1.18    -> 1.19   
+#	 net/ipv6/tcp_ipv6.c	1.22    -> 1.23   
+#	 net/ipv4/tcp_ipv4.c	1.21    -> 1.22   
+#	include/linux/jhash.h	1.1     -> 1.2    
+#	    net/ipv4/route.c	1.22    -> 1.23   
+#
+# The following is the BitKeeper ChangeSet Log
+# --------------------------------------------
+# 03/05/03	jmorris@intercode.com.au	1.1145
+# [NET]: Cosmetic cleanups of jhash code.
+# - Consistent naming (i.e. jhash_xxx)
+# - Reduces the 2&1 word variants to call jhash_3words()
+# - Replaces __inline__ with inline.
+# --------------------------------------------
+#
+diff -Nru a/include/linux/jhash.h b/include/linux/jhash.h
+--- a/include/linux/jhash.h	Tue May  6 02:40:04 2003
++++ b/include/linux/jhash.h	Tue May  6 02:40:04 2003
+@@ -41,7 +41,7 @@
+  * of bytes.  No alignment or length assumptions are made about
+  * the input key.
+  */
+-static __inline__ u32 jenkins_hash(void *key, u32 length, u32 initval)
++static inline u32 jhash(void *key, u32 length, u32 initval)
+ {
+ 	u32 a, b, c, len;
+ 	u8 *k = key;
+@@ -84,7 +84,7 @@
+ /* A special optimized version that handles 1 or more of u32s.
+  * The length parameter here is the number of u32s in the key.
+  */
+-static __inline__ u32 hash2(u32 *k, u32 length, u32 initval)
++static inline u32 jhash2(u32 *k, u32 length, u32 initval)
+ {
+ 	u32 a, b, c, len;
+ 
+@@ -119,8 +119,7 @@
+  * NOTE: In partilar the "c += length; __jhash_mix(a,b,c);" normally
+  *       done at the end is not done here.
+  */
+-static __inline__ u32 jenkins_hash_3words(u32 a, u32 b, u32 c,
+-					  u32 initval)
++static inline u32 jhash_3words(u32 a, u32 b, u32 c, u32 initval)
+ {
+ 	a += JHASH_GOLDEN_RATIO;
+ 	b += JHASH_GOLDEN_RATIO;
+@@ -131,31 +130,14 @@
+ 	return c;
+ }
+ 
+-static __inline__ u32 jenkins_hash_2words(u32 a, u32 b, u32 initval)
++static inline u32 jhash_2words(u32 a, u32 b, u32 initval)
+ {
+-	u32 c = 0;
+-
+-	a += JHASH_GOLDEN_RATIO;
+-	b += JHASH_GOLDEN_RATIO;
+-	c += initval;
+-
+-	__jhash_mix(a, b, c);
+-
+-	return c;
++	return jhash_3words(a, b, 0, initval);
+ }
+ 
+-static __inline__ u32 jenkins_hash_1word(u32 a, u32 initval)
++static inline u32 jhash_1word(u32 a, u32 initval)
+ {
+-	u32 b = 0;
+-	u32 c = 0;
+-
+-	a += JHASH_GOLDEN_RATIO;
+-	b += JHASH_GOLDEN_RATIO;
+-	c += initval;
+-
+-	__jhash_mix(a, b, c);
+-
+-	return c;
++	return jhash_3words(a, 0, 0, initval);
+ }
+ 
+ #endif /* _LINUX_JHASH_H */
+diff -Nru a/net/ipv4/netfilter/ip_conntrack_core.c b/net/ipv4/netfilter/ip_conntrack_core.c
+--- a/net/ipv4/netfilter/ip_conntrack_core.c	Tue May  6 02:40:04 2003
++++ b/net/ipv4/netfilter/ip_conntrack_core.c	Tue May  6 02:40:04 2003
+@@ -115,12 +115,10 @@
+ #if 0
+ 	dump_tuple(tuple);
+ #endif
+-	return (jenkins_hash_3words(tuple->src.ip,
+-				    (tuple->dst.ip ^ tuple->dst.protonum),
+-				    (tuple->src.u.all |
+-				     (tuple->dst.u.all << 16)),
+-				    ip_conntrack_hash_rnd)
+-		% ip_conntrack_htable_size);
++	return (jhash_3words(tuple->src.ip,
++	                     (tuple->dst.ip ^ tuple->dst.protonum),
++	                     (tuple->src.u.all | (tuple->dst.u.all << 16)),
++	                     ip_conntrack_hash_rnd) % ip_conntrack_htable_size);
+ }
+ 
+ inline int
+diff -Nru a/net/ipv4/route.c b/net/ipv4/route.c
+--- a/net/ipv4/route.c	Tue May  6 02:40:04 2003
++++ b/net/ipv4/route.c	Tue May  6 02:40:04 2003
+@@ -205,7 +205,7 @@
+ 
+ static unsigned int rt_hash_code(u32 daddr, u32 saddr, u8 tos)
+ {
+-	return (jenkins_hash_3words(daddr, saddr, (u32) tos, rt_hash_rnd)
++	return (jhash_3words(daddr, saddr, (u32) tos, rt_hash_rnd)
+ 		& rt_hash_mask);
+ }
+ 
+diff -Nru a/net/ipv4/tcp_ipv4.c b/net/ipv4/tcp_ipv4.c
+--- a/net/ipv4/tcp_ipv4.c	Tue May  6 02:40:04 2003
++++ b/net/ipv4/tcp_ipv4.c	Tue May  6 02:40:04 2003
+@@ -871,8 +871,7 @@
+ 
+ static __inline__ u32 tcp_v4_synq_hash(u32 raddr, u16 rport, u32 rnd)
+ {
+-	return (jenkins_hash_2words(raddr, (u32) rport, rnd)
+-		& (TCP_SYNQ_HSIZE - 1));
++	return (jhash_2words(raddr, (u32) rport, rnd) & (TCP_SYNQ_HSIZE - 1));
+ }
+ 
+ static struct open_request *tcp_v4_search_req(struct tcp_opt *tp, 
+diff -Nru a/net/ipv6/tcp_ipv6.c b/net/ipv6/tcp_ipv6.c
+--- a/net/ipv6/tcp_ipv6.c	Tue May  6 02:40:04 2003
++++ b/net/ipv6/tcp_ipv6.c	Tue May  6 02:40:04 2003
+@@ -371,10 +371,9 @@
+ 
+ static u32 tcp_v6_synq_hash(struct in6_addr *raddr, u16 rport, u32 rnd)
+ {
+-	return (jenkins_hash_3words(raddr->s6_addr32[0] ^ raddr->s6_addr32[1],
+-				    raddr->s6_addr32[2] ^ raddr->s6_addr32[3],
+-				    (u32) rport, rnd)
+-		& (TCP_SYNQ_HSIZE - 1));
++	return (jhash_3words(raddr->s6_addr32[0] ^ raddr->s6_addr32[1],
++	                     raddr->s6_addr32[2] ^ raddr->s6_addr32[3],
++	                     (u32) rport, rnd) & (TCP_SYNQ_HSIZE - 1));
+ }
+ 
+ static struct open_request *tcp_v6_search_req(struct tcp_opt *tp,
+# This is a BitKeeper generated patch for the following project:
+# Project Name: Linux kernel tree
+# This patch format is intended for GNU patch command version 2.5 or higher.
+# This patch includes the following deltas:
+#	           ChangeSet	1.1145  -> 1.1146 
+#	    net/ipv4/route.c	1.23    -> 1.24   
+#
+# The following is the BitKeeper ChangeSet Log
+# --------------------------------------------
+# 03/05/04	jmorris@intercode.com.au	1.1146
+# [IPV4]: Choose new rt_hash_rnd every rt_run_flush.
+# --------------------------------------------
+#
+diff -Nru a/net/ipv4/route.c b/net/ipv4/route.c
+--- a/net/ipv4/route.c	Tue May  6 02:40:09 2003
++++ b/net/ipv4/route.c	Tue May  6 02:40:09 2003
+@@ -421,6 +421,8 @@
+ 
+ 	rt_deadline = 0;
+ 
++	get_random_bytes(&rt_hash_rnd, 4);
++
+ 	for (i = rt_hash_mask; i >= 0; i--) {
+ 		write_lock_bh(&rt_hash_table[i].lock);
+ 		rth = rt_hash_table[i].chain;
+@@ -483,7 +485,6 @@
+ {
+ 	unsigned long now = jiffies;
+ 
+-	get_random_bytes(&rt_hash_rnd, 4);
+ 	rt_cache_flush(0);
+ 	mod_timer(&rt_secret_timer, now + ip_rt_secret_interval);
+ }
+# This is a BitKeeper generated patch for the following project:
+# Project Name: Linux kernel tree
+# This patch format is intended for GNU patch command version 2.5 or higher.
+# This patch includes the following deltas:
+#	           ChangeSet	1.1094  -> 1.1095 
+#	net/ipv4/tcp_minisocks.c	1.27    -> 1.28   
+#
+# The following is the BitKeeper ChangeSet Log
+# --------------------------------------------
+# 03/05/07	olof@austin.ibm.com	1.1095
+# [TCP]: tcp_twkill leaves death row list in inconsistent state over tcp_timewait_kill.
+# --------------------------------------------
+#
+diff -Nru a/net/ipv4/tcp_minisocks.c b/net/ipv4/tcp_minisocks.c
+--- a/net/ipv4/tcp_minisocks.c	Wed May  7 02:29:49 2003
++++ b/net/ipv4/tcp_minisocks.c	Wed May  7 02:29:49 2003
+@@ -444,6 +444,8 @@
+ 
+ 	while((tw = tcp_tw_death_row[tcp_tw_death_row_slot]) != NULL) {
+ 		tcp_tw_death_row[tcp_tw_death_row_slot] = tw->next_death;
++		if (tw->next_death)
++			tw->next_death->pprev_death = tw->pprev_death;
+ 		tw->pprev_death = NULL;
+ 		spin_unlock(&tw_death_lock);
+ 
