@@ -2,6 +2,7 @@
 # TODO:
 #	check:	pramfs, swsuspend
 #	add:	fbsplash
+#	replace:pwcx
 #
 # Conditional build:
 %bcond_without	BOOT		# don't build BOOT kernel
@@ -9,7 +10,7 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	grsec		# build without grsec
-%bcond_with	pramfs		# build pramfs support (EXPERIMENTAL)
+%bcond_without	pramfs		# build pramfs support (EXPERIMENTAL)
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	swsuspend	# build with software suspend
@@ -53,7 +54,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.1%{?with_mosix:+mosx}
+%define		_rel		0.3%{?with_mosix:+mosix}
 %define		_cset		20040707_0722
 %define		_apply_cset	0
 %define		_subversion	.1
@@ -246,6 +247,8 @@ Patch461:	21-software-suspend-linux-2.6.8.1-rev2-incremental
 Patch462:	21-software-suspend-linux-2.6.8.1-rev3-incremental
 Patch463:	30-software-suspend-core-2.0.0.104-whole
 Patch464:	31-software-suspend-core-2.0.0.105-incremental
+
+Patch470:	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9-r6-2.6.8.1.patch
 
 Patch500:	%{name}-grsec.patch
 
@@ -737,6 +740,8 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch463 -p1
 %patch464 -p1
 %endif
+
+%patch470 -p1
 
 #grsec
 %ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
