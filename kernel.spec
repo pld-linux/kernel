@@ -6,7 +6,7 @@ Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.14
 Release:	4
-Copyright:	GPL
+License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -44,6 +44,7 @@ Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide.2.2.14.2000012
 Patch7:		%{name}-pldfblogo.patch
 Patch8:		linux-%{version}-freeswan-1.3.patch
 Patch9:		wanrouter-v2214.patch
+Patch10:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.15-pre9-patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -67,9 +68,9 @@ verantwortlich: Speicherreservierung, Prozeß-Management, Geräte Ein- und
 Ausgaben, usw.
 
 %description -l fr
-Le package kernel contient le kernel linux (vmlinuz), la partie centrale d'un
-système d'exploitation Linux. Le noyau traite les fonctions basiques d'un
-système d'exploitation: allocation mémoire, allocation de process,
+Le package kernel contient le kernel linux (vmlinuz), la partie centrale
+d'un système d'exploitation Linux. Le noyau traite les fonctions basiques
+d'un système d'exploitation: allocation mémoire, allocation de process,
 entrée/sortie de peripheriques, etc.
 
 %description -l pl
@@ -92,8 +93,8 @@ fine on single-CPU boxes.
 
 %description -l fr smp
 Ce package inclu une version SMP du noyau de Linux version {version}. Il et
-nécessaire seulement pour les machine avec deux processeurs ou plus, il peut
-quand même fonctionner pour les système mono-processeur.
+nécessaire seulement pour les machine avec deux processeurs ou plus, il
+peut quand même fonctionner pour les système mono-processeur.
 
 %description -l de smp
 Dieses Paket enthält eine SMP (Multiprozessor)-Version von Linux-Kernel
@@ -110,8 +111,8 @@ Provides:	%{name} %{version}
 Autoreqprov:	no
 
 %description fb
-This package includes a version of the Linux %{version} kernel
-with framebuffer support.
+This package includes a version of the Linux %{version} kernel with
+framebuffer support.
 
 %description -l fr fb
 Ce package inclu une version de Linux version %{version} avec framebuffer.
@@ -132,14 +133,14 @@ Autoreqprov:	no
 %description smp-fb
 This package includes a SMP version of the Linux %{version} kernel. It is
 required only on machines with two or more CPUs, although it should work
-fine on single-CPU boxes.
-It also contains support for framebuffer (graphical console) devices.
+fine on single-CPU boxes. It also contains support for framebuffer
+(graphical console) devices.
 
 %description -l fr smp-fb
-Ce package inclu une version SMP du noyau de Linux version
-%{version} avec framebuffer. Il et nécessaire seulement pour les machine
-avec deux processeurs ou plus, il peut quand même fonctionner pour les
-système mono-processeur.
+Ce package inclu une version SMP du noyau de Linux version %{version} avec
+framebuffer. Il et nécessaire seulement pour les machine avec deux
+processeurs ou plus, il peut quand même fonctionner pour les système
+mono-processeur.
 
 %description -l de smp-fb
 Dieses Paket enthält eine SMP (Multiprozessor)-Version von Linux-Kernel
@@ -156,24 +157,22 @@ Group(pl):	Podstawowe/J±dro
 Autoreqprov:	no
 
 %description BOOT
-This package includes a trimmed down version of the Linux %{version} kernel.
-This kernel is used on the installation boot disks only and should not be
-used for an installed system, as many features in this kernel are turned off
-because of the size constraints.
+This package includes a trimmed down version of the Linux %{version}
+kernel. This kernel is used on the installation boot disks only and should
+not be used for an installed system, as many features in this kernel are
+turned off because of the size constraints.
 
 %description -l fr BOOT
 Ce package inclut une version allégée du noyau de Linux version %{version}.
-Ce kernel et utilisé pour les disquettes de boot
-d'installation et ne doivent pas être utilisées pour un système
-classique, beaucoup d'options dans le kernel ont étaient désactivées a
-cause de la contrainte d'espace.
+Ce kernel et utilisé pour les disquettes de boot d'installation et ne
+doivent pas être utilisées pour un système classique, beaucoup d'options
+dans le kernel ont étaient désactivées a cause de la contrainte d'espace.
 
 %description -l de BOOT
 Dieses Paket enthält eine verkleinerte Version vom Linux-Kernel version
-%{version}.
-Dieser Kernel wird auf den Installations-Bootdisketten benutzt und sollte
-nicht auf einem installierten System verwendet werden, da viele Funktionen
-wegen der Platzprobleme abgeschaltet sind.
+%{version}. Dieser Kernel wird auf den Installations-Bootdisketten benutzt
+und sollte nicht auf einem installierten System verwendet werden, da viele
+Funktionen wegen der Platzprobleme abgeschaltet sind.
 
 %package headers
 Summary:	Header files for the Linux kernel
@@ -188,8 +187,8 @@ and constants that are needed when building most standard programs under
 Linux, as well as to rebuild the kernel.
 
 %description headers -l pl
-Pakiet zawiera pliki nag³ówkowe j±dra, niezbedne do rekompilacji j±dra
-oraz niektórych programów.
+Pakiet zawiera pliki nag³ówkowe j±dra, niezbedne do rekompilacji j±dra oraz
+niektórych programów.
 
 %package source
 Summary:	Kernel source tree
@@ -203,10 +202,9 @@ Requires:	bin86
 %endif
 
 %description source
-This is the source code for the Linux kernel. It is required to build
-most C programs as they depend on constants defined in here. You can
-also build a custom kernel that is better tuned to your particular
-hardware.
+This is the source code for the Linux kernel. It is required to build most
+C programs as they depend on constants defined in here. You can also build
+a custom kernel that is better tuned to your particular hardware.
 
 %description -l de source
 Das Kernel-Source-Paket enthält den source code (C/Assembler-Code) des
@@ -216,29 +214,30 @@ definiert sind. Die Source-Dateien können auch benutzt werden, um einen
 Kernel zu compilieren, der besser auf Ihre Hardware ausgerichtet ist.
 
 %description -l fr source
-Le package pour le kernel-source contient le code source pour le noyau linux.
-Ces sources sont nécessaires pour compiler la plupart des programmes C, car il
-dépend de constantes définies dans le code source. Les sources peuvent être
-aussi utilisée pour compiler un noyau personnalisé pour avoir de meilleures
-performances sur des matériels particuliers. 
+Le package pour le kernel-source contient le code source pour le noyau
+linux. Ces sources sont nécessaires pour compiler la plupart des programmes
+C, car il dépend de constantes définies dans le code source. Les sources
+peuvent être aussi utilisée pour compiler un noyau personnalisé pour avoir
+de meilleures performances sur des matériels particuliers.
 
 %description source -l pl
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -a30 -a31 -n linux
-%patch0 -p1
-%patch1 -p1
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
-%patch5 -p1
+%patch0  -p1
+%patch1  -p1
+%patch2  -p1
+%patch3  -p1
+%patch4  -p1
+%patch5  -p1
 %ifarch %{ix86}
-%patch6 -p1
+%patch6  -p1
 %endif
-%patch7 -p1
-%patch8 -p1
-%patch9 -p1
+%patch7  -p1
+%patch8  -p1
+%patch9  -p1
+%patch10 -p1
 
 patch -p1 -s <linux-%{ow_ver}/linux-%{ow_ver}.diff
 # Tekram DC395/315 U/UW SCSI host driver
@@ -319,17 +318,17 @@ BuildKernel BOOT
 %endif
 
 %install
-rm -rf $RPM_BUILD_ROOT/usr
-install -d $RPM_BUILD_ROOT/usr/{include,src}
+rm -rf $RPM_BUILD_ROOT%{_prefix}
+install -d $RPM_BUILD_ROOT%{_prefix}/{include,src}
 
-ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT/usr/include/linux
+ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
 
 %ifarch sparc
-ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT/usr/include/asm-sparc
-ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT/usr/include/asm-sparc64
-mkdir $RPM_BUILD_ROOT/usr/include/asm
-cp -a $RPM_SOURCE_DIR/kernel-BuildASM.sh $RPM_BUILD_ROOT/usr/include/asm/BuildASM
-$RPM_BUILD_ROOT/usr/include/asm/BuildASM $RPM_BUILD_ROOT/usr/include
+ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
+ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
+mkdir $RPM_BUILD_ROOT%{_includedir}/asm
+cp -a $RPM_SOURCE_DIR/kernel-BuildASM.sh $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
+$RPM_BUILD_ROOT%{_includedir}/asm/BuildASM $RPM_BUILD_ROOT%{_includedir}
 %else
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 %endif
@@ -559,34 +558,34 @@ fi
 
 %files headers
 %defattr(644,root,root,755)
-%dir /usr/src/linux-%{version}
-/usr/src/linux-%{version}/include
+%dir %{_prefix}/src/linux-%{version}
+%{_prefix}/src/linux-%{version}/include
 %{_includedir}/asm
 %{_includedir}/linux
 
 %files source
 %defattr(644,root,root,755)
-/usr/src/linux-%{version}/Documentation
-/usr/src/linux-%{version}/arch
-/usr/src/linux-%{version}/crypto
-/usr/src/linux-%{version}/drivers
-/usr/src/linux-%{version}/fs
-/usr/src/linux-%{version}/init
-/usr/src/linux-%{version}/ipc
-/usr/src/linux-%{version}/kernel
-/usr/src/linux-%{version}/lib
-/usr/src/linux-%{version}/mm
-/usr/src/linux-%{version}/modules
-/usr/src/linux-%{version}/net
-/usr/src/linux-%{version}/scripts
-/usr/src/linux-%{version}/security
-/usr/src/linux-%{version}/.config
-/usr/src/linux-%{version}/.depend
-/usr/src/linux-%{version}/.hdepend
-/usr/src/linux-%{version}/COPYING
-/usr/src/linux-%{version}/CREDITS
-/usr/src/linux-%{version}/MAINTAINERS
-/usr/src/linux-%{version}/Makefile
-/usr/src/linux-%{version}/README
-/usr/src/linux-%{version}/REPORTING-BUGS
-/usr/src/linux-%{version}/Rules.make
+%{_prefix}/src/linux-%{version}/Documentation
+%{_prefix}/src/linux-%{version}/arch
+%{_prefix}/src/linux-%{version}/crypto
+%{_prefix}/src/linux-%{version}/drivers
+%{_prefix}/src/linux-%{version}/fs
+%{_prefix}/src/linux-%{version}/init
+%{_prefix}/src/linux-%{version}/ipc
+%{_prefix}/src/linux-%{version}/kernel
+%{_prefix}/src/linux-%{version}/lib
+%{_prefix}/src/linux-%{version}/mm
+%{_prefix}/src/linux-%{version}/modules
+%{_prefix}/src/linux-%{version}/net
+%{_prefix}/src/linux-%{version}/scripts
+%{_prefix}/src/linux-%{version}/security
+%{_prefix}/src/linux-%{version}/.config
+%{_prefix}/src/linux-%{version}/.depend
+%{_prefix}/src/linux-%{version}/.hdepend
+%{_prefix}/src/linux-%{version}/COPYING
+%{_prefix}/src/linux-%{version}/CREDITS
+%{_prefix}/src/linux-%{version}/MAINTAINERS
+%{_prefix}/src/linux-%{version}/Makefile
+%{_prefix}/src/linux-%{version}/README
+%{_prefix}/src/linux-%{version}/REPORTING-BUGS
+%{_prefix}/src/linux-%{version}/Rules.make
