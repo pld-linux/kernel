@@ -44,9 +44,9 @@ Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.16.4.gz
 Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.16-reiserfs-3.5.23-patch.gz
 Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
 Patch3:		linux-tasks.patch
-# Wiget: Using unofficial raid patch, waiting for mingo update
-#Patch4:		http://www.redhat.com/~mingo/raid-patches/raid-2.2.15-A0.gz
-Patch4:		ftp://ftp.sime.com/pub/linux/raid-2.2.16-mabene
+Patch4:		http://www.redhat.com/~mingo/raid-patches/raid-2.2.16-A0
+# serek: unofficial raid patch by wiget, now we use mingo (above)
+#Patch4:		ftp://ftp.sime.com/pub/linux/raid-2.2.16-mabene
 # Wiget: WARNING: hand modified patch
 Patch5:		http://republika.pl/bkz/ide.2.2.16.patch.bz2
 Patch6:		%{name}-pldfblogo.patch
