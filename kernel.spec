@@ -147,7 +147,6 @@ Patch40:	2.6.x-PD6729-lkml.patch
 Patch42:	2.6.x-ppp_mppe.patch
 
 Patch44:	2.6.2-Initio9100U-Kconfig.patch
-Patch45:	2.6.3-sparc32-fix.patch
 
 # netfilter
 Patch46:	2.6.7-pom-ng-%{_netfilter_snap}.patch
@@ -641,7 +640,6 @@ echo "Not fixed !!"
 %patch42 -p1
 
 %patch44 -p1
-%patch45 -p1
 
 # netfilter
 %patch46 -p1
