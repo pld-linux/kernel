@@ -1,58 +1,50 @@
 diff -Nur linux-2.4.20.org/drivers/char/mem.c linux-2.4.20/drivers/char/mem.c
 --- linux-2.4.20.org/drivers/char/mem.c	Mon Feb 17 10:01:43 2003
 +++ linux-2.4.20/drivers/char/mem.c	Mon Feb 17 10:04:57 2003
-@@ -115,10 +115,10 @@
- 	unsigned long p = *ppos;
+@@ -115,8 +115,10 @@
  	unsigned long end_mem;
  
--#ifdef CONFIG_GRKERNSEC_KMEM
+ #ifdef CONFIG_GRKERNSEC_KMEM
 +if(grsec_enable_kmem){
  	gr_handle_mem_write();
  	return -EPERM;
--#endif
 +}
+#endif
  
  	end_mem = __pa(high_memory);
- 	if (p >= end_mem)
-@@ -192,10 +192,10 @@
- {
+@@ -192,8 +192,10 @@
  	unsigned long offset = vma->vm_pgoff << PAGE_SHIFT;
  
--#ifdef CONFIG_GRKERNSEC_KMEM
+ #ifdef CONFIG_GRKERNSEC_KMEM
 +if (grsec_enable_kmem){
  	if (gr_handle_mem_mmap(offset, vma))
  		return -EPERM;
--#endif
 +}
+ #endif
  
  
- 	/*
-@@ -297,10 +297,10 @@
- 	ssize_t virtr = 0;
+@@ -297,8 +297,10 @@
  	char * kbuf; /* k-addr because vwrite() takes vmlist_lock rwlock */
  
--#ifdef CONFIG_GRKERNSEC_KMEM
+ #ifdef CONFIG_GRKERNSEC_KMEM
 +if(grsec_enable_kmem){
  	gr_handle_kmem_write();
  	return -EPERM;
--#endif
 +}
+ #endif
  
  	if (p < (unsigned long) high_memory) {
- 		wrote = count;
-@@ -534,10 +534,10 @@
- 
+@@ -534,8 +534,10 @@
  static int open_port(struct inode * inode, struct file * filp)
  {
--#ifdef CONFIG_GRKERNSEC_KMEM
+ #ifdef CONFIG_GRKERNSEC_KMEM
 +if(grsec_enable_kmem){
  	gr_handle_open_port();
  	return -EPERM;
--#endif
 +}
+ #endif
  	return capable(CAP_SYS_RAWIO) ? 0 : -EPERM;
  }
- 
 diff -Nur linux-2.4.20.org/grsecurity/grsec_init.c linux-2.4.20/grsecurity/grsec_init.c
 --- linux-2.4.20.org/grsecurity/grsec_init.c	Mon Feb 17 10:01:44 2003
 +++ linux-2.4.20/grsecurity/grsec_init.c	Mon Feb 17 10:05:54 2003
