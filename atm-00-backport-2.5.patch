@@ -1,0 +1,1159 @@
+diff -uN linux-2.4.20/include/linux/atmdev.h linux-2.5.63/include/linux/atmdev.h
+--- linux-2.4.20/include/linux/atmdev.h	Sat Aug  3 02:39:45 2002
++++ linux-2.5.63/include/linux/atmdev.h	Mon Feb 24 20:05:40 2003
+@@ -33,7 +33,8 @@
+ #define ATM_PDU_OVHD	0	/* number of bytes to charge against buffer
+ 				   quota per PDU */
+ 
+-#define ATM_SD(s)	((s)->sk->protinfo.af_atm)
++#define atm_sk(__sk) ((struct atm_vcc *)(__sk)->protinfo.af_atm)
++#define ATM_SD(s)	(atm_sk((s)->sk))
+ 
+ 
+ #define __AAL_STAT_ITEMS \
+@@ -206,7 +205,7 @@
+ #undef __AAL_STAT_ITEMS
+ #else
+ 
+-#include <linux/sched.h> /* wait_queue_head_t */
++#include <linux/wait.h> /* wait_queue_head_t */
+ #include <linux/time.h> /* struct timeval */
+ #include <linux/net.h>
+ #include <linux/skbuff.h> /* struct sk_buff */
+@@ -276,12 +275,8 @@
+ 
+ #define ATM_ATMOPT_CLP	1	/* set CLP bit */
+ 
+-
+-typedef struct { unsigned long bits; } atm_vcc_flags_t;
+-
+-
+ struct atm_vcc {
+-	atm_vcc_flags_t flags;		/* VCC flags (ATM_VF_*) */
++	unsigned long	flags;		/* VCC flags (ATM_VF_*) */
+ 	unsigned char	family;		/* address family; 0 if unused */
+ 	short		vpi;		/* VPI and VCI (types must be equal */
+ 					/* with sockaddr) */
+@@ -302,7 +297,6 @@
+ 	int (*send)(struct atm_vcc *vcc,struct sk_buff *skb);
+ 	void		*dev_data;	/* per-device data */
+ 	void		*proto_data;	/* per-protocol data */
+-	struct timeval	timestamp;	/* AAL timestamps */
+ 	struct sk_buff_head recvq;	/* receive queue */
+ 	struct k_atm_aal_stats *stats;	/* pointer to AAL stats group */
+ 	wait_queue_head_t sleep;	/* if socket is busy */
+@@ -331,10 +325,6 @@
+ 	struct atm_dev_addr *next;	/* next address */
+ };
+ 
+-
+-typedef struct { unsigned int bits; } atm_dev_flags_t;
+-
+-
+ struct atm_dev {
+ 	const struct atmdev_ops *ops;	/* device operations; NULL if unused */
+ 	const struct atmphy_ops *phy;	/* PHY operations, may be undefined */
+@@ -345,7 +335,7 @@
+ 	struct atm_vcc	*last;		/* last VCC (or undefined) */
+ 	void		*dev_data;	/* per-device data */
+ 	void		*phy_data;	/* private PHY date */
+-	atm_dev_flags_t flags;		/* device flags (ATM_DF_*) */
++	unsigned long	flags;		/* device flags (ATM_DF_*) */
+ 	struct atm_dev_addr *local;	/* local ATM addresses */
+ 	unsigned char	esi[ESI_LEN];	/* ESI ("MAC" addr) */
+ 	struct atm_cirange ci_range;	/* VPI/VCI range */
+@@ -415,7 +405,7 @@
+ #define ATM_SKB(skb) (((struct atm_skb_data *) (skb)->cb))
+ 
+ struct atm_dev *atm_dev_register(const char *type,const struct atmdev_ops *ops,
+-    int number,atm_dev_flags_t *flags); /* number == -1: pick first available */
++    int number,unsigned long *flags); /* number == -1: pick first available */
+ struct atm_dev *atm_find_dev(int number);
+ void atm_dev_deregister(struct atm_dev *dev);
+ void shutdown_atm_dev(struct atm_dev *dev);
+diff -urN linux-2.4.20/net/atm/clip.c linux-2.5.63/net/atm/clip.c
+--- linux-2.4.20/net/atm/clip.c	Thu Jun 28 02:10:55 2001
++++ linux-2.5.63/net/atm/clip.c	Mon Feb 24 20:06:01 2003
+@@ -710,7 +711,7 @@
+ 	999,		/* dummy device number */
+ 	NULL,NULL,	/* pretend not to have any VCCs */
+ 	NULL,NULL,	/* no data */
+-	{ 0 },		/* no flags */
++	0,		/* no flags */
+ 	NULL,		/* no local address */
+ 	{ 0 }		/* no ESI, no statistics */
+ };
+diff -urN linux-2.4.20/net/atm/common.c linux-2.5.63/net/atm/common.c
+--- linux-2.4.20/net/atm/common.c	Sat Aug  3 02:39:46 2002
++++ linux-2.5.63/net/atm/common.c	Mon Feb 24 20:06:03 2003
+@@ -112,7 +105,7 @@
+ 	sock->sk = NULL;
+ 	if (sock->type == SOCK_STREAM) return -EINVAL;
+ 	if (!(sk = alloc_atm_vcc_sk(family))) return -ENOMEM;
+-	vcc = sk->protinfo.af_atm;
++	vcc = atm_sk(sk);
+ 	memset(&vcc->flags,0,sizeof(vcc->flags));
+ 	vcc->dev = NULL;
+ 	vcc->family = sock->ops->family;
+@@ -128,7 +121,6 @@
+ 	vcc->push_oam = NULL;
+ 	vcc->vpi = vcc->vci = 0; /* no VCI/VPI yet */
+ 	vcc->atm_options = vcc->aal_options = 0;
+-	vcc->timestamp.tv_sec = vcc->timestamp.tv_usec = 0;
+ 	init_waitqueue_head(&vcc->sleep);
+ 	skb_queue_head_init(&vcc->recvq);
+ 	skb_queue_head_init(&vcc->listenq);
+@@ -140,10 +132,9 @@
+ 
+ void atm_release_vcc_sk(struct sock *sk,int free_sk)
+ {
+-	struct atm_vcc *vcc;
++	struct atm_vcc *vcc = atm_sk(sk);
+ 	struct sk_buff *skb;
+ 
+-	vcc = sk->protinfo.af_atm;
+ 	clear_bit(ATM_VF_READY,&vcc->flags);
+ 	if (vcc->dev) {
+ 		if (vcc->dev->ops->close) vcc->dev->ops->close(vcc);
+@@ -295,7 +286,7 @@
+ 	if (vpi != ATM_VPI_UNSPEC && vci != ATM_VCI_UNSPEC)
+ 		clear_bit(ATM_VF_PARTIAL,&vcc->flags);
+ 	else if (test_bit(ATM_VF_PARTIAL,&vcc->flags)) return -EINVAL;
+-	printk(KERN_DEBUG "atm_connect (TX: cl %d,bw %d-%d,sdu %d; "
++	DPRINTK("atm_connect (TX: cl %d,bw %d-%d,sdu %d; "
+ 	    "RX: cl %d,bw %d-%d,sdu %d,AAL %s%d)\n",
+ 	    vcc->qos.txtp.traffic_class,vcc->qos.txtp.min_pcr,
+ 	    vcc->qos.txtp.max_pcr,vcc->qos.txtp.max_sdu,
+@@ -387,7 +378,7 @@
+ 	set_current_state(TASK_RUNNING);
+ 	remove_wait_queue(&vcc->sleep,&wait);
+ 	if (error <= 0) return error;
+-	vcc->timestamp = skb->stamp;
++	sock_recv_timestamp(m, vcc->sk, skb);
+ 	eff_len = skb->len > size ? size : skb->len;
+ 	if (skb->len > size) /* Not fit ?  Report it... */
+ 		m->msg_flags |= MSG_TRUNC;
+@@ -619,13 +610,11 @@
+ 			kfree(tmp_buf);
+ 			goto done;
+ 		case SIOCGSTAMP: /* borrowed from IP */
+-			if (!vcc->timestamp.tv_sec) {
++			if (!vcc->sk->stamp.tv_sec) {
+ 				ret_val = -ENOENT;
+ 				goto done;
+ 			}
+-			vcc->timestamp.tv_sec += vcc->timestamp.tv_usec/1000000;
+-			vcc->timestamp.tv_usec %= 1000000;
+-			ret_val = copy_to_user((void *) arg,&vcc->timestamp,
++			ret_val = copy_to_user((void *) arg, &vcc->sk->stamp,
+ 			    sizeof(struct timeval)) ? -EFAULT : 0;
+ 			goto done;
+ 		case ATM_SETSC:
+diff -urN linux-2.4.20/net/atm/lec.c linux-2.5.63/net/atm/lec.c
+--- linux-2.4.20/net/atm/lec.c	Sun Sep 30 21:26:08 2001
++++ linux-2.5.63/net/atm/lec.c	Mon Feb 24 20:05:34 2003
+@@ -20,6 +20,7 @@
+ #include <net/arp.h>
+ #include <net/dst.h>
+ #include <linux/proc_fs.h>
++#include <linux/spinlock.h>
+ 
+ /* TokenRing if needed */
+ #ifdef CONFIG_TR
+@@ -35,6 +36,10 @@
+ #include <linux/if_bridge.h>
+ #include "../bridge/br_private.h"
+ static unsigned char bridge_ula_lec[] = {0x01, 0x80, 0xc2, 0x00, 0x00};
++
++extern struct net_bridge_fdb_entry *(*br_fdb_get_hook)(struct net_bridge *br,
++       unsigned char *addr);
++extern void (*br_fdb_put_hook)(struct net_bridge_fdb_entry *ent);
+ #endif
+ 
+ /* Modular too */
+@@ -51,10 +56,7 @@
+ #define DPRINTK(format,args...)
+ #endif
+ 
+-extern struct net_bridge_fdb_entry *(*br_fdb_get_hook)(struct net_bridge *br,
+-	unsigned char *addr);
+-extern void (*br_fdb_put_hook)(struct net_bridge_fdb_entry *ent);
+-
++static spinlock_t lec_arp_spinlock = SPIN_LOCK_UNLOCKED;
+ 
+ #define DUMP_PACKETS 0 /* 0 = None,
+                         * 1 = 30 first bytes
+@@ -196,6 +198,23 @@
+         return 0;
+ }
+ 
++static __inline__ void
++lec_send(struct atm_vcc *vcc, struct sk_buff *skb, struct lec_priv *priv)
++{
++	if (atm_may_send(vcc, skb->len)) {
++		atomic_add(skb->truesize, &vcc->tx_inuse);
++	        ATM_SKB(skb)->vcc = vcc;
++	        ATM_SKB(skb)->iovcnt = 0;
++	        ATM_SKB(skb)->atm_options = vcc->atm_options;
++		priv->stats.tx_packets++;
++		priv->stats.tx_bytes += skb->len;
++		vcc->send(vcc, skb);
++	} else {
++		priv->stats.tx_dropped++;
++		dev_kfree_skb(skb);
++	}
++}
++
+ static int 
+ lec_send_packet(struct sk_buff *skb, struct net_device *dev)
+ {
+@@ -341,34 +360,10 @@
+                 DPRINTK("MAC address 0x%02x:%02x:%02x:%02x:%02x:%02x\n",
+                         lec_h->h_dest[0], lec_h->h_dest[1], lec_h->h_dest[2],
+                         lec_h->h_dest[3], lec_h->h_dest[4], lec_h->h_dest[5]);
+-                ATM_SKB(skb2)->vcc = send_vcc;
+-                ATM_SKB(skb2)->iovcnt = 0;
+-                ATM_SKB(skb2)->atm_options = send_vcc->atm_options;
+-                DPRINTK("%s:sending to vpi:%d vci:%d\n", dev->name,
+-                        send_vcc->vpi, send_vcc->vci);       
+-                if (atm_may_send(send_vcc, skb2->len)) {
+-                        atomic_add(skb2->truesize, &send_vcc->tx_inuse);
+-                        priv->stats.tx_packets++;
+-                        priv->stats.tx_bytes += skb2->len;
+-                        send_vcc->send(send_vcc, skb2);
+-                } else {
+-                        priv->stats.tx_dropped++;
+-                        dev_kfree_skb(skb2);
+-		}
++		lec_send(send_vcc, skb2, priv);
+         }
+ 
+-        ATM_SKB(skb)->vcc = send_vcc;
+-        ATM_SKB(skb)->iovcnt = 0;
+-        ATM_SKB(skb)->atm_options = send_vcc->atm_options;
+-        if (atm_may_send(send_vcc, skb->len)) {
+-                atomic_add(skb->truesize, &send_vcc->tx_inuse);
+-                priv->stats.tx_packets++;
+-                priv->stats.tx_bytes += skb->len;
+-                send_vcc->send(send_vcc, skb);
+-        } else {
+-                priv->stats.tx_dropped++;
+-                dev_kfree_skb(skb);
+-	}
++	lec_send(send_vcc, skb, priv);
+ 
+ #if 0
+         /* Should we wait for card's device driver to notify us? */
+@@ -564,7 +559,7 @@
+         999,	    /*dummy device number*/
+         NULL,NULL,  /*no VCCs*/
+         NULL,NULL,  /*no data*/
+-        { 0 },	    /*no flags*/
++        0,	    /*no flags*/
+         NULL,	    /* no local address*/
+         { 0 }	    /*no ESI or rest of the atm_dev struct things*/
+ };
+@@ -1044,15 +1039,15 @@
+ #define HASH(ch) (ch & (LEC_ARP_TABLE_SIZE -1))
+ 
+ static __inline__ void 
+-lec_arp_lock(struct lec_priv *priv)
++lec_arp_get(struct lec_priv *priv)
+ {
+-        atomic_inc(&priv->lec_arp_lock_var);
++        atomic_inc(&priv->lec_arp_users);
+ }
+ 
+ static __inline__ void 
+-lec_arp_unlock(struct lec_priv *priv)
++lec_arp_put(struct lec_priv *priv)
+ {
+-        atomic_dec(&priv->lec_arp_lock_var);
++        atomic_dec(&priv->lec_arp_users);
+ }
+ 
+ /*
+@@ -1103,33 +1098,33 @@
+  * LANE2: Add to the end of the list to satisfy 8.1.13
+  */
+ static __inline__ void 
+-lec_arp_put(struct lec_arp_table **lec_arp_tables, 
+-            struct lec_arp_table *to_put)
++lec_arp_add(struct lec_arp_table **lec_arp_tables, 
++            struct lec_arp_table *to_add)
+ {
+-        unsigned short place;
+         unsigned long flags;
++        unsigned short place;
+         struct lec_arp_table *tmp;
+ 
+-        save_flags(flags);
+-        cli();
++        spin_lock_irqsave(&lec_arp_spinlock, flags);
+ 
+-        place = HASH(to_put->mac_addr[ETH_ALEN-1]);
++        place = HASH(to_add->mac_addr[ETH_ALEN-1]);
+         tmp = lec_arp_tables[place];
+-        to_put->next = NULL;
++        to_add->next = NULL;
+         if (tmp == NULL)
+-                lec_arp_tables[place] = to_put;
++                lec_arp_tables[place] = to_add;
+   
+         else {  /* add to the end */
+                 while (tmp->next)
+                         tmp = tmp->next;
+-                tmp->next = to_put;
++                tmp->next = to_add;
+         }
+ 
+-        restore_flags(flags);
++        spin_unlock_irqrestore(&lec_arp_spinlock, flags);
++
+         DPRINTK("LEC_ARP: Added entry:%2.2x %2.2x %2.2x %2.2x %2.2x %2.2x\n",
+-                0xff&to_put->mac_addr[0], 0xff&to_put->mac_addr[1],
+-                0xff&to_put->mac_addr[2], 0xff&to_put->mac_addr[3],
+-                0xff&to_put->mac_addr[4], 0xff&to_put->mac_addr[5]);
++                0xff&to_add->mac_addr[0], 0xff&to_add->mac_addr[1],
++                0xff&to_add->mac_addr[2], 0xff&to_add->mac_addr[3],
++                0xff&to_add->mac_addr[4], 0xff&to_add->mac_addr[5]);
+ }
+ 
+ /*
+@@ -1139,16 +1134,15 @@
+ lec_arp_remove(struct lec_arp_table **lec_arp_tables,
+                struct lec_arp_table *to_remove)
+ {
++        unsigned long flags;
+         unsigned short place;
+         struct lec_arp_table *tmp;
+-        unsigned long flags;
+         int remove_vcc=1;
+ 
+-        save_flags(flags);
+-        cli();
++        spin_lock_irqsave(&lec_arp_spinlock, flags);
+ 
+         if (!to_remove) {
+-                restore_flags(flags);
++                spin_unlock_irqrestore(&lec_arp_spinlock, flags);
+                 return -1;
+         }
+         place = HASH(to_remove->mac_addr[ETH_ALEN-1]);
+@@ -1160,7 +1154,7 @@
+                         tmp = tmp->next;
+                 }
+                 if (!tmp) {/* Entry was not found */
+-                        restore_flags(flags);
++                        spin_unlock_irqrestore(&lec_arp_spinlock, flags);
+                         return -1;
+                 }
+         }
+@@ -1186,7 +1180,9 @@
+                         lec_arp_clear_vccs(to_remove);
+         }
+         skb_queue_purge(&to_remove->tx_wait); /* FIXME: good place for this? */
+-        restore_flags(flags);
++
++        spin_unlock_irqrestore(&lec_arp_spinlock, flags);
++
+         DPRINTK("LEC_ARP: Removed entry:%2.2x %2.2x %2.2x %2.2x %2.2x %2.2x\n",
+                 0xff&to_remove->mac_addr[0], 0xff&to_remove->mac_addr[1],
+                 0xff&to_remove->mac_addr[2], 0xff&to_remove->mac_addr[3],
+@@ -1371,12 +1367,8 @@
+ lec_arp_destroy(struct lec_priv *priv)
+ {
+         struct lec_arp_table *entry, *next;
+-        unsigned long flags;
+         int i;
+ 
+-        save_flags(flags);
+-        cli();
+-
+         del_timer(&priv->lec_arp_timer);
+         
+         /*
+@@ -1419,7 +1411,6 @@
+         priv->mcast_vcc = NULL;
+         memset(priv->lec_arp_tables, 0, 
+                sizeof(struct lec_arp_table*)*LEC_ARP_TABLE_SIZE);
+-        restore_flags(flags);
+ }
+ 
+ 
+@@ -1436,18 +1427,18 @@
+         DPRINTK("LEC_ARP: lec_arp_find :%2.2x %2.2x %2.2x %2.2x %2.2x %2.2x\n",
+                 mac_addr[0]&0xff, mac_addr[1]&0xff, mac_addr[2]&0xff, 
+                 mac_addr[3]&0xff, mac_addr[4]&0xff, mac_addr[5]&0xff);
+-        lec_arp_lock(priv);
++        lec_arp_get(priv);
+         place = HASH(mac_addr[ETH_ALEN-1]);
+   
+         to_return = priv->lec_arp_tables[place];
+         while(to_return) {
+                 if (memcmp(mac_addr, to_return->mac_addr, ETH_ALEN) == 0) {
+-                        lec_arp_unlock(priv);
++                        lec_arp_put(priv);
+                         return to_return;
+                 }
+                 to_return = to_return->next;
+         }
+-        lec_arp_unlock(priv);
++        lec_arp_put(priv);
+         return NULL;
+ }
+ 
+@@ -1574,11 +1565,11 @@
+         del_timer(&priv->lec_arp_timer);
+ 
+         DPRINTK("lec_arp_check_expire %p,%d\n",priv,
+-                priv->lec_arp_lock_var.counter);
++                atomic_read(&priv->lec_arp_users));
+         DPRINTK("expire: eo:%p nf:%p\n",priv->lec_arp_empty_ones,
+                 priv->lec_no_forward);
+-        if (!priv->lec_arp_lock_var.counter) {
+-                lec_arp_lock(priv);
++        if (!atomic_read(&priv->lec_arp_users)) {
++                lec_arp_get(priv);
+                 now = jiffies;
+                 for(i=0;i<LEC_ARP_TABLE_SIZE;i++) {
+                         for(entry = lec_arp_tables[i];entry != NULL;) {
+@@ -1616,6 +1607,10 @@
+                                            &&
+                                            time_after_eq(now, entry->timestamp+
+                                            priv->path_switching_delay)) {
++			                        struct sk_buff *skb;
++
++ 				                while ((skb = skb_dequeue(&entry->tx_wait)))
++					                lec_send(entry->vcc, skb, entry->priv);
+                                                 entry->last_used = jiffies;
+                                                 entry->status = 
+                                                         ESI_FORWARD_DIRECT;
+@@ -1624,7 +1619,7 @@
+                                 }
+                         }
+                 }
+-                lec_arp_unlock(priv);
++                lec_arp_put(priv);
+         }
+         priv->lec_arp_timer.expires = jiffies + LEC_ARP_REFRESH_INTERVAL;
+         add_timer(&priv->lec_arp_timer);
+@@ -1686,7 +1681,7 @@
+                 if (!entry) {
+                         return priv->mcast_vcc;
+                 }
+-                lec_arp_put(priv->lec_arp_tables, entry);
++                lec_arp_add(priv->lec_arp_tables, entry);
+                 /* We want arp-request(s) to be sent */
+                 entry->packets_flooded =1;
+                 entry->status = ESI_ARP_PENDING;
+@@ -1711,7 +1706,7 @@
+         struct lec_arp_table *entry, *next;
+         int i;
+ 
+-        lec_arp_lock(priv);
++        lec_arp_get(priv);
+         DPRINTK("lec_addr_delete\n");
+         for(i=0;i<LEC_ARP_TABLE_SIZE;i++) {
+                 for(entry=priv->lec_arp_tables[i];entry != NULL; entry=next) {
+@@ -1722,11 +1717,11 @@
+                                 lec_arp_remove(priv->lec_arp_tables, entry);
+                                 kfree(entry);
+                         }
+-                        lec_arp_unlock(priv);
++                        lec_arp_put(priv);
+                         return 0;
+                 }
+         }
+-        lec_arp_unlock(priv);
++        lec_arp_put(priv);
+         return -1;
+ }
+ 
+@@ -1751,7 +1746,7 @@
+                 return;   /* LANE2: ignore targetless LE_ARPs for which
+                            * we have no entry in the cache. 7.1.30
+                            */
+-        lec_arp_lock(priv);
++        lec_arp_get(priv);
+         if (priv->lec_arp_empty_ones) {
+                 entry = priv->lec_arp_empty_ones;
+                 if (!memcmp(entry->atm_addr, atm_addr, ATM_ESA_LEN)) {
+@@ -1785,13 +1780,13 @@
+                                 entry->status = ESI_FORWARD_DIRECT;
+                                 memcpy(entry->mac_addr, mac_addr, ETH_ALEN);
+                                 entry->last_used = jiffies;
+-                                lec_arp_put(priv->lec_arp_tables, entry);
++                                lec_arp_add(priv->lec_arp_tables, entry);
+                         }
+                         if (remoteflag)
+                                 entry->flags|=LEC_REMOTE_FLAG;
+                         else
+                                 entry->flags&=~LEC_REMOTE_FLAG;
+-                        lec_arp_unlock(priv);
++                        lec_arp_put(priv);
+                         DPRINTK("After update\n");
+                         dump_arp_table(priv);
+                         return;
+@@ -1801,11 +1796,11 @@
+         if (!entry) {
+                 entry = make_entry(priv, mac_addr);
+                 if (!entry) {
+-                        lec_arp_unlock(priv);
++                        lec_arp_put(priv);
+                         return;
+                 }
+                 entry->status = ESI_UNKNOWN;
+-                lec_arp_put(priv->lec_arp_tables, entry);
++                lec_arp_add(priv->lec_arp_tables, entry);
+                 /* Temporary, changes before end of function */
+         }
+         memcpy(entry->atm_addr, atm_addr, ATM_ESA_LEN);
+@@ -1840,7 +1835,7 @@
+         }
+         DPRINTK("After update2\n");
+         dump_arp_table(priv);
+-        lec_arp_unlock(priv);
++        lec_arp_put(priv);
+ }
+ 
+ /*
+@@ -1854,7 +1849,7 @@
+         struct lec_arp_table *entry;
+         int i, found_entry=0;
+ 
+-        lec_arp_lock(priv);
++        lec_arp_get(priv);
+         if (ioc_data->receive == 2) {
+                 /* Vcc for Multicast Forward. No timer, LANEv2 7.1.20 and 2.3.5.3 */
+ 
+@@ -1863,7 +1858,7 @@
+                 entry = lec_arp_find(priv, bus_mac);
+                 if (!entry) {
+                         printk("LEC_ARP: Multicast entry not found!\n");
+-                        lec_arp_unlock(priv);
++                        lec_arp_put(priv);
+                         return;
+                 }
+                 memcpy(entry->atm_addr, ioc_data->atm_addr, ATM_ESA_LEN);
+@@ -1872,7 +1867,7 @@
+ #endif
+                 entry = make_entry(priv, bus_mac);
+                 if (entry == NULL) {
+-                        lec_arp_unlock(priv);
++                        lec_arp_put(priv);
+                         return;
+                 }
+                 del_timer(&entry->timer);
+@@ -1881,7 +1876,7 @@
+                 entry->old_recv_push = old_push;
+                 entry->next = priv->mcast_fwds;
+                 priv->mcast_fwds = entry;
+-                lec_arp_unlock(priv);
++                lec_arp_put(priv);
+                 return;
+         } else if (ioc_data->receive == 1) {
+                 /* Vcc which we don't want to make default vcc, attach it
+@@ -1899,7 +1894,7 @@
+                         ioc_data->atm_addr[18],ioc_data->atm_addr[19]);
+                 entry = make_entry(priv, bus_mac);
+                 if (entry == NULL) {
+-                        lec_arp_unlock(priv);
++                        lec_arp_put(priv);
+                         return;
+                 }
+                 memcpy(entry->atm_addr, ioc_data->atm_addr, ATM_ESA_LEN);
+@@ -1912,7 +1907,7 @@
+                 add_timer(&entry->timer);
+                 entry->next = priv->lec_no_forward;
+                 priv->lec_no_forward = entry;
+-                lec_arp_unlock(priv);
++                lec_arp_put(priv);
+ 		dump_arp_table(priv);
+                 return;
+         }
+@@ -1971,7 +1966,7 @@
+                 }
+         }
+         if (found_entry) {
+-                lec_arp_unlock(priv);
++                lec_arp_put(priv);
+                 DPRINTK("After vcc was added\n");
+                 dump_arp_table(priv);
+                 return;
+@@ -1980,7 +1975,7 @@
+            this vcc */
+         entry = make_entry(priv, bus_mac);
+         if (!entry) {
+-                lec_arp_unlock(priv);
++                lec_arp_put(priv);
+                 return;
+         }
+         entry->vcc = vcc;
+@@ -1993,7 +1988,7 @@
+         entry->timer.expires = jiffies + priv->vcc_timeout_period;
+         entry->timer.function = lec_arp_expire_vcc;
+         add_timer(&entry->timer);
+-        lec_arp_unlock(priv);
++        lec_arp_put(priv);
+         DPRINTK("After vcc was added\n");
+ 	dump_arp_table(priv);
+ }
+@@ -2009,6 +2004,10 @@
+                 for (entry=priv->lec_arp_tables[i];entry;entry=entry->next) {
+                         if (entry->flush_tran_id == tran_id &&
+                             entry->status == ESI_FLUSH_PENDING) {
++			        struct sk_buff *skb;
++
++ 				while ((skb = skb_dequeue(&entry->tx_wait)))
++					lec_send(entry->vcc, skb, entry->priv);
+                                 entry->status = ESI_FORWARD_DIRECT;
+                                 DPRINTK("LEC_ARP: Flushed\n");
+                         }
+@@ -2039,10 +2038,10 @@
+                 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+         struct lec_arp_table *to_add;
+   
+-        lec_arp_lock(priv);
++        lec_arp_get(priv);
+         to_add = make_entry(priv, mac_addr);
+         if (!to_add) {
+-                lec_arp_unlock(priv);
++                lec_arp_put(priv);
+                 return -ENOMEM;
+         }
+         memcpy(to_add->atm_addr, vcc->remote.sas_addr.prv, ATM_ESA_LEN);
+@@ -2052,8 +2051,8 @@
+         to_add->old_push = vcc->push;
+         vcc->push = lec_push;
+         priv->mcast_vcc = vcc;
+-        lec_arp_put(priv->lec_arp_tables, to_add);
+-        lec_arp_unlock(priv);
++        lec_arp_add(priv->lec_arp_tables, to_add);
++        lec_arp_put(priv);
+         return 0;
+ }
+ 
+@@ -2065,7 +2064,7 @@
+ 
+         DPRINTK("LEC_ARP: lec_vcc_close vpi:%d vci:%d\n",vcc->vpi,vcc->vci);
+         dump_arp_table(priv);
+-        lec_arp_lock(priv);
++        lec_arp_get(priv);
+         for(i=0;i<LEC_ARP_TABLE_SIZE;i++) {
+                 for(entry = priv->lec_arp_tables[i];entry; entry=next) {
+                         next = entry->next;
+@@ -2127,7 +2126,7 @@
+                 entry = next;
+         }
+ 
+-        lec_arp_unlock(priv);
++        lec_arp_put(priv);
+ 	dump_arp_table(priv);
+ }
+ 
+@@ -2135,9 +2134,9 @@
+ lec_arp_check_empties(struct lec_priv *priv,
+                       struct atm_vcc *vcc, struct sk_buff *skb)
+ {
++        unsigned long flags;
+         struct lec_arp_table *entry, *prev;
+         struct lecdatahdr_8023 *hdr = (struct lecdatahdr_8023 *)skb->data;
+-        unsigned long flags;
+         unsigned char *src;
+ #ifdef CONFIG_TR
+         struct lecdatahdr_8025 *tr_hdr = (struct lecdatahdr_8025 *)skb->data;
+@@ -2147,26 +2146,26 @@
+ #endif
+         src = hdr->h_source;
+ 
+-        lec_arp_lock(priv);
++        lec_arp_get(priv);
+         entry = priv->lec_arp_empty_ones;
+         if (vcc == entry->vcc) {
+-                save_flags(flags);
+-                cli();
++		spin_lock_irqsave(&lec_arp_spinlock, flags);
+                 del_timer(&entry->timer);
+                 memcpy(entry->mac_addr, src, ETH_ALEN);
+                 entry->status = ESI_FORWARD_DIRECT;
+                 entry->last_used = jiffies;
+                 priv->lec_arp_empty_ones = entry->next;
+-                restore_flags(flags);
++                spin_unlock_irqrestore(&lec_arp_spinlock, flags);
+                 /* We might have got an entry */
+                 if ((prev=lec_arp_find(priv,src))) {
+                         lec_arp_remove(priv->lec_arp_tables, prev);
+                         kfree(prev);
+                 }
+-                lec_arp_put(priv->lec_arp_tables, entry);
+-                lec_arp_unlock(priv);
++                lec_arp_add(priv->lec_arp_tables, entry);
++                lec_arp_put(priv);
+                 return;
+         }
++        spin_lock_irqsave(&lec_arp_spinlock, flags);
+         prev = entry;
+         entry = entry->next;
+         while (entry && entry->vcc != vcc) {
+@@ -2175,22 +2174,21 @@
+         }
+         if (!entry) {
+                 DPRINTK("LEC_ARP: Arp_check_empties: entry not found!\n");
+-                lec_arp_unlock(priv);
++                lec_arp_put(priv);
++                spin_unlock_irqrestore(&lec_arp_spinlock, flags);
+                 return;
+         }
+-        save_flags(flags);
+-        cli();
+         del_timer(&entry->timer);
+         memcpy(entry->mac_addr, src, ETH_ALEN);
+         entry->status = ESI_FORWARD_DIRECT;
+         entry->last_used = jiffies;
+         prev->next = entry->next;
+-        restore_flags(flags);
++        spin_unlock_irqrestore(&lec_arp_spinlock, flags);
+         if ((prev = lec_arp_find(priv, src))) {
+                 lec_arp_remove(priv->lec_arp_tables,prev);
+                 kfree(prev);
+         }
+-        lec_arp_put(priv->lec_arp_tables,entry);
+-        lec_arp_unlock(priv);  
++        lec_arp_add(priv->lec_arp_tables,entry);
++        lec_arp_put(priv);  
+ }
+ MODULE_LICENSE("GPL");
+diff -urN linux-2.4.20/net/atm/lec.h linux-2.5.63/net/atm/lec.h
+--- linux-2.4.20/net/atm/lec.h	Fri Feb  9 20:34:13 2001
++++ linux-2.5.63/net/atm/lec.h	Mon Feb 24 20:05:15 2003
+@@ -98,7 +98,7 @@
+            establishes multiple Multicast Forward VCCs to us. This list
+            collects all those VCCs. LANEv1 client has only one item in this
+            list. These entries are not aged out. */
+-        atomic_t lec_arp_lock_var;
++        atomic_t lec_arp_users;
+         struct atm_vcc *mcast_vcc; /* Default Multicast Send VCC */
+         struct atm_vcc *lecd;
+         struct timer_list lec_arp_timer;
+diff -urN linux-2.4.20/net/atm/mpc.c linux-2.5.63/net/atm/mpc.c
+--- linux-2.4.20/net/atm/mpc.c	Sun Sep 30 21:26:08 2001
++++ linux-2.5.63/net/atm/mpc.c	Mon Feb 24 20:05:40 2003
+@@ -13,7 +13,7 @@
+ #include <linux/ip.h>
+ #include <asm/byteorder.h>
+ #include <asm/uaccess.h>
+-#include <asm/checksum.h>   /* for ip_fast_csum() */
++#include <net/checksum.h>   /* for ip_fast_csum() */
+ #include <net/arp.h>
+ #include <net/dst.h>
+ #include <linux/proc_fs.h>
+@@ -741,18 +741,10 @@
+ };
+ 
+ static struct atm_dev mpc_dev = {
+-	&mpc_ops,       /* device operations    */
+-	NULL,           /* PHY operations       */
+-	"mpc",          /* device type name     */
+-	42,             /* device index (dummy) */
+-	NULL,           /* VCC table            */
+-	NULL,           /* last VCC             */
+-	NULL,           /* per-device data      */
+-	NULL,           /* private PHY data     */
+-	{ 0 },          /* device flags         */
+-	NULL,           /* local ATM address    */
+-	{ 0 }           /* no ESI               */
+-	/* rest of the members will be 0 */
++	ops:	&mpc_ops,
++	type:	"mpc",
++	number:	42,
++	/* members not explicitely initialised will be 0 */
+ };
+ 
+ int atm_mpoa_mpoad_attach (struct atm_vcc *vcc, int arg)
+@@ -1432,10 +1424,6 @@
+ 	struct atm_mpoa_qos *qos, *nextqos;
+ 	struct lec_priv *priv;
+ 
+-	if (MOD_IN_USE) {
+-		printk("mpc.c: module in use\n");
+-		return;
+-	}
+ #ifdef CONFIG_PROC_FS
+ 	mpc_proc_clean();
+ #endif
+diff -urN linux-2.4.20/net/atm/mpoa_proc.c linux-2.5.63/net/atm/mpoa_proc.c
+--- linux-2.4.20/net/atm/mpoa_proc.c	Wed Jul  4 20:50:38 2001
++++ linux-2.5.63/net/atm/mpoa_proc.c	Mon Feb 24 20:05:39 2003
+@@ -111,7 +111,7 @@
+ 	unsigned char ip_string[16];
+ 	if(count == 0)
+ 	        return 0;
+-	page = get_free_page(GFP_KERNEL);
++	page = get_zeroed_page(GFP_KERNEL);
+ 	if(!page)
+ 	        return -ENOMEM;
+ 	atm_mpoa_disp_qos((char *)page, &length);
+diff -urN linux-2.4.20/net/atm/proc.c linux-2.5.63/net/atm/proc.c
+--- linux-2.4.20/net/atm/proc.c	Fri Nov 29 00:53:15 2002
++++ linux-2.5.63/net/atm/proc.c	Mon Feb 24 20:05:14 2003
+@@ -220,7 +220,7 @@
+ 		default:
+ 			here += sprintf(here,"%3d",vcc->family);
+ 	}
+-	here += sprintf(here," %04lx  %5d %7d/%7d %7d/%7d\n",vcc->flags.bits,
++	here += sprintf(here," %04lx  %5d %7d/%7d %7d/%7d\n",vcc->flags,
+ 	    vcc->reply,
+ 	    atomic_read(&vcc->tx_inuse),vcc->sk->sndbuf,
+ 	    atomic_read(&vcc->rx_inuse),vcc->sk->rcvbuf);
+@@ -496,7 +496,7 @@
+ 	int length;
+ 
+ 	if (count == 0) return 0;
+-	page = get_free_page(GFP_KERNEL);
++	page = get_zeroed_page(GFP_KERNEL);
+ 	if (!page) return -ENOMEM;
+ 	dev = ((struct proc_dir_entry *) file->f_dentry->d_inode->u.generic_ip)
+ 	    ->data;
+@@ -521,7 +520,7 @@
+ 	    ->data;
+ 
+ 	if (count == 0) return 0;
+-	page = get_free_page(GFP_KERNEL);
++	page = get_zeroed_page(GFP_KERNEL);
+ 	if (!page) return -ENOMEM;
+ 	length = (*info)(*pos,(char *) page);
+ 	if (length > count) length = -EINVAL;
+@@ -552,7 +550,7 @@
+ 	for (num = dev->number; num; num /= 10) digits++;
+ 	if (!digits) digits++;
+ 
+-	dev->proc_name = kmalloc(strlen(dev->type) + digits + 2, GFP_ATOMIC);
++	dev->proc_name = kmalloc(strlen(dev->type) + digits + 2, GFP_KERNEL);
+ 	if (!dev->proc_name)
+ 		goto fail1;
+ 	sprintf(dev->proc_name,"%s:%d",dev->type, dev->number);
+diff -urN linux-2.4.20/net/atm/pvc.c linux-2.5.63/net/atm/pvc.c
+--- linux-2.4.20/net/atm/pvc.c	Thu Apr 12 21:11:39 2001
++++ linux-2.5.63/net/atm/pvc.c	Mon Feb 24 20:05:14 2003
+@@ -111,11 +111,8 @@
+ 
+ 
+ static struct net_proto_family pvc_family_ops = {
+-	PF_ATMPVC,
+-	pvc_create,
+-	0,			/* no authentication */
+-	0,			/* no encryption */
+-	0			/* no encrypt_net */
++	family:	PF_ATMPVC,
++	create:	pvc_create,
+ };
+ 
+ 
+diff -urN linux-2.4.20/net/atm/resources.c linux-2.5.63/net/atm/resources.c
+--- linux-2.4.20/net/atm/resources.c	Fri Nov 29 00:53:15 2002
++++ linux-2.5.63/net/atm/resources.c	Mon Feb 24 20:05:45 2003
+@@ -2,6 +2,11 @@
+ 
+ /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
+ 
++/* Fixes
++ * Arnaldo Carvalho de Melo <acme@conectiva.com.br>
++ * 2002/01 - don't free the whole struct sock on sk->destruct time,
++ * 	     use the default destruct function initialized by sock_init_data */
++
+ 
+ #include <linux/config.h>
+ #include <linux/ctype.h>
+@@ -11,7 +16,6 @@
+ #include <linux/module.h>
+ #include <linux/bitops.h>
+ #include <net/sock.h>	 /* for struct sock */
+-#include <asm/segment.h> /* for get_fs_long and put_fs_long */
+ 
+ #include "common.h"
+ #include "resources.h"
+@@ -27,14 +31,15 @@
+ struct atm_vcc *nodev_vccs = NULL;
+ extern spinlock_t atm_dev_lock;
+ 
+-
+-static struct atm_dev *alloc_atm_dev(const char *type)
++/* Caller must hold atm_dev_lock. */
++static struct atm_dev *__alloc_atm_dev(const char *type)
+ {
+ 	struct atm_dev *dev;
+ 
+ 	dev = kmalloc(sizeof(*dev), GFP_ATOMIC);
+-	if (!dev) return NULL;
+-	memset(dev,0,sizeof(*dev));
++	if (!dev)
++		return NULL;
++	memset(dev, 0, sizeof(*dev));
+ 	dev->type = type;
+ 	dev->signal = ATM_PHY_SIG_UNKNOWN;
+ 	dev->link_rate = ATM_OC3_PCR;
+@@ -42,39 +47,49 @@
+ 
+ 	dev->prev = last_dev;
+ 
+-	if (atm_devs) last_dev->next = dev;
+-	else atm_devs = dev;
++	if (atm_devs)
++		last_dev->next = dev;
++	else
++		atm_devs = dev;
+ 	last_dev = dev;
++
+ 	return dev;
+ }
+ 
+-
+-static void free_atm_dev(struct atm_dev *dev)
++/* Caller must hold atm_dev_lock. */
++static void __free_atm_dev(struct atm_dev *dev)
+ {
+-	if (dev->prev) dev->prev->next = dev->next;
+-	else atm_devs = dev->next;
+-	if (dev->next) dev->next->prev = dev->prev;
+-	else last_dev = dev->prev;
++	if (dev->prev)
++		dev->prev->next = dev->next;
++	else
++		atm_devs = dev->next;
++	if (dev->next)
++		dev->next->prev = dev->prev;
++	else
++		last_dev = dev->prev;
+ 	kfree(dev);
+ }
+ 
++/* Caller must hold atm_dev_lock. */
+ struct atm_dev *atm_find_dev(int number)
+ {
+ 	struct atm_dev *dev;
+ 
+ 	for (dev = atm_devs; dev; dev = dev->next)
+-		if (dev->ops && dev->number == number) return dev;
++		if (dev->ops && dev->number == number)
++			return dev;
+ 	return NULL;
+ }
+ 
+-struct atm_dev *atm_dev_register(const char *type,const struct atmdev_ops *ops,
+-    int number,atm_dev_flags_t *flags)
++
++struct atm_dev *atm_dev_register(const char *type, const struct atmdev_ops *ops,
++				 int number, unsigned long *flags)
+ {
+-	struct atm_dev *dev = NULL;
++	struct atm_dev *dev;
+ 
+ 	spin_lock(&atm_dev_lock);
+ 
+-	dev = alloc_atm_dev(type);
++	dev = __alloc_atm_dev(type);
+ 	if (!dev) {
+ 		printk(KERN_ERR "atm_dev_register: no space for dev %s\n",
+ 		    type);
+@@ -82,31 +97,37 @@
+ 	}
+ 	if (number != -1) {
+ 		if (atm_find_dev(number)) {
+-			free_atm_dev(dev);
+-			return NULL;
++			__free_atm_dev(dev);
++			dev = NULL;
++			goto done;
+ 		}
+ 		dev->number = number;
+ 	} else {
+ 		dev->number = 0;
+-		while (atm_find_dev(dev->number)) dev->number++;
++		while (atm_find_dev(dev->number))
++			dev->number++;
+ 	}
+ 	dev->vccs = dev->last = NULL;
+ 	dev->dev_data = NULL;
+ 	barrier();
+ 	dev->ops = ops;
+-	if (flags) 
++	if (flags)
+ 		dev->flags = *flags;
+-	else 
+-		memset(&dev->flags,0,sizeof(dev->flags));
+-	memset((void *) &dev->stats,0,sizeof(dev->stats));
++	else
++		memset(&dev->flags, 0, sizeof(dev->flags));
++	memset(&dev->stats, 0, sizeof(dev->stats));
++
+ #ifdef CONFIG_PROC_FS
+-	if (ops->proc_read)
++	if (ops->proc_read) {
+ 		if (atm_proc_dev_register(dev) < 0) {
+ 			printk(KERN_ERR "atm_dev_register: "
+-			    "atm_proc_dev_register failed for dev %s\n",type);
+-			free_atm_dev(dev);
++			       "atm_proc_dev_register failed for dev %s\n",
++			       type);
++			__free_atm_dev(dev);
++			dev = NULL;
+ 			goto done;
+ 		}
++	}
+ #endif
+ 
+ done:
+@@ -118,47 +139,50 @@
+ void atm_dev_deregister(struct atm_dev *dev)
+ {
+ #ifdef CONFIG_PROC_FS
+-	if (dev->ops->proc_read) atm_proc_dev_deregister(dev);
++	if (dev->ops->proc_read)
++		atm_proc_dev_deregister(dev);
+ #endif
+ 	spin_lock(&atm_dev_lock);
+-	free_atm_dev(dev);
++	__free_atm_dev(dev);
+ 	spin_unlock(&atm_dev_lock);
+ }
+ 
+ void shutdown_atm_dev(struct atm_dev *dev)
+ {
+ 	if (dev->vccs) {
+-		set_bit(ATM_DF_CLOSE,&dev->flags);
++		set_bit(ATM_DF_CLOSE, &dev->flags);
+ 		return;
+ 	}
+-	if (dev->ops->dev_close) dev->ops->dev_close(dev);
++	if (dev->ops->dev_close)
++		dev->ops->dev_close(dev);
+ 	atm_dev_deregister(dev);
+ }
+ 
+-
+ /* Handler for sk->destruct, invoked by sk_free() */
+ static void atm_free_sock(struct sock *sk)
+ {
+ 	kfree(sk->protinfo.af_atm);
+ }
+ 
+ struct sock *alloc_atm_vcc_sk(int family)
+ {
+ 	struct sock *sk;
+ 	struct atm_vcc *vcc;
+ 
+-	sk = sk_alloc(family, GFP_KERNEL, 1);
+-	if (!sk) return NULL;
+-	vcc = sk->protinfo.af_atm = kmalloc(sizeof(*vcc),GFP_KERNEL);
++	sk = sk_alloc(family, GFP_KERNEL, 1);
++	if (!sk)
++		return NULL;
++	vcc = atm_sk(sk) = kmalloc(sizeof(*vcc), GFP_KERNEL);
+ 	if (!vcc) {
+ 		sk_free(sk);
+ 		return NULL;
+ 	}
+-	sock_init_data(NULL,sk);
+ 	sk->destruct = atm_free_sock;
+-	memset(vcc,0,sizeof(*vcc));
++	sock_init_data(NULL, sk);
++	memset(vcc, 0, sizeof(*vcc));
+ 	vcc->sk = sk;
+-	if (nodev_vccs) nodev_vccs->prev = vcc;
++	if (nodev_vccs)
++		nodev_vccs->prev = vcc;
+ 	vcc->prev = NULL;
+ 	vcc->next = nodev_vccs;
+ 	nodev_vccs = vcc;
+@@ -168,11 +185,16 @@
+ 
+ static void unlink_vcc(struct atm_vcc *vcc,struct atm_dev *hold_dev)
+ {
+-	if (vcc->prev) vcc->prev->next = vcc->next;
+-	else if (vcc->dev) vcc->dev->vccs = vcc->next;
+-	    else nodev_vccs = vcc->next;
+-	if (vcc->next) vcc->next->prev = vcc->prev;
+-	else if (vcc->dev) vcc->dev->last = vcc->prev;
++	if (vcc->prev)
++		vcc->prev->next = vcc->next;
++	else if (vcc->dev)
++		vcc->dev->vccs = vcc->next;
++	else
++		nodev_vccs = vcc->next;
++	if (vcc->next)
++		vcc->next->prev = vcc->prev;
++	else if (vcc->dev)
++		vcc->dev->last = vcc->prev;
+ 	if (vcc->dev && vcc->dev != hold_dev && !vcc->dev->vccs &&
+ 	    test_bit(ATM_DF_CLOSE,&vcc->dev->flags))
+ 		shutdown_atm_dev(vcc->dev);
+@@ -181,11 +203,10 @@
+ 
+ void free_atm_vcc_sk(struct sock *sk)
+ {
+-	unlink_vcc(sk->protinfo.af_atm,NULL);
++	unlink_vcc(atm_sk(sk), NULL);
+ 	sk_free(sk);
+ }
+ 
+-
+ void bind_vcc(struct atm_vcc *vcc,struct atm_dev *dev)
+ {
+ 	unlink_vcc(vcc,dev);
+@@ -193,19 +214,20 @@
+ 	if (dev) {
+ 		vcc->next = NULL;
+ 		vcc->prev = dev->last;
+-		if (dev->vccs) dev->last->next = vcc;
+-		else dev->vccs = vcc;
++		if (dev->vccs)
++			dev->last->next = vcc;
++		else
++			dev->vccs = vcc;
+ 		dev->last = vcc;
+-	}
+-	else {
+-		if (nodev_vccs) nodev_vccs->prev = vcc;
++	} else {
++		if (nodev_vccs)
++			nodev_vccs->prev = vcc;
+ 		vcc->next = nodev_vccs;
+ 		vcc->prev = NULL;
+ 		nodev_vccs = vcc;
+ 	}
+ }
+ 
+-
+ EXPORT_SYMBOL(atm_dev_register);
+ EXPORT_SYMBOL(atm_dev_deregister);
+ EXPORT_SYMBOL(atm_find_dev);
+diff -urN linux-2.4.20/net/atm/signaling.c linux-2.5.63/net/atm/signaling.c
+--- linux-2.4.20/net/atm/signaling.c	Thu Jun 28 02:10:55 2001
++++ linux-2.5.63/net/atm/signaling.c	Mon Feb 24 20:05:39 2003
+@@ -239,7 +239,7 @@
+ 	999,		/* dummy device number */
+ 	NULL,NULL,	/* pretend not to have any VCCs */
+ 	NULL,NULL,	/* no data */
+-	{ 0 },		/* no flags */
++	0,		/* no flags */
+ 	NULL,		/* no local address */
+ 	{ 0 }		/* no ESI, no statistics */
+ };
+diff -urN linux-2.4.20/net/atm/svc.c linux-2.5.63/net/atm/svc.c
+--- linux-2.4.20/net/atm/svc.c	Thu Apr 12 21:11:39 2001
++++ linux-2.5.63/net/atm/svc.c	Mon Feb 24 20:05:36 2003
+@@ -430,11 +430,8 @@
+ 
+ 
+ static struct net_proto_family svc_family_ops = {
+-	PF_ATMSVC,
+-	svc_create,
+-	0,			/* no authentication */
+-	0,			/* no encryption */
+-	0			/* no encrypt_net */
++	family:	PF_ATMSVC,
++	create:	svc_create,
+ };
+ 
+ 

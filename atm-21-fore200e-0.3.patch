@@ -1,0 +1,1055 @@
+--- linux-2.4.0-test9-orig/drivers/atm/fore200e.c
++++ linux-2.4.0-test9/drivers/atm/fore200e.c	Fri Dec  1 16:18:31 2000
+@@ -2,7 +2,7 @@
+   $Id$
+ 
+   A FORE Systems 200E-series driver for ATM on Linux.
+-  Christophe Lizzi (lizzi@cnam.fr), October 1999-March 2000.
++  Christophe Lizzi (lizzi@cnam.fr), October 1999-December 2000.
+ 
+   Based on the PCA-200E driver from Uwe Dannowski (Uwe.Dannowski@inf.tu-dresden.de).
+ 
+@@ -34,6 +34,8 @@
+ #include <linux/sched.h>
+ #include <linux/interrupt.h>
+ #include <linux/bitops.h>
++#include <linux/pci.h>
++#include <linux/module.h>
+ #include <linux/atmdev.h>
+ #include <linux/sonet.h>
+ #include <linux/atm_suni.h>
+@@ -46,7 +48,6 @@
+ #include <asm/byteorder.h>
+ #include <asm/uaccess.h>
+ #include <asm/atomic.h>
+-#include <linux/pci.h>
+ 
+ #ifdef CONFIG_ATM_FORE200E_SBA
+ #include <asm/idprom.h>
+@@ -56,25 +57,31 @@
+ #include <asm/pgtable.h>
+ #endif
+ 
+-#include <linux/module.h>
+ 
+-#include "fore200e.h"
+-#include "suni.h"
++#if 0 /* defer intr work to a tasklet */
++#define FORE200E_USE_TASKLET
++#endif
++
++#if 0 /* enable the debugging code of the buffer supply queues */
++#define FORE200E_BSQ_DEBUG
++#endif
+ 
+ #if 1   /* ensure correct handling of 52-byte AAL0 SDUs used by atmdump-like apps */
+ #define FORE200E_52BYTE_AAL0_SDU
+ #endif
+ 
+-#define FORE200E_VERSION "0.2d"
++#include "fore200e.h"
++#include "suni.h"
+ 
++#define FORE200E_VERSION "0.3"
+ 
+ #define FORE200E         "fore200e: "
+ 
+ #if defined(CONFIG_ATM_FORE200E_DEBUG) && (CONFIG_ATM_FORE200E_DEBUG > 0)
+ #define DPRINTK(level, format, args...)  do { if (CONFIG_ATM_FORE200E_DEBUG >= (level)) \
+-                                                  printk(FORE200E format, ##args); } while(0)
++                                                  printk(FORE200E format, ##args); } while (0)
+ #else
+-#define DPRINTK(level, format, args...)  while(0)
++#define DPRINTK(level, format, args...)  do {} while (0)
+ #endif
+ 
+ 
+@@ -503,6 +510,7 @@
+ {
+ #if defined(__sparc_v9__)
+     /* returned chunks are page-aligned */
++    chunk->alloc_size = size * nbr;
+     chunk->alloc_addr = pci_alloc_consistent((struct pci_dev*)fore200e->bus_dev,
+ 					     chunk->alloc_size,
+ 					     &chunk->dma_addr);
+@@ -589,7 +597,7 @@
+ {
+     DPRINTK(2, "device %s being unmapped from memory\n", fore200e->name);
+ 
+-    /* XXX iounmap() does nothing on PowerPC (at least in 2.2.12 and 2.3.41),
++    /* XXX iounmap() does nothing on PowerPC (at least in 2.2.x and 2.3.x),
+        this leads to a kernel panic if the module is loaded and unloaded several times */
+     if (fore200e->virt_base != NULL)
+ 	iounmap(fore200e->virt_base);
+@@ -989,44 +997,89 @@
+ static void
+ fore200e_irq_tx(struct fore200e* fore200e)
+ {
++    struct host_txq*       txq = &fore200e->host_txq;
+     struct host_txq_entry* entry;
+-    int i;
+-    
+-    entry = fore200e->host_txq.host_entry;
+ 
+-    for (i = 0; i < QUEUE_SIZE_TX; i++) {
++    for (;;) {
+ 
+-	if (*entry->status & STATUS_COMPLETE) {
++	entry = &txq->host_entry[ txq->tail ];
+ 
+-	    DPRINTK(3, "TX COMPLETED: entry = %p, vcc = %p, skb = %p\n", entry, entry->vcc, entry->skb);
++        if (!(*entry->status & STATUS_COMPLETE)) {
++	    break;
++	}
+ 
+-	    /* free copy of misaligned data */
+-	    if (entry->data)
+-		kfree(entry->data);
++	DPRINTK(3, "TX COMPLETED: entry = %p [tail = %d], vcc = %p, skb = %p\n", 
++		entry, txq->tail, entry->vcc, entry->skb);
+ 
+-	    /* remove DMA mapping */
+-	    fore200e->bus->dma_unmap(fore200e, entry->tpd->tsd[ 0 ].buffer, entry->tpd->tsd[ 0 ].length,
+-				     FORE200E_DMA_TODEVICE);
++	/* free copy of misaligned data */
++	if (entry->data)
++	    kfree(entry->data);
++	
++	/* remove DMA mapping */
++	fore200e->bus->dma_unmap(fore200e, entry->tpd->tsd[ 0 ].buffer, entry->tpd->tsd[ 0 ].length,
++				 FORE200E_DMA_TODEVICE);
++	
++	/* notify tx completion */
++	if (entry->vcc->pop)
++	    entry->vcc->pop(entry->vcc, entry->skb);
++	else
++	    dev_kfree_skb_irq(entry->skb);
++	
++	/* check error condition */
++	if (*entry->status & STATUS_ERROR)
++	    atomic_inc(&entry->vcc->stats->tx_err);
++	else
++	    atomic_inc(&entry->vcc->stats->tx);
++	
++	*entry->status = STATUS_FREE;
++	
++	fore200e->host_txq.txing--;
+ 
+-	    /* notify tx completion */
+-	    if (entry->vcc->pop)
+-		entry->vcc->pop(entry->vcc, entry->skb);
+-	    else
+-		dev_kfree_skb_irq(entry->skb);
++	FORE200E_NEXT_ENTRY(txq->tail, QUEUE_SIZE_TX);
++    }
++}
+ 
+-	    /* check error condition */
+-	    if (*entry->status & STATUS_ERROR)
+-		atomic_inc(&entry->vcc->stats->tx_err);
+-	    else
+-		atomic_inc(&entry->vcc->stats->tx);
+ 
+-	    *entry->status = STATUS_FREE;
+-	    
+-	    fore200e->host_txq.txing--;
++#ifdef FORE200E_BSQ_DEBUG
++int bsq_audit(int where, struct host_bsq* bsq, int scheme, int magn) /* FFF */
++{
++    struct buffer* buffer;
++    int count = 0;
++
++    buffer = bsq->freebuf;
++    while (buffer) {
++
++	if (buffer->supplied) {
++	    printk(FORE200E "bsq_audit(%d): queue %d.%d, buffer %ld supplied but in free list!\n",
++		   where, scheme, magn, buffer->index);
+ 	}
+-	entry++;
++
++	if (buffer->magn != magn) {
++	    printk(FORE200E "bsq_audit(%d): queue %d.%d, buffer %ld, unexpected magn = %d\n",
++		   where, scheme, magn, buffer->index, buffer->magn);
++	}
++
++	if (buffer->scheme != scheme) {
++	    printk(FORE200E "bsq_audit(%d): queue %d.%d, buffer %ld, unexpected scheme = %d\n",
++		   where, scheme, magn, buffer->index, buffer->scheme);
++	}
++
++	if (buffer->index < 0 || buffer->index >= fore200e_rx_buf_nbr[ scheme ][ magn ]) {
++	    printk(FORE200E "bsq_audit(%d): queue %d.%d, out of range buffer index = %ld !\n",
++		   where, scheme, magn, buffer->index);
++	}
++
++	count++;
++	buffer = buffer->next;
++    }
++
++    if (count != bsq->freebuf_count) {
++	printk(FORE200E "bsq_audit(%d): queue %d.%d, %d bufs in free list, but freebuf_count = %d\n",
++	       where, scheme, magn, count, bsq->freebuf_count);
+     }
++    return 0;
+ }
++#endif
+ 
+ 
+ static void
+@@ -1043,28 +1096,44 @@
+ 
+ 	    bsq = &fore200e->host_bsq[ scheme ][ magn ];
+ 
+-	    if (fore200e_rx_buf_nbr[ scheme ][ magn ] - bsq->count > RBD_BLK_SIZE) {
++#ifdef FORE200E_BSQ_DEBUG
++	    bsq_audit(1, bsq, scheme, magn);
++#endif
+ 
+-		DPRINTK(2, "supplying rx buffers to queue %d / %d, count = %d\n",
+-			scheme, magn, bsq->count);
++	    while (bsq->freebuf_count >= RBD_BLK_SIZE) {
++
++		DPRINTK(2, "supplying %d rx buffers to queue %d / %d, freebuf_count = %d\n",
++			RBD_BLK_SIZE, scheme, magn, bsq->freebuf_count);
+ 
+ 		entry = &bsq->host_entry[ bsq->head ];
+-		
+-		FORE200E_NEXT_ENTRY(bsq->head, QUEUE_SIZE_BS);
+ 
+ 		for (i = 0; i < RBD_BLK_SIZE; i++) {
+ 
+-		    buffer = &bsq->buffer[ bsq->free ];
+-		    
+-		    FORE200E_NEXT_ENTRY(bsq->free, fore200e_rx_buf_nbr[ scheme ][ magn ]);
++		    /* take the first buffer in the free buffer list */
++		    buffer = bsq->freebuf;
++		    if (!buffer) {
++			printk(FORE200E "no more free bufs in queue %d.%d, but freebuf_count = %d\n",
++			       scheme, magn, bsq->freebuf_count);
++			return;
++		    }
++		    bsq->freebuf = buffer->next;
+ 		    
++#ifdef FORE200E_BSQ_DEBUG
++		    if (buffer->supplied)
++			printk(FORE200E "queue %d.%d, buffer %lu already supplied\n",
++			       scheme, magn, buffer->index);
++		    buffer->supplied = 1;
++#endif
++
+ 		    entry->rbd_block->rbd[ i ].buffer_haddr = buffer->data.dma_addr;
+ 		    entry->rbd_block->rbd[ i ].handle       = FORE200E_BUF2HDL(buffer);
+ 		}
+ 
+-		/* increase the number of supplied rx buffers */
+-		bsq->count += RBD_BLK_SIZE;
+-		
++		FORE200E_NEXT_ENTRY(bsq->head, QUEUE_SIZE_BS);
++
++		/* decrease accordingly the number of free rx buffers */
++		bsq->freebuf_count -= RBD_BLK_SIZE;
++
+ 		*entry->status = STATUS_PENDING;
+ 		fore200e->bus->write(entry->rbd_block_dma, &entry->cp_entry->rbd_block_haddr);
+ 	    }
+@@ -1073,7 +1142,6 @@
+ }
+ 
+ 
+-
+ static struct atm_vcc* 
+ fore200e_find_vcc(struct fore200e* fore200e, struct rpd* rpd)
+ {
+@@ -1089,7 +1157,7 @@
+ }
+ 
+ 
+-static void
++static int
+ fore200e_push_rpd(struct fore200e* fore200e, struct rpd* rpd)
+ {
+     struct atm_vcc*      vcc;
+@@ -1103,10 +1171,15 @@
+ 
+     vcc = fore200e_find_vcc(fore200e, rpd);
+     if (vcc == NULL) {
+-	
+-	printk(FORE200E "no vcc found for PDU received on %d.%d.%d\n",
+-	       fore200e->atm_dev->number, rpd->atm_header.vpi, rpd->atm_header.vci);
+-	return;
++	DPRINTK(1, "no vcc found for PDU received on %d.%d.%d\n",
++		fore200e->atm_dev->number, rpd->atm_header.vpi, rpd->atm_header.vci);
++	return -EINVAL;
++    }
++
++
++    if (!test_bit(ATM_VF_READY, &vcc->flags)) {
++	DPRINTK(1, "vcc %d.%d.%d not ready for rx\n", vcc->itf, vcc->vpi, vcc->vpi);
++	return -EINVAL;
+     }
+ 
+     fore200e_vcc = FORE200E_VCC(vcc);
+@@ -1129,10 +1202,9 @@
+     
+     skb = alloc_skb(pdu_len, GFP_ATOMIC);
+     if (skb == NULL) {
+-	
+ 	printk(FORE200E "unable to alloc new skb, rx PDU length = %d\n", pdu_len);
+ 	atomic_inc(&vcc->stats->rx_drop);
+-	return;
++	return -ENOMEM;
+     } 
+ 
+     do_gettimeofday(&skb->stamp);
+@@ -1169,11 +1241,13 @@
+ 		vcc->itf, vcc->vpi, vcc->vci);
+ 
+ 	dev_kfree_skb_irq(skb);
+-	return;
++	return -ENOMEM;
+     }
+ 
+     vcc->push(vcc, skb);
+     atomic_inc(&vcc->stats->rx);
++
++    return 0;
+ }
+ 
+ 
+@@ -1183,13 +1257,31 @@
+     struct buffer* buffer;
+     int            i;
+     
++    struct host_bsq* bsq;
++
++
+     for (i = 0; i < rpd->nseg; i++) {
+ 
+ 	/* rebuild rx buffer address from rsd handle */
+ 	buffer = FORE200E_HDL2BUF(rpd->rsd[ i ].handle);
+ 
+-	/* decrease the number of supplied rx buffers */
+-	fore200e->host_bsq[ buffer->scheme ][ buffer->magn ].count--;
++	bsq = &fore200e->host_bsq[ buffer->scheme ][ buffer->magn ];
++
++#ifdef FORE200E_BSQ_DEBUG
++	bsq_audit(2, bsq, buffer->scheme, buffer->magn);
++
++	if (buffer->supplied == 0)
++	    printk(FORE200E "queue %d.%d, buffer %ld was not supplied\n",
++		   buffer->scheme, buffer->magn, buffer->index);
++	buffer->supplied = 0;
++#endif
++
++	/* re-insert the buffer into the free buffer list */
++	buffer->next = bsq->freebuf;
++	bsq->freebuf = buffer;
++
++	/* then increment the number of free rx buffers */
++	bsq->freebuf_count++;
+     }
+ }
+ 
+@@ -1208,8 +1300,6 @@
+ 	if ((*entry->status & STATUS_COMPLETE) == 0)
+ 	    break;
+ 
+-	FORE200E_NEXT_ENTRY(rxq->head, QUEUE_SIZE_RX);
+-
+ 	if ((*entry->status & STATUS_ERROR) == 0) {
+ 
+ 	    fore200e_push_rpd(fore200e, entry->rpd);
+@@ -1219,6 +1309,8 @@
+ 		   fore200e->atm_dev->number, entry->rpd->atm_header.vpi, entry->rpd->atm_header.vci);
+ 	}
+ 
++	FORE200E_NEXT_ENTRY(rxq->head, QUEUE_SIZE_RX);
++
+ 	fore200e_collect_rpd(fore200e, entry->rpd);
+ 
+ 	fore200e_supply(fore200e);
+@@ -1230,6 +1322,23 @@
+ }
+ 
+ 
++static void 
++fore200e_irq(struct fore200e* fore200e)
++{
++    fore200e_irq_rx(fore200e);
++    
++    if (fore200e->host_txq.txing) {
++
++	/* give up if someone else is playing with the tx queue */
++	if (test_bit(0, &fore200e->tx_bit))
++	    return;
++
++	fore200e_irq_tx(fore200e);
++    }
++}
++
++
++
+ static void
+ fore200e_interrupt(int irq, void* dev, struct pt_regs* regs)
+ {
+@@ -1242,23 +1351,25 @@
+     }
+     DPRINTK(3, "valid interrupt on device %c\n", fore200e->name[9]);
+ 
++#ifdef FORE200E_USE_TASKLET
+     tasklet_schedule(&fore200e->tasklet);
++#else
++    fore200e_irq(fore200e);
++#endif
+     
+     fore200e->bus->irq_ack(fore200e);
+ }
+ 
+ 
++#ifdef FORE200E_USE_TASKLET
+ static void
+ fore200e_tasklet(unsigned long data)
+ {
+-    struct fore200e* fore200e = (struct fore200e*) data;
++    DPRINTK(3, "tasklet scheduled for device %c\n", fore200e->name[9]);
+ 
+-    fore200e_irq_rx(fore200e);
+-    
+-    if (fore200e->host_txq.txing)
+-	fore200e_irq_tx(fore200e);
++    fore200e_irq((struct fore200e*) data);
+ }
+-
++#endif
+ 
+ 
+ static int
+@@ -1268,7 +1379,7 @@
+ 
+ #if 1
+     /* fairly balance VCs over (identical) buffer schemes */
+-    scheme =  vcc->vci % 2 ? BUFFER_SCHEME_ONE : BUFFER_SCHEME_TWO;
++    scheme = vcc->vci % 2 ? BUFFER_SCHEME_ONE : BUFFER_SCHEME_TWO;
+ #else
+     /* bit 7 of VPI magically selects the second buffer scheme */
+     if (vcc->vpi & (1<<7)) {
+@@ -1419,7 +1530,7 @@
+ 	return 0;
+ 
+     set_bit(ATM_VF_ADDR, &vcc->flags);
+-    vcc->itf    = vcc->dev->number;
++    vcc->itf = vcc->dev->number;
+ 
+     DPRINTK(2, "opening %d.%d.%d:%d QoS = (tx: cl=%s, pcr=%d-%d, cdv=%d, max_sdu=%d; "
+ 	    "rx: cl=%s, pcr=%d-%d, cdv=%d, max_sdu=%d)\n",
+@@ -1438,7 +1549,7 @@
+ 	}
+ 	/* reserving the pseudo-CBR bandwidth at this point grants us
+ 	   to reduce the length of the critical section protected
+-	   by 'rate_sf'. in counterpart, we have to reset the available
++	   by 'rate_sf'. in counterpart, we have to restore the available
+ 	   bandwidth if we later encounter an error */
+ 
+ 	fore200e->available_cell_rate -= vcc->qos.txtp.max_pcr;
+@@ -1490,6 +1601,8 @@
+     
+     DPRINTK(2, "closing %d.%d.%d:%d\n", vcc->itf, vcc->vpi, vcc->vci, fore200e_atm2fore_aal(vcc->qos.aal));
+     
++    clear_bit(ATM_VF_READY, &vcc->flags);
++
+     fore200e_activate_vcin(fore200e, 0, vcc, 0);
+     
+     kfree(FORE200E_VCC(vcc));
+@@ -1499,8 +1610,6 @@
+ 	fore200e->available_cell_rate += vcc->qos.txtp.max_pcr;
+ 	up(&fore200e->rate_sf);
+     }
+-
+-    clear_bit(ATM_VF_READY, &vcc->flags);
+ }
+ 
+ 
+@@ -1518,7 +1627,6 @@
+     struct host_txq_entry* entry;
+     struct tpd*            tpd;
+     struct tpd_haddr       tpd_haddr;
+-    //unsigned long          flags;
+     int                    retry        = CONFIG_ATM_FORE200E_TX_RETRY;
+     int                    tx_copy      = 0;
+     int                    tx_len       = skb->len;
+@@ -1526,6 +1634,11 @@
+     unsigned char*         skb_data;
+     int                    skb_len;
+ 
++    if (!test_bit(ATM_VF_READY, &vcc->flags)) {
++	DPRINTK(1, "vcc %d.%d.%d not ready for tx\n", vcc->itf, vcc->vpi, vcc->vpi);
++	return -EINVAL;
++    }
++
+ #ifdef FORE200E_52BYTE_AAL0_SDU
+     if ((vcc->qos.aal == ATM_AAL0) && (vcc->qos.txtp.max_sdu == ATM_AAL0_SDU)) {
+ 	cell_header = (u32*) skb->data;
+@@ -1543,18 +1656,18 @@
+     
+   retry_here:
+     
+-    tasklet_disable(&fore200e->tasklet);
++    set_bit(0, &fore200e->tx_bit);
+ 
+     entry = &txq->host_entry[ txq->head ];
+     
+-    if (*entry->status != STATUS_FREE) {
++    if ((*entry->status != STATUS_FREE) || (txq->txing >= QUEUE_SIZE_TX - 2)) {
+ 	
+ 	/* try to free completed tx queue entries */
+ 	fore200e_irq_tx(fore200e);
+ 	
+ 	if (*entry->status != STATUS_FREE) {
+ 	    
+-	    tasklet_enable(&fore200e->tasklet);
++	    clear_bit(0, &fore200e->tx_bit);
+ 
+ 	    /* retry once again? */
+ 	    if(--retry > 0)
+@@ -1562,13 +1675,16 @@
+ 	    
+ 	    atomic_inc(&vcc->stats->tx_err);
+ 	    
+-	    printk(FORE200E "tx queue of device %s is saturated, PDU dropped - heartbeat is %08x\n",
++	    fore200e->tx_sat++;
++	    DPRINTK(2, "tx queue of device %s is saturated, PDU dropped - heartbeat is %08x\n",
+ 		   fore200e->name, fore200e->cp_queues->heartbeat);
+ 	    if (vcc->pop)
+ 		vcc->pop(vcc, skb);
+ 	    else
+ 		dev_kfree_skb(skb);
+-	    return -EIO;
++
++	    clear_bit(0, &fore200e->tx_bit);
++	    return -ENOBUFS;
+ 	}
+     }
+ 
+@@ -1594,7 +1710,8 @@
+ 	entry->data = kmalloc(tx_len, GFP_ATOMIC | GFP_DMA);
+ 	if (entry->data == NULL) {
+ 	    
+-	    tasklet_enable(&fore200e->tasklet);
++	    clear_bit(0, &fore200e->tx_bit);
++
+ 	    if (vcc->pop)
+ 		vcc->pop(vcc, skb);
+ 	    else
+@@ -1618,7 +1735,7 @@
+     FORE200E_NEXT_ENTRY(txq->head, QUEUE_SIZE_TX);
+     txq->txing++;
+ 
+-    tasklet_enable(&fore200e->tasklet);
++    clear_bit(0, &fore200e->tx_bit);
+ 
+     /* ensure DMA synchronisation */
+     fore200e->bus->dma_sync(fore200e, tpd->tsd[ 0 ].buffer, tpd->tsd[ 0 ].length, FORE200E_DMA_TODEVICE);
+@@ -1959,6 +2076,11 @@
+     struct fore200e_vcc* fore200e_vcc = FORE200E_VCC(vcc);
+     struct fore200e*     fore200e     = FORE200E_DEV(vcc->dev);
+ 
++    if (!test_bit(ATM_VF_READY, &vcc->flags)) {
++	DPRINTK(1, "vcc %d.%d.%d not ready for QoS change\n", vcc->itf, vcc->vpi, vcc->vpi);
++	return -EINVAL;
++    }
++
+     DPRINTK(2, "change_qos %d.%d.%d, "
+ 	    "(tx: cl=%s, pcr=%d-%d, cdv=%d, max_sdu=%d; "
+ 	    "rx: cl=%s, pcr=%d-%d, cdv=%d, max_sdu=%d), flags = 0x%x\n"
+@@ -2008,7 +2130,9 @@
+     printk(FORE200E "IRQ %s reserved for device %s\n",
+ 	   fore200e_irq_itoa(fore200e->irq), fore200e->name);
+ 
++#ifdef FORE200E_USE_TASKLET
+     tasklet_init(&fore200e->tasklet, fore200e_tasklet, (unsigned long)fore200e);
++#endif
+ 
+     fore200e->state = FORE200E_STATE_IRQ;
+     return 0;
+@@ -2070,10 +2194,16 @@
+ 	    if (buffer == NULL)
+ 		return -ENOMEM;
+ 
++	    bsq->freebuf = NULL;
++
+ 	    for (i = 0; i < nbr; i++) {
+ 
+ 		buffer[ i ].scheme = scheme;
+ 		buffer[ i ].magn   = magn;
++#ifdef FORE200E_BSQ_DEBUG
++		buffer[ i ].index  = i;
++		buffer[ i ].supplied = 0;
++#endif
+ 
+ 		/* allocate the receive buffer body */
+ 		if (fore200e_chunk_alloc(fore200e,
+@@ -2086,9 +2216,17 @@
+ 		    
+ 		    return -ENOMEM;
+ 		}
++
++		/* insert the buffer into the free buffer list */
++		buffer[ i ].next = bsq->freebuf;
++		bsq->freebuf = &buffer[ i ];
+ 	    }
+-	    /* set next free buffer index */
+-	    bsq->free = 0;
++	    /* all the buffers are free, initially */
++	    bsq->freebuf_count = nbr;
++
++#ifdef FORE200E_BDQ_DEBUG
++	    bsq_audit(3, bsq, scheme, magn);
++#endif
+ 	}
+     }
+ 
+@@ -2145,9 +2283,9 @@
+ 		                     FORE200E_INDEX(bsq->rbd_block.align_addr, struct rbd_block, i);
+ 		bsq->host_entry[ i ].rbd_block_dma =
+ 		                     FORE200E_DMA_INDEX(bsq->rbd_block.dma_addr, struct rbd_block, i);
+-		bsq->host_entry[ i ].cp_entry      = &cp_entry[ i ];
++		bsq->host_entry[ i ].cp_entry = &cp_entry[ i ];
+ 		
+-		*bsq->host_entry[ i ].status   = STATUS_FREE;
++		*bsq->host_entry[ i ].status = STATUS_FREE;
+ 		
+ 		fore200e->bus->write(FORE200E_DMA_INDEX(bsq->status.dma_addr, enum status, i), 
+ 				     &cp_entry[ i ].status_haddr);
+@@ -2276,8 +2414,9 @@
+ 	   operation to detect that a new pdu has been submitted for tx */
+ }
+ 
+-    /* set the head entry of the queue */
++    /* set the head and tail entries of the queue */
+     txq->head = 0;
++    txq->tail = 0;
+ 
+     fore200e->state = FORE200E_STATE_INIT_TXQ;
+     return 0;
+@@ -2591,7 +2730,7 @@
+     struct       fore200e*     fore200e;
+     int                        index, link;
+ 
+-    printk(FORE200E "FORE Systems 200E-series driver - version " FORE200E_VERSION "\n");
++    printk(FORE200E "FORE Systems 200E-series ATM driver - version " FORE200E_VERSION "\n");
+ 
+     /* for each configured bus interface */
+     for (link = 0, bus = fore200e_bus; bus->model_name; bus++) {
+@@ -2674,14 +2817,15 @@
+ 
+     if (!left--)
+ 	return sprintf(page,
+-		       "   supplied small bufs (1):\t%d\n"
+-		       "   supplied large bufs (1):\t%d\n"
+-		       "   supplied small bufs (2):\t%d\n"
+-		       "   supplied large bufs (2):\t%d\n",
+-		       fore200e->host_bsq[ BUFFER_SCHEME_ONE ][ BUFFER_MAGN_SMALL ].count,
+-		       fore200e->host_bsq[ BUFFER_SCHEME_ONE ][ BUFFER_MAGN_LARGE ].count,
+-		       fore200e->host_bsq[ BUFFER_SCHEME_TWO ][ BUFFER_MAGN_SMALL ].count,
+-		       fore200e->host_bsq[ BUFFER_SCHEME_TWO ][ BUFFER_MAGN_LARGE ].count);
++		       "   free small bufs, scheme 1:\t%d\n"
++		       "   free large bufs, scheme 1:\t%d\n"
++		       "   free small bufs, scheme 2:\t%d\n"
++		       "   free large bufs, scheme 2:\t%d\n",
++		       fore200e->host_bsq[ BUFFER_SCHEME_ONE ][ BUFFER_MAGN_SMALL ].freebuf_count,
++		       fore200e->host_bsq[ BUFFER_SCHEME_ONE ][ BUFFER_MAGN_LARGE ].freebuf_count,
++		       fore200e->host_bsq[ BUFFER_SCHEME_TWO ][ BUFFER_MAGN_SMALL ].freebuf_count,
++		       fore200e->host_bsq[ BUFFER_SCHEME_TWO ][ BUFFER_MAGN_LARGE ].freebuf_count);
++
+     if (!left--) {
+ 	u32 hb = fore200e->bus->read(&fore200e->cp_queues->heartbeat);
+ 
+@@ -2867,13 +3011,15 @@
+ 		       "     large b1:\t\t\t%10u\n"
+ 		       "     small b2:\t\t\t%10u\n"
+ 		       "     large b2:\t\t\t%10u\n"
+-		       "     RX PDUs:\t\t\t%10u\n",
++		       "     RX PDUs:\t\t\t%10u\n"
++		       "     TX PDUs:\t\t\t%10lu\n",
+ 		       fore200e_swap(fore200e->stats->aux.small_b1_failed),
+ 		       fore200e_swap(fore200e->stats->aux.large_b1_failed),
+ 		       fore200e_swap(fore200e->stats->aux.small_b2_failed),
+ 		       fore200e_swap(fore200e->stats->aux.large_b2_failed),
+-		       fore200e_swap(fore200e->stats->aux.rpd_alloc_failed));
+-    
++		       fore200e_swap(fore200e->stats->aux.rpd_alloc_failed),
++                       fore200e->tx_sat);
++
+     if (!left--)
+ 	return sprintf(page,"\n"
+ 		       " receive carrier:\t\t\t%s\n",
+--- linux-2.4.0-test9-orig/drivers/atm/fore200e.h
++++ linux-2.4.0-test9/drivers/atm/fore200e.h	Fri Dec  1 16:27:20 2000
+@@ -11,7 +11,7 @@
+ #define LARGE_BUFFER_SIZE    4032    /* size of large buffers (multiple of 48 (PCA) and 64 (SBA) bytes) */
+ 
+ 
+-#define RBD_BLK_SIZE	     32      /* nbr of supplied rx buffers per rbd */
++#define RBD_BLK_SIZE	     16      /* nbr of supplied rx buffers per rbd */
+ 
+ 
+ #define MAX_PDU_SIZE	     65535   /* maximum PDU size supported by AALs */
+@@ -23,17 +23,17 @@
+ #define BUFFER_S2_SIZE       SMALL_BUFFER_SIZE    /* size of small buffers, scheme 2 */
+ #define BUFFER_L2_SIZE       LARGE_BUFFER_SIZE    /* size of large buffers, scheme 2 */
+ 
+-#define BUFFER_S1_NBR        (RBD_BLK_SIZE * 2)
+-#define BUFFER_L1_NBR        (RBD_BLK_SIZE * 2)
++#define BUFFER_S1_NBR        (RBD_BLK_SIZE * 6)
++#define BUFFER_L1_NBR        (RBD_BLK_SIZE * 4)
+ 
+-#define BUFFER_S2_NBR        (RBD_BLK_SIZE * 2)
+-#define BUFFER_L2_NBR        (RBD_BLK_SIZE * 2)
++#define BUFFER_S2_NBR        (RBD_BLK_SIZE * 6)
++#define BUFFER_L2_NBR        (RBD_BLK_SIZE * 4)
+ 
+ 
+ #define QUEUE_SIZE_CMD       16	     /* command queue capacity       */
+ #define QUEUE_SIZE_RX	     64	     /* receive queue capacity       */
+ #define QUEUE_SIZE_TX	     256     /* transmit queue capacity      */
+-#define QUEUE_SIZE_BS        16	     /* buffer supply queue capacity */
++#define QUEUE_SIZE_BS        32	     /* buffer supply queue capacity */
+ 
+ #define NBR_CONNECT          1024    /* number of ATM connections     */
+ 
+@@ -576,6 +576,10 @@
+     enum   buffer_scheme scheme;      /* buffer scheme           */
+     enum   buffer_magn   magn;        /* buffer magnitude        */
+     struct chunk         data;        /* data buffer             */
++#ifdef FORE200E_BSQ_DEBUG
++    unsigned long        index;       /* buffer # in queue       */
++    int                  supplied;    /* 'buffer supplied' flag  */
++#endif
+ } buffer_t;
+ 
+ 
+@@ -602,6 +606,7 @@
+ typedef struct host_txq {
+     struct host_txq_entry host_entry[ QUEUE_SIZE_TX ];    /* host resident tx queue entries         */
+     int                   head;                           /* head of tx queue                       */
++    int                   tail;                           /* tail of tx queue                       */
+     struct chunk          tpd;                            /* array of tpds                          */
+     struct chunk          status;                         /* arry of completion status              */
+     int                   txing;                          /* number of pending PDUs in tx queue     */
+@@ -626,8 +631,8 @@
+     struct chunk          rbd_block;                      /* array of rbds                             */
+     struct chunk          status;                         /* array of completion status                */
+     struct buffer*        buffer;                         /* array of rx buffers                       */
+-    int                   free;                           /* index of first free rx buffer             */
+-    volatile int          count;                          /* count of supplied rx buffers              */
++    struct buffer*        freebuf;                        /* list of free rx buffers                   */
++    volatile int          freebuf_count;                  /* count of free rx buffers                  */
+ } host_bsq_t;
+ 
+ 
+@@ -879,8 +884,11 @@
+     struct stats*              stats;                  /* last snapshot of the stats         */
+     
+     struct semaphore           rate_sf;                /* protects rate reservation ops      */
++#ifdef FORE200E_USE_TASKLET
+     struct tasklet_struct      tasklet;                /* performs interrupt work            */
+-
++#endif
++    volatile int               tx_bit;                 /* 'in tx code' flag                  */
++    unsigned long              tx_sat;                 /* tx queue saturation count          */
+ } fore200e_t;
+ 
+ 
+--- /dev/null	Thu Jan  1 01:00:00 1970
++++ linux-2.4.20/drivers/atm/fore200e.CHANGES	Mon Dec  4 14:34:31 2000
+@@ -0,0 +1,207 @@
++Version 0.3 (December, 1, 2000)
++-------------------------------
++
++   this version should fix some of the bugs introduced
++   in the preceding releases (and thus should introduce new ones :-)
++
++   - fix the bug in the sparc64-specific part of
++     fore200e_pca_dma_chunk_alloc(): chunk->alloc_size was
++     left uninitialized.
++   - rewrite the management of the buffer supply queues:
++     now use per-queue linked-lists of free buffers.
++   - the debugging code that audits the sanity of the free buffers
++     lists can be enabled by the FORE200E_BSQ_DEBUG define.
++   - check that a VCC is ready before playing with it.
++   - fix bugs in the management of the tx queue. note that ENOBUFS is
++     now returned in case of tx queue saturation: this prevent
++     ttcp_atm to give up immediately if this event occurs.
++   - count of tx queue saturation occurrences appended to the
++     auxiliary statistics.
++   - minor cosmetic changes.
++
++
++Version 0.2g (July, 16, 2000)
++-----------------------------
++
++   this release includes some experimental changes to 
++   the tx/interrupt code. It's an attempt to improve
++   the schedulability of the driver and its performances.
++
++   - interrupts are no longer disabled to protect the
++     critical section of the tx code. As a consequence,
++     the rx processing may no longer be delayed by the
++     tx processing.
++   - handling of completed tx entries is improved
++     thanks to a tail queue pointer.
++   - interrupt work can be performed by the intr handler
++     or can be deferred to a tasklet according to the
++     FORE200E_USE_TASKLET define.
++
++
++Version 0.2f (May, 21, 2000)
++----------------------------
++
++   this is just the 'official' release of the preceding version.
++   It also fixes a buglet spotted by Mitchell Blank Jr.
++
++   - the driver no longer mess with vcc->timestamp.
++
++
++Version 0.2e (May, 8, 2000)
++---------------------------
++
++   this is an experimental version, intended as a first attempt
++   to fix the lockup problems encountered by a few users
++   under heavy loads/SMP (probably introduced with the tasklet
++   code).
++
++   - use the spin_lock_bh() machinery to guard the
++     critical section of the tx code.
++   - minor fix to the Makefile test that tells the target
++     endianess from <asm/byteorder.h>.
++
++
++Version 0.2d (Mar, 28, 2000)
++----------------------------
++
++   - fix fatal bug in fore200e_open(): the ATM_VF_READY flag
++     should be set, not cleared!
++   - fix SBUS DMA direction flags.
++   - move interrupt handler work to tasklet.
++   - the compile no longer fails when the driver is compiled
++     without any hardware support (i.e. with both PCA and SBA
++     support disabled) (spotted by Arjan van de Ven). Also display
++     a message to warn the user.
++
++
++Version 0.2c (Mar, 23, 2000)
++----------------------------
++
++   this is a minor interim release. It does not provide significant
++   improvement to the driver code.
++
++   - initiate transition to the new-style PCI driver support.
++   - minor cosmetic changes.
++   - fix typos in Documentation/networking/fore200e.txt.
++
++
++Version 0.2b (Feb, 23, 2000)
++----------------------------
++
++   - update of PCI and SBUS DVMA code to 2.3.47-7 (DVMA functions
++     now have a 'direction' argument).
++
++
++Version 0.2a (Feb, 11, 2000)
++----------------------------
++
++   this release completes the transition of the driver to the new
++   DVMA interface. Many thanks to Marconi Networks (formerly FORE
++   Systems) for having placed their binary firmware images under GPL.
++
++   - switch to the new PCI interface (requires 2.3.42+).
++   - minor code cleanup.
++   - add FORE firmware copyright notice.
++
++
++Version 0.2 (Jan, 22, 2000)
++---------------------------
++
++   as the driver is now shipped with the regular linux-atm 
++   distributions, it is now released as a diff against the latest
++   linux-atm code.
++ 
++   - drop support of 2.2.x and pre-2.3.36 kernels.
++   - switch to the new SBUS interface.
++
++
++Version 0.1f (Jan, 22, 2000)
++----------------------------
++
++  this is an interim release that makes the driver ready for the
++  important 2.3.35+ transition. Significant parts of the driver 
++  have been rewritten to comply to the principles of the new SBUS
++  interface introduced by the latest 2.3 kernels.
++
++  - clean code.
++  - rewrite memory management routines.
++  - rewrite DMA/DVMA management routines.
++  - rewrite I/O management routines (and fix design weakness).
++  - fix a bug in the initialization of the buffer supply queue.
++  - cmd polling now gives up immediately if an error condition
++    is detected.
++
++  note that the driver remains useable with 2.2 and earlier 2.3 kernels,
++  but future releases will drop support of pre-2.3.36 kernels.
++
++
++Version 0.1e (Dec, 23, 1999)
++----------------------------
++
++  - support of S/UNI hardware loopback modes via SUNI_GETLOOP/SUNI_SETLOOP
++    ioctls.
++  - add the related ioctl entries in arch/sparc64/kernel/ioctl32.c.
++  - add a simple 'sunimode' utility to get/set the S/UNI loopback mode
++    (should also work with all the drivers that use suni.c/suni.h).
++  - fix handling of 52-byte AAL0 SDUs used by atmdump-like applications:
++    * if qos.txtp.max_sdu == 52, the following tx SDU format is expected
++      by the driver:
++      <4-byte cell header><48-byte AAL0 payload>[<48-byte AAL0 payload>...]
++      i.e.
++      <--- 52-byte AAL0 SDU used by atmdump --->[<- opt. extra payloads ->]
++      otherwise, the following tx SDU format is assumed:
++      <48-byte AAL0 payload>[<48-byte AAL0 payload>...]
++    * if qos.txtp.max_sdu == 52, the rx SDUs are delivered as follows:
++      <4-byte cell header><48-byte AAL0 payload>
++      i.e.
++      <- 52-byte AAL0 SDU expected by atmdump ->
++      otherwise, the SDUs are delivered as: <48-byte AAL0 payload>
++
++
++Version 0.1d (Dec, 16, 1999)
++----------------------------
++
++  - add a retry mechanism so that the driver does not immediately give up
++    if the tx queue is saturated. Saturation of the transmit queue may occur
++    under extreme conditions, when a fast host continuously submits very
++    small frames or raw AAL0 cells.
++  - add a new config option to tune the retry mecanism.
++  - improve AAL0 support. Attempting to transmit incomplete cell payloads
++    over an AAL0 VC simply used to nuke the PCA board.
++
++
++Version 0.1c (Nov, 22, 1999)
++----------------------------
++
++  - endian-dependent code no longer depends on arch-specific definitions
++    (e.g. __powerpc__ or __sparc_v9__) but on __BIG_ENDIAN/__LITTLE_ENDIAN
++  - the right PCA-200E firmware is no longer selected according to
++    a list of well-known archs in Config.in, but is guessed from
++    <asm/byteorder.h> in Makefile.
++  - rbd/rsd handles now use the FORE200E_BUF2HDL() and FORE200E_HDL2BUF()
++    macros.
++  - minor cosmetic changes.
++  - spend some time playing with AAL0. Seems to work with MTU = 48 bytes.
++
++
++Version 0.1b (Nov, 16, 1999)
++----------------------------
++
++  - improve the configuration process in order to avoid confusion
++    caused by the firmware stuff.
++  - update accordingly the build process and the help file.
++
++    (note that the driver code is unchanged)
++
++
++Version 0.1a (Nov, 2, 1999)
++---------------------------
++
++  - use new mutex initializer in 2.3.1+ kernels.
++  - add CHANGES file.
++
++
++Version 0.1 (Oct, 25, 1999)
++---------------------------
++
++  - first public release
+--- /dev/null	Thu Jan  1 01:00:00 1970
++++ linux-2.4.20/drivers/atm/fore200e.README	Mon Dec  4 14:34:31 2000
+@@ -0,0 +1,79 @@
++
++linux-2.4.0-test9-fore200e-0.3.tar
++----------------------------------
++
++This package updates the support of the FORE Systems 200E-series ATM
++adapters by the Linux operating system. Note that the driver itself is
++now distributed with the regular Linux kernel distribution.
++
++It is based on the earlier PCA-200E driver written by Uwe Dannowski.
++
++This device driver simultaneously supports PCA-200E and SBA-200E adapters on
++i386, alpha (untested), powerpc, sparc and sparc64 hosts.
++
++The intent is to enable the use of different models of FORE adapters at the
++same time, by servers that have several bus interfaces (such as PCI+SBUS,
++PCI+MCA or PCI+EISA).
++Only PCI and SBUS devices are currently supported by the driver, but support
++for other bus interfaces such as EISA should not be too hard to add (this may
++be more tricky for the MCA bus, though, as FORE made some MCA-specific
++modifications to the adapter's AALI interface).
++
++The driver is shipped with firmware data being uploaded to the ATM adapters
++at system boot time or at module loading time. The supplied firmware images
++should work with all adapters.
++
++However, if you encounter problems (the firmware doesn't start or the driver
++is unable to read the PROM data), you may consider trying another firmware
++version. Alternative binary firmware images can be found somewhere on the
++ForeThough CD-ROM supplied with your adapter by FORE Systems.
++
++You can also get the latest firmware images from FORE Systems at
++http://www.fore.com. Register TACTics Online and go to
++the 'software updates' pages. The firmware binaries are part of
++the various ForeThough software distributions.
++
++Notice that different versions of the PCA-200E firmware exist, depending
++on the endianess of the host architecture. The driver is shipped with
++both little and big endian PCA firmware images.
++
++Name and location of the alternative firmware images can be set at kernel
++configuration time. See the INSTALL file for details.
++
++Also note that the firmware binaries are the intellectual property
++of FORE Systems, Inc. Please read the fore200e_firmware_copyright file.
++
++
++
++Driver features summary
++-----------------------
++
++    - simultaneously supports PCA-200E and SBA-200E adapters;
++    - works on i386, powerpc, SBUS-based sparc and 
++      SBUS or PCI-based sparc64 architectures;
++    - now targeted to 2.4.0-test9 kernels;
++    - uses new DVMA PCI and SBUS interfaces;
++    - useable as a removable kernel module;
++    - supports FORE pseudo-CBR rate control;
++    - the reserved CBR rate can be changed after VC setup;
++    - supports AAL0, AAL3/4 and AAL5;
++    - supports S/UNI hardware loopback modes;
++    - internal design focuses on portability and extensibility.
++
++
++Restrictions / Known bugs
++-------------------------
++
++    - only VP=0 is supported;
++    - 'insmod' coredumps when attempting to load the driver on sparc64
++      hosts (at least using the old Ultrapenguin 1.1.9 distribution);
++    - some memory resources cannot be freed on sparc, sparc64 and powerpc,
++      because the required support is still missing in 2.2 and 2.3 kernels.
++      You shouldn't try to unload the module driver on these platforms.
++
++
++Feedback
++--------
++
++Feedback is welcome. Please send success stories/bug reports/
++patches/improvement/comments/flames to <lizzi@cnam.fr>.

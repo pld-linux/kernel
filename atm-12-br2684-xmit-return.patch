@@ -1,0 +1,58 @@
+According to chas williams:
+> >> so wherever clip_start_xmit() calls dev_free_skb() it should return 1
+> >> instead of 0?
+> >> did i follow that correctly...?
+> 
+> i believe that you should only return non zero if you want the ip
+> stack to requeue the skb and try to send it again (perhaps your
+> driver was busy).  in practice this is rarely done.  if you drop 
+> the skb and return 1 this is going to create trouble.  check out
+> Documentation/networking/driver.txt.  it looks like br2684 should
+> simple not return 1 at the end of br2684_xmit_vcc.
+
+But that's br2684, not clip... and I posted the same thing about
+a week ago ;)
+
+--- linux-2.4.21-pre4/net/atm/br2684.c.orig	2002-08-03 02:39:46.000000000 +0200
++++ linux-2.4.21-pre4/net/atm/br2684.c	2003-02-26 15:11:48.000000000 +0100
+@@ -219,17 +219,19 @@
+ 		/* netif_stop_queue(dev); */
+ 		dev_kfree_skb(skb);
+ 		read_unlock(&devs_lock);
+-		return -EUNATCH;
++		/* Pretend we succeeded so the packet is dropped. */
++		return 0;
+ 	}
+ 	if (!br2684_xmit_vcc(skb, brdev, brvcc)) {
+ 		/*
+ 		 * We should probably use netif_*_queue() here, but that
+ 		 * involves added complication.  We need to walk before
+ 		 * we can run
++		 *
++		 * Note: at this point, skb is no longer valid.
++		 * br2684_xmit_vcc() might have realloced or freed it.
++		 * We don't need to worry about that.
+ 		 */
+-		/* don't free here! this pointer might be no longer valid!
+-		dev_kfree_skb(skb);
+-		*/
+ 		brdev->stats.tx_errors++;
+ 		brdev->stats.tx_fifo_errors++;
+ 	}
+
+
+Mike.
+-- 
+Anyone who is capable of getting themselves made President should
+on no account be allowed to do the job -- Douglas Adams.
+
+
+-------------------------------------------------------
+This SF.net email is sponsored by: Etnus, makers of TotalView, The debugger 
+for complex code. Debugging C/C++ programs can leave you feeling lost and 
+disoriented. TotalView can help you find your way. Available on major UNIX 
+and Linux platforms. Try it free. www.etnus.com
+_______________________________________________
+Linux-atm-general mailing list
+Linux-atm-general@lists.sourceforge.net
+https://lists.sourceforge.net/lists/listinfo/linux-atm-general

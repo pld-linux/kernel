@@ -1,0 +1,41 @@
+init_etherdev() allocates and registers the network device in one
+step.  it uses eth%d as the template for the device names.  this
+conflicts with already registered ethernet devices, like eth0.  since
+we want a fixed (and different name) this patch uses alloc_etherdev,
+rewrites the device name and then registers our interface.
+
+Index: linux/net/atm/lec.c
+===================================================================
+RCS file: /home/chas/CVSROOT/linux/net/atm/lec.c,v
+retrieving revision 1.12
+diff -u -r1.12 lec.c
+--- linux/net/atm/lec.c	3 Mar 2003 22:23:13 -0000	1.12
++++ linux/net/atm/lec.c	3 Mar 2003 22:29:02 -0000
+@@ -784,15 +784,19 @@
+                 size = sizeof(struct lec_priv);
+ #ifdef CONFIG_TR
+                 if (is_trdev)
+-                        dev_lec[i] = init_trdev(NULL, size);
++                        dev_lec[i] = alloc_trdev(size);
+                 else
+ #endif
+-                dev_lec[i] = init_etherdev(NULL, size);
++                dev_lec[i] = alloc_etherdev(size);
+                 if (!dev_lec[i])
+                         return -ENOMEM;
++                snprintf(dev_lec[i]->name, IFNAMSIZ, "lec%d", i);
++                if (register_netdev(dev_lec[i])) {
++                        kfree(dev_lec[i]);
++                        return -EINVAL;
++                }
+                 priv = dev_lec[i]->priv;
+                 priv->is_trdev = is_trdev;
+-                sprintf(dev_lec[i]->name, "lec%d", i);
+                 lec_init(dev_lec[i]);
+         } else {
+                 priv = dev_lec[i]->priv;
+-
+To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at  http://www.tux.org/lkml/
