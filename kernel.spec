@@ -665,7 +665,7 @@ BuildKernel() {
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 
 %ifarch sparc
-	sparc32 %{__make} clean \
+	sparc32 %{__make} $Opts clean \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 %else
 	%{__make} $Opts clean \
@@ -677,17 +677,17 @@ BuildKernel() {
 # make does vmlinux, modules and bzImage at once
 %ifarch sparc sparc64
 %ifarch sparc64
-	%{__make} image \
+	%{__make} $Opts image \
 		%{?with_verbose:V=1}
 
-	%{__make} modules \
+	%{__make} $Opts modules \
 		%{?with_verbose:V=1}
 %else
-	sparc32 %{__make} \
+	sparc32 %{__make} $Opts \
 		%{?with_verbose:V=1}
 %endif
 %else
-	%{__make} $Opts \
+	%{__make} $Opts $Opts \
 		%{?with_verbose:V=1}
 %endif
 }
