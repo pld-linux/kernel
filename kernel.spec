@@ -99,6 +99,8 @@ Source91:	%{name}-grsec+pax.config
 
 # http://members.optusnet.com.au/ckolivas/kernel/
 Patch10:	patch-2.6.9-rc1-bk19-ck1.bz2
+# http://kem.p.lodz.pl/~peter/qnet/
+Patch15:	patch-2.6.8.1-qnet2.bz2
 
 Patch20:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch21:	2.6.5-3C920b-Tornado.patch
@@ -465,6 +467,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 
 %patch10 -p1
+%patch15 -p1
 %patch20 -p1
 %patch21 -p1
 %patch22 -p1
@@ -475,9 +478,9 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch501 -p1
 
 # Fix EXTRAVERSION in main Makefile
-sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
-
-sed -i 's:\-pipe::' arch/*/Makefile
+sed -e -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
+sed -e -i 's#CC.*$(CROSS_COMPILE)gcc#CC.*$(CROSS_COMPILE)$(CC)#g' Makefile
+sed -e -i 's#\-pipe##' arch/*/Makefile
 
 %build
 TuneUpConfigForIX86 () {
@@ -517,9 +520,14 @@ TuneUpConfigForIX86 () {
 }
 
 %if "%{_target_base_arch}" != "%{_arch}"
-CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
+Opts="ARCH=\"%{_target_base_arch}\" CROSS_COMPILE=\"%{_target_cpu}-pld-linux-\" CC=\"gcc\""
 %else
-CrossOpts=""
+%ifarch %{ix86} alpha sparc ppc
+Opts="CC=\"%{__cc}\""
+%endif
+%ifarch sparc64
+Opts="CC=\"sparc64-pld-linux-gcc\""
+%endif
 %endif
 
 BuildConfig (){
@@ -558,7 +566,7 @@ BuildConfig (){
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
-	%{__make} $CrossOpts include/linux/autoconf.h
+	%{__make} $Opts include/linux/autoconf.h
 	if [ "$smp" = "yes" ]; then
 		install include/linux/autoconf.h \
 			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
@@ -641,7 +649,7 @@ EOF
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
-	%{__make} $CrossOpts include/linux/autoconf.h
+	%{__make} $Opts include/linux/autoconf.h
 	if [ "$smp" = "yes" ]; then
 		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
 	else
@@ -652,7 +660,7 @@ EOF
 BuildKernel() {
 	%{?_debug:set -x}
 	echo "Building kernel $1 ..."	
-	%{__make} $CrossOpts mrproper \
+	%{__make} $Opts mrproper \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 
@@ -660,10 +668,10 @@ BuildKernel() {
 	sparc32 %{__make} clean \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 %else
-	%{__make} $CrossOpts clean \
+	%{__make} $Opts clean \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 %endif
-	%{__make} $CrossOpts include/linux/version.h \
+	%{__make} $Opts include/linux/version.h \
 		%{?with_verbose:V=1}
 
 # make does vmlinux, modules and bzImage at once
@@ -679,7 +687,7 @@ BuildKernel() {
 		%{?with_verbose:V=1}
 %endif
 %else
-	%{__make} $CrossOpts \
+	%{__make} $Opts \
 		%{?with_verbose:V=1}
 %endif
 }
@@ -729,7 +737,7 @@ PreInstallKernel (){
 	install vmlinuz $KERNEL_INSTALL_DIR/boot/efi/vmlinuz-$KernelVer
 	ln -sf efi/vmlinuz-$KernelVer $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
-	%{__make} $CrossOpts modules_install \
+	%{__make} $Opts modules_install \
 		%{?with_verbose:V=1} \
      		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 		KERNELRELEASE=$KernelVer
@@ -769,9 +777,14 @@ PreInstallKernel BOOT
 rm -rf $RPM_BUILD_ROOT
 umask 022
 %if "%{_target_base_arch}" != "%{_arch}"
-CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
+Opts="ARCH=\"%{_target_base_arch}\" CROSS_COMPILE=\"%{_target_cpu}-pld-linux-\" CC=\"gcc\""
 %else
-CrossOpts=""
+%ifarch %{ix86} alpha sparc ppc
+Opts="CC=\"%{__cc}\""
+%endif
+%ifarch sparc64
+Opts="CC=\"sparc64-pld-linux-gcc\""
+%endif
 %endif
 
 install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
@@ -799,7 +812,7 @@ find . ! -name "build-done" ! -name "." -maxdepth 1 -exec cp -a "{}" "$RPM_BUILD
 
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
-%{__make} $CrossOpts mrproper \
+%{__make} $Opts mrproper \
 	RCS_FIND_IGNORE='-name build-done -prune -o'
 find -name "*~" -exec rm -f "{}" ";"
 find -name "*.orig" -exec rm -f "{}" ";"
@@ -824,8 +837,8 @@ install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{version}/include/l
 $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 %endif
 
-%{__make} $CrossOpts mrproper
-%{__make} $CrossOpts include/linux/version.h
+%{__make} $Opts mrproper
+%{__make} $Opts include/linux/version.h
 install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
 
 %clean
