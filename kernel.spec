@@ -1,20 +1,15 @@
 #
-# If you define the following as 1, only kernel, -headers and -source
-# packages will be built
-#
-# _without_smp		- don't build SMP kernel
-#
-%define		test_build		1
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.5.14
-Release:	0.1
+Release:	0.9
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
+Source1:	%{name}-autoconf.h
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -22,43 +17,35 @@ Source23:	%{name}-i586.config
 Source24:	%{name}-i586-smp.config
 Source25:	%{name}-i686.config
 Source26:	%{name}-i686-smp.config
-Source50:	%{name}-sparc.config
-Source51:	%{name}-sparc-smp.config
-Source52:	%{name}-sparc-BOOT.config
-Source60:	%{name}-sparc64.config
-Source61:	%{name}-sparc64-smp.config
-Source62:	%{name}-sparc64-BOOT.config
-Source70:	%{name}-alpha.config
-Source71:	%{name}-alpha-smp.config
-Source72:	%{name}-alpha-BOOT.config
-Source73:	%{name}-ppc.config
-Source74:	%{name}-ppc-smp.config
+Source27:	%{name}-athlon.config
+Source28:	%{name}-athlon-smp.config
 
 Patch1:		http://www.kernel.org/pub/linux/kernel/people/davej/patches/2.5/%{version}/patch-%{version}-dj1.diff.gz
 
+#This shit is because now only x86 is supported
+ExclusiveArch:	%{ix86}
+# /shit
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
-%ifarch sparc64
-BuildRequires:	egcs64
-%else
-#BuildRequires:	egcs
-%endif
+BuildRequires:	egcs
 BuildRequires:	modutils
-Buildrequires:	perl
+BuildRequires:	perl
+BuildRequires:  ncurses-devel
 Provides:	%{name}-up = %{version}
 Provides:	module-info
-Provides:	i2c = 2.6.1
+# i2c is not yet ready so it's not provided, sorry
+# Provides:	i2c = 2.6.1
+Provides:	alsa-driver
 Autoreqprov:	no
 Prereq:		fileutils
 Prereq:		modutils
 Prereq:		geninitrd
 Obsoletes:	kernel-modules
-ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
 BuildRequires:	bin86
 %endif
-#BuildRequires:	kernel-headers
+
 
 %description
 This package contains the Linux kernel that is used to boot and run
@@ -82,13 +69,82 @@ Pakiet zawiera j±dro Linuxa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takich jak karty muzyczne, sterowniki dysków, etc.
 
+
+%package smp
+Summary:	Kernel version %{version} compiled for SMP machines
+Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
+Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
+Summary(pl):	Kernel %{version} skompilowany na maszyny SMP
+Group:		Base/Kernel
+Provides:	%{name} = %{version}-%{release}
+PreReq:		modutils
+PreReq:		fileutils
+PreReq:		geninitrd
+Obsoletes:	kernel-modules
+Autoreqprov:	no
+
+%description smp
+This package includes a SMP version of the Linux %{version} kernel. It
+is required only on machines with two or more CPUs, although it should
+work fine on single-CPU boxes.
+
+%description smp -l de
+Dieses Paket enthält eine SMP (Multiprozessor)-Version von
+Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
+Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
+CPU laufen.
+
+%description smp -l fr
+Ce package inclu une version SMP du noyau de Linux version {version}.
+Il et nécessaire seulement pour les machine avec deux processeurs ou
+plus, il peut quand même fonctionner pour les système mono-processeur.
+
+%description smp -l pl
+Ten pakiet zawiera wersjê SMP j±dra Linuksa w wersji %{version}. Jest
+wymagany wy³±cznie na maszynach z dwoma b±d¼ wiêksz± liczb± CPU,
+jednak¿e powinien dzia³aæ prawid³owo tak¿e na jednoprocesorowych.
+
+
+%package BOOT
+Summary:	Kernel version %{version} used on the installation boot disks
+Summary(de):	Kernel version %{version} für Installationsdisketten
+Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation
+Summary(pl):	Kernel %{version} u¿ywany na instalacyjnych dyskach startowych
+Group:		Base/Kernel
+PreReq:		modutils
+PreReq:		fileutils
+Autoreqprov:	no
+
+%description BOOT
+This package includes a trimmed down version of the Linux %{version}
+kernel. This kernel is used on the installation boot disks only and
+should not be used for an installed system, as many features in this
+kernel are turned off because of the size constraints.
+
+%description BOOT -l de
+Dieses Paket enthält eine verkleinerte Version vom Linux-Kernel
+version %{version}. Dieser Kernel wird auf den
+Installations-Bootdisketten benutzt und sollte nicht auf einem
+installierten System verwendet werden, da viele Funktionen wegen der
+Platzprobleme abgeschaltet sind.
+
+%description BOOT -l fr
+Ce package inclut une version allégée du noyau de Linux version
+%{version}. Ce kernel et utilisé pour les disquettes de boot
+d'installation et ne doivent pas être utilisées pour un système
+classique, beaucoup d'options dans le kernel ont étaient désactivées a
+cause de la contrainte d'espace.
+
+%description BOOT -l pl
+Ten pakiet zawiera okrojon± wersjê kernela %{version}. U¿ywana jest
+wy³±cznie na instalacyjnych dyskach startowych i nie powinna byæ
+u¿ywana na dzia³aj±cym systemie, jako ¿e wiele opcji jest wy³±czonych
+ze wzglêdu na wymagania rozmiarowe.
+
 %package headers
 Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra
 Group:		Base/Kernel
-Provides:	%{name}-headers(agpgart) = %{version}
-Provides:	%{name}-headers(reiserfs) = %{version}
-Provides:	i2c-devel = 2.6.1
 Autoreqprov:	no
 
 %description headers
@@ -100,15 +156,30 @@ programs under Linux, as well as to rebuild the kernel.
 Pakiet zawiera pliki nag³ówkowe j±dra, niezbedne do rekompilacji j±dra
 oraz niektórych programów.
 
+%package doc
+Summary:	Kernel documentation
+Summary(pl):	Dokumentacja j±dra
+Group:		Base/Kernel
+Provides:	%{name}-doc = %{version}
+Autoreqprov:	no
+
+%description doc
+This is the documentation for the Linux kernel, as found in
+/usr/src/linux/Documentation directory.
+
+%description doc -l pl
+Pakiet zawiera dokumentacjê j±dra z katalogu
+/usr/src/linux/Documentation.
+
+
+
 %package source
 Summary:	Kernel source tree
 Summary(pl):	Kod ¼ród³owy j±dra Linuxa
 Group:		Base/Kernel
 Autoreqprov:	no
 Requires:	%{name}-headers = %{version}
-%ifarch %{ix86}
 Requires:	bin86
-%endif
 
 %description source
 This is the source code for the Linux kernel. It is required to build
@@ -142,12 +213,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
-#%ifarch %{ix86} alpha sparc
-#    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= egcs/g' \
-#%endif
-#%ifarch sparc64
-#    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
-#%endif
+    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= gcc/g' \
+    -e 's/HOSTCC.*gcc/HOSTCC	= gcc/g' \
     Makefile.orig >Makefile
 
 
@@ -155,71 +222,32 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
 BuildKernel() {
 	%{?verbose:set -x}
 	# is this a special kernel we want to build?
-	BOOT=
-	if [ -n "$1" ] ; then
-		if [ "$1" = "BOOT" ] ; then
-			BOOT=yes
-		fi
-%ifarch %{ix86}
-		Config="i386"-$1
-%else
+	if [ "$1" = "BOOT" ]; then
+		Config="%{_target_cpu}-BOOT"
+		KernelVer=%{version}
+		echo BUILDING A KERNEL FOR BOOT...
+	elif [ -n "$1" ] ; then
 		Config="%{_target_cpu}"-$1
-%endif
 		KernelVer=%{version}-%{release}$1
 		echo BUILDING A KERNEL FOR $1...
-		shift
 	else
 		Config="%{_target_cpu}"
 		KernelVer=%{version}-%{release}
 		echo BUILDING THE NORMAL KERNEL...
 	fi
-	rm -Rf arch/$RPM_ARCH/defconfig
-:> arch/$RPM_ARCH/defconfig
-	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/$RPM_ARCH/defconfig
+	cp $RPM_SOURCE_DIR/kernel-$Config.config arch/i386/defconfig
 	%{__make} mrproper
-	ln -sf arch/$RPM_ARCH/defconfig .config
-
-%ifarch sparc
-	sparc32 %{__make} oldconfig
-	sparc32 %{__make} dep clean
-%else
+	ln -sf arch/i386/defconfig .config
 	%{__make} oldconfig
-	%{__make} dep clean
-%endif
+	%{__make} dep
 	%{__make} include/linux/version.h
-
-%ifarch %{ix86}
-	%{__make} bzImage
-%else
-%ifarch sparc
-	sparc32 %{__make} boot
-%else
-%ifarch ppc
-	%{__make}
-%else
-	%{__make} boot
-%endif
-%endif
-%endif
-%ifarch sparc
-	sparc32 %{__make} modules
-%else
-	%{__make} modules
-%endif
-
+	KERNELCC="%{kgcc}"
+	%{__make} bzImage EXTRAVERSION="-%{release}"
+	%{__make} modules EXTRAVERSION="-%{release}"
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
-%ifarch %{ix86}
 	cp arch/i386/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
-%endif
-%ifarch alpha sparc sparc64
-	gzip -cfv vmlinux > vmlinuz
-	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
-	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
-%endif
-     %{__make} modules_install \
-     	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
-	KERNELRELEASE=$KernelVer
+	%{__make} INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR modules_install KERNELRELEASE=$KernelVer
 }
 
 KERNEL_BUILD_DIR=`pwd`
@@ -227,30 +255,33 @@ KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
 rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
 
-# UP KERNEL
+# UP Kernel
+
 BuildKernel
 
+# SMP Kernel
+BuildKernel smp
+
+# BOOT kernel - #temporary disable build kernel-BOOT
+%ifnarch i586 i686 athlon 
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk"
+rm -rf $KERNEL_INSTALL_DIR
+install -d $KERNEL_INSTALL_DIR
+BuildKernel BOOT
+%endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
 umask 022
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{version}}
+install -d $RPM_BUILD_ROOT%{_prefix}/{include,src}
 
 KERNEL_BUILD_DIR=`pwd`
-cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed"
+cp -a $KERNEL_INSTALL_DIR/* $RPM_BUILD_ROOT
 
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
-ln -sf linux-%{version} $RPM_BUILD_ROOT%{_kernelsrcdir}
-
-%ifarch sparc sparc64
-ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
-ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
-sh %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}
-cp -a %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
-%else
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
-%endif
 
 cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
 
@@ -264,21 +295,17 @@ find  -name "*.orig" -print | xargs rm -f
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
 
 %{__make} oldconfig
-#mv include/linux/autoconf.h include/linux/autoconf-up.h
-#
-#
-#install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config .config
-#
-#%{__make} oldconfig
-#mv include/linux/autoconf.h include/linux/autoconf-smp.h
+mv include/linux/autoconf.h include/linux/autoconf-up.h
+install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config .config
+%{__make} oldconfig
+mv include/linux/autoconf.h include/linux/autoconf-smp.h
 
-
+install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
-#%{__make} symlinks
-#%{__make} include/linux/version.h
-#%{__make} "`pwd`/include/linux/modversions.h"
+%{__make} symlinks
+%{__make} include/linux/version.h
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well, after we fix the paths
@@ -297,7 +324,7 @@ rm -f drivers/net/hamradio/soundmodem/gentbl
 
 %clean
 rm -rf $RPM_BUILD_ROOT
-rm -rf $RPM_BUILD_DIR/linux-installed
+rm -rf $RPM_BUILD_DIR/linux-%{version}-installed
 
 %post
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
@@ -320,6 +347,36 @@ rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release} /lib/modules/%{version}
 depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
+%post smp
+mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
+mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
+ln -sf System.map-%{version}-%{release}smp /boot/System.map
+
+rm -f /lib/modules/%{version}
+ln -snf %{version}-%{release}smp /lib/modules/%{version}
+ln -snf %{version}-%{release}smp /lib/modules/%{version}smp
+
+depmod -a -F /boot/System.map %{version}-%{release}smp
+
+geninitrd /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
+test ! -f /boot/initrd || mv -f /boot/initrd /boot/initrd.old 2> /dev/null > /dev/null
+ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
+
+if [ -x /sbin/rc-boot ] ; then
+	/sbin/rc-boot 1>&2 || :
+fi
+
+%postun smp
+if [ -L /lib/modules/%{version} ]; then
+	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp" ]; then
+		if [ "$1" = "0" ]; then
+			rm -f /lib/modules/%{version}
+		fi
+	fi
+fi
+rm -f /boot/initrd-%{version}-%{release}smp.gz
+
 %post headers
 rm -f /usr/src/linux
 ln -snf linux-%{version} /usr/src/linux
@@ -341,15 +398,36 @@ fi
 /boot/vmlinuz-%{version}-%{release}
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
-#%ifarch %{ix86}
-#/lib/modules/%{version}-%{release}/pcmcia
-#%endif
 /lib/modules/%{version}-%{release}/kernel
 /lib/modules/%{version}-%{release}/build
+/lib/modules/%{version}-%{release}/pcmcia
 /lib/modules/%{version}-%{release}/modules.dep
 /lib/modules/%{version}-%{release}/modules.*map
 /lib/modules/%{version}-%{release}/modules.generic_string
 
+%files smp
+%defattr(644,root,root,755)
+%attr(600,root,root) /boot/vmlinuz-%{version}-%{release}smp
+%attr(600,root,root) /boot/System.map-%{version}-%{release}smp
+%dir /lib/modules/%{version}-%{release}smp
+/lib/modules/%{version}-%{release}smp/kernel
+/lib/modules/%{version}-%{release}smp/pcmcia
+/lib/modules/%{version}-%{release}smp/build
+/lib/modules/%{version}-%{release}smp/modules.dep
+/lib/modules/%{version}-%{release}smp/modules.*map
+/lib/modules/%{version}-%{release}smp/modules.generic_string
+
+%ifnarch i586 i686 athlon
+%files BOOT
+%defattr(644,root,root,755)
+%{_libdir}/bootdisk/boot/vmlinuz-%{version}
+%{_libdir}/bootdisk/boot/System.map-%{version}
+%dir %{_libdir}/bootdisk/lib/modules/%{version}
+%{_libdir}/bootdisk/lib/modules/%{version}/kernel
+/lib/modules/%{version}-%{release}smp/modules.dep
+/lib/modules/%{version}-%{release}smp/modules.*map
+/lib/modules/%{version}-%{release}smp/modules.generic_string
+%endif
 
 %files headers
 %defattr(644,root,root,755)
@@ -358,9 +436,12 @@ fi
 %{_includedir}/asm
 %{_includedir}/linux
 
+%files doc
+%defattr(644,root,root,755)
+%{_prefix}/src/linux-%{version}/Documentation
+
 %files source
 %defattr(644,root,root,755)
-%{_kernelsrcdir}-%{version}/Documentation
 %{_kernelsrcdir}-%{version}/arch
 %{_kernelsrcdir}-%{version}/drivers
 %{_kernelsrcdir}-%{version}/fs
