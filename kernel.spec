@@ -13,7 +13,7 @@
 %define		freeswan_version	snap2001jun14R
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.9
-%define		sym_ncr_version		sym-1.7.3-ncr-3.4.3
+%define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		vlan_version		1.0.1
 %define		IPperson_version	20010724-2.4.7
 %define		grsec_version		1.6-2.4.7
