@@ -2622,8 +2622,8 @@ diff -uNr linux-2.6.6/fs/dcache.c linux-2.6.6.grsec/fs/dcache.c
  			char *buffer, int buflen)
  {
 diff -uNr linux-2.6.6/fs/exec.c linux-2.6.6.grsec/fs/exec.c
---- linux-2.6.6/fs/exec.c	2004-05-10 04:32:28.000000000 +0200
-+++ linux-2.6.6.grsec/fs/exec.c	2004-05-13 16:52:25.000000000 +0200
+--- linux-2.6.6/fs/exec.c.orig	2004-05-24 14:40:15.000000000 +0200
++++ linux-2.6.6/fs/exec.c	2004-05-24 18:13:04.802121824 +0200
 @@ -46,6 +46,8 @@
  #include <linux/security.h>
  #include <linux/syscalls.h>
@@ -2654,39 +2654,25 @@ diff -uNr linux-2.6.6/fs/exec.c linux-2.6.6.grsec/fs/exec.c
  int register_binfmt(struct linux_binfmt * fmt)
  {
  	struct linux_binfmt ** tmp = &formats;
-@@ -303,7 +319,12 @@
- 	pte_t * pte;
- 	struct pte_chain *pte_chain;
- 
-+#ifdef CONFIG_PAX_SEGMEXEC
-+	if (page_count(page) != 1 && (!(tsk->flags & PF_PAX_SEGMEXEC) || page_count(page) != 3))
-+#else
- 	if (page_count(page) != 1)
-+#endif
-+
- 		printk(KERN_ERR "mem_map disagrees with %p at %08lx\n",
- 				page, address);
- 
-@@ -322,8 +343,18 @@
- 		pte_unmap(pte);
+@@ -321,7 +337,17 @@
  		goto out;
  	}
+ 	mm->rss++;
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
 +	if (page_count(page) == 1) {
 +#endif
 +
  	lru_cache_add_active(page);
- 	flush_dcache_page(page);
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
 +	}
 +#endif
 +
- 	set_pte(pte, pte_mkdirty(pte_mkwrite(mk_pte(page, prot))));
- 	pte_chain = page_add_rmap(page, pte, pte_chain);
- 	pte_unmap(pte);
-@@ -350,6 +381,10 @@
+ 	set_pte(pte, pte_mkdirty(pte_mkwrite(mk_pte(
+ 					page, vma->vm_page_prot))));
+ 	page_add_anon_rmap(page, vma, address);
+@@ -345,6 +371,10 @@
  	int i;
  	long arg_size;
  
@@ -2697,7 +2683,7 @@ diff -uNr linux-2.6.6/fs/exec.c linux-2.6.6.grsec/fs/exec.c
  #ifdef CONFIG_STACK_GROWSUP
  	/* Move the argument and environment strings to the bottom of the
  	 * stack space.
-@@ -409,6 +444,16 @@
+@@ -404,6 +434,16 @@
  	if (!mpnt)
  		return -ENOMEM;
  
@@ -2714,7 +2700,7 @@ diff -uNr linux-2.6.6/fs/exec.c linux-2.6.6.grsec/fs/exec.c
  	if (security_vm_enough_memory(arg_size >> PAGE_SHIFT)) {
  		kmem_cache_free(vm_area_cachep, mpnt);
  		return -ENOMEM;
-@@ -425,6 +470,11 @@
+@@ -422,6 +462,11 @@
  		mpnt->vm_start = PAGE_MASK & (unsigned long) bprm->p;
  		mpnt->vm_end = STACK_TOP;
  #endif
@@ -2726,8 +2712,8 @@ diff -uNr linux-2.6.6/fs/exec.c linux-2.6.6.grsec/fs/exec.c
  		/* Adjust stack execute permissions; explicitly enable
  		 * for EXSTACK_ENABLE_X, disable for EXSTACK_DISABLE_X
  		 * and leave alone (arch default) otherwise. */
-@@ -442,6 +492,26 @@
- 		mpnt->vm_private_data = (void *) 0;
+@@ -434,6 +479,26 @@
+ 		mpnt->vm_page_prot = protection_map[mpnt->vm_flags & 0x7];
  		insert_vm_struct(mm, mpnt);
  		mm->total_vm = (mpnt->vm_end - mpnt->vm_start) >> PAGE_SHIFT;
 +
@@ -2753,23 +2739,22 @@ diff -uNr linux-2.6.6/fs/exec.c linux-2.6.6.grsec/fs/exec.c
  	}
  
  	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
-@@ -450,6 +520,15 @@
+@@ -441,6 +506,14 @@
+ 		if (page) {
  			bprm->page[i] = NULL;
- 			put_dirty_page(current, page, stack_base,
- 					mpnt->vm_page_prot);
+ 			install_arg_page(mpnt, page, stack_base);
 +
 +#if defined(CONFIG_PAX_SEGMEXEC) && defined(CONFIG_PAX_MPROTECT)
-+			if (mpnt_m) {
-+				page_cache_get(page);
-+				put_dirty_page(current, page, stack_base + SEGMEXEC_TASK_SIZE,
-+						mpnt_m->vm_page_prot);
-+			}
++		if (mpnt_m) {
++			page_cache_get(page);
++			install_arg_page(mpnt, page, stack_base + SEGMEXEC_TASK_SIZE);
++		}
 +#endif
 +
  		}
  		stack_base += PAGE_SIZE;
  	}
-@@ -845,6 +924,30 @@
+@@ -836,6 +909,30 @@
  	}
  	current->comm[i] = '\0';
  
@@ -2800,7 +2785,7 @@ diff -uNr linux-2.6.6/fs/exec.c linux-2.6.6.grsec/fs/exec.c
  	flush_thread();
  
  	if (bprm->e_uid != current->euid || bprm->e_gid != current->egid || 
-@@ -913,6 +1016,9 @@
+@@ -904,6 +1001,9 @@
  	if (retval)
  		return retval;
  
@@ -2810,7 +2795,7 @@ diff -uNr linux-2.6.6/fs/exec.c linux-2.6.6.grsec/fs/exec.c
  	memset(bprm->buf,0,BINPRM_BUF_SIZE);
  	return kernel_read(bprm->file,0,bprm->buf,BINPRM_BUF_SIZE);
  }
-@@ -942,6 +1048,7 @@
+@@ -933,6 +1033,7 @@
  	task_lock(current);
  	unsafe = unsafe_exec(current);
  	security_bprm_apply_creds(bprm, unsafe);
@@ -2818,7 +2803,7 @@ diff -uNr linux-2.6.6/fs/exec.c linux-2.6.6.grsec/fs/exec.c
  	task_unlock(current);
  }
  
-@@ -1082,6 +1189,11 @@
+@@ -1073,6 +1174,11 @@
  	struct file *file;
  	int retval;
  	int i;
@@ -2830,7 +2815,7 @@ diff -uNr linux-2.6.6/fs/exec.c linux-2.6.6.grsec/fs/exec.c
  
  	sched_balance_exec();
  
-@@ -1091,13 +1203,39 @@
+@@ -1082,13 +1188,39 @@
  	if (IS_ERR(file))
  		return retval;
  
@@ -2870,7 +2855,7 @@ diff -uNr linux-2.6.6/fs/exec.c linux-2.6.6.grsec/fs/exec.c
  	bprm.loader = 0;
  	bprm.exec = 0;
  	bprm.security = NULL;
-@@ -1126,11 +1264,26 @@
+@@ -1117,11 +1249,26 @@
  	if (retval < 0)
  		goto out;
  
@@ -2897,7 +2882,7 @@ diff -uNr linux-2.6.6/fs/exec.c linux-2.6.6.grsec/fs/exec.c
  	retval = copy_strings(bprm.envc, envp, &bprm);
  	if (retval < 0)
  		goto out;
-@@ -1139,8 +1292,22 @@
+@@ -1130,8 +1277,22 @@
  	if (retval < 0)
  		goto out;
  
@@ -2920,7 +2905,7 @@ diff -uNr linux-2.6.6/fs/exec.c linux-2.6.6.grsec/fs/exec.c
  		free_arg_pages(&bprm);
  
  		/* execve success */
-@@ -1148,6 +1315,13 @@
+@@ -1139,6 +1300,13 @@
  		return retval;
  	}
  
@@ -2934,7 +2919,7 @@ diff -uNr linux-2.6.6/fs/exec.c linux-2.6.6.grsec/fs/exec.c
  out:
  	/* Something went wrong, return the inode and free the argument pages*/
  	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
-@@ -1305,6 +1479,128 @@
+@@ -1296,6 +1464,128 @@
  	*out_ptr = 0;
  }
  
@@ -3063,7 +3048,7 @@ diff -uNr linux-2.6.6/fs/exec.c linux-2.6.6.grsec/fs/exec.c
  static void zap_threads (struct mm_struct *mm)
  {
  	struct task_struct *g, *p;
-@@ -1374,6 +1670,7 @@
+@@ -1365,6 +1655,7 @@
  	current->signal->group_exit_code = exit_code;
  	coredump_wait(mm);
  
@@ -3071,7 +3056,7 @@ diff -uNr linux-2.6.6/fs/exec.c linux-2.6.6.grsec/fs/exec.c
  	if (current->rlim[RLIMIT_CORE].rlim_cur < binfmt->min_coredump)
  		goto fail_unlock;
  
-@@ -1393,7 +1690,7 @@
+@@ -1384,7 +1675,7 @@
  		goto close_fail;
  	if (!file->f_op->write)
  		goto close_fail;
