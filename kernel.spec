@@ -4,13 +4,14 @@
 %define		reiserfs_version	3.5.31
 %define		i2c_version		2.5.5
 %define		wlan_version		0.3.4
+%define		tun_version		1.1
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.19
-Release:	2
+Release:	3
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -24,6 +25,7 @@ Source6:	ftp://ftp.tux.org/tux/roudier/drivers/linux/stable/sym-1.7.3-ncr-3.4.3.
 Source7:	http://www.linux-wlan.com/linux-wlan/linux-wlan-%{wlan_version}.tar.gz
 Source8:	http://www.dandelion.com/Linux/DAC960-2.2.10.tar.gz
 Source9:	serial-5.05.tar.gz
+Source10:	http://vtun.sourceforge.net/tun/tun-%{tun_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -488,6 +490,13 @@ cd driver
 
 cd ../..
 
+cd tun-%{tun_version}
+%configure \
+	--kernel-ver=$KERNEL_BUILD_DIR
+make
+install linux/tun.o $KERNEL_BUILD_ROT-installed/lib/modules/$KernelVer/net
+cd ..
+
 }
 
 KERNEL_BUILD_DIR=`pwd`
@@ -674,20 +683,6 @@ fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
 
-%post BOOT
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
-ln -sf vmlinuz-%{version}-%{release}BOOT /boot/vmlinuz
-ln -sf System.map-%{version}-%{release}BOOT /boot/System.map
-
-if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
-	/sbin/lilo 1>&2 || :
-fi
-
-<<<<<<< kernel.spec
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release}BOOT /lib/modules/%{version}
-=======
 ## commented out by klakier:
 ## DO NOT TOUCH BOOTRECORD OF MY SYSTEM !!!
 #%post BOOT
@@ -702,7 +697,6 @@ ln -snf %{version}-%{release}BOOT /lib/modules/%{version}
 #
 #rm -f /lib/modules/%{version}
 #ln -snf %{version}-%{release}BOOT /lib/modules/%{version}
->>>>>>> 1.167
 
 %postun
 if [ -L /lib/modules/%{version} ]; then 
