@@ -41,6 +41,7 @@ Source33:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_versio
 #Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.17+.gz
 # NFS server patches
 #Source40:	http://download.sourceforge.net/nfs/dhiggen_merge-4.1.tar.gz
+Source50:	i8255-chip.patch
 Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.1.gz
 Patch100:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac2.bz2
 Patch101:		%{name}-%{version}-dc395-patch-fix.patch
@@ -304,6 +305,7 @@ install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 #zcat %{SOURCE34} > drivers/net/3c59x.c
 
 #patch21 -p1
+%patch50 -p1
 
 %build
 BuildKernel() {
