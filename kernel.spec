@@ -16,7 +16,7 @@
 %define		no_install_post_compress_modules	1
 #
 %define		pre_version		%{nil}
-%define		netfilter_snap		20031121
+%define		netfilter_snap		20031206
 %define		i2c_version		2.8.0
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -26,7 +26,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.23
-Release:	0.6
+Release:	0.7
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -71,7 +71,7 @@ Patch20:	uml-patch-2.4.20-6-21.bz2
 Patch21:	linux-2.4.21-uml-o1.patch
 # http://dl.sourceforge.net/user-mode-linux/host-skas3.patch
 Patch22:	linux-2.4.20-uml-host-skas3.patch
-# http://www.kernel.org/pub/linux/kernel/people/jgarzik/libata/ (NOT APPLIED YET)
+# http://www.kernel.org/pub/linux/kernel/people/jgarzik/libata/
 Patch23:	2.4.23-libata1.patch.bz2
 
 # New filesystems
@@ -235,13 +235,11 @@ Patch1413:	linux-2.4.22-andrea-9980_fix-pausing-6.patch
 Patch1414:	linux-2.4.21-oopsmeharder.patch
 Patch1415:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch1416:	linux-2.4.21-no-FPU.patch
-Patch1417:	linux-2.4.22-ac4-ide+sata.patch
 Patch1418:	linux-2.4.21-hpt372-chicken-egg-hack.patch
 Patch1419:	linux-2.4.21-agp-num_of_masks.patch
 # fix spare disk counting for raid 5
 Patch1420:	linux-raid5-spare-counting.patch
 Patch1421:	linux-2.4.21-bttv-typo.patch
-Patch1422:	linux-2.4.21-ipt_TRACE-typo.patch
 
 Patch2000:	linux-PPC-SMP.patch
 Patch2001:	linux-2.4-ppc-procesor.patch
@@ -614,7 +612,7 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch20 -p1
 %patch21 -p1
 %patch22 -p1
-#%patch23 -p1 NOT APPLIED, YET
+%patch23 -p1
 %patch25 -p1
 #%patch26 -p1
 %patch32 -p1
@@ -703,14 +701,10 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch1414 -p1
 %patch1415 -p0
 %patch1416 -p1
-# XXX: is there updated one?
-#%patch1417 -p1
 %patch1418 -p1
 %patch1419 -p1
 %patch1420 -p1
 %patch1421 -p1
-# XXX: no TRACE in netfilter included here (at this moment)
-#%patch1422 -p1
 
 %patch2000 -p0
 %patch2001 -p1
