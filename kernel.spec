@@ -249,7 +249,7 @@ Patch906:	linux-netfilter-newnat-conntrack-nat-udp.patch
 Patch907:	PPC-grsecurity-pgtable.h.patch
 Patch908:	linux-2.4.19-PPC-o1_scheduler.patch
 Patch909:	linux-2.4.19-PPC-agpgart_be.patch
-#Patch910:	
+Patch910:	linux-2.4.21-pre4-ac4-via82cxxx_audio.patch.bz2
 Patch911:	linux-2.4.19-SPARC.patch
 Patch912:	linux-2.4.19-grsec-1.9.7-PAX-sysctl.patch
 Patch913:	linux-2.4.20-no_grsec-pre-netfilter.patch
@@ -699,9 +699,9 @@ echo Added support for V4L2
 # USB patches
 %patch146 -p1
 
-# DVB
-echo Adding DVB support
-#%patch47 -p1
+# VIA82Cxxx
+echo Fixed VIA82Cxxx Audio ...
+%patch910 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
