@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		4
+%define		_rel		5
 %define		_test_ver	8
 %define		_cset		0
 
@@ -87,6 +87,12 @@ Patch30:	2.6.0-t8-siimage-lkml.patch
 Patch32:	2.6.0-t8-swap-include-lkml.patch
 Patch34:	2.6.0-t8-toshiba-PROC_FS-lkml.patch
 Patch36:	2.6.0-t8-h8300-lkml.patch
+
+# based on http://www.uclinux.org/pub/uClinux/uClinux-2.6.x/linux-2.6.0-test8-uc0.patch.gz
+Patch38:	2.6.0-t8-uc0.patch
+
+Patch40:	2.6.0-t8-VLSI-ix86-lkml.patch
+Patch42:	2.6.0-t8-quota-locking-fix-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -406,6 +412,12 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch30 -p1
 %patch32 -p1
 %patch34 -p1
+%patch36 -p1
+
+%patch38 -p1
+
+%patch40 -p1
+%patch42 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
