@@ -95,39 +95,7 @@ diff -ur linux-2.6.11-ac2/arch/i386/kernel/entry.S linux-2.6.11-ac2-stk/arch/i38
  need_resched:
  	movl TI_flags(%ebp), %ecx	# need_resched set ?
  	testb $_TIF_NEED_RESCHED, %cl
-@@ -189,6 +172,31 @@
- 	jmp need_resched
- #endif
- 
-+ldt_ss:
-+	larl OLDSS(%esp), %eax
-+	jnz restore_nocheck
-+	testl $0x00400000, %eax		# returning to 32bit stack?
-+	jnz restore_nocheck		# allright, normal return
-+	/* If returning to userspace with 16bit stack,
-+	 * try to fix the higher word of ESP, as the CPU
-+	 * won't restore it.
-+	 * This is an "official" bug of all the x86-compatible
-+	 * CPUs, which we can try to work around to make
-+	 * dosemu and wine happy. */
-+	subl $8, %esp		# reserve space for switch16 pointer
-+	cli
-+	movl %esp, %eax
-+	/* Set up the 16bit stack frame with switch32 pointer on top,
-+	 * and a switch16 pointer on top of the current frame. */
-+	call setup_x86_bogus_stack
-+	RESTORE_REGS
-+	lss 20+4(%esp), %esp	# switch to 16bit stack
-+1:	iret
-+.section __ex_table,"a"
-+	.align 4
-+	.long 1b,iret_exc
-+.previous
-+
- /* SYSENTER_RETURN points to after the "sysenter" instruction in
-    the vsyscall page.  See vsyscall-sysentry.S, which defines the symbol.  */
- 
-@@ -272,7 +280,32 @@
+@@ -272,8 +255,55 @@
  #endif
  
  restore_all:
@@ -155,13 +123,36 @@ diff -ur linux-2.6.11-ac2/arch/i386/kernel/entry.S linux-2.6.11-ac2-stk/arch/i38
 +	.align 4
 +	.long 1b,iret_exc
 +.previous
-+
-+	# perform work that needs to be done immediately before resumption
-+	ALIGN
  
++ldt_ss:
++	larl OLDSS(%esp), %eax
++	jnz restore_nocheck
++	testl $0x00400000, %eax		# returning to 32bit stack?
++	jnz restore_nocheck		# allright, normal return
++	/* If returning to userspace with 16bit stack,
++	 * try to fix the higher word of ESP, as the CPU
++	 * won't restore it.
++	 * This is an "official" bug of all the x86-compatible
++	 * CPUs, which we can try to work around to make
++	 * dosemu and wine happy. */
++	subl $8, %esp		# reserve space for switch16 pointer
++	cli
++	movl %esp, %eax
++	/* Set up the 16bit stack frame with switch32 pointer on top,
++	 * and a switch16 pointer on top of the current frame. */
++	call setup_x86_bogus_stack
++	RESTORE_REGS
++	lss 20+4(%esp), %esp	# switch to 16bit stack
++1:	iret
++.section __ex_table,"a"
++	.align 4
++	.long 1b,iret_exc
++.previous
++  
  	# perform work that needs to be done immediately before resumption
  	ALIGN
-@@ -348,6 +381,27 @@
+ work_pending:
+@@ -348,6 +378,27 @@
  	movl $-ENOSYS,EAX(%esp)
  	jmp resume_userspace
  
@@ -189,7 +180,7 @@ diff -ur linux-2.6.11-ac2/arch/i386/kernel/entry.S linux-2.6.11-ac2-stk/arch/i38
  /*
   * Build the entry stubs and pointer table with
   * some assembler magic.
-@@ -402,7 +456,9 @@
+@@ -402,7 +453,9 @@
  	pushl %ecx
  	pushl %ebx
  	cld
@@ -200,7 +191,7 @@ diff -ur linux-2.6.11-ac2/arch/i386/kernel/entry.S linux-2.6.11-ac2-stk/arch/i38
  	movl ES(%esp), %edi		# get the function address
  	movl ORIG_EAX(%esp), %edx	# get the error code
  	movl %eax, ORIG_EAX(%esp)
-@@ -484,6 +540,11 @@
+@@ -484,6 +537,11 @@
   * fault happened on the sysenter path.
   */
  ENTRY(nmi)
@@ -212,7 +203,7 @@ diff -ur linux-2.6.11-ac2/arch/i386/kernel/entry.S linux-2.6.11-ac2-stk/arch/i38
  	cmpl $sysenter_entry,(%esp)
  	je nmi_stack_fixup
  	pushl %eax
-@@ -503,7 +564,7 @@
+@@ -503,7 +561,7 @@
  	xorl %edx,%edx		# zero error code
  	movl %esp,%eax		# pt_regs pointer
  	call do_nmi
@@ -221,7 +212,7 @@ diff -ur linux-2.6.11-ac2/arch/i386/kernel/entry.S linux-2.6.11-ac2-stk/arch/i38
  
  nmi_stack_fixup:
  	FIX_STACK(12,nmi_stack_correct, 1)
-@@ -519,6 +580,29 @@
+@@ -519,6 +577,29 @@
  	FIX_STACK(24,nmi_stack_correct, 1)
  	jmp nmi_stack_correct
  
