@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		2
+%define		_rel		3
 %define		_test_ver	9
 %define		_cset		20031027_2205
 
@@ -406,8 +406,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch20 -p1
 %patch21 -p1
-
-%patch22 -p1
 
 %patch28 -p1
 %patch32 -p1
