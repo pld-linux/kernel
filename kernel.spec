@@ -12,7 +12,7 @@
 # _without_w4l		- don't build Win4Lin support
 #
 
-%define		patch_level	9
+%define		patch_level	10
 %define		_rel		5
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -147,10 +147,10 @@ Patch16:	linux-2.4.18-mppe.patch
 #from: 	http://dl.sourceforge.net/linux-hfsplus/hfsplus-patch-20020606.patch
 Patch17:	hfsplus-20020606.patch.bz2
 
-# from http://people.sistina.com/~thornber/patches/2.4-stable/2.4.20/2.4.20-dm-9.tar.bz2DM-9 patch
-Patch18:	linux-2.4.20-dm-9.patch.bz2
+# from http://people.sistina.com/~thornber/patches/2.4-stable/2.4.20/2.4.20-dm-10.tar.bz2
+Patch18:	linux-2.4.20-dm-10.patch.gz
 # EVMS support (http://www.sourceforge.net/projects/evms/)
-Patch19:	linux-2.4.20-evms-%{evms_version}.patch.bz2
+Patch19:	linux-2.4.20-evms-%{evms_version}.patch.gz
 
 # from ???
 Patch20:	linux-2.4.20-audigy.patch.bz2
@@ -354,6 +354,7 @@ Provides:	%{name}(freeswan) = %{freeswan_version}
 Provides:	%{name}(cdrw)
 Provides:	%{name}(cdmrw)
 Provides:	%{name}(hostap)
+Provides:	%{name}(evms)
 Autoreqprov:	no
 Prereq:		fileutils
 Prereq:		modutils
@@ -408,6 +409,7 @@ Provides:	%{name}(freeswan) = %{freeswan_version}
 Provides:	%{name}(cdrw)
 Provides:	%{name}(cdmrw)
 Provides:	%{name}(hostap)
+Provides:	%{name}(evms)
 Prereq:		fileutils
 Prereq:		modutils
 Prereq:		geninitrd >= 2.21
@@ -534,6 +536,7 @@ Provides:	%{name}-headers(bridging) = %{version}
 Provides:	%{name}-headers(netfilter) = 1.2.7a-%{netfilter_snap}
 Provides:	%{name}-headers(grsecurity) = %{grsec_version}
 Provides:	%{name}-headers(freeswan)
+Provides:	%{name}-headers(evms)
 Provides:	%{name}(cdrw)
 Provides:	%{name}(cdmrw)
 Provides:	%{name}(hostap)
