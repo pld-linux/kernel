@@ -7,7 +7,7 @@
 #
 %define		test_build		0
 #
-%define		pre_version		pre6
+%define		pre_version		pre9
 %define		lids_version		1.0.11-2.4.6
 %define		ipvs_version		0.9.2
 %define		freeswan_version	snap2001jun14R
@@ -78,19 +78,17 @@ Patch2:		linux-2.4.5-freeswan-%{freeswan_version}.patch.gz
 Patch3:		linux-2.4.4-aacraid-043001.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.7.diff
-# XFS patches
-#Patch5:		ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4.4-core-xfs-1.0.patch.gz
-#Patch6:		ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4-xfs-1.0.patch.gz
-Patch6:		linux-2.4.7-pre6-xfs-20010717.patch.gz
+# ftp://linux-xfs.sgi.com/projects/xfs/download/
+Patch5:		linux-2.4.7-pre6-xfs-20010717.patch.gz
 # Compressed iso9660 filesystem
-Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/filemap-2.4.4-1.diff.gz
-Patch8:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-2.4.5-pre1-8.diff.gz
-Patch9:		linux-abi-PLD-2.4.7-pre6.diff
-Patch10:	http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
+Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/filemap-2.4.4-1.diff.gz
+Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-2.4.5-pre1-8.diff.gz
+Patch8:		linux-abi-PLD-2.4.7-pre6.diff
+Patch9:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
-Patch11:	linux-grsecurity-1.4-PLD-2.4.7-pre6.patch
+Patch10:	linux-grsecurity-1.4-PLD-2.4.7-pre6.patch
 # Linux Compressed cache
-Patch12:	http://prdownloads.sourceforge.net/linuxcompressed/patch-comp-cache-2.4.6-0.17.bz2
+Patch11:	http://prdownloads.sourceforge.net/linuxcompressed/patch-comp-cache-2.4.6-0.17.bz2
 
 # Assorted bugfixes
 
@@ -115,6 +113,39 @@ Patch112:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4
 Patch113:	linux-reiserfs-rename.patch
 Patch114:	linux-via-fixes.patch
 Patch115:	linux-alpha-nfs-2.4.2.patch
+Patch116:	linux-2.4-string.patch
+# raid5 xor fix for PIII/P4, should go away shortly
+Patch117:	linux-2.4.0-raid5xor.patch
+# disable some networking printk's
+Patch118:	linux-2.4.1-netdebug.patch
+# SCSI Reset patch for clustering stuff
+Patch119:	linux-2.4.1-scsi-reset.patch
+# Add an ioctl to the block layer so we can be EFI compliant
+Patch120:	linux-2.4.2-blkioctl-sector.patch
+# fix for non-atomic bit clear in eepro100 driver on alpha
+Patch121:	linux-2.4.2-eepro100-alpha.patch
+# Patch from Doug to fix i810 recording
+Patch122:	linux-2.4.2-i810_audio.patch
+# OHCI IRQ sanity check
+Patch123:	linux-2.4.2-ohci-irq.patch
+# fix lun probing on multilun RAID chassis
+Patch124:	linux-2.4.2-scsi_scan.patch
+# work around Latitude C600 resume problem (bios bug)
+Patch125:	linux-2.4.3-latitudec600.patch
+# fix pcnet32 networkdriver load vs ifconfig races
+Patch126:	linux-2.4.3-pcnet32.patch
+# fix rawio
+Patch127:	linux-2.4.3-rawio.patch
+# extra PnP id for sb32awe
+Patch128:	linux-2.4.3-sb.patch
+# ideraid driver updates
+Patch129:	linux-2.4.5-ideraid.patch
+# Pete's IDETAPE fixes
+Patch130:	linux-2.4.6-idetape.patch
+# don't allocate highmem pages on non-highmem machines
+Patch131:	linux-2.4.6-nohighmem.patch
+# another sb16 pnp id
+Patch132:	linux-2.4.6-sb_id.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -357,18 +388,17 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch3 -p1
 %patch4 -p1
 %patch100 -p1
-#%patch5 -p1
+%patch5 -p1
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
 %patch9 -p1
-%patch10 -p1
 %if%{?_with_grsec:1}%{!?_with_grsec:0}
-%patch11 -p1
+%patch10 -p1
 %endif
 
 %patch101 -p0
-#%patch102 -p0
+%patch102 -p0
 %patch103 -p1
 %patch104 -p0
 %patch105 -p0
@@ -382,6 +412,23 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch113 -p1
 %patch114 -p1
 %patch115 -p1
+%patch116 -p1
+%patch117 -p1
+%patch118 -p1
+%patch119 -p2
+%patch120 -p1
+%patch121 -p1
+%patch122 -p1
+%patch123 -p1
+%patch124 -p1
+%patch125 -p1
+%patch126 -p1
+%patch127 -p1
+%patch128 -p1
+%patch129 -p1
+%patch130 -p1
+%patch131 -p1
+%patch132 -p1
 
 %patch900 -p0 
 %patch901 -p0
@@ -622,18 +669,17 @@ gzip -dc %{PATCH2} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH3}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
 gzip -dc %{PATCH100} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-#gzip -dc %{PATCH5} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH5} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH6} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH7} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH8} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH9}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
 %if%{?_with_lids:1}%{!?_with_lids:0}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
 %endif
 
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH101}
-#patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH102}
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH102}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH103}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH104}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH105}
@@ -647,6 +693,23 @@ patch -p4 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH111}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH113}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH114}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH115}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH116}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH117}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH118}
+patch -p2 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH119}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH120}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH121}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH122}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH123}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH124}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH125}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH126}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH127}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH128}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH129}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH130}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH131}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH132}
 
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH900}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH901}
