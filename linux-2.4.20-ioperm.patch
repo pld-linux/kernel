@@ -48,3 +48,26 @@ diff -Nur --exclude='*.orig' linux-2.4.20.org/include/asm-i386/processor.h linux
  #define IO_BITMAP_OFFSET offsetof(struct tss_struct,io_bitmap)
  #define INVALID_IO_BITMAP_OFFSET 0x8000
  
+--- linux/arch/x86_64/kernel/ioport.c	2003/04/09 17:49:49	1.10
++++ linux/arch/x86_64/kernel/ioport.c	2003/05/15 17:49:57	1.11
+@@ -76,14 +76,18 @@
+ 		/*
+ 		 * this activates it in the TSS
+ 		 */
+-		tss->io_map_base = IO_BITMAP_OFFSET;
+ 	}
+ 
+ 	/*
+ 	 * do it in the per-thread copy and in the TSS ...
+ 	 */
+ 	set_bitmap((unsigned long *) t->io_bitmap_ptr, from, num, !turn_on);
+-	set_bitmap((unsigned long *) tss->io_bitmap, from, num, !turn_on);
++	if (tss->io_map_base != IO_BITMAP_OFFSET) { 
++		memcpy(tss->io_bitmap, t->io_bitmap_ptr, sizeof(tss->io_bitmap));
++		tss->io_map_base = IO_BITMAP_OFFSET;
++	} else { 
++		set_bitmap((unsigned long *) tss->io_bitmap, from, num, !turn_on);
++	}
+ 
+ 	return 0;
+ }
