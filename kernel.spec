@@ -110,45 +110,44 @@ Source91:	%{name}-grsec+pax.config
 Source92:	%{name}-vserver.config
 
 #Patch0:		2.6.0-ksyms-add.patch
-Patch1:			linux-2.6-alsa-1.0.8-silent-output.patch
+Patch1:		linux-2.6-alsa-1.0.8-silent-output.patch
 #Patch2:		2.6.0-t6-usb-irq.patch
 #Patch3:		2.6.0-t7-memleak-lkml.patch
 #Patch4:		2.6.0-t7-memleak2-lkml.patch
-#Patch5:	2.6.0-t8-swap-include-lkml.patch
 #Patch6:		2.6.0-t8-VLSI-ix86-lkml.patch
 
 #Patch8:		2.6.0-t8-umsdos-lkml.patch
 #Patch9:		2.6.0-t9-acpi_osl-lkml.patch
 
 # http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
-#Patch10:	2.6.0-powernow-k7.patch
-#Patch11:	2.6.0-enable-radeon-igp-rendering.patch
-#Patch12:	2.6.0-omnikeys.patch
+#Patch10:		2.6.0-powernow-k7.patch
+#Patch11:		2.6.0-enable-radeon-igp-rendering.patch
+#Patch12:		2.6.0-omnikeys.patch
 
-#Patch13:	2.6.1-rc2-VLAN-NS83820-lkml.patch
-#Patch14:	linux-2.6-omnibook-20040916.patch
-#Patch15:	linux-2.6-enable-broken-advansys.patch
-#Patch16:	linux-alpha-isa.patch
-#Patch17:	2.6.4-psion-5mx.patch
-#Patch18:	2.6.5-sparc64-missing-include.patch
-#Patch19:	2.6.5-3C920b-Tornado.patch
-#Patch20:	2.6.5-i386-cmpxchg.patch
-#Patch21:	2.6.6-serial-fifo-lkml.patch
-#Patch22:	2.6.6-qsort-updated-lkml.patch
-#Patch23:	2.6.6-xfs-qsort-lkml.patch
-#Patch24:	2.6.7-bridge_sysfs-lkml.patch
-#Patch25:	2.6.7-alpha_compile.patch
-#Patch26:	2.6.7-ppc-asm-defs.patch
-#Patch27:	linux-ppc-oops.patch
-#Patch28:	linux-2.6-sparc-ksyms.patch
+#Patch13:		2.6.1-rc2-VLAN-NS83820-lkml.patch
+#Patch14:		linux-2.6-omnibook-20040916.patch
+#Patch15:		linux-2.6-enable-broken-advansys.patch
+#Patch16:		linux-alpha-isa.patch
+#Patch17:		2.6.4-psion-5mx.patch
+#Patch18:		2.6.5-sparc64-missing-include.patch
+#Patch19:		2.6.5-3C920b-Tornado.patch
+#Patch20:		2.6.5-i386-cmpxchg.patch
+#Patch21:		2.6.6-serial-fifo-lkml.patch
+#Patch22:		2.6.6-qsort-updated-lkml.patch
+#Patch23:		2.6.6-xfs-qsort-lkml.patch
+#Patch24:		2.6.7-bridge_sysfs-lkml.patch
+#Patch25:		2.6.7-alpha_compile.patch
+#Patch26:		2.6.7-ppc-asm-defs.patch
+#Patch27:		linux-ppc-oops.patch
+#Patch28:		linux-2.6-sparc-ksyms.patch
 
-#Patch30:	2.6.x-ppp_mppe.patch
+#Patch30:		2.6.x-ppp_mppe.patch
 
-#Patch32:	2.6.x-TGA-fbdev-lkml.patch
-#Patch33:	linux-kbuild-extmod.patch
+#Patch32:		2.6.x-TGA-fbdev-lkml.patch
+#Patch33:		linux-kbuild-extmod.patch
 
 # framebuffer fixes
-#Patch41:	linux-fbcon-margins.patch
+#Patch41:		linux-fbcon-margins.patch
 
 # netfilter
 #Patch50:	2.6.10-pom-ng-%{_netfilter_snap}.patch
@@ -173,11 +172,7 @@ Patch73:	squashfs2.1-patch
 #Patch74:	linux-static-dev.patch
 #Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
 #Patch76:	linux-2.6-lirc-0.7.patch
-#Patch77:	linux-2.6-alsa-1.0.8.patch
 #Patch78:	linux-2.6-expand-stack-race.patch
-
-# psmouse extension for ThinkPad laptops from http://www.clarkson.edu/~evanchsa/
-#Patch80:	trackpoint-2.6.9.patch
 
 # http://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.10/
 #Patch90:	acpi-20041210-2.6.10.diff
@@ -521,12 +516,11 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 bzcat %{SOURCE4} | patch -p1 -s
 %endif
 
-#%patch0 -p1
+%patch0 -p1
 %patch1 -p1
-#%patch2 -p1
-#%patch3 -p1
-#%patch4 -p1
-#patch5 -p1
+%patch2 -p1
+%patch3 -p1
+%patch4 -p1
 #%patch6 -p1
 
 #%patch8 -p1
@@ -578,10 +572,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 #%patch74 -p1
 #%patch75 -p1
 #%patch76 -p1
-#%patch77 -p1
 #patch78 -p1
-
-#%patch80 -p1
 
 #%patch90 -p1
 
