@@ -568,7 +568,7 @@ echo Bootsplash not available NOW.
 
 %patch36 -p1
 
-##%patch38 -p1
+%patch38 -p1
 
 %patch40 -p1
 
