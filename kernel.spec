@@ -700,8 +700,8 @@ echo AXP patches ...
 
 %ifarch %{ix86}
 echo Win4Lin patch ...
-%{?_without_grsec:%patch1000 -p1}
-%{!?_without_grsec:%patch1001 -p1}
+%{!?_without_grsec:%patch1000 -p1}
+%{?_without_grsec:%patch1001 -p1}
 %endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
