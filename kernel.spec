@@ -507,7 +507,7 @@ echo "Scheduler din't work on ARCH diffetern than Intel x86"
 %endif
 %endif
 %patch9 -p1
-%patch906 -p1
+%patch906 -p0
 %if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %ifarch%{ix86}
 %patch912 -p1
