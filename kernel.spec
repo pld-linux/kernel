@@ -11,6 +11,9 @@
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
 
+%define		pcmcia_version		3.1.22
+%define		drm_xfree_version	4.3.0
+
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
