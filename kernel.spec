@@ -51,9 +51,9 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_post_ver	%{nil}
-%define		_rel		0.10HEAD
-%define		_cset		20041009_2106
-%define		_apply_cset	0
+%define		_rel		0.11HEAD
+%define		_cset		20041014_0511
+%define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
 
@@ -81,8 +81,8 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 # Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
-# Source4-md5:	4ce22d04af5c0b8d5ec01fda136bc123
-# Source4-size:	343793
+# Source4-md5:	9d73b6cbd7c59865930dbfeaad4fcd2b
+# Source4-size:	22057
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -114,6 +114,8 @@ Patch18:	linux-kbuild-extmod.patch
 Patch20:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch21:	2.6.5-3C920b-Tornado.patch
 Patch22:	2.6.5-i386-cmpxchg.patch
+
+Patch30:	kernel-vmalloc-reserve.patch
 
 # suspend/resume
 # http://softwaresuspend.berlios.de/
@@ -485,6 +487,8 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch20 -p1
 %patch21 -p1
 %patch22 -p1
+
+%patch30 -p1
 
 %ifarch %{ix86}
 %patch500 -p1
