@@ -80,6 +80,9 @@ Patch8:		wanrouter-v2215.patch.gz
 Patch10:	bridge-1.0.2-against-2.2.20.diff
 Patch11:	bridge-ipchains-against-1.0.2-against-2.2.20.diff
 Patch12:	linux-ipv6-pld.patch
+Patch13:	linux-des.patch
+Patch14:	linux-alpha.patch
+Patch15:	linux-delay.patch
 
 Patch20:	http://download.sourceforge.net/linux1394/ieee1394-2.2.19-20010527.gz
 Patch21:	linux-tasks.patch
@@ -464,6 +467,9 @@ Modu³y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 %patch10 -p1
 %patch11 -p1
 %patch12 -p1
+%patch13 -p1
+%patch14 -p1
+%patch15 -p1
 
 %patch20 -p1
 %patch21 -p1
