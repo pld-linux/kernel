@@ -13,9 +13,9 @@
 %bcond_without source	# don't build kernel-source package
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
-%define		_rel		2
+%define		_rel		1
 %define		_test_ver	6
-%define		_cset		0
+%define		_cset		20030929_1907
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
