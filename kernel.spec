@@ -544,11 +544,11 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch72 -p1
 
-%patch74 -p1
-##%%patch75 -p1
-%patch76 -p1
+#%%patch74 -p1
+#%%patch75 -p1
+#%%patch76 -p1
 
-%patch78 -p1
+#%%patch78 -p1
 
 %patch80 -p1
 %patch81 -p1
