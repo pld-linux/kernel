@@ -143,6 +143,7 @@ Patch131:	kernel-real_root_dev-s390.patch
 Patch132:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/2.4/preempt-kernel-rml-2.4.14-2.patch
 # fixed xquad_portio
 Patch133:	xquad_portio.fix
+Patch134:	linux-LVM-EXPORT_SYMBOL.fix
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -524,6 +525,7 @@ cp -f tulip-%{tulip_version}/src/ChangeLog drivers/net/tulip
 %patch132 -p1
 
 %patch133 -p1
+%patch134 -p0
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -619,9 +621,6 @@ BuildKernel() {
 %endif
 	%{__make} include/linux/version.h
 	
-# make drivers/scsi/ missing files
-	(cd drivers/scsi; make -f M)
-	
 %ifarch %{ix86}
 	%{__make} bzImage
 %else
@@ -657,6 +656,9 @@ KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
 rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
 
+# make drivers/scsi/ missing files
+	(cd drivers/scsi; make -f M)
+	
 # UP KERNEL
 BuildKernel 
 
