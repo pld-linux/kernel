@@ -6,6 +6,8 @@
 #
 # TODO:
 #		- check I2C
+#		- fix lirc_sasem (usb api)
+#		- update HP-OmniBook patchset (2.6.1-all-in-1.patch)
 #
 # Conditional build:
 %bcond_without	BOOT		# don't build BOOT kernel
@@ -165,8 +167,9 @@ Patch73:	squashfs2.0-patch
 # http://dl.sourceforge.net/sourceforge/pramfs/
 Patch74:	pramfs-2.6.4.patch
 Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
-Patch76:	http://www.elektronikschule.de/~genannt/kernel-patche/lirc/lirc-2.6.5-20040404
-Patch77:	2.6.6-lirc_i2c.diff
+# http://lirc.sourceforge.net/software/snapshots/lirc-0.7.0pre7.tar.bz2
+# extracted and adapterized.
+Patch76:	2.6.8-lirc-0.7.0-pre7.patch
 
 # derived from grsecurity-2.0-2.6.6-unofficial.patch
 Patch90:	%{name}-grsec.patch
@@ -613,7 +616,6 @@ zcat %{SOURCE3} | patch -p1 -s
 %endif
 %patch75 -p1
 %patch76 -p1
-%patch77 -p1
 
 cp -f pwc-%{pwc_version}/2.6/pwc* drivers/usb/media
 
