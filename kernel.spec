@@ -162,7 +162,7 @@ Prereq:		fileutils
 Prereq:		modutils
 Prereq:		geninitrd
 Obsoletes:	kernel-modules
-ExclusiveArch:	%{ix86} sparc sparc64 alpha
+ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
 BuildRequires:	bin86
 %endif
@@ -486,7 +486,9 @@ echo Installing Net Dev Random patch
 %patch11 -p1
 %patch12 -p1
 
+%ifarch %{x86}
 %patch7 -p1
+%endif
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
