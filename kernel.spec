@@ -77,10 +77,12 @@ Patch4:		br2684-against2.4.15.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
 Patch5:		linux-2.4.16-xfs-20011129.patch.gz
 # Homepage of ABI : http://linux-abi.sourceforge.net/
-Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2
+#ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2
+Patch7:		linux-abi-2.4.15.0.patch.bz
 Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
-Patch9:		http://grsecurity.net/grsecurity-%{grsec_version}.patch
+# http://grsecurity.net/grsecurity-%{grsec_version}.patch
+Patch9:		grsecurity-%{grsec_version}.patch
 # Preemptive kernel  patch
 Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.16-1.patch
 
