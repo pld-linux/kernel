@@ -616,7 +616,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH27}
 
 # 802.1Q VLANs
 cd vlan.%{vlan_version}
-patch -p1 -s < %{PACTH905}
+patch -p1 -s < %{PATCH905}
 cd ..
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <vlan.%{vlan_version}/vlan_2.2.patch
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH31}
