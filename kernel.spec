@@ -19,6 +19,7 @@
 %define		vlan_version		1.4
 %define		IPperson_version	20010724-2.4.7
 %define		grsec_version		1.8-2.4.7
+%define		aic-version		6.2.3-2.4.7
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -154,6 +155,7 @@ Patch137:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/2.4.7.pending/panic-in-rei
 Patch138:	linux-quota-bug.patch
 Patch139:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch140:	linux-UDF.fix
+Patch141:	http://people.FreeBSD.org/~gibbs/linux/linux-aic7xxx-%{aic_version}.patch.gz
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -448,6 +450,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch138 -p1
 %patch139 -p0
 %patch140 -p0
+%patch141 -p1
 
 %patch900 -p0 
 %patch901 -p0
