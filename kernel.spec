@@ -27,7 +27,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.15
-Release:	0.1
+Release:	0.2
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -98,7 +98,6 @@ Patch100:	linux-scsi-debug-bug.patch
 Patch101:	linux-2.4.2-raw-ip.patch
 Patch102:	PCI_ISA_bridge.patch
 Patch103:	linux-2.4.2-nvram-hdd.patch
-Patch104:	ppc-patch-2.4.15.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch105:	linux-2.4.2-pcnet-parms.patch
 #Patch106:	http://linuxdiskcert.org/ide.2.4.14.11192001.patch.bz2
@@ -113,8 +112,6 @@ Patch111:	linux-2.4.1-netdebug.patch
 Patch112:	linux-2.4.1-scsi-reset.patch
 # Add an ioctl to the block layer so we can be EFI compliant
 Patch113:	linux-2.4.2-blkioctl-sector.patch
-# fix ??? problem with inode on ext2.
-Patch114:	2.4.15-inode.c.fix
 # fix lun probing on multilun RAID chassis
 Patch115:	linux-2.4.12-scsi_scan.patch
 # fix pcnet32 networkdriver load vs ifconfig races
@@ -395,7 +392,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch101 -p1
 %patch102 -p0
 %patch103 -p0
-%patch104 -p1
 %patch105 -p1
 #%patch106 -p1
 %patch107 -p1
@@ -405,7 +401,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch111 -p1
 %patch112 -p2
 ##%patch113 -p1
-%patch114 -p1
 %patch115 -p1
 %patch116 -p1
 %patch117 -p1
@@ -420,7 +415,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch904 -p0
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
 %ifarch %{ix86}
-%patch906 -p1
+##%patch906 -p1
 %endif
 %endif
 
