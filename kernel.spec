@@ -374,6 +374,7 @@ Patch2006:	linux-2.4.20-tty-fixes-grsec.patch
 ##Patch2007:	linux-2.4.20-tty-fixes.patch
 Patch2008:	linux-do_brk-bound-check.patch
 Patch2009:	linux-2.4-do_mremap.patch
+Patch2010:	linux-2.4-rtc.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -952,6 +953,7 @@ echo AXP patches ...
 
 %patch2006 -p1
 %patch2008 -p1
+%patch2010 -p1
 
 %patch916  -p1
 %patch915 -p1
