@@ -215,6 +215,7 @@ Patch140:	linux-2.4.20-pwc.patch
 Patch141:	linux-rivafb16.patch
 # misc tdfxfb fixes - detailed description inside
 Patch142:	linux-tdfxfb-fixes.patch
+Patch143:	linux-2.4.20-reiserfs-quota.patch.bz2
 
 # Patches fixing other patches or 3rd party sources ;)
 # This patch allows to create more than one sound device using alsa
@@ -678,6 +679,8 @@ echo Added support for V4L2
 
 # sysctl controll of /dev/mem
 %{!?_without_grsec:%patch921 -p1}
+
+%patch143 -p1
 
 echo Added ARCH specific patches....
 %ifarch ppc
