@@ -1725,3 +1725,299 @@ diff -Nru a/drivers/usb/serial/io_fw_down2.h b/drivers/usb/serial/io_fw_down2.h
 To unsubscribe from this list: send the line "unsubscribe bk-commits-24" in
 the body of a message to majordomo@vger.kernel.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
+- From linux-kernel@vger.kernel.org Sun Dec 28 14:33:44 2003
+Date: Sun, 07 Dec 2003 18:27:17 +0000
+From: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: bk-commits-24@vger.kernel.org
+Subject: [wireless airo] Delay MIC activation to prevent Oops
+
+ChangeSet 1.1136.73.7, 2003/12/07 13:27:17-05:00, achirica@telefonica.net
+
+        [wireless airo] Delay MIC activation to prevent Oops
+
+
+# This patch includes the following deltas:
+#                  ChangeSet    1.1136.73.6 -> 1.1136.73.7
+#       drivers/net/wireless/airo.c     1.62    -> 1.63
+#
+
+ airo.c |    7 ++-----
+ 1 files changed, 2 insertions(+), 5 deletions(-)
+
+
+diff -ruN linux-2.4.23.mine/drivers/net/wireless/airo.c linux-2.4.23/drivers/net/wireless/airo.c
+- --- linux-2.4.23.mine/drivers/net/wireless/airo.c	2003-11-28 11:26:20.000000000 -0700
++++ linux-2.4.23/drivers/net/wireless/airo.c	2003-12-28 22:30:56.064562029 -0700
+@@ -2476,11 +2476,8 @@
+ 			OUT4500( apriv, EVACK, EV_MIC );
+ #ifdef MICSUPPORT
+ 			if (test_bit(FLAG_MIC_CAPABLE, &apriv->flags)) {
+- -				if (down_trylock(&apriv->sem) != 0) {
+- -					set_bit(JOB_MIC, &apriv->flags);
+- -					wake_up_interruptible(&apriv->thr_wait);
+- -				} else
+- -					micinit (apriv);
++				set_bit(JOB_MIC, &apriv->flags);
++				wake_up_interruptible(&apriv->thr_wait);
+ 			}
+ #endif
+ 		}
+- From linux-kernel@vger.kernel.org Sun Dec 28 14:34:44 2003
+Date: Sun, 07 Dec 2003 18:27:13 +0000
+From: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: bk-commits-24@vger.kernel.org
+Subject: [wireless airo] Fix PCI registration
+
+ChangeSet 1.1136.73.6, 2003/12/07 13:27:13-05:00, achirica@telefonica.net
+
+        [wireless airo] Fix PCI registration
+
+
+# This patch includes the following deltas:
+#                  ChangeSet    1.1136.73.5 -> 1.1136.73.6
+#       drivers/net/wireless/airo.c     1.61    -> 1.62
+#
+
+ airo.c |   13 ++-----------
+ 1 files changed, 2 insertions(+), 11 deletions(-)
+
+
+diff -ruN linux-2.4.23.mine/drivers/net/wireless/airo.c linux-2.4.23/drivers/net/wireless/airo.c
+- --- linux-2.4.23.mine/drivers/net/wireless/airo.c	2003-12-28 22:32:51.418220092 -0700
++++ linux-2.4.23/drivers/net/wireless/airo.c	2003-12-28 22:33:04.226400129 -0700
+@@ -1034,7 +1034,6 @@
+ #define FLAG_802_11	7
+ #define FLAG_PENDING_XMIT 9
+ #define FLAG_PENDING_XMIT11 10
+- -#define FLAG_PCI	11
+ #define JOB_MASK	0x1ff0000
+ #define JOB_DIE		16
+ #define JOB_XMIT	17
+@@ -4639,7 +4638,6 @@
+ 		return -ENODEV;
+ 
+ 	pci_set_drvdata(pdev, dev);
+- -	set_bit (FLAG_PCI, &((struct airo_info *)dev->priv)->flags);
+ 	return 0;
+ }
+ 
+@@ -4669,7 +4667,7 @@
+ 
+ #ifdef CONFIG_PCI
+ 	printk( KERN_INFO "airo:  Probing for PCI adapters\n" );
+- -	pci_module_init(&airo_driver);
++	pci_register_driver(&airo_driver);
+ 	printk( KERN_INFO "airo:  Finished probing for PCI adapters\n" );
+ #endif
+ 
+@@ -4681,22 +4679,15 @@
+ 
+ static void __exit airo_cleanup_module( void )
+ {
+- -	int is_pci = 0;
+ 	while( airo_devices ) {
+ 		printk( KERN_INFO "airo: Unregistering %s\n", airo_devices->dev->name );
+- -#ifdef CONFIG_PCI
+- -		if (test_bit(FLAG_PCI, &((struct airo_info *)airo_devices->dev->priv)->flags))
+- -			is_pci = 1;
+- -#endif
+ 		stop_airo_card( airo_devices->dev, 1 );
+ 	}
+ 	remove_proc_entry("aironet", proc_root_driver);
+ 
+- -	if (is_pci) {
+ #ifdef CONFIG_PCI
+- -		pci_unregister_driver(&airo_driver);
++	pci_unregister_driver(&airo_driver);
+ #endif
+- -	}
+ }
+ 
+ #ifdef WIRELESS_EXT
+- From linux-kernel@vger.kernel.org Sun Dec 28 14:37:12 2003
+Date: Sun, 28 Dec 2003 20:09:56 +0000
+From: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: bk-commits-24@vger.kernel.org
+Subject: Daniel Lux: Fix IDE busy-wait race
+
+ChangeSet 1.1344, 2003/12/28 18:09:56-02:00, marcelo@logos.cnet
+
+	  Daniel Lux: Fix IDE busy-wait race
+
+
+# This patch includes the following deltas:
+#	           ChangeSet	1.1343  -> 1.1344 
+#	drivers/ide/ide-iops.c	1.7     -> 1.8    
+#
+
+ ide-iops.c |   16 ++++++++++++----
+ 1 files changed, 12 insertions(+), 4 deletions(-)
+
+
+diff -Nru a/drivers/ide/ide-iops.c b/drivers/ide/ide-iops.c
+- --- a/drivers/ide/ide-iops.c	Sun Dec 28 13:01:41 2003
++++ b/drivers/ide/ide-iops.c	Sun Dec 28 13:01:41 2003
+@@ -664,11 +664,19 @@
+ 	if ((stat = hwif->INB(IDE_STATUS_REG)) & BUSY_STAT) {
+ 		local_irq_set(flags);
+ 		timeout += jiffies;
+- -		while ((stat = hwif->INB(IDE_STATUS_REG)) & BUSY_STAT) {
++		stat = hwif->INB(IDE_STATUS_REG);
++		while (stat & BUSY_STAT) {
+ 			if (time_after(jiffies, timeout)) {
+- -				local_irq_restore(flags);
+- -				*startstop = DRIVER(drive)->error(drive, "status timeout", stat);
+- -				return 1;
++				/*
++			       	 * do one more status read in case we were interrupted between last
++				 * stat = hwif->INB(IDE_STATUS_REG) and time_after(jiffies, timeout)
++				 * in wich case the timeout might have been shorter than specified.
++				 */
++				if ((stat = hwif->INB(IDE_STATUS_REG)) & BUSY_STAT) {
++					local_irq_restore(flags);
++					*startstop = DRIVER(drive)->error(drive, "status timeout", stat);
++					return 1;
++				}
+ 			}
+ 		}
+ 		local_irq_restore(flags);
+- -
+To unsubscribe from this list: send the line "unsubscribe bk-commits-24" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+- From linux-kernel@vger.kernel.org Sun Dec 28 14:37:46 2003
+Date: Sun, 28 Dec 2003 20:14:56 +0000
+From: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: bk-commits-24@vger.kernel.org
+Subject: Fix IDE busywait merge
+
+ChangeSet 1.1345, 2003/12/28 18:14:56-02:00, marcelo@logos.cnet
+
+	  Fix IDE busywait merge
+
+
+# This patch includes the following deltas:
+#	           ChangeSet	1.1344  -> 1.1345 
+#	drivers/ide/ide-iops.c	1.8     -> 1.9    
+#
+
+ ide-iops.c |    2 ++
+ 1 files changed, 2 insertions(+)
+
+
+diff -Nru a/drivers/ide/ide-iops.c b/drivers/ide/ide-iops.c
+- --- a/drivers/ide/ide-iops.c	Sun Dec 28 13:01:43 2003
++++ b/drivers/ide/ide-iops.c	Sun Dec 28 13:01:43 2003
+@@ -678,6 +678,8 @@
+ 					return 1;
+ 				}
+ 			}
++			else
++				stat = hwif->INB(IDE_STATUS_REG);
+ 		}
+ 		local_irq_restore(flags);
+ 	}
+- -
+To unsubscribe from this list: send the line "unsubscribe bk-commits-24" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+- From linux-kernel@vger.kernel.org Sun Dec 28 14:36:33 2003
+Date: Mon, 22 Dec 2003 18:41:06 +0000
+From: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: bk-commits-24@vger.kernel.org
+Subject: [PATCH] Initialize ioc3_timer before use
+
+ChangeSet 1.1339, 2003/12/22 16:41:06-02:00, ralf@linux-mips.org
+
+        [PATCH] Initialize ioc3_timer before use
+
+
+
+# This patch includes the following deltas:
+#                  ChangeSet    1.1338  -> 1.1339
+#       drivers/net/ioc3-eth.c  1.15    -> 1.16
+#
+
+ ioc3-eth.c |    2 +-
+ 1 files changed, 1 insertion(+), 1 deletion(-)
+
+
+diff -ruN linux-2.4.23.mine/drivers/net/ioc3-eth.c linux-2.4.23/drivers/net/ioc3-eth.c
+- --- linux-2.4.23.mine/drivers/net/ioc3-eth.c	2003-08-25 05:44:42.000000000 -0600
++++ linux-2.4.23/drivers/net/ioc3-eth.c	2003-12-28 22:39:33.291078118 -0700
+@@ -1552,11 +1552,11 @@
+ #endif
+ 
+ 	spin_lock_init(&ip->ioc3_lock);
++	init_timer(&ip->ioc3_timer);
+ 
+ 	ioc3_stop(ip);
+ 	ioc3_init(ip);
+ 
+- -	init_timer(&ip->ioc3_timer);
+ 	ioc3_mii_init(ip);
+ 
+ 	if (ip->phy == -1) {
+- From linux-kernel@vger.kernel.org Sun Dec 28 14:29:04 2003
+Date: Mon, 22 Dec 2003 11:32:50 +0000
+From: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: bk-commits-24@vger.kernel.org
+Subject: [PATCH] Fix RAID1 blocksize check
+
+ChangeSet 1.1313, 2003/12/22 09:32:50-02:00, neilb@cse.unsw.edu.au
+
+	[PATCH] Fix RAID1 blocksize check
+	
+	On Saturday December 20, zaitcev@redhat.com wrote:
+	> In drivers/md/raid1.c, raid1_sync_request contains the following:
+	>
+	>         block_nr = sector_nr;
+	>         bsize = 512;
+	>         while (!(block_nr & 1) && bsize < PAGE_SIZE
+	>                         && (block_nr+2)*(bsize>>9) < (mddev->sb->size *2)) {
+	>                 block_nr >>= 1;
+	>                 bsize <<= 1;
+	>         }
+	>
+	> Suppose that a mirror is 4K in size. The code above produces
+	> reads (and writes) of the following offsets and sizes:
+	>  0K[2K], 2K[1K], 3K[0.5K], 3.5K[0.5K]
+	>
+	> The above is correct, but it makes the RAID1 completely unuseable
+	> on s390, because I/O with sizes less than 4K is not supported.
+	> I would like the attached patch applied to correct the issue.
+	
+	Yes, I agree.  Marcelo, could you please apply this patch.
+	The '<' test is just to make sure a request of 2*bsize at block_nr
+	will still fit within the size of the device, so a <= is appropriate.
+	
+	NeilBrown
+
+
+# This patch includes the following deltas:
+#	           ChangeSet	1.1312  -> 1.1313 
+#	  drivers/md/raid1.c	1.16    -> 1.17   
+#
+
+ raid1.c |    2 +-
+ 1 files changed, 1 insertion(+), 1 deletion(-)
+
+
+diff -Nru a/drivers/md/raid1.c b/drivers/md/raid1.c
+- --- a/drivers/md/raid1.c	Mon Dec 22 04:03:08 2003
++++ b/drivers/md/raid1.c	Mon Dec 22 04:03:08 2003
+@@ -1436,7 +1436,7 @@
+ 	block_nr = sector_nr;
+ 	bsize = 512;
+ 	while (!(block_nr & 1) && bsize < PAGE_SIZE
+- -			&& (block_nr+2)*(bsize>>9) < (mddev->sb->size *2)) {
++			&& (block_nr+2)*(bsize>>9) <= (mddev->sb->size *2)) {
+ 		block_nr >>= 1;
+ 		bsize <<= 1;
+ 	}
+- -
+To unsubscribe from this list: send the line "unsubscribe bk-commits-24" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
