@@ -11,6 +11,7 @@
 #		- reiserfs4
 #		- update grsecurity patch
 #		- update i2o patchset
+#		- update software suspend patch
 #
 # Conditional build:
 %bcond_without	BOOT		# don't build BOOT kernel
@@ -23,7 +24,7 @@
 %bcond_with	pramfs		# build pramfs support (EXPERIMENTAL)
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
-%bcond_with	bootsplash	# build with bootsplash
+%bcond_with	fbsplash	# build with fbsplash
 
 %{?debug:%define with_verbose 1}
 
@@ -212,6 +213,7 @@ Patch203:	linux-cluster-gnbd.patch
 
 # suspend/resume
 # http://softwaresuspend.berlios.de/
+# NEEDS UPDATE
 Patch219:	linux-2.6-software-suspend-2.0.0.104.patch.gz
 Patch220:	linux-2.6-via-agpc-resume-suspend-support.patch
 
@@ -622,7 +624,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %patch70 -p1
 
-%if %{with bootsplash}
+%if %{with fbsplash}
 %patch72 -p1
 %endif
 %patch73 -p1
@@ -668,7 +670,8 @@ patch -p1 -s < exec-shield.patch
 
 # suspend/resume
 %ifarch %{ix86}
-%patch219 -p1
+# see TODO
+#patch219 -p1
 %endif
 %patch220 -p1
 
