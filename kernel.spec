@@ -33,7 +33,8 @@ Source72:	%{name}-alpha-BOOT.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
 
-Patch1:		kernel-net_divert.patch
+Patch1:		%{name}-net_divert.patch
+Patch2:		%{name}-initrd.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -139,6 +140,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %prep
 %setup -q -n linux-%{version}
 %patch1 -p1
+%patch2 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
