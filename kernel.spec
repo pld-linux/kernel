@@ -128,71 +128,6 @@ Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono wymagane
 przez komputery zawieraj±ce dwa lub wiêcej procesorów. Powinno równie¿ dobrze 
 dzia³aæ na maszynach z jednym procesorem.
 
-%package fb
-Summary:	Kernel version %{version} with framebuffer support
-Summary(de):	Kernel version %{version} mit Framebuffer-Support
-Summary(fr):	Kernel version %{version} avec framebuffer
-Group:		Base/Kernel
-Group(pl):	Podstawowe/J±dro
-Provides:	%{name} = %{version}
-Provides:	%{name}(reiserfs) = %{version}
-Provides:	%{name}(agpgart) = %{version}
-Prereq:		modutils
-Autoreqprov:	no
-
-%description fb
-This package includes a version of the Linux %{version} kernel with
-framebuffer support.
-
-%description -l de fb
-Dieses Paket enthält eine Version von Linux-Kernel %{version} mit
-framebuffer-Support.
-
-%description -l fr fb
-Ce package inclu une version de Linux version %{version} avec
-framebuffer.
-
-%description -l pl fb
-Pakiet zawiera j±dro linuksa w wersji %{version} z wsparciem dla
-fremebuffera.
-
-%package smp-fb
-Summary:	Kernel version %{version} compiled for SMP machines with fb
-Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen mit framebuffer
-Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur avec fb
-Group:		Base/Kernel
-Group(pl):	Podstawowe/J±dro
-Provides:	%{name} = %{version}
-Provides:	%{name}(reiserfs) = %{version}
-Provides:	%{name}(agpgart) = %{version}
-Prereq:		modutils
-Autoreqprov:	no
-
-%description smp-fb
-This package includes a SMP version of the Linux %{version} kernel. It
-is required only on machines with two or more CPUs, although it should
-work fine on single-CPU boxes. It also contains support for
-framebuffer (graphical console) devices.
-
-%description -l de smp-fb
-Dieses Paket enthält eine SMP (Multiprozessor)-Version von
-Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
-Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
-CPU laufen. Außerdem ist Support für Framebuffer-Devices (Console im
-Grafikmodus) enthalten.
-
-%description -l fr smp-fb
-Ce package inclu une version SMP du noyau de Linux version %{version}
-avec framebuffer. Il et nécessaire seulement pour les machine avec
-deux processeurs ou plus, il peut quand même fonctionner pour les
-système mono-processeur.
-
-%description -l pl smp-fb
-Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono wymagane
-przez komputery zawieraj±ce dwa lub wiêcej procesorów. Powinno równie¿ dobrze 
-dzia³aæ na maszynach z jednym procesorem. Ponadto j±dro zawiera wsparcie
-dla framebuffera.
-
 %package BOOT
 Summary:	Kernel version %{version} used on the installation boot disks
 Summary(de):	Kernel version %{version} für Installationsdisketten
@@ -402,16 +337,10 @@ install -d $KERNEL_BUILD_DIR-installed
 # NORMAL KERNEL
 BuildKernel
 
-# FB-ENABLED KERNEL
-#BuildKernel fb
-
 # SMP-ENABLED KERNEL
 %ifnarch i386
 BuildKernel smp
 %endif
-
-# SMP and FB-ENABLED KERNEL
-#BuildKernel smp-fb
 
 # BOOT kernel
 %ifnarch i586 i686
