@@ -73,6 +73,7 @@ Source1009:	%{name}-usb2.config
 Source1010:	%{name}-i2c.config
 Source1011:	%{name}-promise_st.config
 Source1012:	%{name}-i810fb.config
+Source1013:	%{name}-davfs.config
 Source1666:	%{name}-grsec.config
 Source1667:	%{name}-int.config
 Source1668:	%{name}-hostap.config
@@ -158,8 +159,13 @@ Patch32:	ebtables-v2.0.002_vs_2.4.20.patch
 Patch33:	linux-2.4.19-pre8-konicawc.patch
 Patch34:	wrr-linux-2.4.9.patch
 Patch35:	%{name}-pswscancode.patch
-#Patch36:	
-#Patch37:	
+
+# from MDK kernel
+# FC01_davfs_0.2.4.patch
+Patch36:	linux-2.4.20-davfs-0.2.4.patch.bz2
+# FC02_davfs__FUNCTION__.patch
+Patch37:	linux-2.4.20-davfs-_FUNCTION_.patch
+
 #Patch38:	
 #Patch39:	
 #Patch40:	
@@ -712,6 +718,11 @@ echo Added Intel 810 FB support
 %patch24 -p1
 %patch25 -p1
 
+#davfs
+echo Added davFS support
+%patch36 -p1
+%patch37 -p1
+
 echo Added ARCH specific patches....
 %ifarch %{ix86}
 echo Ix86 patches ...
@@ -816,6 +827,7 @@ BuildKernel() {
 	cat %{SOURCE1010} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1011} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1012} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1013} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1671} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1672} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1673} >> arch/%{base_arch}/defconfig
@@ -1018,6 +1030,7 @@ cat %{SOURCE1009} >> .config
 cat %{SOURCE1010} >> .config
 cat %{SOURCE1011} >> .config
 cat %{SOURCE1012} >> .config
+cat %{SOURCE1013} >> .config
 cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
@@ -1075,6 +1088,7 @@ cat %{SOURCE1009} >> .config
 cat %{SOURCE1010} >> .config
 cat %{SOURCE1011} >> .config
 cat %{SOURCE1012} >> .config
+cat %{SOURCE1013} >> .config
 cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
