@@ -1,4 +1,4 @@
-%define		ow_version		2.2.21-ow1
+%define		ow_version		2.2.22-ow1
 %define		pcmcia_version		3.1.30
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.35
@@ -18,7 +18,7 @@ Summary(ru):	Òƒ“œ Linux
 Summary(uk):	Òƒ“œ Linux
 Name:		kernel
 Version:	2.2.22
-Release:	1
+Release:	2
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -71,11 +71,12 @@ Patch22:	%{name}-ipvs-1.0.8-2.2.19.patch
 Patch23:	linux-raw.patch
 Patch24:	%{name}-panaview_kbd.patch
 Patch25:	linux-2.2.19-pci.patch
-Patch27:	%{name}-udf.patch
+Patch26:	%{name}-udf.patch
 # based on	http://people.redhat.com/mingo/raid-patches/raid-2.2.20-A0
-Patch28:	raid-2.2.20-A0.patch.bz2
+Patch27:	raid-2.2.20-A0.patch.bz2
 # based on	http://www.ans.pl/ide/testing/ide.2.2.21.02042002-Ole.patch.gz
-Patch29:	ide.2.2.21.06162002-PLD.patch.gz
+Patch28:	ide.2.2.21.06162002-PLD.patch.gz
+Patch29:	ide.2.2.21_update_to_2.2.22.patch
 Patch30:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
 Patch31:	%{name}-flip.patch
 Patch33:	%{name}-ipsec-bridge.patch
@@ -107,8 +108,6 @@ Patch112:	linux-2.2.20-lfs.patch
 Patch113:	linux-2.2.21-mppe.patch
 Patch114:	wrr-linux-2.2.18.patch
 Patch115:	2.2.21-wrr-pkt_bridged.patch
-
-Patch302:	ow1-fix-2.2.22-rc2.patch
 
 Patch500:	2.2.20-reiserfs_ppc.patch
 Patch501:	2.2.21-ppc-smp.patch
@@ -437,6 +436,7 @@ Modu≥y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 %patch23 -p1
 %patch24 -p1
 %patch25 -p1
+%patch26 -p1
 %patch27 -p1
 %patch28 -p1
 %patch29 -p1
@@ -481,8 +481,7 @@ cd ..
 %patch106 -p1
 %endif
 
-# 2.2.20ow2
-%patch302 -p1
+# 2.2.22ow1
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 
 # symbios drivers
@@ -774,9 +773,10 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH22}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH23}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH24}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH25}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH27}
-bzip2 -dc %{PATCH28} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-gzip -dc %{PATCH29} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH26}
+bzip2 -dc %{PATCH27} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+gzip -dc %{PATCH28} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH29}
 gzip -dc %{PATCH30} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH31}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH33}
@@ -823,9 +823,8 @@ bzip2 -dc %{PATCH105} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ve
 bzip2 -dc %{PATCH106} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 %endif
 
-# 2.2.20ow
+# 2.2.22ow1
 gzip -dc %{SOURCE3} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH302}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/linux-%{ow_version}/linux-%{ow_version}.diff
 rm -rf $RPM_BUILD_ROOT/usr/src/linux-%{version}/linux-%{ow_version}/
 
