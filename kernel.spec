@@ -31,7 +31,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.4.21
+Version:	2.4.20
 Release:	0.%{pre_version}.%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}.1
 License:	GPL
 Group:		Base/Kernel
@@ -195,7 +195,6 @@ Patch991:	linux-2.4.20-Win4Lin-mki-adapter.patch.bz2
 
 # jam - http://giga.cps.unizar.es/~magallon/linux/kernel/
 Patch1000:	jam-04-clone-detached.patch
-Patch1001:	jam-05-module-size-checks.patch
 Patch1002:	jam-06-force-inline.patch
 Patch1003:	jam-07-scsi-error-tmout.patch
 Patch1004:	jam-08-memparam.patch
@@ -217,7 +216,6 @@ Patch1110:	01-sound.diff
 # This patch allows to create more than one sound device using alsa
 # and devfs with two or more sound cards
 Patch1111:	linux-sound_core.patch
-Patch1112:	linux-2.4.21-pre4-ac4-via82cxxx_audio.patch.bz2
 Patch1113:	linux-2.4.20-i810_audio.patch
 
 # rivafb - fix for text background in 16bpp modes
@@ -230,14 +228,10 @@ Patch1154:	linux-2.4.20-drm-Makefile.patch
 # support for VIA KT400 chipset in agpgart
 Patch1155:	linux-2.4.20-kt400.patch
 
-Patch1200:	hpt3xx.patch
 Patch1201:	linux-2.4.10-cpqfc.patch
-Patch1202:	linux-2.4.20-440gx.patch
 Patch1203:	linux-2.4.20-amd-golem.patch
 Patch1205:	linux-53c7,8xx-build.fix
-Patch1206:	piix-ide-fix.patch
 Patch1207:	linux-2.4.20-serverworks.patch
-Patch1208:	PCI_ISA_bridge.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch1209:	linux-2.4.19-pcnet-parms.patch
 
@@ -254,15 +248,8 @@ Patch1302:	linux-2.4.18-nfs-default-size.patch
 Patch1303:	linux-2.4.20-irixnfs.patch
 # Tru64 NFS kludge
 Patch1304:	linux-2.4.20-tru64nfs.patch
-Patch1305:	linux-2.4.20-ext3-updates.patch
-Patch1306:	linux-2.4.20-ext3.patch
 
 Patch1350:	linux-2.4.18-nousb.patch
-# usb patches from ftp://ftp.kernel.org/pub/linux/people/gregkh/usb/*-2.4.20.*
-Patch1351:	linux-2.4.20-USB.patch.bz2
-Patch1352:	linux-2.4.20-usb-bugs.patch
-# PWC USB Webcam Driver update (only for 2.4.20; 2.4.21 should have this fix)
-Patch1353:	linux-2.4.20-pwc.patch
 # from http://www.noc.uoa.gr/~avel/page.php?page=nokia&lang=en
 Patch1354:	linux-2.4.20-Nokia5510.patch
 
@@ -280,12 +267,10 @@ Patch1408:	kernel-pswscancode.patch
 Patch1409:	linux-2.4.18-dmi-hall-of-shame.patch
 Patch1410:	linux-2.4.18-input-35215.patch
 Patch1411:	linux-2.4.18-kiobuf.patch
-Patch1412:	linux-2.4.18-sendfile64.patch
 Patch1413:	linux-2.4.20-andrea-fix-pausing.patch
 Patch1414:	linux-2.4.20-oopsmeharder.patch
 Patch1415:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch1416:	linux-2.4.20-no-FPU.patch
-Patch1417:	linux-2.4.20-initrd-close-fds.patch
 
 Patch2000:	linux-PPC-SMP.patch
 Patch2001:	linux-2.4-ppc-procesor.patch
@@ -293,7 +278,6 @@ Patch2002:	kernel-2.4.18-SPARC64-PLD.patch
 Patch2003:	linux-2.4.20-AXP-avma1_cs.patch
 
 Patch3000:	linux-2.4.1-compilefailure.patch
-Patch3001:	linux-2.4.20-nicupdates.patch
 Patch3002:	linux-2.4.20-EXPORT_SYMBOL.patch
 Patch3003:	linux-2.4.20-missing-license-tags.patch
 Patch3004:	linux-2.4.20-sym53c8xx_old.patch
@@ -302,7 +286,7 @@ Patch3004:	linux-2.4.20-sym53c8xx_old.patch
 
 Patch4000:	linux-2.4.20-ptrace-hole.patch
 
-Patch10000:	patch-2.4.21-pre6.gz
+Patch10000:	patch-2.4.21-pre7.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -647,7 +631,6 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch265 -p1
 %patch275 -p1
 %patch1000 -p1
-#%patch1001 -p1
 %patch1002 -p1
 %patch1003 -p1
 %patch1004 -p1
@@ -663,7 +646,6 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1106 -p0
 #%patch1110 -p1
 %patch1111 -p1
-#%patch1112 -p1
 #%patch1113 -p1
 %patch1150 -p1
 %patch1151 -p1
@@ -671,14 +653,10 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1153 -p1
 %patch1154 -p1
 #%patch1155 -p1
-#%patch1200 -p1
 #%patch1201 -p1
-%patch1202 -p1
 %patch1203 -p1
 %patch1205 -p1
-#%patch1206 -p0
 %patch1207 -p1
-#%patch1208 -p0
 %patch1209 -p1
 %patch1250 -p1
 %patch1251 -p1
@@ -690,12 +668,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1302 -p1
 %patch1303 -p1
 %patch1304 -p1
-#%patch1305 -p1
-#%patch1306 -p1
 #%patch1350 -p1
-#%patch1351 -p1
-#%patch1352 -p1
-#%patch1353 -p1
 %patch1354 -p1
 %patch1400 -p1
 %patch1401 -p1
@@ -709,12 +682,10 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1409 -p1
 %patch1410 -p1
 %patch1411 -p1
-#%patch1412 -p1
 %patch1413 -p1
 #%patch1414 -p1
 %patch1415 -p0
 #%patch1416 -p1
-#%patch1417 -p1
 
 %patch2000 -p0
 %patch2001 -p1
@@ -722,7 +693,6 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch2003 -p1
 
 #%patch3000 -p1
-#%patch3001 -p1
 #%patch3002 -p1
 #%patch3003 -p1
 %patch3004 -p1
