@@ -113,6 +113,8 @@ Patch903:	rl2-include.patch
 # patch to fix problem wit ABI and LIDS
 Patch904:	linux-lids-with-abi.patch
 Patch905:	linux-vlan-fixpatch.patch
+# grsecurity patch http://www.getrewted.net/
+Patch906:	linux-grsecurity-1.4-2.4.5-PLD.patch
 
 # Linus's -pre
 Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.6-%{pre_version}.gz
@@ -409,6 +411,7 @@ mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
 
 # Free S/Wan
+echo "Free S/Wan"
 mv -f net/ipsec/Makefile net/ipsec/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*-g//g' net/ipsec/Makefile.orig > net/ipsec/Makefile
 
@@ -422,10 +425,13 @@ rm -rf %{sym_ncr_version}
 #%patch903 -p1
 
 # 802.1Q VLANs
-#cd vlan.%{vlan_version}
-#%patch905 -p1
-#cd ..
-#patch -p1 -s <vlan.%{vlan_version}/vlan_2.4.patch
+cd vlan.%{vlan_version}
+%patch905 -p1
+cd ..
+patch -p1 -s <vlan.%{vlan_version}/vlan_2.4.patch
+
+# grsecurity
+%patch906 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -437,6 +443,8 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
     -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
 %endif
     Makefile.orig >Makefile
+
+echo "Ready to build"
 
 %build
 BuildKernel() {
