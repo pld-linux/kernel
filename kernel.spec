@@ -60,7 +60,6 @@ Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/axboe/patches/2.4.2-pre4/l
 Patch10:	ipvs-ip_select_ident.patch
 
 ## Patches from Linux Kernel List
-Patch11:	linux-2.4.2-qreboot.patch
 Patch12:	linux-2.4.2-irda3.patch
 Patch13:	linux-2.4.2-irda4.patch
 ## from LKL 28.II - 01.III
@@ -330,7 +329,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch7 -p1
 %patch8 -p1
 # patches from Linux kernel list
-# %patch11 -p1
 %patch12 -p1
 %patch13 -p1
 # next patches
@@ -612,7 +610,6 @@ ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 %endif
 
 # patches from Linux kernel list
-# patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
 ## next
