@@ -148,6 +148,8 @@ Patch76:	2.6.x-TGA-fbdev-lkml.patch
 
 Patch78:	linux-alpha-isa.patch
 
+Patch80:	2.6.4-rc1-sparc-sys_ioperm-fix.patch
+
 Patch82:	2.6.3-ini9100u-fix.patch
 
 URL:		http://www.kernel.org/
@@ -557,6 +559,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch76 -p1
 
 %patch78 -p1
+
+%patch80 -p1
 
 %patch82 -p1
 
