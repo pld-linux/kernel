@@ -32,7 +32,7 @@
 
 %define		_rel		1
 %define		_rc		rc1
-%define		_cset		20040101_0206
+%define		_cset		20040103_0508
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
