@@ -149,6 +149,7 @@ Patch900:	loop-jari-2.4.18.0.patch
 # DRM (note that this doesn't fix drm when running on 386 or 486 CPU!)
 Patch902:	linux-drm-%{drm_xfree_version}-force-cmpxchg.patch
 Patch903:	linux-drm-2.4.19-mm.patch
+Patch904:	linux-abi-put_user.patch
 
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
@@ -404,6 +405,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
+%patch904 -p1
 %patch6 -p1
 %{?_with_preemptive:echo Installing Preemptible patch}
 %{?_with_preemptive:%patch8 -p1}
