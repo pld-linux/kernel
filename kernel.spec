@@ -28,6 +28,9 @@
 # temporary as BOOT is not finished yet
 %undefine	with_BOOT
 
+# for grsecurity
+%define		grsec
+
 ## Program required by kernel to work.
 %define		_binutils_ver		2.12
 %define		_util_linux_ver		2.10o
@@ -44,11 +47,11 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.6
+%define		_rel		1.7
 %define		_cset		20040518_0506
 
 ## netfilter snap 
-%define		_netfilter_snap		20040429
+%define		_netfilter_snap		20040518
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/pentium3/i386/;s/pentium4/i386/;s/amd64/x86_64/')
 
@@ -142,7 +145,7 @@ Patch42:	2.6.x-ppp_mppe.patch
 Patch44:	2.6.2-Initio9100U-Kconfig.patch
 
 # netfilter
-Patch46:	2.6.6-rc3-pom-ng-%{_netfilter_snap}.patch
+Patch46:	2.6.6-pom-ng-%{_netfilter_snap}.patch
 
 Patch48:	2.6.3-sparc32-fix.patch
 
@@ -187,13 +190,9 @@ Patch86:	2.6.6-NTFS-2.1.9-lkml.patch
 Patch88:	2.6.6-qsort-updated-lkml.patch
 Patch90:	2.6.6-xfs-qsort-lkml.patch
 
-Patch92:	2.6.6-pom-ng-20040429-REJECT-fix.patch
-
 Patch94:	grsecurity-2.0-2.6.6-unofficial.patch
 
 Patch96:	2.6.6-lirc_i2c.diff
-
-Patch98:	2.6.6-SPARC64.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -638,14 +637,10 @@ cp drivers/usb/media/libpwcx.a_mipsel drivers/usb/media/libpwcx.a_
 %patch88 -p1
 %patch90 -p1
 
-%patch92 -p1
-
 #grsec
 %{?with_grsec:%patch94 -p1}
 
 %patch96 -p1
-
-%patch98 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -911,7 +906,7 @@ BuildConfig
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig smp
-%{?with_smp:BuildKernel smp}
+##%{?with_smp:BuildKernel smp}
 %{?with_smp:PreInstallKernel smp}
 
 %if %{with BOOT}
