@@ -1,3 +1,9 @@
+#
+# If you define the following as 1, only kernel, -headers and -source
+# packages will be built
+#
+%define		test_build		0
+#
 %define		pre_version		pre1
 %define		lids_version		1.0.5
 %define		ipvs_version		0.2.5
@@ -11,7 +17,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.2
-Release:	6
+Release:	7
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -120,6 +126,8 @@ Patch47:	http://home.sch.bme.hu/~cell/br2684/dist/010109/br2684-common.c-spin_un
 
 # aacraid fix
 Patch48:	http://domsch.com/linux/aacraid/linux-2.4.1-axboe-scsi-max-sec.patch
+
+Patch49:	linux-binutils.patch
 
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
@@ -385,6 +393,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch46 -p1
 %patch47 -p1
 %patch48 -p1
+%patch49 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -516,6 +525,7 @@ install -d $KERNEL_BUILD_DIR-installed
 # UP KERNEL
 BuildKernel
 
+%if !%{test_build}
 # SMP KERNEL
 BuildKernel smp
 
@@ -528,6 +538,7 @@ BuildKernel lids smp
 # BOOT kernel
 %ifnarch i586 i686
 BuildKernel BOOT
+%endif
 %endif
 
 # building i8255 module
@@ -609,6 +620,7 @@ patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH45}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH46}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH47}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH48}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH49}
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/dc395/dc395-integ24.diff
@@ -738,7 +750,7 @@ mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
 
-geninitrd /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
+geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}.gz /boot/initrd
 
@@ -746,6 +758,9 @@ if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
 	/sbin/lilo 1>&2 || :
 fi
 
+if [ ! -L /lib/modules/%{version} ] ; then
+	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
+fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release} /lib/modules/%{version}
 
@@ -755,7 +770,7 @@ mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release}-lids /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}-lids /boot/System.map
 
-geninitrd /boot/initrd-%{version}-%{release}-lids.gz %{version}-%{release}-lids
+geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}-lids.gz %{version}-%{release}-lids
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}-lids.gz /boot/initrd
 
@@ -763,6 +778,9 @@ if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
 	/sbin/lilo 1>&2 || :
 fi
 
+if [ ! -L /lib/modules/%{version} ] ; then
+	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
+fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}-lids /lib/modules/%{version}
 
@@ -772,7 +790,7 @@ mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}smp /boot/System.map
 
-geninitrd /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
+geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 
@@ -780,6 +798,9 @@ if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
 	/sbin/lilo 1>&2 || :
 fi
 
+if [ ! -L /lib/modules/%{version} ] ; then
+	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
+fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
 
@@ -789,7 +810,7 @@ mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release}smp-lids /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}smp-lids /boot/System.map
 
-geninitrd /boot/initrd-%{version}-%{release}smp-lids.gz %{version}-%{release}smp-lids
+geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}smp-lids.gz %{version}-%{release}smp-lids
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}smp-lids.gz /boot/initrd
 
@@ -797,6 +818,9 @@ if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
 	/sbin/lilo 1>&2 || :
 fi
 
+if [ ! -L /lib/modules/%{version} ] ; then
+	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
+fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp-lids /lib/modules/%{version}
 
@@ -810,6 +834,9 @@ if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
 	/sbin/lilo 1>&2 || :
 fi
 
+if [ ! -L /lib/modules/%{version} ] ; then
+	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
+fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}BOOT /lib/modules/%{version}
 
@@ -892,6 +919,7 @@ fi
 /lib/modules/%{version}-%{release}/modules.*map
 /lib/modules/%{version}-%{release}/modules.generic_string
 
+%if !%{test_build}
 %files lids
 %defattr(644,root,root,755)
 %ifarch alpha sparc
@@ -960,6 +988,7 @@ fi
 /lib/modules/%{version}-%{release}BOOT/modules.dep
 /lib/modules/%{version}-%{release}BOOT/modules.*map
 /lib/modules/%{version}-%{release}BOOT/modules.generic_string
+%endif
 %endif
 
 %files headers
