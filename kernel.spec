@@ -15,19 +15,18 @@
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.10
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
-%define		vlan_version		1.5
 %define		IPperson_version	20010724-2.4.7
 %define		grsec_version		1.9-2.4.16
 %define		tulip_version		1.1.8
 %define		aic_version		6.2.3-2.4.7
-%define		jfs_version		2.4-1.0.9
+%define		jfs_version		2.4-1.0.10
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.16
-Release:	0.2
+Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -39,16 +38,15 @@ Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 # based on cvs cvs@pserver.samba.org:/cvsroot netfilter
-Source7:	linux-2.4.15-netfilter-PLD.tar.gz
+Source7:	linux-2.4.16-netfilter-20011129.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_version}.tar.gz
 # new -> ftp://ftp.tux.org/pub/roudier/drivers/portable/sym-2.1.x/sym-2.1.16-20011028.tar.gz
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
-Source12:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
-Source13:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
-Source14:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}-patch.tar.gz
-Source15:	http://prdownloads.sourceforge.net/tulip/tulip-%{tulip_version}.tar.gz
+Source12:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
+Source13:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}-patch.tar.gz
+Source14:	http://prdownloads.sourceforge.net/tulip/tulip-%{tulip_version}.tar.gz
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -66,7 +64,6 @@ Source1001:	%{name}-abi.config
 Source1002:	%{name}-addon.config
 Source1003:	%{name}-netfilter.config
 Source1004:	%{name}-ipvs.config
-Source1005:	%{name}-ide.config
 Source1666:	%{name}-grsec.config
 
 # New features
@@ -79,15 +76,16 @@ Patch2:		linux-2.4.10-freeswan-%{freeswan_version}.patch.gz
 Patch3:		linux-2.4.9-aacraid-20010816.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.15.diff
-# ftp://linux-xfs.sgi.com/projects/xfs/download/patches/2.4.16/
-# based on file xfs-2.4.16-all.bz2
-Patch5:		linux-xfs-2.4.16-PLD.patch
+# ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
+Patch5:		linux-2.4.16-xfs-20011129.patch.gz
 # Homepage of ABI : http://linux-abi.sourceforge.net/
 # http://prdownloads.sourceforge.net/linux-abi/
 #Patch7:		linux-abi-2.4.3-PLD.patch
 Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
 Patch9:		http://grsecurity.net/grsecurity-%{grsec_version}.patch
+# Preemptive kernel  patch
+Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/2.4/preempt-kernel-rml-2.4.14-2.patch
 
 # Assorted bugfixes
 
@@ -125,10 +123,8 @@ Patch121:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
 Patch122:	linux-2.4.16-lvm-1.0.1rc4.patch
 
-# Preemptible kernel  patch
-Patch132:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/2.4/preempt-kernel-rml-2.4.14-2.patch
 # fixed xquad_portio
-Patch133:	xquad_portio.fix
+Patch123:	xquad_portio.fix
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -136,15 +132,12 @@ Patch133:	xquad_portio.fix
 Patch900:	ide-EXPORT_SYMBOL.fix
 # patch fixing problem with ABI and LIDS
 Patch901:	linux-lids-with-abi.patch
-Patch902:	linux-vlan-fixpatch.patch
 # patch fixing LIDS stupidity
 #Patch903:	linux-lids-fixpatch.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch905:	linux-ipvs+ext3.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
-Patch907:	jfs_defconfig.fix
-Patch908:	kernel-kallsyms.fix
 Patch909:	linux-53c7,8xx-build.fix
 Patch910:	dc395-PLD.fix
 
@@ -368,20 +361,21 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%{?_with_lids:%setup -q -a3 -a5 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
-%{!?_with_lids:%setup -q -a3 -a5 -a7 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
+%{?_with_lids:%setup -q -a3 -a5 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -n linux}
+%{!?_with_lids:%setup -q -a3 -a5 -a7 -a9 -a10 -a11 -a12 -a13 -a14 -n linux}
 #%patch1000 -p1
 #%patch0 -p1
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-#%patch5 -p1
+%patch5 -p1
 #%patch7 -p1
 %patch8 -p1
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
 %ifarch %{ix86}
 %patch9 -p1
+%patch906 -p1
 %endif
 %endif
 
@@ -406,13 +400,10 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch120 -p1
 %patch121 -p1
 %patch122 -p0
+%patch123 -p1
 
+%patch900 -p0
 %patch904 -p0
-%if%{?_without_grsec:0}%{!?_without_grsec:1}
-%ifarch %{ix86}
-##%patch906 -p1
-%endif
-%endif
 
 # Tekram DC395/315 U/UW SCSI host driver
 echo Adding Tekram DC395/315 driver
@@ -427,17 +418,15 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # Netfilter
 echo Adding Netfilter
-#for i in netfilter-patches/patch-o-matic/* ; do
-#	if [ -f $i -a "$i" != "netfilter-patches/isapplied" ] ; then
-#	echo $i
-#	patch -p1 <$i
-#	fi
-#done
-#(KERNEL_DIR=`pwd` ; export KERNEL_DIR
-#cd netfilter-patches/patch-o-matic
-#ANS=""
-#for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
-#echo -e $ANS | ./runme)
+(KERNEL_DIR=`pwd` ; export KERNEL_DIR
+cd netfilter-patches/patch-o-matic
+ANS=""
+for suite in pending base extra pld ; do
+	for i in `echo ${suite}/*.patch.ipv6` `echo ${suite}/*.patch` ; do
+		ANS="${ANS}y\n"
+	done
+done
+echo -e $ANS | ./runme pld)
 
 %if %{?_with_lids:1}%{!?_with_lids:0}
 # LIDS
@@ -473,44 +462,29 @@ mv %{sym_ncr_version}/*.{c,h} drivers/scsi
 mv %{sym_ncr_version}/{README,ChangeLog}.* Documentation
 rm -rf %{sym_ncr_version}
 
-## 802.1Q VLANs
-echo Adding VLANs
-#cd vlan
-#%patch902 -p1
-#cd ..
-#patch -p1 -s <vlan/vlan_2.4.patch
-
 # IP personality
 echo Adding IP Personality 
 patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010724-linux-2.4.7.diff
 
 # JFS
 echo Adding JFS
-%patch907 -p0
-patch -p1 -s <jfs-2.4.common-1.0.9-patch
-patch -p1 -s <jfs-2.4.7-1.0.9-patch
+patch -p1 -s <jfs-2.4.common-1.0.10-patch
+patch -p1 -s <jfs-2.4.7-1.0.10-patch
 
 # Tulip driver installed.
 echo Replaced Tulip driver
 #cp -f tulip-%{tulip_version}/src/*.{c,h} drivers/net/tulip
 #cp -f tulip-%{tulip_version}/src/ChangeLog drivers/net/tulip
 
-#%patch908 -p0
 echo Fixed compile process for 53c7,8xx driver
 # fix 53c7,8xx build
 %patch909 -p0
 
-#preemptible kernel patch
+#preemptive kernel patch
 echo Installing Preemptive patch
 %if%{?_with_preemptive:1}%{!?_with_preemptive:0}
-%patch132 -p1
+%patch10 -p1
 %endif
-
-%patch133 -p1
-%patch900 -p0
-
-# XFS
-%patch5 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -576,7 +550,6 @@ BuildKernel() {
 	cat %{SOURCE1002} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1003} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1004} >> arch/$RPM_ARCH/defconfig
-	cat %{SOURCE1005} >> arch/$RPM_ARCH/defconfig
 %ifarch %{ix86}
 	if [ "$BOOT" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/$RPM_ARCH/defconfig
@@ -725,7 +698,6 @@ cat %{SOURCE1001} >> .config
 cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
-cat %{SOURCE1005} >> .config
 cat %{SOURCE1666} >> .config
 
 %{__make} oldconfig
