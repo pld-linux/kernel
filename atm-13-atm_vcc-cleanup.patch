@@ -837,6 +837,17 @@ diff -u -r1.2 signaling.c
  	ATM_SKB(skb)->iovcnt = 0;
  	ATM_SKB(skb)->atm_options = ATM_SKB(skb)->vcc->atm_options;
  	DPRINTK("(unit %d): atm_skb(%p)->vcc(%p)->dev(%p)\n",
+--- linux-2.4.20/net/sched/sch_atm.c.orig	Fri Dec 21 18:42:06 2001
++++ linux-2.4.20/net/sched/sch_atm.c	Thu Mar  6 22:55:53 2003
+@@ -511,7 +511,7 @@
+ 			ATM_SKB(skb)->vcc = flow->vcc;
+ 			memcpy(skb_push(skb,flow->hdr_len),flow->hdr,
+ 			    flow->hdr_len);
+-			atomic_add(skb->truesize,&flow->vcc->tx_inuse);
++			atomic_add(skb->truesize,&flow->vcc->sk->wmem_alloc);
+ 			ATM_SKB(skb)->iovcnt = 0;
+ 			/* atm.atm_options are already set by atm_tc_enqueue */
+ 			(void) flow->vcc->send(flow->vcc,skb);
 -
 To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
 the body of a message to majordomo@vger.kernel.org
