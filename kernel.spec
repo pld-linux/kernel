@@ -75,8 +75,8 @@ Patch27:	%{name}-flip.patch
 Patch28:	%{name}-flip-serial5.05.patch
 Patch29:	%{name}-serial-initialisation.patch
 # Original patch from http://scry.wanfear.com/~greear/vlan/vlan.1.0.1.tar.gz
-Patch30:	vlan_2.2.patch
-Patch31:	kernel-sysctl-ipv6.patch
+Patch30:	%{name}-vlan.patch
+Patch31:	%{name}-sysctl-ipv6.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -608,6 +608,10 @@ gzip -dc %{PATCH24} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 bzip2 -dc %{PATCH25} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} 
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH26}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH27}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH28}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH29}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH30}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH31}
 cd serial-5.05
 ./install-in-kernel $RPM_BUILD_ROOT/usr/src/linux
 cd ..
