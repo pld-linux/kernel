@@ -68,7 +68,7 @@ Patch8:		%{name}-3c90x.patch
 Patch9:		linux-ipv6-glibc2.2.patch
 # based on http://bridge.sourceforge.net/patches/bridge-1.0.1-against-2.2.20.diff
 # but diffrent
-Patch10:	brigde-1.0.1-against-2.2.20.diff
+Patch10:	bridge-1.0.1-against-2.2.20.diff
 
 # in this place will be PLD patches
 
