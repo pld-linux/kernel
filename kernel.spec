@@ -52,6 +52,7 @@ Patch5:		ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.2-%{pre_version
 Patch6:		dc395-patch-PLD-fix.patch
 Patch7:		linux-2.4.1-disable-message-printing.patch
 Patch8:		ftp://ftp.winds.org/linux/patches/2.4.1/aacraid-2.4.1-%{aacraid_version}.patch
+Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/axboe/patches/%{version}-pre1/loop-4.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -260,6 +261,9 @@ patch -p1 <lids-%{lids_version}-2.4.1/lids-%{lids_version}-2.4.1.patch
 
 # Adaptec RAID patch
 %patch8 -p1
+
+# ????
+%patch9 -p1
 
 # Remove -g from drivers/atm/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
