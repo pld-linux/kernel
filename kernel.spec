@@ -429,7 +429,7 @@ install -d $RPM_BUILD_ROOT%{_prefix}/{include,src}
 KERNEL_BUILD_DIR=`pwd`
 cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
 
-for i in "" smp BOOT ; do
+for i in "" "-lids" smp smp-lids BOOT ; do
 	if [ -e  $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i ] ; then
 		rm -f $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
 		ln -sf /usr/src/linux-%{version} $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
@@ -483,7 +483,6 @@ echo -e $ANS | ./runme))
 # LIDS
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/lids-%{lids_version}-2.4.1/lids-%{lids_version}-2.4.1.patch
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config $RPM_BUILD_ROOT/usr/src/linux-%{version}/.config.lids
-cat %{SOURCE1000} >> $RPM_BUILD_ROOT/usr/src/linux-%{version}/.config.lids
 
 # IPVS
 for i in $RPM_BUILD_ROOT/usr/src/linux-%{version}/ipvs-%{ipvs_version}/*.diff ; do
@@ -556,6 +555,9 @@ done
 
 %{__make} clean
 rm -f scripts/mkdep
+
+# LIDS config
+cat %{SOURCE1000} >> $RPM_BUILD_ROOT/usr/src/linux-%{version}/.config.lids
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -805,6 +807,7 @@ fi
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
+%{_prefix}/src/linux-%{version}/i8255
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
 %{_prefix}/src/linux-%{version}/kernel
@@ -813,6 +816,7 @@ fi
 %{_prefix}/src/linux-%{version}/net
 %{_prefix}/src/linux-%{version}/scripts
 %{_prefix}/src/linux-%{version}/.config
+%{_prefix}/src/linux-%{version}/.config.lids
 %{_prefix}/src/linux-%{version}/.depend
 %{_prefix}/src/linux-%{version}/.hdepend
 %{_prefix}/src/linux-%{version}/COPYING
