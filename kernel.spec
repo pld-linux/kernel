@@ -826,6 +826,7 @@ if [ ! -L /lib/modules/%{version} ] ; then
 fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release} /lib/modules/%{version}
+depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
 %if %{?_with_lids:1}%{!?_with_lids:0}
 %post lids
