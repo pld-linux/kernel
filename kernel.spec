@@ -362,7 +362,7 @@ Provides:	%{name}(agpgart) = %{version}
 Provides:	%{name}(freeswan) = %{freeswan_version}
 Provides:	%{name}(cdrw)
 Provides:	%{name}(cdmrw)
-Provides:	%{name}(hostap)
+Provides:	%{name}(hostap) = %{hostap_version}
 Provides:	%{name}(evms)
 Autoreqprov:	no
 Prereq:		fileutils
@@ -421,7 +421,7 @@ Provides:	%{name}(agpgart) = %{version}
 Provides:	%{name}(freeswan) = %{freeswan_version}
 Provides:	%{name}(cdrw)
 Provides:	%{name}(cdmrw)
-Provides:	%{name}(hostap)
+Provides:	%{name}(hostap) = %{hostap_version}
 Provides:	%{name}(evms)
 Prereq:		fileutils
 Prereq:		modutils
@@ -552,11 +552,11 @@ Provides:	%{name}-headers(netfilter) = %{iptables_version}-%{netfilter_snap}
 Provides:	%{name}-headers(netfilter) = %{iptables_version}
 %endif
 Provides:	%{name}-headers(grsecurity) = %{grsec_version}
-Provides:	%{name}-headers(freeswan)
+Provides:	%{name}-headers(freeswan) = %{freeswan_version}
 Provides:	%{name}-headers(evms)
 Provides:	%{name}(cdrw)
 Provides:	%{name}(cdmrw)
-Provides:	%{name}(hostap)
+Provides:	%{name}-headers(hostap) = %{hostap_version}
 Autoreqprov:	no
 
 %description headers
