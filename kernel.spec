@@ -1076,7 +1076,7 @@ for i in "" smp ; do
 	fi
 done
 
-install -d $RPM_BUILD_ROOT/lib/modules-%{version}-%{release}{,smp}/misc
+install -d $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}{,smp}/misc
 
 ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 
