@@ -18,9 +18,9 @@
 %{?debug:%define with_verbose 1}
 
 # see TODO
-%if %{with grsec}
-%undefine	with_grsec
-%endif
+#if %{with grsec}
+#undefine	with_grsec
+#endif
 
 %if !%{with grsec}
 %undefine	with_pax
@@ -176,11 +176,13 @@ Patch76:	2.6.8-lirc-0.7.0-pre7.patch
 
 # derived from official grsecurity-2.0.1-2.6.7.patch
 # NEEDS UPDATE
-Patch90:	%{name}-grsec-2.0.1.patch
+#Patch90:	%{name}-grsec-2.0.1.patch
+Patch90:	grsecurity-2.1.0-2.6.10-200501071049.patch
+Patch91:	linux-2.6.10-secfix-200501071130.patch
 
 # http://lkml.org/lkml/2004/6/2/233
-Patch91:	http://people.redhat.com/mingo/exec-shield/exec-shield-nx-2.6.7-A0
-Patch92:	exec-shield-make-peace-with-grsecurity.patch
+Patch95:	http://people.redhat.com/mingo/exec-shield/exec-shield-nx-2.6.7-A0
+Patch96:	exec-shield-make-peace-with-grsecurity.patch
 
 # frpm http://www.ssi.bg/~ja/#routers
 #Patch100:	00_static_routes-2.6.0-test1-8.diff
@@ -592,14 +594,15 @@ bzcat %{SOURCE4} | patch -p1 -s
 %ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
 %if %{with grsec}
 # see TODO
-#patch90 -p1
+%patch90 -p1
+%patch91 -p1
 %endif
 %endif
 
 %if %{with execshield}
-install %{PATCH91} exec-shield.patch
+install %{PATCH95} exec-shield.patch
 %if %{with grsec}
-patch -s exec-shield.patch < %{PATCH92}
+patch -s exec-shield.patch < %{PATCH96}
 %endif
 patch -p1 -s < exec-shield.patch
 %endif
@@ -612,7 +615,7 @@ patch -p1 -s < exec-shield.patch
 
 %patch200 -p1
 
-%patch250 -p1
+#patch250 -p1
 
 # hotfixes
 %patch300 -p1
@@ -699,7 +702,7 @@ BuildConfig (){
 	cat %{SOURCE91} >> arch/%{_target_base_arch}/defconfig
 %endif
 #	vserver
-	cat %{SOURCE92} >> arch/%{_target_base_arch}/defconfig
+#	cat %{SOURCE92} >> arch/%{_target_base_arch}/defconfig
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
