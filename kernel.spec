@@ -89,6 +89,7 @@ Patch36:	ip_masq_irc-2.2.19-dcc_check-3.diff
 Patch37:	%{name}-udf.patch
 Patch38:	jfs-%{version}-v%{jfs_version}-patch
 Patch39:	pcmcia-cs-3.1.29-smp-compilation-fix.patch
+Patch40:	kernel-2.2.19-ide_sparc32.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -389,6 +390,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch26 -p1
 %patch27 -p1
 %patch39 -p0
+%ifarch sparc
+%patch40 -p1
+%endif
 
 # 802.1Q VLANs
 cd vlan.%{vlan_version}
