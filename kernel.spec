@@ -28,7 +28,7 @@ Source21:	%{name}-sparc.config
 Source22:	%{name}-sparc-smp.config
 Source23:	%{name}-sparc-BOOT.config
 Source24:	%{name}-sparc64.config
-#Source25:	%{name}-sparc64-smp.config
+Source25:	%{name}-sparc64-smp.config
 #Source26:	%{name}-sparc64-BOOT.config
 Source27:	%{name}-alpha.config
 Source28:	%{name}-alpha-smp.config
@@ -53,8 +53,7 @@ Patch8:		wanrouter-v2215.patch.gz
 Patch10:	linux-newagpdist.patch
 Patch11:	linux-agphjlfixes.patch
 Patch12:	linux-agpgart-2.4-compat.patch
-#Patch14:	http://www.linux.org.uk/VERSION/2.2.16combo
-Patch15:	linux-ipv6-addrconf.patch
+Patch13:	linux-ipv6-addrconf.patch
 # NFS client patch
 Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
 ExclusiveOS:	Linux
@@ -279,9 +278,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch10 -p1
 %patch11 -p1
 %patch12 -p1
-#%patch13 -p1 .serek
-#%patch14 -p1 
-%patch15 -p1
+%patch13 -p1
 
 tar zxf %{SOURCE40} dhiggen-over-0.23.1
 patch -p2 -s <dhiggen-over-0.23.1
@@ -429,27 +426,12 @@ cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
 
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
 
-%ifarch sparc
-ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
-ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
-mkdir $RPM_BUILD_ROOT%{_includedir}/asm
-cp -a $RPM_SOURCE_DIR/kernel-BuildASM.sh $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
-$RPM_BUILD_ROOT%{_includedir}/asm/BuildASM $RPM_BUILD_ROOT%{_includedir}
-%else
-ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
-%endif
-
 tar Ixf %{SOURCE0} -C $RPM_BUILD_ROOT/usr/src/
 mv -f $RPM_BUILD_ROOT/usr/src/linux $RPM_BUILD_ROOT/usr/src/linux-%{version}
 ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
 
-# NFS patches must go first
-bzip2 -dc %{PATCH20} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-tar zxf %{SOURCE40} dhiggen-over-0.23.1
-patch -s -p2 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < dhiggen-over-0.23.1
-rm -f dhiggen-over-0.23.1
-
 gzip -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+bzip2 -dc %{PATCH20} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH1} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
@@ -464,12 +446,28 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
-#patch -s -p1 -R -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-%{ow_version}/linux-%{ow_version}.diff
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < dc395/dc395-integ22.diff
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
+
+tar zxf %{SOURCE40} dhiggen-over-0.23.1 -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
+
+patch -p2 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <dhiggen-over-0.23.1
+rm -f dhiggen-over-0.23.1
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
+
+# Tekram DC395/315 U/UW SCSI host driver
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi/
+zcat %{SOURCE34} > $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/net/3c59x.c
+
+%ifarch sparc
+ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
+ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
+mkdir $RPM_BUILD_ROOT%{_includedir}/asm
+cp -a $RPM_SOURCE_DIR/kernel-BuildASM.sh $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
+$RPM_BUILD_ROOT%{_includedir}/asm/BuildASM $RPM_BUILD_ROOT%{_includedir}
+%else
+ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
+%endif
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
@@ -497,8 +495,8 @@ install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoco
 %{__make} include/linux/version.h
 %{__make} "`pwd`/include/linux/modversions.h"
 
-#this generates modversions info which we want to include and we may as
-#well include the depends stuff as well, after we fix the paths
+# this generates modversions info which we want to include and we may as
+# well include the depends stuff as well, after we fix the paths
 
 %{__make} depend 
 find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
