@@ -698,7 +698,7 @@ BuildConfig (){
 %ifarch athlon
 	echo "CONFIG_MK7=y" >> arch/%{_target_base_arch}/defconfig
 %endif
-%{?with_preeemptive:echo "CONFIG_PREEMPT=y" >> arch/%{_target_base_arch}/defconfig}
+%{?with_preemptive:echo "CONFIG_PREEMPT=y" >> arch/%{_target_base_arch}/defconfig}
 
 %ifarch i386 i486 i586
 	sed -i 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
