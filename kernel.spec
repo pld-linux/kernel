@@ -11,7 +11,6 @@
 #		- reiserfs4
 #		- update grsecurity patch
 #		- update i2o patchset
-#		- update software suspend patch
 #		- add distcc support (and don't break crossbuild!)
 #
 # Conditional build:
@@ -26,7 +25,6 @@
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	fbsplash	# build with fbsplash
-%bcond_with	swsuspend	# build with software suspend v2 (EXPERIMENTAL)
 
 %{?debug:%define with_verbose 1}
 
@@ -72,8 +70,8 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.31
-%define		_cset		20041007_0305
+%define		_rel		0.32
+%define		_cset		20041010_0106
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -84,7 +82,6 @@
 
 %define		pcmcia_version		3.1.22
 %define		drm_xfree_version	4.3.0
-#define		pwc_version		9.0.2
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -102,9 +99,8 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 # Source0-md5:	53939eed5c3699fdcaa28735b0ffb12d
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
-#Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
-# Source4-md5:	21cd398181fc00fbf51a21ffebad0099
+# Source4-md5:	c6ad3512ab30cc11b167eae11d7a4f4b
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -605,7 +601,6 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %patch41 -p1
 
-exit 1
 # netfilter
 %patch50 -p1
 %patch51 -p1
@@ -632,9 +627,6 @@ exit 1
 # see TODO
 #patch77 -p1
 #patch78 -p1
-
-#cp -f pwc-%{pwc_version}/2.6/pwc* drivers/usb/media
-rm -rf pwc-%{pwc_version}
 
 #grsec
 %ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
