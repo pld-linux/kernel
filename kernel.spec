@@ -8,7 +8,7 @@
 # _without_lsm		- don't build LSM/SELinux kernel
 
 %define		_rel		0
-%define		patch_level	4
+%define		patch_level	5
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -53,6 +53,7 @@ Patch10:	2.6.0-t1-v850-lkml.patch.bz2
 Patch15:	2.6.0-t1-s390-lkml.patch.bz2
 Patch20:	2.6.0-t1-squashfs.patch
 Patch21:	2.6.0-t1-vesafb.patch
+Patch22:	2.6.0-t1-v4l-m-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -292,6 +293,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch20 -p1 
 %patch21 -p1
+%patch22 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
