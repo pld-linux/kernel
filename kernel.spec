@@ -27,7 +27,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.16
-Release:	0.1
+Release:	0.2
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -38,7 +38,6 @@ Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-134.tar.gz
 Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
-Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
 # based on cvs cvs@pserver.samba.org:/cvsroot netfilter
 Source7:	linux-2.4.15-netfilter-PLD.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}.tar.gz
@@ -80,17 +79,15 @@ Patch2:		linux-2.4.10-freeswan-%{freeswan_version}.patch.gz
 Patch3:		linux-2.4.9-aacraid-20010816.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.15.diff
-# ftp://linux-xfs.sgi.com/projects/xfs/download/
-# based on file xfs-2.4.14-all.bz2
-Patch5:		linux-xfs-2.4.14-PLD.patch.gz
-# GRSECURITY
-Patch6:		http://grsecurity.net/grsecurity-%{grsec_version}.patch
+# ftp://linux-xfs.sgi.com/projects/xfs/download/patches/2.4.16/
+# based on file xfs-2.4.16-all.bz2
+#Patch5:		linux-xfs-2.4.16-PLD.patch.gz
 # Homepage of ABI : http://linux-abi.sourceforge.net/
 # http://prdownloads.sourceforge.net/linux-abi/
 #Patch7:		linux-abi-2.4.3-PLD.patch
 Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
-Patch9:		linux-grsecurity-%{grsec_version}.patch
+Patch9:		http://grsecurity.net/grsecurity-%{grsec_version}.patch
 
 # Assorted bugfixes
 
@@ -370,8 +367,8 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%{?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
-%{!?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
+%{?_with_lids:%setup -q -a3 -a5 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
+%{!?_with_lids:%setup -q -a3 -a5 -a7 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
 #%patch1000 -p1
 #%patch0 -p1
 %patch1 -p1
@@ -399,7 +396,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch110 -p1
 %patch111 -p1
 %patch112 -p2
-##%patch113 -p1
+%patch113 -p1
 %patch115 -p1
 %patch116 -p1
 %patch117 -p1
