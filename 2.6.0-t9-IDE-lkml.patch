@@ -1,0 +1,41 @@
+--- linux.org/drivers/ide/setup-pci.c	Sat Oct 18 01:22:22 2003
++++ linux/drivers/ide/setup-pci.c	Wed Nov 19 13:52:25 2003
+@@ -474,6 +474,11 @@
+  *	state
+  */
+  
++#ifndef CONFIG_BLK_DEV_IDEDMA_PCI
++static void ide_hwif_setup_dma(struct pci_dev *dev, ide_pci_device_t *d, ide_hwif_t *hwif)
++{
++}
++#else
+ static void ide_hwif_setup_dma(struct pci_dev *dev, ide_pci_device_t *d, ide_hwif_t *hwif)
+ {
+ 	u16 pcicmd;
+@@ -516,6 +521,7 @@
+ 		}
+ 	}
+ }
++#endif /* CONFIG_BLK_DEV_IDEDMA_PCI*/
+ 
+ /**
+  *	ide_setup_pci_controller	-	set up IDE PCI
+--- linux.org/drivers/ide/Kconfig	Wed Nov 19 18:40:45 2003
++++ linux/drivers/ide/Kconfig	Thu Nov 20 14:32:13 2003
+@@ -531,6 +531,8 @@
+ 	depends on PCI && BLK_DEV_IDEPCI
+ 	default BLK_DEV_IDEDMA_PCI
+ 
++endif
++
+ config BLK_DEV_AEC62XX
+ 	tristate "AEC62XX chipset support"
+ 	help
+@@ -800,7 +802,6 @@
+ 	  This allows the kernel to change PIO, DMA and UDMA speeds and to
+ 	  configure the chip to optimum performance.
+ 
+-endif
+ 
+ config BLK_DEV_IDE_PMAC
+ 	bool "Builtin PowerMac IDE support"
