@@ -1,7 +1,7 @@
-diff -urN pld/fs/buffer.c zombi-a/fs/buffer.c
---- pld/fs/buffer.c	2003-10-12 01:04:02.000000000 +0200
-+++ zombi-a/fs/buffer.c	2003-10-12 01:13:50.324890464 +0200
-@@ -680,6 +680,20 @@
+diff -urN linux-2.4.22.org/fs/buffer.c linux-2.4.22/fs/buffer.c
+--- linux-2.4.22.org/fs/buffer.c	2003-11-21 15:08:24.000000000 +0100
++++ linux-2.4.22/fs/buffer.c	2003-11-21 15:14:23.000000000 +0100
+@@ -659,6 +659,20 @@
  	spin_unlock(&lru_list_lock);
  }
  
@@ -22,7 +22,7 @@ diff -urN pld/fs/buffer.c zombi-a/fs/buffer.c
  /*
   * The caller must have the lru_list lock before calling the 
   * remove_inode_queue functions.
-@@ -1384,7 +1399,7 @@
+@@ -1370,7 +1384,7 @@
  /*
   * Called when truncating a buffer on a page completely.
   */
@@ -31,10 +31,10 @@ diff -urN pld/fs/buffer.c zombi-a/fs/buffer.c
  {
  	if (buffer_mapped(bh) || buffer_delay(bh)) {
  		mark_buffer_clean(bh);
-diff -urN pld/fs/inode.c zombi-a/fs/inode.c
---- pld/fs/inode.c	2003-10-12 01:03:57.000000000 +0200
-+++ zombi-a/fs/inode.c	2003-10-12 01:13:50.334888944 +0200
-@@ -451,7 +451,7 @@
+diff -urN linux-2.4.22.org/fs/inode.c linux-2.4.22/fs/inode.c
+--- linux-2.4.22.org/fs/inode.c	2003-11-21 15:08:24.000000000 +0100
++++ linux-2.4.22/fs/inode.c	2003-11-21 15:14:23.000000000 +0100
+@@ -476,7 +476,7 @@
  	}
  }
  
@@ -43,7 +43,7 @@ diff -urN pld/fs/inode.c zombi-a/fs/inode.c
  {
  	struct super_block * sb;
  	int nr_inodes = inodes_stat.nr_unused;
-@@ -470,7 +470,8 @@
+@@ -495,7 +495,8 @@
  	spin_unlock(&inode_lock);
  }
  
@@ -53,7 +53,7 @@ diff -urN pld/fs/inode.c zombi-a/fs/inode.c
  
  /**
   *	write_inode_now	-	write an inode to disk
-@@ -717,7 +718,7 @@
+@@ -758,7 +759,7 @@
  	 !inode_has_buffers(inode))
  #define INODE(entry)	(list_entry(entry, struct inode, i_list))
  
@@ -62,7 +62,7 @@ diff -urN pld/fs/inode.c zombi-a/fs/inode.c
  {
  	LIST_HEAD(list);
  	struct list_head *entry, *freeable = &list;
-@@ -753,35 +754,29 @@
+@@ -792,35 +793,29 @@
  	spin_unlock(&inode_lock);
  
  	dispose_list(freeable);
@@ -110,7 +110,7 @@ diff -urN pld/fs/inode.c zombi-a/fs/inode.c
  }
  
  /*
-@@ -1120,6 +1115,34 @@
+@@ -1198,6 +1193,34 @@
  	return res;
  }
  
@@ -145,7 +145,7 @@ diff -urN pld/fs/inode.c zombi-a/fs/inode.c
  /*
   * Initialize the hash tables.
   */
-@@ -1171,8 +1194,17 @@
+@@ -1249,8 +1272,17 @@
  					 NULL);
  	if (!inode_cachep)
  		panic("cannot create inode slab cache");
@@ -164,15 +164,15 @@ diff -urN pld/fs/inode.c zombi-a/fs/inode.c
  }
  
  /**
-@@ -1266,3 +1298,5 @@
+@@ -1344,3 +1376,5 @@
  }
  
  #endif
 +
 +module_init(inode_mod_init) ;
-diff -urN pld/fs/reiserfs/bitmap.c zombi-a/fs/reiserfs/bitmap.c
---- pld/fs/reiserfs/bitmap.c	2003-08-28 03:26:33.000000000 +0200
-+++ zombi-a/fs/reiserfs/bitmap.c	2003-10-12 01:13:50.363884536 +0200
+diff -urN linux-2.4.22.org/fs/reiserfs/bitmap.c linux-2.4.22/fs/reiserfs/bitmap.c
+--- linux-2.4.22.org/fs/reiserfs/bitmap.c	2003-11-21 15:08:29.000000000 +0100
++++ linux-2.4.22/fs/reiserfs/bitmap.c	2003-11-21 15:14:23.000000000 +0100
 @@ -10,6 +10,7 @@
  #include <linux/errno.h>
  #include <linux/locks.h>
@@ -340,9 +340,9 @@ diff -urN pld/fs/reiserfs/bitmap.c zombi-a/fs/reiserfs/bitmap.c
  	}
      }
      return ret;
-diff -urN pld/fs/reiserfs/do_balan.c zombi-a/fs/reiserfs/do_balan.c
---- pld/fs/reiserfs/do_balan.c	2003-08-28 03:26:33.000000000 +0200
-+++ zombi-a/fs/reiserfs/do_balan.c	2003-10-12 01:13:50.366884080 +0200
+diff -urN linux-2.4.22.org/fs/reiserfs/do_balan.c linux-2.4.22/fs/reiserfs/do_balan.c
+--- linux-2.4.22.org/fs/reiserfs/do_balan.c	2003-11-21 15:08:29.000000000 +0100
++++ linux-2.4.22/fs/reiserfs/do_balan.c	2003-11-21 15:14:23.000000000 +0100
 @@ -33,16 +33,8 @@
  inline void do_balance_mark_leaf_dirty (struct tree_balance * tb, 
  					struct buffer_head * bh, int flag)
@@ -400,9 +400,9 @@ diff -urN pld/fs/reiserfs/do_balan.c zombi-a/fs/reiserfs/do_balan.c
 +    reiserfs_check_lock_depth("do balance2");
  
  }
-diff -urN pld/fs/reiserfs/file.c zombi-a/fs/reiserfs/file.c
---- pld/fs/reiserfs/file.c	2002-12-01 15:25:59.000000000 +0100
-+++ zombi-a/fs/reiserfs/file.c	2003-10-12 01:13:50.368883776 +0200
+diff -urN linux-2.4.22.org/fs/reiserfs/file.c linux-2.4.22/fs/reiserfs/file.c
+--- linux-2.4.22.org/fs/reiserfs/file.c	2003-11-21 15:08:29.000000000 +0100
++++ linux-2.4.22/fs/reiserfs/file.c	2003-11-21 15:14:23.000000000 +0100
 @@ -6,6 +6,7 @@
  #include <linux/sched.h>
  #include <linux/reiserfs_fs.h>
@@ -488,9 +488,9 @@ diff -urN pld/fs/reiserfs/file.c zombi-a/fs/reiserfs/file.c
      ioctl:	reiserfs_ioctl,
      mmap:	generic_file_mmap,
      release:	reiserfs_file_release,
-diff -urN pld/fs/reiserfs/fix_node.c zombi-a/fs/reiserfs/fix_node.c
---- pld/fs/reiserfs/fix_node.c	2003-08-28 03:26:33.000000000 +0200
-+++ zombi-a/fs/reiserfs/fix_node.c	2003-10-12 01:13:50.379882104 +0200
+diff -urN linux-2.4.22.org/fs/reiserfs/fix_node.c linux-2.4.22/fs/reiserfs/fix_node.c
+--- linux-2.4.22.org/fs/reiserfs/fix_node.c	2003-11-21 15:08:29.000000000 +0100
++++ linux-2.4.22/fs/reiserfs/fix_node.c	2003-11-21 15:14:23.000000000 +0100
 @@ -795,8 +795,9 @@
    else /* If we have enough already then there is nothing to do. */
      return CARRY_ON;
@@ -522,9 +522,9 @@ diff -urN pld/fs/reiserfs/fix_node.c zombi-a/fs/reiserfs/fix_node.c
  	}
  	if (tb->used[i]) {
  	    /* release used as new nodes including a new root */
-diff -urN pld/fs/reiserfs/ibalance.c zombi-a/fs/reiserfs/ibalance.c
---- pld/fs/reiserfs/ibalance.c	2002-12-01 15:25:59.000000000 +0100
-+++ zombi-a/fs/reiserfs/ibalance.c	2003-10-12 01:13:50.382881648 +0200
+diff -urN linux-2.4.22.org/fs/reiserfs/ibalance.c linux-2.4.22/fs/reiserfs/ibalance.c
+--- linux-2.4.22.org/fs/reiserfs/ibalance.c	2003-11-21 15:08:29.000000000 +0100
++++ linux-2.4.22/fs/reiserfs/ibalance.c	2003-11-21 15:14:23.000000000 +0100
 @@ -632,7 +632,6 @@
  		/* use check_internal if new root is an internal node */
  		check_internal (new_root);
@@ -541,9 +541,9 @@ diff -urN pld/fs/reiserfs/ibalance.c zombi-a/fs/reiserfs/ibalance.c
      }
  	
      if ( tb->blknum[h] == 2 ) {
-diff -urN pld/fs/reiserfs/inode.c zombi-a/fs/reiserfs/inode.c
---- pld/fs/reiserfs/inode.c	2003-08-28 03:26:33.000000000 +0200
-+++ zombi-a/fs/reiserfs/inode.c	2003-10-12 01:13:50.388880736 +0200
+diff -urN linux-2.4.22.org/fs/reiserfs/inode.c linux-2.4.22/fs/reiserfs/inode.c
+--- linux-2.4.22.org/fs/reiserfs/inode.c	2003-11-21 15:08:29.000000000 +0100
++++ linux-2.4.22/fs/reiserfs/inode.c	2003-11-21 15:14:23.000000000 +0100
 @@ -4,9 +4,11 @@
  
  #include <linux/config.h>
@@ -1874,9 +1874,9 @@ diff -urN pld/fs/reiserfs/inode.c zombi-a/fs/reiserfs/inode.c
      direct_IO: reiserfs_direct_io,
 +    flushpage: reiserfs_flushpage,
  } ;
-diff -urN pld/fs/reiserfs/ioctl.c zombi-a/fs/reiserfs/ioctl.c
---- pld/fs/reiserfs/ioctl.c	2003-10-12 01:04:03.000000000 +0200
-+++ zombi-a/fs/reiserfs/ioctl.c	2003-10-12 01:13:50.393879976 +0200
+diff -urN linux-2.4.22.org/fs/reiserfs/ioctl.c linux-2.4.22/fs/reiserfs/ioctl.c
+--- linux-2.4.22.org/fs/reiserfs/ioctl.c	2003-11-21 15:08:29.000000000 +0100
++++ linux-2.4.22/fs/reiserfs/ioctl.c	2003-11-21 15:14:23.000000000 +0100
 @@ -25,12 +25,21 @@
  	switch (cmd) {
  	    case REISERFS_IOC_UNPACK:
@@ -1936,9 +1936,9 @@ diff -urN pld/fs/reiserfs/ioctl.c zombi-a/fs/reiserfs/ioctl.c
  
  out_unlock:
      UnlockPage(page) ;
-diff -urN pld/fs/reiserfs/journal.c zombi-a/fs/reiserfs/journal.c
---- pld/fs/reiserfs/journal.c	2003-08-28 03:26:33.000000000 +0200
-+++ zombi-a/fs/reiserfs/journal.c	2003-10-12 01:13:50.402878608 +0200
+diff -urN linux-2.4.22.org/fs/reiserfs/journal.c linux-2.4.22/fs/reiserfs/journal.c
+--- linux-2.4.22.org/fs/reiserfs/journal.c	2003-11-21 15:08:29.000000000 +0100
++++ linux-2.4.22/fs/reiserfs/journal.c	2003-11-21 15:14:23.000000000 +0100
 @@ -33,17 +33,17 @@
  **		     -- Note, if you call this as an immediate flush from 
  **		        from within kupdate, it will ignore the immediate flag
@@ -4331,9 +4331,9 @@ diff -urN pld/fs/reiserfs/journal.c zombi-a/fs/reiserfs/journal.c
 +int __init reiserfs_journal_cache_init(void) {
 +    return 0;
 +}
-diff -urN pld/fs/reiserfs/Makefile zombi-a/fs/reiserfs/Makefile
---- pld/fs/reiserfs/Makefile	2003-08-28 03:26:33.000000000 +0200
-+++ zombi-a/fs/reiserfs/Makefile	2003-10-12 01:13:50.404878304 +0200
+diff -urN linux-2.4.22.org/fs/reiserfs/Makefile linux-2.4.22/fs/reiserfs/Makefile
+--- linux-2.4.22.org/fs/reiserfs/Makefile	2003-11-21 15:08:29.000000000 +0100
++++ linux-2.4.22/fs/reiserfs/Makefile	2003-11-21 15:14:23.000000000 +0100
 @@ -7,6 +7,7 @@
  #
  # Note 2! The CFLAGS definitions are now in the main makefile...
@@ -4342,9 +4342,9 @@ diff -urN pld/fs/reiserfs/Makefile zombi-a/fs/reiserfs/Makefile
  O_TARGET := reiserfs.o
  obj-y   := bitmap.o do_balan.o namei.o inode.o file.o dir.o fix_node.o super.o prints.o objectid.o \
  lbalance.o ibalance.o stree.o hashes.o buffer2.o tail_conversion.o journal.o resize.o item_ops.o ioctl.o procfs.o
-diff -urN pld/fs/reiserfs/namei.c zombi-a/fs/reiserfs/namei.c
---- pld/fs/reiserfs/namei.c	2003-08-28 03:26:33.000000000 +0200
-+++ zombi-a/fs/reiserfs/namei.c	2003-10-12 01:13:50.407877848 +0200
+diff -urN linux-2.4.22.org/fs/reiserfs/namei.c linux-2.4.22/fs/reiserfs/namei.c
+--- linux-2.4.22.org/fs/reiserfs/namei.c	2003-11-21 15:08:29.000000000 +0100
++++ linux-2.4.22/fs/reiserfs/namei.c	2003-11-21 15:14:23.000000000 +0100
 @@ -7,6 +7,7 @@
  #include <linux/bitops.h>
  #include <linux/reiserfs_fs.h>
@@ -4424,9 +4424,9 @@ diff -urN pld/fs/reiserfs/namei.c zombi-a/fs/reiserfs/namei.c
  
      reiserfs_update_sd (&th, old_dir);
      reiserfs_update_sd (&th, new_dir);
-diff -urN pld/fs/reiserfs/objectid.c zombi-a/fs/reiserfs/objectid.c
---- pld/fs/reiserfs/objectid.c	2003-08-28 03:26:33.000000000 +0200
-+++ zombi-a/fs/reiserfs/objectid.c	2003-10-12 01:13:50.409877544 +0200
+diff -urN linux-2.4.22.org/fs/reiserfs/objectid.c linux-2.4.22/fs/reiserfs/objectid.c
+--- linux-2.4.22.org/fs/reiserfs/objectid.c	2003-11-21 15:08:29.000000000 +0100
++++ linux-2.4.22/fs/reiserfs/objectid.c	2003-11-21 15:14:23.000000000 +0100
 @@ -87,7 +87,6 @@
      }
  
@@ -4444,9 +4444,9 @@ diff -urN pld/fs/reiserfs/objectid.c zombi-a/fs/reiserfs/objectid.c
  
      /* start at the beginning of the objectid map (i = 0) and go to
         the end of it (i = disk_sb->s_oid_cursize).  Linear search is
-diff -urN pld/fs/reiserfs/procfs.c zombi-a/fs/reiserfs/procfs.c
---- pld/fs/reiserfs/procfs.c	2003-08-28 03:26:33.000000000 +0200
-+++ zombi-a/fs/reiserfs/procfs.c	2003-10-12 01:13:50.411877240 +0200
+diff -urN linux-2.4.22.org/fs/reiserfs/procfs.c linux-2.4.22/fs/reiserfs/procfs.c
+--- linux-2.4.22.org/fs/reiserfs/procfs.c	2003-11-21 15:08:29.000000000 +0100
++++ linux-2.4.22/fs/reiserfs/procfs.c	2003-11-21 15:14:24.000000000 +0100
 @@ -497,7 +497,6 @@
  			"j_first_unflushed_offset: \t%lu\n"
  			"j_last_flush_trans_id: \t%lu\n"
@@ -4463,9 +4463,9 @@ diff -urN pld/fs/reiserfs/procfs.c zombi-a/fs/reiserfs/procfs.c
  			JF( j_list_bitmap_index ),
  			JF( j_must_wait ),
  			JF( j_next_full_flush ),
-diff -urN pld/fs/reiserfs/stree.c zombi-a/fs/reiserfs/stree.c
---- pld/fs/reiserfs/stree.c	2003-08-28 03:26:33.000000000 +0200
-+++ zombi-a/fs/reiserfs/stree.c	2003-10-12 01:13:50.414876784 +0200
+diff -urN linux-2.4.22.org/fs/reiserfs/stree.c linux-2.4.22/fs/reiserfs/stree.c
+--- linux-2.4.22.org/fs/reiserfs/stree.c	2003-11-21 15:08:29.000000000 +0100
++++ linux-2.4.22/fs/reiserfs/stree.c	2003-11-21 15:14:25.000000000 +0100
 @@ -60,6 +60,7 @@
  #include <linux/pagemap.h>
  #include <linux/reiserfs_fs.h>
@@ -4978,9 +4978,9 @@ diff -urN pld/fs/reiserfs/stree.c zombi-a/fs/reiserfs/stree.c
      return retval; 
  }
  
-diff -urN pld/fs/reiserfs/super.c zombi-a/fs/reiserfs/super.c
---- pld/fs/reiserfs/super.c	2003-10-12 01:04:01.000000000 +0200
-+++ zombi-a/fs/reiserfs/super.c	2003-10-12 01:13:50.419876024 +0200
+diff -urN linux-2.4.22.org/fs/reiserfs/super.c linux-2.4.22/fs/reiserfs/super.c
+--- linux-2.4.22.org/fs/reiserfs/super.c	2003-11-21 15:08:29.000000000 +0100
++++ linux-2.4.22/fs/reiserfs/super.c	2003-11-21 15:14:25.000000000 +0100
 @@ -13,6 +13,9 @@
  #include <linux/locks.h>
  #include <linux/init.h>
@@ -5031,7 +5031,7 @@ diff -urN pld/fs/reiserfs/super.c zombi-a/fs/reiserfs/super.c
    if (!(s->s_flags & MS_RDONLY)) {
 @@ -75,7 +84,7 @@
      reiserfs_block_writes(&th) ;
-     journal_end_sync(&th, s, 1) ;
+     journal_end(&th, s, 1) ;
    }
 -  s->s_dirt = dirty;
 +  s->s_dirt = 0;
@@ -5244,9 +5244,9 @@ diff -urN pld/fs/reiserfs/super.c zombi-a/fs/reiserfs/super.c
  
  static void __exit exit_reiserfs_fs(void)
  {
-diff -urN pld/fs/reiserfs/tail_conversion.c zombi-a/fs/reiserfs/tail_conversion.c
---- pld/fs/reiserfs/tail_conversion.c	2003-08-28 03:26:33.000000000 +0200
-+++ zombi-a/fs/reiserfs/tail_conversion.c	2003-10-12 01:13:50.421875720 +0200
+diff -urN linux-2.4.22.org/fs/reiserfs/tail_conversion.c linux-2.4.22/fs/reiserfs/tail_conversion.c
+--- linux-2.4.22.org/fs/reiserfs/tail_conversion.c	2003-11-21 15:08:29.000000000 +0100
++++ linux-2.4.22/fs/reiserfs/tail_conversion.c	2003-11-21 15:14:25.000000000 +0100
 @@ -66,11 +66,11 @@
  	set_ih_free_space (&ind_ih, 0); /* delete at nearest future */
          put_ih_item_len( &ind_ih, UNFM_P_SIZE );
@@ -5331,10 +5331,10 @@ diff -urN pld/fs/reiserfs/tail_conversion.c zombi-a/fs/reiserfs/tail_conversion.
      *p_c_mode = M_CUT;
  
      /* we store position of first direct item in the in-core inode */
-diff -urN pld/include/linux/fs.h zombi-a/include/linux/fs.h
---- pld/include/linux/fs.h	2003-10-12 01:04:02.000000000 +0200
-+++ zombi-a/include/linux/fs.h	2003-10-12 01:13:50.427874808 +0200
-@@ -1226,6 +1226,8 @@
+diff -urN linux-2.4.22.org/include/linux/fs.h linux-2.4.22/include/linux/fs.h
+--- linux-2.4.22.org/include/linux/fs.h	2003-11-21 15:08:34.000000000 +0100
++++ linux-2.4.22/include/linux/fs.h	2003-11-21 15:14:25.000000000 +0100
+@@ -1222,6 +1222,8 @@
  	return test_and_set_bit(BH_Dirty, &bh->b_state);
  }
  
@@ -5343,7 +5343,7 @@ diff -urN pld/include/linux/fs.h zombi-a/include/linux/fs.h
  static inline void mark_buffer_async(struct buffer_head * bh, int on)
  {
  	if (on)
-@@ -1510,6 +1512,7 @@
+@@ -1508,6 +1510,7 @@
  /* Generic buffer handling for block filesystems.. */
  extern int try_to_release_page(struct page * page, int gfp_mask);
  extern int discard_bh_page(struct page *, unsigned long, int);
@@ -5351,9 +5351,9 @@ diff -urN pld/include/linux/fs.h zombi-a/include/linux/fs.h
  #define block_flushpage(page, offset) discard_bh_page(page, offset, 1)
  #define block_invalidate_page(page) discard_bh_page(page, 0, 0)
  extern int block_symlink(struct inode *, const char *, int);
-diff -urN pld/include/linux/reiserfs_fs.h zombi-a/include/linux/reiserfs_fs.h
---- pld/include/linux/reiserfs_fs.h	2003-08-28 03:26:37.000000000 +0200
-+++ zombi-a/include/linux/reiserfs_fs.h	2003-10-12 01:13:50.438873136 +0200
+diff -urN linux-2.4.22.org/include/linux/reiserfs_fs.h linux-2.4.22/include/linux/reiserfs_fs.h
+--- linux-2.4.22.org/include/linux/reiserfs_fs.h	2003-11-21 15:08:34.000000000 +0100
++++ linux-2.4.22/include/linux/reiserfs_fs.h	2003-11-21 15:14:25.000000000 +0100
 @@ -266,6 +266,7 @@
  #define NO_DISK_SPACE -3
  #define NO_BALANCING_NEEDED  (-4)
@@ -5565,9 +5565,9 @@ diff -urN pld/include/linux/reiserfs_fs.h zombi-a/include/linux/reiserfs_fs.h
  int reiserfs_allocate_blocknrs(reiserfs_blocknr_hint_t *, b_blocknr_t * , int, int);
  extern inline int reiserfs_new_form_blocknrs (struct tree_balance * tb,
  					      b_blocknr_t *new_blocknrs, int amount_needed)
-diff -urN pld/include/linux/reiserfs_fs_i.h zombi-a/include/linux/reiserfs_fs_i.h
---- pld/include/linux/reiserfs_fs_i.h	2003-08-28 03:26:14.000000000 +0200
-+++ zombi-a/include/linux/reiserfs_fs_i.h	2003-10-12 01:13:50.440872832 +0200
+diff -urN linux-2.4.22.org/include/linux/reiserfs_fs_i.h linux-2.4.22/include/linux/reiserfs_fs_i.h
+--- linux-2.4.22.org/include/linux/reiserfs_fs_i.h	2003-11-21 15:08:34.000000000 +0100
++++ linux-2.4.22/include/linux/reiserfs_fs_i.h	2003-11-21 15:14:25.000000000 +0100
 @@ -6,6 +6,8 @@
  
  #include <linux/list.h>
@@ -5605,9 +5605,9 @@ diff -urN pld/include/linux/reiserfs_fs_i.h zombi-a/include/linux/reiserfs_fs_i.
  };
  
  #endif
-diff -urN pld/include/linux/reiserfs_fs_sb.h zombi-a/include/linux/reiserfs_fs_sb.h
---- pld/include/linux/reiserfs_fs_sb.h	2003-08-28 03:26:37.000000000 +0200
-+++ zombi-a/include/linux/reiserfs_fs_sb.h	2003-10-12 01:13:50.443872376 +0200
+diff -urN linux-2.4.22.org/include/linux/reiserfs_fs_sb.h linux-2.4.22/include/linux/reiserfs_fs_sb.h
+--- linux-2.4.22.org/include/linux/reiserfs_fs_sb.h	2003-11-21 15:08:34.000000000 +0100
++++ linux-2.4.22/include/linux/reiserfs_fs_sb.h	2003-11-21 15:14:25.000000000 +0100
 @@ -120,7 +120,6 @@
  #define JOURNAL_MAX_CNODE   1500 /* max cnodes to allocate. */
  #define JOURNAL_HASH_SIZE 8192   
@@ -5840,22 +5840,22 @@ diff -urN pld/include/linux/reiserfs_fs_sb.h zombi-a/include/linux/reiserfs_fs_s
  #define SB_JOURNAL_LEN_FREE(s) (SB_JOURNAL(s)->j_journal_len_free) 
  #define SB_AP_BITMAP(s) ((s)->u.reiserfs_sb.s_ap_bitmap)
  
-diff -urN pld/kernel/ksyms.c zombi-a/kernel/ksyms.c
---- pld/kernel/ksyms.c	2003-10-12 01:04:03.000000000 +0200
-+++ zombi-a/kernel/ksyms.c	2003-10-12 01:24:09.848708528 +0200
-@@ -181,6 +181,7 @@
- EXPORT_SYMBOL(d_lookup);
- EXPORT_SYMBOL(__d_path);
- EXPORT_SYMBOL(mark_buffer_dirty);
-+EXPORT_SYMBOL(discard_buffer);      /* for FS flushpage funcs */
- EXPORT_SYMBOL(set_buffer_async_io);
+diff -urN linux-2.4.22.org/kernel/ksyms.c linux-2.4.22/kernel/ksyms.c
+--- linux-2.4.22.org/kernel/ksyms.c	2003-11-21 15:08:31.000000000 +0100
++++ linux-2.4.22/kernel/ksyms.c	2003-11-21 15:15:21.000000000 +0100
+@@ -182,6 +182,7 @@
  EXPORT_SYMBOL(end_buffer_io_async);
- EXPORT_SYMBOL(end_buffer_io_sync);
-diff -urN pld/mm/filemap.c zombi-a/mm/filemap.c
---- pld/mm/filemap.c	2003-10-12 01:04:02.000000000 +0200
-+++ zombi-a/mm/filemap.c	2003-10-12 01:13:50.453870856 +0200
-@@ -3085,6 +3085,14 @@
- 	return err;
+ EXPORT_SYMBOL(__mark_buffer_dirty);
+ EXPORT_SYMBOL(__mark_inode_dirty);
++EXPORT_SYMBOL(discard_buffer);      /* for FS flushpage funcs */
+ EXPORT_SYMBOL(fd_install);
+ EXPORT_SYMBOL(get_empty_filp);
+ EXPORT_SYMBOL(init_private_file);
+diff -urN linux-2.4.22.org/mm/filemap.c linux-2.4.22/mm/filemap.c
+--- linux-2.4.22.org/mm/filemap.c	2003-11-21 15:08:31.000000000 +0100
++++ linux-2.4.22/mm/filemap.c	2003-11-21 15:14:25.000000000 +0100
+@@ -3041,6 +3041,14 @@
+ 	}
  }
  
 +static void update_inode_times(struct inode *inode) 
@@ -5867,9 +5867,9 @@ diff -urN pld/mm/filemap.c zombi-a/mm/filemap.c
 +	} 
 +}
  /*
-  * Write to a file through the page cache. 
-  *
-@@ -3247,8 +3255,7 @@
+  * precheck_file_write():
+  * Check the conditions on a file descriptor prior to beginning a write
+@@ -3302,8 +3310,7 @@
  		BUG();
  
  	remove_suid(inode);
