@@ -1,14 +1,3 @@
---- linux-2.6.8-rc3/drivers/char/omnibook/ec.c.orig	2004-08-07 15:32:19.080841480 +0200
-+++ linux-2.6.8-rc3/drivers/char/omnibook/ec.c	2004-08-07 15:32:21.215516960 +0200
-@@ -28,6 +28,8 @@
- #define USE_ACPI_EC
- #endif
- #endif
-+#else
-+#include <asm-generic/errno.h>
- #endif
- 
- #include <asm/io.h>
 --- linux-2.6.8-rc3/arch/i386/crypto/Makefile.orig	2004-08-07 14:54:25.000000000 +0200
 +++ linux-2.6.8-rc3/arch/i386/crypto/Makefile	2004-08-07 18:41:49.000000000 +0200
 @@ -6,4 +6,4 @@
@@ -218,18 +207,6 @@
  
  /** 
   * IO descriptor support routines.
---- linux-2.6.9-rc1/drivers/scsi/ipr.c.orig	2004-08-29 16:44:20.000000000 +0200
-+++ linux-2.6.9-rc1/drivers/scsi/ipr.c	2004-08-29 19:10:05.135226032 +0200
-@@ -1822,7 +1822,8 @@
- 
- 	if (ioa_cfg->sdt_state == GET_DUMP) {
- 		dump = ioa_cfg->dump;
--		if (!dump || !kref_get(&dump->kref)) {
-+		kref_get(&dump->kref);
-+		if (!dump) {
- 			spin_unlock_irqrestore(ioa_cfg->host->host_lock, lock_flags);
- 			return;
- 		}
 diff -puN include/linux/spinlock.h~fix_outofline_spinlocks include/linux/spinlock.h
 --- gr_work/include/linux/spinlock.h~fix_outofline_spinlocks	2004-09-05 02:05:53.243858818 -0500
 +++ gr_work-anton/include/linux/spinlock.h	2004-09-05 02:06:06.177805993 -0500
