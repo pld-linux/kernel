@@ -36,6 +36,7 @@ Source6:	ftp://ftp.tux.org/tux/roudier/drivers/linux/stable/sym-%{symncr_version
 Source7:	ftp://ftp.linux-wlan.org/pub/linux-wlan/linux-wlan-%{wlan_version}.tar.gz
 # Source7-md5:	47fb22cb5ca497eaa6bc51eed2056929
 Source9:	serial-5.05.tar.gz
+# Source9-md5:	415e2239226e15dd97ee373dca19e715
 Source10:	http://vtun.sourceforge.net/tun/tun-%{tun_version}.tar.gz
 # Source10-md5:	b270be81ff9b743d9e9031b0b1a36ebe
 Source11:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
