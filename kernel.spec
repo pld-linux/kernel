@@ -26,7 +26,7 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.3
+%define		_rel		1.4
 %define		_cset		20040220_0706
 
 ## netfilter snap 
@@ -403,6 +403,16 @@ or building kernel modules.
 %description headers -l pl
 Pakiet zawiera pliki nag³ówkowe j±dra, niezbêdne do rekompilacji j±dra
 oraz budowania modu³ów j±dra.
+
+%package module-build
+Summary:	Sources for build kernel module
+Summary(pl):	Kod ¼ród³owy do budowy modó³ów
+Group:		Base/Kernel
+Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
+
+%description module-build
+%description module-build -l pl
+Pliki ¿ród³owe niezbedne do budowy zewnêtrzych modó³ów.
 
 %package source
 Summary:	Kernel source tree
@@ -1101,15 +1111,18 @@ fi
 %files headers
 %defattr(644,root,root,755)
 %dir %{_prefix}/src/linux-%{version}
+%{_prefix}/src/linux-%{version}/include
+%{_prefix}/src/linux-%{version}/config-smp
+%{_prefix}/src/linux-%{version}/config-up
+
+%files module-build
+%defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Makefile
 %dir %{_prefix}/src/linux-%{version}/arch
 %dir %{_prefix}/src/linux-%{version}/arch/*
 %{_prefix}/src/linux-%{version}/arch/*/Makefile*
 %dir %{_prefix}/src/linux-%{version}/arch/*/kernel
 %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
-%{_prefix}/src/linux-%{version}/include
-%{_prefix}/src/linux-%{version}/config-smp
-%{_prefix}/src/linux-%{version}/config-up
 %dir %{_prefix}/src/linux-%{version}/scripts
 %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %{_prefix}/src/linux-%{version}/scripts/*.c
