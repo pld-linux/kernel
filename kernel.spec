@@ -138,6 +138,7 @@ Patch25:	2.6.7-alpha_compile.patch
 Patch26:	2.6.7-ppc-asm-defs.patch
 Patch27:	linux-ppc-oops.patch
 Patch28:	%{name}-2.6-nm256_oops.patch
+Patch29:	linux-2.6-sparc-ksyms.patch
 
 #Patch30:	2.6.x-ppp_mppe.patch
 
@@ -193,10 +194,8 @@ Patch202:	linux-2.6.10-grsec_sparc.patch
 Patch250:	linux-2.6-vs.patch
 
 # hotfixes
-Patch300:	linux-2.6-sparc-ksyms.patch
-
-Patch303:	%{name}-hotfixes.patch
-Patch304:	%{name}-gcc4.patch
+Patch300:	%{name}-hotfixes.patch
+Patch301:	%{name}-gcc4.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -553,6 +552,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch26 -p1
 %patch27 -p1
 %patch28 -p1
+%patch29 -p1
 
 #patch30 -p1
 
@@ -610,9 +610,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 # hotfixes
 %patch300 -p1
-
-%patch303 -p1
-%patch304 -p1
+%patch301 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
