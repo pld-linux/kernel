@@ -1104,6 +1104,12 @@ done
 rm -f scripts/mkdep
 rm -f drivers/net/hamradio/soundmodem/gentbl
 
+# BOOT
+%ifnarch i586 i686 athlon
+install -d $RPM_BUILD_ROOT/%{_libdir}/bootdisk
+cp -rdp $KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk/* $RPM_BUILD_ROOT/%{_libdir}/bootdisk
+%endif
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_DIR/linux-installed
