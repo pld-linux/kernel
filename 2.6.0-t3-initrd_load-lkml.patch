@@ -29,13 +29,10 @@ diff -ur linux-2.6.0-test1.orig/init/do_mounts.c linux-2.6.0-test1/init/do_mount
  static dev_t __init try_name(char *name, int part)
  {
  	char path[64];
-@@ -365,12 +374,21 @@
+@@ -365,8 +374,20 @@
  
  	is_floppy = MAJOR(ROOT_DEV) == FLOPPY_MAJOR;
  
--	/* This has to be before mounting root, because even readonly mount of reiserfs would replay
--	   log corrupting stuff */
--	software_resume();
 +	/* software_resume() has to be before mounting root, because even
 +	   readonly mount of reiserfs would replay log corrupting stuff.
 +	   However, users may still want to run initrd first. */
@@ -47,7 +44,6 @@ diff -ur linux-2.6.0-test1.orig/init/do_mounts.c linux-2.6.0-test1/init/do_mount
 +	}
 +	else {
 +		software_resume();
- 
 -	if (initrd_load())
 -		goto out;
 +		if (initrd_load())

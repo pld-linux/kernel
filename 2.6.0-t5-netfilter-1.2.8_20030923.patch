@@ -88,26 +88,6 @@ diff -Nur --exclude '*.rej' --exclude '*.orig' linux-2.6.0-test5.org/net/ipv4/ne
  
  /* This rwlock protects the main hash table, protocol/helper/expected
     registrations, conntrack timers*/
-@@ -1276,11 +1275,14 @@
- {
- 	struct inet_opt *inet = inet_sk(sk);
- 	struct ip_conntrack_tuple_hash *h;
--	struct ip_conntrack_tuple tuple = { { inet->rcv_saddr,
--						{ .tcp = { inet->sport } } },
--					    { inet->daddr,
--						{ .tcp = { inet->dport } },
--					      IPPROTO_TCP } };
-+	struct ip_conntrack_tuple tuple;
-+	
-+	IP_CT_TUPLE_BLANK(&tuple);
-+	tuple.src.ip = inet->rcv_saddr;
-+	tuple.src.u.tcp.port = inet->sport;
-+	tuple.dst.ip = inet->daddr;
-+	tuple.dst.u.tcp.port = inet->dport;
-+	tuple.dst.protonum = IPPROTO_TCP;
- 
- 	/* We only do TCP at the moment: is there a better way? */
- 	if (strcmp(sk->sk_prot->name, "TCP")) {
 diff -Nur --exclude '*.rej' --exclude '*.orig' linux-2.6.0-test5.org/net/ipv4/netfilter/ip_conntrack_tftp.c linux-2.6.0-test5/net/ipv4/netfilter/ip_conntrack_tftp.c
 --- linux-2.6.0-test5.org/net/ipv4/netfilter/ip_conntrack_tftp.c	Mon Sep  8 19:50:01 2003
 +++ linux-2.6.0-test5/net/ipv4/netfilter/ip_conntrack_tftp.c	Tue Sep 23 12:56:33 2003
