@@ -64,7 +64,7 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.14
+%define		_rel		0.15
 %define		_cset		20041025_0606
 %define		_apply_cset	1
 
@@ -116,6 +116,9 @@ Source40:	%{name}.FAQ-pl
 Source80:	%{name}-netfilter.config
 Source90:	%{name}-grsec.config
 Source91:	%{name}-grsec+pax.config
+
+Source700:	%{name}-reiser4.config
+Source750:	%{name}-squashfs2.0.config
 
 Patch0:		2.6.0-ksyms-add.patch
 
@@ -205,6 +208,11 @@ Patch302:	2.6.7-kill-warnings.patch
 Patch303:	%{name}-hotfixes.patch
 Patch304:	linux-2.6-nptl-process-accounting.patch
 Patch305:	linux-2.6-nptl-sighup.patch
+
+# http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.9/2.6.9-mm1/broken-out/
+Patch700:	linux-reiser4-mm1.patch.bz2
+
+Patch750:	linux-squashfs2.0.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -653,6 +661,9 @@ patch -p1 -s < exec-shield.patch
 %patch304 -p1
 %patch305 -p1
 
+%patch700 -p1
+%patch750 -p1
+
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
 
@@ -737,6 +748,11 @@ BuildConfig (){
 %else
 	cat %{SOURCE91} >> arch/%{_target_base_arch}/defconfig
 %endif
+
+#	reiser4
+	cat %{SOURCE700} >> arch/%{_target_base_arch}/defconfig
+#	squashfs
+	cat %{SOURCE750} >> arch/%{_target_base_arch}/defconfig
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
