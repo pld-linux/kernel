@@ -567,10 +567,14 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 #%patch7 -p1
 %if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %ifarch %{ix86}
-%patch147 -p1		# patch to allow compile scheduler with XFS
-%patch914 -p1		# patch o1-scheduler-pre
-%patch14 -p1		# O(1) scheduler patch
-%patch915 -p1		# patch o1-scheduler-post
+# patch to allow compile scheduler with XFS
+%patch147 -p1
+# patch o1-scheduler-pre
+%patch914 -p1
+# O(1) scheduler patch
+%patch14 -p1
+# patch o1-scheduler-post
+%patch915 -p1
 %else
 echo "Scheduler didn't work on ARCH different than Intel x86"
 %endif
@@ -579,17 +583,21 @@ echo "Scheduler didn't work on ARCH different than Intel x86"
 %endif
 %if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %ifarch%{ix86}
-%patch147 -p1		# patch to allow compile scheduler with XFS
-%patch911 -p1		# linux-o1-grsec-pre 
+# patch to allow compile scheduler with XFS
+%patch147 -p1
+# linux-o1-grsec-pre 
+%patch911 -p1
 %else
 echo "Scheduler didn't work on ARCH different than Intel x86"
 %endif
 %endif
-%patch9 -p1		# grsecurity patch
-%patch906 -p0		#
+# grsecurity patch
+%patch9 -p1
+%patch906 -p0		
 %if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %ifarch%{ix86}
-%patch912 -p1		# linux-o1-grsec-post
+# linux-o1-grsec-post
+%patch912 -p1
 %else
 echo "Scheduler didn't work on ARCH different than Intel x86"
 %endif
@@ -765,7 +773,6 @@ echo Updating VIA Southbridge
 
 %patch145 -p1
 #%patch146 -p1
-
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
