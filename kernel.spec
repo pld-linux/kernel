@@ -165,7 +165,7 @@ Patch103:	linux-2.4.2-nvram-hdd.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch104:	linux-2.4.19-pcnet-parms.patch
 Patch105:	linux-alpha-nfs-2.4.19.patch
-#Patch106:
+Patch106:	linux-2.4.20-lkml-ppp_filter-outbound-fix.patch
 # raid5 xor fix for PIII/P4, should go away shortly
 Patch107:	linux-2.4.0-raid5xor.patch
 # disable some networking printk's
@@ -551,6 +551,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch104 -p1
 # Tru64 NFS kludge
 #%patch105 -p1
+%patch106 -p1
 %patch107 -p1
 %patch108 -p1
 %patch109 -p1
