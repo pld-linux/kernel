@@ -830,7 +830,8 @@ gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version
 gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2}
-patch -s -p0 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH3}
+# This is already applied:
+# patch -s -p0 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH3}
 %ifnarch sparc sparc64 ppc
 gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 %endif
