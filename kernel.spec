@@ -50,6 +50,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
+%define		_post_ver	1
 %define		_rel		0.90
 %define		_cset		20040813_0507
 %define		_apply_cset	0
@@ -82,12 +83,14 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 # Source2-md5:	85bdb0205de53b7787966f0932fd8dd9
-Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	37ccb34f8812ae89d9833758e7388bb5
-Source4:	dpt_i2o-2.5.0-2331.tgz
-# Source4-md5:	573cff0f9cb9fc489d0139888d7ce17d
-Source5:	ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.8/acpi-20040715-2.6.8.diff.gz
-# Source5-md5:	d8162768783a9007603f5a2d2ffb4697
+Source3:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.%{_post_ver}.bz2
+# Source3-md5:	824b7d88ab2fabc031f1a6c1e6e288ee
+Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
+# Source4-md5:	37ccb34f8812ae89d9833758e7388bb5
+Source5:	dpt_i2o-2.5.0-2331.tgz
+# Source5-md5:	573cff0f9cb9fc489d0139888d7ce17d
+Source6:	ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.8/acpi-20040715-2.6.8.diff.gz
+# Source6-md5:	d8162768783a9007603f5a2d2ffb4697
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -548,14 +551,15 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}%{_rc} -a2 -a4
+%setup -q -n linux-%{version}%{_rc} -a2 -a5
+bzcat %{SOURCE3} | patch -p1 -s
 
 %if "%{_apply_cset}" != "0"
-zcat %{SOURCE3} | patch -p1 -s
+zcat %{SOURCE4} | patch -p1 -s
 %endif
 
 # ACPI
-zcat %{SOURCE5} | patch -p1 -s
+zcat %{SOURCE6} | patch -p1 -s
 
 %patch0 -p1
 %patch1 -p1
