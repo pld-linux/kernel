@@ -5,7 +5,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.14
-Release:	2
+Release:	3
 Copyright:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -35,7 +35,7 @@ Source30:	ftp://ftp.openwall.com/linux/linux-%{ow_ver}.tar.gz
 Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-124.tar.gz
 Source32:	kernel-BuildASM.sh
 Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.13.3.gz
-Patch1:		ftp://ftp.botik.ru/rented/namesys/ftp/pub/linux+reiserfs/linux-2.2.14-reiserfs-3.5.16-patch.gz
+Patch1:		ftp://ftp.botik.ru/rented/namesys/ftp/pub/linux+reiserfs/linux-2.2.14-reiserfs-3.5.20-pre1-patch.gz
 Patch2:		linux-2.2.14-atm-0.59-fore200e-0.1e.patch.gz
 Patch3:		linux-tasks.patch
 Patch4:		raid-2.2.14-B1.gz
