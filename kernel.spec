@@ -32,7 +32,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	3.2%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	3.3%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -187,11 +187,10 @@ Patch38:	linux-2.4.20-Nokia5510.patch
 
 #from ??
 Patch39:	linux-2.4.20-aic79xx.patch.bz2
-
 Patch40:	linux-2.4.20-i810_audio.patch
-#Patch41:	
-#Patch42:	
-#Patch43:	
+Patch41:	linux-2.4.20-afs.patch.bz2
+Patch42:	linux-2.4.20-ecc.patch
+Patch43:	linux-2.4.20-e820.patch
 #Patch44:	
 # from http://acl.bestbits.at/
 Patch45:	linux-2.4.20-ACL-0.8.54.patch.bz2
@@ -760,6 +759,10 @@ echo Added Adapter AIC79XX controler support ...
 # i810 audio
 echo Fixed I810 Sound ...
 %patch40 -p1
+
+%patch41 -p1
+%patch42 -p1
+%patch43 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
