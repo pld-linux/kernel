@@ -22,19 +22,30 @@ Release:	3
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
+# Source0-md5:	ba722ead5245c19ce70d34343c515773
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:        http://www.openwall.com/linux/linux-%{ow_version}.tar.gz
+# Source3-md5:	0ff48567fc27c329d28965e057c2c8a6
 Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-133.tar.gz
+# Source4-md5:	36c4e0a426064dede25d16018427b00f
 Source5:	ftp://ftp.sourceforge.net/pub/sourceforge/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
+# Source5-md5:	bff640e1b9177e86e02783fba9bd68df
 Source6:	ftp://ftp.tux.org/tux/roudier/drivers/linux/stable/sym-%{symncr_version}.tar.gz
-Source7:	ftp://ftp.linux-wlan.com/linux-wlan/linux-wlan-%{wlan_version}.tar.gz
+# Source6-md5:	e24e461c65d83937fb0bb1a577ee0767
+Source7:	ftp://ftp.linux-wlan.org/pub/linux-wlan/linux-wlan-%{wlan_version}.tar.gz
+# Source7-md5:	47fb22cb5ca497eaa6bc51eed2056929
 Source9:	serial-5.05.tar.gz
 Source10:	http://vtun.sourceforge.net/tun/tun-%{tun_version}.tar.gz
+# Source10-md5:	b270be81ff9b743d9e9031b0b1a36ebe
 Source11:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
+# Source11-md5:	e682da4719f64581a05c979e3f7824cc
 Source12:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.2-%{jfs_version}-patch.tar.gz
-Source13:	http://www.netroedge.com/~lm78/archive/i2c-%{i2c_version}.tar.gz
+# Source12-md5:	39f80d18148aada17c2987604c4b8b8a
+Source13:	http://secure.netroedge.com/~lm78/archive/i2c-%{i2c_version}.tar.gz
+# Source13-md5:	1b5c3ae5a1b2f8ab4aa829870b10a830
 Source14:	ftp://cyborg.kernel.pl/people/dzimi/realtek_cb/realtek_cb-1.07/realtek_cb-1.07.tar.bz2
+# Source14-md5:	6bf74c7d10f27f2ee0368223bc736485
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -57,8 +68,9 @@ Source38:	%{name}-ppc-BOOT.config
 
 Patch2:		%{name}-pldfblogo.patch
 Patch3:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
-Patch4:		http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
-Patch5:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.20-reiserfs-%{reiserfs_version}.diff.bz2
+# from http://people.freebsd.org/~gibbs/linux/
+Patch4:		linux-aic7xxx-%{aic7xxx_version}.patch.gz
+Patch5:		ftp://ftp.namesys.com/pub/reiserfs-for-2.2/linux-2.2.20-reiserfs-%{reiserfs_version}.diff.bz2
 Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/kernpatch/
 Patch7:		freeswan-%{freeswan_version}.k2.2.patch.gz
