@@ -10,12 +10,11 @@
 # _without_grsec	- don't apply grsecurity patch
 # _without_kheaders	- build without support for glibc-kernel-headers
 #
-%define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
+%define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/amd64/x86_64/')
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
 #
-%define		pre_version		rc6
-%define		drm_xfree_version	4.3.0
+%define		pre_version		rc2
 %define		netfilter_snap		20031009
 %define		i2c_version		2.8.0
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -25,11 +24,11 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
-Version:	2.4.22
-Release:	1.5
+Version:	2.4.23
+Release:	0.1
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-2.4.22.tar.bz2
 # Source0-md5:	75dc85149b06ac9432106b8941eb9f7b
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
@@ -41,8 +40,6 @@ Source5:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
 # Source5-md5:	b8f2f7a268a5cb75fabcaec3b5d45fcd
 Source7:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-1.1.2.tar.gz
 # Source7-md5:	2473f345c66683a03ad27ff132d405b7
-Source8:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
-# Source8-md5:	34515784c7b67f6cc9169aa9eed982c7
 Source10:	linux-2.4.20-aacraid.tar.bz2
 # Source10-md5:	3da1f4b229685766cb4f2f5ce242c0d2
 Source20:	%{name}-ia32.config
@@ -60,16 +57,23 @@ Source1001:	%{name}-netfilter.config
 Source1002:	%{name}-grsec.config
 Source2000:	%{name}-win4lin.config
 
+# Interesting URLs, patches:
+# http://www.hardrock.org/kernel/current-updates/
+
 # New features/updates/backports
 
 # Essential stuff
 
 Patch0:		%{name}-pldfblogo.patch
+
+# http://www.kernel.org/pub/linux/kernel/v2.4/testing/
+Patch1:		patch-%{version}-%{pre_version}.bz2
+
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hvr/testing/
 Patch10:	patch-cryptoloop-jari-2.4.22-rc2.0
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch12:	linux-2.4.21-freeswan-2.00.patch.gz
-Patch15:	linux-2.4.21-sched-O1.patch
+Patch15:	linux-2.4.23-sched-O1.patch
 # http://dl.sourceforge.net/user-mode-linux/uml-patch-2.4.20-6.bz2
 Patch20:	uml-patch-2.4.20-6-21.bz2
 Patch21:	linux-2.4.21-uml-o1.patch
@@ -82,7 +86,7 @@ Patch23:	linux-bigger-printk-buffer.patch
 # http://linux-xfs.sgi.com/projects/xfs/
 #Patch25:	linux-2.4.21-core-xfs-1.3.0.patch.gz
 #Patch26:	linux-xfs-1.3.0pre5.patch.gz
-Patch25:	linux-2.4.22-xfs-2003-09-03.patch.gz
+Patch25:	linux-2.4.23-xfs-2003-11-11.patch.gz
 # http://acl.bestbits.at/
 Patch30:	linux-2.4.21-jfs-xattr.patch
 Patch31:	linux-2.4.21-jfs-acl.patch
@@ -107,15 +111,11 @@ Patch80:	linux-2.4.22-intermezzo-acl.patch
 Patch100:	linux-2.4.22-netfilter-%{netfilter_snap}.patch.gz
 # http://ebtables.sourceforge.net/
 Patch110:	ebtables-brnf-2_vs_2.4.22.diff.gz
-# http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
-Patch115:	linux-2.4.22-ipvs-1.0.9.patch.gz
 # http://trash.net/~kaber/imq/
 Patch120:	imq-2.4.18.diff-10
 # ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
 Patch125:	linux-2.4.18-mppe.patch
 Patch130:	linux-2.4.22-tun-new-style.patch
-# ftp://ftp.pm.waw.pl/pub/Linux/hdlc/hdlc-2.4.21-1.14a.patch
-Patch132:     hdlc-2.4.21-1.14a.patch
 
 # ATM bugfixes
 # Patches by Chas Williams <chas@locutus.cmf.nrl.navy.mil>
@@ -144,13 +144,12 @@ Patch215:	%{name}-cdrw-packet.patch
 Patch216:	%{name}-cd-mrw-2.patch
 Patch225:	wrr-linux-2.4.9.patch
 Patch226:	linux-2.4.18-esfq.diff
-Patch227:	layer7-kernel2.4patch-v0.1.4.patch
+# http://l7-filter.sourceforge.net/
+Patch227:	layer7-kernel2.4patch-v0.4.1a.patch.gz
 
 Patch231:	linux-2.4.21-aic7xxx-mmapio.patch
 Patch235:	linux-2.4.20-audigy.patch.bz2
 Patch240:	linux-2.4.20-ecc.patch
-Patch245:	linux-2.4.20-01-edd.patch
-Patch246:	linux-2.4.20-02-edd-allocate.patch
 # i2c - version 2.8.0
 Patch255:	linux-2.4.22-i2c-%{i2c_version}.patch
 Patch256:	linux-2.4.21-i2c-headers.patch
@@ -160,11 +159,8 @@ Patch265:	linux-2.4.20-e820.patch
 Patch270:	dc395-tab.patch
 # http://www.qlogic.com/
 Patch275:	linux-2.4.20-qla2x00-v6.04.00-fo.patch.gz
-# ftp://ftp.lsil.com/pub/linux-megaraid/drivers/version-1.18j/megaraid-v1.18j.tgz
-Patch280:	%{name}-megaraid.patch
 
 # TV stuff from http://bytesex.org/
-Patch300:	19_videodev25-2.4.22.diff
 Patch301:	20_v4l2-2.4.22.diff.gz
 Patch302:	30_bt832-2.4.22.diff
 Patch303:	30_btaudio-2.4.22.diff
@@ -204,7 +200,6 @@ Patch1111:	linux-sound_core.patch
 # rivafb - fix for text background in 16bpp modes
 Patch1150:	linux-rivafb16.patch
 Patch1152:	linux-2.4.20-agp_uninorth.patch
-Patch1154:	linux-2.4.20-drm-Makefile.patch
 
 Patch1201:	linux-2.4.21-cpqfc.patch
 Patch1203:	linux-2.4.20-amd-golem.patch
@@ -255,18 +250,6 @@ Patch1419:	linux-2.4.21-agp-num_of_masks.patch
 Patch1420:	linux-raid5-spare-counting.patch
 Patch1421:	linux-2.4.21-bttv-typo.patch
 Patch1422:	linux-2.4.21-ipt_TRACE-typo.patch
-Patch1423:	linux-2.4.22-alpha-kmap_types.patch
-
-Patch1430:	linux-2.4.22-file-sharing-initrd.patch
-
-# http://www.hardrock.org/kernel/current-updates/
-# taken at 20031008 (update this date if you update patch)
-# also rememver to remove EXTRAVERSION from this patch
-Patch1424:	linux-2.4.22-updates.patch
-
-# htb
-# http://luxik.cdi.cz/~devik/qos/htb/v3/
-Patch1501:	htb_killdbg_2421.diff
 
 Patch2000:	linux-PPC-SMP.patch
 Patch2001:	linux-2.4-ppc-procesor.patch
@@ -278,10 +261,7 @@ Patch3000:	linux-2.4.1-compilefailure.patch
 Patch3002:	linux-2.4.20-EXPORT_SYMBOL.patch
 Patch3003:	linux-2.4.20-missing-license-tags.patch
 Patch3004:	linux-2.4.20-sym53c8xx_old.patch
-Patch3005:	linux-2.4.21-gcc33.patch
-Patch3006:	linux-2.4.21-sparc-gcc3.patch
 Patch3008:	linux-drm-4.2.0-force-cmpxchg.patch
-Patch3009:	linux-2.4.21-alpha-gcc33.patch
 Patch3010:	linux-2.4.21-ipsec-sparc64.patch
 Patch3011:	linux-2.4.22-gcc33-inline.patch
 Patch3012:	linux-2.4.22-gcc-ext3.patch
@@ -289,8 +269,6 @@ Patch3012:	linux-2.4.22-gcc-ext3.patch
 # Security patches/fixes
 
 Patch4000:	grsecurity-2.0-rc3-2.4.22-O1.patch
-
-#Patch10000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc6.bz2
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -633,15 +611,14 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 Este pacote contém documentação para o kernel Linux.
 
 %prep
-%setup -q -a3 -a8 -n linux-%{version}
+%setup -q -a3 -n linux-2.4.22
+%patch1 -p1
 # JFS 1.1.1
 rm -fr fs/jfs
 gzip -dc %{SOURCE7} | tar -xf -
 # Adaptec AACRaid new drivers
 rm -fr drivers/scsi/aacraid
 bzip2 -dc %{SOURCE10} | tar -xf - -C drivers/scsi/
-# Changing DRM source ....
-cp -f drm/*.{c,h} drivers/char/drm/
 %patch0 -p1
 %patch10 -p1
 %patch12 -p1
@@ -655,7 +632,8 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch30 -p1
 %patch32 -p1
 %patch31 -p1
-%patch40 -p1
+# XXX: TODO - update patch
+#%patch40 -p1
 %patch50 -p1
 %patch55 -p1
 %patch60 -p1
@@ -663,13 +641,12 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch65 -p1
 %patch70 -p1
 %patch80 -p1
-%patch100 -p1
+# XXX: TODO - update patch
+#%patch100 -p1
 %patch110 -p1
-%patch115 -p1
 %patch120 -p1
 %patch125 -p1
 %patch130 -p1
-%patch132 -p1
 #%patch150 -p1
 %patch151 -p1
 %patch152 -p1
@@ -684,15 +661,11 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch231 -p1
 %patch235 -p1
 %patch240 -p1
-%patch245 -p1
-%patch246 -p1
 %patch255 -p1
 %patch256 -p1
 %patch257 -p1
 %patch265 -p1
 %patch275 -p1
-%patch280 -p1
-%patch300 -p1
 %patch301 -p1
 %patch302 -p1
 %patch303 -p1
@@ -711,7 +684,6 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1111 -p1
 %patch1150 -p1
 %patch1152 -p1
-%patch1154 -p1
 %patch1201 -p1
 %patch1203 -p1
 %patch1205 -p1
@@ -744,19 +716,14 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1414 -p1
 %patch1415 -p0
 %patch1416 -p1
-%patch1417 -p1
+# XXX: is there updated one?
+#%patch1417 -p1
 %patch1418 -p1
 %patch1419 -p1
 %patch1420 -p1
 %patch1421 -p1
-%patch1422 -p1
-%patch1423 -p1
-
-%patch1430 -p1
-
-%patch1424 -p1
-
-%patch1501 -p1
+# XXX: OBSOLETE?
+#%patch1422 -p1
 
 %patch2000 -p0
 %patch2001 -p1
@@ -766,15 +733,15 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch2004 -p1
 %endif
 
-%patch3000 -p1
+# XXX: UPDATE
+#%patch3000 -p1
 %patch3002 -p1
-%patch3003 -p1
+# XXX: UPDATE (after adding netfilter)
+#%patch3003 -p1
 %patch3004 -p1
-%patch3005 -p1
-%patch3006 -p1
-%patch3009 -p1
 cd drivers/char/drm
-%patch3008 -p1
+# XXX: UPDATE
+#%patch3008 -p1
 cd ../../..
 
 %ifarch sparc64
@@ -784,6 +751,7 @@ cd ../../..
 %patch3011 -p1
 %patch3012 -p1
 
+# XXX: UPDATE
 %{!?_without_grsec:%patch4000 -p1}
 
 mv -f drivers/scsi/sym53c8xx.c drivers/scsi/sym53c8xx_old.c
