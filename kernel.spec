@@ -705,7 +705,7 @@ gzip -dc %{PATCH6} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH7} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH9}
-%if%{?_with_lids:1}%{!?_with_lids:0}
+%if%{?_without_grsec:0}%{!?_without_grsec:1}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
 %endif
 
