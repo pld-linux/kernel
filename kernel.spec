@@ -20,6 +20,7 @@
 %define		tulip_version		1.1.8
 %define		aic_version		6.2.3-2.4.7
 %define		jfs_version		2.4-1.0.7
+%define		bttv_version		0.7.83
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -129,7 +130,9 @@ Patch121:	linux-2.4.10-cpqfc.patch
 Patch122:	linux-2.4.13-pre6-lvm-1.0.1rc4cvs.patch
 # someone (davem?) broke acenic in 2.4.13-pre
 Patch123:	linux-2.4.13-acenic-rollback.patch
-
+# BTTV update
+Patch124:	http://bytesex.org/patches/btaudio-2.4.13-pre2.diff.gz
+Patch125:	http://bytesex.org/patches/bttv-%{bttv_version}-2.4.13-pre2.diff.gz
 # Patches fixing other patches or 3rd party sources ;)
 
 Patch900:	kernel-i8255-asm-fix.patch
@@ -401,6 +404,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch121 -p1
 %patch122 -p1
 %patch123 -p1 -R
+%patch124 -p1
+%patch125 -p1
 
 %patch900 -p0 
 %patch904 -p0
