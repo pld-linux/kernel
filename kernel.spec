@@ -596,7 +596,7 @@ zcat %{SOURCE3} | patch -p1 -s
 
 %patch22 -p1
 
-%patch24 -p1
+#patch24 -p1
 
 ## bootsplash
 %if %{with bootsplash}
