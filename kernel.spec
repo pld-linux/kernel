@@ -133,7 +133,7 @@ BuildRequires:	%{kgcc_package}
 BuildRequires:	sparc32
 %endif
 Provides:	%{name}-up = %{version}-%{release}
-%ifarch %{ix86}
+%ifarch %{ix86} ppc
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(i2c) = %{i2c_version}
 Provides:	i2c = %{i2c_version}
@@ -189,7 +189,7 @@ Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeu
 Summary(pl):	Kernel %{version} skompilowany na maszyny SMP
 Group:		Base/Kernel
 Provides:	%{name} = %{version}-%{release}
-%ifarch %{ix86}
+%ifarch %{ix86} ppc
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(i2c) = %{i2c_version}
 Provides:	i2c = %{i2c_version}
@@ -271,7 +271,7 @@ ze wzglêdu na wymagania rozmiarowe.
 Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra
 Group:		Base/Kernel
-%ifarch %{ix86}
+%ifarch %{ix86} ppc
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	i2c-devel = %{i2c_version}
 %endif
@@ -531,11 +531,17 @@ BuildKernel() {
 %ifarch %{ix86}
 	cp arch/i386/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
-%ifarch alpha sparc sparc64 ppc
+%ifarch alpha sparc sparc64
 	gzip -cfv vmlinux > vmlinuz
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
+
+%ifarch ppc
+        install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
+        install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%endif
+			
 	%{__make} INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR modules_install KERNELRELEASE=$KernelVer
 }
 
