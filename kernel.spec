@@ -78,7 +78,7 @@ Patch4:		br2684-against2.4.15.diff
 Patch5:		linux-2.4.16-xfs-20011129.patch.gz
 # Homepage of ABI : http://linux-abi.sourceforge.net/
 #ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2
-Patch7:		linux-abi-2.4.15.0.patch.bz
+Patch7:		linux-abi-2.4.15.0.patch.bz2
 Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
 # http://grsecurity.net/grsecurity-%{grsec_version}.patch
