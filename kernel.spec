@@ -44,8 +44,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1
-%define		_cset		0
+%define		_rel		1.1
+%define		_cset		20040511_2230
 
 ## netfilter snap 
 %define		_netfilter_snap		20040429
@@ -559,7 +559,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch31 -p1
 %patch32 -p1
 
-%patch34 -p1
+##%patch34 -p1
 
 %patch36 -p1
 
@@ -629,7 +629,7 @@ cp drivers/usb/media/libpwcx.a_mipsel drivers/usb/media/libpwcx.a_
 %endif
 
 %patch84 -p1
-%patch86 -p1
+##%patch86 -p1
 %patch88 -p1
 %patch90 -p1
 
