@@ -586,7 +586,8 @@ BuildConfig (){
 BuildKernel() {
 	%{?_debug:set -x}
 	echo "Building kernel $1 ..."	
-	%{__make} mrproper
+	%{__make} mrproper \
+		RCS_FIND_IGNORE='-name build-done -prune -o'
 	ln -sf arch/%{base_arch}/defconfig .config
 
 %ifarch sparc
@@ -716,7 +717,8 @@ find . ! -name "build-done" -maxdepth 1 -exec cp -a "{}" "$RPM_BUILD_ROOT/usr/sr
 
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
-%{__make} mrproper
+%{__make} mrproper \
+	RCS_FIND_IGNORE='-name build-done -prune -o'
 find -name "*~" -exec rm -f "{}" ";"
 find -name "*.orig" -exec rm -f "{}" ";"
 cp $KERNEL_BUILD_DIR/scripts/modpost scripts
