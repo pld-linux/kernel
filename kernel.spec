@@ -14,7 +14,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.19
-Release:	20
+Release:	21
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -74,7 +74,7 @@ Patch20:	%{name}-wanrouter-bridge.patch
 Patch21:	%{name}-ipsec-bridge.patch
 Patch22:	%{name}-bridge-extraversion.patch
 Patch23:	%{name}-panaview_kbd.patch
-Patch24:	http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-6.2.0-2.2.19.patch.gz
+Patch24:	http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-6.2.3-2.2.19.patch.gz
 Patch25:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.2.20pre/pre-patch-2.2.20-1.bz2
 Patch26:	linux-2.2.19-pci.patch
 Patch27:	%{name}-flip.patch
