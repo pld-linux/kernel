@@ -9,6 +9,7 @@
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
+%define		no_install_post_compress_modules	1
 #
 %define		pre_version		pre1
 %define		ipvs_version		1.0.4
