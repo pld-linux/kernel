@@ -164,6 +164,11 @@ Patch72:	2.6.5-i386-cmpxchg.patch
 
 Patch74:	2.6.4-wrr.patch
 
+# http://dl.sourceforge.net/sourceforge/pramfs/pramfs-2.6.4-1.0.2.tar.gz
+Patch76:	pramfs-2.6.4.patch
+
+# http://www.namesys.com/snapshots/LATEST/reiser4.only.diff.gz
+
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
@@ -575,6 +580,9 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %endif
 
 %patch74 -p1
+
+#pramfs
+%patch76 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
