@@ -37,11 +37,11 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.2
-%define		_cset		20040415_1914
+%define		_rel		0.3
+%define		_cset		20040419_0610
 
 ## netfilter snap 
-%define		_netfilter_snap		20040415
+%define		_netfilter_snap		20040419
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/pentium3/i386/;s/pentium4/i386/;s/amd64/x86_64/')
 
