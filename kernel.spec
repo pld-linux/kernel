@@ -100,7 +100,7 @@ Patch13:	http://tech9.net/rml/linux/patch-rml-2.4.10-netdev-random-2
 
 # Quota fixes
 # Patch100:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.6-2.diff.gz
-#Patch100:	quota-fix-2.4.10-pre11-1.diff.gz
+Patch100:	quota-fix-2.4.10-pre11-1.diff.gz
 # from LKML
 Patch101:	linux-scsi-debug-bug.patch
 Patch102:	linux-2.4.2-raw-ip.patch
@@ -143,7 +143,7 @@ Patch900:	kernel-i8255-asm-fix.patch
 Patch901:	dc395-patch-PLD-fix.patch
 # patch fixing problem with ABI and LIDS
 Patch902:	linux-lids-with-abi.patch
-Patch903:	linux-vlan-fixpatch-2.4.7-pre6.patch
+Patch903:	linux-vlan-fixpatch-2.4.10.patch
 # patch fixing LIDS stupidity
 #Patch904:	linux-lids-fixpatch.patch
 Patch905:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
@@ -378,7 +378,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch4 -p1
 %patch11 -p1
 #%patch100 -p1
-%patch5 -p1
+#%patch5 -p1
 %patch6 -p1
 #%patch7 -p1
 %patch8 -p1
