@@ -42,18 +42,23 @@ Release:	%{_rel}%{?_without_grsec:_nogrsec}
 %endif
 License:	GPL
 Group:		Base/Kernel
-# Source0-md5:	c439d5c93d7fc9a1480a90842465bb97
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
+# Source0-md5:	c439d5c93d7fc9a1480a90842465bb97
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
-Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
+# Source3-md5:	8ed492197244b6a772270417c66214d3
+# http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz - stored in repo (given URL not working)
+Source4:	linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 Source5:	http://mega.ist.utl.pt/~filipe/ipt_p2p/ipt_p2p-0.2.3.tgz
 # Source5-md5:  bfe1a416d05174c8d0f878ff43a5ab79
 Source6:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
+# Source7-md5:	bf0b7cb5f32916f95b00753d24bd689a
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-%{jfs_version}.tar.gz
+# Source8-md5:	2473f345c66683a03ad27ff132d405b7
 Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
+# Source9-md5:	34515784c7b67f6cc9169aa9eed982c7
 #Source11:	
 Source12:	linux-2.4.20-aacraid.tar.bz2
 
