@@ -1,5 +1,5 @@
 %define		ow_version		2.2.19-ow1
-%define		pcmcia_version		3.1.26
+%define		pcmcia_version		3.1.29
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.34
 %define		i2c_version		2.5.5
