@@ -11,8 +11,8 @@
 # _without_doc		- don't build documentation package
 #
 
-%define		patch_level	0
-%define		_rel		8
+%define		patch_level	1
+%define		_rel		0
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 #
@@ -35,7 +35,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.4.20
+Version:	2.4.21
 %if %{patch_level} !=0
 Release:	%{_rel}pl%{patch_level}%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 %else
@@ -43,7 +43,7 @@ Release:	%{_rel}%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 %endif
 License:	GPL
 Group:		Base/Kernel
-# Source0-md5:	c439d5c93d7fc9a1480a90842465bb97
+# Source0-md5:	f51e12efa18bb828cf57d9d4a81b2fb1
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
