@@ -119,7 +119,7 @@ Patch54:	linux-tdfxfb-fillrect.patch
 Patch55:	linux-fbcon-margins.patch
 Patch56:	linux-tdfxfb-interlace+double.patch
 
-Patch58:	acpi-20031203-2.6.0.diff.gz
+Patch58:	acpi-20040116-2.6.2.diff.gz
 
 Patch60:	2.6.0-mount-rainier-lkml.patch
 Patch61:	2.6.0-mount-rainier-fix-lkml.patch
