@@ -911,6 +911,7 @@ fi
 /lib/modules/%{version}-%{release}/fc4
 %endif
 /lib/modules/%{version}-%{release}/fs
+/lib/modules/%{version}-%{release}/ieee1394
 /lib/modules/%{version}-%{release}/ipv4
 /lib/modules/%{version}-%{release}/ipv6
 /lib/modules/%{version}-%{release}/misc
@@ -942,6 +943,7 @@ fi
 /lib/modules/%{version}-%{release}/fc4
 %endif
 /lib/modules/%{version}-%{release}smp/fs
+/lib/modules/%{version}-%{release}smp/ieee1394
 /lib/modules/%{version}-%{release}smp/ipv4
 /lib/modules/%{version}-%{release}smp/ipv6
 /lib/modules/%{version}-%{release}smp/misc
