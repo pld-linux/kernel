@@ -436,7 +436,24 @@ Patch2024:	linux-2.4-sec-sb_audio.patch
 Patch2025:	24_kernel_ia32-and-x86_64-fix-fpu-state.patch
 # CAN-2004-0497
 Patch2026:	linux-2.4-sec-sys_chown.patch
-
+# CAN-2004-0495
+Patch2027:	linux-2.4-sparse-fixes.patch
+# CAN-2004-0535
+Patch2028:	linux-2.4-e1000-leak.patch
+# CAN-2004-0685
+Patch2029:	linux-2.4-usb-sparse.patch
+# possible DoS
+Patch2030:	linux-2.4-fork-memleak.patch
+# procfile race
+Patch2031:	linux-2.4-procfile-race.patch
+# sock_filter DoS
+Patch2032:	linux-2.4-sock_filter-dos.patch
+# CAN-2004-0394
+Patch2033:	linux-2.4-panic-overflow.patch
+# CAN-2004-0658
+Patch2034:	linux-2.4-firewire-overflow.patch
+# CAN-2004-0415
+Patch2035:	linux-2.4-offsets-fixes.patch
 # other stability or security-related fixes
 # fix for I/O stalls and deadlocks
 Patch2100:	linux-2.4.20-io-stalls-fix.patch
@@ -481,9 +498,6 @@ Prereq:		modutils
 Prereq:		geninitrd >= 2.21
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
-%ifarch		%{ix86}
-BuildRequires:	bin86
-%endif
 ##BuildRequires:	module-init-tools
 Conflicts:	iptables < 1.2.7a
 Conflicts:	lvm < 1.0.7
@@ -1049,6 +1063,15 @@ echo AXP patches ...
 %patch2024 -p1
 %patch2025 -p1
 %patch2026 -p1
+%patch2027 -p1
+%patch2028 -p1
+%patch2029 -p1
+%patch2030 -p1
+%patch2031 -p1
+%patch2032 -p1
+%patch2033 -p1
+%patch2034 -p1
+%patch2035 -p1
 
 %patch2100 -p1
 %patch2101 -p1
