@@ -55,7 +55,12 @@ Patch1:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
 Patch2:		http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
 Patch3:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.19-reiserfs-%{reiserfs_version}-with-quota-and-knfsd-support-patch.bz2
 Patch4:		ftp://ftp.kernel.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
-
+Patch5:		linux-2.2.18-freeswan-%{freeswan_version}.patch
+Patch6:		wanrouter-v2215.patch.gz
+Patch7:		linux-ipv6-addrconf.patch
+# based on http://support.3com.com/infodeli/tools/nic/linux/3c90x-1.0.0i.tar.gz
+Patch8:		%{name}-3c90x.patch
+Patch9:		linux-ipv6-glibc2.2.patch
 
 # in this place i will make new Patches nad Sources
 
@@ -337,6 +342,17 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %endif
 %patch3 -p1
 %patch4 -p1
+%patch5 -p1
+%patch6 -p1
+%patch7 -p1
+%patch8 -p1
+%patch9 -p1
+
+# 802.1Q VLANs
+#cd vlan.%{vlan_version}
+#%patch33 -p1
+#cd ..
+patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
 
 # 2.2.20ow1
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
@@ -541,21 +557,20 @@ cp -a $KERNEL_INSTALL_DIR/* $RPM_BUILD_ROOT
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
 
 bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/
-
 mv -f $RPM_BUILD_ROOT%{_prefix}/src/linux $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
-
 gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH0}
-
 %ifnarch sparc sparc64
 gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 %endif
-
 bzip2 -dc %{PATCH3} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-
 gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH5}
+gzip -dc %{PATCH6} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH7}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH9}
 
 #DAC960 drivers
 tar xfz %{SOURCE8}
