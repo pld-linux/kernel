@@ -27,7 +27,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.6.0
-Release:	0.5
+Release:	0.4.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-test4.tar.bz2
@@ -83,7 +83,7 @@ Provides:	module-info
 Autoreqprov:	no
 Prereq:		coreutils
 Prereq:		module-init-tools >= 0.9.9
-Prereq:		geninitrd >= 2.26
+Prereq:		geninitrd >= 2.57
 Conflicts:	quota < 3.09
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
