@@ -22,8 +22,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.4.7
-Release:	8
+Version:	2.4.9
+Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -43,7 +43,7 @@ Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym
 Source12:	http://www.komacke.com/ftp/rl2isa-driver/rl2_driver.tgz
 Source13:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
 Source14:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
-Source15:	http://www10.software.ibm.com/developer/opensource/pub/jfs-1.0.1-patch.tar.gz
+Source15:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-1.0.1-patch.tar.gz
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -88,6 +88,7 @@ Patch10:	linux-grsecurity-%{grsec_version}.patch
 Patch11:	http://prdownloads.sourceforge.net/linuxcompressed/patch-comp-cache-2.4.6-0.17.bz2
 # EXT3
 Patch12:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.4-247.gz
+#http://www.zip.com.au/~akpm/ext3-2.4-0.9.6-248.gz
 
 # Assorted bugfixes
 
