@@ -676,7 +676,9 @@ cp drm/*.{c,h} drivers/char/drm/
 
 
 ## Preemptive
+%ifnarch sparc sparc64
 %patch40 -p1
+%endif
 
 
 ## Network
@@ -729,7 +731,10 @@ cp drm/*.{c,h} drivers/char/drm/
 #i2c
 %patch72 -p1
 #USB gadget
+%ifnarch ppc
+## Or fix ...
 %patch73 -p1
+%endif
 #Fusion MPT
 %patch74 -p1
 ## ->DRM
