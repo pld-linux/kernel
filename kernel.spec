@@ -183,7 +183,7 @@ fi
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Makefile
 %{_prefix}/src/linux-%{version}/*/Makefile
-%{_prefix}/src/linux-%{version}/*/*/Makefile
+%{_prefix}/src/linux-%{version}/*/*/Makefile*
 %{_prefix}/src/linux-%{version}/*/*/*/Makefile
 %{_prefix}/src/linux-%{version}/*/*/*/*/Makefile
 %{_prefix}/src/linux-%{version}/*/*/*/*/*/Makefile
@@ -228,7 +228,7 @@ fi
 %exclude %{_prefix}/src/linux-%{version}/scripts/*/*.y
 %exclude %{_prefix}/src/linux-%{version}/Makefile
 %exclude %{_prefix}/src/linux-%{version}/*/Makefile
-%exclude %{_prefix}/src/linux-%{version}/*/*/Makefile
+%exclude %{_prefix}/src/linux-%{version}/*/*/Makefile*
 %exclude %{_prefix}/src/linux-%{version}/*/*/*/Makefile
 %exclude %{_prefix}/src/linux-%{version}/*/*/*/*/Makefile
 %exclude %{_prefix}/src/linux-%{version}/*/*/*/*/*/Makefile
