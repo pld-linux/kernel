@@ -598,7 +598,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch24 -p1
 
 ## bootsplash
-%patch26 -p1
+#patch26 -p1
 
 %patch28 -p1
 
@@ -678,16 +678,16 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch90 -p1
 
 #grsec
-%ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
-%if %{with grsec}
-%patch94 -p1
-%endif
-%endif
+#ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
+#if %{with grsec}
+#patch94 -p1
+#endif
+#endif
 
-%if %{with execshield}
-patch -p1 -s < %{SOURCE4}
-patch -p1 -s < %{SOURCE5}
-%endif		
+#if %{with execshield}
+#patch -p1 -s < %{SOURCE4}
+#patch -p1 -s < %{SOURCE5}
+#endif		
 
 %patch96 -p1
 #patch97 -p1
