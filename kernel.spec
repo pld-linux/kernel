@@ -4,19 +4,20 @@ Version:     2.0.36
 Release:     2
 Copyright:   GPL
 Group:       Base/Kernel
+Group(pl):   Bazowe/J±dro
 Source0:     ftp://ftp.kernel.org/pub/linux/kernel/v2.0/linux-%{version}.tar.bz2
-Source2:     kernel-i386.config
-Source6:     kernel-alpha.config
-Source8:     installkernel
+Source1:     kernel-i386.config
+Source2:     kernel-alpha.config
+Source3:     installkernel
 Patch0:      kernel-make.patch
 Patch1:      ftp://ftp.redhat.com/sound/patches-current/2.0.36-modular-1.test.patch.gz
 Patch2:      secure-linux-2.0.36.diff
-Requires:    initscripts >= 3.64
+Requires:    rc-scripts >= 3.64
 ExclusiveOS: Linux
-BuildRoot:   /tmp/%{name}-%{version}-root
+ExclusiveArch: i386
+BuildRoot:   /tmp/buildroot-%{name}-%{version}
 Autoreqprov: no
 Obsoletes:   kernel-modules
-ExclusiveArch: i386
 
 %description
 This package contains the Linux kernel that is used to boot and run
