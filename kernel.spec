@@ -513,7 +513,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch6 -p1
 
-%patch8 -p1
+##%patch8 -p1
 %patch10 -p1
 
 %patch12 -p1
@@ -536,9 +536,10 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch38 -p1
 
-%patch40 -p1
+# to fix
+#%patch40 -p1
 
-%patch42 -p1
+#%patch42 -p1
 
 %patch44 -p1
 %patch45 -p1
@@ -577,7 +578,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch85 -p1
 %patch86 -p1
 
-%patch90 -p1
+# to fix
+#%patch90 -p1
 
 # netfilter - extra
 %patch94 -p1
