@@ -55,7 +55,9 @@ Group(uk):	База/Ядро
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
+# Linux Tekram DC395/DC315 (TRM-S1040) SCSI driver
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-140.tar.gz
+# drivers for FORE Systems 200E-series ATM adapters
 Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
