@@ -25,7 +25,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	1.14%{?_with_preemptive:_pr}
+Release:	1.15%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -63,6 +63,7 @@ Source1666:	%{name}-grsec.config
 Source1667:	%{name}-int.config
 Source1668:	%{name}-hostap.config
 Source1669:	%{name}-konicawc.config
+Source1670:	%{name}-wrr.config
 Source1999:	%{name}-preemptive.config
 
 # New features
@@ -110,6 +111,8 @@ Patch30:	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw252_we15-5.diff
 Patch31:	linux-2.4.20-pre5-ac4-drm.patch.bz2
 Patch32:	ebtables-v2.0-rc1_vs_2.4.18.patch
 Patch33:	linux-2.4.19-pre8-konicawc.patch
+Patch34:	wrr-linux-2.4.9.patch
+Patch35:	%{name}-pswscancode.patch
 
 # Assorted bugfixes
 
@@ -557,6 +560,13 @@ echo Sysctl support for PAX nod installed.
 echo Installing Konica Support
 %patch33 -p1
 
+# WRR
+echo Installing WRR Support
+%patch34 -p1
+
+# scancode
+%patch35 -p1
+
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
@@ -634,6 +644,7 @@ BuildKernel() {
 		cat %{SOURCE1666} >> arch/%{base_arch}/defconfig
 		cat %{SOURCE1668} >> arch/%{base_arch}/defconfig
 		cat %{SOURCE1669} >> arch/%{base_arch}/defconfig
+		cat %{SOURCE1670} >> arch/%{base_arch}/defconfig
 	fi
 %ifarch i386
 	mv -f arch/%{base_arch}/defconfig arch/%{base_arch}/defconfig.orig
@@ -784,6 +795,7 @@ cat %{SOURCE1667} >> .config
 cat %{SOURCE1008} >> .config
 cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
+cat %{SOURCE1670} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
@@ -823,6 +835,7 @@ cat %{SOURCE1667} >> .config
 cat %{SOURCE1008} >> .config
 cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
+cat %{SOURCE1670} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
