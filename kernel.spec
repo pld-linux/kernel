@@ -486,7 +486,7 @@ install security/selinux/include/asm-i386/flask/*.h $RPM_BUILD_ROOT/usr/src/linu
 
 %clean
 rm -rf $RPM_BUILD_ROOT
-rm -rf $RPM_BUILD_DIR/linux-installed
+rm -rf $KERNEL_INSTALL_DIR
 
 %post
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
