@@ -77,7 +77,7 @@ Patch4:		br2684-against2.4.7.diff
 # XFS patches
 #Patch5:		ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4.4-core-xfs-1.0.patch.gz
 #Patch6:		ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4-xfs-1.0.patch.gz
-Patch6:		linux-2.4.7-pre3-xfs-20010709.patch.gz
+Patch6:		linux-2.4.7-pre6-xfs-20010717.patch.gz
 # Compressed iso9660 filesystem
 Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/filemap-2.4.4-1.diff.gz
 Patch8:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-2.4.5-pre1-8.diff.gz
@@ -109,7 +109,7 @@ Patch110:	linux-2.4.2-pcnet-parms.patch
 Patch111:	%{name}-reiser.patch
 Patch112:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.6-p1.06062001.patch.gz
 Patch113:	linux-reiserfs-rename.patch
-Patch114:	linux-via-timer.patch
+Patch114:	linux-via-fixes.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -352,7 +352,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch4 -p1
 %patch100 -p1
 #%patch5 -p1
-#%patch6 -p1 - error 
+%patch6 -p1
 %patch7 -p1
 %patch8 -p1
 %patch9 -p1
