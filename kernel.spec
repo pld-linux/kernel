@@ -9,7 +9,6 @@
 # _without_boot		- don't build BOOT kernel
 # _without_source	- don't build source
 # _without_doc		- don't build documentation package
-# _without_w4l		- don't build Win4Lin support
 #
 
 %define		patch_level	7
@@ -57,18 +56,24 @@ Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsour
 Source10:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
 #Source11:	
 Source12:	linux-2.4.20-aacraid.tar.bz2
+
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
+
 Source50:	%{name}-sparc.config
 Source51:	%{name}-sparc-smp.config
+
 Source60:	%{name}-sparc64.config
 Source61:	%{name}-sparc64-smp.config
+
 Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
+
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
-Source1000:	%{name}-lsm.config
-Source1001:	%{name}-abi.config
+
+#Source1000:
+#Source1001:
 Source1002:	%{name}-addon.config
 Source1003:	%{name}-netfilter.config
 Source1004:	%{name}-ipvs.config
@@ -241,6 +246,7 @@ Patch113:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
 #from ftp://ftp.sistina.com/pub/LVM/1.0/lvm_%{lvm_version}.tar.gz
 Patch114:	linux-2.4.20-LVM-%{lvm_version}.patch.bz2
+
 #Patch115:	ftp://ftp.kernel.org/pub/linux/kernel/people/sct/ext3/v2.4/ext3-0.9.18-2.4.19pre8.patch
 Patch116:	linux-proc_net_dev-counter-fix.patch
 Patch117:	01-sigxfs-vs-blkdev.patch
@@ -308,7 +314,7 @@ Patch900:	loop-jari-2.4.20.0.patch
 Patch901:	dc395-tab.patch
 Patch902:	linux-2.4.20-drm-Makefile.patch
 Patch903:	linux-2.4-ppc-procesor.patch
-#Patch904:
+Patch904:	linux-2.4.20-gcc33.patch
 #Patch905:
 #Patch906:	linux-2.4.20-LSM.patch.gz
 Patch907:	PPC-grsecurity-pgtable.h.patch
@@ -669,8 +675,6 @@ echo Added Device-mapper support ...
 
 %patch200 -p1
 
-#%patch905 -p1
-
 # Tekram DC395/315 U/UW SCSI host driver
 echo Adding Tekram DC395/315 driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -799,9 +803,8 @@ echo Added xattr for JFS ...
 #ptrace fix by Qboosh
 %patch105 -p1
 
-# SLM
-#echo Added LSM support...
-#%patch906 -p1
+# to fix compile on gcc-3.3
+%patch904 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
@@ -894,8 +897,6 @@ BuildKernel() {
 %ifarch athlon
 	echo "CONFIG_MK7=y" >> arch/%{base_arch}/defconfig
 %endif
-	cat %{SOURCE1000} >> arch/%{base_arch}/defconfig
-#	cat %{SOURCE1001} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1002} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1003} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1004} >> arch/%{base_arch}/defconfig
@@ -1098,8 +1099,6 @@ echo "CONFIG_M686=y" >> .config
 %ifarch athlon
 echo "CONFIG_MK7=y" >> .config
 %endif
-cat %{SOURCE1000} >> .config
-#cat %{SOURCE1001} >> .config
 cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
@@ -1158,8 +1157,6 @@ echo "CONFIG_M686=y" >> .config
 echo "CONFIG_MK7=y" >> .config
 %endif
 
-cat %{SOURCE1000} >> .config
-#cat %{SOURCE1001} >> .config
 cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
