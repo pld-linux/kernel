@@ -148,6 +148,9 @@ Patch206:	linux-2.4.20-promise-st6000.patch.bz2
 #from http://prdownloads.sourceforge.net/i810fb/linux-2.4.20-i810fb.diff.bz2
 Patch210:	linux-2.4.20-I810FB.patch.bz2
 
+#from http://sci.felk.cvut.cz/nwd/linux/nwd-patch-2.4.19
+Patch211:	nwd-2.4.20.patch
+
 # Support for CDRW packet writing
 Patch215:	%{name}-cdrw-packet.patch
 Patch216:	%{name}-cd-mrw-2.patch
@@ -605,6 +608,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch205 -p1
 %patch206 -p1
 %patch210 -p1
+%patch211 -p1
 %patch215 -p1
 %patch216 -p1
 %patch220 -p1
