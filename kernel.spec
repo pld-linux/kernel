@@ -104,7 +104,7 @@ Patch80:	linux-2.4.25-intermezzo-acl.patch
 
 # ALWAYS use released patchomatic tarball (don't use CVS)
 # DO NOT include patches from patch-o-matic/userspace since they cause iptables incompatibilities
-Patch100:       linux-2.4.23-netfilter-pom-%{netfilter_snap}.patch.gz
+Patch100:	linux-2.4.23-netfilter-pom-%{netfilter_snap}.patch.gz
 Patch101:	linux-2.4.23-netfilter-IMQ-target.patch
 # http://rnvs.informatik.uni-leipzig.de/ipp2p/index_en.html
 # http://rnvs.informatik.uni-leipzig.de/ipp2p/downloads/ipp2p-0.5a_vs_2.4.22.diff.gz
@@ -200,7 +200,7 @@ Patch1010:	jam-30-smptimers-A0.patch
 Patch1102:	linux-2.4.20-lvm-updates.patch
 
 # IrDA patch for broken IBM Latpops
-Patch1104:      linux-2.4.21-irda-ibm.patch
+Patch1104:	linux-2.4.21-irda-ibm.patch
 
 # fix lun probing on multilun RAID chassis
 Patch1105:	linux-2.4.12-scsi_scan.patch
@@ -923,13 +923,13 @@ BuildKernel() {
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
 %ifarch sparc
-        sparc32 %{__make} modules_install \
-     	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
+	sparc32 %{__make} modules_install \
+	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 	KERNELRELEASE=$KernelVer
 	echo KERNEL RELEASE $KernelVer
 %else
-        %{__make} modules_install \
-     	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
+	%{__make} modules_install \
+	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 	KERNELRELEASE=$KernelVer
 	echo KERNEL RELEASE $KernelVer
 %endif
