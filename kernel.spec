@@ -10,7 +10,7 @@
 # _without_up		- don't build UP kernel
 #
 %define		test_build		0
-%define		krelease		2.40
+%define		krelease		2.41
 #
 %define base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 #
@@ -213,6 +213,9 @@ Patch913:	linux-o1-sched-abi.patch
 Patch914:	linux-o1-sched-pre.patch
 Patch915:	linux-o1-sched-post.patch
 Patch916:	linux-o1-sched-evms.patch
+
+# DRM (note that this doesn't fix drm when running on 386 or 486 CPU!)
+Patch950:	linux-drm-%{drm_xfree_version}-force-cmpxchg.patch
 
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
@@ -597,6 +600,9 @@ echo "Scheduler din't work on ARCH diffetern than Intel x86"
 %patch904 -p0
 
 # XFree DRM
+%ifarch %{ix86}
+%patch950 -p0
+%endif
 rm -rf drivers/char/drm
 cp -f drm/Makefile.kernel drm/Makefile
 mv -f drm drivers/char
