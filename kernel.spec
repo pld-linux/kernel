@@ -550,7 +550,7 @@ BuildKernel() {
 	fi
 %ifarch i386
 	mv -f arch/$RPM_ARCH/defconfig arch/$RPM_ARCH/defconfig.orig
-	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/'
+	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
 		arch/$RPM_ARCH/defconfig.orig > arch/$RPM_ARCH/defconfig
 %endif
 
