@@ -1282,15 +1282,15 @@ diff -Naur linux/fs/ext2/file.c linux-p/fs/ext2/file.c
 -	/* If the fd's pos is already greater than or equal to the file
 -	 * descriptor's offset maximum, then we need to return EFBIG for
 -	 * any non-zero count (and we already tested for zero above). */
--	if (((unsigned) pos) >= 0x7FFFFFFFUL)
+-	if (((unsigned long) pos) >= 0x7FFFFFFFUL)
 -		return -EFBIG;
 -	
 -	/* If we are about to overflow the maximum file size, we also
 -	 * need to return the error, but only if no bytes can be written
 -	 * successfully. */
--	if (((unsigned) pos + count) > 0x7FFFFFFFUL) {
+-	if (((unsigned long) pos + count) > 0x7FFFFFFFUL) {
 -		count = 0x7FFFFFFFL - pos;
--		if (((signed) count) < 0)
+-		if (((ssize_t) count) < 0)
 +  	/* L-F-S spec 2.2.1.27: */
 +  	if (!(filp->f_flags & O_LARGEFILE)) {
 +  		if (pos >= 0x7fffffffULL) /* pos@2G forbidden */
@@ -1304,7 +1304,7 @@ diff -Naur linux/fs/ext2/file.c linux-p/fs/ext2/file.c
 +
  	{
 -		off_t max = ext2_max_sizes[EXT2_BLOCK_SIZE_BITS(sb)];
-+  		loff_t max = ext2_max_sizes[EXT2_BLOCK_SIZE_BITS(sb)];
++		loff_t max = ext2_max_sizes[EXT2_BLOCK_SIZE_BITS(sb)];
  
  		if (pos >= max)
  			return -EFBIG;
@@ -1313,9 +1313,9 @@ diff -Naur linux/fs/ext2/file.c linux-p/fs/ext2/file.c
  
  	limit = current->rlim[RLIMIT_FSIZE].rlim_cur;
 -	if (limit < RLIM_INFINITY) {
--		if (((unsigned) pos+count) >= limit) {
+-		if (((unsigned long) pos + count) >= limit) {
 -			count = limit - pos;
--			if (((signed) count) <= 0) {
+-			if (((ssize_t) count) <= 0) {
 -				send_sig(SIGXFSZ, current, 0);
 -				return -EFBIG;
 -			}
@@ -1329,10 +1329,11 @@ diff -Naur linux/fs/ext2/file.c linux-p/fs/ext2/file.c
  	}
  
  	/*
-@@ -382,15 +360,3 @@
+@@ -381,16 +359,3 @@
+ 		ext2_discard_prealloc (inode);
  	return 0;
  }
- 
+-
 -#if BITS_PER_LONG < 64
 -/*
 - * Called when an inode is about to be open.
