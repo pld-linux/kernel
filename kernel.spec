@@ -27,8 +27,6 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1
-%define		_rc		0
 %define		_cset		20040116_0629
 
 ## netfilter snap 
@@ -48,29 +46,11 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.6.1
-%if "%{_rc}" != "0"
-%if "%{_cset}" != "0"
-Release:	0.rc%{_rc}.%{_rel}.cset%{_cset}
-%else
-Release:	0.rc%{_rc}.%{_rel}
-%endif
-%else
-%if "%{_cset}" != "0"
-Release:	%{_rel}.cset%{_cset}
-%else
-Release:	%{_rel}
-%endif
-%endif
-
-Epoch:		2
+Release:	0.1
+Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-#%%if "%{_rc}" != "0"
-#%[C%define		_kernel_location	testing/linux-%{version}-rc%{_rc}.tar.bz2
-#%%else
-%define		_kernel_location	linux-%{version}.tar.bz2
-#%%endif
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/%{_kernel_location}
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
 # Source0-md5:	fa82d1e4be518261b2eeb78eabf9cca7
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
@@ -507,11 +487,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%if "%{_rc}" != "0"
-%setup -q -n linux-%{version}-rc%{_rc}
-%else
 %setup -q -n linux-%{version}
-%endif
 
 %patch0 -p1
 %if "%{_cset}" != "0"
