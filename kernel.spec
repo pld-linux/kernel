@@ -26,8 +26,10 @@
 %define		netfilter_snap		20030616
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
+Summary(es):	Núcleo (Kernel) linux genérico
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
+Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.21
 Release:	1.2
@@ -337,6 +339,12 @@ Linux-Betriebssystems. Der Kernel ist für grundliegende
 Systemfunktionen verantwortlich: Speicherreservierung,
 Prozeß-Management, Geräte Ein- und Ausgaben, usw.
 
+%description -l es
+Este paquete contiene núcleo (kernel) Linux que se usa para arranque y
+funcionamiento de tu sistema. Contiene soporte a pocos hardwares
+específicos. La mayoría de los hardwares son soportados, vía módulos
+que se cargan después del arranque.
+
 %description -l fr
 Le package kernel contient le kernel linux (vmlinuz), la partie
 centrale d'un système d'exploitation Linux. Le noyau traite les
@@ -348,11 +356,19 @@ Pakiet zawiera j±dro Linuksa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takich jak karty muzyczne, sterowniki dysków, etc.
 
+%description -l pt_BR
+Este pacote contém o kernel Linux que é usado para inicialização
+e funcionamento de seu sistema. Contém suporte a poucos hardwares
+específicos. A maioria dos hardwares são suportados via módulos
+que são carregados após a inicialização.
+
 %package smp
 Summary:	Kernel version %{version} compiled for SMP machines
 Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
+Summary(es):	Núcleo (kernel) compilado para máquinas SMP
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
 Summary(pl):	J±dro Linuksa %{version} skompilowane dla maszyn wieloprocesorowych
+Summary(pt_BR):	Kernel compilado para máquinas SMP
 Group:		Base/Kernel
 Provides:	%{name}-smp = %{version}-%{release}
 Provides:	module-info
@@ -390,6 +406,9 @@ Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
 Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
 CPU laufen.
 
+%description smp -l es
+Núcleo (kernel) compilado para máquinas SMP
+
 %description smp -l fr
 Ce package inclu une version SMP du noyau de Linux version %{version}.
 Il et nécessaire seulement pour les machine avec deux processeurs ou
@@ -400,11 +419,18 @@ Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono
 wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
 Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
 
+%description smp -l pt_BR
+Este pacote inclui uma versão SMP do kernel Linux versão %{version}.
+Ele deve ser utilizado apenas em máquinas com dois ou mais processadores,
+apesar de trabalhar perfeitamente em máquinas com apenas um processador.
+
 %package BOOT
 Summary:	Kernel version %{version} used on the installation boot disks
 Summary(de):	Kernel version %{version} für Installationsdisketten
+Summary(es):	Núcleo (kernel) de Linux, utilizado en el disco de instalación
 Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation
 Summary(pl):	J±dro Linuksa %{version} dla bootkietek instalacyjnych
+Summary(pt_BR):	Kernel Linux utilizado no disco de instalação
 Group:		Base/Kernel
 Prereq:		modutils
 Autoreqprov:	no
@@ -422,11 +448,20 @@ Installations-Bootdisketten benutzt und sollte nicht auf einem
 installierten System verwendet werden, da viele Funktionen wegen der
 Platzprobleme abgeschaltet sind.
 
+%description BOOT -l es
+Núcleo (kernel) de Linux, utilizado en el disco de instalación
+
 %description BOOT -l pl
 Pakiet zawiera j±dro Linuksa dedykowane dyskietkom startowym i powinno
 byæ u¿ywane jedynie podczas instalacji systemu. Wiele u¿ytecznych
 opcji zosta³o wy³±czonych, aby jak najbardziej zmniejszyæ jego
 rozmiar.
+
+%description BOOT -l pt_BR
+Este pacote inclui uma versão minimizada do kernel Linux, criada para
+ser utilizada *apenas* no disco de instalação, e não deve ser utilizada
+em máquinas já instaladas, pois várias características do kernel
+são desabilitadas para diminuir o tamanho final do kernel a ser utilizado.
 
 %package pcmcia-cs
 Summary:	PCMCIA-CS modules
@@ -486,7 +521,9 @@ Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
 
 %package headers
 Summary:	Header files for the Linux kernel
+Summary(es):	Archivos de inclusión para núcleo (kernel) Linux.
 Summary(pl):	Pliki nag³ówkowe j±dra
+Summary(pt_BR):	Arquivos de inclusão para o kernel Linux.
 Group:		Base/Kernel
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
@@ -500,13 +537,27 @@ These are the C header files for the Linux kernel, which define
 structures and constants that are needed when building most standard
 programs under Linux, as well as to rebuild the kernel.
 
+%description headers -l es
+Estos son los archivos de inclusión C para núcleo (kernel) Linux, que define
+estructuras y constantes que son necesarias a la construcción de la
+mayoría de los programas en el Linux, como también para reconstruir
+el núcleo (kernel).
+
 %description headers -l pl
 Pakiet zawiera pliki nag³ówkowe j±dra, niezbêdne do rekompilacji j±dra
 oraz niektórych programów.
 
+%description headers -l pt_BR
+Estes são os arquivos de inclusão C para o kernel Linux, os
+quais definem estruturas e constantes que são necessárias para
+a construção da maioria dos programas no Linux, bem como para
+reconstruir o próprio kernel.
+
 %package source
 Summary:	Kernel source tree
+Summary(es):	Fuentes del núcleo (kernel) Linux
 Summary(pl):	Kod ¼ród³owy j±dra Linuksa
+Summary(pt_BR):	Fontes do kernel Linux
 Group:		Base/Kernel
 Autoreqprov:	no
 Requires:	%{name}-headers = %{version}-%{release}
@@ -528,6 +579,13 @@ im Kernel-Source definiert sind. Die Source-Dateien können auch
 benutzt werden, um einen Kernel zu compilieren, der besser auf Ihre
 Hardware ausgerichtet ist.
 
+%description source -l es
+Este es el fuente para el núcleo (kernel) Linux. Se necesita para la
+construcción de la mayoría de los programas C, pues dependen de
+constantes definidas en él. Tu puedes también construir un núcleo (kernel)
+personalizado que será lo mejor configurado para tu hardware en
+particular.
+
 %description source -l fr
 Le package pour le kernel-source contient le code source pour le noyau
 linux. Ces sources sont nécessaires pour compiler la plupart des
@@ -539,9 +597,17 @@ particuliers.
 %description source -l pl
 Pakiet zawiera kod ¼ród³owy j±dra systemu.
 
+%description source -l pt_BR
+Este é o fonte para o kernel Linux. É necessário para a
+construção da maioria dos programas C, pois eles dependem de
+constantes definidas nele. Você também pode construir um kernel
+personalizado que será melhor configurado para seu hardware particular.
+
 %package doc
 Summary:	Kernel documentation
+Summary(es):	Documentación para los archivos fuente del núcleo (kernel) de Linux
 Summary(pl):	Dokumentacja do j±dra Linuksa
+Summary(pt_BR):	Documentação para os arquivos fontes do kernel Linux
 Group:		Base/Kernel
 Provides:	%{name}-doc = %{version}
 Autoreqprov:	no
@@ -550,9 +616,15 @@ Autoreqprov:	no
 This is the documentation for the Linux kernel, as found in
 /usr/src/linux/Documentation directory.
 
+%description doc -l es
+Documentación para los archivos fuente del núcleo (kernel) de Linux
+
 %description doc -l pl
 Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
+
+%description doc -l pt_BR
+Este pacote contém documentação para o kernel Linux.
 
 %prep
 %setup -q -a3 -a8 -a9 -n linux-%{version}
