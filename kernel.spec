@@ -76,6 +76,8 @@ Source2000:	%{name}-win4lin.config
 Patch0:		%{name}-pldfblogo.patch
 # from ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/testing/
 Patch5:		linux-do_brk-bound-check.patch
+Patch6:		linux-2.4-do_mremap.patch
+Patch7:		linux-2.4-rtc.patch
 
 Patch10:	patch-int-2.4.20.1.bz2
 Patch11:	loop-jari-2.4.21.0.patch
@@ -669,6 +671,8 @@ bzip2 -dc %{SOURCE10} | tar -xf - -C drivers/scsi/
 cp -f drm/*.{c,h} drivers/char/drm/
 %patch0 -p1
 %patch5 -p1
+%patch6 -p1
+%patch7 -p1
 %patch10 -p1
 %patch11 -p1
 %patch12 -p1
