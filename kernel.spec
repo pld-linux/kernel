@@ -46,7 +46,7 @@ Patch3:		linux-ipv6-addrconf.patch
 Patch4:		%{name}-3c90x.patch
 Patch5:		linux-ipv6-glibc2.2.patch
 Patch6:		http://milosch.net/pub/beos/2.2.18-pre2-beos09032000.patch
-Patch7:		/%{name}-autoraidraid.patch
+Patch7:		%{name}-autoraidraid.patch
 Patch8:		ftp://ftp.reiserfs.org/linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
 Patch9: 	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.18/ide.2.2.18.1221.patch.gz
 Patch10:	http://www.math.leidenuniv.nl/~buytenh/bridge/patches/bridge-0.0.9-against-2.2.18.diff
@@ -59,8 +59,8 @@ Patch15:	%{name}-ipvs-1.0.3-2.2.18.patch
 # based on ftp://ftp.kernel.org/pub/linux/kernel/people/sct/raw-io/kiobuf-2.2.18pre24.tar.gz
 Patch16:	linux-raw.patch
 Patch17:	linux-i815-support.patch
-Patch18:	/%{name}-ide-geometry.patch
-Patch19:	/%{name}-pcmcia.patch
+Patch18:	%{name}-ide-geometry.patch
+Patch19:	%{name}-pcmcia.patch
 Patch20:	linux-sparc_ide_fix.patch
 Patch21:	%{name}-Config.in-CONFIG_AMIGA_PARTITION.patch
 Patch22:	%{name}-sysctl_security_fix.patch
