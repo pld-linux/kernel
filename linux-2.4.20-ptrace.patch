@@ -1,0 +1,20 @@
+--- linux-2.4.20/kernel/ptrace.c.org	Fri Apr 18 22:12:31 2003
++++ linux-2.4.20/kernel/ptrace.c	Wed Apr 23 13:20:01 2003
+@@ -22,7 +22,7 @@
+ int ptrace_check_attach(struct task_struct *child, int kill)
+ {
+ 	mb();
+-	if (!is_dumpable(child))
++	if (!child->!task_dumpable)
+ 		return -EPERM;
+ 
+ 	if (!(child->ptrace & PT_PTRACED))
+@@ -140,7 +140,7 @@
+ 	/* Worry about races with exit() */
+ 	task_lock(tsk);
+ 	mm = tsk->mm;
+-	if (!is_dumpable(tsk) || (&init_mm == mm))
++	if (!tsk->task_dumpable || (&init_mm == mm))
+ 		mm = NULL;
+ 	if (mm)
+ 		atomic_inc(&mm->mm_users);
