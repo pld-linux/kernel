@@ -487,7 +487,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}
+%setup -q -n linux-%{version}-rc1
 
 %patch0 -p1
 %if "%{_cset}" != "0"
@@ -552,7 +552,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 #%%patch64 -p1
 #%%patch65 -p1
 
-%patch68 -p1
+#%%patch68 -p1
 
 %patch70 -p1
 
