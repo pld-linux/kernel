@@ -1,0 +1,127 @@
+diff -urNp linux-890/arch/i386/mm/fault.c linux-900/arch/i386/mm/fault.c
+--- linux-890/arch/i386/mm/fault.c	
++++ linux-900/arch/i386/mm/fault.c	
+@@ -178,9 +178,10 @@ asmlinkage void do_page_fault(struct pt_
+ 	 * If we're in an interrupt or have no user
+ 	 * context, we must not take the fault..
+ 	 */
+-	if (in_interrupt() || !mm)
+-		goto no_context;
++	if (tsk->in_page_fault || in_interrupt() || !mm)
++		goto must_oops;
+ 
++	tsk->in_page_fault = 1;
+ 	down_read(&mm->mmap_sem);
+ 
+ 	vma = find_vma(mm, address);
+@@ -256,6 +257,7 @@ good_area:
+ 			tsk->thread.screen_bitmap |= 1 << bit;
+ 	}
+ 	up_read(&mm->mmap_sem);
++	tsk->in_page_fault = 0;
+ 	return;
+ 
+ /*
+@@ -264,6 +266,7 @@ good_area:
+  */
+ bad_area:
+ 	up_read(&mm->mmap_sem);
++	tsk->in_page_fault = 0;
+ 
+ 	/* User mode accesses just cause a SIGSEGV */
+ 	if (error_code & 4) {
+@@ -304,6 +307,7 @@ no_context:
+  * terminate things with extreme prejudice.
+  */
+ 
++must_oops:
+ 	bust_spinlocks(1);
+ 
+ 	if (address < PAGE_SIZE)
+@@ -336,6 +340,7 @@ out_of_memory:
+ 		goto survive;
+ 	}
+ 	up_read(&mm->mmap_sem);
++	tsk->in_page_fault = 0;
+ 	printk("VM: killing process %s\n", tsk->comm);
+ 	if (error_code & 4)
+ 		do_exit(SIGKILL);
+@@ -343,6 +348,7 @@ out_of_memory:
+ 
+ do_sigbus:
+ 	up_read(&mm->mmap_sem);
++	tsk->in_page_fault = 0;
+ 
+ 	/*
+ 	 * Send a sigbus, regardless of whether we were in kernel
+diff -urNp linux-890/arch/x86_64/mm/fault.c linux-900/arch/x86_64/mm/fault.c
+--- linux-890/arch/x86_64/mm/fault.c	
++++ linux-900/arch/x86_64/mm/fault.c	
+@@ -141,10 +141,11 @@ asmlinkage void do_page_fault(struct pt_
+ 	 * If we're in an interrupt or have no user
+ 	 * context, we must not take the fault..
+ 	 */
+-	if (in_interrupt() || !mm)
+-		goto no_context;
++	if (tsk->in_page_fault || in_interrupt() || !mm)
++		goto must_oops;
+ 
+ again:
++	tsk->in_page_fault = 1;
+ 	down_read(&mm->mmap_sem);
+ 
+ 	vma = find_vma(mm, address);
+@@ -202,6 +203,7 @@ good_area:
+ 	}
+ 
+ 	up_read(&mm->mmap_sem);
++	tsk->in_page_fault = 0;
+ 	return;
+ 
+ /*
+@@ -210,6 +212,7 @@ good_area:
+  */
+ bad_area:
+ 	up_read(&mm->mmap_sem);
++	tsk->in_page_fault = 0;
+ 
+ bad_area_nosemaphore:
+ 
+@@ -248,6 +251,7 @@ no_context:
+  * terminate things with extreme prejudice.
+  */
+ 
++must_oops:
+ 	console_verbose();
+ 	bust_spinlocks(1); 
+ 
+@@ -269,7 +273,8 @@ no_context:
+  */
+ out_of_memory:
+ 	up_read(&mm->mmap_sem);
+-	if (current->pid == 1) { 
++	tsk->in_page_fault = 0;
++	if (tsk->pid == 1) { 
+ 		tsk->policy |= SCHED_YIELD;
+ 		schedule();
+ 		goto again;
+@@ -281,6 +286,7 @@ out_of_memory:
+ 
+ do_sigbus:
+ 	up_read(&mm->mmap_sem);
++	tsk->in_page_fault = 0;
+ 
+ 	/*
+ 	 * Send a sigbus, regardless of whether we were in kernel
+diff -urNp linux-890/include/linux/sched.h linux-900/include/linux/sched.h
+--- linux-890/include/linux/sched.h	
++++ linux-900/include/linux/sched.h	
+@@ -339,7 +339,7 @@ struct task_struct {
+ 	int pdeath_signal;  /*  The signal sent when the parent dies  */
+ 	/* ??? */
+ 	unsigned long personality;
+-	int did_exec:1;
++	int did_exec:1, in_page_fault:1;
+ 	pid_t pid;
+ 	pid_t pgrp;
+ 	pid_t tty_old_pgrp;
