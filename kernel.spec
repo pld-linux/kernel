@@ -29,7 +29,7 @@ Source19:	kernel-i686-smp.config
 #Source27:	kernel-alpha.config
 #Source28:	kernel-alpha-smp.config
 #Source29:	kernel-alpha-BOOT.config
-Source30:	ftp://ftp.openwall.com/linux/linux-2.2.13-ow1.tar.gz
+Source30:	ftp://ftp.openwall.com/linux/linux-2.2.14-ow1.tar.gz
 Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.13.3.gz
 Patch1:		ftp://ftp.botik.ru/rented/namesys/ftp/pub/linux+reiserfs/linux-2.2.14-reiserfs-3.5.16-patch.gz
 Patch2:		linux-2.2.14-atm-0.59-fore200e-0.1e.patch.gz
