@@ -143,7 +143,7 @@ Patch21:	linux-2.4.20-promise.patch.bz2
 Patch22:	linux-2.4.20-promise-st6000.patch.bz2
 
 # from ftp://ftp.lsil.com/pub/symchips/scsi/FusionMPT/Linux/2.03.00/mptlinux-2.03.00-src.tar.gz
-Patch23:	linux-2.4.20-mptlinux-2.3.00.patch.bz2
+Patch23:	linux-2.4.20-mptlinux-2.03.00.patch.bz2
 
 # from MDK kernel DV08__i810fb.patch
 Patch24:	linux-2.4.20-I810FB.patch.bz2
