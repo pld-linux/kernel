@@ -1179,7 +1179,11 @@ fi
 %{_prefix}/src/linux-%{version}/arch/*/kernel/sigframe.h
 %dir %{_prefix}/src/linux-%{version}/scripts
 %{_prefix}/src/linux-%{version}/scripts/Makefile*
+%{_prefix}/src/linux-%{version}/scripts/*/Makefile*
+%{_prefix}/src/linux-%{version}/scripts/*/*.l
+%{_prefix}/src/linux-%{version}/scripts/*/*.c
 %{_prefix}/src/linux-%{version}/scripts/*.c
+%{_prefix}/src/linux-%{version}/scripts/*/*.h
 %{_prefix}/src/linux-%{version}/scripts/*.h
 %{_prefix}/src/linux-%{version}/scripts/*.sh
 
@@ -1206,7 +1210,11 @@ fi
 %{_prefix}/src/linux-%{version}/net
 %{_prefix}/src/linux-%{version}/scripts/*
 %exclude %{_prefix}/src/linux-%{version}/scripts/Makefile*
+%exclude %{_prefix}/src/linux-%{version}/scripts/*/Makefile*
+%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.c
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.c
+%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.l
+%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.h
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.h
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.sh
 %{_prefix}/src/linux-%{version}/sound
