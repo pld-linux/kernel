@@ -10,7 +10,7 @@
 # _without_up		- don't build UP kernel
 #
 %define		test_build		0
-%define		krelease		3
+%define		krelease		3.01
 #
 %define base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 #
@@ -757,35 +757,27 @@ BuildKernel() {
 	# is this a special kernel we want to build?
 	BOOT=
 	smp=
-	if [ -n "$1" ] ; then
-		if [ "$1" = "BOOT" ] ; then
-			BOOT=yes
-		fi
-		if [ "$1" = "smp" ] ; then
-			smp=yes
-		fi
+	[ "$1" = "BOOT" -o "$2" = "BOOT" ] && BOOT=yes
+	[ "$1" = "smp" -o "$2" = "smp" ] && smp=yes
 %ifarch %{ix86}
-	if [ "$smp" ]; then
-		Config="ia32"-$1
-	fi
-%else
-	if [ "$smp" ]; then
-		Config="%{_target_cpu}"-$1
-	fi
-%endif
+	if [ "$smp" = "yes" ]; then
+		Config="ia32-smp"
 	else
-%ifarch %{ix86}
 		Config="ia32"
+	fi
 %else
-		Config="%{_target_cpu}"
-%endif
-	fi
-	if [ "$BOOT" ]; then
-	KernelVer=%{version}-%{release}BOOT
+	if [ "$smp" = "yes" ]; then
+		Config="%{_target_cpu}-smp"
 	else
-	KernelVer=%{version}-%{release}$1
+		Config="%{_target_cpu}"
 	fi
-	echo BUILDING THE NORMAL KERNEL $1...
+%endif
+	if [ "$BOOT" = "yes" ]; then
+		KernelVer=%{version}-%{release}BOOT
+	else
+		KernelVer=%{version}-%{release}$1
+	fi
+	echo "BUILDING THE NORMAL KERNEL $*..."
 :> arch/%{base_arch}/defconfig
 	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/%{base_arch}/defconfig
 %ifarch i386
@@ -820,7 +812,7 @@ BuildKernel() {
 	echo "CONFIG_ACPI_CMBATT=m" >> arch/%{base_arch}/defconfig
 	echo "CONFIG_ACPI_THERMAL=m" >> arch/%{base_arch}/defconfig
 %endif
-	if [ "$BOOT" ] ; then
+	if [ "$BOOT" = "yes" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_CRYPTO is not set" >> arch/%{base_arch}/defconfig
 		echo "CONFIG_ROMFS_FS=y" >> arch/%{base_arch}/defconfig
