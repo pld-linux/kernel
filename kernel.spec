@@ -9,7 +9,7 @@
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 #
-%define		krelease		5.902
+%define		krelease		5.903
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -77,10 +77,11 @@ Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
-Source1001:	%{name}-abi.config
+#Source1001:	%{name}-abi.config
 Source1002:	%{name}-addon.config
 Source1003:	%{name}-netfilter.config
 Source1004:	%{name}-ipvs.config
+Source1005:	%{name}-evms.config
 Source1666:	%{name}-grsec.config
 Source1667:	%{name}-int.config
 Source1999:	%{name}-preemptive.config
@@ -455,8 +456,6 @@ Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
 Provides:	i2c-devel = 2.6.1
-# From unstable ...
-#Provides:	%{name}_netfilter = 1.2.7
 Autoreqprov:	no
 
 %description headers
@@ -828,6 +827,7 @@ BuildKernel() {
 	cat %{SOURCE1002} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1003} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1004} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1005} >> arch/%{base_arch}/defconfig
 	%{?_with_preemptive:cat %{SOURCE1999} >> arch/%{base_arch}/defconfig}
 
 %if %{?_with_acpi:1}%{!?_with_acpi:0}
@@ -989,6 +989,7 @@ cat %{SOURCE1001} >> .config
 cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
+cat %{SOURCE1005} >> .config
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
 %{?_with_preemptive:cat %{SOURCE1999} >> .config}
@@ -1019,6 +1020,7 @@ cat %{SOURCE1001} >> .config
 cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
+cat %{SOURCE1005} >> .config
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
 %{?_with_preemptive:cat %{SOURCE1999} >> .config}
