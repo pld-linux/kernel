@@ -699,7 +699,6 @@ BuildConfig (){
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
 	%{__make} $CrossOpts include/linux/autoconf.h
-	%{__make} $CrossOpts include/linux/version.h
 	if [ "$smp" = "yes" ]; then
 		install include/linux/autoconf.h \
 			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
@@ -727,6 +726,8 @@ BuildKernel() {
 	%{__make} $CrossOpts clean \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 %endif
+	%{__make} $CrossOpts include/linux/version.h \
+		%{?with_verbose:V=1}
 
 # make does vmlinux, modules and bzImage at once
 %ifarch sparc sparc64
@@ -875,6 +876,7 @@ $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 %endif
 
 %{__make} $CrossOpts mrproper
+%{__make} $CrossOpts include/linux/version.h
 install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
 
 %clean
