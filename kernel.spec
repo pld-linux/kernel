@@ -111,49 +111,58 @@ Patch6:		linux-2.4.20-no-FPU.patch
 
 # -> grsecurity and other security 
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
-Patch10:		grsecurity-%{grsec_version}-%{version}.patch.gz
-Patch11:		linux-2.4.20-ptrace.patch
-Patch12:		linux-2.4.20-nogrsec.patch
-Patch13:		linux-2.4.20-grsecurity-1.9.9e-kmem.patch
-#Patch14:		PPC-grsecurity-pgtable.h.patch
+Patch10:	grsecurity-%{grsec_version}-%{version}.patch.gz
+#made by Qboosh
+Patch11:	linux-2.4.20-ptrace.patch
+Patch12:	linux-2.4.20-nogrsec.patch
+Patch13:	linux-2.4.20-grsecurity-1.9.9e-kmem.patch
+#Patch14:	PPC-grsecurity-pgtable.h.patch
 
 #from: ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
-Patch17:		linux-2.4-freeswan-%{freeswan_version}.patch.gz
+Patch17:	linux-2.4-freeswan-%{freeswan_version}.patch.gz
 
 # -> New filesystems.
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/Release-1.2pre5/kernel_patches/
-Patch20:	linux-2.4.20-core-xfs-1.2.0.patch.bz2
-Patch21:	linux-2.4.20-xfs-1.2.0.patch.bz2
+Patch20:	linux-2.4.20-xfs-1.2.0.patch.gz
+
 # http://unc.dl.sourceforge.net/sourceforge/linux-ntfs/
-Patch22:	linux-2.4.20-ntfs-%{ntfs_version}.patch.gz
+Patch21:	linux-2.4.20-ntfs-%{ntfs_version}.patch.gz
+
 #from: 	http://dl.sourceforge.net/linux-hfsplus/hfsplus-patch-20020606.patch
-Patch23:	hfsplus-20020606.patch.bz2
+Patch22:	hfsplus-20020606.patch.bz2
+
 # from http://people.sistina.com/~thornber/patches/2.4-stable/2.4.20/2.4.20-dm-10.tar.bz2
-Patch24:	linux-2.4.20-dm-10.patch.gz
+Patch23:	linux-2.4.20-dm-10.patch.gz
 # EVMS support (http://www.sourceforge.net/projects/evms/)
-Patch25:	linux-2.4.20-evms-%{evms_version}.patch.gz
+Patch24:	linux-2.4.20-evms-%{evms_version}.patch.gz
+
 # from MDK kernel
-# FC01_davfs_0.2.4.patch
-Patch26:	linux-2.4.20-davfs-0.2.4.patch.bz2
+# davfs2-0.2.1.tar.gz
+Patch25:	linux-2.4.20-davfs-0.2.4.patch.bz2
 # FC02_davfs__FUNCTION__.patch
-Patch27:	linux-2.4.20-davfs-fix.patch
-Patch28:	linux-2.4.20-afs.patch.bz2
+Patch26:	linux-2.4.20-davfs-fix.patch
+
+Patch27:	linux-2.4.20-afs.patch.bz2
+
 # from http://acl.bestbits.at/
-Patch29:	linux-2.4.20-ACL-%{ACL_version}.patch.bz2
-Patch30:	jfs-2.4.20.patch
-Patch31:	linux-2.4.20-squashfs.patch
+Patch28:	linux-2.4.20-ACL-%{ACL_version}.patch.gz
+
+Patch29:	jfs-2.4.20.patch
 
 # from http://www-124.ibm.com/developerworks/oss/jfs/
 # JFS for Linux [patch ID 399]
-Patch32:	linux-2.4.20-jfs-1.1.2-xattr.patch.gz
+Patch30:	linux-2.4.20-jfs-1.1.2-xattr.patch.gz
+
+Patch31:	linux-2.4.20-squashfs.patch
+
+# quota for reiserfs
+Patch32:	linux-2.4.20-reiserfs-quota.patch.bz2
+
+Patch33:	linux-2.4.20-ext3.patch
+
 # Created from lvm.tgz:LVM/PATCHES by doing make
 #from ftp://ftp.sistina.com/pub/LVM/1.0/lvm_%{lvm_version}.tar.gz
-Patch33:	linux-2.4.20-LVM-%{lvm_version}.patch.bz2
-# quota for reiserfs
-Patch34:	linux-2.4.20-reiserfs-quota.patch.bz2
-Patch35:	linux-2.4.20-ext3.patch
-#Patch36:	linux-2.4.20-ntfs.patch
-
+#Patch33:	linux-2.4.20-LVM-%{lvm_version}.patch.bz2
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -439,24 +448,57 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %prep
 %setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -n linux-%{version}
 %patch0 -p1
+
+## Crypto
 %patch1 -p1
 %patch2 -p1
 
+## general bugfix
 %patch5 -p1
 %patch6 -p1
 
+##grsecurity and other sec.
 %patch10 -p1
 #ptrace fix by Qboosh
 %patch11 -p1
 %{?_without_grsec:%patch12 -p1}
 # sysctl controll of /dev/mem
-echo Sysctl controll access to /dev/kmem 
 %patch13 -p1 
 #%ifarch ppc
 #%patch14 -p1
 #%endif
 
 %patch17 -p1
+
+
+## filesystems
+#XFS
+%patch20 -p1
+#NTFS
+%patch21 -p1
+#HFS+
+%patch22 -p1
+#DM
+%patch23 -p1
+#EVMS
+%patch24 -p1
+#DavFS
+%patch25 -p1
+#fix for davfs
+%patch26 -p1
+#ACL
+%patch28 -p1
+#jfs
+%patch29 -p1
+#xattr for jfs
+%patch30 -p1
+#squashfs
+%patch31 -p1
+#quota for reiserfs
+%patch32 -p1
+#ext3
+%patch33 -p1
+
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
