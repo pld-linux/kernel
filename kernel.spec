@@ -38,7 +38,7 @@ Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
 
 Patch1:		%{name}-net_divert.patch
-Patch2:		%{name}-initrd.patch
+Patch2:		linux-setup_per_cpus.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -180,6 +180,7 @@ BuildKernel() {
 		KernelVer=%{version}-%{release}
 		echo BUILDING THE NORMAL KERNEL...
 	fi
+	rm -Rf arch/$RPM_ARCH/defconfig
 	:> arch/$RPM_ARCH/defconfig
 	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/$RPM_ARCH/defconfig
 	%{__make} mrproper
