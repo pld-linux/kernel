@@ -1,3 +1,6 @@
+
+# SECURITY: CAN-2004-0814
+
 %define		ow_version		2.2.25-ow1
 %define		pcmcia_version		3.1.30
 %define		freeswan_version	2.00
