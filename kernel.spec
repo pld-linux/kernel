@@ -208,7 +208,7 @@ BuildRequires:	automake
 %endif
 Autoreqprov:	no
 
-%define		_kernelsrcdir	/usr/include/linux-%{version}
+%define		_kernelsrcdir	/usr/src/linux-%{version}
 
 %description
 This package contains the Linux kernel that is used to boot and run
