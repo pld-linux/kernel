@@ -468,6 +468,10 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch900 -p1
 %patch2 -p1
 %patch3 -p1
+%ifarch ppc
+%patch908 -p1
+%endif
+
 %patch4 -p1
 %patch5 -p1
 %patch904 -p1
@@ -477,8 +481,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %endif
 %{?_with_preemptive:echo Installing Preemptible patch}
 %{?_with_preemptive:%patch8 -p1}
-#%patch9 -p1
-#%patch10 -p1
+%patch9 -p1
+%patch10 -p1
 %patch11 -p1
 %patch12 -p1
 %patch13 -p1
@@ -560,7 +564,6 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 #patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020427-linux-2.4.18.diff
 
 %ifarch ppc
-%patch908 -p1
 %patch909 -p1
 %endif
 
