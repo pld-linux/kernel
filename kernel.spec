@@ -16,6 +16,7 @@
 %define		sym_ncr_version		sym-1.7.3-ncr-3.4.3
 %define		vlan_version		1.0.1
 %define		IPperson_version	20010703-2.4.5
+%define		grsec_version		1.5-2.4.7
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -86,7 +87,7 @@ Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-2.4.5-pre1-8.di
 Patch8:		linux-abi-2.4.3-PLD.patch
 Patch9:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
-Patch10:	linux-grsecurity-1.4-PLD-2.4.7-pre6.patch
+Patch10:	linux-grsecurity-%{grsec_version}.patch
 # Linux Compressed cache
 Patch11:	http://prdownloads.sourceforge.net/linuxcompressed/patch-comp-cache-2.4.6-0.17.bz2
 
@@ -392,7 +393,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
-%patch9 -p1
+#%patch9 -p1
 %if%{?_with_grsec:1}%{!?_with_grsec:0}
 %patch10 -p1
 %endif
