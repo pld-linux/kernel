@@ -22,13 +22,14 @@
 %define		ntfs_version		2.1.0a
 %define		drm_xfree_version	4.2.99
 %define		hostap_version		2002-10-12
+%define		netfilter_snap		20030205
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	2.6%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	2.7%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -38,7 +39,7 @@ Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source4:	http://christophe.lizzi.free.fr/linux/linux-2.4.0-test9-fore200e-0.3.tar.gz
-Source5:	linux-2.4.20-netfilter-20030120.tar.bz2
+Source5:	linux-2.4.20-netfilter-%{netfilter_snap}.tar.bz2
 Source6:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
@@ -103,7 +104,7 @@ Patch6:		grsecurity-%{grsec_version}-%{version}.patch.bz2
 Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.20-1.patch
 
 # new version of netfilter.
-Patch8:		linux-2.4.20-netfilter-20030120.patch.bz2
+Patch8:		linux-2.4.20-netfilter-%{netfilter_snap}.patch.bz2
 
 Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-2.4.18-1.patch
 Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-2.4.18-1.patch
@@ -278,7 +279,7 @@ Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.7.0
 Provides:	bttv = 0.7.83
-Provides:	%{name}(netfilter) = 1.2.7a
+Provides:	%{name}(netfilter) = 1.2.7a-%{netfilter_snap}
 Provides:	%{name}(grsecurity) = %{grsec_version}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
@@ -330,7 +331,7 @@ Provides:	%{name}-smp = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.7.0
 Provides:	bttv = 0.7.83
-Provides:	%{name}(netfilter) = 1.2.7a
+Provides:	%{name}(netfilter) = 1.2.7a-%{netfilter_snap}
 Provides:	%{name}(grsecurity) = %{grsec_version}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
@@ -672,8 +673,6 @@ echo Installing WRR Support
 echo Added ACL support
 %patch45 -p1
 
-#%patch46 -p0
-
 %patch918 -p1
 %patch919 -p1
 #squashfs
@@ -721,13 +720,13 @@ echo AXP patches ...
 %patch204 -p1
 %endif
 
-%if %{?_with_w4l:1}%{!?_with_w4l:0}
+#%if %{?_with_w4l:1}%{!?_with_w4l:0}
 %ifarch %{ix86}
 echo Win4Lin patch ...
 %{!?_without_grsec:%patch1000 -p1}
 %{?_without_grsec:%patch1001 -p1}
 %endif
-%endif
+#%endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
