@@ -16,7 +16,7 @@
 %define		no_install_post_compress_modules	1
 #
 %define		pre_version		%{nil}
-%define		netfilter_snap		20031206
+%define		netfilter_snap		20031210
 %define		i2c_version		2.8.1
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -26,7 +26,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.23
-Release:	0.8.1
+Release:	0.8.2
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -95,6 +95,8 @@ Patch80:	linux-2.4.22-intermezzo-acl.patch
 # Networking
 
 # new version of netfilter.
+# DO NOT INCLUDE PATCHES FROM patch-o-matic/userspace/ since
+# adding these can cause incompatiblitiy problems with userspace tools
 Patch100:	linux-2.4.23-netfilter-%{netfilter_snap}.patch.gz
 Patch101:	linux-2.4.23-netfilter-IMQ-target.patch
 # http://rnvs.informatik.uni-leipzig.de/ipp2p/index_en.html
