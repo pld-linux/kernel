@@ -4,7 +4,6 @@
 #
 # _without_grsec	- build kernel without grsecurity patch
 # _with_preemptive	- build with Preemptible patch
-# _with_acpi		- build with acpi
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 #
@@ -59,6 +58,7 @@ Source1003:	%{name}-netfilter.config
 Source1004:	%{name}-ipvs.config
 Source1005:	%{name}-evms.config
 Source1006:	%{name}-cdrw.config
+Source1007:	%{name}-acpi.config
 Source1666:	%{name}-grsec.config
 Source1667:	%{name}-int.config
 Source1999:	%{name}-preemptive.config
@@ -578,21 +578,10 @@ BuildKernel() {
 	cat %{SOURCE1005} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1006} >> arch/%{base_arch}/defconfig
 	%{?_with_preemptive:cat %{SOURCE1999} >> arch/%{base_arch}/defconfig}
-
-%if %{?_with_acpi:1}%{!?_with_acpi:0}
-	echo "CONFIG_ACPI=y" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_ACPI_DEBUG is not set" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_SERIAL_ACPI=y" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_BUSMGR=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_SYS=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_CPU=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_BUTTON=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_AC=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_EC=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_CMBATT=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_THERMAL=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_HOTPLUG_PCI_ACPI=m" >> arch/%{base_arch}/defconfig
+%ifnarch i386 i486
+	cat %{SOURCE1007} >> arch/%{base_arch}/defconfig
 %endif
+	
 	if [ "$BOOT" = "yes" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_CRYPTO is not set" >> arch/%{base_arch}/defconfig
@@ -744,24 +733,13 @@ cat %{SOURCE1006} >> .config
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
 %{?_with_preemptive:cat %{SOURCE1999} >> .config}
-
-%if %{?_with_acpi:1}%{!?_with_acpi:0}
-	echo "CONFIG_ACPI=y" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_ACPI_DEBUG is not set" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_SERIAL_ACPI=y" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_BUSMGR=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_SYS=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_CPU=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_BUTTON=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_AC=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_EC=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_CMBATT=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_THERMAL=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_HOTPLUG_PCI_ACPI=m" >> arch/%{base_arch}/defconfig
+%ifnarch i386 i486
+	cat %{SOURCE1007} >> .config
 %endif
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
+mv .config config-up
 
 %ifarch %{ix86}
 cat $RPM_SOURCE_DIR/kernel-ia32-smp.config >> .config
@@ -791,24 +769,13 @@ cat %{SOURCE1006} >> .config
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
 %{?_with_preemptive:cat %{SOURCE1999} >> .config}
-
-%if %{?_with_acpi:1}%{!?_with_acpi:0}
-	echo "CONFIG_ACPI=y" >> arch/%{base_arch}/defconfig
-	echo "# CONFIG_ACPI_DEBUG is not set" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_SERIAL_ACPI=y" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_BUSMGR=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_SYS=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_CPU=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_BUTTON=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_AC=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_EC=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_CMBATT=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_ACPI_THERMAL=m" >> arch/%{base_arch}/defconfig
-	echo "CONFIG_HOTPLUG_PCI_ACPI=m" >> arch/%{base_arch}/defconfig
+%ifnarch i386 i486
+	cat %{SOURCE1007} >> .config
 %endif
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
+mv .config config-smp
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
@@ -854,6 +821,10 @@ ln -snf %{version}-%{release} /lib/modules/%{version}
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}.gz /boot/initrd
 
+if [ ! -f %{_prefix}/src/linux-%{version}/config-up ] ; then
+	ln -s %{_prefix}/src/linux-%{version}/config-up %{_prefix}/src/linux-%{version}/.config
+fi
+
 if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
@@ -874,6 +845,10 @@ ln -snf %{version}-%{release}smp /lib/modules/%{version}
 /sbin/geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
+
+if [ ! -f %{_prefix}/src/linux-%{version}/config-smp ] ; then
+	ln -s %{_prefix}/src/linux-%{version}/config-smp %{_prefix}/src/linux-%{version}/.config
+fi
 
 if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
@@ -1115,3 +1090,4 @@ fi
 %{_prefix}/src/linux-%{version}/README
 %{_prefix}/src/linux-%{version}/REPORTING-BUGS
 %{_prefix}/src/linux-%{version}/Rules.make
+%{_prefix}/src/linux-%{version}/config*
