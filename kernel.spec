@@ -26,11 +26,11 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.10
+%define		_rel		0.11
 %define		_cset		20040130_0708
 
 ## netfilter snap 
-%define		_netfilter_snap		20040114
+%define		_netfilter_snap		20040130
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/amd64/x86_64/')
 
@@ -153,7 +153,7 @@ Patch88:	2.6.1-SIOCSIFNAME-lkml.patch
 
 Patch90:	2.6.1-rq-not-task_running-lkml.patch
 
-Patch92:	2.6.1-NF-20040114.patch
+Patch92:	2.6-p-o-m-ng-%{_netfilter_snap}.patch
 
 Patch94:	2.6.1-sysfs4oss-lkml.patch
 
