@@ -676,14 +676,6 @@ patch -p1 -s < exec-shield.patch
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's#EXTRAVERSION =.*#EXTRAVERSION =#g' \
-%ifarch %{ix86} alpha sparc ppc
-    -e 's#CC.*$(CROSS_COMPILE)gcc#CC            = %{__cc}#g' \
-%endif
-%ifarch sparc64
-    -e 's#CC.*$(CROSS_COMPILE)gcc#CC		= sparc64-pld-linux-gcc#g' \
-%endif
-    Makefile.orig >Makefile
-
 sed -i 's:\-pipe::' arch/*/Makefile
 
 # on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
@@ -726,6 +718,8 @@ TuneUpConfigForIX86 () {
 %endif
 }
 
+CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_platform}-"
+
 BuildConfig (){
 	%{?_debug:set -x}
 	# is this a special kernel we want to build?
@@ -758,7 +752,7 @@ BuildConfig (){
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
-	%{__make} include/linux/autoconf.h
+	%{__make} $CrossOpts include/linux/autoconf.h
 	if [ "$smp" = "yes" ]; then
 		install include/linux/autoconf.h \
 			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
@@ -841,7 +835,7 @@ EOF
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
-	%{__make} include/linux/autoconf.h
+	%{__make} $CrossOpts include/linux/autoconf.h
 	if [ "$smp" = "yes" ]; then
 		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
 	else
@@ -852,7 +846,7 @@ EOF
 BuildKernel() {
 	%{?_debug:set -x}
 	echo "Building kernel $1 ..."	
-	%{__make} mrproper \
+	%{__make} $CrossOpts mrproper \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 
@@ -860,10 +854,10 @@ BuildKernel() {
 	sparc32 %{__make} clean \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 %else
-	%{__make} clean \
+	%{__make} $CrossOpts clean \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 %endif
-	%{__make} include/linux/version.h \
+	%{__make} $CrossOpts include/linux/version.h \
 		%{?with_verbose:V=1}
 
 # make does vmlinux, modules and bzImage at once
@@ -879,7 +873,7 @@ BuildKernel() {
 		%{?with_verbose:V=1}
 %endif
 %else
-	%{__make} \
+	%{__make} $CrossOpts \
 		%{?with_verbose:V=1}
 %endif
 }
@@ -923,10 +917,10 @@ PreInstallKernel (){
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
-	%{__make} modules_install \
-	%{?with_verbose:V=1} \
-     	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
-	KERNELRELEASE=$KernelVer
+	%{__make} $CrossOpts modules_install \
+		%{?with_verbose:V=1} \
+     		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
+		KERNELRELEASE=$KernelVer
 
 	echo "CHECKING DEPENDENCIES FOR KERNEL MODULES"
 	/sbin/depmod --basedir $KERNEL_INSTALL_DIR -ae -F $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer -r $KernelVer || echo
@@ -962,6 +956,7 @@ PreInstallKernel BOOT
 %install
 rm -rf $RPM_BUILD_ROOT
 umask 022
+CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_platform}-"
 
 install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 install -d $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}{,smp}/misc
@@ -986,7 +981,7 @@ find . ! -name "build-done" ! -name "." -maxdepth 1 -exec cp -a "{}" "$RPM_BUILD
 
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
-%{__make} mrproper \
+%{__make} $CrossOpts mrproper \
 	RCS_FIND_IGNORE='-name build-done -prune -o'
 find -name "*~" -exec rm -f "{}" ";"
 find -name "*.orig" -exec rm -f "{}" ";"
@@ -1011,8 +1006,8 @@ install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{version}/include/l
 $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 %endif
 
-%{__make} mrproper
-%{__make} include/linux/version.h
+%{__make} $CrossOpts mrproper
+%{__make} $CrossOpts include/linux/version.h
 install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
 
 %clean
