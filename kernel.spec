@@ -12,9 +12,9 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		2
+%define		_rel		1
 %define		_test_ver	9
-%define		_cset		20031104_0109
+%define		_cset		20031105_0418
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -93,10 +93,7 @@ Patch72:	2.6.0-t9-NLS-module-lkml.patch
 Patch74:	2.6.0-t9-acpi_osl-lkml.patch
 
 Patch76:	2.6.0-t9-forcedeth-lkml.patch
-Patch78:	2.6.0-t9-init_l44gx-lkml.patch
 Patch80:	2.6.0-t9-quirk_via_bridge-fix-lkml.patch
-
-Patch82:	patch-2.6.0-test9-qh0.12.diff.bz2
 
 Patch84:	2.6.0-t9-netfilter-p2p.patch
 
@@ -423,10 +420,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch74 -p1
 
 %patch76 -p1
-%patch78 -p1
 %patch80 -p1
-
-#%%patch82 -p1
 
 %patch84 -p1
 
