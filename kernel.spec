@@ -18,7 +18,7 @@ Summary(ru):	Ядро Linux
 Summary(uk):	Ядро Linux
 Name:		kernel
 Version:	2.2.26
-Release:	1
+Release:	2
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -1261,6 +1261,7 @@ fi
 %dir %{_kernelsrcdir}
 %dir %{_kernelsrcdir}/include
 %{_kernelsrcdir}/include/[!a]*
+%{_kernelsrcdir}/include/asm
 %{_includedir}/asm
 %{_kernelsrcdir}/include/asm-generic
 %ifarch sparc sparc64
