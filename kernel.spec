@@ -1009,7 +1009,7 @@ BuildKernel() {
 		echo "# CONFIG_HAMRADIO is not set" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_INPUT_GAMEPORT is not set" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_INPUT_SERIO is not set" >> arch/%{base_arch}/defconfig
-!!!!		echo "# CONFIG_JOYSTICK_IFORCE is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_JOYSTICK_IFORCE is not set" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_IPMI_HANDLER is not set" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_WATCHDOG is not set" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_AGPGART is not set" >> arch/%{base_arch}/defconfig
@@ -1030,13 +1030,7 @@ BuildKernel() {
 		echo "# CONFIG_NET_SCH_WRR is not set" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_HOSTAP is not set" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_USB_KONICAWC is not set">> arch/%{base_arch}/defconfig
-	%ifarch %{ix86}
-		echo "# CONFIG_MKI is not set" >> arch/%{base_arch}/defconfig
-	%endif
 	fi
-%ifnarch %{ix86}
-#		echo "# CONFIG_IP_NF_MATCH_FUZZY is not set">> arch/%{base_arch}/defconfig
-%endif	
 
 %ifarch sparc64
 ## Temporay - on SPARC64 can't build SHA suppor
