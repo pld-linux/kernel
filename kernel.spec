@@ -270,7 +270,7 @@ Patch1419:	linux-2.4.21-agp-num_of_masks.patch
 # http://luxik.cdi.cz/~devik/qos/htb/v3/
 Patch1500:	htb_3.10_3.12_2.diff
 Patch1501:	htb_killdbg_2421.diff
-
+Patch1600:	linux-pcwd.patch
 
 Patch2000:	linux-PPC-SMP.patch
 Patch2001:	linux-2.4-ppc-procesor.patch
@@ -763,6 +763,8 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1419 -p1
 %patch1500 -p1
 %patch1501 -p1
+
+%patch1600 -p1
 
 %patch2000 -p0
 %patch2001 -p1
