@@ -1,0 +1,2998 @@
+diff -urN -x CVS linux-bk/Documentation/Configure.help linux-hfsplus/Documentation/Configure.help
+--- linux-bk/Documentation/Configure.help	Sun Mar  4 16:18:35 2001
++++ linux-hfsplus/Documentation/Configure.help	Sat Sep 15 17:03:12 2001
+@@ -11383,6 +11383,24 @@
+   compile it as a module, say M here and read
+   Documentation/modules.txt.
+ 
++Apple Extended file system support (read-only) (EXPERIMENTAL)
++CONFIG_HFSPLUS_FS
++  If you say Y here, you will be able to mount extended format
++  Macintosh-formatted hard drive partitions with read-only access.
++  Most of the UNIX related filesystem data saved by Mac OSX should
++  be readable.
++
++  This file system is often called HFS+ and was introduced with
++  MacOS 8. It includes all Mac specific filesystem data such as
++  data forks and creator codes, but it also has several UNIX
++  style features such as file ownership and permissions. No Mac
++  specific data can currently be accessed with this driver.
++
++  This file system is also available as a module ( = code which can
++  be inserted in and removed from the running kernel whenever you
++  want). The module is called hfsplus.o. If you want to compile it
++  as a module, say M here and read Documentation/modules.txt.
++
+ ROM file system support
+ CONFIG_ROMFS_FS
+   This is a very small read-only file system mainly intended for
+diff -urN -x CVS linux-bk/MAINTAINERS linux-hfsplus/MAINTAINERS
+--- linux-bk/MAINTAINERS	Sun Mar  4 16:18:16 2001
++++ linux-hfsplus/MAINTAINERS	Sat Sep 15 17:03:52 2001
+@@ -503,6 +503,12 @@
+ L:      linux-kernel@vger.kernel.org
+ S:      Maintained
+ 
++HFSPLUS FILESYSTEM
++P:	Brad Boyer
++M:	flar@allandria.com
++W:	http://sourceforge.net/projects/linux-hfsplus/
++S:	Maintained
++
+ HGA FRAMEBUFFER DRIVER
+ P:	Ferenc Bakonyi
+ M:	fero@drama.obuda.kando.hu
+diff -urN -x CVS linux-bk/fs/Config.in linux-hfsplus/fs/Config.in
+--- linux-bk/fs/Config.in	Sun Mar  4 16:26:05 2001
++++ linux-hfsplus/fs/Config.in	Tue Apr 10 22:48:28 2001
+@@ -18,6 +18,8 @@
+ 
+ dep_tristate 'Apple Macintosh file system support (EXPERIMENTAL)' CONFIG_HFS_FS $CONFIG_EXPERIMENTAL
+ 
++dep_tristate 'Apple Extended HFS file system support (EXPERIMENTAL)' CONFIG_HFSPLUS_FS $CONFIG_EXPERIMENTAL
++
+ dep_tristate 'BFS file system support (EXPERIMENTAL)' CONFIG_BFS_FS $CONFIG_EXPERIMENTAL
+ 
+ # msdos file systems
+diff -urN -x CVS linux-bk/fs/Makefile linux-hfsplus/fs/Makefile
+--- linux-bk/fs/Makefile	Sun Mar  4 16:26:05 2001
++++ linux-hfsplus/fs/Makefile	Tue Apr 10 22:48:28 2001
+@@ -38,6 +38,7 @@
+ subdir-$(CONFIG_ISO9660_FS)	+= isofs
+ subdir-$(CONFIG_DEVFS_FS)	+= devfs
+ subdir-$(CONFIG_HFS_FS)		+= hfs
++subdir-$(CONFIG_HFSPLUS_FS)	+= hfsplus
+ subdir-$(CONFIG_XVFS_FS)	+= freexvfs
+ subdir-$(CONFIG_NFS_FS)		+= nfs
+ subdir-$(CONFIG_NFSD)		+= nfsd
+diff -urN -x CVS linux-bk/fs/hfsplus/Makefile linux-hfsplus/fs/hfsplus/Makefile
+--- linux-bk/fs/hfsplus/Makefile	Wed Dec 31 16:00:00 1969
++++ linux-hfsplus/fs/hfsplus/Makefile	Fri Sep 21 00:42:03 2001
+@@ -0,0 +1,17 @@
++#
++# Makefile for the Linux hfsplus filesystem routines.
++#
++# Note! Dependencies are done automagically by 'make dep', which also
++# removes any old dependencies. DON'T put your own dependencies here
++# unless it's something special (not a .c file).
++#
++# Note 2! The CFLAGS definitions are now in the main makefile.
++
++O_TARGET := hfsplus.o
++
++obj-y    := super.o options.o inode.o extents.o catalog.o dir.o btree.o \
++		bnode.o brec.o bfind.o btiter.o tables.o unicode.o wrapper.o
++
++obj-m    := $(O_TARGET)
++
++include $(TOPDIR)/Rules.make
+diff -urN -x CVS linux-bk/fs/hfsplus/bfind.c linux-hfsplus/fs/hfsplus/bfind.c
+--- linux-bk/fs/hfsplus/bfind.c	Wed Dec 31 16:00:00 1969
++++ linux-hfsplus/fs/hfsplus/bfind.c	Mon Nov  5 00:09:43 2001
+@@ -0,0 +1,236 @@
++/*
++ *  linux/fs/hfsplus/bfind.c
++ *
++ * Copyright (C) 2001
++ * Brad Boyer (flar@allandria.com)
++ *
++ * Search routines for btrees
++ */
++
++#include <linux/hfsplus_fs.h>
++
++/* Find the record in bnode that best matches key (not greater than...)*/
++static hfsp_u16 hfsplus_find_rec(hfsplus_bnode *bnode, hfsplus_btree_key *key,
++				 int *error)
++{
++	hfsplus_btree_key tmpkey;
++	int cmpval;
++	hfsp_u16 b, m, e, keylen;
++
++	b = 0;
++	e = bnode->num_recs - 1;
++	*error = 0;
++	while(b <= e) {
++		m = (e + b) / 2;
++		keylen = hfsplus_brec_key(bnode, m, &tmpkey, sizeof(tmpkey));
++		if(!keylen) {
++			printk("HFS+-fs: missing key in B*Tree\n");
++			*error = -EIO;
++			return 0xFFFF;
++		}
++		cmpval = bnode->tree->keycmp(&tmpkey, key);
++		if(!cmpval)
++			return m;
++		if(cmpval < 0) {
++			b = m + 1;
++		} else {
++			e = m - 1;
++		}
++	}
++	if(e == 0xFFFF) {
++		*error = -ENOENT;
++		return 0xFFFF;
++	}
++	return e;
++}
++
++/* Traverse a B*Tree from the root to a leaf finding best fit to key */
++/* Return allocated copy of node found, set recnum to best record */
++static hfsplus_bnode *hfsplus_find_leaf(hfsplus_btree *tree,
++					hfsplus_btree_key *key,
++					hfsp_u16 *recnum, int *error)
++{
++	hfsplus_bnode *curr, *last, *retval;
++	int localerr;
++	hfsp_u32 next;
++	hfsp_u16 rec, off, klen;
++	hfsp_lword data;
++
++	*error = -EIO;
++	last = retval = NULL;
++	curr = hfsplus_get_bnode(tree, tree->root);
++	if(!curr || !curr->height || (curr->height > tree->depth)) {
++		printk("HFS+-fs: Found bad root node in B*Tree\n");
++		return NULL;
++	}
++
++	for(;;) {
++		rec = hfsplus_find_rec(curr, key, &localerr);
++		if(rec >= curr->num_recs) {
++			if(localerr)
++				*error = localerr;
++			goto cleanup;
++		}
++		if(curr->kind == HFSPLUS_NODE_LEAF) {
++			/* Found it */
++			retval = curr;
++			*recnum = rec;
++			*error = 0;
++			goto cleanup;
++		}
++		if(curr->kind != HFSPLUS_NODE_NDX) {
++			printk("HFS+-fs: non-keyed B*Tree node in index\n");
++			goto cleanup;
++		}
++		if(last) {
++			hfsplus_put_bnode(last);
++			last = NULL;
++		}
++
++		klen = hfsplus_brec_keylen(curr, rec);
++		if(!klen) {
++			printk("HFS+-fs: bad index key in B*Tree\n");
++			goto cleanup;
++		}
++		if(hfsplus_brec_lenoff(curr, rec, &off) < klen + 4) {
++			printk("HFS+-fs: invalid index record in B*Tree\n");
++			goto cleanup;
++		}
++		if(hfsplus_bnode_copybytes(curr, data, off + klen, 4) != 4) {
++			printk("HFS+-fs: unable to follow index in B*Tree\n");
++			goto cleanup;
++		}
++		next = hfsp_get_hl(data);
++
++		last = curr;
++		curr = hfsplus_get_bnode(tree, next);
++		if(!curr) {
++			printk("HFS+-fs: failed to get next node in B*Tree\n");
++			goto cleanup;
++		}
++		if(!curr->height || (curr->height != (last->height - 1))) {
++			printk("HFS+-fs: inconsistency in B*Tree height\n");
++			goto cleanup;
++		}
++	} /* end of for(;;) */
++ cleanup:
++	if(last && (last != retval))
++		hfsplus_put_bnode(last);
++	if(curr && (curr != retval))
++		hfsplus_put_bnode(curr);
++	return retval;
++}
++
++/* take in tree, key to find, buffer, sizeof buffer */
++/* return error code, set entry_len to actual value on success */
++/* will only return an exact match */
++int hfsplus_btfind_exact(hfsplus_btree *tree, hfsplus_btree_key *key,
++			 void *entry, int *entry_len)
++{
++	hfsplus_bnode *node;
++	hfsplus_btree_key tmpkey;
++	int err;
++	hfsp_u16 rec, off, keylen, datalen;
++
++	if(!tree || !key || !entry || !entry_len)
++		return -EIO;
++
++	node = hfsplus_find_leaf(tree, key, &rec, &err);
++	if(!node)
++		return err;
++	err = -EIO;
++	if(!(keylen = hfsplus_brec_key(node, rec, &tmpkey, sizeof(tmpkey)))) {
++		printk("HFS+-fs: unable to read key from B*Tree record\n");
++		goto out;
++	}
++	if(tree->keycmp(key, &tmpkey)) {
++		err = -ENOENT;
++		goto out;
++	}
++
++	datalen = hfsplus_brec_lenoff(node, rec, &off) - keylen;
++	if((datalen <= 0) || (datalen > *entry_len)) {
++		printk("HFS+-fs: bad entry length in B*Tree\n");
++		goto out;
++	}
++	if(!hfsplus_bnode_copybytes(node, entry, off + keylen, datalen)) {
++		printk("HFS+-fs: unable to read record in B*Tree\n");
++		goto out;
++	}
++	*entry_len = datalen;
++	err = 0;
++ out:
++	hfsplus_put_bnode(node);
++	return err;
++}
++
++/* take in tree, key to find, buffer, sizeof buffer; return error code */
++/* updates key to actual record found, updates length of actual entry */
++/* will return largest key not greater than search key */
++int hfsplus_btfind(hfsplus_btree *tree, hfsplus_btree_key *key, void *entry,
++		   int *entry_len)
++{
++	hfsplus_bnode *node;
++	int err;
++	hfsp_u16 rec, off, keylen, datalen;
++
++	if(!tree || !key || !entry || !entry_len)
++		return -EIO;
++
++	node = hfsplus_find_leaf(tree, key, &rec, &err);
++	if(!node)
++		return err;
++	err = -EIO;
++	if(!(keylen = hfsplus_brec_keylen(node, rec))) {
++		printk("HFS+-fs: unable to read key from B*Tree record\n");
++		goto out;
++	}
++
++	datalen = hfsplus_brec_lenoff(node, rec, &off) - keylen;
++	if((datalen <= 0) || (datalen > *entry_len)) {
++		printk("HFS+-fs: bad entry length in B*Tree\n");
++		goto out;
++	}
++	if(!hfsplus_bnode_copybytes(node, key, off, keylen)) {
++		printk("HFS+-fs: unable to copy key from B*Tree\n");
++		goto out;
++	}
++	if(!hfsplus_bnode_copybytes(node, entry, off + keylen, datalen)) {
++		printk("HFS+-fs: unable to read record in B*Tree\n");
++		goto out;
++	}
++	*entry_len = datalen;
++	err = 0;
++ out:
++	hfsplus_put_bnode(node);
++	return err;
++}
++
++int hfsplus_btiter_find(hfsplus_btiter *iter, hfsplus_btree_key *key)
++{
++	hfsplus_bnode *node;
++	int err;
++	hfsplus_btree_key tmpkey;
++	hfsp_u16 rec, keylen;
++
++	if(!iter || !key || !iter->tree)
++		return -EIO;
++
++	if((node = hfsplus_find_leaf(iter->tree, key, &rec, &err)) == NULL)
++		return err;
++	if(!(keylen = hfsplus_brec_key(node, rec, &tmpkey, sizeof(tmpkey)))) {
++		printk("HFS+-fs: unable to read key from B*Tree record\n");
++		err = -EIO;
++		goto out;
++	}
++	if(node->tree->keycmp(key, &tmpkey)) {
++		err = -ENOENT;
++		goto out;
++	}
++	iter->node = node->this;
++	iter->rec = rec;
++	err = 0;
++ out:
++	hfsplus_put_bnode(node);
++	return err;
++}
+diff -urN -x CVS linux-bk/fs/hfsplus/bnode.c linux-hfsplus/fs/hfsplus/bnode.c
+--- linux-bk/fs/hfsplus/bnode.c	Wed Dec 31 16:00:00 1969
++++ linux-hfsplus/fs/hfsplus/bnode.c	Mon Nov  5 00:07:58 2001
+@@ -0,0 +1,195 @@
++/*
++ *  linux/fs/hfsplus/bnode.c
++ *
++ * Copyright (C) 2001
++ * Brad Boyer (flar@allandria.com)
++ *
++ * Handle basic btree node operations
++ */
++
++#include <linux/string.h>
++#include <linux/slab.h>
++#include <linux/pagemap.h>
++#include <linux/fs.h>
++#include <linux/hfsplus_fs.h>
++#include <linux/hfsplus_raw.h>
++
++/* Convert a node, offset to page number in tree */
++static inline unsigned long hfsplus_pagenum(hfsplus_bnode *node, hfsp_u16 off)
++{
++	return ((node->this * node->tree->node_size) + off) >> PAGE_SHIFT;
++}
++
++/* Convert a node, offset to page offset */
++static inline unsigned long hfsplus_pageoff(hfsplus_bnode *node, hfsp_u16 off)
++{
++	return ((node->this * node->tree->node_size) + off) & (PAGE_SIZE - 1);
++}
++
++/* Dump a page we loaded with hfsplus_get_page */
++static inline void hfsplus_put_page(hfsplus_bnode *node)
++{
++	if(node->page) {
++		UnlockPage(node->page);
++		kunmap(node->page);
++		page_cache_release(node->page);
++		node->page = NULL;
++	}
++}
++
++/* Get the give page associated with the inode */
++static struct page *hfsplus_get_page(hfsplus_bnode *node, unsigned long n)
++{
++	struct address_space *mapping;
++	struct page *page;
++
++	if(!node || !node->tree)
++		return NULL;
++
++	if(!node->inode) {
++		node->inode = iget(node->tree->sb, node->tree->cnid);
++		if(!node->inode) {
++			printk("HFS+-fs: Failed load of B*Tree data\n");
++			return NULL;
++		}
++	}
++	mapping = node->inode->i_mapping;
++	if(node->page) {
++		if(node->page->index == n) {
++			page = node->page;
++			goto check_page;
++		}
++		hfsplus_put_page(node);
++	}
++	page = read_cache_page(mapping, n, mapping->a_ops->readpage, NULL);
++	if(!IS_ERR(page)) {
++		lock_page(page);
++		kmap(page);
++	check_page:
++		if(!Page_Uptodate(page))
++			goto put_page;
++		if(PageError(page))
++			goto put_page;
++	}
++	node->page = page;
++	return page;
++ put_page:
++	hfsplus_put_page(node);
++	return NULL;
++}
++
++/* Fill the node->page element for the given offset */
++static inline struct page *hfsplus_fill_page(hfsplus_bnode *node, hfsp_u16 off)
++{
++	return hfsplus_get_page(node, hfsplus_pagenum(node, off));
++}
++
++/* Copy a specified range of bytes from the raw data of a node */
++hfsp_u16 hfsplus_bnode_copybytes(hfsplus_bnode *node, void *buf,
++				 hfsp_u16 off, hfsp_u16 len)
++{
++	char *kaddr;
++
++	if(hfsplus_pagenum(node, off) == hfsplus_pagenum(node, off+len-1)) {
++		/* All on one page */
++		if(!hfsplus_fill_page(node, off)) {
++			return 0;
++		}
++		kaddr = (char *)page_address(node->page);
++		memcpy(buf, kaddr + hfsplus_pageoff(node, off), len);
++	} else {
++		/* Multiple pages (should be rare) */
++		unsigned long poff;
++		size_t tocopy;
++		hfsp_u16 curr = 0;
++
++		while(curr < len) {
++			if(!hfsplus_fill_page(node, off + curr)) {
++				return curr;
++			}
++			poff = hfsplus_pageoff(node, off + curr);
++			tocopy = PAGE_SIZE - poff;
++			if(curr + tocopy > len)
++				tocopy = len - curr;
++			kaddr = (char *)page_address(node->page);
++			memcpy(buf + curr, kaddr + poff, tocopy);
++			curr += tocopy;
++		}
++	}
++
++	return len;
++}
++
++/* Check for valid kind/height pairs , return 0 for bad pairings */
++static int hfsplus_check_kh(hfsplus_btree *tree, hfsp_u8 kind, hfsp_u8 height)
++{
++	if((kind == HFSPLUS_NODE_HEAD) || (kind == HFSPLUS_NODE_MAP)) {
++		if(height != 0)
++			goto hk_error;
++	} else if(kind == HFSPLUS_NODE_LEAF) {
++		if(height != 1)
++			goto hk_error;
++	} else if(kind == HFSPLUS_NODE_NDX) {
++		if((height <= 1) || (height > tree->depth)) 
++			goto hk_error;
++	} else {
++		printk("HFS+-fs: unknown node type in B*Tree\n");
++		return 0;
++	}
++	return 1;
++ hk_error:
++	printk("HFS+-fs: corrupt node height in B*Tree\n");
++	return 0;
++}
++
++/* Load a particular node out of a tree */
++hfsplus_bnode *hfsplus_get_bnode(hfsplus_btree *tree, hfsp_u32 num)
++{
++	hfsplus_bnode *node;
++	hfsplus_btree_node_desc desc;
++	hfsp_u16 bytes;
++
++	if(num >= tree->node_count) {
++		printk("HFS+-fs: request for non-existent node in B*Tree\n");
++		return NULL;
++	}
++
++	node = kmalloc(sizeof(hfsplus_bnode), GFP_KERNEL);
++	if(!node)
++		return NULL;
++	node->tree = tree;
++	node->page = NULL;
++	node->inode = NULL;
++	node->this = num;
++	bytes = hfsplus_bnode_copybytes(node, &desc, 0,
++					sizeof(hfsplus_btree_node_desc));
++	if(bytes != sizeof(hfsplus_btree_node_desc)) {
++		printk("HFS+-fs: failed to read node descriptor in B*Tree\n");
++		goto free_node;
++	}
++	node->prev = hfsp_get_hl(desc.prev);
++	node->next = hfsp_get_hl(desc.next);
++	node->num_recs = hfsp_get_hs(desc.num_rec);
++	node->kind = desc.kind;
++	node->height = desc.height;
++	if(!hfsplus_check_kh(tree, desc.kind, desc.height))
++		goto free_node;
++	return node;
++ free_node:
++	kfree(node);
++	return NULL;
++}
++
++/* Dispose of resources used by a node */
++void hfsplus_put_bnode(hfsplus_bnode *node)
++{
++	if(node) {
++		if(node->page)
++			hfsplus_put_page(node);
++		if(node->inode) {
++			iput(node->inode);
++			node->inode = NULL;
++		}
++		kfree(node);
++	}
++}
+diff -urN -x CVS linux-bk/fs/hfsplus/brec.c linux-hfsplus/fs/hfsplus/brec.c
+--- linux-bk/fs/hfsplus/brec.c	Wed Dec 31 16:00:00 1969
++++ linux-hfsplus/fs/hfsplus/brec.c	Mon Nov  5 00:09:43 2001
+@@ -0,0 +1,111 @@
++/*
++ *  linux/fs/hfsplus/brec.c
++ *
++ * Copyright (C) 2001
++ * Brad Boyer (flar@allandria.com)
++ *
++ * Handle individual btree records
++ */
++
++#include <linux/hfsplus_fs.h>
++#include <linux/hfsplus_raw.h>
++
++/* Get the offset of the given record in the given node */
++hfsp_u16 hfsplus_brec_off(hfsplus_bnode *node, hfsp_u16 rec)
++{
++	hfsp_word retval;
++	hfsp_u16 dataoff;
++
++	dataoff = node->tree->node_size - (rec + 1) * 2;
++	if(hfsplus_bnode_copybytes(node, retval, dataoff, 2) != 2)
++		return 0;
++	return hfsp_get_hs(retval);
++}
++
++/* Get the length of the given record in the given node */
++hfsp_u16 hfsplus_brec_len(hfsplus_bnode *node, hfsp_u16 rec)
++{
++	unsigned char retval[4];
++	hfsp_u16 dataoff;
++
++	dataoff = node->tree->node_size - (rec + 2) * 2;
++	if(hfsplus_bnode_copybytes(node, retval, dataoff, 4) != 4)
++		return 0;
++	return hfsp_get_hs(retval) - hfsp_get_hs(retval + 2);
++}
++
++/* Get the length and offset of the given record in the given node */
++hfsp_u16 hfsplus_brec_lenoff(hfsplus_bnode *node, hfsp_u16 rec, hfsp_u16 *off)
++{
++	unsigned char retval[4];
++	hfsp_u16 dataoff;
++
++	dataoff = node->tree->node_size - (rec + 2) * 2;
++	if(hfsplus_bnode_copybytes(node, retval, dataoff, 4) != 4) {
++		return 0;
++	}
++	*off = hfsp_get_hs(retval + 2);
++	return hfsp_get_hs(retval) - *off;
++}
++
++/* Copy a record from a node into a buffer, return the actual length */
++hfsp_u16 hfsplus_brec_data(hfsplus_bnode *node, hfsp_u16 rec, char *buf,
++			   hfsp_u16 len)
++{
++	hfsp_u16 recoff, reclen, cplen;
++
++	reclen = hfsplus_brec_lenoff(node, rec, &recoff);
++	if(!reclen)
++		return 0;
++	cplen = (reclen>len) ? len : reclen;
++	if(hfsplus_bnode_copybytes(node, buf, recoff, cplen) != cplen)
++		return 0;
++	return reclen;
++}
++
++/* Get the length of the key from a keyed record */
++hfsp_u16 hfsplus_brec_keylen(hfsplus_bnode *node, hfsp_u16 rec)
++{
++	hfsp_u16 klsz, retval, recoff;
++	unsigned char buf[2];
++
++	if((node->kind != HFSPLUS_NODE_NDX)&&(node->kind != HFSPLUS_NODE_LEAF))
++		return 0;
++
++	klsz = (node->tree->attributes & HFSPLUS_TREE_BIGKEYS) ? 2 : 1;
++	if((node->kind == HFSPLUS_NODE_NDX) &&
++	   !(node->tree->attributes & HFSPLUS_TREE_VAR_NDXKEY_SIZE)) {
++		retval = node->tree->max_key_len;
++	} else {
++		recoff = hfsplus_brec_off(node, rec);
++		if(!recoff)
++			return 0;
++		if(hfsplus_bnode_copybytes(node, buf, recoff, klsz) != klsz)
++			return 0;
++		if(klsz == 1)
++			retval = buf[0];
++		else
++			retval = hfsp_get_hs(buf);
++	}
++	return (retval + klsz + 1) & 0xFFFE;
++}
++
++/* Get a copy of the key of the given record, returns real key length */
++hfsp_u16 hfsplus_brec_key(hfsplus_bnode *node, hfsp_u16 rec, void *buf,
++			  hfsp_u16 len)
++{
++	hfsp_u16 recoff, reclen, keylen, tocopy;
++
++	reclen = hfsplus_brec_lenoff(node, rec, &recoff);
++	keylen = hfsplus_brec_keylen(node, rec);
++	if(!reclen || !keylen)
++		return 0;
++	if(keylen > reclen) {
++		printk("HFS+-fs: corrupt key length in B*Tree\n");
++		return 0;
++	}
++	tocopy = (len > keylen) ? keylen : len;
++	if(hfsplus_bnode_copybytes(node, buf, recoff, tocopy) != tocopy)
++		return 0;
++	return keylen;
++}
+diff -urN -x CVS linux-bk/fs/hfsplus/btiter.c linux-hfsplus/fs/hfsplus/btiter.c
+--- linux-bk/fs/hfsplus/btiter.c	Wed Dec 31 16:00:00 1969
++++ linux-hfsplus/fs/hfsplus/btiter.c	Fri Sep 21 20:56:21 2001
+@@ -0,0 +1,115 @@
++/*
++ *  linux/fs/hfsplus/btiter.c
++ *
++ * Copyright (C) 2001
++ * Brad Boyer (flar@allandria.com)
++ *
++ * Iterators for btrees
++ */
++
++#include <linux/hfsplus_fs.h>
++
++void hfsplus_btiter_setup(hfsplus_btiter *iter, hfsplus_btree *tree)
++{
++	iter->tree = tree;
++	iter->node = 0;
++	iter->rec = 0;
++}
++
++int hfsplus_btiter_move(hfsplus_btiter *iter, int cnt)
++{
++	hfsplus_bnode *node;
++	int err = -EIO;
++
++	if(!iter || !iter->tree)
++		return err;
++	if((cnt < -0xFFFF) || (cnt > 0xFFFF))
++		return err;
++	if(!iter->node)
++		return -ENOENT;
++
++ get_node:
++	if(!(node = hfsplus_get_bnode(iter->tree, iter->node)))
++		return err;
++ start_node:
++	if(node->kind != HFSPLUS_NODE_LEAF) {
++		printk("HFS+-fs: found entry of bad type\n");
++		goto out;
++	}
++	if(iter->rec >= node->num_recs)
++		goto out;
++
++	if((iter->rec + cnt >= 0) && (iter->rec + cnt < node->num_recs)) {
++		iter->rec += cnt;
++		err = 0;
++		goto out;
++	}
++	if(cnt < 0) {
++		iter->node = node->prev;
++		if(!iter->node) {
++			err = -ENOENT;
++			goto out;
++		}
++		hfsplus_put_bnode(node);
++		if(!(node = hfsplus_get_bnode(iter->tree, iter->node)))
++			return err;
++		cnt += iter->rec + 1;
++		iter->rec = node->num_recs - 1;
++		goto start_node;
++	}
++	iter->node = node->next;
++	if(!iter->node) {
++		err = -ENOENT;
++		goto out;
++	}
++	cnt -= node->num_recs - iter->rec;
++	iter->rec = 0;
++	hfsplus_put_bnode(node);
++	goto get_node;
++ out:
++	hfsplus_put_bnode(node);
++	return err;
++}
++
++int hfsplus_btiter_get(hfsplus_btiter *iter, hfsplus_btree_key *key,
++		       void *entry, int *entry_len)
++{
++	hfsplus_bnode *node;
++	int err = -EIO;
++	hfsp_u16 rec, off, keylen, datalen;
++
++	if(!iter || !iter->tree || !key || !entry || !entry_len)
++		return err;
++
++	if((node = hfsplus_get_bnode(iter->tree, iter->node)) == NULL)
++		return err;
++	if(node->kind != HFSPLUS_NODE_LEAF) {
++		printk("HFS+-fs: found entry of bad type\n");
++		goto out;
++	}
++
++	rec = iter->rec;
++	if(!(keylen = hfsplus_brec_keylen(node, rec))) {
++		printk("HFS+-fs: unable to read key from B*Tree record\n");
++		goto out;
++	}
++	datalen = hfsplus_brec_lenoff(node, rec, &off) - keylen;
++	if((datalen <= 0) || (datalen > *entry_len)) {
++		printk("HFS+-fs: bad entry length in B*Tree\n");
++		goto out;
++	}
++	if(!hfsplus_bnode_copybytes(node, key, off, keylen)) {
++		printk("HFS+-fs: unable to copy key from B*Tree\n");
++		goto out;
++	}
++	if(!hfsplus_bnode_copybytes(node, entry, off + keylen, datalen)) {
++		printk("HFS+-fs: unable to read record in B*Tree\n");
++		goto out;
++	}
++	*entry_len = datalen;
++	err = 0;
++ out:
++	hfsplus_put_bnode(node);
++	return err;
++}
++
+diff -urN -x CVS linux-bk/fs/hfsplus/btree.c linux-hfsplus/fs/hfsplus/btree.c
+--- linux-bk/fs/hfsplus/btree.c	Wed Dec 31 16:00:00 1969
++++ linux-hfsplus/fs/hfsplus/btree.c	Mon Nov  5 00:07:58 2001
+@@ -0,0 +1,89 @@
++/*
++ *  linux/fs/hfsplus/btree.c
++ *
++ * Copyright (C) 2001
++ * Brad Boyer (flar@allandria.com)
++ *
++ * Handle opening/closing btree
++ */
++
++#include <linux/slab.h>
++#include <linux/pagemap.h>
++#include <linux/hfsplus_fs.h>
++#include <linux/hfsplus_raw.h>
++
++/* Release resources used by a btree */
++void hfsplus_close_btree(struct hfsplus_btree *tree)
++{
++	if(tree) {
++		kfree(tree);
++	}
++}
++
++/* Fill in extra data in tree structure from header node */
++static void hfsplus_fill_treeinfo(hfsplus_btree *tree, hfsplus_btree_head *hdr)
++{
++	if (!tree || !hdr)
++		return;
++
++	tree->root = hfsp_get_hl(hdr->root);
++	tree->node_count = hfsp_get_hl(hdr->node_count);
++	tree->free_nodes = hfsp_get_hl(hdr->free_nodes);
++	tree->attributes = hfsp_get_hl(hdr->attributes);
++	tree->node_size = hfsp_get_hs(hdr->node_size);
++	tree->max_key_len = hfsp_get_hs(hdr->max_key_len);
++	tree->depth = hfsp_get_hs(hdr->depth);
++}
++
++/* Get a reference to a B*Tree and do some initial checks */
++hfsplus_btree *hfsplus_open_btree(struct super_block *sb, hfsp_cnid id)
++{
++	hfsplus_btree *tree;
++	hfsplus_bnode *hnode;
++	hfsplus_btree_head head;
++	hfsp_u16 bytes;
++
++	tree = kmalloc(sizeof(struct hfsplus_btree), GFP_KERNEL);
++	if(!tree)
++		return NULL;
++
++	/* Set the correct compare function */
++	tree->sb = sb;
++	tree->cnid = id;
++	if(id == HFSPLUS_EXT_CNID) {
++		tree->keycmp = hfsplus_cmp_ext_key;
++	} else if(id == HFSPLUS_CAT_CNID) {
++		tree->keycmp = hfsplus_cmp_cat_key;
++	} else {
++		printk("HFS+-fs: unknown B*Tree requested\n");
++		goto free_tree;
++	}
++
++	/* Set up some dummy values */
++	tree->node_count = 1;
++	if(PAGE_SIZE > HFSPLUS_NODE_MXSZ)
++		tree->node_size = HFSPLUS_NODE_MXSZ;
++	else
++		tree->node_size = PAGE_SIZE;
++
++	/* Load the header */
++	hnode = hfsplus_get_bnode(tree, HFSPLUS_TREE_HEAD);
++	if(!hnode)
++		goto free_tree;
++	bytes = hfsplus_bnode_copybytes(hnode, &head,
++					sizeof(hfsplus_btree_node_desc),
++					sizeof(hfsplus_btree_head));
++	if(bytes != sizeof(hfsplus_btree_head)) {
++		printk("HFS+-fs: unable to read B*Tree header\n");
++		goto put_hnode;
++	}
++	hfsplus_fill_treeinfo(tree, &head);
++	hfsplus_put_bnode(hnode);
++	return tree;
++
++ put_hnode:
++	hfsplus_put_bnode(hnode);
++ free_tree:
++	kfree(tree);
++	return NULL;
++}
+diff -urN -x CVS linux-bk/fs/hfsplus/catalog.c linux-hfsplus/fs/hfsplus/catalog.c
+--- linux-bk/fs/hfsplus/catalog.c	Wed Dec 31 16:00:00 1969
++++ linux-hfsplus/fs/hfsplus/catalog.c	Mon Nov  5 00:09:43 2001
+@@ -0,0 +1,95 @@
++/*
++ *  linux/fs/hfsplus/catalog.c
++ *
++ * Copyright (C) 2001
++ * Brad Boyer (flar@allandria.com)
++ *
++ * Handling of catalog records
++ */
++
++#include <linux/hfsplus_fs.h>
++#include <linux/hfsplus_raw.h>
++
++int hfsplus_cmp_cat_key(hfsplus_btree_key *k1, hfsplus_btree_key *k2)
++{
++        hfsp_cnid k1p, k2p;
++
++        k1p = hfsp_get_hl(k1->u.cat.parent);
++        k2p = hfsp_get_hl(k2->u.cat.parent);
++        if(k1p != k2p) {
++                return (k1p < k2p) ? -1 : 1;
++        }
++        return hfsplus_unistrcmp(&(k1->u.cat.name), &(k2->u.cat.name));
++}
++
++int hfsplus_fill_cat_key(hfsplus_btree_key *key, hfsp_cnid parent, char *name,
++			 int namelen)
++{
++	int err;
++
++	hfsp_put_hl(parent, key->u.cat.parent);
++	if(!name || !namelen) {
++		hfsp_put_hs(0, key->u.cat.name.length);
++	} else {
++		err = hfsplus_asc2uni(&(key->u.cat.name), name, namelen);
++		if(err)
++			return err;
++	}
++	hfsp_put_hs(6 + 2 * hfsp_get_hs(key->u.cat.name.length), key->key_len);
++	return 0;
++}
++
++static void hfsplus_fill_cat_key_uni(hfsplus_btree_key *key, hfsp_cnid parent,
++				     hfsplus_unistr *name)
++{
++	hfsp_u16 ustrlen;
++
++	ustrlen = hfsp_get_hs(name->length);
++	hfsp_put_hs(6 + 2 * ustrlen, key->key_len);
++	hfsp_put_hl(parent, key->u.cat.parent);
++	hfsp_put_hs(ustrlen, key->u.cat.name.length);
++	memcpy(key->u.cat.name.unicode, name->unicode,
++	       2 * ustrlen);
++}
++
++/* Try to get a catalog entry for given catalog id */
++int hfsplus_find_cat(struct super_block *sb, unsigned long cnid,
++		     hfsplus_cat_entry *entry)
++{
++	hfsplus_btree_key key;
++	hfsplus_cat_entry tmp;
++	int err, sz;
++	hfsp_u16 type;
++
++	hfsplus_fill_cat_key(&key, cnid, NULL, 0);
++	sz = sizeof(hfsplus_cat_entry);
++	err = hfsplus_btfind_exact(HFSPLUS_SB(sb).cat_tree, &key, &tmp, &sz);
++	if(err)
++		return err;
++
++	type = hfsp_get_hs(tmp.type);
++	if((type != HFSPLUS_FOLDER_THREAD) && (type != HFSPLUS_FILE_THREAD)) {
++		printk("HFS+-fs: Found bad thread record in catalog\n");
++		return -EIO;
++	}
++
++	hfsplus_fill_cat_key_uni(&key, hfsp_get_hl(tmp.u.thread.parentID),
++				 &(tmp.u.thread.nodeName));
++	sz = sizeof(hfsplus_cat_entry);
++	err = hfsplus_btfind_exact(HFSPLUS_SB(sb).cat_tree, &key, entry, &sz);
++	if(err) {
++		printk("HFS+-fs: Unable to find record listed in thread\n");
++		return err;
++	}
++	type = hfsp_get_hs(entry->type);
++	if((type != HFSPLUS_FOLDER) && (type != HFSPLUS_FILE)) {
++		printk("HFS+-fs: Found bad entry in catalog\n");
++		return -EIO;
++	}
++	if(((type == HFSPLUS_FILE) && (sz < 2+sizeof(hfsplus_cat_file))) ||
++	   ((type == HFSPLUS_FOLDER) && (sz < 2+sizeof(hfsplus_cat_folder)))) {
++		printk("HFS+-fs: Found truncated entry in catalog\n");
++		return -EIO;
++	}
++	return 0;
++}
+diff -urN -x CVS linux-bk/fs/hfsplus/dir.c linux-hfsplus/fs/hfsplus/dir.c
+--- linux-bk/fs/hfsplus/dir.c	Wed Dec 31 16:00:00 1969
++++ linux-hfsplus/fs/hfsplus/dir.c	Thu Dec 13 22:11:55 2001
+@@ -0,0 +1,156 @@
++/*
++ *  linux/fs/hfsplus/dir.c
++ *
++ * Copyright (C) 2001
++ * Brad Boyer (flar@allandria.com)
++ *
++ * Handling of directories
++ */
++
++#include <linux/errno.h>
++#include <linux/fs.h>
++#include <linux/hfsplus_fs.h>
++#include <linux/hfsplus_raw.h>
++
++/* Find the entry inside dir named dentry->d_name */
++static struct dentry *hfsplus_lookup(struct inode *dir, struct dentry *dentry)
++{
++	struct inode *inode = NULL;
++	hfsplus_btree_key key;
++	hfsplus_cat_entry entry;
++	int err, sz;
++	hfsp_u32 cnid;
++	hfsp_u16 type;
++
++	if((err = hfsplus_fill_cat_key(&key, dir->i_ino, dentry->d_name.name,
++				       dentry->d_name.len)) != 0)
++		return ERR_PTR(err);
++	sz = sizeof(entry);
++	if((err = hfsplus_btfind_exact(HFSPLUS_SB(dir->i_sb).cat_tree, &key,
++				       &entry, &sz)) != 0) {
++		if(err == -ENOENT) {
++			/* No such entry */
++			inode = NULL;
++			goto out;
++		}
++		return ERR_PTR(err);
++	}
++	type = hfsp_get_hs(entry.type);
++	if(type == HFSPLUS_FOLDER) {
++		if(sz < 2 + sizeof(hfsplus_cat_folder))
++			return ERR_PTR(-EIO);
++		cnid = hfsp_get_hl(entry.u.folder.id);
++	} else if(type == HFSPLUS_FILE) {
++		if(sz < 2 + sizeof(hfsplus_cat_file))
++			return ERR_PTR(-EIO);
++		cnid = hfsp_get_hl(entry.u.file.id);
++	} else {
++		printk("HFS+-fs: Illegal catalog entry type in lookup\n");
++		return ERR_PTR(-EIO);
++	}
++	inode = iget(dir->i_sb, cnid);
++	if(!inode)
++		return ERR_PTR(-EACCES);
++ out:
++	d_add(dentry, inode);
++	return NULL;
++}
++
++static int hfsplus_readdir(struct file *filp, void *dirent, filldir_t filldir)
++{
++	struct inode *inode = filp->f_dentry->d_inode;
++	int len, sz, err, done = 0;
++	char strbuf[HFSPLUS_MAX_STRLEN + 1];
++	hfsplus_cat_entry entry;
++	hfsplus_btree_key key;
++	hfsplus_btiter iter;
++	hfsp_u16 type;
++
++	if(filp->f_pos >= inode->i_size)
++		return 0;
++
++	hfsplus_fill_cat_key(&key, inode->i_ino, NULL, 0);
++	hfsplus_btiter_setup(&iter, HFSPLUS_SB(inode->i_sb).cat_tree);
++	if((err = hfsplus_btiter_find(&iter, &key)) != 0) {
++		return err;
++	}
++	if(filp->f_pos > 1)
++		if((err = hfsplus_btiter_move(&iter, filp->f_pos - 1)))
++			return err;
++
++	while(!done) {
++		if(!filp->f_pos) {
++			/* This is completely artificial... */
++			if(filldir(dirent, ".", 1, 0, inode->i_ino, DT_DIR))
++				done = 1;
++			filp->f_pos++;
++			continue;
++		}
++		sz = sizeof(entry);
++		if((err = hfsplus_btiter_get(&iter, &key, &entry, &sz)))
++			return err;
++		if(hfsp_get_hl(key.u.cat.parent) != inode->i_ino) {
++			printk("HFS+-fs: walked past end of dir\n");
++			return 0;
++		}
++		if(sz < 2)
++			return -EIO;
++		type = hfsp_get_hs(entry.type);
++		if(filp->f_pos == 1) {
++			if(type != HFSPLUS_FOLDER_THREAD) {
++				printk("HFS+-fs: bad catalog folder thread\n");
++				return -EIO;
++			}
++			if(sz < HFSPLUS_MIN_THREAD_SZ) {
++				printk("HFS+-fs: truncated catalog thread\n");
++				return -EIO;
++			}
++			if(filldir(dirent, "..", 2, 1,
++				   hfsp_get_hl(entry.u.thread.parentID),
++				   DT_DIR))
++				done = 1;
++		} else {
++			len = HFSPLUS_MAX_STRLEN;
++			err = hfsplus_uni2asc(&(key.u.cat.name), strbuf, &len);
++			if(err)
++				return err;
++			if(type == HFSPLUS_FOLDER) {
++				if(sz < 2 + sizeof(hfsplus_cat_folder)) {
++					printk("HFS+-fs: small dir entry\n");
++					return -EIO;
++				}
++				if(filldir(dirent, strbuf, len, filp->f_pos,
++					   hfsp_get_hl(entry.u.folder.id),
++					   DT_DIR))
++					done = 1;
++			} else if(type == HFSPLUS_FILE) {
++				if(sz < 2 + sizeof(hfsplus_cat_file)) {
++					printk("HFS+-fs: small file entry\n");
++					return -EIO;
++				}
++				if(filldir(dirent, strbuf, len, filp->f_pos,
++					   hfsp_get_hl(entry.u.file.id),
++					   DT_REG))
++					done = 1;
++			} else {
++				printk("HFS+-fs: bad catalog entry type\n");
++				return -EIO;
++			}
++		} /* if(filp->f_pos == 1) */
++		filp->f_pos++;
++		if(filp->f_pos >= inode->i_size)
++			break;
++		if((err = hfsplus_btiter_move(&iter, 1)))
++			return err;
++	} /* while(!done) */
++	return 0;
++}
++
++struct inode_operations hfsplus_dir_inode_operations = {
++	lookup:         hfsplus_lookup,
++};
++
++struct file_operations hfsplus_dir_operations = {
++	read:          generic_read_dir,
++	readdir:       hfsplus_readdir,
++};
+diff -urN -x CVS linux-bk/fs/hfsplus/extents.c linux-hfsplus/fs/hfsplus/extents.c
+--- linux-bk/fs/hfsplus/extents.c	Wed Dec 31 16:00:00 1969
++++ linux-hfsplus/fs/hfsplus/extents.c	Mon Nov  5 00:03:59 2001
+@@ -0,0 +1,162 @@
++/*
++ *  linux/fs/hfsplus/extents.c
++ *
++ * Copyright (C) 2001
++ * Brad Boyer (flar@allandria.com)
++ *
++ * Handling of Extents both in catalog and extents overflow trees
++ */
++
++#include <linux/errno.h>
++#include <linux/fs.h>
++#include <linux/hfsplus_fs.h>
++#include <linux/hfsplus_raw.h>
++
++/* Compare two extents keys, returns 0 on same, pos/neg for difference */
++int hfsplus_cmp_ext_key(hfsplus_btree_key *k1, hfsplus_btree_key *k2)
++{
++        hfsp_cnid k1id, k2id;
++        hfsp_u32 k1s, k2s;
++
++        k1id = hfsp_get_hl(k1->u.ext.cnid);
++        k2id = hfsp_get_hl(k2->u.ext.cnid);
++        if(k1id != k2id) {
++                return (k1id < k2id) ? -1 : 1;
++        }
++        if(k1->u.ext.fork_type != k2->u.ext.fork_type) {
++                return (k1->u.ext.fork_type < k2->u.ext.fork_type) ? -1 : 1;
++        }
++        k1s = hfsp_get_hl(k1->u.ext.start_block);
++        k2s = hfsp_get_hl(k2->u.ext.start_block);
++        if(k1s == k2s)
++                return 0;
++        return (k1s < k2s) ? -1 : 1;
++}
++
++void hfsplus_fill_ext_key(hfsplus_btree_key *key, hfsp_u32 cnid,
++			  hfsp_u32 block, hfsp_u8 type)
++{
++	hfsp_put_hl(HFSPLUS_EXT_KEYLEN, key->key_len);
++	hfsp_put_hl(cnid, key->u.ext.cnid);
++	hfsp_put_hl(block, key->u.ext.start_block);
++	key->u.ext.fork_type = type;
++	key->u.ext.pad = 0;
++}
++
++/* Get a block at iblock for inode, possibly allocating if create */
++int hfsplus_get_block(struct inode *inode, long iblock,
++		      struct buffer_head *bh_result, int create)
++{
++	struct super_block *s;
++	hfsplus_extent *extents, ext_entry[8];
++	hfsplus_btree_key key;
++	hfsplus_cat_entry cat_entry;
++	unsigned long ino;
++	long remain;
++	int i, sz, localerr, search_tree = 1, err = -EIO;
++	hfsp_u32 curr, tmp, ablock, dblock, dbpab, dbo;
++	hfsp_u8 forktype;
++
++	if(!inode || !bh_result)
++		goto out;
++
++	ino = inode->i_ino;
++	s = inode->i_sb;
++
++	/* Convert inode block to disk allocation block */
++	dbo = HFSPLUS_SB(s).dboff;
++	dbpab = HFSPLUS_SB(s).dbpab;
++	ablock = iblock / dbpab;
++	remain = iblock % dbpab;
++
++	/* Some files have extents in volume header */
++	if(ino <= HFSPLUS_ATTR_CNID) {
++		switch(ino) {
++		case HFSPLUS_EXT_CNID:
++			extents = HFSPLUS_SB(s).s_vhdr->ext_file.extents;
++			search_tree = 0;
++			break;
++		case HFSPLUS_CAT_CNID:
++			extents = HFSPLUS_SB(s).s_vhdr->cat_file.extents;
++			break;
++		case HFSPLUS_ALLOC_CNID:
++			extents = HFSPLUS_SB(s).s_vhdr->alloc_file.extents;
++			break;
++		case HFSPLUS_START_CNID:
++			extents = HFSPLUS_SB(s).s_vhdr->start_file.extents;
++			break;
++		case HFSPLUS_ATTR_CNID:
++			extents = HFSPLUS_SB(s).s_vhdr->attr_file.extents;
++			break;
++		default:
++			/* Nothing else in this block is valid */
++			goto out;
++			break;
++		}
++	} else {
++		if((localerr = hfsplus_find_cat(s, ino, &cat_entry)) != 0) {
++			err = localerr;
++			goto out;
++		}
++		if(hfsp_get_hs(cat_entry.type) != HFSPLUS_FILE)
++			goto out;
++		if(HFSPLUS_IS_DATA(inode)) {
++			extents = cat_entry.u.file.data_fork.extents;
++		} else if(HFSPLUS_IS_RSRC(inode)) {
++			extents = cat_entry.u.file.res_fork.extents;
++		} else {
++			goto out;
++		}
++	}
++
++	/* Look in extent record for block */
++	curr = 0;
++ search_extent:
++	for(i = 0; i < 8; i++) {
++		tmp = hfsp_get_hl(extents[i].block_count);
++		if(tmp && (ablock < curr + tmp)) {
++			/* Found it */
++			dblock = hfsp_get_hl(extents[i].start_block);
++			dblock += ablock - curr;
++			bh_result->b_dev = inode->i_dev;
++			bh_result->b_blocknr = dblock * dbpab + remain + dbo;
++			bh_result->b_state |= (1UL << BH_Mapped);
++			err = 0;
++			goto out;
++		}
++		curr += tmp;
++	}
++
++	/* Look for extents in tree */
++	if(!search_tree)
++		goto not_found;
++	forktype = HFSPLUS_IS_RSRC(inode) ? HFSPLUS_TYPE_RSRC :
++		HFSPLUS_TYPE_DATA;
++	hfsplus_fill_ext_key(&key, ino, ablock, forktype);
++	sz = sizeof(ext_entry);
++	if((localerr = hfsplus_btfind(HFSPLUS_SB(s).ext_tree, &key, ext_entry,
++				      &sz))) {
++		if(localerr == -ENOENT)
++			goto not_found;
++		printk("HFS+-fs: Unknown problem searching extents B*Tree\n");
++		err = localerr;
++		goto out;
++	}
++	if((hfsp_get_hl(key.u.ext.cnid) != ino) ||
++	   (key.u.ext.fork_type != forktype)) {
++		goto not_found;
++	}
++	search_tree = 0;
++	curr = hfsp_get_hl(key.u.ext.start_block);
++	extents = ext_entry;
++	goto search_extent;
++ not_found:
++	if(!create) {
++		err = 0;
++		goto out;
++	}
++	/* FIXME: Should allocate blocks here... */
++	printk("HFS+-fs: no file writes, but block allocation attempted\n");
++ out:
++	return err;
++}
+diff -urN -x CVS linux-bk/fs/hfsplus/inode.c linux-hfsplus/fs/hfsplus/inode.c
+--- linux-bk/fs/hfsplus/inode.c	Wed Dec 31 16:00:00 1969
++++ linux-hfsplus/fs/hfsplus/inode.c	Thu Dec 13 22:32:32 2001
+@@ -0,0 +1,126 @@
++/*
++ *  linux/fs/hfsplus/inode.c
++ *
++ * Copyright (C) 2001
++ * Brad Boyer (flar@allandria.com)
++ *
++ * Inode handling routines
++ */
++
++#include <linux/fs.h>
++#include <linux/hfsplus_fs.h>
++#include <linux/hfsplus_raw.h>
++
++static int hfsplus_readpage(struct file *file, struct page *page)
++{
++	return block_read_full_page(page, hfsplus_get_block);
++}
++
++static int hfsplus_bmap(struct address_space *mapping, long block)
++{
++	return generic_block_bmap(mapping, block, hfsplus_get_block);
++}
++
++struct address_space_operations hfsplus_aops = {
++	readpage: hfsplus_readpage,
++	bmap: hfsplus_bmap,
++};
++
++static void hfsplus_fill_perms(struct inode *inode, hfsplus_perm *perms)
++{
++	struct super_block *s = inode->i_sb;
++
++	inode->i_mode = hfsp_get_hl(perms->mode);
++	if(inode->i_mode) {
++		inode->i_mode &= ~(S_IFMT);
++	} else {
++		inode->i_mode = S_IRWXUGO & ~(HFSPLUS_SB(s).umask);
++	}
++	inode->i_uid = hfsp_get_hl(perms->owner);
++	if(!(inode->i_uid))
++		inode->i_uid = HFSPLUS_SB(s).uid;
++	inode->i_gid = hfsp_get_hl(perms->group);
++	if(!(inode->i_gid))
++		inode->i_gid = HFSPLUS_SB(s).gid;
++	HFSPLUS_I(inode).dev = hfsp_get_hl(perms->dev);
++}
++
++extern struct inode_operations hfsplus_dir_inode_operations;
++extern struct file_operations hfsplus_dir_operations;
++
++struct inode_operations hfsplus_file_inode_operations = {
++};
++struct file_operations hfsplus_file_operations = {
++	read:          generic_file_read,
++	mmap:          generic_file_mmap,
++};
++
++static void hfsplus_count_subdirs(struct inode *inode)
++{
++	hfsplus_btree_key key;
++	hfsplus_cat_entry entry;
++	hfsplus_btiter iter;
++	int sz;
++
++	hfsplus_fill_cat_key(&key, inode->i_ino, NULL, 0);
++	hfsplus_btiter_setup(&iter, HFSPLUS_SB(inode->i_sb).cat_tree);
++	if(hfsplus_btiter_find(&iter, &key))
++		return;
++	while(1) {
++		sz = sizeof(hfsplus_cat_entry);
++		if(hfsplus_btiter_get(&iter, &key, &entry, &sz) || (sz < 2))
++			return;
++
++		if(hfsp_get_hl(key.u.cat.parent) != inode->i_ino)
++			return;
++		if(hfsp_get_hs(entry.type) == HFSPLUS_FOLDER)
++			HFSPLUS_I(inode).ndirs++;
++
++		if(hfsplus_btiter_move(&iter, 1))
++			return;
++	}
++}
++
++int hfsplus_cat_fill_inode(struct inode *inode, hfsplus_cat_entry *entry)
++{
++	hfsplus_cat_folder *folder;
++	hfsplus_cat_file *file;
++	hfsp_u16 type;
++
++	type = hfsp_get_hs(entry->type);
++	HFSPLUS_I(inode).ndirs = 0;
++	HFSPLUS_I(inode).dev = 0;
++	inode->i_blksize = PAGE_SIZE; /* Doesn't seem to be useful... */
++	if(type == HFSPLUS_FOLDER) {
++		folder = &(entry->u.folder);
++		hfsplus_fill_perms(inode, &(folder->permissions));
++		inode->i_mode |= S_IFDIR;
++		hfsplus_count_subdirs(inode);
++		inode->i_nlink = 2 + HFSPLUS_I(inode).ndirs;
++		inode->i_size = 2 + hfsp_get_hl(folder->valence);
++		inode->i_atime = hfsp_mt2ut(folder->access_date);
++		inode->i_mtime = hfsp_mt2ut(folder->content_mod_date);
++		inode->i_ctime = inode->i_mtime;
++		inode->i_blocks = 0;
++		inode->i_op = &hfsplus_dir_inode_operations;
++		inode->i_fop = &hfsplus_dir_operations;
++	} else if(type == HFSPLUS_FILE) {
++		file = &(entry->u.file);
++		hfsplus_fill_perms(inode, &(file->permissions));
++		inode->i_mode |= S_IFREG;
++		inode->i_nlink = 1;
++		inode->i_size =	hfsp_get_hll(file->data_fork.total_size);
++		inode->i_atime = hfsp_mt2ut(file->access_date);
++		inode->i_mtime = hfsp_mt2ut(file->content_mod_date);
++		inode->i_ctime = inode->i_mtime;
++		inode->i_blocks = hfsp_get_hl(file->data_fork.total_blocks);
++		inode->i_op = &hfsplus_file_inode_operations;
++		inode->i_fop = &hfsplus_file_operations;
++		inode->i_mapping->a_ops = &hfsplus_aops;
++	} else {
++		printk("HFS+-fs: bad catalog entry used to create inode\n");
++		return -EIO;
++	}
++	return 0;
++}
++
+diff -urN -x CVS linux-bk/fs/hfsplus/options.c linux-hfsplus/fs/hfsplus/options.c
+--- linux-bk/fs/hfsplus/options.c	Wed Dec 31 16:00:00 1969
++++ linux-hfsplus/fs/hfsplus/options.c	Fri Sep 21 00:42:03 2001
+@@ -0,0 +1,147 @@
++/*
++ *  linux/fs/hfsplus/options.c
++ *
++ * Copyright (C) 2001
++ * Brad Boyer (flar@allandria.com)
++ *
++ * Option parsing
++ */
++
++#include <linux/string.h>
++#include <linux/kernel.h>
++#include <linux/sched.h>
++#include <linux/hfsplus_fs.h>
++
++/* Initialize an options object to reasonable defaults */
++void fill_defaults(struct hfsplus_sb_info *opts)
++{
++	if(!opts)
++		return;
++
++	opts->creator = HFSPLUS_DEF_CR_TYPE;
++	opts->type = HFSPLUS_DEF_CR_TYPE;
++	opts->charcase = HFSPLUS_CASE_ASIS;
++	opts->fork = HFSPLUS_FORK_RAW;
++	opts->namemap = HFSPLUS_NAMES_TRIVIAL;
++	opts->umask = current->fs->umask;
++	opts->uid = current->uid;
++	opts->gid = current->gid;
++}
++
++/* Copy settings from one hfsplus_sb_info object to another */
++void fill_current(struct hfsplus_sb_info *curopts,
++		  struct hfsplus_sb_info *opts)
++{
++	if(!curopts || !opts)
++		return;
++
++	opts->creator = curopts->creator;
++	opts->type = curopts->type;
++	opts->charcase = curopts->charcase;
++	opts->fork = curopts->fork;
++	opts->namemap = curopts->namemap;
++	opts->umask = curopts->umask;
++	opts->uid = curopts->uid;
++	opts->gid = curopts->gid;
++}
++
++/* My own little ultra-paranoid version of strtok (yes, there is strtok...) */
++static char *my_strtok(char *input, char **next, char delim)
++{
++	char *d;
++
++	if(!input || !*input || !next)
++		return NULL;
++
++	*next = NULL;
++	d = strchr(input, delim);
++	if(d) {
++		*d = '\0';
++		*next = d+1;
++	}
++	return input;
++}
++
++/* convert a "four byte character" to a 32 bit int with error checks */
++static int fill_fourchar(hfsp_u32 *result, char *input)
++{
++	hfsp_u32 out;
++	int i;
++
++	if(!result || !input || !*input || (strlen(input) != 4))
++		return 0;
++
++	for(out = 0, i = 0; i < 4; i++) {
++		out <<= 8;
++		out |= ((int)(input[i])) & 0xFF;
++	}
++	*result = out;
++	return 1;
++}
++
++/* convert a string to int with error checks */
++static int fill_int(int *result, char *input, int base)
++{
++	char *tmp = input;
++	int intval;
++
++	if(!result || !input || !*input)
++		return 0;
++
++	intval = simple_strtoul(tmp, &tmp, base);
++	if(*tmp)
++		return 0;
++
++	*result = intval;
++	return 1;
++}
++
++/* Parse options from mount. Returns 0 on failure */
++/* input is the options passed to mount() as a string */
++int parse_options(char *input, struct hfsplus_sb_info *results)
++{
++	char *next, *curropt, *value;
++
++	if(!input)
++		return 1;
++
++	for(curropt = my_strtok(input, &next, ','); curropt != NULL;
++	    curropt = my_strtok(next, &next, ',')) {
++		if((value = strchr(curropt, '=')) != NULL)
++			*value++ = '\0';
++
++		if(!strcmp(curropt, "creator")) {
++			if(!fill_fourchar(&(results->creator), value)) {
++				printk("HFS+-fs: creator requires a value\n");
++				return 0;
++			}
++		} else if(!strcmp(curropt, "type")) {
++			if(!fill_fourchar(&(results->type), value)) {
++				printk("HFS+-fs: type requires a value\n");
++				return 0;
++			}
++		} else if(!strcmp(curropt, "case")) {
++		} else if(!strcmp(curropt, "fork")) {
++		} else if(!strcmp(curropt, "names")) {
++		} else if(!strcmp(curropt, "umask")) {
++			if(!fill_int(&(results->umask), value, 8))
++				printk("HFS+-fs: umask requires a value\n");
++				return 0;
++		} else if(!strcmp(curropt, "uid")) {
++			if(!fill_int(&(results->uid), value, 0)) {
++				printk("HFS+-fs: uid requires an argument\n");
++				return 0;
++			}
++		} else if(!strcmp(curropt, "gid")) {
++			if(!fill_int(&(results->gid), value, 0)) {
++				printk("HFS+-fs: gid requires an argument\n");
++				return 0;
++			}
++		} else {
++			printk("HFS+-fs: unknown option %s\n", curropt);
++			return 0;
++		}
++	}
++
++	return 1;
++}
+diff -urN -x CVS linux-bk/fs/hfsplus/super.c linux-hfsplus/fs/hfsplus/super.c
+--- linux-bk/fs/hfsplus/super.c	Wed Dec 31 16:00:00 1969
++++ linux-hfsplus/fs/hfsplus/super.c	Mon Nov  5 00:11:34 2001
+@@ -0,0 +1,164 @@
++/*
++ *  linux/fs/hfsplus/super.c
++ *
++ * Copyright (C) 2001
++ * Brad Boyer (flar@allandria.com)
++ *
++ */
++
++#include <linux/config.h>
++#include <linux/init.h>
++#include <linux/module.h>
++#include <linux/fs.h>
++#include <linux/hfsplus_fs.h>
++
++static void hfsplus_read_inode(struct inode *inode)
++{
++	hfsplus_cat_entry entry;
++
++	memset(&entry, 0, sizeof(entry));
++	hfsp_put_hs(HFSPLUS_FILE, entry.type);
++	switch(inode->i_ino) {
++	case HFSPLUS_EXT_CNID:
++		memcpy(&(entry.u.file.data_fork),
++		       &(HFSPLUS_SB(inode->i_sb).s_vhdr->ext_file.extents),
++		       sizeof(hfsplus_fork_raw));
++		break;
++	case HFSPLUS_CAT_CNID:
++		memcpy(&(entry.u.file.data_fork),
++		       &(HFSPLUS_SB(inode->i_sb).s_vhdr->cat_file.extents),
++		       sizeof(hfsplus_fork_raw));
++		break;
++	default:
++		if(hfsplus_find_cat(inode->i_sb, inode->i_ino, &entry))
++			goto bad_inode;
++		break;
++	}
++	if(hfsplus_cat_fill_inode(inode, &entry))
++		goto bad_inode;
++	return;
++
++ bad_inode:
++	make_bad_inode(inode);
++}
++
++static void hfsplus_put_super(struct super_block *sb)
++{
++	hfsplus_close_btree(HFSPLUS_SB(sb).cat_tree);
++	HFSPLUS_SB(sb).cat_tree = NULL;
++	hfsplus_close_btree(HFSPLUS_SB(sb).ext_tree);
++	HFSPLUS_SB(sb).ext_tree = NULL;
++
++	if(HFSPLUS_SB(sb).s_vhbh)
++		brelse(HFSPLUS_SB(sb).s_vhbh);
++	HFSPLUS_SB(sb).s_vhbh = NULL;
++	HFSPLUS_SB(sb).s_vhdr = NULL;
++}
++
++static int hfsplus_statfs(struct super_block *sb, struct statfs *buf)
++{
++	buf->f_type = HFSPLUS_SUPER_MAGIC;
++	buf->f_bsize = sb->s_blocksize;
++	buf->f_blocks = hfsp_get_ahl(HFSPLUS_SB(sb).s_vhdr->total_blocks);
++	buf->f_bfree = HFSPLUS_SB(sb).free_blocks;
++	buf->f_bavail = buf->f_bfree;
++	buf->f_files = HFSPLUS_SB(sb).file_count + HFSPLUS_SB(sb).folder_count;
++	buf->f_ffree = 0xFFFFFFFF - HFSPLUS_SB(sb).next_cnid;
++	buf->f_namelen = HFSPLUS_MAX_STRLEN;
++
++	return 0;
++}
++
++static struct super_operations hfsplus_sops = {
++	read_inode: hfsplus_read_inode,
++	put_super:  hfsplus_put_super,
++	statfs:     hfsplus_statfs,
++};
++
++struct super_block *hfsplus_read_super(struct super_block *sb, void *data,
++				       int silent)
++{
++	struct hfsplus_vh *vhdr;
++	struct hfsplus_sb_info opts;
++
++	fill_defaults(&opts);
++	if(!parse_options(data, &opts)) {
++		if(!silent)
++			printk("HFS+-fs: unable to parse mount options\n");
++		return NULL;
++	}
++	fill_current(&opts, &(HFSPLUS_SB(sb)));
++
++	HFSPLUS_SB(sb).s_vhdr = NULL;
++	HFSPLUS_SB(sb).s_vhbh = NULL;
++	HFSPLUS_SB(sb).ext_tree = NULL;
++	HFSPLUS_SB(sb).cat_tree = NULL;
++
++	/* Grab the volume header */
++	if(!hfsplus_read_wrapper(sb)) {
++		if(!silent)
++			printk("HFS+-fs: unable to find HFS+ superblock\n");
++		return NULL;
++	}
++	vhdr = HFSPLUS_SB(sb).s_vhdr;
++
++	/* Copy parts of the volume header into the superblock */
++	sb->s_magic = hfsp_get_hs(vhdr->signature);
++	if(hfsp_get_hs(vhdr->version) != HFSPLUS_CURRENT_VERSION) {
++		if(!silent)
++			printk("HFS+-fs: wrong filesystem version\n");
++		goto cleanup;
++	}
++	HFSPLUS_SB(sb).free_blocks = hfsp_get_ahl(vhdr->free_blocks);
++	HFSPLUS_SB(sb).next_cnid = hfsp_get_ahl(vhdr->next_cnid);
++	HFSPLUS_SB(sb).file_count = hfsp_get_ahl(vhdr->file_count);
++	HFSPLUS_SB(sb).folder_count = hfsp_get_ahl(vhdr->folder_count);
++
++	/* Set up operations so we can load metadata */
++	sb->s_op = &hfsplus_sops;
++
++	/* Load metadata objects (B*Trees) */
++	HFSPLUS_SB(sb).ext_tree = hfsplus_open_btree(sb, HFSPLUS_EXT_CNID);
++	if(!HFSPLUS_SB(sb).ext_tree) {
++		if(!silent)
++			printk("HFS+-fs: failed to load extents file\n");
++		goto cleanup;
++	}
++	HFSPLUS_SB(sb).cat_tree = hfsplus_open_btree(sb, HFSPLUS_CAT_CNID);
++	if(!HFSPLUS_SB(sb).cat_tree) {
++		if(!silent)
++			printk("HFS+-fs: failed to load catalog file\n");
++		goto cleanup;
++	}
++
++	/* Load the root directory */
++	sb->s_root = d_alloc_root(iget(sb, HFSPLUS_ROOT_CNID));
++	if(!sb->s_root) {
++		if(!silent)
++			printk("HFS+-fs: failed to load root directory\n");
++		goto cleanup;
++	}
++
++	return sb;
++
++ cleanup:
++	hfsplus_put_super(sb);
++	return NULL;
++}
++
++static DECLARE_FSTYPE_DEV(hfsplus_fs_type, "hfsplus", hfsplus_read_super);
++
++static int __init init_hfsplus_fs(void)
++{
++	return register_filesystem(&hfsplus_fs_type);
++}
++
++static void __exit exit_hfsplus_fs(void)
++{
++	unregister_filesystem(&hfsplus_fs_type);
++}
++
++EXPORT_NO_SYMBOLS;
++
++module_init(init_hfsplus_fs)
++module_exit(exit_hfsplus_fs)
+diff -urN -x CVS linux-bk/fs/hfsplus/tables.c linux-hfsplus/fs/hfsplus/tables.c
+--- linux-bk/fs/hfsplus/tables.c	Wed Dec 31 16:00:00 1969
++++ linux-hfsplus/fs/hfsplus/tables.c	Fri Sep 21 00:42:03 2001
+@@ -0,0 +1,408 @@
++/*
++ * linux/fs/hfsplus/tables.c
++ *
++ * Various data tables
++ */
++
++#include <linux/hfsplus_fs.h>
++
++/*
++ *  Unicode case folding table taken from Apple Technote #1150
++ *  (HFS Plus Volume Format)
++ */
++
++hfsp_u16 case_fold_table[] = {
++/*
++ *  The lower case table consists of a 256-entry high-byte table followed by
++ *  some number of 256-entry subtables. The high-byte table contains either an
++ *  offset to the subtable for characters with that high byte or zero, which
++ *  means that there are no case mappings or ignored characters in that block.
++ *  Ignored characters are mapped to zero.
++ */
++
++    // High-byte indices ( == 0 iff no case mapping and no ignorables )
++
++
++    /* 0 */ 0x0100, 0x0200, 0x0000, 0x0300, 0x0400, 0x0500, 0x0000, 0x0000,
++            0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++    /* 1 */ 0x0600, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++            0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++    /* 2 */ 0x0700, 0x0800, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++            0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++    /* 3 */ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++            0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++    /* 4 */ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++            0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++    /* 5 */ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++            0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++    /* 6 */ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++            0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++    /* 7 */ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++            0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++    /* 8 */ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++            0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++    /* 9 */ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++            0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++    /* A */ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++            0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++    /* B */ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++            0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++    /* C */ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++            0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++    /* D */ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++            0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++    /* E */ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++            0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++    /* F */ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++            0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0900, 0x0A00,
++
++    // Table 1 (for high byte 0x00)
++
++    /* 0 */ 0xFFFF, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
++            0x0008, 0x0009, 0x000A, 0x000B, 0x000C, 0x000D, 0x000E, 0x000F,
++    /* 1 */ 0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x0015, 0x0016, 0x0017,
++            0x0018, 0x0019, 0x001A, 0x001B, 0x001C, 0x001D, 0x001E, 0x001F,
++    /* 2 */ 0x0020, 0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
++            0x0028, 0x0029, 0x002A, 0x002B, 0x002C, 0x002D, 0x002E, 0x002F,
++    /* 3 */ 0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
++            0x0038, 0x0039, 0x003A, 0x003B, 0x003C, 0x003D, 0x003E, 0x003F,
++    /* 4 */ 0x0040, 0x0061, 0x0062, 0x0063, 0x0064, 0x0065, 0x0066, 0x0067,
++            0x0068, 0x0069, 0x006A, 0x006B, 0x006C, 0x006D, 0x006E, 0x006F,
++    /* 5 */ 0x0070, 0x0071, 0x0072, 0x0073, 0x0074, 0x0075, 0x0076, 0x0077,
++            0x0078, 0x0079, 0x007A, 0x005B, 0x005C, 0x005D, 0x005E, 0x005F,
++    /* 6 */ 0x0060, 0x0061, 0x0062, 0x0063, 0x0064, 0x0065, 0x0066, 0x0067,
++            0x0068, 0x0069, 0x006A, 0x006B, 0x006C, 0x006D, 0x006E, 0x006F,
++    /* 7 */ 0x0070, 0x0071, 0x0072, 0x0073, 0x0074, 0x0075, 0x0076, 0x0077,
++            0x0078, 0x0079, 0x007A, 0x007B, 0x007C, 0x007D, 0x007E, 0x007F,
++    /* 8 */ 0x0080, 0x0081, 0x0082, 0x0083, 0x0084, 0x0085, 0x0086, 0x0087,
++            0x0088, 0x0089, 0x008A, 0x008B, 0x008C, 0x008D, 0x008E, 0x008F,
++    /* 9 */ 0x0090, 0x0091, 0x0092, 0x0093, 0x0094, 0x0095, 0x0096, 0x0097,
++            0x0098, 0x0099, 0x009A, 0x009B, 0x009C, 0x009D, 0x009E, 0x009F,
++    /* A */ 0x00A0, 0x00A1, 0x00A2, 0x00A3, 0x00A4, 0x00A5, 0x00A6, 0x00A7,
++            0x00A8, 0x00A9, 0x00AA, 0x00AB, 0x00AC, 0x00AD, 0x00AE, 0x00AF,
++    /* B */ 0x00B0, 0x00B1, 0x00B2, 0x00B3, 0x00B4, 0x00B5, 0x00B6, 0x00B7,
++            0x00B8, 0x00B9, 0x00BA, 0x00BB, 0x00BC, 0x00BD, 0x00BE, 0x00BF,
++    /* C */ 0x00C0, 0x00C1, 0x00C2, 0x00C3, 0x00C4, 0x00C5, 0x00E6, 0x00C7,
++            0x00C8, 0x00C9, 0x00CA, 0x00CB, 0x00CC, 0x00CD, 0x00CE, 0x00CF,
++    /* D */ 0x00F0, 0x00D1, 0x00D2, 0x00D3, 0x00D4, 0x00D5, 0x00D6, 0x00D7,
++            0x00F8, 0x00D9, 0x00DA, 0x00DB, 0x00DC, 0x00DD, 0x00FE, 0x00DF,
++    /* E */ 0x00E0, 0x00E1, 0x00E2, 0x00E3, 0x00E4, 0x00E5, 0x00E6, 0x00E7,
++            0x00E8, 0x00E9, 0x00EA, 0x00EB, 0x00EC, 0x00ED, 0x00EE, 0x00EF,
++    /* F */ 0x00F0, 0x00F1, 0x00F2, 0x00F3, 0x00F4, 0x00F5, 0x00F6, 0x00F7,
++            0x00F8, 0x00F9, 0x00FA, 0x00FB, 0x00FC, 0x00FD, 0x00FE, 0x00FF,
++
++    // Table 2 (for high byte 0x01)
++
++    /* 0 */ 0x0100, 0x0101, 0x0102, 0x0103, 0x0104, 0x0105, 0x0106, 0x0107,
++            0x0108, 0x0109, 0x010A, 0x010B, 0x010C, 0x010D, 0x010E, 0x010F,
++    /* 1 */ 0x0111, 0x0111, 0x0112, 0x0113, 0x0114, 0x0115, 0x0116, 0x0117,
++            0x0118, 0x0119, 0x011A, 0x011B, 0x011C, 0x011D, 0x011E, 0x011F,
++    /* 2 */ 0x0120, 0x0121, 0x0122, 0x0123, 0x0124, 0x0125, 0x0127, 0x0127,
++            0x0128, 0x0129, 0x012A, 0x012B, 0x012C, 0x012D, 0x012E, 0x012F,
++    /* 3 */ 0x0130, 0x0131, 0x0133, 0x0133, 0x0134, 0x0135, 0x0136, 0x0137,
++            0x0138, 0x0139, 0x013A, 0x013B, 0x013C, 0x013D, 0x013E, 0x0140,
++    /* 4 */ 0x0140, 0x0142, 0x0142, 0x0143, 0x0144, 0x0145, 0x0146, 0x0147,
++            0x0148, 0x0149, 0x014B, 0x014B, 0x014C, 0x014D, 0x014E, 0x014F,
++    /* 5 */ 0x0150, 0x0151, 0x0153, 0x0153, 0x0154, 0x0155, 0x0156, 0x0157,
++            0x0158, 0x0159, 0x015A, 0x015B, 0x015C, 0x015D, 0x015E, 0x015F,
++    /* 6 */ 0x0160, 0x0161, 0x0162, 0x0163, 0x0164, 0x0165, 0x0167, 0x0167,
++            0x0168, 0x0169, 0x016A, 0x016B, 0x016C, 0x016D, 0x016E, 0x016F,
++    /* 7 */ 0x0170, 0x0171, 0x0172, 0x0173, 0x0174, 0x0175, 0x0176, 0x0177,
++            0x0178, 0x0179, 0x017A, 0x017B, 0x017C, 0x017D, 0x017E, 0x017F,
++    /* 8 */ 0x0180, 0x0253, 0x0183, 0x0183, 0x0185, 0x0185, 0x0254, 0x0188,
++            0x0188, 0x0256, 0x0257, 0x018C, 0x018C, 0x018D, 0x01DD, 0x0259,
++    /* 9 */ 0x025B, 0x0192, 0x0192, 0x0260, 0x0263, 0x0195, 0x0269, 0x0268,
++            0x0199, 0x0199, 0x019A, 0x019B, 0x026F, 0x0272, 0x019E, 0x0275,
++    /* A */ 0x01A0, 0x01A1, 0x01A3, 0x01A3, 0x01A5, 0x01A5, 0x01A6, 0x01A8,
++            0x01A8, 0x0283, 0x01AA, 0x01AB, 0x01AD, 0x01AD, 0x0288, 0x01AF,
++    /* B */ 0x01B0, 0x028A, 0x028B, 0x01B4, 0x01B4, 0x01B6, 0x01B6, 0x0292,
++            0x01B9, 0x01B9, 0x01BA, 0x01BB, 0x01BD, 0x01BD, 0x01BE, 0x01BF,
++    /* C */ 0x01C0, 0x01C1, 0x01C2, 0x01C3, 0x01C6, 0x01C6, 0x01C6, 0x01C9,
++            0x01C9, 0x01C9, 0x01CC, 0x01CC, 0x01CC, 0x01CD, 0x01CE, 0x01CF,
++    /* D */ 0x01D0, 0x01D1, 0x01D2, 0x01D3, 0x01D4, 0x01D5, 0x01D6, 0x01D7,
++            0x01D8, 0x01D9, 0x01DA, 0x01DB, 0x01DC, 0x01DD, 0x01DE, 0x01DF,
++    /* E */ 0x01E0, 0x01E1, 0x01E2, 0x01E3, 0x01E5, 0x01E5, 0x01E6, 0x01E7,
++            0x01E8, 0x01E9, 0x01EA, 0x01EB, 0x01EC, 0x01ED, 0x01EE, 0x01EF,
++    /* F */ 0x01F0, 0x01F3, 0x01F3, 0x01F3, 0x01F4, 0x01F5, 0x01F6, 0x01F7,
++            0x01F8, 0x01F9, 0x01FA, 0x01FB, 0x01FC, 0x01FD, 0x01FE, 0x01FF,
++
++    // Table 3 (for high byte 0x03)
++
++    /* 0 */ 0x0300, 0x0301, 0x0302, 0x0303, 0x0304, 0x0305, 0x0306, 0x0307,
++            0x0308, 0x0309, 0x030A, 0x030B, 0x030C, 0x030D, 0x030E, 0x030F,
++    /* 1 */ 0x0310, 0x0311, 0x0312, 0x0313, 0x0314, 0x0315, 0x0316, 0x0317,
++            0x0318, 0x0319, 0x031A, 0x031B, 0x031C, 0x031D, 0x031E, 0x031F,
++    /* 2 */ 0x0320, 0x0321, 0x0322, 0x0323, 0x0324, 0x0325, 0x0326, 0x0327,
++            0x0328, 0x0329, 0x032A, 0x032B, 0x032C, 0x032D, 0x032E, 0x032F,
++    /* 3 */ 0x0330, 0x0331, 0x0332, 0x0333, 0x0334, 0x0335, 0x0336, 0x0337,
++            0x0338, 0x0339, 0x033A, 0x033B, 0x033C, 0x033D, 0x033E, 0x033F,
++    /* 4 */ 0x0340, 0x0341, 0x0342, 0x0343, 0x0344, 0x0345, 0x0346, 0x0347,
++            0x0348, 0x0349, 0x034A, 0x034B, 0x034C, 0x034D, 0x034E, 0x034F,
++    /* 5 */ 0x0350, 0x0351, 0x0352, 0x0353, 0x0354, 0x0355, 0x0356, 0x0357,
++            0x0358, 0x0359, 0x035A, 0x035B, 0x035C, 0x035D, 0x035E, 0x035F,
++    /* 6 */ 0x0360, 0x0361, 0x0362, 0x0363, 0x0364, 0x0365, 0x0366, 0x0367,
++            0x0368, 0x0369, 0x036A, 0x036B, 0x036C, 0x036D, 0x036E, 0x036F,
++    /* 7 */ 0x0370, 0x0371, 0x0372, 0x0373, 0x0374, 0x0375, 0x0376, 0x0377,
++            0x0378, 0x0379, 0x037A, 0x037B, 0x037C, 0x037D, 0x037E, 0x037F,
++    /* 8 */ 0x0380, 0x0381, 0x0382, 0x0383, 0x0384, 0x0385, 0x0386, 0x0387,
++            0x0388, 0x0389, 0x038A, 0x038B, 0x038C, 0x038D, 0x038E, 0x038F,
++    /* 9 */ 0x0390, 0x03B1, 0x03B2, 0x03B3, 0x03B4, 0x03B5, 0x03B6, 0x03B7,
++            0x03B8, 0x03B9, 0x03BA, 0x03BB, 0x03BC, 0x03BD, 0x03BE, 0x03BF,
++    /* A */ 0x03C0, 0x03C1, 0x03A2, 0x03C3, 0x03C4, 0x03C5, 0x03C6, 0x03C7,
++            0x03C8, 0x03C9, 0x03AA, 0x03AB, 0x03AC, 0x03AD, 0x03AE, 0x03AF,
++    /* B */ 0x03B0, 0x03B1, 0x03B2, 0x03B3, 0x03B4, 0x03B5, 0x03B6, 0x03B7,
++            0x03B8, 0x03B9, 0x03BA, 0x03BB, 0x03BC, 0x03BD, 0x03BE, 0x03BF,
++    /* C */ 0x03C0, 0x03C1, 0x03C2, 0x03C3, 0x03C4, 0x03C5, 0x03C6, 0x03C7,
++            0x03C8, 0x03C9, 0x03CA, 0x03CB, 0x03CC, 0x03CD, 0x03CE, 0x03CF,
++    /* D */ 0x03D0, 0x03D1, 0x03D2, 0x03D3, 0x03D4, 0x03D5, 0x03D6, 0x03D7,
++            0x03D8, 0x03D9, 0x03DA, 0x03DB, 0x03DC, 0x03DD, 0x03DE, 0x03DF,
++    /* E */ 0x03E0, 0x03E1, 0x03E3, 0x03E3, 0x03E5, 0x03E5, 0x03E7, 0x03E7,
++            0x03E9, 0x03E9, 0x03EB, 0x03EB, 0x03ED, 0x03ED, 0x03EF, 0x03EF,
++    /* F */ 0x03F0, 0x03F1, 0x03F2, 0x03F3, 0x03F4, 0x03F5, 0x03F6, 0x03F7,
++            0x03F8, 0x03F9, 0x03FA, 0x03FB, 0x03FC, 0x03FD, 0x03FE, 0x03FF,
++
++    // Table 4 (for high byte 0x04)
++
++    /* 0 */ 0x0400, 0x0401, 0x0452, 0x0403, 0x0454, 0x0455, 0x0456, 0x0407,
++            0x0458, 0x0459, 0x045A, 0x045B, 0x040C, 0x040D, 0x040E, 0x045F,
++    /* 1 */ 0x0430, 0x0431, 0x0432, 0x0433, 0x0434, 0x0435, 0x0436, 0x0437,
++            0x0438, 0x0419, 0x043A, 0x043B, 0x043C, 0x043D, 0x043E, 0x043F,
++    /* 2 */ 0x0440, 0x0441, 0x0442, 0x0443, 0x0444, 0x0445, 0x0446, 0x0447,
++            0x0448, 0x0449, 0x044A, 0x044B, 0x044C, 0x044D, 0x044E, 0x044F,
++    /* 3 */ 0x0430, 0x0431, 0x0432, 0x0433, 0x0434, 0x0435, 0x0436, 0x0437,
++            0x0438, 0x0439, 0x043A, 0x043B, 0x043C, 0x043D, 0x043E, 0x043F,
++    /* 4 */ 0x0440, 0x0441, 0x0442, 0x0443, 0x0444, 0x0445, 0x0446, 0x0447,
++            0x0448, 0x0449, 0x044A, 0x044B, 0x044C, 0x044D, 0x044E, 0x044F,
++    /* 5 */ 0x0450, 0x0451, 0x0452, 0x0453, 0x0454, 0x0455, 0x0456, 0x0457,
++            0x0458, 0x0459, 0x045A, 0x045B, 0x045C, 0x045D, 0x045E, 0x045F,
++    /* 6 */ 0x0461, 0x0461, 0x0463, 0x0463, 0x0465, 0x0465, 0x0467, 0x0467,
++            0x0469, 0x0469, 0x046B, 0x046B, 0x046D, 0x046D, 0x046F, 0x046F,
++    /* 7 */ 0x0471, 0x0471, 0x0473, 0x0473, 0x0475, 0x0475, 0x0476, 0x0477,
++            0x0479, 0x0479, 0x047B, 0x047B, 0x047D, 0x047D, 0x047F, 0x047F,
++    /* 8 */ 0x0481, 0x0481, 0x0482, 0x0483, 0x0484, 0x0485, 0x0486, 0x0487,
++            0x0488, 0x0489, 0x048A, 0x048B, 0x048C, 0x048D, 0x048E, 0x048F,
++    /* 9 */ 0x0491, 0x0491, 0x0493, 0x0493, 0x0495, 0x0495, 0x0497, 0x0497,
++            0x0499, 0x0499, 0x049B, 0x049B, 0x049D, 0x049D, 0x049F, 0x049F,
++    /* A */ 0x04A1, 0x04A1, 0x04A3, 0x04A3, 0x04A5, 0x04A5, 0x04A7, 0x04A7,
++            0x04A9, 0x04A9, 0x04AB, 0x04AB, 0x04AD, 0x04AD, 0x04AF, 0x04AF,
++    /* B */ 0x04B1, 0x04B1, 0x04B3, 0x04B3, 0x04B5, 0x04B5, 0x04B7, 0x04B7,
++            0x04B9, 0x04B9, 0x04BB, 0x04BB, 0x04BD, 0x04BD, 0x04BF, 0x04BF,
++    /* C */ 0x04C0, 0x04C1, 0x04C2, 0x04C4, 0x04C4, 0x04C5, 0x04C6, 0x04C8,
++            0x04C8, 0x04C9, 0x04CA, 0x04CC, 0x04CC, 0x04CD, 0x04CE, 0x04CF,
++    /* D */ 0x04D0, 0x04D1, 0x04D2, 0x04D3, 0x04D4, 0x04D5, 0x04D6, 0x04D7,
++            0x04D8, 0x04D9, 0x04DA, 0x04DB, 0x04DC, 0x04DD, 0x04DE, 0x04DF,
++    /* E */ 0x04E0, 0x04E1, 0x04E2, 0x04E3, 0x04E4, 0x04E5, 0x04E6, 0x04E7,
++            0x04E8, 0x04E9, 0x04EA, 0x04EB, 0x04EC, 0x04ED, 0x04EE, 0x04EF,
++    /* F */ 0x04F0, 0x04F1, 0x04F2, 0x04F3, 0x04F4, 0x04F5, 0x04F6, 0x04F7,
++            0x04F8, 0x04F9, 0x04FA, 0x04FB, 0x04FC, 0x04FD, 0x04FE, 0x04FF,
++
++    // Table 5 (for high byte 0x05)
++
++    /* 0 */ 0x0500, 0x0501, 0x0502, 0x0503, 0x0504, 0x0505, 0x0506, 0x0507,
++            0x0508, 0x0509, 0x050A, 0x050B, 0x050C, 0x050D, 0x050E, 0x050F,
++    /* 1 */ 0x0510, 0x0511, 0x0512, 0x0513, 0x0514, 0x0515, 0x0516, 0x0517,
++            0x0518, 0x0519, 0x051A, 0x051B, 0x051C, 0x051D, 0x051E, 0x051F,
++    /* 2 */ 0x0520, 0x0521, 0x0522, 0x0523, 0x0524, 0x0525, 0x0526, 0x0527,
++            0x0528, 0x0529, 0x052A, 0x052B, 0x052C, 0x052D, 0x052E, 0x052F,
++    /* 3 */ 0x0530, 0x0561, 0x0562, 0x0563, 0x0564, 0x0565, 0x0566, 0x0567,
++            0x0568, 0x0569, 0x056A, 0x056B, 0x056C, 0x056D, 0x056E, 0x056F,
++    /* 4 */ 0x0570, 0x0571, 0x0572, 0x0573, 0x0574, 0x0575, 0x0576, 0x0577,
++            0x0578, 0x0579, 0x057A, 0x057B, 0x057C, 0x057D, 0x057E, 0x057F,
++    /* 5 */ 0x0580, 0x0581, 0x0582, 0x0583, 0x0584, 0x0585, 0x0586, 0x0557,
++            0x0558, 0x0559, 0x055A, 0x055B, 0x055C, 0x055D, 0x055E, 0x055F,
++    /* 6 */ 0x0560, 0x0561, 0x0562, 0x0563, 0x0564, 0x0565, 0x0566, 0x0567,
++            0x0568, 0x0569, 0x056A, 0x056B, 0x056C, 0x056D, 0x056E, 0x056F,
++    /* 7 */ 0x0570, 0x0571, 0x0572, 0x0573, 0x0574, 0x0575, 0x0576, 0x0577,
++            0x0578, 0x0579, 0x057A, 0x057B, 0x057C, 0x057D, 0x057E, 0x057F,
++    /* 8 */ 0x0580, 0x0581, 0x0582, 0x0583, 0x0584, 0x0585, 0x0586, 0x0587,
++            0x0588, 0x0589, 0x058A, 0x058B, 0x058C, 0x058D, 0x058E, 0x058F,
++    /* 9 */ 0x0590, 0x0591, 0x0592, 0x0593, 0x0594, 0x0595, 0x0596, 0x0597,
++            0x0598, 0x0599, 0x059A, 0x059B, 0x059C, 0x059D, 0x059E, 0x059F,
++    /* A */ 0x05A0, 0x05A1, 0x05A2, 0x05A3, 0x05A4, 0x05A5, 0x05A6, 0x05A7,
++            0x05A8, 0x05A9, 0x05AA, 0x05AB, 0x05AC, 0x05AD, 0x05AE, 0x05AF,
++    /* B */ 0x05B0, 0x05B1, 0x05B2, 0x05B3, 0x05B4, 0x05B5, 0x05B6, 0x05B7,
++            0x05B8, 0x05B9, 0x05BA, 0x05BB, 0x05BC, 0x05BD, 0x05BE, 0x05BF,
++    /* C */ 0x05C0, 0x05C1, 0x05C2, 0x05C3, 0x05C4, 0x05C5, 0x05C6, 0x05C7,
++            0x05C8, 0x05C9, 0x05CA, 0x05CB, 0x05CC, 0x05CD, 0x05CE, 0x05CF,
++    /* D */ 0x05D0, 0x05D1, 0x05D2, 0x05D3, 0x05D4, 0x05D5, 0x05D6, 0x05D7,
++            0x05D8, 0x05D9, 0x05DA, 0x05DB, 0x05DC, 0x05DD, 0x05DE, 0x05DF,
++    /* E */ 0x05E0, 0x05E1, 0x05E2, 0x05E3, 0x05E4, 0x05E5, 0x05E6, 0x05E7,
++            0x05E8, 0x05E9, 0x05EA, 0x05EB, 0x05EC, 0x05ED, 0x05EE, 0x05EF,
++    /* F */ 0x05F0, 0x05F1, 0x05F2, 0x05F3, 0x05F4, 0x05F5, 0x05F6, 0x05F7,
++            0x05F8, 0x05F9, 0x05FA, 0x05FB, 0x05FC, 0x05FD, 0x05FE, 0x05FF,
++
++    // Table 6 (for high byte 0x10)
++
++    /* 0 */ 0x1000, 0x1001, 0x1002, 0x1003, 0x1004, 0x1005, 0x1006, 0x1007,
++            0x1008, 0x1009, 0x100A, 0x100B, 0x100C, 0x100D, 0x100E, 0x100F,
++    /* 1 */ 0x1010, 0x1011, 0x1012, 0x1013, 0x1014, 0x1015, 0x1016, 0x1017,
++            0x1018, 0x1019, 0x101A, 0x101B, 0x101C, 0x101D, 0x101E, 0x101F,
++    /* 2 */ 0x1020, 0x1021, 0x1022, 0x1023, 0x1024, 0x1025, 0x1026, 0x1027,
++            0x1028, 0x1029, 0x102A, 0x102B, 0x102C, 0x102D, 0x102E, 0x102F,
++    /* 3 */ 0x1030, 0x1031, 0x1032, 0x1033, 0x1034, 0x1035, 0x1036, 0x1037,
++            0x1038, 0x1039, 0x103A, 0x103B, 0x103C, 0x103D, 0x103E, 0x103F,
++    /* 4 */ 0x1040, 0x1041, 0x1042, 0x1043, 0x1044, 0x1045, 0x1046, 0x1047,
++            0x1048, 0x1049, 0x104A, 0x104B, 0x104C, 0x104D, 0x104E, 0x104F,
++    /* 5 */ 0x1050, 0x1051, 0x1052, 0x1053, 0x1054, 0x1055, 0x1056, 0x1057,
++            0x1058, 0x1059, 0x105A, 0x105B, 0x105C, 0x105D, 0x105E, 0x105F,
++    /* 6 */ 0x1060, 0x1061, 0x1062, 0x1063, 0x1064, 0x1065, 0x1066, 0x1067,
++            0x1068, 0x1069, 0x106A, 0x106B, 0x106C, 0x106D, 0x106E, 0x106F,
++    /* 7 */ 0x1070, 0x1071, 0x1072, 0x1073, 0x1074, 0x1075, 0x1076, 0x1077,
++            0x1078, 0x1079, 0x107A, 0x107B, 0x107C, 0x107D, 0x107E, 0x107F,
++    /* 8 */ 0x1080, 0x1081, 0x1082, 0x1083, 0x1084, 0x1085, 0x1086, 0x1087,
++            0x1088, 0x1089, 0x108A, 0x108B, 0x108C, 0x108D, 0x108E, 0x108F,
++    /* 9 */ 0x1090, 0x1091, 0x1092, 0x1093, 0x1094, 0x1095, 0x1096, 0x1097,
++            0x1098, 0x1099, 0x109A, 0x109B, 0x109C, 0x109D, 0x109E, 0x109F,
++    /* A */ 0x10D0, 0x10D1, 0x10D2, 0x10D3, 0x10D4, 0x10D5, 0x10D6, 0x10D7,
++            0x10D8, 0x10D9, 0x10DA, 0x10DB, 0x10DC, 0x10DD, 0x10DE, 0x10DF,
++    /* B */ 0x10E0, 0x10E1, 0x10E2, 0x10E3, 0x10E4, 0x10E5, 0x10E6, 0x10E7,
++            0x10E8, 0x10E9, 0x10EA, 0x10EB, 0x10EC, 0x10ED, 0x10EE, 0x10EF,
++    /* C */ 0x10F0, 0x10F1, 0x10F2, 0x10F3, 0x10F4, 0x10F5, 0x10C6, 0x10C7,
++            0x10C8, 0x10C9, 0x10CA, 0x10CB, 0x10CC, 0x10CD, 0x10CE, 0x10CF,
++    /* D */ 0x10D0, 0x10D1, 0x10D2, 0x10D3, 0x10D4, 0x10D5, 0x10D6, 0x10D7,
++            0x10D8, 0x10D9, 0x10DA, 0x10DB, 0x10DC, 0x10DD, 0x10DE, 0x10DF,
++    /* E */ 0x10E0, 0x10E1, 0x10E2, 0x10E3, 0x10E4, 0x10E5, 0x10E6, 0x10E7,
++            0x10E8, 0x10E9, 0x10EA, 0x10EB, 0x10EC, 0x10ED, 0x10EE, 0x10EF,
++    /* F */ 0x10F0, 0x10F1, 0x10F2, 0x10F3, 0x10F4, 0x10F5, 0x10F6, 0x10F7,
++            0x10F8, 0x10F9, 0x10FA, 0x10FB, 0x10FC, 0x10FD, 0x10FE, 0x10FF,
++
++    // Table 7 (for high byte 0x20)
++
++    /* 0 */ 0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006, 0x2007,
++            0x2008, 0x2009, 0x200A, 0x200B, 0x0000, 0x0000, 0x0000, 0x0000,
++    /* 1 */ 0x2010, 0x2011, 0x2012, 0x2013, 0x2014, 0x2015, 0x2016, 0x2017,
++            0x2018, 0x2019, 0x201A, 0x201B, 0x201C, 0x201D, 0x201E, 0x201F,
++    /* 2 */ 0x2020, 0x2021, 0x2022, 0x2023, 0x2024, 0x2025, 0x2026, 0x2027,
++            0x2028, 0x2029, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x202F,
++    /* 3 */ 0x2030, 0x2031, 0x2032, 0x2033, 0x2034, 0x2035, 0x2036, 0x2037,
++            0x2038, 0x2039, 0x203A, 0x203B, 0x203C, 0x203D, 0x203E, 0x203F,
++    /* 4 */ 0x2040, 0x2041, 0x2042, 0x2043, 0x2044, 0x2045, 0x2046, 0x2047,
++            0x2048, 0x2049, 0x204A, 0x204B, 0x204C, 0x204D, 0x204E, 0x204F,
++    /* 5 */ 0x2050, 0x2051, 0x2052, 0x2053, 0x2054, 0x2055, 0x2056, 0x2057,
++            0x2058, 0x2059, 0x205A, 0x205B, 0x205C, 0x205D, 0x205E, 0x205F,
++    /* 6 */ 0x2060, 0x2061, 0x2062, 0x2063, 0x2064, 0x2065, 0x2066, 0x2067,
++            0x2068, 0x2069, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
++    /* 7 */ 0x2070, 0x2071, 0x2072, 0x2073, 0x2074, 0x2075, 0x2076, 0x2077,
++            0x2078, 0x2079, 0x207A, 0x207B, 0x207C, 0x207D, 0x207E, 0x207F,
++    /* 8 */ 0x2080, 0x2081, 0x2082, 0x2083, 0x2084, 0x2085, 0x2086, 0x2087,
++            0x2088, 0x2089, 0x208A, 0x208B, 0x208C, 0x208D, 0x208E, 0x208F,
++    /* 9 */ 0x2090, 0x2091, 0x2092, 0x2093, 0x2094, 0x2095, 0x2096, 0x2097,
++            0x2098, 0x2099, 0x209A, 0x209B, 0x209C, 0x209D, 0x209E, 0x209F,
++    /* A */ 0x20A0, 0x20A1, 0x20A2, 0x20A3, 0x20A4, 0x20A5, 0x20A6, 0x20A7,
++            0x20A8, 0x20A9, 0x20AA, 0x20AB, 0x20AC, 0x20AD, 0x20AE, 0x20AF,
++    /* B */ 0x20B0, 0x20B1, 0x20B2, 0x20B3, 0x20B4, 0x20B5, 0x20B6, 0x20B7,
++            0x20B8, 0x20B9, 0x20BA, 0x20BB, 0x20BC, 0x20BD, 0x20BE, 0x20BF,
++    /* C */ 0x20C0, 0x20C1, 0x20C2, 0x20C3, 0x20C4, 0x20C5, 0x20C6, 0x20C7,
++            0x20C8, 0x20C9, 0x20CA, 0x20CB, 0x20CC, 0x20CD, 0x20CE, 0x20CF,
++    /* D */ 0x20D0, 0x20D1, 0x20D2, 0x20D3, 0x20D4, 0x20D5, 0x20D6, 0x20D7,
++            0x20D8, 0x20D9, 0x20DA, 0x20DB, 0x20DC, 0x20DD, 0x20DE, 0x20DF,
++    /* E */ 0x20E0, 0x20E1, 0x20E2, 0x20E3, 0x20E4, 0x20E5, 0x20E6, 0x20E7,
++            0x20E8, 0x20E9, 0x20EA, 0x20EB, 0x20EC, 0x20ED, 0x20EE, 0x20EF,
++    /* F */ 0x20F0, 0x20F1, 0x20F2, 0x20F3, 0x20F4, 0x20F5, 0x20F6, 0x20F7,
++            0x20F8, 0x20F9, 0x20FA, 0x20FB, 0x20FC, 0x20FD, 0x20FE, 0x20FF,
++
++    // Table 8 (for high byte 0x21)
++
++    /* 0 */ 0x2100, 0x2101, 0x2102, 0x2103, 0x2104, 0x2105, 0x2106, 0x2107,
++            0x2108, 0x2109, 0x210A, 0x210B, 0x210C, 0x210D, 0x210E, 0x210F,
++    /* 1 */ 0x2110, 0x2111, 0x2112, 0x2113, 0x2114, 0x2115, 0x2116, 0x2117,
++            0x2118, 0x2119, 0x211A, 0x211B, 0x211C, 0x211D, 0x211E, 0x211F,
++    /* 2 */ 0x2120, 0x2121, 0x2122, 0x2123, 0x2124, 0x2125, 0x2126, 0x2127,
++            0x2128, 0x2129, 0x212A, 0x212B, 0x212C, 0x212D, 0x212E, 0x212F,
++    /* 3 */ 0x2130, 0x2131, 0x2132, 0x2133, 0x2134, 0x2135, 0x2136, 0x2137,
++            0x2138, 0x2139, 0x213A, 0x213B, 0x213C, 0x213D, 0x213E, 0x213F,
++    /* 4 */ 0x2140, 0x2141, 0x2142, 0x2143, 0x2144, 0x2145, 0x2146, 0x2147,
++            0x2148, 0x2149, 0x214A, 0x214B, 0x214C, 0x214D, 0x214E, 0x214F,
++    /* 5 */ 0x2150, 0x2151, 0x2152, 0x2153, 0x2154, 0x2155, 0x2156, 0x2157,
++            0x2158, 0x2159, 0x215A, 0x215B, 0x215C, 0x215D, 0x215E, 0x215F,
++    /* 6 */ 0x2170, 0x2171, 0x2172, 0x2173, 0x2174, 0x2175, 0x2176, 0x2177,
++            0x2178, 0x2179, 0x217A, 0x217B, 0x217C, 0x217D, 0x217E, 0x217F,
++    /* 7 */ 0x2170, 0x2171, 0x2172, 0x2173, 0x2174, 0x2175, 0x2176, 0x2177,
++            0x2178, 0x2179, 0x217A, 0x217B, 0x217C, 0x217D, 0x217E, 0x217F,
++    /* 8 */ 0x2180, 0x2181, 0x2182, 0x2183, 0x2184, 0x2185, 0x2186, 0x2187,
++            0x2188, 0x2189, 0x218A, 0x218B, 0x218C, 0x218D, 0x218E, 0x218F,
++    /* 9 */ 0x2190, 0x2191, 0x2192, 0x2193, 0x2194, 0x2195, 0x2196, 0x2197,
++            0x2198, 0x2199, 0x219A, 0x219B, 0x219C, 0x219D, 0x219E, 0x219F,
++    /* A */ 0x21A0, 0x21A1, 0x21A2, 0x21A3, 0x21A4, 0x21A5, 0x21A6, 0x21A7,
++            0x21A8, 0x21A9, 0x21AA, 0x21AB, 0x21AC, 0x21AD, 0x21AE, 0x21AF,
++    /* B */ 0x21B0, 0x21B1, 0x21B2, 0x21B3, 0x21B4, 0x21B5, 0x21B6, 0x21B7,
++            0x21B8, 0x21B9, 0x21BA, 0x21BB, 0x21BC, 0x21BD, 0x21BE, 0x21BF,
++    /* C */ 0x21C0, 0x21C1, 0x21C2, 0x21C3, 0x21C4, 0x21C5, 0x21C6, 0x21C7,
++            0x21C8, 0x21C9, 0x21CA, 0x21CB, 0x21CC, 0x21CD, 0x21CE, 0x21CF,
++    /* D */ 0x21D0, 0x21D1, 0x21D2, 0x21D3, 0x21D4, 0x21D5, 0x21D6, 0x21D7,
++            0x21D8, 0x21D9, 0x21DA, 0x21DB, 0x21DC, 0x21DD, 0x21DE, 0x21DF,
++    /* E */ 0x21E0, 0x21E1, 0x21E2, 0x21E3, 0x21E4, 0x21E5, 0x21E6, 0x21E7,
++            0x21E8, 0x21E9, 0x21EA, 0x21EB, 0x21EC, 0x21ED, 0x21EE, 0x21EF,
++    /* F */ 0x21F0, 0x21F1, 0x21F2, 0x21F3, 0x21F4, 0x21F5, 0x21F6, 0x21F7,
++            0x21F8, 0x21F9, 0x21FA, 0x21FB, 0x21FC, 0x21FD, 0x21FE, 0x21FF,
++
++    // Table 9 (for high byte 0xFE)
++
++    /* 0 */ 0xFE00, 0xFE01, 0xFE02, 0xFE03, 0xFE04, 0xFE05, 0xFE06, 0xFE07,
++            0xFE08, 0xFE09, 0xFE0A, 0xFE0B, 0xFE0C, 0xFE0D, 0xFE0E, 0xFE0F,
++    /* 1 */ 0xFE10, 0xFE11, 0xFE12, 0xFE13, 0xFE14, 0xFE15, 0xFE16, 0xFE17,
++            0xFE18, 0xFE19, 0xFE1A, 0xFE1B, 0xFE1C, 0xFE1D, 0xFE1E, 0xFE1F,
++    /* 2 */ 0xFE20, 0xFE21, 0xFE22, 0xFE23, 0xFE24, 0xFE25, 0xFE26, 0xFE27,
++            0xFE28, 0xFE29, 0xFE2A, 0xFE2B, 0xFE2C, 0xFE2D, 0xFE2E, 0xFE2F,
++    /* 3 */ 0xFE30, 0xFE31, 0xFE32, 0xFE33, 0xFE34, 0xFE35, 0xFE36, 0xFE37,
++            0xFE38, 0xFE39, 0xFE3A, 0xFE3B, 0xFE3C, 0xFE3D, 0xFE3E, 0xFE3F,
++    /* 4 */ 0xFE40, 0xFE41, 0xFE42, 0xFE43, 0xFE44, 0xFE45, 0xFE46, 0xFE47,
++            0xFE48, 0xFE49, 0xFE4A, 0xFE4B, 0xFE4C, 0xFE4D, 0xFE4E, 0xFE4F,
++    /* 5 */ 0xFE50, 0xFE51, 0xFE52, 0xFE53, 0xFE54, 0xFE55, 0xFE56, 0xFE57,
++            0xFE58, 0xFE59, 0xFE5A, 0xFE5B, 0xFE5C, 0xFE5D, 0xFE5E, 0xFE5F,
++    /* 6 */ 0xFE60, 0xFE61, 0xFE62, 0xFE63, 0xFE64, 0xFE65, 0xFE66, 0xFE67,
++            0xFE68, 0xFE69, 0xFE6A, 0xFE6B, 0xFE6C, 0xFE6D, 0xFE6E, 0xFE6F,
++    /* 7 */ 0xFE70, 0xFE71, 0xFE72, 0xFE73, 0xFE74, 0xFE75, 0xFE76, 0xFE77,
++            0xFE78, 0xFE79, 0xFE7A, 0xFE7B, 0xFE7C, 0xFE7D, 0xFE7E, 0xFE7F,
++    /* 8 */ 0xFE80, 0xFE81, 0xFE82, 0xFE83, 0xFE84, 0xFE85, 0xFE86, 0xFE87,
++            0xFE88, 0xFE89, 0xFE8A, 0xFE8B, 0xFE8C, 0xFE8D, 0xFE8E, 0xFE8F,
++    /* 9 */ 0xFE90, 0xFE91, 0xFE92, 0xFE93, 0xFE94, 0xFE95, 0xFE96, 0xFE97,
++            0xFE98, 0xFE99, 0xFE9A, 0xFE9B, 0xFE9C, 0xFE9D, 0xFE9E, 0xFE9F,
++    /* A */ 0xFEA0, 0xFEA1, 0xFEA2, 0xFEA3, 0xFEA4, 0xFEA5, 0xFEA6, 0xFEA7,
++            0xFEA8, 0xFEA9, 0xFEAA, 0xFEAB, 0xFEAC, 0xFEAD, 0xFEAE, 0xFEAF,
++    /* B */ 0xFEB0, 0xFEB1, 0xFEB2, 0xFEB3, 0xFEB4, 0xFEB5, 0xFEB6, 0xFEB7,
++            0xFEB8, 0xFEB9, 0xFEBA, 0xFEBB, 0xFEBC, 0xFEBD, 0xFEBE, 0xFEBF,
++    /* C */ 0xFEC0, 0xFEC1, 0xFEC2, 0xFEC3, 0xFEC4, 0xFEC5, 0xFEC6, 0xFEC7,
++            0xFEC8, 0xFEC9, 0xFECA, 0xFECB, 0xFECC, 0xFECD, 0xFECE, 0xFECF,
++    /* D */ 0xFED0, 0xFED1, 0xFED2, 0xFED3, 0xFED4, 0xFED5, 0xFED6, 0xFED7,
++            0xFED8, 0xFED9, 0xFEDA, 0xFEDB, 0xFEDC, 0xFEDD, 0xFEDE, 0xFEDF,
++    /* E */ 0xFEE0, 0xFEE1, 0xFEE2, 0xFEE3, 0xFEE4, 0xFEE5, 0xFEE6, 0xFEE7,
++            0xFEE8, 0xFEE9, 0xFEEA, 0xFEEB, 0xFEEC, 0xFEED, 0xFEEE, 0xFEEF,
++    /* F */ 0xFEF0, 0xFEF1, 0xFEF2, 0xFEF3, 0xFEF4, 0xFEF5, 0xFEF6, 0xFEF7,
++            0xFEF8, 0xFEF9, 0xFEFA, 0xFEFB, 0xFEFC, 0xFEFD, 0xFEFE, 0x0000,
++
++    // Table 10 (for high byte 0xFF)
++
++    /* 0 */ 0xFF00, 0xFF01, 0xFF02, 0xFF03, 0xFF04, 0xFF05, 0xFF06, 0xFF07,
++            0xFF08, 0xFF09, 0xFF0A, 0xFF0B, 0xFF0C, 0xFF0D, 0xFF0E, 0xFF0F,
++    /* 1 */ 0xFF10, 0xFF11, 0xFF12, 0xFF13, 0xFF14, 0xFF15, 0xFF16, 0xFF17,
++            0xFF18, 0xFF19, 0xFF1A, 0xFF1B, 0xFF1C, 0xFF1D, 0xFF1E, 0xFF1F,
++    /* 2 */ 0xFF20, 0xFF41, 0xFF42, 0xFF43, 0xFF44, 0xFF45, 0xFF46, 0xFF47,
++            0xFF48, 0xFF49, 0xFF4A, 0xFF4B, 0xFF4C, 0xFF4D, 0xFF4E, 0xFF4F,
++    /* 3 */ 0xFF50, 0xFF51, 0xFF52, 0xFF53, 0xFF54, 0xFF55, 0xFF56, 0xFF57,
++            0xFF58, 0xFF59, 0xFF5A, 0xFF3B, 0xFF3C, 0xFF3D, 0xFF3E, 0xFF3F,
++    /* 4 */ 0xFF40, 0xFF41, 0xFF42, 0xFF43, 0xFF44, 0xFF45, 0xFF46, 0xFF47,
++            0xFF48, 0xFF49, 0xFF4A, 0xFF4B, 0xFF4C, 0xFF4D, 0xFF4E, 0xFF4F,
++    /* 5 */ 0xFF50, 0xFF51, 0xFF52, 0xFF53, 0xFF54, 0xFF55, 0xFF56, 0xFF57,
++            0xFF58, 0xFF59, 0xFF5A, 0xFF5B, 0xFF5C, 0xFF5D, 0xFF5E, 0xFF5F,
++    /* 6 */ 0xFF60, 0xFF61, 0xFF62, 0xFF63, 0xFF64, 0xFF65, 0xFF66, 0xFF67,
++            0xFF68, 0xFF69, 0xFF6A, 0xFF6B, 0xFF6C, 0xFF6D, 0xFF6E, 0xFF6F,
++    /* 7 */ 0xFF70, 0xFF71, 0xFF72, 0xFF73, 0xFF74, 0xFF75, 0xFF76, 0xFF77,
++            0xFF78, 0xFF79, 0xFF7A, 0xFF7B, 0xFF7C, 0xFF7D, 0xFF7E, 0xFF7F,
++    /* 8 */ 0xFF80, 0xFF81, 0xFF82, 0xFF83, 0xFF84, 0xFF85, 0xFF86, 0xFF87,
++            0xFF88, 0xFF89, 0xFF8A, 0xFF8B, 0xFF8C, 0xFF8D, 0xFF8E, 0xFF8F,
++    /* 9 */ 0xFF90, 0xFF91, 0xFF92, 0xFF93, 0xFF94, 0xFF95, 0xFF96, 0xFF97,
++            0xFF98, 0xFF99, 0xFF9A, 0xFF9B, 0xFF9C, 0xFF9D, 0xFF9E, 0xFF9F,
++    /* A */ 0xFFA0, 0xFFA1, 0xFFA2, 0xFFA3, 0xFFA4, 0xFFA5, 0xFFA6, 0xFFA7,
++            0xFFA8, 0xFFA9, 0xFFAA, 0xFFAB, 0xFFAC, 0xFFAD, 0xFFAE, 0xFFAF,
++    /* B */ 0xFFB0, 0xFFB1, 0xFFB2, 0xFFB3, 0xFFB4, 0xFFB5, 0xFFB6, 0xFFB7,
++            0xFFB8, 0xFFB9, 0xFFBA, 0xFFBB, 0xFFBC, 0xFFBD, 0xFFBE, 0xFFBF,
++    /* C */ 0xFFC0, 0xFFC1, 0xFFC2, 0xFFC3, 0xFFC4, 0xFFC5, 0xFFC6, 0xFFC7,
++            0xFFC8, 0xFFC9, 0xFFCA, 0xFFCB, 0xFFCC, 0xFFCD, 0xFFCE, 0xFFCF,
++    /* D */ 0xFFD0, 0xFFD1, 0xFFD2, 0xFFD3, 0xFFD4, 0xFFD5, 0xFFD6, 0xFFD7,
++            0xFFD8, 0xFFD9, 0xFFDA, 0xFFDB, 0xFFDC, 0xFFDD, 0xFFDE, 0xFFDF,
++    /* E */ 0xFFE0, 0xFFE1, 0xFFE2, 0xFFE3, 0xFFE4, 0xFFE5, 0xFFE6, 0xFFE7,
++            0xFFE8, 0xFFE9, 0xFFEA, 0xFFEB, 0xFFEC, 0xFFED, 0xFFEE, 0xFFEF,
++    /* F */ 0xFFF0, 0xFFF1, 0xFFF2, 0xFFF3, 0xFFF4, 0xFFF5, 0xFFF6, 0xFFF7,
++            0xFFF8, 0xFFF9, 0xFFFA, 0xFFFB, 0xFFFC, 0xFFFD, 0xFFFE, 0xFFFF,
++};
+diff -urN -x CVS linux-bk/fs/hfsplus/unicode.c linux-hfsplus/fs/hfsplus/unicode.c
+--- linux-bk/fs/hfsplus/unicode.c	Wed Dec 31 16:00:00 1969
++++ linux-hfsplus/fs/hfsplus/unicode.c	Thu Dec 13 22:32:32 2001
+@@ -0,0 +1,122 @@
++/*
++ *  linux/fs/hfsplus/unicode.c
++ *
++ * Copyright (C) 2001
++ * Brad Boyer (flar@allandria.com)
++ *
++ * Handler routines for unicode strings
++ */
++
++#include <linux/types.h>
++#include <linux/nls.h>
++#include <linux/hfsplus_fs.h>
++#include <linux/hfsplus_raw.h>
++
++/* Fold the case of a unicode char, given the 16 bit value */
++/* Returns folded char, or 0 if ignorable */
++static inline hfsp_u16 case_fold(hfsp_u16 c)
++{
++        hfsp_u16 tmp;
++
++        tmp = case_fold_table[(c>>8)];
++        if(tmp)
++                tmp = case_fold_table[tmp + (c & 0xFF)];
++        else
++                tmp = c;
++        return tmp;
++}
++
++/* Compare unicode strings, return values like normal strcmp */
++int hfsplus_unistrcmp(hfsplus_unistr *s1, hfsplus_unistr *s2)
++{
++	hfsp_u16 len1, len2, c1, c2;
++	hfsplus_unichr *p1, *p2;
++
++	len1 = hfsp_get_hs(s1->length);
++	len2 = hfsp_get_hs(s2->length);
++	p1 = s1->unicode;
++	p2 = s2->unicode;
++
++	while(1) {
++		c1 = c2 = 0;
++
++		while(len1 && !c1) {
++			c1 = case_fold(hfsp_get_hs(p1++));
++			len1--;
++		}
++		while(len2 && !c2) {
++			c2 = case_fold(hfsp_get_hs(p2++));
++			len2--;
++		}
++
++		if(c1 != c2)
++			return (c1 < c2) ? -1 : 1;
++		if(!c1 && !c2)
++			return 0;
++	}
++}
++
++int hfsplus_uni2asc(hfsplus_unistr *ustr, char *astr, int *len)
++{
++	const hfsp_u16 *ip;
++	hfsp_u8 *op;
++	hfsp_u16 ustrlen, cc;
++	int size, tmp;
++
++	op = astr;
++	ip = (hfsp_u16 *)(ustr->unicode);
++	ustrlen = hfsp_get_hs(ustr->length);
++	tmp = *len;
++	while((ustrlen > 0) && (tmp > 0)) {
++		cc = hfsp_get_hs(ip);
++		if(cc > 0x7f) {
++			size = utf8_wctomb(op, cc, tmp);
++			if(size == -1) {
++				/* ignore */
++			} else {
++				op += size;
++				tmp -= size;
++			}
++		} else {
++			*op++ = (hfsp_u8) cc;
++			tmp--;
++		}
++		ip++;
++		ustrlen--;
++	}
++	*len = (char *)op - astr;
++	if(ustrlen)
++		return -ENAMETOOLONG;
++	return 0;
++}
++
++int hfsplus_asc2uni(hfsplus_unistr *ustr, char *astr, int len)
++{
++	int tmp;
++	wchar_t c;
++	hfsp_u16 outlen = 0;
++
++	while((outlen <= HFSPLUS_MAX_STRLEN) && (len > 0)) {
++		if(*astr & 0x80) {
++			if((tmp = utf8_mbtowc(&c, astr, len)) < 0) {
++				astr++;
++				len--;
++				continue;
++			} else {
++				astr += tmp;
++				len -= tmp;
++			}
++		} else {
++			c = *astr++;
++			len--;
++		}
++		hfsp_put_hs(c, ustr->unicode + outlen);
++		outlen++;
++	}
++	hfsp_put_hs(outlen, ustr->length);
++	if(len > 0)
++		return -ENAMETOOLONG;
++	return 0;
++}
++			
++
+diff -urN -x CVS linux-bk/fs/hfsplus/wrapper.c linux-hfsplus/fs/hfsplus/wrapper.c
+--- linux-bk/fs/hfsplus/wrapper.c	Wed Dec 31 16:00:00 1969
++++ linux-hfsplus/fs/hfsplus/wrapper.c	Mon Nov  5 00:11:34 2001
+@@ -0,0 +1,120 @@
++/*
++ *  linux/fs/hfsplus/wrapper.c
++ *
++ * Copyright (C) 2001
++ * Brad Boyer (flar@allandria.com)
++ *
++ * Handling of HFS wrappers around HFS+ volumes
++ */
++
++#include <linux/fs.h>
++#include <linux/hfsplus_fs.h>
++#include <linux/hfsplus_raw.h>
++
++struct hfsplus_wd {
++	hfsp_u32 ablk_size;
++	hfsp_u16 ablk_start;
++	hfsp_u16 embed_start;
++	hfsp_u16 embed_count;
++};
++
++static int hfsplus_read_mdb(unsigned char *bufptr, struct hfsplus_wd *wd)
++{
++	hfsp_u32 extent;
++	hfsp_u16 attrib;
++
++	if(hfsp_get_hs(bufptr + HFSP_WRAPOFF_EMBEDSIG) != HFSPLUS_VOLHEAD_SIG)
++		return 0;
++
++	attrib = hfsp_get_hs(bufptr + HFSP_WRAPOFF_ATTRIB);
++	if(!(attrib & HFSP_WRAP_ATTRIB_SLOCK) ||
++	   !(attrib & HFSP_WRAP_ATTRIB_SPARED))
++		return 0;
++
++	wd->ablk_size = hfsp_get_hl(bufptr + HFSP_WRAPOFF_ABLKSIZE);
++	if(wd->ablk_size < HFSPLUS_SECTOR_SIZE)
++		return 0;
++	if(wd->ablk_size % HFSPLUS_SECTOR_SIZE)
++		return 0;
++	wd->ablk_start = hfsp_get_hs(bufptr + HFSP_WRAPOFF_ABLKSTART);
++
++	extent = hfsp_get_hl(bufptr + HFSP_WRAPOFF_EMBEDEXT);
++	wd->embed_start = (extent >> 16) & 0xFFFF;
++	wd->embed_count = extent & 0xFFFF;
++
++	return 1;
++}
++
++/* Find the volume header and fill in some minimum bits in superblock */
++/* Takes in super block, returns true if good data read */
++int hfsplus_read_wrapper(struct super_block *sb)
++{
++	struct buffer_head *bh;
++	struct hfsplus_vh *vhdr;
++	unsigned char *bufptr;
++	unsigned long block, offset, vhsect;
++	kdev_t dev = sb->s_dev;
++	struct hfsplus_wd wd;
++	int blocksize;
++	hfsp_u32 dblksz;
++	hfsp_u16 sig;
++
++	blocksize = get_hardblocksize(dev);
++	if((blocksize == 0) || (blocksize < HFSPLUS_SECTOR_SIZE)) {
++	  blocksize = HFSPLUS_SECTOR_SIZE;
++	}
++	set_blocksize(dev, blocksize);
++
++	block = (HFSPLUS_VOLHEAD_SECTOR * HFSPLUS_SECTOR_SIZE) / blocksize;
++	offset = (HFSPLUS_VOLHEAD_SECTOR * HFSPLUS_SECTOR_SIZE) % blocksize;
++
++	if(!(bh = bread(dev, block, blocksize))) {
++		printk("HFS+-fs: unable to read VHDR or MDB\n");
++		return 0;
++	}
++
++	bufptr = ((unsigned char *)bh->b_data) + offset;
++	sig = hfsp_get_hs(bufptr + HFSP_WRAPOFF_SIG);
++	if(sig == HFSP_WRAP_MAGIC) {
++		if(!hfsplus_read_mdb(bufptr, &wd))
++			goto error;
++		vhsect = (wd.ablk_start + wd.embed_start * (wd.ablk_size >> 9))
++			+ HFSPLUS_VOLHEAD_SECTOR;
++		block = (vhsect * HFSPLUS_SECTOR_SIZE) / blocksize;
++		offset = (vhsect * HFSPLUS_SECTOR_SIZE) % blocksize;
++		brelse(bh);
++		if(!(bh = bread(dev, block, blocksize))) {
++			printk("HFS+-fs: unable to read VHDR\n");
++			return 0;
++		}
++	} else {
++		wd.ablk_start = 0;
++		wd.ablk_size = blocksize;
++		wd.embed_start = 0;
++	}
++	vhdr = (struct hfsplus_vh *)(((char *)bh->b_data) + offset);
++	if(hfsp_get_hs(vhdr->signature) != HFSPLUS_VOLHEAD_SIG)
++		goto error;
++	dblksz = hfsp_get_hl(vhdr->blocksize);
++	if(wd.ablk_size && (wd.ablk_size % dblksz)) {
++		printk("HFS+-fs: embedded blocks not aligned with wrapper\n");
++		goto error;
++	}
++	if((blocksize > dblksz) && (dblksz % blocksize)) {
++		printk("HFS+-fs: volume blocks not aligned on device\n");
++		goto error;
++	}
++	HFSPLUS_SB(sb).dbpab = dblksz / blocksize;
++	HFSPLUS_SB(sb).dboff = (wd.ablk_start +	wd.embed_start *
++				(wd.ablk_size >> 9)) * (blocksize >> 9);
++	sb->s_blocksize = blocksize;
++	sb->s_blocksize_bits = ffz(~(blocksize));
++
++	HFSPLUS_SB(sb).s_vhbh = bh;
++	HFSPLUS_SB(sb).s_vhdr = vhdr;
++	
++	return 1;
++ error:
++	brelse(bh);
++	return 0;
++}
+diff -urN -x CVS linux-bk/include/linux/fs.h linux-hfsplus/include/linux/fs.h
+--- linux-bk/include/linux/fs.h	Sun Mar  4 16:50:00 2001
++++ linux-hfsplus/include/linux/fs.h	Tue Apr 10 22:48:28 2001
+@@ -294,6 +294,7 @@
+ #include <linux/shmem_fs.h>
+ #include <linux/smb_fs_i.h>
+ #include <linux/hfs_fs_i.h>
++#include <linux/hfsplus_fs_i.h>
+ #include <linux/adfs_fs_i.h>
+ #include <linux/qnx4_fs_i.h>
+ #include <linux/reiserfs_fs_i.h>
+@@ -457,6 +458,7 @@
+ 		struct coda_inode_info		coda_i;
+ 		struct smb_inode_info		smbfs_i;
+ 		struct hfs_inode_info		hfs_i;
++		struct hfsplus_inode_info	hfsplus_i;
+ 		struct adfs_inode_info		adfs_i;
+ 		struct qnx4_inode_info		qnx4_i;
+ 		struct reiserfs_inode_info	reiserfs_i;
+@@ -635,6 +637,7 @@
+ #include <linux/romfs_fs_sb.h>
+ #include <linux/smb_fs_sb.h>
+ #include <linux/hfs_fs_sb.h>
++#include <linux/hfsplus_fs_sb.h>
+ #include <linux/adfs_fs_sb.h>
+ #include <linux/qnx4_fs_sb.h>
+ #include <linux/reiserfs_fs_sb.h>
+@@ -685,6 +688,7 @@
+ 		struct romfs_sb_info	romfs_sb;
+ 		struct smb_sb_info	smbfs_sb;
+ 		struct hfs_sb_info	hfs_sb;
++		struct hfsplus_sb_info	hfsplus_sb;
+ 		struct adfs_sb_info	adfs_sb;
+ 		struct qnx4_sb_info	qnx4_sb;
+ 		struct reiserfs_sb_info	reiserfs_sb;
+diff -urN -x CVS linux-bk/include/linux/hfsplus_fs.h linux-hfsplus/include/linux/hfsplus_fs.h
+--- linux-bk/include/linux/hfsplus_fs.h	Wed Dec 31 16:00:00 1969
++++ linux-hfsplus/include/linux/hfsplus_fs.h	Mon Nov  5 00:01:52 2001
+@@ -0,0 +1,170 @@
++/*
++ *  linux/include/linux/hfsplus_fs.h
++ *
++ * Copyright (C) 1999
++ * Brad Boyer (flar@pants.nu)
++ *
++ */
++
++#ifndef _LINUX_HFSPLUS_FS_H
++#define _LINUX_HFSPLUS_FS_H
++
++#include <linux/fs.h>
++
++#include <asm/unaligned.h>
++
++#include <linux/hfsplus_raw.h>
++#include <linux/hfsplus_fs_sb.h>
++
++typedef  __u8 hfsp_u8;
++typedef __u16 hfsp_u16;
++typedef __u32 hfsp_u32;
++typedef __u64 hfsp_u64;
++typedef __u32 hfsp_cnid;
++
++/* Runtime config options */
++#define HFSPLUS_CASE_ASIS      0
++#define HFSPLUS_CASE_LOWER     1
++
++#define HFSPLUS_FORK_RAW       0
++#define HFSPLUS_FORK_CAP       1
++#define HFSPLUS_FORK_DOUBLE    2
++#define HFSPLUS_FORK_NETATALK  3
++
++#define HFSPLUS_NAMES_TRIVIAL  0
++#define HFSPLUS_NAMES_CAP      1
++#define HFSPLUS_NAMES_NETATALK 2
++#define HFSPLUS_NAMES_7BIT     3
++
++#define HFSPLUS_DEF_CR_TYPE    0x3F3F3F3F  /* '????' */
++
++#define HFSPLUS_TYPE_DATA 0x00
++#define HFSPLUS_TYPE_RSRC 0xFF
++
++struct hfsplus_btree;
++struct page;
++
++/* An HFS+ BTree node in memory */
++typedef struct {
++	struct hfsplus_btree *tree;
++	struct page          *page;
++	struct inode         *inode;
++
++	hfsp_u32              prev;
++	hfsp_u32              this;
++	hfsp_u32              next;
++
++	hfsp_u16              num_recs;
++	hfsp_u8               kind;
++	hfsp_u8               height;
++} hfsplus_bnode;
++
++typedef int (*btree_keycmp)(hfsplus_btree_key *, hfsplus_btree_key *);
++
++/* An HFS+ BTree held in memory */
++typedef struct hfsplus_btree {
++	struct super_block *sb;
++	btree_keycmp        keycmp;
++
++	hfsp_u32            cnid;
++	hfsp_u32            root;
++	hfsp_u32            node_count;
++	hfsp_u32            free_nodes;
++	hfsp_u32            attributes;
++
++	hfsp_u16            node_size;
++	hfsp_u16            max_key_len;
++	hfsp_u16            depth;
++} hfsplus_btree;
++
++/* An iterator for walking an HFS+ BTree */
++typedef struct {
++	hfsplus_btree *tree;
++	hfsp_u32 node;
++	hfsp_u16 rec;
++} hfsplus_btiter;
++
++/*
++ * Functions in any *.c used in other files
++ */
++
++/* bfind.c */
++int hfsplus_btfind(hfsplus_btree *, hfsplus_btree_key *, void *, int *);
++int hfsplus_btfind_exact(hfsplus_btree *, hfsplus_btree_key *, void *, int *);
++int hfsplus_btiter_find(hfsplus_btiter *, hfsplus_btree_key *);
++
++/* bnode.c */
++hfsplus_bnode *hfsplus_get_bnode(hfsplus_btree *, hfsp_u32);
++void hfsplus_put_bnode(hfsplus_bnode *);
++hfsp_u16 hfsplus_bnode_copybytes(hfsplus_bnode *, void *, hfsp_u16, hfsp_u16);
++
++/* brec.c */
++hfsp_u16 hfsplus_brec_off(hfsplus_bnode *, hfsp_u16);
++hfsp_u16 hfsplus_brec_len(hfsplus_bnode *, hfsp_u16);
++hfsp_u16 hfsplus_brec_lenoff(hfsplus_bnode *, hfsp_u16, hfsp_u16 *);
++hfsp_u16 hfsplus_brec_data(hfsplus_bnode *, hfsp_u16, char *, hfsp_u16);
++hfsp_u16 hfsplus_brec_keylen(hfsplus_bnode *, hfsp_u16);
++hfsp_u16 hfsplus_brec_key(hfsplus_bnode *, hfsp_u16, void *, hfsp_u16);
++
++/* btiter.c */
++void hfsplus_btiter_setup(hfsplus_btiter *, hfsplus_btree *);
++int hfsplus_btiter_move(hfsplus_btiter *, int);
++int hfsplus_btiter_get(hfsplus_btiter *, hfsplus_btree_key *, void *, int *);
++
++/* btree.c */
++hfsplus_btree *hfsplus_open_btree(struct super_block *, hfsp_cnid);
++void hfsplus_close_btree(struct hfsplus_btree *);
++
++/* catalog.c */
++int hfsplus_cmp_cat_key(hfsplus_btree_key *, hfsplus_btree_key *);
++int hfsplus_fill_cat_key(hfsplus_btree_key *, hfsp_cnid, char *, int);
++int hfsplus_find_cat(struct super_block *, unsigned long, hfsplus_cat_entry *);
++
++/* extents.c */
++int hfsplus_cmp_ext_key(hfsplus_btree_key *, hfsplus_btree_key *);
++void hfsplus_fill_ext_key(hfsplus_btree_key *, hfsp_u32, hfsp_u32, hfsp_u8);
++int hfsplus_get_block(struct inode *, long, struct buffer_head *, int);
++
++/* inode.c */
++int hfsplus_cat_fill_inode(struct inode *, hfsplus_cat_entry *);
++
++/* options.c */
++int parse_options(char *, struct hfsplus_sb_info *);
++void fill_defaults(struct hfsplus_sb_info *);
++void fill_current(struct hfsplus_sb_info *,  struct hfsplus_sb_info *);
++
++/* tables.c */
++extern hfsp_u16 case_fold_table[];
++
++/* unicode.c */
++int hfsplus_unistrcmp(hfsplus_unistr *, hfsplus_unistr *);
++int hfsplus_uni2asc(hfsplus_unistr *, char *, int *);
++int hfsplus_asc2uni(hfsplus_unistr *, char *, int);
++
++/* wrapper.c */
++int hfsplus_read_wrapper(struct super_block *);
++
++/* access macros */
++#define HFSPLUS_SB(super)        ((super)->u.hfsplus_sb)
++#define HFSPLUS_I(inode)         ((inode)->u.hfsplus_i)
++
++#define HFSPLUS_IS_DATA(inode)   (1)
++#define HFSPLUS_IS_RSRC(inode)   (0)
++
++#define hfsp_get_hs(addr)        ntohs(*((hfsp_u16 *)(addr)))
++#define hfsp_get_hl(addr)        ntohl(get_unaligned((hfsp_u32 *)(addr)))
++#define hfsp_get_ahl(addr)       ntohl(*((hfsp_u32 *)(addr)))
++#define hfsp_get_hll(addr)       __be64_to_cpu(get_unaligned((hfsp_u64 *)(addr)))
++#define hfsp_get_ahll(addr)      __be64_to_cpu(*((hfsp_u64 *)(addr)))
++#define hfsp_put_hs(val, addr)   ((void)(*((hfsp_u16 *)(addr)) = ntohs(val)))
++#define hfsp_put_hl(val, addr)   put_unaligned(htonl(val), (hfsp_u32 *)(addr))
++#define hfsp_put_ahl(val, addr)  ((void)(*((hfsp_u32 *)(addr)) = ntohl(val)))
++#define hfsp_put_hll(val, addr)  put_unaligned(__cpu_to_be64(val), \
++					       (hfsp_u64 *)(addr))
++#define hfsp_put_ahll(val, addr) ((void)(*((hfsp_u64 *)(addr)) = \
++				  __cpu_to_be64(val)))
++
++/* time macros */
++#define hfsp_mt2ut(t)          (hfsp_get_hl(t) - 2082844800U)
++
++#endif
+diff -urN -x CVS linux-bk/include/linux/hfsplus_fs_i.h linux-hfsplus/include/linux/hfsplus_fs_i.h
+--- linux-bk/include/linux/hfsplus_fs_i.h	Wed Dec 31 16:00:00 1969
++++ linux-hfsplus/include/linux/hfsplus_fs_i.h	Mon Sep  3 22:57:43 2001
+@@ -0,0 +1,23 @@
++/*
++ *  linux/include/linux/hfsplus_fs_i.h
++ *
++ * Copyright (C) 1999
++ * Brad Boyer (flar@pants.nu)
++ *
++ */
++
++#ifndef _LINUX_HFSPLUS_FS_I_H
++#define _LINUX_HFSPLUS_FS_I_H
++
++#include <linux/types.h>
++
++struct hfsplus_fork;
++
++struct hfsplus_inode_info {
++	/* Number of subdirectories in a directory */
++	nlink_t              ndirs;
++	/* Device number in hfsplus_permissions in catalog */
++	__u32                dev;
++};
++
++#endif
+diff -urN -x CVS linux-bk/include/linux/hfsplus_fs_sb.h linux-hfsplus/include/linux/hfsplus_fs_sb.h
+--- linux-bk/include/linux/hfsplus_fs_sb.h	Wed Dec 31 16:00:00 1969
++++ linux-hfsplus/include/linux/hfsplus_fs_sb.h	Sat Oct 20 23:33:18 2001
+@@ -0,0 +1,50 @@
++/*
++ *  linux/include/linux/hfsplus_fs_sb.h
++ *
++ * Copyright (C) 1999
++ * Brad Boyer (flar@pants.nu)
++ *
++ */
++
++#ifndef _LINUX_HFSPLUS_FS_SB_H
++#define _LINUX_HFSPLUS_FS_SB_H
++
++#include <asm/types.h>
++
++/*
++ * HFS+ superblock info (built from Volume Header on disk)
++ */
++
++struct hfsplus_vh;
++struct hfsplus_btree;
++
++struct hfsplus_sb_info {
++	struct buffer_head   *s_vhbh;
++	struct hfsplus_vh    *s_vhdr;
++	struct hfsplus_btree *ext_tree;
++	struct hfsplus_btree *cat_tree;
++
++	/* Runtime variables */
++	__u32                 dbpab; /* Device blocks per allocation block */
++	__u32                 dboff; /* Offset to actual HFS+ blocks */
++
++	/* Stuff in host order from Vol Header */
++	__u32                 free_blocks;
++	__u32                 next_cnid;
++	__u32                 file_count;
++	__u32                 folder_count;
++
++	/* Config options */
++	__u32                 creator;
++	__u32                 type;
++
++	int                   charcase;
++	int                   fork;
++	int                   namemap;
++
++	umode_t               umask;
++	uid_t                 uid;
++	gid_t                 gid;
++};
++
++#endif
+diff -urN -x CVS linux-bk/include/linux/hfsplus_raw.h linux-hfsplus/include/linux/hfsplus_raw.h
+--- linux-bk/include/linux/hfsplus_raw.h	Wed Dec 31 16:00:00 1969
++++ linux-hfsplus/include/linux/hfsplus_raw.h	Thu Dec 13 22:11:55 2001
+@@ -0,0 +1,314 @@
++/*
++ *  linux/include/linux/hfsplus_raw.h
++ *
++ * Copyright (C) 1999
++ * Brad Boyer (flar@pants.nu)
++ *
++ * Format of structures on disk
++ * Information taken from Apple Technote #1150 (HFS Plus Volume Format)
++ *
++ */
++
++#ifndef _LINUX_HFSPLUS_RAW_H
++#define _LINUX_HFSPLUS_RAW_H
++
++#include <asm/types.h>
++
++/* Some constants */
++#define HFSPLUS_SECTOR_SIZE        512
++#define HFSPLUS_VOLHEAD_SECTOR       2
++#define HFSPLUS_VOLHEAD_SIG     0x482b
++#define HFSPLUS_SUPER_MAGIC     0x482b
++#define HFSPLUS_CURRENT_VERSION      4
++
++#define HFSP_WRAP_MAGIC         0x4244
++#define HFSP_WRAP_ATTRIB_SLOCK  0x8000
++#define HFSP_WRAP_ATTRIB_SPARED 0x0200
++
++#define HFSP_WRAPOFF_SIG          0x00
++#define HFSP_WRAPOFF_ATTRIB       0x0A
++#define HFSP_WRAPOFF_ABLKSIZE     0x14
++#define HFSP_WRAPOFF_ABLKSTART    0x1C
++#define HFSP_WRAPOFF_EMBEDSIG     0x7C
++#define HFSP_WRAPOFF_EMBEDEXT     0x7E
++
++/* Structures used on disk */
++
++typedef unsigned char hfsp_byte;
++typedef unsigned char hfsp_word[2];
++typedef unsigned char hfsp_lword[4];
++typedef unsigned char hfsp_llword[8];
++
++typedef hfsp_lword hfsplus_cnid;
++typedef hfsp_word hfsplus_unichr;
++
++/* A "string" as used in filenames, etc. */
++typedef struct {
++	hfsp_word          length;
++	hfsplus_unichr     unicode[255];
++} hfsplus_unistr;
++
++#define HFSPLUS_MAX_STRLEN 255
++
++/* POSIX permissions */
++typedef struct {
++	hfsp_lword         owner;
++	hfsp_lword         group;
++	hfsp_lword         mode;
++	hfsp_lword         dev;
++} hfsplus_perm;
++
++/* A single contiguous area of a file */
++typedef struct {
++	hfsp_lword         start_block;
++	hfsp_lword         block_count;
++} hfsplus_extent;
++typedef hfsplus_extent hfsplus_extent_rec[8];
++
++/* Information for a "Fork" in a file */
++typedef struct {
++	hfsp_llword        total_size;
++	hfsp_lword         clump_size;
++	hfsp_lword         total_blocks;
++	hfsplus_extent_rec extents;
++} hfsplus_fork_raw;
++
++/* HFS+ Volume Header */
++typedef struct hfsplus_vh{
++	hfsp_word          signature;
++	hfsp_word          version;
++	hfsp_lword         attributes;
++	hfsp_lword         last_mount_vers;
++	hfsp_lword         reserved;
++
++	hfsp_lword         create_date;
++	hfsp_lword         modify_date;
++	hfsp_lword         backup_date;
++	hfsp_lword         checked_date;
++
++	hfsp_lword         file_count;
++	hfsp_lword         folder_count;
++
++	hfsp_lword         blocksize;
++	hfsp_lword         total_blocks;
++	hfsp_lword         free_blocks;
++
++	hfsp_lword         next_alloc;
++	hfsp_lword         rsrc_clump_sz;
++	hfsp_lword         data_clump_sz;
++	hfsplus_cnid       next_cnid;
++
++	hfsp_lword         write_count;
++	hfsp_llword        encodings_bmp;
++
++	hfsp_byte          finder_info[32];
++
++	hfsplus_fork_raw   alloc_file;
++	hfsplus_fork_raw   ext_file;
++	hfsplus_fork_raw   cat_file;
++	hfsplus_fork_raw   attr_file;
++	hfsplus_fork_raw   start_file;
++} hfsplus_vh;
++
++/* HFS+ volume attributes */
++#define HFSPLUS_VOL_UNMNT     (1 << 8)
++#define HFSPLUS_VOL_SPARE_BLK (1 << 9)
++#define HFSPLUS_VOL_NOCACHE   (1 << 10)
++#define HFSPLUS_VOL_INCNSTNT  (1 << 11)
++#define HFSPLUS_VOL_SOFTLOCK  (1 << 15)
++
++/* HFS+ BTree node descriptor */
++typedef struct {
++	hfsp_lword         next;
++	hfsp_lword         prev;
++	hfsp_byte          kind;
++	hfsp_byte          height;
++	hfsp_word          num_rec;
++	hfsp_word          reserved;
++} hfsplus_btree_node_desc;
++
++/* HFS+ BTree node types */
++#define HFSPLUS_NODE_NDX  0x00
++#define HFSPLUS_NODE_HEAD 0x01
++#define HFSPLUS_NODE_MAP  0x02
++#define HFSPLUS_NODE_LEAF 0xFF
++
++/* HFS+ BTree header */
++typedef struct {
++	hfsp_word          depth;
++	hfsp_lword         root;
++	hfsp_lword         leaf_count;
++	hfsp_lword         leaf_head;
++	hfsp_lword         leaf_tail;
++	hfsp_word          node_size;
++	hfsp_word          max_key_len;
++	hfsp_lword         node_count;
++	hfsp_lword         free_nodes;
++	hfsp_word          reserved1;
++	hfsp_lword         clump_size;
++	hfsp_byte          btree_type;
++	hfsp_byte          reserved2;
++	hfsp_lword         attributes;
++	hfsp_lword         reserved3[16];
++} hfsplus_btree_head;
++
++/* BTree attributes */
++#define HFSPLUS_TREE_BIGKEYS         2
++#define HFSPLUS_TREE_VAR_NDXKEY_SIZE 4
++
++/* HFS+ BTree misc info */
++#define HFSPLUS_TREE_HEAD 0
++#define HFSPLUS_NODE_MXSZ 32768
++
++/* Some special File ID numbers (stolen from hfs.h) */
++#define HFSPLUS_POR_CNID             1  /* Parent Of the Root */
++#define HFSPLUS_ROOT_CNID            2  /* ROOT directory */
++#define HFSPLUS_EXT_CNID             3  /* EXTents B-tree */
++#define HFSPLUS_CAT_CNID             4  /* CATalog B-tree */
++#define HFSPLUS_BAD_CNID             5  /* BAD blocks file */
++#define HFSPLUS_ALLOC_CNID           6  /* ALLOCation file */
++#define HFSPLUS_START_CNID           7  /* STARTup file */
++#define HFSPLUS_ATTR_CNID            8  /* ATTRibutes file  */
++#define HFSPLUS_EXCH_CNID           15  /* ExchangeFiles temp id */
++
++/* HFS+ catalog entry key */
++typedef struct {
++	hfsplus_cnid       parent;
++	hfsplus_unistr     name;
++} hfsplus_cat_key;
++
++
++/* Structs from hfs.h */
++typedef struct {
++        hfsp_word          v;
++        hfsp_word          h;
++} hfsp_point;
++
++typedef struct {
++        hfsp_word          top;
++        hfsp_word          left;
++        hfsp_word          bottom;
++        hfsp_word          right;
++} hfsp_rect;
++
++
++/* HFS directory info (stolen from hfs.h */
++typedef struct {
++        hfsp_rect          frRect;
++        hfsp_word          frFlags;
++        hfsp_point         frLocation;
++        hfsp_word          frView;
++} DInfo;
++
++typedef struct {
++        hfsp_point         frScroll;
++        hfsp_lword         frOpenChain;
++        hfsp_word          frUnused;
++        hfsp_word          frComment;
++        hfsp_lword         frPutAway;
++} DXInfo;
++
++/* HFS+ folder data (part of an hfsplus_cat_entry) */
++typedef struct {
++	hfsp_word          flags;
++	hfsp_lword         valence;
++	hfsplus_cnid       id;
++	hfsp_lword         create_date;
++	hfsp_lword         content_mod_date;
++	hfsp_lword         attribute_mod_date;
++	hfsp_lword         access_date;
++	hfsp_lword         backup_date;
++	hfsplus_perm       permissions;
++	DInfo              user_info;
++	DXInfo             finder_info;
++	hfsp_lword         text_encoding;
++	hfsp_lword         reserved;
++} hfsplus_cat_folder;
++
++/* HFS file info (stolen from hfs.h) */
++typedef struct {
++        hfsp_lword         fdType;
++        hfsp_lword         fdCreator;
++        hfsp_word          fdFlags;
++        hfsp_point         fdLocation;
++        hfsp_word          fdFldr;
++} FInfo;
++
++typedef struct {
++        hfsp_word          fdIconID;
++        hfsp_byte          fdUnused[8];
++        hfsp_word          fdComment;
++        hfsp_lword         fdPutAway;
++} FXInfo;
++
++/* HFS+ file data (part of a cat_entry) */
++typedef struct {
++	hfsp_word          flags;
++	hfsp_lword         reserved1;
++	hfsplus_cnid       id;
++	hfsp_lword         create_date;
++	hfsp_lword         content_mod_date;
++	hfsp_lword         attribute_mod_date;
++	hfsp_lword         access_date;
++	hfsp_lword         backup_date;
++	hfsplus_perm       permissions;
++	FInfo              user_info;
++	FXInfo             finder_info;
++	hfsp_lword         text_encoding;
++	hfsp_lword         reserved2;
++
++	hfsplus_fork_raw   data_fork;
++	hfsplus_fork_raw   res_fork;
++} hfsplus_cat_file;
++
++/* File attribute bits */
++#define kHFSFileLockedBit       0x0000
++#define kHFSFileLockedMask      0x0001
++#define kHFSThreadExistsBit     0x0001
++#define kHFSThreadExistsMask    0x0002
++
++/* HFS+ catalog thread (part of a cat_entry) */
++typedef struct {
++	hfsp_word          reserved;
++	hfsplus_cnid       parentID;
++	hfsplus_unistr     nodeName;
++} hfsplus_cat_thread;
++
++#define HFSPLUS_MIN_THREAD_SZ 10
++
++/* A data record in the catalog tree */
++typedef struct {
++	hfsp_word          type;
++	union {
++		hfsplus_cat_folder folder;
++		hfsplus_cat_file   file;
++		hfsplus_cat_thread thread;
++	} u;
++} hfsplus_cat_entry;
++
++/* HFS+ catalog entry type */
++#define HFSPLUS_FOLDER         0x0001
++#define HFSPLUS_FILE           0x0002
++#define HFSPLUS_FOLDER_THREAD  0x0003
++#define HFSPLUS_FILE_THREAD    0x0004
++
++/* HFS+ extents tree key */
++typedef struct {
++	hfsp_byte          fork_type;
++	hfsp_byte          pad;
++	hfsplus_cnid       cnid;
++	hfsp_lword         start_block;
++} hfsplus_ext_key;
++
++#define HFSPLUS_EXT_KEYLEN 10
++
++/* HFS+ generic BTree key */
++typedef struct {
++	hfsp_word          key_len;
++	union {
++		hfsplus_cat_key cat;
++		hfsplus_ext_key ext;
++	} u;
++} hfsplus_btree_key;
++
++#endif
