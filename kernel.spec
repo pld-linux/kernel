@@ -781,8 +781,8 @@ geninitrd /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
 test ! -f /boot/initrd || mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}.gz /boot/initrd
 
-if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
-	/sbin/lilo 1>&2 || :
+if [ -x /sbin/rc-boot ] ; then
+	/sbin/rc-boot 1>&2 || :
 fi
 
 rm -f /lib/modules/%{version}
@@ -798,8 +798,8 @@ geninitrd /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
 test ! -f /boot/initrd || mv -f /boot/initrd /boot/initrd.old 2> /dev/null > /dev/null
 ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 
-if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
-	/sbin/lilo 1>&2 || :
+if [ -x /sbin/rc-boot ] ; then
+	/sbin/rc-boot 1>&2 || :
 fi
 
 rm -f /lib/modules/%{version}
