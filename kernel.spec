@@ -192,6 +192,7 @@ Patch250:	linux-2.6-vs.patch
 Patch300:	%{name}-hotfixes.patch
 Patch301:	%{name}-gcc4.patch
 Patch302:	linux-2.6-scsi-block.patch
+Patch303:	linux-2.6-ntfs-printk-DoS.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -604,6 +605,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch300 -p1
 %patch301 -p1
 %patch302 -p1
+%patch303 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
