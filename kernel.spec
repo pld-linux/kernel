@@ -1,7 +1,7 @@
 %define		ow_version		2.2.20-ow2
 %define		pcmcia_version		3.1.30
 %define		freeswan_version	1.8
-%define		reiserfs_version	3.5.34
+%define		reiserfs_version	3.5.35
 %define		i2c_version		2.6.2
 %define		bttv_version		0.7.60
 %define		wlan_version		0.3.4
@@ -54,7 +54,7 @@ Source38:	%{name}-ppc-BOOT.config
 Patch0:		%{name}-pldfblogo.patch
 Patch1:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
 Patch2:		http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
-Patch3:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.19-reiserfs-%{reiserfs_version}-patch.bz2
+Patch3:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.20-reiserfs-%{reiserfs_version}.diff.bz2
 Patch4:		ftp://ftp.kernel.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
 Patch5:		linux-2.2.18-freeswan-%{freeswan_version}.patch
 Patch6:		wanrouter-v2215.patch.gz
