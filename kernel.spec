@@ -889,11 +889,6 @@ ln -sf vmlinuz-%{version}-%{release} /boot/efi/vmlinuz
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
 
-if [ ! -L /lib/modules/%{version} ] ; then
-	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave > /dev/null 2>&1
-fi
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release} /lib/modules/%{version}
 %depmod %{version}-%{release}
 
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}.gz %{version}-%{release}
@@ -905,13 +900,6 @@ if [ -x /sbin/rc-boot ] ; then
 fi
 
 %postun
-if [ -L /lib/modules/%{version} ]; then
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $10 }'`" = "%{version}-%{release}" ]; then
-		if [ "$1" = "0" ]; then
-			rm -f /lib/modules/%{version}
-		fi
-	fi
-fi
 rm -f %{initrd_dir}/initrd-%{version}-%{release}.gz
 
 %post drm
@@ -953,11 +941,6 @@ ln -sf vmlinuz-%{version}-%{release}smp /boot/efi/vmlinuz
 ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}smp /boot/System.map
 
-if [ ! -L /lib/modules/%{version} ] ; then
-	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave > /dev/null 2>&1
-fi
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release}smp /lib/modules/%{version}
 %depmod %{version}-%{release}smp
 
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
@@ -969,13 +952,6 @@ if [ -x /sbin/rc-boot ] ; then
 fi
 
 %postun smp
-if [ -L /lib/modules/%{version} ]; then
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $10 }'`" = "%{version}-%{release}smp" ]; then
-		if [ "$1" = "0" ]; then
-			rm -f /lib/modules/%{version}
-		fi
-	fi
-fi
 rm -f %{initrd_dir}/initrd-%{version}-%{release}smp.gz
 
 %post smp-drm
