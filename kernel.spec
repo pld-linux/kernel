@@ -118,6 +118,12 @@ Patch33:	linux-2.4.19-pre8-konicawc.patch
 Patch34:	wrr-linux-2.4.9.patch
 Patch35:	%{name}-pswscancode.patch
 Patch36:	linux-2.4.20-rc1-USB.patch
+Patch37:	linux-2.4.20-rc1-bluetooth-USB.patch
+Patch38:	linux-2.4.20-rc1-cpia_usb-USB.patch
+Patch39:	linux-2.4.20-rc1-iforce-USB.patch
+Patch40:	linux-2.4.20-rc1-irda-usb-USB.patch
+Patch41:	linux-2.4.20-rc1-isdn-hisax-USB.patch
+Patch42:	linux-2.4.20-rc1-ticable.h-USB.patch
 
 # Assorted bugfixes
 
@@ -577,8 +583,16 @@ echo Installing WRR Support
 #squashfs
 %patch913 -p0
 patch -p1 -s < squashfs1.0b/squashfs-patch
+
 # USB 2.0 patch
+echo USB 2.0 Support from Linux-2.4.20-rc1.
 %patch36 -p1
+%patch37 -p1
+%patch38 -p1
+%patch39 -p1
+%patch40 -p1
+%patch41 -p1
+%patch42 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
