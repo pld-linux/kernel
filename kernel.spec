@@ -6,8 +6,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.2.16
-Release:	7
+Version:	2.2.17
+Release:	1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -37,33 +37,26 @@ Source30:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
 Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-127.tar.gz
 Source32:	%{name}-BuildASM.sh
 Source33:	ftp://sourceforge.org/pcmcia/pcmcia-cs-%{pcmcia_version}.tar.gz
-Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x.c-%{version}-pre4-6.gz
+#Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.17-pre18
 # NFS server patches
 Source40:	http://download.sourceforge.net/nfs/%{name}-nfs-dhiggen_merge-3.0.tar.gz
 Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.16.4.gz
-Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.16-reiserfs-3.5.23-patch.gz
+Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.17-reiserfs-3.5.25-patch.gz
 Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
 Patch3:		linux-tasks.patch
-Patch4:		http://www.redhat.com/~mingo/raid-patches/raid-2.2.16-A0.gz
-# serek:	unofficial raid patch by wiget, now we use mingo (above)
-#Patch4:	ftp://ftp.sime.com/pub/linux/raid-2.2.16-mabene
-# Wiget:	WARNING: hand modified patch
-Patch5:		http://republika.pl/bkz/ide.2.2.16.patch.bz2
+# patch based on http://www.redhat.com/~mingo/raid-patches/
+Patch4:		raid-2.2.17-A0.gz
+Patch5:		http://republika.pl/bkz/ide.2.2.17pre15.all.20000722.patch.bz2
 Patch6:		%{name}-pldfblogo.patch
 Patch7:		linux-2.2.16-freeswan-%{freeswan_version}.patch
 Patch8:		wanrouter-v2215.patch.gz
 Patch10:	linux-newagpdist.patch
 Patch11:	linux-agphjlfixes.patch
 Patch12:	linux-agpgart-2.4-compat.patch
-# serek:	do _not_ use DPT smartRAID controllers with linux at al!
-#Patch13:	ftp://shiva.poland.com/people/serek/%{name}-DPT-smartRAID-serek.patch
-# Wiget:	I remove md fix because is in raid patch
 Patch14:	http://www.linux.org.uk/VERSION/2.2.16combo
 Patch15:	linux-ipv6-addrconf.patch
 # NFS client patch
-Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.16-nfsv3-0.21.3.dif.bz2
-# don't use this
-#Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.16-nfsv3-0.22.0.dif.bz2
+Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17pre19-nfsv3-0.22.5.dif.bz2
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
