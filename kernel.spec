@@ -190,6 +190,7 @@ Patch250:	linux-2.6-vs.patch
 Patch300:	linux-2.6-sparc-ksyms.patch
 
 Patch303:	%{name}-hotfixes.patch
+Patch304:	%{name}-gcc4.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -597,7 +598,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch300 -p1
 
 %patch303 -p1
-
+%patch304 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
