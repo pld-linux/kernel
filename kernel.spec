@@ -100,6 +100,7 @@ Patch105:	%{name}-wanrouter-bridge.patch
 Patch106:	linux-netdrivers_vlan.patch
 Patch107:	linux-atm.patch
 Patch108:	atm-unresolved.patch
+Patch109:	af-unresolved.patch
 
 # hap linux based on http://www.theaimsgroup.com/~hlein/hap-linux/hap-linux-2.2.20-2.diff
 Patch200:	hap-linux-2.2.20-2.diff
@@ -411,6 +412,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch105 -p1
 %patch106 -p1
 %patch108 -p1
+%patch109 -p1
 
 # 802.1Q VLANs
 patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
@@ -673,8 +675,8 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH103}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH105}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH106}
 
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH107}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH108}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH109}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH200}
 
@@ -700,6 +702,8 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH41
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH42}
 ./install-in-kernel $RPM_BUILD_ROOT/usr/src/linux-%{version}
 cd ..
+
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH107}
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
