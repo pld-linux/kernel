@@ -777,7 +777,7 @@ echo Added LVM support version %{lvm_version}
 %patch114 -p1
 
 # JFS - xattr+acl
-echo Added xattr and ACL for JFS ...
+#echo Added xattr and ACL for JFS ...
 #%patch103 -p1
 
 echo Added ARCH specific patches....
@@ -790,8 +790,6 @@ echo Added Intel 810 FB support
 # KT400
 echo Added support for KT400 chipset
 %patch144 -p1
-#echo Added patch to fix bad ram ...
-#%patch10 -p1
 #usb gadget
 echo Added USB gadget ...
 %patch30 -p1
