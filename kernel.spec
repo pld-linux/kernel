@@ -807,10 +807,17 @@ BuildKernel() {
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
-     %{__make} modules_install \
+%ifarch sparc
+        sparce32 %{__make} modules_install \
      	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 	KERNELRELEASE=$KernelVer
 	echo KERNEL RELEASE $KernelVer
+%else
+        %{__make} modules_install \
+     	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
+	KERNELRELEASE=$KernelVer
+	echo KERNEL RELEASE $KernelVer
+%endif
 }
 
 KERNEL_BUILD_DIR=`pwd`
@@ -1133,7 +1140,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/*_cs.o*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/dtl1_cs.o*
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.o*
 %ifnarch ppc
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/ide/ide-cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
@@ -1152,7 +1159,7 @@ fi
 /lib/modules/%{version}-%{release}/kernel/drivers/char/pcmcia
 /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o*
 /lib/modules/%{version}-%{release}/kernel/drivers/parport/*_cs.o*
-/lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/dtl1_cs.o*
+/lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.o*
 %ifnarch ppc
 /lib/modules/%{version}-%{release}/kernel/drivers/ide/ide-cs.o*
 /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
@@ -1181,7 +1188,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/*_cs.o*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/dtl1_cs.o*
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.o*
 %ifnarch ppc
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/ide-cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o*
