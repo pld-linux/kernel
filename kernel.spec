@@ -29,7 +29,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	0.8
+Release:	0.99
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -138,9 +138,6 @@ Patch123:	xquad_portio.fix
 # 
 Patch124:	linux-proc_net_dev-counter-fix.patch
 Patch125:	01-sigxfs-vs-blkdev.patch
-#Patch126:	linux-%{version}-cramfs.patch
-#Patch127:	linux-%{version}-sparc64-fix.patch
-#Patch128:	linux-%{version}-AXP-fix.patch
 Patch129:	kernel-Makefile-include-fix.patch
 Patch130:	kernel-2.4.17-netsyms-export-fix.patch
 Patch131:	kernel-2.4.18-personality.patch
@@ -159,7 +156,6 @@ Patch137:	evms-linux-2.4.18-common-files.patch
 
 %ifarch ppc
 #from http://www.drfruitcake.com/linux/dma-bp.html
-#Patch138:	dmasound.patch.bz2
 Patch139:	http://www.uwsg.iu.edu/hypermail/linux/kernel/0201.2/att-1802/01-neofb-0.3.1-linux-2.4.18-pre6.patch
 
 %endif
@@ -425,15 +421,12 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
-#%patch123 -p1
 %patch124 -p1
 
-#%patch900 -p0
 %patch904 -p0
 
 # Tekram DC395/315 U/UW SCSI host driver
 echo Adding Tekram DC395/315 driver
-#%patch910 -p0
 patch -p1 -s <dc395/dc395-integ24.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
@@ -449,7 +442,6 @@ echo Adding Netfilter
 #
 (KERNEL_DIR=`pwd` ; export KERNEL_DIR
 cd netfilter-patches/patch-o-matic/extra
-#%patch902 -p0
 %patch903 -p0
 cd ..
 ANS=""
@@ -464,7 +456,7 @@ patch -p1 < netfilter-patches/patch-o-matic/pld/log.patch
 
 # IPVS
 echo Adding IPVS
-#%patch13 -p1
+%patch13 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
@@ -505,10 +497,6 @@ echo Installing Net Dev Random patch
 %patch12 -p1
 
 %patch125 -p1
-
-# cramfs patch
-echo Installing cramfs patch 
-#%patch126 -p1 
 
 # fixed SPARC64 compilation
 %ifarch sparc64
