@@ -12,11 +12,11 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	grsec		# build without grsec
+%bcond_without	fbsplash	# build without fbsplash
 %bcond_with	pax		# enable PaX
 %bcond_with	execshield	# build with exec-shield
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
-%bcond_with	fbsplash	# build with fbsplash
 
 %{?debug:%define with_verbose 1}
 
