@@ -1148,7 +1148,7 @@ fi
 /lib/modules/%{version}-%{release}smp/pcmcia
 %endif
 
-%ifnarch i586 i686 ppc sparc
+%ifnarch i586 i686 ppc sparc sparc64
 %files BOOT
 %defattr(644,root,root,755)
 %ifarch alpha sparc
