@@ -44,7 +44,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		4.3
+%define		_rel		4.4
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -1012,7 +1012,16 @@ fi
 /boot/vmlinuz-%{version}-%{release}
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
-/lib/modules/%{version}-%{release}/kernel
+%dir /lib/modules/%{version}-%{release}/kernel
+/lib/modules/%{version}-%{release}/kernel/arch
+/lib/modules/%{version}-%{release}/kernel/crypto
+/lib/modules/%{version}-%{release}/kernel/drivers
+/lib/modules/%{version}-%{release}/kernel/fs
+/lib/modules/%{version}-%{release}/kernel/lib
+/lib/modules/%{version}-%{release}/kernel/net
+/lib/modules/%{version}-%{release}/kernel/security
+%dir /lib/modules/%{version}-%{release}/kernel/sound
+/lib/modules/%{version}-%{release}/kernel/sound/soundcore.*
 %dir /lib/modules/%{version}-%{release}/misc
 %ifnarch sparc sparc64
 #pcmcia stuff
@@ -1027,7 +1036,6 @@ fi
 #drm stuff
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 %endif
-%exclude /lib/modules/%{version}-%{release}/kernel/sound
 
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
@@ -1052,6 +1060,8 @@ fi
 %files sound-alsa
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/sound
+%exclude %dir /lib/modules/%{version}-%{release}/kernel/sound
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/soundcore.*
 %ifnarch sparc sparc64
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/oss
 %endif
@@ -1076,7 +1086,16 @@ fi
 /boot/vmlinuz-%{version}-%{release}smp
 /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
-/lib/modules/%{version}-%{release}smp/kernel
+%dir /lib/modules/%{version}-%{release}smp/kernel
+/lib/modules/%{version}-%{release}smp/kernel/arch
+/lib/modules/%{version}-%{release}smp/kernel/crypto
+/lib/modules/%{version}-%{release}smp/kernel/drivers
+/lib/modules/%{version}-%{release}smp/kernel/fs
+/lib/modules/%{version}-%{release}smp/kernel/lib
+/lib/modules/%{version}-%{release}smp/kernel/net
+/lib/modules/%{version}-%{release}smp/kernel/security
+%dir /lib/modules/%{version}-%{release}smp/kernel/sound
+/lib/modules/%{version}-%{release}smp/kernel/sound/soundcore.*
 %dir /lib/modules/%{version}-%{release}smp/misc
 %ifnarch sparc sparc64
 #pcmcia stuff
@@ -1091,7 +1110,6 @@ fi
 #drm stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 %endif
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound
 
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
@@ -1116,6 +1134,8 @@ fi
 %files smp-sound-alsa
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/sound
+%exclude %dir /lib/modules/%{version}-%{release}smp/kernel/sound
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/soundcore.*
 %ifnarch sparc sparc64
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/oss
 %endif
