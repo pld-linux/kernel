@@ -810,12 +810,12 @@ BuildConfig (){
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
-#	%{__make} include/linux/autoconf.h
-#	if [ "$smp" = "yes" ]; then
-#		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
-#	else
-#		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
-#	fi
+	%{__make} include/linux/autoconf.h
+	if [ "$smp" = "yes" ]; then
+		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
+	else
+		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
+	fi
 }
 
 ConfigBOOT()
