@@ -42,6 +42,8 @@ Source100:	http://download.sourceforge.net/xmlprocfs/linux-2.4-xmlprocfs-0.1.tar
 #manual update 
 Patch0:		patch-int-2.4.0.3.gz
 
+Patch7:		kernel-i8255-asm-fix.patch
+
 Patch101:	xmlprocfs-fix.patch
 
 ExclusiveOS:	Linux
@@ -235,6 +237,8 @@ patch -p1 <xmlprocfs.patch
 #LIDS patch
 patch -p1 <lids-1.0.4-2.4.0/lids-1.0.4-2.4.0.patch
 
+#i8255 fix
+%patch7 -p0 
 
 %build
 BuildKernel() {
