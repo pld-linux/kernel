@@ -1,0 +1,26 @@
+--- linux-2.4.20-gw3/arch/i386/kernel/ioport.c	2003-05-16 23:42:47.000000000 +0100
++++ linux-2.4.20-gw4/arch/i386/kernel/ioport.c	2003-05-16 23:42:49.000000000 +0100
+@@ -72,17 +72,18 @@
+ 		 */
+ 		memset(t->io_bitmap,0xff,(IO_BITMAP_SIZE+1)*4);
+ 		t->ioperm = 1;
+-		/*
+-		 * this activates it in the TSS
+-		 */
+-		tss->bitmap = IO_BITMAP_OFFSET;
+ 	}
+ 
+ 	/*
+ 	 * do it in the per-thread copy and in the TSS ...
+ 	 */
+ 	set_bitmap(t->io_bitmap, from, num, !turn_on);
+-	set_bitmap(tss->io_bitmap, from, num, !turn_on);
++	if (tss->bitmap == IO_BITMAP_OFFSET) { /* already active? */
++		set_bitmap(tss->io_bitmap, from, num, !turn_on);
++	} else {
++		memcpy(tss->io_bitmap, t->io_bitmap, IO_BITMAP_SIZE);
++		tss->bitmap = IO_BITMAP_OFFSET; /* Activate it in the TSS */
++	}
+ 
+ 	return 0;
+ }
