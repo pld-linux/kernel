@@ -30,10 +30,24 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	0.101
+Release:	1
 License:	GPL
 Group:		Base/Kernel
+Group(cs):	Základ/Jádro
+Group(da):	Basal/Kerne
+Group(de):	Grundsätzlich/Kern
+Group(es):	Base/Núcleo
+Group(fr):	Base/Noyau
+Group(is):	Grunnforrit/Kjarninn
+Group(it):	Base/Kernel
+Group(ja):	¥Ù¡¼¥¹/¥«¡¼¥Í¥ë
+Group(no):	Basis/Kjerne
 Group(pl):	Podstawowe/J±dro
+Group(pt):	Base/Núcleo
+Group(ru):	âÁÚÁ/ñÄÒÏ
+Group(sl):	Osnova/Jedro
+Group(sv):	Bas/Kärna
+Group(uk):	âÁÚÁ/ñÄÒÏ
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
@@ -69,22 +83,22 @@ Source1999:	%{name}-preemptive.config
 # New features
 
 Patch0:		%{name}-pldfblogo.patch
-# ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
+# from ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
 Patch1:		patch-int-%{version}.1.bz2
-# ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
+# from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch2:		freeswan-%{freeswan_version}-%{version}.patch.gz
-# http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
+# from  http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.17.diff
-# ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
+# from ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
 Patch5:		xfs-2.4.18-12032002.patch.gz
-# Homepage of ABI : http://linux-abi.sourceforge.net/
-#ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2
+# Homepage of ABI:	http://linux-abi.sourceforge.net/
+# from ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2 
 Patch7:		linux-abi-2.4.17.0.patch.bz2
 Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
-# http://grsecurity.net/grsecurity-%{grsec_version}.patch
+# from http://grsecurity.net/grsecurity-%{grsec_version}.patch
 Patch9:		grsecurity-%{grsec_version}.patch
 # Preemptive kernel  patch
-Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-%{version}-2.patch
+Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-%{name}-rml-%{version}-2.patch
 
 Patch11:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-%{version}-1.patch
 Patch12:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-%{version}-1.patch
@@ -93,9 +107,9 @@ Patch14:	http://people.redhat.com/mingo/O(1)-scheduler/sched-O1-2.4.17-K2.patch
 
 Patch15:	http://luxik.cdi.cz/~devik/qos/htb/v2/htb2_2.4.17.diff
 
-# ftp://ftp.kernel.org/pub/linux/kernel/people/dwmw2/linux-2.4.19-shared-zlib.bz2
+# from ftp://ftp.kernel.org/pub/linux/kernel/people/dwmw2/linux-2.4.19-shared-zlib.bz2
 Patch16:	linux-2.4.19-shared-zlib.bz2
-Patch17:	kernel-gcc31.patch
+Patch17:	%{name}-gcc31.patch
 Patch18:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{version}-patch
 
 # Assorted bugfixes
@@ -107,7 +121,6 @@ Patch102:	PCI_ISA_bridge.patch
 Patch103:	linux-2.4.2-nvram-hdd.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch105:	linux-2.4.2-pcnet-parms.patch
-#Patch106:	http://linuxdiskcert.org/ide.2.4.16.12102001.patch.bz2
 Patch106:	http://www.kernel.org/pub/linux/kernel/people/hedrick/ide-%{version}/ide.%{version}-rc1.02152002.patch.bz2
 Patch107:	linux-reiserfs-rename.patch
 Patch108:	linux-alpha-nfs-2.4.2.patch
@@ -136,10 +149,10 @@ Patch123:	xquad_portio.fix
 Patch124:	linux-proc_net_dev-counter-fix.patch
 Patch125:	01-sigxfs-vs-blkdev.patch
 Patch126:	linux-2.4.18-SPARC64-ide.h-fix.patch
-Patch127:	kernel-2.4.18-SPARC64-PLD.patch
-Patch129:	kernel-Makefile-include-fix.patch
-Patch130:	kernel-2.4.17-netsyms-export-fix.patch
-Patch131:	kernel-2.4.18-personality.patch
+Patch127:	%{name}-2.4.18-SPARC64-PLD.patch
+Patch129:	%{name}-Makefile-include-fix.patch
+Patch130:	%{name}-2.4.17-netsyms-export-fix.patch
+Patch131:	%{name}-2.4.18-personality.patch
 
 Patch132:	linux-2.4.18.secfix.patch
 Patch133:	linux-2.4.18-netsyms-fix.patch
@@ -147,14 +160,14 @@ Patch133:	linux-2.4.18-netsyms-fix.patch
 Patch134:	linux-2.4.12-riva-ppc.patch.bz2
 Patch135:	linux-2.4.18-pre4-agp_uninorth-ppc.patch.bz2
 
-# EVMS support (http://www.sourceforge.net/projects/evms/)
+# EVMS support (http:	//www.sourceforge.net/projects/evms/)
 Patch136:	evms-%{evms_version}-linux-2.4.patch
 Patch137:	evms-linux-2.4.18-common-files.patch
 
 #from http://www.drfruitcake.com/linux/dma-bp.html
 Patch139:	http://www.uwsg.iu.edu/hypermail/linux/kernel/0201.2/att-1802/01-neofb-0.3.1-linux-2.4.18-pre6.patch
 
-#http://prdownloads.sourceforge.net/tridentfb/tridentfb-%{tridentfb_version}.tgz
+# from http://prdownloads.sourceforge.net/tridentfb/tridentfb-%{tridentfb_version}.tgz 
 Patch140:	linux-2.4.18-tridentfb.patch
 
 # Patches fixing other patches or 3rd party sources ;)
@@ -233,7 +246,21 @@ Summary:	Kernel version %{version} compiled for SMP machines
 Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
 Group:		Base/Kernel
+Group(cs):	Základ/Jádro
+Group(da):	Basal/Kerne
+Group(de):	Grundsätzlich/Kern
+Group(es):	Base/Núcleo
+Group(fr):	Base/Noyau
+Group(is):	Grunnforrit/Kjarninn
+Group(it):	Base/Kernel
+Group(ja):	¥Ù¡¼¥¹/¥«¡¼¥Í¥ë
+Group(no):	Basis/Kjerne
 Group(pl):	Podstawowe/J±dro
+Group(pt):	Base/Núcleo
+Group(ru):	âÁÚÁ/ñÄÒÏ
+Group(sl):	Osnova/Jedro
+Group(sv):	Bas/Kärna
+Group(uk):	âÁÚÁ/ñÄÒÏ
 Provides:	%{name} = %{version}-%{release}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
@@ -257,9 +284,9 @@ Il et nécessaire seulement pour les machine avec deux processeurs ou
 plus, il peut quand même fonctionner pour les système mono-processeur.
 
 %description -l pl smp
-Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono wymagane
-przez komputery zawieraj±ce dwa lub wiêcej procesorów. Powinno równie¿ dobrze 
-dzia³aæ na maszynach z jednym procesorem.
+Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono
+wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
+Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
 %endif 
 
 %package BOOT
@@ -267,7 +294,21 @@ Summary:	Kernel version %{version} used on the installation boot disks
 Summary(de):	Kernel version %{version} für Installationsdisketten
 Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation
 Group:		Base/Kernel
+Group(cs):	Základ/Jádro
+Group(da):	Basal/Kerne
+Group(de):	Grundsätzlich/Kern
+Group(es):	Base/Núcleo
+Group(fr):	Base/Noyau
+Group(is):	Grunnforrit/Kjarninn
+Group(it):	Base/Kernel
+Group(ja):	¥Ù¡¼¥¹/¥«¡¼¥Í¥ë
+Group(no):	Basis/Kjerne
 Group(pl):	Podstawowe/J±dro
+Group(pt):	Base/Núcleo
+Group(ru):	âÁÚÁ/ñÄÒÏ
+Group(sl):	Osnova/Jedro
+Group(sv):	Bas/Kärna
+Group(uk):	âÁÚÁ/ñÄÒÏ
 Prereq:		modutils
 Autoreqprov:	no
 
@@ -285,25 +326,34 @@ installierten System verwendet werden, da viele Funktionen wegen der
 Platzprobleme abgeschaltet sind.
 
 %description -l fr BOOT
-Ce package inclut une version allégée du noyau de Linux version
-%{version}. Ce kernel et utilisé pour les disquettes de boot
-d'installation et ne doivent pas être utilisées pour un système
-classique, beaucoup d'options dans le kernel ont étaient désactivées a
-cause de la contrainte d'espace.
-#'
 %description -l pl BOOT
-Pakiet zawiera j±dro Linuksa dedykowane dyskietkom startowym i powinno 
-byæ u¿ywane jedynie podczas instalacji systemu. Wiele u¿ytecznych opcji
-zosta³o wy³±czonych, aby jak najbardziej zmniejszyæ jego rozmiar.
+Pakiet zawiera j±dro Linuksa dedykowane dyskietkom startowym i powinno
+byæ u¿ywane jedynie podczas instalacji systemu. Wiele u¿ytecznych
+opcji zosta³o wy³±czonych, aby jak najbardziej zmniejszyæ jego
+rozmiar.
 
 %package headers
 Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra
 Group:		Base/Kernel
+Group(cs):	Základ/Jádro
+Group(da):	Basal/Kerne
+Group(de):	Grundsätzlich/Kern
+Group(es):	Base/Núcleo
+Group(fr):	Base/Noyau
+Group(is):	Grunnforrit/Kjarninn
+Group(it):	Base/Kernel
+Group(ja):	¥Ù¡¼¥¹/¥«¡¼¥Í¥ë
+Group(no):	Basis/Kjerne
 Group(pl):	Podstawowe/J±dro
+Group(pt):	Base/Núcleo
+Group(ru):	âÁÚÁ/ñÄÒÏ
+Group(sl):	Osnova/Jedro
+Group(sv):	Bas/Kärna
+Group(uk):	âÁÚÁ/ñÄÒÏ
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
-Provides:       %{name}-headers(bridging) = %{version}
+Provides:	%{name}-headers(bridging) = %{version}
 Provides:	i2c-devel = 2.6.1
 Autoreqprov:	no
 
@@ -320,7 +370,21 @@ oraz niektórych programów.
 Summary:	Kernel source tree
 Summary(pl):	Kod ¼ród³owy j±dra Linuxa
 Group:		Base/Kernel
+Group(cs):	Základ/Jádro
+Group(da):	Basal/Kerne
+Group(de):	Grundsätzlich/Kern
+Group(es):	Base/Núcleo
+Group(fr):	Base/Noyau
+Group(is):	Grunnforrit/Kjarninn
+Group(it):	Base/Kernel
+Group(ja):	¥Ù¡¼¥¹/¥«¡¼¥Í¥ë
+Group(no):	Basis/Kjerne
 Group(pl):	Podstawowe/J±dro
+Group(pt):	Base/Núcleo
+Group(ru):	âÁÚÁ/ñÄÒÏ
+Group(sl):	Osnova/Jedro
+Group(sv):	Bas/Kärna
+Group(uk):	âÁÚÁ/ñÄÒÏ
 Autoreqprov:	no
 Requires:	%{name}-headers = %{version}
 %ifarch %{ix86}
@@ -356,7 +420,21 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 Summary:	Kernel documentation
 Summary(pl):	Dokumentacja do kernela
 Group:		Base/Kernel
+Group(cs):	Základ/Jádro
+Group(da):	Basal/Kerne
+Group(de):	Grundsätzlich/Kern
+Group(es):	Base/Núcleo
+Group(fr):	Base/Noyau
+Group(is):	Grunnforrit/Kjarninn
+Group(it):	Base/Kernel
+Group(ja):	¥Ù¡¼¥¹/¥«¡¼¥Í¥ë
+Group(no):	Basis/Kjerne
 Group(pl):	Podstawowe/J±dro
+Group(pt):	Base/Núcleo
+Group(ru):	âÁÚÁ/ñÄÒÏ
+Group(sl):	Osnova/Jedro
+Group(sv):	Bas/Kärna
+Group(uk):	âÁÚÁ/ñÄÒÏ
 Provides:	%{name}-doc = %{version}
 Autoreqprov:	no
 
@@ -583,7 +661,7 @@ BuildKernel() {
 	KernelVer=%{version}-%{release}$1
 	fi
 	echo BUILDING THE NORMAL KERNEL $1...
-	:> arch/%{base_arch}/defconfig
+:> arch/%{base_arch}/defconfig
 	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/%{base_arch}/defconfig
 %ifarch i386
 	echo "CONFIG_M386=y" >> arch/%{base_arch}/defconfig
@@ -691,6 +769,7 @@ BuildKernel BOOT
 %endif			# %{test_build}
 
 %install
+rm -rf $RPM_BUILD_ROOT
 umask 022
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{version}}
@@ -701,11 +780,11 @@ cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
 for i in "" smp ; do
 	if [ -e  $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i ] ; then
 		rm -f $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
-		ln -sf /usr/src/linux-%{version} $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
+ln -sf %{_prefix}/src/linux-%{version} $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
 	fi
 done
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
-ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
+ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 
 %ifarch sparc sparc64
 ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
@@ -934,7 +1013,7 @@ fi
 /lib/modules/%{version}-%{release}/modules.generic_string
 %endif			# %{_without_up}
 
-%if !%{test_build}
+#%if !%{test_build}
 
 %if%{?_without_smp:0}%{!?_without_smp:1}
 %files smp
@@ -955,25 +1034,24 @@ fi
 /lib/modules/%{version}-%{release}smp/modules.generic_string
 %endif			# %{_without_smp}
 
-%ifnarch i586 i686 ppc
+%ifnarch i586 i686 		# narch
 %files BOOT
 %defattr(644,root,root,755)
-%ifarch alpha sparc ppc
+%ifarch alpha sparc ppc		# arch
 %{_libdir}/bootdisk/boot/vmlinux-%{version}-%{release}BOOT
-%endif
+%endif				#arch
 %{_libdir}/bootdisk/boot/vmlinuz-%{version}-%{release}BOOT
 %{_libdir}/bootdisk/boot/System.map-%{version}-%{release}BOOT
 %dir %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT
-%ifarch i386
+%ifarch i386			# i386_arch
 %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/pcmcia
-%endif
+%endif				# i386_arch
 %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/kernel
 %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/build
 %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.dep
 %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.*map
 %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.generic_string
-%endif
-%endif
+%endif				# narch
 
 %files headers
 %defattr(644,root,root,755)
@@ -987,7 +1065,7 @@ fi
 %{_prefix}/src/linux-%{version}/Documentation
 
 %files source
-%defattr(-,root,root,755)
+%defattr(644,root,root,755)
 #%{_prefix}/src/linux-%{version}/abi
 %{_prefix}/src/linux-%{version}/arch
 %{_prefix}/src/linux-%{version}/crypto
