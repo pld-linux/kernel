@@ -97,10 +97,12 @@ Group:		Base/Kernel
 %define		_rc	-rc4
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 # Source0-md5:	6ff7c672c2cdea3201220f7e3d5a27d0
+# Source0-size:	36265012
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
 # Source4-md5:	d29e4871b6fd4546c9390e98d9004fc7
+# Source4-size:	3636
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
