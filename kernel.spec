@@ -271,6 +271,7 @@ Patch1412:	linux-2.4.18-sendfile64.patch
 Patch1413:	linux-2.4.20-andrea-fix-pausing.patch
 Patch1414:	linux-2.4.20-oopsmeharder.patch
 Patch1415:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
+Patch1416:	linux-2.4.20-no-FPU.patch
 
 Patch2000:	linux-PPC-SMP.patch
 Patch2001:	linux-2.4-ppc-procesor.patch
@@ -675,6 +676,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1413 -p1
 %patch1414 -p1
 %patch1415 -p0
+%patch1416 -p1
 
 %patch2000 -p0
 %patch2001 -p1
