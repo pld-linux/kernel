@@ -342,7 +342,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
-#%patch10 -p1
+%patch10 -p1
 %patch11 -p1
 %patch12 -p0
 %patch13 -p0
