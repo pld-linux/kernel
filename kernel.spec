@@ -11,18 +11,18 @@
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
-#%bcond_without	grsec		# build without grsec
-#%bcond_with	vserver		# enable vserver (disables grsec)
-#%bcond_with	pax		# enable PaX
+%bcond_without	grsec		# build without grsec
+%bcond_with	vserver		# enable vserver (disables grsec)
+%bcond_with	pax		# enable PaX
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	regparm		# use register arguments (this break binary-only modules)
 
 %{?debug:%define with_verbose 1}
 
-#%if %{with vserver}
-#%undefine	with_grsec
-#%endif
+%if %{with vserver}
+%undefine	with_grsec
+%endif
 
 %if !%{with grsec}
 %undefine	with_pax
@@ -55,7 +55,7 @@
 
 %define		_post_ver	.2
 #define		_post_ver	%{nil}
-%define		_rel		0.30
+%define		_rel		0.31
 %define		_cset		20050302_0807
 %define		_apply_cset	0
 
@@ -182,7 +182,8 @@ Patch76:	linux-2.6-lirc-0.7.patch
 # http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.10-rc2/2.6.10-rc-mm2/broken-out
 #Patch110:	linux-reiser4.patch.bz2
 
-#Patch200:	grsecurity-2.1.1-2.6.10-200501131222.patch
+## based on http://grsecurity.org/grsecurity-2.1.3-2.6.11-200503091157.patch
+Patch200:	grsecurity-2.1.3-2.6.11-200503091157.patch
 #Patch201:	linux-2.6.10-secfix-200501071130.patch
 
 # linux vserver
@@ -584,16 +585,16 @@ bzcat %{SOURCE4} | patch -p1 -s
 # <bconded_patches>
 
 #grsec
-#%ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
-#%if %{with grsec}
-#%patch200 -p1
+%ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
+%if %{with grsec}
+%patch200 -p1
 #%patch201 -p1
-#%endif
-#%endif
+%endif
+%endif
 
-#%if %{with vserver}
+%if %{with vserver}
 #%patch250 -p1
-#%endif
+%endif
 
 # </bconded_patches
 
@@ -1227,9 +1228,9 @@ fi
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
-#%if %{with grsec}
-#%{_prefix}/src/linux-%{version}/grsecurity
-#%endif
+%if %{with grsec}
+%{_prefix}/src/linux-%{version}/grsecurity
+%endif
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
 %{_prefix}/src/linux-%{version}/kernel
