@@ -131,8 +131,11 @@ Patch17:	hfsplus-20011213.patch
 Patch18:	evms-%{evms_version}-linux-2.4.patch
 Patch19:	evms-linux-2.4.20-common-files.patch
 Patch20:	linux-2.4.19-pre8-VFS-lock.patch
-#Patch21:
-#Patch22:
+
+# from http://www.promise.com/support/file/driver/promise-patch-2.4.19.gz
+Patch21:	linux-2.4.20-promise.patch.bz2
+# from http://www.promise.com/support/files/driver/st6000src_1.30_01_0326.tgz
+#Patch22:	linux-2.4.20-promise-st.patch.tgz
 #Patch23:
 #Patch24:
 
@@ -698,6 +701,10 @@ echo Sysctl controll access to /dev/kmem
 echo Fixed VIA82Cxxx Audio ...
 %patch910 -p1
 
+#promise patch
+echo Promise driver patch
+%patch21 -p1
+
 echo Added ARCH specific patches....
 %ifarch %{ix86}
 echo Ix86 patches ...
@@ -947,10 +954,7 @@ ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 %if %{?_without_source:0}%{!?_without_source:1}
 cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
 %else
-cp -a {include,scripts,Makefile,Rules.make} $RPM_BUILD_ROOT/usr/src/linux-%{version}/
-%if %{?_without_doc:0}%{!?_without_doc:1}
-cp -a Documentation $RPM_BUILD_ROOT/usr/src/linux-%{version}/
-%endif
+cp -a {include,scripts,Makefile,Rules.make,Documentation} $RPM_BUILD_ROOT/usr/src/linux-%{version}/
 %endif
 
 %ifarch sparc sparc64
