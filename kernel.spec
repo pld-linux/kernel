@@ -146,6 +146,8 @@ Patch72:	2.6.x-neofb-trivial-fix-lkml.patch
 
 Patch74:	2.6.x-parport-C99-lkml.patch
 
+Patch76:	2.6.x-memleak-while-coredumping-lkml.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
@@ -541,7 +543,10 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch72 -p1
 
-%patch74 -p1
+#%%patch74 -p1
+
+%patch76 -p1
+
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
