@@ -95,7 +95,7 @@ Patch2:		linux-%{version}-freeswan-%{freeswan_version}.patch.gz
 # from  http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.17.diff
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
-Patch5:		xfs-12062002.patch.gz
+Patch5:		xfs.patch
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/sct/ext3/v2.4/
 Patch6:		linux-2.4.18-ext3-0.9.18.patch
 # Homepage of ABI:	http://linux-abi.sourceforge.net/
