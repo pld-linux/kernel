@@ -20,7 +20,7 @@ Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
 Source5:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source6:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 Source7:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
-Source8:	linux-netfilter-patches-20010107.tar.gz
+Source8:	linux-netfilter-patches-20010108.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
