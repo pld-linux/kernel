@@ -268,6 +268,7 @@ Patch3004:	linux-2.4.20-sym53c8xx_old.patch
 Patch3005:	linux-2.4.21-gcc33.patch
 Patch3006:	linux-2.4.21-sparc-gcc3.patch
 Patch3007:	linux-2.4.21-gcc33-math-emu.patch
+Patch3008:	linux-drm-4.2.0-force-cmpxchg.patch
 
 # Security patches/fixes
 
@@ -674,6 +675,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch3005 -p1
 %patch3006 -p1
 %patch3007 -p1
+%patch3008 -p1
 
 %patch4000 -p1
 %{!?_without_grsec:%patch4001 -p1}
