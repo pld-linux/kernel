@@ -374,7 +374,7 @@ PCMCIA-CS modules.
 %description -l pl pcmcia-cs
 Modu³y PCMCIA-CS.
 
-%package -n kernel-smp-pcmcia-cs
+%package smp-pcmcia-cs
 Summary:	PCMCIA-CS modules for SMP kernel
 Summary(pl):	Modu³y PCMCIA-CS dla maszyn SMP
 Group:		Base/Kernel
@@ -382,10 +382,10 @@ Group(pl):	Podstawowe/Kernel
 Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
 Prereq:		%{name}-smp = %{version}-%{release}
 
-%description -n kernel-smp-pcmcia-cs
+%description -n smp-pcmcia-cs
 PCMCIA-CS modules for SMP kernel.
 
-%description -l pl -n kernel-smp-pcmcia-cs
+%description -l pl smp-pcmcia-cs
 Modu³y PCMCIA-CS dla maszyn SMP.
 
 %package drm
@@ -402,7 +402,7 @@ DRM kernel modules.
 %description -l pl drm
 Sterowniki DRM.
 
-%package -n kernel-smp-drm
+%package smp-drm
 Summary:	DRM SMP kernel modules
 Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
 Group:		Base/Kernel
@@ -410,10 +410,10 @@ Group(pl):	Podstawowe/Kernel
 Provides:       %{name}-drm = %{drm_xfree_version}
 Prereq:		%{name}-smp = %{version}-%{release}
 
-%description -n kernel-smp-drm
+%description smp-drm
 DRM SMP kernel modules.
 
-%description -l pl -n kernel-smp-drm
+%description -l pl smp-drm
 Sterowniki DRM dla maszyn wieloprocesorowych.
 
 %package headers
@@ -1133,16 +1133,16 @@ fi
 %postun pcmcia-cs
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
-%post -n kernel-smp-pcmcia-cs
+%post smp-pcmcia-cs
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
 
-%postun -n kernel-smp-pcmcia-cs
+%postun smp-pcmcia-cs
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
 
 %postun drm
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
-%post -n kernel-smp-drm
+%post smp-drm
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
 
 %if %{?_without_up:0}%{!?_without_up:1}
