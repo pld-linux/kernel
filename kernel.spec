@@ -621,8 +621,8 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 %patch8 -p1
 
 # IP personality
-echo Adding IP Personality 
-patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020819-linux-2.4.19.diff
+#echo Adding IP Personality 
+#patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020819-linux-2.4.19.diff
 
 %ifarch ppc
 %patch909 -p1
