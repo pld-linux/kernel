@@ -22,7 +22,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.6
-Release:	3
+Release:	4
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -489,9 +489,9 @@ BuildKernel() {
 		KernelVer=%{version}-%{release}
 		echo BUILDING THE NORMAL KERNEL...
 	fi
-	cat %{SOURCE1003} >> $RPM_SOURCE_DIR/kernel-$Config.config
 	cat %{SOURCE1001} >> $RPM_SOURCE_DIR/kernel-$Config.config
 	cat %{SOURCE1002} >> $RPM_SOURCE_DIR/kernel-$Config.config
+	cat %{SOURCE1003} >> $RPM_SOURCE_DIR/kernel-$Config.config
 	cp $RPM_SOURCE_DIR/kernel-$Config.config arch/$RPM_ARCH/defconfig
 	if [ "$LIDS" = "lids" ] ; then
 		echo ENABLING LIDS...
@@ -504,10 +504,10 @@ BuildKernel() {
 
 %ifarch sparc
 	sparc32 %{__make} oldconfig
-	sparc32 %{__make} dep
+	sparc32 %{__make} dep clean
 %else
 	%{__make} oldconfig
-	%{__make} dep
+	%{__make} dep clean
 %endif
 	%{__make} include/linux/version.h
 
@@ -546,7 +546,7 @@ rm -rf $KERNEL_BUILD_DIR-installed
 install -d $KERNEL_BUILD_DIR-installed
 
 # UP KERNEL
-BuildKernel
+BuildKernel 
 
 %if !%{test_build}
 # SMP KERNEL
@@ -598,25 +598,30 @@ gzip -dc %{SOURCE10} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{SOURCE13} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
+gzip -dc %{SOURCE14} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{SOURCE15} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
+
 # Pre patch
 gzip -dc %{PATCH1000} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH0}
+#patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH0}
 gzip -dc %{PATCH1} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH2} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH3}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
 gzip -dc %{PATCH100} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 #gzip -dc %{PATCH5} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH6} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+#gzip -dc %{PATCH6} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH7} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH8} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH9}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
+%if%{?_with_lids:1}%{!?_with_lids:0}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
+%endif
 
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH101}
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH102}
+#patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH102}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH103}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH104}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH105}
@@ -626,13 +631,15 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH108}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH109}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH110}
 patch -p4 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH111}
-gzip -dc %{PATCH112} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+#gzip -dc %{PATCH112} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH113}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH114}
 
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH900}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH901}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH902}
+#patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH902}
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH905}
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH906}
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/dc395/dc395-integ24.diff
@@ -691,13 +698,21 @@ rm -rf $RPM_BUILD_ROOT/usr/src/linux-%{version}/%{sym_ncr_version}
 #mv rl2-1.7.1 drivers/net/rl2
 #%patch902 -p1
 
-## must be here, in other time make errors with LIDS
-#patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH9}
-
 # 802.1Q VLANs
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/vlan.%{vlan_version} < %{PATCH904}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} \
 	< $RPM_BUILD_ROOT/usr/src/linux-%{version}/vlan.%{vlan_version}/vlan_2.4.patch
+
+# IP personality
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} \
+    <$RPM_BUILD_ROOT/usr/src/linux-%{version}/ippersonality-%{IPperson_version}/patches/ippersonality-20010703-linux-2.4.5.diff
+
+# JFS
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} \
+    <$RPM_BUILD_ROOT/usr/src/linux-%{version}/jfs-common-v1.0.1-patch
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} \
+    < $RPM_BUILD_ROOT/usr/src/linux-%{version}/jfs-2.4.5-v1.0.1-patch
+
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f $RPM_BUILD_ROOT/usr/src/linux-%{version}/Makefile $RPM_BUILD_ROOT/usr/src/linux-%{version}/Makefile.orig
