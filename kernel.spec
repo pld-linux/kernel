@@ -331,10 +331,11 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch4 -p1
 %patch5 -p1
 %patch7 -p1
-%patch8 -p1
 %if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %patch14 -p1
 %patch913 -p1
+%else
+%patch8 -p1
 %endif
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
 %ifarch %{ix86}
