@@ -45,8 +45,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.13
-%define		_cset		20040601_1708
+%define		_rel		0.14
+%define		_cset		20040603_1613
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040518
@@ -75,13 +75,14 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	ece9e328e0cdcf4a093141db36619934
+# Source3-md5:	add3403579d67c109cd9866aa5ede3e2
 # http://lkml.org/lkml/2004/6/2/228
 Source4:	http://redhat.com/~mingo/nx-patches/nx-2.6.7-rc2-bk2-AF
 # Source4-md5:	9d45d98ad5e27747c6e930a46dc9e37f
 # http://lkml.org/lkml/2004/6/2/233
-Source5:	http://redhat.com/~mingo/exec-shield/exec-shield-on-nx-2.6.7-rc2-bk2-A7
-# Source5-md5:	dddc92e35b8b3278368ed891698c5580
+#Source5:	http://redhat.com/~mingo/exec-shield/exec-shield-on-nx-2.6.7-rc2-bk2-A7-nxAF
+Source5:	exec-shield-on-nx-2.6.7-rc2-bk2-A7-nxAF
+# Source5-md5:	70da8754358d6d990887ef7e023e1dc7
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source30:	%{name}-x86_64.config
