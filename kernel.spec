@@ -9,8 +9,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.2.18
-Release:	16
+Version:	2.2.19
+Release:	1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -47,7 +47,7 @@ Patch4:		%{name}-3c90x.patch
 Patch5:		linux-ipv6-glibc2.2.patch
 Patch6:		http://milosch.net/pub/beos/2.2.18-pre2-beos09032000.patch
 Patch7:		%{name}-autoraidraid.patch
-Patch8:		ftp://ftp.reiserfs.org/linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
+Patch8:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.18-reiserfs-3.5.31-patch.gz
 Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/ata/2.2.18/ide.2.2.18.02122001.patch.bz2
 Patch10:	http://www.math.leidenuniv.nl/~buytenh/bridge/patches/bridge-0.0.9-against-2.2.18.diff
 Patch11:	http://download.sourceforge.net/linux1394/ieee1394-2.2.18-20001223.gz
