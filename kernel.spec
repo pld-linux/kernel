@@ -9,7 +9,7 @@
 
 %define		_rel		0
 %define		test_ver	3
-%define		patch_level	2
+%define		patch_level	3
 
 %if	%{test_ver} != 0
 %define		test		test%{test_ver}
@@ -62,6 +62,20 @@ Patch7:		2.6.0-t3-initrd_load-lkml.patch
 Patch10:	2.6.0-t3-pmac_ide-lkml.patch
 Patch11:	2.6.0-t3-sysfs_mem-lkml.patch
 Patch12:	2.6.0-t3-trival-lkml.patch
+
+Patch20:	2.6.0-t3.c99.Documentation-lkml.patch
+Patch21:	2.6.0-t3.c99.arch-lkml.patch
+Patch22:	2.6.0-t3.c99.arch.ia64-lkml.patch
+Patch23:	2.6.0-t3.c99.arch.mips-lkml.patch
+Patch24:	2.6.0-t3.c99.arch.sh-lkml.patch
+Patch25:	2.6.0-t3.c99.drivers-lkml.patch
+Patch26:	2.6.0-t3.c99.fs-lkml.patch
+Patch27:	2.6.0-t3.c99.include-lkml.patch
+Patch28:	2.6.0-t3.c99.sound-lkml.patch
+
+Patch30:	2.6.0-t3-oprofile-1of3-lkml.patch
+Patch31:	2.6.0-t3-oprofile-2of3-lkml.patch
+Patch32:	2.6.0-t3-oprofile-3of3-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -301,6 +315,20 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch10 -p1
 %patch11 -p1
 %patch12 -p1
+
+%patch20 -p1
+%patch21 -p1
+%patch22 -p1
+%patch23 -p1
+%patch24 -p1
+%patch25 -p1
+%patch26 -p1
+%patch27 -p1
+%patch28 -p1
+
+%patch30 -p1
+%patch31 -p1
+%patch32 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
