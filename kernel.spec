@@ -27,7 +27,7 @@ Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.23
 Release:	0.6
-License:	GPL
+License:	GPL v2
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 # Source0-md5:	642af5ab5e1fc63685fde85e9ae601e4
