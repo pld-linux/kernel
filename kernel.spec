@@ -752,9 +752,6 @@ zcat %{SOURCE3} | patch -p1 -s
 
 %patch114 -p1
 
-%if %{with mosix}
-%patch420 -p1
-%endif
 
 %patch440 -p1
 
@@ -818,6 +815,10 @@ zcat %{SOURCE3} | patch -p1 -s
 %if %{with grsec}
 %patch600 -p1
 %endif
+%endif
+
+%if %{with mosix}
+%patch420 -p1
 %endif
 
 # Fix EXTRAVERSION and CC in main Makefile
