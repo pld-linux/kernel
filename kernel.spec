@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.7
-Release:	12
+Release:	13
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -93,6 +93,9 @@ Patch9:		linux-grsecurity-%{grsec_version}.patch
 # EXT3
 # http://www.uow.edu.au/~andrewm/linux/ext3/
 Patch10:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.5-247.gz
+# http://sci.felk.cvut.cz/nwd/linux-2.4/
+Patch11:	ndw-1.4-2.4.7-PLD.patch
+Patch12:	ndw-1.4-pre.common.patch
 
 # Assorted bugfixes
 
@@ -543,6 +546,11 @@ patch -p1 -s <jfs-2.4.7-1.0.7-patch
 echo Replaced Tulip driver
 cp -f tulip-%{tulip_version}/src/*.{c,h} drivers/net/tulip
 cp -f tulip-%{tulip_version}/src/ChangeLog drivers/net/tulip
+
+# NDW patch installed
+echo Network disk device support
+%patch11 -p1
+%patch12 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
