@@ -667,14 +667,14 @@ PreInstallKernel (){
 KERNEL_BUILD_DIR=`pwd`
 
 # UP KERNEL
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/UP"
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig
 %{?with_up:BuildKernel}
 %{?with_up:PreInstallKernel}
 
 # SMP KERNEL
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/SMP"
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig smp
 %{?with_smp:BuildKernel smp}
@@ -696,12 +696,8 @@ install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 KERNEL_BUILD_DIR=`pwd`
 
-%if %{with up}
-cp -a $KERNEL_BUILD_DIR/build-done/UP/* $RPM_BUILD_ROOT
-%endif
-
-%if %{with smp}
-cp -a $KERNEL_BUILD_DIR/build-done/SMP/* $RPM_BUILD_ROOT
+%if %{with up} || %{with smp}
+cp -a $KERNEL_BUILD_DIR/build-done/kernel-*/* $RPM_BUILD_ROOT
 %endif
 
 for i in "" smp ; do
@@ -771,19 +767,19 @@ cp .config config-smp
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
-if [ -e $KERNEL_BUILD_DIR/build-done/UP/usr/src/linux-%{version}/include/linux/autoconf-up.h ]; then
-install $KERNEL_BUILD_DIR/build-done/UP/usr/src/linux-%{version}/include/linux/autoconf-up.h \
+if [ -e $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h ]; then
+install $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h \
 $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 fi
 
-if [ -e $KERNEL_BUILD_DIR/build-done/SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h ]; then
-install $KERNEL_BUILD_DIR/build-done/SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h \
+if [ -e $KERNEL_BUILD_DIR/build-done/kernel-SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h ]; then
+install $KERNEL_BUILD_DIR/build-done/kernel-SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h \
 $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 fi
 
 %if %{with up} || %{with smp}
 # UP or SMP
-install $KERNEL_BUILD_DIR/build-done/*P/usr/src/linux-%{version}/include/linux/* \
+install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{version}/include/linux/* \
 $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 %endif
 
