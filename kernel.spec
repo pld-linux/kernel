@@ -100,8 +100,8 @@ Patch105:	%{name}-wanrouter-bridge.patch
 Patch106:	linux-netdrivers_vlan.patch
 Patch107:	linux-atm.patch
 
-# hap linux
-Patch200:	http://www.theaimsgroup.com/~hlein/hap-linux/hap-linux-2.2.20-2.diff
+# hap linux based on http://www.theaimsgroup.com/~hlein/hap-linux/hap-linux-2.2.20-2.diff
+Patch200:	hap-linux-2.2.20-2.diff
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
