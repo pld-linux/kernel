@@ -77,8 +77,7 @@ Patch4:		br2684-against2.4.15.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
 Patch5:		linux-2.4.16-xfs-20011129.patch.gz
 # Homepage of ABI : http://linux-abi.sourceforge.net/
-# http://prdownloads.sourceforge.net/linux-abi/
-#Patch7:		linux-abi-2.4.3-PLD.patch
+Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2
 Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
 Patch9:		http://grsecurity.net/grsecurity-%{grsec_version}.patch
@@ -484,6 +483,8 @@ echo Installing Preemptive patch
 echo Installing Net Dev Random patch
 %patch11 -p1
 %patch12 -p1
+
+%patch7 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
