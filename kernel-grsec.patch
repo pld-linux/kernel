@@ -660,25 +660,6 @@ diff -uNr linux-2.6.7-rc1.orig/arch/ia64/ia32/binfmt_elf32.c.rej linux-2.6.7-rc1
 +  		mpnt->vm_flags = VM_STACK_FLAGS;
 +  		mpnt->vm_ops = NULL;
 +  		mpnt->vm_pgoff = 0;
-diff -uNr linux-2.6.7-rc1.orig/arch/ia64/ia32/ia32priv.h linux-2.6.7-rc1/arch/ia64/ia32/ia32priv.h
---- linux-2.6.7-rc1.orig/arch/ia64/ia32/ia32priv.h	2004-05-23 07:55:01.000000000 +0200
-+++ linux-2.6.7-rc1/arch/ia64/ia32/ia32priv.h	2004-05-25 14:33:57.823569808 +0200
-@@ -295,7 +295,14 @@
- #define ELF_ARCH	EM_386
- 
- #define IA32_PAGE_OFFSET	0xc0000000
--#define IA32_STACK_TOP		IA32_PAGE_OFFSET
-+
-+#ifdef CONFIG_PAX_RANDUSTACK
-+#define __IA32_DELTA_STACK	(current->mm->delta_stack)
-+#else
-+#define __IA32_DELTA_STACK 0UL
-+#endif
-+
-+#define IA32_STACK_TOP		(IA32_PAGE_OFFSET - __IA32_DELTA_STACK)
- 
- /*
-  * The system segments (GDT, TSS, LDT) have to be mapped below 4GB so the IA-32 engine can
 diff -uNr linux-2.6.7-rc1.orig/arch/ia64/kernel/ptrace.c linux-2.6.7-rc1/arch/ia64/kernel/ptrace.c
 --- linux-2.6.7-rc1.orig/arch/ia64/kernel/ptrace.c	2004-05-23 07:55:02.000000000 +0200
 +++ linux-2.6.7-rc1/arch/ia64/kernel/ptrace.c	2004-05-25 14:33:57.842566920 +0200
@@ -755,18 +736,7 @@ diff -uNr linux-2.6.7-rc1.orig/arch/ppc/kernel/syscalls.c linux-2.6.7-rc1/arch/p
  
  #include <asm/uaccess.h>
  #include <asm/ipc.h>
-@@ -165,14 +166,25 @@
- 	struct file * file = NULL;
- 	int ret = -EBADF;
- 
-+#ifdef CONFIG_PAX_RANDEXEC
-+	if (flags & MAP_MIRROR)
-+		return -EINVAL;
-+#endif
-+
- 	flags &= ~(MAP_EXECUTABLE | MAP_DENYWRITE);
- 	if (!(flags & MAP_ANONYMOUS)) {
- 		if (!(file = fget(fd)))
+@@ -171,8 +172,14 @@
  			goto out;
  	}
  
@@ -1115,17 +1085,7 @@ diff -uNr linux-2.6.7-rc1.orig/arch/sparc64/kernel/sys_sparc.c linux-2.6.7-rc1/a
  
  #include <asm/uaccess.h>
  #include <asm/ipc.h>
-@@ -311,11 +312,22 @@
- 	struct file * file = NULL;
- 	unsigned long retval = -EBADF;
- 
-+#ifdef CONFIG_PAX_RANDEXEC
-+	if (flags & MAP_MIRROR)
-+		return -EINVAL;
-+#endif
-+
- 	if (!(flags & MAP_ANONYMOUS)) {
- 		file = fget(fd);
+@@ -316,6 +317,12 @@
  		if (!file)
  			goto out;
  	}
