@@ -44,6 +44,7 @@ Patch30:	2.6.4-esfq.patch
 Patch31:	2.6.4-imq.patch
 Patch32:	2.6.4-imq-nat.patch
 Patch33:	2.6.4-unclean.patch
+Patch34:	2.6.4-wrr.patch
 Patch50:	2.6.4-pom-ng-%{_netfilter_snap}-base.patch
 Patch51:	2.6.4-pom-ng-%{_netfilter_snap}-extra.patch
 Patch52:	2.6.4-pom-ng-%{_netfilter_snap}-base-osf.patch
@@ -137,6 +138,7 @@ hardware.
 %patch31 -p1
 %patch32 -p1
 %patch33 -p1
+%patch34 -p1
 
 %patch50 -p1
 %patch51 -p1
