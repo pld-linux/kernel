@@ -27,7 +27,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	2.7%{?_with_preemptive:_pr}
+Release:	2.8%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -126,6 +126,7 @@ Patch40:	linux-2.4.20-rc1-irda-usb-USB.patch
 Patch41:	linux-2.4.20-rc1-isdn-hisax-USB.patch
 Patch42:	linux-2.4.20-rc1-ticable.h-USB.patch
 Patch43:	linux-2.4.20-rc1-IDE.patch
+Patch44:	kernel-2.4-NTfix.patch
 
 # Assorted bugfixes
 
@@ -612,6 +613,9 @@ echo USB 2.0 Support from Linux-2.4.20-rc1.
 
 # IDE subsystem
 %patch43 -p1
+
+# security BUG
+%patch44 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
