@@ -8,12 +8,12 @@
 %define		test_build		0
 #
 %define		pre_version		pre11
-%define		lids_version		1.0.11-2.4.6
+%define		lids_version		1.0.14-2.4.9
 %define		ipvs_version		0.9.4
 %define		freeswan_version	snap2001sep23b
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.9
-%define		sym_ncr_version		sym-1.7.3-ncr-3.4.3
+%define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		vlan_version		1.4
 %define		IPperson_version	20010724-2.4.7
 %define		grsec_version		1.8-2.4.10
@@ -64,7 +64,6 @@ Source1004:	%{name}-xfs.config
 Source1005:	%{name}-netfilter.config
 Source1006:	%{name}-ipvs.config
 Source1007:	%{name}-ippersonality.config
-Source1008:	%{name}-netrandom.config
 
 # New features
 
@@ -91,11 +90,6 @@ Patch10:	http://prdownloads.sourceforge.net/linuxcompressed/patch-comp-cache-2.4
 # EXT3
 # http://www.uow.edu.au/~andrewm/linux/ext3/
 Patch11:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.10-2410.gz
-# Netdevice random 
-# http://tech9.net/rml/linux/
-Patch12:	http://tech9.net/rml/linux/patch-rml-2.4.10-netdev-random-1
-Patch13:	http://tech9.net/rml/linux/patch-rml-2.4.10-netdev-random-2
-
 
 # Assorted bugfixes
 
@@ -137,8 +131,9 @@ Patch120:	linux-2.4.3-sb.patch
 Patch121:	linux-2.4.10-ideraid.patch
 # another sb16 pnp id
 Patch122:	linux-2.4.6-sb_id.patch
-# fixed TASK_UNMAPPED_BASE in mmap.c
-Patch123:	kernel-mmap.fix
+Patch123:	linux-2.4.10-aironet.patch
+Patch124:	linux-2.4.10-cpqfc.patch
+Patch125:	linux-2.4.10-SAA9730-mips-only.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -146,7 +141,7 @@ Patch900:	kernel-i8255-asm-fix.patch
 Patch901:	dc395-patch-PLD-fix.patch
 # patch fixing problem with ABI and LIDS
 Patch902:	linux-lids-with-abi.patch
-Patch903:	linux-vlan-fixpatch-2.4.10.patch
+Patch903:	linux-vlan-fixpatch-2.4.7-pre6.patch
 # patch fixing LIDS stupidity
 #Patch904:	linux-lids-fixpatch.patch
 Patch905:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
@@ -380,8 +375,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch3 -p1
 %patch4 -p1
 %patch11 -p1
-#%patch100 -p1
-#%patch5 -p1
+%patch100 -p1
+%patch5 -p1
 #%patch6 -p1
 #%patch7 -p1
 %patch8 -p1
@@ -413,6 +408,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
+%patch123 -p1
+%patch124 -p1
+%patch125 -p1
 
 %patch900 -p0 
 %patch901 -p0
@@ -490,14 +488,6 @@ echo Adding JFS
 patch -p1 -s <jfs-2.4.common-v1.0.5-patch
 patch -p1 -s <jfs-2.4.7-v1.0.5-patch
 
-# Net dev random
-echo Network Device Random
-%patch12 -p1
-%patch13 -p1
-
-# mmap fix
-%patch123 -p0
-
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
@@ -561,7 +551,6 @@ BuildKernel() {
 	cat %{SOURCE1005} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1006} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1007} >> arch/$RPM_ARCH/defconfig
-	cat %{SOURCE1008} >> arch/$RPM_ARCH/defconfig
 	if [ "$LIDS" = "lids" ] ; then
 		echo ENABLING LIDS...
 		cat %{SOURCE1000} >> arch/$RPM_ARCH/defconfig
@@ -695,7 +684,6 @@ cat %{SOURCE1004} >> .config
 cat %{SOURCE1005} >> .config
 cat %{SOURCE1006} >> .config
 cat %{SOURCE1007} >> .config
-cat %{SOURCE1008} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
@@ -723,7 +711,6 @@ cat %{SOURCE1004} >> .config
 cat %{SOURCE1005} >> .config
 cat %{SOURCE1006} >> .config
 cat %{SOURCE1007} >> .config
-cat %{SOURCE1008} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
