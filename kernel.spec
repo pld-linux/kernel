@@ -7,6 +7,7 @@
 # _with_acpi		- build with acpi support
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
+# _with_cdrw		- build with CDRW support
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -28,7 +29,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	0.3%{?_with_preemptive:_pr}%{?_with_acpi:_acpi}
+Release:	0.4%{?_with_preemptive:_pr}%{?_with_acpi:_acpi}%{?_with_cdrw:_cdrw}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -59,6 +60,7 @@ Source1002:	%{name}-addon.config
 Source1003:	%{name}-netfilter.config
 Source1004:	%{name}-ipvs.config
 Source1005:	%{name}-evms.config
+Source1006:	%{name}-cdrw.config
 Source1666:	%{name}-grsec.config
 Source1667:	%{name}-int.config
 Source1999:	%{name}-preemptive.config
@@ -97,6 +99,9 @@ Patch17:	hfsplus-20011213.patch
 Patch18:	evms-%{evms_version}-linux-2.4.patch
 Patch19:	evms-linux-2.4.19-rc3-common-files.patch
 Patch20:	linux-2.4.19-pre8-VFS-lock.patch
+# Support for CDRW packet writing
+Patch26:	%{name}-cdrw-packet.patch
+Patch27:	kernel-cd-mrw-2.patch
 
 # Assorted bugfixes
 
@@ -517,6 +522,8 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
 %endif
     Makefile.orig >Makefile
 
+%{?_with_cdrw:%patch26 -p1}
+%{?_with_cdrw:%patch27 -p1}
 
 %build
 BuildKernel() {
@@ -564,6 +571,7 @@ BuildKernel() {
 	cat %{SOURCE1003} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1004} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1005} >> arch/%{base_arch}/defconfig
+	%{?_with_cdrw:cat %{SOURCE1006} >> arch/%{base_arch}/defconfig}
 	%{?_with_preemptive:cat %{SOURCE1999} >> arch/%{base_arch}/defconfig}
 
 %if %{?_with_acpi:1}%{!?_with_acpi:0}
@@ -578,6 +586,7 @@ BuildKernel() {
 	echo "CONFIG_ACPI_EC=m" >> arch/%{base_arch}/defconfig
 	echo "CONFIG_ACPI_CMBATT=m" >> arch/%{base_arch}/defconfig
 	echo "CONFIG_ACPI_THERMAL=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_HOTPLUG_PCI_ACPI=m" >> arch/%{base_arch}/defconfig
 %endif
 	if [ "$BOOT" = "yes" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
@@ -726,6 +735,7 @@ cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
 cat %{SOURCE1005} >> .config
+%{?_with_cdrw:cat %{SOURCE1006} >> .config}
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
 %{?_with_preemptive:cat %{SOURCE1999} >> .config}
@@ -757,6 +767,7 @@ cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
 cat %{SOURCE1005} >> .config
+%{?_with_cdrw:cat %{SOURCE1006} >> .config}
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
 %{?_with_preemptive:cat %{SOURCE1999} >> .config}
