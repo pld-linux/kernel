@@ -1144,8 +1144,6 @@ fi
 %{_prefix}/src/linux-%{version}/include
 %{_prefix}/src/linux-%{version}/config-smp
 %{_prefix}/src/linux-%{version}/config-up
-%attr(755,root,root)	%{_prefix}/src/linux-%{version}/scripts/modpost
-#%{_prefix}/src/linux-%{version}/.config
 
 %files doc
 %defattr(644,root,root,755)
