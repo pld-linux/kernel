@@ -127,7 +127,7 @@ Patch119:	linux-2.4.6-sb_id.patch
 Patch120:	linux-2.4.10-aironet.patch
 Patch121:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
-Patch122:	linux-2.4.7-lvm-1.0.1rc3cvs.patch
+Patch122:	linux-2.4.13-pre6-lvm-1.0.1rc4cvs.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
