@@ -110,7 +110,7 @@ Patch1503:	%{name}-sym53c8xx.patch
 
 # ppcs patches
 Patch2000:	2.2.20-ppc_ide.patch
-Patch2001:	2.2.20-ppc_serial.patch
+#Patch2001:	2.2.20-ppc_serial.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -389,11 +389,16 @@ mv README.kernel README
 %patch43 -p1
 patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
 
+%ifnarch ppc
 cd serial-5.05
 %patch41 -p1
 %patch42 -p1
 ./install-in-kernel ../
 cd ..
+%endif
+%ifarch ppc
+rm -rf serial-5.05/
+%endif
 
 # i2c
 %ifarch %{ix86}
@@ -436,7 +441,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 #some ppc hacks
 %ifarch ppc
 %patch2000 -p1
-%patch2001 -p1
+#%patch2001 -p1
 %endif
 
 %build
@@ -489,6 +494,8 @@ BuildKernel() {
 %else
 %ifarch sparc
 	sparc32 %{__make} boot EXTRAVERSION="-%{release}"
+%ifarch ppc
+    %{__make} vmlinux EXTRAVERSION="-%{release}"
 %else
 	%{__make} boot EXTRAVERSION="-%{release}"
 %endif
@@ -497,10 +504,6 @@ BuildKernel() {
 	sparc32 %{__make} modules EXTRAVERSION="-%{release}"
 %else
 	%{__make} modules EXTRAVERSION="-%{release}"
-%else
-%endif
-%ifarch ppc
-    %{__make} vmlinux EXTRAVERSION="-%{release}"
 %endif
 
 	mkdir -p $KERNEL_INSTALL_DIR/boot
@@ -695,11 +698,13 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT%{_pre
 rm -rf $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/vlan.%{vlan_version}/
 
 #serial
+%ifnarch ppc
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/serial-5.05
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH41}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH42}
 ./install-in-kernel $RPM_BUILD_ROOT/usr/src/linux-%{version}
 cd ..
+%endif
 rm -rf $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/serial-5.05/
 
 # i2c
@@ -755,7 +760,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1503}
 
 %ifarch ppc
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2000}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2001}
+#patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2001}
 %endif
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
