@@ -16,7 +16,7 @@
 #
 %define		pre_version		rc6
 %define		drm_xfree_version	4.3.0
-%define		netfilter_snap		20030915
+%define		netfilter_snap		20031009
 %define		i2c_version		2.8.0
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -306,7 +306,7 @@ Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = %{i2c_version}
 Provides:	bttv = 0.7.83
-Provides:	%{name}(netfilter) = 1.2.8-%{netfilter_snap}
+Provides:	%{name}(netfilter) = 1.2.9rc1-%{netfilter_snap}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
 #Provides:	%{name}(cdrw)
@@ -314,7 +314,7 @@ Provides:	%{name}(agpgart) = %{version}
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
-Conflicts:	iptables < 1.2.8
+Conflicts:	iptables < 1.2.9rc1
 Conflicts:	lvm < 1.0.4
 Conflicts:	xfsprogs < 2.1.0
 Conflicts:	reiserfsprogs < 3.6.3
@@ -377,12 +377,12 @@ Provides:	%{name}-smp = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = %{i2c_version}
 Provides:	bttv = 0.7.83
-Provides:	%{name}(netfilter) = 1.2.8-%{netfilter_snap}
+Provides:	%{name}(netfilter) = 1.2.9rc1-%{netfilter_snap}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
 #Provides:	%{name}(cdrw)
 #Provides:	%{name}(cdmrw)
-Conflicts:	iptables < 1.2.8
+Conflicts:	iptables < 1.2.9rc1
 Conflicts:	lvm < 1.0.4
 Conflicts:	xfsprogs < 2.1.0
 Conflicts:	reiserfsprogs < 3.6.3
@@ -533,7 +533,7 @@ Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
 Provides:	i2c-devel = %{i2c_version}
-Provides:	%{name}-headers(netfilter) = 1.2.8-%{netfilter_snap}
+Provides:	%{name}-headers(netfilter) = 1.2.9rc1-%{netfilter_snap}
 
 %description headers
 These are the C header files for the Linux kernel, which define
