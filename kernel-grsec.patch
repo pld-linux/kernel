@@ -316,36 +316,6 @@ diff -uNr linux-2.6.7-rc1.orig/arch/i386/kernel/process.c linux-2.6.7-rc1/arch/i
  	ptregs.xcs &= 0xffff;
  	ptregs.xds &= 0xffff;
  	ptregs.xes &= 0xffff;
-@@ -772,3 +771,29 @@
- 	return 0;
- }
- 
-+#ifdef CONFIG_PAX_RANDKSTACK
-+asmlinkage void pax_randomize_kstack(void)
-+{
-+	struct tss_struct *tss = init_tss + smp_processor_id();
-+	unsigned long time;
-+
-+#ifdef CONFIG_PAX_SOFTMODE
-+	if (!pax_aslr)
-+		return;
-+#endif
-+
-+	rdtscl(time);
-+
-+	/* P4 seems to return a 0 LSB, ignore it */
-+#ifdef CONFIG_MPENTIUM4
-+	time &= 0x3EUL;
-+	time <<= 1;
-+#else
-+	time &= 0x1FUL;
-+	time <<= 2;
-+#endif
-+
-+	tss->esp0 ^= time;
-+	current->thread.esp0 = tss->esp0;
-+}
-+#endif
 diff -uNr linux-2.6.7-rc1.orig/arch/i386/kernel/ptrace.c linux-2.6.7-rc1/arch/i386/kernel/ptrace.c
 --- linux-2.6.7-rc1.orig/arch/i386/kernel/ptrace.c	2004-05-23 07:53:47.000000000 +0200
 +++ linux-2.6.7-rc1/arch/i386/kernel/ptrace.c	2004-05-25 14:33:57.759579536 +0200
@@ -411,31 +381,6 @@ diff -uNr linux-2.6.7-rc1.orig/arch/i386/kernel/reboot.c linux-2.6.7-rc1/arch/i3
  }
  real_mode_gdt = { sizeof (real_mode_gdt_entries) - 1, real_mode_gdt_entries },
  real_mode_idt = { 0x3ff, 0 },
-diff -uNr linux-2.6.7-rc1.orig/arch/i386/kernel/sysenter.c linux-2.6.7-rc1/arch/i386/kernel/sysenter.c
---- linux-2.6.7-rc1.orig/arch/i386/kernel/sysenter.c	2004-05-23 07:55:02.000000000 +0200
-+++ linux-2.6.7-rc1/arch/i386/kernel/sysenter.c	2004-05-25 14:33:57.768578168 +0200
-@@ -41,13 +41,15 @@
- extern const char vsyscall_int80_start, vsyscall_int80_end;
- extern const char vsyscall_sysenter_start, vsyscall_sysenter_end;
- 
-+#ifndef CONFIG_PAX_NOVSYSCALL
- static int __init sysenter_setup(void)
- {
- 	unsigned long page = get_zeroed_page(GFP_ATOMIC);
- 
- 	__set_fixmap(FIX_VSYSCALL, __pa(page), PAGE_READONLY);
- 
--	if (!boot_cpu_has(X86_FEATURE_SEP)) {
-+	if (!boot_cpu_has(X86_FEATURE_SEP))
-+	{
- 		memcpy((void *) page,
- 		       &vsyscall_int80_start,
- 		       &vsyscall_int80_end - &vsyscall_int80_start);
-@@ -63,3 +65,4 @@
- }
- 
- __initcall(sysenter_setup);
-+#endif
 diff -uNr linux-2.6.7-rc1.orig/arch/i386/kernel/sys_i386.c linux-2.6.7-rc1/arch/i386/kernel/sys_i386.c
 --- linux-2.6.7-rc1.orig/arch/i386/kernel/sys_i386.c	2004-05-23 07:55:01.000000000 +0200
 +++ linux-2.6.7-rc1/arch/i386/kernel/sys_i386.c	2004-05-25 14:33:57.766578472 +0200
