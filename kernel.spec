@@ -154,7 +154,7 @@ Patch87:	2.6.4-rc1-03-CONNMARK.patch
 
 Patch90:	2.6.4-psion-5mx.patch
 
-Patch94:	2.6.5-rc1-patch-o-matic-ng-extra-%{_netfilter_snap}.patch
+Patch94:	%{version}-patch-o-matic-ng-extra-%{_netfilter_snap}.patch
 
 #from:		http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
 Patch96:	2.6.1-all-in-1.patch
