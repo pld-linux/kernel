@@ -65,7 +65,7 @@
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
 %define		_rel		0.15
-%define		_cset		20041025_0606
+%define		_cset		20041119_0306
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -88,10 +88,9 @@ Epoch:		3
 License:	GPL
 Group:		Base/Kernel
 #define		_rc	%{nil}
-%define		_rc	-rc1
+%define		_rc	-rc2
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	4689a60980f79a223aca6c2244c456e4
-# Source0-size:	36213661
+# Source0-md5:	cbefa7b4012682fe8b5cbb207ecb559c
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
@@ -600,6 +599,8 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch33 -p1
 
 %patch41 -p1
+
+exit 1
 
 # netfilter
 %patch50 -p1
