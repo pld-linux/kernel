@@ -30,7 +30,7 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1.10
+%define		_rel		1.11
 %define		_test_ver	0
 %define		_cset		0
 
@@ -163,6 +163,8 @@ Patch101:	2.6.0-sysfs-3of4-lkml.patch
 Patch102:	2.6.0-sysfs-4of4-lkml.patch
 
 Patch104:	2.6.0-ppdev-MODULES_ALIAS-lkml.patch
+
+Patch106:	2.6.0-NF-time-%{_netfilter_snap}.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -575,6 +577,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch102 -p1
 
 %patch104 -p1
+
+%patch106 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
