@@ -262,7 +262,7 @@ ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
 BuildRequires:	bin86
 %endif
-Conflicts:	iptables < 1.2.6
+Conflicts:	iptables < 1.2.7
 Conflicts:	lvm < 1.0.4
 Conflicts:	xfsprogs < 2.0.0
 
