@@ -43,8 +43,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.2
-%define		_cset		20040525_0509
+%define		_rel		0.3
+%define		_cset		20040527_1508
 
 ## netfilter snap 
 %define		_netfilter_snap		20040518
@@ -72,7 +72,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc1
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	7d38848c2f96436f8bde1b510150b42d
+# Source3-md5:	5a1774238297c4209f9989478c5bb663
 
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -186,11 +186,11 @@ Patch88:	2.6.6-qsort-updated-lkml.patch
 Patch90:	2.6.6-xfs-qsort-lkml.patch
 
 #Patch94:	grsecurity-2.0-2.6.6-unofficial.patch
-Patch94:	kernel-grsec.patch
+Patch94:	%{name}-grsec.patch
 
 Patch96:	2.6.6-lirc_i2c.diff
 # for older glibc:
-Patch97:	kernel-pts.patch
+Patch97:	%{name}-pts.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
