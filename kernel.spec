@@ -226,6 +226,7 @@ Patch200:	linux-cluster-cman.patch
 Patch201:	linux-cluster-dlm.patch
 Patch202:	linux-cluster-gfs.patch
 Patch203:	linux-cluster-gnbd.patch
+Patch204:	linux-2.6-cluster-morearchs.patch
 
 # http://lkml.org/lkml/2004/6/2/233
 Patch211:	http://people.redhat.com/mingo/exec-shield/exec-shield-nx-2.6.7-A0
@@ -736,6 +737,7 @@ patch -p1 -s < exec-shield.patch
 %patch201 -p1
 %patch202 -p1
 %patch203 -p1
+%patch204 -p1
 
 # hotfixes
 %patch300 -p1
