@@ -93,11 +93,6 @@ Patch40:	linux-2.4.22-ntfs-2.1.4c.patch.gz
 Patch50:	linux-2.4.20-davfs-0.2.4.patch.bz2
 # FC02_davfs__FUNCTION__.patch
 Patch55:	linux-2.4.20-davfs-_FUNCTION_.patch
-# ftp://ftp.suse.com/pub/people/jeffm/reiserfs/aclea/
-Patch60:	linux-2.4.22-reiserfs-acl+ea.patch
-# data logging and quota for reiserfs
-# ftp://ftp.suse.com/pub/people/mason/patches/data-logging/2.4.21/
-Patch61:	linux-2.4.22-reiserfs-data-logging+quota.patch.gz
 # http://dl.sourceforge.net/squashfs/squashfs-1.3.tar.gz
 Patch65:	squashfs1.3-2.4.21-patch
 #from http://sci.felk.cvut.cz/nwd/linux/nwd-patch-2.4.19
@@ -163,6 +158,12 @@ Patch270:	dc395-tab.patch
 Patch275:	linux-2.4.20-qla2x00-v6.04.00-fo.patch.gz
 # ftp://ftp.lsil.com/pub/linux-megaraid/drivers/version-1.18j/megaraid-v1.18j.tgz
 Patch280:	%{name}-megaraid.patch
+
+# TV stuff from http://bytesex.org/
+Patch300:	19_videodev25-2.4.22.diff
+Patch301:	20_v4l2-2.4.22.diff.gz
+Patch302:	30_bt832-2.4.22.diff
+Patch303:	30_btaudio-2.4.22.diff
 
 # The following go last as they touch a lot of code
 # and/or are on bcond and/or are ifarch
@@ -650,8 +651,6 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch40 -p1
 %patch50 -p1
 %patch55 -p1
-%patch60 -p1
-%patch61 -p1
 %patch65 -p1
 %patch70 -p1
 %patch80 -p1
@@ -683,6 +682,10 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch265 -p1
 %patch275 -p1
 %patch280 -p1
+%patch300 -p1
+%patch301 -p1
+%patch302 -p1
+%patch303 -p1
 %patch1000 -p1
 %patch1002 -p1
 %patch1003 -p1
