@@ -61,8 +61,7 @@ Patch1:		cset-%{_cset}.txt.gz
 # ftp://ftp.kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.0-test5/2.6.0-test5-mm1/broken-out
 Patch2:		acpi-irq-fixes.patch
 
-Patch22:	2.6.0-t3-swim3.patch
-Patch23:	squashfs1.3-patch
+Patch5:		squashfs1.3-patch
 
 Patch26:	2.6.0-t3-eisa-bus.c-lkml.patch
 Patch27:	2.6.0-t3-initrd_load-lkml.patch
@@ -80,6 +79,9 @@ Patch53:	2.6.0-t4-PPC-ENODEV.patch
 Patch54:	2.6.0-t5-PPC-fix.patch
 Patch55:	kernel-siimage-rqsize.patch
 Patch56:	2.6.0-t5-PPC-Kconfig.patch
+
+Patch60:	2.6.0-t5-i2c.patch.bz2
+# Patch60-md5	9f80878fc516c4fe8fd778e20c7bedd7
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -319,8 +321,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch2 -p1
 
-#%patch22 -p1
-%patch23 -p1
+#%patch4 -p1
+%patch5 -p1
 
 #%patch26 -p1
 #%patch27 -p1
