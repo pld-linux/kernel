@@ -60,7 +60,7 @@
 
 %define		pcmcia_version		3.1.22
 %define		drm_xfree_version	4.3.0
-%define		pwc_version		9.0.1
+%define		pwc_version		9.0.2
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -79,7 +79,7 @@ Source0:	http://kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.
 # Source0-md5:	e89c3f85c38f460dec8ec9044e44f02a
 Source1:	%{name}-autoconf.h
 Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
-# Source2-md5:	421476a59ed54ce3b374b0043060e354
+# Source2-md5:	85bdb0205de53b7787966f0932fd8dd9
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
 # Source3-md5:	5133e99cce7118636bb776be806cee46
 # http://lkml.org/lkml/2004/6/2/228
