@@ -42,7 +42,7 @@ Source33:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_versio
 #Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.17+.gz
 # NFS server patches
 #Source40:	http://download.sourceforge.net/nfs/dhiggen_merge-4.1.tar.gz
-Source50:	i8255-0.2.tar.gz
+Source50:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
 Source51:	ftp://icaftp.epfl.ch/pub/linux/atm/dist/atm-%{atm_version}.tar.gz
 Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.1.gz
 Patch100:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac2.bz2
