@@ -176,6 +176,7 @@ Patch907:	PPC-grsecurity-pgtable.h.patch
 Patch908:	linux-2.4.19-PPC-o1_scheduler.patch
 Patch909:	linux-2.4.19-PPC-agpgart_be.patch
 Patch910:	linux-2.4.19-grsecurity-1.9.7-fix.patch
+Patch911:	linux-2.4.19-SPARC.patch
 
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
@@ -535,6 +536,12 @@ echo Installing Host AP support
 patch -p1 -s < hostap-2002-09-12/kernel-patches/hostap-linux-2.4.19-rc3.patch
 cp hostap-2002-09-12/driver/modules/hostap*.[ch] drivers/net/wireless/
 
+%ifarch sparc
+%patch911 -p1
+%endif
+
+%ifarch sparc64
+%endif
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
