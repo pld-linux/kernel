@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	2.5%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	2.6%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -646,9 +646,8 @@ echo Installing Konica Support
 %patch33 -p1
 
 # Changing DRM source ....
-#echo Installing NEW DRM Source ...
-#rm -f drivers/char/drm/*
-#cp drm/* drivers/char/drm
+echo Installing NEW DRM Source ...
+cp drm/*.{c,h} drivers/char/drm/
 
 # WRR
 echo Installing WRR Support
