@@ -154,6 +154,7 @@ Patch133:	linux-proc_get_inode.patch
 Patch134:	vt8235-2.4.19.patch
 # quota for reiserfs
 Patch135:	linux-2.4.19-reiserfs-quota-22.patch.gz
+Patch136:	piix-ide-fix.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -483,6 +484,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch133 -p1
 %patch134 -p1
 %patch135 -p1
+%patch136 -p0
 
 %patch905 -p1
 
