@@ -32,7 +32,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	4.3%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	4.4%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -163,7 +163,7 @@ Patch215:	%{name}-cdrw-packet.patch
 Patch216:	%{name}-cd-mrw-2.patch
 Patch220:	linux-2.4.19-pre8-konicawc.patch
 Patch225:	wrr-linux-2.4.9.patch
-Patch230:	linux-2.4.20-aic79xx.patch.bz2
+Patch230:	linux-2.4-aic79xx-20030318.patch.bz2
 Patch235:	linux-2.4.20-audigy.patch.bz2
 Patch240:	linux-2.4.20-ecc.patch
 Patch245:	linux-2.4.20-01-edd.patch
