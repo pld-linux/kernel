@@ -911,7 +911,7 @@ echo AXP patches ...
 #%%patch203 -p1
 %patch204 -p1
 #initrd patch for AXP
-%patch1000 -p0
+%patch1000 -p1
 %endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
