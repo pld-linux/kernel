@@ -18544,8 +18544,8 @@ diff -uNr linux-2.6.6/kernel/resource.c linux-2.6.6.fixed/kernel/resource.c
  		entry->proc_fops = &proc_iomem_operations;
  	return 0;
 diff -uNr linux-2.6.6/kernel/sched.c linux-2.6.6.fixed/kernel/sched.c
---- linux-2.6.6/kernel/sched.c	2004-05-10 04:33:13.000000000 +0200
-+++ linux-2.6.6.fixed/kernel/sched.c	2004-05-11 10:55:58.000000000 +0200
+--- linux-2.6.6/kernel/sched.c.orig	2004-05-10 04:33:13.000000000 +0200
++++ linux-2.6.6/kernel/sched.c	2004-05-11 16:57:32.559053240 +0200
 @@ -39,6 +39,7 @@
  #include <linux/cpu.h>
  #include <linux/percpu.h>
@@ -18554,7 +18554,36 @@ diff -uNr linux-2.6.6/kernel/sched.c linux-2.6.6.fixed/kernel/sched.c
  
  #ifdef CONFIG_NUMA
  #define cpu_to_node_mask(cpu) node_to_cpumask(cpu_to_node(cpu))
-@@ -2039,6 +2040,8 @@
+@@ -225,8 +226,8 @@
+ #define task_rq(p)		cpu_rq(task_cpu(p))
+ #define cpu_curr(cpu)		(cpu_rq(cpu)->curr)
+ 
+-extern unsigned long __scheduling_functions_start_here;
+-extern unsigned long __scheduling_functions_end_here;
++void __scheduling_functions_start_here(void);
++void __scheduling_functions_end_here(void);
+ const unsigned long scheduling_functions_start_here =
+ 			(unsigned long)&__scheduling_functions_start_here;
+ const unsigned long scheduling_functions_end_here =
+@@ -1594,6 +1595,8 @@
+ 	rebalance_tick(rq, 0);
+ }
+ 
++void __scheduling_functions_start_here() {}
++
+ /*
+  * schedule() is the main scheduler function.
+  */
+@@ -1966,6 +1969,8 @@
+ 
+ EXPORT_SYMBOL(sleep_on_timeout);
+ 
++void __scheduling_functions_end_here() {}
++
+ void set_user_nice(task_t *p, long nice)
+ {
+ 	unsigned long flags;
+@@ -2039,6 +2044,8 @@
  			return -EPERM;
  		if (increment < -40)
  			increment = -40;
