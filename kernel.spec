@@ -568,12 +568,13 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 # -a2
 
 %patch0 -p1
-%patch1 -p1
-%patch2 -p1
 
 %if "%{_apply_cset}" != "0"
 zcat %{SOURCE3} | patch -p1 -s
 %endif
+
+#patch1 -p1
+#patch2 -p1
 
 %patch4 -p1
 
