@@ -9,7 +9,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.18
-Release:	4
+Release:	5
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
