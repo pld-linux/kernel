@@ -829,6 +829,10 @@ zcat %{SOURCE3} | patch -p1 -s
 %endif
 %endif
 
+%patch711 -p1
+
+## Add ALL patches before this section !!
+
 #grsec
 %ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
 %if %{with grsec}
@@ -843,8 +847,6 @@ zcat %{SOURCE3} | patch -p1 -s
 %ifarch sparc64
 %patch710 -p1
 %endif
-
-%patch711 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
