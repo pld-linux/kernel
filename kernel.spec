@@ -149,7 +149,7 @@ Patch42:	2.6.x-ppp_mppe.patch
 Patch44:	2.6.2-Initio9100U-Kconfig.patch
 
 # netfilter
-Patch46:	2.6.6-pom-ng-%{_netfilter_snap}.patch
+Patch46:	2.6.7-pom-ng-%{_netfilter_snap}.patch
 # http://www.barbara.eu.org/~quaker/ipt_account/
 Patch47:	2.6.6-ipt_account.patch
 
