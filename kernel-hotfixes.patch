@@ -19,50 +19,6 @@
  
  DEFINE_PER_CPU(struct mmu_gather, mmu_gathers);
  unsigned long highstart_pfn, highend_pfn;
---- linux-2.6.10-rc3/fs/reiser4/plugin/file/file.c.orig	2004-12-10 10:54:29.000000000 +0100
-+++ linux-2.6.10-rc3/fs/reiser4/plugin/file/file.c	2004-12-10 11:25:09.868120656 +0100
-@@ -1741,6 +1741,8 @@
- 	while (left > 0) {
- 		size_t to_read;		
- 
-+		txn_restart_current();
-+
- 		size = i_size_read(inode);
- 		if (*off >= size)
- 			/* position to read from is past the end of file */
-@@ -1774,7 +1776,6 @@
- 		if (user_space)
- 			reiser4_put_user_pages(pages, nr_pages);
- 		drop_nonexclusive_access(uf_info);
--		txn_restart_current();
- 
- 		if (read < 0) {
- 			result = read;
-@@ -1975,6 +1976,8 @@
- 	drop_nonexclusive_access(unix_file_inode_data(inode));
- 	up_read(&reiser4_inode_data(inode)->coc_sem);
- 
-+	txn_restart_current();
-+
- 	reiser4_exit_context(&ctx);
- 	return page;
- }
---- RC10-bk6-base/drivers/scsi/megaraid.c	2004-12-25 01:04:29.000000000 -0500
-+++ RC10-bk6-current/drivers/scsi/megaraid.c	2005-01-05 13:03:51.609698587 -0500
-@@ -5109,11 +5109,11 @@
- 	 */
- 	unregister_chrdev(major, "megadev");
- 
-+	pci_unregister_driver(&megaraid_pci_driver);
-+
- #ifdef CONFIG_PROC_FS
- 	remove_proc_entry("megaraid", &proc_root);
- #endif
--
--	pci_unregister_driver(&megaraid_pci_driver);
- }
- 
- module_init(megaraid_init);
 --- linux-2.6.10/drivers/scsi/megaraid/Kconfig.megaraid.orig	2004-12-24 22:34:01.000000000 +0100
 +++ linux-2.6.10/drivers/scsi/megaraid/Kconfig.megaraid	2005-01-30 12:48:22.248759048 +0100
 @@ -63,7 +63,6 @@
