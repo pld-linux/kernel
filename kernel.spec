@@ -43,7 +43,7 @@ Release:	%{_rel}%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 %endif
 License:	GPL
 Group:		Base/Kernel
-# Source0-md5:	f51e12efa18bb828cf57d9d4a81b2fb1
+# Source0-md5:	c439d5c93d7fc9a1480a90842465bb97
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
