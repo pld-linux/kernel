@@ -661,6 +661,8 @@ sed -e 's#EXTRAVERSION =.*#EXTRAVERSION =#g' \
 %endif
     Makefile.orig >Makefile
 
+sed -i 's:\-pipe::' arch/*/Makefile
+
 %build
 BuildConfig (){
 	%{?_debug:set -x}
@@ -893,8 +895,8 @@ KERNEL_BUILD_DIR=`pwd`
 # UP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 #rm -rf $KERNEL_INSTALL_DIR
-#BuildConfig
-#{?with_up:BuildKernel}
+BuildConfig
+{?with_up:BuildKernel}
 %{?with_up:PreInstallKernel}
 
 # SMP KERNEL
