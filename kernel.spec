@@ -12,7 +12,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.19
-Release:	13
+Release:	14
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -27,6 +27,7 @@ Source7:	http://www.linux-wlan.com/linux-wlan/linux-wlan-%{wlan_version}.tar.gz
 Source8:	http://www.dandelion.com/Linux/DAC960-2.2.10.tar.gz
 Source9:	serial-5.05.tar.gz
 Source10:	http://vtun.sourceforge.net/tun/tun-%{tun_version}.tar.gz
+Source13:       http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -74,9 +75,8 @@ Patch26:	linux-2.2.19-pci.patch
 Patch27:	%{name}-flip.patch 
 Patch28:	%{name}-flip-serial5.05.patch
 Patch29:	%{name}-serial-initialisation.patch
-# Original patch from http://scry.wanfear.com/~greear/vlan/vlan.1.0.1.tar.gz
-Patch30:	%{name}-vlan.patch
 Patch31:	%{name}-sysctl-ipv6.patch
+Patch905:       linux-vlan-fixpatch.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -331,7 +331,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -n linux
+%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -a13 -n linux
 
 %patch0 -p1
 %patch1 -p1
@@ -362,7 +362,12 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch25 -p1
 %patch26 -p1
 %patch27 -p1
-%patch30 -p1
+
+# 802.1Q VLANs
+cd vlan.%{vlan_version}
+%patch905 -p1
+cd ..
+patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
 %patch31 -p1
 
 cd  serial-5.05
@@ -378,7 +383,7 @@ mv DAC960.[ch] drivers/block
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 # Tekram DC395/315 U/UW SCSI host driver
 
-patch -p1 -s <dc395/dc395-integ22.diff
+#patch -p1 -s <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # move symbios drivers to proper place
