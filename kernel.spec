@@ -26,8 +26,8 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.21
-%define		_cset		20040216_0307
+%define		_rel		0.30
+%define		_cset		0
 
 ## netfilter snap 
 %define		_netfilter_snap		20040216
@@ -50,8 +50,8 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc3.tar.bz2
-# Source0-md5:	3428e75885a3139c366de8282cba15de
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc4.tar.bz2
+# Source0-md5:	9528bacc872f79639f5b0ef98cd4ac1e
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -74,7 +74,7 @@ Patch0:		2.6.0-ksyms-add.patch
 # http://www.kernel.org/pub/linux/kernel/v2.5/testing/cset/
 Patch2:		cset-%{_cset}.txt.gz
 %endif
-Patch3:		2.6.3-rc3-aty128fb-fix-lkml.patch
+
 Patch4:		squashfs1.3r2-patch
 
 Patch6:		2.6.0-t4-PPC-ENODEV.patch
@@ -455,14 +455,14 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}-rc3
+%setup -q -n linux-%{version}-rc4
 
 %patch0 -p1
 
 %if "%{_cset}" != "0"
 %patch2 -p1
 %endif
-%patch3 -p1
+
 %patch4 -p1
 
 %patch6 -p1
