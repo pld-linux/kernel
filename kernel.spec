@@ -144,16 +144,26 @@ find arch/* -type d -maxdepth 0 ! -name i386 | xargs rm -rf
 find -name '*.orig' | xargs rm -rf
 make mrproper
 
+cat << EOF > cleanup.sh
+#!/bin/sh
+CWD=`pwd`
+cd %{_kernelsrcdir}
+make mrproper
+cd \$CWD
+EOF
+
 cat << EOF > regen-autoconf.sh
 #!/bin/sh
 if [ -r "config-nondist" ]; then
+    CWD=`pwd`
+    cd %{_kernelsrcdir}
     cp config-nondist .config
     make include/linux/autoconf.h
     mv include/linux/autoconf{,-nondist}.h
     make mrproper
     cd include
     ln -sf asm-i386 asm
-    cd ..
+    cd \$CWD
 else
     echo "regen-autoconf: config-nondist - file not found!"
 fi
@@ -162,10 +172,13 @@ EOF
 cat << EOF > regen-version.sh
 #!/bin/sh
 if [ -r "config-nondist" ]; then
+    CWD=`pwd`
+    cd %{_kernelsrcdir}
     cp config-nondist .config
     make include/linux/version.h
     chmod 644 include/linux/version.h
     rm .config
+    cd \$CWD
 else
     echo "regen-version: config-nondist - file not found!"
 fi
@@ -184,9 +197,10 @@ rm -rf $RPM_BUILD_ROOT
 %post headers
 rm -f %{_kernelsrcdir}
 ln -snf linux-%{version} %{_kernelsrcdir}
+%{_kernelsrcdir}/regen-version.sh
 
 %preun headers
-rm -f config-nondist include/linux/autoconf-nondist.h
+rm -f include/linux/{autoconf-nondist.h,version.h}
 
 %postun headers
 if [ -L %{_kernelsrcdir} ]; then
@@ -197,18 +211,12 @@ if [ -L %{_kernelsrcdir} ]; then
     fi
 fi
 
-%preun module-build
-cd %{_kernelsrcdir}
-make mrproper
-
 %preun source
-cd %{_kernelsrcdir}
-make mrproper
+%{_kernelsrcdir}/cleanup.sh
 
 %post source
-echo
-echo "You need to configure your kernel now."
-echo
+%{_kernelsrcdir}/regen-autoconf.sh
+%{_kernelsrcdir}/regen-version.sh
 
 %files doc
 %defattr(644,root,root,755)
