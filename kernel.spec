@@ -12,16 +12,24 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	grsec		# build without grsec
-%bcond_with	vserver		# enable vserver (disables grsec)
+%bcond_with     mosix           # build with openMosix support
 %bcond_with	pax		# enable PaX
-%bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	regparm		# use register arguments (this break binary-only modules)
+%bcond_with	verbose		# verbose build (V=1)
+%bcond_with	vserver		# enable vserver (disables grsec)
+
+#
+# Default
+#
+%define		vserver		%{nil}
+%define		mosix		%{nil}
 
 %{?debug:%define with_verbose 1}
 
 %if %{with vserver}
 %undefine	with_grsec
+%define		vserver		v
 %endif
 
 %if !%{with grsec}
@@ -35,6 +43,16 @@
 %ifarch ia64
 # broken
 %undefine	with_up
+%endif
+
+%if %{with mosix}
+# openMosix not compile with SMP
+%undefine       with_smp
+%define		mosix		m
+%endif
+
+%if %{with mosix}
+%undefine	with_vserver
 %endif
 
 ## Program required by kernel to work.
@@ -55,7 +73,7 @@
 
 %define		_post_ver	.6
 #define		_post_ver	%{nil}
-%define		_rel		4
+%define		_rel		5
 %define		_cset		20050302_0807
 %define		_apply_cset	0
 
@@ -74,7 +92,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.6.11%{_post_ver}
-Release:	%{_rel}
+Release:	%{_rel}%{mosix}%{vserver}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
@@ -108,6 +126,8 @@ Source90:	%{name}-grsec.config
 Source91:	%{name}-grsec+pax.config
 Source92:	%{name}-vserver.config
 Source93:	%{name}-iriverfs.config
+
+Source100:	%{name}-openMosix.config
 
 #Patch0:		2.6.0-ksyms-add.patch
 #Patch1:		linux-2.6-alsa-1.0.8-silent-output.patch
@@ -197,6 +217,9 @@ Patch260:	iriverfs-r0.1.0.1.patch.gz
 Patch262:	2.6.11.5-dst_cache_overflow.patch
 
 Patch264:	2.6.11.5-invalid_mac_fix.patch
+
+# openMosix from: http://openmosix.snarc.org/files/releases/2.6/patch-2.6.11-om-r557.bz2
+Patch700:	openMosix-2.6.11.6-r557.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -609,6 +632,12 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch250 -p1
 %endif
 
+%ifarch %{ix86} ppc amd64
+%if %{with mosix}
+%patch700 -p1
+%endif
+%endif
+
 # </bconded_patches
 
 
@@ -697,6 +726,10 @@ BuildConfig (){
 	cat %{SOURCE92} >> arch/%{_target_base_arch}/defconfig
 #	iriverfs
 	cat %{SOURCE93} >> arch/%{_target_base_arch}/defconfig
+
+%if %{with mosix}
+	cat %{SOURCE100} >> arch/%{_target_base_arch}/defconfig
+%endif
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
