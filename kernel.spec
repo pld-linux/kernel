@@ -134,7 +134,7 @@ Patch28:	pcsp1.4-ss4-2.4.19.diff
 Patch29:	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw_handlers.w14-5.diff
 Patch30:	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw252_we15-5.diff
 Patch31:	linux-2.4.20-pre5-ac4-drm.patch.bz2
-Patch32:	ebtables-v2.0-rc1_vs_2.4.20.patch
+Patch32:	ebtables-v2.0.002_vs_2.4.20.patch
 Patch33:	linux-2.4.19-pre8-konicawc.patch
 Patch34:	wrr-linux-2.4.9.patch
 Patch35:	%{name}-pswscancode.patch
@@ -147,7 +147,8 @@ Patch35:	%{name}-pswscancode.patch
 #Patch42:	
 #Patch43:	
 Patch44:	kernel-2.4-NTfix.patch
-Patch45:	linux-2.4.19-ACL-0.8.54.patch.bz2
+# from http://acl.bestbits.at/
+Patch45:	linux-2.4.20-ACL-0.8.54.patch
 #Patch46:	
 
 # Assorted bugfixes
@@ -587,8 +588,8 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # hostap
 echo Installing Host AP support
-patch -p1 -s < hostap-%{hostap_version}/kernel-patches/hostap-linux-2.4.19-rc3.patch
-cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
+#patch -p1 -s < hostap-%{hostap_version}/kernel-patches/hostap-linux-2.4.19-rc3.patch
+#cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 
 %ifarch sparc
 %patch911 -p1
@@ -624,12 +625,12 @@ patch -p1 -s < squashfs1.0c/squashfs-patch
 # security BUG
 #%patch44 -p1
 
-%patch916 -p1
+#%patch916 -p1
 %{!?_without_grsec:%patch917 -p1}
 
 # ACL support
 echo Added ACL support
-%patch45 -p1
+#%patch45 -p1
 
 #%patch46 -p0
 
