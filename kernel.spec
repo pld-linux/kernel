@@ -43,19 +43,24 @@ Release:	%{_rel}%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 %endif
 License:	GPL
 Group:		Base/Kernel
+# Source0-md5:	c439d5c93d7fc9a1480a90842465bb97
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
+# Source3-md5:	b2a4bc176e9f29b0c439ef9a53a62a1a
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
+# Source4-md5:	b2a4bc176e9f29b0c439ef9a53a62a1a
 Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 #Source5:	
+# Source6-md5:	b8f2f7a268a5cb75fabcaec3b5d45fcd
 Source6:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-%{jfs_version}.tar.gz
 Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
 Source10:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
 #Source11:	
-Source12:	linux-2.4.20-aacraid.tar.bz2
+# Source12-md5: 3da1f4b229685766cb4f2f5ce242c0d2
+Source12:	http://ep09.kernel.pl/~djrzulf/linux-2.4.20-aacraid.tar.bz2
 
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
