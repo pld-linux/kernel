@@ -435,12 +435,14 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch104 -p1
 %patch108 -p1
 %patch110 -p1
+%ifarch sparc sparc64
 %patch1500 -p1
 %patch1501 -p1
+%patch1503 -p1
+%endif
 %ifarch sparc64
 %patch1502 -p1
 %endif
-%patch1503 -p1
 
 #some ppc hacks
 %ifarch ppc
