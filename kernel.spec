@@ -12,7 +12,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.19
-Release:	16
+Release:	17
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -77,7 +77,9 @@ Patch28:	%{name}-flip-serial5.05.patch
 Patch29:	%{name}-serial-initialisation.patch
 Patch31:	%{name}-sysctl-ipv6.patch
 Patch32:	%{name}-arp.patch
-Patch905:       linux-vlan-fixpatch.patch
+Patch33:	linux-vlan-fixpatch.patch
+Patch34:	%{name}-sparc-zs.h.patch
+Patch35:	%{name}-sym53c8xx.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -359,14 +361,17 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %ifarch %{x86}
 %patch23 -p1
 %endif
+# disable aic7xxx patch on sparc (this must be reported to aic7xxx driver maintainer)
+%ifnarch sparc sparc64
 %patch24 -p1
+%endif
 %patch25 -p1
 %patch26 -p1
 %patch27 -p1
 
 # 802.1Q VLANs
 cd vlan.%{vlan_version}
-%patch905 -p1
+%patch33 -p1
 cd ..
 patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
 %patch31 -p1
@@ -392,6 +397,9 @@ install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 mv sym-1.7.3-ncr-3.4.3/*.{c,h} drivers/scsi
 mv sym-1.7.3-ncr-3.4.3/{README,ChangeLog}.* Documentation
 rm -rf sym-1.7.3-ncr-3.4.3
+
+%patch34 -p1
+%patch35 -p1
 
 %build
 BuildKernel() {
@@ -586,6 +594,8 @@ bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/
 mv -f $RPM_BUILD_ROOT/usr/src/linux $RPM_BUILD_ROOT/usr/src/linux-%{version}
 ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
 
+gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
+
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH0}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH1}
 gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
@@ -611,7 +621,9 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH22}
 %ifarch %{x86}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH23}
 %endif
+%ifnarch sparc sparc64
 gzip -dc %{PATCH24} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+%endif
 bzip2 -dc %{PATCH25} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} 
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH26}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH27}
@@ -619,6 +631,8 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <vlan.%{vlan_version}/v
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH31}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH32}
 cd serial-5.05
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH28}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH29}
 ./install-in-kernel $RPM_BUILD_ROOT/usr/src/linux-%{version}
 cd ..
 
@@ -632,6 +646,9 @@ tar zxf %{SOURCE6}
 mv sym-1.7.3-ncr-3.4.3/*.{c,h} $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi
 mv sym-1.7.3-ncr-3.4.3/{README,ChangeLog}.* $RPM_BUILD_ROOT/usr/src/linux-%{version}/Documentation
 rm -rf sym-1.7.3-ncr-3.4.3
+
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH34}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH35}
 
 %ifarch sparc sparc64
 ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
