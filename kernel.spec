@@ -13,22 +13,9 @@
 %bcond_without source	# don't build kernel-source package
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
-%define		_rel		0.3
-%define		test_ver	5
-%define		patch_level	0
+%define		_rel		1
+%define		_test_ver	5
 %define		_cset		20030922_2109
-
-%if "%{test_ver}" != "0"
-%define		test	test%{test_ver}
-%else
-%define		test	%{nil}
-%endif
-
-%if "%{_cset}" != "0"
-%define		cset	.cset%{_cset}
-%else
-%define		cset	%{nil}
-%endif
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -44,14 +31,11 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.6.0
-%if	%{patch_level} != 0
-Release:	%{test}%{cset}.rel%{_rel}pl%{patch_level}
-%else
-Release:	%{test}%{cset}.rel%{_rel}
-%endif
+Release:	0.test%{_test_ver}.cset%{_cset}.%{_rel}
+Epoch:		1
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-test5.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-test%{_test_ver}.tar.bz2
 # Source0-md5:	638fb2fbffad7ff067c178a345605d37
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
@@ -328,7 +312,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}-%{test}
+%setup -q -n linux-%{version}-test%{_test_ver}
 %if "%{_cset}" != "0"
 %patch1 -p1
 %endif
