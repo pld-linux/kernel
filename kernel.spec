@@ -448,7 +448,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch120 -p0
 %patch121 -p0
 %ifarch ppc
-%patch122 -p1
+# fixme
+#%patch122 -p1
 %patch123 -p1
 %endif
 %patch124 -p1
