@@ -10,6 +10,8 @@
 %bcond_without	up	# don't build UP kernel
 %bcond_without	source	# don't build kernel-source package
 %bcond_with	verbose	# verbose build (V=1)
+%bcond_with	menuconfig # generate  config by menuconfig instead of
+# using kernel.config  in source2
 
 %{?debug:%define with_verbose 1}
 
@@ -60,13 +62,16 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.6.4
-Release:	%{_rel}
+Release:	1.ck2
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/stable/linux-%{version}.tar.bz2
 # Source0-md5:	e50361c332f87a89ddf81399643dea3a
 Source1:	%{name}-autoconf.h
+%if 	%{without menuconfig}
+Source2:	%{name}.config
+%endif
 ##Patch0:		http://ck.kolivas.org/patches/2.6/2.6.4/2.6.4-ck2/patch-2.6.4-ck2.bz2
 Patch0:		http://ck.kolivas.org/patches/2.6/2.6.4/2.6.4-ck2/split/patch-2.6.4-am9.bz2
 Patch1:		http://ck.kolivas.org/patches/2.6/2.6.4/2.6.4-ck2/split/patch-2.6.4.batch-iso.bz2
@@ -397,22 +402,32 @@ BuildConfig (){
 	# is this a special kernel we want to build?
 	smp=
 	[ "$1" = "smp" -o "$2" = "smp" ] && smp=yes
-	%{__make} menconfig
+	%if %{with menuconfig}
+	%{__make} menuconfig
+	mv .config arch/%{base_arch}/defconfig
+	%else
+	install %{SOURCE2} arch/%{base_arch}/defconfig
+	%endif
+	ln -sf arch/%{base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
 	%{__make} include/linux/autoconf.h
+	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
 	if [ "$smp" = "yes" ]; then
 		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
 	else
 		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
 	fi
-	cp .config arch/%{base_arch}/defconfig
 }
 
+KERNEL_BUILD_DIR=`pwd`
+
 %if %{with up}
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 BuildConfig 
 %endif 
 
 %if %{with smp}
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 BuildConfig smp
 %endif
 
@@ -505,7 +520,6 @@ rm -rf $KERNEL_INSTALL_DIR
 # SMP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
-BuildConfig smp
 %{?with_smp:BuildKernel smp}
 %{?with_smp:PreInstallKernel smp}
 
@@ -541,10 +555,11 @@ cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 find -name "*~" -exec rm -f "{}" ";"
 find -name "*.orig" -exec rm -f "{}" ";"
 %if %{with up} 
-cp .config config-up
+cp arch/%{base_arch}/defconfig config-up
+ln -s config-up .config
 %endif
 %if %{with smp}
-cp .config config-smp
+cp arch/%{base_arch}/defconfig config-smp
 %endif
 
 if [ -e $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h ]; then
@@ -559,8 +574,8 @@ fi
 
 %if %{with up} || %{with smp}
 # UP or SMP
-install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{version}/include/linux/* \
-$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
+##install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{version}/include/linux/* \
+##$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 %endif
 
 %ifarch %{ix86}
@@ -568,7 +583,8 @@ ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
 %endif
 
 %{__make} mrproper
-
+install -d include/config
+%{__make} include/config/MARKER
 %{__make} include/linux/version.h
 install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
 
@@ -712,77 +728,8 @@ fi
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
 /lib/modules/%{version}-%{release}/kernel
-%ifnarch sparc sparc64
-#pcmcia stuff
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko
-%endif
-%ifnarch sparc sparc64
-#drm stuff
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
-%endif
-%ifnarch sparc sparc64
-#oss sound stuff
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/oss
-%endif
-#alsa sound stuff
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/core
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/drivers
-%ifnarch sparc sparc64
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/i2c
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/isa
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/pci
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/synth
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/usb
-%endif
-%ifarch sparc sparc64
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/sparc
-%endif
-
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
-
-%ifnarch sparc sparc64
-%files drm
-%defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/drivers/char/drm
-%endif
-
-%ifnarch sparc sparc64
-%files pcmcia
-%defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
-/lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
-/lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko
-/lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko
-/lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko
-/lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko
-%endif
-
-%files sound-alsa
-%defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/sound/core
-/lib/modules/%{version}-%{release}/kernel/sound/drivers
-%ifnarch sparc sparc64
-/lib/modules/%{version}-%{release}/kernel/sound/i2c
-/lib/modules/%{version}-%{release}/kernel/sound/isa
-/lib/modules/%{version}-%{release}/kernel/sound/pci
-/lib/modules/%{version}-%{release}/kernel/sound/synth
-/lib/modules/%{version}-%{release}/kernel/sound/usb
-%endif
-%ifarch sparc sparc64
-/lib/modules/%{version}-%{release}/kernel/sound/sparc
-%endif
-
-%ifnarch sparc sparc64
-%files sound-oss
-%defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/sound/oss
-%endif
 %endif			# %%{with up}
 
 %if %{with smp}
@@ -795,85 +742,20 @@ fi
 /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
 /lib/modules/%{version}-%{release}smp/kernel
-%ifnarch sparc sparc64
-#pcmcia stuff
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko
-%endif
-%ifnarch sparc sparc64
-#drm stuff
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
-%endif
-%ifnarch sparc sparc64
-#oss sound stuff
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/oss
-%endif
-#alsa sound stuff
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/core
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/drivers
-%ifnarch sparc sparc64
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/i2c
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/isa
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/pci
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/synth
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/usb
-%endif
-%ifarch sparc sparc64
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/sparc
-%endif
-
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
-
-%ifnarch sparc sparc64
-%files smp-drm
-%defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
-%endif
-
-%ifnarch sparc sparc64
-%files smp-pcmcia
-%defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko
-/lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko
-/lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko
-/lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko
-%endif
-
-%files smp-sound-alsa
-%defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/sound/core
-/lib/modules/%{version}-%{release}smp/kernel/sound/drivers
-%ifnarch sparc sparc64
-/lib/modules/%{version}-%{release}smp/kernel/sound/i2c
-/lib/modules/%{version}-%{release}smp/kernel/sound/isa
-/lib/modules/%{version}-%{release}smp/kernel/sound/pci
-/lib/modules/%{version}-%{release}smp/kernel/sound/synth
-/lib/modules/%{version}-%{release}smp/kernel/sound/usb
-%endif
-%ifarch sparc sparc64
-/lib/modules/%{version}-%{release}smp/kernel/sound/sparc
-%endif
-
-%ifnarch sparc sparc64
-%files smp-sound-oss
-%defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/sound/oss
-%endif
 %endif			# %%{with smp}
 
 %files headers
 %defattr(644,root,root,755)
 %dir %{_prefix}/src/linux-%{version}
 %{_prefix}/src/linux-%{version}/include
+%if %{with smp}
 %{_prefix}/src/linux-%{version}/config-smp
+%endif
+%if %{with up}
 %{_prefix}/src/linux-%{version}/config-up
+%endif
 
 %files module-build
 %defattr(644,root,root,755)
@@ -892,7 +774,7 @@ fi
 %{_prefix}/src/linux-%{version}/arch/*/kernel/sigframe.h
 %dir %{_prefix}/src/linux-%{version}/scripts
 %{_prefix}/src/linux-%{version}/scripts/Makefile*
-%{_prefix}/src/linux-%{version}/scripts/basic
+##%{_prefix}/src/linux-%{version}/scripts/basic
 #%{_prefix}/src/linux-%{version}/scripts/*/*.l
 #%{_prefix}/src/linux-%{version}/scripts/*/*.c
 %{_prefix}/src/linux-%{version}/scripts/*.c
@@ -930,7 +812,7 @@ fi
 #%exclude %{_prefix}/src/linux-%{version}/*/*/*/*/Makefile*
 #%exclude %{_prefix}/src/linux-%{version}/*/*/*/*/*/Makefile*
 #%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.c
-%exclude %{_prefix}/src/linux-%{version}/scripts/basic
+##%exclude %{_prefix}/src/linux-%{version}/scripts/basic
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.c
 #%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.l
 #%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.h
