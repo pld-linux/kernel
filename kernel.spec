@@ -209,6 +209,7 @@ Patch137:	linux-2.4.19-truncate-fix.patch
 Patch200:	linux-sound_core.patch
 Patch201:	linux-2.4.20-SPARC64.patch
 Patch202:	linux-2.4.20-SPARC-EXPORT_SYMBOL.patch
+Patch203:	linux-2.4.20-AXP-EXPORT_SYMBOL.patch
 
 # tweaks for grsecurity, description inside patch
 Patch900:	loop-jari-2.4.20.0.patch
@@ -230,7 +231,7 @@ Patch914:	linux-2.4.20-MODULE_XXX.patch
 Patch915:	linux-2.4.19-usb-digitalcams.patch
 Patch916:	linux-2.4.19-ksyms-sys_sched_yield-rm.patch
 Patch917:	linux-2.4.19-EXPORT_SYMBOL-netsyms.c-rm.patch
-Patch918:	linux-2.4.20-umount-sync-super.patch
+Patch918:	linux-2.4.20-ext3.patch
 Patch919:	linux-2.4.20-ntfs.patch
 Patch920:	linux-2.4.20-squashfs.patch
 
@@ -658,6 +659,10 @@ echo SPARC64 patches ...
 %ifarch sparc
 echo SPARC patches ...
 %patch202 -p1
+%endif
+%ifarch alpha
+echo AXP patches ...
+%patch203 -p1
 %endif
 
 %if %{?_with_o1:1}%{!?_with_o1:0}
