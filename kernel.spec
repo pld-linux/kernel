@@ -41,6 +41,9 @@ Patch1:		linux-2.5.70-fix_missing_symb.patch
 Patch2:		linux-2.5-miscfix.patch
 # Alpha specific patch
 Patch3:         linux-2.5.73-pci-semicolon.patch
+# undefined reference to `sys_socket' at sparc32/64, mips32/64, parisc
+# ia64 and alpha (from lkl)
+Patch4:		linux-2.5.73-syscall.patch
 # LSM/SELinux
 # Patch10:	http://lsm.immunix.org/patches/2.5/2.5.72/patch-2.5.72-lsm1.gz
 Patch10:	patch-2.5.72-lsm1.gz
