@@ -6687,30 +6687,28 @@ diff -urN linux-2.4.22.org/fs/proc/array.c linux-2.4.22/fs/proc/array.c
  		esp,
  		eip,
  		/* The signal information here is obsolete.
-@@ -526,6 +551,23 @@
- 		ino = inode->i_ino;
+@@ -513,6 +538,7 @@
+ 
+ static int show_map(struct seq_file *m, void *v)
+ {
++	struct task_struct *task = m->private;
+ 	struct vm_area_struct *map = v;
+ 	struct file *file = map->vm_file;
+ 	int flags = map->vm_flags;
+@@ -526,8 +551,13 @@
  	}
  
-+#if defined(CONFIG_GRKERNSEC_PROC_MEMMAP) && 0
-+// XXX: arekm, jak sie dobrac do task_struct?
-+// struct task_struct *task ?
-+	if (task->flags & PF_PAX_RANDMMAP ||
-+		task->flags & PF_PAX_SEGMEXEC ||
-+		task->flags & PF_PAX_RANDEXEC)
-+	    seq_printf(m, "%08lx-%08lx %c%c%c%c %08lx %02x:%02x %lu %n",
-+		    0UL,
-+		    0UL,
-+		    flags & VM_READ ? 'r' : '-',
-+		    flags & VM_WRITE ? 'w' : '-',
-+		    flags & VM_EXEC ? 'x' : '-',
-+		    flags & VM_MAYSHARE ? 's' : 'p',
-+		    0UL,
-+		    MAJOR(dev), MINOR(dev), ino, &len);
-+	else
-+#endif
  	seq_printf(m, "%08lx-%08lx %c%c%c%c %08lx %02x:%02x %lu %n",
++#ifdef CONFIG_GRKERNSEC_PROC_MEMMAP
++			PAX_RAND_FLAGS ? 0UL : map->vm_start,
++			PAX_RAND_FLAGS ? 0UL : map->vm_end,
++#else
  			map->vm_start,
  			map->vm_end,
++#endif
+ 			flags & VM_READ ? 'r' : '-',
+ 			flags & VM_WRITE ? 'w' : '-',
+ 			flags & VM_EXEC ? 'x' : '-',
 @@ -601,6 +643,16 @@
  	.show	= show_map
  };
@@ -18143,7 +18141,7 @@ diff -urN linux-2.4.22.org/net/netsyms.c linux-2.4.22/net/netsyms.c
  #ifdef CONFIG_HIPPI
  #include <linux/hippidevice.h>
  #endif
-@@ -614,6 +615,51 @@
+@@ -614,6 +615,49 @@
  
  EXPORT_SYMBOL(softnet_data);
  
@@ -18152,9 +18150,7 @@ diff -urN linux-2.4.22.org/net/netsyms.c linux-2.4.22/net/netsyms.c
 +EXPORT_SYMBOL(tcp_v4_lookup_listener);
 +#endif
 +extern struct sock *udp_v4_lookup(u32 saddr, u16 sport, u32 daddr, u16 dport, int dif);
-+#if !defined(CONFIG_IP_NF_MATCH_OWNER) && !defined(CONFIG_IP_NF_MATCH_OWNER_MODULE)
 +EXPORT_SYMBOL(udp_v4_lookup);
-+#endif
 +#endif
 +
 +#if defined(CONFIG_GRKERNSEC_RANDID)
