@@ -50,7 +50,7 @@
 
 %define		_rel		0.21
 %define		_cset		20040802_2306
-%define		_apply_cset	1
+%define		_apply_cset	0
 
 %define		_netfilter_snap		20040629
 
@@ -73,10 +73,10 @@ Epoch:		3
 License:	GPL
 Group:		Base/Kernel
 #define		_rc	%{nil}
-%define		_rc	-rc2
+%define		_rc	-rc3
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
 Source0:	http://kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	27b84a4dbb7434389f5782f86d5e894f
+# Source0-md5:	e89c3f85c38f460dec8ec9044e44f02a
 Source1:	%{name}-autoconf.h
 Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 # Source2-md5:	421476a59ed54ce3b374b0043060e354
