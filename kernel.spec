@@ -14,7 +14,7 @@
 %define		ipvs_version		1.0.4
 %define		freeswan_version	1.97
 %define		IPperson_version	20020427-2.4.18
-%define		grsec_version		1.9.6-2.4.19
+%define		grsec_version		1.9.7-2.4.19
 %define		jfs_version		2.4-1.0.20
 %define		lvm_version		1.0.5
 %define		evms_version		1.1.0
