@@ -22,7 +22,7 @@ diff -urN linux-2.4.22/Documentation/Configure.help linux-2.4.22-grsec/Documenta
  MAC address match support
  CONFIG_IP_NF_MATCH_MAC
    MAC matching allows you to match packets based on the source
-@@ -23554,6 +23568,147 @@
+@@ -23554,6 +23568,233 @@
  
    "Area6" will work for most boards. For ADX, select "Area5".
  
@@ -166,6 +166,92 @@ diff -urN linux-2.4.22/Documentation/Configure.help linux-2.4.22-grsec/Documenta
 +  if your chrooted apps are having problems performing those kinds of
 +  tasks.  If the sysctl option is enabled, a sysctl option with
 +  name "chroot_caps" is created.
++
++Trusted path execution
++CONFIG_GRKERNSEC_TPE
++  If you say Y here, you will be able to choose a gid to add to the
++  supplementary groups of users you want to mark as "untrusted."
++  These users will not be able to execute any files that are not in
++  root-owned directories writable only by root.  If the sysctl option
++  is enabled, a sysctl option with name "tpe" is created.
++
++Group for trusted path execution
++CONFIG_GRKERNSEC_TPE_GID
++  Here you can choose the GID to enable trusted path protection for.
++  Remember to add the users you want protection enabled for to the GID 
++  specified here.  If the sysctl option is enabled, whatever you choose
++  here won't matter. You'll have to specify the GID in your bootup 
++  script by echoing the GID to the proper /proc entry.  View the help
++  on the sysctl option for more information.  If the sysctl option is
++  enabled, a sysctl option with name "tpe_gid" is created.
++
++Partially restrict non-root users
++CONFIG_GRKERNSEC_TPE_ALL
++  If you say Y here, All non-root users other than the ones in the 
++  group specified in the main TPE option will only be allowed to
++  execute files in directories they own that are not group or
++  world-writable, or in directories owned by root and writable only by
++  root.  If the sysctl option is enabled, a sysctl option with name 
++  "tpe_restrict_all" is created.
++
++Socket restrictions
++CONFIG_GRKERNSEC_SOCKET
++  If you say Y here, you will be able to choose from several options.
++  If you assign a GID on your system and add it to the supplementary
++  groups of users you want to restrict socket access to, this patch
++  will perform up to three things, based on the option(s) you choose.
++
++Deny all socket access
++CONFIG_GRKERNSEC_SOCKET_ALL
++  If you say Y here, you will be able to choose a GID of whose users will
++  be unable to connect to other hosts from your machine or run server
++  applications from your machine.  If the sysctl option is enabled, a
++  sysctl option with name "socket_all" is created.
++
++Group for disabled socket access
++CONFIG_GRKERNSEC_SOCKET_ALL_GID
++  Here you can choose the GID to disable socket access for. Remember to 
++  add the users you want socket access disabled for to the GID 
++  specified here.  If the sysctl option is enabled, whatever you choose
++  here won't matter. You'll have to specify the GID in your bootup 
++  script by echoing the GID to the proper /proc entry.  View the help
++  on the sysctl option for more information.  If the sysctl option is
++  enabled, a sysctl option with name "socket_all_gid" is created.
++
++Deny all client socket access
++CONFIG_GRKERNSEC_SOCKET_CLIENT
++  If you say Y here, you will be able to choose a GID of whose users will
++  be unable to connect to other hosts from your machine, but will be
++  able to run servers.  If this option is enabled, all users in the group
++  you specify will have to use passive mode when initiating ftp transfers
++  from the shell on your machine.  If the sysctl option is enabled, a
++  sysctl option with name "socket_client" is created.
++
++Group for disabled client socket access
++CONFIG_GRKERNSEC_SOCKET_CLIENT_GID
++  Here you can choose the GID to disable client socket access for. 
++  Remember to add the users you want client socket access disabled for to 
++  the GID specified here.  If the sysctl option is enabled, whatever you 
++  choose here won't matter. You'll have to specify the GID in your bootup 
++  script by echoing the GID to the proper /proc entry.  View the help
++  on the sysctl option for more information.  If the sysctl option is
++  enabled, a sysctl option with name "socket_client_gid" is created.
++
++Deny all server socket access
++CONFIG_GRKERNSEC_SOCKET_SERVER
++  If you say Y here, you will be able to choose a GID of whose users will
++  be unable to run server applications from your machine.  If the sysctl 
++  option is enabled, a sysctl option with name "socket_server" is created.
++
++Group for disabled server socket access
++CONFIG_GRKERNSEC_SOCKET_SERVER_GID
++  Here you can choose the GID to disable server socket access for. 
++  Remember to add the users you want server socket access disabled for to 
++  the GID specified here.  If the sysctl option is enabled, whatever you 
++  choose here won't matter. You'll have to specify the GID in your bootup 
++  script by echoing the GID to the proper /proc entry.  View the help
++  on the sysctl option for more information.  If the sysctl option is
++  enabled, a sysctl option with name "socket_server_gid" is created.
 +
  Disable data cache
  CONFIG_DCACHE_DISABLE
@@ -361,6 +447,20 @@ diff -urN linux-2.4.22/arch/parisc/kernel/sys_parisc32.c linux-2.4.22/arch/paris
  
  	file = open_exec(filename);
  
+@@ -209,6 +234,13 @@
+ 	if (retval < 0)
+ 		goto out;
+ 	
++#ifdef CONFIG_GRKERNSEC
++	if (!gr_tpe_allow(file)) {
++		retval = -EACCES;
++		goto out;
++	}
++#endif
++
+ 	retval = copy_strings_kernel(1, &bprm.filename, &bprm);
+ 	if (retval < 0)
+ 		goto out;
 @@ -222,11 +260,26 @@
  	if (retval < 0)
  		goto out;
@@ -514,6 +614,20 @@ diff -urN linux-2.4.22/arch/sparc64/kernel/sys_sparc32.c linux-2.4.22/arch/sparc
  
  	bprm.p = PAGE_SIZE*MAX_ARG_PAGES-sizeof(void *);
  	memset(bprm.page, 0, MAX_ARG_PAGES * sizeof(bprm.page[0]));
+@@ -3263,6 +3289,13 @@
+ 	if (retval < 0)
+ 		goto out;
+ 	
++#ifdef CONFIG_GRKERNSEC
++	if(!gr_tpe_allow(file)) {
++		retval = -EACCES;
++		goto out;
++	}
++#endif
++
+ 	retval = copy_strings_kernel(1, &bprm.filename, &bprm);
+ 	if (retval < 0)
+ 		goto out;
 @@ -3276,11 +3315,26 @@
  	if (retval < 0)
  		goto out;
@@ -576,6 +690,20 @@ diff -urN linux-2.4.22/fs/exec.c linux-2.4.22-grsec/fs/exec.c
  
  	file = open_exec(filename);
  
+@@ -938,6 +999,13 @@
+ 	if (retval < 0) 
+ 		goto out; 
+ 
++#ifdef CONFIG_GRKERNSEC
++	if (!gr_tpe_allow(file)) {
++		retval = -EACCES;
++		goto out;
++	}
++#endif
++
+ 	retval = copy_strings_kernel(1, &bprm.filename, &bprm);
+ 	if (retval < 0) 
+ 		goto out; 
 @@ -949,6 +954,11 @@
  		goto out; 
  
@@ -874,7 +1002,7 @@ diff -urN linux-2.4.22/fs/proc/base.c linux-2.4.22-grsec/fs/proc/base.c
 diff -urN linux-2.4.22/grsecurity/Config.in linux-2.4.22-grsec/grsecurity/Config.in
 --- linux-2.4.22/grsecurity/Config.in	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.4.22-grsec/grsecurity/Config.in	2003-10-09 19:13:26.000000000 +0200
-@@ -0,0 +1,19 @@
+@@ -0,0 +1,39 @@
 +bool 'Deny mounts' CONFIG_GRKERNSEC_CHROOT_MOUNT
 +bool 'Deny double-chroots' CONFIG_GRKERNSEC_CHROOT_DOUBLE
 +bool 'Deny pivot_root in chroot' CONFIG_GRKERNSEC_CHROOT_PIVOT
@@ -888,6 +1016,26 @@ diff -urN linux-2.4.22/grsecurity/Config.in linux-2.4.22-grsec/grsecurity/Config
 +bool 'Restrict priority changes' CONFIG_GRKERNSEC_CHROOT_NICE
 +bool 'Deny sysctl writes in chroot' CONFIG_GRKERNSEC_CHROOT_SYSCTL
 +bool 'Capability restrictions within chroot' CONFIG_GRKERNSEC_CHROOT_CAPS
++bool 'Trusted path execution' CONFIG_GRKERNSEC_TPE
++if [ "$CONFIG_GRKERNSEC_TPE" != "n" ]; then
++bool '   Partially restrict non-root users' CONFIG_GRKERNSEC_TPE_ALL
++int  '   GID for untrusted users:' CONFIG_GRKERNSEC_TPE_GID 1005
++fi
++bool 'Socket restrictions' CONFIG_GRKERNSEC_SOCKET
++if [ "$CONFIG_GRKERNSEC_SOCKET" != "n" ]; then
++bool '  Deny any sockets to group' CONFIG_GRKERNSEC_SOCKET_ALL
++if [ "$CONFIG_GRKERNSEC_SOCKET_ALL" != "n" ]; then
++int  '   GID to deny all sockets for:' CONFIG_GRKERNSEC_SOCKET_ALL_GID 1004
++fi
++bool '  Deny client sockets to group' CONFIG_GRKERNSEC_SOCKET_CLIENT
++if [ "$CONFIG_GRKERNSEC_SOCKET_CLIENT" != "n" ]; then
++int  '   GID to deny client sockets for:' CONFIG_GRKERNSEC_SOCKET_CLIENT_GID 1003
++fi
++bool '  Deny server sockets to group' CONFIG_GRKERNSEC_SOCKET_SERVER
++if [ "$CONFIG_GRKERNSEC_SOCKET_SERVER" != "n" ]; then
++int  '   GID to deny server sockets for:' CONFIG_GRKERNSEC_SOCKET_SERVER_GID 1002
++fi
++fi
 +bool '/proc/<pid>/ipaddr support' CONFIG_GRKERNSEC_PROC_IPADDR
 +int 'Seconds in between log messages (minimum)' CONFIG_GRKERNSEC_FLOODTIME 10
 +int 'Number of messages in a burst (maximum)' CONFIG_GRKERNSEC_FLOODBURST 4
@@ -908,7 +1056,7 @@ diff -urN linux-2.4.22/grsecurity/Makefile linux-2.4.22-grsec/grsecurity/Makefil
 +
 +O_TARGET := grsec.o
 +
-+obj-$(CONFIG_GRKERNSEC) = grsec_chroot.o grsec_sysctl.o grsec_init.o grsec_sock.o
++obj-$(CONFIG_GRKERNSEC) = grsec_chroot.o grsec_sysctl.o grsec_init.o grsec_sock.o grsec_tpe.o
 +
 +include $(TOPDIR)/Rules.make
 diff -urN linux-2.4.22/grsecurity/grsec_chroot.c linux-2.4.22-grsec/grsecurity/grsec_chroot.c
@@ -1320,7 +1468,7 @@ diff -urN linux-2.4.22/grsecurity/grsec_chroot.c linux-2.4.22-grsec/grsecurity/g
 diff -urN linux-2.4.22/grsecurity/grsec_init.c linux-2.4.22-grsec/grsecurity/grsec_init.c
 --- linux-2.4.22/grsecurity/grsec_init.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.4.22-grsec/grsecurity/grsec_init.c	2003-10-09 19:16:48.000000000 +0200
-@@ -0,0 +1,98 @@
+@@ -0,0 +1,126 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
 +#include <linux/mm.h>
@@ -1341,6 +1489,15 @@ diff -urN linux-2.4.22/grsecurity/grsec_init.c linux-2.4.22-grsec/grsecurity/grs
 +int grsec_enable_chroot_caps;
 +int grsec_enable_chroot_sysctl;
 +int grsec_enable_chroot_unix;
++int grsec_enable_tpe;
++int grsec_tpe_gid;
++int grsec_enable_tpe_all;
++int grsec_enable_socket_all;
++int grsec_socket_all_gid;
++int grsec_enable_socket_client;
++int grsec_socket_client_gid;
++int grsec_enable_socket_server;
++int grsec_socket_server_gid;
 +int grsec_lock;
 +
 +spinlock_t grsec_alert_lock = SPIN_LOCK_UNLOCKED;
@@ -1415,6 +1572,25 @@ diff -urN linux-2.4.22/grsecurity/grsec_init.c linux-2.4.22-grsec/grsecurity/grs
 +#ifdef CONFIG_GRKERNSEC_CHROOT_SYSCTL
 +	grsec_enable_chroot_sysctl = 1;
 +#endif
++#ifdef CONFIG_GRKERNSEC_TPE
++	grsec_enable_tpe = 1;
++	grsec_tpe_gid = CONFIG_GRKERNSEC_TPE_GID;
++#ifdef CONFIG_GRKERNSEC_TPE_ALL
++	grsec_enable_tpe_all = 1;
++#endif
++#endif
++#ifdef CONFIG_GRKERNSEC_SOCKET_ALL
++	grsec_enable_socket_all = 1;
++	grsec_socket_all_gid = CONFIG_GRKERNSEC_SOCKET_ALL_GID;
++#endif
++#ifdef CONFIG_GRKERNSEC_SOCKET_CLIENT
++	grsec_enable_socket_client = 1;
++	grsec_socket_client_gid = CONFIG_GRKERNSEC_SOCKET_CLIENT_GID;
++#endif
++#ifdef CONFIG_GRKERNSEC_SOCKET_SERVER
++	grsec_enable_socket_server = 1;
++	grsec_socket_server_gid = CONFIG_GRKERNSEC_SOCKET_SERVER_GID;
++#endif
 +#endif
 +
 +	return;
@@ -1422,7 +1598,7 @@ diff -urN linux-2.4.22/grsecurity/grsec_init.c linux-2.4.22-grsec/grsecurity/grs
 diff -urN linux-2.4.22/grsecurity/grsec_sock.c linux-2.4.22/grsecurity/grsec_sock.c
 --- linux-2.4.22/grsecurity/grsec_sock.c	1969-12-31 19:00:00.000000000 -0500
 +++ linux-2.4.22/grsecurity/grsec_sock.c	2003-09-02 19:29:42.000000000 -0400
-@@ -0,0 +1,66 @@
+@@ -0,0 +1,109 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
 +#include <linux/file.h>
@@ -1489,6 +1665,49 @@ diff -urN linux-2.4.22/grsecurity/grsec_sock.c linux-2.4.22/grsecurity/grsec_soc
 +#endif
 +	return;
 +}
++
++int
++gr_handle_sock_all(const int family, const int type, const int protocol)
++{
++#ifdef CONFIG_GRKERNSEC_SOCKET_ALL
++	if (grsec_enable_socket_all && in_group_p(grsec_socket_all_gid) &&
++	    (family != AF_UNIX) && (family != AF_LOCAL)) {
++		gr_security_alert(GR_SOCK_MSG, family, type, protocol,
++			       DEFAULTSECARGS);
++		return -EACCES;
++	}
++#endif
++	return 0;
++}
++
++int
++gr_handle_sock_server(const struct sockaddr *sck)
++{
++#ifdef CONFIG_GRKERNSEC_SOCKET_SERVER
++	if (grsec_enable_socket_server &&
++	    in_group_p(grsec_socket_server_gid) &&
++	    sck && (sck->sa_family != AF_UNIX) &&
++	    (sck->sa_family != AF_LOCAL)) {
++		gr_security_alert(GR_BIND_MSG, DEFAULTSECARGS);
++		return -EACCES;
++	}
++#endif
++	return 0;
++}
++
++int
++gr_handle_sock_client(const struct sockaddr *sck)
++{
++#ifdef CONFIG_GRKERNSEC_SOCKET_CLIENT
++	if (grsec_enable_socket_client && in_group_p(grsec_socket_client_gid) &&
++	    sck && (sck->sa_family != AF_UNIX) &&
++	    (sck->sa_family != AF_LOCAL)) {
++		gr_security_alert(GR_CONNECT_MSG, DEFAULTSECARGS);
++		return -EACCES;
++	}
++#endif
++	return 0;
++}
 diff -urN linux-2.4.22/grsecurity/grsec_sysctl.c linux-2.4.22-grsec/grsecurity/grsec_sysctl.c
 --- linux-2.4.22/grsecurity/grsec_sysctl.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.4.22-grsec/grsecurity/grsec_sysctl.c	2003-10-09 19:13:26.000000000 +0200
@@ -1509,10 +1728,47 @@ diff -urN linux-2.4.22/grsecurity/grsec_sysctl.c linux-2.4.22-grsec/grsecurity/g
 +#endif
 +	return 0;
 +}
+diff -urN linux-2.4.22/grsecurity/grsec_tpe.c linux-2.4.22/grsecurity/grsec_tpe.c
+--- linux-2.4.22/grsecurity/grsec_tpe.c	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.4.22/grsecurity/grsec_tpe.c	2003-09-02 19:29:42.000000000 -0400
+@@ -0,0 +1,33 @@
++#include <linux/kernel.h>
++#include <linux/sched.h>
++#include <linux/file.h>
++#include <linux/fs.h>
++#include <linux/grinternal.h>
++
++int
++gr_tpe_allow(const struct file *file)
++{
++#ifdef CONFIG_GRKERNSEC
++	struct inode *inode = file->f_dentry->d_parent->d_inode;
++
++	if (current->uid && ((grsec_enable_tpe && in_group_p(grsec_tpe_gid))) &&
++	    (inode->i_uid || (!inode->i_uid && ((inode->i_mode & S_IWGRP) ||
++						(inode->i_mode & S_IWOTH))))) {
++		gr_security_alert(GR_EXEC_TPE_MSG,
++			       gr_to_filename(file->f_dentry, file->f_vfsmnt),
++			       DEFAULTSECARGS);
++		return 0;
++	}
++#ifdef CONFIG_GRKERNSEC_TPE_ALL
++	if (current->uid && grsec_enable_tpe && grsec_enable_tpe_all &&
++	    ((inode->i_uid && (inode->i_uid != current->uid)) ||
++	     (inode->i_mode & S_IWGRP) || (inode->i_mode & S_IWOTH))) {
++		gr_security_alert(GR_EXEC_TPE_MSG,
++			       gr_to_filename(file->f_dentry, file->f_vfsmnt),
++			       DEFAULTSECARGS);
++		return 0;
++	}
++#endif
++#endif
++	return 1;
++}
 diff -urN linux-2.4.22/include/linux/grinternal.h linux-2.4.22-grsec/include/linux/grinternal.h
 --- linux-2.4.22/include/linux/grinternal.h	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.4.22-grsec/include/linux/grinternal.h	2003-10-09 19:13:26.000000000 +0200
-@@ -0,0 +1,121 @@
+@@ -0,0 +1,130 @@
 +#ifndef __GRINTERNAL_H
 +#define __GRINTERNAL_H
 +
@@ -1545,6 +1801,15 @@ diff -urN linux-2.4.22/include/linux/grinternal.h linux-2.4.22-grsec/include/lin
 +extern int grsec_enable_chroot_caps;
 +extern int grsec_enable_chroot_sysctl;
 +extern int grsec_enable_chroot_unix;
++extern int grsec_enable_tpe;
++extern int grsec_tpe_gid;
++extern int grsec_enable_tpe_all;
++extern int grsec_enable_socket_all;
++extern int grsec_socket_all_gid;
++extern int grsec_enable_socket_client;
++extern int grsec_socket_client_gid;
++extern int grsec_enable_socket_server;
++extern int grsec_socket_server_gid;
 +extern int grsec_lock;
 +
 +extern struct task_struct *child_reaper;
@@ -1637,7 +1902,7 @@ diff -urN linux-2.4.22/include/linux/grinternal.h linux-2.4.22-grsec/include/lin
 diff -urN linux-2.4.22/include/linux/grmsg.h linux-2.4.22-grsec/include/linux/grmsg.h
 --- linux-2.4.22/include/linux/grmsg.h	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.4.22-grsec/include/linux/grmsg.h	2003-10-09 19:13:26.000000000 +0200
-@@ -0,0 +1,14 @@
+@@ -0,0 +1,18 @@
 +#define DEFAULTSECMSG "%.256s[%.16s:%d] uid/euid:%d/%d gid/egid:%d/%d, parent %.256s[%.16s:%d] uid/euid:%d/%d gid/egid:%d/%d"
 +#define GR_UNIX_CHROOT_MSG "denied connect to abstract AF_UNIX socket outside of chroot by " DEFAULTSECMSG
 +#define GR_SHMAT_CHROOT_MSG "denied attach of shared memory outside of chroot by " DEFAULTSECMSG
@@ -1652,10 +1917,14 @@ diff -urN linux-2.4.22/include/linux/grmsg.h linux-2.4.22-grsec/include/linux/gr
 +#define GR_NICE_CHROOT_MSG "attempted priority change by " DEFAULTSECMSG
 +#define GR_SYSCTL_MSG "attempt to modify grsecurity sysctl value : %.32s by " DEFAULTSECMSG
 +#define GR_EXEC_CHROOT_MSG "exec of %.980s within chroot by process " DEFAULTSECMSG
++#define GR_EXEC_TPE_MSG "denied untrusted exec of %.950s by " DEFAULTSECMSG
++#define GR_SOCK_MSG "attempted socket(%d,%d,%d) by " DEFAULTSECMSG
++#define GR_BIND_MSG "attempted bind() by " DEFAULTSECMSG
++#define GR_CONNECT_MSG "attempted connect by " DEFAULTSECMSG
 diff -urN linux-2.4.22/include/linux/grsecurity.h linux-2.4.22-grsec/include/linux/grsecurity.h
 --- linux-2.4.22/include/linux/grsecurity.h	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.4.22-grsec/include/linux/grsecurity.h	2003-10-09 19:13:26.000000000 +0200
-@@ -0,0 +1,30 @@
+@@ -0,0 +1,32 @@
 +#ifndef GR_SECURITY_H
 +#define GR_SECURITY_H
 +
@@ -1684,6 +1953,8 @@ diff -urN linux-2.4.22/include/linux/grsecurity.h linux-2.4.22-grsec/include/lin
 +			       const struct vfsmount *mnt);
 +
 +extern void gr_copy_label(struct task_struct *tsk);
++
++extern int gr_tpe_allow(const struct file *file);
 +
 +#endif
 diff -urN linux-2.4.22/include/linux/sched.h linux-2.4.22-grsec/include/linux/sched.h
@@ -1865,10 +2136,11 @@ diff -urN linux-2.4.22/kernel/capability.c linux-2.4.22-grsec/kernel/capability.
 diff -urN linux-2.4.22/kernel/exit.c linux-2.4.22/kernel/exit.c
 --- linux-2.4.22/kernel/exit.c	2003-09-01 22:19:01.000000000 -0400
 +++ linux-2.4.22/kernel/exit.c	2003-09-02 19:29:42.000000000 -0400
-@@ -16,6 +16,7 @@
+@@ -16,6 +16,8 @@
  #ifdef CONFIG_BSD_PROCESS_ACCT
  #include <linux/acct.h>
  #endif
++#include <linux/file.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
@@ -2015,7 +2287,7 @@ diff -urN linux-2.4.22/kernel/sysctl.c linux-2.4.22-grsec/kernel/sysctl.c
  /* /proc declarations: */
  
  #ifdef CONFIG_PROC_FS
-@@ -272,8 +283,77 @@
+@@ -272,8 +283,112 @@
  	{KERN_EXCEPTION_TRACE,"exception-trace",
  	 &exception_trace,sizeof(int),0644,NULL,&proc_dointvec},
  #endif	
@@ -2029,7 +2301,9 @@ diff -urN linux-2.4.22/kernel/sysctl.c linux-2.4.22-grsec/kernel/sysctl.c
 +enum {GS_CHROOT_SHMAT=1, GS_CHROOT_UNIX, GS_CHROOT_MNT,
 +GS_CHROOT_FCHDIR, GS_CHROOT_DBL, GS_CHROOT_PVT, GS_CHROOT_CD, GS_CHROOT_CM,
 +GS_CHROOT_MK, GS_CHROOT_NI, GS_CHROOT_EXECLOG, GS_CHROOT_CAPS, 
-+GS_CHROOT_SYSCTL, GS_LOCK};
++GS_CHROOT_SYSCTL, GS_TPE, GS_TPE_GID, GS_TPE_ALL,
++GS_SOCKET_ALL, GS_SOCKET_ALL_GID, GS_SOCKET_CLIENT,
++GS_SOCKET_CLIENT_GID, GS_SOCKET_SERVER, GS_SOCKET_SERVER_GID, GS_LOCK};
 +
 +static ctl_table grsecurity_table[] = {
 +#ifdef CONFIG_GRKERNSEC_CHROOT_SHMAT
@@ -2085,6 +2359,39 @@ diff -urN linux-2.4.22/kernel/sysctl.c linux-2.4.22-grsec/kernel/sysctl.c
 +	{GS_CHROOT_SYSCTL, "chroot_deny_sysctl", &grsec_enable_chroot_sysctl, sizeof (int),
 +	 0600, NULL, &proc_dointvec},
 +#endif
++#ifdef CONFIG_GRKERNSEC_TPE
++	{GS_TPE, "tpe", &grsec_enable_tpe, sizeof (int),
++	 0600, NULL, &proc_dointvec},
++	{GS_TPE_GID, "tpe_gid", &grsec_tpe_gid, sizeof (int),
++	 0600, NULL, &proc_dointvec},
++#endif
++#ifdef CONFIG_GRKERNSEC_TPE_ALL
++	{GS_TPE_ALL, "tpe_restrict_all", &grsec_enable_tpe_all, sizeof (int),
++	 0600, NULL, &proc_dointvec},
++#endif
++#ifdef CONFIG_GRKERNSEC_SOCKET_ALL
++	{GS_SOCKET_ALL, "socket_all", &grsec_enable_socket_all, sizeof (int),
++	 0600, NULL, &proc_dointvec},
++	{GS_SOCKET_ALL_GID, "socket_all_gid",
++	 &grsec_socket_all_gid, sizeof (int),
++	 0600, NULL, &proc_dointvec},
++#endif
++#ifdef CONFIG_GRKERNSEC_SOCKET_CLIENT
++	{GS_SOCKET_CLIENT, "socket_client", 
++	 &grsec_enable_socket_client, sizeof (int),
++	 0600, NULL, &proc_dointvec},
++	{GS_SOCKET_CLIENT_GID, "socket_client_gid", 
++	 &grsec_socket_client_gid, sizeof (int),
++	 0600, NULL, &proc_dointvec},
++#endif
++#ifdef CONFIG_GRKERNSEC_SOCKET_SERVER
++	{GS_SOCKET_SERVER, "socket_server", 
++	 &grsec_enable_socket_server, sizeof (int),
++	 0600, NULL, &proc_dointvec},
++	{GS_SOCKET_SERVER_GID, "socket_server_gid",
++	 &grsec_socket_server_gid, sizeof (int),
++	 0600, NULL, &proc_dointvec},
++#endif
 +	{GS_LOCK, "grsec_lock", &grsec_lock, sizeof (int), 0600, NULL,
 +	 &proc_dointvec},
  	{0}
@@ -2107,6 +2414,55 @@ diff -urN linux-2.4.22/kernel/sysctl.c linux-2.4.22-grsec/kernel/sysctl.c
  	return test_perm(table->mode, op);
  }
  
+diff -urN linux-2.4.22/mm/mmap.c linux-2.4.22/mm/mmap.c
+--- linux-2.4.22/mm/mmap.c	2003-09-01 22:19:02.000000000 -0400
++++ linux-2.4.22/mm/mmap.c	2003-09-02 19:29:42.000000000 -0400
+@@ -14,6 +14,8 @@
+ #include <linux/file.h>
+ #include <linux/fs.h>
+ #include <linux/personality.h>
++#include <linux/random.h>
++#include <linux/grsecurity.h>
+ 
+ #include <asm/uaccess.h>
+ #include <asm/pgalloc.h>
+@@ -480,6 +532,11 @@
+ 		}
+ 	}
+ 
++#ifdef CONFIG_GRKERNSEC
++	if (!gr_tpe_allow(file))
++		return -EACCES;
++#endif
++
+ 	/* Clear old maps */
+ munmap_back:
+ 	vma = find_vma_prepare(mm, addr, &prev, &rb_link, &rb_parent);
+diff -urN linux-2.4.22/mm/mprotect.c linux-2.4.22/mm/mprotect.c
+--- linux-2.4.22/mm/mprotect.c	2003-09-01 22:19:02.000000000 -0400
++++ linux-2.4.22/mm/mprotect.c	2003-09-02 19:29:42.000000000 -0400
+@@ -7,6 +7,7 @@
+ #include <linux/smp_lock.h>
+ #include <linux/shm.h>
+ #include <linux/mman.h>
++#include <linux/grsecurity.h>
+ 
+ #include <asm/uaccess.h>
+ #include <asm/pgalloc.h>
+@@ -288,6 +393,13 @@
+ 	if (!vma || vma->vm_start > start)
+ 		goto out;
+ 
++#ifdef CONFIG_GRKERNSEC
++	if (!gr_tpe_allow(vma->vm_file)) {
++		error = -EACCES;
++		goto out;
++	}
++#endif
++
+ 	for (nstart = start ; ; ) {
+ 		unsigned int newflags;
+ 		int last = 0;
 diff -urN linux-2.4.22/net/ipv4/netfilter/Config.in linux-2.4.22-grsec/net/ipv4/netfilter/Config.in
 --- linux-2.4.22/net/ipv4/netfilter/Config.in	2003-10-09 18:47:22.000000000 +0200
 +++ linux-2.4.22-grsec/net/ipv4/netfilter/Config.in	2003-10-09 19:13:26.000000000 +0200
@@ -2277,11 +2633,16 @@ diff -urN linux-2.4.22/net/netsyms.c linux-2.4.22-grsec/net/netsyms.c
 diff -urN linux-2.4.22/net/socket.c linux-2.4.22/net/socket.c
 --- linux-2.4.22/net/socket.c	2003-09-01 22:19:08.000000000 -0400
 +++ linux-2.4.22/net/socket.c	2003-09-02 19:29:42.000000000 -0400
-@@ -85,6 +85,7 @@
+@@ -85,6 +85,12 @@
  #include <net/scm.h>
  #include <linux/netfilter.h>
  
 +extern void gr_attach_curr_ip(const struct sock *sk);
++extern int gr_handle_sock_all(const int family, const int type,
++			      const int protocol);
++extern int gr_handle_sock_server(const struct sockaddr *sck);  
++extern int gr_handle_sock_client(const struct sockaddr *sck);
++
  static int sock_no_open(struct inode *irrelevant, struct file *dontcare);
  static ssize_t sock_read(struct file *file, char *buf,
  			 size_t size, loff_t *ppos);
@@ -2315,6 +2676,45 @@ diff -urN linux-2.4.22/net/socket.c linux-2.4.22/net/socket.c
  	return 0;
  }
  
+@@ -903,6 +929,13 @@
+ 	int retval;
+ 	struct socket *sock;
+ 
++#ifdef CONFIG_GRKERNSEC
++	if (gr_handle_sock_all(family, type, protocol)) {
++		retval = -EACCES;
++		goto out;
++	}
++#endif
++
+ 	retval = sock_create(family, type, protocol, &sock);
+ 	if (retval < 0)
+ 		goto out;
+@@ -998,12 +1034,23 @@
+ {
+ 	struct socket *sock;
+ 	char address[MAX_SOCK_ADDR];
++	struct sockaddr * sck;
+ 	int err;
+ 
+ 	if((sock = sockfd_lookup(fd,&err))!=NULL)
+ 	{
+-		if((err=move_addr_to_kernel(umyaddr,addrlen,address))>=0)
++		if((err=move_addr_to_kernel(umyaddr,addrlen,address))>=0) {
++#ifdef CONFIG_GRKERNSEC
++			sck = (struct sockaddr *) address;
++
++			if (gr_handle_sock_server(sck)) {
++				sockfd_put(sock);
++				return -EACCES;
++			}
++#endif
++
+ 			err = sock->ops->bind(sock, (struct sockaddr *)address, addrlen);
++		}
+ 		sockfd_put(sock);
+ 	}			
+ 	return err;
 @@ -1079,6 +1129,10 @@
  	if ((err = sock_map_fd(newsock)) < 0)
  		goto out_release;
@@ -2326,6 +2726,34 @@ diff -urN linux-2.4.22/net/socket.c linux-2.4.22/net/socket.c
  out_put:
  	sockfd_put(sock);
  out:
+@@ -1106,6 +1158,7 @@
+ {
+ 	struct socket *sock;
+ 	char address[MAX_SOCK_ADDR];
++	struct sockaddr * sck;
+ 	int err;
+ 
+ 	sock = sockfd_lookup(fd, &err);
+@@ -1114,6 +1167,19 @@
+ 	err = move_addr_to_kernel(uservaddr, addrlen, address);
+ 	if (err < 0)
+ 		goto out_put;
++
++#ifdef CONFIG_GRKERNSEC
++	sck = (struct sockaddr *) address;
++
++	if (gr_handle_sock_client(sck)) {
++		err = -EACCES;
++		goto out_put;
++	}
++
++	if (sock->sk->protocol == IPPROTO_TCP)
++		current->used_connect = 1;
++#endif
++
+ 	err = sock->ops->connect(sock, (struct sockaddr *) address, addrlen,
+ 				 sock->file->f_flags);
+ out_put:
 @@ -1333,6 +1404,14 @@
  		err=sock->ops->shutdown(sock, how);
  		sockfd_put(sock);
@@ -2379,6 +2807,16 @@ diff -urN linux-2.4.22/net/unix/af_unix.c linux-2.4.22-grsec/net/unix/af_unix.c
  		list = &unix_socket_table[addr->hash];
  	} else {
  		list = &unix_socket_table[dentry->d_inode->i_ino & (UNIX_HASH_SIZE-1)];
+@@ -866,6 +893,9 @@
+ 	int st;
+ 	int err;
+ 	long timeo;
++#ifdef CONFIG_GRKERNSEC
++	struct task_struct *p, **htable;
++#endif
+ 
+ 	err = unix_mkname(sunaddr, addr_len, &hash);
+ 	if (err < 0)
 @@ -989,6 +1019,17 @@
  	/* Set credentials */
  	sk->peercred = other->peercred;
