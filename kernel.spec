@@ -3,13 +3,14 @@
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.29
 %define		i2c_version		2.5.4
+%define		wlan_version		0.3.4
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.18
-Release:	10
+Release:	11
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -21,6 +22,7 @@ Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
 Source5:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source6:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/sym-1.7.2-ncr-3.4.2.tar.gz
 Source7:	http://www2.lm-sensors.nu/~lm78/archive/i2c-%{i2c_version}.tar.gz
+Source8:	http://www.linux-wlan.com/linux-wlan/linux-wlan-%{wlan_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -333,6 +335,11 @@ mv sym-1.7.2-ncr-3.4.2/*.{c,h} drivers/scsi
 mv sym-1.7.2-ncr-3.4.2/{README,ChangeLog}.* Documentation
 rm -rf sym-1.7.2-ncr-3.4.2
 
+# Drivers for wireless PCMCIA cards
+rm -rf linux-wlan-%{wlan_version}
+tar zxf %{SOURCE8}
+
+
 %build
 BuildKernel() {
 	%{?verbose:set -x}
@@ -440,6 +447,27 @@ sed "s/.*= 8390\..$//" clients/Makefile.bak > clients/Makefile
 
 %{__make} PREFIX=$KERNEL_BUILD_DIR-installed install
 cd ..
+
+# Linux WLAN package extension for PCMCIA
+cd linux-wlan-%{wlan_version}
+%{__make} clean
+mv config.mk config.mk.bak
+kernelbase=`echo $KERNEL_BUILD_DIR| sed -e "sm/m\\\\\/mg"`
+sed "s/^MODULES_DIR=.*/MODULES_DIR=$kernelbase-installed\/lib\/modules\/$KernelVer/" config.mk.bak > config.mk.bak2
+sed "s/^MAKE_CS=.*/MAKE_CS=y/" config.mk.bak2 > config.mk.bak3
+sed "s/^LINUX_SRC=.*/LINUX_SRC=$kernelbase/" config.mk.bak3 > config.mk.bak4
+sed "s/^PCMCIA_SRC=.*/PCMCIA_SRC=$kernelbase\/pcmcia-cs-%{pcmcia_version}/" config.mk.bak4 > config.mk
+
+cd driver
+%{__make} all \
+	CC=egcs \
+	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
+	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNEL_BUILD_DIR/include -I$KERNEL_BUILD_DIR/pcmcia-cs-%{pcmcia_version}/include -D__KERNEL__ -DEXPORT_SYMTAB"
+
+%{__make} PREFIX=$KERNEL_BUILD_DIR-installed install
+
+cd ../..
+
 }
 
 KERNEL_BUILD_DIR=`pwd`
