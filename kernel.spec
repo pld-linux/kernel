@@ -14,6 +14,7 @@
 %bcond_without	source		# don't build kernel-source package
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
+%bcond_with	execshield	# build kernel with ExecShield protector.
 %bcond_with	bootsplash	# build with bootsplash
 
 %{?debug:%define with_verbose 1}
@@ -46,7 +47,7 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_rel		0.16
-%define		_cset		20040607_0507
+%define		_cset		20040607_2308
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040518
@@ -69,13 +70,13 @@ Epoch:		3
 License:	GPL
 Group:		Base/Kernel
 #define		_rc	%{nil}
-%define		_rc	-rc2
+%define		_rc	-rc3
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	7c4ce655b71985765190a0c2a2c26a03
+# Source0-md5:	39f976038319fd56dd5cc6ce22d43b0f
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	07ae88dbe20e51add85a611401dea4ad
+# Source3-md5:	e8139149d98e674d1f40a3cbc2655936
 # http://lkml.org/lkml/2004/6/2/228
 Source4:	http://redhat.com/~mingo/nx-patches/nx-2.6.7-rc2-bk2-AF
 # Source4-md5:	9d45d98ad5e27747c6e930a46dc9e37f
@@ -554,8 +555,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %if "%{_apply_cset}" != "0"
 zcat %{SOURCE3} | patch -p1 -s
 %endif
-patch -p1 -s < %{SOURCE4}
-patch -p1 -s < %{SOURCE5}
 
 %patch4 -p1
 
@@ -671,6 +670,12 @@ cp drivers/usb/media/libpwcx.a_mipsel drivers/usb/media/libpwcx.a_
 %patch97 -p1
 
 %patch100 -p1
+
+%if %{with execshield}
+patch -p1 -s < %{SOURCE4}
+patch -p1 -s < %{SOURCE5}
+%endif
+
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
