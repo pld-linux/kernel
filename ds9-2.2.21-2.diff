@@ -1,0 +1,5106 @@
+diff -urN ../v2.2.21/linux/include/linux/netdevice.h linux/include/linux/netdevice.h
+--- ../v2.2.21/linux/include/linux/netdevice.h	Sun Nov  4 10:16:15 2001
++++ linux/include/linux/netdevice.h	Wed Jul 31 00:00:59 2002
+@@ -268,6 +268,7 @@
+ 	struct Qdisc		*qdisc;
+ 	struct Qdisc		*qdisc_sleeping;
+ 	struct Qdisc		*qdisc_list;
++	struct Qdisc		*qdisc_ingress;
+ 	unsigned long		tx_queue_len;	/* Max frames per queue allowed */
+ 
+ 	/* Bridge stuff */
+diff -urN ../v2.2.21/linux/include/linux/pkt_cls.h linux/include/linux/pkt_cls.h
+--- ../v2.2.21/linux/include/linux/pkt_cls.h	Sat Oct 21 12:10:47 2000
++++ linux/include/linux/pkt_cls.h	Wed Jul 31 00:00:59 2002
+@@ -143,4 +143,20 @@
+ 
+ #define TCA_FW_MAX TCA_FW_POLICE
+ 
++/* TC index filter */
++
++enum
++{
++	TCA_TCINDEX_UNSPEC,
++	TCA_TCINDEX_HASH,
++	TCA_TCINDEX_MASK,
++	TCA_TCINDEX_SHIFT,
++	TCA_TCINDEX_FALL_THROUGH,
++	TCA_TCINDEX_CLASSID,
++	TCA_TCINDEX_POLICE,
++};
++
++#define TCA_TCINDEX_MAX        TCA_TCINDEX_POLICE
++
++
+ #endif
+diff -urN ../v2.2.21/linux/include/linux/pkt_sched.h linux/include/linux/pkt_sched.h
+--- ../v2.2.21/linux/include/linux/pkt_sched.h	Tue Apr 28 18:10:10 1998
++++ linux/include/linux/pkt_sched.h	Sun Aug  4 14:54:40 2002
+@@ -71,6 +71,7 @@
+ 
+ #define TC_H_UNSPEC	(0U)
+ #define TC_H_ROOT	(0xFFFFFFFFU)
++#define TC_H_INGRESS    (0xFFFFFFF1U)
+ 
+ struct tc_ratespec
+ {
+@@ -188,8 +189,63 @@
+ 	unsigned char   Wlog;		/* log(W)		*/
+ 	unsigned char   Plog;		/* log(P_max/(qth_max-qth_min))	*/
+ 	unsigned char   Scell_log;	/* cell size for idle damping */
++	unsigned char	flags;
++#define TC_RED_ECN	1
++};
++
++struct tc_red_xstats
++{
++	__u32           early;          /* Early drops */
++	__u32           pdrop;          /* Drops due to queue limits */
++	__u32           other;          /* Drops due to drop() calls */
++	__u32           marked;         /* Marked packets */
++};
++
++/* GRED section */
++
++#define MAX_DPs 16
++
++enum
++{
++       TCA_GRED_UNSPEC,
++       TCA_GRED_PARMS,
++       TCA_GRED_STAB,
++       TCA_GRED_DPS,
++};
++
++#define TCA_SET_OFF TCA_GRED_PARMS
++struct tc_gred_qopt
++{
++       __u32           limit;          /* HARD maximal queue length (bytes)    
++*/
++       __u32           qth_min;        /* Min average length threshold (bytes) 
++*/
++       __u32           qth_max;        /* Max average length threshold (bytes) 
++*/
++       __u32           DP;             /* upto 2^32 DPs */
++       __u32           backlog;        
++       __u32           qave;   
++       __u32           forced; 
++       __u32           early;  
++       __u32           other;  
++       __u32           pdrop;  
++
++       unsigned char   Wlog;           /* log(W)               */
++       unsigned char   Plog;           /* log(P_max/(qth_max-qth_min)) */
++       unsigned char   Scell_log;      /* cell size for idle damping */
++       __u8            prio;		/* prio of this VQ */
++       __u32	packets;
++       __u32	bytesin;
++};
++/* gred setup */
++struct tc_gred_sopt
++{
++       __u32           DPs;
++       __u32           def_DP;
++       __u8            grio;
+ };
+ 
++
+ /* CBQ section */
+ 
+ #define TC_CBQ_MAXPRIO		8
+@@ -273,5 +329,19 @@
+ };
+ 
+ #define TCA_CBQ_MAX	TCA_CBQ_POLICE
++
++
++/* dsmark section */
++
++enum {
++	TCA_DSMARK_UNSPEC,
++	TCA_DSMARK_INDICES,
++	TCA_DSMARK_DEFAULT_INDEX,
++	TCA_DSMARK_SET_TC_INDEX,
++	TCA_DSMARK_MASK,
++	TCA_DSMARK_VALUE
++};
++
++#define TCA_DSMARK_MAX TCA_DSMARK_VALUE
+ 
+ #endif
+diff -urN ../v2.2.21/linux/include/linux/skbuff.h linux/include/linux/skbuff.h
+--- ../v2.2.21/linux/include/linux/skbuff.h	Sat Oct 21 12:11:03 2000
++++ linux/include/linux/skbuff.h	Wed Jul 31 00:00:59 2002
+@@ -112,6 +112,11 @@
+ 		__u32	ifield;
+ 	} private;
+ #endif
++
++#ifdef CONFIG_NET_SCHED
++       __u32           tc_index;               /* traffic control index */
++#endif
++
+ };
+ 
+ /* These are just the default values. This is run time configurable.
+diff -urN ../v2.2.21/linux/include/net/dsfield.h linux/include/net/dsfield.h
+--- ../v2.2.21/linux/include/net/dsfield.h	Thu Jan  1 00:00:00 1970
++++ linux/include/net/dsfield.h	Wed Jul 31 00:00:59 2002
+@@ -0,0 +1,79 @@
++/* include/net/dsfield.h - Manipulation of the Differentiated Services field */
++
++/* Written 1998-2000 by Werner Almesberger, EPFL ICA */
++
++
++#ifndef __NET_DSFIELD_H
++#define __NET_DSFIELD_H
++
++#include <linux/types.h>
++#include <linux/ip.h>
++#include <linux/ipv6.h>
++#include <asm/byteorder.h>
++
++
++extern __inline__ __u8 ipv4_get_dsfield(struct iphdr *iph)
++{
++	return iph->tos;
++}
++
++
++extern __inline__ __u8 ipv6_get_dsfield(struct ipv6hdr *ipv6h)
++{
++	return ntohs(*(__u16 *) ipv6h) >> 4;
++}
++
++
++extern __inline__ void ipv4_change_dsfield(struct iphdr *iph,__u8 mask,
++    __u8 value)
++{
++        __u32 check = ntohs(iph->check);
++	__u8 dsfield;
++
++	dsfield = (iph->tos & mask) | value;
++	check += iph->tos;
++	if ((check+1) >> 16) check = (check+1) & 0xffff;
++	check -= dsfield;
++	check += check >> 16; /* adjust carry */
++	iph->check = htons(check);
++	iph->tos = dsfield;
++}
++
++
++extern __inline__ void ipv6_change_dsfield(struct ipv6hdr *ipv6h,__u8 mask,
++    __u8 value)
++{
++        __u16 tmp;
++
++	tmp = ntohs(*(__u16 *) ipv6h);
++	tmp = (tmp & ((mask << 4) | 0xf00f)) | (value << 4);
++	*(__u16 *) ipv6h = htons(tmp);
++}
++
++
++#if 0 /* put this later into asm-i386 or such ... */
++
++extern __inline__ void ip_change_dsfield(struct iphdr *iph,__u16 dsfield)
++{
++	__u16 check;
++
++	__asm__ __volatile__("
++		movw	10(%1),%0
++		xchg	%b0,%h0
++		addb	1(%1),%b0
++		adcb	$0,%h0
++		adcw	$1,%0
++		cmc
++		sbbw	%2,%0
++		sbbw	$0,%0
++		movb	%b2,1(%1)
++		xchg	%b0,%h0
++		movw	%0,10(%1)"
++	    : "=&r" (check)
++	    : "r" (iph), "r" (dsfield)
++	    : "cc");
++}
++
++#endif
++
++#endif
+diff -urN ../v2.2.21/linux/include/net/pkt_cls.h linux/include/net/pkt_cls.h
+--- ../v2.2.21/linux/include/net/pkt_cls.h	Sat Oct 21 12:11:28 2000
++++ linux/include/net/pkt_cls.h	Thu Aug  1 00:12:52 2002
+@@ -77,16 +77,6 @@
+ 	return -1;
+ }
+ 
+-extern __inline__ unsigned long cls_set_class(unsigned long *clp, unsigned long cl)
+-{
+-	unsigned long old_cl; 
+-
+-	old_cl = *clp;
+-	*clp = cl;
+-	synchronize_bh();
+-	return old_cl;
+-}
+-
+ extern int register_tcf_proto_ops(struct tcf_proto_ops *ops);
+ extern int unregister_tcf_proto_ops(struct tcf_proto_ops *ops);
+ 
+diff -urN ../v2.2.21/linux/include/net/pkt_sched.h linux/include/net/pkt_sched.h
+--- ../v2.2.21/linux/include/net/pkt_sched.h	Sat Oct 21 12:10:57 2000
++++ linux/include/net/pkt_sched.h	Wed Aug  7 00:23:36 2002
+@@ -8,6 +8,7 @@
+ #define PSCHED_CLOCK_SOURCE	PSCHED_JIFFIES
+ 
+ #include <linux/pkt_sched.h>
++#include <linux/ip.h>
+ #include <net/pkt_cls.h>
+ 
+ struct rtattr;
+@@ -78,6 +79,7 @@
+ 	unsigned		flags;
+ #define TCQ_F_BUILTIN	1
+ #define TCQ_F_THROTTLED	2
++#define TCQ_F_INGRES	4
+ 	struct Qdisc_ops	*ops;
+ 	struct Qdisc		*next;
+ 	u32			handle;
+@@ -106,6 +108,111 @@
+ 	int		refcnt;
+ };
+ 
++#ifndef MODULE_LICENSE
++#define MODULE_LICENSE(X)
++#endif
++
++#ifndef NET_XMIT_SUCCESS
++#define NET_XMIT_SUCCESS	0
++#define NET_XMIT_DROP		1	/* skb dropped			*/
++#define NET_XMIT_CN		2	/* congestion notification	*/
++#define NET_XMIT_POLICED	3	/* skb is shot by police	*/
++#define NET_XMIT_BYPASS		4	/* packet does not leave via dequeue;
++					   (TC use only - dev_queue_xmit
++					   returns this as NET_XMIT_SUCCESS) */
++#endif
++
++#define likely(e)	(e)
++#define unlikely(e)	(e)
++
++#ifndef min_t
++#define min_t(type,x,y) \
++	({ type __x = (x); type __y = (y); __x < __y ? __x: __y; })
++#define max_t(type,x,y) \
++	({ type __x = (x); type __y = (y); __x > __y ? __x: __y; })
++#endif
++
++static inline void list_del_init(struct list_head *entry)
++{
++	__list_del(entry->prev, entry->next);
++	INIT_LIST_HEAD(entry);
++}
++
++static inline void __skb_queue_purge(struct sk_buff_head *list)
++{
++	struct sk_buff *skb;
++	while ((skb=__skb_dequeue(list))!=NULL)
++		kfree_skb(skb);
++}
++#define del_timer_sync(t) del_timer(t)
++
++#define netif_schedule qdisc_wakeup
++#define netif_queue_stopped(D) (D->tbusy)
++#ifndef BUG_TRAP
++#define BUG_TRAP(x) if (!(x)) { printk("Assertion (" #x ") failed at " __FILE__ "(%d):" __FUNCTION__ "\n", __LINE__); }
++#endif
++
++static inline void IP_ECN_set_ce(struct iphdr *iph)
++{
++	u32 check = iph->check;
++	check += __constant_htons(0xFFFE);
++	iph->check = check + (check>=0xFFFF);
++	iph->tos |= 1;
++}
++
++static inline void sch_tree_lock(struct Qdisc *q)
++{
++	start_bh_atomic();
++}
++
++static inline void sch_tree_unlock(struct Qdisc *q)
++{
++	end_bh_atomic();
++}
++
++static inline void tcf_tree_lock(struct tcf_proto *tp)
++{
++	wmb();
++}
++
++static inline void tcf_tree_unlock(struct tcf_proto *tp)
++{
++	synchronize_bh();
++}
++
++static inline void sch_dev_queue_lock(struct device *dev)
++{
++	start_bh_atomic();
++}
++
++static inline void sch_dev_queue_unlock(struct device *dev)
++{
++	end_bh_atomic();
++}
++
++
++static inline unsigned long
++cls_set_class(struct tcf_proto *tp, unsigned long *clp, unsigned long cl)
++{
++	unsigned long old_cl;
++
++	old_cl = *clp;
++	wmb();
++	*clp = cl;
++	synchronize_bh();
++	return old_cl;
++}
++
++static inline unsigned long
++__cls_set_class(unsigned long *clp, unsigned long cl)
++{
++	unsigned long old_cl;
++
++	old_cl = *clp;
++	*clp = cl;
++	return old_cl;
++}
++
+ 
+ /* 
+    Timer resolution MUST BE < 10% of min_schedulable_packet_size/bandwidth
+@@ -176,7 +283,7 @@
+ 
+ #define PSCHED_EXPORTLIST_2
+ 
+-#if ~0UL == 0xFFFFFFFF
++#if BITS_PER_LONG <= 32
+ 
+ #define PSCHED_WATCHER unsigned long
+ 
+@@ -207,7 +314,7 @@
+ 
+ #define PSCHED_US2JIFFIE(delay) (((delay)+psched_clock_per_hz-1)/psched_clock_per_hz)
+ 
+-#if CPU == 586 || CPU == 686
++#ifdef CONFIG_X86_TSC
+ 
+ #define PSCHED_GET_TIME(stamp) \
+ ({ u64 __cur; \
+@@ -313,8 +420,8 @@
+ #define PSCHED_TDIFF(tv1, tv2) (long)((tv1) - (tv2))
+ #define PSCHED_TDIFF_SAFE(tv1, tv2, bound, guard) \
+ ({ \
+-	   long __delta = (tv1) - (tv2); \
+-	   if ( __delta > (bound)) {  __delta = (bound); guard; } \
++	   long long __delta = (tv1) - (tv2); \
++	   if ( __delta > (long long)(bound)) {  __delta = (bound); guard; } \
+ 	   __delta; \
+ })
+ 
+@@ -349,6 +456,7 @@
+ 	struct tc_stats	stats;
+ };
+ 
++extern int qdisc_copy_stats(struct sk_buff *skb, struct tc_stats *st);
+ extern void tcf_police_destroy(struct tcf_police *p);
+ extern struct tcf_police * tcf_police_locate(struct rtattr *rta, struct rtattr *est);
+ extern int tcf_police_dump(struct sk_buff *skb, struct tcf_police *p);
+@@ -364,6 +472,8 @@
+ extern struct Qdisc_ops noop_qdisc_ops;
+ extern struct Qdisc_ops pfifo_qdisc_ops;
+ extern struct Qdisc_ops bfifo_qdisc_ops;
++
++extern int call_in_ingress(struct sk_buff *skb);
+ 
+ int register_qdisc(struct Qdisc_ops *qops);
+ int unregister_qdisc(struct Qdisc_ops *qops);
+diff -urN ../v2.2.21/linux/net/core/skbuff.c linux/net/core/skbuff.c
+--- ../v2.2.21/linux/net/core/skbuff.c	Sat Oct 21 12:10:41 2000
++++ linux/net/core/skbuff.c	Sun Aug  4 13:18:42 2002
+@@ -195,6 +195,9 @@
+ #ifdef CONFIG_IP_FIREWALL
+         skb->fwmark = 0;
+ #endif
++#ifdef CONFIG_NET_SCHED
++        skb->tc_index = 0;
++#endif
+ 	memset(skb->cb, 0, sizeof(skb->cb));
+ 	skb->priority = 0;
+ }
+@@ -307,6 +310,9 @@
+ #ifdef CONFIG_IP_FIREWALL
+         n->fwmark = skb->fwmark;
+ #endif
++#ifdef CONFIG_NET_SCHED
++	n->tc_index = skb->tc_index;
++#endif
+ 	return n;
+ }
+ 
+@@ -355,6 +361,9 @@
+ 	n->security=skb->security;
+ #ifdef CONFIG_IP_FIREWALL
+         n->fwmark = skb->fwmark;
++#endif
++#ifdef CONFIG_NET_SCHED
++	n->tc_index = skb->tc_index;
+ #endif
+ 
+ 	return n;
+diff -urN ../v2.2.21/linux/net/ipv4/ip_input.c linux/net/ipv4/ip_input.c
+--- ../v2.2.21/linux/net/ipv4/ip_input.c	Sun Nov  4 10:16:16 2001
++++ linux/net/ipv4/ip_input.c	Tue Aug  6 11:02:54 2002
+@@ -98,6 +98,7 @@
+  *		Jos Vos		:	Do accounting *before* call_in_firewall
+  *	Willy Konynenberg	:	Transparent proxying support
+  *             Stephan Uphoff   :       Check IP header length field
++ *             Jamal Hadi Salim :       Ingress policer support
+  *
+  *  
+  *
+@@ -149,6 +150,11 @@
+ #include <linux/mroute.h>
+ #include <linux/netlink.h>
+ 
++#ifdef	CONFIG_FIREWALL
++#if defined(CONFIG_NET_SCH_INGRESS) || defined(CONFIG_NET_SCH_INGRESS_MODULE)
++#include <net/pkt_sched.h>
++#endif
++#endif
+ /*
+  *	SNMP management statistics
+  */
+@@ -469,6 +475,11 @@
+ 	fwres = call_in_firewall(PF_INET, dev, iph, &rport, &skb);
+ 	if (fwres < FW_ACCEPT && fwres != FW_REJECT)
+ 		goto drop;
++#if defined(CONFIG_NET_SCH_INGRESS) || defined(CONFIG_NET_SCH_INGRESS_MODULE)
++        if (FW_ACCEPT != call_in_ingress(skb))
++                goto drop;
++#endif
++
+ 	iph = skb->nh.iph;
+ #endif /* CONFIG_FIREWALL */
+ 
+diff -urN ../v2.2.21/linux/net/netsyms.c linux/net/netsyms.c
+--- ../v2.2.21/linux/net/netsyms.c	Sat Aug  4 12:52:33 2001
++++ linux/net/netsyms.c	Tue Aug  6 10:40:17 2002
+@@ -548,6 +548,7 @@
+ EXPORT_SYMBOL(unregister_qdisc);
+ EXPORT_SYMBOL(qdisc_get_rtab);
+ EXPORT_SYMBOL(qdisc_put_rtab);
++EXPORT_SYMBOL(qdisc_copy_stats);
+ #ifdef CONFIG_NET_ESTIMATOR
+ EXPORT_SYMBOL(qdisc_new_estimator);
+ EXPORT_SYMBOL(qdisc_kill_estimator);
+@@ -560,6 +561,9 @@
+ EXPORT_SYMBOL(tcf_police_dump);
+ #endif
+ #endif
++#endif
++#ifdef CONFIG_NET_SCH_INGRESS
++EXPORT_SYMBOL(call_in_ingress);
+ #endif
+ #ifdef CONFIG_NET_CLS
+ EXPORT_SYMBOL(register_tcf_proto_ops);
+diff -urN ../v2.2.21/linux/net/sched/Config.in linux/net/sched/Config.in
+--- ../v2.2.21/linux/net/sched/Config.in	Sat Oct 21 12:10:47 2000
++++ linux/net/sched/Config.in	Wed Jul 31 00:00:59 2002
+@@ -12,12 +12,17 @@
+ tristate 'SFQ queue' CONFIG_NET_SCH_SFQ
+ tristate 'TEQL queue' CONFIG_NET_SCH_TEQL
+ tristate 'TBF queue' CONFIG_NET_SCH_TBF
++tristate 'GRED queue' CONFIG_NET_SCH_GRED
++tristate 'Diffserv field marker' CONFIG_NET_SCH_DSMARK
++tristate 'Ingress Qdisc/policing' CONFIG_NET_SCH_INGRESS
++
+ bool 'QoS support' CONFIG_NET_QOS
+ if [ "$CONFIG_NET_QOS" = "y" ]; then
+     bool 'Rate estimator' CONFIG_NET_ESTIMATOR
+ fi
+ bool 'Packet classifier API' CONFIG_NET_CLS
+ if [ "$CONFIG_NET_CLS" = "y" ]; then
++  tristate 'TC index classifier' CONFIG_NET_CLS_TCINDEX
+   tristate 'Routing table based classifier' CONFIG_NET_CLS_ROUTE4
+   if [ "$CONFIG_NET_CLS_ROUTE4" != "n" ]; then
+     define_bool CONFIG_NET_CLS_ROUTE y
+@@ -27,7 +32,7 @@
+   if [ "$CONFIG_NET_QOS" = "y" ]; then
+     tristate 'Special RSVP classifier' CONFIG_NET_CLS_RSVP
+     tristate 'Special RSVP classifier for IPv6' CONFIG_NET_CLS_RSVP6
+-    bool 'Ingres traffic policing' CONFIG_NET_CLS_POLICE
++    bool 'Traffic policing (needed for in/egress)' CONFIG_NET_CLS_POLICE
+   fi
+ fi
+ 
+diff -urN ../v2.2.21/linux/net/sched/Makefile linux/net/sched/Makefile
+--- ../v2.2.21/linux/net/sched/Makefile	Sat Oct 21 12:10:47 2000
++++ linux/net/sched/Makefile	Wed Jul 31 00:00:59 2002
+@@ -28,6 +28,14 @@
+ 
+ endif
+ 
++ifeq ($(CONFIG_NET_SCH_INGRESS), y)
++O_OBJS += sch_ingress.o
++else
++  ifeq ($(CONFIG_NET_SCH_INGRESS), m)
++	M_OBJS += sch_ingress.o
++  endif
++endif
++
+ ifeq ($(CONFIG_NET_SCH_CBQ), y)
+ O_OBJS += sch_cbq.o
+ else
+@@ -98,6 +106,30 @@
+ else
+   ifeq ($(CONFIG_NET_SCH_TEQL), m)
+ 	M_OBJS += sch_teql.o
++  endif
++endif
++
++ifeq ($(CONFIG_NET_SCH_GRED), y)
++O_OBJS += sch_gred.o
++else
++  ifeq ($(CONFIG_NET_SCH_GRED), m)
++       M_OBJS += sch_gred.o
++  endif
++endif
++
++ifeq ($(CONFIG_NET_SCH_DSMARK), y)
++O_OBJS += sch_dsmark.o
++else
++  ifeq ($(CONFIG_NET_SCH_DSMARK), m)
++       M_OBJS += sch_dsmark.o
++  endif
++endif
++
++ifeq ($(CONFIG_NET_CLS_TCINDEX), y)
++O_OBJS += cls_tcindex.o
++else
++  ifeq ($(CONFIG_NET_CLS_TCINDEX), m)
++       M_OBJS += cls_tcindex.o
+   endif
+ endif
+ 
+diff -urN ../v2.2.21/linux/net/sched/cls_api.c linux/net/sched/cls_api.c
+--- ../v2.2.21/linux/net/sched/cls_api.c	Sat Oct 21 12:10:50 2000
++++ linux/net/sched/cls_api.c	Sun Aug  4 16:57:48 2002
+@@ -217,8 +217,10 @@
+ 			kfree(tp);
+ 			goto errout;
+ 		}
++		sch_dev_queue_lock(dev);
+ 		tp->next = *back;
+ 		*back = tp;
++		sch_dev_queue_unlock(dev);
+ 	} else if (tca[TCA_KIND-1] && rtattr_strcmp(tca[TCA_KIND-1], tp->ops->kind))
+ 		goto errout;
+ 
+@@ -438,6 +440,9 @@
+ #endif
+ #ifdef CONFIG_NET_CLS_RSVP
+ 	INIT_TC_FILTER(rsvp);
++#endif
++#ifdef CONFIG_NET_CLS_TCINDEX
++	INIT_TC_FILTER(tcindex);
+ #endif
+ #ifdef CONFIG_NET_CLS_RSVP6
+ 	INIT_TC_FILTER(rsvp6);
+diff -urN ../v2.2.21/linux/net/sched/cls_fw.c linux/net/sched/cls_fw.c
+--- ../v2.2.21/linux/net/sched/cls_fw.c	Sat Oct 21 12:10:57 2000
++++ linux/net/sched/cls_fw.c	Thu Aug  1 00:34:59 2002
+@@ -136,7 +136,7 @@
+ 			unsigned long cl;
+ 			head->ht[h] = f->next;
+ 
+-			if ((cl = cls_set_class(&f->res.class, 0)) != 0)
++			if ((cl = __cls_set_class(&f->res.class, 0)) != 0)
+ 				tp->q->ops->cl_ops->unbind_tcf(tp->q, cl);
+ #ifdef CONFIG_NET_CLS_POLICE
+ 			tcf_police_release(f->police);
+@@ -161,10 +161,11 @@
+ 		if (*fp == f) {
+ 			unsigned long cl;
+ 
++			tcf_tree_lock(tp);
+ 			*fp = f->next;
+-			synchronize_bh();
++			tcf_tree_unlock(tp);
+ 
+-			if ((cl = cls_set_class(&f->res.class, 0)) != 0)
++			if ((cl = cls_set_class(tp, &f->res.class, 0)) != 0)
+ 				tp->q->ops->cl_ops->unbind_tcf(tp->q, cl);
+ #ifdef CONFIG_NET_CLS_POLICE
+ 			tcf_police_release(f->police);
+@@ -203,7 +204,7 @@
+ 
+ 			f->res.classid = *(u32*)RTA_DATA(tb[TCA_FW_CLASSID-1]);
+ 			cl = tp->q->ops->cl_ops->bind_tcf(tp->q, base, f->res.classid);
+-			cl = cls_set_class(&f->res.class, cl);
++			cl = cls_set_class(tp, &f->res.class, cl);
+ 			if (cl)
+ 				tp->q->ops->cl_ops->unbind_tcf(tp->q, cl);
+ 		}
+@@ -211,8 +212,9 @@
+ 		if (tb[TCA_FW_POLICE-1]) {
+ 			struct tcf_police *police = tcf_police_locate(tb[TCA_FW_POLICE-1], tca[TCA_RATE-1]);
+ 
++			tcf_tree_lock(tp);
+ 			police = xchg(&f->police, police);
+-			synchronize_bh();
++			tcf_tree_unlock(tp);
+ 
+ 			tcf_police_release(police);
+ 		}
+@@ -229,8 +231,9 @@
+ 			return -ENOBUFS;
+ 		memset(head, 0, sizeof(*head));
+ 
++		tcf_tree_lock(tp);
+ 		tp->root = head;
+-		synchronize_bh();
++		tcf_tree_unlock(tp);
+ 	}
+ 
+ 	f = kmalloc(sizeof(struct fw_filter), GFP_KERNEL);
+@@ -245,7 +248,7 @@
+ 		if (RTA_PAYLOAD(tb[TCA_FW_CLASSID-1]) != 4)
+ 			goto errout;
+ 		f->res.classid = *(u32*)RTA_DATA(tb[TCA_FW_CLASSID-1]);
+-		cls_set_class(&f->res.class, tp->q->ops->cl_ops->bind_tcf(tp->q, base, f->res.classid));
++		cls_set_class(tp, &f->res.class, tp->q->ops->cl_ops->bind_tcf(tp->q, base, f->res.classid));
+ 	}
+ 
+ #ifdef CONFIG_NET_CLS_POLICE
+@@ -254,8 +257,9 @@
+ #endif
+ 
+ 	f->next = head->ht[fw_hash(handle)];
+-	wmb();
++	tcf_tree_lock(tp);
+ 	head->ht[fw_hash(handle)] = f;
++	tcf_tree_unlock(tp);
+ 
+ 	*arg = (unsigned long)f;
+ 	return 0;
+@@ -294,7 +298,6 @@
+ 	}
+ }
+ 
+-#ifdef CONFIG_RTNETLINK
+ static int fw_dump(struct tcf_proto *tp, unsigned long fh,
+ 		   struct sk_buff *skb, struct tcmsg *t)
+ {
+@@ -335,7 +338,8 @@
+ 	rta->rta_len = skb->tail - b;
+ #ifdef CONFIG_NET_CLS_POLICE
+ 	if (f->police) {
+-		RTA_PUT(skb, TCA_STATS, sizeof(struct tc_stats), &f->police->stats);
++		if (qdisc_copy_stats(skb, &f->police->stats))
++			goto rtattr_failure;
+ 	}
+ #endif
+ 	return skb->len;
+@@ -344,8 +348,6 @@
+ 	skb_trim(skb, b - skb->data);
+ 	return -1;
+ }
+-#endif
+-
+ 
+ struct tcf_proto_ops cls_fw_ops = {
+ 	NULL,
+@@ -359,11 +361,7 @@
+ 	fw_change,
+ 	fw_delete,
+ 	fw_walk,
+-#ifdef CONFIG_RTNETLINK
+ 	fw_dump
+-#else
+-	NULL
+-#endif
+ };
+ 
+ #ifdef MODULE
+diff -urN ../v2.2.21/linux/net/sched/cls_route.c linux/net/sched/cls_route.c
+--- ../v2.2.21/linux/net/sched/cls_route.c	Sat Oct 21 12:10:50 2000
++++ linux/net/sched/cls_route.c	Sun Aug  4 17:08:47 2002
+@@ -83,11 +83,11 @@
+ 	return id&0xF;
+ }
+ 
+-static void route4_reset_fastmap(struct route4_head *head, u32 id)
++static void route4_reset_fastmap(struct device *dev, struct route4_head *head, u32 id)
+ {
+-	start_bh_atomic();
++	sch_dev_queue_lock(dev);
+ 	memset(head->fastmap, 0, sizeof(head->fastmap));
+-	end_bh_atomic();
++	sch_dev_queue_unlock(dev);
+ }
+ 
+ static void __inline__
+@@ -297,7 +297,7 @@
+ 					unsigned long cl;
+ 
+ 					b->ht[h2] = f->next;
+-					if ((cl = cls_set_class(&f->res.class, 0)) != 0)
++					if ((cl = __cls_set_class(&f->res.class, 0)) != 0)
+ 						tp->q->ops->cl_ops->unbind_tcf(tp->q, cl);
+ #ifdef CONFIG_NET_CLS_POLICE
+ 					tcf_police_release(f->police);
+@@ -316,25 +316,27 @@
+ {
+ 	struct route4_head *head = (struct route4_head*)tp->root;
+ 	struct route4_filter **fp, *f = (struct route4_filter*)arg;
+-	unsigned h = f->handle;
++	unsigned h = 0;
+ 	struct route4_bucket *b;
+ 	int i;
+ 
+ 	if (!head || !f)
+ 		return -EINVAL;
+ 
++	h = f->handle;
+ 	b = f->bkt;
+ 
+ 	for (fp = &b->ht[from_hash(h>>16)]; *fp; fp = &(*fp)->next) {
+ 		if (*fp == f) {
+ 			unsigned long cl;
+ 
++			tcf_tree_lock(tp);
+ 			*fp = f->next;
+-			synchronize_bh();
++			tcf_tree_unlock(tp);
+ 
+-			route4_reset_fastmap(head, f->id);
++			route4_reset_fastmap(tp->q->dev, head, f->id);
+ 
+-			if ((cl = cls_set_class(&f->res.class, 0)) != 0)
++			if ((cl = cls_set_class(tp, &f->res.class, 0)) != 0)
+ 				tp->q->ops->cl_ops->unbind_tcf(tp->q, cl);
+ 
+ #ifdef CONFIG_NET_CLS_POLICE
+@@ -349,8 +351,9 @@
+ 					return 0;
+ 
+ 			/* OK, session has no flows */
++			tcf_tree_lock(tp);
+ 			head->table[to_hash(h)] = NULL;
+-			synchronize_bh();
++			tcf_tree_unlock(tp);
+ 
+ 			kfree(b);
+ 			return 0;
+@@ -387,7 +390,7 @@
+ 			unsigned long cl;
+ 
+ 			f->res.classid = *(u32*)RTA_DATA(tb[TCA_ROUTE4_CLASSID-1]);
+-			cl = cls_set_class(&f->res.class, tp->q->ops->cl_ops->bind_tcf(tp->q, base, f->res.classid));
++			cl = cls_set_class(tp, &f->res.class, tp->q->ops->cl_ops->bind_tcf(tp->q, base, f->res.classid));
+ 			if (cl)
+ 				tp->q->ops->cl_ops->unbind_tcf(tp->q, cl);
+ 		}
+@@ -395,8 +398,9 @@
+ 		if (tb[TCA_ROUTE4_POLICE-1]) {
+ 			struct tcf_police *police = tcf_police_locate(tb[TCA_ROUTE4_POLICE-1], tca[TCA_RATE-1]);
+ 
++			tcf_tree_lock(tp);
+ 			police = xchg(&f->police, police);
+-			synchronize_bh();
++			tcf_tree_unlock(tp);
+ 
+ 			tcf_police_release(police);
+ 		}
+@@ -412,8 +416,9 @@
+ 			return -ENOBUFS;
+ 		memset(head, 0, sizeof(struct route4_head));
+ 
++		tcf_tree_lock(tp);
+ 		tp->root = head;
+-		synchronize_bh();
++		tcf_tree_unlock(tp);
+ 	}
+ 
+ 	f = kmalloc(sizeof(struct route4_filter), GFP_KERNEL);
+@@ -475,8 +480,9 @@
+ 			goto errout;
+ 		memset(b, 0, sizeof(*b));
+ 
++		tcf_tree_lock(tp);
+ 		head->table[h1] = b;
+-		synchronize_bh();
++		tcf_tree_unlock(tp);
+ 	}
+ 	f->bkt = b;
+ 
+@@ -489,17 +495,18 @@
+ 			goto errout;
+ 	}
+ 
+-	cls_set_class(&f->res.class, tp->q->ops->cl_ops->bind_tcf(tp->q, base, f->res.classid));
++	cls_set_class(tp, &f->res.class, tp->q->ops->cl_ops->bind_tcf(tp->q, base, f->res.classid));
+ #ifdef CONFIG_NET_CLS_POLICE
+ 	if (tb[TCA_ROUTE4_POLICE-1])
+ 		f->police = tcf_police_locate(tb[TCA_ROUTE4_POLICE-1], tca[TCA_RATE-1]);
+ #endif
+ 
+ 	f->next = f1;
+-	wmb();
++	tcf_tree_lock(tp);
+ 	*ins_f = f;
++	tcf_tree_unlock(tp);
+ 
+-	route4_reset_fastmap(head, f->id);
++	route4_reset_fastmap(tp->q->dev, head, f->id);
+ 	*arg = (unsigned long)f;
+ 	return 0;
+ 
+@@ -543,7 +550,6 @@
+ 	}
+ }
+ 
+-#ifdef CONFIG_RTNETLINK
+ static int route4_dump(struct tcf_proto *tp, unsigned long fh,
+ 		       struct sk_buff *skb, struct tcmsg *t)
+ {
+@@ -589,7 +595,8 @@
+ 	rta->rta_len = skb->tail - b;
+ #ifdef CONFIG_NET_CLS_POLICE
+ 	if (f->police) {
+-		RTA_PUT(skb, TCA_STATS, sizeof(struct tc_stats), &f->police->stats);
++		if (qdisc_copy_stats(skb, &f->police->stats))
++			goto rtattr_failure;
+ 	}
+ #endif
+ 	return skb->len;
+@@ -598,7 +605,6 @@
+ 	skb_trim(skb, b - skb->data);
+ 	return -1;
+ }
+-#endif
+ 
+ struct tcf_proto_ops cls_route4_ops = {
+ 	NULL,
+@@ -612,11 +618,7 @@
+ 	route4_change,
+ 	route4_delete,
+ 	route4_walk,
+-#ifdef CONFIG_RTNETLINK
+ 	route4_dump
+-#else
+-	NULL
+-#endif
+ };
+ 
+ #ifdef MODULE
+@@ -630,3 +632,4 @@
+ 	unregister_tcf_proto_ops(&cls_route4_ops);
+ }
+ #endif
++MODULE_LICENSE("GPL");
+diff -urN ../v2.2.21/linux/net/sched/cls_rsvp.c linux/net/sched/cls_rsvp.c
+--- ../v2.2.21/linux/net/sched/cls_rsvp.c	Thu Apr 30 05:46:59 1998
++++ linux/net/sched/cls_rsvp.c	Tue Nov 13 01:29:33 2001
+@@ -39,3 +39,4 @@
+ #define RSVP_OPS	cls_rsvp_ops
+ 
+ #include "cls_rsvp.h"
++MODULE_LICENSE("GPL");
+diff -urN ../v2.2.21/linux/net/sched/cls_rsvp.h linux/net/sched/cls_rsvp.h
+--- ../v2.2.21/linux/net/sched/cls_rsvp.h	Sat Oct 21 12:10:57 2000
++++ linux/net/sched/cls_rsvp.h	Sun Mar 31 03:18:28 2002
+@@ -282,7 +282,7 @@
+ 					unsigned long cl;
+ 
+ 					s->ht[h2] = f->next;
+-					if ((cl = cls_set_class(&f->res.class, 0)) != 0)
++					if ((cl = __cls_set_class(&f->res.class, 0)) != 0)
+ 						tp->q->ops->cl_ops->unbind_tcf(tp->q, cl);
+ #ifdef CONFIG_NET_CLS_POLICE
+ 					tcf_police_release(f->police);
+@@ -310,10 +310,11 @@
+ 			unsigned long cl;
+ 
+ 
++			tcf_tree_lock(tp);
+ 			*fp = f->next;
+-			synchronize_bh();
++			tcf_tree_unlock(tp);
+ 
+-			if ((cl = cls_set_class(&f->res.class, 0)) != 0)
++			if ((cl = cls_set_class(tp, &f->res.class, 0)) != 0)
+ 				tp->q->ops->cl_ops->unbind_tcf(tp->q, cl);
+ 
+ #ifdef CONFIG_NET_CLS_POLICE
+@@ -332,8 +333,9 @@
+ 			for (sp = &((struct rsvp_head*)tp->root)->ht[h&0xFF];
+ 			     *sp; sp = &(*sp)->next) {
+ 				if (*sp == s) {
++					tcf_tree_lock(tp);
+ 					*sp = s->next;
+-					synchronize_bh();
++					tcf_tree_unlock(tp);
+ 
+ 					kfree(s);
+ 					return 0;
+@@ -446,7 +448,7 @@
+ 			unsigned long cl;
+ 
+ 			f->res.classid = *(u32*)RTA_DATA(tb[TCA_RSVP_CLASSID-1]);
+-			cl = cls_set_class(&f->res.class, tp->q->ops->cl_ops->bind_tcf(tp->q, base, f->res.classid));
++			cl = cls_set_class(tp, &f->res.class, tp->q->ops->cl_ops->bind_tcf(tp->q, base, f->res.classid));
+ 			if (cl)
+ 				tp->q->ops->cl_ops->unbind_tcf(tp->q, cl);
+ 		}
+@@ -454,8 +456,9 @@
+ 		if (tb[TCA_RSVP_POLICE-1]) {
+ 			struct tcf_police *police = tcf_police_locate(tb[TCA_RSVP_POLICE-1], tca[TCA_RATE-1]);
+ 
++			tcf_tree_lock(tp);
+ 			police = xchg(&f->police, police);
+-			synchronize_bh();
++			tcf_tree_unlock(tp);
+ 
+ 			tcf_police_release(police);
+ 		}
+@@ -536,7 +539,7 @@
+ 
+ 			f->sess = s;
+ 			if (f->tunnelhdr == 0)
+-				cls_set_class(&f->res.class, tp->q->ops->cl_ops->bind_tcf(tp->q, base, f->res.classid));
++				cls_set_class(tp, &f->res.class, tp->q->ops->cl_ops->bind_tcf(tp->q, base, f->res.classid));
+ #ifdef CONFIG_NET_CLS_POLICE
+ 			if (tb[TCA_RSVP_POLICE-1])
+ 				f->police = tcf_police_locate(tb[TCA_RSVP_POLICE-1], tca[TCA_RATE-1]);
+@@ -612,7 +615,6 @@
+ 	}
+ }
+ 
+-#ifdef CONFIG_RTNETLINK
+ static int rsvp_dump(struct tcf_proto *tp, unsigned long fh,
+ 		     struct sk_buff *skb, struct tcmsg *t)
+ {
+@@ -659,7 +661,8 @@
+ 	rta->rta_len = skb->tail - b;
+ #ifdef CONFIG_NET_CLS_POLICE
+ 	if (f->police) {
+-		RTA_PUT(skb, TCA_STATS, sizeof(struct tc_stats), &f->police->stats);
++		if (qdisc_copy_stats(skb, &f->police->stats))
++			goto rtattr_failure;
+ 	}
+ #endif
+ 	return skb->len;
+@@ -668,7 +671,6 @@
+ 	skb_trim(skb, b - skb->data);
+ 	return -1;
+ }
+-#endif
+ 
+ struct tcf_proto_ops RSVP_OPS = {
+ 	NULL,
+@@ -682,11 +684,7 @@
+ 	rsvp_change,
+ 	rsvp_delete,
+ 	rsvp_walk,
+-#ifdef CONFIG_RTNETLINK
+ 	rsvp_dump
+-#else
+-	NULL
+-#endif
+ };
+ 
+ #ifdef MODULE
+diff -urN ../v2.2.21/linux/net/sched/cls_rsvp6.c linux/net/sched/cls_rsvp6.c
+--- ../v2.2.21/linux/net/sched/cls_rsvp6.c	Thu Apr 30 05:46:59 1998
++++ linux/net/sched/cls_rsvp6.c	Tue Nov 13 01:29:33 2001
+@@ -40,3 +40,4 @@
+ #define RSVP_OPS	cls_rsvp6_ops
+ 
+ #include "cls_rsvp.h"
++MODULE_LICENSE("GPL");
+diff -urN ../v2.2.21/linux/net/sched/cls_tcindex.c linux/net/sched/cls_tcindex.c
+--- ../v2.2.21/linux/net/sched/cls_tcindex.c	Thu Jan  1 00:00:00 1970
++++ linux/net/sched/cls_tcindex.c	Sun Mar 31 03:18:28 2002
+@@ -0,0 +1,509 @@
++/*
++ * net/sched/cls_tcindex.c	Packet classifier for skb->tc_index
++ *
++ * Written 1998,1999 by Werner Almesberger, EPFL ICA
++ */
++
++#include <linux/config.h>
++#include <linux/module.h>
++#include <linux/types.h>
++#include <linux/kernel.h>
++#include <linux/skbuff.h>
++#include <linux/errno.h>
++#include <linux/netdevice.h>
++#include <net/ip.h>
++#include <net/pkt_sched.h>
++#include <net/route.h>
++
++
++/*
++ * Not quite sure if we need all the xchgs Alexey uses when accessing things.
++ * Can always add them later ... :)
++ */
++
++/*
++ * Passing parameters to the root seems to be done more awkwardly than really
++ * necessary. At least, u32 doesn't seem to use such dirty hacks. To be
++ * verified. FIXME.
++ */
++
++#define PERFECT_HASH_THRESHOLD	64	/* use perfect hash if not bigger */
++#define DEFAULT_HASH_SIZE	64	/* optimized for diffserv */
++
++
++#if 1 /* control */
++#define DPRINTK(format,args...) printk(KERN_DEBUG format,##args)
++#else
++#define DPRINTK(format,args...)
++#endif
++
++#if 0 /* data */
++#define D2PRINTK(format,args...) printk(KERN_DEBUG format,##args)
++#else
++#define D2PRINTK(format,args...)
++#endif
++
++
++#define	PRIV(tp)	((struct tcindex_data *) (tp)->root)
++
++
++struct tcindex_filter_result {
++	struct tcf_police *police;
++	struct tcf_result res;
++};
++
++struct tcindex_filter {
++	__u16 key;
++	struct tcindex_filter_result result;
++	struct tcindex_filter *next;
++};
++
++
++struct tcindex_data {
++	struct tcindex_filter_result *perfect; /* perfect hash; NULL if none */
++	struct tcindex_filter **h; /* imperfect hash; only used if !perfect;
++				      NULL if unused */
++	__u16 mask;		/* AND key with mask */
++	int shift;		/* shift ANDed key to the right */
++	int hash;		/* hash table size; 0 if undefined */
++	int alloc_hash;		/* allocated size */
++	int fall_through;	/* 0: only classify if explicit match */
++};
++
++
++static struct tcindex_filter_result *lookup(struct tcindex_data *p,__u16 key)
++{
++	struct tcindex_filter *f;
++
++	if (p->perfect)
++		return p->perfect[key].res.class ? p->perfect+key : NULL;
++	if (!p->h)
++		return NULL;
++	for (f = p->h[key % p->hash]; f; f = f->next) {
++		if (f->key == key)
++			return &f->result;
++	}
++	return NULL;
++}
++
++
++static int tcindex_classify(struct sk_buff *skb, struct tcf_proto *tp,
++			  struct tcf_result *res)
++{
++	struct tcindex_data *p = PRIV(tp);
++	struct tcindex_filter_result *f;
++
++	D2PRINTK("tcindex_classify(skb %p,tp %p,res %p),p %p\n",skb,tp,res,p);
++
++	f = lookup(p,(skb->tc_index & p->mask) >> p->shift);
++	if (!f) {
++		if (!p->fall_through)
++			return -1;
++		res->classid = TC_H_MAKE(TC_H_MAJ(tp->q->handle),
++		    (skb->tc_index& p->mask) >> p->shift);
++		res->class = 0;
++		D2PRINTK("alg 0x%x\n",res->classid);
++		return 0;
++	}
++	*res = f->res;
++	D2PRINTK("map 0x%x\n",res->classid);
++#ifdef CONFIG_NET_CLS_POLICE
++	if (f->police) {
++		int result;
++
++		result = tcf_police(skb,f->police);
++		D2PRINTK("police %d\n",res);
++		return result;
++	}
++#endif
++	return 0;
++}
++
++
++static unsigned long tcindex_get(struct tcf_proto *tp, u32 handle)
++{
++	struct tcindex_data *p = PRIV(tp);
++	struct tcindex_filter_result *r;
++
++	DPRINTK("tcindex_get(tp %p,handle 0x%08x)\n",tp,handle);
++	if (p->perfect && handle >= p->alloc_hash)
++		return 0;
++	r = lookup(PRIV(tp),handle);
++	return r && r->res.class ? (unsigned long) r : 0;
++}
++
++
++static void tcindex_put(struct tcf_proto *tp, unsigned long f)
++{
++	DPRINTK("tcindex_put(tp %p,f 0x%lx)\n",tp,f);
++}
++
++
++static int tcindex_init(struct tcf_proto *tp)
++{
++	struct tcindex_data *p;
++
++	DPRINTK("tcindex_init(tp %p)\n",tp);
++	MOD_INC_USE_COUNT;
++	p = kmalloc(sizeof(struct tcindex_data),GFP_KERNEL);
++	if (!p) {
++		MOD_DEC_USE_COUNT;
++		return -ENOMEM;
++	}
++	tp->root = p;
++	p->perfect = NULL;
++	p->h = NULL;
++	p->hash = 0;
++	p->mask = 0xffff;
++	p->shift = 0;
++	p->fall_through = 1;
++	return 0;
++}
++
++
++static int tcindex_delete(struct tcf_proto *tp, unsigned long arg)
++{
++	struct tcindex_data *p = PRIV(tp);
++	struct tcindex_filter_result *r = (struct tcindex_filter_result *) arg;
++	struct tcindex_filter *f = NULL;
++	unsigned long cl;
++
++	DPRINTK("tcindex_delete(tp %p,arg 0x%lx),p %p,f %p\n",tp,arg,p,f);
++	if (p->perfect) {
++		if (!r->res.class)
++			return -ENOENT;
++	} else {
++		int i;
++		struct tcindex_filter **walk = NULL;
++
++		for (i = 0; i < p->hash; i++)
++			for (walk = p->h+i; *walk; walk = &(*walk)->next)
++				if (&(*walk)->result == r)
++					goto found;
++		return -ENOENT;
++
++found:
++		f = *walk;
++		tcf_tree_lock(tp); 
++		*walk = f->next;
++		tcf_tree_unlock(tp);
++	}
++	cl = __cls_set_class(&r->res.class,0);
++	if (cl)
++		tp->q->ops->cl_ops->unbind_tcf(tp->q,cl);
++#ifdef CONFIG_NET_CLS_POLICE
++	tcf_police_release(r->police);
++#endif
++	if (f)
++		kfree(f);
++	return 0;
++}
++
++
++/*
++ * There are no parameters for tcindex_init, so we overload tcindex_change
++ */
++
++
++static int tcindex_change(struct tcf_proto *tp,unsigned long base,u32 handle,
++    struct rtattr **tca,unsigned long *arg)
++{
++	struct tcindex_filter_result new_filter_result = {
++		NULL,		/* no policing */
++		{ 0,0 },	/* no classification */
++	};
++	struct rtattr *opt = tca[TCA_OPTIONS-1];
++	struct rtattr *tb[TCA_TCINDEX_MAX];
++	struct tcindex_data *p = PRIV(tp);
++	struct tcindex_filter *f;
++	struct tcindex_filter_result *r = (struct tcindex_filter_result *) *arg;
++	struct tcindex_filter **walk;
++	int hash,shift;
++	__u16 mask;
++
++	DPRINTK("tcindex_change(tp %p,handle 0x%08x,tca %p,arg %p),opt %p,"
++	    "p %p,r %p\n",tp,handle,tca,arg,opt,p,r);
++	if (arg)
++		DPRINTK("*arg = 0x%lx\n",*arg);
++	if (!opt)
++		return 0;
++	if (rtattr_parse(tb,TCA_TCINDEX_MAX,RTA_DATA(opt),RTA_PAYLOAD(opt)) < 0)
++		return -EINVAL;
++	if (!tb[TCA_TCINDEX_HASH-1]) {
++		hash = p->hash;
++	} else {
++		if (RTA_PAYLOAD(tb[TCA_TCINDEX_HASH-1]) < sizeof(int))
++			return -EINVAL;
++		hash = *(int *) RTA_DATA(tb[TCA_TCINDEX_HASH-1]);
++	}
++	if (!tb[TCA_TCINDEX_MASK-1]) {
++		mask = p->mask;
++	} else {
++		if (RTA_PAYLOAD(tb[TCA_TCINDEX_MASK-1]) < sizeof(__u16))
++			return -EINVAL;
++		mask = *(__u16 *) RTA_DATA(tb[TCA_TCINDEX_MASK-1]);
++	}
++	if (!tb[TCA_TCINDEX_SHIFT-1])
++		shift = p->shift;
++	else {
++		if (RTA_PAYLOAD(tb[TCA_TCINDEX_SHIFT-1]) < sizeof(__u16))
++			return -EINVAL;
++		shift = *(int *) RTA_DATA(tb[TCA_TCINDEX_SHIFT-1]);
++	}
++	if (p->perfect && hash <= (mask >> shift))
++		return -EBUSY;
++	if (p->perfect && hash > p->alloc_hash)
++		return -EBUSY;
++	if (p->h && hash != p->alloc_hash)
++		return -EBUSY;
++	p->hash = hash;
++	p->mask = mask;
++	p->shift = shift;
++	if (tb[TCA_TCINDEX_FALL_THROUGH-1]) {
++		if (RTA_PAYLOAD(tb[TCA_TCINDEX_FALL_THROUGH-1]) < sizeof(int))
++			return -EINVAL;
++		p->fall_through =
++		    *(int *) RTA_DATA(tb[TCA_TCINDEX_FALL_THROUGH-1]);
++	}
++	DPRINTK("classid/police %p/%p\n",tb[TCA_TCINDEX_CLASSID-1],
++	    tb[TCA_TCINDEX_POLICE-1]);
++	if (!tb[TCA_TCINDEX_CLASSID-1] && !tb[TCA_TCINDEX_POLICE-1])
++		return 0;
++	if (!hash) {
++		if ((mask >> shift) < PERFECT_HASH_THRESHOLD) {
++			p->hash = (mask >> shift)+1;
++		} else {
++			p->hash = DEFAULT_HASH_SIZE;
++		}
++	}
++	if (!p->perfect && !p->h) {
++		p->alloc_hash = p->hash;
++		DPRINTK("hash %d mask %d\n",p->hash,p->mask);
++		if (p->hash > (mask >> shift)) {
++			p->perfect = kmalloc(p->hash*
++			    sizeof(struct tcindex_filter_result),GFP_KERNEL);
++			if (!p->perfect)
++				return -ENOMEM;
++			memset(p->perfect, 0,
++			       p->hash * sizeof(struct tcindex_filter_result));
++		} else {
++			p->h = kmalloc(p->hash*sizeof(struct tcindex_filter *),
++			    GFP_KERNEL);
++			if (!p->h)
++				return -ENOMEM;
++			memset(p->h, 0, p->hash*sizeof(struct tcindex_filter *));
++		}
++	}
++	/*
++	 * Note: this could be as restrictive as
++	 * if (handle & ~(mask >> shift))
++	 * but then, we'd fail handles that may become valid after some
++	 * future mask change. While this is extremely unlikely to ever
++	 * matter, the check below is safer (and also more
++	 * backwards-compatible).
++	 */
++	if (p->perfect && handle >= p->alloc_hash)
++		return -EINVAL;
++	if (p->perfect) {
++		r = p->perfect+handle;
++	} else {
++		r = lookup(p,handle);
++		DPRINTK("r=%p\n",r);
++		if (!r)
++			r = &new_filter_result;
++	}
++	DPRINTK("r=%p\n",r);
++	if (tb[TCA_TCINDEX_CLASSID-1]) {
++		unsigned long cl = cls_set_class(tp,&r->res.class,0);
++
++		if (cl)
++			tp->q->ops->cl_ops->unbind_tcf(tp->q,cl);
++		r->res.classid = *(__u32 *) RTA_DATA(tb[TCA_TCINDEX_CLASSID-1]);
++		r->res.class = tp->q->ops->cl_ops->bind_tcf(tp->q,base,
++							    r->res.classid);
++		if (!r->res.class) {
++			r->res.classid = 0;
++			return -ENOENT;
++		}
++        }
++#ifdef CONFIG_NET_CLS_POLICE
++	{
++		struct tcf_police *police;
++
++		police = tb[TCA_TCINDEX_POLICE-1] ?
++		    tcf_police_locate(tb[TCA_TCINDEX_POLICE-1],NULL) : NULL;
++		tcf_tree_lock(tp);
++		police = xchg(&r->police,police);
++		tcf_tree_unlock(tp);
++		tcf_police_release(police);
++	}
++#endif
++	if (r != &new_filter_result)
++		return 0;
++	f = kmalloc(sizeof(struct tcindex_filter),GFP_KERNEL);
++	if (!f)
++		return -ENOMEM;
++	f->key = handle;
++	f->result = new_filter_result;
++	f->next = NULL;
++	for (walk = p->h+(handle % p->hash); *walk; walk = &(*walk)->next)
++		/* nothing */;
++	wmb();
++	*walk = f;
++	return 0;
++}
++
++
++static void tcindex_walk(struct tcf_proto *tp, struct tcf_walker *walker)
++{
++	struct tcindex_data *p = PRIV(tp);
++	struct tcindex_filter *f,*next;
++	int i;
++
++	DPRINTK("tcindex_walk(tp %p,walker %p),p %p\n",tp,walker,p);
++	if (p->perfect) {
++		for (i = 0; i < p->hash; i++) {
++			if (!p->perfect[i].res.class)
++				continue;
++			if (walker->count >= walker->skip) {
++				if (walker->fn(tp,
++				    (unsigned long) (p->perfect+i), walker)
++				     < 0) {
++					walker->stop = 1;
++					return;
++				}
++			}
++			walker->count++;
++		}
++	}
++	if (!p->h)
++		return;
++	for (i = 0; i < p->hash; i++) {
++		for (f = p->h[i]; f; f = next) {
++			next = f->next;
++			if (walker->count >= walker->skip) {
++				if (walker->fn(tp,(unsigned long) &f->result,
++				    walker) < 0) {
++					walker->stop = 1;
++					return;
++				}
++			}
++			walker->count++;
++		}
++	}
++}
++
++
++static int tcindex_destroy_element(struct tcf_proto *tp,
++    unsigned long arg, struct tcf_walker *walker)
++{
++	return tcindex_delete(tp,arg);
++}
++
++
++static void tcindex_destroy(struct tcf_proto *tp)
++{
++	struct tcindex_data *p = PRIV(tp);
++	struct tcf_walker walker;
++
++	DPRINTK("tcindex_destroy(tp %p),p %p\n",tp,p);
++	walker.count = 0;
++	walker.skip = 0;
++	walker.fn = &tcindex_destroy_element;
++	tcindex_walk(tp,&walker);
++	if (p->perfect)
++		kfree(p->perfect);
++	if (p->h)
++		kfree(p->h);
++	kfree(p);
++	tp->root = NULL;
++	MOD_DEC_USE_COUNT;
++}
++
++
++static int tcindex_dump(struct tcf_proto *tp, unsigned long fh,
++    struct sk_buff *skb, struct tcmsg *t)
++{
++	struct tcindex_data *p = PRIV(tp);
++	struct tcindex_filter_result *r = (struct tcindex_filter_result *) fh;
++	unsigned char *b = skb->tail;
++	struct rtattr *rta;
++
++	DPRINTK("tcindex_dump(tp %p,fh 0x%lx,skb %p,t %p),p %p,r %p,b %p\n",
++	    tp,fh,skb,t,p,r,b);
++	DPRINTK("p->perfect %p p->h %p\n",p->perfect,p->h);
++	rta = (struct rtattr *) b;
++	RTA_PUT(skb,TCA_OPTIONS,0,NULL);
++	if (!fh) {
++		t->tcm_handle = ~0; /* whatever ... */
++		RTA_PUT(skb,TCA_TCINDEX_HASH,sizeof(p->hash),&p->hash);
++		RTA_PUT(skb,TCA_TCINDEX_MASK,sizeof(p->mask),&p->mask);
++		RTA_PUT(skb,TCA_TCINDEX_SHIFT,sizeof(p->shift),&p->shift);
++		RTA_PUT(skb,TCA_TCINDEX_FALL_THROUGH,sizeof(p->fall_through),
++		    &p->fall_through);
++	} else {
++		if (p->perfect) {
++			t->tcm_handle = r-p->perfect;
++		} else {
++			struct tcindex_filter *f;
++			int i;
++
++			t->tcm_handle = 0;
++			for (i = 0; !t->tcm_handle && i < p->hash; i++) {
++				for (f = p->h[i]; !t->tcm_handle && f;
++				     f = f->next) {
++					if (&f->result == r)
++						t->tcm_handle = f->key;
++				}
++			}
++		}
++		DPRINTK("handle = %d\n",t->tcm_handle);
++		if (r->res.class)
++			RTA_PUT(skb, TCA_TCINDEX_CLASSID, 4, &r->res.classid);
++#ifdef CONFIG_NET_CLS_POLICE
++		if (r->police) {
++			struct rtattr *p_rta = (struct rtattr *) skb->tail;
++
++			RTA_PUT(skb,TCA_TCINDEX_POLICE,0,NULL);
++			if (tcf_police_dump(skb,r->police) < 0)
++				goto rtattr_failure;
++			p_rta->rta_len = skb->tail-(u8 *) p_rta;
++		}
++#endif
++	}
++	rta->rta_len = skb->tail-b;
++	return skb->len;
++
++rtattr_failure:
++	skb_trim(skb, b - skb->data);
++	return -1;
++}
++
++struct tcf_proto_ops cls_tcindex_ops = {
++	NULL,
++	"tcindex",
++	tcindex_classify,
++	tcindex_init,
++	tcindex_destroy,
++
++	tcindex_get,
++	tcindex_put,
++	tcindex_change,
++	tcindex_delete,
++	tcindex_walk,
++	tcindex_dump
++};
++
++
++#ifdef MODULE
++int init_module(void)
++{
++	return register_tcf_proto_ops(&cls_tcindex_ops);
++}
++
++void cleanup_module(void) 
++{
++	unregister_tcf_proto_ops(&cls_tcindex_ops);
++}
++#endif
++MODULE_LICENSE("GPL");
+diff -urN ../v2.2.21/linux/net/sched/cls_u32.c linux/net/sched/cls_u32.c
+--- ../v2.2.21/linux/net/sched/cls_u32.c	Sat Aug  4 12:52:33 2001
++++ linux/net/sched/cls_u32.c	Sun Mar 31 03:18:28 2002
+@@ -52,8 +52,6 @@
+ #include <net/sock.h>
+ #include <net/pkt_sched.h>
+ 
+-#define BUG_TRAP(x) if (!(x)) { printk("Assertion (" #x ") failed at " __FILE__ "(%d):" __FUNCTION__ "\n", __LINE__); }
+-
+ 
+ struct tc_u_knode
+ {
+@@ -164,7 +162,7 @@
+ 		if (!(n->sel.flags&(TC_U32_VAROFFSET|TC_U32_OFFSET|TC_U32_EAT)))
+ 			goto next_ht;
+ 
+-		if (n->sel.flags&(TC_U32_EAT|TC_U32_VAROFFSET)) {
++		if (n->sel.flags&(TC_U32_OFFSET|TC_U32_VAROFFSET)) {
+ 			off2 = n->sel.off + 3;
+ 			if (n->sel.flags&TC_U32_VAROFFSET)
+ 				off2 += ntohs(n->sel.offmask & *(u16*)(ptr+n->sel.offoff)) >>n->sel.offshift;
+@@ -307,7 +305,7 @@
+ {
+ 	unsigned long cl;
+ 
+-	if ((cl = cls_set_class(&n->res.class, 0)) != 0)
++	if ((cl = __cls_set_class(&n->res.class, 0)) != 0)
+ 		tp->q->ops->cl_ops->unbind_tcf(tp->q, cl);
+ #ifdef CONFIG_NET_CLS_POLICE
+ 	tcf_police_release(n->police);
+@@ -326,8 +324,9 @@
+ 	if (ht) {
+ 		for (kp = &ht->ht[TC_U32_HASH(key->handle)]; *kp; kp = &(*kp)->next) {
+ 			if (*kp == key) {
++				tcf_tree_lock(tp);
+ 				*kp = key->next;
+-				synchronize_bh();
++				tcf_tree_unlock(tp);
+ 
+ 				u32_destroy_key(tp, key);
+ 				return 0;
+@@ -346,7 +345,6 @@
+ 	for (h=0; h<=ht->divisor; h++) {
+ 		while ((n = ht->ht[h]) != NULL) {
+ 			ht->ht[h] = n->next;
+-			synchronize_bh();
+ 
+ 			u32_destroy_key(tp, n);
+ 		}
+@@ -465,8 +463,9 @@
+ 			ht_down->refcnt++;
+ 		}
+ 
++		sch_tree_lock(q);
+ 		ht_down = xchg(&n->ht_down, ht_down);
+-		synchronize_bh();
++		sch_tree_unlock(q);
+ 
+ 		if (ht_down)
+ 			ht_down->refcnt--;
+@@ -475,7 +474,9 @@
+ 		unsigned long cl;
+ 
+ 		n->res.classid = *(u32*)RTA_DATA(tb[TCA_U32_CLASSID-1]);
+-		cl = cls_set_class(&n->res.class, q->ops->cl_ops->bind_tcf(q, base, n->res.classid));
++		sch_tree_lock(q);
++		cl = __cls_set_class(&n->res.class, q->ops->cl_ops->bind_tcf(q, base, n->res.classid));
++		sch_tree_unlock(q);
+ 		if (cl)
+ 			q->ops->cl_ops->unbind_tcf(q, cl);
+ 	}
+@@ -483,8 +484,9 @@
+ 	if (tb[TCA_U32_POLICE-1]) {
+ 		struct tcf_police *police = tcf_police_locate(tb[TCA_U32_POLICE-1], est);
+ 
++		sch_tree_lock(q);
+ 		police = xchg(&n->police, police);
+-		synchronize_bh();
++		sch_tree_unlock(q);
+ 
+ 		tcf_police_release(police);
+ 	}
+@@ -633,7 +635,6 @@
+ 	}
+ }
+ 
+-#ifdef CONFIG_RTNETLINK
+ static int u32_dump(struct tcf_proto *tp, unsigned long fh,
+ 		     struct sk_buff *skb, struct tcmsg *t)
+ {
+@@ -682,7 +683,8 @@
+ 	rta->rta_len = skb->tail - b;
+ #ifdef CONFIG_NET_CLS_POLICE
+ 	if (TC_U32_KEY(n->handle) && n->police) {
+-		RTA_PUT(skb, TCA_STATS, sizeof(struct tc_stats), &n->police->stats);
++		if (qdisc_copy_stats(skb, &n->police->stats))
++			goto rtattr_failure;
+ 	}
+ #endif
+ 	return skb->len;
+@@ -691,7 +693,6 @@
+ 	skb_trim(skb, b - skb->data);
+ 	return -1;
+ }
+-#endif
+ 
+ struct tcf_proto_ops cls_u32_ops = {
+ 	NULL,
+@@ -705,11 +706,7 @@
+ 	u32_change,
+ 	u32_delete,
+ 	u32_walk,
+-#ifdef CONFIG_RTNETLINK
+ 	u32_dump
+-#else
+-	NULL
+-#endif
+ };
+ 
+ #ifdef MODULE
+@@ -723,3 +720,4 @@
+ 	unregister_tcf_proto_ops(&cls_u32_ops);
+ }
+ #endif
++MODULE_LICENSE("GPL");
+diff -urN ../v2.2.21/linux/net/sched/police.c linux/net/sched/police.c
+--- ../v2.2.21/linux/net/sched/police.c	Sat Oct 21 12:10:47 2000
++++ linux/net/sched/police.c	Wed Aug  7 23:28:12 2002
+@@ -31,8 +31,6 @@
+ #include <net/sock.h>
+ #include <net/pkt_sched.h>
+ 
+-#define BUG_TRAP(x) if (!(x)) { printk("Assertion (" #x ") failed at " __FILE__ "(%d):" __FUNCTION__ "\n", __LINE__); }
+-
+ #define L2T(p,L)   ((p)->R_tab->data[(L)>>(p)->R_tab->rate.cell_log])
+ #define L2T_P(p,L) ((p)->P_tab->data[(L)>>(p)->P_tab->rate.cell_log])
+ 
+@@ -74,6 +72,7 @@
+ 	for (p1p = &tcf_police_ht[h]; *p1p; p1p = &(*p1p)->next) {
+ 		if (*p1p == p) {
+ 			*p1p = p->next;
++			synchronize_bh();
+ #ifdef CONFIG_NET_ESTIMATOR
+ 			qdisc_kill_estimator(&p->stats);
+ #endif
+@@ -145,7 +144,9 @@
+ #endif
+ 	h = tcf_police_hash(p->index);
+ 	p->next = tcf_police_ht[h];
++	wmb();
+ 	tcf_police_ht[h] = p;
++	synchronize_bh();
+ 	return p;
+ 
+ failure:
+diff -urN ../v2.2.21/linux/net/sched/sch_api.c linux/net/sched/sch_api.c
+--- ../v2.2.21/linux/net/sched/sch_api.c	Sat Oct 21 12:10:47 2000
++++ linux/net/sched/sch_api.c	Wed Aug  7 23:27:29 2002
+@@ -11,7 +11,10 @@
+  * Fixes:
+  *
+  * Rani Assaf <rani@magic.metawire.com> :980802: JIFFIES and CPU clock sources are repaired.
++ * J Hadi Salim (hadi@nortelnetworks.com):981128: "Append" message
++ *
+  * Eduardo J. Blanco <ejbs@netlabs.com.uy> :990222: kmod support
++ * Jamal Hadi Salim <hadi@nortelnetworks.com>: 990501: ingress support
+  */
+ 
+ #include <linux/config.h>
+@@ -31,6 +34,7 @@
+ #include <linux/init.h>
+ #include <linux/proc_fs.h>
+ #include <linux/kmod.h>
++#include <linux/firewall.h>
+ 
+ #include <net/sock.h>
+ #include <net/pkt_sched.h>
+@@ -40,8 +44,6 @@
+ #include <asm/system.h>
+ #include <asm/bitops.h>
+ 
+-#define BUG_TRAP(x) if (!(x)) { printk("Assertion (" #x ") failed at " __FILE__ "(%d):" __FUNCTION__ "\n", __LINE__); }
+-
+ #ifdef CONFIG_RTNETLINK
+ static int qdisc_notify(struct sk_buff *oskb, struct nlmsghdr *n, u32 clid,
+ 			struct Qdisc *old, struct Qdisc *new);
+@@ -95,9 +97,15 @@
+ 
+    ---enqueue
+ 
+-   enqueue returns number of enqueued packets i.e. this number is 1,
+-   if packet was enqueued successfully and <1 if something (not
+-   necessary THIS packet) was dropped.
++   enqueue returns 0, if packet was enqueued successfully.
++   If packet (this one or another one) was dropped, it returns
++   not zero error code.
++   NET_XMIT_DROP 	- this packet dropped
++     Expected action: do not backoff, but wait until queue will clear.
++   NET_XMIT_CN	 	- probably this packet enqueued, but another one dropped.
++     Expected action: backoff or ignore
++   NET_XMIT_POLICED	- dropped by police.
++     Expected action: backoff or error to real-time apps.
+ 
+    Auxiliary routines:
+ 
+@@ -139,9 +147,11 @@
+ {
+ 	struct Qdisc_ops *q, **qp;
+ 
+-	for (qp = &qdisc_base; (q=*qp)!=NULL; qp = &q->next)
+-		if (strcmp(qops->id, q->id) == 0)
++	for (qp = &qdisc_base; (q=*qp)!=NULL; qp = &q->next) {
++		if (strcmp(qops->id, q->id) == 0) {
+ 			return -EEXIST;
++		}
++	}
+ 
+ 	if (qops->enqueue == NULL)
+ 		qops->enqueue = noop_qdisc_ops.enqueue;
+@@ -158,14 +168,17 @@
+ int unregister_qdisc(struct Qdisc_ops *qops)
+ {
+ 	struct Qdisc_ops *q, **qp;
++	int err = -ENOENT;
++
+ 	for (qp = &qdisc_base; (q=*qp)!=NULL; qp = &q->next)
+ 		if (q == qops)
+ 			break;
+-	if (!q)
+-		return -ENOENT;
+-	*qp = q->next;
+-	q->next = NULL;
+-	return 0;
++	if (q) {
++		*qp = q->next;
++		q->next = NULL;
++		err = 0;
++	}
++	return err;
+ }
+ 
+ /* We know handle. Find qdisc among all qdisc's attached to device
+@@ -192,6 +205,7 @@
+ 	if (cops == NULL)
+ 		return NULL;
+ 	cl = cops->get(p, classid);
++
+ 	if (cl == 0)
+ 		return NULL;
+ 	leaf = cops->leaf(p, cl);
+@@ -203,15 +217,15 @@
+ 
+ struct Qdisc_ops *qdisc_lookup_ops(struct rtattr *kind)
+ {
+-	struct Qdisc_ops *q;
++	struct Qdisc_ops *q = NULL;
+ 
+ 	if (kind) {
+ 		for (q = qdisc_base; q; q = q->next) {
+ 			if (rtattr_strcmp(kind, q->id) == 0)
+-				return q;
++				break;
+ 		}
+ 	}
+-	return NULL;
++	return q;
+ }
+ 
+ static struct qdisc_rate_table *qdisc_rtab_list;
+@@ -285,17 +299,32 @@
+ 		dev_deactivate(dev);
+ 
+ 	start_bh_atomic();
+-	oqdisc = dev->qdisc_sleeping;
++	if (qdisc && qdisc->flags&TCQ_F_INGRES) {
++		oqdisc = dev->qdisc_ingress;
++		/* Prune old scheduler */
++		if (oqdisc && atomic_read(&oqdisc->refcnt) <= 1) {
++			/* delete */
++			qdisc_reset(oqdisc);
++			dev->qdisc_ingress = NULL;
++		} else {  /* new */
++			dev->qdisc_ingress = qdisc;
++		}
++
++	} else {
++
++		oqdisc = dev->qdisc_sleeping;
++
++		/* Prune old scheduler */
++		if (oqdisc && atomic_read(&oqdisc->refcnt) <= 1)
++			qdisc_reset(oqdisc);
++
++		/* ... and graft new one */
++		if (qdisc == NULL)
++			qdisc = &noop_qdisc;
++		dev->qdisc_sleeping = qdisc;
++		dev->qdisc = &noop_qdisc;
++	}
+ 
+-	/* Prune old scheduler */
+-	if (oqdisc && atomic_read(&oqdisc->refcnt) <= 1)
+-		qdisc_reset(oqdisc);
+-
+-	/* ... and graft new one */
+-	if (qdisc == NULL)
+-		qdisc = &noop_qdisc;
+-	dev->qdisc_sleeping = qdisc;
+-	dev->qdisc = &noop_qdisc;
+ 	end_bh_atomic();
+ 
+ 	if (dev->flags & IFF_UP)
+@@ -315,9 +344,15 @@
+ 		struct Qdisc *new, struct Qdisc **old)
+ {
+ 	int err = 0;
++	struct Qdisc *q = *old;
++
+ 
+-	if (parent == NULL) {
+-		*old = dev_graft_qdisc(dev, new);
++	if (parent == NULL) { 
++		if (q && q->flags&TCQ_F_INGRES) {
++			*old = dev_graft_qdisc(dev, q);
++		} else {
++			*old = dev_graft_qdisc(dev, new);
++		}
+ 	} else {
+ 		struct Qdisc_class_ops *cops = parent->ops->cl_ops;
+ 
+@@ -334,8 +369,6 @@
+ 	return err;
+ }
+ 
+-#ifdef CONFIG_RTNETLINK
+-
+ /*
+    Allocate and initialize new qdisc.
+ 
+@@ -376,7 +409,7 @@
+ 		goto err_out;
+ 
+ 	/* Grrr... Resolve race condition with module unload */
+-	
++
+ 	err = -EINVAL;
+ 	if (ops != qdisc_lookup_ops(kind))
+ 		goto err_out;
+@@ -384,6 +417,10 @@
+ 	memset(sch, 0, size);
+ 
+ 	skb_queue_head_init(&sch->q);
++
++	if (handle == TC_H_INGRESS)
++		sch->flags |= TCQ_F_INGRES;
++
+ 	sch->ops = ops;
+ 	sch->enqueue = ops->enqueue;
+ 	sch->dequeue = ops->dequeue;
+@@ -395,7 +432,11 @@
+ 		if (handle == 0)
+ 			goto err_out;
+ 	}
+-	sch->handle = handle;
++
++	if (handle == TC_H_INGRESS)
++                sch->handle =TC_H_MAKE(TC_H_INGRESS, 0);
++        else
++                sch->handle = handle;
+ 
+ 	if (!ops->init || (err = ops->init(sch, tca[TCA_OPTIONS-1])) == 0) {
+ 		sch->next = dev->qdisc_list;
+@@ -493,12 +534,16 @@
+ 
+ 	if (clid) {
+ 		if (clid != TC_H_ROOT) {
+-			if ((p = qdisc_lookup(dev, TC_H_MAJ(clid))) == NULL)
+-				return -ENOENT;
+-			q = qdisc_leaf(p, clid);
+-		} else
++			if (TC_H_MAJ(clid) != TC_H_MAJ(TC_H_INGRESS)) {
++				if ((p = qdisc_lookup(dev, TC_H_MAJ(clid))) == NULL)
++					return -ENOENT;
++				q = qdisc_leaf(p, clid);
++			} else { /* ingress */
++				q = dev->qdisc_ingress;
++                        }
++		} else {
+ 			q = dev->qdisc_sleeping;
+-
++		}
+ 		if (!q)
+ 			return -ENOENT;
+ 
+@@ -521,7 +566,9 @@
+ 			return err;
+ 		if (q) {
+ 			qdisc_notify(skb, n, clid, q, NULL);
++			sch_dev_queue_lock(dev);
+ 			qdisc_destroy(q);
++			sch_dev_queue_unlock(dev);
+ 		}
+ 	} else {
+ 		qdisc_notify(skb, n, clid, NULL, q);
+@@ -548,9 +595,13 @@
+ 
+ 	if (clid) {
+ 		if (clid != TC_H_ROOT) {
+-			if ((p = qdisc_lookup(dev, TC_H_MAJ(clid))) == NULL)
+-				return -ENOENT;
+-			q = qdisc_leaf(p, clid);
++			if (clid != TC_H_INGRESS) {
++				if ((p = qdisc_lookup(dev, TC_H_MAJ(clid))) == NULL)
++					return -ENOENT;
++				q = qdisc_leaf(p, clid);
++			} else { /*ingress */
++				q = dev->qdisc_ingress;
++			}
+ 		} else {
+ 			q = dev->qdisc_sleeping;
+ 		}
+@@ -628,7 +679,10 @@
+ create_n_graft:
+ 	if (!(n->nlmsg_flags&NLM_F_CREATE))
+ 		return -ENOENT;
+-	q = qdisc_create(dev, tcm->tcm_handle, tca, &err);
++	if (clid == TC_H_INGRESS)
++		q = qdisc_create(dev, tcm->tcm_parent, tca, &err);
++        else
++		q = qdisc_create(dev, tcm->tcm_handle, tca, &err);
+ 	if (q == NULL)
+ 		return err;
+ 
+@@ -637,17 +691,36 @@
+ 		struct Qdisc *old_q = NULL;
+ 		err = qdisc_graft(dev, p, clid, q, &old_q);
+ 		if (err) {
+-			if (q)
++			if (q) {
++				sch_dev_queue_lock(dev);
+ 				qdisc_destroy(q);
++				sch_dev_queue_unlock(dev);
++			}
+ 			return err;
+ 		}
+ 		qdisc_notify(skb, n, clid, old_q, q);
+-		if (old_q)
++		if (old_q) {
++			sch_dev_queue_lock(dev);
+ 			qdisc_destroy(old_q);
++			sch_dev_queue_unlock(dev);
++		}
+ 	}
+ 	return 0;
+ }
+ 
++int qdisc_copy_stats(struct sk_buff *skb, struct tc_stats *st)
++{
++	start_bh_atomic();
++	RTA_PUT(skb, TCA_STATS, sizeof(*st), st);
++	end_bh_atomic();
++	return 0;
++
++rtattr_failure:
++	end_bh_atomic();
++	return -1;
++}
++
++
+ static int tc_fill_qdisc(struct sk_buff *skb, struct Qdisc *q, u32 clid,
+ 			 u32 pid, u32 seq, unsigned flags, int event)
+ {
+@@ -667,7 +740,8 @@
+ 	if (q->ops->dump && q->ops->dump(q, skb) < 0)
+ 		goto rtattr_failure;
+ 	q->stats.qlen = q->q.qlen;
+-	RTA_PUT(skb, TCA_STATS, sizeof(q->stats), &q->stats);
++	if (qdisc_copy_stats(skb, &q->stats))
++		goto rtattr_failure;
+ 	nlh->nlmsg_len = skb->tail - b;
+ 	return skb->len;
+ 
+@@ -723,8 +797,9 @@
+ 			if (q_idx < s_q_idx)
+ 				continue;
+ 			if (tc_fill_qdisc(skb, q, 0, NETLINK_CB(cb->skb).pid,
+-					  cb->nlh->nlmsg_seq, NLM_F_MULTI, RTM_NEWQDISC) <= 0)
++					  cb->nlh->nlmsg_seq, NLM_F_MULTI, RTM_NEWQDISC) <= 0) {
+ 				goto done;
++			}
+ 		}
+ 	}
+ 
+@@ -956,6 +1031,13 @@
+ 
+ 	return skb->len;
+ }
++
++#if defined(CONFIG_NET_SCH_INGRESS) || defined(CONFIG_NET_SCH_INGRESS_MODULE)
++int call_in_ingress(struct sk_buff *skb)
++{
++	if (!skb->dev->qdisc_ingress) return FW_ACCEPT;
++	return skb->dev->qdisc_ingress->enqueue(skb,skb->dev->qdisc_ingress);
++}
+ #endif
+ 
+ int psched_us_per_tick = 1;
+@@ -967,8 +1049,9 @@
+ {
+ 	int len;
+ 
+-	len = sprintf(buffer, "%08x %08x\n",
+-		      psched_tick_per_us, psched_us_per_tick);
++	len = sprintf(buffer, "%08x %08x %08x %08x\n",
++		      psched_tick_per_us, psched_us_per_tick,
++		      1000000, HZ);
+ 
+ 	len -= offset;
+ 
+@@ -1011,7 +1094,7 @@
+ static void psched_tick(unsigned long);
+ 
+ static struct timer_list psched_timer =
+-	{ NULL, NULL, 0, 0L, psched_tick };
++	{ function: psched_tick };
+ 
+ static void psched_tick(unsigned long dummy)
+ {
+@@ -1022,7 +1105,7 @@
+ 	psched_timer.expires = jiffies + 1*HZ;
+ #else
+ 	unsigned long now = jiffies;
+-	psched_time_base = ((u64)now)<<PSCHED_JSCALE;
++	psched_time_base += ((u64)(now-psched_time_mark))<<PSCHED_JSCALE;
+ 	psched_time_mark = now;
+ 	psched_timer.expires = now + 60*60*HZ;
+ #endif
+@@ -1072,9 +1155,7 @@
+ 
+ __initfunc(int pktsched_init(void))
+ {
+-#ifdef CONFIG_RTNETLINK
+ 	struct rtnetlink_link *link_p;
+-#endif
+ #ifdef CONFIG_PROC_FS
+ 	struct proc_dir_entry *ent;
+ #endif
+@@ -1090,7 +1171,6 @@
+ #endif
+ #endif
+ 
+-#ifdef CONFIG_RTNETLINK
+ 	link_p = rtnetlink_links[PF_UNSPEC];
+ 
+ 	/* Setup rtnetlink links. It is made here to avoid
+@@ -1107,11 +1187,10 @@
+ 		link_p[RTM_GETTCLASS-RTM_BASE].doit = tc_ctl_tclass;
+ 		link_p[RTM_GETTCLASS-RTM_BASE].dumpit = tc_dump_tclass;
+ 	}
+-#endif
+ 
+ #define INIT_QDISC(name) { \
+           extern struct Qdisc_ops name##_qdisc_ops; \
+-          register_qdisc(&##name##_qdisc_ops); \
++          register_qdisc(& name##_qdisc_ops);       \
+ 	}
+ 
+ 	INIT_QDISC(pfifo);
+@@ -1134,6 +1213,9 @@
+ #endif
+ #ifdef CONFIG_NET_SCH_GRED
+        INIT_QDISC(gred);
++#endif
++#ifdef CONFIG_NET_SCH_INGRESS
++       INIT_QDISC(ingress);
+ #endif
+ #ifdef CONFIG_NET_SCH_DSMARK
+        INIT_QDISC(dsmark);
+diff -urN ../v2.2.21/linux/net/sched/sch_cbq.c linux/net/sched/sch_cbq.c
+--- ../v2.2.21/linux/net/sched/sch_cbq.c	Sat Oct 21 12:11:29 2000
++++ linux/net/sched/sch_cbq.c	Thu Aug  1 23:43:46 2002
+@@ -192,8 +192,6 @@
+ 
+ #define L2T(cl,len)	((cl)->R_tab->data[(len)>>(cl)->R_tab->rate.cell_log])
+ 
+-#define BUG_TRAP(x) if (!(x)) { printk("Assertion (" #x ") failed at " __FILE__ "(%d):" __FUNCTION__ "\n", __LINE__); }
+-
+ 
+ static __inline__ unsigned cbq_hash(u32 h)
+ {
+@@ -284,6 +282,7 @@
+ 		case TC_POLICE_SHOT:
+ 			return NULL;
+ 		default:
++			break;
+ 		}
+ #endif
+ 		if (cl->level == 0)
+@@ -397,6 +396,7 @@
+ 	struct cbq_sched_data *q = (struct cbq_sched_data *)sch->data;
+ 	struct cbq_class *cl = cbq_classify(skb, sch);
+ 	int len = skb->len;
++	int ret = NET_XMIT_POLICED;
+ 
+ #ifdef CONFIG_NET_CLS_POLICE
+ 	q->rx_class = cl;
+@@ -405,14 +405,14 @@
+ #ifdef CONFIG_NET_CLS_POLICE
+ 		cl->q->__parent = sch;
+ #endif
+-		if (cl->q->enqueue(skb, cl->q) == 1) {
++		if ((ret = cl->q->enqueue(skb, cl->q)) == 0) {
+ 			sch->q.qlen++;
+ 			sch->stats.packets++;
+ 			sch->stats.bytes+=len;
+ 			cbq_mark_toplevel(q, cl);
+ 			if (!cl->next_alive)
+ 				cbq_activate_class(cl);
+-			return 1;
++			return 0;
+ 		}
+ 	}
+ 
+@@ -423,7 +423,7 @@
+ 		cbq_mark_toplevel(q, cl);
+ 		cl->stats.drops++;
+ 	}
+-	return 0;
++	return ret;
+ }
+ 
+ static int
+@@ -431,11 +431,12 @@
+ {
+ 	struct cbq_sched_data *q = (struct cbq_sched_data *)sch->data;
+ 	struct cbq_class *cl;
++	int ret;
+ 
+ 	if ((cl = q->tx_class) == NULL) {
+ 		kfree_skb(skb);
+ 		sch->stats.drops++;
+-		return 0;
++		return NET_XMIT_CN;
+ 	}
+ 	q->tx_class = NULL;
+ 
+@@ -445,15 +446,15 @@
+ 	q->rx_class = cl;
+ 	cl->q->__parent = sch;
+ #endif
+-	if (cl->q->ops->requeue(skb, cl->q) == 1) {
++	if ((ret = cl->q->ops->requeue(skb, cl->q)) == 0) {
+ 		sch->q.qlen++;
+ 		if (!cl->next_alive)
+ 			cbq_activate_class(cl);
+-		return 1;
++		return 0;
+ 	}
+ 	sch->stats.drops++;
+ 	cl->stats.drops++;
+-	return 0;
++	return ret;
+ }
+ 
+ /* Overlimit actions */
+@@ -597,8 +598,9 @@
+ static void cbq_watchdog(unsigned long arg)
+ {
+ 	struct Qdisc *sch = (struct Qdisc*)arg;
++
+ 	sch->flags &= ~TCQ_F_THROTTLED;
+-	qdisc_wakeup(sch->dev);
++	netif_schedule(sch->dev);
+ }
+ 
+ static unsigned long cbq_undelay_prio(struct cbq_sched_data *q, int prio)
+@@ -666,7 +668,7 @@
+ 	}
+ 
+ 	sch->flags &= ~TCQ_F_THROTTLED;
+-	qdisc_wakeup(sch->dev);
++	netif_schedule(sch->dev);
+ }
+ 
+ 
+@@ -688,7 +690,7 @@
+ 		q->rx_class = cl;
+ 		cl->q->__parent = sch;
+ 
+-		if (cl->q->enqueue(skb, cl->q) == 1) {
++		if (cl->q->enqueue(skb, cl->q) == 0) {
+ 			sch->q.qlen++;
+ 			sch->stats.packets++;
+ 			sch->stats.bytes+=len;
+@@ -877,7 +879,7 @@
+ 
+ 		/* Start round */
+ 		do {
+-			struct cbq_class *borrow = NULL;
++			struct cbq_class *borrow = cl;
+ 
+ 			if (cl->q->q.qlen &&
+ 			    (borrow = cbq_under_limit(cl)) == NULL)
+@@ -1052,16 +1054,11 @@
+ 
+ 	if (sch->q.qlen) {
+ 		sch->stats.overlimits++;
+-		if (q->wd_expires && !sch->dev->tbusy) {
++		if (q->wd_expires && !netif_queue_stopped(sch->dev)) {
+ 			long delay = PSCHED_US2JIFFIE(q->wd_expires);
+ 			del_timer(&q->wd_timer);
+ 			if (delay <= 0)
+ 				delay = 1;
+-			if (delay > 10*HZ) {
+-				if (net_ratelimit())
+-					printk(KERN_DEBUG "CBQ delay %ld > 10sec\n", delay);
+-				delay = 10*HZ;
+-			}
+ 			q->wd_timer.expires = jiffies + delay;
+ 			add_timer(&q->wd_timer);
+ 			sch->flags |= TCQ_F_THROTTLED;
+@@ -1248,8 +1245,10 @@
+ 
+ 		cl = cl_head;
+ 		do {
+-			if (cl->q->ops->drop && cl->q->ops->drop(cl->q))
++			if (cl->q->ops->drop && cl->q->ops->drop(cl->q)) {
++				sch->q.qlen--;
+ 				return 1;
++			}
+ 		} while ((cl = cl->next_alive) != cl_head);
+ 	}
+ 	return 0;
+@@ -1457,8 +1456,6 @@
+ 	return 0;
+ }
+ 
+-#ifdef CONFIG_RTNETLINK
+-
+ static __inline__ int cbq_dump_rate(struct sk_buff *skb, struct cbq_class *cl)
+ {
+ 	unsigned char	 *b = skb->tail;
+@@ -1580,6 +1577,16 @@
+ 	return 0;
+ }
+ 
++int cbq_copy_xstats(struct sk_buff *skb, struct tc_cbq_xstats *st)
++{
++	RTA_PUT(skb, TCA_XSTATS, sizeof(*st), st);
++	return 0;
++
++rtattr_failure:
++	return -1;
++}
++
++
+ static int cbq_dump(struct Qdisc *sch, struct sk_buff *skb)
+ {
+ 	struct cbq_sched_data *q = (struct cbq_sched_data*)sch->data;
+@@ -1591,8 +1598,13 @@
+ 	if (cbq_dump_attr(skb, &q->link) < 0)
+ 		goto rtattr_failure;
+ 	rta->rta_len = skb->tail - b;
++	sch_dev_queue_lock(sch->dev);
+ 	q->link.xstats.avgidle = q->link.avgidle;
+-	RTA_PUT(skb, TCA_XSTATS, sizeof(q->link.xstats), &q->link.xstats);
++	if (cbq_copy_xstats(skb, &q->link.xstats)) {
++		sch_dev_queue_unlock(sch->dev);
++		goto rtattr_failure;
++	}
++	sch_dev_queue_unlock(sch->dev);
+ 	return skb->len;
+ 
+ rtattr_failure:
+@@ -1622,12 +1634,19 @@
+ 		goto rtattr_failure;
+ 	rta->rta_len = skb->tail - b;
+ 	cl->stats.qlen = cl->q->q.qlen;
+-	RTA_PUT(skb, TCA_STATS, sizeof(cl->stats), &cl->stats);
++	if (qdisc_copy_stats(skb, &cl->stats))
++		goto rtattr_failure;
++	sch_dev_queue_lock(sch->dev);
+ 	cl->xstats.avgidle = cl->avgidle;
+ 	cl->xstats.undertime = 0;
+ 	if (!PSCHED_IS_PASTPERFECT(cl->undertime))
+ 		cl->xstats.undertime = PSCHED_TDIFF(cl->undertime, q->now);
+-	RTA_PUT(skb, TCA_XSTATS, sizeof(cl->xstats), &cl->xstats);
++	q->link.xstats.avgidle = q->link.avgidle;
++	if (cbq_copy_xstats(skb, &cl->xstats)) {
++		sch_dev_queue_unlock(sch->dev);
++		goto rtattr_failure;
++	}
++	sch_dev_queue_unlock(sch->dev);
+ 
+ 	return skb->len;
+ 
+@@ -1636,8 +1655,6 @@
+ 	return -1;
+ }
+ 
+-#endif
+-
+ static int cbq_graft(struct Qdisc *sch, unsigned long arg, struct Qdisc *new,
+ 		     struct Qdisc **old)
+ {
+@@ -1653,8 +1670,11 @@
+ 				new->reshape_fail = cbq_reshape_fail;
+ #endif
+ 		}
+-		if ((*old = xchg(&cl->q, new)) != NULL)
+-			qdisc_reset(*old);
++		sch_tree_lock(sch);
++		*old = cl->q;
++		cl->q = new;
++		qdisc_reset(*old);
++		sch_tree_unlock(sch);
+ 
+ 		return 0;
+ 	}
+@@ -1718,9 +1738,13 @@
+ 	}
+ 
+ 	for (h = 0; h < 16; h++) {
+-		for (cl = q->classes[h]; cl; cl = cl->next)
++		struct cbq_class *next;
++
++		for (cl = q->classes[h]; cl; cl = next) {
++			next = cl->next;
+ 			if (cl != &q->link)
+ 				cbq_destroy_class(cl);
++		}
+ 	}
+ 
+ 	qdisc_put_rtab(q->link.R_tab);
+@@ -1729,19 +1753,20 @@
+ 
+ static void cbq_put(struct Qdisc *sch, unsigned long arg)
+ {
+-	struct cbq_sched_data *q = (struct cbq_sched_data *)sch->data;
+ 	struct cbq_class *cl = (struct cbq_class*)arg;
+ 
+-	start_bh_atomic();
+ 	if (--cl->refcnt == 0) {
+ #ifdef CONFIG_NET_CLS_POLICE
++		struct cbq_sched_data *q = (struct cbq_sched_data *)sch->data;
++
++		sch_dev_queue_lock(sch->dev);
+ 		if (q->rx_class == cl)
+ 			q->rx_class = NULL;
++		sch_dev_queue_unlock(sch->dev);
+ #endif
++
+ 		cbq_destroy_class(cl);
+ 	}
+-	end_bh_atomic();
+-	return;
+ }
+ 
+ static int
+@@ -1802,7 +1827,7 @@
+ 		}
+ 
+ 		/* Change class parameters */
+-		start_bh_atomic();
++		sch_tree_lock(sch);
+ 
+ 		if (cl->next_alive != NULL)
+ 			cbq_deactivate_class(cl);
+@@ -1834,7 +1859,7 @@
+ 		if (cl->q->q.qlen)
+ 			cbq_activate_class(cl);
+ 
+-		end_bh_atomic();
++		sch_tree_unlock(sch);
+ 
+ #ifdef CONFIG_NET_ESTIMATOR
+ 		if (tca[TCA_RATE-1]) {
+@@ -1901,7 +1926,7 @@
+ 	cl->quantum = cl->allot;
+ 	cl->weight = cl->R_tab->rate.rate;
+ 
+-	start_bh_atomic();
++	sch_tree_lock(sch);
+ 	cbq_link_class(cl);
+ 	cl->borrow = cl->tparent;
+ 	if (cl->tparent != &q->link)
+@@ -1925,7 +1950,7 @@
+ #endif
+ 	if (tb[TCA_CBQ_FOPT-1])
+ 		cbq_set_fopt(cl, RTA_DATA(tb[TCA_CBQ_FOPT-1]));
+-	end_bh_atomic();
++	sch_tree_unlock(sch);
+ 
+ #ifdef CONFIG_NET_ESTIMATOR
+ 	if (tca[TCA_RATE-1])
+@@ -1948,7 +1973,7 @@
+ 	if (cl->filters || cl->children || cl == &q->link)
+ 		return -EBUSY;
+ 
+-	start_bh_atomic();
++	sch_tree_lock(sch);
+ 
+ 	if (cl->next_alive)
+ 		cbq_deactivate_class(cl);
+@@ -1970,12 +1995,11 @@
+ 	cbq_sync_defmap(cl);
+ 
+ 	cbq_rmprio(q, cl);
++	sch_tree_unlock(sch);
+ 
+ 	if (--cl->refcnt == 0)
+ 		cbq_destroy_class(cl);
+ 
+-	end_bh_atomic();
+-
+ 	return 0;
+ }
+ 
+@@ -2052,9 +2076,7 @@
+ 	cbq_bind_filter,
+ 	cbq_unbind_filter,
+ 
+-#ifdef CONFIG_RTNETLINK
+ 	cbq_dump_class,
+-#endif
+ };
+ 
+ struct Qdisc_ops cbq_qdisc_ops =
+@@ -2074,9 +2096,7 @@
+ 	cbq_destroy,
+ 	NULL /* cbq_change */,
+ 
+-#ifdef CONFIG_RTNETLINK
+ 	cbq_dump,
+-#endif
+ };
+ 
+ #ifdef MODULE
+@@ -2090,3 +2110,4 @@
+ 	unregister_qdisc(&cbq_qdisc_ops);
+ }
+ #endif
++MODULE_LICENSE("GPL");
+diff -urN ../v2.2.21/linux/net/sched/sch_csz.c linux/net/sched/sch_csz.c
+--- ../v2.2.21/linux/net/sched/sch_csz.c	Sat Oct 21 12:10:47 2000
++++ linux/net/sched/sch_csz.c	Thu Aug  1 23:53:01 2002
+@@ -477,7 +477,7 @@
+ 	if (this->q.qlen >= this->limit || this->L_tab == NULL) {
+ 		sch->stats.drops++;
+ 		kfree_skb(skb);
+-		return 0;
++		return NET_XMIT_DROP;
+ 	}
+ 
+ 	R = csz_update(sch);
+@@ -505,7 +505,7 @@
+ 	sch->q.qlen++;
+ 	sch->stats.bytes += skb->len;
+ 	sch->stats.packets++;
+-	return 1;
++	return 0;
+ }
+ 
+ static __inline__ struct sk_buff *
+@@ -795,7 +795,6 @@
+ 	return 0;
+ }
+ 
+-#ifdef CONFIG_RTNETLINK
+ static int csz_dump(struct Qdisc *sch, struct sk_buff *skb)
+ {
+ 	struct csz_sched_data *q = (struct csz_sched_data *)sch->data;
+@@ -817,8 +816,6 @@
+ 	skb_trim(skb, b - skb->data);
+ 	return -1;
+ }
+-#endif
+-
+ 
+ static int csz_graft(struct Qdisc *sch, unsigned long cl, struct Qdisc *new,
+ 		     struct Qdisc **old)
+@@ -885,7 +882,7 @@
+ 
+ 		a = &q->flow[cl];
+ 
+-		start_bh_atomic();	
++		sch_dev_queue_lock(sch->dev);
+ #if 0
+ 		a->rate_log = copt->rate_log;
+ #endif
+@@ -899,7 +896,7 @@
+ 		if (tb[TCA_CSZ_RTAB-1])
+ 			memcpy(a->L_tab, RTA_DATA(tb[TCA_CSZ_RTAB-1]), 1024);
+ 
+-		end_bh_atomic();
++		sch_dev_queue_unlock(sch->dev);
+ 		return 0;
+ 	}
+ 	/* NI */
+@@ -920,19 +917,18 @@
+ 
+ 	a = &q->flow[cl];
+ 
+-	start_bh_atomic();
++	sch_dev_queue_lock(sch->dev);
+ 	a->fprev->fnext = a->fnext;
+ 	a->fnext->fprev = a->fprev;
+ 	a->sprev->snext = a->snext;
+ 	a->snext->sprev = a->sprev;
+ 	a->start = a->finish = 0;
+ 	kfree(xchg(&q->flow[cl].L_tab, NULL));
+-	end_bh_atomic();
++	sch_dev_queue_unlock(sch->dev);
+ 
+ 	return 0;
+ }
+ 
+-#ifdef CONFIG_RTNETLINK
+ static int csz_dump_class(struct Qdisc *sch, unsigned long cl, struct sk_buff *skb, struct tcmsg *tcm)
+ {
+ 	struct csz_sched_data *q = (struct csz_sched_data *)sch->data;
+@@ -978,7 +974,6 @@
+ 	skb_trim(skb, b - skb->data);
+ 	return -1;
+ }
+-#endif
+ 
+ static void csz_walk(struct Qdisc *sch, struct qdisc_walker *arg)
+ {
+@@ -1030,9 +1025,7 @@
+ 	csz_bind,
+ 	csz_put,
+ 
+-#ifdef CONFIG_RTNETLINK
+ 	csz_dump_class,
+-#endif
+ };
+ 
+ struct Qdisc_ops csz_qdisc_ops =
+@@ -1052,9 +1045,7 @@
+ 	csz_destroy,
+ 	NULL /* csz_change */,
+ 
+-#ifdef CONFIG_RTNETLINK
+ 	csz_dump,
+-#endif
+ };
+ 
+ 
+@@ -1069,3 +1060,4 @@
+ 	unregister_qdisc(&csz_qdisc_ops);
+ }
+ #endif
++MODULE_LICENSE("GPL");
+diff -urN ../v2.2.21/linux/net/sched/sch_dsmark.c linux/net/sched/sch_dsmark.c
+--- ../v2.2.21/linux/net/sched/sch_dsmark.c	Thu Jan  1 00:00:00 1970
++++ linux/net/sched/sch_dsmark.c	Sun Mar 31 03:18:30 2002
+@@ -0,0 +1,484 @@
++/* net/sched/sch_dsmark.c - Differentiated Services field marker */
++
++/* Written 1998-2000 by Werner Almesberger, EPFL ICA */
++
++
++#include <linux/config.h>
++#include <linux/module.h>
++#include <linux/types.h>
++#include <linux/string.h>
++#include <linux/errno.h>
++#include <linux/skbuff.h>
++#include <linux/netdevice.h> /* for pkt_sched */
++#include <linux/rtnetlink.h>
++#include <net/pkt_sched.h>
++#include <net/dsfield.h>
++#include <asm/byteorder.h>
++
++
++#if 1 /* control */
++#define DPRINTK(format,args...) printk(KERN_DEBUG format,##args)
++#else
++#define DPRINTK(format,args...)
++#endif
++
++#if 0 /* data */
++#define D2PRINTK(format,args...) printk(KERN_DEBUG format,##args)
++#else
++#define D2PRINTK(format,args...)
++#endif
++
++
++#define PRIV(sch) ((struct dsmark_qdisc_data *) (sch)->data)
++
++
++/*
++ * classid	class		marking
++ * -------	-----		-------
++ *   n/a	  0		n/a
++ *   x:0	  1		use entry [0]
++ *   ...	 ...		...
++ *   x:y y>0	 y+1		use entry [y]
++ *   ...	 ...		...
++ * x:indices-1	indices		use entry [indices-1]
++ *   ...	 ...		...
++ *   x:y	 y+1		use entry [y & (indices-1)]
++ *   ...	 ...		...
++ * 0xffff	0x10000		use entry [indices-1]
++ */
++
++
++#define NO_DEFAULT_INDEX	(1 << 16)
++
++struct dsmark_qdisc_data {
++	struct Qdisc		*q;
++	struct tcf_proto	*filter_list;
++	__u8			*mask;	/* "owns" the array */
++	__u8			*value;
++	__u16			indices;
++	__u32			default_index;	/* index range is 0...0xffff */
++	int			set_tc_index;
++};
++
++
++/* ------------------------- Class/flow operations ------------------------- */
++
++
++static int dsmark_graft(struct Qdisc *sch,unsigned long arg,
++    struct Qdisc *new,struct Qdisc **old)
++{
++	struct dsmark_qdisc_data *p = PRIV(sch);
++
++	DPRINTK("dsmark_graft(sch %p,[qdisc %p],new %p,old %p)\n",sch,p,new,
++	    old);
++	if (!new)
++		new = &noop_qdisc;
++	sch_tree_lock(sch);
++	*old = xchg(&p->q,new);
++	if (*old)
++		qdisc_reset(*old);
++	sch_tree_unlock(sch); /* @@@ move up ? */
++        return 0;
++}
++
++
++static struct Qdisc *dsmark_leaf(struct Qdisc *sch, unsigned long arg)
++{
++	struct dsmark_qdisc_data *p = PRIV(sch);
++
++	return p->q;
++}
++
++
++static unsigned long dsmark_get(struct Qdisc *sch,u32 classid)
++{
++	struct dsmark_qdisc_data *p __attribute__((unused)) = PRIV(sch);
++
++	DPRINTK("dsmark_get(sch %p,[qdisc %p],classid %x)\n",sch,p,classid);
++	return TC_H_MIN(classid)+1;
++}
++
++
++static unsigned long dsmark_bind_filter(struct Qdisc *sch,
++    unsigned long parent, u32 classid)
++{
++	return dsmark_get(sch,classid);
++}
++
++
++static void dsmark_put(struct Qdisc *sch, unsigned long cl)
++{
++}
++
++
++static int dsmark_change(struct Qdisc *sch, u32 classid, u32 parent,
++    struct rtattr **tca, unsigned long *arg)
++{
++	struct dsmark_qdisc_data *p = PRIV(sch);
++	struct rtattr *opt = tca[TCA_OPTIONS-1];
++	struct rtattr *tb[TCA_DSMARK_MAX];
++
++	DPRINTK("dsmark_change(sch %p,[qdisc %p],classid %x,parent %x),"
++	    "arg 0x%lx\n",sch,p,classid,parent,*arg);
++	if (*arg > p->indices)
++		return -ENOENT;
++	if (!opt || rtattr_parse(tb, TCA_DSMARK_MAX, RTA_DATA(opt),
++				 RTA_PAYLOAD(opt)))
++		return -EINVAL;
++	if (tb[TCA_DSMARK_MASK-1]) {
++		if (!RTA_PAYLOAD(tb[TCA_DSMARK_MASK-1]))
++			return -EINVAL;
++		p->mask[*arg-1] = *(__u8 *) RTA_DATA(tb[TCA_DSMARK_MASK-1]);
++	}
++	if (tb[TCA_DSMARK_VALUE-1]) {
++		if (!RTA_PAYLOAD(tb[TCA_DSMARK_VALUE-1]))
++			return -EINVAL;
++		p->value[*arg-1] = *(__u8 *) RTA_DATA(tb[TCA_DSMARK_VALUE-1]);
++	}
++	return 0;
++}
++
++
++static int dsmark_delete(struct Qdisc *sch,unsigned long arg)
++{
++	struct dsmark_qdisc_data *p = PRIV(sch);
++
++	if (!arg || arg > p->indices)
++		return -EINVAL;
++	p->mask[arg-1] = 0xff;
++	p->value[arg-1] = 0;
++	return 0;
++}
++
++
++static void dsmark_walk(struct Qdisc *sch,struct qdisc_walker *walker)
++{
++	struct dsmark_qdisc_data *p = PRIV(sch);
++	int i;
++
++	DPRINTK("dsmark_walk(sch %p,[qdisc %p],walker %p)\n",sch,p,walker);
++	if (walker->stop)
++		return;
++	for (i = 0; i < p->indices; i++) {
++		if (p->mask[i] == 0xff && !p->value[i])
++			continue;
++		if (walker->count >= walker->skip) {
++			if (walker->fn(sch, i+1, walker) < 0) {
++				walker->stop = 1;
++				break;
++			}
++		}
++                walker->count++;
++        }
++}
++
++
++static struct tcf_proto **dsmark_find_tcf(struct Qdisc *sch,unsigned long cl)
++{
++	struct dsmark_qdisc_data *p = PRIV(sch);
++
++	return &p->filter_list;
++}
++
++
++/* --------------------------- Qdisc operations ---------------------------- */
++
++
++static int dsmark_enqueue(struct sk_buff *skb,struct Qdisc *sch)
++{
++	struct dsmark_qdisc_data *p = PRIV(sch);
++	struct tcf_result res;
++	int result;
++	int ret = NET_XMIT_POLICED;
++
++	D2PRINTK("dsmark_enqueue(skb %p,sch %p,[qdisc %p])\n",skb,sch,p);
++	if (p->set_tc_index) {
++		switch (skb->protocol) {
++			case __constant_htons(ETH_P_IP):
++				skb->tc_index = ipv4_get_dsfield(skb->nh.iph);
++				break;
++			case __constant_htons(ETH_P_IPV6):
++				skb->tc_index = ipv6_get_dsfield(skb->nh.ipv6h);
++				break;
++			default:
++				skb->tc_index = 0;
++				break;
++		};
++	}
++	result = TC_POLICE_OK; /* be nice to gcc */
++	if (TC_H_MAJ(skb->priority) == sch->handle) {
++		skb->tc_index = TC_H_MIN(skb->priority);
++	} else {
++		result = tc_classify(skb,p->filter_list,&res);
++		D2PRINTK("result %d class 0x%04x\n",result,res.classid);
++		switch (result) {
++#ifdef CONFIG_NET_CLS_POLICE
++			case TC_POLICE_SHOT:
++				kfree_skb(skb);
++				break;
++#if 0
++			case TC_POLICE_RECLASSIFY:
++				/* FIXME: what to do here ??? */
++#endif
++#endif
++			case TC_POLICE_OK:
++				skb->tc_index = TC_H_MIN(res.classid);
++				break;
++			case TC_POLICE_UNSPEC:
++				/* fall through */
++			default:
++				if (p->default_index != NO_DEFAULT_INDEX)
++					skb->tc_index = p->default_index;
++				break;
++		};
++	}
++	if (
++#ifdef CONFIG_NET_CLS_POLICE
++	    result == TC_POLICE_SHOT ||
++#endif
++
++	    ((ret = p->q->enqueue(skb,p->q)) != 0)) {
++		sch->stats.drops++;
++		return ret;
++	}
++	sch->stats.bytes += skb->len;
++	sch->stats.packets++;
++	sch->q.qlen++;
++	return ret;
++}
++
++
++static struct sk_buff *dsmark_dequeue(struct Qdisc *sch)
++{
++	struct dsmark_qdisc_data *p = PRIV(sch);
++	struct sk_buff *skb;
++	int index;
++
++	D2PRINTK("dsmark_dequeue(sch %p,[qdisc %p])\n",sch,p);
++	skb = p->q->ops->dequeue(p->q);
++	if (!skb)
++		return NULL;
++	sch->q.qlen--;
++	index = skb->tc_index & (p->indices-1);
++	D2PRINTK("index %d->%d\n",skb->tc_index,index);
++	switch (skb->protocol) {
++		case __constant_htons(ETH_P_IP):
++			ipv4_change_dsfield(skb->nh.iph,
++			    p->mask[index],p->value[index]);
++			break;
++		case __constant_htons(ETH_P_IPV6):
++			ipv6_change_dsfield(skb->nh.ipv6h,
++			    p->mask[index],p->value[index]);
++			break;
++		default:
++			/*
++			 * Only complain if a change was actually attempted.
++			 * This way, we can send non-IP traffic through dsmark
++			 * and don't need yet another qdisc as a bypass.
++			 */
++			if (p->mask[index] != 0xff || p->value[index])
++				printk(KERN_WARNING "dsmark_dequeue: "
++				       "unsupported protocol %d\n",
++				       htons(skb->protocol));
++			break;
++	};
++	return skb;
++}
++
++
++static int dsmark_requeue(struct sk_buff *skb,struct Qdisc *sch)
++{
++	int ret;
++	struct dsmark_qdisc_data *p = PRIV(sch);
++
++	D2PRINTK("dsmark_requeue(skb %p,sch %p,[qdisc %p])\n",skb,sch,p);
++        if ((ret = p->q->ops->requeue(skb, p->q)) == 0) {
++		sch->q.qlen++;
++		return 0;
++	}
++	sch->stats.drops++;
++	return ret;
++}
++
++
++static int dsmark_drop(struct Qdisc *sch)
++{
++	struct dsmark_qdisc_data *p = PRIV(sch);
++
++	DPRINTK("dsmark_reset(sch %p,[qdisc %p])\n",sch,p);
++	if (!p->q->ops->drop)
++		return 0;
++	if (!p->q->ops->drop(p->q))
++		return 0;
++	sch->q.qlen--;
++	return 1;
++}
++
++
++int dsmark_init(struct Qdisc *sch,struct rtattr *opt)
++{
++	struct dsmark_qdisc_data *p = PRIV(sch);
++	struct rtattr *tb[TCA_DSMARK_MAX];
++	__u16 tmp;
++
++	DPRINTK("dsmark_init(sch %p,[qdisc %p],opt %p)\n",sch,p,opt);
++	if (rtattr_parse(tb,TCA_DSMARK_MAX,RTA_DATA(opt),RTA_PAYLOAD(opt)) < 0 ||
++	    !tb[TCA_DSMARK_INDICES-1] ||
++	    RTA_PAYLOAD(tb[TCA_DSMARK_INDICES-1]) < sizeof(__u16))
++                return -EINVAL;
++	memset(p,0,sizeof(*p));
++	p->filter_list = NULL;
++	p->indices = *(__u16 *) RTA_DATA(tb[TCA_DSMARK_INDICES-1]);
++	if (!p->indices)
++		return -EINVAL;
++	for (tmp = p->indices; tmp != 1; tmp >>= 1) {
++		if (tmp & 1)
++			return -EINVAL;
++	}
++	p->default_index = NO_DEFAULT_INDEX;
++	if (tb[TCA_DSMARK_DEFAULT_INDEX-1]) {
++		if (RTA_PAYLOAD(tb[TCA_DSMARK_DEFAULT_INDEX-1]) < sizeof(__u16))
++			return -EINVAL;
++		p->default_index =
++		    *(__u16 *) RTA_DATA(tb[TCA_DSMARK_DEFAULT_INDEX-1]);
++	}
++	p->set_tc_index = !!tb[TCA_DSMARK_SET_TC_INDEX-1];
++	p->mask = kmalloc(p->indices*2,GFP_KERNEL);
++	if (!p->mask)
++		return -ENOMEM;
++	p->value = p->mask+p->indices;
++	memset(p->mask,0xff,p->indices);
++	memset(p->value,0,p->indices);
++	if (!(p->q = qdisc_create_dflt(sch->dev, &pfifo_qdisc_ops)))
++		p->q = &noop_qdisc;
++	DPRINTK("dsmark_init: qdisc %p\n",&p->q);
++	MOD_INC_USE_COUNT;
++	return 0;
++}
++
++
++static void dsmark_reset(struct Qdisc *sch)
++{
++	struct dsmark_qdisc_data *p = PRIV(sch);
++
++	DPRINTK("dsmark_reset(sch %p,[qdisc %p])\n",sch,p);
++	qdisc_reset(p->q);
++	sch->q.qlen = 0;
++}
++
++
++static void dsmark_destroy(struct Qdisc *sch)
++{
++	struct dsmark_qdisc_data *p = PRIV(sch);
++	struct tcf_proto *tp;
++
++	DPRINTK("dsmark_destroy(sch %p,[qdisc %p])\n",sch,p);
++	while (p->filter_list) {
++		tp = p->filter_list;
++		p->filter_list = tp->next;
++		tp->ops->destroy(tp);
++	}
++	qdisc_destroy(p->q);
++	p->q = &noop_qdisc;
++	kfree(p->mask);
++	MOD_DEC_USE_COUNT;
++}
++
++
++static int dsmark_dump_class(struct Qdisc *sch, unsigned long cl,
++    struct sk_buff *skb, struct tcmsg *tcm)
++{
++	struct dsmark_qdisc_data *p = PRIV(sch);
++	unsigned char *b = skb->tail;
++	struct rtattr *rta;
++
++	DPRINTK("dsmark_dump_class(sch %p,[qdisc %p],class %ld\n",sch,p,cl);
++	if (!cl || cl > p->indices)
++		return -EINVAL;
++	tcm->tcm_handle = TC_H_MAKE(TC_H_MAJ(sch->handle),cl-1);
++	rta = (struct rtattr *) b;
++	RTA_PUT(skb,TCA_OPTIONS,0,NULL);
++	RTA_PUT(skb,TCA_DSMARK_MASK,1,&p->mask[cl-1]);
++	RTA_PUT(skb,TCA_DSMARK_VALUE,1,&p->value[cl-1]);
++	rta->rta_len = skb->tail-b;
++	return skb->len;
++
++rtattr_failure:
++	skb_trim(skb,b-skb->data);
++	return -1;
++}
++
++static int dsmark_dump(struct Qdisc *sch, struct sk_buff *skb)
++{
++	struct dsmark_qdisc_data *p = PRIV(sch);
++	unsigned char *b = skb->tail;
++	struct rtattr *rta;
++
++	rta = (struct rtattr *) b;
++	RTA_PUT(skb,TCA_OPTIONS,0,NULL);
++	RTA_PUT(skb,TCA_DSMARK_INDICES,sizeof(__u16),&p->indices);
++	if (p->default_index != NO_DEFAULT_INDEX) {
++		__u16 tmp = p->default_index;
++
++		RTA_PUT(skb,TCA_DSMARK_DEFAULT_INDEX, sizeof(__u16), &tmp);
++	}
++	if (p->set_tc_index)
++		RTA_PUT(skb, TCA_DSMARK_SET_TC_INDEX, 0, NULL);
++	rta->rta_len = skb->tail-b;
++	return skb->len;
++
++rtattr_failure:
++	skb_trim(skb,b-skb->data);
++	return -1;
++}
++
++static struct Qdisc_class_ops dsmark_class_ops =
++{
++	dsmark_graft,			/* graft */
++	dsmark_leaf,			/* leaf */
++	dsmark_get,			/* get */
++	dsmark_put,			/* put */
++	dsmark_change,			/* change */
++	dsmark_delete,			/* delete */
++	dsmark_walk,			/* walk */
++
++	dsmark_find_tcf,		/* tcf_chain */
++	dsmark_bind_filter,		/* bind_tcf */
++	dsmark_put,			/* unbind_tcf */
++
++	dsmark_dump_class,		/* dump */
++};
++
++struct Qdisc_ops dsmark_qdisc_ops =
++{
++	NULL,				/* next */
++	&dsmark_class_ops,		/* cl_ops */
++	"dsmark",
++	sizeof(struct dsmark_qdisc_data),
++
++	dsmark_enqueue,			/* enqueue */
++	dsmark_dequeue,			/* dequeue */
++	dsmark_requeue,			/* requeue */
++	dsmark_drop,			/* drop */
++
++	dsmark_init,			/* init */
++	dsmark_reset,			/* reset */
++	dsmark_destroy,			/* destroy */
++	NULL,				/* change */
++
++	dsmark_dump			/* dump */
++};
++
++#ifdef MODULE
++int init_module(void)
++{
++	return register_qdisc(&dsmark_qdisc_ops);
++}
++
++
++void cleanup_module(void) 
++{
++	unregister_qdisc(&dsmark_qdisc_ops);
++}
++#endif
++MODULE_LICENSE("GPL");
+diff -urN ../v2.2.21/linux/net/sched/sch_fifo.c linux/net/sched/sch_fifo.c
+--- ../v2.2.21/linux/net/sched/sch_fifo.c	Sat Oct 21 12:10:47 2000
++++ linux/net/sched/sch_fifo.c	Sun Mar 31 03:18:30 2002
+@@ -51,14 +51,14 @@
+ 		sch->stats.backlog += skb->len;
+ 		sch->stats.bytes += skb->len;
+ 		sch->stats.packets++;
+-		return 1;
++		return 0;
+ 	}
+ 	sch->stats.drops++;
+ #ifdef CONFIG_NET_CLS_POLICE
+ 	if (sch->reshape_fail==NULL || sch->reshape_fail(skb, sch))
+ #endif
+ 		kfree_skb(skb);
+-	return 0;
++	return NET_XMIT_DROP;
+ }
+ 
+ static int
+@@ -66,7 +66,7 @@
+ {
+ 	__skb_queue_head(&sch->q, skb);
+ 	sch->stats.backlog += skb->len;
+-	return 1;
++	return 0;
+ }
+ 
+ static struct sk_buff *
+@@ -110,21 +110,21 @@
+ 		__skb_queue_tail(&sch->q, skb);
+ 		sch->stats.bytes += skb->len;
+ 		sch->stats.packets++;
+-		return 1;
++		return 0;
+ 	}
+ 	sch->stats.drops++;
+ #ifdef CONFIG_NET_CLS_POLICE
+ 	if (sch->reshape_fail==NULL || sch->reshape_fail(skb, sch))
+ #endif
+ 		kfree_skb(skb);
+-	return 0;
++	return NET_XMIT_DROP;
+ }
+ 
+ static int
+ pfifo_requeue(struct sk_buff *skb, struct Qdisc* sch)
+ {
+ 	__skb_queue_head(&sch->q, skb);
+-	return 1;
++	return 0;
+ }
+ 
+ 
+@@ -152,7 +152,6 @@
+ 	return 0;
+ }
+ 
+-#ifdef CONFIG_RTNETLINK
+ static int fifo_dump(struct Qdisc *sch, struct sk_buff *skb)
+ {
+ 	struct fifo_sched_data *q = (void*)sch->data;
+@@ -168,7 +167,6 @@
+ 	skb_trim(skb, b - skb->data);
+ 	return -1;
+ }
+-#endif
+ 
+ struct Qdisc_ops pfifo_qdisc_ops =
+ {
+@@ -187,9 +185,7 @@
+ 	NULL,
+ 	fifo_init,
+ 
+-#ifdef CONFIG_RTNETLINK
+ 	fifo_dump,
+-#endif
+ };
+ 
+ struct Qdisc_ops bfifo_qdisc_ops =
+@@ -208,7 +204,5 @@
+ 	fifo_reset,
+ 	NULL,
+ 	fifo_init,
+-#ifdef CONFIG_RTNETLINK
+ 	fifo_dump,
+-#endif
+ };
+diff -urN ../v2.2.21/linux/net/sched/sch_generic.c linux/net/sched/sch_generic.c
+--- ../v2.2.21/linux/net/sched/sch_generic.c	Sat Oct 21 12:11:45 2000
++++ linux/net/sched/sch_generic.c	Wed Aug  7 23:26:44 2002
+@@ -7,6 +7,8 @@
+  *		2 of the License, or (at your option) any later version.
+  *
+  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
++ *		Jamal Hadi Salim, <hadi@nortelnetworks.com>
++ *		- Ingress support
+  */
+ 
+ #include <asm/uaccess.h>
+@@ -30,8 +32,6 @@
+ #include <net/sock.h>
+ #include <net/pkt_sched.h>
+ 
+-#define BUG_TRAP(x) if (!(x)) { printk("Assertion (" #x ") failed at " __FILE__ "(%d):" __FUNCTION__ "\n", __LINE__); }
+-
+ /* Main transmission queue. */
+ 
+ struct Qdisc_head qdisc_head = { &qdisc_head };
+@@ -149,7 +149,7 @@
+ noop_enqueue(struct sk_buff *skb, struct Qdisc * qdisc)
+ {
+ 	kfree_skb(skb);
+-	return 0;
++	return NET_XMIT_CN;
+ }
+ 
+ static struct sk_buff *
+@@ -164,7 +164,7 @@
+ 	if (net_ratelimit())
+ 		printk(KERN_DEBUG "%s deferred output. It is buggy.\n", skb->dev->name);
+ 	kfree_skb(skb);
+-	return 0;
++	return NET_XMIT_CN;
+ }
+ 
+ struct Qdisc_ops noop_qdisc_ops =
+@@ -206,7 +206,7 @@
+ {
+         { NULL }, 
+ 	NULL,
+-	NULL,
++	noop_dequeue,
+ 	TCQ_F_BUILTIN,
+ 	&noqueue_qdisc_ops,
+ };
+@@ -227,14 +227,14 @@
+ 	list = ((struct sk_buff_head*)qdisc->data) +
+ 		prio2band[skb->priority&TC_PRIO_MAX];
+ 
+-	if (list->qlen <= skb->dev->tx_queue_len) {
++	if (list->qlen <= qdisc->dev->tx_queue_len) {
+ 		__skb_queue_tail(list, skb);
+ 		qdisc->q.qlen++;
+-		return 1;
++		return 0;
+ 	}
+ 	qdisc->stats.drops++;
+ 	kfree_skb(skb);
+-	return 0;
++	return NET_XMIT_DROP;
+ }
+ 
+ static struct sk_buff *
+@@ -264,7 +264,7 @@
+ 
+ 	__skb_queue_head(list, skb);
+ 	qdisc->q.qlen++;
+-	return 1;
++	return 0;
+ }
+ 
+ static void
+@@ -333,39 +333,39 @@
+ void qdisc_reset(struct Qdisc *qdisc)
+ {
+ 	struct Qdisc_ops *ops = qdisc->ops;
+-	start_bh_atomic();
++
+ 	if (ops->reset)
+ 		ops->reset(qdisc);
+-	end_bh_atomic();
+ }
+ 
+ void qdisc_destroy(struct Qdisc *qdisc)
+ {
+ 	struct Qdisc_ops *ops = qdisc->ops;
++	struct device *dev;
+ 
+ 	if (!atomic_dec_and_test(&qdisc->refcnt))
+ 		return;
+ 
++	dev = qdisc->dev;
++
+ #ifdef CONFIG_NET_SCHED
+-	if (qdisc->dev) {
++	if (dev) {
+ 		struct Qdisc *q, **qp;
+-		for (qp = &qdisc->dev->qdisc_list; (q=*qp) != NULL; qp = &q->next)
++		for (qp = &qdisc->dev->qdisc_list; (q=*qp) != NULL; qp = &q->next) {
+ 			if (q == qdisc) {
+ 				*qp = q->next;
+-				q->next = NULL;
+ 				break;
+ 			}
++		}
+ 	}
+ #ifdef CONFIG_NET_ESTIMATOR
+ 	qdisc_kill_estimator(&qdisc->stats);
+ #endif
+ #endif
+-	start_bh_atomic();
+ 	if (ops->reset)
+ 		ops->reset(qdisc);
+ 	if (ops->destroy)
+ 		ops->destroy(qdisc);
+-	end_bh_atomic();
+ 	if (!(qdisc->flags&TCQ_F_BUILTIN))
+ 		kfree(qdisc);
+ }
+@@ -380,19 +380,20 @@
+ 	 */
+ 
+ 	if (dev->qdisc_sleeping == &noop_qdisc) {
++		struct Qdisc *qdisc;
+ 		if (dev->tx_queue_len) {
+-			struct Qdisc *qdisc;
+ 			qdisc = qdisc_create_dflt(dev, &pfifo_fast_ops);
+ 			if (qdisc == NULL) {
+ 				printk(KERN_INFO "%s: activation failed\n", dev->name);
+ 				return;
+ 			}
+-			dev->qdisc_sleeping = qdisc;
+-		} else
+-			dev->qdisc_sleeping = &noqueue_qdisc;
++		} else {
++			qdisc =  &noqueue_qdisc;
++		}
++		dev->qdisc_sleeping = qdisc;
+ 	}
+ 
+-	start_bh_atomic();
++	sch_dev_queue_lock(dev);
+ 	if ((dev->qdisc = dev->qdisc_sleeping) != &noqueue_qdisc) {
+ 		dev->qdisc->tx_timeo = 5*HZ;
+ 		dev->qdisc->tx_last = jiffies - dev->qdisc->tx_timeo;
+@@ -400,16 +401,17 @@
+ 			dev_watchdog.expires = jiffies + 5*HZ;
+ 		add_timer(&dev_watchdog);
+ 	}
+-	end_bh_atomic();
++	sch_dev_queue_unlock(dev);
+ }
+ 
+ void dev_deactivate(struct device *dev)
+ {
+ 	struct Qdisc *qdisc;
+ 
+-	start_bh_atomic();
++	sch_dev_queue_lock(dev);
+ 
+-	qdisc = xchg(&dev->qdisc, &noop_qdisc);
++	qdisc = dev->qdisc;
++	dev->qdisc = &noop_qdisc;
+ 
+ 	qdisc_reset(qdisc);
+ 
+@@ -425,7 +427,7 @@
+ 		}
+ 	}
+ 
+-	end_bh_atomic();
++	sch_dev_queue_unlock(dev);
+ }
+ 
+ void dev_init_scheduler(struct device *dev)
+@@ -439,13 +441,16 @@
+ {
+ 	struct Qdisc *qdisc;
+ 
+-	start_bh_atomic();
++	sch_dev_queue_lock(dev);
+ 	qdisc = dev->qdisc_sleeping;
+ 	dev->qdisc = &noop_qdisc;
+ 	dev->qdisc_sleeping = &noop_qdisc;
+ 	qdisc_destroy(qdisc);
++        if ((qdisc = dev->qdisc_ingress) != NULL) {
++		dev->qdisc_ingress = NULL;
++		qdisc_destroy(qdisc);
++        }
+ 	BUG_TRAP(dev->qdisc_list == NULL);
+ 	dev->qdisc_list = NULL;
+-	end_bh_atomic();
++	sch_dev_queue_unlock(dev);
+ }
+-
+diff -urN ../v2.2.21/linux/net/sched/sch_gred.c linux/net/sched/sch_gred.c
+--- ../v2.2.21/linux/net/sched/sch_gred.c	Thu Jan  1 00:00:00 1970
++++ linux/net/sched/sch_gred.c	Fri Jul  5 22:06:27 2002
+@@ -0,0 +1,633 @@
++/*
++ * net/sched/sch_gred.c	Generic Random Early Detection queue.
++ *
++ *
++ *              This program is free software; you can redistribute it and/or
++ *              modify it under the terms of the GNU General Public License
++ *              as published by the Free Software Foundation; either version
++ *              2 of the License, or (at your option) any later version.
++ *
++ * Authors:    J Hadi Salim (hadi@cyberus.ca) 1998-2002
++ *
++ *             991129: -  Bug fix with grio mode
++ *		       - a better sing. AvgQ mode with Grio(WRED)
++ *		       - A finer grained VQ dequeue based on sugestion
++ *		         from Ren Liu
++ *		       - More error checks
++ *
++ *
++ *
++ *  For all the glorious comments look at Alexey's sch_red.c
++ */
++
++#include <linux/config.h>
++#include <linux/module.h>
++#include <asm/uaccess.h>
++#include <asm/system.h>
++#include <asm/bitops.h>
++#include <linux/types.h>
++#include <linux/kernel.h>
++#include <linux/sched.h>
++#include <linux/string.h>
++#include <linux/mm.h>
++#include <linux/socket.h>
++#include <linux/sockios.h>
++#include <linux/in.h>
++#include <linux/errno.h>
++#include <linux/interrupt.h>
++#include <linux/if_ether.h>
++#include <linux/inet.h>
++#include <linux/netdevice.h>
++#include <linux/etherdevice.h>
++#include <linux/notifier.h>
++#include <net/ip.h>
++#include <net/route.h>
++#include <linux/skbuff.h>
++#include <net/sock.h>
++#include <net/pkt_sched.h>
++
++#if 1 /* control */
++#define DPRINTK(format,args...) printk(KERN_DEBUG format,##args)
++#else
++#define DPRINTK(format,args...)
++#endif
++
++#if 0 /* data */
++#define D2PRINTK(format,args...) printk(KERN_DEBUG format,##args)
++#else
++#define D2PRINTK(format,args...)
++#endif
++
++struct gred_sched_data;
++struct gred_sched;
++
++struct gred_sched_data
++{
++/* Parameters */
++	u32		limit;		/* HARD maximal queue length	*/
++	u32		qth_min;	/* Min average length threshold: A scaled */
++	u32		qth_max;	/* Max average length threshold: A scaled */
++	u32      	DP;		/* the drop pramaters */
++	char		Wlog;		/* log(W)		*/
++	char		Plog;		/* random number bits	*/
++	u32		Scell_max;
++	u32		Rmask;
++	u32		bytesin;	/* bytes seen on virtualQ so far*/
++	u32		packetsin;	/* packets seen on virtualQ so far*/
++	u32		backlog;	/* bytes on the virtualQ */
++	u32		forced;	/* packets dropped for exceeding limits */
++	u32		early;	/* packets dropped as a warning */
++	u32		other;	/* packets dropped by invoking drop() */
++	u32		pdrop;	/* packets dropped because we exceeded physical queue limits */
++	char		Scell_log;
++	u8		Stab[256];
++	u8              prio;        /* the prio of this vq */
++
++/* Variables */
++	unsigned long	qave;		/* Average queue length: A scaled */
++	int		qcount;		/* Packets since last random number generation */
++	u32		qR;		/* Cached random number */
++
++	psched_time_t	qidlestart;	/* Start of idle period	*/
++};
++
++struct gred_sched
++{
++	struct gred_sched_data *tab[MAX_DPs];
++	u32 		DPs;   
++	u32 		def; 
++	u8 		initd; 
++	u8 		grio; 
++	u8 		eqp; 
++};
++
++static int
++gred_enqueue(struct sk_buff *skb, struct Qdisc* sch)
++{
++	psched_time_t now;
++	struct gred_sched_data *q=NULL;
++	struct gred_sched *t= (struct gred_sched *)sch->data;
++	unsigned long	qave=0;	
++	int i=0;
++
++	if (!t->initd && skb_queue_len(&sch->q) <= sch->dev->tx_queue_len) {
++		D2PRINTK("NO GRED Queues setup yet! Enqueued anyway\n");
++		goto do_enqueue;
++	}
++
++
++	if ( ((skb->tc_index&0xf) > t->DPs) || !(q=t->tab[skb->tc_index&0xf])) {
++		printk("GRED: setting to default (%d)\n ",t->def);
++		if (!(q=t->tab[t->def])) {
++			DPRINTK("GRED: setting to default FAILED! dropping!! "
++			    "(%d)\n ", t->def);
++			goto drop;
++		}
++		/* fix tc_index? --could be controvesial but needed for
++		   requeueing */
++		skb->tc_index=(skb->tc_index&0xfffffff0) | t->def;
++	}
++
++	D2PRINTK("gred_enqueue virtualQ 0x%x classid %x backlog %d "
++	    "general backlog %d\n",skb->tc_index&0xf,sch->handle,q->backlog,
++	    sch->stats.backlog);
++	/* sum up all the qaves of prios <= to ours to get the new qave*/
++	if (!t->eqp && t->grio) {
++		for (i=0;i<t->DPs;i++) {
++			if ((!t->tab[i]) || (i==q->DP))	
++				continue; 
++				
++			if ((t->tab[i]->prio < q->prio) && (PSCHED_IS_PASTPERFECT(t->tab[i]->qidlestart)))
++				qave +=t->tab[i]->qave;
++		}
++			
++	}
++
++	q->packetsin++;
++	q->bytesin+=skb->len;
++
++	if (t->eqp && t->grio) {
++		qave=0;
++		q->qave=t->tab[t->def]->qave;
++		q->qidlestart=t->tab[t->def]->qidlestart;
++	}
++
++	if (!PSCHED_IS_PASTPERFECT(q->qidlestart)) {
++		long us_idle;
++		PSCHED_GET_TIME(now);
++		us_idle = PSCHED_TDIFF_SAFE(now, q->qidlestart, q->Scell_max, 0);
++		PSCHED_SET_PASTPERFECT(q->qidlestart);
++
++		q->qave >>= q->Stab[(us_idle>>q->Scell_log)&0xFF];
++	} else {
++		if (t->eqp) {
++			q->qave += sch->stats.backlog - (q->qave >> q->Wlog);
++		} else {
++			q->qave += q->backlog - (q->qave >> q->Wlog);
++		}
++
++	}
++	
++
++	if (t->eqp && t->grio) 
++		t->tab[t->def]->qave=q->qave;
++
++	if ((q->qave+qave) < q->qth_min) {
++		q->qcount = -1;
++enqueue:
++		if (q->backlog <= q->limit) {
++			q->backlog += skb->len;
++do_enqueue:
++			__skb_queue_tail(&sch->q, skb);
++			sch->stats.backlog += skb->len;
++			sch->stats.bytes += skb->len;
++			sch->stats.packets++;
++			return 0;
++		} else {
++			q->pdrop++;
++		}
++
++drop:
++		kfree_skb(skb);
++		sch->stats.drops++;
++		return NET_XMIT_DROP;
++	}
++	if ((q->qave+qave) >= q->qth_max) {
++		q->qcount = -1;
++		sch->stats.overlimits++;
++		q->forced++;
++		goto drop;
++	}
++	if (++q->qcount) {
++		if ((((qave+q->qave) - q->qth_min)>>q->Wlog)*q->qcount < q->qR)
++			goto enqueue;
++		q->qcount = 0;
++		q->qR = net_random()&q->Rmask;
++		sch->stats.overlimits++;
++		q->early++;
++		goto drop;
++	}
++	q->qR = net_random()&q->Rmask;
++	goto enqueue;
++}
++
++static int
++gred_requeue(struct sk_buff *skb, struct Qdisc* sch)
++{
++	struct gred_sched_data *q;
++	struct gred_sched *t= (struct gred_sched *)sch->data;
++	q= t->tab[(skb->tc_index&0xf)];
++/* error checking here -- probably unnecessary */
++	PSCHED_SET_PASTPERFECT(q->qidlestart);
++
++	__skb_queue_head(&sch->q, skb);
++	sch->stats.backlog += skb->len;
++	q->backlog += skb->len;
++	return 0;
++}
++
++static struct sk_buff *
++gred_dequeue(struct Qdisc* sch)
++{
++	struct sk_buff *skb;
++	struct gred_sched_data *q;
++	struct gred_sched *t= (struct gred_sched *)sch->data;
++
++	skb = __skb_dequeue(&sch->q);
++	if (skb) {
++		sch->stats.backlog -= skb->len;
++		q= t->tab[(skb->tc_index&0xf)];
++		if (q) {
++			q->backlog -= skb->len;
++			if (!q->backlog && !t->eqp)
++				PSCHED_GET_TIME(q->qidlestart);
++		} else {
++			D2PRINTK("gred_dequeue: skb has bad tcindex %x\n",skb->tc_index&0xf); 
++		}
++		return skb;
++	}
++
++	if (t->eqp) {
++			q= t->tab[t->def];
++			if (!q)	
++				D2PRINTK("no default VQ set: Results will be "
++				       "screwed up\n");
++			else
++				PSCHED_GET_TIME(q->qidlestart);
++	}
++
++	return NULL;
++}
++
++static int
++gred_drop(struct Qdisc* sch)
++{
++	struct sk_buff *skb;
++
++	struct gred_sched_data *q;
++	struct gred_sched *t= (struct gred_sched *)sch->data;
++
++	skb = __skb_dequeue_tail(&sch->q);
++	if (skb) {
++		sch->stats.backlog -= skb->len;
++		sch->stats.drops++;
++		q= t->tab[(skb->tc_index&0xf)];
++		if (q) {
++			q->backlog -= skb->len;
++			q->other++;
++			if (!q->backlog && !t->eqp)
++				PSCHED_GET_TIME(q->qidlestart);
++			} else {
++				D2PRINTK("gred_dequeue: skb has bad tcindex %x\n",skb->tc_index&0xf); 
++			}
++
++		kfree_skb(skb);
++		return 1;
++	}
++
++	q=t->tab[t->def];
++	if (!q) {
++		D2PRINTK("no default VQ set: Results might be screwed up\n");
++		return 0;
++	}
++
++	PSCHED_GET_TIME(q->qidlestart);
++	return 0;
++
++}
++
++static void gred_reset(struct Qdisc* sch)
++{
++	int i;
++	struct gred_sched_data *q;
++	struct gred_sched *t= (struct gred_sched *)sch->data;
++
++	__skb_queue_purge(&sch->q);
++
++	sch->stats.backlog = 0;
++
++        for (i=0;i<t->DPs;i++) {
++	        q= t->tab[i];
++		if (!q)	
++			continue; 
++		PSCHED_SET_PASTPERFECT(q->qidlestart);
++		q->qave = 0;
++		q->qcount = -1;
++		q->backlog = 0;
++		q->other=0;
++		q->forced=0;
++		q->pdrop=0;
++		q->early=0;
++	}
++}
++
++static int gred_change(struct Qdisc *sch, struct rtattr *opt)
++{
++	struct gred_sched *table = (struct gred_sched *)sch->data;
++	struct gred_sched_data *q;
++	struct tc_gred_qopt *ctl;
++	struct tc_gred_sopt *sopt;
++	struct rtattr *tb[TCA_GRED_STAB];
++	struct rtattr *tb2[TCA_GRED_STAB];
++	int i;
++
++	if (opt == NULL ||
++		rtattr_parse(tb, TCA_GRED_STAB, RTA_DATA(opt), RTA_PAYLOAD(opt)) )
++			return -EINVAL;
++
++	if (tb[TCA_GRED_PARMS-1] == 0 && tb[TCA_GRED_STAB-1] == 0 &&
++	    tb[TCA_GRED_DPS-1] != 0) {
++		rtattr_parse(tb2, TCA_GRED_DPS, RTA_DATA(opt),
++		    RTA_PAYLOAD(opt));
++
++		sopt = RTA_DATA(tb2[TCA_GRED_DPS-1]);
++		table->DPs=sopt->DPs;   
++		table->def=sopt->def_DP; 
++		table->grio=sopt->grio; 
++		table->initd=0;
++		/* probably need to clear all the table DP entries as well */
++		MOD_INC_USE_COUNT;
++		return 0;
++	    }
++
++
++	if (!table->DPs || tb[TCA_GRED_PARMS-1] == 0 || tb[TCA_GRED_STAB-1] == 0 ||
++		RTA_PAYLOAD(tb[TCA_GRED_PARMS-1]) < sizeof(*ctl) ||
++		RTA_PAYLOAD(tb[TCA_GRED_STAB-1]) < 256)
++			return -EINVAL;
++
++	ctl = RTA_DATA(tb[TCA_GRED_PARMS-1]);
++	if (ctl->DP > MAX_DPs-1 ) {
++		/* misbehaving is punished! Put in the default drop probability */
++		DPRINTK("\nGRED: DP %u not in  the proper range fixed. New DP "
++			"set to default at %d\n",ctl->DP,table->def);
++		ctl->DP=table->def;
++	}
++	
++	if (table->tab[ctl->DP] == NULL) {
++		table->tab[ctl->DP]=kmalloc(sizeof(struct gred_sched_data),
++					    GFP_KERNEL);
++		if (NULL == table->tab[ctl->DP])
++			return -ENOMEM;
++		memset(table->tab[ctl->DP], 0, (sizeof(struct gred_sched_data)));
++	}
++	q= table->tab[ctl->DP]; 
++
++	if (table->grio) {
++		if (ctl->prio <=0) {
++			if (table->def && table->tab[table->def]) {
++				DPRINTK("\nGRED: DP %u does not have a prio"
++					"setting default to %d\n",ctl->DP,
++					table->tab[table->def]->prio);
++				q->prio=table->tab[table->def]->prio;
++			} else { 
++				DPRINTK("\nGRED: DP %u does not have a prio"
++					" setting default to 8\n",ctl->DP);
++				q->prio=8;
++			}
++		} else {
++			q->prio=ctl->prio;
++		}
++	} else {
++		q->prio=8;
++	}
++
++
++	q->DP=ctl->DP;
++	q->Wlog = ctl->Wlog;
++	q->Plog = ctl->Plog;
++	q->limit = ctl->limit;
++	q->Scell_log = ctl->Scell_log;
++	q->Rmask = ctl->Plog < 32 ? ((1<<ctl->Plog) - 1) : ~0UL;
++	q->Scell_max = (255<<q->Scell_log);
++	q->qth_min = ctl->qth_min<<ctl->Wlog;
++	q->qth_max = ctl->qth_max<<ctl->Wlog;
++	q->qave=0;
++	q->backlog=0;
++	q->qcount = -1;
++	q->other=0;
++	q->forced=0;
++	q->pdrop=0;
++	q->early=0;
++
++	PSCHED_SET_PASTPERFECT(q->qidlestart);
++	memcpy(q->Stab, RTA_DATA(tb[TCA_GRED_STAB-1]), 256);
++
++	if ( table->initd && table->grio) {
++	/* this looks ugly but its not in the fast path */
++		for (i=0;i<table->DPs;i++) {
++			if ((!table->tab[i]) || (i==q->DP) )    
++				continue; 
++			if (table->tab[i]->prio == q->prio ){
++				/* WRED mode detected */
++				table->eqp=1;
++				break;
++			}
++		}
++	}
++
++	if (!table->initd) {
++		table->initd=1;
++		/* 
++        	the first entry also goes into the default until
++        	over-written 
++		*/
++
++		if (table->tab[table->def] == NULL) {
++			table->tab[table->def]=
++				kmalloc(sizeof(struct gred_sched_data), GFP_KERNEL);
++			if (NULL == table->tab[table->def])
++				return -ENOMEM;
++
++			memset(table->tab[table->def], 0,
++			       (sizeof(struct gred_sched_data)));
++		}
++		q= table->tab[table->def]; 
++		q->DP=table->def;
++		q->Wlog = ctl->Wlog;
++		q->Plog = ctl->Plog;
++		q->limit = ctl->limit;
++		q->Scell_log = ctl->Scell_log;
++		q->Rmask = ctl->Plog < 32 ? ((1<<ctl->Plog) - 1) : ~0UL;
++		q->Scell_max = (255<<q->Scell_log);
++		q->qth_min = ctl->qth_min<<ctl->Wlog;
++		q->qth_max = ctl->qth_max<<ctl->Wlog;
++
++		if (table->grio)
++			q->prio=table->tab[ctl->DP]->prio;
++		else
++			q->prio=8;
++
++		q->qcount = -1;
++		PSCHED_SET_PASTPERFECT(q->qidlestart);
++		memcpy(q->Stab, RTA_DATA(tb[TCA_GRED_STAB-1]), 256);
++	}
++	return 0;
++
++}
++
++static int gred_init(struct Qdisc *sch, struct rtattr *opt)
++{
++	struct gred_sched *table = (struct gred_sched *)sch->data;
++	struct tc_gred_sopt *sopt;
++	struct rtattr *tb[TCA_GRED_STAB];
++	struct rtattr *tb2[TCA_GRED_STAB];
++
++	if (opt == NULL ||
++		rtattr_parse(tb, TCA_GRED_STAB, RTA_DATA(opt), RTA_PAYLOAD(opt)) )
++			return -EINVAL;
++
++	if (tb[TCA_GRED_PARMS-1] == 0 && tb[TCA_GRED_STAB-1] == 0 &&
++	    tb[TCA_GRED_DPS-1] != 0) {
++		rtattr_parse(tb2, TCA_GRED_DPS, RTA_DATA(opt),RTA_PAYLOAD(opt));
++
++		sopt = RTA_DATA(tb2[TCA_GRED_DPS-1]);
++		table->DPs=sopt->DPs;   
++		table->def=sopt->def_DP; 
++		table->grio=sopt->grio; 
++		table->initd=0;
++		MOD_INC_USE_COUNT;
++		return 0;
++	}
++
++	DPRINTK("\n GRED_INIT error!\n");
++	return -EINVAL;
++}
++
++static int gred_dump(struct Qdisc *sch, struct sk_buff *skb)
++{
++	unsigned long qave;
++	struct rtattr *rta;
++	struct tc_gred_qopt *opt = NULL ;
++	struct tc_gred_qopt *dst;
++	struct gred_sched *table = (struct gred_sched *)sch->data;
++	struct gred_sched_data *q;
++	int i;
++	unsigned char	 *b = skb->tail;
++
++	rta = (struct rtattr*)b;
++	RTA_PUT(skb, TCA_OPTIONS, 0, NULL);
++
++	opt=kmalloc(sizeof(struct tc_gred_qopt)*MAX_DPs, GFP_KERNEL);
++
++	if (opt  == NULL) {
++		DPRINTK("gred_dump:failed to malloc for %Zd\n",
++		    sizeof(struct tc_gred_qopt)*MAX_DPs);
++		goto rtattr_failure;
++	}
++
++	memset(opt, 0, (sizeof(struct tc_gred_qopt))*table->DPs);
++
++	if (!table->initd) {
++		DPRINTK("NO GRED Queues setup!\n");
++	}
++
++	for (i=0;i<MAX_DPs;i++) {
++		dst= &opt[i]; 
++		q= table->tab[i]; 
++
++		if (!q) {
++			/* hack -- fix at some point with proper message
++			   This is how we indicate to tc that there is no VQ
++			   at this DP */
++
++			dst->DP=MAX_DPs+i;
++			continue;
++		}
++
++		dst->limit=q->limit;
++		dst->qth_min=q->qth_min>>q->Wlog;
++		dst->qth_max=q->qth_max>>q->Wlog;
++		dst->DP=q->DP;
++		dst->backlog=q->backlog;
++		if (q->qave) {
++			if (table->eqp && table->grio) {
++				q->qidlestart=table->tab[table->def]->qidlestart;
++				q->qave=table->tab[table->def]->qave;
++			}
++			if (!PSCHED_IS_PASTPERFECT(q->qidlestart)) {
++				long idle;
++				psched_time_t now;
++				PSCHED_GET_TIME(now);
++				idle = PSCHED_TDIFF_SAFE(now, q->qidlestart, q->Scell_max, 0);
++				qave  = q->qave >> q->Stab[(idle>>q->Scell_log)&0xFF];
++				dst->qave = qave >> q->Wlog;
++
++			} else {
++				dst->qave = q->qave >> q->Wlog;
++			}
++		} else {
++			dst->qave = 0;
++		}
++		
++
++		dst->Wlog = q->Wlog;
++		dst->Plog = q->Plog;
++		dst->Scell_log = q->Scell_log;
++		dst->other = q->other;
++		dst->forced = q->forced;
++		dst->early = q->early;
++		dst->pdrop = q->pdrop;
++		dst->prio = q->prio;
++		dst->packets=q->packetsin;
++		dst->bytesin=q->bytesin;
++	}
++
++	RTA_PUT(skb, TCA_GRED_PARMS, sizeof(struct tc_gred_qopt)*MAX_DPs, opt);
++	rta->rta_len = skb->tail - b;
++
++	kfree(opt);
++	return skb->len;
++
++rtattr_failure:
++	if (opt)
++		kfree(opt);
++	DPRINTK("gred_dump: FAILURE!!!!\n");
++
++/* also free the opt struct here */
++	skb_trim(skb, b - skb->data);
++	return -1;
++}
++
++static void gred_destroy(struct Qdisc *sch)
++{
++	struct gred_sched *table = (struct gred_sched *)sch->data;
++	int i;
++
++	for (i = 0;i < table->DPs; i++) {
++		if (table->tab[i])
++			kfree(table->tab[i]);
++	}
++	MOD_DEC_USE_COUNT;
++}
++
++struct Qdisc_ops gred_qdisc_ops =
++{
++	NULL,
++	NULL,
++	"gred",
++	sizeof(struct gred_sched),
++	gred_enqueue,
++	gred_dequeue,
++	gred_requeue,
++	gred_drop,
++	gred_init,
++	gred_reset,
++	gred_destroy,
++	gred_change, /* change */
++	gred_dump,
++};
++
++
++#ifdef MODULE
++int init_module(void)
++{
++	return register_qdisc(&gred_qdisc_ops);
++}
++
++void cleanup_module(void) 
++{
++	unregister_qdisc(&gred_qdisc_ops);
++}
++#endif
++MODULE_LICENSE("GPL");
+diff -urN ../v2.2.21/linux/net/sched/sch_ingress.c linux/net/sched/sch_ingress.c
+--- ../v2.2.21/linux/net/sched/sch_ingress.c	Thu Jan  1 00:00:00 1970
++++ linux/net/sched/sch_ingress.c	Sun Aug  4 18:02:57 2002
+@@ -0,0 +1,313 @@
++/* net/sched/sch_ingress.c - Ingress qdisc */
++
++/* Written 1999 by Jamal Hadi Salim */
++
++
++#include <linux/config.h>
++#include <linux/module.h>
++#include <linux/types.h>
++#include <linux/skbuff.h>
++#include <linux/netdevice.h> /* for pkt_sched */
++#include <linux/rtnetlink.h>
++#include <linux/firewall.h>
++#include <net/pkt_sched.h>
++#include <asm/byteorder.h>
++
++#undef DEBUG_INGRESS
++
++#ifdef DEBUG_INGRESS  /* control */
++#define DPRINTK(format,args...) printk(KERN_DEBUG format,##args)
++#else
++#define DPRINTK(format,args...)
++#endif
++
++#if 0  /* data */
++#define D2PRINTK(format,args...) printk(KERN_DEBUG format,##args)
++#else
++#define D2PRINTK(format,args...)
++#endif
++
++
++#define PRIV(sch) ((struct ingress_qdisc_data *) (sch)->data)
++
++
++
++struct ingress_qdisc_data {
++	struct Qdisc		*q;
++	struct tcf_proto	*filter_list;
++};
++
++
++/* ------------------------- Class/flow operations ------------------------- */
++
++
++static int ingress_graft(struct Qdisc *sch,unsigned long arg,
++    struct Qdisc *new,struct Qdisc **old)
++{
++#ifdef DEBUG_INGRESS
++	struct ingress_qdisc_data *p = PRIV(sch);
++#endif
++
++	DPRINTK("ingress_graft(sch %p,[qdisc %p],new %p,old %p)\n",
++		sch, p, new, old);
++	DPRINTK("\n ingress_graft: You cannot add qdiscs to classes");
++        return 1;
++}
++
++
++static struct Qdisc *ingress_leaf(struct Qdisc *sch, unsigned long arg)
++{
++	return NULL;
++}
++
++
++static unsigned long ingress_get(struct Qdisc *sch,u32 classid)
++{
++#ifdef DEBUG_INGRESS
++	struct ingress_qdisc_data *p = PRIV(sch);
++#endif
++	DPRINTK("ingress_get(sch %p,[qdisc %p],classid %x)\n", sch, p, classid);
++	return TC_H_MIN(classid) + 1;
++}
++
++
++static unsigned long ingress_bind_filter(struct Qdisc *sch,
++    unsigned long parent, u32 classid)
++{
++	return ingress_get(sch, classid);
++}
++
++
++static void ingress_put(struct Qdisc *sch, unsigned long cl)
++{
++}
++
++
++static int ingress_change(struct Qdisc *sch, u32 classid, u32 parent,
++    struct rtattr **tca, unsigned long *arg)
++{
++#ifdef DEBUG_INGRESS
++	struct ingress_qdisc_data *p = PRIV(sch);
++#endif
++	DPRINTK("ingress_change(sch %p,[qdisc %p],classid %x,parent %x),"
++		"arg 0x%lx\n", sch, p, classid, parent, *arg);
++	DPRINTK("No effect. sch_ingress doesnt maintain classes at the moment");
++	return 0;
++}
++
++
++
++static void ingress_walk(struct Qdisc *sch,struct qdisc_walker *walker)
++{
++#ifdef DEBUG_INGRESS
++	struct ingress_qdisc_data *p = PRIV(sch);
++#endif
++	DPRINTK("ingress_walk(sch %p,[qdisc %p],walker %p)\n", sch, p, walker);
++	DPRINTK("No effect. sch_ingress doesnt maintain classes at the moment");
++}
++
++
++static struct tcf_proto **ingress_find_tcf(struct Qdisc *sch,unsigned long cl)
++{
++	struct ingress_qdisc_data *p = PRIV(sch);
++
++	return &p->filter_list;
++}
++
++
++/* --------------------------- Qdisc operations ---------------------------- */
++
++
++static int ingress_enqueue(struct sk_buff *skb,struct Qdisc *sch)
++{
++	struct ingress_qdisc_data *p = PRIV(sch);
++	struct tcf_result res;
++	int result;
++
++	D2PRINTK("ingress_enqueue(skb %p,sch %p,[qdisc %p])\n", skb, sch, p);
++	result = tc_classify(skb, p->filter_list, &res);
++	D2PRINTK("result %d class 0x%04x\n", result, res.classid);
++	/*
++	 * Unlike normal "enqueue" functions, ingress_enqueue returns a
++	 * firewall FW_* code.
++	 */
++#ifdef CONFIG_NET_CLS_POLICE
++	switch (result) {
++		case TC_POLICE_SHOT:
++			result = FW_BLOCK;
++			sch->stats.drops++;
++			break;
++		case TC_POLICE_RECLASSIFY: /* DSCP remarking here ? */
++		case TC_POLICE_OK:
++		case TC_POLICE_UNSPEC:
++		default:
++			sch->stats.packets++;
++			sch->stats.bytes += skb->len;
++			result = FW_ACCEPT;
++			break;
++	};
++#else
++	sch->stats.packets++;
++	sch->stats.bytes += skb->len;
++#endif
++
++	skb->tc_index = TC_H_MIN(res.classid);
++	return result;
++}
++
++
++static struct sk_buff *ingress_dequeue(struct Qdisc *sch)
++{
++/*
++	struct ingress_qdisc_data *p = PRIV(sch);
++	D2PRINTK("ingress_dequeue(sch %p,[qdisc %p])\n",sch,PRIV(p));
++*/
++	return NULL;
++}
++
++
++static int ingress_requeue(struct sk_buff *skb,struct Qdisc *sch)
++{
++/*
++	struct ingress_qdisc_data *p = PRIV(sch);
++	D2PRINTK("ingress_requeue(skb %p,sch %p,[qdisc %p])\n",skb,sch,PRIV(p));
++*/
++	return 0;
++}
++
++static int ingress_drop(struct Qdisc *sch)
++{
++#ifdef DEBUG_INGRESS
++	struct ingress_qdisc_data *p = PRIV(sch);
++#endif
++	DPRINTK("ingress_drop(sch %p,[qdisc %p])\n", sch, p);
++	return 0;
++}
++
++
++int ingress_init(struct Qdisc *sch,struct rtattr *opt)
++{
++	struct ingress_qdisc_data *p = PRIV(sch);
++
++	DPRINTK("ingress_init(sch %p,[qdisc %p],opt %p)\n",sch,p,opt);
++	memset(p, 0, sizeof(*p));
++	p->filter_list = NULL;
++	p->q = &noop_qdisc;
++	MOD_INC_USE_COUNT;
++	return 0;
++}
++
++
++static void ingress_reset(struct Qdisc *sch)
++{
++	struct ingress_qdisc_data *p = PRIV(sch);
++
++	DPRINTK("ingress_reset(sch %p,[qdisc %p])\n", sch, p);
++
++/*
++#if 0
++*/
++/* for future use */
++	qdisc_reset(p->q);
++/*
++#endif
++*/
++}
++
++
++static void ingress_destroy(struct Qdisc *sch)
++{
++	struct ingress_qdisc_data *p = PRIV(sch);
++	struct tcf_proto *tp;
++
++	DPRINTK("ingress_destroy(sch %p,[qdisc %p])\n", sch, p);
++	while (p->filter_list) {
++		tp = p->filter_list;
++		p->filter_list = tp->next;
++		tp->ops->destroy(tp);
++	}
++	memset(p, 0, sizeof(*p));
++	p->filter_list = NULL;
++
++#if 0
++/* for future use */
++	qdisc_destroy(p->q);
++#endif
++ 
++	MOD_DEC_USE_COUNT;
++
++}
++
++
++static int ingress_dump(struct Qdisc *sch, struct sk_buff *skb)
++{
++	unsigned char *b = skb->tail;
++	struct rtattr *rta;
++
++	rta = (struct rtattr *) b;
++	RTA_PUT(skb, TCA_OPTIONS, 0, NULL);
++	rta->rta_len = skb->tail - b;
++	return skb->len;
++
++rtattr_failure:
++	skb_trim(skb, b - skb->data);
++	return -1;
++}
++
++static struct Qdisc_class_ops ingress_class_ops =
++{
++	ingress_graft,			/* graft */
++	ingress_leaf,			/* leaf */
++	ingress_get,			/* get */
++	ingress_put,			/* put */
++	ingress_change,			/* change */
++	NULL,				/* delete */
++	ingress_walk,				/* walk */
++
++	ingress_find_tcf,		/* tcf_chain */
++	ingress_bind_filter,		/* bind_tcf */
++	ingress_put,			/* unbind_tcf */
++
++	NULL,		/* dump */
++};
++
++struct Qdisc_ops ingress_qdisc_ops =
++{
++	NULL,				/* next */
++	&ingress_class_ops,		/* cl_ops */
++	"ingress",
++	sizeof(struct ingress_qdisc_data),
++
++	ingress_enqueue,		/* enqueue */
++	ingress_dequeue,		/* dequeue */
++	ingress_requeue,		/* requeue */
++	ingress_drop,			/* drop */
++
++	ingress_init,			/* init */
++	ingress_reset,			/* reset */
++	ingress_destroy,		/* destroy */
++	NULL,				/* change */
++
++	ingress_dump,			/* dump */
++};
++
++
++#ifdef MODULE
++int init_module(void)
++{
++	int ret = 0;
++
++	if ((ret = register_qdisc(&ingress_qdisc_ops)) < 0) {
++		printk("Unable to register Ingress qdisc\n");
++		return ret;
++	}
++
++	return ret;
++}
++
++
++void cleanup_module(void) 
++{
++	unregister_qdisc(&ingress_qdisc_ops);
++}
++#endif
+diff -urN ../v2.2.21/linux/net/sched/sch_prio.c linux/net/sched/sch_prio.c
+--- ../v2.2.21/linux/net/sched/sch_prio.c	Sat Oct 21 12:10:50 2000
++++ linux/net/sched/sch_prio.c	Fri Jul  5 22:06:27 2002
+@@ -7,6 +7,8 @@
+  *		2 of the License, or (at your option) any later version.
+  *
+  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
++ * Fixes:       19990609: J Hadi Salim <hadi@nortelnetworks.com>: 
++ *              Init --  EINVAL when opt undefined
+  */
+ 
+ #include <linux/config.h>
+@@ -69,17 +71,18 @@
+ {
+ 	struct prio_sched_data *q = (struct prio_sched_data *)sch->data;
+ 	struct Qdisc *qdisc;
++	int ret;
+ 
+ 	qdisc = q->queues[prio_classify(skb, sch)];
+ 
+-	if (qdisc->enqueue(skb, qdisc) == 1) {
++	if ((ret = qdisc->enqueue(skb, qdisc)) == 0) {
+ 		sch->stats.bytes += skb->len;
+ 		sch->stats.packets++;
+ 		sch->q.qlen++;
+-		return 1;
++		return 0;
+ 	}
+ 	sch->stats.drops++;
+-	return 0;
++	return ret;
+ }
+ 
+ 
+@@ -88,15 +91,16 @@
+ {
+ 	struct prio_sched_data *q = (struct prio_sched_data *)sch->data;
+ 	struct Qdisc *qdisc;
++	int ret;
+ 
+ 	qdisc = q->queues[prio_classify(skb, sch)];
+ 
+-	if (qdisc->ops->requeue(skb, qdisc) == 1) {
++	if ((ret = qdisc->ops->requeue(skb, qdisc)) == 0) {
+ 		sch->q.qlen++;
+-		return 1;
++		return 0;
+ 	}
+ 	sch->stats.drops++;
+-	return 0;
++	return ret;
+ }
+ 
+ 
+@@ -178,7 +182,7 @@
+ 			return -EINVAL;
+ 	}
+ 
+-	start_bh_atomic();
++	sch_tree_lock(sch);
+ 	q->bands = qopt->bands;
+ 	memcpy(q->prio2band, qopt->priomap, TC_PRIO_MAX+1);
+ 
+@@ -187,7 +191,7 @@
+ 		if (child != &noop_qdisc)
+ 			qdisc_destroy(child);
+ 	}
+-	end_bh_atomic();
++	sch_tree_unlock(sch);
+ 
+ 	for (i=0; i<=TC_PRIO_MAX; i++) {
+ 		int band = q->prio2band[i];
+@@ -195,11 +199,12 @@
+ 			struct Qdisc *child;
+ 			child = qdisc_create_dflt(sch->dev, &pfifo_qdisc_ops);
+ 			if (child) {
++				sch_tree_lock(sch);
+ 				child = xchg(&q->queues[band], child);
+-				synchronize_bh();
+ 
+ 				if (child != &noop_qdisc)
+ 					qdisc_destroy(child);
++				sch_tree_unlock(sch);
+ 			}
+ 		}
+ 	}
+@@ -208,8 +213,6 @@
+ 
+ static int prio_init(struct Qdisc *sch, struct rtattr *opt)
+ {
+-	static const u8 prio2band[TC_PRIO_MAX+1] =
+-	{ 1, 2, 2, 2, 1, 2, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1 };
+ 	struct prio_sched_data *q = (struct prio_sched_data *)sch->data;
+ 	int i;
+ 
+@@ -217,14 +220,7 @@
+ 		q->queues[i] = &noop_qdisc;
+ 
+ 	if (opt == NULL) {
+-		q->bands = 3;
+-		memcpy(q->prio2band, prio2band, sizeof(prio2band));
+-		for (i=0; i<3; i++) {
+-			struct Qdisc *child;
+-			child = qdisc_create_dflt(sch->dev, &pfifo_qdisc_ops);
+-			if (child)
+-				q->queues[i] = child;
+-		}
++		return -EINVAL;
+ 	} else {
+ 		int err;
+ 
+@@ -235,7 +231,6 @@
+ 	return 0;
+ }
+ 
+-#ifdef CONFIG_RTNETLINK
+ static int prio_dump(struct Qdisc *sch, struct sk_buff *skb)
+ {
+ 	struct prio_sched_data *q = (struct prio_sched_data *)sch->data;
+@@ -251,7 +246,6 @@
+ 	skb_trim(skb, b - skb->data);
+ 	return -1;
+ }
+-#endif
+ 
+ static int prio_graft(struct Qdisc *sch, unsigned long arg, struct Qdisc *new,
+ 		      struct Qdisc **old)
+@@ -265,7 +259,11 @@
+ 	if (new == NULL)
+ 		new = &noop_qdisc;
+ 
+-	*old = xchg(&q->queues[band], new);
++	sch_tree_lock(sch);
++	*old = q->queues[band];
++	q->queues[band] = new;
++	qdisc_reset(*old);
++	sch_tree_unlock(sch);
+ 
+ 	return 0;
+ }
+@@ -322,7 +320,6 @@
+ }
+ 
+ 
+-#ifdef CONFIG_RTNETLINK
+ static int prio_dump_class(struct Qdisc *sch, unsigned long cl, struct sk_buff *skb,
+ 			   struct tcmsg *tcm)
+ {
+@@ -330,11 +327,11 @@
+ 
+ 	if (cl - 1 > q->bands)
+ 		return -ENOENT;
++	tcm->tcm_handle |= TC_H_MIN(cl);
+ 	if (q->queues[cl-1])
+ 		tcm->tcm_info = q->queues[cl-1]->handle;
+ 	return 0;
+ }
+-#endif
+ 
+ static void prio_walk(struct Qdisc *sch, struct qdisc_walker *arg)
+ {
+@@ -381,9 +378,7 @@
+ 	prio_bind,
+ 	prio_put,
+ 
+-#ifdef CONFIG_RTNETLINK
+ 	prio_dump_class,
+-#endif
+ };
+ 
+ struct Qdisc_ops prio_qdisc_ops =
+@@ -403,9 +398,7 @@
+ 	prio_destroy,
+ 	prio_tune,
+ 
+-#ifdef CONFIG_RTNETLINK
+ 	prio_dump,
+-#endif
+ };
+ 
+ #ifdef MODULE
+@@ -421,3 +414,4 @@
+ }
+ 
+ #endif
++MODULE_LICENSE("GPL");
+diff -urN ../v2.2.21/linux/net/sched/sch_red.c linux/net/sched/sch_red.c
+--- ../v2.2.21/linux/net/sched/sch_red.c	Sat Oct 21 12:11:29 2000
++++ linux/net/sched/sch_red.c	Fri Aug  2 02:41:03 2002
+@@ -10,6 +10,8 @@
+  *
+  * Changes:
+  * J Hadi Salim <hadi@nortel.com> 980914:	computation fixes
++ * Alexey Makarenko <makar@phoenix.kharkov.ua> 990814: qave on idle link was calculated incorrectly.
++ * J Hadi Salim <hadi@nortelnetworks.com> 980816:  ECN support	
+  */
+ 
+ #include <linux/config.h>
+@@ -38,6 +40,9 @@
+ #include <net/sock.h>
+ #include <net/pkt_sched.h>
+ 
++#define RED_ECN_ECT  0x02
++#define RED_ECN_CE   0x01
++
+ 
+ /*	Random Early Detection (RED) algorithm.
+ 	=======================================
+@@ -137,6 +142,7 @@
+ 	u32		qth_max;	/* Max average length threshold: A scaled */
+ 	u32		Rmask;
+ 	u32		Scell_max;
++	unsigned char	flags;
+ 	char		Wlog;		/* log(W)		*/
+ 	char		Plog;		/* random number bits	*/
+ 	char		Scell_log;
+@@ -148,8 +154,43 @@
+ 	u32		qR;		/* Cached random number */
+ 
+ 	psched_time_t	qidlestart;	/* Start of idle period		*/
++	struct tc_red_xstats st;
+ };
+ 
++static int red_ecn_mark(struct sk_buff *skb)
++{
++	if (skb->nh.raw + 20 > skb->tail)
++		return 0;
++
++	switch (skb->protocol) {
++	case __constant_htons(ETH_P_IP):
++	{
++		u8 tos = skb->nh.iph->tos;
++
++		if (!(tos & RED_ECN_ECT))
++			return 0;
++
++		if (!(tos & RED_ECN_CE))
++			IP_ECN_set_ce(skb->nh.iph);
++
++		return 1;
++	}
++
++	case __constant_htons(ETH_P_IPV6):
++	{
++		u32 label = *(u32*)skb->nh.raw;
++
++		if (!(label & __constant_htonl(RED_ECN_ECT<<20)))
++			return 0;
++		label |= __constant_htonl(RED_ECN_CE<<20);
++		return 1;
++	}
++
++	default:
++		return 0;
++	}
++}
++
+ static int
+ red_enqueue(struct sk_buff *skb, struct Qdisc* sch)
+ {
+@@ -159,6 +200,8 @@
+ 
+ 	if (!PSCHED_IS_PASTPERFECT(q->qidlestart)) {
+ 		long us_idle;
++		int  shift;
++
+ 		PSCHED_GET_TIME(now);
+ 		us_idle = PSCHED_TDIFF_SAFE(now, q->qidlestart, q->Scell_max, 0);
+ 		PSCHED_SET_PASTPERFECT(q->qidlestart);
+@@ -179,7 +222,25 @@
+    I believe that a simpler model may be used here,
+    but it is field for experiments.
+ */
+-		q->qave >>= q->Stab[(us_idle>>q->Scell_log)&0xFF];
++		shift = q->Stab[us_idle>>q->Scell_log];
++
++		if (shift) {
++			q->qave >>= shift;
++		} else {
++			/* Approximate initial part of exponent
++			   with linear function:
++			   (1-W)^m ~= 1-mW + ...
++
++			   Seems, it is the best solution to
++			   problem of too coarce exponent tabulation.
++			 */
++
++			us_idle = (q->qave * us_idle)>>q->Scell_log;
++			if (us_idle < q->qave/2)
++				q->qave -= us_idle;
++			else
++				q->qave >>= 1;
++		}
+ 	} else {
+ 		q->qave += sch->stats.backlog - (q->qave >> q->Wlog);
+ 		/* NOTE:
+@@ -200,18 +261,26 @@
+ 			sch->stats.backlog += skb->len;
+ 			sch->stats.bytes += skb->len;
+ 			sch->stats.packets++;
+-			return 1;
++			return NET_XMIT_SUCCESS;
++		} else {
++			q->st.pdrop++;
+ 		}
+-drop:
+ 		kfree_skb(skb);
+ 		sch->stats.drops++;
+-		return 0;
++		return NET_XMIT_DROP;
+ 	}
+ 	if (q->qave >= q->qth_max) {
+ 		q->qcount = -1;
+ 		sch->stats.overlimits++;
+-		goto drop;
++mark:
++		if  (!(q->flags&TC_RED_ECN) || !red_ecn_mark(skb)) {
++			q->st.early++;
++			goto drop;
++		}
++		q->st.marked++;
++		goto enqueue;
+ 	}
++
+ 	if (++q->qcount) {
+ 		/* The formula used below causes questions.
+ 
+@@ -234,10 +303,15 @@
+ 		q->qcount = 0;
+ 		q->qR = net_random()&q->Rmask;
+ 		sch->stats.overlimits++;
+-		goto drop;
++		goto mark;
+ 	}
+ 	q->qR = net_random()&q->Rmask;
+ 	goto enqueue;
++
++drop:
++	kfree_skb(skb);
++	sch->stats.drops++;
++	return NET_XMIT_CN;
+ }
+ 
+ static int
+@@ -249,7 +323,7 @@
+ 
+ 	__skb_queue_head(&sch->q, skb);
+ 	sch->stats.backlog += skb->len;
+-	return 1;
++	return 0;
+ }
+ 
+ static struct sk_buff *
+@@ -277,6 +351,7 @@
+ 	if (skb) {
+ 		sch->stats.backlog -= skb->len;
+ 		sch->stats.drops++;
++		q->st.other++;
+ 		kfree_skb(skb);
+ 		return 1;
+ 	}
+@@ -287,17 +362,15 @@
+ static void red_reset(struct Qdisc* sch)
+ {
+ 	struct red_sched_data *q = (struct red_sched_data *)sch->data;
+-	struct sk_buff *skb;
+ 
+-	while((skb=__skb_dequeue(&sch->q))!=NULL)
+-		kfree_skb(skb);
++	__skb_queue_purge(&sch->q);
+ 	sch->stats.backlog = 0;
+ 	PSCHED_SET_PASTPERFECT(q->qidlestart);
+ 	q->qave = 0;
+ 	q->qcount = -1;
+ }
+ 
+-static int red_init(struct Qdisc *sch, struct rtattr *opt)
++static int red_change(struct Qdisc *sch, struct rtattr *opt)
+ {
+ 	struct red_sched_data *q = (struct red_sched_data *)sch->data;
+ 	struct rtattr *tb[TCA_RED_STAB];
+@@ -312,6 +385,8 @@
+ 
+ 	ctl = RTA_DATA(tb[TCA_RED_PARMS-1]);
+ 
++	sch_tree_lock(sch);
++	q->flags = ctl->flags;
+ 	q->Wlog = ctl->Wlog;
+ 	q->Plog = ctl->Plog;
+ 	q->Rmask = ctl->Plog < 32 ? ((1<<ctl->Plog) - 1) : ~0UL;
+@@ -323,12 +398,34 @@
+ 	memcpy(q->Stab, RTA_DATA(tb[TCA_RED_STAB-1]), 256);
+ 
+ 	q->qcount = -1;
+-	PSCHED_SET_PASTPERFECT(q->qidlestart);
+-	MOD_INC_USE_COUNT;
++	if (skb_queue_len(&sch->q) == 0)
++		PSCHED_SET_PASTPERFECT(q->qidlestart);
++	sch_tree_unlock(sch);
+ 	return 0;
+ }
+ 
+-#ifdef CONFIG_RTNETLINK
++static int red_init(struct Qdisc* sch, struct rtattr *opt)
++{
++	int err;
++
++	MOD_INC_USE_COUNT;
++
++	if ((err = red_change(sch, opt)) != 0) {
++		MOD_DEC_USE_COUNT;
++	}
++	return err;
++}
++
++
++int red_copy_xstats(struct sk_buff *skb, struct tc_red_xstats *st)
++{
++        RTA_PUT(skb, TCA_XSTATS, sizeof(*st), st);
++        return 0;
++
++rtattr_failure:
++        return 1;
++}
++
+ static int red_dump(struct Qdisc *sch, struct sk_buff *skb)
+ {
+ 	struct red_sched_data *q = (struct red_sched_data *)sch->data;
+@@ -344,16 +441,19 @@
+ 	opt.Wlog = q->Wlog;
+ 	opt.Plog = q->Plog;
+ 	opt.Scell_log = q->Scell_log;
++	opt.flags = q->flags;
+ 	RTA_PUT(skb, TCA_RED_PARMS, sizeof(opt), &opt);
+ 	rta->rta_len = skb->tail - b;
+ 
++	if (red_copy_xstats(skb, &q->st))
++		goto rtattr_failure;
++
+ 	return skb->len;
+ 
+ rtattr_failure:
+ 	skb_trim(skb, b - skb->data);
+ 	return -1;
+ }
+-#endif
+ 
+ static void red_destroy(struct Qdisc *sch)
+ {
+@@ -375,11 +475,9 @@
+ 	red_init,
+ 	red_reset,
+ 	red_destroy,
+-	NULL /* red_change */,
++	red_change,
+ 
+-#ifdef CONFIG_RTNETLINK
+ 	red_dump,
+-#endif
+ };
+ 
+ 
+@@ -394,3 +492,4 @@
+ 	unregister_qdisc(&red_qdisc_ops);
+ }
+ #endif
++MODULE_LICENSE("GPL");
+diff -urN ../v2.2.21/linux/net/sched/sch_sfq.c linux/net/sched/sch_sfq.c
+--- ../v2.2.21/linux/net/sched/sch_sfq.c	Sat Oct 21 12:10:57 2000
++++ linux/net/sched/sch_sfq.c	Fri Jul  5 22:06:27 2002
+@@ -105,6 +105,7 @@
+ /* Parameters */
+ 	int		perturb_period;
+ 	unsigned	quantum;	/* Allotment per round: MUST BE >= MTU */
++	int		limit;
+ 
+ /* Variables */
+ 	struct timer_list perturb_timer;
+@@ -275,14 +276,14 @@
+ 			q->tail = x;
+ 		}
+ 	}
+-	if (++sch->q.qlen < SFQ_DEPTH-1) {
++	if (++sch->q.qlen < q->limit-1) {
+ 		sch->stats.bytes += skb->len;
+ 		sch->stats.packets++;
+-		return 1;
++		return 0;
+ 	}
+ 
+ 	sfq_drop(sch);
+-	return 0;
++	return NET_XMIT_CN;
+ }
+ 
+ static int
+@@ -310,12 +311,12 @@
+ 			q->tail = x;
+ 		}
+ 	}
+-	if (++sch->q.qlen < SFQ_DEPTH-1)
+-		return 1;
++	if (++sch->q.qlen < q->limit - 1)
++		return 0;
+ 
+ 	sch->stats.drops++;
+ 	sfq_drop(sch);
+-	return 0;
++	return NET_XMIT_CN;
+ }
+ 
+ 
+@@ -387,16 +388,21 @@
+ 	if (opt->rta_len < RTA_LENGTH(sizeof(*ctl)))
+ 		return -EINVAL;
+ 
+-	start_bh_atomic();
++	sch_tree_lock(sch);
+ 	q->quantum = ctl->quantum ? : psched_mtu(sch->dev);
+ 	q->perturb_period = ctl->perturb_period*HZ;
++	if (ctl->limit)
++		q->limit = min_t(u32, ctl->limit, SFQ_DEPTH);
++
++	while (sch->q.qlen >= q->limit-1)
++		sfq_drop(sch);
+ 
+ 	del_timer(&q->perturb_timer);
+ 	if (q->perturb_period) {
+ 		q->perturb_timer.expires = jiffies + q->perturb_period;
+ 		add_timer(&q->perturb_timer);
+ 	}
+-	end_bh_atomic();
++	sch_tree_unlock(sch);
+ 	return 0;
+ }
+ 
+@@ -416,6 +422,7 @@
+ 		q->dep[i+SFQ_DEPTH].next = i+SFQ_DEPTH;
+ 		q->dep[i+SFQ_DEPTH].prev = i+SFQ_DEPTH;
+ 	}
++	q->limit = SFQ_DEPTH;
+ 	q->max_depth = 0;
+ 	q->tail = SFQ_DEPTH;
+ 	if (opt == NULL) {
+@@ -439,7 +446,6 @@
+ 	MOD_DEC_USE_COUNT;
+ }
+ 
+-#ifdef CONFIG_RTNETLINK
+ static int sfq_dump(struct Qdisc *sch, struct sk_buff *skb)
+ {
+ 	struct sfq_sched_data *q = (struct sfq_sched_data *)sch->data;
+@@ -449,9 +455,9 @@
+ 	opt.quantum = q->quantum;
+ 	opt.perturb_period = q->perturb_period/HZ;
+ 
+-	opt.limit = SFQ_DEPTH;
++	opt.limit = q->limit;
+ 	opt.divisor = SFQ_HASH_DIVISOR;
+-	opt.flows = SFQ_DEPTH;
++	opt.flows = q->limit;
+ 
+ 	RTA_PUT(skb, TCA_OPTIONS, sizeof(opt), &opt);
+ 
+@@ -461,7 +467,6 @@
+ 	skb_trim(skb, b - skb->data);
+ 	return -1;
+ }
+-#endif
+ 
+ struct Qdisc_ops sfq_qdisc_ops =
+ {
+@@ -480,9 +485,7 @@
+ 	sfq_destroy,
+ 	NULL, /* sfq_change */
+ 
+-#ifdef CONFIG_RTNETLINK
+ 	sfq_dump,
+-#endif
+ };
+ 
+ #ifdef MODULE
+@@ -496,3 +499,4 @@
+ 	unregister_qdisc(&sfq_qdisc_ops);
+ }
+ #endif
++MODULE_LICENSE("GPL");
+diff -urN ../v2.2.21/linux/net/sched/sch_tbf.c linux/net/sched/sch_tbf.c
+--- ../v2.2.21/linux/net/sched/sch_tbf.c	Sat Oct 21 12:10:47 2000
++++ linux/net/sched/sch_tbf.c	Sun Mar 31 03:18:30 2002
+@@ -66,7 +66,7 @@
+ 	N(t+delta) = min{B/R, N(t) + delta}
+ 
+ 	If the first packet in queue has length S, it may be
+-	transmited only at the time t_* when S/R <= N(t_*),
++	transmitted only at the time t_* when S/R <= N(t_*),
+ 	and in this case N(t) jumps:
+ 
+ 	N(t_* + 0) = N(t_* - 0) - S/R.
+@@ -139,7 +139,7 @@
+ 	if ((sch->stats.backlog += skb->len) <= q->limit) {
+ 		sch->stats.bytes += skb->len;
+ 		sch->stats.packets++;
+-		return 1;
++		return 0;
+ 	}
+ 
+ 	/* Drop action: undo the things that we just did,
+@@ -155,7 +155,7 @@
+ 	if (sch->reshape_fail==NULL || sch->reshape_fail(skb, sch))
+ #endif
+ 		kfree_skb(skb);
+-	return 0;
++	return NET_XMIT_DROP;
+ }
+ 
+ static int
+@@ -163,7 +163,7 @@
+ {
+ 	__skb_queue_head(&sch->q, skb);
+ 	sch->stats.backlog += skb->len;
+-	return 1;
++	return 0;
+ }
+ 
+ static int
+@@ -186,7 +186,7 @@
+ 	struct Qdisc *sch = (struct Qdisc*)arg;
+ 
+ 	sch->flags &= ~TCQ_F_THROTTLED;
+-	qdisc_wakeup(sch->dev);
++	netif_schedule(sch->dev);
+ }
+ 
+ static struct sk_buff *
+@@ -226,15 +226,13 @@
+ 			return skb;
+ 		}
+ 
+-		if (!sch->dev->tbusy) {
+-			long delay = PSCHED_US2JIFFIE(max(-toks, -ptoks));
++		if (!netif_queue_stopped(sch->dev)) {
++			long delay = PSCHED_US2JIFFIE(max_t(long, -toks, -ptoks));
+ 
+ 			if (delay == 0)
+ 				delay = 1;
+ 
+-			del_timer(&q->wd_timer);
+-			q->wd_timer.expires = jiffies + delay;
+-			add_timer(&q->wd_timer);
++			mod_timer(&q->wd_timer, jiffies+delay);
+ 		}
+ 
+ 		/* Maybe we have a shorter packet in the queue,
+@@ -278,7 +276,7 @@
+ 	struct tc_tbf_qopt *qopt;
+ 	struct qdisc_rate_table *rtab = NULL;
+ 	struct qdisc_rate_table *ptab = NULL;
+-	int max_size;
++	int max_size,n;
+ 
+ 	if (rtattr_parse(tb, TCA_TBF_PTAB, RTA_DATA(opt), RTA_PAYLOAD(opt)) ||
+ 	    tb[TCA_TBF_PARMS-1] == NULL ||
+@@ -297,18 +295,21 @@
+ 			goto done;
+ 	}
+ 
+-	max_size = psched_mtu(sch->dev);
++	for (n = 0; n < 256; n++)
++		if (rtab->data[n] > qopt->buffer) break;
++	max_size = (n << qopt->rate.cell_log)-1;
+ 	if (ptab) {
+-		int n = max_size>>qopt->peakrate.cell_log;
+-		while (n>0 && ptab->data[n-1] > qopt->mtu) {
+-			max_size -= (1<<qopt->peakrate.cell_log);
+-			n--;
+-		}
++		int size;
++
++		for (n = 0; n < 256; n++)
++			if (ptab->data[n] > qopt->mtu) break;
++		size = (n << qopt->peakrate.cell_log)-1;
++		if (size < max_size) max_size = size;
+ 	}
+-	if (rtab->data[max_size>>qopt->rate.cell_log] > qopt->buffer)
++	if (max_size < 0)
+ 		goto done;
+ 
+-	start_bh_atomic();
++	sch_tree_lock(sch);
+ 	q->limit = qopt->limit;
+ 	q->mtu = qopt->mtu;
+ 	q->max_size = max_size;
+@@ -317,7 +318,7 @@
+ 	q->ptokens = q->mtu;
+ 	rtab = xchg(&q->R_tab, rtab);
+ 	ptab = xchg(&q->P_tab, ptab);
+-	end_bh_atomic();
++	sch_tree_unlock(sch);
+ 	err = 0;
+ done:
+ 	if (rtab)
+@@ -362,7 +363,6 @@
+ 	MOD_DEC_USE_COUNT;
+ }
+ 
+-#ifdef CONFIG_RTNETLINK
+ static int tbf_dump(struct Qdisc *sch, struct sk_buff *skb)
+ {
+ 	struct tbf_sched_data *q = (struct tbf_sched_data *)sch->data;
+@@ -390,7 +390,6 @@
+ 	skb_trim(skb, b - skb->data);
+ 	return -1;
+ }
+-#endif
+ 
+ struct Qdisc_ops tbf_qdisc_ops =
+ {
+@@ -409,9 +408,7 @@
+ 	tbf_destroy,
+ 	tbf_change,
+ 
+-#ifdef CONFIG_RTNETLINK
+ 	tbf_dump,
+-#endif
+ };
+ 
+ 
+@@ -426,3 +423,4 @@
+ 	unregister_qdisc(&tbf_qdisc_ops);
+ }
+ #endif
++MODULE_LICENSE("GPL");
+diff -urN ../v2.2.21/linux/net/sched/sch_teql.c linux/net/sched/sch_teql.c
+--- ../v2.2.21/linux/net/sched/sch_teql.c	Sat Oct 21 12:10:47 2000
++++ linux/net/sched/sch_teql.c	Sun Aug  4 18:06:40 2002
+@@ -97,13 +97,13 @@
+ 	if (q->q.qlen <= dev->tx_queue_len) {
+ 		sch->stats.bytes += skb->len;
+ 		sch->stats.packets++;
+-		return 1;
++		return 0;
+ 	}
+ 
+ 	__skb_unlink(skb, &q->q);
+ 	kfree_skb(skb);
+ 	sch->stats.drops++;
+-	return 0;
++	return NET_XMIT_DROP;
+ }
+ 
+ static int
+@@ -112,7 +112,7 @@
+ 	struct teql_sched_data *q = (struct teql_sched_data *)sch->data;
+ 
+ 	__skb_queue_head(&q->q, skb);
+-	return 1;
++	return 0;
+ }
+ 
+ static struct sk_buff *
+@@ -167,7 +167,9 @@
+ 					master->slaves = NEXT_SLAVE(q);
+ 					if (q == master->slaves) {
+ 						master->slaves = NULL;
++						sch_dev_queue_lock(&master->dev);
+ 						qdisc_reset(master->dev.qdisc);
++						sch_dev_queue_unlock(&master->dev);
+ 					}
+ 				}
+ 				skb_queue_purge(&dat->q);
+@@ -189,6 +191,9 @@
+ 
+ 	if (dev->hard_header_len > m->dev.hard_header_len)
+ 		return -EINVAL;
++
++	if (&m->dev == dev)
++		return -ELOOP;
+ 
+ 	q->m = m;
+ 
