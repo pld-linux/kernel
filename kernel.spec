@@ -78,7 +78,6 @@ Source1003:	%{name}-netfilter.config
 Source1004:	%{name}-ipvs.config
 Source1666:	%{name}-grsec.config
 Source1667:	%{name}-int.config
-Source1668:	%{name}-ipsec.config
 Source1999:	%{name}-preemptive.config
 
 # New features
