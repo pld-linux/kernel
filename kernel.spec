@@ -405,6 +405,9 @@ Modu³y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 %prep
 %setup -q -a3 -a4 -a5 -a6 -a7 -a9 -a10 -a11 -a13 -n linux
 
+# first we should apply dzimi patch for vanilla kernel to get b50 work!
+#%patch ktorys_tam -p0
+
 %patch0 -p1
 %patch1 -p0
 # disable aic7xxx patch on sparc (this must be reported to aic7xxx driver maintainer)
