@@ -4,6 +4,7 @@
 #
 # _without_grsec	- build kernel without grsecurity patch
 # _with_preemptive	- build with Preemptible patch
+# _with_acpi		- build with acpi
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 #
@@ -26,7 +27,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	1.5%{?_with_preemptive:_pr}
+Release:	1.6%{?_with_preemptive:_pr}%{?_with_acpi:_acpi}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -578,7 +579,7 @@ BuildKernel() {
 	cat %{SOURCE1006} >> arch/%{base_arch}/defconfig
 	%{?_with_preemptive:cat %{SOURCE1999} >> arch/%{base_arch}/defconfig}
 
-#%if %{?_with_acpi:1}%{!?_with_acpi:0}
+%if %{?_with_acpi:1}%{!?_with_acpi:0}
 	echo "CONFIG_ACPI=y" >> arch/%{base_arch}/defconfig
 	echo "# CONFIG_ACPI_DEBUG is not set" >> arch/%{base_arch}/defconfig
 	echo "CONFIG_SERIAL_ACPI=y" >> arch/%{base_arch}/defconfig
@@ -591,7 +592,7 @@ BuildKernel() {
 	echo "CONFIG_ACPI_CMBATT=m" >> arch/%{base_arch}/defconfig
 	echo "CONFIG_ACPI_THERMAL=m" >> arch/%{base_arch}/defconfig
 	echo "CONFIG_HOTPLUG_PCI_ACPI=m" >> arch/%{base_arch}/defconfig
-#%endif
+%endif
 	if [ "$BOOT" = "yes" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_CRYPTO is not set" >> arch/%{base_arch}/defconfig
@@ -606,7 +607,7 @@ BuildKernel() {
 		arch/%{base_arch}/defconfig.orig > arch/%{base_arch}/defconfig
 %endif
 
-#	%{__make} mrproper
+	%{__make} mrproper
 	ln -sf arch/%{base_arch}/defconfig .config
 
 %ifarch sparc
@@ -744,6 +745,21 @@ cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
 %{?_with_preemptive:cat %{SOURCE1999} >> .config}
 
+%if %{?_with_acpi:1}%{!?_with_acpi:0}
+	echo "CONFIG_ACPI=y" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_ACPI_DEBUG is not set" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_SERIAL_ACPI=y" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_BUSMGR=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_SYS=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_CPU=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_BUTTON=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_AC=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_EC=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_CMBATT=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_THERMAL=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_HOTPLUG_PCI_ACPI=m" >> arch/%{base_arch}/defconfig
+%endif
+
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
 
@@ -775,6 +791,21 @@ cat %{SOURCE1006} >> .config
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
 %{?_with_preemptive:cat %{SOURCE1999} >> .config}
+
+%if %{?_with_acpi:1}%{!?_with_acpi:0}
+	echo "CONFIG_ACPI=y" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_ACPI_DEBUG is not set" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_SERIAL_ACPI=y" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_BUSMGR=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_SYS=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_CPU=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_BUTTON=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_AC=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_EC=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_CMBATT=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_ACPI_THERMAL=m" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_HOTPLUG_PCI_ACPI=m" >> arch/%{base_arch}/defconfig
+%endif
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
