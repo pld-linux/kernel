@@ -22,7 +22,7 @@
 Summary:	The Linux kernel (the core of the Linux operating system)
 Name:		kernel
 Version:	2.6.4
-Release:	0.1
+Release:	0.2
 Epoch:		0
 License:	GPL
 Group:		Base/Kernel
