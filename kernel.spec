@@ -50,9 +50,9 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.40
-%define		_cset		20040808_0805
-%define		_apply_cset	0
+%define		_rel		0.41
+%define		_cset		20040810_2207
+%define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
 
@@ -83,7 +83,7 @@ Source1:	%{name}-autoconf.h
 Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 # Source2-md5:	85bdb0205de53b7787966f0932fd8dd9
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	e613c24b6a61f574914ebc118e898eaf
+# Source3-md5:	5b66eee22e4f84ca8a201e5b42bf3931
 # http://lkml.org/lkml/2004/6/2/228
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
