@@ -7,6 +7,7 @@
 # _without_boot		- don't build BOOT kernel
 # _without_source	- don't build source
 # _without_doc		- don't build documentation package
+# _without_grsec	- don't apply grsecurity patch
 # _without_kheaders	- build without support for glibc-kernel-headers
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
@@ -25,7 +26,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.22
-Release:	1.3
+Release:	1.4
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -283,8 +284,10 @@ Patch3012:	linux-2.4.22-gcc-ext3.patch
 
 # Security patches/fixes
 
-Patch4000:	linux-2.4.22-ow1.diff
-Patch4001:	linux-grsecurity-minimal.patch
+Patch4000:	linux-2.4.22-ow1-stack.patch
+Patch4001:	grsecurity-nopax-2.0-rc3-2.4.22.patch
+
+Patch5000:	linux-2.4.22-security.patch
 
 #Patch10000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc6.bz2
 
@@ -777,8 +780,10 @@ cd ../../..
 %patch3011 -p1
 %patch3012 -p1
 
+%patch5000 -p1
+
 %patch4000 -p1
-%patch4001 -p1
+%{!?_without_grsec:%patch4001 -p1}
 
 mv -f drivers/scsi/sym53c8xx.c drivers/scsi/sym53c8xx_old.c
 
@@ -861,7 +866,12 @@ BuildKernel() {
 	if [ "$BOOT" = "yes" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
 	else
+		:;
+%if %{?_without_grsec:0}%{!?_without_grsec:1}
+		echo -e ',s/CONFIG_CRYPTO_SHA256=m/CONFIG_CRYPTO_SHA256=y/g\n,w' | \
+			ed arch/%{base_arch}/defconfig
 		cat %{SOURCE1002} >> arch/%{base_arch}/defconfig
+%endif
 	fi
 %ifarch %{ix86}
 	cat %{SOURCE2000} >> arch/%{base_arch}/defconfig
@@ -1023,7 +1033,7 @@ echo "CONFIG_MK7=y" >> .config
 %endif
 cat %{SOURCE1000} >> .config
 cat %{SOURCE1001} >> .config
-cat %{SOURCE1002} >> .config
+%{!?_without_grsec:cat %{SOURCE1002} >> .config}
 
 %ifarch sparc64
 	echo -e ',s/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/g\n,w' | \
@@ -1066,7 +1076,7 @@ echo "CONFIG_MK7=y" >> .config
 
 cat %{SOURCE1000} >> .config
 cat %{SOURCE1001} >> .config
-cat %{SOURCE1002} >> .config
+%{!?_without_grsec:cat %{SOURCE1002} >> .config}
 
 %ifarch sparc64
 	echo -e ',s/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/g\n,w' | \
@@ -1415,7 +1425,7 @@ fi
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
 %{_prefix}/src/linux-%{version}/init
-%{_prefix}/src/linux-%{version}/grsecurity
+%{!?_without_grsec:%{_prefix}/src/linux-%{version}/grsecurity}
 %{_prefix}/src/linux-%{version}/ipc
 #%{_prefix}/src/linux-%{version}/kdb
 %{_prefix}/src/linux-%{version}/kernel
