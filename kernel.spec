@@ -81,7 +81,7 @@ Patch1:		patch-int-2.4.20.0.bz2
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch2:		linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/Release-1.2pre3/kernel_patches/
-Patch3:		linux-2.4.19-core-xfs-1.2pre3.patch.bz2
+Patch3:		linux-2.4.20-core-xfs-1.2pre3.patch.bz2
 Patch4:		linux-2.4.19-xfs-1.2pre3.patch.bz2
 # Homepage of ABI:	http://linux-abi.sourceforge.net/
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.18.0.patch.bz2 
@@ -210,7 +210,7 @@ Patch916:	linux-2.4.19-ksyms-sys_sched_yield-rm.patch
 Patch917:	linux-2.4.19-EXPORT_SYMBOL-netsyms.c-rm.patch
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
-Patch2000:	sched-2.4.19-rc2-A4
+Patch2000:	sched-2.4.20-A0.patch.bz2
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -471,7 +471,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch1 -p1
 %patch900 -p1
 %patch2 -p1
-exit 1
 %patch2000 -p1
 %ifarch ppc
 #%patch908 -p1
