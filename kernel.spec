@@ -216,8 +216,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
-    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= gcc/g' \
-    -e 's/HOSTCC.*gcc/HOSTCC	= gcc/g' \
+    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= %{kgcc}/g' \
+    -e 's/HOSTCC.*gcc/HOSTCC	= %{kgcc}/g' \
     Makefile.orig >Makefile
 
 %build
