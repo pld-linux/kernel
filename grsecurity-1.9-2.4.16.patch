@@ -3088,9 +3088,9 @@ diff -urN linux/fs/namei.c linux/fs/namei.c
  	path_release(&nd);
  out:
 @@ -1323,6 +1488,17 @@
- 		dentry = lookup_create(&nd, 1);
- 		error = PTR_ERR(dentry);
  		if (!IS_ERR(dentry)) {
+ 			if (!IS_POSIX_ACL(nd.dentry->d_inode))
+ 				mode &= ~current->fs->umask;
 +#ifdef CONFIG_OBV_PROC
 +			error = 0;
 +			if( ( ((obv_search(nd.dentry,OBV_WRITE,nd.mnt)) == OBV_DENY))){
@@ -3102,9 +3102,9 @@ diff -urN linux/fs/namei.c linux/fs/namei.c
 +			if(!error)
 +#endif
 +
- 			error = vfs_mkdir(nd.dentry->d_inode, dentry,
- 					  mode & ~current->fs->umask);
+ 			error = vfs_mkdir(nd.dentry->d_inode, dentry, mode);
  			dput(dentry);
+ 		}
 @@ -1431,7 +1607,17 @@
  	dentry = lookup_hash(&nd.last, nd.dentry);
  	error = PTR_ERR(dentry);
@@ -4929,9 +4929,9 @@ diff -urN linux/include/linux/sysctl.h linux/include/linux/sysctl.h
 --- linux/include/linux/sysctl.h	Mon Nov 26 08:29:17 2001
 +++ linux/include/linux/sysctl.h	Mon Nov 26 11:15:37 2001
 @@ -124,6 +124,8 @@
- 	KERN_CORE_USES_PID=52,		/* int: use core or core.%pid */
  	KERN_TAINTED=53,	/* int: various kernel tainted flags */
  	KERN_CADPID=54,		/* int: PID of the process to notify on CAD */
+ 	KERN_KDB=55,		/* int: kdb on/off */
 +        KERN_GRSECURITY=68,              /* grsecurity */
 +        KERN_OBV = 69                    /* struct obv_pw, controls oblivion*/
  };
@@ -5043,7 +5043,7 @@ diff -urN linux/init/main.c linux/init/main.c
 diff -urN linux/kernel/Makefile linux/kernel/Makefile
 --- linux/kernel/Makefile	Mon Sep 17 00:22:40 2001
 +++ linux/kernel/Makefile	Mon Nov 26 10:38:11 2001
-@@ -14,11 +14,12 @@
+@@ -14,12 +14,13 @@
  obj-y     = sched.o dma.o fork.o exec_domain.o panic.o printk.o \
  	    module.o exit.o itimer.o info.o time.o softirq.o resource.o \
  	    sysctl.o acct.o capability.o ptrace.o timer.o user.o \
@@ -5053,6 +5053,7 @@ diff -urN linux/kernel/Makefile linux/kernel/Makefile
  obj-$(CONFIG_UID16) += uid16.o
  obj-$(CONFIG_MODULES) += ksyms.o
  obj-$(CONFIG_PM) += pm.o
+ obj-$(CONFIG_KALLSYMS) += kallsyms.o
 +obj-$(CONFIG_OBV_PROC) += oblivion.o obvqsort.o obvhash.o
  
  ifneq ($(CONFIG_IA64),y)
@@ -7618,9 +7619,9 @@ diff -urN linux/kernel/sysctl.c linux/kernel/sysctl.c
  /* /proc declarations: */
  
 @@ -255,9 +263,228 @@
- 	{KERN_S390_USER_DEBUG_LOGGING,"userprocess_debug",
- 	 &sysctl_userprocess_debug,sizeof(int),0644,NULL,&proc_dointvec},
- #endif
+ 	{KERN_KDB, "kdb", &kdb_on, sizeof(int),
+ 	 0644, NULL, &proc_dointvec},
+ #endif	/* CONFIG_KDB */
 +#ifdef CONFIG_GRKERNSEC_SYSCTL
 +	{KERN_GRSECURITY, "grsecurity", NULL, 0, 0550, grsecurity_table},
 +#endif
@@ -7979,9 +7980,9 @@ diff -urN linux/mm/mprotect.c linux/mm/mprotect.c
 --- linux/mm/mprotect.c	Mon Sep 17 18:30:23 2001
 +++ linux/mm/mprotect.c	Mon Nov 26 10:38:11 2001
 @@ -300,6 +300,12 @@
- 			goto out;
  		}
  
+ #endif	/* CONFIG_XFS_DMAPI */
 +#ifdef CONFIG_GRKERNSEC_PAX_MPROTECT
 +		/* PaX: disallow write access after relocs are done, hopefully noone else needs it... */
 +		if ((current->flags & PF_PAX_MPROTECT) && (prot & PROT_WRITE) && (vma->vm_flags & VM_MAYEXEC)) {
