@@ -84,7 +84,7 @@ Patch4:		br2684-against2.4.15.diff
 Patch5:		linux-xfs-2.4.14-PLD.patch.gz
 # Homepage of ABI : http://linux-abi.sourceforge.net/
 # http://prdownloads.sourceforge.net/linux-abi/
-Patch7:		linux-abi-2.4.3-PLD.patch
+#Patch7:		linux-abi-2.4.3-PLD.patch
 Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
 Patch9:		linux-grsecurity-%{grsec_version}.patch
@@ -96,9 +96,10 @@ Patch100:	linux-scsi-debug-bug.patch
 Patch101:	linux-2.4.2-raw-ip.patch
 Patch102:	PCI_ISA_bridge.patch
 Patch103:	linux-2.4.2-nvram-hdd.patch
+Patch104:	ppc-patch-2.4.15.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch105:	linux-2.4.2-pcnet-parms.patch
-Patch106:	http://linuxdiskcert.org/ide.2.4.14.11192001.patch.bz2
+#Patch106:	http://linuxdiskcert.org/ide.2.4.14.11192001.patch.bz2
 Patch107:	linux-reiserfs-rename.patch
 Patch108:	linux-alpha-nfs-2.4.2.patch
 Patch109:	linux-2.4-string.patch
@@ -389,6 +390,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch101 -p1
 %patch102 -p0
 %patch103 -p0
+%patch104 -p1
 %patch105 -p1
 #%patch106 -p1
 %patch107 -p1
@@ -428,16 +430,17 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # Netfilter
 echo Adding Netfilter
-for i in netfilter-patches/* ; do
-	if [ -f $i -a "$i" != "netfilter-patches/isapplied" ] ; then
-	patch -p1 <$i
-	fi
-done
-(KERNEL_DIR=`pwd` ; export KERNEL_DIR
-cd netfilter-patches/patch-o-matic
-ANS=""
-for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
-echo -e $ANS | ./runme)
+#for i in netfilter-patches/patch-o-matic/* ; do
+#	if [ -f $i -a "$i" != "netfilter-patches/isapplied" ] ; then
+#	echo $i
+#	patch -p1 <$i
+#	fi
+#done
+#(KERNEL_DIR=`pwd` ; export KERNEL_DIR
+#cd netfilter-patches/patch-o-matic
+#ANS=""
+#for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
+#echo -e $ANS | ./runme)
 
 %if %{?_with_lids:1}%{!?_with_lids:0}
 # LIDS
@@ -474,7 +477,7 @@ mv %{sym_ncr_version}/{README,ChangeLog}.* Documentation
 rm -rf %{sym_ncr_version}
 
 ## 802.1Q VLANs
-#echo Adding VLANs
+echo Adding VLANs
 #cd vlan
 #%patch902 -p1
 #cd ..
@@ -507,10 +510,6 @@ echo Installing Preemptive patch
 %endif
 
 %patch133 -p1
-
-# install 8139too driver
-echo Updated RTL 8139 Driver
-cp -f %{SOURCE16} drivers/net/8139too.c
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
