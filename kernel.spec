@@ -24,7 +24,7 @@ Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
-Source3:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
+Source3:	ftp://ftp.openwall.com/linux/v2.2/linux-%{ow_version}.tar.gz
 Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-133.tar.gz
 Source5:	ftp://ftp.sourceforge.net/pub/sourceforge/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source6:	ftp://ftp.tux.org/tux/roudier/drivers/linux/stable/sym-%{symncr_version}.tar.gz
