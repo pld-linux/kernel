@@ -45,7 +45,7 @@ Source72:	%{name}-alpha-BOOT.config
 Source1000:	%{name}-lids.config
 Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.3.gz
 #Patch1:		%{name}-pldfblogo.patch
-Patch2:		linux-2.4.2-freeswan-%{freeswan_version}.patch
+Patch2:		linux-2.4.2-freeswan-%{freeswan_version}.patch.gz
 #Patch3:		linux-ipv6-addrconf.patch
 Patch4:		kernel-i8255-asm-fix.patch
 Patch5:		dc395-patch-PLD-fix.patch
@@ -310,9 +310,12 @@ cp ipvs-%{ipvs_version}/ipvs/*.{c,h,in} net/ipv4/ipvs
 cp ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile net/ipv4/ipvs/Makefile
 patch -p1 -s < %{PATCH10}
 
-# Remove -g from drivers/atm/Makefile
+# Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
+
+mv -f net/ipsec/Makefile net/ipsec/Makefile.orig
+sed -e 's/EXTRA_CFLAGS.*-g//g' net/ipsec/Makefile.orig > net/ipsec/Makefile
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -450,6 +453,7 @@ gzip -dc %{SOURCE10} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 #gzip -dc %{PATCH100} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
 gzip -dc %{PATCH0} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH2} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
@@ -589,6 +593,23 @@ fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release} /lib/modules/%{version}
 
+%post lids
+mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
+mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+ln -sf vmlinuz-%{version}-%{release}-lids /boot/vmlinuz
+ln -sf System.map-%{version}-%{release}-lids /boot/System.map
+
+geninitrd /boot/initrd-%{version}-%{release}-lids.gz %{version}-%{release}-lids
+mv -f /boot/initrd /boot/initrd.old
+ln -sf initrd-%{version}-%{release}-lids.gz /boot/initrd
+
+if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
+	/sbin/lilo 1>&2 || :
+fi
+
+rm -f /lib/modules/%{version}
+ln -snf %{version}-%{release}-lids /lib/modules/%{version}
+
 %post smp
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
@@ -605,6 +626,23 @@ fi
 
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
+
+%post lids-smp
+mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
+mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+ln -sf vmlinuz-%{version}-%{release}smp-lids /boot/vmlinuz
+ln -sf System.map-%{version}-%{release}smp-lids /boot/System.map
+
+geninitrd /boot/initrd-%{version}-%{release}smp-lids.gz %{version}-%{release}smp-lids
+mv -f /boot/initrd /boot/initrd.old
+ln -sf initrd-%{version}-%{release}smp-lids.gz /boot/initrd
+
+if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
+	/sbin/lilo 1>&2 || :
+fi
+
+rm -f /lib/modules/%{version}
+ln -snf %{version}-%{release}smp-lids /lib/modules/%{version}
 
 %post BOOT
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
@@ -629,6 +667,16 @@ if [ -L /lib/modules/%{version} ]; then
 fi
 rm -f /boot/initrd-%{version}-%{release}.gz
 
+%postun lids
+if [ -L /lib/modules/%{version} ]; then 
+	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}-lids" ]; then
+		if [ "$1" = "0" ]; then
+			rm -f /lib/modules/%{version}
+		fi
+	fi
+fi
+rm -f /boot/initrd-%{version}-%{release}-lids.gz
+
 %postun smp
 if [ -L /lib/modules/%{version} ]; then 
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp" ]; then
@@ -638,6 +686,16 @@ if [ -L /lib/modules/%{version} ]; then
 	fi
 fi
 rm -f /boot/initrd-%{version}-%{release}smp.gz
+
+%postun lids-smp
+if [ -L /lib/modules/%{version} ]; then 
+	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp-lids" ]; then
+		if [ "$1" = "0" ]; then
+			rm -f /lib/modules/%{version}
+		fi
+	fi
+fi
+rm -f /boot/initrd-%{version}-%{release}smp-lids.gz
 
 %postun BOOT
 if [ -L /lib/modules/%{version} ]; then 
@@ -678,16 +736,16 @@ fi
 %files lids
 %defattr(644,root,root,755)
 %ifarch alpha sparc
-/boot/vmlinux-%{version}-%{release}lids
+/boot/vmlinux-%{version}-%{release}-lids
 %endif
-/boot/vmlinuz-%{version}-%{release}lids
-/boot/System.map-%{version}-%{release}lids
-%dir /lib/modules/%{version}-%{release}lids
+/boot/vmlinuz-%{version}-%{release}-lids
+/boot/System.map-%{version}-%{release}-lids
+%dir /lib/modules/%{version}-%{release}-lids
 %ifarch %{ix86}
-/lib/modules/%{version}-%{release}lids/pcmcia
+/lib/modules/%{version}-%{release}-lids/pcmcia
 %endif
-/lib/modules/%{version}-%{release}lids/kernel
-/lib/modules/%{version}-%{release}lids/build
+/lib/modules/%{version}-%{release}-lids/kernel
+/lib/modules/%{version}-%{release}-lids/build
 
 %files smp
 %defattr(644,root,root,755)
@@ -706,16 +764,16 @@ fi
 %files lids-smp
 %defattr(644,root,root,755)
 %ifarch alpha sparc
-/boot/vmlinux-%{version}-%{release}lids-smp
+/boot/vmlinux-%{version}-%{release}smp-lids
 %endif
-/boot/vmlinuz-%{version}-%{release}lids-smp
-/boot/System.map-%{version}-%{release}lids-smp
-%dir /lib/modules/%{version}-%{release}lids-smp
+/boot/vmlinuz-%{version}-%{release}smp-lids
+/boot/System.map-%{version}-%{release}smp-lids
+%dir /lib/modules/%{version}-%{release}smp-lids
 %ifarch %{ix86}
-/lib/modules/%{version}-%{release}lids-smp/pcmcia
+/lib/modules/%{version}-%{release}smp-lids/pcmcia
 %endif
-/lib/modules/%{version}-%{release}lids-smp/kernel
-/lib/modules/%{version}-%{release}lids-smp/build
+/lib/modules/%{version}-%{release}smp-lids/kernel
+/lib/modules/%{version}-%{release}smp-lids/build
 
 %ifnarch i586 i686
 %files BOOT
