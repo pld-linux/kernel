@@ -1,0 +1,1397 @@
+diff -urN linux-2.6.10.orig/arch/i386/kernel/cpu/common.c linux-2.6.10/arch/i386/kernel/cpu/common.c
+--- linux-2.6.10.orig/arch/i386/kernel/cpu/common.c	2004-12-24 16:33:50.000000000 -0500
++++ linux-2.6.10/arch/i386/kernel/cpu/common.c	2005-01-16 00:15:41.131755296 -0500
+@@ -334,21 +334,19 @@
+ 
+ 	generic_identify(c);
+ 
+-	printk(KERN_DEBUG "CPU: After generic identify, caps: %08lx %08lx %08lx %08lx\n",
+-		c->x86_capability[0],
+-		c->x86_capability[1],
+-		c->x86_capability[2],
+-		c->x86_capability[3]);
++	printk(KERN_DEBUG "CPU: After generic identify, caps:");
++	for (i = 0; i < NCAPINTS; i++)
++		printk(" %08lx", c->x86_capability[i]);
++	printk("\n");
+ 
+ 	if (this_cpu->c_identify) {
+ 		this_cpu->c_identify(c);
+ 
+-	printk(KERN_DEBUG "CPU: After vendor identify, caps:  %08lx %08lx %08lx %08lx\n",
+-		c->x86_capability[0],
+-		c->x86_capability[1],
+-		c->x86_capability[2],
+-		c->x86_capability[3]);
+-}
++		printk(KERN_DEBUG "CPU: After vendor identify, caps:");
++		for (i = 0; i < NCAPINTS; i++)
++			printk(" %08lx", c->x86_capability[i]);
++		printk("\n");
++	}
+ 
+ 	/*
+ 	 * Vendor-specific initialization.  In this section we
+@@ -398,11 +396,10 @@
+ 
+ 	/* Now the feature flags better reflect actual CPU features! */
+ 
+-	printk(KERN_DEBUG "CPU: After all inits, caps:        %08lx %08lx %08lx %08lx\n",
+-	       c->x86_capability[0],
+-	       c->x86_capability[1],
+-	       c->x86_capability[2],
+-	       c->x86_capability[3]);
++	printk(KERN_DEBUG "CPU: After all inits, caps:");
++	for (i = 0; i < NCAPINTS; i++)
++		printk(" %08lx", c->x86_capability[i]);
++	printk("\n");
+ 
+ 	/*
+ 	 * On SMP, boot_cpu_data holds the common feature set between
+diff -urN linux-2.6.10.orig/arch/i386/kernel/cpu/cpufreq/gx-suspmod.c linux-2.6.10/arch/i386/kernel/cpu/cpufreq/gx-suspmod.c
+--- linux-2.6.10.orig/arch/i386/kernel/cpu/cpufreq/gx-suspmod.c	2004-12-24 16:35:50.000000000 -0500
++++ linux-2.6.10/arch/i386/kernel/cpu/cpufreq/gx-suspmod.c	2005-01-16 00:15:41.263735232 -0500
+@@ -209,7 +209,7 @@
+ 	if ((gx_params->pci_suscfg & SUSMOD) == 0) 
+ 		return stock_freq;
+ 
+-	return (stock_freq * gx_params->on_duration) 
++	return (stock_freq * gx_params->off_duration) 
+ 		/ (gx_params->on_duration + gx_params->off_duration);
+ }
+ 
+diff -urN linux-2.6.10.orig/arch/i386/kernel/cpu/cpufreq/p4-clockmod.c linux-2.6.10/arch/i386/kernel/cpu/cpufreq/p4-clockmod.c
+--- linux-2.6.10.orig/arch/i386/kernel/cpu/cpufreq/p4-clockmod.c	2004-12-24 16:35:28.000000000 -0500
++++ linux-2.6.10/arch/i386/kernel/cpu/cpufreq/p4-clockmod.c	2005-01-16 00:15:41.265734928 -0500
+@@ -171,7 +171,7 @@
+ 		return speedstep_get_processor_frequency(SPEEDSTEP_PROCESSOR_PM);
+ 	}
+ 
+-	if ((c->x86 == 0x06) && (c->x86_model == 0x13)) {
++	if ((c->x86 == 0x06) && (c->x86_model == 0x0D)) {
+ 		/* Pentium M (Dothan) */
+ 		printk(KERN_WARNING PFX "Warning: Pentium M detected. "
+ 		       "The speedstep_centrino module offers voltage scaling"
+diff -urN linux-2.6.10.orig/arch/mips/kernel/irixelf.c linux-2.6.10/arch/mips/kernel/irixelf.c
+--- linux-2.6.10.orig/arch/mips/kernel/irixelf.c	2004-12-24 16:35:50.000000000 -0500
++++ linux-2.6.10/arch/mips/kernel/irixelf.c	2005-01-16 00:15:41.183747392 -0500
+@@ -127,7 +127,9 @@
+ 	end = PAGE_ALIGN(end);
+ 	if (end <= start)
+ 		return;
++	down_write(&current->mm->mmap_sem);
+ 	do_brk(start, end - start);
++	up_write(&current->mm->mmap_sem);
+ }
+ 
+ 
+@@ -375,7 +377,9 @@
+ 
+ 	/* Map the last of the bss segment */
+ 	if (last_bss > len) {
++		down_write(&current->mm->mmap_sem);
+ 		do_brk(len, (last_bss - len));
++		up_write(&current->mm->mmap_sem);
+ 	}
+ 	kfree(elf_phdata);
+ 
+@@ -562,7 +566,9 @@
+ 	unsigned long v;
+ 	struct prda *pp;
+ 
++	down_write(&current->mm->mmap_sem);
+ 	v =  do_brk (PRDA_ADDRESS, PAGE_SIZE);
++	up_write(&current->mm->mmap_sem);
+ 
+ 	if (v < 0)
+ 		return;
+@@ -852,8 +858,11 @@
+ 
+ 	len = (elf_phdata->p_filesz + elf_phdata->p_vaddr+ 0xfff) & 0xfffff000;
+ 	bss = elf_phdata->p_memsz + elf_phdata->p_vaddr;
+-	if (bss > len)
++	if (bss > len) {
++	  down_write(&current->mm->mmap_sem);
+ 	  do_brk(len, bss-len);
++	  up_write(&current->mm->mmap_sem);
++	}
+ 	kfree(elf_phdata);
+ 	return 0;
+ }
+diff -urN linux-2.6.10.orig/arch/sparc64/kernel/binfmt_aout32.c linux-2.6.10/arch/sparc64/kernel/binfmt_aout32.c
+--- linux-2.6.10.orig/arch/sparc64/kernel/binfmt_aout32.c	2004-12-24 16:34:45.000000000 -0500
++++ linux-2.6.10/arch/sparc64/kernel/binfmt_aout32.c	2005-01-16 00:15:41.183747392 -0500
+@@ -49,7 +49,9 @@
+ 	end = PAGE_ALIGN(end);
+ 	if (end <= start)
+ 		return;
++	down_write(&current->mm->mmap_sem);
+ 	do_brk(start, end - start);
++	up_write(&current->mm->mmap_sem);
+ }
+ 
+ /*
+@@ -246,10 +248,14 @@
+ 	if (N_MAGIC(ex) == NMAGIC) {
+ 		loff_t pos = fd_offset;
+ 		/* Fuck me plenty... */
++		down_write(&current->mm->mmap_sem);	
+ 		error = do_brk(N_TXTADDR(ex), ex.a_text);
++		up_write(&current->mm->mmap_sem);
+ 		bprm->file->f_op->read(bprm->file, (char __user *)N_TXTADDR(ex),
+ 			  ex.a_text, &pos);
++		down_write(&current->mm->mmap_sem);
+ 		error = do_brk(N_DATADDR(ex), ex.a_data);
++		up_write(&current->mm->mmap_sem);
+ 		bprm->file->f_op->read(bprm->file, (char __user *)N_DATADDR(ex),
+ 			  ex.a_data, &pos);
+ 		goto beyond_if;
+@@ -257,8 +263,10 @@
+ 
+ 	if (N_MAGIC(ex) == OMAGIC) {
+ 		loff_t pos = fd_offset;
++		down_write(&current->mm->mmap_sem);
+ 		do_brk(N_TXTADDR(ex) & PAGE_MASK,
+ 			ex.a_text+ex.a_data + PAGE_SIZE - 1);
++		up_write(&current->mm->mmap_sem);
+ 		bprm->file->f_op->read(bprm->file, (char __user *)N_TXTADDR(ex),
+ 			  ex.a_text+ex.a_data, &pos);
+ 	} else {
+@@ -272,7 +280,9 @@
+ 
+ 		if (!bprm->file->f_op->mmap) {
+ 			loff_t pos = fd_offset;
++			down_write(&current->mm->mmap_sem);
+ 			do_brk(0, ex.a_text+ex.a_data);
++			up_write(&current->mm->mmap_sem);
+ 			bprm->file->f_op->read(bprm->file,
+ 				  (char __user *)N_TXTADDR(ex),
+ 				  ex.a_text+ex.a_data, &pos);
+@@ -389,7 +399,9 @@
+ 	len = PAGE_ALIGN(ex.a_text + ex.a_data);
+ 	bss = ex.a_text + ex.a_data + ex.a_bss;
+ 	if (bss > len) {
++		down_write(&current->mm->mmap_sem);
+ 		error = do_brk(start_addr + len, bss - len);
++		up_write(&current->mm->mmap_sem);
+ 		retval = error;
+ 		if (error != start_addr + len)
+ 			goto out;
+diff -urN linux-2.6.10.orig/arch/sparc64/kernel/pci_psycho.c linux-2.6.10/arch/sparc64/kernel/pci_psycho.c
+--- linux-2.6.10.orig/arch/sparc64/kernel/pci_psycho.c	2004-12-24 16:34:58.000000000 -0500
++++ linux-2.6.10/arch/sparc64/kernel/pci_psycho.c	2005-01-16 00:15:41.271734016 -0500
+@@ -453,9 +453,9 @@
+ 		tag_base = regbase + PSYCHO_STC_TAG_A;
+ 		line_base = regbase + PSYCHO_STC_LINE_A;
+ 	} else {
+-		err_base = regbase + PSYCHO_STC_ERR_A;
+-		tag_base = regbase + PSYCHO_STC_TAG_A;
+-		line_base = regbase + PSYCHO_STC_LINE_A;
++		err_base = regbase + PSYCHO_STC_ERR_B;
++		tag_base = regbase + PSYCHO_STC_TAG_B;
++		line_base = regbase + PSYCHO_STC_LINE_B;
+ 	}
+ 
+ 	spin_lock(&stc_buf_lock);
+diff -urN linux-2.6.10.orig/arch/sparc64/solaris/ioctl.c linux-2.6.10/arch/sparc64/solaris/ioctl.c
+--- linux-2.6.10.orig/arch/sparc64/solaris/ioctl.c	2004-12-24 16:34:58.000000000 -0500
++++ linux-2.6.10/arch/sparc64/solaris/ioctl.c	2005-01-16 00:15:40.942784024 -0500
+@@ -298,7 +298,7 @@
+ 	if (! current->files->fd[fd] ||
+ 	    ! current->files->fd[fd]->f_dentry ||
+ 	    ! (ino = current->files->fd[fd]->f_dentry->d_inode) ||
+-	    ! ino->i_sock) {
++	    ! S_ISSOCK(ino->i_mode)) {
+ 		spin_unlock(&current->files->file_lock);
+ 		return TBADF;
+ 	}
+@@ -478,7 +478,7 @@
+         struct module_info *mi;
+ 
+         ino = filp->f_dentry->d_inode;
+-        if (! ino->i_sock)
++        if (!S_ISSOCK(ino->i_mode))
+ 		return -EBADF;
+         sock = filp->private_data;
+         if (! sock) {
+diff -urN linux-2.6.10.orig/arch/sparc64/solaris/socksys.c linux-2.6.10/arch/sparc64/solaris/socksys.c
+--- linux-2.6.10.orig/arch/sparc64/solaris/socksys.c	2004-12-24 16:34:30.000000000 -0500
++++ linux-2.6.10/arch/sparc64/solaris/socksys.c	2005-01-16 00:15:40.981778096 -0500
+@@ -150,7 +150,7 @@
+ 	unsigned int mask = 0;
+ 
+ 	ino=filp->f_dentry->d_inode;
+-	if (ino && ino->i_sock) {
++	if (ino && S_ISSOCK(ino->i_mode)) {
+ 		struct sol_socket_struct *sock;
+ 		sock = (struct sol_socket_struct*)filp->private_data;
+ 		if (sock && sock->pfirst) {
+diff -urN linux-2.6.10.orig/arch/sparc64/solaris/timod.c linux-2.6.10/arch/sparc64/solaris/timod.c
+--- linux-2.6.10.orig/arch/sparc64/solaris/timod.c	2004-12-24 16:34:32.000000000 -0500
++++ linux-2.6.10/arch/sparc64/solaris/timod.c	2005-01-16 00:15:40.998775512 -0500
+@@ -853,9 +853,7 @@
+ 	if(!filp) goto out;
+ 
+ 	ino = filp->f_dentry->d_inode;
+-	if (!ino) goto out;
+-
+-	if (!ino->i_sock)
++	if (!ino || !S_ISSOCK(ino->i_mode))
+ 		goto out;
+ 
+ 	ctlptr = (struct strbuf __user *)A(arg1);
+@@ -923,7 +921,7 @@
+ 	ino = filp->f_dentry->d_inode;
+ 	if (!ino) goto out;
+ 
+-	if (!ino->i_sock &&
++	if (!S_ISSOCK(ino->i_mode) &&
+ 		(imajor(ino) != 30 || iminor(ino) != 1))
+ 		goto out;
+ 
+diff -urN linux-2.6.10.orig/arch/x86_64/ia32/ia32_aout.c linux-2.6.10/arch/x86_64/ia32/ia32_aout.c
+--- linux-2.6.10.orig/arch/x86_64/ia32/ia32_aout.c	2004-12-24 16:35:40.000000000 -0500
++++ linux-2.6.10/arch/x86_64/ia32/ia32_aout.c	2005-01-16 00:15:41.184747240 -0500
+@@ -114,7 +114,9 @@
+ 	end = PAGE_ALIGN(end);
+ 	if (end <= start)
+ 		return;
++	down_write(&current->mm->mmap_sem);
+ 	do_brk(start, end - start);
++	up_write(&current->mm->mmap_sem);
+ }
+ 
+ #if CORE_DUMP
+@@ -324,7 +326,10 @@
+ 		pos = 32;
+ 		map_size = ex.a_text+ex.a_data;
+ 
++		down_write(&current->mm->mmap_sem);
+ 		error = do_brk(text_addr & PAGE_MASK, map_size);
++		up_write(&current->mm->mmap_sem);
++
+ 		if (error != (text_addr & PAGE_MASK)) {
+ 			send_sig(SIGKILL, current, 0);
+ 			return error;
+@@ -360,7 +365,9 @@
+ 
+ 		if (!bprm->file->f_op->mmap||((fd_offset & ~PAGE_MASK) != 0)) {
+ 			loff_t pos = fd_offset;
++			down_write(&current->mm->mmap_sem);
+ 			do_brk(N_TXTADDR(ex), ex.a_text+ex.a_data);
++			up_write(&current->mm->mmap_sem);
+ 			bprm->file->f_op->read(bprm->file,(char *)N_TXTADDR(ex),
+ 					ex.a_text+ex.a_data, &pos);
+ 			flush_icache_range((unsigned long) N_TXTADDR(ex),
+@@ -468,8 +475,9 @@
+ 			error_time = jiffies;
+ 		}
+ #endif
+-
++		down_write(&current->mm->mmap_sem);
+ 		do_brk(start_addr, ex.a_text + ex.a_data + ex.a_bss);
++		up_write(&current->mm->mmap_sem);
+ 		
+ 		file->f_op->read(file, (char *)start_addr,
+ 			ex.a_text + ex.a_data, &pos);
+@@ -493,7 +501,9 @@
+ 	len = PAGE_ALIGN(ex.a_text + ex.a_data);
+ 	bss = ex.a_text + ex.a_data + ex.a_bss;
+ 	if (bss > len) {
++		down_write(&current->mm->mmap_sem);
+ 		error = do_brk(start_addr + len, bss - len);
++		up_write(&current->mm->mmap_sem);
+ 		retval = error;
+ 		if (error != start_addr + len)
+ 			goto out;
+diff -urN linux-2.6.10.orig/drivers/acpi/ibm_acpi.c linux-2.6.10/drivers/acpi/ibm_acpi.c
+--- linux-2.6.10.orig/drivers/acpi/ibm_acpi.c	2004-12-24 16:35:24.000000000 -0500
++++ linux-2.6.10/drivers/acpi/ibm_acpi.c	2005-01-16 00:15:40.931785696 -0500
+@@ -1168,7 +1168,7 @@
+ #define IBM_PARAM(feature) \
+ 	module_param_call(feature, set_ibm_param, NULL, NULL, 0)
+ 
+-static void __exit acpi_ibm_exit(void)
++static void acpi_ibm_exit(void)
+ {
+ 	int i;
+ 
+diff -urN linux-2.6.10.orig/drivers/atm/zatm.c linux-2.6.10/drivers/atm/zatm.c
+--- linux-2.6.10.orig/drivers/atm/zatm.c	2004-12-24 16:34:26.000000000 -0500
++++ linux-2.6.10/drivers/atm/zatm.c	2005-01-16 00:15:41.000775208 -0500
+@@ -1605,7 +1605,7 @@
+ 		goto out_disable;
+ 
+ 	zatm_dev->pci_dev = pci_dev;
+-	dev = (struct atm_dev *)zatm_dev;
++	dev->dev_data = zatm_dev;
+ 	zatm_dev->copper = (int)ent->driver_data;
+ 	if ((ret = zatm_init(dev)) || (ret = zatm_start(dev)))
+ 		goto out_release;
+diff -urN linux-2.6.10.orig/drivers/block/cfq-iosched.c linux-2.6.10/drivers/block/cfq-iosched.c
+--- linux-2.6.10.orig/drivers/block/cfq-iosched.c	2004-12-24 16:35:01.000000000 -0500
++++ linux-2.6.10/drivers/block/cfq-iosched.c	2005-01-16 00:15:41.285731888 -0500
+@@ -622,8 +622,10 @@
+ 			cfq_sort_rr_list(cfqq, 0);
+ 		}
+ 
+-		crq->accounted = 0;
+-		cfqq->cfqd->rq_in_driver--;
++		if (crq->accounted) {
++			crq->accounted = 0;
++			cfqq->cfqd->rq_in_driver--;
++		}
+ 	}
+ 	list_add(&rq->queuelist, &q->queue_head);
+ }
+diff -urN linux-2.6.10.orig/drivers/block/noop-iosched.c linux-2.6.10/drivers/block/noop-iosched.c
+--- linux-2.6.10.orig/drivers/block/noop-iosched.c	2004-12-24 16:35:01.000000000 -0500
++++ linux-2.6.10/drivers/block/noop-iosched.c	2005-01-16 00:15:41.268734472 -0500
+@@ -59,12 +59,10 @@
+ void elevator_noop_add_request(request_queue_t *q, struct request *rq,
+ 			       int where)
+ {
+-	struct list_head *insert = q->queue_head.prev;
+-
+ 	if (where == ELEVATOR_INSERT_FRONT)
+-		insert = &q->queue_head;
+-
+-	list_add_tail(&rq->queuelist, &q->queue_head);
++		list_add(&rq->queuelist, &q->queue_head);
++	else
++		list_add_tail(&rq->queuelist, &q->queue_head);
+ 
+ 	/*
+ 	 * new merges must not precede this barrier
+diff -urN linux-2.6.10.orig/drivers/block/scsi_ioctl.c linux-2.6.10/drivers/block/scsi_ioctl.c
+--- linux-2.6.10.orig/drivers/block/scsi_ioctl.c	2004-12-24 16:35:40.000000000 -0500
++++ linux-2.6.10/drivers/block/scsi_ioctl.c	2005-01-16 00:15:41.172749064 -0500
+@@ -339,7 +339,8 @@
+ 			 struct gendisk *bd_disk, Scsi_Ioctl_Command __user *sic)
+ {
+ 	struct request *rq;
+-	int err, in_len, out_len, bytes, opcode, cmdlen;
++	int err;
++	unsigned int in_len, out_len, bytes, opcode, cmdlen;
+ 	char *buffer = NULL, sense[SCSI_SENSE_BUFFERSIZE];
+ 
+ 	/*
+diff -urN linux-2.6.10.orig/drivers/char/moxa.c linux-2.6.10/drivers/char/moxa.c
+--- linux-2.6.10.orig/drivers/char/moxa.c	2004-12-24 16:35:28.000000000 -0500
++++ linux-2.6.10/drivers/char/moxa.c	2005-01-16 00:15:41.169749520 -0500
+@@ -1666,7 +1666,7 @@
+ 
+ 	if(copy_from_user(&dltmp, argp, sizeof(struct dl_str)))
+ 		return -EFAULT;
+-	if(dltmp.cardno < 0 || dltmp.cardno >= MAX_BOARDS)
++	if(dltmp.cardno < 0 || dltmp.cardno >= MAX_BOARDS || dltmp.len < 0)
+ 		return -EINVAL;
+ 
+ 	switch(cmd)
+@@ -2775,6 +2775,8 @@
+ 	void __iomem *baseAddr;
+ 	int i;
+ 
++	if(len < 0 || len > sizeof(moxaBuff))
++		return -EINVAL;
+ 	if(copy_from_user(moxaBuff, tmp, len))
+ 		return -EFAULT;
+ 	baseAddr = moxaBaseAddr[cardno];
+@@ -2822,7 +2824,7 @@
+ 	void __iomem *baseAddr;
+ 	int i;
+ 
+-	if(len > sizeof(moxaBuff))
++	if(len < 0 || len > sizeof(moxaBuff))
+ 		return -EINVAL;
+ 	if(copy_from_user(moxaBuff, tmp, len))
+ 		return -EFAULT;
+@@ -2842,6 +2844,8 @@
+ 	void __iomem *baseAddr, *ofsAddr;
+ 	int retval, port, i;
+ 
++	if(len < 0 || len > sizeof(moxaBuff))
++		return -EINVAL;
+ 	if(copy_from_user(moxaBuff, tmp, len))
+ 		return -EFAULT;
+ 	baseAddr = moxaBaseAddr[cardno];
+diff -urN linux-2.6.10.orig/drivers/char/random.c linux-2.6.10/drivers/char/random.c
+--- linux-2.6.10.orig/drivers/char/random.c	2004-12-24 16:33:51.000000000 -0500
++++ linux-2.6.10/drivers/char/random.c	2005-01-16 00:15:41.166749976 -0500
+@@ -1906,7 +1906,7 @@
+ 			     void __user *oldval, size_t __user *oldlenp,
+ 			     void __user *newval, size_t newlen, void **context)
+ {
+-	int	len;
++	unsigned long len;
+ 	
+ 	sysctl_poolsize = random_state->poolinfo.POOLBYTES;
+ 
+@@ -1916,7 +1916,7 @@
+ 	 * write case happens twice; it's harmless).
+ 	 */
+ 	if (newval && newlen) {
+-		len = newlen;
++		len = (unsigned long) newlen;
+ 		if (len > table->maxlen)
+ 			len = table->maxlen;
+ 		if (copy_from_user(table->data, newval, len))
+diff -urN linux-2.6.10.orig/drivers/ide/ide-probe.c linux-2.6.10/drivers/ide/ide-probe.c
+--- linux-2.6.10.orig/drivers/ide/ide-probe.c	2004-12-24 16:34:58.000000000 -0500
++++ linux-2.6.10/drivers/ide/ide-probe.c	2005-01-16 00:15:41.261735536 -0500
+@@ -749,7 +749,7 @@
+ 	 *  
+ 	 *  BenH.
+ 	 */
+-	if (wait_hwif_ready(hwif))
++	if (wait_hwif_ready(hwif) == -EBUSY)
+ 		printk(KERN_DEBUG "%s: Wait for ready failed before probe !\n", hwif->name);
+ 
+ 	/*
+diff -urN linux-2.6.10.orig/drivers/ide/pci/generic.c linux-2.6.10/drivers/ide/pci/generic.c
+--- linux-2.6.10.orig/drivers/ide/pci/generic.c	2004-12-24 16:34:57.000000000 -0500
++++ linux-2.6.10/drivers/ide/pci/generic.c	2005-01-16 00:15:41.003774752 -0500
+@@ -96,25 +96,27 @@
+ {
+ 	ide_pci_device_t *d = &generic_chipsets[id->driver_data];
+ 	u16 command;
++	int ret = -ENODEV;
+ 
+ 	if (dev->vendor == PCI_VENDOR_ID_UMC &&
+ 	    dev->device == PCI_DEVICE_ID_UMC_UM8886A &&
+ 	    (!(PCI_FUNC(dev->devfn) & 1)))
+-		return 1; /* UM8886A/BF pair */
++		goto out; /* UM8886A/BF pair */
+ 
+ 	if (dev->vendor == PCI_VENDOR_ID_OPTI &&
+ 	    dev->device == PCI_DEVICE_ID_OPTI_82C558 &&
+ 	    (!(PCI_FUNC(dev->devfn) & 1)))
+-		return 1;
++		goto out;
+ 
+ 	pci_read_config_word(dev, PCI_COMMAND, &command);
+-	if(!(command & PCI_COMMAND_IO))
+-	{
++	if (!(command & PCI_COMMAND_IO)) {
+ 		printk(KERN_INFO "Skipping disabled %s IDE controller.\n", d->name);
+-		return 1; 
++		goto out;
+ 	}
++	ret = 0;
+ 	ide_setup_pci_device(dev, d);
+-	return 0;
++out:
++	return ret;
+ }
+ 
+ static struct pci_device_id generic_pci_tbl[] = {
+diff -urN linux-2.6.10.orig/drivers/input/gameport/Makefile linux-2.6.10/drivers/input/gameport/Makefile
+--- linux-2.6.10.orig/drivers/input/gameport/Makefile	2004-12-24 16:33:49.000000000 -0500
++++ linux-2.6.10/drivers/input/gameport/Makefile	2005-01-16 00:15:41.083762592 -0500
+@@ -5,7 +5,7 @@
+ # Each configuration option enables a list of files.
+ 
+ obj-$(CONFIG_GAMEPORT)		+= gameport.o
+-obj-$(CONFIG_GAMEPORT_CS461X)	+= cs461x.o
++obj-$(CONFIG_GAMEPORT_CS461x)	+= cs461x.o
+ obj-$(CONFIG_GAMEPORT_EMU10K1)	+= emu10k1-gp.o
+ obj-$(CONFIG_GAMEPORT_FM801)	+= fm801-gp.o
+ obj-$(CONFIG_GAMEPORT_L4)	+= lightning.o
+diff -urN linux-2.6.10.orig/drivers/parport/parport_pc.c linux-2.6.10/drivers/parport/parport_pc.c
+--- linux-2.6.10.orig/drivers/parport/parport_pc.c	2004-12-24 16:35:39.000000000 -0500
++++ linux-2.6.10/drivers/parport/parport_pc.c	2005-01-16 00:15:41.014773080 -0500
+@@ -3176,7 +3176,6 @@
+ #ifdef MODULE
+ static const char *irq[PARPORT_PC_MAX_PORTS];
+ static const char *dma[PARPORT_PC_MAX_PORTS];
+-static char *init_mode;
+ 
+ MODULE_PARM_DESC(io, "Base I/O address (SPP regs)");
+ module_param_array(io, int, NULL, 0);
+@@ -3192,8 +3191,9 @@
+ module_param(verbose_probing, int, 0644);
+ #endif
+ #ifdef CONFIG_PCI
++static char *init_mode;
+ MODULE_PARM_DESC(init_mode, "Initialise mode for VIA VT8231 port (spp, ps2, epp, ecp or ecpepp)");
+-MODULE_PARM(init_mode, "s");
++module_param(init_mode, charp, 0);
+ #endif
+ 
+ static int __init parse_parport_params(void)
+diff -urN linux-2.6.10.orig/drivers/scsi/libata-core.c linux-2.6.10/drivers/scsi/libata-core.c
+--- linux-2.6.10.orig/drivers/scsi/libata-core.c	2004-12-24 16:33:48.000000000 -0500
++++ linux-2.6.10/drivers/scsi/libata-core.c	2005-01-16 00:15:40.939784480 -0500
+@@ -28,6 +28,7 @@
+ #include <linux/pci.h>
+ #include <linux/init.h>
+ #include <linux/list.h>
++#include <linux/mm.h>
+ #include <linux/highmem.h>
+ #include <linux/spinlock.h>
+ #include <linux/blkdev.h>
+@@ -2369,6 +2370,9 @@
+ 	unsigned long timeout = 0;
+ 
+ 	switch (ap->pio_task_state) {
++	case PIO_ST_IDLE:
++		return;
++
+ 	case PIO_ST:
+ 		ata_pio_block(ap);
+ 		break;
+@@ -2385,18 +2389,14 @@
+ 	case PIO_ST_TMOUT:
+ 	case PIO_ST_ERR:
+ 		ata_pio_error(ap);
+-		break;
++		return;
+ 	}
+ 
+-	if ((ap->pio_task_state != PIO_ST_IDLE) &&
+-	    (ap->pio_task_state != PIO_ST_TMOUT) &&
+-	    (ap->pio_task_state != PIO_ST_ERR)) {
+-		if (timeout)
+-			queue_delayed_work(ata_wq, &ap->pio_task,
+-					   timeout);
+-		else
+-			queue_work(ata_wq, &ap->pio_task);
+-	}
++	if (timeout)
++		queue_delayed_work(ata_wq, &ap->pio_task,
++				   timeout);
++	else
++		queue_work(ata_wq, &ap->pio_task);
+ }
+ 
+ static void atapi_request_sense(struct ata_port *ap, struct ata_device *dev,
+diff -urN linux-2.6.10.orig/drivers/serial/serial_core.c linux-2.6.10/drivers/serial/serial_core.c
+--- linux-2.6.10.orig/drivers/serial/serial_core.c	2004-12-24 16:34:26.000000000 -0500
++++ linux-2.6.10/drivers/serial/serial_core.c	2005-01-16 00:15:41.255736448 -0500
+@@ -1877,7 +1877,21 @@
+ 	 * Re-enable the console device after suspending.
+ 	 */
+ 	if (uart_console(port)) {
+-		uart_change_speed(state, NULL);
++		struct termios termios;
++
++		/*
++		 * First try to use the console cflag setting.
++		 */
++		memset(&termios, 0, sizeof(struct termios));
++		termios.c_cflag = port->cons->cflag;
++
++		/*
++		 * If that's unset, use the tty termios setting.
++		 */
++		if (state->info && state->info->tty && termios.c_cflag == 0)
++			termios = *state->info->tty->termios;
++
++		port->ops->set_termios(port, &termios, NULL);
+ 		console_start(port->cons);
+ 	}
+ 
+diff -urN linux-2.6.10.orig/drivers/usb/serial/ftdi_sio.c linux-2.6.10/drivers/usb/serial/ftdi_sio.c
+--- linux-2.6.10.orig/drivers/usb/serial/ftdi_sio.c	2004-12-24 16:35:24.000000000 -0500
++++ linux-2.6.10/drivers/usb/serial/ftdi_sio.c	2005-01-16 00:15:41.251737056 -0500
+@@ -1518,7 +1518,7 @@
+ 	dbg("%s port %d, %d bytes", __FUNCTION__, port->number, count);
+ 
+ 	if (count == 0) {
+-		err("write request of 0 bytes");
++		dbg("write request of 0 bytes");
+ 		return 0;
+ 	}
+ 	
+diff -urN linux-2.6.10.orig/drivers/video/matrox/matroxfb_base.c linux-2.6.10/drivers/video/matrox/matroxfb_base.c
+--- linux-2.6.10.orig/drivers/video/matrox/matroxfb_base.c	2004-12-24 16:35:18.000000000 -0500
++++ linux-2.6.10/drivers/video/matrox/matroxfb_base.c	2005-01-16 00:15:41.280732648 -0500
+@@ -2477,8 +2477,10 @@
+ MODULE_PARM_DESC(noinit, "Disables W/SG/SD-RAM and bus interface initialization (0 or 1=do not initialize) (default=0)");
+ MODULE_PARM(memtype, "i");
+ MODULE_PARM_DESC(memtype, "Memory type for G200/G400 (see Documentation/fb/matroxfb.txt for explanation) (default=3 for G200, 0 for G400)");
++#ifdef CONFIG_MTRR
+ MODULE_PARM(mtrr, "i");
+ MODULE_PARM_DESC(mtrr, "This speeds up video memory accesses (0=disabled or 1) (default=1)");
++#endif
+ MODULE_PARM(sgram, "i");
+ MODULE_PARM_DESC(sgram, "Indicates that G100/G200/G400 has SGRAM memory (0=SDRAM, 1=SGRAM) (default=0)");
+ MODULE_PARM(inv24, "i");
+diff -urN linux-2.6.10.orig/fs/binfmt_aout.c linux-2.6.10/fs/binfmt_aout.c
+--- linux-2.6.10.orig/fs/binfmt_aout.c	2004-12-24 16:35:50.000000000 -0500
++++ linux-2.6.10/fs/binfmt_aout.c	2005-01-16 00:15:41.184747240 -0500
+@@ -50,7 +50,10 @@
+ 	start = PAGE_ALIGN(start);
+ 	end = PAGE_ALIGN(end);
+ 	if (end > start) {
+-		unsigned long addr = do_brk(start, end - start);
++		unsigned long addr;
++		down_write(&current->mm->mmap_sem);
++		addr = do_brk(start, end - start);
++		up_write(&current->mm->mmap_sem);
+ 		if (BAD_ADDR(addr))
+ 			return addr;
+ 	}
+@@ -323,10 +326,14 @@
+ 		loff_t pos = fd_offset;
+ 		/* Fuck me plenty... */
+ 		/* <AOL></AOL> */
++		down_write(&current->mm->mmap_sem);	
+ 		error = do_brk(N_TXTADDR(ex), ex.a_text);
++		up_write(&current->mm->mmap_sem);
+ 		bprm->file->f_op->read(bprm->file, (char *) N_TXTADDR(ex),
+ 			  ex.a_text, &pos);
++		down_write(&current->mm->mmap_sem);
+ 		error = do_brk(N_DATADDR(ex), ex.a_data);
++		up_write(&current->mm->mmap_sem);
+ 		bprm->file->f_op->read(bprm->file, (char *) N_DATADDR(ex),
+ 			  ex.a_data, &pos);
+ 		goto beyond_if;
+@@ -346,8 +353,9 @@
+ 		pos = 32;
+ 		map_size = ex.a_text+ex.a_data;
+ #endif
+-
++		down_write(&current->mm->mmap_sem);
+ 		error = do_brk(text_addr & PAGE_MASK, map_size);
++		up_write(&current->mm->mmap_sem);
+ 		if (error != (text_addr & PAGE_MASK)) {
+ 			send_sig(SIGKILL, current, 0);
+ 			return error;
+@@ -382,7 +390,9 @@
+ 
+ 		if (!bprm->file->f_op->mmap||((fd_offset & ~PAGE_MASK) != 0)) {
+ 			loff_t pos = fd_offset;
++			down_write(&current->mm->mmap_sem);
+ 			do_brk(N_TXTADDR(ex), ex.a_text+ex.a_data);
++			up_write(&current->mm->mmap_sem);
+ 			bprm->file->f_op->read(bprm->file,
+ 					(char __user *)N_TXTADDR(ex),
+ 					ex.a_text+ex.a_data, &pos);
+@@ -487,8 +497,9 @@
+ 			       file->f_dentry->d_name.name);
+ 			error_time = jiffies;
+ 		}
+-
++		down_write(&current->mm->mmap_sem);
+ 		do_brk(start_addr, ex.a_text + ex.a_data + ex.a_bss);
++		up_write(&current->mm->mmap_sem);
+ 		
+ 		file->f_op->read(file, (char __user *)start_addr,
+ 			ex.a_text + ex.a_data, &pos);
+@@ -512,7 +523,9 @@
+ 	len = PAGE_ALIGN(ex.a_text + ex.a_data);
+ 	bss = ex.a_text + ex.a_data + ex.a_bss;
+ 	if (bss > len) {
++		down_write(&current->mm->mmap_sem);
+ 		error = do_brk(start_addr + len, bss - len);
++		up_write(&current->mm->mmap_sem);
+ 		retval = error;
+ 		if (error != start_addr + len)
+ 			goto out;
+diff -urN linux-2.6.10.orig/fs/binfmt_elf.c linux-2.6.10/fs/binfmt_elf.c
+--- linux-2.6.10.orig/fs/binfmt_elf.c	2004-12-24 16:34:33.000000000 -0500
++++ linux-2.6.10/fs/binfmt_elf.c	2005-01-16 00:15:41.185747088 -0500
+@@ -88,7 +88,10 @@
+ 	start = ELF_PAGEALIGN(start);
+ 	end = ELF_PAGEALIGN(end);
+ 	if (end > start) {
+-		unsigned long addr = do_brk(start, end - start);
++		unsigned long addr;
++		down_write(&current->mm->mmap_sem);
++		addr = do_brk(start, end - start);
++		up_write(&current->mm->mmap_sem);
+ 		if (BAD_ADDR(addr))
+ 			return addr;
+ 	}
+@@ -408,7 +411,9 @@
+ 
+ 	/* Map the last of the bss segment */
+ 	if (last_bss > elf_bss) {
++		down_write(&current->mm->mmap_sem);
+ 		error = do_brk(elf_bss, last_bss - elf_bss);
++		up_write(&current->mm->mmap_sem);
+ 		if (BAD_ADDR(error))
+ 			goto out_close;
+ 	}
+@@ -448,7 +453,9 @@
+ 		goto out;
+ 	}
+ 
++	down_write(&current->mm->mmap_sem);	
+ 	do_brk(0, text_data);
++	up_write(&current->mm->mmap_sem);
+ 	if (!interpreter->f_op || !interpreter->f_op->read)
+ 		goto out;
+ 	if (interpreter->f_op->read(interpreter, addr, text_data, &offset) < 0)
+@@ -456,8 +463,11 @@
+ 	flush_icache_range((unsigned long)addr,
+ 	                   (unsigned long)addr + text_data);
+ 
++
++	down_write(&current->mm->mmap_sem);	
+ 	do_brk(ELF_PAGESTART(text_data + ELF_MIN_ALIGN - 1),
+ 		interp_ex->a_bss);
++	up_write(&current->mm->mmap_sem);
+ 	elf_entry = interp_ex->a_entry;
+ 
+ out:
+@@ -1024,8 +1034,11 @@
+ 
+ 	len = ELF_PAGESTART(elf_phdata->p_filesz + elf_phdata->p_vaddr + ELF_MIN_ALIGN - 1);
+ 	bss = elf_phdata->p_memsz + elf_phdata->p_vaddr;
+-	if (bss > len)
++	if (bss > len) {
++		down_write(&current->mm->mmap_sem);
+ 		do_brk(len, bss - len);
++		up_write(&current->mm->mmap_sem);
++	}
+ 	error = 0;
+ 
+ out_free_ph:
+diff -urN linux-2.6.10.orig/fs/nfs/dir.c linux-2.6.10/fs/nfs/dir.c
+--- linux-2.6.10.orig/fs/nfs/dir.c	2004-12-24 16:34:45.000000000 -0500
++++ linux-2.6.10/fs/nfs/dir.c	2005-01-16 00:15:41.150752408 -0500
+@@ -1438,7 +1438,7 @@
+ 		goto go_ahead;
+ 	if (S_ISDIR(new_inode->i_mode))
+ 		goto out;
+-	else if (atomic_read(&new_dentry->d_count) > 1) {
++	else if (atomic_read(&new_dentry->d_count) > 2) {
+ 		int err;
+ 		/* copy the target dentry's name */
+ 		dentry = d_alloc(new_dentry->d_parent,
+@@ -1453,10 +1453,8 @@
+ 			new_inode = NULL;
+ 			/* instantiate the replacement target */
+ 			d_instantiate(new_dentry, NULL);
+-		}
+-
++		} else if (atomic_read(&new_dentry->d_count) > 1) {
+ 		/* dentry still busy? */
+-		if (atomic_read(&new_dentry->d_count) > 1) {
+ #ifdef NFS_PARANOIA
+ 			printk("nfs_rename: target %s/%s busy, d_count=%d\n",
+ 			       new_dentry->d_parent->d_name.name,
+diff -urN linux-2.6.10.orig/fs/nfs/direct.c linux-2.6.10/fs/nfs/direct.c
+--- linux-2.6.10.orig/fs/nfs/direct.c	2004-12-24 16:35:27.000000000 -0500
++++ linux-2.6.10/fs/nfs/direct.c	2005-01-16 00:15:41.157751344 -0500
+@@ -72,8 +72,10 @@
+ 	size_t array_size;
+ 
+ 	/* set an arbitrary limit to prevent arithmetic overflow */
+-	if (size > MAX_DIRECTIO_SIZE)
++	if (size > MAX_DIRECTIO_SIZE) {
++		*pages = NULL;
+ 		return -EFBIG;
++	}
+ 
+ 	page_count = (user_addr + size + PAGE_SIZE - 1) >> PAGE_SHIFT;
+ 	page_count -= user_addr >> PAGE_SHIFT;
+diff -urN linux-2.6.10.orig/fs/nfs/inode.c linux-2.6.10/fs/nfs/inode.c
+--- linux-2.6.10.orig/fs/nfs/inode.c	2004-12-24 16:35:24.000000000 -0500
++++ linux-2.6.10/fs/nfs/inode.c	2005-01-16 00:15:41.152752104 -0500
+@@ -486,13 +486,27 @@
+ 	if (error < 0)
+ 		goto out_err;
+ 
+-	buf->f_frsize = server->wtmult;
++	/*
++	 * Current versions of glibc do not correctly handle the
++	 * case where f_frsize != f_bsize.  Eventually we want to
++	 * report the value of wtmult in this field.
++	 */
++	buf->f_frsize = sb->s_blocksize;
++
++	/*
++	 * On most *nix systems, f_blocks, f_bfree, and f_bavail
++	 * are reported in units of f_frsize.  Linux hasn't had
++	 * an f_frsize field in its statfs struct until recently,
++	 * thus historically Linux's sys_statfs reports these
++	 * fields in units of f_bsize.
++	 */
+ 	buf->f_bsize = sb->s_blocksize;
+ 	blockbits = sb->s_blocksize_bits;
+ 	blockres = (1 << blockbits) - 1;
+ 	buf->f_blocks = (res.tbytes + blockres) >> blockbits;
+ 	buf->f_bfree = (res.fbytes + blockres) >> blockbits;
+ 	buf->f_bavail = (res.abytes + blockres) >> blockbits;
++
+ 	buf->f_files = res.tfiles;
+ 	buf->f_ffree = res.afiles;
+ 
+diff -urN linux-2.6.10.orig/include/asm-alpha/io_trivial.h linux-2.6.10/include/asm-alpha/io_trivial.h
+--- linux-2.6.10.orig/include/asm-alpha/io_trivial.h	2004-12-24 16:34:33.000000000 -0500
++++ linux-2.6.10/include/asm-alpha/io_trivial.h	2005-01-16 00:15:41.282732344 -0500
+@@ -26,7 +26,7 @@
+ __EXTERN_INLINE void
+ IO_CONCAT(__IO_PREFIX,iowrite16)(u16 b, void __iomem *a)
+ {
+-	__kernel_stb(b, *(volatile u16 __force *)a);
++	__kernel_stw(b, *(volatile u16 __force *)a);
+ }
+ #endif
+ 
+@@ -66,7 +66,7 @@
+ __EXTERN_INLINE void
+ IO_CONCAT(__IO_PREFIX,writew)(u16 b, volatile void __iomem *a)
+ {
+-	__kernel_stb(b, *(volatile u16 __force *)a);
++	__kernel_stw(b, *(volatile u16 __force *)a);
+ }
+ #elif IO_CONCAT(__IO_PREFIX,trivial_rw_bw) == 2
+ __EXTERN_INLINE u8
+diff -urN linux-2.6.10.orig/include/asm-i386/processor.h linux-2.6.10/include/asm-i386/processor.h
+--- linux-2.6.10.orig/include/asm-i386/processor.h	2004-12-24 16:33:50.000000000 -0500
++++ linux-2.6.10/include/asm-i386/processor.h	2005-01-16 00:15:41.132755144 -0500
+@@ -126,6 +126,8 @@
+ 
+ /*
+  * Generic CPUID function
++ * clear %ecx since some cpus (Cyrix MII) do not set or clear %ecx
++ * resulting in stale register contents being returned.
+  */
+ static inline void cpuid(int op, int *eax, int *ebx, int *ecx, int *edx)
+ {
+@@ -134,7 +136,7 @@
+ 		  "=b" (*ebx),
+ 		  "=c" (*ecx),
+ 		  "=d" (*edx)
+-		: "0" (op));
++		: "0" (op), "c"(0));
+ }
+ 
+ /*
+diff -urN linux-2.6.10.orig/include/asm-sparc64/pgtable.h linux-2.6.10/include/asm-sparc64/pgtable.h
+--- linux-2.6.10.orig/include/asm-sparc64/pgtable.h	2004-12-24 16:33:49.000000000 -0500
++++ linux-2.6.10/include/asm-sparc64/pgtable.h	2005-01-16 00:15:41.010773688 -0500
+@@ -313,7 +313,7 @@
+ /* Find an entry in the second-level page table.. */
+ #define pmd_offset(dir, address)	\
+ 	((pmd_t *) pgd_page(*(dir)) + \
+-	 ((address >> PMD_SHIFT) & (REAL_PTRS_PER_PMD-1)))
++	 (((address) >> PMD_SHIFT) & (REAL_PTRS_PER_PMD-1)))
+ 
+ /* Find an entry in the third-level page table.. */
+ #define pte_index(dir, address)	\
+diff -urN linux-2.6.10.orig/include/linux/ipv6.h linux-2.6.10/include/linux/ipv6.h
+--- linux-2.6.10.orig/include/linux/ipv6.h	2004-12-24 16:35:23.000000000 -0500
++++ linux-2.6.10/include/linux/ipv6.h	2005-01-16 00:15:41.005774448 -0500
+@@ -279,6 +279,7 @@
+ 	struct ipv6_pinfo inet6;
+ };
+ 
++#if defined(CONFIG_IPV6) || defined(CONFIG_IPV6_MODULE)
+ static inline struct ipv6_pinfo * inet6_sk(const struct sock *__sk)
+ {
+ 	return ((struct raw6_sock *)__sk)->pinet6;
+@@ -289,7 +290,6 @@
+ 	return &((struct raw6_sock *)__sk)->raw6;
+ }
+ 
+-#if defined(CONFIG_IPV6) || defined(CONFIG_IPV6_MODULE)
+ #define __ipv6_only_sock(sk)	(inet6_sk(sk)->ipv6only)
+ #define ipv6_only_sock(sk)	((sk)->sk_family == PF_INET6 && __ipv6_only_sock(sk))
+ #else
+diff -urN linux-2.6.10.orig/Makefile linux-2.6.10/Makefile
+--- linux-2.6.10.orig/Makefile	2004-12-24 16:35:01.000000000 -0500
++++ linux-2.6.10/Makefile	2005-01-16 00:15:40.517848624 -0500
+@@ -1,8 +1,8 @@
+ VERSION = 2
+ PATCHLEVEL = 6
+ SUBLEVEL = 10
+-EXTRAVERSION =
+-NAME=Woozy Numbat
++EXTRAVERSION = -as2
++NAME=Woozy Numbat + fixes
+ 
+ # *DOCUMENTATION*
+ # To see a list of typical targets execute "make help"
+diff -urN linux-2.6.10.orig/mm/mmap.c linux-2.6.10/mm/mmap.c
+--- linux-2.6.10.orig/mm/mmap.c	2004-12-24 16:35:00.000000000 -0500
++++ linux-2.6.10/mm/mmap.c	2005-01-16 00:15:41.245737968 -0500
+@@ -1319,13 +1319,57 @@
+ 	return prev ? prev->vm_next : vma;
+ }
+ 
++/*
++ * Verify that the stack growth is acceptable and
++ * update accounting. This is shared with both the
++ * grow-up and grow-down cases.
++ */
++static int acct_stack_growth(struct vm_area_struct * vma, unsigned long size, unsigned long grow)
++{
++	struct mm_struct *mm = vma->vm_mm;
++	struct rlimit *rlim = current->signal->rlim;
++
++	/* address space limit tests */
++	rlim = current->signal->rlim;
++	if (mm->total_vm + grow > rlim[RLIMIT_AS].rlim_cur >> PAGE_SHIFT)
++		return -ENOMEM;
++
++	/* Stack limit test */
++	if (size > rlim[RLIMIT_STACK].rlim_cur)
++		return -ENOMEM;
++
++	/* mlock limit tests */
++	if (vma->vm_flags & VM_LOCKED) {
++		unsigned long locked;
++		unsigned long limit;
++		locked = mm->locked_vm + grow;
++		limit = rlim[RLIMIT_MEMLOCK].rlim_cur >> PAGE_SHIFT;
++		if (locked > limit && !capable(CAP_IPC_LOCK))
++			return -ENOMEM;
++	}
++
++	/*
++	 * Overcommit..  This must be the final test, as it will
++	 * update security statistics.
++	 */
++	if (security_vm_enough_memory(grow))
++		return -ENOMEM;
++
++	/* Ok, everything looks good - let it rip */
++	mm->total_vm += grow;
++	if (vma->vm_flags & VM_LOCKED)
++		mm->locked_vm += grow;
++	__vm_stat_account(mm, vma->vm_flags, vma->vm_file, grow);
++	return 0;
++}
++
+ #ifdef CONFIG_STACK_GROWSUP
+ /*
+  * vma is the first one with address > vma->vm_end.  Have to extend vma.
+  */
+ int expand_stack(struct vm_area_struct * vma, unsigned long address)
+ {
+-	unsigned long grow;
++	int error;
+ 
+ 	if (!(vma->vm_flags & VM_GROWSUP))
+ 		return -EFAULT;
+@@ -1345,28 +1389,21 @@
+ 	 */
+ 	address += 4 + PAGE_SIZE - 1;
+ 	address &= PAGE_MASK;
+-	grow = (address - vma->vm_end) >> PAGE_SHIFT;
++	error = 0;
+ 
+-	/* Overcommit.. */
+-	if (security_vm_enough_memory(grow)) {
+-		anon_vma_unlock(vma);
+-		return -ENOMEM;
++	/* Somebody else might have raced and expanded it already */
++	if (address > vma->vm_end) {
++		unsigned long size, grow;
++
++		size = address - vma->vm_start;
++		grow = (address - vma->vm_end) >> PAGE_SHIFT;
++
++		error = acct_stack_growth(vma, size, grow);
++		if (!error)
++			vma->vm_end = address;
+ 	}
+-	
+-	if (address - vma->vm_start > current->signal->rlim[RLIMIT_STACK].rlim_cur ||
+-			((vma->vm_mm->total_vm + grow) << PAGE_SHIFT) >
+-			current->signal->rlim[RLIMIT_AS].rlim_cur) {
+-		anon_vma_unlock(vma);
+-		vm_unacct_memory(grow);
+-		return -ENOMEM;
+-	}
+-	vma->vm_end = address;
+-	vma->vm_mm->total_vm += grow;
+-	if (vma->vm_flags & VM_LOCKED)
+-		vma->vm_mm->locked_vm += grow;
+-	__vm_stat_account(vma->vm_mm, vma->vm_flags, vma->vm_file, grow);
+ 	anon_vma_unlock(vma);
+-	return 0;
++	return error;
+ }
+ 
+ struct vm_area_struct *
+@@ -1391,7 +1428,7 @@
+  */
+ int expand_stack(struct vm_area_struct *vma, unsigned long address)
+ {
+-	unsigned long grow;
++	int error;
+ 
+ 	/*
+ 	 * We must make sure the anon_vma is allocated
+@@ -1407,29 +1444,23 @@
+ 	 * anon_vma lock to serialize against concurrent expand_stacks.
+ 	 */
+ 	address &= PAGE_MASK;
+-	grow = (vma->vm_start - address) >> PAGE_SHIFT;
++	error = 0;
+ 
+-	/* Overcommit.. */
+-	if (security_vm_enough_memory(grow)) {
+-		anon_vma_unlock(vma);
+-		return -ENOMEM;
+-	}
+-	
+-	if (vma->vm_end - address > current->signal->rlim[RLIMIT_STACK].rlim_cur ||
+-			((vma->vm_mm->total_vm + grow) << PAGE_SHIFT) >
+-			current->signal->rlim[RLIMIT_AS].rlim_cur) {
+-		anon_vma_unlock(vma);
+-		vm_unacct_memory(grow);
+-		return -ENOMEM;
++	/* Somebody else might have raced and expanded it already */
++	if (address < vma->vm_start) {
++		unsigned long size, grow;
++
++		size = vma->vm_end - address;
++		grow = (vma->vm_start - address) >> PAGE_SHIFT;
++
++		error = acct_stack_growth(vma, size, grow);
++		if (!error) {
++			vma->vm_start = address;
++			vma->vm_pgoff -= grow;
++		}
+ 	}
+-	vma->vm_start = address;
+-	vma->vm_pgoff -= grow;
+-	vma->vm_mm->total_vm += grow;
+-	if (vma->vm_flags & VM_LOCKED)
+-		vma->vm_mm->locked_vm += grow;
+-	__vm_stat_account(vma->vm_mm, vma->vm_flags, vma->vm_file, grow);
+ 	anon_vma_unlock(vma);
+-	return 0;
++	return error;
+ }
+ 
+ struct vm_area_struct *
+@@ -1770,6 +1801,12 @@
+ 	}
+ 
+ 	/*
++	 * mm->mmap_sem is required to protect against another thread
++	 * changing the mappings in case we sleep.
++	 */
++	WARN_ON(down_read_trylock(&mm->mmap_sem));
++
++	/*
+ 	 * Clear old maps.  this also does some error checking for us
+ 	 */
+  munmap_back:
+diff -urN linux-2.6.10.orig/mm/vmscan.c linux-2.6.10/mm/vmscan.c
+--- linux-2.6.10.orig/mm/vmscan.c	2004-12-24 16:34:00.000000000 -0500
++++ linux-2.6.10/mm/vmscan.c	2005-01-16 00:15:41.081762896 -0500
+@@ -1063,6 +1063,7 @@
+ 			shrink_slab(sc.nr_scanned, GFP_KERNEL, lru_pages);
+ 			sc.nr_reclaimed += reclaim_state->reclaimed_slab;
+ 			total_reclaimed += sc.nr_reclaimed;
++			total_scanned += sc.nr_scanned;
+ 			if (zone->all_unreclaimable)
+ 				continue;
+ 			if (zone->pages_scanned >= (zone->nr_active +
+diff -urN linux-2.6.10.orig/net/ipv4/netfilter/ip_conntrack_proto_sctp.c linux-2.6.10/net/ipv4/netfilter/ip_conntrack_proto_sctp.c
+--- linux-2.6.10.orig/net/ipv4/netfilter/ip_conntrack_proto_sctp.c	2004-12-24 16:35:28.000000000 -0500
++++ linux-2.6.10/net/ipv4/netfilter/ip_conntrack_proto_sctp.c	2005-01-16 00:15:41.086762136 -0500
+@@ -609,7 +609,7 @@
+ static struct ctl_table_header *ip_ct_sysctl_header;
+ #endif
+ 
+-int __init init(void)
++static int __init init(void)
+ {
+ 	int ret;
+ 
+@@ -622,6 +622,7 @@
+ #ifdef CONFIG_SYSCTL
+ 	ip_ct_sysctl_header = register_sysctl_table(ip_ct_net_table, 0);
+ 	if (ip_ct_sysctl_header == NULL) {
++		ret = -ENOMEM;
+ 		printk("ip_conntrack_proto_sctp: can't register to sysctl.\n");
+ 		goto cleanup;
+ 	}
+@@ -639,7 +640,7 @@
+ 	return ret;
+ }
+ 
+-void __exit fini(void)
++static void __exit fini(void)
+ {
+ 	ip_conntrack_protocol_unregister(&ip_conntrack_protocol_sctp);
+ #ifdef CONFIG_SYSCTL
+diff -urN linux-2.6.10.orig/net/ipv4/netfilter/ip_conntrack_proto_tcp.c linux-2.6.10/net/ipv4/netfilter/ip_conntrack_proto_tcp.c
+--- linux-2.6.10.orig/net/ipv4/netfilter/ip_conntrack_proto_tcp.c	2004-12-24 16:35:40.000000000 -0500
++++ linux-2.6.10/net/ipv4/netfilter/ip_conntrack_proto_tcp.c	2005-01-16 00:15:41.092761224 -0500
+@@ -906,7 +906,8 @@
+ 		if (index == TCP_RST_SET
+ 		    && ((test_bit(IPS_SEEN_REPLY_BIT, &conntrack->status)
+ 		         && conntrack->proto.tcp.last_index <= TCP_SYNACK_SET)
+-		        || conntrack->proto.tcp.last_index == TCP_ACK_SET)
++		        || (!test_bit(IPS_ASSURED_BIT, &conntrack->status)
++			 && conntrack->proto.tcp.last_index == TCP_ACK_SET))
+ 		    && after(ntohl(th->ack_seq),
+ 		    	     conntrack->proto.tcp.last_seq)) {
+ 			/* Ignore RST closing down invalid SYN or ACK
+diff -urN linux-2.6.10.orig/net/ipv4/netfilter/ip_conntrack_standalone.c linux-2.6.10/net/ipv4/netfilter/ip_conntrack_standalone.c
+--- linux-2.6.10.orig/net/ipv4/netfilter/ip_conntrack_standalone.c	2004-12-24 16:34:33.000000000 -0500
++++ linux-2.6.10/net/ipv4/netfilter/ip_conntrack_standalone.c	2005-01-16 00:15:41.019772320 -0500
+@@ -791,7 +791,8 @@
+ 	ip_ct_sysctl_header = register_sysctl_table(ip_ct_net_table, 0);
+ 	if (ip_ct_sysctl_header == NULL) {
+ 		printk("ip_conntrack: can't register to sysctl.\n");
+-		goto cleanup;
++		ret = -ENOMEM;
++		goto cleanup_localinops;
+ 	}
+ #endif
+ 
+@@ -800,6 +801,7 @@
+  cleanup:
+ #ifdef CONFIG_SYSCTL
+  	unregister_sysctl_table(ip_ct_sysctl_header);
++ cleanup_localinops:
+ #endif
+ 	nf_unregister_hook(&ip_conntrack_local_in_ops);
+  cleanup_inoutandlocalops:
+@@ -820,8 +822,8 @@
+ 	nf_unregister_hook(&ip_conntrack_defrag_ops);
+  cleanup_proc_stat:
+ #ifdef CONFIG_PROC_FS
+-	proc_net_remove("ip_conntrack_stat");
+-cleanup_proc_exp:
++	remove_proc_entry("ip_conntrack", proc_net_stat);
++ cleanup_proc_exp:
+ 	proc_net_remove("ip_conntrack_expect");
+  cleanup_proc:
+ 	proc_net_remove("ip_conntrack");
+diff -urN linux-2.6.10.orig/net/ipv4/netfilter/ipt_ECN.c linux-2.6.10/net/ipv4/netfilter/ipt_ECN.c
+--- linux-2.6.10.orig/net/ipv4/netfilter/ipt_ECN.c	2004-12-24 16:35:40.000000000 -0500
++++ linux-2.6.10/net/ipv4/netfilter/ipt_ECN.c	2005-01-16 00:15:41.008773992 -0500
+@@ -67,7 +67,7 @@
+ 
+ 	if (einfo->operation & IPT_ECN_OP_SET_CWR)
+ 		th->cwr = einfo->proto.tcp.cwr;
+-	diffs[1] = ((u_int16_t *)&th)[6];
++	diffs[1] = ((u_int16_t *)th)[6];
+ 
+ 	/* Only mangle if it's changed. */
+ 	if (diffs[0] != diffs[1]) {
+diff -urN linux-2.6.10.orig/net/ipv4/netfilter/ipt_recent.c linux-2.6.10/net/ipv4/netfilter/ipt_recent.c
+--- linux-2.6.10.orig/net/ipv4/netfilter/ipt_recent.c	2004-12-24 16:33:59.000000000 -0500
++++ linux-2.6.10/net/ipv4/netfilter/ipt_recent.c	2005-01-16 00:15:41.088761832 -0500
+@@ -959,7 +959,7 @@
+ /* Kernel module initialization. */
+ static int __init init(void)
+ {
+-	int count;
++	int err, count;
+ 
+ 	printk(version);
+ #ifdef CONFIG_PROC_FS
+@@ -983,7 +983,10 @@
+ 	if(debug) printk(KERN_INFO RECENT_NAME ": ip_list_hash_size: %d\n",ip_list_hash_size);
+ #endif
+ 
+-	return ipt_register_match(&recent_match);
++	err = ipt_register_match(&recent_match);
++	if (err)
++		remove_proc_entry("ipt_recent", proc_net);
++	return err;
+ }
+ 
+ /* Kernel module destruction. */
+diff -urN linux-2.6.10.orig/net/ipv4/tcp.c linux-2.6.10/net/ipv4/tcp.c
+--- linux-2.6.10.orig/net/ipv4/tcp.c	2004-12-24 16:34:29.000000000 -0500
++++ linux-2.6.10/net/ipv4/tcp.c	2005-01-16 00:15:41.276733256 -0500
+@@ -654,7 +654,7 @@
+ 	while (psize > 0) {
+ 		struct sk_buff *skb = sk->sk_write_queue.prev;
+ 		struct page *page = pages[poffset / PAGE_SIZE];
+-		int copy, i;
++		int copy, i, can_coalesce;
+ 		int offset = poffset % PAGE_SIZE;
+ 		int size = min_t(size_t, psize, PAGE_SIZE - offset);
+ 
+@@ -663,7 +663,7 @@
+ 			if (!sk_stream_memory_free(sk))
+ 				goto wait_for_sndbuf;
+ 
+-			skb = sk_stream_alloc_pskb(sk, 0, tp->mss_cache,
++			skb = sk_stream_alloc_pskb(sk, 0, 0,
+ 						   sk->sk_allocation);
+ 			if (!skb)
+ 				goto wait_for_memory;
+@@ -676,18 +676,27 @@
+ 			copy = size;
+ 
+ 		i = skb_shinfo(skb)->nr_frags;
+-		if (skb_can_coalesce(skb, i, page, offset)) {
++		can_coalesce = skb_can_coalesce(skb, i, page, offset);
++		if (!can_coalesce && i >= MAX_SKB_FRAGS) {
++			tcp_mark_push(tp, skb);
++			goto new_segment;
++		}
++		if (sk->sk_forward_alloc < copy &&
++		    !sk_stream_mem_schedule(sk, copy, 0))
++			goto wait_for_memory;
++		
++		if (can_coalesce) {
+ 			skb_shinfo(skb)->frags[i - 1].size += copy;
+-		} else if (i < MAX_SKB_FRAGS) {
++		} else {
+ 			get_page(page);
+ 			skb_fill_page_desc(skb, i, page, offset, copy);
+-		} else {
+-			tcp_mark_push(tp, skb);
+-			goto new_segment;
+ 		}
+ 
+ 		skb->len += copy;
+ 		skb->data_len += copy;
++		skb->truesize += copy;
++		sk->sk_wmem_queued += copy;
++		sk->sk_forward_alloc -= copy;
+ 		skb->ip_summed = CHECKSUM_HW;
+ 		tp->write_seq += copy;
+ 		TCP_SKB_CB(skb)->end_seq += copy;
+diff -urN linux-2.6.10.orig/net/ipv6/sit.c linux-2.6.10/net/ipv6/sit.c
+--- linux-2.6.10.orig/net/ipv6/sit.c	2004-12-24 16:35:28.000000000 -0500
++++ linux-2.6.10/net/ipv6/sit.c	2005-01-16 00:15:41.273733712 -0500
+@@ -135,10 +135,10 @@
+ {
+ 	struct ip_tunnel **tp = ipip6_bucket(t);
+ 
+-	write_lock_bh(&ipip6_lock);
+ 	t->next = *tp;
+-	write_unlock_bh(&ipip6_lock);
++	write_lock_bh(&ipip6_lock);
+ 	*tp = t;
++	write_unlock_bh(&ipip6_lock);
+ }
+ 
+ static struct ip_tunnel * ipip6_tunnel_locate(struct ip_tunnel_parm *parms, int create)
+diff -urN linux-2.6.10.orig/net/sctp/input.c linux-2.6.10/net/sctp/input.c
+--- linux-2.6.10.orig/net/sctp/input.c	2004-12-24 16:33:50.000000000 -0500
++++ linux-2.6.10/net/sctp/input.c	2005-01-16 00:15:41.248737512 -0500
+@@ -326,11 +326,12 @@
+ 	}
+ 
+ 	if (asoc) {
++		sk = asoc->base.sk;
++
+ 		if (ntohl(sctphdr->vtag) != asoc->c.peer_vtag) {
+ 			ICMP_INC_STATS_BH(ICMP_MIB_INERRORS);
+ 			goto out;
+ 		}
+-		sk = asoc->base.sk;
+ 	} else
+ 		sk = ep->base.sk;
+ 
+diff -urN linux-2.6.10.orig/net/sunrpc/sched.c linux-2.6.10/net/sunrpc/sched.c
+--- linux-2.6.10.orig/net/sunrpc/sched.c	2004-12-24 16:34:58.000000000 -0500
++++ linux-2.6.10/net/sunrpc/sched.c	2005-01-16 00:15:41.144753320 -0500
+@@ -875,11 +875,6 @@
+ 	task->tk_cookie = (unsigned long)current;
+ 	INIT_LIST_HEAD(&task->tk_links);
+ 
+-	/* Add to global list of all tasks */
+-	spin_lock(&rpc_sched_lock);
+-	list_add(&task->tk_task, &all_tasks);
+-	spin_unlock(&rpc_sched_lock);
+-
+ 	if (clnt) {
+ 		atomic_inc(&clnt->cl_users);
+ 		if (clnt->cl_softrtry)
+@@ -892,6 +887,11 @@
+ 	task->tk_magic = 0xf00baa;
+ 	task->tk_pid = rpc_task_id++;
+ #endif
++	/* Add to global list of all tasks */
++	spin_lock(&rpc_sched_lock);
++	list_add_tail(&task->tk_task, &all_tasks);
++	spin_unlock(&rpc_sched_lock);
++
+ 	dprintk("RPC: %4d new task procpid %d\n", task->tk_pid,
+ 				current->pid);
+ }
+@@ -1080,12 +1080,15 @@
+ 	 * Spin lock all_tasks to prevent changes...
+ 	 */
+ 	spin_lock(&rpc_sched_lock);
+-	alltask_for_each(rovr, le, &all_tasks)
++	alltask_for_each(rovr, le, &all_tasks) {
++		if (! RPC_IS_ACTIVATED(rovr))
++			continue;
+ 		if (!clnt || rovr->tk_client == clnt) {
+ 			rovr->tk_flags |= RPC_TASK_KILLED;
+ 			rpc_exit(rovr, -EIO);
+ 			rpc_wake_up_task(rovr);
+ 		}
++	}
+ 	spin_unlock(&rpc_sched_lock);
+ }
+ 
+diff -urN linux-2.6.10.orig/net/sunrpc/xdr.c linux-2.6.10/net/sunrpc/xdr.c
+--- linux-2.6.10.orig/net/sunrpc/xdr.c	2004-12-24 16:35:23.000000000 -0500
++++ linux-2.6.10/net/sunrpc/xdr.c	2005-01-16 00:15:41.147752864 -0500
+@@ -498,6 +498,7 @@
+ 	do {
+ 		/* Are any pointers crossing a page boundary? */
+ 		if (pgto_base == 0) {
++			flush_dcache_page(*pgto);
+ 			pgto_base = PAGE_CACHE_SIZE;
+ 			pgto--;
+ 		}
+@@ -521,6 +522,7 @@
+ 		kunmap_atomic(vto, KM_USER0);
+ 
+ 	} while ((len -= copy) != 0);
++	flush_dcache_page(*pgto);
+ }
+ 
+ /*
+@@ -554,12 +556,14 @@
+ 
+ 		pgbase += copy;
+ 		if (pgbase == PAGE_CACHE_SIZE) {
++			flush_dcache_page(*pgto);
+ 			pgbase = 0;
+ 			pgto++;
+ 		}
+ 		p += copy;
+ 
+ 	} while ((len -= copy) != 0);
++	flush_dcache_page(*pgto);
+ }
+ 
+ /*
+diff -urN linux-2.6.10.orig/security/dummy.c linux-2.6.10/security/dummy.c
+--- linux-2.6.10.orig/security/dummy.c	2004-12-24 16:34:26.000000000 -0500
++++ linux-2.6.10/security/dummy.c	2005-01-16 00:15:41.160750888 -0500
+@@ -74,11 +74,8 @@
+ 
+ static int dummy_capable (struct task_struct *tsk, int cap)
+ {
+-	if (cap_is_fs_cap (cap) ? tsk->fsuid == 0 : tsk->euid == 0)
+-		/* capability granted */
++	if (cap_raised (tsk->cap_effective, cap))
+ 		return 0;
+-
+-	/* capability denied */
+ 	return -EPERM;
+ }
+ 
+@@ -191,6 +188,8 @@
+ 
+ 	current->suid = current->euid = current->fsuid = bprm->e_uid;
+ 	current->sgid = current->egid = current->fsgid = bprm->e_gid;
++
++	dummy_capget(current, &current->cap_effective, &current->cap_inheritable, &current->cap_permitted);
+ }
+ 
+ static int dummy_bprm_set_security (struct linux_binprm *bprm)
+@@ -550,6 +549,7 @@
+ 
+ static int dummy_task_post_setuid (uid_t id0, uid_t id1, uid_t id2, int flags)
+ {
++	dummy_capget(current, &current->cap_effective, &current->cap_inheritable, &current->cap_permitted);
+ 	return 0;
+ }
+ 
