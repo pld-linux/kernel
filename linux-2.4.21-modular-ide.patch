@@ -1,0 +1,95 @@
+diff -urN linux-2.4.20-rc6.orig/drivers/ide/Makefile linux-2.4.20-rc6/drivers/ide/Makefile
+--- linux-2.4.20-rc6.orig/drivers/ide/Makefile	Fri May 30 22:52:30 2003
++++ linux-2.4.20-rc6/drivers/ide/Makefile	Fri May 30 22:17:16 2003
+@@ -43,9 +43,8 @@
+ endif
+ obj-$(CONFIG_BLK_DEV_ISAPNP)		+= ide-pnp.o
+ 
+-
+-ifeq ($(CONFIG_BLK_DEV_IDE),y)
+-obj-$(CONFIG_PROC_FS)			+= ide-proc.o
++ifeq ($(CONFIG_PROC_FS),y)
++obj-$(CONFIG_BLK_DEV_IDE)		+= ide-proc.o
+ endif
+ 
+ ifeq ($(CONFIG_BLK_DEV_IDE),y)
+diff -urN linux-2.4.20-rc6.orig/drivers/ide/ide-io.c linux-2.4.20-rc6/drivers/ide/ide-io.c
+--- linux-2.4.20-rc6.orig/drivers/ide/ide-io.c	Fri May 30 22:52:30 2003
++++ linux-2.4.20-rc6/drivers/ide/ide-io.c	Fri May 30 22:25:30 2003
+@@ -896,6 +896,8 @@
+ 	ide_do_request(q->queuedata, IDE_NO_IRQ);
+ }
+ 
++EXPORT_SYMBOL(do_ide_request);
++
+ /*
+  * un-busy the hwgroup etc, and clear any pending DMA status. we want to
+  * retry the current request in pio mode instead of risking tossing it
+diff -urN linux-2.4.20-rc6.orig/drivers/ide/ide.c linux-2.4.20-rc6/drivers/ide/ide.c
+--- linux-2.4.20-rc6.orig/drivers/ide/ide.c	Fri May 30 22:52:31 2003
++++ linux-2.4.20-rc6/drivers/ide/ide.c	Fri May 30 22:47:00 2003
+@@ -190,6 +190,8 @@
+ ide_module_t *ide_modules;
+ ide_module_t *ide_probe;
+ 
++EXPORT_SYMBOL(ide_modules);
++
+ /*
+  * This is declared extern in ide.h, for access by other IDE modules:
+  */
+@@ -597,6 +599,9 @@
+ 	{ "capacity",	S_IFREG|S_IRUGO,	proc_ide_read_capacity,	NULL },
+ 	{ NULL, 0, NULL, NULL }
+ };
++
++EXPORT_SYMBOL(generic_subdriver_entries);
++
+ #endif
+ 
+ 
+@@ -1181,6 +1186,8 @@
+ 	return setting;
+ }
+ 
++EXPORT_SYMBOL(ide_find_setting_by_name);
++
+ /**
+  *	auto_remove_settings	-	remove driver specific settings
+  *	@drive: drive
+@@ -1241,6 +1248,8 @@
+ 	return val;
+ }
+ 
++EXPORT_SYMBOL(ide_read_setting);
++
+ int ide_spin_wait_hwgroup (ide_drive_t *drive)
+ {
+ 	ide_hwgroup_t *hwgroup = HWGROUP(drive);
+@@ -1414,6 +1423,8 @@
+ #endif		
+ }
+ 
++EXPORT_SYMBOL(ide_add_generic_settings);
++
+ /*
+  * Delay for *at least* 50ms.  As we don't know how much time is left
+  * until the next tick occurs, we wait an extra tick to be safe.
+@@ -2820,6 +2831,8 @@
+ 	devfs_unregister (ide_devfs_handle);
+ }
+ 
++EXPORT_SYMBOL(ide_release_dma);
++
+ #else /* !MODULE */
+ 
+ __setup("", ide_setup);
+diff -urN linux-2.4.20-rc6.orig/drivers/ide/setup-pci.c linux-2.4.20-rc6/drivers/ide/setup-pci.c
+--- linux-2.4.20-rc6.orig/drivers/ide/setup-pci.c	Fri May 30 22:52:31 2003
++++ linux-2.4.20-rc6/drivers/ide/setup-pci.c	Fri May 30 22:49:02 2003
+@@ -830,3 +830,5 @@
+ 		pci_register_driver(d);
+ 	}
+ }
++
++EXPORT_SYMBOL(ide_scan_pcibus);
+\ No newline at end of file
