@@ -55,7 +55,7 @@
 
 %define		_post_ver	.6
 #define		_post_ver	%{nil}
-%define		_rel		3
+%define		_rel		4
 %define		_cset		20050302_0807
 %define		_apply_cset	0
 
@@ -193,8 +193,10 @@ Patch250:	linux-2.6-vs.patch
 
 # iRiverFS support from http://dl.sourceforge.net/sourceforge/ifp-driver/
 Patch260:	iriverfs-r0.1.0.1.patch.gz
-Patch261:	linux-2.6-bdi-provide-backing-device-capability-information.patch
-Patch262:	linux-2.6-iriver-backing-device-capability-information-fix.patch
+
+Patch262:	2.6.11.5-dst_cache_overflow.patch
+
+Patch264:	2.6.11.5-invalid_mac_fix.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -589,8 +591,9 @@ bzcat %{SOURCE4} | patch -p1 -s
 #%patch110 -p1
 
 %patch260 -p1
-## %patch261 -p1
-## %patch262 -p1
+
+%patch262 -p1
+%patch264 -p1
 
 # <bconded_patches>
 
