@@ -747,7 +747,9 @@ patch -p1 -s < exec-shield.patch
 
 %patch114 -p1
 
+%if %{with mosix}
 %patch420 -p1
+%endif
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -1026,7 +1028,7 @@ KERNEL_BUILD_DIR=`pwd`
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig
-%{?with_up:BuildKernel}
+##%{?with_up:BuildKernel}
 %{?with_up:PreInstallKernel}
 
 # SMP KERNEL
@@ -1472,6 +1474,9 @@ fi
 %{_prefix}/src/linux-%{version}/fs
 %if %{with grsec}
 %{_prefix}/src/linux-%{version}/grsecurity
+%endif
+%if %{with mosix}
+%{_prefix}/src/linux-%{version}/hpc
 %endif
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
