@@ -122,6 +122,7 @@ Patch902:	rl2-include.patch
 # patch to fix problem wit ABI and LIDS
 Patch903:	linux-lids-with-abi.patch
 Patch904:	linux-vlan-fixpatch-2.4.7-pre6.patch
+Patch905:	linux-mtd-missing-include-fix.patch
 
 # Linus's -pre
 Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.7-%{pre_version}.gz
@@ -376,6 +377,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %patch900 -p0 
 %patch901 -p0
+%patch905 -p0
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -446,6 +448,11 @@ patch -p1 -s <vlan.%{vlan_version}/vlan_2.4.patch
 # IP personality
 echo Adding IP Personality 
 patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010703-linux-2.4.5.diff
+
+# JFS
+echo Adding JFS
+patch -p1 -s <jfs-common-v1.0.1-patch
+patch -p1 -s <jfs-2.4.5-v1.0.1-patch
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
