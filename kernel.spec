@@ -51,7 +51,8 @@ Patch7:		linux-2.2.16-freeswan-1.4.patch
 Patch8:		wanrouter-v2215.patch.gz
 Patch10:	linux-newagpdist.patch
 Patch11:	linux-agphjlfixes.patch
-Patch12:	ftp://shiva.poland.com/people/serek/kernel-DPT-smartRAID-serek.patch
+# serek: do _not_ use DPT smartRAID controllers with linux at al!
+#Patch12:	ftp://shiva.poland.com/people/serek/kernel-DPT-smartRAID-serek.patch
 # Wiget: obsoleted by raid patch
 #Patch13:	http://www.linux.org.uk/VERSION/2216.raidfix
 Patch14:	http://www.linux.org.uk/VERSION/2216.decbug
@@ -258,7 +259,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch8 -p1
 %patch10 -p1
 %patch11 -p1
-%patch12 -p1
+#%patch12 -p1 .serek
 #%patch13 -p1 -R -b .wiget
 %patch14 -p1 -R
 %patch15 -p1
