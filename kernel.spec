@@ -6,34 +6,33 @@ Summary(ru):	Òƒ“œ Linux
 Summary(uk):	Òƒ“œ Linux
 Name:		kernel
 Version:	2.4.20
-Release:	0.1
+Release:	0.3
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
-Source1:	%{name}-BuildASM.sh
-Source2:	%{name}-alpha-BOOT.config
-Source3:	%{name}-alpha.config
-Source4:	%{name}-alpha-smp.config
-Source5:	%{name}-athlon.config
-Source6:	%{name}-athlon-smp.config
-Source7:	%{name}-i386-BOOT.config
-Source8:	%{name}-i386.config
-Source9:	%{name}-i386-smp.config
-Source10:	%{name}-i586.config
-Source11:	%{name}-i586-smp.config
-Source12:	%{name}-i686.config
-Source13:	%{name}-i686-smp.config
-Source14:	%{name}-ppc-BOOT.config
-Source15:	%{name}-ppc.config
-Source16:	%{name}-ppc-smp.config
-Source17:	%{name}-sparc64-BOOT.config
-Source18:	%{name}-sparc64.config
-Source19:	%{name}-sparc64-smp.config
-Source20:	%{name}-sparc-BOOT.config
-Source21:	%{name}-sparc.config
-Source22:	%{name}-sparc-smp.config
-Source23:	%{name}-autoconf.h
-Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc2.bz2
+Source1:	%{name}-alpha-BOOT.config
+Source2:	%{name}-alpha.config
+Source3:	%{name}-alpha-smp.config
+Source4:	%{name}-athlon.config
+Source5:	%{name}-athlon-smp.config
+Source6:	%{name}-i386-BOOT.config
+Source7:	%{name}-i386.config
+Source8:	%{name}-i386-smp.config
+Source9:	%{name}-i586.config
+Source10:	%{name}-i586-smp.config
+Source11:	%{name}-i686.config
+Source12:	%{name}-i686-smp.config
+Source13:	%{name}-ppc-BOOT.config
+Source14:	%{name}-ppc.config
+Source15:	%{name}-ppc-smp.config
+Source16:	%{name}-sparc64-BOOT.config
+Source17:	%{name}-sparc64.config
+Source18:	%{name}-sparc64-smp.config
+Source19:	%{name}-sparc-BOOT.config
+Source20:	%{name}-sparc.config
+Source21:	%{name}-sparc-smp.config
+Source22:	%{name}-autoconf.h
+Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc4.bz2
 ExclusiveOS:	Linux
 Autoreqprov:	no
 URL:		http://www.kernel.org/
@@ -400,9 +399,10 @@ rm -f drivers/net/hamradio/soundmodem/gentbl
 rm -rf $RPM_BUILD_ROOT{,-build}
 
 %post
-ln -sf vmlinuz{-%{version}-%{release},}
-ln -sf System.map{-%{version}-%{release},}
+ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
+ln -sf System.map-%{version}-%{release} /boot/System.map
 
+depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}.gz /boot/initrd
@@ -416,14 +416,13 @@ if [ ! -L /lib/modules/%{version} ] ; then
 fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release} /lib/modules/%{version}
-depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
 %post pcmcia-cs
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
 %post smp
-ln -sf vmlinuz{-%{version}-%{release}smp,}
-ln -sf System.map{-%{version}-%{release}smp,}
+ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
+ln -sf System.map-%{version}-%{release} /boot/System.map
 
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
