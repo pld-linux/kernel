@@ -690,10 +690,13 @@ echo "Not fixed !!"
 %endif
 %endif
 
-#if %{with execshield}
-#patch -p1 -s < %{SOURCE4}
-#patch -p1 -s < %{SOURCE5}
-#endif		
+%if %{with execshield}
+%if %{with grsec}
+## <- tu dostosowanie grsec'a do nx'a - do zrobienia
+%endif
+patch -p1 -s < %{SOURCE4}
+patch -p1 -s < %{SOURCE5}
+%endif		
 
 %patch96 -p1
 #patch97 -p1
