@@ -46,7 +46,7 @@ Patch5:		linux-ipv6-glibc2.2.patch
 Patch6:		http://milosch.net/pub/beos/2.2.18-pre2-beos09032000.patch
 Patch7:		kernel-autoraidraid.patch
 Patch8:		linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
-Patch9: 	ftp://ftp.kernel.org/pub/linux/kernel/people/hedric/ide.2.2.18.1209.patch.gz
+Patch9: 	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide.2.2.18.1209.patch.gz
 Patch10:	http://www.math.leidenuniv.nl/~buytenh/bridge/patches/bridge-0.0.9-against-2.2.18.diff
 patch11:	http://download.sourceforge.net/linux1394/ieee1394-2.2.17-20001012.gz
 #Patch:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.17.10.gz
