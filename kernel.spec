@@ -234,7 +234,6 @@ Patch212:	exec-shield-make-peace-with-grsecurity.patch
 
 # hotfixes
 Patch300:	2.6.7-ppc-asm-defs.patch
-Patch301:	2.6.7-ppc-strncasecmp.patch
 Patch302:	2.6.7-ppc-cciss-div.patch
 Patch303:	2.6.8-lkml-saa7146-memory-variable.patch
 Patch304:	2.6.7-ppc-ipr-div.patch
@@ -745,7 +744,6 @@ patch -p1 -s < exec-shield.patch
 
 # hotfixes
 %patch300 -p1
-%patch301 -p1
 %patch302 -p1
 %patch303 -p1
 %patch304 -p1
