@@ -30,9 +30,9 @@ Source23:	%{name}-sparc-BOOT.config
 #Source24:	%{name}-sparc64.config
 #Source25:	%{name}-sparc64-smp.config
 #Source26:	%{name}-sparc64-BOOT.config
-#Source27:	%{name}-alpha.config
-#Source28:	%{name}-alpha-smp.config
-#Source29:	%{name}-alpha-BOOT.config
+Source27:	%{name}-alpha.config
+Source28:	%{name}-alpha-smp.config
+Source29:	%{name}-alpha-BOOT.config
 Source30:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
 Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-127.tar.gz
 Source32:	%{name}-BuildASM.sh
