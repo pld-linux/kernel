@@ -92,6 +92,8 @@ Patch2:		linux-%{version}-freeswan-%{freeswan_version}.patch.gz
 Patch4:		br2684-against2.4.17.diff
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
 Patch5:		linux-2.4.18-xfs-20020517.patch.gz
+# from ftp://ftp.kernel.org/pub/linux/kernel/people/sct/ext3/v2.4/
+Patch6:		linux-2.4.18-ext3-0.9.18.patch
 # Homepage of ABI:	http://linux-abi.sourceforge.net/
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2 
 Patch7:		linux-abi-2.4.17.0.patch.bz2
@@ -484,6 +486,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch2 -p1
 %patch4 -p1
 %patch5 -p1
+%patch6 -p1
 %patch19 -p1
 #%patch7 -p1
 %if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
