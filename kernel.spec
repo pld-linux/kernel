@@ -92,6 +92,8 @@ Patch40:	linux-2.4.22-ntfs-2.1.4c.patch.gz
 Patch50:	linux-2.4.20-davfs-0.2.4.patch.bz2
 # FC02_davfs__FUNCTION__.patch
 Patch55:	linux-2.4.20-davfs-_FUNCTION_.patch
+Patch60:	linux-2.4.22-data-loging+quota.patch
+Patch61:	linux-2.4.22-acl+xattr.patch
 # http://dl.sourceforge.net/squashfs/squashfs-1.3.tar.gz
 Patch65:	squashfs1.3-2.4.21-patch
 #from http://sci.felk.cvut.cz/nwd/linux/nwd-patch-2.4.19
@@ -652,6 +654,8 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch40 -p1
 %patch50 -p1
 %patch55 -p1
+%patch60 -p1
+%patch61 -p1
 %patch65 -p1
 %patch70 -p1
 %patch80 -p1
