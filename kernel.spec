@@ -22,7 +22,7 @@
 %define		IPperson_version	20020427-2.4.18
 %define		grsec_version		1.9.4-2.4.18
 %define		aic_version		6.2.3-2.4.7
-%define		jfs_version		2.4-1.0.19
+%define		jfs_version		2.4-1.0.20
 %define		lvm_version		1.0.4
 %define		evms_version		1.0.1
 %define		tridentfb_version	0.7.0
