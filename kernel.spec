@@ -111,6 +111,7 @@ Patch1500:	linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	%{name}-sparc-zs.h.patch
 Patch1502:	%{name}-sparc_netsyms.patch
 Patch1503:	%{name}-sym53c8xx.patch
+Patch1550:	%{name}-gentbl.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -754,7 +755,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1502}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1503}
 
 # fix gentbl cannot execute
-chmod a+x $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/drivers/char/hfmodem/gentbl
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1550}
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
