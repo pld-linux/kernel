@@ -14,33 +14,29 @@ Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
-Source10:	%{name}-i386.config
-#Source11:	%{name}-i386-fb.config
-Source12:	%{name}-i386-BOOT.config
-Source13:	%{name}-i586.config
-#Source14:	%{name}-i586-fb.config
-Source15:	%{name}-i586-smp.config
-#Source16:	%{name}-i586-smp-fb.config
-Source17:	%{name}-i686.config
-#Source18:	%{name}-i686-fb.config
-Source19:	%{name}-i686-smp.config
-#Source20:	%{name}-i686-smp-fb.config
-Source21:	%{name}-sparc.config
-Source22:	%{name}-sparc-smp.config
-Source23:	%{name}-sparc-BOOT.config
-Source24:	%{name}-sparc64.config
-Source25:	%{name}-sparc64-smp.config
-#Source26:	%{name}-sparc64-BOOT.config
-Source27:	%{name}-alpha.config
-Source28:	%{name}-alpha-smp.config
-Source29:	%{name}-alpha-BOOT.config
-Source30:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
-Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-127.tar.gz
-Source32:	%{name}-BuildASM.sh
-Source33:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
-Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.17+.gz
+Source2:	%{name}-BuildASM.sh
+Source3:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
+Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-127.tar.gz
+Source5:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
+Source6:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.17+.gz
 # NFS server patches
-Source40:	http://download.sourceforge.net/nfs/dhiggen_merge-4.1.tar.gz
+Source7:	http://download.sourceforge.net/nfs/dhiggen_merge-4.1.tar.gz
+Source20:	%{name}-i386.config
+Source21:	%{name}-i386-smp.config
+Source22:	%{name}-i386-BOOT.config
+Source31:	%{name}-i586.config
+Source32:	%{name}-i586-smp.config
+Source41:	%{name}-i686.config
+Source42:	%{name}-i686-smp.config
+Source51:	%{name}-sparc.config
+Source52:	%{name}-sparc-smp.config
+Source63:	%{name}-sparc-BOOT.config
+Source71:	%{name}-sparc64.config
+Source72:	%{name}-sparc64-smp.config
+Source73:	%{name}-sparc64-BOOT.config
+Source81:	%{name}-alpha.config
+Source82:	%{name}-alpha-smp.config
+Source83:	%{name}-alpha-BOOT.config
 Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.17.2.gz
 Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
 Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
@@ -269,7 +265,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a30 -a31 -a33 -n linux
+%setup -q -a3 -a4 -a5 -n linux
 %patch0 -p1
 %patch14 -p1
 %patch1 -p1
@@ -291,15 +287,14 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch16 -p1
 %endif
 
-tar zxf %{SOURCE40} dhiggen-over-0.23.1
+tar zxf %{SOURCE7} dhiggen-over-0.23.1
 patch -p2 -s <dhiggen-over-0.23.1
 
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
-zcat %{SOURCE34} > drivers/net/3c59x.c
-
+zcat %{SOURCE6} > drivers/net/3c59x.c
 
 %build
 BuildKernel() {
@@ -411,15 +406,10 @@ BuildPCMCIA
 #BuildKernel fb
 
 # SMP-ENABLED KERNEL
-%ifnarch i386
 BuildKernel smp
 %ifarch %{ix86}
 BuildPCMCIA smp
 %endif
-%endif
-
-# SMP and FB-ENABLED KERNEL
-#BuildKernel smp-fb
 
 # BOOT kernel
 %ifnarch i586 i686
@@ -493,12 +483,9 @@ install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
 
-%ifnarch i386
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config .config
-
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
-%endif
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
