@@ -23,8 +23,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.4.17
-Release:	2.5
+Version:	2.4.18
+Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -129,6 +129,7 @@ Patch127:	linux-%{version}-sparc64-fix.patch
 Patch128:	linux-%{version}-AXP-fix.patch
 Patch129:	kernel-Makefile-include-fix.patch
 Patch130:	kernel-2.4.17-netsyms-export-fix.patch
+Patch131:	kernel-2.4.18-personality.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -478,6 +479,9 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 
 #Fixed sysctl export symbols.
 %patch130 -p0
+
+#Missing patch in 2.4.18 final
+%patch131 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
