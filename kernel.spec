@@ -1018,7 +1018,7 @@ fi
 #%{_includedir}/asm-sparc*
 #%endif
 %ifarch ppc
-%{_kerneldir}/include/asm-ppc
+%{_kernelsrcdir}/include/asm-ppc
 %endif
 
 %{_includedir}/linux
