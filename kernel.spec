@@ -96,6 +96,8 @@ Patch40:	2.6.0-t9-forcedeth-lkml.patch
 
 Patch42:	2.6.0-t9-netfilter-p2p.patch
 
+Patch43:	2.6.0-t9-PPC-ksyms.patch
+
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -430,6 +432,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch40 -p1
 
 %patch42 -p1
+
+%patch43 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
