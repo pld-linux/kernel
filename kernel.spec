@@ -246,6 +246,8 @@ Patch400:	2.6.7-kill-warnings.patch
 # openMosix support
 Patch420:	openMosix-2.6.7-PLD.patch
 
+Patch440:	2.6.8.1-qdisc_run.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 %ifarch sparc sparc64
@@ -744,6 +746,8 @@ patch -p1 -s < exec-shield.patch
 %if %{with mosix}
 %patch420 -p1
 %endif
+
+%patch440 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
