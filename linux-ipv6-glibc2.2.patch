@@ -1,6 +1,6 @@
 diff -urN linux-2.2.17.org/include/linux/in6.h linux-2.2.17/include/linux/in6.h
---- linux-2.2.17.org/include/linux/in6.h	Wed Dec  6 14:40:00 2000
-+++ linux-2.2.17/include/linux/in6.h	Wed Dec  6 14:40:15 2000
+--- linux-2.2.17.org/include/linux/in6.h	Wed Dec  6 18:06:51 2000
++++ linux-2.2.17/include/linux/in6.h	Wed Dec  6 18:09:01 2000
 @@ -56,6 +56,7 @@
  	__u16			sin6_port;      /* Transport layer port # */
  	__u32			sin6_flowinfo;  /* IPv6 flow information */
@@ -10,8 +10,8 @@ diff -urN linux-2.2.17.org/include/linux/in6.h linux-2.2.17/include/linux/in6.h
  
  
 diff -urN linux-2.2.17.org/include/net/ipv6.h linux-2.2.17/include/net/ipv6.h
---- linux-2.2.17.org/include/net/ipv6.h	Wed Dec  6 14:40:05 2000
-+++ linux-2.2.17/include/net/ipv6.h	Wed Dec  6 14:40:15 2000
+--- linux-2.2.17.org/include/net/ipv6.h	Wed Dec  6 18:06:51 2000
++++ linux-2.2.17/include/net/ipv6.h	Wed Dec  6 18:09:01 2000
 @@ -20,6 +20,8 @@
  #include <net/ndisc.h>
  #include <net/flow.h>
@@ -22,8 +22,8 @@ diff -urN linux-2.2.17.org/include/net/ipv6.h linux-2.2.17/include/net/ipv6.h
   *	NextHeader field of IPv6 header
   */
 diff -urN linux-2.2.17.org/net/ipv6/af_inet6.c linux-2.2.17/net/ipv6/af_inet6.c
---- linux-2.2.17.org/net/ipv6/af_inet6.c	Wed Dec  6 14:40:09 2000
-+++ linux-2.2.17/net/ipv6/af_inet6.c	Wed Dec  6 14:42:19 2000
+--- linux-2.2.17.org/net/ipv6/af_inet6.c	Wed Dec  6 18:06:51 2000
++++ linux-2.2.17/net/ipv6/af_inet6.c	Wed Dec  6 18:09:01 2000
 @@ -199,7 +199,7 @@
  		
  	/* Check these errors (active socket, bad address length, double bind). */
@@ -42,9 +42,21 @@ diff -urN linux-2.2.17.org/net/ipv6/af_inet6.c linux-2.2.17/net/ipv6/af_inet6.c
  	return(0);
  }
 diff -urN linux-2.2.17.org/net/ipv6/datagram.c linux-2.2.17/net/ipv6/datagram.c
---- linux-2.2.17.org/net/ipv6/datagram.c	Wed Dec  6 14:40:09 2000
-+++ linux-2.2.17/net/ipv6/datagram.c	Wed Dec  6 14:45:30 2000
-@@ -150,8 +150,10 @@
+--- linux-2.2.17.org/net/ipv6/datagram.c	Wed Dec  6 18:06:51 2000
++++ linux-2.2.17/net/ipv6/datagram.c	Wed Dec  6 18:10:00 2000
+@@ -133,9 +133,11 @@
+ 	if (sin) {
+ 		sin->sin6_family = AF_INET6;
+ 		sin->sin6_flowinfo = 0;
++		sin->sin6_scope_id = 0;
+ 		sin->sin6_port = serr->port; 
+ 		if (serr->ee.ee_origin == SO_EE_ORIGIN_ICMP6) {
+ 			memcpy(&sin->sin6_addr, skb->nh.raw + serr->addr_offset, 16);
++			sin->sin6_scope_id = 0;
+ 			if (sk->net_pinfo.af_inet6.sndflow)
+ 				sin->sin6_flowinfo = *(u32*)(skb->nh.raw + serr->addr_offset - 24) & IPV6_FLOWINFO_MASK;
+ 		} else
+@@ -150,8 +152,10 @@
  	if (serr->ee.ee_origin != SO_EE_ORIGIN_LOCAL) {
  		sin->sin6_family = AF_INET6;
  		sin->sin6_flowinfo = 0;
@@ -56,8 +68,8 @@ diff -urN linux-2.2.17.org/net/ipv6/datagram.c linux-2.2.17/net/ipv6/datagram.c
  				datagram_recv_ctl(sk, msg, skb);
  		} else {
 diff -urN linux-2.2.17.org/net/ipv6/raw.c linux-2.2.17/net/ipv6/raw.c
---- linux-2.2.17.org/net/ipv6/raw.c	Wed Dec  6 14:40:09 2000
-+++ linux-2.2.17/net/ipv6/raw.c	Wed Dec  6 14:40:15 2000
+--- linux-2.2.17.org/net/ipv6/raw.c	Wed Dec  6 18:06:51 2000
++++ linux-2.2.17/net/ipv6/raw.c	Wed Dec  6 18:09:01 2000
 @@ -117,7 +117,7 @@
  	int addr_type;
  
@@ -85,8 +97,8 @@ diff -urN linux-2.2.17.org/net/ipv6/raw.c linux-2.2.17/net/ipv6/raw.c
  
  		if (sin6->sin6_family && sin6->sin6_family != AF_INET6) 
 diff -urN linux-2.2.17.org/net/ipv6/tcp_ipv6.c linux-2.2.17/net/ipv6/tcp_ipv6.c
---- linux-2.2.17.org/net/ipv6/tcp_ipv6.c	Wed Dec  6 14:40:09 2000
-+++ linux-2.2.17/net/ipv6/tcp_ipv6.c	Wed Dec  6 14:40:15 2000
+--- linux-2.2.17.org/net/ipv6/tcp_ipv6.c	Wed Dec  6 18:06:51 2000
++++ linux-2.2.17/net/ipv6/tcp_ipv6.c	Wed Dec  6 18:09:01 2000
 @@ -387,7 +387,7 @@
  	if(!ipv6_addr_any(&np->daddr))
  		return -EINVAL;
@@ -105,8 +117,8 @@ diff -urN linux-2.2.17.org/net/ipv6/tcp_ipv6.c linux-2.2.17/net/ipv6/tcp_ipv6.c
  
  static struct tcp_func ipv6_specific = {
 diff -urN linux-2.2.17.org/net/ipv6/udp.c linux-2.2.17/net/ipv6/udp.c
---- linux-2.2.17.org/net/ipv6/udp.c	Wed Dec  6 14:40:09 2000
-+++ linux-2.2.17/net/ipv6/udp.c	Wed Dec  6 14:46:29 2000
+--- linux-2.2.17.org/net/ipv6/udp.c	Wed Dec  6 18:06:51 2000
++++ linux-2.2.17/net/ipv6/udp.c	Wed Dec  6 18:14:24 2000
 @@ -210,7 +210,7 @@
  		goto ipv4_connected;
  	}
@@ -124,14 +136,14 @@ diff -urN linux-2.2.17.org/net/ipv6/udp.c linux-2.2.17/net/ipv6/udp.c
  
  		if (skb->protocol == __constant_htons(ETH_P_IP)) {
  			ipv6_addr_set(&sin6->sin6_addr, 0, 0,
-@@ -426,6 +427,7 @@
+@@ -424,6 +425,7 @@
+ 			memcpy(&sin6->sin6_addr, &skb->nh.ipv6h->saddr,
+ 			       sizeof(struct in6_addr));
  
++			sin6->sin6_scope_id = 0;
  			if (sk->net_pinfo.af_inet6.rxopt.all)
  				datagram_recv_ctl(sk, msg, skb);
-+			sin->sin6_scope_id = 0;
  		}
-   	}
- 	err = copied;
 @@ -777,7 +779,7 @@
  		if (sin6->sin6_family == AF_INET)
  			return udp_sendmsg(sk, msg, ulen);
