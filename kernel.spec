@@ -10,6 +10,9 @@
 # _without_grsec	- don't apply grsecurity patch
 # _without_kheaders	- build without support for glibc-kernel-headers
 #
+
+%define _without_grsec 1
+
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
@@ -36,7 +39,7 @@ Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 # Source3-md5:	8ed492197244b6a772270417c66214d3
-Source4:	linux-2.4.21-netfilter-%{netfilter_snap}.tar.gz
+Source4:	linux-2.4.22-netfilter-%{netfilter_snap}.tar.gz
 # Source4-md5:	fbbbe9b0669c7e766ddf125dfa11781c
 Source5:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
 # Source5-md5:	b8f2f7a268a5cb75fabcaec3b5d45fcd
@@ -109,7 +112,7 @@ Patch70:	nwd-2.4.21.patch
 # Networking
 
 # new version of netfilter.
-Patch100:	linux-2.4.21-netfilter-%{netfilter_snap}.patch.gz
+Patch100:	linux-2.4.22-netfilter-%{netfilter_snap}.patch.gz
 # http://ebtables.sourceforge.net/
 Patch110:	ebtables-brnf-2_vs_2.4.22.diff.gz
 # http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
@@ -256,7 +259,6 @@ Patch1422:	linux-2.4.21-ipt_TRACE-typo.patch
 
 # htb
 # http://luxik.cdi.cz/~devik/qos/htb/v3/
-Patch1500:	htb_3.10_3.12_2.diff
 Patch1501:	htb_killdbg_2421.diff
 Patch1600:	linux-pcwd.patch
 
@@ -271,18 +273,15 @@ Patch3003:	linux-2.4.20-missing-license-tags.patch
 Patch3004:	linux-2.4.20-sym53c8xx_old.patch
 Patch3005:	linux-2.4.21-gcc33.patch
 Patch3006:	linux-2.4.21-sparc-gcc3.patch
-Patch3007:	linux-2.4.21-gcc33-math-emu.patch
 Patch3008:	linux-drm-4.2.0-force-cmpxchg.patch
 Patch3009:	linux-2.4.21-alpha-gcc33.patch
 Patch3010:	linux-2.4.21-ipsec-sparc64.patch
 
 # Security patches/fixes
 
-Patch4000:	linux-2.4.21-ow1-stack.patch
+Patch4000:	linux-2.4.22-ow1-stack.patch
 Patch4001:	grsecurity-nopax-2.0-rc2-2.4.21.patch
 
-# From RH, fixes: CAN-2003-0461 CAN-2003-0462 CAN-2003-0476 CAN-2003-0501
-#		  CAN-2003-0550 CAN-2003-0551 CAN-2003-0552
 Patch5000:	linux-2.4.22-security.patch
 
 #Patch10000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc6.bz2
@@ -740,8 +739,6 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1420 -p1
 %patch1421 -p1
 %patch1422 -p1
-exit
-%patch1500 -p1
 %patch1501 -p1
 
 %patch1600 -p1
@@ -757,7 +754,6 @@ exit
 %patch3004 -p1
 %patch3005 -p1
 %patch3006 -p1
-%patch3007 -p1
 %patch3009 -p1
 cd drivers/char/drm
 %patch3008 -p1
