@@ -34,7 +34,7 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.30
+%define		_rel		0.31
 %define		_cset		0
 
 ## netfilter snap 
@@ -105,7 +105,8 @@ Patch30:	2.6.0-t9-acpi_osl-lkml.patch
 
 Patch32:	%{name}-nls_default.patch
 
-Patch36:	bootsplash-3.1.4-2.6.3.diff
+# rewriten based on: ftp://ftp.suse.com/pub/people/stepan/bootsplash/kernel/bootsplash-3.1.4-2.6.3.diff
+Patch36:	bootsplash-3.1.4-2.6.5.patch
 
 Patch38:	2.6.0-t11-AIC_and_db4-lkml.patch
 
@@ -524,7 +525,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch32 -p1
 
 ## bootsplash
-##%%patch36 -p1
+%patch36 -p1
 
 %patch38 -p1
 
