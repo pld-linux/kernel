@@ -1,7 +1,7 @@
 %define		pcmcia_version		3.1.24
 %define		lids_version		1.0.5
 %define		ipvs_version		0.2.3
-%define		ac_version		ac8
+%define		ac_version		ac9
 %define 	aacraid_version		1.0.6
 %define		lm_sensors_version	2.5.5
 #define		wlan_version		0.1.7
