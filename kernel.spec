@@ -599,7 +599,7 @@ mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}.gz /boot/initrd
 
 if [ -f %{_prefix}/src/linux-%{version}/config-up ] ; then
-	ln -s %{_prefix}/src/linux-%{version}/config-up %{_prefix}/src/linux-%{version}/.config
+	cp -f %{_prefix}/src/linux-%{version}/config-up %{_prefix}/src/linux-%{version}/.config
 fi
 
 if [ -x /sbin/rc-boot ] ; then
@@ -624,7 +624,7 @@ mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 
 if [ -f %{_prefix}/src/linux-%{version}/config-smp ] ; then
-	ln -s %{_prefix}/src/linux-%{version}/config-smp %{_prefix}/src/linux-%{version}/.config
+	cp -f %{_prefix}/src/linux-%{version}/config-smp %{_prefix}/src/linux-%{version}/.config
 fi
 
 if [ -x /sbin/rc-boot ] ; then
