@@ -132,7 +132,7 @@ Patch50:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 
 Patch52:	laptop-mode-2.6.1-7.patch
 
-Patch56:	kbuild-out-of-tree.diff
+Patch56:	linux-kbuild-extmod.patch
 
 Patch58:	2.6.x-PD6729-lkml.patch
 
@@ -591,6 +591,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %endif
 
 %patch106 -p1
+
+%patch56 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -1302,21 +1304,24 @@ fi
 %files module-build
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Makefile
-%{_prefix}/src/linux-%{version}/*/Makefile*
-%{_prefix}/src/linux-%{version}/*/*/Makefile*
-%{_prefix}/src/linux-%{version}/*/*/*/Makefile*
-%{_prefix}/src/linux-%{version}/*/*/*/*/Makefile*
-%{_prefix}/src/linux-%{version}/*/*/*/*/*/Makefile*
+#%{_prefix}/src/linux-%{version}/*/Makefile*
+#%{_prefix}/src/linux-%{version}/*/*/Makefile*
+#%{_prefix}/src/linux-%{version}/*/*/*/Makefile*
+#%{_prefix}/src/linux-%{version}/*/*/*/*/Makefile*
+#%{_prefix}/src/linux-%{version}/*/*/*/*/*/Makefile*
 %dir %{_prefix}/src/linux-%{version}/arch
 %dir %{_prefix}/src/linux-%{version}/arch/*
+%{_prefix}/src/linux-%{version}/arch/*/Makefile*
 %dir %{_prefix}/src/linux-%{version}/arch/*/kernel
 %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
 %{_prefix}/src/linux-%{version}/arch/*/kernel/sigframe.h
 %dir %{_prefix}/src/linux-%{version}/scripts
-%{_prefix}/src/linux-%{version}/scripts/*/*.l
-%{_prefix}/src/linux-%{version}/scripts/*/*.c
+%{_prefix}/src/linux-%{version}/scripts/Makefile*
+%{_prefix}/src/linux-%{version}/scripts/basic
+#%{_prefix}/src/linux-%{version}/scripts/*/*.l
+#%{_prefix}/src/linux-%{version}/scripts/*/*.c
 %{_prefix}/src/linux-%{version}/scripts/*.c
-%{_prefix}/src/linux-%{version}/scripts/*/*.h
+#%{_prefix}/src/linux-%{version}/scripts/*/*.h
 %{_prefix}/src/linux-%{version}/scripts/*.h
 %{_prefix}/src/linux-%{version}/scripts/*.sh
 
@@ -1342,16 +1347,18 @@ fi
 %{_prefix}/src/linux-%{version}/mm
 %{_prefix}/src/linux-%{version}/net
 %{_prefix}/src/linux-%{version}/scripts/*
-%exclude %{_prefix}/src/linux-%{version}/Makefile*
-%exclude %{_prefix}/src/linux-%{version}/*/Makefile*
-%exclude %{_prefix}/src/linux-%{version}/*/*/Makefile*
-%exclude %{_prefix}/src/linux-%{version}/*/*/*/Makefile*
-%exclude %{_prefix}/src/linux-%{version}/*/*/*/*/Makefile*
-%exclude %{_prefix}/src/linux-%{version}/*/*/*/*/*/Makefile*
-%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.c
+%exclude %{_prefix}/src/linux-%{version}/scripts/Makefile*
+#%exclude %{_prefix}/src/linux-%{version}/Makefile*
+#%exclude %{_prefix}/src/linux-%{version}/*/Makefile*
+#%exclude %{_prefix}/src/linux-%{version}/*/*/Makefile*
+#%exclude %{_prefix}/src/linux-%{version}/*/*/*/Makefile*
+#%exclude %{_prefix}/src/linux-%{version}/*/*/*/*/Makefile*
+#%exclude %{_prefix}/src/linux-%{version}/*/*/*/*/*/Makefile*
+#%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.c
+%exclude %{_prefix}/src/linux-%{version}/scripts/basic
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.c
-%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.l
-%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.h
+#%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.l
+#%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.h
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.h
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.sh
 %{_prefix}/src/linux-%{version}/sound
