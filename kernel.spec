@@ -119,7 +119,7 @@ Patch7:		2.6.0-t8-appletalk-SYSCTL-lkml.patch
 Patch8:		2.6.0-t8-umsdos-lkml.patch
 Patch9:		2.6.0-t9-acpi_osl-lkml.patch
 Patch10:	2.6.0-t11-AIC_and_db4-lkml.patch
-
+Patch11:	2.6.8.1-qos-and-routing-conflict.patch
 Patch12:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch13:	2.6.2-Initio9100U-Kconfig.patch
 # http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
@@ -164,6 +164,7 @@ Patch56:	linux-2.6-netfilter-syms.patch
 # pseudo terminal fix for older glibc
 #Patch60:	%{name}-pts.patch
 Patch61:	%{name}-MAX_INIT_ARGS.patch
+Patch62:	http://www.kernel.org/pub/linux/kernel/people/jgarzik/patchkits/2.6/2.6.8.1-libata2.patch.bz2
 
 # http://tahoe.pl/patch.htm
 Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
@@ -575,7 +576,7 @@ zcat %{SOURCE7} | patch -p1 -s
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
-
+%patch11 -p1
 %patch12 -p1
 %patch13 -p1
 %patch14 -p1
@@ -615,6 +616,7 @@ zcat %{SOURCE7} | patch -p1 -s
 
 #patch60 -p1
 %patch61 -p1
+%patch62 -p1
 
 %patch70 -p1
 
