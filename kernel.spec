@@ -51,7 +51,7 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_post_ver	%{nil}
-%define		_rel		0.12HEAD
+%define		_rel		0.13HEAD
 %define		_cset		20041014_0511
 %define		_apply_cset	0
 
@@ -119,7 +119,6 @@ Patch30:	kernel-vmalloc-reserve.patch
 # suspend/resume
 # http://softwaresuspend.berlios.de/
 Patch500:	linux-2.6-software-suspend-2.1.patch.gz
-Patch501:	linux-2.6-software-suspend-fixes.patch
 
 # http://sources.redhat.com/cluster/
 Patch550:	linux-cluster-cman.patch
@@ -491,7 +490,6 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %ifarch %{ix86}
 %patch500 -p1
-%patch501 -p1
 %endif
 
 %patch550 -p1
