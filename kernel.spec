@@ -72,7 +72,7 @@ Patch10:	patch-int-2.4.20.1.bz2
 Patch11:	loop-jari-2.4.20.0.patch
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch12:	linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
-Patch20:	linux-2.4.20-sched-O1+preempt.patch
+Patch20:	linux-2.4.20-sched-O1.patch
 
 # New filesystems
 
@@ -128,12 +128,14 @@ Patch158:	atm-10-modular-atm.patch
 Patch159:	atm-11-correct-lec-net_device-names.patch
 Patch160:	atm-12-br2684-xmit-return.patch
 Patch161:	atm-13-atm_vcc-cleanup.patch
-Patch190:	atm-20-fore200e-gettimeofday.patch
+Patch162:	atm-14-clip-neigh-lock.patch
+Patch180:	atm-20-fore200e-gettimeofday.patch
 # http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # http://christophe.lizzi.free.fr/linux/linux-2.4.0-test9-fore200e-0.3.tar.gz
-Patch191:	atm-21-fore200e-0.2f.patch
+Patch181:	atm-21-fore200e-0.2f.patch
 # Oopses on me - baggins
 #Patch191:	atm-21-fore200e-0.3.patch
+Patch185:	atm-30-idt77105-cleanup.patch
 
 # New devices/drivers
 
@@ -169,6 +171,8 @@ Patch260:	linux-2.4.20-mptlinux-2.03.00.patch.bz2
 Patch265:	linux-2.4.20-e820.patch
 # Syntax bug
 Patch270:	dc395-tab.patch
+# http://www.qlogic.com/
+Patch275:	linux-2.4.20-qla2x00-v6.04.00-fo.patch.gz
 
 # The following go last as they touch a lot of code
 # and/or are on bcond and/or are ifarch
@@ -277,7 +281,7 @@ Patch1413:	linux-2.4.20-andrea-fix-pausing.patch
 Patch1414:	linux-2.4.20-oopsmeharder.patch
 Patch1415:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch1416:	linux-2.4.20-no-FPU.patch
-Patch1417:	linux-2.4.20-initrd-close-console.patch
+Patch1417:	linux-2.4.20-initrd-close-fds.patch
 
 Patch2000:	linux-PPC-SMP.patch
 Patch2001:	linux-2.4-ppc-procesor.patch
@@ -603,8 +607,10 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch159 -p1
 %patch160 -p1
 %patch161 -p1
-%patch190 -p1
-%patch191 -p1
+%patch162 -p0
+%patch180 -p1
+%patch181 -p1
+%patch185 -p1
 %patch200 -p1
 %patch201 -p1
 %patch205 -p1
@@ -623,6 +629,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch255 -p1
 %patch260 -p1
 %patch265 -p1
+%patch275 -p1
 %patch1000 -p1
 %patch1001 -p1
 %patch1002 -p1
