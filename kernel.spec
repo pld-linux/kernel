@@ -22,7 +22,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.4.9
+Version:	2.4.10
 Release:	0.1
 License:	GPL
 Group:		Base/Kernel
@@ -376,7 +376,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %prep
 %{?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -n linux}
 %{!?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -a14 -n linux}
-%patch1000 -p1
+#%patch1000 -p1
 #%patch0 -p1
 %patch1 -p1
 %patch2 -p1
