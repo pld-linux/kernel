@@ -50,11 +50,11 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		4.1%{?with_mosix:m}
+%define		_rel		4.2%{?with_mosix:m}
 %define		_cset		20040707_0722
 %define		_apply_cset	1
 
-%define		_netfilter_snap		20040629
+%define		_netfilter_snap		20040907
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
@@ -648,7 +648,7 @@ echo "Not fixed !!"
 # netfilter
 %patch46 -p1
 %patch47 -p1
-%patch48 -p1
+##%patch48 -p1
 
 %patch50 -p1
 #patch51 -p1
@@ -660,8 +660,8 @@ echo "Not fixed !!"
 %patch58 -p1
 %patch59 -p1
 
-%patch60 -p1
-%patch61 -p1
+##%patch60 -p1
+##%patch61 -p1
 
 %patch64 -p1
 
@@ -1028,7 +1028,7 @@ KERNEL_BUILD_DIR=`pwd`
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig
-%{?with_up:BuildKernel}
+##%{?with_up:BuildKernel}
 %{?with_up:PreInstallKernel}
 
 # SMP KERNEL
