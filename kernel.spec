@@ -9,6 +9,7 @@
 # _without_boot		- don't build BOOT kernel
 # _without_source	- don't build source
 # _without_doc		- don't build documentation package
+# _without_w4l		- don't build Win4Lin support
 #
 
 %define		patch_level	5
@@ -125,6 +126,7 @@ Patch8:		linux-2.4.20-netfilter-%{netfilter_snap}.patch.bz2
 
 Patch9:		linux-2.4.20-initrd-close-console.patch
 
+#from http://rick.vanrein.org/linux/badram/software/BadRAM-2.4.20.1.patch
 Patch10:	linux-2.4.20-badram.patch
 
 # http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
@@ -216,8 +218,7 @@ Patch47:	linux-2.4-3com-vlan.patch
 Patch100:	linux-scsi-debug-bug.patch
 Patch101:	linux-2.4.2-raw-ip.patch
 Patch102:	PCI_ISA_bridge.patch
-#from 
-Patch103:	irqbalance-2.4.20-MRC.patch
+#Patch103:	
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch104:	linux-2.4.19-pcnet-parms.patch
 #Patch105:	
@@ -783,8 +784,6 @@ echo Added patch to fix bad ram ...
 #usb gadget
 echo Added USB gadget ...
 %patch30 -p1
-echo Added IRQ balance support ...
-%patch103 -p1
 %endif
 %ifarch ppc
 echo PPC patches ...
@@ -809,10 +808,10 @@ echo AXP patches ...
 %endif
 
 %ifarch %{ix86}
-echo Win4Lin patch ...
-%patch1000 -p1
-%patch1001 -p1
-%patch1002 -p1
+echo Win4Lin patch ... %{?_without_w4l: not installed}
+%{!?_without_w4l:%patch1000 -p1}
+%{!?_without_w4l:%patch1001 -p1}
+%{!?_without_w4l:%patch1002 -p1}
 %endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
