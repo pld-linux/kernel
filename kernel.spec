@@ -220,7 +220,7 @@ oraz niektórych programów.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-patch -p1 -s <linux-2.2.13-ow1/linux-2.2.13-ow1.diff
+patch -p1 -s <linux-2.2.14-ow1/linux-2.2.14-ow1.diff
 
 %build
 BuildKernel() {
@@ -328,7 +328,7 @@ gzip -dc %{PATCH1} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH3} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-2.2.13-ow1/linux-2.2.13-ow1.diff
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-2.2.14-ow1/linux-2.2.14-ow1.diff
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
