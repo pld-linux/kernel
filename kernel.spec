@@ -72,8 +72,6 @@ Patch14:	2.6.0-t7-netfilter-20031010.patch
 Patch16:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
 Patch18:	2.6.0-t6-usb-irq.patch
 
-Patch20:	2.6.0-t6-SELinux-lkml.patch
-
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -375,8 +373,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch16 -p1
 %patch18 -p1
-
-%patch20 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
