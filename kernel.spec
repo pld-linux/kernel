@@ -1,4 +1,4 @@
-%define		ow_ver	2.2.14-ow2
+%define		ow_ver	2.2.15-ow1
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -32,19 +32,18 @@ Source23:	kernel-sparc-BOOT.config
 #Source28:	kernel-alpha-smp.config
 #Source29:	kernel-alpha-BOOT.config
 Source30:	ftp://ftp.openwall.com/linux/linux-%{ow_ver}.tar.gz
-Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-124.tar.gz
+Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-126.tar.gz
 Source32:	kernel-BuildASM.sh
-Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.13.3.gz
+Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.14.1.gz
 Patch1:		ftp://ftp.botik.ru/rented/namesys/ftp/pub/linux+reiserfs/linux-2.2.14-reiserfs-3.5.20-pre1-patch.gz
 Patch2:		linux-2.2.14-atm-0.59-fore200e-0.1f.patch.gz
 Patch3:		linux-tasks.patch
 Patch4:		raid-2.2.14-B1.gz
-Patch5:		kernel-cpqarray-raid090.patch
-Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide.2.2.15.20000504.patch.bz2
-Patch7:		%{name}-pldfblogo.patch
-Patch8:		linux-2.2.14-freeswan-1.3.patch
-Patch9:		wanrouter-v2214.patch
-Patch10:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.15-pre9-patch
+Patch5:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide.2.2.15.20000504.patch.bz2
+Patch6:		%{name}-pldfblogo.patch
+Patch7:		linux-2.2.14-freeswan-1.3.patch
+Patch8:		wanrouter-v2214.patch
+Patch9:		http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.15-pre9-patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -225,19 +224,18 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -a30 -a31 -n linux
-%patch0  -p1
-%patch1  -p1
-%patch2  -p1
-%patch3  -p1
-%patch4  -p1
-%patch5  -p1
+%patch0 -p1
+%patch1 -p1
+%patch2 -p1
+%patch3 -p1
+%patch4 -p1
 %ifarch %{ix86}
-%patch6  -p1
+%patch5 -p1
 %endif
-%patch7  -p1
-%patch8  -p1
+%patch6 -p1
+%patch7 -p1
+%patch8 -p1
 %patch9  -p1
-%patch10 -p1
 
 patch -p1 -s <linux-%{ow_ver}/linux-%{ow_ver}.diff
 # Tekram DC395/315 U/UW SCSI host driver
@@ -342,10 +340,10 @@ gzip -dc %{PATCH1} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 %ifarch %{ix86}
-gzip -dc %{PATCH6} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH5} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 %endif
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH3}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH9}
