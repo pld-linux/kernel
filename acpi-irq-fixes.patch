@@ -53,23 +53,23 @@ CONFIG_ACPI rather
 
 
 
- 25-akpm/arch/i386/kernel/acpi/boot.c   |   10 +--
- 25-akpm/arch/i386/kernel/dmi_scan.c    |   10 +--
- 25-akpm/arch/i386/kernel/mpparse.c     |   31 ++++-----
- 25-akpm/arch/i386/kernel/setup.c       |    2 
- 25-akpm/drivers/acpi/Kconfig           |  108 ++++++++++++++++++---------------
- 25-akpm/drivers/acpi/Makefile          |    2 
- 25-akpm/drivers/acpi/ec.c              |    7 +-
- 25-akpm/drivers/acpi/events/evregion.c |    6 -
- 25-akpm/drivers/acpi/pci_link.c        |   74 +++++++++++++++++-----
- 25-akpm/include/acpi/acconfig.h        |    2 
- 25-akpm/include/linux/acpi.h           |    6 -
- 25-akpm/init/do_mounts.h               |    1 
+ arch/i386/kernel/acpi/boot.c   |   10 +--
+ arch/i386/kernel/dmi_scan.c    |   10 +--
+ arch/i386/kernel/mpparse.c     |   31 +++++------
+ arch/i386/kernel/setup.c       |    2 
+ drivers/acpi/Kconfig           |  108 ++++++++++++++++++++++-------------------
+ drivers/acpi/Makefile          |    2 
+ drivers/acpi/ec.c              |    7 +-
+ drivers/acpi/events/evregion.c |    6 +-
+ drivers/acpi/pci_link.c        |   74 +++++++++++++++++++++-------
+ include/acpi/acconfig.h        |    2 
+ include/linux/acpi.h           |    6 +-
+ init/do_mounts.h               |    1 
  12 files changed, 155 insertions(+), 104 deletions(-)
 
 diff -puN arch/i386/kernel/acpi/boot.c~acpi-20030916 arch/i386/kernel/acpi/boot.c
---- 25/arch/i386/kernel/acpi/boot.c~acpi-20030916	Thu Sep 18 15:51:50 2003
-+++ 25-akpm/arch/i386/kernel/acpi/boot.c	Thu Sep 18 15:51:50 2003
+--- 25/arch/i386/kernel/acpi/boot.c~acpi-20030916	2003-09-26 22:15:04.000000000 -0700
++++ 25-akpm/arch/i386/kernel/acpi/boot.c	2003-09-26 22:15:04.000000000 -0700
 @@ -183,8 +183,7 @@ acpi_parse_lapic_nmi (
  
  #endif /*CONFIG_X86_LOCAL_APIC*/
@@ -116,8 +116,8 @@ diff -puN arch/i386/kernel/acpi/boot.c~acpi-20030916 arch/i386/kernel/acpi/boot.
  	acpi_table_parse(ACPI_HPET, acpi_parse_hpet);
  #endif
 diff -puN arch/i386/kernel/dmi_scan.c~acpi-20030916 arch/i386/kernel/dmi_scan.c
---- 25/arch/i386/kernel/dmi_scan.c~acpi-20030916	Thu Sep 18 15:51:50 2003
-+++ 25-akpm/arch/i386/kernel/dmi_scan.c	Thu Sep 18 15:51:50 2003
+--- 25/arch/i386/kernel/dmi_scan.c~acpi-20030916	2003-09-26 22:15:04.000000000 -0700
++++ 25-akpm/arch/i386/kernel/dmi_scan.c	2003-09-26 22:15:04.000000000 -0700
 @@ -939,11 +939,6 @@ static __initdata struct dmi_blacklist d
  			MATCH(DMI_BOARD_NAME, "CUR-DLS"),
  			NO_MATCH, NO_MATCH }},
@@ -143,8 +143,8 @@ diff -puN arch/i386/kernel/dmi_scan.c~acpi-20030916 arch/i386/kernel/dmi_scan.c
  
  	{ NULL, }
 diff -puN arch/i386/kernel/mpparse.c~acpi-20030916 arch/i386/kernel/mpparse.c
---- 25/arch/i386/kernel/mpparse.c~acpi-20030916	Thu Sep 18 15:51:50 2003
-+++ 25-akpm/arch/i386/kernel/mpparse.c	Thu Sep 18 16:00:40 2003
+--- 25/arch/i386/kernel/mpparse.c~acpi-20030916	2003-09-26 22:15:04.000000000 -0700
++++ 25-akpm/arch/i386/kernel/mpparse.c	2003-09-26 22:15:04.000000000 -0700
 @@ -830,7 +830,7 @@ void __init mp_register_lapic (
  	MP_processor_info(&processor);
  }
@@ -219,8 +219,8 @@ diff -puN arch/i386/kernel/mpparse.c~acpi-20030916 arch/i386/kernel/mpparse.c
 +#endif /*CONFIG_X86_IO_APIC && CONFIG_ACPI_INTERPRETER*/
  #endif /*CONFIG_ACPI_BOOT*/
 diff -puN arch/i386/kernel/setup.c~acpi-20030916 arch/i386/kernel/setup.c
---- 25/arch/i386/kernel/setup.c~acpi-20030916	Thu Sep 18 15:51:50 2003
-+++ 25-akpm/arch/i386/kernel/setup.c	Thu Sep 18 15:51:50 2003
+--- 25/arch/i386/kernel/setup.c~acpi-20030916	2003-09-26 22:15:04.000000000 -0700
++++ 25-akpm/arch/i386/kernel/setup.c	2003-09-26 22:15:04.000000000 -0700
 @@ -64,7 +64,7 @@ struct cpuinfo_x86 boot_cpu_data = { 0, 
  unsigned long mmu_cr4_features;
  EXPORT_SYMBOL_GPL(mmu_cr4_features);
@@ -231,8 +231,8 @@ diff -puN arch/i386/kernel/setup.c~acpi-20030916 arch/i386/kernel/setup.c
  #else
  	int acpi_disabled __initdata = 1;
 diff -puN drivers/acpi/ec.c~acpi-20030916 drivers/acpi/ec.c
---- 25/drivers/acpi/ec.c~acpi-20030916	Thu Sep 18 15:51:50 2003
-+++ 25-akpm/drivers/acpi/ec.c	Thu Sep 18 15:51:50 2003
+--- 25/drivers/acpi/ec.c~acpi-20030916	2003-09-26 22:15:04.000000000 -0700
++++ 25-akpm/drivers/acpi/ec.c	2003-09-26 22:15:04.000000000 -0700
 @@ -32,7 +32,7 @@
  #include <asm/io.h>
  #include <acpi/acpi_bus.h>
@@ -255,8 +255,8 @@ diff -puN drivers/acpi/ec.c~acpi-20030916 drivers/acpi/ec.c
  	return AE_OK;
  }
 diff -puN drivers/acpi/events/evregion.c~acpi-20030916 drivers/acpi/events/evregion.c
---- 25/drivers/acpi/events/evregion.c~acpi-20030916	Thu Sep 18 15:51:50 2003
-+++ 25-akpm/drivers/acpi/events/evregion.c	Thu Sep 18 15:51:50 2003
+--- 25/drivers/acpi/events/evregion.c~acpi-20030916	2003-09-26 22:15:04.000000000 -0700
++++ 25-akpm/drivers/acpi/events/evregion.c	2003-09-26 22:15:04.000000000 -0700
 @@ -382,7 +382,7 @@ acpi_ev_detach_region(
  	union acpi_operand_object       *obj_desc;
  	union acpi_operand_object       **last_obj_ptr;
@@ -285,8 +285,8 @@ diff -puN drivers/acpi/events/evregion.c~acpi-20030916 drivers/acpi/events/evreg
  			/* Init routine may fail, Just ignore errors */
  
 diff -puN drivers/acpi/Kconfig~acpi-20030916 drivers/acpi/Kconfig
---- 25/drivers/acpi/Kconfig~acpi-20030916	Thu Sep 18 15:51:50 2003
-+++ 25-akpm/drivers/acpi/Kconfig	Thu Sep 18 15:51:50 2003
+--- 25/drivers/acpi/Kconfig~acpi-20030916	2003-09-26 22:15:04.000000000 -0700
++++ 25-akpm/drivers/acpi/Kconfig	2003-09-26 22:15:04.000000000 -0700
 @@ -3,34 +3,14 @@
  #
  
@@ -375,9 +375,9 @@ diff -puN drivers/acpi/Kconfig~acpi-20030916 drivers/acpi/Kconfig
  	depends on X86 && ACPI
 +	depends on ACPI_INTERPRETER
  	depends on EXPERIMENTAL && PM
- 	select SOFTWARE_SUSPEND
  	default y
-@@ -94,7 +107,8 @@ config ACPI_SLEEP_PROC_FS
+ 	---help---
+@@ -93,7 +106,8 @@ config ACPI_SLEEP_PROC_FS
  
  config ACPI_AC
  	tristate "AC Adapter"
@@ -387,7 +387,7 @@ diff -puN drivers/acpi/Kconfig~acpi-20030916 drivers/acpi/Kconfig
  	default m
  	help
  	  This driver adds support for the AC Adapter object, which indicates
-@@ -103,7 +117,8 @@ config ACPI_AC
+@@ -102,7 +116,8 @@ config ACPI_AC
  
  config ACPI_BATTERY
  	tristate "Battery"
@@ -397,7 +397,7 @@ diff -puN drivers/acpi/Kconfig~acpi-20030916 drivers/acpi/Kconfig
  	default m
  	help
  	  This driver adds support for battery information through
-@@ -112,7 +127,7 @@ config ACPI_BATTERY
+@@ -111,7 +126,7 @@ config ACPI_BATTERY
  
  config ACPI_BUTTON
  	tristate "Button"
@@ -406,7 +406,7 @@ diff -puN drivers/acpi/Kconfig~acpi-20030916 drivers/acpi/Kconfig
  	depends on !IA64_SGI_SN
  	default m
  	help
-@@ -124,7 +139,7 @@ config ACPI_BUTTON
+@@ -123,7 +138,7 @@ config ACPI_BUTTON
  
  config ACPI_FAN
  	tristate "Fan"
@@ -415,7 +415,7 @@ diff -puN drivers/acpi/Kconfig~acpi-20030916 drivers/acpi/Kconfig
  	depends on !IA64_SGI_SN
  	default m
  	help
-@@ -133,7 +148,7 @@ config ACPI_FAN
+@@ -132,7 +147,7 @@ config ACPI_FAN
  
  config ACPI_PROCESSOR
  	tristate "Processor"
@@ -424,7 +424,7 @@ diff -puN drivers/acpi/Kconfig~acpi-20030916 drivers/acpi/Kconfig
  	depends on !IA64_SGI_SN
  	default m
  	help
-@@ -153,14 +168,15 @@ config ACPI_THERMAL
+@@ -152,14 +167,15 @@ config ACPI_THERMAL
  
  config ACPI_NUMA
  	bool "NUMA support"
@@ -442,7 +442,7 @@ diff -puN drivers/acpi/Kconfig~acpi-20030916 drivers/acpi/Kconfig
  	default m
          ---help---
            This driver provides support for extra features of ACPI-compatible
-@@ -186,7 +202,8 @@ config ACPI_ASUS
+@@ -185,7 +201,8 @@ config ACPI_ASUS
            
  config ACPI_TOSHIBA
  	tristate "Toshiba Laptop Extras"
@@ -452,7 +452,7 @@ diff -puN drivers/acpi/Kconfig~acpi-20030916 drivers/acpi/Kconfig
  	default m
  	---help---
  	  This driver adds support for access to certain system settings
-@@ -213,7 +230,7 @@ config ACPI_TOSHIBA
+@@ -212,7 +229,7 @@ config ACPI_TOSHIBA
  
  config ACPI_DEBUG
  	bool "Debug Statements"
@@ -461,7 +461,7 @@ diff -puN drivers/acpi/Kconfig~acpi-20030916 drivers/acpi/Kconfig
  	depends on !IA64_SGI_SN
  	default n
  	help
-@@ -223,19 +240,14 @@ config ACPI_DEBUG
+@@ -222,19 +239,14 @@ config ACPI_DEBUG
  
  config ACPI_BUS
  	bool
@@ -484,7 +484,7 @@ diff -puN drivers/acpi/Kconfig~acpi-20030916 drivers/acpi/Kconfig
  	default y
  	help
  	  This driver is required on some systems for the proper operation of
-@@ -244,19 +256,19 @@ config ACPI_EC
+@@ -243,19 +255,19 @@ config ACPI_EC
  
  config ACPI_POWER
  	bool
@@ -507,7 +507,7 @@ diff -puN drivers/acpi/Kconfig~acpi-20030916 drivers/acpi/Kconfig
  	depends on !IA64_SGI_SN
  	default y
  	help
-@@ -265,7 +277,7 @@ config ACPI_SYSTEM
+@@ -264,7 +276,7 @@ config ACPI_SYSTEM
  
  config ACPI_EFI
  	bool
@@ -517,8 +517,8 @@ diff -puN drivers/acpi/Kconfig~acpi-20030916 drivers/acpi/Kconfig
  	default y
  
 diff -puN drivers/acpi/Makefile~acpi-20030916 drivers/acpi/Makefile
---- 25/drivers/acpi/Makefile~acpi-20030916	Thu Sep 18 15:51:50 2003
-+++ 25-akpm/drivers/acpi/Makefile	Thu Sep 18 15:51:50 2003
+--- 25/drivers/acpi/Makefile~acpi-20030916	2003-09-26 22:15:04.000000000 -0700
++++ 25-akpm/drivers/acpi/Makefile	2003-09-26 22:15:04.000000000 -0700
 @@ -18,7 +18,7 @@ obj-$(CONFIG_ACPI)		:= acpi_ksyms.o 
  # ACPI Boot-Time Table Parsing
  #
@@ -529,8 +529,8 @@ diff -puN drivers/acpi/Makefile~acpi-20030916 drivers/acpi/Makefile
  #
  # ACPI Core Subsystem (Interpreter)
 diff -puN drivers/acpi/pci_link.c~acpi-20030916 drivers/acpi/pci_link.c
---- 25/drivers/acpi/pci_link.c~acpi-20030916	Thu Sep 18 15:51:50 2003
-+++ 25-akpm/drivers/acpi/pci_link.c	Thu Sep 18 15:51:50 2003
+--- 25/drivers/acpi/pci_link.c~acpi-20030916	2003-09-26 22:15:04.000000000 -0700
++++ 25-akpm/drivers/acpi/pci_link.c	2003-09-26 22:15:04.000000000 -0700
 @@ -220,7 +220,6 @@ acpi_pci_link_check_current (
  	return AE_CTRL_TERMINATE;
  }
@@ -678,8 +678,8 @@ diff -puN drivers/acpi/pci_link.c~acpi-20030916 drivers/acpi/pci_link.c
  
  	/* TBD: Acquire/release lock */
 diff -puN include/acpi/acconfig.h~acpi-20030916 include/acpi/acconfig.h
---- 25/include/acpi/acconfig.h~acpi-20030916	Thu Sep 18 15:51:50 2003
-+++ 25-akpm/include/acpi/acconfig.h	Thu Sep 18 15:51:50 2003
+--- 25/include/acpi/acconfig.h~acpi-20030916	2003-09-26 22:15:04.000000000 -0700
++++ 25-akpm/include/acpi/acconfig.h	2003-09-26 22:15:04.000000000 -0700
 @@ -64,7 +64,7 @@
  
  /* Version string */
@@ -690,8 +690,8 @@ diff -puN include/acpi/acconfig.h~acpi-20030916 include/acpi/acconfig.h
  /* Maximum objects in the various object caches */
  
 diff -puN include/linux/acpi.h~acpi-20030916 include/linux/acpi.h
---- 25/include/linux/acpi.h~acpi-20030916	Thu Sep 18 15:51:50 2003
-+++ 25-akpm/include/linux/acpi.h	Thu Sep 18 15:51:50 2003
+--- 25/include/linux/acpi.h~acpi-20030916	2003-09-26 22:15:04.000000000 -0700
++++ 25-akpm/include/linux/acpi.h	2003-09-26 22:15:04.000000000 -0700
 @@ -424,17 +424,17 @@ int ec_write(u8 addr, u8 val);
  
  #endif /*CONFIG_ACPI_EC*/
@@ -714,13 +714,92 @@ diff -puN include/linux/acpi.h~acpi-20030916 include/linux/acpi.h
  
  #endif /*_LINUX_ACPI_H*/
 diff -puN init/do_mounts.h~acpi-20030916 init/do_mounts.h
---- 25/init/do_mounts.h~acpi-20030916	Thu Sep 18 15:51:50 2003
-+++ 25-akpm/init/do_mounts.h	Thu Sep 18 15:51:50 2003
-@@ -79,4 +79,3 @@ void md_run_setup(void);
+--- 25/init/do_mounts.h~acpi-20030916	2003-09-26 22:15:04.000000000 -0700
++++ 25-akpm/init/do_mounts.h	2003-09-26 22:15:04.000000000 -0700
+@@ -104,4 +104,3 @@ void md_run_setup(void);
  static inline void md_run_setup(void) {}
  
  #endif
 -
+
+_
+
+From: Andi Kleen <ak@suse.de>
+
+ACPI modules check acpi_disabled at module load time.  This fixes random
+failures to load battery.o et.al.
+
+
+
+ 25-akpm/arch/i386/kernel/setup.c |    4 ++--
+ 25-akpm/arch/ia64/kernel/acpi.c  |    2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff -puN arch/i386/kernel/setup.c~acpi_disabled-fix arch/i386/kernel/setup.c
+--- 25/arch/i386/kernel/setup.c~acpi_disabled-fix	Tue Sep 23 14:01:14 2003
++++ 25-akpm/arch/i386/kernel/setup.c	Tue Sep 23 14:01:14 2003
+@@ -65,9 +65,9 @@ unsigned long mmu_cr4_features;
+ EXPORT_SYMBOL_GPL(mmu_cr4_features);
+ 
+ #ifdef	CONFIG_ACPI_INTERPRETER
+-	int acpi_disabled __initdata = 0;
++	int acpi_disabled = 0;
+ #else
+-	int acpi_disabled __initdata = 1;
++	int acpi_disabled = 1;
+ #endif
+ EXPORT_SYMBOL(acpi_disabled);
+ 
+diff -puN arch/ia64/kernel/acpi.c~acpi_disabled-fix arch/ia64/kernel/acpi.c
+--- 25/arch/ia64/kernel/acpi.c~acpi_disabled-fix	Tue Sep 23 14:01:14 2003
++++ 25-akpm/arch/ia64/kernel/acpi.c	Tue Sep 23 14:01:14 2003
+@@ -56,7 +56,7 @@ void (*pm_power_off) (void);
+ 
+ unsigned char acpi_kbd_controller_present = 1;
+ 
+-int acpi_disabled __initdata;	/* XXX this shouldn't be needed---we can't boot without ACPI! */
++int acpi_disabled;	/* XXX this shouldn't be needed---we can't boot without ACPI! */
+ 
+ const char *
+ acpi_get_sysname (void)
+
+_
+
+From: Chris Wright <chrisw@osdl.org>
+
+This got lost.
+
+
+ 25-akpm/drivers/acpi/pci_link.c |   16 ++++++++--------
+ 1 files changed, 8 insertions(+), 8 deletions(-)
+
+diff -puN drivers/acpi/pci_link.c~acpi-pci-irq-fix-439 drivers/acpi/pci_link.c
+--- 25/drivers/acpi/pci_link.c~acpi-pci-irq-fix-439	Mon Sep 22 14:08:48 2003
++++ 25-akpm/drivers/acpi/pci_link.c	Mon Sep 22 14:08:48 2003
+@@ -500,15 +500,15 @@ static int acpi_pci_link_allocate(struct
+ 		irq = link->irq.active;
+ 	} else {
+ 		irq = link->irq.possible[0];
+-	}
+ 
+-	/* 
+-	 * Select the best IRQ.  This is done in reverse to promote 
+-	 * the use of IRQs 9, 10, 11, and >15.
+-	 */
+-	for (i=(link->irq.possible_count-1); i>0; i--) {
+-		if (acpi_irq_penalty[irq] > acpi_irq_penalty[link->irq.possible[i]])
+-			irq = link->irq.possible[i];
++		/*
++		 * Select the best IRQ.  This is done in reverse to promote
++		 * the use of IRQs 9, 10, 11, and >15.
++		 */
++		for (i=(link->irq.possible_count-1); i>0; i--) {
++			if (acpi_irq_penalty[irq] > acpi_irq_penalty[link->irq.possible[i]])
++				irq = link->irq.possible[i];
++		}
+ 	}
+ 
+ 	/* Attempt to enable the link device at this IRQ. */
 
 _
 
@@ -860,43 +939,16 @@ _
 
 From: Andi Kleen <ak@suse.de>
 
-ACPI modules check acpi_disabled at module load time.  This fixes random
-failures to load battery.o et.al.
+Try this (untested) patch
+
+(2.6 version untested, I tested a similar patch on the 2.4 backport of
+ACPI):
 
 
 
- arch/i386/kernel/setup.c   |    4 ++--
- arch/ia64/kernel/acpi.c    |    2 +-
- arch/x86_64/kernel/setup.c |    2 +-
- 3 files changed, 4 insertions(+), 4 deletions(-)
+ 25-akpm/arch/i386/pci/acpi.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletion(-)
 
-diff -puN arch/i386/kernel/setup.c~acpi_disabled-fix arch/i386/kernel/setup.c
---- 25/arch/i386/kernel/setup.c~acpi_disabled-fix	2003-09-18 20:02:17.000000000 -0700
-+++ 25-akpm/arch/i386/kernel/setup.c	2003-09-18 20:02:44.000000000 -0700
-@@ -65,9 +65,9 @@ unsigned long mmu_cr4_features;
- EXPORT_SYMBOL_GPL(mmu_cr4_features);
- 
- #ifdef	CONFIG_ACPI_INTERPRETER
--	int acpi_disabled __initdata = 0;
-+	int acpi_disabled = 0;
- #else
--	int acpi_disabled __initdata = 1;
-+	int acpi_disabled = 1;
- #endif
- EXPORT_SYMBOL(acpi_disabled);
- 
-diff -puN arch/ia64/kernel/acpi.c~acpi_disabled-fix arch/ia64/kernel/acpi.c
---- 25/arch/ia64/kernel/acpi.c~acpi_disabled-fix	2003-09-18 20:02:17.000000000 -0700
-+++ 25-akpm/arch/ia64/kernel/acpi.c	2003-09-18 20:02:17.000000000 -0700
-@@ -56,7 +56,7 @@ void (*pm_power_off) (void);
- 
- unsigned char acpi_kbd_controller_present = 1;
- 
--int acpi_disabled __initdata;	/* XXX this shouldn't be needed---we can't boot without ACPI! */
-+int acpi_disabled;	/* XXX this shouldn't be needed---we can't boot without ACPI! */
- 
- const char *
- acpi_get_sysname (void)
 diff -puN arch/i386/pci/acpi.c~acpi_off-fix arch/i386/pci/acpi.c
 --- 25/arch/i386/pci/acpi.c~acpi_off-fix	Tue Sep  9 12:12:00 2003
 +++ 25-akpm/arch/i386/pci/acpi.c	Tue Sep  9 12:12:00 2003
@@ -915,31 +967,3 @@ diff -puN arch/i386/pci/acpi.c~acpi_off-fix arch/i386/pci/acpi.c
  			printk(KERN_INFO "PCI: if you experience problems, try using option 'pci=noacpi' or even 'acpi=off'\n");
 
 _
---- 2.6.0-test5-mm3/drivers/acpi/pci_link.c~acpi_pci_irq_fix	2003-09-22 10:00:16.000000000 -0700
-+++ 2.6.0-test5-mm3/drivers/acpi/pci_link.c	2003-09-22 10:10:06.000000000 -0700
-@@ -500,15 +500,15 @@ static int acpi_pci_link_allocate(struct
- 		irq = link->irq.active;
- 	} else {
- 		irq = link->irq.possible[0];
--	}
- 
--	/* 
--	 * Select the best IRQ.  This is done in reverse to promote 
--	 * the use of IRQs 9, 10, 11, and >15.
--	 */
--	for (i=(link->irq.possible_count-1); i>0; i--) {
--		if (acpi_irq_penalty[irq] > acpi_irq_penalty[link->irq.possible[i]])
--			irq = link->irq.possible[i];
-+		/* 
-+		 * Select the best IRQ.  This is done in reverse to promote 
-+		 * the use of IRQs 9, 10, 11, and >15.
-+		 */
-+		for (i=(link->irq.possible_count-1); i>0; i--) {
-+			if (acpi_irq_penalty[irq] > acpi_irq_penalty[link->irq.possible[i]])
-+				irq = link->irq.possible[i];
-+		}
- 	}
- 
- 	/* Attempt to enable the link device at this IRQ. */
-
-
