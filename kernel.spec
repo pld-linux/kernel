@@ -151,6 +151,7 @@ Patch901:	linux-proc_get_inode.patch
 Patch902:	linux-drm-%{drm_xfree_version}-force-cmpxchg.patch
 Patch903:	linux-drm-2.4.19-mm.patch
 Patch904:	linux-abi-put_user.patch
+Patch905:	linux-abi-fl_ibcs_to_linux.patch
 
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
@@ -493,6 +494,7 @@ mv %{sym_ncr_version}/{README,ChangeLog}.* Documentation
 rm -rf %{sym_ncr_version}
 
 %patch901 -p1
+%patch905 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
