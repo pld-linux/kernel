@@ -159,7 +159,7 @@ Patch70:	grsecurity-2.1.3-2.6.11-200503111604.patch
 # http://tahoe.pl/patch.htm
 Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 # psmouse extension for ThinkPad laptops from http://www.clarkson.edu/~evanchsa/
-Patch81:	trackpoint-2.6.9.patch
+Patch81:	trackpoint-2.6.11.patch
 
 Patch100:	linux-2.6-nvidia-pci-ids.patch
 Patch101:	linux-2.6-pty-is-losing-bytes.patch
