@@ -23,7 +23,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.7
-Release:	3
+Release:	4
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -76,7 +76,7 @@ Patch3:		linux-2.4.4-aacraid-043001.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.7.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/
-Patch5:		linux-2.4.7-xfs-20010723.patch.gz
+Patch5:		linux-2.4.7-xfs-20010726.patch.gz
 # Compressed iso9660 filesystem
 Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/filemap-2.4.4-1.diff.gz
 Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-2.4.5-pre1-8.diff.gz
@@ -86,6 +86,8 @@ Patch9:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 Patch10:	linux-grsecurity-%{grsec_version}.patch
 # Linux Compressed cache
 Patch11:	http://prdownloads.sourceforge.net/linuxcompressed/patch-comp-cache-2.4.6-0.17.bz2
+# EXT3
+Patch12:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.4-247.gz
 
 # Assorted bugfixes
 
@@ -165,6 +167,8 @@ Patch904:	linux-vlan-fixpatch-2.4.7-pre6.patch
 Patch905:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch906:	linux-UDF.fix
 Patch907:	linux-jfs+xfs-PLD.fix
+Patch908:	linux-ipvs+ext3.patch
+Patch909:	linux-ext3-quota.patch
 
 # Linus's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.7-%{pre_version}.gz
@@ -391,6 +395,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
+%patch12 -p1
 %patch100 -p1
 %patch5 -p1
 %patch6 -p1
@@ -443,6 +448,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch901 -p0
 %patch905 -p0
 %patch906 -p0
+%patch909 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -476,6 +482,7 @@ patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
 
 # IPVS
 echo Adding IPVS
+%patch908 -p1
 for i in ipvs-%{ipvs_version}/*.diff ; do
 	patch -p1 -s <$i
 done
@@ -661,7 +668,7 @@ BuildKernel BOOT
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT%{_prefix}/{include,src}
+install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{version}}
 
 KERNEL_BUILD_DIR=`pwd`
 cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
@@ -673,181 +680,20 @@ for i in "" "-lids" smp smp-lids BOOT ; do
 	fi
 done
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
-
-bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/
-mv -f $RPM_BUILD_ROOT/usr/src/linux $RPM_BUILD_ROOT/usr/src/linux-%{version}
 ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
-
-gzip -dc %{SOURCE3} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{SOURCE5} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{SOURCE6} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{SOURCE7} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{SOURCE8} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{SOURCE10} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{SOURCE13} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
-
-gzip -dc %{SOURCE14} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{SOURCE15} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
-
-# Pre patch
-gzip -dc %{PATCH1000} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-
-#patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH0}
-gzip -dc %{PATCH1} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH2} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH3}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
-gzip -dc %{PATCH100} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH5} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH6} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH7} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH9}
-%if%{?_without_grsec:0}%{!?_without_grsec:1}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
-%endif
-
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH101}
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH102}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH103}
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH104}
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH105}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH106}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH107}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH108}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH109}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH110}
-patch -p4 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH111}
-#gzip -dc %{PATCH112} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH113}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH114}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH115}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH116}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH117}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH118}
-patch -p2 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH119}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH120}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH121}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH122}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH123}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH124}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH125}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH126}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH127}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH128}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH129}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH130}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH131}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH132}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH133}
-bzip2 -dc %{PATCH134} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-bzip2 -dc %{PATCH135} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH136}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH137}
-
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH900}
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH901}
-#patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH902}
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH905}
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH906}
-
-# Tekram DC395/315 U/UW SCSI host driver
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/dc395/dc395-integ24.diff
-install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
-
-# Fore 200e ATM NIC
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
-#patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
-
-# Netfilter
-(cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
-for i in netfilter-patches/* ; do
-	if [ -f $i -a "$i" != "netfilter-patches/isapplied" ] ; then
-		patch -p1 <$i
-	fi
-done
-(KERNEL_DIR=`pwd` ; export KERNEL_DIR
-cd netfilter-patches/patch-o-matic
-ANS=""
-for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
-echo -e $ANS | ./runme))
-
-%if %{?_with_lids:1}%{!?_with_lids:0}
-# LIDS
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/lids-%{lids_version} < %{PATCH903}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/lids-%{lids_version}/lids-%{lids_version}.patch
-install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config $RPM_BUILD_ROOT/usr/src/linux-%{version}/.config.lids
-%endif
-
-# IPVS
-for i in $RPM_BUILD_ROOT/usr/src/linux-%{version}/ipvs-%{ipvs_version}/*.diff ; do
-	patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $i
-done
-mkdir $RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipv4/ipvs
-cp $RPM_BUILD_ROOT/usr/src/linux-%{version}/ipvs-%{ipvs_version}/ipvs/*.{c,h,in} $RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipv4/ipvs
-cp $RPM_BUILD_ROOT/usr/src/linux-%{version}/ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile $RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipv4/ipvs/Makefile
-
-# Remove -g from drivers/atm/Makefile
-mv -f $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/atm/Makefile \
-	$RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/atm/Makefile.orig
-sed -e 's/EXTRA_CFLAGS.*//g' $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/atm/Makefile.orig \
-	> $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/atm/Makefile
-
-# Free S/Wan
-mv -f $RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipsec/Makefile \
-	$RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipsec/Makefile.orig
-sed -e 's/EXTRA_CFLAGS.*-g//g' $RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipsec/Makefile.orig \
-	> $RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipsec/Makefile
-
-## SymBios/NCR drivers install
-mv $RPM_BUILD_ROOT/usr/src/linux-%{version}/%{sym_ncr_version}/*.{c,h} $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi
-mv $RPM_BUILD_ROOT/usr/src/linux-%{version}/%{sym_ncr_version}/{README,ChangeLog}.* $RPM_BUILD_ROOT/usr/src/linux-%{version}/Documentation
-rm -rf $RPM_BUILD_ROOT/usr/src/linux-%{version}/%{sym_ncr_version}
-
-# install RangeLAN2 driver
-#mv rl2-1.7.1 drivers/net/rl2
-#%patch902 -p1
-
-# 802.1Q VLANs
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/vlan.%{vlan_version} < %{PATCH904}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} \
-	< $RPM_BUILD_ROOT/usr/src/linux-%{version}/vlan.%{vlan_version}/vlan_2.4.patch
-
-# IP personality
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} \
-    <$RPM_BUILD_ROOT/usr/src/linux-%{version}/ippersonality-%{IPperson_version}/patches/ippersonality-20010703-linux-2.4.5.diff
-
-# JFS
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH907}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} \
-    <$RPM_BUILD_ROOT/usr/src/linux-%{version}/jfs-common-v1.0.1-patch
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} \
-    < $RPM_BUILD_ROOT/usr/src/linux-%{version}/jfs-2.4.5-v1.0.1-patch
-
-
-# Fix EXTRAVERSION and CC in main Makefile
-mv -f $RPM_BUILD_ROOT/usr/src/linux-%{version}/Makefile $RPM_BUILD_ROOT/usr/src/linux-%{version}/Makefile.orig
-sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
-%ifarch %{ix86} alpha sparc
-    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= egcs/g' \
-%endif
-%ifarch sparc64
-    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
-%endif
-    $RPM_BUILD_ROOT/usr/src/linux-%{version}/Makefile.orig >$RPM_BUILD_ROOT/usr/src/linux-%{version}/Makefile
 
 %ifarch sparc sparc64
 ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
 ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
-sh $RPM_SOURCE_DIR/kernel-BuildASM.sh $RPM_BUILD_ROOT%{_includedir}
-cp -a $RPM_SOURCE_DIR/kernel-BuildASM.sh $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
+sh %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}
+cp -a %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
 %else
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 %endif
 
-cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
+cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
+
+cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 %{__make} mrproper
 find  -name "*~" -print | xargs rm -f
