@@ -700,6 +700,7 @@ ConfigBOOT()
 	echo "# CONFIG_SOUND is not set">> arch/%{base_arch}/defconfig
 	echo "# CONFIG_USB_AUDIO is not set">> arch/%{base_arch}/defconfig
 	echo "# CONFIG_INPUT_JOYSTICK is not set">> arch/%{base_arch}/defconfig
+	echo "# CONFIG_OMNIBOOK is not set">> arch/%{base_arch}/defconfig
 	
 	ln -sf arch/%{base_arch}/defconfig .config
 
