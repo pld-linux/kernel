@@ -1,0 +1,747 @@
+diff -Naur linux-2002-09-16/Documentation/Configure.help evms-2002-09-16/Documentation/Configure.help
+--- linux-2002-09-16/Documentation/Configure.help	Mon Sep 16 08:55:18 2002
++++ evms-2002-09-16/Documentation/Configure.help	Mon Sep 16 08:50:20 2002
+@@ -1788,6 +1788,196 @@
+   called on26.o. You must also have a high-level driver for the type
+   of device that you want to support.
+ 
++EVMS Kernel Runtime
++CONFIG_EVMS
++  EVMS runtime driver. This is a plugin-based framework for volume
++  management, and combines support for partitioning, software RAID,
++  LVM, and more into a single interface.
++
++  User-space tools are required to perform administration of EVMS logical
++  volumes. Please visit <http://www.sourceforge.net/projects/evms> for
++  more details on downloading and installing these tools.
++
++  This driver is also available as a pair of modules called evms.o and
++  evms_passthru.o ( = code which can be inserted and removed from the
++  running kernel whenever you want). If you want to compile it as a module,
++  say M here and read <file:Documentation/modules.txt>.
++
++EVMS Local Device Manager Plugin
++CONFIG_EVMS_LOCAL_DEV_MGR
++  Support for local IDE and SCSI devices. This plugin is required if EVMS
++  support is selected.
++
++  This plugin is also available as a kernel module called ldev_mgr.o.
++
++EVMS DOS Partition Manager Plugin
++CONFIG_EVMS_DOS_SEGMENT_MGR
++  Support for recognizing all partitions using the ever-popular DOS
++  partitioning scheme (MBRs & EBRs). 99% of the time you will need 
++  this plugin to do anything useful with EVMS.
++
++  This plugin also contains support for recognizing BSD disklabels,
++  UNIXWARE partitions, Solaris-X86 partitions, and OS/2 DLAT entries.
++
++  This plugin is also available as a kernel module called dos_part.o.
++
++EVMS GPT Partition Manager Plugin
++CONFIG_EVMS_GPT_SEGMENT_MGR
++  Support for recognizing all partitions using the new EFI GUID partitioning
++  scheme that is used by IA-64 machines. You should only need to enable this
++  plugin if you are running Linux on an IA-64 machine. All other architectures
++  can say 'N' here.
++
++  This plugin is also available as a kernel module called gpt_part.o
++
++EVMS S/390 Partition Manager Plugin
++CONFIG_EVMS_S390_SEGMENT_MGR
++  Support for recognizing all partitions created on S/390 machines. This
++  plugin recognizes CDL, LDL, and CMS partition formats. You should only need
++  to enable this plugin if you are running Linux on an S/390. All other
++  architectures can say 'N' here.
++
++  This plugin is also available as a kernel module called s390_part.o
++
++EVMS SnapShot Feature Plugin
++CONFIG_EVMS_SNAPSHOT
++  This feature plugin lets you create a snapshot of any volume
++  under EVMS control using any other device under under EVMS
++  control as the target for the snapshot volume.
++
++  This plugin is also available as a kernel module called snapshot.o.
++
++EVMS DriveLink Feature Plugin
++CONFIG_EVMS_DRIVELINK
++  This feature plugin lets you combine multiple devices into a
++  single virtual block device. The size of the virtual block
++  device is approximately equal to the sum of all its components.
++  It currently supports combining up to 60 devices (partitions,
++  disks, or logical volumes).
++
++  This plugin is also available as a kernel module called evms_drivelink.o.
++
++EVMS Bad Block Relocation (BBR) Feature
++CONFIG_EVMS_BBR
++  BBR is designed to remap I/O write failures to another safe
++  location on disk. Note that most disk drives have BBR built
++  into them, so software BBR will only be activated when all
++  hardware BBR replacement sectors have been used.
++
++  This plugin is also available as a kernel module called evms_bbr.o.
++
++EVMS Linux LVM Plugin
++CONFIG_EVMS_LVM
++  The LVM plugin is responsible for providing compatibility with the Linux
++  LVM. This plugin recognizes disks and partitions that are LVM physical
++  volumes (PVs), and assembles the appropriate volume groups (VGs). LVM
++  logical volumes (LVs) are exported as EVMS volumes with full read/write
++  support.  In addition, support for striped and snapshotted volumes is
++  included. The corresponding EVMS Engine plugin must also be installed in
++  order to perform any administration of LVM VGs and LVs.
++
++  This plugin is also available as a kernel module called lvm_vge.o.
++
++EVMS MD Plugin
++CONFIG_EVMS_MD
++  The MD plugin is responsible for providing compatibility with the Linux
++  Software RAID driver (MD). It allows several devices to be combined into
++  one logical device. This can be used to simply append one disk or
++  partition to another, or to combine several redundant disks into a
++  RAID 1/4/5 device so as to provide protection against hard disk failures.
++
++  This plugin is also available as a kernel module called md_core.o.
++
++EVMS MD RAID-Linear Plugin
++CONFIG_EVMS_MD_LINEAR
++  The RAID-Linear personality combines disks and/or partitions simply by
++  appending one to the other.
++
++  This plugin is also available as a kernel module called md_linear.o.
++
++EVMS MD RAID-0 Plugin
++CONFIG_EVMS_MD_RAID0
++  The RAID-0 personality combines disks and/or partitions into one
++  logical device using striping. This method writes data evenly across
++  all members in the device in order to increase the throughput rate if
++  each member resides on a distinct disk.
++
++  This plugin is also available as a kernel module called md_raid0.o.
++
++EVMS MD RAID-1 Plugin
++CONFIG_EVMS_MD_RAID1
++  The RAID-1 personality implements mirroring, in which a logical device
++  consists of several disks that are exact copies of each other. In the
++  event of a mirror failure, the RAID-1 personality will continue to use
++  the remaining mirrors in the set, providing an error free device to the
++  higher levels of the kernel. In a set with N drives, the available space
++  is the capacity of a single drive, and the set protects against the
++  failure of N-1 drives.
++
++  This plugin is also available as a kernel module called md_raid1.o.
++
++EVMS MD RAID-4/RAID-5 Plugin
++CONFIG_EVMS_MD_RAID5
++  A RAID-5 set of N drives with a capacity of C MB per drive provides
++  the capacity of C * (N-1) MB, and protects against a failure of a
++  single drive. For a given sector (row) number, (N-1) drives contain
++  data sectors, and one drive contains the parity protection. For a
++  RAID-4 set, the parity blocks are present on a single drive, while
++  a RAID-5 set distributes the parity across all drives in one of the
++  available parity distribution methods.
++
++  This plugin is also available as a kernel module called md_raid5.o.
++
++EVMS AIX LVM Plugin
++CONFIG_EVMS_AIX
++  The AIX LVM plugin is responsible for providing compatibility with the
++  AIX LVM. This plugin recognizes disks and partitions that are AIX disks,
++  and assembles the appropriate volume groups. AIX logical volumes are
++  exported as EVMS volumes with full read/write support. In addition,
++  support for striped volumes is included, and support for mirroring is
++  under development.
++
++  You should only need to select this option if you are running on a PPC
++  machine and want to access AIX LVM volumes. The user-space plugin for
++  AIX will be available in the future.
++
++  This plugin is also available as a kernel module called AIXlvm_vge.o.
++
++EVMS OS/2 LVM Plugin
++CONFIG_EVMS_OS2
++  Support for recognizing the type 0x35 partitions that later versions
++  of OS/2 use in its Logical Volume Manager.  Provides binary
++  compatibility and includes Drive Linking and Bad Block Relocation
++  emulation. The user-space plugin for OS/2 will be available in the future.
++
++  This plugin is also available as a kernel module called os2lvm_vge.o.
++
++EVMS Clustering Plugin
++CONFIG_EVMS_ECR
++
++  The EVMS Clustering Plugin is still under design and development.
++  Best to just say 'n' here.
++
++  This plugin is available as a kernel module called evms_ecr.o.
++
++EVMS Debug Level
++CONFIG_EVMS_INFO_CRITICAL
++  Set the level for kernel messages from EVMS. Each level on the list
++  produces message for that level and all levels above it. Thus, level
++  "Critical" only logs the most critical messages (and thus the fewest),
++  whereas level "Everything" produces more information that will probably
++  ever be useful.  Level "Default" is a good starting point. Level "Debug"
++  is good if you are having problems with EVMS and want more basic info
++  on what's going on during the volume discovery process.
++
++  EVMS also supports a boot-time kernel parameter to set the info level.
++  To use this method, specify "evms_info_level=5" at boot time, or add the
++  line "append = "evms_info_level=5"" to your lilo.conf file (replacing 5
++  with your desired info level). See include/linux/evms/evms.h for the
++  numerical definitions of the info levels. To use this boot-time parameter,
++  the EVMS core driver must be statically built into the kernel (not as a
++  module).
++
+ Logical Volume Manager (LVM) support
+ CONFIG_BLK_DEV_LVM
+   This driver lets you combine several hard disks, hard disk
+diff -Naur linux-2002-09-16/MAINTAINERS evms-2002-09-16/MAINTAINERS
+--- linux-2002-09-16/MAINTAINERS	Mon Sep 16 08:55:18 2002
++++ evms-2002-09-16/MAINTAINERS	Mon Sep 16 08:50:20 2002
+@@ -546,6 +546,13 @@
+ W:	http://opensource.creative.com/
+ S:	Maintained
+ 
++ENTERPRISE VOLUME MANAGEMENT SYSTEM (EVMS)
++P:	Mark Peloquin, Steve Pratt, Kevin Corry
++M:	peloquin@us.ibm.com, slpratt@us.ibm.com, corryk@us.ibm.com
++L:	evms-devel@lists.sourceforge.net                          
++W:	http://www.sourceforge.net/projects/evms/
++S:	Supported
++
+ ETHEREXPRESS-16 NETWORK DRIVER
+ P:	Philip Blundell
+ M:	Philip.Blundell@pobox.com
+diff -Naur linux-2002-09-16/Makefile evms-2002-09-16/Makefile
+--- linux-2002-09-16/Makefile	Mon Sep 16 08:55:18 2002
++++ evms-2002-09-16/Makefile	Mon Sep 16 08:50:20 2002
+@@ -190,6 +190,7 @@
+ DRIVERS-$(CONFIG_BLUEZ) += drivers/bluetooth/bluetooth.o
+ DRIVERS-$(CONFIG_HOTPLUG_PCI) += drivers/hotplug/vmlinux-obj.o
+ DRIVERS-$(CONFIG_ISDN_BOOL) += drivers/isdn/vmlinux-obj.o
++DRIVERS-$(CONFIG_EVMS) += drivers/evms/evmsdrvr.o
+ 
+ DRIVERS := $(DRIVERS-y)
+ 
+diff -Naur linux-2002-09-16/arch/i386/config.in evms-2002-09-16/arch/i386/config.in
+--- linux-2002-09-16/arch/i386/config.in	Mon Sep 16 08:55:18 2002
++++ evms-2002-09-16/arch/i386/config.in	Mon Sep 16 08:50:21 2002
+@@ -326,6 +326,8 @@
+ 
+ source drivers/block/Config.in
+ 
++source drivers/evms/Config.in
++
+ source drivers/md/Config.in
+ 
+ if [ "$CONFIG_NET" = "y" ]; then
+diff -Naur linux-2002-09-16/arch/ia64/config.in evms-2002-09-16/arch/ia64/config.in
+--- linux-2002-09-16/arch/ia64/config.in	Mon Sep 16 08:55:18 2002
++++ evms-2002-09-16/arch/ia64/config.in	Mon Sep 16 08:52:33 2002
+@@ -139,6 +139,7 @@
+   source drivers/block/Config.in
+   source drivers/ieee1394/Config.in
+   source drivers/message/i2o/Config.in
++  source drivers/evms/Config.in
+   source drivers/md/Config.in
+   source drivers/message/fusion/Config.in
+ 
+diff -Naur linux-2002-09-16/arch/parisc/config.in evms-2002-09-16/arch/parisc/config.in
+--- linux-2002-09-16/arch/parisc/config.in	Mon Sep 16 08:55:18 2002
++++ evms-2002-09-16/arch/parisc/config.in	Mon Sep 16 08:53:20 2002
+@@ -97,6 +97,8 @@
+ 
+ source drivers/block/Config.in
+ 
++source drivers/evms/Config.in
++
+ source drivers/md/Config.in
+ 
+ if [ "$CONFIG_NET" = "y" ]; then
+diff -Naur linux-2002-09-16/arch/ppc/config.in evms-2002-09-16/arch/ppc/config.in
+--- linux-2002-09-16/arch/ppc/config.in	Mon Sep 16 08:55:18 2002
++++ evms-2002-09-16/arch/ppc/config.in	Mon Sep 16 08:50:21 2002
+@@ -249,6 +249,7 @@
+ source drivers/mtd/Config.in
+ source drivers/pnp/Config.in
+ source drivers/block/Config.in
++source drivers/evms/Config.in
+ source drivers/md/Config.in
+ 
+ if [ "$CONFIG_NET" = "y" ]; then
+diff -Naur linux-2002-09-16/arch/ppc64/config.in evms-2002-09-16/arch/ppc64/config.in
+--- linux-2002-09-16/arch/ppc64/config.in	Mon Sep 16 08:55:18 2002
++++ evms-2002-09-16/arch/ppc64/config.in	Mon Sep 16 08:50:22 2002
+@@ -99,6 +99,7 @@
+ endmenu
+ 
+ source drivers/block/Config.in
++source drivers/evms/Config.in
+ source drivers/md/Config.in
+ 
+ if [ "$CONFIG_NET" = "y" ]; then
+diff -Naur linux-2002-09-16/arch/s390/config.in evms-2002-09-16/arch/s390/config.in
+--- linux-2002-09-16/arch/s390/config.in	Mon Sep 16 08:55:18 2002
++++ evms-2002-09-16/arch/s390/config.in	Mon Sep 16 08:50:21 2002
+@@ -59,6 +59,8 @@
+ 
+ source drivers/s390/Config.in
+ 
++source drivers/evms/Config.in
++
+ if [ "$CONFIG_NET" = "y" ]; then
+   source net/Config.in
+ fi
+diff -Naur linux-2002-09-16/arch/s390x/config.in evms-2002-09-16/arch/s390x/config.in
+--- linux-2002-09-16/arch/s390x/config.in	Mon Sep 16 08:55:18 2002
++++ evms-2002-09-16/arch/s390x/config.in	Mon Sep 16 08:50:21 2002
+@@ -63,6 +63,8 @@
+ 
+ source drivers/s390/Config.in
+ 
++source drivers/evms/Config.in
++
+ if [ "$CONFIG_NET" = "y" ]; then
+   source net/Config.in
+ fi
+diff -Naur linux-2002-09-16/drivers/Makefile evms-2002-09-16/drivers/Makefile
+--- linux-2002-09-16/drivers/Makefile	Mon Sep 16 08:55:18 2002
++++ evms-2002-09-16/drivers/Makefile	Mon Sep 16 08:50:22 2002
+@@ -8,7 +8,7 @@
+ 
+ mod-subdirs :=	dio hil mtd sbus video macintosh usb input telephony sgi ide \
+ 		message/i2o message/fusion scsi md ieee1394 pnp isdn atm \
+-		fc4 net/hamradio i2c acpi bluetooth
++		fc4 net/hamradio i2c acpi bluetooth evms
+ 
+ subdir-y :=	parport char block net sound misc media cdrom hotplug
+ subdir-m :=	$(subdir-y)
+@@ -48,5 +48,6 @@
+ subdir-$(CONFIG_ACPI)		+= acpi
+ 
+ subdir-$(CONFIG_BLUEZ)		+= bluetooth
++subdir-$(CONFIG_EVMS)		+= evms
+ 
+ include $(TOPDIR)/Rules.make
+diff -Naur linux-2002-09-16/include/linux/fs.h evms-2002-09-16/include/linux/fs.h
+--- linux-2002-09-16/include/linux/fs.h	Mon Sep 16 08:55:18 2002
++++ evms-2002-09-16/include/linux/fs.h	Mon Sep 16 08:50:23 2002
+@@ -1478,6 +1478,7 @@
+ unsigned long generate_cluster_swab32(kdev_t, int b[], int);
+ extern kdev_t ROOT_DEV;
+ extern char root_device_name[];
++extern void get_root_device_name( char * root_name );
+ 
+ 
+ extern void show_buffers(void);
+diff -Naur linux-2002-09-16/include/linux/major.h evms-2002-09-16/include/linux/major.h
+--- linux-2002-09-16/include/linux/major.h	Mon Sep 16 08:55:18 2002
++++ evms-2002-09-16/include/linux/major.h	Mon Jul  8 16:23:51 2002
+@@ -142,6 +142,8 @@
+ 
+ #define	UMEM_MAJOR	116	/* http://www.umem.com/ Battery Backed RAM */
+ 
++#define EVMS_MAJOR	117	/* Enterprise Volume Management System */
++
+ #define RTF_MAJOR	150
+ #define RAW_MAJOR	162
+ 
+diff -Naur linux-2002-09-16/include/linux/mempool.h evms-2002-09-16/include/linux/mempool.h
+--- linux-2002-09-16/include/linux/mempool.h	Wed Dec 31 18:00:00 1969
++++ evms-2002-09-16/include/linux/mempool.h	Mon Jun 17 10:13:08 2002
+@@ -0,0 +1,30 @@
++/*
++ * memory buffer pool support
++ */
++#ifndef _LINUX_MEMPOOL_H
++#define _LINUX_MEMPOOL_H
++
++#include <linux/wait.h>
++
++typedef void * (mempool_alloc_t)(int gfp_mask, void *pool_data);
++typedef void (mempool_free_t)(void *element, void *pool_data);
++
++typedef struct mempool_s {
++	spinlock_t lock;
++	int min_nr;		/* nr of elements at *elements */
++	int curr_nr;		/* Current nr of elements at *elements */
++	void **elements;
++
++	void *pool_data;
++	mempool_alloc_t *alloc;
++	mempool_free_t *free;
++	wait_queue_head_t wait;
++} mempool_t;
++extern mempool_t * mempool_create(int min_nr, mempool_alloc_t *alloc_fn,
++				 mempool_free_t *free_fn, void *pool_data);
++extern int mempool_resize(mempool_t *pool, int new_min_nr, int gfp_mask);
++extern void mempool_destroy(mempool_t *pool);
++extern void * mempool_alloc(mempool_t *pool, int gfp_mask);
++extern void mempool_free(void *element, mempool_t *pool);
++
++#endif /* _LINUX_MEMPOOL_H */
+diff -Naur linux-2002-09-16/include/linux/sysctl.h evms-2002-09-16/include/linux/sysctl.h
+--- linux-2002-09-16/include/linux/sysctl.h	Mon Sep 16 08:55:18 2002
++++ evms-2002-09-16/include/linux/sysctl.h	Mon Sep 16 08:50:22 2002
+@@ -557,7 +557,8 @@
+ 	DEV_HWMON=2,
+ 	DEV_PARPORT=3,
+ 	DEV_RAID=4,
+-	DEV_MAC_HID=5
++	DEV_MAC_HID=5,
++	DEV_EVMS=6
+ };
+ 
+ /* /proc/sys/dev/cdrom */
+@@ -573,6 +574,18 @@
+ /* /proc/sys/dev/parport */
+ enum {
+ 	DEV_PARPORT_DEFAULT=-3
++};
++
++/* /proc/sys/dev/evms */
++enum {
++	DEV_EVMS_INFO_LEVEL=1,
++	DEV_EVMS_MD=2
++};
++
++/* /proc/sys/dev/evms/raid */
++enum {
++	DEV_EVMS_MD_SPEED_LIMIT_MIN=1,
++	DEV_EVMS_MD_SPEED_LIMIT_MAX=2
+ };
+ 
+ /* /proc/sys/dev/raid */
+diff -Naur linux-2002-09-16/init/do_mounts.c evms-2002-09-16/init/do_mounts.c
+--- linux-2002-09-16/init/do_mounts.c	Mon Sep 16 08:55:18 2002
++++ evms-2002-09-16/init/do_mounts.c	Mon Sep 16 08:50:23 2002
+@@ -225,6 +225,7 @@
+ 	{ "ftlc", 0x2c10 },
+ 	{ "ftld", 0x2c18 },
+ 	{ "mtdblock", 0x1f00 },
++ 	{ "evms", 0x7500 },
+ 	{ NULL, 0 }
+ };
+ 
+@@ -739,6 +740,11 @@
+ 	}
+ #endif
+ 	mount_block_root("/dev/root", root_mountflags);
++}
++
++void get_root_device_name( char * root_name )
++{
++	strncpy(root_name, root_device_name, 63);
+ }
+ 
+ #ifdef CONFIG_BLK_DEV_INITRD
+diff -Naur linux-2002-09-16/kernel/ksyms.c evms-2002-09-16/kernel/ksyms.c
+--- linux-2002-09-16/kernel/ksyms.c	Mon Sep 16 08:55:18 2002
++++ evms-2002-09-16/kernel/ksyms.c	Mon Sep 16 08:50:23 2002
+@@ -323,6 +323,8 @@
+ EXPORT_SYMBOL(refile_buffer);
+ EXPORT_SYMBOL(max_sectors);
+ EXPORT_SYMBOL(max_readahead);
++EXPORT_SYMBOL(is_swap_partition);
++EXPORT_SYMBOL(walk_gendisk);
+ 
+ /* tty routines */
+ EXPORT_SYMBOL(tty_hangup);
+diff -Naur linux-2002-09-16/mm/Makefile evms-2002-09-16/mm/Makefile
+--- linux-2002-09-16/mm/Makefile	Mon Sep 16 08:55:18 2002
++++ evms-2002-09-16/mm/Makefile	Wed Jun 19 11:21:04 2002
+@@ -9,12 +9,12 @@
+ 
+ O_TARGET := mm.o
+ 
+-export-objs := shmem.o filemap.o memory.o page_alloc.o
++export-objs := shmem.o filemap.o memory.o page_alloc.o mempool.o
+ 
+ obj-y	 := memory.o mmap.o filemap.o mprotect.o mlock.o mremap.o \
+ 	    vmalloc.o slab.o bootmem.o swap.o vmscan.o page_io.o \
+ 	    page_alloc.o swap_state.o swapfile.o numa.o oom_kill.o \
+-	    shmem.o
++	    shmem.o mempool.o
+ 
+ obj-$(CONFIG_HIGHMEM) += highmem.o
+ 
+diff -Naur linux-2002-09-16/mm/mempool.c evms-2002-09-16/mm/mempool.c
+--- linux-2002-09-16/mm/mempool.c	Wed Dec 31 18:00:00 1969
++++ evms-2002-09-16/mm/mempool.c	Wed Jun 19 09:47:16 2002
+@@ -0,0 +1,273 @@
++/*
++ *  linux/mm/mempool.c
++ *
++ *  memory buffer pool support. Such pools are mostly used
++ *  for guaranteed, deadlock-free memory allocations during
++ *  extreme VM load.
++ *
++ *  started by Ingo Molnar, Copyright (C) 2001
++ */
++
++#include <linux/mm.h>
++#include <linux/slab.h>
++#include <linux/module.h>
++#include <linux/compiler.h>
++#include <linux/mempool.h>
++#include <linux/fs.h>
++
++#define BUG_ON(condition) do { if (unlikely((condition)!=0)) BUG(); } while(0)
++
++static void add_element(mempool_t *pool, void *element)
++{
++	BUG_ON(pool->curr_nr >= pool->min_nr);
++	pool->elements[pool->curr_nr++] = element;
++}
++
++static void *remove_element(mempool_t *pool)
++{
++	BUG_ON(pool->curr_nr <= 0);
++	return pool->elements[--pool->curr_nr];
++}
++
++static void free_pool(mempool_t *pool)
++{
++	while (pool->curr_nr) {
++		void *element = remove_element(pool);
++		pool->free(element, pool->pool_data);
++	}
++	kfree(pool->elements);
++	kfree(pool);
++}
++
++/**
++ * mempool_create - create a memory pool
++ * @min_nr:    the minimum number of elements guaranteed to be
++ *             allocated for this pool.
++ * @alloc_fn:  user-defined element-allocation function.
++ * @free_fn:   user-defined element-freeing function.
++ * @pool_data: optional private data available to the user-defined functions.
++ *
++ * this function creates and allocates a guaranteed size, preallocated
++ * memory pool. The pool can be used from the mempool_alloc and mempool_free
++ * functions. This function might sleep. Both the alloc_fn() and the free_fn()
++ * functions might sleep - as long as the mempool_alloc function is not called
++ * from IRQ contexts.
++ */
++mempool_t * mempool_create(int min_nr, mempool_alloc_t *alloc_fn,
++				mempool_free_t *free_fn, void *pool_data)
++{
++	mempool_t *pool;
++
++	pool = kmalloc(sizeof(*pool), GFP_KERNEL);
++	if (!pool)
++		return NULL;
++	memset(pool, 0, sizeof(*pool));
++	pool->elements = kmalloc(min_nr * sizeof(void *), GFP_KERNEL);
++	if (!pool->elements) {
++		kfree(pool);
++		return NULL;
++	}
++	spin_lock_init(&pool->lock);
++	pool->min_nr = min_nr;
++	pool->pool_data = pool_data;
++	init_waitqueue_head(&pool->wait);
++	pool->alloc = alloc_fn;
++	pool->free = free_fn;
++
++	/*
++	 * First pre-allocate the guaranteed number of buffers.
++	 */
++	while (pool->curr_nr < pool->min_nr) {
++		void *element;
++
++		element = pool->alloc(GFP_KERNEL, pool->pool_data);
++		if (unlikely(!element)) {
++			free_pool(pool);
++			return NULL;
++		}
++		add_element(pool, element);
++	}
++	return pool;
++}
++
++/**
++ * mempool_resize - resize an existing memory pool
++ * @pool:       pointer to the memory pool which was allocated via
++ *              mempool_create().
++ * @new_min_nr: the new minimum number of elements guaranteed to be
++ *              allocated for this pool.
++ * @gfp_mask:   the usual allocation bitmask.
++ *
++ * This function shrinks/grows the pool. In the case of growing,
++ * it cannot be guaranteed that the pool will be grown to the new
++ * size immediately, but new mempool_free() calls will refill it.
++ *
++ * Note, the caller must guarantee that no mempool_destroy is called
++ * while this function is running. mempool_alloc() & mempool_free()
++ * might be called (eg. from IRQ contexts) while this function executes.
++ */
++int mempool_resize(mempool_t *pool, int new_min_nr, int gfp_mask)
++{
++	void *element;
++	void **new_elements;
++	unsigned long flags;
++
++	BUG_ON(new_min_nr <= 0);
++
++	spin_lock_irqsave(&pool->lock, flags);
++	if (new_min_nr < pool->min_nr) {
++		while (pool->curr_nr > new_min_nr) {
++			element = remove_element(pool);
++			spin_unlock_irqrestore(&pool->lock, flags);
++			pool->free(element, pool->pool_data);
++			spin_lock_irqsave(&pool->lock, flags);
++		}
++		pool->min_nr = new_min_nr;
++		goto out_unlock;
++	}
++	spin_unlock_irqrestore(&pool->lock, flags);
++
++	/* Grow the pool */
++	new_elements = kmalloc(new_min_nr * sizeof(*new_elements), gfp_mask);
++	if (!new_elements)
++		return -ENOMEM;
++
++	spin_lock_irqsave(&pool->lock, flags);
++	memcpy(new_elements, pool->elements,
++			pool->curr_nr * sizeof(*new_elements));
++	kfree(pool->elements);
++	pool->elements = new_elements;
++	pool->min_nr = new_min_nr;
++
++	while (pool->curr_nr < pool->min_nr) {
++		spin_unlock_irqrestore(&pool->lock, flags);
++		element = pool->alloc(gfp_mask, pool->pool_data);
++		if (!element)
++			goto out;
++		spin_lock_irqsave(&pool->lock, flags);
++		if (pool->curr_nr < pool->min_nr)
++			add_element(pool, element);
++		else
++			kfree(element);		/* Raced */
++	}
++out_unlock:
++	spin_unlock_irqrestore(&pool->lock, flags);
++out:
++	return 0;
++}
++
++/**
++ * mempool_destroy - deallocate a memory pool
++ * @pool:      pointer to the memory pool which was allocated via
++ *             mempool_create().
++ *
++ * this function only sleeps if the free_fn() function sleeps. The caller
++ * has to guarantee that all elements have been returned to the pool (ie:
++ * freed) prior to calling mempool_destroy().
++ */
++void mempool_destroy(mempool_t *pool)
++{
++	if (pool->curr_nr != pool->min_nr)
++		BUG();		/* There were outstanding elements */
++	free_pool(pool);
++}
++
++/**
++ * mempool_alloc - allocate an element from a specific memory pool
++ * @pool:      pointer to the memory pool which was allocated via
++ *             mempool_create().
++ * @gfp_mask:  the usual allocation bitmask.
++ *
++ * this function only sleeps if the alloc_fn function sleeps or
++ * returns NULL. Note that due to preallocation, this function
++ * *never* fails when called from process contexts. (it might
++ * fail if called from an IRQ context.)
++ */
++void * mempool_alloc(mempool_t *pool, int gfp_mask)
++{
++	void *element;
++	unsigned long flags;
++	int curr_nr;
++	DECLARE_WAITQUEUE(wait, current);
++	int gfp_nowait = gfp_mask & ~(__GFP_WAIT | __GFP_IO);
++
++repeat_alloc:
++	element = pool->alloc(gfp_nowait, pool->pool_data);
++	if (likely(element != NULL))
++		return element;
++
++	/*
++	 * If the pool is less than 50% full then try harder
++	 * to allocate an element:
++	 */
++	if ((gfp_mask != gfp_nowait) && (pool->curr_nr <= pool->min_nr/2)) {
++		element = pool->alloc(gfp_mask, pool->pool_data);
++		if (likely(element != NULL))
++			return element;
++	}
++
++	/*
++	 * Kick the VM at this point.
++	 */
++	wakeup_bdflush();
++
++	spin_lock_irqsave(&pool->lock, flags);
++	if (likely(pool->curr_nr)) {
++		element = remove_element(pool);
++		spin_unlock_irqrestore(&pool->lock, flags);
++		return element;
++	}
++	spin_unlock_irqrestore(&pool->lock, flags);
++
++	/* We must not sleep in the GFP_ATOMIC case */
++	if (gfp_mask == gfp_nowait)
++		return NULL;
++
++	run_task_queue(&tq_disk);
++
++	add_wait_queue_exclusive(&pool->wait, &wait);
++	set_task_state(current, TASK_UNINTERRUPTIBLE);
++
++	spin_lock_irqsave(&pool->lock, flags);
++	curr_nr = pool->curr_nr;
++	spin_unlock_irqrestore(&pool->lock, flags);
++
++	if (!curr_nr)
++		schedule();
++
++	current->state = TASK_RUNNING;
++	remove_wait_queue(&pool->wait, &wait);
++
++	goto repeat_alloc;
++}
++
++/**
++ * mempool_free - return an element to the pool.
++ * @element:   pool element pointer.
++ * @pool:      pointer to the memory pool which was allocated via
++ *             mempool_create().
++ *
++ * this function only sleeps if the free_fn() function sleeps.
++ */
++void mempool_free(void *element, mempool_t *pool)
++{
++	unsigned long flags;
++
++	if (pool->curr_nr < pool->min_nr) {
++		spin_lock_irqsave(&pool->lock, flags);
++		if (pool->curr_nr < pool->min_nr) {
++			add_element(pool, element);
++			spin_unlock_irqrestore(&pool->lock, flags);
++			wake_up(&pool->wait);
++			return;
++		}
++		spin_unlock_irqrestore(&pool->lock, flags);
++	}
++	pool->free(element, pool->pool_data);
++}
++
++EXPORT_SYMBOL(mempool_create);
++EXPORT_SYMBOL(mempool_resize);
++EXPORT_SYMBOL(mempool_destroy);
++EXPORT_SYMBOL(mempool_alloc);
++EXPORT_SYMBOL(mempool_free);
