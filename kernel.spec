@@ -30,7 +30,7 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		4
+%define		_rel		5
 %define		_test_ver	11
 %define		_cset		20031209_2107
 
@@ -132,6 +132,8 @@ Patch70:	2.6.0-t11-r8169-getstats.patch
 Patch72:	2.6.0-t11-ALI-M1563-lkml.patch
 
 Patch74:	patch-2.6.0-test11-bart1
+Patch75:	2.6.0-t11-ide2.patch
+
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -516,6 +518,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch72 -p1
 
 %patch74 -p1
+%patch75 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
