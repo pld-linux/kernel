@@ -160,6 +160,7 @@ BuildRequires:	modutils
 Buildrequires:	perl
 Provides:	%{name}-up = %{version}
 Provides:	module-info
+Provides:	i2c = 2.6.1
 Autoreqprov:	no
 Prereq:		fileutils
 Prereq:		modutils
@@ -317,6 +318,7 @@ Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
+Provides:	i2c-devel = 2.6.1
 Autoreqprov:	no
 
 %description headers
