@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		3
+%define		_rel		4
 %define		_test_ver	10
 %define		_cset		20031125_0507
 
@@ -595,23 +595,24 @@ PreInstallKernel (){
 }
 
 KERNEL_BUILD_DIR=`pwd`
-KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
-rm -rf $KERNEL_INSTALL_DIR
-install -d $KERNEL_INSTALL_DIR
 
 # UP KERNEL
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build/UP"
+rm -rf $KERNEL_INSTALL_DIR
 BuildConfig
 %{?with_up:BuildKernel}
 %{?with_up:PreInstallKernel}
 
 # SMP KERNEL
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build/SMP"
+rm -rf $KERNEL_INSTALL_DIR
 BuildConfig smp
 %{?with_smp:BuildKernel smp}
 %{?with_smp:PreInstallKernel smp}
 
 # BOOT kernel
 %ifnarch i586 i686 athlon
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk"
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build/BOOT"
 rm -rf $KERNEL_INSTALL_DIR
 %{?with_boot:BuildKernel BOOT}
 %{?with_boot:PreInstallKernel boot}
@@ -625,8 +626,12 @@ install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 KERNEL_BUILD_DIR=`pwd`
 
-%if %{with up} || %{with smp}
-cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
+%if %{with up}
+cp -a $KERNEL_BUILD_DIR/build/UP/* $RPM_BUILD_ROOT
+%endif
+
+%if %{with smp}
+cp -a $KERNEL_BUILD_DIR/build/SMP/* $RPM_BUILD_ROOT
 %endif
 
 for i in "" smp ; do
@@ -644,8 +649,8 @@ cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 %{__make} mrproper
-find  -name "*~" -print | xargs rm -f
-find  -name "*.orig" -print | xargs rm -f
+find -name "*~" -exec rm -f "{}" ";"
+find -name "*.orig" -exec rm -f "{}" ";"
 
 %ifarch %{ix86}
 cat $RPM_SOURCE_DIR/kernel-ia32.config > .config
@@ -695,16 +700,21 @@ cp .config config-smp
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
-if [ -e $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h ]; then
-install $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h \
+if [ -e $KERNEL_BUILD_DIR/build/UP/usr/src/linux-%{version}/include/linux/autoconf-up.h ]; then
+install $KERNEL_BUILD_DIR/build/UP/usr/src/linux-%{version}/include/linux/autoconf-up.h \
 $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 fi
-if [ -e $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h ]; then
-install $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h \
+
+if [ -e $KERNEL_BUILD_DIR/build/SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h ]; then
+install $KERNEL_BUILD_DIR/build/SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h \
 $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 fi
-install $KERNEL_BUILD_DIR-installed/usr/src/linux-%{version}/include/linux/* \
+
+%if %{with up} || %{with smp}
+# UP or SMP
+install $KERNEL_BUILD_DIR/build/*P/usr/src/linux-%{version}/include/linux/* \
 $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
+%endif
 
 %ifarch %{ix86}
 ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
@@ -714,10 +724,7 @@ ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
 %{__make} clean
 
 %clean
-KERNEL_BUILD_DIR=`pwd`
-KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
 rm -rf $RPM_BUILD_ROOT
-rm -rf $KERNEL_INSTALL_DIR
 
 %post
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
