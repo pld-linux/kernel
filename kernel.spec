@@ -47,7 +47,7 @@ Patch4:		ftp://ftp.sime.com/pub/linux/raid-2.2.16-mabene
 # Wiget: WARNING: hand modified patch
 Patch5:		http://republika.pl/bkz/ide.2.2.16.patch.bz2
 Patch6:		%{name}-pldfblogo.patch
-Patch7:		linux-2.2.14-freeswan-1.3.patch
+Patch7:		linux-2.2.16-freeswan-1.4.patch
 Patch8:		wanrouter-v2215.patch.gz
 Patch10:	linux-newagpdist.patch
 Patch11:	linux-agphjlfixes.patch
