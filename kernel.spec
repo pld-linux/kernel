@@ -372,6 +372,36 @@ do twojego sprzêtu.
 ãÅ ×ÉÈ¦ÄÎ¦ ÔÅËÓÔÉ ÑÄÒÁ Linux. ÷ÉËÏÒÉÓÔÏ×ÕÀÞÉ §È ×É ÍÏÖÅÔÅ ÐÏÂÕÄÕ×ÁÔÉ
 ×ÁÛÅ ×ÌÁÓÎÅ ÑÄÒÏ, ÑËÅ ËÒÁÝÅ ÎÁÓÔÒÏ¤ÎÏ ÎÁ ËÏÎÆ¦ÇÕÒÁÃ¦À ×ÁÛÏ§ ÍÁÛÉÎÉ.
 
+%package pcmcia-cs
+Summary:	PCMCIA-CS modules
+Summary(pl):	Modu³y PCMCIA-CS 
+Group:		Base/Kernel
+Group(pl):	Podstawowe/Kernel
+Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
+Requires(post):		%{name}-up = %{version}-%{release}
+Requires(postun):	%{name}-up = %{version}-%{release}
+
+%description pcmcia-cs
+PCMCIA-CS modules (%{pcmcia_version}).
+
+%description -l pl pcmcia-cs
+Modu³y PCMCIA-CS (%{pcmcia_version}).
+
+%package smp-pcmcia-cs
+Summary:	PCMCIA-CS modules for SMP kernel
+Summary(pl):	Modu³y PCMCIA-CS dla maszyn SMP
+Group:		Base/Kernel
+Group(pl):	Podstawowe/Kernel
+Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
+Requires(post):		%{name}-smp = %{version}-%{release}
+Requires(postun):	%{name}-smp = %{version}-%{release}
+
+%description smp-pcmcia-cs
+PCMCIA-CS modules for SMP kernel (%{pcmcia_version}).
+
+%description -l pl smp-pcmcia-cs
+Modu³y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
+
 %prep
 %setup -q -a3 -a4 -a5 -a6 -a7 -a9 -a10 -a11 -a13 -n linux
 
@@ -657,6 +687,7 @@ KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
 rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
 
+
 # NORMAL KERNEL
 BuildKernel
 %ifarch %{ix86}
@@ -890,6 +921,10 @@ if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
+%post pcmcia-cs
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+
+
 %post smp
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
@@ -910,6 +945,9 @@ if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
+%post smp-pcmcia-cs
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
+
 %postun
 if [ -L /lib/modules/%{version} ]; then
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}" ]; then
@@ -919,6 +957,9 @@ if [ -L /lib/modules/%{version} ]; then
 	fi
 fi
 rm -f /boot/initrd-%{version}-%{release}.gz
+
+%postun pcmcia-cs
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
 %postun smp
 if [ -L /lib/modules/%{version} ]; then
@@ -930,6 +971,8 @@ if [ -L /lib/modules/%{version} ]; then
 fi
 rm -f /boot/initrd-%{version}-%{release}smp.gz
 
+%postun smp-pcmcia-cs
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
 
 %post headers
 rm -f /usr/src/linux
@@ -971,10 +1014,13 @@ fi
 /lib/modules/%{version}-%{release}/usb
 /lib/modules/%{version}-%{release}/video
 %endif
+#%config(missingok) %{_sysconfdir}/sysconfig/rc-boot/images
+
+%files pcmcia-cs
+%defattr(644,root,root,755)
 %ifarch %{ix86}
 /lib/modules/%{version}-%{release}/pcmcia
 %endif
-#%config(missingok) %{_sysconfdir}/sysconfig/rc-boot/images
 
 %files smp
 %defattr(644,root,root,755)
@@ -1003,10 +1049,13 @@ fi
 /lib/modules/%{version}-%{release}smp/usb
 /lib/modules/%{version}-%{release}smp/video
 %endif
+#%config(missingok) %{_sysconfdir}/sysconfig/rc-boot/images
+
+%files -n kernel-smp-pcmcia-cs
+%defattr(644,root,root,755)
 %ifarch %{ix86}
 /lib/modules/%{version}-%{release}smp/pcmcia
 %endif
-#%config(missingok) %{_sysconfdir}/sysconfig/rc-boot/images
 
 %ifnarch i586 i686 ppc
 %files BOOT
