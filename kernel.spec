@@ -771,8 +771,8 @@ geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}.gz %{version}-%{release
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}.gz /boot/initrd
 
-if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
-	/sbin/lilo 1>&2 || :
+if [ -x /sbin/rc-boot ] ; then
+	/sbin/rc-boot 1>&2 || :
 fi
 
 if [ ! -L /lib/modules/%{version} ] ; then
@@ -792,8 +792,8 @@ geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}-lids.gz %{version}-%{re
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}-lids.gz /boot/initrd
 
-if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
-	/sbin/lilo 1>&2 || :
+if [ -x /sbin/rc-boot ] ; then
+	/sbin/rc-boot 1>&2 || :
 fi
 
 if [ ! -L /lib/modules/%{version} ] ; then
@@ -813,8 +813,8 @@ geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}smp.gz %{version}-%{rele
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 
-if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
-	/sbin/lilo 1>&2 || :
+if [ -x /sbin/rc-boot ] ; then
+	/sbin/rc-boot 1>&2 || :
 fi
 
 if [ ! -L /lib/modules/%{version} ] ; then
@@ -834,8 +834,8 @@ geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}smp-lids.gz %{version}-%
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}smp-lids.gz /boot/initrd
 
-if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
-	/sbin/lilo 1>&2 || :
+if [ -x /sbin/rc-boot ] ; then
+	/sbin/rc-boot 1>&2 || :
 fi
 
 if [ ! -L /lib/modules/%{version} ] ; then
@@ -851,8 +851,9 @@ mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release}BOOT /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}BOOT /boot/System.map
 
-if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
-	/sbin/lilo 1>&2 || :
+
+if [ -x /sbin/rc-boot ] ; then
+	/sbin/rc-boot 1>&2 || :
 fi
 
 if [ ! -L /lib/modules/%{version} ] ; then
