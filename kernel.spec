@@ -156,7 +156,8 @@ Patch138:	linux-quota-bug.patch
 Patch139:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch140:	linux-UDF.fix
 Patch141:	http://people.FreeBSD.org/~gibbs/linux/linux-aic7xxx-%{aic_version}.patch.gz
-
+# Created from lvm.tgz:LVM/PATCHES by doing make
+Patch142:	linux-2.4.7-lvm-1.0.1rc3cvs.patch
 # Patches fixing other patches or 3rd party sources ;)
 
 Patch900:	kernel-i8255-asm-fix.patch
@@ -451,6 +452,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch139 -p0
 %patch140 -p0
 %patch141 -p1
+%patch142 -p1
 
 %patch900 -p0 
 %patch901 -p0
