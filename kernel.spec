@@ -672,7 +672,7 @@ ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
 
 geninitrd /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
-mv -f /boot/initrd /boot/initrd.old
+mv -f /boot/initrd /boot/initrd.old 2> /dev/null > /dev/null
 ln -sf initrd-%{version}-%{release}.gz /boot/initrd
 
 if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
@@ -689,7 +689,7 @@ ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}smp /boot/System.map
 
 geninitrd /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
-mv -f /boot/initrd /boot/initrd.old
+mv -f /boot/initrd /boot/initrd.old 2> /deb/null > /dev/null
 ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 
 if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
