@@ -51,8 +51,8 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_post_ver	%{nil}
-%define		_rel		0.9HEAD
-%define		_cset		20041005_1606
+%define		_rel		0.10HEAD
+%define		_cset		20041009_2106
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -80,7 +80,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 # Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
-# Source4-md5:	a69b8822d095c463a35dd0beb28f3f34
+# Source4-md5:	4ce22d04af5c0b8d5ec01fda136bc123
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -117,7 +117,6 @@ Patch22:	2.6.5-i386-cmpxchg.patch
 # http://softwaresuspend.berlios.de/
 Patch500:	linux-2.6-software-suspend-2.1.patch.gz
 Patch501:	linux-2.6-software-suspend-fixes.patch
-Patch502:	linux-2.6-via-agpc-resume-suspend-support.patch
 
 # http://sources.redhat.com/cluster/
 Patch550:	linux-cluster-cman.patch
@@ -489,7 +488,6 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch500 -p1
 %patch501 -p1
 %endif
-%patch502 -p1
 
 %patch550 -p1
 %patch551 -p1
