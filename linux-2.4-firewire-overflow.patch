@@ -1,0 +1,12 @@
+--- linux-2.4.20.orig/drivers/ieee1394/raw1394.c	2004-07-27 14:54:56.918393009 +0200
++++ linux-2.4.20/drivers/ieee1394/raw1394.c	2004-07-27 14:56:37.930125580 +0200
+@@ -1974,7 +1974,8 @@ static ssize_t raw1394_write(struct file
+         }
+         req->file_info = fi;
+ 
+-        if (copy_from_user(&req->req, buffer, sizeof(struct raw1394_request))) {
++        if (copy_from_user(&req->req, buffer, sizeof(struct raw1394_request))
++	    || (ssize_t)req->req.length < 0) {
+                 free_pending_request(req);
+                 return -EFAULT;
+         }
