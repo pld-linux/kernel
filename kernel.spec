@@ -447,7 +447,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
 
-tar zxf %{SOURCE40} dhiggen-over-0.23.1 -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
+tar zxf %{SOURCE7} dhiggen-over-0.23.1 -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
 patch -p2 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <dhiggen-over-0.23.1
 rm -f dhiggen-over-0.23.1
