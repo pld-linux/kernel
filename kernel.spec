@@ -214,7 +214,7 @@ Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono wymagane
 przez komputery zawieraj±ce dwa lub wiêcej procesorów. Powinno równie¿ dobrze 
 dzia³aæ na maszynach z jednym procesorem.
 
-%if %{!?_without_lids:1}%{_without_lids:0}
+%if %{!?_without_lids:1}%{?_without_lids:0}
 %package lids-smp
 Summary:	LIDS enabled kernel version %{version} compiled for SMP machines
 Group:		Base/Kernel
