@@ -49,7 +49,7 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.109
+%define		_rel		0.110
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -120,7 +120,6 @@ Patch9:		2.6.0-t9-acpi_osl-lkml.patch
 Patch10:	2.6.0-powernow-k7.patch
 Patch11:	2.6.0-enable-radeon-igp-rendering.patch
 Patch12:	2.6.0-omnikeys.patch
-
 Patch13:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch14:	linux-2.6-omnibook-20040916.patch
 Patch15:	linux-2.6-enable-broken-advansys.patch
@@ -137,7 +136,7 @@ Patch25:	2.6.7-alpha_compile.patch
 Patch26:	2.6.7-ppc-asm-defs.patch
 Patch27:	linux-ppc-oops.patch
 Patch28:	linux-2.6-sparc-ksyms.patch
-
+Patch29:	linux-2.6-ppc-no-pc-serial.patch
 #Patch30:	2.6.x-ppp_mppe.patch
 # http://developer.osdl.org/shemminger/skge/
 Patch31:	linux-2.6-skge-0.4.patch
@@ -566,7 +565,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch26 -p1
 %patch27 -p1
 %patch28 -p1
-
+%patch29 -p1
 #patch30 -p1
 %patch31 -p1
 %patch32 -p1
