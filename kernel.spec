@@ -1,5 +1,5 @@
 #%define		ow_version	2.2.17-ow1
-#%define		pcmcia_version	3.1.20
+%define		pcmcia_version	3.1.23
 #%define		freeswan_version	1.5
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -35,8 +35,8 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 #Source29:	%{name}-alpha-BOOT.config
 #Source30:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
 Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
-#Source32:	%{name}-BuildASM.sh
-#Source33:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
+Source32:	%{name}-BuildASM.sh
+Source33:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
 #Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.17+.gz
 # NFS server patches
 #Source40:	http://download.sourceforge.net/nfs/dhiggen_merge-4.1.tar.gz
@@ -266,7 +266,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a31 -n linux
+%setup -q -a31 -a33 -n linux
 #%setup -q -a30 -a31 -a33 -n linux
 %patch0 -p1
 %patch1 -p1
@@ -293,8 +293,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 #patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 # Tekram DC395/315 U/UW SCSI host driver
-#patch -p1 -s <dc395/dc395-integ22.diff
-#install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
+patch -p1 -s <dc395/dc395-integ22.diff
+install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 #zcat %{SOURCE34} > drivers/net/3c59x.c
 
 #patch21 -p1
