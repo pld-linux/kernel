@@ -75,6 +75,9 @@ Patch18:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.
 Patch19:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/linux-2.4.2-reiserfs-20010301-full.patch.gz
 Patch20:	ftp://ftp.reiserfs.org/pub/misc-patches/linux-2.4.2-knfsd-6.g.patch.gz
 
+## from LKL 2001.03.02
+Patch21:	linux-2.4.2-oom-killer.patch
+
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
 ExclusiveOS:	Linux
@@ -297,11 +300,11 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 # Adaptec RAID patch
 %patch7 -p1
 %patch8 -p1
-#patches from Linux kernel list
+# patches from Linux kernel list
 %patch11 -p1
 %patch12 -p1
 %patch13 -p1
-## next patches
+# next patches
 %patch14 -p1
 %patch15 -p1
 %patch16 -p0
@@ -311,7 +314,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 # reiserfs/NFS patches
 %patch19 -p1
 %patch20 -p1
-
+# LWL 2001.03.02
+%patch21 -p0
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -567,6 +571,10 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH16}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH17}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH18}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH19}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH20}
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH21}
 
 ## SymBios/NCR drivers install
 mv $RPM_BUILD_ROOT/usr/src/linux-%{version}/%{sym_ncr_version}/*.{c,h} $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi
