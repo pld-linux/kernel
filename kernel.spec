@@ -9,6 +9,7 @@
 #
 %define		test_build		0
 #
+BASE_ARCH=="`echo %{_target_cpu}|sed 's/i.86/i386/;s/athlon/i386/'`"
 %define		pre_version		pre1
 %define		ipvs_version		1.0.0
 %define		freeswan_version	1.95
@@ -539,38 +540,38 @@ BuildKernel() {
 		KernelVer=%{version}-%{release}
 		echo BUILDING THE NORMAL KERNEL...
 	fi
-	:> arch/$RPM_ARCH/defconfig
-	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/$RPM_ARCH/defconfig
+	:> arch/$BASE_ARCH/defconfig
+	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/$BASE_ARCH/defconfig
 %ifarch i386
-	echo "CONFIG_M386=y" >> arch/$RPM_ARCH/defconfig
+	echo "CONFIG_M386=y" >> arch/$BASE_ARCH/defconfig
 %endif
 %ifarch i586
-	echo "CONFIG_M586=y" >> arch/$RPM_ARCH/defconfig
+	echo "CONFIG_M586=y" >> arch/$BASE_ARCH/defconfig
 %endif
 %ifarch i686
-	echo "CONFIG_M686=y" >> arch/$RPM_ARCH/defconfig
+	echo "CONFIG_M686=y" >> arch/$BASE_ARCH/defconfig
 %endif
-	cat %{SOURCE1001} >> arch/$RPM_ARCH/defconfig
-	cat %{SOURCE1002} >> arch/$RPM_ARCH/defconfig
-	cat %{SOURCE1003} >> arch/$RPM_ARCH/defconfig
-	cat %{SOURCE1004} >> arch/$RPM_ARCH/defconfig
-	cat %{SOURCE1667} >> arch/$RPM_ARCH/defconfig
+	cat %{SOURCE1001} >> arch/$BASE_ARCH/defconfig
+	cat %{SOURCE1002} >> arch/$BASE_ARCH/defconfig
+	cat %{SOURCE1003} >> arch/$BASE_ARCH/defconfig
+	cat %{SOURCE1004} >> arch/$BASE_ARCH/defconfig
+	cat %{SOURCE1667} >> arch/$BASE_ARCH/defconfig
 %if%{?_with_preemptive:1}%{!?_with_preemptive:0}
-	cat %{SOURCE1999} >> arch/$RPM_ARCH/defconfig
+	cat %{SOURCE1999} >> arch/$BASE_ARCH/defconfig
 %endif
 	if [ "$BOOT" ] ; then
-		echo "# CONFIG_GRKERNSEC is not set" >> arch/$RPM_ARCH/defconfig
+		echo "# CONFIG_GRKERNSEC is not set" >> arch/$BASE_ARCH/defconfig
 	else
-		cat %{SOURCE1666} >> arch/$RPM_ARCH/defconfig
+		cat %{SOURCE1666} >> arch/$BASE_ARCH/defconfig
 	fi
 %ifarch i386
-	mv -f arch/$RPM_ARCH/defconfig arch/$RPM_ARCH/defconfig.orig
+	mv -f arch/$BASE_ARCH/defconfig arch/$BASE_ARCH/defconfig.orig
 	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
-		arch/$RPM_ARCH/defconfig.orig > arch/$RPM_ARCH/defconfig
+		arch/$BASE_ARCH/defconfig.orig > arch/$BASE_ARCH/defconfig
 %endif
 
 	%{__make} mrproper
-	ln -sf arch/$RPM_ARCH/defconfig .config
+	ln -sf arch/$BASE_ARCH/defconfig .config
 
 %ifarch sparc
 	sparc32 %{__make} oldconfig
