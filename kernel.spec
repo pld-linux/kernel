@@ -76,8 +76,8 @@ Patch13:	linux-smaller-parport_pc-non-pci-box.patch
 # Quota fixes
 Patch14:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.2-1.diff.gz
 # Reiserfs/NFS patches
-Patch15:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/linux-2.4.2-reiserfs-20010305.patch.gz
-Patch16:	ftp://ftp.reiserfs.org/pub/misc-patches/linux-2.4.2-knfsd-6.g.patch.gz
+Patch15:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/linux-2.4.3-reiserfs-20010327.patch.gz
+Patch16:	ftp://ftp.reiserfs.org/pub/misc-patches/linux-2.4.3-knfsd-6.g.patch.gz
 
 # from LKL 2001.03.02
 Patch17:	linux-2.4.2-oom-killer.patch
@@ -346,8 +346,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch12 -p0
 %patch13 -p0
 %patch14 -p1
-#%patch15 -p1
-#%patch16 -p1
+%patch15 -p1
+%patch16 -p1
 %patch17 -p0
 %patch18 -p1
 %patch19 -p0
