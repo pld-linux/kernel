@@ -11,7 +11,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.19
-Release:	5
+Release:	6
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -380,7 +380,11 @@ rm -rf sym-1.7.3-ncr-3.4.3
 BuildKernel() {
 	%{?verbose:set -x}
 	# is this a special kernel we want to build?
-	if [ -n "$1" ] ; then
+	if [ "$1" = "BOOT" ]; then
+		Config="%{_target_cpu}"
+		KernelVer=%{version}
+		echo BUILDING A KERNEL FOR BOOT...
+	elif [ -n "$1" ] ; then
 		Config="%{_target_cpu}"-$1
 		KernelVer=%{version}-%{release}$1
 		echo BUILDING A KERNEL FOR $1...
@@ -432,21 +436,25 @@ BuildKernel() {
 	%{__make} modules EXTRAVERSION="-%{release}"
 %endif
 
-	mkdir -p $KERNEL_BUILD_DIR-installed/boot
-	install System.map $KERNEL_BUILD_DIR-installed/boot/System.map-$KernelVer
+	mkdir -p $KERNEL_INSTALL_DIR/boot
+	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
 %ifarch %{ix86}
-	cp arch/i386/boot/bzImage $KERNEL_BUILD_DIR-installed/boot/vmlinuz-$KernelVer
+	cp arch/i386/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
 %ifarch alpha sparc sparc64
 	gzip -cfv vmlinux > vmlinuz
-	install vmlinux $KERNEL_BUILD_DIR-installed/boot/vmlinux-$KernelVer
-	install vmlinuz $KERNEL_BUILD_DIR-installed/boot/vmlinuz-$KernelVer
+	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
+	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
-     %{__make} INSTALL_MOD_PATH=$KERNEL_BUILD_DIR-installed modules_install KERNELRELEASE=$KernelVer
+     %{__make} INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR modules_install KERNELRELEASE=$KernelVer
 }
 
 BuildPCMCIA() {
-if [ -n "$1" ] ; then
+if [ "$1" = "BOOT" ]; then
+	PCMCIA_APM=--apm
+	KernelVer=%{version}
+	echo BUILDING A KERNEL PCMCIA MODULES FOR BOOT...
+elif [ -n "$1" ] ; then
 	PCMCIA_APM=--apm
 	KernelVer=%{version}-%{release}$1
 	echo BUILDING A KERNEL PCMCIA MODULES FOR $1...
@@ -467,7 +475,7 @@ cd pcmcia-cs-%{pcmcia_version}
 	$PCMCIA_APM \
 	--kernel=$KERNEL_BUILD_DIR \
 	--moddir=/lib/modules/$KernelVer \
-	--target=$KERNEL_BUILD_DIR-installed
+	--target=$KERNEL_INSTALL_DIR
 
 mv config.mk config.mk.bak
 mv Makefile Makefile.bak
@@ -481,7 +489,7 @@ sed "s/.*= 8390\..$//" clients/Makefile.bak > clients/Makefile
 	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
 	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNEL_BUILD_DIR/include -D__KERNEL__ -DEXPORT_SYMTAB"
 
-%{__make} PREFIX=$KERNEL_BUILD_DIR-installed install
+%{__make} PREFIX=$KERNEL_INSTALL_DIR install
 cd ..
 
 # Linux WLAN package extension for PCMCIA
@@ -500,7 +508,7 @@ cd driver
 	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
 	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNEL_BUILD_DIR/include -I$KERNEL_BUILD_DIR/pcmcia-cs-%{pcmcia_version}/include -D__KERNEL__ -DEXPORT_SYMTAB"
 
-%{__make} PREFIX=$KERNEL_BUILD_DIR-installed install
+%{__make} PREFIX=$KERNEL_INSTALL_DIR install
 
 cd ../..
 
@@ -508,14 +516,16 @@ cd tun-%{tun_version}
 %configure \
 	--with-kernel="$KERNEL_BUILD_DIR"
 make
-install linux/tun.o "$KERNEL_BUILD_DIR-installed/lib/modules/$KernelVer/net"
+install linux/tun.o "$KERNEL_INSTALL_DIR/lib/modules/$KernelVer/net"
 cd ..
 
 }
 
 KERNEL_BUILD_DIR=`pwd`
-rm -rf $KERNEL_BUILD_DIR-installed
-install -d $KERNEL_BUILD_DIR-installed
+KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
+
+rm -rf $KERNEL_INSTALL_DIR
+install -d $KERNEL_INSTALL_DIR
 
 # NORMAL KERNEL
 BuildKernel
@@ -534,6 +544,10 @@ BuildPCMCIA smp
 
 # BOOT kernel
 %ifnarch i586 i686
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk"
+rm -rf $KERNEL_INSTALL_DIR
+install -d $KERNEL_INSTALL_DIR
+
 BuildKernel BOOT
 %ifarch %{ix86}
 BuildPCMCIA BOOT
@@ -545,7 +559,8 @@ rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT%{_prefix}/{include,src}
 
 KERNEL_BUILD_DIR=`pwd`
-cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed"
+cp -a $KERNEL_INSTALL_DIR/* $RPM_BUILD_ROOT
 
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
 
@@ -776,28 +791,28 @@ fi
 %files BOOT
 %defattr(644,root,root,755)
 %ifarch alpha sparc
-/boot/vmlinux-%{version}-%{release}BOOT
+%{_libdir}/bootdisk/boot/vmlinux-%{version}
 %endif
-/boot/vmlinuz-%{version}-%{release}BOOT
-/boot/System.map-%{version}-%{release}BOOT
-%dir /lib/modules/%{version}-%{release}BOOT
-#/lib/modules/%{version}-%{release}BOOT/atm
-/lib/modules/%{version}-%{release}BOOT/block
+%{_libdir}/bootdisk/boot/vmlinuz-%{version}
+%{_libdir}/bootdisk/boot/System.map-%{version}
+%dir %{_libdir}/bootdisk/lib/modules/%{version}
+#%{_libdir}/bootdisk/lib/modules/%{version}/atm
+%{_libdir}/bootdisk/lib/modules/%{version}/block
 %ifnarch sparc sparc64 alpha
-/lib/modules/%{version}-%{release}BOOT/cdrom
+%{_libdir}/bootdisk/lib/modules/%{version}/cdrom
 %endif
-/lib/modules/%{version}-%{release}BOOT/fs
-#/lib/modules/%{version}-%{release}BOOT/ipv4
-#/lib/modules/%{version}-%{release}BOOT/ipv6
-/lib/modules/%{version}-%{release}BOOT/misc
-/lib/modules/%{version}-%{release}BOOT/net
-/lib/modules/%{version}-%{release}BOOT/scsi
+%{_libdir}/bootdisk/lib/modules/%{version}/fs
+#%{_libdir}/bootdisk/lib/modules/%{version}/ipv4
+#%{_libdir}/bootdisk/lib/modules/%{version}/ipv6
+%{_libdir}/bootdisk/lib/modules/%{version}/misc
+%{_libdir}/bootdisk/lib/modules/%{version}/net
+%{_libdir}/bootdisk/lib/modules/%{version}/scsi
 %ifarch %{ix86} 
-/lib/modules/%{version}-%{release}BOOT/usb
-/lib/modules/%{version}-%{release}BOOT/video
+%{_libdir}/bootdisk/lib/modules/%{version}/usb
+%{_libdir}/bootdisk/lib/modules/%{version}/video
 %endif
 %ifarch i386
-/lib/modules/%{version}-%{release}BOOT/pcmcia
+%{_libdir}/bootdisk/lib/modules/%{version}/pcmcia
 %endif
 %endif
 
