@@ -1313,6 +1313,7 @@ fi
 %dir %{_prefix}/src/linux-%{version}/arch/*
 %{_prefix}/src/linux-%{version}/arch/*/Makefile*
 %dir %{_prefix}/src/linux-%{version}/arch/*/kernel
+%{_prefix}/src/linux-%{version}/arch/*/kernel/Makefile
 %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
 %{_prefix}/src/linux-%{version}/arch/*/kernel/sigframe.h
 %dir %{_prefix}/src/linux-%{version}/scripts
