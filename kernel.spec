@@ -130,6 +130,7 @@ Patch123:	linux-acenic-dma64.patch
 # HTP360/370 driver update
 Patch124:	linux-drivers_ide_hpt366.c.diff
 Patch125:	linux-2.4.13-usb-ohci.patch
+Patch126:	kernel-deactivate_page-fix.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -366,6 +367,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %{!?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
 #%patch1000 -p1
 #%patch0 -p1
+%patch126 -p1
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
