@@ -42,6 +42,7 @@ Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym
 Source12:	http://www.komacke.com/ftp/rl2isa-driver/rl2_driver.tgz
 Source13:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
 Source14:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
+Source15:	http://www10.software.ibm.com/developer/opensource/pub/jfs-1.0.1-patch.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -85,9 +86,7 @@ Patch10:	http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
 Patch11:	linux-grsecurity-1.4-PLD-2.4.7-pre6.patch
 # Linux Compressed cache
-Patch12:	http://prdownloads.sourceforge.net/linuxcompressed/patch-comp-cache-2.4.6-0.17.bz
-# JFS		http://www10.software.ibm.com/developer/opensource/pub/jfs-1.0.1-patch.tar.gz
-Patch13:	jfs-1.0.1-patch.tar.gz
+Patch12:	http://prdownloads.sourceforge.net/linuxcompressed/patch-comp-cache-2.4.6-0.17.bz2
 
 # Assorted bugfixes
 
@@ -341,8 +340,8 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%{?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -n linux}
-%{!?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -a14 -n linux}
+%{?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
+%{!?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
 %patch1000 -p1
 #%patch0 -p1
 %patch1 -p1
