@@ -1,0 +1,73 @@
+diff -uNr linux-2.6.6/arch/i386.orig/Kconfig linux-2.6.6/arch/i386/Kconfig
+--- linux-2.6.6/arch/i386.orig/Kconfig	2004-05-17 21:56:37.000000000 +0200
++++ linux-2.6.6/arch/i386/Kconfig	2004-05-17 21:32:33.000000000 +0200
+@@ -501,6 +501,13 @@
+ 	  Say Y here if you are building a kernel for a desktop, embedded
+ 	  or real-time system.  Say N if you are unsure.
+ 
++config STACK_SMASHING_PROTECTOR
++	bool "ProPolice stack smashing protection"
++	help
++	  Build kernel with -fstack-protector flag.
++	  
++	  http://www.trl.ibm.com/projects/security/ssp/
++
+ config X86_UP_APIC
+ 	bool "Local APIC support on uniprocessors" if !SMP
+ 	depends on !(X86_VISWS || X86_VOYAGER)
+diff -uNr linux-2.6.6/arch/i386.orig/Makefile linux-2.6.6/arch/i386/Makefile
+--- linux-2.6.6/arch/i386.orig/Makefile	2004-05-17 21:56:15.000000000 +0200
++++ linux-2.6.6/arch/i386/Makefile	2004-05-17 21:27:35.000000000 +0200
+@@ -21,6 +21,10 @@
+ 
+ CFLAGS += -pipe -msoft-float
+ 
++ifdef CONFIG_STACK_SMASHING_PROTECTOR
++CFLAGS += -fstack-protector
++endif
++
+ # prevent gcc from keeping the stack 16 byte aligned
+ CFLAGS += $(call check_gcc,-mpreferred-stack-boundary=2,)
+ 
+diff -uNr linux-2.6.6/include/linux.orig/kernel.h linux-2.6.6/include/linux/kernel.h
+--- linux-2.6.6/include/linux.orig/kernel.h	2004-05-10 04:31:56.000000000 +0200
++++ linux-2.6.6/include/linux/kernel.h	2004-05-17 21:38:01.236543040 +0200
+@@ -85,6 +85,10 @@
+ extern unsigned long long memparse(char *ptr, char **retptr);
+ 
+ extern int kernel_text_address(unsigned long addr);
++
++extern int __guard;
++extern void __stack_smash_handler(const int, const char*);
++
+ extern int session_of_pgrp(int pgrp);
+ 
+ asmlinkage int printk(const char * fmt, ...)
+diff -uNr linux-2.6.6/lib.orig/Makefile linux-2.6.6/lib/Makefile
+--- linux-2.6.6/lib.orig/Makefile	2004-05-10 04:31:59.000000000 +0200
++++ linux-2.6.6/lib/Makefile	2004-05-17 22:01:21.916607304 +0200
+@@ -6,7 +6,7 @@
+ lib-y := errno.o ctype.o string.o vsprintf.o cmdline.o \
+ 	 bust_spinlocks.o rbtree.o radix-tree.o dump_stack.o \
+ 	 kobject.o idr.o div64.o parser.o int_sqrt.o \
+-	 bitmap.o extable.o
++	 bitmap.o extable.o propolice.o
+ 
+ # hack for now till some static code uses krefs, then it can move up above...
+ obj-y += kref.o
+diff -uNr linux-2.6.6/lib.orig/propolice.c linux-2.6.6/lib/propolice.c
+--- linux-2.6.6/lib.orig/propolice.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.6/lib/propolice.c	2004-05-17 22:01:21.917607152 +0200
+@@ -0,0 +1,12 @@
++#include <linux/module.h>
++
++int __guard = 0x00000aff;
++
++void __stack_smash_handler(const int damaged, const char *func)
++{
++  static const char *message = "propolice detects %x at function %s.\n" ;
++  panic(message, damaged, func);
++}
++
++EXPORT_SYMBOL_NOVERS(__guard);
++EXPORT_SYMBOL_NOVERS(__stack_smash_handler);
