@@ -210,24 +210,39 @@ diff -Nur linux-2.6.0.org/net/ipv4/netfilter/ip_nat_core.c linux-2.6.0/net/ipv4/
  		/* We now have two tuples (SRCIP/SRCPT/DSTIP/DSTPT):
 --- linux-2.6.0/net/ipv4/netfilter/Kconfig.org	2003-12-18 03:59:25.000000000 +0100
 +++ linux-2.6.0/net/ipv4/netfilter/Kconfig	2003-12-19 11:37:04.565557808 +0100
-@@ -68,6 +68,20 @@
+@@ -68,6 +68,16 @@
  
  	  To compile it as a module, choose M here.  If unsure, say Y.
  
 +config IP_NF_CT_PROTO_GRE
 +	tristate " GRE protocol support"
 +	depends on IP_NF_CONNTRACK!=n
-+	default IP_NF_NAT_PROTO_GRE if IP_NF_CT_PROTRO_GRE=y
-+	default m if IP_NF_CT_PROTRO_GRE=m
 +	help
 +
 +config IP_NF_PPTP
 +	tristate " PPTP protocol support"
-+	depends on IP_NF_CT_PROTO_GRE=!n
-+	default IP_NF_NAT_PPTP if IP_NF_PPTP=y
-+	default m if IP_NF_PPTP=m
++	depends on IP_NF_CT_PROTO_GRE!=n
 +	help
 +
  config IP_NF_QUEUE
  	tristate "Userspace queueing via NETLINK"
  	help
+@@ -390,6 +400,18 @@
+ 
+ # If they want FTP, set to $CONFIG_IP_NF_NAT (m or y), 
+ # or $CONFIG_IP_NF_FTP (m or y), whichever is weaker.  Argh.
++config IP_NF_NAT_PROTO_GRE
++	tristate
++	depends on IP_NF_CONNTRACK!=n && IP_NF_NAT!=n
++	default IP_NF_NAT_PROTO_GRE if IP_NF_CT_PROTO_GRE=y
++	default m if IP_NF_CT_PROTO_GRE=m
++
++config IP_NF_NAT_PPTP
++	tristate
++	depends on IP_NF_CT_PROTO_GRE=!n && IP_NF_PPTP!=n && IP_NF_NAT!=n
++	default IP_NF_NAT_PPTP if IP_NF_PPTP=y
++	default m if IP_NF_PPTP=m
++
+ config IP_NF_NAT_FTP
+ 	tristate
+ 	depends on IP_NF_IPTABLES!=n && IP_NF_CONNTRACK!=n && IP_NF_NAT!=n
