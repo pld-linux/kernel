@@ -8,11 +8,12 @@
 # - check I2C
 #
 # Conditional build:
-%bcond_without	BOOT	# don't build BOOT kernel
-%bcond_without	smp	# don't build SMP kernel
-%bcond_without	up	# don't build UP kernel
-%bcond_without	source	# don't build kernel-source package
-%bcond_with	verbose	# verbose build (V=1)
+%bcond_without	BOOT		# don't build BOOT kernel
+%bcond_without	smp		# don't build SMP kernel
+%bcond_without	up		# don't build UP kernel
+%bcond_without	source		# don't build kernel-source package
+%bcond_with	verbose		# verbose build (V=1)
+%bcond_with	preemptive	# build preemptive kernel
 
 %{?debug:%define with_verbose 1}
 
@@ -697,6 +698,7 @@ BuildConfig (){
 %ifarch athlon
 	echo "CONFIG_MK7=y" >> arch/%{_target_base_arch}/defconfig
 %endif
+%{?with_preeemptive:echo "CONFIG_PREEMPT=y" >> arch/%{_target_base_arch}/defconfig}
 
 %ifarch i386 i486 i586
 	sed -i 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
