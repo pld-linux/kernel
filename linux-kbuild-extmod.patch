@@ -1,0 +1,38 @@
+--- linux-2.6.6/scripts/Makefile.modpost.orig	Thu Apr 15 03:35:04 2004
++++ linux-2.6.6/scripts/Makefile.modpost	Tue Apr 20 16:43:56 2004
+@@ -50,7 +50,7 @@
+ #  Includes step 3,4
+ quiet_cmd_modpost = MODPOST
+       cmd_modpost = scripts/modpost \
+-	$(if $(KBUILD_EXTMOD),-i,-o) $(symverfile) \
++	$(if $(CONFIG_MODVERSIONS),$(if $(filter vmlinux,$^),-o,-i) $(objtree)/Module.symvers) \
+ 	$(filter-out FORCE,$^)
+ 
+ __modpost: $(if $(KBUILD_EXTMOD),,$(wildcard vmlinux)) $(modules:.ko=.o) FORCE
+--- linux-2.6.6/Makefile.orig	Tue Apr 20 12:27:34 2004
++++ linux-2.6.6/Makefile	Tue Apr 20 17:07:06 2004
+@@ -399,7 +399,6 @@
+ # Build targets only - this includes vmlinux, arch specific targets, clean
+ # targets and others. In general all targets except *config targets.
+ 
+-ifeq ($(KBUILD_EXTMOD),)
+ # Additional helpers built in scripts/
+ # Carefully list dependencies so we do not try to build scripts twice
+ # in parrallel
+@@ -409,6 +408,7 @@
+ 
+ scripts_basic: include/linux/autoconf.h
+ 
++ifeq ($(KBUILD_EXTMOD),)
+ 
+ # That's our default target when none is given on the command line
+ # Note that 'modules' will be added as a prerequisite as well, 
+@@ -952,7 +952,7 @@
+ 	$(Q)mkdir -p $(MODVERDIR)
+ 
+ .PHONY: $(KBUILD_EXTMOD)
+-$(KBUILD_EXTMOD): crmodverdir FORCE
++$(KBUILD_EXTMOD): crmodverdir scripts FORCE
+ 	$(Q)$(MAKE) $(build)=$@
+ 
+ .PHONY: modules
