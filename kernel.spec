@@ -980,6 +980,7 @@ cat %{SOURCE1667} >> .config
 %endif
 cat %{SOURCE1008} >> .config
 cat %{SOURCE1009} >> .config
+cat %{SOURCE1010} >> .config
 cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
@@ -1034,6 +1035,7 @@ cat %{SOURCE1667} >> .config
 %endif
 cat %{SOURCE1008} >> .config
 cat %{SOURCE1009} >> .config
+cat %{SOURCE1010} >> .config
 cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
