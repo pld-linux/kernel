@@ -110,7 +110,7 @@ Patch1503:	%{name}-sym53c8xx.patch
 
 # ppcs patches
 Patch2000:	2.2.20-ppc_ide.patch
-#Patch2001:	2.2.20-ppc_serial.patch
+Patch2001:	2.2.20-ppc_sysrq.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -442,7 +442,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 #some ppc hacks
 %ifarch ppc
 %patch2000 -p1
-#%patch2001 -p1
+%patch2001 -p1
 %endif
 
 %build
@@ -763,7 +763,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1503}
 
 %ifarch ppc
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2000}
-#patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2001}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2001}
 %endif
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
