@@ -26,8 +26,8 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		2.2
-%define		_cset		20040206_0610
+%define		_rel		2.3
+%define		_cset		20040208_0106
 
 ## netfilter snap 
 %define		_netfilter_snap		20040130
@@ -71,9 +71,11 @@ Source100:	%{name}-misc.config
 
 Patch0:		2.6.0-ksyms-add.patch
 
+Patch1:		patch-2.6.3-rc1.bz2
+
 %if "%{_cset}" != "0"
 # http://www.kernel.org/pub/linux/kernel/v2.5/testing/cset/
-Patch1:		cset-%{_cset}.txt.gz
+Patch2:		cset-%{_cset}.txt.gz
 %endif
 
 Patch4:		squashfs1.3r2-patch
@@ -102,8 +104,6 @@ Patch28:	2.6.0-t8-umsdos-lkml.patch
 Patch30:	2.6.0-t9-acpi_osl-lkml.patch
 
 Patch32:	2.6.0-t9-PPC-smp.patch
-
-Patch34:	2.6.0-t11-EPoX-sound-lkml.patch
 
 Patch36:	bootsplash-3.1.3-2.6.0-test9.diff
 
@@ -465,8 +465,9 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %setup -q -n linux-%{version}
 
 %patch0 -p1
-%if "%{_cset}" != "0"
 %patch1 -p1
+%if "%{_cset}" != "0"
+%patch2 -p1
 %endif
 
 %patch4 -p1
@@ -495,8 +496,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch30 -p1
 
 %patch32 -p1
-
-%patch34 -p1
 
 %patch36 -p1
 
