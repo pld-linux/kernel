@@ -16308,19 +16308,39 @@ diff -uNr linux-2.6.8/include/asm-i386/pgalloc.h linux-2.6.8.grsecurity/include/
 diff -uNr linux-2.6.8/include/asm-i386/pgtable.h linux-2.6.8.grsecurity/include/asm-i386/pgtable.h
 --- linux-2.6.8/include/asm-i386/pgtable.h	2004-08-14 07:37:37.000000000 +0200
 +++ linux-2.6.8.grsecurity/include/asm-i386/pgtable.h	2004-08-16 18:14:49.000000000 +0200
-@@ -31,7 +31,10 @@
-  */
- #define ZERO_PAGE(vaddr) (virt_to_page(empty_zero_page))
- extern unsigned long empty_zero_page[1024];
+@@ -25,13 +25,6 @@
+ #include <linux/list.h>
+ #include <linux/spinlock.h>
+ 
+-/*
+- * ZERO_PAGE is a global shared page that is always zero: used
+- * for zero-mapped memory areas etc..
+- */
+-#define ZERO_PAGE(vaddr) (virt_to_page(empty_zero_page))
+-extern unsigned long empty_zero_page[1024];
 -extern pgd_t swapper_pg_dir[1024];
+ extern kmem_cache_t *pgd_cache;
+ extern kmem_cache_t *pmd_cache;
+ extern spinlock_t pgd_lock;
+@@ -54,6 +47,17 @@
+ # include <asm/pgtable-2level-defs.h>
+ #endif
+ 
++/*
++ * ZERO_PAGE is a global shared page that is always zero: used
++ * for zero-mapped memory areas etc..
++ */
++#define ZERO_PAGE(vaddr) (virt_to_page(empty_zero_page))
++extern unsigned long empty_zero_page[1024];
 +extern pgd_t swapper_pg_dir[PTRS_PER_PTE];
 +#ifdef CONFIG_PAX_KERNEXEC
 +extern pgd_t kernexec_pg_dir[PTRS_PER_PTE];
 +#endif
- extern kmem_cache_t *pgd_cache;
- extern kmem_cache_t *pmd_cache;
- extern spinlock_t pgd_lock;
-@@ -133,21 +136,27 @@
++
+ #define PMD_SIZE	(1UL << PMD_SHIFT)
+ #define PMD_MASK	(~(PMD_SIZE-1))
+ #define PGDIR_SIZE	(1UL << PGDIR_SHIFT)
+@@ -133,21 +137,27 @@
  
  #define PAGE_NONE \
  	__pgprot(_PAGE_PROTNONE | _PAGE_ACCESSED)
@@ -16353,7 +16373,7 @@ diff -uNr linux-2.6.8/include/asm-i386/pgtable.h linux-2.6.8.grsecurity/include/
  
  #define _PAGE_KERNEL \
  	(_PAGE_PRESENT | _PAGE_RW | _PAGE_DIRTY | _PAGE_ACCESSED | _PAGE_NX)
-@@ -173,18 +182,18 @@
+@@ -173,18 +183,18 @@
   * This is the closest we can get..
   */
  #define __P000	PAGE_NONE
@@ -16378,7 +16398,7 @@ diff -uNr linux-2.6.8/include/asm-i386/pgtable.h linux-2.6.8.grsecurity/include/
  #define __S100	PAGE_READONLY_EXEC
  #define __S101	PAGE_READONLY_EXEC
  #define __S110	PAGE_SHARED_EXEC
-@@ -407,6 +416,8 @@
+@@ -407,6 +417,8 @@
  
  #endif /* !__ASSEMBLY__ */
  
