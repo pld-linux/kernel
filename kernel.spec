@@ -701,7 +701,7 @@ CrossOpts=""
 %endif
 
 BuildConfig (){
-	%{?_debug:set -x}
+	%{?debug:set -x}
 	# is this a special kernel we want to build?
 	BOOT=
 	smp=
@@ -828,7 +828,7 @@ EOF
 }
 
 BuildKernel() {
-	%{?_debug:set -x}
+	%{?debug:set -x}
 	echo "Building kernel $1 ..."	
 	%{__make} $CrossOpts mrproper \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
