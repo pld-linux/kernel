@@ -11,7 +11,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.2
-Release:	3
+Release:	4
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -867,6 +867,9 @@ fi
 %endif
 /lib/modules/%{version}-%{release}/kernel
 /lib/modules/%{version}-%{release}/build
+/lib/modules/%{version}-%{release}/modules.dep
+/lib/modules/%{version}-%{release}/modules.*map
+/lib/modules/%{version}-%{release}/modules.generic_string
 
 %files lids
 %defattr(644,root,root,755)
@@ -881,6 +884,9 @@ fi
 %endif
 /lib/modules/%{version}-%{release}-lids/kernel
 /lib/modules/%{version}-%{release}-lids/build
+/lib/modules/%{version}-%{release}-lids/modules.dep
+/lib/modules/%{version}-%{release}-lids/modules.*map
+/lib/modules/%{version}-%{release}-lids/modules.generic_string
 
 %files smp
 %defattr(644,root,root,755)
@@ -895,6 +901,9 @@ fi
 %endif
 /lib/modules/%{version}-%{release}smp/kernel
 /lib/modules/%{version}-%{release}smp/build
+/lib/modules/%{version}-%{release}smp/modules.dep
+/lib/modules/%{version}-%{release}smp/modules.*map
+/lib/modules/%{version}-%{release}smp/modules.generic_string
 
 %files lids-smp
 %defattr(644,root,root,755)
@@ -909,6 +918,9 @@ fi
 %endif
 /lib/modules/%{version}-%{release}smp-lids/kernel
 /lib/modules/%{version}-%{release}smp-lids/build
+/lib/modules/%{version}-%{release}smp-lids/modules.dep
+/lib/modules/%{version}-%{release}smp-lids/modules.*map
+/lib/modules/%{version}-%{release}smp-lids/modules.generic_string
 
 %ifnarch i586 i686
 %files BOOT
@@ -925,6 +937,9 @@ fi
 /lib/modules/%{version}-%{release}BOOT/kernel
 /lib/modules/%{version}-%{release}BOOT/build
 %endif
+/lib/modules/%{version}-%{release}BOOT/modules.dep
+/lib/modules/%{version}-%{release}BOOT/modules.*map
+/lib/modules/%{version}-%{release}BOOT/modules.generic_string
 
 %files headers
 %defattr(644,root,root,755)
