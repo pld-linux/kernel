@@ -1,0 +1,4734 @@
+diff -ru linux-2.6.6/arch/i386/kernel/cpu/cpufreq/powernow-k7.c linux-2.6.6-modified/arch/i386/kernel/cpu/cpufreq/powernow-k7.c
+--- linux-2.6.6/arch/i386/kernel/cpu/cpufreq/powernow-k7.c	2004-05-24 01:17:34.000000000 +0200
++++ linux-2.6.6-modified/arch/i386/kernel/cpu/cpufreq/powernow-k7.c	2004-05-24 02:47:35.000000000 +0200
+@@ -634,8 +634,7 @@
+ 	}
+ #endif
+ 	cpufreq_unregister_driver(&powernow_driver);
+-	if (powernow_table)
+-		kfree(powernow_table);
++	kfree(powernow_table);
+ }
+ 
+ module_param(powernow_acpi_force,  int, 0444);
+diff -ru linux-2.6.6/arch/i386/kernel/cpu/mtrr/generic.c linux-2.6.6-modified/arch/i386/kernel/cpu/mtrr/generic.c
+--- linux-2.6.6/arch/i386/kernel/cpu/mtrr/generic.c	2004-04-04 05:37:23.000000000 +0200
++++ linux-2.6.6-modified/arch/i386/kernel/cpu/mtrr/generic.c	2004-05-24 02:47:35.000000000 +0200
+@@ -71,8 +71,7 @@
+ /*  Free resources associated with a struct mtrr_state  */
+ void __init finalize_mtrr_state(void)
+ {
+-	if (mtrr_state.var_ranges)
+-		kfree(mtrr_state.var_ranges);
++	kfree(mtrr_state.var_ranges);
+ 	mtrr_state.var_ranges = NULL;
+ }
+ 
+diff -ru linux-2.6.6/arch/i386/kernel/io_apic.c linux-2.6.6-modified/arch/i386/kernel/io_apic.c
+--- linux-2.6.6/arch/i386/kernel/io_apic.c	2004-05-24 01:17:34.000000000 +0200
++++ linux-2.6.6-modified/arch/i386/kernel/io_apic.c	2004-05-24 02:47:35.000000000 +0200
+@@ -662,10 +662,8 @@
+ 		printk(KERN_ERR "balanced_irq_init: failed to spawn balanced_irq");
+ failed:
+ 	for (i = 0; i < NR_CPUS; i++) {
+-		if(irq_cpu_data[i].irq_delta)
+-			kfree(irq_cpu_data[i].irq_delta);
+-		if(irq_cpu_data[i].last_irq)
+-			kfree(irq_cpu_data[i].last_irq);
++		kfree(irq_cpu_data[i].irq_delta);
++		kfree(irq_cpu_data[i].last_irq);
+ 	}
+ 	return 0;
+ }
+diff -ru linux-2.6.6/arch/i386/kernel/process.c linux-2.6.6-modified/arch/i386/kernel/process.c
+--- linux-2.6.6/arch/i386/kernel/process.c	2004-05-24 01:17:34.000000000 +0200
++++ linux-2.6.6-modified/arch/i386/kernel/process.c	2004-05-24 02:47:35.000000000 +0200
+@@ -397,7 +397,7 @@
+ 
+ 	err = 0;
+  out:
+-	if (err && p->thread.io_bitmap_ptr)
++	if (err)
+ 		kfree(p->thread.io_bitmap_ptr);
+ 	return err;
+ }
+diff -ru linux-2.6.6/arch/ia64/kernel/perfmon.c linux-2.6.6-modified/arch/ia64/kernel/perfmon.c
+--- linux-2.6.6/arch/ia64/kernel/perfmon.c	2004-05-24 01:17:34.000000000 +0200
++++ linux-2.6.6-modified/arch/ia64/kernel/perfmon.c	2004-05-24 12:22:00.000000000 +0200
+@@ -4901,7 +4901,7 @@
+ 	if (call_made && PFM_CMD_RW_ARG(cmd) && copy_to_user(arg, args_k, base_sz*count)) ret = -EFAULT;
+ 
+ error_args:
+-	if (args_k) kfree(args_k);
++	kfree(args_k);
+ 
+ 	DPRINT(("cmd=%s ret=%ld\n", PFM_CMD_NAME(cmd), ret));
+ 
+diff -ru linux-2.6.6/crypto/cipher.c linux-2.6.6-modified/crypto/cipher.c
+--- linux-2.6.6/crypto/cipher.c	2004-04-04 05:37:07.000000000 +0200
++++ linux-2.6.6-modified/crypto/cipher.c	2004-05-24 02:44:37.000000000 +0200
+@@ -292,6 +292,5 @@
+ 
+ void crypto_exit_cipher_ops(struct crypto_tfm *tfm)
+ {
+-	if (tfm->crt_cipher.cit_iv)
+-		kfree(tfm->crt_cipher.cit_iv);
++	kfree(tfm->crt_cipher.cit_iv);
+ }
+diff -ru linux-2.6.6/crypto/hmac.c linux-2.6.6-modified/crypto/hmac.c
+--- linux-2.6.6/crypto/hmac.c	2004-04-04 05:37:06.000000000 +0200
++++ linux-2.6.6-modified/crypto/hmac.c	2004-05-24 02:44:37.000000000 +0200
+@@ -49,8 +49,7 @@
+ 
+ void crypto_free_hmac_block(struct crypto_tfm *tfm)
+ {
+-	if (tfm->crt_digest.dit_hmac_block)
+-		kfree(tfm->crt_digest.dit_hmac_block);
++	kfree(tfm->crt_digest.dit_hmac_block);
+ }
+ 
+ void crypto_hmac_init(struct crypto_tfm *tfm, u8 *key, unsigned int *keylen)
+diff -ru linux-2.6.6/drivers/atm/zatm.c linux-2.6.6-modified/drivers/atm/zatm.c
+--- linux-2.6.6/drivers/atm/zatm.c	2004-04-04 05:36:27.000000000 +0200
++++ linux-2.6.6-modified/drivers/atm/zatm.c	2004-05-24 12:22:00.000000000 +0200
+@@ -909,7 +909,7 @@
+ 		zatm_dev->tx_bw += vcc->qos.txtp.min_pcr;
+ 		dealloc_shaper(vcc->dev,zatm_vcc->shaper);
+ 	}
+-	if (zatm_vcc->ring) kfree(zatm_vcc->ring);
++	kfree(zatm_vcc->ring);
+ }
+ 
+ 
+diff -ru linux-2.6.6/drivers/block/cciss.c linux-2.6.6-modified/drivers/block/cciss.c
+--- linux-2.6.6/drivers/block/cciss.c	2004-05-24 01:17:34.000000000 +0200
++++ linux-2.6.6-modified/drivers/block/cciss.c	2004-05-24 12:50:16.000000000 +0200
+@@ -918,14 +918,11 @@
+ cleanup1:
+ 		if (buff) {
+ 			for(i=0; i<sg_used; i++)
+-				if(buff[i] != NULL)
+-					kfree(buff[i]);
++				kfree(buff[i]);
+ 			kfree(buff);
+ 		}
+-		if (buff_size)
+-			kfree(buff_size);
+-		if (ioc)
+-			kfree(ioc);
++		kfree(buff_size);
++		kfree(ioc);
+ 		return(status);
+ 	}
+ 	default:
+@@ -2633,8 +2630,7 @@
+ 	return(1);
+ 
+ clean4:
+-	if(hba[i]->cmd_pool_bits)
+-               	kfree(hba[i]->cmd_pool_bits);
++	kfree(hba[i]->cmd_pool_bits);
+ 	if(hba[i]->cmd_pool)
+ 		pci_free_consistent(hba[i]->pdev,
+ 			NR_CMDS * sizeof(CommandList_struct),
+diff -ru linux-2.6.6/drivers/block/DAC960.c linux-2.6.6-modified/drivers/block/DAC960.c
+--- linux-2.6.6/drivers/block/DAC960.c	2004-04-04 05:37:40.000000000 +0200
++++ linux-2.6.6-modified/drivers/block/DAC960.c	2004-05-24 12:50:16.000000000 +0200
+@@ -410,14 +410,12 @@
+             * Remember the beginning of the group, but don't free it
+ 	    * until we've reached the beginning of the next group.
+ 	    */
+-	   if (CommandGroup != NULL)
+-		kfree(CommandGroup);
++	   kfree(CommandGroup);
+ 	    CommandGroup = Command;
+       }
+       Controller->Commands[i] = NULL;
+     }
+-  if (CommandGroup != NULL)
+-      kfree(CommandGroup);
++  kfree(CommandGroup);
+ 
+   if (Controller->CombinedStatusBuffer != NULL)
+     {
+diff -ru linux-2.6.6/drivers/block/ll_rw_blk.c linux-2.6.6-modified/drivers/block/ll_rw_blk.c
+--- linux-2.6.6/drivers/block/ll_rw_blk.c	2004-05-24 01:17:34.000000000 +0200
++++ linux-2.6.6-modified/drivers/block/ll_rw_blk.c	2004-05-24 12:50:17.000000000 +0200
+@@ -1800,8 +1800,7 @@
+ 	rq->data_len = len;
+ 	return rq;
+ fault:
+-	if (buf)
+-		kfree(buf);
++	kfree(buf);
+ 	if (bio)
+ 		bio_unmap_user(bio, 1);
+ 	if (rq)
+diff -ru linux-2.6.6/drivers/block/z2ram.c linux-2.6.6-modified/drivers/block/z2ram.c
+--- linux-2.6.6/drivers/block/z2ram.c	2004-04-04 05:37:36.000000000 +0200
++++ linux-2.6.6-modified/drivers/block/z2ram.c	2004-05-24 12:50:16.000000000 +0200
+@@ -418,10 +418,7 @@
+ 	    }
+ 	}
+ 
+-	if ( z2ram_map != NULL )
+-	{
+-	    kfree( z2ram_map );
+-	}
++	kfree( z2ram_map );
+     }
+ 
+     return;
+diff -ru linux-2.6.6/drivers/char/consolemap.c linux-2.6.6-modified/drivers/char/consolemap.c
+--- linux-2.6.6/drivers/char/consolemap.c	2004-04-04 05:37:37.000000000 +0200
++++ linux-2.6.6-modified/drivers/char/consolemap.c	2004-05-24 12:48:08.000000000 +0200
+@@ -351,8 +351,7 @@
+ 	for (i = 0; i < 32; i++) {
+ 		if ((p1 = p->uni_pgdir[i]) != NULL) {
+ 			for (j = 0; j < 32; j++)
+-				if (p1[j])
+-					kfree(p1[j]);
++				kfree(p1[j]);
+ 			kfree(p1);
+ 		}
+ 		p->uni_pgdir[i] = NULL;
+diff -ru linux-2.6.6/drivers/char/drm/ffb_drv.c linux-2.6.6-modified/drivers/char/drm/ffb_drv.c
+--- linux-2.6.6/drivers/char/drm/ffb_drv.c	2004-04-04 05:38:26.000000000 +0200
++++ linux-2.6.6-modified/drivers/char/drm/ffb_drv.c	2004-05-24 12:48:08.000000000 +0200
+@@ -50,11 +50,11 @@
+ 
+ /* Free private structure */
+ #define DRIVER_PRETAKEDOWN()	do {				\
+-	if (dev->dev_private) kfree(dev->dev_private);		\
++	kfree(dev->dev_private);		\
+ } while(0)
+ 
+ #define DRIVER_POSTCLEANUP()	do {				\
+-	if (ffb_position != NULL) kfree(ffb_position);		\
++	kfree(ffb_position);		\
+ } while(0)
+ 
+ /* We have to free up the rogue hw context state holding error or 
+diff -ru linux-2.6.6/drivers/char/istallion.c linux-2.6.6-modified/drivers/char/istallion.c
+--- linux-2.6.6/drivers/char/istallion.c	2004-05-24 01:17:35.000000000 +0200
++++ linux-2.6.6-modified/drivers/char/istallion.c	2004-05-24 12:48:08.000000000 +0200
+@@ -865,10 +865,8 @@
+ 	if ((i = unregister_chrdev(STL_SIOMEMMAJOR, "staliomem")))
+ 		printk("STALLION: failed to un-register serial memory device, "
+ 			"errno=%d\n", -i);
+-	if (stli_tmpwritebuf != (char *) NULL)
+-		kfree(stli_tmpwritebuf);
+-	if (stli_txcookbuf != (char *) NULL)
+-		kfree(stli_txcookbuf);
++	kfree(stli_tmpwritebuf);
++	kfree(stli_txcookbuf);
+ 
+ 	for (i = 0; (i < stli_nrbrds); i++) {
+ 		if ((brdp = stli_brds[i]) == (stlibrd_t *) NULL)
+diff -ru linux-2.6.6/drivers/char/n_hdlc.c linux-2.6.6-modified/drivers/char/n_hdlc.c
+--- linux-2.6.6/drivers/char/n_hdlc.c	2004-04-04 05:36:53.000000000 +0200
++++ linux-2.6.6-modified/drivers/char/n_hdlc.c	2004-05-24 12:48:08.000000000 +0200
+@@ -264,8 +264,7 @@
+ 		} else
+ 			break;
+ 	}
+-	if (n_hdlc->tbuf)
+-		kfree(n_hdlc->tbuf);
++	kfree(n_hdlc->tbuf);
+ 	kfree(n_hdlc);
+ 	
+ }	/* end of n_hdlc_release() */
+diff -ru linux-2.6.6/drivers/char/pcmcia/synclink_cs.c linux-2.6.6-modified/drivers/char/pcmcia/synclink_cs.c
+--- linux-2.6.6/drivers/char/pcmcia/synclink_cs.c	2004-04-04 05:36:55.000000000 +0200
++++ linux-2.6.6-modified/drivers/char/pcmcia/synclink_cs.c	2004-05-24 12:48:08.000000000 +0200
+@@ -3005,8 +3005,7 @@
+ 
+ void rx_free_buffers(MGSLPC_INFO *info)
+ {
+-	if (info->rx_buf)
+-		kfree(info->rx_buf);
++	kfree(info->rx_buf);
+ 	info->rx_buf = NULL;
+ }
+ 
+diff -ru linux-2.6.6/drivers/char/pcxx.c linux-2.6.6-modified/drivers/char/pcxx.c
+--- linux-2.6.6/drivers/char/pcxx.c	2004-04-04 05:37:23.000000000 +0200
++++ linux-2.6.6-modified/drivers/char/pcxx.c	2004-05-24 12:48:08.000000000 +0200
+@@ -197,8 +197,7 @@
+ 			release_region(bd->port, 4);
+ 
+ 		for(i = 0; i < bd->numports; i++, ch++)
+-			if (ch->tmp_buf)
+-				kfree(ch->tmp_buf);
++			kfree(ch->tmp_buf);
+ 	}
+ }
+ 
+diff -ru linux-2.6.6/drivers/char/random.c linux-2.6.6-modified/drivers/char/random.c
+--- linux-2.6.6/drivers/char/random.c	2004-05-24 01:17:35.000000000 +0200
++++ linux-2.6.6-modified/drivers/char/random.c	2004-05-24 12:48:08.000000000 +0200
+@@ -553,8 +553,7 @@
+ #ifdef CONFIG_SYSCTL
+ static void free_entropy_store(struct entropy_store *r)
+ {
+-	if (r->pool)
+-		kfree(r->pool);
++	kfree(r->pool);
+ 	kfree(r);
+ }
+ #endif
+diff -ru linux-2.6.6/drivers/char/rocket.c linux-2.6.6-modified/drivers/char/rocket.c
+--- linux-2.6.6/drivers/char/rocket.c	2004-05-24 01:17:35.000000000 +0200
++++ linux-2.6.6-modified/drivers/char/rocket.c	2004-05-24 12:48:08.000000000 +0200
+@@ -2460,8 +2460,7 @@
+ 	put_tty_driver(rocket_driver);
+ 
+ 	for (i = 0; i < MAX_RP_PORTS; i++) {
+-		if (rp_table[i])
+-			kfree(rp_table[i]);
++		kfree(rp_table[i]);
+ 	}
+ 
+ 	for (i = 0; i < NUM_BOARDS; i++) {
+diff -ru linux-2.6.6/drivers/char/selection.c linux-2.6.6-modified/drivers/char/selection.c
+--- linux-2.6.6/drivers/char/selection.c	2004-04-04 05:38:19.000000000 +0200
++++ linux-2.6.6-modified/drivers/char/selection.c	2004-05-24 12:48:08.000000000 +0200
+@@ -258,8 +258,7 @@
+ 		clear_selection();
+ 		return -ENOMEM;
+ 	}
+-	if (sel_buffer)
+-		kfree(sel_buffer);
++	kfree(sel_buffer);
+ 	sel_buffer = bp;
+ 
+ 	obp = bp;
+diff -ru linux-2.6.6/drivers/char/stallion.c linux-2.6.6-modified/drivers/char/stallion.c
+--- linux-2.6.6/drivers/char/stallion.c	2004-05-24 01:17:35.000000000 +0200
++++ linux-2.6.6-modified/drivers/char/stallion.c	2004-05-24 12:48:08.000000000 +0200
+@@ -801,8 +801,7 @@
+ 			"errno=%d\n", -i);
+ 	class_simple_destroy(stallion_class);
+ 
+-	if (stl_tmpwritebuf != (char *) NULL)
+-		kfree(stl_tmpwritebuf);
++	kfree(stl_tmpwritebuf);
+ 
+ 	for (i = 0; (i < stl_nrbrds); i++) {
+ 		if ((brdp = stl_brds[i]) == (stlbrd_t *) NULL)
+@@ -817,8 +816,7 @@
+ 					continue;
+ 				if (portp->tty != (struct tty_struct *) NULL)
+ 					stl_hangup(portp->tty);
+-				if (portp->tx.buf != (char *) NULL)
+-					kfree(portp->tx.buf);
++				kfree(portp->tx.buf);
+ 				kfree(portp);
+ 			}
+ 			kfree(panelp);
+diff -ru linux-2.6.6/drivers/char/synclink.c linux-2.6.6-modified/drivers/char/synclink.c
+--- linux-2.6.6/drivers/char/synclink.c	2004-04-04 05:36:56.000000000 +0200
++++ linux-2.6.6-modified/drivers/char/synclink.c	2004-05-24 12:48:08.000000000 +0200
+@@ -4075,8 +4075,7 @@
+  */
+ void mgsl_free_intermediate_rxbuffer_memory(struct mgsl_struct *info)
+ {
+-	if ( info->intermediate_rxbuffer )
+-		kfree(info->intermediate_rxbuffer);
++	kfree(info->intermediate_rxbuffer);
+ 
+ 	info->intermediate_rxbuffer = NULL;
+ 
+diff -ru linux-2.6.6/drivers/char/synclinkmp.c linux-2.6.6-modified/drivers/char/synclinkmp.c
+--- linux-2.6.6/drivers/char/synclinkmp.c	2004-04-04 05:36:26.000000000 +0200
++++ linux-2.6.6-modified/drivers/char/synclinkmp.c	2004-05-24 12:48:08.000000000 +0200
+@@ -3437,8 +3437,7 @@
+ 
+ void free_tmp_rx_buf(SLMP_INFO *info)
+ {
+-	if (info->tmp_rx_buf)
+-		kfree(info->tmp_rx_buf);
++	kfree(info->tmp_rx_buf);
+ 	info->tmp_rx_buf = NULL;
+ }
+ 
+diff -ru linux-2.6.6/drivers/char/tty_io.c linux-2.6.6-modified/drivers/char/tty_io.c
+--- linux-2.6.6/drivers/char/tty_io.c	2004-05-24 01:17:35.000000000 +0200
++++ linux-2.6.6-modified/drivers/char/tty_io.c	2004-05-24 12:48:08.000000000 +0200
+@@ -975,14 +975,11 @@
+ 
+ 	/* Release locally allocated memory ... nothing placed in slots */
+ free_mem_out:
+-	if (o_tp)
+-		kfree(o_tp);
++	kfree(o_tp);
+ 	if (o_tty)
+ 		free_tty_struct(o_tty);
+-	if (ltp)
+-		kfree(ltp);
+-	if (tp)
+-		kfree(tp);
++	kfree(ltp);
++	kfree(tp);
+ 	free_tty_struct(tty);
+ 
+ fail_no_mem:
+diff -ru linux-2.6.6/drivers/char/vt.c linux-2.6.6-modified/drivers/char/vt.c
+--- linux-2.6.6/drivers/char/vt.c	2004-05-24 01:17:35.000000000 +0200
++++ linux-2.6.6-modified/drivers/char/vt.c	2004-05-24 12:48:08.000000000 +0200
+@@ -3087,8 +3087,7 @@
+ 		if (!rc && op->data && copy_to_user(op->data, temp, c))
+ 			rc = -EFAULT;
+ 	}
+-quit:	if (temp)
+-		kfree(temp);
++quit:	kfree(temp);
+ 	return rc;
+ }
+ 
+diff -ru linux-2.6.6/drivers/fc4/fc.c linux-2.6.6-modified/drivers/fc4/fc.c
+--- linux-2.6.6/drivers/fc4/fc.c	2004-04-04 05:37:23.000000000 +0200
++++ linux-2.6.6-modified/drivers/fc4/fc.c	2004-05-24 12:22:00.000000000 +0200
+@@ -559,8 +559,8 @@
+ 	l->logi = kmalloc (count * 3 * sizeof(logi), GFP_KERNEL);
+ 	l->fcmds = kmalloc (count * sizeof(fcp_cmnd), GFP_KERNEL);
+ 	if (!l->logi || !l->fcmds) {
+-		if (l->logi) kfree (l->logi);
+-		if (l->fcmds) kfree (l->fcmds);
++		kfree (l->logi);
++		kfree (l->fcmds);
+ 		kfree (l);
+ 		printk ("FC: Cannot allocate DMA memory for initialization\n");
+ 		return -ENOMEM;
+diff -ru linux-2.6.6/drivers/firmware/efivars.c linux-2.6.6-modified/drivers/firmware/efivars.c
+--- linux-2.6.6/drivers/firmware/efivars.c	2004-05-24 01:17:35.000000000 +0200
++++ linux-2.6.6-modified/drivers/firmware/efivars.c	2004-05-24 12:22:00.000000000 +0200
+@@ -612,8 +612,8 @@
+ 	new_efivar = kmalloc(sizeof(struct efivar_entry), GFP_KERNEL);
+ 
+ 	if (!short_name || !new_efivar)  {
+-		if (short_name)        kfree(short_name);
+-		if (new_efivar)        kfree(new_efivar);
++		kfree(short_name);
++		kfree(new_efivar);
+ 		return 1;
+ 	}
+ 	memset(short_name, 0, short_name_size+1);
+diff -ru linux-2.6.6/drivers/i2c/chips/w83781d.c linux-2.6.6-modified/drivers/i2c/chips/w83781d.c
+--- linux-2.6.6/drivers/i2c/chips/w83781d.c	2004-05-24 01:17:35.000000000 +0200
++++ linux-2.6.6-modified/drivers/i2c/chips/w83781d.c	2004-05-24 14:03:26.000000000 +0200
+@@ -1012,11 +1012,9 @@
+ ERROR_SC_3:
+ 	i2c_detach_client(data->lm75[0]);
+ ERROR_SC_2:
+-	if (NULL != data->lm75[1])
+-		kfree(data->lm75[1]);
++	kfree(data->lm75[1]);
+ ERROR_SC_1:
+-	if (NULL != data->lm75[0])
+-		kfree(data->lm75[0]);
++	kfree(data->lm75[0]);
+ ERROR_SC_0:
+ 	return err;
+ }
+diff -ru linux-2.6.6/drivers/ide/ide.c linux-2.6.6-modified/drivers/ide/ide.c
+--- linux-2.6.6/drivers/ide/ide.c	2004-05-24 01:17:35.000000000 +0200
++++ linux-2.6.6-modified/drivers/ide/ide.c	2004-05-24 12:28:00.000000000 +0200
+@@ -1061,8 +1061,7 @@
+ 	return 0;
+ abort:
+ 	up(&ide_setting_sem);
+-	if (setting)
+-		kfree(setting);
++	kfree(setting);
+ 	return -1;
+ }
+ 
+diff -ru linux-2.6.6/drivers/ide/ide-cd.c linux-2.6.6-modified/drivers/ide/ide-cd.c
+--- linux-2.6.6/drivers/ide/ide-cd.c	2004-05-24 01:17:35.000000000 +0200
++++ linux-2.6.6-modified/drivers/ide/ide-cd.c	2004-05-24 12:28:00.000000000 +0200
+@@ -3317,12 +3317,9 @@
+ 			__FUNCTION__, drive->name);
+ 		return 1;
+ 	}
+-	if (info->buffer != NULL)
+-		kfree(info->buffer);
+-	if (info->toc != NULL)
+-		kfree(info->toc);
+-	if (info->changer_info != NULL)
+-		kfree(info->changer_info);
++	kfree(info->buffer);
++	kfree(info->toc);
++	kfree(info->changer_info);
+ 	if (devinfo->handle == drive && unregister_cdrom(devinfo))
+ 		printk("%s: ide_cdrom_cleanup failed to unregister device from the cdrom driver.\n", drive->name);
+ 	kfree(info);
+@@ -3507,12 +3504,9 @@
+ 		struct cdrom_device_info *devinfo = &info->devinfo;
+ 		DRIVER(drive)->busy--;
+ 		ide_unregister_subdriver(drive);
+-		if (info->buffer != NULL)
+-			kfree(info->buffer);
+-		if (info->toc != NULL)
+-			kfree(info->toc);
+-		if (info->changer_info != NULL)
+-			kfree(info->changer_info);
++		kfree(info->buffer);
++		kfree(info->toc);
++		kfree(info->changer_info);
+ 		if (devinfo->handle == drive && unregister_cdrom(devinfo))
+ 			printk ("%s: ide_cdrom_cleanup failed to unregister device from the cdrom driver.\n", drive->name);
+ 		kfree(info);
+diff -ru linux-2.6.6/drivers/ide/ide-taskfile.c linux-2.6.6-modified/drivers/ide/ide-taskfile.c
+--- linux-2.6.6/drivers/ide/ide-taskfile.c	2004-04-04 05:36:14.000000000 +0200
++++ linux-2.6.6-modified/drivers/ide/ide-taskfile.c	2004-05-24 12:28:00.000000000 +0200
+@@ -1216,10 +1216,8 @@
+ 	}
+ abort:
+ 	kfree(req_task);
+-	if (outbuf != NULL)
+-		kfree(outbuf);
+-	if (inbuf != NULL)
+-		kfree(inbuf);
++	kfree(outbuf);
++	kfree(inbuf);
+ 
+ //	printk("IDE Taskfile ioctl ended. rc = %i\n", err);
+ 
+diff -ru linux-2.6.6/drivers/ieee1394/ohci1394.c linux-2.6.6-modified/drivers/ieee1394/ohci1394.c
+--- linux-2.6.6/drivers/ieee1394/ohci1394.c	2004-05-24 01:17:35.000000000 +0200
++++ linux-2.6.6-modified/drivers/ieee1394/ohci1394.c	2004-05-24 12:22:00.000000000 +0200
+@@ -2902,7 +2902,7 @@
+ 		kfree(d->prg_cpu);
+ 		kfree(d->prg_bus);
+ 	}
+-	if (d->spb) kfree(d->spb);
++	kfree(d->spb);
+ 
+ 	/* Mark this context as freed. */
+ 	d->ohci = NULL;
+diff -ru linux-2.6.6/drivers/net/acenic.c linux-2.6.6-modified/drivers/net/acenic.c
+--- linux-2.6.6/drivers/net/acenic.c	2004-04-04 05:37:06.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/acenic.c	2004-05-24 00:39:35.000000000 +0200
+@@ -1127,10 +1127,8 @@
+ 	if (ap->info)
+ 		pci_free_consistent(ap->pdev, sizeof(struct ace_info),
+ 				    ap->info, ap->info_dma);
+-	if (ap->skb)
+-		kfree(ap->skb);
+-	if (ap->trace_buf)
+-		kfree(ap->trace_buf);
++	kfree(ap->skb);
++	kfree(ap->trace_buf);
+ 
+ 	if (dev->irq)
+ 		free_irq(dev->irq, dev);
+diff -ru linux-2.6.6/drivers/net/e1000/e1000_ethtool.c linux-2.6.6-modified/drivers/net/e1000/e1000_ethtool.c
+--- linux-2.6.6/drivers/net/e1000/e1000_ethtool.c	2004-05-24 01:17:36.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/e1000/e1000_ethtool.c	2004-05-24 01:01:23.000000000 +0200
+@@ -802,10 +802,8 @@
+ 	if(rxdr->desc)
+ 		pci_free_consistent(pdev, rxdr->size, rxdr->desc, rxdr->dma);
+ 
+-	if(txdr->buffer_info)
+-		kfree(txdr->buffer_info);
+-	if(rxdr->buffer_info)
+-		kfree(rxdr->buffer_info);
++	kfree(txdr->buffer_info);
++	kfree(rxdr->buffer_info);
+ 
+ 	return;
+ }
+diff -ru linux-2.6.6/drivers/net/fc/iph5526.c linux-2.6.6-modified/drivers/net/fc/iph5526.c
+--- linux-2.6.6/drivers/net/fc/iph5526.c	2004-05-24 01:17:36.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/fc/iph5526.c	2004-05-24 12:40:29.000000000 +0200
+@@ -4524,8 +4524,7 @@
+ 		take_tachyon_offline(fc[i]);
+ 		unregister_netdev(dev);
+ 		clean_up_memory(fc[i]);
+-		if (dev->priv)
+-			kfree(priv);
++		kfree(priv);
+ 		free_netdev(dev);
+ 		dev = NULL;
+ 		i++;
+@@ -4546,8 +4545,7 @@
+ 	DPRINTK("after kfree2");
+ 	for (i = 0; i < SFSBQ_LENGTH; i++)
+ 		for (j = 0; j < NO_OF_ENTRIES; j++)
+-			if (fi->q.ptr_sfs_buffers[i*NO_OF_ENTRIES + j])
+-				kfree(fi->q.ptr_sfs_buffers[i*NO_OF_ENTRIES + j]);
++			kfree(fi->q.ptr_sfs_buffers[i*NO_OF_ENTRIES + j]);
+ 	DPRINTK("after kfree1");
+ 	if (fi->q.ptr_ocq_base)
+ 		free_page((u_long)fi->q.ptr_ocq_base);
+@@ -4568,12 +4566,9 @@
+ 	if (fi->q.ptr_fcp_cmnd_base)
+ 		free_page((u_long)fi->q.ptr_fcp_cmnd_base);
+ 	DPRINTK("after free_pages"); 
+-	if (fi->q.ptr_host_ocq_cons_indx)
+-		kfree(fi->q.ptr_host_ocq_cons_indx);
+-	if (fi->q.ptr_host_hpcq_cons_indx)
+-		kfree(fi->q.ptr_host_hpcq_cons_indx);
+-	if (fi->q.ptr_host_imq_prod_indx)
+-		kfree(fi->q.ptr_host_imq_prod_indx);
++	kfree(fi->q.ptr_host_ocq_cons_indx);
++	kfree(fi->q.ptr_host_hpcq_cons_indx);
++	kfree(fi->q.ptr_host_imq_prod_indx);
+ 	DPRINTK("after kfree3");
+ 	while (fi->node_info_list) {
+ 	struct fc_node_info *temp_list = fi->node_info_list;
+diff -ru linux-2.6.6/drivers/net/hamradio/6pack.c linux-2.6.6-modified/drivers/net/hamradio/6pack.c
+--- linux-2.6.6/drivers/net/hamradio/6pack.c	2004-04-04 05:36:25.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/hamradio/6pack.c	2004-05-24 12:40:29.000000000 +0200
+@@ -394,13 +394,8 @@
+ /* Free a 6pack channel. */
+ static inline void sp_free(struct sixpack *sp)
+ {
+-	void * tmp;
+-
+-	/* Free all 6pack frame buffers. */
+-	if ((tmp = xchg(&sp->rbuff, NULL)) != NULL)
+-		kfree(tmp);
+-	if ((tmp = xchg(&sp->xbuff, NULL)) != NULL)
+-		kfree(tmp);
++	kfree(xchg(&sp->rbuff, NULL));
++	kfree(xchg(&sp->xbuff, NULL));
+ }
+ 
+ 
+@@ -569,10 +564,8 @@
+ 	err = 0;
+ 
+ err_exit:
+-	if (xbuff)
+-		kfree(xbuff);
+-	if (rbuff)
+-		kfree(rbuff);
++	kfree(xbuff);
++	kfree(rbuff);
+ 
+ 	return err;
+ }
+diff -ru linux-2.6.6/drivers/net/hamradio/mkiss.c linux-2.6.6-modified/drivers/net/hamradio/mkiss.c
+--- linux-2.6.6/drivers/net/hamradio/mkiss.c	2004-04-04 05:38:21.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/hamradio/mkiss.c	2004-05-24 12:40:29.000000000 +0200
+@@ -206,11 +206,9 @@
+ static inline void ax_free(struct ax_disp *ax)
+ {
+ 	/* Free all AX25 frame buffers. */
+-	if (ax->rbuff)
+-		kfree(ax->rbuff);
++	kfree(ax->rbuff);
+ 	ax->rbuff = NULL;
+-	if (ax->xbuff)
+-		kfree(ax->xbuff);
++	kfree(ax->xbuff);
+ 	ax->xbuff = NULL;
+ 	if (!test_and_clear_bit(AXF_INUSE, &ax->flags))
+ 		printk(KERN_ERR "mkiss: %s: ax_free for already free unit.\n", ax->dev->name);
+@@ -239,10 +237,8 @@
+ 		printk(KERN_ERR "mkiss: %s: unable to grow ax25 buffers, MTU change cancelled.\n",
+ 		       ax->dev->name);
+ 		dev->mtu = ax->mtu;
+-		if (xbuff != NULL)
+-			kfree(xbuff);
+-		if (rbuff != NULL)
+-			kfree(rbuff);
++		kfree(xbuff);
++		kfree(rbuff);
+ 		return;
+ 	}
+ 
+@@ -279,10 +275,8 @@
+ 
+ 	spin_unlock_bh(&ax->buflock);
+ 
+-	if (oxbuff != NULL)
+-		kfree(oxbuff);
+-	if (orbuff != NULL)
+-		kfree(orbuff);
++	kfree(oxbuff);
++	kfree(orbuff);
+ }
+ 
+ 
+diff -ru linux-2.6.6/drivers/net/irda/ali-ircc.c linux-2.6.6-modified/drivers/net/irda/ali-ircc.c
+--- linux-2.6.6/drivers/net/irda/ali-ircc.c	2004-05-24 01:17:36.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/irda/ali-ircc.c	2004-05-24 12:40:29.000000000 +0200
+@@ -397,11 +397,9 @@
+ 	IRDA_DEBUG(4, "%s(), Releasing Region %03x\n", __FUNCTION__, self->io.fir_base);
+ 	release_region(self->io.fir_base, self->io.fir_ext);
+ 
+-	if (self->tx_buff.head)
+-		kfree(self->tx_buff.head);
++	kfree(self->tx_buff.head);
+ 	
+-	if (self->rx_buff.head)
+-		kfree(self->rx_buff.head);
++	kfree(self->rx_buff.head);
+ 
+ 	dev_self[self->index] = NULL;
+ 	free_netdev(self->netdev);
+diff -ru linux-2.6.6/drivers/net/irda/donauboe.c linux-2.6.6-modified/drivers/net/irda/donauboe.c
+--- linux-2.6.6/drivers/net/irda/donauboe.c	2004-05-24 01:17:36.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/irda/donauboe.c	2004-05-24 12:40:29.000000000 +0200
+@@ -1691,11 +1691,9 @@
+ 
+ freebufs:
+   for (i = 0; i < TX_SLOTS; ++i)
+-    if (self->tx_bufs[i])
+-      kfree (self->tx_bufs[i]);
++    kfree (self->tx_bufs[i]);
+   for (i = 0; i < RX_SLOTS; ++i)
+-    if (self->rx_bufs[i])
+-      kfree (self->rx_bufs[i]);
++    kfree (self->rx_bufs[i]);
+   kfree(self->ringbuf);
+ 
+ freeregion:
+diff -ru linux-2.6.6/drivers/net/irda/irport.c linux-2.6.6-modified/drivers/net/irda/irport.c
+--- linux-2.6.6/drivers/net/irda/irport.c	2004-05-24 01:17:36.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/irda/irport.c	2004-05-24 12:40:29.000000000 +0200
+@@ -271,8 +271,7 @@
+ 		   __FUNCTION__, self->io.sir_base);
+ 	release_region(self->io.sir_base, self->io.sir_ext);
+ 
+-	if (self->tx_buff.head)
+-		kfree(self->tx_buff.head);
++	kfree(self->tx_buff.head);
+ 	
+ 	if (self->rx_buff.skb)
+ 		kfree_skb(self->rx_buff.skb);
+diff -ru linux-2.6.6/drivers/net/irda/nsc-ircc.c linux-2.6.6-modified/drivers/net/irda/nsc-ircc.c
+--- linux-2.6.6/drivers/net/irda/nsc-ircc.c	2004-05-24 01:17:36.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/irda/nsc-ircc.c	2004-05-24 12:40:30.000000000 +0200
+@@ -403,11 +403,9 @@
+ 		   __FUNCTION__, self->io.fir_base);
+ 	release_region(self->io.fir_base, self->io.fir_ext);
+ 
+-	if (self->tx_buff.head)
+-		kfree(self->tx_buff.head);
++	kfree(self->tx_buff.head);
+ 	
+-	if (self->rx_buff.head)
+-		kfree(self->rx_buff.head);
++	kfree(self->rx_buff.head);
+ 
+ 	dev_self[self->index] = NULL;
+ 	free_netdev(self->netdev);
+diff -ru linux-2.6.6/drivers/net/irda/sir_dev.c linux-2.6.6-modified/drivers/net/irda/sir_dev.c
+--- linux-2.6.6/drivers/net/irda/sir_dev.c	2004-05-24 01:17:36.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/irda/sir_dev.c	2004-05-24 12:40:30.000000000 +0200
+@@ -488,8 +488,7 @@
+ {
+ 	if (dev->rx_buff.skb)
+ 		kfree_skb(dev->rx_buff.skb);
+-	if (dev->tx_buff.head)
+-		kfree(dev->tx_buff.head);
++	kfree(dev->tx_buff.head);
+ 	dev->rx_buff.head = dev->tx_buff.head = NULL;
+ 	dev->rx_buff.skb = NULL;
+ }
+diff -ru linux-2.6.6/drivers/net/irda/smsc-ircc2.c linux-2.6.6-modified/drivers/net/irda/smsc-ircc2.c
+--- linux-2.6.6/drivers/net/irda/smsc-ircc2.c	2004-05-24 01:17:36.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/irda/smsc-ircc2.c	2004-05-24 12:40:30.000000000 +0200
+@@ -1716,11 +1716,9 @@
+ 
+ 	release_region(self->io.sir_base, self->io.sir_ext);
+ 
+-	if (self->tx_buff.head)
+-		kfree(self->tx_buff.head);
++	kfree(self->tx_buff.head);
+ 	
+-	if (self->rx_buff.head)
+-		kfree(self->rx_buff.head);
++	kfree(self->rx_buff.head);
+ 
+ 	free_netdev(self->netdev);
+ 
+diff -ru linux-2.6.6/drivers/net/irda/via-ircc.c linux-2.6.6-modified/drivers/net/irda/via-ircc.c
+--- linux-2.6.6/drivers/net/irda/via-ircc.c	2004-05-24 01:17:36.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/irda/via-ircc.c	2004-05-24 12:40:30.000000000 +0200
+@@ -467,10 +467,8 @@
+ 	IRDA_DEBUG(4, "%s(), Releasing Region %03x\n",
+ 		   __FUNCTION__, self->io.fir_base);
+ 	release_region(self->io.fir_base, self->io.fir_ext);
+-	if (self->tx_buff.head)
+-		kfree(self->tx_buff.head);
+-	if (self->rx_buff.head)
+-		kfree(self->rx_buff.head);
++	kfree(self->tx_buff.head);
++	kfree(self->rx_buff.head);
+ 	dev_self[self->index] = NULL;
+ 
+ 	free_netdev(self->netdev);
+diff -ru linux-2.6.6/drivers/net/irda/vlsi_ir.c linux-2.6.6-modified/drivers/net/irda/vlsi_ir.c
+--- linux-2.6.6/drivers/net/irda/vlsi_ir.c	2004-05-24 01:17:36.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/irda/vlsi_ir.c	2004-05-24 12:40:30.000000000 +0200
+@@ -473,8 +473,7 @@
+ 		rd_set_addr_status(rd, 0, 0);
+ 		if (busaddr)
+ 			pci_unmap_single(r->pdev, busaddr, r->len, r->dir);
+-		if (rd->buf)
+-			kfree(rd->buf);
++		kfree(rd->buf);
+ 	}
+ 	kfree(r);
+ 	return 0;
+diff -ru linux-2.6.6/drivers/net/irda/w83977af_ir.c linux-2.6.6-modified/drivers/net/irda/w83977af_ir.c
+--- linux-2.6.6/drivers/net/irda/w83977af_ir.c	2004-05-24 01:17:36.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/irda/w83977af_ir.c	2004-05-24 12:40:30.000000000 +0200
+@@ -296,11 +296,9 @@
+ 	      __FUNCTION__ , self->io.fir_base);
+ 	release_region(self->io.fir_base, self->io.fir_ext);
+ 
+-	if (self->tx_buff.head)
+-		kfree(self->tx_buff.head);
++	kfree(self->tx_buff.head);
+ 	
+-	if (self->rx_buff.head)
+-		kfree(self->rx_buff.head);
++	kfree(self->rx_buff.head);
+ 
+ 	free_netdev(self->netdev);
+ 
+diff -ru linux-2.6.6/drivers/net/iseries_veth.c linux-2.6.6-modified/drivers/net/iseries_veth.c
+--- linux-2.6.6/drivers/net/iseries_veth.c	2004-05-24 01:17:36.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/iseries_veth.c	2004-05-24 00:42:38.000000000 +0200
+@@ -667,8 +667,7 @@
+ 				      cnx->num_ack_events,
+ 				      NULL, NULL);
+ 
+-	if (cnx->msgs)
+-		kfree(cnx->msgs);
++	kfree(cnx->msgs);
+ }
+ 
+ /*
+diff -ru linux-2.6.6/drivers/net/ne2k_cbus.h linux-2.6.6-modified/drivers/net/ne2k_cbus.h
+--- linux-2.6.6/drivers/net/ne2k_cbus.h	2004-04-04 05:36:17.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/ne2k_cbus.h	2004-05-24 00:44:32.000000000 +0200
+@@ -385,8 +385,7 @@
+ {
+ 	struct ei_device *ei_local = (struct ei_device *)(dev->priv);
+ 	if (ei_local != NULL) {
+-		if (ei_local->reg_offset)
+-			kfree(ei_local->reg_offset);
++		kfree(ei_local->reg_offset);
+ 		kfree(dev->priv);
+ 		dev->priv = NULL;
+ 	}
+diff -ru linux-2.6.6/drivers/net/ni65.c linux-2.6.6-modified/drivers/net/ni65.c
+--- linux-2.6.6/drivers/net/ni65.c	2004-04-04 05:36:53.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/ni65.c	2004-05-24 00:46:18.000000000 +0200
+@@ -697,8 +697,7 @@
+ 		return;
+ 
+ 	for(i=0;i<TMDNUM;i++) {
+-		if(p->tmdbounce[i])
+-			kfree(p->tmdbounce[i]);
++		kfree(p->tmdbounce[i]);
+ #ifdef XMT_VIA_SKB
+ 		if(p->tmd_skb[i])
+ 			dev_kfree_skb(p->tmd_skb[i]);
+@@ -715,8 +714,7 @@
+ 			kfree(p->recvbounce[i]);
+ #endif
+ 	}
+-	if(p->self)
+-		kfree(p->self);
++	kfree(p->self);
+ }
+ 
+ 
+diff -ru linux-2.6.6/drivers/net/ppp_deflate.c linux-2.6.6-modified/drivers/net/ppp_deflate.c
+--- linux-2.6.6/drivers/net/ppp_deflate.c	2004-04-04 05:38:15.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/ppp_deflate.c	2004-05-24 00:47:12.000000000 +0200
+@@ -308,8 +308,7 @@
+ 
+ 	if (state) {
+ 		zlib_inflateEnd(&state->strm);
+-		if (state->strm.workspace)
+-			kfree(state->strm.workspace);
++		kfree(state->strm.workspace);
+ 		kfree(state);
+ 	}
+ }
+diff -ru linux-2.6.6/drivers/net/ppp_generic.c linux-2.6.6-modified/drivers/net/ppp_generic.c
+--- linux-2.6.6/drivers/net/ppp_generic.c	2004-05-24 01:17:36.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/ppp_generic.c	2004-05-24 00:47:56.000000000 +0200
+@@ -700,8 +700,7 @@
+ 		}
+ 		filtp = (cmd == PPPIOCSPASS)? &ppp->pass_filter: &ppp->active_filter;
+ 		ppp_lock(ppp);
+-		if (filtp->filter)
+-			kfree(filtp->filter);
++		kfree(filtp->filter);
+ 		filtp->filter = code;
+ 		filtp->len = uprog.len;
+ 		ppp_unlock(ppp);
+diff -ru linux-2.6.6/drivers/net/pppoe.c linux-2.6.6-modified/drivers/net/pppoe.c
+--- linux-2.6.6/drivers/net/pppoe.c	2004-04-04 05:37:36.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/pppoe.c	2004-05-24 14:43:42.000000000 +0200
+@@ -482,10 +482,7 @@
+  **********************************************************************/
+ static void pppoe_sk_free(struct sock *sk)
+ {
+-	struct pppox_opt *po = pppox_sk(sk);
+-
+-	if (po)
+-		kfree(po);
++	kfree(pppox_sk(sk));
+ }
+ 
+ 
+diff -ru linux-2.6.6/drivers/net/rrunner.c linux-2.6.6-modified/drivers/net/rrunner.c
+--- linux-2.6.6/drivers/net/rrunner.c	2004-04-04 05:36:46.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/rrunner.c	2004-05-24 00:51:56.000000000 +0200
+@@ -1708,10 +1708,8 @@
+ 			error = -EFAULT;
+ 		}
+ 	wf_out:
+-		if (oldimage)
+-			kfree(oldimage);
+-		if (image)
+-			kfree(image);
++		kfree(oldimage);
++		kfree(image);
+ 		return error;
+ 		
+ 	case SIOCRRID:
+diff -ru linux-2.6.6/drivers/net/saa9730.c linux-2.6.6-modified/drivers/net/saa9730.c
+--- linux-2.6.6/drivers/net/saa9730.c	2004-05-24 01:17:36.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/saa9730.c	2004-05-24 00:52:42.000000000 +0200
+@@ -998,8 +998,7 @@
+         if (dev) {
+                 unregister_netdev(dev);
+ 
+-		if (dev->priv)
+-			kfree(dev->priv);
++		kfree(dev->priv);
+ 
+                 free_netdev(dev);
+                 pci_release_regions(pdev);
+@@ -1096,8 +1095,7 @@
+ 	return 0;
+ 
+  out:
+-	if (dev->priv)
+-		kfree(dev->priv);
++	kfree(dev->priv);
+ 	return ret;
+ }
+ 
+diff -ru linux-2.6.6/drivers/net/slip.c linux-2.6.6-modified/drivers/net/slip.c
+--- linux-2.6.6/drivers/net/slip.c	2004-05-24 01:17:36.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/slip.c	2004-05-24 00:56:25.000000000 +0200
+@@ -184,15 +184,11 @@
+ 	/* Cleanup */
+ err_exit:
+ #ifdef SL_INCLUDE_CSLIP
+-	if (cbuff)
+-		kfree(cbuff);
+-	if (slcomp)
+-		slhc_free(slcomp);
+-#endif
+-	if (xbuff)
+-		kfree(xbuff);
+-	if (rbuff)
+-		kfree(rbuff);
++	kfree(cbuff);
++	slhc_free(slcomp);
++#endif
++	kfree(xbuff);
++	kfree(rbuff);
+ 	return err;
+ }
+ 
+@@ -200,18 +196,12 @@
+ static void
+ sl_free_bufs(struct slip *sl)
+ {
+-	void * tmp;
+-
+ 	/* Free all SLIP frame buffers. */
+-	if ((tmp = xchg(&sl->rbuff, NULL)) != NULL)
+-		kfree(tmp);
+-	if ((tmp = xchg(&sl->xbuff, NULL)) != NULL)
+-		kfree(tmp);
++	kfree( xchg(&sl->rbuff, NULL) );
++	kfree( xchg(&sl->xbuff, NULL) );
+ #ifdef SL_INCLUDE_CSLIP
+-	if ((tmp = xchg(&sl->cbuff, NULL)) != NULL)
+-		kfree(tmp);
+-	if ((tmp = xchg(&sl->slcomp, NULL)) != NULL)
+-		slhc_free(tmp);
++	kfree( xchg(&sl->cbuff,  NULL) );
++	kfree( xchg(&sl->slcomp, NULL) );
+ #endif
+ }
+ 
+@@ -296,13 +286,10 @@
+ 	spin_unlock_bh(&sl->lock);
+ 
+ done:
+-	if (xbuff)
+-		kfree(xbuff);
+-	if (rbuff)
+-		kfree(rbuff);
++	kfree(xbuff);
++	kfree(rbuff);
+ #ifdef SL_INCLUDE_CSLIP
+-	if (cbuff)
+-		kfree(cbuff);
++	kfree(cbuff);
+ #endif
+ 	return err;
+ }
+diff -ru linux-2.6.6/drivers/net/tulip/de2104x.c linux-2.6.6-modified/drivers/net/tulip/de2104x.c
+--- linux-2.6.6/drivers/net/tulip/de2104x.c	2004-05-24 01:17:37.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/tulip/de2104x.c	2004-05-24 12:40:30.000000000 +0200
+@@ -2077,8 +2077,7 @@
+ 	return 0;
+ 
+ err_out_iomap:
+-	if (de->ee_data)
+-		kfree(de->ee_data);
++	kfree(de->ee_data);
+ 	iounmap(regs);
+ err_out_res:
+ 	pci_release_regions(pdev);
+@@ -2097,8 +2096,7 @@
+ 	if (!dev)
+ 		BUG();
+ 	unregister_netdev(dev);
+-	if (de->ee_data)
+-		kfree(de->ee_data);
++	kfree(de->ee_data);
+ 	iounmap(de->regs);
+ 	pci_release_regions(pdev);
+ 	pci_disable_device(pdev);
+diff -ru linux-2.6.6/drivers/net/tulip/tulip_core.c linux-2.6.6-modified/drivers/net/tulip/tulip_core.c
+--- linux-2.6.6/drivers/net/tulip/tulip_core.c	2004-05-24 01:17:37.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/tulip/tulip_core.c	2004-05-24 12:40:30.000000000 +0200
+@@ -1704,8 +1704,7 @@
+ 			     tp->rx_ring, tp->rx_ring_dma);
+ 
+ err_out_mtable:
+-	if (tp->mtable)
+-		kfree (tp->mtable);
++	kfree (tp->mtable);
+ #ifndef USE_IO_OPS
+ 	iounmap((void *)ioaddr);
+ 
+@@ -1766,8 +1765,7 @@
+ 			     sizeof (struct tulip_rx_desc) * RX_RING_SIZE +
+ 			     sizeof (struct tulip_tx_desc) * TX_RING_SIZE,
+ 			     tp->rx_ring, tp->rx_ring_dma);
+-	if (tp->mtable)
+-		kfree (tp->mtable);
++	kfree (tp->mtable);
+ #ifndef USE_IO_OPS
+ 	iounmap((void *)dev->base_addr);
+ #endif
+diff -ru linux-2.6.6/drivers/net/wan/cycx_x25.c linux-2.6.6-modified/drivers/net/wan/cycx_x25.c
+--- linux-2.6.6/drivers/net/wan/cycx_x25.c	2004-04-04 05:36:26.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/wan/cycx_x25.c	2004-05-24 12:40:30.000000000 +0200
+@@ -434,8 +434,7 @@
+ 	}
+ 
+ 	if (err) {
+-		if (chan->local_addr)
+-			kfree(chan->local_addr);
++		kfree(chan->local_addr);
+ 
+ 		kfree(chan);
+ 		return err;
+@@ -456,8 +455,7 @@
+ 		struct cycx_x25_channel *chan = dev->priv;
+ 
+ 		if (chan->svc) {
+-			if (chan->local_addr)
+-				kfree(chan->local_addr);
++			kfree(chan->local_addr);
+ 
+ 			if (chan->state == WAN_CONNECTED)
+ 				del_timer(&chan->timer);
+diff -ru linux-2.6.6/drivers/net/wan/x25_asy.c linux-2.6.6-modified/drivers/net/wan/x25_asy.c
+--- linux-2.6.6/drivers/net/wan/x25_asy.c	2004-04-04 05:36:26.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/wan/x25_asy.c	2004-05-24 12:40:30.000000000 +0200
+@@ -105,13 +105,9 @@
+ static void x25_asy_free(struct x25_asy *sl)
+ {
+ 	/* Free all X.25 frame buffers. */
+-	if (sl->rbuff)  {
+-		kfree(sl->rbuff);
+-	}
++	kfree(sl->rbuff);
+ 	sl->rbuff = NULL;
+-	if (sl->xbuff)  {
+-		kfree(sl->xbuff);
+-	}
++	kfree(sl->xbuff);
+ 	sl->xbuff = NULL;
+ 
+ 	if (!test_and_clear_bit(SLF_INUSE, &sl->flags)) {
+@@ -132,10 +128,8 @@
+ 	{
+ 		printk("%s: unable to grow X.25 buffers, MTU change cancelled.\n",
+ 		       dev->name);
+-		if (xbuff != NULL)  
+-			kfree(xbuff);
+-		if (rbuff != NULL)  
+-			kfree(rbuff);
++		kfree(xbuff);
++		kfree(rbuff);
+ 		return -ENOMEM;
+ 	}
+ 
+@@ -167,10 +161,8 @@
+ 
+ 	spin_unlock_bh(&sl->lock);
+ 
+-	if (xbuff != NULL) 
+-		kfree(xbuff);
+-	if (rbuff != NULL)
+-		kfree(rbuff);
++	kfree(xbuff);
++	kfree(rbuff);
+ 	return 0;
+ }
+ 
+diff -ru linux-2.6.6/drivers/net/wireless/airo.c linux-2.6.6-modified/drivers/net/wireless/airo.c
+--- linux-2.6.6/drivers/net/wireless/airo.c	2004-05-24 01:17:37.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/wireless/airo.c	2004-05-24 12:40:30.000000000 +0200
+@@ -2356,14 +2356,10 @@
+ 			dev_kfree_skb(skb);
+ 	}
+ 
+-	if (ai->flash)
+-		kfree(ai->flash);
+-	if (ai->rssi)
+-		kfree(ai->rssi);
+-	if (ai->APList)
+-		kfree(ai->APList);
+-	if (ai->SSID)
+-		kfree(ai->SSID);
++	kfree(ai->flash);
++	kfree(ai->rssi);
++	kfree(ai->APList);
++	kfree(ai->SSID);
+ 	if (freeres) {
+ 		/* PCMCIA frees this stuff, so only for PCI and ISA */
+ 	        release_region( dev->base_addr, 64 );
+@@ -5245,8 +5241,8 @@
+ {
+ 	struct proc_data *data = (struct proc_data *)file->private_data;
+ 	if ( data->on_close != NULL ) data->on_close( inode, file );
+-	if ( data->rbuffer ) kfree( data->rbuffer );
+-	if ( data->wbuffer ) kfree( data->wbuffer );
++	kfree( data->rbuffer );
++	kfree( data->wbuffer );
+ 	kfree( data );
+ 	return 0;
+ }
+diff -ru linux-2.6.6/drivers/net/wireless/airo_cs.c linux-2.6.6-modified/drivers/net/wireless/airo_cs.c
+--- linux-2.6.6/drivers/net/wireless/airo_cs.c	2004-04-04 05:37:59.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/wireless/airo_cs.c	2004-05-24 12:40:30.000000000 +0200
+@@ -280,9 +280,7 @@
+ 	
+ 	/* Unlink device structure, free pieces */
+ 	*linkp = link->next;
+-	if (link->priv) {
+-		kfree(link->priv);
+-	}
++	kfree(link->priv);
+ 	kfree(link);
+ 	
+ } /* airo_detach */
+diff -ru linux-2.6.6/drivers/net/wireless/atmel.c linux-2.6.6-modified/drivers/net/wireless/atmel.c
+--- linux-2.6.6/drivers/net/wireless/atmel.c	2004-05-24 01:17:37.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/wireless/atmel.c	2004-05-24 12:40:30.000000000 +0200
+@@ -1632,8 +1632,7 @@
+ 	unregister_netdev(dev);
+ 	remove_proc_entry("driver/atmel", NULL);
+ 	free_irq(dev->irq, dev);
+-	if (priv->firmware)
+-		kfree(priv->firmware);
++	kfree(priv->firmware);
+ 	if (freeres) {
+ 		/* PCMCIA frees this stuff, so only for PCI */
+ 	        release_region(dev->base_addr, 64);
+@@ -2436,8 +2435,7 @@
+ 			break;
+ 		}
+ 		
+-		if (priv->firmware)
+-			kfree(priv->firmware);
++		kfree(priv->firmware);
+ 		
+ 		priv->firmware = new_firmware;
+ 		priv->firmware_length = com.len;
+diff -ru linux-2.6.6/drivers/net/wireless/atmel_cs.c linux-2.6.6-modified/drivers/net/wireless/atmel_cs.c
+--- linux-2.6.6/drivers/net/wireless/atmel_cs.c	2004-05-24 01:17:37.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/wireless/atmel_cs.c	2004-05-24 12:40:30.000000000 +0200
+@@ -285,8 +285,7 @@
+ 
+ 	/* Unlink device structure, free pieces */
+ 	*linkp = link->next;
+-	if (link->priv)
+-		kfree(link->priv);
++	kfree(link->priv);
+ 	kfree(link);
+ }
+ 
+diff -ru linux-2.6.6/drivers/net/wireless/prism54/islpci_dev.c linux-2.6.6-modified/drivers/net/wireless/prism54/islpci_dev.c
+--- linux-2.6.6/drivers/net/wireless/prism54/islpci_dev.c	2004-04-04 05:36:14.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/wireless/prism54/islpci_dev.c	2004-05-24 12:40:30.000000000 +0200
+@@ -635,8 +635,7 @@
+ 			pci_unmap_single(priv->pdev, buf->pci_addr,
+ 					 buf->size, PCI_DMA_FROMDEVICE);
+ 		buf->pci_addr = 0;
+-		if (buf->mem)
+-			kfree(buf->mem);
++		kfree(buf->mem);
+ 		buf->size = 0;
+ 		buf->mem = NULL;
+         }
+diff -ru linux-2.6.6/drivers/net/wireless/strip.c linux-2.6.6-modified/drivers/net/wireless/strip.c
+--- linux-2.6.6/drivers/net/wireless/strip.c	2004-05-24 01:17:37.000000000 +0200
++++ linux-2.6.6-modified/drivers/net/wireless/strip.c	2004-05-24 12:40:30.000000000 +0200
+@@ -859,12 +859,9 @@
+ 		strip_info->mtu = dev->mtu = mtu;
+ 		return (1);
+ 	}
+-	if (r)
+-		kfree(r);
+-	if (s)
+-		kfree(s);
+-	if (t)
+-		kfree(t);
++	kfree(r);
++	kfree(s);
++	kfree(t);
+ 	return (0);
+ }
+ 
+@@ -921,12 +918,9 @@
+ 	printk(KERN_NOTICE "%s: strip MTU changed fom %d to %d.\n",
+ 	       strip_info->dev->name, old_mtu, strip_info->mtu);
+ 
+-	if (orbuff)
+-		kfree(orbuff);
+-	if (osbuff)
+-		kfree(osbuff);
+-	if (otbuff)
+-		kfree(otbuff);
++	kfree(orbuff);
++	kfree(osbuff);
++	kfree(otbuff);
+ 
+ 	return 0;
+ }
+diff -ru linux-2.6.6/drivers/scsi/eata.c linux-2.6.6-modified/drivers/scsi/eata.c
+--- linux-2.6.6/drivers/scsi/eata.c	2004-04-04 05:38:12.000000000 +0200
++++ linux-2.6.6-modified/drivers/scsi/eata.c	2004-05-24 12:22:00.000000000 +0200
+@@ -2392,7 +2392,7 @@
+                             driver_name);
+ 
+    for (i = 0; i < sh[j]->can_queue; i++)
+-      if ((&HD(j)->cp[i])->sglist) kfree((&HD(j)->cp[i])->sglist);
++      kfree((&HD(j)->cp[i])->sglist);
+ 
+    for (i = 0; i < sh[j]->can_queue; i++)
+       pci_unmap_single(HD(j)->pdev, HD(j)->cp[i].cp_dma_addr,
+diff -ru linux-2.6.6/drivers/scsi/ide-scsi.c linux-2.6.6-modified/drivers/scsi/ide-scsi.c
+--- linux-2.6.6/drivers/scsi/ide-scsi.c	2004-05-24 01:17:38.000000000 +0200
++++ linux-2.6.6-modified/drivers/scsi/ide-scsi.c	2004-05-24 12:22:00.000000000 +0200
+@@ -283,9 +283,9 @@
+ 	rq = kmalloc (sizeof (struct request), GFP_ATOMIC);
+ 	buf = kmalloc(SCSI_SENSE_BUFFERSIZE, GFP_ATOMIC);
+ 	if (pc == NULL || rq == NULL || buf == NULL) {
+-		if (pc) kfree(pc);
+-		if (rq) kfree(rq);
+-		if (buf) kfree(buf);
++		kfree(pc);
++		kfree(rq);
++		kfree(buf);
+ 		return -ENOMEM;
+ 	}
+ 	memset (pc, 0, sizeof (idescsi_pc_t));
+@@ -912,8 +912,8 @@
+ 	spin_lock_irq(host->host_lock);
+ 	return 0;
+ abort:
+-	if (pc) kfree (pc);
+-	if (rq) kfree (rq);
++	kfree (pc);
++	kfree (rq);
+ 	cmd->result = DID_ERROR << 16;
+ 	done(cmd);
+ 	return 1;
+diff -ru linux-2.6.6/drivers/scsi/u14-34f.c linux-2.6.6-modified/drivers/scsi/u14-34f.c
+--- linux-2.6.6/drivers/scsi/u14-34f.c	2004-04-04 05:36:54.000000000 +0200
++++ linux-2.6.6-modified/drivers/scsi/u14-34f.c	2004-05-24 12:22:00.000000000 +0200
+@@ -1961,7 +1961,7 @@
+                             driver_name);
+ 
+    for (i = 0; i < sh[j]->can_queue; i++)
+-      if ((&HD(j)->cp[i])->sglist) kfree((&HD(j)->cp[i])->sglist);
++      kfree((&HD(j)->cp[i])->sglist);
+ 
+    for (i = 0; i < sh[j]->can_queue; i++)
+       pci_unmap_single(HD(j)->pdev, HD(j)->cp[i].cp_dma_addr,
+diff -ru linux-2.6.6/drivers/usb/class/audio.c linux-2.6.6-modified/drivers/usb/class/audio.c
+--- linux-2.6.6/drivers/usb/class/audio.c	2004-04-04 05:38:21.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/class/audio.c	2004-05-24 01:31:09.000000000 +0200
+@@ -660,14 +660,10 @@
+ 		}
+ 	}
+ 	set_current_state(TASK_RUNNING);
+-	if (u->durb[0].urb->transfer_buffer)
+-		kfree(u->durb[0].urb->transfer_buffer);
+-	if (u->durb[1].urb->transfer_buffer)
+-		kfree(u->durb[1].urb->transfer_buffer);
+-	if (u->surb[0].urb->transfer_buffer)
+-		kfree(u->surb[0].urb->transfer_buffer);
+-	if (u->surb[1].urb->transfer_buffer)
+-		kfree(u->surb[1].urb->transfer_buffer);
++	kfree(u->durb[0].urb->transfer_buffer);
++	kfree(u->durb[1].urb->transfer_buffer);
++	kfree(u->surb[0].urb->transfer_buffer);
++	kfree(u->surb[1].urb->transfer_buffer);
+ 	u->durb[0].urb->transfer_buffer = u->durb[1].urb->transfer_buffer = 
+ 		u->surb[0].urb->transfer_buffer = u->surb[1].urb->transfer_buffer = NULL;
+ }
+@@ -1020,21 +1016,17 @@
+ 		u->phase = 0;
+ 		maxsze = (u->freqmax + 0x3fff) >> (14 - AFMT_BYTESSHIFT(u->format));
+ 		bufsz = DESCFRAMES * maxsze;
+-		if (u->durb[0].urb->transfer_buffer)
+-			kfree(u->durb[0].urb->transfer_buffer);
++		kfree(u->durb[0].urb->transfer_buffer);
+ 		u->durb[0].urb->transfer_buffer = kmalloc(bufsz, GFP_KERNEL);
+ 		u->durb[0].urb->transfer_buffer_length = bufsz;
+-		if (u->durb[1].urb->transfer_buffer)
+-			kfree(u->durb[1].urb->transfer_buffer);
++		kfree(u->durb[1].urb->transfer_buffer);
+ 		u->durb[1].urb->transfer_buffer = kmalloc(bufsz, GFP_KERNEL);
+ 		u->durb[1].urb->transfer_buffer_length = bufsz;
+ 		if (u->syncpipe) {
+-			if (u->surb[0].urb->transfer_buffer)
+-				kfree(u->surb[0].urb->transfer_buffer);
++			kfree(u->surb[0].urb->transfer_buffer);
+ 			u->surb[0].urb->transfer_buffer = kmalloc(3*SYNCFRAMES, GFP_KERNEL);
+ 			u->surb[0].urb->transfer_buffer_length = 3*SYNCFRAMES;
+-			if (u->surb[1].urb->transfer_buffer)
+-				kfree(u->surb[1].urb->transfer_buffer);
++			kfree(u->surb[1].urb->transfer_buffer);
+ 			u->surb[1].urb->transfer_buffer = kmalloc(3*SYNCFRAMES, GFP_KERNEL);
+ 			u->surb[1].urb->transfer_buffer_length = 3*SYNCFRAMES;
+ 		}
+@@ -1139,14 +1131,10 @@
+ 		}
+ 	}
+ 	set_current_state(TASK_RUNNING);
+-	if (u->durb[0].urb->transfer_buffer)
+-		kfree(u->durb[0].urb->transfer_buffer);
+-	if (u->durb[1].urb->transfer_buffer)
+-		kfree(u->durb[1].urb->transfer_buffer);
+-	if (u->surb[0].urb->transfer_buffer)
+-		kfree(u->surb[0].urb->transfer_buffer);
+-	if (u->surb[1].urb->transfer_buffer)
+-		kfree(u->surb[1].urb->transfer_buffer);
++	kfree(u->durb[0].urb->transfer_buffer);
++	kfree(u->durb[1].urb->transfer_buffer);
++	kfree(u->surb[0].urb->transfer_buffer);
++	kfree(u->surb[1].urb->transfer_buffer);
+ 	u->durb[0].urb->transfer_buffer = u->durb[1].urb->transfer_buffer = 
+ 		u->surb[0].urb->transfer_buffer = u->surb[1].urb->transfer_buffer = NULL;
+ }
+@@ -1387,21 +1375,17 @@
+ 		u->phase = 0;
+ 		maxsze = (u->freqmax + 0x3fff) >> (14 - AFMT_BYTESSHIFT(u->format));
+ 		bufsz = DESCFRAMES * maxsze;
+-		if (u->durb[0].urb->transfer_buffer)
+-			kfree(u->durb[0].urb->transfer_buffer);
++		kfree(u->durb[0].urb->transfer_buffer);
+ 		u->durb[0].urb->transfer_buffer = kmalloc(bufsz, GFP_KERNEL);
+ 		u->durb[0].urb->transfer_buffer_length = bufsz;
+-		if (u->durb[1].urb->transfer_buffer)
+-			kfree(u->durb[1].urb->transfer_buffer);
++		kfree(u->durb[1].urb->transfer_buffer);
+ 		u->durb[1].urb->transfer_buffer = kmalloc(bufsz, GFP_KERNEL);
+ 		u->durb[1].urb->transfer_buffer_length = bufsz;
+ 		if (u->syncpipe) {
+-			if (u->surb[0].urb->transfer_buffer)
+-				kfree(u->surb[0].urb->transfer_buffer);
++			kfree(u->surb[0].urb->transfer_buffer);
+ 			u->surb[0].urb->transfer_buffer = kmalloc(3*SYNCFRAMES, GFP_KERNEL);
+ 			u->surb[0].urb->transfer_buffer_length = 3*SYNCFRAMES;
+-			if (u->surb[1].urb->transfer_buffer)
+-				kfree(u->surb[1].urb->transfer_buffer);
++			kfree(u->surb[1].urb->transfer_buffer);
+ 			u->surb[1].urb->transfer_buffer = kmalloc(3*SYNCFRAMES, GFP_KERNEL);
+ 			u->surb[1].urb->transfer_buffer_length = 3*SYNCFRAMES;
+ 		}
+diff -ru linux-2.6.6/drivers/usb/class/bluetty.c linux-2.6.6-modified/drivers/usb/class/bluetty.c
+--- linux-2.6.6/drivers/usb/class/bluetty.c	2004-04-04 05:37:39.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/class/bluetty.c	2004-05-24 01:31:09.000000000 +0200
+@@ -1153,16 +1153,13 @@
+ probe_error:
+ 	if (bluetooth->read_urb)
+ 		usb_free_urb (bluetooth->read_urb);
+-	if (bluetooth->bulk_in_buffer)
+-		kfree (bluetooth->bulk_in_buffer);
++	kfree (bluetooth->bulk_in_buffer);
+ 	if (bluetooth->interrupt_in_urb)
+ 		usb_free_urb (bluetooth->interrupt_in_urb);
+-	if (bluetooth->interrupt_in_buffer)
+-		kfree (bluetooth->interrupt_in_buffer);
++	kfree (bluetooth->interrupt_in_buffer);
+ 	for (i = 0; i < NUM_CONTROL_URBS; ++i) 
+ 		if (bluetooth->control_urb_pool[i]) {
+-			if (bluetooth->control_urb_pool[i]->transfer_buffer)
+-				kfree (bluetooth->control_urb_pool[i]->transfer_buffer);
++			kfree (bluetooth->control_urb_pool[i]->transfer_buffer);
+ 			usb_free_urb (bluetooth->control_urb_pool[i]);
+ 		}
+ 
+@@ -1190,23 +1187,20 @@
+ 			usb_unlink_urb (bluetooth->read_urb);
+ 			usb_free_urb (bluetooth->read_urb);
+ 		}
+-		if (bluetooth->bulk_in_buffer)
+-			kfree (bluetooth->bulk_in_buffer);
++		kfree (bluetooth->bulk_in_buffer);
+ 
+ 		if (bluetooth->interrupt_in_urb) {
+ 			usb_unlink_urb (bluetooth->interrupt_in_urb);
+ 			usb_free_urb (bluetooth->interrupt_in_urb);
+ 		}
+-		if (bluetooth->interrupt_in_buffer)
+-			kfree (bluetooth->interrupt_in_buffer);
++		kfree (bluetooth->interrupt_in_buffer);
+ 
+ 		tty_unregister_device (bluetooth_tty_driver, bluetooth->minor);
+ 
+ 		for (i = 0; i < NUM_CONTROL_URBS; ++i) {
+ 			if (bluetooth->control_urb_pool[i]) {
+ 				usb_unlink_urb (bluetooth->control_urb_pool[i]);
+-				if (bluetooth->control_urb_pool[i]->transfer_buffer)
+-					kfree (bluetooth->control_urb_pool[i]->transfer_buffer);
++				kfree (bluetooth->control_urb_pool[i]->transfer_buffer);
+ 				usb_free_urb (bluetooth->control_urb_pool[i]);
+ 			}
+ 		}
+diff -ru linux-2.6.6/drivers/usb/core/devio.c linux-2.6.6-modified/drivers/usb/core/devio.c
+--- linux-2.6.6/drivers/usb/core/devio.c.orig	2004-05-24 22:02:36.734469872 +0200
++++ linux-2.6.6/drivers/usb/core/devio.c	2004-05-24 22:04:40.037724928 +0200
+@@ -198,12 +198,10 @@
+ 
+ static void free_async(struct async *as)
+ {
+-        if (as->urb->transfer_buffer)
+-                kfree(as->urb->transfer_buffer);
+-        if (as->urb->setup_packet)
+-                kfree(as->urb->setup_packet);
++	kfree(as->urb->transfer_buffer);
++	kfree(as->urb->setup_packet);
+ 	usb_free_urb(as->urb);
+-        kfree(as);
++	kfree(as);
+ }
+ 
+ static inline void async_newpending(struct async *as)
+@@ -898,17 +896,13 @@
+ 		return -EINVAL;
+ 	}
+ 	if (!(as = alloc_async(uurb.number_of_packets))) {
+-		if (isopkt)
+-			kfree(isopkt);
+-		if (dr)
+-			kfree(dr);
++		kfree(isopkt);
++		kfree(dr);
+ 		return -ENOMEM;
+ 	}
+ 	if (!(as->urb->transfer_buffer = kmalloc(uurb.buffer_length, GFP_KERNEL))) {
+-		if (isopkt)
+-			kfree(isopkt);
+-		if (dr)
+-			kfree(dr);
++		kfree(isopkt);
++		kfree(dr);
+ 		free_async(as);
+ 		return -ENOMEM;
+ 	}
+@@ -927,8 +921,7 @@
+ 		as->urb->iso_frame_desc[u].length = isopkt[u].length;
+ 		totlen += isopkt[u].length;
+ 	}
+-	if (isopkt)
+-		kfree(isopkt);
++	kfree(isopkt);
+ 	as->ps = ps;
+         as->userurb = arg;
+ 	if (uurb.endpoint & USB_DIR_IN)
+@@ -1111,8 +1104,7 @@
+ 	}
+ 
+ 	if (!connected(ps->dev)) {
+-		if (buf)
+-			kfree(buf);
++		kfree(buf);
+ 		return -ENODEV;
+ 	}
+ 
+@@ -1160,8 +1152,7 @@
+ 			&& size > 0
+ 			&& copy_to_user (ctrl.data, buf, size) != 0)
+ 		retval = -EFAULT;
+-	if (buf != 0)
+-		kfree (buf);
++	kfree (buf);
+ 	return retval;
+ }
+ 
+diff -ru linux-2.6.6/drivers/usb/host/ehci-mem.c linux-2.6.6-modified/drivers/usb/host/ehci-mem.c
+--- linux-2.6.6/drivers/usb/host/ehci-mem.c	2004-04-04 05:38:16.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/host/ehci-mem.c	2004-05-24 01:31:09.000000000 +0200
+@@ -173,8 +173,7 @@
+ 	ehci->periodic = 0;
+ 
+ 	/* shadow periodic table */
+-	if (ehci->pshadow)
+-		kfree (ehci->pshadow);
++	kfree (ehci->pshadow);
+ 	ehci->pshadow = 0;
+ }
+ 
+diff -ru linux-2.6.6/drivers/usb/host/hc_simple.c linux-2.6.6-modified/drivers/usb/host/hc_simple.c
+--- linux-2.6.6/drivers/usb/host/hc_simple.c	2004-04-04 05:38:28.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/host/hc_simple.c	2004-05-24 01:31:09.000000000 +0200
+@@ -312,8 +312,7 @@
+ {
+ 	DBGFUNC ("enter hci_free_dev\n");
+ 
+-	if (usb_dev->hcpriv)
+-		kfree (usb_dev->hcpriv);
++	kfree (usb_dev->hcpriv);
+ 
+ 	usb_dev->hcpriv = NULL;
+ 
+diff -ru linux-2.6.6/drivers/usb/host/hc_sl811.c linux-2.6.6-modified/drivers/usb/host/hc_sl811.c
+--- linux-2.6.6/drivers/usb/host/hc_sl811.c	2004-04-04 05:37:37.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/host/hc_sl811.c	2004-05-24 01:31:09.000000000 +0200
+@@ -1191,8 +1191,7 @@
+ 
+ 	hc_reset (hci);
+ 
+-	if (hp->tl)
+-		kfree (hp->tl);
++	kfree (hp->tl);
+ 
+ 	if (hp->hcport > 0) {
+ 		release_region (hp->hcport, 2);
+diff -ru linux-2.6.6/drivers/usb/host/uhci-hcd.c linux-2.6.6-modified/drivers/usb/host/uhci-hcd.c
+--- linux-2.6.6/drivers/usb/host/uhci-hcd.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/host/uhci-hcd.c	2004-05-24 01:31:09.000000000 +0200
+@@ -2461,8 +2461,7 @@
+ 
+ proc_failed:
+ #endif
+-	if (errbuf)
+-		kfree(errbuf);
++	kfree(errbuf);
+ 
+ errbuf_failed:
+ 
+@@ -2480,8 +2479,7 @@
+ 	remove_proc_entry("driver/uhci", 0);
+ #endif
+ 
+-	if (errbuf)
+-		kfree(errbuf);
++	kfree(errbuf);
+ }
+ 
+ module_init(uhci_hcd_init);
+diff -ru linux-2.6.6/drivers/usb/input/ati_remote.c linux-2.6.6-modified/drivers/usb/input/ati_remote.c
+--- linux-2.6.6/drivers/usb/input/ati_remote.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/input/ati_remote.c	2004-05-24 01:31:09.000000000 +0200
+@@ -787,8 +787,7 @@
+ 	ati_remote->present = 1;	
+ 	
+ error:
+-	if (buf)
+-		kfree(buf);
++	kfree(buf);
+ 
+ 	if (retval)
+ 		ati_remote_delete(ati_remote);
+diff -ru linux-2.6.6/drivers/usb/input/hid-core.c linux-2.6.6-modified/drivers/usb/input/hid-core.c
+--- linux-2.6.6/drivers/usb/input/hid-core.c	2004-04-04 05:37:23.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/input/hid-core.c	2004-05-24 01:31:09.000000000 +0200
+@@ -552,8 +552,7 @@
+ 		}
+ 	}
+ 
+-	if (device->rdesc)
+-		kfree(device->rdesc);
++	kfree(device->rdesc);
+ 	kfree(device);
+ }
+ 
+diff -ru linux-2.6.6/drivers/usb/media/dabusb.c linux-2.6.6-modified/drivers/usb/media/dabusb.c
+--- linux-2.6.6/drivers/usb/media/dabusb.c	2004-04-04 05:37:23.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/media/dabusb.c	2004-05-24 01:31:09.000000000 +0200
+@@ -141,8 +141,7 @@
+ #ifdef DEBUG 
+ 		dump_urb(b->purb);
+ #endif
+-		if (b->purb->transfer_buffer)
+-			kfree (b->purb->transfer_buffer);
++		kfree (b->purb->transfer_buffer);
+ 		usb_free_urb(b->purb);
+ 		tmp = p->next;
+ 		list_del (p);
+diff -ru linux-2.6.6/drivers/usb/media/w9968cf.c linux-2.6.6-modified/drivers/usb/media/w9968cf.c
+--- linux-2.6.6/drivers/usb/media/w9968cf.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/media/w9968cf.c	2004-05-24 01:31:09.000000000 +0200
+@@ -3585,10 +3585,8 @@
+ 
+ fail: /* Free unused memory */
+ 	if (cam) {
+-		if (cam->control_buffer)
+-			kfree(cam->control_buffer);
+-		if (cam->data_buffer)
+-			kfree(cam->data_buffer);
++		kfree(cam->control_buffer);
++		kfree(cam->data_buffer);
+ 		if (cam->v4ldev)
+ 			video_device_release(cam->v4ldev);
+ 		up(&cam->dev_sem);
+diff -ru linux-2.6.6/drivers/usb/misc/auerswald.c linux-2.6.6-modified/drivers/usb/misc/auerswald.c
+--- linux-2.6.6/drivers/usb/misc/auerswald.c	2004-04-04 05:36:57.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/misc/auerswald.c	2004-05-24 01:31:09.000000000 +0200
+@@ -718,12 +718,8 @@
+ /* free a single auerbuf */
+ static void auerbuf_free (pauerbuf_t bp)
+ {
+-	if (bp->bufp) {
+-		kfree (bp->bufp);
+-	}
+-	if (bp->dr) {
+-		kfree (bp->dr);
+-	}
++	kfree (bp->bufp);
++	kfree (bp->dr);
+ 	if (bp->urbp) {
+ 		usb_free_urb (bp->urbp);
+ 	}
+diff -ru linux-2.6.6/drivers/usb/serial/belkin_sa.c linux-2.6.6-modified/drivers/usb/serial/belkin_sa.c
+--- linux-2.6.6/drivers/usb/serial/belkin_sa.c	2004-04-04 05:37:23.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/serial/belkin_sa.c	2004-05-24 01:31:09.000000000 +0200
+@@ -207,8 +207,7 @@
+ 	for (i=0; i < serial->num_ports; ++i) {
+ 		/* My special items, the standard routines free my urbs */
+ 		priv = usb_get_serial_port_data(serial->port[i]);
+-		if (priv)
+-			kfree(priv);
++		kfree(priv);
+ 	}
+ }
+ 
+diff -ru linux-2.6.6/drivers/usb/serial/empeg.c linux-2.6.6-modified/drivers/usb/serial/empeg.c
+--- linux-2.6.6/drivers/usb/serial/empeg.c	2004-04-04 05:38:22.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/serial/empeg.c	2004-05-24 01:31:09.000000000 +0200
+@@ -593,8 +593,7 @@
+ failed_usb_serial_register:
+ 	for (i = 0; i < NUM_URBS; ++i) {
+ 		if (write_urb_pool[i]) {
+-			if (write_urb_pool[i]->transfer_buffer)
+-				kfree(write_urb_pool[i]->transfer_buffer);
++			kfree(write_urb_pool[i]->transfer_buffer);
+ 			usb_free_urb(write_urb_pool[i]);
+ 		}
+ 	}
+@@ -618,8 +617,7 @@
+ 			 * the host controllers get fixed to set urb->dev = NULL after
+ 			 * the urb is finished.  Otherwise this call oopses. */
+ 			/* usb_unlink_urb(write_urb_pool[i]); */
+-			if (write_urb_pool[i]->transfer_buffer)
+-				kfree(write_urb_pool[i]->transfer_buffer);
++			kfree(write_urb_pool[i]->transfer_buffer);
+ 			usb_free_urb (write_urb_pool[i]);
+ 		}
+ 	}
+diff -ru linux-2.6.6/drivers/usb/serial/ftdi_sio.c linux-2.6.6-modified/drivers/usb/serial/ftdi_sio.c
+--- linux-2.6.6/drivers/usb/serial/ftdi_sio.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/serial/ftdi_sio.c	2004-05-24 01:31:09.000000000 +0200
+@@ -1116,9 +1116,8 @@
+ 	priv->flags = ASYNC_LOW_LATENCY;
+ 
+ 	/* Increase the size of read buffers */
+-	if (port->bulk_in_buffer) {
+-		kfree (port->bulk_in_buffer);
+-	}
++	kfree (port->bulk_in_buffer);
++
+ 	port->bulk_in_buffer = kmalloc (BUFSZ, GFP_KERNEL);
+ 	if (!port->bulk_in_buffer) {
+ 		kfree (priv);
+diff -ru linux-2.6.6/drivers/usb/serial/io_edgeport.c linux-2.6.6-modified/drivers/usb/serial/io_edgeport.c
+--- linux-2.6.6/drivers/usb/serial/io_edgeport.c	2004-04-04 05:36:17.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/serial/io_edgeport.c	2004-05-24 01:31:09.000000000 +0200
+@@ -962,9 +962,7 @@
+ 
+ 
+ 	/* clean up the transfer buffer */
+-	if (urb->transfer_buffer != NULL) {
+-		kfree(urb->transfer_buffer);
+-	}
++	kfree(urb->transfer_buffer);
+ 
+ 	/* Free the command urb */
+ 	usb_free_urb (urb);
+@@ -1293,14 +1291,10 @@
+ 
+ 	if (edge_port->write_urb) {
+ 		/* if this urb had a transfer buffer already (old transfer) free it */
+-		if (edge_port->write_urb->transfer_buffer != NULL) {
+-			kfree(edge_port->write_urb->transfer_buffer);
+-		}
++		kfree(edge_port->write_urb->transfer_buffer);
+ 		usb_free_urb   (edge_port->write_urb);
+ 	}
+-	if (edge_port->txfifo.fifo) {
+-		kfree(edge_port->txfifo.fifo);
+-	}
++	kfree(edge_port->txfifo.fifo);
+ 
+ 	dbg("%s exited", __FUNCTION__);
+ }   
+diff -ru linux-2.6.6/drivers/usb/serial/kl5kusb105.c linux-2.6.6-modified/drivers/usb/serial/kl5kusb105.c
+--- linux-2.6.6/drivers/usb/serial/kl5kusb105.c	2004-04-04 05:37:23.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/serial/kl5kusb105.c	2004-05-24 01:31:09.000000000 +0200
+@@ -346,8 +346,7 @@
+ 					 * finished.  Otherwise this call
+ 					 * oopses. */
+ 					/* usb_unlink_urb(write_urbs[j]); */
+-					if (write_urbs[j]->transfer_buffer)
+-						    kfree(write_urbs[j]->transfer_buffer);
++					kfree(write_urbs[j]->transfer_buffer);
+ 					usb_free_urb (write_urbs[j]);
+ 				}
+ 			}
+diff -ru linux-2.6.6/drivers/usb/serial/mct_u232.c linux-2.6.6-modified/drivers/usb/serial/mct_u232.c
+--- linux-2.6.6/drivers/usb/serial/mct_u232.c	2004-04-04 05:37:36.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/serial/mct_u232.c	2004-05-24 01:31:09.000000000 +0200
+@@ -411,8 +411,7 @@
+ 	for (i=0; i < serial->num_ports; ++i) {
+ 		/* My special items, the standard routines free my urbs */
+ 		priv = usb_get_serial_port_data(serial->port[i]);
+-		if (priv)
+-			kfree(priv);
++		kfree(priv);
+ 	}
+ } /* mct_u232_shutdown */
+ 
+diff -ru linux-2.6.6/drivers/usb/serial/omninet.c linux-2.6.6-modified/drivers/usb/serial/omninet.c
+--- linux-2.6.6/drivers/usb/serial/omninet.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/serial/omninet.c	2004-05-24 01:31:09.000000000 +0200
+@@ -209,8 +209,7 @@
+ 	}
+ 
+ 	od = usb_get_serial_port_data(port);
+-	if (od)
+-		kfree(od);
++	kfree(od);
+ }
+ 
+ 
+diff -ru linux-2.6.6/drivers/usb/storage/sddr55.c linux-2.6.6-modified/drivers/usb/storage/sddr55.c
+--- linux-2.6.6/drivers/usb/storage/sddr55.c	2004-04-04 05:36:55.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/storage/sddr55.c	2004-05-24 01:04:52.000000000 +0200
+@@ -115,10 +115,8 @@
+ 	/* expect to get short transfer if no card fitted */
+ 	if (result == USB_STOR_XFER_SHORT || result == USB_STOR_XFER_STALLED) {
+ 		/* had a short transfer, no card inserted, free map memory */
+-		if (info->lba_to_pba)
+-			kfree(info->lba_to_pba);
+-		if (info->pba_to_lba)
+-			kfree(info->pba_to_lba);
++		kfree(info->lba_to_pba);
++		kfree(info->pba_to_lba);
+ 		info->lba_to_pba = NULL;
+ 		info->pba_to_lba = NULL;
+ 
+@@ -645,18 +643,14 @@
+ 		return -1;
+ 	}
+ 
+-	if (info->lba_to_pba)
+-		kfree(info->lba_to_pba);
+-	if (info->pba_to_lba)
+-		kfree(info->pba_to_lba);
++	kfree(info->lba_to_pba);
++	kfree(info->pba_to_lba);
+ 	info->lba_to_pba = kmalloc(numblocks*sizeof(int), GFP_NOIO);
+ 	info->pba_to_lba = kmalloc(numblocks*sizeof(int), GFP_NOIO);
+ 
+ 	if (info->lba_to_pba == NULL || info->pba_to_lba == NULL) {
+-		if (info->lba_to_pba != NULL)
+-			kfree(info->lba_to_pba);
+-		if (info->pba_to_lba != NULL)
+-			kfree(info->pba_to_lba);
++		kfree(info->lba_to_pba);
++		kfree(info->pba_to_lba);
+ 		info->lba_to_pba = NULL;
+ 		info->pba_to_lba = NULL;
+ 		kfree(buffer);
+@@ -724,10 +718,8 @@
+ 	if (!extra)
+ 		return;
+ 
+-	if (info->lba_to_pba)
+-		kfree(info->lba_to_pba);
+-	if (info->pba_to_lba)
+-		kfree(info->pba_to_lba);
++	kfree(info->lba_to_pba);
++	kfree(info->pba_to_lba);
+ }
+ 
+ 
+diff -ru linux-2.6.6/drivers/usb/storage/usb.c linux-2.6.6-modified/drivers/usb/storage/usb.c
+--- linux-2.6.6/drivers/usb/storage/usb.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/drivers/usb/storage/usb.c	2004-05-24 01:05:42.000000000 +0200
+@@ -858,8 +858,7 @@
+ 	}
+ 
+ 	/* Free the extra data and the URB */
+-	if (us->extra)
+-		kfree(us->extra);
++	kfree(us->extra);
+ 	if (us->current_urb)
+ 		usb_free_urb(us->current_urb);
+ 
+diff -ru linux-2.6.6/fs/affs/super.c linux-2.6.6-modified/fs/affs/super.c
+--- linux-2.6.6/fs/affs/super.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/affs/super.c	2004-05-24 02:42:33.000000000 +0200
+@@ -52,8 +52,7 @@
+ 	}
+ 
+ 	affs_brelse(sbi->s_bmap_bh);
+-	if (sbi->s_prefix)
+-		kfree(sbi->s_prefix);
++	kfree(sbi->s_prefix);
+ 	kfree(sbi->s_bitmap);
+ 	affs_brelse(sbi->s_root_bh);
+ 	kfree(sbi);
+@@ -477,11 +476,9 @@
+ out_error:
+ 	if (root_inode)
+ 		iput(root_inode);
+-	if (sbi->s_bitmap)
+-		kfree(sbi->s_bitmap);
++	kfree(sbi->s_bitmap);
+ 	affs_brelse(root_bh);
+-	if (sbi->s_prefix)
+-		kfree(sbi->s_prefix);
++	kfree(sbi->s_prefix);
+ 	kfree(sbi);
+ 	sb->s_fs_info = NULL;
+ 	return -EINVAL;
+diff -ru linux-2.6.6/fs/afs/file.c linux-2.6.6-modified/fs/afs/file.c
+--- linux-2.6.6/fs/afs/file.c	2004-04-04 05:37:38.000000000 +0200
++++ linux-2.6.6-modified/fs/afs/file.c	2004-05-24 02:42:33.000000000 +0200
+@@ -296,8 +296,7 @@
+ 		page->private = 0;
+ 		ClearPagePrivate(page);
+ 
+-		if (pageio)
+-			kfree(pageio);
++		kfree(pageio);
+ 	}
+ 
+ 	_leave(" = 0");
+diff -ru linux-2.6.6/fs/binfmt_elf.c linux-2.6.6-modified/fs/binfmt_elf.c
+--- linux-2.6.6/fs/binfmt_elf.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/binfmt_elf.c	2004-05-24 02:42:33.000000000 +0200
+@@ -903,8 +903,7 @@
+ 	if (interpreter)
+ 		fput(interpreter);
+ out_free_interp:
+-	if (elf_interpreter)
+-		kfree(elf_interpreter);
++	kfree(elf_interpreter);
+ out_free_file:
+ 	sys_close(elf_exec_fileno);
+ out_free_fh:
+diff -ru linux-2.6.6/fs/cifs/connect.c linux-2.6.6-modified/fs/cifs/connect.c
+--- linux-2.6.6/fs/cifs/connect.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/cifs/connect.c	2004-05-24 02:42:33.000000000 +0200
+@@ -837,8 +837,7 @@
+ 		the helper that resolves tcp names, mount to it, try to 
+ 		tcon to it unmount it if fail */
+ 
+-	if(referrals)
+-		kfree(referrals);
++	kfree(referrals);
+ 
+ 	return rc;
+ }
+@@ -1085,10 +1084,8 @@
+ 	
+ 	memset(&volume_info,0,sizeof(struct smb_vol));
+ 	if (cifs_parse_mount_options(mount_data, devname, &volume_info)) {
+-		if(volume_info.UNC)
+-			kfree(volume_info.UNC);
+-		if(volume_info.password)
+-			kfree(volume_info.password);
++		kfree(volume_info.UNC);
++		kfree(volume_info.password);
+ 		FreeXid(xid);
+ 		return -EINVAL;
+ 	}
+@@ -1100,10 +1097,8 @@
+ 		cifserror("No username specified ");
+         /* In userspace mount helper we can get user name from alternate
+            locations such as env variables and files on disk */
+-		if(volume_info.UNC)
+-			kfree(volume_info.UNC);
+-		if(volume_info.password)
+-			kfree(volume_info.password);
++		kfree(volume_info.UNC);
++		kfree(volume_info.password);
+ 		FreeXid(xid);
+ 		return -EINVAL;
+ 	}
+@@ -1118,10 +1113,8 @@
+        
+ 		if(rc != 1) {
+ 			/* we failed translating address */
+-			if(volume_info.UNC)
+-				kfree(volume_info.UNC);
+-			if(volume_info.password)
+-				kfree(volume_info.password);
++			kfree(volume_info.UNC);
++			kfree(volume_info.password);
+ 			FreeXid(xid);
+ 			return -EINVAL;
+ 		}
+@@ -1132,19 +1125,15 @@
+ 	} else if (volume_info.UNCip){
+ 		/* BB using ip addr as server name connect to the DFS root below */
+ 		cERROR(1,("Connecting to DFS root not implemented yet"));
+-		if(volume_info.UNC)
+-			kfree(volume_info.UNC);
+-		if(volume_info.password)
+-			kfree(volume_info.password);
++		kfree(volume_info.UNC);
++		kfree(volume_info.password);
+ 		FreeXid(xid);
+ 		return -EINVAL;
+ 	} else /* which servers DFS root would we conect to */ {
+ 		cERROR(1,
+ 		       ("CIFS mount error: No UNC path (e.g. -o unc=//192.168.1.100/public) specified  "));
+-		if(volume_info.UNC)
+-			kfree(volume_info.UNC);
+-		if(volume_info.password)
+-			kfree(volume_info.password);
++		kfree(volume_info.UNC);
++		kfree(volume_info.password);
+ 		FreeXid(xid);
+ 		return -EINVAL;
+ 	}
+@@ -1157,10 +1146,8 @@
+ 		cifs_sb->local_nls = load_nls(volume_info.iocharset);
+ 		if(cifs_sb->local_nls == NULL) {
+ 			cERROR(1,("CIFS mount error: iocharset %s not found",volume_info.iocharset));
+-			if(volume_info.UNC)
+-				kfree(volume_info.UNC);
+-			if(volume_info.password)
+-				kfree(volume_info.password);
++			kfree(volume_info.UNC);
++			kfree(volume_info.password);
+ 			FreeXid(xid);
+ 			return -ELIBACC;
+ 		}
+@@ -1182,10 +1169,8 @@
+ 			       ("Error connecting to IPv4 socket. Aborting operation"));
+ 			if(csocket != NULL)
+ 				sock_release(csocket);
+-			if(volume_info.UNC)
+-				kfree(volume_info.UNC);
+-			if(volume_info.password)
+-				kfree(volume_info.password);
++			kfree(volume_info.UNC);
++			kfree(volume_info.password);
+ 			FreeXid(xid);
+ 			return rc;
+ 		}
+@@ -1194,10 +1179,8 @@
+ 		if (srvTcp == NULL) {
+ 			rc = -ENOMEM;
+ 			sock_release(csocket);
+-			if(volume_info.UNC)
+-				kfree(volume_info.UNC);
+-			if(volume_info.password)
+-				kfree(volume_info.password);
++			kfree(volume_info.UNC);
++			kfree(volume_info.password);
+ 			FreeXid(xid);
+ 			return rc;
+ 		} else {
+@@ -1219,8 +1202,7 @@
+ 	if (existingCifsSes) {
+ 		pSesInfo = existingCifsSes;
+ 		cFYI(1, ("Existing smb sess found "));
+-		if(volume_info.password)
+-			kfree(volume_info.password);
++		kfree(volume_info.password);
+ 		/* volume_info.UNC freed at end of function */
+ 	} else if (!rc) {
+ 		cFYI(1, ("Existing smb sess not found "));
+@@ -1250,8 +1232,7 @@
+ 			if(!rc)
+ 				atomic_inc(&srvTcp->socketUseCount);
+ 		} else
+-			if(volume_info.password)
+-				kfree(volume_info.password);
++			kfree(volume_info.password);
+ 	}
+     
+ 	/* search for existing tcon to this server share */
+@@ -1299,8 +1280,7 @@
+ 								 "",
+ 								 cifs_sb->
+ 								 local_nls);
+-					if(volume_info.UNC)
+-						kfree(volume_info.UNC);
++					kfree(volume_info.UNC);
+ 					FreeXid(xid);
+ 					return -ENODEV;
+ 				} else {
+@@ -1360,8 +1340,7 @@
+ 	(in which case it is not needed anymore) but when new sesion is created
+ 	the password ptr is put in the new session structure (in which case the
+ 	password will be freed at unmount time) */
+-	if(volume_info.UNC)
+-		kfree(volume_info.UNC);
++	kfree(volume_info.UNC);
+ 	FreeXid(xid);
+ 	return rc;
+ }
+@@ -2680,8 +2659,7 @@
+ 			if (((long) bcc_ptr + (2 * length)) -
+ 			    (long) pByteArea(smb_buffer_response) <=
+ 			    BCC(smb_buffer_response)) {
+-				if(tcon->nativeFileSystem)
+-					kfree(tcon->nativeFileSystem);
++				kfree(tcon->nativeFileSystem);
+ 				tcon->nativeFileSystem =
+ 				    cifs_kcalloc(length + 2, GFP_KERNEL);
+ 				cifs_strfromUCS_le(tcon->nativeFileSystem,
+@@ -2698,8 +2676,7 @@
+ 			if (((long) bcc_ptr + length) -
+ 			    (long) pByteArea(smb_buffer_response) <=
+ 			    BCC(smb_buffer_response)) {
+-				if(tcon->nativeFileSystem)
+-					kfree(tcon->nativeFileSystem);
++				kfree(tcon->nativeFileSystem);
+ 				tcon->nativeFileSystem =
+ 				    cifs_kcalloc(length + 1, GFP_KERNEL);
+ 				strncpy(tcon->nativeFileSystem, bcc_ptr,
+diff -ru linux-2.6.6/fs/cifs/dir.c linux-2.6.6-modified/fs/cifs/dir.c
+--- linux-2.6.6/fs/cifs/dir.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/cifs/dir.c	2004-05-24 02:42:33.000000000 +0200
+@@ -246,10 +246,8 @@
+ 		}
+ 	} 
+ 
+-	if (buf)
+-	    kfree(buf);
+-	if (full_path)
+-	    kfree(full_path);
++	kfree(buf);
++	kfree(full_path);
+ 	FreeXid(xid);
+ 
+ 	return rc;
+@@ -287,8 +285,7 @@
+ 		}
+ 	}
+ 
+-	if (full_path)
+-		kfree(full_path);
++	kfree(full_path);
+ 	FreeXid(xid);
+ 
+ 	return rc;
+@@ -353,8 +350,7 @@
+ 		/* BB special case check for Access Denied - watch security exposure of returning dir info implicitly via different rc if file exists or not but no access BB */
+ 	}
+ 
+-	if (full_path)
+-		kfree(full_path);
++	kfree(full_path);
+ 	FreeXid(xid);
+ 	return ERR_PTR(rc);
+ }
+@@ -377,8 +373,7 @@
+ 
+ 	cFYI(1, (" inode = 0x%p and full path is %s", inode, full_path));
+ 
+-	if (full_path)
+-		kfree(full_path);
++	kfree(full_path);
+ 	FreeXid(xid);
+ 	return rc;
+ }
+diff -ru linux-2.6.6/fs/cifs/file.c linux-2.6.6-modified/fs/cifs/file.c
+--- linux-2.6.6/fs/cifs/file.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/cifs/file.c	2004-05-24 02:42:33.000000000 +0200
+@@ -139,8 +139,7 @@
+ 	   helps non-Unix server case */
+ 	buf = kmalloc(sizeof(FILE_ALL_INFO),GFP_KERNEL);
+ 	if(buf==0) {
+-		if (full_path)
+-			kfree(full_path);
++		kfree(full_path);
+ 		FreeXid(xid);
+ 		return -ENOMEM;
+ 	}
+@@ -150,8 +149,7 @@
+ 		cFYI(1, ("cifs_open returned 0x%x ", rc));
+ 		cFYI(1, ("oplock: %d ", oplock));	
+ 	} else {
+-		if(file->private_data)
+-			kfree(file->private_data);
++		kfree(file->private_data);
+ 		file->private_data =
+ 			kmalloc(sizeof (struct cifsFileInfo), GFP_KERNEL);
+ 		if (file->private_data) {
+@@ -233,10 +231,8 @@
+ 		}
+ 	}
+ 
+-	if (buf)
+-		kfree(buf);
+-	if (full_path)
+-		kfree(full_path);
++	kfree(buf);
++	kfree(full_path);
+ 	FreeXid(xid);
+ 	return rc;
+ }
+@@ -312,8 +308,7 @@
+ 	buf = kmalloc(sizeof(FILE_ALL_INFO),GFP_KERNEL);
+ 	if(buf==0) {
+ 		up(&pCifsFile->fh_sem);
+-		if (full_path)
+-			kfree(full_path);
++		kfree(full_path);
+ 		FreeXid(xid);
+ 		return -ENOMEM;
+ 	}
+@@ -351,10 +346,8 @@
+ 		}
+ 	}
+ 
+-	if (buf)
+-		kfree(buf);
+-	if (full_path)
+-		kfree(full_path);
++	kfree(buf);
++	kfree(full_path);
+ 	FreeXid(xid);
+ 	return rc;
+ }
+@@ -388,8 +381,7 @@
+ 		list_del(&pSMBFile->flist);
+ 		list_del(&pSMBFile->tlist);
+ 		write_unlock(&file->f_owner.lock);
+-		if(pSMBFile->search_resume_name)
+-			kfree(pSMBFile->search_resume_name);
++		kfree(pSMBFile->search_resume_name);
+ 		kfree(file->private_data);
+ 		file->private_data = NULL;
+ 	} else
+@@ -1377,9 +1369,7 @@
+ 	cifsFile = (struct cifsFileInfo *)dir_file->private_data;
+ 	if(cifsFile == NULL)
+ 		return;
+-	if(cifsFile->search_resume_name) {
+-		kfree(cifsFile->search_resume_name);
+-	}
++	kfree(cifsFile->search_resume_name);
+ 
+ 	if(Unicode) 
+ 		len *= 2;
+@@ -1753,8 +1743,7 @@
+ 					/* Free the memory allocated by previous findfirst 
+ 					or findnext call - we can not reuse the memory since
+ 					the resume name may not be same string length */
+-					if(cifsFile->search_resume_name)
+-						kfree(cifsFile->search_resume_name);
++					kfree(cifsFile->search_resume_name);
+ 					cifsFile->search_resume_name = 
+ 						kmalloc(cifsFile->resume_name_length, GFP_KERNEL);
+ 					cFYI(1,("Last file: %s with name %d bytes long",
+@@ -1788,8 +1777,7 @@
+ 					/* Free the memory allocated by previous findfirst 
+ 					or findnext call - we can not reuse the memory since
+ 					the resume name may not be same string length */
+-					if(cifsFile->search_resume_name)
+-						kfree(cifsFile->search_resume_name);
++					kfree(cifsFile->search_resume_name);
+ 					cifsFile->search_resume_name = 
+ 						kmalloc(cifsFile->resume_name_length, GFP_KERNEL);
+ 					cFYI(1,("fnext last file: %s with name %d bytes long",
+@@ -1894,10 +1882,8 @@
+ 			}
+ 		}
+ 	} /* end switch */
+-	if (data)
+-		kfree(data);
+-	if (full_path)
+-		kfree(full_path);
++	kfree(data);
++	kfree(full_path);
+ 	FreeXid(xid);
+ 
+ 	return rc;
+diff -ru linux-2.6.6/fs/cifs/inode.c linux-2.6.6-modified/fs/cifs/inode.c
+--- linux-2.6.6/fs/cifs/inode.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/cifs/inode.c	2004-05-24 02:42:33.000000000 +0200
+@@ -204,8 +204,7 @@
+ 				    strnlen(search_path, MAX_PATHCONF) + 1,
+ 				    GFP_KERNEL);
+ 			if (tmp_path == NULL) {
+-				if(buf)
+-					kfree(buf);
++				kfree(buf);
+ 				FreeXid(xid);
+ 				return -ENOMEM;
+ 			}
+@@ -218,8 +217,7 @@
+ 			kfree(tmp_path);
+ 			/* BB fix up inode etc. */
+ 		} else if (rc) {
+-			if(buf)
+-				kfree(buf);
++			kfree(buf);
+ 			FreeXid(xid);
+ 			return rc;
+ 		}
+@@ -307,8 +305,7 @@
+ 					   inode->i_rdev);
+ 		}
+ 	}
+-	if(buf)
+-	    kfree(buf);
++	kfree(buf);
+ 	FreeXid(xid);
+ 	return rc;
+ }
+@@ -404,8 +401,7 @@
+ 	cifsInode = CIFS_I(inode);
+ 	cifsInode->time = 0;	/* force revalidate of dir as well */
+ 
+-	if (full_path)
+-		kfree(full_path);
++	kfree(full_path);
+ 	FreeXid(xid);
+ 	return rc;
+ }
+@@ -456,8 +452,7 @@
+ 		/* eg CIFSSMBWinSetPerms(xid,pTcon,full_path,mode,-1,-1,local_nls);*/
+ 		}
+ 	}
+-	if (full_path)
+-		kfree(full_path);
++	kfree(full_path);
+ 	FreeXid(xid);
+ 
+ 	return rc;
+@@ -495,8 +490,7 @@
+ 	direntry->d_inode->i_ctime = inode->i_ctime = inode->i_mtime =
+ 	    CURRENT_TIME;
+ 
+-	if (full_path)
+-		kfree(full_path);
++	kfree(full_path);
+ 	FreeXid(xid);
+ 	return rc;
+ }
+@@ -549,10 +543,8 @@
+ 			CIFSSMBClose(xid, pTcon, netfid);
+ 		}
+ 	}
+-	if (fromName)
+-		kfree(fromName);
+-	if (toName)
+-		kfree(toName);
++	kfree(fromName);
++	kfree(toName);
+ 
+ 	FreeXid(xid);
+ 	return rc;
+@@ -598,8 +590,7 @@
+ 	} else if (time_before(jiffies, cifsInode->time + HZ) && lookupCacheEnabled) {
+ 	    if((S_ISREG(direntry->d_inode->i_mode) == 0) || 
+ 			(direntry->d_inode->i_nlink == 1)) {  
+-			if (full_path)
+-				kfree(full_path);
++			kfree(full_path);
+ 			FreeXid(xid);
+ 			return rc;
+ 		} else {
+@@ -667,8 +658,7 @@
+ 
+ 	up(&direntry->d_inode->i_sem);
+ 	
+-	if (full_path)
+-		kfree(full_path);
++	kfree(full_path);
+ 	FreeXid(xid);
+ 
+ 	return rc;
+@@ -863,8 +853,7 @@
+ 
+ 	/* do not  need local check to inode_check_ok since the server does that */
+ 	inode_setattr(direntry->d_inode, attrs);
+-	if (full_path)
+-		kfree(full_path);
++	kfree(full_path);
+ 	FreeXid(xid);
+ 	return rc;
+ }
+diff -ru linux-2.6.6/fs/cifs/link.c linux-2.6.6-modified/fs/cifs/link.c
+--- linux-2.6.6/fs/cifs/link.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/cifs/link.c	2004-05-24 02:42:33.000000000 +0200
+@@ -70,10 +70,8 @@
+ 	cifsInode = CIFS_I(old_file->d_inode);
+ 	cifsInode->time = 0;	/* will force revalidate to go get info when needed */
+ 
+-	if (fromName)
+-		kfree(fromName);
+-	if (toName)
+-		kfree(toName);
++	kfree(fromName);
++	kfree(toName);
+ 	FreeXid(xid);
+ 	return rc;
+ }
+@@ -96,8 +94,7 @@
+ 	pTcon = cifs_sb->tcon;
+ 	target_path = kmalloc(PATH_MAX, GFP_KERNEL);
+ 	if(target_path == NULL) {
+-		if (full_path)
+-			kfree(full_path);
++		kfree(full_path);
+ 		FreeXid(xid);
+ 		return -ENOMEM;
+ 	}
+@@ -126,10 +123,8 @@
+ 	}
+ 	/* else EACCESS */
+ 
+-	if (target_path)
+-		kfree(target_path);
+-	if (full_path)
+-		kfree(full_path);
++	kfree(target_path);
++	kfree(full_path);
+ 	FreeXid(xid);
+ 	return rc;
+ }
+@@ -178,8 +173,7 @@
+ 		}
+ 	}
+ 
+-	if (full_path)
+-		kfree(full_path);
++	kfree(full_path);
+ 	FreeXid(xid);
+ 	return rc;
+ }
+@@ -214,8 +208,7 @@
+ 		len = buflen;
+ 	tmpbuffer = kmalloc(len,GFP_KERNEL);   
+ 	if(tmpbuffer == NULL) {
+-		if (full_path)
+-			kfree(full_path);
++		kfree(full_path);
+ 		FreeXid(xid);
+ 		return -ENOMEM;
+ 	}
+@@ -258,12 +251,9 @@
+ 							strncpy(tmpbuffer, referrals, len-1);                            
+ 						}
+ 					}
+-					if(referrals)
+-						kfree(referrals);
++					kfree(referrals);
+ 					kfree(tmp_path);
+-					if(referrals) {
+-						kfree(referrals);
+-					}
++					kfree(referrals);
+ 				}
+ 				/* BB add code like else decode referrals then memcpy to
+ 				  tmpbuffer and free referrals string array BB */
+@@ -281,12 +271,8 @@
+ 		      rc));
+ 	}
+ 
+-	if (tmpbuffer) {
+-		kfree(tmpbuffer);
+-	}
+-	if (full_path) {
+-		kfree(full_path);
+-	}
++	kfree(tmpbuffer);
++	kfree(full_path);
+ 	FreeXid(xid);
+ 	return rc;
+ }
+diff -ru linux-2.6.6/fs/cifs/misc.c linux-2.6.6-modified/fs/cifs/misc.c
+--- linux-2.6.6/fs/cifs/misc.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/cifs/misc.c	2004-05-24 02:42:33.000000000 +0200
+@@ -95,14 +95,10 @@
+ 	atomic_dec(&sesInfoAllocCount);
+ 	list_del(&buf_to_free->cifsSessionList);
+ 	write_unlock(&GlobalSMBSeslock);
+-	if (buf_to_free->serverOS)
+-		kfree(buf_to_free->serverOS);
+-	if (buf_to_free->serverDomain)
+-		kfree(buf_to_free->serverDomain);
+-	if (buf_to_free->serverNOS)
+-		kfree(buf_to_free->serverNOS);
+-	if (buf_to_free->password)
+-		kfree(buf_to_free->password);
++	kfree(buf_to_free->serverOS);
++	kfree(buf_to_free->serverDomain);
++	kfree(buf_to_free->serverNOS);
++	kfree(buf_to_free->password);
+ 	kfree(buf_to_free);
+ }
+ 
+@@ -138,8 +134,7 @@
+ 	atomic_dec(&tconInfoAllocCount);
+ 	list_del(&buf_to_free->cifsConnectionList);
+ 	write_unlock(&GlobalSMBSeslock);
+-	if (buf_to_free->nativeFileSystem)
+-		kfree(buf_to_free->nativeFileSystem);
++	kfree(buf_to_free->nativeFileSystem);
+ 	kfree(buf_to_free);
+ }
+ 
+diff -ru linux-2.6.6/fs/compat_ioctl.c linux-2.6.6-modified/fs/compat_ioctl.c
+--- linux-2.6.6/fs/compat_ioctl.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/compat_ioctl.c	2004-05-24 02:42:33.000000000 +0200
+@@ -256,8 +256,7 @@
+ 	struct video_clip *cp;
+ 
+ 	cp = kp->clips;
+-	if(cp != NULL)
+-		kfree(cp);
++	kfree(cp);
+ }
+ 
+ static int get_video_window32(struct video_window *kp, struct video_window32 *up)
+@@ -555,8 +554,7 @@
+ 				err = -EFAULT;
+ 		}
+ 	}
+-	if(ifc.ifc_buf != NULL)
+-		kfree (ifc.ifc_buf);
++	kfree (ifc.ifc_buf);
+ 	return err;
+ }
+ 
+@@ -2320,7 +2318,7 @@
+ 	if (err)
+ 		err = -EFAULT;
+ 
+-out:	if (karg) kfree(karg);
++out:	kfree(karg);
+ 	return err;
+ }
+ 
+diff -ru linux-2.6.6/fs/ext2/acl.c linux-2.6.6-modified/fs/ext2/acl.c
+--- linux-2.6.6/fs/ext2/acl.c	2004-04-04 05:37:41.000000000 +0200
++++ linux-2.6.6-modified/fs/ext2/acl.c	2004-05-24 02:42:33.000000000 +0200
+@@ -194,8 +194,7 @@
+ 		acl = NULL;
+ 	else
+ 		acl = ERR_PTR(retval);
+-	if (value)
+-		kfree(value);
++	kfree(value);
+ 
+ 	if (!IS_ERR(acl)) {
+ 		switch(type) {
+@@ -264,8 +263,7 @@
+ 
+ 	error = ext2_xattr_set(inode, name_index, "", value, size, 0);
+ 
+-	if (value)
+-		kfree(value);
++	kfree(value);
+ 	if (!error) {
+ 		switch(type) {
+ 			case ACL_TYPE_ACCESS:
+diff -ru linux-2.6.6/fs/ext2/super.c linux-2.6.6-modified/fs/ext2/super.c
+--- linux-2.6.6/fs/ext2/super.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/ext2/super.c	2004-05-24 02:42:33.000000000 +0200
+@@ -848,8 +848,7 @@
+ 		brelse(sbi->s_group_desc[i]);
+ failed_mount_group_desc:
+ 	kfree(sbi->s_group_desc);
+-	if (sbi->s_debts)
+-		kfree(sbi->s_debts);
++	kfree(sbi->s_debts);
+ failed_mount:
+ 	brelse(bh);
+ failed_sbi:
+diff -ru linux-2.6.6/fs/ext3/acl.c linux-2.6.6-modified/fs/ext3/acl.c
+--- linux-2.6.6/fs/ext3/acl.c	2004-04-04 05:36:55.000000000 +0200
++++ linux-2.6.6-modified/fs/ext3/acl.c	2004-05-24 02:42:33.000000000 +0200
+@@ -197,8 +197,7 @@
+ 		acl = NULL;
+ 	else
+ 		acl = ERR_PTR(retval);
+-	if (value)
+-		kfree(value);
++	kfree(value);
+ 
+ 	if (!IS_ERR(acl)) {
+ 		switch(type) {
+@@ -269,8 +268,7 @@
+ 	error = ext3_xattr_set_handle(handle, inode, name_index, "",
+ 				      value, size, 0);
+ 
+-	if (value)
+-		kfree(value);
++	kfree(value);
+ 	if (!error) {
+ 		switch(type) {
+ 			case ACL_TYPE_ACCESS:
+diff -ru linux-2.6.6/fs/ext3/super.c linux-2.6.6-modified/fs/ext3/super.c
+--- linux-2.6.6/fs/ext3/super.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/ext3/super.c	2004-05-24 02:42:33.000000000 +0200
+@@ -407,8 +407,7 @@
+ 	brelse(sbi->s_sbh);
+ #ifdef CONFIG_QUOTA
+ 	for (i = 0; i < MAXQUOTAS; i++) {
+-		if (sbi->s_qf_names[i])
+-			kfree(sbi->s_qf_names[i]);
++		kfree(sbi->s_qf_names[i]);
+ 	}
+ #endif
+ 
+@@ -1578,8 +1577,7 @@
+ failed_mount:
+ #ifdef CONFIG_QUOTA
+ 	for (i = 0; i < MAXQUOTAS; i++) {
+-		if (sbi->s_qf_names[i])
+-			kfree(sbi->s_qf_names[i]);
++		kfree(sbi->s_qf_names[i]);
+ 	}
+ #endif
+ 	ext3_blkdev_remove(sbi);
+diff -ru linux-2.6.6/fs/fat/inode.c linux-2.6.6-modified/fs/fat/inode.c
+--- linux-2.6.6/fs/fat/inode.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/fat/inode.c	2004-05-24 02:42:33.000000000 +0200
+@@ -1068,8 +1068,7 @@
+ 		unload_nls(sbi->nls_io);
+ 	if (sbi->nls_disk)
+ 		unload_nls(sbi->nls_disk);
+-	if (sbi->options.iocharset)
+-		kfree(sbi->options.iocharset);
++	kfree(sbi->options.iocharset);
+ 	sb->s_fs_info = NULL;
+ 	kfree(sbi);
+ 	return error;
+diff -ru linux-2.6.6/fs/hpfs/dnode.c linux-2.6.6-modified/fs/hpfs/dnode.c
+--- linux-2.6.6/fs/hpfs/dnode.c	2004-04-04 05:37:06.000000000 +0200
++++ linux-2.6.6-modified/fs/hpfs/dnode.c	2004-05-24 02:42:33.000000000 +0200
+@@ -242,12 +242,12 @@
+ 	go_up:
+ 	if (namelen >= 256) {
+ 		hpfs_error(i->i_sb, "hpfs_add_to_dnode: namelen == %d", namelen);
+-		if (nd) kfree(nd);
++		kfree(nd);
+ 		kfree(nname);
+ 		return 1;
+ 	}
+ 	if (!(d = hpfs_map_dnode(i->i_sb, dno, &qbh))) {
+-		if (nd) kfree(nd);
++		kfree(nd);
+ 		kfree(nname);
+ 		return 1;
+ 	}
+@@ -255,7 +255,7 @@
+ 	if (hpfs_sb(i->i_sb)->sb_chk)
+ 		if (hpfs_stop_cycles(i->i_sb, dno, &c1, &c2, "hpfs_add_to_dnode")) {
+ 			hpfs_brelse4(&qbh);
+-			if (nd) kfree(nd);
++			kfree(nd);
+ 			kfree(nname);
+ 			return 1;
+ 		}
+@@ -268,7 +268,7 @@
+ 		for_all_poss(i, hpfs_pos_subst, 5, t + 1);
+ 		hpfs_mark_4buffers_dirty(&qbh);
+ 		hpfs_brelse4(&qbh);
+-		if (nd) kfree(nd);
++		kfree(nd);
+ 		kfree(nname);
+ 		return 0;
+ 	}
+diff -ru linux-2.6.6/fs/hpfs/super.c linux-2.6.6-modified/fs/hpfs/super.c
+--- linux-2.6.6/fs/hpfs/super.c	2004-04-04 05:37:23.000000000 +0200
++++ linux-2.6.6-modified/fs/hpfs/super.c	2004-05-24 02:42:33.000000000 +0200
+@@ -75,7 +75,7 @@
+ 		} else if (s->s_flags & MS_RDONLY) printk("; going on - but anything won't be destroyed because it's read-only\n");
+ 		else printk("; corrupted filesystem mounted read/write - your computer will explode within 20 seconds ... but you wanted it so!\n");
+ 	} else printk("\n");
+-	if (buf) kfree(buf);
++	kfree(buf);
+ 	hpfs_sb(s)->sb_was_error = 1;
+ }
+ 
+@@ -102,8 +102,8 @@
+ static void hpfs_put_super(struct super_block *s)
+ {
+ 	struct hpfs_sb_info *sbi = hpfs_sb(s);
+-	if (sbi->sb_cp_table) kfree(sbi->sb_cp_table);
+-	if (sbi->sb_bmp_dir) kfree(sbi->sb_bmp_dir);
++	kfree(sbi->sb_cp_table);
++	kfree(sbi->sb_bmp_dir);
+ 	unmark_dirty(s);
+ 	s->s_fs_info = NULL;
+ 	kfree(sbi);
+@@ -653,8 +653,8 @@
+ bail2:	brelse(bh0);
+ bail1:
+ bail0:
+-	if (sbi->sb_bmp_dir) kfree(sbi->sb_bmp_dir);
+-	if (sbi->sb_cp_table) kfree(sbi->sb_cp_table);
++	kfree(sbi->sb_bmp_dir);
++	kfree(sbi->sb_cp_table);
+ 	s->s_fs_info = NULL;
+ 	kfree(sbi);
+ 	return -EINVAL;
+diff -ru linux-2.6.6/fs/isofs/inode.c linux-2.6.6-modified/fs/isofs/inode.c
+--- linux-2.6.6/fs/isofs/inode.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/isofs/inode.c	2004-05-24 02:42:33.000000000 +0200
+@@ -880,8 +880,7 @@
+ 	if (opt.check == 'r') table++;
+ 	s->s_root->d_op = &isofs_dentry_ops[table];
+ 
+-	if (opt.iocharset)
+-		kfree(opt.iocharset);
++	kfree(opt.iocharset);
+ 
+ 	return 0;
+ 
+@@ -920,8 +919,7 @@
+ out_freebh:
+ 	brelse(bh);
+ out_freesbi:
+-	if (opt.iocharset)
+-		kfree(opt.iocharset);
++	kfree(opt.iocharset);
+ 	kfree(sbi);
+ 	s->s_fs_info = NULL;
+ 	return -EINVAL;
+@@ -1170,8 +1168,7 @@
+ 			goto out_toomany;
+ 	} while(more_entries);
+ out:
+-	if (tmpde)
+-		kfree(tmpde);
++	kfree(tmpde);
+ 	if (bh)
+ 		brelse(bh);
+ 	return 0;
+@@ -1183,8 +1180,7 @@
+ 
+ out_noread:
+ 	printk(KERN_INFO "ISOFS: unable to read i-node block %lu\n", block);
+-	if (tmpde)
+-		kfree(tmpde);
++	kfree(tmpde);
+ 	return -EIO;
+ 
+ out_toomany:
+@@ -1375,8 +1371,7 @@
+ 		init_special_inode(inode, inode->i_mode, inode->i_rdev);
+ 
+  out:
+-	if (tmpde)
+-		kfree(tmpde);
++	kfree(tmpde);
+ 	if (bh)
+ 		brelse(bh);
+ 	return;
+diff -ru linux-2.6.6/fs/isofs/rock.c linux-2.6.6-modified/fs/isofs/rock.c
+--- linux-2.6.6/fs/isofs/rock.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/isofs/rock.c	2004-05-24 02:42:33.000000000 +0200
+@@ -62,7 +62,7 @@
+ }                                     
+ 
+ #define MAYBE_CONTINUE(LABEL,DEV) \
+-  {if (buffer) kfree(buffer); \
++  {kfree(buffer); \
+   if (cont_extent){ \
+     int block, offset, offset1; \
+     struct buffer_head * pbh; \
+@@ -145,7 +145,7 @@
+ 	retnamlen += rr->len - 5;
+ 	break;
+       case SIG('R','E'):
+-	if (buffer) kfree(buffer);
++	kfree(buffer);
+ 	return -1;
+       default:
+ 	break;
+@@ -155,7 +155,7 @@
+   MAYBE_CONTINUE(repeat,inode);
+   return retnamlen; /* If 0, this file did not have a NM field */
+  out:
+-  if(buffer) kfree(buffer);
++  kfree(buffer);
+   return 0;
+ }
+ 
+@@ -355,7 +355,7 @@
+   MAYBE_CONTINUE(repeat,inode);
+   return 0;
+  out:
+-  if(buffer) kfree(buffer);
++  kfree(buffer);
+   return 0;
+ }
+ 
+@@ -529,8 +529,7 @@
+ 
+ 	/* error exit from macro */
+       out:
+-	if (buffer)
+-		kfree(buffer);
++	kfree(buffer);
+ 	goto fail;
+       out_noread:
+ 	printk("unable to read i-node block");
+diff -ru linux-2.6.6/fs/jbd/transaction.c linux-2.6.6-modified/fs/jbd/transaction.c
+--- linux-2.6.6/fs/jbd/transaction.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/jbd/transaction.c	2004-05-24 02:42:33.000000000 +0200
+@@ -229,8 +229,7 @@
+ 	spin_unlock(&transaction->t_handle_lock);
+ 	spin_unlock(&journal->j_state_lock);
+ out:
+-	if (new_transaction)
+-		kfree(new_transaction);
++	kfree(new_transaction);
+ 	return ret;
+ }
+ 
+@@ -724,8 +723,7 @@
+ 	journal_cancel_revoke(handle, jh);
+ 
+ out:
+-	if (frozen_buffer)
+-		kfree(frozen_buffer);
++	kfree(frozen_buffer);
+ 
+ 	JBUFFER_TRACE(jh, "exit");
+ 	return error;
+@@ -908,8 +906,7 @@
+ 	jbd_unlock_bh_state(bh);
+ out:
+ 	journal_put_journal_head(jh);
+-	if (committed_data)
+-		kfree(committed_data);
++	kfree(committed_data);
+ 	return err;
+ }
+ 
+diff -ru linux-2.6.6/fs/jffs/intrep.c linux-2.6.6-modified/fs/jffs/intrep.c
+--- linux-2.6.6/fs/jffs/intrep.c	2004-04-04 05:37:23.000000000 +0200
++++ linux-2.6.6-modified/fs/jffs/intrep.c	2004-05-24 02:42:33.000000000 +0200
+@@ -1667,9 +1667,7 @@
+ 		}
+ 		printk("jffs_find_child(): Didn't find the file \"%s\".\n",
+ 		       (copy ? copy : ""));
+-		if (copy) {
+-			kfree(copy);
+-		}
++		kfree(copy);
+ 	});
+ 
+ 	return f;
+diff -ru linux-2.6.6/fs/jffs2/gc.c linux-2.6.6-modified/fs/jffs2/gc.c
+--- linux-2.6.6/fs/jffs2/gc.c	2004-04-04 05:36:53.000000000 +0200
++++ linux-2.6.6-modified/fs/jffs2/gc.c	2004-05-24 02:42:33.000000000 +0200
+@@ -867,8 +867,7 @@
+ 			   the flash which our deletion dirent obsoletes. So we have to write out
+ 			   a new deletion dirent to replace it */
+ 			
+-			if (namebuf)
+-				kfree(namebuf);
++			kfree(namebuf);
+ 
+ 			up(&c->erase_free_sem);
+ 			return jffs2_garbage_collect_dirent(c, jeb, f, fd);
+@@ -876,8 +875,7 @@
+ 
+ 		up(&c->erase_free_sem);
+ 
+-		if (namebuf) 
+-			kfree(namebuf);
++		kfree(namebuf);
+ 	}
+ 
+ 	/* No need for it any more. Just mark it obsolete and remove it from the list */
+@@ -1258,7 +1256,7 @@
+ 			f->metadata = NULL;
+ 		}
+ 	}
+-	if (comprbuf) kfree(comprbuf);
++	kfree(comprbuf);
+ 
+ 	kunmap(pg);
+ 	/* XXX: Does the page get freed automatically? */
+diff -ru linux-2.6.6/fs/jffs2/wbuf.c linux-2.6.6-modified/fs/jffs2/wbuf.c
+--- linux-2.6.6/fs/jffs2/wbuf.c	2004-04-04 05:36:52.000000000 +0200
++++ linux-2.6.6-modified/fs/jffs2/wbuf.c	2004-05-24 02:42:33.000000000 +0200
+@@ -253,8 +253,7 @@
+ 	ret = jffs2_reserve_space_gc(c, end-start, &ofs, &len);
+ 	if (ret) {
+ 		printk(KERN_WARNING "Failed to allocate space for wbuf recovery. Data loss ensues.\n");
+-		if (buf)
+-			kfree(buf);
++		kfree(buf);
+ 		return;
+ 	}
+ 	if (end-start >= c->wbuf_pagesize) {
+diff -ru linux-2.6.6/fs/jffs2/write.c linux-2.6.6-modified/fs/jffs2/write.c
+--- linux-2.6.6/fs/jffs2/write.c	2004-04-04 05:37:06.000000000 +0200
++++ linux-2.6.6-modified/fs/jffs2/write.c	2004-05-24 02:42:33.000000000 +0200
+@@ -382,8 +382,7 @@
+ 		}
+ 		if (comprtype == JFFS2_COMPR_NONE) {
+ 			/* Either compression failed, or the allocation of comprbuf failed */
+-			if (comprbuf)
+-				kfree(comprbuf);
++			kfree(comprbuf);
+ 			comprbuf = buf;
+ 			datalen = cdatalen;
+ 		}
+diff -ru linux-2.6.6/fs/jfs/acl.c linux-2.6.6-modified/fs/jfs/acl.c
+--- linux-2.6.6/fs/jfs/acl.c	2004-04-04 05:36:16.000000000 +0200
++++ linux-2.6.6-modified/fs/jfs/acl.c	2004-05-24 02:42:33.000000000 +0200
+@@ -69,8 +69,7 @@
+ 		if (!IS_ERR(acl))
+ 			*p_acl = posix_acl_dup(acl);
+ 	}
+-	if (value)
+-		kfree(value);
++	kfree(value);
+ 	return acl;
+ }
+ 
+@@ -111,8 +110,7 @@
+ 	}
+ 	rc = __jfs_setxattr(inode, ea_name, value, size, 0);
+ out:
+-	if (value)
+-		kfree(value);
++	kfree(value);
+ 
+ 	if (!rc) {
+ 		if (*p_acl && (*p_acl != JFS_ACL_NOT_CACHED))
+diff -ru linux-2.6.6/fs/jfs/xattr.c linux-2.6.6-modified/fs/jfs/xattr.c
+--- linux-2.6.6/fs/jfs/xattr.c	2004-04-04 05:36:56.000000000 +0200
++++ linux-2.6.6-modified/fs/jfs/xattr.c	2004-05-24 02:42:33.000000000 +0200
+@@ -881,8 +881,7 @@
+       out:
+ 	up_write(&JFS_IP(inode)->xattr_sem);
+ 
+-	if (os2name)
+-		kfree(os2name);
++	kfree(os2name);
+ 
+ 	return rc;
+ }
+@@ -972,8 +971,7 @@
+       out:
+ 	up_read(&JFS_IP(inode)->xattr_sem);
+ 
+-	if (os2name)
+-		kfree(os2name);
++	kfree(os2name);
+ 
+ 	return size;
+ }
+diff -ru linux-2.6.6/fs/mbcache.c linux-2.6.6-modified/fs/mbcache.c
+--- linux-2.6.6/fs/mbcache.c	2004-04-04 05:38:22.000000000 +0200
++++ linux-2.6.6-modified/fs/mbcache.c	2004-05-24 02:42:33.000000000 +0200
+@@ -278,8 +278,7 @@
+ 	if (cache) {
+ 		while (--m >= 0)
+ 			kfree(cache->c_indexes_hash[m]);
+-		if (cache->c_block_hash)
+-			kfree(cache->c_block_hash);
++		kfree(cache->c_block_hash);
+ 		kfree(cache);
+ 	}
+ 	return NULL;
+diff -ru linux-2.6.6/fs/nfs/inode.c linux-2.6.6-modified/fs/nfs/inode.c
+--- linux-2.6.6/fs/nfs/inode.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/nfs/inode.c	2004-05-24 02:42:33.000000000 +0200
+@@ -497,8 +497,7 @@
+ 	if (server->client_sys)
+ 		rpc_shutdown_client(server->client_sys);
+ out_fail:
+-	if (server->hostname)
+-		kfree(server->hostname);
++	kfree(server->hostname);
+ 	return err;
+ }
+ 
+@@ -1614,8 +1613,7 @@
+ 			return ERR_PTR(-ENOMEM);
+ 	}
+ 	if (copy_from_user(dst, src->data, maxlen)) {
+-		if (p != NULL)
+-			kfree(p);
++		kfree(p);
+ 		return ERR_PTR(-EFAULT);
+ 	}
+ 	dst[maxlen] = '\0';
+@@ -1697,10 +1695,8 @@
+ out_err:
+ 	s = (struct super_block *)p;
+ out_free:
+-	if (server->mnt_path)
+-		kfree(server->mnt_path);
+-	if (server->hostname)
+-		kfree(server->hostname);
++	kfree(server->mnt_path);
++	kfree(server->hostname);
+ 	kfree(server);
+ 	return s;
+ }
+diff -ru linux-2.6.6/fs/nfs/nfs4state.c linux-2.6.6-modified/fs/nfs/nfs4state.c
+--- linux-2.6.6/fs/nfs/nfs4state.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/nfs/nfs4state.c	2004-05-24 02:42:33.000000000 +0200
+@@ -259,8 +259,7 @@
+ 		new = NULL;
+ 	}
+ 	spin_unlock(&clp->cl_lock);
+-	if (new)
+-		kfree(new);
++	kfree(new);
+ 	if (sp) {
+ 		if (!test_bit(NFS4CLNT_OK, &clp->cl_state))
+ 			nfs4_wait_clnt_recover(server->client, clp);
+diff -ru linux-2.6.6/fs/nfs/proc.c linux-2.6.6-modified/fs/nfs/proc.c
+--- linux-2.6.6/fs/nfs/proc.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/nfs/proc.c	2004-05-24 02:42:33.000000000 +0200
+@@ -343,8 +343,7 @@
+ {
+ 	struct rpc_message *msg = &task->tk_msg;
+ 	
+-	if (msg->rpc_argp)
+-		kfree(msg->rpc_argp);
++	kfree(msg->rpc_argp);
+ 	return 0;
+ }
+ 
+diff -ru linux-2.6.6/fs/nfs/unlink.c linux-2.6.6-modified/fs/nfs/unlink.c
+--- linux-2.6.6/fs/nfs/unlink.c	2004-04-04 05:38:18.000000000 +0200
++++ linux-2.6.6-modified/fs/nfs/unlink.c	2004-05-24 02:42:33.000000000 +0200
+@@ -52,8 +52,7 @@
+ {
+ 	if (--data->count == 0) {
+ 		nfs_detach_unlinkdata(data);
+-		if (data->name.name != NULL)
+-			kfree(data->name.name);
++		kfree(data->name.name);
+ 		kfree(data);
+ 	}
+ }
+diff -ru linux-2.6.6/fs/nfsd/export.c linux-2.6.6-modified/fs/nfsd/export.c
+--- linux-2.6.6/fs/nfsd/export.c	2004-04-04 05:37:23.000000000 +0200
++++ linux-2.6.6-modified/fs/nfsd/export.c	2004-05-24 02:42:33.000000000 +0200
+@@ -189,8 +189,7 @@
+  out:
+ 	if (dom)
+ 		auth_domain_put(dom);
+-	if (buf)
+-		kfree(buf);
++	kfree(buf);
+ 	return err;
+ }
+ 
+@@ -426,8 +425,7 @@
+ 		path_release(&nd);
+ 	if (dom)
+ 		auth_domain_put(dom);
+-	if (buf)
+-		kfree(buf);
++	kfree(buf);
+ 	return err;
+ }
+ 
+diff -ru linux-2.6.6/fs/nfsd/nfs4xdr.c linux-2.6.6-modified/fs/nfsd/nfs4xdr.c
+--- linux-2.6.6/fs/nfsd/nfs4xdr.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/nfsd/nfs4xdr.c	2004-05-24 02:42:33.000000000 +0200
+@@ -264,8 +264,7 @@
+ 	if (nbytes <= sizeof(argp->tmp))
+ 		p = argp->tmp;
+ 	else {
+-		if (argp->tmpp)
+-			kfree(argp->tmpp);
++		kfree(argp->tmpp);
+ 		p = argp->tmpp = kmalloc(nbytes, GFP_KERNEL);
+ 		if (!p)
+ 			return NULL;
+diff -ru linux-2.6.6/fs/ntfs/dir.c linux-2.6.6-modified/fs/ntfs/dir.c
+--- linux-2.6.6/fs/ntfs/dir.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/ntfs/dir.c	2004-05-24 02:42:33.000000000 +0200
+@@ -164,8 +164,7 @@
+ 				name->len = 0;
+ 				*res = name;
+ 			} else {
+-				if (name)
+-					kfree(name);
++				kfree(name);
+ 				*res = NULL;
+ 			}
+ 			mref = le64_to_cpu(ie->data.dir.indexed_file);
+@@ -424,8 +423,7 @@
+ 				name->len = 0;
+ 				*res = name;
+ 			} else {
+-				if (name)
+-					kfree(name);
++				kfree(name);
+ 				*res = NULL;
+ 			}
+ 			mref = le64_to_cpu(ie->data.dir.indexed_file);
+@@ -1379,8 +1377,7 @@
+ 		ntfs_unmap_page(bmp_page);
+ 	if (ia_page)
+ 		ntfs_unmap_page(ia_page);
+-	if (name)
+-		kfree(name);
++	kfree(name);
+ 	if (ctx)
+ 		put_attr_search_ctx(ctx);
+ 	if (m)
+diff -ru linux-2.6.6/fs/ntfs/namei.c linux-2.6.6-modified/fs/ntfs/namei.c
+--- linux-2.6.6/fs/ntfs/namei.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/ntfs/namei.c	2004-05-24 02:42:33.000000000 +0200
+@@ -147,8 +147,7 @@
+ 			ntfs_error(vol->sb, "ntfs_iget(0x%lx) failed with "
+ 					"error code %li.", dent_ino,
+ 					PTR_ERR(dent_inode));
+-		if (name)
+-			kfree(name);
++		kfree(name);
+ 		/* Return the error code. */
+ 		return (struct dentry *)dent_inode;
+ 	}
+diff -ru linux-2.6.6/fs/openpromfs/inode.c linux-2.6.6-modified/fs/openpromfs/inode.c
+--- linux-2.6.6/fs/openpromfs/inode.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/openpromfs/inode.c	2004-05-24 02:42:33.000000000 +0200
+@@ -1087,8 +1087,7 @@
+ 	unregister_filesystem(&openprom_fs_type);
+ 	free_pages ((unsigned long)nodes, alloced);
+ 	for (i = 0; i < aliases_nodes; i++)
+-		if (alias_names [i])
+-			kfree (alias_names [i]);
++		kfree (alias_names [i]);
+ 	nodes = NULL;
+ }
+ 
+diff -ru linux-2.6.6/fs/reiserfs/super.c linux-2.6.6-modified/fs/reiserfs/super.c
+--- linux-2.6.6/fs/reiserfs/super.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/reiserfs/super.c	2004-05-24 02:14:49.000000000 +0200
+@@ -1484,9 +1484,7 @@
+     if (SB_BUFFER_WITH_SB (s))
+ 	brelse(SB_BUFFER_WITH_SB (s));
+ 
+-    if (sbi != NULL) {
+-	kfree(sbi);
+-    }
++    kfree(sbi);
+ 
+     s->s_fs_info = NULL;
+     return errval;
+diff -ru linux-2.6.6/fs/smbfs/request.c linux-2.6.6-modified/fs/smbfs/request.c
+--- linux-2.6.6/fs/smbfs/request.c	2004-04-04 05:38:25.000000000 +0200
++++ linux-2.6.6-modified/fs/smbfs/request.c	2004-05-24 02:42:33.000000000 +0200
+@@ -123,8 +123,7 @@
+ 	atomic_dec(&req->rq_server->nr_requests);
+ 	if (req->rq_buffer && !(req->rq_flags & SMB_REQ_STATIC))
+ 		smb_kfree(req->rq_buffer);
+-	if (req->rq_trans2buffer)
+-		smb_kfree(req->rq_trans2buffer);
++	smb_kfree(req->rq_trans2buffer);
+ 	kmem_cache_free(req_cachep, req);
+ }
+ 
+@@ -181,8 +180,7 @@
+ 	req->rq_err = 0;
+ 	req->rq_errno = 0;
+ 	req->rq_fragment = 0;
+-	if (req->rq_trans2buffer)
+-		smb_kfree(req->rq_trans2buffer);
++	smb_kfree(req->rq_trans2buffer);
+ 
+ 	return 0;
+ }
+diff -ru linux-2.6.6/fs/udf/udf_sb.h linux-2.6.6-modified/fs/udf/udf_sb.h
+--- linux-2.6.6/fs/udf/udf_sb.h	2004-04-04 05:37:45.000000000 +0200
++++ linux-2.6.6-modified/fs/udf/udf_sb.h	2004-05-24 02:42:33.000000000 +0200
+@@ -39,8 +39,7 @@
+ {\
+ 	if (UDF_SB(X))\
+ 	{\
+-		if (UDF_SB_PARTMAPS(X))\
+-			kfree(UDF_SB_PARTMAPS(X));\
++		kfree(UDF_SB_PARTMAPS(X));\
+ 		UDF_SB_PARTMAPS(X) = NULL;\
+ 	}\
+ }
+diff -ru linux-2.6.6/fs/ufs/super.c linux-2.6.6-modified/fs/ufs/super.c
+--- linux-2.6.6/fs/ufs/super.c	2004-05-24 01:17:39.000000000 +0200
++++ linux-2.6.6-modified/fs/ufs/super.c	2004-05-24 02:42:33.000000000 +0200
+@@ -472,13 +472,13 @@
+ 	return 1;
+ 
+ failed:
+-	if (base) kfree (base);
++	kfree (base);
+ 	if (sbi->s_ucg) {
+ 		for (i = 0; i < uspi->s_ncg; i++)
+ 			if (sbi->s_ucg[i]) brelse (sbi->s_ucg[i]);
+ 		kfree (sbi->s_ucg);
+ 		for (i = 0; i < UFS_MAX_GROUP_LOADED; i++)
+-			if (sbi->s_ucpi[i]) kfree (sbi->s_ucpi[i]);
++			kfree (sbi->s_ucpi[i]);
+ 	}
+ 	UFSD(("EXIT (FAILED)\n"))
+ 	return 0;
+@@ -982,8 +982,8 @@
+ 	iput(inode);
+ failed:
+ 	if (ubh) ubh_brelse_uspi (uspi);
+-	if (uspi) kfree (uspi);
+-	if (sbi) kfree(sbi);
++	kfree (uspi);
++	kfree(sbi);
+ 	sb->s_fs_info = NULL;
+ 	UFSD(("EXIT (FAILED)\n"))
+ 	return -EINVAL;
+diff -ru linux-2.6.6/fs/xattr.c linux-2.6.6-modified/fs/xattr.c
+--- linux-2.6.6/fs/xattr.c	2004-04-04 05:36:57.000000000 +0200
++++ linux-2.6.6-modified/fs/xattr.c	2004-05-24 02:42:33.000000000 +0200
+@@ -59,8 +59,7 @@
+ out:
+ 		up(&d->d_inode->i_sem);
+ 	}
+-	if (kvalue)
+-		kfree(kvalue);
++	kfree(kvalue);
+ 	return error;
+ }
+ 
+@@ -149,8 +148,7 @@
+ 		}
+ 	}
+ out:
+-	if (kvalue)
+-		kfree(kvalue);
++	kfree(kvalue);
+ 	return error;
+ }
+ 
+@@ -231,8 +229,7 @@
+ 		}
+ 	}
+ out:
+-	if (klist)
+-		kfree(klist);
++	kfree(klist);
+ 	return error;
+ }
+ 
+diff -ru linux-2.6.6/include/net/ax25.h linux-2.6.6-modified/include/net/ax25.h
+--- linux-2.6.6/include/net/ax25.h	2004-04-04 05:37:36.000000000 +0200
++++ linux-2.6.6-modified/include/net/ax25.h	2004-05-24 02:18:38.000000000 +0200
+@@ -214,8 +214,7 @@
+ static __inline__ void ax25_cb_put(ax25_cb *ax25)
+ {
+ 	if (atomic_dec_and_test(&ax25->refcount)) {
+-		if (ax25->digipeat)
+-			kfree(ax25->digipeat);
++		kfree(ax25->digipeat);
+ 		kfree(ax25);
+ 	}
+ }
+diff -ru linux-2.6.6/include/net/netrom.h linux-2.6.6-modified/include/net/netrom.h
+--- linux-2.6.6/include/net/netrom.h	2004-04-04 05:37:07.000000000 +0200
++++ linux-2.6.6-modified/include/net/netrom.h	2004-05-24 02:18:38.000000000 +0200
+@@ -131,8 +131,7 @@
+ static __inline__ void nr_neigh_put(struct nr_neigh *nr_neigh)
+ {
+ 	if (atomic_dec_and_test(&nr_neigh->refcount)) {
+-		if (nr_neigh->digipeat != NULL)
+-			kfree(nr_neigh->digipeat);
++		kfree(nr_neigh->digipeat);
+ 		kfree(nr_neigh);
+ 	}
+ }
+diff -ru linux-2.6.6/net/802/p8023.c linux-2.6.6-modified/net/802/p8023.c
+--- linux-2.6.6/net/802/p8023.c	2004-04-04 05:36:17.000000000 +0200
++++ linux-2.6.6-modified/net/802/p8023.c	2004-05-24 08:39:22.000000000 +0200
+@@ -53,8 +53,7 @@
+  */
+ void destroy_8023_client(struct datalink_proto *dl)
+ {
+-	if (dl)
+-		kfree(dl);
++	kfree(dl);
+ }
+ 
+ EXPORT_SYMBOL(destroy_8023_client);
+diff -ru linux-2.6.6/net/ax25/af_ax25.c linux-2.6.6-modified/net/ax25/af_ax25.c
+--- linux-2.6.6/net/ax25/af_ax25.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/net/ax25/af_ax25.c	2004-05-24 08:39:22.000000000 +0200
+@@ -1191,8 +1191,7 @@
+ 	if (sk->sk_type == SOCK_SEQPACKET &&
+ 	    (ax25t=ax25_find_cb(&ax25->source_addr, &fsa->fsa_ax25.sax25_call, digi,
+ 		    	 ax25->ax25_dev->dev))) {
+-		if (digi != NULL)
+-			kfree(digi);
++		kfree(digi);
+ 		err = -EADDRINUSE;		/* Already such a connection */
+ 		ax25_cb_put(ax25t);
+ 		goto out;
+diff -ru linux-2.6.6/net/ax25/ax25_route.c linux-2.6.6-modified/net/ax25/ax25_route.c
+--- linux-2.6.6/net/ax25/ax25_route.c	2004-04-04 05:37:36.000000000 +0200
++++ linux-2.6.6-modified/net/ax25/ax25_route.c	2004-05-24 08:39:22.000000000 +0200
+@@ -70,15 +70,13 @@
+ 		if (s->dev == dev) {
+ 			if (ax25_route_list == s) {
+ 				ax25_route_list = s->next;
+-				if (s->digipeat != NULL)
+-					kfree(s->digipeat);
++				kfree(s->digipeat);
+ 				kfree(s);
+ 			} else {
+ 				for (t = ax25_route_list; t != NULL; t = t->next) {
+ 					if (t->next == s) {
+ 						t->next = s->next;
+-						if (s->digipeat != NULL)
+-							kfree(s->digipeat);
++						kfree(s->digipeat);
+ 						kfree(s);
+ 						break;
+ 					}
+@@ -160,8 +158,7 @@
+ static void ax25_rt_destroy(ax25_route *ax25_rt)
+ {
+ 	if (atomic_read(&ax25_rt->ref) == 0) {
+-		if (ax25_rt->digipeat != NULL)
+-			kfree(ax25_rt->digipeat);
++		kfree(ax25_rt->digipeat);
+ 		kfree(ax25_rt);
+ 		return;
+ 	}
+@@ -540,8 +537,7 @@
+ 		s       = ax25_rt;
+ 		ax25_rt = ax25_rt->next;
+ 
+-		if (s->digipeat != NULL)
+-			kfree(s->digipeat);
++		kfree(s->digipeat);
+ 
+ 		kfree(s);
+ 	}
+diff -ru linux-2.6.6/net/bluetooth/l2cap.c linux-2.6.6-modified/net/bluetooth/l2cap.c
+--- linux-2.6.6/net/bluetooth/l2cap.c	2004-04-04 05:37:36.000000000 +0200
++++ linux-2.6.6-modified/net/bluetooth/l2cap.c	2004-05-24 08:39:22.000000000 +0200
+@@ -238,8 +238,7 @@
+ 	skb_queue_purge(&sk->sk_receive_queue);
+ 	skb_queue_purge(&sk->sk_write_queue);
+ 
+-	if (sk->sk_protinfo)
+-		kfree(sk->sk_protinfo);
++	kfree(sk->sk_protinfo);
+ }
+ 
+ static void l2cap_sock_cleanup_listen(struct sock *parent)
+diff -ru linux-2.6.6/net/bluetooth/rfcomm/sock.c linux-2.6.6-modified/net/bluetooth/rfcomm/sock.c
+--- linux-2.6.6/net/bluetooth/rfcomm/sock.c	2004-04-04 05:37:36.000000000 +0200
++++ linux-2.6.6-modified/net/bluetooth/rfcomm/sock.c	2004-05-24 08:39:22.000000000 +0200
+@@ -181,8 +181,7 @@
+ 
+ 	rfcomm_dlc_put(d);
+ 
+-	if (sk->sk_protinfo)
+-		kfree(sk->sk_protinfo);
++	kfree(sk->sk_protinfo);
+ }
+ 
+ static void rfcomm_sock_cleanup_listen(struct sock *parent)
+diff -ru linux-2.6.6/net/bluetooth/sco.c linux-2.6.6-modified/net/bluetooth/sco.c
+--- linux-2.6.6/net/bluetooth/sco.c	2004-04-04 05:36:47.000000000 +0200
++++ linux-2.6.6-modified/net/bluetooth/sco.c	2004-05-24 08:39:22.000000000 +0200
+@@ -342,8 +342,7 @@
+ 	skb_queue_purge(&sk->sk_receive_queue);
+ 	skb_queue_purge(&sk->sk_write_queue);
+ 
+-	if (sk->sk_protinfo)
+-		kfree(sk->sk_protinfo);
++	kfree(sk->sk_protinfo);
+ }
+ 
+ static void sco_sock_cleanup_listen(struct sock *parent)
+diff -ru linux-2.6.6/net/core/dev_mcast.c linux-2.6.6-modified/net/core/dev_mcast.c
+--- linux-2.6.6/net/core/dev_mcast.c	2004-04-04 05:36:55.000000000 +0200
++++ linux-2.6.6-modified/net/core/dev_mcast.c	2004-05-24 08:39:22.000000000 +0200
+@@ -194,8 +194,7 @@
+ 
+ done:
+ 	spin_unlock_bh(&dev->xmit_lock);
+-	if (dmi1)
+-		kfree(dmi1);
++	kfree(dmi1);
+ 	return err;
+ }
+ 
+diff -ru linux-2.6.6/net/core/sock.c linux-2.6.6-modified/net/core/sock.c
+--- linux-2.6.6/net/core/sock.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/net/core/sock.c	2004-05-24 08:39:22.000000000 +0200
+@@ -1088,8 +1088,7 @@
+ 
+ void sock_def_destruct(struct sock *sk)
+ {
+-	if (sk->sk_protinfo)
+-		kfree(sk->sk_protinfo);
++	kfree(sk->sk_protinfo);
+ }
+ 
+ void sk_send_sigurg(struct sock *sk)
+diff -ru linux-2.6.6/net/decnet/dn_table.c linux-2.6.6-modified/net/decnet/dn_table.c
+--- linux-2.6.6/net/decnet/dn_table.c	2004-04-04 05:36:52.000000000 +0200
++++ linux-2.6.6-modified/net/decnet/dn_table.c	2004-05-24 08:39:22.000000000 +0200
+@@ -791,9 +791,7 @@
+         dn_fib_tables[n] = NULL;
+         write_unlock(&dn_fib_tables_lock);
+ 
+-        if (t) {
+-                kfree(t);
+-        }
++        kfree(t);
+ }
+ 
+ struct dn_fib_table *dn_fib_empty_table(void)
+diff -ru linux-2.6.6/net/ethernet/pe2.c linux-2.6.6-modified/net/ethernet/pe2.c
+--- linux-2.6.6/net/ethernet/pe2.c	2004-04-04 05:38:25.000000000 +0200
++++ linux-2.6.6-modified/net/ethernet/pe2.c	2004-05-24 08:39:22.000000000 +0200
+@@ -32,8 +32,7 @@
+ 
+ void destroy_EII_client(struct datalink_proto *dl)
+ {
+-	if (dl)
+-		kfree(dl);
++	kfree(dl);
+ }
+ 
+ EXPORT_SYMBOL(destroy_EII_client);
+diff -ru linux-2.6.6/net/ipv4/af_inet.c linux-2.6.6-modified/net/ipv4/af_inet.c
+--- linux-2.6.6/net/ipv4/af_inet.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/net/ipv4/af_inet.c	2004-05-24 08:39:22.000000000 +0200
+@@ -156,8 +156,7 @@
+ 	BUG_TRAP(!sk->sk_wmem_queued);
+ 	BUG_TRAP(!sk->sk_forward_alloc);
+ 
+-	if (inet->opt)
+-		kfree(inet->opt);
++	kfree(inet->opt);
+ 	dst_release(sk->sk_dst_cache);
+ #ifdef INET_REFCNT_DEBUG
+ 	atomic_dec(&inet_sock_nr);
+diff -ru linux-2.6.6/net/ipv4/ah4.c linux-2.6.6-modified/net/ipv4/ah4.c
+--- linux-2.6.6/net/ipv4/ah4.c	2004-04-04 05:38:13.000000000 +0200
++++ linux-2.6.6-modified/net/ipv4/ah4.c	2004-05-24 08:39:22.000000000 +0200
+@@ -300,8 +300,7 @@
+ 
+ error:
+ 	if (ahp) {
+-		if (ahp->work_icv)
+-			kfree(ahp->work_icv);
++		kfree(ahp->work_icv);
+ 		if (ahp->tfm)
+ 			crypto_free_tfm(ahp->tfm);
+ 		kfree(ahp);
+diff -ru linux-2.6.6/net/ipv4/esp4.c linux-2.6.6-modified/net/ipv4/esp4.c
+--- linux-2.6.6/net/ipv4/esp4.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/net/ipv4/esp4.c	2004-05-24 08:39:22.000000000 +0200
+@@ -572,8 +572,7 @@
+ 	if (esp) {
+ 		if (esp->auth.tfm)
+ 			crypto_free_tfm(esp->auth.tfm);
+-		if (esp->auth.work_icv)
+-			kfree(esp->auth.work_icv);
++		kfree(esp->auth.work_icv);
+ 		if (esp->conf.tfm)
+ 			crypto_free_tfm(esp->conf.tfm);
+ 		kfree(esp);
+diff -ru linux-2.6.6/net/ipv4/fib_frontend.c linux-2.6.6-modified/net/ipv4/fib_frontend.c
+--- linux-2.6.6/net/ipv4/fib_frontend.c	2004-04-04 05:38:24.000000000 +0200
++++ linux-2.6.6-modified/net/ipv4/fib_frontend.c	2004-05-24 08:39:22.000000000 +0200
+@@ -266,8 +266,7 @@
+ 				if (tb)
+ 					err = tb->tb_insert(tb, &req.rtm, &rta, &req.nlh, NULL);
+ 			}
+-			if (rta.rta_mx)
+-				kfree(rta.rta_mx);
++			kfree(rta.rta_mx);
+ 		}
+ 		rtnl_unlock();
+ 		return err;
+diff -ru linux-2.6.6/net/ipv4/ipcomp.c linux-2.6.6-modified/net/ipv4/ipcomp.c
+--- linux-2.6.6/net/ipv4/ipcomp.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/net/ipv4/ipcomp.c	2004-05-24 08:39:22.000000000 +0200
+@@ -330,8 +330,7 @@
+ {
+ 	if (ipcd->tfm)
+ 		crypto_free_tfm(ipcd->tfm);
+-	if (ipcd->scratch)
+-		kfree(ipcd->scratch);	
++	kfree(ipcd->scratch);	
+ }
+ 
+ static void ipcomp_destroy(struct xfrm_state *x)
+diff -ru linux-2.6.6/net/ipv4/ip_sockglue.c linux-2.6.6-modified/net/ipv4/ip_sockglue.c
+--- linux-2.6.6/net/ipv4/ip_sockglue.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/net/ipv4/ip_sockglue.c	2004-05-24 08:39:22.000000000 +0200
+@@ -205,8 +205,7 @@
+ 		if (ra->sk == sk) {
+ 			if (on) {
+ 				write_unlock_bh(&ip_ra_lock);
+-				if (new_ra)
+-					kfree(new_ra);
++				kfree(new_ra);
+ 				return -EADDRINUSE;
+ 			}
+ 			*rap = ra->next;
+@@ -449,8 +448,7 @@
+ #endif
+ 			}
+ 			opt = xchg(&inet->opt, opt);
+-			if (opt)
+-				kfree(opt);
++			kfree(opt);
+ 			break;
+ 		}
+ 		case IP_PKTINFO:
+@@ -832,10 +830,8 @@
+ 
+ 			err = ip_mc_msfilter(sk, msf, ifindex);
+ mc_msf_out:
+-			if (msf)
+-				kfree(msf);
+-			if (gsf)
+-				kfree(gsf);
++			kfree(msf);
++			kfree(gsf);
+ 			break;
+ 		}
+ 		case IP_ROUTER_ALERT:	
+diff -ru linux-2.6.6/net/ipv4/ipvs/ip_vs_app.c linux-2.6.6-modified/net/ipv4/ipvs/ip_vs_app.c
+--- linux-2.6.6/net/ipv4/ipvs/ip_vs_app.c	2004-04-04 05:36:12.000000000 +0200
++++ linux-2.6.6-modified/net/ipv4/ipvs/ip_vs_app.c	2004-05-24 08:39:22.000000000 +0200
+@@ -109,8 +109,7 @@
+ 	return 0;
+ 
+   out:
+-	if (inc->timeout_table)
+-		kfree(inc->timeout_table);
++	kfree(inc->timeout_table);
+ 	kfree(inc);
+ 	return ret;
+ }
+@@ -135,8 +134,7 @@
+ 
+ 	list_del(&inc->a_list);
+ 
+-	if (inc->timeout_table != NULL)
+-		kfree(inc->timeout_table);
++	kfree(inc->timeout_table);
+ 	kfree(inc);
+ }
+ 
+diff -ru linux-2.6.6/net/ipv4/netfilter/ip_nat_snmp_basic.c linux-2.6.6-modified/net/ipv4/netfilter/ip_nat_snmp_basic.c
+--- linux-2.6.6/net/ipv4/netfilter/ip_nat_snmp_basic.c	2004-04-04 05:37:44.000000000 +0200
++++ linux-2.6.6-modified/net/ipv4/netfilter/ip_nat_snmp_basic.c	2004-05-24 08:39:22.000000000 +0200
+@@ -1159,8 +1159,7 @@
+ 		
+ 		if (!snmp_object_decode(&ctx, obj)) {
+ 			if (*obj) {
+-				if ((*obj)->id)
+-					kfree((*obj)->id);
++				kfree((*obj)->id);
+ 				kfree(*obj);
+ 			}	
+ 			kfree(obj);
+diff -ru linux-2.6.6/net/ipv4/tcp_ipv4.c linux-2.6.6-modified/net/ipv4/tcp_ipv4.c
+--- linux-2.6.6/net/ipv4/tcp_ipv4.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/net/ipv4/tcp_ipv4.c	2004-05-24 08:39:22.000000000 +0200
+@@ -1344,8 +1344,7 @@
+  */
+ static void tcp_v4_or_free(struct open_request *req)
+ {
+-	if (req->af.v4_req.opt)
+-		kfree(req->af.v4_req.opt);
++	kfree(req->af.v4_req.opt);
+ }
+ 
+ static inline void syn_flood_warning(struct sk_buff *skb)
+diff -ru linux-2.6.6/net/ipv6/addrconf.c linux-2.6.6-modified/net/ipv6/addrconf.c
+--- linux-2.6.6/net/ipv6/addrconf.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/net/ipv6/addrconf.c	2004-05-24 08:39:22.000000000 +0200
+@@ -2852,8 +2852,7 @@
+ 
+ nlmsg_failure:
+ rtattr_failure:
+-	if (array)
+-		kfree(array);
++	kfree(array);
+ 	skb_trim(skb, b - skb->data);
+ 	return -1;
+ }
+diff -ru linux-2.6.6/net/ipv6/ah6.c linux-2.6.6-modified/net/ipv6/ah6.c
+--- linux-2.6.6/net/ipv6/ah6.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/net/ipv6/ah6.c	2004-05-24 08:39:22.000000000 +0200
+@@ -435,8 +435,7 @@
+ 
+ error:
+ 	if (ahp) {
+-		if (ahp->work_icv)
+-			kfree(ahp->work_icv);
++		kfree(ahp->work_icv);
+ 		if (ahp->tfm)
+ 			crypto_free_tfm(ahp->tfm);
+ 		kfree(ahp);
+diff -ru linux-2.6.6/net/ipv6/esp6.c linux-2.6.6-modified/net/ipv6/esp6.c
+--- linux-2.6.6/net/ipv6/esp6.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/net/ipv6/esp6.c	2004-05-24 08:39:22.000000000 +0200
+@@ -99,7 +99,7 @@
+ 		clen = (clen + esp->conf.padlen-1)&~(esp->conf.padlen-1);
+ 
+ 	if ((nfrags = skb_cow_data(skb, clen-skb->len+alen, &trailer)) < 0) {
+-		if (!x->props.mode && iph) kfree(iph);
++		if (!x->props.mode) kfree(iph);
+ 		goto error;
+ 	}
+ 
+@@ -436,8 +436,7 @@
+ 	if (esp) {
+ 		if (esp->auth.tfm)
+ 			crypto_free_tfm(esp->auth.tfm);
+-		if (esp->auth.work_icv)
+-			kfree(esp->auth.work_icv);
++		kfree(esp->auth.work_icv);
+ 		if (esp->conf.tfm)
+ 			crypto_free_tfm(esp->conf.tfm);
+ 		kfree(esp);
+diff -ru linux-2.6.6/net/ipv6/ip6_flowlabel.c linux-2.6.6-modified/net/ipv6/ip6_flowlabel.c
+--- linux-2.6.6/net/ipv6/ip6_flowlabel.c	2004-04-04 05:36:27.000000000 +0200
++++ linux-2.6.6-modified/net/ipv6/ip6_flowlabel.c	2004-05-24 08:39:22.000000000 +0200
+@@ -87,8 +87,7 @@
+ 
+ static void fl_free(struct ip6_flowlabel *fl)
+ {
+-	if (fl->opt)
+-		kfree(fl->opt);
++	kfree(fl->opt);
+ 	kfree(fl);
+ }
+ 
+@@ -552,8 +551,7 @@
+ done:
+ 	if (fl)
+ 		fl_free(fl);
+-	if (sfl1)
+-		kfree(sfl1);
++	kfree(sfl1);
+ 	return err;
+ }
+ 
+diff -ru linux-2.6.6/net/ipv6/ip6_output.c linux-2.6.6-modified/net/ipv6/ip6_output.c
+--- linux-2.6.6/net/ipv6/ip6_output.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/net/ipv6/ip6_output.c	2004-05-24 08:39:22.000000000 +0200
+@@ -614,8 +614,7 @@
+ 			skb->next = NULL;
+ 		}
+ 
+-		if (tmp_hdr)
+-			kfree(tmp_hdr);
++		kfree(tmp_hdr);
+ 
+ 		if (err == 0) {
+ 			IP6_INC_STATS(Ip6FragOKs);
+diff -ru linux-2.6.6/net/ipv6/ip6_tunnel.c linux-2.6.6-modified/net/ipv6/ip6_tunnel.c
+--- linux-2.6.6/net/ipv6/ip6_tunnel.c	2004-04-04 05:36:17.000000000 +0200
++++ linux-2.6.6-modified/net/ipv6/ip6_tunnel.c	2004-05-24 08:39:22.000000000 +0200
+@@ -735,8 +735,7 @@
+ 	}
+ 	ip6_tnl_dst_store(t, dst);
+ 
+-	if (opt)
+-		kfree(opt);
++	kfree(opt);
+ 
+ 	t->recursion--;
+ 	return 0;
+@@ -745,8 +744,7 @@
+ 	dst_link_failure(skb);
+ tx_err_dst_release:
+ 	dst_release(dst);
+-	if (opt)
+-		kfree(opt);
++	kfree(opt);
+ tx_err:
+ 	stats->tx_errors++;
+ 	stats->tx_dropped++;
+diff -ru linux-2.6.6/net/ipv6/ipcomp6.c linux-2.6.6-modified/net/ipv6/ipcomp6.c
+--- linux-2.6.6/net/ipv6/ipcomp6.c	2004-04-04 05:37:07.000000000 +0200
++++ linux-2.6.6-modified/net/ipv6/ipcomp6.c	2004-05-24 08:39:22.000000000 +0200
+@@ -109,8 +109,7 @@
+ 	ip6_find_1stfragopt(skb, &prevhdr);
+ 	*prevhdr = nexthdr;
+ out:
+-	if (tmp_hdr)
+-		kfree(tmp_hdr);
++	kfree(tmp_hdr);
+ 	if (err)
+ 		goto error_out;
+ 	return nexthdr;
+@@ -261,8 +260,7 @@
+ {
+ 	if (ipcd->tfm)
+ 		crypto_free_tfm(ipcd->tfm);
+-	if (ipcd->scratch)
+-		kfree(ipcd->scratch);
++	kfree(ipcd->scratch);
+ }
+ 
+ static void ipcomp6_destroy(struct xfrm_state *x)
+diff -ru linux-2.6.6/net/ipv6/ipv6_sockglue.c linux-2.6.6-modified/net/ipv6/ipv6_sockglue.c
+--- linux-2.6.6/net/ipv6/ipv6_sockglue.c	2004-04-04 05:36:17.000000000 +0200
++++ linux-2.6.6-modified/net/ipv6/ipv6_sockglue.c	2004-05-24 08:39:22.000000000 +0200
+@@ -80,8 +80,7 @@
+ 		if (ra->sk == sk) {
+ 			if (sel>=0) {
+ 				write_unlock_bh(&ip6_ra_lock);
+-				if (new_ra)
+-					kfree(new_ra);
++				kfree(new_ra);
+ 				return -EADDRINUSE;
+ 			}
+ 
+diff -ru linux-2.6.6/net/irda/discovery.c linux-2.6.6-modified/net/irda/discovery.c
+--- linux-2.6.6/net/irda/discovery.c	2004-04-04 05:36:47.000000000 +0200
++++ linux-2.6.6-modified/net/irda/discovery.c	2004-05-24 08:39:22.000000000 +0200
+@@ -194,8 +194,7 @@
+ 
+ 			/* Remove it from the log */
+ 			curr = hashbin_remove_this(log, (irda_queue_t *) curr);
+-			if (curr)
+-				kfree(curr);
++			kfree(curr);
+ 		}
+ 	}
+ 
+diff -ru linux-2.6.6/net/irda/irias_object.c linux-2.6.6-modified/net/irda/irias_object.c
+--- linux-2.6.6/net/irda/irias_object.c	2004-04-04 05:37:36.000000000 +0200
++++ linux-2.6.6-modified/net/irda/irias_object.c	2004-05-24 08:39:22.000000000 +0200
+@@ -121,8 +121,7 @@
+ 	ASSERT(attrib != NULL, return;);
+ 	ASSERT(attrib->magic == IAS_ATTRIB_MAGIC, return;);
+ 
+-	if (attrib->name)
+-		kfree(attrib->name);
++	kfree(attrib->name);
+ 
+ 	irias_delete_value(attrib->value);
+ 	attrib->magic = ~IAS_ATTRIB_MAGIC;
+@@ -135,8 +134,7 @@
+ 	ASSERT(obj != NULL, return;);
+ 	ASSERT(obj->magic == IAS_OBJECT_MAGIC, return;);
+ 
+-	if (obj->name)
+-		kfree(obj->name);
++	kfree(obj->name);
+ 
+ 	hashbin_delete(obj->attribs, (FREE_FUNC) __irias_delete_attrib);
+ 
+@@ -551,13 +549,11 @@
+ 		break;
+ 	case IAS_STRING:
+ 		/* If string, deallocate string */
+-		if (value->t.string != NULL)
+-			kfree(value->t.string);
++		kfree(value->t.string);
+ 		break;
+ 	case IAS_OCT_SEQ:
+ 		/* If byte stream, deallocate byte stream */
+-		 if (value->t.oct_seq != NULL)
+-			 kfree(value->t.oct_seq);
++		 kfree(value->t.oct_seq);
+ 		 break;
+ 	default:
+ 		IRDA_DEBUG(0, "%s(), Unknown value type!\n", __FUNCTION__);
+diff -ru linux-2.6.6/net/packet/af_packet.c linux-2.6.6-modified/net/packet/af_packet.c
+--- linux-2.6.6/net/packet/af_packet.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/net/packet/af_packet.c	2004-05-24 08:39:22.000000000 +0200
+@@ -223,8 +223,7 @@
+ 		return;
+ 	}
+ 
+-	if (pkt_sk(sk))
+-		kfree(pkt_sk(sk));
++	kfree(pkt_sk(sk));
+ 	atomic_dec(&packet_socks_nr);
+ #ifdef PACKET_REFCNT_DEBUG
+ 	printk(KERN_DEBUG "PACKET socket %p is free, %d are alive\n", sk, atomic_read(&packet_socks_nr));
+diff -ru linux-2.6.6/net/rose/rose_route.c linux-2.6.6-modified/net/rose/rose_route.c
+--- linux-2.6.6/net/rose/rose_route.c	2004-04-04 05:38:21.000000000 +0200
++++ linux-2.6.6-modified/net/rose/rose_route.c	2004-05-24 08:39:22.000000000 +0200
+@@ -241,8 +241,7 @@
+ 	if ((s = rose_neigh_list) == rose_neigh) {
+ 		rose_neigh_list = rose_neigh->next;
+ 		spin_unlock_bh(&rose_neigh_list_lock);
+-		if (rose_neigh->digipeat != NULL)
+-			kfree(rose_neigh->digipeat);
++		kfree(rose_neigh->digipeat);
+ 		kfree(rose_neigh);
+ 		return;
+ 	}
+@@ -251,8 +250,7 @@
+ 		if (s->next == rose_neigh) {
+ 			s->next = rose_neigh->next;
+ 			spin_unlock_bh(&rose_neigh_list_lock);
+-			if (rose_neigh->digipeat != NULL)
+-				kfree(rose_neigh->digipeat);
++			kfree(rose_neigh->digipeat);
+ 			kfree(rose_neigh);
+ 			return;
+ 		}
+diff -ru linux-2.6.6/net/sched/cls_fw.c linux-2.6.6-modified/net/sched/cls_fw.c
+--- linux-2.6.6/net/sched/cls_fw.c	2004-04-04 05:36:56.000000000 +0200
++++ linux-2.6.6-modified/net/sched/cls_fw.c	2004-05-24 08:39:22.000000000 +0200
+@@ -263,8 +263,7 @@
+ 	return 0;
+ 
+ errout:
+-	if (f)
+-		kfree(f);
++	kfree(f);
+ 	return err;
+ }
+ 
+diff -ru linux-2.6.6/net/sched/cls_route.c linux-2.6.6-modified/net/sched/cls_route.c
+--- linux-2.6.6/net/sched/cls_route.c	2004-04-04 05:36:54.000000000 +0200
++++ linux-2.6.6-modified/net/sched/cls_route.c	2004-05-24 08:39:22.000000000 +0200
+@@ -507,8 +507,7 @@
+ 	return 0;
+ 
+ errout:
+-	if (f)
+-		kfree(f);
++	kfree(f);
+ 	return err;
+ }
+ 
+diff -ru linux-2.6.6/net/sched/cls_rsvp.h linux-2.6.6-modified/net/sched/cls_rsvp.h
+--- linux-2.6.6/net/sched/cls_rsvp.h	2004-04-04 05:36:18.000000000 +0200
++++ linux-2.6.6-modified/net/sched/cls_rsvp.h	2004-05-24 08:39:22.000000000 +0200
+@@ -574,8 +574,7 @@
+ 	goto insert;
+ 
+ errout:
+-	if (f)
+-		kfree(f);
++	kfree(f);
+ 	return err;
+ }
+ 
+diff -ru linux-2.6.6/net/sched/cls_tcindex.c linux-2.6.6-modified/net/sched/cls_tcindex.c
+--- linux-2.6.6/net/sched/cls_tcindex.c	2004-04-04 05:36:57.000000000 +0200
++++ linux-2.6.6-modified/net/sched/cls_tcindex.c	2004-05-24 08:39:22.000000000 +0200
+@@ -192,8 +192,7 @@
+ #ifdef CONFIG_NET_CLS_POLICE
+ 	tcf_police_release(r->police);
+ #endif
+-	if (f)
+-		kfree(f);
++	kfree(f);
+ 	return 0;
+ }
+ 
+@@ -409,10 +408,8 @@
+ 	walker.skip = 0;
+ 	walker.fn = &tcindex_destroy_element;
+ 	tcindex_walk(tp,&walker);
+-	if (p->perfect)
+-		kfree(p->perfect);
+-	if (p->h)
+-		kfree(p->h);
++	kfree(p->perfect);
++	kfree(p->h);
+ 	kfree(p);
+ 	tp->root = NULL;
+ }
+diff -ru linux-2.6.6/net/sched/sch_api.c linux-2.6.6-modified/net/sched/sch_api.c
+--- linux-2.6.6/net/sched/sch_api.c	2004-04-04 05:36:57.000000000 +0200
++++ linux-2.6.6-modified/net/sched/sch_api.c	2004-05-24 08:39:22.000000000 +0200
+@@ -465,8 +465,7 @@
+ 
+ err_out:
+ 	*errp = err;
+-	if (sch)
+-		kfree(sch);
++	kfree(sch);
+ 	return NULL;
+ }
+ 
+diff -ru linux-2.6.6/net/sched/sch_gred.c linux-2.6.6-modified/net/sched/sch_gred.c
+--- linux-2.6.6/net/sched/sch_gred.c	2004-04-04 05:38:12.000000000 +0200
++++ linux-2.6.6-modified/net/sched/sch_gred.c	2004-05-24 08:39:22.000000000 +0200
+@@ -582,8 +582,7 @@
+ 	return skb->len;
+ 
+ rtattr_failure:
+-	if (opt)
+-		kfree(opt);
++	kfree(opt);
+ 	DPRINTK("gred_dump: FAILURE!!!!\n");
+ 
+ /* also free the opt struct here */
+@@ -597,8 +596,7 @@
+ 	int i;
+ 
+ 	for (i = 0;i < table->DPs; i++) {
+-		if (table->tab[i])
+-			kfree(table->tab[i]);
++		kfree(table->tab[i]);
+ 	}
+ }
+ 
+diff -ru linux-2.6.6/net/sctp/associola.c linux-2.6.6-modified/net/sctp/associola.c
+--- linux-2.6.6/net/sctp/associola.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/net/sctp/associola.c	2004-05-24 08:39:22.000000000 +0200
+@@ -344,9 +344,7 @@
+ 	}
+ 
+ 	/* Free peer's cached cookie. */
+-	if (asoc->peer.cookie) {
+-		kfree(asoc->peer.cookie);
+-	}
++	kfree(asoc->peer.cookie);
+ 
+ 	/* Release the transport structures. */
+ 	list_for_each_safe(pos, temp, &asoc->peer.transport_addr_list) {
+diff -ru linux-2.6.6/net/sctp/sm_make_chunk.c linux-2.6.6-modified/net/sctp/sm_make_chunk.c
+--- linux-2.6.6/net/sctp/sm_make_chunk.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/net/sctp/sm_make_chunk.c	2004-05-24 08:39:22.000000000 +0200
+@@ -235,8 +235,7 @@
+ 	if (sctp_prsctp_enable)
+ 		sctp_addto_chunk(retval, sizeof(prsctp_param), &prsctp_param);
+ nodata:
+-	if (addrs.v)
+-		kfree(addrs.v);
++	kfree(addrs.v);
+ 	return retval;
+ }
+ 
+@@ -320,8 +319,7 @@
+ nomem_chunk:
+ 	kfree(cookie);
+ nomem_cookie:
+-	if (addrs.v)
+-		kfree(addrs.v);
++	kfree(addrs.v);
+ 	return retval;
+ }
+ 
+diff -ru linux-2.6.6/net/socket.c linux-2.6.6-modified/net/socket.c
+--- linux-2.6.6/net/socket.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/net/socket.c	2004-05-24 08:39:23.000000000 +0200
+@@ -929,8 +929,7 @@
+ 	sock = SOCKET_I(filp->f_dentry->d_inode);
+ 
+ 	if ((sk=sock->sk) == NULL) {
+-		if (fna)
+-			kfree(fna);
++		kfree(fna);
+ 		return -EINVAL;
+ 	}
+ 
+diff -ru linux-2.6.6/net/sunrpc/auth_gss/auth_gss.c linux-2.6.6-modified/net/sunrpc/auth_gss/auth_gss.c
+--- linux-2.6.6/net/sunrpc/auth_gss/auth_gss.c.orig	2004-05-24 21:55:01.830625768 +0200
++++ linux-2.6.6/net/sunrpc/auth_gss/auth_gss.c	2004-05-24 21:58:01.130368064 +0200
+@@ -405,8 +405,7 @@
+ 	rpc_sleep_on(&gss_msg->waitq, task, NULL, NULL);
+ 	spin_unlock(&gss_auth->lock);
+ 	dprintk("RPC: %4u gss_upcall  sleeping\n", task->tk_pid);
+-	if (gss_new)
+-		kfree(gss_new);
++	kfree(gss_new);
+ 	/* Note: we drop the reference here: we are automatically removed
+ 	 * from the queue when we're woken up, and we should in any case
+ 	 * have no further responsabilities w.r.t. the upcall.
+diff -ru linux-2.6.6/net/sunrpc/auth_gss/gss_krb5_mech.c linux-2.6.6-modified/net/sunrpc/auth_gss/gss_krb5_mech.c
+--- linux-2.6.6/net/sunrpc/auth_gss/gss_krb5_mech.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/net/sunrpc/auth_gss/gss_krb5_mech.c	2004-05-24 08:39:22.000000000 +0200
+@@ -178,8 +178,7 @@
+ 		crypto_free_tfm(kctx->seq);
+ 	if (kctx->enc)
+ 		crypto_free_tfm(kctx->enc);
+-	if (kctx->mech_used.data)
+-		kfree(kctx->mech_used.data);
++	kfree(kctx->mech_used.data);
+ 	kfree(kctx);
+ }
+ 
+diff -ru linux-2.6.6/net/sunrpc/auth_gss/gss_krb5_seal.c linux-2.6.6-modified/net/sunrpc/auth_gss/gss_krb5_seal.c
+--- linux-2.6.6/net/sunrpc/auth_gss/gss_krb5_seal.c	2004-04-04 05:36:11.000000000 +0200
++++ linux-2.6.6-modified/net/sunrpc/auth_gss/gss_krb5_seal.c	2004-05-24 12:22:00.000000000 +0200
+@@ -168,6 +168,6 @@
+ 
+ 	return ((ctx->endtime < now) ? GSS_S_CONTEXT_EXPIRED : GSS_S_COMPLETE);
+ out_err:
+-	if (md5cksum.data) kfree(md5cksum.data);
++	kfree(md5cksum.data);
+ 	return GSS_S_FAILURE;
+ }
+diff -ru linux-2.6.6/net/sunrpc/auth_gss/gss_krb5_unseal.c linux-2.6.6-modified/net/sunrpc/auth_gss/gss_krb5_unseal.c
+--- linux-2.6.6/net/sunrpc/auth_gss/gss_krb5_unseal.c	2004-04-04 05:37:42.000000000 +0200
++++ linux-2.6.6-modified/net/sunrpc/auth_gss/gss_krb5_unseal.c	2004-05-24 08:39:22.000000000 +0200
+@@ -193,6 +193,6 @@
+ 
+ 	ret = GSS_S_COMPLETE;
+ out:
+-	if (md5cksum.data) kfree(md5cksum.data);
++	kfree(md5cksum.data);
+ 	return ret;
+ }
+diff -ru linux-2.6.6/net/sunrpc/svcauth_unix.c linux-2.6.6-modified/net/sunrpc/svcauth_unix.c
+--- linux-2.6.6/net/sunrpc/svcauth_unix.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/net/sunrpc/svcauth_unix.c	2004-05-24 08:39:22.000000000 +0200
+@@ -212,7 +212,7 @@
+ 		ip_map_put(&ipmp->h, &ip_map_cache);
+ 	if (dom)
+ 		auth_domain_put(dom);
+-	if (ipm.m_class) kfree(ipm.m_class);
++	kfree(ipm.m_class);
+ 	if (!ipmp)
+ 		return -ENOMEM;
+ 	cache_flush();
+@@ -282,7 +282,7 @@
+ 	ip.h.expiry_time = NEVER;
+ 	
+ 	ipmp = ip_map_lookup(&ip, 1);
+-	if (ip.m_class) kfree(ip.m_class);
++	kfree(ip.m_class);
+ 	if (ipmp) {
+ 		ip_map_put(&ipmp->h, &ip_map_cache);
+ 		return 0;
+diff -ru linux-2.6.6/net/sunrpc/svc.c linux-2.6.6-modified/net/sunrpc/svc.c
+--- linux-2.6.6/net/sunrpc/svc.c	2004-04-04 05:38:16.000000000 +0200
++++ linux-2.6.6-modified/net/sunrpc/svc.c	2004-05-24 08:39:22.000000000 +0200
+@@ -194,12 +194,9 @@
+ 	struct svc_serv	*serv = rqstp->rq_server;
+ 
+ 	svc_release_buffer(rqstp);
+-	if (rqstp->rq_resp)
+-		kfree(rqstp->rq_resp);
+-	if (rqstp->rq_argp)
+-		kfree(rqstp->rq_argp);
+-	if (rqstp->rq_auth_data)
+-		kfree(rqstp->rq_auth_data);
++	kfree(rqstp->rq_resp);
++	kfree(rqstp->rq_argp);
++	kfree(rqstp->rq_auth_data);
+ 	kfree(rqstp);
+ 
+ 	/* Release the server */
+diff -ru linux-2.6.6/net/xfrm/xfrm_state.c linux-2.6.6-modified/net/xfrm/xfrm_state.c
+--- linux-2.6.6/net/xfrm/xfrm_state.c	2004-04-04 05:37:37.000000000 +0200
++++ linux-2.6.6-modified/net/xfrm/xfrm_state.c	2004-05-24 08:39:22.000000000 +0200
+@@ -52,14 +52,10 @@
+ {
+ 	if (del_timer(&x->timer))
+ 		BUG();
+-	if (x->aalg)
+-		kfree(x->aalg);
+-	if (x->ealg)
+-		kfree(x->ealg);
+-	if (x->calg)
+-		kfree(x->calg);
+-	if (x->encap)
+-		kfree(x->encap);
++	kfree(x->aalg);
++	kfree(x->ealg);
++	kfree(x->calg);
++	kfree(x->encap);
+ 	if (x->type) {
+ 		x->type->destructor(x);
+ 		xfrm_put_type(x->type);
+diff -ru linux-2.6.6/security/selinux/selinuxfs.c linux-2.6.6-modified/security/selinux/selinuxfs.c
+--- linux-2.6.6/security/selinux/selinuxfs.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/security/selinux/selinuxfs.c	2004-05-24 14:01:04.000000000 +0200
+@@ -974,8 +974,7 @@
+ 	u32 sid;
+ 
+ 	/* remove any existing files */
+-	if (bool_pending_values)
+-		kfree(bool_pending_values);
++	kfree(bool_pending_values);
+ 
+ 	sel_remove_bools(dir);
+ 
+@@ -1025,8 +1024,7 @@
+ 	free_page((unsigned long)page);
+ 	if (names) {
+ 		for (i = 0; i < num; i++) {
+-			if (names[i])
+-				kfree(names[i]);
++			kfree(names[i]);
+ 		}
+ 		kfree(names);
+ 	}
+diff -ru linux-2.6.6/security/selinux/ss/conditional.c linux-2.6.6-modified/security/selinux/ss/conditional.c
+--- linux-2.6.6/security/selinux/ss/conditional.c	2004-04-04 05:36:26.000000000 +0200
++++ linux-2.6.6-modified/security/selinux/ss/conditional.c	2004-05-24 14:01:04.000000000 +0200
+@@ -166,16 +166,14 @@
+ 
+ void cond_policydb_destroy(struct policydb *p)
+ {
+-	if (p->bool_val_to_struct != NULL)
+-		kfree(p->bool_val_to_struct);
++	kfree(p->bool_val_to_struct);
+ 	avtab_destroy(&p->te_cond_avtab);
+ 	cond_list_destroy(p->cond_list);
+ }
+ 
+ int cond_init_bool_indexes(struct policydb *p)
+ {
+-	if (p->bool_val_to_struct)
+-		kfree(p->bool_val_to_struct);
++	kfree(p->bool_val_to_struct);
+ 	p->bool_val_to_struct = (struct cond_bool_datum**)
+ 		kmalloc(p->p_bools.nprim * sizeof(struct cond_bool_datum*), GFP_KERNEL);
+ 	if (!p->bool_val_to_struct)
+@@ -185,8 +183,7 @@
+ 
+ int cond_destroy_bool(void *key, void *datum, void *p)
+ {
+-	if (key)
+-		kfree(key);
++	kfree(key);
+ 	kfree(datum);
+ 	return 0;
+ }
+diff -ru linux-2.6.6/security/selinux/ss/policydb.c linux-2.6.6-modified/security/selinux/ss/policydb.c
+--- linux-2.6.6/security/selinux/ss/policydb.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/security/selinux/ss/policydb.c	2004-05-24 14:01:04.000000000 +0200
+@@ -496,16 +496,12 @@
+ 	}
+ 
+ 	for (i = 0; i < SYM_NUM; i++) {
+-		if (p->sym_val_to_name[i])
+-			kfree(p->sym_val_to_name[i]);
++		kfree(p->sym_val_to_name[i]);
+ 	}
+ 
+-	if (p->class_val_to_struct)
+-		kfree(p->class_val_to_struct);
+-	if (p->role_val_to_struct)
+-		kfree(p->role_val_to_struct);
+-	if (p->user_val_to_struct)
+-		kfree(p->user_val_to_struct);
++	kfree(p->class_val_to_struct);
++	kfree(p->role_val_to_struct);
++	kfree(p->user_val_to_struct);
+ 
+ 	avtab_destroy(&p->te_avtab);
+ 
+diff -ru linux-2.6.6/security/selinux/ss/services.c linux-2.6.6-modified/security/selinux/ss/services.c
+--- linux-2.6.6/security/selinux/ss/services.c	2004-05-24 01:17:40.000000000 +0200
++++ linux-2.6.6-modified/security/selinux/ss/services.c	2004-05-24 14:01:04.000000000 +0200
+@@ -1533,11 +1533,9 @@
+ err:
+ 	if (*names) {
+ 		for (i = 0; i < *len; i++)
+-			if ((*names)[i])
+-				kfree((*names)[i]);
++			kfree((*names)[i]);
+ 	}
+-	if (*values)
+-		kfree(*values);
++	kfree(*values);
+ 	goto out;
+ }
+ 
+diff -ru linux-2.6.6/sound/core/info.c linux-2.6.6-modified/sound/core/info.c
+--- linux-2.6.6/sound/core/info.c	2004-04-04 05:38:19.000000000 +0200
++++ linux-2.6.6-modified/sound/core/info.c	2004-05-24 13:48:18.000000000 +0200
+@@ -871,8 +871,7 @@
+ {
+ 	if (entry == NULL)
+ 		return;
+-	if (entry->name)
+-		kfree((char *)entry->name);
++	kfree((char *)entry->name);
+ 	if (entry->private_free)
+ 		entry->private_free(entry);
+ 	snd_magic_kfree(entry);
+diff -ru linux-2.6.6/sound/core/ioctl32/ioctl32.c linux-2.6.6-modified/sound/core/ioctl32/ioctl32.c
+--- linux-2.6.6/sound/core/ioctl32/ioctl32.c	2004-04-04 05:36:24.000000000 +0200
++++ linux-2.6.6-modified/sound/core/ioctl32/ioctl32.c	2004-05-24 13:48:18.000000000 +0200
+@@ -370,10 +370,8 @@
+ 	if (copy_to_user((void*)arg, data32, sizeof(*data32)))
+ 		err = -EFAULT;
+       __end:
+-      	if (data32)
+-      		kfree(data32);
+-	if (data)
+-		kfree(data);
++      	kfree(data32);
++	kfree(data);
+ 	return err;
+ }
+ 
+diff -ru linux-2.6.6/sound/core/ioctl32/ioctl32.h linux-2.6.6-modified/sound/core/ioctl32/ioctl32.h
+--- linux-2.6.6/sound/core/ioctl32/ioctl32.h	2004-04-04 05:36:57.000000000 +0200
++++ linux-2.6.6-modified/sound/core/ioctl32/ioctl32.h	2004-05-24 13:48:18.000000000 +0200
+@@ -112,10 +112,8 @@
+ 			err = -EFAULT;\
+ 	}\
+       __end:\
+-      	if (data)\
+-      		kfree(data);\
+-      	if (data32)\
+-      		kfree(data32);\
++      	kfree(data);\
++      	kfree(data32);\
+ 	return err;\
+ }
+ 
+diff -ru linux-2.6.6/sound/core/ioctl32/pcm32.c linux-2.6.6-modified/sound/core/ioctl32/pcm32.c
+--- linux-2.6.6/sound/core/ioctl32/pcm32.c	2004-04-04 05:37:24.000000000 +0200
++++ linux-2.6.6-modified/sound/core/ioctl32/pcm32.c	2004-05-24 13:48:18.000000000 +0200
+@@ -371,10 +371,8 @@
+ 	if (copy_to_user((void*)arg, data32, sizeof(*data32)))
+ 		err = -EFAULT;
+       __end:
+-      	if (data)
+-      		kfree(data);
+-      	if (data32)
+-      		kfree(data32);
++      	kfree(data);
++      	kfree(data32);
+ 	return err;
+ }
+ 
+diff -ru linux-2.6.6/sound/core/oss/mixer_oss.c linux-2.6.6-modified/sound/core/oss/mixer_oss.c
+--- linux-2.6.6/sound/core/oss/mixer_oss.c	2004-04-04 05:37:36.000000000 +0200
++++ linux-2.6.6-modified/sound/core/oss/mixer_oss.c	2004-05-24 13:48:18.000000000 +0200
+@@ -518,10 +518,8 @@
+ 		*right = snd_mixer_oss_conv1(uctl->value.integer.value[1], uinfo->value.integer.min, uinfo->value.integer.max, &pslot->volume[1]);
+       __unalloc:
+ 	up_read(&card->controls_rwsem);
+-      	if (uctl)
+-      		kfree(uctl);
+-      	if (uinfo)
+-      		kfree(uinfo);
++      	kfree(uctl);
++      	kfree(uinfo);
+ }
+ 
+ static void snd_mixer_oss_get_volume1_sw(snd_mixer_oss_file_t *fmixer,
+@@ -557,10 +555,8 @@
+ 		*right = 0;
+       __unalloc:
+ 	up_read(&card->controls_rwsem);
+-      	if (uctl)
+-      		kfree(uctl);
+-      	if (uinfo)
+-		kfree(uinfo);
++      	kfree(uctl);
++      	kfree(uinfo);
+ }
+ 
+ static int snd_mixer_oss_get_volume1(snd_mixer_oss_file_t *fmixer,
+@@ -619,10 +615,8 @@
+ 		snd_ctl_notify(card, SNDRV_CTL_EVENT_MASK_VALUE, &kctl->id);
+       __unalloc:
+ 	up_read(&card->controls_rwsem);
+-      	if (uctl)
+-      		kfree(uctl);
+-      	if (uinfo)
+-		kfree(uinfo);
++      	kfree(uctl);
++      	kfree(uinfo);
+ }
+ 
+ static void snd_mixer_oss_put_volume1_sw(snd_mixer_oss_file_t *fmixer,
+@@ -664,10 +658,8 @@
+ 		snd_ctl_notify(card, SNDRV_CTL_EVENT_MASK_VALUE, &kctl->id);
+       __unalloc:
+ 	up_read(&card->controls_rwsem);
+-      	if (uctl)
+-      		kfree(uctl);
+-      	if (uinfo)
+-		kfree(uinfo);
++      	kfree(uctl);
++      	kfree(uinfo);
+ }
+ 
+ static int snd_mixer_oss_put_volume1(snd_mixer_oss_file_t *fmixer,
+@@ -793,10 +785,8 @@
+ 	err = 0;
+       __unlock:
+      	up_read(&card->controls_rwsem);
+-      	if (uctl)
+-      		kfree(uctl);
+-      	if (uinfo)
+-      		kfree(uinfo);
++      	kfree(uctl);
++      	kfree(uinfo);
+       	return err;
+ }
+ 
+@@ -844,10 +834,8 @@
+ 	err = 0;
+       __unlock:
+ 	up_read(&card->controls_rwsem);
+-	if (uctl)
+-		kfree(uctl);
+-	if (uinfo)
+-		kfree(uinfo);
++	kfree(uctl);
++	kfree(uinfo);
+ 	return err;
+ }
+ 
+diff -ru linux-2.6.6/sound/core/oss/pcm_oss.c linux-2.6.6-modified/sound/core/oss/pcm_oss.c
+--- linux-2.6.6/sound/core/oss/pcm_oss.c	2004-04-04 05:38:12.000000000 +0200
++++ linux-2.6.6-modified/sound/core/oss/pcm_oss.c	2004-05-24 13:48:18.000000000 +0200
+@@ -525,12 +525,9 @@
+ 
+ 	err = 0;
+ failure:
+-	if (sw_params)
+-		kfree(sw_params);
+-	if (params)
+-		kfree(params);
+-	if (sparams)
+-		kfree(sparams);
++	kfree(sw_params);
++	kfree(params);
++	kfree(sparams);
+ 	return err;
+ }
+ 
+diff -ru linux-2.6.6/sound/core/oss/pcm_plugin.c linux-2.6.6-modified/sound/core/oss/pcm_plugin.c
+--- linux-2.6.6/sound/core/oss/pcm_plugin.c	2004-04-04 05:36:54.000000000 +0200
++++ linux-2.6.6-modified/sound/core/oss/pcm_plugin.c	2004-05-24 13:48:18.000000000 +0200
+@@ -217,14 +217,11 @@
+ 		return 0;
+ 	if (plugin->private_free)
+ 		plugin->private_free(plugin);
+-	if (plugin->buf_channels)
+-		kfree(plugin->buf_channels);
++	kfree(plugin->buf_channels);
+ 	if (plugin->buf)
+ 		vfree(plugin->buf);
+-	if (plugin->src_vmask)
+-		kfree(plugin->src_vmask);
+-	if (plugin->dst_vmask)
+-		kfree(plugin->dst_vmask);
++	kfree(plugin->src_vmask);
++	kfree(plugin->dst_vmask);
+ 	kfree(plugin);
+ 	return 0;
+ }
+diff -ru linux-2.6.6/sound/core/oss/route.c linux-2.6.6-modified/sound/core/oss/route.c
+--- linux-2.6.6/sound/core/oss/route.c	2004-04-04 05:38:16.000000000 +0200
++++ linux-2.6.6-modified/sound/core/oss/route.c	2004-05-24 13:48:18.000000000 +0200
+@@ -407,8 +407,7 @@
+ 	route_t *data = (route_t *)plugin->extra_data;
+ 	unsigned int dst_channel;
+ 	for (dst_channel = 0; dst_channel < plugin->dst_format.channels; ++dst_channel) {
+-		if (data->ttable[dst_channel].srcs != NULL)
+-			kfree(data->ttable[dst_channel].srcs);
++		kfree(data->ttable[dst_channel].srcs);
+ 	}
+ }
+ 
+diff -ru linux-2.6.6/sound/core/pcm.c linux-2.6.6-modified/sound/core/pcm.c
+--- linux-2.6.6/sound/core/pcm.c	2004-04-04 05:38:25.000000000 +0200
++++ linux-2.6.6-modified/sound/core/pcm.c	2004-05-24 13:48:18.000000000 +0200
+@@ -828,8 +828,7 @@
+ 		runtime->private_free(runtime);
+ 	snd_free_pages((void*)runtime->status, PAGE_ALIGN(sizeof(snd_pcm_mmap_status_t)));
+ 	snd_free_pages((void*)runtime->control, PAGE_ALIGN(sizeof(snd_pcm_mmap_control_t)));
+-	if (runtime->hw_constraints.rules)
+-		kfree(runtime->hw_constraints.rules);
++	kfree(runtime->hw_constraints.rules);
+ 	kfree(runtime);
+ 	substream->runtime = NULL;
+ 	substream->pstr->substream_opened--;
+diff -ru linux-2.6.6/sound/core/seq/oss/seq_oss_readq.c linux-2.6.6-modified/sound/core/seq/oss/seq_oss_readq.c
+--- linux-2.6.6/sound/core/seq/oss/seq_oss_readq.c	2004-04-04 05:36:47.000000000 +0200
++++ linux-2.6.6-modified/sound/core/seq/oss/seq_oss_readq.c	2004-05-24 13:48:18.000000000 +0200
+@@ -75,8 +75,7 @@
+ {
+ 	if (q) {
+ 		snd_seq_oss_readq_clear(q);	/* to be sure */
+-		if (q->q)
+-			kfree(q->q);
++		kfree(q->q);
+ 		kfree(q);
+ 	}
+ }
+diff -ru linux-2.6.6/sound/core/seq/seq_instr.c linux-2.6.6-modified/sound/core/seq/seq_instr.c
+--- linux-2.6.6/sound/core/seq/seq_instr.c	2004-04-04 05:36:56.000000000 +0200
++++ linux-2.6.6-modified/sound/core/seq/seq_instr.c	2004-05-24 13:48:18.000000000 +0200
+@@ -61,8 +61,6 @@
+ 
+ void snd_seq_cluster_free(snd_seq_kcluster_t *cluster, int atomic)
+ {
+-	if (cluster == NULL)
+-		return;
+ 	kfree(cluster);
+ }
+ 
+@@ -85,8 +83,7 @@
+ 		return -EINVAL;
+ 	if (instr->ops && instr->ops->remove)
+ 		result = instr->ops->remove(instr->ops->private_data, instr, 1);
+-	if (!result)
+-		kfree(instr);
++	kfree(instr);
+ 	return result;
+ }
+ 
+diff -ru linux-2.6.6/sound/core/seq/seq_midi_emul.c linux-2.6.6-modified/sound/core/seq/seq_midi_emul.c
+--- linux-2.6.6/sound/core/seq/seq_midi_emul.c	2004-04-04 05:38:16.000000000 +0200
++++ linux-2.6.6-modified/sound/core/seq/seq_midi_emul.c	2004-05-24 13:48:18.000000000 +0200
+@@ -715,8 +715,7 @@
+ {
+ 	if (chset == NULL)
+ 		return;
+-	if (chset->channels != NULL)
+-		kfree(chset->channels);
++	kfree(chset->channels);
+ 	kfree(chset);
+ }
+ 
+diff -ru linux-2.6.6/sound/core/seq/seq_midi_event.c linux-2.6.6-modified/sound/core/seq/seq_midi_event.c
+--- linux-2.6.6/sound/core/seq/seq_midi_event.c	2004-04-04 05:36:14.000000000 +0200
++++ linux-2.6.6-modified/sound/core/seq/seq_midi_event.c	2004-05-24 13:48:18.000000000 +0200
+@@ -138,8 +138,7 @@
+ void snd_midi_event_free(snd_midi_event_t *dev)
+ {
+ 	if (dev != NULL) {
+-		if (dev->buf)
+-			kfree(dev->buf);
++		kfree(dev->buf);
+ 		kfree(dev);
+ 	}
+ }
+@@ -202,8 +201,7 @@
+ 	dev->bufsize = bufsize;
+ 	reset_encode(dev);
+ 	spin_unlock_irqrestore(&dev->lock, flags);
+-	if (old_buf)
+-		kfree(old_buf);
++	kfree(old_buf);
+ 	return 0;
+ }
+ 
+diff -ru linux-2.6.6/sound/core/sgbuf.c linux-2.6.6-modified/sound/core/sgbuf.c
+--- linux-2.6.6/sound/core/sgbuf.c	2004-04-04 05:37:36.000000000 +0200
++++ linux-2.6.6-modified/sound/core/sgbuf.c	2004-05-24 13:48:18.000000000 +0200
+@@ -49,10 +49,8 @@
+ 		vunmap(dmab->area);
+ 	dmab->area = NULL;
+ 
+-	if (sgbuf->table)
+-		kfree(sgbuf->table);
+-	if (sgbuf->page_table)
+-		kfree(sgbuf->page_table);
++	kfree(sgbuf->table);
++	kfree(sgbuf->page_table);
+ 	kfree(sgbuf);
+ 	dmab->private_data = NULL;
+ 	
+diff -ru linux-2.6.6/sound/core/timer.c linux-2.6.6-modified/sound/core/timer.c
+--- linux-2.6.6/sound/core/timer.c	2004-04-04 05:37:27.000000000 +0200
++++ linux-2.6.6-modified/sound/core/timer.c	2004-05-24 13:48:18.000000000 +0200
+@@ -350,8 +350,7 @@
+ 	}
+ 	if (timeri->private_free)
+ 		timeri->private_free(timeri);
+-	if (timeri->owner)
+-		kfree(timeri->owner);
++	kfree(timeri->owner);
+ 	kfree(timeri);
+ 	if (timer && timer->card)
+ 		module_put(timer->card->module);
+@@ -1003,8 +1002,7 @@
+ 
+ static void snd_timer_free_system(snd_timer_t *timer)
+ {
+-	if (timer->private_data)
+-		kfree(timer->private_data);
++	kfree(timer->private_data);
+ }
+ 
+ static int snd_timer_register_system(void)
+@@ -1225,10 +1223,8 @@
+ 		fasync_helper(-1, file, 0, &tu->fasync);
+ 		if (tu->timeri)
+ 			snd_timer_close(tu->timeri);
+-		if (tu->queue)
+-			kfree(tu->queue);
+-		if (tu->tqueue)
+-			kfree(tu->tqueue);
++		kfree(tu->queue);
++		kfree(tu->tqueue);
+ 		snd_magic_kfree(tu);
+ 	}
+ 	return 0;
+diff -ru linux-2.6.6/sound/isa/gus/gus_mem.c linux-2.6.6-modified/sound/isa/gus/gus_mem.c
+--- linux-2.6.6/sound/isa/gus/gus_mem.c	2004-04-04 05:36:57.000000000 +0200
++++ linux-2.6.6-modified/sound/isa/gus/gus_mem.c	2004-05-24 13:48:18.000000000 +0200
+@@ -100,8 +100,7 @@
+ 		if (block->prev)
+ 			block->prev->next = block->next;
+ 	}
+-	if (block->name)
+-		kfree(block->name);
++	kfree(block->name);
+ 	kfree(block);
+ 	return 0;
+ }
+diff -ru linux-2.6.6/sound/isa/sb/emu8000_pcm.c linux-2.6.6-modified/sound/isa/sb/emu8000_pcm.c
+--- linux-2.6.6/sound/isa/sb/emu8000_pcm.c	2004-04-04 05:38:22.000000000 +0200
++++ linux-2.6.6-modified/sound/isa/sb/emu8000_pcm.c	2004-05-24 13:48:18.000000000 +0200
+@@ -262,8 +262,7 @@
+ static int emu8k_pcm_close(snd_pcm_substream_t *subs)
+ {
+ 	emu8k_pcm_t *rec = subs->runtime->private_data;
+-	if (rec)
+-		kfree(rec);
++	kfree(rec);
+ 	subs->runtime->private_data = 0;
+ 	return 0;
+ }
+diff -ru linux-2.6.6/sound/oss/ad1848.c linux-2.6.6-modified/sound/oss/ad1848.c
+--- linux-2.6.6/sound/oss/ad1848.c	2004-04-04 05:37:24.000000000 +0200
++++ linux-2.6.6-modified/sound/oss/ad1848.c	2004-05-24 13:48:18.000000000 +0200
+@@ -2182,8 +2182,7 @@
+ 		
+ 	if (devc != NULL)
+ 	{
+-		if(audio_devs[dev]->portc!=NULL)
+-			kfree(audio_devs[dev]->portc);
++		kfree(audio_devs[dev]->portc);
+ 		release_region(devc->base, 4);
+ 
+ 		if (!share_dma)
+diff -ru linux-2.6.6/sound/oss/ad1889.c linux-2.6.6-modified/sound/oss/ad1889.c
+--- linux-2.6.6/sound/oss/ad1889.c	2004-04-04 05:36:55.000000000 +0200
++++ linux-2.6.6-modified/sound/oss/ad1889.c	2004-05-24 13:48:18.000000000 +0200
+@@ -267,8 +267,7 @@
+ 
+ 	for (j = 0; j < AD_MAX_STATES; j++) {
+ 		dmabuf = &dev->state[j].dmabuf;
+-		if (dmabuf->rawbuf != NULL) 
+-			kfree(dmabuf->rawbuf);
++		kfree(dmabuf->rawbuf);
+ 	}
+ 
+ 	kfree(dev);
+diff -ru linux-2.6.6/sound/oss/dmasound/dmasound_awacs.c linux-2.6.6-modified/sound/oss/dmasound/dmasound_awacs.c
+--- linux-2.6.6/sound/oss/dmasound/dmasound_awacs.c	2004-04-04 05:36:55.000000000 +0200
++++ linux-2.6.6-modified/sound/oss/dmasound/dmasound_awacs.c	2004-05-24 13:48:18.000000000 +0200
+@@ -671,14 +671,10 @@
+ 	release_OF_resource(awacs_node, 1);
+ 	release_OF_resource(awacs_node, 2);
+ 
+-	if (awacs_tx_cmd_space)
+-		kfree(awacs_tx_cmd_space);
+-	if (awacs_rx_cmd_space)
+-		kfree(awacs_rx_cmd_space);
+-	if (beep_dbdma_cmd_space)
+-		kfree(beep_dbdma_cmd_space);
+-	if (beep_buf)
+-		kfree(beep_buf);
++	kfree(awacs_tx_cmd_space);
++	kfree(awacs_rx_cmd_space);
++	kfree(beep_dbdma_cmd_space);
++	kfree(beep_buf);
+ #ifdef CONFIG_PMAC_PBOOK
+ 	pmu_unregister_sleep_notifier(&awacs_sleep_notifier);
+ #endif
+@@ -2301,8 +2297,7 @@
+ #endif
+ 
+ 	if ((write_sq.max_count + 1) > number_of_tx_cmd_buffers) {
+-		if (awacs_tx_cmd_space)
+-			kfree(awacs_tx_cmd_space);
++		kfree(awacs_tx_cmd_space);
+ 		number_of_tx_cmd_buffers = 0;
+ 
+ 		/* we need nbufs + 1 (for the loop) and we should request + 1
+@@ -2360,8 +2355,7 @@
+ #endif
+ 
+ 	if ((read_sq.max_count+1) > number_of_rx_cmd_buffers ) {
+-		if (awacs_rx_cmd_space)
+-			kfree(awacs_rx_cmd_space);
++		kfree(awacs_rx_cmd_space);
+ 		number_of_rx_cmd_buffers = 0;
+ 
+ 		/* we need nbufs + 1 (for the loop) and we should request + 1 again
+@@ -2805,7 +2799,7 @@
+ 	beep_buf = (short *) kmalloc(BEEP_BUFLEN * 4, GFP_KERNEL);
+ 	if (beep_buf == NULL) {
+ 		printk(KERN_ERR "dmasound_pmac: no memory for beep buffer\n");
+-		if( beep_dbdma_cmd_space ) kfree(beep_dbdma_cmd_space) ;
++		kfree(beep_dbdma_cmd_space);
+ 		return -ENOMEM ;
+ 	}
+ 	return 0 ;
+diff -ru linux-2.6.6/sound/oss/emu10k1/passthrough.c linux-2.6.6-modified/sound/oss/emu10k1/passthrough.c
+--- linux-2.6.6/sound/oss/emu10k1/passthrough.c	2004-04-04 05:37:06.000000000 +0200
++++ linux-2.6.6-modified/sound/oss/emu10k1/passthrough.c	2004-05-24 13:48:18.000000000 +0200
+@@ -214,8 +214,7 @@
+ 				sblive_writeptr(card, SPCS0 + i, 0, pt->old_spcs[i]);
+ 		}
+ 		pt->state = PT_STATE_INACTIVE;
+-		if(pt->buf)
+-			kfree(pt->buf);
++		kfree(pt->buf);
+ 	}
+ }
+ 
+diff -ru linux-2.6.6/sound/oss/maestro.c linux-2.6.6-modified/sound/oss/maestro.c
+--- linux-2.6.6/sound/oss/maestro.c	2004-04-04 05:38:13.000000000 +0200
++++ linux-2.6.6-modified/sound/oss/maestro.c	2004-05-24 12:22:01.000000000 +0200
+@@ -2356,7 +2356,7 @@
+ 	}
+ 
+ rec_return_free:
+-	if(combbuf) kfree(combbuf);
++	kfree(combbuf);
+ 	return ret;
+ }
+ 
+diff -ru linux-2.6.6/sound/oss/mpu401.c linux-2.6.6-modified/sound/oss/mpu401.c
+--- linux-2.6.6/sound/oss/mpu401.c	2004-04-04 05:38:16.000000000 +0200
++++ linux-2.6.6-modified/sound/oss/mpu401.c	2004-05-24 13:48:18.000000000 +0200
+@@ -1254,8 +1254,7 @@
+ 		p=mpu401_synth_operations[n];
+ 		sound_unload_mididev(n);
+ 		sound_unload_timerdev(hw_config->slots[2]);
+-		if(p)
+-			kfree(p);
++		kfree(p);
+ 	}
+ }
+ 
+diff -ru linux-2.6.6/sound/oss/sb_common.c linux-2.6.6-modified/sound/oss/sb_common.c
+--- linux-2.6.6/sound/oss/sb_common.c	2004-04-04 05:36:16.000000000 +0200
++++ linux-2.6.6-modified/sound/oss/sb_common.c	2004-05-24 13:48:18.000000000 +0200
+@@ -928,8 +928,7 @@
+ 	}
+ 	else
+ 		release_region(hw_config->io_base, 16);
+-	if(detected_devc)
+-		kfree(detected_devc);
++	kfree(detected_devc);
+ }
+ 
+ /*
+diff -ru linux-2.6.6/sound/pci/ac97/ac97_codec.c linux-2.6.6-modified/sound/pci/ac97/ac97_codec.c
+--- linux-2.6.6/sound/pci/ac97/ac97_codec.c	2004-04-04 05:36:56.000000000 +0200
++++ linux-2.6.6-modified/sound/pci/ac97/ac97_codec.c	2004-05-24 13:48:18.000000000 +0200
+@@ -991,8 +991,7 @@
+ {
+ 	if (bus) {
+ 		snd_ac97_bus_proc_done(bus);
+-		if (bus->pcms)
+-			kfree(bus->pcms);
++		kfree(bus->pcms);
+ 		if (bus->private_free)
+ 			bus->private_free(bus);
+ 		snd_magic_kfree(bus);
+diff -ru linux-2.6.6/sound/pci/ali5451/ali5451.c linux-2.6.6-modified/sound/pci/ali5451/ali5451.c
+--- linux-2.6.6/sound/pci/ali5451/ali5451.c	2004-04-04 05:38:17.000000000 +0200
++++ linux-2.6.6-modified/sound/pci/ali5451/ali5451.c	2004-05-24 13:48:18.000000000 +0200
+@@ -2005,8 +2005,7 @@
+ 		kfree_nocheck(codec->res_port);
+ 	}
+ #ifdef CONFIG_PM
+-	if (codec->image)
+-		kfree(codec->image);
++	kfree(codec->image);
+ #endif
+ 	snd_magic_kfree(codec);
+ 	return 0;
+diff -ru linux-2.6.6/sound/pci/cs46xx/dsp_spos.c linux-2.6.6-modified/sound/pci/cs46xx/dsp_spos.c
+--- linux-2.6.6/sound/pci/cs46xx/dsp_spos.c	2004-04-04 05:37:59.000000000 +0200
++++ linux-2.6.6-modified/sound/pci/cs46xx/dsp_spos.c	2004-05-24 13:48:18.000000000 +0200
+@@ -289,14 +289,12 @@
+ 		cs46xx_dsp_proc_free_scb_desc ( (ins->scbs + i) );
+ 	}
+ 
+-	if (ins->code.data)
+-		kfree(ins->code.data);
++	kfree(ins->code.data);
+ 
+ 	if (ins->symbol_table.symbols)
+ 		vfree(ins->symbol_table.symbols);
+ 
+-	if (ins->modules)
+-		kfree(ins->modules);
++	kfree(ins->modules);
+ 	
+ 	kfree(ins);
+ 	up(&chip->spos_mutex);
+diff -ru linux-2.6.6/sound/pci/ice1712/ak4xxx.c linux-2.6.6-modified/sound/pci/ice1712/ak4xxx.c
+--- linux-2.6.6/sound/pci/ice1712/ak4xxx.c	2004-04-04 05:36:12.000000000 +0200
++++ linux-2.6.6-modified/sound/pci/ice1712/ak4xxx.c	2004-05-24 13:48:18.000000000 +0200
+@@ -152,8 +152,7 @@
+ 		return;
+ 	for (akidx = 0; akidx < ice->akm_codecs; akidx++) {
+ 		akm4xxx_t *ak = &ice->akm[akidx];
+-		if (ak->private_value[0])
+-			kfree((void *)ak->private_value[0]);
++		kfree((void *)ak->private_value[0]);
+ 	}
+ 	kfree(ice->akm);
+ }
+diff -ru linux-2.6.6/sound/ppc/pmac.c linux-2.6.6-modified/sound/ppc/pmac.c
+--- linux-2.6.6/sound/ppc/pmac.c	2004-04-04 05:38:26.000000000 +0200
++++ linux-2.6.6-modified/sound/ppc/pmac.c	2004-05-24 13:48:18.000000000 +0200
+@@ -72,7 +72,7 @@
+ 
+ static void snd_pmac_dbdma_free(pmac_dbdma_t *rec)
+ {
+-	if (rec && rec->space)
++	if (rec)
+ 		kfree(rec->space);
+ }
+ 
+diff -ru linux-2.6.6/sound/synth/emux/emux.c linux-2.6.6-modified/sound/synth/emux/emux.c
+--- linux-2.6.6/sound/synth/emux/emux.c	2004-04-04 05:37:07.000000000 +0200
++++ linux-2.6.6-modified/sound/synth/emux/emux.c	2004-05-24 13:48:18.000000000 +0200
+@@ -137,11 +137,9 @@
+ 	if (emu->sflist)
+ 		snd_sf_free(emu->sflist);
+ 
+-	if (emu->voices)
+-		kfree(emu->voices);
++	kfree(emu->voices);
+ 
+-	if (emu->name)
+-		kfree(emu->name);
++	kfree(emu->name);
+ 
+ 	snd_magic_kfree(emu);
+ 	return 0;
+diff -ru linux-2.6.6/sound/synth/emux/emux_seq.c linux-2.6.6-modified/sound/synth/emux/emux_seq.c
+--- linux-2.6.6/sound/synth/emux/emux_seq.c	2004-04-04 05:36:57.000000000 +0200
++++ linux-2.6.6-modified/sound/synth/emux/emux_seq.c	2004-05-24 13:48:18.000000000 +0200
+@@ -197,8 +197,7 @@
+ #ifdef SNDRV_EMUX_USE_RAW_EFFECT
+ 		snd_emux_delete_effect(p);
+ #endif
+-		if (p->chset.channels)
+-			kfree(p->chset.channels);
++		kfree(p->chset.channels);
+ 		snd_magic_kfree(p);
+ 	}
+ }
+diff -ru linux-2.6.6/sound/usb/usbaudio.c linux-2.6.6-modified/sound/usb/usbaudio.c
+--- linux-2.6.6/sound/usb/usbaudio.c	2004-04-04 05:37:37.000000000 +0200
++++ linux-2.6.6-modified/sound/usb/usbaudio.c	2004-05-24 13:48:18.000000000 +0200
+@@ -2520,8 +2520,7 @@
+ 
+ 		/* ok, let's parse further... */
+ 		if (parse_audio_format(dev, fp, format, fmt, stream) < 0) {
+-			if (fp->rate_table)
+-				kfree(fp->rate_table);
++			kfree(fp->rate_table);
+ 			kfree(fp);
+ 			continue;
+ 		}
+@@ -2529,8 +2528,7 @@
+ 		snd_printdd(KERN_INFO "%d:%u:%d: add audio endpoint 0x%x\n", dev->devnum, iface_no, i, fp->endpoint);
+ 		err = add_audio_endpoint(chip, stream, fp);
+ 		if (err < 0) {
+-			if (fp->rate_table)
+-				kfree(fp->rate_table);
++			kfree(fp->rate_table);
+ 			kfree(fp);
+ 			return err;
+ 		}
+diff -ru linux-2.6.6/sound/usb/usbmidi.c linux-2.6.6-modified/sound/usb/usbmidi.c
+--- linux-2.6.6/sound/usb/usbmidi.c	2004-04-04 05:38:13.000000000 +0200
++++ linux-2.6.6-modified/sound/usb/usbmidi.c	2004-05-24 13:48:18.000000000 +0200
+@@ -499,8 +499,7 @@
+ static void snd_usbmidi_in_endpoint_delete(snd_usb_midi_in_endpoint_t* ep)
+ {
+ 	if (ep->urb) {
+-		if (ep->urb->transfer_buffer)
+-			kfree(ep->urb->transfer_buffer);
++		kfree(ep->urb->transfer_buffer);
+ 		usb_free_urb(ep->urb);
+ 	}
+ 	snd_magic_kfree(ep);
+@@ -627,8 +626,7 @@
+ 	if (ep->tasklet.func)
+ 		tasklet_kill(&ep->tasklet);
+ 	if (ep->urb) {
+-		if (ep->urb->transfer_buffer)
+-			kfree(ep->urb->transfer_buffer);
++		kfree(ep->urb->transfer_buffer);
+ 		usb_free_urb(ep->urb);
+ 	}
+ 	snd_magic_kfree(ep);
