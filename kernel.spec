@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 ## netfilter snap 
-%define		_netfilter_snap		20031221
+%define		_netfilter_snap		20031222
 ## Program required by kernel to work.
 %define		_binutils_ver		2.12
 %define		_util-linux_ver		2.10o
@@ -30,7 +30,7 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1.8
+%define		_rel		1.9
 %define		_test_ver	0
 %define		_cset		0
 
@@ -157,6 +157,12 @@ Patch96:	2.6.0-mount-rainier-lkml.patch
 Patch97:	2.6.0-mount-rainier-fix-lkml.patch
 
 Patch98:	x86_64-2.6.0-1-pld.patch
+
+Patch100:	2.6.0-sysfs-1of4-lkml.patch
+Patch101:	2.6.0-sysfs-3of4-lkml.patch
+Patch102:	2.6.0-sysfs-4of4-lkml.patch
+
+Patch104:	2.6.0-ppdev-MODULES_ALIAS-lkml.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -563,6 +569,12 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch97 -p0
 
 %patch98 -p1
+
+%patch100 -p1
+%patch101 -p1
+%patch102 -p1
+
+%patch104 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
