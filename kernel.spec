@@ -5,6 +5,7 @@
 %define		i2c_version		2.6.2
 %define		bttv_version		0.7.60
 %define		wlan_version		0.3.4
+%define		wlan-ng_version		0.1.12
 %define		tun_version		1.1
 %define         vlan_version            1.0.1
 %define		aic7xxx_version		6.2.3-2.2.19
@@ -16,7 +17,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	11
+Release:	12
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -34,6 +35,7 @@ Source10:	http://vtun.sourceforge.net/tun/tun-%{tun_version}.tar.gz
 Source11:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
 Source12:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.2-%{jfs_version}-patch.tar.gz
 Source13:	http://www.netroedge.com/~lm78/archive/i2c-%{i2c_version}.tar.gz
+Source14:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-0.1.12.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -50,6 +52,7 @@ Source32:	%{name}-sparc64-BOOT.config
 Source33:	%{name}-alpha.config
 Source34:	%{name}-alpha-smp.config
 Source35:	%{name}-alpha-BOOT.config
+Source36:	%{name}-wlan-ng.config
 Patch0:		%{name}-pldfblogo.patch
 Patch1:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
 Patch2:		http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
@@ -108,6 +111,7 @@ Patch106:	linux-2.2.20-undo-ioport.h.patch.bz2
 Patch107:	linux-2.2.20-icn-unresolved.patch.bz2
 Patch108:	linux-2.2.20-agp_backport.patch.bz2
 Patch109:	dc395-MAINTAINERS.patch
+Patch110:	linux-wlan-ng-Makefile.patch
 
 Patch1500:	linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	%{name}-sparc-zs.h.patch
@@ -331,7 +335,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a9 -a10 -a11 -a13 -n linux
+%setup -q -a3 -a4 -a5 -a6 -a7 -a9 -a10 -a11 -a13 -a14 -n linux
 
 %patch0 -p1
 %patch1 -p0
@@ -427,6 +431,8 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch104 -p1
 %patch107 -p1
 %patch108 -p1
+%patch110 -p1
+
 %patch1500 -p1
 %patch1501 -p1
 %ifarch sparc64
@@ -564,6 +570,32 @@ sed "s/^LINUX_SRC=.*/LINUX_SRC=$kernelbase/" config.mk.bak3 > config.mk.bak4
 sed "s/^PCMCIA_SRC=.*/PCMCIA_SRC=$kernelbase\/pcmcia-cs-%{pcmcia_version}/" config.mk.bak4 > config.mk
 
 cd driver
+%{__make} all
+	CC=egcs \
+	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
+	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNEL_BUILD_DIR/include -I$KERNEL_BUILD_DIR/pcmcia-cs-%{pcmcia_version}/include -D__KERNEL__ -DEXPORT_SYMTAB"
+
+%{__make} PREFIX=$KERNEL_INSTALL_DIR install
+
+cd ../..
+
+# Linux WLAN-NG package extension for PCMCIA
+
+cp $RPM_SOURCE_DIR/linux-wlan-ng.config linux-wlan-ng-%{wlan-ng_version}
+cd linux-wlan-ng-%{wlan-ng_version}
+%{__make} clean
+rm config.mk
+cp linux-wlan-ng.config config.mk
+mv config.mk config.mk.bak
+kernelbase=`echo $KERNEL_BUILD_DIR| sed -e "sm/m\\\\\/mg"`
+sed "s/^MODDIR=.*/MODDIR=$kernelbase-installed\/lib\/modules\/$KernelVer/" config.mk.bak > config.mk.bak2
+sed "s/^TARGET_MODDIR=.*/TARGET_MODDIR=$kernelbase-installed\/lib\/modules\/$KernelVer/" config.mk.bak2 > config.mk.bak3
+sed "s/^MAKE_CS=.*/MAKE_CS=y/" config.mk.bak3 > config.mk.bak4
+sed "s/^LINUX_SRC=.*/LINUX_SRC=$kernelbase/" config.mk.bak4 > config.mk.bak5
+sed "s/^PCMCIA_SRC=.*/PCMCIA_SRC=$kernelbase\/pcmcia-cs-%{pcmcia_version}/" config.mk.bak5 > config.mk6
+sed "s/^CROSS_CC=$(CROSS_COMPILE).*/CROSS_CC=$(CROSS_COMPILE).egcs" config.mk.bak6 > config.mk.bak7
+sed "s/^WLAN_TARGET_ARCH=.*/WLAN_TARGET_ARCH=%{_target_cpu}" config.mk.bak7 > config.mk
+
 %{__make} all
 	CC=egcs \
 	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
