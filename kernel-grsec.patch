@@ -4968,7 +4968,7 @@ diff -urN linux-2.6.7/fs/binfmt_aout.c linux-2.6.7/fs/binfmt_aout.c
 diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
 --- linux-2.6.7/fs/binfmt_elf.c	2004-06-16 01:19:22 -0400
 +++ linux-2.6.7/fs/binfmt_elf.c	2004-06-25 17:44:19 -0400
-@@ -37,11 +37,17 @@
+@@ -37,10 +37,16 @@
  #include <linux/pagemap.h>
  #include <linux/security.h>
  #include <linux/syscalls.h>
@@ -4977,7 +4977,6 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
  
  #include <asm/uaccess.h>
  #include <asm/param.h>
- #include <asm/pgalloc.h>
  
 +#ifdef CONFIG_PAX_SEGMEXEC
 +#include <asm/desc.h>
@@ -5270,9 +5269,9 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
   * These are the functions used to load ELF style executables and shared
   * libraries.  There is no binary dependent code anywhere else.
 @@ -491,7 +732,13 @@
- 	char passed_fileno[6];
  	struct files_struct *files;
- 	int executable_stack = EXSTACK_DEFAULT;
+ 	int have_pt_gnu_stack, executable_stack = EXSTACK_DEFAULT;
+ 	unsigned long def_flags = 0;
 -	
 +	unsigned long task_size = TASK_SIZE;
 +
