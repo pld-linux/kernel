@@ -70,7 +70,7 @@ Patch12:	2.6.0-t4-PPC-ENODEV.patch
 Patch14:	kernel-siimage-rqsize.patch
 Patch16:	2.6.0-t5-PPC-Kconfig.patch
 
-Patch18:	2.6.0-t5-netfilter-1.2.8_20030923.patch
+Patch18:	2.6.0-t7-netfilter-20031010.patch
 Patch20:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
 Patch22:	2.6.0-t6-usb-irq.patch
 
