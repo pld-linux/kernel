@@ -168,6 +168,7 @@ Patch902:	linux-drm-%{drm_xfree_version}-force-cmpxchg.patch
 Patch903:	linux-drm-2.4.19-mm.patch
 Patch904:	linux-abi-put_user.patch
 Patch905:	linux-abi-fl_ibcs_to_linux.patch
+Patch906:	linux-netfilter-newnat-conntrack-nat-udp.patch
 Patch907:	PPC-grsecurity-pgtable.h.patch
 Patch908:	linux-2.4.19-PPC-o1_scheduler.patch
 Patch909:	linux-2.4.19-PPC-agpgart_be.patch
@@ -505,6 +506,7 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # Netfilter
 (KERNEL_DIR=`pwd` ; export KERNEL_DIR ; cd netfilter-patch-o-matic ; ./runme --batch userspace)
+%patch906 -p1
 
 # IP personality
 #echo Adding IP Personality 
