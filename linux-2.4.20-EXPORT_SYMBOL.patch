@@ -97,3 +97,42 @@ diff -urN linux-2.4.20/arch/ppc/kernel/ppc_ksyms.c linux-2.4.20-o1-preempt/arch/
  
  /* Networking helper routines. */
  /* XXX This is NOVERS because C_LABEL_STR doesn't get the version number. -DaveM */
+--- linux-2.4.21/drivers/sbus/char/sunserial.c~	Sat Aug  3 02:39:44 2002
++++ linux-2.4.21/drivers/sbus/char/sunserial.c	Mon Aug 18 19:00:37 2003
+@@ -25,11 +25,13 @@
+ int serial_console;
+ int stop_a_enabled = 1;
+ 
+-int __init con_is_present(void)
++int con_is_present(void)
+ {
+ 	return serial_console ? 0 : 1;
+ }
+ 
++EXPORT_SYMBOL(con_is_present);
++
+ static void __init nop_rs_kgdb_hook(int channel)
+ {
+ 	printk("Oops: %s called\n", __FUNCTION__);
+--- linux-2.4.21/drivers/sbus/char/Makefile~	Sat Apr 28 00:40:39 2001
++++ linux-2.4.21/drivers/sbus/char/Makefile	Mon Aug 18 19:01:57 2003
+@@ -9,7 +9,7 @@
+ 
+ O_TARGET := sunchar.o
+ 
+-export-objs := su.o bbc_i2c.o
++export-objs := su.o bbc_i2c.o sunserial.o
+ obj-y := sunkbd.o sunkbdmap.o sunmouse.o sunserial.o zs.o
+ 
+ list-multi := vfc.o bbc.o
+--- linux-2.4.21/arch/sparc64/kernel/sparc64_ksyms.c~	Mon Aug 18 18:51:31 2003
++++ linux-2.4.21/arch/sparc64/kernel/sparc64_ksyms.c	Mon Aug 18 19:05:07 2003
+@@ -372,4 +372,8 @@
+ EXPORT_SYMBOL(do_BUG);
+ #endif
+ 
++#if CONFIG_SUN_CONSOLE
++EXPORT_SYMBOL(prom_palette);
++#endif
++
+ EXPORT_SYMBOL(tick_ops);
