@@ -1,21 +1,24 @@
-diff -Naur linux-2.6.0-test1-ac2/fs/Kconfig linux-2.6.0-test1-ac2-sfs/fs/Kconfig
---- linux-2.6.0-test1-ac2/fs/Kconfig	2003-07-10 13:10:54.000000000 -0700
-+++ linux-2.6.0-test1-ac2-sfs/fs/Kconfig	2003-07-20 01:36:53.000000000 -0700
-@@ -1114,6 +1114,26 @@
+diff --new-file -ur linux-2.6.0-test7/fs/Kconfig linux-2.6.0-test7-squashfs1.3r2/fs/Kconfig
+--- linux-2.6.0-test7/fs/Kconfig	2003-10-08 20:24:14.000000000 +0100
++++ linux-2.6.0-test7-squashfs1.3r2/fs/Kconfig	2003-10-14 02:37:09.000000000 +0100
+@@ -1113,6 +1113,29 @@
  
  	  If unsure, say N.
  
 +config SQUASHFS
-+	tristate "Squashfs file system support"
++	tristate "SquashFS - Squashed file system support"
++	select ZLIB_INFLATE
 +	help
-+	  Saying Y here includes support for Squashfs.  Squashfs is a
-+	  highly compressed read-only filesystem for Linux. It uses zlib
-+	  compression to compress both files, inodes and directories.
-+	  Inodes in the system are very small and all blocks are packed
-+	  to minimise data overhead. Block sizes greater than 4K are
-+	  supported up to a maximum of 32K.
++	  Saying Y here includes support for SquashFs (Compressed Read-Only File
++	  System).  Squashfs is a highly compressed read-only filesystem for Linux.
++	  It uses zlib compression to compress both files, inodes and directories.
++	  Inodes in the system are very small and all blocks are packed to minimise
++	  data overhead. Block sizes greater than 4K are supported up to a maximum of 32K.
 +
-+	  See <http://squashfs.sourceforge.net/> for further information.
++	  Squashfs is intended for general read-only filesystem use, for archival
++	  use (i.e. in cases where a .tar.gz file may be used), and in embedded
++	  systems where low overhead is needed.  Further information and filesystem tools
++	  are available from http://squashfs.sourceforge.net.
 +
 +	  If you want to compile this as a module ( = code which can be
 +	  inserted in and removed from the running kernel whenever you want),
@@ -28,10 +31,10 @@ diff -Naur linux-2.6.0-test1-ac2/fs/Kconfig linux-2.6.0-test1-ac2-sfs/fs/Kconfig
  config VXFS_FS
  	tristate "FreeVxFS file system support (VERITAS VxFS(TM) compatible)"
  	help
-diff -Naur linux-2.6.0-test1-ac2/fs/Makefile linux-2.6.0-test1-ac2-sfs/fs/Makefile
---- linux-2.6.0-test1-ac2/fs/Makefile	2003-07-10 13:10:55.000000000 -0700
-+++ linux-2.6.0-test1-ac2-sfs/fs/Makefile	2003-07-16 13:45:34.000000000 -0700
-@@ -53,6 +53,7 @@
+diff --new-file -ur linux-2.6.0-test7/fs/Makefile linux-2.6.0-test7-squashfs1.3r2/fs/Makefile
+--- linux-2.6.0-test7/fs/Makefile	2003-10-08 20:24:14.000000000 +0100
++++ linux-2.6.0-test7-squashfs1.3r2/fs/Makefile	2003-10-14 02:37:09.000000000 +0100
+@@ -49,6 +49,7 @@
  obj-$(CONFIG_JBD)		+= jbd/
  obj-$(CONFIG_EXT2_FS)		+= ext2/
  obj-$(CONFIG_CRAMFS)		+= cramfs/
@@ -39,22 +42,10 @@ diff -Naur linux-2.6.0-test1-ac2/fs/Makefile linux-2.6.0-test1-ac2-sfs/fs/Makefi
  obj-$(CONFIG_RAMFS)		+= ramfs/
  obj-$(CONFIG_HUGETLBFS)		+= hugetlbfs/
  obj-$(CONFIG_CODA_FS)		+= coda/
-diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/Makefile linux-2.6.0-test1-ac2-sfs/fs/squashfs/Makefile
---- linux-2.6.0-test1-ac2/fs/squashfs/Makefile	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.0-test1-ac2-sfs/fs/squashfs/Makefile	2003-07-15 12:17:43.000000000 -0700
-@@ -0,0 +1,8 @@
-+#
-+# Makefile for the linux squashfs routines.
-+#
-+
-+obj-$(CONFIG_SQUASHFS) += squashfs.o
-+
-+squashfs-objs := inode.o
-+
-diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/fs/squashfs/inode.c
---- linux-2.6.0-test1-ac2/fs/squashfs/inode.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.0-test1-ac2-sfs/fs/squashfs/inode.c	2003-07-20 02:08:01.000000000 -0700
-@@ -0,0 +1,1045 @@
+diff --new-file -ur linux-2.6.0-test7/fs/squashfs/inode.c linux-2.6.0-test7-squashfs1.3r2/fs/squashfs/inode.c
+--- linux-2.6.0-test7/fs/squashfs/inode.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.0-test7-squashfs1.3r2/fs/squashfs/inode.c	2003-10-14 02:37:09.000000000 +0100
+@@ -0,0 +1,1063 @@
 +/*
 + * Squashfs - a compressed read only filesystem for Linux
 + *
@@ -69,10 +60,17 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 + */
 +
 +#include <linux/types.h>
++#include <linux/squashfs_fs.h>
 +#include <linux/module.h>
 +#include <linux/errno.h>
 +#include <linux/slab.h>
 +#include <linux/fs.h>
++#include <linux/smp_lock.h>
++#include <linux/slab.h>
++#include <linux/squashfs_fs_sb.h>
++#include <linux/squashfs_fs_i.h>
++#include <linux/buffer_head.h>
++#include <linux/vfs.h>
 +#include <linux/init.h>
 +#include <linux/dcache.h>
 +#include <asm/uaccess.h>
@@ -81,10 +79,6 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +#include <linux/zlib.h>
 +#include <linux/blkdev.h>
 +#include <linux/vmalloc.h>
-+#include <linux/smp_lock.h>
-+#include <linux/buffer_head.h>
-+#include <linux/squashfs_fs_sb.h>
-+#include <linux/vfs.h>
 +
 +#ifdef SQUASHFS_TRACE
 +#define TRACE(s, args...)				printk(KERN_NOTICE "SQUASHFS: "s, ## args)
@@ -97,20 +91,6 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +#define SERROR(s, args...)				if(!silent) printk(KERN_ERR "SQUASHFS error: "s, ## args)
 +#define WARNING(s, args...)				printk(KERN_WARNING "SQUASHFS: "s, ## args)
 +
-+typedef struct squashfs_inode_info {
-+	unsigned int	start_block;
-+	unsigned int	block_list_start;
-+	unsigned int	offset;
-+
-+	struct inode	vfs_inode;
-+} squashfs_inode_info;
-+
-+static inline struct squashfs_inode_info *SQUASH_I(struct inode *inode)
-+{
-+	return container_of(inode, struct squashfs_inode_info, vfs_inode);
-+}
-+
-+static int squashfs_fill_super(struct super_block *, void *, int);
 +static void squashfs_put_super(struct super_block *);
 +static int squashfs_statfs(struct super_block *, struct kstatfs *);
 +static int squashfs_symlink_readpage(struct file *file, struct page *page);
@@ -125,53 +105,62 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +static struct inode *squashfs_iget(struct super_block *s, squashfs_inode inode);
 +static void squashfs_put_super(struct super_block *s);
 +static struct super_block *squashfs_get_sb(struct file_system_type *, int, const char *, void *);
-+static struct inode *squashfs_alloc_inode(struct super_block *);
-+static void squashfs_destroy_inode(struct inode *);
++static struct inode *squashfs_alloc_inode(struct super_block *sb);
++static void squashfs_destroy_inode(struct inode *inode);
++static int init_inodecache(void);
++static void destroy_inodecache(void);
 +
 +DECLARE_MUTEX(read_data_mutex);
 +
 +static z_stream stream;
 +
++static struct file_system_type squashfs_fs_type = {
++	.owner = THIS_MODULE,
++	.name = "squashfs",
++	.get_sb = squashfs_get_sb,
++	.kill_sb = kill_block_super,
++	.fs_flags = FS_REQUIRES_DEV
++	};
++
 +static unsigned char squashfs_filetype_table[] = {
-+	DT_UNKNOWN, DT_DIR, DT_REG, DT_LNK, DT_BLK, DT_CHR
++	DT_UNKNOWN, DT_DIR, DT_REG, DT_LNK, DT_BLK, DT_CHR, DT_FIFO, DT_SOCK
 +};
 +
 +static struct super_operations squashfs_ops = {
-+	.alloc_inode	= squashfs_alloc_inode,
-+	.destroy_inode	= squashfs_destroy_inode,
-+	.statfs		= squashfs_statfs,
-+	.put_super	= squashfs_put_super,
++	.alloc_inode = squashfs_alloc_inode,
++	.destroy_inode = squashfs_destroy_inode,
++	.statfs = squashfs_statfs,
++	.put_super = squashfs_put_super,
 +};
 +
 +static struct address_space_operations squashfs_symlink_aops = {
-+	.readpage	= squashfs_symlink_readpage
++	.readpage = squashfs_symlink_readpage
 +};
 +
 +static struct address_space_operations squashfs_aops = {
-+	.readpage	= squashfs_readpage
++	.readpage = squashfs_readpage
 +};
 +
 +static struct file_operations squashfs_dir_ops = {
-+	.read		= generic_read_dir,
-+	.readdir	= squashfs_readdir
++	.read = generic_read_dir,
++	.readdir = squashfs_readdir
 +};
 +
 +static struct inode_operations squashfs_dir_inode_ops = {
-+	.lookup		= squashfs_lookup
++	.lookup = squashfs_lookup
 +};
 +
-+static struct file_system_type squashfs_fs_type = {
-+	.owner		= THIS_MODULE,
-+	.name		= "squashfs",
-+	.get_sb		= squashfs_get_sb,
-+	.kill_sb	= kill_block_super,
-+	.fs_flags	= FS_REQUIRES_DEV,
-+};
++
++static inline struct squashfs_inode_info *SQUASHFS_I(struct inode *inode)
++{
++	return list_entry(inode, struct squashfs_inode_info, vfs_inode);
++}
++
 +
 +static unsigned int read_data(struct super_block *s, char *buffer,
 +		unsigned int index, int length, unsigned int *next_index)
 +{
-+	squashfs_sb_info *msBlk = s->s_fs_info;
++	squashfs_sb_info *msBlk = (squashfs_sb_info *)s->s_fs_info;
 +	struct buffer_head *bh[((SQUASHFS_FILE_MAX_SIZE - 1) >> msBlk->devblksize_log2) + 2];
 +	unsigned short c_byte;
 +	unsigned int offset = index & ((1 << msBlk->devblksize_log2) - 1);
@@ -285,7 +274,7 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +		unsigned int block, unsigned int offset, int length,
 +		unsigned int *next_block, unsigned int *next_offset)
 +{
-+	squashfs_sb_info *msBlk = s->s_fs_info;
++	squashfs_sb_info *msBlk = (squashfs_sb_info *)s->s_fs_info;
 +	int n, i, bytes, return_length = length;
 +	unsigned int next_index;
 +
@@ -338,7 +327,8 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +		}
 +
 +		if((bytes = msBlk->block_cache[i].length - offset) >= length) {
-+			memcpy(buffer, msBlk->block_cache[i].data + offset, length);
++			if(buffer)
++				memcpy(buffer, msBlk->block_cache[i].data + offset, length);
 +			if(msBlk->block_cache[i].length - offset == length) {
 +				*next_block = msBlk->block_cache[i].next_index;
 +				*next_offset = 0;
@@ -350,12 +340,14 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +			up(&msBlk->block_cache_mutex);
 +			return return_length;
 +		} else {
-+			memcpy(buffer, msBlk->block_cache[i].data + offset, bytes);
++			if(buffer) {
++				memcpy(buffer, msBlk->block_cache[i].data + offset, bytes);
++				buffer += bytes;
++			}
 +			block = msBlk->block_cache[i].next_index;
 +			up(&msBlk->block_cache_mutex);
 +			length -= bytes;
 +			offset = 0;
-+			buffer += bytes;
 +		}
 +	}
 +}
@@ -364,8 +356,7 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +static struct inode *squashfs_iget(struct super_block *s, squashfs_inode inode)
 +{
 +	struct inode *i = new_inode(s);
-+	struct squashfs_inode_info *sqi = SQUASH_I(i);
-+	squashfs_sb_info *msBlk = s->s_fs_info;
++	squashfs_sb_info *msBlk = (squashfs_sb_info *)s->s_fs_info;
 +	squashfs_super_block *sBlk = &msBlk->sBlk;
 +	unsigned int block = SQUASHFS_INODE_BLK(inode) + sBlk->inode_table_start;
 +	unsigned int offset = SQUASHFS_INODE_OFFSET(inode);
@@ -391,18 +382,14 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +	i->i_mtime.tv_sec = sBlk->mkfs_time;
 +	i->i_atime.tv_sec = sBlk->mkfs_time;
 +	i->i_ctime.tv_sec = sBlk->mkfs_time;
-+	i->i_mtime.tv_nsec = i->i_atime.tv_nsec = i->i_ctime.tv_nsec = 0;
-+	i->i_uid = msBlk->uid[((inodeb.inode_type - 1) / SQUASHFS_TYPES) * 16 + inodeb.uid];
-+	i->i_ino = SQUASHFS_MK_VFS_INODE(block - sBlk->inode_table_start, offset);
 +
-+	if(inodeb.guid == SQUASHFS_GUIDS)
-+		i->i_gid = i->i_uid;
-+	else
-+		i->i_gid = msBlk->guid[inodeb.guid];
++	if(inodeb.inode_type != SQUASHFS_IPC_TYPE)
++		i->i_uid = msBlk->uid[((inodeb.inode_type - 1) / SQUASHFS_TYPES) * 16 + inodeb.uid];
++	i->i_ino = SQUASHFS_MK_VFS_INODE(block - sBlk->inode_table_start, offset);
 +
 +	i->i_mode = inodeb.mode;
 +
-+	switch((inodeb.inode_type - 1) % SQUASHFS_TYPES + 1) {
++	switch(inodeb.inode_type == SQUASHFS_IPC_TYPE ? SQUASHFS_IPC_TYPE : (inodeb.inode_type - 1) % SQUASHFS_TYPES + 1) {
 +		case SQUASHFS_FILE_TYPE: {
 +			squashfs_reg_inode_header inodep;
 +
@@ -422,15 +409,14 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +			i->i_fop = &generic_ro_fops;
 +			i->i_data.a_ops = &squashfs_aops;
 +			i->i_mode |= S_IFREG;
-+
 +			i->i_mtime.tv_sec = inodep.mtime;
 +			i->i_atime.tv_sec = inodep.mtime;
 +			i->i_ctime.tv_sec = inodep.mtime;
-+			i->i_mtime.tv_nsec = i->i_atime.tv_nsec =
-+				i->i_ctime.tv_nsec = 0;
-+			sqi->start_block = inodep.start_block;
-+			sqi->block_list_start = next_block;
-+			sqi->offset = next_offset;
++			i->i_blocks = ((i->i_size - 1) >> 9) + 1;
++			i->i_blksize = PAGE_CACHE_SIZE;
++			SQUASHFS_I(i)->start_block = inodep.start_block;
++			SQUASHFS_I(i)->block_list_start = next_block;
++			SQUASHFS_I(i)->offset = next_offset;
 +			TRACE("File inode %x:%x, start_block %x, block_list_start %x, offset %x\n",
 +					SQUASHFS_INODE_BLK(inode), offset, inodep.start_block, next_block, next_offset);
 +			break;
@@ -457,10 +443,8 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +			i->i_mtime.tv_sec = inodep.mtime;
 +			i->i_atime.tv_sec = inodep.mtime;
 +			i->i_ctime.tv_sec = inodep.mtime;
-+			i->i_mtime.tv_nsec = i->i_atime.tv_nsec =
-+				i->i_ctime.tv_nsec = 0;
-+			sqi->start_block = inodep.start_block;
-+			sqi->offset = inodep.offset;
++			SQUASHFS_I(i)->start_block = inodep.start_block;
++			SQUASHFS_I(i)->offset = inodep.offset;
 +			TRACE("Directory inode %x:%x, start_block %x, offset %x\n", SQUASHFS_INODE_BLK(inode), offset,
 +					inodep.start_block, inodep.offset);
 +			break;
@@ -484,8 +468,8 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +			i->i_op = &page_symlink_inode_operations;
 +			i->i_data.a_ops = &squashfs_symlink_aops;
 +			i->i_mode |= S_IFLNK;
-+			sqi->start_block = next_block;
-+			sqi->offset = next_offset;
++			SQUASHFS_I(i)->start_block = next_block;
++			SQUASHFS_I(i)->offset = next_offset;
 +			TRACE("Symbolic link inode %x:%x, start_block %x, offset %x\n",
 +				SQUASHFS_INODE_BLK(inode), offset, next_block, next_offset);
 +			break;
@@ -508,8 +492,29 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +
 +			i->i_size = 0;
 +			i->i_mode |= (inodeb.inode_type == SQUASHFS_CHRDEV_TYPE) ? S_IFCHR : S_IFBLK;
-+			init_special_inode(i, i->i_mode, inodep.rdev);
++			init_special_inode(i, i->i_mode, old_decode_dev(inodep.rdev));
 +			TRACE("Device inode %x:%x, rdev %x\n", SQUASHFS_INODE_BLK(inode), offset, inodep.rdev);
++			break;
++		 }
++		 case SQUASHFS_IPC_TYPE: {
++			squashfs_ipc_inode_header inodep;
++
++			if(msBlk->swap) {
++				squashfs_ipc_inode_header sinodep;
++
++				if(!squashfs_get_cached_block(s, (char *) &sinodep, block,  offset, sizeof(sinodep),
++							&next_block, &next_offset))
++					goto failed_read;
++				SQUASHFS_SWAP_IPC_INODE_HEADER(&inodep, &sinodep);
++			} else	
++				if(!squashfs_get_cached_block(s, (char *) &inodep, block,  offset, sizeof(inodep),
++							&next_block, &next_offset))
++					goto failed_read;
++
++			i->i_size = 0;
++			i->i_mode |= (inodep.type == SQUASHFS_FIFO_TYPE) ? S_IFIFO : S_IFSOCK;
++			i->i_uid = msBlk->uid[inodep.offset * 16 + inodeb.uid];
++			init_special_inode(i, i->i_mode, 0);
 +			break;
 +		 }
 +		 default:
@@ -517,6 +522,11 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +				goto failed_read1;
 +	}
 +	
++	if(inodeb.guid == SQUASHFS_GUIDS)
++		i->i_gid = i->i_uid;
++	else
++		i->i_gid = msBlk->guid[inodeb.guid];
++
 +	return i;
 +
 +failed_read:
@@ -527,22 +537,22 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +}
 +
 +
-+static int squashfs_fill_super(struct super_block *s, void *data, int silent)
++static int squashfs_fill_super(struct super_block *s,
++		void *data, int silent)
 +{
-+	char bbuf[BDEVNAME_SIZE];
 +	squashfs_sb_info *msBlk;
 +	squashfs_super_block *sBlk;
 +	int i;
++	char b[BDEVNAME_SIZE];
 +
-+	TRACE("Entered squashfs_fill_super\n");
++	TRACE("Entered squashfs_read_superblock\n");
 +
-+	msBlk = kmalloc(sizeof(squashfs_sb_info), GFP_KERNEL);
-+	if (!msBlk)
++	if(!(msBlk = (squashfs_sb_info *) s->s_fs_info = (void *) kmalloc(sizeof(squashfs_sb_info), GFP_KERNEL))) {
++		ERROR("Failed to allocate superblock\n");
 +		return -ENOMEM;
-+	s->s_fs_info = msBlk;
-+	sBlk = &(msBlk->sBlk);
-+	memset(msBlk, 0, sizeof(squashfs_sb_info));
-+
++	}
++	sBlk = &msBlk->sBlk;
++	
 +	msBlk->devblksize = sb_min_blocksize(s, BLOCK_SIZE);
 +	msBlk->devblksize_log2 = ffz(~msBlk->devblksize);
 +
@@ -561,12 +571,12 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +	if((s->s_magic = sBlk->s_magic) != SQUASHFS_MAGIC) {
 +		if(sBlk->s_magic == SQUASHFS_MAGIC_SWAP) {
 +			squashfs_super_block sblk;
-+			WARNING("Mounting a different endian SQUASHFS filesystem on %s\n", __bdevname(s->s_dev, bbuf));
++			WARNING("Mounting a different endian SQUASHFS filesystem on %s\n", bdevname(s->s_bdev, b));
 +			SQUASHFS_SWAP_SUPER_BLOCK(&sblk, sBlk);
 +			memcpy(sBlk, &sblk, sizeof(squashfs_super_block));
 +			msBlk->swap = 1;
 +		} else  {
-+			SERROR("Can't find a SQUASHFS superblock on %s\n", __bdevname(s->s_dev, bbuf));
++			SERROR("Can't find a SQUASHFS superblock on %s\n", bdevname(s->s_bdev, b));
 +			goto failed_mount;
 +		}
 +	}
@@ -578,7 +588,7 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +		goto failed_mount;
 +	}
 +
-+	TRACE("Found valid superblock on %s\n", __bdevname(s->s_dev, bbuf));
++	TRACE("Found valid superblock on %s\n", bdevname(s->s_bdev, b));
 +	TRACE("Inodes are %scompressed\n", SQUASHFS_UNCOMPRESSED_INODES(sBlk->flags) ? "un" : "");
 +	TRACE("Data is %scompressed\n", SQUASHFS_UNCOMPRESSED_DATA(sBlk->flags) ? "un" : "");
 +	TRACE("Check data is %s present in the filesystem\n", SQUASHFS_CHECK_DATA(sBlk->flags) ? "" : "not");
@@ -648,7 +658,7 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +		goto failed_mount4;
 +	}
 +
-+	TRACE("Leaving squashfs_fill_super\n");
++	TRACE("Leaving squashfs_read_super\n");
 +	return 0;
 +
 +failed_mount4:
@@ -660,7 +670,7 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +failed_mount1:
 +	kfree(msBlk->block_cache);
 +failed_mount:
-+	kfree(msBlk);
++	kfree(s->s_fs_info);
 +	s->s_fs_info = NULL;
 +	return -EINVAL;
 +}
@@ -668,7 +678,7 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +
 +static int squashfs_statfs(struct super_block *s, struct kstatfs *buf)
 +{
-+	squashfs_super_block *sBlk = &((squashfs_sb_info*)(s->s_fs_info))->sBlk;
++	squashfs_super_block *sBlk = &((squashfs_sb_info *)s->s_fs_info)->sBlk;
 +
 +	TRACE("Entered squashfs_statfs\n");
 +	buf->f_type = SQUASHFS_MAGIC;
@@ -685,23 +695,16 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +static int squashfs_symlink_readpage(struct file *file, struct page *page)
 +{
 +	struct inode *inode = page->mapping->host;
-+	struct squashfs_inode_info *sqi = SQUASH_I(inode);
-+	int index = page->index << PAGE_CACHE_SHIFT, length = 0, bytes;
-+	int block = sqi->start_block;
-+	int offset = sqi->offset;
-+	char *buffer;
++	int index = page->index << PAGE_CACHE_SHIFT, length, bytes;
++	int block = SQUASHFS_I(inode)->start_block;
++	int offset = SQUASHFS_I(inode)->offset;
 +
 +	TRACE("Entered squashfs_symlink_readpage, page index %d, start block %x, offset %x\n",
-+		page->index, sqi->start_block, sqi->offset);
++		page->index, SQUASHFS_I(inode)->start_block, SQUASHFS_I(i)->offset);
 +
-+	if (! (buffer = kmalloc(PAGE_CACHE_SIZE, GFP_KERNEL))) {
-+		ERROR("Failed to allocate symblic link buffer\n");
-+		return 0;
-+	}
-+
-+	while(length < index) {
-+		if(length += bytes = squashfs_get_cached_block(inode->i_sb, buffer, block, offset,
-+					PAGE_CACHE_SIZE, &block, &offset), !bytes) {
++	for(length = 0; length < index; length += bytes) {
++		if(!(bytes = squashfs_get_cached_block(inode->i_sb, NULL, block, offset,
++					PAGE_CACHE_SIZE, &block, &offset))) {
 +			ERROR("Unable to read symbolic link [%x:%x]\n", block, offset);
 +			goto skip_read;
 +		}
@@ -709,16 +712,14 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +
 +	if(length != index) {
 +		ERROR("(squashfs_symlink_readpage) length != index\n");
-+		kfree(buffer);
 +		return 0;
 +	}
 +
 +	bytes = (inode->i_size - length) > PAGE_CACHE_SIZE ? PAGE_CACHE_SIZE : inode->i_size - length;
-+	if(!squashfs_get_cached_block(inode->i_sb, page_address(page), block, offset, bytes, &block, &offset))
++	if(!(bytes = squashfs_get_cached_block(inode->i_sb, page_address(page), block, offset, bytes, &block, &offset)))
 +		ERROR("Unable to read symbolic link [%x:%x]\n", block, offset);
 +
 +skip_read:
-+	kfree(buffer);
 +	memset(page_address(page) + bytes, 0, PAGE_CACHE_SIZE - bytes);
 +	flush_dcache_page(page);
 +	SetPageUptodate(page);
@@ -728,62 +729,53 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +}
 +
 +
-+#define SIZE 1024
++#define SIZE 256
 +static int squashfs_readpage(struct file *file, struct page *page)
 +{
 +	struct inode *inode = page->mapping->host;
-+	struct squashfs_inode_info *sqi = SQUASH_I(inode);
-+	squashfs_sb_info *msBlk = inode->i_sb->s_fs_info;
++	squashfs_sb_info *msBlk = (squashfs_sb_info *)inode->i_sb->s_fs_info;
 +	squashfs_super_block *sBlk = &msBlk->sBlk;
++	unsigned char block_list[SIZE];
 +	unsigned short *block_listp;
 +	int index = sBlk->block_log > PAGE_CACHE_SHIFT ?
 +		page->index >> (sBlk->block_log - PAGE_CACHE_SHIFT) :
 +		page->index << (PAGE_CACHE_SHIFT - sBlk->block_log);
-+	int block = sqi->start_block, i = 0;
-+	int bytes = sqi->block_list_start;
-+	int offset = sqi->offset;
++	int block = SQUASHFS_I(inode)->start_block, i = 0;
++	int bytes = 0, block_ptr = SQUASHFS_I(inode)->block_list_start;
++	int offset = SQUASHFS_I(inode)->offset;
 +	int file_blocks = ((inode->i_size - 1) >> sBlk->block_log) + 1;
-+	char *block_list;
-+	char *sblock_list;
++	int readahead_blks = sBlk->block_log >= PAGE_CACHE_SHIFT ? 1 : 1 << (PAGE_CACHE_SHIFT - sBlk->block_log);
 +	
 +	TRACE("Entered squashfs_readpage, page index %d, start block %x\n", page->index,
-+		sqi->start_block);
-+
-+	if (msBlk->swap) {
-+		block_list = kmalloc(SIZE, GFP_KERNEL);
-+		sblock_list = kmalloc(SIZE, GFP_KERNEL);
-+		if (! (block_list && sblock_list)) {
-+			ERROR("Unable to allocate readpage buffer\n");
-+			goto skip_read;
-+		}
-+	}
-+	else {
-+		sblock_list = 0;
-+		if (! (block_list = kmalloc(SIZE, GFP_KERNEL))) {
-+			ERROR("Unable to allocate readpage buffer\n");
-+			goto skip_read;
-+		}
-+	}
++		SQUASHFS_I(inode)->start_block);
 +
 +	if(index > file_blocks)
 +		goto skip_read;
 +
 +	for(;;) {
-+		int blocks = (index + 1 - i) > (SIZE >> 1) ? SIZE >> 1 : (index + 1 - i);
++		int blocks = (index + readahead_blks - i);
++		if(blocks > (SIZE >> 1)) {
++			if((index - i) <= (SIZE >> 1))
++				blocks = index - i;
++			else
++				blocks = SIZE >> 1;
++		}
++
 +		if(msBlk->swap) {
-+			if(!squashfs_get_cached_block(inode->i_sb, sblock_list, bytes, offset, blocks << 1, &bytes, &offset)) {
-+				ERROR("Unable to read block list [%d:%x]\n", bytes, offset);
++			unsigned char sblock_list[SIZE];
++			if(!squashfs_get_cached_block(inode->i_sb, (char *) sblock_list, block_ptr, offset, blocks << 1, &block_ptr, &offset)) {
++				ERROR("Unable to read block list [%d:%x]\n", block_ptr, offset);
 +				goto skip_read;
 +			}
 +			SQUASHFS_SWAP_SHORTS(((unsigned short *)block_list), ((unsigned short *)sblock_list), blocks);
 +		} else
-+			if(!squashfs_get_cached_block(inode->i_sb, block_list, bytes, offset, blocks << 1, &bytes, &offset)) {
-+				ERROR("Unable to read block list [%d:%x]\n", bytes, offset);
++			if(!squashfs_get_cached_block(inode->i_sb, (char *) block_list, block_ptr, offset, blocks << 1, &block_ptr, &offset)) {
++				ERROR("Unable to read block list [%d:%x]\n", block_ptr, offset);
 +				goto skip_read;
 +			}
 +		for(block_listp = (unsigned short *) block_list; i < index && blocks; i ++, block_listp ++, blocks --)
 +			block += SQUASHFS_COMPRESSED_SIZE(*block_listp);
-+		if(blocks)
++		if(blocks >= readahead_blks)
 +			break;
 +	}
 +
@@ -824,8 +816,7 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +			}
 +		}
 +		up( &msBlk->read_page_mutex);
-+		kfree(block_list);
-+		kfree(sblock_list);
++
 +		return 0;
 +
 +	} else if(sBlk->block_log == PAGE_CACHE_SHIFT) {
@@ -854,8 +845,6 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +	}
 +
 +skip_read:
-+	kfree(block_list);
-+	kfree(sblock_list);
 +	memset(page_address(page) + bytes, 0, PAGE_CACHE_SIZE - bytes);
 +	flush_dcache_page(page);
 +	SetPageUptodate(page);
@@ -868,11 +857,10 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +static int squashfs_readdir(struct file *file, void *dirent, filldir_t filldir)
 +{
 +	struct inode *i = file->f_dentry->d_inode;
-+	struct squashfs_inode_info *sqi = SQUASH_I(i);
-+	squashfs_sb_info *msBlk = i->i_sb->s_fs_info;
++	squashfs_sb_info *msBlk = (squashfs_sb_info *)i->i_sb->s_fs_info;
 +	squashfs_super_block *sBlk = &msBlk->sBlk;
-+	int next_block = sqi->start_block + sBlk->directory_table_start, next_offset =
-+		sqi->offset, length = 0, dirs_read = 0, dir_count, bytes;
++	int next_block = SQUASHFS_I(i)->start_block + sBlk->directory_table_start, next_offset =
++		SQUASHFS_I(i)->offset, length = 0, dirs_read = 0, dir_count;
 +	squashfs_dir_header dirh;
 +	char buffer[sizeof(squashfs_dir_entry) + SQUASHFS_NAME_LEN + 1];
 +	squashfs_dir_entry *dire = (squashfs_dir_entry *) buffer;
@@ -880,36 +868,42 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +	TRACE("Entered squashfs_readdir [%x:%x]\n", next_block, next_offset);
 +
 +	lock_kernel();
-+
 +	while(length < i->i_size) {
 +		/* read directory header */
 +		if(msBlk->swap) {
 +			squashfs_dir_header sdirh;
-+			if(length += bytes = squashfs_get_cached_block(i->i_sb, (char *) &sdirh, next_block,
-+						next_offset, sizeof(sdirh), &next_block, &next_offset), !bytes)
++			if(!squashfs_get_cached_block(i->i_sb, (char *) &sdirh, next_block,
++						next_offset, sizeof(sdirh), &next_block, &next_offset))
 +				goto failed_read;
++			length += sizeof(sdirh);
 +			SQUASHFS_SWAP_DIR_HEADER(&dirh, &sdirh);
-+		} else
-+			if(length += bytes = squashfs_get_cached_block(i->i_sb, (char *) &dirh, next_block,
-+						next_offset, sizeof(dirh), &next_block, &next_offset), !bytes)
++		} else {
++			if(!squashfs_get_cached_block(i->i_sb, (char *) &dirh, next_block,
++						next_offset, sizeof(dirh), &next_block, &next_offset))
 +				goto failed_read;
++			length += sizeof(dirh);
++		}
 +
 +		dir_count = dirh.count + 1;
 +		while(dir_count--) {
 +			if(msBlk->swap) {
 +				squashfs_dir_entry sdire;
-+				if(length += bytes = squashfs_get_cached_block(i->i_sb, (char *) &sdire, next_block,
-+							next_offset, sizeof(sdire), &next_block, &next_offset), !bytes)
++				if(!squashfs_get_cached_block(i->i_sb, (char *) &sdire, next_block,
++							next_offset, sizeof(sdire), &next_block, &next_offset))
 +					goto failed_read;
++				length += sizeof(sdire);
 +				SQUASHFS_SWAP_DIR_ENTRY(dire, &sdire);
-+			} else
-+				if(length += bytes = squashfs_get_cached_block(i->i_sb, (char *) dire, next_block,
-+							next_offset, sizeof(*dire), &next_block, &next_offset), !bytes)
++			} else {
++				if(!squashfs_get_cached_block(i->i_sb, (char *) dire, next_block,
++							next_offset, sizeof(*dire), &next_block, &next_offset))
 +					goto failed_read;
++				length += sizeof(*dire);
++			}
 +
-+			if(length += bytes = squashfs_get_cached_block(i->i_sb, dire->name, next_block,
-+						next_offset, dire->size + 1, &next_block, &next_offset), !bytes)
++			if(!squashfs_get_cached_block(i->i_sb, dire->name, next_block,
++						next_offset, dire->size + 1, &next_block, &next_offset))
 +				goto failed_read;
++			length += dire->size + 1;
 +
 +			if(file->f_pos >= length)
 +				continue;
@@ -931,62 +925,69 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +			dirs_read ++;
 +		}
 +	}
++
 +	unlock_kernel();
 +	return dirs_read;
 +
 +failed_read:
-+	ERROR("Unable to read directory block [%x:%x]\n", next_block, next_offset);
 +	unlock_kernel();
++	ERROR("Unable to read directory block [%x:%x]\n", next_block, next_offset);
 +	return 0;
 +}
 +
 +
-+static struct dentry *squashfs_lookup(struct inode *i, struct dentry *dentry,
-+				      struct nameidata *nd)
++static struct dentry *squashfs_lookup(struct inode *i, struct dentry *dentry, struct nameidata *nd)
 +{
 +	const char *name =dentry->d_name.name;
 +	int len = dentry->d_name.len;
 +	struct inode *inode = NULL;
-+	struct squashfs_inode_info *sqi = SQUASH_I(i);
-+	squashfs_sb_info *msBlk = i->i_sb->s_fs_info;
++	squashfs_sb_info *msBlk = (squashfs_sb_info *)i->i_sb->s_fs_info;
 +	squashfs_super_block *sBlk = &msBlk->sBlk;
-+	int next_block = sqi->start_block + sBlk->directory_table_start, next_offset =
-+		sqi->offset, length = 0, dir_count, bytes;
++	int next_block = SQUASHFS_I(i)->start_block + sBlk->directory_table_start, next_offset =
++		SQUASHFS_I(i)->offset, length = 0, dir_count;
 +	squashfs_dir_header dirh;
 +	char buffer[sizeof(squashfs_dir_entry) + SQUASHFS_NAME_LEN];
 +	squashfs_dir_entry *dire = (squashfs_dir_entry *) buffer;
 +
 +	TRACE("Entered squashfs_lookup [%x:%x]\n", next_block, next_offset);
 +
++	lock_kernel();
 +	while(length < i->i_size) {
 +		/* read directory header */
 +		if(msBlk->swap) {
 +			squashfs_dir_header sdirh;
-+			if(length += bytes = squashfs_get_cached_block(i->i_sb, (char *) &sdirh, next_block, next_offset,
-+						sizeof(sdirh), &next_block, &next_offset), !bytes)
++			if(!squashfs_get_cached_block(i->i_sb, (char *) &sdirh, next_block, next_offset,
++						sizeof(sdirh), &next_block, &next_offset))
 +				goto failed_read;
++			length += sizeof(sdirh);
 +			SQUASHFS_SWAP_DIR_HEADER(&dirh, &sdirh);
-+		} else
-+			if(length += bytes = squashfs_get_cached_block(i->i_sb, (char *) &dirh, next_block, next_offset,
-+						sizeof(dirh), &next_block, &next_offset), !bytes)
++		} else {
++			if(!squashfs_get_cached_block(i->i_sb, (char *) &dirh, next_block, next_offset,
++						sizeof(dirh), &next_block, &next_offset))
 +				goto failed_read;
++			length += sizeof(dirh);
++		}
 +
 +		dir_count = dirh.count + 1;
 +		while(dir_count--) {
 +			if(msBlk->swap) {
 +				squashfs_dir_entry sdire;
-+				if(length += bytes = squashfs_get_cached_block(i->i_sb, (char *) &sdire,
-+							next_block,next_offset, sizeof(sdire), &next_block, &next_offset), !bytes)
++				if(!squashfs_get_cached_block(i->i_sb, (char *) &sdire,
++							next_block,next_offset, sizeof(sdire), &next_block, &next_offset))
 +					goto failed_read;
++				length += sizeof(sdire);
 +				SQUASHFS_SWAP_DIR_ENTRY(dire, &sdire);
-+			} else
-+				if(length += bytes = squashfs_get_cached_block(i->i_sb, (char *) dire,
-+							next_block,next_offset, sizeof(*dire), &next_block, &next_offset), !bytes)
++			} else {
++				if(!squashfs_get_cached_block(i->i_sb, (char *) dire,
++							next_block,next_offset, sizeof(*dire), &next_block, &next_offset))
 +					goto failed_read;
++				length += sizeof(*dire);
++			}
 +
-+			if(length += bytes = squashfs_get_cached_block(i->i_sb, dire->name,
-+						next_block, next_offset, dire->size + 1, &next_block, &next_offset), !bytes)
++			if(!squashfs_get_cached_block(i->i_sb, dire->name,
++						next_block, next_offset, dire->size + 1, &next_block, &next_offset))
 +				goto failed_read;
++			length += dire->size + 1;
 +
 +			if((len == dire->size + 1) && !strncmp(name, dire->name, len)) {
 +				squashfs_inode ino = SQUASHFS_MKINODE(dirh.start_block, dire->offset);
@@ -1003,6 +1004,7 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +
 +exit_loop:
 +	d_add(dentry, inode);
++	unlock_kernel();
 +	return ERR_PTR(0);
 +
 +failed_read:
@@ -1013,57 +1015,84 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +
 +static void squashfs_put_super(struct super_block *s)
 +{
-+	squashfs_sb_info *msBlk = s->s_fs_info;
-+	kfree(msBlk->block_cache);
-+	kfree(msBlk->read_data);
-+	kfree(msBlk->read_page);
-+	kfree(msBlk->uid);
-+	kfree(msBlk);
-+	s->s_fs_info = NULL;
++	if(s->s_fs_info) {
++		squashfs_sb_info *sbi = (squashfs_sb_info *) s->s_fs_info;
++		if(sbi->block_cache) kfree(sbi->block_cache);
++		if(sbi->read_data) kfree(sbi->read_data);
++		if(sbi->read_page) kfree(sbi->read_page);
++		if(sbi->uid) kfree(sbi->uid);
++		kfree(s->s_fs_info);
++		s->s_fs_info = NULL;
++	}
 +}
 +
-+static struct super_block *squashfs_get_sb(struct file_system_type *fs_type,
-+	int flags, const char *dev_name, void *data)
++
++static struct super_block *squashfs_get_sb(struct file_system_type *fs_type, int flags, const char *dev_name, void *data)
 +{
-+	return get_sb_bdev(fs_type, flags, dev_name, data,
-+			   squashfs_fill_super);
++	return get_sb_bdev(fs_type, flags, dev_name, data, squashfs_fill_super);
 +}
++
++
++static int __init init_squashfs_fs(void)
++{
++	int err = init_inodecache();
++	if(err)
++		return err;
++
++	if(!(stream.workspace = (char *) vmalloc(zlib_inflate_workspacesize()))) {
++		ERROR("Failed to allocate zlib workspace\n");
++		destroy_inodecache();
++		return -ENOMEM;
++	}
++
++	if((err = register_filesystem(&squashfs_fs_type))) {
++		vfree(stream.workspace);
++		destroy_inodecache();
++	}
++
++	return err;
++}
++
++
++static void __exit exit_squashfs_fs(void)
++{
++	vfree(stream.workspace);
++	unregister_filesystem(&squashfs_fs_type);
++	destroy_inodecache();
++}
++
 +
 +static kmem_cache_t * squashfs_inode_cachep;
 +
 +static struct inode *squashfs_alloc_inode(struct super_block *sb)
 +{
-+	struct squashfs_inode_info *ii;
-+	ii = (struct squashfs_inode_info *)
-+		kmem_cache_alloc(squashfs_inode_cachep, SLAB_KERNEL);
-+	if (!ii)
++	struct squashfs_inode_info *ei;
++	ei = (struct squashfs_inode_info *)kmem_cache_alloc(squashfs_inode_cachep, SLAB_KERNEL);
++	if (!ei)
 +		return NULL;
-+	ii->vfs_inode.i_version = 1;
-+	return &ii->vfs_inode;
++	return &ei->vfs_inode;
 +}
 +
 +static void squashfs_destroy_inode(struct inode *inode)
 +{
-+	kmem_cache_free(squashfs_inode_cachep, SQUASH_I(inode));
++	kmem_cache_free(squashfs_inode_cachep, SQUASHFS_I(inode));
 +}
 +
 +static void init_once(void * foo, kmem_cache_t * cachep, unsigned long flags)
 +{
-+	struct squashfs_inode_info *sqi = (struct squashfs_inode_info *) foo;
++	struct squashfs_inode_info *ei = (struct squashfs_inode_info *) foo;
 +
 +	if ((flags & (SLAB_CTOR_VERIFY|SLAB_CTOR_CONSTRUCTOR)) ==
-+	    SLAB_CTOR_CONSTRUCTOR) {
-+		inode_init_once(&sqi->vfs_inode);
-+	}
++	    SLAB_CTOR_CONSTRUCTOR)
++		inode_init_once(&ei->vfs_inode);
 +}
-+
++ 
 +static int init_inodecache(void)
 +{
-+	squashfs_inode_cachep =
-+		kmem_cache_create("squashfs_inode_cache",
-+				  sizeof(struct squashfs_inode_info),
-+				  0, SLAB_HWCACHE_ALIGN|SLAB_RECLAIM_ACCOUNT,
-+				  init_once, NULL);
++	squashfs_inode_cachep = kmem_cache_create("squashfs_inode_cache",
++					     sizeof(struct squashfs_inode_info),
++					     0, SLAB_HWCACHE_ALIGN|SLAB_RECLAIM_ACCOUNT,
++					     init_once, NULL);
 +	if (squashfs_inode_cachep == NULL)
 +		return -ENOMEM;
 +	return 0;
@@ -1071,39 +1100,30 @@ diff -Naur linux-2.6.0-test1-ac2/fs/squashfs/inode.c linux-2.6.0-test1-ac2-sfs/f
 +
 +static void destroy_inodecache(void)
 +{
-+	kmem_cache_destroy(squashfs_inode_cachep);
++	if (kmem_cache_destroy(squashfs_inode_cachep))
++		printk(KERN_INFO "squashfs_inode_cache: not all structures were freed\n");
 +}
-+
-+static int __init init_squashfs_fs(void)
-+{
-+
-+	if(!(stream.workspace = (char *) vmalloc(zlib_inflate_workspacesize()))) {
-+		ERROR("Failed to allocate zlib workspace\n");
-+		return -ENOMEM;
-+	}
-+	if (init_inodecache())
-+		return -ENOMEM;
-+	return register_filesystem(&squashfs_fs_type);
-+}
-+
-+
-+static void __exit exit_squashfs_fs(void)
-+{
-+	destroy_inodecache();
-+	vfree(stream.workspace);
-+	unregister_filesystem(&squashfs_fs_type);
-+}
-+
 +
 +module_init(init_squashfs_fs);
 +module_exit(exit_squashfs_fs);
 +MODULE_DESCRIPTION("squashfs, a compressed read-only filesystem");
 +MODULE_AUTHOR("Phillip Lougher <phillip@lougher.demon.co.uk>");
 +MODULE_LICENSE("GPL");
-diff -Naur linux-2.6.0-test1-ac2/include/linux/squashfs_fs.h linux-2.6.0-test1-ac2-sfs/include/linux/squashfs_fs.h
---- linux-2.6.0-test1-ac2/include/linux/squashfs_fs.h	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.0-test1-ac2-sfs/include/linux/squashfs_fs.h	2003-07-18 16:12:47.000000000 -0700
-@@ -0,0 +1,304 @@
+diff --new-file -ur linux-2.6.0-test7/fs/squashfs/Makefile linux-2.6.0-test7-squashfs1.3r2/fs/squashfs/Makefile
+--- linux-2.6.0-test7/fs/squashfs/Makefile	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.0-test7-squashfs1.3r2/fs/squashfs/Makefile	2003-10-14 02:37:09.000000000 +0100
+@@ -0,0 +1,7 @@
++#
++# Makefile for the linux squashfs routines.
++#
++
++obj-$(CONFIG_SQUASHFS) += squashfs.o
++
++squashfs-objs := inode.o
+diff --new-file -ur linux-2.6.0-test7/include/linux/squashfs_fs.h linux-2.6.0-test7-squashfs1.3r2/include/linux/squashfs_fs.h
+--- linux-2.6.0-test7/include/linux/squashfs_fs.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.0-test7-squashfs1.3r2/include/linux/squashfs_fs.h	2003-10-14 02:37:09.000000000 +0100
+@@ -0,0 +1,323 @@
 +#ifndef SQUASHFS_FS
 +#define SQUASHFS_FS
 +/*
@@ -1163,6 +1183,10 @@ diff -Naur linux-2.6.0-test1-ac2/include/linux/squashfs_fs.h linux-2.6.0-test1-a
 +#define SQUASHFS_BLKDEV_TYPE		4
 +#define SQUASHFS_CHRDEV_TYPE		5
 +
++#define SQUASHFS_IPC_TYPE		0
++#define SQUASHFS_FIFO_TYPE		6
++#define SQUASHFS_SOCKET_TYPE		7
++
 +/* Flag whether block is compressed or uncompressed, bit is set if block is uncompressed */
 +#define SQUASHFS_COMPRESSED_BIT		(1 << 15)
 +#define SQUASHFS_COMPRESSED_SIZE(B)	(((B) & ~SQUASHFS_COMPRESSED_BIT) ? \
@@ -1189,7 +1213,7 @@ diff -Naur linux-2.6.0-test1-ac2/include/linux/squashfs_fs.h linux-2.6.0-test1-a
 +#define SQUASHFS_CACHED_BLKS		8
 +
 +#define SQUASHFS_MAX_FILE_SIZE_LOG	32
-+#define SQUASHFS_MAX_FILE_SIZE		((long long) 1 << SQUASHFS_MAX_FILE_SIZE_LOG - 1)
++#define SQUASHFS_MAX_FILE_SIZE		((long long) 1 << (SQUASHFS_MAX_FILE_SIZE_LOG - 1))
 +
 +#define SQUASHFS_MARKER_BYTE		0xff
 +
@@ -1203,69 +1227,78 @@ diff -Naur linux-2.6.0-test1-ac2/include/linux/squashfs_fs.h linux-2.6.0-test1-a
 +typedef unsigned int		squashfs_uid;
 +
 +typedef struct squashfs_super_block {
-+	unsigned int		s_magic __attribute__ ((packed));
-+	unsigned int		inodes __attribute__ ((packed));
-+	unsigned int		bytes_used __attribute__ ((packed));
-+	unsigned int		uid_start __attribute__ ((packed));
-+	unsigned int		guid_start __attribute__ ((packed));
-+	unsigned int		inode_table_start __attribute__ ((packed));
-+	unsigned int		directory_table_start __attribute__ ((packed));
-+	unsigned int		s_major:16 __attribute__ ((packed));
-+	unsigned int		s_minor:16 __attribute__ ((packed));
-+	unsigned int		block_size:16 __attribute__ ((packed));
-+	unsigned int		block_log:16 __attribute__ ((packed));
-+	unsigned int		flags:8 __attribute__ ((packed));
-+	unsigned int		no_uids:8 __attribute__ ((packed));
-+	unsigned int		no_guids:8 __attribute__ ((packed));
-+	time_t			mkfs_time /* time of filesystem creation */ __attribute__ ((packed));
-+	squashfs_inode		root_inode __attribute__ ((packed));
-+} squashfs_super_block;
++	unsigned int		s_magic;
++	unsigned int		inodes;
++	unsigned int		bytes_used;
++	unsigned int		uid_start;
++	unsigned int		guid_start;
++	unsigned int		inode_table_start;
++	unsigned int		directory_table_start;
++	unsigned int		s_major:16;
++	unsigned int		s_minor:16;
++	unsigned int		block_size:16;
++	unsigned int		block_log:16;
++	unsigned int		flags:8;
++	unsigned int		no_uids:8;
++	unsigned int		no_guids:8;
++	time_t			mkfs_time /* time of filesystem creation */;
++	squashfs_inode		root_inode;
++} __attribute__ ((packed)) squashfs_super_block;
 +
 +typedef struct {
-+	unsigned int		inode_type:4 __attribute__ ((packed));
-+	unsigned int		mode:12 __attribute__ ((packed)); /* protection */
-+	unsigned int		uid:4 __attribute__ ((packed)); /* index into uid table */
-+	unsigned int		guid:4 __attribute__ ((packed)); /* index into guid table */
-+} squashfs_base_inode_header;
++	unsigned int		inode_type:4;
++	unsigned int		mode:12; /* protection */
++	unsigned int		uid:4; /* index into uid table */
++	unsigned int		guid:4; /* index into guid table */
++} __attribute__ ((packed)) squashfs_base_inode_header;
 +
 +typedef struct {
-+	unsigned int		inode_type:4 __attribute__ ((packed));
-+	unsigned int		mode:12 __attribute__ ((packed)); /* protection */
-+	unsigned int		uid:4 __attribute__ ((packed)); /* index into uid table */
-+	unsigned int		guid:4 __attribute__ ((packed)); /* index into guid table */
-+	unsigned short		rdev __attribute__ ((packed));
-+} squashfs_dev_inode_header;
++	unsigned int		inode_type:4;
++	unsigned int		mode:12; /* protection */
++	unsigned int		uid:4; /* index into uid table */
++	unsigned int		guid:4; /* index into guid table */
++	unsigned int		type:4;
++	unsigned int		offset:4;
++} __attribute__ ((packed)) squashfs_ipc_inode_header;
++
++typedef struct {
++	unsigned int		inode_type:4;
++	unsigned int		mode:12; /* protection */
++	unsigned int		uid:4; /* index into uid table */
++	unsigned int		guid:4; /* index into guid table */
++	unsigned short		rdev;
++} __attribute__ ((packed)) squashfs_dev_inode_header;
 +	
 +typedef struct {
-+	unsigned int		inode_type:4 __attribute__ ((packed));
-+	unsigned int		mode:12 __attribute__ ((packed)); /* protection */
-+	unsigned int		uid:4 __attribute__ ((packed)); /* index into uid table */
-+	unsigned int		guid:4 __attribute__ ((packed)); /* index into guid table */
-+	unsigned short		symlink_size __attribute__ ((packed));
-+	char			symlink[0] __attribute__ ((packed));
-+} squashfs_symlink_inode_header;
++	unsigned int		inode_type:4;
++	unsigned int		mode:12; /* protection */
++	unsigned int		uid:4; /* index into uid table */
++	unsigned int		guid:4; /* index into guid table */
++	unsigned short		symlink_size;
++	char			symlink[0];
++} __attribute__ ((packed)) squashfs_symlink_inode_header;
 +
 +typedef struct {
-+	unsigned int		inode_type:4 __attribute__ ((packed));
-+	unsigned int		mode:12 __attribute__ ((packed)); /* protection */
-+	unsigned int		uid:4 __attribute__ ((packed)); /* index into uid table */
-+	unsigned int		guid:4 __attribute__ ((packed)); /* index into guid table */
-+	time_t			mtime __attribute__ ((packed));
-+	squashfs_block		start_block __attribute__ ((packed));
-+	unsigned int		file_size:SQUASHFS_MAX_FILE_SIZE_LOG __attribute__ ((packed));
-+	unsigned short		block_list[0]  __attribute__ ((packed));
-+} squashfs_reg_inode_header;
++	unsigned int		inode_type:4;
++	unsigned int		mode:12; /* protection */
++	unsigned int		uid:4; /* index into uid table */
++	unsigned int		guid:4; /* index into guid table */
++	time_t			mtime;
++	squashfs_block		start_block;
++	unsigned int		file_size:SQUASHFS_MAX_FILE_SIZE_LOG;
++	unsigned short		block_list[0];
++} __attribute__ ((packed)) squashfs_reg_inode_header;
 +
 +typedef struct {
-+	unsigned int		inode_type:4 __attribute__ ((packed));
-+	unsigned int		mode:12 __attribute__ ((packed)); /* protection */
-+	unsigned int		uid:4 __attribute__ ((packed)); /* index into uid table */
-+	unsigned int		guid:4 __attribute__ ((packed)); /* index into guid table */
-+	unsigned int		file_size:19 __attribute__ ((packed));
-+	unsigned int		offset:13 __attribute__ ((packed));
-+	time_t			mtime __attribute__ ((packed));
-+	unsigned int		start_block:24 __attribute__ ((packed));
-+} squashfs_dir_inode_header;
++	unsigned int		inode_type:4;
++	unsigned int		mode:12; /* protection */
++	unsigned int		uid:4; /* index into uid table */
++	unsigned int		guid:4; /* index into guid table */
++	unsigned int		file_size:19;
++	unsigned int		offset:13;
++	time_t			mtime;
++	unsigned int		start_block:24;
++} __attribute__  ((packed)) squashfs_dir_inode_header;
 +
 +typedef union {
 +	squashfs_base_inode_header	base;
@@ -1273,19 +1306,20 @@ diff -Naur linux-2.6.0-test1-ac2/include/linux/squashfs_fs.h linux-2.6.0-test1-a
 +	squashfs_symlink_inode_header	symlink;
 +	squashfs_reg_inode_header	reg;
 +	squashfs_dir_inode_header	dir;
++	squashfs_ipc_inode_header	ipc;
 +} squashfs_inode_header;
 +	
 +typedef struct {
-+	unsigned int		offset:13 __attribute__ ((packed));
-+	unsigned int		type:3 __attribute__ ((packed));
-+	unsigned int		size:8 __attribute__ ((packed));
-+	char			name[0] __attribute__ ((packed));
-+} squashfs_dir_entry;
++	unsigned int		offset:13;
++	unsigned int		type:3;
++	unsigned int		size:8;
++	char			name[0];
++} __attribute__ ((packed)) squashfs_dir_entry;
 +
 +typedef struct {
-+	unsigned int		count:8 __attribute__ ((packed));
-+	unsigned int		start_block:24 __attribute__ ((packed));
-+} squashfs_dir_header;
++	unsigned int		count:8;
++	unsigned int		start_block:24;
++} __attribute__ ((packed)) squashfs_dir_header;
 +
 +
 +extern int squashfs_uncompress_block(void *d, int dstlen, void *s, int srclen);
@@ -1327,6 +1361,11 @@ diff -Naur linux-2.6.0-test1-ac2/include/linux/squashfs_fs.h linux-2.6.0-test1-a
 +	SQUASHFS_SWAP((s)->guid, d, 20, 4);\
 +}
 +
++#define SQUASHFS_SWAP_IPC_INODE_HEADER(s, d) {\
++	SQUASHFS_SWAP_BASE_INODE_HEADER(s, d, sizeof(squashfs_dev_inode_header));\
++	SQUASHFS_SWAP((s)->type, d, 24, 4);\
++	SQUASHFS_SWAP((s)->offset, d, 28, 4);\
++}
 +#define SQUASHFS_SWAP_DEV_INODE_HEADER(s, d) {\
 +	SQUASHFS_SWAP_BASE_INODE_HEADER(s, d, sizeof(squashfs_dev_inode_header));\
 +	SQUASHFS_SWAP((s)->rdev, d, 24, 16);\
@@ -1403,14 +1442,40 @@ diff -Naur linux-2.6.0-test1-ac2/include/linux/squashfs_fs.h linux-2.6.0-test1-a
 +	unsigned char *d = ((unsigned char *) &val) + 7;\
 +	for(bits = 0; bits < (tbits + b_pos); bits += 8) \
 +		*d-- = *s++;\
-+	value = val >> (SHIFT);\
++	value = (val >> (SHIFT));\
 +}
 +#define SQUASHFS_MEMSET(s, d, n)	memset(s, 0, n);
 +#endif
 +#endif
-diff -Naur linux-2.6.0-test1-ac2/include/linux/squashfs_fs_sb.h linux-2.6.0-test1-ac2-sfs/include/linux/squashfs_fs_sb.h
---- linux-2.6.0-test1-ac2/include/linux/squashfs_fs_sb.h	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.0-test1-ac2-sfs/include/linux/squashfs_fs_sb.h	2003-07-18 16:12:47.000000000 -0700
+diff --new-file -ur linux-2.6.0-test7/include/linux/squashfs_fs_i.h linux-2.6.0-test7-squashfs1.3r2/include/linux/squashfs_fs_i.h
+--- linux-2.6.0-test7/include/linux/squashfs_fs_i.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.0-test7-squashfs1.3r2/include/linux/squashfs_fs_i.h	2003-10-14 02:37:09.000000000 +0100
+@@ -0,0 +1,22 @@
++#ifndef SQUASHFS_FS_I
++#define SQUASHFS_FS_I
++/*
++ * Squashfs
++ *
++ * Copyright (c) 2002 Phillip Lougher <phillip@lougher.demon.co.uk>
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * as published by the Free Software Foundation; either version
++ * 2 of the License, or (at your option) any later version.
++ *
++ * squashfs_fs_i.h
++ */
++
++typedef struct squashfs_inode_info {
++	unsigned int	start_block;
++	unsigned int	block_list_start;
++	unsigned int	offset;
++	struct inode	vfs_inode;
++	} squashfs_inode_info;
++#endif
+diff --new-file -ur linux-2.6.0-test7/include/linux/squashfs_fs_sb.h linux-2.6.0-test7-squashfs1.3r2/include/linux/squashfs_fs_sb.h
+--- linux-2.6.0-test7/include/linux/squashfs_fs_sb.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.0-test7-squashfs1.3r2/include/linux/squashfs_fs_sb.h	2003-10-14 02:37:09.000000000 +0100
 @@ -0,0 +1,41 @@
 +#ifndef SQUASHFS_FS_SB
 +#define SQUASHFS_FS_SB
@@ -1453,17 +1518,3 @@ diff -Naur linux-2.6.0-test1-ac2/include/linux/squashfs_fs_sb.h linux-2.6.0-test
 +	wait_queue_head_t	waitq;
 +	} squashfs_sb_info;
 +#endif
-diff -Naur linux-2.6.0-test1-ac2/lib/Kconfig linux-2.6.0-test1-ac2-sfs/lib/Kconfig
---- linux-2.6.0-test1-ac2/lib/Kconfig	2003-05-04 16:53:32.000000000 -0700
-+++ linux-2.6.0-test1-ac2-sfs/lib/Kconfig	2003-07-16 16:40:44.000000000 -0700
-@@ -17,8 +17,8 @@
- #
- config ZLIB_INFLATE
- 	tristate
--	default y if CRAMFS=y || PPP_DEFLATE=y || JFFS2_FS=y || ZISOFS_FS=y || BINFMT_ZFLAT=y || CRYPTO_DEFLATE=y
--	default m if CRAMFS=m || PPP_DEFLATE=m || JFFS2_FS=m || ZISOFS_FS=m || BINFMT_ZFLAT=m || CRYPTO_DEFLATE=m
-+	default y if CRAMFS=y || SQUASHFS=y || PPP_DEFLATE=y || JFFS2_FS=y || ZISOFS_FS=y || BINFMT_ZFLAT=y || CRYPTO_DEFLATE=y
-+	default m if CRAMFS=m || SQUASHFS=m || PPP_DEFLATE=m || JFFS2_FS=m || ZISOFS_FS=m || BINFMT_ZFLAT=m || CRYPTO_DEFLATE=m
- 
- config ZLIB_DEFLATE
- 	tristate
