@@ -15,7 +15,7 @@
 
 %define		_rel		2
 %define		_test_ver	5
-%define		_cset		20030925_0108
+%define		_cset		20030926_0507
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
