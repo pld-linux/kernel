@@ -21,6 +21,7 @@
 %define		grsec_version		1.8-2.4.7
 %define		tulip_version		1.1.8
 %define		aic_version		6.2.3-2.4.7
+%define		jfs_version		2.4-1.0.7
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -46,7 +47,7 @@ Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_versio
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
 Source12:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
 Source13:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
-Source14:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-1.0.6-patch.tar.gz
+Source14:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}-patch.tar.gz
 Source15:	http://prdownloads.sourceforge.net/tulip/tulip-%{tulip_version}.tar.gz
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -536,8 +537,9 @@ patch -p1 -s <jfs-2.4.common-v1.0.6-patch
 patch -p1 -s <jfs-2.4.7-v1.0.6-patch
 
 # Tulip driver installed.
-echo Replaced Tulip
+echo Replaced Tulip driver
 cp -f tulip-%{tulip_version}/src/*.{c,h} drivers/net/tulip
+cp -f tulip-%{tulip_version}/src/ChangeLog drivers/net/tulip
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
