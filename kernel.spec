@@ -63,7 +63,7 @@ Release:	%{_rel}
 %endif
 %endif
 
-Epoch:		1
+Epoch:		2
 License:	GPL
 Group:		Base/Kernel
 #%%if "%{_rc}" != "0"
