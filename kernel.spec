@@ -62,6 +62,7 @@ Source1005:	%{name}-evms.config
 Source1006:	%{name}-cdrw.config
 Source1007:	%{name}-acpi.config
 Source1008:	%{name}-ebtables.config
+Source1009:	%{name}-usb2.config
 Source1666:	%{name}-grsec.config
 Source1667:	%{name}-int.config
 Source1668:	%{name}-hostap.config
@@ -660,6 +661,7 @@ BuildKernel() {
 	cat %{SOURCE1007} >> arch/%{base_arch}/defconfig
 %endif
 	cat %{SOURCE1008} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1009} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1671} >> arch/%{base_arch}/defconfig
 	
 	if [ "$BOOT" = "yes" ] ; then
@@ -824,6 +826,7 @@ cat %{SOURCE1667} >> .config
 	cat %{SOURCE1007} >> .config
 %endif
 cat %{SOURCE1008} >> .config
+cat %{SOURCE1009} >> .config
 cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
@@ -865,6 +868,7 @@ cat %{SOURCE1667} >> .config
 	cat %{SOURCE1007} >> .config
 %endif
 cat %{SOURCE1008} >> .config
+cat %{SOURCE1009} >> .config
 cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
