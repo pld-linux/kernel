@@ -1,6 +1,6 @@
 %define		ow_version		2.2.17-ow1
 %define		pcmcia_version		3.1.23
-%define		reiserfs_version	3.6.24
+%define		reiserfs_version	3.6.25
 %define		freeswan_version	1.8
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -37,8 +37,10 @@ Source62:	%{name}-sparc64-BOOT.config
 Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
+Source90:	ftp://fb9nt.uni-duisburg.de/pub/linux/dmsdos/dmsdos-0.9.2.3-pre2.tgz
 Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.2.gz
-Patch1:		ftp://ftp.reiserfs.org/pub/2.4/linux-%{version}-ac2-reiserfs-%{reiserfs_version}-patch.gz
+#Patch1:		ftp://ftp.reiserfs.org/pub/2.4/linux-%{version}-ac2-reiserfs-%{reiserfs_version}-patch.gz
+Patch1:		ftp://ftp.reiserfs.org/pub/2.4/linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
 Patch2:		%{name}-%{version}-dc395-patch-fix.patch
 #Patch3:		%{name}-pldfblogo.patch
 #Patch4:		linux-2.4.0-freeswan-%{freeswan_version}.patch
