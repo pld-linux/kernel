@@ -463,6 +463,7 @@ echo Installing cramfs patch
 %ifarch sparc64
 echo Fixed SYSCALL errors for SPARC 64 arch.
 %patch127 -p1
+cp include/asm-sparc/vfc_ioctl.h include/asm-sparc64/vfc_ioctl.h
 %endif
 
 #fixed AXP compilation
