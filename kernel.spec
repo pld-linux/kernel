@@ -9,7 +9,7 @@
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	grsec		# build without grsec
 %bcond_without	swsuspend	# build without swsuspend support
-%bcond_with	abi		# don't build Linux_ABI support
+%bcond_with	abi		# build Linux_ABI support
 %bcond_with	mosix		# build with openMosix support
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	verbose		# verbose build (V=1)
@@ -100,7 +100,7 @@ Source90:	%{name}-grsec.config
 
 Source100:	%{name}-openMosix.config
 
-Source110:	%{mame}-abi.config
+Source110:	%{name}-abi.config
 
 Patch0:		2.6.0-ksyms-add.patch
 
