@@ -41,7 +41,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.4%{?with_mosix:+mosix}
+%define		_rel		0.5%{?with_mosix:+mosix}
 %define		_cset		20040707_0722
 %define		_apply_cset	0
 %define		_subversion	.1
@@ -1526,7 +1526,7 @@ fi
 %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %{_prefix}/src/linux-%{version}/scripts/basic
 %{_prefix}/src/linux-%{version}/scripts/*.c
-#%%{_prefix}/src/linux-%{version}/scripts/*.h
+%{_prefix}/src/linux-%{version}/scripts/mod/*
 %{_prefix}/src/linux-%{version}/scripts/*.sh
 
 %files doc
@@ -1561,7 +1561,7 @@ fi
 %exclude %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %exclude %{_prefix}/src/linux-%{version}/scripts/basic
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.c
-#%%exclude %{_prefix}/src/linux-%{version}/scripts/*.h
+%exclude %{_prefix}/src/linux-%{version}/scripts/*
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.sh
 %{_prefix}/src/linux-%{version}/sound
 %{_prefix}/src/linux-%{version}/security
