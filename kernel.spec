@@ -12,9 +12,9 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		2
-%define		_test_ver	11
-%define		_cset		20031204_0007
+%define		_rel		1
+%define		_test_ver	10
+%define		_cset		20031126_0007
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -35,7 +35,7 @@ Epoch:		1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-test%{_test_ver}.tar.bz2
-# Source0-md5:	06ba5a7eeb924036633a7b33689b2c4f
+# Source0-md5:	61828549d38189bdece85f5107a507ca
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -95,25 +95,14 @@ Patch42:	2.6.0-t9-netfilter-p2p.patch
 
 Patch44:	2.6.0-t9-PPC-smp.patch
 
+Patch46:	2.6.0-t9-IDE-lkml.patch
+
 Patch48:	2.6.0-t10-sis_operator_fix-lkml.patch
+
+Patch50:	2.6.0-modular-IDE.patch
 
 Patch52:	2.6.0-t10-POSIX_message_queues-1of2-lkml.patch
 Patch53:	2.6.0-t10-POSIX_message_queues-2of2-lkml.patch
-
-# http://bytesex.org/patches/2.6.0-test10-2/
-Patch60:	patch-2.6.0-test10-kraxel.gz
-
-Patch62:	2.6.0-t11-EPoX-sound-lkml.patch
-
-Patch64:	bootsplash-3.1.3-2.6.0-test9.diff
-
-Patch66:	2.6.0-t11-AIC_and_db4-lkml.patch
-
-Patch68:	2.6.0-t11-get_compat_timespec-lkml.patch
-
-Patch70:	2.6.0-t11-r8169-getstats.patch
-
-Patch72:	2.6.0-t11-ALI-M1563-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -452,24 +441,14 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch44 -p1
 
+%patch46 -p1
+
 %patch48 -p1
+
+#%%patch50 -p1
 
 %patch52 -p1
 %patch53 -p1
-
-%patch60 -p1
-
-%patch62 -p1
-
-%patch64 -p1
-
-%patch66 -p1
-
-%patch68 -p1
-
-%patch70 -p1
-
-%patch72 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -638,12 +617,12 @@ BuildConfig smp
 %{?with_smp:PreInstallKernel smp}
 
 # BOOT kernel
-#%%ifnarch i586 i686 athlon
-#%KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
-#%rm -rf $KERNEL_INSTALL_DIR
-#%%{?with_boot:BuildKernel BOOT}
-#%%{?with_boot:PreInstallKernel boot}
-#%%endif
+%ifnarch i586 i686 athlon
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
+rm -rf $KERNEL_INSTALL_DIR
+%{?with_boot:BuildKernel BOOT}
+%{?with_boot:PreInstallKernel boot}
+%endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -678,7 +657,6 @@ cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 %{__make} mrproper
 find -name "*~" -exec rm -f "{}" ";"
 find -name "*.orig" -exec rm -f "{}" ";"
-cp $KERNEL_BUILD_DIR/scripts/modpost scripts
 
 %ifarch %{ix86}
 cat $RPM_SOURCE_DIR/kernel-ia32.config > .config
@@ -750,7 +728,6 @@ ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
 
 %{__make} include/linux/version.h
 %{__make} clean
-cp $KERNEL_BUILD_DIR/scripts/modpost scripts
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -1029,7 +1006,6 @@ fi
 %{_prefix}/src/linux-%{version}/include
 %{_prefix}/src/linux-%{version}/config-smp
 %{_prefix}/src/linux-%{version}/config-up
-%attr(755,root,root)	%{_prefix}/src/linux-%{version}/scripts/modpost
 #%{_prefix}/src/linux-%{version}/.config
 
 %files doc
