@@ -30,6 +30,7 @@
 %define		drm_xfree_version	4.2.99
 %define		hostap_version		2002-10-12
 %define		netfilter_snap		20030326
+%define		ACL_version		0.8.56
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -207,7 +208,7 @@ Patch43:	linux-2.4.20-e820.patch
 # from http://www.holtmann.org/linux/kernel/patch-2.4.20-mh6.gz
 Patch44:	linux-2.4.20-mh6.patch.bz2
 # from http://acl.bestbits.at/
-Patch45:	linux-2.4.20-ACL-0.8.54.patch.bz2
+Patch45:	linux-2.4.20-ACL-%{ACL_version}.patch.bz2
 Patch46:	linux-2.4.19-netmos_pci_parallel_n_serial.patch
 
 Patch47:	linux-2.4-3com-vlan.patch
