@@ -58,9 +58,6 @@ Patch3:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.20-reiserfs-%{rei
 Patch4:		ftp://ftp.kernel.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
 Patch5:		linux-2.2.18-freeswan-%{freeswan_version}.patch
 Patch6:		wanrouter-v2215.patch.gz
-Patch7:		linux-ipv6-addrconf.patch
-# based on http://support.3com.com/infodeli/tools/nic/linux/3c90x-1.0.0i.tar.gz
-Patch9:		linux-ipv6-glibc2.2.patch
 # based on http://bridge.sourceforge.net/patches/bridge-1.0.2-against-2.2.20.diff
 Patch10:	bridge-1.0.2-against-2.2.20.diff
 Patch11:	bridge-ipchains-against-1.0.2-against-2.2.20.diff
@@ -70,7 +67,6 @@ Patch22:	%{name}-ipvs-1.0.8-2.2.19.patch
 Patch23:	linux-raw.patch
 Patch24:	%{name}-panaview_kbd.patch
 Patch25:	linux-2.2.19-pci.patch
-Patch26:	%{name}-sysctl-ipv6.patch
 Patch27:	%{name}-udf.patch
 # based on	http://people.redhat.com/mingo/raid-patches/raid-2.2.20-A0
 Patch28:	raid-2.2.20-A0.patch.bz2
@@ -364,8 +360,6 @@ do twojego sprzêtu.
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
-%patch7 -p1
-%patch9 -p1
 %patch10 -p1
 %patch11 -p1
 %patch20 -p1
@@ -374,7 +368,6 @@ do twojego sprzêtu.
 %patch23 -p1
 %patch24 -p1
 %patch25 -p1
-%patch26 -p1
 %patch27 -p1
 %patch28 -p1
 %patch29 -p1
@@ -695,8 +688,6 @@ bzip2 -dc %{PATCH3} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{vers
 gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH5}
 gzip -dc %{PATCH6} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH7}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH9}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH10}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH11}
 gzip -dc %{PATCH20} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
@@ -705,7 +696,6 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH22}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH23}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH24}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH25}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH26}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH27}
 bzip2 -dc %{PATCH28} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 gzip -dc %{PATCH29} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
