@@ -5,14 +5,13 @@
 # _without_smp		- don't build SMP kernel
 #
 %define		test_build		1
-#
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.5.13
-Release:	0.1.dj
+Release:	0.3
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -36,7 +35,7 @@ Source72:	%{name}-alpha-BOOT.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
 
-Patch1: 	http://www.kernel.org/pub/linux/kernel/people/davej/patches/2.5/2.5.13/patch-2.5.13-dj1.diff.gz
+Patch1:		http://www.kernel.org/pub/linux/kernel/people/davej/patches/2.5/2.5.13/patch-2.5.13-dj2.diff.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
