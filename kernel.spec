@@ -8,6 +8,7 @@
 #
 # TODO:
 # - everything
+# - activate reiser4 in configs for platforms other than i386 w/o SMP
 #
 # Conditional build:
 %bcond_without	BOOT		# don't build BOOT kernel
@@ -16,6 +17,7 @@
 %bcond_without	source		# don't build kernel-source package
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
+%bcond_with	reiser4		# build with reiser4 support
 
 %{?debug:%define with_verbose 1}
 
@@ -125,6 +127,8 @@ Patch550:	linux-cluster-cman.patch
 Patch551:	linux-cluster-dlm.patch
 Patch552:	linux-cluster-gfs.patch
 Patch553:	linux-cluster-gnbd.patch
+
+Patch700:	linux-reiser4.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -496,6 +500,10 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch551 -p1
 %patch552 -p1
 %patch553 -p1
+
+%if %{with reiser4}
+%patch700 -p1
+%endif
 
 # Fix EXTRAVERSION in main Makefile
 sed -i -e 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
