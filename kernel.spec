@@ -111,6 +111,11 @@ Patch904:	ipvs-ip_select_ident.patch
 # patch for fix LIDS install
 Patch905:	linux-lids-1.0.7-PLD.fix
 
+# Adaptec AIC7XXX patch rewriten to PLD.
+# orginal was here.
+# http://people.FreeBDS.org/~gibbs/linux/linux-aic7xxx-6.1.13-2.4.4.patch.gz
+Patch906:	linux-aic7xxx-6.1.13-PLD.patch.gz
+
 # Linus's -pre
 Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.5-%{pre_version}.gz
 
@@ -422,6 +427,9 @@ rm -rf %{sym_ncr_version}
 
 ## must be here, in other time make errors with LIDS
 %patch11 -p1
+
+## Adaptec AIC7XXX patch
+%patch906 -p1
 
 %build
 BuildKernel() {
