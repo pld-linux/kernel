@@ -20,7 +20,7 @@
 %define		lvm_version		1.0.5
 %define		evms_version		1.2.0
 %define		ntfs_version		2.1.0a
-%define		drm_xfree_version	4.2.0
+%define		drm_xfree_version	4.2.99
 %define		hostap_version		2002-10-12
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	1.4%{?_with_preemptive:_pr}
+Release:	1.5%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -42,7 +42,7 @@ Source5:	linux-2.4.20-netfilter-20021125.tar.bz2
 Source6:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
-Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
+Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.bz2
 Source10:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
 #Source11:
 Source12:	linux-2.4.20-aacraid.tar.bz2
@@ -136,7 +136,7 @@ Patch28:	pcsp1.4-ss4-2.4.19.diff
 # Wireless Extensions
 Patch29:	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw_handlers.w14-5.diff
 Patch30:	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw252_we15-5.diff
-Patch31:	linux-2.4.20-pre5-ac4-drm.patch.bz2
+#Patch31:
 Patch32:	ebtables-v2.0.002_vs_2.4.20.patch
 Patch33:	linux-2.4.19-pre8-konicawc.patch
 Patch34:	wrr-linux-2.4.9.patch
@@ -229,8 +229,8 @@ Patch205:	linux-2.4.20-PPC-EXPORT_SYMBOL.patch
 Patch900:	loop-jari-2.4.20.0.patch
 Patch901:	dc395-tab.patch
 # DRM (note that this doesn't fix drm when running on 386 or 486 CPU!)
-Patch902:	linux-drm-%{drm_xfree_version}-force-cmpxchg.patch
-Patch903:	linux-drm-2.4.19-mm.patch
+#Patch902:
+#Patch903:
 Patch904:	linux-abi-put_user.patch
 Patch905:	linux-abi-fl_ibcs_to_linux.patch
 Patch906:	linux-netfilter-newnat-conntrack-nat-udp.patch
