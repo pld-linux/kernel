@@ -19,8 +19,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.4.5
-Release:	3
+Version:	2.4.6
+Release:	1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -338,18 +338,18 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %prep
 %{?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -n linux}
 %{!?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -n linux}
-%patch1000 -p1
+#%patch1000 -p1
 #%patch0 -p1
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
-%patch4 -p1
-%patch100 -p1
+#%patch4 -p1
+#%patch100 -p1
 #%patch5 -p1
-%patch6 -p1
+#%patch6 -p1
 %patch7 -p1
 %patch8 -p1
-%patch9 -p1
+#%patch9 -p1
 %patch10 -p1
 
 %patch101 -p0
@@ -363,7 +363,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch109 -p1
 %patch110 -p1
 %patch111 -p4
-%patch112 -p1
+#%patch112 -p1
 %patch113 -p1
 %patch114 -p0
 %patch115 -p1
