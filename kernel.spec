@@ -56,10 +56,10 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-test5.tar.b
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
-#Source50:	%{name}-sparc.config
+Source50:	%{name}-sparc.config
 #Source51:	%{name}-sparc-smp.config
 #Source60:	%{name}-sparc64.config
-#Source61:	%{name}-sparc64-smp.config
+Source61:	%{name}-sparc64-smp.config
 Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source73:	%{name}-ppc.config
