@@ -916,7 +916,7 @@ BuildKernel() {
 # making  table for soundmodem.
 	(cd drivers/net/hamradio/soundmodem; \
 	%{__cc} -o gentbl -lm gentbl.c; \
-	./gentbl)	
+	./gentbl)
 
 %ifarch %{ix86}
 	%{__make} bzImage
@@ -968,7 +968,7 @@ install -d $KERNEL_INSTALL_DIR
 
 # make drivers/scsi/ missing files
 #	(cd drivers/scsi; make -f M)
-	
+
 # UP KERNEL
 %{!?_without_up:BuildKernel}
 
