@@ -761,11 +761,11 @@ zcat %{SOURCE3} | patch -p1 -s
 
 # software suspend
 %ifarch %{ix86}
-%patch500 -p1
-%patch501 -p1
-%patch502 -p1
-%patch503 -p1
-#%patch504 -p1
+#patch500 -p1
+#patch501 -p1
+#patch502 -p1
+#patch503 -p1
+#patch504 -p1
 %patch505 -p1
 %patch506 -p1
 %patch507 -p1
@@ -803,7 +803,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch539 -p1
 %patch540 -p1
 %patch541 -p1
-#%patch542 -p1
+#patch542 -p1
 %patch543 -p1
 %patch544 -p1
 %patch545 -p1
