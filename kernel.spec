@@ -767,9 +767,10 @@ BuildKernel() {
 %ifarch athlon
 	echo "CONFIG_MK7=y" >> arch/%{base_arch}/defconfig
 %endif
+	%{?_with_preemptive:cat %{SOURCE1100} >> arch/%{base_arch}/defconfig}
+	%{!?_with_preemptive:echo "# CONFIG_PREEMPT is not set" >> arch/%{base_arch}/defconfig}
 	cat %{SOURCE1000} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1001} >> arch/%{base_arch}/defconfig
-	%{?_with_preemptive:cat %{SOURCE1100} >> arch/%{base_arch}/defconfig}
 	
 	if [ "$BOOT" = "yes" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
@@ -944,10 +945,11 @@ echo "CONFIG_M686=y" >> .config
 %ifarch athlon
 echo "CONFIG_MK7=y" >> .config
 %endif
+%{?_with_preemptive:cat %{SOURCE1100} >> .config}
+%{!?_with_preemptive:echo "# CONFIG_PREEMPT is not set" >> .config}
 cat %{SOURCE1000} >> .config
 cat %{SOURCE1001} >> .config
 %{!?_without_grsec:cat %{SOURCE1666} >> .config}
-%{?_with_preemptive:cat %{SOURCE1100} >> .config}
 
 %ifarch %{ix86}
 cat %{SOURCE2000} >> .config
@@ -981,10 +983,11 @@ echo "CONFIG_M686=y" >> .config
 echo "CONFIG_MK7=y" >> .config
 %endif
 
+%{?_with_preemptive:cat %{SOURCE1100} >> .config}
+%{!?_with_preemptive:echo "# CONFIG_PREEMPT is not set" >> .config}
 cat %{SOURCE1000} >> .config
 cat %{SOURCE1001} >> .config
 %{!?_without_grsec:cat %{SOURCE1666} >> .config}
-%{?_with_preemptive:cat %{SOURCE1100} >> .config}
 
 %ifarch %{ix86}
 cat %{SOURCE2000} >> .config
