@@ -924,7 +924,7 @@ fi
 %attr(600,root,root) /boot/vmlinuz-%{version}-%{release}
 %attr(600,root,root) /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
-%ifnarch sparc sparc64
+%ifnarch sparc sparc64 ppc
 /lib/modules/%{version}-%{release}/atm
 %endif
 /lib/modules/%{version}-%{release}/block
@@ -935,7 +935,9 @@ fi
 /lib/modules/%{version}-%{release}/fs
 /lib/modules/%{version}-%{release}/ieee1394
 /lib/modules/%{version}-%{release}/ipv4
+%ifnarch ppc
 /lib/modules/%{version}-%{release}/ipv6
+%endif
 /lib/modules/%{version}-%{release}/misc
 /lib/modules/%{version}-%{release}/net
 /lib/modules/%{version}-%{release}/scsi
@@ -956,7 +958,7 @@ fi
 %attr(600,root,root) /boot/vmlinuz-%{version}-%{release}smp
 %attr(600,root,root) /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
-%ifnarch sparc sparc64
+%ifnarch sparc sparc64 ppc
 /lib/modules/%{version}-%{release}smp/atm
 %endif
 /lib/modules/%{version}-%{release}smp/block
@@ -967,7 +969,9 @@ fi
 /lib/modules/%{version}-%{release}smp/fs
 /lib/modules/%{version}-%{release}smp/ieee1394
 /lib/modules/%{version}-%{release}smp/ipv4
+%ifnarch ppc
 /lib/modules/%{version}-%{release}smp/ipv6
+%endif
 /lib/modules/%{version}-%{release}smp/misc
 /lib/modules/%{version}-%{release}smp/net
 /lib/modules/%{version}-%{release}smp/scsi
@@ -980,7 +984,7 @@ fi
 %endif
 #%config(missingok) %{_sysconfdir}/sysconfig/rc-boot/images
 
-%ifnarch i586 i686
+%ifnarch i586 i686 ppc
 %files BOOT
 %defattr(644,root,root,755)
 %ifarch alpha sparc
@@ -1017,7 +1021,7 @@ fi
 #%{_includedir}/asm-sparc*
 #%endif
 %ifarch ppc
-%{_kerneldir}/include/asm-m68k
+%{_kerneldir}/include/asm-ppc
 %endif
 
 %{_includedir}/linux
