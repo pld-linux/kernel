@@ -17,7 +17,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.5.69
-Release:	0.1
+Release:	0.2
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
@@ -33,7 +33,8 @@ Source21:	%{name}-ia32-smp.config
 #Source73:	%{name}-ppc.config
 #Source74:	%{name}-ppc-smp.config
 Patch0:		http://piorun.ds.pg.gda.pl/~blues/linux-2.5.67-genrtc_fix.patch
-Patch1:		patch-2.5.69-ac1.bz2
+Patch1:		http://www.kernel.org/pub/linux/kernel/people/alan/linux-2.5/2.5.69/patch-2.5.69-ac1.bz2
+#Patch2:		http://www.kernel.org/pub/linux/kernel/v2.5/snapshots/patch-2.5.69-bk2.bz2
 # LSM/SELinux
 Patch10:	http://www.nsa.gov/selinux/lk/2.5.69-selinux0.patch.gz
 ExclusiveOS:	Linux
@@ -262,6 +263,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %setup -q -n linux-%{version}
 %patch0 -p0
 %patch1 -p1
+#%patch2 -p1
 %{!?_without_lsm:%patch10 -p1}
 
 # Fix EXTRAVERSION and CC in main Makefile
@@ -547,7 +549,7 @@ ln -snf vmlinuz-%{version}-%{release}BOOT %{_libdir}/bootdisk/boot/vmlinuz-%{ver
 
 %postun
 if [ -L /lib/modules/%{version} ]; then
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}" ]; then
+	if [ "`ls -l /lib/modules/%{version} | awk '{ print $10 }'`" = "%{version}-%{release}" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f /lib/modules/%{version}
 		fi
@@ -569,7 +571,7 @@ rm -f /boot/initrd-%{version}-%{release}.gz
 
 %postun smp
 if [ -L /lib/modules/%{version} ]; then
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp" ]; then
+	if [ "`ls -l /lib/modules/%{version} | awk '{ print $10 }'`" = "%{version}-%{release}smp" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f /lib/modules/%{version}
 		fi
@@ -591,7 +593,7 @@ rm -f /boot/initrd-%{version}-%{release}smp.gz
 
 %postun BOOT
 if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then
-	if [ "`ls -l %{_libdir}/bootdisk/lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}BOOT" ]; then
+	if [ "`ls -l %{_libdir}/bootdisk/lib/modules/%{version} | awk '{ print $10 }'`" = "%{version}-%{release}BOOT" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f %{_libdir}/bootdisk/lib/modules/%{version}
 		fi
@@ -600,38 +602,33 @@ fi
 
 %post headers
 rm -f /usr/src/linux
-ln -snf linux-%{version} /usr/src/linux
-if [ ! -L %{_includedir}/linux ]; then
-        ln -sf ../src/linux/include/linux %{_includedir}/linux
-fi
-if [ ! -L %{_includedir}/asm-generic ]; then
-	ln -sf ../src/linux/include/asm-generic %{_includedir}/asm-generic
-fi
-%ifarch sparc sparc64
-if [ ! -L %{_includedir}/asm-sparc ] && [ ! -L %{_includedir}/asm-sparc64 ]; then
-	ln -sf ../src/linux/include/asm-sparc %{_includedir}/asm-sparc
-	ln -sf ../src/linux/include/asm-sparc64 %{_includedir}/asm-sparc64
-fi
-%else
-if [ ! -L %{_includedir}/asm ]; then
-	ln -sf ../src/linux/include/asm %{_includedir}/asm
-fi
-%endif
-
-%postun headers
 rm -f %{_includedir}/linux
 rm -f %{_includedir}/asm-generic
+ln -snf linux-%{version} /usr/src/linux
+ln -snf ../src/linux/include/linux %{_includedir}/linux
+ln -snf ../src/linux/include/asm-generic %{_includedir}/asm-generic
 %ifarch sparc sparc64
 rm -f %{_includedir}/asm-sparc
 rm -f %{_includedir}/asm-sparc64
+ln -snf ../src/linux/include/asm-sparc %{_includedir}/asm-sparc
+ln -snf ../src/linux/include/asm-sparc64 %{_includedir}/asm-sparc64
 %else
 rm -f %{_includedir}/asm
+ln -sf ../src/linux/include/asm %{_includedir}/asm
 %endif
+
+%postun headers
 if [ -L %{_prefix}/src/linux ]; then
-	if [ "`ls -l %{_prefix}/src/linux | awk '{ print $11 }'`" = "linux-%{version}" ]; then
-		if [ "$1" = "0" ]; then
-			rm -f %{_prefix}/src/linux
-		fi
+	if [ "`ls -l %{_prefix}/src/linux | awk '{ print $10 }'`" = "linux-%{version}" ]; then
+		rm -f %{_prefix}/src/linux
+		rm -f %{_includedir}/linux
+		rm -f %{_includedir}/asm-generic
+%ifarch sparc sparc64
+		rm -f %{_includedir}/asm-sparc
+		rm -f %{_includedir}/asm-sparc64
+%else
+		rm -f %{_includedir}/asm
+%endif
 	fi
 fi
 
