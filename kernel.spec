@@ -991,7 +991,7 @@ echo "#include <linux/modsetver.h>" > include/linux/modversions.h
 %if 0%{!?_without_source:1}
 %{__make} depend 
 for i in $(find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend"); do
-	echo -e ",s|$RPM_BUILD_ROOT\(/usr/src/linux\)|\1|g"'\n,w' | ed $i
+	echo -e ",s|$RPM_BUILD_ROOT\(/usr/src/linux\)|\1|g"'\n,w' | ed $i ||:
 done
 
 %{__make} clean
