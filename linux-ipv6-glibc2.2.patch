@@ -1,27 +1,22 @@
-No wiêc sytuacja wygl±da tak:
+On/Dnia Fri, Nov 17, 2000 at 06:46:52PM +0100, Jan Rekorajski wrote/napisa³(a)
+> > Zapatchowane jajko + glibce 2.1.x == nie dzia³a.
+                                         ^^^^^^^^^^ tu oczywi¶cie o v6 chodzi³o
+					 
+> To dlaczego glibc 2.1.x dzia³a na kernelu 2.4?
+w jaju 2.2 jest tak:
+	if (addr_len < sizeof(struct sockaddr_in6))
+			return -EINVAL;
+			
+w jaju 2.4 jest tak:
+        if (addr_len < SIN6_LEN_RFC2133)
+	                return -EINVAL;
+przy czym: SIN6_LEN_RFC2133==24, a to jest wielko¶æ sockaddr_in6 bez pola
+sin6_scope_id czyli przepu¶ci zarówno stare jak i nowe sockaddr_in6.
 
-Minimalne j±dro, które nale¿y posiadaæ by móc przej¶æ na glibce2.2
-to 2.2.17. Radzê nie próbowaæ ze starszymi bo mo¿e takiego delikwenta
-spotkaæ niespodzianka typu:
+Tak wiêc nowy patch, który spowoduje, ¿e ipv6 && jajo 2.2.x bêdzie dzia³a³o
+prawid³o zarówno z glibcami 2.1 jak i 2.2.
 
-[misiek@ikar misiek]$ ./glibc22-jajco22test (statycznie linkowany)
-FATAL: kernel too old
-Przerwane
-[misiek@ikar misiek]$ uname -r
-2.2.16
 
-Je¶li chodzi o kwestie zwi±zane z IPv6 to minimalna wersja oficjalne
-supportowanego jaja to:
-
-2.2.x	- dla glibców 2.1.x
-2.3.99	- dla glibców 2.2
-
-Osoby, które chc± u¿ywaæ jaja 2.2.x i glibców 2.2 maj± dwa wyj¶cia:
-a) zapomnieæ o IPv6 i *wogóle nie kompilowaæ go w jajo ani modu³*.
-   Wtedy bêdzie wszystko bezproblemowo chodzi³o.
-b) nadal u¿ywaæ IPv6 po uwcze¶niejszym zapatchowaniu jaja poni¿szym
-   patchem (który wkrótce trafi do dystrybucyjnego kernela 2.2.x)
-   
 diff -urN linux-2.2.x.org/include/linux/in6.h linux-2.2.x/include/linux/in6.h
 --- linux-2.2.x.org/include/linux/in6.h	Fri Nov 17 18:21:58 2000
 +++ linux-2.2.x/include/linux/in6.h	Fri Nov 17 18:22:26 2000
@@ -31,39 +26,88 @@ diff -urN linux-2.2.x.org/include/linux/in6.h linux-2.2.x/include/linux/in6.h
  	struct in6_addr		sin6_addr;      /* IPv6 address */
 +	__u32			sin6_scope_id;	/* scope id (new in RFC2553) */
  };
+ 
+ 
+diff -urN linux-2.2.x.org/include/net/ipv6.h linux-2.2.x/include/net/ipv6.h
+--- linux-2.2.x.org/include/net/ipv6.h	Tue May 11 19:36:50 1999
++++ linux-2.2.x/include/net/ipv6.h	Fri Nov 17 18:55:27 2000
+@@ -20,6 +20,8 @@
+ #include <net/ndisc.h>
+ #include <net/flow.h>
+ 
++#define	SIN6_LEN_RFC2133	24
++
+ /*
+  *	NextHeader field of IPv6 header
+  */
+diff -urN linux-2.2.x.org/net/ipv6/af_inet6.c linux-2.2.x/net/ipv6/af_inet6.c
+--- linux-2.2.x.org/net/ipv6/af_inet6.c	Thu May  4 02:16:53 2000
++++ linux-2.2.x/net/ipv6/af_inet6.c	Fri Nov 17 18:56:34 2000
+@@ -199,7 +199,7 @@
+ 		
+ 	/* Check these errors (active socket, bad address length, double bind). */
+ 	if ((sk->state != TCP_CLOSE)			||
+-	    (addr_len < sizeof(struct sockaddr_in6))	||
++	    (addr_len < SIN6_LEN_RFC2133)		||
+ 	    (sk->num != 0))
+ 		return -EINVAL;
+ 		
+diff -urN linux-2.2.x.org/net/ipv6/raw.c linux-2.2.x/net/ipv6/raw.c
+--- linux-2.2.x.org/net/ipv6/raw.c	Mon Aug  9 21:04:41 1999
++++ linux-2.2.x/net/ipv6/raw.c	Fri Nov 17 18:57:01 2000
+@@ -117,7 +117,7 @@
+ 	int addr_type;
+ 
+ 	/* Check these errors. */
+-	if (sk->state != TCP_CLOSE || (addr_len < sizeof(struct sockaddr_in6)))
++	if (sk->state != TCP_CLOSE || (addr_len < SIN6_LEN_RFC2133))
+ 		return -EINVAL;
+ 
+ 	addr_type = ipv6_addr_type(&addr->sin6_addr);
+@@ -360,7 +360,7 @@
+ 	fl.fl6_flowlabel = 0;
+ 
+ 	if (sin6) {
+-		if (addr_len < sizeof(struct sockaddr_in6)) 
++		if (addr_len < SIN6_LEN_RFC2133) 
+ 			return(-EINVAL);
+ 
+ 		if (sin6->sin6_family && sin6->sin6_family != AF_INET6) 
+diff -urN linux-2.2.x.org/net/ipv6/tcp_ipv6.c linux-2.2.x/net/ipv6/tcp_ipv6.c
+--- linux-2.2.x.org/net/ipv6/tcp_ipv6.c	Thu May  4 02:16:53 2000
++++ linux-2.2.x/net/ipv6/tcp_ipv6.c	Fri Nov 17 18:57:12 2000
+@@ -387,7 +387,7 @@
+ 	if(!ipv6_addr_any(&np->daddr))
+ 		return -EINVAL;
+ 	
+-	if (addr_len < sizeof(struct sockaddr_in6)) 
++	if (addr_len < SIN6_LEN_RFC2133) 
+ 		return(-EINVAL);
+ 
+ 	if (usin->sin6_family && usin->sin6_family != AF_INET6) 
+diff -urN linux-2.2.x.org/net/ipv6/udp.c linux-2.2.x/net/ipv6/udp.c
+--- linux-2.2.x.org/net/ipv6/udp.c	Mon Aug  9 21:04:41 1999
++++ linux-2.2.x/net/ipv6/udp.c	Fri Nov 17 18:58:13 2000
+@@ -210,7 +210,7 @@
+ 		goto ipv4_connected;
+ 	}
+ 
+-	if (addr_len < sizeof(*usin)) 
++	if (addr_len < SIN6_LEN_RFC2133) 
+ 	  	return(-EINVAL);
+ 
+ 	if (usin->sin6_family && usin->sin6_family != AF_INET6) 
+@@ -777,7 +777,7 @@
+ 		if (sin6->sin6_family == AF_INET)
+ 			return udp_sendmsg(sk, msg, ulen);
+ 
+-		if (addr_len < sizeof(*sin6))
++		if (addr_len < SIN6_LEN_RFC2133)
+ 			return(-EINVAL);
+ 
+ 		if (sin6->sin6_family && sin6->sin6_family != AF_INET6)
 
-(wszystko po to, ¿eby rozmiar strucktury sockaddr_in6 w j±drze linuksa
- == rozmiarowi struktury sockaddr_in6 w glibcach 2.2).
-
-Tak zapatchowane jajo powinno bez problemów dzia³aæ równie¿ na glibcach 2.1.x
-ale nie testowa³em tego jako, ¿e ani nie u¿ywam jaj 2.2.x ani glibców 2.1.x :>
-
-Powy¿szy patch pozwoli unikn±æ k³opotów typu:
-sshd:  fatal: get_sock_port: getnameinfo NI_NUMERICSERV failed
-
-Jakie¶ pytania/uwagi ?
-
-ps. kloczek/baggins -- wrzuæcie tego patcha do dystrybucyjnego jaja
-    jak bêdziecie co¶ w nim grzebaæ.
-    
-ps2. w attachu znajduje siê ma³y, badziwewny programik do sprawdzania
-czy jajo bêdzie dzia³a³o ok z glibcami 2.2 i IPv6. Wywo³uje siê go
-z adresem ipv6 maszyny, na której dzia³a byle jakie sshd (mo¿e siê
-³±czyæ z dowoln± inna us³ug± ipv6 -- to nie ma znaczenia -- trzeba tylko
-w ¼róde³ku port zmieniæ):
-
-[misiek@arm 3]$ ./glibc22-jajco22test ::1
-Resolving ... ::1
-Socket: 3
-Size1: 128
-Size2: 28
-Size3: 28
-Size4: 28
-Konekszyn z ipv6-localhost [::1]
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ To oraz te same warto¶ci przy size2, size3 i size4
-                                 oznacza, ¿e jajo jest ok.
-[misiek@arm 3]$
-
+> Janek
 
 -- 
 Arkadiusz Mi¶kiewicz, AM2-6BONE    [ PLD GNU/Linux IPv6 ]
