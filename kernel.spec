@@ -3,7 +3,6 @@
 #
 # TODO:
 #		- fix lirc_sasem (usb api)
-#		- reiserfs4
 #		- update grsecurity patch
 #		- add distcc support (and don't break crossbuild!)
 #
