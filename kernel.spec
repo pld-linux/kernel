@@ -1,6 +1,6 @@
 #
 # TODO:
-#	check:	pramfs, swsuspend, execshield
+#	check:	pramfs, swsuspend
 #	add:	fbsplash
 #
 # Conditional build:
@@ -9,7 +9,6 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	grsec		# build without grsec
-%bcond_with	execshield	# build with exec-shield
 %bcond_with	pramfs		# build pramfs support (EXPERIMENTAL)
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
@@ -225,10 +224,6 @@ Patch200:	linux-cluster-cman.patch
 Patch201:	linux-cluster-dlm.patch
 Patch202:	linux-cluster-gfs.patch
 Patch203:	linux-cluster-gnbd.patch
-
-# http://lkml.org/lkml/2004/6/2/233
-Patch211:	http://people.redhat.com/mingo/exec-shield/exec-shield-nx-2.6.7-A0
-Patch212:	exec-shield-make-peace-with-grsecurity.patch
 
 # hotfixes
 Patch300:	2.6.7-ppc-asm-defs.patch
@@ -703,14 +698,6 @@ echo "Not fixed !!"
 %if %{with grsec}
 %patch94 -p1
 %endif
-%endif
-
-%if %{with execshield}
-install %{PATCH211} exec-shield.patch
-%if %{with grsec}
-patch -s exec-shield.patch < %{PATCH212}
-%endif
-patch -p1 -s < exec-shield.patch
 %endif
 
 %patch96 -p1
