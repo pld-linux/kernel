@@ -284,7 +284,7 @@ Patch3008:	linux-drm-4.2.0-force-cmpxchg.patch
 # Security patches/fixes
 
 Patch4000:	linux-2.4.21-ow1-stack.patch
-Patch4001:	grsecurity-nopax-2.0-rc1-2.4.21.patch
+Patch4001:	grsecurity-nopax-2.0-rc2-2.4.21.patch
 
 # From RH, fixes: CAN-2003-0461 CAN-2003-0462 CAN-2003-0476 CAN-2003-0501
 #		  CAN-2003-0550 CAN-2003-0551 CAN-2003-0552
