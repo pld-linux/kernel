@@ -4933,23 +4933,19 @@ diff -uNr linux-2.6.8/fs/binfmt_aout.c linux-2.6.8.grsecurity/fs/binfmt_aout.c
 diff -uNr linux-2.6.8/fs/binfmt_elf.c linux-2.6.8.grsecurity/fs/binfmt_elf.c
 --- linux-2.6.8/fs/binfmt_elf.c	2004-08-14 07:36:57.000000000 +0200
 +++ linux-2.6.8.grsecurity/fs/binfmt_elf.c	2004-08-16 17:42:02.000000000 +0200
-@@ -37,10 +37,16 @@
+@@ -37,6 +37,12 @@
  #include <linux/pagemap.h>
  #include <linux/security.h>
  #include <linux/syscalls.h>
 +#include <linux/grsecurity.h>
 +#include <linux/random.h>
- 
- #include <asm/uaccess.h>
- #include <asm/param.h>
- 
++  
 +#ifdef CONFIG_PAX_SEGMEXEC
 +#include <asm/desc.h>
 +#endif
-+
- #include <linux/elf.h>
  
- static int load_elf_binary(struct linux_binprm * bprm, struct pt_regs * regs);
+ #include <asm/uaccess.h>
+ #include <asm/param.h>
 @@ -84,14 +90,22 @@
  
  static int set_brk(unsigned long start, unsigned long end)
@@ -5233,10 +5229,11 @@ diff -uNr linux-2.6.8/fs/binfmt_elf.c linux-2.6.8.grsecurity/fs/binfmt_elf.c
  /*
   * These are the functions used to load ELF style executables and shared
   * libraries.  There is no binary dependent code anywhere else.
-@@ -494,6 +735,13 @@
+@@ -494,7 +735,13 @@
  	struct files_struct *files;
  	int have_pt_gnu_stack, executable_stack = EXSTACK_DEFAULT;
  	unsigned long def_flags = 0;
+-	
 +	unsigned long task_size = TASK_SIZE;
 +
 +#ifdef CONFIG_PAX_RANDEXEC
@@ -5244,10 +5241,10 @@ diff -uNr linux-2.6.8/fs/binfmt_elf.c linux-2.6.8.grsecurity/fs/binfmt_elf.c
 +	unsigned long load_bias_random = 0UL;
 +#endif
 +
- 	
  	/* Get the exec-header */
  	elf_ex = *((struct elfhdr *) bprm->buf);
-@@ -618,6 +866,7 @@
+ 
+@@ -618,6 +865,7 @@
  		elf_ppnt++;
  	}
  
@@ -5255,11 +5252,18 @@ diff -uNr linux-2.6.8/fs/binfmt_elf.c linux-2.6.8.grsecurity/fs/binfmt_elf.c
  	elf_ppnt = elf_phdata;
  	for (i = 0; i < elf_ex.e_phnum; i++, elf_ppnt++)
  		if (elf_ppnt->p_type == PT_GNU_STACK) {
+@@ -627,6 +875,7 @@
+ 				executable_stack = EXSTACK_DISABLE_X;
+ 			break;
+ 		}
++#endif
+ 	have_pt_gnu_stack = (i < elf_ex.e_phnum);
+ 
+ 	/* Some simple consistency checks for the interpreter */
 @@ -694,9 +943,65 @@
  	current->mm->end_data = 0;
  	current->mm->end_code = 0;
  	current->mm->mmap = NULL;
--	current->flags &= ~PF_FORKNOEXEC;
 +
 +#ifdef CONFIG_PAX_DLRESOLVE
 +	current->mm->call_dl_resolve = 0UL;
@@ -5275,7 +5279,7 @@ diff -uNr linux-2.6.8/fs/binfmt_elf.c linux-2.6.8.grsecurity/fs/binfmt_elf.c
 +	current->mm->delta_stack = 0UL;
 +#endif
 +
-+  	current->flags &= ~PF_FORKNOEXEC;
+ 	current->flags &= ~PF_FORKNOEXEC;
  	current->mm->def_flags = def_flags;
  
 +#if defined(CONFIG_PAX_EI_PAX) || defined(CONFIG_PAX_PT_PAX_FLAGS)
@@ -5335,15 +5339,7 @@ diff -uNr linux-2.6.8/fs/binfmt_elf.c linux-2.6.8.grsecurity/fs/binfmt_elf.c
  	retval = setup_arg_pages(bprm, executable_stack);
  	if (retval < 0) {
  		send_sig(SIGKILL, current, 0);
-@@ -747,6 +1058,7 @@
- 				clear_user((void __user *) elf_bss + load_bias, nbyte);
- 			}
- 		}
-+#endif
- 
- 		if (elf_ppnt->p_flags & PF_R) elf_prot |= PROT_READ;
- 		if (elf_ppnt->p_flags & PF_W) elf_prot |= PROT_WRITE;
-@@ -761,12 +1073,92 @@
+@@ -761,12 +1072,92 @@
  			/* Try and get dynamic programs out of the way of the default mmap
  			   base, as well as whatever program they might try to exec.  This
  			   is because the brk will follow the loader, and is not movable.  */
@@ -5439,7 +5435,7 @@ diff -uNr linux-2.6.8/fs/binfmt_elf.c linux-2.6.8.grsecurity/fs/binfmt_elf.c
  
  		if (!load_addr_set) {
  			load_addr_set = 1;
-@@ -777,6 +1169,11 @@
+@@ -777,6 +1168,11 @@
  				load_addr += load_bias;
  				reloc_func_desc = load_bias;
  			}
@@ -5451,7 +5447,7 @@ diff -uNr linux-2.6.8/fs/binfmt_elf.c linux-2.6.8.grsecurity/fs/binfmt_elf.c
  		}
  		k = elf_ppnt->p_vaddr;
  		if (k < start_code) start_code = k;
-@@ -787,9 +1184,9 @@
+@@ -787,9 +1183,9 @@
  		 * allowed task size. Note that p_filesz must always be
  		 * <= p_memsz so it is only necessary to check p_memsz.
  		 */
@@ -5464,7 +5460,7 @@ diff -uNr linux-2.6.8/fs/binfmt_elf.c linux-2.6.8.grsecurity/fs/binfmt_elf.c
  			/* set_brk can never work.  Avoid overflows.  */
  			send_sig(SIGKILL, current, 0);
  			goto out_free_dentry;
-@@ -816,6 +1213,16 @@
+@@ -816,6 +1212,16 @@
  	start_data += load_bias;
  	end_data += load_bias;
  
@@ -5481,7 +5477,7 @@ diff -uNr linux-2.6.8/fs/binfmt_elf.c linux-2.6.8.grsecurity/fs/binfmt_elf.c
  	/* Calling set_brk effectively mmaps the pages that we need
  	 * for the bss and break sections.  We must do this before
  	 * mapping in the interpreter, to make sure it doesn't wind
-@@ -1108,8 +1515,11 @@
+@@ -1108,8 +1514,11 @@
  #undef DUMP_SEEK
  
  #define DUMP_WRITE(addr, nr)	\
