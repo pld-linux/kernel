@@ -823,21 +823,6 @@ cat %{SOURCE1000} >> $RPM_BUILD_ROOT/usr/src/linux-%{version}-%{release}/.config
 rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_DIR/linux-installed
 
-# do this for upgrades...in case the old modules get removed we have
-# loopback in the kernel so that mkinitrd will work.
-#%pre modules
-%pre
-/sbin/modprobe loop 2> /dev/null > /dev/null
-exit 0
-
-%pre smp
-/sbin/modprobe loop 2> /dev/null > /dev/null
-exit 0
-
-%pre BOOT
-/sbin/modprobe loop 2> /dev/null > /dev/null
-exit 0
-
 %post
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null 
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
