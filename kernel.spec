@@ -1,6 +1,7 @@
 %define		pre_version		pre1
 %define		lids_version		1.0.5
 %define		ipvs_version		0.2.5
+%define		freeswan_version	snap2001feb24b
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.7
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -44,7 +45,7 @@ Source72:	%{name}-alpha-BOOT.config
 Source1000:	%{name}-lids.config
 Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.3.gz
 #Patch1:		%{name}-pldfblogo.patch
-#Patch2:		linux-2.4.0-freeswan-%{freeswan_version}.patch
+Patch2:		linux-2.4.2-freeswan-%{freeswan_version}.patch
 #Patch3:		linux-ipv6-addrconf.patch
 Patch4:		kernel-i8255-asm-fix.patch
 Patch5:		dc395-patch-PLD-fix.patch
@@ -269,6 +270,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch9 -p1
 # kerneli patch
 %patch0 -p1
+%patch2 -p1
 # i8255 fix
 %patch4 -p0 
 %patch5 -p0
