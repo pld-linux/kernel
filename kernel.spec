@@ -44,7 +44,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.92
+%define		_rel		0.94
 %define		_cset		0
 
 ## netfilter snap 
@@ -188,7 +188,7 @@ Patch90:	2.6.6-xfs-qsort-lkml.patch
 
 Patch92:	2.6.6-pom-ng-20040429-REJECT-fix.patch
 
-Patch94:	grsecurity-20-2.6.6-unofficial.patch
+Patch94:	grsecurity-2.0-2.6.6-unofficial.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
