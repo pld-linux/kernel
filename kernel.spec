@@ -9,7 +9,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.18
-Release:	1
+Release:	2
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -46,8 +46,10 @@ Patch5:		linux-ipv6-glibc2.2.patch
 Patch6:		http://milosch.net/pub/beos/2.2.18-pre2-beos09032000.patch
 Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/mingo/raid-patches/raid-2.2.18-A2
 Patch8:		linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
+Patch9: 	ftp://ftp.kernel.org/pub/linux/kernel/people/hedric/ide.2.2.18.1209.patch.gz
+Patch10:	http://www.math.leidenuniv.nl/~buytenh/bridge/patches/bridge-0.0.9-against-2.2.18.diff
 
-#Patch:	ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.17.10.gz
+#Patch:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.17.10.gz
 #Patch:		linux-2.2.18pre21.ext3.diff
 #Patch:		ftp://ftp.devlinux.com/pub/namesys/linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
 #Patch:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
@@ -294,6 +296,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch6 -p1
 #%patch7 -p1
 %patch8 -p1
+%patch9 -p1
+%patch10 -p1
 
 %ifarch %{ix86}
 cd ..
@@ -473,6 +477,8 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
 #patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
 gzip -dc %{PATCH8} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH9} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
 
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
 
