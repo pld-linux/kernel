@@ -657,7 +657,6 @@ KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
 rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
 
-
 # NORMAL KERNEL
 BuildKernel
 %ifarch %{ix86}
