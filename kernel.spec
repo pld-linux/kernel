@@ -1,7 +1,7 @@
 %define		ow_version		2.2.19-ow1
 %define		pcmcia_version		3.1.25
 %define		freeswan_version	1.8
-%define		reiserfs_version	3.5.31
+%define		reiserfs_version	3.5.32
 %define		i2c_version		2.5.5
 %define		wlan_version		0.3.4
 %define		tun_version		1.1
@@ -58,7 +58,7 @@ Patch12:	ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.g
 Patch13:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
 Patch14:	linux-tasks.patch
 # Linux Virtual Server: http://www.linuxvirtualserver.org/software/
-Patch15:	%{name}-ipvs-1.0.6-2.2.19.patch
+Patch15:	%{name}-ipvs-1.0.7-2.2.19.patch
 # based on ftp://ftp.kernel.org/pub/linux/kernel/people/sct/raw-io/kiobuf-2.2.18pre24.tar.gz
 Patch16:	linux-raw.patch
 Patch17:	%{name}-pcmcia.patch
@@ -68,8 +68,8 @@ Patch20:	%{name}-wanrouter-bridge.patch
 Patch21:	%{name}-ipsec-bridge.patch
 Patch22:	%{name}-bridge-extraversion.patch
 Patch23:	%{name}-panaview_kbd.patch
-Patch24:	http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-6.1.11-2.2.19.patch.gz
-Patch25:	%{name}-toshiba-2.2.19.patch
+Patch24:	http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-6.1.13-2.2.19.patch.gz	
+Patch25:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.2.20pre/pre-patch-2.2.20-1.bz2 	
 Patch26:	linux-2.2.19-pci.patch 
 Patch27:	%{name}-flip.patch 
 Patch28:	%{name}-flip-serial5.05.patch
@@ -325,6 +325,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -n linux
+
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
@@ -352,7 +353,10 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch23 -p1
 %endif
 %patch24 -p1
+
+#pre20
 %patch25 -p1
+
 %patch26 -p1
 %patch27 -p1
 
@@ -581,7 +585,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH22}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH23}
 %endif
 gzip -dc %{PATCH24} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH25}
+bzip2 -dc %{PATCH25} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} 
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH26}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH27}
 cd serial-5.05
