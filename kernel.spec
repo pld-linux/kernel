@@ -8,6 +8,7 @@
 # _without_up		- don't build UP kernel
 # _without_boot		- don't build BOOT kernel
 # _without_source	- don't build source
+# _without_doc		- don't build documentation package
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -945,6 +946,12 @@ ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 
 %if %{?_without_source:0}%{!?_without_source:1}
 cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
+%else
+cp -a {include,scripts,Makefile,Rules.make} $RPM_BUILD_ROOT/usr/src/linux-%{version}/
+%if %{?_without_doc:0}%{!?_without_doc:1}
+cp -a Documentation $RPM_BUILD_ROOT/usr/src/linux-%{version}/
+%endif
+%endif
 
 %ifarch sparc sparc64
 sh %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}
@@ -953,7 +960,9 @@ cp -a %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
 
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
+%if %{?_without_source:0}%{!?_without_source:1}
 %{__make} mrproper
+
 find  -name "*~" -print | xargs rm -f
 find  -name "*.orig" -print | xargs rm -f
 
@@ -1064,14 +1073,17 @@ sparc32 %{__make} oldconfig
 %endif
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
 cp .config config-smp
+%endif
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
+%if %{?_without_source:0}%{!?_without_source:1}
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
 %{__make} symlinks 
 %{__make} include/linux/version.h
 #%{__make} "`pwd`/include/linux/modversions.h"
+%endif
 rm -f include/linux/modversions.h
 echo "#include <linux/modsetver.h>" > include/linux/modversions.h
 
@@ -1079,6 +1091,7 @@ echo "#include <linux/modsetver.h>" > include/linux/modversions.h
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well, after we fix the paths
 
+%if %{?_without_source:0}%{!?_without_source:1}
 %{__make} depend 
 find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
 while read file ; do
@@ -1090,14 +1103,14 @@ done
 %{__make} clean
 rm -f scripts/mkdep
 rm -f drivers/net/hamradio/soundmodem/gentbl
-%else
-
 %endif
 
 # BOOT
+%if %{?_without_boot:0}%{!?_without_boot:1}
 %ifnarch i586 i686 athlon
 install -d $RPM_BUILD_ROOT/%{_libdir}/bootdisk
 cp -rdp $KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk/* $RPM_BUILD_ROOT/%{_libdir}/bootdisk
+%endif
 %endif
 
 %clean
@@ -1375,9 +1388,11 @@ fi
 %{_includedir}/asm
 %{_includedir}/linux
 
+%if %{?_without_doc:0}%{!?_without_doc:1}
 %files doc
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Documentation
+%endif
 
 %if %{?_without_source:0}%{!?_without_source:1}
 %files source
