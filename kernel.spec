@@ -81,7 +81,7 @@ Source1:	%{name}-autoconf.h
 Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 # Source2-md5:	85bdb0205de53b7787966f0932fd8dd9
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	5133e99cce7118636bb776be806cee46
+# Source3-md5:	b276fa1e91f03c791585e7abad228d5c
 # http://lkml.org/lkml/2004/6/2/228
 ## Source6:	http://prdownloads.sourceforge.net/swsusp/software-suspend-2.0.0.81-for-2.6.6.tar.bz2
 Source20:	%{name}-i386.config
