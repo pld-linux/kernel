@@ -19,8 +19,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.5.72
-Release:	0.2
+Version:	2.5.73
+Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
@@ -41,7 +41,8 @@ Patch1:		linux-2.5.70-fix_missing_symb.patch
 Patch2:		linux-2.5-miscfix.patch
 Patch3:		linux-2.5.72-srmcons_ops.patch
 # LSM/SELinux
-Patch10:	http://lsm.immunix.org/patches/2.5/2.5.72/patch-2.5.72-lsm1.gz
+# Patch10:	http://lsm.immunix.org/patches/2.5/2.5.72/patch-2.5.72-lsm1.gz
+Patch10:	patch-2.5.72-lsm1.gz
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
