@@ -19,6 +19,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(es):	Núcleo (Kernel) linux genérico
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
+Summary(ja):	Linux ¥«¡¼¥Í¥ë (Linux ¥ª¥Ú¥ì¡¼¥Æ¥£¥ó¥°¥·¥¹¥Æ¥à¤Î¿´Â¡ÉôÊ¬)
 Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
@@ -345,6 +346,12 @@ centrale d'un système d'exploitation Linux. Le noyau traite les
 fonctions basiques d'un système d'exploitation: allocation mémoire,
 allocation de process, entrée/sortie de peripheriques, etc.
 
+%description -l ja
+kernel ¥Ñ¥Ã¥±¡¼¥¸¤Ë¤Ï¡¤Red Hat Linux ¥ª¥Ú¥ì¡¼¥Æ¥£¥ó¥°¥·¥¹¥Æ¥à¤Î¿´Â¡ÉôÊ¬
+¤È¤â¸À¤¨¤ë Linux ¥«¡¼¥Í¥ë (vmlinuz) ¤¬´Þ¤Þ¤ì¤Æ¤¤¤Þ¤¹¡¥
+¥«¡¼¥Í¥ë¤Ï¡¤¥á¥â¥ê´ÉÍý¡¤¥×¥í¥»¥¹´ÉÍý¡¤¥Ç¥Ð¥¤¥¹¤ÎÆþ½ÐÎÏÅù¡¤¥ª¥Ú¥ì¡¼¥Æ¥£¥ó¥°
+¥·¥¹¥Æ¥à¤Î´ðËÜÅª¤ÊÉôÊ¬¤ò»Ê¤ê¤Þ¤¹¡¥
+
 %description -l pl
 Pakiet zawiera j±dro Linuksa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
@@ -361,6 +368,7 @@ Summary:	Kernel version %{version} compiled for SMP machines
 Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
 Summary(es):	Núcleo (kernel) compilado para máquinas SMP
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
+Summary(ja):	SMP (ÂÐ¾Î¥Þ¥ë¥Á¥×¥í¥»¥Ã¥·¥ó¥°) ÂÐ±þ Linux ¥«¡¼¥Í¥ë
 Summary(pl):	J±dro Linuksa %{version} skompilowane dla maszyn wieloprocesorowych
 Summary(pt_BR):	Kernel compilado para máquinas SMP
 Group:		Base/Kernel
@@ -409,6 +417,14 @@ Ce package inclu une version SMP du noyau de Linux version %{version}.
 Il et nécessaire seulement pour les machine avec deux processeurs ou
 plus, il peut quand même fonctionner pour les système mono-processeur.
 
+%description smp -l ja
+¤³¤Î¥Ñ¥Ã¥±¡¼¥¸¤Ë¤Ï SMP ÈÇ¤Î Linux ¥«¡¼¥Í¥ë¤¬¼ý¤á¤é¤ì¤Æ¤¤¤Þ¤¹¡¥
+¤³¤Î¥«¡¼¥Í¥ë¤Ï 2¸Ä°Ê¾å¤Î CPU ¤òÅëºÜ¤·¤¿¥Þ¥·¥ó¤Ë¤Î¤ßÉ¬Í×¤È¤Ê¤ê¤Þ¤¹¤¬¡¤
+1CPU ¤Î¥Þ¥·¥ó¤Ç¤âÌäÂê¤Ê¤¯Æ°ºî¤·¤Þ¤¹¡¥
+
+¤¢¤Ê¤¿¤Î¥Þ¥·¥ó¤¬ 2¸Ä°Ê¾å¤Î CPU ¤òÅëºÜ¤·¤Æ¤¤¤ë¾ì¹ç¤Ï
+kernel-smp ¥Ñ¥Ã¥±¡¼¥¸¤ò¥¤¥ó¥¹¥È¡¼¥ë¤·¤Æ¤¯¤À¤µ¤¤¡¥
+
 %description smp -l pl
 Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono
 wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
@@ -424,6 +440,7 @@ Summary:	Kernel version %{version} used on the installation boot disks
 Summary(de):	Kernel version %{version} für Installationsdisketten
 Summary(es):	Núcleo (kernel) de Linux, utilizado en el disco de instalación
 Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation
+Summary(ja):	¥¤¥ó¥¹¥È¡¼¥éµ¯Æ°¥Ç¥£¥¹¥¯¤Ç»È¤ï¤ì¤ë Linux ¥«¡¼¥Í¥ë
 Summary(pl):	J±dro Linuksa %{version} dla bootkietek instalacyjnych
 Summary(pt_BR):	Kernel Linux utilizado no disco de instalação
 Group:		Base/Kernel
@@ -447,6 +464,13 @@ Platzprobleme abgeschaltet sind.
 
 %description BOOT -l es
 Núcleo (kernel) de Linux, utilizado en el disco de instalación
+
+%description BOOT -l ja
+¤³¤Î¥Ñ¥Ã¥±¡¼¥¸¤Ë¤ÏÍ¾Ê¬¤Êµ¡Ç½¤òºï¤êÍî¤·¤Æ¥µ¥¤¥º¤ò¾®¤µ¤¯¤·¤¿
+Linux ¥«¡¼¥Í¥ë¤¬¼ý¤á¤é¤ì¤Æ¤¤¤Þ¤¹¡¥¤³¤Î¥«¡¼¥Í¥ë¤Ï¥¤¥ó¥¹¥È¡¼¥é
+µ¯Æ°¥Ç¥£¥¹¥¯¤Ë»È¤ï¤ì¤ë¤â¤Î¤Ç¡¤´û¤Ë¥¤¥ó¥¹¥È¡¼¥ë¤¬½ª¤Ã¤¿¥·¥¹¥Æ¥à¾å¤Ç
+»È¤¦°Ù¤Î¤â¤Î¤Ç¤¢¤ê¤Þ¤»¤ó¡¥¥µ¥¤¥º¤ò¾®¤µ¤¯¤¹¤ë°Ù¤ËÂ¿¤¯¤Îµ¡Ç½¤¬
+ºï¤é¤ì¤Æ¤¤¤ë¤«¤é¤Ç¤¹¡¥
 
 %description BOOT -l pl
 Pakiet zawiera j±dro Linuksa dedykowane dyskietkom startowym i powinno
@@ -519,6 +543,7 @@ Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
 %package headers
 Summary:	Header files for the Linux kernel
 Summary(es):	Archivos de inclusión para núcleo (kernel) Linux.
+Summary(ja):	Linux ¥«¡¼¥Í¥ë¤Î¥Ø¥Ã¥À¥Õ¥¡¥¤¥ë
 Summary(pl):	Pliki nag³ówkowe j±dra
 Summary(pt_BR):	Arquivos de inclusão para o kernel Linux.
 Group:		Base/Kernel
@@ -543,6 +568,11 @@ estructuras y constantes que son necesarias a la construcción de la
 mayoría de los programas en el Linux, como también para reconstruir
 el núcleo (kernel).
 
+%description headers -l ja
+kernel-headers ¥Ñ¥Ã¥±¡¼¥¸¤Ë¤Ï Linux ¥«¡¼¥Í¥ë¤Î C ¥Ø¥Ã¥À¥Õ¥¡¥¤¥ë¤¬
+¼ý¤á¤é¤ì¤Æ¤¤¤Þ¤¹¡¥¥Ø¥Ã¥À¥Õ¥¡¥¤¥ë¤Ë¤Ï¡¤Â¿¤¯¤Î¥×¥í¥°¥é¥à¤ò¥³¥ó¥Ñ¥¤¥ë
+¤¹¤ëºÝ¡¤°¿¤¤¤Ï¥«¡¼¥Í¥ë¤òºÆ¹½ÃÛ¤¹¤ë¤Î¤ËÉ¬Í×¤Ê¹½Â¤¤äÀ©Ìó¤¬ÄêµÁ¤µ¤ì¤Æ¤¤¤Þ¤¹¡¥
+
 %description headers -l pl
 Pakiet zawiera pliki nag³ówkowe j±dra, niezbêdne do rekompilacji j±dra
 oraz niektórych programów.
@@ -556,6 +586,7 @@ reconstruir o próprio kernel.
 %package source
 Summary:	Kernel source tree
 Summary(es):	Fuentes del núcleo (kernel) Linux
+Summary(ja):	Linux ¥«¡¼¥Í¥ë¤Î¥½¡¼¥¹¥³¡¼¥É
 Summary(pl):	Kod ¼ród³owy j±dra Linuksa
 Summary(pt_BR):	Fontes do kernel Linux
 Group:		Base/Kernel
@@ -594,6 +625,13 @@ source. Les sources peuvent être aussi utilisée pour compiler un noyau
 personnalisé pour avoir de meilleures performances sur des matériels
 particuliers.
 
+%description source -l ja
+kernel-source ¥Ñ¥Ã¥±¡¼¥¸¤Ë¤Ï Linux ¥«¡¼¥Í¥ë¤Î¥½¡¼¥¹¥³¡¼¥É¤¬´Þ¤Þ¤ì¤Æ
+¤¤¤Þ¤¹¡¥¥«¡¼¥Í¥ë¤Î¥½¡¼¥¹¥³¡¼¥É¤ÏÂ¿¤¯¤Î C ¥×¥í¥°¥é¥à¤ÎºîÀ®¤ËÉ¬Í×¤Ç¤¹¡¥
+¥«¡¼¥Í¥ë¤Î¥½¡¼¥¹¥³¡¼¥É¤ËÄêµÁ¤µ¤ì¤Æ¤¤¤ëÀ©¸Â¤Ë°ÍÂ¸¤¹¤ë¤³¤È¤¬¤¢¤ë¤«¤é¤Ç¤¹¡¥
+¤³¤Î¥½¡¼¥¹¥³¡¼¥É¤ò»È¤Ã¤Æ¡¤¤¢¤Ê¤¿¤Î¥·¥¹¥Æ¥à¸þ¤±¤Ë¥Á¥å¡¼¥ó¥¢¥Ã¥×¤·¤¿
+¥«¥¹¥¿¥à¥«¡¼¥Í¥ë¤òºîÀ®¤¹¤ë¤³¤È¤â¤Ç¤­¤Þ¤¹¡¥
+
 %description source -l pl
 Pakiet zawiera kod ¼ród³owy j±dra systemu.
 
@@ -606,6 +644,7 @@ personalizado que será melhor configurado para seu hardware particular.
 %package doc
 Summary:	Kernel documentation
 Summary(es):	Documentación para los archivos fuente del núcleo (kernel) de Linux
+Summary(ja):	¥«¡¼¥Í¥ë¥½¡¼¥¹¤Ë´Þ¤Þ¤ì¤ëÍÍ¡¹¤Ê¥É¥­¥å¥á¥ó¥È
 Summary(pl):	Dokumentacja do j±dra Linuksa
 Summary(pt_BR):	Documentação para os arquivos fontes do kernel Linux
 Group:		Base/Kernel
@@ -618,6 +657,14 @@ This is the documentation for the Linux kernel, as found in
 
 %description doc -l es
 Documentación para los archivos fuente del núcleo (kernel) de Linux
+
+%description doc -l ja
+¤³¤Î¥Ñ¥Ã¥±¡¼¥¸¤Ë¤Ï¥«¡¼¥Í¥ë¥½¡¼¥¹¤Ë´Þ¤Þ¤ì¤Æ¤¤¤ë¥É¥­¥å¥á¥ó¥È¤¬
+¼ý¤á¤é¤ì¤Æ¤¤¤Þ¤¹¡¥Linux ¥«¡¼¥Í¥ë¤ä¥Ç¥Ð¥¤¥¹¥É¥é¥¤¥Ð¤Ë´Ø¤¹¤ëÍÍ¡¹¤Ê
+¾ðÊó¤¬¤³¤Î¥É¥­¥å¥á¥ó¥È¤Ë¤Ïµ­¤µ¤ì¤Æ¤¤¤Þ¤¹¡¥
+
+Linux ¥«¡¼¥Í¥ë¥â¥¸¥å¡¼¥ë¤òÆÉ¤ß¹þ¤àºÝ¤Î°ú¿ô¤òÄ´¤Ù¤¿¤¤¾ì¹çÅù¡¤
+¤³¤Î¥Ñ¥Ã¥±¡¼¥¸¤ò¥¤¥ó¥¹¥È¡¼¥ë¤¹¤ë¤ÈÎÉ¤¤¤Ç¤·¤ç¤¦¡¥
 
 %description doc -l pl
 Pakiet zawiera dokumentacjê j±dra z katalogu
