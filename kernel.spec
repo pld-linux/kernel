@@ -752,7 +752,7 @@ echo Added Intel 810 FB support
 # KT400
 echo Added support for KT400 chipset
 %patch144 -p1
-%patch10 -p1
+#%patch10 -p1
 %endif
 %ifarch ppc
 echo PPC patches ...
