@@ -131,6 +131,7 @@ Patch122:	linux-2.4.13-pre6-lvm-1.0.1rc4cvs.patch
 Patch123:	linux-acenic-dma64.patch
 # HTP360/370 driver update
 Patch124:	linux-drivers_ide_hpt366.c.diff
+Patch125:	linux-2.4.13-usb-ohci.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -406,6 +407,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch122 -p1
 %patch123 -p1
 %patch124 -p1
+%patch125 -p1
 
 %patch900 -p0 
 %patch904 -p0
