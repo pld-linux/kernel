@@ -30,7 +30,7 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1.3
+%define		_rel		1.4
 %define		_test_ver	0
 %define		_cset		0
 
@@ -154,6 +154,7 @@ Patch91:	2.6.0-sensors-chip-update-4of4-lkml.patch
 Patch94:	acpi-20031203-2.6.0.diff.gz
 
 Patch96:	2.6.0-mount-rainier-lkml.patch
+Patch97:	2.6.0-mount-rainier-fix-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -559,7 +560,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch94 -p1
 
-#%%patch96 -p1
+%patch96 -p1
+%patch97 -p0
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
