@@ -23,7 +23,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.24
-Release:	0.1
+Release:	0.2
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -271,7 +271,7 @@ Patch3500:	http://www.hardrock.org/kernel/current-updates/linux-2.4.24-updates.p
 # ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.4.24/acpi-20031203-2.4.24.diff.bz2
 Patch3510:      acpi-20031203-2.4.24.diff.bz2
 Patch3600:	linux-2.4-sysctl-empty.patch
-Patch4000:	grsecurity-2.0-rc3-2.4.22-O1.patch
+Patch4000:	grsecurity-2.0-rc4-2.4.24-O1.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
