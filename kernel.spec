@@ -9,7 +9,7 @@
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 #
-%define		krelease		3.01
+%define		krelease		3.02
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -60,7 +60,7 @@ Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 # based on cvs cvs@pserver.samba.org:/cvsroot netfilter
-Source7:	netfilter-15042002.tar.gz
+#Source7:	netfilter-27052002.tar.gz
 Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_version}.tar.gz
 # new -> ftp://ftp.tux.org/pub/roudier/drivers/portable/sym-2.1.x/sym-2.1.16-20011028.tar.gz
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
@@ -126,6 +126,8 @@ Patch21:	linux-2.4.18-hpfs.patch
 
 # ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
 Patch22:	linux-2.4.18-mppe.patch
+
+Patch23:	netfilter-27052002.patch.gz
 
 # Assorted bugfixes
 
@@ -201,6 +203,7 @@ Patch901:	netfilter-ip_nat_pptp.patch
 Patch902:	linux-2.4.19pre7-VIA.patch
 Patch903:	linux-PPC-SMP.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
+Patch905:	ippersonality-applay-fix.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
 Patch907:	linux-loop-hvr-2.4.16.0.patch
@@ -530,7 +533,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -a3 -a5 -a7 -a10 -a11 -a12 -a13 -a14 -n linux
+%setup -q -a3 -a5 -a10 -a11 -a12 -a13 -a14 -n linux
 #%patch1000 -p1
 #%patch0 -p1
 %patch16 -p1
@@ -616,19 +619,19 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # Netfilter
 echo Adding Netfilter snapshot from 15.04.2002
-(KERNEL_DIR=`pwd` ; export KERNEL_DIR
-cd netfilter-patches/patch-o-matic/extra
-cd ..
-ANS=""
-for suite in submitted pending base extra pld ; do
-	for i in `echo ${suite}/*.patch.ipv6` `echo ${suite}/*.patch` ; do
-		ANS="${ANS}y\n\n"
-	done
-done
-echo -e $ANS | ./runme pld)
+#(KERNEL_DIR=`pwd` ; export KERNEL_DIR
+#cd netfilter-patches/patch-o-matic
+#ANS=""
+#for suite in submitted pending base extra pld ; do
+#	for i in `echo ${suite}/*.patch.ipv6` `echo ${suite}/*.patch` ; do
+#		ANS="${ANS}y\n\n"
+#	done
+#done
+#echo -e $ANS | ./runme pld)
 
-patch -p1 < netfilter-patches/patch-o-matic/pld/log.patch
-%patch901 -p0
+#patch -p1 < netfilter-patches/patch-o-matic/pld/log.patch
+#%patch901 -p0
+%patch23 -p1
 
 # IPVS
 echo Adding IPVS
@@ -651,8 +654,9 @@ rm -rf %{sym_ncr_version}
 
 # IP personality
 echo Adding IP Personality 
+%patch905 -p0
 patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020427-linux-2.4.18.diff
-%patch908 -p1
+#%patch908 -p1
 
 # JFS
 echo Adding JFS
