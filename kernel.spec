@@ -1,6 +1,7 @@
 %define		ow_version	2.2.17-ow1
 %define		pcmcia_version	3.1.20
 %define		freeswan_version	1.5
+%define		reiserfs_version	3.5.26
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -41,7 +42,7 @@ Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.17+.gz
 # NFS server patches
 Source40:	http://download.sourceforge.net/nfs/dhiggen_merge-4.1.tar.gz
 Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.17.2.gz
-Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.17-reiserfs-3.5.25-patch.gz
+Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
 Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
 Patch3:		linux-tasks.patch
 # patch based on http://www.redhat.com/~mingo/raid-patches/
@@ -57,7 +58,7 @@ Patch13:	linux-ipv6-addrconf.patch
 # NFS client patch
 Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
 # patch from Console Daemon
-Patch21:	wait_any_vt.diff
+#Patch21:	wait_any_vt.diff
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -291,7 +292,7 @@ patch -p1 -s <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 zcat %{SOURCE34} > drivers/net/3c59x.c
 
-patch21 -p1
+#patch21 -p1
 
 %build
 BuildKernel() {
