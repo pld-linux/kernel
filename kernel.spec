@@ -319,7 +319,7 @@ Provides:	%{name}(hostap)
 Autoreqprov:	no
 Prereq:		fileutils
 Prereq:		modutils
-Prereq:		geninitrd >= 2.39
+Prereq:		geninitrd >= 2.40
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
