@@ -53,6 +53,8 @@
 %define		_rel		0.1%{?with_mosix:+mosx}
 %define		_cset		20040707_0722
 %define		_apply_cset	0
+%define		_ver		2.6.8
+
 
 %define		_netfilter_snap		20040629
 
@@ -69,7 +71,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.6.8.1
+Version:	%{_ver}.1
 Release:	%{_rel}
 Epoch:		3
 License:	GPL
@@ -1108,11 +1110,11 @@ mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
 
-if [ ! -L /lib/modules/%{version} ] ; then
-	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave > /dev/null 2>&1
+if [ ! -L /lib/modules/%{_ver} ] ; then
+	mv -f /lib/modules/%{_ver} /lib/modules/%{_ver}.rpmsave > /dev/null 2>&1
 fi
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release} /lib/modules/%{version}
+rm -f /lib/modules/%{_ver}
+ln -snf %{version}-%{release} /lib/modules/%{_ver}
 %depmod %{version}-%{release}
 
 /sbin/geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
