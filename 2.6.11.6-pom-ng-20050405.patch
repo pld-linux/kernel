@@ -245,9 +245,9 @@ diff -Nur --exclude '*.orig' linux-2.6.11.6.org/include/linux/netfilter_ipv4/ip_
  /* per conntrack: application helper private data */
  union ip_conntrack_help {
  	/* insert conntrack helper private data (master) here */
-+	struct ip_ct_rtsp_master ct_rtsp_info;
-+	struct ip_ct_mms_master ct_mms_info;
-+	struct ip_ct_h225_master ct_h225_info;
++//	struct ip_ct_rtsp_master ct_rtsp_info;
++//	struct ip_ct_mms_master ct_mms_info;
++//	struct ip_ct_h225_master ct_h225_info;
  	struct ip_ct_ftp_master ct_ftp_info;
  	struct ip_ct_irc_master ct_irc_info;
  };
@@ -1374,6 +1374,30 @@ diff -Nur --exclude '*.orig' linux-2.6.11.6.org/include/linux/netfilter_ipv4/ip_
  
  /* Values for "inv" field in struct ipt_ip. */
  #define IPT_INV_VIA_IN		0x01	/* Invert the sense of IN IFACE. */
+@@ -151,12 +151,23 @@
+ #define IPT_SO_SET_ADD_COUNTERS	(IPT_BASE_CTL + 1)
+ #define IPT_SO_SET_MAX		IPT_SO_SET_ADD_COUNTERS
+ 
++#define IPT_SO_SET_ACCOUNT_HANDLE_FREE	(IPT_BASE_CTL + 3)
++#define IPT_SO_SET_ACCOUNT_HANDLE_FREE_ALL (IPT_BASE_CTL + 4)
++#define IPT_SO_SET_ACCOUNT_MAX		IPT_SO_SET_ACCOUNT_HANDLE_FREE_ALL
++
+ #define IPT_SO_GET_INFO			(IPT_BASE_CTL)
+ #define IPT_SO_GET_ENTRIES		(IPT_BASE_CTL + 1)
+ #define IPT_SO_GET_REVISION_MATCH	(IPT_BASE_CTL + 2)
+ #define IPT_SO_GET_REVISION_TARGET	(IPT_BASE_CTL + 3)
+ #define IPT_SO_GET_MAX			IPT_SO_GET_REVISION_TARGET
+ 
++#define IPT_SO_GET_ACCOUNT_PREPARE_READ (IPT_BASE_CTL + 3)
++#define IPT_SO_GET_ACCOUNT_PREPARE_READ_FLUSH (IPT_BASE_CTL + 4)
++#define IPT_SO_GET_ACCOUNT_GET_DATA (IPT_BASE_CTL + 5)
++#define IPT_SO_GET_ACCOUNT_GET_HANDLE_USAGE (IPT_BASE_CTL + 6)
++#define IPT_SO_GET_ACCOUNT_GET_TABLE_NAMES (IPT_BASE_CTL + 7)
++#define IPT_SO_GET_ACCOUNT_MAX      IPT_SO_GET_ACCOUNT_GET_TABLE_NAMES
++
+ /* CONTINUE verdict for targets */
+ #define IPT_CONTINUE 0xFFFFFFFF
+ 
 diff -Nur --exclude '*.orig' linux-2.6.11.6.org/include/linux/netfilter_ipv4/ipt_ACCOUNT.h linux-2.6.11.6/include/linux/netfilter_ipv4/ipt_ACCOUNT.h
 --- linux-2.6.11.6.org/include/linux/netfilter_ipv4/ipt_ACCOUNT.h	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.11.6/include/linux/netfilter_ipv4/ipt_ACCOUNT.h	2005-04-05 11:19:12.908876984 +0200
@@ -2372,7 +2396,7 @@ diff -Nur --exclude '*.orig' linux-2.6.11.6.org/include/linux/netfilter_mime.h l
 diff -Nur --exclude '*.orig' linux-2.6.11.6.org/net/ipv4/netfilter/Kconfig linux-2.6.11.6/net/ipv4/netfilter/Kconfig
 --- linux-2.6.11.6.org/net/ipv4/netfilter/Kconfig	2005-03-26 04:28:26.000000000 +0100
 +++ linux-2.6.11.6/net/ipv4/netfilter/Kconfig	2005-04-05 10:56:26.000000000 +0200
-@@ -692,5 +692,436 @@
+@@ -692,5 +692,442 @@
  	  Allows altering the ARP packet payload: source and destination
  	  hardware and network addresses.
  
@@ -2806,6 +2830,12 @@ diff -Nur --exclude '*.orig' linux-2.6.11.6.org/net/ipv4/netfilter/Kconfig linux
 +	
 +	  If you want to compile it as a module, say 'M' here and read
 +	  Documentation/modules.txt.  If unsure, say 'Y'.
++
++config IP_NF_TARGET_ACCOUNT
++	tristate ' ACCOUNT target support'
++	depends on IP_NF_IPTABLES
++	help
++
 +
  endmenu
  
