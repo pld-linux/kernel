@@ -781,7 +781,7 @@ BuildKernel() {
 		cat %{SOURCE1670} >> arch/%{base_arch}/defconfig
 	fi
 %ifnarch %{ix86}
-		cat "# CONFIG_IP_NF_MATCH_FUZZY is not set">> arch/%{base_arch}/defconfig
+		echo "# CONFIG_IP_NF_MATCH_FUZZY is not set">> arch/%{base_arch}/defconfig
 %endif		
 %ifarch i386
 	mv -f arch/%{base_arch}/defconfig arch/%{base_arch}/defconfig.orig
