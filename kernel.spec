@@ -20,7 +20,6 @@
 %define		tulip_version		1.1.8
 %define		aic_version		6.2.3-2.4.7
 %define		jfs_version		2.4-1.0.7
-%define		bttv_version		0.7.83
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -78,7 +77,7 @@ Patch3:		linux-2.4.9-aacraid-20010816.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.10.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/
-Patch5:		linux-2.4.13-xfs-2001-10-25.patch.bz2
+Patch5:		linux-2.4.13-xfs-20011026.patch.gz
 # Compressed iso9660 filesystem
 Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-unified-2.4.12.diff.gz
 # Homepage of ABI : http://linux-abi.sourceforge.net/
@@ -130,11 +129,8 @@ Patch121:	linux-2.4.10-cpqfc.patch
 Patch122:	linux-2.4.13-pre6-lvm-1.0.1rc4cvs.patch
 # davem broke acenic in 2.4.13-pre
 Patch123:	linux-acenic-dma64.patch
-# BTTV update
-Patch124:	http://bytesex.org/patches/btaudio-2.4.13-pre2.diff.gz
-Patch125:	http://bytesex.org/patches/bttv-%{bttv_version}-2.4.13-pre2.diff.gz
 # HTP360/370 driver update
-Patch126:	linux-drivers_ide_hpt366.c.diff
+Patch124:	linux-drivers_ide_hpt366.c.diff
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -409,9 +405,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch121 -p1
 %patch122 -p1
 %patch123 -p1
-#%patch124 -p1 exist??
-#%patch125 -p1
-%patch126 -p1
+%patch124 -p1
 
 %patch900 -p0 
 %patch904 -p0
