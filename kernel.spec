@@ -11,7 +11,7 @@
 # _without_doc		- don't build documentation package
 #
 
-%define		patch_level	2
+%define		patch_level	3
 %define		_rel		5
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -125,8 +125,7 @@ Patch8:		linux-2.4.20-netfilter-%{netfilter_snap}.patch.bz2
 
 Patch9:		linux-2.4.20-initrd-close-console.patch
 
-#from http://unc.dl.sourceforge.net/sourceforge/user-mode-linux/host-skas3.patch
-Patch10:	host-skas3.patch
+Patch10:	linux-2.4.20-badram.patch
 
 # http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
 Patch11:	linux-2.4.20-ipvs-%{ipvs_version}.patch.bz2
@@ -208,6 +207,8 @@ Patch44:	linux-2.4.20-mh6.patch.bz2
 # from http://acl.bestbits.at/
 Patch45:	linux-2.4.20-ACL-0.8.54.patch.bz2
 Patch46:	linux-2.4.19-netmos_pci_parallel_n_serial.patch
+
+Patch47:	linux-2.4-3com-vlan.patch
 
 # Assorted bugfixes
 
@@ -758,11 +759,13 @@ echo Fixed I810 Sound ...
 
 %patch29 -p1
 
-#usb gadget
-%patch30 -p1
 
 # USB bluesooth
 %patch44 -p1
+
+# vlan patch
+echo updated 3Con drivers for VLAN ...
+%patch47 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
@@ -774,7 +777,11 @@ echo Added Intel 810 FB support
 # KT400
 echo Added support for KT400 chipset
 %patch144 -p1
-#%patch10 -p1
+echo Added patch to fix bad ram ...
+%patch10 -p1
+#usb gadget
+echo Added USB gadget ...
+%patch30 -p1
 %endif
 %ifarch ppc
 echo PPC patches ...
