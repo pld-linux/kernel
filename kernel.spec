@@ -205,6 +205,9 @@ Patch1010:	jam-30-smptimers-A0.patch
 Patch1100:	linux-2.4.21-lvm-VFSlock.patch
 Patch1102:	linux-2.4.20-lvm-updates.patch
 
+# IrDA patch for broken IBM Latpops
+Patch1104:      linux-2.4.21-irda-ibm.patch
+
 # fix lun probing on multilun RAID chassis
 Patch1105:	linux-2.4.12-scsi_scan.patch
 Patch1106:	linux-scsi-debug-bug.patch
@@ -720,6 +723,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1010 -p1
 %patch1100 -p1
 %patch1102 -p1
+%patch1104 -p0
 %patch1105 -p1
 %patch1106 -p0
 %patch1111 -p1
