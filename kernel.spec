@@ -362,37 +362,59 @@ rozmiar.
 
 %package pcmcia-cs
 Summary:	PCMCIA-CS modules
-Summary(pl):	Mod馧y PCMCIA-CS 
+Summary(pl):	Modu造 PCMCIA-CS 
 Group:		Base/Kernel
 Group(pl):	Podstawowe/Kernel
-Provides:	%{name}-pcmcia-cs=%{pcmcia_version}
+Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
+Requires:	%{name}-up = %{version}-%{release}
+
 %description pcmcia-cs
+PCMCIA-CS modules.
+
 %description -l pl pcmcia-cs
+Modu造 PCMCIA-CS.
 
 %package pcmcia-cs-smp
 Summary:	PCMCIA-CS modules for SMP kernel
-Summary(pl):	Mod馧y PCMCIA-CS dla maszyn SMP
-Group:		Base/Kernel
+Summary(pl):	Modu造 PCMCIA-CS dla maszyn SMP
+Group:		Base//Kernel
 Group(pl):	Podstawowe/Kernel
-Provides:	%{name}-pcmcia-cs=%{pcmcia_version}
+Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
+Requires:       %{name}-smp = %{version}-%{release}
+
 %description pcmcia-cs-smp
+PCMCIA-CS modules for SMP kernel.
+
 %description -l pl pcmcia-cs-smp
+Modu造 PCMCIA-CS dla maszyn SMP.
 
 %package drm
 Summary:	DRM kernel modules
 Summary(pl):	Sterowniki DRM
 Group:		Base/Kernel
 Group(pl):	Podstawowe/Kernel
+Provides:       %{name}-drm = %{drm_xfree_version}
+Requires:       %{name}-up = %{version}-%{release}
+
 %description drm
+DRM kernel modules.
+
 %description -l pl drm
+Sterowniki DRM.
 
 %package drm-smp
 Summary:	DRM SMP kernel modules
 Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Group(pl):	Podstawowe/Kernel
+Provides:       %{name}-drm = %{drm_xfree_version}
+Requires:       %{name}-smp = %{version}-%{release}
+
 %description drm-smp
+DRM SMP kernel modules.
+
 %description -l pl drm-smp
+Sterowniki DRM dla maszyn wieloprocesorowych.
 
 %package headers
 Summary:	Header files for the Linux kernel
@@ -448,7 +470,7 @@ Group(sl):	Osnova/Jedro
 Group(sv):	Bas/K酺na
 Group(uk):	煻睋/鯆眐
 Autoreqprov:	no
-Requires:	%{name}-headers = %{version}
+Requires:	%{name}-headers = %{version}-%{release}
 %ifarch %{ix86}
 Requires:	bin86
 %endif
