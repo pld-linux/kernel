@@ -169,8 +169,7 @@ Patch72:	fbsplash-0.9.1-2.6.10-rc3-bk6.patch
 Patch73:	squashfs2.1-patch
 Patch74:	linux-static-dev.patch
 Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
-# http://lirc.sourceforge.net/software/snapshots/lirc-0.7.0pre7.tar.bz2
-Patch76:	2.6.8-lirc-0.7.0-pre7.patch
+Patch76:	linux-2.6-lirc-0.7.patch
 
 # psmouse extension for ThinkPad laptops from http://www.clarkson.edu/~evanchsa/
 Patch80:	trackpoint-2.6.9.patch
