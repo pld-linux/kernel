@@ -156,6 +156,7 @@ Buildrequires:	perl
 Provides:	%{name}-up = %{version}
 Provides:	module-info
 Provides:	i2c = 2.6.1
+Provides:	bttv = 0.7.83
 Autoreqprov:	no
 Prereq:		fileutils
 Prereq:		modutils
@@ -374,11 +375,15 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # Netfilter
 echo Adding Netfilter
+#
+# Baggins please check and fix this patches !!!
+#
 (KERNEL_DIR=`pwd` ; export KERNEL_DIR
 cd netfilter-patches/patch-o-matic/extra
-%patch902 -p0
-%patch903 -p0
-%patch905 -p0
+#%patch902 -p0
+#%patch903 -p0
+#rm -f pptp-*
+#rm -f tcp-wi*
 cd ..
 ANS=""
 for suite in pending base extra pld ; do
@@ -387,6 +392,8 @@ for suite in pending base extra pld ; do
 	done
 done
 echo -e $ANS | ./runme pld)
+
+patch -p1 < netfilter-patches/patch-o-matic/pld/log.patch
 
 # IPVS
 echo Adding IPVS
