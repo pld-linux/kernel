@@ -718,6 +718,7 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} \
     <$RPM_BUILD_ROOT/usr/src/linux-%{version}/ippersonality-%{IPperson_version}/patches/ippersonality-20010703-linux-2.4.5.diff
 
 # JFS
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH907}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} \
     <$RPM_BUILD_ROOT/usr/src/linux-%{version}/jfs-common-v1.0.1-patch
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} \
