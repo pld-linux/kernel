@@ -667,6 +667,7 @@ BuildKernel BOOT
 %{__make} -C i8255
 
 %install
+umask 022
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{version}}
 
@@ -691,7 +692,7 @@ cp -a %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 %endif
 
-(umask 022 ; cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/)
+cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
 
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
