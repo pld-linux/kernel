@@ -486,6 +486,10 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
+echo "Kernel is not ready!"
+echo "don't build!"
+echo "don't touch anything in kernel.spec!!!!!!!!!"
+exit 1 
 %setup -q -n linux-%{version}-rc2
 
 %patch0 -p1
