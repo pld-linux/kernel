@@ -1,0 +1,85 @@
+CAN-2004-0685 (backported Conectiva usb sparse fixes)
+
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2004/07/26 19:14:16-03:00 mjc@redhat.com 
+#   [PATCH] USB: more sparse fixes
+#   
+#   Back in October 2003 Arnaldo commited some fixes prior to 2.6 for some leaking info to userspace in the
+#   usb drivers:
+#   http://linux.bkbits.net:8080/linux-2.6/cset@3f986b35LyBKc-OxB8G6k22oOjgYTQ
+#   
+#   The corresponding changes have not been commited to 2.4, or included in
+#   the previous sparse fixes.
+# 
+# drivers/usb/audio.c
+#   2004/07/15 08:46:52-03:00 mjc@redhat.com +4 -0
+#   USB: more sparse fixes
+# 
+# drivers/usb/brlvger.c
+#   2004/07/15 08:47:27-03:00 mjc@redhat.com +1 -0
+#   USB: more sparse fixes
+# 
+# drivers/usb/serial/io_edgeport.c
+#   2004/07/15 08:48:06-03:00 mjc@redhat.com +1 -0
+#   USB: more sparse fixes
+# 
+# drivers/usb/vicam.c
+#   2004/07/15 08:47:13-03:00 mjc@redhat.com +1 -0
+#   USB: more sparse fixes
+# 
+diff -Nru a/drivers/usb/audio.c b/drivers/usb/audio.c
+--- a/drivers/usb/audio.c	2004-08-10 06:15:25 -07:00
++++ b/drivers/usb/audio.c	2004-08-10 06:15:25 -07:00
+@@ -2141,6 +2141,8 @@
+   
+ 	if (cmd == SOUND_MIXER_INFO) {
+ 		mixer_info info;
++
++		memset(&info, 0, sizeof(info));
+ 		strncpy(info.id, "USB_AUDIO", sizeof(info.id));
+ 		strncpy(info.name, "USB Audio Class Driver", sizeof(info.name));
+ 		info.modify_counter = ms->modcnt;
+@@ -2150,6 +2152,8 @@
+ 	}
+ 	if (cmd == SOUND_OLD_MIXER_INFO) {
+ 		_old_mixer_info info;
++
++		memset(&info, 0, sizeof(info));
+ 		strncpy(info.id, "USB_AUDIO", sizeof(info.id));
+ 		strncpy(info.name, "USB Audio Class Driver", sizeof(info.name));
+ 		if (copy_to_user((void *)arg, &info, sizeof(info)))
+diff -Nru a/drivers/usb/brlvger.c b/drivers/usb/brlvger.c
+--- a/drivers/usb/brlvger.c	2004-08-10 06:15:25 -07:00
++++ b/drivers/usb/brlvger.c	2004-08-10 06:15:25 -07:00
+@@ -743,6 +743,7 @@
+ 	case BRLVGER_GET_INFO: {
+ 		struct brlvger_info vi;
+ 
++		memset(&vi, 0, sizeof(vi));
+ 		strncpy(vi.driver_version, DRIVER_VERSION,
+ 			sizeof(vi.driver_version));
+ 		vi.driver_version[sizeof(vi.driver_version)-1] = 0;
+diff -Nru a/drivers/usb/serial/io_edgeport.c b/drivers/usb/serial/io_edgeport.c
+--- a/drivers/usb/serial/io_edgeport.c	2004-08-10 06:15:25 -07:00
++++ b/drivers/usb/serial/io_edgeport.c	2004-08-10 06:15:25 -07:00
+@@ -1913,6 +1913,7 @@
+ 
+ 		case TIOCGICOUNT:
+ 			cnow = edge_port->icount;
++			memset(&icount, 0, sizeof(icount));
+ 			icount.cts = cnow.cts;
+ 			icount.dsr = cnow.dsr;
+ 			icount.rng = cnow.rng;
+diff -Nru a/drivers/usb/vicam.c b/drivers/usb/vicam.c
+--- a/drivers/usb/vicam.c	2004-08-10 06:15:25 -07:00
++++ b/drivers/usb/vicam.c	2004-08-10 06:15:25 -07:00
+@@ -481,6 +481,7 @@
+ 			struct video_capability b;
+ 
+ 			DBG("VIDIOCGCAP\n");
++			memset(&b, 0, sizeof(b));
+ 			strcpy(b.name, "ViCam-based Camera");
+ 			b.type = VID_TYPE_CAPTURE;
+ 			b.channels = 1;

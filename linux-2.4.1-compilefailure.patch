@@ -403,6 +403,18 @@ diff -urN linux-2.4.22.org/drivers/video/fbcon-mac.c linux-2.4.22/drivers/video/
  
  #include <video/fbcon.h>
  #include <video/fbcon-mac.h>
+diff -urN linux-2.4.22.org/drivers/video/sis/init301.c linux-2.4.22/drivers/video/sis/init301.c
+--- linux-2.4.22.org/drivers/video/sis/init301.c	2003-11-23 16:00:24.000000000 +0100
++++ linux-2.4.22/drivers/video/sis/init301.c	2003-11-23 16:04:30.000000000 +0100
+@@ -3528,7 +3528,7 @@
+                    USHORT RefreshRateTableIndex,
+ 		   PSIS_HW_DEVICE_INFO HwDeviceExtension)
+ {
+-  USHORT tempax,tempbx,modeflag;
++  USHORT tempax=0,tempbx=0,modeflag;
+   USHORT resinfo;
+   USHORT CRT2Index,ResIndex;
+   const SiS_LCDDataStruct *LCDPtr = NULL;
 diff -urN linux-2.4.22.org/drivers/video/sis/sis_main.c linux-2.4.22/drivers/video/sis/sis_main.c
 --- linux-2.4.22.org/drivers/video/sis/sis_main.c	2003-11-23 16:00:24.000000000 +0100
 +++ linux-2.4.22/drivers/video/sis/sis_main.c	2003-11-23 16:04:30.000000000 +0100
@@ -783,10 +795,11 @@ diff -urN linux-2.4.24.org/include/asm-alpha/bitops.h linux-2.4.24/include/asm-a
  {
 --- linux-2.4.26/drivers/char/drm/drmP.h.org	2004-04-19 02:52:58.034427096 +0200
 +++ linux-2.4.26/drivers/char/drm/drmP.h	2004-04-19 02:53:24.323430560 +0200
-@@ -107,76 +107,6 @@
+@@ -105,108 +105,6 @@
+ 						defined(CONFIG_AGP_MODULE)))
  #define __REALLY_HAVE_MTRR	(__HAVE_MTRR && defined(CONFIG_MTRR))
  
- 
+-
 -				/* Generic cmpxchg added in 2.3.x */
 -#ifndef __HAVE_ARCH_CMPXCHG
 -				/* Include this here so that driver can be
@@ -855,9 +868,39 @@ diff -urN linux-2.4.24.org/include/asm-alpha/bitops.h linux-2.4.24/include/asm-a
 -				    (unsigned long)_n_, sizeof(*(ptr))); \
 -  })
 -
--#endif /* alpha */
+-#elif __i386__
+-static inline unsigned long __cmpxchg(volatile void *ptr, unsigned long old,
+-				      unsigned long new, int size)
+-{
+-	unsigned long prev;
+-	switch (size) {
+-	case 1:
+-		__asm__ __volatile__(LOCK_PREFIX "cmpxchgb %b1,%2"
+-				     : "=a"(prev)
+-				     : "q"(new), "m"(*__xg(ptr)), "0"(old)
+-				     : "memory");
+-		return prev;
+-	case 2:
+-		__asm__ __volatile__(LOCK_PREFIX "cmpxchgw %w1,%2"
+-				     : "=a"(prev)
+-				     : "q"(new), "m"(*__xg(ptr)), "0"(old)
+-				     : "memory");
+-		return prev;
+-	case 4:
+-		__asm__ __volatile__(LOCK_PREFIX "cmpxchgl %1,%2"
+-				     : "=a"(prev)
+-				     : "q"(new), "m"(*__xg(ptr)), "0"(old)
+-				     : "memory");
+-		return prev;
+-	}
+-	return old;
+-}
+-
+-#define cmpxchg(ptr,o,n)						\
+-  ((__typeof__(*(ptr)))__cmpxchg((ptr),(unsigned long)(o),		\
+-				 (unsigned long)(n),sizeof(*(ptr))))
+-#endif /* i386 & alpha */
 -#endif
  #define __REALLY_HAVE_SG	(__HAVE_SG)
  
  /* Begin the DRM...
-
