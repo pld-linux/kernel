@@ -425,8 +425,8 @@ mv %{sym_ncr_version}/{README,ChangeLog}.* Documentation
 rm -rf %{sym_ncr_version}
 
 ## install RangeLAN2 driver
-mv rl2-1.7.1 drivers/net/rl2
-%patch36 -p1
+#mv rl2-1.7.1 drivers/net/rl2
+#%patch36 -p1
 
 %build
 BuildKernel() {
