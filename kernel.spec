@@ -76,6 +76,7 @@ Patch2:		freeswan-%{freeswan_version}-%{version}.patch.gz
 Patch4:		br2684-against2.4.17.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
 #Patch5:		xfs-2.4.18-02032002.patch.gz
+Patch5:		xfs-2.4.18-05.03.2002.patch.gz
 # Homepage of ABI : http://linux-abi.sourceforge.net/
 #ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2
 Patch7:		linux-abi-2.4.17.0.patch.bz2
@@ -339,7 +340,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch907 -p1
 %patch2 -p1
 %patch4 -p1
-#%patch5 -p1
+%patch5 -p1
 #%patch7 -p1
 #%if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 #%patch14 -p1
@@ -379,7 +380,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
-%patch123 -p1
+#%patch123 -p1
 %patch124 -p1
 
 #%patch900 -p0
@@ -442,8 +443,8 @@ patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010724-l
 
 # JFS
 echo Adding JFS
-patch -p1 -s <jfs-2.4.common-1.0.14-patch
-patch -p1 -s <jfs-2.4.17-1.0.14-patch
+patch -p1 -s <jfs-2.4.common-1.0.15-patch
+patch -p1 -s <jfs-2.4.17-1.0.15-patch
 
 echo Fixed compile process for 53c7,8xx driver
 # fix 53c7,8xx build
