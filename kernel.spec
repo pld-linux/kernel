@@ -26,7 +26,7 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.20
+%define		_rel		0.21
 %define		_cset		20040216_0307
 
 ## netfilter snap 
@@ -131,9 +131,7 @@ Patch64:	2.6.x-ppp_mppe.patch
 
 Patch66:	2.6.2-Initio9100U-Kconfig.patch
 
-# from http://www.digriz.org.uk/jdg-qos-script/patches-2.6/
-Patch68:	01_linux-2.6.0-test11-esfq-imq.diff
-Patch69:	02_linux-2.6.0-test11-imq-nat-support.diff
+Patch68:	2.6.x-patch-o-matic-ng-base-%{_netfilter_snap}.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -522,7 +520,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch66 -p1
 
 %patch68 -p1
-%patch69 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
