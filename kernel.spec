@@ -30,7 +30,7 @@
 %define		_cset		20040216_0307
 
 ## netfilter snap 
-%define		_netfilter_snap		20040130
+%define		_netfilter_snap		20040216
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/amd64/x86_64/')
 
@@ -112,34 +112,29 @@ Patch44:	linux-tdfxfb-fillrect.patch
 Patch45:	linux-fbcon-margins.patch
 Patch46:	linux-tdfxfb-interlace+double.patch
 
-Patch48:	2.6-pnp.patch
+Patch48:	2.6.1-rc2-ini9100u-lkml.patch
 
-Patch50:	2.6.1-rc2-ini9100u-lkml.patch
+Patch50:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 
-Patch52:	2.6.1-rc2-VLAN-NS83820-lkml.patch
+Patch52:	laptop-mode-2.6.1-7.patch
 
-Patch54:	laptop-mode-2.6.1-7.patch
+Patch54:	2.6.1-hash_table_size-lkml.patch
 
-Patch56:	2.6.1-hash_table_size-lkml.patch
+Patch56:	kbuild-out-of-tree.diff
 
-Patch58:	2.6-p-o-m-ng-%{_netfilter_snap}.patch
+Patch58:	2.6.x-PD6729-lkml.patch
 
-Patch60:	2.6.x-pnp-lkml.patch
+Patch60:	2.6.x-IBM-RAS-service-procesor-1of2-lkml.patch
+Patch61:	2.6.x-IBM-RAS-service-procesor-2of2-lkml.patch
 
-Patch62:	kbuild-out-of-tree.diff
+Patch64:	2.6.x-ppp_mppe.patch
 
-Patch64:	2.6.x-PD6729-lkml.patch
-
-Patch66:	2.6.x-IBM-RAS-service-procesor-1of2-lkml.patch
-Patch67:	2.6.x-IBM-RAS-service-procesor-2of2-lkml.patch
-
-Patch70:	2.6.x-ppp_mppe.patch
-
-Patch72:	2.6.2-Initio9100U-Kconfig.patch
+Patch66:	2.6.2-Initio9100U-Kconfig.patch
 
 # from http://www.digriz.org.uk/jdg-qos-script/patches-2.6/
-Patch74:	01_linux-2.6.0-test11-esfq-imq.diff
-Patch75:	02_linux-2.6.0-test11-imq-nat-support.diff
+Patch68:	01_linux-2.6.0-test11-esfq-imq.diff
+Patch69:	02_linux-2.6.0-test11-imq-nat-support.diff
+
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
@@ -507,7 +502,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch45 -p1
 %patch46 -p1
 
-#%%patch48 -p1
+%patch48 -p1
 
 %patch50 -p1
 
@@ -519,18 +514,15 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch58 -p1
 
-#%%patch60 -p1
-
-%patch62 -p1
+%patch60 -p1
+%patch61 -p1
 
 %patch64 -p1
 
 %patch66 -p1
-%patch67 -p1
 
-%patch70 -p1
-
-%patch72 -p1
+%patch68 -p1
+%patch69 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
