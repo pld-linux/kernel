@@ -27,13 +27,13 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	0.7%{?_with_preemptive:_pr}
+Release:	0.8%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
-Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-140.tar.gz
+Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
@@ -157,6 +157,7 @@ Patch134:	vt8235-2.4.19.patch
 
 # tweaks for grsecurity, description inside patch
 Patch900:	loop-jari-2.4.18.0.patch
+Patch901:	dc395-tab.patch
 # DRM (note that this doesn't fix drm when running on 386 or 486 CPU!)
 Patch902:	linux-drm-%{drm_xfree_version}-force-cmpxchg.patch
 Patch903:	linux-drm-2.4.19-mm.patch
@@ -171,8 +172,8 @@ URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %ifarch sparc64
 BuildRequires:	egcs64
-%else
-BuildRequires:	%{kgcc_package}
+#%else
+#BuildRequires:	%{kgcc_package}
 %endif
 BuildRequires:	modutils
 Buildrequires:	perl
@@ -487,6 +488,7 @@ mv -f drm drivers/char
 echo Adding Tekram DC395/315 driver
 patch -p1 -s <dc395/dc395-integ24.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
+%patch901 -p0
 
 # Fore 200e ATM NIC
 echo Adding FORE 200e ATM driver
@@ -501,10 +503,10 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 #patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020427-linux-2.4.18.diff
 
 # install NCR/Symbios controler
-echo Adding NCR/Symbios controler
-mv %{sym_ncr_version}/*.{c,h} drivers/scsi
-mv %{sym_ncr_version}/{README,ChangeLog}.* Documentation
-rm -rf %{sym_ncr_version}
+# echo Adding NCR/Symbios controler
+# mv %{sym_ncr_version}/*.{c,h} drivers/scsi
+# mv %{sym_ncr_version}/{README,ChangeLog}.* Documentation
+# rm -rf %{sym_ncr_version}
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
