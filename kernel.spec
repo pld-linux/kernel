@@ -44,7 +44,7 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_post_ver	%{nil}
-%define		_rel		0.8HEAD
+%define		_rel		0.9HEAD
 %define		_cset		20041005_1606
 %define		_apply_cset	1
 
@@ -97,8 +97,6 @@ Source90:	%{name}-grsec.config
 Source91:	%{name}-grsec+pax.config
 
 
-# http://members.optusnet.com.au/ckolivas/kernel/
-Patch10:	patch-2.6.9-rc3-ck2.bz2
 # http://kem.p.lodz.pl/~peter/qnet/
 Patch15:	patch-2.6.8.1-qnet2.bz2
 
@@ -474,8 +472,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 bzcat %{SOURCE4} | patch -p1 -s
 %endif
 
-
-%patch10 -p1
 %patch15 -p1
 %patch18 -p1
 %patch20 -p1
