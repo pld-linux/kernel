@@ -91,8 +91,9 @@ Patch43:	%{name}-vlan_bridge.patch
 Patch44:	tulip-patch-0.91.patch.bz2
 Patch100:	jfs-2.2.20-v%{jfs_version}-patch
 Patch101:	linux-atm.patch
-# HTB from http://luxik.cdi.cz/~devik/qos/htb/
+# HTB and IMQ from http://luxik.cdi.cz/~devik/qos/
 Patch102:	htb2_2.2.17.diff
+Patch103:	imq_2.2.17.diff
 #i2o patch from ftp://ftp.adaptec.com/raid/asr/unix/asr_linux_v242_drv.rpm
 Patch104:	dpt_i2o-2.2.19.diff
 Patch105:	linux-2.2.19-bttv-%{bttv_version}.patch.bz2
@@ -493,6 +494,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 
 %patch101 -p1
 %patch102 -p1
+%patch103 -p1
 %patch104 -p1
 %patch107 -p1
 %patch108 -p1
@@ -835,6 +837,7 @@ rm $RPM_BUILD_ROOT/usr/src/linux-%{version}/jfs-*
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH102}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH103}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH104}
 bzip2 -dc %{PATCH107} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 bzip2 -dc %{PATCH108} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
