@@ -571,10 +571,8 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %patch70 -p1
 
-%ifarch %{ix86}
 %if %{with fbsplash}
 %patch72 -p1
-%endif
 %endif
 
 %patch73 -p1
