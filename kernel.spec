@@ -1311,7 +1311,7 @@ fi
 %endif
 %ifnarch ppc sparc sparc64
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o*
-%ifnarch alpha sparc64
+%ifnarch alpha
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o*
 %endif
@@ -1373,7 +1373,7 @@ fi
 %endif
 %ifnarch ppc sparc sparc64
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o*
-%ifnarch alpha sparc64
+%ifnarch alpha
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o*
 %endif
