@@ -26,7 +26,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	1.7%{?_with_preemptive:_pr}
+Release:	1.8%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -591,6 +591,7 @@ BuildKernel() {
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_CRYPTO is not set" >> arch/%{base_arch}/defconfig
 		echo "CONFIG_ROMFS_FS=y" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_IP_NF_MATCH_STEALTH is not set">> arch/%{base_arch}/defconfig
 	else
 		cat %{SOURCE1667} >> arch/%{base_arch}/defconfig
 		cat %{SOURCE1666} >> arch/%{base_arch}/defconfig
