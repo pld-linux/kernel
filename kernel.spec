@@ -12,7 +12,7 @@
 # _without_w4l		- don't build Win4Lin support
 #
 
-%define		patch_level	0
+%define		patch_level	1
 %define		_rel		6
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -27,8 +27,8 @@
 %define		evms_version		2.0.0
 %define		ntfs_version		2.1.2a
 %define		drm_xfree_version	4.3.0
-%define		hostap_version		2002-10-12
-%define		netfilter_snap		0
+%define		hostap_version		0.0.1
+%define		netfilter_snap		20030418
 %define		iptables_version	1.2.8
 %define		ACL_version		0.8.56
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -204,7 +204,7 @@ Patch38:	linux-2.4.20-Nokia5510.patch
 
 #from http://people.freebsd.org/~gibbs/linux/SRC/
 #last: aic79xx-linux-2.4-20030410-tar.gz
-Patch39:	linux-2.4.20-aic79xx.patch.bz2
+Patch39:	linux-2.4.20-aic79xx.patch.gz
 Patch40:	linux-2.4.20-i810_audio.patch
 Patch41:	linux-2.4.20-afs.patch.bz2
 Patch42:	linux-2.4.20-ecc.patch
@@ -354,7 +354,7 @@ Provides:	bttv = 0.7.83
 %if %{netfilter_snap} != 0
 Provides:	%{name}(netfilter) = %{iptables_version}-%{netfilter_snap}
 %else
-Provides:	%{name}(netfilter) = %{iptables_version}-%{netfilter_snap}
+Provides:	%{name}(netfilter) = %{iptables_version}
 %endif
 Provides:	%{name}(grsecurity) = %{grsec_version}
 Provides:	%{name}(reiserfs) = %{version}
@@ -413,7 +413,7 @@ Provides:	bttv = 0.7.83
 %if %{netfilter_snap} != 0
 Provides:	%{name}(netfilter) = %{iptables_version}-%{netfilter_snap}
 %else
-Provides:	%{name}(netfilter) = %{iptables_version}-%{netfilter_snap}
+Provides:	%{name}(netfilter) = %{iptables_version}
 %endif
 Provides:	%{name}(grsecurity) = %{grsec_version}
 Provides:	%{name}(reiserfs) = %{version}
@@ -549,7 +549,7 @@ Provides:	%{name}-headers(bridging) = %{version}
 %if %{netfilter_snap} != 0
 Provides:	%{name}-headers(netfilter) = %{iptables_version}-%{netfilter_snap}
 %else
-Provides:	%{name}-headers(netfilter) = %{iptables_version}-%{netfilter_snap}
+Provides:	%{name}-headers(netfilter) = %{iptables_version}
 %endif
 Provides:	%{name}-headers(grsecurity) = %{grsec_version}
 Provides:	%{name}-headers(freeswan)
@@ -702,7 +702,7 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # hostap
 echo Installing Host AP support
-patch -p1 -s < hostap-%{hostap_version}/kernel-patches/hostap-linux-2.4.19-rc3.patch
+patch -p1 -s < hostap-%{hostap_version}/kernel-patches/hostap-linux-%{version}.patch
 cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 
 # Konica USB camera support
