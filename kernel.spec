@@ -315,7 +315,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch15 -p1
 %patch16 -p1
 %patch18 -p1
-%patch19 -p1
 %ifarch %{ix86}
 cd ..
 rm -rf i2c-%{i2c_version}
