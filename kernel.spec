@@ -67,6 +67,7 @@ Source1001:	%{name}-abi.config
 Source1002:	%{name}-addon.config
 Source1003:	%{name}-netfilter.config
 Source1004:	%{name}-ipvs.config
+Source1005:	%{name}-ide.config
 Source1666:	%{name}-grsec.config
 
 # New features
@@ -574,6 +575,7 @@ BuildKernel() {
 	cat %{SOURCE1002} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1003} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1004} >> arch/$RPM_ARCH/defconfig
+	cat %{SOURCE1005} >> arch/$RPM_ARCH/defconfig
 %ifarch %{ix86}
 	if [ "$BOOT" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/$RPM_ARCH/defconfig
@@ -722,6 +724,7 @@ cat %{SOURCE1001} >> .config
 cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
+cat %{SOURCE1005} >> .config
 cat %{SOURCE1666} >> .config
 
 %{__make} oldconfig
