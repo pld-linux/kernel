@@ -20,7 +20,7 @@
 %define		lvm_version		1.0.5
 %define		evms_version		1.2.0
 %define		ntfs_version		2.1.0a
-%define		drm_xfree_version	4.2.99
+%define		drm_xfree_version	4.3.0
 %define		hostap_version		2002-10-12
 %define		netfilter_snap		20030306
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -46,7 +46,7 @@ Source6:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_
 # Source6-md5: bf0b7cb5f32916f95b00753d24bd689a
 Source7:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
 # Source7-md5:	93828aea31e72bc34e3188d64cf0518a
-Source8:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.bz2
+Source8:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
 # Source8-md5: c2a17dbb0259505f45e4dc0ead39709c
 Source9:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
 # Source9-md5: 4d5dd3fef2f5537ee07e64cdd1378e80
