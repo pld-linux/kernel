@@ -1222,6 +1222,7 @@ fi
 %files source
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Documentation
+%{_prefix}/src/linux-%{version}/abi
 %{_prefix}/src/linux-%{version}/arch
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
@@ -1229,6 +1230,7 @@ fi
 %{_prefix}/src/linux-%{version}/i8255
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
+%{_prefix}/src/linux-%{version}/kdb
 %{_prefix}/src/linux-%{version}/kernel
 %{_prefix}/src/linux-%{version}/lib
 %{_prefix}/src/linux-%{version}/mm
