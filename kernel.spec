@@ -11,13 +11,15 @@
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
 
+#%define		_without_lsm	1
+
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.5.69
-Release:	0.2
+Version:	2.5.70
+Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
@@ -33,10 +35,9 @@ Source21:	%{name}-ia32-smp.config
 #Source73:	%{name}-ppc.config
 #Source74:	%{name}-ppc-smp.config
 Patch0:		http://piorun.ds.pg.gda.pl/~blues/linux-2.5.67-genrtc_fix.patch
-Patch1:		http://www.kernel.org/pub/linux/kernel/people/alan/linux-2.5/2.5.69/patch-2.5.69-ac1.bz2
-#Patch2:		http://www.kernel.org/pub/linux/kernel/v2.5/snapshots/patch-2.5.69-bk2.bz2
+#Patch1:		http://www.kernel.org/pub/linux/kernel/v2.5/snapshots/patch-2.5.69-bk19.bz2
 # LSM/SELinux
-Patch10:	http://www.nsa.gov/selinux/lk/2.5.69-selinux1.patch.gz
+#Patch10:	lsm-2.5-20030527.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -262,9 +263,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %prep
 %setup -q -n linux-%{version}
 %patch0 -p0
-%patch1 -p1
-#%patch2 -p1
-%{!?_without_lsm:%patch10 -p1}
+#%patch1 -p1
+#%{!?_without_lsm:%patch10 -p1}
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -471,11 +471,11 @@ ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
 %endif
 
 %if %{?_without_lsm:0}%{!?_without_lsm:1}
-#install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/{linux,asm-i386}/flask
+install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/{linux,asm-i386}/flask
 install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/flask
-#install security/lids/include/linux/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
+install security/lids/include/linux/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 install security/selinux/include/linux/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/flask
-#install security/selinux/include/asm-i386/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/asm-i386/flask
+install security/selinux/include/asm-i386/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/asm-i386/flask
 %endif			# _without_selinux
 
 %{__make} include/linux/version.h
@@ -635,7 +635,7 @@ fi
 %if %{?_without_up:0}%{!?_without_up:1}
 %files
 %defattr(644,root,root,755)
-%ifarch alpha sparc ppc
+%ifarch alpha sparc sparc64 ppc
 /boot/vmlinux-%{version}-%{release}
 %endif
 /boot/vmlinuz-%{version}-%{release}
@@ -664,7 +664,7 @@ fi
 %if %{?_without_smp:0}%{!?_without_smp:1}
 %files smp
 %defattr(644,root,root,755)
-%ifarch alpha sparc ppc
+%ifarch alpha sparc sparc64 ppc
 /boot/vmlinux-%{version}-%{release}smp
 %endif
 /boot/vmlinuz-%{version}-%{release}smp
@@ -693,7 +693,7 @@ fi
 %ifnarch i586 i686 athlon 		# narch
 %files BOOT
 %defattr(644,root,root,755)
-%ifarch alpha sparc ppc		# arch
+%ifarch alpha sparc sparc64 ppc		# arch
 %{_libdir}/bootdisk/boot/vmlinux-%{version}-%{release}BOOT
 %endif				#arch
 %{_libdir}/bootdisk/boot/vmlinuz-%{version}-%{release}BOOT
