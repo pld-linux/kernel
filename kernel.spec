@@ -41,8 +41,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.13
-%define		_cset		20040422_2313
+%define		_rel		0.14
+%define		_cset		20040423_1410
 
 ## netfilter snap 
 %define		_netfilter_snap		20040419
@@ -176,6 +176,8 @@ Patch102:	2.6.5-rc3-EXPORT_SYMBOL.patch
 Patch104:	2.6.5-i386-cmpxchg.patch
 
 Patch106:	2.6.4-wrr.patch
+
+Patch108:	2.6.6-ALPS-touchpad-driver.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -593,6 +595,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %endif
 
 %patch106 -p1
+
+%patch108 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
