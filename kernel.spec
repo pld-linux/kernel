@@ -32,7 +32,7 @@
 
 %define		_rel		1
 %define		_test_ver	11
-%define		_cset		20031216_0608
+%define		_cset		20031217_0407
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -537,7 +537,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 ##%%patch75 -p1
 #%%patch76 -p1
 
-#%%patch78 -p1
+%patch78 -p1
 
 %patch80 -p1
 %patch81 -p1
