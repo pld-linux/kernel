@@ -6,7 +6,9 @@
 %define		wlan_version		0.3.4
 %define		tun_version		1.1
 %define         vlan_version            1.0.1
+%define		aic7xxx_version		6.2.3-2.2.19
 %define		symncr_version		1.7.3c-ncr-3.4.3b
+%define		sym2_version		2.1.15-20010930
 %define		jfs_version		1.0.5
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -14,7 +16,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.19
-Release:	22
+Release:	23
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -32,6 +34,7 @@ Source9:	serial-5.05.tar.gz
 Source10:	http://vtun.sourceforge.net/tun/tun-%{tun_version}.tar.gz
 Source13:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
 Source14:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.2-%{jfs_version}-patch.tar.gz
+Source15:	ftp://ftp.tux.org/tux/roudier/drivers/portable/sym-2.1.x/sym-%{sym2_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -74,7 +77,7 @@ Patch20:	%{name}-wanrouter-bridge.patch
 Patch21:	%{name}-ipsec-bridge.patch
 Patch22:	%{name}-bridge-extraversion.patch
 Patch23:	%{name}-panaview_kbd.patch
-Patch24:	http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-6.2.3-2.2.19.patch.gz
+Patch24:	http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
 Patch25:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.2.20pre/pre-patch-2.2.20-1.bz2
 Patch26:	linux-2.2.19-pci.patch
 Patch27:	%{name}-flip.patch
@@ -88,7 +91,7 @@ Patch35:	%{name}-sym53c8xx.patch
 Patch36:	ip_masq_irc-2.2.19-dcc_check-3.diff
 Patch37:	%{name}-udf.patch
 Patch38:	jfs-%{version}-v%{jfs_version}-patch
-Patch39:	pcmcia-cs-3.1.29-smp-compilation-fix.patch
+Patch39:	pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
 Patch40:	kernel-2.2.19-ide_sparc32.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -355,7 +358,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -a13 -a14 -n linux
+%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -a13 -a14 -a15 -n linux
 
 %patch0 -p1
 %patch1 -p1
@@ -399,10 +402,11 @@ cd vlan.%{vlan_version}
 %patch33 -p1
 cd ..
 patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
+
 %patch31 -p1
 %patch32 -p1
 
-cd  serial-5.05
+cd serial-5.05
 %patch28 -p1
 %patch29 -p1
 ./install-in-kernel ../
@@ -413,15 +417,18 @@ mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
 mv DAC960.[ch] drivers/block
 
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
-# Tekram DC395/315 U/UW SCSI host driver
 
-#patch -p1 -s <dc395/dc395-integ22.diff
+# Tekram DC395/315 U/UW SCSI host driver
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # move symbios drivers to proper place
 mv sym-%{symncr_version}/*.{c,h} drivers/scsi
 mv sym-%{symncr_version}/{README,ChangeLog}.* Documentation
 rm -rf sym-%{symncr_version}
+
+# SYM-2
+(cd Linux/Installation ; sh InstallScript ../.. )
+rm -rf Common FreeBSD Linux NetBSD MakePatches MakeTar README-sym-2
 
 %patch34 -p1
 %patch35 -p1
@@ -685,6 +692,10 @@ tar zxf %{SOURCE6}
 mv sym-%{symncr_version}/*.{c,h} $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi
 mv sym-%{symncr_version}/{README,ChangeLog}.* $RPM_BUILD_ROOT/usr/src/linux-%{version}/Documentation
 rm -rf sym-%{symncr_version}
+
+tar zxf %{SOURCE15}
+(cd Linux/Installation ; sh InstallScript $RPM_BUILD_ROOT/usr/src/linux-%{version} ) 
+rm -rf Common FreeBSD Linux NetBSD MakePatches MakeTar README-sym-2
 
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH34}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH35}
