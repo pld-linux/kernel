@@ -889,7 +889,9 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko
 #drm stuff
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
-
+#sound stuff
+%exclude /lib/modules/%{version}-%{release}/kernel/sound
+ 
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
 
@@ -926,6 +928,9 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko
 #drm stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
+#sound stuff
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/oss
+
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
 
