@@ -26,7 +26,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	1.8%{?_with_preemptive:_pr}
+Release:	1.9%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -36,8 +36,7 @@ Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
-#Source5:	linux-2.4.19-netfilter-20020808.tar.gz
-Source5:	linux-2.4.19-netfilter-20020825.tar.gz
+Source5:	linux-2.4.19-netfilter-20020923.tar.gz
 #Source6:	
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
@@ -73,7 +72,7 @@ Patch1:		patch-int-2.4.18.3.bz2
 Patch2:		linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
 Patch3:		http://people.redhat.com/mingo/O(1)-scheduler/sched-2.4.19-rc2-A4
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
-Patch4:		linux-2.4.19-xfs-20020812.patch.gz
+Patch4:		linux-2.4.19-xfs-20020923.patch.gz
 # Homepage of ABI:	http://linux-abi.sourceforge.net/
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2 
 Patch5:		linux-abi-2.4.19.0.patch.bz2
@@ -169,7 +168,6 @@ Patch902:	linux-drm-%{drm_xfree_version}-force-cmpxchg.patch
 Patch903:	linux-drm-2.4.19-mm.patch
 Patch904:	linux-abi-put_user.patch
 Patch905:	linux-abi-fl_ibcs_to_linux.patch
-Patch906:	linux-2.4.19-iptables-1.2.7a-netfilter.patch
 Patch907:	PPC-grsecurity-pgtable.h.patch
 Patch908:	linux-2.4.19-PPC-o1_scheduler.patch
 Patch909:	linux-2.4.19-PPC-agpgart_be.patch
@@ -507,7 +505,6 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # Netfilter
 (KERNEL_DIR=`pwd` ; export KERNEL_DIR ; cd netfilter-patch-o-matic ; ./runme --batch userspace)
-%patch906 -p1
 
 # IP personality
 #echo Adding IP Personality 
