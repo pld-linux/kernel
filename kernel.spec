@@ -16,7 +16,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	12
+Release:	13
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -57,19 +57,10 @@ Patch5:		linux-2.2.18-freeswan-%{freeswan_version}.patch
 Patch6:		wanrouter-v2215.patch.gz
 Patch7:		linux-ipv6-addrconf.patch
 # based on http://support.3com.com/infodeli/tools/nic/linux/3c90x-1.0.0i.tar.gz
-Patch8:		%{name}-3c90x.patch
 Patch9:		linux-ipv6-glibc2.2.patch
 # based on http://bridge.sourceforge.net/patches/bridge-1.0.2-against-2.2.20.diff
 Patch10:	bridge-1.0.2-against-2.2.20.diff
 Patch11:	bridge-ipchains-against-1.0.2-against-2.2.20.diff
-Patch12:	2.2.21-pre2_VIA.patch
-Patch13:	2.2.21-pre2_ati.patch
-Patch14:	2.2.21-pre2_doc_and_maintainers.patch
-Patch15:	2.2.21-pre2_zImage.patch
-Patch16:	2.2.21-pre2_page_alloc_race_fix.patch
-Patch17:	2.2.21-pre2_sym53x8xx.patch
-Patch18:	2.2.21-pre2_8139too_tune.patch
-Patch19:	2.2.21-pre2_menuconfig_fix.patch
 Patch20:	http://download.sourceforge.net/linux1394/ieee1394-2.2.19-20010527.gz
 Patch21:	linux-tasks.patch
 Patch22:	%{name}-ipvs-1.0.8-2.2.19.patch
@@ -80,7 +71,7 @@ Patch26:	%{name}-sysctl-ipv6.patch
 Patch27:	%{name}-udf.patch
 # based on	http://people.redhat.com/mingo/raid-patches/raid-2.2.20-A0
 Patch28:	raid-2.2.20-A0.patch.bz2
-Patch29:	http://www.ans.pl/ide/ide.2.2.21.01152002-Ole.patch.gz
+Patch29:	ide.2.2.21.01152002-Ole.patch.gz
 Patch30:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
 Patch31:	%{name}-flip.patch
 Patch33:	%{name}-ipsec-bridge.patch
@@ -103,9 +94,12 @@ Patch102:	htb2_2.2.17.diff
 Patch104:	dpt_i2o-2.2.19.diff
 Patch105:	linux-2.2.19-bttv-%{bttv_version}.patch.bz2
 Patch106:	linux-2.2.20-undo-ioport.h.patch.bz2
-Patch107:	linux-2.2.20-icn-unresolved.patch.bz2
 Patch108:	linux-2.2.20-agp_backport.patch.bz2
 Patch109:	dc395-MAINTAINERS.patch
+
+Patch300:	patch-2.2.21-pre3.bz2
+Patch320:	fix-prename.patch
+Patch321:	ow1-fix-2.2.21-pre1.patch
 
 Patch1500:	linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	%{name}-sparc-zs.h.patch
@@ -337,6 +331,9 @@ do twojego sprzêtu.
 %prep
 %setup -q -a3 -a4 -a5 -a6 -a7 -a9 -a10 -a11 -a13 -n linux
 
+%patch300 -p1
+%patch320 -p1
+
 %patch0 -p1
 %patch1 -p0
 # disable aic7xxx patch on sparc (this must be reported to aic7xxx driver maintainer)
@@ -348,19 +345,9 @@ do twojego sprzêtu.
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
-%patch8 -p1
 %patch9 -p1
 %patch10 -p1
 %patch11 -p1
-%patch12 -p1
-%patch13 -p1
-%patch14 -p1
-%patch15 -p1
-# need testing
-#%patch16 -p1
-%patch17 -p1
-%patch18 -p1
-%patch19 -p1
 %patch20 -p1
 %patch21 -p1
 %patch22 -p1
@@ -412,6 +399,7 @@ cd ..
 %endif
 
 # 2.2.20ow1
+%patch321 -p1
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 
 # symbios drivers
@@ -430,7 +418,6 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch101 -p1
 %patch102 -p1
 %patch104 -p1
-%patch107 -p1
 %patch108 -p1
 %patch1500 -p1
 %patch1501 -p1
@@ -641,6 +628,9 @@ ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
+bzip2 -dc %{PATCH300} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH320}
+
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH0}
 %ifnarch sparc sparc64
 gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
@@ -650,17 +640,9 @@ gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH5}
 gzip -dc %{PATCH6} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH7}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH8}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH9}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH10}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH11}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH12}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH13}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH14}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH15}
-#patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH16}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH17}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH18}
 gzip -dc %{PATCH20} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH21}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH22}
@@ -716,6 +698,7 @@ bzip2 -dc %{PATCH106} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ve
 
 # 2.2.20ow
 gzip -dc %{SOURCE3} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH321}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/linux-%{ow_version}/linux-%{ow_version}.diff
 rm -rf $RPM_BUILD_ROOT/usr/src/linux-%{version}/linux-%{ow_version}/
 
@@ -743,7 +726,6 @@ rm $RPM_BUILD_ROOT/usr/src/linux-%{version}/jfs-*
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH102}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH104}
-bzip2 -dc %{PATCH107} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 bzip2 -dc %{PATCH108} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1500}
