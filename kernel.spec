@@ -673,18 +673,20 @@ fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
 
-%post BOOT
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
-ln -sf vmlinuz-%{version}-%{release}BOOT /boot/vmlinuz
-ln -sf System.map-%{version}-%{release}BOOT /boot/System.map
-
-if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
-	/sbin/lilo 1>&2 || :
-fi
-
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release}BOOT /lib/modules/%{version}
+## commented out by klakier:
+## DO NOT TOUCH BOOTRECORD OF MY SYSTEM !!!
+#%post BOOT
+#mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
+#mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+#ln -sf vmlinuz-%{version}-%{release}BOOT /boot/vmlinuz
+#ln -sf System.map-%{version}-%{release}BOOT /boot/System.map
+#
+#if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
+#	/sbin/lilo 1>&2 || :
+#fi
+#
+#rm -f /lib/modules/%{version}
+#ln -snf %{version}-%{release}BOOT /lib/modules/%{version}
 
 %postun
 if [ -L /lib/modules/%{version} ]; then 
