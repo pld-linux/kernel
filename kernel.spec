@@ -85,7 +85,7 @@ Patch3:		linux-2.4.20-core-xfs-1.2pre3.patch.bz2
 Patch4:		linux-2.4.20-xfs-1.2pre3.patch.bz2
 # Homepage of ABI:	http://linux-abi.sourceforge.net/
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.18.0.patch.bz2 
-Patch5:		linux-abi-2.4.19.1.patch.bz2
+Patch5:		linux-abi-2.4.20.0.patch.bz2
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
 Patch6:		grsecurity-%{grsec_version}.patch.gz
 # Preemptive kernel  patch
@@ -476,11 +476,11 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 #%patch908 -p1
 %endif
 %patch3 -p1
-exit 0
 %patch4 -p1
 %patch5 -p1
 %patch904 -p1
 %{!?_without_grsec:%patch6 -p1}
+exit 1
 %ifarch ppc
 %patch907 -p1
 %endif
@@ -488,6 +488,7 @@ exit 0
 %{?_with_preemptive:%patch8 -p1}
 #%patch9 -p1
 #%patch10 -p1
+exit 1
 %patch11 -p1
 %patch12 -p1
 %patch13 -p1
