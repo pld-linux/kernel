@@ -1,0 +1,70 @@
+No wiêc sytuacja wygl±da tak:
+
+Minimalne j±dro, które nale¿y posiadaæ by móc przej¶æ na glibce2.2
+to 2.2.17. Radzê nie próbowaæ ze starszymi bo mo¿e takiego delikwenta
+spotkaæ niespodzianka typu:
+
+[misiek@ikar misiek]$ ./glibc22-jajco22test (statycznie linkowany)
+FATAL: kernel too old
+Przerwane
+[misiek@ikar misiek]$ uname -r
+2.2.16
+
+Je¶li chodzi o kwestie zwi±zane z IPv6 to minimalna wersja oficjalne
+supportowanego jaja to:
+
+2.2.x	- dla glibców 2.1.x
+2.3.99	- dla glibców 2.2
+
+Osoby, które chc± u¿ywaæ jaja 2.2.x i glibców 2.2 maj± dwa wyj¶cia:
+a) zapomnieæ o IPv6 i *wogóle nie kompilowaæ go w jajo ani modu³*.
+   Wtedy bêdzie wszystko bezproblemowo chodzi³o.
+b) nadal u¿ywaæ IPv6 po uwcze¶niejszym zapatchowaniu jaja poni¿szym
+   patchem (który wkrótce trafi do dystrybucyjnego kernela 2.2.x)
+   
+diff -urN linux-2.2.x.org/include/linux/in6.h linux-2.2.x/include/linux/in6.h
+--- linux-2.2.x.org/include/linux/in6.h	Fri Nov 17 18:21:58 2000
++++ linux-2.2.x/include/linux/in6.h	Fri Nov 17 18:22:26 2000
+@@ -56,6 +56,7 @@
+ 	__u16			sin6_port;      /* Transport layer port # */
+ 	__u32			sin6_flowinfo;  /* IPv6 flow information */
+ 	struct in6_addr		sin6_addr;      /* IPv6 address */
++	__u32			sin6_scope_id;	/* scope id (new in RFC2553) */
+ };
+
+(wszystko po to, ¿eby rozmiar strucktury sockaddr_in6 w j±drze linuksa
+ == rozmiarowi struktury sockaddr_in6 w glibcach 2.2).
+
+Tak zapatchowane jajo powinno bez problemów dzia³aæ równie¿ na glibcach 2.1.x
+ale nie testowa³em tego jako, ¿e ani nie u¿ywam jaj 2.2.x ani glibców 2.1.x :>
+
+Powy¿szy patch pozwoli unikn±æ k³opotów typu:
+sshd:  fatal: get_sock_port: getnameinfo NI_NUMERICSERV failed
+
+Jakie¶ pytania/uwagi ?
+
+ps. kloczek/baggins -- wrzuæcie tego patcha do dystrybucyjnego jaja
+    jak bêdziecie co¶ w nim grzebaæ.
+    
+ps2. w attachu znajduje siê ma³y, badziwewny programik do sprawdzania
+czy jajo bêdzie dzia³a³o ok z glibcami 2.2 i IPv6. Wywo³uje siê go
+z adresem ipv6 maszyny, na której dzia³a byle jakie sshd (mo¿e siê
+³±czyæ z dowoln± inna us³ug± ipv6 -- to nie ma znaczenia -- trzeba tylko
+w ¼róde³ku port zmieniæ):
+
+[misiek@arm 3]$ ./glibc22-jajco22test ::1
+Resolving ... ::1
+Socket: 3
+Size1: 128
+Size2: 28
+Size3: 28
+Size4: 28
+Konekszyn z ipv6-localhost [::1]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ To oraz te same warto¶ci przy size2, size3 i size4
+                                 oznacza, ¿e jajo jest ok.
+[misiek@arm 3]$
+
+
+-- 
+Arkadiusz Mi¶kiewicz, AM2-6BONE    [ PLD GNU/Linux IPv6 ]
+http://www.t17.ds.pwr.wroc.pl/~misiek/ipv6/   [ enabled ]
