@@ -107,6 +107,7 @@ Source80:	%{name}-netfilter.config
 Source90:	%{name}-grsec.config
 Source91:	%{name}-grsec+pax.config
 Source92:	%{name}-vserver.config
+Source93:	%{name}-iriverfs.config
 
 #Patch0:		2.6.0-ksyms-add.patch
 #Patch1:		linux-2.6-alsa-1.0.8-silent-output.patch
@@ -190,7 +191,7 @@ Patch200:	grsecurity-2.1.3-2.6.11-200503091157.patch
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
 Patch250:	linux-2.6-vs.patch
 
-#Patch260:	http://dl.sourceforge.net/sourceforge/ifp-driver/iriverfs-r0.1.0.1.patch.gz
+Patch260:	http://dl.sourceforge.net/sourceforge/ifp-driver/iriverfs-r0.1.0.1.patch.gz
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -584,6 +585,8 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 #%patch110 -p1
 
+%patch260 -p1
+
 # <bconded_patches>
 
 #grsec
@@ -684,6 +687,8 @@ BuildConfig (){
 %endif
 #	vserver
 	cat %{SOURCE92} >> arch/%{_target_base_arch}/defconfig
+#	iriverfs
+	cat %{SOURCE93} >> arch/%{_target_base_arch}/defconfig
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
