@@ -1,5 +1,6 @@
 #%define		ow_version	2.2.17-ow1
 %define		pcmcia_version	3.1.23
+%define		reiserfs_version	3.6.24
 #%define		freeswan_version	1.5
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -41,8 +42,9 @@ Source33:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_versio
 # NFS server patches
 #Source40:	http://download.sourceforge.net/nfs/dhiggen_merge-4.1.tar.gz
 Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.1.gz
-Patch1:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac2.bz2
+Patch100:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac2.bz2
 #Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.17-reiserfs-3.5.25-patch.gz
+Patch1:		ftp://ftp.reiserfs.org/pub/2.4/linux-${version}-reiserfs-%{reiserfs_version}-patch.gz
 #Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
 #Patch3:		linux-tasks.patch
 # patch based on http://www.redhat.com/~mingo/raid-patches/
@@ -269,6 +271,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %setup -q -a31 -a33 -n linux
 #%setup -q -a30 -a31 -a33 -n linux
 %patch0 -p1
+%patch100 -p1
 %patch1 -p1
 #%patch20 -p1
 #%patch1 -p1
@@ -293,8 +296,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 #patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 # Tekram DC395/315 U/UW SCSI host driver
-patch -p1 -s <dc395/dc395-integ22.diff
-install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
+#patch -p1 -s <dc395/dc395-integ22.diff
+#install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 #zcat %{SOURCE34} > drivers/net/3c59x.c
 
 #patch21 -p1
