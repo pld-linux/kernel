@@ -49,8 +49,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.2
-%define		_cset		20040712_1813
+%define		_rel		0.3
+%define		_cset		20040716_1706
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -115,7 +115,7 @@ Patch12:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch13:	2.6.2-Initio9100U-Kconfig.patch
 # http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
 Patch14:	2.6.1-all-in-1.patch
-Patch15:	2.6.3-sparc32-fix.patch
+
 Patch16:	linux-alpha-isa.patch
 Patch17:	2.6.4-psion-5mx.patch
 Patch18:	2.6.5-sparc64-missing-include.patch
@@ -129,7 +129,7 @@ Patch25:	2.6.7-alpha_compile.patch
 Patch26:	2.6.7-ppc-asm-defs.patch
 Patch27:	2.6.7-ppc-cciss-div.patch
 Patch28:	2.6.7-ppc-ipr-div.patch
-Patch29:	2.6.8-lkml-saa7146-memory-variable.patch
+
 Patch30:	2.6.x-ppp_mppe.patch
 Patch31:	2.6.x-SGI_VW-fbdev-lkml.patch
 Patch32:	2.6.x-TGA-fbdev-lkml.patch
@@ -560,7 +560,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch12 -p1
 %patch13 -p1
 %patch14 -p1
-%patch15 -p1
+
 %patch16 -p1
 %patch17 -p1
 %patch18 -p1
@@ -576,7 +576,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch26 -p1
 %patch27 -p1
 %patch28 -p1
-%patch29 -p1
+
 #patch30 -p1
 %patch31 -p1
 %patch32 -p1
