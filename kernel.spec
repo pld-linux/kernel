@@ -83,14 +83,13 @@ Patch34:	%{name}-wanrouter-bridge.patch
 Patch35:	linux-netdrivers_vlan.patch
 Patch36:	atm-unresolved.patch
 Patch38:	linux-2.2.20-pcmcia-without-iee1394.patch.bz2
-# based on ftp://ftp.kernel.org/people/andrea/kernels/v2.2/2.2.20pre9aa2/40_lfs-2.2.20pre9aa2-27.bz2
-Patch39:	linux-2.2.20-lfs.patch
 Patch40:	2.2.21-pre2_Makefile.patch
 Patch41:	%{name}-serial-initialisation.patch
 Patch42:	%{name}-flip-serial5.05.patch
 Patch43:	%{name}-vlan_bridge.patch
 Patch44:	tulip-patch-0.91.patch.bz2
 Patch100:	jfs-2.2.20-v%{jfs_version}-patch
+
 Patch101:	linux-atm.patch
 # HTB from http://luxik.cdi.cz/~devik/qos/htb/
 Patch102:	htb2_2.2.17.diff
@@ -105,6 +104,8 @@ Patch110:	linux-2.2.20-rivafb.patch.bz2
 Patch112:	linux-2.2.20-pcilynx_unresolved.patch
 Patch114:	ide-2.2.21-ide.c-ide-cd.c_license.patch
 Patch115:	ide-2.2.21-printk.patch
+# based on ftp://ftp.kernel.org/people/andrea/kernels/v2.2/2.2.20pre9aa2/40_lfs-2.2.20pre9aa2-27.bz2
+Patch116:	linux-2.2.20-lfs.patch
 
 Patch300:	patch-2.2.21-rc3.gz
 Patch320:	fix-prename.patch
@@ -380,9 +381,6 @@ do twojego sprzêtu.
 %patch35 -p1
 %patch36 -p1
 %patch38 -p1
-%ifarch ppc
-%patch39 -p1
-%endif
 %patch40 -p1
 %patch44 -p1
 
@@ -445,6 +443,9 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch112 -p1
 %patch114 -p1
 %patch115 -p1
+%ifarch ppc
+%patch116 -p1
+%endif
 
 %ifarch sparc sparc64
 %patch1500 -p1
@@ -698,9 +699,6 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH33}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH34}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH35}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH36}
-%ifarch ppc
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH39}
-%endif
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH40}
 bzip2 -dc %{PATCH44} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
@@ -775,6 +773,10 @@ bzip2 -dc %{PATCH110} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ve
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH112}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH114}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH115}
+%ifarch ppc
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH116}
+%endif
+
 %ifarch sparc sparc64
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1500}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1501}
