@@ -55,8 +55,8 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.25
-%define		_cset		20050209_2206
+%define		_rel		0.26
+%define		_cset		20050213_2006
 %define		_apply_cset	0
 
 %define		_netfilter_snap		20041118
@@ -79,9 +79,9 @@ Epoch:		3
 License:	GPL
 Group:		Base/Kernel
 #%define		_rc	%{nil}
-%define		_rc	-rc3
+%define		_rc	-rc4
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	80ccdb76ee74e839517e74827e8bef93
+# Source0-md5:	b8f4b46ea738de4fe38147bbf3b2a286
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 
@@ -110,7 +110,7 @@ Source91:	%{name}-grsec+pax.config
 Source92:	%{name}-vserver.config
 
 #Patch0:		2.6.0-ksyms-add.patch
-Patch1:		linux-2.6-alsa-1.0.8-silent-output.patch
+#Patch1:		linux-2.6-alsa-1.0.8-silent-output.patch
 #Patch2:		2.6.0-t6-usb-irq.patch
 #Patch3:		2.6.0-t7-memleak-lkml.patch
 #Patch4:		2.6.0-t7-memleak2-lkml.patch
@@ -517,7 +517,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %endif
 
 #%patch0 -p1
-%patch1 -p1
+#%patch1 -p1
 #%patch2 -p1
 #%patch3 -p1
 #%patch4 -p1
