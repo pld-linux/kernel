@@ -412,6 +412,7 @@ ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
 BuildRequires:	bin86
 %endif
+BuildRequires:	module-init-tools
 Conflicts:	iptables < 1.2.7a
 Conflicts:	lvm < 1.0.7
 Conflicts:	xfsprogs < 2.0.0
