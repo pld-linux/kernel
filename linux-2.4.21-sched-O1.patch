@@ -1195,6 +1195,18 @@ diff -urN linux-2.4.20/arch/sparc64/kernel/process.c linux-2.4.20-o1/arch/sparc6
  	while(1) {
  		if (current->need_resched != 0) {
  			unidle_me();
+diff -urN linux-2.4.20/arch/sparc64/kernel/rtrap.S linux-2.4.20-o1/arch/sparc64/kernel/rtrap.S
+--- linux-2.4.20/arch/sparc64/kernel/rtrap.S	2003-08-16 04:07:49.000000000 +0200
++++ linux-2.4.20-o1/arch/sparc64/kernel/rtrap.S	2003-08-16 04:08:38.000000000 +0200
+@@ -140,7 +140,7 @@
+ 		.align			64
+ 		.globl			rtrap_clr_l6, rtrap, irqsz_patchme, rtrap_xcall
+ rtrap_clr_l6:	clr			%l6
+-rtrap:		lduw			[%g6 + AOFF_task_processor], %l0
++rtrap:		lduw			[%g6 + AOFF_task_cpu], %l0
+ 		sethi			%hi(irq_stat), %l2	! &softirq_active
+ 		or			%l2, %lo(irq_stat), %l2	! &softirq_active
+ irqsz_patchme:	sllx			%l0, 0, %l0
 diff -urN linux-2.4.20/arch/sparc64/kernel/smp.c linux-2.4.20-o1/arch/sparc64/kernel/smp.c
 --- linux-2.4.20/arch/sparc64/kernel/smp.c	Fri Nov 29 00:53:12 2002
 +++ linux-2.4.20-o1/arch/sparc64/kernel/smp.c	Wed Mar 12 00:41:43 2003
@@ -1335,6 +1347,18 @@ diff -urN linux-2.4.20/arch/sparc64/kernel/smp.c linux-2.4.20-o1/arch/sparc64/ke
  }
  
  static inline unsigned long find_flush_base(unsigned long size)
+diff -urN linux-2.4.20/arch/sparc64/kernel/trampoline.S linux-2.4.20-o1/arch/sparc64/kernel/trampoline.S
+--- linux-2.4.20/arch/sparc64/kernel/trampoline.S	2003-08-16 04:07:57.000000000 +0200
++++ linux-2.4.20-o1/arch/sparc64/kernel/trampoline.S	2003-08-16 04:08:56.000000000 +0200
+@@ -250,7 +250,7 @@
+ 	wrpr		%o1, PSTATE_IG, %pstate
+ 
+ 	/* Get our UPA MID. */
+-	lduw		[%o2 + AOFF_task_processor], %g1
++	lduw		[%o2 + AOFF_task_cpu], %g1
+ 	sethi		%hi(cpu_data), %g5
+ 	or		%g5, %lo(cpu_data), %g5
+ 
 diff -urN linux-2.4.20/arch/sparc64/kernel/traps.c linux-2.4.20-o1/arch/sparc64/kernel/traps.c
 --- linux-2.4.20/arch/sparc64/kernel/traps.c	Fri Nov 29 00:53:12 2002
 +++ linux-2.4.20-o1/arch/sparc64/kernel/traps.c	Wed Mar 12 00:41:43 2003
