@@ -131,8 +131,9 @@ Patch161:	atm-13-atm_vcc-cleanup.patch
 Patch190:	atm-20-fore200e-gettimeofday.patch
 # http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # http://christophe.lizzi.free.fr/linux/linux-2.4.0-test9-fore200e-0.3.tar.gz
-#Patch191:	atm-21-fore200e-0.2f.patch
-Patch191:	atm-21-fore200e-0.3.patch
+Patch191:	atm-21-fore200e-0.2f.patch
+# Oopses on me - baggins
+#Patch191:	atm-21-fore200e-0.3.patch
 
 # New devices/drivers
 
@@ -276,6 +277,7 @@ Patch1413:	linux-2.4.20-andrea-fix-pausing.patch
 Patch1414:	linux-2.4.20-oopsmeharder.patch
 Patch1415:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch1416:	linux-2.4.20-no-FPU.patch
+Patch1417:	linux-2.4.20-initrd-close-console.patch
 
 Patch2000:	linux-PPC-SMP.patch
 Patch2001:	linux-2.4-ppc-procesor.patch
@@ -692,6 +694,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1414 -p1
 %patch1415 -p0
 %patch1416 -p1
+%patch1417 -p1
 
 %patch2000 -p0
 %patch2001 -p1
