@@ -98,7 +98,7 @@ Patch2:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.tx
 %endif
 
 # from http://dl.sf.net/sourceforge/squashfs/
-Patch4:		squashfs1.3r3-patch
+Patch4:		squashfs2.0-patch
 
 Patch6:		2.6.0-t4-PPC-ENODEV.patch
 
