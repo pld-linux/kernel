@@ -65,7 +65,9 @@ BuildRequires:	egcs
 %ifarch sparc
 BuildRequires:	sparc32
 %endif
+%ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
+%endif
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
 Autoreqprov:	no
@@ -105,7 +107,9 @@ Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeu
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
+%ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
+%endif
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
 Prereq:		modutils
@@ -134,7 +138,9 @@ Summary(fr):	Kernel version %{version} avec framebuffer
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
+%ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
+%endif
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
 Prereq:		modutils
@@ -159,7 +165,9 @@ Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeu
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
+%ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
+%endif
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
 Prereq:		modutils
@@ -218,7 +226,9 @@ Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
+%ifarch %{x86}
 Provides:	%{name}-headers(reiserfs) = %{version}
+%endif
 Provides:	%{name}-headers(ipvs) = %{version}
 Provides:	%{name}-headers(rawio) = %{version}
 Autoreqprov:	no
@@ -452,7 +462,7 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <dc395/dc395-integ22.di
 install dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi/
 
 # symbios drivers
-tar zxf %{SOURCE7}
+tar zxf %{SOURCE6}
 mv sym-1.7.2-ncr-3.4.2/*.{c,h} drivers/scsi
 mv sym-1.7.2-ncr-3.4.2/{README,ChangeLog}.* Documentation
 rm -rf sym-1.7.2-ncr-3.4.2
@@ -610,9 +620,11 @@ fi
 /boot/vmlinuz-%{version}-%{release}
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
-/lib/modules/%{version}-%{release}/atm
+#/lib/modules/%{version}-%{release}/atm
 /lib/modules/%{version}-%{release}/block
+%ifnarch sparc sparc64
 /lib/modules/%{version}-%{release}/cdrom
+%endif
 /lib/modules/%{version}-%{release}/fs
 /lib/modules/%{version}-%{release}/ipv4
 /lib/modules/%{version}-%{release}/ipv6
@@ -620,6 +632,7 @@ fi
 /lib/modules/%{version}-%{release}/net
 /lib/modules/%{version}-%{release}/scsi
 %ifarch %{ix86} alpha
+/lib/modules/%{version}-%{release}/usb
 /lib/modules/%{version}-%{release}/video
 %endif
 %ifarch %{ix86}
@@ -634,9 +647,11 @@ fi
 /boot/vmlinuz-%{version}-%{release}smp
 /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
-/lib/modules/%{version}-%{release}smp/atm
+#/lib/modules/%{version}-%{release}smp/atm
 /lib/modules/%{version}-%{release}smp/block
+%ifnarch sparc sparc64
 /lib/modules/%{version}-%{release}smp/cdrom
+%endif
 /lib/modules/%{version}-%{release}smp/fs
 /lib/modules/%{version}-%{release}smp/ipv4
 /lib/modules/%{version}-%{release}smp/ipv6
@@ -644,6 +659,7 @@ fi
 /lib/modules/%{version}-%{release}smp/net
 /lib/modules/%{version}-%{release}smp/scsi
 %ifarch %{ix86} alpha
+/lib/modules/%{version}-%{release}smp/usb
 /lib/modules/%{version}-%{release}smp/video
 %endif
 %ifarch %{ix86}
@@ -661,7 +677,7 @@ fi
 %dir /lib/modules/%{version}-%{release}BOOT
 #/lib/modules/%{version}-%{release}BOOT/atm
 /lib/modules/%{version}-%{release}BOOT/block
-%ifnarch alpha
+%ifnarch sparc sparc64 alpha
 /lib/modules/%{version}-%{release}BOOT/cdrom
 %endif
 /lib/modules/%{version}-%{release}BOOT/fs
@@ -670,6 +686,10 @@ fi
 /lib/modules/%{version}-%{release}BOOT/misc
 /lib/modules/%{version}-%{release}BOOT/net
 /lib/modules/%{version}-%{release}BOOT/scsi
+%ifarch %{ix86} alpha
+/lib/modules/%{version}-%{release}/usb
+/lib/modules/%{version}-%{release}/video
+%endif
 %ifarch i386
 /lib/modules/%{version}-%{release}BOOT/pcmcia
 %endif
@@ -686,7 +706,7 @@ fi
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Documentation
 %{_prefix}/src/linux-%{version}/arch
-%{_prefix}/src/linux-%{version}/crypto
+#%{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
 %{_prefix}/src/linux-%{version}/init
