@@ -21,7 +21,7 @@
 %if	%{test_ver} != 0
 %define		test		test%{test_ver}
 %else
-%undefine		test
+%define		test		%{nil}
 %endif
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
