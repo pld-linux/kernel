@@ -39,7 +39,7 @@ Patch0:		http://piorun.ds.pg.gda.pl/~blues/linux-2.5.67-genrtc_fix.patch
 Patch1:		lsm-%{version}.patch.gz
 # FBDEV fixes:
 Patch2:		http://piorun.ds.pg.gda.pl/~blues/%{name}-2.5.67-radeonfb.patch
-
+Patch3:		http://phoenix.infradead.org/~jsimmons/fbdev.diff.gz
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -271,7 +271,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %setup -q -n linux-%{version}
 %patch0 -p0
 %patch1 -p1
-%patch2 -p1
+#%patch2 -p1
+%patch3 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
