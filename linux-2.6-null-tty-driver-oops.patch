@@ -1,0 +1,57 @@
+From: "Tomita, Haruo" <haruo.tomita@toshiba.co.jp>
+To: <linux-kernel@vger.kernel.org>
+
+Modules Linked in: parport_pc lp parport autofs4 i2c_dev i2c_core xxxnrpc dm_mod
+button battery ac md5 ipv6 uhci_hcd ehci_hcd e1000 floppy ext3 jbd ata_piix liba
+ta sd_mod scsi_mod
+CPU:	0
+EIP:	0060:[<021f39cd>]	Not tainted VLI
+EFLAGS:	00010216	(2.6.9-5.0.3.ELhugeme)
+EIP is at vt_ioctl+0x1d/0x17b7
+eax: 00000000 ebx: 00004b3b ecx: 00004b3b edx: 02dcea80
+esi: feed6f60 edi: feed6f60 ebp: 11145000 esp: 08b0fe88
+ds: 007b es: 007b ss: 0068
+Process gpm (pid: 2190, threadinfo=08b0f000 task=0813ab30)
+Stack:  00000001 00000000 11ed3e80 11949344 00000000 00000000 00000000 00000000
+	00000000 00000000 00000000 00000000 11145000 00000000 00000000 00000000
+	00000246 00000000 00000246 00000246 00005315 02120dbc 00000007 11145000
+Call Trace:
+[<02120dbc>] release_console_sem+0x75/0xa9
+[<021fbe9c>] con_open+0x88/0x8e
+[<021eecd0>] tty_open+0x189/0x2a0
+[<0215c132>] chrdev_open+0x171/0x187
+[<02154058>] dentry_open+0xf0/0x1a5
+[<02153f62>] filp_open+0x36/0x3c
+[<021efad4>] tty_ioctl+0x33e/0x38d
+[<0216415a>] sys_ioctl+0x211/0x253
+Code: Bad EIP value.
+
+tty->driver_data is NULL.
+
+--- a/drivers/char/vt_ioctl.c	2005-03-30 11:51:25.000000000 +0200
++++ b/drivers/char/vt_ioctl.c	2005-03-30 12:41:31.000000000 +0200
+@@ -379,7 +379,7 @@
+ 	     unsigned int cmd, unsigned long arg)
+ {
+ 	struct vt_struct *vt = (struct vt_struct *)tty->driver_data;
+-	struct vc_data *vc = vc_cons[vt->vc_num].d;
++	struct vc_data *vc;
+ 	struct console_font_op op;	/* used in multiple places here */
+ 	struct kbd_struct * kbd;
+ 	unsigned int console;
+@@ -387,7 +387,15 @@
+ 	void __user *up = (void __user *)arg;
+ 	int i, perm;
+ 	
++	acquire_console_sem();
++	if (!vt) {
++		printk(KERN_ERR "vt_ioctl: argh, driver_data is NULL !\n");
++		release_console_sem();
++		return -EINVAL;
++	}
++	vc = vc_cons[vt->vc_num].d;
+ 	console = vt->vc_num;
++	release_console_sem();
+ 
+ 	if (!vc_cons_allocated(console)) 	/* impossible? */
+ 		return -ENOIOCTLCMD;
