@@ -125,7 +125,8 @@ Patch15:	linux-2.4.20-ntfs-%{ntfs_version}.patch.bz2
 # ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
 Patch16:	linux-2.4.18-mppe.patch
 
-Patch17:	hfsplus-20011213.patch
+#from: 	http://dl.sourceforge.net/linux-hfsplus/hfsplus-patch-20020606.patch
+Patch17:	hfsplus-20020606.patch.bz2
 
 # EVMS support (http://www.sourceforge.net/projects/evms/)
 Patch18:	evms-%{evms_version}-linux-2.4.patch
