@@ -304,6 +304,9 @@ Patch750:	kernel-VLAN_3c59x-3c90x.patch
 Patch760:	kernel-2.6.8.1-memleak-cdaudio.patch
 Patch770:	mISDN-2004-11-20.patch
 
+# Bluetooth SCO alsa patch
+Patch780:	http://www.gargan.org/linux/snd-bt-sco/kernel-2.6.7-8.24-08-04.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 %ifarch sparc sparc64
@@ -835,10 +838,6 @@ zcat %{SOURCE3} | patch -p1 -s
 
 %patch714 -p1
 
-%patch760 -p1
-
-%patch770 -p1
-
 %ifarch %{ix86} amd64
 %patch720 -p1
 %endif
@@ -850,6 +849,9 @@ zcat %{SOURCE3} | patch -p1 -s
 %endif
 
 %patch750 -p1
+%patch760 -p1
+%patch770 -p1
+%patch780 -p1
 
 ## Add ALL patches before this section !!
 
