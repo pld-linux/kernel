@@ -44,7 +44,7 @@ Patch0:		patch-int-2.4.0.3.gz
 
 Patch7:		kernel-i8255-asm-fix.patch
 
-Patch101:	xmlprocfs-fix.patch
+Patch100:	xmlprocfs-fix.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -231,7 +231,7 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
 patch -p1 <ipvs-%{ipvs_version}/linux-2.4.0_kernel_ksyms_c.diff
 
 #xmlprocfs patch
-%patch101
+%patch100 -p0
 patch -p1 <xmlprocfs.patch
 
 #LIDS patch
@@ -339,9 +339,12 @@ bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/
 mv -f $RPM_BUILD_ROOT/usr/src/linux $RPM_BUILD_ROOT/usr/src/linux-%{version}
 ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
 
+gzip -dc %{SOURCE7} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{SOURCE100} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH101}
+patch -s -p0 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
+patch -s -p0 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH100}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/xmlprocfs.patch
 
 # Remove -g from drivers/atm/Makefile
 mv -f $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/atm/Makefile \
