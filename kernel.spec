@@ -623,7 +623,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 # hotfixes
 %patch300 -p1
-%patch301 -p1
+#patch301 -p1
 %patch302 -p1
 %patch303 -p1
 %patch304 -p1
