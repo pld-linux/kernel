@@ -473,24 +473,20 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %else
 %patch8 -p1
 %endif
-%ifarch%{ix86}
-	%if%{?_without_grsec:0}%{!?_without_grsec:1}
-		%if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%ifarch%{ix86}+f%{?_without_grsec:0}%{!?_without_grsec:1}+f%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %patch911 -p1
-		%endif
-	%endif
 %endif
+#%endif
+#%endif
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
 %patch9 -p1
 %patch906 -p1
 %endif
-%ifarch%{ix86}
-	%if%{?_without_grsec:0}%{!?_without_grsec:1}
-		%if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%ifarch%{ix86}+f%{?_without_grsec:0}%{!?_without_grsec:1}+f%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %patch912 -p1
-		%endif
-	%endif
 %endif
+#%endif
+#%endif
 %patch15 -p1
 %patch17 -p1
 
@@ -636,7 +632,7 @@ echo Updating VIA Southbridge
 
 %ifarch ppc
 %patch138 -p1
-%patch143 -p0
+#%patch143 -p0
 %endif
 
 %patch141 -p1
