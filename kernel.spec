@@ -410,7 +410,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch122 -p1
 %patch123 -p1
 #%patch124 -p1 exist??
-%patch125 -p1
+#%patch125 -p1
 %patch126 -p1
 
 %patch900 -p0 
