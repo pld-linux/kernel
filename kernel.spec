@@ -1156,7 +1156,7 @@ fi
 /lib/modules/%{version}-%{release}/fc4
 %endif
 /lib/modules/%{version}-%{release}/fs
-%ifnarch sparc sparc64
+%ifnarch alpha sparc sparc64
 /lib/modules/%{version}-%{release}/ieee1394
 %endif
 /lib/modules/%{version}-%{release}/ipv4
