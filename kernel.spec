@@ -43,7 +43,7 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.103
+%define		_rel		0.104
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -133,7 +133,7 @@ Patch28:	linux-2.6-sparc-ksyms.patch
 
 #Patch30:	2.6.x-ppp_mppe.patch
 # http://developer.osdl.org/shemminger/skge/
-Patch31:	linux-2.6-skge-0.5.patch
+Patch31:	linux-2.6-skge-0.4.patch
 Patch32:	2.6.x-TGA-fbdev-lkml.patch
 Patch33:	linux-kbuild-extmod.patch
 
