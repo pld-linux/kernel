@@ -9,13 +9,13 @@
 #
 %define		pre_version		pre9
 %define		lids_version		1.0.11-2.4.6
-%define		ipvs_version		0.9.2
+%define		ipvs_version		0.9.4
 %define		freeswan_version	snap2001jun14R
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.7
 %define		sym_ncr_version		sym-1.7.3-ncr-3.4.3
 %define		vlan_version		1.0.1
-%define		IPperson_version	20010703-2.4.5
+%define		IPperson_version	20010724-2.4.7
 %define		grsec_version		1.6-2.4.7
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
