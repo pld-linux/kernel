@@ -377,7 +377,7 @@ Modu³y PCMCIA-CS.
 %package pcmcia-cs-smp
 Summary:	PCMCIA-CS modules for SMP kernel
 Summary(pl):	Modu³y PCMCIA-CS dla maszyn SMP
-Group:		Base//Kernel
+Group:		Base/Kernel
 Group(pl):	Podstawowe/Kernel
 Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
 Requires:       %{name}-smp = %{version}-%{release}
