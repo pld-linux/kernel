@@ -135,7 +135,7 @@ Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch905:	netfilter-pptp-conntrack-nat-fix.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
-Patch907:	loop-hvr-2.4.16.0.patch
+Patch907:	linux-loop-hvr-2.4.16.0.patch
 Patch909:	linux-53c7,8xx-build.fix
 Patch910:	dc395-PLD.fix
 
