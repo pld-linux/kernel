@@ -48,7 +48,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.5
+%define		_rel		1.6
 %define		_cset		20040620_0609
 %define		_apply_cset	1
 
@@ -203,8 +203,8 @@ Patch84:	2.6.6-serial-fifo-lkml.patch
 Patch88:	2.6.6-qsort-updated-lkml.patch
 Patch90:	2.6.6-xfs-qsort-lkml.patch
 
-Patch94:	grsecurity-2.0-2.6.6-unofficial.patch
-#Patch94:	%{name}-grsec.patch
+#Patch94:	grsecurity-2.0-2.6.6-unofficial.patch
+Patch94:	%{name}-grsec.patch
 
 Patch96:	2.6.6-lirc_i2c.diff
 # for older glibc:
@@ -1465,7 +1465,9 @@ fi
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
+%if %{with grsec}
 %{_prefix}/src/linux-%{version}/grsecurity
+%endif
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
 %{_prefix}/src/linux-%{version}/kernel
