@@ -48,7 +48,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.32
+%define		_rel		0.33
 %define		_cset		20040806_1906
 %define		_apply_cset	1
 
@@ -120,7 +120,7 @@ Patch16:	linux-alpha-isa.patch
 Patch17:	2.6.4-psion-5mx.patch
 Patch18:	2.6.5-sparc64-missing-include.patch
 Patch19:	2.6.5-3C920b-Tornado.patch
-Patch20:	2.6.5-i386-cmpxchg.patch
+Patch20:	2.6.8-atomic.patch
 Patch21:	2.6.6-serial-fifo-lkml.patch
 Patch22:	2.6.6-qsort-updated-lkml.patch
 Patch23:	2.6.6-xfs-qsort-lkml.patch
@@ -568,9 +568,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch17 -p1
 %patch18 -p1
 %patch19 -p1
-%ifarch i386
 %patch20 -p1
-%endif
 %patch21 -p1
 %patch22 -p1
 %patch23 -p1
@@ -1352,8 +1350,8 @@ fi
 %dir %{_prefix}/src/linux-%{version}/scripts
 %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %{_prefix}/src/linux-%{version}/scripts/basic
+%{_prefix}/src/linux-%{version}/scripts/mod
 %{_prefix}/src/linux-%{version}/scripts/*.c
-%{_prefix}/src/linux-%{version}/scripts/*.h
 %{_prefix}/src/linux-%{version}/scripts/*.sh
 
 %files doc
@@ -1384,8 +1382,8 @@ fi
 %{_prefix}/src/linux-%{version}/scripts/*
 %exclude %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %exclude %{_prefix}/src/linux-%{version}/scripts/basic
+%exclude %{_prefix}/src/linux-%{version}/scripts/mod
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.c
-%exclude %{_prefix}/src/linux-%{version}/scripts/*.h
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.sh
 %{_prefix}/src/linux-%{version}/sound
 %{_prefix}/src/linux-%{version}/security
