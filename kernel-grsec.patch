@@ -3706,9 +3706,9 @@ diff -urN linux-2.6.7/arch/sparc64/kernel/itlb_base.S linux-2.6.7/arch/sparc64/k
 --- linux-2.6.7/arch/sparc64/kernel/itlb_base.S	2004-06-16 01:18:58 -0400
 +++ linux-2.6.7/arch/sparc64/kernel/itlb_base.S	2004-06-25 17:41:53 -0400
 @@ -41,7 +41,9 @@
- 	CREATE_VPTE_OFFSET2(%g4, %g6)			! Create VPTE offset
- 	ldxa		[%g3 + %g6] ASI_P, %g5		! Load VPTE
- 1:	brgez,pn	%g5, 3f				! Not valid, branch out
+ 	 sethi		%hi(_PAGE_EXEC), %g4		! Delay-slot
+ 	andcc		%g5, %g4, %g0			! Executable?
+ 	be,pn		%xcc, 3f			! Nope, branch.
 -	 nop						! Delay-slot
 +	and		%g5, _PAGE_EXEC, %g4
 +	brz,pn		%g4, 3f				! Not executable, branch out
