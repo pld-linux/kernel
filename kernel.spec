@@ -663,7 +663,7 @@ echo Added NetMos card supprot
 %patch138 -p1
 
 echo Added support for V4L2
-%patch139 -p1
+#%patch139 -p1
 
 # sysctl controll of /dev/mem
 %{!?_without_grsec:%patch921 -p1}
