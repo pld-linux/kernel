@@ -13,7 +13,7 @@
 %bcond_without source	# don't build kernel-source package
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
-%define		_rel		2
+%define		_rel		1
 %define		_test_ver	6
 %define		_cset		20031002_0604
 
@@ -59,7 +59,7 @@ Patch1:		cset-%{_cset}.txt.gz
 %endif
 
 # ftp://ftp.kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.0-test5/2.6.0-test5-mm1/broken-out
-Patch2:		acpi-irq-fixes.patch
+#Patch2:		acpi-irq-fixes.patch
 
 Patch5:		squashfs1.3-patch
 
@@ -326,7 +326,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch1 -p1
 %endif
 
-%patch2 -p1
+#%patch2 -p1
 
 #%patch4 -p1
 %patch5 -p1
