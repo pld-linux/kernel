@@ -96,13 +96,9 @@ Patch13:	2.6.0-t7-memleak2-lkml.patch
 Patch16:	2.6.0-t8-clean-mtd-lkml.patch
 Patch18:	2.6.0-t8-swap-include-lkml.patch
 
-Patch20:	2.6.4-amd64-i810_main.h.diff
-
 Patch22:	2.6.0-t8-VLSI-ix86-lkml.patch
 
 Patch24:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
-
-Patch26:	2.6.0-t8-pci_dma_sync_to_device-lkml.patch
 
 Patch28:	2.6.0-t8-umsdos-lkml.patch
 
@@ -510,13 +506,9 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch16 -p1
 %patch18 -p1
 
-%patch20 -p1
-
 %patch22 -p1
 
 %patch24 -p1
-
-%patch26 -p1
 
 %patch28 -p1
 
@@ -524,7 +516,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch32 -p1
 
-%patch36 -p1
+#%%patch36 -p1
 
 %patch38 -p1
 
@@ -542,7 +534,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch52 -p1
 
-%patch56 -p1
+#%%patch56 -p1
 
 %patch58 -p1
 
@@ -563,7 +555,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch78 -p1
 
-%patch82 -p1
+#5%patch82 -p1
 
 %patch85 -p1
 %patch86 -p1
