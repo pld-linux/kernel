@@ -11,7 +11,7 @@
 # _without_doc		- don't build documentation package
 #
 
-%define		patch_level	1
+%define		patch_level	2
 %define		_rel		5
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -202,7 +202,9 @@ Patch40:	linux-2.4.20-i810_audio.patch
 Patch41:	linux-2.4.20-afs.patch.bz2
 Patch42:	linux-2.4.20-ecc.patch
 Patch43:	linux-2.4.20-e820.patch
-#Patch44:	
+
+# from http://www.holtmann.org/linux/kernel/patch-2.4.20-mh6.gz
+Patch44:	linux-2.4.20-mh6.patch.bz2
 # from http://acl.bestbits.at/
 Patch45:	linux-2.4.20-ACL-0.8.54.patch.bz2
 Patch46:	linux-2.4.19-netmos_pci_parallel_n_serial.patch
@@ -341,6 +343,7 @@ Provides:	%{name}(netfilter) = 1.2.7a-%{netfilter_snap}
 Provides:	%{name}(grsecurity) = %{grsec_version}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
+Provides:	%{name}(freeswan)
 Provides:	%{name}(cdrw)
 Provides:	%{name}(cdmrw)
 Provides:	%{name}(hostap)
@@ -393,6 +396,7 @@ Provides:	%{name}(netfilter) = 1.2.7a-%{netfilter_snap}
 Provides:	%{name}(grsecurity) = %{grsec_version}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
+Provides:	%{name}(freeswan)
 Provides:	%{name}(cdrw)
 Provides:	%{name}(cdmrw)
 Provides:	%{name}(hostap)
@@ -518,8 +522,9 @@ Provides:	bttv = 0.7.83
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
-Provides:	%{name}(netfilter) = 1.2.7a-%{netfilter_snap}
-Provides:	%{name}(grsecurity) = %{grsec_version}
+Provides:	%{name}-headers(netfilter) = 1.2.7a-%{netfilter_snap}
+Provides:	%{name}-headers(grsecurity) = %{grsec_version}
+Provides:	%{name}-headers(freeswan)
 Provides:	%{name}(cdrw)
 Provides:	%{name}(cdmrw)
 Provides:	%{name}(hostap)
@@ -755,6 +760,9 @@ echo Fixed I810 Sound ...
 
 #usb gadget
 %patch30 -p1
+
+# USB bluesooth
+%patch44 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
