@@ -917,6 +917,11 @@ install -d $KERNEL_INSTALL_DIR
 # SMP KERNEL
 %{?with_smp:BuildKernel smp}
 
+%if ! %{with up} && ! %{with smp}
+# We need include/asm created somewhere
+make symlinks
+%endif
+
 # BOOT kernel
 %ifnarch i586 i686 athlon
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed%{_libdir}/bootdisk"
@@ -966,6 +971,34 @@ cp -a %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
 %endif
 
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+
+# remove foreign architecture files
+cd include
+mkdir _asm_keep
+%ifarch sparc sparc64
+	mv asm-sparc* _asm_keep
+%else
+	mv `readlink asm` _asm_keep
+%endif
+rm -rf asm-*
+mv _asm_keep/* .
+rmdir _asm_keep
+cd ..
+
+%if %{with source}
+MYARCH=%{_arch}
+%ifarch %{ix86}
+MYARCH=i386
+%endif
+%ifarch sparc sparc64
+MYARCH="sparc sparc64"
+%endif
+cd arch
+mv $MYARCH ..
+cd ..
+rm -rf arch/*
+mv $MYARCH arch
+%endif
 
 %if %{with source}
 %{__make} mrproper
