@@ -18,6 +18,30 @@
  		if(current->need_resched) {
 --- linux/include/asm-sparc/bitops.h.orig	Tue Aug 21 14:26:16 2001
 +++ linux/include/asm-sparc/bitops.h	Fri Jul 19 15:03:33 2002
+@@ -13,6 +13,23 @@
+ #include <asm/byteorder.h>
+ #include <asm/system.h>
+ 
++/**
++ * __ffs - find first bit in word.
++ * @word: The word to search
++ *
++ * Undefined if no bit exists, so code should check against 0 first.
++ */
++static __inline__ unsigned long __ffs(unsigned long word)
++{
++	unsigned long result = 0;
++
++	while (!(word & 1UL)) {
++		result++;
++		word >>= 1;
++	}
++	return result;
++}
++
+ #ifdef __KERNEL__
+ 
+ /*
 @@ -330,6 +400,25 @@
  }
  
@@ -44,6 +68,26 @@
  
  /**
   * ffs - find first bit set
+--- linux-2.4.19/include/asm-sparc/system.h.org	Wed Oct 31 00:08:11 2001
++++ linux-2.4.19/include/asm-sparc/system.h	Sat Nov  2 23:54:48 2002
+@@ -88,7 +88,7 @@
+  *
+  * SWITCH_ENTER and SWITH_DO_LAZY_FPU do not work yet (e.g. SMP does not work)
+  */
+-#define prepare_to_switch() do { \
++#define prepare_arch_switch(rq, next) do { \
+ 	__asm__ __volatile__( \
+ 	".globl\tflush_patch_switch\nflush_patch_switch:\n\t" \
+ 	"save %sp, -0x40, %sp; save %sp, -0x40, %sp; save %sp, -0x40, %sp\n\t" \
+@@ -96,6 +96,8 @@
+ 	"save %sp, -0x40, %sp\n\t" \
+ 	"restore; restore; restore; restore; restore; restore; restore"); \
+ } while(0)
++#define finish_arch_switch(rq, next)	do{ }while(0)
++#define task_running(rq, p)		((rq)->curr == (p))
+ 
+ 	/* Much care has gone into this code, do not touch it.
+ 	 *
 --- linux-2.4.19/include/asm-sparc/pgtable.h.org	Mon Sep 23 09:33:03 2002
 +++ linux-2.4.19/include/asm-sparc/pgtable.h	Mon Sep 23 10:23:24 2002
 @@ -118,6 +118,16 @@
