@@ -15,12 +15,12 @@
 %define		pre_version		pre1
 %define		ipvs_version		1.0.0
 %define		freeswan_version	1.95
-%define		wlan_version		0.1.12
+%define		wlan_version		0.1.13
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		IPperson_version	20010724-2.4.7
 %define		grsec_version		1.9.4-2.4.18
 %define		aic_version		6.2.3-2.4.7
-%define		jfs_version		2.4-1.0.15
+%define		jfs_version		2.4-1.0.16
 %define		lvm_version		1.0.3
 %define		evms_version		0.9.2
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -36,7 +36,7 @@ Group(pl):	Podstawowe/J±dro
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
-Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-134.tar.gz
+Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-138.tar.gz
 Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
@@ -46,7 +46,7 @@ Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_versio
 # new -> ftp://ftp.tux.org/pub/roudier/drivers/portable/sym-2.1.x/sym-2.1.16-20011028.tar.gz
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
 Source12:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
-Source13:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}-patch.tar.gz
+Source13:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -99,6 +99,7 @@ Patch15:	http://luxik.cdi.cz/~devik/qos/htb/v2/htb2_2.4.17.diff
 # ftp://ftp.kernel.org/pub/linux/kernel/people/dwmw2/linux-2.4.19-shared-zlib.bz2
 Patch16:	linux-2.4.19-shared-zlib.bz2
 Patch17:	kernel-gcc31.patch
+Patch18:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{version}-patch
 
 # Assorted bugfixes
 
@@ -136,7 +137,7 @@ Patch122:	lvm-%{lvm_version}-%{version}.patch.gz
 Patch123:	xquad_portio.fix
 # 
 Patch124:	linux-proc_net_dev-counter-fix.patch
-#Patch125:	linux-%{version}-devfs-v199.7.patch
+Patch125:	01-sigxfs-vs-blkdev.patch
 #Patch126:	linux-%{version}-cramfs.patch
 #Patch127:	linux-%{version}-sparc64-fix.patch
 #Patch128:	linux-%{version}-AXP-fix.patch
@@ -427,12 +428,12 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch124 -p1
 
 #%patch900 -p0
-%patch901 -p0
+#%patch901 -p0
 %patch904 -p0
 
 # Tekram DC395/315 U/UW SCSI host driver
 echo Adding Tekram DC395/315 driver
-%patch910 -p0
+#%patch910 -p0
 patch -p1 -s <dc395/dc395-integ24.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
@@ -486,8 +487,7 @@ patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010724-l
 
 # JFS
 echo Adding JFS
-patch -p1 -s <jfs-2.4.common-1.0.15-patch
-patch -p1 -s <jfs-2.4.17-1.0.15-patch
+%patch18 -p1
 
 echo Fixed compile process for 53c7,8xx driver
 # fix 53c7,8xx build
@@ -504,9 +504,7 @@ echo Installing Net Dev Random patch
 %patch11 -p1
 %patch12 -p1
 
-# devfs patch
-echo Installing DEVFS patch
-#%patch125 -p1
+%patch125 -p1
 
 # cramfs patch
 echo Installing cramfs patch 
