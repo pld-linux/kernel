@@ -48,8 +48,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.18
-%define		_cset		20040727_0514
+%define		_rel		0.20
+%define		_cset		20040802_0406
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -81,7 +81,7 @@ Source1:	%{name}-autoconf.h
 Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 # Source2-md5:	421476a59ed54ce3b374b0043060e354
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	8be77630a3e335179cd53eb1131ea24f
+# Source3-md5:	f1f3c8c8e7a8825773d8001add1a607a
 # http://lkml.org/lkml/2004/6/2/228
 ## Source6:	http://prdownloads.sourceforge.net/swsusp/software-suspend-2.0.0.81-for-2.6.6.tar.bz2
 Source20:	%{name}-i386.config
@@ -115,8 +115,7 @@ Patch12:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch13:	2.6.2-Initio9100U-Kconfig.patch
 # http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
 Patch14:	2.6.1-all-in-1.patch
-# http://lkml.org/lkml/2004/7/21/43
-Patch15:	2.6.8-pty-leak-lkml.patch
+
 Patch16:	linux-alpha-isa.patch
 Patch17:	2.6.4-psion-5mx.patch
 Patch18:	2.6.5-sparc64-missing-include.patch
@@ -177,10 +176,10 @@ Patch91:	http://people.redhat.com/mingo/exec-shield/exec-shield-nx-2.6.7-A0
 Patch92:	exec-shield-make-peace-with-grsecurity.patch
 
 # frpm http://www.ssi.bg/~ja/#routers
-Patch100:	00_static_routes-2.6.0-test1-8.diff
-Patch101:	01_alt_routes-2.5.50-8.diff
+#Patch100:	00_static_routes-2.6.0-test1-8.diff
+#Patch101:	01_alt_routes-2.5.50-8.diff
 #Patch102:	01_arp_prefsrc-2.5.50-5.diff <- not applied. needs checkout
-Patch103:	05_nf_reroute-2.6.7-10.diff
+#Patch103:	05_nf_reroute-2.6.7-10.diff
 
 # acpi
 #Patch110:	ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.7/acpi-20040326-2.6.7.diff.gz
@@ -195,7 +194,7 @@ Patch203:	linux-cluster-gnbd.patch
 Patch300:	linux-2.6-sparc-ksyms.patch
 Patch301:	linux-2.6-ppc-ksyms.patch
 Patch302:	2.6.7-kill-warnings.patch
-Patch303:	%{name}-hotfixes.patch
+#Patch303:	%{name}-hotfixes.patch
 Patch304:	linux-2.6-acpi-s3-pae.patch
 
 URL:		http://www.kernel.org/
@@ -560,7 +559,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch12 -p1
 %patch13 -p1
 %patch14 -p1
-%patch15 -p1
+
 %patch16 -p1
 %patch17 -p1
 %patch18 -p1
@@ -631,10 +630,10 @@ patch -p1 -s < exec-shield.patch
 %endif
 
 # routers
-%patch100 -p1
-%patch101 -p1
+#patch100 -p1
+#patch101 -p1
 #patch102 -p1 # <- not applayed need checkout
-%patch103 -p1
+#patch103 -p1
 
 # acpi
 #patch110 -p1
@@ -649,7 +648,7 @@ patch -p1 -s < exec-shield.patch
 %patch300 -p1
 %patch301 -p1
 %patch302 -p1
-%patch303 -p1
+#patch303 -p1
 %patch304 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
