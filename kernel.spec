@@ -478,26 +478,29 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch5 -p1
 #%patch7 -p1
 %if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%ifarch %{ix86}
 %patch914 -p1
 %patch14 -p1
 %else
+echo "Scheduler din't work on ARCH diffetern than Intel x86"
+%endif
+%else
 %patch8 -p1
 %endif
-%ifarch%{ix86}
-%if %{?_without_grsec:0}%{!?_without_grsec:1}
 %if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%ifarch%{ix86}
 %patch911 -p1
+%else
+echo "Scheduler din't work on ARCH diffetern than Intel x86"
 %endif
 %endif
-%endif
-%if%{?_without_grsec:0}%{!?_without_grsec:1}
 %patch9 -p1
 %patch906 -p1
-%endif
-%ifarch%{ix86}
-%if%{?_without_grsec:0}%{!?_without_grsec:1}
 %if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%ifarch%{ix86}
 %patch912 -p1
+%else
+echo "Scheduler din't work on ARCH diffetern than Intel x86"
 %endif
 %endif
 %endif
@@ -617,9 +620,7 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 #Fixed sysctl export symbols.
 %patch130 -p0
 
-%if%{?_without_grsec:0}%{!?_without_grsec:1}
 %patch133 -p0
-%endif
 
 %ifarch ppc
 %patch134 -p1
