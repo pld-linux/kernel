@@ -122,7 +122,7 @@ Patch48:	2.6.1-rc2-ini9100u-lkml.patch
 
 Patch50:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 
-Patch52:	laptop-mode.patch
+Patch52:	laptop-mode-2.6.1-7.patch
 
 Patch56:	kbuild-out-of-tree.diff
 
@@ -545,7 +545,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch50 -p1
 
-%patch52 -p1
+##%patch52 -p1
 
 #%%patch56 -p1
 
