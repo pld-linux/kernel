@@ -16,7 +16,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.19
-Release:	25
+Release:	26
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -94,6 +94,7 @@ Patch38:	jfs-%{version}-v%{jfs_version}-patch
 Patch39:	pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
 Patch40:	%{name}-2.2.19-ide_sparc32.patch
 Patch41:	%{name}-symbios-makefile.patch
+Patch42:	%{name}-fs_export_modules.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -441,6 +442,8 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch38 -p1
 
 %patch41 -p1
+
+%patch42 -p1
 
 %build
 BuildKernel() {
