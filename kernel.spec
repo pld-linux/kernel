@@ -685,7 +685,11 @@ ConfigBOOT()
 	echo "# CONFIG_ATM is not set" >> arch/%{base_arch}/defconfig
 	echo "# CONFIG_HOTPLUG_PCI is not set" >> arch/%{base_arch}/defconfig
 	echo "# CONFIG_NET_SCHED is not set" >> arch/%{base_arch}/defconfig
-
+	echo "# CONFIG_X86_MCE is not set">> arch/%{base_arch}/defconfig
+	echo "# CONFIG_MTRR is not set">> arch/%{base_arch}/defconfig
+	echo "# CONFIG_PM is not set">> arch/%{base_arch}/defconfig
+	echo "# CONFIG_CPU_FREQ is not set">> arch/%{base_arch}/defconfig
+	
 	ln -sf arch/%{base_arch}/defconfig .config
 
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
