@@ -9,7 +9,7 @@
 
 %define		_rel		0
 %define		test_ver	3
-%define		patch_level	1
+%define		patch_level	2
 
 %if	%{test_ver} != 0
 %define		test		test%{test_ver}
@@ -58,6 +58,10 @@ Patch2:		2.6.0-t3-swim3.patch
 Patch5:		2.6.0-t3-64-bit_kdev-fix-lkml.patch
 Patch6:		2.6.0-t3-eisa-bus.c-lkml.patch
 Patch7:		2.6.0-t3-initrd_load-lkml.patch
+
+Patch10:	2.6.0-t3-pmac_ide-lkml.patch
+Patch11:	2.6.0-t3-sysfs_mem-lkml.patch
+Patch12:	2.6.0-t3-trival-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -221,7 +225,7 @@ Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
 Provides:	i2c-devel = 2.6.1
-Provides:	%{name}-headers(netfilter) = 1.2.7a
+#%%Provides:	%{name}-headers(netfilter) = 1.2.7a
 Provides:	%{name}-headers(alsa-drivers)
 Provides:	alsa-driver-devel
 Autoreqprov:	no
@@ -293,6 +297,10 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
+
+%patch10 -p1
+%patch11 -p1
+%patch12 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
