@@ -342,6 +342,7 @@ BuildKernel() {
 
 KERNEL_BUILD_DIR=`pwd`
 KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-build
+rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
 
 BuildKernel
