@@ -14,7 +14,7 @@
 
 %define		_rel		1
 %define		_test_ver	9
-%define		_cset		20031118_0607
+%define		_cset		20031119_0306
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -321,11 +321,13 @@ Sterowniki ALSA dla maszyn wieloprocesorowych.
 Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra
 Group:		Base/Kernel
+Obsoletes:	alsa-driver
+Obsoletes:	alsa-driver-devel
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
 Provides:	i2c-devel
-Provides:	%{name}-headers(netfilter) = 1.2.9rc1
+Provides:	%{name}-headers(netfilter) = 1.2.9
 Provides:	%{name}-headers(alsa-drivers)
 Provides:	alsa-driver-devel
 Autoreqprov:	no
