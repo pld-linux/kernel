@@ -44,7 +44,6 @@ Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
 Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
 Source10:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
-Source11:	http://download.sourceforge.net/squashfs/squashfs1.0c.tar.gz
 Source12:	linux-2.4.20-aacraid.tar.bz2
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -126,9 +125,9 @@ Patch20:	linux-2.4.19-pre8-VFS-lock.patch
 #Patch22:
 #Patch23:
 #Patch24:
-#Patch25:
 
 # Support for CDRW packet writing
+Patch25:	%{name}-cdrw-elevator.patch
 Patch26:	%{name}-cdrw-packet.patch
 Patch27:	%{name}-cd-mrw-2.patch
 # PC Speaker driver
@@ -240,7 +239,7 @@ Patch909:	linux-2.4.19-PPC-agpgart_be.patch
 Patch910:	linux-2.4.19-grsecurity-1.9.7-fix.patch
 Patch911:	linux-2.4.19-SPARC.patch
 Patch912:	linux-2.4.19-grsec-1.9.7-PAX-sysctl.patch
-Patch913:	squashfs1.0c-fix.patch
+
 Patch914:	linux-2.4.20-MODULE_XXX.patch
 Patch915:	linux-2.4.19-usb-digitalcams.patch
 Patch916:	linux-2.4.19-ksyms-sys_sched_yield-rm.patch
@@ -531,6 +530,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch19 -p1
 %patch20 -p1
 # broken
+%{?_without_grsec:%patch25 -p1}
 %patch26 -p1
 %patch27 -p1
 # fixme
@@ -637,10 +637,6 @@ echo Installing WRR Support
 # scancode
 %patch35 -p1
 
-#squashfs
-%patch913 -p0
-patch -p1 -s < squashfs1.0c/squashfs-patch
-
 # added missing MODULE_LICENSE, MODULE_DESCRIPTION, MODULE_AUTHOR
 %patch914 -p1
 
@@ -661,6 +657,7 @@ echo Added ACL support
 
 %patch918 -p1
 %patch919 -p1
+#squashfs
 %patch920 -p1
 
 # NetMos support
