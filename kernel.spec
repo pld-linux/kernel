@@ -209,6 +209,12 @@ Patch97:	%{name}-pts.patch
 
 Patch100:	%{name}-MAX_INIT_ARGS.patch
 
+# frpm http://www.ssi.bg/~ja/#routers
+Patch102:	00_static_routes-2.6.0-test1-8.diff
+Patch103:	01_alt_routes-2.5.50-8.diff
+Patch104:	01_arp_prefsrc-2.5.50-5.diff
+Patch105:	05_nf_reroute-2.6.7-10.diff
+
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 %ifarch sparc sparc64
@@ -675,7 +681,11 @@ patch -p1 -s < %{SOURCE5}
 
 %patch100 -p1
 
-
+# routers
+%patch102 -p1
+%patch103 -p1
+#patch104 -p1 # <- not applayed need checkout
+%patch105 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
