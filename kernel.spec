@@ -1,5 +1,5 @@
 %define		pcmcia_version		3.1.24
-%define		lids_version		1.0.4
+%define		lids_version		1.0.5
 %define		ipvs_version		0.2.3
 %define		ac_version		ac2
 %define		zerocopy_version	3
@@ -19,9 +19,10 @@ Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
 Source4:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
+#Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
 Source7:	linux-netfilter-patches-20010201.tar.gz
-Source8:	http://www.lids.org/download/lids-%{lids_version}-2.4.0.tar.gz
+Source8:	http://www.lids.org/download/lids-%{lids_version}-%{version}.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -218,7 +219,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch5 -p1
 
 # Fore 200e ATM NIC
-patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
+patch -p1 <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
+#patch -p1 <linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
 
 # Tekram DC395/315 U/UW SCSI host driver
 #patch -p1 -s <dc395/dc395-integ24.diff
@@ -246,7 +248,7 @@ echo -e $ANS | ./runme)
 #cp ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile net/ipv4/ipvs/Makefile
 
 # LIDS
-#patch -p1 <lids-1.0.4-2.4.0/lids-1.0.4-2.4.0.patch
+patch -p1 <lids-%{lids_version}-{%version}/lids-%{lids_version}-%{version}.patch
 
 
 # Remove -g from drivers/atm/Makefile
