@@ -43,6 +43,7 @@ Patch5:		kernel-cpqarray-raid090.patch
 Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide.2.2.14.20000124.patch.gz
 Patch7:		%{name}-pldfblogo.patch
 Patch8:		linux-%{version}-freeswan-1.3.patch
+Patch9:		wanrouter-v2214.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -237,6 +238,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %endif
 %patch7 -p1
 %patch8 -p1
+%patch9 -p1
 
 patch -p1 -s <linux-%{ow_ver}/linux-%{ow_ver}.diff
 # Tekram DC395/315 U/UW SCSI host driver
@@ -346,6 +348,8 @@ gzip -dc %{PATCH6} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH3}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH9}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-%{ow_ver}/linux-%{ow_ver}.diff
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
