@@ -277,6 +277,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %ifarch alpha
 %patch3 -p1
 %endif
+%patch4 -p1
 %{!?_without_lsm:%patch10 -p1}
 
 # Fix EXTRAVERSION and CC in main Makefile
