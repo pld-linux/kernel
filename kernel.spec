@@ -770,7 +770,6 @@ cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 	RCS_FIND_IGNORE='-name build-done -prune -o'
 find -name "*~" -exec rm -f "{}" ";"
 find -name "*.orig" -exec rm -f "{}" ";"
-cp $KERNEL_BUILD_DIR/scripts/modpost scripts
 
 %ifarch %{ix86}
 cat $RPM_SOURCE_DIR/kernel-ia32.config > .config
@@ -839,9 +838,9 @@ $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
 %endif
 
-%{__make} include/linux/version.h
 %{__make} mrproper
 
+%{__make} include/linux/version.h
 install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
 
 %clean
