@@ -29,7 +29,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.4.21
-Release:	1
+Release:	1.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -158,6 +158,7 @@ Patch225:	wrr-linux-2.4.9.patch
 
 # http://people.FreeBSD.org/~gibbs/linux/SRC/aic79xx-linux-2.4-20030603-tar.gz
 Patch230:	linux-2.4-aic79xx-20030603.patch.gz
+Patch231:	linux-2.4.21-aic7xxx-mmapio.patch
 Patch235:	linux-2.4.20-audigy.patch.bz2
 Patch240:	linux-2.4.20-ecc.patch
 Patch245:	linux-2.4.20-01-edd.patch
@@ -598,6 +599,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 #%patch216 -p1
 %patch225 -p1
 %patch230 -p1
+%patch231 -p1
 %patch235 -p1
 %patch240 -p1
 %patch245 -p1
