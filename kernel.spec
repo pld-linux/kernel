@@ -643,6 +643,7 @@ BuildKernel() {
 		echo "# CONFIG_IP_NF_MATCH_STEALTH is not set">> arch/%{base_arch}/defconfig
 		echo "# CONFIG_NET_SCH_WRR is not set" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_HOSTAP is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_USB_KONICAWC is not set">> arch/%{base_arch}/defconfig
 	else
 		cat %{SOURCE1667} >> arch/%{base_arch}/defconfig
 		cat %{SOURCE1666} >> arch/%{base_arch}/defconfig
