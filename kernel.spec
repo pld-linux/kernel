@@ -49,7 +49,7 @@ Patch7:		kernel-autoraidraid.patch
 Patch8:		linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
 Patch9: 	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.18/ide.2.2.18.1209.patch.gz
 Patch10:	http://www.math.leidenuniv.nl/~buytenh/bridge/patches/bridge-0.0.9-against-2.2.18.diff
-patch11:	http://download.sourceforge.net/linux1394/ieee1394-2.2.17-20001012.gz
+Patch11:	http://download.sourceforge.net/linux1394/ieee1394-2.2.18-20001209.patch.gz
 Patch12:	ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
 #Patch:		linux-2.2.18pre21.ext3.diff
 #Patch:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
