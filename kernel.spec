@@ -508,7 +508,9 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch506 -p1
 %endif
 
+%ifnarch ppc sparc sparc64
 %patch113 -p1
+%endif
 
 %ifarch sparc sparc64
 %patch1500 -p1
@@ -841,7 +843,9 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH504}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH505}
 %endif
 
+%ifnarch ppc sparc sparc64
 bzip2 -dc %{PATCH113} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+%endif
 
 %ifarch sparc sparc64
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1500}
