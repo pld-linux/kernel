@@ -70,7 +70,7 @@ Patch0:		%{name}-pldfblogo.patch
 Patch1:		patch-int-2.4.15.0.gz
 Patch2:		linux-2.4.10-freeswan-%{freeswan_version}.patch.gz
 # http://domsch.com/linux/aacraid/linux-2.4.9-aacraid-20010816.patch
-Patch3:		linux-2.4.9-aacraid-20010816.patch
+Patch3:		linux-2.4.15-aacraid-20011123.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.15.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
@@ -87,7 +87,7 @@ Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/pr
 
 Patch11:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-2.4.16-1.patch
 Patch12:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-2.4.16-1.patch
-Patch13:	http://www.linuxvirtualserver.org/software/kernel-2.4/linux-%{version}-ipvs-%{ipvs_version}.patch.gz
+Patch13:	http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.16-ipvs-%{ipvs_version}.patch.gz
 
 # Assorted bugfixes
 
@@ -319,7 +319,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #%patch0 -p1
 %patch1 -p1
 %patch2 -p1
-%patch3 -p1
+#%patch3 -p1 # not needed ??
 %patch4 -p1
 %patch5 -p1
 #%patch7 -p1
