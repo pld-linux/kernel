@@ -6,7 +6,7 @@
 %define		bttv_version		0.7.60
 %define		wlan_version		0.3.4
 %define		tun_version		1.1
-%define         vlan_version            1.0.1
+%define		vlan_version		1.0.1
 %define		aic7xxx_version		6.2.3-2.2.19
 %define		symncr_version		1.7.3c-ncr-3.4.3b
 %define		jfs_version		1.0.5
@@ -91,8 +91,8 @@ Patch35:	linux-netdrivers_vlan.patch
 Patch36:	atm-unresolved.patch
 Patch38:	linux-2.2.20-pcmcia-without-iee1394.patch.bz2
 # based on ftp://ftp.kernel.org/people/andrea/kernels/v2.2/2.2.20pre9aa2/40_lfs-2.2.20pre9aa2-27.bz2
-#Patch39:       linux-2.2.20-lfs.patch
-Patch40:        2.2.21-pre2_Makefile.patch
+#Patch39:	linux-2.2.20-lfs.patch
+Patch40:	2.2.21-pre2_Makefile.patch
 Patch41:	%{name}-serial-initialisation.patch
 Patch42:	%{name}-flip-serial5.05.patch
 Patch43:	%{name}-vlan_bridge.patch
@@ -101,7 +101,7 @@ Patch100:	jfs-2.2.20-v%{jfs_version}-patch
 Patch101:	linux-atm.patch
 # HTB from http://luxik.cdi.cz/~devik/qos/htb/
 Patch102:	htb2_2.2.17.diff
-#i2o patch from ftp://ftp.adaptec.com/raid/asr/unix/asr_linux_v242_drv.rpm 
+#i2o patch from ftp://ftp.adaptec.com/raid/asr/unix/asr_linux_v242_drv.rpm
 Patch104:	dpt_i2o-2.2.19.diff
 Patch105:	linux-2.2.19-bttv-%{bttv_version}.patch.bz2
 Patch106:	linux-2.2.20-undo-ioport.h.patch.bz2
@@ -129,15 +129,15 @@ Provides:	%{name}-up = %{version}
 %ifarch %{ix86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(i2c) = %{i2c_version}
-Provides:       i2c = %{i2c_version}
+Provides:	i2c = %{i2c_version}
 Provides:	bttv = %{bttv_version}
 %endif
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
 Autoreqprov:	no
-Prereq:		modutils
-Prereq:		fileutils
-Prereq:		geninitrd
+PreReq:		modutils
+PreReq:		fileutils
+PreReq:		geninitrd
 #Prereq:		rc-boot
 Obsoletes:	kernel-modules
 
@@ -152,7 +152,7 @@ BuildRequires:	bin86
 BuildRequires:	autoconf
 BuildRequires:	automake
 %endif
-Autoreqprov:    no
+Autoreqprov:	no
 
 %description
 This package contains the Linux kernel that is used to boot and run
@@ -179,29 +179,30 @@ Twojego komputera.
 Summary:	Kernel version %{version} compiled for SMP machines
 Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
+Summary(pl):	Kernel %{version} skompilowany na maszyny SMP
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
 %ifarch %{ix86}
 Provides:	%{name}(reiserfs) = %{version}
-Provides:       %{name}(i2c) = %{i2c_version}
-Provides:       i2c = %{i2c_version}
+Provides:	%{name}(i2c) = %{i2c_version}
+Provides:	i2c = %{i2c_version}
 Provides:	bttv = %{bttv_version}
 
 %endif
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
-Prereq:		modutils
-Prereq:		fileutils
-Prereq:		geninitrd
+PreReq:		modutils
+PreReq:		fileutils
+PreReq:		geninitrd
 #Prereq:		rc-boot
-Obsoletes:      kernel-modules
+Obsoletes:	kernel-modules
 
 #i2c and bttv packages are obsolete
-Obsoletes:      kernel-smp-i2c
-Obsoletes:      bttv
-Obsoletes:      kernel-smp-misc-bttv
+Obsoletes:	kernel-smp-i2c
+Obsoletes:	bttv
+Obsoletes:	kernel-smp-misc-bttv
 Autoreqprov:	no
 
 %description smp
@@ -209,26 +210,32 @@ This package includes a SMP version of the Linux %{version} kernel. It
 is required only on machines with two or more CPUs, although it should
 work fine on single-CPU boxes.
 
-%description -l fr smp
-Ce package inclu une version SMP du noyau de Linux version {version}.
-Il et nécessaire seulement pour les machine avec deux processeurs ou
-plus, il peut quand même fonctionner pour les système mono-processeur.
-
-%description -l de smp
+%description smp -l de
 Dieses Paket enthält eine SMP (Multiprozessor)-Version von
 Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
 Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
 CPU laufen.
 
+%description smp -l fr
+Ce package inclu une version SMP du noyau de Linux version {version}.
+Il et nécessaire seulement pour les machine avec deux processeurs ou
+plus, il peut quand même fonctionner pour les système mono-processeur.
+
+%description smp -l pl
+Ten pakiet zawiera wersjê SMP j±dra Linuksa w wersji %{version}. Jest
+wymagany wy³±cznie na maszynach z dwoma b±d¼ wiêksz± liczb± CPU,
+jednak¿e powinien dzia³aæ prawid³owo tak¿e na jednoprocesorowych.
+
 %package BOOT
 Summary:	Kernel version %{version} used on the installation boot disks
 Summary(de):	Kernel version %{version} für Installationsdisketten
 Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation
+Summary(pl):	Kernel %{version} u¿ywany na instalacyjnych dyskach startowych
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
 Group(pl):	Podstawowe/J±dro
-Prereq:		modutils
-Prereq:		fileutils
+PreReq:		modutils
+PreReq:		fileutils
 Autoreqprov:	no
 
 %description BOOT
@@ -237,19 +244,25 @@ kernel. This kernel is used on the installation boot disks only and
 should not be used for an installed system, as many features in this
 kernel are turned off because of the size constraints.
 
-%description -l fr BOOT
+%description BOOT -l de
+Dieses Paket enthält eine verkleinerte Version vom Linux-Kernel
+version %{version}. Dieser Kernel wird auf den
+Installations-Bootdisketten benutzt und sollte nicht auf einem
+installierten System verwendet werden, da viele Funktionen wegen der
+Platzprobleme abgeschaltet sind.
+
+%description BOOT -l fr
 Ce package inclut une version allégée du noyau de Linux version
 %{version}. Ce kernel et utilisé pour les disquettes de boot
 d'installation et ne doivent pas être utilisées pour un système
 classique, beaucoup d'options dans le kernel ont étaient désactivées a
 cause de la contrainte d'espace.
 
-%description -l de BOOT
-Dieses Paket enthält eine verkleinerte Version vom Linux-Kernel
-version %{version}. Dieser Kernel wird auf den
-Installations-Bootdisketten benutzt und sollte nicht auf einem
-installierten System verwendet werden, da viele Funktionen wegen der
-Platzprobleme abgeschaltet sind.
+%description BOOT -l pl
+Ten pakiet zawiera okrojon± wersjê kernela %{version}. U¿ywana jest
+wy³±cznie na instalacyjnych dyskach startowych i nie powinna byæ
+u¿ywana na dzia³aj±cym systemie, jako ¿e wiele opcji jest wy³±czonych
+ze wzglêdu na wymagania rozmiarowe.
 
 %package headers
 Summary:	Header files for the Linux kernel
@@ -310,7 +323,7 @@ most C programs as they depend on constants defined in here. You can
 also build a custom kernel that is better tuned to your particular
 hardware.
 
-%description -l de source
+%description source -l de
 Das Kernel-Source-Paket enthält den source code (C/Assembler-Code) des
 Linux-Kernels. Die Source-Dateien werden gebraucht, um viele
 C-Programme zu compilieren, da sie auf Konstanten zurückgreifen, die
@@ -318,7 +331,7 @@ im Kernel-Source definiert sind. Die Source-Dateien können auch
 benutzt werden, um einen Kernel zu compilieren, der besser auf Ihre
 Hardware ausgerichtet ist.
 
-%description -l fr source
+%description source -l fr
 Le package pour le kernel-source contient le code source pour le noyau
 linux. Ces sources sont nécessaires pour compiler la plupart des
 programmes C, car il dépend de constantes définies dans le code
@@ -327,7 +340,10 @@ personnalisé pour avoir de meilleures performances sur des matériels
 particuliers.
 
 %description source -l pl
-Pakiet zawiera kod ¼ród³owy jadra systemu.
+Pakiet zawiera kod ¼ród³owy jadra systemu. Jest wymagany do budowania
+wiêkszo¶ci programów C, jako ¿e s± one zale¿ne od sta³ych tutaj
+zawartych. Mo¿esz równie¿ skompilowaæ w³asne j±dro, lepiej dopasowane
+do twojego sprzêtu.
 
 %prep
 %setup -q -a3 -a4 -a5 -a6 -a7 -a9 -a10 -a11 -a13 -n linux
@@ -395,7 +411,7 @@ cd serial-5.05
 %patch41 -p1
 %patch42 -p1
 ./install-in-kernel ../
-cd .. 
+cd ..
 
 # i2c
 %ifarch %{ix86}
@@ -465,12 +481,12 @@ BuildKernel() {
 
 %ifarch sparc
 	sparc32 %{__make} oldconfig
-	sparc32 %{__make} dep 
+	sparc32 %{__make} dep
 %else
 	%{__make} oldconfig
 	%{__make} dep
 %endif
-	make include/linux/version.h 
+	make include/linux/version.h
 
 %ifarch %{ix86} alpha sparc
 	KERNELCC="egcs"
@@ -504,7 +520,7 @@ BuildKernel() {
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
-     %{__make} INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR modules_install KERNELRELEASE=$KernelVer
+	%{__make} INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR modules_install KERNELRELEASE=$KernelVer
 }
 
 BuildPCMCIA() {
@@ -730,7 +746,7 @@ rm -rf dc395/
 # jfs 1.0.5
 gzip -dc %{SOURCE12} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH100}
-patch -s -p1 -d  $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/jfs-2.2.common-v%{jfs_version}-patch
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/jfs-2.2.common-v%{jfs_version}-patch
 # remove all jfs patches from linux/ directory
 rm $RPM_BUILD_ROOT/usr/src/linux-%{version}/jfs-*
 
@@ -751,8 +767,8 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1503}
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
 %{__make} mrproper
-find  -name "*~" -print | xargs rm -f
-find  -name "*.orig" -print | xargs rm -f
+find -name "*~" -print | xargs rm -f
+find -name "*.orig" -print | xargs rm -f
 
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
 
@@ -767,14 +783,14 @@ install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoco
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
-%{__make} symlinks 
+%{__make} symlinks
 %{__make} include/linux/version.h
 %{__make} "`pwd`/include/linux/modversions.h"
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well, after we fix the paths
 
-%{__make} depend 
+%{__make} depend
 find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
 while read file ; do
 	mv $file $file.old
@@ -839,7 +855,7 @@ ln -snf %{version}-%{release}smp /lib/modules/%{version}smp
 depmod -a -F /boot/System.map %{version}-%{release}smp
 
 %postun
-if [ -L /lib/modules/%{version} ]; then 
+if [ -L /lib/modules/%{version} ]; then
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f /lib/modules/%{version}
@@ -849,7 +865,7 @@ fi
 rm -f /boot/initrd-%{version}-%{release}.gz
 
 %postun smp
-if [ -L /lib/modules/%{version} ]; then 
+if [ -L /lib/modules/%{version} ]; then
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f /lib/modules/%{version}
@@ -864,7 +880,7 @@ rm -f /usr/src/linux
 ln -snf linux-%{version} /usr/src/linux
 
 %postun headers
-if [ -L /usr/src/linux ]; then 
+if [ -L /usr/src/linux ]; then
 	if [ "`ls -l /usr/src/linux | awk '{ print $11 }'`" = "linux-%{version}" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f /usr/src/linux
@@ -925,7 +941,7 @@ fi
 /lib/modules/%{version}-%{release}smp/misc
 /lib/modules/%{version}-%{release}smp/net
 /lib/modules/%{version}-%{release}smp/scsi
-%ifarch %{ix86} 
+%ifarch %{ix86}
 /lib/modules/%{version}-%{release}smp/usb
 /lib/modules/%{version}-%{release}smp/video
 %endif
@@ -954,7 +970,7 @@ fi
 %{_libdir}/bootdisk/lib/modules/%{version}/misc
 %{_libdir}/bootdisk/lib/modules/%{version}/net
 %{_libdir}/bootdisk/lib/modules/%{version}/scsi
-%ifarch %{ix86} 
+%ifarch %{ix86}
 %{_libdir}/bootdisk/lib/modules/%{version}/usb
 %endif
 %ifarch i386
