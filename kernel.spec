@@ -29,8 +29,8 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.15
-%define		_cset		20040227_1106
+%define		_rel		1.16
+%define		_cset		20040227_2308
 
 ## netfilter snap 
 %define		_netfilter_snap		20040225
