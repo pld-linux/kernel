@@ -1,0 +1,401 @@
+ChangeSet@1.1136.1.75  2003-12-07 21:20:48-02:00  willy at debian.org
+[PATCH] Remove broken file lock accounting
+
+On Mon, Jul 01, 2002 at 11:13:55PM +0100, Matthew Wilcox wrote:
+> The file lock accounting code is horribly broken (and I wrote it, I
+> should know).  I think the best solution to 2.4 is simply to delete it,
+> at least for BSD-style flocks.
+>
+> Patch to follow.  Note that 2.5 has the same issue, but I'll fix it
+> differently there.
+
+Here's the patch for 2.4:
+
+--- linux-2.4.23/fs/locks.c.orig	Tue Dec  9 00:11:23 2003
++++ linux-2.4.23/fs/locks.c	Tue Dec  9 00:13:00 2003
+@@ -135,15 +135,9 @@
+ static kmem_cache_t *filelock_cache;
+ 
+ /* Allocate an empty lock structure. */
+-static struct file_lock *locks_alloc_lock(int account)
++static struct file_lock *locks_alloc_lock(void)
+ {
+-	struct file_lock *fl;
+-	if (account && current->locks >= current->rlim[RLIMIT_LOCKS].rlim_cur)
+-		return NULL;
+-	fl = kmem_cache_alloc(filelock_cache, SLAB_KERNEL);
+-	if (fl)
+-		current->locks++;
+-	return fl;
++	return kmem_cache_alloc(filelock_cache, SLAB_KERNEL);
+ }
+ 
+ /* Free a lock which is not in use. */
+@@ -153,7 +147,6 @@
+ 		BUG();
+ 		return;
+ 	}
+-	current->locks--;
+ 	if (waitqueue_active(&fl->fl_wait))
+ 		panic("Attempting to free lock with active wait queue");
+ 
+@@ -220,7 +213,7 @@
+ /* Fill in a file_lock structure with an appropriate FLOCK lock. */
+ static struct file_lock *flock_make_lock(struct file *filp, unsigned int type)
+ {
+-	struct file_lock *fl = locks_alloc_lock(1);
++	struct file_lock *fl = locks_alloc_lock();
+ 	if (fl == NULL)
+ 		return NULL;
+ 
+@@ -358,7 +351,7 @@
+ /* Allocate a file_lock initialised to this type of lease */
+ static int lease_alloc(struct file *filp, int type, struct file_lock **flp)
+ {
+-	struct file_lock *fl = locks_alloc_lock(1);
++	struct file_lock *fl = locks_alloc_lock();
+ 	if (fl == NULL)
+ 		return -ENOMEM;
+ 
+@@ -721,7 +714,7 @@
+ 			 size_t count)
+ {
+ 	struct file_lock *fl;
+-	struct file_lock *new_fl = locks_alloc_lock(0);
++	struct file_lock *new_fl = locks_alloc_lock();
+ 	int error;
+ 
+ 	if (new_fl == NULL)
+@@ -881,8 +874,8 @@
+ 	 * We may need two file_lock structures for this operation,
+ 	 * so we get them in advance to avoid races.
+ 	 */
+-	new_fl = locks_alloc_lock(0);
+-	new_fl2 = locks_alloc_lock(0);
++	new_fl = locks_alloc_lock();
++	new_fl2 = locks_alloc_lock();
+ 	error = -ENOLCK; /* "no luck" */
+ 	if (!(new_fl && new_fl2))
+ 		goto out_nolock;
+@@ -1488,7 +1481,7 @@
+ int fcntl_setlk(unsigned int fd, unsigned int cmd, struct flock *l)
+ {
+ 	struct file *filp;
+-	struct file_lock *file_lock = locks_alloc_lock(0);
++	struct file_lock *file_lock = locks_alloc_lock();
+ 	struct flock flock;
+ 	struct inode *inode;
+ 	int error;
+@@ -1644,7 +1637,7 @@
+ int fcntl_setlk64(unsigned int fd, unsigned int cmd, struct flock64 *l)
+ {
+ 	struct file *filp;
+-	struct file_lock *file_lock = locks_alloc_lock(0);
++	struct file_lock *file_lock = locks_alloc_lock();
+ 	struct flock64 flock;
+ 	struct inode *inode;
+ 	int error;
+ChangeSet@1.1136.1.68  2003-12-06 16:25:16-02:00  wli at holomorphy.com
+[PATCH] Fixup smb_boot_cpus(): Fix HT detection bug
+
+On Wed, Dec 03, 2003 at 06:41:36PM -0500, Ethan Weinstein wrote:
+> Ok, setting CONFIG_NR_CPUS=8 does indeed solve the HT issue, looks like
+> it was the numbering scheme:
+
+Something like this might do the trick. NR_CPUS is already checked
+indirectly via max_cpus.
+
+
+-- wli
+
+
+
+--- linux-2.4.23/arch/i386/kernel/smpboot.c.orig	Tue Dec  9 00:27:10 2003
++++ linux-2.4.23/arch/i386/kernel/smpboot.c	Tue Dec  9 00:27:23 2003
+@@ -1106,7 +1106,7 @@
+ 	 */
+ 	Dprintk("CPU present map: %lx\n", phys_cpu_present_map);
+ 
+-	for (bit = 0; bit < NR_CPUS; bit++) {
++	for (bit = 0; bit < BITS_PER_LONG; bit++) {
+ 		apicid = cpu_present_to_apicid(bit);
+ 		
+ 		/* don't try to boot BAD_APICID */
+ChangeSet@1.1136.1.73  2003-12-07 15:10:38-02:00  mikulas at cuni.cz
+[PATCH] from -aa tree: Fix potential fsync() race condition
+
+> 00_ll_rw_block-sync-race-1 first appeared in 2.4.21pre4aa3 - 470 bytes
+>
+>  Add lock_page in ll_rw_block to fix a fs race
+>  condition. Fix suggested by Mikulas Patocka.
+
+Yes. You have two inodes placed in the same buffer.
+
+Process 1 modifies inode 1 and calls fsync on it. fsync initiates write of
+the block. ll_rw_block returns, write is in progress.
+
+Process 2 modifies inode 2 and calls fsync on it. Filesystem calls
+ll_rw_block write on the same buffer. ll_rw_block immediatelly returns,
+because it sees there is already IO on the buffer (there used to be
+something like if (buffer_locked(bh)) return;). Process 2 waits on buffer.
+
+The write finished. Both processes are waken up. Both processes return out
+of fsync function. Process 2 returns from fsync while it did not write its
+inode modification to disk --- it waited on process 1's write.
+
+
+--- linux-2.4.23/drivers/block/ll_rw_blk.c~	Tue Dec  9 00:17:12 2003
++++ linux-2.4.23/drivers/block/ll_rw_blk.c	Tue Dec  9 00:17:12 2003
+@@ -1377,9 +1377,7 @@
+ 	for (i = 0; i < nr; i++) {
+ 		struct buffer_head *bh = bhs[i];
+ 
+-		/* Only one thread can actually submit the I/O. */
+-		if (test_and_set_bit(BH_Lock, &bh->b_state))
+-			continue;
++		lock_buffer(bh);
+ 
+ 		/* We have the buffer lock */
+ 		atomic_inc(&bh->b_count);
+ChangeSet@1.1136.73.4  2003-12-02 12:02:00-02:00  neilb at unsw.edu.au
+[PATCH] Drop module count if lockd reclaimer thread failed to start.
+
+--- linux-2.4.23/fs/lockd/clntlock.c~	Tue Dec  9 00:35:29 2003
++++ linux-2.4.23/fs/lockd/clntlock.c	Tue Dec  9 00:35:29 2003
+@@ -188,7 +188,8 @@
+ 		nlmclnt_prepare_reclaim(host, newstate);
+ 		nlm_get_host(host);
+ 		MOD_INC_USE_COUNT;
+-		kernel_thread(reclaimer, host, CLONE_SIGNAL);
++		if(kernel_thread(reclaimer, host, CLONE_SIGNAL) < 0)
++			MOD_DEC_USE_COUNT;
+ 	}
+ }
+ 
+ChangeSet@1.1136.1.65  2003-12-05 15:53:34-02:00  mikpe at se
+[PATCH] fix reboot/no_idt bug
+
+When compiling 2.4.23 with gcc-3.3.2, gcc generates the
+following warning for arch/i386/kernel/process.c:
+
+process.c: In function `machine_restart':
+process.c:427: warning: use of memory input without lvalue in asm operand 0
+is deprecated
+
+The warning identifies a real bug. no_idt is passed to
+lidt with an "m" constraint, which requires an l-value.
+Since no_idt is faked as an array, gcc creates an anonymous
+variable pointing to no_idt and passes that to lidt(*),
+so at runtime lidt sees the wrong address. Not good.
+(The bug, while real, is unlikely to trigger since it
+sits in an infrequently used path in the reboot code.)
+
+The fix is to make no_idt a struct (and thus an l-lvalue)
+like the other gdt/idt descriptors.
+
+This patch is a backport of the fix Linus made for the
+same bug in 2.6.0-test4.
+
+[Andi: x86-64 appears to have the same bug]
+
+(*) Verified by inspection of the assembly code.
+
+/Mikael
+
+
+--- linux-2.4.23/arch/i386/kernel/process.c.orig	Tue Dec  9 00:29:52 2003
++++ linux-2.4.23/arch/i386/kernel/process.c	Tue Dec  9 00:30:46 2003
+@@ -153,7 +153,6 @@
+ 
+ __setup("idle=", idle_setup);
+ 
+-static long no_idt[2];
+ static int reboot_mode;
+ int reboot_thru_bios;
+ 
+@@ -224,7 +223,8 @@
+ 	unsigned long long * base __attribute__ ((packed));
+ }
+ real_mode_gdt = { sizeof (real_mode_gdt_entries) - 1, real_mode_gdt_entries },
+-real_mode_idt = { 0x3ff, 0 };
++real_mode_idt = { 0x3ff, 0 },
++no_idt = { 0, 0 };
+ 
+ /* This is 16-bit protected mode code to disable paging and the cache,
+    switch to real mode and jump to the BIOS reset code.
+ChangeSet@1.1136.78.2  2003-12-07 12:43:34-02:00  wli at holomorphy.com
+[PATCH] out_of_memory() locking
+
+On Sun, Nov 30, 2003 at 08:18:02AM -0800, William Lee Irwin III wrote:
+> (1) the timestamps/etc. weren't locked, and when cpus raced, it caused
+>  false OOM kills
+> (2) the mm could go away while scanning the tasklist, causing the thing
+>  to try to kill kernel threads
+> Here's a preliminary backport (please do _NOT_ apply until I or someone
+> tests it) for you to comment on. Basically, do you want (1) and (2)
+> split out, is the basic thing okay, etc.?
+
+out_of_memory()'s operational variables are not locked, and can be
+reset by multiple cpus simultaneously, causing false OOM kills.
+
+This patch adds an oom_lock to out_of_memory() to protect its operational
+variables.
+
+
+-- wli
+
+
+
+--- linux-2.4.23/mm/oom_kill.c.orig	Tue Dec  9 00:20:47 2003
++++ linux-2.4.23/mm/oom_kill.c	Tue Dec  9 00:24:20 2003
+@@ -202,6 +202,11 @@
+  */
+ void out_of_memory(void)
+ {
++	/*
++	* oom_lock protects out_of_memory()'s static variables.
++	* It's a global lock; this is not performance-critical.
++	*/
++	static spinlock_t oom_lock = SPIN_LOCK_UNLOCKED;
+ 	static unsigned long first, last, count, lastkill;
+ 	unsigned long now, since;
+ 
+@@ -211,6 +216,7 @@
+ 	if (nr_swap_pages > 0)
+ 		return;
+ 
++	spin_lock(&oom_lock);
+ 	now = jiffies;
+ 	since = now - last;
+ 	last = now;
+@@ -229,14 +235,14 @@
+ 	 */
+ 	since = now - first;
+ 	if (since < HZ)
+-		return;
++		goto out_unlock;
+ 
+ 	/*
+ 	 * If we have gotten only a few failures,
+ 	 * we're not really oom. 
+ 	 */
+ 	if (++count < 10)
+-		return;
++		goto out_unlock;
+ 
+ 	/*
+ 	 * If we just killed a process, wait a while
+@@ -245,17 +251,25 @@
+ 	 */
+ 	since = now - lastkill;
+ 	if (since < HZ*5)
+-		return;
++		goto out_unlock;
+ 
+ 	/*
+ 	 * Ok, really out of memory. Kill something.
+ 	 */
+ 	lastkill = now;
++	
++	/* oom_kill() can sleep */
++	spin_unlock(&oom_lock);
+ 	oom_kill();
++	spin_lock(&oom_lock);
+ 
+ reset:
+-	first = now;
++	if (first < now)
++		first = now;
+ 	count = 0;
++
++out_unlock:
++	spin_unlock(&oom_lock);
+ }
+ 
+ #endif	/* Unused file */
+ChangeSet@1.1136.1.61  2003-12-01 12:43:59-07:00  davidm at com[helgaas]
+
+ia64: Fix a bug in sigtramp() which corrupted ar.rnat when unwinding
+        across a signal trampoline (in user space).  Reported by
+        Laurent Morichetti.
+
+arch/ia64/kernel/gate.S@1.11  2003-12-01 05:43:29-07:00  davidm at com[helgaas]
+
+(__kernel_sigtramp): Replace usage of p8 with p1.  We must use a preserved
+        predicate for the .spillsp.p directive, otherwise, the predicate
+        may have been clobbered by the time the unwinder looks at it.
+        Fortunately, we can just use p1 because the entire pr register
+        is already saved/restored by the kernel.
+
+
+--- linux-2.4.23/arch/ia64/kernel/gate.S~	Tue Dec  9 00:46:11 2003
++++ linux-2.4.23/arch/ia64/kernel/gate.S	Tue Dec  9 00:46:11 2003
+@@ -88,10 +88,10 @@
+ 	ld8 r15=[base1]					// get address of new RBS base (or NULL)
+ 	cover				// push args in interrupted frame onto backing store
+ 	;;
+-	cmp.ne p8,p0=r15,r0		// do we need to switch the rbs?
++	cmp.ne p1,p0=r15,r0		// do we need to switch rbs? (note: pr is saved by kernel)
+ 	mov.m r9=ar.bsp			// fetch ar.bsp
+-	.spillsp.p p8, ar.rnat, RNAT_OFF+SIGCONTEXT_OFF
+-(p8)	br.cond.spnt setup_rbs		// yup -> (clobbers r14, r15, and r16)
++	.spillsp.p p1, ar.rnat, RNAT_OFF+SIGCONTEXT_OFF
++(p1)	br.cond.spnt setup_rbs		// yup -> (clobbers p8, r14, r15, and r16)
+ back_from_setup_rbs:
+ 	alloc r8=ar.pfs,0,0,3,0
+ 	ld8 out0=[base0],16		// load arg0 (signum)
+@@ -130,8 +130,8 @@
+ 	ld8 r15=[base0],(CFM_OFF-BSP_OFF)	// fetch sc_ar_bsp and advance to CFM_OFF
+ 	mov r14=ar.bsp
+ 	;;
+-	cmp.ne p8,p0=r14,r15			// do we need to restore the rbs?
+-(p8)	br.cond.spnt restore_rbs		// yup -> (clobbers r14-r18, f6 & f7)
++	cmp.ne p1,p0=r14,r15			// do we need to restore the rbs?
++(p1)	br.cond.spnt restore_rbs		// yup -> (clobbers p8, r14-r18, f6 & f7)
+ 	;;
+ back_from_restore_rbs:
+ 	adds base0=(FR6_OFF+SIGCONTEXT_OFF),sp
+ChangeSet@1.1136.73.2  2003-12-02 11:58:06-02:00  neilb at unsw.edu.au
+[PATCH] Make root a special case for per-user process limits.
+
+This is needed because when a setuid-root program calls
+setuid(0) to become really-root, p->user becomes root_user,
+but ->rlim stays as the original user's limit, and now
+the process cannot fork - becuase root has more processes than
+the original user had.
+
+The real problem is that NPROC is not really a per-process limit,
+but its a per-user limit, and including it with the rlim structure
+was not a good idea :-(
+
+This fix is already in 2.6
+
+
+--- linux-2.4.23/kernel/fork.c.orig	Tue Dec  9 00:38:16 2003
++++ linux-2.4.23/kernel/fork.c	Tue Dec  9 00:38:59 2003
+@@ -669,6 +669,7 @@
+ 	 * than the amount of processes root is running. -- Rik
+ 	 */
+ 	if (atomic_read(&p->user->processes) >= p->rlim[RLIMIT_NPROC].rlim_cur
++	              && p->user != &root_user
+ 	              && !capable(CAP_SYS_ADMIN) && !capable(CAP_SYS_RESOURCE))
+ 		goto bad_fork_free;
+ 
+As per http://lkml.org/lkml/2003/12/1/150
+
+diff -urN --exclude=CVS --exclude=.cvsignore linux-2.4.23/include/linux/mc146818rtc.h linux-cvs-2.4.23/include/linux/mc146818rtc.h
+--- linux-2.4.23/include/linux/mc146818rtc.h	2001-11-22 20:46:58.000000000 +0100
++++ linux-cvs-2.4.23/include/linux/mc146818rtc.h	2003-11-28 15:09:41.000000000 +0100
+@@ -98,4 +98,12 @@
+ #define BIN_TO_BCD(val) ((val)=(((val)/10)<<4) + (val)%10)
+ #endif
+ 
++#ifndef RTC_IO_EXTENT
++#define RTC_IO_EXTENT	0x10	/* Only really two ports, but...	*/
++#endif
++
++#ifndef RTC_IOMAPPED
++#define RTC_IOMAPPED	1	/* Default to I/O mapping. */
++#endif
++
+ #endif /* _MC146818RTC_H */
