@@ -1,28 +1,28 @@
-diff -Nur linux-2.4.23.orig/fs/fat/inode.c linux-2.4.23/fs/fat/inode.c
---- linux-2.4.23.orig/fs/fat/inode.c	2003-08-25 13:44:43.000000000 +0200
-+++ linux-2.4.23/fs/fat/inode.c	2003-12-10 16:04:01.000000000 +0100
-@@ -770,7 +770,7 @@
+diff -Nur linux-2.6.3/fs.orig/fat/inode.c linux-2.6.3/fs/fat/inode.c
+--- linux-2.6.3/fs.orig/fat/inode.c	2004-02-18 04:57:46.000000000 +0100
++++ linux-2.6.3/fs/fat/inode.c	2004-02-22 14:01:03.215500528 +0100
+@@ -200,7 +200,7 @@
+ 		seq_printf(m, ",codepage=%s", sbi->nls_disk->charset);
+ 	if (isvfat) {
+ 		if (sbi->nls_io
+-		    && strcmp(sbi->nls_io->charset, CONFIG_NLS_DEFAULT))
++		    && strcmp(sbi->nls_io->charset, nls_default_name))
+ 			seq_printf(m, ",iocharset=%s", sbi->nls_io->charset);
  
- 	sbi->nls_io = NULL;
- 	if (sbi->options.isvfat && !opts.utf8) {
--		p = opts.iocharset ? opts.iocharset : CONFIG_NLS_DEFAULT;
-+		p = opts.iocharset ? opts.iocharset : nls_default_name;
- 		sbi->nls_io = load_nls(p);
- 		if (! sbi->nls_io)
- 			/* Fail only if explicit charset specified */
-diff -Nur linux-2.4.23.orig/fs/nls/nls_base.c linux-2.4.23/fs/nls/nls_base.c
---- linux-2.4.23.orig/fs/nls/nls_base.c	2002-08-03 02:39:45.000000000 +0200
-+++ linux-2.4.23/fs/nls/nls_base.c	2003-12-10 16:02:27.000000000 +0100
-@@ -20,6 +20,8 @@
+ 		switch (opts->shortname) {
+diff -Nur linux-2.6.3/fs.orig/nls/nls_base.c linux-2.6.3/fs/nls/nls_base.c
+--- linux-2.6.3/fs.orig/nls/nls_base.c	2004-02-18 04:58:32.000000000 +0100
++++ linux-2.6.3/fs/nls/nls_base.c	2004-02-22 14:02:34.984549512 +0100
+@@ -19,6 +19,8 @@
  #endif
  #include <linux/spinlock.h>
  
 +char nls_default_name[40] = CONFIG_NLS_DEFAULT;
 +
- static struct nls_table *tables;
+ static struct nls_table default_table;
+ static struct nls_table *tables = &default_table;
  static spinlock_t nls_lock = SPIN_LOCK_UNLOCKED;
- 
-@@ -483,13 +485,14 @@
+@@ -477,13 +479,14 @@
  {
  	struct nls_table *default_nls;
  	
@@ -31,17 +31,17 @@ diff -Nur linux-2.4.23.orig/fs/nls/nls_base.c linux-2.4.23/fs/nls/nls_base.c
  	if (default_nls != NULL)
  		return default_nls;
  	else
-                return &default_table;
+ 		return &default_table;
  }
  
 +EXPORT_SYMBOL(nls_default_name);
  EXPORT_SYMBOL(register_nls);
  EXPORT_SYMBOL(unregister_nls);
  EXPORT_SYMBOL(unload_nls);
-diff -Nur linux-2.4.23.orig/fs/smbfs/inode.c linux-2.4.23/fs/smbfs/inode.c
---- linux-2.4.23.orig/fs/smbfs/inode.c	2002-11-29 00:53:15.000000000 +0100
-+++ linux-2.4.23/fs/smbfs/inode.c	2003-12-10 16:04:38.000000000 +0100
-@@ -374,7 +374,7 @@
+diff -Nur linux-2.6.3/fs.orig/smbfs/inode.c linux-2.6.3/fs/smbfs/inode.c
+--- linux-2.6.3/fs.orig/smbfs/inode.c	2004-02-18 04:57:16.000000000 +0100
++++ linux-2.6.3/fs/smbfs/inode.c	2004-02-22 14:03:11.597983424 +0100
+@@ -436,7 +436,7 @@
  	seq_printf(s, ",file_mode=%04o", mnt->file_mode & S_IRWXUGO);
  	seq_printf(s, ",dir_mode=%04o", mnt->dir_mode & S_IRWXUGO);
  
@@ -50,19 +50,19 @@ diff -Nur linux-2.4.23.orig/fs/smbfs/inode.c linux-2.4.23/fs/smbfs/inode.c
  		seq_printf(s, ",iocharset=%s", mnt->codepage.local_name);
  	if (strcmp(mnt->codepage.remote_name, SMB_NLS_REMOTE))
  		seq_printf(s, ",codepage=%s", mnt->codepage.remote_name);
-@@ -468,7 +468,7 @@
- 	server->mnt = mnt;
+@@ -542,7 +542,7 @@
+ 	mnt = server->mnt;
  
  	memset(mnt, 0, sizeof(struct smb_mount_data_kernel));
--	strncpy(mnt->codepage.local_name, CONFIG_NLS_DEFAULT,
-+	strncpy(mnt->codepage.local_name, nls_default_name,
+-	strlcpy(mnt->codepage.local_name, CONFIG_NLS_DEFAULT,
++	strlcpy(mnt->codepage.local_name, nls_default_name,
  		SMB_NLS_MAXNAMELEN);
- 	strncpy(mnt->codepage.remote_name, SMB_NLS_REMOTE,
+ 	strlcpy(mnt->codepage.remote_name, SMB_NLS_REMOTE,
  		SMB_NLS_MAXNAMELEN);
-diff -Nur linux-2.4.23.orig/include/linux/nls.h linux-2.4.23/include/linux/nls.h
---- linux-2.4.23.orig/include/linux/nls.h	2002-08-03 02:39:45.000000000 +0200
-+++ linux-2.4.23/include/linux/nls.h	2003-12-10 16:03:19.000000000 +0100
-@@ -21,6 +21,8 @@
+diff -Nur linux-2.6.3/include.orig/linux/nls.h linux-2.6.3/include/linux/nls.h
+--- linux-2.6.3/include.orig/linux/nls.h	2004-02-18 04:57:22.000000000 +0100
++++ linux-2.6.3/include/linux/nls.h	2004-02-22 13:59:25.000000000 +0100
+@@ -22,6 +22,8 @@
  #define NLS_MAX_CHARSET_SIZE 6 /* for UTF-8 */
  
  /* nls.c */
@@ -71,21 +71,21 @@ diff -Nur linux-2.4.23.orig/include/linux/nls.h linux-2.4.23/include/linux/nls.h
  extern int register_nls(struct nls_table *);
  extern int unregister_nls(struct nls_table *);
  extern struct nls_table *load_nls(char *);
-diff -Nur linux-2.4.23.orig/include/linux/sysctl.h linux-2.4.23/include/linux/sysctl.h
---- linux-2.4.23.orig/include/linux/sysctl.h	2003-11-28 19:26:21.000000000 +0100
-+++ linux-2.4.23/include/linux/sysctl.h	2003-12-10 15:55:47.000000000 +0100
-@@ -608,6 +608,7 @@
- 	FS_LEASE_TIME=15,	/* int: maximum time to wait for a lease break */
- 	FS_DQSTATS=16,	/* dir: disc quota usage statistics */
+diff -Nur linux-2.6.3/include.orig/linux/sysctl.h linux-2.6.3/include/linux/sysctl.h
+--- linux-2.6.3/include.orig/linux/sysctl.h	2004-02-22 13:54:09.000000000 +0100
++++ linux-2.6.3/include/linux/sysctl.h	2004-02-22 13:58:56.000000000 +0100
+@@ -624,6 +624,7 @@
  	FS_XFS=17,	/* struct: control xfs parameters */
-+	FS_NLS_DEFAULT=18,	/* string:default console character set */
+ 	FS_AIO_NR=18,	/* current system-wide number of aio requests */
+ 	FS_AIO_MAX_NR=19,	/* system-wide maximum number of aio requests */
++	FS_NLS_DEFAULT=20,	/* string:default console character set */
  };
  
  /* /proc/sys/fs/quota/ */
-diff -Nur linux-2.4.23.orig/kernel/sysctl.c linux-2.4.23/kernel/sysctl.c
---- linux-2.4.23.orig/kernel/sysctl.c	2003-11-28 19:26:21.000000000 +0100
-+++ linux-2.4.23/kernel/sysctl.c	2003-12-10 16:03:30.000000000 +0100
-@@ -66,6 +66,9 @@
+diff -Nur linux-2.6.3/kernel.orig/sysctl.c linux-2.6.3/kernel/sysctl.c
+--- linux-2.6.3/kernel.orig/sysctl.c	2004-02-22 13:54:09.000000000 +0100
++++ linux-2.6.3/kernel/sysctl.c	2004-02-22 13:58:02.000000000 +0100
+@@ -74,6 +74,9 @@
  #ifdef CONFIG_HOTPLUG
  extern char hotplug_path[];
  #endif
@@ -95,14 +95,21 @@ diff -Nur linux-2.4.23.orig/kernel/sysctl.c linux-2.4.23/kernel/sysctl.c
  #ifdef CONFIG_CHR_DEV_SG
  extern int sg_big_buff;
  #endif
-@@ -342,6 +345,10 @@
- 	 sizeof(int), 0644, NULL, &proc_dointvec},
- 	{FS_LEASE_TIME, "lease-break-time", &lease_break_time, sizeof(int),
- 	 0644, NULL, &proc_dointvec},
+@@ -844,6 +847,17 @@
+ 		.mode		= 0644,
+ 		.proc_handler	= &proc_dointvec,
+ 	},
 +#ifdef CONFIG_NLS
-+	{FS_NLS_DEFAULT, "nls-default", &nls_default_name, 40,
-+	 0644, NULL, &proc_dostring, &sysctl_string },
++	{
++		.ctl_name	= FS_NLS_DEFAULT,
++		.procname	= "nls-default",
++		.data		= &nls_default_name,
++		.maxlen		= 40,
++		.mode		= 0644,
++		.proc_handler	= &proc_dostring,
++		.strategy	= &sysctl_string,
++	},
 +#endif
- 	{0}
+ 	{ .ctl_name = 0 }
  };
  
