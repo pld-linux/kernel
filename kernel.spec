@@ -52,7 +52,7 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_post_ver	1
-%define		_rel		0.91
+%define		_rel		0.92
 %define		_cset		20040813_0507
 %define		_apply_cset	0
 
@@ -177,8 +177,8 @@ Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2
 # http://lirc.sourceforge.net/software/snapshots/lirc-0.7.0pre7.tar.bz2
 Patch76:	2.6.8-lirc-0.7.0-pre7.patch
 # i2o/dpt
-Patch77:	2.6.8-i2o-proc_full_seq_file.patch
-Patch78:	2.6.8-i2o-pae_support.patch
+#Patch77:	2.6.8-i2o-proc_full_seq_file.patch
+#Patch78:	2.6.8-i2o-pae_support.patch
 Patch79:	dpt_i2o-2.5.0-2331-fixes.patch
 
 # derived from grsecurity-2.0-2.6.6-unofficial.patch
@@ -626,8 +626,8 @@ zcat %{SOURCE6} | patch -p1 -s
 %patch75 -p1
 %patch76 -p1
 
-%patch77 -p1
-%patch78 -p1
+#patch77 -p1
+#patch78 -p1
 rm -rf drivers/scsi/dpt*
 cd dpt_i2o && cp -ar * ../drivers/scsi && cd -
 rm -rf dpt_i2o
