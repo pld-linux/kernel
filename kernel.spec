@@ -108,7 +108,7 @@ Patch22:	2.6.5-i386-cmpxchg.patch
 
 # suspend/resume
 # http://softwaresuspend.berlios.de/
-Patch500:	linux-2.6-software-suspend-2.0.0.105.patch.gz
+Patch500:	linux-2.6-software-suspend-2.0.0.107.patch.gz
 Patch501:	linux-2.6-via-agpc-resume-suspend-support.patch
 
 URL:		http://www.kernel.org/
