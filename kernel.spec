@@ -7,7 +7,7 @@
 %define		pre_version		pre1
 %define		lids_version		1.0.8-2.4.4
 %define		ipvs_version		0.9.0
-%define		freeswan_version	snap2001feb24b
+%define		freeswan_version	1.9
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.7
 %define		sym_ncr_version		sym-1.7.3-ncr-3.4.3
@@ -57,7 +57,7 @@ Source1000:	%{name}-lids.config
 
 Patch0:		%{name}-pldfblogo.patch
 Patch1:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
-Patch2:		linux-2.4.2-freeswan-%{freeswan_version}.patch.gz
+Patch2:		linux-2.4.5-freeswan-%{freeswan_version}.patch.gz
 # http://domsch.com/linux/aacraid/linux-2.4.4-aacraid-043001.patch
 Patch3:		linux-2.4.4-aacraid-043001.patch
 # Reiserfs/NFS patches
