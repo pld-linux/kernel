@@ -84,7 +84,7 @@ Source4:	http://redhat.com/~mingo/nx-patches/nx-2.6.7-rc2-bk2-AF
 Source5:	exec-shield-on-nx-2.6.7-rc2-bk2-A7-nxAF
 # Source5-md5:	70da8754358d6d990887ef7e023e1dc7
 Source6:	http://prdownloads.sourceforge.net/swsusp/software-suspend-2.0.0.81-for-2.6.6.tar.bz2
-# Source6-md5:	0b848096c4ccd05688cbdb74472cf58d
+# Source6-md5:	01f16898ee99fe48c9639f0d5a6e889e
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source30:	%{name}-x86_64.config
