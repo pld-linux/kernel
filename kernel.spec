@@ -47,7 +47,7 @@ Source74:	%{name}-ppc-smp.config
 Patch0:		patch-2.6.0-test1-ac2.bz2
 Patch1:		2.6.0-test1-lkml.patch
 
-Patch5:		2.6.0-test1-axp-alsa.patch
+Patch5:		kernel-2.6.0-test1-axp-alsa.patch
 Patch10:	2.6.0-t1-v850-lkml.patch.bz2
 
 ExclusiveOS:	Linux
