@@ -1,0 +1,29 @@
+--- linux/include/linux/major.h~	Wed Jul  4 14:00:15 2001
++++ linux/include/linux/major.h	Wed Jul  4 14:01:07 2001
+@@ -118,6 +118,8 @@
+ #define COMPAQ_CISS_MAJOR6      110
+ #define COMPAQ_CISS_MAJOR7      111
+ 
++#define ATARAID_MAJOR		114
++
+ #define DASD_MAJOR      94	/* Official assignations from Peter */
+ 
+ #define MDISK_MAJOR     95	/* Official assignations from Peter */
+--- Linux/fs/partitions/check.c	Wed Jul  4 14:00:15 2001
++++ linux/fs/partitions/check.c	Wed Jul  4 14:02:32 2001
+@@ -164,6 +164,15 @@
+  			sprintf(buf, "%s/c%dd%dp%d", maj, ctlr, disk, part);
+  		return buf;
+  	}
++	if (hd->major == ATARAID_MAJOR) {
++ 		int disk = minor >> hd->minor_shift;
++ 		int part = minor & (( 1 << hd->minor_shift) - 1);
++ 		if (part == 0)
++ 			sprintf(buf, "%s/d%d", maj, disk);
++ 		else
++ 			sprintf(buf, "%s/d%dp%d", maj, disk, part);
++ 		return buf;
++ 	}
+ 	if (part)
+ 		sprintf(buf, "%s%c%d", maj, unit, part);
+ 	else

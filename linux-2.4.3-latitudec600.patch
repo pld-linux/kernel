@@ -1,0 +1,128 @@
+diff -ur Linux/arch/i386/kernel/dmi_scan.c linux/arch/i386/kernel/dmi_scan.c
+--- Linux/arch/i386/kernel/dmi_scan.c	Wed May 16 16:01:13 2001
++++ linux/arch/i386/kernel/dmi_scan.c	Wed May 16 16:43:24 2001
+@@ -6,6 +6,9 @@
+ #include <linux/apm_bios.h>
+ #include <linux/slab.h>
+ #include <asm/io.h>
++#include <linux/pm.h>
++#include <linux/keyboard.h>
++#include <asm/keyboard.h>
+ 
+ struct dmi_header
+ {
+@@ -219,6 +222,35 @@
+ 
+ 
+ /*
++ * Some Bioses enable the PS/2 mouse (touchpad) at resume, even if it was disabled before 
++ * the suspend. Linux gets terribly confused by that.
++ */
++
++typedef void (pm_kbd_func) (void);
++extern pm_kbd_func *pm_kbd_request_override;
++
++static int pm_kbd_request(struct pm_dev *dev, pm_request_t req, void *data)
++{
++       if (req == PM_RESUME) {
++               pckbd_pm_resume();
++       }
++       return 0;
++}
++
++
++static __init int broken_ps2_resume(struct dmi_blacklist *d)
++{
++	if (pm_kbd_request_override == NULL)
++	{
++		pm_kbd_request_override = pckbd_pm_resume;
++		printk(KERN_INFO "%s machine detected. Mousepad Resume Bug workaround enabled.\n", d->ident);
++	}
++}
++
++
++
++
++/*
+  *  Check for clue free BIOS implementations who use
+  *  the following QA technique
+  *
+@@ -258,6 +290,10 @@
+ 			NO_MATCH, NO_MATCH, NO_MATCH
+ 			} },
+ #endif			
++	{ broken_ps2_resume, "Dell Latitude C600", {	/* Handle problems with APM on Inspiron 5000e */
++			MATCH(DMI_SYS_VENDOR, "Dell"),
++			MATCH(DMI_PRODUCT_NAME, "Latitude C600"), NO_MATCH, NO_MATCH
++			} },
+ 	{ broken_apm_power, "Dell Inspiron 5000e", {	/* Handle problems with APM on Inspiron 5000e */
+ 			MATCH(DMI_BIOS_VENDOR, "Phoenix Technologies LTD"),
+ 			MATCH(DMI_BIOS_VERSION, "A04"),
+diff -ur Linux/drivers/char/keyboard.c linux/drivers/char/keyboard.c
+--- Linux/drivers/char/keyboard.c	Wed May 16 16:00:37 2001
++++ linux/drivers/char/keyboard.c	Wed May 16 16:25:44 2001
+@@ -911,6 +911,10 @@
+ EXPORT_SYMBOL(keyboard_tasklet);
+ DECLARE_TASKLET_DISABLED(keyboard_tasklet, kbd_bh, 0);
+ 
++typedef void (pm_kbd_func) (void);
++
++pm_kbd_func *pm_kbd_request_override = NULL;
++
+ int __init kbd_init(void)
+ {
+ 	int i;
+@@ -934,7 +938,7 @@
+ 	tasklet_enable(&keyboard_tasklet);
+ 	tasklet_schedule(&keyboard_tasklet);
+ 	
+-	pm_kbd = pm_register(PM_SYS_DEV, PM_SYS_KBC, NULL);
++	pm_kbd = pm_register(PM_SYS_DEV, PM_SYS_KBC, pm_kbd_request_override);
+ 
+ 	return 0;
+ }
+diff -ur Linux/drivers/char/pc_keyb.c linux/drivers/char/pc_keyb.c
+--- Linux/drivers/char/pc_keyb.c	Wed May 16 16:01:14 2001
++++ linux/drivers/char/pc_keyb.c	Wed May 16 16:26:27 2001
+@@ -393,6 +393,30 @@
+ 	    return 0200;
+ }
+ 
++void pckbd_pm_resume(void)
++{
++       unsigned int flags;
++
++       if (queue) {                    /* Aux port detected */
++               if (aux_count == 0) {   /* Mouse not in use */ 
++                       spin_lock_irqsave(&kbd_controller_lock, flags);
++                       /*
++                        * Dell Lat. C600 A06 enables mouse after resume.
++                        * When user touches the pad, it posts IRQ 12
++                        * (which we do not process), thus holding keyboard.
++                        */
++                       kbd_write_command(KBD_CCMD_MOUSE_DISABLE);
++                       /* kbd_write_cmd(AUX_INTS_OFF); */ /* Config & lock */
++                       kb_wait();
++                       kbd_write_command(KBD_CCMD_WRITE_MODE);
++                       kb_wait();
++                       kbd_write_output(AUX_INTS_OFF);
++                       spin_unlock_irqrestore(&kbd_controller_lock, flags);
++               }
++       }
++}
++
++
+ static inline void handle_mouse_event(unsigned char scancode)
+ {
+ #ifdef CONFIG_PSMOUSE
+diff -ur Linux/include/asm-i386/keyboard.h linux/include/asm-i386/keyboard.h
+--- Linux/include/asm-i386/keyboard.h	Tue Mar 27 00:50:00 2001
++++ linux/include/asm-i386/keyboard.h	Wed May 16 16:28:57 2001
+@@ -27,6 +27,7 @@
+ extern char pckbd_unexpected_up(unsigned char keycode);
+ extern void pckbd_leds(unsigned char leds);
+ extern void pckbd_init_hw(void);
++extern void pckbd_pm_resume(void);
+ extern unsigned char pckbd_sysrq_xlate[128];
+ 
+ #define kbd_setkeycode		pckbd_setkeycode
