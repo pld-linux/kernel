@@ -258,7 +258,7 @@ Patch917:	linux-2.4.19-EXPORT_SYMBOL-netsyms.c-rm.patch
 Patch918:	linux-2.4.20-ext3.patch
 Patch919:	linux-2.4.20-ntfs.patch
 Patch920:	linux-2.4.20-squashfs.patch
-Patch921:	linux-2.4.20-grsecurity-1.9.8-dev_mem.patch
+Patch921:	linux-2.4.20-grsecurity-1.9.9-rc3-kmem.patch
 
 # Win4Lin
 Patch1000:	linux-2.4.20-Win4Lin.PLD.patch.bz2
@@ -690,7 +690,7 @@ echo Added support for V4L2
 #%patch139 -p1
 
 # sysctl controll of /dev/mem
-#%{!?_without_grsec:%patch921 -p1}
+%{!?_without_grsec:%patch921 -p1}
 
 %patch143 -p1
 %patch145 -p1
