@@ -422,8 +422,6 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %endif
 %patch1503 -p1
 %patch105 -p1
-#%patch2000 -p1
-%patch2001 -p1
 
 %build
 BuildKernel() {
