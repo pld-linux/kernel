@@ -31,7 +31,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	2.30
+Release:	2.30%{?_with_preemptible:_pr}%{?_with_o1_sched:_o1}
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
