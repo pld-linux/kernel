@@ -1175,6 +1175,7 @@ fi
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
 /lib/modules/%{version}-%{release}/kernel
+%dir /lib/modules/%{version}-%{release}/misc
 %ifnarch sparc sparc64
 #pcmcia stuff
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
@@ -1258,6 +1259,7 @@ fi
 /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
 /lib/modules/%{version}-%{release}smp/kernel
+%dir /lib/modules/%{version}-%{release}smp/misc
 %ifnarch sparc sparc64
 #pcmcia stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
