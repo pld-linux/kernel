@@ -12,9 +12,9 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		3
+%define		_rel		1
 %define		_test_ver	11
-%define		_cset		0
+%define		_cset		20031203_0406
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -107,6 +107,11 @@ Patch62:	2.6.0-t11-EPoX-sound-lkml.patch
 
 Patch64:	bootsplash-3.1.3-2.6.0-test9.diff
 
+Patch66:	2.6.0-t11-AIC_and_db4-lkml.patch
+
+Patch68:	2.6.0-t11-get_compat_timespec-lkml.patch
+
+Patch70:	2.6.0-t11-r8169-getstats.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -455,6 +460,12 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch62 -p1
 
 %patch64 -p1
+
+%patch66 -p1
+
+%patch68 -p1
+
+%patch70 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
