@@ -8,7 +8,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.17
-Release:	9
+Release:	10
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -56,6 +56,8 @@ Patch14:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
 # Linux Virtual Server: http://www.linuxvirtualserver.org/software/
 Patch15:	linux-ipvs-0.9.16-%{version}.patch
 Patch16:	kernel-3c90x.patch
+# raw-io patch
+Patch17:	ftp://ftp.kernel.org/pub/linux/kernel/people/sct/raw-io/raw-2.2.17.diff
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -287,6 +289,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch13 -p1
 %patch15 -p1
 %patch16 -p1
+%patch17 -p1
 
 tar zxf %{SOURCE6} dhiggen-over-0.23.1
 patch -p2 -s <dhiggen-over-0.23.1
@@ -469,6 +472,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH16}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH17}
 
 tar zxf %{SOURCE6} dhiggen-over-0.23.1 -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
