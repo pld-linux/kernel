@@ -271,7 +271,7 @@ BuildRequires:	bin86
 BuildRequires:	modutils
 BuildRequires:	ed
 PreReq:		modutils
-PreReq:		geninitrd >= 2.40
+PreReq:		geninitrd >= 1354
 Requires(post,postun):	fileutils
 Requires(postun):	awk
 Provides:	%{name}-up = %{version}-%{release}
