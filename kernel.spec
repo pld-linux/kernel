@@ -51,6 +51,8 @@ Source74:	%{name}-ppc-smp.config
 
 Source100:	%{name}-misc.config
 
+Patch0:		2.6.0-ksyms-add.patch
+
 %if "%{_cset}" != "0"
 Patch1:		cset-%{_cset}.txt.gz
 %endif
@@ -356,6 +358,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %prep
 %setup -q -n linux-%{version}-test%{_test_ver}
+%patch0 -p1
 %if "%{_cset}" != "0"
 %patch1 -p1
 %endif
