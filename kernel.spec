@@ -403,22 +403,22 @@ BuildKernel() {
 %else
 	%{__make} clean
 %endif
-	%{__make} include/linux/version.h
+	%{__make} %{?debug:V=1} include/linux/version.h
 
 %ifarch %{ix86}
-	%{__make} bzImage
+	%{__make} %{?debug:V=1} bzImage
 %endif
 %ifarch sparc
-	sparc32 %{__make} image
+	sparc32 %{__make} %{?debug:V=1} image
 %else
 %ifnarch %{ix86}
-	%{__make}
+	%{__make} %{?debug:V=1}
 %endif
 %endif
 %ifarch sparc
-	sparc32 %{__make} modules
+	sparc32 %{__make} %{?debug:V=1} modules
 %else
-	%{__make} modules
+	%{__make} %{?debug:V=1} modules
 %endif
 
 	mkdir -p $KERNEL_INSTALL_DIR/boot
@@ -436,6 +436,7 @@ BuildKernel() {
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
      %{__make} modules_install \
+	%{?debug:V=1} \
      	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 	KERNELRELEASE=$KernelVer
 	echo KERNEL RELEASE $KernelVer
