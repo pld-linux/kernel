@@ -12,7 +12,7 @@
 # _without_w4l		- don't build Win4Lin support
 #
 
-%define		patch_level	1
+%define		patch_level	2
 %define		_rel		6
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -229,7 +229,7 @@ Patch102:	PCI_ISA_bridge.patch
 Patch103:	linux-2.4.20-jfs-1.1.2-xattr.patch.gz
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch104:	linux-2.4.19-pcnet-parms.patch
-#Patch105:	
+Patch105:	linux-2.4.20-ptrace.patch
 Patch106:	linux-2.4.20-lkml-ppp_filter-outbound-fix.patch
 # raid5 xor fix for PIII/P4, should go away shortly
 Patch107:	linux-2.4.0-raid5xor.patch
@@ -803,6 +803,9 @@ echo Added xattr for JFS ...
 %patch103 -p1
 
 %{?_without_grsec:%patch917 -p1}
+
+#ptrace fix by Qboosh
+%patch105 -p1
 
 # SLM
 #echo Added LSM support...
