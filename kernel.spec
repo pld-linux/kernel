@@ -34,11 +34,11 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.1
+%define		_rel		0.2
 %define		_cset		0
 
 ## netfilter snap 
-%define		_netfilter_snap		20040308
+%define		_netfilter_snap		20040316
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/pentium3/i386/;s/amd64/x86_64/')
 
@@ -132,7 +132,7 @@ Patch64:	2.6.x-ppp_mppe.patch
 
 Patch66:	2.6.2-Initio9100U-Kconfig.patch
 
-Patch68:	2.6.x-patch-o-matic-ng-base-%{_netfilter_snap}.patch
+Patch68:	2.6.5-rc1-patch-o-matic-ng-base-%{_netfilter_snap}.patch
 
 Patch70:	2.6.3-sparc32-fix.patch
 
@@ -155,6 +155,8 @@ Patch87:	2.6.4-rc1-03-CONNMARK.patch
 Patch90:	2.6.4-psion-5mx.patch
 
 Patch92:	2.6.4-video-fb_find_mode-export.patch
+
+Patch94:	2.6.5-rc1-patch-o-matic-ng-extra-%{_netfilter_snap}.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -565,6 +567,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch90 -p1
 
 %patch92 -p1
+
+%patch94 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
