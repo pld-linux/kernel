@@ -1124,9 +1124,7 @@ kernelbase=`echo $KERNEL_BUILD_DIR| sed -e "sm/m\\\\\/mg"`
 mv Makefile-2.4 Makefile-2.4.bak
 sed "s/^KERNELDIR := .*/KERNELDIR := $kernelbase/" Makefile-2.4.bak > Makefile-2.4
 %{__make} -f Makefile-2.4
-cp ipt_p2p.o $KERNEL_INSTALL_DIR/lib/modules/$KernelVer/kernel/net/ipv4/netfilter/
 cd ../..
-rm -rf ipt_p2p-0.2.2
 
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
@@ -1154,6 +1152,11 @@ rm -rf ipt_p2p-0.2.2
 	KERNELRELEASE=$KernelVer
 	echo KERNEL RELEASE $KernelVer
 %endif
+
+# install ipt_p2p
+cp ipt_p2p-0.2.2/kernel/ipt_p2p.o $KERNEL_INSTALL_DIR/lib/modules/$KernelVer/kernel/net/ipv4/netfilter/
+rm -rf ipt_p2p-0.2.2
+
 } # BuildKernel
 
 KERNEL_BUILD_DIR=`pwd`
