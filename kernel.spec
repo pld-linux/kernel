@@ -82,7 +82,7 @@ Patch1:		patch-int-2.4.20.0.bz2
 Patch2:		linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/Release-1.2pre3/kernel_patches/
 Patch3:		linux-2.4.20-core-xfs-1.2pre3.patch.bz2
-Patch4:		linux-2.4.19-xfs-1.2pre3.patch.bz2
+Patch4:		linux-2.4.20-xfs-1.2pre3.patch.bz2
 # Homepage of ABI:	http://linux-abi.sourceforge.net/
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.18.0.patch.bz2 
 Patch5:		linux-abi-2.4.19.1.patch.bz2
@@ -476,6 +476,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 #%patch908 -p1
 %endif
 %patch3 -p1
+exit 0
 %patch4 -p1
 %patch5 -p1
 %patch904 -p1
