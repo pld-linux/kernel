@@ -161,14 +161,15 @@ Patch913:	linux-o1-sched-abi.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+BuildRequires:	rpm-build >= 4.0.2-53
 %ifarch sparc64
 BuildRequires:	egcs64
 %else
-BuildRequires:	egcs
+BuildRequires:	%{kgcc_package}
 %endif
 BuildRequires:	modutils
 Buildrequires:	perl
-Provides:	%{name}-up = %{version}
+Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.6.1
 Provides:	bttv = 0.7.83
@@ -214,7 +215,7 @@ Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Provides:	%{name} = %{version}
+Provides:	%{name} = %{version}-%{release}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
 Prereq:		modutils
@@ -495,7 +496,7 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
 %ifarch %{ix86} alpha sparc
-    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= egcs/g' \
+    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= %{kgcc}/g' \
 %endif
 %ifarch sparc64
     -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
