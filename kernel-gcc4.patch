@@ -20,3 +20,264 @@
  				i++;
  			}
  			j++;
+--- a/include/asm-i386/checksum.h	2004-12-24 22:35:59.000000000 +0100
++++ b/include/asm-i386/checksum.h	2005-01-08 16:53:20.649479088 +0100
+@@ -25,8 +25,8 @@
+  * better 64-bit) boundary
+  */
+ 
+-asmlinkage unsigned int csum_partial_copy_generic( const char *src, char *dst, int len, int sum,
+-						   int *src_err_ptr, int *dst_err_ptr);
++asmlinkage unsigned int csum_partial_copy_generic(const unsigned char *src, unsigned char *dst,
++						  int len, int sum, int *src_err_ptr, int *dst_err_ptr);
+ 
+ /*
+  *	Note: when you get a NULL pointer exception here this means someone
+@@ -36,14 +36,14 @@
+  *	verify_area().
+  */
+ static __inline__
+-unsigned int csum_partial_copy_nocheck ( const char *src, char *dst,
++unsigned int csum_partial_copy_nocheck (const unsigned char *src, unsigned char *dst,
+ 					int len, int sum)
+ {
+ 	return csum_partial_copy_generic ( src, dst, len, sum, NULL, NULL);
+ }
+ 
+ static __inline__
+-unsigned int csum_partial_copy_from_user(const char __user *src, char *dst,
++unsigned int csum_partial_copy_from_user(const unsigned char __user *src, unsigned char *dst,
+ 						int len, int sum, int *err_ptr)
+ {
+ 	might_sleep();
+@@ -174,8 +174,8 @@
+  *	Copy and checksum to user
+  */
+ #define HAVE_CSUM_COPY_USER
+-static __inline__ unsigned int csum_and_copy_to_user(const char *src, 
+-						     char __user *dst,
++static __inline__ unsigned int csum_and_copy_to_user(const unsigned char *src, 
++						     unsigned char __user *dst,
+ 						     int len, int sum, 
+ 						     int *err_ptr)
+ {
+--- a/include/asm-mips/checksum.h	2004-12-24 22:33:51.000000000 +0100
++++ b/include/asm-mips/checksum.h	2005-01-08 16:54:02.862061800 +0100
+@@ -34,15 +34,15 @@
+  * this is a new version of the above that records errors it finds in *errp,
+  * but continues and zeros the rest of the buffer.
+  */
+-unsigned int csum_partial_copy_from_user(const char *src, char *dst, int len,
++unsigned int csum_partial_copy_from_user(const unsigned char *src, unsigned char *dst, int len,
+                                          unsigned int sum, int *errp);
+ 
+ /*
+  * Copy and checksum to user
+  */
+ #define HAVE_CSUM_COPY_USER
+-static inline unsigned int csum_and_copy_to_user (const char *src, 
+-						  char __user *dst,
++static inline unsigned int csum_and_copy_to_user (const unsigned char *src, 
++						  unsigned char __user *dst,
+ 						  int len, int sum,
+ 						  int *err_ptr)
+ {
+@@ -61,8 +61,8 @@
+  * the same as csum_partial, but copies from user space (but on MIPS
+  * we have just one address space, so this is identical to the above)
+  */
+-unsigned int csum_partial_copy_nocheck(const char *src, char *dst, int len,
+-				       unsigned int sum);
++unsigned int csum_partial_copy_nocheck(const unsigned char *src, unsigned char *dst,
++				       int len, unsigned int sum);
+ 
+ /*
+  *	Fold a partial checksum without adding pseudo headers
+--- a/include/asm-parisc/checksum.h	2004-12-24 22:34:00.000000000 +0100
++++ b/include/asm-parisc/checksum.h	2005-01-08 16:55:09.849878104 +0100
+@@ -23,13 +23,15 @@
+  * Here even more important to align src and dst on a 32-bit (or even
+  * better 64-bit) boundary
+  */
+-extern unsigned int csum_partial_copy_nocheck(const char *, char *, int, unsigned int);
++extern unsigned int csum_partial_copy_nocheck(const unsigned char *, unsigned char *,
++					      int, unsigned int);
+ 
+ /*
+  * this is a new version of the above that records errors it finds in *errp,
+  * but continues and zeros the rest of the buffer.
+  */
+-extern unsigned int csum_partial_copy_from_user(const char *src, char *dst, int len, unsigned int sum, int *errp);
++extern unsigned int csum_partial_copy_from_user(const unsigned char *src, unsigned char *dst,
++						int len, unsigned int sum, int *errp);
+ 
+ /*
+  *	Optimized for IP headers, which always checksum on 4 octet boundaries.
+@@ -191,8 +193,8 @@
+  *	Copy and checksum to user
+  */
+ #define HAVE_CSUM_COPY_USER
+-static __inline__ unsigned int csum_and_copy_to_user (const char *src, 
+-						      char __user *dst,
++static __inline__ unsigned int csum_and_copy_to_user (const unsigned char *src, 
++						      unsigned char __user *dst,
+ 						      int len, int sum, 
+ 						      int *err_ptr)
+ {
+--- a/include/asm-sh/checksum.h	2004-12-24 22:34:01.000000000 +0100
++++ b/include/asm-sh/checksum.h	2005-01-08 16:57:44.688339080 +0100
+@@ -34,8 +34,8 @@
+  * better 64-bit) boundary
+  */
+ 
+-asmlinkage unsigned int csum_partial_copy_generic( const char *src, char *dst, int len, int sum,
+-						   int *src_err_ptr, int *dst_err_ptr);
++asmlinkage unsigned int csum_partial_copy_generic(const unsigned char *src, unsigned char *dst,
++						  int len, int sum, int *src_err_ptr, int *dst_err_ptr);
+ 
+ /*
+  *	Note: when you get a NULL pointer exception here this means someone
+@@ -45,14 +45,14 @@
+  *	verify_area().
+  */
+ static __inline__
+-unsigned int csum_partial_copy_nocheck ( const char *src, char *dst,
++unsigned int csum_partial_copy_nocheck (const unsigned char *src, unsigned char *dst,
+ 					int len, int sum)
+ {
+ 	return csum_partial_copy_generic ( src, dst, len, sum, NULL, NULL);
+ }
+ 
+ static __inline__
+-unsigned int csum_partial_copy_from_user ( const char *src, char *dst,
++unsigned int csum_partial_copy_from_user (const unsigned char *src, unsigned char *dst,
+ 						int len, int sum, int *err_ptr)
+ {
+ 	return csum_partial_copy_generic ( src, dst, len, sum, err_ptr, NULL);
+@@ -200,8 +200,8 @@
+  *	Copy and checksum to user
+  */
+ #define HAVE_CSUM_COPY_USER
+-static __inline__ unsigned int csum_and_copy_to_user (const char *src, 
+-						      char __user *dst,
++static __inline__ unsigned int csum_and_copy_to_user (const unsigned char *src, 
++						      unsigned char __user *dst,
+ 						      int len, int sum,
+ 						      int *err_ptr)
+ {
+--- a/include/asm-sparc/checksum.h	2004-12-24 22:33:47.000000000 +0100
++++ b/include/asm-sparc/checksum.h	2005-01-08 16:58:30.151427640 +0100
+@@ -39,10 +39,10 @@
+  * better 64-bit) boundary
+  */
+ 
+-extern unsigned int __csum_partial_copy_sparc_generic (const char *, char *);
++extern unsigned int __csum_partial_copy_sparc_generic (const unsigned char *, unsigned char *);
+ 
+ static inline unsigned int 
+-csum_partial_copy_nocheck (const char *src, char *dst, int len, 
++csum_partial_copy_nocheck (const unsigned char *src, unsigned char *dst, int len, 
+ 			   unsigned int sum)
+ {
+ 	register unsigned int ret asm("o0") = (unsigned int)src;
+@@ -61,7 +61,7 @@
+ }
+ 
+ static inline unsigned int 
+-csum_partial_copy_from_user(const char *src, char *dst, int len, 
++csum_partial_copy_from_user(const unsigned char *src, unsigned char *dst, int len, 
+ 			    unsigned int sum, int *err)
+   {
+ 	if (!access_ok (VERIFY_READ, src, len)) {
+@@ -91,7 +91,7 @@
+   }
+   
+ static inline unsigned int 
+-csum_partial_copy_to_user(const char *src, char __user *dst, int len, 
++csum_partial_copy_to_user(const unsigned char *src, unsigned char __user *dst, int len, 
+ 			  unsigned int sum, int *err)
+ {
+ 	if (!access_ok (VERIFY_WRITE, dst, len)) {
+--- a/include/asm-sparc64/checksum.h	2004-12-24 22:34:30.000000000 +0100
++++ b/include/asm-sparc64/checksum.h	2005-01-08 17:00:18.513954032 +0100
+@@ -38,10 +38,11 @@
+  * here even more important to align src and dst on a 32-bit (or even
+  * better 64-bit) boundary
+  */
+-extern unsigned int csum_partial_copy_sparc64(const char *src, char *dst, int len, unsigned int sum);
++extern unsigned int csum_partial_copy_sparc64(const unsigned char *src, unsigned char *dst,
++					      int len, unsigned int sum);
+ 			
+ static inline unsigned int 
+-csum_partial_copy_nocheck (const char *src, char *dst, int len, 
++csum_partial_copy_nocheck (const unsigned char *src, unsigned char *dst, int len, 
+ 			   unsigned int sum)
+ {
+ 	int ret;
+@@ -53,7 +54,7 @@
+ }
+ 
+ static inline unsigned int 
+-csum_partial_copy_from_user(const char __user *src, char *dst, int len, 
++csum_partial_copy_from_user(const unsigned char __user *src, unsigned char *dst, int len, 
+ 			    unsigned int sum, int *err)
+ {
+ 	__asm__ __volatile__ ("stx	%0, [%%sp + 0x7ff + 128]"
+@@ -66,10 +67,11 @@
+  *	Copy and checksum to user
+  */
+ #define HAVE_CSUM_COPY_USER
+-extern unsigned int csum_partial_copy_user_sparc64(const char *src, char __user *dst, int len, unsigned int sum);
++extern unsigned int csum_partial_copy_user_sparc64(const unsigned char *src, unsigned char __user *dst,
++						   int len, unsigned int sum);
+ 
+ static inline unsigned int 
+-csum_and_copy_to_user(const char *src, char __user *dst, int len, 
++csum_and_copy_to_user(const unsigned char *src, unsigned char __user *dst, int len, 
+ 		      unsigned int sum, int *err)
+ {
+ 	__asm__ __volatile__ ("stx	%0, [%%sp + 0x7ff + 128]"
+--- a/include/asm-x86_64/checksum.h	2004-12-24 22:35:23.000000000 +0100
++++ b/include/asm-x86_64/checksum.h	2005-01-08 17:00:59.051791344 +0100
+@@ -133,17 +133,17 @@
+ 
+ 
+ /* Do not call this directly. Use the wrappers below */
+-extern unsigned long csum_partial_copy_generic(const char *src, const char *dst, 
++extern unsigned long csum_partial_copy_generic(const unsigned char *src, const unsigned char *dst, 
+ 					       unsigned len,
+ 					       unsigned sum, 
+ 					       int *src_err_ptr, int *dst_err_ptr);
+ 
+ 
+-extern unsigned int csum_partial_copy_from_user(const char __user *src, char *dst, 
++extern unsigned int csum_partial_copy_from_user(const unsigned char __user *src, unsigned char *dst, 
+ 				       int len, unsigned int isum, int *errp);
+-extern unsigned int csum_partial_copy_to_user(const char *src, char __user *dst, 
++extern unsigned int csum_partial_copy_to_user(const unsigned char *src, unsigned char __user *dst, 
+ 				      int len, unsigned int isum, int *errp);
+-extern unsigned int csum_partial_copy_nocheck(const char *src, char *dst, int len, 
++extern unsigned int csum_partial_copy_nocheck(const unsigned char *src, unsigned char *dst, int len, 
+ 					      unsigned int sum);
+ 
+ /* Old names. To be removed. */
+--- a/include/net/checksum.h	2004-12-24 22:34:26.000000000 +0100
++++ b/include/net/checksum.h	2005-01-08 17:01:47.304124712 +0100
+@@ -27,7 +27,7 @@
+ 
+ #ifndef _HAVE_ARCH_COPY_AND_CSUM_FROM_USER
+ static inline
+-unsigned int csum_and_copy_from_user (const char __user *src, char *dst,
++unsigned int csum_and_copy_from_user (const unsigned char __user *src, unsigned char *dst,
+ 				      int len, int sum, int *err_ptr)
+ {
+ 	if (verify_area(VERIFY_READ, src, len) == 0)
+@@ -42,7 +42,7 @@
+ 
+ #ifndef HAVE_CSUM_COPY_USER
+ static __inline__ unsigned int csum_and_copy_to_user
+-(const char *src, char __user *dst, int len, unsigned int sum, int *err_ptr)
++(const unsigned char *src, unsigned char __user *dst, int len, unsigned int sum, int *err_ptr)
+ {
+ 	sum = csum_partial(src, len, sum);
+ 
