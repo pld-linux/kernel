@@ -572,7 +572,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
-sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
+sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
 %ifarch sparc64
     -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
 %endif
