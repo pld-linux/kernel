@@ -96,20 +96,12 @@ These are the C header files for the Linux kernel, which define
 structures and constants that are needed when rebuilding the kernel or
 building kernel modules.
 
-%package module-build
-Summary:	Development files for building kernel modules
-Group:		Base/Kernel
-Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
-
-%description module-build
-Development files from kernel source tree needed to build Linux kernel
-modules from external packages.
-
 %package source
 Summary:	Kernel source tree
 Group:		Base/Kernel
 Autoreqprov:	no
-Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
+Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
+Provides:	%{name}-module-build
 
 %description source
 This is the source code for the Linux kernel. It is required to build
@@ -179,35 +171,10 @@ fi
 %dir %{_prefix}/src/linux-%{version}
 %{_prefix}/src/linux-%{version}/include
 
-%files module-build
-%defattr(644,root,root,755)
-%{_prefix}/src/linux-%{version}/Makefile
-%{_prefix}/src/linux-%{version}/*/Makefile
-%{_prefix}/src/linux-%{version}/*/*/Makefile*
-%{_prefix}/src/linux-%{version}/*/*/*/Makefile
-%{_prefix}/src/linux-%{version}/*/*/*/*/Makefile
-%{_prefix}/src/linux-%{version}/*/*/*/*/*/Makefile
-%dir %{_prefix}/src/linux-%{version}/arch
-%dir %{_prefix}/src/linux-%{version}/arch/*
-%dir %{_prefix}/src/linux-%{version}/arch/*/kernel
-%{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
-%{_prefix}/src/linux-%{version}/arch/*/kernel/sigframe.h
-%dir %{_prefix}/src/linux-%{version}/scripts
-%{_prefix}/src/linux-%{version}/scripts/*.c
-%{_prefix}/src/linux-%{version}/scripts/*.h
-%{_prefix}/src/linux-%{version}/scripts/*.sh
-%{_prefix}/src/linux-%{version}/scripts/*/*.c
-%{_prefix}/src/linux-%{version}/scripts/*/*.h
-%{_prefix}/src/linux-%{version}/scripts/*/*.l
-%{_prefix}/src/linux-%{version}/scripts/*/*.y
-
 %files source
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Documentation
-%{_prefix}/src/linux-%{version}/arch/*/[!Mk]*
-%{_prefix}/src/linux-%{version}/arch/*/kernel/[!M]*
-%exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
-%exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/sigframe.h
+%{_prefix}/src/linux-%{version}/arch
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
@@ -218,23 +185,11 @@ fi
 %{_prefix}/src/linux-%{version}/lib
 %{_prefix}/src/linux-%{version}/mm
 %{_prefix}/src/linux-%{version}/net
-%{_prefix}/src/linux-%{version}/scripts/*
-%exclude %{_prefix}/src/linux-%{version}/scripts/*.c
-%exclude %{_prefix}/src/linux-%{version}/scripts/*.h
-%exclude %{_prefix}/src/linux-%{version}/scripts/*.sh
-%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.c
-%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.h
-%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.l
-%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.y
-%exclude %{_prefix}/src/linux-%{version}/Makefile
-%exclude %{_prefix}/src/linux-%{version}/*/Makefile
-%exclude %{_prefix}/src/linux-%{version}/*/*/Makefile*
-%exclude %{_prefix}/src/linux-%{version}/*/*/*/Makefile
-%exclude %{_prefix}/src/linux-%{version}/*/*/*/*/Makefile
-%exclude %{_prefix}/src/linux-%{version}/*/*/*/*/*/Makefile
+%{_prefix}/src/linux-%{version}/scripts
 %{_prefix}/src/linux-%{version}/sound
 %{_prefix}/src/linux-%{version}/security
 %{_prefix}/src/linux-%{version}/usr
+%{_prefix}/src/linux-%{version}/Makefile
 %{_prefix}/src/linux-%{version}/COPYING
 %{_prefix}/src/linux-%{version}/CREDITS
 %{_prefix}/src/linux-%{version}/MAINTAINERS
