@@ -35,6 +35,7 @@ Source21:	%{name}-ia32-smp.config
 #Source74:	%{name}-ppc-smp.config
 Patch0:		linux-2.5.67-genrtc_fix.patch
 Patch1:		linux-2.5.70-fix_missing_symb.patch
+Patch2:		linux-2.5-miscfix.patch
 # LSM/SELinux
 Patch10:	linux-2.5.70-lsm-20030605.patch.bz2
 ExclusiveOS:	Linux
@@ -263,6 +264,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %setup -q -n linux-%{version}
 %patch0 -p0
 %patch1 -p1
+%patch2 -p1
 #%{!?_without_lsm:%patch10 -p1}
 
 # Fix EXTRAVERSION and CC in main Makefile
