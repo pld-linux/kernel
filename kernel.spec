@@ -465,7 +465,7 @@ fi
 /lib/modules/%{version}-%{release}/misc
 /lib/modules/%{version}-%{release}/net
 /lib/modules/%{version}-%{release}/scsi
-%ifarch i386
+%ifarch %{ix86}
 /lib/modules/%{version}-%{release}/video
 #/lib/modules/%{version}-%{release}/pcmcia
 %endif
