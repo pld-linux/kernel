@@ -1,0 +1,139 @@
+diff -u -p linux/net/irda/irttp.j2.c linux/net/irda/irttp.c
+--- linux/net/irda/irttp.j2.c	Fri Mar  2 14:10:29 2001
++++ linux/net/irda/irttp.c	Fri Mar  2 14:22:10 2001
+@@ -404,6 +404,7 @@ int irttp_data_request(struct tsap_cb *s
+ static void irttp_run_tx_queue(struct tsap_cb *self) 
+ {
+ 	struct sk_buff *skb;
++	struct sk_buff *tx_skb;
+ 	unsigned long flags;
+ 	int n;
+ 
+@@ -454,7 +455,40 @@ static void irttp_run_tx_queue(struct ts
+ 		 */
+ 		skb->data[0] |= (n & 0x7f);
+ 		
+-		irlmp_data_request(self->lsap, skb);
++		/* Detach from socket.
++		 * The current skb has a reference to the socket that sent
++		 * it (skb->sk). When we pass it to IrLMP, the skb will be
++		 * stored in in IrLAP (self->wx_list). When we are within
++		 * IrLAP, we loose the notion of socket, so we should not
++		 * have a reference to a socket. So, we drop it here.
++		 * 
++		 * Why does it matter ?
++		 * When the skb is freed (kfree_skb), if it is associated
++		 * with a socket, it release buffer space on the socket
++		 * (through sock_wfree() and sock_def_write_space()).
++		 * If the socket no longer exist, we may crash. Hard.
++		 * When we close a socket, we make sure that associated packets
++		 * in IrTTP are freed. However, we have no way to cancel
++		 * the packet that we have passed to IrLAP. So, if a packet
++		 * remains in IrLAP (retry on the link or else) after we
++		 * close the socket, we are dead !
++		 * Jean II */
++		if (skb->sk != NULL) {
++			IRDA_DEBUG(4, __FUNCTION__ "() : Detaching SKB from socket.\n");
++			/* Get another skb on the same buffer, but without
++			 * a reference to the socket (skb->sk = NULL) */
++			tx_skb = skb_clone(skb, GFP_ATOMIC);
++			if (tx_skb != NULL) {
++				/* Release the skb associated with the
++				 * socket, and use the new skb insted */
++				kfree_skb(skb);
++			}
++		} else {
++			IRDA_DEBUG(3, __FUNCTION__ "() : Got SKB not attached to a socket.\n");
++			tx_skb = skb;
++		}
++
++		irlmp_data_request(self->lsap, tx_skb);
+ 		self->stats.tx_packets++;
+ 
+ 		/* Check if we can accept more frames from client */
+diff -u -p linux/net/irda/irlmp.j2.c linux/net/irda/irlmp.c
+--- linux/net/irda/irlmp.j2.c	Fri Mar  2 14:10:08 2001
++++ linux/net/irda/irlmp.c	Fri Mar  2 14:15:05 2001
+@@ -963,6 +963,7 @@ int irlmp_data_request(struct lsap_cb *s
+ {
+ 	ASSERT(self != NULL, return -1;);
+ 	ASSERT(self->magic == LMP_LSAP_MAGIC, return -1;);
++	ASSERT(skb->sk == NULL, /* Just a warning - NOP */;);
+ 	
+ 	/* Make room for MUX header */
+ 	ASSERT(skb_headroom(skb) >= LMP_HEADER, return -1;);
+diff -u -p linux/net/irda/irlap_frame.j2.c linux/net/irda/irlap_frame.c
+--- linux/net/irda/irlap_frame.j2.c	Fri Mar  2 14:10:19 2001
++++ linux/net/irda/irlap_frame.c	Fri Mar  2 14:16:06 2001
+@@ -742,12 +742,6 @@ void irlap_send_data_primary(struct irla
+ 			return;
+ 		}
+ 		
+-		/*
+-		 *  make sure the skb->sk accounting of memory usage is sane
+-		 */
+-		if (skb->sk != NULL)
+-			skb_set_owner_w(tx_skb, skb->sk);
+-		
+ 		/* 
+ 		 *  Insert frame in store, in case of retransmissions 
+ 		 */
+@@ -788,12 +782,6 @@ void irlap_send_data_primary_poll(struct
+ 			return;
+ 		}
+ 		
+-		/*
+-		 *  make sure the skb->sk accounting of memory usage is sane
+-		 */
+-		if (skb->sk != NULL)
+-			skb_set_owner_w(tx_skb, skb->sk);
+-		
+ 		/* 
+ 		 *  Insert frame in store, in case of retransmissions 
+ 		 */
+@@ -863,9 +851,6 @@ void irlap_send_data_secondary_final(str
+ 			return;
+ 		}		
+ 
+-		if (skb->sk != NULL)
+-			skb_set_owner_w(tx_skb, skb->sk);
+-		
+ 		/* Insert frame in store */
+ 		skb_queue_tail(&self->wx_list, skb_get(skb));
+ 		
+@@ -917,9 +902,6 @@ void irlap_send_data_secondary(struct ir
+ 			return;
+ 		}		
+ 		
+-		if (skb->sk != NULL)
+-			skb_set_owner_w(tx_skb, skb->sk);
+-		
+ 		/* Insert frame in store */
+ 		skb_queue_tail(&self->wx_list, skb_get(skb));
+ 		
+@@ -973,12 +955,6 @@ void irlap_resend_rejected_frames(struct
+ 		tx_skb->next = tx_skb->prev = NULL;
+ 		tx_skb->list = NULL;
+ 
+-		/*
+-		 *  make sure the skb->sk accounting of memory usage is sane
+-		 */
+-		if (skb->sk != NULL)
+-			skb_set_owner_w(tx_skb, skb->sk);
+-
+ 		/* Clear old Nr field + poll bit */
+ 		tx_skb->data[1] &= 0x0f;
+ 
+@@ -1058,12 +1034,6 @@ void irlap_resend_rejected_frame(struct 
+ 		/* Unlink tx_skb from list */
+ 		tx_skb->next = tx_skb->prev = NULL;
+ 		tx_skb->list = NULL;
+-
+-		/*
+-		 *  make sure the skb->sk accounting of memory usage is sane
+-		 */
+-		if (skb->sk != NULL)
+-			skb_set_owner_w(tx_skb, skb->sk);
+ 
+ 		/* Clear old Nr field + poll bit */
+ 		tx_skb->data[1] &= 0x0f;
