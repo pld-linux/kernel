@@ -48,6 +48,7 @@ Patch8:		wanrouter-v2215.patch.gz
 Patch9:		http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.15-pre9-patch
 Patch10:	linux-newagpdist.patch
 Patch11:	linux-agphjlfixes.patch
+Patch12:	ftp://shiva.poland.com/people/serek/kernel-DPT-smartRAID-serek.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -251,6 +252,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch9 -p1
 %patch10 -p1
 %patch11 -p1
+%patch12 -p1
 
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 # Tekram DC395/315 U/UW SCSI host driver
@@ -625,7 +627,7 @@ fi
 /lib/modules/%{version}-%{release}BOOT/net
 /lib/modules/%{version}-%{release}BOOT/scsi
 %ifarch i386
-#/lib/modules/%{version}-%{release}BOOT/video
+/lib/modules/%{version}-%{release}BOOT/video
 /lib/modules/%{version}-%{release}BOOT/pcmcia
 %endif
 %endif
