@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	1.7%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	1.8%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -66,6 +66,7 @@ Source1006:	%{name}-cdrw.config
 Source1007:	%{name}-acpi.config
 Source1008:	%{name}-ebtables.config
 Source1009:	%{name}-usb2.config
+Source1010:	%{name}-i2c.config
 Source1666:	%{name}-grsec.config
 Source1667:	%{name}-int.config
 Source1668:	%{name}-hostap.config
@@ -217,6 +218,8 @@ Patch142:	linux-tdfxfb-fixes.patch
 Patch143:	linux-2.4.20-reiserfs-quota.patch.bz2
 #support for VIA KT400 chipset in agpgart
 Patch144:	linux-2.4.20-kt400.patch
+#i2c - version 2.7.0
+Patch145:	linux-2.4.20-i2c-2.7.0.patch.gz
 
 # Patches fixing other patches or 3rd party sources ;)
 # This patch allows to create more than one sound device using alsa
@@ -269,7 +272,7 @@ BuildRequires:	modutils
 Buildrequires:	perl
 Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
-Provides:	i2c = 2.6.1
+Provides:	i2c = 2.7.0
 Provides:	bttv = 0.7.83
 Provides:	%{name}_netfilter = 1.2.7a
 Provides:	%{name}(reiserfs) = %{version}
@@ -319,7 +322,7 @@ Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeu
 Group:		Base/Kernel
 Provides:	%{name}-smp = %{version}-%{release}
 Provides:	module-info
-Provides:	i2c = 2.6.1
+Provides:	i2c = 2.7.0
 Provides:	bttv = 0.7.83
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
@@ -446,7 +449,7 @@ Group:		Base/Kernel
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
-Provides:	i2c-devel = 2.6.1
+Provides:	i2c-devel = 2.7.0
 Provides:	%{name}_netfilter = 1.2.7a
 Autoreqprov:	no
 
@@ -683,6 +686,7 @@ echo Added support for V4L2
 
 %patch143 -p1
 %patch144 -p1
+%patch145 -p1
 
 echo Added ARCH specific patches....
 %ifarch ppc
@@ -778,6 +782,7 @@ BuildKernel() {
 %endif
 	cat %{SOURCE1008} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1009} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1010} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1671} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1672} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1673} >> arch/%{base_arch}/defconfig
