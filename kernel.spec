@@ -52,7 +52,7 @@ Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
 Source1000:	%{name}-lids.config
-Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.3.gz
+Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
 #Patch1:		%{name}-pldfblogo.patch
 Patch2:		linux-2.4.2-freeswan-%{freeswan_version}.patch.gz
 #Patch3:		linux-ipv6-addrconf.patch
