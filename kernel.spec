@@ -74,9 +74,9 @@ Patch0:		%{name}-pldfblogo.patch
 Patch1:		patch-int-2.4.5.0.gz
 Patch2:		linux-2.4.7-freeswan-%{freeswan_version}.patch.gz
 # http://domsch.com/linux/aacraid/linux-2.4.4-aacraid-043001.patch
-# http://domsch.com/linux/aacraid/linux-2.4.7-aacraid-20010721.patch
+Patch3: 	http://domsch.com/linux/aacraid/linux-2.4.7-aacraid-20010721.patch
 #Patch3:		linux-2.4.4-aacraid-043001.patch
-Patch3:		linux-2.4.7-aacraid.patch
+#Patch3:		linux-2.4.7-aacraid.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.7.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/
@@ -163,7 +163,8 @@ Patch142:	linux-2.4.7-lvm-1.0.1rc3cvs.patch
 # Patches fixing other patches or 3rd party sources ;)
 
 Patch900:	kernel-i8255-asm-fix.patch
-Patch901:	dc395-patch-PLD-fix.patch
+# patch not needed for ver. 133
+#Patch901:	dc395-patch-PLD-fix.patch
 # patch to fix LIDS stupidity
 Patch902:	linux-lids-fixpatch.patch
 # patch to fix problem wit ABI and LIDS
@@ -457,7 +458,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch142 -p1
 
 %patch900 -p0 
-%patch901 -p0
+#%patch901 -p0
 %patch906 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
