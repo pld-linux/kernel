@@ -12,7 +12,6 @@
 %bcond_with	pramfs		# build pramfs support (EXPERIMENTAL)
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
-%bcond_with	bootsplash	# build with bootsplash
 %bcond_with	swsuspend	# build with software suspend
 %bcond_with	mosix		# build with openMosix support
 
@@ -126,9 +125,6 @@ Patch20:	2.6.0-t8-umsdos-lkml.patch
 Patch22:	2.6.0-t9-acpi_osl-lkml.patch
 
 Patch24:	%{name}-nls_default.patch
-
-# rewriten based on: ftp://ftp.suse.com/pub/people/stepan/bootsplash/kernel/bootsplash-3.1.4-2.6.3.diff
-Patch26:	bootsplash-3.1.4-2.6.7.patch
 
 Patch28:	2.6.0-t11-AIC_and_db4-lkml.patch
 Patch30:	linux-tdfxfb-fillrect.patch
@@ -619,12 +615,6 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch22 -p1
 
 #patch24 -p1
-
-## bootsplash
-%if %{with bootsplash}
-echo "Not fixed !!"
-%patch26 -p1
-%endif
 
 %patch28 -p1
 %patch30 -p1
