@@ -109,9 +109,9 @@ Patch110:	linux-2.2.20-pcmcia-without-iee1394.patch.bz2
 # based on ftp://ftp.kernel.org/people/andrea/kernels/v2.2/2.2.20pre9aa2/40_lfs-2.2.20pre9aa2-27.bz2
 #Patch111:       linux-2.2.20-lfs.patch
 Patch112:       %{name}-scripts-include-dir.patch
-Patch120:	bttv-makefile.patch
+#Patch120:	bttv-makefile.patch
 Patch121:	tulip-patch-0.91.patch.bz2
-Patch122:       bttv-symbols.patch.bz2
+#Patch122:       bttv-symbols.patch.bz2
 #Patch123:	bridge-module_build.patch.bz2
 
 Patch1000:	%{name}-vlan_bridge.patch
@@ -521,9 +521,9 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 
 %patch200 -p1
 
-%patch120 -p1
+#%patch120 -p1
 %patch121 -p1
-%patch122 -p1
+#%patch122 -p1
 #%patch123 -p1
 
 #%patch111 -p1
