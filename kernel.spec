@@ -3,7 +3,7 @@
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.34
 %define		i2c_version		2.6.2
-%define		bttv_version		0.7.86
+%define		bttv_version		0.7.87
 %define		wlan_version		0.3.4
 %define		tun_version		1.1
 %define         vlan_version            1.0.1
