@@ -53,13 +53,13 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-#define		_post_ver	.1
-%define		_post_ver	%{nil}
-%define		_rel		0.28
+%define		_post_ver	.2
+#define		_post_ver	%{nil}
+%define		_rel		0.30
 %define		_cset		20050302_0807
 %define		_apply_cset	0
 
-%define		_netfilter_snap		20041118
+%define		_netfilter_snap		20050302
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
@@ -81,7 +81,7 @@ Group:		Base/Kernel
 %define		_rc	%{nil}
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	f00fd1b5a80f52baf9d1d83acddfa325
+# Source0-md5:	61ade860849e8661f14bd754f5a90986
 Source1:	%{name}-autoconf.h
 
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
@@ -149,7 +149,7 @@ Patch33:		linux-kbuild-extmod.patch
 Patch41:		linux-fbcon-margins.patch
 
 # netfilter
-#Patch50:	2.6.10-pom-ng-%{_netfilter_snap}.patch
+Patch50:	2.6.11-pom-ng-base-%{_netfilter_snap}.patch
 # http://l7-filter.sourceforge.net/
 #Patch52:	2.6.8-ipt_layer7.patch
 #Patch53:	2.6.10-esfq.patch
@@ -553,7 +553,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch41 -p1
 
 # netfilter
-#%patch50 -p1
+%patch50 -p1
 
 #%patch52 -p1
 #%patch53 -p1
