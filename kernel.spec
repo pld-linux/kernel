@@ -16,7 +16,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	6
+Release:	7
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -32,7 +32,6 @@ Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-133.tar.gz
 Source5:	ftp://ftp.sourceforge.net/pub/sourceforge/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source6:	ftp://ftp.tux.org/tux/roudier/drivers/linux/stable/sym-%{symncr_version}.tar.gz
 Source7:	ftp://ftp.linux-wlan.com/linux-wlan/linux-wlan-%{wlan_version}.tar.gz
-Source8:	http://www.dandelion.com/Linux/DAC960-2.2.10.tar.gz
 Source9:	serial-5.05.tar.gz
 Source10:	http://vtun.sourceforge.net/tun/tun-%{tun_version}.tar.gz
 Source11:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
@@ -58,6 +57,7 @@ Source51:	http://www.strusel007.de/linux/bttv/bttv-%{bttv_version}.tar.gz
 
 # in this place i will include Patches
 
+
 Patch0:		%{name}-pldfblogo.patch
 Patch1:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
 Patch2:		http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
@@ -71,7 +71,8 @@ Patch8:		%{name}-3c90x.patch
 Patch9:		linux-ipv6-glibc2.2.patch
 # based on http://bridge.sourceforge.net/patches/bridge-1.0.1-against-2.2.20.diff
 # but diffrent
-Patch10:	bridge-1.0.1-against-2.2.20.diff
+Patch10:	bridge-1.0.2-against-2.2.20.diff
+Patch11:	bridge-ipchains-against-1.0.2-against-2.2.20.diff
 
 Patch20:	http://download.sourceforge.net/linux1394/ieee1394-2.2.19-20010527.gz
 Patch21:	linux-tasks.patch
@@ -84,8 +85,7 @@ Patch27:	%{name}-udf.patch
 
 # based on	http://people.redhat.com/mingo/raid-patches/raid-2.2.20-A0
 Patch30:	raid-2.2.20-A0.patch.bz2
-# based on	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.19/ide.2.2.19.05042001.patch.bz2
-Patch31:	ide.2.2.21.05042001-Ole.patch.gz
+Patch31:	http://www.ans.pl/ide/ide.2.2.21.01152002-Ole.patch.gz
 Patch32:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
 
 Patch40:	%{name}-flip.patch
@@ -94,7 +94,7 @@ Patch42:	%{name}-serial-initialisation.patch
 
 # in this place will be PLD patches
 
-Patch100:	bridge-include.patch
+#Patch100:	bridge-include.patch
 Patch101:	bridge-netsyms.patch
 Patch102:	%{name}-ipsec-bridge.patch
 
@@ -111,7 +111,9 @@ Patch112:       %{name}-scripts-include-dir.patch
 Patch120:	bttv-makefile.patch
 Patch121:	tulip-patch-0.91.patch.bz2
 Patch122:       bttv-symbols.patch.bz2
-Patch123:	bridge-module_build.patch.bz2
+#Patch123:	bridge-module_build.patch.bz2
+
+Patch1000:	%{name}-vlan_bridge.patch
 
 # HTB from http://luxik.cdi.cz/~devik/qos/htb/
 Patch200:	htb2_2.2.17.diff
@@ -135,6 +137,9 @@ Provides:	%{name}-up = %{version}
 %ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(i2c) = %{i2c_version}
+Provides:	i2c-devel = %{i2c_version}
+Provides:       i2c = %{i2c_version}
+Provides:	bttv = %{bttv_version}
 %endif
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
@@ -144,12 +149,20 @@ Prereq:		fileutils
 Prereq:		geninitrd
 #Prereq:		rc-boot
 Obsoletes:	kernel-modules
+
+#i2c and bttv packages are obsolete
+Obsoletes:	i2c-devel
+Obsoletes:	kernel-i2c
+Obsoletes:	bttv
+Obsoletes:	kernel-misc-bttv
+
 ExclusiveArch:	%{ix86} sparc sparc64 alpha
 %ifarch		%{ix86}
 BuildRequires:	bin86
 BuildRequires:	autoconf
 BuildRequires:	automake
 %endif
+Autoreqprov:    no
 
 %description
 This package contains the Linux kernel that is used to boot and run
@@ -182,6 +195,11 @@ Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
 %ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
+Provides:       %{name}(i2c) = %{i2c_version}
+Provides:       i2c-devel = %{i2c_version}
+Provides:       i2c = %{i2c_version}
+Provides:	bttv = %{bttv_version}
+
 %endif
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
@@ -189,6 +207,13 @@ Prereq:		modutils
 Prereq:		fileutils
 Prereq:		geninitrd
 #Prereq:		rc-boot
+Obsoletes:      kernel-modules
+
+#i2c and bttv packages are obsolete
+Obsoletes:      i2c-devel
+Obsoletes:      kernel-smp-i2c
+Obsoletes:      bttv
+Obsoletes:      kernel-smp-misc-bttv
 Autoreqprov:	no
 
 %description smp
@@ -217,6 +242,10 @@ Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
 %ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
+Provides:       %{name}(i2c) = %{i2c_version}
+Provides:       i2c-devel = %{i2c_version}
+Provides:       i2c = %{i2c_version}
+Provides:	bttv = %{bttv_version}
 %endif
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
@@ -224,6 +253,14 @@ Prereq:		modutils
 Prereq:		fileutils
 Prereq:		geninitrd
 #Prereq:		rc-boot
+Obsoletes:      kernel-modules
+
+#i2c and bttv packages are obsolete
+Obsoletes:      i2c-devel
+Obsoletes:      kernel-smp-i2c
+Obsoletes:      bttv
+Obsoletes:      kernel-smp-misc-bttv
+
 Autoreqprov:	no
 
 %description fb
@@ -248,6 +285,10 @@ Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
 %ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
+Provides:       %{name}(i2c) = %{i2c_version}
+Provides:       i2c-devel = %{i2c_version}
+Provides:       i2c = %{i2c_version}
+Provides:       bttv = %{bttv_version}
 %endif
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
@@ -255,6 +296,14 @@ Prereq:		modutils
 Prereq:		fileutils
 Prereq:		geninitrd
 #Prereq:		rc-boot
+Obsoletes:      kernel-modules
+
+#i2c and bttv packages are obsolete
+Obsoletes:      i2c-devel
+Obsoletes:      kernel-smp-i2c
+Obsoletes:      bttv
+Obsoletes:      kernel-smp-misc-bttv
+
 Autoreqprov:	no
 
 %description smp-fb
@@ -386,7 +435,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a50 -a51 -n linux
+%setup -q -a3 -a4 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a50 -a51 -n linux
 
 # here  patch will be executabling, for now we have just patch in the 
 # tar.gz sources
@@ -408,6 +457,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
+%patch11 -p1
 
 %patch20 -p1
 %patch21 -p1
@@ -424,8 +474,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %patch40 -p1
 
-%patch100 -p1
-%patch101 -p1
+#%patch100 -p1
 %patch102 -p1
 %patch105 -p1
 %patch106 -p1
@@ -435,6 +484,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch112 -p1
 
 # 802.1Q VLANs
+%patch1000 -p1
 patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
 
 cd serial-5.05
@@ -442,10 +492,6 @@ cd serial-5.05
 %patch42 -p1
 ./install-in-kernel ../
 cd .. 
-
-# Dac drivers
-mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
-mv DAC960.[ch] drivers/block
 
 # i2c
 %ifarch %{ix86}
@@ -477,9 +523,10 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
-%patch123 -p1
+#%patch123 -p1
 
 #%patch111 -p1
+%patch101 -p1
 
 %build
 BuildKernel() {
@@ -694,6 +741,7 @@ bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/
 mv -f $RPM_BUILD_ROOT%{_prefix}/src/linux $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 bzip2 -dc %{PATCH300} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH320}
@@ -709,6 +757,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH7}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH9}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH10}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH11}
 
 gzip -dc %{PATCH20} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH21}
@@ -725,8 +774,7 @@ gzip -dc %{PATCH32} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{vers
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH40}
 
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH100}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
+#patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH100}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH102}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH105}
@@ -735,7 +783,10 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH106}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH108}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH109}
 
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH112}
+
 # VLAN
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1000}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <vlan.%{vlan_version}/vlan_2.2.patch
 
 #serial
@@ -744,11 +795,6 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH41
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH42}
 ./install-in-kernel $RPM_BUILD_ROOT/usr/src/linux-%{version}
 cd ..
-
-#DAC960 drivers
-tar xfz %{SOURCE8}
-mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
-mv DAC960.[ch] drivers/block
 
 # i2c
 %ifarch %{ix86}
@@ -773,12 +819,13 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < jfs-2.2.common-v%{jfs
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH107}
 
-bzip2 -dc %{PATCH121} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-bzip2 -dc %{PATCH123} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH200}
 
+bzip2 -dc %{PATCH121} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+#bzip2 -dc %{PATCH123} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+
 #patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH111}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
@@ -867,7 +914,7 @@ fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
 
-depmod -a -F /boot/System.map %{version}-%{release}
+depmod -a -F /boot/System.map %{version}-%{release}smp
 
 %postun
 if [ -L /lib/modules/%{version} ]; then 
