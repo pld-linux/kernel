@@ -543,22 +543,30 @@ BuildKernel() {
 	%{?verbose:set -x}
 	# is this a special kernel we want to build?
 	BOOT=
+	smp=
 	if [ -n "$1" ] ; then
 		if [ "$1" = "BOOT" ] ; then
 			BOOT=yes
 		fi
+		if [ "$1" = "smp" ] ; then
+			smp=yes
+		fi
 	else
 %ifarch %{ix86}
-		Config="ia32"
-%else
-		Config="%{_target_cpu}"
-%endif
-	if [ "$BOOT" ] ; then
-		KernelVer=%{version}-%{release}-BOOT
+	if [ "$smp"||"$BOOT" ]; then
+		Config="ia32"-$1
 	else
-		KernelVer=%{version}-%{release}
-	fi	
-		echo BUILDING THE NORMAL KERNEL...
+		Config="ia32"
+	fi
+%else
+	if [ "$smp"||"$BOOT" ]; then
+		Config="%{_target_cpu}"-$1
+	else
+		Config="%{_target_cpu}"
+	fi
+%endif
+		KernelVer=%{version}-%{release}$1
+		echo BUILDING THE NORMAL KERNEL $1...
 	fi
 	:> arch/%{base_arch}/defconfig
 	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/%{base_arch}/defconfig
@@ -581,6 +589,7 @@ BuildKernel() {
 	if [ "$BOOT" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_CRYPTO is not set" >> arch/%{base_arch}/defconfig
+		echo "CONFIG_ROMFS_FS=y" >> arch/%{base_arch}/defconfig
 	else
 		cat %{SOURCE1667} >> arch/%{base_arch}/defconfig
 		cat %{SOURCE1666} >> arch/%{base_arch}/defconfig
