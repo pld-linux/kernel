@@ -551,15 +551,14 @@ BuildKernel() {
 		if [ "$1" = "smp" ] ; then
 			smp=yes
 		fi
-	else
 %ifarch %{ix86}
-	if [ "$smp"||"$BOOT" ]; then
+	if [ "$smp" ] || [ "$BOOT" ]; then
 		Config="ia32"-$1
 	else
 		Config="ia32"
 	fi
 %else
-	if [ "$smp"||"$BOOT" ]; then
+	if [ "$smp" ] || [ "$BOOT" ]; then
 		Config="%{_target_cpu}"-$1
 	else
 		Config="%{_target_cpu}"
