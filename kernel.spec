@@ -557,14 +557,14 @@ BuildKernel() {
 		KernelVer=%{version}-%{release}
 		echo BUILDING THE NORMAL KERNEL...
 	fi
-	cat %{SOURCE1001} >> $RPM_SOURCE_DIR/kernel-$Config.config
-	cat %{SOURCE1002} >> $RPM_SOURCE_DIR/kernel-$Config.config
-	cat %{SOURCE1003} >> $RPM_SOURCE_DIR/kernel-$Config.config
-	cat %{SOURCE1004} >> $RPM_SOURCE_DIR/kernel-$Config.config
-	cat %{SOURCE1005} >> $RPM_SOURCE_DIR/kernel-$Config.config
-	cat %{SOURCE1006} >> $RPM_SOURCE_DIR/kernel-$Config.config
-	cat %{SOURCE1007} >> $RPM_SOURCE_DIR/kernel-$Config.config
 	cp $RPM_SOURCE_DIR/kernel-$Config.config arch/$RPM_ARCH/defconfig
+	cat %{SOURCE1001} >> arch/$RPM_ARCH/defconfig
+	cat %{SOURCE1002} >> arch/$RPM_ARCH/defconfig
+	cat %{SOURCE1003} >> arch/$RPM_ARCH/defconfig
+	cat %{SOURCE1004} >> arch/$RPM_ARCH/defconfig
+	cat %{SOURCE1005} >> arch/$RPM_ARCH/defconfig
+	cat %{SOURCE1006} >> arch/$RPM_ARCH/defconfig
+	cat %{SOURCE1007} >> arch/$RPM_ARCH/defconfig
 	if [ "$LIDS" = "lids" ] ; then
 		echo ENABLING LIDS...
 		cat %{SOURCE1000} >> arch/$RPM_ARCH/defconfig
