@@ -1,8 +1,9 @@
---- linux/drivers/char/agp/agpgart_be.c.ppc	2002-06-06 08:32:04.000000000 -0400
-+++ linux/drivers/char/agp/agpgart_be.c	2002-06-06 08:56:53.000000000 -0400
-@@ -44,6 +44,10 @@
- #include <asm/io.h>
- #include <asm/page.h>
+diff -urN linux-2.4.22.org/drivers/char/agp/agpgart_be.c linux-2.4.22/drivers/char/agp/agpgart_be.c
+--- linux-2.4.22.org/drivers/char/agp/agpgart_be.c	2003-11-21 18:32:42.000000000 +0100
++++ linux-2.4.22/drivers/char/agp/agpgart_be.c	2003-11-21 18:34:41.000000000 +0100
+@@ -53,6 +53,10 @@
+ #include <asm/msr.h>
+ #endif
  
 +#ifdef CONFIG_AGP_UNINORTH
 +#include <asm/uninorth.h>
@@ -11,7 +12,7 @@
  #include <linux/agp_backend.h>
  #include "agp.h"
  
-@@ -69,7 +73,7 @@
+@@ -81,7 +85,7 @@
  {
  #if defined(__i386__) || defined(__x86_64__)
  	asm volatile ("wbinvd":::"memory");
@@ -20,9 +21,9 @@
  	/* ??? I wonder if we'll really need to flush caches, or if the
  	   core logic can manage to keep the system coherent.  The ARM
  	   speaks only of using `cflush' to get things in memory in
-@@ -3803,6 +3809,405 @@
- 
- #endif /* CONFIG_AGP_HP_ZX1 */
+@@ -5918,6 +5922,405 @@
+ }
+ #endif /* CONFIG_AGP_ATI */
  
 +#ifdef CONFIG_AGP_UNINORTH
 +
@@ -426,9 +427,9 @@
  /* per-chipset initialization data.
   * note -- all chipsets for a single vendor MUST be grouped together
   */
-@@ -4116,6 +4521,27 @@
- 		hp_zx1_setup },
- #endif
+@@ -6462,6 +6865,27 @@
+ 	  ati_generic_setup },
+ #endif /* CONFIG_AGP_ATI */
  
 +#ifdef CONFIG_AGP_UNINORTH
 +	{ PCI_DEVICE_ID_APPLE_UNI_N_AGP,
@@ -454,27 +455,27 @@
  	{ 0, }, /* dummy final entry, always present */
  };
  
-diff -u linux/drivers/char/Config.in.orig linux/drivers/char/Config.in
---- linux/drivers/char/Config.in.orig	2002-05-29 17:02:22.000000000 +0200
-+++ linux/drivers/char/Config.in	2002-05-29 17:03:42.000000000 +0200
-@@ -266,6 +266,9 @@
-    if [ "$CONFIG_IA64" = "y" ]; then
-       bool '  HP ZX1 AGP support' CONFIG_AGP_HP_ZX1
+diff -urN linux-2.4.22.org/drivers/char/Config.in linux-2.4.22/drivers/char/Config.in
+--- linux-2.4.22.org/drivers/char/Config.in	2003-11-21 18:32:29.000000000 +0100
++++ linux-2.4.22/drivers/char/Config.in	2003-11-21 18:34:42.000000000 +0100
+@@ -210,6 +210,9 @@
+       comment '  from the tpqic02-support package.  It is available at'
+       comment '  metalab.unc.edu or ftp://titus.cfw.com/pub/Linux/util/'
     fi
 +   if [ "$CONFIG_ALL_PPC" = "y" ]; then
 +      bool '  Apple UniNorth support' CONFIG_AGP_UNINORTH
 +   fi
  fi
  
- bool 'Direct Rendering Manager (XFree86 DRI support)' CONFIG_DRM
-diff -u linux/include/linux/agp_backend.h.orig linux/include/linux/agp_backend.h
---- linux/include/linux/agp_backend.h.orig	2002-05-07 12:20:25.000000000 +0200
-+++ linux/include/linux/agp_backend.h	2002-05-07 12:24:01.000000000 +0200
-@@ -77,6 +77,7 @@
- 	SVWRKS_LE,
- 	SVWRKS_GENERIC,
+ tristate 'IPMI top-level message handler' CONFIG_IPMI_HANDLER
+diff -urN linux-2.4.22.org/include/linux/agp_backend.h linux-2.4.22/include/linux/agp_backend.h
+--- linux-2.4.22.org/include/linux/agp_backend.h	2003-11-21 18:31:25.000000000 +0100
++++ linux-2.4.22/include/linux/agp_backend.h	2003-11-21 18:35:20.000000000 +0100
+@@ -95,6 +95,7 @@
+ 	NVIDIA_NFORCE3,
+ 	NVIDIA_GENERIC,
  	HP_ZX1,
 +	APPLE_UNINORTH,
- };
- 
- typedef struct _agp_version {
+ 	ATI_RS100,
+ 	ATI_RS200,
+ 	ATI_RS250,
