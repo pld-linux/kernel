@@ -324,7 +324,7 @@ Group:		Base/Kernel
 PreReq:		coreutils
 PreReq:		module-init-tools >= 0.9.9
 PreReq:		geninitrd >= 2.26
-Provides:	%{name} = %{epoch}:%{version}-%{release}
+Provides:	%{name}-smp = %{epoch}:%{version}-%{release}
 Provides:	module-info
 Provides:	%{name}(netfilter) = %{_netfilter_snap}
 Conflicts:	util-linux < %{_util_linux_ver}
