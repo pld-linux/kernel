@@ -130,6 +130,7 @@ Patch42:	linux-2.4.20-rc3-ticable.h-USB.patch
 #Patch43:	linux-2.4.20-rc1-IDE.patch
 Patch44:	kernel-2.4-NTfix.patch
 Patch45:	linux-2.4.19-ACL-0.8.54.patch.bz2
+Patch46:	linux-2.4.19-HP715.patch
 
 # Assorted bugfixes
 
@@ -633,6 +634,8 @@ echo USB 2.0 Support from Linux-2.4.20-rc1.
 # ACL support
 echo Added ACL support
 %patch45 -p1
+
+%patch46 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
