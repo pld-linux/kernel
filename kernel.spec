@@ -6,24 +6,22 @@
 # _without_up		- don't build UP kernel
 # _without_source	- don't build source
 # _without_selinux	- don't build SELinux kernel
-#
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
-#
+
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.5.68
-Release:	0.2
+Release:	0.3
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
-Source2:	http://piorun.ds.pg.gda.pl/~blues/radeonfb.c
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 #Source50:	%{name}-sparc.config
@@ -35,24 +33,18 @@ Source21:	%{name}-ia32-smp.config
 #Source73:	%{name}-ppc.config
 #Source74:	%{name}-ppc-smp.config
 Patch0:		http://piorun.ds.pg.gda.pl/~blues/linux-2.5.67-genrtc_fix.patch
-# FBDEV fixes:
-# SELinux:
-#Patch3:		http://www.nsa.gov/selinux/patches/linux-2.5-2003040709.patch.gz
+# SELinux
+#Patch1:		http://www.nsa.gov/selinux/patches/linux-2.5-2003040709.patch.gz
 Patch1:		lsm-2.5.67.patch.gz
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
-%ifarch sparc64
-BuildRequires:	egcs64
-#%else
-#BuildRequires:	%{kgcc_package}
-%endif
 BuildRequires:	module-init-tools
 Buildrequires:	perl
 Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Autoreqprov:	no
-Prereq:		fileutils
+Prereq:		coreutils
 Prereq:		module-init-tools
 Prereq:		geninitrd >= 2.26
 Obsoletes:	kernel-modules
@@ -87,9 +79,9 @@ Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeu
 Group:		Base/Kernel
 Provides:	%{name}-smp = %{version}-%{release}
 Provides:	module-info
-Prereq:		fileutils
-Prereq:		modutils
-Prereq:		geninitrd >= 2.21
+Prereq:		coreutils
+Prereq:		module-init-tools
+Prereq:		geninitrd >= 2.26
 Autoreqprov:	no
 
 %description smp
@@ -118,7 +110,7 @@ Summary:	Kernel version %{version} used on the installation boot disks
 Summary(de):	Kernel version %{version} für Installationsdisketten
 Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation
 Group:		Base/Kernel
-Prereq:		modutils
+Prereq:		module-init-tools
 Autoreqprov:	no
 
 %description BOOT
@@ -280,7 +272,6 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
     Makefile.orig >Makefile
 
 %build
-#install %{SOURCE2} drivers/video/
 BuildKernel() {
 	%{?_debug:set -x}
 	# is this a special kernel we want to build?
@@ -420,8 +411,6 @@ ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 %ifarch sparc sparc64
 ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
 ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
-sh %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}
-cp -a %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
 %else
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 %endif
@@ -482,7 +471,6 @@ cp .config config-smp
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
-
 # install SELinux headers
 %if %{?_without_selinux:0}%{!?_without_selinux:1}
 install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/{linux,asm-i386}/flask
@@ -491,27 +479,8 @@ install security/selinux/include/linux/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%
 install security/selinux/include/asm-i386/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/asm-i386/flask
 %endif			# %%{_without_selinux}
 
-# this generates modversions info which we want to include and we may as
-# well include the depends stuff as well
-#%%{__make} symlinks
 %{__make} include/linux/version.h
-#%%{__make} "`pwd`/include/linux/modversions.h"
-
-# this generates modversions info which we want to include and we may as
-# well include the depends stuff as well, after we fix the paths
-
-# depend is not going to work with our version of autoconf.h
-#%%{__make} depend
-#find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
-#while read file ; do
-#	mv $file $file.old
-#	sed -e "s|$RPM_BUILD_ROOT\(/usr/src/linux\)|\1|g" < $file.old > $file
-#	rm -f $file.old
-#done
-
 %{__make} clean
-#rm -f scripts/mkdep
-#rm -f drivers/net/hamradio/soundmodem/gentbl
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -747,7 +716,6 @@ fi
 %{_prefix}/src/linux-%{version}/security
 %{_prefix}/src/linux-%{version}%{_prefix}
 %{_prefix}/src/linux-%{version}/.config
-#%{_prefix}/src/linux-%{version}/.hdepend
 %{_prefix}/src/linux-%{version}/COPYING
 %{_prefix}/src/linux-%{version}/CREDITS
 %{_prefix}/src/linux-%{version}/MAINTAINERS
@@ -756,5 +724,4 @@ fi
 %{_prefix}/src/linux-%{version}/REPORTING-BUGS
 %{_prefix}/src/linux-%{version}/config-smp
 %{_prefix}/src/linux-%{version}/config-up
-#%{_prefix}/src/linux-%{version}/Rules.make
 %endif
