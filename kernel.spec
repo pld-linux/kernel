@@ -41,7 +41,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.26
+%define		_rel		0.27
 %define		_cset		20040505_0212
 
 ## netfilter snap 
@@ -167,7 +167,7 @@ Patch74:	2.6.4-wrr.patch
 # http://dl.sourceforge.net/sourceforge/pramfs/pramfs-2.6.4-1.0.2.tar.gz
 Patch76:	pramfs-2.6.4.patch
 
-# http://www.namesys.com/snapshots/LATEST/reiser4.only.diff.gz
+Patch78:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -583,6 +583,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 #pramfs
 %patch76 -p1
+
+%patch78 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
