@@ -75,7 +75,7 @@ Patch27:	%{name}-udf.patch
 # based on	http://people.redhat.com/mingo/raid-patches/raid-2.2.20-A0
 Patch28:	raid-2.2.20-A0.patch.bz2
 # based on	http://www.ans.pl/ide/testing/ide.2.2.21.02042002-Ole.patch.gz
-Patch29:	ide.2.2.21.06162002-PLD.patch.gz
+Patch29:	ide.2.2.21.07102002-PLD.patch.gz
 Patch30:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
 Patch31:	%{name}-flip.patch
 Patch33:	%{name}-ipsec-bridge.patch
@@ -113,7 +113,7 @@ Patch502:	linux-2.2.19-ieee1394-ppc.patch.bz2
 Patch503:	2.2.20-ppc_ide.patch
 Patch504:	2.2.21-enable_ibmraid-ppc.patch
 Patch505:	2.2.21-ppc_asm.patch
-Patch506:	2.2.21-ppc_setup.patch
+Patch506:	2.2.21-ppc_3.patch
 
 Patch1500:	linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	%{name}-sparc-zs.h.patch
@@ -406,7 +406,7 @@ Modu³y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 %setup -q -a3 -a4 -a5 -a6 -a7 -a9 -a10 -a11 -a13 -n linux
 
 # first we should apply dzimi patch for vanilla kernel to get b50 work!
-#%patch ktorys_tam -p0
+%patch506 -p1
 
 %patch0 -p1
 %patch1 -p0
@@ -505,7 +505,6 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch503 -p1
 %patch504 -p1
 %patch505 -p1
-%patch506 -p1
 %endif
 
 %ifnarch ppc sparc sparc64
@@ -732,6 +731,8 @@ mv -f $RPM_BUILD_ROOT%{_kernelsrcdir} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{vers
 ln -sf linux-%{version} $RPM_BUILD_ROOT%{_kernelsrcdir}
 gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH506}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH0}
 %ifnarch sparc sparc64 ppc
