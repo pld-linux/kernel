@@ -200,7 +200,7 @@ Patch119:	linux-AXP.patch
 Patch120:	%{name}-Makefile-include-fix.patch
 Patch121:	%{name}-2.4.17-netsyms-export-fix.patch
 Patch122:	linux-2.4.12-riva-ppc.patch.bz2
-Patch123:	linux-2.4.18-pre4-agp_uninorth-ppc.patch.bz2
+Patch123:	linux-2.4.20-agp_uninorth.patch
 Patch124:	%{name}-gcc31.patch
 Patch125:	linux-2.4.18-hpfs.patch
 Patch126:	linux-tulip-vlan.patch
@@ -214,7 +214,8 @@ Patch133:	linux-proc_get_inode.patch
 
 # added support for VIA8235
 Patch134:	vt8235-2.4.19.patch
-#Patch135:	
+
+Patch135:	linux-2.4.20-radeonfb_clean.patch
 Patch136:	piix-ide-fix.patch
 #Patch137:	
 Patch138:	http://www.uwsg.indiana.edu/hypermail/linux/kernel/0212.0/att-1445/01-sound.diff
@@ -263,10 +264,10 @@ Patch905:	linux-abi-fl_ibcs_to_linux.patch
 Patch906:	linux-netfilter-newnat-conntrack-nat-udp.patch
 Patch907:	PPC-grsecurity-pgtable.h.patch
 Patch908:	linux-2.4.19-PPC-o1_scheduler.patch
-Patch909:	linux-2.4.19-PPC-agpgart_be.patch
+#Patch909:	
 Patch910:	linux-2.4.21-pre4-ac4-via82cxxx_audio.patch.bz2
 Patch911:	linux-2.4.19-SPARC.patch
-#Patch912:	
+Patch912:	linux-2.4.20-PPC-arch-Makefile.patch
 #Patch913:	
 Patch914:	linux-2.4.20-MODULE_XXX.patch
 Patch915:	linux-2.4.19-usb-digitalcams.patch
@@ -590,21 +591,20 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 #%patch115 -p0
 %patch116 -p1
 %patch117 -p1
-%patch118 -p1
-%patch119 -p0
 %patch120 -p0
 %patch121 -p0
+%patch123 -p1
 %patch124 -p1
 %patch125 -p1
 #%patch126 -p1
 %patch127 -p1
 %patch128 -p1
 %patch129 -p0
-%patch130 -p0
 %patch131 -p0
 %patch132 -p0
 %patch133 -p1
 #%patch134 -p1
+%patch135 -p1
 %patch136 -p0
 %patch140 -p1
 %patch141 -p1
@@ -638,10 +638,6 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 # IP personality
 #echo Adding IP Personality 
 #patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020819-linux-2.4.19.diff
-
-%ifarch ppc
-%patch909 -p1
-%endif
 
 %patch32 -p1
 
@@ -690,7 +686,7 @@ echo Added support for V4L2
 
 # sysctl controll of /dev/mem
 echo Sysctl controll access to /dev/kmem 
-%patch921 -p1
+%patch921 -p1 
 
 %patch143 -p1
 %patch145 -p1
@@ -713,11 +709,14 @@ echo Ix86 patches ...
 %endif
 %ifarch ppc
 echo PPC patches ...
+%patch130 -p0
 %patch205 -p1
 %patch903 -p1
+%patch912 -p1
 %endif
 %ifarch sparc64
 echo SPARC64 patches ...
+%patch118 -p1
 %patch201 -p1
 %endif
 %ifarch sparc
@@ -726,6 +725,7 @@ echo SPARC patches ...
 %endif
 %ifarch alpha
 echo AXP patches ...
+%patch119 -p0
 %patch203 -p1
 %patch204 -p1
 %endif
@@ -826,7 +826,7 @@ BuildKernel() {
 	%endif
 	fi
 %ifnarch %{ix86}
-		echo "# CONFIG_IP_NF_MATCH_FUZZY is not set">> arch/%{base_arch}/defconfig
+#		echo "# CONFIG_IP_NF_MATCH_FUZZY is not set">> arch/%{base_arch}/defconfig
 %endif	
 %ifarch %{ix86}
 		cat %{SOURCE2000} >> arch/%{base_arch}/defconfig
