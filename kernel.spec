@@ -91,6 +91,7 @@ Source90:	%{name}-grsec.config
 
 Patch0:		2.6.0-ksyms-add.patch
 Patch1:		%{name}-isofs-128GB.patch
+Patch2:		linux-2.6-isofs-4G.patch
 
 # from http://dl.sf.net/sourceforge/squashfs/
 Patch4:		squashfs2.0-patch
@@ -526,6 +527,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch0 -p1
 %patch1 -p1
+%patch2 -p1
 
 %if "%{_cset}" != "0"
 zcat %{SOURCE3} | patch -p1 -s
