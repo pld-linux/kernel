@@ -1,0 +1,40 @@
+--- linux/drivers/evms/evms.c.orig	Fri Apr 19 17:23:41 2002
++++ linux/drivers/evms/evms.c	Fri Apr 19 17:24:40 2002
+@@ -1301,7 +1301,7 @@
+ 	thread->tsk = current;
+ 
+ 	current->policy = SCHED_OTHER;
+-	current->nice = -20;
++	set_user_nice(current,-20);
+ 	unlock_kernel();
+ 	
+ 	complete(thread->event);
+--- linux/drivers/evms/md_core.c.orig	Fri Apr 19 17:23:48 2002
++++ linux/drivers/evms/md_core.c	Fri Apr 19 17:25:41 2002
+@@ -2677,7 +2677,7 @@
+ 	/*
+ 	 * Resync has low priority.
+ 	 */
+-	current->nice = 19;
++	set_user_nice(current,19);
+ 
+ 	is_mddev_idle(mddev); /* this also initializes IO event counters */
+ 	for (m = 0; m < SYNC_MARKS; m++) {
+@@ -2756,7 +2756,7 @@
+ 		currspeed = (j-mddev->resync_mark_cnt)/2/((jiffies-mddev->resync_mark)/HZ +1) +1;
+ 
+ 		if (currspeed > sysctl_speed_limit_min) {
+-			current->nice = 19;
++			set_user_nice(current,19);
+ 
+ 			if ((currspeed > sysctl_speed_limit_max) ||
+ 					!is_mddev_idle(mddev)) {
+@@ -2765,7 +2765,7 @@
+ 				goto repeat;
+ 			}
+ 		} else
+-			current->nice = -20;
++			set_user_nice(current,-20);
+ 	}
+ 	LOG_DEFAULT("md%d: sync done.\n",mdidx(mddev));
+ 	err = 0;
