@@ -769,7 +769,6 @@ BuildKernel() {
 
 %ifarch i386
 	sed -i -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
-	       -e 's/CONFIG_DRM_\(.*\)=[ym]/# CONFIG_DRM_\1 is not set/' \
 		arch/%{base_arch}/defconfig
 %endif
 
@@ -1166,7 +1165,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o*
 %endif
 %endif
-%ifnarch sparc i386
+%ifnarch sparc
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 %endif
 /lib/modules/%{version}-%{release}/build
@@ -1191,7 +1190,7 @@ fi
 %endif
 %endif
 
-%ifnarch sparc i386
+%ifnarch sparc
 %files drm
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
@@ -1224,7 +1223,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o*
 %endif
 %endif
-%ifnarch sparc i386
+%ifnarch sparc
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 %endif
 /lib/modules/%{version}-%{release}smp/build
@@ -1249,7 +1248,7 @@ fi
 %endif
 %endif
 
-%ifnarch sparc i386
+%ifnarch sparc
 %files -n kernel-smp-drm
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
