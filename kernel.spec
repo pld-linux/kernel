@@ -397,7 +397,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch47 -p1
 %patch48 -p1
 %patch49 -p1
-%patch50 -p1
+%patch50 -p4
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -625,6 +625,7 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH46}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH47}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH48}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH49}
+patch -p4 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH50}
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/dc395/dc395-integ24.diff
