@@ -10,7 +10,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.18
-Release:	13
+Release:	14
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -64,7 +64,9 @@ Patch19:	%{name}-pcmcia.patch
 Patch20:	linux-sparc_ide_fix.patch
 Patch21:	%{name}-Config.in-CONFIG_AMIGA_PARTITION.patch
 Patch22:	%{name}-sysctl_security_fix.patch
-
+Patch23:	%{name}-wanrouter-bridge.patch
+Patch24:	%{name}-ipsec-bridge.patch
+Patch25:	%{name}-bridge-extraversion.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -251,6 +253,7 @@ Provides:	%{name}-headers(reiserfs) = %{version}
 %endif
 Provides:	%{name}-headers(ipvs) = %{version}
 Provides:	%{name}-headers(rawio) = %{version}
+Provides:	%{name}-headers(bridging) = %{version}
 Autoreqprov:	no
 
 %description headers
@@ -310,7 +313,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch7 -p1
 %patch8 -p1
 %patch9 -p1
-#%patch10 -p1
+%patch10 -p1
 %patch11 -p1
 %patch12 -p1
 %patch13 -p1
@@ -323,6 +326,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch20 -p1
 %patch21 -p1
 %patch22 -p1
+%patch23 -p1
+%patch24 -p1
+%patch25 -p1
 %ifarch %{ix86}
 cd ..
 rm -rf i2c-%{i2c_version}
