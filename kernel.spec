@@ -200,8 +200,8 @@ Patch300:	linux-2.6-sparc-ksyms.patch
 
 Patch303:	%{name}-hotfixes.patch
 
-# http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.9/2.6.9-mm1/broken-out/
-Patch700:	linux-reiser4-mm1.patch.bz2
+# http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.10-rc2/2.6.10-rc-mm2/broken-out
+Patch700:	linux-reiser4.patch.bz2
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
