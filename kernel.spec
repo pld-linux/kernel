@@ -266,6 +266,7 @@ Patch3003:	linux-2.4.20-missing-license-tags.patch
 Patch3004:	linux-2.4.20-sym53c8xx_old.patch
 Patch3005:	linux-2.4.21-gcc33.patch
 Patch3006:	linux-2.4.21-sparc-gcc3.patch
+Patch3007:	linux-2.4.21-gcc33-math-emu.patch
 
 # Security patches/fixes
 
@@ -670,6 +671,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch3004 -p1
 %patch3005 -p1
 %patch3006 -p1
+%patch3007 -p1
 
 %patch4000 -p1
 %{!?_without_grsec:%patch4001 -p1}
@@ -762,8 +764,8 @@ BuildKernel() {
 %endif
 
 %ifarch i386
-	mv -f arch/%{base_arch}/defconfig arch/%{base_arch}/defconfig.orig
 	sed -i -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
+	       -e 's/CONFIG_DRM_NEW=y/# CONFIG_DRM_NEW is not set/' \
 		arch/%{base_arch}/defconfig
 %endif
 
