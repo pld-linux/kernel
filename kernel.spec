@@ -741,7 +741,9 @@ patch -p1 -s < exec-shield.patch
 
 %patch114 -p1
 
+%if %{with mosix}
 %patch420 -p1
+%endif
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
