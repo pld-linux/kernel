@@ -19,12 +19,12 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.5.74
+Version:	2.5.75
 Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
-# Source0-md5:	5285fc8b7aea93b9fa5fe67c31c0124a
+# Source0-md5:	ed4e25318e9cd18dc7e732b3483f271d
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -40,7 +40,6 @@ Patch0:		linux-2.5.67-genrtc_fix.patch
 Patch1:		linux-2.5.70-fix_missing_symb.patch
 # Alpha specific patch
 Patch2:         linux-2.5.73-pci-semicolon.patch
-Patch3:		linux-2.5-miscfix.patch
 # LSM/SELinux
 # Patch10:	http://lsm.immunix.org/patches/2.5/2.5.72/patch-2.5.72-lsm1.gz
 Patch10:	patch-2.5.72-lsm1.gz
@@ -273,8 +272,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %ifarch alpha
 %patch2 -p1
 %endif
-%patch3 -p1
-%{!?_without_lsm:%patch10 -p1}
+#%{!?_without_lsm:%patch10 -p1}
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
