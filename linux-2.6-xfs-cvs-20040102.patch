@@ -2269,9 +2269,9 @@ diff -urN linux.org/fs/xfs/Makefile linux/fs/xfs/Makefile
 +
 +
 +
-+
-+
-+
++ifneq ($(CONFIG_XFS_DMAPI),y)
++xfs-y				+= xfs_dmops.o
++endif
  
  xfs-$(CONFIG_XFS_QUOTA)		+= $(addprefix quota/, \
  				   xfs_dquot.o \
@@ -6130,6 +6130,23 @@ diff -urN linux.org/fs/xfs/xfs_dmapi.h linux/fs/xfs/xfs_dmapi.h
  
  extern struct bhv_vfsops xfs_dmops;
  
+diff -urN linux.org/fs/xfs/xfs_dmops.c linux/fs/xfs/xfs_dmops.c
+--- linux.org/fs/xfs/xfs_dmops.c	2003-12-31 05:48:36.000000000 +0100
++++ linux/fs/xfs/xfs_dmops.c	2004-01-02 04:21:44.000000000 +0100
+@@ -43,8 +43,6 @@
+ #include "xfs_dmapi.h"
+ #include "xfs_mount.h"
+ 
+-
+-#ifndef CONFIG_XFS_DMAPI
+ xfs_dmops_t	xfs_dmcore_xfs = {
+ 	.xfs_send_data		= (xfs_send_data_t)fs_nosys,
+ 	.xfs_send_mmap		= (xfs_send_mmap_t)fs_noerr,
+@@ -52,4 +50,3 @@
+ 	.xfs_send_namesp	= (xfs_send_namesp_t)fs_nosys,
+ 	.xfs_send_unmount	= (xfs_send_unmount_t)fs_noval,
+ };
+-#endif /* CONFIG_XFS_DMAPI */
 diff -urN linux.org/fs/xfs/xfs_error.c linux/fs/xfs/xfs_error.c
 --- linux.org/fs/xfs/xfs_error.c	2003-12-31 05:48:26.000000000 +0100
 +++ linux/fs/xfs/xfs_error.c	2004-01-02 04:21:44.000000000 +0100
