@@ -48,7 +48,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.21
+%define		_rel		1.22
 %define		_cset		20040707_0722
 %define		_apply_cset	1
 
@@ -78,7 +78,8 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
 # Source0-md5:	a74671ea68b0e3c609e8785ed8497c14
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
-Source2:	2.6.6-pwcx.tar.bz2
+Source2:	http://www.smcc.demon.nl/webcam/pwcx-9.0.tar.gz
+# Source2-md5:  73907e7e1ae7c311553182569ce6ab1c
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
 # Source3-md5:	56299a33297f65997d9787a87f76af66
 # http://lkml.org/lkml/2004/6/2/228
@@ -190,8 +191,9 @@ Patch78:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2
 
 Patch80:	http://www.elektronikschule.de/~genannt/kernel-patche/lirc/lirc-2.6.5-20040404
 
-# from http://www.smcc.demon.nl/webcam/pwcx-9.0-beta-2.tar.gz
-Patch82:	2.6.7-pwcx.patch
+# from http://www.smcc.demon.nl/webcam/release.html
+Patch82:        2.6.7-pwc-9.0.1.patch
+Patch83:        2.6.7-pwcx-9.0.patch
 
 Patch84:	2.6.6-serial-fifo-lkml.patch
 
@@ -686,18 +688,26 @@ echo "Not fixed !!"
 
 %patch80 -p1
 
-# Philips USB drivers.
-#patch82 -p1
-# selected library
-#ifarch %{ix86}
-#cp drivers/usb/media/libpwcx.a_ix86 drivers/usb/media/libpwcx.a_
-#endif
-#ifarch powerpc
-#cp drivers/usb/media/libpwcx.a_powerpc drivers/usb/media/libpwcx.a_
-#endif
-#ifarch ppc
-#cp drivers/usb/media/libpwcx.a_ppc drivers/usb/media/libpwcx.a_
-#endif
+#######################
+# Philips USB drivers #
+#######################
+# PWC 9.0.1
+%patch82 -p1
+# Webcam decompressor module entries (PWCX 9.0).
+%patch83 -p1
+# Copy decompressor glue code
+cp pwcx-9.0/pwcx/*.[ch] drivers/usb/media
+# and arch dependent library
+%ifarch %{ix86}
+cp pwcx-9.0/x86/libpwcx.a drivers/usb/media/libpwcx.a_
+%endif
+%ifarch amd64
+cp pwcx-9.0/x86_64/libpwcx.a drivers/usb/media/libpwcx.a_
+%endif
+%ifarch ppc
+cp pwcx-9.0/powerpc/libpwcx.a drivers/usb/media/libpwcx.a_
+%endif
+#######################
 
 %patch84 -p1
 
