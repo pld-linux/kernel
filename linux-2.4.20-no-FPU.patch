@@ -1,0 +1,63 @@
+diff -ur linux-2.4.20/drivers/media/video/tda7432.c linux-2.4.20.fpu/drivers/media/video/tda7432.c
+--- linux-2.4.20/drivers/media/video/tda7432.c	Fri Nov 29 00:53:13 2002
++++ linux-2.4.20.fpu/drivers/media/video/tda7432.c	Sun Mar  9 20:55:29 2003
+@@ -398,7 +398,7 @@
+ 		if(!maxvol){  /* max +20db */
+ 			va->volume = ( 0x6f - (t->volume & 0x7F) ) * 630;
+ 		} else {     /* max 0db   */
+-			va->volume = (int )(( 0x6f - (t->volume & 0x7F) ) * 829.557);
++			va->volume = (int )(( 0x6f - (t->volume & 0x7F) ) * 829557/1000);
+ 		}
+ 		
+ 		/* Balance depends on L,R attenuation
+@@ -440,7 +440,7 @@
+ 			if(!maxvol){ /* max +20db */
+ 				t->volume = 0x6f - ( (va->volume)/630 );
+ 			} else {    /* max 0db   */
+-				t->volume = 0x6f - ((int) (va->volume)/829.557 );
++				t->volume = 0x6f - ((int) (va->volume*1000)/829557 );
+ 			}
+ 		
+ 		if (loudness)		/* Turn on the loudness bit */
+diff -ur linux-2.4.20/fs/davfs/proc.c linux-2.4.20.fpu/fs/davfs/proc.c
+--- linux-2.4.20/fs/davfs/proc.c	Sun Mar  9 21:12:08 2003
++++ linux-2.4.20.fpu/fs/davfs/proc.c	Sun Mar  9 21:05:33 2003
+@@ -156,7 +156,7 @@
+ int dav_atoi(char *digit) {
+     int ret=0;
+     int i = (strlen(digit)-1);
+-    double weight=1;
++    s64 weight=1;
+     
+     for(;i;i--)
+         weight*=10;
+diff -ur linux-2.4.20/net/ipv4/netfilter/ipt_fuzzy.c linux-2.4.20.fpu/net/ipv4/netfilter/ipt_fuzzy.c
+--- linux-2.4.20/net/ipv4/netfilter/ipt_fuzzy.c	Sun Mar  9 21:12:14 2003
++++ linux-2.4.20.fpu/net/ipv4/netfilter/ipt_fuzzy.c	Sun Mar  9 21:15:22 2003
+@@ -30,7 +30,7 @@
+  Expressed in percentage
+ */
+ 
+-#define PAR_LOW		0.01
++#define PAR_LOW		1/100
+ #define PAR_HIGH	1
+ 
+ static spinlock_t fuzzy_lock = SPIN_LOCK_UNLOCKED ;
+@@ -109,7 +109,7 @@
+        howlow  = mf_low(info->mean_rate,info->minimum_rate,info->maximum_rate);
+ 
+     info->acceptance_rate = (u_int8_t) \
+-		           ( PAR_LOW*howhigh + PAR_HIGH*howlow ) ;
++		           ( howhigh*PAR_LOW + PAR_HIGH*howlow ) ;
+ 
+     /* In fact , the above defuzzification would require a denominator
+        proportional to (howhigh+howlow) but , in this particular case ,
+@@ -129,7 +129,7 @@
+ 		get_random_bytes((void *)(&random_number), 1);
+ 
+ 		/*  If within the acceptance , it can pass => don't match */
+-		if ( random_number <= 2.55 * info->acceptance_rate )
++		if ( random_number <= (255 * info->acceptance_rate) / 100 )
+ 			return 0 ;
+ 		else
+ 			return 1; /* It can't pass ( It matches ) */
