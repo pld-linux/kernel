@@ -9,7 +9,7 @@
 # _without_up		- don't build UP kernel
 # _without_wrr		- don't build WRR support
 #
-%define		krelease		9
+%define		krelease		10
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -134,6 +134,8 @@ Patch23:	hfsplus-20011213.patch
 Patch24:	http://luxik.cdi.cz/~devik/qos/imq_2.4.12.diff
 
 Patch25:	wrr-linux-2.4.9.patch
+
+Patch26:	kernel-2.4-NTfix.patch
 
 # Assorted bugfixes
 
@@ -774,6 +776,9 @@ echo Fixed HPFS
 
 # hfsplus
 %patch23 -p1
+
+# security BUG
+%patch26 -p1
 
 # ADM router
 echo Added patch fot ADM router
