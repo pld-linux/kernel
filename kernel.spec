@@ -45,7 +45,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.12
+%define		_rel		0.13
 %define		_cset		20040601_1708
 %define		_apply_cset	1
 
@@ -75,6 +75,8 @@ Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
 # Source3-md5:	ece9e328e0cdcf4a093141db36619934
+Source4:	http://redhat.com/~mingo/nx-patches/nx-2.6.7-rc2-bk2-AE
+Source5:	http://redhat.com/~mingo/exec-shield/exec-shield-on-nx-2.6.7-rc2-bk2-A7
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -536,6 +538,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %if "%{_apply_cset}" != "0"
 zcat %{SOURCE3} | patch -p1 -s
 %endif
+patch -p1 -s < %{SOURCE4}
+patch -p1 -s < %{SOURCE5}
 
 %patch4 -p1
 
