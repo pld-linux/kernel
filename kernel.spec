@@ -544,7 +544,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch6 -p1
 %patch19 -p1
 #%patch7 -p1
-%if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %ifarch %{ix86}
 %patch914 -p1
 %patch14 -p1
@@ -796,10 +796,10 @@ BuildKernel() {
 	cat %{SOURCE1002} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1003} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1004} >> arch/%{base_arch}/defconfig
-%if%{?_with_preemptive:1}%{!?_with_preemptive:0}
+%if %{?_with_preemptive:1}%{!?_with_preemptive:0}
 	cat %{SOURCE1999} >> arch/%{base_arch}/defconfig
 %endif
-%if%{?_with_ACPI:1}%{!?_with_ACPI:0}
+%if %{?_with_ACPI:1}%{!?_with_ACPI:0}
 	echo "CONFIG_ACPI=y">>arch/%{base_arch}/defconfig
 	echo "# CONFIG_ACPI_DEBUG is not set">>arch/%{base_arch}/defconfig
 	echo "CONFIG_ACPI_BUSMGR=m">>arch/%{base_arch}/defconfig
@@ -958,7 +958,7 @@ cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
-%if%{?_with_preemptive:1}%{!?_with_preemptive:0}
+%if %{?_with_preemptive:1}%{!?_with_preemptive:0}
 	cat %{SOURCE1999} >> .config
 %endif
 
@@ -987,7 +987,7 @@ cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
-%if%{?_with_preemptive:1}%{!?_with_preemptive:0}
+%if %{?_with_preemptive:1}%{!?_with_preemptive:0}
 	cat %{SOURCE1999} >> .config
 %endif
 
@@ -1033,9 +1033,9 @@ if [ ! -L /lib/modules/%{version} ] ; then
 fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release} /lib/modules/%{version}
-depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
-geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
+/sbin/geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}.gz /boot/initrd
 
@@ -1044,7 +1044,7 @@ if [ -x /sbin/rc-boot ] ; then
 fi
 %endif			# %{_without_up}
 
-%if%{?_without_smp:0}%{!?_without_smp:1}
+%if %{?_without_smp:0}%{!?_without_smp:1}
 %post smp
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
@@ -1056,9 +1056,9 @@ if [ ! -L /lib/modules/%{version} ] ; then
 fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
-depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
 
-geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
+/sbin/geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 
@@ -1091,7 +1091,7 @@ fi
 rm -f /boot/initrd-%{version}-%{release}.gz
 %endif			# %{_without_up}
 
-%if%{?_without_smp:0}%{!?_without_smp:1}
+%if %{?_without_smp:0}%{!?_without_smp:1}
 %postun smp
 if [ -L /lib/modules/%{version} ]; then 
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp" ]; then
@@ -1127,22 +1127,22 @@ fi
 
 
 %post pcmcia-cs
-depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
 %postun pcmcia-cs
-depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
 %post pcmcia-cs-smp
-depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
 
 %postun pcmcia-cs-smp
-depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
 
 %postun drm
-depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
 %post drm-smp
-depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
 
 %if %{?_without_up:0}%{!?_without_up:1}
 %files
@@ -1173,7 +1173,7 @@ depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 
-%if%{?_without_smp:0}%{!?_without_smp:1}
+%if %{?_without_smp:0}%{!?_without_smp:1}
 %files pcmcia-cs-smp
 %defattr(644,root,root,755)
 %ifarch %{ix86}
