@@ -83,7 +83,7 @@ Patch5:		linux-2.4.7-pre6-xfs-20010717.patch.gz
 # Compressed iso9660 filesystem
 Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/filemap-2.4.4-1.diff.gz
 Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-2.4.5-pre1-8.diff.gz
-Patch8:		linux-abi-PLD-2.4.7-pre6.diff
+Patch8:		linux-abi-2.4.3-PLD.diff
 Patch9:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
 Patch10:	linux-grsecurity-1.4-PLD-2.4.7-pre6.patch
@@ -388,7 +388,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch3 -p1
 %patch4 -p1
 %patch100 -p1
-%patch5 -p1
+#%patch5 -p1 - need fixup.
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
@@ -507,9 +507,9 @@ patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010703-l
 
 # JFS
 echo Adding JFS
-%patch907 -p0
-patch -p1 -s <jfs-common-v1.0.1-patch
-patch -p1 -s <jfs-2.4.5-v1.0.1-patch
+#%patch907 -p0
+#patch -p1 -s <jfs-common-v1.0.1-patch
+#patch -p1 -s <jfs-2.4.5-v1.0.1-patch
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
