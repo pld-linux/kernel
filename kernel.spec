@@ -589,8 +589,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}%{_rc}
-# -a2
+%setup -q -n linux-%{version}%{_rc} -a2
 
 %patch0 -p1
 
@@ -755,7 +754,7 @@ patch -p1 -s < exec-shield.patch
 
 # hotfixes
 %patch300 -p1
-%patch301 -p1
+
 %patch302 -p1
 %patch303 -p1
 %patch304 -p1
