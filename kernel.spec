@@ -41,6 +41,7 @@ Source5:	linux-2.4.19-netfilter-20020923.tar.gz
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
 Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
+Source10:	http://www.hpl.hp.com/personal/Jean_Tourrihes/Linux/wireless_tools.25.tar.gz
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source50:	%{name}-sparc.config
@@ -157,6 +158,7 @@ Patch134:	vt8235-2.4.19.patch
 # quota for reiserfs
 Patch135:	linux-2.4.19-reiserfs-quota-22.patch.gz
 Patch136:	piix-ide-fix.patch
+#Patch137:	
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -172,6 +174,7 @@ Patch906:	linux-netfilter-newnat-conntrack-nat-udp.patch
 Patch907:	PPC-grsecurity-pgtable.h.patch
 Patch908:	linux-2.4.19-PPC-o1_scheduler.patch
 Patch909:	linux-2.4.19-PPC-agpgart_be.patch
+Patch910:	linux-2.4.19-grsecurity-1.9.7-fix.patch
 
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
@@ -518,6 +521,7 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 %endif
 
 %patch32 -p1
+%patch910 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
