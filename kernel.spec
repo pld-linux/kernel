@@ -152,8 +152,9 @@ Patch41:	linux-fbcon-margins.patch
 Patch50:	2.6.10-pom-ng-%{_netfilter_snap}.patch
 # http://l7-filter.sourceforge.net/
 Patch52:	2.6.8-ipt_layer7.patch
-Patch53:	2.6.4-rc1-01-esfq-imq.patch
-Patch54:	2.6.4-rc1-02-imq-nat-support.patch
+Patch53:	2.6.10-esfq.patch
+# http://www.linuximq.net/patchs/linux-2.6.9-imq1.diff
+Patch54:	2.6.10-imq.patch
 Patch55:	2.6.4-wrr.patch
 Patch56:	linux-2.6-netfilter-syms.patch
 
