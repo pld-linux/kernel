@@ -190,6 +190,10 @@ Patch201:	linux-cluster-dlm.patch
 Patch202:	linux-cluster-gfs.patch
 Patch203:	linux-cluster-gnbd.patch
 
+# suspend/resume
+Patch220:	linux-2.6-via-agpc-resume-suspend-support.patch
+Patch221:	linux-2.6-via-rhine-suspend-resume.patch
+
 # hotfixes
 Patch300:	linux-2.6-sparc-ksyms.patch
 Patch301:	linux-2.6-ppc-ksyms.patch
@@ -643,6 +647,10 @@ patch -p1 -s < exec-shield.patch
 %patch201 -p1
 %patch202 -p1
 %patch203 -p1
+
+# suspend/resume
+%patch220 -p1
+%patch221 -p1
 
 # hotfixes
 %patch300 -p1
