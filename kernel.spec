@@ -109,8 +109,6 @@ Patch38:	2.6.0-t9-acpi_osl-lkml.patch
 
 Patch40:	2.6.0-t9-forcedeth-lkml.patch
 
-Patch42:	2.6.0-t11-ipp2p-0.5a.patch
-
 Patch44:	2.6.0-t9-PPC-smp.patch
 
 Patch48:	2.6.0-t10-sis_operator_fix-lkml.patch
@@ -144,7 +142,7 @@ BuildRequires:	elftoaout
 %endif
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	module-info
-Provides:	%{name}-up(netfilter) = %{_netfilter_snap}
+Provides:	%{name}(netfilter) = %{_netfilter_snap}
 Autoreqprov:	no
 Prereq:		coreutils
 Prereq:		module-init-tools >= 0.9.9
@@ -196,7 +194,7 @@ Summary(pl):	J±dro Linuxa w wersji %{version} dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Provides:	%{name}-smp = %{epoch}:%{version}-%{release}
 Provides:	module-info
-Provides:	%{name}-smp(netfilter) = %{_netfilter_snap}
+Provides:	%{name}(netfilter) = %{_netfilter_snap}
 Prereq:		coreutils
 Prereq:		module-init-tools >= 0.9.9
 Prereq:		geninitrd >= 2.26
@@ -494,8 +492,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch38 -p1
 
 %patch40 -p1
-
-%patch42 -p1
 
 %patch44 -p1
 
