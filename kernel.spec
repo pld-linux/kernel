@@ -18,9 +18,13 @@ License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
-Source20:	%{name}-ia32.config
-Source21:	%{name}-ia32-smp.config
+Source20:	%{name}-i386.config
+Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
+Source23:	%{name}-i586.config
+Source25:	%{name}-i586-smp.config
+Source23:	%{name}-i686.config
+Source25:	%{name}-i686-smp.config
 Source50:	%{name}-sparc.config
 Source51:	%{name}-sparc-smp.config
 Source52:	%{name}-sparc-BOOT.config
@@ -164,11 +168,7 @@ BuildKernel() {
 			BOOT=yes
 		fi
 %ifarch %{ix86}
-		if [ "$1" = "BOOT" ] ; then
-			Config="%{_target_cpu}"-$1
-		else
-			Config="ia32"-$1
-		fi
+		Config="i386"-$1
 %else
 		Config="%{_target_cpu}"-$1
 %endif
@@ -176,31 +176,12 @@ BuildKernel() {
 		echo BUILDING A KERNEL FOR $1...
 		shift
 	else
-%ifarch %{ix86}
-		Config="ia32"
-%else
 		Config="%{_target_cpu}"
-%endif
 		KernelVer=%{version}-%{release}
 		echo BUILDING THE NORMAL KERNEL...
 	fi
 	:> arch/$RPM_ARCH/defconfig
 	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/$RPM_ARCH/defconfig
-%ifarch i386
-	echo "CONFIG_M386=y" >> arch/$RPM_ARCH/defconfig
-%endif
-%ifarch i586
-	echo "CONFIG_M586=y" >> arch/$RPM_ARCH/defconfig
-%endif
-%ifarch i686
-	echo "CONFIG_M686=y" >> arch/$RPM_ARCH/defconfig
-%endif
-%ifarch i386
-	mv -f arch/$RPM_ARCH/defconfig arch/$RPM_ARCH/defconfig.orig
-	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
-		arch/$RPM_ARCH/defconfig.orig > arch/$RPM_ARCH/defconfig
-%endif
-
 	%{__make} mrproper
 	ln -sf arch/$RPM_ARCH/defconfig .config
 
@@ -285,41 +266,13 @@ find  -name "*~" -print | xargs rm -f
 find  -name "*.orig" -print | xargs rm -f
 
 
-%ifarch %{ix86}
-cat $RPM_SOURCE_DIR/kernel-ia32.config > .config
-%else
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
-%endif
-
-%ifarch i386
-echo "CONFIG_M386=y" >> .config
-%endif
-%ifarch i586
-echo "CONFIG_M586=y" >> .config
-%endif
-%ifarch i686
-echo "CONFIG_M686=y" >> .config
-%endif
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
 
 
-%ifarch %{ix86}
-cat $RPM_SOURCE_DIR/kernel-ia32-smp.config >> .config
-%else
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config .config
-%endif
-
-%ifarch i386
-echo "CONFIG_M386=y" >> .config
-%endif
-%ifarch i586
-echo "CONFIG_M586=y" >> .config
-%endif
-%ifarch i686
-echo "CONFIG_M686=y" >> .config
-%endif
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
