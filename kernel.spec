@@ -235,6 +235,7 @@ Patch55:	linux-2.4.20-sym53c8xx_2.patch
 Patch56:	linux-2.4.20-new_IO_scheduler.patch
 
 Patch57:	linux-2.4.20-iForce2.patch
+Patch58:	linux-2.4.20-iForce2-usb.patch
 # Assorted bugfixes
 
 # from LKML
@@ -852,6 +853,7 @@ echo Added xattr for JFS ...
 
 #iForce joystick
 %patch57 -p1
+%patch58 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
