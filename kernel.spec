@@ -5,7 +5,6 @@
 #	TODO
 # - check I2C
 # - check netfilter
-# - check squashfs
 # - fix config problem
 #
 # BCOND:
@@ -14,10 +13,10 @@
 %bcond_without source	# don't build kernel-source package
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
-%define		_rel		0.2
+%define		_rel		0.3
 %define		test_ver	5
 %define		patch_level	0
-%define		_cset		20030910_1715
+%define		_cset		20030910_1809
 
 %if "%{test_ver}" != "0"
 %define		test	test%{test_ver}
