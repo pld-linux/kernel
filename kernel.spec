@@ -17,7 +17,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.5.70
-Release:	0.4
+Release:	0.5
 License:	GPL
 Group:		Base/Kernel
 # Source0-md5:	8d3ee29e86c728a0de2151328164269b
@@ -37,7 +37,7 @@ Patch0:		linux-2.5.67-genrtc_fix.patch
 Patch1:		linux-2.5.70-fix_missing_symb.patch
 Patch2:		linux-2.5.70-mga.patch.bz2
 # LSM/SELinux
-Patch10:	linux-2.5.70-lsm-20030529.patch.bz2
+Patch10:	linux-2.5.70-lsm-20030605.patch.bz2
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
