@@ -168,7 +168,7 @@ Patch35:	linux-2.4.18-hpfs.patch
 
 ## -> Preemptive kernel  patch
 # from:
-Patch40:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.20-1.patch
+Patch40:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.20-3.patch
 
 
 ## -> Network
@@ -211,7 +211,7 @@ Patch62:	linux-2.4.20-pcsp.patch.gz
 Patch63:	linux-2.4.20-USB.patch.bz2
 # from: http://people.freebsd.org/~gibbs/linux/SRC/
 #last: aic79xx-linux-2.4-20030424-tar.gz
-Patch64:	linux-2.4.20-aic79xx.patch.bz2
+Patch64:	linux-2.4.20-aic79xx.patch.gz
 # from: MDK kernel DV08__i810fb.patch
 Patch65:	linux-2.4.20-I810FB.patch.bz2
 Patch66:	linux-2.4.20-I810FB_lock_page_fix.patch
