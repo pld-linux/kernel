@@ -16,7 +16,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.19
-Release:	23
+Release:	24
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -92,7 +92,8 @@ Patch36:	ip_masq_irc-2.2.19-dcc_check-3.diff
 Patch37:	%{name}-udf.patch
 Patch38:	jfs-%{version}-v%{jfs_version}-patch
 Patch39:	pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
-Patch40:	kernel-2.2.19-ide_sparc32.patch
+Patch40:	%{name}-2.2.19-ide_sparc32.patch
+Patch41:	%{name}-symbios-makefile.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -439,6 +440,8 @@ rm -rf Common FreeBSD Linux NetBSD MakePatches MakeTar README-sym-2
 patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch38 -p1
 
+%patch41 -p1
+
 %build
 BuildKernel() {
 	%{?verbose:set -x}
@@ -705,6 +708,8 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH37}
 # JFS
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < jfs-2.2.common-v%{jfs_version}-patch
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH38}
+
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH41}
 
 %ifarch sparc sparc64
 ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
