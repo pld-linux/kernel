@@ -52,6 +52,7 @@ Patch0:		%{name}-pldfblogo.patch
 Patch1:		linux-2.2.18-freeswan-%{freeswan_version}.patch
 Patch2:		wanrouter-v2215.patch.gz
 Patch3:		linux-ipv6-addrconf.patch
+# based on http://support.3com.com/infodeli/tools/nic/linux/3c90x-1.0.0i.tar.gz
 Patch4:		%{name}-3c90x.patch
 Patch5:		linux-ipv6-glibc2.2.patch
 Patch6:		http://milosch.net/pub/beos/2.2.18-pre2-beos09032000.patch
@@ -356,7 +357,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
-# %patch4 -p1
+%patch4 -p1
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
@@ -627,7 +628,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH0}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1}
 gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH3}
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH5}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH6}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH7}
