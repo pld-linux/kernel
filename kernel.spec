@@ -667,7 +667,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch74 -p1
 
 #pramfs
-%if %{with parmfs}
+%if %{with pramfs}
 %patch76 -p1
 %endif
 
