@@ -71,6 +71,7 @@ Source1669:	%{name}-konicawc.config
 Source1670:	%{name}-wrr.config
 Source1671:	%{name}-squashfs.config
 Source1672:	%{name}-ACL.config
+Source1673:	%{name}-IMQ.config
 Source1999:	%{name}-preemptive.config
 
 # New features
@@ -149,7 +150,7 @@ Patch35:	%{name}-pswscancode.patch
 Patch44:	kernel-2.4-NTfix.patch
 # from http://acl.bestbits.at/
 Patch45:	linux-2.4.20-ACL-0.8.54.patch.bz2
-#Patch46:	
+Patch46:	linux-2.4.19-netmos_pci_parallel_n_serial.patch
 
 # Assorted bugfixes
 
@@ -642,6 +643,10 @@ echo Added ACL support
 %patch919 -p1
 %patch920 -p1
 
+# 
+echo Added supprot
+%patch46 -p1
+
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
@@ -711,6 +716,7 @@ BuildKernel() {
 	cat %{SOURCE1009} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1671} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1672} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1673} >> arch/%{base_arch}/defconfig
 	
 	if [ "$BOOT" = "yes" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
@@ -880,6 +886,7 @@ cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
 cat %{SOURCE1671} >> .config
 cat %{SOURCE1672} >> .config
+cat %{SOURCE1673} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
@@ -923,6 +930,7 @@ cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
 cat %{SOURCE1671} >> .config
 cat %{SOURCE1672} >> .config
+cat %{SOURCE1673} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
