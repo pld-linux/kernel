@@ -48,7 +48,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		4.3%{?with_mosix:m}
+%define		_rel		4.5%{?with_mosix:m}
 %define		_cset		20040707_0722
 %define		_apply_cset	0
 %define		_subversion	.1
@@ -300,6 +300,7 @@ Patch710:	kernel-SPARC64-binfmt_elf.patch
 Patch714:	kernel-ppc_asm_and_initializers-from-rc3-bk9.patch
 Patch720:	kernel-it82xx-raid.patch
 Patch740:	linux-abi-2.6.8.1.patch
+Patch750:	kernel-VLAN_3c59x-3c90x.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -845,6 +846,9 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch740 -p1
 %endif
 %endif
+
+%patch750 -p1
+
 ## Add ALL patches before this section !!
 
 #grsec
