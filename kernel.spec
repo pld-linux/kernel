@@ -176,6 +176,7 @@ Patch140:	linux-2.4.18-tridentfb.patch
 Patch900:	ide-EXPORT_SYMBOL.fix
 Patch901:	netfilter-ip_nat_pptp.patch
 Patch902:	linux-2.4.19pre7-VIA.patch
+Patch903:	linux-PPC-SMP.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
@@ -613,6 +614,8 @@ echo Replacing Trident FB module .
 # VIA Southbridge update
 echo Updating VIA Southbridge
 %patch902 -p1
+
+%patch903 -p0
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
