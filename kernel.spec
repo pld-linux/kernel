@@ -154,6 +154,10 @@ Patch135:	linux-2.4.18-pre4-agp_uninorth-ppc.patch.bz2
 Patch136:	evms-%{evms_version}-linux-2.4.patch
 Patch137:	evms-linux-2.4.18-common-files.patch
 
+%ifarch ppc
+#from http://www.drfruitcake.com/linux/dma-bp.html
+Patch138:	dmasound.patch.bz2
+%endif
 # Patches fixing other patches or 3rd party sources ;)
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
@@ -519,6 +523,10 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 %patch136 -p1
 %patch137 -p1
 
+%ifarch ppc
+%patch138 -p1
+%endif
+
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
@@ -623,10 +631,14 @@ BuildKernel() {
 %ifarch %{ix86}
 	cp arch/i386/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
-%ifarch alpha sparc sparc64 ppc
+%ifarch alpha sparc sparc64
 	gzip -cfv vmlinux > vmlinuz
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%endif
+%ifarch ppc
+	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
+	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
      %{__make} modules_install \
      	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
