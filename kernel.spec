@@ -9,6 +9,7 @@
 # _without_up		- don't build UP kernel
 #
 %define		test_build		0
+%define		krelease		2.32
 #
 %define base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 #
@@ -31,7 +32,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	2.31%{?_with_preemptible:_pr}%{?_with_o1_sched:_o1}
+Release:	%{krelease}%{?_with_preemptible:_pr}%{?_with_o1_sched:_o1}
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
