@@ -1991,17 +1991,6 @@ diff -Nur linux-2.6.3.org/net/ipv4/netfilter/Makefile linux-2.6.3/net/ipv4/netfi
  obj-$(CONFIG_IP_NF_TARGET_ULOG) += ipt_ULOG.o
  obj-$(CONFIG_IP_NF_TARGET_TCPMSS) += ipt_TCPMSS.o
  
-@@ -94,3 +125,10 @@
- obj-$(CONFIG_IP_NF_COMPAT_IPFWADM) += ipfwadm.o
- 
- obj-$(CONFIG_IP_NF_QUEUE) += ip_queue.o
-+
-+obj-$(CONFIG_IP_NF_SET) += ipt_set.o ipt_SET.o ip_set.o
-+obj-$(CONFIG_IP_NF_SET_IPMAP) += ip_set_ipmap.o
-+obj-$(CONFIG_IP_NF_SET_PORTMAP) += ip_set_portmap.o
-+obj-$(CONFIG_IP_NF_SET_MACIPMAP) += ip_set_macipmap.o
-+obj-$(CONFIG_IP_NF_SET_IPHASH) += ip_set_iphash.o
-+
 diff -Nur linux-2.6.3.org/net/ipv4/netfilter/ip_pool.c linux-2.6.3/net/ipv4/netfilter/ip_pool.c
 --- linux-2.6.3.org/net/ipv4/netfilter/ip_pool.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.3/net/ipv4/netfilter/ip_pool.c	2004-02-19 09:08:42.247779733 +0100
@@ -5346,7 +5335,7 @@ diff -Nur linux-2.6.3.org/net/ipv4/netfilter/ipt_IPV4OPTSSTRIP.c linux-2.6.3/net
 diff -Nur linux-2.6.3.org/net/ipv4/netfilter/ipt_NETLINK.c linux-2.6.3/net/ipv4/netfilter/ipt_NETLINK.c
 --- linux-2.6.3.org/net/ipv4/netfilter/ipt_NETLINK.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.3/net/ipv4/netfilter/ipt_NETLINK.c	2004-02-19 08:47:24.269530314 +0100
-@@ -0,0 +1,119 @@
+@@ -0,0 +1,118 @@
 +#include <linux/module.h>
 +#include <linux/version.h>
 +#include <linux/config.h>
@@ -5461,7 +5450,6 @@ diff -Nur linux-2.6.3.org/net/ipv4/netfilter/ipt_NETLINK.c linux-2.6.3/net/ipv4/
 +{
 +	DEBUGP("ipt_NETLINK: cleanup_module\n");
 +	ipt_unregister_target(&ipt_netlink_reg);
-+	if(ipfwsk->socket) sock_release(ipfwsk->socket);
 +}
 +
 +module_init(init);
@@ -5822,7 +5810,7 @@ diff -Nur linux-2.6.3.org/net/ipv4/netfilter/ipt_TTL.c linux-2.6.3/net/ipv4/netf
 diff -Nur linux-2.6.3.org/net/ipv4/netfilter/ipt_connlimit.c linux-2.6.3/net/ipv4/netfilter/ipt_connlimit.c
 --- linux-2.6.3.org/net/ipv4/netfilter/ipt_connlimit.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.3/net/ipv4/netfilter/ipt_connlimit.c	2004-02-19 08:47:26.593970414 +0100
-@@ -0,0 +1,232 @@
+@@ -0,0 +1,227 @@
 +/*
 + * netfilter module to limit the number of parallel tcp
 + * connections per IP address.
@@ -6040,17 +6028,12 @@ diff -Nur linux-2.6.3.org/net/ipv4/netfilter/ipt_connlimit.c linux-2.6.3/net/ipv
 +
 +static int __init init(void)
 +{
-+	/* NULL if ip_conntrack not a module */
-+	if (ip_conntrack_module)
-+		__MOD_INC_USE_COUNT(ip_conntrack_module);
 +	return ipt_register_match(&connlimit_match);
 +}
 +
 +static void __exit fini(void)
 +{
 +	ipt_unregister_match(&connlimit_match);
-+	if (ip_conntrack_module)
-+		__MOD_DEC_USE_COUNT(ip_conntrack_module);
 +}
 +
 +module_init(init);
