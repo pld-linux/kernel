@@ -798,8 +798,6 @@ BuildConfig smp
 %{?with_smp:BuildKernel smp}
 %{?with_smp:PreInstallKernel smp}
 
-rm -rf localversion
-
 %install
 rm -rf $RPM_BUILD_ROOT
 umask 022
@@ -1197,6 +1195,7 @@ fi
 %files module-build
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Makefile
+%{_prefix}/src/linux-%{version}/localversion
 %dir %{_prefix}/src/linux-%{version}/arch
 %dir %{_prefix}/src/linux-%{version}/arch/*
 %{_prefix}/src/linux-%{version}/arch/*/Makefile*
