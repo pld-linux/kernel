@@ -66,6 +66,7 @@ Source1003:	%{name}-addon-2.4.7-pre6.config
 Source1004:	%{name}-xfs.config
 Source1005:	%{name}-netfilter.config
 Source1006:	%{name}-ipvs.config
+Source1007:	%{name}-ippersonality.config
 
 # New features
 
@@ -500,6 +501,7 @@ BuildKernel() {
 	cat %{SOURCE1004} >> $RPM_SOURCE_DIR/kernel-$Config.config
 	cat %{SOURCE1005} >> $RPM_SOURCE_DIR/kernel-$Config.config
 	cat %{SOURCE1006} >> $RPM_SOURCE_DIR/kernel-$Config.config
+	cat %{SOURCE1007} >> $RPM_SOURCE_DIR/kernel-$Config.config
 	cp $RPM_SOURCE_DIR/kernel-$Config.config arch/$RPM_ARCH/defconfig
 	if [ "$LIDS" = "lids" ] ; then
 		echo ENABLING LIDS...
