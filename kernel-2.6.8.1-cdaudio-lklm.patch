@@ -1,0 +1,21 @@
+--- linux-2.6.8.1/fs/bio.c.orig	2004-12-05 22:42:10.348095640 +0100
++++ linux-2.6.8.1/fs/bio.c	2004-12-05 22:45:51.870419128 +0100
+@@ -454,6 +454,7 @@
+ 	 */
+ 	if (!ret) {
+ 		if (!write_to_vm) {
++		        unsigned long p = uaddr;
+ 			bio->bi_rw |= (1 << BIO_RW);
+ 			/*
+ 	 		 * for a write, copy in data to kernel pages
+@@ -462,8 +463,9 @@
+ 			bio_for_each_segment(bvec, bio, i) {
+ 				char *addr = page_address(bvec->bv_page);
+ 
+-				if (copy_from_user(addr, (char *) uaddr, bvec->bv_len))
++				if (copy_from_user(addr, (char *) p, bvec->bv_len))	
+ 					goto cleanup;
++				p += bvec->bv_len;
+ 			}
+ 		}
+ 
