@@ -381,7 +381,7 @@ patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # JFS 1.0.5
-patch -p1 -s <jfs-2.2..common-v%{jfs_version}-patch
+patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 
 %build
 BuildKernel() {
