@@ -1,0 +1,32 @@
+--- linux-2.6.7/fs/gfs/log.c.orig	2004-07-10 09:36:36.000000000 +0000
++++ linux-2.6.7/fs/gfs/log.c	2004-07-10 13:57:31.000000000 +0000
+@@ -526,24 +526,16 @@
+ 		dump_off = sdp->sd_log_dump_last;
+ 		dump_wrap = sdp->sd_log_dump_last_wrap;
+ 
+-		switch (head_wrap - dump_wrap) {
+-		case 0:
+-			break;
+-
+-		case 1:
+-			if (head_off < dump_off)
+-				break;
+-			else if (head_off == dump_off &&
+-				 (tr->tr_flags & TRF_LOG_DUMP))
+-				break;
+-
+-		default:
++		if ((head_wrap - dump_wrap) != 0) {
++			if(((head_wrap - dump_wrap) != 1) ||
++				((head_off >= dump_off) &&
++				 ((head_off != dump_off) || !(tr->tr_flags & TRF_LOG_DUMP)))) {
+ 			GFS_ASSERT_SBD(FALSE, sdp,
+ 				       printk("head_off = %"PRIu64", head_wrap = %"PRIu64"\n",
+ 					      head_off, head_wrap);
+ 				       printk("dump_off = %"PRIu64", dump_wrap = %"PRIu64"\n",
+ 					      dump_off, dump_wrap););
+-			break;
++			}
+ 		}
+ 	}
+ }
