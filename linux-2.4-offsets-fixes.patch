@@ -2520,10 +2520,28 @@ diff -Nru a/drivers/gsc/eisa_eeprom.c b/drivers/gsc/eisa_eeprom.c
  	return ret;
  }
  
-diff -Nru a/drivers/hotplug/pci_hotplug_core.c b/drivers/hotplug/pci_hotplug_core.c
---- a/drivers/hotplug/pci_hotplug_core.c	2004-08-06 02:04:33 -07:00
-+++ b/drivers/hotplug/pci_hotplug_core.c	2004-08-06 02:04:33 -07:00
-@@ -616,7 +616,7 @@
+--- linux-2.4.26/drivers/hotplug/pci_hotplug_core.c.orig	2003-11-28 19:26:20.000000000 +0100
++++ linux-2.4.26/drivers/hotplug/pci_hotplug_core.c	2004-08-11 15:04:17.000000000 +0200
+@@ -576,14 +576,15 @@
+ 	int retval;
+ 	int len;
+ 	u8 value;
++	loff_t off = *offset;
+ 
+-	dbg(" count = %d, offset = %lld\n", count, *offset);
++	dbg(" count = %d, offset = %lld\n", count, off);
+ 
+-	if (*offset < 0)
++	if (off < 0)
+ 		return -EINVAL;
+ 	if (count == 0 || count > 16384)
+ 		return 0;
+-	if (*offset != 0)
++	if (off != 0)
+ 		return 0;
+ 
+ 	if (slot == NULL) {
+@@ -604,7 +605,7 @@
  		retval = -EFAULT;
  		goto exit;
  	}
@@ -2532,7 +2550,42 @@ diff -Nru a/drivers/hotplug/pci_hotplug_core.c b/drivers/hotplug/pci_hotplug_cor
  	retval = len;
  
  exit:
-@@ -727,7 +727,7 @@
+@@ -619,12 +620,13 @@
+ 	unsigned long lpower;
+ 	u8 power;
+ 	int retval = 0;
++	loff_t off = *offset;
+ 
+-	if (*offset < 0)
++	if (off < 0)
+ 		return -EINVAL;
+ 	if (count == 0 || count > 16384)
+ 		return 0;
+-	if (*offset != 0)
++	if (off != 0)
+ 		return 0;
+ 
+ 	if (slot == NULL) {
+@@ -687,14 +689,15 @@
+ 	int retval;
+ 	int len;
+ 	u8 value;
++	loff_t off = *offset;
+ 
+-	dbg("count = %d, offset = %lld\n", count, *offset);
++	dbg("count = %d, offset = %lld\n", count, off);
+ 
+-	if (*offset < 0)
++	if (off < 0)
+ 		return -EINVAL;
+ 	if (count == 0 || count > 16384)
+ 		return 0;
+-	if (*offset != 0)
++	if (off != 0)
+ 		return 0;
+ 
+ 	if (slot == NULL) {
+@@ -715,7 +718,7 @@
  		retval = -EFAULT;
  		goto exit;
  	}
@@ -2541,7 +2594,23 @@ diff -Nru a/drivers/hotplug/pci_hotplug_core.c b/drivers/hotplug/pci_hotplug_cor
  	retval = len;
  
  exit:
-@@ -792,14 +792,15 @@
+@@ -730,12 +733,13 @@
+ 	unsigned long lattention;
+ 	u8 attention;
+ 	int retval = 0;
++	loff_t off = *offset;
+ 
+-	if (*offset < 0)
++	if (off < 0)
+ 		return -EINVAL;
+ 	if (count == 0 || count > 16384)
+ 		return 0;
+-	if (*offset != 0)
++	if (off != 0)
+ 		return 0;
+ 
+ 	if (slot == NULL) {
+@@ -780,14 +784,15 @@
  	int retval;
  	int len;
  	u8 value;
@@ -2560,7 +2629,7 @@ diff -Nru a/drivers/hotplug/pci_hotplug_core.c b/drivers/hotplug/pci_hotplug_cor
  		return 0;
  
  	if (slot == NULL) {
-@@ -820,7 +821,7 @@
+@@ -808,7 +813,7 @@
  		retval = -EFAULT;
  		goto exit;
  	}
@@ -2569,37 +2638,10 @@ diff -Nru a/drivers/hotplug/pci_hotplug_core.c b/drivers/hotplug/pci_hotplug_cor
  	retval = len;
  
  exit:
-@@ -835,14 +836,15 @@
+@@ -823,14 +828,15 @@
  	int retval;
  	int len;
  	u8 value;
-+	loff_t off = *offset;
- 
- 	dbg("count = %d, offset = %lld\n", count, *offset);
- 
--	if (*offset < 0)
-+	if (off < 0)
- 		return -EINVAL;
- 	if (count <= 0)
- 		return 0;
--	if (*offset != 0)
-+	if (off != 0)
- 		return 0;
- 
- 	if (slot == NULL) {
-@@ -863,7 +865,7 @@
- 		retval = -EFAULT;
- 		goto exit;
- 	}
--	*offset += len;
-+	*offset = off + len;
- 	retval = len;
- 
- exit:
-@@ -878,14 +880,15 @@
- 	int retval;
- 	int len;
- 	u32 address;
 +	loff_t off = *offset;
  
 -	dbg("count = %d, offset = %lld\n", count, *offset);
@@ -2615,16 +2657,16 @@ diff -Nru a/drivers/hotplug/pci_hotplug_core.c b/drivers/hotplug/pci_hotplug_cor
  		return 0;
  
  	if (slot == NULL) {
-@@ -909,7 +912,7 @@
+@@ -851,7 +857,7 @@
  		retval = -EFAULT;
  		goto exit;
  	}
 -	*offset += len;
-+	*offset  = off + len;
++	*offset = off + len;
  	retval = len;
  
  exit:
-@@ -927,14 +930,15 @@
+@@ -869,14 +875,15 @@
  	int retval;
  	int len = 0;
  	enum pci_bus_speed value;
@@ -2643,16 +2685,16 @@ diff -Nru a/drivers/hotplug/pci_hotplug_core.c b/drivers/hotplug/pci_hotplug_cor
  		return 0;
  
  	if (slot == NULL) {
-@@ -961,7 +965,7 @@
+@@ -903,7 +910,7 @@
  		retval = -EFAULT;
  		goto exit;
  	}
 -	*offset += len;
-+	*offset = off + len;
++	*offset  = off + len;
  	retval = len;
  
  exit:
-@@ -977,14 +981,15 @@
+@@ -919,14 +926,15 @@
  	int retval;
  	int len = 0;
  	enum pci_bus_speed value;
@@ -2671,7 +2713,7 @@ diff -Nru a/drivers/hotplug/pci_hotplug_core.c b/drivers/hotplug/pci_hotplug_cor
  		return 0;
  
  	if (slot == NULL) {
-@@ -1011,7 +1016,7 @@
+@@ -953,7 +961,7 @@
  		retval = -EFAULT;
  		goto exit;
  	}
@@ -2680,6 +2722,22 @@ diff -Nru a/drivers/hotplug/pci_hotplug_core.c b/drivers/hotplug/pci_hotplug_cor
  	retval = len;
  
  exit:
+@@ -968,12 +976,13 @@
+ 	unsigned long ltest;
+ 	u32 test;
+ 	int retval = 0;
++	loff_t off = *offset;
+ 
+-	if (*offset < 0)
++	if (off < 0)
+ 		return -EINVAL;
+ 	if (count == 0 || count > 16384)
+ 		return 0;
+-	if (*offset != 0)
++	if (off != 0)
+ 		return 0;
+ 
+ 	if (slot == NULL) {
 diff -Nru a/drivers/ieee1394/pcilynx.c b/drivers/ieee1394/pcilynx.c
 --- a/drivers/ieee1394/pcilynx.c	2004-08-06 02:04:33 -07:00
 +++ b/drivers/ieee1394/pcilynx.c	2004-08-06 02:04:33 -07:00
