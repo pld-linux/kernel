@@ -126,7 +126,7 @@ Patch119:	linux-2.4.6-sb_id.patch
 Patch120:	linux-2.4.10-aironet.patch
 Patch121:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
-Patch122:	linux-2.4.13-pre6-lvm-1.0.1rc4cvs.patch
+Patch122:	linux-2.4.14-lvm-1.0.1rc4cvs.patch
 # davem broke acenic in 2.4.13-pre
 Patch123:	linux-acenic-dma64.patch
 # HTP360/370 driver update
@@ -417,6 +417,12 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch123 -p1
 %patch124 -p1
 %patch125 -p1
+
+# IRDA patches
+%patch127 -p1
+%patch128 -p1
+%patch129 -p1
+%patch130 -p1
 
 %patch900 -p0 
 %patch904 -p0
