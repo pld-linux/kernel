@@ -168,7 +168,7 @@ rm -rf $RPM_BUILD_ROOT
 umask 022
 install -d $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}
 cp -R . $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}/
-install %{SOURCE2} $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}
+install %{SOURCE2} $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}/config-nondist
 
 %clean
 rm -rf $RPM_BUILD_ROOT
