@@ -51,8 +51,9 @@
 
 %define		_netfilter_snap		20040518
 
-%define		no_install_post_strip	1
+%define		no_install_post_strip			1
 %define		no_install_post_compress_modules	1
+%define		no_install_post_chrpath			1
 
 %define		pcmcia_version		3.1.22
 %define		drm_xfree_version	4.3.0
@@ -261,6 +262,7 @@ Group:		Base/Kernel
 PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	%{name}-drm = %{drm_xfree_version}
+Autoreqprov:	no
 
 %description drm
 DRM kernel modules (%{drm_xfree_version}).
@@ -277,6 +279,7 @@ Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	%{name}-pcmcia = %{pcmcia_version}
 Provides:	kernel(pcmcia)
 Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
+Autoreqprov:	no
 
 %description pcmcia
 PCMCIA modules (%{pcmcia_version}).
@@ -293,6 +296,7 @@ Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	alsa-driver
 Obsoletes:	alsa-driver
 Obsoletes:	alsa-driver-up
+Autoreqprov:	no
 
 %description sound-alsa
 ALSA (Advanced Linux Sound Architecture) sound drivers.
@@ -306,6 +310,7 @@ Summary(pl):	Sterowniki d¼wiêku OSS
 Group:		Base/Kernel
 PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
+Autoreqprov:	no
 
 %description sound-oss
 OSS (Open Sound System) drivers.
@@ -367,6 +372,7 @@ Group:		Base/Kernel
 PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Provides:	%{name}-drm = %{drm_xfree_version}
+Autoreqprov:	no
 
 %description smp-drm
 DRM SMP kernel modules (%{drm_xfree_version}).
@@ -383,6 +389,7 @@ Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Provides:	%{name}-pcmcia = %{pcmcia_version}
 Provides:	kernel(pcmcia)
 Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
+Autoreqprov:	no
 
 %description smp-pcmcia
 PCMCIA modules for SMP kernel (%{pcmcia_version}).
@@ -399,6 +406,7 @@ Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Provides:	alsa-driver
 Obsoletes:	alsa-driver
 Obsoletes:	alsa-driver-smp
+Autoreqprov:	no
 
 %description smp-sound-alsa
 ALSA (Advanced Linux Sound Architecture) SMP sound drivers.
@@ -413,6 +421,7 @@ Summary(pl):	Sterowniki d¼wiêku OSS dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
+Autoreqprov:	no
 
 %description smp-sound-oss
 OSS (Open Sound System) SMP sound drivers.
@@ -475,6 +484,7 @@ Summary:	Development files for building kernel modules
 Summary(pl):	Pliki s³u¿±ce do budowania modu³ów j±dra
 Group:		Base/Kernel
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
+Autoreqprov:	no
 
 %description module-build
 Development files from kernel source tree needed to build Linux kernel
@@ -488,8 +498,8 @@ Linuksa z zewnêtrznych pakietów.
 Summary:	Kernel source tree
 Summary(pl):	Kod ¼ród³owy j±dra Linuksa
 Group:		Base/Kernel
-Autoreqprov:	no
 Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
+Autoreqprov:	no
 
 %description source
 This is the source code for the Linux kernel. It is required to build
