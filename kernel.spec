@@ -80,8 +80,7 @@ Patch54:	2.6.0-t5-PPC-fix.patch
 Patch55:	kernel-siimage-rqsize.patch
 Patch56:	2.6.0-t5-PPC-Kconfig.patch
 
-Patch60:	2.6.0-t5-i2c.patch.bz2
-# Patch60-md5	9f80878fc516c4fe8fd778e20c7bedd7
+Patch60:	2.6.0-t5-i2c.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
