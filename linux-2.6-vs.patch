@@ -6063,15 +6063,16 @@ diff -NurpP --minimal linux-2.6.10/include/linux/reiserfs_fs_sb.h linux-2.6.10-v
 diff -NurpP --minimal linux-2.6.10/include/linux/sched.h linux-2.6.10-vs1.9.3.17/include/linux/sched.h
 --- linux-2.6.10/include/linux/sched.h	2004-12-25 01:55:29.000000000 +0100
 +++ linux-2.6.10-vs1.9.3.17/include/linux/sched.h	2004-12-26 19:40:35.000000000 +0100
-@@ -30,6 +30,7 @@
+@@ -30,6 +30,8 @@
  #include <linux/pid.h>
  #include <linux/percpu.h>
  #include <linux/topology.h>
 +#include <linux/vs_base.h>
++#include <linux/vs_cvirt.h>
  
  struct exec_domain;
  
-@@ -110,6 +111,7 @@ extern unsigned long nr_iowait(void);
+@@ -110,6 +112,7 @@ extern unsigned long nr_iowait(void);
  #define TASK_TRACED		8
  #define EXIT_ZOMBIE		16
  #define EXIT_DEAD		32
@@ -6079,7 +6080,7 @@ diff -NurpP --minimal linux-2.6.10/include/linux/sched.h linux-2.6.10-vs1.9.3.17
  
  #define __set_task_state(tsk, state_value)		\
  	do { (tsk)->state = (state_value); } while (0)
-@@ -236,6 +238,7 @@ struct mm_struct {
+@@ -236,6 +239,7 @@ struct mm_struct {
  
  	/* Architecture-specific MM context */
  	mm_context_t context;
@@ -6087,7 +6088,7 @@ diff -NurpP --minimal linux-2.6.10/include/linux/sched.h linux-2.6.10-vs1.9.3.17
  
  	/* Token based thrashing protection. */
  	unsigned long swap_token_time;
-@@ -365,9 +368,10 @@ struct user_struct {
+@@ -365,9 +369,10 @@ struct user_struct {
  	/* Hash table maintenance information */
  	struct list_head uidhash_list;
  	uid_t uid;
@@ -6099,7 +6100,7 @@ diff -NurpP --minimal linux-2.6.10/include/linux/sched.h linux-2.6.10-vs1.9.3.17
  
  extern struct user_struct root_user;
  #define INIT_USER (&root_user)
-@@ -630,6 +634,14 @@ struct task_struct {
+@@ -630,6 +635,14 @@ struct task_struct {
  	void *security;
  	struct audit_context *audit_context;
  
@@ -6114,7 +6115,7 @@ diff -NurpP --minimal linux-2.6.10/include/linux/sched.h linux-2.6.10-vs1.9.3.17
  /* Thread group tracking */
     	u32 parent_exec_id;
     	u32 self_exec_id;
-@@ -768,13 +780,19 @@ extern struct task_struct init_task;
+@@ -768,13 +781,19 @@ extern struct task_struct init_task;
  
  extern struct   mm_struct init_mm;
  
@@ -6136,7 +6137,7 @@ diff -NurpP --minimal linux-2.6.10/include/linux/sched.h linux-2.6.10-vs1.9.3.17
  static inline struct user_struct *get_uid(struct user_struct *u)
  {
  	atomic_inc(&u->__count);
-@@ -867,15 +885,28 @@ static inline int sas_ss_flags(unsigned 
+@@ -867,15 +886,28 @@ static inline int sas_ss_flags(unsigned 
  #ifdef CONFIG_SECURITY
  /* code is in security.c */
  extern int capable(int cap);
