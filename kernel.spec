@@ -71,6 +71,7 @@ Source1007:	%{name}-acpi.config
 Source1008:	%{name}-ebtables.config
 Source1009:	%{name}-usb2.config
 Source1010:	%{name}-i2c.config
+Source1011:	%{name}-promise_st.config
 Source1666:	%{name}-grsec.config
 Source1667:	%{name}-int.config
 Source1668:	%{name}-hostap.config
@@ -135,8 +136,9 @@ Patch20:	linux-2.4.19-pre8-VFS-lock.patch
 
 # from http://www.promise.com/support/file/driver/promise-patch-2.4.19.gz
 Patch21:	linux-2.4.20-promise.patch.bz2
-# from http://www.promise.com/support/files/driver/st6000src_1.30_01_0326.tgz
-#Patch22:	linux-2.4.20-promise-st.patch.tgz
+# from http://www.promise.com/support/file/driver/st6000src_1.30_01_0326.tgz
+Patch22:	linux-2.4.20-promise-st6000.patch.bz2
+# from ftp://ftp.lsil.com/pub/symchips/scsi/FusionMPT/Linux/2.03.00/mptlinux-2.03.00-src.tar.gz
 #Patch23:
 #Patch24:
 
@@ -701,6 +703,7 @@ echo Fixed VIA82Cxxx Audio ...
 #promise patch
 echo Promise driver patch
 %patch21 -p1
+%patch22 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
@@ -804,6 +807,7 @@ BuildKernel() {
 	cat %{SOURCE1008} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1009} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1010} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1011} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1671} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1672} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1673} >> arch/%{base_arch}/defconfig
@@ -1004,6 +1008,7 @@ cat %{SOURCE1667} >> .config
 cat %{SOURCE1008} >> .config
 cat %{SOURCE1009} >> .config
 cat %{SOURCE1010} >> .config
+cat %{SOURCE1011} >> .config
 cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
@@ -1059,6 +1064,7 @@ cat %{SOURCE1667} >> .config
 cat %{SOURCE1008} >> .config
 cat %{SOURCE1009} >> .config
 cat %{SOURCE1010} >> .config
+cat %{SOURCE1011} >> .config
 cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
