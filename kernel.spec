@@ -34,7 +34,7 @@
 %define		_PPP_ver		2.4.0
 %define		_isdn4k_utils_ver	3.1pre1
 %define		_nfs_utils_ver		1.0.5
-%define		_procps_ver		3.1.13
+%define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
 %define		_rel		0.3
@@ -1336,16 +1336,24 @@ fi
 %files sound-alsa
 %defattr(644,root,root,755)
 %dir /lib/modules/%{version}-%{release}/kernel/sound/core
+/lib/modules/%{version}-%{release}/kernel/sound/core/*
 %dir /lib/modules/%{version}-%{release}/kernel/sound/drivers
+/lib/modules/%{version}-%{release}/kernel/sound/drivers/*
 %ifnarch sparc sparc64
 %dir /lib/modules/%{version}-%{release}/kernel/sound/i2c
+/lib/modules/%{version}-%{release}/kernel/sound/i2c/*
 %dir /lib/modules/%{version}-%{release}/kernel/sound/isa
+/lib/modules/%{version}-%{release}/kernel/sound/isa/*
 %dir /lib/modules/%{version}-%{release}/kernel/sound/pci
+/lib/modules/%{version}-%{release}/kernel/sound/pci/*
 %dir /lib/modules/%{version}-%{release}/kernel/sound/synth
+/lib/modules/%{version}-%{release}/kernel/sound/synth/*
 %dir /lib/modules/%{version}-%{release}/kernel/sound/usb
+/lib/modules/%{version}-%{release}/kernel/sound/usb/*
 %endif			
 %ifarch sparc sparc64
 %dir /lib/modules/%{version}-%{release}/kernel/sound/sparc
+/lib/modules/%{version}-%{release}/kernel/sound/sparc/*
 %endif			
 %endif
 
@@ -1360,15 +1368,23 @@ fi
 %files smp-sound-alsa
 %defattr(644,root,root,755)
 %dir /lib/modules/%{version}-%{release}smp/kernel/sound/core
+/lib/modules/%{version}-%{release}smp/kernel/sound/core/*
 %dir /lib/modules/%{version}-%{release}smp/kernel/sound/drivers
+/lib/modules/%{version}-%{release}smp/kernel/sound/drivers/*
 %ifnarch sparc sparc64
 %dir /lib/modules/%{version}-%{release}smp/kernel/sound/i2c
+/lib/modules/%{version}-%{release}smp/kernel/sound/i2c/*
 %dir /lib/modules/%{version}-%{release}smp/kernel/sound/isa
+/lib/modules/%{version}-%{release}smp/kernel/sound/isa/*
 %dir /lib/modules/%{version}-%{release}smp/kernel/sound/pci
+/lib/modules/%{version}-%{release}smp/kernel/sound/pci/*
 %dir /lib/modules/%{version}-%{release}smp/kernel/sound/synth
+/lib/modules/%{version}-%{release}smp/kernel/sound/synth/*
 %dir /lib/modules/%{version}-%{release}smp/kernel/sound/usb
+/lib/modules/%{version}-%{release}smp/kernel/sound/usb/*
 %endif 
 %ifarch sparc sparc64
 %dir /lib/modules/%{version}-%{release}smp/kernel/sound/sparc
+/lib/modules/%{version}-%{release}smp/kernel/sound/sparc/*
 %endif
 %endif 
