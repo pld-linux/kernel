@@ -213,7 +213,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #i8255 fix
 %patch4 -p0 
 
-%patch5
+%patch5 -p1
 
 # Fore 200e ATM NIC
 patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
@@ -233,15 +233,15 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 #echo -e $ANS | ./runme)
 
 # IPVS
-for i in ipvs-%{ipvs_version}/*.diff ; do
-	patch -p1 <$i
-done
+#for i in ipvs-%{ipvs_version}/*.diff ; do
+#	patch -p1 <$i
+#done
 mkdir net/ipv4/ipvs
 cp ipvs-%{ipvs_version}/ipvs/*.{c,h,in} net/ipv4/ipvs
 cp ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile net/ipv4/ipvs/Makefile
 
 # LIDS
-patch -p1 <lids-1.0.4-2.4.0/lids-1.0.4-2.4.0.patch
+#patch -p1 <lids-1.0.4-2.4.0/lids-1.0.4-2.4.0.patch
 
 # Remove -g from drivers/atm/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
