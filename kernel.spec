@@ -408,11 +408,15 @@ done
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
 ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 
+ln -sf ../src/linux/include/asm-generic $RPM_BUILD_ROOT%{_includedir}/asm-generic
 %ifarch sparc sparc64
-ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
-ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
+ln -sf ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
+ln -sf ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
 %else
-ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
+ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT%{_includedir}/asm
+%endif
+%ifarch %{ix86}
+ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux/include/asm
 %endif
 
 cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
@@ -422,7 +426,6 @@ cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 %{__make} mrproper
 find  -name "*~" -print | xargs rm -f
 find  -name "*.orig" -print | xargs rm -f
-
 
 %ifarch %{ix86}
 cat $RPM_SOURCE_DIR/kernel-ia32.config > .config
@@ -476,7 +479,7 @@ install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/{linux,asm-i386}/fla
 install security/lids/include/linux/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 install security/selinux/include/linux/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/flask
 install security/selinux/include/asm-i386/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/asm-i386/flask
-%endif			# %%{_without_selinux}
+%endif			# _without_selinux
 
 %{__make} include/linux/version.h
 %{__make} clean
@@ -691,6 +694,7 @@ fi
 %dir %{_prefix}/src/linux-%{version}
 %{_prefix}/src/linux-%{version}/include
 %{_includedir}/asm
+%{_includedir}/asm-generic
 %{_includedir}/linux
 
 %files doc
