@@ -9,7 +9,7 @@
 # _without_up		- don't build UP kernel
 # _without_wrr		- don't build WRR support
 #
-%define		krelease		5.914
+%define		krelease		5.915
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -213,15 +213,15 @@ Patch147:	http://www.hojdpunkten.ac.se/054/samba/00-smbfs-2.4.18-codepage.patch.
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
 Patch900:	ide-EXPORT_SYMBOL.fix
-Patch901:	ide_o1_sched_fix.patch
+#Patch901:	
 Patch902:	linux-2.4.19pre7-VIA.patch
 Patch903:	linux-PPC-SMP.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
-Patch905:	ippersonality-applay-fix.patch
+#Patch905:	ippersonality-applay-fix.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
 Patch907:	loop-jari-2.4.18.0.patch
-Patch908:	ippersonality-post.patch
+#Patch908:	ippersonality-post.patch
 Patch909:	linux-53c7,8xx-build.fix
 Patch910:	dc395-PLD.fix
 Patch911:	linux-o1-sched-grsec-pre.patch
@@ -615,7 +615,6 @@ echo "Scheduler didn't work on ARCH different than Intel x86"
 %patch102 -p0
 %patch103 -p0
 %patch105 -p1
-%{?_with_o1_sched:%patch901 -p1}
 %patch106 -p1
 %patch118 -p0
 #%patch107 -p1
@@ -653,7 +652,6 @@ install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 # Fore 200e ATM NIC
 echo Adding FORE 200e ATM driver
 patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
-#patch -p1 -s <linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
 
 # Netfilter
 echo Adding Netfilter snapshot from 25.06.2002
@@ -668,7 +666,6 @@ done
 echo -e $ANS | ./runme pld )
 
 patch -p1 < netfilter-patches/patch-o-matic/pld/log.patch
-#%patch917 -p0
 
 # IPVS
 echo Adding IPVS
@@ -691,9 +688,7 @@ rm -rf %{sym_ncr_version}
 
 # IP personality
 echo Adding IP Personality 
-#%patch905 -p0
 patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020427-linux-2.4.18.diff
-#%patch908 -p1
 
 # JFS
 echo Adding JFS
@@ -731,7 +726,8 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 # Fided include path
 %patch129 -p0
 
-#Fixed sysctl export symbols.
+# Fixed sysctl export symbols.
+echo Fixed export sysctl symbols
 %patch130 -p0
 
 %patch133 -p0
@@ -748,7 +744,6 @@ echo Installing EVMS patch
 %{?_with_o1_sched:%patch916 -p1}
 
 %ifarch %{ix86}
-echo 
 %patch139 -p1
 %endif
 
@@ -758,9 +753,8 @@ echo Replacing Trident FB module.
 
 # VIA Southbridge update
 echo Updating VIA Southbridge
-#%patch902 -p1
+%patch902 -p1
 
-echo
 %patch903 -p0
 
 %ifarch ppc
