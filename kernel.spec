@@ -1002,7 +1002,6 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o
 %endif
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
 
@@ -1024,7 +1023,6 @@ fi
 /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o
 /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o
 %endif
-/lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o
 
 %files drm
 %defattr(644,root,root,755)
@@ -1055,7 +1053,6 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o
 %endif
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
 
@@ -1077,7 +1074,6 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o
 /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o
 %endif
-/lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o
 
 %files -n kernel-smp-drm
 %defattr(644,root,root,755)
