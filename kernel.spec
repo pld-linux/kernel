@@ -422,10 +422,10 @@ rm -rf %{sym_ncr_version}
 #%patch903 -p1
 
 # 802.1Q VLANs
-cd vlan.%{vlan_version}
-%patch905 -p1
-cd ..
-patch -p1 -s <vlan.%{vlan_version}/vlan_2.4.patch
+#cd vlan.%{vlan_version}
+#%patch905 -p1
+#cd ..
+#patch -p1 -s <vlan.%{vlan_version}/vlan_2.4.patch
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
