@@ -11,8 +11,6 @@
 %bcond_without source	# don't build kernel-source package
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
-## netfilter snap 
-%define		_netfilter_snap		20040105
 ## Program required by kernel to work.
 %define		_binutils_ver		2.12
 %define		_util-linux_ver		2.10o
@@ -32,7 +30,10 @@
 
 %define		_rel		1
 %define		_rc		2
-%define		_cset		20040106_0706
+%define		_cset		20040107_0505
+
+## netfilter snap 
+%define		_netfilter_snap		20040105
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -491,7 +492,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%if "_rc" != "0"
+%if "%{_rc}" != "0"
 %setup -q -n linux-%{version}-rc%{_rc}
 %else
 %setup -q -n linux-%{version}
