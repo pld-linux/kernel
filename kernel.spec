@@ -10,13 +10,13 @@
 %define		pre_version		pre11
 %define		lids_version		1.0.11-2.4.6
 %define		ipvs_version		0.9.4
-%define		freeswan_version	snap2001jun14R
+%define		freeswan_version	snap2001sep23b
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.9
 %define		sym_ncr_version		sym-1.7.3-ncr-3.4.3
 %define		vlan_version		1.4
 %define		IPperson_version	20010724-2.4.7
-%define		grsec_version		1.6-2.4.7
+%define		grsec_version		1.7.2-2.4.9
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -27,7 +27,7 @@ Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.gz
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
@@ -70,77 +70,67 @@ Source1007:	%{name}-ippersonality.config
 Patch0:		%{name}-pldfblogo.patch
 #Patch1:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
 Patch1:		patch-int-2.4.5.0.gz
-Patch2:		linux-2.4.5-freeswan-%{freeswan_version}.patch.gz
+Patch2:		linux-2.4.10-freeswan-%{freeswan_version}.patch.gz
 # http://domsch.com/linux/aacraid/linux-2.4.9-aacraid-20010816.patch
 Patch3:		linux-2.4.9-aacraid-20010816.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
-Patch4:		br2684-against2.4.7.diff
+Patch4:		br2684-against2.4.10.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/
-#Patch5:		linux-2.4.10pre9-xfs-20010915.patch.gz
+Patch5:		linux-2.4.10-xfs-20010924.patch.gz
 # Compressed iso9660 filesystem
 Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs+filemap-2.4.7-1.diff.gz
 # Homepage of ABI : http://linux-abi.sourceforge.net/
 # http://prdownloads.sourceforge.net/linux-abi/
-Patch8:		linux-abi-2.4.3-PLD.patch
-Patch9:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
+Patch7:		linux-abi-2.4.3-PLD.patch
+Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
-Patch10:	linux-grsecurity-%{grsec_version}.patch
+Patch9:		linux-grsecurity-%{grsec_version}.patch
 # Linux Compressed cache
-Patch11:	http://prdownloads.sourceforge.net/linuxcompressed/patch-comp-cache-2.4.6-0.17.bz2
+Patch10:	http://prdownloads.sourceforge.net/linuxcompressed/patch-comp-cache-2.4.6-0.17.bz2
 # EXT3
 # http://www.uow.edu.au/~andrewm/linux/ext3/
-Patch12:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.9-2410p4.gz
+Patch11:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.10-2410.gz
 
 # Assorted bugfixes
 
 # Quota fixes
 # Patch100:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.6-2.diff.gz
-#Patch100:	quota-fix-2.4.10-pre4-2.diff.gz
+Patch100:	quota-fix-2.4.10-pre11-1.diff.gz
 # from LKML
 Patch101:	linux-scsi-debug-bug.patch
-Patch102:	linux-2.4.7-oom-killer.patch
-Patch103:	linux-2.4.2-raw-ip.patch
-Patch104:	PCI_ISA_bridge.patch
-Patch105:	linux-2.4.2-nvram-hdd.patch
-Patch106:	linux-2.4-fix-kapm.patch
-Patch107:	epca-fix-missing-unregister-driver.patch
-Patch108:	ramdisk-VM.fix
-Patch109:	linux-ram-disk-free.patch
+Patch102:	linux-2.4.2-raw-ip.patch
+Patch103:	PCI_ISA_bridge.patch
+Patch104:	linux-2.4.2-nvram-hdd.patch
+Patch105:	linux-2.4-fix-kapm.patch
+Patch106:	epca-fix-missing-unregister-driver.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
-Patch110:	linux-2.4.2-pcnet-parms.patch
-Patch111:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.6-p1.06062001.patch.gz
-Patch112:	linux-reiserfs-rename.patch
-Patch113:	linux-via-fixes.patch
-Patch114:	linux-alpha-nfs-2.4.2.patch
-Patch115:	linux-2.4-string.patch
+Patch107:	linux-2.4.2-pcnet-parms.patch
+Patch108:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.6-p1.06062001.patch.gz
+Patch109:	linux-reiserfs-rename.patch
+Patch110:	linux-alpha-nfs-2.4.2.patch
+Patch111:	linux-2.4-string.patch
 # raid5 xor fix for PIII/P4, should go away shortly
-Patch116:	linux-2.4.0-raid5xor.patch
+Patch112:	linux-2.4.0-raid5xor.patch
 # disable some networking printk's
-Patch117:	linux-2.4.1-netdebug.patch
+Patch113:	linux-2.4.1-netdebug.patch
 # SCSI Reset patch for clustering stuff
-Patch118:	linux-2.4.1-scsi-reset.patch
+Patch114:	linux-2.4.1-scsi-reset.patch
 # Add an ioctl to the block layer so we can be EFI compliant
-Patch119:	linux-2.4.2-blkioctl-sector.patch
-# fix for non-atomic bit clear in eepro100 driver on alpha
-Patch120:	linux-2.4.2-eepro100-alpha.patch
+Patch115:	linux-2.4.2-blkioctl-sector.patch
 # OHCI IRQ sanity check
-Patch121:	linux-2.4.2-ohci-irq.patch
+Patch116:	linux-2.4.2-ohci-irq.patch
 # fix lun probing on multilun RAID chassis
-Patch122:	linux-2.4.2-scsi_scan.patch
-# work around Latitude C600 resume problem (bios bug)
-Patch123:	linux-2.4.3-latitudec600.patch
+Patch117:	linux-2.4.2-scsi_scan.patch
 # fix pcnet32 networkdriver load vs ifconfig races
-Patch124:	linux-2.4.3-pcnet32.patch
+Patch118:	linux-2.4.3-pcnet32.patch
 # fix rawio
-Patch125:	linux-2.4.3-rawio.patch
+Patch119:	linux-2.4.3-rawio.patch
 # extra PnP id for sb32awe
-Patch126:	linux-2.4.3-sb.patch
+Patch120:	linux-2.4.3-sb.patch
 # ideraid driver updates
-Patch127:	linux-2.4.5-ideraid.patch
-# don't allocate highmem pages on non-highmem machines
-Patch128:	linux-2.4.6-nohighmem.patch
+Patch121:	linux-2.4.10-ideraid.patch
 # another sb16 pnp id
-Patch129:	linux-2.4.6-sb_id.patch
+Patch122:	linux-2.4.6-sb_id.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -152,9 +142,8 @@ Patch903:	linux-vlan-fixpatch-2.4.7-pre6.patch
 # patch fixing LIDS stupidity
 #Patch904:	linux-lids-fixpatch.patch
 Patch905:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
-Patch906:	linux-UDF.fix
-Patch907:	linux-ipvs+ext3.patch
-Patch908:	linux-ext3-quota.patch
+Patch906:	linux-ipvs+ext3.patch
+Patch907:	linux-ext3-quota.patch
 
 # Linus's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.10-%{pre_version}.gz
@@ -382,53 +371,45 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-%patch12 -p1
-#%patch100 -p1
-#%patch5 -p1
+%patch11 -p1
+%patch100 -p1
+%patch5 -p1
 %patch6 -p1
-#%patch8 -p1
-%patch9 -p1
+#%patch7 -p1
+%patch8 -p1
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
-%patch10 -p1
+%patch9 -p1
 %endif
 
 %patch101 -p0
-%patch102 -p0
-%patch103 -p1
+%patch102 -p1
+%patch103 -p0
 %patch104 -p0
-%patch105 -p0
+%patch105 -p1
 %patch106 -p1
 %patch107 -p1
-%patch108 -p1
+#%patch108 -p1
 %patch109 -p1
+%ifarch alpha
 %patch110 -p1
-#%patch111 -p1
+%endif
+%patch111 -p1
 %patch112 -p1
 %patch113 -p1
-%ifarch alpha
-%patch114 -p1
-%endif
+%patch114 -p2
 %patch115 -p1
 %patch116 -p1
 %patch117 -p1
-%patch118 -p2
+%patch118 -p1
 %patch119 -p1
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
-%patch123 -p1
-%patch124 -p1
-%patch125 -p1
-%patch126 -p1
-%patch127 -p1
-%patch128 -p1
-%patch129 -p1
 
 %patch900 -p0 
 %patch901 -p0
 %patch905 -p0
-%patch906 -p0
-%patch908 -p1
+%patch907 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -462,7 +443,7 @@ patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
 
 # IPVS
 echo Adding IPVS
-%patch907 -p1
+%patch906 -p1
 for i in ipvs-%{ipvs_version}/*.diff ; do
 	patch -p1 -s <$i
 done
