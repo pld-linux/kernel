@@ -6925,9 +6925,10 @@ diff -urN linux-2.4.22.org/fs/proc/inode.c linux-2.4.22/fs/proc/inode.c
  		}
  		if (de->size)
  			inode->i_size = de->size;
-diff -urN linux-2.4.22.org/fs/proc/proc_misc.c linux-2.4.22/fs/proc/proc_misc.c
---- linux-2.4.22.org/fs/proc/proc_misc.c	2003-11-22 22:08:59.000000000 +0100
-+++ linux-2.4.22/fs/proc/proc_misc.c	2003-11-22 22:44:55.000000000 +0100
+
+diff -urN linux-2.4.23/fs/proc/proc_misc.c linux-2.4.23/fs/proc/proc_misc.c
+--- linux-2.4.23/fs/proc/proc_misc.c	2003-11-28 13:26:21.000000000 -0500
++++ linux-2.4.23/fs/proc/proc_misc.c	2003-11-30 16:37:16.000000000 -0500
 @@ -590,6 +590,7 @@
  void __init proc_misc_init(void)
  {
@@ -6941,7 +6942,7 @@ diff -urN linux-2.4.22.org/fs/proc/proc_misc.c linux-2.4.22/fs/proc/proc_misc.c
  		{"stram",	stram_read_proc},
  #endif
 -#ifdef CONFIG_MODULES
-+#ifdef CONFIG_MODULES && !defined(CONFIG_GRKERNSEC_PROC)
++#if defined(CONFIG_MODULES) && !defined(CONFIG_GRKERNSEC_PROC)
  		{"modules",	modules_read_proc},
  #endif
  		{"stat",	kstat_read_proc},
@@ -6960,27 +6961,24 @@ diff -urN linux-2.4.22.org/fs/proc/proc_misc.c linux-2.4.22/fs/proc/proc_misc.c
  #ifdef CONFIG_SGI_DS1286
  		{"rtc",		ds1286_read_proc},
  #endif
-@@ -626,29 +631,58 @@
+@@ -626,29 +631,60 @@
  	for (p = simple_ones; p->name; p++)
  		create_proc_read_entry(p->name, 0, NULL, p->read_proc, NULL);
  
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
-+        gr_mode = S_IRUSR;
++	gr_mode = S_IRUSR;
 +#elif CONFIG_GRKERNSEC_PROC_USERGROUP
-+        gr_mode = S_IRUSR | S_IRGRP;
++	gr_mode = S_IRUSR | S_IRGRP;
 +#endif
-+
 +#if defined(CONFIG_GRKERNSEC_PROC) && defined(CONFIG_MODULES)
-+        create_proc_read_entry("modules", gr_mode, NULL, &modules_read_proc, NULL);
++	create_proc_read_entry("modules", gr_mode, NULL, &modules_read_proc, NULL);
 +#endif
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
-+        create_proc_read_entry("devices", gr_mode, NULL, &devices_read_proc, NULL);
-+        create_proc_read_entry("dma", gr_mode, NULL, &dma_read_proc, NULL);
-+	 create_seq_entry("ioports", gr_mode, &proc_ioports_operations);
-+        create_proc_read_entry("cmdline", gr_mode, NULL, &cmdline_read_proc, NULL);
-+        create_seq_entry("iomem", gr_mode, &proc_iomem_operations);
-+#if defined(CONFIG_X86)
-+        create_seq_entry("interrupts", gr_mode, &proc_interrupts_operations);
++	create_proc_read_entry("devices", gr_mode, NULL, &devices_read_proc, NULL);
++	create_proc_read_entry("dma", gr_mode, NULL, &dma_read_proc, NULL);
++	create_proc_read_entry("cmdline", gr_mode, NULL, &cmdline_read_proc, NULL);
++#if !defined(CONFIG_ARCH_S390) && !defined(CONFIG_X86)
++	create_proc_read_entry("interrupts", gr_mode, NULL, &interrupts_read_proc, NULL);
 +#endif
 +#endif
 +
@@ -6992,21 +6990,26 @@ diff -urN linux-2.4.22.org/fs/proc/proc_misc.c linux-2.4.22/fs/proc/proc_misc.c
  		entry->proc_fops = &proc_kmsg_operations;
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +	create_seq_entry("cpuinfo", gr_mode, &proc_cpuinfo_operations);
-+	create_seq_entry("slabinfo", gr_mode,&proc_slabinfo_operations);
 +#else
  	create_seq_entry("cpuinfo", 0, &proc_cpuinfo_operations);
-+	create_seq_entry("slabinfo",S_IWUSR|S_IRUGO,&proc_slabinfo_operations);
+-#if defined(CONFIG_X86)
 +#endif
- #if defined(CONFIG_X86)
--	create_seq_entry("interrupts", 0, &proc_interrupts_operations);
++#if defined(CONFIG_X86) && !defined(CONFIG_GRKERNSEC_PROC_ADD)
+ 	create_seq_entry("interrupts", 0, &proc_interrupts_operations);
++#elif defined(CONFIG_X86)
 +	create_seq_entry("interrupts", gr_mode, &proc_interrupts_operations);
  #endif
-+#ifndef CONFIG_GRKERNSEC_PROC_ADD
++#ifdef CONFIG_GRKERNSEC_PROC_ADD
++	create_seq_entry("ioports", gr_mode, &proc_ioports_operations);
++	create_seq_entry("iomem", gr_mode, &proc_iomem_operations);
++	create_seq_entry("slabinfo",gr_mode,&proc_slabinfo_operations);
++#else
  	create_seq_entry("ioports", 0, &proc_ioports_operations);
  	create_seq_entry("iomem", 0, &proc_iomem_operations);
+-	create_seq_entry("partitions", 0, &proc_partitions_operations);
+ 	create_seq_entry("slabinfo",S_IWUSR|S_IRUGO,&proc_slabinfo_operations);
 +#endif
- 	create_seq_entry("partitions", 0, &proc_partitions_operations);
--	create_seq_entry("slabinfo",S_IWUSR|S_IRUGO,&proc_slabinfo_operations);
++	create_seq_entry("partitions", 0, &proc_partitions_operations);
  #ifdef CONFIG_MODULES
 -	create_seq_entry("ksyms", 0, &proc_ksyms_operations);
 +	create_seq_entry("ksyms", gr_mode, &proc_ksyms_operations);
