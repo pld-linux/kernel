@@ -54,11 +54,8 @@ Source26:	%{name}-alpha.config
 Source27:	%{name}-alpha-smp.config
 Source28:	%{name}-alpha-BOOT.config
 Source50:	http://www.netroedge.com/~lm78/archive/i2c-%{i2c_version}.tar.gz
-Source51:	http://www.strusel007.de/linux/bttv/bttv-%{bttv_version}.tar.gz
-#Source52:	http://www.tux.org/pub/tux/roudier/drivers/linux/experimental/sym-%{sym2_version}.tar.gz
 
 # in this place i will include Patches
-
 
 Patch0:		%{name}-pldfblogo.patch
 Patch1:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
@@ -126,8 +123,8 @@ Patch1503:	kernel-sym53c8xx.patch
 # HTB from http://luxik.cdi.cz/~devik/qos/htb/
 Patch200:	htb2_2.2.17.diff
 
-Patch300:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/v2.2/2.2.21pre/patch-2.2.21-pre2.bz2
-Patch320:	fix-prename.patch
+#Patch300:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/v2.2/2.2.21pre/patch-2.2.21-pre2.bz2
+#Patch320:	fix-prename.patch
 Patch321:	ow1-fix-2.2.21-pre1.patch
 
 ExclusiveOS:	Linux
@@ -444,8 +441,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 # here  patch will be executabling, for now we have just patch in the 
 # tar.gz sources
 
-%patch300 -p1
-%patch320 -p1
+#%patch300 -p1
+#%patch320 -p1
 
 %patch0 -p1
 %patch1 -p0
@@ -505,7 +502,7 @@ cd ..
 %endif
 
 # 2.2.20ow1
-%patch321 -p1
+#%patch321 -p1
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 
 # symbios drivers
@@ -755,8 +752,8 @@ ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
-bzip2 -dc %{PATCH300} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH320}
+#bzip2 -dc %{PATCH300} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+#patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH320}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH0}
 %ifnarch sparc sparc64
 gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
