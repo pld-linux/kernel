@@ -15,7 +15,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	0.2	
+Release:	0.3	
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -70,6 +70,15 @@ Patch9:		linux-ipv6-glibc2.2.patch
 # but diffrent
 Patch10:	bridge-1.0.1-against-2.2.20.diff
 
+Patch20:	http://download.sourceforge.net/linux1394/ieee1394-2.2.19-20010527.gz
+Patch21:	linux-tasks.patch
+Patch22:	%{name}-ipvs-1.0.8-2.2.19.patch
+Patch23:	linux-raw.patch
+Patch24:	%{name}-panaview_kdb.patch
+Patch25:	linux-2.2.19-pci.patch
+Patch26:	%{name}-sysctl-ipv6.patch
+Patch27:	%{name}-udf.patch
+
 # in this place will be PLD patches
 
 Patch100:	bridge-include.patch
@@ -77,6 +86,7 @@ Patch101:	bridge-netsyms.patch
 Patch102:	%{name}-ipsec-bridge.patch
 Patch103:	%{name}-bridge-extraversion.patch
 Patch104:	jfs-2.2.20-v%{jfs_version}-patch
+Patch105:	%{name}-wanrouter-bridge.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -363,10 +373,20 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch9 -p1
 %patch10 -p1
 
+%patch20 -p1
+%patch21 -p1
+%patch22 -p1
+%patch23 -p1
+%patch24 -p1
+%patch25 -p1
+%patch26 -p1
+%patch27 -p1
+
 %patch100 -p1
 %patch101 -p1
 %patch102 -p1
 %patch103 -p1
+%patch104 -p1
 
 # 802.1Q VLANs
 #cd vlan.%{vlan_version}
@@ -596,10 +616,20 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH7}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH9}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH10}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH20}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH21}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH22}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH23}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH24}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH25}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH26}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH27}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH100}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH102}
+
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH105}
 
 #DAC960 drivers
 tar xfz %{SOURCE8}
