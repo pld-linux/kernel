@@ -24,7 +24,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.17
-Release:	2.3
+Release:	2.4
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -463,7 +463,7 @@ echo Installing cramfs patch
 %ifarch sparc64
 echo Fixed SYSCALL errors for SPARC 64 arch.
 %patch127 -p1
-cp include/asm-sparc/vfc_ioctl.h include/asm-sparc64/vfc_ioctl.h
+cp include/asm-sparc/vfc_ioctls.h include/asm-sparc64/vfc_ioctls.h
 %endif
 
 #fixed AXP compilation
