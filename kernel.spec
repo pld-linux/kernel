@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.7
-Release:	13
+Release:	14
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -550,9 +550,11 @@ cp -f tulip-%{tulip_version}/src/*.{c,h} drivers/net/tulip
 cp -f tulip-%{tulip_version}/src/ChangeLog drivers/net/tulip
 
 # NWD patch installed
+%ifarch %{ix86}
 echo Network disk device support
 %patch11 -p1
 %patch12 -p1
+%endif
 
 # DAC960 drivers update
 echo Update DAC960 driver
