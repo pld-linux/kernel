@@ -66,10 +66,11 @@ Epoch:		1
 License:	GPL
 Group:		Base/Kernel
 %if "%{_rc}" != "0"
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc%{_rc}.tar.bz2
+%define		_kernel_location	testing/linux-%{version}-rc%{_rc}.tar.bz2
 %else
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
+%define		_kernel_location	linux-%{version}.tar.bz2
 %endif
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/%{__kernel_location}
 # Source0-md5:	0b4e662aaec673604387f59e4c4a7703
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
