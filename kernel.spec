@@ -1,4 +1,4 @@
-%define		ow_version		2.2.22-ow1
+%define		ow_version		2.2.23-ow1
 %define		pcmcia_version		3.1.30
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.35
@@ -17,8 +17,8 @@ Summary(pl):	J±dro Linuksa
 Summary(ru):	Òƒ“œ Linux
 Summary(uk):	Òƒ“œ Linux
 Name:		kernel
-Version:	2.2.22
-Release:	5
+Version:	2.2.23
+Release:	1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -54,6 +54,9 @@ Source35:	%{name}-alpha-BOOT.config
 Source36:	%{name}-ppc.config
 Source37:	%{name}-ppc-smp.config
 Source38:	%{name}-ppc-BOOT.config
+
+Patch0:		patch-2.2.24-rc2.bz2
+Patch1:		rename-2.2.24.patch
 Patch2:		%{name}-pldfblogo.patch
 Patch3:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
 Patch4:		http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
@@ -110,7 +113,12 @@ Patch113:	linux-2.2.21-mppe.patch
 Patch114:	wrr-linux-2.2.18.patch
 Patch115:	2.2.21-wrr-pkt_bridged.patch
 Patch116:	2.2.22-skbuff_panicfix.patch
-Patch117:	2.2.22-security_NTfix.patch
+
+Patch118:	ip_masq_vpn-2.2.18-pld.patch.gz
+Patch119:	linux-remove_htb2_header.diff
+Patch120:	ds9-2.2.21-2.diff
+Patch121:	rbtree-2.2.21-1.diff
+Patch122:	ds9-htb3-2.2.21-2.diff
 
 Patch500:	2.2.20-reiserfs_ppc.patch
 Patch501:	2.2.21-ppc-smp.patch
@@ -418,6 +426,8 @@ Modu≥y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 %prep
 %setup -q -a3 -a4 -a5 -a6 -a7 -a9 -a10 -a11 -a13 -n linux
 
+%patch0 -p1
+%patch1 -p1
 %patch2 -p1
 %patch3 -p0
 # disable aic7xxx patch on sparc (this must be reported to aic7xxx driver maintainer)
@@ -483,7 +493,7 @@ cd ..
 %patch106 -p1
 %endif
 
-# 2.2.22ow1
+# 2.2.23ow1
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 
 # symbios drivers
@@ -511,7 +521,12 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch114 -p1
 %patch115 -p1
 %patch116 -p1
-%patch117 -p1
+
+%patch118 -p1
+%patch119 -p1
+%patch120 -p1
+%patch121 -p1
+%patch122 -p1
 
 %ifarch ppc
 #enable lfs on ppc
@@ -697,7 +712,7 @@ cd ../..
 
 # Build Realtek CardBus 10/100 Ethernet Card for PCMCIA
 # extract and go to realtek_cb-1.07 directory
-tar -zxvf %SOURCE14
+tar -jxvf %SOURCE14
 cd realtek_cb-1.07
 mv -f Makefile Makefile.bak
 sed "s/^KERN_VER.*/KERN_VER = $KernelVer/" Makefile.bak > Makefile.bak2
@@ -776,6 +791,8 @@ ln -sf linux-%{version} $RPM_BUILD_ROOT%{_kernelsrcdir}
 gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
+bzip2 -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2}
 %ifnarch sparc sparc64 ppc
 gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
@@ -844,7 +861,7 @@ bzip2 -dc %{PATCH105} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ve
 bzip2 -dc %{PATCH106} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 %endif
 
-# 2.2.22ow1
+# 2.2.23ow1
 gzip -dc %{SOURCE3} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/linux-%{ow_version}/linux-%{ow_version}.diff
 rm -rf $RPM_BUILD_ROOT/usr/src/linux-%{version}/linux-%{ow_version}/
@@ -881,7 +898,13 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH113}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH114}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH115}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH116}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH117}
+
+gzip -dc %{PATCH118} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH119}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH120}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH121}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH122}
+
 %ifarch ppc
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH500}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH501}
