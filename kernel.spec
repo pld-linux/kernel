@@ -18,7 +18,7 @@ Summary(ru):	Òƒ“œ Linux
 Summary(uk):	Òƒ“œ Linux
 Name:		kernel
 Version:	2.2.22
-Release:	4
+Release:	5
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -34,6 +34,7 @@ Source10:	http://vtun.sourceforge.net/tun/tun-%{tun_version}.tar.gz
 Source11:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
 Source12:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.2-%{jfs_version}-patch.tar.gz
 Source13:	http://www.netroedge.com/~lm78/archive/i2c-%{i2c_version}.tar.gz
+Source14:	ftp://cyborg.kernel.pl/people/dzimi/realtek_cb/realtek_cb-1.07/realtek_cb-1.07.tar.bz2
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -109,6 +110,7 @@ Patch113:	linux-2.2.21-mppe.patch
 Patch114:	wrr-linux-2.2.18.patch
 Patch115:	2.2.21-wrr-pkt_bridged.patch
 Patch116:	2.2.22-skbuff_panicfix.patch
+Patch117:	2.2.22-security_NTfix.patch
 
 Patch500:	2.2.20-reiserfs_ppc.patch
 Patch501:	2.2.21-ppc-smp.patch
@@ -510,6 +512,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch114 -p1
 %patch115 -p1
 %patch116 -p1
+%patch117 -p1
 
 %ifarch ppc
 #enable lfs on ppc
@@ -694,6 +697,23 @@ cd driver
 
 cd ../..
 
+# Build Realtek CardBus 10/100 Ethernet Card for PCMCIA
+# extract and go to realtek_cb-1.07 directory
+tar -zxvf %SOURCE14
+cd realtek_cb-1.07
+mv -f Makefile Makefile.bak
+sed "s/^KERN_VER.*/KERN_VER = $KernelVer/" Makefile.bak > Makefile.bak2
+sed "s/^MOD_DIR.*/MOD_DIR = $kernelbase-installed\/lib\/modules\/$KernelVer/" Makefile.bak2 > Makefile.bak3
+sed "s/^PCMCIA.*/PCMCIA = $kernelbase/" Makefile.bak3 > Makefile.bak4
+sed "s/^CC          =.*/CC = %{kgcc}/" Makefile.bak4 > Makefile
+
+%{__make} all
+
+%{__make} PREFIX=$KERNEL_INSTALL_DIR install
+
+cd ..
+rm -rf realtek_cb-1.07
+
 cd tun-%{tun_version}
 %{__aclocal}
 %{__autoconf}
@@ -863,6 +883,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH113}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH114}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH115}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH116}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH117}
 %ifarch ppc
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH500}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH501}
@@ -957,7 +978,7 @@ ln -sf initrd-%{version}-%{release}.gz /boot/initrd
 #	/sbin/rc-boot 1>&2 || :
 #fi
 %ifarch ppc
-echo "This is very unstable 2.2.21 linux kernel image. It work on early"
+echo "This is very unstable 2.2.22 linux kernel image. It work on early"
 echo "power g3 machines and work on chrp machines."
 echo "If this image didn't work correctly on your machine we suggest you"
 echo "to use 2.4.x kernels on ppc machines as long as"
@@ -988,7 +1009,7 @@ ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 #	/sbin/rc-boot 1>&2 || :
 #fi
 %ifarch ppc
-echo "This is very unstable 2.2.21 linux kernel image. It work on early"
+echo "This is very unstable 2.2.22 linux kernel image. It work on early"
 echo "power g3 machines and work on chrp machines."
 echo "If this image didn't work correctly on your machine we suggest you"
 echo "to use 2.4.x kernels on ppc machines as long as"
