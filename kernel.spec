@@ -7,23 +7,23 @@
 #
 %define		test_build		0
 #
-%define		pre_version		pre11
-%define		lids_version		1.0.14-2.4.9
-%define		ipvs_version		0.9.4
-%define		freeswan_version	snap2001sep23b
+%define		pre_version		pre9
+%define		lids_version		1.0.11-2.4.6
+%define		ipvs_version		0.9.2
+%define		freeswan_version	snap2001jun14R
 %define 	aacraid_version		1.0.6
-%define		wlan_version		0.1.9
-%define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
-%define		vlan_version		1.4
-%define		IPperson_version	20010724-2.4.7
-%define		grsec_version		1.8-2.4.10
+%define		wlan_version		0.1.7
+%define		sym_ncr_version		sym-1.7.3-ncr-3.4.3
+%define		vlan_version		1.0.1
+%define		IPperson_version	20010703-2.4.5
+%define		grsec_version		1.6-2.4.7
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.4.10
-Release:	0.1
+Version:	2.4.7
+Release:	8
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -35,15 +35,15 @@ Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
-Source7:	linux-netfilter-patches-20010915.tar.gz
+Source7:	linux-netfilter-patches-20010709.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
-# linux-wlan-ng-0.1.9.tar.gz
-Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_version}.tar.gz
+Source10:	http://www.linux-wlan.com/linux-wlan/linux-wlan-ng-%{wlan_version}.tar.gz
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
-Source12:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
-Source13:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
-Source14:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-1.0.5-patch.tar.gz
+Source12:	http://www.komacke.com/ftp/rl2isa-driver/rl2_driver.tgz
+Source13:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
+Source14:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
+Source15:	http://www10.software.ibm.com/developer/opensource/pub/jfs-1.0.1-patch.tar.gz
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -70,86 +70,108 @@ Source1007:	%{name}-ippersonality.config
 Patch0:		%{name}-pldfblogo.patch
 #Patch1:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
 Patch1:		patch-int-2.4.5.0.gz
-Patch2:		linux-2.4.10-freeswan-%{freeswan_version}.patch.gz
-# http://domsch.com/linux/aacraid/linux-2.4.9-aacraid-20010816.patch
-Patch3:		linux-2.4.9-aacraid-20010816.patch
+Patch2:		linux-2.4.5-freeswan-%{freeswan_version}.patch.gz
+# http://domsch.com/linux/aacraid/linux-2.4.4-aacraid-043001.patch
+Patch3:		linux-2.4.4-aacraid-043001.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
-Patch4:		br2684-against2.4.10.diff
+Patch4:		br2684-against2.4.7.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/
-Patch5:		linux-2.4.10-xfs-20010924.patch.gz
+Patch5:		linux-2.4.7-xfs-20010726.patch.gz
 # Compressed iso9660 filesystem
-Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs+filemap-2.4.7-1.diff.gz
-# Homepage of ABI : http://linux-abi.sourceforge.net/
-# http://prdownloads.sourceforge.net/linux-abi/
-Patch7:		linux-abi-2.4.3-PLD.patch
-Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
+Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/filemap-2.4.4-1.diff.gz
+Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-2.4.5-pre1-8.diff.gz
+Patch8:		linux-abi-2.4.3-PLD.patch
+Patch9:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
-Patch9:		linux-grsecurity-%{grsec_version}.patch
+Patch10:	linux-grsecurity-%{grsec_version}.patch
 # Linux Compressed cache
-Patch10:	http://prdownloads.sourceforge.net/linuxcompressed/patch-comp-cache-2.4.6-0.17.bz2
+Patch11:	http://prdownloads.sourceforge.net/linuxcompressed/patch-comp-cache-2.4.6-0.17.bz2
 # EXT3
-# http://www.uow.edu.au/~andrewm/linux/ext3/
-Patch11:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.10-2410.gz
+Patch12:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.4-247.gz
 
 # Assorted bugfixes
 
 # Quota fixes
 # Patch100:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.6-2.diff.gz
-Patch100:	quota-fix-2.4.10-pre11-1.diff.gz
+Patch100:	quota-fix-2.4.7-1.diff.gz
 # from LKML
 Patch101:	linux-scsi-debug-bug.patch
-Patch102:	linux-2.4.2-raw-ip.patch
-Patch103:	PCI_ISA_bridge.patch
-Patch104:	linux-2.4.2-nvram-hdd.patch
-Patch105:	linux-2.4-fix-kapm.patch
-Patch106:	epca-fix-missing-unregister-driver.patch
+Patch102:	linux-2.4.7-oom-killer.patch
+Patch103:	linux-2.4.2-raw-ip.patch
+Patch104:	PCI_ISA_bridge.patch
+Patch105:	linux-2.4.2-nvram-hdd.patch
+Patch106:	linux-2.4-fix-kapm.patch
+Patch107:	epca-fix-missing-unregister-driver.patch
+Patch108:	ramdisk-VM.fix
+Patch109:	linux-ram-disk-free.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
-Patch107:	linux-2.4.2-pcnet-parms.patch
-Patch108:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.6-p1.06062001.patch.gz
-Patch109:	linux-reiserfs-rename.patch
-Patch110:	linux-alpha-nfs-2.4.2.patch
-Patch111:	linux-2.4-string.patch
+Patch110:	linux-2.4.2-pcnet-parms.patch
+# Kernel crashes during making reiser-module:
+Patch111:	%{name}-reiser.patch
+Patch112:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.6-p1.06062001.patch.gz
+Patch113:	linux-reiserfs-rename.patch
+Patch114:	linux-via-fixes.patch
+Patch115:	linux-alpha-nfs-2.4.2.patch
+Patch116:	linux-2.4-string.patch
 # raid5 xor fix for PIII/P4, should go away shortly
-Patch112:	linux-2.4.0-raid5xor.patch
+Patch117:	linux-2.4.0-raid5xor.patch
 # disable some networking printk's
-Patch113:	linux-2.4.1-netdebug.patch
+Patch118:	linux-2.4.1-netdebug.patch
 # SCSI Reset patch for clustering stuff
-Patch114:	linux-2.4.1-scsi-reset.patch
+Patch119:	linux-2.4.1-scsi-reset.patch
 # Add an ioctl to the block layer so we can be EFI compliant
-Patch115:	linux-2.4.2-blkioctl-sector.patch
+Patch120:	linux-2.4.2-blkioctl-sector.patch
+# fix for non-atomic bit clear in eepro100 driver on alpha
+Patch121:	linux-2.4.2-eepro100-alpha.patch
+# Patch from Doug to fix i810 recording
+Patch122:	linux-2.4.2-i810_audio.patch
 # OHCI IRQ sanity check
-Patch116:	linux-2.4.2-ohci-irq.patch
+Patch123:	linux-2.4.2-ohci-irq.patch
 # fix lun probing on multilun RAID chassis
-Patch117:	linux-2.4.2-scsi_scan.patch
+Patch124:	linux-2.4.2-scsi_scan.patch
+# work around Latitude C600 resume problem (bios bug)
+Patch125:	linux-2.4.3-latitudec600.patch
 # fix pcnet32 networkdriver load vs ifconfig races
-Patch118:	linux-2.4.3-pcnet32.patch
+Patch126:	linux-2.4.3-pcnet32.patch
 # fix rawio
-Patch119:	linux-2.4.3-rawio.patch
+Patch127:	linux-2.4.3-rawio.patch
 # extra PnP id for sb32awe
-Patch120:	linux-2.4.3-sb.patch
+Patch128:	linux-2.4.3-sb.patch
 # ideraid driver updates
-Patch121:	linux-2.4.10-ideraid.patch
+Patch129:	linux-2.4.5-ideraid.patch
+# Pete's IDETAPE fixes
+Patch130:	linux-2.4.6-idetape.patch
+# don't allocate highmem pages on non-highmem machines
+Patch131:	linux-2.4.6-nohighmem.patch
 # another sb16 pnp id
-Patch122:	linux-2.4.6-sb_id.patch
-Patch123:	linux-2.4.10-aironet.patch
-Patch124:	linux-2.4.10-cpqfc.patch
-Patch125:	linux-2.4.10-SAA9730-mips-only.patch
+Patch132:	linux-2.4.6-sb_id.patch
+# DAC960 build fix
+Patch133:	linux-2.4.7-DAC960-completion.patch
+# Reiserfs fixes
+Patch134:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/2.4.7.pending/2.4.7-old-format.dif.bz2
+Patch135:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/2.4.7.pending/2.4.7-unlink-truncate-rename-rmdir.dif.bz2
+Patch136:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/2.4.7.pending/journal-replay.patch
+Patch137:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/2.4.7.pending/panic-in-reiserfs_read_super.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
 Patch900:	kernel-i8255-asm-fix.patch
 Patch901:	dc395-patch-PLD-fix.patch
-# patch fixing problem with ABI and LIDS
-Patch902:	linux-lids-with-abi.patch
-Patch903:	linux-vlan-fixpatch-2.4.7-pre6.patch
-# patch fixing LIDS stupidity
+# aacraid fix
+Patch902:	rl2-include.patch
+# patch to fix LIDS stupidity
 #Patch904:	linux-lids-fixpatch.patch
+# patch to fix problem wit ABI and LIDS
+Patch903:	linux-lids-with-abi.patch
+Patch904:	linux-vlan-fixpatch-2.4.7-pre6.patch
 Patch905:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
-Patch906:	linux-ipvs+ext3.patch
-Patch907:	linux-ext3-quota.patch
+Patch906:	linux-UDF.fix
+Patch907:	linux-jfs+xfs-PLD.fix
+Patch908:	linux-ipvs+ext3.patch
+Patch909:	linux-ext3-quota.patch
 
 # Linus's -pre
-#Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.10-%{pre_version}.gz
+#Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.7-%{pre_version}.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -366,56 +388,70 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%{?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -n linux}
-%{!?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -a14 -n linux}
+%{?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
+%{!?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
 #%patch1000 -p1
 #%patch0 -p1
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-%patch11 -p1
+%patch12 -p1
 %patch100 -p1
 %patch5 -p1
-#%patch6 -p1
-#%patch7 -p1
+%patch6 -p1
+%patch7 -p1
 %patch8 -p1
-%if%{?_without_grsec:0}%{!?_without_grsec:1}
 %patch9 -p1
+%if%{?_without_grsec:0}%{!?_without_grsec:1}
+%patch10 -p1
 %endif
 
 %patch101 -p0
-%patch102 -p1
-%patch103 -p0
+%patch102 -p0
+%patch103 -p1
 %patch104 -p0
-%patch105 -p1
+%patch105 -p0
 %patch106 -p1
 %patch107 -p1
-#%patch108 -p1
+%patch108 -p1
 %patch109 -p1
-%ifarch alpha
 %patch110 -p1
-%endif
-%patch111 -p1
-%patch112 -p1
+%patch111 -p4
+#%patch112 -p1
 %patch113 -p1
-%patch114 -p2
+%patch114 -p1
+%ifarch alpha
 %patch115 -p1
+%endif
 %patch116 -p1
 %patch117 -p1
 %patch118 -p1
-%patch119 -p1
+%patch119 -p2
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
 %patch123 -p1
 %patch124 -p1
 %patch125 -p1
+%patch126 -p1
+%patch127 -p1
+%patch128 -p1
+%patch129 -p1
+%patch130 -p1
+%patch131 -p1
+%patch132 -p1
+%patch133 -p1
+%patch134 -p1
+%patch135 -p1
+%patch136 -p1
+%patch137 -p1
 
 %patch900 -p0 
 %patch901 -p0
 %patch905 -p0
-%patch907 -p1
+%patch906 -p0
+%patch909 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -442,14 +478,14 @@ echo -e $ANS | ./runme)
 # LIDS
 echo Adding LIDS
 cd lids-%{lids_version}
-%patch902 -p1
+%patch903 -p1
 cd ..
 patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
 %endif
 
 # IPVS
 echo Adding IPVS
-%patch906 -p1
+%patch908 -p1
 for i in ipvs-%{ipvs_version}/*.diff ; do
 	patch -p1 -s <$i
 done
@@ -472,21 +508,27 @@ mv %{sym_ncr_version}/*.{c,h} drivers/scsi
 mv %{sym_ncr_version}/{README,ChangeLog}.* Documentation
 rm -rf %{sym_ncr_version}
 
+# install RangeLAN2 driver
+#echo Adding RangeLAN2 
+#mv rl2-1.7.1 drivers/net/rl2
+#%patch902 -p1
+
 # 802.1Q VLANs
 echo Adding VLANs
-cd vlan
-%patch903 -p1
+cd vlan.%{vlan_version}
+%patch904 -p1
 cd ..
-patch -p1 -s <vlan/vlan_2.4.patch
+patch -p1 -s <vlan.%{vlan_version}/vlan_2.4.patch
 
 # IP personality
 echo Adding IP Personality 
-patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010724-linux-2.4.7.diff
+patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010703-linux-2.4.5.diff
 
 # JFS
 echo Adding JFS
-patch -p1 -s <jfs-2.4.common-v1.0.5-patch
-patch -p1 -s <jfs-2.4.7-v1.0.5-patch
+%patch907 -p0
+patch -p1 -s <jfs-common-v1.0.1-patch
+patch -p1 -s <jfs-2.4.5-v1.0.1-patch
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
