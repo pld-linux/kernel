@@ -32,7 +32,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	2.12%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	2.13%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -167,7 +167,8 @@ Patch36:	linux-2.4.20-davfs-0.2.4.patch.bz2
 # FC02_davfs__FUNCTION__.patch
 Patch37:	linux-2.4.20-davfs-_FUNCTION_.patch
 
-#Patch38:	
+# from http://www.noc.uoa.gr/~avel/page.php?page=nokia&lang=en
+Patch38:	linux-2.4.20-Nokia5510.patch
 #Patch39:	
 #Patch40:	
 #Patch41:	
@@ -718,6 +719,10 @@ echo Promise driver patch
 echo Added davFS support
 %patch36 -p1
 %patch37 -p1
+
+# Nokia 5510 
+echo Added Nokia5510 support
+%patch38 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
