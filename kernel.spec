@@ -79,9 +79,9 @@ Epoch:		3
 License:	GPL
 Group:		Base/Kernel
 #%define		_rc	%{nil}
-%define		_rc	-rc4
+%define		_rc	-rc5
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	b8f4b46ea738de4fe38147bbf3b2a286
+# Source0-md5:	b0fe88d32b2580c01d58fc39298fd1df
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 
