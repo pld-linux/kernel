@@ -144,13 +144,13 @@ Patch40:	2.6.x-PD6729-lkml.patch
 Patch42:	2.6.x-ppp_mppe.patch
 
 Patch44:	2.6.2-Initio9100U-Kconfig.patch
+Patch45:	2.6.3-sparc32-fix.patch
 
 # netfilter
 Patch46:	2.6.7-pom-ng-%{_netfilter_snap}.patch
 # http://www.barbara.eu.org/~quaker/ipt_account/
 Patch47:	2.6.6-ipt_account.patch
-
-Patch48:	2.6.3-sparc32-fix.patch
+Patch48:	2.6.7-ipt_layer7.patch
 
 # http://www.tahoe.pl/drivers/tahoe9xx-2.6.2.patch
 #Patch50:	tahoe9xx-2.6.2.patch
@@ -636,11 +636,11 @@ echo "Not fixed !!"
 %patch42 -p1
 
 %patch44 -p1
+%patch45 -p1
 
 # netfilter
 %patch46 -p1
-#patch47 -p1
-
+%patch47 -p1
 %patch48 -p1
 
 %patch50 -p1
