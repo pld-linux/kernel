@@ -1172,10 +1172,10 @@ fi
 #pcmcia stuff
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko*
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko*
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko*
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko*
 %endif
 %ifnarch sparc sparc64
 #drm stuff
@@ -1213,10 +1213,10 @@ fi
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
-/lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko
-/lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko
-/lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko
-/lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko
+/lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko*
+/lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko*
+/lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko*
+/lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko*
 %endif
 
 %files sound-alsa
@@ -1255,10 +1255,10 @@ fi
 #pcmcia stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko*
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko*
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko*
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko*
 %endif
 %ifnarch sparc sparc64
 #drm stuff
@@ -1296,10 +1296,10 @@ fi
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko
-/lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko
-/lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko
-/lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko
+/lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko*
+/lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko*
+/lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko*
+/lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko*
 %endif
 
 %files smp-sound-alsa
