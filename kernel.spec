@@ -16,7 +16,7 @@
 %define		_rel		0.3
 %define		test_ver	5
 %define		patch_level	0
-%define		_cset		20030912_0513
+%define		_cset		20030919_2216
 
 %if "%{test_ver}" != "0"
 %define		test	test%{test_ver}
@@ -76,7 +76,6 @@ Patch1:		cset-%{_cset}.txt.gz
 
 # ftp://ftp.kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.0-test5/2.6.0-test5-mm1/broken-out
 Patch2:		acpi-irq-fixes.patch
-Patch3:		acpi-sci-irq-penalty.patch
 
 Patch22:	2.6.0-t3-swim3.patch
 Patch23:	squashfs1.3-patch
@@ -331,7 +330,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %endif
 
 %patch2 -p1
-%patch3 -p1
 
 #%patch22 -p1
 %patch23 -p1
