@@ -520,7 +520,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch74 -p1
 %patch75 -p1
-%patch76 -p1
+#%%patch76 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
