@@ -554,15 +554,17 @@ BuildKernel() {
 %ifarch %{ix86}
 	if [ "$smp" ] || [ "$BOOT" ]; then
 		Config="ia32"-$1
-	else
-		Config="ia32"
 	fi
 %else
 	if [ "$smp" ] || [ "$BOOT" ]; then
 		Config="%{_target_cpu}"-$1
-	else
-		Config="%{_target_cpu}"
 	fi
+%endif
+	else
+%ifarch %{ix86}
+		Config="ia32"
+%else
+		Config="%{_target_cpu}"
 %endif
 		KernelVer=%{version}-%{release}$1
 		echo BUILDING THE NORMAL KERNEL $1...
