@@ -43,7 +43,7 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.104
+%define		_rel		0.105
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -180,9 +180,8 @@ Patch100:	routes-2.6.10-11.diff
 # http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.10-rc2/2.6.10-rc-mm2/broken-out
 Patch110:	linux-reiser4.patch.bz2
 
-Patch200:	grsecurity-2.1.1-2.6.10-200501131222.patch
-Patch201:	linux-2.6.10-secfix-200501071130.patch
-Patch202:	linux-2.6-expand-stack-race.patch
+Patch200:	linux-2.6-as2.patch
+Patch201:	grsecurity-2.1.1-2.6.10-as2-200501242254.patch
 
 Patch210:	linux-2.6-ftdi_sio-ever_ups.patch
 
@@ -596,7 +595,6 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %patch200 -p1
 %patch201 -p1
-%patch202 -p1
 
 %patch210 -p1
 
