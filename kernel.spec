@@ -713,7 +713,7 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch1419 -p1
 %patch1420 -p1
 %patch1421 -p1
-# XXX: OBSOLETE?
+# XXX: no TRACE in netfilter included here (at this moment)
 #%patch1422 -p1
 
 %patch2000 -p0
@@ -724,15 +724,13 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch2004 -p1
 %endif
 
-# XXX: UPDATE
+# XXX: UPDATE or better start if from scratch
 #%patch3000 -p1
 %patch3002 -p1
-# XXX: UPDATE (after adding netfilter)
-#%patch3003 -p1
+%patch3003 -p1
 %patch3004 -p1
 cd drivers/char/drm
-# XXX: UPDATE
-#%patch3008 -p1
+%patch3008 -p1
 cd ../../..
 
 %ifarch sparc64
@@ -742,14 +740,14 @@ cd ../../..
 %patch3011 -p1
 %patch3012 -p1
 
-# XXX: UPDATE
+# XXX: UPDATE (proc in 2.4.23 was converted to seq_file so bigger changes are needed)
 %{!?_without_grsec:%patch4000 -p1}
 
 mv -f drivers/scsi/sym53c8xx.c drivers/scsi/sym53c8xx_old.c
 
 # Tekram DC395/315 U/UW SCSI host driver
 echo Adding Tekram DC395/315 driver
-patch -p1 -s <dc395/dc395-integ24.diff
+patch -p1 -s < dc395/dc395-integ24.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 %patch270 -p1
 
@@ -763,7 +761,6 @@ install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 %endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
-echo -e ',s/EXTRA_CFLAGS.*//g\n,w' | ed drivers/atm/Makefile
 echo -e ',s/EXTRA_CFLAGS.*-g//g\n,w' | ed net/ipsec/Makefile
 
 # Fix EXTRAVERSION and CC in main Makefile
