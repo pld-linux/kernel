@@ -26,8 +26,8 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		2
-%define		_cset		0
+%define		_rel		2.1
+%define		_cset		20040204_2206
 
 ## netfilter snap 
 %define		_netfilter_snap		20040130
@@ -119,40 +119,26 @@ Patch46:	linux-tdfxfb-interlace+double.patch
 
 Patch48:	2.6-pnp.patch
 
-# from ftp://ftp.lsil.com/HostAdapterDrivers/linux/Fusion-MPT/2.6-patches/3.00.00/
-Patch50:	2.6.1-rc2-mptlinux-3.00.00.patch
+Patch50:	2.6.1-rc2-ini9100u-lkml.patch
 
-Patch52:	2.6.1-rc2-ini9100u-lkml.patch
+Patch52:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 
-Patch54:	2.6.1-rc2-VLAN-NS83820-lkml.patch
+Patch54:	laptop-mode-2.6.1-7.patch
 
-Patch56:	laptop-mode-2.6.1-7.patch
+Patch56:	2.6.1-hash_table_size-lkml.patch
 
-Patch58:	2.6.1-hash_table_size-lkml.patch
+Patch58:	2.6-p-o-m-ng-%{_netfilter_snap}.patch
 
-Patch60:	2.6-p-o-m-ng-%{_netfilter_snap}.patch
+Patch60:	2.6.x-pnp-lkml.patch
 
-Patch62:	2.6.x-pnp-lkml.patch
+Patch62:	kbuild-out-of-tree.diff
 
-Patch64:	kbuild-out-of-tree.diff
+Patch64:	2.6.x-PD6729-lkml.patch
 
-Patch66:	2.6.x-PD6729-lkml.patch
+Patch66:	2.6.x-IBM-RAS-service-procesor-1of2-lkml.patch
+Patch67:	2.6.x-IBM-RAS-service-procesor-2of2-lkml.patch
 
-Patch68:	2.6.x-cpu_2_node-lkml.patch
-
-Patch70:	2.6.x-neofb-trivial-fix-lkml.patch
-
-Patch72:	2.6.x-memleak-while-coredumping-lkml.patch
-
-Patch74:	2.6.x-DVB-compile-fix-lkml.patch
-Patch75:	2.6.x-SELinux-compile-fix-lkml.patch
-Patch76:	2.6.x-hisax-compile-fix-lkml.patch
-Patch77:	2.6.x-istalion-compile-fix-lkml.patch
-Patch78:	2.6.x-moxa-compile-fix-lkml.patch
-Patch79:	2.6.x-specialix-compile-fix-lkml.patch
-
-Patch82:	2.6.x-IBM-RAS-service-procesor-1of2-lkml.patch
-Patch83:	2.6.x-IBM-RAS-service-procesor-2of2-lkml.patch
+Patch70:	2.6.x-ppp_mppe.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -541,22 +527,9 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch64 -p1
 
 %patch66 -p1
-
-%patch68 -p1
+%patch67 -p1
 
 %patch70 -p1
-
-%patch72 -p1
-
-%patch74 -p1
-%patch75 -p1
-%patch76 -p1
-%patch77 -p1
-%patch78 -p1
-%patch79 -p1
-
-%patch82 -p1
-%patch83 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
