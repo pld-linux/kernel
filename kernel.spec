@@ -14,7 +14,7 @@
 # _without_source	- don't build source
 # _without_lsm		- don't build LSM/SELinux kernel
 
-%define		_rel		0.1
+%define		_rel		0.2
 %define		test_ver	5
 %define		patch_level	0
 %define		_cset		0
@@ -74,6 +74,9 @@ Source100:	%{name}-misc.config
 %if "%{_cset}" != "0"
 Patch1:		cset-%{_cset}.txt.gz
 %endif
+
+# ftp://ftp.kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.0-test5/2.6.0-test5-mm1/broken-out
+Patch2:		acpi-irq-fixes.patch
 
 Patch22:	2.6.0-t3-swim3.patch
 Patch23:	squashfs1.3-patch
@@ -324,6 +327,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %if "%{_cset}" != "0"
 %patch1 -p1
 %endif
+
+%patch2 -p1
 
 #%patch22 -p1
 %patch23 -p1
