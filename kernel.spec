@@ -560,19 +560,14 @@ cat %{SOURCE100} >> .config
 cp .config config-smp
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
-install $KERNEL_BUILD_DIR-installed/usr/src/linux-%{version}/include/linux/* $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
+install $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-{up,smp}.h \
+$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
+install $KERNEL_BUILD_DIR-installed/usr/src/linux-%{version}/include/linux/* \
+$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 
 %ifarch %{ix86}
 ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
 %endif
-
-%if %{?_without_lsm:0}%{!?_without_lsm:1}
-install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/{linux,asm-i386}/flask
-install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/flask
-#install security/lids/include/linux/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
-#install security/selinux/include/linux/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/flask
-#install security/selinux/include/asm-i386/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/asm-i386/flask
-%endif			# _without_lsm
 
 %{__make} include/linux/version.h
 %{__make} clean
