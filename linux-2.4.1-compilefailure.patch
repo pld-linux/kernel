@@ -710,3 +710,72 @@ diff -urNp linux-5270/net/wanrouter/wanproc.c linux-10010/net/wanrouter/wanproc.
  #include <linux/smp_lock.h>
  
  #include <linux/errno.h>
+--- linux-2.4.21/drivers/scsi/53c7,8xx.c.orig	Mon Feb 25 20:38:04 2002
++++ linux-2.4.21/drivers/scsi/53c7,8xx.c	Thu Jul  3 14:57:53 2003
+@@ -1433,14 +1433,13 @@
+       command |= PCI_COMMAND_MASTER|PCI_COMMAND_IO;
+       pci_write_config_word(pdev, PCI_COMMAND, command);
+ 
+-      if (io_port >= 0x10000000 && is_prep ) {
++      if (io_port >= 0x10000000 && (_machine == _MACH_prep) ) {
+ 	      /* Mapping on PowerPC can't handle this! */
+ 	      unsigned long new_io_port;
+ 	      new_io_port = (io_port & 0x00FFFFFF) | 0x01000000;
+ 	      printk("SCSI: I/O moved from %08X to %08x\n", io_port, new_io_port);
+ 	      io_port = new_io_port;
+ 	      pci_write_config_dword(pdev, PCI_BASE_ADDRESS_0, io_port);
+-	      pdev->base_address[0] = io_port;
+       }
+     }
+ #endif
+--- linux-2.4.21/drivers/char/amd76x_pm.c~	Fri Nov 29 00:53:12 2002
++++ linux-2.4.21/drivers/char/amd76x_pm.c	Thu Jul  3 13:27:43 2003
+@@ -73,6 +73,7 @@
+ 
+ 
+ #include <linux/config.h>
++#include <linux/init.h>
+ #include <linux/module.h>
+ #include <linux/slab.h>
+ #include <linux/pci.h>
+--- linux-2.4.21/drivers/atm/horizon.c~	Thu Jul  3 02:54:34 2003
++++ linux-2.4.21/drivers/atm/horizon.c	Thu Jul  3 03:09:43 2003
+@@ -480,7 +480,7 @@
+ #endif
+   return;
+ }
+-
++#if 0
+ static inline void dump_regs (hrz_dev * dev) {
+ #ifdef DEBUG_HORIZON
+   PRINTD (DBG_REGS, "CONTROL 0: %#x", rd_regl (dev, CONTROL_0_REG));
+@@ -494,7 +494,7 @@
+ #endif
+   return;
+ }
+-
++#endif
+ static inline void dump_framer (hrz_dev * dev) {
+ #ifdef DEBUG_HORIZON
+   unsigned int i;
+--- linux-2.4.21/drivers/net/rrunner.c~	Fri Jun 13 16:51:35 2003
++++ linux-2.4.21/drivers/net/rrunner.c	Thu Jul  3 14:02:52 2003
+@@ -234,7 +234,7 @@
+ 		 * Don't access any registes before this point!
+ 		 */
+ #ifdef __BIG_ENDIAN
+-		writel(readl(&regs->HostCtrl) | NO_SWAP, &regs->HostCtrl);
++		writel(readl(&rrpriv->regs->HostCtrl) | NO_SWAP, &rrpriv->regs->HostCtrl);
+ #endif
+ 		/*
+ 		 * Need to add a case for little-endian 64-bit hosts here.
+--- linux-2.4.21/drivers/video/sis/sis_main.c~	Fri Jun 13 16:51:37 2003
++++ linux-2.4.21/drivers/video/sis/sis_main.c	Thu Jul  3 16:24:34 2003
+@@ -43,6 +43,7 @@
+ #include <linux/fs.h>
+ #include <linux/agp_backend.h>
+ #include <linux/types.h>
++#include <linux/vmalloc.h>
+ 
+ #include <asm/uaccess.h>
+ 
