@@ -792,6 +792,9 @@ BuildKernel() {
 %ifarch i686
 	echo "CONFIG_M686=y" >> arch/%{base_arch}/defconfig
 %endif
+%ifarch athlon
+	echo "CONFIG_MK7=y" >> arch/%{base_arch}/defconfig
+%endif
 	cat %{SOURCE1001} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1002} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1003} >> arch/%{base_arch}/defconfig
@@ -893,7 +896,7 @@ BuildKernel smp
 %endif			# %{_without_smp}
 
 # BOOT kernel
-%ifnarch i586 i686
+%ifnarch i586 i686 athlon
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk"
 rm -rf $KERNEL_INSTALL_DIR
 BuildKernel BOOT
@@ -952,7 +955,9 @@ echo "CONFIG_M586=y" >> .config
 %ifarch i686
 echo "CONFIG_M686=y" >> .config
 %endif
-
+%ifarch athlon
+echo "CONFIG_MK7=y" >> .config
+%endif
 cat %{SOURCE1001} >> .config
 cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
@@ -980,6 +985,9 @@ echo "CONFIG_M586=y" >> .config
 %endif
 %ifarch i686
 echo "CONFIG_M686=y" >> .config
+%endif
+%ifarch athlon
+echo "CONFIG_MK7=y" >> .config
 %endif
 
 cat %{SOURCE1001} >> .config
@@ -1201,7 +1209,7 @@ fi
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
 %endif			# %{_without_smp}
 
-%ifnarch i586 i686 		# narch
+%ifnarch i586 i686 athlon 		# narch
 %files BOOT
 %defattr(644,root,root,755)
 %ifarch alpha sparc ppc		# arch
