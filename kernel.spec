@@ -137,7 +137,7 @@ Patch20:	linux-2.4.19-pre8-VFS-lock.patch
 #Patch24:
 
 # Support for CDRW packet writing
-Patch25:	%{name}-cdrw-elevator.patch
+#Patch25:	
 Patch26:	%{name}-cdrw-packet.patch
 Patch27:	%{name}-cd-mrw-2.patch
 # PC Speaker driver
@@ -253,7 +253,7 @@ Patch909:	linux-2.4.19-PPC-agpgart_be.patch
 Patch910:	linux-2.4.21-pre4-ac4-via82cxxx_audio.patch.bz2
 Patch911:	linux-2.4.19-SPARC.patch
 #Patch912:	
-Patch913:	linux-2.4.20-no_grsec-pre-netfilter.patch
+#Patch913:	
 Patch914:	linux-2.4.20-MODULE_XXX.patch
 Patch915:	linux-2.4.19-usb-digitalcams.patch
 #Patch916:	
@@ -265,8 +265,7 @@ Patch921:	linux-2.4.20-grsecurity-%{grsec_version}-kmem.patch
 
 # Win4Lin
 Patch1000:	linux-2.4.20-Win4Lin.PLD.patch.bz2
-Patch1001:	linux-2.4.20-Win4Lin.nogrsec.PLD.patch.bz2
-Patch1002:	linux-2.4.20-Win4Lin-mki-adapter.patch.bz2
+Patch1001:	linux-2.4.20-Win4Lin-mki-adapter.patch.bz2
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -534,7 +533,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch4 -p1
 %patch5 -p1
 %patch904 -p1
-%{!?_without_grsec:%patch6 -p1}
+%patch6 -p1
 %ifarch ppc
 %patch907 -p1
 %endif
@@ -552,8 +551,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch18 -p1
 %patch19 -p1
 %patch20 -p1
-# broken
-%{?_without_grsec:%patch25 -p1}
 %patch26 -p1
 %patch27 -p1
 # fixme
@@ -578,7 +575,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 #%patch114 -p1
 #%patch115 -p0
 %patch116 -p1
-%{!?_without_grsec:%patch117 -p1}
+%patch117 -p1
 %patch118 -p1
 %patch119 -p0
 %patch120 -p0
@@ -591,7 +588,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch129 -p0
 %patch130 -p0
 %patch131 -p0
-%{!?_without_grsec:%patch132 -p0}
+%patch132 -p0
 %patch133 -p1
 #%patch134 -p1
 #%patch135 -p1
@@ -623,7 +620,6 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # Netfilter
 #(KERNEL_DIR=`pwd` ; export KERNEL_DIR ; cd netfilter-patch-o-matic ; ./runme --batch userspace)
-%{?_without_grsec:%patch913 -p1}
 #%patch906 -p1
 %patch8 -p1
 
@@ -681,7 +677,8 @@ echo Added support for V4L2
 #%patch139 -p1
 
 # sysctl controll of /dev/mem
-%{!?_without_grsec:%patch921 -p1}
+echo Sysctl controll access to /dev/kmem 
+%patch921 -p1
 
 %patch143 -p1
 %patch145 -p1
@@ -720,9 +717,8 @@ echo AXP patches ...
 %if %{?_with_w4l:1}%{!?_with_w4l:0}
 %ifarch %{ix86}
 echo Win4Lin patch ...
-%{!?_without_grsec:%patch1000 -p1}
-%{?_without_grsec:%patch1001 -p1}
-%patch1002 -p1
+%patch1000 -p1
+%patch1001 -p1
 %endif
 %endif
 
@@ -815,7 +811,6 @@ BuildKernel() {
 %endif
 #	else
 		cat %{SOURCE1667} >> arch/%{base_arch}/defconfig
-		cat %{SOURCE1666} >> arch/%{base_arch}/defconfig
 		cat %{SOURCE1668} >> arch/%{base_arch}/defconfig
 		cat %{SOURCE1669} >> arch/%{base_arch}/defconfig
 		cat %{SOURCE1670} >> arch/%{base_arch}/defconfig
@@ -826,6 +821,9 @@ BuildKernel() {
 %ifarch %{ix86}
 		cat %{SOURCE2000} >> arch/%{base_arch}/defconfig
 %endif
+%{?_without_grsec:echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig}
+%{?_without_grsec:echo "# CONFIG_IP_NF_MATCH_STEALTH is not set">> arch/%{base_arch}/defconfig}
+%{!?_without_grsec:cat %{SOURCE1666} >> arch/%{base_arch}/defconfig}
 
 %ifarch i386
 	mv -f arch/%{base_arch}/defconfig arch/%{base_arch}/defconfig.orig
