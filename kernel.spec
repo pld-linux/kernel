@@ -8,7 +8,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.18
-Release:	0.pre22.3
+Release:	0.pre23.1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -35,7 +35,7 @@ Source73:	%{name}-sparc64-BOOT.config
 Source81:	%{name}-alpha.config
 Source82:	%{name}-alpha-smp.config
 Source83:	%{name}-alpha-BOOT.config
-Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.2.18pre/pre-patch-2.2.18-22.gz
+Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.2.18pre/pre-patch-2.2.18-23.gz
 Patch1:		%{name}-pldfblogo.patch
 Patch2:		linux-2.2.16-freeswan-%{freeswan_version}.patch
 Patch3:		wanrouter-v2215.patch.gz
@@ -43,14 +43,13 @@ Patch4:		linux-ipv6-addrconf.patch
 Patch5:		%{name}-3c90x.patch
 Patch6:		linux-ipv6-glibc2.2.patch
 Patch7:		http://milosch.net/pub/beos/2.2.18-pre2-beos09032000.patch
-Patch8:		%{name}-sysctl.c_sysctl_intvec.patch
+Patch8:		ftp://ftp.kernel.org/pub/linux/kernel/people/mingo/raid-patches/raid-2.2.18-A2
 
+#Patch:	ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.17.10.gz
 #Patch:		linux-2.2.18pre21.ext3.diff
-#Patch:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.17.2.gz
 #Patch:		ftp://ftp.devlinux.com/pub/namesys/linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
 #Patch:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
 #Patch:		linux-tasks.patch
-#Patch:		ftp://ftp.kernel.org/pub/linux/kernel/people/mingo/raid-patches/raid-2.2.18-A2
 #Patch:		http://www.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.17/ide.2.2.17.all.20000904.patch.bz2
 # Linux Virtual Server: http://www.linuxvirtualserver.org/software/
 #Patch:		%{name}-ipvs-1.0.0-%{version}.patch
@@ -474,12 +473,11 @@ mv sym-1.7.2-ncr-3.4.2/*.{c,h} drivers/scsi
 mv sym-1.7.2-ncr-3.4.2/{README,ChangeLog}.* Documentation
 rm -rf sym-1.7.2-ncr-3.4.2
 
-%ifarch sparc
+%ifarch sparc sparc64
 ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
 ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
-mkdir $RPM_BUILD_ROOT%{_includedir}/asm
+sh $RPM_SOURCE_DIR/kernel-BuildASM.sh $RPM_BUILD_ROOT%{_includedir}
 cp -a $RPM_SOURCE_DIR/kernel-BuildASM.sh $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
-$RPM_BUILD_ROOT%{_includedir}/asm/BuildASM $RPM_BUILD_ROOT%{_includedir}
 %else
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 %endif
@@ -707,6 +705,9 @@ fi
 %dir %{_prefix}/src/linux-%{version}
 %{_prefix}/src/linux-%{version}/include
 %{_includedir}/asm
+%ifarch sparc sparc64
+%{_includedir}/asm-sparc*
+%endif
 %{_includedir}/linux
 
 %files source
