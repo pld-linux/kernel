@@ -15,7 +15,7 @@
 
 %define		_rel		1
 %define		_test_ver	7
-%define		_cset		20031009_0504
+%define		_cset		20031011_0007
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -63,8 +63,6 @@ Patch4:		squashfs1.3-patch
 Patch6:		2.6.0-t3-initrd_load-lkml.patch
 
 Patch8:		2.6.0-t3-sysfs_mem-lkml.patch
-
-Patch10:	2.6.0-t5-PPC-fix.patch
 
 Patch12:	2.6.0-t4-PPC-ENODEV.patch
 Patch14:	kernel-siimage-rqsize.patch
@@ -318,7 +316,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch8 -p1
 
-%patch10 -p1
 %patch12 -p1
 %patch14 -p1
 %patch16 -p1
