@@ -1,0 +1,28 @@
+--- linux/sound/pci/nm256/nm256.c 27 Dec 2004 13:32:57 -0000 1.61
++++ linux/sound/pci/nm256/nm256.c 30 Dec 2004 16:10:00 -0000
+@@ -1486,12 +1486,6 @@
+
+  snd_nm256_init_chip(chip);
+
+- if ((err = snd_nm256_pcm(chip, 0)) < 0)
+-  goto __error;
+-
+- if ((err = snd_nm256_mixer(chip)) < 0)
+-  goto __error;
+-
+  // pci_set_master(pci); /* needed? */
+
+  snd_card_set_pm_callback(card, nm256_suspend, nm256_resume, chip);
+@@ -1612,6 +1606,12 @@
+   chip->reset_workaround = 1;
+  }
+
++ if ((err = snd_nm256_pcm(chip, 0)) < 0 ||
++     (err = snd_nm256_mixer(chip)) < 0) {
++  snd_card_free(card);
++  return err;
++ }
++
+  sprintf(card->shortname, "NeoMagic %s", card->driver);
+  sprintf(card->longname, "%s at 0x%lx & 0x%lx, irq %d",
+   card->shortname,
