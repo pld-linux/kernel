@@ -1153,7 +1153,7 @@ fi
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
 /lib/modules/%{version}-%{release}/kernel
-%ifnarch alpha sparc
+%ifnarch sparc
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/scsi/pcmcia
@@ -1162,11 +1162,13 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/*_cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.o*
 %endif
-%ifnarch alpha ppc sparc
+%ifnarch ppc sparc
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/ide/ide-cs.o*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o*
+%ifnarch alpha
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o*
+%endif
 %endif
 %ifnarch sparc
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
@@ -1174,7 +1176,7 @@ fi
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
 
-%ifnarch alpha sparc
+%ifnarch sparc
 %files pcmcia-cs
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
@@ -1186,9 +1188,11 @@ fi
 /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.o*
 %ifnarch ppc
 /lib/modules/%{version}-%{release}/kernel/drivers/ide/ide-cs.o*
-/lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
 /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o*
+%ifnarch alpha
+/lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
 /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o*
+%endif
 %endif
 %endif
 
@@ -1202,14 +1206,14 @@ fi
 %if %{?_without_smp:0}%{!?_without_smp:1}
 %files smp
 %defattr(644,root,root,755)
-%ifarch alpha sparc ppc
+%ifarch sparc ppc
 /boot/vmlinux-%{version}-%{release}smp
 %endif
 /boot/vmlinuz-%{version}-%{release}smp
 /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
 /lib/modules/%{version}-%{release}smp/kernel
-%ifnarch alpha sparc
+%ifnarch sparc
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/scsi/pcmcia
@@ -1218,11 +1222,13 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/*_cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.o*
 %endif
-%ifnarch alpha ppc sparc
+%ifnarch ppc sparc
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/ide-cs.o*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o*
+%ifnarch alpha
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o*
+%endif
 %endif
 %ifnarch sparc
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
@@ -1230,7 +1236,7 @@ fi
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
 
-%ifnarch alpha sparc
+%ifnarch sparc
 %files -n kernel-smp-pcmcia-cs
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
@@ -1242,9 +1248,11 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/dtl1_cs.o*
 %ifnarch ppc
 /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/ide-cs.o*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o*
+%ifnarch alpha
+/lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o*
+%endif
 %endif
 %endif
 
