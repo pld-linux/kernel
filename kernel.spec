@@ -901,6 +901,7 @@ bzip2 -dc %{PATCH106} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ve
 # 2.2.23ow1
 gzip -dc %{SOURCE3} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH150}
+patch -s -p0 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH151}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/linux-%{ow_version}/linux-%{ow_version}.diff
 rm -rf $RPM_BUILD_ROOT/usr/src/linux-%{version}/linux-%{ow_version}/
 
