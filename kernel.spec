@@ -19,7 +19,11 @@
 %undefine	with_smp
 %endif
 
-%undefine	BOOT
+%ifarch i586 i686 athlon
+%undefine	with_BOOT
+%endif
+# temporary as BOOT is not finished yet
+%undefine	with_BOOT
 
 ## Program required by kernel to work.
 %define		_binutils_ver		2.12
@@ -226,6 +230,65 @@ Pakiet zawiera j±dro Linuksa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takiego jak sterowniki dysków itp.
 
+%package drm
+Summary:	DRM kernel modules
+Summary(pl):	Sterowniki DRM
+Group:		Base/Kernel
+PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
+Provides:	%{name}-drm = %{drm_xfree_version}
+
+%description drm
+DRM kernel modules (%{drm_xfree_version}).
+
+%description drm -l pl
+Sterowniki DRM (%{drm_xfree_version}).
+
+%package pcmcia
+Summary:	PCMCIA modules
+Summary(pl):	Modu³y PCMCIA
+Group:		Base/Kernel
+PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
+Provides:	%{name}-pcmcia = %{pcmcia_version}
+Provides:	kernel(pcmcia)
+Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
+
+%description pcmcia
+PCMCIA modules (%{pcmcia_version}).
+
+%description pcmcia -l pl
+Modu³y PCMCIA (%{pcmcia_version}).
+
+%package sound-alsa
+Summary:	ALSA kernel modules
+Summary(pl):	Sterowniki d¼wiêku ALSA
+Group:		Base/Kernel
+PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
+Provides:	alsa-driver
+Obsoletes:	alsa-driver
+Obsoletes:	alsa-driver-up
+
+%description sound-alsa
+ALSA (Advanced Linux Sound Architecture) sound drivers.
+
+%description sound-alsa -l pl
+Sterowniki d¼wiêku ALSA (Advanced Linux Sound Architecture).
+
+%package sound-oss
+Summary:	OSS kernel modules
+Summary(pl):	Sterowniki d¼wiêku OSS
+Group:		Base/Kernel
+PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
+
+%description sound-oss
+OSS (Open Sound System) drivers.
+
+%description sound-oss -l pl
+Sterowniki d¼wiêku OSS (Open Sound System).
+
 %package smp
 Summary:	Kernel version %{version} compiled for SMP machines
 Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
@@ -273,6 +336,66 @@ Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono
 wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
 Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
 
+%package smp-drm
+Summary:	DRM SMP kernel modules
+Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
+Group:		Base/Kernel
+PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
+Provides:	%{name}-drm = %{drm_xfree_version}
+
+%description smp-drm
+DRM SMP kernel modules (%{drm_xfree_version}).
+
+%description smp-drm -l pl
+Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
+
+%package smp-pcmcia
+Summary:	PCMCIA modules for SMP kernel
+Summary(pl):	Modu³y PCMCIA dla maszyn SMP
+Group:		Base/Kernel
+PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
+Provides:	%{name}-pcmcia = %{pcmcia_version}
+Provides:	kernel(pcmcia)
+Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
+
+%description smp-pcmcia
+PCMCIA modules for SMP kernel (%{pcmcia_version}).
+
+%description smp-pcmcia -l pl
+Modu³y PCMCIA dla maszyn SMP (%{pcmcia_version}).
+
+%package smp-sound-alsa
+Summary:	ALSA SMP kernel modules
+Summary(pl):	Sterowniki d¼wiêku ALSA dla maszyn wieloprocesorowych
+Group:		Base/Kernel
+PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
+Provides:	alsa-driver
+Obsoletes:	alsa-driver
+Obsoletes:	alsa-driver-smp
+
+%description smp-sound-alsa
+ALSA (Advanced Linux Sound Architecture) SMP sound drivers.
+
+%description smp-sound-alsa -l pl
+Sterowniki d¼wiêku ALSA (Advanced Linux Sound Architecture) dla maszyn
+wieloprocesorowych.
+
+%package smp-sound-oss
+Summary:	OSS SMP kernel modules
+Summary(pl):	Sterowniki d¼wiêku OSS dla maszyn wieloprocesorowych
+Group:		Base/Kernel
+PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
+
+%description smp-sound-oss
+OSS (Open Sound System) SMP sound drivers.
+
+%description smp-sound-oss -l pl
+Sterowniki OSS (Open Sound System) dla maszyn wieloprocesorowych.
+
 %package BOOT
 Summary:	Kernel version %{version} used on the installation boot disks
 Summary(de):	Kernel version %{version} für Installationsdisketten
@@ -300,125 +423,6 @@ Pakiet zawiera j±dro Linuksa dedykowane dyskietkom startowym i powinno
 byæ u¿ywane jedynie podczas instalacji systemu. Wiele u¿ytecznych
 opcji zosta³o wy³±czonych, aby jak najbardziej zmniejszyæ jego
 rozmiar.
-
-%package pcmcia
-Summary:	PCMCIA modules
-Summary(pl):	Modu³y PCMCIA
-Group:		Base/Kernel
-PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
-Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
-Provides:	%{name}-pcmcia = %{pcmcia_version}
-Provides:	kernel(pcmcia)
-Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
-
-%description pcmcia
-PCMCIA modules (%{pcmcia_version}).
-
-%description pcmcia -l pl
-Modu³y PCMCIA (%{pcmcia_version}).
-
-%package smp-pcmcia
-Summary:	PCMCIA modules for SMP kernel
-Summary(pl):	Modu³y PCMCIA dla maszyn SMP
-Group:		Base/Kernel
-PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
-Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
-Provides:	%{name}-pcmcia = %{pcmcia_version}
-Provides:	kernel(pcmcia)
-Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
-
-%description smp-pcmcia
-PCMCIA modules for SMP kernel (%{pcmcia_version}).
-
-%description smp-pcmcia -l pl
-Modu³y PCMCIA dla maszyn SMP (%{pcmcia_version}).
-
-%package drm
-Summary:	DRM kernel modules
-Summary(pl):	Sterowniki DRM
-Group:		Base/Kernel
-PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
-Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
-Provides:	%{name}-drm = %{drm_xfree_version}
-
-%description drm
-DRM kernel modules (%{drm_xfree_version}).
-
-%description drm -l pl
-Sterowniki DRM (%{drm_xfree_version}).
-
-%package smp-drm
-Summary:	DRM SMP kernel modules
-Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
-Group:		Base/Kernel
-PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
-Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
-Provides:	%{name}-drm = %{drm_xfree_version}
-
-%description smp-drm
-DRM SMP kernel modules (%{drm_xfree_version}).
-
-%description smp-drm -l pl
-Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
-
-%package sound-oss
-Summary:	OSS kernel modules
-Summary(pl):	Sterowniki d¼wiêku OSS
-Group:		Base/Kernel
-PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
-Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
-
-%description sound-oss
-OSS (Open Sound System) drivers.
-
-%description sound-oss -l pl
-Sterowniki d¼wiêku OSS (Open Sound System).
-
-%package smp-sound-oss
-Summary:	OSS SMP kernel modules
-Summary(pl):	Sterowniki d¼wiêku OSS dla maszyn wieloprocesorowych
-Group:		Base/Kernel
-PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
-Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
-
-%description smp-sound-oss
-OSS (Open Sound System) SMP sound drivers.
-
-%description smp-sound-oss -l pl
-Sterowniki OSS (Open Sound System) dla maszyn wieloprocesorowych.
-
-%package sound-alsa
-Summary:	ALSA kernel modules
-Summary(pl):	Sterowniki d¼wiêku ALSA
-Group:		Base/Kernel
-PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
-Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
-Provides:	alsa-driver
-Obsoletes:	alsa-driver
-Obsoletes:	alsa-driver-up
-
-%description sound-alsa
-ALSA (Advanced Linux Sound Architecture) sound drivers.
-
-%description sound-alsa -l pl
-Sterowniki d¼wiêku ALSA (Advanced Linux Sound Architecture).
-
-%package smp-sound-alsa
-Summary:	ALSA SMP kernel modules
-Summary(pl):	Sterowniki d¼wiêku ALSA dla maszyn wieloprocesorowych
-Group:		Base/Kernel
-PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
-Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
-Provides:	alsa-driver
-Obsoletes:	alsa-driver
-Obsoletes:	alsa-driver-smp
-
-%description smp-sound-alsa
-ALSA (Advanced Linux Sound Architecture) SMP sound drivers.
-
-%description smp-sound-alsa -l pl
-Sterowniki d¼wiêku ALSA (Advanced Linux Sound Architecture) dla maszyn
-wieloprocesorowych.
 
 %package headers
 Summary:	Header files for the Linux kernel
@@ -849,14 +853,13 @@ BuildConfig smp
 %{?with_smp:BuildKernel smp}
 %{?with_smp:PreInstallKernel smp}
 
-# BOOT kernel
-##%%ifnarch i586 i686 athlon
-##KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
-##rm -rf $KERNEL_INSTALL_DIR
-##ConfigBOOT
-##%%{?with_BOOT:BuildKernel BOOT}
-##%{?with_BOOT:PreInstallKernel BOOT}
-##%endif
+%if %{with BOOT}
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
+rm -rf $KERNEL_INSTALL_DIR
+ConfigBOOT
+BuildKernel BOOT
+PreInstallKernel BOOT
+%endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -982,6 +985,40 @@ if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
+%postun
+if [ -L /lib/modules/%{version} ]; then
+	if [ "`ls -l /lib/modules/%{version} | awk '{ print $10 }'`" = "%{version}-%{release}" ]; then
+		if [ "$1" = "0" ]; then
+			rm -f /lib/modules/%{version}
+		fi
+	fi
+fi
+rm -f /boot/initrd-%{version}-%{release}.gz
+
+%post drm
+%depmod %{version}-%{release}
+
+%postun drm
+%depmod %{version}-%{release}
+
+%post pcmcia
+%depmod %{version}-%{release}
+
+%postun pcmcia
+%depmod %{version}-%{release}
+
+%post sound-alsa
+%depmod %{version}-%{release}
+
+%postun sound-alsa
+%depmod %{version}-%{release}
+
+%post sound-oss
+%depmod %{version}-%{release}
+
+%postun sound-oss
+%depmod %{version}-%{release}
+
 %post smp
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
@@ -1003,6 +1040,16 @@ if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
+%postun smp
+if [ -L /lib/modules/%{version} ]; then
+	if [ "`ls -l /lib/modules/%{version} | awk '{ print $10 }'`" = "%{version}-%{release}smp" ]; then
+		if [ "$1" = "0" ]; then
+			rm -f /lib/modules/%{version}
+		fi
+	fi
+fi
+rm -f /boot/initrd-%{version}-%{release}smp.gz
+
 %post BOOT
 if [ ! -L %{_libdir}/bootdisk/lib/modules/%{version} ] ; then
 	mv -f %{_libdir}/bootdisk/lib/modules/%{version} %{_libdir}/bootdisk/lib/modules/%{version}.rpmsave
@@ -1015,49 +1062,11 @@ ln -snf %{version}-%{release}BOOT %{_libdir}/bootdisk/lib/modules/%{version}
 rm -f %{_libdir}/bootdisk/boot/vmlinuz-%{version}
 ln -snf vmlinuz-%{version}-%{release}BOOT %{_libdir}/bootdisk/boot/vmlinuz-%{version}
 
-%postun
-if [ -L /lib/modules/%{version} ]; then
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $10 }'`" = "%{version}-%{release}" ]; then
-		if [ "$1" = "0" ]; then
-			rm -f /lib/modules/%{version}
-		fi
-	fi
-fi
-rm -f /boot/initrd-%{version}-%{release}.gz
+%post smp-drm
+%depmod %{version}-%{release}smp
 
-%post pcmcia
-%depmod %{version}-%{release}
-
-%postun pcmcia
-%depmod %{version}-%{release}
-
-%post drm
-%depmod %{version}-%{release}
-
-%postun drm
-%depmod %{version}-%{release}
-
-%post sound-oss
-%depmod %{version}-%{release}
-
-%postun sound-oss
-%depmod %{version}-%{release}
-
-%post sound-alsa
-%depmod %{version}-%{release}
-
-%postun sound-alsa
-%depmod %{version}-%{release}
-
-%postun smp
-if [ -L /lib/modules/%{version} ]; then
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $10 }'`" = "%{version}-%{release}smp" ]; then
-		if [ "$1" = "0" ]; then
-			rm -f /lib/modules/%{version}
-		fi
-	fi
-fi
-rm -f /boot/initrd-%{version}-%{release}smp.gz
+%postun smp-drm
+%depmod %{version}-%{release}smp
 
 %post smp-pcmcia
 %depmod %{version}-%{release}smp
@@ -1065,22 +1074,16 @@ rm -f /boot/initrd-%{version}-%{release}smp.gz
 %postun smp-pcmcia
 %depmod %{version}-%{release}smp
 
-%post smp-drm
+%post smp-sound-alsa
 %depmod %{version}-%{release}smp
 
-%postun smp-drm
+%postun smp-sound-alsa
 %depmod %{version}-%{release}smp
 
 %post smp-sound-oss
 %depmod %{version}-%{release}smp
 
 %postun smp-sound-oss
-%depmod %{version}-%{release}smp
-
-%post smp-sound-alsa
-%depmod %{version}-%{release}smp
-
-%postun smp-sound-alsa
 %depmod %{version}-%{release}smp
 
 %postun BOOT
@@ -1127,7 +1130,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko
-%endif 
+%endif
 %ifnarch sparc sparc64
 #drm stuff
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
@@ -1145,32 +1148,51 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/pci
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/synth
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/usb
-%endif 
+%endif
 %ifarch sparc sparc64
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/sparc
-%endif 
+%endif
 
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
 
 %ifnarch sparc sparc64
+%files drm
+%defattr(644,root,root,755)
+/lib/modules/%{version}-%{release}/kernel/drivers/char/drm
+%endif
+
+%ifnarch sparc sparc64
 %files pcmcia
 %defattr(644,root,root,755)
-%dir /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
-%attr(644,root,root) /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia/*
+/lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
 /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko
 /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko
 /lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko
 /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko
-%endif 			
+%endif
+
+%files sound-alsa
+%defattr(644,root,root,755)
+/lib/modules/%{version}-%{release}/kernel/sound/core
+/lib/modules/%{version}-%{release}/kernel/sound/drivers
+%ifnarch sparc sparc64
+/lib/modules/%{version}-%{release}/kernel/sound/i2c
+/lib/modules/%{version}-%{release}/kernel/sound/isa
+/lib/modules/%{version}-%{release}/kernel/sound/pci
+/lib/modules/%{version}-%{release}/kernel/sound/synth
+/lib/modules/%{version}-%{release}/kernel/sound/usb
+%endif
+%ifarch sparc sparc64
+/lib/modules/%{version}-%{release}/kernel/sound/sparc
+%endif
 
 %ifnarch sparc sparc64
-%files drm
+%files sound-oss
 %defattr(644,root,root,755)
-%dir /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
-%attr(644, root,root) /lib/modules/%{version}-%{release}/kernel/drivers/char/drm/*
-%endif 			
+/lib/modules/%{version}-%{release}/kernel/sound/oss
+%endif
 %endif			# %%{with up}
 
 %if %{with smp}
@@ -1209,36 +1231,54 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/pci
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/synth
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/usb
-%endif 
+%endif
 %ifarch sparc sparc64
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/sparc
-%endif 
+%endif
 
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
 
 %ifnarch sparc sparc64
-%files -n kernel-smp-pcmcia
+%files smp-drm
 %defattr(644,root,root,755)
-%dir /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
-%attr(644,root,root) /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia/*
+/lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
+%endif
+
+%ifnarch sparc sparc64
+%files smp-pcmcia
+%defattr(644,root,root,755)
+/lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
 /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko
 /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko
 /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko
 /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko
-%endif 			
+%endif
+
+%files smp-sound-alsa
+%defattr(644,root,root,755)
+/lib/modules/%{version}-%{release}smp/kernel/sound/core
+/lib/modules/%{version}-%{release}smp/kernel/sound/drivers
+%ifnarch sparc sparc64
+/lib/modules/%{version}-%{release}smp/kernel/sound/i2c
+/lib/modules/%{version}-%{release}smp/kernel/sound/isa
+/lib/modules/%{version}-%{release}smp/kernel/sound/pci
+/lib/modules/%{version}-%{release}smp/kernel/sound/synth
+/lib/modules/%{version}-%{release}smp/kernel/sound/usb
+%endif
+%ifarch sparc sparc64
+/lib/modules/%{version}-%{release}smp/kernel/sound/sparc
+%endif
 
 %ifnarch sparc sparc64
-%files -n kernel-smp-drm
+%files smp-sound-oss
 %defattr(644,root,root,755)
-%dir /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
-%attr(644,root,root) /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm/*
-%endif			
+/lib/modules/%{version}-%{release}smp/kernel/sound/oss
+%endif
 %endif			# %%{with smp}
 
-%if %{with boot}
-%ifnarch i586 i686 athlon 		# narch
+%if %{with BOOT}
 %files BOOT
 %defattr(644,root,root,755)
 %ifarch alpha sparc sparc64 ppc		# arch
@@ -1250,8 +1290,7 @@ fi
 %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/kernel
 %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/build
 %ghost %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.*
-%endif				# narch
-%endif				# %%{with boot}
+%endif				# %%{with BOOT}
 
 %files headers
 %defattr(644,root,root,755)
@@ -1324,67 +1363,3 @@ fi
 %{_prefix}/src/linux-%{version}/README
 %{_prefix}/src/linux-%{version}/REPORTING-BUGS
 %endif
-
-%if %{with up}
-%ifnarch sparc sparc64
-%files sound-oss
-%defattr(644,root,root,755)
-%dir /lib/modules/%{version}-%{release}/kernel/sound/oss
-/lib/modules/%{version}-%{release}/kernel/sound/oss/*
-%endif  		
-
-%files sound-alsa
-%defattr(644,root,root,755)
-%dir /lib/modules/%{version}-%{release}/kernel/sound/core
-/lib/modules/%{version}-%{release}/kernel/sound/core/*
-%dir /lib/modules/%{version}-%{release}/kernel/sound/drivers
-/lib/modules/%{version}-%{release}/kernel/sound/drivers/*
-%ifnarch sparc sparc64
-%dir /lib/modules/%{version}-%{release}/kernel/sound/i2c
-/lib/modules/%{version}-%{release}/kernel/sound/i2c/*
-%dir /lib/modules/%{version}-%{release}/kernel/sound/isa
-/lib/modules/%{version}-%{release}/kernel/sound/isa/*
-%dir /lib/modules/%{version}-%{release}/kernel/sound/pci
-/lib/modules/%{version}-%{release}/kernel/sound/pci/*
-%dir /lib/modules/%{version}-%{release}/kernel/sound/synth
-/lib/modules/%{version}-%{release}/kernel/sound/synth/*
-%dir /lib/modules/%{version}-%{release}/kernel/sound/usb
-/lib/modules/%{version}-%{release}/kernel/sound/usb/*
-%endif			
-%ifarch sparc sparc64
-%dir /lib/modules/%{version}-%{release}/kernel/sound/sparc
-/lib/modules/%{version}-%{release}/kernel/sound/sparc/*
-%endif			
-%endif
-
-%if %{with smp}
-%ifnarch sparc sparc64
-%files smp-sound-oss
-%defattr(644,root,root,755)
-%dir /lib/modules/%{version}-%{release}smp/kernel/sound/oss
-/lib/modules/%{version}-%{release}smp/kernel/sound/oss/*
-%endif
-
-%files smp-sound-alsa
-%defattr(644,root,root,755)
-%dir /lib/modules/%{version}-%{release}smp/kernel/sound/core
-/lib/modules/%{version}-%{release}smp/kernel/sound/core/*
-%dir /lib/modules/%{version}-%{release}smp/kernel/sound/drivers
-/lib/modules/%{version}-%{release}smp/kernel/sound/drivers/*
-%ifnarch sparc sparc64
-%dir /lib/modules/%{version}-%{release}smp/kernel/sound/i2c
-/lib/modules/%{version}-%{release}smp/kernel/sound/i2c/*
-%dir /lib/modules/%{version}-%{release}smp/kernel/sound/isa
-/lib/modules/%{version}-%{release}smp/kernel/sound/isa/*
-%dir /lib/modules/%{version}-%{release}smp/kernel/sound/pci
-/lib/modules/%{version}-%{release}smp/kernel/sound/pci/*
-%dir /lib/modules/%{version}-%{release}smp/kernel/sound/synth
-/lib/modules/%{version}-%{release}smp/kernel/sound/synth/*
-%dir /lib/modules/%{version}-%{release}smp/kernel/sound/usb
-/lib/modules/%{version}-%{release}smp/kernel/sound/usb/*
-%endif 
-%ifarch sparc sparc64
-%dir /lib/modules/%{version}-%{release}smp/kernel/sound/sparc
-/lib/modules/%{version}-%{release}smp/kernel/sound/sparc/*
-%endif
-%endif 
