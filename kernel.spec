@@ -16,14 +16,14 @@
 %define		sym_ncr_version		sym-1.7.3-ncr-3.4.3
 %define		vlan_version		1.0.1
 %define		IPperson_version	20010703-2.4.5
-%define		grsec_version		1.5-2.4.7
+%define		grsec_version		1.6-2.4.7
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.7
-Release:	7
+Release:	8
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -395,7 +395,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-#%patch12 -p1
+%patch12 -p1
 %patch100 -p1
 %patch5 -p1
 %patch6 -p1
@@ -420,7 +420,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #%patch112 -p1
 %patch113 -p1
 %patch114 -p1
+%ifarch alpha
 %patch115 -p1
+%endif
 %patch116 -p1
 %patch117 -p1
 %patch118 -p1
@@ -448,7 +450,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch901 -p0
 %patch905 -p0
 %patch906 -p0
-#%patch909 -p1
+%patch909 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
