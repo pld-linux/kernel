@@ -12,7 +12,7 @@
 #
 
 %define		patch_level	0
-%define		_rel		12
+%define		_rel		13
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 #
@@ -381,6 +381,7 @@ Patch2006:	linux-2.4.20-tty-fixes-grsec.patch
 Patch2008:	linux-do_brk-bound-check.patch
 Patch2009:	linux-2.4-do_mremap.patch
 Patch2010:	linux-2.4-rtc.patch
+Patch2011:	linux-2.4-mremap-munmap.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -960,6 +961,7 @@ echo AXP patches ...
 %patch2006 -p1
 %patch2008 -p1
 %patch2010 -p1
+%patch2011 -p1
 
 %patch916  -p1
 %patch915 -p1
