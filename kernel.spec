@@ -164,6 +164,7 @@ Patch215:	%{name}-cdrw-packet.patch
 Patch216:	%{name}-cd-mrw-2.patch
 Patch225:	wrr-linux-2.4.9.patch
 Patch226:	linux-2.4.18-esfq.diff
+Patch227:	layer7-kernel2.4patch-v0.1.4.patch
 
 # http://people.FreeBSD.org/~gibbs/linux/SRC/aic79xx-linux-2.4-20030603-tar.gz
 Patch230:	linux-2.4-aic79xx-20030603.patch.gz
@@ -704,6 +705,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 #%patch216 -p1
 %patch225 -p1
 %patch226 -p1
+%patch227 -p1
 %patch230 -p1
 %patch231 -p1
 %patch235 -p1
