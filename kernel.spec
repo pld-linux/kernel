@@ -184,6 +184,7 @@ Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2
 Patch76:	2.6.8-lirc-0.7.0-pre7.patch
 # http://i2o.shadowconnect.com/
 Patch77:	2.6.8-i2o-build_105.patch.gz
+Patch78:	i2o-build_105-fixes.patch
 
 # derived from official grsecurity-2.0.1-2.6.7.patch
 Patch90:	%{name}-grsec-2.0.1.patch
@@ -636,6 +637,7 @@ zcat %{SOURCE7} | patch -p1 -s
 %patch75 -p1
 %patch76 -p1
 %patch77 -p1
+%patch78 -p1
 
 cp -f pwc-%{pwc_version}/2.6/pwc* drivers/usb/media
 rm -rf pwc-%{pwc_version}
