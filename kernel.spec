@@ -27,7 +27,7 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_rel		0.1
-%define		_cset		20040121_0606
+%define		_cset		20040121_2007
 
 ## netfilter snap 
 %define		_netfilter_snap		20040114
@@ -161,8 +161,6 @@ Patch92:	2.6.1-NF-20040114.patch
 Patch94:	2.6.1-sysfs4oss-lkml.patch
 
 Patch96:	2.6.1-modular-ide-lkml.patch
-
-Patch98:	2.6.2rc1-selinux-netif.patch
 
 # ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/
 Patch100:	linux-2.6.2-rc1-raid6-2.patch
@@ -578,8 +576,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 #%%patch94 -p1
 
 %patch96 -p1
-
-%patch98 -p1
 
 %patch100 -p1
 
