@@ -1,4 +1,4 @@
-%define		ow_version		2.2.20-ow2
+%define		ow_version		2.2.21-ow1
 %define		pcmcia_version		3.1.30
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.35
@@ -18,7 +18,7 @@ Summary(ru):	Òƒ“œ Linux
 Summary(uk):	Òƒ“œ Linux
 Name:		kernel
 Version:	2.2.21
-Release:	4
+Release:	5
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -53,13 +53,15 @@ Source35:	%{name}-alpha-BOOT.config
 Source36:	%{name}-ppc.config
 Source37:	%{name}-ppc-smp.config
 Source38:	%{name}-ppc-BOOT.config
-Patch0:		%{name}-pldfblogo.patch
-Patch1:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
-Patch2:		http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
-Patch3:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.20-reiserfs-%{reiserfs_version}.diff.bz2
-Patch4:		ftp://ftp.kernel.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
-Patch5:		linux-2.2.18-freeswan-%{freeswan_version}.patch
-Patch6:		wanrouter-v2215.patch.gz
+Patch0:		patch-2.2.22-rc1.bz2
+Patch1:		2.2.22-undo_extraversion.patch
+Patch2:		%{name}-pldfblogo.patch
+Patch3:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
+Patch4:		http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
+Patch5:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.20-reiserfs-%{reiserfs_version}.diff.bz2
+Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
+Patch7:		linux-2.2.18-freeswan-%{freeswan_version}.patch
+Patch8:		wanrouter-v2215.patch.gz
 # based on http://bridge.sourceforge.net/patches/bridge-1.0.2-against-2.2.20.diff
 Patch10:	bridge-1.0.2-against-2.2.20.diff
 Patch11:	bridge-ipchains-against-1.0.2-against-2.2.20.diff
@@ -108,7 +110,7 @@ Patch113:	linux-2.2.21-mppe.patch
 Patch114:	wrr-linux-2.2.18.patch
 Patch115:	2.2.21-wrr-pkt_bridged.patch
 
-Patch302:	ow2-fix-2.2.21-rc3.patch
+Patch302:	ow1-fix-2.2.22-rc1.patch
 
 Patch500:	2.2.20-reiserfs_ppc.patch
 Patch501:	2.2.21-ppc-smp.patch
@@ -412,15 +414,17 @@ Modu≥y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 %setup -q -a3 -a4 -a5 -a6 -a7 -a9 -a10 -a11 -a13 -n linux
 
 %patch0 -p1
-%patch1 -p0
+%patch1 -p1
+%patch2 -p1
+%patch3 -p0
 # disable aic7xxx patch on sparc (this must be reported to aic7xxx driver maintainer)
 %ifnarch sparc sparc64 ppc
-%patch2 -p1
-%endif
-%patch3 -p1
 %patch4 -p1
+%endif
 %patch5 -p1
 %patch6 -p1
+%patch7 -p1
+%patch8 -p1
 %patch10 -p1
 %patch11 -p1
 %patch12 -p1
@@ -739,14 +743,16 @@ ln -sf linux-%{version} $RPM_BUILD_ROOT%{_kernelsrcdir}
 gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH0}
+bzip2 -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2}
 %ifnarch sparc sparc64 ppc
-gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 %endif
-bzip2 -dc %{PATCH3} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH5}
+bzip2 -dc %{PATCH5} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 gzip -dc %{PATCH6} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH7}
+gzip -dc %{PATCH8} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH10}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH11}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH12}
