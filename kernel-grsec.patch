@@ -4985,7 +4985,7 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
  #include <linux/elf.h>
  
  static int load_elf_binary(struct linux_binprm * bprm, struct pt_regs * regs);
-@@ -85,14 +91,22 @@
+@@ -84,14 +90,22 @@
  
  static int set_brk(unsigned long start, unsigned long end)
  {
@@ -5009,7 +5009,7 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
  	return 0;
  }
  
-@@ -303,6 +317,7 @@
+@@ -305,6 +319,7 @@
  	unsigned long last_bss = 0, elf_bss = 0;
  	unsigned long error = ~0UL;
  	int retval, i, size;
@@ -5017,7 +5017,7 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
  
  	/* First of all, some simple consistency checks */
  	if (interp_elf_ex->e_type != ET_EXEC &&
-@@ -336,6 +351,11 @@
+@@ -338,6 +353,11 @@
  	if (retval < 0)
  		goto out_close;
  
@@ -5029,7 +5029,7 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
  	eppnt = elf_phdata;
  	for (i=0; i<interp_elf_ex->e_phnum; i++, eppnt++) {
  	  if (eppnt->p_type == PT_LOAD) {
-@@ -367,8 +387,8 @@
+@@ -369,8 +389,8 @@
  	     * <= p_memsize so it is only necessary to check p_memsz.
  	     */
  	    k = load_addr + eppnt->p_vaddr;
@@ -5040,7 +5040,7 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
  	        error = -ENOMEM;
  		goto out_close;
  	    }
-@@ -458,6 +478,227 @@
+@@ -460,6 +480,227 @@
  	return elf_entry;
  }
  
@@ -5268,7 +5268,7 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
  /*
   * These are the functions used to load ELF style executables and shared
   * libraries.  There is no binary dependent code anywhere else.
-@@ -491,7 +732,13 @@
+@@ -494,7 +735,13 @@
  	struct files_struct *files;
  	int have_pt_gnu_stack, executable_stack = EXSTACK_DEFAULT;
  	unsigned long def_flags = 0;
@@ -5283,7 +5283,7 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
  	/* Get the exec-header */
  	elf_ex = *((struct elfhdr *) bprm->buf);
  
-@@ -615,6 +862,7 @@
+@@ -618,6 +865,7 @@
  		elf_ppnt++;
  	}
  
@@ -5291,15 +5291,7 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
  	elf_ppnt = elf_phdata;
  	for (i = 0; i < elf_ex.e_phnum; i++, elf_ppnt++)
  		if (elf_ppnt->p_type == PT_GNU_STACK) {
-@@ -623,6 +871,7 @@
- 			else
- 				executable_stack = EXSTACK_DISABLE_X;
- 		}
-+#endif
- 
- 	/* Some simple consistency checks for the interpreter */
- 	if (elf_interpreter) {
-@@ -689,9 +942,65 @@
+@@ -694,9 +942,65 @@
  	current->mm->end_data = 0;
  	current->mm->end_code = 0;
  	current->mm->mmap = NULL;
@@ -5365,7 +5357,7 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
  	/* Do this immediately, since STACK_TOP as used in setup_arg_pages
  	   may depend on the personality.  */
  	SET_PERSONALITY(elf_ex, ibcs2_interpreter);
-@@ -699,6 +1004,12 @@
+@@ -707,6 +1011,12 @@
  	   change some of these later */
  	current->mm->rss = 0;
  	current->mm->free_area_cache = TASK_UNMAPPED_BASE;
@@ -5378,7 +5370,15 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
  	retval = setup_arg_pages(bprm, executable_stack);
  	if (retval < 0) {
  		send_sig(SIGKILL, current, 0);
-@@ -753,12 +1064,92 @@
+@@ -747,6 +1057,7 @@
+ 				clear_user((void __user *) elf_bss + load_bias, nbyte);
+ 			}
+ 		}
++#endif
+ 
+ 		if (elf_ppnt->p_flags & PF_R) elf_prot |= PROT_READ;
+ 		if (elf_ppnt->p_flags & PF_W) elf_prot |= PROT_WRITE;
+@@ -761,12 +1072,92 @@
  			/* Try and get dynamic programs out of the way of the default mmap
  			   base, as well as whatever program they might try to exec.  This
  			   is because the brk will follow the loader, and is not movable.  */
@@ -5474,7 +5474,7 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
  
  		if (!load_addr_set) {
  			load_addr_set = 1;
-@@ -769,6 +1160,11 @@
+@@ -777,6 +1168,11 @@
  				load_addr += load_bias;
  				reloc_func_desc = load_bias;
  			}
@@ -5486,7 +5486,7 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
  		}
  		k = elf_ppnt->p_vaddr;
  		if (k < start_code) start_code = k;
-@@ -779,9 +1175,9 @@
+@@ -787,9 +1183,9 @@
  		 * allowed task size. Note that p_filesz must always be
  		 * <= p_memsz so it is only necessary to check p_memsz.
  		 */
@@ -5499,7 +5499,7 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
  			/* set_brk can never work.  Avoid overflows.  */
  			send_sig(SIGKILL, current, 0);
  			goto out_free_dentry;
-@@ -808,6 +1204,16 @@
+@@ -816,6 +1212,16 @@
  	start_data += load_bias;
  	end_data += load_bias;
  
@@ -5516,7 +5516,7 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
  	/* Calling set_brk effectively mmaps the pages that we need
  	 * for the bss and break sections.  We must do this before
  	 * mapping in the interpreter, to make sure it doesn't wind
-@@ -1100,8 +1506,11 @@
+@@ -1108,8 +1514,11 @@
  #undef DUMP_SEEK
  
  #define DUMP_WRITE(addr, nr)	\
