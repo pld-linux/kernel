@@ -140,6 +140,9 @@ Patch52:	linux-aic7xxx-6.1.8-2.4.2.patch.gz
 
 # RAM Disk free from LKL 23.03.2001
 Patch53:	linux-ram-disk-free.patch
+
+Patch54:	rl2-include.patch
+
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
 ExclusiveOS:	Linux
@@ -465,6 +468,10 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
 mv %{sym_ncr_version}/*.{c,h} drivers/scsi
 mv %{sym_ncr_version}/{README,ChangeLog}.* Documentation
 rm -rf %{sym_ncr_version}
+
+## install RangeLAN2 driver
+mv rl2-1.7.1 drivers/net/rl2
+%patch54 -p0
 
 %build
 BuildKernel() {
