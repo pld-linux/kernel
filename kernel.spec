@@ -48,7 +48,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.13
+%define		_rel		0.14
 %define		_cset		20040718_1706
 %define		_apply_cset	1
 
@@ -130,7 +130,7 @@ Patch25:	2.6.7-alpha_compile.patch
 Patch26:	2.6.7-ppc-asm-defs.patch
 Patch27:	2.6.7-ppc-cciss-div.patch
 Patch28:	2.6.7-ppc-ipr-div.patch
-
+Patch29:	2.6.8-intel8x0-ck804-lkml.patch
 Patch30:	2.6.x-ppp_mppe.patch
 Patch31:	2.6.x-SGI_VW-fbdev-lkml.patch
 Patch32:	2.6.x-TGA-fbdev-lkml.patch
@@ -575,7 +575,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch26 -p1
 %patch27 -p1
 %patch28 -p1
-
+%patch29 -p1
 #patch30 -p1
 %patch31 -p1
 %patch32 -p1
