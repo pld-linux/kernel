@@ -133,7 +133,6 @@ Patch901:	linux-lids-with-abi.patch
 # patch fixing LIDS stupidity
 #Patch903:	linux-lids-fixpatch.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
-Patch905:	linux-ipvs+ext3.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
 Patch909:	linux-53c7,8xx-build.fix
@@ -437,7 +436,6 @@ patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
 
 # IPVS
 echo Adding IPVS
-%patch905 -p1
 for i in ipvs-%{ipvs_version}/*.diff ; do
 	patch -p1 -s <$i
 done
