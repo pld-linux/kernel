@@ -12788,23 +12788,15 @@ diff -uNr linux-orig/include/linux/blkdev.h linux/include/linux/blkdev.h
 diff -uNr linux-orig/include/linux/fs.h linux/include/linux/fs.h
 --- linux-orig/include/linux/fs.h	Fri Dec  8 22:53:55 2000
 +++ linux/include/linux/fs.h	Fri Dec  8 22:54:52 2000
-@@ -185,6 +185,7 @@
- #define BH_Lock		2	/* 1 if the buffer is locked */
- #define BH_Req		3	/* 0 if the buffer has been invalidated */
- #define BH_Protected	6	/* 1 if the buffer is protected */
-+#define BH_LowPrio	7	/* 1 if the buffer is lowprio */
- 
- /*
-  * Try to keep the most commonly used fields in single cache lines (16
-@@ -778,6 +779,7 @@
+@@ -788,6 +788,7 @@
  extern void refile_buffer(struct buffer_head * buf);
  extern void set_writetime(struct buffer_head * buf, int flag);
- extern int try_to_free_buffers(struct page *, int wait);
+ extern int try_to_free_buffers(struct page *, int);
 +extern void cache_drop_behind(struct buffer_head *bh);
  
  extern int nr_buffers;
  extern long buffermem;
-@@ -798,6 +800,25 @@
+@@ -818,6 +819,25 @@
  	}
  }
  
@@ -12830,7 +12822,7 @@ diff -uNr linux-orig/include/linux/fs.h linux/include/linux/fs.h
  extern inline void mark_buffer_dirty(struct buffer_head * bh, int flag)
  {
  	if (!test_and_set_bit(BH_Dirty, &bh->b_state)) {
-@@ -805,6 +826,23 @@
+@@ -825,6 +845,23 @@
  		if (bh->b_list != BUF_DIRTY)
  			refile_buffer(bh);
  	}
@@ -12854,7 +12846,7 @@ diff -uNr linux-orig/include/linux/fs.h linux/include/linux/fs.h
  }
  
  extern int check_disk_change(kdev_t dev);
-@@ -882,6 +920,7 @@
+@@ -902,6 +939,7 @@
  extern struct buffer_head * find_buffer(kdev_t dev, int block, int size);
  extern void ll_rw_block(int, int, struct buffer_head * bh[]);
  extern int is_read_only(kdev_t);
@@ -12862,7 +12854,7 @@ diff -uNr linux-orig/include/linux/fs.h linux/include/linux/fs.h
  extern void __brelse(struct buffer_head *);
  extern inline void brelse(struct buffer_head *buf)
  {
-@@ -897,8 +936,12 @@
+@@ -917,8 +955,12 @@
  extern void set_blocksize(kdev_t dev, int size);
  extern unsigned int get_hardblocksize(kdev_t dev);
  extern struct buffer_head * bread(kdev_t dev, int block, int size);
