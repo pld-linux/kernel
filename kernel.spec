@@ -1,6 +1,6 @@
 %define		ow_ver	2.2.14-ow2
-Summary:	The Linux kernel (the core of the Linux operating system).
-Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems).
+Summary:	The Linux kernel (the core of the Linux operating system)
+Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
@@ -33,6 +33,7 @@ Source23:	kernel-sparc-BOOT.config
 #Source29:	kernel-alpha-BOOT.config
 Source30:	ftp://ftp.openwall.com/linux/linux-%{ow_ver}.tar.gz
 Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-124.tar.gz
+Source32:	kernel-BuildASM.sh
 Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.13.3.gz
 Patch1:		ftp://ftp.botik.ru/rented/namesys/ftp/pub/linux+reiserfs/linux-2.2.14-reiserfs-3.5.16-patch.gz
 Patch2:		linux-2.2.14-atm-0.59-fore200e-0.1e.patch.gz
@@ -73,9 +74,9 @@ Pakiet zawiera j±dro Linuxa niezbêdne do prawid³owego dzia³ania Twojego
 komputera.
 
 %package smp
-Summary:	Kernel version %{version} compiled for SMP machines.
-Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen.
-Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur.
+Summary:	Kernel version %{version} compiled for SMP machines
+Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
+Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name} %{version}
@@ -99,7 +100,7 @@ sollte aber auch auf Computern mit nur einer CPU laufen.
 %package fb
 Summary:	Kernel version %{version} with framebuffer support
 Summary(de):	Kernel version %{version} mit Framebuffer-Support
-Summary(fr):	Kernel version %{version} avec framebuffer.
+Summary(fr):	Kernel version %{version} avec framebuffer
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name} %{version}
@@ -117,9 +118,9 @@ Dieses Paket enthält eine Version von Linux-Kernel %{version} mit
 framebuffer-Support.
 
 %package smp-fb
-Summary:	Kernel version %{version} compiled for SMP machines with fb.
-Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen mit framebuffer.
-Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur avec fb.
+Summary:	Kernel version %{version} compiled for SMP machines with fb
+Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen mit framebuffer
+Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur avec fb
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name} %{version}
@@ -144,9 +145,9 @@ sollte aber auch auf Computern mit nur einer CPU laufen. Außerdem ist
 Support für Framebuffer-Devices (Console im Grafikmodus) enthalten.
 
 %package BOOT
-Summary:	Kernel version %{version} used on the installation boot disks.
-Summary(de):	Kernel version %{version} für Installationsdisketten.
-Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation.
+Summary:	Kernel version %{version} used on the installation boot disks
+Summary(de):	Kernel version %{version} für Installationsdisketten
+Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Autoreqprov:	no
@@ -172,8 +173,8 @@ nicht auf einem installierten System verwendet werden, da viele Funktionen
 wegen der Platzprobleme abgeschaltet sind.
 
 %package headers
-Summary:	Header files for the Linux kernel.
-Summary(pl):	Pliki nag³owkowe j±dra
+Summary:	Header files for the Linux kernel
+Summary(pl):	Pliki nag³ówkowe j±dra
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Autoreqprov:	no
@@ -232,11 +233,11 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %ifarch %{ix86}
 %patch6 -p1
 %endif
+
 patch -p1 -s <linux-%{ow_ver}/linux-%{ow_ver}.diff
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ22.diff
-install -m644 dc395/dc395x_trm.? drivers/scsi/
-install -m644 dc395/README.dc395x drivers/scsi/
+install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 %build
 BuildKernel() {
@@ -316,7 +317,16 @@ rm -rf $RPM_BUILD_ROOT/usr
 install -d $RPM_BUILD_ROOT/usr/{include,src}
 
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT/usr/include/linux
+
+%ifarch sparc
+ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT/usr/include/asm-sparc
+ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT/usr/include/asm-sparc64
+mkdir $RPM_BUILD_ROOT/usr/include/asm
+cp -a $RPM_SOURCE_DIR/kernel-BuildASM.sh $RPM_BUILD_ROOT/usr/include/asm/BuildASM
+$RPM_BUILD_ROOT/usr/include/asm/BuildASM $RPM_BUILD_ROOT/usr/include
+%else
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
+%endif
 
 tar Ixf %{SOURCE0} -C $RPM_BUILD_ROOT/usr/src/
 mv -f $RPM_BUILD_ROOT/usr/src/linux $RPM_BUILD_ROOT/usr/src/linux-%{version}
