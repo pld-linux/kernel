@@ -32,7 +32,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	2.10%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	2.11%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -72,6 +72,7 @@ Source1008:	%{name}-ebtables.config
 Source1009:	%{name}-usb2.config
 Source1010:	%{name}-i2c.config
 Source1011:	%{name}-promise_st.config
+Source1012:	%{name}-i810fb.config
 Source1666:	%{name}-grsec.config
 Source1667:	%{name}-int.config
 Source1668:	%{name}-hostap.config
@@ -140,7 +141,8 @@ Patch21:	linux-2.4.20-promise.patch.bz2
 Patch22:	linux-2.4.20-promise-st6000.patch.bz2
 # from ftp://ftp.lsil.com/pub/symchips/scsi/FusionMPT/Linux/2.03.00/mptlinux-2.03.00-src.tar.gz
 #Patch23:
-#Patch24:
+# from MDK kernel DV08__i810fb.patch
+Patch24:	linux-2.4.20-I810FB.patch.bz2
 
 # Support for CDRW packet writing
 #Patch25:	
@@ -705,6 +707,10 @@ echo Promise driver patch
 %patch21 -p1
 %patch22 -p1
 
+# I810FB
+echo Added Intel 810 FB support
+%patch24 -p1
+
 echo Added ARCH specific patches....
 %ifarch %{ix86}
 echo Ix86 patches ...
@@ -808,6 +814,7 @@ BuildKernel() {
 	cat %{SOURCE1009} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1010} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1011} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1012} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1671} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1672} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1673} >> arch/%{base_arch}/defconfig
@@ -1009,6 +1016,7 @@ cat %{SOURCE1008} >> .config
 cat %{SOURCE1009} >> .config
 cat %{SOURCE1010} >> .config
 cat %{SOURCE1011} >> .config
+cat %{SOURCE1012} >> .config
 cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
@@ -1065,6 +1073,7 @@ cat %{SOURCE1008} >> .config
 cat %{SOURCE1009} >> .config
 cat %{SOURCE1010} >> .config
 cat %{SOURCE1011} >> .config
+cat %{SOURCE1012} >> .config
 cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
