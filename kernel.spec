@@ -14,7 +14,7 @@
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.10
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
-%define		vlan_version		1.4
+%define		vlan_version		1.5
 %define		IPperson_version	20010724-2.4.7
 %define		grsec_version		1.8.4-2.4.12
 %define		tulip_version		1.1.8
