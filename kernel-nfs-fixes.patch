@@ -1,0 +1,178 @@
+diff -urN linux.orig/fs/lockd/svc.c linux/fs/lockd/svc.c
+--- linux.orig/fs/lockd/svc.c	Sun Mar 25 18:37:38 2001
++++ linux/fs/lockd/svc.c	Sat Mar  9 19:03:43 2002
+@@ -37,7 +37,7 @@
+ 
+ #define NLMDBG_FACILITY		NLMDBG_SVC
+ #define LOCKD_BUFSIZE		(1024 + NLMSSVC_XDRSIZE)
+-#define ALLOWED_SIGS		(sigmask(SIGKILL))
++#define ALLOWED_SIGS		(sigmask(SIGKILL|SIGTERM))
+ 
+ extern struct svc_program	nlmsvc_program;
+ struct nlmsvc_binding *		nlmsvc_ops = NULL;
+@@ -82,7 +82,7 @@
+ 
+ 	/* Process request with signals blocked.  */
+ 	spin_lock_irq(&current->sigmask_lock);
+-	siginitsetinv(&current->blocked, sigmask(SIGKILL));
++	siginitsetinv(&current->blocked, sigmask(SIGKILL|SIGTERM));
+ 	recalc_sigpending(current);
+ 	spin_unlock_irq(&current->sigmask_lock);		
+ 
+@@ -115,7 +115,7 @@
+ 	 * NFS mount or NFS daemon has gone away, and we've been sent a
+ 	 * signal, or else another process has taken over our job.
+ 	 */
+-	while ((nlmsvc_users || !signalled()) && nlmsvc_pid == current->pid)
++	while ((nlmsvc_users>1 || !signalled()) && nlmsvc_pid == current->pid)
+ 	{
+ 		long timeout = MAX_SCHEDULE_TIMEOUT;
+ 		if (signalled()) {
+@@ -180,6 +180,7 @@
+ 	if (!nlmsvc_pid || current->pid == nlmsvc_pid) {
+ 		nlm_shutdown_hosts();
+ 		nlmsvc_pid = 0;
++		nlmsvc_users = 0;
+ 	} else
+ 		printk(KERN_DEBUG
+ 			"lockd: new process, skipping host shutdown\n");
+diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
+--- linux.orig/fs/nfsd/nfsfh.c	Sat Mar  9 13:03:12 2002
++++ linux/fs/nfsd/nfsfh.c	Sat Mar  9 18:58:42 2002
+@@ -114,6 +114,37 @@
+ 	return error;
+ }
+ 
++/* Arrange a dentry for the given inode:
++ *  1. Prefer an existing connected dentry.
++ *  2. Settle for an existing disconnected dentry.
++ *  3. If necessary, create a (disconnected) dentry.
++ */
++static struct dentry *nfsd_arrange_dentry(struct inode *inode)
++{
++	struct list_head *lp;
++	struct dentry *result;
++
++	result = NULL;
++	for (lp = inode->i_dentry.next; lp != &inode->i_dentry ; lp=lp->next) {
++		result = list_entry(lp,struct dentry, d_alias);
++		if (! (result->d_flags & DCACHE_NFSD_DISCONNECTED))
++			break;
++	}
++	if (result) {
++		dget(result);
++		iput(inode);
++	} else {
++		result = d_alloc_root(inode, NULL);
++		if (!result) {
++			iput(inode);
++			return ERR_PTR(-ENOMEM);
++		}
++		result->d_flags |= DCACHE_NFSD_DISCONNECTED;
++		d_rehash(result); /* so a dput won't loose it */
++	}
++	return result;
++}
++
+ /* this should be provided by each filesystem in an nfsd_operations interface as
+  * iget isn't really the right interface
+  */
+@@ -128,8 +159,6 @@
+ 	 * so a generation of 0 means "accept any"
+ 	 */
+ 	struct inode *inode;
+-	struct list_head *lp;
+-	struct dentry *result;
+ 	inode = iget_in_use(sb, ino, &locality);
+ 	if (!inode) {
+ 		dprintk("nfsd_iget: failed to find ino: %lu on %s\n",
+@@ -149,25 +178,8 @@
+ 		iput(inode);
+ 		return ERR_PTR(-ESTALE);
+ 	}
+-	/* now to find a dentry.
+-	 * If possible, get a well-connected one
+-	 */
+-	for (lp = inode->i_dentry.next; lp != &inode->i_dentry ; lp=lp->next) {
+-		result = list_entry(lp,struct dentry, d_alias);
+-		if (! (result->d_flags & DCACHE_NFSD_DISCONNECTED)) {
+-			dget(result);
+-			iput(inode);
+-			return result;
+-		}
+-	}
+-	result = d_alloc_root(inode, NULL);
+-	if (result == NULL) {
+-		iput(inode);
+-		return ERR_PTR(-ENOMEM);
+-	}
+-	result->d_flags |= DCACHE_NFSD_DISCONNECTED;
+-	d_rehash(result); /* so a dput won't loose it */
+-	return result;
++
++	return nfsd_arrange_dentry(inode);
+ }
+ 
+ /* this routine links an IS_ROOT dentry into the dcache tree.  It gains "parent"
+@@ -227,45 +239,28 @@
+  */
+ struct dentry *nfsd_findparent(struct dentry *child)
+ {
+-	struct dentry *tdentry, *pdentry;
+-	tdentry = d_alloc(child, &(const struct qstr) {"..", 2, 0});
+-	if (!tdentry)
++	struct dentry *dotdot, *parent;
++
++	dotdot = d_alloc(child, &(const struct qstr) {"..", 2, 0});
++	if (!dotdot)
+ 		return ERR_PTR(-ENOMEM);
+ 
+ 	/* I'm going to assume that if the returned dentry is different, then
+ 	 * it is well connected.  But nobody returns different dentrys do they?
+ 	 */
+-	pdentry = child->d_inode->i_op->lookup(child->d_inode, tdentry);
+-	d_drop(tdentry); /* we never want ".." hashed */
+-	if (!pdentry) {
+-		/* I don't want to return a ".." dentry.
+-		 * I would prefer to return an unconnected "IS_ROOT" dentry,
+-		 * though a properly connected dentry is even better
+-		 */
+-		/* if first or last of alias list is not tdentry, use that
+-		 * else make a root dentry
+-		 */
+-		struct list_head *aliases = &tdentry->d_inode->i_dentry;
+-		if (aliases->next != aliases) {
+-			pdentry = list_entry(aliases->next, struct dentry, d_alias);
+-			if (pdentry == tdentry)
+-				pdentry = list_entry(aliases->prev, struct dentry, d_alias);
+-			if (pdentry == tdentry)
+-				pdentry = NULL;
+-			if (pdentry) dget(pdentry);
+-		}
+-		if (pdentry == NULL) {
+-			pdentry = d_alloc_root(igrab(tdentry->d_inode), NULL);
+-			if (pdentry) {
+-				pdentry->d_flags |= DCACHE_NFSD_DISCONNECTED;
+-				d_rehash(pdentry);
+-			}
+-		}
+-		if (pdentry == NULL)
+-			pdentry = ERR_PTR(-ENOMEM);
++	parent = child->d_inode->i_op->lookup(child->d_inode, dotdot);
++	d_drop(dotdot); /* we never want ".." hashed */
++
++	if (parent)
++		dput(dotdot); /* not hashed, thus discarded */
++	else {
++		/* Discard the ".." dentry, then arrange for a better one */
++		struct inode *inode = igrab(dotdot->d_inode);
++		dput(dotdot); /* not hashed, thus discarded */
++		parent = nfsd_arrange_dentry(inode);
++
+ 	}
+-	dput(tdentry); /* it is not hashed, it will be discarded */
+-	return pdentry;
++	return parent;
+ }
+ 
+ static struct dentry *splice(struct dentry *child, struct dentry *parent)
