@@ -679,8 +679,8 @@ sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 %build
 TuneUpConfigForIX86 () {
 %ifarch %{ix86}
-    %ifarch i386
-	sed -i 's:# CONFIG_M386 is not set:CONFIG_M386=y:' $1
+    %ifnarch i386
+	sed -i 's:CONFIG_M386=y:# CONFIG_M386 is not set:' $1
     %endif
     %ifarch i486
 	sed -i 's:# CONFIG_M486 is not set:CONFIG_M486=y:' $1
@@ -707,8 +707,8 @@ TuneUpConfigForIX86 () {
 	    sed -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" $1
 	%endif
     %endif
-    %ifarch i386 i486 i586
-	sed -i 's:# CONFIG_MATH_EMULATION is not set:CONFIG_MATH_EMULATION=y:' $1
+    %ifarch i686 pentium3 pentium4
+	sed -i 's:CONFIG_MATH_EMULATION=y:# CONFIG_MATH_EMULATION is not set:' $1
     %endif
 %endif
 }
@@ -928,15 +928,11 @@ KERNEL_BUILD_DIR=`pwd`
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig
-%{?with_up:BuildKernel}
-%{?with_up:PreInstallKernel}
 
 # SMP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig smp
-%{?with_smp:BuildKernel smp}
-%{?with_smp:PreInstallKernel smp}
 
 %if %{with BOOT}
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
