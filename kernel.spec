@@ -192,6 +192,7 @@ Autoreqprov:	no
 Prereq:		fileutils
 Prereq:		modutils
 Prereq:		geninitrd
+Requires:	rc-scripts >= 0.3.0
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha
 %ifarch		%{ix86}
