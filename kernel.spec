@@ -15,7 +15,7 @@
 
 %define		_rel		2
 %define		_test_ver	5
-%define		_cset		20030922_2109
+%define		_cset		20030925_0108
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -80,11 +80,8 @@ Patch54:	2.6.0-t5-PPC-fix.patch
 Patch55:	kernel-siimage-rqsize.patch
 Patch56:	2.6.0-t5-PPC-Kconfig.patch
 
-Patch60:	2.6.0-t5-i2c.patch
-
 Patch62:	2.6.0-t5-memleak-NCR_Q720-lkml.patch
 Patch63:	2.6.0-t5-memleak-scsi_debug-lkml.patch
-Patch64:	2.6.0-t5-memleak-ixj_pcmcia-lkml.patch
 
 Patch65:	2.6.0-t5-netfilter-1.2.8_20030923.patch
 
@@ -345,11 +342,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch55 -p1
 %patch56 -p1
 
-%patch60 -p1
-
 %patch62 -p1
 %patch63 -p1
-%patch64 -p1
 
 %patch65 -p1
 
