@@ -12,7 +12,7 @@
 # _without_w4l		- don't build Win4Lin support
 #
 
-%define		patch_level	6
+%define		patch_level	7
 %define		_rel		5
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -25,8 +25,8 @@
 %define		grsec_version		2.0.0
 %define		jfs_version		2.4-1.0.24
 %define		lvm_version		1.0.7
-%define		evms_version		1.2.1
-%define		ntfs_version		2.1.0a
+%define		evms_version		2.0.0
+%define		ntfs_version		2.1.2a
 %define		drm_xfree_version	4.2.99
 %define		hostap_version		2002-10-12
 %define		netfilter_snap		20030326
@@ -149,7 +149,7 @@ Patch17:	hfsplus-20020606.patch.bz2
 # from http://people.sistina.com/~thornber/patches/2.4-stable/2.4.20/2.4.20-dm-9.tar.bz2DM-9 patch
 Patch18:	linux-2.4.20-dm-9.patch.bz2
 # EVMS support (http://www.sourceforge.net/projects/evms/)
-Patch19:	linux-2.4.20-evms-1.9.0.patch.bz2
+Patch19:	linux-2.4.20-evms-%{evms_version}.patch.bz2
 
 # from ???
 Patch20:	linux-2.4.20-audigy.patch.bz2
