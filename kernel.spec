@@ -1219,16 +1219,16 @@ fi
 rm -f /boot/initrd-%{version}-%{release}.gz
 
 %post pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}%{?_without_grsec:_nogrsec} %{version}-%{release}
 
 %postun pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release} > /dev/null 2>&1
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}%{?_without_grsec:_nogrsec} %{version}-%{release} > /dev/null 2>&1
 
 %post drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}%{?_without_grsec:_nogrsec} %{version}-%{release}
 
 %postun drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release} > /dev/null 2>&1
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}%{?_without_grsec:_nogrsec} %{version}-%{release} > /dev/null 2>&1
 
 %postun smp
 if [ -L /lib/modules/%{version} ]; then 
@@ -1241,16 +1241,16 @@ fi
 rm -f /boot/initrd-%{version}-%{release}smp.gz
 
 %post smp-pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp%{?_without_grsec:_nogrsec} %{version}-%{release}smp
 
 %postun smp-pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp > /dev/null 2>&1
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp%{?_without_grsec:_nogrsec} %{version}-%{release}smp > /dev/null 2>&1
 
 %post smp-drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp%{?_without_grsec:_nogrsec} %{version}-%{release}smp
 
 %postun smp-drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp > /dev/null 2>&1
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp%{?_without_grsec:_nogrsec} %{version}-%{release}smp > /dev/null 2>&1
 
 %postun BOOT
 if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then 
