@@ -67,7 +67,7 @@
 %define		_cset		20041119_0306
 %define		_apply_cset	1
 
-%define		_netfilter_snap		20040629
+%define		_netfilter_snap		20041118
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
@@ -136,7 +136,7 @@ Patch12:	2.6.0-omnikeys.patch
 
 Patch13:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch14:	linux-2.6-omnibook-20040916.patch
-
+Patch15:	linux-2.6-enable-broken-advansys.patch
 Patch16:	linux-alpha-isa.patch
 Patch17:	2.6.4-psion-5mx.patch
 Patch18:	2.6.5-sparc64-missing-include.patch
@@ -158,9 +158,7 @@ Patch33:	linux-kbuild-extmod.patch
 Patch41:	linux-fbcon-margins.patch
 
 # netfilter
-Patch50:	2.6.7-pom-ng-%{_netfilter_snap}.patch
-# http://www.barbara.eu.org/~quaker/ipt_account/
-Patch51:	2.6.6-ipt_account.patch
+Patch50:	2.6.10-pom-ng-%{_netfilter_snap}.patch
 # http://l7-filter.sourceforge.net/
 Patch52:	2.6.8-ipt_layer7.patch
 Patch53:	2.6.4-rc1-01-esfq-imq.patch
@@ -201,11 +199,8 @@ Patch92:	exec-shield-make-peace-with-grsecurity.patch
 
 # hotfixes
 Patch300:	linux-2.6-sparc-ksyms.patch
-Patch301:	linux-2.6-ppc-ksyms.patch
-Patch302:	2.6.7-kill-warnings.patch
+
 Patch303:	%{name}-hotfixes.patch
-Patch304:	linux-2.6-nptl-process-accounting.patch
-Patch305:	linux-2.6-nptl-sighup.patch
 
 # http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.9/2.6.9-mm1/broken-out/
 Patch700:	linux-reiser4-mm1.patch.bz2
@@ -579,7 +574,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch12 -p1
 %patch13 -p1
 %patch14 -p1
-
+%patch15 -p1
 %patch16 -p1
 %patch17 -p1
 %patch18 -p1
@@ -599,11 +594,9 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %patch41 -p1
 
-exit 1
-
 # netfilter
 %patch50 -p1
-%patch51 -p1
+
 %patch52 -p1
 %patch53 -p1
 %patch54 -p1
@@ -653,11 +646,8 @@ patch -p1 -s < exec-shield.patch
 
 # hotfixes
 %patch300 -p1
-%patch301 -p1
-%patch302 -p1
+
 %patch303 -p1
-%patch304 -p1
-%patch305 -p1
 
 %patch700 -p1
 
