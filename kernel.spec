@@ -168,7 +168,7 @@ Provides:	bttv = 0.7.83
 Autoreqprov:	no
 Prereq:		fileutils
 Prereq:		modutils
-Prereq:		geninitrd
+Prereq:		geninitrd >= 2.13
 Obsoletes:	kernel-modules
 Obsoletes:	kernel-doc
 ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
@@ -746,7 +746,7 @@ mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
 
-geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
+geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}.gz /boot/initrd
 
