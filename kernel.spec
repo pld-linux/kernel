@@ -21,30 +21,29 @@
 #
 Summary:	The Linux kernel (the core of the Linux operating system)
 Name:		kernel
-%define		_ver	2.6.5
+%define		_ver	2.6.6
 Version:	%{_ver}+grsec
 Release:	1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{_ver}.tar.bz2
-# Source0-md5:	9a76bf64c1151369b250f967d83077aa
-Source1:	http://www.grsecurity.net/grsecurity-2.0-2.6.5.patch
-# Source1-md5:	306e6b7e719abea88012da2b47f6d4cb
+# Source0-md5:	5218790bc3db41e77a7422969639a9ad
+Source1:	grsecurity-2.0-2.6.6-unofficial.patch
+# Source1-md5:	be087f7e902801ff6368f1cb88d7bbe7
 Source2:	%{name}-config-nondist
-Patch0:		2.6.0-ksyms-add.patch
-Patch1:		2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
-Patch2:		2.6.0-t6-usb-irq.patch
-Patch3:		2.6.0-t7-memleak-lkml.patch
-Patch4:		2.6.0-t7-memleak2-lkml.patch
-Patch5:		2.6.0-t8-swap-include-lkml.patch
-Patch6:		2.6.0-t9-acpi_osl-lkml.patch
-Patch7:		2.6.1-squashfs1.3r3.patch
-Patch8:		2.6.4-esfq.patch
-Patch9:		2.6.4-imq.patch
-Patch10:	2.6.4-imq-nat.patch
-Patch11:	2.6.4-wrr.patch
-Patch12:	2.6.5-pom-ng-%{_netfilter_snap}.patch
-Patch13:	2.6.5-pom-ng-fixes.patch
+Patch0:		2.6.0-t6-usb-irq.patch
+Patch1:		2.6.0-t7-memleak-lkml.patch
+Patch2:		2.6.0-t7-memleak2-lkml.patch
+Patch3:		2.6.0-t8-swap-include-lkml.patch
+Patch4:		2.6.0-t9-acpi_osl-lkml.patch
+Patch5:		2.6.1-squashfs1.3r3.patch
+Patch6:		2.6.6-pramfs.patch
+Patch10:	2.6.4-esfq.patch
+Patch11:	2.6.4-imq.patch
+Patch12:	2.6.4-imq-nat.patch
+Patch13:	2.6.4-wrr.patch
+Patch14:	2.6.6-pom-ng-%{_netfilter_snap}.patch
+Patch15:	2.6.5-pom-ng-fixes.patch
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 BuildRequires:	module-init-tools
@@ -108,7 +107,7 @@ hardware.
 
 %prep
 %setup -q -n linux-%{_ver}
-
+%{__patch} -p1 < %{SOURCE1}
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
@@ -116,14 +115,13 @@ hardware.
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
-%patch7 -p1
-patch -p1 < %{SOURCE1}
-%patch8 -p1
-%patch9 -p1
+
 %patch10 -p1
 %patch11 -p1
 %patch12 -p1
 %patch13 -p1
+%patch14 -p1
+%patch15 -p1
 
 %build
 cat << EOF > cleanup-nondist-kernel.sh
