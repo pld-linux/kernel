@@ -70,6 +70,8 @@ Patch21:	linux-2.4.21-uml-o1.patch
 Patch22:	linux-2.4.20-uml-host-skas3.patch
 # http://www.kernel.org/pub/linux/kernel/people/jgarzik/libata/
 Patch23:	2.4.23-libata1.patch.bz2
+# missing <linux/mm.h> include in libata-core.c (needed on alpha)
+Patch24:	linux-2.4.23-libata1-include.patch
 
 # New filesystems
 
@@ -621,6 +623,7 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch21 -p1
 %patch22 -p1
 %patch23 -p1
+%patch24 -p1
 %patch25 -p1
 #%patch26 -p1
 %patch32 -p1
