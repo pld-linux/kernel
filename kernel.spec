@@ -191,6 +191,8 @@ Patch202:	linux-cluster-gfs.patch
 Patch203:	linux-cluster-gnbd.patch
 
 # suspend/resume
+# http://softwaresuspend.berlios.de/
+Patch219:	linux-2.6.8-rc3-software-suspend-2.0.0.103-for-2.6.7.patch.gz
 Patch220:	linux-2.6-via-agpc-resume-suspend-support.patch
 Patch221:	linux-2.6-via-rhine-suspend-resume.patch
 
@@ -647,9 +649,9 @@ patch -p1 -s < exec-shield.patch
 %patch203 -p1
 
 # suspend/resume
+%patch219 -p1
 %patch220 -p1
-# it's for newer version of via-rhine driver so disable for now
-#%patch221 -p1
+%patch221 -p1
 
 # hotfixes
 %patch300 -p1
