@@ -18,7 +18,7 @@ Summary(ru):	ñÄÒÏ Linux
 Summary(uk):	ñÄÒÏ Linux
 Name:		kernel
 Version:	2.2.21
-Release:	5
+Release:	6
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -122,6 +122,8 @@ Patch506:	2.2.21-ppc_setup.patch
 Patch507:	2.2.21-ppc_ieee1394.patch
 Patch508:	serial-5.05-ppc.patch
 Patch509:	2.2.21-ppc_macserial.patch
+Patch510:	2.2.21-ppc_openpic_fix.patch
+Patch511:	2.2.21-ppc_use_egcs.patch
 
 Patch1500:	linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	%{name}-sparc-zs.h.patch
@@ -134,6 +136,10 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 BuildRequires:	rpm-build >= 4.0.2-53
 %ifarch sparc64
 BuildRequires:	egcs64
+%else
+%ifarch ppc
+BuildRequires:	egcs
+%endif
 %else
 BuildRequires:	%{kgcc_package}
 %endif
@@ -520,6 +526,8 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch506 -p1
 %patch507 -p1
 %patch509 -p1
+%patch510 -p1
+%patch511 -p1
 %endif
 
 %ifarch sparc sparc64
@@ -571,6 +579,9 @@ BuildKernel() {
 
 %ifarch %{ix86} alpha sparc
 	KERNELCC="%{kgcc}"
+%endif
+%ifarch ppc
+	KERNELCC="kgcc"
 %endif
 %ifarch sparc64
 	KERNELCC="sparc64-linux-gcc"
@@ -672,9 +683,15 @@ sed "s/^PCMCIA_SRC=.*/PCMCIA_SRC=$kernelbase\/pcmcia-cs-%{pcmcia_version}/" conf
 
 cd driver
 %{__make} all
+	%ifarch ppc
+	CC=kgcc \
+	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
+	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNEL_BUILD_DIR/include -I$KERNEL_BUILD_DIR/pcmcia-cs-%{pcmcia_version}/include -D__KERNEL__ -DEXPORT_SYMTAB"
+	%else
 	CC=%{kgcc} \
 	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
 	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNEL_BUILD_DIR/include -I$KERNEL_BUILD_DIR/pcmcia-cs-%{pcmcia_version}/include -D__KERNEL__ -DEXPORT_SYMTAB"
+	%endif
 
 %{__make} PREFIX=$KERNEL_INSTALL_DIR install
 
@@ -859,6 +876,8 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH505}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH506}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH507}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH509}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH510}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH511}
 %endif
 
 %ifarch sparc sparc64
@@ -940,6 +959,13 @@ ln -sf initrd-%{version}-%{release}.gz /boot/initrd
 #if [ -x /sbin/rc-boot ] ; then
 #	/sbin/rc-boot 1>&2 || :
 #fi
+%ifarch ppc
+echo "This is very unstable 2.2.21 linux kernel image. It work on early"
+echo "power g3 machines and work on chrp machines."
+echo "If this image didn't work correctly on your machine we suggest you"
+echo "to use 2.4.x kernels on ppc machines as long as"
+echo "we don't prepared correct 2.2.x linux kernel image."
+%endif
 
 %post pcmcia-cs
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
@@ -964,6 +990,13 @@ ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 #if [ -x /sbin/rc-boot ] ; then
 #	/sbin/rc-boot 1>&2 || :
 #fi
+%ifarch ppc
+echo "This is very unstable 2.2.21 linux kernel image. It work on early"
+echo "power g3 machines and work on chrp machines."
+echo "If this image didn't work correctly on your machine we suggest you"
+echo "to use 2.4.x kernels on ppc machines as long as"
+echo "we don't prepared correct 2.2.x linux kernel image."
+%endif
 
 %post smp-pcmcia-cs
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
