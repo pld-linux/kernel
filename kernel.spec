@@ -9,12 +9,17 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	grsec		# build without grsec
+%bcond_with	vserver		# enable vserver (disables grsec)
 %bcond_with	pax		# enable PaX
 %bcond_with	execshield	# build with exec-shield
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 
 %{?debug:%define with_verbose 1}
+
+%if %{with vserver}
+%undefine	with_grsec
+%endif
 
 %if !%{with grsec}
 %undefine	with_pax
@@ -603,7 +608,9 @@ patch -p1 -s < exec-shield.patch
 
 %patch200 -p1
 
-#patch250 -p1
+%if %{with vserver}
+%patch250 -p1
+%endif
 
 # hotfixes
 %patch300 -p1
@@ -690,7 +697,7 @@ BuildConfig (){
 	cat %{SOURCE91} >> arch/%{_target_base_arch}/defconfig
 %endif
 #	vserver
-#	cat %{SOURCE92} >> arch/%{_target_base_arch}/defconfig
+	cat %{SOURCE92} >> arch/%{_target_base_arch}/defconfig
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
