@@ -57,6 +57,8 @@ Source62:	%{name}-sparc64-BOOT.config
 Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
+Source73:	%{name}-ppc.config
+Source74:	%{name}-ppc-smp.config
 Source1000:	%{name}-lids.config
 Source1001:	%{name}-abi.config
 Source1002:	%{name}-addon.config
