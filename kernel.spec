@@ -202,7 +202,8 @@ Patch37:	linux-2.4.20-davfs-_FUNCTION_.patch
 # from http://www.noc.uoa.gr/~avel/page.php?page=nokia&lang=en
 Patch38:	linux-2.4.20-Nokia5510.patch
 
-#from ??
+#from http://people.freebsd.org/~gibbs/linux/SRC/
+#last: aic79xx-linux-2.4-20030410-tar.gz
 Patch39:	linux-2.4.20-aic79xx.patch.bz2
 Patch40:	linux-2.4.20-i810_audio.patch
 Patch41:	linux-2.4.20-afs.patch.bz2
