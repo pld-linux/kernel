@@ -26,7 +26,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	1.4%{?_with_preemptive:_pr}
+Release:	1.5%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -167,7 +167,7 @@ Patch904:	linux-abi-put_user.patch
 Patch905:	linux-abi-fl_ibcs_to_linux.patch
 Patch906:	linux-2.4.19-iptables-1.2.7a-netfilter.patch
 Patch907:	PPC-grsecurity-pgtable.h.patch
-
+Patch908:	linux-2.4.19-PPC-o1_scheduler.patch
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
 
@@ -419,14 +419,14 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch1 -p1
 %patch900 -p1
 %patch2 -p1
-%ifnarch ppc
 %patch3 -p1
-%endif
 %patch4 -p1
 %patch5 -p1
 %patch904 -p1
 %patch6 -p1
+%ifarch ppc
 %patch907 -p1
+%endif
 %{?_with_preemptive:echo Installing Preemptible patch}
 %{?_with_preemptive:%patch8 -p1}
 #%patch9 -p1
@@ -506,6 +506,9 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 #echo Adding IP Personality 
 #patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020427-linux-2.4.18.diff
 
+%ifarch ppc
+%patch908 -p1
+%endif
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
