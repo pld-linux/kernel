@@ -23,7 +23,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Name:		kernel
 %define		_ver	2.6.4
 Version:	%{_ver}+grsec
-Release:	2
+Release:	3
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{_ver}.tar.bz2
