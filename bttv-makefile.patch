@@ -1,0 +1,34 @@
+diff -urN linux/bttv-0.7.86.orig/driver/Makefile linux/bttv-0.7.86/driver/Makefile
+--- linux/bttv-0.7.86.orig/driver/Makefile	Mon Oct  1 18:11:46 2001
++++ linux/bttv-0.7.86/driver/Makefile	Tue Jan  8 00:23:51 2002
+@@ -3,7 +3,7 @@
+ 
+ # where the kernel sources are located
+ RUNNING := /lib/modules/$(shell uname -r)/build
+-KERNEL_DIR := $(shell if test -d $(RUNNING); then echo $(RUNNING); else echo /usr/src/linux; fi)
++KERNEL_DIR := $(shell if test -d $(RUNNING); then echo $(RUNNING); else echo ../../../linux; fi)
+ #KERNEL_DIR := /usr/src/linux
+ 
+ # kernel version
+@@ -17,9 +17,9 @@
+   KCOMPAT := kcompat24.o
+ endif
+ 
+-MODULE_DIR := $(shell test -d "/lib/modules/$(CURRENT)/kernel" && \
+-	echo "/lib/modules/$(CURRENT)/kernel/drivers/media/video" ||\
+-	echo "/lib/modules/$(CURRENT)/misc")
++MODULE_DIR := $(shell test -d "../../../linux-installed/lib/modules/$(CURRENT)/kernel" && \
++	echo "../../../linux-installed/lib/modules/$(CURRENT)/kernel/drivers/media/video" ||\
++	echo "../../../linux-installed/lib/modules/$(CURRENT)/misc")
+ 
+ EXTRA_CFLAGS=-g #-DVIDEODAT_HACK
+ 
+@@ -59,7 +59,7 @@
+ 
+ install:
+ 	strip --strip-debug *.o
+-	su -c "set -x; mkdir -p $(MODULE_DIR); cp -v $(M_OBJS) $(MX_OBJS) $(MODULE_DIR); depmod -a"
++	set -x; mkdir -p $(MODULE_DIR); cp -v $(M_OBJS) $(MX_OBJS) $(MODULE_DIR)
+ 
+ clean:
+ 	-rm -f *.o .*.o.flags *~
