@@ -14,7 +14,6 @@ Version:	2.5.14
 Release:	0.1
 License:	GPL
 Group:		Base/Kernel
-Group(pl):	Podstawowe/J±dro
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -35,7 +34,7 @@ Source72:	%{name}-alpha-BOOT.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
 
-#Patch1:		http://www.kernel.org/pub/linux/kernel/people/davej/patches/2.5/2.5.13/patch-2.5.13-dj2.diff.gz
+Patch1:		http://www.kernel.org/pub/linux/kernel/people/davej/patches/2.5/%{version}/patch-%{version}-dj1.diff.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -43,7 +42,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %ifarch sparc64
 BuildRequires:	egcs64
 %else
-BuildRequires:	egcs
+#BuildRequires:	egcs
 %endif
 BuildRequires:	modutils
 Buildrequires:	perl
@@ -87,7 +86,6 @@ siê w komputerze, takich jak karty muzyczne, sterowniki dysków, etc.
 Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra
 Group:		Base/Kernel
-Group(pl):	Podstawowe/J±dro
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	i2c-devel = 2.6.1
@@ -106,7 +104,6 @@ oraz niektórych programów.
 Summary:	Kernel source tree
 Summary(pl):	Kod ¼ród³owy j±dra Linuxa
 Group:		Base/Kernel
-Group(pl):	Podstawowe/J±dro
 Autoreqprov:	no
 Requires:	%{name}-headers = %{version}
 %ifarch %{ix86}
@@ -119,7 +116,7 @@ most C programs as they depend on constants defined in here. You can
 also build a custom kernel that is better tuned to your particular
 hardware.
 
-%description -l de source
+%description source -l de
 Das Kernel-Source-Paket enthält den source code (C/Assembler-Code) des
 Linux-Kernels. Die Source-Dateien werden gebraucht, um viele
 C-Programme zu compilieren, da sie auf Konstanten zurückgreifen, die
@@ -127,7 +124,7 @@ im Kernel-Source definiert sind. Die Source-Dateien können auch
 benutzt werden, um einen Kernel zu compilieren, der besser auf Ihre
 Hardware ausgerichtet ist.
 
-%description -l fr source
+%description source -l fr
 Le package pour le kernel-source contient le code source pour le noyau
 linux. Ces sources sont nécessaires pour compiler la plupart des
 programmes C, car il dépend de constantes définies dans le code
@@ -140,17 +137,17 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -n linux-%{version}
-#%patch1 -p1
+%patch1 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
-%ifarch %{ix86} alpha sparc
-    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= egcs/g' \
-%endif
-%ifarch sparc64
-    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
-%endif
+#%ifarch %{ix86} alpha sparc
+#    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= egcs/g' \
+#%endif
+#%ifarch sparc64
+#    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
+#%endif
     Makefile.orig >Makefile
 
 
@@ -177,7 +174,7 @@ BuildKernel() {
 		echo BUILDING THE NORMAL KERNEL...
 	fi
 	rm -Rf arch/$RPM_ARCH/defconfig
-	:> arch/$RPM_ARCH/defconfig
+:> arch/$RPM_ARCH/defconfig
 	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/$RPM_ARCH/defconfig
 	%{__make} mrproper
 	ln -sf arch/$RPM_ARCH/defconfig .config
@@ -190,7 +187,7 @@ BuildKernel() {
 	%{__make} dep clean
 %endif
 	%{__make} include/linux/version.h
-	
+
 %ifarch %{ix86}
 	%{__make} bzImage
 %else
@@ -231,10 +228,11 @@ rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
 
 # UP KERNEL
-BuildKernel 
+BuildKernel
 
 
 %install
+rm -rf $RPM_BUILD_ROOT
 umask 022
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{version}}
@@ -243,7 +241,7 @@ KERNEL_BUILD_DIR=`pwd`
 cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
 
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
-ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
+ln -sf linux-%{version} $RPM_BUILD_ROOT%{_kernelsrcdir}
 
 %ifarch sparc sparc64
 ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
@@ -278,14 +276,14 @@ install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
-#%{__make} symlinks 
+#%{__make} symlinks
 #%{__make} include/linux/version.h
 #%{__make} "`pwd`/include/linux/modversions.h"
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well, after we fix the paths
 
-%{__make} depend 
+%{__make} depend
 find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
 while read file ; do
 	mv $file $file.old
@@ -302,7 +300,7 @@ rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_DIR/linux-installed
 
 %post
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null 
+mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
@@ -327,7 +325,7 @@ rm -f /usr/src/linux
 ln -snf linux-%{version} /usr/src/linux
 
 %postun headers
-if [ -L /usr/src/linux ]; then 
+if [ -L /usr/src/linux ]; then
 	if [ "`ls -l /usr/src/linux | awk '{ print $11 }'`" = "linux-%{version}" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f /usr/src/linux
@@ -355,31 +353,31 @@ fi
 
 %files headers
 %defattr(644,root,root,755)
-%dir %{_prefix}/src/linux-%{version}
-%{_prefix}/src/linux-%{version}/include
+%dir %{_kernelsrcdir}-%{version}
+%{_kernelsrcdir}-%{version}/include
 %{_includedir}/asm
 %{_includedir}/linux
 
 %files source
-%defattr(-,root,root,755)
-%{_prefix}/src/linux-%{version}/Documentation
-%{_prefix}/src/linux-%{version}/arch
-%{_prefix}/src/linux-%{version}/drivers
-%{_prefix}/src/linux-%{version}/fs
-%{_prefix}/src/linux-%{version}/init
-%{_prefix}/src/linux-%{version}/ipc
-%{_prefix}/src/linux-%{version}/kernel
-%{_prefix}/src/linux-%{version}/lib
-%{_prefix}/src/linux-%{version}/mm
-%{_prefix}/src/linux-%{version}/net
-%{_prefix}/src/linux-%{version}/scripts
-%{_prefix}/src/linux-%{version}/.config
-%{_prefix}/src/linux-%{version}/.depend
-%{_prefix}/src/linux-%{version}/.hdepend
-%{_prefix}/src/linux-%{version}/COPYING
-%{_prefix}/src/linux-%{version}/CREDITS
-%{_prefix}/src/linux-%{version}/MAINTAINERS
-%{_prefix}/src/linux-%{version}/Makefile
-%{_prefix}/src/linux-%{version}/README
-%{_prefix}/src/linux-%{version}/REPORTING-BUGS
-%{_prefix}/src/linux-%{version}/Rules.make
+%defattr(644,root,root,755)
+%{_kernelsrcdir}-%{version}/Documentation
+%{_kernelsrcdir}-%{version}/arch
+%{_kernelsrcdir}-%{version}/drivers
+%{_kernelsrcdir}-%{version}/fs
+%{_kernelsrcdir}-%{version}/init
+%{_kernelsrcdir}-%{version}/ipc
+%{_kernelsrcdir}-%{version}/kernel
+%{_kernelsrcdir}-%{version}/lib
+%{_kernelsrcdir}-%{version}/mm
+%{_kernelsrcdir}-%{version}/net
+%{_kernelsrcdir}-%{version}/scripts
+%{_kernelsrcdir}-%{version}/.config
+%{_kernelsrcdir}-%{version}/.depend
+%{_kernelsrcdir}-%{version}/.hdepend
+%{_kernelsrcdir}-%{version}/COPYING
+%{_kernelsrcdir}-%{version}/CREDITS
+%{_kernelsrcdir}-%{version}/MAINTAINERS
+%{_kernelsrcdir}-%{version}/Makefile
+%{_kernelsrcdir}-%{version}/README
+%{_kernelsrcdir}-%{version}/REPORTING-BUGS
+%{_kernelsrcdir}-%{version}/Rules.make
