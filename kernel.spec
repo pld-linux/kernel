@@ -868,7 +868,7 @@ fi
 if [ -e $KERNEL_BUILD_DIR/build-done/kernel-SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h ]; then
 install $KERNEL_BUILD_DIR/build-done/kernel-SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h \
 	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
-install $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/version-smp.h \
+install $KERNEL_BUILD_DIR/build-done/kernel-SMP/usr/src/linux-%{version}/include/linux/version-smp.h \
 	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 install	$KERNEL_BUILD_DIR/build-done/kernel-SMP/usr/src/linux-%{version}/config-smp \
 	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
