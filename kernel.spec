@@ -30,7 +30,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	2.23
+Release:	2.24
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
@@ -51,7 +51,7 @@ Group(uk):	âÁÚÁ/ñÄÒÏ
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
-Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-138.tar.gz
+Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-139.tar.gz
 Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
@@ -340,6 +340,15 @@ Pakiet zawiera j±dro Linuksa dedykowane dyskietkom startowym i powinno
 byæ u¿ywane jedynie podczas instalacji systemu. Wiele u¿ytecznych
 opcji zosta³o wy³±czonych, aby jak najbardziej zmniejszyæ jego
 rozmiar.
+
+%package pcmcia-cs
+Summary:	PCMCIA-CS modules
+Summary(pl):	Modó³y PCMCIA-CS
+Group:		Base/Kernel
+Group(pl):	Podstawowe/Kernel
+Provides:	%{name}-pcmcia-cs=%{pcmcia_version}
+%description
+%description -l pl
 
 %package headers
 Summary:	Header files for the Linux kernel
@@ -1018,6 +1027,10 @@ if [ -L /usr/src/linux ]; then
 	fi
 fi
 
+
+%post pcmcia-cs
+%postun pcmcia-cs
+
 %if %{?_without_up:0}%{!?_without_up:1}
 %files
 %defattr(644,root,root,755)
@@ -1027,9 +1040,6 @@ fi
 /boot/vmlinuz-%{version}-%{release}
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
-%ifarch %{ix86}
-/lib/modules/%{version}-%{release}/pcmcia
-%endif
 /lib/modules/%{version}-%{release}/kernel
 /lib/modules/%{version}-%{release}/build
 /lib/modules/%{version}-%{release}/modules.dep
@@ -1038,6 +1048,12 @@ fi
 %endif			# %{_without_up}
 
 #%if !%{test_build}
+
+%files pcmcia-cs
+%defattr(644,root,root,755)
+%ifarch %{ix86}
+/lib/modules/%{version}-%{release}/pcmcia
+%endif
 
 %if%{?_without_smp:0}%{!?_without_smp:1}
 %files smp
