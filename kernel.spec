@@ -1218,7 +1218,7 @@ fi
 #drm stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 %endif
-%ifarch sparc sparc64
+%ifnarch sparc sparc64
 #oss sound stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/oss
 %endif
