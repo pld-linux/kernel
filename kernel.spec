@@ -763,15 +763,14 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1501}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1502}
 %endif
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1503}
+
+# fix gentbl cannot execute
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1550}
 
 %ifarch ppc
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2000}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2001}
 %endif
-
-# fix gentbl cannot execute
-chmod a+x $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/drivers/char/hfmodem/gentbl
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
