@@ -188,7 +188,8 @@ Patch86:	2.6.6-NTFS-2.1.9-lkml.patch
 Patch88:	2.6.6-qsort-updated-lkml.patch
 Patch90:	2.6.6-xfs-qsort-lkml.patch
 
-Patch94:	grsecurity-2.0-2.6.6-unofficial.patch
+#Patch94:	grsecurity-2.0-2.6.6-unofficial.patch
+Patch94:	kernel-grsec.patch
 
 Patch96:	2.6.6-lirc_i2c.diff
 # for older glibc:
@@ -639,7 +640,10 @@ cp drivers/usb/media/libpwcx.a_mipsel drivers/usb/media/libpwcx.a_
 %patch90 -p1
 
 #grsec
-##%patch94 -p1
+%ifarch alpha %{ix86} ppc sparc amd64
+# ia64 and sparc64 NFY.
+%patch94 -p1
+%endif
 
 %patch96 -p1
 %patch97 -p1
