@@ -572,7 +572,7 @@ BuildKernel() {
 	if [ "$BOOT" ] ; then
 		KernelVer=%{version}-%{release}-BOOT
 	else
-		KernelVer=%{version}=%{release}
+		KernelVer=%{version}-%{release}
 	fi	
 		echo BUILDING THE NORMAL KERNEL...
 	fi
