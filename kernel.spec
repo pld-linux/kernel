@@ -1,5 +1,5 @@
-
-## Program required by kernel to work.
+#
+# Programs required by kernel to work.
 %define		_binutils_ver		2.12
 %define		_util_linux_ver		2.10o
 %define		_module_init_tool_ver	0.9.10
@@ -14,11 +14,11 @@
 %define		_nfs_utils_ver		1.0.5
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
-
+# Netfilter snap.
 %define		_netfilter_snap		20040316
-
+#
 %define		no_install_post_strip	1
-
+#
 Summary:	The Linux kernel (the core of the Linux operating system)
 Name:		kernel
 Version:	2.6.4
@@ -27,7 +27,7 @@ Epoch:		0
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
-
+# Source0-md5:	335f06eba1e5372ba38a0d2b253629bd
 Patch0:		2.6.0-ksyms-add.patch
 Patch1:		2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
 Patch2:		2.6.0-t6-usb-irq.patch
@@ -38,17 +38,13 @@ Patch6:		2.6.0-t8-swap-include-lkml.patch
 Patch7:		2.6.0-t9-acpi_osl-lkml.patch
 Patch8:		2.6.1-kbuild-out-of-tree.diff
 Patch9:		2.6.1-squashfs1.3r3.patch
-
 Patch20:	2.6.4-paxgrsec.patch
 Patch21:	2.6.4-paxgrsec-gcc34.patch
-
 Patch30:	2.6.4-esfq.patch
 Patch31:	2.6.4-imq.patch
 Patch32:	2.6.4-imq-nat.patch
-
 Patch50:	2.6.4-pom-ng-%{_netfilter_snap}-base.patch
 Patch51:	2.6.4-pom-ng-%{_netfilter_snap}-extra.patch
-
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 BuildRequires:	module-init-tools
