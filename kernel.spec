@@ -115,10 +115,11 @@ Patch2000:	2.2.20-ppc_ide.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+BuildRequires:	rpm-build >= 4.0.2-53
 %ifarch sparc64
 BuildRequires:	egcs64
 %else
-BuildRequires:	egcs
+BuildRequires:	%{kgcc_package}
 %endif
 %ifarch sparc
 BuildRequires:	sparc32
@@ -483,7 +484,7 @@ BuildKernel() {
 	make include/linux/version.h
 
 %ifarch %{ix86} alpha sparc
-	KERNELCC="egcs"
+	KERNELCC="%{kgcc}"
 %endif
 %ifarch sparc64
 	KERNELCC="sparc64-linux-gcc"
@@ -556,7 +557,7 @@ sed "s/^DIRS =.*//" Makefile.bak > Makefile
 sed "s/.*= 8390\..$//" clients/Makefile.bak > clients/Makefile
 
 %{__make} all
-#	CC=egcs \
+#	CC=%{kgcc} \
 #	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
 #	MFLAG="$RPM_OPT_FLAGS -O"
 
@@ -577,7 +578,7 @@ sed "s/^PCMCIA_SRC=.*/PCMCIA_SRC=$kernelbase\/pcmcia-cs-%{pcmcia_version}/" conf
 
 cd driver
 %{__make} all
-	CC=egcs \
+	CC=%{kgcc} \
 	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
 	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNEL_BUILD_DIR/include -I$KERNEL_BUILD_DIR/pcmcia-cs-%{pcmcia_version}/include -D__KERNEL__ -DEXPORT_SYMTAB"
 
