@@ -1,0 +1,30 @@
+diff -Naur -X dontdiff linux-2.4.0/Makefile linux-2.4.0-greg/Makefile
+--- linux-2.4.0/Makefile	Thu Jan  4 13:48:13 2001
++++ linux-2.4.0-greg/Makefile	Thu Jan  4 21:40:49 2001
+@@ -228,6 +228,10 @@
+ 
+ include arch/$(ARCH)/Makefile
+ 
++# if we have a StackGuard compiler, then we need to turn off the canary death handler stuff
++CFLAGS	+= $(shell if $(CC) -fno-canary-all-functions -S -o /dev/null -xc /dev/null &gt;/dev/null 2&gt;&amp;1; then echo "-fno-canary-all-functions"; fi)
++CFLAGS	+= $(shell if $(CC) -mno-terminator-canary -S -o /dev/null -xc /dev/null &gt;/dev/null 2&gt;&amp;1; then echo "-mno-terminator-canary"; fi)
++
+ export	CPPFLAGS CFLAGS AFLAGS
+ 
+ export	NETWORKS DRIVERS LIBS HEAD LDFLAGS LINKFLAGS MAKEBOOT ASFLAGS
+diff -Naur -X dontdiff linux-2.4.0/arch/i386/boot/compressed/Makefile linux-2.4.0-greg/arch/i386/boot/compressed/Makefile
+--- linux-2.4.0/arch/i386/boot/compressed/Makefile	Tue Mar  7 11:04:12 2000
++++ linux-2.4.0-greg/arch/i386/boot/compressed/Makefile	Thu Jan  4 21:40:49 2001
+@@ -12,6 +12,12 @@
+ CFLAGS = $(CPPFLAGS) -O2 -DSTDC_HEADERS
+ ZLDFLAGS = -e startup_32
+ 
++# if we have a StackGuard compiler, then we need to turn off the canary death handler stuff
++CFLAGS += $(shell if $(CC) -fno-canary-all-functions -S -o /dev/null -xc /dev/null &gt;/dev/null 2&gt;&amp;1; then echo "-fno-canary-all-functions"; fi)
++CFLAGS += $(shell if $(CC) -mno-terminator-canary -S -o /dev/null -xc /dev/null &gt;/dev/null 2&gt;&amp;1; then echo "-mno-terminator-canary"; fi)
++
++
++
+ #
+ # ZIMAGE_OFFSET is the load offset of the compression loader
+ # BZIMAGE_OFFSET is the load offset of the high loaded compression loader
