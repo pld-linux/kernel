@@ -30,7 +30,6 @@ ExclusiveArch:	%{ix86}
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
-BuildRequires:	egcs
 BuildRequires:	modutils
 BuildRequires:	perl
 BuildRequires:  ncurses-devel
