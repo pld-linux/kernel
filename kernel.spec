@@ -199,6 +199,7 @@ Patch911:	linux-2.4.19-SPARC.patch
 Patch912:	linux-2.4.19-grsec-1.9.7-PAX-sysctl.patch
 Patch913:	squashfs1.0b-fix.patch
 Patch914:	linux-2.4.19-MODULE_XXX.patch
+Patch915:	linux-2.4.19-usb-digitalcams.patch
 
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
@@ -604,6 +605,9 @@ echo USB 2.0 Support from Linux-2.4.20-rc1.
 
 # added missing MODULE_LICENSE, MODULE_DESCRIPTION, MODULE_AUTHOR
 %patch914 -p1
+
+# added some USB digital cameras.
+%patch915 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
