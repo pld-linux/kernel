@@ -323,6 +323,9 @@ Patch146:	linux-2.4.20-USB.patch.bz2
 # (even if grsecurity is whole disabled, only patch applied)
 Patch147:	linux-2.4-sysctl-empty.patch
 
+# fix typo in sparc64_get_context (g7 saved wrongly, broke 64-bit userspace)
+Patch148:	linux-2.4.20-sparc64-get_context.patch
+
 # Patches fixing other patches or 3rd party sources ;)
 # This patch allows to create more than one sound device using alsa
 # and devfs with two or more sound cards
@@ -445,7 +448,6 @@ Patch2102:	linux-2.4-fault-leak.patch
 Patch2103:	linux-2.4-proc-cmdline-sign.patch
 # fix sstfb oops
 Patch2104:	linux-2.4-sstfb-oops.patch
-
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -871,8 +873,8 @@ echo Sysctl for /dev/{k,}mem access control
 # USB patches
 %patch146 -p1
 
-#
 %patch147 -p1
+%patch148 -p1
 
 # VIA82Cxxx
 echo Fixed VIA82Cxxx Audio ...
