@@ -14,7 +14,7 @@
 #
 %define		pre_version		pre1
 %define		ipvs_version		1.0.0
-%define		freeswan_version	1.95
+%define		freeswan_version	1.97
 %define		wlan_version		0.1.13
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		IPperson_version	20010724-2.4.7
@@ -30,7 +30,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	2.24
+Release:	2.25
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
@@ -78,6 +78,7 @@ Source1003:	%{name}-netfilter.config
 Source1004:	%{name}-ipvs.config
 Source1666:	%{name}-grsec.config
 Source1667:	%{name}-int.config
+Source1668:	%{name}-ipsec.config
 Source1999:	%{name}-preemptive.config
 
 # New features
