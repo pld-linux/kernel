@@ -9,7 +9,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.18
-Release:	5
+Release:	6
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -56,6 +56,7 @@ Patch14:	linux-tasks.patch
 Patch15:	%{name}-ipvs-1.0.3-2.2.18.patch
 # based on ftp://ftp.kernel.org/pub/linux/kernel/people/sct/raw-io/kiobuf-2.2.18pre24.tar.gz
 Patch16:	linux-raw.patch
+Patch17:	linux-i815-support.patch
 #Patch:		linux-2.2.18pre21.ext3.diff
 
 ExclusiveOS:	Linux
