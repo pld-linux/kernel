@@ -26,8 +26,8 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.14
-%define		_cset		20040214_0608
+%define		_rel		0.20
+%define		_cset		20040216_0307
 
 ## netfilter snap 
 %define		_netfilter_snap		20040130
@@ -50,8 +50,8 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc2.tar.bz2
-# Source0-md5:	c986668e1dbc7f93d7c274182bf81855
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc3.tar.bz2
+# Source0-md5:	3428e75885a3139c366de8282cba15de
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -457,7 +457,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}-rc2
+%setup -q -n linux-%{version}-rc3
 
 %patch0 -p1
 
