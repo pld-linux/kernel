@@ -9,7 +9,7 @@
 # _without_up		- don't build UP kernel
 # _without_wrr		- don't build WRR support
 #
-%define		krelease		5.905
+%define		krelease		5.906
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -200,6 +200,8 @@ Patch141:	linux-tulip-vlan.patch
 Patch142:	linux-modules-fixed.patch
 Patch143:	linux-ppc-procesor.patch
 Patch144:	amd762_irq_router.patch
+
+Patch145:	linux-2.4.18-iptables.fix.patch
 
 Patch147:	http://www.hojdpunkten.ac.se/054/samba/00-smbfs-2.4.18-codepage.patch.gz
 
@@ -778,6 +780,9 @@ echo Added patch fot ADM router
 %{!?_without_wrr:echo Added WRR support}
 %{!?_without_wrr:%patch25 -p1}
 
+# fixed iptables building process
+echo Patch to fixing iptables building process ...
+%patch145 -p0
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
