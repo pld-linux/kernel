@@ -323,7 +323,7 @@ else
 	echo BUILDING THE NORMAL KERNEL PCMCIA MODULES...
 fi
 cd pcmcia-cs-%{pcmcia_version}
-make clean
+%{__make} clean
 ./Configure \
 	--noprompt \
 	--trust \
@@ -343,11 +343,11 @@ sed "s/^MODDIR=.*/MODDIR=\/lib\/modules\/$KernelVer/" config.mk.bak > config.mk
 sed "s/^DIRS =.*//" Makefile.bak > Makefile
 sed "s/.*= 8390\..$//" clients/Makefile.bak > clients/Makefile
 
-make all \
+%{__make} all \
 	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
 	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNELDIR/include -D__KERNEL__ -DEXPORT_SYMTAB"
 
-make install
+%{__make} install
 cd ..
 }
 
@@ -421,7 +421,7 @@ install dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{v
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
-make mrproper
+%{__make} mrproper
 find  -name "*~" -print | xargs rm -f
 find  -name "*.orig" -print | xargs rm -f
 
@@ -430,28 +430,28 @@ install $RPM_SOURCE_DIR/kernel-i586.config .config
 %else
 install $RPM_SOURCE_DIR/kernel-$RPM_ARCH.config .config
 %endif
-make oldconfig
+%{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
 %ifarch %{ix86}
 install $RPM_SOURCE_DIR/kernel-i586-smp.config .config
 %else
 install $RPM_SOURCE_DIR/kernel-$RPM_ARCH-smp.config .config
 %endif
-make oldconfig
+%{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
-make symlinks 
-make include/linux/version.h
-make "`pwd`/include/linux/modversions.h"
+%{__make} symlinks 
+%{__make} include/linux/version.h
+%{__make} "`pwd`/include/linux/modversions.h"
 
 #this generates modversions info which we want to include and we may as
 #well include the depends stuff as well, after we fix the paths
 
-make depend 
+%{__make} depend 
 find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
 while read file ; do
 	mv $file $file.old
@@ -459,7 +459,7 @@ while read file ; do
 	rm -f $file.old
 done
 
-make clean
+%{__make} clean
 rm -f scripts/mkdep
 
 %clean
