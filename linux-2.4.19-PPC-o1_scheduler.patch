@@ -130,8 +130,31 @@ diff -Nur linux-2.4.19.org/include/asm-ppc/bitops.h linux-2.4.19/include/asm-ppc
  #endif
  
  static inline task_t * context_switch(task_t *prev, task_t *next)
---- linux-2.4.19/include/asm-ppc/smp.h.org	Mon Sep 16 09:31:30 2002
-+++ linux-2.4.19/include/asm-ppc/smp.h	Mon Sep 16 09:32:06 2002
+--- linux-2.4.19.work/arch/ppc/mm/init.c.org	Mon Sep 16 12:29:30 2002
++++ linux-2.4.19.work/arch/ppc/mm/init.c	Mon Sep 16 12:31:46 2002
+@@ -168,9 +168,9 @@
+ 		{
+ 			int iscur = 0;
+ #ifdef CONFIG_SMP
+-			printk("%3d ", p->processor);
+-			if ( (p->processor != NO_PROC_ID) &&
+-			     (p == current_set[p->processor]) )
++			printk("%3d ", p->cpu);
++			if ( (p->cpu != NO_PROC_ID) &&
++			     (p == current_set[p->cpu]) )
+ 			{
+ 				iscur = 1;
+ 				printk("current");
+--- linux-2.4.19/arch/ppc/kernel/ppc_ksyms.c.org	Thu Sep 19 20:41:52 2002
++++ linux-2.4.19/arch/ppc/kernel/ppc_ksyms.c	Thu Sep 19 20:41:40 2002
+@@ -371,3 +371,5 @@
+ #endif /* defined(CONFIG_ALL_PPC) */
+ 
+ 
++
++EXPORT_SYMBOL(ioremap_bot);
+--- linux-2.4.19/include/asm-ppc/smp.h.org	Fri Sep 20 14:51:59 2002
++++ linux-2.4.19/include/asm-ppc/smp.h	Fri Sep 20 15:06:52 2002
 @@ -49,7 +49,7 @@
  #define cpu_logical_map(cpu) (cpu)
  #define cpu_number_map(x) (x)
@@ -141,3 +164,65 @@ diff -Nur linux-2.4.19.org/include/asm-ppc/bitops.h linux-2.4.19/include/asm-ppc
  
  extern int smp_hw_index[NR_CPUS];
  #define hard_smp_processor_id() (smp_hw_index[smp_processor_id()])
+--- linux-2.4.19/arch/ppc/kernel/process.c.org	Mon Nov 26 14:29:17 2001
++++ linux-2.4.19/arch/ppc/kernel/process.c	Fri Sep 20 15:16:32 2002
+@@ -270,7 +270,7 @@
+ #endif
+ 	
+ #ifdef CONFIG_SMP
+-	printk(" CPU: %d", current->processor);
++	printk(" CPU: %d", current->cpu);
+ #endif /* CONFIG_SMP */
+ 	
+ 	printk("\n");
+--- linux-2.4.19/arch/ppc/kernel/smp.c.org	Sat Aug  3 02:39:43 2002
++++ linux-2.4.19/arch/ppc/kernel/smp.c	Fri Sep 20 15:20:40 2002
+@@ -292,9 +292,9 @@
+ 	 * cpu 0, the master -- Cort
+ 	 */
+ 	cpu_callin_map[0] = 1;
+-	current->processor = 0;
++	current->cpu = 0;
+ 
+-	init_idle();
++//	init_idle();
+ 
+ 	for (i = 0; i < NR_CPUS; i++) {
+ 		prof_counter[i] = 1;
+@@ -348,12 +348,12 @@
+ 		p = init_task.prev_task;
+ 		if (!p)
+ 			panic("No idle task for CPU %d", i);
+-		del_from_runqueue(p);
++//		del_from_runqueue(p);
+ 		unhash_process(p);
+-		init_tasks[i] = p;
++//		init_tasks[i] = p;
+ 
+-		p->processor = i;
+-		p->cpus_runnable = 1 << i; /* we schedule the first task manually */
++		p->cpu = i;
++//		p->cpus_runnable = 1 << i; /* we schedule the first task manually */
+ 		current_set[i] = p;
+ 
+ 		/*
+@@ -502,7 +502,7 @@
+ 
+ void __init smp_callin(void)
+ {
+-	int cpu = current->processor;
++	int cpu = current->cpu;
+ 	
+         smp_store_cpu_info(cpu);
+ 	set_dec(tb_ticks_per_jiffy);
+--- linux-2.4.19/kernel/sched.c.org	Fri Sep 20 14:48:06 2002
++++ linux-2.4.19/kernel/sched.c	Fri Sep 20 15:27:34 2002
+@@ -119,6 +119,8 @@
+ #define BASE_TIMESLICE(p) (MIN_TIMESLICE + \
+ 	((MAX_TIMESLICE - MIN_TIMESLICE) * (MAX_PRIO-1-(p)->static_prio)/(MAX_USER_PRIO - 1)))
+ 
++unsigned long cache_decay_ticks;
++
+ static inline unsigned int task_timeslice(task_t *p)
+ {
+ 	if (p->policy == SCHED_BATCH)
