@@ -3,7 +3,6 @@
 #		- fix lirc_sasem (usb api)
 #		- add distcc support (and don't break crossbuild!)
 #		- fix vserver against new grsec
-#		- emufx module / ppc-target
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
