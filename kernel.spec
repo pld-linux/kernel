@@ -2,53 +2,46 @@
 # If you define the following as 1, only kernel, -headers and -source
 # packages will be built
 #
-# _with_lids		- build LIDS enabled kernels
 # _without_grsec	- build kernel without grsecurity patch
-#
-# WARNING: grsec needs manual tweaking, read note in the patch for details
+# _with_preemptible	- build with Preemptible patch
+# _with_o1_sched	- build with new O(1) scheduler
+# _without_smp		- don't build SMP kernel
 #
 %define		test_build		0
 #
-%define		pre_version		pre9
-%define		lids_version		1.0.11-2.4.6
-%define		ipvs_version		0.9.4
-%define		freeswan_version	snap2001sep27b
-%define 	aacraid_version		1.0.6
-%define		wlan_version		0.1.10
+%define		pre_version		pre1
+%define		ipvs_version		0.9.8
+%define		freeswan_version	1.92
+%define		wlan_version		0.1.12
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
-%define		vlan_version		1.5
 %define		IPperson_version	20010724-2.4.7
-%define		grsec_version		1.8-2.4.7
-%define		tulip_version		1.1.8
+%define		grsec_version		1.9.2-2.4.17
 %define		aic_version		6.2.3-2.4.7
-%define		jfs_version		2.4-1.0.7
+%define		jfs_version		2.4-1.0.14
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.4.7
-Release:	14
+Version:	2.4.17
+Release:	2.5
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
-Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-133.tar.gz
+Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-134.tar.gz
 Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
-Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
-Source7:	linux-2.4.7-netfilter-20010928.tar.gz
-Source8:	http://www.lids.org/download/lids-%{lids_version}.tar.gz
-Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
+# based on cvs cvs@pserver.samba.org:/cvsroot netfilter
+Source7:	linux-2.4.17-netfilter-20020204.tar.gz
 Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_version}.tar.gz
+# new -> ftp://ftp.tux.org/pub/roudier/drivers/portable/sym-2.1.x/sym-2.1.16-20011028.tar.gz
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
-Source12:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
-Source13:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
-Source14:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}-patch.tar.gz
-Source15:	http://prdownloads.sourceforge.net/tulip/tulip-%{tulip_version}.tar.gz
+Source12:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
+Source13:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}-patch.tar.gz
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -61,130 +54,102 @@ Source62:	%{name}-sparc64-BOOT.config
 Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
-Source1000:	%{name}-lids.config
+Source73:	%{name}-ppc.config
+Source74:	%{name}-ppc-smp.config
 Source1001:	%{name}-abi.config
 Source1002:	%{name}-addon.config
-Source1003:	%{name}-xfs.config
-Source1004:	%{name}-netfilter.config
-Source1005:	%{name}-ipvs.config
-Source1006:	%{name}-ippersonality.config
+Source1003:	%{name}-netfilter.config
+Source1004:	%{name}-ipvs.config
 Source1666:	%{name}-grsec.config
+Source1667:	%{name}-int.config
+Source1999:	%{name}-preemptive.config
 
 # New features
 
 Patch0:		%{name}-pldfblogo.patch
-#Patch1:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
-Patch1:		patch-int-2.4.5.0.gz
-Patch2:		linux-2.4.7-freeswan-%{freeswan_version}.patch.gz
-# http://domsch.com/linux/aacraid/linux-2.4.4-aacraid-043001.patch
-Patch3: 	http://domsch.com/linux/aacraid/linux-2.4.7-aacraid-20010721.patch
-#Patch3:		linux-2.4.4-aacraid-043001.patch
-#Patch3:		linux-2.4.7-aacraid.patch
+# ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
+Patch1:		patch-int-2.4.17.0.gz
+Patch2:		linux-%{version}-freeswan-%{freeswan_version}.patch.gz
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
-Patch4:		br2684-against2.4.7.diff
-# ftp://linux-xfs.sgi.com/projects/xfs/download/
-Patch5:		linux-2.4.7-xfs-20010726.patch.gz
-# Compressed iso9660 filesystem
-Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs+filemap-2.4.7-1.diff.gz
-Patch7:		linux-abi-2.4.3-PLD.patch
+Patch4:		br2684-against2.4.17.diff
+# ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
+Patch5:		linux-2.4.17-xfs-20020204.patch.gz
+# Homepage of ABI : http://linux-abi.sourceforge.net/
+#ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2
+Patch7:		linux-abi-2.4.17.0.patch.bz2
 Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
-# grsecurity patch http://www.getrewted.net/
-Patch9:		linux-grsecurity-%{grsec_version}.patch
-# EXT3
-# http://www.uow.edu.au/~andrewm/linux/ext3/
-Patch10:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.5-247.gz
-# http://sci.felk.cvut.cz/nwd/linux-2.4/
-Patch11:	nwd-1.4-2.4.7-PLD.patch
-Patch12:	nwd-1.4-pre.common.patch
+# http://grsecurity.net/grsecurity-%{grsec_version}.patch
+Patch9:		grsecurity-%{grsec_version}.patch
+# Preemptive kernel  patch
+Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-%{version}-1.patch
+
+Patch11:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-%{version}-1.patch
+Patch12:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-%{version}-1.patch
+Patch13:	http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.16-ipvs-%{ipvs_version}.patch.gz
+Patch14:	http://people.redhat.com/mingo/O(1)-scheduler/sched-O1-2.4.17-K2.patch
 
 # Assorted bugfixes
 
-# Quota fixes
-# Patch100:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.6-2.diff.gz
-Patch100:	quota-fix-2.4.7-1.diff.gz
 # from LKML
-Patch101:	linux-scsi-debug-bug.patch
-Patch102:	linux-2.4.7-oom-killer.patch
-Patch103:	linux-2.4.2-raw-ip.patch
-Patch104:	PCI_ISA_bridge.patch
-Patch105:	linux-2.4.2-nvram-hdd.patch
-Patch106:	linux-2.4-fix-kapm.patch
-Patch107:	epca-fix-missing-unregister-driver.patch
-Patch108:	ramdisk-VM.fix
-Patch109:	linux-ram-disk-free.patch
+Patch100:	linux-scsi-debug-bug.patch
+Patch101:	linux-2.4.2-raw-ip.patch
+Patch102:	PCI_ISA_bridge.patch
+Patch103:	linux-2.4.2-nvram-hdd.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
-Patch110:	linux-2.4.2-pcnet-parms.patch
-# Kernel crashes during making reiser-module:
-Patch111:	%{name}-reiser.patch
-Patch112:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.6-p1.06062001.patch.gz
-Patch113:	linux-reiserfs-rename.patch
-Patch114:	linux-via-fixes.patch
-Patch115:	linux-alpha-nfs-2.4.2.patch
-Patch116:	linux-2.4-string.patch
+Patch105:	linux-2.4.2-pcnet-parms.patch
+Patch106:	http://linuxdiskcert.org/ide.2.4.16.12102001.patch.bz2
+Patch107:	linux-reiserfs-rename.patch
+Patch108:	linux-alpha-nfs-2.4.2.patch
+Patch109:	linux-2.4-string.patch
 # raid5 xor fix for PIII/P4, should go away shortly
-Patch117:	linux-2.4.0-raid5xor.patch
+Patch110:	linux-2.4.0-raid5xor.patch
 # disable some networking printk's
-Patch118:	linux-2.4.1-netdebug.patch
+Patch111:	linux-2.4.1-netdebug.patch
 # SCSI Reset patch for clustering stuff
-Patch119:	linux-2.4.1-scsi-reset.patch
+Patch112:	linux-2.4.1-scsi-reset.patch
 # Add an ioctl to the block layer so we can be EFI compliant
-Patch120:	linux-2.4.2-blkioctl-sector.patch
-# fix for non-atomic bit clear in eepro100 driver on alpha
-Patch121:	linux-2.4.2-eepro100-alpha.patch
-# Patch from Doug to fix i810 recording
-Patch122:	linux-2.4.2-i810_audio.patch
-# OHCI IRQ sanity check
-Patch123:	linux-2.4.2-ohci-irq.patch
+Patch113:	linux-2.4.2-blkioctl-sector.patch
 # fix lun probing on multilun RAID chassis
-Patch124:	linux-2.4.2-scsi_scan.patch
-# work around Latitude C600 resume problem (bios bug)
-Patch125:	linux-2.4.3-latitudec600.patch
+Patch115:	linux-2.4.12-scsi_scan.patch
 # fix pcnet32 networkdriver load vs ifconfig races
-Patch126:	linux-2.4.3-pcnet32.patch
+Patch116:	linux-2.4.3-pcnet32.patch
 # fix rawio
-Patch127:	linux-2.4.3-rawio.patch
-# extra PnP id for sb32awe
-Patch128:	linux-2.4.3-sb.patch
-# ideraid driver updates
-Patch129:	linux-2.4.5-ideraid.patch
-# Pete's IDETAPE fixes
-Patch130:	linux-2.4.6-idetape.patch
-# don't allocate highmem pages on non-highmem machines
-Patch131:	linux-2.4.6-nohighmem.patch
-# another sb16 pnp id
-Patch132:	linux-2.4.6-sb_id.patch
-# DAC960 build fix
-Patch133:	linux-2.4.7-DAC960-completion.patch
-# Reiserfs fixes
-Patch134:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/2.4.7.pending/2.4.7-old-format.dif.bz2
-Patch135:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/2.4.7.pending/2.4.7-unlink-truncate-rename-rmdir.dif.bz2
-Patch136:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/2.4.7.pending/journal-replay.patch
-Patch137:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/2.4.7.pending/panic-in-reiserfs_read_super.patch
-Patch138:	linux-quota-bug.patch
-Patch139:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
-Patch140:	linux-UDF.fix
-Patch141:	http://people.FreeBSD.org/~gibbs/linux/linux-aic7xxx-%{aic_version}.patch.gz
+Patch117:	linux-2.4.3-rawio.patch
+Patch120:	linux-2.4.10-aironet.patch
+Patch121:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
-Patch142:	linux-2.4.7-lvm-1.0.1rc4cvs.patch
-Patch143:	linux-ptrace.patch
+Patch122:	linux-lvm-1.0.1-%{version}.patch
+# fixed xquad_portio
+Patch123:	xquad_portio.fix
+# 
+Patch124:	linux-proc_net_dev-counter-fix.patch
+Patch125:	linux-%{version}-devfs-v199.7.patch
+Patch126:	linux-%{version}-cramfs.patch
+Patch127:	linux-%{version}-sparc64-fix.patch
+Patch128:	linux-%{version}-AXP-fix.patch
+Patch129:	kernel-Makefile-include-fix.patch
+Patch130:	kernel-2.4.17-netsyms-export-fix.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
-Patch900:	kernel-i8255-asm-fix.patch
-# patch not needed for ver. 133
-#Patch901:	dc395-patch-PLD-fix.patch
-# patch to fix LIDS stupidity
-Patch902:	linux-lids-fixpatch.patch
-# patch to fix problem wit ABI and LIDS
-Patch903:	linux-lids-with-abi.patch
-Patch904:	linux-vlan-fixpatch.patch
-Patch905:	linux-ipvs+ext3.patch
-Patch906:	linux-ext3-quota.patch
+# patch to fix missing EXPORT_SYMBOLS from IDE patch
+Patch900:	ide-EXPORT_SYMBOL.fix
+Patch901:	jfs-fix.patch
+Patch902:	netfilter-ctnetlink-fix.patch
+Patch903:	netfilter-ftp-fxp-fix.patch
+Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
+Patch905:	netfilter-pptp-conntrack-nat-fix.patch
 # tweaks for grsecurity, description inside patch
-Patch907:	linux-grsecurity-fixes.patch
+Patch906:	linux-grsecurity-fixes.patch
+Patch907:	linux-loop-hvr-2.4.16.0.patch
+Patch909:	linux-53c7,8xx-build.fix
+Patch910:	dc395-PLD.fix
+Patch911:	linux-o1-sched-grsec-pre.patch
+Patch912:	linux-o1-sched-grsec-post.patch
+Patch913:	linux-o1-sched-abi.patch
 
-# Linus's -pre
-#Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.7-%{pre_version}.gz
+# Marcelo's -pre
+#Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -194,15 +159,19 @@ BuildRequires:	egcs64
 %else
 BuildRequires:	egcs
 %endif
+BuildRequires:	modutils
+Buildrequires:	perl
 Provides:	%{name}-up = %{version}
 Provides:	module-info
+Provides:	i2c = 2.6.1
+Provides:	bttv = 0.7.83
 Autoreqprov:	no
 Prereq:		fileutils
 Prereq:		modutils
-Prereq:		geninitrd
-Requires:	rc-scripts >= 0.3.0
+Prereq:		geninitrd >= 2.13
 Obsoletes:	kernel-modules
-ExclusiveArch:	%{ix86} sparc sparc64 alpha
+Obsoletes:	kernel-doc
+ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
 BuildRequires:	bin86
 %endif
@@ -230,30 +199,8 @@ Pakiet zawiera j±dro Linuxa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takich jak karty muzyczne, sterowniki dysków, etc.
 
-%if %{?_with_lids:1}%{!?_with_lids:0}
-%package lids
-Summary:	LIDS enabled kernel version %{version}
-Group:		Base/Kernel
-Group(pl):	Podstawowe/J±dro
-Provides:	%{name} = %{version}
-Provides:	%{name}(reiserfs) = %{version}
-Provides:	%{name}(agpgart) = %{version}
-Prereq:		modutils
-Autoreqprov:	no
 
-%description lids
-This package includes a LIDS enabled version of the Linux %{version} kernel.
-It is required only when you want maximum security.
-
-See http://www.lids.org/ for details.
-
-%description -l pl lids
-Pakiet zawiera j±dro Linuksa w wersji %{version} z w³±czonym LIDS.
-Jest ono wymagane jedynie gdy potrzebne jest maksymalne bezpieczeñstwo.
-
-Szczegó³y pod http://www.lids.org/.
-%endif
-
+%if%{?_without_smp:0}%{!?_without_smp:1}
 %package smp
 Summary:	Kernel version %{version} compiled for SMP machines
 Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
@@ -286,32 +233,7 @@ plus, il peut quand même fonctionner pour les système mono-processeur.
 Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono wymagane
 przez komputery zawieraj±ce dwa lub wiêcej procesorów. Powinno równie¿ dobrze 
 dzia³aæ na maszynach z jednym procesorem.
-
-%if %{?_with_lids:1}%{!?_with_lids:0}
-%package lids-smp
-Summary:	LIDS enabled kernel version %{version} compiled for SMP machines
-Group:		Base/Kernel
-Group(pl):	Podstawowe/J±dro
-Provides:	%{name} = %{version}
-Provides:	%{name}(reiserfs) = %{version}
-Provides:	%{name}(agpgart) = %{version}
-Prereq:		modutils
-Autoreqprov:	no
-
-%description lids-smp
-This package includes a LIDS enabled SMP version of the Linux %{version}
-kernel. It is required only on machines with two or more CPUs, when you want
-maximum security.
-
-See http://www.lids.org/ for details.
-
-%description -l pl lids-smp
-Pakiet zawiera j±dro SMP Linuksa w wersji %{version} z w³±czonym LIDS.
-Jest ono wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów,
-jedynie gdy wymagane jest maksymalne bezpieczeñstwo.
-
-Szczegó³y pod http://www.lids.org/.
-%endif
+%endif 
 
 %package BOOT
 Summary:	Kernel version %{version} used on the installation boot disks
@@ -354,6 +276,8 @@ Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
+Provides:       %{name}-headers(bridging) = %{version}
+Provides:	i2c-devel = 2.6.1
 Autoreqprov:	no
 
 %description headers
@@ -402,114 +326,92 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%{?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
-%{!?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
+%setup -q -a3 -a5 -a7 -a10 -a11 -a12 -a13 -n linux
 #%patch1000 -p1
 #%patch0 -p1
 %patch1 -p1
 %patch2 -p1
-%patch3 -p1
 %patch4 -p1
-%patch10 -p1
-%patch100 -p1
 %patch5 -p1
-%patch6 -p1
 %patch7 -p1
+%if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%patch14 -p1
+%patch913 -p1
+%else
 %patch8 -p1
-%if%{?_without_grsec:0}%{!?_without_grsec:1}
-%ifarch %{ix86}
-%patch9 -p1
-%patch907 -p1
 %endif
+%ifarch {ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%patch911 -p1
+%endif
+%if%{?_without_grsec:0}%{!?_without_grsec:1}
+%patch9 -p1
+%patch906 -p1
+%endif
+%ifarch{ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%patch912 -p1
 %endif
 
-%patch101 -p0
+%patch100 -p0
+%patch101 -p1
 %patch102 -p0
-%patch103 -p1
-%patch104 -p0
-%patch105 -p0
+%patch103 -p0
+%patch105 -p1
 %patch106 -p1
-%patch107 -p1
+#%patch107 -p1
 %patch108 -p1
 %patch109 -p1
 %patch110 -p1
-%patch111 -p4
-#%patch112 -p1
+%patch111 -p1
+%patch112 -p2
 %patch113 -p1
-%patch114 -p1
 %patch115 -p1
 %patch116 -p1
 %patch117 -p1
-%patch118 -p1
-%patch119 -p2
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
 %patch123 -p1
 %patch124 -p1
-%patch125 -p1
-%patch126 -p1
-%patch127 -p1
-%patch128 -p1
-%patch129 -p1
-%patch130 -p1
-%patch131 -p1
-%patch132 -p1
-%patch133 -p1
-%patch134 -p1
-%patch135 -p1
-%patch136 -p1
-%patch137 -p1
-%patch138 -p1
-%patch139 -p0
-%patch140 -p0
-%patch141 -p1
-%patch142 -p1
-%patch143 -p1
 
-%patch900 -p0 
-#%patch901 -p0
-%patch906 -p1
+%patch900 -p0
+%patch901 -p0
+%patch904 -p0
+%patch907 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
+echo Adding Tekram DC395/315 driver
+%patch910 -p0
 patch -p1 -s <dc395/dc395-integ24.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # Fore 200e ATM NIC
+echo Adding FORE 200e ATM driver
 patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
 #patch -p1 -s <linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
 
 # Netfilter
 echo Adding Netfilter
-for i in netfilter-patches/* ; do
-	if [ -f $i -a "$i" != "netfilter-patches/isapplied" ] ; then
-		patch -p1 <$i
-	fi
-done
+#
+# Baggins please check and fix this patches !!!
+#
 (KERNEL_DIR=`pwd` ; export KERNEL_DIR
-cd netfilter-patches/patch-o-matic
-ANS=""
-for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
-echo -e $ANS | ./runme)
-
-%if %{?_with_lids:1}%{!?_with_lids:0}
-# LIDS
-echo Adding LIDS
-cd lids-%{lids_version}
-%patch903 -p1
+cd netfilter-patches/patch-o-matic/extra
+#%patch902 -p0
+%patch903 -p0
 cd ..
-patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
-%endif
+ANS=""
+for suite in submitted pending base extra pld ; do
+	for i in `echo ${suite}/*.patch.ipv6` `echo ${suite}/*.patch` ; do
+		ANS="${ANS}y\n\n"
+	done
+done
+echo -e $ANS | ./runme pld)
+
+patch -p1 < netfilter-patches/patch-o-matic/pld/log.patch
 
 # IPVS
 echo Adding IPVS
-%patch905 -p1
-for i in ipvs-%{ipvs_version}/*.diff ; do
-	patch -p1 -s <$i
-done
-mkdir net/ipv4/ipvs
-cp ipvs-%{ipvs_version}/ipvs/*.{c,h,in} net/ipv4/ipvs
-cp ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile net/ipv4/ipvs/Makefile
+%patch13 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
@@ -526,33 +428,56 @@ mv %{sym_ncr_version}/*.{c,h} drivers/scsi
 mv %{sym_ncr_version}/{README,ChangeLog}.* Documentation
 rm -rf %{sym_ncr_version}
 
-# 802.1Q VLANs
-echo Adding VLANs
-cd vlan
-%patch904 -p1
-cd ..
-patch -p1 -s <vlan/vlan_2.4.patch
-
 # IP personality
 echo Adding IP Personality 
 patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010724-linux-2.4.7.diff
 
 # JFS
 echo Adding JFS
-patch -p1 -s <jfs-2.4.common-1.0.7-patch
-patch -p1 -s <jfs-2.4.7-1.0.7-patch
+patch -p1 -s <jfs-2.4.common-1.0.14-patch
+patch -p1 -s <jfs-2.4.17-1.0.14-patch
 
-# Tulip driver installed.
-echo Replaced Tulip driver
-cp -f tulip-%{tulip_version}/src/*.{c,h} drivers/net/tulip
-cp -f tulip-%{tulip_version}/src/ChangeLog drivers/net/tulip
+echo Fixed compile process for 53c7,8xx driver
+# fix 53c7,8xx build
+%patch909 -p0
 
-# NWD patch installed
-%ifarch %{ix86}
-echo Network disk device support
+#preemptble kernel patch
+%if%{?_with_preemptible:1}%{!?_with_preemptible:0}
+echo Installing Preemptible patch
+%patch10 -p1
+%endif
+
+# netdev-random
+echo Installing Net Dev Random patch
 %patch11 -p1
 %patch12 -p1
+
+# devfs patch
+echo Installing DEVFS patch
+%patch125 -p1
+
+# cramfs patch
+echo Installing cramfs patch 
+%patch126 -p1 
+
+# fixed SPARC64 compilation
+%ifarch sparc64
+echo Fixed SYSCALL errors for SPARC 64 arch.
+%patch127 -p1
+cp include/asm-sparc/vfc_ioctls.h include/asm-sparc64/vfc_ioctls.h
 %endif
+
+#fixed AXP compilation
+%ifarch alpha
+echo Fixed SYSCALL errors for DEC Alpha arch.
+%patch128 -p0
+%endif
+
+# Fided include path
+%patch129 -p0
+
+#Fixed sysctl export symbols.
+%patch130 -p0
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -569,15 +494,12 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
 %build
 BuildKernel() {
 	%{?verbose:set -x}
-	# is this a LIDS enabled kernel?
-	if [ "$1" = "lids" ] ; then
-		LIDS="lids"
-		shift
-	else
-		LIDS=""
-	fi
 	# is this a special kernel we want to build?
+	BOOT=
 	if [ -n "$1" ] ; then
+		if [ "$1" = "BOOT" ] ; then
+			BOOT=yes
+		fi
 %ifarch %{ix86}
 		if [ "$1" = "BOOT" ] ; then
 			Config="%{_target_cpu}"-$1
@@ -588,7 +510,6 @@ BuildKernel() {
 		Config="%{_target_cpu}"-$1
 %endif
 		KernelVer=%{version}-%{release}$1
-		ExtraVer="-%{release}$1"
 		echo BUILDING A KERNEL FOR $1...
 		shift
 	else
@@ -598,36 +519,37 @@ BuildKernel() {
 		Config="%{_target_cpu}"
 %endif
 		KernelVer=%{version}-%{release}
-		ExtraVer="-%{release}"
 		echo BUILDING THE NORMAL KERNEL...
 	fi
 	:> arch/$RPM_ARCH/defconfig
+	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/$RPM_ARCH/defconfig
 %ifarch i386
-	echo "CONFIG_M386=y" > arch/$RPM_ARCH/defconfig
-	echo "CONFIG_MATH_EMULATION=y" >> arch/$RPM_ARCH/defconfig
+	echo "CONFIG_M386=y" >> arch/$RPM_ARCH/defconfig
 %endif
 %ifarch i586
-	echo "CONFIG_M586=y" > arch/$RPM_ARCH/defconfig
+	echo "CONFIG_M586=y" >> arch/$RPM_ARCH/defconfig
 %endif
 %ifarch i686
-	echo "CONFIG_M686=y" > arch/$RPM_ARCH/defconfig
+	echo "CONFIG_M686=y" >> arch/$RPM_ARCH/defconfig
 %endif
-	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1001} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1002} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1003} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1004} >> arch/$RPM_ARCH/defconfig
-	cat %{SOURCE1005} >> arch/$RPM_ARCH/defconfig
-	cat %{SOURCE1006} >> arch/$RPM_ARCH/defconfig
-%ifarch %{ix86}
-	cat %{SOURCE1666} >> arch/$RPM_ARCH/defconfig
+	cat %{SOURCE1667} >> arch/$RPM_ARCH/defconfig
+%if%{?_with_preemptive:1}%{!?_with_preemptive:0}
+	cat %{SOURCE1999} >> arch/$RPM_ARCH/defconfig
 %endif
-	if [ "$LIDS" = "lids" ] ; then
-		echo ENABLING LIDS...
-		cat %{SOURCE1000} >> arch/$RPM_ARCH/defconfig
-		KernelVer="${KernelVer}-lids"
-		ExtraVer="${ExtraVer}-lids"
+	if [ "$BOOT" ] ; then
+		echo "# CONFIG_GRKERNSEC is not set" >> arch/$RPM_ARCH/defconfig
+	else
+		cat %{SOURCE1666} >> arch/$RPM_ARCH/defconfig
 	fi
+%ifarch i386
+	mv -f arch/$RPM_ARCH/defconfig arch/$RPM_ARCH/defconfig.orig
+	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
+		arch/$RPM_ARCH/defconfig.orig > arch/$RPM_ARCH/defconfig
+%endif
 
 	%{__make} mrproper
 	ln -sf arch/$RPM_ARCH/defconfig .config
@@ -640,14 +562,14 @@ BuildKernel() {
 	%{__make} dep clean
 %endif
 	%{__make} include/linux/version.h
-
+	
 %ifarch %{ix86}
 	%{__make} bzImage
 %else
 %ifarch sparc
 	sparc32 %{__make} boot
 %else
-	%{__make} boot
+	%{__make} 
 %endif
 %endif
 %ifarch sparc
@@ -656,118 +578,111 @@ BuildKernel() {
 	%{__make} modules
 %endif
 
-	mkdir -p $KERNEL_BUILD_DIR-installed/boot
-	install System.map $KERNEL_BUILD_DIR-installed/boot/System.map-$KernelVer
+	mkdir -p $KERNEL_INSTALL_DIR/boot
+	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
 %ifarch %{ix86}
-	cp arch/i386/boot/bzImage $KERNEL_BUILD_DIR-installed/boot/vmlinuz-$KernelVer
+	cp arch/i386/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
 %ifarch alpha sparc sparc64
 	gzip -cfv vmlinux > vmlinuz
-	install vmlinux $KERNEL_BUILD_DIR-installed/boot/vmlinux-$KernelVer
-	install vmlinuz $KERNEL_BUILD_DIR-installed/boot/vmlinuz-$KernelVer
+	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
+	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
      %{__make} modules_install \
-     	INSTALL_MOD_PATH=$KERNEL_BUILD_DIR-installed \
+     	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 	KERNELRELEASE=$KernelVer
 }
 
 KERNEL_BUILD_DIR=`pwd`
-rm -rf $KERNEL_BUILD_DIR-installed
-install -d $KERNEL_BUILD_DIR-installed
+KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
+rm -rf $KERNEL_INSTALL_DIR
+install -d $KERNEL_INSTALL_DIR
 
+# make drivers/scsi/ missing files
+	(cd drivers/scsi; make -f M)
+	
 # UP KERNEL
 BuildKernel 
 
 %if !%{test_build}
 # SMP KERNEL
+%if %{?_without_smp:0}%{!?_without_smp:1}
 BuildKernel smp
-
-%if %{?_with_lids:1}%{!?_with_lids:0}
-# UP LIDS KERNEL
-BuildKernel lids
-
-# SMP LIDS KERNEL
-BuildKernel lids smp
-%endif
+%endif			# %{_without_smp}
 
 # BOOT kernel
 %ifnarch i586 i686
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk"
+rm -rf $KERNEL_INSTALL_DIR
 BuildKernel BOOT
 %endif
-%endif
+
+%endif			# %{test_build}
 
 %install
 umask 022
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT/usr/{include,src/linux-%{version}-%{release}}
+install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{version}}
 
 KERNEL_BUILD_DIR=`pwd`
 cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
 
-for i in "" "-lids" smp smp-lids BOOT ; do
+for i in "" smp ; do
 	if [ -e  $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i ] ; then
 		rm -f $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
-		ln -sf /usr/src/linux-%{version}-%{release} $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
+		ln -sf /usr/src/linux-%{version} $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
 	fi
 done
-ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT/usr/include/linux
+ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
 ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
 
 %ifarch sparc sparc64
-ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT/usr/include/asm-sparc
-ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT/usr/include/asm-sparc64
-sh %{SOURCE2} $RPM_BUILD_ROOT/usr/include
-cp -a %{SOURCE2} $RPM_BUILD_ROOT/usr/include/asm/BuildASM
+ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
+ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
+sh %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}
+cp -a %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
 %else
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 %endif
 
-cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}-%{release}/
+cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
 
-cd $RPM_BUILD_ROOT/usr/src/linux-%{version}-%{release}
+cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 %{__make} mrproper
 find  -name "*~" -print | xargs rm -f
 find  -name "*.orig" -print | xargs rm -f
 
-%ifarch i386
-echo "CONFIG_M386=y" > .config
-echo "CONFIG_MATH_EMULATION=y" >> .config
-%endif
-%ifarch i586
-echo "CONFIG_M586=y" > .config
-%endif
-%ifarch i686
-echo "CONFIG_M686=y" > .config
-%endif
 
 %ifarch %{ix86}
-cat $RPM_SOURCE_DIR/kernel-ia32.config >> .config
+cat $RPM_SOURCE_DIR/kernel-ia32.config > .config
 %else
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
+%endif
+
+%ifarch i386
+echo "CONFIG_M386=y" >> .config
+%endif
+%ifarch i586
+echo "CONFIG_M586=y" >> .config
+%endif
+%ifarch i686
+echo "CONFIG_M686=y" >> .config
 %endif
 
 cat %{SOURCE1001} >> .config
 cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
-cat %{SOURCE1005} >> .config
-cat %{SOURCE1006} >> .config
 cat %{SOURCE1666} >> .config
+cat %{SOURCE1667} >> .config
+%if%{?_with_preemptive:1}%{!?_with_preemptive:0}
+	cat %{SOURCE1999} >> .config
+%endif
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
 
-%ifarch i386
-echo "CONFIG_M386=y" > .config
-echo "CONFIG_MATH_EMULATION=y" >> .config
-%endif
-%ifarch i586
-echo "CONFIG_M586=y" > .config
-%endif
-%ifarch i686
-echo "CONFIG_M686=y" > .config
-%endif
 
 %ifarch %{ix86}
 cat $RPM_SOURCE_DIR/kernel-ia32-smp.config >> .config
@@ -775,18 +690,30 @@ cat $RPM_SOURCE_DIR/kernel-ia32-smp.config >> .config
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config .config
 %endif
 
+%ifarch i386
+echo "CONFIG_M386=y" >> .config
+%endif
+%ifarch i586
+echo "CONFIG_M586=y" >> .config
+%endif
+%ifarch i686
+echo "CONFIG_M686=y" >> .config
+%endif
+
 cat %{SOURCE1001} >> .config
 cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
-cat %{SOURCE1005} >> .config
-cat %{SOURCE1006} >> .config
 cat %{SOURCE1666} >> .config
+cat %{SOURCE1667} >> .config
+%if%{?_with_preemptive:1}%{!?_with_preemptive:0}
+	cat %{SOURCE1999} >> .config
+%endif
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
 
-install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}-%{release}/include/linux/autoconf.h
+install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
@@ -798,7 +725,7 @@ install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}-%{release}/include/l
 # well include the depends stuff as well, after we fix the paths
 
 %{__make} depend 
-find $RPM_BUILD_ROOT/usr/src/linux-%{version}-%{release} -name ".*depend" | \
+find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
 while read file ; do
 	mv $file $file.old
 	sed -e "s|$RPM_BUILD_ROOT\(/usr/src/linux\)|\1|g" < $file.old > $file
@@ -807,11 +734,7 @@ done
 
 %{__make} clean
 rm -f scripts/mkdep
-
-%if %{?_with_lids:1}%{!?_with_lids:0}
-# LIDS config
-cat %{SOURCE1000} >> $RPM_BUILD_ROOT/usr/src/linux-%{version}-%{release}/.config.lids
-%endif
+rm -f drivers/net/hamradio/soundmodem/gentbl
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -823,7 +746,14 @@ mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
 
-geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
+if [ ! -L /lib/modules/%{version} ] ; then
+	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
+fi
+rm -f /lib/modules/%{version}
+ln -snf %{version}-%{release} /lib/modules/%{version}
+depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+
+geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}.gz /boot/initrd
 
@@ -831,41 +761,21 @@ if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
-if [ ! -L /lib/modules/%{version} ] ; then
-	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
-fi
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release} /lib/modules/%{version}
-
-%if %{?_with_lids:1}%{!?_with_lids:0}
-%post lids
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
-ln -sf vmlinuz-%{version}-%{release}-lids /boot/vmlinuz
-ln -sf System.map-%{version}-%{release}-lids /boot/System.map
-
-geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}-lids.gz %{version}-%{release}-lids
-mv -f /boot/initrd /boot/initrd.old
-ln -sf initrd-%{version}-%{release}-lids.gz /boot/initrd
-
-if [ -x /sbin/rc-boot ] ; then
-	/sbin/rc-boot 1>&2 || :
-fi
-
-if [ ! -L /lib/modules/%{version} ] ; then
-	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
-fi
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release}-lids /lib/modules/%{version}
-%endif
-
+%if%{?_without_smp:0}%{!?_without_smp:1}
 %post smp
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}smp /boot/System.map
 
-geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
+if [ ! -L /lib/modules/%{version} ] ; then
+	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
+fi
+rm -f /lib/modules/%{version}
+ln -snf %{version}-%{release}smp /lib/modules/%{version}
+depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
+
+geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 
@@ -873,49 +783,19 @@ if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
-if [ ! -L /lib/modules/%{version} ] ; then
-	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
-fi
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release}smp /lib/modules/%{version}
-
-%if %{?_with_lids:1}%{!?_with_lids:0}
-%post lids-smp
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
-ln -sf vmlinuz-%{version}-%{release}smp-lids /boot/vmlinuz
-ln -sf System.map-%{version}-%{release}smp-lids /boot/System.map
-
-geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}smp-lids.gz %{version}-%{release}smp-lids
-mv -f /boot/initrd /boot/initrd.old
-ln -sf initrd-%{version}-%{release}smp-lids.gz /boot/initrd
-
-if [ -x /sbin/rc-boot ] ; then
-	/sbin/rc-boot 1>&2 || :
-fi
-
-if [ ! -L /lib/modules/%{version} ] ; then
-	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
-fi
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release}smp-lids /lib/modules/%{version}
-%endif
+%endif			# %{_without_smp}
 
 %post BOOT
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
-ln -sf vmlinuz-%{version}-%{release}BOOT /boot/vmlinuz
-ln -sf System.map-%{version}-%{release}BOOT /boot/System.map
-
-if [ -x /sbin/rc-boot ] ; then
-	/sbin/rc-boot 1>&2 || :
+if [ ! -L %{_libdir}/bootdisk/lib/modules/%{version} ] ; then
+	mv -f %{_libdir}/bootdisk/lib/modules/%{version} %{_libdir}/bootdisk/lib/modules/%{version}.rpmsave
 fi
-
-if [ ! -L /lib/modules/%{version} ] ; then
-	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
+if [ ! -L %{_libdir}/bootdisk/boot/vmlinuz-%{version} ] ; then
+	mv -f %{_libdir}/bootdisk/boot/vmlinuz-%{version} %{_libdir}/bootdisk/boot/vmlinuz-%{version}.rpmsave
 fi
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release}BOOT /lib/modules/%{version}
+rm -f %{_libdir}/bootdisk/lib/modules/%{version}
+ln -snf %{version}-%{release}BOOT %{_libdir}/bootdisk/lib/modules/%{version}
+rm -f %{_libdir}/bootdisk/boot/vmlinuz-%{version}
+ln -snf vmlinuz-%{version}-%{release}BOOT %{_libdir}/bootdisk/boot/vmlinuz-%{version}
 
 %postun
 if [ -L /lib/modules/%{version} ]; then 
@@ -927,18 +807,7 @@ if [ -L /lib/modules/%{version} ]; then
 fi
 rm -f /boot/initrd-%{version}-%{release}.gz
 
-%if %{?_with_lids:1}%{!?_with_lids:0}
-%postun lids
-if [ -L /lib/modules/%{version} ]; then 
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}-lids" ]; then
-		if [ "$1" = "0" ]; then
-			rm -f /lib/modules/%{version}
-		fi
-	fi
-fi
-rm -f /boot/initrd-%{version}-%{release}-lids.gz
-%endif
-
+%if%{?_without_smp:0}%{!?_without_smp:1}
 %postun smp
 if [ -L /lib/modules/%{version} ]; then 
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp" ]; then
@@ -948,35 +817,24 @@ if [ -L /lib/modules/%{version} ]; then
 	fi
 fi
 rm -f /boot/initrd-%{version}-%{release}smp.gz
-
-%if %{?_with_lids:1}%{!?_with_lids:0}
-%postun lids-smp
-if [ -L /lib/modules/%{version} ]; then 
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp-lids" ]; then
-		if [ "$1" = "0" ]; then
-			rm -f /lib/modules/%{version}
-		fi
-	fi
-fi
-rm -f /boot/initrd-%{version}-%{release}smp-lids.gz
-%endif
+%endif			# %{_without_smp}
 
 %postun BOOT
-if [ -L /lib/modules/%{version} ]; then 
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}BOOT" ]; then
+if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then 
+	if [ "`ls -l %{_libdir}/bootdisk/lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}BOOT" ]; then
 		if [ "$1" = "0" ]; then
-			rm -f /lib/modules/%{version}
+			rm -f %{_libdir}/bootdisk/lib/modules/%{version}
 		fi
 	fi
 fi
 
 %post headers
 rm -f /usr/src/linux
-ln -snf linux-%{version}-%{release} /usr/src/linux
+ln -snf linux-%{version} /usr/src/linux
 
 %postun headers
 if [ -L /usr/src/linux ]; then 
-	if [ "`ls -l /usr/src/linux | awk '{ print $11 }'`" = "linux-%{version}-%{release}" ]; then
+	if [ "`ls -l /usr/src/linux | awk '{ print $11 }'`" = "linux-%{version}" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f /usr/src/linux
 		fi
@@ -1001,25 +859,8 @@ fi
 /lib/modules/%{version}-%{release}/modules.generic_string
 
 %if !%{test_build}
-%if %{?_with_lids:1}%{!?_with_lids:0}
-%files lids
-%defattr(644,root,root,755)
-%ifarch alpha sparc
-/boot/vmlinux-%{version}-%{release}-lids
-%endif
-/boot/vmlinuz-%{version}-%{release}-lids
-/boot/System.map-%{version}-%{release}-lids
-%dir /lib/modules/%{version}-%{release}-lids
-%ifarch %{ix86}
-/lib/modules/%{version}-%{release}-lids/pcmcia
-%endif
-/lib/modules/%{version}-%{release}-lids/kernel
-/lib/modules/%{version}-%{release}-lids/build
-/lib/modules/%{version}-%{release}-lids/modules.dep
-/lib/modules/%{version}-%{release}-lids/modules.*map
-/lib/modules/%{version}-%{release}-lids/modules.generic_string
-%endif
 
+%if%{?_without_smp:0}%{!?_without_smp:1}
 %files smp
 %defattr(644,root,root,755)
 %ifarch alpha sparc
@@ -1036,81 +877,59 @@ fi
 /lib/modules/%{version}-%{release}smp/modules.dep
 /lib/modules/%{version}-%{release}smp/modules.*map
 /lib/modules/%{version}-%{release}smp/modules.generic_string
-
-%if %{?_with_lids:1}%{!?_with_lids:0}
-%files lids-smp
-%defattr(644,root,root,755)
-%ifarch alpha sparc
-/boot/vmlinux-%{version}-%{release}smp-lids
-%endif
-/boot/vmlinuz-%{version}-%{release}smp-lids
-/boot/System.map-%{version}-%{release}smp-lids
-%dir /lib/modules/%{version}-%{release}smp-lids
-%ifarch %{ix86}
-/lib/modules/%{version}-%{release}smp-lids/pcmcia
-%endif
-/lib/modules/%{version}-%{release}smp-lids/kernel
-/lib/modules/%{version}-%{release}smp-lids/build
-/lib/modules/%{version}-%{release}smp-lids/modules.dep
-/lib/modules/%{version}-%{release}smp-lids/modules.*map
-/lib/modules/%{version}-%{release}smp-lids/modules.generic_string
-%endif
+%endif			# %{_without_smp}
 
 %ifnarch i586 i686
 %files BOOT
 %defattr(644,root,root,755)
 %ifarch alpha sparc
-/boot/vmlinux-%{version}-%{release}BOOT
+%{_libdir}/bootdisk/boot/vmlinux-%{version}-%{release}BOOT
 %endif
-/boot/vmlinuz-%{version}-%{release}BOOT
-/boot/System.map-%{version}-%{release}BOOT
-%dir /lib/modules/%{version}-%{release}BOOT
+%{_libdir}/bootdisk/boot/vmlinuz-%{version}-%{release}BOOT
+%{_libdir}/bootdisk/boot/System.map-%{version}-%{release}BOOT
+%dir %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT
 %ifarch i386
-/lib/modules/%{version}-%{release}BOOT/pcmcia
+%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/pcmcia
 %endif
-/lib/modules/%{version}-%{release}BOOT/kernel
-/lib/modules/%{version}-%{release}BOOT/build
-/lib/modules/%{version}-%{release}BOOT/modules.dep
-/lib/modules/%{version}-%{release}BOOT/modules.*map
-/lib/modules/%{version}-%{release}BOOT/modules.generic_string
+%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/kernel
+%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/build
+%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.dep
+%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.*map
+%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.generic_string
 %endif
 %endif
 
 %files headers
 %defattr(644,root,root,755)
-%dir /usr/src/linux-%{version}-%{release}
-/usr/src/linux-%{version}-%{release}/include
-/usr/include/asm
-/usr/include/linux
+%dir %{_prefix}/src/linux-%{version}
+%{_prefix}/src/linux-%{version}/include
+%{_includedir}/asm
+%{_includedir}/linux
 
 %files source
 %defattr(-,root,root,755)
-/usr/src/linux-%{version}-%{release}/Documentation
-/usr/src/linux-%{version}-%{release}/abi
-/usr/src/linux-%{version}-%{release}/arch
-/usr/src/linux-%{version}-%{release}/crypto
-/usr/src/linux-%{version}-%{release}/drivers
-/usr/src/linux-%{version}-%{release}/fs
-%ifarch %{ix86}
-/usr/src/linux-%{version}-%{release}/grsecurity
-%endif
-/usr/src/linux-%{version}-%{release}/i8255
-/usr/src/linux-%{version}-%{release}/init
-/usr/src/linux-%{version}-%{release}/ipc
-/usr/src/linux-%{version}-%{release}/kdb
-/usr/src/linux-%{version}-%{release}/kernel
-/usr/src/linux-%{version}-%{release}/lib
-/usr/src/linux-%{version}-%{release}/mm
-/usr/src/linux-%{version}-%{release}/net
-/usr/src/linux-%{version}-%{release}/scripts
-/usr/src/linux-%{version}-%{release}/.config
-%{?_with_lids:/usr/src/linux-%{version}-%{release}/.config.lids}
-/usr/src/linux-%{version}-%{release}/.depend
-/usr/src/linux-%{version}-%{release}/.hdepend
-/usr/src/linux-%{version}-%{release}/COPYING
-/usr/src/linux-%{version}-%{release}/CREDITS
-/usr/src/linux-%{version}-%{release}/MAINTAINERS
-/usr/src/linux-%{version}-%{release}/Makefile
-/usr/src/linux-%{version}-%{release}/README
-/usr/src/linux-%{version}-%{release}/REPORTING-BUGS
-/usr/src/linux-%{version}-%{release}/Rules.make
+%{_prefix}/src/linux-%{version}/Documentation
+%{_prefix}/src/linux-%{version}/abi
+%{_prefix}/src/linux-%{version}/arch
+%{_prefix}/src/linux-%{version}/crypto
+%{_prefix}/src/linux-%{version}/drivers
+%{_prefix}/src/linux-%{version}/fs
+%{_prefix}/src/linux-%{version}/grsecurity
+%{_prefix}/src/linux-%{version}/init
+%{_prefix}/src/linux-%{version}/ipc
+%{_prefix}/src/linux-%{version}/kdb
+%{_prefix}/src/linux-%{version}/kernel
+%{_prefix}/src/linux-%{version}/lib
+%{_prefix}/src/linux-%{version}/mm
+%{_prefix}/src/linux-%{version}/net
+%{_prefix}/src/linux-%{version}/scripts
+%{_prefix}/src/linux-%{version}/.config
+%{_prefix}/src/linux-%{version}/.depend
+%{_prefix}/src/linux-%{version}/.hdepend
+%{_prefix}/src/linux-%{version}/COPYING
+%{_prefix}/src/linux-%{version}/CREDITS
+%{_prefix}/src/linux-%{version}/MAINTAINERS
+%{_prefix}/src/linux-%{version}/Makefile
+%{_prefix}/src/linux-%{version}/README
+%{_prefix}/src/linux-%{version}/REPORTING-BUGS
+%{_prefix}/src/linux-%{version}/Rules.make
