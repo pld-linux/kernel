@@ -105,6 +105,9 @@ Patch107:	linux-atm.patch
 Patch108:	atm-unresolved.patch
 Patch109:	af-unresolved.patch
 Patch110:	linux-2.2.20-pcmcia-without-iee1394.patch.bz2
+# based on ftp://ftp.kernel.org/people/andrea/kernels/v2.2/2.2.20pre9aa2/40_lfs-2.2.20pre9aa2-27.bz2
+Patch111:       linux-2.2.20-lfs.patch
+Patch112:       %{name}-scripts-include-dir.patch
 Patch120:	bttv-makefile.patch
 Patch121:	tulip-patch-0.91.patch.bz2
 Patch122:       bttv-symbols.patch.bz2
@@ -429,6 +432,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch108 -p1
 %patch109 -p1
 %patch110 -p1
+%patch112 -p1
 
 # 802.1Q VLANs
 patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
@@ -474,6 +478,8 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch121 -p1
 %patch122 -p1
 %patch123 -p1
+
+%patch111 -p1
 
 %build
 BuildKernel() {
@@ -771,6 +777,8 @@ bzip2 -dc %{PATCH121} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ve
 bzip2 -dc %{PATCH123} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH200}
+
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH111}
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
