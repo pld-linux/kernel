@@ -11,7 +11,7 @@
 # _without_doc		- don't build documentation package
 #
 
-%define		patch_level	0
+%define		patch_level	1
 %define		_rel		5
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -19,7 +19,7 @@
 #
 %define		pre_version		pre1
 %define		ipvs_version		1.0.7
-%define		freeswan_version	1.97
+%define		freeswan_version	2.00-rc2
 %define		IPperson_version	20020819-2.4.19
 %define		grsec_version		1.9.9e
 %define		jfs_version		2.4-1.0.24
@@ -104,7 +104,7 @@ Patch0:		%{name}-pldfblogo.patch
 Patch1:		patch-int-2.4.20.1.bz2
 
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
-Patch2:		linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
+Patch2:		linux-2.4-freeswan-%{freeswan_version}.patch.gz
 
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/Release-1.2pre5/kernel_patches/
 Patch3:		linux-2.4.20-core-xfs-1.2.0.patch.bz2
@@ -173,7 +173,9 @@ Patch27:	%{name}-cd-mrw-2.patch
 #Patch28:	pcsp1.4-ss4-2.4.19.diff
 
 Patch29:	linux-2.4.20-no-FPU.patch
-#Patch30:	
+
+#from http://kernel.bkbits.net/~david-b/gadget24-0331.patch
+Patch30:	linux-2.4-USB-gadget-20030331.patch.bz2
 
 # from http://users.pandora.be/bart.de.schuymer/ebtables/sourcecode.html
 #		bridge-nf-0.0.10-against-2.4.20.diff
@@ -750,6 +752,9 @@ echo Fixed I810 Sound ...
 %patch9 -p1
 
 %patch29 -p1
+
+#usb gadget
+%patch30 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
