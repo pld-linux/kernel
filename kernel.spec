@@ -581,8 +581,8 @@ cd ../..
 
 # Linux WLAN-NG package extension for PCMCIA
 
-cp $RPM_SOURCE_DIR/kernel-wlan-ng.config linux-wlan-ng-%{wlan-ng_version}
-cd linux-wlan-ng-%{wlan-ng_version}
+cp $RPM_SOURCE_DIR/kernel-wlan-ng.config linux-wlan-ng-%{wlan-ng_version}/
+cd linux-wlan-ng-%{wlan-ng_version}/
 %{__make} clean
 rm config.mk
 cp kernel-wlan-ng.config config.mk
@@ -707,7 +707,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH36}
 #patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH39}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH40}
 bzip2 -dc %{PATCH44} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH37}
+#patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH37}
 
 # preparing linux/README file to backup
 mv $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README.kernel
