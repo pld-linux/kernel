@@ -277,6 +277,7 @@ Patch3008:	linux-drm-4.2.0-force-cmpxchg.patch
 Patch3009:	linux-2.4.21-alpha-gcc33.patch
 Patch3010:	linux-2.4.21-ipsec-sparc64.patch
 Patch3011:	linux-2.4.22-gcc33-inline.patch
+Patch3012:	linux-2.4.22-gcc-ext3.patch
 
 # Security patches/fixes
 
@@ -770,6 +771,7 @@ cd ../../..
 %endif
 
 %patch3011 -p1
+%patch3012 -p1
 
 %patch5000 -p1
 
