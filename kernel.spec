@@ -13,8 +13,8 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	grsec		# build without grsec
+%bcond_without	execshield	# build without exec-shield
 %bcond_with	pramfs		# build pramfs support (EXPERIMENTAL)
-%bcond_with	execshield	# build with exec-shield
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	bootsplash	# build with bootsplash
@@ -87,6 +87,7 @@ Source4:	http://redhat.com/~mingo/nx-patches/nx-2.6.7-rc2-bk2-AF
 # http://lkml.org/lkml/2004/6/2/233
 Source5:	http://redhat.com/~mingo/exec-shield/exec-shield-on-nx-2.6.7-rc2-bk2-A9
 # Source5-md5:	1566f42e3b3018d1e86db0d1e00be0ab
+Source6:	exec-shield-make-peace-with-grsecurity.patch
 ## Source6:	http://prdownloads.sourceforge.net/swsusp/software-suspend-2.0.0.81-for-2.6.6.tar.bz2
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -223,6 +224,12 @@ Patch108:	2.6.7-bridge_sysfs-lkml.patch
 Patch110:	ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.7/acpi-20040326-2.6.7.diff.gz
 
 Patch112:	linux-fbcon-con2fb-crash-workaround.patch
+
+# http://sources.redhat.com/cluster/
+Patch200:	linux-cluster-cman.patch
+Patch201:	linux-cluster-dlm.patch
+Patch202:	linux-cluster-gfs.patch
+Patch203:	linux-cluster-gnbd.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -690,11 +697,13 @@ echo "Not fixed !!"
 %endif
 %endif
 
+# NX is NX and it has noting to do with exec-shield beside
+# exec-shield using NX feature
+patch -p1 -s < %{SOURCE4}
 %if %{with execshield}
 %if %{with grsec}
-## <- tu dostosowanie grsec'a do nx'a - do zrobienia
+patch %{SOURCE5} < %{SOURCE6}
 %endif
-patch -p1 -s < %{SOURCE4}
 patch -p1 -s < %{SOURCE5}
 %endif		
 
@@ -714,6 +723,11 @@ patch -p1 -s < %{SOURCE5}
 #patch110 -p1
 
 #patch112 -p1
+
+%patch200 -p1
+%patch201 -p1
+%patch202 -p1
+%patch203 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
