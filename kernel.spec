@@ -32,10 +32,6 @@
 %undefine	with_smp
 %endif
 
-%if %{with fbsplash}
-%undefine	with_grsec
-%endif
-
 ## Program required by kernel to work.
 %define		_binutils_ver		2.12
 %define		_util_linux_ver		2.10o
