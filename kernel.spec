@@ -13,7 +13,7 @@
 %bcond_without source	# don't build kernel-source package
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
-%define		_rel		0.4
+%define		_rel		0.1
 %define		test_ver	5
 %define		patch_level	0
 %define		_cset		20030912_0513
@@ -79,7 +79,6 @@ Patch2:		acpi-irq-fixes.patch
 
 Patch22:	2.6.0-t3-swim3.patch
 Patch23:	squashfs1.3-patch
-Patch24:	2.6.0-t5-isdn.patch
 
 Patch26:	2.6.0-t3-eisa-bus.c-lkml.patch
 Patch27:	2.6.0-t3-initrd_load-lkml.patch
@@ -332,7 +331,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 #%patch22 -p1
 %patch23 -p1
-%patch24 -p1
 
 #%patch26 -p1
 #%patch27 -p1
