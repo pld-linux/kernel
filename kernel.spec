@@ -1078,9 +1078,6 @@ fi
 /lib/modules/%{version}-%{release}/kernel
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}/build
-/lib/modules/%{version}-%{release}/modules.dep
-/lib/modules/%{version}-%{release}/modules.[^pic]*map
-/lib/modules/%{version}-%{release}/modules.generic_string
 %endif			# %{_without_up}
 
 #%if !%{test_build}
@@ -1091,7 +1088,6 @@ fi
 /lib/modules/%{version}-%{release}/pcmcia
 %endif
 /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
-/lib/modules/%{version}-%{release}smp/modules.pcimap
 
 %if%{?_without_smp:0}%{!?_without_smp:1}
 %files pcmcia-cs-smp
@@ -1100,7 +1096,6 @@ fi
 /lib/modules/%{version}-%{release}smp/pcmcia
 %endif
 /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
-/lib/modules/%{version}-%{release}smp/modules.pcimap
 
 %files smp
 %defattr(644,root,root,755)
@@ -1113,9 +1108,6 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}smp/build
-/lib/modules/%{version}-%{release}smp/modules.dep
-/lib/modules/%{version}-%{release}smp/modules.[^pci]*map
-/lib/modules/%{version}-%{release}smp/modules.generic_string
 %endif			# %{_without_smp}
 
 %ifnarch i586 i686 		# narch
@@ -1132,9 +1124,6 @@ fi
 %endif				# i386_arch
 %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/kernel
 %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/build
-%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.dep
-%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.*map
-%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.generic_string
 %endif				# narch
 
 %files headers
