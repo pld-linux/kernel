@@ -14,15 +14,14 @@
 #
 %define		pre_version		rc6
 %define		ipvs_version		1.0.7
-%define		freeswan_version	1.97
-%define		IPperson_version	20020819-2.4.19
+%define		freeswan_version	2.00
 %define		jfs_version		2.4-1.1.2
 %define		lvm_version		1.0.5
-%define		evms_version		1.2.0
+%define		evms_version		2.0.1
 %define		ntfs_version		2.1.4a
 %define		drm_xfree_version	4.3.0
 %define		hostap_version		2002-10-12
-%define		netfilter_snap		20030306
+%define		netfilter_snap		20030616
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -38,12 +37,10 @@ Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 # Source3-md5:	8ed492197244b6a772270417c66214d3
-Source4:	linux-2.4.20-netfilter-%{netfilter_snap}.tar.gz
-# Source4-md5:	56a065ad2b44b375e91679b3e0515353
+Source4:	linux-2.4.21-netfilter-%{netfilter_snap}.tar.gz
+# Source4-md5:	fbbbe9b0669c7e766ddf125dfa11781c
 Source5:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
 # Source5-md5:	b8f2f7a268a5cb75fabcaec3b5d45fcd
-Source6:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
-# Source6-md5:	bf0b7cb5f32916f95b00753d24bd689a
 Source7:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
 # Source7-md5:	2473f345c66683a03ad27ff132d405b7
 Source8:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
@@ -75,7 +72,7 @@ Patch0:		%{name}-pldfblogo.patch
 Patch10:	patch-int-2.4.20.1.bz2
 Patch11:	loop-jari-2.4.21.0.patch
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
-Patch12:	linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
+Patch12:	linux-2.4.21-freeswan-%{freeswan_version}.patch.gz
 Patch15:	linux-2.4.21-sched-O1.patch
 # http://dl.sourceforge.net/user-mode-linux/uml-patch-2.4.20-6.bz2
 Patch20:	uml-patch-2.4.20-6-21.bz2
@@ -86,18 +83,12 @@ Patch22:	linux-2.4.20-uml-host-skas3.patch
 # New filesystems
 
 # http://linux-xfs.sgi.com/projects/xfs/
-Patch25:	linux-2.4.21-core-xfs-1.2.0.patch.bz2
-Patch26:	linux-2.4.20-xfs-1.2.0.patch.bz2
+Patch25:	linux-2.4.21-core-xfs-1.3.0.patch.gz
+Patch26:	linux-xfs-1.3.0pre2.patch.gz
 # http://acl.bestbits.at/
 Patch30:	linux-2.4.21-jfs-xattr.patch
 Patch31:	linux-2.4.21-jfs-acl.patch
 Patch32:	linux-2.4.21-ea+acl+nfsacl-0.8.58.diff.gz
-Patch33:	linux-2.4.21-acl-intermezzo-fix.patch
-# ftp://ftp.suse.com/pub/people/jeffm/reiserfs/aclea/
-#Patch34:	reiserfs-nesting
-#Patch35:	reiserfs-xattrs
-#Patch36:	reiserfs-acl
-#Patch37:	reiserfs-trusted
 # http://unc.dl.sourceforge.net/sourceforge/linux-ntfs/
 Patch40:	linux-2.4.21-ntfs-%{ntfs_version}.patch.gz
 Patch41:	linux-2.4.20-ntfs.patch
@@ -107,25 +98,23 @@ Patch45:	hfsplus-20020606.patch.bz2
 Patch50:	linux-2.4.20-davfs-0.2.4.patch.bz2
 # FC02_davfs__FUNCTION__.patch
 Patch55:	linux-2.4.20-davfs-_FUNCTION_.patch
-# quota for reiserfs
-#Patch60:	linux-2.4.20-reiserfs-quota.patch.bz2
-Patch60:	ftp://ftp.icm.edu.pl/vol/rzm0/linux-reiserfs/reiserfs-for-2.4/testing/data-logging-and-quota-2.4.21-rc3/05-data-logging-37-for2.4.21-rc3.diff.gz
-Patch61:	ftp://ftp.icm.edu.pl/vol/rzm0/linux-reiserfs/reiserfs-for-2.4/testing/data-logging-and-quota-2.4.21-rc3/06-logging-export-for2.4.21-rc3.diff.gz
-Patch62:	ftp://ftp.icm.edu.pl/vol/rzm0/linux-reiserfs/reiserfs-for-2.4/testing/data-logging-and-quota-2.4.21-rc3/07-quota_nospace_fix.diff.gz
-Patch63:	ftp://ftp.icm.edu.pl/vol/rzm0/linux-reiserfs/reiserfs-for-2.4/testing/data-logging-and-quota-2.4.21-rc3/08-reiserfs-quota-27-rc3.diff.gz
+# data logging and quota for reiserfs
+# ftp://ftp.suse.com/pub/people/mason/patches/data-logging/2.4.21/
+Patch60:	linux-2.4.21-reiserfs-data-logging+quota.patch.gz
+# ftp://ftp.suse.com/pub/people/jeffm/reiserfs/aclea/
+#Patch35:	reiserfs-xattrs
+#Patch36:	reiserfs-acl
+#Patch37:	reiserfs-trusted
 # http://dl.sourceforge.net/squashfs/squashfs-1.1b.tar.gz
 Patch65:	squashfs1.2-2.4.21-patch
 #Patch70:	linux-2.4.20-afs.patch.bz2
 #from http://sci.felk.cvut.cz/nwd/linux/nwd-patch-2.4.19
 Patch75:	nwd-2.4.21.patch
 
-# patch for patch in Source9 
-Patch90:	hostap-2.4.19-rc3-patch.patch
-
 # Networking
 
 # new version of netfilter.
-Patch100:	linux-2.4.20-netfilter-%{netfilter_snap}.patch.gz
+Patch100:	linux-2.4.21-netfilter-%{netfilter_snap}.patch.gz
 # from http://users.pandora.be/bart.de.schuymer/ebtables/sourcecode.html
 #	ebtables_v2.0.003_vs_2.4.20.diff
 Patch110:	ebtables-v2.0.003_vs_2.4.20.patch.bz2
@@ -146,30 +135,34 @@ Patch125:	linux-2.4.18-mppe.patch
 Patch150:	linux-2.4.21-atm_diffs.patch
 Patch151:	ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr-kernel-diffs
 
+# patch for patch in Source9 
+Patch190:	hostap-2.4.19-rc3-patch.patch
+
 # New devices/drivers
 
-# from http://people.sistina.com/~thornber/patches/2.4-stable/2.4.20/2.4.20-dm-9.tar.bz2DM-9 patch
-Patch200:	linux-2.4.20-dm-9.patch.bz2
+# from http://people.sistina.com/~thornber/patches/2.4-stable/2.4.20/2.4.20-dm-10.tar.bz2
+Patch200:	linux-2.4.21-dm-20-10.patch.gz
 # EVMS support (http://www.sourceforge.net/projects/evms/)
-Patch201:	linux-2.4.20-evms-1.9.0.patch.bz2
+# Disabled due to conflicts with LVM2 and device mapper tools
+Patch201:	linux-2.4.21-evms-2.0.1.patch.gz
+Patch202:	linux-2.4.21-evms-o1.patch
 
 #from http://prdownloads.sourceforge.net/i810fb/linux-2.4.20-i810fb.diff.bz2
-Patch210:	linux-2.4.20-I810FB.patch.bz2
+Patch210:	linux-2.4.21-I810FB.patch.gz
 
 # Support for CDRW packet writing
 Patch215:	%{name}-cdrw-packet.patch
 Patch216:	%{name}-cd-mrw-2.patch
-Patch220:	linux-2.4.19-pre8-konicawc.patch
 Patch225:	wrr-linux-2.4.9.patch
 
-# from http://people.FreeBSD.org/~gibbs/linux/SRC/aic79xx-linux-2.4-20030318_tar.gz
-Patch230:	linux-2.4-aic79xx-20030318.patch.bz2
+# http://people.FreeBSD.org/~gibbs/linux/SRC/aic79xx-linux-2.4-20030603-tar.gz
+Patch230:	linux-2.4-aic79xx-20030603.patch.gz
 Patch235:	linux-2.4.20-audigy.patch.bz2
 Patch240:	linux-2.4.20-ecc.patch
 Patch245:	linux-2.4.20-01-edd.patch
 Patch246:	linux-2.4.20-02-edd-allocate.patch
-#i2c - version 2.7.0
-Patch255:	linux-2.4.20-i2c-2.7.0.patch.gz
+# i2c - version 2.7.0
+Patch255:	linux-2.4.21-i2c-2.7.0.patch.gz
 Patch265:	linux-2.4.20-e820.patch
 # Syntax bug
 Patch270:	dc395-tab.patch
@@ -233,6 +226,7 @@ Patch1302:	linux-2.4.18-nfs-default-size.patch
 Patch1303:	linux-2.4.20-irixnfs.patch
 # Tru64 NFS kludge
 Patch1304:	linux-2.4.21-tru64nfs.patch
+Patch1305:	linux-2.4.21-nfs-silly-rename.patch
 
 Patch1350:	linux-2.4.21-nousb.patch
 # from http://www.noc.uoa.gr/~avel/page.php?page=nokia&lang=en
@@ -252,10 +246,10 @@ Patch1408:	kernel-pswscancode.patch
 Patch1409:	linux-2.4.18-dmi-hall-of-shame.patch
 Patch1410:	linux-2.4.18-input-35215.patch
 Patch1411:	linux-2.4.18-kiobuf.patch
-Patch1413:	linux-2.4.20-andrea-fix-pausing.patch
+Patch1413:	linux-2.4.21-andrea-9980_fix-pausing-5.patch
 Patch1414:	linux-2.4.21-oopsmeharder.patch
 Patch1415:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
-Patch1416:	linux-2.4.20-no-FPU.patch
+Patch1416:	linux-2.4.21-no-FPU.patch
 
 Patch2000:	linux-PPC-SMP.patch
 Patch2001:	linux-2.4-ppc-procesor.patch
@@ -538,9 +532,9 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -a3 -a6 -a8 -a9 -n linux-%{version}
+%setup -q -a3 -a8 -a9 -n linux-%{version}
 cd hostap-2002-10-12
-%patch90 -p1  
+%patch190 -p1  
 cd ..
 # JFS 1.1.1
 rm -fr fs/jfs
@@ -563,24 +557,19 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch30 -p1
 %patch32 -p1
 %patch31 -p1
-%patch33 -p1
-#%patch34 -p1
-#%patch35 -p1
-#%patch36 -p1
-#%patch37 -p1
 %patch40 -p1
 #%patch41 -p1
 %patch45 -p1
 %patch50 -p1
 %patch55 -p1
-#%patch60 -p1
-#%patch61 -p1
-#%patch62 -p1
-#%patch63 -p1
+%patch60 -p1
+#%patch35 -p1
+#%patch36 -p1
+#%patch37 -p1
 %patch65 -p1
 #%patch70 -p1
 %patch75 -p1
-#%patch100 -p1
+%patch100 -p1
 %patch110 -p1
 %patch111 -p1
 %patch115 -p1
@@ -588,19 +577,19 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch125 -p1
 %patch150 -p1
 %patch151 -p1
-#%patch200 -p1
+%patch200 -p1
 #%patch201 -p1
-#%patch210 -p1
+#%patch202 -p1
+%patch210 -p1
 #%patch215 -p1
 #%patch216 -p1
-#%patch220 -p1
-#%patch225 -p1
-#%patch230 -p1
+%patch225 -p1
+%patch230 -p1
 %patch235 -p1
 %patch240 -p1
 %patch245 -p1
 %patch246 -p1
-#%patch255 -p1
+%patch255 -p1
 %patch265 -p1
 %patch275 -p1
 %patch1000 -p1
@@ -636,6 +625,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1302 -p1
 %patch1303 -p1
 %patch1304 -p1
+%patch1305 -p1
 %patch1350 -p1
 %patch1354 -p1
 %patch1400 -p1
@@ -650,19 +640,19 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1409 -p1
 %patch1410 -p1
 %patch1411 -p1
-#%patch1413 -p1
+%patch1413 -p1
 %patch1414 -p1
 %patch1415 -p0
-#%patch1416 -p1
+%patch1416 -p1
 
 %patch2000 -p0
 %patch2001 -p1
 %patch2002 -p1
 %patch2003 -p1
 
-#%patch3000 -p1
-#%patch3002 -p1
-#%patch3003 -p1
+%patch3000 -p1
+%patch3002 -p1
+%patch3003 -p1
 %patch3004 -p1
 
 mv -f drivers/scsi/sym53c8xx.c drivers/scsi/sym53c8xx_old.c
@@ -673,14 +663,10 @@ patch -p1 -s <dc395/dc395-integ24.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 %patch270 -p1
 
-# IP personality
-#echo Adding IP Personality 
-#patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020819-linux-2.4.19.diff
-
 # hostap
-#echo Installing Host AP support
-#patch -p1 -s < hostap-%{hostap_version}/kernel-patches/hostap-linux-2.4.19-rc3.patch
-#cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
+echo Installing Host AP support
+patch -p1 -s < hostap-%{hostap_version}/kernel-patches/hostap-linux-2.4.19-rc3.patch
+cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 
 # The following go last as they touch a lot of code
 # and/or are on bcond and/or are ifarch
