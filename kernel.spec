@@ -1,7 +1,6 @@
 #
 # TODO:
 #		- fix lirc_sasem (usb api)
-#		- update grsecurity patch
 #		- add distcc support (and don't break crossbuild!)
 #
 # Conditional build:
@@ -16,11 +15,6 @@
 %bcond_with	preemptive	# build preemptive kernel
 
 %{?debug:%define with_verbose 1}
-
-# see TODO
-#if %{with grsec}
-#undefine	with_grsec
-#endif
 
 %if !%{with grsec}
 %undefine	with_pax
@@ -54,7 +48,7 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.95.1
+%define		_rel		0.96
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -174,9 +168,7 @@ Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2
 # http://lirc.sourceforge.net/software/snapshots/lirc-0.7.0pre7.tar.bz2
 Patch76:	2.6.8-lirc-0.7.0-pre7.patch
 
-# derived from official grsecurity-2.0.1-2.6.7.patch
-# NEEDS UPDATE
-#Patch90:	%{name}-grsec-2.0.1.patch
+# derived from official grsecurity-2.1.0-2.6.10-200501071049.patch
 Patch90:	grsecurity-2.1.0-2.6.10-200501071049.patch
 Patch91:	linux-2.6.10-secfix-200501071130.patch
 
@@ -194,7 +186,6 @@ Patch96:	exec-shield-make-peace-with-grsecurity.patch
 Patch200:	linux-reiser4.patch.bz2
 
 # linux vserver
-#Patch250:	http://www.13thfloor.at/vserver/d_rel26/v1.9.3/patch-2.6.9-vs1.9.3.diff.bz2
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
 Patch250:	linux-2.6-vs.patch
 
