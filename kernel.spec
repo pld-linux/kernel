@@ -80,13 +80,13 @@ Patch1:		patch-int-2.4.19.2.bz2
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch2:		linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/Release-1.2pre3/kernel_patches/
-Patch3:		linux-2.4.19-core-xfs-1.2pre3.patch
+Patch3:		linux-2.4.19-core-xfs-1.2pre3.patch.bz2
 Patch4:		linux-2.4.19-xfs-1.2pre3.patch.bz2
 # Homepage of ABI:	http://linux-abi.sourceforge.net/
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.18.0.patch.bz2 
 Patch5:		linux-abi-2.4.19.1.patch.bz2
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
-Patch6:		grsecurity-%{grsec_version}.patch
+Patch6:		grsecurity-%{grsec_version}.patch.gz
 # Preemptive kernel  patch
 Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.19-rc5-3.patch
 Patch8:		preempt_sched_O1_ck3_2.4.19.patch.bz2
