@@ -411,11 +411,9 @@ Group:		Base/Kernel
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
-Provides:	i2c-devel
+Provides:	kernel-i2c-devel
 Provides:	%{name}-headers(netfilter) = %{_netfilter_snap}
 Provides:	%{name}-headers(alsa-drivers)
-Provides:	alsa-driver-devel
-Obsoletes:	alsa-driver-devel
 Autoreqprov:	no
 
 %description headers
