@@ -431,6 +431,8 @@ Patch2023:	linux-2.4-sec-jfs-leak.patch
 Patch2024:	linux-2.4-sec-sb_audio.patch
 # http://linuxreviews.org/news/2004-06-11_kernel_crash/
 Patch2025:	24_kernel_ia32-and-x86_64-fix-fpu-state.patch
+# CAN-2004-0497
+Patch2026:	linux-2.4-sec-sys_chown.patch
 
 # other stability or security-related fixes
 # fix for I/O stalls and deadlocks
@@ -1044,6 +1046,7 @@ echo AXP patches ...
 %patch2023 -p1
 %patch2024 -p1
 %patch2025 -p1
+%patch2026 -p1
 
 %patch2100 -p1
 %patch2101 -p1
