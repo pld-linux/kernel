@@ -148,7 +148,7 @@ Patch35:	%{name}-pswscancode.patch
 #Patch43:	
 Patch44:	kernel-2.4-NTfix.patch
 # from http://acl.bestbits.at/
-Patch45:	linux-2.4.20-ACL-0.8.54.patch
+Patch45:	linux-2.4.20-ACL-0.8.54.patch.bz2
 #Patch46:	
 
 # Assorted bugfixes
@@ -779,7 +779,7 @@ rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
 
 # make drivers/scsi/ missing files
-	(cd drivers/scsi; make -f M)
+#	(cd drivers/scsi; make -f M)
 	
 # UP KERNEL
 %{!?_without_up:BuildKernel}
