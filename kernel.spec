@@ -32,26 +32,26 @@ Version:	2.4.20
 Release:	0.%{pre_version}.1
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.gz
 # Source0-md5:	4606bddce8887deec72120a9ef78f4c2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.gz
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
+# Source3-md5:	8ed492197244b6a772270417c66214d3
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
-# Source3-md5: 8ed492197244b6a772270417c66214d3
-Source4:	linux-2.4.20-netfilter-%{netfilter_snap}.tar.gz
 # Source4-md5:	56a065ad2b44b375e91679b3e0515353
+Source4:	linux-2.4.20-netfilter-%{netfilter_snap}.tar.gz
+# Source5-md5:	b8f2f7a268a5cb75fabcaec3b5d45fcd
 Source5:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
-# Source5-md5: b8f2f7a268a5cb75fabcaec3b5d45fcd
+# Source6-md5:	bf0b7cb5f32916f95b00753d24bd689a
 Source6:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
-# Source6-md5: bf0b7cb5f32916f95b00753d24bd689a
+# Source7-md5:	2473f345c66683a03ad27ff132d405b7
 Source7:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
-# Source7-md5:	93828aea31e72bc34e3188d64cf0518a
+# Source8-md5:	34515784c7b67f6cc9169aa9eed982c7
 Source8:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
-# Source8-md5: 34515784c7b67f6cc9169aa9eed982c7
+# Source9-md5:	4d5dd3fef2f5537ee07e64cdd1378e80
 Source9:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
-# Source9-md5: 4d5dd3fef2f5537ee07e64cdd1378e80
+# Source10-md5:	3da1f4b229685766cb4f2f5ce242c0d2
 Source10:	linux-2.4.20-aacraid.tar.bz2
-# Source10-md5: 3da1f4b229685766cb4f2f5ce242c0d2
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source50:	%{name}-sparc.config
