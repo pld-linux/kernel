@@ -8,7 +8,6 @@
 #		- check I2C
 #		- fix lirc_sasem (usb api)
 #		- update HP-OmniBook patchset (2.6.1-all-in-1.patch)
-#		- grsecurity 2.0.1
 #
 # Conditional build:
 %bcond_without	BOOT		# don't build BOOT kernel
@@ -16,6 +15,7 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	grsec		# build without grsec
+%bcond_with	pax		# enable PaX
 %bcond_with	execshield	# build without exec-shield
 %bcond_with	pramfs		# build pramfs support (EXPERIMENTAL)
 %bcond_with	verbose		# verbose build (V=1)
@@ -23,6 +23,10 @@
 %bcond_with	bootsplash	# build with bootsplash
 
 %{?debug:%define with_verbose 1}
+
+%if !%{with grsec}
+%undefine	with_pax
+%endif
 
 %ifarch sparc
 # sparc32 is missing important updates from 2.5 cycle - won't build
@@ -72,7 +76,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.6.8
-Release:	%{_rel}
+Release:	%{_rel}%{?with_pax:pax}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
@@ -107,6 +111,7 @@ Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
 Source80:	%{name}-netfilter.config
 Source90:	%{name}-grsec.config
+Source91:	%{name}-grsec+pax.config
 
 Patch0:		2.6.0-ksyms-add.patch
 Patch1:		2.6.0-t4-PPC-ENODEV.patch
@@ -180,8 +185,9 @@ Patch76:	2.6.8-lirc-0.7.0-pre7.patch
 # http://i2o.shadowconnect.com/
 Patch77:	2.6.8-i2o-build_105.patch.gz
 
-# derived from grsecurity-2.0-2.6.6-unofficial.patch
-Patch90:	%{name}-grsec.patch
+# derived from official grsecurity-2.0.1-2.6.7.patch
+Patch90:	%{name}-grsec-2.0.1.patch
+
 # http://lkml.org/lkml/2004/6/2/233
 Patch91:	http://people.redhat.com/mingo/exec-shield/exec-shield-nx-2.6.7-A0
 Patch92:	exec-shield-make-peace-with-grsecurity.patch
@@ -752,7 +758,11 @@ BuildConfig (){
 #	netfilter	
 	cat %{SOURCE80} >> arch/%{_target_base_arch}/defconfig
 #	grsecurity
+%if !%{with pax}
 	cat %{SOURCE90} >> arch/%{_target_base_arch}/defconfig
+%else
+	cat %{SOURCE91} >> arch/%{_target_base_arch}/defconfig
+%endif
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
