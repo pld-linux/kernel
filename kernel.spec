@@ -21,13 +21,14 @@
 %define		aic_version		6.2.3-2.4.7
 %define		jfs_version		2.4-1.0.15
 %define		lvm_version		1.0.3
+%define		evms_version		0.9.2
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	0.6
+Release:	0.7
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -148,6 +149,11 @@ Patch133:	linux-2.4.18-netsyms-fix.patch
 Patch134:	linux-2.4.12-riva-ppc.patch.bz2
 Patch135:	linux-2.4.18-pre4-agp_uninorth-ppc.patch.bz2
 %endif
+
+# EVMS support (http://www.sourceforge.net/projects/evms/)
+Patch136:	evms-%{evms_version}-linux-2.4.patch
+Patch137:	evms-linux-2.4.18-common-files.patch
+
 # Patches fixing other patches or 3rd party sources ;)
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
@@ -508,6 +514,10 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 %patch134 -p1
 %patch135 -p1
 %endif
+
+# EVMS
+%patch136 -p1
+%patch137 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
