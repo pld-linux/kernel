@@ -418,6 +418,12 @@ BuildKernel smp
 BuildKernel BOOT
 %endif
 
+# building IPVS
+(cd ipvs-%{ipvs_version}/ipvs;make;make -C ipvsadm)
+
+# building i8255 module
+{cd i8255;make)
+
 %install
 rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT%{_prefix}/{include,src}
