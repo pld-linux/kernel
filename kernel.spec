@@ -1,10 +1,11 @@
+
 #
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.5.38
+Version:	2.5.41
 Release:	0.1
 License:	GPL
 Group:		Base/Kernel
@@ -22,7 +23,7 @@ Source27:	%{name}-athlon.config
 Source28:	%{name}-athlon-smp.config
 Source30:	%{name}-ppc.config
 
-Patch1:		kernel-2.5.38-devfscdrom.patch
+#Patch1:		kernel-2.5.38-devfscdrom.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -206,7 +207,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -n linux-%{version}
-%patch1 -p1
+#%patch1 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -235,15 +236,46 @@ BuildKernel() {
 	cp $RPM_SOURCE_DIR/kernel-$Config.config arch/i386/defconfig
 	%{__make} mrproper
 	ln -sf arch/i386/defconfig .config
-	%{__make} oldconfig
-	%{__make} dep
+%ifarch sparc
+        sparc32 %{__make} oldconfig
+        sparc32 %{__make} dep
+%else
+        %{__make} oldconfig
+        %{__make} dep
+%endif
 	%{__make} include/linux/version.h
 	KERNELCC="%{kgcc}"
-	%{__make} bzImage EXTRAVERSION="-%{release}"
-	%{__make} modules EXTRAVERSION="-%{release}"
+%ifarch %{ix86}
+        %{__make} bzImage EXTRAVERSION="-%{release}"
+%endif
+%ifarch sparc
+        sparc32 %{__make} boot EXTRAVERSION="-%{release}"
+%endif
+%ifarch ppc
+        %{__make} vmlinux EXTRAVERSION="-%{release}"
+%endif
+#
+#        %{__make} boot EXTRAVERSION="-%{release}"
+%ifarch sparc
+        sparc32 %{__make} modules EXTRAVERSION="-%{release}"
+%else
+        %{__make} modules EXTRAVERSION="-%{release}"
+%endif
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
-	cp arch/i386/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%ifarch %{ix86}
+        cp arch/i386/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%endif
+%ifarch alpha sparc sparc64
+        gzip -cfv vmlinux > vmlinuz
+        install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
+        install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%endif
+
+%ifarch ppc
+        install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
+        install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%endif
 	%{__make} INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR modules_install KERNELRELEASE=$KernelVer
 }
 
