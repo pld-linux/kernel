@@ -1,22 +1,6 @@
 #
-# Programs required by kernel to work.
-%define		_binutils_ver		2.12
-%define		_util_linux_ver		2.10o
-%define		_module_init_tool_ver	0.9.10
-%define		_e2fsprogs_ver		1.29
-%define		_jfsutils_ver		1.1.3
-%define		_reiserfsprogs_ver	3.6.3
-%define		_xfsprogs_ver		2.1.0
-%define		_pcmcia_cs_ver		3.1.21
-%define		_quota_tools_ver	3.09
-%define		_PPP_ver		2.4.0
-%define		_isdn4k_utils_ver	3.1pre1
-%define		_nfs_utils_ver		1.0.5
-%define		_procps_ver		3.1.13
-%define		_oprofile_ver		0.5.3
-# Netfilter snap.
 %define		_netfilter_snap		20040429
-#
+%define		_cset			20040515_0809
 %define		no_install_post_strip	1
 #
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -30,7 +14,6 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{_ver}.tar.bz2
 # Source0-md5:	5218790bc3db41e77a7422969639a9ad
 Source1:	grsecurity-2.0-2.6.6-unofficial.patch
 Source2:	%{name}-config-nondist
-%define		_cset	20040511_2230
 %if "%{_cset}" != "0"
 Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
 %endif
@@ -57,20 +40,21 @@ Autoreqprov:	no
 PreReq:		coreutils
 PreReq:		module-init-tools >= 0.9.9
 Provides:	module-info
+
 Provides:	kernel(netfilter) = %{_netfilter_snap}
 Obsoletes:	kernel-modules
-Conflicts:	util-linux < %{_util_linux_ver}
-Conflicts:	module-init-tool < %{_module_init_tool_ver}
-Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
-Conflicts:	jfsutils < %{_jfsutils_ver}
-Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
-Conflicts:	xfsprogs < %{_xfsprogs_ver}
-Conflicts:	quota-tools < %{_quota_tools_ver}
-Conflicts:	PPP < %{_PPP_ver}
-Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
-Conflicts:	nfs-utils < %{_nfs_utils_ver}
-Conflicts:	procps < %{_procps_ver}
-Conflicts:	oprofile < %{_oprofile_ver}
+Conflicts:	PPP < 2.4.0
+Conflicts:	e2fsprogs < 1.29
+Conflicts:	isdn4k-utils < 3.1pre1
+Conflicts:	jfsutils < 1.1.3
+Conflicts:	module-init-tool < 0.9.10
+Conflicts:	nfs-utils < 1.0.5
+Conflicts:	oprofile < 0.5.3
+Conflicts:	procps < 3.1.13
+Conflicts:	quota-tools < 3.09
+Conflicts:	reiserfsprogs < 3.6.3
+Conflicts:	util-linux < 2.10o
+Conflicts:	xfsprogs < 2.1.0
 ExclusiveArch:	%{ix86}
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
