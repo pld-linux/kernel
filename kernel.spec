@@ -240,7 +240,7 @@ Patch900:	loop-jari-2.4.20.0.patch
 Patch901:	dc395-tab.patch
 # DRM (note that this doesn't fix drm when running on 386 or 486 CPU!)
 #Patch902:
-#Patch903:
+Patch903:	linux-2.4-ppc-procesor.patch
 Patch904:	linux-abi-put_user.patch
 Patch905:	linux-abi-fl_ibcs_to_linux.patch
 Patch906:	linux-netfilter-newnat-conntrack-nat-udp.patch
@@ -706,6 +706,7 @@ echo Ix86 patches ...
 %ifarch ppc
 echo PPC patches ...
 %patch205 -p1
+%patch903 -p1
 %endif
 %ifarch sparc64
 echo SPARC64 patches ...
