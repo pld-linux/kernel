@@ -7,6 +7,9 @@
 # _without_source	- don't build source
 # _without_lsm		- don't build LSM/SELinux kernel
 
+%define		_rel		0
+%define		patch_level	2
+
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
@@ -20,7 +23,11 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.6.0
-Release:	0.1
+%if %{patch_level} != 0
+Release:	%{_rel}pl%{patch_level}
+%else
+Release:	%{_rel}
+%endif
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-test1.tar.bz2
@@ -28,21 +35,18 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-test1.tar.b
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
-Source50:	%{name}-sparc.config
+#Source50:	%{name}-sparc.config
 #Source51:	%{name}-sparc-smp.config
-Source60:	%{name}-sparc64.config
+#Source60:	%{name}-sparc64.config
 #Source61:	%{name}-sparc64-smp.config
-Source70:	%{name}-alpha.config
+#Source70:	%{name}-alpha.config
 #Source71:	%{name}-alpha-smp.config
 #Source73:	%{name}-ppc.config
 #Source74:	%{name}-ppc-smp.config
-Patch0:		linux-2.5.67-genrtc_fix.patch
-Patch1:		linux-2.5.70-fix_missing_symb.patch
-# Alpha specific patch
-Patch2:         linux-2.5.73-pci-semicolon.patch
-# LSM/SELinux
-# Patch10:	http://lsm.immunix.org/patches/2.5/2.5.72/patch-2.5.72-lsm1.gz
-Patch10:	patch-2.5.72-lsm1.gz
+
+Patch0:		patch-2.6.0-test1-aca.tar.bz2
+Patch1:		2.6.0-test1-lkml.patch
+
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -266,13 +270,9 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}
-%patch0 -p0
+%setup -q -n linux-%{version}-test1
+%patch0 -p1
 %patch1 -p1
-%ifarch alpha
-%patch2 -p1
-%endif
-#%{!?_without_lsm:%patch10 -p1}
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
