@@ -15,7 +15,7 @@
 %define		ipvs_version		1.0.4
 %define		freeswan_version	1.97
 %define		IPperson_version	20020427-2.4.18
-%define		grsec_version		1.9.7-2.4.19
+%define		grsec_version		1.9.7d-2.4.19
 %define		jfs_version		2.4-1.0.24
 %define		lvm_version		1.0.5
 %define		evms_version		1.1.0
@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	2.9%{?_with_preemptive:_pr}
+Release:	2.9.1%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -38,7 +38,7 @@ Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source4:	http://christophe.lizzi.free.fr/linux/linux-2.4.0-test9-fore200e-0.3.tar.gz
-Source5:	linux-2.4.19-netfilter-20021020.tar.bz2
+Source5:	linux-2.4.19-netfilter-20021125.tar.bz2
 #Source6:	
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
@@ -79,14 +79,14 @@ Patch0:		%{name}-pldfblogo.patch
 Patch1:		patch-int-2.4.19.2.bz2
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch2:		linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
-Patch3:		http://people.redhat.com/mingo/O(1)-scheduler/sched-2.4.19-rc2-A4
-# from ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
-Patch4:		linux-2.4.19-xfs-20020923.patch.gz
+# from ftp://linux-xfs.sgi.com/projects/xfs/download/Release-1.2pre3/kernel_patches/
+Patch3:		linux-2.4.19-core-xfs-1.2pre3.patch
+Patch4:		linux-2.4.19-xfs-1.2pre3.patch.bz2
 # Homepage of ABI:	http://linux-abi.sourceforge.net/
-# from ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2 
-Patch5:		linux-abi-2.4.19.0.patch.bz2
+# from ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.18.0.patch.bz2 
+Patch5:		linux-abi-2.4.19.1.patch.bz2
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
-Patch6:		grsecurity-%{grsec_version}.patch.gz
+Patch6:		grsecurity-%{grsec_version}.patch
 # Preemptive kernel  patch
 Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.19-rc5-3.patch
 Patch8:		preempt_sched_O1_ck3_2.4.19.patch.bz2
@@ -119,13 +119,13 @@ Patch32:	ebtables-v2.0-rc1_vs_2.4.18.patch
 Patch33:	linux-2.4.19-pre8-konicawc.patch
 Patch34:	wrr-linux-2.4.9.patch
 Patch35:	%{name}-pswscancode.patch
-Patch36:	linux-2.4.20-rc1-USB.patch
-Patch37:	linux-2.4.20-rc1-bluetooth-USB.patch
-Patch38:	linux-2.4.20-rc1-cpia_usb-USB.patch
-Patch39:	linux-2.4.20-rc1-iforce-USB.patch
-Patch40:	linux-2.4.20-rc1-irda-usb-USB.patch
-Patch41:	linux-2.4.20-rc1-isdn-hisax-USB.patch
-Patch42:	linux-2.4.20-rc1-ticable.h-USB.patch
+Patch36:	linux-2.4.20-rc3-USB.patch
+Patch37:	linux-2.4.20-rc3-bluetooth-USB.patch
+Patch38:	linux-2.4.20-rc3-cpia_usb-USB.patch
+Patch39:	linux-2.4.20-rc3-iforce-USB.patch
+Patch40:	linux-2.4.20-rc3-irda-usb-USB.patch
+Patch41:	linux-2.4.20-rc3-isdn-hisax-USB.patch
+Patch42:	linux-2.4.20-rc3-ticable.h-USB.patch
 Patch43:	linux-2.4.20-rc1-IDE.patch
 Patch44:	kernel-2.4-NTfix.patch
 
@@ -206,6 +206,7 @@ Patch915:	linux-2.4.19-usb-digitalcams.patch
 
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
+Patch2000:	sched-2.4.19-rc2-A4
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -466,12 +467,15 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch1 -p1
 %patch900 -p1
 %patch2 -p1
+%patch2000 -p1
+#%ifarch ppc
+#%patch908 -p1
+#%endif
 %patch3 -p1
-%ifarch ppc
-%patch908 -p1
-%endif
 %patch4 -p1
+%ifarch %{ix86} athlon
 %patch5 -p1
+%endif
 %patch904 -p1
 %{!?_without_grsec:%patch6 -p1}
 %ifarch ppc
@@ -533,7 +537,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch134 -p1
 %patch135 -p1
 %patch136 -p0
-%patch137 -p1
+#%patch137 -p1
 
 %patch200 -p1
 
