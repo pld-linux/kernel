@@ -44,7 +44,7 @@ Source33:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_versio
 Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.1.gz
 Patch100:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac2.bz2
 #Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.17-reiserfs-3.5.25-patch.gz
-Patch1:		ftp://ftp.reiserfs.org/pub/2.4/linux-${version}-reiserfs-%{reiserfs_version}-patch.gz
+Patch1:		ftp://ftp.reiserfs.org/pub/2.4/linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
 #Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
 #Patch3:		linux-tasks.patch
 # patch based on http://www.redhat.com/~mingo/raid-patches/
