@@ -489,9 +489,6 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 #Fixed sysctl export symbols.
 %patch130 -p0
 
-#Missing patch in 2.4.18 final
-%patch131 -p1
-
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
