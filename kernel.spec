@@ -1020,7 +1020,7 @@ fi
 %files source
 %defattr(-,root,root,755)
 %{_prefix}/src/linux-%{version}/Documentation
-%{_prefix}/src/linux-%{version}/abi
+#%{_prefix}/src/linux-%{version}/abi
 %{_prefix}/src/linux-%{version}/arch
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
