@@ -19,12 +19,12 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.5.73
-Release:	0.3
+Version:	2.5.74
+Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
-# Source0-md5:	48dcb423fc2857d64d0e69856c7af5ad	
+# Source0-md5:	5285fc8b7aea93b9fa5fe67c31c0124a
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -38,12 +38,8 @@ Source70:	%{name}-alpha.config
 #Source74:	%{name}-ppc-smp.config
 Patch0:		linux-2.5.67-genrtc_fix.patch
 Patch1:		linux-2.5.70-fix_missing_symb.patch
-Patch2:		linux-2.5-miscfix.patch
 # Alpha specific patch
-Patch3:         linux-2.5.73-pci-semicolon.patch
-# undefined reference to `sys_socket' at sparc32/64, mips32/64, parisc
-# ia64 and alpha (from lkl)
-Patch4:		linux-2.5.73-syscall.patch
+Patch2:         linux-2.5.73-pci-semicolon.patch
 # LSM/SELinux
 # Patch10:	http://lsm.immunix.org/patches/2.5/2.5.72/patch-2.5.72-lsm1.gz
 Patch10:	patch-2.5.72-lsm1.gz
@@ -273,11 +269,9 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %setup -q -n linux-%{version}
 %patch0 -p0
 %patch1 -p1
-%patch2 -p1
 %ifarch alpha
-%patch3 -p1
+%patch2 -p1
 %endif
-%patch4 -p1
 %{!?_without_lsm:%patch10 -p1}
 
 # Fix EXTRAVERSION and CC in main Makefile
