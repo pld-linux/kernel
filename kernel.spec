@@ -20,7 +20,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.5.73
-Release:	0.1
+Release:	0.2
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
@@ -28,9 +28,9 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
-#Source50:	%{name}-sparc.config
+Source50:	%{name}-sparc.config
 #Source51:	%{name}-sparc-smp.config
-#Source60:	%{name}-sparc64.config
+Source60:	%{name}-sparc64.config
 #Source61:	%{name}-sparc64-smp.config
 Source70:	%{name}-alpha.config
 #Source71:	%{name}-alpha-smp.config
@@ -348,7 +348,7 @@ BuildKernel() {
 	%{__make} bzImage
 %endif
 %ifarch sparc
-	sparc32 %{__make} boot
+	sparc32 %{__make} image
 %else
 %ifnarch %{ix86}
 	%{__make}
