@@ -1,0 +1,2428 @@
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/aec62xx.c linux/drivers/ide/aec62xx.c
+--- linux-2.5.24/drivers/ide/aec62xx.c	Tue Jun 25 22:46:43 2002
++++ linux/drivers/ide/aec62xx.c	Tue Jul  2 23:54:16 2002
+@@ -160,16 +160,15 @@
+ }
+ 
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+-static int aec62xx_udma_setup(struct ata_device *drive)
++static int __init aec62xx_modes_map(struct ata_channel *ch)
+ {
+-	u32 bmide = pci_resource_start(drive->channel->pci_dev, 4);
+-	short speed;
++	u32 bmide = pci_resource_start(ch->pci_dev, 4);
+ 	int map;
+ 
+-	map = XFER_PIO | XFER_EPIO | XFER_MWDMA | XFER_UDMA | XFER_SWDMA | XFER_UDMA;
++	map = XFER_EPIO | XFER_SWDMA | XFER_MWDMA | XFER_UDMA;
+ 
+-	if (drive->channel->udma_four)
+-		switch (drive->channel->pci_dev->device) {
++	if (ch->udma_four)
++		switch (ch->pci_dev->device) {
+ 			case PCI_DEVICE_ID_ARTOP_ATP865R:
+ 			case PCI_DEVICE_ID_ARTOP_ATP865:
+ 				/* Can't use these modes simultaneously,
+@@ -180,11 +179,7 @@
+ 				map |= XFER_UDMA_66;
+ 		}
+ 
+-	speed = ata_timing_mode(drive, map);
+-	aec_set_drive(drive, speed);
+-	udma_enable(drive, drive->channel->autodma && (speed & XFER_MODE) != XFER_PIO, 0);
+-
+-	return 0;
++	return map;
+ }
+ #endif
+ 
+@@ -256,11 +251,12 @@
+ 
+ 	ch->tuneproc = aec62xx_tune_drive;
+ 	ch->speedproc = aec_set_drive;
+-	ch->autodma = 0;
+ 
+ 	ch->io_32bit = 1;
+ 	ch->unmask = 1;
+ 
++	ch->udma_four = aec62xx_ata66_check(ch);
++
+ 	for (i = 0; i < 2; i++) {
+ 		ch->drives[i].autotune = 1;
+ 		ch->drives[i].dn = ch->unit * 2 + i;
+@@ -269,11 +265,8 @@
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+ 	if (ch->dma_base) {
+ 		ch->highmem = 1;
+-		ch->udma_setup = aec62xx_udma_setup;
+-#ifdef CONFIG_IDEDMA_AUTO
+-		if (!noautodma)
+-			ch->autodma = 1;
+-#endif
++		ch->modes_map = aec62xx_modes_map(ch);
++		ch->udma_setup = udma_generic_setup;
+ 	}
+ #endif
+ }
+@@ -306,17 +299,15 @@
+ 		vendor: PCI_VENDOR_ID_ARTOP,
+ 		device: PCI_DEVICE_ID_ARTOP_ATP860,
+ 		init_chipset: aec62xx_init_chipset,
+-		ata66_check: aec62xx_ata66_check,
+ 		init_channel: aec62xx_init_channel,
+ 		enablebits: { {0x4a,0x02,0x02},	{0x4a,0x04,0x04} },
+ 		bootable: NEVER_BOARD,
+-		flags: ATA_F_IRQ | ATA_F_NOADMA | ATA_F_DMA
++		flags: ATA_F_IRQ | ATA_F_DMA
+ 	},
+ 	{
+ 		vendor: PCI_VENDOR_ID_ARTOP,
+ 		device: PCI_DEVICE_ID_ARTOP_ATP860R,
+ 		init_chipset: aec62xx_init_chipset,
+-		ata66_check: aec62xx_ata66_check,
+ 		init_channel: aec62xx_init_channel,
+ 		enablebits: { {0x4a,0x02,0x02},	{0x4a,0x04,0x04} },
+ 		bootable: OFF_BOARD,
+@@ -326,7 +317,6 @@
+ 		vendor: PCI_VENDOR_ID_ARTOP,
+ 		device: PCI_DEVICE_ID_ARTOP_ATP865,
+ 		init_chipset: aec62xx_init_chipset,
+-		ata66_check: aec62xx_ata66_check,
+ 		init_channel: aec62xx_init_channel,
+ 		enablebits: { {0x4a,0x02,0x02},	{0x4a,0x04,0x04} },
+ 		bootable: NEVER_BOARD,
+@@ -336,7 +326,6 @@
+ 		vendor: PCI_VENDOR_ID_ARTOP,
+ 		device: PCI_DEVICE_ID_ARTOP_ATP865R,
+ 		init_chipset: aec62xx_init_chipset,
+-		ata66_check: aec62xx_ata66_check,
+ 		init_channel: aec62xx_init_channel,
+ 		enablebits: { {0x4a,0x02,0x02},	{0x4a,0x04,0x04} },
+ 		bootable: OFF_BOARD,
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/alim15x3.c linux/drivers/ide/alim15x3.c
+--- linux-2.5.24/drivers/ide/alim15x3.c	Tue Jun 25 22:46:43 2002
++++ linux/drivers/ide/alim15x3.c	Tue Jul  2 23:54:16 2002
+@@ -99,43 +99,6 @@
+ 	__restore_flags(flags);
+ }
+ 
+-static byte ali15x3_can_ultra(struct ata_device *drive)
+-{
+-	if (m5229_revision <= 0x20) {
+-		return 0;
+-	} else if ((m5229_revision < 0xC2) &&
+-#ifndef CONFIG_WDC_ALI15X3
+-		((chip_is_1543c_e && strstr(drive->id->model, "WDC ")) ||
+-		 (drive->type != ATA_DISK))) {
+-#else
+-		(drive->type != ATA_DISK)) {
+-#endif
+-		return 0;
+-	} else {
+-		return 1;
+-	}
+-}
+-
+-static int ali15x3_ratemask(struct ata_device *drive)
+-{
+-	int map = 0;
+-
+-	if (!ali15x3_can_ultra(drive))
+-		return 0;
+-
+-	map |= XFER_UDMA;
+-
+-	if (!eighty_ninty_three(drive))
+-		return map;
+-
+-	if (m5229_revision >= 0xC4)
+-		map |= XFER_UDMA_100;
+-	if (m5229_revision >= 0xC2)
+-		map |= XFER_UDMA_66;
+-
+-	return map;
+-}
+-
+ static int ali15x3_tune_chipset(struct ata_device *drive, byte speed)
+ {
+ 	struct pci_dev *dev = drive->channel->pci_dev;
+@@ -156,6 +119,7 @@
+ 	if (speed < XFER_SW_DMA_0)
+ 		ali15x3_tune_drive(drive, speed);
+ #ifdef CONFIG_BLK_DEV_IDEDMA
++	/* FIXME: no support for MWDMA and SWDMA modes  --bkz */
+ 	else if (speed >= XFER_UDMA_0) {
+ 		pci_read_config_byte(dev, m5229_udma, &tmpbyte);
+ 		tmpbyte &= (0x0f << ((1-unit) << 2));
+@@ -176,91 +140,40 @@
+ }
+ 
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+-static int config_chipset_for_dma(struct ata_device *drive, u8 udma)
++static int ali15x3_udma_setup(struct ata_device *drive, int map)
+ {
+-	int map;
+-	u8 mode;
++#ifndef CONFIG_WDC_ALI15X3
++	if ((m5229_revision < 0xC2) && chip_is_1543c_e &&
++	    strstr(drive->id->model, "WDC "))
++		map &= ~XFER_UDMA_ALL;
++#endif
++	return udma_generic_setup(drive, map);
++}
+ 
+-	if (udma)
+-		map = ali15x3_ratemask(drive);
+-	else
+-		map = XFER_SWDMA | XFER_MWDMA;
+-
+-	mode = ata_timing_mode(drive, map);
+-	if (mode < XFER_SW_DMA_0)
+-		return 0;
++static int ali15x3_udma_init(struct ata_device *drive, struct request *rq)
++{
++	if ((m5229_revision < 0xC2) && (drive->type != ATA_DISK))
++		return ide_stopped;	/* try PIO instead of DMA */
+ 
+-	return !ali15x3_tune_chipset(drive, mode);
++	return udma_pci_init(drive, rq);
+ }
+ 
+-static int ali15x3_udma_setup(struct ata_device *drive)
++static int __init ali15x3_modes_map(struct ata_channel *ch)
+ {
+-	struct hd_driveid *id = drive->id;
+-	struct ata_channel *hwif = drive->channel;
+-	int on = 1;
+-	int verbose = 1;
+-	byte can_ultra_dma = ali15x3_can_ultra(drive);
+-
+-	if ((m5229_revision<=0x20) && (drive->type != ATA_DISK)) {
+-		udma_enable(drive, 0, 0);
+-		return 0;
+-	}
+-
+-	if ((id != NULL) && ((id->capability & 1) != 0) && hwif->autodma) {
+-		/* Consult the list of known "bad" drives */
+-		if (udma_black_list(drive)) {
+-			on = 0;
+-			goto fast_ata_pio;
+-		}
+-		on = 0;
+-		verbose = 0;
+-		if ((id->field_valid & 4) && (m5229_revision >= 0xC2)) {
+-			if (id->dma_ultra & 0x003F) {
+-				/* Force if Capable UltraDMA */
+-				on = config_chipset_for_dma(drive, can_ultra_dma);
+-				if ((id->field_valid & 2) &&
+-				    (!on))
+-					goto try_dma_modes;
+-			}
+-		} else if (id->field_valid & 2) {
+-try_dma_modes:
+-			if ((id->dma_mword & 0x0007) ||
+-			    (id->dma_1word & 0x0007)) {
+-				/* Force if Capable regular DMA modes */
+-				on = config_chipset_for_dma(drive, can_ultra_dma);
+-				if (!on)
+-					goto no_dma_set;
+-			}
+-		} else if (udma_white_list(drive)) {
+-			if (id->eide_dma_time > 150) {
+-				goto no_dma_set;
+-			}
+-			/* Consult the list of known "good" drives */
+-			on = config_chipset_for_dma(drive, can_ultra_dma);
+-			if (!on)
+-				goto no_dma_set;
+-		} else {
+-			goto fast_ata_pio;
+-		}
+-	} else if ((id->capability & 8) || (id->field_valid & 2)) {
+-fast_ata_pio:
+-		on = 0;
+-		verbose = 0;
+-no_dma_set:
+-		ali15x3_tune_drive(drive, 255);
+-	}
++	int map = XFER_EPIO | XFER_SWDMA | XFER_MWDMA;
+ 
+-	udma_enable(drive, on, verbose);
++	if (m5229_revision <= 0x20)
++		return map;
+ 
+-	return 0;
+-}
++	map |= XFER_UDMA;
+ 
+-static int ali15x3_udma_init(struct ata_device *drive, struct request *rq)
+-{
+-	if ((m5229_revision < 0xC2) && (drive->type != ATA_DISK))
+-		return ide_stopped;	/* try PIO instead of DMA */
++	if (m5229_revision >= 0xC2) {
++		map |= XFER_UDMA_66;
++		if (m5229_revision >= 0xC4)
++			map |= XFER_UDMA_100;
++	}
+ 
+-	return udma_pci_init(drive, rq);
++	return map;
+ }
+ #endif
+ 
+@@ -426,6 +339,8 @@
+ 	}
+ #endif /* CONFIG_SPARC64 */
+ 
++	hwif->udma_four = ali15x3_ata66_check(hwif);
++
+ 	hwif->tuneproc = &ali15x3_tune_drive;
+ 	hwif->drives[0].autotune = 1;
+ 	hwif->drives[1].autotune = 1;
+@@ -436,15 +351,12 @@
+ 		/*
+ 		 * M1543C or newer for DMAing
+ 		 */
+-		hwif->udma_init = ali15x3_udma_init;
++		hwif->modes_map = ali15x3_modes_map(hwif);
++		if (m5229_revision < 0xC2)
++			hwif->no_atapi_autodma = 1;
+ 		hwif->udma_setup = ali15x3_udma_setup;
+-		hwif->autodma = 1;
++		hwif->udma_init = ali15x3_udma_init;
+ 	}
+-
+-	if (noautodma)
+-		hwif->autodma = 0;
+-#else
+-	hwif->autodma = 0;
+ #endif
+ }
+ 
+@@ -472,7 +384,6 @@
+ 		vendor: PCI_VENDOR_ID_AL,
+ 	        device: PCI_DEVICE_ID_AL_M5229,
+ 		init_chipset: ali15x3_init_chipset,
+-		ata66_check: ali15x3_ata66_check,
+ 		init_channel: ali15x3_init_channel,
+ 		init_dma: ali15x3_init_dma,
+ 		enablebits: { {0x00,0x00,0x00}, {0x00,0x00,0x00} },
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/amd74xx.c linux/drivers/ide/amd74xx.c
+--- linux-2.5.24/drivers/ide/amd74xx.c	Tue Jun 25 22:46:05 2002
++++ linux/drivers/ide/amd74xx.c	Tue Jul  2 23:54:16 2002
+@@ -175,21 +175,15 @@
+ }
+ 
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+-static int amd74xx_udma_setup(struct ata_device *drive)
++static int __init amd_modes_map(struct ata_channel *ch)
+ {
+-	short w80 = drive->channel->udma_four;
++	short w80 = ch->udma_four;
++	int map = XFER_EPIO | XFER_MWDMA | XFER_UDMA |
++		  ((amd_config->flags & AMD_BAD_SWDMA) ? 0 : XFER_SWDMA) |
++		  (w80 && (amd_config->flags & AMD_UDMA) >= AMD_UDMA_66 ? XFER_UDMA_66 : 0) |
++		  (w80 && (amd_config->flags & AMD_UDMA) >= AMD_UDMA_100 ? XFER_UDMA_100 : 0);
+ 
+-	short speed = ata_timing_mode(drive,
+-			XFER_PIO | XFER_EPIO | XFER_MWDMA | XFER_UDMA |
+-			((amd_config->flags & AMD_BAD_SWDMA) ? 0 : XFER_SWDMA) |
+-			(w80 && (amd_config->flags & AMD_UDMA) >= AMD_UDMA_66 ? XFER_UDMA_66 : 0) |
+-			(w80 && (amd_config->flags & AMD_UDMA) >= AMD_UDMA_100 ? XFER_UDMA_100 : 0));
+-
+-	amd_set_drive(drive, speed);
+-
+-	udma_enable(drive, drive->channel->autodma && (speed & XFER_MODE) != XFER_PIO, 0);
+-
+-	return 0;
++	return map;
+ }
+ #endif
+ 
+@@ -274,9 +268,10 @@
+ {
+ 	int i;
+ 
++	hwif->udma_four = amd74xx_ata66_check(hwif);
++
+ 	hwif->tuneproc = &amd74xx_tune_drive;
+ 	hwif->speedproc = &amd_set_drive;
+-	hwif->autodma = 0;
+ 
+ 	hwif->io_32bit = 1;
+ 	hwif->unmask = 1;
+@@ -289,11 +284,8 @@
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+ 	if (hwif->dma_base) {
+ 		hwif->highmem = 1;
+-		hwif->udma_setup = amd74xx_udma_setup;
+-# ifdef CONFIG_IDEDMA_AUTO
+-		if (!noautodma)
+-			hwif->autodma = 1;
+-# endif
++		hwif->modes_map = amd_modes_map(hwif);
++		hwif->udma_setup = udma_generic_setup;
+ 	}
+ #endif
+ }
+@@ -314,7 +306,6 @@
+ 		vendor: PCI_VENDOR_ID_AMD,
+ 		device: PCI_DEVICE_ID_AMD_COBRA_7401,
+ 		init_chipset: amd74xx_init_chipset,
+-		ata66_check: amd74xx_ata66_check,
+ 		init_channel: amd74xx_init_channel,
+ 		init_dma: amd74xx_init_dma,
+ 		enablebits: {{0x40,0x01,0x01}, {0x40,0x02,0x02}},
+@@ -324,7 +315,6 @@
+ 		vendor:	PCI_VENDOR_ID_AMD,
+ 		device:	PCI_DEVICE_ID_AMD_VIPER_7409,
+ 		init_chipset: amd74xx_init_chipset,
+-		ata66_check: amd74xx_ata66_check,
+ 		init_channel: amd74xx_init_channel,
+ 		init_dma: amd74xx_init_dma,
+ 		enablebits: {{0x40,0x01,0x01}, {0x40,0x02,0x02}},
+@@ -335,7 +325,6 @@
+ 		vendor:	PCI_VENDOR_ID_AMD,
+ 		device:	PCI_DEVICE_ID_AMD_VIPER_7411,
+ 		init_chipset: amd74xx_init_chipset,
+-		ata66_check: amd74xx_ata66_check,
+ 		init_channel: amd74xx_init_channel,
+ 		init_dma: amd74xx_init_dma,
+ 		enablebits: {{0x40,0x01,0x01}, {0x40,0x02,0x02}},
+@@ -345,7 +334,6 @@
+ 		vendor:	PCI_VENDOR_ID_AMD,
+ 		device:	PCI_DEVICE_ID_AMD_OPUS_7441,
+ 		init_chipset: amd74xx_init_chipset,
+-		ata66_check: amd74xx_ata66_check,
+ 		init_channel: amd74xx_init_channel,
+ 		init_dma: amd74xx_init_dma,
+ 		enablebits: {{0x40,0x01,0x01}, {0x40,0x02,0x02}},
+@@ -355,7 +343,6 @@
+ 		vendor:	PCI_VENDOR_ID_AMD,
+ 		device:	PCI_DEVICE_ID_AMD_8111_IDE,
+ 		init_chipset: amd74xx_init_chipset,
+-		ata66_check: amd74xx_ata66_check,
+ 		init_channel: amd74xx_init_channel,
+ 		init_dma: amd74xx_init_dma,
+ 		enablebits: {{0x40,0x01,0x01}, {0x40,0x02,0x02}},
+@@ -365,7 +352,6 @@
+ 		vendor:	PCI_VENDOR_ID_NVIDIA,
+ 		device:	PCI_DEVICE_ID_NVIDIA_NFORCE_IDE,
+ 		init_chipset: amd74xx_init_chipset,
+-		ata66_check: amd74xx_ata66_check,
+ 		init_channel: amd74xx_init_channel,
+ 		init_dma: amd74xx_init_dma,
+ 		enablebits: {{0x50,0x01,0x01}, {0x50,0x02,0x02}},
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/ata-timing.c linux/drivers/ide/ata-timing.c
+--- linux-2.5.24/drivers/ide/ata-timing.c	Tue Jun 25 22:46:00 2002
++++ linux/drivers/ide/ata-timing.c	Tue Jul  2 23:53:04 2002
+@@ -86,9 +86,11 @@
+ 		if ((map & XFER_UDMA_100) == XFER_UDMA_100)
+ 			if ((best = (id->dma_ultra & 0x0020) ? XFER_UDMA_5 : 0)) return best;
+ 
+-		if ((map & XFER_UDMA_66) == XFER_UDMA_66)
+-			if ((best = (id->dma_ultra & 0x0010) ? XFER_UDMA_4 :
+-				    (id->dma_ultra & 0x0008) ? XFER_UDMA_3 : 0)) return best;
++		if ((map & XFER_UDMA_66_4) == XFER_UDMA_66_4)
++			if ((best = (id->dma_ultra & 0x0010) ? XFER_UDMA_4 : 0)) return best;
++
++		if ((map & XFER_UDMA_66_3) == XFER_UDMA_66_3)
++			if ((best = (id->dma_ultra & 0x0008) ? XFER_UDMA_3 : 0)) return best;
+ 
+                 if ((best = (id->dma_ultra & 0x0004) ? XFER_UDMA_2 :
+ 			    (id->dma_ultra & 0x0002) ? XFER_UDMA_1 :
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/ata-timing.h linux/drivers/ide/ata-timing.h
+--- linux-2.5.24/drivers/ide/ata-timing.h	Tue Jun 25 22:46:43 2002
++++ linux/drivers/ide/ata-timing.h	Tue Jul  2 23:53:04 2002
+@@ -59,15 +59,22 @@
+ #define ENOUGH(v,unit)	(((v)-1)/(unit)+1)
+ #define EZ(v,unit)	((v)?ENOUGH(v,unit):0)
+ 
+-#define XFER_MODE	0xf0
+-#define XFER_UDMA_133	0x48
+-#define XFER_UDMA_100	0x44
+-#define XFER_UDMA_66	0x42
+-#define XFER_UDMA	0x40
+-#define XFER_MWDMA	0x20
+-#define XFER_SWDMA	0x10
+-#define XFER_EPIO	0x01
+-#define XFER_PIO	0x00
++/* see hpt366.c for details */
++#define XFER_UDMA_66_3	0x100
++#define XFER_UDMA_66_4	0x200
++
++#define XFER_MODE	0xff0
++#define XFER_UDMA_133	0x800
++#define XFER_UDMA_100	0x400
++#define XFER_UDMA_66	0x300
++#define XFER_UDMA	0x040
++#define XFER_MWDMA	0x020
++#define XFER_SWDMA	0x010
++#define XFER_EPIO	0x001
++#define XFER_PIO	0x000
++
++#define XFER_UDMA_ALL	0xf40
++#define XFER_UDMA_80W	0xf00
+ 
+ /* External interface to host chips channel timing setup.
+  *
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/cmd64x.c linux/drivers/ide/cmd64x.c
+--- linux-2.5.24/drivers/ide/cmd64x.c	Tue Jun 25 22:46:43 2002
++++ linux/drivers/ide/cmd64x.c	Tue Jul  2 23:54:16 2002
+@@ -217,10 +217,10 @@
+ 	ide_config_drive_speed(drive, speed);
+ }
+ 
+-static int cmd64x_ratemask(struct ata_device *drive)
++static int __init cmd6xx_modes_map(struct ata_channel *ch)
+ {
+-	struct pci_dev *dev = drive->channel->pci_dev;
+-	int map = 0;
++	struct pci_dev *dev = ch->pci_dev;
++	int map = XFER_EPIO | XFER_SWDMA | XFER_MWDMA;
+ 
+ 	switch(dev->device) {
+ 		case PCI_DEVICE_ID_CMD_680:
+@@ -234,10 +234,9 @@
+ 			break;
+ 		case PCI_DEVICE_ID_CMD_646:
+ 		{
+-			u32 class_rev;
+-			pci_read_config_dword(dev,
+-				PCI_CLASS_REVISION, &class_rev);
+-			class_rev &= 0xff;
++			u32 rev;
++			pci_read_config_dword(dev, PCI_CLASS_REVISION, &rev);
++			rev &= 0xff;
+ 		/*
+ 		 * UltraDMA only supported on PCI646U and PCI646U2, which
+ 		 * correspond to revisions 0x03, 0x05 and 0x07 respectively.
+@@ -250,7 +249,7 @@
+ 		 *
+ 		 * So we only do UltraDMA on revision 0x05 and 0x07 chipsets.
+ 		 */
+-			switch(class_rev) {
++			switch(rev) {
+ 				case 0x07:
+ 				case 0x05:
+ 					map |= XFER_UDMA;
+@@ -260,11 +259,6 @@
+ 		}
+ 	}
+ 
+-	if (!eighty_ninty_three(drive)) {
+-		if (map & XFER_UDMA)
+-			return XFER_UDMA;
+-		return 0;
+-	}
+ 	return map;
+ }
+ 
+@@ -515,80 +509,6 @@
+ }
+ 
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+-static int config_chipset_for_dma(struct ata_device *drive, u8 udma)
+-{
+-	int map;
+-	u8 mode;
+-
+-	if (udma)
+-		map = cmd64x_ratemask(drive);
+-	else
+-		map = XFER_SWDMA | XFER_MWDMA;
+-
+-	mode = ata_timing_mode(drive, map);
+-
+-	return !drive->channel->speedproc(drive, mode);
+-}
+-
+-static int cmd6xx_udma_setup(struct ata_device *drive)
+-{
+-	struct hd_driveid *id	= drive->id;
+-	struct ata_channel *hwif = drive->channel;
+-	int on = 1;
+-	int verbose = 1;
+-
+-	hwif->tuneproc(drive, 255);
+-
+-	if ((id != NULL) && ((id->capability & 1) != 0) &&
+-	    hwif->autodma && (drive->type == ATA_DISK)) {
+-		/* Consult the list of known "bad" drives */
+-		if (udma_black_list(drive)) {
+-			on = 0;
+-			goto fast_ata_pio;
+-		}
+-		on = 0;
+-		verbose = 0;
+-		if ((id->field_valid & 4)) {
+-			if (id->dma_ultra & 0x007F) {
+-				/* Force if Capable UltraDMA */
+-				on = config_chipset_for_dma(drive, 1);
+-				if ((id->field_valid & 2) &&
+-				    (!on))
+-					goto try_dma_modes;
+-			}
+-		} else if (id->field_valid & 2) {
+-try_dma_modes:
+-			if ((id->dma_mword & 0x0007) ||
+-			    (id->dma_1word & 0x0007)) {
+-				/* Force if Capable regular DMA modes */
+-				on = config_chipset_for_dma(drive, 0);
+-				if (!on)
+-					goto no_dma_set;
+-			}
+-		} else if (udma_white_list(drive)) {
+-			if (id->eide_dma_time > 150) {
+-				goto no_dma_set;
+-			}
+-			/* Consult the list of known "good" drives */
+-			on = config_chipset_for_dma(drive, 0);
+-			if (!on)
+-				goto no_dma_set;
+-		} else {
+-			goto fast_ata_pio;
+-		}
+-	} else if ((id->capability & 8) || (id->field_valid & 2)) {
+-fast_ata_pio:
+-		on = 0;
+-		verbose = 0;
+-no_dma_set:
+-		hwif->tuneproc(drive, 255);
+-	}
+-
+-	udma_enable(drive, on, verbose);
+-
+-	return 0;
+-}
+-
+ static int cmd64x_udma_stop(struct ata_device *drive)
+ {
+ 	struct ata_channel *ch = drive->channel;
+@@ -822,13 +742,6 @@
+ 	return (ata66 & mask) ? 1 : 0;
+ }
+ 
+-static unsigned int __init cmd64x_ata66_check(struct ata_channel *hwif)
+-{
+-	if (hwif->pci_dev->device == PCI_DEVICE_ID_CMD_680)
+-		return cmd680_ata66(hwif);
+-	return cmd64x_ata66(hwif);
+-}
+-
+ static void __init cmd64x_init_channel(struct ata_channel *hwif)
+ {
+ 	struct pci_dev *dev	= hwif->pci_dev;
+@@ -843,32 +756,28 @@
+ 	switch(dev->device) {
+ 		case PCI_DEVICE_ID_CMD_680:
+ 			hwif->busproc	= cmd680_busproc;
+-#ifdef CONFIG_BLK_DEV_IDEDMA
+-			if (hwif->dma_base)
+-				hwif->udma_setup = cmd6xx_udma_setup;
+-#endif
+ 			hwif->resetproc = cmd680_reset;
+ 			hwif->speedproc	= cmd680_tune_chipset;
+ 			hwif->tuneproc	= cmd680_tuneproc;
++			hwif->udma_four = cmd680_ata66(hwif);
+ 			break;
+ 		case PCI_DEVICE_ID_CMD_649:
+ 		case PCI_DEVICE_ID_CMD_648:
+ 		case PCI_DEVICE_ID_CMD_643:
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+ 			if (hwif->dma_base) {
+-				hwif->udma_setup = cmd6xx_udma_setup;
+ 				hwif->udma_stop	= cmd64x_udma_stop;
+ 				hwif->udma_irq_status = cmd64x_udma_irq_status;
+ 			}
+ #endif
+ 			hwif->tuneproc	= cmd64x_tuneproc;
+ 			hwif->speedproc = cmd64x_tune_chipset;
++			hwif->udma_four = cmd64x_ata66(hwif);
+ 			break;
+ 		case PCI_DEVICE_ID_CMD_646:
+ 			hwif->chipset = ide_cmd646;
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+ 			if (hwif->dma_base) {
+-				hwif->udma_setup = cmd6xx_udma_setup;
+ 				if (class_rev == 0x01) {
+ 					hwif->udma_stop = cmd646_1_udma_stop;
+ 				} else {
+@@ -879,6 +788,7 @@
+ #endif
+ 			hwif->tuneproc	= cmd64x_tuneproc;
+ 			hwif->speedproc	= cmd64x_tune_chipset;
++			hwif->udma_four = cmd64x_ata66(hwif);
+ 			break;
+ 		default:
+ 			break;
+@@ -887,10 +797,9 @@
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+ 	if (hwif->dma_base) {
+ 		hwif->highmem = 1;
+-# ifdef CONFIG_IDEDMA_AUTO
+-		if (!noautodma)
+-			hwif->autodma = 1;
+-# endif
++		hwif->modes_map = cmd6xx_modes_map(hwif);
++		hwif->no_atapi_autodma = 1;
++		hwif->udma_setup = udma_generic_setup;
+ 	}
+ #endif
+ }
+@@ -919,7 +828,6 @@
+ 		vendor: PCI_VENDOR_ID_CMD,
+ 		device: PCI_DEVICE_ID_CMD_648,
+ 		init_chipset: cmd64x_init_chipset,
+-		ata66_check: cmd64x_ata66_check,
+ 		init_channel: cmd64x_init_channel,
+ 		bootable: ON_BOARD,
+ 		flags: ATA_F_DMA
+@@ -928,7 +836,6 @@
+ 		vendor: PCI_VENDOR_ID_CMD,
+ 		device: PCI_DEVICE_ID_CMD_649,
+ 		init_chipset: cmd64x_init_chipset,
+-		ata66_check: cmd64x_ata66_check,
+ 		init_channel: cmd64x_init_channel,
+ 		bootable: ON_BOARD,
+ 		flags: ATA_F_DMA
+@@ -937,7 +844,6 @@
+ 		vendor: PCI_VENDOR_ID_CMD,
+ 		device: PCI_DEVICE_ID_CMD_680,
+ 		init_chipset: cmd64x_init_chipset,
+-		ata66_check: cmd64x_ata66_check,
+ 		init_channel: cmd64x_init_channel,
+ 		bootable: ON_BOARD,
+ 		flags: ATA_F_DMA
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/cs5530.c linux/drivers/ide/cs5530.c
+--- linux-2.5.24/drivers/ide/cs5530.c	Tue Jun 25 22:46:02 2002
++++ linux/drivers/ide/cs5530.c	Tue Jul  2 23:54:07 2002
+@@ -191,7 +191,7 @@
+ 	return 0;
+ }
+ 
+-static int cs5530_udma_setup(struct ata_device *drive)
++static int cs5530_udma_setup(struct ata_device *drive, int map)
+ {
+ 	return cs5530_config_dma(drive);
+ }
+@@ -285,17 +285,15 @@
+  */
+ static void __init ide_init_cs5530(struct ata_channel *hwif)
+ {
++	u32 basereg, d0_timings;
++
+ 	hwif->serialized = 1;
+-	if (!hwif->dma_base) {
+-		hwif->autodma = 0;
+-	} else {
+-		unsigned int basereg, d0_timings;
+ 
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+-	hwif->udma_setup = cs5530_udma_setup;
+-	hwif->highmem = 1;
+-#else
+-	hwif->autodma = 0;
++	if (hwif->dma_base) {
++		hwif->highmem = 1;
++		hwif->udma_setup = cs5530_udma_setup;
++	}
+ #endif
+ 
+ 		hwif->tuneproc = &cs5530_tuneproc;
+@@ -311,7 +309,6 @@
+ 			if (!hwif->drives[1].autotune)
+ 				hwif->drives[1].autotune = 1;	/* needs autotuning later */
+ 		}
+-	}
+ }
+ 
+ 
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/cy82c693.c linux/drivers/ide/cy82c693.c
+--- linux-2.5.24/drivers/ide/cy82c693.c	Tue Jun 25 22:46:02 2002
++++ linux/drivers/ide/cy82c693.c	Tue Jul  2 23:54:07 2002
+@@ -237,7 +237,7 @@
+ /*
+  * used to set DMA mode for CY82C693 (single and multi modes)
+  */
+-static int cy82c693_udma_setup(struct ata_device *drive)
++static int cy82c693_udma_setup(struct ata_device *drive, int map)
+ {
+ 	/*
+ 	 * Set dma mode for drive everything else is done by the defaul func.
+@@ -414,14 +414,11 @@
+ 	hwif->tuneproc = cy82c693_tune_drive;
+ 	hwif->drives[0].autotune = 1;
+ 	hwif->drives[1].autotune = 1;
+-	hwif->autodma = 0;
+ 
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+ 	if (hwif->dma_base) {
+ 		hwif->highmem = 1;
+ 		hwif->udma_setup = cy82c693_udma_setup;
+-		if (!noautodma)
+-			hwif->autodma = 1;
+ 	}
+ #endif
+ }
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/hpt34x.c linux/drivers/ide/hpt34x.c
+--- linux-2.5.24/drivers/ide/hpt34x.c	Tue Jun 25 22:46:05 2002
++++ linux/drivers/ide/hpt34x.c	Tue Jul  2 23:54:07 2002
+@@ -72,83 +72,13 @@
+ }
+ 
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+-static int config_chipset_for_dma(struct ata_device *drive, u8 udma)
++static int hpt34x_udma_setup(struct ata_device *drive, int map)
+ {
+-	int map;
+-	u8 mode;
+-
+-	if (drive->type != ATA_DISK)
+-		return 0;
+-
+-	if (udma)
+-		map = XFER_UDMA;
+-	else
+-		map = XFER_SWDMA | XFER_MWDMA;
+-
+-	mode = ata_timing_mode(drive, map);
+-	if (mode < XFER_SW_DMA_0)
+-		return 0;
+-
+-	return !hpt34x_tune_chipset(drive, mode);
+-}
+-
+-static int hpt34x_udma_setup(struct ata_device *drive)
+-{
+-	struct hd_driveid *id = drive->id;
+-	int on = 1;
+-	int verbose = 1;
+-
+-	if (id && (id->capability & 1) && drive->channel->autodma) {
+-		/* Consult the list of known "bad" drives */
+-		if (udma_black_list(drive)) {
+-			on = 0;
+-			goto fast_ata_pio;
+-		}
+-		on = 0;
+-		verbose = 0;
+-		if (id->field_valid & 4) {
+-			if (id->dma_ultra & 0x0007) {
+-				/* Force if Capable UltraDMA */
+-				on = config_chipset_for_dma(drive, 1);
+-				if ((id->field_valid & 2) &&
+-				    (!on))
+-					goto try_dma_modes;
+-			}
+-		} else if (id->field_valid & 2) {
+-try_dma_modes:
+-			if ((id->dma_mword & 0x0007) ||
+-			    (id->dma_1word & 0x0007)) {
+-				/* Force if Capable regular DMA modes */
+-				on = config_chipset_for_dma(drive, 0);
+-				if (!on)
+-					goto no_dma_set;
+-			}
+-		} else if (udma_white_list(drive)) {
+-			if (id->eide_dma_time > 150) {
+-				goto no_dma_set;
+-			}
+-			/* Consult the list of known "good" drives */
+-			on = config_chipset_for_dma(drive, 0);
+-			if (!on)
+-				goto no_dma_set;
+-		} else {
+-			goto fast_ata_pio;
+-		}
+-	} else if ((id->capability & 8) || (id->field_valid & 2)) {
+-fast_ata_pio:
+-		on = 0;
+-		verbose = 0;
+-no_dma_set:
+-		hpt34x_tune_chipset(drive, ata_best_pio_mode(drive));
+-	}
+-
+-#ifndef CONFIG_HPT34X_AUTODMA
+-	if (on)
+-		on = 0;
+-#endif
+-	udma_enable(drive, on, verbose);
+-
++#ifdef CONFIG_HPT34X_AUTODMA
++	return udma_generic_setup(drive, map);
++#else
+ 	return 0;
++#endif
+ }
+ 
+ static int hpt34x_udma_stop(struct ata_device *drive)
+@@ -252,24 +182,21 @@
+ 		unsigned short pcicmd = 0;
+ 
+ 		pci_read_config_word(hwif->pci_dev, PCI_COMMAND, &pcicmd);
+-		if (!noautodma)
+-			hwif->autodma = (pcicmd & PCI_COMMAND_MEMORY) ? 1 : 0;
+-		else
+-			hwif->autodma = 0;
+-
++#ifdef CONFIG_IDEDMA_AUTO
++		hwif->autodma = (pcicmd & PCI_COMMAND_MEMORY) ? 1 : 0;
++#endif
+ 		hwif->udma_stop = hpt34x_udma_stop;
+ 		hwif->udma_init = hpt34x_udma_init;
++		hwif->modes_map = XFER_EPIO | XFER_SWDMA | XFER_MWDMA | XFER_UDMA;
++		hwif->no_atapi_autodma = 1;
+ 		hwif->udma_setup = hpt34x_udma_setup;
+ 		hwif->highmem = 1;
+-	} else {
++	} else 
++#endif
++	{
+ 		hwif->drives[0].autotune = 1;
+ 		hwif->drives[1].autotune = 1;
+ 	}
+-#else
+-	hwif->drives[0].autotune = 1;
+-	hwif->drives[1].autotune = 1;
+-	hwif->autodma = 0;
+-#endif
+ }
+ 
+ 
+@@ -281,7 +208,7 @@
+ 	init_channel:	ide_init_hpt34x,
+ 	bootable: NEVER_BOARD,
+ 	extra: 16,
+-	flags: ATA_F_NOADMA | ATA_F_DMA
++	flags: ATA_F_DMA
+ };
+ 
+ int __init init_hpt34x(void)
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/hpt366.c linux/drivers/ide/hpt366.c
+--- linux-2.5.24/drivers/ide/hpt366.c	Tue Jun 25 22:46:43 2002
++++ linux/drivers/ide/hpt366.c	Tue Jul  2 23:54:16 2002
+@@ -493,37 +493,23 @@
+ 	return class_rev;
+ }
+ 
+-static int hpt3xx_ratemask(struct ata_device *drive)
++static int __init hpt3xx_modes_map(struct ata_channel *ch)
+ {
+-	u32 rev = hpt_revision(drive->channel->pci_dev);
+-	int map = XFER_UDMA;
++	u32 rev = hpt_revision(ch->pci_dev);
++	int map = XFER_EPIO | XFER_MWDMA | XFER_UDMA | XFER_UDMA_66;
+ 
+ 	if (rev >= 8) {					/* HPT374 */
+ 		if (HPT374_ALLOW_ATA133_6)
+ 			map |= XFER_UDMA_133;
+-		map |= (XFER_UDMA_100 | XFER_UDMA_66);
++		map |= XFER_UDMA_100;
+ 	} else if (rev >= 5) {				/* HPT372 */
+ 		if (HPT372_ALLOW_ATA133_6)
+ 			map |= XFER_UDMA_133;
+-		map |= (XFER_UDMA_100 | XFER_UDMA_66);
+-	} else if (rev >= 4) {				/* HPT370A */
++		map |= XFER_UDMA_100;
++	} else if (rev >= 3) {				/* HPT370A / HPT370 */
+ 		if (HPT370_ALLOW_ATA100_5)
+ 			map |= XFER_UDMA_100;
+-		map |= XFER_UDMA_66;
+-	} else if (rev >= 3) {				/* HPT370 */
+-		if (HPT370_ALLOW_ATA100_5)
+-			map |= XFER_UDMA_100;
+-		map |= XFER_UDMA_66;
+-		if (check_in_drive_lists(drive, bad_ata33))
+-			return 0;
+-	} else {					/* HPT366 and HPT368 */
+-		map |= XFER_UDMA_66;
+-		if (check_in_drive_lists(drive, bad_ata33))
+-			return 0;
+-	}
+-
+-	if (!eighty_ninty_three(drive))
+-		return XFER_UDMA;
++	}						/* HPT366 / HPT368 */
+ 
+ 	return map;
+ }
+@@ -662,62 +648,42 @@
+ 	return ide_config_drive_speed(drive, speed);
+ }
+ 
++/* FIXME: pio == 255 -> ata_best_pio_mode(drive)  --bkz */
+ static void hpt3xx_tune_drive(struct ata_device *drive, u8 pio)
+ {
+ 	(void) hpt3xx_tune_chipset(drive, XFER_PIO_0 + min_t(u8, pio, 4));
+ }
+ 
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+-static int config_chipset_for_dma(struct ata_device *drive)
++static int hpt3xx_udma_setup(struct ata_device *drive, int map)
+ {
+-	int map;
+ 	u32 rev;
+-	u8 mode;
+ 
+ 	if (drive->type != ATA_DISK)
+ 		return 0;
+ 
+ 	rev = hpt_revision(drive->channel->pci_dev);
+ 
+-	/* FIXME: check SWDMA modes --bkz */
+-	map = hpt3xx_ratemask(drive) | XFER_MWDMA;
+-	mode = ata_timing_mode(drive, map);
+-
+-	/* FIXME: badlists need futher investigation --bkz
+-		  bad_ata100_5 is for HPT370/370A,
+-		  bad_ata66_4, bad_ata66_3 and bad_ata33 are for HPT366/368
+-	 */
+-	if (mode == XFER_UDMA_5 && rev < 5) {
+-		if (check_in_drive_lists(drive, bad_ata100_5)) {
+-			/* FIXME: make XFER_UDMA_66/100/133
+-				  independent of XFER_UDMA --bkz */
+-			map &= ~XFER_UDMA_100;
+-			map |= XFER_UDMA;
+-			mode = ata_timing_mode(drive, map);
+-		}
+-	}
+-	if (mode == XFER_UDMA_4 && rev < 3) {
+-		if (check_in_drive_lists(drive, bad_ata66_4)) {
+-			if (drive->id->dma_ultra & 0x0008) {
+-				mode = XFER_UDMA_3;
+-			} else {
+-				map &= ~XFER_UDMA_66;
+-				map |= XFER_UDMA;
+-				mode = ata_timing_mode(drive, map);
+-			}
+-		}
+-	}
+-	if (mode == XFER_UDMA_3 && rev < 3) {
+-		if (check_in_drive_lists(drive, bad_ata66_3)) {
+-			map &= ~XFER_UDMA_66;
+-			map |= XFER_UDMA;
+-			mode = ata_timing_mode(drive, map);
+-		}
++	/* FIXME: badlists need futher investigation  --bkz */
++
++	/* bad_ata100_5 is for HPT370/370A,
++	   bad_ata66_4, bad_ata66_3 and bad_ata33 are for HPT366/368 */
++
++	if (rev < 5 && check_in_drive_lists(drive, bad_ata100_5))
++		map &= ~XFER_UDMA_100;
++
++	if (rev < 3) {
++		if (check_in_drive_lists(drive, bad_ata66_4))
++			map &= ~XFER_UDMA_66_4;
++
++		if (check_in_drive_lists(drive, bad_ata66_3))
++			map &= ~XFER_UDMA_66_3;
++
++		if (check_in_drive_lists(drive, bad_ata33))
++			map &= ~XFER_UDMA_ALL;
+ 	}
+-	if (check_in_drive_lists(drive, bad_ata33) && rev < 3)
+-		mode = ata_timing_mode(drive, XFER_MWDMA);
+ 
+-	return !hpt3xx_tune_chipset(drive, mode);
++	return udma_generic_setup(drive, map);
+ }
+ 
+ static int hpt3xx_quirkproc(struct ata_device *drive)
+@@ -754,59 +720,6 @@
+ 	}
+ }
+ 
+-static int hpt3xx_udma_setup(struct ata_device *drive)
+-{
+-	struct hd_driveid *id = drive->id;
+-	int on = 1;
+-	int verbose = 1;
+-
+-	if (id && (id->capability & 1) && drive->channel->autodma) {
+-		/* Consult the list of known "bad" drives */
+-		if (udma_black_list(drive)) {
+-			on = 0;
+-			goto fast_ata_pio;
+-		}
+-		on = 0;
+-		verbose = 0;
+-		if (id->field_valid & 4) {
+-			if (id->dma_ultra & 0x007F) {
+-				/* Force if Capable UltraDMA */
+-				on = config_chipset_for_dma(drive);
+-				if ((id->field_valid & 2) &&
+-				    (!on))
+-					goto try_dma_modes;
+-			}
+-		} else if (id->field_valid & 2) {
+-try_dma_modes:
+-			if (id->dma_mword & 0x0007) {
+-				/* Force if Capable regular DMA modes */
+-				on = config_chipset_for_dma(drive);
+-				if (!on)
+-					goto no_dma_set;
+-			}
+-		} else if (udma_white_list(drive)) {
+-			if (id->eide_dma_time > 150) {
+-				goto no_dma_set;
+-			}
+-			/* Consult the list of known "good" drives */
+-			on = config_chipset_for_dma(drive);
+-			if (!on)
+-				goto no_dma_set;
+-		} else {
+-			goto fast_ata_pio;
+-		}
+-	} else if ((id->capability & 8) || (id->field_valid & 2)) {
+-fast_ata_pio:
+-		on = 0;
+-		verbose = 0;
+-no_dma_set:
+-		hpt3xx_tune_chipset(drive, ata_best_pio_mode(drive));
+-	}
+-	udma_enable(drive, on, verbose);
+-
+-	return 0;
+-}
+-
+ static void hpt366_udma_irq_lost(struct ata_device *drive)
+ {
+ 	struct pci_dev *dev = drive->channel->pci_dev;
+@@ -1232,6 +1145,8 @@
+ 	struct pci_dev *dev = ch->pci_dev;
+ 	u32 rev = hpt_revision(dev);
+ 
++	ch->udma_four = hpt366_ata66_check(ch);
++
+ 	ch->tuneproc = hpt3xx_tune_drive;
+ 	ch->speedproc = hpt3xx_tune_chipset;
+ 	ch->quirkproc = hpt3xx_quirkproc;
+@@ -1272,17 +1187,12 @@
+ //			ch->resetproc = hpt3xx_reset;
+ //			ch->busproc = hpt3xx_tristate;
+ 		}
++		ch->modes_map = hpt3xx_modes_map(ch);
+ 		ch->udma_setup = hpt3xx_udma_setup;
+-
+-		if (!noautodma)
+-			ch->autodma = 1;
+-		else
+-			ch->autodma = 0;
+ 		ch->highmem = 1;
+ 	} else
+ #endif
+ 	{
+-		ch->autodma = 0;
+ 		ch->drives[0].autotune = 1;
+ 		ch->drives[1].autotune = 1;
+ 	}
+@@ -1315,7 +1225,6 @@
+ 		vendor: PCI_VENDOR_ID_TTI,
+ 		device: PCI_DEVICE_ID_TTI_HPT366,
+ 		init_chipset: hpt366_init_chipset,
+-		ata66_check: hpt366_ata66_check,
+ 		init_channel: hpt366_init_channel,
+ 		init_dma: hpt366_init_dma,
+ 		bootable: OFF_BOARD,
+@@ -1326,7 +1235,6 @@
+ 		vendor: PCI_VENDOR_ID_TTI,
+ 		device: PCI_DEVICE_ID_TTI_HPT372,
+ 		init_chipset: hpt366_init_chipset,
+-		ata66_check: hpt366_ata66_check,
+ 		init_channel: hpt366_init_channel,
+ 		init_dma: hpt366_init_dma,
+ 		bootable: OFF_BOARD,
+@@ -1337,7 +1245,6 @@
+ 		vendor: PCI_VENDOR_ID_TTI,
+ 		device: PCI_DEVICE_ID_TTI_HPT374,
+ 		init_chipset: hpt366_init_chipset,
+-		ata66_check: hpt366_ata66_check,
+ 		init_channel: hpt366_init_channel,
+ 		init_dma: hpt366_init_dma,
+ 		bootable: OFF_BOARD,
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/icside.c linux/drivers/ide/icside.c
+--- linux-2.5.24/drivers/ide/icside.c	Tue Jun 25 22:46:02 2002
++++ linux/drivers/ide/icside.c	Tue Jul  2 23:52:58 2002
+@@ -405,7 +405,7 @@
+ #endif
+ }
+ 
+-static int icside_dma_check(struct ata_device *drive)
++static int icside_dma_check(struct ata_device *drive, int map)
+ {
+ 	struct hd_driveid *id = drive->id;
+ 	struct ata_channel *ch = drive->channel;
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/ide-pci.c linux/drivers/ide/ide-pci.c
+--- linux-2.5.24/drivers/ide/ide-pci.c	Tue Jun 25 22:45:54 2002
++++ linux/drivers/ide/ide-pci.c	Tue Jul  2 23:54:16 2002
+@@ -257,24 +257,13 @@
+ 	if (d->flags & ATA_F_NODMA)
+ 		goto no_dma;
+ 
+-	/* Check whatever this interface is UDMA4 mode capable. */
+-	if (ch->udma_four) {
++	if (ch->udma_four)
+ 		printk("%s: warning: ATA-66/100 forced bit set!\n", dev->name);
+-	} else {
+-		if (d->ata66_check)
+-			ch->udma_four = d->ata66_check(ch);
+-	}
+ 
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+ 	/*
+ 	 * Setup DMA transfers on the channel.
+ 	 */
+-	if (d->flags & ATA_F_NOADMA)
+-		autodma = 0;
+-
+-	if (autodma)
+-		ch->autodma = 1;
+-
+ 	if (!((d->flags & ATA_F_DMA) || ((dev->class >> 8) == PCI_CLASS_STORAGE_IDE && (dev->class & 0x80))))
+ 		goto no_dma;
+ 	/*
+@@ -328,6 +317,9 @@
+ 		d->init_dma(ch, dma_base);
+ 	else
+ 		ata_init_dma(ch, dma_base);
++
++	if (ch->dma_base && autodma)
++		ch->autodma = 1;
+ #endif
+ 
+ no_dma:
+@@ -335,6 +327,11 @@
+ 	if (d->init_channel)
+ 		d->init_channel(ch);
+ 
++#ifdef CONFIG_BLK_DEV_IDEDMA
++	if ((d->flags & ATA_F_NOADMA) || noautodma)
++		ch->autodma = 0;
++#endif
++
+ 	return 0;
+ }
+ 
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/ide-pmac.c linux/drivers/ide/ide-pmac.c
+--- linux-2.5.24/drivers/ide/ide-pmac.c	Wed Jun 26 00:02:53 2002
++++ linux/drivers/ide/ide-pmac.c	Tue Jul  2 23:52:58 2002
+@@ -260,7 +260,7 @@
+ static int pmac_udma_stop(struct ata_device *drive);
+ static int pmac_udma_init(struct ata_device *drive, struct request *rq);
+ static int pmac_udma_irq_status(struct ata_device *drive);
+-static int pmac_udma_setup(struct ata_device *drive);
++static int pmac_udma_setup(struct ata_device *drive, int map);
+ static int pmac_ide_build_dmatable(struct ata_device *drive, struct request *rq, int ix, int wr);
+ static int pmac_ide_tune_chipset(struct ata_device *drive, byte speed);
+ static void pmac_ide_tuneproc(struct ata_device *drive, byte pio);
+@@ -1498,7 +1498,7 @@
+ 	return 0;
+ }
+ 
+-static int pmac_udma_setup(struct ata_device *drive)
++static int pmac_udma_setup(struct ata_device *drive, int map)
+ {
+ 	/* Change this to better match ide-dma.c */
+ 	pmac_ide_check_dma(drive);
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/it8172.c linux/drivers/ide/it8172.c
+--- linux-2.5.24/drivers/ide/it8172.c	Tue Jun 25 22:45:58 2002
++++ linux/drivers/ide/it8172.c	Tue Jul  2 23:54:07 2002
+@@ -179,14 +179,6 @@
+ 
+ 	return ide_config_drive_speed(drive, speed);
+ }
+-
+-static int it8172_udma_setup(struct ata_device *drive)
+-{
+-	u8 speed = ata_timing_mode(drive, XFER_PIO | XFER_EPIO |
+-				   XFER_SWDMA | XFER_MWDMA | XFER_UDMA);
+-
+-	return !it8172_tune_chipset(drive, speed);
+-}
+ #endif /* defined(CONFIG_BLK_DEV_IDEDMA) && (CONFIG_IT8172_TUNING) */
+ 
+ 
+@@ -216,15 +208,11 @@
+     if (!hwif->dma_base)
+ 	return;
+ 
+-#ifndef CONFIG_BLK_DEV_IDEDMA
+-    hwif->autodma = 0;
+-#else /* CONFIG_BLK_DEV_IDEDMA */
+ # ifdef CONFIG_IT8172_TUNING
+-    hwif->autodma = 1;
+-    hwif->dmaproc = &it8172_dmaproc;
++	hwif->modes_map = XFER_EPIO | XFER_SWDMA | XFER_MWDMA | XFER_UDMA;
++	hwif->udma_setup = udma_generic_setup;
+     hwif->speedproc = &it8172_tune_chipset;
+ # endif
+-#endif
+ 
+     cmdBase = dev->resource[0].start;
+     ctrlBase = dev->resource[1].start;
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/main.c linux/drivers/ide/main.c
+--- linux-2.5.24/drivers/ide/main.c	Tue Jun 25 22:46:02 2002
++++ linux/drivers/ide/main.c	Tue Jul  2 23:52:58 2002
+@@ -1074,7 +1074,8 @@
+ 	spin_unlock_irqrestore(&ide_lock, flags);
+ 	/* Default autotune or requested autotune */
+ 	if (drive->autotune != 2) {
+-		if (drive->channel->udma_setup) {
++		struct ata_channel *ch = drive->channel;
++		if (ch->udma_setup) {
+ 
+ 			/*
+ 			 * Force DMAing for the beginning of the check.  Some
+@@ -1085,7 +1086,7 @@
+ 			 */
+ 
+ 			udma_enable(drive, 0, 0);
+-			drive->channel->udma_setup(drive);
++			ch->udma_setup(drive, ch->modes_map);
+ #ifdef CONFIG_BLK_DEV_IDE_TCQ_DEFAULT
+ 			udma_tcq_enable(drive, 1);
+ #endif
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/ns87415.c linux/drivers/ide/ns87415.c
+--- linux-2.5.24/drivers/ide/ns87415.c	Tue Jun 25 22:46:02 2002
++++ linux/drivers/ide/ns87415.c	Tue Jul  2 23:52:58 2002
+@@ -112,14 +112,14 @@
+ 	return ide_stopped;
+ }
+ 
+-static int ns87415_udma_setup(struct ata_device *drive)
++static int ns87415_udma_setup(struct ata_device *drive, int map)
+ {
+ 	if (drive->type != ATA_DISK) {
+ 		udma_enable(drive, 0, 0);
+ 
+ 		return 0;
+ 	}
+-	return udma_pci_setup(drive);
++	return udma_pci_setup(drive, map);
+ }
+ #endif
+ 
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/pcidma.c linux/drivers/ide/pcidma.c
+--- linux-2.5.24/drivers/ide/pcidma.c	Tue Jul  2 17:28:02 2002
++++ linux/drivers/ide/pcidma.c	Tue Jul  2 23:52:58 2002
+@@ -27,6 +27,8 @@
+ #include <linux/ide.h>
+ #include <linux/delay.h>
+ 
++#include "ata-timing.h"
++
+ #include <asm/io.h>
+ #include <asm/irq.h>
+ 
+@@ -164,10 +166,73 @@
+ 	return 0;
+ }
+ 
++/* generic udma_setup() function for drivers having ->speedproc/tuneproc */
++int udma_generic_setup(struct ata_device *drive, int map)
++{
++	struct hd_driveid *id = drive->id;
++	struct ata_channel *ch = drive->channel;
++	int on = 0;
++	u8 mode;
++
++	if (!id || (drive->type != ATA_DISK && ch->no_atapi_autodma))
++		return 0;
++
++	if ((map & XFER_UDMA_80W) && !eighty_ninty_three(drive))
++		map &= ~XFER_UDMA_80W;
++
++	if ((id->capability & 1) && ch->autodma && ch->speedproc) {
++
++		/* Consult the list of known "bad" devices. */
++		if (udma_black_list(drive))
++			goto set_dma;
++
++		mode = ata_timing_mode(drive, map);
++
++		/* Device is UltraDMA capable. */
++		if (mode & XFER_UDMA) {
++			if((on = !ch->speedproc(drive, mode)))
++				goto set_dma;
++
++			printk(KERN_WARNING "%s: UDMA auto-tune failed.\n", drive->name);
++
++			map &= ~XFER_UDMA_ALL;
++			mode = ata_timing_mode(drive, map);
++		}
++
++		/* Device is regular DMA capable. */
++		if (mode & (XFER_SWDMA | XFER_MWDMA)) {
++			if((on = !ch->speedproc(drive, mode)))
++				goto set_dma;
++
++			printk(KERN_WARNING "%s: DMA auto-tune failed.\n", drive->name);
++		}
++
++		/* FIXME: this seems non-functional  --bkz */
++		/* Consult the list of known "good" devices. */
++		if (udma_white_list(drive)) {
++
++			if (id->eide_dma_time > 150)
++				goto set_dma;
++
++			printk(KERN_INFO "%s: device is on DMA whitelist.\n", drive->name);
++//			on = 1;
++		}
++
++		/* Revert to PIO. */
++		if (!on && ch->tuneproc)
++			ch->tuneproc(drive, 255);
++	}
++
++set_dma:
++	udma_enable(drive, on, !on);
++
++	return 0;
++}
++
+ /*
+  * Configure a device for DMA operation.
+  */
+-int udma_pci_setup(struct ata_device *drive)
++int udma_pci_setup(struct ata_device *drive, int map)
+ {
+ 	int config_allows_dma = 1;
+ 	struct hd_driveid *id = drive->id;
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/pcihost.h linux/drivers/ide/pcihost.h
+--- linux-2.5.24/drivers/ide/pcihost.h	Tue Jun 25 22:45:47 2002
++++ linux/drivers/ide/pcihost.h	Tue Jul  2 23:54:16 2002
+@@ -117,7 +117,6 @@
+ 	unsigned short		vendor;
+ 	unsigned short		device;
+ 	unsigned int		(*init_chipset)(struct pci_dev *);
+-	unsigned int		(*ata66_check)(struct ata_channel *);
+ 	void			(*init_channel)(struct ata_channel *);
+ 	void			(*init_dma)(struct ata_channel *, unsigned long);
+ 	ide_pci_enablebit_t	enablebits[2];
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/pdc202xx.c linux/drivers/ide/pdc202xx.c
+--- linux-2.5.24/drivers/ide/pdc202xx.c	Tue Jun 25 22:46:43 2002
++++ linux/drivers/ide/pdc202xx.c	Tue Jul  2 23:54:16 2002
+@@ -129,29 +129,30 @@
+ 	return 0;
+ }
+ 
+-static int pdc202xx_ratemask(struct ata_device *drive)
++static int __init pdc202xx_modes_map(struct ata_channel *ch)
+ {
+-	struct pci_dev *dev = drive->channel->pci_dev;
+-	int map = 0;
+-
+-	if (!eighty_ninty_three(drive))
+-		return XFER_UDMA;
++	int map = XFER_EPIO | XFER_SWDMA | XFER_MWDMA | XFER_UDMA;
+ 
+-	switch(dev->device) {
++	switch(ch->pci_dev->device) {
+ 		case PCI_DEVICE_ID_PROMISE_20276:
+ 		case PCI_DEVICE_ID_PROMISE_20275:
+ 		case PCI_DEVICE_ID_PROMISE_20269:
+ 			map |= XFER_UDMA_133;
+ 		case PCI_DEVICE_ID_PROMISE_20268R:
+ 		case PCI_DEVICE_ID_PROMISE_20268:
++			map &= ~XFER_SWDMA;
+ 		case PCI_DEVICE_ID_PROMISE_20267:
+ 		case PCI_DEVICE_ID_PROMISE_20265:
+ 			map |= XFER_UDMA_100;
+ 		case PCI_DEVICE_ID_PROMISE_20262:
+ 			map |= XFER_UDMA_66;
+-		case PCI_DEVICE_ID_PROMISE_20246:
+-			map |= XFER_UDMA;
++
++			if (!ch->udma_four) {
++				printk(KERN_WARNING "%s: 40-pin cable, speed reduced to UDMA(33) mode.\n", ch->name);
++				map &= ~XFER_UDMA_80W;
++			}
+ 	}
++
+ 	return map;
+ }
+ 
+@@ -372,48 +373,34 @@
+ }
+ 
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+-/* FIXME: split this for old & new chipsets (jumpbit) --bkz */
+-static int config_chipset_for_dma(struct ata_device *drive, byte udma)
++static int pdc202xx_tx_udma_setup(struct ata_device *drive, int map)
++{
++	struct hd_driveid *id = drive->id;
++	struct ata_channel *ch = drive->channel;
++	u32 indexreg = ch->dma_base + 1;
++	u32 datareg = indexreg + 2;
++	u8 adj = (drive->dn % 2) ? 0x08 : 0x00;
++
++	if (drive->type != ATA_DISK)
++		return 0;
++
++	/* IORDY_EN & PREFETCH_EN */
++	if (id->capability & 4)
++		set_2regs(0x13, (IN_BYTE(datareg)|0x03));
++
++	return udma_generic_setup(drive, map);
++}
++
++static int pdc202xx_udma_setup(struct ata_device *drive, int map)
+ {
+-	struct hd_driveid *id	= drive->id;
++	struct hd_driveid *id = drive->id;
+ 	struct ata_channel *hwif = drive->channel;
+ 	struct hd_driveid *mate_id = hwif->drives[!(drive->dn%2)].id;
+-	struct pci_dev *dev	= hwif->pci_dev;
++	struct pci_dev *dev = hwif->pci_dev;
+ 	u32 high_16 = pci_resource_start(dev, 4);
+-	u32 dma_base = hwif->dma_base;
+-	u32 indexreg = dma_base + 1;
+-	u32 datareg = dma_base + 3;
+-	byte adj		= (drive->dn%2) ? 0x08 : 0x00;
+-	u8 jumpbit;
+ 	u32 drive_conf;
+ 	u8 drive_pci = 0, AP, tmp, mode = -1;
+ 	u8 CLKSPD, mask = hwif->unit ? 0x08 : 0x02;
+-	int map;
+-
+-	/* UDMA 3, 4, 5 and 6 */
+-	u8 needs_80w = (id->dma_ultra & 0x0078);
+-
+-	switch(dev->device) {
+-		case PCI_DEVICE_ID_PROMISE_20267:
+-		case PCI_DEVICE_ID_PROMISE_20265:
+-		case PCI_DEVICE_ID_PROMISE_20262:
+-		case PCI_DEVICE_ID_PROMISE_20246:
+-			jumpbit = 0;
+-			break;
+-		default: /* chipsets newer then 20267 */
+-			jumpbit = 1;
+-			break;
+-	}
+-
+-	/* FIXME: this check is wrong for 20246  --bkz */
+-	/* */
+-	if (needs_80w && !hwif->udma_four) {
+-		printk(KERN_WARNING "%s: channel requires an 80-pin cable.\n", hwif->name);
+-		printk(KERN_INFO "%s: reduced to UDMA(33) mode.\n", drive->name);
+-	}
+-
+-	if (jumpbit)
+-		goto chipset_is_set;
+ 
+ 	/*
+ 	 * Set the control register to use the 66Mhz system
+@@ -427,7 +414,7 @@
+ 	 * FIXME: move this to pdc202xx_tuneproc()
+ 	 *        right now you can't downgrade from U66 to U33  --bkz
+ 	 */
+-	if (needs_80w) {
++	if (id->dma_ultra & 0x0078) {	/* UDMA 3, 4, 5 and 6 */
+ 		CLKSPD = IN_BYTE(high_16 + PDC_CLK);
+ 		/* check cable and mate (must be at least udma3 capable) */
+ 		if (!hwif->udma_four ||
+@@ -449,12 +436,11 @@
+ 	/* FIXME: what if SYNC_ERRDY is enabled for slave
+ 		  and disabled for master? --bkz */
+ 	pci_read_config_byte(dev, drive_pci, &AP);
++	/* enable SYNC_ERRDY for master and slave (if enabled for master) */
+ 	if (!(AP & SYNC_ERRDY_EN)) {
+-		if (drive->dn == 0 || drive->dn == 2) {
+-			/* enable SYNC_ERRDY for master */
++		if (!(drive->dn % 2)) {
+ 			pci_write_config_byte(dev, drive_pci, AP|SYNC_ERRDY_EN);
+ 		} else {
+-			/* enable SYNC_ERRDY for slave if enabled for master */
+ 			pci_read_config_byte(dev, drive_pci - 4, &tmp);
+ 			if (tmp & SYNC_ERRDY_EN)
+ 				pci_write_config_byte(dev, drive_pci, AP|SYNC_ERRDY_EN);
+@@ -466,85 +452,26 @@
+ 	if (drive->type != ATA_DISK)
+ 		return 0;
+ 
+-	if (jumpbit) {
+-		if (id->capability & 4) {	/* IORDY_EN & PREFETCH_EN */
+-			set_2regs(0x13, (IN_BYTE(datareg)|0x03));
+-		}
+-	} else {
+-		pci_read_config_byte(dev, drive_pci, &AP);
+-		if (id->capability & 4)		/* IORDY_EN */
+-			pci_write_config_byte(dev, drive_pci, AP|IORDY_EN);
+-		pci_read_config_byte(dev, drive_pci, &AP);
+-		if (drive->type == ATA_DISK)	/* PREFETCH_EN */
+-			pci_write_config_byte(dev, drive_pci, AP|PREFETCH_EN);
+-	}
++	pci_read_config_byte(dev, drive_pci, &AP);
++	if (id->capability & 4)		/* IORDY_EN */
++		pci_write_config_byte(dev, drive_pci, AP|IORDY_EN);
++	pci_read_config_byte(dev, drive_pci, &AP);
++	if (drive->type == ATA_DISK)	/* PREFETCH_EN */
++		pci_write_config_byte(dev, drive_pci, AP|PREFETCH_EN);
+ 
+-	if (udma) {
+-		map = pdc202xx_ratemask(drive);
+-	} else {
+-		if (!jumpbit)
+-			map = XFER_SWDMA | XFER_MWDMA;
+-		else
+-			map = XFER_MWDMA;
+-	}
++	map = hwif->modes_map;
++
++	if (!eighty_ninty_three(drive))
++		map &= ~XFER_UDMA_80W;
+ 
+ 	mode = ata_timing_mode(drive, map);
+ 	if (mode < XFER_SW_DMA_0) {
+ 		/* restore original pci-config space */
+-		if (!jumpbit)
+-			pci_write_config_dword(dev, drive_pci, drive_conf);
++		pci_write_config_dword(dev, drive_pci, drive_conf);
+ 		return 0;
+ 	}
+ 
+-	return !hwif->speedproc(drive, mode);
+-}
+-
+-static int pdc202xx_udma_setup(struct ata_device *drive)
+-{
+-	struct hd_driveid *id = drive->id;
+-	struct ata_channel *hwif = drive->channel;
+-	int on = 0;
+-	int verbose = 1;
+-
+-	if (id && (id->capability & 1) && hwif->autodma) {
+-		/* Consult the list of known "bad" drives */
+-		verbose = 0;
+-		if (udma_black_list(drive))
+-			goto no_dma_set;
+-		if (id->field_valid & 4) {
+-			if (id->dma_ultra & 0x007F) {
+-				/* Force if Capable UltraDMA */
+-				on = config_chipset_for_dma(drive, 1);
+-				if ((id->field_valid & 2) &&
+-				    (!on))
+-					goto try_dma_modes;
+-			}
+-		} else if (id->field_valid & 2) {
+-try_dma_modes:
+-			if ((id->dma_mword & 0x0007) ||
+-			    (id->dma_1word & 0x0007)) {
+-				/* Force if Capable regular DMA modes */
+-				on = config_chipset_for_dma(drive, 0);
+-				if (!on)
+-					goto no_dma_set;
+-			}
+-		} else if (udma_white_list(drive)) {
+-			if (id->eide_dma_time > 150) {
+-				goto no_dma_set;
+-			}
+-			/* Consult the list of known "good" drives */
+-			on = config_chipset_for_dma(drive, 0);
+-			if (!on)
+-				goto no_dma_set;
+-		} else goto no_dma_set;
+-	} else if ((id->capability & 8) || (id->field_valid & 2)) {
+-no_dma_set:
+-		pdc202xx_tune_drive(drive, 255);
+-	}
+-
+-	udma_enable(drive, on, verbose);
+-
+-	return 0;
++	return udma_generic_setup(drive, map);
+ }
+ 
+ static void pdc202xx_udma_start(struct ata_device *drive, struct request *rq)
+@@ -725,12 +652,20 @@
+ 		case PCI_DEVICE_ID_PROMISE_20269:
+ 		case PCI_DEVICE_ID_PROMISE_20268:
+ 		case PCI_DEVICE_ID_PROMISE_20268R:
++			hwif->udma_four = pdc202xx_tx_ata66_check(hwif);
++
+ 			hwif->speedproc = &pdc202xx_new_tune_chipset;
+ 			hwif->resetproc = &pdc202xx_new_reset;
++#ifdef CONFIG_BLK_DEV_IDEDMA
++			if (hwif->dma_base)
++				hwif->udma_setup = pdc202xx_tx_udma_setup;
++#endif
+ 			break;
+ 		case PCI_DEVICE_ID_PROMISE_20267:
+ 		case PCI_DEVICE_ID_PROMISE_20265:
+ 		case PCI_DEVICE_ID_PROMISE_20262:
++			hwif->udma_four = pdc202xx_ata66_check(hwif);
++
+ 			hwif->resetproc	= &pdc202xx_reset;
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+ 			/* we need special functions for lba48 */
+@@ -741,6 +676,10 @@
+ #endif
+ 		/* FIXME: check whether 20246 works with lba48 --bkz */
+ 		case PCI_DEVICE_ID_PROMISE_20246:
++#ifdef CONFIG_BLK_DEV_IDEDMA
++			if (hwif->dma_base)
++				hwif->udma_setup = pdc202xx_udma_setup;
++#endif
+ 			hwif->speedproc = &pdc202xx_tune_chipset;
+ 		default:
+ 			break;
+@@ -748,18 +687,15 @@
+ 
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+ 	if (hwif->dma_base) {
++		hwif->modes_map = pdc202xx_modes_map(hwif);
+ 		hwif->udma_irq_lost = pdc202xx_bug;
+ 		hwif->udma_timeout = pdc202xx_bug;
+-		hwif->udma_setup = pdc202xx_udma_setup;
+ 		hwif->highmem = 1;
+-		if (!noautodma)
+-			hwif->autodma = 1;
+ 	} else
+ #endif
+ 	{
+ 		hwif->drives[0].autotune = 1;
+ 		hwif->drives[1].autotune = 1;
+-		hwif->autodma = 0;
+ 	}
+ }
+ 
+@@ -770,7 +706,6 @@
+ 		vendor: PCI_VENDOR_ID_PROMISE,
+ 		device: PCI_DEVICE_ID_PROMISE_20246,
+ 		init_chipset: pdc202xx_init_chipset,
+-		ata66_check: NULL,
+ 		init_channel: ide_init_pdc202xx,
+ #ifndef CONFIG_PDC202XX_FORCE
+ 		enablebits: {{0x50,0x02,0x02}, {0x50,0x04,0x04}},
+@@ -783,7 +718,6 @@
+ 		vendor: PCI_VENDOR_ID_PROMISE,
+ 		device: PCI_DEVICE_ID_PROMISE_20262,
+ 		init_chipset: pdc202xx_init_chipset,
+-		ata66_check: pdc202xx_ata66_check,
+ 		init_channel: ide_init_pdc202xx,
+ #ifndef CONFIG_PDC202XX_FORCE
+ 		enablebits: {{0x50,0x02,0x02}, {0x50,0x04,0x04}},
+@@ -796,7 +730,6 @@
+ 		vendor: PCI_VENDOR_ID_PROMISE,
+ 		device: PCI_DEVICE_ID_PROMISE_20265,
+ 		init_chipset: pdc202xx_init_chipset,
+-		ata66_check: pdc202xx_ata66_check,
+ 		init_channel: ide_init_pdc202xx,
+ #ifndef CONFIG_PDC202XX_FORCE
+ 		enablebits: {{0x50,0x02,0x02}, {0x50,0x04,0x04}},
+@@ -811,7 +744,6 @@
+ 		vendor: PCI_VENDOR_ID_PROMISE,
+ 		device: PCI_DEVICE_ID_PROMISE_20267,
+ 		init_chipset: pdc202xx_init_chipset,
+-		ata66_check: pdc202xx_ata66_check,
+ 		init_channel: ide_init_pdc202xx,
+ #ifndef CONFIG_PDC202XX_FORCE
+ 		enablebits: {{0x50,0x02,0x02}, {0x50,0x04,0x04}},
+@@ -824,7 +756,6 @@
+ 		vendor: PCI_VENDOR_ID_PROMISE,
+ 		device: PCI_DEVICE_ID_PROMISE_20268,
+ 		init_chipset: pdc202xx_tx_init_chipset,
+-		ata66_check: pdc202xx_tx_ata66_check,
+ 		init_channel: ide_init_pdc202xx,
+ 		bootable: OFF_BOARD,
+ 		flags: ATA_F_IRQ | ATA_F_DMA
+@@ -837,7 +768,6 @@
+ 		vendor: PCI_VENDOR_ID_PROMISE,
+ 		device: PCI_DEVICE_ID_PROMISE_20268R,
+ 		init_chipset: pdc202xx_tx_init_chipset,
+-		ata66_check: pdc202xx_tx_ata66_check,
+ 		init_channel: ide_init_pdc202xx,
+ 		bootable: OFF_BOARD,
+ 		flags: ATA_F_IRQ  | ATA_F_DMA
+@@ -846,7 +776,6 @@
+ 		vendor: PCI_VENDOR_ID_PROMISE,
+ 		device: PCI_DEVICE_ID_PROMISE_20269,
+ 		init_chipset: pdc202xx_tx_init_chipset,
+-		ata66_check: pdc202xx_tx_ata66_check,
+ 		init_channel: ide_init_pdc202xx,
+ 		bootable: OFF_BOARD,
+ 		flags: ATA_F_IRQ | ATA_F_DMA
+@@ -855,7 +784,6 @@
+ 		vendor: PCI_VENDOR_ID_PROMISE,
+ 		device: PCI_DEVICE_ID_PROMISE_20275,
+ 		init_chipset: pdc202xx_tx_init_chipset,
+-		ata66_check: pdc202xx_tx_ata66_check,
+ 		init_channel: ide_init_pdc202xx,
+ 		bootable: OFF_BOARD,
+ 		flags: ATA_F_IRQ | ATA_F_DMA
+@@ -864,7 +792,6 @@
+ 		vendor: PCI_VENDOR_ID_PROMISE,
+ 		device: PCI_DEVICE_ID_PROMISE_20276,
+ 		init_chipset: pdc202xx_tx_init_chipset,
+-		ata66_check: pdc202xx_tx_ata66_check,
+ 		init_channel: ide_init_pdc202xx,
+ 		bootable: OFF_BOARD,
+ 		flags: ATA_F_IRQ | ATA_F_DMA
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/piix.c linux/drivers/ide/piix.c
+--- linux-2.5.24/drivers/ide/piix.c	Tue Jun 25 22:46:05 2002
++++ linux/drivers/ide/piix.c	Tue Jul  2 23:54:16 2002
+@@ -244,26 +244,18 @@
+ }
+ 
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+-
+-static int piix_udma_setup(struct ata_device *drive)
++static int __init piix_modes_map(struct ata_channel *ch)
+ {
+-	short w80 = drive->channel->udma_four;
+-
+-	short speed = ata_timing_mode(drive,
+-			XFER_PIO | XFER_EPIO |
+-			(piix_config->flags & PIIX_NODMA ? 0 : (XFER_SWDMA | XFER_MWDMA |
+-			(piix_config->flags & PIIX_UDMA ? XFER_UDMA : 0) |
+-			(w80 && (piix_config->flags & PIIX_UDMA) >= PIIX_UDMA_66 ? XFER_UDMA_66 : 0) |
+-			(w80 && (piix_config->flags & PIIX_UDMA) >= PIIX_UDMA_100 ? XFER_UDMA_100 : 0) |
+-			(w80 && (piix_config->flags & PIIX_UDMA) >= PIIX_UDMA_133 ? XFER_UDMA_133 : 0))));
+-
+-	piix_set_drive(drive, speed);
+-
+-	udma_enable(drive, drive->channel->autodma && (speed & XFER_MODE) != XFER_PIO, 0);
++	short w80 = ch->udma_four;
++	int map = XFER_EPIO |
++		  (piix_config->flags & PIIX_NODMA ? 0 : (XFER_SWDMA | XFER_MWDMA |
++		  (piix_config->flags & PIIX_UDMA ? XFER_UDMA : 0) |
++		  (w80 && (piix_config->flags & PIIX_UDMA) >= PIIX_UDMA_66 ? XFER_UDMA_66 : 0) |
++		  (w80 && (piix_config->flags & PIIX_UDMA) >= PIIX_UDMA_100 ? XFER_UDMA_100 : 0) |
++		  (w80 && (piix_config->flags & PIIX_UDMA) >= PIIX_UDMA_133 ? XFER_UDMA_133 : 0)));
+ 
+-	return 0;
++	return map;
+ }
+-
+ #endif
+ 
+ /*
+@@ -360,9 +352,10 @@
+ {
+ 	int i;
+ 
++	ch->udma_four = piix_ata66_check(ch);
++
+ 	ch->tuneproc = &piix_tune_drive;
+ 	ch->speedproc = &piix_set_drive;
+-	ch->autodma = 0;
+ 	ch->io_32bit = 1;
+ 	ch->unmask = 1;
+ 	for (i = 0; i < 2; i++) {
+@@ -373,11 +366,8 @@
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+ 	if (ch->dma_base) {
+ 		ch->highmem = 1;
+-		ch->udma_setup = piix_udma_setup;
+-# ifdef CONFIG_IDEDMA_AUTO
+-		if (!noautodma)
+-			ch->autodma = 1;
+-# endif
++		ch->modes_map = piix_modes_map(ch);
++		ch->udma_setup = udma_generic_setup;
+ 	}
+ #endif
+ }
+@@ -401,7 +391,6 @@
+ 		vendor: PCI_VENDOR_ID_INTEL,
+ 		device: PCI_DEVICE_ID_INTEL_82371FB_1,
+ 		init_chipset: piix_init_chipset,
+-		ata66_check: piix_ata66_check,
+ 		init_channel: piix_init_channel,
+ 		init_dma: piix_init_dma,
+ 		enablebits: {{0x41,0x80,0x80}, {0x43,0x80,0x80}},
+@@ -411,7 +400,6 @@
+ 		vendor: PCI_VENDOR_ID_INTEL,
+ 		device: PCI_DEVICE_ID_INTEL_82371SB_1,
+ 		init_chipset: piix_init_chipset,
+-		ata66_check: piix_ata66_check,
+ 		init_channel: piix_init_channel,
+ 		init_dma: piix_init_dma,
+ 		enablebits: {{0x41,0x80,0x80}, {0x43,0x80,0x80}},
+@@ -421,7 +409,6 @@
+ 		vendor: PCI_VENDOR_ID_INTEL,
+ 		device: PCI_DEVICE_ID_INTEL_82371AB,
+ 		init_chipset: piix_init_chipset,
+-		ata66_check: piix_ata66_check,
+ 		init_channel: piix_init_channel,
+ 		init_dma: piix_init_dma,
+ 		enablebits: {{0x41,0x80,0x80}, {0x43,0x80,0x80}},
+@@ -431,7 +418,6 @@
+ 		vendor: PCI_VENDOR_ID_INTEL,
+ 		device: PCI_DEVICE_ID_INTEL_82443MX_1,
+ 		init_chipset: piix_init_chipset,
+-		ata66_check: piix_ata66_check,
+ 		init_channel: piix_init_channel,
+ 		init_dma: piix_init_dma,
+ 		enablebits: {{0x41,0x80,0x80}, {0x43,0x80,0x80}},
+@@ -441,7 +427,6 @@
+ 		vendor: PCI_VENDOR_ID_INTEL,
+ 		device: PCI_DEVICE_ID_INTEL_82372FB_1,
+ 		init_chipset: piix_init_chipset,
+-		ata66_check: piix_ata66_check,
+ 		init_channel: piix_init_channel,
+ 		init_dma: piix_init_dma,
+ 		enablebits: {{0x41,0x80,0x80}, {0x43,0x80,0x80}},
+@@ -451,7 +436,6 @@
+ 		vendor: PCI_VENDOR_ID_INTEL,
+ 		device: PCI_DEVICE_ID_INTEL_82801AA_1,
+ 		init_chipset: piix_init_chipset,
+-		ata66_check: piix_ata66_check,
+ 		init_channel: piix_init_channel,
+ 		init_dma: piix_init_dma,
+ 		enablebits: {{0x41,0x80,0x80}, {0x43,0x80,0x80}},
+@@ -461,7 +445,6 @@
+ 		vendor: PCI_VENDOR_ID_INTEL,
+ 		device: PCI_DEVICE_ID_INTEL_82801AB_1,
+ 		init_chipset: piix_init_chipset,
+-		ata66_check: piix_ata66_check,
+ 		init_channel: piix_init_channel,
+ 		init_dma: piix_init_dma,
+ 		enablebits: {{0x41,0x80,0x80}, {0x43,0x80,0x80}},
+@@ -471,7 +454,6 @@
+ 		vendor: PCI_VENDOR_ID_INTEL,
+ 		device: PCI_DEVICE_ID_INTEL_82801BA_9,
+ 		init_chipset: piix_init_chipset,
+-		ata66_check: piix_ata66_check,
+ 		init_channel: piix_init_channel,
+ 		init_dma: piix_init_dma,
+ 		enablebits: {{0x41,0x80,0x80}, {0x43,0x80,0x80}},
+@@ -481,7 +463,6 @@
+ 		vendor: PCI_VENDOR_ID_INTEL,
+ 		device: PCI_DEVICE_ID_INTEL_82801BA_8,
+ 		init_chipset: piix_init_chipset,
+-		ata66_check: piix_ata66_check,
+ 		init_channel: piix_init_channel,
+ 		init_dma: piix_init_dma,
+ 		enablebits: {{0x41,0x80,0x80}, {0x43,0x80,0x80}},
+@@ -491,7 +472,6 @@
+ 		vendor: PCI_VENDOR_ID_INTEL,
+ 		device: PCI_DEVICE_ID_INTEL_82801E_9,
+ 		init_chipset: piix_init_chipset,
+-		ata66_check: piix_ata66_check,
+ 		init_channel: piix_init_channel,
+ 		init_dma: piix_init_dma,
+ 		enablebits: {{0x41,0x80,0x80}, {0x43,0x80,0x80}},
+@@ -501,7 +481,6 @@
+ 		vendor: PCI_VENDOR_ID_INTEL,
+ 		device: PCI_DEVICE_ID_INTEL_82801CA_10,
+ 		init_chipset: piix_init_chipset,
+-		ata66_check: piix_ata66_check,
+ 		init_channel: piix_init_channel,
+ 		init_dma: piix_init_dma,
+ 		enablebits: {{0x41,0x80,0x80}, {0x43,0x80,0x80}},
+@@ -511,7 +490,6 @@
+ 		vendor: PCI_VENDOR_ID_INTEL,
+ 		device: PCI_DEVICE_ID_INTEL_82801CA_11,
+ 		init_chipset: piix_init_chipset,
+-		ata66_check: piix_ata66_check,
+ 		init_channel: piix_init_channel,
+ 		init_dma: piix_init_dma,
+ 		enablebits: {{0x41,0x80,0x80}, {0x43,0x80,0x80}},
+@@ -521,7 +499,6 @@
+ 		vendor: PCI_VENDOR_ID_INTEL,
+ 		device: PCI_DEVICE_ID_INTEL_82801DB_9,
+ 		init_chipset: piix_init_chipset,
+-		ata66_check: piix_ata66_check,
+ 		init_channel: piix_init_channel,
+ 		init_dma: piix_init_dma,
+ 		enablebits: {{0x41,0x80,0x80}, {0x43,0x80,0x80}},
+@@ -531,7 +508,6 @@
+ 		vendor: PCI_VENDOR_ID_EFAR,
+ 		device: PCI_DEVICE_ID_EFAR_SLC90E66_1,
+ 		init_chipset: piix_init_chipset,
+-		ata66_check: piix_ata66_check,
+ 		init_channel: piix_init_channel,
+ 		init_dma: piix_init_dma,
+ 		enablebits: {{0x41,0x80,0x80}, {0x43,0x80,0x80}},
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/serverworks.c linux/drivers/ide/serverworks.c
+--- linux-2.5.24/drivers/ide/serverworks.c	Tue Jun 25 22:46:43 2002
++++ linux/drivers/ide/serverworks.c	Tue Jul  2 23:54:16 2002
+@@ -103,15 +103,11 @@
+ 
+ static struct pci_dev *isa_dev;
+ 
+-static int svwks_ratemask(struct ata_device *drive)
++static int __init svwks_modes_map(struct ata_channel *ch)
+ {
+-	struct pci_dev *dev = drive->channel->pci_dev;
+-	int map = 0;
++	int map = XFER_EPIO | XFER_MWDMA;
+ 
+-	if (!eighty_ninty_three(drive))
+-		return XFER_UDMA;
+-
+-	switch(dev->device) {
++	switch(ch->pci_dev->device) {
+ 		case PCI_DEVICE_ID_SERVERWORKS_CSB5IDE:
+ 			if (svwks_revision >= SVWKS_CSB5_REVISION_NEW)
+ 				map |= XFER_UDMA_100;
+@@ -120,6 +116,7 @@
+ 			map |= XFER_UDMA;
+ 			break;
+ 	}
++
+ 	return map;
+ }
+ 
+@@ -176,6 +173,7 @@
+ 			csb5_pio   |= ((speed - XFER_PIO_0) << (4*drive->dn));
+ 			break;
+ 
++		/* FIXME: check SWDMA modes  --bkz */
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+ 		case XFER_MW_DMA_2:
+ 		case XFER_MW_DMA_1:
+@@ -224,79 +222,13 @@
+ 	return ide_config_drive_speed(drive, speed);
+ }
+ 
++/* FIXME: pio == 255 -> ata_best_pio_mode(drive)  --bkz */
+ static void svwks_tune_drive(struct ata_device *drive, u8 pio)
+ {
+ 	(void) svwks_tune_chipset(drive, XFER_PIO_0 + min_t(u8, pio, 4));
+ }
+ 
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+-static int config_chipset_for_dma(struct ata_device *drive)
+-{
+-	int map;
+-	u8 mode;
+-
+-	/* FIXME: check SWDMA modes --bkz */
+-	map = XFER_MWDMA | svwks_ratemask(drive);
+-	mode = ata_timing_mode(drive, map);
+-
+-	return !svwks_tune_chipset(drive, mode);
+-}
+-
+-static int svwks_udma_setup(struct ata_device *drive)
+-{
+-	struct hd_driveid *id = drive->id;
+-	int on = 1;
+-	int verbose = 1;
+-
+-	if (id && (id->capability & 1) && drive->channel->autodma) {
+-		/* Consult the list of known "bad" drives */
+-		if (udma_black_list(drive)) {
+-			on = 0;
+-			goto fast_ata_pio;
+-		}
+-		on = 0;
+-		verbose = 0;
+-		if (id->field_valid & 4) {
+-			if (id->dma_ultra & 0x003F) {
+-				/* Force if Capable UltraDMA */
+-				on = config_chipset_for_dma(drive);
+-				if ((id->field_valid & 2) &&
+-				    (!on))
+-					goto try_dma_modes;
+-			}
+-		} else if (id->field_valid & 2) {
+-try_dma_modes:
+-			if ((id->dma_mword & 0x0007) ||
+-			    (id->dma_1word & 0x007)) {
+-				/* Force if Capable regular DMA modes */
+-				on = config_chipset_for_dma(drive);
+-				if (!on)
+-					goto no_dma_set;
+-			}
+-		} else if (udma_white_list(drive)) {
+-			if (id->eide_dma_time > 150) {
+-				goto no_dma_set;
+-			}
+-			/* Consult the list of known "good" drives */
+-			on = config_chipset_for_dma(drive);
+-			if (!on)
+-				goto no_dma_set;
+-		} else {
+-			goto fast_ata_pio;
+-		}
+-	} else if ((id->capability & 8) || (id->field_valid & 2)) {
+-fast_ata_pio:
+-		on = 0;
+-		verbose = 0;
+-no_dma_set:
+-		svwks_tune_chipset(drive, ata_best_pio_mode(drive));
+-	}
+-
+-	udma_enable(drive, on, verbose);
+-
+-	return 0;
+-}
+-
+ static int svwks_udma_stop(struct ata_device *drive)
+ {
+ 	struct ata_channel *ch = drive->channel;
+@@ -437,24 +369,21 @@
+ 	if (!hwif->irq)
+ 		hwif->irq = hwif->unit ? 15 : 14;
+ 
++	hwif->udma_four = svwks_ata66_check(hwif);
++
+ 	hwif->tuneproc = &svwks_tune_drive;
+ 	hwif->speedproc = &svwks_tune_chipset;
+ 
+ #ifndef CONFIG_BLK_DEV_IDEDMA
+ 	hwif->drives[0].autotune = 1;
+ 	hwif->drives[1].autotune = 1;
+-	hwif->autodma = 0;
+ #else
+ 	if (hwif->dma_base) {
+-#ifdef CONFIG_IDEDMA_AUTO
+-		if (!noautodma)
+-			hwif->autodma = 1;
+-#endif
++		hwif->modes_map = svwks_modes_map(hwif);
++		hwif->udma_setup = udma_generic_setup;
+ 		hwif->udma_stop = svwks_udma_stop;
+-		hwif->udma_setup = svwks_udma_setup;
+ 		hwif->highmem = 1;
+ 	} else {
+-		hwif->autodma = 0;
+ 		hwif->drives[0].autotune = 1;
+ 		hwif->drives[1].autotune = 1;
+ 	}
+@@ -468,7 +397,6 @@
+ 		vendor: PCI_VENDOR_ID_SERVERWORKS,
+ 		device: PCI_DEVICE_ID_SERVERWORKS_OSB4IDE,
+ 		init_chipset: svwks_init_chipset,
+-		ata66_check: svwks_ata66_check,
+ 		init_channel: ide_init_svwks,
+ 		bootable: ON_BOARD,
+ 		flags: ATA_F_DMA
+@@ -477,7 +405,6 @@
+ 		vendor: PCI_VENDOR_ID_SERVERWORKS,
+ 		device: PCI_DEVICE_ID_SERVERWORKS_CSB5IDE,
+ 		init_chipset: svwks_init_chipset,
+-		ata66_check: svwks_ata66_check,
+ 		init_channel: ide_init_svwks,
+ 		bootable: ON_BOARD,
+ 		flags: ATA_F_SIMPLEX
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/sis5513.c linux/drivers/ide/sis5513.c
+--- linux-2.5.24/drivers/ide/sis5513.c	Tue Jun 25 22:46:43 2002
++++ linux/drivers/ide/sis5513.c	Tue Jul  2 23:54:16 2002
+@@ -207,9 +207,9 @@
+ 
+ static struct pci_dev *host_dev = NULL;
+ 
+-static int sis5513_ratemask(struct ata_device *drive)
++static int __init sis5513_modes_map(struct ata_channel *ch)
+ {
+-	int map = 0;
++	int map = XFER_EPIO | XFER_SWDMA | XFER_MWDMA;
+ 
+ 	switch(chipset_family) {
+ 		case ATA_133:	/* map |= XFER_UDMA_133; */
+@@ -221,15 +221,8 @@
+ 		case ATA_33:
+ 			map |= XFER_UDMA;
+ 			break;
+-		case ATA_16:
+-		case ATA_00:
+-		default:
+-			return 0;
+ 	}
+ 
+-	if (!eighty_ninty_three(drive))
+-		return XFER_UDMA;
+-
+ 	return map;
+ }
+ 
+@@ -404,86 +397,6 @@
+ 	(void)config_art_rwp_pio(drive, min_t(u8, pio, 4));
+ }
+ 
+-#ifdef CONFIG_BLK_DEV_IDEDMA
+-static int config_chipset_for_dma(struct ata_device *drive, u8 udma)
+-{
+-	int map;
+-	u8 mode;
+-
+-#ifdef DEBUG
+-	printk("SIS5513: config_chipset_for_dma, drive %d, udma %d\n",
+-	       drive->dn, udma);
+-#endif
+-
+-	if (udma)
+-		map = sis5513_ratemask(drive);
+-	else
+-		map = XFER_SWDMA | XFER_MWDMA;
+-
+-	mode = ata_timing_mode(drive, map);
+-	if (mode < XFER_SW_DMA_0)
+-		return 0;
+-
+-	return !sis5513_tune_chipset(drive, mode);
+-}
+-
+-static int sis5513_udma_setup(struct ata_device *drive)
+-{
+-	struct hd_driveid *id = drive->id;
+-	int on = 0;
+-	int verbose = 1;
+-
+-	config_drive_art_rwp(drive);
+-	sis5513_tune_drive(drive, 255);
+-
+-	if (id && (id->capability & 1) && drive->channel->autodma) {
+-		/* Consult the list of known "bad" drives */
+-		if (udma_black_list(drive)) {
+-			on = 0;
+-			goto fast_ata_pio;
+-		}
+-		on = 0;
+-		verbose = 0;
+-		if (id->field_valid & 4) {
+-			if (id->dma_ultra & 0x003F) {
+-				/* Force if Capable UltraDMA */
+-				on = config_chipset_for_dma(drive, 1);
+-				if ((id->field_valid & 2) &&
+-				    (!on))
+-					goto try_dma_modes;
+-			}
+-		} else if (id->field_valid & 2) {
+-try_dma_modes:
+-			if ((id->dma_mword & 0x0007) ||
+-			    (id->dma_1word & 0x0007)) {
+-				/* Force if Capable regular DMA modes */
+-				on = config_chipset_for_dma(drive, 0);
+-				if (!on)
+-					goto no_dma_set;
+-			}
+-		} else if ((udma_white_list(drive)) &&
+-			   (id->eide_dma_time > 150)) {
+-			/* Consult the list of known "good" drives */
+-			on = config_chipset_for_dma(drive, 0);
+-			if (!on)
+-				goto no_dma_set;
+-		} else {
+-			goto fast_ata_pio;
+-		}
+-	} else if ((id->capability & 8) || (id->field_valid & 2)) {
+-fast_ata_pio:
+-		on = 0;
+-		verbose = 0;
+-no_dma_set:
+-		sis5513_tune_drive(drive, 255);
+-	}
+-
+-	udma_enable(drive, on, verbose);
+-
+-	return 0;
+-}
+-#endif
+-
+ /* Chip detection and general config */
+ static unsigned int __init pci_init_sis5513(struct pci_dev *dev)
+ {
+@@ -576,25 +489,19 @@
+ 
+ 	hwif->irq = hwif->unit ? 15 : 14;
+ 
++	hwif->udma_four = ata66_sis5513(hwif);
++
+ 	hwif->tuneproc = &sis5513_tune_drive;
+ 	hwif->speedproc = &sis5513_tune_chipset;
+ 
+-	if (!(hwif->dma_base))
+-		return;
+-
+-	if (host_dev) {
+-#ifdef CONFIG_BLK_DEV_IDEDMA
+-		if (chipset_family > ATA_16) {
+-			hwif->autodma = noautodma ? 0 : 1;
+-			hwif->highmem = 1;
+-			hwif->udma_setup = sis5513_udma_setup;
+-		} else {
+-#endif
+-			hwif->autodma = 0;
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+-		}
+-#endif
++	if (hwif->dma_base && host_dev && chipset_family > ATA_16) {
++		hwif->highmem = 1;
++		hwif->modes_map = sis5513_modes_map(hwif);
++		hwif->udma_setup = udma_generic_setup;
+ 	}
++#endif
++
+ 	return;
+ }
+ 
+@@ -604,11 +511,9 @@
+ 	vendor: PCI_VENDOR_ID_SI,
+ 	device: PCI_DEVICE_ID_SI_5513,
+ 	init_chipset: pci_init_sis5513,
+-	ata66_check: ata66_sis5513,
+ 	init_channel: ide_init_sis5513,
+ 	enablebits: {{0x4a,0x02,0x02}, {0x4a,0x04,0x04} },
+ 	bootable: ON_BOARD,
+-	flags: ATA_F_NOADMA
+ };
+ 
+ int __init init_sis5513(void)
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/sl82c105.c linux/drivers/ide/sl82c105.c
+--- linux-2.5.24/drivers/ide/sl82c105.c	Tue Jun 25 22:46:02 2002
++++ linux/drivers/ide/sl82c105.c	Tue Jul  2 23:54:07 2002
+@@ -130,7 +130,7 @@
+  * Check to see if the drive and
+  * chipset is capable of DMA mode
+  */
+-static int sl82c105_dma_setup(struct ata_device *drive)
++static int sl82c105_dma_setup(struct ata_device *drive, int map)
+ {
+ 	int on = 0;
+ 
+@@ -333,7 +333,6 @@
+ 		dma_state &= ~0x60;
+ 	} else {
+ 		dma_state |= 0x60;
+-		ch->autodma = 1;
+ 	}
+ 	outb(dma_state, dma_base + 2);
+ 
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/trm290.c linux/drivers/ide/trm290.c
+--- linux-2.5.24/drivers/ide/trm290.c	Tue Jun 25 22:46:02 2002
++++ linux/drivers/ide/trm290.c	Tue Jul  2 23:54:07 2002
+@@ -239,9 +239,9 @@
+ 	return (inw(drive->channel->dma_base + 2) == 0x00ff);
+ }
+ 
+-static int trm290_udma_setup(struct ata_device *drive)
++static int trm290_udma_setup(struct ata_device *drive, int map)
+ {
+-	return udma_pci_setup(drive);
++	return udma_pci_setup(drive, map);
+ }
+ #endif
+ 
+@@ -303,7 +303,6 @@
+ #endif
+ 
+ 	hwif->selectproc = &trm290_selectproc;
+-	hwif->autodma = 0;				/* play it safe for now */
+ #if 1
+ 	{
+ 		/*
+diff -ur -Xdontdiff linux-2.5.24/drivers/ide/via82cxxx.c linux/drivers/ide/via82cxxx.c
+--- linux-2.5.24/drivers/ide/via82cxxx.c	Tue Jun 25 22:46:05 2002
++++ linux/drivers/ide/via82cxxx.c	Tue Jul  2 23:54:16 2002
+@@ -221,22 +221,16 @@
+ }
+ 
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+-static int via82cxxx_udma_setup(struct ata_device *drive)
++static int __init via_modes_map(struct ata_channel *ch)
+ {
+-	short w80 = drive->channel->udma_four;
++	short w80 = ch->udma_four;
++	int map = XFER_EPIO | XFER_SWDMA | XFER_MWDMA |
++		  (via_config->flags & VIA_UDMA ? XFER_UDMA : 0) |
++		  (w80 && (via_config->flags & VIA_UDMA) >= VIA_UDMA_66 ? XFER_UDMA_66 : 0) |
++		  (w80 && (via_config->flags & VIA_UDMA) >= VIA_UDMA_100 ? XFER_UDMA_100 : 0) |
++		  (w80 && (via_config->flags & VIA_UDMA) >= VIA_UDMA_133 ? XFER_UDMA_133 : 0);
+ 
+-	short speed = ata_timing_mode(drive,
+-			XFER_PIO | XFER_EPIO | XFER_SWDMA | XFER_MWDMA |
+-			(via_config->flags & VIA_UDMA ? XFER_UDMA : 0) |
+-			(w80 && (via_config->flags & VIA_UDMA) >= VIA_UDMA_66 ? XFER_UDMA_66 : 0) |
+-			(w80 && (via_config->flags & VIA_UDMA) >= VIA_UDMA_100 ? XFER_UDMA_100 : 0) |
+-			(w80 && (via_config->flags & VIA_UDMA) >= VIA_UDMA_133 ? XFER_UDMA_133 : 0));
+-
+-	via_set_drive(drive, speed);
+-
+-	udma_enable(drive, drive->channel->autodma && (speed & XFER_MODE) != XFER_PIO, 0);
+-
+-	return 0;
++	return map;
+ }
+ #endif
+ 
+@@ -352,9 +346,10 @@
+ {
+ 	int i;
+ 
++	hwif->udma_four = via82cxxx_ata66_check(hwif);
++
+ 	hwif->tuneproc = &via82cxxx_tune_drive;
+ 	hwif->speedproc = &via_set_drive;
+-	hwif->autodma = 0;
+ 	hwif->io_32bit = 1;
+ 
+ 	hwif->unmask = (via_config->flags & VIA_NO_UNMASK) ? 0 : 1;
+@@ -366,11 +361,8 @@
+ #ifdef CONFIG_BLK_DEV_IDEDMA
+ 	if (hwif->dma_base) {
+ 		hwif->highmem = 1;
+-		hwif->udma_setup = via82cxxx_udma_setup;
+-# ifdef CONFIG_IDEDMA_AUTO
+-		if (!noautodma)
+-			hwif->autodma = 1;
+-# endif
++		hwif->modes_map = via_modes_map(hwif);
++		hwif->udma_setup = udma_generic_setup;
+ 	}
+ #endif
+ }
+@@ -391,23 +383,19 @@
+ 		vendor: PCI_VENDOR_ID_VIA,
+ 		device:	PCI_DEVICE_ID_VIA_82C576_1,
+ 		init_chipset: via82cxxx_init_chipset,
+-		ata66_check: via82cxxx_ata66_check,
+ 		init_channel: via82cxxx_init_channel,
+ 		init_dma: via82cxxx_init_dma,
+ 		enablebits: {{0x40,0x02,0x02}, {0x40,0x01,0x01}},
+ 		bootable: ON_BOARD,
+-		flags: ATA_F_NOADMA
+ 	},
+ 	{
+ 		vendor:	PCI_VENDOR_ID_VIA,
+ 		device:	PCI_DEVICE_ID_VIA_82C586_1,
+ 		init_chipset: via82cxxx_init_chipset,
+-		ata66_check: via82cxxx_ata66_check,
+ 		init_channel: via82cxxx_init_channel,
+ 		init_dma: via82cxxx_init_dma,
+ 		enablebits: {{0x40,0x02,0x02}, {0x40,0x01,0x01}},
+ 		bootable: ON_BOARD,
+-		flags: ATA_F_NOADMA
+ 	},
+ };
+ 
+diff -ur -Xdontdiff linux-2.5.24/include/linux/ide.h linux/include/linux/ide.h
+--- linux-2.5.24/include/linux/ide.h	Wed Jul  3 00:02:07 2002
++++ linux/include/linux/ide.h	Tue Jul  2 23:52:58 2002
+@@ -456,7 +456,7 @@
+ 	void (*atapi_read)(struct ata_device *, void *, unsigned int);
+ 	void (*atapi_write)(struct ata_device *, void *, unsigned int);
+ 
+-	int (*udma_setup)(struct ata_device *);
++	int (*udma_setup)(struct ata_device *, int);
+ 
+ 	void (*udma_enable)(struct ata_device *, int, int);
+ 	void (*udma_start) (struct ata_device *, struct request *);
+@@ -496,7 +496,9 @@
+ 	unsigned unmask		: 1;	/* flag: okay to unmask other irqs */
+ 	unsigned slow		: 1;	/* flag: slow data port */
+ 	unsigned io_32bit	: 1;	/* 0=16-bit, 1=32-bit */
++	unsigned no_atapi_autodma : 1;	/* flag: use auto DMA only for disks */
+ 	unsigned char bus_state;	/* power state of the IDE bus */
++	int modes_map;			/* map of supported transfer modes */
+ };
+ 
+ /*
+@@ -771,7 +773,9 @@
+ extern int udma_pci_irq_status(struct ata_device *drive);
+ extern void udma_pci_timeout(struct ata_device *drive);
+ extern void udma_pci_irq_lost(struct ata_device *);
+-extern int udma_pci_setup(struct ata_device *);
++extern int udma_pci_setup(struct ata_device *, int);
++
++extern int udma_generic_setup(struct ata_device *, int);
+ 
+ extern int udma_new_table(struct ata_device *, struct request *);
+ extern void udma_destroy_table(struct ata_channel *);

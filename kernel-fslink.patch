@@ -1,0 +1,105 @@
+diff -urN linux-2.5.25-orig/fs/proc/array.c linux-2.5.25/fs/proc/array.c
+--- linux-2.5.25-orig/fs/proc/array.c	Sun Jul 14 14:04:14 2002
++++ linux-2.5.25/fs/proc/array.c	Sun Jul 14 14:08:02 2002
+@@ -346,7 +346,7 @@
+ 	ppid = task->pid ? task->real_parent->pid : 0;
+ 	read_unlock(&tasklist_lock);
+ 	res = sprintf(buffer,"%d (%s) %c %d %d %d %d %d %lu %lu \
+-%lu %lu %lu %lu %lu %ld %ld %ld %ld %ld %ld %lu %lu %ld %lu %lu %lu %lu %lu \
++%lu %lu %lu %lu %lu %ld %ld %ld %ld %ld %ld %llu %lu %ld %lu %lu %lu %lu %lu \
+ %lu %lu %lu %lu %lu %lu %lu %lu %d %d %lu %lu\n",
+ 		task->pid,
+ 		task->comm,
+@@ -369,7 +369,7 @@
+ 		nice,
+ 		0UL /* removed */,
+ 		jiffies_to_clock_t(task->it_real_value),
+-		jiffies_to_clock_t(task->start_time),
++		(unsigned long long) jiffies_64_to_clock_t(task->start_time),
+ 		vsize,
+ 		mm ? mm->rss : 0, /* you might want to shift this left 3 */
+ 		task->rlim[RLIMIT_RSS].rlim_cur,
+diff -urN linux-2.5.25-orig/fs/proc/proc_misc.c linux-2.5.25/fs/proc/proc_misc.c
+--- linux-2.5.25-orig/fs/proc/proc_misc.c	Sun Jul 14 14:04:14 2002
++++ linux-2.5.25/fs/proc/proc_misc.c	Sun Jul 14 14:10:15 2002
+@@ -310,7 +310,9 @@
+ 		jiffies_to_clock_t(user),
+ 		jiffies_to_clock_t(nice),
+ 		jiffies_to_clock_t(system),
+-		jiffies_to_clock_t(jif * num_online_cpus() - (user + nice + system)));
++		(unsigned long long)
++		jiffies_64_to_clock_t(jif * num_online_cpus() 
++					- (user + nice + system)));
+ 	for (i = 0 ; i < NR_CPUS; i++){
+ 		if (!cpu_online(i)) continue;
+ 		len += sprintf(page + len, "cpu%d %lu %lu %lu %llu\n",
+@@ -318,9 +320,10 @@
+ 			jiffies_to_clock_t(kstat.per_cpu_user[i]),
+ 			jiffies_to_clock_t(kstat.per_cpu_nice[i]),
+ 			jiffies_to_clock_t(kstat.per_cpu_system[i]),
+-			jiffies_to_clock_t(jif - (  kstat.per_cpu_user[i] \
+-			       + kstat.per_cpu_nice[i] \
+-			       + kstat.per_cpu_system[i])));
++			(unsigned long long)
++			jiffies_64_to_clock_t(jif -   kstat.per_cpu_user[i] \
++			       - kstat.per_cpu_nice[i] \
++			       - kstat.per_cpu_system[i]));
+ 	}
+ 	len += sprintf(page + len,
+ 		"page %u %u\n"
+diff -urN linux-2.5.25-orig/include/linux/times.h linux-2.5.25/include/linux/times.h
+--- linux-2.5.25-orig/include/linux/times.h	Sun Jul 14 14:03:28 2002
++++ linux-2.5.25/include/linux/times.h	Sun Jul 14 14:11:14 2002
+@@ -2,7 +2,22 @@
+ #define _LINUX_TIMES_H
+ 
+ #ifdef __KERNEL__
++#include <asm/div64.h>
++#include <asm/types.h>
++
+ # define jiffies_to_clock_t(x) ((x) / (HZ / USER_HZ))
++
++/* 
++ * returning a different type than the function name says is
++ * ugly as hell, and only intended to stay until I know what type
++ * should replace clock_t
++ */
++
++static inline u64 jiffies_64_to_clock_t(u64 x)
++{
++ do_div(x, HZ / USER_HZ);
++ return x;
++}
+ #endif
+ 
+ struct tms {
+diff -urN linux-2.5.25-orig/kernel/timer.c linux-2.5.25/kernel/timer.c
+--- linux-2.5.25-orig/kernel/timer.c	Sun Jul 14 14:03:39 2002
++++ linux-2.5.25/kernel/timer.c	Sun Jul 14 14:06:36 2002
+@@ -24,6 +24,8 @@
+ #include <linux/interrupt.h>
+ #include <linux/tqueue.h>
+ #include <linux/kernel_stat.h>
++#include <linux/jiffies.h>
+ 
+ #include <asm/uaccess.h>
++#include <asm/div64.h>
+ 
+@@ -938,13 +939,16 @@
+ asmlinkage long sys_sysinfo(struct sysinfo *info)
+ {
+ 	struct sysinfo val;
++	u64 uptime;
+ 	unsigned long mem_total, sav_total;
+ 	unsigned int mem_unit, bitcount;
+ 
+ 	memset((char *)&val, 0, sizeof(struct sysinfo));
+ 
+ 	read_lock_irq(&xtime_lock);
+-	val.uptime = jiffies / HZ;
++	uptime = jiffies_64;
++	do_div(uptime, HZ);
++	val.uptime = (unsigned long) uptime;
+ 
+ 	val.loads[0] = avenrun[0] << (SI_LOAD_SHIFT - FSHIFT);
+ 	val.loads[1] = avenrun[1] << (SI_LOAD_SHIFT - FSHIFT);
