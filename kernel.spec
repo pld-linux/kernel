@@ -61,6 +61,7 @@
 %define		_nfs_utils_ver		1.0.5
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
+%define		_squashfs_ver		2.1
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
@@ -233,6 +234,7 @@ Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
 Conflicts:	nfs-utils < %{_nfs_utils_ver}
 Conflicts:	procps < %{_procps_ver}
 Conflicts:	oprofile < %{_oprofile_ver}
+Conflicts:	squashfs < %{_squashfs_ver}
 ExclusiveArch:	%{ix86} alpha amd64 ia64 ppc sparc sparc64
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
