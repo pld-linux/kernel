@@ -13,7 +13,6 @@
 %define		pre_version		pre1
 %define		ipvs_version		1.0.4
 %define		freeswan_version	1.97
-%define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		IPperson_version	20020427-2.4.18
 %define		grsec_version		1.9.6-2.4.19
 %define		jfs_version		2.4-1.0.20
@@ -27,7 +26,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	0.8%{?_with_preemptive:_pr}
+Release:	0.9%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -37,9 +36,9 @@ Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
-Source5:	linux-2.4.19-netfilter-20020808.tar.gz
-# new -> ftp://ftp.tux.org/pub/roudier/drivers/portable/sym-2.1.x/sym-2.1.16-20011028.tar.gz
-#Source6:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
+# Source5:	linux-2.4.19-netfilter-20020825.tar.gz
+# based on ftp://ftp.netfilter.org/pub/patch-o-matic/patch-o-matic-20020825.tar.gz
+#Source6:	
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
 Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
@@ -97,6 +96,8 @@ Patch17:	hfsplus-20011213.patch
 Patch18:	evms-%{evms_version}-linux-2.4.patch
 Patch19:	evms-linux-2.4.19-rc3-common-files.patch
 Patch20:	linux-2.4.19-pre8-VFS-lock.patch
+# based on ftp://ftp.netfilter.org/pub/patch-o-matic/patch-o-matic-20020825.tar.gz
+Patch21:	linux-2.4.19-netfilter-all-in-one-20020825.patch.gz
 # Support for CDRW packet writing
 Patch26:	%{name}-cdrw-packet.patch
 Patch27:	kernel-cd-mrw-2.patch
@@ -181,7 +182,7 @@ Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.6.1
 Provides:	bttv = 0.7.83
-Provides:	%{name}_netfilter = 1.2.7
+Provides:	%{name}_netfilter = 1.2.7a
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
 Autoreqprov:	no
@@ -193,7 +194,7 @@ ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
 BuildRequires:	bin86
 %endif
-Conflicts:	iptables < 1.2.7
+Conflicts:	iptables < 1.2.7a
 Conflicts:	lvm < 1.0.4
 Conflicts:	xfsprogs < 2.0.0
 
@@ -230,7 +231,7 @@ Provides:	i2c = 2.6.1
 Provides:	bttv = 0.7.83
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
-Provides:	%{name}_netfilter = 1.2.7
+Provides:	%{name}_netfilter = 1.2.7a
 Prereq:		modutils
 Autoreqprov:	no
 
@@ -346,7 +347,7 @@ Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
 Provides:	i2c-devel = 2.6.1
-Provides:	%{name}_netfilter = 1.2.7
+Provides:	%{name}_netfilter = 1.2.7a
 Autoreqprov:	no
 
 %description headers
@@ -409,10 +410,11 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -a3 -a4 -a5  -a7 -a8 -a9 -n linux-%{version}
+#%setup -q -a3 -a4 -a5  -a7 -a8 -a9 -n linux-%{version}
+%setup -q -a3 -a4 -a7 -a8 -a9 -n linux-%{version}
 #%patch1000 -p1
 #fixme
-#%patch0 -p1
+%patch0 -p1
 %patch1 -p1
 %patch900 -p1
 %patch2 -p1
@@ -497,7 +499,8 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 #patch -p1 -s <linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
 
 # Netfilter
-(KERNEL_DIR=`pwd` ; export KERNEL_DIR ; cd netfilter-patch-o-matic ; ./runme --batch userspace)
+%patch21 -p1
+#(KERNEL_DIR=`pwd` ; export KERNEL_DIR ; cd netfilter-patch-o-matic ; ./runme --batch userspace)
 
 # IP personality
 #echo Adding IP Personality 
@@ -512,9 +515,6 @@ sed -e 's/EXTRA_CFLAGS.*-g//g' net/ipsec/Makefile.orig > net/ipsec/Makefile
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
-%ifarch %{ix86} alpha sparc ppc
-    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= %{kgcc}/g' \
-%endif
 %ifarch sparc64
     -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
 %endif
@@ -597,7 +597,7 @@ BuildKernel() {
 		arch/%{base_arch}/defconfig.orig > arch/%{base_arch}/defconfig
 %endif
 
-	%{__make} mrproper
+#	%{__make} mrproper
 	ln -sf arch/%{base_arch}/defconfig .config
 
 %ifarch sparc
@@ -605,7 +605,7 @@ BuildKernel() {
 	sparc32 %{__make} dep clean
 %else
 	%{__make} oldconfig
-	%{__make} dep clean
+	%{__make} dep
 %endif
 	%{__make} include/linux/version.h
 	
