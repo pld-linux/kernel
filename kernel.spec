@@ -339,7 +339,7 @@ Patch252:	http://luxik.cdi.cz/~devik/qos/htb/v3/htb_killdbg_2421.diff
 
 # change network packet traveling, if NAT is enabled should go first there,
 # next one should be IMQ device 
-Patch260:	linux-2.4.25-change-imq_with_nat.patch
+Patch253:	linux-2.4.25-change-imq_with_nat.patch
 
 #esfq
 Patch260:	linux-2.4.18-esfq.diff
@@ -771,7 +771,7 @@ echo Installing WRR Support
 %patch252 -p1
 
 # imq vs nat :-)
-%patch260 -p1
+%patch253 -p1
 
 # esfq
 %patch260 -p1
