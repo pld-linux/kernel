@@ -219,8 +219,6 @@ Patch46:	linux-2.4.19-netmos_pci_parallel_n_serial.patch
 
 Patch47:	linux-2.4-3com-vlan.patch
 
-Patch48:	%{name}-supermount.patch
-
 # Assorted bugfixes
 
 # from LKML
@@ -796,8 +794,6 @@ echo Fixed I810 Sound ...
 # vlan patch
 echo Updated 3Com drivers for VLAN ...
 %patch47 -p1
-
-%patch48 -p1
 
 # LVM 1.0.7
 echo Added LVM support version %{lvm_version}
