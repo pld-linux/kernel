@@ -17,7 +17,7 @@
 %define		_rel		0.1
 %define		test_ver	4
 %define		patch_level	0
-%define		_bk_ver		2
+%define		_bk_ver		3
 
 %if %{test_ver} != 0
 %define		test	test%{test_ver}
@@ -69,7 +69,7 @@ Source74:	%{name}-ppc-smp.config
 Source100:	%{name}-misc.config
 
 # ftp://ftp.kernel.org:/pub/linux/kernel/v2.6/snapshots/
-Patch1:		patch-2.6.0-test4-bk2
+Patch1:		patch-2.6.0-test4-bk3
 
 Patch22:		2.6.0-t3-swim3.patch
 Patch23:		squashfs1.3-patch
