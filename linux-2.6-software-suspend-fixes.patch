@@ -60,3 +60,20 @@
          	__asm__( "movl %%ecx,%%cr3\n" ::"c"(__pa(swsusp_pg_dir)));
  
  		kernel_fpu_begin();
+--- linux.org/kernel/power/process.c.org	2004-09-26 15:20:19.791412023 +0200
++++ linux/kernel/power/process.c	2004-09-26 15:20:38.477408986 +0200
+@@ -159,12 +159,12 @@
+ 	}
+ }
+ 
+-extern void __smp_suspend_lowlevel(void * info);
++extern void smp_suspend_lowlevel(void * info);
+ 
+ void smp_suspend(void)
+ {
+ 	set_suspend_state(SUSPEND_FREEZE_SMP);
+-	smp_call_function(__smp_suspend_lowlevel, NULL, 0, 0);
++	smp_call_function(smp_suspend_lowlevel, NULL, 0, 0);
+ 
+ 	while (atomic_read(&suspend_cpu_counter) < (num_online_cpus() - 1)) {
+ 		cpu_relax();
