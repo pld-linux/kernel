@@ -163,6 +163,9 @@ Patch136:	piix-ide-fix.patch
 Patch137:	linux-2.4.19-truncate-fix.patch
 
 # Patches fixing other patches or 3rd party sources ;)
+# This patch allows to create more than one sound device using alsa
+# and devfs with two or more sound cards
+Patch200:	linux-sound_core.patch
 
 # tweaks for grsecurity, description inside patch
 Patch900:	loop-jari-2.4.18.0.patch
@@ -500,6 +503,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch135 -p1
 %patch136 -p0
 %patch137 -p1
+
+%patch200 -p1
 
 %patch905 -p1
 
