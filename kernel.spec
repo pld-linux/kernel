@@ -3,11 +3,6 @@
 #		- fix lirc_sasem (usb api)
 #		- add distcc support (and don't break crossbuild!)
 #		- fix vserver against new grsec
-#		- http://secunia.com/advisories/14295/
-#		- undefine symbols @alpha
-#			"pci_get_legacy_ide_irq" [drivers/ide/pci/amd74xx.ko] undefined!
-#			"pm_power_off" [drivers/char/ipmi/ipmi_poweroff.ko] undefined!
-#		- fix pptp conntrack
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -105,13 +100,12 @@ Source93:	%{name}-em8300.config
 
 Patch0:		2.6.0-ksyms-add.patch
 Patch1:		linux-2.6-version.patch
-Patch2:		2.6.0-t6-usb-irq.patch
+
 Patch3:		2.6.0-t7-memleak-lkml.patch
 Patch4:		2.6.0-t7-memleak2-lkml.patch
-#Patch5:	2.6.0-t8-swap-include-lkml.patch
+
 Patch6:		2.6.0-t8-VLSI-ix86-lkml.patch
 
-Patch8:		2.6.0-t8-umsdos-lkml.patch
 Patch9:		2.6.0-t9-acpi_osl-lkml.patch
 
 # http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
@@ -122,22 +116,20 @@ Patch13:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch14:	linux-2.6-omnibook-20040916.patch
 Patch15:	linux-2.6-enable-broken-advansys.patch
 Patch16:	linux-alpha-isa.patch
-Patch17:	2.6.4-psion-5mx.patch
+
 Patch18:	2.6.5-sparc64-missing-include.patch
 Patch19:	2.6.5-3C920b-Tornado.patch
 Patch20:	2.6.5-i386-cmpxchg.patch
 Patch21:	2.6.6-serial-fifo-lkml.patch
-Patch22:	2.6.6-qsort-updated-lkml.patch
-Patch23:	2.6.6-xfs-qsort-lkml.patch
-#Patch24:	2.6.7-bridge_sysfs-lkml.patch
+
 Patch25:	2.6.7-alpha_compile.patch
 Patch26:	2.6.7-ppc-asm-defs.patch
 Patch27:	linux-ppc-oops.patch
 Patch28:	linux-2.6-sparc-ksyms.patch
 Patch29:	linux-2.6-ppc-no-pc-serial.patch
-#Patch30:	2.6.x-ppp_mppe.patch
+
 # http://developer.osdl.org/shemminger/skge/
-Patch31:	linux-2.6-skge-0.4.patch
+Patch31:	linux-2.6-skge-0.5.patch
 Patch32:	2.6.x-TGA-fbdev-lkml.patch
 Patch33:	linux-kbuild-extmod.patch
 
@@ -539,14 +531,12 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %patch0 -p1
 %patch1 -p0
-%patch2 -p1
+
 %patch3 -p1
 %patch4 -p1
 #patch5 -p1
 %patch6 -p1
-exit 1
 
-%patch8 -p1
 %patch9 -p1
 %patch10 -p1
 %patch11 -p1
@@ -555,26 +545,24 @@ exit 1
 %patch14 -p1
 %patch15 -p1
 %patch16 -p1
-%patch17 -p1
+
 %patch18 -p1
 %patch19 -p1
 %patch20 -p1
 %patch21 -p1
-%patch22 -p1
-%patch23 -p1
-#patch24 -p1
+
 %patch25 -p1
 %patch26 -p1
 %patch27 -p1
 %patch28 -p1
 %patch29 -p1
-#patch30 -p1
+
 %patch31 -p1
 %patch32 -p1
 %patch33 -p1
 
 %patch41 -p1
-
+exit 1
 # netfilter
 %patch50 -p1
 
