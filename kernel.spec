@@ -629,7 +629,7 @@ echo "Not fixed !!"
 %patch42 -p1
 
 %patch44 -p1
-exit 0
+
 # netfilter
 %patch46 -p1
 #patch47 -p1
