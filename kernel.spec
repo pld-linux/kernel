@@ -14,7 +14,6 @@
 %bcond_without	source		# don't build kernel-source package
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
-%bcond_with	execshield	# build kernel with ExecShield protector.
 %bcond_with	bootsplash	# build with bootsplash
 
 %{?debug:%define with_verbose 1}
