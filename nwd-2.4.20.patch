@@ -1838,3 +1838,48 @@ diff -Nur linux-2.4.20.org/include/linux/nwd.h linux-2.4.20/include/linux/nwd.h
 +#endif /* __KERNEL__ */
 +
 +#endif /* _LINUX_NWD_H */
+--- linux-2.4.20/include/linux/inet.h.org	Sat Aug  3 02:39:45 2002
++++ linux-2.4.20/include/linux/inet.h	Fri Mar 21 13:34:17 2003
+@@ -46,6 +46,7 @@
+ 
+ extern void		inet_proto_init(struct net_proto *pro);
+ extern __u32		in_aton(const char *str);
++extern char		*in_ntoa(__u32 in);
+ 
+ #endif
+ #endif	/* _LINUX_INET_H */
+--- linux-2.4.20/net/netsyms.c.org	Fri Mar 21 10:07:21 2003
++++ linux-2.4.20/net/netsyms.c	Fri Mar 21 13:34:52 2003
+@@ -262,6 +262,7 @@
+ EXPORT_SYMBOL(ip_fragment);
+ EXPORT_SYMBOL(inet_family_ops);
+ EXPORT_SYMBOL(in_aton);
++EXPORT_SYMBOL(in_ntoa);
+ EXPORT_SYMBOL(ip_mc_inc_group);
+ EXPORT_SYMBOL(ip_mc_dec_group);
+ EXPORT_SYMBOL(ip_mc_join_group);
+--- linux-2.4.20/net/ipv4/utils.c.org	Sat Aug  3 02:39:46 2002
++++ linux-2.4.20/net/ipv4/utils.c	Fri Mar 21 14:35:14 2003
+@@ -43,6 +43,22 @@
+ 
+ 
+ /*
++ *	Display an IP address in readable format. 
++ */
++ 
++char *in_ntoa(__u32 in)
++{
++	static char buff[18];
++	char *p;
++
++	p = (char *) &in;
++	sprintf(buff, "%d.%d.%d.%d",
++		(p[0] & 255), (p[1] & 255), (p[2] & 255), (p[3] & 255));
++	return(buff);
++}
++
++
++/*
+  *	Convert an ASCII string to binary IP. 
+  */
+  
