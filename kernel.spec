@@ -102,81 +102,20 @@ Patch0:		2.6.0-ksyms-add.patch
 # from http://dl.sf.net/sourceforge/squashfs/
 Patch4:		squashfs2.0-patch
 
-Patch6:		2.6.0-t4-PPC-ENODEV.patch
-
-Patch8:		2.6.0-t6-usb-irq.patch
-
-Patch10:	2.6.0-t7-memleak-lkml.patch
-Patch11:	2.6.0-t7-memleak2-lkml.patch
-
-Patch14:	2.6.0-t8-swap-include-lkml.patch
-
-Patch16:	2.6.0-t8-VLSI-ix86-lkml.patch
-
-Patch18:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
-
-Patch20:	2.6.0-t8-umsdos-lkml.patch
-
-Patch22:	2.6.0-t9-acpi_osl-lkml.patch
-
-Patch24:	%{name}-nls_default.patch
+# Reiserfs4
 
 # rewriten based on: ftp://ftp.suse.com/pub/people/stepan/bootsplash/kernel/bootsplash-3.1.4-2.6.3.diff
 Patch26:	bootsplash-3.1.4-2.6.7.patch
 
-Patch28:	2.6.0-t11-AIC_and_db4-lkml.patch
-
-Patch30:	linux-tdfxfb-fillrect.patch
-Patch31:	linux-fbcon-margins.patch
-Patch32:	linux-tdfxfb-interlace+double.patch
-Patch33:	linux-2.6-rivafb16.patch
-
-Patch34:	2.6.1-rc2-ini9100u-lkml.patch
-
-Patch36:	2.6.1-rc2-VLAN-NS83820-lkml.patch
-
-Patch38:	linux-kbuild-extmod.patch
-
-Patch40:	2.6.x-PD6729-lkml.patch
-
-Patch42:	2.6.x-ppp_mppe.patch
-
-Patch44:	2.6.2-Initio9100U-Kconfig.patch
-
 # netfilter
 Patch46:	2.6.7-pom-ng-%{_netfilter_snap}.patch
-# http://www.barbara.eu.org/~quaker/ipt_account/
-Patch47:	2.6.6-ipt_account.patch
-
-Patch48:	2.6.3-sparc32-fix.patch
 
 # http://www.tahoe.pl/drivers/tahoe9xx-2.6.2.patch
-#Patch50:	tahoe9xx-2.6.2.patch
 Patch50:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 Patch51:	linux-tahoe9xx-hdlc-update.patch
 
-Patch54:	2.6.x-SGI_VW-fbdev-lkml.patch
-
-Patch56:	2.6.x-TGA-fbdev-lkml.patch
-
-Patch58:	linux-alpha-isa.patch
-Patch59:	2.6.7-alpha_compile.patch
-
-Patch60:	2.6.4-rc1-01-esfq-imq.patch
-Patch61:	2.6.4-rc1-02-imq-nat-support.patch
-
-Patch64:	2.6.4-psion-5mx.patch
-
 #from:		http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
 Patch66:	2.6.1-all-in-1.patch
-
-Patch68:	2.6.5-sparc64-missing-include.patch
-
-Patch70:	2.6.5-3C920b-Tornado.patch
-
-Patch72:	2.6.5-i386-cmpxchg.patch
-
-Patch74:	2.6.4-wrr.patch
 
 # http://dl.sourceforge.net/sourceforge/pramfs/pramfs-2.6.4-1.0.2.tar.gz
 Patch76:	pramfs-2.6.4.patch
@@ -185,18 +124,13 @@ Patch78:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2
 
 Patch80:	http://www.elektronikschule.de/~genannt/kernel-patche/lirc/lirc-2.6.5-20040404
 
-# from http://www.smcc.demon.nl/webcam/pwcx-9.0-beta-2.tar.gz
-Patch82:	2.6.7-pwcx.patch
-
 Patch84:	2.6.6-serial-fifo-lkml.patch
 
 Patch88:	2.6.6-qsort-updated-lkml.patch
 Patch90:	2.6.6-xfs-qsort-lkml.patch
 
-#Patch94:	grsecurity-2.0-2.6.6-unofficial.patch
-Patch94:	%{name}-grsec.patch
-
 Patch96:	2.6.6-lirc_i2c.diff
+
 # for older glibc:
 Patch97:	%{name}-pts.patch
 
@@ -219,6 +153,7 @@ Patch200:	linux-cluster-cman.patch
 Patch201:	linux-cluster-dlm.patch
 Patch202:	linux-cluster-gfs.patch
 Patch203:	linux-cluster-gnbd.patch
+
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -562,7 +497,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %prep
 %setup -q -n linux-%{version}%{_rc}
-# -a2
 
 %patch0 -p1
 
@@ -570,29 +504,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 zcat %{SOURCE3} | patch -p1 -s
 %endif
 
-#patch1 -p1
-#patch2 -p1
-
-#patch4 -p1
-
-#patch6 -p1
-
-#patch8 -p1
-
-#patch10 -p1
-#patch11 -p1
-
-#patch14 -p1
-
-#patch16 -p1
-
-#patch18 -p1
-
-#patch20 -p1
-
-#patch22 -p1
-
-#patch24 -p1
+%patch4 -p1
 
 ## bootsplash
 %if %{with bootsplash}
@@ -600,71 +512,25 @@ echo "Not fixed !!"
 %patch26 -p1
 %endif
 
-#patch28 -p1
-
-#patch30 -p1
-#patch31 -p1
-#patch32 -p1
-#patch33 -p1
-
-##%patch34 -p1
-
-#patch36 -p1
-
-#patch38 -p1
-
-#%patch40 -p1
-
-#patch42 -p1
-
-#patch44 -p1
-
 # netfilter
-#patch46 -p1
-#patch47 -p1
+%patch46 -p1
 
-#patch48 -p1
+%patch50 -p1
 
-#patch50 -p1
-#patch51 -p1
-
-#patch54 -p1
-
-#patch56 -p1
-
-#patch58 -p1
-#patch59 -p1
-
-#patch60 -p1
-#patch61 -p1
-
-#patch64 -p1
-
-#patch66 -p1
-
-#patch68 -p1
-
-#patch70 -p1
-
-%ifarch i386
-#patch72 -p1
-%endif
-
-#patch74 -p1
+%patch66 -p1
 
 #pramfs
 %if %{with pramfs}
 %patch76 -p1
 %endif
 
-#patch78 -p1
+%patch78 -p1
 
-#patch80 -p1
+%patch80 -p1
 
-#patch84 -p1
 
-#patch88 -p1
-#patch90 -p1
+%patch88 -p1
+%patch90 -p1
 
 #grsec
 #ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
@@ -684,10 +550,9 @@ echo "Not fixed !!"
 #patch -p1 -s < exec-shield.patch
 #endif
 
-#patch96 -p1
-#patch97 -p1
+%patch96 -p1
 
-#patch100 -p1
+%patch100 -p1
 
 # routers
 %if %{with routers}
@@ -696,12 +561,6 @@ echo "Not fixed !!"
 #patch104 -p1 # <- not applayed need checkout
 %patch105 -p1
 %endif
-
-#patch108 -p1
-
-#patch110 -p1
-
-#patch112 -p1
 
 %if %{with gfs}
 %patch200 -p1
