@@ -1,5 +1,5 @@
 %define		ow_version		2.2.17-ow1
-%define		pcmcia_version		3.1.23
+%define		pcmcia_version		3.1.24
 %define		reiserfs_version	3.6.24
 %define		freeswan_version	1.8
 %define		lids_version		1.0.4
