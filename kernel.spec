@@ -821,7 +821,7 @@ ln -snf %{version}-%{release} /lib/modules/%{version}
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}.gz /boot/initrd
 
-if [ ! -f %{_prefix}/src/linux-%{version}/config-up ] ; then
+if [ -f %{_prefix}/src/linux-%{version}/config-up ] ; then
 	ln -s %{_prefix}/src/linux-%{version}/config-up %{_prefix}/src/linux-%{version}/.config
 fi
 
@@ -846,7 +846,7 @@ ln -snf %{version}-%{release}smp /lib/modules/%{version}
 mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 
-if [ ! -f %{_prefix}/src/linux-%{version}/config-smp ] ; then
+if [ -f %{_prefix}/src/linux-%{version}/config-smp ] ; then
 	ln -s %{_prefix}/src/linux-%{version}/config-smp %{_prefix}/src/linux-%{version}/.config
 fi
 
