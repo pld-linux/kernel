@@ -1162,6 +1162,7 @@ fi
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
 /lib/modules/%{version}-%{release}/kernel
+%ifnarch sparc
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/scsi/pcmcia
@@ -1169,16 +1170,20 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/*_cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.o*
-%ifnarch ppc
+%endif
+%ifnarch ppc sparc
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/ide/ide-cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o*
 %endif
+%ifnarch sparc
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
+%endif
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
 
+%ifnarch sparc
 %files pcmcia-cs
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
@@ -1194,11 +1199,14 @@ fi
 /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o*
 /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o*
 %endif
+%endif
 
+%ifnarch sparc
 %files drm
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 %endif			# %%{_without_up}
+%endif
 
 %if %{?_without_smp:0}%{!?_without_smp:1}
 %files smp
@@ -1210,6 +1218,7 @@ fi
 /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
 /lib/modules/%{version}-%{release}smp/kernel
+%ifnarch sparc
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/scsi/pcmcia
@@ -1217,16 +1226,20 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/*_cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.o*
-%ifnarch ppc
+%endif
+%ifnarch ppc sparc
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/ide-cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o*
 %endif
+%ifnarch sparc
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
+%endif
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
 
+%ifnarch sparc
 %files -n kernel-smp-pcmcia-cs
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
@@ -1242,11 +1255,14 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o*
 %endif
+%endif
 
+%ifnarch sparc
 %files -n kernel-smp-drm
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 %endif			# %%{_without_smp}
+%endif
 
 %if %{?_without_boot:0}%{!?_without_boot:1}
 %ifnarch i586 i686 athlon 		# narch
