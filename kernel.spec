@@ -193,8 +193,6 @@ Patch84:	2.6.6-serial-fifo-lkml.patch
 Patch88:	2.6.6-qsort-updated-lkml.patch
 Patch90:	2.6.6-xfs-qsort-lkml.patch
 
-Patch94:	%{name}-grsec.patch
-
 Patch96:	2.6.6-lirc_i2c.diff
 # for older glibc:
 Patch97:	%{name}-pts.patch
@@ -245,6 +243,8 @@ Patch461:	21-software-suspend-linux-2.6.8.1-rev2-incremental
 Patch462:	21-software-suspend-linux-2.6.8.1-rev3-incremental
 Patch463:	30-software-suspend-core-2.0.0.104-whole
 Patch464:	31-software-suspend-core-2.0.0.105-incremental
+
+Patch500:	%{name}-grsec.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -683,13 +683,6 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch88 -p1
 %patch90 -p1
 
-#grsec
-%ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
-%if %{with grsec}
-%patch94 -p1
-%endif
-%endif
-
 %patch96 -p1
 #patch97 -p1
 
@@ -740,6 +733,13 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch462 -p1
 %patch463 -p1
 %patch464 -p1
+%endif
+
+#grsec
+%ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
+%if %{with grsec}
+%patch500 -p1
+%endif
 %endif
 
 # Fix EXTRAVERSION and CC in main Makefile
