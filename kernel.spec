@@ -9,7 +9,7 @@
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 #
-%define		krelease		4.03
+%define		krelease		5
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -387,7 +387,7 @@ Summary(pl):	Modu³y PCMCIA-CS
 Group:		Base/Kernel
 Group(pl):	Podstawowe/Kernel
 Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
-Requires(post):		%{name}-up = %{version}-%{release}
+PreReq:		%{name}-up = %{version}-%{release}
 Requires(postun):	%{name}-up = %{version}-%{release}
 
 %description pcmcia-cs
@@ -402,7 +402,7 @@ Summary(pl):	Modu³y PCMCIA-CS dla maszyn SMP
 Group:		Base/Kernel
 Group(pl):	Podstawowe/Kernel
 Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
-Requires(post):		%{name}-smp = %{version}-%{release}
+PreReq:		%{name}-smp = %{version}-%{release}
 Requires(postun):	%{name}-smp = %{version}-%{release}
 
 %description smp-pcmcia-cs
@@ -417,7 +417,7 @@ Summary(pl):	Sterowniki DRM
 Group:		Base/Kernel
 Group(pl):	Podstawowe/Kernel
 Provides:       %{name}-drm = %{drm_xfree_version}
-Requires(post):		%{name}-up = %{version}-%{release}
+PreReq:		%{name}-up = %{version}-%{release}
 Requires(postun):	%{name}-up = %{version}-%{release}
 
 %description drm
@@ -432,7 +432,7 @@ Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Group(pl):	Podstawowe/Kernel
 Provides:       %{name}-drm = %{drm_xfree_version}
-Requires(post):		%{name}-smp = %{version}-%{release}
+PreReq:		%{name}-smp = %{version}-%{release}
 Requires(postun):	%{name}-smp = %{version}-%{release}
 
 %description smp-drm
@@ -1129,13 +1129,13 @@ rm -f /boot/initrd-%{version}-%{release}.gz
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
 %postun pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release} > /dev/null 2>&1
 
 %post drm
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
 %postun drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release} > /dev/null 2>&1
 
 %postun smp
 if [ -L /lib/modules/%{version} ]; then 
@@ -1151,13 +1151,13 @@ rm -f /boot/initrd-%{version}-%{release}smp.gz
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
 
 %postun smp-pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp > /dev/null 2>&1
 
 %post smp-drm
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
 
 %postun smp-drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp > /dev/null 2>&1
 
 %postun BOOT
 if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then 
