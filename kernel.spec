@@ -53,7 +53,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_post_ver	.5
+%define		_post_ver	.6
 #define		_post_ver	%{nil}
 %define		_rel		1.2
 %define		_cset		20050302_0807
@@ -81,7 +81,7 @@ Group:		Base/Kernel
 %define		_rc	%{nil}
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	94af162c2c5c264344f279c6946c4f59
+# Source0-md5:	91544ed14e672386bf2f76c94911afe6
 Source1:	%{name}-autoconf.h
 
 ## Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
@@ -589,8 +589,8 @@ bzcat %{SOURCE4} | patch -p1 -s
 #%patch110 -p1
 
 %patch260 -p1
-%patch261 -p1
-%patch262 -p1
+## %patch261 -p1
+## %patch262 -p1
 
 # <bconded_patches>
 
