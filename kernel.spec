@@ -462,23 +462,23 @@ echo Installing Net Dev Random patch
 
 # devfs patch
 echo Installing DEVFS patch
-%patch125 -p1
+#%patch125 -p1
 
 # cramfs patch
 echo Installing cramfs patch 
-%patch126 -p1 
+#%patch126 -p1 
 
 # fixed SPARC64 compilation
 %ifarch sparc64
 echo Fixed SYSCALL errors for SPARC 64 arch.
-%patch127 -p1
-cp include/asm-sparc/vfc_ioctls.h include/asm-sparc64/vfc_ioctls.h
+#%patch127 -p1
+#cp include/asm-sparc/vfc_ioctls.h include/asm-sparc64/vfc_ioctls.h
 %endif
 
 #fixed AXP compilation
 %ifarch alpha
 echo Fixed SYSCALL errors for DEC Alpha arch.
-%patch128 -p0
+#%patch128 -p0
 %endif
 
 # Fided include path
