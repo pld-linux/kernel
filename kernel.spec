@@ -1,6 +1,5 @@
 %define		ow_version		2.2.17-ow1
 %define		pcmcia_version		3.1.24
-%define		reiserfs_version	3.6.24
 %define		freeswan_version	1.8
 %define		lids_version		1.0.4
 %define		jfs_version		0.1.3
@@ -55,6 +54,10 @@ Patch1000:	linux-2.4-misc.patch
 Patch1001:	http://oss.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}-patch.tar.gz
 Patch1002:	bug-report-2.4.0.patch
 Patch1003:	%{name}-%{version}-i8255-asm-fix.patch
+## from LWN
+Patch1004:	http://www.rhdv.cistron.nl/2.4.0.timer.patch
+## from LWN
+Patch1005:	raid5.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -262,7 +265,7 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
     Makefile.orig >Makefile
 
 #LIDS patch
-patch -p1 <lids-1.0.4-2.4.0/lids-1.0.4-2.4.0.patch
+#patch -p1 <lids-1.0.4-2.4.0/lids-1.0.4-2.4.0.patch
 
 #i8255 patch
 %patch1003 -p0
@@ -270,6 +273,12 @@ patch -p1 <lids-1.0.4-2.4.0/lids-1.0.4-2.4.0.patch
 # Patch IPVS
 %patch10 -p0
 patch -p1 <ipvs-%{ipvs_version}/linux-2.4.0_kernel_ksyms_c.diff
+
+# POSIX timer patch from LWN
+%patch1004 -p1
+
+# RAID5 patch from LWN
+#%patch1005 -p1
 
 %build
 BuildKernel() {
