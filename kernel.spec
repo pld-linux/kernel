@@ -639,9 +639,9 @@ echo Installing Konica Support
 %patch33 -p1
 
 # Changing DRM source ....
-echo Installing NEW DRM Source ...
-rm -f drivers/char/drm/*
-cp drm/* drivers/char/drm
+#echo Installing NEW DRM Source ...
+#rm -f drivers/char/drm/*
+#cp drm/* drivers/char/drm
 
 # WRR
 echo Installing WRR Support
