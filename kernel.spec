@@ -690,6 +690,16 @@ ConfigBOOT()
 	echo "# CONFIG_MTRR is not set">> arch/%{base_arch}/defconfig
 	echo "# CONFIG_PM is not set">> arch/%{base_arch}/defconfig
 	echo "# CONFIG_CPU_FREQ is not set">> arch/%{base_arch}/defconfig
+	echo "# CONFIG_DRM is not set">> arch/%{base_arch}/defconfig
+	echo "# CONFIG_FTAPE is not set">> arch/%{base_arch}/defconfig
+	echo "# CONFIG_WATCHDOG is not set">> arch/%{base_arch}/defconfig
+	echo "# CONFIG_DVB is not set">> arch/%{base_arch}/defconfig
+	echo "# CONFIG_DVB_CORE is not set">> arch/%{base_arch}/defconfig
+	echo "# CONFIG_VIDEO_DEV is not set">> arch/%{base_arch}/defconfig
+	echo "# CONFIG_SECURITY is not set">> arch/%{base_arch}/defconfig
+	echo "# CONFIG_SOUND is not set">> arch/%{base_arch}/defconfig
+	echo "# CONFIG_USB_AUDIO is not set">> arch/%{base_arch}/defconfig
+	echo "# CONFIG_INPUT_JOYSTICK is not set">> arch/%{base_arch}/defconfig
 	
 	ln -sf arch/%{base_arch}/defconfig .config
 
