@@ -156,7 +156,6 @@ Patch235:	linux-2.4.20-audigy.patch.bz2
 Patch240:	linux-2.4.20-ecc.patch
 Patch245:	linux-2.4.20-01-edd.patch
 Patch246:	linux-2.4.20-02-edd-allocate.patch
-Patch250:	linux-2.4.20-03-cpufreq.patch
 #i2c - version 2.7.0
 Patch255:	linux-2.4.20-i2c-2.7.0.patch.gz
 # from ftp://ftp.lsil.com/pub/symchips/scsi/FusionMPT/Linux/2.03.00/mptlinux-2.03.00-src.tar.gz
@@ -600,7 +599,6 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch240 -p1
 %patch245 -p1
 %patch246 -p1
-%patch250 -p1
 %patch255 -p1
 %patch260 -p1
 %patch265 -p1
