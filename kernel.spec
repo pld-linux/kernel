@@ -90,6 +90,8 @@ Patch12:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/net
 Patch13:	http://www.linuxvirtualserver.org/software/kernel-2.4/linux-%{version}-ipvs-%{ipvs_version}.patch.gz
 Patch14:	http://people.redhat.com/mingo/O(1)-scheduler/sched-O1-2.4.17-K2.patch
 
+Patch15:	http://luxik.cdi.cz/~devik/qos/htb/v2/htb2_2.4.17.diff
+
 # Assorted bugfixes
 
 # from LKML
@@ -355,6 +357,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #%ifarch{ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 #%patch912 -p1
 #%endif
+
+%patch15 -p1
 
 %patch100 -p0
 %patch101 -p1
