@@ -146,7 +146,8 @@ Patch190:	hostap-2.4.19-rc3-patch.patch
 # New devices/drivers
 
 # taken at 2003-07-19
-Patch200:	ftp://ftp.sistina.com/pub/LVM2/device-mapper/patches-version4/combined-linux-2.4.21-devmapper-ioctl.patch
+# ftp://ftp.sistina.com/pub/LVM2/device-mapper/patches-version4/
+Patch200:	combined-linux-2.4.21-devmapper-ioctl.patch
 
 # EVMS support (http://www.sourceforge.net/projects/evms/)
 # Disabled due to conflicts with LVM2 and device mapper tools
