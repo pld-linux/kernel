@@ -16,7 +16,7 @@
 %define		no_install_post_compress_modules	1
 #
 %define		pre_version		%{nil}
-%define		netfilter_snap		20031210
+%define		netfilter_snap		20031209
 %define		i2c_version		2.8.1
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -96,10 +96,9 @@ Patch80:	linux-2.4.22-intermezzo-acl.patch
 
 # Networking
 
-# Temporary: use released pom, instead of CVS snapshot
-# (problems with user chains).
-Patch100:       linux-2.4.23-netfilter-pom-20031209.patch.gz
-#Patch100:	linux-2.4.23-netfilter-%{netfilter_snap}.patch.gz
+# ALWAYS use released patchomatic tarball (don't use CVS)
+# DO NOT include patches from patch-o-matic/userspace since they cause iptables incompatibilities
+Patch100:       linux-2.4.23-netfilter-pom-%{netfilter_snap}.patch.gz
 Patch101:	linux-2.4.23-netfilter-IMQ-target.patch
 # http://rnvs.informatik.uni-leipzig.de/ipp2p/index_en.html
 # http://rnvs.informatik.uni-leipzig.de/ipp2p/downloads/ipp2p-0.5a_vs_2.4.22.diff.gz
