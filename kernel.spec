@@ -10,10 +10,9 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	grsec		# build without grsec
-%bcond_without	pramfs		# build pramfs support (EXPERIMENTAL)
+%bcond_without	swsuspend	# build with software suspend
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
-%bcond_with	swsuspend	# build with software suspend
 %bcond_with	mosix		# build with openMosix support
 
 %{?debug:%define with_verbose 1}
@@ -182,9 +181,6 @@ Patch72:	2.6.5-i386-cmpxchg.patch
 
 Patch74:	2.6.4-wrr.patch
 
-# http://dl.sourceforge.net/sourceforge/pramfs/pramfs-2.6.4-1.0.2.tar.gz
-Patch76:	pramfs-2.6.4.patch
-
 Patch78:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
 
 Patch80:	http://www.elektronikschule.de/~genannt/kernel-patche/lirc/lirc-2.6.5-20040404
@@ -248,7 +244,8 @@ Patch462:	21-software-suspend-linux-2.6.8.1-rev3-incremental
 Patch463:	30-software-suspend-core-2.0.0.104-whole
 Patch464:	31-software-suspend-core-2.0.0.105-incremental
 
-Patch470:	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9-r6-2.6.8.1.patch
+# http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9-r6-2.6.8.1.patch
+Patch470:	fbsplash-0.9-r6-2.6.8.1.patch
 
 Patch500:	%{name}-grsec.patch
 
@@ -671,11 +668,6 @@ zcat %{SOURCE3} | patch -p1 -s
 %endif
 
 %patch74 -p1
-
-#pramfs
-%if %{with pramfs}
-%patch76 -p1
-%endif
 
 %patch78 -p1
 
