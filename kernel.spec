@@ -100,15 +100,11 @@ Source93:	%{name}-em8300.config
 
 Patch0:		2.6.0-ksyms-add.patch
 Patch1:		linux-2.6-version.patch
+Patch2:		ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
+Patch3:		2.6.0-t9-acpi_osl-lkml.patch
+Patch4:		linux-kbuild-extmod.patch
+Patch5:		%{name}-MAX_INIT_ARGS.patch
 
-Patch3:		2.6.0-t7-memleak-lkml.patch
-Patch4:		2.6.0-t7-memleak2-lkml.patch
-
-Patch6:		2.6.0-t8-VLSI-ix86-lkml.patch
-
-Patch9:		2.6.0-t9-acpi_osl-lkml.patch
-
-# http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
 Patch10:	2.6.0-powernow-k7.patch
 Patch11:	2.6.0-enable-radeon-igp-rendering.patch
 Patch12:	2.6.0-omnikeys.patch
@@ -116,7 +112,7 @@ Patch13:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch14:	linux-2.6-omnibook-20040916.patch
 Patch15:	linux-2.6-enable-broken-advansys.patch
 Patch16:	linux-alpha-isa.patch
-
+Patch17:	linux-fbcon-margins.patch
 Patch18:	2.6.5-sparc64-missing-include.patch
 Patch19:	2.6.5-3C920b-Tornado.patch
 Patch20:	2.6.5-i386-cmpxchg.patch
@@ -127,81 +123,51 @@ Patch26:	2.6.7-ppc-asm-defs.patch
 Patch27:	linux-ppc-oops.patch
 Patch28:	linux-2.6-sparc-ksyms.patch
 Patch29:	linux-2.6-ppc-no-pc-serial.patch
-
-# http://developer.osdl.org/shemminger/skge/
-Patch31:	linux-2.6-skge-0.5.patch
-Patch32:	2.6.x-TGA-fbdev-lkml.patch
-Patch33:	linux-kbuild-extmod.patch
-
-# framebuffer fixes
-Patch41:	linux-fbcon-margins.patch
+Patch30:	2.6.x-TGA-fbdev-lkml.patch
 
 # netfilter
 Patch50:	linux-2.6-pom-ng-%{_netfilter_snap}.patch
 # http://l7-filter.sourceforge.net/
-Patch52:	%{name}-2.6-layer7-%{_l7_ver}.patch
-Patch53:	2.6.10-esfq.patch
+#Patch51:	linux-2.6-layer7-%{_l7_ver}.patch	WAITING FOR MEMLEAK FIX
+Patch52:	2.6.10-esfq.patch
 # http://www.linuximq.net/patchs/linux-2.6.9-imq1.diff
-Patch54:	2.6.10-imq.patch
-Patch55:	2.6.4-wrr.patch
-Patch56:	linux-2.6-netfilter-syms.patch
-# http://kernel.umbrella.ro/net/ (included in 2.6.11-rc1)
-Patch57:	kernel-match-nfmark-in-u32.patch
-
-# pseudo terminal fix for older glibc
-#Patch60:	%{name}-pts.patch
-Patch61:	%{name}-MAX_INIT_ARGS.patch
-
-# http://tahoe.pl/patch.htm
-Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
-# http://ifp-driver.sourceforge.net/
-Patch71:	iriverfs-r0.1.0.1.patch
+Patch53:	2.6.10-imq.patch
+Patch54:	2.6.4-wrr.patch
+Patch55:	linux-2.6-netfilter-syms.patch
+# frpm http://www.ssi.bg/~ja/#routers
+Patch56:	routes-2.6.11-12.diff
+# http://developer.osdl.org/shemminger/skge/
+Patch57:	linux-2.6-skge-0.5.patch
 
 # http://dev.gentoo.org/~spock/projects/gensplash/
-Patch72:	fbsplash-0.9.1-r1-2.6.10.patch
-Patch73:	squashfs2.1-patch
-Patch74:	linux-static-dev.patch
-Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
-Patch76:	linux-2.6-lirc-0.7.patch
-Patch77:	linux-2.6-alsa-1.0.8.patch
-Patch78:	linux-2.6-alsa-1.0.8-silent-output.patch
+Patch60:	fbsplash-0.9.2-2.6.11.patch
+# reserve dynamic minors for fbsplash and device mapper
+Patch61:	linux-static-dev.patch
+Patch62:	linux-2.6-lirc-0.7.patch
+# http://ifp-driver.sourceforge.net/
+Patch63:	iriverfs-r0.1.0.1.patch
+Patch64:	squashfs2.1-patch
+#Patch65:	linux-reiser4.patch.bz2
 
+# http://grsecurity.net
+Patch70:	grsecurity-2.1.3-2.6.11-200503111604.patch
+
+# http://tahoe.pl/patch.htm
+Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 # psmouse extension for ThinkPad laptops from http://www.clarkson.edu/~evanchsa/
-Patch80:	trackpoint-2.6.9.patch
+Patch81:	trackpoint-2.6.9.patch
 
-# http://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.10/
-Patch90:	acpi-20041210-2.6.10.diff
-
-# frpm http://www.ssi.bg/~ja/#routers
-Patch100:	routes-2.6.10-11.diff
-
-# http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.10-rc2/2.6.10-rc-mm2/broken-out
-Patch110:	linux-reiser4.patch.bz2
-
-Patch200:	linux-2.6-as2.patch
-Patch201:	grsecurity-2.1.1-2.6.10-as2-200501242254.patch
-
-Patch210:	linux-2.6-ftdi_sio-ever_ups.patch
+Patch100:	linux-2.6-nvidia-pci-ids.patch
+Patch101:	linux-2.6-pty-is-losing-bytes.patch
 
 # linux vserver
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
-Patch250:	linux-2.6-vs.patch
-
-# hotfixes
-Patch300:	%{name}-hotfixes.patch
-Patch301:	%{name}-gcc4.patch
-Patch302:	linux-2.6-scsi-block.patch
-Patch303:	linux-2.6-ntfs-printk-DoS.patch
-Patch304:	linux-2.6-radeonfb-fix-rom-enable-disable.patch
-Patch305:	linux-2.6-radeonfb-fix-section-usage.patch
-Patch306:	linux-2.6-fix-ooops-unmounting-a-defect-dvd.patch
-Patch307:	linux-2.6-long-standing-xattr-sharing.patch
-Patch308:	linux-2.6-nvidia-pci-ids.patch
-Patch309:	linux-2.6-pty-is-losing-bytes.patch
-Patch310:	linux-2.6-epoll-overflow.patch
-
+Patch200:	linux-2.6-vs.patch
 # em8300
-Patch400:	linux-em8300-2.6.10.patch
+Patch201:	linux-em8300-2.6.10.patch
+
+Patch399:	%{name}-gcc4.patch
+Patch400:	%{name}-hotfixes.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -531,13 +497,11 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %patch0 -p1
 %patch1 -p0
-
+%patch2 -p1
 %patch3 -p1
 %patch4 -p1
-#patch5 -p1
-%patch6 -p1
+%patch5 -p1
 
-%patch9 -p1
 %patch10 -p1
 %patch11 -p1
 %patch12 -p1
@@ -545,7 +509,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch14 -p1
 %patch15 -p1
 %patch16 -p1
-
+%patch17 -p1
 %patch18 -p1
 %patch19 -p1
 %patch20 -p1
@@ -556,16 +520,10 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch27 -p1
 %patch28 -p1
 %patch29 -p1
+%patch30 -p1
 
-%patch31 -p1
-%patch32 -p1
-%patch33 -p1
-
-%patch41 -p1
-exit 1
-# netfilter
 %patch50 -p1
-
+#patch51 -p1		WAITING FOR MEMLEAK FIX
 %patch52 -p1
 %patch53 -p1
 %patch54 -p1
@@ -573,56 +531,30 @@ exit 1
 %patch56 -p1
 %patch57 -p1
 
-#patch60 -p1
+%patch60 -p1
 %patch61 -p1
+%patch62 -p1
+%patch63 -p1
+%patch64 -p1
+#patch65 -p1
 
 %patch70 -p1
-%patch71 -p1
-%patch72 -p1
-
-%patch73 -p1
-%patch74 -p1
-%patch75 -p1
-%patch76 -p1
-%patch77 -p1
-%patch78 -p1
 
 %patch80 -p1
+%patch81 -p1
 
-%patch90 -p1
-
-# routers
 %patch100 -p1
-
-%patch110 -p1
-
-%patch200 -p1
-%patch201 -p1
-
-%patch210 -p1
+%patch101 -p1
 
 %if %{with vserver}
-%patch250 -p1
+%patch200 -p1
 %endif
-
-# </bconded_patches
-
-# hotfixes
-%patch300 -p1
-#patch301 -p1
-%patch302 -p1
-%patch303 -p1
-%patch304 -p1
-%patch305 -p1
-%patch306 -p1
-%patch307 -p1
-%patch308 -p1
-%patch309 -p1
-%patch310 -p1
-
 %if %{with em8300}
-%patch400 -p1
+%patch201 -p1
 %endif
+
+#patch399 -p1
+%patch400 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
