@@ -625,7 +625,8 @@ BuildKernel() {
 	%{__make} clean \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 %endif
-	%{__make} V=1 include/linux/version.h
+	%{__make} include/linux/version.h \
+		%{?with_verbose:V=1}
 
 # make does vmlinux, modules and bzImage at once
 %ifarch sparc
