@@ -84,7 +84,10 @@ Patch62:	2.6.0-t5-memleak-NCR_Q720-lkml.patch
 Patch63:	2.6.0-t5-memleak-scsi_debug-lkml.patch
 
 Patch65:	2.6.0-t5-netfilter-1.2.8_20030923.patch
-
+Patch66:	2.6.0-t5-SELinux-convert_context-lkml.patch
+Patch67:	2.6.0-t5-security_inode_permission-lkml.patch
+Patch68:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
+Patch69:	2.6.0-t5-enbd-2.4.31_20030506.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -346,6 +349,11 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch63 -p1
 
 %patch65 -p1
+
+%patch66 -p1
+%patch67 -p1
+%patch68 -p1
+%patch69 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
