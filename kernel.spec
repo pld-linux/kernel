@@ -41,7 +41,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.90
+%define		_rel		0.91
 %define		_cset		0
 
 ## netfilter snap 
@@ -170,6 +170,9 @@ Patch76:	pramfs-2.6.4.patch
 Patch78:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
 
 Patch80:	http://www.elektronikschule.de/~genannt/kernel-patche/lirc/lirc-2.6.5-20040404
+
+# from http://www.smcc.demon.nl/webcam/pwcx-9.0-beta-2.tar.gz
+Patch82:	2.6.6-pwcx.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -584,11 +587,14 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch74 -p1
 
 #pramfs
-%patch76 -p1
+##%patch76 -p1
 
 %patch78 -p1
 
 %patch80 -p1
+
+# Philips USB drivers.
+##%patch82 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
