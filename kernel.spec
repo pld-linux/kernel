@@ -30,9 +30,9 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1.11
-%define		_test_ver	0
-%define		_cset		0
+%define		_rel		0.1
+%define		_RC		rc1
+%define		_cset		20040101_0206
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -47,13 +47,13 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.6.0
-Release:	%{_rel}
+Version:	2.6.1
+Release:	%{_RC}%{_rel}
 Epoch:		1
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
-# Source0-md5:	c9e73737002521a347d2e6617beb56cc
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-rc1.tar.bz2
+# Source0-md5:	5b8cbd68b11ec012a52b07cfed404a20
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -488,7 +488,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}
+%setup -q -n linux-%{version}-%{_RC}
 %patch0 -p1
 %if "%{_cset}" != "0"
 %patch1 -p1
@@ -519,7 +519,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch32 -p1
 
 %patch34 -p1
-%patch36 -p1
+#%%patch36 -p1
 
 %patch38 -p1
 
@@ -527,12 +527,12 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch44 -p1
 
-%patch48 -p1
+#%%patch48 -p1
 
 %patch52 -p1
 %patch53 -p1
 
-%patch60 -p1
+#%%patch60 -p1
 
 %patch62 -p1
 
@@ -540,7 +540,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch66 -p1
 
-%patch68 -p1
+#%%patch68 -p1
 
 %patch70 -p1
 
@@ -558,25 +558,25 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch84 -p1
 
-%patch86 -p1
+#%%patch86 -p1
 
-%patch88 -p1
-%patch89 -p1
-%patch90 -p1
-%patch91 -p1
+#%%patch88 -p1
+#%%patch89 -p1
+#%%patch90 -p1
+#%%patch91 -p1
 
 %patch94 -p1
 
 %patch96 -p1
 %patch97 -p0
 
-%patch98 -p1
+#%%patch98 -p1
 
 %patch100 -p1
 %patch101 -p1
 %patch102 -p1
 
-%patch104 -p1
+#%%patch104 -p1
 
 %patch106 -p1
 
