@@ -29,8 +29,8 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.16
-%define		_cset		20040227_2308
+%define		_rel		1.17
+%define		_cset		0
 
 ## netfilter snap 
 %define		_netfilter_snap		20040225
@@ -73,10 +73,12 @@ Source80:	%{name}-netfilter.config
 
 Patch0:		2.6.0-ksyms-add.patch
 
-%if "%{_cset}" != "0"
+#%%if "%{_cset}" != "0"
 # http://www.kernel.org/pub/linux/kernel/v2.6/testing/cset/
-Patch2:		cset-%{_cset}.txt.gz
-%endif
+#%Patch2:		cset-%{_cset}.txt.gz
+#%%endif
+# last changes in 2.6.3 - needed to build.
+Patch2:		patch-2.6.4-rc1.bz2
 
 Patch4:		squashfs1.3r2-patch
 
@@ -487,9 +489,9 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch0 -p1
 
-%if "%{_cset}" != "0"
+#%%if "%{_cset}" != "0"
 %patch2 -p1
-%endif
+#%%endif
 
 %patch4 -p1
 
