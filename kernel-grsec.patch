@@ -5291,7 +5291,15 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
  	elf_ppnt = elf_phdata;
  	for (i = 0; i < elf_ex.e_phnum; i++, elf_ppnt++)
  		if (elf_ppnt->p_type == PT_GNU_STACK) {
-@@ -694,9 +942,65 @@
+@@ -661,6 +909,7 @@
+ 		/* Executables without an interpreter also need a personality  */
+ 		SET_PERSONALITY(elf_ex, ibcs2_interpreter);
+ 	}
++#endif
+ 
+ 	/* OK, we are done with that, now set up the arg stuff,
+ 	   and then start this sucker up */
+@@ -694,9 +943,65 @@
  	current->mm->end_data = 0;
  	current->mm->end_code = 0;
  	current->mm->mmap = NULL;
@@ -5353,11 +5361,11 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
 +		current->mm->delta_stack = pax_delta_mask(pax_get_random_long(), PAX_DELTA_STACK_LSB(current), PAX_DELTA_STACK_LEN(current));
 +	}
 +#endif
-+	
++
  	/* Do this immediately, since STACK_TOP as used in setup_arg_pages
  	   may depend on the personality.  */
  	SET_PERSONALITY(elf_ex, ibcs2_interpreter);
-@@ -707,6 +1011,12 @@
+@@ -707,6 +1012,12 @@
  	   change some of these later */
  	current->mm->rss = 0;
  	current->mm->free_area_cache = TASK_UNMAPPED_BASE;
@@ -5370,14 +5378,6 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
  	retval = setup_arg_pages(bprm, executable_stack);
  	if (retval < 0) {
  		send_sig(SIGKILL, current, 0);
-@@ -747,6 +1057,7 @@
- 				clear_user((void __user *) elf_bss + load_bias, nbyte);
- 			}
- 		}
-+#endif
- 
- 		if (elf_ppnt->p_flags & PF_R) elf_prot |= PROT_READ;
- 		if (elf_ppnt->p_flags & PF_W) elf_prot |= PROT_WRITE;
 @@ -761,12 +1072,92 @@
  			/* Try and get dynamic programs out of the way of the default mmap
  			   base, as well as whatever program they might try to exec.  This
@@ -16366,7 +16366,7 @@ diff -urN linux-2.6.7/include/asm-i386/pgtable.h linux-2.6.7/include/asm-i386/pg
  
  #define PMD_SIZE	(1UL << PMD_SHIFT)
  #define PMD_MASK	(~(PMD_SIZE-1))
-@@ -136,6 +139,16 @@
+@@ -136,6 +139,15 @@
  #define PAGE_COPY	__pgprot(_PAGE_PRESENT | _PAGE_USER | _PAGE_ACCESSED)
  #define PAGE_READONLY	__pgprot(_PAGE_PRESENT | _PAGE_USER | _PAGE_ACCESSED)
  
@@ -16376,7 +16376,6 @@ diff -urN linux-2.6.7/include/asm-i386/pgtable.h linux-2.6.7/include/asm-i386/pg
 +# define PAGE_READONLY_NOEXEC	__pgprot(_PAGE_PRESENT | _PAGE_ACCESSED)
 +#else
 +# define PAGE_SHARED_NOEXEC	PAGE_SHARED
-+# define PAGE_COPY_NOEXEC	PAGE_COPY
 +# define PAGE_READONLY_NOEXEC	PAGE_READONLY
 +#endif
 +
