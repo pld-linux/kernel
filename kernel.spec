@@ -30,7 +30,7 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1
+%define		_rel		1.1
 %define		_rc		rc1
 %define		_cset		20040101_0206
 
@@ -145,6 +145,9 @@ Patch101:	2.6.0-sysfs-3of4-lkml.patch
 Patch102:	2.6.0-sysfs-4of4-lkml.patch
 
 Patch106:	2.6.0-NF-time-%{_netfilter_snap}.patch
+
+Patch110:	linux-2.6-xfs-cvs-20040102.patch
+Patch111:	linux-2.6-xfs-secure-attr.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -534,6 +537,9 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch102 -p1
 
 %patch106 -p1
+
+%patch110 -p1
+%patch111 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
