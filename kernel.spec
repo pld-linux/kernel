@@ -1,13 +1,13 @@
 #
 %define		_netfilter_snap		20040429
-%define		_cset			20040517_0407
+%define		_cset			20040518_0506
 %define		no_install_post_strip	1
 #
 Summary:	The Linux kernel (the core of the Linux operating system)
 Name:		kernel
 %define		_ver	2.6.6
 Version:	%{_ver}+grsec
-Release:	1.4
+Release:	1.5
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{_ver}.tar.bz2
@@ -121,6 +121,7 @@ hardware.
 find include/ -type d -maxdepth 1 -name "asm-*" ! -name asm-i386 ! -name asm-generic | xargs rm -rf
 mv arch/{x86_64,i386}/kernel/early_printk.c
 find arch/* -type d -maxdepth 0 ! -name i386 | xargs rm -rf
+find -name '*.orig' | xargs rm -rf
 make mrproper
 
 cat << EOF > cleanup-nondist-kernel.sh
