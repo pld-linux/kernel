@@ -173,6 +173,7 @@ Patch76:	2.6.8-lirc-0.7.0-pre7.patch
 
 Patch77:	2.6.8-i2o-proc_full_seq_file.patch
 Patch78:	2.6.8-i2o-pae_support.patch
+Patch79:	dpt_i2o-2.5.0-2331-fixes.patch
 
 # derived from grsecurity-2.0-2.6.6-unofficial.patch
 Patch90:	%{name}-grsec.patch
@@ -625,6 +626,7 @@ zcat %{SOURCE3} | patch -p1 -s
 rm -rf drivers/scsi/dpt*
 cd dpt_i2o && cp -ar * ../drivers/scsi && cd -
 rm -rf dpt_i2o
+%patch79 -p1
 
 cp -f pwc-%{pwc_version}/2.6/pwc* drivers/usb/media
 rm -rf pwc-%{pwc_version}
