@@ -21,9 +21,8 @@ Source3:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
 Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
 Source5:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source6:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/sym-1.7.2-ncr-3.4.2.tar.gz
-Source7:	http://www2.lm-sensors.nu/~lm78/archive/i2c-%{i2c_version}.tar.gz
-Source8:	http://www.linux-wlan.com/linux-wlan/linux-wlan-%{wlan_version}.tar.gz
-Source9:	http://www.dandelion.com/Linux/DAC960-2.2.10.tar.gz
+Source7:	http://www.linux-wlan.com/linux-wlan/linux-wlan-%{wlan_version}.tar.gz
+Source8:	http://www.dandelion.com/Linux/DAC960-2.2.10.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -49,7 +48,7 @@ Patch5:		linux-ipv6-glibc2.2.patch
 Patch6:		http://milosch.net/pub/beos/2.2.18-pre2-beos09032000.patch
 Patch7:		%{name}-autoraidraid.patch
 Patch8:		ftp://ftp.reiserfs.org/linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
-Patch9: 	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.18/ide.2.2.18.1221.patch.gz
+Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/ata/2.2.18/ide.2.2.18.02122001.patch.bz2
 Patch10:	http://www.math.leidenuniv.nl/~buytenh/bridge/patches/bridge-0.0.9-against-2.2.18.diff
 Patch11:	http://download.sourceforge.net/linux1394/ieee1394-2.2.18-20001223.gz
 Patch12:	ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
@@ -60,14 +59,14 @@ Patch15:	%{name}-ipvs-1.0.3-2.2.18.patch
 # based on ftp://ftp.kernel.org/pub/linux/kernel/people/sct/raw-io/kiobuf-2.2.18pre24.tar.gz
 Patch16:	linux-raw.patch
 Patch17:	linux-i815-support.patch
-Patch18:	%{name}-ide-geometry.patch
-Patch19:	%{name}-pcmcia.patch
-Patch20:	linux-sparc_ide_fix.patch
-Patch21:	%{name}-Config.in-CONFIG_AMIGA_PARTITION.patch
-Patch22:	%{name}-sysctl_security_fix.patch
-Patch23:	%{name}-wanrouter-bridge.patch
-Patch24:	%{name}-ipsec-bridge.patch
-Patch25:	%{name}-bridge-extraversion.patch
+Patch18:	%{name}-pcmcia.patch
+Patch19:	linux-sparc_ide_fix.patch
+Patch20:	%{name}-Config.in-CONFIG_AMIGA_PARTITION.patch
+Patch21:	%{name}-sysctl_security_fix.patch
+Patch22:	%{name}-wanrouter-bridge.patch
+Patch23:	%{name}-ipsec-bridge.patch
+Patch24:	%{name}-bridge-extraversion.patch
+Patch25:	%{name}-panaview_kbd.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -303,7 +302,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -n linux
+%setup -q -a3 -a4 -a5 -a6 -a8 -n linux
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
@@ -329,21 +328,13 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch22 -p1
 %patch23 -p1
 %patch24 -p1
+%ifarch %{x86}
 %patch25 -p1
-%ifarch %{ix86}
-cd ..
-rm -rf i2c-%{i2c_version}
-tar xfz %{SOURCE7}
+%endif
 
 #DAC960-2.2.10
-tar xfz %{SOURCE9}
-mv RELEASE_NOTES.DAC960 README.DAC960 linux/Documentation
-mv DAC960.[ch] linux/drivers/block
-
-cd i2c-%{i2c_version}
-mkpatch/mkpatch.pl . ../linux | (cd ../linux; patch -p1 -s)
-cd ../linux
-%endif
+mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
+mv DAC960.[ch] drivers/block
 
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 # Tekram DC395/315 U/UW SCSI host driver
@@ -358,7 +349,6 @@ rm -rf sym-1.7.2-ncr-3.4.2
 # Drivers for wireless PCMCIA cards
 rm -rf linux-wlan-%{wlan_version}
 tar zxf %{SOURCE8}
-
 
 %build
 BuildKernel() {
@@ -539,7 +529,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
 gzip -dc %{PATCH8} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH9} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+bzip2 -dc %{PATCH9} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
 gzip -dc %{PATCH11} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH12} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
@@ -548,15 +538,20 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH16}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH17}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH18}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH19}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH20}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH21}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH22}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH23}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH24}
+%ifarch %{x86}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH25}
+%endif
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
 
+tar xfz %{SOURCE8}
+mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
+mv DAC960.[ch] drivers/block
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <dc395/dc395-integ22.diff
