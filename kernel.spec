@@ -174,7 +174,7 @@ Patch140:	linux-2.4.18-tridentfb.patch
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
 Patch900:	ide-EXPORT_SYMBOL.fix
-Patch901:	netfilter_pptp-EXPORT_SYMBOL-fix.patch
+Patch901:	netfilter-ip_nat_pptp.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
