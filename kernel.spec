@@ -48,6 +48,7 @@
 %define		_apply_cset	0
 
 %define		_netfilter_snap		20041118
+%define		_l7_ver			1.0
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
@@ -141,7 +142,7 @@ Patch41:	linux-fbcon-margins.patch
 # netfilter
 Patch50:	2.6.10-pom-ng-%{_netfilter_snap}.patch
 # http://l7-filter.sourceforge.net/
-Patch52:	2.6.8-ipt_layer7.patch
+Patch52:	%{name}-2.6-layer7-%{_l7_ver}.patch
 Patch53:	2.6.10-esfq.patch
 # http://www.linuximq.net/patchs/linux-2.6.9-imq1.diff
 Patch54:	2.6.10-imq.patch
