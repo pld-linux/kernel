@@ -713,11 +713,6 @@ echo Promise driver patch
 %patch21 -p1
 %patch22 -p1
 
-# I810FB
-echo Added Intel 810 FB support
-%patch24 -p1
-%patch25 -p1
-
 #davfs
 echo Added davFS support
 %patch36 -p1
@@ -726,6 +721,12 @@ echo Added davFS support
 echo Added ARCH specific patches....
 %ifarch %{ix86}
 echo Ix86 patches ...
+# I810FB
+echo Added Intel 810 FB support
+%patch24 -p1
+%patch25 -p1
+# KT400
+echo Added support for KT400 chipset
 %patch144 -p1
 %endif
 %ifarch ppc
