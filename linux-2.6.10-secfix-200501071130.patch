@@ -6,7 +6,7 @@ diff -urNp linux-2.6.10/arch/mips/kernel/irixelf.c linux-2.6.10-new/arch/mips/ke
  	if (end <= start)
  		return;
 -	do_brk(start, end - start);
-+	do_brk_locked(start, end - start);
++	__do_brk(start, end - start);
  }
  
  
@@ -15,7 +15,7 @@ diff -urNp linux-2.6.10/arch/mips/kernel/irixelf.c linux-2.6.10-new/arch/mips/ke
  	/* Map the last of the bss segment */
  	if (last_bss > len) {
 -		do_brk(len, (last_bss - len));
-+		do_brk_locked(len, (last_bss - len));
++		__do_brk(len, (last_bss - len));
  	}
  	kfree(elf_phdata);
  
@@ -24,7 +24,7 @@ diff -urNp linux-2.6.10/arch/mips/kernel/irixelf.c linux-2.6.10-new/arch/mips/ke
  	struct prda *pp;
  
 -	v =  do_brk (PRDA_ADDRESS, PAGE_SIZE);
-+	v =  do_brk_locked (PRDA_ADDRESS, PAGE_SIZE);
++	v =  __do_brk (PRDA_ADDRESS, PAGE_SIZE);
  
  	if (v < 0)
  		return;
@@ -33,7 +33,7 @@ diff -urNp linux-2.6.10/arch/mips/kernel/irixelf.c linux-2.6.10-new/arch/mips/ke
  	bss = elf_phdata->p_memsz + elf_phdata->p_vaddr;
  	if (bss > len)
 -	  do_brk(len, bss-len);
-+	  do_brk_locked(len, bss-len);
++	  __do_brk(len, bss-len);
  	kfree(elf_phdata);
  	return 0;
  }
@@ -45,7 +45,7 @@ diff -urNp linux-2.6.10/arch/sparc64/kernel/binfmt_aout32.c linux-2.6.10-new/arc
  	if (end <= start)
  		return;
 -	do_brk(start, end - start);
-+	do_brk_locked(start, end - start);
++	__do_brk(start, end - start);
  }
  
  /*
@@ -54,11 +54,11 @@ diff -urNp linux-2.6.10/arch/sparc64/kernel/binfmt_aout32.c linux-2.6.10-new/arc
  		loff_t pos = fd_offset;
  		/* Fuck me plenty... */
 -		error = do_brk(N_TXTADDR(ex), ex.a_text);
-+		error = do_brk_locked(N_TXTADDR(ex), ex.a_text);
++		error = __do_brk(N_TXTADDR(ex), ex.a_text);
  		bprm->file->f_op->read(bprm->file, (char __user *)N_TXTADDR(ex),
  			  ex.a_text, &pos);
 -		error = do_brk(N_DATADDR(ex), ex.a_data);
-+		error = do_brk_locked(N_DATADDR(ex), ex.a_data);
++		error = __do_brk(N_DATADDR(ex), ex.a_data);
  		bprm->file->f_op->read(bprm->file, (char __user *)N_DATADDR(ex),
  			  ex.a_data, &pos);
  		goto beyond_if;
@@ -67,7 +67,7 @@ diff -urNp linux-2.6.10/arch/sparc64/kernel/binfmt_aout32.c linux-2.6.10-new/arc
  	if (N_MAGIC(ex) == OMAGIC) {
  		loff_t pos = fd_offset;
 -		do_brk(N_TXTADDR(ex) & PAGE_MASK,
-+		do_brk_locked(N_TXTADDR(ex) & PAGE_MASK,
++		__do_brk(N_TXTADDR(ex) & PAGE_MASK,
  			ex.a_text+ex.a_data + PAGE_SIZE - 1);
  		bprm->file->f_op->read(bprm->file, (char __user *)N_TXTADDR(ex),
  			  ex.a_text+ex.a_data, &pos);
@@ -76,7 +76,7 @@ diff -urNp linux-2.6.10/arch/sparc64/kernel/binfmt_aout32.c linux-2.6.10-new/arc
  		if (!bprm->file->f_op->mmap) {
  			loff_t pos = fd_offset;
 -			do_brk(0, ex.a_text+ex.a_data);
-+			do_brk_locked(0, ex.a_text+ex.a_data);
++			__do_brk(0, ex.a_text+ex.a_data);
  			bprm->file->f_op->read(bprm->file,
  				  (char __user *)N_TXTADDR(ex),
  				  ex.a_text+ex.a_data, &pos);
@@ -85,7 +85,7 @@ diff -urNp linux-2.6.10/arch/sparc64/kernel/binfmt_aout32.c linux-2.6.10-new/arc
  	bss = ex.a_text + ex.a_data + ex.a_bss;
  	if (bss > len) {
 -		error = do_brk(start_addr + len, bss - len);
-+		error = do_brk_locked(start_addr + len, bss - len);
++		error = __do_brk(start_addr + len, bss - len);
  		retval = error;
  		if (error != start_addr + len)
  			goto out;
@@ -97,7 +97,7 @@ diff -urNp linux-2.6.10/arch/x86_64/ia32/ia32_aout.c linux-2.6.10-new/arch/x86_6
  	if (end <= start)
  		return;
 -	do_brk(start, end - start);
-+	do_brk_locked(start, end - start);
++	__do_brk(start, end - start);
  }
  
  #if CORE_DUMP
@@ -106,7 +106,7 @@ diff -urNp linux-2.6.10/arch/x86_64/ia32/ia32_aout.c linux-2.6.10-new/arch/x86_6
  		map_size = ex.a_text+ex.a_data;
  
 -		error = do_brk(text_addr & PAGE_MASK, map_size);
-+		error = do_brk_locked(text_addr & PAGE_MASK, map_size);
++		error = __do_brk(text_addr & PAGE_MASK, map_size);
  		if (error != (text_addr & PAGE_MASK)) {
  			send_sig(SIGKILL, current, 0);
  			return error;
@@ -115,7 +115,7 @@ diff -urNp linux-2.6.10/arch/x86_64/ia32/ia32_aout.c linux-2.6.10-new/arch/x86_6
  		if (!bprm->file->f_op->mmap||((fd_offset & ~PAGE_MASK) != 0)) {
  			loff_t pos = fd_offset;
 -			do_brk(N_TXTADDR(ex), ex.a_text+ex.a_data);
-+			do_brk_locked(N_TXTADDR(ex), ex.a_text+ex.a_data);
++			__do_brk(N_TXTADDR(ex), ex.a_text+ex.a_data);
  			bprm->file->f_op->read(bprm->file,(char *)N_TXTADDR(ex),
  					ex.a_text+ex.a_data, &pos);
  			flush_icache_range((unsigned long) N_TXTADDR(ex),
@@ -124,7 +124,7 @@ diff -urNp linux-2.6.10/arch/x86_64/ia32/ia32_aout.c linux-2.6.10-new/arch/x86_6
  #endif
  
 -		do_brk(start_addr, ex.a_text + ex.a_data + ex.a_bss);
-+		do_brk_locked(start_addr, ex.a_text + ex.a_data + 
++		__do_brk(start_addr, ex.a_text + ex.a_data + 
 +ex.a_bss);
  		
  		file->f_op->read(file, (char *)start_addr,
@@ -134,7 +134,7 @@ diff -urNp linux-2.6.10/arch/x86_64/ia32/ia32_aout.c linux-2.6.10-new/arch/x86_6
  	bss = ex.a_text + ex.a_data + ex.a_bss;
  	if (bss > len) {
 -		error = do_brk(start_addr + len, bss - len);
-+		error = do_brk_locked(start_addr + len, bss - len);
++		error = __do_brk(start_addr + len, bss - len);
  		retval = error;
  		if (error != start_addr + len)
  			goto out;
@@ -192,7 +192,7 @@ diff -urNp linux-2.6.10/fs/binfmt_aout.c linux-2.6.10-new/fs/binfmt_aout.c
  	end = PAGE_ALIGN(end);
  	if (end > start) {
 -		unsigned long addr = do_brk(start, end - start);
-+		unsigned long addr = do_brk_locked(start, end - start);
++		unsigned long addr = __do_brk(start, end - start);
  		if (BAD_ADDR(addr))
  			return addr;
  	}
@@ -201,11 +201,11 @@ diff -urNp linux-2.6.10/fs/binfmt_aout.c linux-2.6.10-new/fs/binfmt_aout.c
  		/* Fuck me plenty... */
  		/* <AOL></AOL> */
 -		error = do_brk(N_TXTADDR(ex), ex.a_text);
-+		error = do_brk_locked(N_TXTADDR(ex), ex.a_text);
++		error = __do_brk(N_TXTADDR(ex), ex.a_text);
  		bprm->file->f_op->read(bprm->file, (char *) N_TXTADDR(ex),
  			  ex.a_text, &pos);
 -		error = do_brk(N_DATADDR(ex), ex.a_data);
-+		error = do_brk_locked(N_DATADDR(ex), ex.a_data);
++		error = __do_brk(N_DATADDR(ex), ex.a_data);
  		bprm->file->f_op->read(bprm->file, (char *) N_DATADDR(ex),
  			  ex.a_data, &pos);
  		goto beyond_if;
@@ -214,7 +214,7 @@ diff -urNp linux-2.6.10/fs/binfmt_aout.c linux-2.6.10-new/fs/binfmt_aout.c
  #endif
  
 -		error = do_brk(text_addr & PAGE_MASK, map_size);
-+		error = do_brk_locked(text_addr & PAGE_MASK, map_size);
++		error = __do_brk(text_addr & PAGE_MASK, map_size);
  		if (error != (text_addr & PAGE_MASK)) {
  			send_sig(SIGKILL, current, 0);
  			return error;
@@ -223,7 +223,7 @@ diff -urNp linux-2.6.10/fs/binfmt_aout.c linux-2.6.10-new/fs/binfmt_aout.c
  		if (!bprm->file->f_op->mmap||((fd_offset & ~PAGE_MASK) != 0)) {
  			loff_t pos = fd_offset;
 -			do_brk(N_TXTADDR(ex), ex.a_text+ex.a_data);
-+			do_brk_locked(N_TXTADDR(ex), ex.a_text+ex.a_data);
++			__do_brk(N_TXTADDR(ex), ex.a_text+ex.a_data);
  			bprm->file->f_op->read(bprm->file,
  					(char __user *)N_TXTADDR(ex),
  					ex.a_text+ex.a_data, &pos);
@@ -232,7 +232,7 @@ diff -urNp linux-2.6.10/fs/binfmt_aout.c linux-2.6.10-new/fs/binfmt_aout.c
  		}
  
 -		do_brk(start_addr, ex.a_text + ex.a_data + ex.a_bss);
-+		do_brk_locked(start_addr, ex.a_text + ex.a_data + ex.a_bss);
++		__do_brk(start_addr, ex.a_text + ex.a_data + ex.a_bss);
  		
  		file->f_op->read(file, (char __user *)start_addr,
  			ex.a_text + ex.a_data, &pos);
@@ -241,7 +241,7 @@ diff -urNp linux-2.6.10/fs/binfmt_aout.c linux-2.6.10-new/fs/binfmt_aout.c
  	bss = ex.a_text + ex.a_data + ex.a_bss;
  	if (bss > len) {
 -		error = do_brk(start_addr + len, bss - len);
-+		error = do_brk_locked(start_addr + len, bss - len);
++		error = __do_brk(start_addr + len, bss - len);
  		retval = error;
  		if (error != start_addr + len)
  			goto out;
@@ -264,7 +264,7 @@ diff -urNp linux-2.6.10/fs/binfmt_elf.c linux-2.6.10-new/fs/binfmt_elf.c
  	/* Map the last of the bss segment */
  	if (last_bss > elf_bss) {
 -		error = do_brk(elf_bss, last_bss - elf_bss);
-+		error = do_brk_locked(elf_bss, last_bss - elf_bss);
++		error = __do_brk(elf_bss, last_bss - elf_bss);
  		if (BAD_ADDR(error))
  			goto out_close;
  	}
@@ -273,7 +273,7 @@ diff -urNp linux-2.6.10/fs/binfmt_elf.c linux-2.6.10-new/fs/binfmt_elf.c
  	}
  
 -	do_brk(0, text_data);
-+	do_brk_locked(0, text_data);
++	__do_brk(0, text_data);
  	if (!interpreter->f_op || !interpreter->f_op->read)
  		goto out;
  	if (interpreter->f_op->read(interpreter, addr, text_data, &offset) < 0)
@@ -282,7 +282,7 @@ diff -urNp linux-2.6.10/fs/binfmt_elf.c linux-2.6.10-new/fs/binfmt_elf.c
  	                   (unsigned long)addr + text_data);
  
 -	do_brk(ELF_PAGESTART(text_data + ELF_MIN_ALIGN - 1),
-+	do_brk_locked(ELF_PAGESTART(text_data + ELF_MIN_ALIGN - 1),
++	__do_brk(ELF_PAGESTART(text_data + ELF_MIN_ALIGN - 1),
  		interp_ex->a_bss);
  	elf_entry = interp_ex->a_entry;
  
@@ -293,7 +293,7 @@ diff -urNp linux-2.6.10/fs/binfmt_elf.c linux-2.6.10-new/fs/binfmt_elf.c
 -		down_write(&current->mm->mmap_sem);
 -		do_brk(len, bss - len);
 -		up_write(&current->mm->mmap_sem);
-+		do_brk_locked(len, bss - len);
++		__do_brk(len, bss - len);
  	}
  	error = 0;
  
@@ -304,7 +304,7 @@ diff -urNp linux-2.6.10/include/linux/mm.h linux-2.6.10-new/include/linux/mm.h
  extern int do_munmap(struct mm_struct *, unsigned long, size_t);
  
  extern unsigned long do_brk(unsigned long, unsigned long);
-+extern unsigned long do_brk_locked(unsigned long, unsigned long);
++extern unsigned long __do_brk(unsigned long, unsigned long);
  
  /* filemap.c */
  extern unsigned long page_unuse(struct page *);
@@ -327,7 +327,7 @@ diff -urNp linux-2.6.10/mm/mmap.c linux-2.6.10-new/mm/mmap.c
  }
  
 +/* locking version of do_brk. */
-+unsigned long do_brk_locked(unsigned long addr, unsigned long len)
++unsigned long __do_brk(unsigned long addr, unsigned long len)
 +{
 +	unsigned long ret;
 +
@@ -339,7 +339,7 @@ diff -urNp linux-2.6.10/mm/mmap.c linux-2.6.10-new/mm/mmap.c
 +}
 +
  EXPORT_SYMBOL(do_brk);
-+EXPORT_SYMBOL(do_brk_locked);
++EXPORT_SYMBOL(__do_brk);
  
  /* Release all mmaps. */
  void exit_mmap(struct mm_struct *mm)
