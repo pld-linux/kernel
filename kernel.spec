@@ -106,6 +106,10 @@ Patch40:	smbfs-re-open-fixes.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch41:	linux-2.4.2-pcnet-parms.patch
 
+# from LKL 2001.03.09
+Patch42:	lanstreamer-support.patch
+Patch43:	ramdisk-VM.fix
+
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
 ExclusiveOS:	Linux
@@ -363,6 +367,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch39 -p1
 %patch40 -p1
 %patch41 -p1
+%patch42 -p1
+%patch43 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
