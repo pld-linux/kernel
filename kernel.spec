@@ -79,7 +79,7 @@ Patch5:		linux-abi-2.4.19.0.patch.bz2
 Patch6:		grsecurity-%{grsec_version}.patch.gz
 # Preemptive kernel  patch
 Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.19-rc5-3.patch
-Patch8:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/ingo-O1-sched/preempt-%{name}-rml-2.4.18-rc1-ingo-K3-1.patch
+Patch8:		preempt_sched_O1_ck3_2.4.19.patch.bz2
 Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-2.4.18-1.patch
 Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-2.4.18-1.patch
 # http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
