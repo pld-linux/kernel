@@ -26,7 +26,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.14
-Release:	0.2
+Release:	0.3
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -42,6 +42,7 @@ Source7:	linux-2.4.12-netfilter-20011023.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_version}.tar.gz
+# new -> ftp://ftp.tux.org/pub/roudier/drivers/portable/sym-2.1.x/sym-2.1.16-20011028.tar.gz
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
 Source12:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
 Source13:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
@@ -153,6 +154,7 @@ Patch905:	linux-ipvs+ext3.patch
 Patch906:	linux-grsecurity-fixes.patch
 Patch907:	jfs_defconfig.fix
 Patch908:	kernel-kallsyms.fix
+Patch909:	linux-53c7,8xx-build.fix
 
 # Linus's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.13-%{pre_version}.gz
@@ -165,6 +167,8 @@ BuildRequires:	egcs64
 %else
 BuildRequires:	egcs
 %endif
+BuildRequires:	modutils
+Buildrequires:	perl
 Provides:	%{name}-up = %{version}
 Provides:	module-info
 Autoreqprov:	no
@@ -509,6 +513,8 @@ cp -f tulip-%{tulip_version}/src/*.{c,h} drivers/net/tulip
 cp -f tulip-%{tulip_version}/src/ChangeLog drivers/net/tulip
 
 %patch908 -p0
+# fix 53c7,8xx build
+%patch909 -p0
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -603,7 +609,10 @@ BuildKernel() {
 	%{__make} dep clean
 %endif
 	%{__make} include/linux/version.h
-
+	
+# make drivers/scsi/ missing files
+	(cd drivers/scsi; make -f M)
+	
 %ifarch %{ix86}
 	%{__make} bzImage
 %else
