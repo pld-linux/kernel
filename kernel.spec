@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 ## netfilter snap 
-%define		_netfilter_snap		20031222
+%define		_netfilter_snap		20031226
 ## Program required by kernel to work.
 %define		_binutils_ver		2.12
 %define		_util-linux_ver		2.10o
@@ -30,7 +30,7 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1.9
+%define		_rel		1.10
 %define		_test_ver	0
 %define		_cset		0
 
@@ -544,11 +544,11 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch72 -p1
 
-#%%patch74 -p1
+%patch74 -p1
 ##%%patch75 -p1
-#%%patch76 -p1
+%patch76 -p1
 
-#%%patch78 -p1
+%patch78 -p1
 
 %patch80 -p1
 %patch81 -p1
