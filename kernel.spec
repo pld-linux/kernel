@@ -30,14 +30,19 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{_ver}.tar.bz2
 # Source0-md5:	5218790bc3db41e77a7422969639a9ad
 Source1:	grsecurity-2.0-2.6.6-unofficial.patch
 Source2:	%{name}-config-nondist
-Patch0:		2.6.0-t6-usb-irq.patch
-Patch1:		2.6.0-t7-memleak-lkml.patch
-Patch2:		2.6.0-t7-memleak2-lkml.patch
-Patch3:		2.6.0-t8-swap-include-lkml.patch
-Patch4:		2.6.0-t9-acpi_osl-lkml.patch
-Patch5:		2.6.1-squashfs1.3r3.patch
-Patch6:		2.6.6-pramfs.patch
-Patch7:		linux-kbuild-extmod.patch
+%define		_cset	20040511_2230
+%if "%{_cset}" != "0"
+Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
+%endif
+Patch1:		2.6.0-t6-usb-irq.patch
+Patch2:		2.6.0-t7-memleak-lkml.patch
+Patch3:		2.6.0-t7-memleak2-lkml.patch
+Patch4:		2.6.0-t8-swap-include-lkml.patch
+Patch5:		2.6.0-t9-acpi_osl-lkml.patch
+Patch6:		2.6.1-squashfs1.3r3.patch
+Patch7:		2.6.6-pramfs.patch
+Patch8:		linux-kbuild-extmod.patch
+Patch9:		%{name}-arch386.patch
 Patch10:	2.6.4-esfq.patch
 Patch11:	2.6.4-imq.patch
 Patch12:	2.6.4-imq-nat.patch
@@ -107,8 +112,10 @@ hardware.
 
 %prep
 %setup -q -n linux-%{_ver}
-%{__patch} -p1 < %{SOURCE1}
+%if "%{_cset}" != "0"
 %patch0 -p1
+%endif
+%{__patch} -p1 < %{SOURCE1}
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
@@ -116,7 +123,8 @@ hardware.
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
-
+%patch8 -p1
+%patch9 -p0
 %patch10 -p1
 %patch11 -p1
 %patch12 -p1
@@ -125,6 +133,10 @@ hardware.
 %patch15 -p1
 
 %build
+find include/ -type d -maxdepth 1 -name "asm-*" ! -name asm-i386 ! -name asm-generic | xargs rm -rf
+find arch/* -type d -maxdepth 0 ! -name i386 | xargs rm -rf
+%{__make} mrproper
+
 cat << EOF > cleanup-nondist-kernel.sh
 #!/bin/sh
 CWD=\`pwd\`
@@ -155,10 +167,7 @@ rm -rf $RPM_BUILD_ROOT
 umask 022
 install -d $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}
 cp -R . $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}/
-cd $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}
-find include/ -type d -maxdepth 1 -name "asm-*" ! -name asm-i386 ! -name asm-generic | xargs rm -rf
-%{__make} mrproper
-install %{SOURCE2} config-nondist
+install %{SOURCE2} $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
