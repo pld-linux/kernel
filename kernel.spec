@@ -64,7 +64,7 @@ Patch0:		%{name}-pldfblogo.patch
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hvr/testing/
 Patch10:	patch-cryptoloop-jari-2.4.22-rc2.0
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
-Patch12:	linux-2.4.21-freeswan-2.00.patch.gz
+Patch12:	linux-2.4.23-freeswan-2.04.patch.gz
 Patch15:	linux-2.4.23-sched-O1.patch
 # http://dl.sourceforge.net/user-mode-linux/uml-patch-2.4.20-6.bz2
 Patch20:	uml-patch-2.4.20-6-21.bz2
