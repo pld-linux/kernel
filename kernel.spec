@@ -30,7 +30,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	2.22
+Release:	2.23
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
@@ -181,6 +181,7 @@ Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
 Patch907:	linux-loop-hvr-2.4.16.0.patch
+Patch908:	ippersonality-post.patch
 Patch909:	linux-53c7,8xx-build.fix
 Patch910:	dc395-PLD.fix
 Patch911:	linux-o1-sched-grsec-pre.patch
@@ -551,6 +552,7 @@ rm -rf %{sym_ncr_version}
 # IP personality
 echo Adding IP Personality 
 patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010724-linux-2.4.7.diff
+%patch908 -p1
 
 # JFS
 echo Adding JFS
