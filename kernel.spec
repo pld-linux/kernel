@@ -136,6 +136,7 @@ BuildRequires:	elftoaout
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
 BuildRequires:	rpmbuild(macros) >= 1.153
+BuildRequires:	sed >= 4.0
 Autoreqprov:	no
 PreReq:		coreutils
 PreReq:		module-init-tools >= 0.9.9
