@@ -26,7 +26,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.22
-Release:	1.4
+Release:	1.5
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -288,10 +288,7 @@ Patch3012:	linux-2.4.22-gcc-ext3.patch
 
 # Security patches/fixes
 
-Patch4000:	linux-2.4.22-ow1-stack.patch
-Patch4001:	grsecurity-nopax-2.0-rc3-2.4.22.patch
-
-Patch5000:	linux-2.4.22-security.patch
+Patch4001:	grsecurity-2.0-rc3-2.4.22-O1.patch
 
 #Patch10000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc6.bz2
 
@@ -787,9 +784,6 @@ cd ../../..
 %patch3011 -p1
 %patch3012 -p1
 
-%patch5000 -p1
-
-%patch4000 -p1
 %{!?_without_grsec:%patch4001 -p1}
 
 mv -f drivers/scsi/sym53c8xx.c drivers/scsi/sym53c8xx_old.c
