@@ -1,130 +1,27 @@
-%define		ow_version		2.2.20-ow2
-%define		pcmcia_version		3.1.30
-%define		freeswan_version	1.8
-%define		reiserfs_version	3.5.35
-%define		i2c_version		2.6.2
-%define		bttv_version		0.7.60
-%define		wlan_version		0.3.4
-%define		tun_version		1.1
-%define		vlan_version		1.0.1
-%define		aic7xxx_version		6.2.3-2.2.19
-%define		symncr_version		1.7.3c-ncr-3.4.3b
-%define		jfs_version		1.0.5
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Summary(ru):	Òƒ“œ Linux
 Summary(uk):	Òƒ“œ Linux
-Name:		kernel
-Version:	2.2.21
-Release:	2
+Name:		kernel-vanilla
+Version:	2.4.19
+Release:	0
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
-Source1:	%{name}-autoconf.h
-Source2:	%{name}-BuildASM.sh
-Source3:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
-Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-133.tar.gz
-Source5:	ftp://ftp.sourceforge.net/pub/sourceforge/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
-Source6:	ftp://ftp.tux.org/tux/roudier/drivers/linux/stable/sym-%{symncr_version}.tar.gz
-Source7:	ftp://ftp.linux-wlan.com/linux-wlan/linux-wlan-%{wlan_version}.tar.gz
-Source9:	serial-5.05.tar.gz
-Source10:	http://vtun.sourceforge.net/tun/tun-%{tun_version}.tar.gz
-Source11:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
-Source12:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.2-%{jfs_version}-patch.tar.gz
-Source13:	http://www.netroedge.com/~lm78/archive/i2c-%{i2c_version}.tar.gz
-Source20:	%{name}-i386.config
-Source21:	%{name}-i386-smp.config
-Source22:	%{name}-i386-BOOT.config
-Source23:	%{name}-i586.config
-Source24:	%{name}-i586-smp.config
-Source25:	%{name}-i686.config
-Source26:	%{name}-i686-smp.config
-Source27:	%{name}-sparc.config
-Source28:	%{name}-sparc-smp.config
-Source29:	%{name}-sparc-BOOT.config
-Source30:	%{name}-sparc64.config
-Source31:	%{name}-sparc64-smp.config
-Source32:	%{name}-sparc64-BOOT.config
-Source33:	%{name}-alpha.config
-Source34:	%{name}-alpha-smp.config
-Source35:	%{name}-alpha-BOOT.config
-Source36:	%{name}-ppc.config
-Source37:	%{name}-ppc-smp.config
-Source38:	%{name}-ppc-BOOT.config
-Patch0:		%{name}-pldfblogo.patch
-Patch1:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
-Patch2:		http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
-Patch3:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.20-reiserfs-%{reiserfs_version}.diff.bz2
-Patch4:		ftp://ftp.kernel.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
-Patch5:		linux-2.2.18-freeswan-%{freeswan_version}.patch
-Patch6:		wanrouter-v2215.patch.gz
-# based on http://bridge.sourceforge.net/patches/bridge-1.0.2-against-2.2.20.diff
-Patch10:	bridge-1.0.2-against-2.2.20.diff
-Patch11:	bridge-ipchains-against-1.0.2-against-2.2.20.diff
-Patch12:	linux-ipv6-pld.patch
-
-Patch20:	http://download.sourceforge.net/linux1394/ieee1394-2.2.19-20010527.gz
-Patch21:	linux-tasks.patch
-Patch22:	%{name}-ipvs-1.0.8-2.2.19.patch
-Patch23:	linux-raw.patch
-Patch24:	%{name}-panaview_kbd.patch
-Patch25:	linux-2.2.19-pci.patch
-Patch27:	%{name}-udf.patch
-# based on	http://people.redhat.com/mingo/raid-patches/raid-2.2.20-A0
-Patch28:	raid-2.2.20-A0.patch.bz2
-# based on	http://www.ans.pl/ide/testing/ide.2.2.21.02042002-Ole.patch.gz
-Patch29:	ide.2.2.21.06162002-PLD.patch.gz
-Patch30:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
-Patch31:	%{name}-flip.patch
-Patch33:	%{name}-ipsec-bridge.patch
-Patch34:	%{name}-wanrouter-bridge.patch
-Patch35:	linux-netdrivers_vlan.patch
-Patch36:	atm-unresolved.patch
-Patch38:	linux-2.2.20-pcmcia-without-iee1394.patch.bz2
-# based on ftp://ftp.kernel.org/people/andrea/kernels/v2.2/2.2.20pre9aa2/40_lfs-2.2.20pre9aa2-27.bz2
-Patch40:	2.2.21-pre2_Makefile.patch
-Patch41:	%{name}-serial-initialisation.patch
-Patch42:	%{name}-flip-serial5.05.patch
-Patch43:	%{name}-vlan_bridge.patch
-Patch44:	tulip-patch-0.91.patch.bz2
-Patch100:	jfs-2.2.20-v%{jfs_version}-patch
-Patch101:	linux-atm.patch
-# HTB from http://luxik.cdi.cz/~devik/qos/htb/
-Patch102:	htb2_2.2.17.diff
-Patch103:	imq_2.2.17.diff
-#i2o patch from ftp://ftp.adaptec.com/raid/asr/unix/asr_linux_v242_drv.rpm
-Patch104:	dpt_i2o-2.2.19.diff
-Patch105:	linux-2.2.19-bttv-%{bttv_version}.patch.bz2
-Patch106:	linux-2.2.20-undo-ioport.h.patch.bz2
-Patch107:	linux-2.2.20-icn-unresolved.patch.bz2
-Patch108:	linux-2.2.20-agp_backport.patch.bz2
-Patch109:	dc395-MAINTAINERS.patch
-Patch110:	%{name}-nfs-fixes.patch
-Patch111:	linux-2.2.20-pcilynx_unresolved.patch
-Patch112:	linux-2.2.20-lfs.patch
-Patch113:	linux-2.2.21-mppe.patch
-Patch114:	wrr-linux-2.2.18.patch
-Patch115:	2.2.21-wrr-pkt_bridged.patch
-
-Patch302:	ow2-fix-2.2.21-rc3.patch
-
-Patch500:	2.2.20-reiserfs_ppc.patch
-Patch501:	2.2.21-ppc-smp.patch
-Patch502:	linux-2.2.19-ieee1394-ppc.patch.bz2
-Patch503:	2.2.20-ppc_ide.patch
-Patch504:	2.2.21-enable_ibmraid-ppc.patch
-Patch505:	2.2.21-ppc_asm.patch
-Patch506:	2.2.21-ppc_setup.patch
-Patch507:	2.2.21-ppc_ieee1394.patch
-Patch508:	serial-5.05-ppc.patch
-Patch509:	2.2.21-ppc_macserial.patch
-
-Patch1500:	linux-sparc_ide_fix.patch.2.2.19
-Patch1501:	%{name}-sparc-zs.h.patch
-Patch1502:	%{name}-sym53c8xx.patch
-Patch1503:	%{name}-sparc_netsyms.patch
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
+Source1:	kernel-autoconf.h
+Source2:	kernel-BuildASM.sh
+Source20:	kernel-i386.config
+Source21:	kernel-i386-smp.config
+Source22:	kernel-i386-BOOT.config
+Source23:	kernel-i586.config
+Source24:	kernel-i586-smp.config
+Source25:	kernel-i686.config
+Source26:	kernel-i686-smp.config
+Source36:	kernel-ppc.config
+Source37:	kernel-ppc-smp.config
+Source38:	kernel-ppc-BOOT.config
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -139,25 +36,12 @@ BuildRequires:	%{kgcc_package}
 BuildRequires:	sparc32
 %endif
 Provides:	%{name}-up = %{version}-%{release}
-%ifarch %{ix86} ppc
-Provides:	%{name}(reiserfs) = %{version}
-Provides:	%{name}(i2c) = %{i2c_version}
-Provides:	i2c = %{i2c_version}
-Provides:	bttv = %{bttv_version}
-%endif
-Provides:	%{name}(ipvs) = %{version}
-Provides:	%{name}(rawio) = %{version}
 Autoreqprov:	no
 PreReq:		modutils
 PreReq:		fileutils
 PreReq:		geninitrd
 #Prereq:		rc-boot
 Obsoletes:	kernel-modules
-
-#i2c and bttv packages are obsolete
-Obsoletes:	kernel-i2c
-Obsoletes:	bttv
-Obsoletes:	kernel-misc-bttv
 
 ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
@@ -214,25 +98,12 @@ Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeu
 Summary(pl):	Kernel %{version} skompilowany na maszyny SMP
 Group:		Base/Kernel
 Provides:	%{name} = %{version}-%{release}
-%ifarch %{ix86} ppc
-Provides:	%{name}(reiserfs) = %{version}
-Provides:	%{name}(i2c) = %{i2c_version}
-Provides:	i2c = %{i2c_version}
-Provides:	bttv = %{bttv_version}
-
-%endif
-Provides:	%{name}(ipvs) = %{version}
-Provides:	%{name}(rawio) = %{version}
 PreReq:		modutils
 PreReq:		fileutils
 PreReq:		geninitrd
 Prereq:		rc-boot
 Obsoletes:	kernel-modules
 
-# i2c and bttv packages are obsolete
-Obsoletes:	kernel-smp-i2c
-Obsoletes:	bttv
-Obsoletes:	kernel-smp-misc-bttv
 Autoreqprov:	no
 
 %description smp
@@ -296,14 +167,6 @@ ze wzglÍdu na wymagania rozmiarowe.
 Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag≥Ûwkowe j±dra
 Group:		Base/Kernel
-%ifarch %{ix86} ppc
-Provides:	%{name}-headers(reiserfs) = %{version}
-Provides:	i2c-devel = %{i2c_version}
-%endif
-Provides:	%{name}-headers(ipvs) = %{version}
-Provides:	%{name}-headers(rawio) = %{version}
-Provides:	%{name}-headers(bridging) = %{version}
-Obsoletes:	i2c-devel
 Autoreqprov:	no
 
 %description headers
@@ -378,154 +241,8 @@ do twojego sprzÍtu.
 „≈ ◊…»¶ƒŒ¶ ‘≈À”‘… —ƒ“¡ Linux. ˜…Àœ“…”‘œ◊’¿ﬁ… ß» ◊… Õœ÷≈‘≈ –œ¬’ƒ’◊¡‘…
 ◊¡€≈ ◊Ã¡”Œ≈ —ƒ“œ, —À≈ À“¡›≈ Œ¡”‘“œ§Œœ Œ¡ ÀœŒ∆¶«’“¡√¶¿ ◊¡€œß Õ¡€…Œ….
 
-%package pcmcia-cs
-Summary:	PCMCIA-CS modules
-Summary(pl):	Modu≥y PCMCIA-CS 
-Group:		Base/Kernel
-Group(pl):	Podstawowe/Kernel
-Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
-Requires(post):		%{name}-up = %{version}-%{release}
-Requires(postun):	%{name}-up = %{version}-%{release}
-
-%description pcmcia-cs
-PCMCIA-CS modules (%{pcmcia_version}).
-
-%description -l pl pcmcia-cs
-Modu≥y PCMCIA-CS (%{pcmcia_version}).
-
-%package smp-pcmcia-cs
-Summary:	PCMCIA-CS modules for SMP kernel
-Summary(pl):	Modu≥y PCMCIA-CS dla maszyn SMP
-Group:		Base/Kernel
-Group(pl):	Podstawowe/Kernel
-Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
-Requires(post):		%{name}-smp = %{version}-%{release}
-Requires(postun):	%{name}-smp = %{version}-%{release}
-
-%description smp-pcmcia-cs
-PCMCIA-CS modules for SMP kernel (%{pcmcia_version}).
-
-%description -l pl smp-pcmcia-cs
-Modu≥y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
-
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a9 -a10 -a11 -a13 -n linux
-
-%patch0 -p1
-%patch1 -p0
-# disable aic7xxx patch on sparc (this must be reported to aic7xxx driver maintainer)
-%ifnarch sparc sparc64 ppc
-%patch2 -p1
-%endif
-%patch3 -p1
-%patch4 -p1
-%patch5 -p1
-%patch6 -p1
-%patch10 -p1
-%patch11 -p1
-%patch12 -p1
-
-%patch20 -p1
-%patch21 -p1
-%patch22 -p1
-%patch23 -p1
-%patch24 -p1
-%patch25 -p1
-%patch27 -p1
-%patch28 -p1
-%patch29 -p1
-%patch30 -p1
-%patch31 -p1
-%patch33 -p1
-%patch34 -p1
-%patch35 -p1
-%patch36 -p1
-%patch38 -p1
-%patch40 -p1
-%patch44 -p1
-
-# preparing linux/README file to backup
-mv README README.kernel
-# unpacking %{SOURCE12}
-tar zxvf %{SOURCE12}
-# move jfs README file to README.jfs
-mv README README.jfs
-# back kernel README file
-mv README.kernel README
-
-# 802.1Q VLANs
-%patch43 -p1
-patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
-
-%ifnarch ppc
-cd serial-5.05
-%patch41 -p1
-%patch42 -p1
-%patch508 -p1
-./install-in-kernel ../
-cd ..
-%endif
-
-# i2c
-%ifarch %{ix86} ppc
-cd i2c-%{i2c_version}
-mkpatch/mkpatch.pl . ../../linux | (cd ../../linux; patch -p1 -s)
-cd ..
-%patch105 -p1
-%patch106 -p1
-%endif
-
-# 2.2.20ow2
-%patch302 -p1
-patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
-
-# symbios drivers
-mv sym-%{symncr_version}/*.{c,h} drivers/scsi
-mv sym-%{symncr_version}/{README,ChangeLog}.* Documentation
-
-# Tekram DC395/315 U/UW SCSI host driver
-%patch109 -p1
-patch -p1 -s <dc395/dc395-integ22.diff
-install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
-
-# JFS 1.0.5
-%patch100 -p1
-patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
-
-%patch101 -p1
-%patch102 -p1
-%patch103 -p1
-%patch104 -p1
-%patch107 -p1
-%patch108 -p1
-%patch110 -p1
-%patch111 -p1
-%patch113 -p1
-%patch114 -p1
-%patch115 -p1
-
-%ifarch ppc
-#enable lfs on ppc
-%patch112 -p1
-%patch500 -p1
-%patch501 -p1
-%patch502 -p1
-%patch503 -p1
-%patch504 -p1
-%patch505 -p1
-%patch506 -p1
-%patch507 -p1
-%patch509 -p1
-%endif
-
-%ifarch sparc sparc64
-%patch1500 -p1
-%patch1501 -p1
-%endif
-%ifarch sparc64
-%patch1503 -p1
-%endif
-#%patch1502 -p1
+%setup -q -n linux
 
 %build
 BuildKernel() {
@@ -610,105 +327,17 @@ BuildKernel() {
 	%{__make} INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR modules_install KERNELRELEASE=$KernelVer
 }
 
-BuildPCMCIA() {
-if [ "$1" = "BOOT" ]; then
-	PCMCIA_APM=--apm
-	KernelVer=%{version}
-	echo BUILDING A KERNEL PCMCIA MODULES FOR BOOT...
-elif [ -n "$1" ] ; then
-	PCMCIA_APM=--apm
-	KernelVer=%{version}-%{release}$1
-	echo BUILDING A KERNEL PCMCIA MODULES FOR $1...
-else
-	PCMCIA_APM=--noapm
-	KernelVer=%{version}-%{release}
-	echo BUILDING THE NORMAL KERNEL PCMCIA MODULES...
-fi
-cd pcmcia-cs-%{pcmcia_version}
-%{__make} clean
-./Configure \
-	--noprompt \
-	--trust \
-	--cardbus \
-	--current \
-	--pnp \
-	--srctree \
-	$PCMCIA_APM \
-	--kernel=$KERNEL_BUILD_DIR \
-	--moddir=/lib/modules/$KernelVer \
-	--kflags="-march=%{_target_cpu}" \
-	--target=$KERNEL_INSTALL_DIR
-
-mv config.mk config.mk.bak
-mv Makefile Makefile.bak
-mv clients/Makefile clients/Makefile.bak
-sed "s/^MODDIR=.*/MODDIR=\/lib\/modules\/$KernelVer/" config.mk.bak > config.mk
-sed "s/^DIRS =.*//" Makefile.bak > Makefile
-sed "s/.*= 8390\..$//" clients/Makefile.bak > clients/Makefile
-
-%{__make} all
-#	CC=%{kgcc} \
-#	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
-#	MFLAG="$RPM_OPT_FLAGS -O"
-
-#	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNEL_BUILD_DIR/include -D__KERNEL__ -DEXPORT_SYMTAB"
-
-%{__make} PREFIX=$KERNEL_INSTALL_DIR install
-cd ..
-
-# Linux WLAN package extension for PCMCIA
-cd linux-wlan-%{wlan_version}
-%{__make} clean
-mv config.mk config.mk.bak
-kernelbase=`echo $KERNEL_BUILD_DIR| sed -e "sm/m\\\\\/mg"`
-sed "s/^MODULES_DIR=.*/MODULES_DIR=$kernelbase-installed\/lib\/modules\/$KernelVer/" config.mk.bak > config.mk.bak2
-sed "s/^MAKE_CS=.*/MAKE_CS=y/" config.mk.bak2 > config.mk.bak3
-sed "s/^LINUX_SRC=.*/LINUX_SRC=$kernelbase/" config.mk.bak3 > config.mk.bak4
-sed "s/^PCMCIA_SRC=.*/PCMCIA_SRC=$kernelbase\/pcmcia-cs-%{pcmcia_version}/" config.mk.bak4 > config.mk
-
-cd driver
-%{__make} all
-	CC=%{kgcc} \
-	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
-	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNEL_BUILD_DIR/include -I$KERNEL_BUILD_DIR/pcmcia-cs-%{pcmcia_version}/include -D__KERNEL__ -DEXPORT_SYMTAB"
-
-%{__make} PREFIX=$KERNEL_INSTALL_DIR install
-
-cd ../..
-
-cd tun-%{tun_version}
-aclocal
-autoconf
-(cd linux
-aclocal
-autoconf)
-%configure \
-	--with-kernel="$KERNEL_BUILD_DIR"
-make
-install linux/tun.o "$KERNEL_INSTALL_DIR/lib/modules/$KernelVer/net"
-cd ..
-
-}
-
-
 KERNEL_BUILD_DIR=`pwd`
 KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
 
 rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
 
-
 # NORMAL KERNEL
 BuildKernel
-%ifarch %{ix86}
-BuildPCMCIA
-%endif
 
 # SMP-ENABLED KERNEL
 BuildKernel smp
-%ifarch %{ix86}
-BuildPCMCIA smp
-%endif
 
 # BOOT kernel
 %ifnarch i586 i686 ppc
@@ -717,9 +346,6 @@ rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
 
 BuildKernel BOOT
-%ifarch %{ix86}
-BuildPCMCIA BOOT
-%endif
 %endif
 
 %install
@@ -736,133 +362,6 @@ ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT%{_includedir}/asm
 bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/
 mv -f $RPM_BUILD_ROOT%{_kernelsrcdir} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 ln -sf linux-%{version} $RPM_BUILD_ROOT%{_kernelsrcdir}
-gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH0}
-%ifnarch sparc sparc64 ppc
-gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-%endif
-bzip2 -dc %{PATCH3} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH5}
-gzip -dc %{PATCH6} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH10}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH11}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH12}
-
-gzip -dc %{PATCH20} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH21}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH22}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH23}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH24}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH25}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH27}
-bzip2 -dc %{PATCH28} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-gzip -dc %{PATCH29} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH30} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH31}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH33}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH34}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH35}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH36}
-#patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH39}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH40}
-bzip2 -dc %{PATCH44} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-
-# preparing linux/README file to backup
-mv $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README.kernel
-# unpacking %{SOURCE12}
-gzip -dc %{SOURCE12} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-# move jfs README file to README.jfs
-mv $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README.jfs
-# back kernel README file
-mv $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README.kernel $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README
-
-# VLAN
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH43}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/vlan.%{vlan_version}/vlan_2.2.patch
-rm -rf $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/vlan.%{vlan_version}/
-
-#serial
-%ifnarch ppc
-cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/serial-5.05
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH41}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH42}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/serial-5.05 < %{PATCH508}
-./install-in-kernel $RPM_BUILD_ROOT/usr/src/linux-%{version}
-cd ..
-%endif
-rm -rf $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/serial-5.05/
-
-# i2c
-%ifarch %{ix86}
-gzip -dc %{SOURCE13} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/i2c-%{i2c_version}
-mkpatch/mkpatch.pl . $RPM_BUILD_ROOT/usr/src/linux-%{version} | (cd $RPM_BUILD_ROOT/usr/src/linux-%{version}; patch -p1 -s)
-cd ..
-rm -rf i2c-%{i2c_version}/
-bzip2 -dc %{PATCH105} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-bzip2 -dc %{PATCH106} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-%endif
-
-# 2.2.20ow
-gzip -dc %{SOURCE3} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH302}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/linux-%{ow_version}/linux-%{ow_version}.diff
-rm -rf $RPM_BUILD_ROOT/usr/src/linux-%{version}/linux-%{ow_version}/
-
-# symbios drivers
-gzip -dc %{SOURCE6} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-mv $RPM_BUILD_ROOT/usr/src/linux-%{version}/sym-%{symncr_version}/*.{c,h} $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi
-mv $RPM_BUILD_ROOT/usr/src/linux-%{version}/sym-%{symncr_version}/{README,ChangeLog}.* $RPM_BUILD_ROOT/usr/src/linux-%{version}/Documentation
-rm -rf $RPM_BUILD_ROOT/usr/src/linux-%{version}sym-%{symncr_version}
-
-# Tekram DC395/315 U/UW SCSI host driver
-gzip -dc %{SOURCE4} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH109}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <dc395/dc395-integ22.diff
-install dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi/
-rm -rf dc395/
-
-# jfs 1.0.5
-gzip -dc %{SOURCE12} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH100}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/jfs-2.2.common-v%{jfs_version}-patch
-# remove all jfs patches from linux/ directory
-rm $RPM_BUILD_ROOT/usr/src/linux-%{version}/jfs-*
-
-
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH102}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH103}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH104}
-bzip2 -dc %{PATCH107} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-bzip2 -dc %{PATCH108} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH110}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH113}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH114}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH115}
-%ifarch ppc
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH500}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH501}
-bzip2 -dc %{PATCH502} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH503}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH504}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH505}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH506}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH507}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH509}
-%endif
-
-%ifarch sparc sparc64
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1500}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1501}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1502}
-%endif
-%ifarch sparc64
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1503}
-%endif
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
@@ -935,10 +434,6 @@ if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
-%post pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
-
-
 %post smp
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
@@ -959,9 +454,6 @@ if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
-%post smp-pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
-
 %postun
 if [ -L /lib/modules/%{version} ]; then
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}" ]; then
@@ -972,9 +464,6 @@ if [ -L /lib/modules/%{version} ]; then
 fi
 rm -f /boot/initrd-%{version}-%{release}.gz
 
-%postun pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
-
 %postun smp
 if [ -L /lib/modules/%{version} ]; then
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp" ]; then
@@ -984,9 +473,6 @@ if [ -L /lib/modules/%{version} ]; then
 	fi
 fi
 rm -f /boot/initrd-%{version}-%{release}smp.gz
-
-%postun smp-pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
 
 %post headers
 rm -f /usr/src/linux
@@ -1009,9 +495,9 @@ fi
 %attr(600,root,root) /boot/vmlinuz-%{version}-%{release}
 %attr(600,root,root) /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
-%ifnarch sparc sparc64 ppc
-/lib/modules/%{version}-%{release}/atm
-%endif
+#%ifnarch sparc sparc64 ppc
+#/lib/modules/%{version}-%{release}/atm
+#%endif
 /lib/modules/%{version}-%{release}/block
 /lib/modules/%{version}-%{release}/cdrom
 %ifarch sparc sparc64
@@ -1030,12 +516,6 @@ fi
 %endif
 #%config(missingok) %{_sysconfdir}/sysconfig/rc-boot/images
 
-%files pcmcia-cs
-%defattr(644,root,root,755)
-%ifarch %{ix86}
-/lib/modules/%{version}-%{release}/pcmcia
-%endif
-
 %files smp
 %defattr(644,root,root,755)
 %ifarch alpha sparc ppc
@@ -1044,9 +524,9 @@ fi
 %attr(600,root,root) /boot/vmlinuz-%{version}-%{release}smp
 %attr(600,root,root) /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
-%ifnarch sparc sparc64 ppc
-/lib/modules/%{version}-%{release}smp/atm
-%endif
+#%ifnarch sparc sparc64 ppc
+#/lib/modules/%{version}-%{release}smp/atm
+#%endif
 /lib/modules/%{version}-%{release}smp/block
 /lib/modules/%{version}-%{release}smp/cdrom
 %ifarch sparc sparc64
@@ -1064,12 +544,6 @@ fi
 /lib/modules/%{version}-%{release}smp/video
 %endif
 #%config(missingok) %{_sysconfdir}/sysconfig/rc-boot/images
-
-%files -n kernel-smp-pcmcia-cs
-%defattr(644,root,root,755)
-%ifarch %{ix86}
-/lib/modules/%{version}-%{release}smp/pcmcia
-%endif
 
 %ifnarch i586 i686 ppc
 %files BOOT
@@ -1094,9 +568,9 @@ fi
 %ifarch %{ix86}
 %{_libdir}/bootdisk/lib/modules/%{version}/usb
 %endif
-%ifarch i386
-%{_libdir}/bootdisk/lib/modules/%{version}/pcmcia
-%endif
+#%ifarch i386
+#%{_libdir}/bootdisk/lib/modules/%{version}/pcmcia
+#%endif
 %endif
 
 %files headers
@@ -1120,7 +594,7 @@ fi
 %files source
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/arch
-%{_prefix}/src/linux-%{version}/crypto
+#%{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
 %{_prefix}/src/linux-%{version}/init
@@ -1131,7 +605,7 @@ fi
 %{_prefix}/src/linux-%{version}/modules
 %{_prefix}/src/linux-%{version}/net
 %{_prefix}/src/linux-%{version}/scripts
-%{_prefix}/src/linux-%{version}/security
+#%{_prefix}/src/linux-%{version}/security
 %{_prefix}/src/linux-%{version}/.config
 %{_prefix}/src/linux-%{version}/.depend
 %{_prefix}/src/linux-%{version}/.hdepend
