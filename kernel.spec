@@ -24,7 +24,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.17
-Release:	2.1
+Release:	2.2
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -126,6 +126,7 @@ Patch124:	linux-proc_net_dev-counter-fix.patch
 Patch125:	linux-%{version}-devfs-v199.7.patch
 Patch126:	linux-%{version}-cramfs.patch
 Patch127:	linux-%{version}-sparc64-fix.patch
+Patch128:	linux-%{version}-AXP-fix.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -337,17 +338,15 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %else
 %patch8 -p1
 %endif
-%if%{?_without_grsec:0}%{!?_without_grsec:1}
-%ifarch %{ix86}
-%if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%ifarch {ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %patch911 -p1
 %endif
+%if%{?_without_grsec:0}%{!?_without_grsec:1}
 %patch9 -p1
 %patch906 -p1
-%if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%endif
+%ifarch{ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %patch912 -p1
-%endif
-%endif
 %endif
 
 %patch100 -p0
@@ -465,6 +464,12 @@ echo Fixed SYSCALL errors for SPARC 64 arch.
 %patch127 -p1
 %endif
 
+#fixed AXP compilation
+%ifarch alpha
+echo Fixed SYSCALL errors for DEC Alpha arch.
+%patch128 -p0
+%endif
+
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
@@ -526,13 +531,11 @@ BuildKernel() {
 %if%{?_with_preemptive:1}%{!?_with_preemptive:0}
 	cat %{SOURCE1999} >> arch/$RPM_ARCH/defconfig
 %endif
-%ifarch %{ix86}
 	if [ "$BOOT" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/$RPM_ARCH/defconfig
 	else
 		cat %{SOURCE1666} >> arch/$RPM_ARCH/defconfig
 	fi
-%endif
 %ifarch i386
 	mv -f arch/$RPM_ARCH/defconfig arch/$RPM_ARCH/defconfig.orig
 	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
@@ -557,10 +560,7 @@ BuildKernel() {
 %ifarch sparc
 	sparc32 %{__make} boot
 %else
-%ifarch ppc
-	%{__make}
-%else
-	%{__make} boot
+	%{__make} 
 %endif
 %endif
 %endif
