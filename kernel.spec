@@ -4,6 +4,7 @@
 %define		freeswan_version	snap2001feb24b
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.7
+%define		sym_ncr_version		sym-1.7.3-ncr-3.4.3
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -26,6 +27,8 @@ Source7:	linux-netfilter-patches-20010223.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}-2.4.1.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source10:	http://www.linux-wlan.com/linux-wlan/linux-wlan-ng-%{wlan_version}.tar.gz
+Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/
+%{sym_ncr_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -276,7 +279,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -n linux
+%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -n11 -n linux
 %patch9 -p1
 # kerneli patch
 %patch0 -p1
@@ -348,6 +351,11 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
 %patch15 -p1
 %patch16 -p0
 %patch17 -p0
+
+## install NCR/Symbios controler
+mv %{sym_ncr_version}/*.{c,h} drivers/scsi
+mv %{sym_ncr_version}/{README,ChangeLog}.* Documentation
+rm -rf %{sym_ncr_version}
 
 %build
 BuildKernel() {
@@ -469,6 +477,7 @@ gzip -dc %{SOURCE7} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{SOURCE8} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{SOURCE10} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
 # Pre patch
 #gzip -dc %{PATCH100} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
@@ -549,6 +558,11 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH16}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH17}
+
+## SymBios/NCR drivers install
+mv $RPM_BUILD_ROOT/usr/src/linux-%{version}/%{sym_ncr_version}/*.{c,h} $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi
+mv $RPM_BUILD_ROOT/usr/src/linux-%{version}/%{sym_ncr_version}/{README,ChangeLog}.* $RPM_BUILD_ROOT/usr/src/linux-%{version}/Documentation
+rm -rf $RPM_BUILD_ROOT/usr/src/linux-%{version}/%{sym_ncr_version}
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
