@@ -124,7 +124,7 @@ Patch3:		2.6.0-t7-memleak-lkml.patch
 Patch4:		2.6.0-t7-memleak2-lkml.patch
 #Patch5:	2.6.0-t8-swap-include-lkml.patch
 Patch6:		2.6.0-t8-VLSI-ix86-lkml.patch
-
+Patch7:		linux-2.6-extfs-memleak.patch
 Patch8:		2.6.0-t8-umsdos-lkml.patch
 Patch9:		2.6.0-t9-acpi_osl-lkml.patch
 
@@ -567,7 +567,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch4 -p1
 #patch5 -p1
 %patch6 -p1
-
+%patch7 -p1
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
