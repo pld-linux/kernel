@@ -457,6 +457,7 @@ Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
 Provides:	i2c-devel = 2.6.1
+Provides:	%{name}_netfilter = 1.2.7
 Autoreqprov:	no
 
 %description headers
