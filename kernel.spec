@@ -383,7 +383,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch42 -p1
 %patch43 -p1
 %patch44 -p1
-%patch45 -p0
+#%patch45 -p0
 %patch46 -p1
 %patch47 -p1
 %patch48 -p1
@@ -608,7 +608,7 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH41}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH42}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH43}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH44}
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH45}
+#patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH45}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH46}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH47}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH48}
