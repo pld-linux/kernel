@@ -1,0 +1,288 @@
+--- linux-2.6.8-rc3/arch/i386/Kconfig.orig	2004-08-07 07:52:57.000000000 +0200
++++ linux-2.6.8-rc3/arch/i386/Kconfig	2004-08-07 10:37:33.204220304 +0200
+@@ -342,6 +342,11 @@
+ 	depends on !M386
+ 	default y
+ 
++config X86_CMPXCHG8B
++	bool
++	depends on !M386 && !M486
++	default y
++
+ config X86_XADD
+ 	bool
+ 	depends on !M386
+--- linux-2.6.8-rc3/include/asm-i386/system.h.orig	2004-08-03 23:26:44.000000000 +0200
++++ linux-2.6.8-rc3/include/asm-i386/system.h	2004-08-07 12:34:30.520426088 +0200
+@@ -5,7 +5,7 @@
+ #include <linux/kernel.h>
+ #include <asm/segment.h>
+ #include <asm/cpufeature.h>
+-#include <linux/bitops.h> /* for LOCK_PREFIX */
++#include <asm/atomic.h>
+ 
+ #ifdef __KERNEL__
+ 
+@@ -150,60 +150,6 @@
+ 
+ 
+ /*
+- * The semantics of XCHGCMP8B are a bit strange, this is why
+- * there is a loop and the loading of %%eax and %%edx has to
+- * be inside. This inlines well in most cases, the cached
+- * cost is around ~38 cycles. (in the future we might want
+- * to do an SIMD/3DNOW!/MMX/FPU 64-bit store here, but that
+- * might have an implicit FPU-save as a cost, so it's not
+- * clear which path to go.)
+- *
+- * cmpxchg8b must be used with the lock prefix here to allow
+- * the instruction to be executed atomically, see page 3-102
+- * of the instruction set reference 24319102.pdf. We need
+- * the reader side to see the coherent 64bit value.
+- */
+-static inline void __set_64bit (unsigned long long * ptr,
+-		unsigned int low, unsigned int high)
+-{
+-	__asm__ __volatile__ (
+-		"\n1:\t"
+-		"movl (%0), %%eax\n\t"
+-		"movl 4(%0), %%edx\n\t"
+-		"lock cmpxchg8b (%0)\n\t"
+-		"jnz 1b"
+-		: /* no outputs */
+-		:	"D"(ptr),
+-			"b"(low),
+-			"c"(high)
+-		:	"ax","dx","memory");
+-}
+-
+-static inline void __set_64bit_constant (unsigned long long *ptr,
+-						 unsigned long long value)
+-{
+-	__set_64bit(ptr,(unsigned int)(value), (unsigned int)((value)>>32ULL));
+-}
+-#define ll_low(x)	*(((unsigned int*)&(x))+0)
+-#define ll_high(x)	*(((unsigned int*)&(x))+1)
+-
+-static inline void __set_64bit_var (unsigned long long *ptr,
+-			 unsigned long long value)
+-{
+-	__set_64bit(ptr,ll_low(value), ll_high(value));
+-}
+-
+-#define set_64bit(ptr,value) \
+-(__builtin_constant_p(value) ? \
+- __set_64bit_constant(ptr, value) : \
+- __set_64bit_var(ptr, value) )
+-
+-#define _set_64bit(ptr,value) \
+-(__builtin_constant_p(value) ? \
+- __set_64bit(ptr, (unsigned int)(value), (unsigned int)((value)>>32ULL) ) : \
+- __set_64bit(ptr, ll_low(value), ll_high(value)) )
+-
+-/*
+  * Note: no "lock" prefix even on SMP: xchg always implies lock anyway
+  * Note 2: xchg has side effect, so that attribute volatile is necessary,
+  *	  but generally the primitive is invalid, *ptr is output argument. --ANK
+@@ -233,47 +179,6 @@
+ 	return x;
+ }
+ 
+-/*
+- * Atomic compare and exchange.  Compare OLD with MEM, if identical,
+- * store NEW in MEM.  Return the initial value in MEM.  Success is
+- * indicated by comparing RETURN with OLD.
+- */
+-
+-#ifdef CONFIG_X86_CMPXCHG
+-#define __HAVE_ARCH_CMPXCHG 1
+-#endif
+-
+-static inline unsigned long __cmpxchg(volatile void *ptr, unsigned long old,
+-				      unsigned long new, int size)
+-{
+-	unsigned long prev;
+-	switch (size) {
+-	case 1:
+-		__asm__ __volatile__(LOCK_PREFIX "cmpxchgb %b1,%2"
+-				     : "=a"(prev)
+-				     : "q"(new), "m"(*__xg(ptr)), "0"(old)
+-				     : "memory");
+-		return prev;
+-	case 2:
+-		__asm__ __volatile__(LOCK_PREFIX "cmpxchgw %w1,%2"
+-				     : "=a"(prev)
+-				     : "q"(new), "m"(*__xg(ptr)), "0"(old)
+-				     : "memory");
+-		return prev;
+-	case 4:
+-		__asm__ __volatile__(LOCK_PREFIX "cmpxchgl %1,%2"
+-				     : "=a"(prev)
+-				     : "q"(new), "m"(*__xg(ptr)), "0"(old)
+-				     : "memory");
+-		return prev;
+-	}
+-	return old;
+-}
+-
+-#define cmpxchg(ptr,o,n)\
+-	((__typeof__(*(ptr)))__cmpxchg((ptr),(unsigned long)(o),\
+-					(unsigned long)(n),sizeof(*(ptr))))
+-    
+ #ifdef __KERNEL__
+ struct alt_instr { 
+ 	__u8 *instr; 		/* original instruction */
+--- linux-2.6.8-rc3/include/asm-i386/atomic.h.orig	2004-08-07 13:00:44.000000000 +0200
++++ linux-2.6.8-rc3/include/asm-i386/atomic.h	2004-08-07 13:14:26.621163408 +0200
+@@ -2,6 +2,9 @@
+ #define __ARCH_I386_ATOMIC__
+ 
+ #include <linux/config.h>
++#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT)
++#include <linux/smp_lock.h>
++#endif
+ 
+ /*
+  * Atomic operations that C can't guarantee us.  Useful for
+@@ -191,4 +194,121 @@
+ #define smp_mb__before_atomic_inc()	barrier()
+ #define smp_mb__after_atomic_inc()	barrier()
+ 
++#ifdef CONFIG_X86_CMPXCHG8B
++#define __HAVE_ARCH_CMPXCHG8B 1
++
++/*
++ * CMPXCHG8B isn't supported on Intel processors earlier
++ * than the Pentium processors.
++ *
++ * The semantics of CMPXCHG8B are a bit strange, this is why
++ * there is a loop and the loading of %%eax and %%edx has to
++ * be inside. This inlines well in most cases, the cached
++ * cost is around ~38 cycles. (in the future we might want
++ * to do an SIMD/3DNOW!/MMX/FPU 64-bit store here, but that
++ * might have an implicit FPU-save as a cost, so it's not
++ * clear which path to go.)
++ *
++ * cmpxchg8b must be used with the lock prefix here to allow
++ * the instruction to be executed atomically, see page 3-102
++ * of the instruction set reference 24319102.pdf. We need
++ * the reader side to see the coherent 64bit value.
++ */
++static __inline__ void atomic_set_64bit(unsigned long long * ptr,
++					const unsigned int low,
++					const unsigned int high)
++{
++	__asm__ __volatile__ (
++		"\n1:\t"
++		"movl (%0), %%eax\n\t"
++		"movl 4(%0), %%edx\n\t"
++		"lock cmpxchg8b (%0)\n\t"
++		"jnz 1b"
++		: /* no outputs */
++		:	"D"(ptr),
++			"b"(low),
++			"c"(high)
++		:	"ax","dx","memory");
++}
++
++#define set_64bit(ptr, value) 						\
++	(__builtin_constant_p(value) ? 					\
++	    atomic_set_64bit(ptr,					\
++				(const unsigned int)(value),		\
++				(const unsigned int)(value >> 32ULL)	\
++			    ) :						\
++	    atomic_set_64bit(ptr,					\
++				*(((const unsigned int *)&value) + 0),	\
++				*(((const unsigned int *)&value) + 1)	\
++			    )						\
++	)
++
++#else
++
++static __inline__ void set_64bit(unsigned long long *ptr,
++				const unsigned long long value)
++{
++#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT)
++	lock_kernel();
++#endif
++	*ptr = value;
++#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT)
++	unlock_kernel();
++#endif
++}
++
++#endif
++
++#ifdef CONFIG_X86_CMPXCHG
++#define __HAVE_ARCH_CMPXCHG 1
++
++/*
++ * Atomic compare and exchange.  Compare OLD with MEM, if identical,
++ * store NEW in MEM.  Return the initial value in MEM.  Success is
++ * indicated by comparing RETURN with OLD.
++ *
++ * CMPXCHG isn't supported on Intel processors earlier than
++ * the Intel486 processors.
++ */
++static __inline__ unsigned long atomic_cmpxchg(volatile void *ptr,
++			    			unsigned long old,
++						unsigned long new,
++						int size)
++{
++	unsigned long prev;
++	switch (size) {
++	case 1:
++		__asm__ __volatile__(LOCK "cmpxchgb %b1,%2"
++				     : "=a"(prev)
++				     : "q"(new), "m"(*__xg(ptr)), "0"(old)
++				     : "memory");
++		return prev;
++	case 2:
++		__asm__ __volatile__(LOCK "cmpxchgw %w1,%2"
++				     : "=a"(prev)
++				     : "q"(new), "m"(*__xg(ptr)), "0"(old)
++				     : "memory");
++		return prev;
++	case 4:
++		__asm__ __volatile__(LOCK "cmpxchgl %1,%2"
++				     : "=a"(prev)
++				     : "q"(new), "m"(*__xg(ptr)), "0"(old)
++				     : "memory");
++		return prev;
++	}
++	return old;
++}
++
++#define cmpxchg(ptr, o, n)						\
++	((__typeof__(*(ptr)))atomic_cmpxchg((ptr),			\
++					    (unsigned long)(o),		\
++					    (unsigned long)(n),		\
++					    sizeof(*(ptr))))
++
++#else 
++
++/* Not implemented. */
++
++#endif
++
+ #endif
+--- linux-2.6.8-rc3/drivers/char/drm/Kconfig.orig	2004-08-03 23:28:30.000000000 +0200
++++ linux-2.6.8-rc3/drivers/char/drm/Kconfig	2004-08-07 12:49:55.413820920 +0200
+@@ -49,7 +49,7 @@
+ 
+ config DRM_I810
+ 	tristate "Intel I810"
+-	depends on DRM && AGP && AGP_INTEL
++	depends on DRM && AGP && AGP_INTEL && X86_CMPXCHG
+ 	help
+ 	  Choose this option if you have an Intel I810 graphics card.  If M is
+ 	  selected, the module will be called i810.  AGP support is required
+@@ -57,7 +57,7 @@
+ 
+ config DRM_I830
+ 	tristate "Intel 830M, 845G, 852GM, 855GM, 865G"
+-	depends on DRM && AGP && AGP_INTEL
++	depends on DRM && AGP && AGP_INTEL && X86_CMPXCHG
+ 	help
+ 	  Choose this option if you have a system that has Intel 830M, 845G,
+ 	  852GM, 855GM or 865G integrated graphics.  If M is selected, the
