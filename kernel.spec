@@ -143,6 +143,8 @@ Patch201:	linux-2.4.20-evms-1.9.0.patch.bz2
 Patch205:	linux-2.4.20-promise.patch.bz2
 # from http://www.promise.com/support/file/driver/st6000src_1.30_01_0326.tgz
 Patch206:	linux-2.4.20-promise-st6000.patch.bz2
+
+#from http://prdownloads.sourceforge.net/i810fb/linux-2.4.20-i810fb.diff.bz2
 # from MDK kernel DV08__i810fb.patch
 Patch210:	linux-2.4.20-I810FB.patch.bz2
 Patch211:	linux-2.4.20-I810FB_lock_page_fix.patch
@@ -169,9 +171,9 @@ Patch270:	dc395-tab.patch
 # and/or are on bcond and/or are ifarch
 
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
-#Patch800:	grsecurity-%{grsec_version}-%{version}.patch.bz2
-#Patch801:	PPC-grsecurity-pgtable.h.patch
-#Patch802:	linux-2.4.20-grsecurity-%{grsec_version}-kmem.patch
+Patch800:	grsecurity-%{grsec_version}-%{version}.patch
+Patch801:	PPC-grsecurity-pgtable.h.patch
+Patch802:	linux-2.4.20-grsecurity-%{grsec_version}-kmem.patch
 
 # Win4Lin
 #Patch900:	linux-2.4.20-Win4Lin.PLD.patch.bz2
@@ -594,7 +596,6 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch205 -p1
 %patch206 -p1
 %patch210 -p1
-%patch211 -p1
 %patch215 -p1
 %patch216 -p1
 %patch220 -p1
@@ -709,10 +710,10 @@ cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 # The following go last as they touch a lot of code
 # and/or are on bcond and/or are ifarch
 
-#%{!?_without_grsec:echo GRSecurity}
-#%{!?_without_grsec:%patch800 -p1}
-#%{!?_without_grsec:%patch801 -p1}
-#%{!?_without_grsec:%patch802 -p1}
+%{!?_without_grsec:echo GRSecurity}
+%{!?_without_grsec:%patch800 -p1}
+%{!?_without_grsec:%patch801 -p1}
+%{!?_without_grsec:%patch802 -p1}
 
 #%ifarch %{ix86}
 #echo Win4Lin patch ...
