@@ -281,7 +281,7 @@ Patch3012:	linux-2.4.22-gcc-ext3.patch
 
 # Security patches/fixes
 
-Patch4000:	linux-2.4.22-ow1.patch
+Patch4000:	linux-2.4.22-ow1.diff
 Patch4001:	linux-grsecurity-minimal.patch
 
 Patch5000:	linux-2.4.22-security.patch
