@@ -39,6 +39,9 @@ Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
 Source100:	http://download.sourceforge.net/xmlprocfs/linux-2.4-xmlprocfs-0.1.tar.gz
 
+#manual update 
+Patch0:		patch-int-2.4.0.3.gz
+
 Patch101:	xmlprocfs-fix.patch
 
 ExclusiveOS:	Linux
@@ -204,6 +207,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %prep
 %setup -q -a4 -a5 -a6 -a7 -a8 -a10 -a11 -a100 -n linux
 
+#kerneli patch
+%patch0 -p1
+
 # Remove -g from drivers/atm/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
@@ -228,6 +234,7 @@ patch -p1 <xmlprocfs.patch
 
 #LIDS patch
 patch -p1 <lids-1.0.4-2.4.0/lids-1.0.4-2.4.0.patch
+
 
 %build
 BuildKernel() {
