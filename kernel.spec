@@ -971,6 +971,10 @@ cat %{SOURCE1671} >> .config
 cat %{SOURCE1672} >> .config
 cat %{SOURCE1673} >> .config
 
+%ifarch %{ix86}
+cat %{SOURCE2000} >> .config
+%endif
+
 %ifarch sparc
 sparc32 %{__make} oldconfig
 %else
@@ -1020,6 +1024,10 @@ cat %{SOURCE1670} >> .config
 cat %{SOURCE1671} >> .config
 cat %{SOURCE1672} >> .config
 cat %{SOURCE1673} >> .config
+
+%ifarch %{ix86}
+cat %{SOURCE2000} >> .config
+%endif
 
 %ifarch sparc
 sparc32 %{__make} oldconfig
