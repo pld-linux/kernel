@@ -19,6 +19,8 @@
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	bootsplash	# build with bootsplash
 
+%bcond_with	mosix		# build with openMosix support
+
 %{?debug:%define with_verbose 1}
 
 %ifarch sparc
@@ -48,7 +50,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.21
+%define		_rel		4%{with mosix:m}
 %define		_cset		20040707_0722
 %define		_apply_cset	1
 
@@ -78,7 +80,6 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
 # Source0-md5:	a74671ea68b0e3c609e8785ed8497c14
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
-Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
 # Source3-md5:	56299a33297f65997d9787a87f76af66
 # http://lkml.org/lkml/2004/6/2/228
@@ -100,9 +101,9 @@ Source80:	%{name}-netfilter.config
 
 Source90:	%{name}-grsec.config
 
+Source100:	%{name}-openMosix.config
+
 Patch0:		2.6.0-ksyms-add.patch
-Patch1:		%{name}-isofs-128GB.patch
-Patch2:		linux-2.6-isofs-4G.patch
 
 # from http://dl.sf.net/sourceforge/squashfs/
 Patch4:		squashfs2.0-patch
@@ -130,7 +131,7 @@ Patch24:	%{name}-nls_default.patch
 Patch26:	bootsplash-3.1.4-2.6.7.patch
 
 Patch28:	2.6.0-t11-AIC_and_db4-lkml.patch
-
+Patch29:	2.6.7-x86-sys_sigaltstack-lkml.patch
 Patch30:	linux-tdfxfb-fillrect.patch
 Patch31:	linux-fbcon-margins.patch
 Patch32:	linux-tdfxfb-interlace+double.patch
@@ -147,13 +148,13 @@ Patch40:	2.6.x-PD6729-lkml.patch
 Patch42:	2.6.x-ppp_mppe.patch
 
 Patch44:	2.6.2-Initio9100U-Kconfig.patch
+Patch45:	2.6.3-sparc32-fix.patch
 
 # netfilter
 Patch46:	2.6.7-pom-ng-%{_netfilter_snap}.patch
 # http://www.barbara.eu.org/~quaker/ipt_account/
 Patch47:	2.6.6-ipt_account.patch
-
-Patch48:	2.6.3-sparc32-fix.patch
+Patch48:	2.6.7-ipt_layer7.patch
 
 # http://www.tahoe.pl/drivers/tahoe9xx-2.6.2.patch
 #Patch50:	tahoe9xx-2.6.2.patch
@@ -190,8 +191,8 @@ Patch78:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2
 
 Patch80:	http://www.elektronikschule.de/~genannt/kernel-patche/lirc/lirc-2.6.5-20040404
 
-# from http://www.smcc.demon.nl/webcam/pwcx-9.0-beta-2.tar.gz
-Patch82:	2.6.7-pwcx.patch
+# from http://www.smcc.demon.nl/webcam/release.html
+Patch82:        2.6.7-pwc-9.0.1.patch
 
 Patch84:	2.6.6-serial-fifo-lkml.patch
 
@@ -226,7 +227,6 @@ Patch200:	linux-cluster-cman.patch
 Patch201:	linux-cluster-dlm.patch
 Patch202:	linux-cluster-gfs.patch
 Patch203:	linux-cluster-gnbd.patch
-Patch204:	linux-2.6-cluster-morearchs.patch
 
 # http://lkml.org/lkml/2004/6/2/233
 Patch211:	http://people.redhat.com/mingo/exec-shield/exec-shield-nx-2.6.7-A0
@@ -234,16 +234,20 @@ Patch212:	exec-shield-make-peace-with-grsecurity.patch
 
 # hotfixes
 Patch300:	2.6.7-ppc-asm-defs.patch
-Patch301:	2.6.7-ppc-strncasecmp.patch
+
 Patch302:	2.6.7-ppc-cciss-div.patch
-Patch303:	2.6.7-ppc-saa7146-workaround.patch
+Patch303:	2.6.7-lkml-saa7146-memory-variable.patch
 Patch304:	2.6.7-ppc-ipr-div.patch
 Patch305:	2.6.7-ppc-proxydict-workaround.patch
 
 Patch310:	linux-2.6-sparc-ksyms.patch
-Patch311:	linux-2.6-gfs-noswitch64.patch
+
+Patch312:	linux-2.6-ppc-ksyms.patch
 
 Patch400:	2.6.7-kill-warnings.patch
+
+# openMosix support
+Patch420:	openMosix-2.6.7-PLD.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -587,16 +591,12 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %prep
 %setup -q -n linux-%{version}%{_rc}
-# -a2
 
 %patch0 -p1
 
 %if "%{_apply_cset}" != "0"
 zcat %{SOURCE3} | patch -p1 -s
 %endif
-
-#patch1 -p1
-#patch2 -p1
 
 %patch4 -p1
 
@@ -626,7 +626,7 @@ echo "Not fixed !!"
 %endif
 
 %patch28 -p1
-
+%patch29 -p1
 %patch30 -p1
 %patch31 -p1
 %patch32 -p1
@@ -643,11 +643,11 @@ echo "Not fixed !!"
 %patch42 -p1
 
 %patch44 -p1
+%patch45 -p1
 
 # netfilter
 %patch46 -p1
-#patch47 -p1
-
+%patch47 -p1
 %patch48 -p1
 
 %patch50 -p1
@@ -686,18 +686,8 @@ echo "Not fixed !!"
 
 %patch80 -p1
 
-# Philips USB drivers.
-#patch82 -p1
-# selected library
-#ifarch %{ix86}
-#cp drivers/usb/media/libpwcx.a_ix86 drivers/usb/media/libpwcx.a_
-#endif
-#ifarch powerpc
-#cp drivers/usb/media/libpwcx.a_powerpc drivers/usb/media/libpwcx.a_
-#endif
-#ifarch ppc
-#cp drivers/usb/media/libpwcx.a_ppc drivers/usb/media/libpwcx.a_
-#endif
+# PWC 9.0.1
+%patch82 -p1
 
 %patch84 -p1
 
@@ -740,24 +730,24 @@ patch -p1 -s < exec-shield.patch
 %patch201 -p1
 %patch202 -p1
 %patch203 -p1
-%patch204 -p1
 
 # hotfixes
 %patch300 -p1
-%patch301 -p1
+
 %patch302 -p1
 %patch303 -p1
 %patch304 -p1
 %patch305 -p1
 
 %patch310 -p1
-%ifarch ppc sparc
-%patch311 -p1
-%endif
+
+%patch312 -p1
 
 %patch400 -p1
 
 %patch114 -p1
+
+%patch420 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -837,6 +827,15 @@ BuildConfig (){
 	sed -i 's:# CONFIG_PREEMPT is not set:CONFIG_PREEMPT=y:' arch/%{_target_base_arch}/defconfig
 %endif
 
+%ifarch %{ix86} 
+    %if %{with_mosix}
+	cat %{SOURCE100} >> arch/%{_target_base_arch}/defconfig
+	%if %{with preemptive}
+		sed -i 's:CONFIG_PREEMPT=y:# CONFIG_PREEMPT is not set:' arch/%{_target_base_arch}/defconfig
+	%endif
+    %endif
+%endif
+	
 #	netfilter	
 	cat %{SOURCE80} >> arch/%{_target_base_arch}/defconfig
 #	grsecurity
