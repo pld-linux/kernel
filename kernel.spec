@@ -86,7 +86,8 @@ Patch10:	linux-grsecurity-%{grsec_version}.patch
 # Linux Compressed cache
 Patch11:	http://prdownloads.sourceforge.net/linuxcompressed/patch-comp-cache-2.4.6-0.17.bz2
 # EXT3
-Patch12:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.4-247.gz
+# http://www.uow.edu.au/~andrewm/linux/ext3/
+Patch12:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.5-247.gz
 
 # Assorted bugfixes
 
