@@ -67,7 +67,8 @@ Patch5:		br2684-against2.4.5.diff
 # XFS patches
 #Patch6:		ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4.4-core-xfs-1.0.patch.gz
 #Patch7:		ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4-xfs-1.0.patch.gz
-#Patch8:		linux-2.4-xfs-nfsdops.patch
+Patch7:		linux-2.4.5-xfs-20010528.patch.gz
+Patch8:		linux-2.4-xfs-nfsdops.patch
 # Compressed iso9660 filesystem
 Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/filemap-2.4.4-1.diff.gz
 Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-2.4.5-pre1-8.diff.gz
@@ -97,6 +98,8 @@ Patch112:	linux-2.4.2-pcnet-parms.patch
 Patch113:	%{name}-reiser.patch
 Patch114:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.5-p1.05132001.patch.gz
 Patch115:	http://www.eax.com/patches/linux-245-ov511-diff
+Patch116:	linux-2.4.5-umount.patch
+Patch117:	linux-reiserfs-rename.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -328,14 +331,14 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
+%patch100 -p1
 #%patch6 -p1
-#%patch7 -p1
-#%patch8 -p1
+%patch7 -p1
+%patch8 -p1
 %patch9 -p1
 %patch10 -p1
 %patch12 -p1
 
-%patch100 -p1
 %patch101 -p0
 %patch102 -p0
 %patch103 -p1
@@ -351,6 +354,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch113 -p4
 #%patch114 -p1
 %patch115 -p1
+%patch116 -p1
+%patch117 -p1
 
 %patch900 -p0 
 %patch901 -p0
