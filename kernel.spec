@@ -99,7 +99,6 @@ Patch72:	2.6.0-t9-NLS-module-lkml.patch
 Patch74:	2.6.0-t9-acpi_osl-lkml.patch
 Patch78:	2.6.0-test9-nforce-ideata133.patch
 Patch80:	2.6.0-test9-promise20378.patch
-Patch82:	2.6.0-test9-r8169-8110S.patch
 Patch84:	2.6.0-test9-wintv-d.patch
 
 ExclusiveOS:	Linux
@@ -431,7 +430,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch74 -p1
 %patch78 -p1
 %patch80 -p1
-%patch82 -p1
 %patch84 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
