@@ -467,7 +467,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch4 -p1
 %patch5 -p1
 %patch904 -p1
-%patch6 -p1
+%{!?_without_grsec:%patch6 -p1}
 %ifarch ppc
 %patch907 -p1
 %endif
@@ -509,7 +509,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch114 -p1
 %patch115 -p0
 %patch116 -p1
-%patch117 -p1
+%{!?_without_grsec:%patch117 -p1}
 %patch118 -p1
 %patch119 -p0
 %patch120 -p0
@@ -522,7 +522,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch129 -p0
 %patch130 -p0
 %patch131 -p0
-%patch132 -p0
+%{!?_without_grsec:%patch132 -p0}
 %patch133 -p1
 %patch134 -p1
 %patch135 -p1
@@ -561,7 +561,7 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 %endif
 
 %patch32 -p1
-%patch910 -p1
+%{!?_without_grsec:%patch910 -p1}
 
 # hostap
 echo Installing Host AP support
@@ -1178,7 +1178,7 @@ fi
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
-%{_prefix}/src/linux-%{version}/grsecurity
+%{!?_without_grsec:%{_prefix}/src/linux-%{version}/grsecurity}
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
 %{_prefix}/src/linux-%{version}/kdb
