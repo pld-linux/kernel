@@ -578,6 +578,8 @@ ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
 %{__make} clean
 
 %clean
+KERNEL_BUILD_DIR=`pwd`
+KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
 rm -rf $RPM_BUILD_ROOT
 rm -rf $KERNEL_INSTALL_DIR
 
