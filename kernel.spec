@@ -728,6 +728,14 @@ BuildConfig (){
 %endif
 %{?with_preemptive:echo "CONFIG_PREEMPT=y" >> arch/%{_target_base_arch}/defconfig}
 
+%ifarch pentium3 pentium4 athlon
+# kernel-i386-smp.config contains 64G support by default.
+%if %{with up}
+	sed -i "s:CONFIG_HIGHMEM4G=y:# CONFIG_HIGHMEM4G is not set:" arch/%{_target_base_arch}/defconfig
+	sed -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" arch/%{_target_base_arch}/defconfig
+%endif
+%endif
+
 %ifarch i386 i486 i586
 	sed -i 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
 		arch/%{_target_base_arch}/defconfig
