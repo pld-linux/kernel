@@ -7,7 +7,7 @@
 Summary:	The Linux kernel (the core of the Linux operating system)
 Name:		kernel
 Version:	2.6.7
-Release:	0.1
+Release:	1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-2.6.6.tar.bz2
@@ -24,6 +24,8 @@ Patch7:		2.6.0-t8-swap-include-lkml.patch
 Patch8:		2.6.0-t9-acpi_osl-lkml.patch
 Patch9:		2.6.6-squashfs2.0.patch
 Patch10:	2.6.6-pramfs.patch
+Patch11:	2.6.6-kfree-calls-cleanup-lkml.patch
+
 Patch20:	2.6.4-esfq.patch
 Patch21:	2.6.4-imq.patch
 Patch22:	2.6.4-imq-nat.patch
@@ -129,6 +131,7 @@ hardware.
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
+%patch11 -p1
 
 %patch20 -p1
 %patch21 -p1
@@ -153,9 +156,7 @@ if [ -r "config-nondist" ]; then
     make include/linux/autoconf.h
     mv include/linux/autoconf{,-nondist}.h
     make mrproper
-    cd include
-    ln -sf asm-i386 asm
-    cd ..
+    ln -sf asm-i386 include/asm
 else
     echo "regen-autoconf.sh: config-nondist - file not found!"
 fi
