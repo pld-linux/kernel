@@ -13,8 +13,8 @@
 
 
 %define		_rel		1
-%define		_test_ver	10
-%define		_cset		20031126_0007
+%define		_test_ver	11
+%define		_cset		0
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -35,7 +35,7 @@ Epoch:		1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-test%{_test_ver}.tar.bz2
-# Source0-md5:	61828549d38189bdece85f5107a507ca
+# Source0-md5:	06ba5a7eeb924036633a7b33689b2c4f
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
