@@ -1,0 +1,200 @@
+diff -ruN linux-2.6.9-rc1/kernel/power/Kconfig software-suspend-linux-2.6.9-rc1-rev3/kernel/power/Kconfig
+--- linux-2.6.9-rc1/kernel/power/Kconfig	2004-05-27 23:16:45.000000000 +1000
++++ software-suspend-linux-2.6.9-rc1-rev3/kernel/power/Kconfig	2004-09-09 19:36:24.000000000 +1000
+@@ -22,14 +22,16 @@
+ 	bool "Software Suspend (EXPERIMENTAL)"
+ 	depends on EXPERIMENTAL && PM && SWAP
+ 	---help---
+-	  Enable the possibilty of suspendig machine. It doesn't need APM.
++	  Pavel's original version.
++
++	  Enable the possibilty of suspending your machine. It doesn't need APM.
+ 	  You may suspend your machine by 'swsusp' or 'shutdown -z <time>' 
+ 	  (patch for sysvinit needed). 
+ 
+-	  It creates an image which is saved in your active swaps. By the next
+-	  booting the, pass 'resume=/dev/swappartition' and kernel will 
+-	  detect the saved image, restore the memory from
+-	  it and then it continues to run as before you've suspended.
++	  It creates an image which is saved in your active swaps. At the next
++	  boot, pass 'resume=/dev/swappartition' and the kernel will 
++	  detect the saved image, restore the memory from disk
++	  and then continue to run as before you suspended.
+ 	  If you don't want the previous state to continue use the 'noresume'
+ 	  kernel option. However note that your partitions will be fsck'd and
+ 	  you must re-mkswap your swap partitions. It does not work with swap
+@@ -91,3 +93,144 @@
+ 	  suspended image to. It will simply pick the first available swap 
+ 	  device.
+ 
++menu "Software Suspend 2"
++
++config SOFTWARE_SUSPEND2_CORE
++	tristate "Software Suspend 2"
++	depends on EXPERIMENTAL && PM
++	select SOFTWARE_SUSPEND2
++	---help---
++	  Software Suspend 2 is the 'new and improved' suspend support. You
++	  can now build it as modules, but be aware that this requires
++	  initrd support (the modules you use in saving the image have to
++	  be loaded in order for you to be able to resume!)
++	  
++	  See the Software Suspend home page (softwaresuspend.berlios.de)
++	  for FAQs, HOWTOs and other documentation.
++
++	config SOFTWARE_SUSPEND2
++	bool
++
++	if SOFTWARE_SUSPEND2
++		config SOFTWARE_SUSPEND2_WRITER
++		bool
++
++		comment 'Image Storage (you need at least one writer)'
++		depends on SOFTWARE_SUSPEND2_CORE
++	
++		config SOFTWARE_SUSPEND_SWAPWRITER
++			tristate '   Swap Writer'
++			depends on SWAP && SOFTWARE_SUSPEND2_CORE
++			select SOFTWARE_SUSPEND2_WRITER
++			---help---
++			  This option enabled support for storing an image in your
++			  swap space. Swap partitions are supported. Swap file
++			  support is currently broken (16 April 2004).
++
++		comment 'Page Transformers'
++			depends on SOFTWARE_SUSPEND2_WRITER
++
++		if SOFTWARE_SUSPEND2_WRITER
++			config SOFTWARE_SUSPEND_LZF_COMPRESSION
++				depends on SOFTWARE_SUSPEND2_CORE
++				tristate '   LZF image compression'
++				default Y
++				---help---
++				  This option enables compression of pages stored during suspending
++				  to disk, using LZF compression. LZF compression is fast and
++				  still achieves a good compression ratio.
++	
++				  You probably want to say 'Y'.
++
++			config SOFTWARE_SUSPEND_GZIP_COMPRESSION
++				tristate '   GZIP image Compression'
++				depends on SOFTWARE_SUSPEND2_CORE
++				select ZLIB_DEFLATE
++				select ZLIB_INFLATE
++				---help---
++				  This option enables compression of pages stored during Software Suspend
++				  process. Pages are compressed using the zlib library, with a default
++				  setting (in code) of fastest compression. If your swap device is
++				  significantly slower than your CPU, you may improve the speed of a
++				  suspend/resume cycle by enabling this option.
++			  		
++				  You may also benefit from it if your swap space is small. Note, however,
++				  that since we can't know how big the image will be until we actually
++				  compress it, the algorithm assumes no compression will be achieved and
++				  ensures that your data will fit on disk even if that happens. This means
++				  that more memory will be eaten than probably needs to be. The best
++				  solution to this issue is to increase your swapspace size. We may
++				  implement support for a swap file in future.
++					
++				  This option should be off for most people.
++
++			comment 'User Interface Options'
++
++			config SOFTWARE_SUSPEND_BOOTSPLASH
++				tristate '  Bootsplash support'
++				depends on SOFTWARE_SUSPEND2_CORE && BOOTSPLASH
++				---help---
++				  This option enables support for Bootsplash (bootsplash.org). Suspend
++				  can set the progress bar value and switch between silent and verbose
++				  modes. (Silent mode is used when the debug level is 0 or 1). 
++				
++			config SOFTWARE_SUSPEND_TEXT_MODE
++				tristate '  Text mode console support'
++				depends on SOFTWARE_SUSPEND2_CORE && VT
++				---help---
++				  This option enables support for a text mode 'nice display'. If you don't
++				  have/want bootsplash support, you probably want this.
++				
++			comment 'General Options'
++
++			config SOFTWARE_SUSPEND_RELAXED_PROC
++				bool '   Relaxed /proc/software_suspend permissions'
++				---help---
++				  This option makes /proc/software_suspend entries world-accessible, rather
++				  than root-only. It is intended for systems where security is not a concern.
++				
++				  Networked machines, and particularly those where users are granted
++				  shell access, should say 'N' here!
++
++			config SOFTWARE_SUSPEND_DEFAULT_RESUME2
++				string '   Default resume device name'
++				---help---
++				  You normally need to add a resume2= parameter to your lilo.conf or
++				  equivalent. With this option properly set, the kernel has a value
++				  to default. No damage will be done if the value is invalid.
++
++			config SOFTWARE_SUSPEND_KEEP_IMAGE
++				bool '   Allow Keep Image Mode'
++				---help---
++				  This option allows you to keep and image and reuse it. It is intended
++				  __ONLY__ for use with systems where all filesystems are mounted read-
++				  only (kiosks, for example). To use it, compile this option in and boot
++				  normally. Set the KEEP_IMAGE flag in /proc/software_suspend and suspend.
++				  When you resume, the image will not be removed. You will be unable to turn
++				  off swap partitions (assuming you are using the swap writer), but future
++				  suspends simply do a power-down. The image can be updated using the
++				  kernel command line parameter suspend_act= to turn off the keep image
++				  bit. Keep image mode is a little less user friendly on purpose - it
++				  should not be used without thought!
++
++			comment 'Debugging'
++
++			config SOFTWARE_SUSPEND_DEBUG
++				bool '   Compile in debugging output'
++				---help---
++				  This option enables the inclusion of debugging info in the software
++				  suspend code. Turning it off will reduce the kernel size but make
++				  debugging suspend & resume issues harder to do.
++			
++				  For normal usage, this option can be turned off.
++
++		endif
++
++	endif
++	
++	
++endmenu
++
++comment 'Suspend2 depends on EXPERIMENTAL and PM support.'
++	depends on !EXPERIMENTAL || !PM
++
+diff -ruN linux-2.6.9-rc1/kernel/power/Makefile software-suspend-linux-2.6.9-rc1-rev3/kernel/power/Makefile
+--- linux-2.6.9-rc1/kernel/power/Makefile	2004-09-07 21:59:00.000000000 +1000
++++ software-suspend-linux-2.6.9-rc1-rev3/kernel/power/Makefile	2004-09-09 19:36:24.000000000 +1000
+@@ -2,7 +2,26 @@
+ swsusp-smp-$(CONFIG_SMP)	+= smp.o
+ 
+ obj-y				:= main.o process.o console.o pm.o
++
++ifeq ($(CONFIG_SOFTWARE_SUSPEND2),y)
++obj-y	+= suspend_builtin.o proc.o
++endif
++
++suspend_core-objs := io.o memory_pool.o pagedir.o prepare_image.o \
++		range.o suspend.o plugins.o suspend_ui.o utility.o
++
++obj-$(CONFIG_SOFTWARE_SUSPEND2_CORE)		+= suspend_core.o
++obj-$(CONFIG_SOFTWARE_SUSPEND_BOOTSPLASH)	+= suspend_bootsplash.o
++obj-$(CONFIG_SOFTWARE_SUSPEND_TEXT_MODE)	+= suspend_text.o
++obj-$(CONFIG_SOFTWARE_SUSPEND_LZF_COMPRESSION)	+= suspend_lzf.o
++obj-$(CONFIG_SOFTWARE_SUSPEND_GZIP_COMPRESSION)	+= suspend_gzip.o
++obj-$(CONFIG_SOFTWARE_SUSPEND_SWAPWRITER)	+= suspend_block_io.o suspend_swap.o
++
+ obj-$(CONFIG_SOFTWARE_SUSPEND)	+= swsusp.o $(swsusp-smp-y)
+ obj-$(CONFIG_PM_DISK)		+= disk.o pmdisk.o
+ 
+ obj-$(CONFIG_MAGIC_SYSRQ)	+= poweroff.o
++
++*.c:
++	@(echo -e "\n\n *** It looks like you have not applied the core Software Suspend patch. *** \n\n"; \
++	  exit 1)

@@ -1,0 +1,34 @@
+diff -ruN linux-2.6.9-rc1/arch/i386/kernel/smp.c software-suspend-linux-2.6.9-rc1-rev3/arch/i386/kernel/smp.c
+--- linux-2.6.9-rc1/arch/i386/kernel/smp.c	2004-09-07 21:58:22.000000000 +1000
++++ software-suspend-linux-2.6.9-rc1-rev3/arch/i386/kernel/smp.c	2004-09-09 19:36:24.000000000 +1000
+@@ -453,7 +453,7 @@
+ 	preempt_enable();
+ }
+ 
+-static void do_flush_tlb_all(void* info)
++void do_flush_tlb_all(void* info)
+ {
+ 	unsigned long cpu = smp_processor_id();
+ 
+diff -ruN linux-2.6.9-rc1/include/asm-i386/tlbflush.h software-suspend-linux-2.6.9-rc1-rev3/include/asm-i386/tlbflush.h
+--- linux-2.6.9-rc1/include/asm-i386/tlbflush.h	2004-09-07 21:58:58.000000000 +1000
++++ software-suspend-linux-2.6.9-rc1-rev3/include/asm-i386/tlbflush.h	2004-09-09 19:36:24.000000000 +1000
+@@ -82,6 +82,7 @@
+ #define flush_tlb() __flush_tlb()
+ #define flush_tlb_all() __flush_tlb_all()
+ #define local_flush_tlb() __flush_tlb()
++#define local_flush_tlb_all() __flush_tlb_all();
+ 
+ static inline void flush_tlb_mm(struct mm_struct *mm)
+ {
+@@ -114,6 +115,10 @@
+ extern void flush_tlb_current_task(void);
+ extern void flush_tlb_mm(struct mm_struct *);
+ extern void flush_tlb_page(struct vm_area_struct *, unsigned long);
++extern void do_flush_tlb_all(void * info);
++
++#define local_flush_tlb_all() \
++	do_flush_tlb_all(NULL);
+ 
+ #define flush_tlb()	flush_tlb_current_task()
+ 

@@ -1,0 +1,745 @@
+diff -ruN 824-builtin-old/kernel/power/proc.c 824-builtin-new/kernel/power/proc.c
+--- 824-builtin-old/kernel/power/proc.c	1970-01-01 10:00:00.000000000 +1000
++++ 824-builtin-new/kernel/power/proc.c	2004-09-27 21:03:30.864548080 +1000
+@@ -0,0 +1,332 @@
++/*
++ * /kernel/power/proc.c
++ *
++ * Copyright (C) 2002-2003 Nigel Cunningham <ncunningham@linuxmail.org>
++ *
++ * This file is released under the GPLv2.
++ *
++ * This file contains support for proc entries for tuning Software Suspend.
++ *
++ * We have a generic handler that deals with the most common cases, and
++ * hooks for special handlers to use.
++ *
++ * Versions:
++ * 1: /proc/sys/kernel/suspend the only tuning interface
++ * 2: Initial version of this file
++ * 3: Removed kernel debugger parameter.
++ *    Added checkpage parameter (for checking checksum of a page over time).
++ * 4: Added entry for maximum granularity in splash screen progress bar.
++ *    (Progress bar is slow, but the right setting will vary with disk &
++ *    processor speed and the user's tastes).
++ * 5: Added enable_escape to control ability to cancel aborting by pressing
++ *    ESC key.
++ * 6: Removed checksumming and checkpage parameter. Made all debugging proc
++ *    entries dependant upon debugging being compiled in.
++ *    Meaning of some flags also changed in this version.
++ * 7: Added header_locations entry to simplify getting the resume= parameter for
++ *    swapfiles easy and swapfile entry for automatically doing swapon/off from
++ *    swapfiles as well as partitions.
++ * 8: Added option for marking process pages as pageset 2 (processes_pageset2).
++ * 9: Added option for keep image mode.
++ *    Enumeration patch from Michael Frank applied.
++ * 10: Various corrections to when options are disabled/enabled;
++ *     Added option for specifying expected compression.
++ * 11: Added option for freezer testing. Debug only.
++ * 12: Removed test entries no_async_[read|write], processes_pageset2 and
++ *     NoPageset2.
++ * 13: Make default_console_level available when debugging disabled, but limited
++ *     to 0 or 1.
++ * 14: Rewrite to allow for dynamic registration of proc entries and smooth the
++ *     transition to kobjects in 2.6.
++ * 15: Add setting resume2 parameter without rebooting (still need to run lilo
++ *     though!). Add support for generic string handling and switch resume2 to use
++ *     it.
++ */
++
++#define SUSPEND_PROC_C
++
++static int suspend_proc_version = 15;
++static int suspend_proc_initialised = 0;
++
++#include <linux/suspend.h>
++#include <linux/module.h>
++#include <linux/proc_fs.h>
++#include <asm/uaccess.h>
++
++#include "suspend.h"
++#include "proc.h"
++
++static struct list_head suspend_proc_entries;
++static struct proc_dir_entry *suspend_dir;
++
++extern char resume2_file[256];	/* For resume= kernel option */
++
++/*
++ * proc_software_suspend_pending
++ *
++ * This routine initiates a suspend cycle when /proc/suspend/activity is
++ * written to. The value written is ignored.
++ */
++
++static int proc_software_suspend_pending(struct file *file, const char *buffer,
++        unsigned long count, void *data)
++{
++	software_suspend_pending();
++	return count;
++}
++
++/*
++ * generic_read_proc
++ *
++ * Generic handling for reading the contents of bits, integers,
++ * unsigned longs and strings.
++ */
++static int generic_read_proc(char * page, char ** start, off_t off, int count,
++		int *eof, void *data)
++{
++	int len = 0;
++	struct suspend_proc_data * proc_data = (struct suspend_proc_data *) data;
++
++	switch (proc_data->type) {
++		case SUSPEND_PROC_DATA_CUSTOM:
++			printk("Error! /proc/suspend/%s marked as having custom"
++				" routines, but the generic read routine has"
++				" been invoked.\n",
++				proc_data->filename);
++			break;
++		case SUSPEND_PROC_DATA_BIT:
++			len = sprintf(page, "%d\n", 
++				-test_bit(proc_data->data.bit.bit,
++					proc_data->data.bit.bit_vector));
++			break;
++		case SUSPEND_PROC_DATA_INTEGER:
++			{
++				int * variable = proc_data->data.integer.variable;
++				len = sprintf(page, "%d\n", *variable);
++				break;
++			}
++		case SUSPEND_PROC_DATA_UL:
++			{
++				long * variable = proc_data->data.ul.variable;
++				len = sprintf(page, "%lu\n", *variable);
++				break;
++			}
++		case SUSPEND_PROC_DATA_STRING:
++			{
++				char * variable = proc_data->data.string.variable;
++				len = sprintf(page, "%s\n", variable);
++				break;
++			}
++	}
++	*eof = 1;
++	return len;
++}
++/*
++ * generic_write_proc
++ *
++ * Generic routine for handling writing to files representing
++ * bits, integers and unsigned longs.
++ */
++
++static int generic_write_proc(struct file *file, const char * buffer,
++		unsigned long count, void * data)
++{
++	struct suspend_proc_data * proc_data = (struct suspend_proc_data *) data;
++	char * my_buf = (char *) get_zeroed_page(GFP_ATOMIC);
++	int result = count;
++
++	if (!my_buf)
++		return -ENOMEM;
++
++	if (count > PAGE_SIZE)
++		count = PAGE_SIZE;
++
++	if (copy_from_user(my_buf, buffer, count))
++		return -EFAULT;
++	
++	my_buf[count] = 0;
++
++	switch (proc_data->type) {
++		case SUSPEND_PROC_DATA_CUSTOM:
++			printk("Error! /proc/suspend/%s marked as having custom"
++				" routines, but the generic write routine has"
++				" been invoked.\n",
++				proc_data->filename);
++			break;
++		case SUSPEND_PROC_DATA_BIT:
++			{
++			int value = simple_strtoul(my_buf, NULL, 0);
++			if (value)
++				set_bit(proc_data->data.bit.bit, 
++					(proc_data->data.bit.bit_vector));
++			else
++				clear_bit(proc_data->data.bit.bit,
++					(proc_data->data.bit.bit_vector));
++			}
++			break;
++		case SUSPEND_PROC_DATA_INTEGER:
++			{
++				int * variable = proc_data->data.integer.variable;
++				int minimum = proc_data->data.integer.minimum;
++				int maximum = proc_data->data.integer.maximum;
++				*variable = simple_strtol(my_buf, NULL, 0);
++				if (((*variable) < minimum))
++					*variable = minimum;
++
++				if (((*variable) > maximum))
++					*variable = maximum;
++				break;
++			}
++		case SUSPEND_PROC_DATA_UL:
++			{
++				unsigned long * variable = proc_data->data.ul.variable;
++				unsigned long minimum = proc_data->data.ul.minimum;
++				unsigned long maximum = proc_data->data.ul.maximum;
++				*variable = simple_strtoul(my_buf, NULL, 0);
++				
++				if (minimum && ((*variable) < minimum))
++					*variable = minimum;
++
++				if (maximum && ((*variable) > maximum))
++					*variable = maximum;
++				break;
++			}
++			break;
++		case SUSPEND_PROC_DATA_STRING:
++			{
++				int copy_len = 
++					(count > 
++					 proc_data->data.string.max_length) ?
++					proc_data->data.string.max_length : 
++					count;
++				char * variable =
++					proc_data->data.string.variable;
++				strncpy(variable, my_buf, copy_len);
++				if ((copy_len) &&
++					 (my_buf[copy_len - 1] == '\n'))
++					variable[count - 1] = 0;
++				variable[count] = 0;
++				if (proc_data->data.string.write_proc) {
++					int routine_result = 
++					  proc_data->data.string.write_proc();
++					if (routine_result < 0)
++						result = routine_result;
++				}
++			}
++			break;
++	}
++	free_pages((unsigned long) my_buf, 0);
++	return result;
++}
++
++/*
++ * Non-plugin proc entries.
++ *
++ * This array contains entries that are automatically registered at
++ * boot. Plugins and the console code register their own entries separately.
++ */
++
++static struct suspend_proc_data proc_params[] = {
++	{ .filename			= "activate",
++	  .permissions			= PROC_WRITEONLY,
++	  .type				= SUSPEND_PROC_DATA_CUSTOM,
++	  .data = {
++		  .special = {
++			  .write_proc	= proc_software_suspend_pending
++		  }
++	  }
++	},
++
++
++	{ .filename			= "interface_version",
++	  .permissions			= PROC_READONLY,
++	  .type				= SUSPEND_PROC_DATA_INTEGER,
++	  .data = {
++		  .integer = {
++			  .variable	= &suspend_proc_version,
++		  }
++	  }
++	},
++};
++
++/*
++ * suspend_initialise_proc
++ *
++ * Initialise the /proc/suspend tree.
++ *
++ */
++
++static void suspend_initialise_proc(void)
++{
++	int i;
++	int numfiles = sizeof(proc_params) / sizeof(struct suspend_proc_data);
++	
++	if (suspend_proc_initialised)
++		return;
++
++	suspend_dir = proc_mkdir("software_suspend", NULL);
++	
++	BUG_ON(!suspend_dir);
++
++	INIT_LIST_HEAD(&suspend_proc_entries);
++
++	suspend_proc_initialised = 1;
++
++	for (i=0; i< numfiles; i++)
++		suspend_register_procfile(&proc_params[i]);
++}
++
++/*
++ * suspend_register_procfile
++ *
++ * Helper for registering a new /proc/suspend entry.
++ */
++
++struct proc_dir_entry * suspend_register_procfile(
++		struct suspend_proc_data * suspend_proc_data)
++{
++	struct proc_dir_entry * new_entry;
++	
++	if (!suspend_proc_initialised)
++		suspend_initialise_proc();
++
++	new_entry = create_proc_entry(
++			suspend_proc_data->filename,
++			suspend_proc_data->permissions, 
++			suspend_dir);
++	if (new_entry) {
++		list_add_tail(&suspend_proc_data->proc_data_list, &suspend_proc_entries);
++		if (suspend_proc_data->type) {
++			new_entry->read_proc = generic_read_proc;
++			new_entry->write_proc = generic_write_proc;
++		} else {
++			new_entry->read_proc = suspend_proc_data->data.special.read_proc;
++			new_entry->write_proc = suspend_proc_data->data.special.write_proc;
++		}
++		new_entry->data = suspend_proc_data;
++	} else {
++		printk("Error! create_proc_entry returned NULL.\n");
++		INIT_LIST_HEAD(&suspend_proc_data->proc_data_list);
++	}
++	return new_entry;
++}
++
++/*
++ * suspend_unregister_procfile
++ *
++ * Helper for removing unwanted /proc/suspend entries.
++ *
++ */
++void suspend_unregister_procfile(struct suspend_proc_data * suspend_proc_data)
++{
++	if (list_empty(&suspend_proc_data->proc_data_list))
++		return;
++
++	remove_proc_entry(
++		suspend_proc_data->filename,
++		suspend_dir);
++	list_del(&suspend_proc_data->proc_data_list);
++}
++
++EXPORT_SYMBOL(suspend_register_procfile);
++EXPORT_SYMBOL(suspend_unregister_procfile);
+diff -ruN 824-builtin-old/kernel/power/suspend_builtin.c 824-builtin-new/kernel/power/suspend_builtin.c
+--- 824-builtin-old/kernel/power/suspend_builtin.c	1970-01-01 10:00:00.000000000 +1000
++++ 824-builtin-new/kernel/power/suspend_builtin.c	2004-09-27 21:02:23.097850184 +1000
+@@ -0,0 +1,405 @@
++/*
++ * kernel/power/suspend2-builtin.c
++ *
++ * Copyright (C) 2004 Nigel Cunningham <ncunningham@linuxmail.org>
++ *
++ * This file is released under the GPLv2.
++ *
++ * It contains the functions for suspend2 that are built into the kernel even if
++ * suspend is configured as modules.
++ */
++
++#include <linux/suspend.h>
++#include <linux/module.h>
++#include <linux/reboot.h>
++#include <asm/uaccess.h>
++
++#include "suspend.h"
++/* 
++ *---------------------  Variables ---------------------------
++ * 
++ * The following are used by the arch specific low level routines 
++ * and only needed if suspend2 is compiled in. Other variables,
++ * used by the freezer even if suspend2 is not compiled in are
++ * found in process.c
++ */
++volatile int suspend_io_time[2][2];
++struct pagedir __nosavedata pagedir_resume;
++struct pagedir pagedir1 = { 1, 0, 0}, pagedir2 = {2, 0, 0};
++
++/* Suspend2 variables used by built-in routines. */
++unsigned int nr_suspends = 0;
++int suspend_act_used = 0;
++int suspend_lvl_used = 0;
++int suspend_dbg_used = 0;
++int suspend_default_console_level = 0;
++
++/* 
++ * For resume2= kernel option. It's pointless to compile
++ * suspend2 without any writers, but compilation shouldn't
++ * fail if you do.
++ */
++#ifdef CONFIG_SOFTWARE_SUSPEND_DEFAULT_RESUME2
++char resume2_file[256] = CONFIG_SOFTWARE_SUSPEND_DEFAULT_RESUME2;
++#else
++char resume2_file[256];
++#endif
++
++/* --------------- Basic user interface functions --------------- 
++ * 
++ * These need to be available even if none of the core is
++ * loaded.
++ */
++
++DECLARE_WAIT_QUEUE_HEAD(suspend_wait_for_key);
++static int last_key;
++
++int suspend_wait_for_keypress(void)
++{
++	interruptible_sleep_on(&suspend_wait_for_key);
++	return last_key;
++}
++
++/* 
++ * Basic keypress handler for suspend. This is extensible
++ * via the user interface modules.
++ */
++
++/* For simplicity, we convert keyboard key codes to ascii,
++ * except in the case of function keys, which are mapped
++ * to 1-12. We can then use the same case statement for
++ * serial keyboards (and from a serial keyboard, you can
++ * press Control-A..L to toggle sections.
++ */
++static unsigned int kbd_keytable[] = {
++	  0,  27,  49,  50,  51,  52,  53,  54,  55,  56,
++	 57,  48,   0,   0,   0,   0,   0,   0,   0, 114,
++	  0,   0,   0,   0,   0, 112,   0,   0,   0,   0,
++	  0, 115,   0,   0,   0,   0,   0,   0, 108,   0,
++	  0, 122,   0,   0,   0,   0,  99,   0,   0,   0,
++	  0,   0,   0,   0,   0,   0,   0,  32,   0,   1,
++	  2,   3,   4,   5,   6,   7,   8,   9,  10,   0,
++	  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
++	  0,   0,   0,   0,   0,   0,   0,  11,  12,   0,
++};
++
++/*
++ * keycode_to_action
++ *
++ * Convert a keycode (serial or keyboard) into our
++ * internal code (ascii, except for function keys).
++ */
++static unsigned int keycode_to_action(unsigned int keycode, int source)
++{
++	if (source == SUSPEND_KEY_SERIAL) {
++		if (keycode > 64)
++			return (keycode | 32);
++		else
++			return keycode;
++	}
++
++	/* Local keyboard - use table above */
++	if (keycode > sizeof(kbd_keytable))
++		return 0;
++
++	return kbd_keytable[keycode];
++}
++
++/*
++ * suspend_handle_keypress
++ *
++ * This is the basic routine for handling keystrokes.
++ * If it doesn't know what to do with a keypress, it
++ * passes it on to the plugins.
++ */
++void suspend_handle_keypress(unsigned int keycode, int source)
++{
++	keycode = keycode_to_action(keycode, source);
++
++	if (test_suspend_state(SUSPEND_SANITY_CHECK_PROMPT)) {
++		if (keycode == 32)
++			wake_up_interruptible(&suspend_wait_for_key);
++		else if (keycode == 99) {
++			set_suspend_state(SUSPEND_CONTINUE_REQ);
++			wake_up_interruptible(&suspend_wait_for_key);
++		}
++		return;
++	}
++
++	last_key = keycode;
++
++	/* 
++	 * If the message was handled or is the space bar, we
++	 * wake our completion handler.
++	 */
++	if ((suspend2_core_ops->keypress(keycode)) ||
++		(keycode == 32))
++		wake_up_interruptible(&suspend_wait_for_key);
++}
++
++/* suspend_early_boot_message()
++ * Description:	Handle errors early in the process of booting.
++ * 		The user may press C to continue booting, perhaps
++ * 		invalidating the image,  or space to reboot. 
++ * 		This works from either the serial console or normally 
++ * 		attached keyboard.
++ *
++ * 		Note that we come in here from init, while the kernel is
++ * 		locked. If we want to get events from the serial console,
++ * 		we need to temporarily unlock the kernel.
++ *
++ * Arguments:	Char *. Pointer to a string explaining why we're moaning.
++ */
++
++#define say(message, a...) printk(KERN_EMERG message, ##a)
++
++int suspend_early_boot_message(char *warning_reason, int can_erase_image)
++{
++	unsigned long orig_state = get_suspend_state(), continue_req;
++
++	set_suspend_state(SUSPEND_RUNNING);
++
++#if defined(CONFIG_VT) || defined(CONFIG_SERIAL_CONSOLE)
++	if (suspend2_core_ops)
++		suspend2_core_ops->early_boot_plugins();
++
++	say("=== Software Suspend ===\n\n");
++	if (warning_reason) {
++		say("BIG FAT WARNING!! %s\n\n", warning_reason);
++		if (can_erase_image) {
++			say("If you want to use the current suspend image, reboot and try\n");
++			say("again with the same kernel that you suspended from. If you want\n");
++			say("to forget that image, continue and the image will be erased.\n");
++		} else {
++			say("If you continue booting, note that any image WILL NOT BE REMOVED.\n");
++			say("Suspend is unable to do so because the appropriate modules aren't\n");
++			say("loaded. You should manually remove the image to avoid any\n");
++			say("possibility of corrupting your filesystem(s) later.\n");
++		}
++		say("Press SPACE to reboot or C to continue booting with this kernel\n");
++	} else {
++		say("BIG FAT WARNING!!\n\n");
++		say("You have tried to resume from this image before.\n");
++		say("If it failed once, it will probably fail again.\n");
++		say("Would you like to remove the image and boot normally?\n");
++		say("This will be equivalent to entering noresume2 on the\n");
++		say("kernel command line.\n\n");
++		say("Press SPACE to remove the image or C to continue resuming.\n");
++	}
++	
++	set_suspend_state(SUSPEND_SANITY_CHECK_PROMPT);
++
++	interruptible_sleep_on(&suspend_wait_for_key);
++
++	continue_req = test_suspend_state(SUSPEND_CONTINUE_REQ);
++	
++	if ((warning_reason) && (!continue_req))
++		machine_restart(NULL);
++	
++	restore_suspend_state(orig_state);
++	if (continue_req)
++		set_suspend_state(SUSPEND_CONTINUE_REQ);
++
++#endif // CONFIG_VT or CONFIG_SERIAL_CONSOLE
++	return -EPERM;
++}
++#undef say
++
++/* --------------- Registration of the core code -----------------------------
++ *
++ * We don't need to do anything more. The writers determine
++ * whether suspending is disabled and they're not loaded yet.
++ */
++void suspend2_register_core(struct suspend2_core_ops * ops_pointer)
++{
++	suspend2_core_ops = ops_pointer;
++}
++
++void suspend2_unregister_core(void)
++{
++	suspend2_core_ops = NULL;
++}
++
++/* ------------ Functions for kickstarting a suspend or resume ----------- */
++
++static int can_suspend(void)
++{
++	if (test_suspend_state(SUSPEND_RUNNING)) {
++		printk(name_suspend "Software suspend is already running.\n");
++		return 0;
++	}
++
++	if (!suspend2_core_ops) {
++		printk(name_suspend "Software suspend is disabled.\n"
++			"You do not appear to have inserted the core module.\n");
++		SET_RESULT_STATE(SUSPEND_ABORTED);
++		return 0;
++	}
++
++	if (test_suspend_state(SUSPEND_DISABLED)) {
++		printk(name_suspend "Software suspend is disabled.\n"
++			"This may be because you haven't put something along the "
++			"lines of\n\nresume2=swap:/dev/hda1\n\n"
++			"in lilo.conf or equivalent. (Where /dev/hda1 is your "
++			"swap partition).\n");
++		SET_RESULT_STATE(SUSPEND_ABORTED);
++		return 0;
++	}
++	
++	return 1;
++}
++
++/*
++ * Check if we have an image and if so try to resume.
++ */
++
++void software_suspend_try_resume(void)
++{
++	mm_segment_t oldfs;
++	oldfs = get_fs(); set_fs(KERNEL_DS);
++
++	clear_suspend_state(SUSPEND_RESUME_NOT_DONE);
++
++	if (!suspend2_core_ops) {
++		/*
++		 * We can only get here at boot time. It is really dangerous
++		 * to suspend, boot without resuming and then boot with
++		 * resuming. Since the core (and writers) isn't loaded, we
++		 * can't fix this. We can however print a big fat warning
++		 * and give the user the option of rebooting.
++		 *
++		 * We don't do this if no resume2= parameter was specified.
++		 */
++
++		if (resume2_file[0])
++			suspend_early_boot_message(
++			 "Can't check whether to resume. Suspend's core module isn't loaded.",
++			 0);
++		goto out;
++	}
++	suspend2_core_ops->do_resume();
++out:
++	set_fs(oldfs);
++	return;
++}
++
++/*
++ * software_suspend_pending
++ * Functionality   : First level of code for software suspend invocations.
++ * 		     Performs the basic checking as to whether suspend is
++ * 		     enabled before invoking the high level routine.
++ * Called From     : 
++ */
++void software_suspend_pending(void)
++{
++	mm_segment_t oldfs;
++
++	if (test_suspend_state(SUSPEND_RUNNING_INITRD)) {
++		/* 
++		 * Activated from initrd - try to resume now.
++		 */
++		software_suspend_try_resume();
++		return;
++	}
++	
++	if (!can_suspend())
++		return;
++	
++	oldfs = get_fs(); set_fs(KERNEL_DS);
++	suspend2_core_ops->do_suspend();
++	set_fs(oldfs);
++}
++
++/* -------------------  Commandline Parameter Handling -----------------
++ *
++ * Resume setup: obtain the storage device.
++ */
++
++static int __init resume_setup(char *str)
++{
++	if (str == NULL)
++		return 1;
++	
++	strncpy(resume2_file, str, 255);
++	return 0;
++}
++
++/*
++ * Allow the user to set the action parameter from lilo, prior to resuming.
++ */
++static int __init suspend_act_setup(char *str)
++{
++	if(str)
++		suspend_action=simple_strtol(str,NULL,0);
++	suspend_act_used = 1;
++	return 0;
++}
++
++/*
++ * Allow the user to set the debug parameter from lilo, prior to resuming.
++ */
++#ifdef CONFIG_SOFTWARE_SUSPEND_DEBUG
++static int __init suspend_dbg_setup(char *str)
++{
++	if(str)
++		suspend_debug_state=simple_strtol(str,NULL,0);
++	suspend_dbg_used = 1;
++	return 0;
++}
++
++/*
++ * Allow the user to set the debug level parameter from lilo, prior to
++ * resuming.
++ */
++static int __init suspend_lvl_setup(char *str)
++{
++	if(str)
++		console_loglevel =
++		suspend_default_console_level = 
++			simple_strtol(str,NULL,0);
++	suspend_lvl_used = 1;
++	return 0;
++}
++#endif
++
++/*
++ * Allow the user to specify that we should ignore any image found and
++ * invalidate the image if necesssary. This is equivalent to running
++ * the task queue and a sync and then turning off the power. The same
++ * precautions should be taken: fsck if you're not journalled.
++ */
++static int __init noresume_setup(char *str)
++{
++	set_suspend_state(SUSPEND_NORESUME_SPECIFIED);
++	/* Message printed later */
++	return 0;
++}
++
++__setup("resume2=", resume_setup);
++__setup("suspend_act=", suspend_act_setup);
++#ifdef CONFIG_SOFTWARE_SUSPEND_DEBUG
++__setup("suspend_dbg=", suspend_dbg_setup);
++__setup("suspend_lvl=", suspend_lvl_setup);
++#endif
++__setup("noresume2", noresume_setup);
++
++EXPORT_SYMBOL(nr_suspends);
++EXPORT_SYMBOL(pagedir1);
++EXPORT_SYMBOL(pagedir2);
++EXPORT_SYMBOL(suspend2_register_core);
++EXPORT_SYMBOL(suspend2_unregister_core);
++EXPORT_SYMBOL(resume2_file);
++EXPORT_SYMBOL(suspend_act_used);
++EXPORT_SYMBOL(suspend_lvl_used);
++EXPORT_SYMBOL(suspend_dbg_used);
++EXPORT_SYMBOL(software_suspend_pending);
++EXPORT_SYMBOL(suspend_debug_state);
++EXPORT_SYMBOL(suspend_result);
++
++/* Symnols exported for Suspend plugins */
++EXPORT_SYMBOL(suspend_default_console_level);
++EXPORT_SYMBOL(pagedir_resume);
++EXPORT_SYMBOL(suspend_io_time);
++EXPORT_SYMBOL(suspend2_core_ops);
++EXPORT_SYMBOL(suspend_early_boot_message);
++EXPORT_SYMBOL(suspend_wait_for_keypress);

@@ -1,0 +1,169 @@
+diff -ruN 302-init-hooks-old/init/do_mounts.c 302-init-hooks-new/init/do_mounts.c
+--- 302-init-hooks-old/init/do_mounts.c	2004-05-19 22:10:47.000000000 +1000
++++ 302-init-hooks-new/init/do_mounts.c	2004-09-24 19:09:41.000000000 +1000
+@@ -52,7 +52,7 @@
+ __setup("ro", readonly);
+ __setup("rw", readwrite);
+ 
+-static dev_t __init try_name(char *name, int part)
++static dev_t try_name(char *name, int part)
+ {
+ 	char path[64];
+ 	char buf[32];
+@@ -134,16 +134,21 @@
+  *	is mounted on rootfs /sys.
+  */
+ 
+-dev_t __init name_to_dev_t(char *name)
++dev_t name_to_dev_t(char *name)
+ {
+ 	char s[32];
+ 	char *p;
+ 	dev_t res = 0;
+-	int part;
++	int part, mount_result;
+ 
+ #ifdef CONFIG_SYSFS
+ 	sys_mkdir("/sys", 0700);
+-	if (sys_mount("sysfs", "/sys", "sysfs", 0, NULL) < 0)
++	/* 
++	 * When changing resume2 parameter for Software Suspend, sysfs may
++	 * already be mounted. 
++	 */
++	mount_result = sys_mount("sysfs", "/sys", "sysfs", 0, NULL);
++	if (mount_result < 0 && mount_result != -EBUSY)
+ 		goto out;
+ #endif
+ 
+@@ -195,7 +200,8 @@
+ 	res = try_name(s, part);
+ done:
+ #ifdef CONFIG_SYSFS
+-	sys_umount("/sys", 0);
++	if (mount_result >= 0)
++		sys_umount("/sys", 0);
+ out:
+ 	sys_rmdir("/sys");
+ #endif
+@@ -204,6 +210,8 @@
+ 	res = 0;
+ 	goto done;
+ }
++/* Exported for Software Suspend */
++EXPORT_SYMBOL(name_to_dev_t);
+ 
+ static int __init root_dev_setup(char *line)
+ {
+@@ -397,9 +405,25 @@
+ 
+ 	is_floppy = MAJOR(ROOT_DEV) == FLOPPY_MAJOR;
+ 
++	/* Suspend2:
++	 * By this point, suspend_early_init has been called to initialise our
++	 * proc interface. If modules are built in, they have registered (all
++	 * of the above via late_initcalls).
++	 * 
++	 * We have not yet looked to see if an image exists, however. If we
++	 * have an initrd, it is expected that the user will have set it up
++	 * to echo > /proc/software_suspend/activate and thus initiate any
++	 * resume. If they don'tdo that, we do it immediately after the initrd
++	 * is finished (major issues if they mount filesystems rw from the
++	 * initrd! - they are warned. If there's no usable initrd, we do our
++	 * check next
++	 */
+ 	if (initrd_load())
+ 		goto out;
+ 
++	if (test_suspend_state(SUSPEND_RESUME_NOT_DONE))
++		software_suspend_try_resume();
++	
+ 	if (is_floppy && rd_doload && rd_load_disk(0))
+ 		ROOT_DEV = Root_RAM0;
+ 
+diff -ruN 302-init-hooks-old/init/do_mounts_initrd.c 302-init-hooks-new/init/do_mounts_initrd.c
+--- 302-init-hooks-old/init/do_mounts_initrd.c	2004-09-07 21:59:00.000000000 +1000
++++ 302-init-hooks-new/init/do_mounts_initrd.c	2004-09-24 19:09:41.000000000 +1000
+@@ -7,6 +7,7 @@
+ #include <linux/romfs_fs.h>
+ #include <linux/initrd.h>
+ #include <linux/sched.h>
++#include <linux/suspend.h>
+ 
+ #include "do_mounts.h"
+ 
+@@ -56,12 +57,21 @@
+ 	sys_chroot(".");
+ 	mount_devfs_fs ();
+ 
++	set_suspend_state(SUSPEND_RUNNING_INITRD);
++
+ 	pid = kernel_thread(do_linuxrc, "/linuxrc", SIGCHLD);
+ 	if (pid > 0) {
+-		while (pid != sys_wait4(-1, &i, 0, NULL))
++		while (pid != sys_wait4(-1, &i, 0, NULL)) {
+ 			yield();
++			if (current->flags & PF_FREEZE)
++				refrigerator(PF_FREEZE);
++		}
+ 	}
+ 
++	clear_suspend_state(SUSPEND_RUNNING_INITRD);
++	if (test_suspend_state(SUSPEND_RESUME_NOT_DONE))
++		software_suspend_try_resume();
++
+ 	/* move initrd to rootfs' /old */
+ 	sys_fchdir(old_fd);
+ 	sys_mount("/", ".", NULL, MS_MOVE, NULL);
+diff -ruN 302-init-hooks-old/init/main.c 302-init-hooks-new/init/main.c
+--- 302-init-hooks-old/init/main.c	2004-09-24 22:36:17.000000000 +1000
++++ 302-init-hooks-new/init/main.c	2004-09-24 19:09:41.000000000 +1000
+@@ -45,6 +45,7 @@
+ #include <linux/unistd.h>
+ #include <linux/rmap.h>
+ #include <linux/mempolicy.h>
++#include <linux/suspend.h>
+ 
+ #include <asm/io.h>
+ #include <asm/bugs.h>
+@@ -747,6 +748,8 @@
+ 	else
+ 		prepare_namespace();
+ 
++	clear_suspend_state(SUSPEND_BOOT_TIME);
++
+ 	/*
+ 	 * Ok, we have completed the initial bootup, and
+ 	 * we're essentially up and running. Get rid of the
+diff -ruN 302-init-hooks-old/kernel/power/pmdisk.c 302-init-hooks-new/kernel/power/pmdisk.c
+--- 302-init-hooks-old/kernel/power/pmdisk.c	2004-09-07 21:59:00.000000000 +1000
++++ 302-init-hooks-new/kernel/power/pmdisk.c	2004-09-24 22:36:25.000000000 +1000
+@@ -904,7 +904,7 @@
+ }
+ 
+ 
+-extern dev_t __init name_to_dev_t(const char *line);
++extern dev_t name_to_dev_t(char *line);
+ 
+ 
+ static int __init check_sig(void)
+diff -ruN 302-init-hooks-old/kernel/power/swsusp.c 302-init-hooks-new/kernel/power/swsusp.c
+--- 302-init-hooks-old/kernel/power/swsusp.c	2004-09-07 21:59:01.000000000 +1000
++++ 302-init-hooks-new/kernel/power/swsusp.c	2004-09-24 22:36:25.000000000 +1000
+@@ -1020,7 +1020,7 @@
+ 	return 0;
+ }
+ 
+-extern dev_t __init name_to_dev_t(const char *line);
++extern dev_t name_to_dev_t(char *line);
+ 
+ static int __init __read_suspend_image(struct block_device *bdev, union diskpage *cur, int noresume)
+ {
+@@ -1108,7 +1108,7 @@
+ 	return 0;
+ }
+ 
+-static int __init read_suspend_image(const char * specialfile, int noresume)
++static int __init read_suspend_image(char * specialfile, int noresume)
+ {
+ 	union diskpage *cur;
+ 	unsigned long scratch_page = 0;

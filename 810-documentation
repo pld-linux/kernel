@@ -1,0 +1,537 @@
+diff -ruN linux-2.6.9-rc1/Documentation/kernel-parameters.txt software-suspend-linux-2.6.9-rc1-rev3/Documentation/kernel-parameters.txt
+--- linux-2.6.9-rc1/Documentation/kernel-parameters.txt	2004-09-07 21:58:20.000000000 +1000
++++ software-suspend-linux-2.6.9-rc1-rev3/Documentation/kernel-parameters.txt	2004-09-09 19:36:24.000000000 +1000
+@@ -754,6 +754,8 @@
+ 
+ 	noresume	[SWSUSP] Disables resume and restore original swap space.
+  
++	noresume2	[SWSUSP2] Disables resuming and restores original swap signature.
++ 
+ 	no-scroll	[VGA] Disables scrollback.
+ 			This is required for the Braillex ib80-piezo Braille
+ 			reader made by F.H. Papenmeier (Germany).
+@@ -951,7 +953,12 @@
+ 
+ 	reserve=	[KNL,BUGS] Force the kernel to ignore some iomem area
+ 
+-	resume=		[SWSUSP] Specify the partition device for software suspension
++	resume=		[SWSUSP] Specify the partition device for software suspension.
++
++	resume2=	[SWSUSP2] Specify the storage device for software suspend.
++			Format: <writer>:<writer-parameters>.
++			See Documentation/power/swsusp2.txt for details of the formats
++			for available image writers.
+ 
+ 	rhash_entries=	[KNL,NET]
+ 			Set number of hash buckets for route cache
+diff -ruN linux-2.6.9-rc1/Documentation/power/suspend2.txt software-suspend-linux-2.6.9-rc1-rev3/Documentation/power/suspend2.txt
+--- linux-2.6.9-rc1/Documentation/power/suspend2.txt	1970-01-01 10:00:00.000000000 +1000
++++ software-suspend-linux-2.6.9-rc1-rev3/Documentation/power/suspend2.txt	2004-09-09 19:36:24.000000000 +1000
+@@ -0,0 +1,507 @@
++		--- Software Suspend for Linux, version 2.0 ---
++
++1.  What is it?
++2.  Why would you want it?
++3.  What do you need to use it?
++4.  How do you use it?
++5.  What do all those entries in /proc/software_suspend do?
++6.  How do you get support?
++7.  I think I've found a bug. What should I do?
++8.  When will XXX be supported?
++9.  How does it work?
++10. Who wrote Software Suspend?
++
++1. What is it?
++
++   Imagine you're sitting at your computer, working away. For some reason, you
++   need to turn off your computer for a while - perhaps it's time to go home
++   for the day. When you come back to your computer next, you're going to want
++   to carry on where you left off. Now imagine that you could push a button and
++   have your computer store the contents of its memory to disk and power down.
++   Then, when you next start up your computer, it loads that image back into
++   memory and you can carry on from where you were, just as if you'd never
++   turned the computer off. Far less time to start up, no reopening
++   applications and finding what directory you put that file in yesterday.
++   That's what Software Suspend does.
++
++2. Why would you want it?
++
++   Why wouldn't you want it?
++   
++   Being able to save the state of your system and quickly restore it improves
++   your productivity - you get a useful system in far less time than through
++   the normal boot process.
++   
++3. What do you need to use it?
++
++   a. Kernel Support.
++   
++   Software Suspend is part of the Linux Kernel. This version is not part of Linus's
++   2.6 tree at the moment, so you will need to download the kernel source and
++   apply the latest patch. Having done that, enable the appropriate options in
++   make [menu|x]config (under General Setup), compile and install your kernel.
++   Software Suspend is incompatible with SMP, and non x86 hardware but
++   works with preempt support and HighMem. It requires your swap 
++   partitions/files to be on IDE devices.
++
++   Software Suspend patches are available from http://softwaresuspend.berlios.de.
++
++   You may also want to apply the optional patches. At the time of writing,
++   option patches are available to support Bootsplash (www.bootsplash.org, for
++   an even nicer display during suspend), Win4Lin. The Win4Lin option patch (only
++   needed for 2.4) provides support for Win4Lin.
++   
++   Option patches should be applied after the main patch and after Win4Lin
++   or Bootsplash.
++   
++   As of version 2.0.0.102, suspend can be built as modules. To use this
++   configuration, you need to have initrd support, because resuming needs
++   to occur before any filesystems that were mounted when you suspended
++   are remounted. For details on setting up suspend-as-modules, please
++   read the FAQs on suspend's web site.
++
++   b. Swapspace.
++
++   Software Suspend can store the suspend image in your swap partition,
++   a swap file or a combination thereof. Whichever combination you choose, you
++   will probably want to create enough swap space to store the largest image
++   you could have, plus the space you'd normally use for swap. A good rule of
++   thumb would be to calculate the amount of swap you'd want without using
++   Software Suspend, and then add the amount of memory you have. This swap
++   space can be arranged in any way you'd like. It can be in one partition or
++   file, or spread over a number. The only requirement is that they be active
++   when you start a suspend cycle.
++   
++   There is one exception to this requirement. Software Suspend has
++   the ability to turn on one swap file or partition at the start of
++   suspending and turn it back off at the end. If you want to ensure you have
++   enough memory to store a image when your memory is fully used, you might 
++   want to make one swap partition/file for 'normal' use, and another for
++   Software Suspend to activate & deactivate automatically. (Further details
++   below).
++
++   c. Bootloader configuration.
++   
++   Using Software Suspend also requires that you add an extra parameter to 
++   your lilo.conf or equivalent. Here's an example for a swap partition:
++
++   append="resume2=/dev/hda1"
++
++   This would tell Software Suspend that /dev/hda1 is a swap partition you 
++   have. Software Suspend will use the swap signature of this partition as a
++   pointer to your data when you suspend. This means that (in this example)
++   /dev/hda1 doesn't need to be _the_ swap partition where all of your data
++   is actually stored. It just needs to be a swap partition that has a
++   valid signature.
++
++   You don't need to have a swap partition for this purpose. Software Suspend
++   can also use a swap file, but usage is a little more complex. Having made
++   your swap file, turn it on and do 
++
++   cat /proc/software_suspend/header_locations
++
++   (this assumes you've already compiled your kernel with Software Suspend
++   support and booted it). The results of the cat command will tell you
++   what you need to put in lilo.conf:
++
++   For swap partitions like /dev/hda1, simply use resume2=/dev/hda1.
++   For swapfile `swapfile`, use resume2=/dev/hda2:0x242d@4096.
++
++   If the swapfile changes for any reason (it is moved to a different
++   location, it is deleted and recreated, or the filesystem is
++   defragmented) then you will have to check
++   /proc/software_suspend/header_locations for a new resume_block value.
++
++   Once you've compiled and installed the kernel, adjusted your lilo.conf
++   and rerun lilo, you should only need to reboot for the most basic part
++   of Software Suspend to be ready.
++
++   d. A suspend script.
++
++   Since the driver model in 2.6 kernels is still being developed, you may need
++   to do more, however. Users of Software Suspend usually start the process 
++   via a script which prepares for the suspend, tells the kernel to do its
++   stuff and then restore things afterwards. This script might involve:
++
++   - Switching to a text console and back if X doesn't like the video card
++     status on resume.
++   - Running /sbin/hwclock [--directisa] to update the clock on resume
++   - Un/reloading PCMCIA support since it doesn't play well with suspend.
++  
++   Note that you might not be able to unload some drivers if there are 
++   processes using them. You might have to kill off processes that hold
++   devices open. Hint: if your X server accesses an USB mouse, doing a
++   'chvt' to a text console releases the device and you can unload the
++   module.
++
++   Check out the latest script (available on Berlios).
++   
++4. How do you use it?
++
++   Once your script is properly set up, you should just be able to start it
++   and everything should go like clockwork. Of course things aren't always
++   that easy out of the box.
++
++   Check out (in the kernel source tree) include/linux/suspend-debug for
++   settings you can use to get detailed information about what suspend is doing.
++   /proc/sys/kernel/swsusp and the kernel parameters suspend_act, suspend_dbg
++   and suspend_lvl allow you to set the action and debugging parameters prior
++   to starting a suspend and/or at the lilo prompt before resuming. There is
++   also a nice little program that should be available from Berlios which
++   makes it easier to turn these debugging settings on and off. Note that to
++   get any debugging output, you need to enable it when compiling the kernel.
++
++   A neat feature of Software Suspend is that you can press Escape at any time
++   during suspending, and the process will be aborted.
++   
++   Due to the way suspend works, this means you'll have your system back and
++   perfectly usable almost instantly. The only exception is when it's at
++   the very end of writing the image. Then it will need to reload a small
++   (usually 4-50MBs) portion first.
++
++   If you run into problems with resuming, adding the "noresume2" option to
++   the kernel command line will let you skip the resume step and
++   (hopefully) recover your system.
++
++5. What do all those entries in /proc/software_suspend do?
++
++   /proc/software_suspend is the directory which contains files you can use to
++   tune and configure Software Suspend to your liking. The exact contents of
++   the directory will depend upon the version of Software Suspend you're
++   running, the options you selected at compile time and which modules you have
++   inserted at the moment (where appropriate). In the following
++   descriptions, names in brackets refer to compile time options and modules
++   that control whether the file exists. (Note that they're all dependant upon
++   you having selected CONFIG_SOFTWARE_SUSPEND2 in the first place!)
++
++   Since the values of these settings can open potential security risks, they
++   are usually accessible only to the root user. You can, however, enable a
++   compile time option which makes all of these files world-accessible. This
++   should only be done if you trust everyone with shell access to this
++   computer!
++  
++   - activate:
++
++   When anything is written to this file suspend will be activated and suspend
++   the system. The value is completely ignored. It is just the fact that you
++   write to the file that initiates the suspend.
++
++   When accessed from an initrd, the software instead checks whether it needs
++   to initiate a resume. If it doesn't, the echo returns almost immediately.
++   If a resume is needed, the echo never returns.
++
++   - async_io_limit: (module suspend_block_io)
++
++   This value is the limit on the number of pages Software Suspend will submit
++   for reading or writing at once. The ideal value depends upon the speed of
++   your hard disks, but the default (and maximum) of 256 should be fine.
++
++   - debug_info:
++  
++   This file returns information about your configuration that may be helpful
++   in diagnosing problems with suspending.
++
++   - debug_sections (CONFIG_SOFTWARE_SUSPEND_DEBUG, module suspend_core):
++
++   This value, together with the console log level, controls what debugging
++   information is displayed. The console log level determines the level of
++   detail, and this value determines what detail is displayed. This value is
++   a bit vector, and the meaning of the bits can be found in the kernel tree
++   in include/linux/suspend-debug.h. It can be over-ridden using the kernel's
++   command line option suspend_dbg.
++
++   - default_console_level (CONFIG_SOFTWARE_SUSPEND_DEBUG, module suspend_core):
++
++   This determines the value of the console log level at the start of a
++   suspend cycle. If debugging is compiled in, the console log level can be
++   changed during a cycle by pressing the digit keys. Meanings are:
++
++   0: Nice display.
++   1: Nice display plus numerical progress.
++   2: Errors only.
++   3: Low level debugging info.
++   4: Medium level debugging info.
++   5: High level debugging info.
++   6: Verbose debugging info.
++
++   This value can be over-ridden using the kernel command line option 
++   suspend_lvl.
++
++   - disable_gzip_compression (CONFIG_SOFTWARE_SUSPEND_GZIP_COMPRESSION,
++	module suspend_gzip):
++
++   If gzip compression support is compiled in, this option can be used to 
++   disable this plugin.
++
++   - disable_lzf_compression (CONFIG_SOFTWARE_SUSPEND_LZF_COMPRESSION,
++	modules suspend_lzf):
++
++   If lzf compression support is compiled in, this option can be used to 
++   disable this plugin.
++
++   - enable_escape (module suspend_core):
++
++   Setting this to "1" will enable you abort a suspend by
++   pressing escape, "0" (default) disables this feature. Note that enabling
++   this option means that you cannot initiate a suspend and then walk away
++   from your computer, expecting it to be secure. With feature disabled,
++   you can validly have this expectation once Suspend begins to write the
++   image to disk. (Prior to this point, it is possible that Suspend might
++   about because of failure to freeze all processes or because constraints
++   on its ability to save the image are not met).
++
++   - expected_gzip_compression (CONFIG_SOFTWARE_SUSPEND_GZIP_COMPRESSION,
++	module suspend_gzip):
++   - expected_lzf_compression (CONFIG_SOFTWARE_SUSPEND_LZF_COMPRESSION,
++	module suspend_lzf):
++
++   These values allow you to set an expected compression ratio, which Software
++   Suspend will use in calculating whether it meets constraints on the image
++   size. If this expected compression ratio is not attained, the suspend will
++   abort, so it is wise to allow some spare. You can see what compression
++   ratio is achieved in the logs after suspending.
++
++   Note that the values are cumulative. If you compile in both gzip and lzf
++   compression, have both enabled, and set both expected compression ratios
++   to 20, Suspend will expect that the storage required  will be at most 
++   .8 * .8 = 64% of the number of pages to be written.
++
++   - header_locations:
++
++   This option tells you the resume= options to use for swap devices you
++   currently have activated. It is particularly useful when you only want to
++   use a swap file to store your image. See above for further details.
++
++   - image_size_limit:
++
++   The maximum size of suspend image written to disk, measured in megabytes
++   (1024*1024).
++
++   - interface_version:
++
++   The value returned by this file can be used by scripts and configuration
++   tools to determine what entries should be looked for. The value is
++   incremented whenever an entry in /proc/software_suspend is obsoleted or 
++   added.
++
++   - last_result:
++
++   The result of the last suspend, as defined in
++   include/linux/suspend-debug.h with the values SUSPEND_ABORTED to
++   SUSPEND_KEPT_IMAGE. This is a bitmask.
++
++   - log_everything (CONFIG_SOFTWARE_SUSPEND_DEBUG):
++
++   Setting this option results in all messages printed being logged. Normally,
++   only a subset are logged, so as to not slow the process and not clutter the
++   logs. Useful for debugging. It can be toggled during a cycle by pressing
++   'L'.
++
++   - no_output:
++
++   Setting this to "1" disables all output from suspend. It may be useful if a
++   distribution wants to implement a static display while suspending.
++
++   - pause_between_steps (CONFIG_SOFTWARE_SUSPEND_DEBUG):
++
++   This option is used during debugging, to make Software Suspend pause between
++   each step of the process. It is ignored when the nice display is on.
++
++   - progressbar_granularity_limit (CONFIG_FBCON_SPLASHSCREEN):
++
++   This option can be used to limit the granularity of the progress bar
++   displayed with a bootsplash screen. The value is the maximum number of
++   steps. That is, 10 will make the progress bar jump in 10% increments.
++
++   - reboot (CONFIG_SOFTWARE_SUSPEND_DEBUG):
++
++   This option causes Software Suspend to reboot rather than powering down
++   at the end of saving an image. It can be toggled during a cycle by pressing
++   'R'.
++
++   - slow:
++
++   This option inserts a couple of one+ second delays in the code. It should
++   not be needed, and may disappear in a future version.
++
++   - swapfile:
++
++   This entry is used to specify the swapfile or partition that
++   Software Suspend will attempt to swapon/swapoff automatically. Thus, if
++   I normally use /dev/hda1 for swap, and want to use /dev/hda2 for specifically
++   for my suspend image, I would
++  
++   echo /dev/hda2 > /proc/software_suspend/swapfile
++
++   /dev/hda2 would then be automatically swapon'd and swapoff'd. Note that the
++   swapon and swapoff occur while other processes are frozen (including kswapd)
++   so this swap file will not be used up when attempting to free memory. The
++   parition/file is also given the highest priority, so other swapfiles/partitions
++   will only be used to save the image when this one is filled.
++
++   The value of this file is used by header_locations along with any currently
++   activated swapfiles/partitions.
++
++   - version:
++  
++   The version of suspend you have compiled into the currently running kernel.
++
++6. How do you get support?
++
++   Glad you asked. Software Suspend is being actively maintained and supported,
++   both by Nigel (the guy doing most of the coding at the moment) and its
++   users. You can find the mailing list via the Sourceforge project page.
++
++7. I think I've found a bug. What should I do?
++
++   If you're seeing Software Suspend hang at some point, and especially if
++   lights are flashing on your keyboard, you should compile in debugging 
++   support and try...
++   
++   echo 1 > /proc/software_suspend/debug_sections
++   echo 3 > /proc/software_suspend/default_console_level
++   echo > /proc/software_suspend/activate
++
++   You should then see low level debugging information and eventually an
++   oops.
++
++   Good information on how to provide us with useful information from an
++   oops is found in the file REPORTING-BUGS, in the top level directory
++   of the kernel tree. If you get an oops, please especially note the
++   information about running what is printed on the screen through ksymoops.
++   The raw information is useless.
++
++   You might also read the FAQ and HOWTO on the web site for known issues,
++   and subscribe to the mailing list.
++
++   Beginning with 1.1rc10, you should include the contents of 
++   /proc/software_suspend/debug_info in your report. Prior to this version,
++   similar information is written to /var/log/messages at the end of a
++   successful resume and should be sent. It is also a good idea to check
++   /var/log/messages for relevant information as well. Information from the
++   unloading and reloading of drivers and modules  prior to and after 
++   suspending is sometimes helpful.
++
++8. When will XXX be supported?
++
++   Software Suspend currently lacks support for SMP, non x86 and SCSI.
++
++   Patches for the other items (and anything that's been missed) are welcome. 
++   Please send to the list.
++
++   Because Nigel's main task is definitely not Software Suspend and he doesn't
++   have the hardware, he will be unlikely to develop support for any of these
++   in the near future. His development work to date has been driven by the
++   desire to be a user of a more feature complete Software Suspend.
++
++9. How does it work?
++
++   Software Suspend does its work in a number of steps.
++
++   a. Freezing system activity.
++
++   The first main stage in suspending is to stop all other activity. This is
++   achieved in stages. First, we stop tasks from submitting new I/O using hooks
++   in the system calls for reading, writing and at a number of other places as
++   well as at the kernel threads that start I/O. If any tasks are syncing,
++   we wait for them to complete. We then do our own sync, just in case no
++   syncs were running. Next, we stop all the others tasks. Some are signalled
++   and put in a 'refrigerator'. Others are simply not scheduled again until we
++   decide to wake them up.
++
++   b. Eating memory.
++
++   For a successful suspend, you need to have enough disk space to store the
++   image and enough memory for the various limitations of Software Suspend's
++   algorithm. You can also specify a maximum image size. In order to attain
++   to those constraints, Software Suspend may 'eat' memory. If, after freezing
++   processes, the constraints aren't met, Software Suspend will thaw all the
++   other processes and begin to eat memory until its calculations indicate
++   the constraints are met. It will then freeze processes again and recheck
++   its calculations.
++
++   c. Suspending drivers and storing processor context.
++
++   Software Suspend then calls the power management functions to notify
++   drivers of the suspend, and saves the processor state.
++
++   d. Storage of meta data and image.
++
++   Next, Software Suspend allocates the swap pages that will be used to save
++   the image and stores their locations, along with the locations of the pages
++   to be saved in what we call pagesets or pagedirs. Software Suspend stores
++   data in two pagesets. Pageset 2 contains pages on the active and inactive
++   lists; essentially the page cache. Pageset 1 contains all other pages,
++   including the kernel. We use two pagesets for one important reason: We
++   need to make an atomic copy of the kernel to ensure consistency of the
++   image. Without a second pagedir, that would limit us to an image that was
++   at most half the amount of memory available. Using two pagesets allows us
++   to store a full image. Since pageset 2 pages won't be needed in saving
++   pageset 1, we first save pageset 2 pages. We can then make our atomic copy
++   of the remaining pages using both pageset 2 pages and any other pages that
++   are free. While saving both pagesets, we are careful not to corrupt the
++   image. We immediately shoot down pages that are added to the page cache,
++   and we allocate a special memory pool of extra pages that can be used by
++   during suspending. All of the pages in this pool are saved along with the
++   rest of the pageset 1 pages, even if they're not used. This saves us having
++   to worry about the image becoming inconsistent while we're saving it.
++
++   e. Save a second copy of the pagedirs.
++
++   To reload pagedir 1 at resume time, we need to know where the data is
++   stored. This requires the saving of a second copy of the pagedirs.
++
++   f. Save the suspend header.
++
++   Nearly there! We save our settings and other parameters needed for
++   reloading pagedir 1 in a 'suspend header' this is a single swap page.
++
++   g. Set the swap header.
++
++   Finally, we edit the swap header for our resume= swap file/partition. The
++   swap signature is changed to record what kind of header it originally was
++   (swapspace 1 or 2) and the bdev and first block and block size details of
++   the suspend header.
++
++   h. Power down.
++
++   Or reboot if we're debugging and the appropriate option is selected.
++
++   Whew!
++
++   Reloading the image.
++   --------------------
++
++   Reloading the image is essentially the reverse of all the above. We load
++   our copy of pagedir 1, being careful to choose locations that aren't going
++   to be overwritten as we copy it back (We start very early in the boot
++   process, so there are no other processes to quiesce here). We then copy
++   pagedir 1 back to its original location in memory and restore the process
++   context. We are now running with the original kernel. Next, we reload the
++   pageset 2 pages, free the memory and swap used by Software Suspend, restore
++   the pagedir header and restart processes. Sounds easy in comparison to
++   suspending, doesn't it!
++
++   There is of course more to Software Suspend than this, but this explanation
++   should be a good start. If there's interest, I'll write further
++   documentation on range pages and the low level I/O.
++
++10. Who wrote Software Suspend?
++
++   (Answer based on the writings of Florent Chabaud, credits in files and
++   Nigel's limited knowledge; apologies to anyone missed out!)
++
++   The main developers of Software Suspend have been...
++
++   Gabor Kuti
++   Pavel Machek
++   Florent Chabaud
++   Nigel Cunningham
++
++   They have been aided in their efforts by a host of hundreds, if not thousands
++   of testers and people who have submitted bug fixes & suggestions. Of special
++   note are the efforts of Michael Frank, who had his computers repetitively
++   suspend and resume for literally tens of thousands of cycles and developed
++   scripts to stress the system and test Software Suspend far beyond the point
++   most of us (Nigel included!) would consider testing. His efforts have
++   contributed as much to Software Suspend as any of the names above.

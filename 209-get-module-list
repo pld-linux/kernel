@@ -1,0 +1,44 @@
+diff -ruN linux-2.6.9-rc1/kernel/module.c software-suspend-linux-2.6.9-rc1-rev3/kernel/module.c
+--- linux-2.6.9-rc1/kernel/module.c	2004-09-07 21:59:00.000000000 +1000
++++ software-suspend-linux-2.6.9-rc1-rev3/kernel/module.c	2004-09-09 19:36:24.000000000 +1000
+@@ -2146,6 +2146,33 @@
+ 	printk("\n");
+ }
+ 
++#define MODLIST_SIZE 4096
++
++void print_module_list(void)
++{
++	static char modlist[MODLIST_SIZE];
++	struct module *mod;
++	int pos = 0;
++
++	list_for_each_entry(mod, &modules, list)
++		if (mod->name)
++			pos += snprintf(modlist+pos, MODLIST_SIZE-pos-1, 
++					"%s ", mod->name);
++	printk("%s\n",modlist);
++}
++
++int print_module_list_to_buffer(char * buffer, int size)
++{
++	struct module *mod;
++	int pos = 0;
++
++	list_for_each_entry(mod, &modules, list)
++		if (mod->name)
++			pos += snprintf(buffer+pos, size-pos-1, 
++					"%s ", mod->name);
++	return pos;
++}
++
+ #ifdef CONFIG_MODVERSIONS
+ /* Generate the signature for struct module here, too, for modversions. */
+ void struct_module(struct module *mod) { return; }
+@@ -2157,3 +2184,6 @@
+ 	return subsystem_register(&module_subsys);
+ }
+ __initcall(modules_init);
++
++/* For Suspend2 */
++EXPORT_SYMBOL(print_module_list_to_buffer);

@@ -1,0 +1,65 @@
+diff -ruN linux-2.6.9-rc1/drivers/char/vt.c software-suspend-linux-2.6.9-rc1-rev3/drivers/char/vt.c
+--- linux-2.6.9-rc1/drivers/char/vt.c	2004-09-07 21:58:32.000000000 +1000
++++ software-suspend-linux-2.6.9-rc1-rev3/drivers/char/vt.c	2004-09-09 19:36:24.000000000 +1000
+@@ -151,11 +151,11 @@
+ 		    unsigned int cols, int do_clear);
+ static void gotoxy(int currcons, int new_x, int new_y);
+ static void save_cur(int currcons);
+-static void reset_terminal(int currcons, int do_clear);
++void reset_terminal(int currcons, int do_clear);
+ static void con_flush_chars(struct tty_struct *tty);
+ static void set_vesa_blanking(char __user *p);
+ static void set_cursor(int currcons);
+-static void hide_cursor(int currcons);
++void hide_cursor(int currcons);
+ static void console_callback(void *ignored);
+ static void blank_screen_t(unsigned long dummy);
+ 
+@@ -553,7 +553,7 @@
+ 	}
+ }
+ 
+-static void hide_cursor(int currcons)
++void hide_cursor(int currcons)
+ {
+ 	if (currcons == sel_cons)
+ 		clear_selection();
+@@ -913,7 +913,7 @@
+  */
+ static void gotoxy(int currcons, int new_x, int new_y)
+ {
+-	int min_y, max_y;
++	unsigned int min_y, max_y;
+ 
+ 	if (new_x < 0)
+ 		x = 0;
+@@ -940,7 +940,7 @@
+ }
+ 
+ /* for absolute user moves, when decom is set */
+-static void gotoxay(int currcons, int new_x, int new_y)
++static void gotoxay(int currcons, unsigned int new_x, unsigned int new_y)
+ {
+ 	gotoxy(currcons, new_x, decom ? (top+new_y) : new_y);
+ }
+@@ -1455,7 +1455,7 @@
+ 	ESpalette };
+ 
+ /* console_sem is held (except via vc_init()) */
+-static void reset_terminal(int currcons, int do_clear)
++void reset_terminal(int currcons, int do_clear)
+ {
+ 	top		= 0;
+ 	bottom		= video_num_lines;
+@@ -3283,6 +3283,11 @@
+  *	Visible symbols for modules
+  */
+ 
++EXPORT_SYMBOL(hide_cursor);
++EXPORT_SYMBOL(reset_terminal);
++EXPORT_SYMBOL(unblank_screen);
++EXPORT_SYMBOL(poke_blanked_console);
++EXPORT_SYMBOL(kmsg_redirect);
+ EXPORT_SYMBOL(color_table);
+ EXPORT_SYMBOL(default_red);
+ EXPORT_SYMBOL(default_grn);

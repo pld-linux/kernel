@@ -1,0 +1,21 @@
+diff -ruN linux-2.6.9-rc1/drivers/acpi/sleep/proc.c software-suspend-linux-2.6.9-rc1-rev3/drivers/acpi/sleep/proc.c
+--- linux-2.6.9-rc1/drivers/acpi/sleep/proc.c	2004-09-07 21:58:30.000000000 +1000
++++ software-suspend-linux-2.6.9-rc1-rev3/drivers/acpi/sleep/proc.c	2004-09-09 19:36:24.000000000 +1000
+@@ -68,6 +68,17 @@
+ 		goto Done;
+ 	}
+ 	state = simple_strtoul(str, NULL, 0);
++#ifdef CONFIG_SOFTWARE_SUSPEND2
++	/* 
++	 * I used to put this after the CONFIG_SOFTWARE_SUSPEND
++	 * test, but people who compile in suspend2 usually want
++	 * to use it instead of swsusp.   --NC
++	 */
++	if (state == 4) {
++		software_suspend_pending();
++		goto Done;
++	}
++#endif
+ #ifdef CONFIG_SOFTWARE_SUSPEND
+ 	if (state == 4) {
+ 		software_suspend();

@@ -1,0 +1,21 @@
+diff -ruN 505-disable-cache-reaping-during-suspend-old/mm/slab.c 505-disable-cache-reaping-during-suspend-new/mm/slab.c
+--- 505-disable-cache-reaping-during-suspend-old/mm/slab.c	2004-09-21 10:59:03.000000000 +1000
++++ 505-disable-cache-reaping-during-suspend-new/mm/slab.c	2004-09-27 22:59:35.944694952 +1000
+@@ -91,6 +91,7 @@
+ #include	<linux/cpu.h>
+ #include	<linux/sysctl.h>
+ #include	<linux/module.h>
++#include	<linux/suspend.h>
+ 
+ #include	<asm/uaccess.h>
+ #include	<asm/cacheflush.h>
+@@ -2690,7 +2691,8 @@
+ 	BUG_ON(!in_interrupt());
+ 	BUG_ON(in_irq());
+ #endif
+-	if (down_trylock(&cache_chain_sem))
++	if ((test_suspend_state(SUSPEND_RUNNING)) ||
++		(down_trylock(&cache_chain_sem))) 
+ 		return;
+ 
+ 	list_for_each(walk, &cache_chain) {

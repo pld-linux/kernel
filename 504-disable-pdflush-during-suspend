@@ -1,0 +1,33 @@
+diff -ruN 504-disable-pdflush-during-suspend-old/mm/page-writeback.c 504-disable-pdflush-during-suspend-new/mm/page-writeback.c
+--- 504-disable-pdflush-during-suspend-old/mm/page-writeback.c	2004-09-24 22:28:41.000000000 +1000
++++ 504-disable-pdflush-during-suspend-new/mm/page-writeback.c	2004-09-24 19:09:41.000000000 +1000
+@@ -29,6 +29,7 @@
+ #include <linux/sysctl.h>
+ #include <linux/cpu.h>
+ #include <linux/syscalls.h>
++#include <linux/suspend.h>
+ 
+ /*
+  * The maximum number of pages to writeout in a single bdflush/kupdate
+@@ -372,6 +373,12 @@
+ 		.for_kupdate	= 1,
+ 	};
+ 
++	if (test_suspend_state(SUSPEND_RUNNING)) {
++		start_jif = jiffies;
++		next_jif = start_jif + (dirty_writeback_centisecs * HZ) / 100;
++		goto out;
++	}
++
+ 	sync_supers();
+ 
+ 	get_writeback_state(&wbs);
+@@ -392,6 +399,8 @@
+ 		}
+ 		nr_to_write -= MAX_WRITEBACK_PAGES - wbc.nr_to_write;
+ 	}
++
++out:
+ 	if (time_before(next_jif, jiffies + HZ))
+ 		next_jif = jiffies + HZ;
+ 	if (dirty_writeback_centisecs)

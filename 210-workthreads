@@ -1,0 +1,412 @@
+diff -ruN 210-workthreads-old/drivers/acpi/osl.c 210-workthreads-new/drivers/acpi/osl.c
+--- 210-workthreads-old/drivers/acpi/osl.c	2004-09-21 10:58:58.000000000 +1000
++++ 210-workthreads-new/drivers/acpi/osl.c	2004-09-23 16:42:21.600669448 +1000
+@@ -81,7 +81,7 @@
+ 		return AE_NULL_ENTRY;
+ 	}
+ #endif
+-	kacpid_wq = create_singlethread_workqueue("kacpid");
++	kacpid_wq = create_singlethread_workqueue("kacpid", 0);
+ 	BUG_ON(!kacpid_wq);
+ 
+ 	return AE_OK;
+diff -ruN 210-workthreads-old/drivers/block/ll_rw_blk.c 210-workthreads-new/drivers/block/ll_rw_blk.c
+--- 210-workthreads-old/drivers/block/ll_rw_blk.c	2004-09-21 10:58:58.000000000 +1000
++++ 210-workthreads-new/drivers/block/ll_rw_blk.c	2004-09-23 16:42:21.622666104 +1000
+@@ -2877,7 +2877,7 @@
+ 
+ int __init blk_dev_init(void)
+ {
+-	kblockd_workqueue = create_workqueue("kblockd");
++	kblockd_workqueue = create_workqueue("kblockd", PF_NOFREEZE);
+ 	if (!kblockd_workqueue)
+ 		panic("Failed to create kblockd\n");
+ 
+diff -ruN 210-workthreads-old/drivers/char/hvcs.c 210-workthreads-new/drivers/char/hvcs.c
+--- 210-workthreads-old/drivers/char/hvcs.c	2004-09-21 10:58:58.000000000 +1000
++++ 210-workthreads-new/drivers/char/hvcs.c	2004-09-23 16:42:21.637663824 +1000
+@@ -1351,7 +1351,7 @@
+ 	hvcs_pi_lock = SPIN_LOCK_UNLOCKED;
+ 	hvcs_pi_buff = kmalloc(PAGE_SIZE, GFP_KERNEL);
+ 
+-	hvcs_task = kthread_run(khvcsd, NULL, "khvcsd");
++	hvcs_task = kthread_run(khvcsd, NULL, 0, "khvcsd");
+ 	if (IS_ERR(hvcs_task)) {
+ 		printk("khvcsd creation failed.  Driver not loaded.\n");
+ 		kfree(hvcs_pi_buff);
+diff -ruN 210-workthreads-old/drivers/md/dm-crypt.c 210-workthreads-new/drivers/md/dm-crypt.c
+--- 210-workthreads-old/drivers/md/dm-crypt.c	2004-05-19 22:10:27.000000000 +1000
++++ 210-workthreads-new/drivers/md/dm-crypt.c	2004-09-23 16:42:21.658660632 +1000
+@@ -758,7 +758,7 @@
+ 	if (!_crypt_io_pool)
+ 		return -ENOMEM;
+ 
+-	_kcryptd_workqueue = create_workqueue("kcryptd");
++	_kcryptd_workqueue = create_workqueue("kcryptd", PF_NOFREEZE);
+ 	if (!_kcryptd_workqueue) {
+ 		r = -ENOMEM;
+ 		DMERR(PFX "couldn't create kcryptd");
+diff -ruN 210-workthreads-old/drivers/md/dm-raid1.c 210-workthreads-new/drivers/md/dm-raid1.c
+--- 210-workthreads-old/drivers/md/dm-raid1.c	2004-08-30 16:00:58.000000000 +1000
++++ 210-workthreads-new/drivers/md/dm-raid1.c	2004-09-23 16:42:21.671658656 +1000
+@@ -1238,7 +1238,7 @@
+ 	if (r)
+ 		return r;
+ 
+-	_kmirrord_wq = create_workqueue("kmirrord");
++	_kmirrord_wq = create_workqueue("kmirrord", PF_SYNCTHREAD);
+ 	if (!_kmirrord_wq) {
+ 		DMERR("couldn't start kmirrord");
+ 		dm_dirty_log_exit();
+diff -ruN 210-workthreads-old/drivers/md/kcopyd.c 210-workthreads-new/drivers/md/kcopyd.c
+--- 210-workthreads-old/drivers/md/kcopyd.c	2004-08-30 16:00:58.000000000 +1000
++++ 210-workthreads-new/drivers/md/kcopyd.c	2004-09-23 16:42:21.687656224 +1000
+@@ -609,7 +609,7 @@
+ 		return r;
+ 	}
+ 
+-	_kcopyd_wq = create_singlethread_workqueue("kcopyd");
++	_kcopyd_wq = create_singlethread_workqueue("kcopyd", PF_SYNCTHREAD);
+ 	if (!_kcopyd_wq) {
+ 		jobs_exit();
+ 		up(&kcopyd_init_lock);
+diff -ruN 210-workthreads-old/drivers/message/i2o/i2o_core.c 210-workthreads-new/drivers/message/i2o/i2o_core.c
+--- 210-workthreads-old/drivers/message/i2o/i2o_core.c	2004-08-30 16:01:00.000000000 +1000
++++ 210-workthreads-new/drivers/message/i2o/i2o_core.c	2004-09-23 16:46:12.535562008 +1000
+@@ -1027,6 +1027,11 @@
+ 	{
+ 		if(down_interruptible(&evt_sem))
+ 		{
++			if (current->flags & PF_FREEZE) {
++				refrigerator(PF_FREEZE);
++				continue;
++			}
++
+ 			dprintk(KERN_INFO "I2O event thread dead\n");
+ 			printk("exiting...");
+ 			evt_running = 0;
+diff -ruN 210-workthreads-old/drivers/net/wan/sdlamain.c 210-workthreads-new/drivers/net/wan/sdlamain.c
+--- 210-workthreads-old/drivers/net/wan/sdlamain.c	2004-03-16 09:20:04.000000000 +1100
++++ 210-workthreads-new/drivers/net/wan/sdlamain.c	2004-09-23 16:42:21.718651512 +1000
+@@ -240,7 +240,7 @@
+ 	printk(KERN_INFO "%s v%u.%u %s\n",
+ 		fullname, DRV_VERSION, DRV_RELEASE, copyright);
+ 
+-	wanpipe_wq = create_workqueue("wanpipe_wq");
++	wanpipe_wq = create_workqueue("wanpipe_wq", 0);
+ 	if (!wanpipe_wq)
+ 		return -ENOMEM;
+ 
+diff -ruN 210-workthreads-old/drivers/s390/cio/device.c 210-workthreads-new/drivers/s390/cio/device.c
+--- 210-workthreads-old/drivers/s390/cio/device.c	2004-06-18 12:44:07.000000000 +1000
++++ 210-workthreads-new/drivers/s390/cio/device.c	2004-09-23 16:42:21.724650600 +1000
+@@ -151,15 +151,16 @@
+ 	init_waitqueue_head(&ccw_device_init_wq);
+ 	atomic_set(&ccw_device_init_count, 0);
+ 
+-	ccw_device_work = create_singlethread_workqueue("cio");
++	ccw_device_work = create_singlethread_workqueue("cio", 0);
+ 	if (!ccw_device_work)
+ 		return -ENOMEM; /* FIXME: better errno ? */
+-	ccw_device_notify_work = create_singlethread_workqueue("cio_notify");
++	ccw_device_notify_work = create_singlethread_workqueue("cio_notify",
++			0);
+ 	if (!ccw_device_notify_work) {
+ 		ret = -ENOMEM; /* FIXME: better errno ? */
+ 		goto out_err;
+ 	}
+-	slow_path_wq = create_singlethread_workqueue("kslowcrw");
++	slow_path_wq = create_singlethread_workqueue("kslowcrw", 0);
+ 	if (!slow_path_wq) {
+ 		ret = -ENOMEM; /* FIXME: better errno ? */
+ 		goto out_err;
+diff -ruN 210-workthreads-old/drivers/scsi/libata-core.c 210-workthreads-new/drivers/scsi/libata-core.c
+--- 210-workthreads-old/drivers/scsi/libata-core.c	2004-09-21 10:58:59.000000000 +1000
++++ 210-workthreads-new/drivers/scsi/libata-core.c	2004-09-23 16:42:21.760645128 +1000
+@@ -3331,7 +3331,7 @@
+ 
+ static int __init ata_init(void)
+ {
+-	ata_wq = create_workqueue("ata");
++	ata_wq = create_workqueue("ata", PF_NOFREEZE);
+ 	if (!ata_wq)
+ 		return -ENOMEM;
+ 
+diff -ruN 210-workthreads-old/fs/aio.c 210-workthreads-new/fs/aio.c
+--- 210-workthreads-old/fs/aio.c	2004-09-21 10:59:00.000000000 +1000
++++ 210-workthreads-new/fs/aio.c	2004-09-23 16:42:21.764644520 +1000
+@@ -69,7 +69,7 @@
+ 	kioctx_cachep = kmem_cache_create("kioctx", sizeof(struct kioctx),
+ 				0, SLAB_HWCACHE_ALIGN|SLAB_PANIC, NULL, NULL);
+ 
+-	aio_wq = create_workqueue("aio");
++	aio_wq = create_workqueue("aio", PF_NOFREEZE);
+ 
+ 	pr_debug("aio_setup: sizeof(struct page) = %d\n", (int)sizeof(struct page));
+ 
+diff -ruN 210-workthreads-old/fs/reiserfs/journal.c 210-workthreads-new/fs/reiserfs/journal.c
+--- 210-workthreads-old/fs/reiserfs/journal.c	2004-09-21 10:59:01.000000000 +1000
++++ 210-workthreads-new/fs/reiserfs/journal.c	2004-09-23 16:42:21.779642240 +1000
+@@ -2423,7 +2423,7 @@
+ 
+   reiserfs_mounted_fs_count++ ;
+   if (reiserfs_mounted_fs_count <= 1)
+-    commit_wq = create_workqueue("reiserfs");
++    commit_wq = create_workqueue("reiserfs", PF_SYNCTHREAD);
+ 
+   INIT_WORK(&journal->j_work, flush_async_commits, p_s_sb);
+   return 0 ;
+diff -ruN 210-workthreads-old/fs/xfs/linux-2.6/xfs_buf.c 210-workthreads-new/fs/xfs/linux-2.6/xfs_buf.c
+--- 210-workthreads-old/fs/xfs/linux-2.6/xfs_buf.c	2004-09-21 10:59:01.000000000 +1000
++++ 210-workthreads-new/fs/xfs/linux-2.6/xfs_buf.c	2004-09-23 16:42:21.784641480 +1000
+@@ -1746,11 +1746,11 @@
+ {
+ 	int		rval;
+ 
+-	pagebuf_logio_workqueue = create_workqueue("xfslogd");
++	pagebuf_logio_workqueue = create_workqueue("xfslogd", PF_SYNCTHREAD);
+ 	if (!pagebuf_logio_workqueue)
+ 		return -ENOMEM;
+ 
+-	pagebuf_dataio_workqueue = create_workqueue("xfsdatad");
++	pagebuf_dataio_workqueue = create_workqueue("xfsdatad", PF_SYNCTHREAD);
+ 	if (!pagebuf_dataio_workqueue) {
+ 		destroy_workqueue(pagebuf_logio_workqueue);
+ 		return -ENOMEM;
+diff -ruN 210-workthreads-old/include/linux/kthread.h 210-workthreads-new/include/linux/kthread.h
+--- 210-workthreads-old/include/linux/kthread.h	2004-07-08 12:03:28.000000000 +1000
++++ 210-workthreads-new/include/linux/kthread.h	2004-09-23 16:42:21.824635400 +1000
+@@ -25,20 +25,26 @@
+  */
+ struct task_struct *kthread_create(int (*threadfn)(void *data),
+ 				   void *data,
++				   unsigned long freezer_flags,
+ 				   const char namefmt[], ...);
+ 
+ /**
+  * kthread_run: create and wake a thread.
+  * @threadfn: the function to run until signal_pending(current).
+  * @data: data ptr for @threadfn.
++ * @freezer_flags: process flags that should be used for freezing.
++ * 	PF_SYNCTHREAD if needed for syncing data to disk.
++ * 	PF_NOFREEZE if also needed for writing the image.
++ * 	0 otherwise.
+  * @namefmt: printf-style name for the thread.
+  *
+  * Description: Convenient wrapper for kthread_create() followed by
+  * wake_up_process().  Returns the kthread, or ERR_PTR(-ENOMEM). */
+-#define kthread_run(threadfn, data, namefmt, ...)			   \
++#define kthread_run(threadfn, data, freezer_flags, namefmt, ...)	   \
+ ({									   \
+ 	struct task_struct *__k						   \
+-		= kthread_create(threadfn, data, namefmt, ## __VA_ARGS__); \
++		= kthread_create(threadfn, data, freezer_flags, 	   \
++			namefmt, ## __VA_ARGS__);			   \
+ 	if (!IS_ERR(__k))						   \
+ 		wake_up_process(__k);					   \
+ 	__k;								   \
+diff -ruN 210-workthreads-old/include/linux/workqueue.h 210-workthreads-new/include/linux/workqueue.h
+--- 210-workthreads-old/include/linux/workqueue.h	2004-09-21 10:59:02.000000000 +1000
++++ 210-workthreads-new/include/linux/workqueue.h	2004-09-23 16:42:21.834633880 +1000
+@@ -51,9 +51,10 @@
+ 	} while (0)
+ 
+ extern struct workqueue_struct *__create_workqueue(const char *name,
+-						    int singlethread);
+-#define create_workqueue(name) __create_workqueue((name), 0)
+-#define create_singlethread_workqueue(name) __create_workqueue((name), 1)
++						    int singlethread,
++						    unsigned long freezer_flag);
++#define create_workqueue(name, flags) __create_workqueue((name), 0, flags)
++#define create_singlethread_workqueue(name, flags) __create_workqueue((name), 1, flags)
+ 
+ extern void destroy_workqueue(struct workqueue_struct *wq);
+ 
+diff -ruN 210-workthreads-old/kernel/kmod.c 210-workthreads-new/kernel/kmod.c
+--- 210-workthreads-old/kernel/kmod.c	2004-09-21 10:59:02.000000000 +1000
++++ 210-workthreads-new/kernel/kmod.c	2004-09-23 16:42:21.847631904 +1000
+@@ -274,7 +274,7 @@
+ 
+ static __init int usermodehelper_init(void)
+ {
+-	khelper_wq = create_singlethread_workqueue("khelper");
++	khelper_wq = create_singlethread_workqueue("khelper", 0);
+ 	BUG_ON(!khelper_wq);
+ 	return 0;
+ }
+diff -ruN 210-workthreads-old/kernel/kthread.c 210-workthreads-new/kernel/kthread.c
+--- 210-workthreads-old/kernel/kthread.c	2004-08-30 16:01:19.000000000 +1000
++++ 210-workthreads-new/kernel/kthread.c	2004-09-23 16:42:21.854630840 +1000
+@@ -19,6 +19,7 @@
+ 	/* Information passed to kthread() from keventd. */
+ 	int (*threadfn)(void *data);
+ 	void *data;
++	unsigned long freezer_flags;
+ 	struct completion started;
+ 
+ 	/* Result passed back to kthread_create() from keventd. */
+@@ -80,6 +81,9 @@
+ 	/* By default we can run anywhere, unlike keventd. */
+ 	set_cpus_allowed(current, CPU_MASK_ALL);
+ 
++	/* Set our freezer flags */
++	current->flags |= create->freezer_flags;
++
+ 	/* OK, tell user we're spawned, wait for stop or wakeup */
+ 	__set_current_state(TASK_INTERRUPTIBLE);
+ 	complete(&create->started);
+@@ -115,6 +119,7 @@
+ 
+ struct task_struct *kthread_create(int (*threadfn)(void *data),
+ 				   void *data,
++				   unsigned long freezer_flags,
+ 				   const char namefmt[],
+ 				   ...)
+ {
+@@ -123,6 +128,7 @@
+ 
+ 	create.threadfn = threadfn;
+ 	create.data = data;
++	create.freezer_flags = freezer_flags;
+ 	init_completion(&create.started);
+ 	init_completion(&create.done);
+ 
+diff -ruN 210-workthreads-old/kernel/sched.c 210-workthreads-new/kernel/sched.c
+--- 210-workthreads-old/kernel/sched.c	2004-09-23 16:46:26.183487208 +1000
++++ 210-workthreads-new/kernel/sched.c	2004-09-23 16:42:21.857630384 +1000
+@@ -3596,7 +3596,8 @@
+ 
+ 	switch (action) {
+ 	case CPU_UP_PREPARE:
+-		p = kthread_create(migration_thread, hcpu, "migration/%d",cpu);
++		p = kthread_create(migration_thread, hcpu, 0,
++				"migration/%d",cpu);
+ 		if (IS_ERR(p))
+ 			return NOTIFY_BAD;
+ 		p->flags |= PF_NOFREEZE;
+diff -ruN 210-workthreads-old/kernel/softirq.c 210-workthreads-new/kernel/softirq.c
+--- 210-workthreads-old/kernel/softirq.c	2004-09-21 10:59:03.000000000 +1000
++++ 210-workthreads-new/kernel/softirq.c	2004-09-23 16:42:21.868628712 +1000
+@@ -425,7 +425,7 @@
+ 	case CPU_UP_PREPARE:
+ 		BUG_ON(per_cpu(tasklet_vec, hotcpu).list);
+ 		BUG_ON(per_cpu(tasklet_hi_vec, hotcpu).list);
+-		p = kthread_create(ksoftirqd, hcpu, "ksoftirqd/%d", hotcpu);
++		p = kthread_create(ksoftirqd, hcpu, 0, "ksoftirqd/%d", hotcpu);
+ 		if (IS_ERR(p)) {
+ 			printk("ksoftirqd for %i failed\n", hotcpu);
+ 			return NOTIFY_BAD;
+diff -ruN 210-workthreads-old/kernel/stop_machine.c 210-workthreads-new/kernel/stop_machine.c
+--- 210-workthreads-old/kernel/stop_machine.c	2004-05-19 22:10:48.000000000 +1000
++++ 210-workthreads-new/kernel/stop_machine.c	2004-09-23 16:42:21.904623240 +1000
+@@ -174,7 +174,7 @@
+ 	if (cpu == NR_CPUS)
+ 		cpu = smp_processor_id();
+ 
+-	p = kthread_create(do_stop, &smdata, "kstopmachine");
++	p = kthread_create(do_stop, &smdata, 0, "kstopmachine");
+ 	if (!IS_ERR(p)) {
+ 		kthread_bind(p, cpu);
+ 		wake_up_process(p);
+diff -ruN 210-workthreads-old/kernel/workqueue.c 210-workthreads-new/kernel/workqueue.c
+--- 210-workthreads-old/kernel/workqueue.c	2004-09-21 10:59:03.000000000 +1000
++++ 210-workthreads-new/kernel/workqueue.c	2004-09-23 16:42:21.929619440 +1000
+@@ -25,6 +25,7 @@
+ #include <linux/cpu.h>
+ #include <linux/notifier.h>
+ #include <linux/kthread.h>
++#include <linux/suspend.h>
+ 
+ /*
+  * The per-CPU workqueue (if single thread, we always use cpu 0's).
+@@ -186,8 +187,6 @@
+ 	struct k_sigaction sa;
+ 	sigset_t blocked;
+ 
+-	current->flags |= PF_NOFREEZE;
+-
+ 	set_user_nice(current, -10);
+ 
+ 	/* Block and flush all signals */
+@@ -208,6 +207,8 @@
+ 			schedule();
+ 		else
+ 			__set_current_state(TASK_RUNNING);
++		if (current->flags & PF_FREEZE)
++			refrigerator(PF_FREEZE);
+ 		remove_wait_queue(&cwq->more_work, &wait);
+ 
+ 		if (!list_empty(&cwq->worklist))
+@@ -277,7 +278,8 @@
+ }
+ 
+ static struct task_struct *create_workqueue_thread(struct workqueue_struct *wq,
+-						   int cpu)
++						   int cpu,
++						   unsigned long freezer_flags)
+ {
+ 	struct cpu_workqueue_struct *cwq = wq->cpu_wq + cpu;
+ 	struct task_struct *p;
+@@ -292,9 +294,11 @@
+ 	init_waitqueue_head(&cwq->work_done);
+ 
+ 	if (is_single_threaded(wq))
+-		p = kthread_create(worker_thread, cwq, "%s", wq->name);
++		p = kthread_create(worker_thread, cwq, freezer_flags, 
++				"%s", wq->name);
+ 	else
+-		p = kthread_create(worker_thread, cwq, "%s/%d", wq->name, cpu);
++		p = kthread_create(worker_thread, cwq, freezer_flags,
++				"%s/%d", wq->name, cpu);
+ 	if (IS_ERR(p))
+ 		return NULL;
+ 	cwq->thread = p;
+@@ -302,7 +306,8 @@
+ }
+ 
+ struct workqueue_struct *__create_workqueue(const char *name,
+-					    int singlethread)
++					    int singlethread,
++					    unsigned long freezer_flags)
+ {
+ 	int cpu, destroy = 0;
+ 	struct workqueue_struct *wq;
+@@ -320,7 +325,7 @@
+ 	lock_cpu_hotplug();
+ 	if (singlethread) {
+ 		INIT_LIST_HEAD(&wq->list);
+-		p = create_workqueue_thread(wq, 0);
++		p = create_workqueue_thread(wq, 0, freezer_flags);
+ 		if (!p)
+ 			destroy = 1;
+ 		else
+@@ -330,7 +335,7 @@
+ 		list_add(&wq->list, &workqueues);
+ 		spin_unlock(&workqueue_lock);
+ 		for_each_online_cpu(cpu) {
+-			p = create_workqueue_thread(wq, cpu);
++			p = create_workqueue_thread(wq, cpu, freezer_flags);
+ 			if (p) {
+ 				kthread_bind(p, cpu);
+ 				wake_up_process(p);
+@@ -493,7 +498,7 @@
+ void init_workqueues(void)
+ {
+ 	hotcpu_notifier(workqueue_cpu_callback, 0);
+-	keventd_wq = create_workqueue("events");
++	keventd_wq = create_workqueue("events", 0);
+ 	BUG_ON(!keventd_wq);
+ }
+ 
+diff -ruN 210-workthreads-old/mm/pdflush.c 210-workthreads-new/mm/pdflush.c
+--- 210-workthreads-old/mm/pdflush.c	2004-05-19 22:10:48.000000000 +1000
++++ 210-workthreads-new/mm/pdflush.c	2004-09-23 16:42:21.965613968 +1000
+@@ -215,7 +215,7 @@
+ 
+ static void start_one_pdflush_thread(void)
+ {
+-	kthread_run(pdflush, NULL, "pdflush");
++	kthread_run(pdflush, NULL, 0, "pdflush");
+ }
+ 
+ static int __init pdflush_init(void)

@@ -1,0 +1,21 @@
+diff -ruN 501-disable-oom-killer-when-suspending-old/mm/oom_kill.c 501-disable-oom-killer-when-suspending-new/mm/oom_kill.c
+--- 501-disable-oom-killer-when-suspending-old/mm/oom_kill.c	2004-09-16 08:34:57.000000000 +1000
++++ 501-disable-oom-killer-when-suspending-new/mm/oom_kill.c	2004-09-24 19:09:41.000000000 +1000
+@@ -20,6 +20,7 @@
+ #include <linux/swap.h>
+ #include <linux/timex.h>
+ #include <linux/jiffies.h>
++#include <linux/suspend.h>
+ 
+ /* #define DEBUG */
+ 
+@@ -230,6 +231,9 @@
+ 	static unsigned long first, last, count, lastkill;
+ 	unsigned long now, since;
+ 
++	if (test_suspend_state(SUSPEND_RUNNING))
++		return;
++	
+ 	spin_lock(&oom_lock);
+ 	now = jiffies;
+ 	since = now - last;

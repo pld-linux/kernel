@@ -1,0 +1,57 @@
+diff -ruN 830-blockwriter-old/kernel/power/block_io.h 830-blockwriter-new/kernel/power/block_io.h
+--- 830-blockwriter-old/kernel/power/block_io.h	1970-01-01 10:00:00.000000000 +1000
++++ 830-blockwriter-new/kernel/power/block_io.h	2004-09-25 15:21:13.000000000 +1000
+@@ -0,0 +1,53 @@
++/*
++ * block_io.h
++ *
++ * Copyright 2004 Nigel Cunningham <ncunningham@linuxmail.org>
++ *
++ * Distributed under GPLv2.
++ *
++ * This file contains declarations for functions exported from
++ * block_io.c, which contains low level io functions.
++ */
++
++#define MAX_READAHEAD (int) (2048)
++
++/* Forward Declarations */
++
++struct submit_params {
++	swp_entry_t swap_address;
++	struct page * page;
++	struct block_device * dev;
++	long blocks[PAGE_SIZE/512];
++	int blocks_used;
++	int readahead_index;
++	struct submit_params * next;
++};
++
++
++extern int max_async_ios;
++#define REAL_MAX_ASYNC ((max_async_ios ? max_async_ios : MAX_READAHEAD))
++
++/* 
++ * Our exported interface so the swapwriter and NFS writer don't
++ * need these functions built in.
++ */
++struct suspend_bio_ops {
++	int (*set_block_size) (struct block_device * bdev, int size);
++	int (*get_block_size) (struct block_device * bdev);
++	void (*cleanup_completed_io) (void);
++	void (*submit_io) (int rw, 
++		struct submit_params * submit_info, int syncio);
++	void (*bdev_page_io) (int rw, struct block_device * bdev, long pos,
++			struct page * page);
++	void (*wait_on_readahead) (int readahead_index);
++	void (*check_io_stats) (void);
++	void (*reset_io_stats) (void);
++	void (*finish_all_io) (void);
++	int (*readahead_prepare) (void);
++	void (*readahead_cleanup) (void);
++	struct page ** readahead_pages;
++	unsigned long * readahead_flags;
++	spinlock_t * readahead_flags_lock;
++};
++
++extern struct suspend_bio_ops suspend_bio_ops;

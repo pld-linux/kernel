@@ -1,0 +1,916 @@
+diff -ruN 701-mac-old/arch/ppc/Kconfig 701-mac-new/arch/ppc/Kconfig
+--- 701-mac-old/arch/ppc/Kconfig	2004-09-16 08:34:28.000000000 +1000
++++ 701-mac-new/arch/ppc/Kconfig	2004-09-24 19:09:40.000000000 +1000
+@@ -225,6 +225,8 @@
+ 
+ 	  If in doubt, say Y here.
+ 
++source kernel/power/Kconfig
++
+ source arch/ppc/platforms/4xx/Kconfig
+ source arch/ppc/platforms/85xx/Kconfig
+ 
+diff -ruN 701-mac-old/arch/ppc/kernel/signal.c 701-mac-new/arch/ppc/kernel/signal.c
+--- 701-mac-old/arch/ppc/kernel/signal.c	2004-09-16 08:34:28.000000000 +1000
++++ 701-mac-new/arch/ppc/kernel/signal.c	2004-09-24 19:09:41.000000000 +1000
+@@ -604,6 +604,15 @@
+ 	unsigned long frame, newsp;
+ 	int signr, ret;
+ 
++	if (current->flags & PF_FREEZE) {
++		refrigerator(PF_FREEZE);
++		signr = 0;
++		ret = regs->gpr[3];
++		recalc_sigpending();
++		if (!signal_pending(current))
++			goto no_signal;
++	}
++
+ 	if (!oldset)
+ 		oldset = &current->blocked;
+ 
+@@ -626,6 +635,7 @@
+ 			regs->gpr[3] = EINTR;
+ 			/* note that the cr0.SO bit is already set */
+ 		} else {
++no_signal:
+ 			regs->nip -= 4;	/* Back up & retry system call */
+ 			regs->result = 0;
+ 			regs->trap = 0;
+diff -ruN 701-mac-old/arch/ppc/kernel/vmlinux.lds.S 701-mac-new/arch/ppc/kernel/vmlinux.lds.S
+--- 701-mac-old/arch/ppc/kernel/vmlinux.lds.S	2004-09-16 08:34:28.000000000 +1000
++++ 701-mac-new/arch/ppc/kernel/vmlinux.lds.S	2004-09-24 19:09:40.000000000 +1000
+@@ -74,6 +74,12 @@
+     CONSTRUCTORS
+   }
+ 
++  . = ALIGN(4096);
++  __nosave_begin = .;
++  .data_nosave : { *(.data.nosave) }
++  . = ALIGN(4096);
++  __nosave_end = .;
++
+   . = ALIGN(32);
+   .data.cacheline_aligned : { *(.data.cacheline_aligned) }
+ 
+diff -ruN 701-mac-old/arch/ppc/Makefile 701-mac-new/arch/ppc/Makefile
+--- 701-mac-old/arch/ppc/Makefile	2004-09-16 08:34:28.000000000 +1000
++++ 701-mac-new/arch/ppc/Makefile	2004-09-24 19:09:40.000000000 +1000
+@@ -61,6 +61,7 @@
+ drivers-$(CONFIG_8xx)		+= arch/ppc/8xx_io/
+ drivers-$(CONFIG_4xx)		+= arch/ppc/4xx_io/
+ drivers-$(CONFIG_CPM2)		+= arch/ppc/8260_io/
++drivers-$(CONFIG_PM)		+= arch/ppc/power/
+ 
+ drivers-$(CONFIG_OPROFILE)	+= arch/ppc/oprofile/
+ 
+diff -ruN 701-mac-old/arch/ppc/mm/init.c 701-mac-new/arch/ppc/mm/init.c
+--- 701-mac-old/arch/ppc/mm/init.c	2004-09-07 21:58:26.000000000 +1000
++++ 701-mac-new/arch/ppc/mm/init.c	2004-09-24 19:09:40.000000000 +1000
+@@ -31,6 +31,9 @@
+ #include <linux/bootmem.h>
+ #include <linux/highmem.h>
+ #include <linux/initrd.h>
++#ifdef CONFIG_SOFTWARE_SUSPEND2
++#include <linux/suspend-common.h>
++#endif
+ 
+ #include <asm/pgalloc.h>
+ #include <asm/prom.h>
+@@ -149,6 +152,9 @@
+ 
+ 	while (start < end) {
+ 		ClearPageReserved(virt_to_page(start));
++#ifdef CONFIG_SOFTWARE_SUSPEND2
++		ClearPageNosave(virt_to_page(start));
++#endif
+ 		set_page_count(virt_to_page(start), 1);
+ 		free_page(start);
+ 		cnt++;
+@@ -188,6 +194,9 @@
+ 
+ 	for (; start < end; start += PAGE_SIZE) {
+ 		ClearPageReserved(virt_to_page(start));
++#ifdef CONFIG_SOFTWARE_SUSPEND2
++		ClearPageNosave(virt_to_page(start));
++#endif
+ 		set_page_count(virt_to_page(start), 1);
+ 		free_page(start);
+ 		totalram_pages++;
+@@ -424,8 +433,12 @@
+ 	/* if we are booted from BootX with an initial ramdisk,
+ 	   make sure the ramdisk pages aren't reserved. */
+ 	if (initrd_start) {
+-		for (addr = initrd_start; addr < initrd_end; addr += PAGE_SIZE)
++		for (addr = initrd_start; addr < initrd_end; addr += PAGE_SIZE) {
+ 			ClearPageReserved(virt_to_page(addr));
++#ifdef CONFIG_SOFTWARE_SUSPEND2
++			ClearPageNosave(virt_to_page(addr));
++#endif
++		}
+ 	}
+ #endif /* CONFIG_BLK_DEV_INITRD */
+ 
+@@ -451,6 +464,14 @@
+ 	     addr += PAGE_SIZE) {
+ 		if (!PageReserved(virt_to_page(addr)))
+ 			continue;
++#ifdef CONFIG_SOFTWARE_SUSPEND2
++		/*
++		 * Mark nosave pages
++		 */
++		if (addr >= (void *)&__nosave_begin && addr < (void *)&__nosave_end)
++			SetPageNosave(virt_to_page(addr));
++#endif
++
+ 		if (addr < (ulong) etext)
+ 			codepages++;
+ 		else if (addr >= (unsigned long)&__init_begin
+@@ -468,6 +489,9 @@
+ 			struct page *page = mem_map + pfn;
+ 
+ 			ClearPageReserved(page);
++#ifdef CONFIG_SOFTWARE_SUSPEND2
++			ClearPageNosave(page);
++#endif
+ 			set_bit(PG_highmem, &page->flags);
+ 			set_page_count(page, 1);
+ 			__free_page(page);
+@@ -501,7 +525,6 @@
+ 			pg->index = addr;
+ 		}
+ 	}
+-
+ 	mem_init_done = 1;
+ }
+ 
+diff -ruN 701-mac-old/arch/ppc/platforms/pmac_feature.c 701-mac-new/arch/ppc/platforms/pmac_feature.c
+--- 701-mac-old/arch/ppc/platforms/pmac_feature.c	2004-09-07 21:58:26.000000000 +1000
++++ 701-mac-new/arch/ppc/platforms/pmac_feature.c	2004-09-24 19:09:40.000000000 +1000
+@@ -2146,7 +2146,10 @@
+ 	},
+ 	{	"PowerBook6,1",			"PowerBook G4 12\"",
+ 		PMAC_TYPE_UNKNOWN_INTREPID,	intrepid_features,
+-		PMAC_MB_HAS_FW_POWER | PMAC_MB_MOBILE,
++		PMAC_MB_HAS_FW_POWER | PMAC_MB_MOBILE
++#ifdef CONFIG_SOFTWARE_REPLACE_SLEEP
++		| PMAC_MB_CAN_SLEEP,
++#endif
+ 	},
+ 	{	"PowerBook6,2",			"PowerBook G4",
+ 		PMAC_TYPE_UNKNOWN_INTREPID,	intrepid_features,
+diff -ruN 701-mac-old/arch/ppc/power/cpu.c 701-mac-new/arch/ppc/power/cpu.c
+--- 701-mac-old/arch/ppc/power/cpu.c	1970-01-01 10:00:00.000000000 +1000
++++ 701-mac-new/arch/ppc/power/cpu.c	2004-09-24 19:09:40.000000000 +1000
+@@ -0,0 +1,61 @@
++#include <linux/config.h>
++#include <linux/init.h>
++#include <linux/sched.h>
++#include <linux/kernel.h>
++#include <linux/mm.h>
++#include <linux/tty.h>
++#include <linux/string.h>
++#include <linux/adb.h>
++#include <linux/cuda.h>
++#include <linux/pmu.h>
++#include <linux/suspend.h>
++#include <linux/delay.h>
++#include <linux/module.h>
++
++#include <asm/mmu_context.h>
++
++extern void enable_kernel_altivec(void);
++
++static inline void do_pmu_resume(void)
++{
++	struct adb_request req;
++
++	printk("resume pmu");	
++	/* Tell PMU we are ready */
++	pmu_request(&req, NULL, 2, PMU_SYSTEM_READY, 2);
++	pmu_wait_complete(&req);
++
++	/* Resume PMU event interrupts */
++	pmu_resume();	
++	printk(".\n");
++}
++
++void save_processor_state(void)
++{
++	printk("suspend pmu");	
++	pmu_suspend();
++	printk(".\n");
++	printk("current is 0x%p\n", current);
++}
++
++void restore_processor_state(void)
++{
++	printk("seting context, 0x%p", current);
++	local_irq_disable();
++	/* Restore userland MMU context */
++	set_context(current->active_mm->context, current->active_mm->pgd);
++	printk(".\n");
++
++#ifdef CONFIG_ALTIVEC
++	if (cur_cpu_spec[0]->cpu_features & CPU_FTR_ALTIVEC)
++		enable_kernel_altivec();
++#endif
++	printk("enable kernel fp");
++	enable_kernel_fp();
++	printk(".\n");
++	do_pmu_resume();
++	local_irq_enable();
++}
++
++EXPORT_SYMBOL(save_processor_state);
++EXPORT_SYMBOL(restore_processor_state);
+diff -ruN 701-mac-old/arch/ppc/power/cpu_reg.S 701-mac-new/arch/ppc/power/cpu_reg.S
+--- 701-mac-old/arch/ppc/power/cpu_reg.S	1970-01-01 10:00:00.000000000 +1000
++++ 701-mac-new/arch/ppc/power/cpu_reg.S	2004-09-24 19:09:40.000000000 +1000
+@@ -0,0 +1,325 @@
++/*
++ * This code base on pmdisk.S by Benjamin Herrenschmidt <benh@kernel.crashing.org>
++ *
++ * changed for swsusp2 by Hu Gang <hugang@soulinfo.com>
++ */
++#include <linux/config.h>
++#include <linux/threads.h>
++#include <asm/processor.h>
++#include <asm/page.h>
++#include <asm/cputable.h>
++#include <asm/thread_info.h>
++#include <asm/ppc_asm.h>
++#include <asm/offsets.h>
++
++/*
++ * Structure for storing CPU registers on the save area.
++ */
++#define SL_SP		0
++#define SL_PC		4
++#define SL_MSR		8
++#define SL_SDR1		0xc
++#define SL_SPRG0	0x10	/* 4 sprg's */
++#define SL_DBAT0	0x20
++#define SL_IBAT0	0x28
++#define SL_DBAT1	0x30
++#define SL_IBAT1	0x38
++#define SL_DBAT2	0x40
++#define SL_IBAT2	0x48
++#define SL_DBAT3	0x50
++#define SL_IBAT3	0x58
++#define SL_TB		0x60
++#define SL_R2		0x68
++#define SL_CR		0x6c
++#define SL_LR		0x70
++#define SL_R12		0x74	/* r12 to r31 */
++#define SL_SIZE		(SL_R12 + 80)
++
++#define CPU_REG_MEM_DEFINE \
++	.section .data					  ; \
++	.align	5					  ; \
++\
++_GLOBAL(cpu_reg_save_area)				  ; \
++	.space	SL_SIZE	
++	
++#define CPU_REG_MEM_SAVE \
++	lis	r11,cpu_reg_save_area@h;\
++	ori	r11,r11,cpu_reg_save_area@l;\
++;\
++	mflr	r0					  ; \
++	stw	r0,SL_LR(r11);\
++	mfcr	r0;\
++	stw	r0,SL_CR(r11);\
++	stw	r1,SL_SP(r11);\
++	stw	r2,SL_R2(r11);\
++	stmw	r12,SL_R12(r11);\
++;\
++	/* Save MSR & SDR1 */;\
++	mfmsr	r4;\
++	stw	r4,SL_MSR(r11);\
++	mfsdr1	r4;\
++	stw	r4,SL_SDR1(r11);\
++;\
++	/* Get a stable timebase and save it */;\
++1:	mftbu	r4;\
++	stw	r4,SL_TB(r11);\
++	mftb	r5;\
++	stw	r5,SL_TB+4(r11);\
++	mftbu	r3;\
++	cmpw	r3,r4;\
++	bne	1b;\
++;\
++	/* Save SPRGs */;\
++	mfsprg	r4,0;\
++	stw	r4,SL_SPRG0(r11);\
++	mfsprg	r4,1;\
++	stw	r4,SL_SPRG0+4(r11);\
++	mfsprg	r4,2;\
++	stw	r4,SL_SPRG0+8(r11);\
++	mfsprg	r4,3;\
++	stw	r4,SL_SPRG0+12(r11);\
++;\
++	/* Save BATs */;\
++	mfdbatu	r4,0;\
++	stw	r4,SL_DBAT0(r11);\
++	mfdbatl	r4,0;\
++	stw	r4,SL_DBAT0+4(r11);\
++	mfdbatu	r4,1;\
++	stw	r4,SL_DBAT1(r11);\
++	mfdbatl	r4,1;\
++	stw	r4,SL_DBAT1+4(r11);\
++	mfdbatu	r4,2;\
++	stw	r4,SL_DBAT2(r11);\
++	mfdbatl	r4,2;\
++	stw	r4,SL_DBAT2+4(r11);\
++	mfdbatu	r4,3;\
++	stw	r4,SL_DBAT3(r11);\
++	mfdbatl	r4,3;\
++	stw	r4,SL_DBAT3+4(r11);\
++	mfibatu	r4,0;\
++	stw	r4,SL_IBAT0(r11);\
++	mfibatl	r4,0;\
++	stw	r4,SL_IBAT0+4(r11);\
++	mfibatu	r4,1;\
++	stw	r4,SL_IBAT1(r11);\
++	mfibatl	r4,1;\
++	stw	r4,SL_IBAT1+4(r11);\
++	mfibatu	r4,2;\
++	stw	r4,SL_IBAT2(r11);\
++	mfibatl	r4,2;\
++	stw	r4,SL_IBAT2+4(r11);\
++	mfibatu	r4,3;\
++	stw	r4,SL_IBAT3(r11);\
++	mfibatl	r4,3;\
++	stw	r4,SL_IBAT3+4(r11);\
++	/* Backup various CPU config stuffs */;\
++	/* bl	__save_cpu_setup; */
++
++#define CPU_REG_MEM_DISABLE_MMU \
++	/* Disable MSR:DR to make sure we don't take a TLB or	;\
++	 * hash miss during the copy, as our hash table will	;\
++	 * for a while be unuseable. For .text, we assume we are;\
++	 * covered by a BAT. This works only for non-G5 at this	;\
++	 * point. G5 will need a better approach, possibly using;\
++	 * a small temporary hash table filled with large mappings,;\
++	 * disabling the MMU completely isn't a good option for	;\
++	 * performance reasons.	;\
++	 * (Note that 750's may have the same performance issue as;\
++	 * the G5 in this case, we should investigate using moving;\
++	 * BATs for these CPUs);\
++	 */;\
++	mfmsr	r0	;\
++	sync	;\
++	rlwinm	r0,r0,0,28,26		/* clear MSR_DR */ ;\
++	mtmsr	r0 ;\
++	sync ;\
++	isync
++
++#define CPU_REG_MEM_FLUSH_CACHE \
++	/* Do a very simple cache flush/inval of the L1 to ensure \
++	 * coherency of the icache \
++	 */ \
++	lis	r3,0x0002 ;\
++	mtctr	r3 ;\
++	li	r3, 0 ;\
++1: ;\
++	lwz	r0,0(r3) ;\
++	addi	r3,r3,0x0020 ;\
++	bdnz	1b ;\
++	isync ;\
++	sync ;\
++;\
++	/* Now flush those cache lines */ ;\
++	lis	r3,0x0002 ;\
++	mtctr	r3 ;\
++	li	r3, 0 ;\
++1:;\
++	dcbf	0,r3 ;\
++	addi	r3,r3,0x0020 ;\
++	bdnz	1b
++
++#define CPU_REG_MEM_RESTORE \
++/* Ok, we are now running with the kernel data of the old;\
++	 * kernel fully restored. We can get to the save area;\
++	 * easily now. As for the rest of the code, it assumes the;\
++	 * loader kernel and the booted one are exactly identical;\
++	 */;\
++	lis	r11,cpu_reg_save_area@h;\
++	ori	r11,r11,cpu_reg_save_area@l;\
++	tophys(r11,r11);\
++	/* Restore various CPU config stuffs */;\
++	/* bl	__restore_cpu_setup; */\
++	/* Restore the BATs, and SDR1.  Then we can turn on the MMU. ;\
++	 * This is a bit hairy as we are running out of those BATs,;\
++	 * but first, our code is probably in the icache, and we are;\
++	 * writing the same value to the BAT, so that should be fine,;\
++	 * though a better solution will have to be found long-term;\
++	 */;\
++	lwz	r4,SL_SDR1(r11);\
++	mtsdr1	r4;\
++	lwz	r4,SL_SPRG0(r11);\
++	mtsprg	0,r4;\
++	lwz	r4,SL_SPRG0+4(r11);\
++	mtsprg	1,r4;\
++	lwz	r4,SL_SPRG0+8(r11);\
++	mtsprg	2,r4;\
++	lwz	r4,SL_SPRG0+12(r11);\
++	mtsprg	3,r4;\
++;\
++/*	lwz	r4,SL_DBAT0(r11);\
++	mtdbatu	0,r4;\
++	lwz	r4,SL_DBAT0+4(r11);\
++	mtdbatl	0,r4;\
++	lwz	r4,SL_DBAT1(r11);\
++	mtdbatu	1,r4;\
++	lwz	r4,SL_DBAT1+4(r11);\
++	mtdbatl	1,r4;\
++	lwz	r4,SL_DBAT2(r11);\
++	mtdbatu	2,r4;\
++	lwz	r4,SL_DBAT2+4(r11);\
++	mtdbatl	2,r4;\
++	lwz	r4,SL_DBAT3(r11);\
++	mtdbatu	3,r4;\
++	lwz	r4,SL_DBAT3+4(r11);\
++	mtdbatl	3,r4;\
++	lwz	r4,SL_IBAT0(r11);\
++	mtibatu	0,r4;\
++	lwz	r4,SL_IBAT0+4(r11);\
++	mtibatl	0,r4;\
++	lwz	r4,SL_IBAT1(r11);\
++	mtibatu	1,r4;\
++	lwz	r4,SL_IBAT1+4(r11);\
++	mtibatl	1,r4;\
++	lwz	r4,SL_IBAT2(r11);\
++	mtibatu	2,r4;\
++	lwz	r4,SL_IBAT2+4(r11);\
++	mtibatl	2,r4;\
++	lwz	r4,SL_IBAT3(r11);\
++	mtibatu	3,r4;\
++	lwz	r4,SL_IBAT3+4(r11);\
++	mtibatl	3,r4;\
++; */ \
++BEGIN_FTR_SECTION;\
++	li	r4,0;\
++	mtspr	SPRN_DBAT4U,r4;\
++	mtspr	SPRN_DBAT4L,r4;\
++	mtspr	SPRN_DBAT5U,r4;\
++	mtspr	SPRN_DBAT5L,r4;\
++	mtspr	SPRN_DBAT6U,r4;\
++	mtspr	SPRN_DBAT6L,r4;\
++	mtspr	SPRN_DBAT7U,r4;\
++	mtspr	SPRN_DBAT7L,r4;\
++	mtspr	SPRN_IBAT4U,r4;\
++	mtspr	SPRN_IBAT4L,r4;\
++	mtspr	SPRN_IBAT5U,r4;\
++	mtspr	SPRN_IBAT5L,r4;\
++	mtspr	SPRN_IBAT6U,r4;\
++	mtspr	SPRN_IBAT6L,r4;\
++	mtspr	SPRN_IBAT7U,r4;\
++	mtspr	SPRN_IBAT7L,r4;\
++END_FTR_SECTION_IFSET(CPU_FTR_HAS_HIGH_BATS);\
++;\
++	/* Flush all TLBs */;\
++	lis	r4,0x1000;\
++1:	addic.	r4,r4,-0x1000;\
++	tlbie	r4;\
++	blt	1b;\
++	sync;\
++;\
++	/* restore the MSR and turn on the MMU */;\
++	lwz	r3,SL_MSR(r11);\
++	bl	turn_on_mmu;\
++	tovirt(r11,r11);\
++;\
++	/* Restore TB */;\
++	li	r3,0;\
++	mttbl	r3;\
++	lwz	r3,SL_TB(r11);\
++	lwz	r4,SL_TB+4(r11);\
++	mttbu	r3;\
++	mttbl	r4;\
++; \
++	lwz	r0,SL_CR(r11);\
++	mtcr	r0;\
++	lwz	r2,SL_R2(r11);\
++	lmw	r12,SL_R12(r11);\
++	lwz	r1,SL_SP(r11);\
++	lwz	r4,SL_LR(r11)
++
++#define CPU_REG_MEM_RESTORE_END \
++	/* Restore LR from the save area */		  ; \
++	lis	r11,cpu_reg_save_area@h			  ; \
++	ori	r11,r11,cpu_reg_save_area@l		  ; \
++	lwz	r0,SL_CR(r11)				  ; \
++	mtcr r0					  ; \
++	lwz	r2,SL_R2(r11)				  ; \
++	lmw	r12,SL_R12(r11)				  ; \
++	lwz	r1,SL_SP(r11)
++
++#define CPU_REG_TURN_ON_MMU \
++/* FIXME:This construct is actually not useful since we don't shut ; \
++ * down the instruction MMU, we could just flip back MSR-DR on.	; \
++ */							  ; \
++turn_on_mmu:						  ; \
++	mflr	r4					  ; \
++	mtsrr0	r4					  ; \
++	mtsrr1	r3					  ; \
++	sync						  ; \
++	isync						  ; \
++	rfi
++
++#define CPU_REG_STACK_SAVE \
++	mflr	r0					  ; \
++	stw	r0,4(r1)				  ; \
++	stwu	r1,-SL_SIZE(r1)				  ; \
++	mfcr	r0					  ; \
++	stw	r0,SL_CR(r1)				  ; \
++	stw	r2,SL_R2(r1)				  ; \
++	stmw	r12,SL_R12(r1)				  ; \
++	/* Save SPRGs */				  ; \
++	mfsprg	r4,0					  ; \
++	stw	r4,SL_SPRG0(r1)				  ; \
++	mfsprg	r4,1					  ; \
++	stw	r4,SL_SPRG0+4(r1)			  ; \
++	mfsprg	r4,2					  ; \
++	stw	r4,SL_SPRG0+8(r1)			  ; \
++	mfsprg	r4,3					  ; \
++	stw	r4,SL_SPRG0+12(r1)	
++
++#define CPU_REG_STACK_RESTORE \
++	lwz	r4,SL_SPRG0(r1)				  ; \
++	mtsprg	0,r4					  ; \
++	lwz	r4,SL_SPRG0+4(r1)			  ; \
++	mtsprg	1,r4					  ; \
++	lwz	r4,SL_SPRG0+8(r1)			  ; \
++	mtsprg	2,r4					  ; \
++	lwz	r4,SL_SPRG0+12(r1)			  ; \
++	mtsprg	3,r4					  ; \
++	lwz	r0,SL_CR(r1)				  ; \
++	mtcr	r0					  ; \
++	lwz	r2,SL_R2(r1)				  ; \
++	lmw	r12,SL_R12(r1)				  ; \
++	addi	r1,r1,SL_SIZE				  ; \
++	lwz	r0,4(r1)				  ; \
++	mtlr	r0					  ; \
++	blr
+diff -ruN 701-mac-old/arch/ppc/power/Makefile 701-mac-new/arch/ppc/power/Makefile
+--- 701-mac-old/arch/ppc/power/Makefile	1970-01-01 10:00:00.000000000 +1000
++++ 701-mac-new/arch/ppc/power/Makefile	2004-09-24 19:09:40.000000000 +1000
+@@ -0,0 +1,2 @@
++obj-$(CONFIG_PM) += cpu.o
++obj-$(CONFIG_SOFTWARE_SUSPEND2) += swsusp2-asm.o
+diff -ruN 701-mac-old/arch/ppc/power/swsusp2-asm.S 701-mac-new/arch/ppc/power/swsusp2-asm.S
+--- 701-mac-old/arch/ppc/power/swsusp2-asm.S	1970-01-01 10:00:00.000000000 +1000
++++ 701-mac-new/arch/ppc/power/swsusp2-asm.S	2004-09-24 19:09:40.000000000 +1000
+@@ -0,0 +1,53 @@
++/*
++ * This code base on pmdisk.S by Benjamin Herrenschmidt <benh@kernel.crashing.org>
++ *
++ * changed for swsusp2 by Hu Gang <hugang@soulinfo.com>
++ */
++#include <linux/config.h>
++#include <asm/processor.h>
++#include <asm/page.h>
++#include <asm/ppc_asm.h>
++#include <asm/cputable.h>
++#include <asm/cache.h>
++#include <asm/thread_info.h>
++#include <asm/offsets.h>
++#include "cpu_reg.S"
++
++	CPU_REG_MEM_DEFINE
++
++	.section .text
++	.align 5
++_GLOBAL(do_suspend2_lowlevel)
++	CPU_REG_STACK_SAVE
++	cmpwi	0,r3,0
++	bne	do_resume
++	bl	save_processor_state
++	bl	do_suspend2_suspend_1
++	CPU_REG_MEM_SAVE
++	bl	do_suspend2_suspend_2
++	CPU_REG_MEM_RESTORE_END 
++	CPU_REG_STACK_RESTORE
++	
++do_resume:
++	bl save_processor_state
++	bl do_suspend2_resume_1
++
++	/* Stop pending alitvec streams and memory accesses */
++BEGIN_FTR_SECTION
++	DSSALL
++END_FTR_SECTION_IFSET(CPU_FTR_ALTIVEC)
++ 	sync
++
++	CPU_REG_MEM_DISABLE_MMU 
++#include "swsusp2-copyback.S"
++	CPU_REG_MEM_FLUSH_CACHE
++	
++	CPU_REG_MEM_RESTORE
++	bl	do_suspend2_resume_2
++	bl	restore_processor_state
++	CPU_REG_MEM_RESTORE_END
++	CPU_REG_STACK_RESTORE
++
++	CPU_REG_TURN_ON_MMU
++
++	.section .text
+diff -ruN 701-mac-old/arch/ppc/power/swsusp2.c 701-mac-new/arch/ppc/power/swsusp2.c
+--- 701-mac-old/arch/ppc/power/swsusp2.c	1970-01-01 10:00:00.000000000 +1000
++++ 701-mac-new/arch/ppc/power/swsusp2.c	2004-09-24 19:09:40.000000000 +1000
+@@ -0,0 +1,170 @@
++ /*
++  * Copyright 2003 Nigel Cunningham.
++  *
++  * This is the code that the code in swsusp2-asm.S for
++  * copying back the original kernel is based upon. It
++  * was based upon code that is...
++  * Copyright 2001-2002 Pavel Machek <pavel@suse.cz>
++  * Based on code
++  * Copyright 2001 Patrick Mochel <mochel@osdl.org>
++  * Copyright 2004 Hu Gang <hugang@soulinfo.com
++  *  port to PowerPC
++  */
++#include <linux/config.h>
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/types.h>
++#include <linux/spinlock.h>
++#include <linux/poll.h>
++#include <linux/delay.h>
++#include <linux/sysrq.h>
++#include <linux/proc_fs.h>
++#include <linux/irq.h>
++#include <linux/pm.h>
++#include <linux/device.h>
++#include <linux/suspend.h>
++#include <linux/suspend-debug.h>
++#include <linux/suspend-common.h>
++#include <asm/uaccess.h>
++#if 0
++/* Local variables for do_swsusp2_suspend */
++volatile static int state1 __nosavedata = 0;
++volatile static int state2 __nosavedata = 0;
++volatile static int state3 __nosavedata = 0;
++volatile static int loop __nosavedata = 0;
++volatile static struct range *origrange __nosavedata;
++volatile static struct range *copyrange __nosavedata;
++volatile static int origoffset __nosavedata;
++volatile static int copyoffset __nosavedata;
++volatile static unsigned long * origpage __nosavedata;
++volatile static unsigned long * copypage __nosavedata;
++#endif
++
++//volatile static int orig_min_free __nosavedata;
++#ifndef CONFIG_SMP
++//static unsigned long c_loops_per_jiffy_ref __nosavedata = 0;
++//static unsigned long cpu_khz_ref __nosavedata = 0;
++#endif
++
++extern void do_swsusp2_suspend_1(void);
++extern void do_swsusp2_suspend_2(void);
++extern void do_swsusp2_resume_1(void);
++extern void do_swsusp2_resume_2(void);
++extern struct pagedir __nosavedata pagedir_resume;
++
++/*
++ * FIXME: This function should really be written in assembly. Actually
++ * requirement is that it does not touch stack, because %esp will be
++ * wrong during resume before restore_processor_context(). Check
++ * assembly if you modify this.
++ */
++#if 0
++static inline void pre_copyback(void)
++{
++#ifdef CONFIG_PREEMPT
++	/*
++	 * Preempt disabled in kernel we're about to restore.
++	 * Make sure we match state now.
++	 */
++	preempt_disable();
++	PRINTPREEMPTCOUNT("Prior to copying old kernel back.");
++#endif
++
++	state1 = swsusp_action;
++	state2 = swsusp_debug_state;
++	state3 = console_loglevel;
++
++#ifndef CONFIG_SMP
++	//c_loops_per_jiffy_ref = cpu_data->loops_per_jiffy;
++	//cpu_khz_ref = cpu_khz;
++#endif
++}
++static inline void post_copyback(void)
++{
++#ifndef CONFIG_SMP
++	//cpu_data->loops_per_jiffy = c_loops_per_jiffy_ref;
++	//loops_per_jiffy = c_loops_per_jiffy_ref;
++	//cpu_khz = cpu_khz_ref;
++#endif
++	swsusp_action = state1;
++	swsusp_debug_state = state2;
++	console_loglevel = state3;
++	//swsusp_min_free = orig_min_free;
++
++}
++#endif
++static inline void do_swsusp2_copyback(void)
++{
++	/* PowerPC has a lots register, use local register is possible */
++	register int origoffset, copyoffset;
++	register unsigned long * origpage, * copypage;
++	register struct range *origrange, *copyrange;
++//	register int pagesize;
++
++//	pre_copyback();
++
++	origrange = pagedir_resume.origranges.first;
++//	pagesize = pagedir_resume.pageset_size;
++//	printk("%d\n", pagesize);
++	origoffset = origrange->minimum;
++	origpage = (unsigned long *) (page_address(mem_map + origoffset));
++	
++	copyrange = pagedir_resume.destranges.first;
++	copyoffset = copyrange->minimum;
++	copypage = (unsigned long *) (page_address(mem_map + copyoffset));
++	//orig_min_free = swsusp_min_free;
++
++	while (origrange) {
++		register int loop;
++		for (loop = 0; loop < (PAGE_SIZE / sizeof(unsigned long)); loop++)
++			*(origpage + loop) = *(copypage + loop);
++		
++		if (origoffset < origrange->maximum) {
++			origoffset++;
++			origpage += (PAGE_SIZE / sizeof(unsigned long));
++		} else {
++			origrange = origrange->next;
++			if (origrange) {
++				origoffset = origrange->minimum;
++				origpage = (unsigned long *) (page_address(mem_map + origoffset));
++			}
++		}
++
++		if (copyoffset < copyrange->maximum) {
++			copyoffset++;
++			copypage += (PAGE_SIZE / sizeof(unsigned long));
++		} else {
++			copyrange = copyrange->next;
++			if (copyrange) {
++				copyoffset = copyrange->minimum;
++				copypage = (unsigned long *) (page_address(mem_map + copyoffset));
++			}
++		}
++	}
++	
++/* Ahah, we now run with our old stack, and with registers copied from
++   suspend time */
++
++//	post_copyback();
++}
++
++void do_swsusp_lowlevel(int resume)
++{
++	if (!resume) {
++		do_swsusp2_suspend_1();
++		save_processor_state();
++		/* saving stack */
++		
++		do_swsusp2_suspend_2();
++		return;
++	}
++
++	/* setup swapper_pg_dir in x86 */
++
++	do_swsusp2_resume_1();
++	do_swsusp2_copyback();
++	/* setup segment register */
++	restore_processor_state();
++	do_swsusp2_resume_2();
++}
+diff -ruN 701-mac-old/arch/ppc/power/swsusp2-copyback.S 701-mac-new/arch/ppc/power/swsusp2-copyback.S
+--- 701-mac-old/arch/ppc/power/swsusp2-copyback.S	1970-01-01 10:00:00.000000000 +1000
++++ 701-mac-new/arch/ppc/power/swsusp2-copyback.S	2004-09-24 19:09:40.000000000 +1000
+@@ -0,0 +1,73 @@
++#define PAGE_TO_POINTER(in, out, p)	\
++	lwz out,0(in)					  ; \
++	slwi r9,out,2					  ; \
++	add r9,r9,out					  ; \
++	slwi r9,r9,3					  ; \
++	mullw r9,r9,r4					  ; \
++	slwi r9,r9,9					  ; \
++	addis p,r9,0xc000				  ; \
++	tophys(p,p)
++
++	.section ".text"
++swsusp2_copyback:
++	lis r20,pagedir_resume@ha	/* can't ture this is right FIXME */
++	addi r20,r20,pagedir_resume@l
++	tophys(r20,r20)
++#if 0
++	lwz	r4,4(r20)
++	twi	31,r0,0	/* triger trap */
++#endif	
++	lis r4,0xcccc /* FIXME */
++	ori r4,r4,52429
++
++	lwz r6,12(r20)		/* r6 is origranges.first */
++	cmpwi r6,0
++	beq- swsusp2_end_copyback
++		
++	tophys(r6,r6)
++	PAGE_TO_POINTER(r6,r8,r10)				  
++
++	lwz r5,56(r20)		/* r5 is copyranges.first */
++	tophys(r5,r5)
++	PAGE_TO_POINTER(r5,r7,r11) 
++	
++swsusp2_copy_one_page:
++	li r0,1024		/* r9 is loop */
++	mtctr r0		/* prepare for branch */
++	li r9,0
++swsusp2_copy_data:
++	lwzx r0,r9,r11
++	stwx r0,r9,r10
++	addi r9,r9,4
++
++	bdnz swsusp2_copy_data
++
++	lwz r0,4(r6)					  /* r0 is maximum */
++	cmplw r8,r0
++	bge- next_orig
++	addi r8,r8,1
++	addi r10,r10,4096
++	b end_orig
++next_orig:
++	lwz r6,8(r6)	/* r6 origrange */
++	cmpwi r6,0
++	beq- end_orig
++	tophys(r6,r6)
++	PAGE_TO_POINTER(r6,r8,r10)
++end_orig:
++	lwz r0,4(r5)					  /* r0 is maximum */
++	cmplw r7,r0
++	bge- next_copy
++	addi r7,r7,1
++	addi r11,r11,4096
++	b end_copy
++next_copy:
++	lwz r5,8(r5)	/* r5 is copypage */
++	cmpwi r5,0
++	beq- end_copy
++	tophys(r5,r5)
++	PAGE_TO_POINTER(r5,r7,r11)
++end_copy:
++	cmpwi 0,r6,0
++	bc r4,r2,swsusp2_copy_one_page
++swsusp2_end_copyback:
+diff -ruN 701-mac-old/drivers/macintosh/Kconfig 701-mac-new/drivers/macintosh/Kconfig
+--- 701-mac-old/drivers/macintosh/Kconfig	2004-09-07 21:58:37.000000000 +1000
++++ 701-mac-new/drivers/macintosh/Kconfig	2004-09-24 19:09:40.000000000 +1000
+@@ -187,4 +187,8 @@
+ 	tristate "Support for ANS LCD display"
+ 	depends on ADB_CUDA && PPC_PMAC
+ 
++config SOFTWARE_REPLACE_SLEEP
++	bool "Using Software suspend replace broken sleep function"
++	depends on SOFTWARE_SUSPEND2
++
+ endmenu
+diff -ruN 701-mac-old/drivers/macintosh/via-pmu.c 701-mac-new/drivers/macintosh/via-pmu.c
+--- 701-mac-old/drivers/macintosh/via-pmu.c	2004-09-16 08:34:36.000000000 +1000
++++ 701-mac-new/drivers/macintosh/via-pmu.c	2004-09-24 19:09:40.000000000 +1000
+@@ -2890,6 +2890,13 @@
+ 			return -EACCES;
+ 		if (sleep_in_progress)
+ 			return -EBUSY;
++#ifdef CONFIG_SOFTWARE_REPLACE_SLEEP
++		{
++		extern void software_suspend_pending(void);
++		software_suspend_pending();
++		return (0);
++		}
++#endif
+ 		sleep_in_progress = 1;
+ 		switch (pmu_kind) {
+ 		case PMU_OHARE_BASED:
+diff -ruN 701-mac-old/include/asm-ppc/suspend.h 701-mac-new/include/asm-ppc/suspend.h
+--- 701-mac-old/include/asm-ppc/suspend.h	1970-01-01 10:00:00.000000000 +1000
++++ 701-mac-new/include/asm-ppc/suspend.h	2004-09-24 19:09:40.000000000 +1000
+@@ -0,0 +1,14 @@
++#ifndef _PPC_SUSPEND_H
++#define _PPC_SUSPEND_H
++
++static inline void flush_tlb_all(void)
++{
++	/* Flush all TLBs */
++	__asm__ __volatile__("lis 4, 0x1000");
++	__asm__ __volatile__("1: addic. 4,4,-0x1000");
++	__asm__ __volatile__("tlbie 4");
++	__asm__ __volatile__("blt 1b");
++	__asm__ __volatile__("sync");
++}
++
++#endif

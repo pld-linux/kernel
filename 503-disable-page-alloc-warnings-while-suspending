@@ -1,0 +1,14 @@
+diff -ruN 503-disable-page-alloc-warnings-while-suspending-old/mm/page_alloc.c 503-disable-page-alloc-warnings-while-suspending-new/mm/page_alloc.c
+--- 503-disable-page-alloc-warnings-while-suspending-old/mm/page_alloc.c	2004-09-24 22:26:01.000000000 +1000
++++ 503-disable-page-alloc-warnings-while-suspending-new/mm/page_alloc.c	2004-09-24 22:26:07.000000000 +1000
+@@ -727,7 +727,9 @@
+ 	}
+ 
+ nopage:
+-	if (!(gfp_mask & __GFP_NOWARN) && printk_ratelimit()) {
++	if (!(gfp_mask & __GFP_NOWARN) && printk_ratelimit() && 
++			(!test_suspend_state(SUSPEND_RUNNING))) {
++
+ 		printk(KERN_WARNING "%s: page allocation failure."
+ 			" order:%d, mode:0x%x\n",
+ 			p->comm, order, gfp_mask);

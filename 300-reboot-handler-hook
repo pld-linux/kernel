@@ -1,0 +1,20 @@
+diff -ruN 300-reboot-handler-hook-old/kernel/sys.c 300-reboot-handler-hook-new/kernel/sys.c
+--- 300-reboot-handler-hook-old/kernel/sys.c	2004-09-16 08:34:56.000000000 +1000
++++ 300-reboot-handler-hook-new/kernel/sys.c	2004-09-24 22:25:07.000000000 +1000
+@@ -500,10 +500,14 @@
+ 		machine_restart(buffer);
+ 		break;
+ 
+-#ifdef CONFIG_SOFTWARE_SUSPEND
++#ifdef CONFIG_SOFTWARE_SUSPEND2
+ 	case LINUX_REBOOT_CMD_SW_SUSPEND:
+ 		{
+-			int ret = software_suspend();
++			int ret = -EINVAL;
++			if (!(test_suspend_state(SUSPEND_DISABLED))) {
++				software_suspend_pending();
++				ret = 0;
++			}
+ 			unlock_kernel();
+ 			return ret;
+ 		}

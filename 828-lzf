@@ -1,0 +1,883 @@
+diff -ruN 828-lzf-old/kernel/power/lzf/lzf_c.c 828-lzf-new/kernel/power/lzf/lzf_c.c
+--- 828-lzf-old/kernel/power/lzf/lzf_c.c	1970-01-01 10:00:00.000000000 +1000
++++ 828-lzf-new/kernel/power/lzf/lzf_c.c	2004-09-24 19:09:41.000000000 +1000
+@@ -0,0 +1,220 @@
++/*
++ * Copyright (c) 2000-2003 Marc Alexander Lehmann <pcg@goof.com>
++ * 
++ * Redistribution and use in source and binary forms, with or without modifica-
++ * tion, are permitted provided that the following conditions are met:
++ * 
++ *   1.  Redistributions of source code must retain the above copyright notice,
++ *       this list of conditions and the following disclaimer.
++ * 
++ *   2.  Redistributions in binary form must reproduce the above copyright
++ *       notice, this list of conditions and the following disclaimer in the
++ *       documentation and/or other materials provided with the distribution.
++ * 
++ *   3.  The name of the author may not be used to endorse or promote products
++ *       derived from this software without specific prior written permission.
++ * 
++ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
++ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MER-
++ * CHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO
++ * EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPE-
++ * CIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
++ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
++ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTH-
++ * ERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
++ * OF THE POSSIBILITY OF SUCH DAMAGE.
++ *
++ * Alternatively, the contents of this file may be used under the terms of
++ * the GNU General Public License version 2 (the "GPL"), in which case the
++ * provisions of the GPL are applicable instead of the above. If you wish to
++ * allow the use of your version of this file only under the terms of the
++ * GPL and not to allow others to use your version of this file under the
++ * BSD license, indicate your decision by deleting the provisions above and
++ * replace them with the notice and other provisions required by the GPL. If
++ * you do not delete the provisions above, a recipient may use your version
++ * of this file under either the BSD or the GPL.
++ */
++
++#define HSIZE (1 << (HLOG))
++
++/*
++ * don't play with this unless you benchmark!
++ * decompression is not dependent on the hash function
++ * the hashing function might seem strange, just believe me
++ * it works ;)
++ */
++#define FRST(p) (((p[0]) << 8) + p[1])
++#define NEXT(v,p) (((v) << 8) + p[2])
++#define IDX(h) ((((h ^ (h << 5)) >> (3*8 - HLOG)) + h*3) & (HSIZE - 1))
++/*
++ * IDX works because it is very similar to a multiplicative hash, e.g.
++ * (h * 57321 >> (3*8 - HLOG))
++ * the next one is also quite good, albeit slow ;)
++ * (int)(cos(h & 0xffffff) * 1e6)
++ */
++
++#if 0
++/* original lzv-like hash function */
++# define FRST(p) (p[0] << 5) ^ p[1]
++# define NEXT(v,p) ((v) << 5) ^ p[2]
++# define IDX(h) ((h) & (HSIZE - 1))
++#endif
++
++#define        MAX_LIT        (1 <<  5)
++#define        MAX_OFF        (1 << 13)
++#define        MAX_REF        ((1 <<  8) + (1 << 3))
++
++/*
++ * compressed format
++ *
++ * 000LLLLL <L+1>    ; literal
++ * LLLOOOOO oooooooo ; backref L
++ * 111OOOOO LLLLLLLL oooooooo ; backref L+7
++ *
++ */
++
++unsigned int
++lzf_compress (const void *const in_data, unsigned int in_len,
++	      void *out_data, unsigned int out_len, void *hbuf)
++{
++  const u8 **htab = hbuf;
++  const u8 **hslot;
++  const u8 *ip = (const u8 *)in_data;
++        u8 *op = (u8 *)out_data;
++  const u8 *in_end  = ip + in_len;
++        u8 *out_end = op + out_len;
++  const u8 *ref;
++
++  unsigned int hval = FRST (ip);
++  unsigned long off;
++           int lit = 0;
++
++#if INIT_HTAB
++# if USE_MEMCPY
++    memset (htab, 0, sizeof (htab));
++# else
++    for (hslot = htab; hslot < htab + HSIZE; hslot++)
++      *hslot++ = ip;
++# endif
++#endif
++
++  for (;;)
++    {
++      if (ip < in_end - 2)
++        {
++          hval = NEXT (hval, ip);
++          hslot = htab + IDX (hval);
++          ref = *hslot; *hslot = ip;
++
++          if (1
++#if INIT_HTAB && !USE_MEMCPY
++              && ref < ip /* the next test will actually take care of this, but this is faster */
++#endif
++              && (off = ip - ref - 1) < MAX_OFF
++              && ip + 4 < in_end
++              && ref > (u8 *)in_data
++#if STRICT_ALIGN
++              && ref[0] == ip[0]
++              && ref[1] == ip[1]
++              && ref[2] == ip[2]
++#else
++              && *(u16 *)ref == *(u16 *)ip
++              && ref[2] == ip[2]
++#endif
++            )
++            {
++              /* match found at *ref++ */
++              unsigned int len = 2;
++              unsigned int maxlen = in_end - ip - len;
++              maxlen = maxlen > MAX_REF ? MAX_REF : maxlen;
++
++              do
++                len++;
++              while (len < maxlen && ref[len] == ip[len]);
++
++              if (op + lit + 1 + 3 >= out_end)
++                return 0;
++
++              if (lit)
++                {
++                  *op++ = lit - 1;
++                  lit = -lit;
++                  do
++                    *op++ = ip[lit];
++                  while (++lit);
++                }
++
++              len -= 2;
++              ip++;
++
++              if (len < 7)
++                {
++                  *op++ = (off >> 8) + (len << 5);
++                }
++              else
++                {
++                  *op++ = (off >> 8) + (  7 << 5);
++                  *op++ = len - 7;
++                }
++
++              *op++ = off;
++
++#if ULTRA_FAST
++              ip += len;
++              hval = FRST (ip);
++              hval = NEXT (hval, ip);
++              htab[IDX (hval)] = ip;
++              ip++;
++#else
++              do
++                {
++                  hval = NEXT (hval, ip);
++                  htab[IDX (hval)] = ip;
++                  ip++;
++                }
++              while (len--);
++#endif
++              continue;
++            }
++        }
++      else if (ip == in_end)
++        break;
++
++      /* one more literal byte we must copy */
++      lit++;
++      ip++;
++
++      if (lit == MAX_LIT)
++        {
++          if (op + 1 + MAX_LIT >= out_end)
++            return 0;
++
++          *op++ = MAX_LIT - 1;
++#if USE_MEMCPY
++          memcpy (op, ip - MAX_LIT, MAX_LIT);
++          op += MAX_LIT;
++          lit = 0;
++#else
++          lit = -lit;
++          do
++            *op++ = ip[lit];
++          while (++lit);
++#endif
++        }
++    }
++
++  if (lit)
++    {
++      if (op + lit + 1 >= out_end)
++	return 0;
++
++      *op++ = lit - 1;
++      lit = -lit;
++      do
++	*op++ = ip[lit];
++      while (++lit);
++    }
++
++  return op - (u8 *) out_data;
++}
+diff -ruN 828-lzf-old/kernel/power/lzf/lzf_d.c 828-lzf-new/kernel/power/lzf/lzf_d.c
+--- 828-lzf-old/kernel/power/lzf/lzf_d.c	1970-01-01 10:00:00.000000000 +1000
++++ 828-lzf-new/kernel/power/lzf/lzf_d.c	2004-09-24 19:09:41.000000000 +1000
+@@ -0,0 +1,98 @@
++/*
++ * Copyright (c) 2000-2002 Marc Alexander Lehmann <pcg@goof.com>
++ * 
++ * Redistribution and use in source and binary forms, with or without modifica-
++ * tion, are permitted provided that the following conditions are met:
++ * 
++ *   1.  Redistributions of source code must retain the above copyright notice,
++ *       this list of conditions and the following disclaimer.
++ * 
++ *   2.  Redistributions in binary form must reproduce the above copyright
++ *       notice, this list of conditions and the following disclaimer in the
++ *       documentation and/or other materials provided with the distribution.
++ * 
++ *   3.  The name of the author may not be used to endorse or promote products
++ *       derived from this software without specific prior written permission.
++ * 
++ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
++ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MER-
++ * CHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO
++ * EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPE-
++ * CIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
++ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
++ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
++ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTH-
++ * ERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
++ * OF THE POSSIBILITY OF SUCH DAMAGE.
++ *
++ * Alternatively, the contents of this file may be used under the terms of
++ * the GNU General Public License version 2 (the "GPL"), in which case the
++ * provisions of the GPL are applicable instead of the above. If you wish to
++ * allow the use of your version of this file only under the terms of the
++ * GPL and not to allow others to use your version of this file under the
++ * BSD license, indicate your decision by deleting the provisions above and
++ * replace them with the notice and other provisions required by the GPL. If
++ * you do not delete the provisions above, a recipient may use your version
++ * of this file under either the BSD or the GPL.
++ */
++
++unsigned int 
++lzf_decompress (const void *const in_data,  unsigned int in_len,
++                void             *out_data, unsigned int out_len)
++{
++  u8 const *ip = in_data;
++  u8       *op = out_data;
++  u8 const *const in_end  = ip + in_len;
++  u8       *const out_end = op + out_len;
++
++  do
++    {
++      unsigned int ctrl = *ip++;
++
++      if (ctrl < (1 << 5)) /* literal run */
++        {
++          ctrl++;
++
++          if (op + ctrl > out_end)
++            return 0;
++
++#if USE_MEMCPY
++          memcpy (op, ip, ctrl);
++          op += ctrl;
++          ip += ctrl;
++#else
++          do
++            *op++ = *ip++;
++          while (--ctrl);
++#endif
++        }
++      else /* back reference */
++        {
++          unsigned int len = ctrl >> 5;
++
++          u8 *ref = op - ((ctrl & 0x1f) << 8) - 1;
++
++          if (len == 7)
++            len += *ip++;
++          
++          ref -= *ip++;
++
++          if (op + len + 2 > out_end)
++            return 0;
++
++          if (ref < (u8 *)out_data)
++            return 0;
++
++          *op++ = *ref++;
++          *op++ = *ref++;
++
++          do
++            *op++ = *ref++;
++          while (--len);
++        }
++    }
++  while (op < out_end && ip < in_end);
++
++  return op - (u8 *)out_data;
++}
++
+diff -ruN 828-lzf-old/kernel/power/suspend_lzf.c 828-lzf-new/kernel/power/suspend_lzf.c
+--- 828-lzf-old/kernel/power/suspend_lzf.c	1970-01-01 10:00:00.000000000 +1000
++++ 828-lzf-new/kernel/power/suspend_lzf.c	2004-09-27 19:46:48.000000000 +1000
+@@ -0,0 +1,553 @@
++/*
++ * kernel/power/lzf_compress.c
++ *
++ * Copyright (C) 2003 Marc Lehmann <pcg@goof.com>
++ * Copyright (C) 2003,2004 Nigel Cunningham <ncunningham@linuxmail.org>
++ *
++ * This file is released under the GPLv2.
++ *
++ * This file contains data compression routines for suspend,
++ * using LZH compression.
++ *
++ */
++
++#include <linux/suspend.h>
++#include <linux/module.h>
++#include <linux/highmem.h>
++
++#include "plugins.h"
++#include "proc.h"
++#include "suspend.h"
++
++static int expected_lzf_compression = 0;
++
++/*
++ * size of hashtable is (1 << HLOG) * sizeof (char *)
++ * decompression is independent of the hash table size
++ * the difference between 15 and 14 is very small
++ * for small blocks (and 14 is also faster).
++ * For a low-memory configuration, use HLOG == 13;
++ * For best compression, use 15 or 16.
++ */
++#ifndef HLOG
++# define HLOG 14
++#endif
++
++/*
++ * sacrifice some compression quality in favour of compression speed.
++ * (roughly 1-2% worse compression for large blocks and
++ * 9-10% for small, redundant, blocks and >>20% better speed in both cases)
++ * In short: enable this for binary data, disable this for text data.
++ */
++#ifndef ULTRA_FAST
++# define ULTRA_FAST 1
++#endif
++
++#define STRICT_ALIGN 0
++#define USE_MEMCPY 1
++#define INIT_HTAB 0
++
++#include "lzf/lzf_c.c"
++#include "lzf/lzf_d.c"
++
++static struct suspend_plugin_ops lzf_compression_ops;
++static struct suspend_plugin_ops * next_driver;
++
++static void *compression_workspace = NULL;
++static u8 *local_buffer = NULL;
++static struct page * local_buffer_page = NULL;
++static u8 *page_buffer = NULL;
++static struct page * page_buffer_page = NULL;
++static unsigned int bufofs;
++
++static __nosavedata unsigned long bytes_in = 0, bytes_out = 0;
++
++/* allocate_compression_space
++ *
++ * Description:	Allocate space for use in [de]compressing our data.
++ *		Each call must have a matching call to free_memory.
++ * Returns:	Int: Zero if successful, -ENONEM otherwise.
++ */
++
++static inline int allocate_compression_space(void)
++{
++	BUG_ON(compression_workspace);
++
++	compression_workspace = vmalloc_32((1<<HLOG)*sizeof(char *));
++	if (!compression_workspace) {
++		printk(KERN_WARNING
++			"Failed to allocate %d bytes for lzf workspace\n",
++			(1<<HLOG)*sizeof(char *));
++		return -ENOMEM;
++	}
++	
++	return 0;
++}
++
++/* free_zlib_memory
++ *
++ * Description:	Frees memory allocated by the allocation routine (above).
++ */
++
++static inline void free_memory(void)
++{
++	if (!compression_workspace)
++		return;
++
++	vfree(compression_workspace);
++	compression_workspace = NULL;
++}
++
++/* ---- Local buffer management ---- */
++
++/* allocate_local_buffer
++ *
++ * Description:	Allocates a page of memory for buffering output.
++ * Returns:	Int: Zero if successful, -ENONEM otherwise.
++ */
++
++static int allocate_local_buffer(void)
++{
++	if (!local_buffer) {
++		local_buffer = (char *) get_zeroed_page(GFP_ATOMIC);
++	
++		if (!local_buffer) {
++			printk(KERN_ERR
++				"Failed to allocate the local buffer for "
++				"lzf compression driver.\n");
++			return -ENOMEM;
++		}
++		local_buffer_page = virt_to_page(local_buffer);
++	}
++
++	if (!page_buffer) {
++		page_buffer = (char *) get_zeroed_page(GFP_ATOMIC);
++	
++		if (!page_buffer) {
++			printk(KERN_ERR
++				"Failed to allocate the page buffer for "
++				"lzf compression driver.\n");
++			return -ENOMEM;
++		}
++		page_buffer_page = virt_to_page(page_buffer);
++	}
++
++	return 0;
++}
++
++/* free_local_buffer
++ *
++ * Description:	Frees memory allocated for buffering output.
++ */
++
++static inline void free_local_buffer(void)
++{
++	if (local_buffer)
++		free_pages((unsigned long) local_buffer, 0);
++
++	local_buffer = NULL;
++	local_buffer_page = NULL;
++
++	if (page_buffer)
++		free_pages((unsigned long) page_buffer, 0);
++
++	page_buffer = NULL;
++	page_buffer_page = NULL;
++}
++
++/* ---- Exported functions ---- */
++
++/* write_init()
++ *
++ * Description:	Allocate buffers and prepare to compress data.
++ * Arguments:	Stream_number:	Ignored.
++ * Returns:	Zero on success, -ENOMEM if unable to vmalloc.
++ */
++
++static int lzf_write_init(int stream_number)
++{
++	int result;
++	
++	next_driver = get_next_filter(&lzf_compression_ops);
++
++	if (!next_driver) {
++		printk("LZF Compression Driver: Argh! No one wants my output!");
++		return -ECHILD;
++	}
++
++	if ((result = allocate_compression_space()))
++		return result;
++	
++	if ((result = allocate_local_buffer()))
++		return result;
++
++	/* Only reset the stats if starting to write an image */
++	if (stream_number == 2)
++		bytes_in = bytes_out = 0;
++	
++	bufofs = 0;
++
++	return 0;
++}
++
++/* lzf_write()
++ *
++ * Description:	Helper function for write_chunk. Write the compressed data.
++ * Arguments:	u8*:		Output buffer to be written.
++ * 		unsigned int:	Length of buffer.
++ * Return:	int:		Result to be passed back to caller.
++ */
++
++static int lzf_write (u8 *buffer, unsigned int len)
++{
++	int ret;
++
++	bytes_out += len;
++
++	while (len + bufofs > PAGE_SIZE) {
++		unsigned int chunk = PAGE_SIZE - bufofs;
++		memcpy (local_buffer + bufofs, buffer, chunk);
++		buffer += chunk;
++		len -= chunk;
++		bufofs = 0;
++		if ((ret = next_driver->ops.filter.write_chunk(local_buffer_page)) < 0)
++			return ret;
++	}
++	memcpy (local_buffer + bufofs, buffer, len);
++	bufofs += len;
++	return 0;
++}
++
++/* lzf_write_chunk()
++ *
++ * Description:	Compress a page of data, buffering output and passing on
++ * 		filled pages to the next plugin in the pipeline.
++ * Arguments:	Buffer_page:	Pointer to a buffer of size PAGE_SIZE, 
++ * 				containing data to be compressed.
++ * Returns:	0 on success. Otherwise the error is that returned by later
++ * 		plugins, -ECHILD if we have a broken pipeline or -EPERM if
++ * 		zlib errs.
++ */
++
++static int lzf_write_chunk(struct page * buffer_page)
++{
++	int ret; 
++	u16 len;
++	char * buffer_start = kmap(buffer_page);
++	
++	bytes_in += PAGE_SIZE;
++
++	len = lzf_compress(buffer_start, PAGE_SIZE, page_buffer,
++			PAGE_SIZE - 3, compression_workspace);
++
++	if ((ret = lzf_write((u8 *)&len, 2)) >= 0) {
++		if (len) // some compression
++			ret = lzf_write(page_buffer, len);
++		else
++			ret = lzf_write(buffer_start, PAGE_SIZE);
++	}
++	kunmap(buffer_page);
++	return ret;
++}
++
++/* write_cleanup()
++ *
++ * Description: Write unflushed data and free workspace.
++ * Returns:	Result of writing last page.
++ */
++
++static int lzf_write_cleanup(void)
++{
++	int ret;
++	
++	ret = next_driver->ops.filter.write_chunk(local_buffer_page);
++
++	free_memory();
++	free_local_buffer();
++
++	return ret;
++}
++
++/* read_init()
++ *
++ * Description:	Prepare to read a new stream of data.
++ * Arguments:	int: Section of image about to be read.
++ * Returns:	int: Zero on success, error number otherwise.
++ */
++
++static int lzf_read_init(int stream_number)
++{
++	int result;
++
++	next_driver = get_next_filter(&lzf_compression_ops);
++
++	if (!next_driver) {
++		printk("LZF Compression Driver: Argh! No one wants "
++				"to feed me data!");
++		return -ECHILD;
++	}
++	
++	if ((result = allocate_local_buffer()))
++		return result;
++
++	bufofs = PAGE_SIZE;
++
++	return 0;
++}
++
++/* lzf_read()
++ *
++ * Description:	Read data into compression buffer.
++ * Arguments:	u8 *:		Address of the buffer.
++ * 		unsigned int:	Length
++ * Returns:	int:		Result of reading the image chunk.
++ */
++
++static int lzf_read (u8 * buffer, unsigned int len)
++{
++	int ret;
++
++	while (len + bufofs > PAGE_SIZE) {
++		unsigned int chunk = PAGE_SIZE - bufofs;
++		memcpy(buffer, local_buffer + bufofs, chunk);
++		buffer += chunk;
++		len -= chunk;
++		bufofs = 0;
++		if ((ret = next_driver->ops.filter.read_chunk(
++					local_buffer_page, SUSPEND_SYNC)) < 0) {
++			return ret;
++		}
++	}
++	memcpy (buffer, local_buffer + bufofs, len);
++	bufofs += len;
++	return 0;
++}
++
++/* lzf_read_chunk()
++ *
++ * Description:	Retrieve data from later plugins and decompress it until the
++ * 		input buffer is filled.
++ * Arguments:	Buffer_start: 	Pointer to a buffer of size PAGE_SIZE.
++ * 		Sync:		Whether the previous plugin (or core) wants its
++ * 				data synchronously.
++ * Returns:	Zero if successful. Error condition from me or from downstream
++ * 		on failure.
++ */
++
++static int lzf_read_chunk(struct page * buffer_page, int sync)
++{
++	int ret; 
++	u16 len;
++	char * buffer_start = kmap(buffer_page);
++
++	/* 
++	 * All our reads must be synchronous - we can't decompress
++	 * data that hasn't been read yet.
++	 */
++
++	if ((ret = lzf_read ((u8 *)&len, 2)) >= 0) {
++		if (len == 0) { // uncompressed
++			ret = lzf_read(buffer_start, PAGE_SIZE);
++		} else { // compressed
++			if ((ret = lzf_read(page_buffer, len)) >= 0) {
++				ret = lzf_decompress(page_buffer, len, buffer_start, PAGE_SIZE);
++				if (ret != PAGE_SIZE)
++					ret = -EPERM; // why EPERM??
++				else
++					ret = 0;
++			}
++		}
++	}
++	kunmap(buffer_page);
++	return ret;
++}
++
++/* read_cleanup()
++ *
++ * Description:	Clean up after reading part or all of a stream of data.
++ * Returns:	int: Always zero. Never fails.
++ */
++
++static int lzf_read_cleanup(void)
++{
++	free_local_buffer();
++	return 0;
++}
++
++/* lzf_print_debug_stats
++ *
++ * Description:	Print information to be recorded for debugging purposes into a
++ * 		buffer.
++ * Arguments:	buffer: Pointer to a buffer into which the debug info will be
++ * 			printed.
++ * 		size:	Size of the buffer.
++ * Returns:	Number of characters written to the buffer.
++ */
++
++static int lzf_print_debug_stats(char * buffer, int size)
++{
++	int pages_in = bytes_in >> PAGE_SHIFT, 
++		pages_out = bytes_out >> PAGE_SHIFT;
++	int len;
++	
++	/* Output the compression ratio achieved. */
++	len = suspend_snprintf(buffer, size, "- LZF Compressor enabled.\n");
++	if (pages_in)
++		len+= suspend_snprintf(buffer+len, size - len,
++		  "  Compressed %ld bytes into %ld (%d percent compression).\n",
++		  bytes_in, bytes_out, (pages_in - pages_out) * 100 / pages_in);
++	return len;
++}
++
++/* compression_memory_needed
++ *
++ * Description:	Tell the caller how much memory we need to operate during
++ * 		suspend/resume.
++ * Returns:	Unsigned long. Maximum number of bytes of memory required for
++ * 		operation.
++ */
++
++static unsigned long lzf_memory_needed(void)
++{
++	return PAGE_SIZE * 2 + (1<<HLOG)*sizeof(char *);
++}
++
++static unsigned long lzf_storage_needed(void)
++{
++	return 2 * sizeof(unsigned long);
++}
++
++/* lzf_save_config_info
++ *
++ * Description:	Save informaton needed when reloading the image at resume time.
++ * Arguments:	Buffer:		Pointer to a buffer of size PAGE_SIZE.
++ * Returns:	Number of bytes used for saving our data.
++ */
++
++static int lzf_save_config_info(char * buffer)
++{
++	*((unsigned long *) buffer) = bytes_in;
++	*((unsigned long *) (buffer + sizeof(unsigned long))) = bytes_out;
++	*((int *) (buffer + 2 * sizeof(unsigned long))) = expected_lzf_compression;
++	return 2 * sizeof(unsigned long) + sizeof(int);
++}
++
++/* lzf_load_config_info
++ *
++ * Description:	Reload information needed for decompressing the image at 
++ * 		resume time.
++ * Arguments:	Buffer:		Pointer to the start of the data.
++ *		Size:		Number of bytes that were saved.
++ */
++
++static void lzf_load_config_info(char * buffer, int size)
++{
++	if(size == 2 * sizeof(unsigned long) + sizeof(int)) {
++		bytes_in = *((unsigned long *) buffer);
++		bytes_out = *((unsigned long *) (buffer + sizeof(unsigned long)));
++		expected_lzf_compression = *((int *) (buffer + 2 * sizeof(unsigned long)));
++	} else
++		printk("Suspend LZF config info size mismatch: settings ignored.\n");
++	return;
++}
++
++/* lzf_get_expected_compression
++ * 
++ * Description:	Returns the expected ratio between data passed into this plugin
++ * 		and the amount of data output when writing.
++ * Returns:	100 if the plugin is disabled. Otherwise the value set by the
++ * 		user via our proc entry.
++ */
++
++static int lzf_get_expected_compression(void)
++{
++	return 100 - expected_lzf_compression;
++}
++
++/*
++ * data for our proc entries.
++ */
++
++static struct suspend_proc_data expected_compression_proc_data = {
++	.filename			= "expected_lzf_compression",
++	.permissions			= PROC_RW,
++	.type				= SUSPEND_PROC_DATA_INTEGER,
++	.data = {
++		.integer = {
++			.variable	= &expected_lzf_compression,
++			.minimum	= 0,
++			.maximum	= 99,
++		}
++	}
++};
++
++static struct suspend_proc_data disable_compression_proc_data = {
++	.filename			= "disable_lzf_compression",
++	.permissions			= PROC_RW,
++	.type				= SUSPEND_PROC_DATA_INTEGER,
++	.data = {
++		.integer = {
++			.variable	= &lzf_compression_ops.disabled,
++			.minimum	= 0,
++			.maximum	= 1,
++		}
++	}
++};
++
++/*
++ * Ops structure.
++ */
++
++static struct suspend_plugin_ops lzf_compression_ops = {
++	.type			= FILTER_PLUGIN,
++	.name			= "LZF Page Compressor",
++	.memory_needed 		= lzf_memory_needed,
++	.print_debug_info	= lzf_print_debug_stats,
++	.save_config_info	= lzf_save_config_info,
++	.load_config_info	= lzf_load_config_info,
++	.storage_needed		= lzf_storage_needed,
++	.ops = {
++		.filter = {
++			.write_init		= lzf_write_init,
++			.write_chunk		= lzf_write_chunk,
++			.write_cleanup		= lzf_write_cleanup,
++			.read_init		= lzf_read_init,
++			.read_chunk		= lzf_read_chunk,
++			.read_cleanup		= lzf_read_cleanup,
++			.expected_compression	= lzf_get_expected_compression,
++		}
++	}
++};
++
++/* ---- Registration ---- */
++
++static __init int lzf_load(void)
++{
++	int result;
++
++	printk("Software Suspend LZF Compression Driver registering.\n");
++	if (!(result = suspend_register_plugin(&lzf_compression_ops))) {
++		suspend_register_procfile(&expected_compression_proc_data);
++		suspend_register_procfile(&disable_compression_proc_data);
++	}
++	return result;
++}
++
++#ifdef MODULE
++static __exit void lzf_unload(void)
++{
++	printk("Software Suspend LZF Compression Driver unloading.\n");
++	suspend_unregister_procfile(&expected_compression_proc_data);
++	suspend_unregister_procfile(&disable_compression_proc_data);
++	suspend_unregister_plugin(&lzf_compression_ops);
++}
++
++
++module_init(lzf_load);
++module_exit(lzf_unload);
++MODULE_LICENSE("GPL");
++MODULE_AUTHOR("Marc Lehmann");
++MODULE_DESCRIPTION("LZF Compression support for Suspend2");
++#else
++late_initcall(lzf_load);
++#endif

@@ -1,0 +1,147 @@
+diff -ruN 208-e820-table-support-old/arch/i386/mm/init.c 208-e820-table-support-new/arch/i386/mm/init.c
+--- 208-e820-table-support-old/arch/i386/mm/init.c	2004-08-30 16:00:52.000000000 +1000
++++ 208-e820-table-support-new/arch/i386/mm/init.c	2004-09-27 23:14:48.399980664 +1000
+@@ -27,6 +27,7 @@
+ #include <linux/slab.h>
+ #include <linux/proc_fs.h>
+ #include <linux/efi.h>
++#include <linux/suspend.h>
+ 
+ #include <asm/processor.h>
+ #include <asm/system.h>
+@@ -264,12 +265,15 @@
+ {
+ 	if (page_is_ram(pfn) && !(bad_ppro && page_kills_ppro(pfn))) {
+ 		ClearPageReserved(page);
++		ClearPageNosave(page);
+ 		set_bit(PG_highmem, &page->flags);
+ 		set_page_count(page, 1);
+ 		__free_page(page);
+ 		totalhigh_pages++;
+-	} else
++	} else {
+ 		SetPageReserved(page);
++		SetPageNosave(page);
++	}
+ }
+ 
+ #ifndef CONFIG_DISCONTIGMEM
+@@ -347,7 +351,7 @@
+ #endif
+ }
+ 
+-#if defined(CONFIG_PM_DISK) || defined(CONFIG_SOFTWARE_SUSPEND)
++#if defined(CONFIG_PM_DISK) || defined(CONFIG_SOFTWARE_SUSPEND) || defined(CONFIG_SOFTWARE_SUSPEND2)
+ /*
+  * Swap suspend & friends need this for resume because things like the intel-agp
+  * driver might have split up a kernel 4MB mapping.
+@@ -567,6 +571,7 @@
+ 	int codesize, reservedpages, datasize, initsize;
+ 	int tmp;
+ 	int bad_ppro;
++	void * addr;
+ 
+ #ifndef CONFIG_DISCONTIGMEM
+ 	if (!mem_map)
+@@ -597,12 +602,25 @@
+ 	totalram_pages += __free_all_bootmem();
+ 
+ 	reservedpages = 0;
+-	for (tmp = 0; tmp < max_low_pfn; tmp++)
+-		/*
+-		 * Only count reserved RAM pages
+-		 */
+-		if (page_is_ram(tmp) && PageReserved(pfn_to_page(tmp)))
+-			reservedpages++;
++	addr = __va(0);
++	for (tmp = 0; tmp < max_low_pfn; tmp++, addr += PAGE_SIZE) {
++		if (page_is_ram(tmp)) {
++			/*
++			 * Only count reserved RAM pages
++			 */
++			if (PageReserved(mem_map+tmp))
++				reservedpages++;
++			/*
++			 * Mark nosave pages
++			 */
++			if (addr >= (void *)&__nosave_begin && addr < (void *)&__nosave_end)
++				SetPageNosave(mem_map+tmp);
++		} else
++			/*
++			 * Non-RAM pages are always nosave
++			 */
++			SetPageNosave(mem_map+tmp);
++	}
+ 
+ 	set_highmem_pages_init(bad_ppro);
+ 
+@@ -701,6 +719,7 @@
+ 	addr = (unsigned long)(&__init_begin);
+ 	for (; addr < (unsigned long)(&__init_end); addr += PAGE_SIZE) {
+ 		ClearPageReserved(virt_to_page(addr));
++		ClearPageNosave(virt_to_page(addr));
+ 		set_page_count(virt_to_page(addr), 1);
+ 		free_page(addr);
+ 		totalram_pages++;
+@@ -715,9 +734,13 @@
+ 		printk (KERN_INFO "Freeing initrd memory: %ldk freed\n", (end - start) >> 10);
+ 	for (; start < end; start += PAGE_SIZE) {
+ 		ClearPageReserved(virt_to_page(start));
++		ClearPageNosave(virt_to_page(start));
+ 		set_page_count(virt_to_page(start), 1);
+ 		free_page(start);
+ 		totalram_pages++;
+ 	}
+ }
+ #endif
++
++/* Exported for Software Suspend 2 */
++EXPORT_SYMBOL(highstart_pfn);
+diff -ruN 208-e820-table-support-old/kernel/sysctl.c 208-e820-table-support-new/kernel/sysctl.c
+--- 208-e820-table-support-old/kernel/sysctl.c	2004-09-27 23:18:05.122074360 +1000
++++ 208-e820-table-support-new/kernel/sysctl.c	2004-09-27 23:16:50.196464784 +1000
+@@ -44,7 +44,7 @@
+ #include <asm/uaccess.h>
+ #ifdef	CONFIG_KDB
+ #include <linux/kdb.h>
+-static int proc_do_kdb(ctl_table *table, int write, struct file *filp, void *buffer, size_t *lenp);
++static int proc_do_kdb(ctl_table *table, int write, struct file *filp, void *buffer, size_t *lenp, loff_t *ppos);
+ #endif	/* CONFIG_KDB */
+ 
+ #ifdef CONFIG_ROOT_NFS
+@@ -2187,14 +2187,14 @@
+ 
+ #ifdef	CONFIG_KDB
+ static int proc_do_kdb(ctl_table *table, int write, struct file *filp,
+-		       void *buffer, size_t *lenp)
++		       void *buffer, size_t *lenp, loff_t *ppos)
+ {
+ #ifdef	CONFIG_SYSCTL
+ 	if (KDB_FLAG(NO_CONSOLE) && write) {
+ 		printk(KERN_ERR "kdb has no working console and has switched itself off\n");
+ 		return -EINVAL;
+ 	}
+-	return proc_dointvec(table, write, filp, buffer, lenp);
++	return proc_dointvec(table, write, filp, buffer, lenp, ppos);
+ #else	/* !CONFIG_SYSCTL */
+ 	return -ENOSYS;
+ #endif	/* CONFIG_SYSCTL */
+diff -ruN 208-e820-table-support-old/mm/bootmem.c 208-e820-table-support-new/mm/bootmem.c
+--- 208-e820-table-support-old/mm/bootmem.c	2004-08-30 16:01:19.000000000 +1000
++++ 208-e820-table-support-new/mm/bootmem.c	2004-09-27 22:58:13.890169136 +1000
+@@ -275,6 +275,7 @@
+ 				if (v & m) {
+ 					count++;
+ 					ClearPageReserved(page);
++					ClearPageNosave(page);
+ 					set_page_count(page, 1);
+ 					__free_page(page);
+ 				}
+@@ -295,6 +296,7 @@
+ 	for (i = 0; i < ((bdata->node_low_pfn-(bdata->node_boot_start >> PAGE_SHIFT))/8 + PAGE_SIZE-1)/PAGE_SIZE; i++,page++) {
+ 		count++;
+ 		ClearPageReserved(page);
++		ClearPageNosave(page);
+ 		set_page_count(page, 1);
+ 		__free_page(page);
+ 	}

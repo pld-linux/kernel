@@ -1,0 +1,46 @@
+diff -ruN 207-find-class-by-name-old/drivers/base/class.c 207-find-class-by-name-new/drivers/base/class.c
+--- 207-find-class-by-name-old/drivers/base/class.c	2004-09-16 08:34:34.000000000 +1000
++++ 207-find-class-by-name-new/drivers/base/class.c	2004-09-17 11:52:28.000000000 +1000
+@@ -465,6 +465,25 @@
+ 	kobject_put(&class_dev->kobj);
+ }
+ 
++struct class * class_find(char * name)
++{
++	struct class * this_class;
++
++	if (!name)
++		return NULL;
++
++	down_read(&class_subsys.rwsem);
++	list_for_each_entry(this_class, &class_subsys.kset.list, subsys.kset.kobj.entry) {
++		if (!(strcmp(this_class->name, name))) {
++			class_get(this_class);
++			up_read(&class_subsys.rwsem);
++			return this_class;
++		}
++	}
++	up_read(&class_subsys.rwsem);
++
++	return NULL;
++}
+ 
+ int class_interface_register(struct class_interface *class_intf)
+ {
+@@ -547,3 +566,5 @@
+ 
+ EXPORT_SYMBOL(class_interface_register);
+ EXPORT_SYMBOL(class_interface_unregister);
++
++EXPORT_SYMBOL(class_find);
+diff -ruN 207-find-class-by-name-old/include/linux/device.h 207-find-class-by-name-new/include/linux/device.h
+--- 207-find-class-by-name-old/include/linux/device.h	2004-09-17 14:25:03.000000000 +1000
++++ 207-find-class-by-name-new/include/linux/device.h	2004-09-16 09:43:39.000000000 +1000
+@@ -162,6 +162,7 @@
+ 
+ extern struct class * class_get(struct class *);
+ extern void class_put(struct class *);
++extern struct class * class_find(char * name);
+ 
+ 
+ struct class_attribute {

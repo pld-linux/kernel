@@ -1,0 +1,48 @@
+diff -ruN 815-add-suspend-memory-pool-hooks-old/mm/page_alloc.c 815-add-suspend-memory-pool-hooks-new/mm/page_alloc.c
+--- 815-add-suspend-memory-pool-hooks-old/mm/page_alloc.c	2004-09-24 22:20:38.000000000 +1000
++++ 815-add-suspend-memory-pool-hooks-new/mm/page_alloc.c	2004-09-24 22:20:44.000000000 +1000
+@@ -279,6 +279,11 @@
+ 
+ 	arch_free_page(page, order);
+ 
++	if (unlikely(test_suspend_state(SUSPEND_USE_MEMORY_POOL))) {
++		suspend2_core_ops->free_pool_pages(page, order);
++		return;
++	}
++
+ 	mod_page_state(pgfree, 1 << order);
+ 	for (i = 0 ; i < (1 << order) ; ++i)
+ 		free_pages_check(__FUNCTION__, page + i);
+@@ -509,6 +514,11 @@
+ 
+ 	arch_free_page(page, 0);
+ 
++	if (unlikely(test_suspend_state(SUSPEND_USE_MEMORY_POOL))) {
++		suspend2_core_ops->free_pool_pages(page, 0);
++		return;
++	}
++
+ 	kernel_map_pages(page, 1, 0);
+ 	inc_page_state(pgfree);
+ 	if (PageAnon(page))
+@@ -611,6 +621,20 @@
+ 	int do_retry;
+ 	int can_try_harder;
+ 
++	if (unlikely(test_suspend_state(SUSPEND_USE_MEMORY_POOL))) {
++		/*
++		 * When pool enabled, processes get allocations
++		 * from a special pool so the image size doesn't
++		 * vary (all the pages in the pool are saved, 
++		 * used or not).
++		 *
++		 * The only process that should be running is
++		 * suspend, so the demand should be very
++		 * predicatable.
++		 */
++		return suspend2_core_ops->get_pool_page(gfp_mask, order);
++	}
++
+ 	might_sleep_if(wait);
+ 
+ 	/*

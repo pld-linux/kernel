@@ -1,0 +1,214 @@
+diff -ruN 400-exports-old/drivers/acpi/hardware/hwsleep.c 400-exports-new/drivers/acpi/hardware/hwsleep.c
+--- 400-exports-old/drivers/acpi/hardware/hwsleep.c	2004-09-07 21:58:30.000000000 +1000
++++ 400-exports-new/drivers/acpi/hardware/hwsleep.c	2004-09-24 19:09:40.000000000 +1000
+@@ -43,6 +43,7 @@
+  */
+ 
+ #include <acpi/acpi.h>
++#include <linux/module.h>
+ 
+ #define _COMPONENT          ACPI_HARDWARE
+ 	 ACPI_MODULE_NAME    ("hwsleep")
+@@ -591,3 +592,6 @@
+ 
+ 	return_ACPI_STATUS (status);
+ }
++
++/* For suspend2 */
++EXPORT_SYMBOL(acpi_leave_sleep_state);
+diff -ruN 400-exports-old/fs/bio.c 400-exports-new/fs/bio.c
+--- 400-exports-old/fs/bio.c	2004-09-16 08:34:48.000000000 +1000
++++ 400-exports-new/fs/bio.c	2004-09-24 19:09:40.000000000 +1000
+@@ -976,3 +976,4 @@
+ EXPORT_SYMBOL(bio_split_pool);
+ EXPORT_SYMBOL(bio_copy_user);
+ EXPORT_SYMBOL(bio_uncopy_user);
++EXPORT_SYMBOL(bio_set_pages_dirty);
+diff -ruN 400-exports-old/fs/ioctl.c 400-exports-new/fs/ioctl.c
+--- 400-exports-old/fs/ioctl.c	2004-09-07 21:58:53.000000000 +1000
++++ 400-exports-new/fs/ioctl.c	2004-09-24 19:09:40.000000000 +1000
+@@ -138,8 +138,7 @@
+ 
+ /*
+  * Platforms implementing 32 bit compatibility ioctl handlers in
+- * modules need this exported
++ * modules need this exported. So does Suspend2 (when made as
++ * modules), so the export_symbol is now unconditional.
+  */
+-#ifdef CONFIG_COMPAT
+ EXPORT_SYMBOL(sys_ioctl);
+-#endif
+diff -ruN 400-exports-old/fs/namei.c 400-exports-new/fs/namei.c
+--- 400-exports-old/fs/namei.c	2004-09-16 08:34:50.000000000 +1000
++++ 400-exports-new/fs/namei.c	2004-09-24 19:09:40.000000000 +1000
+@@ -1649,6 +1649,8 @@
+ 	return error;
+ }
+ 
++EXPORT_SYMBOL(sys_mkdir);
++
+ /*
+  * We try to drop the dentry early: we should have
+  * a usage count of 2 if we're the only user of this
+diff -ruN 400-exports-old/fs/namespace.c 400-exports-new/fs/namespace.c
+--- 400-exports-old/fs/namespace.c	2004-09-16 08:34:50.000000000 +1000
++++ 400-exports-new/fs/namespace.c	2004-09-24 19:09:40.000000000 +1000
+@@ -490,6 +490,8 @@
+ 	return retval;
+ }
+ 
++EXPORT_SYMBOL(sys_umount);
++
+ #ifdef __ARCH_WANT_SYS_OLDUMOUNT
+ 
+ /*
+@@ -1187,6 +1189,8 @@
+ 	return retval;
+ }
+ 
++EXPORT_SYMBOL(sys_mount);
++
+ /*
+  * Replace the fs->{rootmnt,root} with {mnt,dentry}. Put the old values.
+  * It can block. Requires the big lock held.
+diff -ruN 400-exports-old/fs/proc/generic.c 400-exports-new/fs/proc/generic.c
+--- 400-exports-old/fs/proc/generic.c	2004-09-07 21:58:54.000000000 +1000
++++ 400-exports-new/fs/proc/generic.c	2004-09-24 19:09:40.000000000 +1000
+@@ -698,3 +698,5 @@
+ out:
+ 	return;
+ }
++
++EXPORT_SYMBOL(proc_match);
+diff -ruN 400-exports-old/fs/read_write.c 400-exports-new/fs/read_write.c
+--- 400-exports-old/fs/read_write.c	2004-09-07 21:58:54.000000000 +1000
++++ 400-exports-new/fs/read_write.c	2004-09-24 19:09:40.000000000 +1000
+@@ -314,6 +314,7 @@
+ 
+ 	return ret;
+ }
++EXPORT_SYMBOL(sys_write);
+ 
+ asmlinkage ssize_t sys_pread64(unsigned int fd, char __user *buf,
+ 			     size_t count, loff_t pos)
+diff -ruN 400-exports-old/kernel/power/main.c 400-exports-new/kernel/power/main.c
+--- 400-exports-old/kernel/power/main.c	2004-05-27 23:16:45.000000000 +1000
++++ 400-exports-new/kernel/power/main.c	2004-09-24 22:51:17.000000000 +1000
+@@ -17,7 +17,7 @@
+ #include <linux/errno.h>
+ #include <linux/init.h>
+ #include <linux/pm.h>
+-
++#include <linux/module.h>
+ 
+ #include "power.h"
+ 
+@@ -257,3 +257,7 @@
+ }
+ 
+ core_initcall(pm_init);
++
++/* For Suspend2 ACPI support */
++EXPORT_SYMBOL(pm_ops);
++EXPORT_SYMBOL(pm_disk_mode);
+diff -ruN 400-exports-old/kernel/sched.c 400-exports-new/kernel/sched.c
+--- 400-exports-old/kernel/sched.c	2004-09-24 22:51:11.000000000 +1000
++++ 400-exports-new/kernel/sched.c	2004-09-24 22:51:17.000000000 +1000
+@@ -3753,6 +3753,7 @@
+ 
+ 	read_unlock(&tasklist_lock);
+ }
++EXPORT_SYMBOL(show_state);
+ 
+ void __devinit init_idle(task_t *idle, int cpu)
+ {
+diff -ruN 400-exports-old/kernel/sys.c 400-exports-new/kernel/sys.c
+--- 400-exports-old/kernel/sys.c	2004-09-24 22:51:11.000000000 +1000
++++ 400-exports-new/kernel/sys.c	2004-09-24 19:09:41.000000000 +1000
+@@ -521,6 +521,8 @@
+ 	return 0;
+ }
+ 
++EXPORT_SYMBOL(sys_reboot);
++
+ static void deferred_cad(void *dummy)
+ {
+ 	notifier_call_chain(&reboot_notifier_list, SYS_RESTART, NULL);
+diff -ruN 400-exports-old/kernel/timer.c 400-exports-new/kernel/timer.c
+--- 400-exports-old/kernel/timer.c	2004-09-16 08:34:56.000000000 +1000
++++ 400-exports-new/kernel/timer.c	2004-09-24 19:09:40.000000000 +1000
+@@ -880,6 +880,7 @@
+  * Requires xtime_lock to access.
+  */
+ unsigned long avenrun[3];
++EXPORT_SYMBOL(avenrun);
+ 
+ /*
+  * calc_load - given tick count, update the avenrun load estimates.
+diff -ruN 400-exports-old/mm/page_alloc.c 400-exports-new/mm/page_alloc.c
+--- 400-exports-old/mm/page_alloc.c	2004-09-16 08:34:57.000000000 +1000
++++ 400-exports-new/mm/page_alloc.c	2004-09-24 22:51:17.000000000 +1000
+@@ -72,7 +72,7 @@
+ 	return 0;
+ }
+ 
+-static void bad_page(const char *function, struct page *page)
++void bad_page(const char *function, struct page *page)
+ {
+ 	printk(KERN_EMERG "Bad page state at %s (in process '%s', page %p)\n",
+ 		function, current->comm, page);
+@@ -94,6 +94,8 @@
+ 	page->mapping = NULL;
+ }
+ 
++EXPORT_SYMBOL(bad_page);
++
+ #ifndef CONFIG_HUGETLB_PAGE
+ #define prep_compound_page(page, order) do { } while (0)
+ #define destroy_compound_page(page, order) do { } while (0)
+@@ -2069,3 +2071,7 @@
+ 
+ 	return table;
+ }
++
++/* Exported for Software Suspend 2 */
++EXPORT_SYMBOL(nr_free_highpages);
++EXPORT_SYMBOL(pgdat_list);
+diff -ruN 400-exports-old/mm/page-writeback.c 400-exports-new/mm/page-writeback.c
+--- 400-exports-old/mm/page-writeback.c	2004-09-16 08:34:57.000000000 +1000
++++ 400-exports-new/mm/page-writeback.c	2004-09-24 22:51:17.000000000 +1000
+@@ -331,6 +331,7 @@
+ 	}
+ 	return pdflush_operation(background_writeout, nr_pages);
+ }
++EXPORT_SYMBOL(wakeup_bdflush);
+ 
+ static void wb_timer_fn(unsigned long unused);
+ static void laptop_timer_fn(unsigned long unused);
+diff -ruN 400-exports-old/mm/swapfile.c 400-exports-new/mm/swapfile.c
+--- 400-exports-old/mm/swapfile.c	2004-09-24 22:51:11.000000000 +1000
++++ 400-exports-new/mm/swapfile.c	2004-09-24 22:51:17.000000000 +1000
+@@ -1710,3 +1710,13 @@
+ 	swap_device_unlock(swapdev);
+ 	return ret;
+ }
++
++/* Functions exported for Software Suspend's swapwriter */
++EXPORT_SYMBOL(swap_free);
++EXPORT_SYMBOL(swap_info);
++EXPORT_SYMBOL(sys_swapoff);
++EXPORT_SYMBOL(sys_swapon);
++EXPORT_SYMBOL(si_swapinfo);
++EXPORT_SYMBOL(map_swap_page);
++EXPORT_SYMBOL(get_swap_page);
++EXPORT_SYMBOL(get_swap_info_struct);
+diff -ruN 400-exports-old/mm/vmscan.c 400-exports-new/mm/vmscan.c
+--- 400-exports-old/mm/vmscan.c	2004-09-16 08:34:57.000000000 +1000
++++ 400-exports-new/mm/vmscan.c	2004-09-24 22:51:17.000000000 +1000
+@@ -1214,3 +1214,6 @@
+ }
+ 
+ module_init(kswapd_init)
++
++/* For Suspend2 */	
++EXPORT_SYMBOL(shrink_all_memory);

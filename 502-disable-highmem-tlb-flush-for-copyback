@@ -1,0 +1,23 @@
+diff -ruN 502-disable-highmem-tlb-flush-for-copyback-old/mm/highmem.c 502-disable-highmem-tlb-flush-for-copyback-new/mm/highmem.c
+--- 502-disable-highmem-tlb-flush-for-copyback-old/mm/highmem.c	2004-09-17 17:02:32.000000000 +1000
++++ 502-disable-highmem-tlb-flush-for-copyback-new/mm/highmem.c	2004-09-25 11:00:19.280798456 +1000
+@@ -26,6 +26,7 @@
+ #include <linux/init.h>
+ #include <linux/hash.h>
+ #include <linux/highmem.h>
++#include <linux/suspend.h>
+ #include <asm/tlbflush.h>
+ 
+ static mempool_t *page_pool, *isa_page_pool;
+@@ -94,7 +95,10 @@
+ 
+ 		set_page_address(page, NULL);
+ 	}
+-	flush_tlb_kernel_range(PKMAP_ADDR(0), PKMAP_ADDR(LAST_PKMAP));
++	if (test_suspend_state(SUSPEND_FREEZE_SMP))
++		__flush_tlb();
++	else
++		flush_tlb_kernel_range(PKMAP_ADDR(0), PKMAP_ADDR(LAST_PKMAP));
+ }
+ 
+ static inline unsigned long map_new_virtual(struct page *page)

@@ -1,0 +1,67 @@
+diff -ruN 702-keyboard-and-8250-hooks-old/drivers/char/keyboard.c 702-keyboard-and-8250-hooks-new/drivers/char/keyboard.c
+--- 702-keyboard-and-8250-hooks-old/drivers/char/keyboard.c	2004-09-24 21:31:49.000000000 +1000
++++ 702-keyboard-and-8250-hooks-new/drivers/char/keyboard.c	2004-09-24 19:09:41.000000000 +1000
+@@ -33,6 +33,7 @@
+ #include <linux/string.h>
+ #include <linux/random.h>
+ #include <linux/init.h>
++#include <linux/completion.h>
+ #include <linux/slab.h>
+ 
+ #include <linux/kbd_kern.h>
+@@ -44,9 +45,15 @@
+ #include <linux/kdb.h>
+ #endif	/* CONFIG_KDB */
+ 
++#include <linux/suspend.h>
++
+ static void kbd_disconnect(struct input_handle *handle);
+ extern void ctrl_alt_del(void);
+ 
++#ifdef CONFIG_PM
++extern void wakeup_suspend(void);
++#endif
++
+ /*
+  * Exported functions/variables
+  */
+@@ -1078,6 +1085,12 @@
+ 		return;
+ 	}
+ #endif
++#ifdef CONFIG_SOFTWARE_SUSPEND2
++	if (down && (test_suspend_state(SUSPEND_RUNNING))) {
++		suspend_handle_keypress(keycode, SUSPEND_KEY_KEYBOARD);
++		return;
++	}
++#endif
+ #if defined(CONFIG_SPARC32) || defined(CONFIG_SPARC64)
+ 	if (keycode == KEY_A && sparc_l1_a_state) {
+ 		sparc_l1_a_state = 0;
+diff -ruN 702-keyboard-and-8250-hooks-old/drivers/serial/8250.c 702-keyboard-and-8250-hooks-new/drivers/serial/8250.c
+--- 702-keyboard-and-8250-hooks-old/drivers/serial/8250.c	2004-09-24 21:31:49.000000000 +1000
++++ 702-keyboard-and-8250-hooks-new/drivers/serial/8250.c	2004-09-24 19:09:41.000000000 +1000
+@@ -32,6 +32,7 @@
+ #include <linux/serialP.h>
+ #include <linux/delay.h>
+ #include <linux/device.h>
++#include <linux/suspend.h>
+ 
+ #include <asm/io.h>
+ #include <asm/irq.h>
+@@ -943,6 +944,15 @@
+ 		}
+ 		if (uart_handle_sysrq_char(&up->port, ch, regs))
+ 			goto ignore_char;
++
++#if defined(CONFIG_SERIAL_CORE_CONSOLE) && defined(CONFIG_SOFTWARE_SUSPEND2)
++		if (test_suspend_state(SUSPEND_SANITY_CHECK_PROMPT) ||
++		    test_suspend_state(SUSPEND_RUNNING)) {
++			suspend_handle_keypress(ch, SUSPEND_KEY_SERIAL);
++			goto ignore_char;
++		}
++#endif
++
+ 		if ((*status & up->port.ignore_status_mask) == 0) {
+ 			tty->flip.flag_buf_ptr++;
+ 			tty->flip.char_buf_ptr++;

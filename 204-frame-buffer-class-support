@@ -1,0 +1,319 @@
+diff -ruN 204-frame-buffer-class-support-old/drivers/video/aty/atyfb_base.c 204-frame-buffer-class-support-new/drivers/video/aty/atyfb_base.c
+--- 204-frame-buffer-class-support-old/drivers/video/aty/atyfb_base.c	2004-08-30 16:01:10.000000000 +1000
++++ 204-frame-buffer-class-support-new/drivers/video/aty/atyfb_base.c	2004-09-23 16:18:12.896905896 +1000
+@@ -1972,7 +1972,7 @@
+ 
+ 			info->fix = atyfb_fix;
+ 			info->par = default_par;
+-
++			info->device = &pdev->dev;
+ #ifdef __sparc__
+ 			/*
+ 			 * Map memory-mapped registers.
+diff -ruN 204-frame-buffer-class-support-old/drivers/video/chipsfb.c 204-frame-buffer-class-support-new/drivers/video/chipsfb.c
+--- 204-frame-buffer-class-support-old/drivers/video/chipsfb.c	2004-09-21 10:59:00.000000000 +1000
++++ 204-frame-buffer-class-support-new/drivers/video/chipsfb.c	2004-09-23 16:18:12.913903312 +1000
+@@ -416,7 +416,7 @@
+ 		release_mem_region(addr, size);
+ 		return -ENOMEM;
+ 	}
+-
++	p->device = &dp->dev;
+ 	init_chips(p, addr);
+ 
+ #ifdef CONFIG_PMAC_PBOOK
+diff -ruN 204-frame-buffer-class-support-old/drivers/video/cyber2000fb.c 204-frame-buffer-class-support-new/drivers/video/cyber2000fb.c
+--- 204-frame-buffer-class-support-old/drivers/video/cyber2000fb.c	2004-09-21 10:59:00.000000000 +1000
++++ 204-frame-buffer-class-support-new/drivers/video/cyber2000fb.c	2004-09-23 16:18:12.922901944 +1000
+@@ -1399,6 +1399,8 @@
+ 		cfb->fb.var.xres, cfb->fb.var.yres,
+ 		h_sync / 1000, h_sync % 1000, v_sync);
+ 
++	if (cfb->dev)
++		cfb->fb.device = &cfb->dev->dev;
+ 	err = register_framebuffer(&cfb->fb);
+ 
+ failed:
+diff -ruN 204-frame-buffer-class-support-old/drivers/video/fbmem.c 204-frame-buffer-class-support-new/drivers/video/fbmem.c
+--- 204-frame-buffer-class-support-old/drivers/video/fbmem.c	2004-09-21 10:59:00.000000000 +1000
++++ 204-frame-buffer-class-support-new/drivers/video/fbmem.c	2004-09-23 16:18:12.926901336 +1000
+@@ -1380,7 +1380,8 @@
+ 			break;
+ 	fb_info->node = i;
+ 
+-	c = class_simple_device_add(fb_class, MKDEV(FB_MAJOR, i), NULL, "fb%d", i);
++	c = class_simple_device_add(fb_class, MKDEV(FB_MAJOR, i),
++				    fb_info->device, "fb%d", i);
+ 	if (IS_ERR(c)) {
+ 		/* Not fatal */
+ 		printk(KERN_WARNING "Unable to create class_device for framebuffer %d; errno = %ld\n", i, PTR_ERR(c));
+diff -ruN 204-frame-buffer-class-support-old/drivers/video/fbsysfs.c 204-frame-buffer-class-support-new/drivers/video/fbsysfs.c
+--- 204-frame-buffer-class-support-old/drivers/video/fbsysfs.c	2004-02-18 19:16:01.000000000 +1100
++++ 204-frame-buffer-class-support-new/drivers/video/fbsysfs.c	2004-09-23 16:18:12.954897080 +1000
+@@ -51,6 +51,8 @@
+ 	if (size)
+ 		info->par = p + fb_info_size;
+ 
++	info->device = dev;
++
+ 	return info;
+ #undef PADDING
+ #undef BYTES_PER_LONG
+diff -ruN 204-frame-buffer-class-support-old/drivers/video/i810/i810_main.c 204-frame-buffer-class-support-new/drivers/video/i810/i810_main.c
+--- 204-frame-buffer-class-support-old/drivers/video/i810/i810_main.c	2004-09-21 10:59:00.000000000 +1000
++++ 204-frame-buffer-class-support-new/drivers/video/i810/i810_main.c	2004-09-23 16:35:44.893978032 +1000
+@@ -1838,20 +1838,12 @@
+ 	struct i810fb_par *par = NULL;
+ 	int err, vfreq, hfreq, pixclock;
+ 
+-	if (!(info = kmalloc(sizeof(struct fb_info), GFP_KERNEL))) {
+-		i810fb_release_resource(info, par);
++ 	info = framebuffer_alloc(sizeof(struct i810fb_par), &dev->dev);
++ 	if (!info)
+ 		return -ENOMEM;
+-	}
+-	memset(info, 0, sizeof(struct fb_info));
+-
+-	if(!(par = kmalloc(sizeof(struct i810fb_par), GFP_KERNEL))) {
+-		i810fb_release_resource(info, par);
+-		return -ENOMEM;
+-	}
+-	memset(par, 0, sizeof(struct i810fb_par));
+ 
++ 	par = (struct i810fb_par *) info->par;
+ 	par->dev = dev;
+-	info->par = par;
+ 
+ 	if (!(info->pixmap.addr = kmalloc(64*1024, GFP_KERNEL))) {
+ 		i810fb_release_resource(info, par);
+@@ -1926,39 +1918,35 @@
+ static void i810fb_release_resource(struct fb_info *info, 
+ 				    struct i810fb_par *par)
+ {
+-	if (par) {
+-		unset_mtrr(par);
+-		if (par->drm_agp) {
+-			drm_agp_t *agp = par->drm_agp;
+-			struct gtt_data *gtt = &par->i810_gtt;
+-
+-			if (par->i810_gtt.i810_cursor_memory) 
+-				agp->free_memory(gtt->i810_cursor_memory);
+-			if (par->i810_gtt.i810_fb_memory) 
+-				agp->free_memory(gtt->i810_fb_memory);
+-
+-			inter_module_put("drm_agp");
+-			par->drm_agp = NULL;
+-		}
+-
+-		if (par->mmio_start_virtual) 
+-			iounmap(par->mmio_start_virtual);
+-		if (par->aperture.virtual) 
+-			iounmap(par->aperture.virtual);
+-
+-		if (par->res_flags & FRAMEBUFFER_REQ)
+-			release_mem_region(par->aperture.physical, 
+-					   par->aperture.size);
+-		if (par->res_flags & MMIO_REQ)
+-			release_mem_region(par->mmio_start_phys, MMIO_SIZE);
+-
+-		if (par->res_flags & PCI_DEVICE_ENABLED)
+-			pci_disable_device(par->dev); 
+-
+-		kfree(par);
+-	}
+-	if (info) 
+-		kfree(info);
++ 	unset_mtrr(par);
++ 	if (par->drm_agp) {
++ 		drm_agp_t *agp = par->drm_agp;
++ 		struct gtt_data *gtt = &par->i810_gtt;
++ 
++ 		if (par->i810_gtt.i810_cursor_memory)
++ 			agp->free_memory(gtt->i810_cursor_memory);
++ 		if (par->i810_gtt.i810_fb_memory)
++ 			agp->free_memory(gtt->i810_fb_memory);
++ 
++ 		inter_module_put("drm_agp");
++ 		par->drm_agp = NULL;
++ 	}
++ 
++ 	if (par->mmio_start_virtual)
++ 		iounmap(par->mmio_start_virtual);
++ 	if (par->aperture.virtual)
++ 		iounmap(par->aperture.virtual);
++ 
++ 	if (par->res_flags & FRAMEBUFFER_REQ)
++ 		release_mem_region(par->aperture.physical,
++ 				   par->aperture.size);
++ 	if (par->res_flags & MMIO_REQ)
++ 		release_mem_region(par->mmio_start_phys, MMIO_SIZE);
++ 
++ 	if (par->res_flags & PCI_DEVICE_ENABLED)
++ 		pci_disable_device(par->dev);
++ 
++ 	framebuffer_release(info);
+ }
+ 
+ static void __exit i810fb_remove_pci(struct pci_dev *dev)
+diff -ruN 204-frame-buffer-class-support-old/drivers/video/igafb.c 204-frame-buffer-class-support-new/drivers/video/igafb.c
+--- 204-frame-buffer-class-support-old/drivers/video/igafb.c	2004-09-21 10:59:00.000000000 +1000
++++ 204-frame-buffer-class-support-new/drivers/video/igafb.c	2004-09-23 16:18:12.996890696 +1000
+@@ -528,6 +528,7 @@
+ 	info->var = default_var;
+ 	info->fix = igafb_fix;
+ 	info->pseudo_palette = (void *)(par + 1);
++	info->device = &pdev->dev;
+ 
+ 	if (!iga_init(info, par)) {
+ 		iounmap((void *)par->io_base);
+diff -ruN 204-frame-buffer-class-support-old/drivers/video/imsttfb.c 204-frame-buffer-class-support-new/drivers/video/imsttfb.c
+--- 204-frame-buffer-class-support-old/drivers/video/imsttfb.c	2004-09-21 10:59:00.000000000 +1000
++++ 204-frame-buffer-class-support-new/drivers/video/imsttfb.c	2004-09-23 16:18:13.015887808 +1000
+@@ -1521,6 +1521,7 @@
+ 	par->cmap_regs = (__u8 *)ioremap(addr + 0x840000, 0x1000);
+ 	info->par = par;
+ 	info->pseudo_palette = (void *) (par + 1);
++	info->device = &pdev->dev;
+ 	init_imstt(info);
+ 
+ 	pci_set_drvdata(pdev, info);
+diff -ruN 204-frame-buffer-class-support-old/drivers/video/kyro/fbdev.c 204-frame-buffer-class-support-new/drivers/video/kyro/fbdev.c
+--- 204-frame-buffer-class-support-old/drivers/video/kyro/fbdev.c	2004-09-21 10:59:00.000000000 +1000
++++ 204-frame-buffer-class-support-new/drivers/video/kyro/fbdev.c	2004-09-23 16:18:13.016887656 +1000
+@@ -735,6 +735,7 @@
+ 
+ 	fb_memset(info->screen_base, 0, size);
+ 
++	info->device = &pdev->dev;
+ 	if (register_framebuffer(info) < 0)
+ 		goto out_unmap;
+ 
+diff -ruN 204-frame-buffer-class-support-old/drivers/video/matrox/matroxfb_base.c 204-frame-buffer-class-support-new/drivers/video/matrox/matroxfb_base.c
+--- 204-frame-buffer-class-support-old/drivers/video/matrox/matroxfb_base.c	2004-08-30 16:01:11.000000000 +1000
++++ 204-frame-buffer-class-support-new/drivers/video/matrox/matroxfb_base.c	2004-09-23 16:18:13.028885832 +1000
+@@ -1864,6 +1864,7 @@
+ /* We do not have to set currcon to 0... register_framebuffer do it for us on first console
+  * and we do not want currcon == 0 for subsequent framebuffers */
+ 
++	ACCESS_FBINFO(fbcon).device = &ACCESS_FBINFO(pcidev)->dev;
+ 	if (register_framebuffer(&ACCESS_FBINFO(fbcon)) < 0) {
+ 		goto failVideoIO;
+ 	}
+diff -ruN 204-frame-buffer-class-support-old/drivers/video/pvr2fb.c 204-frame-buffer-class-support-new/drivers/video/pvr2fb.c
+--- 204-frame-buffer-class-support-old/drivers/video/pvr2fb.c	2004-09-21 10:59:00.000000000 +1000
++++ 204-frame-buffer-class-support-new/drivers/video/pvr2fb.c	2004-09-23 16:18:13.046883096 +1000
+@@ -939,6 +939,7 @@
+ 
+ 	pvr2_fix.mmio_start	= pci_resource_start(pdev, 1);
+ 	pvr2_fix.mmio_len	= pci_resource_len(pdev, 1);
++	fbinfo->device = &pdev->dev;
+ 
+ 	return pvr2fb_common_init();
+ }
+diff -ruN 204-frame-buffer-class-support-old/drivers/video/radeonfb.c 204-frame-buffer-class-support-new/drivers/video/radeonfb.c
+--- 204-frame-buffer-class-support-old/drivers/video/radeonfb.c	2004-09-21 10:59:00.000000000 +1000
++++ 204-frame-buffer-class-support-new/drivers/video/radeonfb.c	2004-09-23 16:18:13.072879144 +1000
+@@ -3040,7 +3040,7 @@
+ 	pci_set_drvdata(pdev, rinfo);
+ 	rinfo->next = board_list;
+ 	board_list = rinfo;
+-
++	((struct fb_info *) rinfo)->device = &pdev->dev;
+ 	if (register_framebuffer ((struct fb_info *) rinfo) < 0) {
+ 		printk ("radeonfb: could not register framebuffer\n");
+ 		iounmap ((void*)rinfo->fb_base);
+diff -ruN 204-frame-buffer-class-support-old/drivers/video/riva/fbdev.c 204-frame-buffer-class-support-new/drivers/video/riva/fbdev.c
+--- 204-frame-buffer-class-support-old/drivers/video/riva/fbdev.c	2004-09-21 10:59:00.000000000 +1000
++++ 204-frame-buffer-class-support-new/drivers/video/riva/fbdev.c	2004-09-23 16:18:13.077878000 +1000
+@@ -1921,21 +1921,17 @@
+ 	assert(pd != NULL);
+ 	assert(rci != NULL);
+ 
+-	info = kmalloc(sizeof(struct fb_info), GFP_KERNEL);
++	info = framebuffer_alloc(sizeof(struct riva_par), &pd->dev);
++
+ 	if (!info)
+ 		goto err_out;
+ 
+-	default_par = kmalloc(sizeof(struct riva_par), GFP_KERNEL);
+-	if (!default_par)
+-		goto err_out_kfree;
+-
+-	memset(info, 0, sizeof(struct fb_info));
+-	memset(default_par, 0, sizeof(struct riva_par));
++	default_par = (struct riva_par *) info->par;
+ 	default_par->pdev = pd;
+ 
+ 	info->pixmap.addr = kmalloc(64 * 1024, GFP_KERNEL);
+ 	if (info->pixmap.addr == NULL)
+-		goto err_out_kfree1;
++		goto err_out_kfree;
+ 	memset(info->pixmap.addr, 0, 64 * 1024);
+ 
+ 	if (pci_enable_device(pd)) {
+@@ -2084,10 +2080,8 @@
+ 	pci_disable_device(pd);
+ err_out_enable:
+ 	kfree(info->pixmap.addr);
+-err_out_kfree1:
+-	kfree(default_par);
+ err_out_kfree:
+-	kfree(info);
++	framebuffer_release(info);
+ err_out:
+ 	return -ENODEV;
+ }
+@@ -2116,8 +2110,7 @@
+ 	pci_disable_device(pd);
+ 	fb_destroy_modedb(info->monspecs.modedb);
+ 	kfree(info->pixmap.addr);
+-	kfree(par);
+-	kfree(info);
++	framebuffer_release(info);
+ 	pci_set_drvdata(pd, NULL);
+ 	NVTRACE_LEAVE();
+ }
+diff -ruN 204-frame-buffer-class-support-old/drivers/video/sstfb.c 204-frame-buffer-class-support-new/drivers/video/sstfb.c
+--- 204-frame-buffer-class-support-old/drivers/video/sstfb.c	2004-09-21 10:59:00.000000000 +1000
++++ 204-frame-buffer-class-support-new/drivers/video/sstfb.c	2004-09-23 16:18:13.087876864 +1000
+@@ -1507,6 +1507,7 @@
+ 	fb_alloc_cmap(&info->cmap, 256, 0);
+ 
+ 	/* register fb */
++	info->device = &pdev->dev;
+ 	if (register_framebuffer(info) < 0) {
+ 		eprintk("can't register framebuffer.\n");
+ 		goto fail;
+diff -ruN 204-frame-buffer-class-support-old/drivers/video/tgafb.c 204-frame-buffer-class-support-new/drivers/video/tgafb.c
+--- 204-frame-buffer-class-support-old/drivers/video/tgafb.c	2004-09-21 10:59:00.000000000 +1000
++++ 204-frame-buffer-class-support-new/drivers/video/tgafb.c	2004-09-23 16:18:13.091876256 +1000
+@@ -1453,6 +1453,7 @@
+ 	tgafb_set_par(&all->info);
+ 	tgafb_init_fix(&all->info);
+ 
++	all->info.device = &pdev->dev;
+ 	if (register_framebuffer(&all->info) < 0) {
+ 		printk(KERN_ERR "tgafb: Could not register framebuffer\n");
+ 		ret = -EINVAL;
+diff -ruN 204-frame-buffer-class-support-old/drivers/video/tridentfb.c 204-frame-buffer-class-support-new/drivers/video/tridentfb.c
+--- 204-frame-buffer-class-support-old/drivers/video/tridentfb.c	2004-09-21 10:59:00.000000000 +1000
++++ 204-frame-buffer-class-support-new/drivers/video/tridentfb.c	2004-09-23 16:18:13.093875952 +1000
+@@ -1161,6 +1161,7 @@
+ 		default_var.accel_flags &= ~FB_ACCELF_TEXT;
+ 	default_var.activate |= FB_ACTIVATE_NOW;
+ 	fb_info.var = default_var;
++	fb_info.device = &dev->dev;
+ 	if (register_framebuffer(&fb_info) < 0) {
+ 		output("Could not register Trident framebuffer\n");
+ 		return -EINVAL;
+diff -ruN 204-frame-buffer-class-support-old/include/linux/fb.h 204-frame-buffer-class-support-new/include/linux/fb.h
+--- 204-frame-buffer-class-support-old/include/linux/fb.h	2004-09-21 10:59:02.000000000 +1000
++++ 204-frame-buffer-class-support-new/include/linux/fb.h	2004-09-23 16:39:26.035359432 +1000
+@@ -582,6 +582,7 @@
+ 	struct fb_pixmap sprite;	/* Cursor hardware mapper */
+ 	struct fb_cmap cmap;		/* Current cmap */
+ 	struct fb_ops *fbops;
++ 	struct device *device;
+ 	char *screen_base;		/* Virtual address */
+ 	int currcon;			/* Current VC. */
+ 	void *pseudo_palette;		/* Fake palette of 16 colors */ 

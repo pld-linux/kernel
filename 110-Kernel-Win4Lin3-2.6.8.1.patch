@@ -1,0 +1,813 @@
+diff -auP linux-2.6.8.1/kernel/exit.c linux-2.6.8.1-win4lin/kernel/exit.c
+--- linux-2.6.8.1/kernel/exit.c	2004-08-14 06:56:01.000000000 -0400
++++ linux-2.6.8.1-win4lin/kernel/exit.c	2004-08-22 21:09:21.000000000 -0400
+@@ -29,6 +29,10 @@
+ #include <asm/pgtable.h>
+ #include <asm/mmu_context.h>
+ 
++#ifdef CONFIG_MKI
++#include <asm/mki.h>
++#endif
++
+ extern void sem_exit (void);
+ extern struct task_struct *child_reaper;
+ 
+@@ -821,6 +825,12 @@
+ 	}
+ 
+ 	acct_process(code);
++
++#ifdef CONFIG_MKI
++	if (unlikely(tsk->mki_task_info))
++		CALL_MKI_HOOK(MKI_HOOK_EXIT, NULL, NULL);
++#endif
++
+ 	__exit_mm(tsk);
+ 
+ 	exit_sem(tsk);
+diff -auP linux-2.6.8.1/kernel/fork.c linux-2.6.8.1-win4lin/kernel/fork.c
+--- linux-2.6.8.1/kernel/fork.c	2004-08-14 06:54:49.000000000 -0400
++++ linux-2.6.8.1-win4lin/kernel/fork.c	2004-08-22 21:09:21.000000000 -0400
+@@ -913,6 +913,10 @@
+ 	atomic_inc(&p->user->processes);
+ 	get_group_info(p->group_info);
+ 
++#ifdef CONFIG_MKI
++	p->mki_task_info = NULL;
++#endif
++
+ 	/*
+ 	 * If multiple threads are within copy_process(), then this check
+ 	 * triggers too late. This doesn't hurt, the check is only there
+diff -auP linux-2.6.8.1/kernel/sched.c linux-2.6.8.1-win4lin/kernel/sched.c
+--- linux-2.6.8.1/kernel/sched.c	2004-08-14 06:55:59.000000000 -0400
++++ linux-2.6.8.1-win4lin/kernel/sched.c	2004-08-22 21:10:45.000000000 -0400
+@@ -41,6 +41,9 @@
+ #include <linux/percpu.h>
+ #include <linux/kthread.h>
+ #include <asm/tlb.h>
++#ifdef CONFIG_MKI
++#include <asm/mki.h>
++#endif
+ 
+ #include <asm/unistd.h>
+ 
+@@ -852,6 +855,24 @@
+ 	return success;
+ }
+ 
++#if defined(CONFIG_MKI) && defined(CONFIG_SMP)
++/*
++ * If there is a possibility that task p is running in user mode
++ * (per force on a different CPU), then kick that CPU into the
++ * kernel so that we can deliver MKI events (kind of like signals).
++ */
++void mki_kick_if_running(task_t *p)
++{
++       unsigned long flags;
++       runqueue_t *rq;
++
++       rq = task_rq_lock(p, &flags);
++       if (task_running(rq, p) && (task_cpu(p) != smp_processor_id()))
++               smp_send_reschedule(task_cpu(p));
++       task_rq_unlock(rq, &flags);
++}
++#endif /* CONFIG_MKI && CONFIG_SMP */
++
+ int fastcall wake_up_process(task_t * p)
+ {
+ 	return try_to_wake_up(p, TASK_STOPPED |
+@@ -1055,6 +1076,11 @@
+ 	struct mm_struct *mm = next->mm;
+ 	struct mm_struct *oldmm = prev->active_mm;
+ 
++#ifdef CONFIG_MKI
++	if (unlikely(prev->mki_task_info))
++		CALL_MKI_HOOK(MKI_HOOK_SWITCH_AWAY, prev, NULL);
++#endif
++
+ 	if (unlikely(!mm)) {
+ 		next->active_mm = oldmm;
+ 		atomic_inc(&oldmm->mm_count);
+diff -auP linux-2.6.8.1/mm/vmscan.c linux-2.6.8.1-win4lin/mm/vmscan.c
+--- linux-2.6.8.1/mm/vmscan.c	2004-08-14 06:54:50.000000000 -0400
++++ linux-2.6.8.1-win4lin/mm/vmscan.c	2004-08-22 21:09:21.000000000 -0400
+@@ -74,6 +74,10 @@
+ 	int may_writepage;
+ };
+ 
++#ifdef CONFIG_MKI
++#include <asm/mki.h>
++#endif
++
+ /*
+  * The list of shrinker callbacks used by to apply pressure to
+  * ageable caches.
+@@ -915,6 +919,17 @@
+ 	}
+ 
+ 	for (priority = DEF_PRIORITY; priority >= 0; priority--) {
++
++#ifdef CONFIG_MKI
++		if (priority < DEF_PRIORITY) {
++			int mki_swap_pri = (priority < (DEF_PRIORITY - 1)) ?
++				MKI_HARD_PRIORITY : MKI_NORMAL_PRIORITY;
++
++			CALL_MKI_HOOK(MKI_HOOK_SWAP, (void *) mki_swap_pri,
++					(void *) 0);
++		}
++#endif
++
+ 		sc.nr_mapped = read_page_state(nr_mapped);
+ 		sc.nr_scanned = 0;
+ 		sc.nr_reclaimed = 0;
+diff -auP linux-2.6.8.1/arch/i386/Kconfig linux-2.6.8.1-win4lin/arch/i386/Kconfig
+--- linux-2.6.8.1/arch/i386/Kconfig	2004-08-14 06:54:50.000000000 -0400
++++ linux-2.6.8.1-win4lin/arch/i386/Kconfig	2004-08-22 21:09:21.000000000 -0400
+@@ -1185,6 +1185,16 @@
+ 
+ source "arch/i386/oprofile/Kconfig"
+ 
++menu "NeTraverse Win4Lin Support"
++config MKI
++	bool "Include NeTraverse Win4Lin Support"
++	select MODULES
++	select MODULE_UNLOAD
++	help
++	  Say Y here if you want a kernel that supports the NeTraverse
++	  Win4Lin products which let you run Windows as a guest Operating
++	  System on Linux systems.
++endmenu
+ 
+ menu "Kernel hacking"
+ 
+diff -auP linux-2.6.8.1/arch/i386/kernel/apm.c linux-2.6.8.1-win4lin/arch/i386/kernel/apm.c
+--- linux-2.6.8.1/arch/i386/kernel/apm.c	2004-08-14 06:54:48.000000000 -0400
++++ linux-2.6.8.1-win4lin/arch/i386/kernel/apm.c	2004-08-22 21:09:21.000000000 -0400
+@@ -2292,6 +2292,10 @@
+ 	apm_bios_entry.segment = APM_CS;
+ 
+ 	for (i = 0; i < NR_CPUS; i++) {
++#ifdef CONFIG_MKI
++		if (cpu_gdt_table[i] == 0)
++			continue;
++#endif
+ 		set_base(cpu_gdt_table[i][APM_CS >> 3],
+ 			 __va((unsigned long)apm_info.bios.cseg << 4));
+ 		set_base(cpu_gdt_table[i][APM_CS_16 >> 3],
+diff -auP linux-2.6.8.1/arch/i386/kernel/cpu/common.c linux-2.6.8.1-win4lin/arch/i386/kernel/cpu/common.c
+--- linux-2.6.8.1/arch/i386/kernel/cpu/common.c	2004-08-14 06:54:48.000000000 -0400
++++ linux-2.6.8.1-win4lin/arch/i386/kernel/cpu/common.c	2004-08-22 21:09:21.000000000 -0400
+@@ -524,6 +524,13 @@
+ 	 * and set up the GDT descriptor:
+ 	 */
+ 	if (cpu) {
++#ifdef CONFIG_MKI
++#if    GDT_SIZE != PAGE_SIZE
++#error CONFIG_MKI - unexpected GDT_SIZE
++#endif
++		cpu_gdt_table[cpu] =
++			(struct desc_struct *) __get_free_page(GFP_ATOMIC);
++#endif /* CONFIG_MKI */
+ 		memcpy(cpu_gdt_table[cpu], cpu_gdt_table[0], GDT_SIZE);
+ 		cpu_gdt_descr[cpu].size = GDT_SIZE - 1;
+ 		cpu_gdt_descr[cpu].address = (unsigned long)cpu_gdt_table[cpu];
+diff -auP linux-2.6.8.1/arch/i386/kernel/entry.S linux-2.6.8.1-win4lin/arch/i386/kernel/entry.S
+--- linux-2.6.8.1/arch/i386/kernel/entry.S	2004-08-14 06:55:09.000000000 -0400
++++ linux-2.6.8.1-win4lin/arch/i386/kernel/entry.S	2004-08-22 21:09:21.000000000 -0400
+@@ -190,6 +190,9 @@
+ 
+ 	# userspace resumption stub bypassing syscall exit tracing
+ 	ALIGN
++#ifdef CONFIG_MKI
++ENTRY(mki_process_trapret)
++#endif
+ ret_from_exception:
+ 	preempt_stop
+ ret_from_intr:
+diff -auP linux-2.6.8.1/arch/i386/kernel/head.S linux-2.6.8.1-win4lin/arch/i386/kernel/head.S
+--- linux-2.6.8.1/arch/i386/kernel/head.S	2004-08-14 06:54:49.000000000 -0400
++++ linux-2.6.8.1-win4lin/arch/i386/kernel/head.S	2004-08-22 21:09:21.000000000 -0400
+@@ -460,7 +460,7 @@
+ 	.word 0				# 32 bit align gdt_desc.address
+ cpu_gdt_descr:
+ 	.word GDT_ENTRIES*8-1
+-	.long cpu_gdt_table
++	.long gdt_table
+ 
+ 	.fill NR_CPUS-1,8,0		# space for the other GDT descriptors
+ 
+@@ -478,6 +478,90 @@
+  * The Global Descriptor Table contains 28 quadwords, per-CPU.
+  */
+ 	.align PAGE_SIZE_asm
++
++
++#ifdef CONFIG_MKI
++/*
++ * The Global Descriptor Table.  Note that entries below __KERNEL_CS
++ * may differ if an MKI task is in context.  That is why we move the
++ * global kernel entries so far up.
++ */
++ENTRY(gdt_table)
++	.quad 0x0000000000000000	/* NULL descriptor */
++	.quad 0x0000000000000000	/* 0x0b reserved */
++	.quad 0x0000000000000000	/* 0x13 reserved */
++	.quad 0x0000000000000000	/* 0x1b reserved */
++	.quad 0x0000000000000000	/* 0x20 unused */
++	.quad 0x0000000000000000	/* 0x28 unused */
++	.quad 0x0000000000000000	/* 0x33 TLS entry 1 */
++	.quad 0x0000000000000000	/* 0x3b TLS entry 2 */
++	.quad 0x0000000000000000	/* 0x43 TLS entry 3 */
++	.quad 0x0000000000000000	/* 0x4b reserved */
++	.quad 0x0000000000000000	/* 0x53 reserved */
++	.quad 0x0000000000000000	/* 0x5b reserved */
++
++	.fill (__KERNEL_CS - 0x60),1,0 	/* reserved for MKI use */
++
++	/*
++	 * Note that the following four entries MUST be in this order and
++	 * all adjacent: Kernel Code then data immediately followed by User
++	 * Code and then data.  See the Sysenter()/Sysexit() instruction
++	 * details to understand why.
++	 */
++	.quad 0x00cf9a000000ffff	/* 0xf20 krnl 4GB code at 0x00000000 */
++	.quad 0x00cf92000000ffff	/* 0xf28 krnl 4GB data at 0x00000000 */
++	.quad 0x00cffa000000ffff	/* 0xf33 user 4GB code at 0x00000000 */
++	.quad 0x00cff2000000ffff	/* 0xf3b user 4GB data at 0x00000000 */
++
++	.quad 0x0000000000000000	/* 0xf40 TSS descriptor */
++	.quad 0x0000000000000000	/* 0xf48 LDT descriptor */
++
++	/* Segments used for calling PnP BIOS */
++	.quad 0x00c09a0000000000	/* 0xf50 32-bit code */
++	.quad 0x00809a0000000000	/* 0xf58 16-bit code */
++	.quad 0x0080920000000000	/* 0xf60 16-bit data */
++	.quad 0x0080920000000000	/* 0xf68 16-bit data */
++	.quad 0x0080920000000000	/* 0xf70 16-bit data */
++	/*
++	 * The APM segments have byte granularity and their bases
++	 * and limits are set at run time.
++	 */
++	.quad 0x00409a0000000000	/* 0xf78 APM CS    code */
++	.quad 0x00009a0000000000	/* 0xf80 APM CS 16 code (16 bit) */
++	.quad 0x0040920000000000	/* 0xf88 APM DS    data */
++
++	.quad 0x0000000000000000	/* 0xf90 - unused */
++	.quad 0x0000000000000000	/* 0xf98 - unused */
++	.quad 0x0000000000000000	/* 0xfa0 - unused */
++	.quad 0x0000000000000000	/* 0xfa8 - unused */
++	.quad 0x0000000000000000	/* 0xfb0 - unused */
++	.quad 0x0000000000000000	/* 0xfb8 - GDT entry 501: double-fault TSS */
++	.quad 0x0000000000000000	/* 0xfc0 - unused */
++	.quad 0x0000000000000000	/* 0xfc8 - unused */
++	.quad 0x0000000000000000	/* 0xfd0 - unused */
++	.quad 0x0000000000000000	/* 0xfd8 - unused */
++	.quad 0x0000000000000000	/* 0xfe0 - unused */
++	.quad 0x0000000000000000	/* 0xfe8 - unused */
++	.quad 0x0000000000000000	/* 0xff0 - unused */
++	.quad 0x0000000000000000	/* 0xff8 - unused */
++
++/*
++ * Array of pointers to per-CPU GDTs
++ */
++ENTRY(cpu_gdt_table)
++	.long gdt_table			/* CPU0's GDT */
++#if CONFIG_SMP
++	.fill (NR_CPUS-1),4,0		/* pointers to other CPU's GDT */
++#endif
++	.long	0
++
++/* ------------------------------------------------------------------ */
++#else  /* !CONFIG_MKI */
++/*
++ * The Global Descriptor Table contains 28 quadwords, per-CPU.
++ */
++ENTRY(gdt_table)
++
+ ENTRY(cpu_gdt_table)
+ 	.quad 0x0000000000000000	/* NULL descriptor */
+ 	.quad 0x0000000000000000	/* 0x0b reserved */
+@@ -524,3 +608,6 @@
+ #ifdef CONFIG_SMP
+ 	.fill (NR_CPUS-1)*GDT_ENTRIES,8,0 /* other CPU's GDT */
+ #endif
++
++#endif /* !CONFIG_MKI */
++
+diff -auP linux-2.6.8.1/arch/i386/kernel/process.c linux-2.6.8.1-win4lin/arch/i386/kernel/process.c
+--- linux-2.6.8.1/arch/i386/kernel/process.c	2004-08-14 06:54:46.000000000 -0400
++++ linux-2.6.8.1-win4lin/arch/i386/kernel/process.c	2004-08-22 21:09:21.000000000 -0400
+@@ -49,6 +49,9 @@
+ #ifdef CONFIG_MATH_EMULATION
+ #include <asm/math_emu.h>
+ #endif
++#ifdef CONFIG_MKI
++#include <asm/mki.h>
++#endif
+ 
+ #include <linux/irq.h>
+ #include <linux/err.h>
+@@ -530,6 +533,11 @@
+ 	asm volatile("movl %%fs,%0":"=m" (*(int *)&prev->fs));
+ 	asm volatile("movl %%gs,%0":"=m" (*(int *)&prev->gs));
+ 
++#ifdef CONFIG_MKI
++	if (unlikely(next_p->mki_task_info))
++		CALL_MKI_HOOK(MKI_HOOK_SWITCH_TO, next_p, NULL);
++#endif
++
+ 	/*
+ 	 * Restore %fs and %gs if needed.
+ 	 */
+diff -auP linux-2.6.8.1/arch/i386/kernel/signal.c linux-2.6.8.1-win4lin/arch/i386/kernel/signal.c
+--- linux-2.6.8.1/arch/i386/kernel/signal.c	2004-08-14 06:55:24.000000000 -0400
++++ linux-2.6.8.1-win4lin/arch/i386/kernel/signal.c	2004-08-22 21:09:21.000000000 -0400
+@@ -24,6 +24,9 @@
+ #include <asm/ucontext.h>
+ #include <asm/uaccess.h>
+ #include <asm/i387.h>
++#ifdef CONFIG_MKI
++#include <asm/mki.h>
++#endif
+ #include "sigframe.h"
+ 
+ #define DEBUG_SIG 0
+@@ -562,8 +565,16 @@
+ 	 * kernel mode. Just return without doing anything
+ 	 * if so.
+ 	 */
++#ifdef CONFIG_MKI
++	/* When we are in vm86 mode don't do the quick return */
++	if (((regs->eflags & 0x20000) == 0) &&
++	    ((regs->xcs & 3) != 3)) {
++		return 1;
++	}
++#else
+ 	if ((regs->xcs & 3) != 3)
+ 		return 1;
++#endif
+ 
+ 	if (current->flags & PF_FREEZE) {
+ 		refrigerator(0);
+@@ -613,6 +624,41 @@
+ void do_notify_resume(struct pt_regs *regs, sigset_t *oldset,
+ 		      __u32 thread_info_flags)
+ {
++#ifdef CONFIG_MKI
++	/*
++	 * Call the Return to User hook.  Note that we never clear
++	 * _TIF_MKI_RETUSER on MKI marked processes (the only ones on which
++	 * it is set) because we always want to use the iret return path.
++	 * BTW, we know that this code below is a bit ugly but it saves us
++	 * having to add code to entry.S which needs to be the shortest path
++	 * possible for non-MKI tasks.  Since we need to have interrupts
++	 * enabled while we do the RET_USER hook, we have to recheck to see
++	 * whether NEED_RESCHED got set.  Note further that the RET_USER hook
++	 * "handles" signals, which is why we loop while SIGPENDING is set.
++	 */
++	if (thread_info_flags & _TIF_MKI_RETUSER) {
++		/*
++		 * Set the local SIGPENDING so we call the RETUSER hook
++		 * at least once.
++		 */
++		thread_info_flags |= _TIF_SIGPENDING;
++		while (thread_info_flags &
++		    (_TIF_SIGPENDING | _TIF_NEED_RESCHED)) {
++			if (thread_info_flags & _TIF_SIGPENDING) {
++				thread_info_flags &= ~_TIF_SIGPENDING;
++				asm volatile("sti");
++				CALL_MKI_HOOK(MKI_HOOK_RET_USER, regs, NULL);
++			}
++			if (thread_info_flags & _TIF_NEED_RESCHED) {
++				thread_info_flags &= ~_TIF_NEED_RESCHED;
++				schedule();
++			}
++			asm volatile("cli");
++			thread_info_flags |= current_thread_info()->flags;
++		}
++	}
++#endif /* CONFIG_MKI */
++
+ 	/* Pending single-step? */
+ 	if (thread_info_flags & _TIF_SINGLESTEP) {
+ 		regs->eflags |= TF_MASK;
+diff -auP linux-2.6.8.1/arch/i386/kernel/vm86.c linux-2.6.8.1-win4lin/arch/i386/kernel/vm86.c
+--- linux-2.6.8.1/arch/i386/kernel/vm86.c	2004-08-14 06:54:49.000000000 -0400
++++ linux-2.6.8.1-win4lin/arch/i386/kernel/vm86.c	2004-08-22 21:09:21.000000000 -0400
+@@ -107,6 +107,15 @@
+ 	 */
+ 	local_irq_enable();
+ 
++#ifdef CONFIG_MKI
++	if (current->mki_task_info) {
++		/* If this is an MKI task, then just return regs.  MKI
++		 * special handling will be done in do_notify_resume()
++		 * if necessary.
++		 */
++		return (struct pt_regs *) regs;
++	}
++#endif
+ 	if (!current->thread.vm86_info) {
+ 		printk("no vm86_info: BAD\n");
+ 		do_exit(SIGSEGV);
+diff -auP linux-2.6.8.1/arch/i386/Makefile linux-2.6.8.1-win4lin/arch/i386/Makefile
+--- linux-2.6.8.1/arch/i386/Makefile	2004-08-14 06:55:10.000000000 -0400
++++ linux-2.6.8.1-win4lin/arch/i386/Makefile	2004-08-22 21:09:21.000000000 -0400
+@@ -112,6 +112,9 @@
+ drivers-$(CONFIG_OPROFILE)		+= arch/i386/oprofile/
+ drivers-$(CONFIG_PM)			+= arch/i386/power/
+ 
++# NeTraverse MKI support
++core-$(CONFIG_MKI)			+= arch/i386/mki/
++
+ CFLAGS += $(mflags-y)
+ AFLAGS += $(mflags-y)
+ 
+diff -auP linux-2.6.8.1/arch/i386/mki/Makefile linux-2.6.8.1-win4lin/arch/i386/mki/Makefile
+--- linux-2.6.8.1/arch/i386/mki/Makefile	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.6.8.1-win4lin/arch/i386/mki/Makefile	2004-08-22 21:09:21.000000000 -0400
+@@ -0,0 +1,5 @@
++#
++# Makefile for arch/i386/mki subdirectory
++#
++obj-y	:=	mki.o
++
+diff -auP linux-2.6.8.1/arch/i386/mki/mki.c linux-2.6.8.1-win4lin/arch/i386/mki/mki.c
+--- linux-2.6.8.1/arch/i386/mki/mki.c	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.6.8.1-win4lin/arch/i386/mki/mki.c	2004-08-22 21:09:21.000000000 -0400
+@@ -0,0 +1,100 @@
++/*
++ * Copyright 1999-2003 by NeTraverse Inc.
++ * This source code is provided "AS IS", free of charge
++ * and without restrictions.
++ * NeTraverse (and it's third party suppliers and licensors) make no warranty
++ * to its use, performance, or suitability for any particular purpose.
++ * In no event, shall NeTraverse (and it's third party suppliers and licensors)
++ * be liable for any damages resulting in the use of this source code.
++ * The entire risk arising out of the use of this source code remains
++ * with you.
++ *
++ ***********************************************************************
++ *  This software may be used and distributed according to the terms
++ *  of the GNU General Public License, incorporated herein by reference.
++ */
++/*
++ * These hooks will get populated by the mki-adapter module
++ */
++
++#include <linux/config.h>
++#include <linux/version.h>
++#include <linux/module.h>
++#include <linux/types.h>
++#include <linux/spinlock.h>
++
++#include <asm/system.h>
++#include <asm/mki.h>
++#include <asm/mkiversion.h>
++
++/* if CONFIG_REGPARM is set, stop right here; this option is not compatible
++ * with Win4Lin */
++#ifdef CONFIG_REGPARM
++#error The kernel option CONFIG_REGPARM is not compatible with Win4Lin.
++#error Please turn it off, reconfigure, and try to build again.
++#endif	/* CONFIG_REGPARM */
++
++char mki_ver[] = "mki_version_3_1_2";
++
++void mhi_void_hook(void *parm1, void *parm2)
++{
++	return;
++}
++
++void (*mhi_hooks[])(void *, void *) =
++{
++	&mhi_void_hook, /* MKI_HOOK_RET_USER */
++	&mhi_void_hook, /* MKI_HOOK_SWITCH_TO */
++	&mhi_void_hook, /* MKI_HOOK_SWITCH_AWAY */
++	&mhi_void_hook, /* MKI_HOOK_EXIT */
++	&mhi_void_hook, /* MKI_HOOK_SWAP */
++};
++
++void mki_ret_user(void * regs)
++{
++	CALL_MKI_HOOK(MKI_HOOK_RET_USER, regs, NULL);
++}
++
++EXPORT_SYMBOL_NOVERS(mhi_void_hook);
++EXPORT_SYMBOL_NOVERS(mhi_hooks);
++EXPORT_SYMBOL_NOVERS(mki_ret_user);
++extern void mki_process_trapret(void);
++EXPORT_SYMBOL_NOVERS(mki_process_trapret);
++
++//some data that we need for the other modules
++#include <linux/sched.h>
++#include <asm/processor.h>
++#include <asm/desc.h>
++
++extern struct desc_struct idt_table[], gdt_table[];
++
++EXPORT_SYMBOL_NOVERS(init_tss);
++EXPORT_SYMBOL_NOVERS(idt_table);
++EXPORT_SYMBOL_NOVERS(idt_descr);
++EXPORT_SYMBOL_NOVERS(gdt_table);
++EXPORT_SYMBOL_NOVERS(cpu_gdt_descr);
++EXPORT_SYMBOL_NOVERS(mmu_cr4_features);
++
++//and some functions
++#include <linux/mm.h>
++EXPORT_SYMBOL_NOVERS(handle_mm_fault);
++EXPORT_SYMBOL_NOVERS(make_pages_present);
++#ifdef CONFIG_SMP
++EXPORT_SYMBOL_NOVERS(mki_kick_if_running);
++extern void flush_tlb_all(void);
++EXPORT_SYMBOL_NOVERS(flush_tlb_all);
++#endif
++
++EXPORT_SYMBOL_NOVERS(__pmd_alloc);
++EXPORT_SYMBOL_NOVERS(pte_alloc_map);
++
++#include <asm/uaccess.h>
++EXPORT_SYMBOL_NOVERS(search_exception_tables);
++extern asmlinkage int sys_mprotect(unsigned long, size_t, unsigned long);
++EXPORT_SYMBOL_NOVERS(sys_mprotect);
++extern asmlinkage long sys_ftruncate(int, unsigned long);
++EXPORT_SYMBOL_NOVERS(sys_ftruncate);
++extern asmlinkage int sys_munmap(unsigned long, size_t);
++EXPORT_SYMBOL_NOVERS(sys_munmap);
++asmlinkage NORET_TYPE void do_exit(long error_code) ATTRIB_NORET;
++EXPORT_SYMBOL_NOVERS(do_exit);
+diff -auP linux-2.6.8.1/arch/i386/mm/fault.c linux-2.6.8.1-win4lin/arch/i386/mm/fault.c
+--- linux-2.6.8.1/arch/i386/mm/fault.c	2004-08-14 06:54:46.000000000 -0400
++++ linux-2.6.8.1-win4lin/arch/i386/mm/fault.c	2004-08-22 21:09:21.000000000 -0400
+@@ -374,7 +374,12 @@
+ 
+ bad_area_nosemaphore:
+ 	/* User mode accesses just cause a SIGSEGV */
++
++#ifdef CONFIG_MKI
++	if (user_mode(regs)) {
++#else
+ 	if (error_code & 4) {
++#endif
+ 		/* 
+ 		 * Valid to do another page fault here because this one came 
+ 		 * from user space.
+diff -auP linux-2.6.8.1/include/asm-i386/desc.h linux-2.6.8.1-win4lin/include/asm-i386/desc.h
+--- linux-2.6.8.1/include/asm-i386/desc.h	2004-08-14 06:54:46.000000000 -0400
++++ linux-2.6.8.1-win4lin/include/asm-i386/desc.h	2004-08-22 21:09:21.000000000 -0400
+@@ -11,7 +11,12 @@
+ 
+ #include <asm/mmu.h>
+ 
++#ifdef CONFIG_MKI
++#define MM_CONTEXT_HAS_LDT_FIELD	1  
++extern struct desc_struct *cpu_gdt_table[NR_CPUS];
++#else
+ extern struct desc_struct cpu_gdt_table[NR_CPUS][GDT_ENTRIES];
++#endif
+ 
+ struct Xgt_desc_struct {
+ 	unsigned short size;
+diff -auP linux-2.6.8.1/include/asm-i386/mki.h linux-2.6.8.1-win4lin/include/asm-i386/mki.h
+--- linux-2.6.8.1/include/asm-i386/mki.h	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.6.8.1-win4lin/include/asm-i386/mki.h	2004-08-22 21:09:21.000000000 -0400
+@@ -0,0 +1,52 @@
++/* 
++ * Copyright 1999-2003 by NeTraverse Inc.
++ * This source code is provided "AS IS", free of charge 
++ * and without restrictions.
++ * NeTraverse (and it's third party suppliers and licensors) make no warranty
++ * to its use, performance, or suitability for any particular purpose.
++ * In no event, shall NeTraverse (and it's third party suppliers and licensors)
++ * be liable for any damages resulting in the use of this source code.
++ * The entire risk arising out of the use of this source code remains
++ * with you.
++ * 
++ ***********************************************************************
++ *  This software may be used and distributed according to the terms
++ *  of the GNU General Public License, incorporated herein by reference.
++ */
++
++
++#ifdef CONFIG_MKI
++#ifndef INCLUDE_MKI_H
++#define INCLUDE_MKI_H
++
++extern void mhi_void_hook(void *, void *);
++extern void (*mhi_hooks[])(void *, void *);
++extern void mki_ret_user(void *regs);
++
++#define CALL_MKI_HOOK(hook, arg1, arg2)  mhi_hooks[hook](arg1, arg2)
++
++/* for mki-adapter module */
++#define MKI_HOOK_TABLE_EXISTS	1
++
++#ifdef CONFIG_SMP
++/*
++ * For mki-adapter: this version of the MKI has a mki_kick_if_running()
++ * function.
++ */
++#define MKI_HAS_MKI_KICK_IF_RUNNING    1
++extern void mki_kick_if_running(struct task_struct *);
++#endif /* CONFIG_SMP */
++
++
++/* constants for hook table  */
++#define MKI_HOOK_RET_USER 		0
++#define MKI_HOOK_SWITCH_TO 		1
++#define MKI_HOOK_SWITCH_AWAY 		2
++#define MKI_HOOK_EXIT			3
++#define MKI_HOOK_SWAP			4
++
++#define MKI_HARD_PRIORITY 	1
++#define MKI_NORMAL_PRIORITY 	6
++
++#endif /* INCLUDE_MKI_H */
++#endif /* CONFIG_MKI */
+diff -auP linux-2.6.8.1/include/asm-i386/mkiversion.h linux-2.6.8.1-win4lin/include/asm-i386/mkiversion.h
+--- linux-2.6.8.1/include/asm-i386/mkiversion.h	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.6.8.1-win4lin/include/asm-i386/mkiversion.h	2004-08-22 21:09:21.000000000 -0400
+@@ -0,0 +1,25 @@
++/*
++ * Copyright 1999-2003 by NeTraverse Inc.
++ * This source code is provided "AS IS", free of charge
++ * and without restrictions.
++ * NeTraverse (and it's third party suppliers and licensors) make no warranty
++ * to its use, performance, or suitability for any particular purpose.
++ * In no event, shall NeTraverse (and it's third party suppliers and licensors)
++ * be liable for any damages resulting in the use of this source code.
++ * The entire risk arising out of the use of this source code remains
++ * with you.
++ *
++ ***********************************************************************
++ *  This software may be used and distributed according to the terms
++ *  of the GNU General Public License, incorporated herein by reference.
++ */
++
++#ifdef CONFIG_MKI
++#ifndef INCLUDE_MKI_VERSION_H
++#define INCLUDE_MKI_VERSION_H
++
++int mki_version_3_0_1 = 0;
++EXPORT_SYMBOL_NOVERS(mki_version_3_0_1);
++
++#endif /* INCLUDE_MKI_H */
++#endif /* CONFIG_MKI */
+diff -auP linux-2.6.8.1/include/asm-i386/segment.h linux-2.6.8.1-win4lin/include/asm-i386/segment.h
+--- linux-2.6.8.1/include/asm-i386/segment.h	2004-08-14 06:55:09.000000000 -0400
++++ linux-2.6.8.1-win4lin/include/asm-i386/segment.h	2004-08-22 21:09:21.000000000 -0400
+@@ -1,6 +1,93 @@
+ #ifndef _ASM_SEGMENT_H
+ #define _ASM_SEGMENT_H
+ 
++#ifdef CONFIG_MKI
++
++/*
++ * The layout of the per-CPU GDT under Linux with CONFIG_MKI:
++ *
++ *   0 - 0x000 - null
++ *   1 - 0x008 - reserved
++ *   2 - 0x010 - reserved
++ *   3 - 0x018 - reserved
++ *
++ *   4 - 0x020 - unused			<==== new cacheline
++ *   5 - 0x028 - unused
++ *
++ *  ------- start of TLS (Thread-Local Storage) segments:
++ *
++ *   6 - 0x030 - TLS segment #1	[ glibc's TLS segment ]
++ *   7 - 0x038 - TLS segment #2	[ Wine's %fs Win32 segment ]
++ *   8 - 0x040 - TLS segment #3
++ *   9 - 0x048 - reserved
++ *  10 - 0x050 - reserved
++ *  11 - 0x058 - reserved
++ *
++ *  12 - 0x060 
++ *     |	- reserved for MKI use
++ *     V
++ * 479 - 0xef8 
++ *
++ *  ------- start of kernel segments:
++ * 484 - 0xf20 - kernel code segment	<==== new cacheline
++ * 485 - 0xf28 - kernel data segment
++ * 486 - 0xf30 - default user CS
++ * 487 - 0xf38 - default user DS
++ * 488 - 0xf40 - TSS
++ * 489 - 0xf48 - LDT
++ * 490 - 0xf50 - PNPBIOS support (16->32 gate)
++ * 491 - 0xf58 - PNPBIOS support
++ * 492 - 0xf60 - PNPBIOS support
++ * 493 - 0xf68 - PNPBIOS support
++ * 494 - 0xf78 - PNPBIOS support
++ * 495 - 0xf78 - APM BIOS support
++ * 496 - 0xf80 - APM BIOS support
++ * 497 - 0xf88 - APM BIOS support 
++ * 498 - 0xf90 - unused
++ * 497 - 0xf98 - unused
++ * 498 - 0xfa0 - unused
++ * 499 - 0xfa8 - unused
++ * 500 - 0xfb0 - unused
++ * 501 - 0xfb8 - TSS for double fault handler
++ * 502 - 0xfc0 - unused
++ *     |       - unused
++ *     V       - unused
++ * 511 - 0xff8 - unused
++ */
++#define GDT_ENTRY_TLS_ENTRIES	3
++#define GDT_ENTRY_TLS_MIN	6
++#define GDT_ENTRY_TLS_MAX 	(GDT_ENTRY_TLS_MIN + GDT_ENTRY_TLS_ENTRIES - 1)
++
++#define TLS_SIZE (GDT_ENTRY_TLS_ENTRIES * 8)
++
++#define GDT_ENTRY_DEFAULT_USER_CS	486
++#define __USER_CS (GDT_ENTRY_DEFAULT_USER_CS * 8 + 3)
++
++#define GDT_ENTRY_DEFAULT_USER_DS	487
++#define __USER_DS (GDT_ENTRY_DEFAULT_USER_DS * 8 + 3)
++
++#define GDT_ENTRY_KERNEL_BASE		484
++
++#define GDT_ENTRY_KERNEL_CS		(GDT_ENTRY_KERNEL_BASE + 0)
++#define __KERNEL_CS (GDT_ENTRY_KERNEL_CS * 8)
++
++#define GDT_ENTRY_KERNEL_DS		(GDT_ENTRY_KERNEL_BASE + 1)
++#define __KERNEL_DS (GDT_ENTRY_KERNEL_DS * 8)
++
++#define GDT_ENTRY_TSS			(GDT_ENTRY_KERNEL_BASE + 4)
++#define GDT_ENTRY_LDT			(GDT_ENTRY_KERNEL_BASE + 5)
++
++#define GDT_ENTRY_PNPBIOS_BASE		(GDT_ENTRY_KERNEL_BASE + 6)
++#define GDT_ENTRY_APMBIOS_BASE		(GDT_ENTRY_KERNEL_BASE + 11)
++
++#define GDT_ENTRY_DOUBLEFAULT_TSS	501
++
++/*
++ * The GDT has 512 entries
++ */
++#define GDT_ENTRIES 512
++
++#else /* !CONFIG_MKI */
+ /*
+  * The layout of the per-CPU GDT under Linux:
+  *
+@@ -77,6 +164,7 @@
+  * The GDT has 32 entries
+  */
+ #define GDT_ENTRIES 32
++#endif  /* !CONFIG_MKI */
+ 
+ #define GDT_SIZE (GDT_ENTRIES * 8)
+ 
+diff -auP linux-2.6.8.1/include/asm-i386/thread_info.h linux-2.6.8.1-win4lin/include/asm-i386/thread_info.h
+--- linux-2.6.8.1/include/asm-i386/thread_info.h	2004-08-14 06:54:50.000000000 -0400
++++ linux-2.6.8.1-win4lin/include/asm-i386/thread_info.h	2004-08-22 21:09:21.000000000 -0400
+@@ -144,6 +144,9 @@
+ #define TIF_SINGLESTEP		4	/* restore singlestep on return to user mode */
+ #define TIF_IRET		5	/* return with iret */
+ #define TIF_SYSCALL_AUDIT	7	/* syscall auditing active */
++#ifdef CONFIG_MKI
++#define TIF_MKI_RETUSER		15	/* need to call MKI retuser hook */
++#endif
+ #define TIF_POLLING_NRFLAG	16	/* true if poll_idle() is polling TIF_NEED_RESCHED */
+ 
+ #define _TIF_SYSCALL_TRACE	(1<<TIF_SYSCALL_TRACE)
+@@ -153,6 +156,9 @@
+ #define _TIF_SINGLESTEP		(1<<TIF_SINGLESTEP)
+ #define _TIF_IRET		(1<<TIF_IRET)
+ #define _TIF_SYSCALL_AUDIT	(1<<TIF_SYSCALL_AUDIT)
++#ifdef CONFIG_MKI
++#define _TIF_MKI_RETUSER	(1<<TIF_MKI_RETUSER)
++#endif
+ #define _TIF_POLLING_NRFLAG	(1<<TIF_POLLING_NRFLAG)
+ 
+ /* work to do on interrupt/exception return */
+diff -auP linux-2.6.8.1/include/linux/init_task.h linux-2.6.8.1-win4lin/include/linux/init_task.h
+--- linux-2.6.8.1/include/linux/init_task.h	2004-08-14 06:54:49.000000000 -0400
++++ linux-2.6.8.1-win4lin/include/linux/init_task.h	2004-08-22 21:09:21.000000000 -0400
+@@ -112,6 +112,7 @@
+ 	.proc_lock	= SPIN_LOCK_UNLOCKED,				\
+ 	.switch_lock	= SPIN_LOCK_UNLOCKED,				\
+ 	.journal_info	= NULL,						\
++    	MKI_INIT_TASK							\
+ }
+ 
+ 
+diff -auP linux-2.6.8.1/include/linux/sched.h linux-2.6.8.1-win4lin/include/linux/sched.h
+--- linux-2.6.8.1/include/linux/sched.h	2004-08-14 06:54:49.000000000 -0400
++++ linux-2.6.8.1-win4lin/include/linux/sched.h	2004-08-22 21:09:21.000000000 -0400
+@@ -527,6 +527,14 @@
+   	struct mempolicy *mempolicy;
+   	short il_next;		/* could be shared with used_math */
+ #endif
++
++#ifdef CONFIG_MKI
++/* mki task info structure */
++       void *mki_task_info;
++#define MKI_INIT_TASK .mki_task_info = NULL,
++#else
++#define MKI_INIT_TASK
++#endif
+ };
+ 
+ static inline pid_t process_group(struct task_struct *tsk)

@@ -1,0 +1,56 @@
+diff -ruN linux-2.6.9-rc1/sound/core/init.c software-suspend-linux-2.6.9-rc1-rev3/sound/core/init.c
+--- linux-2.6.9-rc1/sound/core/init.c	2004-06-18 12:44:25.000000000 +1000
++++ software-suspend-linux-2.6.9-rc1-rev3/sound/core/init.c	2004-09-09 19:36:24.000000000 +1000
+@@ -790,7 +790,7 @@
+ 	if (card->power_state == SNDRV_CTL_POWER_D3hot)
+ 		return 0;
+ 	/* FIXME: correct state value? */
+-	return card->pm_suspend(card, 0);
++	return card->pm_suspend(card, SNDRV_CTL_POWER_D3hot);
+ }
+ 
+ int snd_card_pci_resume(struct pci_dev *dev)
+@@ -801,7 +801,7 @@
+ 	if (card->power_state == SNDRV_CTL_POWER_D0)
+ 		return 0;
+ 	/* FIXME: correct state value? */
+-	return card->pm_resume(card, 0);
++	return card->pm_resume(card, SNDRV_CTL_POWER_D0);
+ }
+ #endif
+ 
+diff -ruN linux-2.6.9-rc1/sound/pci/ali5451/ali5451.c software-suspend-linux-2.6.9-rc1-rev3/sound/pci/ali5451/ali5451.c
+--- linux-2.6.9-rc1/sound/pci/ali5451/ali5451.c	2004-06-18 12:44:26.000000000 +1000
++++ software-suspend-linux-2.6.9-rc1-rev3/sound/pci/ali5451/ali5451.c	2004-09-09 19:36:24.000000000 +1000
+@@ -286,6 +286,7 @@
+ static void snd_ali_clear_voices(ali_t *, unsigned int, unsigned int);
+ static unsigned short snd_ali_codec_peek(ali_t *, int, unsigned short);
+ static void snd_ali_codec_poke(ali_t *, int, unsigned short, unsigned short);
++static int snd_ali_chip_init(ali_t *codec);
+ 
+ /*
+  *  Debug Part
+@@ -1915,7 +1916,6 @@
+ 	if (! im)
+ 		return 0;
+ 
+-	snd_pcm_suspend_all(chip->pcm);
+ 	snd_ac97_suspend(chip->ac97);
+ 
+ 	spin_lock_irq(&chip->reg_lock);
+@@ -1957,6 +1957,7 @@
+ 		return 0;
+ 
+ 	pci_enable_device(chip->pci);
++	snd_ali_chip_init(chip);
+ 
+ 	spin_lock_irq(&chip->reg_lock);
+ 	
+@@ -1981,6 +1982,7 @@
+ 
+ 	snd_ac97_resume(chip->ac97);
+ 	
++	snd_power_change_state(card, state);
+ 	return 0;
+ }
+ #endif /* CONFIG_PM */

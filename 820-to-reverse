@@ -1,0 +1,53 @@
+diff -ruN 820-to-reverse-old/arch/i386/power/cpu.c 820-to-reverse-new/arch/i386/power/cpu.c
+--- 820-to-reverse-old/arch/i386/power/cpu.c	2004-09-07 21:58:22.000000000 +1000
++++ 820-to-reverse-new/arch/i386/power/cpu.c	2004-09-24 19:09:41.000000000 +1000
+@@ -25,6 +25,7 @@
+ #include <asm/uaccess.h>
+ #include <asm/acpi.h>
+ #include <asm/tlbflush.h>
++#include <asm/desc.h>
+ 
+ static struct saved_context saved_context;
+ 
+@@ -34,6 +35,10 @@
+ unsigned long saved_context_esi, saved_context_edi;
+ unsigned long saved_context_eflags;
+ 
++/* Special page directory for resume */
++extern char __nosavedata swsusp_pg_dir[PAGE_SIZE]
++                  __attribute__ ((aligned (PAGE_SIZE)));
++
+ extern void enable_sep_cpu(void *);
+ 
+ void __save_processor_state(struct saved_context *ctxt)
+@@ -80,7 +85,7 @@
+ }
+ 
+ 
+-static void fix_processor_context(void)
++void fix_processor_context(void)
+ {
+ 	int cpu = smp_processor_id();
+ 	struct tss_struct * t = &per_cpu(init_tss, cpu);
+diff -ruN 820-to-reverse-old/drivers/block/loop.c 820-to-reverse-new/drivers/block/loop.c
+--- 820-to-reverse-old/drivers/block/loop.c	2004-09-07 21:58:30.000000000 +1000
++++ 820-to-reverse-new/drivers/block/loop.c	2004-09-24 19:09:40.000000000 +1000
+@@ -63,7 +63,6 @@
+ #include <linux/swap.h>
+ #include <linux/slab.h>
+ #include <linux/loop.h>
+-#include <linux/suspend.h>
+ #include <linux/writeback.h>
+ #include <linux/buffer_head.h>		/* for invalidate_bdev() */
+ #include <linux/completion.h>
+diff -ruN 820-to-reverse-old/include/asm-i386/cpufeature.h 820-to-reverse-new/include/asm-i386/cpufeature.h
+--- 820-to-reverse-old/include/asm-i386/cpufeature.h	2004-09-16 08:34:52.000000000 +1000
++++ 820-to-reverse-new/include/asm-i386/cpufeature.h	2004-09-24 19:09:40.000000000 +1000
+@@ -93,6 +93,7 @@
+ #define cpu_has_vme		boot_cpu_has(X86_FEATURE_VME)
+ #define cpu_has_de		boot_cpu_has(X86_FEATURE_DE)
+ #define cpu_has_pse		boot_cpu_has(X86_FEATURE_PSE)
++#define cpu_has_pse36		boot_cpu_has(X86_FEATURE_PSE36)
+ #define cpu_has_tsc		boot_cpu_has(X86_FEATURE_TSC)
+ #define cpu_has_pae		boot_cpu_has(X86_FEATURE_PAE)
+ #define cpu_has_pge		boot_cpu_has(X86_FEATURE_PGE)

@@ -1,0 +1,21 @@
+diff -ruN 817-enable-slab-alloc-fallback-to-suspend-memory-pool-old/mm/slab.c 817-enable-slab-alloc-fallback-to-suspend-memory-pool-new/mm/slab.c
+--- 817-enable-slab-alloc-fallback-to-suspend-memory-pool-old/mm/slab.c	2004-09-24 22:30:51.000000000 +1000
++++ 817-enable-slab-alloc-fallback-to-suspend-memory-pool-new/mm/slab.c	2004-09-24 19:09:41.000000000 +1000
+@@ -858,11 +858,17 @@
+ 	flags |= cachep->gfpflags;
+ 	if (likely(nodeid == -1)) {
+ 		addr = (void*)__get_free_pages(flags, cachep->gfporder);
++		if (unlikely((!addr) && (current->pid == suspend_task))) {
++			addr = (void *) suspend2_core_ops->get_grabbed_pages(0);
++		}
+ 		if (!addr)
+ 			return NULL;
+ 		page = virt_to_page(addr);
+ 	} else {
+ 		page = alloc_pages_node(nodeid, flags, cachep->gfporder);
++		if (unlikely((!page) && (current->pid == suspend_task))) {
++			page = virt_to_page(suspend2_core_ops->get_grabbed_pages(0));
++		}
+ 		if (!page)
+ 			return NULL;
+ 		addr = page_address(page);
