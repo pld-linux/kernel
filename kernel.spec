@@ -11,7 +11,8 @@
 # _without_doc		- don't build documentation package
 #
 
-%define		patch_level	pl2
+%define		patch_level	0
+%define		_rel		5
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
@@ -34,7 +35,11 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	4%{patch_level}%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+%if %{patch_level} !=0
+Release:	%{_rel}pl%{patch_level}%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+%else
+Release:	%{_rel}%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+%endif
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
