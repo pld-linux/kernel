@@ -731,7 +731,6 @@ gzip -dc %{PATCH32} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{vers
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH40}
 
 #patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH100}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH102}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH105}
@@ -785,6 +784,7 @@ bzip2 -dc %{PATCH121} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ve
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH200}
 
 #patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH111}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
