@@ -1,3 +1,6 @@
+
+
+
 %define		ow_version		2.2.20-ow1
 %define		pcmcia_version		3.1.30
 %define		freeswan_version	1.8
@@ -137,6 +140,9 @@ Provides:	%{name}-up = %{version}
 %ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(i2c) = %{i2c_version}
+Provides:	i2c-devel = %{i2c_version}
+Provides:       i2c = %{i2c_version}
+Provides:	bttv = %{bttv_version}
 %endif
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
@@ -146,12 +152,20 @@ Prereq:		fileutils
 Prereq:		geninitrd
 #Prereq:		rc-boot
 Obsoletes:	kernel-modules
+
+#i2c and bttv packages are obsolete
+Obsoletes:	i2c-devel
+Obsoletes:	kernel-i2c
+Obsoletes:	bttv
+Obsoletes:	kernel-misc-bttv
+
 ExclusiveArch:	%{ix86} sparc sparc64 alpha
 %ifarch		%{ix86}
 BuildRequires:	bin86
 BuildRequires:	autoconf
 BuildRequires:	automake
 %endif
+Autoreqprov:    no
 
 %description
 This package contains the Linux kernel that is used to boot and run
@@ -184,6 +198,11 @@ Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
 %ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
+Provides:       %{name}(i2c) = %{i2c_version}
+Provides:       i2c-devel = %{i2c_version}
+Provides:       i2c = %{i2c_version}
+Provides:	bttv = %{bttv_version}
+
 %endif
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
@@ -191,6 +210,13 @@ Prereq:		modutils
 Prereq:		fileutils
 Prereq:		geninitrd
 #Prereq:		rc-boot
+Obsoletes:      kernel-modules
+
+#i2c and bttv packages are obsolete
+Obsoletes:      i2c-devel
+Obsoletes:      kernel-smp-i2c
+Obsoletes:      bttv
+Obsoletes:      kernel-smp-misc-bttv
 Autoreqprov:	no
 
 %description smp
@@ -219,6 +245,10 @@ Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
 %ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
+Provides:       %{name}(i2c) = %{i2c_version}
+Provides:       i2c-devel = %{i2c_version}
+Provides:       i2c = %{i2c_version}
+Provides:	bttv = %{bttv_version}
 %endif
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
@@ -226,6 +256,14 @@ Prereq:		modutils
 Prereq:		fileutils
 Prereq:		geninitrd
 #Prereq:		rc-boot
+Obsoletes:      kernel-modules
+
+#i2c and bttv packages are obsolete
+Obsoletes:      i2c-devel
+Obsoletes:      kernel-smp-i2c
+Obsoletes:      bttv
+Obsoletes:      kernel-smp-misc-bttv
+
 Autoreqprov:	no
 
 %description fb
@@ -250,6 +288,10 @@ Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
 %ifarch %{x86}
 Provides:	%{name}(reiserfs) = %{version}
+Provides:       %{name}(i2c) = %{i2c_version}
+Provides:       i2c-devel = %{i2c_version}
+Provides:       i2c = %{i2c_version}
+Provides:       bttv = %{bttv_version}
 %endif
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
@@ -257,6 +299,14 @@ Prereq:		modutils
 Prereq:		fileutils
 Prereq:		geninitrd
 #Prereq:		rc-boot
+Obsoletes:      kernel-modules
+
+#i2c and bttv packages are obsolete
+Obsoletes:      i2c-devel
+Obsoletes:      kernel-smp-i2c
+Obsoletes:      bttv
+Obsoletes:      kernel-smp-misc-bttv
+
 Autoreqprov:	no
 
 %description smp-fb
@@ -867,7 +917,7 @@ fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
 
-depmod -a -F /boot/System.map %{version}-%{release}
+depmod -a -F /boot/System.map %{version}-%{release}smp
 
 %postun
 if [ -L /lib/modules/%{version} ]; then 
