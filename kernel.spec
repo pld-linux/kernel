@@ -1,7 +1,4 @@
-
-# SECURITY: CAN-2004-0814
-
-%define		ow_version		2.2.25-ow1
+%define		ow_version		2.2.26-ow1
 %define		pcmcia_version		3.1.30
 %define		freeswan_version	2.00
 %define		reiserfs_version	3.5.35
@@ -21,7 +18,7 @@ Summary(ru):	Òƒ“œ Linux
 Summary(uk):	Òƒ“œ Linux
 Name:		kernel
 Version:	2.2.26
-Release:	3
+Release:	3.9
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -70,6 +67,8 @@ Source36:	%{name}-ppc.config
 Source37:	%{name}-ppc-smp.config
 Source38:	%{name}-ppc-BOOT.config
 
+Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/v2.2/testing/patch-2.2.27-pre2.bz2
+Patch1:		2.2.27-pre2-remove_extraversion.patch
 Patch2:		%{name}-pldfblogo.patch
 Patch3:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
 # from http://people.freebsd.org/~gibbs/linux/
@@ -131,7 +130,7 @@ Patch112:	linux-2.2.20-lfs.patch
 Patch113:	linux-2.2.21-mppe.patch
 Patch114:	wrr-linux-2.2.18.patch
 Patch115:	2.2.21-wrr-pkt_bridged.patch
-Patch116:	2.2.22-skbuff_panicfix.patch
+Patch117:	2.2.27-pre2-dc395-sync_tree.patch
 
 Patch118:	ip_masq_vpn-2.2.18-pld.patch.gz
 Patch119:	linux-remove_htb2_header.diff
@@ -139,8 +138,7 @@ Patch120:	ds9-2.2.21-2.diff
 Patch121:	rbtree-2.2.21-1.diff
 Patch122:	ds9-htb3-2.2.21-2.diff
 
-Patch150:	2.2.25-fix-ow_configure.help.patch
-Patch151:	ow-update.patch
+Patch150:	sync-owl1-2.2.27-pre2.patch
 
 Patch500:	2.2.20-reiserfs_ppc.patch
 Patch501:	2.2.21-ppc-smp.patch
@@ -163,6 +161,7 @@ Patch1503:	%{name}-sparc_netsyms.patch
 Patch1504:	%{name}-sparc64-inw_p.patch
 Patch1505:	%{name}-sparc64-egcs64.patch
 Patch1506:	%{name}-fwait-2.2.patch
+Patch1507:	patch-2.2.27-pre2-CAN-2004-0814.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -476,6 +475,8 @@ Modu≥y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 %prep
 %setup -q -a3 -a4 -a5 -a6 -a7 -a9 -a10 -a11 -a13 -n linux-%{version}
 
+%patch0 -p1
+%patch1 -p1
 %patch2 -p1
 %patch3 -p0
 # disable aic7xxx patch on sparc (this must be reported to aic7xxx driver maintainer)
@@ -546,9 +547,8 @@ cd ..
 %patch106 -p1
 %endif
 
-# 2.2.23ow1
+# 2.2.26ow1
 %patch150 -p1
-%patch151 -p0
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 
 # symbios drivers
@@ -557,6 +557,7 @@ mv -f sym-%{symncr_version}/{README,ChangeLog}.* Documentation
 
 # Tekram DC395/315 U/UW SCSI host driver
 %patch109 -p1
+%patch117 -p1
 patch -p1 -s <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
@@ -575,7 +576,6 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch113 -p1
 %patch114 -p1
 %patch115 -p1
-%patch116 -p1
 
 %patch118 -p1
 %patch119 -p1
@@ -611,6 +611,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %endif
 %patch1502 -p1
 %patch1506 -p1
+%patch1507 -p1
 
 %build
 BuildKernel() {
@@ -849,6 +850,8 @@ bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/
 gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH0}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2}
 # This is already applied:
 # patch -s -p0 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH3}
@@ -925,10 +928,9 @@ bzip2 -dc %{PATCH105} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ve
 bzip2 -dc %{PATCH106} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 %endif
 
-# 2.2.23ow1
+# 2.2.26ow1
 gzip -dc %{SOURCE3} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH150}
-patch -s -p0 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH151}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/linux-%{ow_version}/linux-%{ow_version}.diff
 rm -rf $RPM_BUILD_ROOT/usr/src/linux-%{version}/linux-%{ow_version}/
 
@@ -941,6 +943,7 @@ rm -rf $RPM_BUILD_ROOT/usr/src/linux-%{version}sym-%{symncr_version}
 # Tekram DC395/315 U/UW SCSI host driver
 gzip -dc %{SOURCE4} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH109}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH117}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi/
 rm -rf dc395/
@@ -963,7 +966,6 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH111}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH113}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH114}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH115}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH116}
 
 gzip -dc %{PATCH118} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH119}
@@ -996,6 +998,8 @@ patch -s -p0 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1505}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1503}
 %endif
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1502}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1506}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1507}
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
