@@ -4,8 +4,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.5.20
-Release:	dj3_0.2
+Version:	2.5.21
+Release:	dj1_0.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
@@ -20,7 +20,8 @@ Source26:	%{name}-i686-smp.config
 Source27:	%{name}-athlon.config
 Source28:	%{name}-athlon-smp.config
 
-Patch1:		http://www.kernel.org/pub/linux/kernel/people/davej/patches/2.5/%{version}/patch-%{version}-dj3.diff.gz
+Patch1:		http://www.kernel.org/pub/linux/kernel/people/davej/patches/2.5/%{version}/patch-%{version}-dj1.diff.gz
+#Patch2:		kernel-2.5.20-rd.patch
 
 #This shit is because now only x86 is supported
 ExclusiveArch:	%{ix86}
@@ -209,6 +210,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %prep
 %setup -q -n linux-%{version}
 %patch1 -p1
+#%patch2 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
