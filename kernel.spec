@@ -29,8 +29,8 @@
 
 
 %define		_rel		1
-%define		_rc		3
-%define		_cset		20040109_0116
+%define		_rc		0
+%define		_cset		0
 
 ## netfilter snap 
 %define		_netfilter_snap		20040107
@@ -67,12 +67,12 @@ Epoch:		1
 License:	GPL
 Group:		Base/Kernel
 #%%if "%{_rc}" != "0"
-%define		_kernel_location	testing/linux-%{version}-rc%{_rc}.tar.bz2
+#%[C%define		_kernel_location	testing/linux-%{version}-rc%{_rc}.tar.bz2
 #%%else
-#%%define		_kernel_location	linux-%{version}.tar.bz2
+%define		_kernel_location	linux-%{version}.tar.bz2
 #%%endif
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/%{_kernel_location}
-# Source0-md5:	ce211776fe26f474cf87867cdb48dd1a
+# Source0-md5:	fa82d1e4be518261b2eeb78eabf9cca7
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
