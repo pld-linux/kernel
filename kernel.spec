@@ -155,7 +155,7 @@ Provides:	%{name}(rawio) = %{version}
 Autoreqprov:	no
 PreReq:		modutils
 PreReq:		fileutils
-PreReq:		geninitrd
+PreReq:		geninitrd >= 2.21
 #Prereq:		rc-boot
 Obsoletes:	kernel-modules
 
