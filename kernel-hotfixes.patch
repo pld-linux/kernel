@@ -46,3 +46,31 @@
  
 -aes-i586-y := aes-i586-asm.o aes.o
 +aes-i586-objs := aes-i586-asm.o aes.o
+--- linux-2.6.8-rc3/arch/i386/power/suspend2.c.orig	2004-08-08 13:26:48.000000000 +0200
++++ linux-2.6.8-rc3/arch/i386/power/suspend2.c	2004-08-08 14:50:21.850891208 +0200
+@@ -133,23 +133,11 @@
+ static void fix_processor_context(void)
+ {
+ 	int nr = smp_processor_id();
+-	struct tss_struct * t = &per_cpu(init_tss,nr);
++	struct tss_struct * t = init_tss + nr;
+ 
+ 	set_tss_desc(nr,t);	/* This just modifies memory; should not be neccessary. But... This is neccessary, because 386 hardware has concept of busy tsc or some similar stupidity. */
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,4,99)
+-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7)
+-        per_cpu(cpu_gdt_table,nr)[GDT_ENTRY_TSS].b &= 0xfffffdff;
+-#else
+-        cpu_gdt_table[nr][GDT_ENTRY_TSS].b &= 0xfffffdff;
+-#endif
+-
++	cpu_gdt_table[nr][GDT_ENTRY_TSS].b &= 0xfffffdff;
+ 	load_TR_desc();
+-#else
+-        gdt_table[__TSS(nr)].b &= 0xfffffdff;
+-
+-	load_TR(nr);		/* This does ltr */
+-#endif
+-
+ 	load_LDT(&current->active_mm->context);	/* This does lldt */
+ 
+ 	/*
