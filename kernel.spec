@@ -77,7 +77,8 @@ Patch3:		linux-2.4.9-aacraid-20010816.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.10.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/
-Patch5:		linux-2.4.13-xfs-20011026.patch.gz
+#Patch5:		linux-2.4.13-xfs-20011026.patch.gz
+Patch5:		linux-2.4.14-xfs-2001-11-07.patch.bz2
 # Compressed iso9660 filesystem
 Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-unified-2.4.12.diff.gz
 # Homepage of ABI : http://linux-abi.sourceforge.net/
@@ -373,8 +374,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch3 -p1
 %patch4 -p1
 %patch10 -p1
-%patch5 -p1
-%patch6 -p1
+#%patch5 -p1
+#%patch6 -p1
 #%patch7 -p1
 %patch8 -p1
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
