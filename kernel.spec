@@ -118,7 +118,7 @@ Patch119:	linux-2.4.6-sb_id.patch
 Patch120:	linux-2.4.10-aironet.patch
 Patch121:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
-Patch122:	linux-2.4.16-lvm-1.0.1rc4.patch
+Patch122:	linux-lvm-1.0.1-%{version}.patch
 # fixed xquad_portio
 Patch123:	xquad_portio.fix
 # 
@@ -128,6 +128,7 @@ Patch124:	linux-proc_net_dev-counter-fix.patch
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
 Patch900:	ide-EXPORT_SYMBOL.fix
+Patch901:	jfs-fix.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
@@ -345,11 +346,12 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch119 -p1
 %patch120 -p1
 %patch121 -p1
-%patch122 -p0
+%patch122 -p1
 %patch123 -p1
 %patch124 -p1
 
 %patch900 -p0
+%patch901 -p0
 %patch904 -p0
 
 # Tekram DC395/315 U/UW SCSI host driver
@@ -400,16 +402,16 @@ patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010724-l
 
 # JFS
 echo Adding JFS
-patch -p1 -s <jfs-2.4.common-1.0.10-patch
-patch -p1 -s <jfs-2.4.7-1.0.10-patch
+patch -p1 -s <jfs-2.4.common-1.0.11-patch
+patch -p1 -s <jfs-2.4.7-1.0.11-patch
 
 echo Fixed compile process for 53c7,8xx driver
 # fix 53c7,8xx build
 %patch909 -p0
 
 #preemptive kernel patch
-echo Installing Preemptive patch
 %if%{?_with_preemptive:1}%{!?_with_preemptive:0}
+echo Installing Preemptive patch
 %patch10 -p1
 %endif
 
