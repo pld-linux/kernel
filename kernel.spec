@@ -14,7 +14,7 @@
 
 %define		_rel		1
 %define		_test_ver	9
-%define		_cset		20031105_0418
+%define		_cset		20031106_0107
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -521,6 +521,32 @@ BuildKernel() {
 %else
 	%{__make} %{?debug:V=1} modules
 %endif
+}
+
+PreInstallKernel 
+{
+	BOOT=
+	smp=
+	[ "$1" = "BOOT" -o "$2" = "BOOT" ] && BOOT=yes
+	[ "$1" = "smp" -o "$2" = "smp" ] && smp=yes
+%ifarch %{ix86}
+	if [ "$smp" = "yes" ]; then
+		Config="ia32-smp"
+	else
+		Config="ia32"
+	fi
+%else
+	if [ "$smp" = "yes" ]; then
+		Config="%{_target_cpu}-smp"
+	else
+		Config="%{_target_cpu}"
+	fi
+%endif
+	if [ "$BOOT" = "yes" ]; then
+		KernelVer=%{version}-%{release}BOOT
+	else
+		KernelVer=%{version}-%{release}$1
+	fi
 
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
@@ -557,16 +583,19 @@ install -d $KERNEL_INSTALL_DIR
 # UP KERNEL
 BuildConfig
 %{?with_up:BuildKernel}
+%{?with_up:PreInstallKernel}
 
 # SMP KERNEL
 BuildConfig smp
 %{?with_smp:BuildKernel smp}
+%{?with_smp:PreInstallKernel smp}
 
 # BOOT kernel
 %ifnarch i586 i686 athlon
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk"
 rm -rf $KERNEL_INSTALL_DIR
 %{?with_boot:BuildKernel BOOT}
+%{?with_boot:PreInstallKernel boot}
 %endif
 
 %install
