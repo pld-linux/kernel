@@ -206,7 +206,7 @@ Patch38:	linux-2.4.20-Nokia5510.patch
 
 #from http://people.freebsd.org/~gibbs/linux/SRC/
 #last: aic79xx-linux-2.4-20030410-tar.gz
-Patch39:	linux-2.4.20-aic79xx.patch.gz
+Patch39:	linux-2.4.20-aic79xx.patch.bz2
 Patch40:	linux-2.4.20-i810_audio.patch
 # from : RedHat 2.4.20-13.9
 Patch41:	linux-2.4.20-afs.patch
@@ -228,6 +228,11 @@ Patch50:	linux-2.4.20-irixnfs.patch
 Patch51:	linux-2.4.20-odirect.patch
 Patch52:	linux-2.4.20-440gx.patch
 Patch53:	linux-2.4.20-nforce2.patch
+
+Patch55:	linux-2.4.20-sym53c8xx_2.patch
+
+# from: LKML
+Patch56:	linux-2.4.20-new_IO_scheduler.patch
 
 # Assorted bugfixes
 
@@ -841,9 +846,14 @@ echo Added xattr for JFS ...
 
 #EXPORT_SYMBOL missing for acpi.
 %patch48 -p1
+ 
+# SYM53C8xx old
+%patch55 -p1
+
+#new IO scheduler
+%patch56 -p1
 
 echo Added ARCH specific patches....
-
 %ifarch %{ix86}
 echo Ix86 patches ...
 # I810FB
