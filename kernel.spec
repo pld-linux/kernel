@@ -72,8 +72,8 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.22
-%define		_cset		20040914_1622
+%define		_rel		0.31
+%define		_cset		20041007_0305
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -97,14 +97,14 @@ Epoch:		3
 License:	GPL
 Group:		Base/Kernel
 #define		_rc	%{nil}
-%define		_rc	-rc2
+%define		_rc	-rc3
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	b3d4a5c384d56ab974d1ac864b995ac4
+# Source0-md5:	53939eed5c3699fdcaa28735b0ffb12d
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 #Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
-# Source4-md5:	462cbc68049412fdd73625a6c312bcda
+# Source4-md5:	21cd398181fc00fbf51a21ffebad0099
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -156,13 +156,10 @@ Patch23:	2.6.6-xfs-qsort-lkml.patch
 Patch25:	2.6.7-alpha_compile.patch
 Patch26:	2.6.7-ppc-asm-defs.patch
 
-Patch28:	2.6.7-ppc-ipr-div.patch
-
 #Patch30:	2.6.x-ppp_mppe.patch
 #Patch31:	2.6.x-SGI_VW-fbdev-lkml.patch	-- obsolete
 Patch32:	2.6.x-TGA-fbdev-lkml.patch
 Patch33:	linux-kbuild-extmod.patch
-Patch34:	2.6.8-cpu_feature.patch
 
 # framebuffer fixes
 Patch41:	linux-fbcon-margins.patch
@@ -213,18 +210,6 @@ Patch92:	exec-shield-make-peace-with-grsecurity.patch
 #Patch101:	01_alt_routes-2.5.50-8.diff
 #Patch102:	01_arp_prefsrc-2.5.50-5.diff <- not applied. needs checkout
 #Patch103:	05_nf_reroute-2.6.7-10.diff
-
-# http://sources.redhat.com/cluster/
-# NEED UPDATE
-#Patch200:	linux-cluster-cman.patch
-#Patch201:	linux-cluster-dlm.patch
-#Patch202:	linux-cluster-gfs.patch
-#Patch203:	linux-cluster-gnbd.patch
-
-# suspend/resume
-# http://softwaresuspend.berlios.de/
-Patch219:	linux-2.6-software-suspend-2.0.0.105.patch.gz
-Patch220:	linux-2.6-via-agpc-resume-suspend-support.patch
 
 # hotfixes
 Patch300:	linux-2.6-sparc-ksyms.patch
@@ -620,6 +605,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %patch41 -p1
 
+exit 1
 # netfilter
 %patch50 -p1
 %patch51 -p1
@@ -671,20 +657,6 @@ patch -p1 -s < exec-shield.patch
 #patch101 -p1
 #patch102 -p1 # <- not applayed need checkout
 #patch103 -p1
-
-# cluster
-#patch200 -p1
-#patch201 -p1
-#patch202 -p1
-#patch203 -p1
-
-# suspend/resume
-%if %{with swsuspend}
-%ifarch %{ix86}
-%patch219 -p1
-%endif
-%patch220 -p1
-%endif
 
 # hotfixes
 %patch300 -p1
@@ -1444,7 +1416,6 @@ fi
 %{_prefix}/src/linux-%{version}/arch/*/kernel/[!M]*
 %exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
 %exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/sigframe.h
-%{_prefix}/src/linux-%{version}/cluster
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
