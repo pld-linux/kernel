@@ -17,12 +17,12 @@ Summary(pl):	J±dro Linuksa
 Summary(ru):	ñÄÒÏ Linux
 Summary(uk):	ñÄÒÏ Linux
 Name:		kernel
-Version:	2.2.25
-Release:	4.1
+Version:	2.2.26
+Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
-# Source0-md5:	ba722ead5245c19ce70d34343c515773
+# Source0-md5:	4fa42c5112ddd2cc20dedfbd61d588a1
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:        http://www.openwall.com/linux/linux-%{ow_version}.tar.gz
@@ -135,9 +135,9 @@ Patch119:	linux-remove_htb2_header.diff
 Patch120:	ds9-2.2.21-2.diff
 Patch121:	rbtree-2.2.21-1.diff
 Patch122:	ds9-htb3-2.2.21-2.diff
-Patch123:	linux-2.2-mremap-munmap.patch
 
 Patch150:	2.2.25-fix-ow_configure.help.patch
+Patch151:	ow-update.patch
 
 Patch500:	2.2.20-reiserfs_ppc.patch
 Patch501:	2.2.21-ppc-smp.patch
@@ -163,6 +163,7 @@ Patch1505:	%{name}-sparc64-egcs64.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+BuildRequires:	perl
 BuildRequires:	rpm-build >= 4.0.2-53
 %ifarch sparc64
 BuildRequires:	egcs64
@@ -452,7 +453,7 @@ PCMCIA-CS modules for SMP kernel (%{pcmcia_version}).
 Modu³y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a9 -a10 -a11 -a13 -n linux
+%setup -q -a3 -a4 -a5 -a6 -a7 -a9 -a10 -a11 -a13 -n linux-%{version}
 
 %patch2 -p1
 %patch3 -p0
@@ -518,7 +519,7 @@ cd ..
 # i2c
 %ifarch %{ix86} ppc
 cd i2c-%{i2c_version}
-mkpatch/mkpatch.pl . ../../linux | (cd ../../linux; patch -p1 -s)
+mkpatch/mkpatch.pl . ../../linux-%{version} | (cd ../../linux-%{version}; patch -p1 -s)
 cd ..
 %patch105 -p1
 %patch106 -p1
@@ -526,6 +527,7 @@ cd ..
 
 # 2.2.23ow1
 %patch150 -p1
+%patch151 -p0
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 
 # symbios drivers
@@ -559,7 +561,6 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
-%patch123 -p1
 
 %patch500 -p1
 
@@ -1049,11 +1050,11 @@ ln -sf initrd-%{version}-%{release}.gz /boot/initrd
 #	/sbin/rc-boot 1>&2 || :
 #fi
 %ifarch ppc
-echo "This is very unstable 2.2.22 linux kernel image. It work on early"
+echo "This is very unstable %{version} linux kernel image. It work on early"
 echo "power g3 machines and work on chrp machines."
 echo "If this image didn't work correctly on your machine we suggest you"
 echo "to use 2.4.x kernels on ppc machines as long as"
-echo "we don't prepared correct 2.2.x linux kernel image."
+echo "we don't prepare correct 2.2.x linux kernel image."
 %endif
 
 %post pcmcia-cs
@@ -1080,11 +1081,11 @@ ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 #	/sbin/rc-boot 1>&2 || :
 #fi
 %ifarch ppc
-echo "This is very unstable 2.2.22 linux kernel image. It work on early"
+echo "This is very unstable %{version} linux kernel image. It work on early"
 echo "power g3 machines and work on chrp machines."
 echo "If this image didn't work correctly on your machine we suggest you"
 echo "to use 2.4.x kernels on ppc machines as long as"
-echo "we don't prepared correct 2.2.x linux kernel image."
+echo "we don't prepare correct 2.2.x linux kernel image."
 %endif
 
 %post smp-pcmcia-cs
