@@ -1,0 +1,159 @@
+diff -u linux-2.4.22/drivers/media/video/videodev.c linux/drivers/media/video/videodev.c
+--- linux-2.4.22/drivers/media/video/videodev.c	2003-09-08 17:26:56.000000000 +0200
++++ linux/drivers/media/video/videodev.c	2003-09-08 17:28:40.000000000 +0200
+@@ -62,6 +62,20 @@
+ 
+ #endif /* CONFIG_PROC_FS && CONFIG_VIDEO_PROC_FS */
+ 
++struct video_device *video_device_alloc(void)
++{
++	struct video_device *vfd;
++	vfd = kmalloc(sizeof(*vfd),GFP_KERNEL);
++	if (NULL == vfd)
++		return NULL;
++	memset(vfd,0,sizeof(*vfd));
++	return vfd;
++}
++
++void video_device_release(struct video_device *vfd)
++{
++	kfree(vfd);
++}
+ 
+ /*
+  *	Read will do some smarts later on. Buffer pin etc.
+@@ -611,6 +625,8 @@
+ #endif
+ 
+ 	devfs_unregister (vfd->devfs_handle);
++	if (vfd->release)
++		vfd->release(vfd);
+ 	video_device[vfd->minor]=NULL;
+ 	MOD_DEC_USE_COUNT;
+ 	up(&videodev_lock);
+@@ -661,6 +677,8 @@
+ module_init(videodev_init)
+ module_exit(videodev_exit)
+ 
++EXPORT_SYMBOL(video_device_alloc);
++EXPORT_SYMBOL(video_device_release);
+ EXPORT_SYMBOL(video_register_device);
+ EXPORT_SYMBOL(video_unregister_device);
+ EXPORT_SYMBOL(video_devdata);
+diff -u linux-2.4.22/include/linux/videodev.h linux/include/linux/videodev.h
+--- linux-2.4.22/include/linux/videodev.h	2003-09-08 17:27:56.000000000 +0200
++++ linux/include/linux/videodev.h	2003-09-08 17:28:40.000000000 +0200
+@@ -4,32 +4,25 @@
+ #include <linux/types.h>
+ #include <linux/version.h>
+ 
+-#if 0
+-/*
+- * v4l2 is still work-in-progress, integration planed for 2.5.x
+- *   v4l2 project homepage:   http://www.thedirks.org/v4l2/
+- *   patches available from:  http://bytesex.org/patches/
+- */ 
+-# define HAVE_V4L2 1
+-# include <linux/videodev2.h>
+-#else
+-# undef HAVE_V4L2
+-#endif
+-
+ #ifdef __KERNEL__
+ 
+ #include <linux/poll.h>
++#include <linux/mm.h>
+ #include <linux/devfs_fs_kernel.h>
+ 
+ struct video_device
+ {
+-	struct module *owner;
+-     	char name[32];
+- 	int type;       /* v4l1 */
+- 	int type2;      /* v4l2 */
++	/* device info */
++	char name[32];
++	int type;       /* v4l1 */
++	int type2;      /* v4l2 */
+ 	int hardware;
+ 	int minor;
+ 
++	/* device ops + callbacks */
++	struct file_operations *fops;
++	void (*release)(struct video_device *vfd);
++
+ 	/* old, obsolete interface -- dropped in 2.5.x, don't use it */
+ 	int (*open)(struct video_device *, int mode);
+ 	void (*close)(struct video_device *);
+@@ -40,28 +33,50 @@
+ 	int (*mmap)(struct video_device *, const char *, unsigned long);
+ 	int (*initialize)(struct video_device *);       
+ 
+- 	/* new interface -- we will use file_operations directly
+- 	 * like soundcore does. */
+- 	struct file_operations *fops;
+-	void *priv;		/* Used to be 'private' but that upsets C++ */
+-
+-	/* for videodev.c intenal usage -- don't touch */
+-	int users;
+-	struct semaphore lock;
+-	devfs_handle_t devfs_handle;
++#if 1 /* to be removed in 2.7.x */
++	/* obsolete -- fops->owner is used instead */
++	struct module *owner;
++	/* dev->driver_data will be used instead some day.
++	 * Use the video_{get|set}_drvdata() helper functions,
++	 * so the switch over will be transparent for you.
++	 * Or use {pci|usb}_{get|set}_drvdata() directly. */
++	void *priv;
++#endif
++
++	/* for videodev.c intenal usage -- please don't touch */
++	int users;                     /* video_exclusive_{open|close} ... */
++	struct semaphore lock;         /* ... helper function uses these   */
++	devfs_handle_t devfs_handle;   /* devfs */
+ };
+ 
+ #define VIDEO_MAJOR	81
+-extern int video_register_device(struct video_device *, int type, int nr);
+ 
+ #define VFL_TYPE_GRABBER	0
+ #define VFL_TYPE_VBI		1
+ #define VFL_TYPE_RADIO		2
+ #define VFL_TYPE_VTX		3
+ 
++extern int video_register_device(struct video_device *, int type, int nr);
+ extern void video_unregister_device(struct video_device *);
+ extern struct video_device* video_devdata(struct file*);
+ 
++
++/* helper functions to alloc / release struct video_device, the
++   later can be used for video_device->release() */
++struct video_device *video_device_alloc(void);
++void video_device_release(struct video_device *vfd);
++
++/* helper functions to access driver private data. */
++static inline void *video_get_drvdata(struct video_device *dev)
++{
++	return dev->priv;
++}
++
++static inline void video_set_drvdata(struct video_device *dev, void *data)
++{
++	dev->priv = data;
++}
++
+ extern int video_exclusive_open(struct inode *inode, struct file *file);
+ extern int video_exclusive_release(struct inode *inode, struct file *file);
+ extern int video_usercopy(struct inode *inode, struct file *file,
+@@ -403,9 +418,8 @@
+ #define VID_HARDWARE_PWC	31	/* Philips webcams */
+ #define VID_HARDWARE_MEYE	32	/* Sony Vaio MotionEye cameras */
+ #define VID_HARDWARE_CPIA2	33
+-#define VID_HARDWARE_VICAM	34	/* ViCam, 3Com Homeconnect */
++#define VID_HARDWARE_VICAM      34
+ #define VID_HARDWARE_SF16FMR2	35
+-
+ #endif /* __LINUX_VIDEODEV_H */
+ 
+ /*

@@ -1,0 +1,115 @@
+diff -u linux-2.4.22/drivers/media/video/bt832.c linux/drivers/media/video/bt832.c
+--- linux-2.4.22/drivers/media/video/bt832.c	2003-09-08 17:26:56.000000000 +0200
++++ linux/drivers/media/video/bt832.c	2003-09-08 17:30:22.000000000 +0200
+@@ -1,5 +1,5 @@
+ /* Driver for Bt832 CMOS Camera Video Processor
+-    i2c-adresses: 0x88 or 0x8a
++    i2c-addresses: 0x88 or 0x8a
+ 
+   The BT832 interfaces to a Quartzsight Digital Camera (352x288, 25 or 30 fps)
+   via a 9 pin connector ( 4-wire SDATA, 2-wire i2c, SCLK, VCC, GND).
+@@ -31,8 +31,9 @@
+ #include <linux/errno.h>
+ #include <linux/slab.h>
+ 
+-#include "id.h"
+ #include "audiochip.h"
++#include "id.h"
++#include "i2c-compat.h"
+ #include "bttv.h"
+ #include "bt832.h"
+ 
+@@ -184,7 +185,7 @@
+                 return -ENOMEM;
+ 	memset(t,0,sizeof(*t));
+ 	t->client = client_template;
+-        t->client.data = t;
++        i2c_set_clientdata(&t->client, t);
+         i2c_attach_client(&t->client);
+ 
+ 	MOD_INC_USE_COUNT;
+@@ -198,30 +199,19 @@
+ 
+ static int bt832_probe(struct i2c_adapter *adap)
+ {
+-	int rc;
+-
+-	printk("bt832_probe\n");
+-
+-	switch (adap->id) {
+-	case I2C_ALGO_BIT | I2C_HW_B_BT848:
+-	case I2C_ALGO_BIT | I2C_HW_B_RIVA:
+-	case I2C_ALGO_SAA7134:
+-		printk("bt832: probing %s i2c adapter [id=0x%x]\n",
+-		       adap->name,adap->id);
+-		rc = i2c_probe(adap, &addr_data, bt832_attach);
+-		break;
+-	default:
+-		printk("bt832: ignoring %s i2c adapter [id=0x%x]\n",
+-		       adap->name,adap->id);
+-		rc = 0;
+-		/* nothing */
+-	}
+-	return rc;
++#ifdef I2C_ADAP_CLASS_TV_ANALOG
++	if (adap->class & I2C_ADAP_CLASS_TV_ANALOG)
++		return i2c_probe(adap, &addr_data, bt832_attach);
++#else
++	if (adap->id == (I2C_ALGO_BIT | I2C_HW_B_BT848))
++		return i2c_probe(adap, &addr_data, bt832_attach);
++#endif
++	return 0;
+ }
+ 
+ static int bt832_detach(struct i2c_client *client)
+ {
+-	struct bt832 *t = (struct bt832*)client->data;
++	struct bt832 *t = i2c_get_clientdata(client);
+ 
+ 	printk("bt832: detach.\n");
+ 	i2c_detach_client(client);
+@@ -233,7 +223,7 @@
+ static int
+ bt832_command(struct i2c_client *client, unsigned int cmd, void *arg)
+ {
+-	struct bt832 *t = (struct bt832*)client->data;
++	struct bt832 *t = i2c_get_clientdata(client);
+ 
+ 	printk("bt832: command %x\n",cmd);
+ 
+@@ -266,9 +256,9 @@
+ };
+ static struct i2c_client client_template =
+ {
+-        .name   = "bt832",
+-	.flags  = I2C_CLIENT_ALLOW_USE,
+-        .driver = &driver,
++	I2C_DEVNAME("bt832"),
++	.flags      = I2C_CLIENT_ALLOW_USE,
++        .driver     = &driver,
+ };
+ 
+ 
+@@ -286,3 +276,10 @@
+ module_init(bt832_init_module);
+ module_exit(bt832_cleanup_module);
+ 
++/*
++ * Overrides for Emacs so that we follow Linus's tabbing style.
++ * ---------------------------------------------------------------------------
++ * Local variables:
++ * c-basic-offset: 8
++ * End:
++ */
+diff -u linux-2.4.22/drivers/media/video/bt832.h linux/drivers/media/video/bt832.h
+--- linux-2.4.22/drivers/media/video/bt832.h	2003-09-08 17:27:12.000000000 +0200
++++ linux/drivers/media/video/bt832.h	2003-09-08 17:30:22.000000000 +0200
+@@ -4,7 +4,7 @@
+   color digital camera directly to video capture devices via an 8-bit,
+   4:2:2 YUV or YCrCb video interface.
+ 
+- i2c adresses: 0x88 or 0x8a
++ i2c addresses: 0x88 or 0x8a
+  */
+ 
+ /* The 64 registers: */
