@@ -822,6 +822,7 @@ fi
 %files doc
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Documentation
+%{_prefix}/src/linux-%{version}/netfilter-patch-o-matic
 
 %if %{with source}
 %files source
