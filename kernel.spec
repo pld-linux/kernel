@@ -941,9 +941,7 @@ fi
 /lib/modules/%{version}-%{release}/fs
 /lib/modules/%{version}-%{release}/ieee1394
 /lib/modules/%{version}-%{release}/ipv4
-%ifnarch ppc
 /lib/modules/%{version}-%{release}/ipv6
-%endif
 /lib/modules/%{version}-%{release}/misc
 /lib/modules/%{version}-%{release}/net
 /lib/modules/%{version}-%{release}/scsi
@@ -975,9 +973,7 @@ fi
 /lib/modules/%{version}-%{release}smp/fs
 /lib/modules/%{version}-%{release}smp/ieee1394
 /lib/modules/%{version}-%{release}smp/ipv4
-%ifnarch ppc
 /lib/modules/%{version}-%{release}smp/ipv6
-%endif
 /lib/modules/%{version}-%{release}smp/misc
 /lib/modules/%{version}-%{release}smp/net
 /lib/modules/%{version}-%{release}smp/scsi
