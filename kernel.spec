@@ -295,7 +295,7 @@ BuildKernel() {
 	else
 		Config="%{_target_cpu}"
 	fi
-	KernelVer=%{version}$1
+	KernelVer=%{version}-%{release}$1
 
 	cp $RPM_SOURCE_DIR/kernel-$Config.config .config
 
@@ -336,8 +336,9 @@ BuildKernel() {
 	%{__make} modules EXTRAVERSION="-%{release}"
 	%{__make} modules_install \
 		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
-		KERNELRELEASE=$KernelVer
-	rm -rf $KERNEL_INSTALL_DIR/lib/modules/*/pcmcia
+		KERNELRELEASE=$KernelVer \
+		EXTRAVERSION="-%{release}"
+	rm -rf $KERNEL_INSTALL_DIR/lib/modules/*/{pcmcia,build}
 }
 
 KERNEL_BUILD_DIR=`pwd`
@@ -395,10 +396,10 @@ rm -f drivers/net/hamradio/soundmodem/gentbl
 rm -rf $RPM_BUILD_ROOT{,-build}
 
 %post
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
-ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
-ln -sf System.map-%{version}-%{release} /boot/System.map
+mv -f /boot/vmlinuz{,old}
+mv -f /boot/System.map{,old}
+ln -sf vmlinuz{-%{version}-%{release},}
+ln -sf System.map{-%{version}-%{release},}
 
 geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
 mv -f /boot/initrd /boot/initrd.old
@@ -419,10 +420,10 @@ depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
 %post smp
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
-ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
-ln -sf System.map-%{version}-%{release}smp /boot/System.map
+mv -f /boot/vmlinuz{,old}
+mv -f /boot/System.map{,old}
+ln -sf vmlinuz{-%{version}-%{release}smp,}
+ln -sf System.map{-%{version}-%{release}smp,}
 
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
@@ -489,32 +490,30 @@ fi
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
 /lib/modules/%{version}-%{release}/kernel
-/lib/modules/%{version}-%{release}/build
-/lib/modules/%{version}-%{release}/modules.dep
+%ghost /lib/modules/%{version}-%{release}/modules.dep
 /lib/modules/%{version}-%{release}/modules.*map
 /lib/modules/%{version}-%{release}/modules.generic_string
 
-#%files smp
-#%defattr(644,root,root,755)
-#%attr(600,root,root) /boot/vmlinuz-%{version}-%{release}smp
-#%attr(600,root,root) /boot/System.map-%{version}-%{release}smp
-#%dir /lib/modules/%{version}-%{release}smp
-#/lib/modules/%{version}-%{release}smp/kernel
-#/lib/modules/%{version}-%{release}smp/build
-#/lib/modules/%{version}-%{release}smp/modules.dep
-#/lib/modules/%{version}-%{release}smp/modules.*map
-#/lib/modules/%{version}-%{release}smp/modules.generic_string
+%files smp
+%defattr(644,root,root,755)
+%attr(600,root,root) /boot/vmlinuz-%{version}-%{release}smp
+%attr(600,root,root) /boot/System.map-%{version}-%{release}smp
+%dir /lib/modules/%{version}-%{release}smp
+/lib/modules/%{version}-%{release}smp/kernel
+%ghost /lib/modules/%{version}-%{release}smp/modules.dep
+/lib/modules/%{version}-%{release}smp/modules.*map
+/lib/modules/%{version}-%{release}smp/modules.generic_string
 
 %if %{?_with_boot:1}0
 %files BOOT
 %defattr(644,root,root,755)
-%{_libdir}/bootdisk/boot/vmlinuz-%{version}
-%{_libdir}/bootdisk/boot/System.map-%{version}
-%dir %{_libdir}/bootdisk/lib/modules/%{version}
-%{_libdir}/bootdisk/lib/modules/%{version}/kernel
-/lib/modules/%{version}-%{release}smp/modules.dep
-/lib/modules/%{version}-%{release}smp/modules.*map
-/lib/modules/%{version}-%{release}smp/modules.generic_string
+%{_libdir}/bootdisk/boot/vmlinuz-%{version}-%{release}BOOT
+%{_libdir}/bootdisk/boot/System.map-%{version}-%{release}BOOT
+%dir %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT
+%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/kernel
+%ghost %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.dep
+%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.*map
+%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.generic_string
 %endif
 
 %files headers
