@@ -46,11 +46,11 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.16
+%define		_rel		0.21
 %define		_cset		20040607_2308
 %define		_apply_cset	1
 
-%define		_netfilter_snap		20040518
+%define		_netfilter_snap		20040608
 
 %define		no_install_post_strip			1
 %define		no_install_post_compress_modules	1
@@ -598,7 +598,7 @@ zcat %{SOURCE3} | patch -p1 -s
 
 %patch44 -p1
 
-## netfilter
+# netfilter
 %patch46 -p1
 %patch47 -p1
 
