@@ -112,12 +112,13 @@ Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/pr
 # new version of netfilter.
 Patch8:		linux-2.4.20-netfilter-%{netfilter_snap}.patch.bz2
 
-Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-2.4.18-1.patch
-Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-2.4.18-1.patch
+#Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-2.4.18-1.patch
+#Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-2.4.18-1.patch
 
 # http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
 Patch11:	linux-2.4.20-ipvs-%{ipvs_version}.patch.bz2
-Patch12:	htb3.6-2.4.17.patch.bz2
+# included in kernel.
+#Patch12:	htb3.6-2.4.17.patch.bz2
 Patch13:	http://luxik.cdi.cz/~devik/qos/imq-2.4.18.diff-10
 
 Patch14:	jfs-2.4.20.patch
@@ -150,10 +151,10 @@ Patch25:	linux-2.4.20-I810FB_lock_page_fix.patch
 Patch26:	%{name}-cdrw-packet.patch
 Patch27:	%{name}-cd-mrw-2.patch
 # PC Speaker driver
-Patch28:	pcsp1.4-ss4-2.4.19.diff
+#Patch28:	pcsp1.4-ss4-2.4.19.diff
 # Wireless Extensions
-Patch29:	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw_handlers.w14-5.diff
-Patch30:	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw252_we15-5.diff
+#Patch29:	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw_handlers.w14-5.diff
+#Patch30:	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw252_we15-5.diff
 #Patch31:
 Patch32:	ebtables-v2.0.002_vs_2.4.20.patch
 Patch33:	linux-2.4.19-pre8-konicawc.patch
@@ -183,10 +184,10 @@ Patch46:	linux-2.4.19-netmos_pci_parallel_n_serial.patch
 Patch100:	linux-scsi-debug-bug.patch
 Patch101:	linux-2.4.2-raw-ip.patch
 Patch102:	PCI_ISA_bridge.patch
-Patch103:	linux-2.4.2-nvram-hdd.patch
+#Patch103:	linux-2.4.2-nvram-hdd.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch104:	linux-2.4.19-pcnet-parms.patch
-Patch105:	linux-alpha-nfs-2.4.19.patch
+#Patch105:	linux-alpha-nfs-2.4.19.patch
 Patch106:	linux-2.4.20-lkml-ppp_filter-outbound-fix.patch
 # raid5 xor fix for PIII/P4, should go away shortly
 Patch107:	linux-2.4.0-raid5xor.patch
@@ -202,18 +203,18 @@ Patch111:	linux-2.4.3-rawio.patch
 Patch113:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
 #Patch114:	http://people.sistina.com/~mauelshagen/lvm_patches/lvm_%{lvm_version}+_25.07.2002.patch
-Patch115:	ftp://ftp.kernel.org/pub/linux/kernel/people/sct/ext3/v2.4/ext3-0.9.18-2.4.19pre8.patch
+#Patch115:	ftp://ftp.kernel.org/pub/linux/kernel/people/sct/ext3/v2.4/ext3-0.9.18-2.4.19pre8.patch
 Patch116:	linux-proc_net_dev-counter-fix.patch
 Patch117:	01-sigxfs-vs-blkdev.patch
 Patch118:	%{name}-2.4.18-SPARC64-PLD.patch
 Patch119:	linux-AXP.patch
 Patch120:	%{name}-Makefile-include-fix.patch
 Patch121:	%{name}-2.4.17-netsyms-export-fix.patch
-Patch122:	linux-2.4.12-riva-ppc.patch.bz2
+#Patch122:	linux-2.4.12-riva-ppc.patch.bz2
 Patch123:	linux-2.4.20-agp_uninorth.patch
 Patch124:	%{name}-gcc31.patch
 Patch125:	linux-2.4.18-hpfs.patch
-Patch126:	linux-tulip-vlan.patch
+#Patch126:	linux-tulip-vlan.patch
 Patch127:	linux-modules-fixed.patch
 Patch128:	hpt3xx.patch
 Patch129:	linux-53c7,8xx-build.fix
@@ -223,7 +224,7 @@ Patch132:	ide-EXPORT_SYMBOL.fix
 Patch133:	linux-proc_get_inode.patch
 
 # added support for VIA8235
-Patch134:	vt8235-2.4.19.patch
+#Patch134:	vt8235-2.4.19.patch
 
 Patch135:	linux-2.4.20-radeonfb_clean.patch
 Patch136:	piix-ide-fix.patch
@@ -231,7 +232,7 @@ Patch136:	piix-ide-fix.patch
 Patch138:	http://www.uwsg.indiana.edu/hypermail/linux/kernel/0212.0/att-1445/01-sound.diff
 
 # Video 4 Linux 2
-Patch139:	linux-2.4.20-v4l2.patch.bz2 
+#Patch139:	linux-2.4.20-v4l2.patch.bz2 
 
 # PWC USB Webcam Driver update (only for 2.4.20; 2.4.21 should have this fix)
 Patch140:	linux-2.4.20-pwc.patch
@@ -271,16 +272,16 @@ Patch902:	linux-2.4.20-drm-Makefile.patch
 Patch903:	linux-2.4-ppc-procesor.patch
 Patch904:	linux-abi-put_user.patch
 Patch905:	linux-abi-fl_ibcs_to_linux.patch
-Patch906:	linux-netfilter-newnat-conntrack-nat-udp.patch
+#Patch906:	linux-netfilter-newnat-conntrack-nat-udp.patch
 Patch907:	PPC-grsecurity-pgtable.h.patch
-Patch908:	linux-2.4.19-PPC-o1_scheduler.patch
+#Patch908:
 #Patch909:	
 Patch910:	linux-2.4.21-pre4-ac4-via82cxxx_audio.patch.bz2
-Patch911:	linux-2.4.19-SPARC.patch
+#Patch911:	
 #Patch912:	
 #Patch913:	
 Patch914:	linux-2.4.20-MODULE_XXX.patch
-Patch915:	linux-2.4.19-usb-digitalcams.patch
+#Patch915:	linux-2.4.19-usb-digitalcams.patch
 #Patch916:	
 #Patch917:	
 Patch918:	linux-2.4.20-ext3.patch
