@@ -75,7 +75,7 @@ Patch10:	bridge-1.0.1-against-2.2.20.diff
 Patch100:	bridge-include.patch
 Patch101:	bridge-netsyms.patch
 Patch102:	%{name}-ipsec-bridge.patch
-#Patch103:	some patch
+Patch103:	%{name}-bridge-extraversion.patch
 #Patch104:	some patch
 
 ExclusiveOS:	Linux
@@ -366,6 +366,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch100 -p1
 %patch101 -p1
 %patch102 -p1
+%patch103 -p1
 
 # 802.1Q VLANs
 #cd vlan.%{vlan_version}
@@ -378,6 +379,9 @@ patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 
 # Tekram DC395/315 U/UW SCSI host driver
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
+
+# JFS 1.0.5
+patch -p1 -s <jfs-2.2..common-v%{jfs_version}-patch
 
 %build
 BuildKernel() {
@@ -595,11 +599,13 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH10}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH100}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH102}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH103}
 
 #DAC960 drivers
 tar xfz %{SOURCE8}
 mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
 mv DAC960.[ch] drivers/block
+# 2.2.20ow
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
 
 # symbios drivers
@@ -607,6 +613,9 @@ tar zxf %{SOURCE6}
 mv sym-%{symncr_version}/*.{c,h} $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi
 mv sym-%{symncr_version}/{README,ChangeLog}.* $RPM_BUILD_ROOT/usr/src/linux-%{version}/Documentation
 rm -rf sym-%{symncr_version}
+
+# jfs 1.0.5
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < jfs-2.2.common-v%{jfs_version}-patch
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
