@@ -84,7 +84,7 @@ Patch35:	linux-netdrivers_vlan.patch
 Patch36:	atm-unresolved.patch
 Patch38:	linux-2.2.20-pcmcia-without-iee1394.patch.bz2
 # based on ftp://ftp.kernel.org/people/andrea/kernels/v2.2/2.2.20pre9aa2/40_lfs-2.2.20pre9aa2-27.bz2
-#Patch39:	linux-2.2.20-lfs.patch
+Patch39:	linux-2.2.20-lfs.patch
 Patch40:	2.2.21-pre2_Makefile.patch
 Patch41:	%{name}-serial-initialisation.patch
 Patch42:	%{name}-flip-serial5.05.patch
@@ -380,7 +380,9 @@ do twojego sprzêtu.
 %patch35 -p1
 %patch36 -p1
 %patch38 -p1
-#%patch39 -p1
+%ifarch ppc
+%patch39 -p1
+%endif
 %patch40 -p1
 %patch44 -p1
 
@@ -696,7 +698,9 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH33}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH34}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH35}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH36}
-#patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH39}
+%ifarch ppc
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH39}
+%endif
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH40}
 bzip2 -dc %{PATCH44} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
