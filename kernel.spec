@@ -157,6 +157,7 @@ Pakiet zawiera j±dro Linuxa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takich jak karty muzyczne, sterowniki dysków, etc.
 
+%if %{!?_without_lids:1}%{?_without_lids:0}
 %package lids
 Summary:	LIDS enabled kernel version %{version}
 Group:		Base/Kernel
@@ -178,6 +179,7 @@ Pakiet zawiera j±dro Linuksa w wersji %{version} z w³±czonym LIDS.
 Jest ono wymagane jedynie gdy potrzebne jest maksymalne bezpieczeñstwo.
 
 Szczegó³y pod http://www.lids.org/.
+%endif
 
 %package smp
 Summary:	Kernel version %{version} compiled for SMP machines
@@ -212,6 +214,7 @@ Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono wymagane
 przez komputery zawieraj±ce dwa lub wiêcej procesorów. Powinno równie¿ dobrze 
 dzia³aæ na maszynach z jednym procesorem.
 
+%if %{!?_without_lids:1}%{_without_lids:0}
 %package lids-smp
 Summary:	LIDS enabled kernel version %{version} compiled for SMP machines
 Group:		Base/Kernel
@@ -235,6 +238,7 @@ Jest ono wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów,
 jedynie gdy wymagane jest maksymalne bezpieczeñstwo.
 
 Szczegó³y pod http://www.lids.org/.
+%endif
 
 %package BOOT
 Summary:	Kernel version %{version} used on the installation boot disks
@@ -338,6 +342,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
+%patch9 -p1
 %patch10 -p1
 
 %patch101 -p0
@@ -573,6 +578,7 @@ gzip -dc %{PATCH100} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH6} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH7} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH8} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH9}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
 
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH101}
