@@ -1,5 +1,5 @@
 %define		ow_version		2.2.19-ow1
-%define		pcmcia_version		3.1.26
+%define		pcmcia_version		3.1.29
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.34
 %define		i2c_version		2.5.5
@@ -14,7 +14,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.19
-Release:	21
+Release:	22
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -88,6 +88,7 @@ Patch35:	%{name}-sym53c8xx.patch
 Patch36:	ip_masq_irc-2.2.19-dcc_check-3.diff
 Patch37:	%{name}-udf.patch
 Patch38:	jfs-%{version}-v%{jfs_version}-patch
+Patch39:	pcmcia-cs-3.1.29-smp-compilation-fix.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -385,6 +386,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch25 -p1
 %patch26 -p1
 %patch27 -p1
+%patch39 -p0
 
 # 802.1Q VLANs
 cd vlan.%{vlan_version}
@@ -523,6 +525,7 @@ cd pcmcia-cs-%{pcmcia_version}
 	$PCMCIA_APM \
 	--kernel=$KERNEL_BUILD_DIR \
 	--moddir=/lib/modules/$KernelVer \
+	--kflags="-march=i686" \
 	--target=$KERNEL_INSTALL_DIR
 
 mv config.mk config.mk.bak
@@ -532,10 +535,12 @@ sed "s/^MODDIR=.*/MODDIR=\/lib\/modules\/$KernelVer/" config.mk.bak > config.mk
 sed "s/^DIRS =.*//" Makefile.bak > Makefile
 sed "s/.*= 8390\..$//" clients/Makefile.bak > clients/Makefile
 
-%{__make} all \
-	CC=egcs \
-	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
-	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNEL_BUILD_DIR/include -D__KERNEL__ -DEXPORT_SYMTAB"
+%{__make} all
+#	CC=egcs \
+#	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
+#	MFLAG="$RPM_OPT_FLAGS -O"
+
+#	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNEL_BUILD_DIR/include -D__KERNEL__ -DEXPORT_SYMTAB"
 
 %{__make} PREFIX=$KERNEL_INSTALL_DIR install
 cd ..
@@ -551,7 +556,7 @@ sed "s/^LINUX_SRC=.*/LINUX_SRC=$kernelbase/" config.mk.bak3 > config.mk.bak4
 sed "s/^PCMCIA_SRC=.*/PCMCIA_SRC=$kernelbase\/pcmcia-cs-%{pcmcia_version}/" config.mk.bak4 > config.mk
 
 cd driver
-%{__make} all \
+%{__make} all
 	CC=egcs \
 	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
 	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNEL_BUILD_DIR/include -I$KERNEL_BUILD_DIR/pcmcia-cs-%{pcmcia_version}/include -D__KERNEL__ -DEXPORT_SYMTAB"
