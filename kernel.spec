@@ -146,7 +146,8 @@ Patch44:	linux-fbcon-con2fb-crash-workaround.patch
 Patch50:	2.6.7-pom-ng-%{_netfilter_snap}.patch
 # http://www.barbara.eu.org/~quaker/ipt_account/
 Patch51:	2.6.6-ipt_account.patch
-#Patch52:	2.6.7-ipt_layer7.patch
+# http://l7-filter.sourceforge.net/
+Patch52:	2.6.8-ipt_layer7.patch
 Patch53:	2.6.4-rc1-01-esfq-imq.patch
 Patch54:	2.6.4-rc1-02-imq-nat-support.patch
 Patch55:	2.6.4-wrr.patch
@@ -590,7 +591,7 @@ zcat %{SOURCE3} | patch -p1 -s
 # netfilter
 %patch50 -p1
 %patch51 -p1
-#patch52 -p1
+%patch52 -p1
 %patch53 -p1
 %patch54 -p1
 %patch55 -p1
