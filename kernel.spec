@@ -15,15 +15,9 @@
 %define		no_install_post_compress_modules	1
 #
 %define		pre_version		rc6
-%define		ipvs_version		1.0.7
-%define		freeswan_version	2.00
-%define		jfs_version		2.4-1.1.2
-%define		lvm_version		1.0.5
-%define		evms_version		2.0.1
-%define		ntfs_version		2.1.4c
 %define		drm_xfree_version	4.3.0
 %define		hostap_version		2002-10-12
-%define		netfilter_snap		20030616
+%define		netfilter_snap		20030915
 %define		i2c_version		2.8.0
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -46,7 +40,7 @@ Source4:	linux-2.4.21-netfilter-%{netfilter_snap}.tar.gz
 # Source4-md5:	fbbbe9b0669c7e766ddf125dfa11781c
 Source5:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
 # Source5-md5:	b8f2f7a268a5cb75fabcaec3b5d45fcd
-Source7:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
+Source7:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-1.1.2.tar.gz
 # Source7-md5:	2473f345c66683a03ad27ff132d405b7
 Source8:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
 # Source8-md5:	34515784c7b67f6cc9169aa9eed982c7
@@ -77,7 +71,7 @@ Patch0:		%{name}-pldfblogo.patch
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hvr/testing/
 Patch10:	patch-cryptoloop-jari-2.4.22-rc2.0
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
-Patch12:	linux-2.4.21-freeswan-%{freeswan_version}.patch.gz
+Patch12:	linux-2.4.21-freeswan-2.00.patch.gz
 Patch15:	linux-2.4.21-sched-O1.patch
 # http://dl.sourceforge.net/user-mode-linux/uml-patch-2.4.20-6.bz2
 Patch20:	uml-patch-2.4.20-6-21.bz2
@@ -97,7 +91,7 @@ Patch30:	linux-2.4.21-jfs-xattr.patch
 Patch31:	linux-2.4.21-jfs-acl.patch
 Patch32:	linux-2.4.22-ea+acl+nfsacl-0.8.60.diff.gz
 # http://dl.sourceforge.net/linux-ntfs/
-Patch40:	linux-2.4.22-ntfs-%{ntfs_version}.patch.gz
+Patch40:	linux-2.4.22-ntfs-2.1.4c.patch.gz
 # FC01_davfs_0.2.4.patch
 Patch50:	linux-2.4.20-davfs-0.2.4.patch.bz2
 # FC02_davfs__FUNCTION__.patch
@@ -116,13 +110,10 @@ Patch70:	nwd-2.4.21.patch
 
 # new version of netfilter.
 Patch100:	linux-2.4.21-netfilter-%{netfilter_snap}.patch.gz
-# from http://users.pandora.be/bart.de.schuymer/ebtables/sourcecode.html
-#	ebtables_v2.0.003_vs_2.4.20.diff
-Patch110:	ebtables-v2.0.003_vs_2.4.20.patch.bz2
-#	bridge-nf-0.0.10-against-2.4.20.diff
-Patch111:	linux-2.4.20-bridge-nf-0.0.10.patch.bz2
+# http://ebtables.sourceforge.net/
+Patch110:	ebtables-brnf-2_vs_2.4.22.diff.gz
 # http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
-Patch115:	linux-2.4.20-ipvs-%{ipvs_version}.patch.bz2
+Patch115:	linux-2.4.22-ipvs-1.0.9.patch.gz
 # http://trash.net/~kaber/imq/
 Patch120:	imq-2.4.18.diff-10
 # ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
@@ -142,15 +133,12 @@ Patch190:	hostap-2.4.19-rc3-patch.patch
 
 # New devices/drivers
 
-# taken at 2003-08-22
-# ftp://ftp.sistina.com/pub/LVM2/device-mapper/patches-version4/
-Patch200:	combined-linux-2.4.21-devmapper-ioctl.patch
-Patch201:	linux-2.4.21-dm-fls-redefined.patch
+# http://people.sistina.com/~thornber/patches/2.4-stable/
+Patch200:	linux-2.4.22-dm-1.patch
 
 # EVMS support (http://www.sourceforge.net/projects/evms/)
 # Disabled due to conflicts with LVM2 and device mapper tools
-Patch205:	linux-2.4.21-evms-2.0.1.patch.gz
-Patch206:	linux-2.4.21-evms-o1.patch
+Patch205:	linux-2.4.22-evms-2.1.1.patch
 
 #from http://dl.sourceforge.net/i810fb/linux-2.4.20-i810fb.diff.bz2
 Patch210:	linux-2.4.21-I810FB.patch.gz
@@ -680,18 +668,15 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch61 -p1
 %patch65 -p1
 %patch70 -p1
-#%patch100 -p1
-#%patch110 -p1
-#%patch111 -p1
-#%patch115 -p1
-#%patch120 -p1
-#%patch125 -p1
+%patch100 -p1
+%patch110 -p1
+%patch115 -p1
+%patch120 -p1
+%patch125 -p1
 #%patch150 -p1
-#%patch151 -p1
+%patch151 -p1
 %patch200 -p1
-%patch201 -p1
-#%patch205 -p1
-#%patch206 -p1
+%patch205 -p1
 %patch210 -p1
 #%patch215 -p1
 #%patch216 -p1
