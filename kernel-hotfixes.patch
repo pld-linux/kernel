@@ -88,3 +88,167 @@
  #endif
  
  struct machdep_calls ppc_md;
+--- linux-2.6.10/drivers/usb/gadget/serial.c.orig	2004-12-24 22:35:24.000000000 +0100
++++ linux-2.6.10/drivers/usb/gadget/serial.c	2005-02-15 09:39:48.408315792 +0100
+@@ -329,10 +329,6 @@
+ 
+ /* Functions */
+ 
+-/* module */
+-static int __init gs_module_init(void);
+-static void __exit gs_module_exit(void);
+-
+ /* tty driver */
+ static int gs_open(struct tty_struct *tty, struct file *file);
+ static void gs_close(struct tty_struct *tty, struct file *file);
+@@ -712,8 +708,6 @@
+ module_param(use_acm, uint, S_IRUGO);
+ MODULE_PARM_DESC(use_acm, "Use CDC ACM, 0=no, 1=yes, default=no");
+ 
+-module_init(gs_module_init);
+-module_exit(gs_module_exit);
+ 
+ /*
+ *  gs_module_init
+@@ -761,6 +755,7 @@
+ 	printk(KERN_INFO "gs_module_init: %s %s loaded\n", GS_LONG_NAME, GS_VERSION_STR);
+ 	return 0;
+ }
++module_init(gs_module_init);
+ 
+ /*
+ * gs_module_exit
+@@ -775,6 +770,7 @@
+ 
+ 	printk(KERN_INFO "gs_module_exit: %s %s unloaded\n", GS_LONG_NAME, GS_VERSION_STR);
+ }
++module_exit(gs_module_exit);
+ 
+ /* TTY Driver */
+ 
+--- linux-2.6.10/fs/afs/main.c.orig	2004-12-24 22:34:27.000000000 +0100
++++ linux-2.6.10/fs/afs/main.c	2005-02-15 09:42:09.761826792 +0100
+@@ -29,29 +29,11 @@
+ 
+ struct rxrpc_transport *afs_transport;
+ 
+-static int afs_init(void);
+-static void afs_exit(void);
+ static int afs_adding_peer(struct rxrpc_peer *peer);
+ static void afs_discarding_peer(struct rxrpc_peer *peer);
+ 
+-/* XXX late_initcall is kludgy, but the only alternative seems to create
+- * a transport upon the first mount, which is worse. Or is it?
+- */
+-/* module_init(afs_init); */
+-late_initcall(afs_init);	/* must be called after net/ to create socket */
+-
+-module_exit(afs_exit);
+-
+-MODULE_DESCRIPTION("AFS Client File System");
+-MODULE_AUTHOR("Red Hat, Inc.");
+-MODULE_LICENSE("GPL");
+-
+ static char *rootcell;
+ 
+-module_param(rootcell, charp, 0);
+-MODULE_PARM_DESC(rootcell, "root AFS cell name and VL server IP addr list");
+-
+-
+ static struct rxrpc_peer_ops afs_peer_ops = {
+ 	.adding		= afs_adding_peer,
+ 	.discarding	= afs_discarding_peer,
+@@ -287,3 +269,17 @@
+                     );
+ }
+ #endif
++
++/* XXX late_initcall is kludgy, but the only alternative seems to create
++ * a transport upon the first mount, which is worse. Or is it?
++ */
++/* module_init(afs_init); */
++late_initcall(afs_init);	/* must be called after net/ to create socket */
++module_exit(afs_exit);
++
++module_param(rootcell, charp, 0);
++MODULE_PARM_DESC(rootcell, "root AFS cell name and VL server IP addr list");
++
++MODULE_DESCRIPTION("AFS Client File System");
++MODULE_AUTHOR("Red Hat, Inc.");
++MODULE_LICENSE("GPL");
+--- linux-2.6.10/net/rxrpc/main.c.orig	2004-12-24 22:35:25.000000000 +0100
++++ linux-2.6.10/net/rxrpc/main.c	2005-02-15 09:45:12.420058520 +0100
+@@ -22,12 +22,6 @@
+ #include <rxrpc/message.h>
+ #include "internal.h"
+ 
+-static int rxrpc_initialise(void);
+-static void rxrpc_cleanup(void);
+-
+-module_init(rxrpc_initialise);
+-module_exit(rxrpc_cleanup);
+-
+ MODULE_DESCRIPTION("Rx RPC implementation");
+ MODULE_AUTHOR("Red Hat, Inc.");
+ MODULE_LICENSE("GPL");
+@@ -38,7 +32,7 @@
+ /*
+  * initialise the Rx module
+  */
+-static int rxrpc_initialise(void)
++static int __init rxrpc_initialise(void)
+ {
+ 	int ret;
+ 
+@@ -92,6 +86,7 @@
+ #endif
+ 	return ret;
+ } /* end rxrpc_initialise() */
++module_init(rxrpc_initialise);
+ 
+ /*****************************************************************************/
+ /*
+@@ -135,6 +130,7 @@
+ 
+ 	kleave("");
+ } /* end rxrpc_cleanup() */
++module_exit(rxrpc_cleanup);
+ 
+ /*****************************************************************************/
+ /*
+--- linux-2.6.10/drivers/char/rocket.c.orig	2004-12-24 22:35:21.000000000 +0100
++++ linux-2.6.10/drivers/char/rocket.c	2005-02-15 09:48:39.050645896 +0100
+@@ -210,11 +210,6 @@
+ module_param_array(pc104_4, ulong, NULL, 0);
+ MODULE_PARM_DESC(pc104_4, "set interface types for ISA(PC104) board #4 (e.g. pc104_4=232,232,485,485,...");
+ 
+-int rp_init(void);
+-static void rp_cleanup_module(void);
+-
+-module_init(rp_init);
+-module_exit(rp_cleanup_module);
+ 
+ #endif
+ 
+@@ -2422,10 +2417,11 @@
+ 
+ 	return 0;
+ }
++module_init(rp_init);
+ 
+ #ifdef MODULE
+ 
+-static void rp_cleanup_module(void)
++static void __exit rp_cleanup_module(void)
+ {
+ 	int retval;
+ 	int i;
+@@ -2451,6 +2447,8 @@
+ 	if (controller)
+ 		release_region(controller, 4);
+ }
++module_exit(rp_cleanup_module);
++
+ #endif
+ 
+ #ifndef TRUE
