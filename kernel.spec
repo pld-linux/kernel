@@ -33,22 +33,30 @@ Source23:	kernel-sparc-BOOT.config
 #Source28:	kernel-alpha-smp.config
 #Source29:	kernel-alpha-BOOT.config
 Source30:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
-Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-126.tar.gz
+Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-127.tar.gz
 Source32:	kernel-BuildASM.sh
 Source33:	ftp://sourceforge.org/pcmcia/pcmcia-cs-%{pcmcia_version}.tar.gz
+Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x.c-2.2.16-pre4-6.gz
 Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.14.1.gz
 Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.15-reiserfs-3.5.21-patch.gz
 Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
 Patch3:		linux-tasks.patch
-Patch4:		http://www.redhat.com/~mingo/raid-patches/raid-2.2.15-A0.gz
-Patch5:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide.2.2.15.20000504.patch.bz2
+# Wiget: Using unofficial raid patch, waiting for mingo update
+#Patch4:		http://www.redhat.com/~mingo/raid-patches/raid-2.2.15-A0.gz
+Patch4:		ftp://ftp.sime.com/pub/linux/raid-2.2.16-mabene
+# Wiget: WARNING: hand modified patch
+Patch5:		http://republika.pl/bkz/ide.2.2.16.patch.bz2
 Patch6:		%{name}-pldfblogo.patch
 Patch7:		linux-2.2.14-freeswan-1.3.patch
 Patch8:		wanrouter-v2215.patch.gz
-Patch9:		http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.15-pre9-patch
 Patch10:	linux-newagpdist.patch
 Patch11:	linux-agphjlfixes.patch
 Patch12:	ftp://shiva.poland.com/people/serek/kernel-DPT-smartRAID-serek.patch
+# Wiget: This is hand modified OW1 patch
+Patch13:	linux-2.2.15-ow1.diff
+# Wiget: obsoleted by raid patch
+#Patch14:	http://www.linux.org.uk/VERSION/2216.raidfix
+Patch15:	http://www.linux.org.uk/VERSION/2216.decbug
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -249,15 +257,18 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
-%patch9 -p1
 %patch10 -p1
 %patch11 -p1
 %patch12 -p1
+%patch13 -p1
+#%patch14 -p1 -R -b .wiget
+%patch15 -p1 -R
 
-patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
+#patch -p1 -s -b -z wiget <linux-%{ow_version}/linux-%{ow_version}.diff
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
+zcat %{SOURCE34} > drivers/net/3c59x.c
 
 %build
 BuildKernel() {
@@ -286,18 +297,18 @@ BuildKernel() {
     perl -p -i -e "s/-DCPU=586/-mpentium -DCPU=586/" arch/i386/Makefile
     perl -p -i -e "s/-DCPU=686/-mpentiumpro -DCPU=686/" arch/i386/Makefile
 %endif
-    make mrproper
+    %{__make} mrproper
     ln -sf arch/$RPM_ARCH/defconfig .config
 
-    make oldconfig
-    make dep 
+    %{__make} oldconfig
+    %{__make} dep 
     make include/linux/version.h 
 %ifarch %{ix86}
-    make bzImage EXTRAVERSION="-%{release}"
+    %{__make} bzImage EXTRAVERSION="-%{release}"
 %else
-    make boot EXTRAVERSION="-%{release}"
+    %{__make} boot EXTRAVERSION="-%{release}"
 %endif
-    make modules EXTRAVERSION="-%{release}"
+    %{__make} modules EXTRAVERSION="-%{release}"
     mkdir -p $RPM_BUILD_ROOT/boot
     install System.map $RPM_BUILD_ROOT/boot/System.map-$KernelVer
 %ifarch %{ix86}
@@ -308,7 +319,7 @@ BuildKernel() {
      install vmlinux $RPM_BUILD_ROOT/boot/vmlinux-$KernelVer
      install vmlinuz $RPM_BUILD_ROOT/boot/vmlinuz-$KernelVer
 %endif
-     make INSTALL_MOD_PATH=$RPM_BUILD_ROOT modules_install KERNELRELEASE=$KernelVer
+     %{__make} INSTALL_MOD_PATH=$RPM_BUILD_ROOT modules_install KERNELRELEASE=$KernelVer
 }
 
 BuildPCMCIA() {
@@ -412,10 +423,12 @@ bzip2 -dc %{PATCH5} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH3}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH9}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-%{ow_version}/linux-%{ow_version}.diff
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
+#patch -s -p1 -R -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
+patch -s -p1 -R -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi/
 
@@ -455,7 +468,7 @@ install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoco
 find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
 while read file ; do
 	mv $file $file.old
-	sed -e "s|[^ ]*\(/usr/src/linux\)|\1|g" < $file.old > $file
+	sed -e "s|$RPM_BUILD_ROOT\(/usr/src/linux\)|\1|g" < $file.old > $file
 	rm -f $file.old
 done
 
