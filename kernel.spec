@@ -208,6 +208,7 @@ Patch303:	linux-2.6-ntfs-printk-DoS.patch
 Patch304:	linux-2.6-radeonfb-fix-rom-enable-disable.patch
 Patch305:	linux-2.6-radeonfb-fix-section-usage.patch
 Patch306:	linux-2.6-fix-ooops-unmounting-a-defect-dvd.patch
+Patch307:	linux-2.6-long-standing-xattr-sharing.patch
 
 # em8300
 Patch400:	linux-em8300-2.6.10.patch
@@ -627,6 +628,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch304 -p1
 %patch305 -p1
 %patch306 -p1
+%patch307 -p1
 
 %if %{with em8300}
 %patch400 -p1
