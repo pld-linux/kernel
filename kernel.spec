@@ -36,8 +36,8 @@ Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
-#Source5:	linux-2.4.19-netfilter-20020808.tar.gz
-Source5:	linux-2.4.19-netfilter-20020825.tar.gz
+Source5:	linux-2.4.19-netfilter-20020808.tar.gz
+#Source5:	linux-2.4.19-netfilter-20020825.tar.gz
 #Source6:	
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
@@ -413,7 +413,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %prep
 %setup -q -a3 -a4 -a5  -a7 -a8 -a9 -n linux-%{version}
 #%patch1000 -p1
-#fixme
 %patch0 -p1
 %patch1 -p1
 %patch900 -p1
@@ -501,8 +500,8 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # Netfilter
 (KERNEL_DIR=`pwd` ; export KERNEL_DIR ; cd netfilter-patch-o-matic ; ./runme --batch userspace)
-# added missing #define
-%patch906 -p1
+# added missing #define for patch-o-matic-20020825
+#%patch906 -p1
 
 # IP personality
 #echo Adding IP Personality 
