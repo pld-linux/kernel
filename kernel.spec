@@ -617,7 +617,6 @@ fi
 %endif
 /boot/vmlinuz-%{version}-%{release}
 /boot/System.map-%{version}-%{release}
-%dir /lib/modules
 %dir /lib/modules/%{version}-%{release}
 /lib/modules/%{version}-%{release}/atm
 /lib/modules/%{version}-%{release}/block
@@ -643,7 +642,6 @@ fi
 %endif
 /boot/vmlinuz-%{version}-%{release}smp
 /boot/System.map-%{version}-%{release}smp
-%dir /lib/modules
 %dir /lib/modules/%{version}-%{release}smp
 /lib/modules/%{version}-%{release}smp/atm
 /lib/modules/%{version}-%{release}smp/block
@@ -670,7 +668,6 @@ fi
 %endif
 /boot/vmlinuz-%{version}-%{release}BOOT
 /boot/System.map-%{version}-%{release}BOOT
-%dir /lib/modules
 %dir /lib/modules/%{version}-%{release}BOOT
 #/lib/modules/%{version}-%{release}BOOT/atm
 /lib/modules/%{version}-%{release}BOOT/block
