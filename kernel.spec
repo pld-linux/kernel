@@ -45,6 +45,7 @@ Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-
 Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
 Source10:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
 Source11:	http://download.sourceforge.net/squashfs/squashfs1.0c.tar.gz
+Source12:	linux-2.4.20-aacraid.tar.bz2
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source50:	%{name}-sparc.config
@@ -497,7 +498,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a11 -n linux-%{version}
+%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a11 -a12 -n linux-%{version}
 %patch0 -p1
 %patch1 -p1
 %patch900 -p1
@@ -578,6 +579,11 @@ echo Adding Tekram DC395/315 driver
 patch -p1 -s <dc395/dc395-integ24.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 %patch901 -p0
+
+# Adaptec AACRaid nev drivers
+echo Updating AAC driver ...
+rm -f drivers/scsi/aacraid/*
+cp aacraid/* drivers/scsi/aacraid/
 
 # Fore 200e ATM NIC
 echo Adding FORE 200e ATM driver
