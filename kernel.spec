@@ -33,7 +33,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.21
-Release:	2
+Release:	2.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -723,7 +723,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1004 -p1
 %patch1006 -p1
 %patch1007 -p1
-%patch1008 -p1
+#%patch1008 -p1
 %patch1009 -p1
 %patch1010 -p1
 %patch1100 -p1
