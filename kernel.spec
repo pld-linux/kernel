@@ -896,7 +896,7 @@ KERNEL_BUILD_DIR=`pwd`
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 #rm -rf $KERNEL_INSTALL_DIR
 BuildConfig
-{?with_up:BuildKernel}
+%{?with_up:BuildKernel}
 %{?with_up:PreInstallKernel}
 
 # SMP KERNEL
