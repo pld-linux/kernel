@@ -2,14 +2,14 @@
 # If you define the following as 1, only kernel, -headers and -source
 # packages will be built
 #
-# _without_grsec	- build kernel without grsecurity patch
 # _with_preemptible	- build with Preemptible patch
 # _with_o1_sched	- build with new O(1) scheduler
 # _with_acpi		- build with acpi support
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
+# _without_wrr		- don't build WRR support
 #
-%define		krelease		5.903
+%define		krelease		5.904
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -84,6 +84,7 @@ Source1004:	%{name}-ipvs.config
 Source1005:	%{name}-evms.config
 Source1666:	%{name}-grsec.config
 Source1667:	%{name}-int.config
+Source1668:	%{name}-wrr.config
 Source1999:	%{name}-preemptive.config
 
 # New features
@@ -130,6 +131,8 @@ Patch21:	linux-%{version}-hpfs.patch
 Patch22:	linux-%{version}-mppe.patch
 
 Patch23:	hfsplus-20011213.patch
+
+Patch24:	wrr-linux-2.4.9.patch
 
 # Assorted bugfixes
 
@@ -595,7 +598,6 @@ echo "Scheduler didn't work on ARCH different than Intel x86"
 %endif
 %endif
 %patch15 -p1
-%patch24 -p1
 %patch17 -p1
 
 %patch100 -p0
@@ -770,6 +772,11 @@ echo Fixed HPFS
 echo Added patch fot ADM router
 %patch144 -p1
 
+# WRR support
+%{!?_without_wrr:echo Added WRR support}
+%{!?_without_wrr:%patch24 -p1}
+
+
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
@@ -829,7 +836,7 @@ BuildKernel() {
 	cat %{SOURCE1004} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1005} >> arch/%{base_arch}/defconfig
 	%{?_with_preemptive:cat %{SOURCE1999} >> arch/%{base_arch}/defconfig}
-
+	%{!?_without_wrr:cat %{SOURCE1668} >> arch/%{base_arch}/defconfig}
 %if %{?_with_acpi:1}%{!?_with_acpi:0}
 	echo "CONFIG_ACPI=y" >> arch/%{base_arch}/defconfig
 	echo "# CONFIG_ACPI_DEBUG is not set" >> arch/%{base_arch}/defconfig
@@ -992,6 +999,7 @@ cat %{SOURCE1004} >> .config
 cat %{SOURCE1005} >> .config
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
+%{!?_without_wrr:cat %{SOURCE1668} >> .config}
 %{?_with_preemptive:cat %{SOURCE1999} >> .config}
 
 %{__make} oldconfig
