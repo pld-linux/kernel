@@ -17,7 +17,7 @@
 %define		_rel		0.1
 %define		test_ver	4
 %define		patch_level	0
-%define		_cset		20030905
+%define		_cset		20030906
 
 %if %{test_ver} != 0
 %define		test	test%{test_ver}
@@ -71,7 +71,7 @@ Source100:	%{name}-misc.config
 # ftp://ftp.kernel.org:/pub/linux/kernel/v2.6/snapshots/
 #Patch1:		patch-2.6.0-test4-bk%{_bk_ver}
 # http://www.kernel.org/pub/linux/kernel/v2.5/testing/cset/
-Patch1:		cset-%{cset}_1613.txt.gz
+Patch1:		cset-%{cset}_2214.txt.gz
 
 Patch22:	2.6.0-t3-swim3.patch
 Patch23:	squashfs1.3-patch
