@@ -17,7 +17,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.5.70
-Release:	0.5
+Release:	0.6
 License:	GPL
 Group:		Base/Kernel
 # Source0-md5:	8d3ee29e86c728a0de2151328164269b
@@ -602,34 +602,12 @@ if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then
 fi
 
 %post headers
-rm -f /usr/src/linux
-rm -f %{_includedir}/linux
-rm -f %{_includedir}/asm-generic
 ln -snf linux-%{version} /usr/src/linux
-ln -snf ../src/linux/include/linux %{_includedir}/linux
-ln -snf ../src/linux/include/asm-generic %{_includedir}/asm-generic
-%ifarch sparc sparc64
-rm -f %{_includedir}/asm-sparc
-rm -f %{_includedir}/asm-sparc64
-ln -snf ../src/linux/include/asm-sparc %{_includedir}/asm-sparc
-ln -snf ../src/linux/include/asm-sparc64 %{_includedir}/asm-sparc64
-%else
-rm -f %{_includedir}/asm
-ln -sf ../src/linux/include/asm %{_includedir}/asm
-%endif
 
 %postun headers
 if [ -L %{_prefix}/src/linux ]; then
 	if [ "`ls -l %{_prefix}/src/linux | awk '{ print $10 }'`" = "linux-%{version}" ]; then
 		rm -f %{_prefix}/src/linux
-		rm -f %{_includedir}/linux
-		rm -f %{_includedir}/asm-generic
-%ifarch sparc sparc64
-		rm -f %{_includedir}/asm-sparc
-		rm -f %{_includedir}/asm-sparc64
-%else
-		rm -f %{_includedir}/asm
-%endif
 	fi
 fi
 
