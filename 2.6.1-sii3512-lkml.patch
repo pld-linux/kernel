@@ -1,0 +1,83 @@
+--- linux-2.6.1-1.34/include/linux/pci_ids.h.orig	2004-01-11 10:30:11.000000000 -0500
++++ linux-2.6.1-1.34/include/linux/pci_ids.h	2004-01-11 10:44:25.000000000 -0500
+@@ -883,6 +883,7 @@
+ 
+ #define PCI_DEVICE_ID_SII_680		0x0680
+ #define PCI_DEVICE_ID_SII_3112		0x3112
++#define PCI_DEVICE_ID_SII_3512		0x3512
+ #define PCI_DEVICE_ID_SII_1210SA	0x0240
+ 
+ #define PCI_VENDOR_ID_VISION		0x1098
+--- linux-2.6.1-1.34/drivers/scsi/sata_sil.c.orig	2004-01-11 21:41:36.968803995 -0500
++++ linux-2.6.1-1.34/drivers/scsi/sata_sil.c	2004-01-11 10:43:09.000000000 -0500
+@@ -39,6 +39,7 @@
+ 
+ enum {
+ 	sil_3112		= 0,
++	sil_3512		= 1,
+ 
+ 	SIL_IDE0_TF		= 0x80,
+ 	SIL_IDE0_CTL		= 0x8A,
+@@ -62,6 +63,7 @@
+ 
+ static struct pci_device_id sil_pci_tbl[] = {
+ 	{ 0x1095, 0x3112, PCI_ANY_ID, PCI_ANY_ID, 0, 0, sil_3112 },
++	{ 0x1095, 0x3512, PCI_ANY_ID, PCI_ANY_ID, 0, 0, sil_3512 },
+ 	{ }	/* terminate list */
+ };
+ 
+@@ -121,6 +123,15 @@
+ 		.udma_mask	= 0x7f,			/* udma0-6; FIXME */
+ 		.port_ops	= &sil_ops,
+ 	},
++	/* sil_3512 */
++	{
++		.sht		= &sil_sht,
++		.host_flags	= ATA_FLAG_SATA | ATA_FLAG_NO_LEGACY |
++				  ATA_FLAG_SRST | ATA_FLAG_MMIO,
++		.pio_mask	= 0x03,			/* pio3-4 */
++		.udma_mask	= 0x7f,			/* udma0-6; FIXME */
++		.port_ops	= &sil_ops,
++	},
+ };
+ 
+ MODULE_AUTHOR("Jeff Garzik");
+--- linux-2.6.1-1.34/drivers/ide/pci/siimage.c.orig	2004-01-11 10:14:19.000000000 -0500
++++ linux-2.6.1-1.34/drivers/ide/pci/siimage.c	2004-01-11 10:44:12.000000000 -0500
+@@ -55,6 +55,7 @@
+ 	switch(pdev->device)
+ 	{
+ 		case PCI_DEVICE_ID_SII_3112:
++		case PCI_DEVICE_ID_SII_3512:
+ 		case PCI_DEVICE_ID_SII_1210SA:
+ 			return 1;
+ 		case PCI_DEVICE_ID_SII_680:
+@@ -1179,6 +1180,7 @@
+ 	{ PCI_VENDOR_ID_CMD, PCI_DEVICE_ID_SII_680,  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0},
+ 	{ PCI_VENDOR_ID_CMD, PCI_DEVICE_ID_SII_3112, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 1},
+ 	{ PCI_VENDOR_ID_CMD, PCI_DEVICE_ID_SII_1210SA, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 2},
++	{ PCI_VENDOR_ID_CMD, PCI_DEVICE_ID_SII_3512, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 3},
+ 	{ 0, },
+ };
+ 
+--- linux-2.6.1-1.34/drivers/ide/pci/siimage.h.orig	2004-01-11 10:15:21.000000000 -0500
++++ linux-2.6.1-1.34/drivers/ide/pci/siimage.h	2004-01-11 10:43:41.000000000 -0500
+@@ -82,6 +82,18 @@
+ 		.enablebits	= {{0x00,0x00,0x00}, {0x00,0x00,0x00}},
+ 		.bootable	= ON_BOARD,
+ 		.extra		= 0,
++	},{	/* 3 */
++		.vendor		= PCI_VENDOR_ID_CMD,
++		.device		= PCI_DEVICE_ID_SII_3512,
++		.name		= "SiI3512 Serial ATA",
++		.init_chipset	= init_chipset_siimage,
++		.init_iops	= init_iops_siimage,
++		.init_hwif	= init_hwif_siimage,
++		.channels	= 2,
++		.autodma	= AUTODMA,
++		.enablebits	= {{0x00,0x00,0x00}, {0x00,0x00,0x00}},
++		.bootable	= ON_BOARD,
++		.extra		= 0,
+ 	},{
+ 		.vendor		= 0,
+ 		.device		= 0,
