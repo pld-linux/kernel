@@ -12,9 +12,9 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		4
+%define		_rel		1
 %define		_test_ver	10
-%define		_cset		20031125_0507
+%define		_cset		20031126_0007
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -100,6 +100,9 @@ Patch46:	2.6.0-t9-IDE-lkml.patch
 Patch48:	2.6.0-t10-sis_operator_fix-lkml.patch
 
 Patch50:	2.6.0-modular-IDE.patch
+
+Patch52:	2.6.0-t10-POSIX_message_queues-1of2-lkml.patch
+Patch53:	2.6.0-t10-POSIX_message_queues-2of2-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -443,6 +446,9 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch48 -p1
 
 #%%patch50 -p1
+
+%patch52 -p1
+%patch53 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
