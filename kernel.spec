@@ -9,10 +9,10 @@
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
-Summary(pl):	J±dro Linuxa
+Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.19
-Release:	12
+Release:	13
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -96,6 +96,7 @@ Autoreqprov:	no
 Prereq:		modutils
 Prereq:		fileutils
 Prereq:		geninitrd
+Prereq:		rc-boot
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha
 %ifarch		%{ix86}
@@ -138,6 +139,7 @@ Provides:	%{name}(rawio) = %{version}
 Prereq:		modutils
 Prereq:		fileutils
 Prereq:		geninitrd
+Prereq:		rc-boot
 Autoreqprov:	no
 
 %description smp
@@ -171,6 +173,7 @@ Provides:	%{name}(rawio) = %{version}
 Prereq:		modutils
 Prereq:		fileutils
 Prereq:		geninitrd
+Prereq:		rc-boot
 Autoreqprov:	no
 
 %description fb
@@ -200,6 +203,7 @@ Provides:	%{name}(rawio) = %{version}
 Prereq:		modutils
 Prereq:		fileutils
 Prereq:		geninitrd
+Prereq:		rc-boot
 Autoreqprov:	no
 
 %description smp-fb
@@ -667,6 +671,15 @@ done
 %{__make} clean
 rm -f scripts/mkdep
 
+# add a rc-boot info
+install -d $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/rc-boot/images
+cat >$RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/rc-boot/images/pld-%{version}-%{release} <<EOF
+TYPE=linux
+ROOT=auto
+KERNEL=/boot/vmlinuz-%{version}-%{release}
+INITRD=/boot/initrd-%{version}-%{release}.gz
+EOF
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_DIR/linux-installed
@@ -767,6 +780,7 @@ fi
 %ifarch %{ix86}
 /lib/modules/%{version}-%{release}/pcmcia
 %endif
+%config(missingok) %{_sysconfdir}/sysconfig/rc-boot/images
 
 %files smp
 %defattr(644,root,root,755)
@@ -794,6 +808,7 @@ fi
 %ifarch %{ix86}
 /lib/modules/%{version}-%{release}smp/pcmcia
 %endif
+%config(missingok) %{_sysconfdir}/sysconfig/rc-boot/images
 
 %ifnarch i586 i686
 %files BOOT
