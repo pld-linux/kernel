@@ -382,7 +382,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %prep
 %setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a50 -a51 -n linux
 
-# here patch will be executabling, for now we have just patch in the 
+# here  patch will be executabling, for now we have just patch in the 
 # tar.gz sources
 
 %patch300 -p1
