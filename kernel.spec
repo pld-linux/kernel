@@ -106,6 +106,7 @@ Patch111:	linux-2.2.20-pcilynx_unresolved.patch
 Patch112:	linux-2.2.20-lfs.patch
 Patch113:	bigmem-2.2.21-0.1.bz2
 Patch114:	linux-2.2.21-mppe.patch
+Patch115:	wrr-linux-2.2.18.patch
 
 Patch302:	ow2-fix-2.2.21-rc3.patch
 
@@ -519,6 +520,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %endif
 
 %patch114 -p1
+%patch115 -p1
 
 %ifarch sparc sparc64
 %patch1500 -p1
@@ -860,6 +862,7 @@ bzip2 -dc %{PATCH113} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ve
 %endif
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH114}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH115}
 
 %ifarch sparc sparc64
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1500}
