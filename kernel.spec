@@ -49,7 +49,7 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.110
+%define		_rel		0.111
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -164,6 +164,8 @@ Patch61:	%{name}-MAX_INIT_ARGS.patch
 
 # http://tahoe.pl/patch.htm
 Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
+# http://ifp-driver.sourceforge.net/
+Patch71:	iriverfs-r0.1.0.1.patch
 
 # http://dev.gentoo.org/~spock/projects/gensplash/
 Patch72:	fbsplash-0.9.1-r1-2.6.10.patch
@@ -206,6 +208,7 @@ Patch306:	linux-2.6-fix-ooops-unmounting-a-defect-dvd.patch
 Patch307:	linux-2.6-long-standing-xattr-sharing.patch
 Patch308:	linux-2.6-nvidia-pci-ids.patch
 Patch309:	linux-2.6-pty-is-losing-bytes.patch
+Patch310:	linux-2.6-epoll-overflow.patch
 
 # em8300
 Patch400:	linux-em8300-2.6.10.patch
@@ -587,7 +590,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch61 -p1
 
 %patch70 -p1
-
+%patch71 -p1
 %patch72 -p1
 
 %patch73 -p1
@@ -628,6 +631,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch307 -p1
 %patch308 -p1
 %patch309 -p1
+%patch310 -p1
 
 %if %{with em8300}
 %patch400 -p1
