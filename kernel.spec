@@ -52,8 +52,8 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_post_ver	%{nil}
-%define		_rel		0.4HEAD
-%define		_cset		20041222_0104
+%define		_rel		0.5HEAD
+%define		_cset		20041224_0404
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -80,7 +80,7 @@ Source0:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_
 # Source0-md5:	a106fbe90fb55448331efeb40d7572a9
 Source1:	%{name}-autoconf.h
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
-# Source4-md5:	771942f3fa1918a74c44e18159f09429
+# Source4-md5:	6d572bee414b6d065f90cc9824eecff3
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -117,7 +117,7 @@ Patch30:	kernel-vmalloc-reserve.patch
 
 # suspend/resume
 # http://softwaresuspend.berlios.de/
-Patch500:	linux-2.6-software-suspend-2.1.5.8.patch.gz
+Patch500:	linux-2.6-software-suspend-2.1.5.10.patch.gz
 
 # http://sources.redhat.com/cluster/
 Patch550:	linux-cluster-cman.patch
