@@ -1,4 +1,6 @@
 #
+# TODO: check pramfs
+#
 # Conditional build:
 %bcond_without	BOOT		# don't build BOOT kernel
 %bcond_without	smp		# don't build SMP kernel
