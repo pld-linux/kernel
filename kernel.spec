@@ -29,7 +29,7 @@
 
 %define		_rel		1
 %define		_rc		0
-%define		_cset		20040115_0622
+%define		_cset		20040116_0629
 
 ## netfilter snap 
 %define		_netfilter_snap		20040114
@@ -180,6 +180,10 @@ Patch88:	2.6.1-SIOCSIFNAME-lkml.patch
 Patch90:	2.6.1-rq-not-task_running-lkml.patch
 
 Patch92:	2.6.1-NF-20040114.patch
+
+Patch94:	ir260_ircom_ioctl-2.diff
+
+Patch96:	2.6.1-sysfs4oss-lkml.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -596,6 +600,10 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch90 -p1
 
 %patch92 -p1
+
+%patch94 -p1
+
+%patch96 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
