@@ -1,10 +1,13 @@
 
- Makefile                     |    4 ++--
- drivers/net/wan/pc300_drv.c  |   10 +++++-----
- include/asm-i386/processor.h |    6 ++----
- include/linux/fb.h           |    5 +++--
- net/ipv4/netfilter/ipt_XOR.c |    6 ++----
- 5 files changed, 14 insertions(+), 17 deletions(-)
+ Makefile                                     |    4 +--
+ drivers/net/wan/pc300_drv.c                  |   10 ++++----
+ include/asm-i386/processor.h                 |    6 +----
+ include/linux/fb.h                           |    5 ++--
+ linux-2.6.10/drivers/media/dvb/bt8xx/bt878.h |    6 ++---
+ linux-2.6.10/drivers/media/video/bttvp.h     |   21 ++++++++---------
+ linux-2.6.10/include/linux/i2c.h             |   32 +++++++++++++--------------
+ net/ipv4/netfilter/ipt_XOR.c                 |    6 +----
+ 8 files changed, 43 insertions(+), 47 deletions(-)
 
 --- a/Makefile	2005-02-13 16:02:05.000000000 +0100
 +++ b/Makefile	2005-02-14 20:33:42.643412656 +0100
@@ -138,3 +141,110 @@
  extern int fb_find_mode(struct fb_var_screeninfo *var,
  			struct fb_info *info, const char *mode_option,
  			const struct fb_videomode *db,
+--- linux-2.6.10/include/linux/i2c.h.orig	2004-12-24 22:34:01.000000000 +0100
++++ linux-2.6.10/include/linux/i2c.h	2005-02-14 23:35:45.455135464 +0100
+@@ -36,7 +36,22 @@
+ 
+ /* --- General options ------------------------------------------------	*/
+ 
+-struct i2c_msg;
++/*
++ * I2C Message - used for pure i2c transaction, also from /dev interface
++ */
++struct i2c_msg {
++	__u16 addr;	/* slave address			*/
++ 	__u16 flags;		
++#define I2C_M_TEN	0x10	/* we have a ten bit chip address	*/
++#define I2C_M_RD	0x01
++#define I2C_M_NOSTART	0x4000
++#define I2C_M_REV_DIR_ADDR	0x2000
++#define I2C_M_IGNORE_NAK	0x1000
++#define I2C_M_NO_RD_ACK		0x0800
++ 	__u16 len;		/* msg length				*/
++ 	__u8 *buf;		/* pointer to msg data			*/
++};
++
+ struct i2c_algorithm;
+ struct i2c_adapter;
+ struct i2c_client;
+@@ -379,21 +394,6 @@
+ /* Return 1 if adapter supports everything we need, 0 if not. */
+ extern int i2c_check_functionality (struct i2c_adapter *adap, u32 func);
+ 
+-/*
+- * I2C Message - used for pure i2c transaction, also from /dev interface
+- */
+-struct i2c_msg {
+-	__u16 addr;	/* slave address			*/
+- 	__u16 flags;		
+-#define I2C_M_TEN	0x10	/* we have a ten bit chip address	*/
+-#define I2C_M_RD	0x01
+-#define I2C_M_NOSTART	0x4000
+-#define I2C_M_REV_DIR_ADDR	0x2000
+-#define I2C_M_IGNORE_NAK	0x1000
+-#define I2C_M_NO_RD_ACK		0x0800
+- 	__u16 len;		/* msg length				*/
+- 	__u8 *buf;		/* pointer to msg data			*/
+-};
+ 
+ /* To determine what functionality is present */
+ 
+--- linux-2.6.10/drivers/media/dvb/bt8xx/bt878.h.orig	2004-12-24 22:35:50.000000000 +0100
++++ linux-2.6.10/drivers/media/dvb/bt8xx/bt878.h	2005-02-14 23:46:30.575062328 +0100
+@@ -88,9 +88,6 @@
+ 
+ #define BT878_RISC_SYNC_MASK	(1 << 15)
+ 
+-extern int bt878_num;
+-extern struct bt878 bt878[BT878_MAX];
+-
+ struct bt878 {
+ 	struct semaphore  gpio_lock;
+ 	unsigned int nr;
+@@ -124,6 +121,9 @@
+ 	int shutdown;	
+ };
+ 
++extern int bt878_num;
++extern struct bt878 bt878[BT878_MAX];
++
+ void bt878_start(struct bt878 *bt, u32 controlreg, u32 op_sync_orin,
+ 		u32 irq_err_ignore);
+ void bt878_stop(struct bt878 *bt);	     
+--- linux-2.6.10/drivers/media/video/bttvp.h.orig	2004-12-24 22:35:50.000000000 +0100
++++ linux-2.6.10/drivers/media/video/bttvp.h	2005-02-14 23:52:36.512431392 +0100
+@@ -250,17 +250,6 @@
+ #define dprintk  if (bttv_debug >= 1) printk
+ #define d2printk if (bttv_debug >= 2) printk
+ 
+-/* our devices */
+-#define BTTV_MAX 16
+-extern unsigned int bttv_num;
+-extern struct bttv bttvs[BTTV_MAX];
+-
+-#define BTTV_MAX_FBUF   0x208000
+-#define VBIBUF_SIZE     (2048*VBI_MAXLINES*2)
+-#define BTTV_TIMEOUT    (HZ/2) /* 0.5 seconds */
+-#define BTTV_FREE_IDLE  (HZ)   /* one second */
+-
+-
+ struct bttv_pll_info {
+ 	unsigned int pll_ifreq;    /* PLL input frequency        */
+ 	unsigned int pll_ofreq;    /* PLL output frequency       */
+@@ -401,6 +390,16 @@
+ 	struct bttv_fh init;
+ };
+ 
++/* our devices */
++#define BTTV_MAX 16
++extern unsigned int bttv_num;
++extern struct bttv bttvs[BTTV_MAX];
++
++#define BTTV_MAX_FBUF   0x208000
++#define VBIBUF_SIZE     (2048*VBI_MAXLINES*2)
++#define BTTV_TIMEOUT    (HZ/2) /* 0.5 seconds */
++#define BTTV_FREE_IDLE  (HZ)   /* one second */
++
+ /* private ioctls */
+ #define BTTV_VERSION            _IOR('v' , BASE_VIDIOCPRIVATE+6, int)
+ #define BTTV_VBISIZE            _IOR('v' , BASE_VIDIOCPRIVATE+8, int)
