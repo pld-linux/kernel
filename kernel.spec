@@ -799,7 +799,7 @@ KERNEL_BUILD_DIR=`pwd`
 # UP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 rm -rf $KERNEL_INSTALL_DIR
-echo "%{release}" > localversion
+#echo "%{release}" > localversion
 BuildConfig
 %{?with_up:BuildKernel}
 %{?with_up:PreInstallKernel}
@@ -807,7 +807,7 @@ BuildConfig
 # SMP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
-echo "%{release}smp" > localversion
+#echo "%{release}smp" > localversion
 BuildConfig smp
 %{?with_smp:BuildKernel smp}
 %{?with_smp:PreInstallKernel smp}
