@@ -1,0 +1,18 @@
+--- linux/drivers/char/vt.c~	Mon May 13 06:36:19 1996
++++ linux/drivers/char/vt.c	Sun Apr 19 13:56:07 1998
+@@ -743,7 +743,14 @@
+ 	case VT_WAITACTIVE:
+ 		if (!perm)
+ 			return -EPERM;
+-		if (arg == 0 || arg > MAX_NR_CONSOLES)
++		/* on arg==0 we wait for any console change */
++		if (arg == 0)
++		{
++			if (vt_waitactive() < 0)
++				return -EINTR;
++			return 0;
++		}
++		if (arg > MAX_NR_CONSOLES)
+ 			return -ENXIO;
+ 		arg--;
+ 		while (fg_console != arg)
