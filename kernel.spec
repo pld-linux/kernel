@@ -11,8 +11,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.5.9
-Release:	0.1
+Version:	2.5.11
+Release:	0.2
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -35,9 +35,6 @@ Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
-
-Patch1:		%{name}-net_divert.patch
-Patch2:		kernel-setup_per_cpu_areas.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -142,8 +139,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -n linux-%{version}
-%patch1 -p1
-%patch2 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -366,15 +361,11 @@ fi
 %files source
 %defattr(-,root,root,755)
 %{_prefix}/src/linux-%{version}/Documentation
-%{_prefix}/src/linux-%{version}/abi
 %{_prefix}/src/linux-%{version}/arch
-%{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
-%{_prefix}/src/linux-%{version}/grsecurity
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
-%{_prefix}/src/linux-%{version}/kdb
 %{_prefix}/src/linux-%{version}/kernel
 %{_prefix}/src/linux-%{version}/lib
 %{_prefix}/src/linux-%{version}/mm
