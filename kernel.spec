@@ -2,7 +2,7 @@
 # If you define the following as 1, only kernel, -headers and -source
 # packages will be built
 #
-# _without_lids - don't build LIDS enabled kernels
+# _with_lids - build LIDS enabled kernels
 #
 %define		test_build		0
 #
@@ -159,7 +159,7 @@ Pakiet zawiera j±dro Linuxa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takich jak karty muzyczne, sterowniki dysków, etc.
 
-%if %{!?_without_lids:1}%{?_without_lids:0}
+%if %{?_with_lids:1}%{!?_with_lids:0}
 %package lids
 Summary:	LIDS enabled kernel version %{version}
 Group:		Base/Kernel
@@ -216,7 +216,7 @@ Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono wymagane
 przez komputery zawieraj±ce dwa lub wiêcej procesorów. Powinno równie¿ dobrze 
 dzia³aæ na maszynach z jednym procesorem.
 
-%if %{!?_without_lids:1}%{?_without_lids:0}
+%if %{?_with_lids:1}%{!?_with_lids:0}
 %package lids-smp
 Summary:	LIDS enabled kernel version %{version} compiled for SMP machines
 Group:		Base/Kernel
@@ -331,8 +331,8 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%{?!_without_lids:%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -n linux}
-%{?_without_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -n linux}
+%{?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -n linux}
+%{!?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -n linux}
 %patch1000 -p1
 #%patch0 -p1
 %patch1 -p1
@@ -387,8 +387,9 @@ ANS=""
 for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
 echo -e $ANS | ./runme)
 
-%if %{!?_without_lids:1}%{?_without_lids:0}
+%if %{?_with_lids:1}%{!?_with_lids:0}
 # LIDS
+echo "LIDS"
 cd lids-%{lids_version}
 %patch904 -p1
 cd ..
@@ -518,7 +519,7 @@ BuildKernel
 # SMP KERNEL
 BuildKernel smp
 
-%if %{!?_without_lids:1}%{?_without_lids:0}
+%if %{?_with_lids:1}%{!?_with_lids:0}
 # UP LIDS KERNEL
 BuildKernel lids
 
@@ -621,8 +622,9 @@ ANS=""
 for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
 echo -e $ANS | ./runme))
 
-%if %{!?_without_lids:1}%{?_without_lids:0}
+%if %{?_with_lids:1}%{!?_with_lids:0}
 # LIDS
+echo "LIDS"
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/lids-%{lids_version} < %{PATCH904}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/lids-%{lids_version}/lids-%{lids_version}.patch
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config $RPM_BUILD_ROOT/usr/src/linux-%{version}/.config.lids
@@ -722,7 +724,7 @@ done
 %{__make} clean
 rm -f scripts/mkdep
 
-%if %{!?_without_lids:1}%{?_without_lids:0}
+%if %{?_with_lids:1}%{!?_with_lids:0}
 # LIDS config
 cat %{SOURCE1000} >> $RPM_BUILD_ROOT/usr/src/linux-%{version}/.config.lids
 %endif
@@ -766,7 +768,7 @@ fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release} /lib/modules/%{version}
 
-%if %{!?_without_lids:1}%{?_without_lids:0}
+%if %{?_with_lids:1}%{!?_with_lids:0}
 %post lids
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
@@ -808,7 +810,7 @@ fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
 
-%if %{!?_without_lids:1}%{?_without_lids:0}
+%if %{?_with_lids:1}%{!?_with_lids:0}
 %post lids-smp
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
@@ -856,7 +858,7 @@ if [ -L /lib/modules/%{version} ]; then
 fi
 rm -f /boot/initrd-%{version}-%{release}.gz
 
-%if %{!?_without_lids:1}%{?_without_lids:0}
+%if %{?_with_lids:1}%{!?_with_lids:0}
 %postun lids
 if [ -L /lib/modules/%{version} ]; then 
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}-lids" ]; then
@@ -878,7 +880,7 @@ if [ -L /lib/modules/%{version} ]; then
 fi
 rm -f /boot/initrd-%{version}-%{release}smp.gz
 
-%if %{!?_without_lids:1}%{?_without_lids:0}
+%if %{?_with_lids:1}%{!?_with_lids:0}
 %postun lids-smp
 if [ -L /lib/modules/%{version} ]; then 
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp-lids" ]; then
@@ -930,7 +932,7 @@ fi
 /lib/modules/%{version}-%{release}/modules.generic_string
 
 %if !%{test_build}
-%if %{!?_without_lids:1}%{?_without_lids:0}
+%if %{?_with_lids:1}%{!?_with_lids:0}
 %files lids
 %defattr(644,root,root,755)
 %ifarch alpha sparc
@@ -966,7 +968,7 @@ fi
 /lib/modules/%{version}-%{release}smp/modules.*map
 /lib/modules/%{version}-%{release}smp/modules.generic_string
 
-%if %{!?_without_lids:1}%{?_without_lids:0}
+%if %{?_with_lids:1}%{!?_with_lids:0}
 %files lids-smp
 %defattr(644,root,root,755)
 %ifarch alpha sparc
@@ -1028,7 +1030,7 @@ fi
 %{_prefix}/src/linux-%{version}/net
 %{_prefix}/src/linux-%{version}/scripts
 %{_prefix}/src/linux-%{version}/.config
-%{!?_without_lids:%{_prefix}/src/linux-%{version}/.config.lids}
+%{?_with_lids:%{_prefix}/src/linux-%{version}/.config.lids}
 %{_prefix}/src/linux-%{version}/.depend
 %{_prefix}/src/linux-%{version}/.hdepend
 %{_prefix}/src/linux-%{version}/COPYING
