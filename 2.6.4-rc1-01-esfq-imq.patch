@@ -159,7 +159,7 @@ diff -uNr linux-2.6.4-rc1/drivers/net.orig/imq.c linux-2.6.4-rc1/drivers/net/imq
 +	if (spin_is_locked(&dev->xmit_lock))
 +		netif_schedule(dev);
 +	else
-+		qdisc_run(dev);
++		while (!netif_queue_stopped(dev) && (qdisc_restart(dev) < 0));
 +	spin_unlock_bh(&dev->queue_lock);
 +
 +	if (skb2)
