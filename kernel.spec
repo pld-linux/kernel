@@ -55,7 +55,7 @@
 
 %define		_post_ver	.5
 #define		_post_ver	%{nil}
-%define		_rel		0.52
+%define		_rel		1
 %define		_cset		20050302_0807
 %define		_apply_cset	0
 
@@ -941,7 +941,7 @@ ln -sf vmlinuz-%{version}-%{release}smp /boot/efi/vmlinuz
 %endif
 ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}smp /boot/System.map
-
+echo "%{version}-%{release}smp"
 %depmod %{version}-%{release}smp
 
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
