@@ -298,34 +298,3 @@
  #ifdef __KERNEL__
  struct alt_instr { 
  	__u8 *instr; 		/* original instruction */
---- linux-2.6.8-rc3/include/asm-i386/rwsem.h.orig	2004-08-03 23:27:36.000000000 +0200
-+++ linux-2.6.8-rc3/include/asm-i386/rwsem.h	2004-08-07 16:38:43.338142304 +0200
-@@ -122,22 +122,12 @@
-  */
- static inline int __down_read_trylock(struct rw_semaphore *sem)
- {
--	__s32 result, tmp;
--	__asm__ __volatile__(
--		"# beginning __down_read_trylock\n\t"
--		"  movl      %0,%1\n\t"
--		"1:\n\t"
--		"  movl	     %1,%2\n\t"
--		"  addl      %3,%2\n\t"
--		"  jle	     2f\n\t"
--LOCK_PREFIX	"  cmpxchgl  %2,%0\n\t"
--		"  jnz	     1b\n\t"
--		"2:\n\t"
--		"# ending __down_read_trylock\n\t"
--		: "+m"(sem->count), "=&a"(result), "=&r"(tmp)
--		: "i"(RWSEM_ACTIVE_READ_BIAS)
--		: "memory", "cc");
--	return result>=0 ? 1 : 0;
-+	signed long ret = cmpxchg(&sem->count,
-+				  RWSEM_UNLOCKED_VALUE, 
-+				  RWSEM_ACTIVE_READ_BIAS);
-+	if (ret == RWSEM_UNLOCKED_VALUE)
-+		return 1;
-+	return 0;
- }
- 
- /*
