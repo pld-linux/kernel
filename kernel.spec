@@ -42,6 +42,7 @@ Patch4:		raid-2.2.14-B1.gz
 Patch5:		kernel-cpqarray-raid090.patch
 Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide.2.2.14.20000124.patch.gz
 Patch7:		%{name}-pldfblogo.patch
+Patch8:		linux-%{version}-freeswan-1.3.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -235,6 +236,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch6 -p1
 %patch7 -p1
 %endif
+%patch8 -p1
 
 patch -p1 -s <linux-%{ow_ver}/linux-%{ow_ver}.diff
 # Tekram DC395/315 U/UW SCSI host driver
