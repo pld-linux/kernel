@@ -584,17 +584,15 @@ cd ../..
 cp $RPM_SOURCE_DIR/kernel-wlan-ng.config linux-wlan-ng-%{wlan_ng_version}/
 cd linux-wlan-ng-%{wlan_ng_version}/
 %{__make} clean
-rm config.mk
-cp kernel-wlan-ng.config config.mk
+mv kernel-wlan-ng.config config.mk
 mv config.mk config.mk.bak
 kernelbase=`echo $KERNEL_BUILD_DIR| sed -e "sm/m\\\\\/mg"`
 sed "s/^MODDIR=.*/MODDIR=$kernelbase-installed\/lib\/modules\/$KernelVer/" config.mk.bak > config.mk.bak2
 sed "s/^TARGET_MODDIR=.*/TARGET_MODDIR=$kernelbase-installed\/lib\/modules\/$KernelVer/" config.mk.bak2 > config.mk.bak3
 sed "s/^MAKE_CS=.*/MAKE_CS=y/" config.mk.bak3 > config.mk.bak4
 sed "s/^LINUX_SRC=.*/LINUX_SRC=$kernelbase/" config.mk.bak4 > config.mk.bak5
-sed "s/^PCMCIA_SRC=.*/PCMCIA_SRC=$kernelbase\/pcmcia-cs-%{pcmcia_version}/" config.mk.bak5 > config.mk6
-sed "s/^CROSS_CC=$(CROSS_COMPILE).*/CROSS_CC=$(CROSS_COMPILE).egcs" config.mk.bak6 > config.mk.bak7
-sed "s/^WLAN_TARGET_ARCH=.*/WLAN_TARGET_ARCH=%{_target_cpu}" config.mk.bak7 > config.mk
+sed "s/^PCMCIA_SRC=.*/PCMCIA_SRC=$kernelbase\/pcmcia-cs-%{pcmcia_version}/" config.mk.bak5 > config.mk.bak6
+sed "s/^WLAN_TARGET_ARCH=.*/WLAN_TARGET_ARCH=%{_target_cpu}/" config.mk.bak6 > config.mk
 
 %{__make} all
 	CC=egcs \
