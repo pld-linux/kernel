@@ -228,6 +228,8 @@ Patch915:	linux-2.4.19-usb-digitalcams.patch
 Patch916:	linux-2.4.19-ksyms-sys_sched_yield-rm.patch
 Patch917:	linux-2.4.19-EXPORT_SYMBOL-netsyms.c-rm.patch
 Patch918:	linux-2.4.20-umount-sync-super.patch
+Patch919:	linux-2.4.20-ntfs.patch
+Patch920:	linux-2.4.20-squashfs.patch
 
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
@@ -545,8 +547,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch121 -p0
 %patch124 -p1
 %patch125 -p1
-%patch126 -p1
-%patch127 -p1
+#%patch126 -p1
+#%patch127 -p1
 %patch128 -p1
 %patch129 -p0
 %patch130 -p0
@@ -637,6 +639,8 @@ echo Added ACL support
 #%patch46 -p0
 
 %patch918 -p1
+%patch919 -p1
+%patch920 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
