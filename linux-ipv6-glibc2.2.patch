@@ -1,25 +1,12 @@
-On/Dnia Fri, Nov 17, 2000 at 06:46:52PM +0100, Jan Rekorajski wrote/napisa³(a)
-> > Zapatchowane jajko + glibce 2.1.x == nie dzia³a.
-                                         ^^^^^^^^^^ tu oczywi¶cie o v6 chodzi³o
-					 
-> To dlaczego glibc 2.1.x dzia³a na kernelu 2.4?
-w jaju 2.2 jest tak:
-	if (addr_len < sizeof(struct sockaddr_in6))
-			return -EINVAL;
-			
-w jaju 2.4 jest tak:
-        if (addr_len < SIN6_LEN_RFC2133)
-	                return -EINVAL;
-przy czym: SIN6_LEN_RFC2133==24, a to jest wielko¶æ sockaddr_in6 bez pola
-sin6_scope_id czyli przepu¶ci zarówno stare jak i nowe sockaddr_in6.
-
-Tak wiêc nowy patch, który spowoduje, ¿e ipv6 && jajo 2.2.x bêdzie dzia³a³o
-prawid³o zarówno z glibcami 2.1 jak i 2.2.
-
-
+;
+; This is simple hack to get 2.2.x kernel working with
+; glibc 2.1.x AND glibc 2.2 library (changes in struct sockaddr_in6).
+;               Arkadiusz Miskiewicz <misiek@pld.org.pl>, PLD GNU/Linux
+;
+; Note: I'm not kernel hacker ! You have been warned.
 diff -urN linux-2.2.x.org/include/linux/in6.h linux-2.2.x/include/linux/in6.h
---- linux-2.2.x.org/include/linux/in6.h	Fri Nov 17 18:21:58 2000
-+++ linux-2.2.x/include/linux/in6.h	Fri Nov 17 18:22:26 2000
+--- linux-2.2.x.org/include/linux/in6.h	Tue Nov 21 16:02:16 2000
++++ linux-2.2.x/include/linux/in6.h	Tue Nov 21 16:02:35 2000
 @@ -56,6 +56,7 @@
  	__u16			sin6_port;      /* Transport layer port # */
  	__u32			sin6_flowinfo;  /* IPv6 flow information */
@@ -29,8 +16,8 @@ diff -urN linux-2.2.x.org/include/linux/in6.h linux-2.2.x/include/linux/in6.h
  
  
 diff -urN linux-2.2.x.org/include/net/ipv6.h linux-2.2.x/include/net/ipv6.h
---- linux-2.2.x.org/include/net/ipv6.h	Tue May 11 19:36:50 1999
-+++ linux-2.2.x/include/net/ipv6.h	Fri Nov 17 18:55:27 2000
+--- linux-2.2.x.org/include/net/ipv6.h	Tue Nov 21 16:02:17 2000
++++ linux-2.2.x/include/net/ipv6.h	Tue Nov 21 16:02:35 2000
 @@ -20,6 +20,8 @@
  #include <net/ndisc.h>
  #include <net/flow.h>
@@ -41,8 +28,8 @@ diff -urN linux-2.2.x.org/include/net/ipv6.h linux-2.2.x/include/net/ipv6.h
   *	NextHeader field of IPv6 header
   */
 diff -urN linux-2.2.x.org/net/ipv6/af_inet6.c linux-2.2.x/net/ipv6/af_inet6.c
---- linux-2.2.x.org/net/ipv6/af_inet6.c	Thu May  4 02:16:53 2000
-+++ linux-2.2.x/net/ipv6/af_inet6.c	Fri Nov 17 18:56:34 2000
+--- linux-2.2.x.org/net/ipv6/af_inet6.c	Tue Nov 21 16:02:18 2000
++++ linux-2.2.x/net/ipv6/af_inet6.c	Tue Nov 21 16:04:00 2000
 @@ -199,7 +199,7 @@
  		
  	/* Check these errors (active socket, bad address length, double bind). */
@@ -52,9 +39,36 @@ diff -urN linux-2.2.x.org/net/ipv6/af_inet6.c linux-2.2.x/net/ipv6/af_inet6.c
  	    (sk->num != 0))
  		return -EINVAL;
  		
+@@ -313,6 +313,7 @@
+   
+ 	sin->sin6_family = AF_INET6;
+ 	sin->sin6_flowinfo = 0;
++	sin->sin6_scope_id = 0;
+ 	sk = sock->sk;
+ 	if (peer) {
+ 		if (!tcp_connected(sk->state))
+diff -urN linux-2.2.x.org/net/ipv6/datagram.c linux-2.2.x/net/ipv6/datagram.c
+--- linux-2.2.x.org/net/ipv6/datagram.c	Tue Nov 21 16:02:18 2000
++++ linux-2.2.x/net/ipv6/datagram.c	Tue Nov 21 16:05:29 2000
+@@ -133,6 +133,7 @@
+ 	if (sin) {
+ 		sin->sin6_family = AF_INET6;
+ 		sin->sin6_flowinfo = 0;
++		sin->sin6_scope_id = 0;
+ 		sin->sin6_port = serr->port; 
+ 		if (serr->ee.ee_origin == SO_EE_ORIGIN_ICMP6) {
+ 			memcpy(&sin->sin6_addr, skb->nh.raw + serr->addr_offset, 16);
+@@ -150,6 +151,7 @@
+ 	if (serr->ee.ee_origin != SO_EE_ORIGIN_LOCAL) {
+ 		sin->sin6_family = AF_INET6;
+ 		sin->sin6_flowinfo = 0;
++		sin->sin6_scope_id = 0;
+ 		if (serr->ee.ee_origin == SO_EE_ORIGIN_ICMP6) {
+ 			memcpy(&sin->sin6_addr, &skb->nh.ipv6h->saddr, 16);
+ 			if (sk->net_pinfo.af_inet6.rxopt.all)
 diff -urN linux-2.2.x.org/net/ipv6/raw.c linux-2.2.x/net/ipv6/raw.c
---- linux-2.2.x.org/net/ipv6/raw.c	Mon Aug  9 21:04:41 1999
-+++ linux-2.2.x/net/ipv6/raw.c	Fri Nov 17 18:57:01 2000
+--- linux-2.2.x.org/net/ipv6/raw.c	Tue Nov 21 16:02:18 2000
++++ linux-2.2.x/net/ipv6/raw.c	Tue Nov 21 16:08:12 2000
 @@ -117,7 +117,7 @@
  	int addr_type;
  
@@ -64,7 +78,15 @@ diff -urN linux-2.2.x.org/net/ipv6/raw.c linux-2.2.x/net/ipv6/raw.c
  		return -EINVAL;
  
  	addr_type = ipv6_addr_type(&addr->sin6_addr);
-@@ -360,7 +360,7 @@
+@@ -252,6 +252,7 @@
+ 		memcpy(&sin6->sin6_addr, &skb->nh.ipv6h->saddr, 
+ 		       sizeof(struct in6_addr));
+ 		sin6->sin6_flowinfo = 0;
++		sin6->sin6_scope_id = 0;
+ 	}
+ 
+ 	if (sk->net_pinfo.af_inet6.rxopt.all)
+@@ -360,7 +361,7 @@
  	fl.fl6_flowlabel = 0;
  
  	if (sin6) {
@@ -74,8 +96,8 @@ diff -urN linux-2.2.x.org/net/ipv6/raw.c linux-2.2.x/net/ipv6/raw.c
  
  		if (sin6->sin6_family && sin6->sin6_family != AF_INET6) 
 diff -urN linux-2.2.x.org/net/ipv6/tcp_ipv6.c linux-2.2.x/net/ipv6/tcp_ipv6.c
---- linux-2.2.x.org/net/ipv6/tcp_ipv6.c	Thu May  4 02:16:53 2000
-+++ linux-2.2.x/net/ipv6/tcp_ipv6.c	Fri Nov 17 18:57:12 2000
+--- linux-2.2.x.org/net/ipv6/tcp_ipv6.c	Tue Nov 21 16:02:18 2000
++++ linux-2.2.x/net/ipv6/tcp_ipv6.c	Tue Nov 21 16:08:44 2000
 @@ -387,7 +387,7 @@
  	if(!ipv6_addr_any(&np->daddr))
  		return -EINVAL;
@@ -85,9 +107,17 @@ diff -urN linux-2.2.x.org/net/ipv6/tcp_ipv6.c linux-2.2.x/net/ipv6/tcp_ipv6.c
  		return(-EINVAL);
  
  	if (usin->sin6_family && usin->sin6_family != AF_INET6) 
+@@ -1583,6 +1583,7 @@
+ 	sin6->sin6_port	= sk->dport;
+ 	/* We do not store received flowlabel for TCP */
+ 	sin6->sin6_flowinfo = 0;
++	sin6->sin6_scope_id = 0;
+ }
+ 
+ static struct tcp_func ipv6_specific = {
 diff -urN linux-2.2.x.org/net/ipv6/udp.c linux-2.2.x/net/ipv6/udp.c
---- linux-2.2.x.org/net/ipv6/udp.c	Mon Aug  9 21:04:41 1999
-+++ linux-2.2.x/net/ipv6/udp.c	Fri Nov 17 18:58:13 2000
+--- linux-2.2.x.org/net/ipv6/udp.c	Tue Nov 21 16:02:18 2000
++++ linux-2.2.x/net/ipv6/udp.c	Tue Nov 21 16:08:56 2000
 @@ -210,7 +210,7 @@
  		goto ipv4_connected;
  	}
@@ -97,7 +127,15 @@ diff -urN linux-2.2.x.org/net/ipv6/udp.c linux-2.2.x/net/ipv6/udp.c
  	  	return(-EINVAL);
  
  	if (usin->sin6_family && usin->sin6_family != AF_INET6) 
-@@ -777,7 +777,7 @@
+@@ -414,6 +414,7 @@
+ 		sin6->sin6_family = AF_INET6;
+ 		sin6->sin6_port = skb->h.uh->source;
+ 		sin6->sin6_flowinfo = 0;
++		sin6->sin6_scope_id = 0;
+ 
+ 		if (skb->protocol == __constant_htons(ETH_P_IP)) {
+ 			ipv6_addr_set(&sin6->sin6_addr, 0, 0,
+@@ -777,7 +778,7 @@
  		if (sin6->sin6_family == AF_INET)
  			return udp_sendmsg(sk, msg, ulen);
  
@@ -106,9 +144,3 @@ diff -urN linux-2.2.x.org/net/ipv6/udp.c linux-2.2.x/net/ipv6/udp.c
  			return(-EINVAL);
  
  		if (sin6->sin6_family && sin6->sin6_family != AF_INET6)
-
-> Janek
-
--- 
-Arkadiusz Mi¶kiewicz, AM2-6BONE    [ PLD GNU/Linux IPv6 ]
-http://www.t17.ds.pwr.wroc.pl/~misiek/ipv6/   [ enabled ]
