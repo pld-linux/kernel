@@ -792,7 +792,7 @@ fi
 %defattr(644,root,root,755)
 %dir %{_prefix}/src/linux-%{version}
 %{_prefix}/src/linux-%{version}/include
-%{_includedir}/asm
+#%{_includedir}/asm
 %ifarch sparc sparc64
 %{_includedir}/asm-sparc*
 %endif
@@ -816,7 +816,7 @@ fi
 %{_prefix}/src/linux-%{version}/modules
 %{_prefix}/src/linux-%{version}/net
 %{_prefix}/src/linux-%{version}/scripts
-#%{_prefix}/src/linux-%{version}/security
+%{_prefix}/src/linux-%{version}/security
 %{_prefix}/src/linux-%{version}/.config
 %{_prefix}/src/linux-%{version}/.depend
 %{_prefix}/src/linux-%{version}/.hdepend
