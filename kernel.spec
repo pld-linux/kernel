@@ -91,7 +91,6 @@ Patch68:	2.6.0-t8-umsdos-lkml.patch
 Patch72:	2.6.0-t9-NLS-module-lkml.patch
 
 Patch74:	2.6.0-t9-acpi_osl-lkml.patch
-Patch78:	2.6.0-test9-nforce-ideata133.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -414,7 +413,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch72 -p1
 
 %patch74 -p1
-%patch78 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
