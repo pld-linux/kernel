@@ -650,7 +650,8 @@ patch -p1 -s < exec-shield.patch
 
 # suspend/resume
 %patch220 -p1
-%patch221 -p1
+# it's for newer version of via-rhine driver so disable for now
+#%patch221 -p1
 
 # hotfixes
 %patch300 -p1
