@@ -309,11 +309,7 @@ URL:		http://www.kernel.org/
 %ifarch		%{ix86}
 BuildRequires:	bin86
 %endif
-%ifarch sparc64
-BuildRequires:	egcs64
-#%else
 #BuildRequires:	%{kgcc_package}
-%endif
 BuildRequires:	modutils
 BuildRequires:	perl-base
 Autoreqprov:	no
@@ -1257,7 +1253,7 @@ fi
 %if %{?_without_up:0}%{!?_without_up:1}
 %files
 %defattr(644,root,root,755)
-%ifarch alpha sparc ppc
+%ifarch alpha sparc sparc64 ppc
 /boot/vmlinux-%{version}-%{release}
 %endif
 /boot/vmlinuz-%{version}-%{release}
@@ -1319,7 +1315,7 @@ fi
 %if %{?_without_smp:0}%{!?_without_smp:1}
 %files smp
 %defattr(644,root,root,755)
-%ifarch sparc ppc
+%ifarch alpha sparc sparc64 ppc
 /boot/vmlinux-%{version}-%{release}smp
 %endif
 /boot/vmlinuz-%{version}-%{release}smp
@@ -1382,7 +1378,7 @@ fi
 %ifnarch i586 i686 athlon 		# narch
 %files BOOT
 %defattr(644,root,root,755)
-%ifarch alpha sparc ppc		# arch
+%ifarch alpha sparc sparc64 ppc		# arch
 %{_libdir}/bootdisk/boot/vmlinux-%{version}-%{release}BOOT
 %endif				#arch
 %{_libdir}/bootdisk/boot/vmlinuz-%{version}-%{release}BOOT
