@@ -857,15 +857,17 @@ BuildKernel() {
 		ed arch/%{base_arch}/defconfig
 	echo -e ',s/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/g\n,w' | \
 		ed arch/%{base_arch}/defconfig
-	echo -e ',s/CONFIG_DIGEST_SHA1=m/# CONFIG_DIGEST_SHA1 is not set/g\n,w' | \
-		ed arch/%{base_arch}/defconfig
 %endif
 
 	if [ "$BOOT" = "yes" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
 	else
 		:;
-		%{!?_without_grsec:cat %{SOURCE1002} >> arch/%{base_arch}/defconfig}
+%if %{?_without_grsec:0}%{!?_without_grsec:1}
+		echo -e ',s/CONFIG_CRYPTO_SHA256=m/CONFIG_CRYPTO_SHA256=y/g\n,w' | \
+			ed arch/%{base_arch}/defconfig
+		cat %{SOURCE1002} >> arch/%{base_arch}/defconfig
+%endif
 	fi
 %ifarch %{ix86}
 	cat %{SOURCE2000} >> arch/%{base_arch}/defconfig
@@ -1034,8 +1036,6 @@ cat %{SOURCE1001} >> .config
 		ed arch/%{base_arch}/defconfig
 	echo -e ',s/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/g\n,w' | \
 		ed arch/%{base_arch}/defconfig
-	echo -e ',s/CONFIG_DIGEST_SHA1=m/# CONFIG_DIGEST_SHA1 is not set/g\n,w' | \
-		ed arch/%{base_arch}/defconfig
 %endif
 
 %ifarch %{ix86}
@@ -1078,8 +1078,6 @@ cat %{SOURCE1001} >> .config
 	echo -e ',s/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/g\n,w' | \
 		ed arch/%{base_arch}/defconfig
 	echo -e ',s/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/g\n,w' | \
-		ed arch/%{base_arch}/defconfig
-	echo -e ',s/CONFIG_DIGEST_SHA1=m/# CONFIG_DIGEST_SHA1 is not set/g\n,w' | \
 		ed arch/%{base_arch}/defconfig
 %endif
 
