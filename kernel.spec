@@ -82,14 +82,12 @@ License:	GPL
 Group:		Base/Kernel
 %define		_rc	%{nil}
 #define		_rc	-rc4
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.%{_post_ver}.tar.bz2
 # Source0-md5:	2f8b0030ce970f3c1a460faf5d2b1cec
 #Source0:	http://kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 # Source2-md5:	85bdb0205de53b7787966f0932fd8dd9
-Source3:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.%{_post_ver}.bz2
-# Source3-md5:	824b7d88ab2fabc031f1a6c1e6e288ee
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
 # Source4-md5:	37ccb34f8812ae89d9833758e7388bb5
 Source6:	ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.8/acpi-20040715-2.6.8.diff.gz
@@ -562,8 +560,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %prep
 %setup -q -n linux-%{version}%{_rc} -a2 
-#-a5 //dpt
-bzcat %{SOURCE3} | patch -p1 -s
 
 %if "%{_apply_cset}" != "0"
 zcat %{SOURCE4} | patch -p1 -s
