@@ -1,6 +1,47 @@
+diff -u --recursive --exclude-from /usr/src/exclude --new-file linux.vanilla/fs/proc/generic.c linux.22-ac3/fs/proc/generic.c
+--- linux.vanilla/fs/proc/generic.c	2003-06-14 00:11:39.000000000 +0100
++++ linux.22-ac3/fs/proc/generic.c	2003-07-09 13:45:05.000000000 +0100
+@@ -485,12 +485,12 @@
+ 	return ent;
+ }
+ 
+-struct proc_dir_entry *proc_mkdir(const char *name, struct proc_dir_entry *parent)
++struct proc_dir_entry *proc_mkdir_mode(const char *name, mode_t mode,
++		struct proc_dir_entry *parent)
+ {
+ 	struct proc_dir_entry *ent;
+ 
+-	ent = proc_create(&parent,name,
+-			  (S_IFDIR | S_IRUGO | S_IXUGO),2);
++	ent = proc_create(&parent, name, S_IFDIR | mode, 2);
+ 	if (ent) {
+ 		ent->proc_fops = &proc_dir_operations;
+ 		ent->proc_iops = &proc_dir_inode_operations;
+@@ -503,6 +503,12 @@
+ 	return ent;
+ }
+ 
++struct proc_dir_entry *proc_mkdir(const char *name,
++		struct proc_dir_entry *parent)
++{
++	return proc_mkdir_mode(name, S_IRUGO | S_IXUGO, parent);
++}
++
+ struct proc_dir_entry *create_proc_entry(const char *name, mode_t mode,
+ 					 struct proc_dir_entry *parent)
+ {
 diff -purN linux-2.4.21/fs/proc/proc_tty.c linux-f/fs/proc/proc_tty.c
 --- linux-2.4.21/fs/proc/proc_tty.c	2000-04-22 00:17:57.000000000 +0200
 +++ linux-f/fs/proc/proc_tty.c	2003-07-14 22:10:30.000000000 +0200
+@@ -16,7 +16,7 @@
+ 
+ extern struct tty_driver *tty_drivers;	/* linked list of tty drivers */
+ extern struct tty_ldisc ldiscs[];
+-
++extern struct proc_dir_entry *proc_mkdir_mode(const char *name, mode_t mode, struct proc_dir_entry *parent);
+ 
+ static int tty_drivers_read_proc(char *page, char **start, off_t off,
+ 				 int count, int *eof, void *data);
 @@ -174,7 +174,13 @@ void __init proc_tty_init(void)
  	if (!proc_mkdir("tty", 0))
  		return;
