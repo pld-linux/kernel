@@ -219,6 +219,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -n linux
+%patch9 -p1
 # kerneli patch
 %patch0 -p1
 # i8255 fix
@@ -229,7 +230,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 # Adaptec RAID patch
 %patch7 -p1
 %patch8 -p1
-%patch9 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
