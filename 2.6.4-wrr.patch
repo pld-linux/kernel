@@ -168,7 +168,7 @@ diff -uNr linux-2.6.4/net/sched.orig/proxydict.c linux-2.6.4/net/sched/proxydict
 +// Size of hash table given maximal number of connections:
 +#define hash_size_max_con(max_con) (2*(max_con))
 +
-+// The memory area we maintain:
++// The __proxydict_memory area we maintain:
 +typedef struct {
 +  int hash_size;
 +  int max_con;
@@ -188,20 +188,20 @@ diff -uNr linux-2.6.4/net/sched.orig/proxydict.c linux-2.6.4/net/sched/proxydict
 +  //
 +  //   The entries in next not allocated is also in linked list where 
 +  //   the first free index is free_first.
-+} memory;  
++} __proxydict_memory;  
 +
-+#define Memory(m)     ((memory*)m)
-+#define Hash_table(m) ((int*)(((char*)m)+sizeof(memory)))
-+#define Next(m)       ((int*)(((char*)m)+sizeof(memory)+     \
-+                       sizeof(int)*((memory*)m)->hash_size))
++#define Memory(m)     ((__proxydict_memory*)m)
++#define Hash_table(m) ((int*)(((char*)m)+sizeof(__proxydict_memory)))
++#define Next(m)       ((int*)(((char*)m)+sizeof(__proxydict_memory)+     \
++                       sizeof(int)*((__proxydict_memory*)m)->hash_size))
 +#define Info(m)       ((ProxyRemapBlock*)(((char*)m)+                          \
-+                                           sizeof(memory)+                     \
-+                                           sizeof(int)*((memory*)m)->hash_size+\
-+					   sizeof(int)*((memory*)m)->max_con   \
++                                           sizeof(__proxydict_memory)+                     \
++                                           sizeof(int)*((__proxydict_memory*)m)->hash_size+\
++					   sizeof(int)*((__proxydict_memory*)m)->max_con   \
 +					  ))
 +
 +int proxyGetMemSize(int max_con) {
-+  return sizeof(memory)+
++  return sizeof(__proxydict_memory)+
 +         sizeof(int)*hash_size_max_con(max_con)+
 +	 sizeof(int)*max_con+
 +	 sizeof(ProxyRemapBlock)*max_con;
@@ -209,7 +209,7 @@ diff -uNr linux-2.6.4/net/sched.orig/proxydict.c linux-2.6.4/net/sched/proxydict
 +
 +void proxyInitMem(void* data, int max_con) {
 +  // Init m:
-+  memory* m=Memory(data);
++  __proxydict_memory* m=Memory(data);
 +  m->max_con=max_con;
 +  m->cur_con=0;
 +  m->hash_size=hash_size_max_con(max_con);
@@ -238,7 +238,7 @@ diff -uNr linux-2.6.4/net/sched.orig/proxydict.c linux-2.6.4/net/sched/proxydict
 +}
 +
 +ProxyRemapBlock* proxyLookup(void* data, unsigned ipaddr, unsigned short port, char proto) {    
-+  memory* m=Memory(data);
++  __proxydict_memory* m=Memory(data);
 +  int* hash_table=Hash_table(m);
 +  int* next=Next(m);
 +  ProxyRemapBlock* info=Info(m);
@@ -254,7 +254,7 @@ diff -uNr linux-2.6.4/net/sched.orig/proxydict.c linux-2.6.4/net/sched/proxydict
 +}    
 +
 +int proxyConsumeBlock(void* data, ProxyRemapBlock* blk) {
-+  memory* m=Memory(data);
++  __proxydict_memory* m=Memory(data);
 +  int* hash_table=Hash_table(m);
 +  int* next=Next(m);
 +  ProxyRemapBlock* info=Info(m);
