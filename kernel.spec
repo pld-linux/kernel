@@ -120,7 +120,7 @@ Patch120:	ds9-2.2.21-2.diff
 Patch121:	rbtree-2.2.21-1.diff
 Patch122:	ds9-htb3-2.2.21-2.diff
 
-Patch150:	fix-ow_configure.help.patch
+Patch150:	2.2.25-fix-ow_configure.help.patch
 
 Patch500:	2.2.20-reiserfs_ppc.patch
 Patch501:	2.2.21-ppc-smp.patch
