@@ -46,6 +46,7 @@ Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.3.gz
 #Patch3:		linux-ipv6-addrconf.patch
 Patch4:		kernel-i8255-asm-fix.patch
 Patch5:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.1-%{ac_version}.gz
+Patch6:		dc395-patch-PLD-fix.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -223,8 +224,9 @@ patch -p1 <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
 #patch -p1 <linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
 
 # Tekram DC395/315 U/UW SCSI host driver
-#patch -p1 -s <dc395/dc395-integ24.diff
-#install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
+%patch6 -p0
+patch -p1 -s <dc395/dc395-integ24.diff
+install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # Netfilter
 for i in netfilter-patches/* ; do
