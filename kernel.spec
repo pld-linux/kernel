@@ -74,7 +74,7 @@ Patch20:	http://download.sourceforge.net/linux1394/ieee1394-2.2.19-20010527.gz
 Patch21:	linux-tasks.patch
 Patch22:	%{name}-ipvs-1.0.8-2.2.19.patch
 Patch23:	linux-raw.patch
-Patch24:	%{name}-panaview_kdb.patch
+Patch24:	%{name}-panaview_kbd.patch
 Patch25:	linux-2.2.19-pci.patch
 Patch26:	%{name}-sysctl-ipv6.patch
 Patch27:	%{name}-udf.patch
