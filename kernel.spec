@@ -224,7 +224,7 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # Netfilter
 #for i in netfilter-patches/* ; do
-#       [ -f $i -a "$i" != "netfilter-patches/isapplied" ] && patch -p1 -s <$i
+#       [ -f $i -a "$i" != "netfilter-patches/isapplied" ] && patch -p1  <$i
 #done
 #(KERNEL_DIR=`pwd` ; export KERNEL_DIR
 #cd netfilter-patches/patch-o-matic
@@ -236,9 +236,9 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 #for i in ipvs-%{ipvs_version}/*.diff ; do
 #	patch -p1 <$i
 #done
-mkdir net/ipv4/ipvs
-cp ipvs-%{ipvs_version}/ipvs/*.{c,h,in} net/ipv4/ipvs
-cp ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile net/ipv4/ipvs/Makefile
+#mkdir net/ipv4/ipvs
+#cp ipvs-%{ipvs_version}/ipvs/*.{c,h,in} net/ipv4/ipvs
+#cp ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile net/ipv4/ipvs/Makefile
 
 # LIDS
 #patch -p1 <lids-1.0.4-2.4.0/lids-1.0.4-2.4.0.patch
