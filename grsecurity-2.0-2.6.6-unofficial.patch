@@ -14667,12 +14667,12 @@ diff -uNr linux-2.6.6/kernel/exit.c linux-2.6.6.grsec/kernel/exit.c
  
  	exit_sem(tsk);
 diff -uNr linux-2.6.6/kernel/fork.c linux-2.6.6.grsec/kernel/fork.c
---- linux-2.6.6/kernel/fork.c	2004-05-13 16:55:47.000000000 +0200
-+++ linux-2.6.6.grsec/kernel/fork.c	2004-05-13 16:52:26.000000000 +0200
-@@ -34,6 +34,7 @@
- #include <linux/ptrace.h>
+--- linux-2.6.6/kernel/fork.c.orig	2004-05-24 14:40:24.000000000 +0200
++++ linux-2.6.6/kernel/fork.c	2004-05-24 16:37:54.518216928 +0200
+@@ -36,6 +36,7 @@
  #include <linux/mount.h>
  #include <linux/audit.h>
+ #include <linux/rmap.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/pgtable.h>
@@ -14686,7 +14686,7 @@ diff -uNr linux-2.6.6/kernel/fork.c linux-2.6.6.grsec/kernel/fork.c
  	mm->map_count = 0;
  	mm->rss = 0;
  	cpus_clear(mm->cpu_vm_mask);
-@@ -891,6 +892,9 @@
+@@ -901,6 +902,9 @@
  		goto fork_out;
  
  	retval = -EAGAIN;
@@ -14696,7 +14696,7 @@ diff -uNr linux-2.6.6/kernel/fork.c linux-2.6.6.grsec/kernel/fork.c
  	if (atomic_read(&p->user->processes) >=
  			p->rlim[RLIMIT_NPROC].rlim_cur) {
  		if (!capable(CAP_SYS_ADMIN) && !capable(CAP_SYS_RESOURCE) &&
-@@ -979,6 +983,8 @@
+@@ -997,6 +1001,8 @@
  	if (retval)
  		goto bad_fork_cleanup_namespace;
  
@@ -14705,7 +14705,7 @@ diff -uNr linux-2.6.6/kernel/fork.c linux-2.6.6.grsec/kernel/fork.c
  	p->set_child_tid = (clone_flags & CLONE_CHILD_SETTID) ? child_tidptr : NULL;
  	/*
  	 * Clear TID on mm_release()?
-@@ -1116,6 +1122,9 @@
+@@ -1138,6 +1144,9 @@
  	free_uid(p->user);
  bad_fork_free:
  	free_task(p);
