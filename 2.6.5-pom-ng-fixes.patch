@@ -27,3 +27,40 @@
  {
  	return NF_HOOK_COND(PF_INET, NF_IP_POST_ROUTING, skb, NULL,
  	                    skb->dst->dev, dst_output, skb->dst->xfrm != NULL);
+--- linux/net/ipv4/netfilter/ipt_string.c.orig	2004-05-19 09:07:06.000000000 +0200
++++ linux/net/ipv4/netfilter/ipt_string.c	2004-05-19 09:45:37.664960640 +0200
+@@ -17,6 +17,7 @@
+  * 		packet basis.
+  */
+ 
++#include <linux/cpumask.h>
+ #include <linux/smp.h>
+ #include <linux/module.h>
+ #include <linux/skbuff.h>
+@@ -163,7 +164,7 @@
+ 	int c;
+ 	
+ 	if ( bm_string_data ) {
+-		for(c=0; c<smp_num_cpus; c++) {
++		for(c=0; c<num_online_cpus(); c++) {
+ 			if ( bm_string_data[c].shift ) kfree(bm_string_data[c].shift);
+ 			if ( bm_string_data[c].skip ) kfree(bm_string_data[c].skip);
+ 			if ( bm_string_data[c].len ) kfree(bm_string_data[c].len);
+@@ -181,7 +182,7 @@
+ 	size_t tlen;
+ 	size_t alen;
+ 
+-	tlen=sizeof(struct string_per_cpu)*smp_num_cpus;
++	tlen=sizeof(struct string_per_cpu)*num_online_cpus();
+ 	alen=sizeof(int)*BM_MAX_HLEN;
+ 	
+ 	/* allocate array of structures */
+@@ -192,7 +193,7 @@
+ 	memset(bm_string_data, 0, tlen);
+ 	
+ 	/* allocate our skip/shift tables */
+-	for(c=0; c<smp_num_cpus; c++) {
++	for(c=0; c<num_online_cpus(); c++) {
+ 		if ( !(bm_string_data[c].shift=kmalloc(alen, GFP_KERNEL)) )
+ 			goto alloc_fail;
+ 		if ( !(bm_string_data[c].skip=kmalloc(alen, GFP_KERNEL)) )
