@@ -386,7 +386,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch101 -p1
 %patch102 -p1
 %patch103 -p1
-%patch104 -p1
+%patch105 -p1
 
 # 802.1Q VLANs
 #cd vlan.%{vlan_version}
