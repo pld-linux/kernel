@@ -293,6 +293,8 @@ Patch600:	%{name}-grsec.patch
 # openMosix support
 Patch700:	openMosix-2.6.7-PLD.patch
 
+Patch710:	kernel-SPARC64-binfmt_elf.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 %ifarch sparc sparc64
@@ -835,6 +837,10 @@ zcat %{SOURCE3} | patch -p1 -s
 
 %if %{with mosix}
 %patch700 -p1
+%endif
+
+%ifarch sparc64
+%patch710 -p1
 %endif
 
 # Fix EXTRAVERSION and CC in main Makefile
