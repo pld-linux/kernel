@@ -148,8 +148,7 @@ Patch132:	ide-EXPORT_SYMBOL.fix
 Patch900:	loop-jari-2.4.18.0.patch
 # DRM (note that this doesn't fix drm when running on 386 or 486 CPU!)
 Patch902:	linux-drm-%{drm_xfree_version}-force-cmpxchg.patch
-Patch903:	linux-2.4.19-ippersonality-fix.patch
-Patch904:	linux-drm-2.4.19-mm.patch
+Patch903:	linux-drm-2.4.19-mm.patch
 
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
@@ -465,7 +464,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 rm -rf drivers/char/drm
 cp -f drm/Makefile.kernel drm/Makefile
 mv -f drm drivers/char
-%patch904 -p1
+%patch903 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 echo Adding Tekram DC395/315 driver
@@ -482,7 +481,6 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # IP personality
 #echo Adding IP Personality 
-#%patch903 -p1
 #patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020427-linux-2.4.18.diff
 
 # install NCR/Symbios controler
