@@ -821,6 +821,11 @@ test ! -f /boot/System.map || mv -f /boot/System.map /boot/System.map.old
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
 
+rm -f /lib/modules/%{version}
+ln -snf %{version}-%{release} /lib/modules/%{version}
+
+depmod -a -F /boot/System.map %{version}-%{release}
+
 geninitrd /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
 test ! -f /boot/initrd || mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}.gz /boot/initrd
@@ -829,16 +834,17 @@ if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release} /lib/modules/%{version}
-
-depmod -a -F /boot/System.map %{version}-%{release}
-
 %post smp
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}smp /boot/System.map
+
+rm -f /lib/modules/%{version}
+ln -snf %{version}-%{release}smp /lib/modules/%{version}
+ln -snf %{version}-%{release}smp /lib/modules/%{version}smp
+
+depmod -a -F /boot/System.map %{version}-%{release}smp
 
 geninitrd /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
 test ! -f /boot/initrd || mv -f /boot/initrd /boot/initrd.old 2> /dev/null > /dev/null
@@ -847,12 +853,6 @@ ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
-
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release}smp /lib/modules/%{version}
-ln -snf %{version}-%{release}smp /lib/modules/%{version}smp
-
-depmod -a -F /boot/System.map %{version}-%{release}smp
 
 %postun
 if [ -L /lib/modules/%{version} ]; then
