@@ -581,11 +581,11 @@ cd ../..
 
 # Linux WLAN-NG package extension for PCMCIA
 
-cp $RPM_SOURCE_DIR/linux-wlan-ng.config linux-wlan-ng-%{wlan-ng_version}
+cp $RPM_SOURCE_DIR/kernel-wlan-ng.config linux-wlan-ng-%{wlan-ng_version}
 cd linux-wlan-ng-%{wlan-ng_version}
 %{__make} clean
 rm config.mk
-cp linux-wlan-ng.config config.mk
+cp kernel-wlan-ng.config config.mk
 mv config.mk config.mk.bak
 kernelbase=`echo $KERNEL_BUILD_DIR| sed -e "sm/m\\\\\/mg"`
 sed "s/^MODDIR=.*/MODDIR=$kernelbase-installed\/lib\/modules\/$KernelVer/" config.mk.bak > config.mk.bak2
