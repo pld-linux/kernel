@@ -5,7 +5,7 @@ Version:	2.2.6
 Release:	1_i386
 Copyright:	GPL
 Group:		Base/Kernel
-Group(pl):	Podstawy/J±dro
+Group(pl):	Podstawowe/J±dro
 URL:		http://www.kernel.org/
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
 Source1:	kernel-i386.config
@@ -33,7 +33,7 @@ komputera.
 Summary:	Kernel source tree
 Summary(pl):	Kod ¼ród³owy j±dra Linuxa
 Group:		Base/Kernel
-Group(pl):	Podstawy/J±dro
+Group(pl):	Podstawowe/J±dro
 Requires:	%{name}-headers = %{version}
 #Requires:	bin86
 
@@ -50,7 +50,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 Summary:	Header files for the Linux kernel.
 Summary(pl):	Pliki nag³owkowe j±dra
 Group:		Base/Kernel
-Group(pl):	Podstawy/J±dro
+Group(pl):	Podstawowe/J±dro
 
 %description headers
 These are the C header files for the Linux kernel, which define structures
