@@ -111,8 +111,6 @@ Patch111:	linux-2.4.1-netdebug.patch
 Patch112:	linux-2.4.1-scsi-reset.patch
 # Add an ioctl to the block layer so we can be EFI compliant
 Patch113:	linux-2.4.2-blkioctl-sector.patch
-# OHCI IRQ sanity check
-Patch114:	linux-2.4.2-ohci-irq.patch
 # fix lun probing on multilun RAID chassis
 Patch115:	linux-2.4.12-scsi_scan.patch
 # fix pcnet32 networkdriver load vs ifconfig races
@@ -396,7 +394,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch111 -p1
 %patch112 -p2
 %patch113 -p1
-%patch114 -p1
 %patch115 -p1
 %patch116 -p1
 %patch117 -p1
