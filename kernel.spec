@@ -482,10 +482,12 @@ install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
 
+%ifnarch i386
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
+%endif
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
