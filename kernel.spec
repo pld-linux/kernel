@@ -188,6 +188,8 @@ Patch100:	2.6.1-SIOCSIFNAME-lkml.patch
 
 Patch102:	2.6.1-rq-not-task_running-lkml.patch
 
+Patch104:	2.6.1-NF-connlimit-20040107.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
@@ -610,6 +612,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch100 -p1
 
 %patch102 -p1
+
+%patch104 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
