@@ -73,6 +73,7 @@ Patch11:	loop-jari-2.4.20.0.patch
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch12:	linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
 Patch15:	linux-2.4.20-sched-O1.patch
+Patch16:	linux-2.4.20-sched-O1-ingo-fixes.patch
 Patch20:	http://dl.sourceforge.net/user-mode-linux/uml-patch-2.4.20-1.bz2
 Patch21:	linux-2.4.20-uml-o1.patch
 # http://unc.dl.sourceforge.net/sourceforge/user-mode-linux/host-skas3.patch
@@ -577,6 +578,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch11 -p1
 %patch12 -p1
 %patch15 -p1
+%patch16 -p1
 %patch20 -p1
 %patch21 -p1
 %patch22 -p1
