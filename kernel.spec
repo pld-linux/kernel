@@ -12,11 +12,10 @@
 # _without_w4l		- don't build Win4Lin support
 #
 
-%define		patch_level	11
+%define		patch_level	12
 %define		_rel		5
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
-#%%define		no_install_post_compress_modules	1
 #
 %define		pre_version		pre1
 %define		ipvs_version		1.0.7
@@ -29,7 +28,8 @@
 %define		ntfs_version		2.1.2a
 %define		drm_xfree_version	4.3.0
 %define		hostap_version		2002-10-12
-%define		netfilter_snap		20030326
+%define		netfilter_snap		0
+%define		iptables_version	1.2.8
 %define		ACL_version		0.8.56
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -123,7 +123,11 @@ Patch6:		grsecurity-%{grsec_version}-%{version}.patch.bz2
 Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.20-1.patch
 
 # new version of netfilter.
-Patch8:		linux-2.4.20-netfilter-%{netfilter_snap}.patch.bz2
+%if %{netfilter_snap} != 0
+Patch8:		linux-2.4.20-netfilter-%{iptables_version}_%{netfilter_snap}.patch.gz
+%else
+Patch8:		linux-2.4.20-netfilter-%{iptables_version}.patch.gz
+%endif
 
 Patch9:		linux-2.4.20-initrd-close-console.patch
 
@@ -346,7 +350,11 @@ Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.7.0
 Provides:	bttv = 0.7.83
-Provides:	%{name}(netfilter) = 1.2.7a-%{netfilter_snap}
+%if %{netfilter_snap} != 0
+Provides:	%{name}(netfilter) = %{iptables_version}-%{netfilter_snap}
+%else
+Provides:	%{name}(netfilter) = %{iptables_version}-%{netfilter_snap}
+%endif
 Provides:	%{name}(grsecurity) = %{grsec_version}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
@@ -401,7 +409,11 @@ Provides:	%{name}-smp = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.7.0
 Provides:	bttv = 0.7.83
-Provides:	%{name}(netfilter) = 1.2.7a-%{netfilter_snap}
+%if %{netfilter_snap} != 0
+Provides:	%{name}(netfilter) = %{iptables_version}-%{netfilter_snap}
+%else
+Provides:	%{name}(netfilter) = %{iptables_version}-%{netfilter_snap}
+%endif
 Provides:	%{name}(grsecurity) = %{grsec_version}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
@@ -533,7 +545,11 @@ Provides:	bttv = 0.7.83
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
-Provides:	%{name}-headers(netfilter) = 1.2.7a-%{netfilter_snap}
+%if %{netfilter_snap} != 0
+Provides:	%{name}-headers(netfilter) = %{iptables_version}-%{netfilter_snap}
+%else
+Provides:	%{name}-headers(netfilter) = %{iptables_version}-%{netfilter_snap}
+%endif
 Provides:	%{name}-headers(grsecurity) = %{grsec_version}
 Provides:	%{name}-headers(freeswan)
 Provides:	%{name}-headers(evms)
