@@ -198,6 +198,7 @@ Patch203:	linux-cluster-gnbd.patch
 Patch300:	linux-2.6-sparc-ksyms.patch
 Patch301:	linux-2.6-ppc-ksyms.patch
 Patch302:	2.6.7-kill-warnings.patch
+Patch303:	%{name}-hotfixes.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -663,7 +664,7 @@ patch -p1 -s < exec-shield.patch
 %patch300 -p1
 %patch301 -p1
 %patch302 -p1
-
+%patch303 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
