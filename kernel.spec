@@ -536,7 +536,7 @@ TuneUpConfigForIX86 () {
 }
 
 %if "%{_target_base_arch}" != "%{_arch}"
-Opts="ARCH=\"%{_target_base_arch}\" CROSS_COMPILE=\"%{_target_cpu}-pld-linux-\" OURCC=\"gcc\""
+Opts="ARCH=%{_target_base_arch} CROSS_COMPILE=\"%{_target_cpu}-pld-linux-\" OURCC=\"gcc\""
 %else
 %ifarch %{ix86} alpha sparc ppc
 Opts="OURCC=\"%{__cc}\""
@@ -793,7 +793,7 @@ PreInstallKernel BOOT
 rm -rf $RPM_BUILD_ROOT
 umask 022
 %if "%{_target_base_arch}" != "%{_arch}"
-Opts="ARCH=\"%{_target_base_arch}\" CROSS_COMPILE=\"%{_target_cpu}-pld-linux-\" OURCC=\"gcc\""
+Opts="ARCH=%{_target_base_arch} CROSS_COMPILE=\"%{_target_cpu}-pld-linux-\" OURCC=\"gcc\""
 %else
 %ifarch %{ix86} alpha sparc ppc
 Opts="OURCC=\"%{__cc}\""
