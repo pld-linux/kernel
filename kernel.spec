@@ -15,7 +15,7 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 # Netfilter snap.
-%define		_netfilter_snap		20040419
+%define		_netfilter_snap		20040429
 #
 %define		no_install_post_strip	1
 #
@@ -39,14 +39,12 @@ Patch4:		2.6.0-t7-memleak2-lkml.patch
 Patch5:		2.6.0-t8-swap-include-lkml.patch
 Patch6:		2.6.0-t9-acpi_osl-lkml.patch
 Patch7:		2.6.1-squashfs1.3r3.patch
-#Patch8:		2.6.4-paxgrsec-gcc34.patch
-Patch9:		2.6.4-esfq.patch
-Patch10:	2.6.4-imq.patch
-Patch11:	2.6.4-imq-nat.patch
-Patch12:	2.6.4-wrr.patch
-# netfilter
-Patch50:	2.6.5-pom-ng-%{_netfilter_snap}.patch
-#Patch51:	%{name}-netfilter.patch
+Patch8:		2.6.4-esfq.patch
+Patch9:		2.6.4-imq.patch
+Patch10:	2.6.4-imq-nat.patch
+Patch11:	2.6.4-wrr.patch
+Patch12:	2.6.5-pom-ng-%{_netfilter_snap}.patch
+Patch13:	2.6.5-pom-ng-fixes.patch
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 BuildRequires:	module-init-tools
@@ -120,14 +118,12 @@ hardware.
 %patch6 -p1
 %patch7 -p1
 patch -p1 < %{SOURCE1}
-#%patch8 -p1
+%patch8 -p1
 %patch9 -p1
 %patch10 -p1
 %patch11 -p1
 %patch12 -p1
-
-%patch50 -p1
-#%patch51 -p1
+%patch13 -p1
 
 %build
 cat << EOF > cleanup-nondist-kernel.sh
