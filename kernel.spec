@@ -451,13 +451,13 @@ Modu³y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 %patch44 -p1
 
 # preparing linux/README file to backup
-mv README README.kernel
+mv -f README README.kernel
 # unpacking %{SOURCE12}
 tar zxvf %{SOURCE12}
 # move jfs README file to README.jfs
-mv README README.jfs
+mv -f README README.jfs
 # back kernel README file
-mv README.kernel README
+mv -f README.kernel README
 
 # 802.1Q VLANs
 %patch43 -p1
@@ -485,8 +485,8 @@ cd ..
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 
 # symbios drivers
-mv sym-%{symncr_version}/*.{c,h} drivers/scsi
-mv sym-%{symncr_version}/{README,ChangeLog}.* Documentation
+mv -f sym-%{symncr_version}/*.{c,h} drivers/scsi
+mv -f sym-%{symncr_version}/{README,ChangeLog}.* Documentation
 
 # Tekram DC395/315 U/UW SCSI host driver
 %patch109 -p1
@@ -649,9 +649,9 @@ cd pcmcia-cs-%{pcmcia_version}
 	--kflags="-march=%{_target_cpu}" \
 	--target=$KERNEL_INSTALL_DIR
 
-mv config.mk config.mk.bak
-mv Makefile Makefile.bak
-mv clients/Makefile clients/Makefile.bak
+mv -f config.mk config.mk.bak
+mv -f Makefile Makefile.bak
+mv -f clients/Makefile clients/Makefile.bak
 sed "s/^MODDIR=.*/MODDIR=\/lib\/modules\/$KernelVer/" config.mk.bak > config.mk
 sed "s/^DIRS =.*//" Makefile.bak > Makefile
 sed "s/.*= 8390\..$//" clients/Makefile.bak > clients/Makefile
@@ -669,7 +669,7 @@ cd ..
 # Linux WLAN package extension for PCMCIA
 cd linux-wlan-%{wlan_version}
 %{__make} clean
-mv config.mk config.mk.bak
+mv -f config.mk config.mk.bak
 kernelbase=`echo $KERNEL_BUILD_DIR| sed -e "sm/m\\\\\/mg"`
 sed "s/^MODULES_DIR=.*/MODULES_DIR=$kernelbase-installed\/lib\/modules\/$KernelVer/" config.mk.bak > config.mk.bak2
 sed "s/^MAKE_CS=.*/MAKE_CS=y/" config.mk.bak2 > config.mk.bak3
@@ -789,13 +789,13 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH40}
 bzip2 -dc %{PATCH44} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 # preparing linux/README file to backup
-mv $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README.kernel
+mv -f $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README.kernel
 # unpacking %{SOURCE12}
 gzip -dc %{SOURCE12} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 # move jfs README file to README.jfs
-mv $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README.jfs
+mv -f $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README.jfs
 # back kernel README file
-mv $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README.kernel $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README
+mv -f $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README.kernel $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/README
 
 # VLAN
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH43}
@@ -831,8 +831,8 @@ rm -rf $RPM_BUILD_ROOT/usr/src/linux-%{version}/linux-%{ow_version}/
 
 # symbios drivers
 gzip -dc %{SOURCE6} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-mv $RPM_BUILD_ROOT/usr/src/linux-%{version}/sym-%{symncr_version}/*.{c,h} $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi
-mv $RPM_BUILD_ROOT/usr/src/linux-%{version}/sym-%{symncr_version}/{README,ChangeLog}.* $RPM_BUILD_ROOT/usr/src/linux-%{version}/Documentation
+mv -f $RPM_BUILD_ROOT/usr/src/linux-%{version}/sym-%{symncr_version}/*.{c,h} $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi
+mv -f $RPM_BUILD_ROOT/usr/src/linux-%{version}/sym-%{symncr_version}/{README,ChangeLog}.* $RPM_BUILD_ROOT/usr/src/linux-%{version}/Documentation
 rm -rf $RPM_BUILD_ROOT/usr/src/linux-%{version}sym-%{symncr_version}
 
 # Tekram DC395/315 U/UW SCSI host driver
@@ -847,7 +847,7 @@ gzip -dc %{SOURCE12} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{versio
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH100}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/jfs-2.2.common-v%{jfs_version}-patch
 # remove all jfs patches from linux/ directory
-rm $RPM_BUILD_ROOT/usr/src/linux-%{version}/jfs-*
+rm -f $RPM_BUILD_ROOT/usr/src/linux-%{version}/jfs-*
 
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
@@ -892,11 +892,11 @@ find -name "*.orig" -print | xargs rm -f
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
 
 %{__make} oldconfig
-mv include/linux/autoconf.h include/linux/autoconf-up.h
+mv -f include/linux/autoconf.h include/linux/autoconf-up.h
 
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config .config
 %{__make} oldconfig
-mv include/linux/autoconf.h include/linux/autoconf-smp.h
+mv -f include/linux/autoconf.h include/linux/autoconf-smp.h
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
@@ -912,7 +912,7 @@ install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoco
 %{__make} depend
 find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
 while read file ; do
-	mv $file $file.old
+	mv -f $file $file.old
 	sed -e "s|$RPM_BUILD_ROOT\(/usr/src/linux\)|\1|g" < $file.old > $file
 	rm -f $file.old
 done
