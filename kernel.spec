@@ -595,6 +595,7 @@ BuildKernel() {
 	%{__make} boot
 %endif
 %endif
+%endif
 %ifarch sparc
 	sparc32 %{__make} modules
 %else
