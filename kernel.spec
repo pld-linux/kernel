@@ -10,7 +10,7 @@
 #
 %define		pre_version		pre1
 %define		ipvs_version		0.9.8
-%define		freeswan_version	snap2001sep23b
+%define		freeswan_version	1.94
 %define		wlan_version		0.1.12
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		IPperson_version	20010724-2.4.7
@@ -66,11 +66,11 @@ Source1666:	%{name}-grsec.config
 Patch0:		%{name}-pldfblogo.patch
 # ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
 Patch1:		patch-int-2.4.15.0.gz
-Patch2:		linux-2.4.10-freeswan-%{freeswan_version}.patch.gz
+Patch2:		linux-%{version}-freeswan-%{freeswan_version}.patch.gz
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.17.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
-Patch5:		linux-%{version}-xfs-20011230.patch.bz2
+Patch5:		linux-%{version}-xfs-20020106.patch.bz2
 # Homepage of ABI : http://linux-abi.sourceforge.net/
 #ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2
 Patch7:		linux-abi-2.4.17.0.patch.bz2
