@@ -43,7 +43,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		2
+%define		_rel		2.1
 %define		_cset		20040518_0506
 
 ## netfilter snap 
@@ -1395,6 +1395,7 @@ fi
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
+%{_prefix}/src/linux-%{version}/grsecurity
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
 %{_prefix}/src/linux-%{version}/kernel
