@@ -263,6 +263,7 @@ Patch921:	linux-2.4.20-grsecurity-1.9.9-rc3-kmem.patch
 # Win4Lin
 Patch1000:	linux-2.4.20-Win4Lin.PLD.patch.bz2
 Patch1001:	linux-2.4.20-Win4Lin.nogrsec.PLD.patch.bz2
+Patch1002:	linux-2.4.20-Win4Lin-mki-adapter.patch.bz2
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -726,6 +727,7 @@ echo AXP patches ...
 echo Win4Lin patch ...
 %{!?_without_grsec:%patch1000 -p1}
 %{?_without_grsec:%patch1001 -p1}
+%patch1002 -p1
 %endif
 #%endif
 
