@@ -3,12 +3,13 @@
 # packages will be built
 #
 # _with_preemptible	- build with Preemptible patch
+# _with_o1_sched	- build with new O(1) scheduler
 # _with_acpi		- build with acpi support
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 # _without_wrr		- don't build WRR support
 #
-%define		krelease		5.916
+%define		krelease		6
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -19,7 +20,7 @@
 %define		wlan_version		0.1.13
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		IPperson_version	20020427-2.4.18
-%define		grsec_version		1.9.5-2.4.18
+%define		grsec_version		1.9.4-2.4.18
 %define		aic_version		6.2.3-2.4.7
 %define		jfs_version		2.4-1.0.20
 %define		lvm_version		1.0.4
@@ -33,7 +34,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	%{krelease}%{?_with_preemptible:_pr}%{?_with_acpi:_acpi}%{?_without_wrr:_nowrr}
+Release:	%{krelease}%{?_with_preemptible:_pr}%{?_with_o1_sched:_o1}%{?_with_acpi:_acpi}%{?_without_wrr:_nowrr}
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
@@ -104,15 +105,15 @@ Patch6:		linux-%{version}-ext3-0.9.18.patch
 Patch7:		linux-abi-2.4.17.0.patch.bz2
 Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
-Patch9:		grsecurity-%{grsec_version}.patch.bz2
+Patch9:		grsecurity-%{grsec_version}.patch
 # Preemptive kernel  patch
 Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-%{name}-rml-%{version}-4.patch
 
 Patch11:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-%{version}-1.patch
 Patch12:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-%{version}-1.patch
 Patch13:	http://www.linuxvirtualserver.org/software/kernel-2.4/linux-%{version}-ipvs-%{ipvs_version}.patch.gz
-# from http://people.redhat.com/mingo/O(1)-scheduler/sched-%{version}-A1.patch
-Patch14:	sched-%{version}-A1.patch.bz2
+Patch14:	http://people.redhat.com/mingo/O(1)-scheduler/sched-O1-%{version}-pre8-K3.patch
+
 Patch15:	http://luxik.cdi.cz/~devik/qos/htb/v2/htb2_2.4.17.diff
 
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/dwmw2/linux-2.4.19-shared-zlib.bz2
@@ -212,7 +213,7 @@ Patch147:	http://www.hojdpunkten.ac.se/054/samba/00-smbfs-2.4.18-codepage.patch.
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
 Patch900:	ide-EXPORT_SYMBOL.fix
-Patch901:	linux-o1-sched-sys.c-fix.patch
+#Patch901:	
 Patch902:	linux-2.4.19pre7-VIA.patch
 Patch903:	linux-PPC-SMP.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
@@ -220,7 +221,7 @@ Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
 Patch907:	loop-jari-2.4.18.0.patch
-Patch908:	ippersonality-post.patch
+#Patch908:	ippersonality-post.patch
 Patch909:	linux-53c7,8xx-build.fix
 Patch910:	dc395-PLD.fix
 Patch911:	linux-o1-sched-grsec-pre.patch
@@ -572,9 +573,39 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch918 -p1
 %patch6 -p1
 %patch19 -p1
+#%patch7 -p1
+%if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%ifarch %{ix86}
+# patch o1-scheduler-pre
+%patch914 -p1
+# O(1) scheduler patch
 %patch14 -p1
+# patch o1-scheduler-post
+%patch915 -p1
+%else
+echo "Scheduler didn't work on ARCH different than Intel x86"
+%endif
+%else
+%patch8 -p1
+%endif
+%if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%ifarch%{ix86}
+%patch911 -p1
+%else
+echo "Scheduler didn't work on ARCH different than Intel x86"
+%endif
+%endif
+# grsecurity patch
 %patch9 -p1
-%patch901 -p1
+%patch906 -p1
+%if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%ifarch%{ix86}
+# linux-o1-grsec-post
+%patch912 -p1
+%else
+echo "Scheduler didn't work on ARCH different than Intel x86"
+%endif
+%endif
 %patch15 -p1
 %patch24 -p1
 %patch17 -p1
@@ -658,7 +689,6 @@ rm -rf %{sym_ncr_version}
 # IP personality
 echo Adding IP Personality 
 patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020427-linux-2.4.18.diff
-%patch908 -p1
 
 # JFS
 echo Adding JFS
@@ -711,7 +741,7 @@ echo Fixed export sysctl symbols
 echo Installing EVMS patch 
 %patch136 -p1
 %patch137 -p1
-%patch916 -p1
+%{?_with_o1_sched:%patch916 -p1}
 
 %ifarch %{ix86}
 %patch139 -p1
