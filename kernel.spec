@@ -6,6 +6,7 @@
 # _without_up		- don't build UP kernel
 # _without_source	- don't build source
 #
+
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
@@ -15,7 +16,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.5.50
+Version:	2.5.59
 Release:	0.1
 License:	GPL
 Group:		Base/Kernel
@@ -31,7 +32,6 @@ Source21:	%{name}-ia32-smp.config
 #Source71:	%{name}-alpha-smp.config
 #Source73:	%{name}-ppc.config
 #Source74:	%{name}-ppc-smp.config
-Patch0:		%{name}-%{version}-complex.patch
 
 
 ExclusiveOS:	Linux
@@ -52,9 +52,6 @@ Prereq:		modutils
 Prereq:		geninitrd >= 2.21
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
-%ifarch		%{ix86}
-BuildRequires:	bin86
-%endif
 
 %description
 This package contains the Linux kernel that is used to boot and run
@@ -95,18 +92,18 @@ This package includes a SMP version of the Linux %{version} kernel. It
 is required only on machines with two or more CPUs, although it should
 work fine on single-CPU boxes.
 
-%description -l de smp
+%description smp -l de
 Dieses Paket enthält eine SMP (Multiprozessor)-Version von
 Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
 Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
 CPU laufen.
 
-%description -l fr smp
+%description smp -l fr
 Ce package inclu une version SMP du noyau de Linux version {version}.
 Il et nécessaire seulement pour les machine avec deux processeurs ou
 plus, il peut quand même fonctionner pour les système mono-processeur.
 
-%description -l pl smp
+%description smp -l pl
 Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono
 wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
 Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
@@ -125,14 +122,14 @@ kernel. This kernel is used on the installation boot disks only and
 should not be used for an installed system, as many features in this
 kernel are turned off because of the size constraints.
 
-%description -l de BOOT
+%description BOOT -l de
 Dieses Paket enthält eine verkleinerte Version vom Linux-Kernel
 version %{version}. Dieser Kernel wird auf den
 Installations-Bootdisketten benutzt und sollte nicht auf einem
 installierten System verwendet werden, da viele Funktionen wegen der
 Platzprobleme abgeschaltet sind.
 
-%description -l pl BOOT
+%description BOOT -l pl
 Pakiet zawiera j±dro Linuksa dedykowane dyskietkom startowym i powinno
 byæ u¿ywane jedynie podczas instalacji systemu. Wiele u¿ytecznych
 opcji zosta³o wy³±czonych, aby jak najbardziej zmniejszyæ jego
@@ -140,7 +137,7 @@ rozmiar.
 
 %package pcmcia-cs
 Summary:	PCMCIA-CS modules
-Summary(pl):	Modu³y PCMCIA-CS 
+Summary(pl):	Modu³y PCMCIA-CS
 Group:		Base/Kernel
 Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
 PreReq:		%{name}-up = %{version}-%{release}
@@ -149,7 +146,7 @@ Requires(postun):	%{name}-up = %{version}-%{release}
 %description pcmcia-cs
 PCMCIA-CS modules (%{pcmcia_version}).
 
-%description -l pl pcmcia-cs
+%description pcmcia-cs -l pl
 Modu³y PCMCIA-CS (%{pcmcia_version}).
 
 %package smp-pcmcia-cs
@@ -163,35 +160,35 @@ Requires(postun):	%{name}-smp = %{version}-%{release}
 %description smp-pcmcia-cs
 PCMCIA-CS modules for SMP kernel (%{pcmcia_version}).
 
-%description -l pl smp-pcmcia-cs
+%description smp-pcmcia-cs -l pl
 Modu³y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 
 %package drm
 Summary:	DRM kernel modules
 Summary(pl):	Sterowniki DRM
 Group:		Base/Kernel
-Provides:       %{name}-drm = %{drm_xfree_version}
+Provides:	%{name}-drm = %{drm_xfree_version}
 PreReq:		%{name}-up = %{version}-%{release}
 Requires(postun):	%{name}-up = %{version}-%{release}
 
 %description drm
 DRM kernel modules (%{drm_xfree_version}).
 
-%description -l pl drm
+%description drm -l pl
 Sterowniki DRM (%{drm_xfree_version}).
 
 %package smp-drm
 Summary:	DRM SMP kernel modules
 Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
 Group:		Base/Kernel
-Provides:       %{name}-drm = %{drm_xfree_version}
+Provides:	%{name}-drm = %{drm_xfree_version}
 PreReq:		%{name}-smp = %{version}-%{release}
 Requires(postun):	%{name}-smp = %{version}-%{release}
 
 %description smp-drm
 DRM SMP kernel modules (%{drm_xfree_version}).
 
-%description -l pl smp-drm
+%description smp-drm -l pl
 Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
 
 %package headers
@@ -230,7 +227,7 @@ most C programs as they depend on constants defined in here. You can
 also build a custom kernel that is better tuned to your particular
 hardware.
 
-%description -l de source
+%description source -l de
 Das Kernel-Source-Paket enthält den source code (C/Assembler-Code) des
 Linux-Kernels. Die Source-Dateien werden gebraucht, um viele
 C-Programme zu compilieren, da sie auf Konstanten zurückgreifen, die
@@ -238,7 +235,7 @@ im Kernel-Source definiert sind. Die Source-Dateien können auch
 benutzt werden, um einen Kernel zu compilieren, der besser auf Ihre
 Hardware ausgerichtet ist.
 
-%description -l fr source
+%description source -l fr
 Le package pour le kernel-source contient le code source pour le noyau
 linux. Ces sources sont nécessaires pour compiler la plupart des
 programmes C, car il dépend de constantes définies dans le code
@@ -260,13 +257,13 @@ Autoreqprov:	no
 This is the documentation for the Linux kernel, as found in
 /usr/src/linux/Documentation directory.
 
-%description -l pl doc
+%description doc -l pl
 Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
 %setup -q -n linux-%{version}
-%patch0 -p1 
+#%patch0 -p1
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
@@ -334,7 +331,7 @@ BuildKernel() {
 	%{__make} dep clean
 %endif
 	%{__make} include/linux/version.h
-	
+
 %ifarch %{ix86}
 	%{__make} bzImage
 %endif
@@ -479,31 +476,32 @@ install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoco
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
-%{__make} symlinks 
+#%%{__make} symlinks
 %{__make} include/linux/version.h
-%{__make} "`pwd`/include/linux/modversions.h"
+#%%{__make} "`pwd`/include/linux/modversions.h"
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well, after we fix the paths
 
-%{__make} depend 
-find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
-while read file ; do
-	mv $file $file.old
-	sed -e "s|$RPM_BUILD_ROOT\(/usr/src/linux\)|\1|g" < $file.old > $file
-	rm -f $file.old
-done
+# depend is not going to work with our version of autoconf.h
+#%%{__make} depend
+#find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
+#while read file ; do
+#	mv $file $file.old
+#	sed -e "s|$RPM_BUILD_ROOT\(/usr/src/linux\)|\1|g" < $file.old > $file
+#	rm -f $file.old
+#done
 
 %{__make} clean
-rm -f scripts/mkdep
-rm -f drivers/net/hamradio/soundmodem/gentbl
+#rm -f scripts/mkdep
+#rm -f drivers/net/hamradio/soundmodem/gentbl
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_DIR/linux-installed
 
 %post
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null 
+mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
@@ -565,7 +563,7 @@ rm -f %{_libdir}/bootdisk/boot/vmlinuz-%{version}
 ln -snf vmlinuz-%{version}-%{release}BOOT %{_libdir}/bootdisk/boot/vmlinuz-%{version}
 
 %postun
-if [ -L /lib/modules/%{version} ]; then 
+if [ -L /lib/modules/%{version} ]; then
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f /lib/modules/%{version}
@@ -587,7 +585,7 @@ rm -f /boot/initrd-%{version}-%{release}.gz
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release} > /dev/null 2>&1
 
 %postun smp
-if [ -L /lib/modules/%{version} ]; then 
+if [ -L /lib/modules/%{version} ]; then
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f /lib/modules/%{version}
@@ -609,7 +607,7 @@ rm -f /boot/initrd-%{version}-%{release}smp.gz
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp > /dev/null 2>&1
 
 %postun BOOT
-if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then 
+if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then
 	if [ "`ls -l %{_libdir}/bootdisk/lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}BOOT" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f %{_libdir}/bootdisk/lib/modules/%{version}
@@ -622,7 +620,7 @@ rm -f /usr/src/linux
 ln -snf linux-%{version} /usr/src/linux
 
 %postun headers
-if [ -L /usr/src/linux ]; then 
+if [ -L /usr/src/linux ]; then
 	if [ "`ls -l /usr/src/linux | awk '{ print $11 }'`" = "linux-%{version}" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f /usr/src/linux
@@ -641,32 +639,22 @@ fi
 %dir /lib/modules/%{version}-%{release}
 /lib/modules/%{version}-%{release}/kernel
 #pcmcia stuff
-%exclude /lib/modules/%{version}-%{release}/kernel/*pcmcia*
-%exclude /lib/modules/%{version}-%{release}/kernel/*_cs.o*
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
 #drm stuff
-%exclude /lib/modules/%{version}-%{release}/kernel/tdfx.o
-%exclude /lib/modules/%{version}-%{release}/kernel/mga.o
-%exclude /lib/modules/%{version}-%{release}/kernel/i810.o
-%exclude /lib/modules/%{version}-%{release}/kernel/i830.o
-%exclude /lib/modules/%{version}-%{release}/kernel/radeon.o
-%exclude /lib/modules/%{version}-%{release}/kernel/r128.o
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
 
 %files pcmcia-cs
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/*pcmcia*
-/lib/modules/%{version}-%{release}/kernel/*_cs.o*
+/lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
+/lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
 
 %files drm
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/tdfx.o
-/lib/modules/%{version}-%{release}/kernel/mga.o
-/lib/modules/%{version}-%{release}/kernel/i810.o
-/lib/modules/%{version}-%{release}/kernel/i830.o
-/lib/modules/%{version}-%{release}/kernel/radeon.o
-/lib/modules/%{version}-%{release}/kernel/r128.o
+/lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 %endif			# %%{_without_up}
 
 %if %{?_without_smp:0}%{!?_without_smp:1}
@@ -680,31 +668,21 @@ fi
 %dir /lib/modules/%{version}-%{release}smp
 /lib/modules/%{version}-%{release}smp/kernel
 #pcmcia stuff
-%exclude /lib/modules/%{version}-%{release}smp/kernel/*pcmcia*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/*_cs.o*
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
 #drm stuff
-%exclude /lib/modules/%{version}-%{release}smp/kernel/tdfx.o
-%exclude /lib/modules/%{version}-%{release}smp/kernel/mga.o
-%exclude /lib/modules/%{version}-%{release}smp/kernel/i810.o
-%exclude /lib/modules/%{version}-%{release}smp/kernel/i830.o
-%exclude /lib/modules/%{version}-%{release}smp/kernel/radeon.o
-%exclude /lib/modules/%{version}-%{release}smp/kernel/r128.o
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
 
 %files -n kernel-smp-pcmcia-cs
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/*pcmcia*
-/lib/modules/%{version}-%{release}smp/kernel/*_cs.o*
+/lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
+/lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
 
 %files -n kernel-smp-drm
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/tdfx.o
-/lib/modules/%{version}-%{release}smp/kernel/mga.o
-/lib/modules/%{version}-%{release}smp/kernel/i810.o
-/lib/modules/%{version}-%{release}smp/kernel/i830.o
-/lib/modules/%{version}-%{release}smp/kernel/radeon.o
-/lib/modules/%{version}-%{release}smp/kernel/r128.o
+/lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 %endif			# %%{_without_smp}
 
 %if %{?_without_boot:0}%{!?_without_boot:1}
@@ -750,14 +728,16 @@ fi
 %{_prefix}/src/linux-%{version}/scripts
 %{_prefix}/src/linux-%{version}/sound
 %{_prefix}/src/linux-%{version}/security
-%{_prefix}/src/linux-%{version}/usr
+%{_prefix}/src/linux-%{version}%{_prefix}
 %{_prefix}/src/linux-%{version}/.config
-%{_prefix}/src/linux-%{version}/.hdepend
+#%{_prefix}/src/linux-%{version}/.hdepend
 %{_prefix}/src/linux-%{version}/COPYING
 %{_prefix}/src/linux-%{version}/CREDITS
 %{_prefix}/src/linux-%{version}/MAINTAINERS
 %{_prefix}/src/linux-%{version}/Makefile
 %{_prefix}/src/linux-%{version}/README
 %{_prefix}/src/linux-%{version}/REPORTING-BUGS
-%{_prefix}/src/linux-%{version}/Rules.make
+%{_prefix}/src/linux-%{version}/config-smp
+%{_prefix}/src/linux-%{version}/config-up
+#%{_prefix}/src/linux-%{version}/Rules.make
 %endif
