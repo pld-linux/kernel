@@ -50,9 +50,9 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		4%{with mosix:m}
+%define		_rel		0.1%{with mosix:m}
 %define		_cset		20040707_0722
-%define		_apply_cset	1
+%define		_apply_cset	0
 
 %define		_netfilter_snap		20040629
 
@@ -69,7 +69,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.6.7
+Version:	2.6.8.1
 Release:	%{_rel}
 Epoch:		3
 License:	GPL
@@ -77,7 +77,7 @@ Group:		Base/Kernel
 %define		_rc	%{nil}
 #define		_rc	-rc3
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
-# Source0-md5:	a74671ea68b0e3c609e8785ed8497c14
+# Source0-md5:	9517ca999e822b898fbdc7e72796b1aa
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
