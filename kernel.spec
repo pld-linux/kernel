@@ -34,8 +34,8 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.21
-%define		_cset		20040327_0210
+%define		_rel		0.22
+%define		_cset		20040329_0308
 
 ## netfilter snap 
 %define		_netfilter_snap		20040322
@@ -526,7 +526,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch32 -p1
 
 ## bootsplash
-%patch36 -p1
+##%%patch36 -p1
 
 %patch38 -p1
 
