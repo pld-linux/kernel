@@ -4,8 +4,6 @@
 #
 #	TODO
 # - check I2C
-# - check netfilter
-# - fix config problem
 #
 # BCOND:
 %bcond_without smp	# don't build SMP kernel
@@ -15,7 +13,7 @@
 
 %define		_rel		1
 %define		_test_ver	7
-%define		_cset		20031011_0007
+%define		_cset		20031012_0407
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -60,19 +58,17 @@ Patch1:		cset-%{_cset}.txt.gz
 
 Patch4:		squashfs1.3-patch
 
-Patch6:		2.6.0-t3-initrd_load-lkml.patch
+Patch6:		2.6.0-t3-sysfs_mem-lkml.patch
 
-Patch8:		2.6.0-t3-sysfs_mem-lkml.patch
+Patch8:		2.6.0-t4-PPC-ENODEV.patch
+Patch10:	kernel-siimage-rqsize.patch
+Patch12:	2.6.0-t5-PPC-Kconfig.patch
 
-Patch12:	2.6.0-t4-PPC-ENODEV.patch
-Patch14:	kernel-siimage-rqsize.patch
-Patch16:	2.6.0-t5-PPC-Kconfig.patch
+Patch14:	2.6.0-t7-netfilter-20031010.patch
+Patch16:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
+Patch18:	2.6.0-t6-usb-irq.patch
 
-Patch18:	2.6.0-t7-netfilter-20031010.patch
-Patch20:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
-Patch22:	2.6.0-t6-usb-irq.patch
-
-Patch24:	2.6.0-t6-SELinux-lkml.patch
+Patch20:	2.6.0-t6-SELinux-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -312,20 +308,18 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch4 -p1
 
-#%%patch6 -p1
+%patch6 -p1
 
 %patch8 -p1
-
+%patch10 -p1
 %patch12 -p1
-%patch14 -p1
-%patch16 -p1
 
+%patch14 -p1
+
+%patch16 -p1
 %patch18 -p1
 
 %patch20 -p1
-%patch22 -p1
-
-%patch24 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
