@@ -15,7 +15,7 @@
 
 %define		_rel		1
 %define		_test_ver	6
-%define		_cset		20031006_0605
+%define		_cset		20031008_0506
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -92,6 +92,7 @@ Patch70:	2.6.0-t6-usb-irq.patch
 Patch71:	2.6.0-t6-asus_acpi.patch
 
 Patch75:	2.6.0-t6-s390-lkml.patch
+Patch77:	2.6.0-t6-SELinux-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -363,6 +364,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 #%patch71 -p1
 
 %patch75 -p1
+%patch77 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
