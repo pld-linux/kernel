@@ -34,6 +34,7 @@ Source8:	http://www.lids.org/download/lids-%{lids_version}-2.4.1.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source10:	http://www.linux-wlan.com/linux-wlan/linux-wlan-ng-%{wlan_version}.tar.gz
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
+Source12:	http://www.komacke.com/ftp/rl2isa-driver/rl2_driver.tgz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -348,7 +349,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -n linux
+%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -n linux
 %patch9 -p1
 # kerneli patch
 %patch0 -p1
