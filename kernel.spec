@@ -74,7 +74,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	2d367eeedb6b76c05436e2cc6593fefe
+# Source3-md5:	3d6d985f6fb46f40be09ddf05a835fe1
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
