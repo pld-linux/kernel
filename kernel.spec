@@ -11,7 +11,7 @@
 # _without_doc		- don't build documentation package
 #
 
-%define		patch_level	3
+%define		patch_level	5
 %define		_rel		5
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -21,7 +21,7 @@
 %define		ipvs_version		1.0.7
 %define		freeswan_version	2.00-rc2
 %define		IPperson_version	20020819-2.4.19
-%define		grsec_version		1.9.9e
+%define		grsec_version		2.0.0
 %define		jfs_version		2.4-1.0.24
 %define		lvm_version		1.0.5
 %define		evms_version		1.2.1
@@ -320,7 +320,7 @@ Patch914:	linux-2.4.20-MODULE_XXX.patch
 Patch918:	linux-2.4.20-ext3.patch
 Patch919:	linux-2.4.20-ntfs.patch
 Patch920:	linux-2.4.20-squashfs.patch
-Patch921:	linux-2.4.20-grsecurity-%{grsec_version}-kmem.patch
+Patch921:	linux-2.4.20-grsecurity-1.9.9e-kmem.patch
 
 # Win4Lin
 Patch1000:	linux-2.4.20-Win4Lin.PLD.patch.bz2
