@@ -1,7 +1,7 @@
 Summary:     Generic linux kernel
 Name:        kernel
 Version:     2.0.36
-Release:     1
+Release:     2
 Copyright:   GPL
 Group:       Base/Kernel
 Source0:     ftp://ftp.kernel.org/pub/linux/kernel/v2.0/linux-%{version}.tar.bz2
@@ -10,6 +10,7 @@ Source6:     kernel-alpha.config
 Source8:     installkernel
 Patch0:      kernel-make.patch
 Patch1:      ftp://ftp.redhat.com/sound/patches-current/2.0.36-modular-1.test.patch.gz
+Patch2:      secure-linux-2.0.36.diff
 Requires:    initscripts >= 3.64
 ExclusiveOS: Linux
 BuildRoot:   /tmp/%{name}-%{version}-root
@@ -46,6 +47,7 @@ Linux, as well as to rebuild the kernel.
 %setup -q -n linux
 %patch0 -p1
 %patch1 -p1
+%patch2 -p1
 
 %ifarch i386
 install $RPM_SOURCE_DIR/kernel-i386.config arch/i386/defconfig
@@ -194,6 +196,11 @@ fi
 /usr/include/scsi
 
 %changelog
+* Sat Nov 21 1998 Tomasz K³oczko <kloczek@rudy.mif.pg.gda.pl>
+  [2.0.36-2]
+- adedd secure-linux-2.0.36.diff from 
+  ftp://ftp.false.com/pub/security/linux/secure-linux-06.tar.gz.
+
 * Mon Nov 16 1998 Tomasz K³oczko <kloczek@rudy.mif.pg.gda.pl>
   [2.0.36-1]
 - first release kernel package for PLD (based on RH kernel spec).
