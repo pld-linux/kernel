@@ -7,20 +7,18 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.2.17
-Release:	11
+Version:	2.2.18
+Release:	0.pre22.1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-2.2.17.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
 Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-127.tar.gz
 Source5:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
-# NFS server patches
-Source6:	http://download.sourceforge.net/nfs/dhiggen_merge-4.1.tar.gz
-Source7:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/sym-1.7.2-ncr-3.4.2.tar.gz
+Source6:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/sym-1.7.2-ncr-3.4.2.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -37,30 +35,25 @@ Source73:	%{name}-sparc64-BOOT.config
 Source81:	%{name}-alpha.config
 Source82:	%{name}-alpha-smp.config
 Source83:	%{name}-alpha-BOOT.config
-Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.17.2.gz
-Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
-Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
-Patch3:		linux-tasks.patch
-# patch based on http://www.redhat.com/~mingo/raid-patches/
-Patch4:		raid-2.2.17-A0.gz
-Patch5:		http://www.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.17/ide.2.2.17.all.20000904.patch.bz2
-Patch6:		%{name}-pldfblogo.patch
-Patch7:		linux-2.2.16-freeswan-%{freeswan_version}.patch
-Patch8:		wanrouter-v2215.patch.gz
-Patch10:	linux-newagpdist.patch
-Patch11:	linux-agphjlfixes.patch
-Patch12:	linux-agpgart-2.4-compat.patch
-Patch13:	linux-ipv6-addrconf.patch
-# NFS client patch
-Patch14:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
+Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.2.18pre/pre-patch-2.2.18-22.gz
+Patch1:		%{name}-pldfblogo.patch
+Patch2:		linux-2.2.16-freeswan-%{freeswan_version}.patch
+Patch3:		wanrouter-v2215.patch.gz
+Patch4:		linux-ipv6-addrconf.patch
+Patch5:		%{name}-3c90x.patch
+Patch6:		linux-ipv6-glibc2.2.patch
+
+#Patch:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.17.2.gz
+#Patch:		ftp://ftp.devlinux.com/pub/namesys/linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
+#Patch:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
+#Patch:		linux-tasks.patch
+#Patch:		ftp://ftp.kernel.org/pub/linux/kernel/people/mingo/raid-patches/raid-2.2.18-A2
+#Patch:		http://www.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.17/ide.2.2.17.all.20000904.patch.bz2
 # Linux Virtual Server: http://www.linuxvirtualserver.org/software/
-Patch15:	%{name}-ipvs-1.0.0-%{version}.patch
-Patch16:	%{name}-3c90x.patch
+#Patch:		%{name}-ipvs-1.0.0-%{version}.patch
 # raw-io patch
-Patch17:	ftp://ftp.kernel.org/pub/linux/kernel/people/sct/raw-io/raw-2.2.17.diff
-# modularization FB for Permedia2 (patch from RH)
-Patch18:	%{name}-fb-modules.patch
-Patch19:	linux-ipv6-glibc2.2.patch
+#Patch:		ftp://ftp.kernel.org/pub/linux/kernel/people/sct/raw-io/raw-2.2.17.diff
+
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -73,7 +66,6 @@ BuildRequires:	egcs
 BuildRequires:	sparc32
 %endif
 Provides:	%{name}(reiserfs) = %{version}
-Provides:	%{name}(agpgart) = %{version}
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
 Autoreqprov:	no
@@ -114,7 +106,6 @@ Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
 Provides:	%{name}(reiserfs) = %{version}
-Provides:	%{name}(agpgart) = %{version}
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
 Prereq:		modutils
@@ -144,7 +135,6 @@ Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
 Provides:	%{name}(reiserfs) = %{version}
-Provides:	%{name}(agpgart) = %{version}
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
 Prereq:		modutils
@@ -170,7 +160,6 @@ Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name} = %{version}
 Provides:	%{name}(reiserfs) = %{version}
-Provides:	%{name}(agpgart) = %{version}
 Provides:	%{name}(ipvs) = %{version}
 Provides:	%{name}(rawio) = %{version}
 Prereq:		modutils
@@ -229,7 +218,6 @@ Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(ipvs) = %{version}
 Provides:	%{name}-headers(rawio) = %{version}
@@ -281,31 +269,14 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a4 -a5 -a7 -n linux
+%setup -q -a3 -a4 -a5 -a6 -n linux
 %patch0 -p1
-%patch14 -p1
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-%ifarch %{ix86}
 %patch5 -p1
-%endif
 %patch6 -p1
-%patch7 -p1
-%patch8 -p1
-%patch10 -p1
-%patch11 -p1
-%patch12 -p1
-%patch13 -p1
-%patch15 -p1
-%patch16 -p1
-%patch17 -p1
-%patch18 -p1
-%patch19 -p1
-
-tar zxf %{SOURCE6} dhiggen-over-0.23.1
-patch -p2 -s <dhiggen-over-0.23.1
 
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 # Tekram DC395/315 U/UW SCSI host driver
@@ -467,32 +438,13 @@ mv -f $RPM_BUILD_ROOT/usr/src/linux $RPM_BUILD_ROOT/usr/src/linux-%{version}
 ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
 
 gzip -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-bzip2 -dc %{PATCH14} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH1} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH8} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-
-%ifarch %{ix86}
-bzip2 -dc %{PATCH5} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-%endif
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH3}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH1}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH2}
+gzip -dc %{PATCH3} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH16}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH17}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH18}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH19}
 
-tar zxf %{SOURCE6} dhiggen-over-0.23.1 -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
-
-patch -p2 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <dhiggen-over-0.23.1
-rm -f dhiggen-over-0.23.1
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
 
 # Tekram DC395/315 U/UW SCSI host driver
