@@ -54,9 +54,13 @@ Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 #Source5:	
 # Source6-md5:	b8f2f7a268a5cb75fabcaec3b5d45fcd
 Source6:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
+# Source7-md5:	86e6c50b1664e5a1bdf6321a0c4d071a
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
+# Source8-md5:	2473f345c66683a03ad27ff132d405b7
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-%{jfs_version}.tar.gz
+# Source9-md5:	34515784c7b67f6cc9169aa9eed982c7
 Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
+# Source10-md5:	78b4043f36b11ae7d549e3111698ac7f
 Source10:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
 #Source11:	
 # Source12-md5: 3da1f4b229685766cb4f2f5ce242c0d2
