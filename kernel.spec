@@ -234,6 +234,7 @@ BuildRequires:	bin86
 Conflicts:	iptables < 1.2.7a
 Conflicts:	lvm < 1.0.4
 Conflicts:	xfsprogs < 2.0.0
+Conflicts:	quota < 3.06
 
 %description
 This package contains the Linux kernel that is used to boot and run
@@ -271,8 +272,14 @@ Provides:	%{name}(agpgart) = %{version}
 Provides:	%{name}(cdrw)
 Provides:	%{name}(cdmrw)
 Provides:	%{name}_netfilter = 1.2.7a
+Prereq:		fileutils
 Prereq:		modutils
+Prereq:		geninitrd >= 2.21
 Autoreqprov:	no
+Conflicts:	iptables < 1.2.7a
+Conflicts:	lvm < 1.0.4
+Conflicts:	xfsprogs < 2.0.0
+Conflicts:	quota < 3.06
 
 %description smp
 This package includes a SMP version of the Linux %{version} kernel. It
