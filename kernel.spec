@@ -6,6 +6,7 @@
 # _with_preemptible	- build with Preemptible patch
 # _with_o1_sched	- build with new O(1) scheduler
 # _without_smp		- don't build SMP kernel
+# _without_up		- don't build UP kernel
 #
 %define		test_build		0
 #
@@ -28,7 +29,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	0.7
+Release:	0.8
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -355,6 +356,22 @@ particuliers.
 %description source -l pl
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
+%package doc
+Summary:	Kernel documentation
+Summary(pl):	Dokumentacja do kernela
+Group:		Base/Kernel
+Group(pl):	Podstawowe/J±dro
+Provides:	%{name}-doc = %{version}
+Autoreqprov:	no
+
+%description doc
+This is the documentation for the Linux kernel, as found in
+/usr/src/linux/Documentation directory.
+
+%description -l pl doc
+Pakiet zawiera dokumentacjê j±dra z katalogu
+/usr/src/linux/Documentation.
+
 %prep
 %setup -q -a3 -a5 -a7 -a10 -a11 -a12 -a13 -n linux
 #%patch1000 -p1
@@ -656,7 +673,9 @@ install -d $KERNEL_INSTALL_DIR
 	(cd drivers/scsi; make -f M)
 	
 # UP KERNEL
+%if %{?_without_up:0}%{!?_without_up:1}
 BuildKernel 
+%endif
 
 %if !%{test_build}
 # SMP KERNEL
@@ -794,6 +813,7 @@ rm -f drivers/net/hamradio/soundmodem/gentbl
 rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_DIR/linux-installed
 
+%if %{?_without_up:0}%{!?_without_up:1}
 %post
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null 
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
@@ -814,6 +834,7 @@ ln -sf initrd-%{version}-%{release}.gz /boot/initrd
 if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
+%endif			# %{_without_up}
 
 %if%{?_without_smp:0}%{!?_without_smp:1}
 %post smp
@@ -836,7 +857,6 @@ ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
-
 %endif			# %{_without_smp}
 
 %post BOOT
@@ -851,6 +871,7 @@ ln -snf %{version}-%{release}BOOT %{_libdir}/bootdisk/lib/modules/%{version}
 rm -f %{_libdir}/bootdisk/boot/vmlinuz-%{version}
 ln -snf vmlinuz-%{version}-%{release}BOOT %{_libdir}/bootdisk/boot/vmlinuz-%{version}
 
+%if %{?_without_up:0}%{!?_without_up:1}
 %postun
 if [ -L /lib/modules/%{version} ]; then 
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}" ]; then
@@ -860,6 +881,7 @@ if [ -L /lib/modules/%{version} ]; then
 	fi
 fi
 rm -f /boot/initrd-%{version}-%{release}.gz
+%endif			# %{_without_up}
 
 %if%{?_without_smp:0}%{!?_without_smp:1}
 %postun smp
@@ -895,6 +917,7 @@ if [ -L /usr/src/linux ]; then
 	fi
 fi
 
+%if %{?_without_up:0}%{!?_without_up:1}
 %files
 %defattr(644,root,root,755)
 %ifarch alpha sparc ppc
@@ -911,6 +934,7 @@ fi
 /lib/modules/%{version}-%{release}/modules.dep
 /lib/modules/%{version}-%{release}/modules.*map
 /lib/modules/%{version}-%{release}/modules.generic_string
+%endif			# %{_without_up}
 
 %if !%{test_build}
 
@@ -960,9 +984,12 @@ fi
 %{_includedir}/asm
 %{_includedir}/linux
 
+%files doc
+%defattr(644,root,root,755)
+%{_prefix}/src/linux-%{version}/Documentation
+
 %files source
 %defattr(-,root,root,755)
-%{_prefix}/src/linux-%{version}/Documentation
 #%{_prefix}/src/linux-%{version}/abi
 %{_prefix}/src/linux-%{version}/arch
 %{_prefix}/src/linux-%{version}/crypto
