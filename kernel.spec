@@ -162,7 +162,7 @@ Patch139:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch140:	linux-UDF.fix
 Patch141:	http://people.FreeBSD.org/~gibbs/linux/linux-aic7xxx-%{aic_version}.patch.gz
 # Created from lvm.tgz:LVM/PATCHES by doing make
-Patch142:	linux-2.4.7-lvm-1.0.1rc3cvs.patch
+Patch142:	linux-2.4.7-lvm-1.0.1rc4cvs.patch
 Patch143:	linux-ptrace.patch
 
 # Patches fixing other patches or 3rd party sources ;)
