@@ -109,6 +109,7 @@ Patch116:	linux-2.2.20-lfs.patch
 Patch117:	2.2.21-ppc-smp.patch
 Patch118:	ide.2.2.21_2.4.19pre7-VIA.patch
 Patch119:	ide-probe.patch
+Patch220:	2.2.20-reiserfs_ppc.patch
 
 Patch300:	patch-2.2.21-rc3.gz
 Patch320:	fix-prename.patch
@@ -466,6 +467,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %ifarch ppc
 %patch2000 -p1
 %patch2002 -p1
+%patch220 -p1
 %endif
 
 %build
@@ -804,6 +806,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1502}
 %ifarch ppc
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2000}
 bzip2 -dc %{PATCH2002} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH220}
 %endif
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
