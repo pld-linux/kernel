@@ -212,13 +212,14 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 #kerneli patch
 %patch0 -p1
+
 #i8255 fix
 %patch4 -p0 
 
 %patch5 -p1
 
 # Fore 200e ATM NIC
-#patch -p1 <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
+patch -p1 <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
 #patch -p1 <linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
 
 # Tekram DC395/315 U/UW SCSI host driver
@@ -244,7 +245,7 @@ echo -e $ANS | ./runme)
 #cp ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile net/ipv4/ipvs/Makefile
 
 # LIDS
-patch -p1 <lids-%{lids_version}-{%version}/lids-%{lids_version}-%{version}.patch
+patch -p1 <lids-%{lids_version}-%version/lids-%{lids_version}-%version.patch
 
 
 # Remove -g from drivers/atm/Makefile
