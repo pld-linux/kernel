@@ -1,6 +1,6 @@
-diff -urN linux.orig/fs/dcache.c linux/fs/dcache.c
---- linux.orig/fs/dcache.c	Fri Apr 27 23:23:25 2001
-+++ linux/fs/dcache.c	Fri May  4 19:14:37 2001
+diff -urN linux/fs/dcache.c linux.nfsdops/fs/dcache.c
+--- linux/fs/dcache.c	Tue May 22 18:35:42 2001
++++ linux.nfsdops/fs/dcache.c	Wed May 30 20:35:35 2001
 @@ -262,6 +262,53 @@
  	return NULL;
  }
@@ -127,9 +127,99 @@ diff -urN linux.orig/fs/dcache.c linux/fs/dcache.c
  }
  
  /**
-diff -urN linux.orig/fs/ext2/namei.c linux/fs/ext2/namei.c
---- linux.orig/fs/ext2/namei.c	Thu Feb 15 21:32:21 2001
-+++ linux/fs/ext2/namei.c	Fri May  4 19:14:37 2001
+diff -urN linux/fs/efs/inode.c linux.nfsdops/fs/efs/inode.c
+--- linux/fs/efs/inode.c	Mon May  8 20:11:29 2000
++++ linux.nfsdops/fs/efs/inode.c	Wed May 30 20:35:53 2001
+@@ -91,6 +91,9 @@
+ 	inode->i_atime = be32_to_cpu(efs_inode->di_atime);
+ 	inode->i_mtime = be32_to_cpu(efs_inode->di_mtime);
+ 	inode->i_ctime = be32_to_cpu(efs_inode->di_ctime);
++	inode->i_generation = be32_to_cpu(efs_inode->di_gen);
++	if (inode->i_mode == 0 || inode->i_nlink == 0)
++		goto badinode;
+ 
+ 	/* this is the number of blocks in the file */
+ 	if (inode->i_size == 0) {
+@@ -163,6 +166,7 @@
+         
+ read_inode_error:
+ 	printk(KERN_WARNING "EFS: failed to read inode %lu\n", inode->i_ino);
++ badinode:
+ 	make_bad_inode(inode);
+ 
+ 	return;
+diff -urN linux/fs/efs/namei.c linux.nfsdops/fs/efs/namei.c
+--- linux/fs/efs/namei.c	Wed Jun  2 08:25:48 1999
++++ linux.nfsdops/fs/efs/namei.c	Wed May 30 20:35:53 2001
+@@ -70,7 +70,32 @@
+ 			return ERR_PTR(-EACCES);
+ 	}
+ 
++	if (inode)
++		return d_splice_alias(inode, dentry);
++	
+ 	d_add(dentry, inode);
+ 	return NULL;
+ }
+ 
++struct dentry *efs_get_parent(struct dentry *child)
++{
++	struct super_block *sb;
++	struct inode *inode = NULL;
++	efs_ino_t inodenum;
++	struct dentry *parent;
++
++	sb = child->d_inode->i_sb;
++
++	inodenum = efs_find_entry(child->d_inode, "..", 2);
++	if (inodenum)
++		inode = iget(sb, inodenum);
++	if (!inode)
++		return ERR_PTR(-EACCES);
++
++	parent = d_make_alias(inode);
++	if (!parent) {
++		iput(inode);
++		parent = ERR_PTR(-ENOMEM);
++	}
++	return parent;
++}
+diff -urN linux/fs/efs/super.c linux.nfsdops/fs/efs/super.c
+--- linux/fs/efs/super.c	Wed Apr 18 08:16:38 2001
++++ linux.nfsdops/fs/efs/super.c	Wed May 30 20:35:53 2001
+@@ -12,6 +12,7 @@
+ #include <linux/efs_fs.h>
+ #include <linux/efs_vh.h>
+ #include <linux/efs_fs_sb.h>
++#include <linux/nfsd/interface.h>
+ 
+ static DECLARE_FSTYPE_DEV(efs_fs_type, "efs", efs_read_super);
+ 
+@@ -20,6 +21,13 @@
+ 	statfs:		efs_statfs,
+ };
+ 
++extern struct dentry *efs_get_parent(struct dentry *child);
++
++static struct nfsd_operations efs_nfsd_operations = {
++	get_parent:	efs_get_parent,
++};
++
++
+ static int __init init_efs_fs(void) {
+ 	printk("EFS: "EFS_VERSION" - http://aeschi.ch.eu.org/efs/\n");
+ 	return register_filesystem(&efs_fs_type);
+@@ -186,6 +194,7 @@
+ 		s->s_flags |= MS_RDONLY;
+ 	}
+ 	s->s_op   = &efs_superblock_operations;
++	s->s_nfsd_op = &efs_nfsd_operations;
+ 	s->s_root = d_alloc_root(iget(s, EFS_ROOTINODE));
+  
+ 	if (!(s->s_root)) {
+diff -urN linux/fs/ext2/namei.c linux.nfsdops/fs/ext2/namei.c
+--- linux/fs/ext2/namei.c	Thu Feb 15 21:32:21 2001
++++ linux.nfsdops/fs/ext2/namei.c	Wed May 30 20:35:35 2001
 @@ -179,9 +179,37 @@
  		if (!inode)
  			return ERR_PTR(-EACCES);
@@ -168,18 +258,18 @@ diff -urN linux.orig/fs/ext2/namei.c linux/fs/ext2/namei.c
  
  #define S_SHIFT 12
  static unsigned char ext2_type_by_mode[S_IFMT >> S_SHIFT] = {
-diff -urN linux.orig/fs/ext2/super.c linux/fs/ext2/super.c
---- linux.orig/fs/ext2/super.c	Wed Apr 18 20:49:13 2001
-+++ linux/fs/ext2/super.c	Fri May  4 19:14:37 2001
-@@ -24,6 +24,7 @@
- #include <linux/slab.h>
+diff -urN linux/fs/ext2/super.c linux.nfsdops/fs/ext2/super.c
+--- linux/fs/ext2/super.c	Wed May 16 19:31:27 2001
++++ linux.nfsdops/fs/ext2/super.c	Wed May 30 20:35:35 2001
+@@ -25,6 +25,7 @@
  #include <linux/init.h>
  #include <linux/locks.h>
-+#include <linux/nfsd/interface.h>
  #include <linux/blkdev.h>
++#include <linux/nfsd/interface.h>
  #include <asm/uaccess.h>
  
-@@ -157,6 +158,16 @@
+ 
+@@ -154,6 +155,16 @@
  	remount_fs:	ext2_remount,
  };
  
@@ -196,7 +286,7 @@ diff -urN linux.orig/fs/ext2/super.c linux/fs/ext2/super.c
  /*
   * This function has been shamelessly adapted from the msdos fs
   */
-@@ -644,6 +655,7 @@
+@@ -641,6 +652,7 @@
  	 * set up enough so that it can read an inode
  	 */
  	sb->s_op = &ext2_sops;
@@ -204,9 +294,9 @@ diff -urN linux.orig/fs/ext2/super.c linux/fs/ext2/super.c
  	sb->s_root = d_alloc_root(iget(sb, EXT2_ROOT_INO));
  	if (!sb->s_root) {
  		for (i = 0; i < db_count; i++)
-diff -urN linux.orig/fs/isofs/inode.c linux/fs/isofs/inode.c
---- linux.orig/fs/isofs/inode.c	Wed Apr 18 20:49:13 2001
-+++ linux/fs/isofs/inode.c	Fri May  4 19:14:45 2001
+diff -urN linux/fs/isofs/inode.c linux.nfsdops/fs/isofs/inode.c
+--- linux/fs/isofs/inode.c	Wed Apr 18 20:49:13 2001
++++ linux.nfsdops/fs/isofs/inode.c	Wed May 30 20:35:45 2001
 @@ -28,6 +28,7 @@
  #include <linux/ctype.h>
  #include <linux/smp_lock.h>
@@ -233,9 +323,9 @@ diff -urN linux.orig/fs/isofs/inode.c linux/fs/isofs/inode.c
  	s->u.isofs_sb.s_mapping = opt.map;
  	s->u.isofs_sb.s_rock = (opt.rock == 'y' ? 2 : 0);
  	s->u.isofs_sb.s_cruft = opt.cruft;
-diff -urN linux.orig/fs/nfsd/Makefile linux/fs/nfsd/Makefile
---- linux.orig/fs/nfsd/Makefile	Fri Dec 29 23:07:23 2000
-+++ linux/fs/nfsd/Makefile	Fri May  4 19:14:37 2001
+diff -urN linux/fs/nfsd/Makefile linux.nfsdops/fs/nfsd/Makefile
+--- linux/fs/nfsd/Makefile	Fri Dec 29 23:07:23 2000
++++ linux.nfsdops/fs/nfsd/Makefile	Wed May 30 20:35:35 2001
 @@ -9,6 +9,7 @@
  
  O_TARGET := nfsd.o
@@ -244,9 +334,9 @@ diff -urN linux.orig/fs/nfsd/Makefile linux/fs/nfsd/Makefile
  obj-y :=    nfssvc.o nfsctl.o nfsproc.o nfsfh.o vfs.o \
  	    export.o auth.o lockd.o nfscache.o nfsxdr.o \
  	    stats.o
-diff -urN linux.orig/fs/nfsd/export.c linux/fs/nfsd/export.c
---- linux.orig/fs/nfsd/export.c	Fri Feb  9 20:29:44 2001
-+++ linux/fs/nfsd/export.c	Fri May  4 19:14:37 2001
+diff -urN linux/fs/nfsd/export.c linux.nfsdops/fs/nfsd/export.c
+--- linux/fs/nfsd/export.c	Fri Feb  9 20:29:44 2001
++++ linux.nfsdops/fs/nfsd/export.c	Wed May 30 20:35:35 2001
 @@ -212,8 +212,7 @@
  		goto finish;
  
@@ -257,9 +347,9 @@ diff -urN linux.orig/fs/nfsd/export.c linux/fs/nfsd/export.c
  		dprintk("exp_export: export of invalid fs type.\n");
  		goto finish;
  	}
-diff -urN linux.orig/fs/nfsd/nfsctl.c linux/fs/nfsd/nfsctl.c
---- linux.orig/fs/nfsd/nfsctl.c	Fri Feb  9 20:29:44 2001
-+++ linux/fs/nfsd/nfsctl.c	Fri May  4 19:14:37 2001
+diff -urN linux/fs/nfsd/nfsctl.c linux.nfsdops/fs/nfsd/nfsctl.c
+--- linux/fs/nfsd/nfsctl.c	Wed May 16 19:04:25 2001
++++ linux.nfsdops/fs/nfsd/nfsctl.c	Wed May 30 20:35:35 2001
 @@ -312,8 +312,11 @@
  EXPORT_NO_SYMBOLS;
  MODULE_AUTHOR("Olaf Kirch <okir@monad.swb.de>");
@@ -272,9 +362,9 @@ diff -urN linux.orig/fs/nfsd/nfsctl.c linux/fs/nfsd/nfsctl.c
  };
  
  /*
-diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
---- linux.orig/fs/nfsd/nfsfh.c	Fri May  4 18:52:16 2001
-+++ linux/fs/nfsd/nfsfh.c	Fri May  4 19:14:37 2001
+diff -urN linux/fs/nfsd/nfsfh.c linux.nfsdops/fs/nfsd/nfsfh.c
+--- linux/fs/nfsd/nfsfh.c	Sun May 20 02:47:55 2001
++++ linux.nfsdops/fs/nfsd/nfsfh.c	Wed May 30 20:35:35 2001
 @@ -6,6 +6,7 @@
   * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
   * Portions Copyright (C) 1999 G. Allen Morris III <gam3@acm.org>
@@ -365,7 +455,7 @@ diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
  		if (error < 0)
  			break;
  
-@@ -116,375 +123,390 @@
+@@ -116,375 +123,391 @@
  	return error;
  }
  
@@ -784,6 +874,7 @@ diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
  				dput(result);
 -				result = tmp;
 -				/* If !found, then this is really weird, but it shouldn't hurt */
++				dentry->d_vfs_flags |= DCACHE_REFERENCED;
 +				return dentry;
  			}
 +			spin_lock(&dcache_lock);
@@ -915,7 +1006,7 @@ diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
 +			}
 +			dprintk("nfsfh: found name: %s\n", nbuf);
 +			down(&ppd->d_inode->i_sem);
-+			npd = lookup_one(nbuf, ppd);
++			npd = lookup_one_len(nbuf, ppd, strlen(nbuf));
 +			up(&ppd->d_inode->i_sem);
 +			if (IS_ERR(npd)) {
 +				err = PTR_ERR(npd);
@@ -961,7 +1052,7 @@ diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
 +		err = CALL(nops,get_name)(target_dir, nbuf, result);
 +		if (!err) {
 +			down(&target_dir->d_inode->i_sem);
-+			nresult = lookup_one(nbuf, target_dir);
++			nresult = lookup_one_len(nbuf, target_dir, strlen(nbuf));
 +			up(&target_dir->d_inode->i_sem);
 +			if (!IS_ERR(nresult)) {
 +				if (nresult->d_inode) {
@@ -1077,7 +1168,7 @@ diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
  /*
   * Perform sanity checks on the dentry in a client's file handle.
   *
-@@ -544,7 +571,6 @@
+@@ -549,7 +572,6 @@
  
  		if (!exp) {
  			/* export entry revoked */
@@ -1085,7 +1176,7 @@ diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
  			goto out;
  		}
  
-@@ -564,44 +590,43 @@
+@@ -569,44 +591,43 @@
  		/*
  		 * Look up the dentry using the NFS file handle.
  		 */
@@ -1160,7 +1251,7 @@ diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
  #ifdef NFSD_PARANOIA
  		if (S_ISDIR(dentry->d_inode->i_mode) &&
  		    (dentry->d_flags & DCACHE_NFSD_DISCONNECTED)) {
-@@ -631,7 +656,7 @@
+@@ -636,7 +657,7 @@
  	 * write call).
  	 */
  
@@ -1169,7 +1260,7 @@ diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
  	if (type > 0 && (inode->i_mode & S_IFMT) != type) {
  		error = (type == S_IFDIR)? nfserr_notdir : nfserr_isdir;
  		goto out;
-@@ -641,58 +666,58 @@
+@@ -646,58 +667,58 @@
  		goto out;
  	}
  
@@ -1270,7 +1361,7 @@ diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
  /*
   * Compose a file handle for an NFS reply.
   *
-@@ -703,20 +728,24 @@
+@@ -708,20 +729,24 @@
  inline int _fh_update(struct dentry *dentry, struct svc_export *exp,
  		      __u32 **datapp, int maxsize)
  {
@@ -1307,7 +1398,7 @@ diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
  }
  
  int
-@@ -725,6 +754,7 @@
+@@ -730,6 +755,7 @@
  	struct inode * inode = dentry->d_inode;
  	struct dentry *parent = dentry->d_parent;
  	__u32 *datap;
@@ -1315,7 +1406,7 @@ diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
  
  	dprintk("nfsd: fh_compose(exp %x/%ld %s/%s, ino=%ld)\n",
  		exp->ex_dev, (long) exp->ex_ino,
-@@ -750,16 +780,16 @@
+@@ -755,16 +781,16 @@
  	*datap++ = htonl((MAJOR(exp->ex_dev)<<16)| MINOR(exp->ex_dev));
  	*datap++ = ino_t_to_u32(exp->ex_ino);
  
@@ -1338,7 +1429,7 @@ diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
  	return 0;
  }
  
-@@ -772,6 +802,7 @@
+@@ -777,6 +803,7 @@
  {
  	struct dentry *dentry;
  	__u32 *datap;
@@ -1346,7 +1437,7 @@ diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
  	
  	if (!fhp->fh_dentry)
  		goto out_bad;
-@@ -783,8 +814,10 @@
+@@ -788,8 +815,10 @@
  		goto out_uptodate;
  	datap = fhp->fh_handle.fh_auth+
  		          fhp->fh_handle.fh_size/4 -1;
@@ -1359,7 +1450,7 @@ diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
  	fhp->fh_handle.fh_size = (datap-fhp->fh_handle.fh_auth+1)*4;
  out:
  	return 0;
-@@ -817,3 +850,30 @@
+@@ -822,3 +851,30 @@
  	}
  	return;
  }
@@ -1390,9 +1481,9 @@ diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
 + */
 +EXPORT_SYMBOL(nfsd_find_fh_dentry);
 +#endif
-diff -urN linux.orig/fs/reiserfs/inode.c linux/fs/reiserfs/inode.c
---- linux.orig/fs/reiserfs/inode.c	Fri Apr 27 23:18:08 2001
-+++ linux/fs/reiserfs/inode.c	Fri May  4 19:14:41 2001
+diff -urN linux/fs/reiserfs/inode.c linux.nfsdops/fs/reiserfs/inode.c
+--- linux/fs/reiserfs/inode.c	Fri Apr 27 23:18:08 2001
++++ linux.nfsdops/fs/reiserfs/inode.c	Wed May 30 20:35:41 2001
 @@ -918,7 +918,6 @@
  
  
@@ -1463,9 +1554,9 @@ diff -urN linux.orig/fs/reiserfs/inode.c linux/fs/reiserfs/inode.c
      insert_inode_hash (inode);
      // we do not mark inode dirty: on disk content matches to the
      // in-core one
-diff -urN linux.orig/fs/reiserfs/namei.c linux/fs/reiserfs/namei.c
---- linux.orig/fs/reiserfs/namei.c	Fri Apr 27 23:18:08 2001
-+++ linux/fs/reiserfs/namei.c	Fri May  4 19:14:41 2001
+diff -urN linux/fs/reiserfs/namei.c linux.nfsdops/fs/reiserfs/namei.c
+--- linux/fs/reiserfs/namei.c	Fri Apr 27 23:18:08 2001
++++ linux.nfsdops/fs/reiserfs/namei.c	Wed May 30 20:35:41 2001
 @@ -18,6 +18,7 @@
  #include <linux/bitops.h>
  #include <linux/reiserfs_fs.h>
@@ -1700,9 +1791,9 @@ diff -urN linux.orig/fs/reiserfs/namei.c linux/fs/reiserfs/namei.c
 +#endif
  }
  
-diff -urN linux.orig/fs/reiserfs/stree.c linux/fs/reiserfs/stree.c
---- linux.orig/fs/reiserfs/stree.c	Sat Apr 14 05:26:07 2001
-+++ linux/fs/reiserfs/stree.c	Fri May  4 19:14:41 2001
+diff -urN linux/fs/reiserfs/stree.c linux.nfsdops/fs/reiserfs/stree.c
+--- linux/fs/reiserfs/stree.c	Sat Apr 14 05:26:07 2001
++++ linux.nfsdops/fs/reiserfs/stree.c	Wed May 30 20:35:41 2001
 @@ -1560,6 +1560,17 @@
          reiserfs_warning("clm-4001: deleting inode with link count==%d\n", inode->i_nlink) ;
      }
@@ -1721,9 +1812,9 @@ diff -urN linux.orig/fs/reiserfs/stree.c linux/fs/reiserfs/stree.c
      reiserfs_delete_solid_item (th, INODE_PKEY (inode));
  }
  
-diff -urN linux.orig/fs/reiserfs/super.c linux/fs/reiserfs/super.c
---- linux.orig/fs/reiserfs/super.c	Fri Apr 27 23:18:08 2001
-+++ linux/fs/reiserfs/super.c	Fri May  4 19:14:41 2001
+diff -urN linux/fs/reiserfs/super.c linux.nfsdops/fs/reiserfs/super.c
+--- linux/fs/reiserfs/super.c	Fri Apr 27 23:18:08 2001
++++ linux.nfsdops/fs/reiserfs/super.c	Wed May 30 20:35:41 2001
 @@ -21,6 +21,7 @@
  #include <linux/smp_lock.h>
  #include <linux/locks.h>
@@ -1772,20 +1863,20 @@ diff -urN linux.orig/fs/reiserfs/super.c linux/fs/reiserfs/super.c
  
      /* new format is limited by the 32 bit wide i_blocks field, want to
      ** be one full block below that.
-diff -urN linux.orig/fs/super.c linux/fs/super.c
---- linux.orig/fs/super.c	Fri May  4 18:52:16 2001
-+++ linux/fs/super.c	Fri May  4 19:14:37 2001
-@@ -720,7 +720,6 @@
+diff -urN linux/fs/super.c linux.nfsdops/fs/super.c
+--- linux/fs/super.c	Fri May 25 21:38:52 2001
++++ linux.nfsdops/fs/super.c	Wed May 30 20:35:35 2001
+@@ -689,7 +689,6 @@
  		init_rwsem(&s->s_umount);
-		sema_init(&s->s_lock, 1);
-		sema_init(&s->s_vfs_rename_sem,1);
+ 		sema_init(&s->s_lock, 1);
+ 		sema_init(&s->s_vfs_rename_sem,1);
 -		sema_init(&s->s_nfsd_free_path_sem,1);
-		sema_init(&s->s_dquot.dqio_sem, 1);
-		sema_init(&s->s_dquot.dqoff_sem, 1);
+ 		sema_init(&s->s_dquot.dqio_sem, 1);
+ 		sema_init(&s->s_dquot.dqoff_sem, 1);
  	}
-diff -urN linux.orig/fs/ufs/ialloc.c linux/fs/ufs/ialloc.c
---- linux.orig/fs/ufs/ialloc.c	Thu Nov 16 22:18:26 2000
-+++ linux/fs/ufs/ialloc.c	Fri May  4 19:14:48 2001
+diff -urN linux/fs/ufs/ialloc.c linux.nfsdops/fs/ufs/ialloc.c
+--- linux/fs/ufs/ialloc.c	Thu Nov 16 22:18:26 2000
++++ linux.nfsdops/fs/ufs/ialloc.c	Wed May 30 20:35:48 2001
 @@ -272,6 +272,7 @@
  	inode->i_mtime = inode->i_atime = inode->i_ctime = CURRENT_TIME;
  	inode->u.ufs_i.i_flags = dir->u.ufs_i.i_flags;
@@ -1794,9 +1885,9 @@ diff -urN linux.orig/fs/ufs/ialloc.c linux/fs/ufs/ialloc.c
  
  	insert_inode_hash(inode);
  	mark_inode_dirty(inode);
-diff -urN linux.orig/fs/ufs/inode.c linux/fs/ufs/inode.c
---- linux.orig/fs/ufs/inode.c	Tue Dec  5 04:00:54 2000
-+++ linux/fs/ufs/inode.c	Fri May  4 19:14:48 2001
+diff -urN linux/fs/ufs/inode.c linux.nfsdops/fs/ufs/inode.c
+--- linux/fs/ufs/inode.c	Tue Dec  5 04:00:54 2000
++++ linux.nfsdops/fs/ufs/inode.c	Wed May 30 20:35:48 2001
 @@ -562,13 +562,13 @@
  	if (inode->i_ino < UFS_ROOTINO || 
  	    inode->i_ino > (uspi->s_ncg * uspi->s_ipg)) {
@@ -1878,9 +1969,9 @@ diff -urN linux.orig/fs/ufs/inode.c linux/fs/ufs/inode.c
 +		clear_inode(inode);
  	unlock_kernel();
  }
-diff -urN linux.orig/fs/ufs/namei.c linux/fs/ufs/namei.c
---- linux.orig/fs/ufs/namei.c	Tue Sep  5 23:07:30 2000
-+++ linux/fs/ufs/namei.c	Fri May  4 19:14:48 2001
+diff -urN linux/fs/ufs/namei.c linux.nfsdops/fs/ufs/namei.c
+--- linux/fs/ufs/namei.c	Tue Sep  5 23:07:30 2000
++++ linux.nfsdops/fs/ufs/namei.c	Wed May 30 20:35:48 2001
 @@ -208,9 +208,45 @@
  		if (!inode) 
  			return ERR_PTR(-EACCES);
@@ -1927,9 +2018,9 @@ diff -urN linux.orig/fs/ufs/namei.c linux/fs/ufs/namei.c
  }
  
  /*
-diff -urN linux.orig/fs/ufs/super.c linux/fs/ufs/super.c
---- linux.orig/fs/ufs/super.c	Wed Apr 18 08:16:39 2001
-+++ linux/fs/ufs/super.c	Fri May  4 19:14:48 2001
+diff -urN linux/fs/ufs/super.c linux.nfsdops/fs/ufs/super.c
+--- linux/fs/ufs/super.c	Wed May 16 19:31:27 2001
++++ linux.nfsdops/fs/ufs/super.c	Wed May 30 20:35:48 2001
 @@ -80,6 +80,7 @@
  #include <linux/locks.h>
  #include <linux/blkdev.h>
@@ -1946,7 +2037,7 @@ diff -urN linux.orig/fs/ufs/super.c linux/fs/ufs/super.c
  
  static char error_buf[1024];
  
-@@ -738,6 +740,7 @@
+@@ -735,6 +737,7 @@
  	sb->s_blocksize =  SWAB32(usb1->fs_fsize);
  	sb->s_blocksize_bits = SWAB32(usb1->fs_fshift);
  	sb->s_op = &ufs_super_ops;
@@ -1954,7 +2045,7 @@ diff -urN linux.orig/fs/ufs/super.c linux/fs/ufs/super.c
  	sb->dq_op = NULL; /***/
  	sb->s_magic = SWAB32(usb3->fs_magic);
  
-@@ -980,6 +983,12 @@
+@@ -977,6 +980,12 @@
  	write_super:	ufs_write_super,
  	statfs:		ufs_statfs,
  	remount_fs:	ufs_remount,
@@ -1967,9 +2058,9 @@ diff -urN linux.orig/fs/ufs/super.c linux/fs/ufs/super.c
  };
  
  static DECLARE_FSTYPE_DEV(ufs_fs_type, "ufs", ufs_read_super);
-diff -urN linux.orig/include/linux/dcache.h linux/include/linux/dcache.h
---- linux.orig/include/linux/dcache.h	Sat Apr 28 00:48:18 2001
-+++ linux/include/linux/dcache.h	Fri May  4 19:14:37 2001
+diff -urN linux/include/linux/dcache.h linux.nfsdops/include/linux/dcache.h
+--- linux/include/linux/dcache.h	Sat May 26 03:01:26 2001
++++ linux.nfsdops/include/linux/dcache.h	Wed May 30 20:35:35 2001
 @@ -116,12 +116,17 @@
  					 * renamed" and has to be
  					 * deleted on the last dput()
@@ -2006,10 +2097,10 @@ diff -urN linux.orig/include/linux/dcache.h linux/include/linux/dcache.h
  
  /* appendix may either be NULL or be used for transname suffixes */
  extern struct dentry * d_lookup(struct dentry *, struct qstr *);
-diff -urN linux.orig/include/linux/fs.h linux/include/linux/fs.h
---- linux.orig/include/linux/fs.h	Fri May  4 18:52:17 2001
-+++ linux/include/linux/fs.h	Fri May  4 19:14:37 2001
-@@ -658,6 +658,7 @@
+diff -urN linux/include/linux/fs.h linux.nfsdops/include/linux/fs.h
+--- linux/include/linux/fs.h	Sat May 26 03:01:28 2001
++++ linux.nfsdops/include/linux/fs.h	Wed May 30 20:35:35 2001
+@@ -667,6 +667,7 @@
  	struct file_system_type	*s_type;
  	struct super_operations	*s_op;
  	struct dquot_operations	*dq_op;
@@ -2017,7 +2108,7 @@ diff -urN linux.orig/include/linux/fs.h linux/include/linux/fs.h
  	unsigned long		s_flags;
  	unsigned long		s_magic;
  	struct dentry		*s_root;
-@@ -702,15 +703,6 @@
+@@ -711,15 +712,6 @@
  	 * even looking at it. You had been warned.
  	 */
  	struct semaphore s_vfs_rename_sem;	/* Kludge */
@@ -2033,9 +2124,9 @@ diff -urN linux.orig/include/linux/fs.h linux/include/linux/fs.h
  };
  
  /*
-diff -urN linux.orig/include/linux/nfsd/interface.h linux/include/linux/nfsd/interface.h
---- linux.orig/include/linux/nfsd/interface.h	Tue Sep  5 21:56:51 2000
-+++ linux/include/linux/nfsd/interface.h	Fri May  4 19:14:37 2001
+diff -urN linux/include/linux/nfsd/interface.h linux.nfsdops/include/linux/nfsd/interface.h
+--- linux/include/linux/nfsd/interface.h	Tue Sep  5 21:56:51 2000
++++ linux.nfsdops/include/linux/nfsd/interface.h	Wed May 30 20:35:35 2001
 @@ -12,12 +12,151 @@
  
  #include <linux/config.h>
@@ -2188,9 +2279,9 @@ diff -urN linux.orig/include/linux/nfsd/interface.h linux/include/linux/nfsd/int
  #endif
  
  #endif /* LINUX_NFSD_INTERFACE_H */
-diff -urN linux.orig/include/linux/reiserfs_fs.h linux/include/linux/reiserfs_fs.h
---- linux.orig/include/linux/reiserfs_fs.h	Fri Apr 27 23:18:08 2001
-+++ linux/include/linux/reiserfs_fs.h	Fri May  4 19:14:41 2001
+diff -urN linux/include/linux/reiserfs_fs.h linux.nfsdops/include/linux/reiserfs_fs.h
+--- linux/include/linux/reiserfs_fs.h	Fri Apr 27 23:18:08 2001
++++ linux.nfsdops/include/linux/reiserfs_fs.h	Wed May 30 20:35:41 2001
 @@ -65,6 +65,8 @@
  /* enable journalling */
  #define ENABLE_JOURNAL
@@ -2208,9 +2299,9 @@ diff -urN linux.orig/include/linux/reiserfs_fs.h linux/include/linux/reiserfs_fs
        //__u32 sd_first_direct_byte; 
        /* first byte of file which is stored in a
  				       direct item: except that if it equals 1
-diff -urN linux.orig/include/linux/reiserfs_fs_sb.h linux/include/linux/reiserfs_fs_sb.h
---- linux.orig/include/linux/reiserfs_fs_sb.h	Sat Apr 28 00:48:26 2001
-+++ linux/include/linux/reiserfs_fs_sb.h	Fri May  4 19:14:41 2001
+diff -urN linux/include/linux/reiserfs_fs_sb.h linux.nfsdops/include/linux/reiserfs_fs_sb.h
+--- linux/include/linux/reiserfs_fs_sb.h	Sat May 26 03:01:28 2001
++++ linux.nfsdops/include/linux/reiserfs_fs_sb.h	Wed May 30 20:35:41 2001
 @@ -60,7 +60,8 @@
                                     don't need to save bytes in the
                                     superblock. -Hans */
@@ -2221,10 +2312,10 @@ diff -urN linux.orig/include/linux/reiserfs_fs_sb.h linux/include/linux/reiserfs
  } __attribute__ ((__packed__));
  
  #define SB_SIZE (sizeof(struct reiserfs_super_block))
-diff -urN linux.orig/kernel/ksyms.c linux/kernel/ksyms.c
---- linux.orig/kernel/ksyms.c	Fri May  4 18:52:17 2001
-+++ linux/kernel/ksyms.c	Fri May  4 19:14:37 2001
-@@ -157,6 +157,8 @@
+diff -urN linux/kernel/ksyms.c linux.nfsdops/kernel/ksyms.c
+--- linux/kernel/ksyms.c	Fri May 25 00:20:18 2001
++++ linux.nfsdops/kernel/ksyms.c	Wed May 30 20:35:35 2001
+@@ -159,6 +159,8 @@
  EXPORT_SYMBOL(d_rehash);
  EXPORT_SYMBOL(d_invalidate);	/* May be it will be better in dcache.h? */
  EXPORT_SYMBOL(d_move);
