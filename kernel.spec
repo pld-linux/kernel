@@ -53,9 +53,9 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_post_ver	.5
-#define		_post_ver	%{nil}
-%define		_rel		1.2
+#define		_post_ver	.5
+%define		_post_ver	%{nil}
+%define		_rel		0.1
 %define		_cset		20050302_0807
 %define		_apply_cset	0
 
@@ -73,15 +73,16 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.6.11%{_post_ver}
+Version:	2.6.12%{_post_ver}
 Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-%define		_rc	%{nil}
-#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	94af162c2c5c264344f279c6946c4f59
+#define		_rc	%{nil}
+%define		_rc	-rc1
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
+# Source0-md5:	ff769e52bebd0b07587acc21083aa4a5
+##Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 
 ## Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
@@ -102,97 +103,6 @@ Source32:	%{name}-ia64.config
 Source33:	%{name}-ia64-smp.config
 
 Source40:	%{name}.FAQ-pl
-
-Source80:	%{name}-netfilter.config
-Source90:	%{name}-grsec.config
-Source91:	%{name}-grsec+pax.config
-Source92:	%{name}-vserver.config
-Source93:	%{name}-iriverfs.config
-
-#Patch0:		2.6.0-ksyms-add.patch
-#Patch1:		linux-2.6-alsa-1.0.8-silent-output.patch
-#Patch2:		2.6.0-t6-usb-irq.patch
-#Patch3:		2.6.0-t7-memleak-lkml.patch
-#Patch4:		2.6.0-t7-memleak2-lkml.patch
-#Patch6:		2.6.0-t8-VLSI-ix86-lkml.patch
-
-#Patch8:		2.6.0-t8-umsdos-lkml.patch
-#Patch9:		2.6.0-t9-acpi_osl-lkml.patch
-
-# http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
-#Patch10:		2.6.0-powernow-k7.patch
-#Patch11:		2.6.0-enable-radeon-igp-rendering.patch
-#Patch12:		2.6.0-omnikeys.patch
-
-#Patch13:		2.6.1-rc2-VLAN-NS83820-lkml.patch
-#Patch14:		linux-2.6-omnibook-20040916.patch
-#Patch15:		linux-2.6-enable-broken-advansys.patch
-#Patch16:		linux-alpha-isa.patch
-#Patch17:		2.6.4-psion-5mx.patch
-#Patch18:		2.6.5-sparc64-missing-include.patch
-#Patch19:		2.6.5-3C920b-Tornado.patch
-#Patch20:		2.6.5-i386-cmpxchg.patch
-#Patch21:		2.6.6-serial-fifo-lkml.patch
-#Patch22:		2.6.6-qsort-updated-lkml.patch
-#Patch23:		2.6.6-xfs-qsort-lkml.patch
-#Patch24:		2.6.7-bridge_sysfs-lkml.patch
-#Patch25:		2.6.7-alpha_compile.patch
-#Patch26:		2.6.7-ppc-asm-defs.patch
-#Patch27:		linux-ppc-oops.patch
-#Patch28:		linux-2.6-sparc-ksyms.patch
-
-#Patch30:		2.6.x-ppp_mppe.patch
-
-#Patch32:		2.6.x-TGA-fbdev-lkml.patch
-Patch33:		linux-kbuild-extmod.patch
-
-# framebuffer fixes
-Patch41:		linux-fbcon-margins.patch
-
-# netfilter
-Patch50:	2.6.11.3-pom-ng-%{_netfilter_snap}.patch
-# http://l7-filter.sourceforge.net/
-#Patch52:	2.6.8-ipt_layer7.patch
-#Patch53:	2.6.10-esfq.patch
-# from http://www.linuximq.net/patchs/linux-2.6.9-imq1.diff
-Patch54:	linux-2.6.11.3-imq1.patch
-#Patch55:	2.6.4-wrr.patch
-#Patch56:	linux-2.6-netfilter-syms.patch
-
-# pseudo terminal fix for older glibc
-#Patch60:	%{name}-pts.patch
-#Patch61:	%{name}-MAX_INIT_ARGS.patch
-
-# http://tahoe.pl/patch.htm
-Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.10.patch
-
-# http://dev.gentoo.org/~spock/projects/gensplash/
-Patch72:	fbsplash-0.9.2-2.6.11.patch  
-Patch73:	squashfs2.1-patch
-Patch74:	linux-static-dev.patch
-Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
-Patch76:	linux-2.6-lirc-0.7.patch
-#Patch78:	linux-2.6-expand-stack-race.patch
-
-# http://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.10/
-Patch90:	acpi-20050309-2.6.11.diff
-
-# frpm http://www.ssi.bg/~ja/#routers
-#Patch100:	routes-2.6.10-11.diff
-
-# http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.10-rc2/2.6.10-rc-mm2/broken-out
-#Patch110:	linux-reiser4.patch.bz2
-
-## based on http://grsecurity.org/grsecurity-2.1.3-2.6.11-200503091157.patch
-Patch200:	grsecurity-2.1.3-2.6.11-200503091157.patch
-#Patch201:	linux-2.6.10-secfix-200501071130.patch
-
-# linux vserver
-# adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
-Patch250:	linux-2.6-vs.patch
-
-# iRiverFS support from http://dl.sourceforge.net/sourceforge/ifp-driver/
-Patch260:	iriverfs-r0.1.0.1.patch.gz
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -521,90 +431,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 bzcat %{SOURCE4} | patch -p1 -s
 %endif
 
-#%patch0 -p1
-#%patch1 -p1
-#%patch2 -p1
-#%patch3 -p1
-#%patch4 -p1
-#%patch6 -p1
-
-#%patch8 -p1
-#%patch9 -p1
-#%patch10 -p1
-#%patch11 -p1
-#%patch12 -p1
-#%patch13 -p1
-#%patch14 -p1
-#%patch15 -p1
-#%patch16 -p1
-#%patch17 -p1
-#%patch18 -p1
-#%patch19 -p1
-#%patch20 -p1
-#%patch21 -p1
-#%patch22 -p1
-#%patch23 -p1
-#patch24 -p1
-#%patch25 -p1
-#%patch26 -p1
-#%patch27 -p1
-#%patch28 -p1
-
-#patch30 -p1
-
-#patch32 -p1	NEEDS UPDATE
-%patch33 -p1
-
-%patch41 -p1
-
-# netfilter
-%patch50 -p1
-
-#%patch52 -p1
-#%patch53 -p1
-%patch54 -p1
-#%patch55 -p1
-#%patch56 -p1
-
-#patch60 -p1
-#%patch61 -p1
-
-%patch70 -p1
-
-%patch72 -p1
-
-%patch73 -p1
-%patch74 -p1
-%patch75 -p1
-%patch76 -p1
-#patch78 -p1
-
-%patch90 -p1
-
-# routers
-#%patch100 -p1
-
-#%patch110 -p1
-
-%patch260 -p1
-
-# <bconded_patches>
-
-#grsec
-%ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
-%if %{with grsec}
-%patch200 -p1
-#%patch201 -p1
-%endif
-%endif
-
-%if %{with vserver}
-%patch250 -p1
-%endif
-
-# </bconded_patches
-
-
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_post_ver}#g' Makefile
 
@@ -679,17 +505,17 @@ BuildConfig (){
 %endif
 
 #	netfilter	
-	cat %{SOURCE80} >> arch/%{_target_base_arch}/defconfig
+#	cat %{SOURCE80} >> arch/%{_target_base_arch}/defconfig
 #	grsecurity
-%if !%{with pax}
-	cat %{SOURCE90} >> arch/%{_target_base_arch}/defconfig
-%else
-	cat %{SOURCE91} >> arch/%{_target_base_arch}/defconfig
-%endif
+#if !%{with pax}
+#	cat %{SOURCE90} >> arch/%{_target_base_arch}/defconfig
+#else
+#	cat %{SOURCE91} >> arch/%{_target_base_arch}/defconfig
+#endif
 #	vserver
-	cat %{SOURCE92} >> arch/%{_target_base_arch}/defconfig
+#	cat %{SOURCE92} >> arch/%{_target_base_arch}/defconfig
 #	iriverfs
-	cat %{SOURCE93} >> arch/%{_target_base_arch}/defconfig
+#	cat %{SOURCE93} >> arch/%{_target_base_arch}/defconfig
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
