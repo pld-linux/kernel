@@ -14,6 +14,7 @@
 %bcond_without	source		# don't build kernel-source package
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
+%bcond_with	bootsplash	# build with bootsplash
 
 %{?debug:%define with_verbose 1}
 
@@ -558,7 +559,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch24 -p1
 
 ## bootsplash
-%patch26 -p1
+%{?with_bootsplash:%patch26 -p1}
 
 %patch28 -p1
 
