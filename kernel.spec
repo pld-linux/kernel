@@ -4,8 +4,9 @@
 # If you define the following as 1, only kernel, -headers and -source
 # packages will be built
 #
-#	TODO
-# - check I2C
+# TODO:
+#		- check I2C
+#		- fix bootsplash
 #
 # Conditional build:
 %bcond_without	BOOT		# don't build BOOT kernel
@@ -95,9 +96,7 @@ Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
-
 Source80:	%{name}-netfilter.config
-
 Source90:	%{name}-grsec.config
 
 Patch0:		2.6.0-ksyms-add.patch
@@ -116,94 +115,75 @@ Patch12:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch13:	2.6.2-Initio9100U-Kconfig.patch
 # http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
 Patch14:	2.6.1-all-in-1.patch
+Patch15:	2.6.3-sparc32-fix.patch
+Patch16:	linux-alpha-isa.patch
+Patch17:	2.6.4-psion-5mx.patch
+Patch18:	2.6.5-sparc64-missing-include.patch
+Patch19:	2.6.5-3C920b-Tornado.patch
+Patch20:	2.6.5-i386-cmpxchg.patch
+Patch21:	2.6.6-serial-fifo-lkml.patch
+Patch22:	2.6.6-qsort-updated-lkml.patch
+Patch23:	2.6.6-xfs-qsort-lkml.patch
+Patch24:	2.6.7-bridge_sysfs-lkml.patch
+Patch25:	2.6.7-alpha_compile.patch
+Patch26:	2.6.7-ppc-asm-defs.patch
+Patch27:	2.6.7-ppc-cciss-div.patch
+Patch28:	2.6.7-ppc-ipr-div.patch
+Patch29:	2.6.8-lkml-saa7146-memory-variable.patch
+Patch30:	2.6.x-ppp_mppe.patch
+Patch31:	2.6.x-SGI_VW-fbdev-lkml.patch
+Patch32:	2.6.x-TGA-fbdev-lkml.patch
+Patch33:	linux-kbuild-extmod.patch
 
-
-#Patch24:	%{name}-nls_default.patch
-Patch25:	squashfs2.0-patch
-# rewriten based on: ftp://ftp.suse.com/pub/people/stepan/bootsplash/kernel/bootsplash-3.1.4-2.6.3.diff
-Patch26:	bootsplash-3.1.4-2.6.7.patch
-
-Patch30:	linux-tdfxfb-fillrect.patch
-Patch31:	linux-fbcon-margins.patch
-Patch32:	linux-tdfxfb-interlace+double.patch
-Patch33:	linux-2.6-rivafb16.patch
-
-Patch38:	linux-kbuild-extmod.patch
-
-Patch40:	2.6.x-PD6729-lkml.patch
-
-Patch42:	2.6.x-ppp_mppe.patch
+# framebuffer fixes
+Patch40:	linux-tdfxfb-fillrect.patch
+Patch41:	linux-fbcon-margins.patch
+Patch42:	linux-tdfxfb-interlace+double.patch
+Patch43:	linux-2.6-rivafb16.patch
+Patch44:	linux-fbcon-con2fb-crash-workaround.patch
 
 # netfilter
-Patch46:	2.6.7-pom-ng-%{_netfilter_snap}.patch
+Patch50:	2.6.7-pom-ng-%{_netfilter_snap}.patch
 # http://www.barbara.eu.org/~quaker/ipt_account/
-Patch47:	2.6.6-ipt_account.patch
+Patch51:	2.6.6-ipt_account.patch
+#Patch52:	2.6.7-ipt_layer7.patch
+Patch53:	2.6.4-rc1-01-esfq-imq.patch
+Patch54:	2.6.4-rc1-02-imq-nat-support.patch
+Patch55:	2.6.4-wrr.patch
+Patch56:	linux-2.6-netfilter-syms.patch
 
-Patch48:	2.6.3-sparc32-fix.patch
+# pseudo terminal fix for older glibc
+Patch60:	%{name}-pts.patch
+Patch61:	%{name}-MAX_INIT_ARGS.patch
 
-# http://www.tahoe.pl/drivers/tahoe9xx-2.6.2.patch
-#Patch50:	tahoe9xx-2.6.2.patch
-Patch50:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
-Patch51:	linux-tahoe9xx-hdlc-update.patch
-
-Patch54:	2.6.x-SGI_VW-fbdev-lkml.patch
-
-Patch56:	2.6.x-TGA-fbdev-lkml.patch
-
-Patch58:	linux-alpha-isa.patch
-Patch59:	2.6.7-alpha_compile.patch
-
-Patch60:	2.6.4-rc1-01-esfq-imq.patch
-Patch61:	2.6.4-rc1-02-imq-nat-support.patch
-
-Patch64:	2.6.4-psion-5mx.patch
-
-
-Patch68:	2.6.5-sparc64-missing-include.patch
-
-Patch70:	2.6.5-3C920b-Tornado.patch
-
-Patch72:	2.6.5-i386-cmpxchg.patch
-
-Patch74:	2.6.4-wrr.patch
-
-# http://dl.sourceforge.net/sourceforge/pramfs/pramfs-2.6.4-1.0.2.tar.gz
-Patch76:	pramfs-2.6.4.patch
-
-Patch78:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
-
-Patch80:	http://www.elektronikschule.de/~genannt/kernel-patche/lirc/lirc-2.6.5-20040404
-
+# http://tahoe.pl/patch.htm
+Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
+Patch71:	linux-tahoe9xx-hdlc-update.patch
+# rewriten based on: ftp://ftp.suse.com/pub/people/stepan/bootsplash/kernel/bootsplash-3.1.4-2.6.3.diff
+Patch72:	bootsplash-3.1.4-2.6.7.patch
+Patch73:	squashfs2.0-patch
+# http://dl.sourceforge.net/sourceforge/pramfs/
+Patch74:	pramfs-2.6.4.patch
+Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
+Patch76:	http://www.elektronikschule.de/~genannt/kernel-patche/lirc/lirc-2.6.5-20040404
+Patch77:	2.6.6-lirc_i2c.diff
 # from http://www.smcc.demon.nl/webcam/pwcx-9.0-beta-2.tar.gz
-Patch82:	2.6.7-pwcx.patch
+Patch78:	2.6.7-pwcx.patch
 
-Patch84:	2.6.6-serial-fifo-lkml.patch
-
-Patch88:	2.6.6-qsort-updated-lkml.patch
-Patch90:	2.6.6-xfs-qsort-lkml.patch
-
-#Patch94:	grsecurity-2.0-2.6.6-unofficial.patch
-Patch94:	%{name}-grsec.patch
-
-Patch96:	2.6.6-lirc_i2c.diff
-# for older glibc:
-Patch97:	%{name}-pts.patch
-
-Patch100:	%{name}-MAX_INIT_ARGS.patch
+# derived from grsecurity-2.0-2.6.6-unofficial.patch
+Patch90:	%{name}-grsec.patch
+# http://lkml.org/lkml/2004/6/2/233
+Patch91:	http://people.redhat.com/mingo/exec-shield/exec-shield-nx-2.6.7-A0
+Patch92:	exec-shield-make-peace-with-grsecurity.patch
 
 # frpm http://www.ssi.bg/~ja/#routers
-Patch102:	00_static_routes-2.6.0-test1-8.diff
-Patch103:	01_alt_routes-2.5.50-8.diff
-Patch104:	01_arp_prefsrc-2.5.50-5.diff
-Patch105:	05_nf_reroute-2.6.7-10.diff
+Patch100:	00_static_routes-2.6.0-test1-8.diff
+Patch101:	01_alt_routes-2.5.50-8.diff
+#Patch102:	01_arp_prefsrc-2.5.50-5.diff <- not applied. needs checkout
+Patch103:	05_nf_reroute-2.6.7-10.diff
 
-Patch108:	2.6.7-bridge_sysfs-lkml.patch
-
-Patch110:	ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.7/acpi-20040326-2.6.7.diff.gz
-
-Patch112:	linux-fbcon-con2fb-crash-workaround.patch
-
-Patch114:	linux-2.6-netfilter-syms.patch
+# acpi
+#Patch110:	ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.7/acpi-20040326-2.6.7.diff.gz
 
 # http://sources.redhat.com/cluster/
 Patch200:	linux-cluster-cman.patch
@@ -211,22 +191,10 @@ Patch201:	linux-cluster-dlm.patch
 Patch202:	linux-cluster-gfs.patch
 Patch203:	linux-cluster-gnbd.patch
 
-# http://lkml.org/lkml/2004/6/2/233
-Patch211:	http://people.redhat.com/mingo/exec-shield/exec-shield-nx-2.6.7-A0
-Patch212:	exec-shield-make-peace-with-grsecurity.patch
-
 # hotfixes
-Patch300:	2.6.7-ppc-asm-defs.patch
-Patch302:	2.6.7-ppc-cciss-div.patch
-Patch303:	2.6.8-lkml-saa7146-memory-variable.patch
-Patch304:	2.6.7-ppc-ipr-div.patch
-Patch305:	2.6.7-ppc-proxydict-workaround.patch
-
-Patch310:	linux-2.6-sparc-ksyms.patch
-
-Patch312:	linux-2.6-ppc-ksyms.patch
-
-Patch400:	2.6.7-kill-warnings.patch
+Patch300:	linux-2.6-sparc-ksyms.patch
+Patch301:	linux-2.6-ppc-ksyms.patch
+Patch302:	2.6.7-kill-warnings.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -591,80 +559,62 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch12 -p1
 %patch13 -p1
 %patch14 -p1
-
-#patch24 -p1
-# squashfs
-%patch25 -p1
-
-## bootsplash
-%if %{with bootsplash}
-echo "Not fixed !!"
-%patch26 -p1
+%patch15 -p1
+%patch16 -p1
+%patch17 -p1
+%patch18 -p1
+%patch19 -p1
+%ifarch i386
+%patch20 -p1
 %endif
-
-
-
-%patch30 -p1
+%patch21 -p1
+%patch22 -p1
+%patch23 -p1
+#patch24 -p1
+%patch25 -p1
+%patch26 -p1
+%patch27 -p1
+%patch28 -p1
+%patch29 -p1
+#patch30 -p1
 %patch31 -p1
 %patch32 -p1
-#patch33 -p1
+%patch33 -p1
 
-
-
-
-
-%patch38 -p1
-
-#%patch40 -p1
-
+%patch40 -p1
+%patch41 -p1
 %patch42 -p1
-
-
+#patch43 -p1
+#patch44 -p1
 
 # netfilter
-%patch46 -p1
-#patch47 -p1
-
-%patch48 -p1
-
 %patch50 -p1
-#patch51 -p1
-
+%patch51 -p1
+#patch52 -p1
+%patch53 -p1
 %patch54 -p1
-
+%patch55 -p1
 %patch56 -p1
 
-%patch58 -p1
-%patch59 -p1
-
-%patch60 -p1
+#patch60 -p1
 %patch61 -p1
 
-%patch64 -p1
-
-
-
-%patch68 -p1
-
 %patch70 -p1
-
-%ifarch i386
+#patch71 -p1
+%if %{with bootsplash}
+echo "Not fixed !!"
 %patch72 -p1
 %endif
-
-%patch74 -p1
-
-#pramfs
+%patch73 -p1
 %if %{with parmfs}
-%patch76 -p1
+%patch74 -p1
 %endif
-
-%patch78 -p1
-
-%patch80 -p1
+%patch75 -p1
+%patch76 -p1
+%patch77 -p1
 
 # Philips USB drivers.
-#patch82 -p1
+#patch78 -p1
 # selected library
 #ifarch %{ix86}
 #cp drivers/usb/media/libpwcx.a_ix86 drivers/usb/media/libpwcx.a_
@@ -676,43 +626,31 @@ echo "Not fixed !!"
 #cp drivers/usb/media/libpwcx.a_ppc drivers/usb/media/libpwcx.a_
 #endif
 
-%patch84 -p1
-
-%patch88 -p1
-%patch90 -p1
-
 #grsec
 %ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
 %if %{with grsec}
-%patch94 -p1
+%patch90 -p1
 %endif
 %endif
 
 %if %{with execshield}
-install %{PATCH211} exec-shield.patch
+install %{PATCH91} exec-shield.patch
 %if %{with grsec}
-patch -s exec-shield.patch < %{PATCH212}
+patch -s exec-shield.patch < %{PATCH92}
 %endif
 patch -p1 -s < exec-shield.patch
 %endif
 
-%patch96 -p1
-#patch97 -p1
-
-%patch100 -p1
-
 # routers
-%patch102 -p1
+%patch100 -p1
+%patch101 -p1
+#patch102 -p1 # <- not applayed need checkout
 %patch103 -p1
-#patch104 -p1 # <- not applayed need checkout
-%patch105 -p1
 
-#patch108 -p1
-
+# acpi
 #patch110 -p1
 
-#patch112 -p1
-
+# cluster
 %patch200 -p1
 %patch201 -p1
 %patch202 -p1
@@ -720,18 +658,9 @@ patch -p1 -s < exec-shield.patch
 
 # hotfixes
 %patch300 -p1
+%patch301 -p1
 %patch302 -p1
-%patch303 -p1
-%patch304 -p1
-%patch305 -p1
 
-%patch310 -p1
-
-%patch312 -p1
-
-%patch400 -p1
-
-%patch114 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
