@@ -50,9 +50,9 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.11
-%define		_cset		20040718_0608
-%define		_apply_cset	0
+%define		_rel		0.12
+%define		_cset		20040718_1706
+%define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
 
@@ -81,9 +81,7 @@ Source0:	http://kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	a17d751c6a6b6fd86f11ececd2c0ad62
-# http://lkml.org/lkml/2004/7/18/8
-Source4:	nx-legacy-2.6.8-rc2-A7
+# Source3-md5:	6779d837d58ecdb27ee3bcb0af4cf3e9
 # http://lkml.org/lkml/2004/6/2/228
 ## Source6:	http://prdownloads.sourceforge.net/swsusp/software-suspend-2.0.0.81-for-2.6.6.tar.bz2
 Source20:	%{name}-i386.config
@@ -547,7 +545,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %if "%{_apply_cset}" != "0"
 zcat %{SOURCE3} | patch -p1 -s
 %endif
-patch -p1 -s < %{SOURCE4}
 
 %patch0 -p1
 %patch1 -p1
