@@ -68,23 +68,27 @@ diff -uNr linux-2.6.8-rc4.i2o.orig/drivers/message/i2o/i2o_core.c linux-2.6.8-rc
  	do {
  		if (c->lct == NULL) {
 +			if(c->pae_support)
-+				pci_set_dma_mask(c->pdev, (dma_addr_t)0xffffffffffffffff);
++				pci_set_dma_mask(c->pdev, (dma_addr_t)0xffffffffffffffffULL);
  			c->lct = pci_alloc_consistent(c->pdev, size, &c->lct_phys);
 +			if(c->pae_support)
 +				pci_set_dma_mask(c->pdev, (dma_addr_t)0xffffffffffffffffULL);
  			if(c->lct == NULL) {
  				printk(KERN_CRIT "%s: Lct Get failed. Out of memory.\n",
  					c->name);
-@@ -2622,7 +2632,7 @@
+@@ -2622,7 +2632,11 @@
  		sys_tbl->iops[count].iop_capabilities = 
  				iop->status_block->iop_capabilities;
  		sys_tbl->iops[count].inbound_low = (u32)iop->post_port;
 -		sys_tbl->iops[count].inbound_high = 0;	// FIXME: 64-bit support
-+		sys_tbl->iops[count].inbound_high = (u32)(iop->post_port >> 32);
++#if BITS_PER_LONG == 64
++		sys_tbl->iops[count].inbound_high = (u32)(((u64)iop->post_port) >> 32);
++#else
++		sys_tbl->iops[count].inbound_high = 0;
++#endif
  
  		count++;
  	}
-@@ -3660,6 +3670,12 @@
+@@ -3660,6 +3674,12 @@
  	c->short_req = 0;
  	c->pdev = dev;
  
