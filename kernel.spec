@@ -17,7 +17,7 @@
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
 %define		vlan_version		1.5
 %define		IPperson_version	20010724-2.4.7
-%define		grsec_version		1.8.7-2.4.14
+%define		grsec_version		1.8.9-2.4.15
 %define		tulip_version		1.1.8
 %define		aic_version		6.2.3-2.4.7
 %define		jfs_version		2.4-1.0.9
@@ -111,6 +111,8 @@ Patch111:	linux-2.4.1-netdebug.patch
 Patch112:	linux-2.4.1-scsi-reset.patch
 # Add an ioctl to the block layer so we can be EFI compliant
 Patch113:	linux-2.4.2-blkioctl-sector.patch
+# fix ??? problem with inode on ext2.
+Patch114:	2.4.15-inode.c.fix
 # fix lun probing on multilun RAID chassis
 Patch115:	linux-2.4.12-scsi_scan.patch
 # fix pcnet32 networkdriver load vs ifconfig races
@@ -400,6 +402,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch111 -p1
 %patch112 -p2
 ##%patch113 -p1
+%patch114 -p1
 %patch115 -p1
 %patch116 -p1
 %patch117 -p1
