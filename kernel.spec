@@ -6,7 +6,6 @@
 #
 # TODO:
 #		- check I2C
-#		- pwc
 #
 # Conditional build:
 %bcond_without	BOOT		# don't build BOOT kernel
@@ -18,7 +17,7 @@
 %bcond_with	pramfs		# build pramfs support (EXPERIMENTAL)
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
-%bcond_with	bootsplash	# build without bootsplash
+%bcond_with	bootsplash	# build with bootsplash
 
 %{?debug:%define with_verbose 1}
 
@@ -49,7 +48,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.12
+%define		_rel		0.13
 %define		_cset		20040718_1706
 %define		_apply_cset	1
 
@@ -61,6 +60,7 @@
 
 %define		pcmcia_version		3.1.22
 %define		drm_xfree_version	4.3.0
+%define		pwc_version		9.0.1
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -78,7 +78,8 @@ Group:		Base/Kernel
 Source0:	http://kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 # Source0-md5:	27b84a4dbb7434389f5782f86d5e894f
 Source1:	%{name}-autoconf.h
-Source2:	2.6.6-pwcx.tar.bz2
+Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
+# Source2-md5:	421476a59ed54ce3b374b0043060e354
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
 # Source3-md5:	6779d837d58ecdb27ee3bcb0af4cf3e9
 # http://lkml.org/lkml/2004/6/2/228
@@ -167,8 +168,6 @@ Patch74:	pramfs-2.6.4.patch
 Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
 Patch76:	http://www.elektronikschule.de/~genannt/kernel-patche/lirc/lirc-2.6.5-20040404
 Patch77:	2.6.6-lirc_i2c.diff
-# from http://www.smcc.demon.nl/webcam/pwcx-9.0-beta-2.tar.gz
-Patch78:	2.6.7-pwcx.patch
 
 # derived from grsecurity-2.0-2.6.6-unofficial.patch
 Patch90:	%{name}-grsec.patch
@@ -538,8 +537,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}%{_rc}
-# -a2
+%setup -q -n linux-%{version}%{_rc} -a2
 
 %if "%{_apply_cset}" != "0"
 zcat %{SOURCE3} | patch -p1 -s
@@ -612,18 +610,8 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch75 -p1
 %patch76 -p1
 %patch77 -p1
-# Philips USB drivers.
-#patch78 -p1
-# selected library
-#ifarch %{ix86}
-#cp drivers/usb/media/libpwcx.a_ix86 drivers/usb/media/libpwcx.a_
-#endif
-#ifarch powerpc
-#cp drivers/usb/media/libpwcx.a_powerpc drivers/usb/media/libpwcx.a_
-#endif
-#ifarch ppc
-#cp drivers/usb/media/libpwcx.a_ppc drivers/usb/media/libpwcx.a_
-#endif
+
+cp -f pwc-%{pwc_version}/2.6/pwc* drivers/usb/media
 
 #grsec
 %ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
