@@ -566,9 +566,9 @@ BuildKernel() {
 %else
 		Config="%{_target_cpu}"
 %endif
-		KernelVer=%{version}-%{release}$1
-		echo BUILDING THE NORMAL KERNEL $1...
 	fi
+	KernelVer=%{version}-%{release}$1
+	echo BUILDING THE NORMAL KERNEL $1...
 	:> arch/%{base_arch}/defconfig
 	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/%{base_arch}/defconfig
 %ifarch i386
@@ -645,6 +645,7 @@ BuildKernel() {
      %{__make} modules_install \
      	INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 	KERNELRELEASE=$KernelVer
+	echo KERNEL RELEASE $KernelVer
 }
 
 KERNEL_BUILD_DIR=`pwd`
