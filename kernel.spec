@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		1
+%define		_rel		2
 %define		_test_ver	8
 %define		_cset		20031023_1605
 
@@ -96,13 +96,9 @@ Patch46:	2.6.0-t8-sis900_net-lkml.patch
 
 Patch52:	2.6.0-t8-pci_dma_sync_to_device-lkml.patch
 
-#Patch54:	2.6.0-t8-ISAPnP-lkml.patch
-Patch56:	2.6.0-t8-cpuset-1of4-lkml.patch
-Patch58:	2.6.0-t8-cpuset-2of4-lkml.patch
-Patch60:	2.6.0-t8-cpuset-3of4-lkml.patch
-Patch62:	2.6.0-t8-cpuset-4of4-lkml.patch
+Patch54:	2.6.0-t8-ISAPnP-lkml.patch
 
-#Patch64:	2.6.0-t8-x86_64-declaration_fix-lkml.patch
+Patch64:	2.6.0-t8-x86_64-declaration_fix-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -426,12 +422,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch52 -p1
 
-#%patch54 -p1
-%patch56 -p1
-%patch58 -p1
-%patch60 -p1
-%patch62 -p1
-#%patch64 -p1
+%patch54 -p1
+%patch64 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
