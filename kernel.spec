@@ -173,8 +173,7 @@ Patch245:	linux-2.4.20-01-edd.patch
 Patch246:	linux-2.4.20-02-edd-allocate.patch
 # i2c - version 2.8.0
 Patch255:	linux-2.4.21-i2c-%{i2c_version}.patch.gz
-Patch256:	linux-2.4.21-i2c-HZ.patch
-Patch257:	linux-2.4.21-i2c-kmalloc.patch
+Patch256:	linux-2.4.21-i2c-headers.patch
 Patch265:	linux-2.4.20-e820.patch
 # Syntax bug
 Patch270:	dc395-tab.patch
@@ -704,7 +703,6 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch246 -p1
 %patch255 -p1
 %patch256 -p1
-%patch257 -p1
 %patch265 -p1
 %patch275 -p1
 %patch280 -p1
