@@ -208,7 +208,7 @@ Patch203:	linux-cluster-gnbd.patch
 
 # suspend/resume
 # http://softwaresuspend.berlios.de/
-Patch219:	linux-2.6.8-rc3-software-suspend-2.0.0.103.patch.gz
+Patch219:	linux-2.6-software-suspend-2.0.0.104.patch.gz
 Patch220:	linux-2.6-via-agpc-resume-suspend-support.patch
 Patch221:	linux-2.6-via-rhine-suspend-resume.patch
 
