@@ -6,7 +6,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.15
-Release:	1
+Release:	2
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -88,6 +88,8 @@ Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeu
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name} %{version}
+Provides:	%{name}(reiserfs) %{version}
+Provides:	%{name}(agpgart) %{version}
 Autoreqprov:	no
 
 %description smp
@@ -112,6 +114,8 @@ Summary(fr):	Kernel version %{version} avec framebuffer
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name} %{version}
+Provides:	%{name}(reiserfs) %{version}
+Provides:	%{name}(agpgart) %{version}
 Autoreqprov:	no
 
 %description fb
@@ -132,6 +136,8 @@ Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeu
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Provides:	%{name} %{version}
+Provides:	%{name}(reiserfs) %{version}
+Provides:	%{name}(agpgart) %{version}
 Autoreqprov:	no
 
 %description smp-fb
@@ -183,6 +189,8 @@ Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
+Provides:	%{name}-headers(agpgart) %{version}
+Provides:	%{name}-headers(reiserfs) %{version}
 Autoreqprov:	no
 
 %description headers
@@ -397,9 +405,11 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH3}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH9}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-%{ow_version}/linux-%{ow_version}.diff
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < dc395/dc395-integ22.diff
-install -m644 dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi/
+install dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi/
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
