@@ -124,7 +124,8 @@ Patch4:		linux-2.4.20-xfs-1.2.0.patch.bz2
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
 Patch6:		grsecurity-%{grsec_version}-%{version}.patch.gz
 
-# new version of netfilter.
+# new version of netfilter
+# (includes CAN-2003-0187 and CAN-2003-0467 fixes for Linux 2.4.20).
 %if %{netfilter_snap} != 0
 Patch8:		linux-2.4.20-netfilter-%{iptables_version}_%{netfilter_snap}.patch.gz
 %else
@@ -265,7 +266,7 @@ Patch113:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
 #from ftp://ftp.sistina.com/pub/LVM/1.0/lvm_%{lvm_version}.tar.gz
 Patch114:	linux-2.4.20-LVM-%{lvm_version}.patch.bz2
-
+# ioperm security fix (CAN-2003-0246)
 Patch115:	linux-2.4.20-ioperm.patch
 Patch116:	linux-proc_net_dev-counter-fix.patch
 Patch117:	01-sigxfs-vs-blkdev.patch
@@ -345,7 +346,11 @@ Patch253:	linux-2.4.25-change-imq_with_nat.patch
 Patch260:	linux-2.4.18-esfq.diff
 
 Patch888:	linux-2.4.20-netfilter-1.2.8_20030914-fix.patch
-
+# refcounting fix for CAN-2003-0187 fix in netfilter patch
+Patch889:	linux-2.4.20-conntrack-fix.patch
+# missing part of netfilter endian fixes
+Patch890:	linux-netfilter-ip_conntrack_amanda-endian.patch
+ 
 # tweaks for grsecurity, description inside patch
 Patch900:	loop-jari-2.4.20.0.patch
 Patch901:	dc395-tab.patch
@@ -374,18 +379,68 @@ Patch921:	linux-2.4.20-grsecurity-1.9.9e-kmem.patch
 Patch1000:	http://cvs.gentoo.org/~wwoods/linux-2.4.20-alpha-initrd.patch
 
 # SECURITY PATCHES.
+# CAN-2003-0248
 Patch2000:	linux-2.4.20-mxcsr-fix.patch
+# CAN-2003-0001
 Patch2001:	linux-2.4.20-net-padding.patch
+# fix previous fix
 Patch2002:	linux-2.4.20-net-padding-fix.patch
+# CAN-2003-0364
 Patch2003:	linux-2.4.20-nethashfix2.patch
+# CAN-2003-0619
 Patch2004:	linux-2.4.20-nfsd-xdr-secfix.patch
+# CAN-2003-0464
 Patch2005:	linux-2.4.20-sunrpc-noudpreuse.patch
+# CAN-2002-0247
 Patch2006:	linux-2.4.20-tty-fixes-grsec.patch
 ##Patch2007:	linux-2.4.20-tty-fixes.patch
+# CAN-2003-0961
 Patch2008:	linux-do_brk-bound-check.patch
+# CAN-2003-0985
 Patch2009:	linux-2.4-do_mremap.patch
+# CAN-2003-0984
 Patch2010:	linux-2.4-rtc.patch
+# CAN-2004-0077
 Patch2011:	linux-2.4-mremap-munmap.patch
+# CAN-2003-0699, CAN-2003-0700
+Patch2012:	linux-2.4.20-sec-cmpci.patch
+# CAN-2003-0465
+Patch2013:	linux-2.4-sec-strncpy.patch
+# CAN-2003-1040
+Patch2014:	linux-2.4-sec-kmod.patch
+# CAN-2004-0001
+Patch2015:	linux-2.4-sec-amd64-ptrace.patch
+# CAN-2004-0003
+Patch2016:	linux-2.4-sec-drm-r128.patch
+# similar in GAMMA DRM
+Patch2017:	linux-2.4-sec-drm-gamma.patch
+# CAN-2004-0010
+Patch2018:	linux-2.4-sec-ncpfs.patch
+# CAN-2004-0075
+Patch2019:	linux-2.4-sec-usb-vicam.patch
+# CAN-2004-0109
+Patch2020:	linux-2.4-sec-iso9660-overflow.patch
+# CAN-2004-0133
+Patch2021:	linux-2.4-sec-xfs-leak.patch
+# CAN-2004-0177
+Patch2022:	linux-2.4-sec-ext3-leak.patch
+# CAN-2004-0181
+Patch2023:	linux-2.4-sec-jfs-leak.patch
+# CAN-2004-0178
+Patch2024:	linux-2.4-sec-sb_audio.patch
+
+# other stability or security-related fixes
+# fix for I/O stalls and deadlocks
+Patch2100:	linux-2.4.20-io-stalls-fix.patch
+# properly handle too long pathnames in d_path
+Patch2101:	linux-2.4-dcache-nametoolong.patch
+# kernel addresses are always protection faults
+Patch2102:	linux-2.4-fault-leak.patch
+# signed/unsigned inconsequence in check
+Patch2103:	linux-2.4-proc-cmdline-sign.patch
+# fix sstfb oops
+Patch2104:	linux-2.4-sstfb-oops.patch
+
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -748,6 +803,8 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 # Netfilter
 %patch8 -p1
 #%patch888 -p1
+%patch889 -p1
+%patch890 -p1
 
 %patch32 -p1
 %patch31 -p1
@@ -969,6 +1026,25 @@ echo AXP patches ...
 %patch2008 -p1
 %patch2010 -p1
 %patch2011 -p1
+%patch2012 -p1
+%patch2013 -p1
+%patch2014 -p1
+%patch2015 -p1
+%patch2016 -p1
+%patch2017 -p1
+%patch2018 -p1
+%patch2019 -p1
+%patch2020 -p1
+%patch2021 -p1
+%patch2022 -p1
+%patch2023 -p1
+%patch2024 -p1
+
+%patch2100 -p1
+%patch2101 -p1
+%patch2102 -p1
+%patch2103 -p1
+%patch2104 -p1
 
 %patch916  -p1
 %patch915 -p1
