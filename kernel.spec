@@ -44,7 +44,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.99
+%define		_rel		0.1
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -63,7 +63,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-%define		_postver	.4
+%define		_postver	.5
 #define		_postver	%{nil}
 Version:	2.6.11%{_postver}
 Release:	%{_rel}
@@ -73,8 +73,8 @@ Group:		Base/Kernel
 %define		_rc	%{nil}
 #define		_rc	-rc3
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	f3bdaa6e7e36827347bbfdbcc6c9bc07
+Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
+# Source0-md5:	94af162c2c5c264344f279c6946c4f59
 Source1:	%{name}-autoconf.h
 
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
@@ -166,7 +166,7 @@ Patch101:	linux-2.6-pty-is-losing-bytes.patch
 Patch102:	linux-2.6-esp-corruption-cpu-bug.patch
 Patch103:	linux-2.6-tty-overrun-notify.patch
 Patch104:	linux-2.6-tcp-unaligned-access.patch
-Patch105:	linux-2.6-wan-driver-panic.patch
+Patch105:	linux-2.6-align-udp-packet.patch
 Patch106:	linux-2.6-smbfs.patch
 
 # linux vserver
