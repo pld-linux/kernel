@@ -11,7 +11,6 @@
 %bcond_without source	# don't build kernel-source package
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
-%bcond_without	oss	# with old OSS 
 
 %define		_rel		2
 %define		_test_ver	7
@@ -383,7 +382,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch20 -p1
 %patch21 -p1
 
-%patch22 -p1
+#%%patch22 -p1
 %patch23 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
@@ -452,7 +451,7 @@ BuildConfig (){
 	else
 		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
 	fi
-%{?with_oss:cat $RPM_SOURCE_DIR/kernel-sound-oss.config >> arch/%{base_arch}/defconfig}
+	cat $RPM_SOURCE_DIR/kernel-sound-oss.config >> arch/%{base_arch}/defconfig
 }
 
 BuildKernel() {
@@ -803,7 +802,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/netwireless/*_cs.ko
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko
 #drm stuff
@@ -817,7 +816,7 @@ fi
 /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
 /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko
-/lib/modules/%{version}-%{release}/kernel/drivers/netwireless/*_cs.ko
+/lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko
 /lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko
 /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko
 
@@ -840,7 +839,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/netwireless/*_cs.ko
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko
 #drm stuff
@@ -853,7 +852,7 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
 /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko
-/lib/modules/%{version}-%{release}smp/kernel/drivers/netwireless/*_cs.ko
+/lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko
 /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko
 /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko
 
@@ -916,26 +915,18 @@ fi
 %{_prefix}/src/linux-%{version}/REPORTING-BUGS
 %endif
 
-%if %{with oss}
-
 %if %{with up}
 %files sound-oss
 /lib/modules/%{version}-%{release}/kernel/sound/oss
-%endif
 
-%if %{with smp}
-%files smp-sound-oss
-/lib/modules/%{version}-%{release}smp/kernel/sound/oss
-%endif
-
-%endif		## with oss
-
-%if %{with smp}
 %files sound-alsa
 /lib/modules/%{version}-%{release}/kernel/sound/[^core,^oss,^soundcore]*
 %endif
 
 %if %{with smp}
+%files smp-sound-oss
+/lib/modules/%{version}-%{release}smp/kernel/sound/oss
+
 %files smp-sound-alsa
 /lib/modules/%{version}-%{release}smp/kernel/sound/[^core,^oss,^soundcore]*
 %endif
