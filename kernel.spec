@@ -1,3 +1,7 @@
+#
+# FOR INFORMATION ABOUT OTHER KERNELS:
+#   cvs up -r KERNEL_BRANCHES_INFORMATION kernel.spec && less kernel.spec
+#
 # NOTE:
 # - no grsecurity (not planned, use selinux)
 # - no devfs (devfs is obsolete, use udev from HEAD)
