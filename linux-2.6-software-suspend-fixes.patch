@@ -1,13 +1,5 @@
 --- linux.org/kernel/power/suspend.c.org	2004-09-26 01:20:35.304106773 +0200
 +++ linux/kernel/power/suspend.c	2004-09-26 01:23:29.340823488 +0200
-@@ -55,6 +55,7 @@
- #include <linux/console.h>
- #include <linux/version.h>
- #include <linux/device.h>
-+#include <linux/highmem.h>
- #include <linux/mm.h>
- 
- #include "suspend.h"
 @@ -66,6 +67,8 @@
  #include <asm/i387.h> /* for kernel_fpu_end */
  #endif
@@ -49,17 +41,6 @@
  #include "suspend.h"
  /* 
   *---------------------  Variables ---------------------------
---- linux.org/arch/i386/power/suspend2.c.org	2004-09-26 13:35:37.757190524 +0200
-+++ linux/arch/i386/power/suspend2.c	2004-09-26 13:37:02.553025005 +0200
-@@ -530,7 +530,7 @@
- 
- void smp_suspend_lowlevel(void * info)
- {
--	if (now_resuming) {
-+	if (test_suspend_state(SUSPEND_NOW_RESUMING)) {
-         	__asm__( "movl %%ecx,%%cr3\n" ::"c"(__pa(swsusp_pg_dir)));
- 
- 		kernel_fpu_begin();
 --- linux.org/kernel/power/process.c.org	2004-09-26 15:20:19.791412023 +0200
 +++ linux/kernel/power/process.c	2004-09-26 15:20:38.477408986 +0200
 @@ -159,12 +159,12 @@
@@ -77,19 +58,4 @@
  
  	while (atomic_read(&suspend_cpu_counter) < (num_online_cpus() - 1)) {
  		cpu_relax();
-diff -ruN 999-old/kernel/power/suspend.c 999-new/kernel/power/suspend.c
---- 999-old/kernel/power/suspend.c	2004-09-28 08:21:43.000000000 +1000
-+++ 999-new/kernel/power/suspend.c	2004-09-28 08:21:33.000000000 +1000
-@@ -325,10 +325,11 @@
- 
- 	/* Now check for graphics class devices, so we can keep the display on while suspending */
- 	class = class_find("graphics");
--	if (class)
-+	if (class) {
- 		list_for_each_entry(class_dev, &class->children, node)
- 			device_switch_trees(class_dev->dev, suspend_device_tree);
--	class_put(class);
-+		class_put(class);
-+	}
- 	return 0;
- }
+
