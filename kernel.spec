@@ -1,5 +1,5 @@
 %define		ow_version		2.2.20-ow1
-%define		pcmcia_version		3.1.29
+%define		pcmcia_version		3.1.30
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.34
 %define		i2c_version		2.5.5
@@ -15,7 +15,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	0.5	
+Release:	0.6	
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
