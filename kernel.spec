@@ -83,7 +83,7 @@ Patch15:	linux-2.4.21-sched-O1.patch
 # http://dl.sourceforge.net/user-mode-linux/uml-patch-2.4.20-6.bz2
 Patch20:	uml-patch-2.4.20-6-21.bz2
 Patch21:	linux-2.4.21-uml-o1.patch
-# http://unc.dl.sourceforge.net/sourceforge/user-mode-linux/host-skas3.patch
+# http://dl.sourceforge.net/user-mode-linux/host-skas3.patch
 Patch22:	linux-2.4.20-uml-host-skas3.patch
 
 # New filesystems
@@ -95,7 +95,7 @@ Patch26:	linux-xfs-1.3.0pre5.patch.gz
 Patch30:	linux-2.4.21-jfs-xattr.patch
 Patch31:	linux-2.4.21-jfs-acl.patch
 Patch32:	linux-2.4.21-ea+acl+nfsacl-0.8.58.diff.gz
-# http://unc.dl.sourceforge.net/sourceforge/linux-ntfs/
+# http://dl.sourceforge.net/linux-ntfs/
 Patch40:	linux-2.4.21-ntfs-%{ntfs_version}.patch.gz
 # http://dl.sourceforge.net/linux-hfsplus/hfsplus-patch-20020606.patch
 Patch45:	hfsplus-20020606.patch.bz2
@@ -156,7 +156,7 @@ Patch201:	linux-2.4.21-dm-fls-redefined.patch
 Patch205:	linux-2.4.21-evms-2.0.1.patch.gz
 Patch206:	linux-2.4.21-evms-o1.patch
 
-#from http://prdownloads.sourceforge.net/i810fb/linux-2.4.20-i810fb.diff.bz2
+#from http://dl.sourceforge.net/i810fb/linux-2.4.20-i810fb.diff.bz2
 Patch210:	linux-2.4.21-I810FB.patch.gz
 
 # Support for CDRW packet writing
@@ -983,7 +983,7 @@ install -d $KERNEL_INSTALL_DIR
 
 # BOOT kernel
 %ifnarch i586 i686 athlon
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk"
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed%{_libdir}/bootdisk"
 rm -rf $KERNEL_INSTALL_DIR
 %{!?_without_boot:BuildKernel BOOT}
 %endif
@@ -1019,9 +1019,9 @@ ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 %endif
 
 %if %{?_without_source:0}%{!?_without_source:1}
-cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
+cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}
 %else
-cp -a {include,scripts,Makefile,Rules.make,Documentation} $RPM_BUILD_ROOT/usr/src/linux-%{version}/
+cp -a {include,scripts,Makefile,Rules.make,Documentation} $RPM_BUILD_ROOT/usr/src/linux-%{version}
 %endif
 
 %ifarch sparc sparc64
@@ -1155,8 +1155,8 @@ rm -f drivers/net/hamradio/soundmodem/gentbl
 # BOOT
 %if %{?_without_boot:0}%{!?_without_boot:1}
 %ifnarch i586 i686 athlon
-install -d $RPM_BUILD_ROOT/%{_libdir}/bootdisk
-cp -rdp $KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk/* $RPM_BUILD_ROOT/%{_libdir}/bootdisk
+install -d $RPM_BUILD_ROOT%{_libdir}/bootdisk
+cp -rdp $KERNEL_BUILD_DIR-installed%{_libdir}/bootdisk/* $RPM_BUILD_ROOT%{_libdir}/bootdisk
 %endif
 %endif
 
