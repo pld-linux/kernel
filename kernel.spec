@@ -191,7 +191,8 @@ Patch200:	grsecurity-2.1.3-2.6.11-200503091157.patch
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
 Patch250:	linux-2.6-vs.patch
 
-Patch260:	http://dl.sourceforge.net/sourceforge/ifp-driver/iriverfs-r0.1.0.1.patch.gz
+# iRiverFS support from http://dl.sourceforge.net/sourceforge/ifp-driver/
+Patch260:	iriverfs-r0.1.0.1.patch.gz
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
