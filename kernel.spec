@@ -9,6 +9,8 @@
 #		- fix lirc_sasem (usb api)
 #		- update HP-OmniBook patchset (2.6.1-all-in-1.patch)
 #		- reiserfs4
+#		- update grsecurity patch
+#		- update i2o patchset
 #
 # Conditional build:
 %bcond_without	BOOT		# don't build BOOT kernel
@@ -184,10 +186,12 @@ Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2
 # http://lirc.sourceforge.net/software/snapshots/lirc-0.7.0pre7.tar.bz2
 Patch76:	2.6.8-lirc-0.7.0-pre7.patch
 # http://i2o.shadowconnect.com/
+# NEEDS UPDATE
 Patch77:	2.6.8-i2o-build_105.patch.gz
 Patch78:	i2o-build_105-fixes.patch
 
 # derived from official grsecurity-2.0.1-2.6.7.patch
+# NEEDS UPDATE
 Patch90:	%{name}-grsec-2.0.1.patch
 
 # http://lkml.org/lkml/2004/6/2/233
@@ -627,8 +631,9 @@ bzcat %{SOURCE4} | patch -p1 -s
 %endif
 %patch75 -p1
 %patch76 -p1
-%patch77 -p1
-%patch78 -p1
+# see TODO
+#patch77 -p1
+#patch78 -p1
 
 #cp -f pwc-%{pwc_version}/2.6/pwc* drivers/usb/media
 rm -rf pwc-%{pwc_version}
@@ -636,7 +641,8 @@ rm -rf pwc-%{pwc_version}
 #grsec
 %ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
 %if %{with grsec}
-%patch90 -p1
+# see TODO
+#patch90 -p1
 %endif
 %endif
 
