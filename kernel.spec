@@ -831,9 +831,13 @@ BuildConfig (){
 	if [ "$smp" = "yes" ]; then
 		install include/linux/autoconf.h \
 			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
+		install .config \
+			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/config-smp.h
 	else
 		install include/linux/autoconf.h \
 			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
+		install .config \
+			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/config-up.h
 	fi
 }
 
@@ -1054,66 +1058,6 @@ cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 	RCS_FIND_IGNORE='-name build-done -prune -o'
 find -name "*~" -exec rm -f "{}" ";"
 find -name "*.orig" -exec rm -f "{}" ";"
-
-install $RPM_SOURCE_DIR/kernel-%{_target_base_arch}.config .config
-
-%ifarch i386
-echo "CONFIG_M386=y" >> .config
-%endif
-%ifarch i486
-echo "CONFIG_M486=y" >> .config
-%endif
-%ifarch i586
-echo "CONFIG_M586=y" >> .config
-%endif
-%ifarch i686
-echo "CONFIG_M686=y" >> .config
-%endif
-%ifarch pentium3
-echo "CONFIG_MPENTIUMIII=y" >> .config
-%endif
-%ifarch pentium4
-echo "CONFIG_MPENTIUM4=y" >> .config
-%endif
-%ifarch athlon
-echo "CONFIG_MK7=y" >> .config
-%endif
-
-cat %{SOURCE80} >> .config
-#grsec
-cat %{SOURCE90} >> .config
-
-cp .config config-up
-
-install $RPM_SOURCE_DIR/kernel-%{_target_base_arch}-smp.config .config
-
-%ifarch i386
-echo "CONFIG_M386=y" >> .config
-%endif
-%ifarch i486
-echo "CONFIG_M486=y" >> .config
-%endif
-%ifarch i586
-echo "CONFIG_M586=y" >> .config
-%endif
-%ifarch i686
-echo "CONFIG_M686=y" >> .config
-%endif
-%ifarch pentium3
-echo "CONFIG_MPENTIUMIII=y" >> .config
-%endif
-%ifarch pentium4
-echo "CONFIG_MPENTIUM4=y" >> .config
-%endif
-%ifarch athlon
-echo "CONFIG_MK7=y" >> .config
-%endif
-
-cat %{SOURCE80} >> .config
-#grsec
-cat %{SOURCE90} >> .config
-
-cp .config config-smp
 
 if [ -e $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h ]; then
 install $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h \
