@@ -653,20 +653,6 @@ rm -f scripts/mkdep
 rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_DIR/linux-installed
 
-# do this for upgrades...in case the old modules get removed we have
-# loopback in the kernel so that mkinitrd will work.
-#%pre modules
-%pre
-/sbin/modprobe loop 2> /dev/null > /dev/null
-exit 0
-
-%pre smp
-/sbin/modprobe loop 2> /dev/null > /dev/null
-exit 0
-
-#%pre BOOT
-#/sbin/modprobe loop 2> /dev/null > /dev/null
-#exit 0
 
 %post
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null 
@@ -702,20 +688,6 @@ fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
 
-## commented out by klakier:
-## DO NOT TOUCH BOOTRECORD OF MY SYSTEM !!!
-#%post BOOT
-#mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-#mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
-#ln -sf vmlinuz-%{version}-%{release}BOOT /boot/vmlinuz
-#ln -sf System.map-%{version}-%{release}BOOT /boot/System.map
-#
-#if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
-#	/sbin/lilo 1>&2 || :
-#fi
-#
-#rm -f /lib/modules/%{version}
-#ln -snf %{version}-%{release}BOOT /lib/modules/%{version}
 
 %postun
 if [ -L /lib/modules/%{version} ]; then 
@@ -737,14 +709,6 @@ if [ -L /lib/modules/%{version} ]; then
 fi
 rm -f /boot/initrd-%{version}-%{release}smp.gz
 
-#%postun BOOT
-#if [ -L /lib/modules/%{version} ]; then 
-#	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}BOOT" ]; then
-#		if [ "$1" = "0" ]; then
-#			rm -f /lib/modules/%{version}
-#		fi
-#	fi
-#fi
 
 %post headers
 rm -f /usr/src/linux
