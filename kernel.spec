@@ -419,7 +419,7 @@ BuildPCMCIA BOOT
 %endif
 
 %install
-rm -rf $RPM_BUILD_ROOT
+rm -rf $RPM_BUILD_ROOT%{_prefix}
 install -d $RPM_BUILD_ROOT%{_prefix}/{include,src}
 
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
@@ -624,8 +624,10 @@ fi
 /lib/modules/%{version}-%{release}/misc
 /lib/modules/%{version}-%{release}/net
 /lib/modules/%{version}-%{release}/scsi
-%ifarch %{ix86}
+%ifarch %{ix86} alpha
 /lib/modules/%{version}-%{release}/video
+%endif
+%ifarch %{ix86}
 /lib/modules/%{version}-%{release}/pcmcia
 %endif
 
@@ -648,8 +650,10 @@ fi
 /lib/modules/%{version}-%{release}smp/misc
 /lib/modules/%{version}-%{release}smp/net
 /lib/modules/%{version}-%{release}smp/scsi
-%ifarch %{ix86}
+%ifarch %{ix86} alpha
 /lib/modules/%{version}-%{release}smp/video
+%endif
+%ifarch %{ix86}
 /lib/modules/%{version}-%{release}smp/pcmcia
 %endif
 %endif
