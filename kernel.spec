@@ -66,9 +66,9 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-#define		_rc	0
-%define		_rc	rc2
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-%{_rc}.tar.gz
+#define		_rc	%{nil}
+%define		_rc	-rc2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.gz
 # Source0-md5:	835ecb6f4a5189573be21603b5a09565
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
@@ -526,11 +526,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%if "%{_rc}" != "0"
-%setup -q -n linux-%{version}-%{_rc} -a2
-%else
-%setup -q -a2
-%endif
+%setup -q -n linux-%{version}%{_rc} -a2
 
 %patch0 -p1
 %patch1 -p1
