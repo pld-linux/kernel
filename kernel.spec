@@ -54,7 +54,7 @@ Source2000:	%{name}-win4lin.config
 
 # Essential stuff
 
-Patch0:		patch-2.4.25-pre8.bz2
+Patch0:		patch-2.4.25-rc1.bz2
 
 Patch1:		%{name}-pldfblogo.patch
 
