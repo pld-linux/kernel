@@ -378,6 +378,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
+%patch103 -p1
 
 %patch20 -p1
 %patch21 -p1
@@ -394,7 +395,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch100 -p1
 %patch101 -p1
 %patch102 -p1
-%patch103 -p1
 %patch105 -p1
 %patch106 -p1
 #%patch107 -p1
