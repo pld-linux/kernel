@@ -100,7 +100,7 @@ Patch102:	PCI_ISA_bridge.patch
 Patch103:	linux-2.4.2-nvram-hdd.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch105:	linux-2.4.2-pcnet-parms.patch
-#Patch106:	http://linuxdiskcert.org/ide.2.4.14.11192001.patch.bz2
+Patch106:	http://linuxdiskcert.org/ide.2.4.16-p1.11242001.patch.bz2
 Patch107:	linux-reiserfs-rename.patch
 Patch108:	linux-alpha-nfs-2.4.2.patch
 Patch109:	linux-2.4-string.patch
@@ -126,8 +126,6 @@ Patch120:	linux-2.4.10-aironet.patch
 Patch121:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
 Patch122:	linux-2.4.14-lvm-1.0.1rc4cvs.patch
-# HTP360/370 driver update
-Patch124:	linux-drivers_ide_hpt366.c.diff
 
 # Preemptible kernel  patch
 Patch132:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/2.4/preempt-kernel-rml-2.4.14-2.patch
@@ -151,8 +149,8 @@ Patch908:	kernel-kallsyms.fix
 Patch909:	linux-53c7,8xx-build.fix
 Patch910:	dc395-PLD.fix
 
-# Linus's -pre
-Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
+# Marcelo's -pre
+#Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -373,7 +371,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %prep
 %{?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
 %{!?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
-%patch1000 -p1
+#%patch1000 -p1
 #%patch0 -p1
 %patch1 -p1
 %patch2 -p1
@@ -393,7 +391,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch102 -p0
 %patch103 -p0
 %patch105 -p1
-#%patch106 -p1
+%patch106 -p1
 %patch107 -p1
 %patch108 -p1
 %patch109 -p1
@@ -409,13 +407,12 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch120 -p1
 %patch121 -p1
 ##%patch122 -p1
-%patch124 -p1
 
 %patch900 -p0 
 %patch904 -p0
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
 %ifarch %{ix86}
-##%patch906 -p1
+%patch906 -p1
 %endif
 %endif
 
