@@ -365,7 +365,7 @@ diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
  		if (error < 0)
  			break;
  
-@@ -116,370 +123,390 @@
+@@ -116,375 +123,390 @@
  	return error;
  }
  
@@ -585,6 +585,11 @@ diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
 -	 */
 -	pdentry = child->d_inode->i_op->lookup(child->d_inode, tdentry);
 -	d_drop(tdentry); /* we never want ".." hashed */
+-	if (!pdentry && tdentry->d_inode == NULL) {
+-		/* File system cannot find ".." ... sad but possible */
+-		dput(tdentry);
+-		pdentry = ERR_PTR(-EINVAL);
+-	}
 -	if (!pdentry) {
 -		/* I don't want to return a ".." dentry.
 -		 * I would prefer to return an unconnected "IS_ROOT" dentry,
@@ -778,7 +783,7 @@ diff -urN linux.orig/fs/nfsd/nfsfh.c linux/fs/nfsd/nfsfh.c
 +			    acceptable(context, dentry)) {
  				dput(result);
 -				result = tmp;
--				/* If !found, then this is really wierd, but it shouldn't hurt */
+-				/* If !found, then this is really weird, but it shouldn't hurt */
 +				return dentry;
  			}
 +			spin_lock(&dcache_lock);
@@ -1770,14 +1775,14 @@ diff -urN linux.orig/fs/reiserfs/super.c linux/fs/reiserfs/super.c
 diff -urN linux.orig/fs/super.c linux/fs/super.c
 --- linux.orig/fs/super.c	Fri May  4 18:52:16 2001
 +++ linux/fs/super.c	Fri May  4 19:14:37 2001
-@@ -735,7 +735,6 @@
- 	s->s_flags = flags;
- 	s->s_dirt = 0;
- 	sema_init(&s->s_vfs_rename_sem,1);
--	sema_init(&s->s_nfsd_free_path_sem,1);
- 	s->s_type = type;
- 	sema_init(&s->s_dquot.dqio_sem, 1);
- 	sema_init(&s->s_dquot.dqoff_sem, 1);
+@@ -720,7 +720,6 @@
+ 		init_rwsem(&s->s_umount);
+		sema_init(&s->s_lock, 1);
+		sema_init(&s->s_vfs_rename_sem,1);
+-		sema_init(&s->s_nfsd_free_path_sem,1);
+		sema_init(&s->s_dquot.dqio_sem, 1);
+		sema_init(&s->s_dquot.dqoff_sem, 1);
+ 	}
 diff -urN linux.orig/fs/ufs/ialloc.c linux/fs/ufs/ialloc.c
 --- linux.orig/fs/ufs/ialloc.c	Thu Nov 16 22:18:26 2000
 +++ linux/fs/ufs/ialloc.c	Fri May  4 19:14:48 2001
