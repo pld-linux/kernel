@@ -205,7 +205,8 @@ Patch136:	piix-ide-fix.patch
 Patch137:	linux-2.4.19-truncate-fix.patch
 Patch138:	http://www.uwsg.indiana.edu/hypermail/linux/kernel/0212.0/att-1445/01-sound.diff
 # Video 4 Linux 2
-Patch139:	linux-2.4.20-v4l2.patch.bz2
+#Patch139:	linux-2.4.20-v4l2.patch.bz2 -- well it seems, that it causes more problems
+#		with compilation v4l stuff, sorry :(
 # PWC USB Webcam Driver update (only for 2.4.20; 2.4.21 should have this fix)
 Patch140:	linux-2.4.20-pwc.patch
 
@@ -656,8 +657,8 @@ echo Added NetMos card supprot
 
 %patch138 -p1
 
-echo Added support for V4L2
-%patch139 -p1
+#echo Added support for V4L2
+#%patch139 -p1
 
 # sysctl controll of /dev/mem
 %{!?_without_grsec:%patch921 -p1}
