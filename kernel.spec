@@ -2,6 +2,7 @@
 %define		pcmcia_version		3.1.23
 %define		reiserfs_version	3.6.24
 %define		freeswan_version	1.8
+%define		NVIDIA_version		0.9-5
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -20,6 +21,8 @@ Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
 Source5:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source6:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 Source7:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
+Source8:	linux-netfilter-patches-20010107.tar.gz
+Source9:	ftp://ftp1.detonator.nvidia.com/pub/drivers/english/XFree86_40/%{NVIDIA_version}/NVIDIA_kernel-%{NVIDIA_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i586-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -45,7 +48,9 @@ Patch3:		%{name}-pldfblogo.patch
 # patch for console daemon.
 Patch6:		wait_any_vt.diff
 #Patch7:		i8255-chip.patch
-Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac2.bz2
+# This will soon become obsolete, NVIDIA is working on new driver
+Patch99:	NVIDIA-linux-2.4.patch
+Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac3.bz2
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -253,7 +258,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a4 -a5 -a6 -a7 -n linux
+%setup -q -a4 -a6 -a7 -a8 -a9 -n linux
 %patch100 -p1
 %patch0 -p1
 %patch1 -p1
@@ -272,6 +277,15 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
+
+for i in netfilter-patches/* ; do
+	[ -f $i -a "$i" != "netfilter-patches/isapplied" ] && patch -p1 -s <$i
+done
+(KERNEL_DIR=`pwd` ; export KERNEL_DIR
+cd netfilter-patches/patch-o-matic
+ANS=""
+for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
+echo -e $ANS | ./runme)
 
 %build
 BuildKernel() {
