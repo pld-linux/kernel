@@ -71,6 +71,8 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc1
 # Source0-md5:	50c53b665f6f9febc06b4d27d74b594b
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
+Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
+# Source3-md5:	7d38848c2f96436f8bde1b510150b42d
 
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -91,11 +93,6 @@ Source90:	%{name}-grsec.config
 
 Patch0:		2.6.0-ksyms-add.patch
 
-%if "%{_cset}" != "0"
-# http://www.kernel.org/pub/linux/kernel/v2.6/testing/cset/
-# http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/
-Patch2:		http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-%endif
 
 # from http://dl.sf.net/sourceforge/squashfs/
 Patch4:		squashfs2.0-patch
@@ -531,7 +528,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch0 -p1
 
 %if "%{_cset}" != "0"
-%patch2 -p1
+zcat %{SOURCE3} | patch -p1
 %endif
 
 %patch4 -p1
