@@ -1,0 +1,23 @@
+--- mm/oom_kill.c.orig	Thu Mar  1 18:57:11 2001
++++ mm/oom_kill.c	Thu Mar  1 18:58:23 2001
+@@ -188,13 +188,17 @@
+  *
+  * Returns 0 if there is still enough memory left,
+  * 1 when we are out of memory (otherwise).
++ *
++ * Note that since __alloc_pages() never lets user
++ * allocations go below freepages.min, we have to
++ * use a slightly higher threshold here...
+  */
+ int out_of_memory(void)
+ {
+ 	long cache_mem, limit;
+
+ 	/* Enough free memory?  Not OOM. */
+-	if (nr_free_pages() > freepages.min)
++	if (nr_free_pages() > freepages.min + 4)
+ 		return 0;
+
+ 	if (nr_free_pages() + nr_inactive_clean_pages() > freepages.low)
+
+
