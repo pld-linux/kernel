@@ -34,8 +34,8 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.91
-%define		_cset		0
+%define		_rel		0.92
+%define		_cset		20040312_0710
 
 ## netfilter snap 
 %define		_netfilter_snap		20040308
@@ -96,7 +96,7 @@ Patch13:	2.6.0-t7-memleak2-lkml.patch
 Patch16:	2.6.0-t8-clean-mtd-lkml.patch
 Patch18:	2.6.0-t8-swap-include-lkml.patch
 
-Patch20:	2.6.x-x86_64-sys_wait4-EXPORT.patch
+Patch20:	2.6.4-amd64-i810_main.h.diff
 
 Patch22:	2.6.0-t8-VLSI-ix86-lkml.patch
 
