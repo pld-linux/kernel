@@ -14,7 +14,7 @@
 #
 %define		pre_version		%{nil}
 %define		netfilter_snap		20031209
-%define		i2c_version		2.8.1
+%define		i2c_version		2.8.3
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(es):	Núcleo (Kernel) linux genérico
@@ -150,7 +150,7 @@ Patch227:	layer7-kernel2.4patch-v0.4.1a.patch.gz
 Patch235:	linux-2.4.20-audigy.patch.bz2
 Patch240:	linux-2.4.20-ecc.patch
 # i2c - http://secure.netroedge.com/~lm78/
-Patch255:	linux-2.4.23-i2c-%{i2c_version}.patch
+Patch255:	linux-2.4.25-i2c-%{i2c_version}-1.patch
 Patch256:	linux-2.4.21-i2c-headers.patch
 Patch257:	linux-2.4.21-i2c-sparc64.patch
 Patch265:	linux-2.4.20-e820.patch
@@ -638,9 +638,8 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch22 -p1
 %patch23 -p1
 %patch24 -p1
-#%patch26 -p1
 %patch32 -p1
-# XXX: TODO - update patch
+# XXX: TODO - update patch?
 #%patch31 -p1
 %patch40 -p1
 %patch50 -p1
@@ -664,12 +663,14 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch120 -p1
 %patch125 -p1
 %patch130 -p1
+# ???
 #%patch150 -p1
 %patch151 -p1
 %patch152 -p1
 %patch200 -p1
 %patch205 -p1
 %patch210 -p1
+# mtrainer, problematic with some LG cdroms
 #%patch215 -p1
 #%patch216 -p1
 %patch225 -p1
@@ -677,10 +678,9 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch227 -p1
 %patch235 -p1
 %patch240 -p1
-# UPDATEME
-#%patch255 -p1
-#%patch256 -p1
-#%patch257 -p1
+%patch255 -p1
+%patch256 -p1
+%patch257 -p1
 %patch265 -p1
 %patch275 -p1
 %patch301 -p1
@@ -694,6 +694,7 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch1003 -p1
 %patch1006 -p1
 %patch1007 -p1
+# broken on SMP machines!
 #%patch1008 -p1
 %patch1009 -p1
 %patch1010 -p1
@@ -761,9 +762,11 @@ cd ../../..
 %endif
 
 %patch3011 -p1
+#???
 #%patch3012 -p1
 %patch3013 -p1
 
+# left for future updates
 #%patch3500 -p1
 %patch3600 -p1
 %{?with_grsec:%patch4000 -p1}
