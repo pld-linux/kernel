@@ -3,7 +3,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems).
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.2.10
+Version:	2.2.13
 Release:	1
 Copyright:	GPL
 Group:		Base/Kernel
@@ -33,6 +33,8 @@ Source30:	kernel-sparc64-BOOT.config
 Source31:	kernel-alpha.config
 Source32:	kernel-alpha-smp.config
 Source33:	kernel-alpha-BOOT.config
+Patch0:		http://www.openwall.com/linux/linux-2.2.13-ow1.tar.gz
+Patch1:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.13.3.gz
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	/tmp/%{name}-%{version}-root
