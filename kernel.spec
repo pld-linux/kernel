@@ -597,7 +597,7 @@ BuildKernel() {
 %ifarch %{ix86}
 	cp arch/i386/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
-%ifarch alpha sparc sparc64
+%ifarch alpha sparc sparc64 ppc
 	gzip -cfv vmlinux > vmlinuz
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
