@@ -363,7 +363,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch28 -p1
 #%patch29 -p0
 %patch30 -p1
-%patch31 -p1
+#%patch31 -p1
 %patch32 -p1
 %patch33 -p4
 %patch34 -p1
