@@ -1,12 +1,12 @@
 %define		ow_version		2.2.20-ow1
 %define		pcmcia_version		3.1.29
 %define		freeswan_version	1.8
-%define		reiserfs_version	3.5.34
+%define		reiserfs_version	3.5.33
 %define		i2c_version		2.5.5
 %define		wlan_version		0.3.4
 %define		tun_version		1.1
 %define         vlan_version            1.0.1
-%define		aic7xxx_version		6.2.3-2.2.19
+%define		aic7xxx_version		6.2.4-2.2.19
 %define		symncr_version		1.7.3c-ncr-3.4.3b
 %define		jfs_version		1.0.5
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -52,6 +52,8 @@ Source28:	%{name}-alpha-BOOT.config
 
 Patch0:		%{name}-pldfblogo.patch
 Patch1:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
+Patch2:		http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
+Patch3:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.19-reiserfs-%{reiserfs_version}-with-qouta-and-knfsd-support.patch.bz2
 
 
 # in this place i will make new Patches nad Sources
@@ -323,11 +325,16 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %prep
 %setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -n linux
 
-%patch0 -p1
-%patch1 -p0
-
 # here patch will be executabling, for now we have just patch in the 
 # tar.gz sources
+
+%patch0 -p1
+%patch1 -p0
+# disable aic7xxx patch on sparc (this must be reported to aic7xxx driver maintainer)
+%ifnarch sparc sparc64
+%patch2 -p1
+%endif
+%patch3 -p1
 
 # 2.2.20ow1
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
@@ -539,6 +546,12 @@ ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH0}
+
+%ifnarch sparc sparc64
+gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+%endif
+
+bzip2 -dc %{PATCH3} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 #DAC960 drivers
 tar xfz %{SOURCE8}
