@@ -193,6 +193,7 @@ Obsoletes:	kernel-modules
 Obsoletes:	kernel-i2c
 Obsoletes:	bttv
 Obsoletes:	kernel-misc-bttv
+Obsoletes:	kernel-misc-munmap
 
 ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
@@ -269,6 +270,7 @@ Obsoletes:	kernel-modules
 Obsoletes:	kernel-smp-i2c
 Obsoletes:	bttv
 Obsoletes:	kernel-smp-misc-bttv
+Obsoletes:	kernel-smp-misc-munmap
 Autoreqprov:	no
 
 %description smp
