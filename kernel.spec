@@ -733,10 +733,10 @@ fi
 %files
 %defattr(644,root,root,755)
 %ifarch alpha sparc
-/boot/vmlinux-%{version}-%{release}
+%attr(600,root,root) /boot/vmlinux-%{version}-%{release}
 %endif
-/boot/vmlinuz-%{version}-%{release}
-/boot/System.map-%{version}-%{release}
+%attr(600,root,root) /boot/vmlinuz-%{version}-%{release}
+%attr(600,root,root) /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
 #/lib/modules/%{version}-%{release}/atm
 /lib/modules/%{version}-%{release}/block
@@ -760,10 +760,10 @@ fi
 %files smp
 %defattr(644,root,root,755)
 %ifarch alpha sparc
-/boot/vmlinux-%{version}-%{release}smp
+%attr(600,root,root) /boot/vmlinux-%{version}-%{release}smp
 %endif
-/boot/vmlinuz-%{version}-%{release}smp
-/boot/System.map-%{version}-%{release}smp
+%attr(600,root,root) /boot/vmlinuz-%{version}-%{release}smp
+%attr(600,root,root) /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
 #/lib/modules/%{version}-%{release}smp/atm
 /lib/modules/%{version}-%{release}smp/block
