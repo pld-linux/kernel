@@ -71,6 +71,10 @@ Patch17:	linux-smaller-parport_pc-non-pci-box.patch
 
 # Quota fixes
 Patch18:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.2-1.diff.gz
+# Reiserfs/NFS patches
+Patch19:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/linux-2.4.2-reiserfs-20010301-full.patch.gz
+Patch20:	ftp://ftp.reiserfs.org/pub/misc-patches/linux-2.4.2-knfsd-6.g.patch.gz
+
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
 ExclusiveOS:	Linux
@@ -304,6 +308,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch17 -p0
 # quota fixes
 %patch18 -p1
+# reiserfs/NFS patches
+%patch19 -p1
+%patch20 -p1
 
 
 # Tekram DC395/315 U/UW SCSI host driver
