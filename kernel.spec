@@ -41,7 +41,7 @@ Source5:	linux-2.4.19-netfilter-20020923.tar.gz
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
 Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
-Source10:	http://hostap.epitest.fi/hostap-2002-09-12.tar.gz
+Source10:	http://hostap.epitest.fi/releases/hostap-2002-09-12.tar.gz
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source50:	%{name}-sparc.config
