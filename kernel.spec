@@ -191,7 +191,6 @@ Patch1010:	jam-23-config-nr_cpus.patch
 Patch1011:	jam-30-smptimers-A0.patch
 
 Patch1100:	linux-2.4.18-lvm-VFSlock.patch
-Patch1101:	linux-2.4.17-lvm-pvmove.patch
 Patch1102:	linux-2.4.20-lvm-updates.patch
 
 # fix lun probing on multilun RAID chassis
@@ -615,7 +614,6 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1010 -p1
 %patch1011 -p1
 %patch1100 -p1
-%patch1101 -p1
 %patch1102 -p1
 %patch1105 -p1
 %patch1106 -p0
