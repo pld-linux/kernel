@@ -44,8 +44,8 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_post_ver	%{nil}
-%define		_rel		0.1HEAD
-%define		_cset		20040914_1622
+%define		_rel		0.2HEAD
+%define		_cset		20040925_0206
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -73,7 +73,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 # Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
-# Source4-md5:	462cbc68049412fdd73625a6c312bcda
+# Source4-md5:	f064b0c94b0ec370ba87843ce207d56b
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -102,14 +102,17 @@ Patch10:	patch-2.6.9-rc1-bk19-ck1.bz2
 # http://kem.p.lodz.pl/~peter/qnet/
 Patch15:	patch-2.6.8.1-qnet2.bz2
 
+Patch18:	linux-kbuild-extmod.patch
+
 Patch20:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch21:	2.6.5-3C920b-Tornado.patch
 Patch22:	2.6.5-i386-cmpxchg.patch
 
 # suspend/resume
 # http://softwaresuspend.berlios.de/
-Patch500:	linux-2.6-software-suspend-2.0.0.107.patch.gz
-Patch501:	linux-2.6-via-agpc-resume-suspend-support.patch
+Patch500:	linux-2.6-software-suspend-2.0.0.108.patch.gz
+Patch501:	linux-2.6-software-suspend-fixes.patch
+Patch502:	linux-2.6-via-agpc-resume-suspend-support.patch
 
 # http://sources.redhat.com/cluster/
 Patch550:	linux-cluster-cman.patch
@@ -474,12 +477,14 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %patch10 -p1
 %patch15 -p1
+%patch18 -p1
 %patch20 -p1
 %patch21 -p1
 %patch22 -p1
 
 %ifarch %{ix86}
 %patch500 -p1
+%patch501 -p1
 %endif
 %patch501 -p1
 
