@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		1
+%define		_rel		2
 %define		_test_ver	11
 %define		_cset		20031204_0007
 
@@ -112,6 +112,8 @@ Patch66:	2.6.0-t11-AIC_and_db4-lkml.patch
 Patch68:	2.6.0-t11-get_compat_timespec-lkml.patch
 
 Patch70:	2.6.0-t11-r8169-getstats.patch
+
+Patch72:	2.6.0-t11-ALI-M1563-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -466,6 +468,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch68 -p1
 
 %patch70 -p1
+
+%patch72 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
