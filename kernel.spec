@@ -11,7 +11,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.19
-Release:	3
+Release:	4
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -329,7 +329,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
-%patch4 -p1
+# %patch4 -p1
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
