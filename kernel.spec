@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	1.2%{?_with_preemptive:_pr}
+Release:	1.3%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -215,6 +215,7 @@ Patch201:	linux-2.4.20-SPARC64.patch
 Patch202:	linux-2.4.20-SPARC-EXPORT_SYMBOL.patch
 Patch203:	linux-2.4.20-AXP-EXPORT_SYMBOL.patch
 Patch204:	linux-2.4.20-AXP-avma1_cs.patch
+Patch205:	linux-2.4.20-PPC-EXPORT_SYMBOL.patch
 
 # tweaks for grsecurity, description inside patch
 Patch900:	loop-jari-2.4.20.0.patch
@@ -239,6 +240,7 @@ Patch917:	linux-2.4.19-EXPORT_SYMBOL-netsyms.c-rm.patch
 Patch918:	linux-2.4.20-ext3.patch
 Patch919:	linux-2.4.20-ntfs.patch
 Patch920:	linux-2.4.20-squashfs.patch
+Patch921:	linux-2.4.20-grsecurity-1.9.8-dev_mem.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -521,7 +523,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch19 -p1
 %patch20 -p1
 # broken
-#%patch26 -p1
+%patch26 -p1
 #%patch27 -p1
 # fixme
 #%patch28 -p1
@@ -654,7 +656,14 @@ echo Added NetMos card supprot
 echo Added support for V4L2
 %patch139 -p1
 
+# sysctl controll of /dev/mem
+%{!?_without_grsec:%patch921 -p1}
+
 echo Added ARCH specific patches....
+%ifarch ppc
+echo PPC patches ...
+%patch205 -p1
+%endif
 %ifarch sparc64
 echo SPARC64 patches ...
 %patch201 -p1
