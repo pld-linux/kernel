@@ -49,6 +49,8 @@ Source33:	%{name}-alpha.config
 Source34:	%{name}-alpha-smp.config
 Source35:	%{name}-alpha-BOOT.config
 Source36:	%{name}-ppc.config
+Source37:	%{name}-ppc-smp.config
+Source38:	%{name}-ppc-BOOT.config
 Patch0:		%{name}-pldfblogo.patch
 Patch1:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
 Patch2:		http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
@@ -638,8 +640,8 @@ BuildKernel smp
 BuildPCMCIA smp
 %endif
 
-# BOOT kernel
-%ifnarch i586 i686
+# BOOT kernel - #temporary disable build kernel-BOOT
+%ifnarch i586 i686 ppc 
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk"
 rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
@@ -786,7 +788,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1502}
 %ifarch ppc
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2000}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2001}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2002}
+bzip2 -dc %{PATCH2002} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 %endif
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
