@@ -1,6 +1,6 @@
 diff -urN linux-2.4.22.org/drivers/ide/ide.c linux-2.4.22/drivers/ide/ide.c
 --- linux-2.4.22.org/drivers/ide/ide.c	2003-11-22 22:11:12.000000000 +0100
-+++ linux-2.4.22/drivers/ide/ide.c	2003-11-23 02:57:57.000000000 +0100
++++ linux-2.4.22/drivers/ide/ide.c	2003-11-23 03:16:51.000000000 +0100
 @@ -2349,8 +2349,8 @@
  #ifdef CONFIG_BLK_DEV_CMD640
  			case -14: /* "cmd640_vlb" */
@@ -21,23 +21,30 @@ diff -urN linux-2.4.22.org/drivers/ide/ide.c linux-2.4.22/drivers/ide/ide.c
  #ifdef MODULE
  char *options = NULL;
  MODULE_PARM(options,"s");
-@@ -3084,6 +3085,29 @@
+@@ -3084,6 +3085,36 @@
  	devfs_unregister (ide_devfs_handle);
  }
  
++static int ideprobe_real_done = 0;
++
 +int ideprobe_real_init_module(void)
 +{
 +	unsigned int index;
++
++	if (ideprobe_real_done)
++	    return -EBUSY;
 +	
 +	for (index = 0; index < MAX_HWIFS; ++index)
 +	    ide_unregister(index);
 +	ideprobe_init();
 +	create_proc_ide_interfaces();
 +	ide_xlate_1024_hook = ide_xlate_1024;
++	ideprobe_real_done = 1;
 +	return 0;
 +}
 +
 +EXPORT_SYMBOL(ideprobe_real_init_module);
++
 +
 +int ideprobe_real_cleanup_module(void)
 +{
