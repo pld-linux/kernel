@@ -71,6 +71,8 @@ Patch25:	%{name}-panaview_kbd.patch
 Patch26:	http://people.FreeBSD.org/~gibbs/linux/linux-aic7xxx-6.1.8-2.2.18.patch.gz
 Patch27:	kernel-toshiba-2.2.19.patch
 Patch28:	linux-2.2.19-pci.patch 
+Patch29:	kernel-flip.patch 
+Patch30:	kernel-flip-serial5.05.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -339,6 +341,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #%patch26 -p1
 %patch27 -p1
 %patch28 -p1
+%patch29 -p1
 
 #DAC960-2.2.10
 mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
@@ -356,8 +359,10 @@ mv sym-1.7.2-ncr-3.4.2/{README,ChangeLog}.* Documentation
 rm -rf sym-1.7.2-ncr-3.4.2
 
 cd  serial-5.05
+%patch30 -p1
 ./install-in-kernel ../
 cd .. 
+
 
 %build
 BuildKernel() {
@@ -673,6 +678,20 @@ fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
 
+%post BOOT
+mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
+mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+ln -sf vmlinuz-%{version}-%{release}BOOT /boot/vmlinuz
+ln -sf System.map-%{version}-%{release}BOOT /boot/System.map
+
+if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
+	/sbin/lilo 1>&2 || :
+fi
+
+<<<<<<< kernel.spec
+rm -f /lib/modules/%{version}
+ln -snf %{version}-%{release}BOOT /lib/modules/%{version}
+=======
 ## commented out by klakier:
 ## DO NOT TOUCH BOOTRECORD OF MY SYSTEM !!!
 #%post BOOT
@@ -687,6 +706,7 @@ ln -snf %{version}-%{release}smp /lib/modules/%{version}
 #
 #rm -f /lib/modules/%{version}
 #ln -snf %{version}-%{release}BOOT /lib/modules/%{version}
+>>>>>>> 1.167
 
 %postun
 if [ -L /lib/modules/%{version} ]; then 
