@@ -12,10 +12,10 @@
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
+%bcond_without	execshield      # build without exec-shield
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	bootsplash	# build with bootsplash
-%bcond_with	execshield	# build with exec-shield
 
 %{?debug:%define with_verbose 1}
 
