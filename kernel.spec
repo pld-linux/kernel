@@ -210,6 +210,7 @@ Patch200:	linux-sound_core.patch
 Patch201:	linux-2.4.20-SPARC64.patch
 Patch202:	linux-2.4.20-SPARC-EXPORT_SYMBOL.patch
 Patch203:	linux-2.4.20-AXP-EXPORT_SYMBOL.patch
+Patch204:	linux-2.4.20-AXP-avma1_cs.patch
 
 # tweaks for grsecurity, description inside patch
 Patch900:	loop-jari-2.4.20.0.patch
@@ -662,6 +663,7 @@ echo SPARC patches ...
 %ifarch alpha
 echo AXP patches ...
 %patch203 -p1
+%patch204 -p1
 %endif
 
 %if %{?_with_o1:1}%{!?_with_o1:0}
