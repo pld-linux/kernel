@@ -49,16 +49,12 @@ Source12:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson
 Source13:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
-Source22:	%{name}-i386-BOOT.config
 Source50:	%{name}-sparc.config
 Source51:	%{name}-sparc-smp.config
-Source52:	%{name}-sparc-BOOT.config
 Source60:	%{name}-sparc64.config
 Source61:	%{name}-sparc64-smp.config
-Source62:	%{name}-sparc64-BOOT.config
 Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
-Source72:	%{name}-alpha-BOOT.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
 Source1001:	%{name}-abi.config
