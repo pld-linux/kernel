@@ -1048,7 +1048,7 @@ done
 
 ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 
-find . ! -name "build-done" -maxdepth 1 -exec cp -a "{}" "$RPM_BUILD_ROOT/usr/src/linux-%{version}/" ";"
+find . ! -name "build-done" ! -name "." -maxdepth 1 -exec cp -a "{}" "$RPM_BUILD_ROOT/usr/src/linux-%{version}/" ";"
 
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
