@@ -11,7 +11,7 @@
 %bcond_without source	# don't build kernel-source package
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
-%define		_rel		2
+%define		_rel		3
 %define		_test_ver	7
 %define		_cset		20031012_0407
 
@@ -177,8 +177,8 @@ Summary:	PCMCIA-CS modules
 Summary(pl):	Modu造 PCMCIA-CS
 Group:		Base/Kernel
 Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
-PreReq:		%{name}-up = %{version}-%{release}
-Requires(postun):	%{name}-up = %{version}-%{release}
+PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 
 %description pcmcia-cs
 PCMCIA-CS modules (%{pcmcia_version}).
@@ -191,8 +191,8 @@ Summary:	PCMCIA-CS modules for SMP kernel
 Summary(pl):	Modu造 PCMCIA-CS dla maszyn SMP
 Group:		Base/Kernel
 Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
-PreReq:		%{name}-smp = %{version}-%{release}
-Requires(postun):	%{name}-smp = %{version}-%{release}
+PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 
 %description smp-pcmcia-cs
 PCMCIA-CS modules for SMP kernel (%{pcmcia_version}).
@@ -205,8 +205,8 @@ Summary:	DRM kernel modules
 Summary(pl):	Sterowniki DRM
 Group:		Base/Kernel
 Provides:	%{name}-drm = %{drm_xfree_version}
-PreReq:		%{name}-up = %{version}-%{release}
-Requires(postun):	%{name}-up = %{version}-%{release}
+PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 
 %description drm
 DRM kernel modules (%{drm_xfree_version}).
@@ -219,14 +219,40 @@ Summary:	DRM SMP kernel modules
 Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Provides:	%{name}-drm = %{drm_xfree_version}
-PreReq:		%{name}-smp = %{version}-%{release}
-Requires(postun):	%{name}-smp = %{version}-%{release}
+PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 
 %description smp-drm
 DRM SMP kernel modules (%{drm_xfree_version}).
 
 %description smp-drm -l pl
 Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
+
+%package sound-oss
+Summary:	OSS kernel modules
+Summary(pl):	Sterowniki d德i瘯u OSS
+Group:		Base/Kernel
+PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
+
+%description sound-oss
+OSS Sound driver.
+
+%description sound-oss -l pl
+Sterowniki OSS.
+
+%package smp-sound-oss
+Summary:	OSS SMP kernel modules
+Summary(pl):	Sterowniki d德i瘯u OSS dla maszyn wieloprocesorowych
+Group:		Base/Kernel
+PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
+Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
+
+%description smp-sound-oss
+OSS SMP Sound driver.
+
+%description smp-sound-oss -l pl
+Sterowniki OSS dla maszyn wieloprocesorowych.
 
 %package headers
 Summary:	Header files for the Linux kernel
@@ -235,8 +261,8 @@ Group:		Base/Kernel
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
-Provides:	i2c-devel = 2.6.1
-Provides:	%{name}-headers(netfilter) = 1.2.8
+Provides:	i2c-devel
+Provides:	%{name}-headers(netfilter) = 1.2.9rc1
 Provides:	%{name}-headers(alsa-drivers)
 Provides:	alsa-driver-devel
 Autoreqprov:	no
