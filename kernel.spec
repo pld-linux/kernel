@@ -58,6 +58,7 @@ Patch3:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.20-reiserfs-%{rei
 Patch4:		ftp://ftp.kernel.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
 Patch5:		linux-2.2.18-freeswan-%{freeswan_version}.patch
 Patch6:		wanrouter-v2215.patch.gz
+Patch7:		linux-ipv6-pld.patch
 # based on http://bridge.sourceforge.net/patches/bridge-1.0.2-against-2.2.20.diff
 Patch10:	bridge-1.0.2-against-2.2.20.diff
 Patch11:	bridge-ipchains-against-1.0.2-against-2.2.20.diff
@@ -360,6 +361,7 @@ do twojego sprzêtu.
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
+%patch7 -p1
 %patch10 -p1
 %patch11 -p1
 %patch20 -p1
@@ -688,6 +690,7 @@ bzip2 -dc %{PATCH3} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{vers
 gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH5}
 gzip -dc %{PATCH6} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH7}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH10}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH11}
 gzip -dc %{PATCH20} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
