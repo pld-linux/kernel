@@ -50,7 +50,7 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc1.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc2.tar.bz2
 # Source0-md5:	6af662c8a2db73c63dad069b403cc852
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
@@ -483,7 +483,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}-rc1
+%setup -q -n linux-%{version}-rc2
 
 %patch0 -p1
 %if "%{_cset}" != "0"
