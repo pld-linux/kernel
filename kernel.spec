@@ -3,7 +3,7 @@ File: kernel.spec
 
    Existing Tags:
 	kernel-2_4_20-14         last stable 2.4.20 series with security fix
-	djurban-LINUX_2_6        ?
+	djurban-LINUX_2_6        djurban's kernel branch for desktop users
 	ac-2_6_5-1               2.6.5 official kernel
 	LNX26_IX86_PAXGRSEC      2.6.5/ix86 nondist kernel with PaX and grsecurity
 	                         (sources only! requires manual build)
