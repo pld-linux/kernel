@@ -609,7 +609,9 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1005 -p1
 %patch1006 -p1
 %patch1007 -p1
+%ifarch %{ix86}
 %patch1008 -p1
+%endif
 %patch1009 -p1
 %patch1010 -p1
 %patch1011 -p1
