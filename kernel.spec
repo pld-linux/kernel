@@ -10,8 +10,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.5.13
-Release:	0.3
+Version:	2.5.14
+Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -35,7 +35,7 @@ Source72:	%{name}-alpha-BOOT.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
 
-Patch1:		http://www.kernel.org/pub/linux/kernel/people/davej/patches/2.5/2.5.13/patch-2.5.13-dj2.diff.gz
+#Patch1:		http://www.kernel.org/pub/linux/kernel/people/davej/patches/2.5/2.5.13/patch-2.5.13-dj2.diff.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -140,7 +140,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -n linux-%{version}
-%patch1 -p1
+#%patch1 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
