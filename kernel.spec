@@ -24,8 +24,8 @@ Patch4:		2.6.0-t8-swap-include-lkml.patch
 Patch5:		2.6.0-t9-acpi_osl-lkml.patch
 Patch6:		2.6.1-squashfs1.3r3.patch
 Patch7:		2.6.6-pramfs.patch
-Patch8:		linux-kbuild-extmod.patch
-
+Patch8:		%{name}-Makefile.patch
+Patch9:		linux-kbuild-extmod.patch
 Patch10:	2.6.4-esfq.patch
 Patch11:	2.6.4-imq.patch
 Patch12:	2.6.4-imq-nat.patch
@@ -34,6 +34,7 @@ Patch14:	2.6.6-pom-ng-%{_netfilter_snap}.patch
 Patch15:	2.6.5-pom-ng-fixes.patch
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
+BuildRequires:	gcc(ssp)
 BuildRequires:	module-init-tools
 BuildRequires:	sed >= 4.0
 Autoreqprov:	no
@@ -107,7 +108,7 @@ hardware.
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
-
+%patch9 -p1
 %patch10 -p1
 %patch11 -p1
 %patch12 -p1
