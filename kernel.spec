@@ -5,7 +5,7 @@
 %define		test_build		0
 #
 %define		pre_version		pre1
-%define		lids_version		1.0.6
+%define		lids_version		1.0.7
 %define		ipvs_version		0.2.7
 %define		freeswan_version	snap2001feb24b
 %define 	aacraid_version		1.0.6
@@ -30,7 +30,7 @@ Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
 Source7:	linux-netfilter-patches-20010322.tar.gz
-Source8:	http://www.lids.org/download/lids-%{lids_version}-2.4.2.tar.gz
+Source8:	http://www.lids.org/download/lids-%{lids_version}-%{version}.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source10:	http://www.linux-wlan.com/linux-wlan/linux-wlan-ng-%{wlan_version}.tar.gz
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
@@ -337,36 +337,36 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -n linux
 %patch0 -p1
 %patch2 -p1
-%patch4 -p0 
+#%patch4 -p0 
 %patch5 -p0
 %patch6 -p1
 %patch7 -p1
-%patch8 -p1
-%patch10 -p1
-%patch11 -p1
-%patch12 -p0
-%patch13 -p0
-%patch14 -p1
+#%patch8 -p1
+#%patch10 -p1
+#%patch11 -p1
+#%patch12 -p0
+#%patch13 -p0
+#%patch14 -p1
 %patch15 -p1
 %patch16 -p1
-%patch17 -p0
-%patch18 -p1
-%patch19 -p0
-%patch20 -p0
-%patch21 -p1
-%patch22 -p1
-%patch23 -p1
-%patch24 -p1
-%patch25 -p1
-%patch26 -p1
-%patch27 -p1
-%patch28 -p1
-#%patch29 -p0
-%patch30 -p1
+#%patch17 -p0
+#%patch18 -p1
+#%patch19 -p0
+#%patch20 -p0
+#%patch21 -p1
+#%patch22 -p1
+#%patch23 -p1
+#%patch24 -p1
+#%patch25 -p1
+#%patch26 -p1
+#%patch27 -p1
+#%patch28 -p1
+##%patch29 -p0
+#%patch30 -p1
 %patch31 -p1
-%patch32 -p4
+#%patch32 -p4
 %patch33 -p1
-%patch34 -p1
+#%patch34 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
