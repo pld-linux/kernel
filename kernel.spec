@@ -278,6 +278,7 @@ Patch4001:	grsecurity-nopax-2.0-rc1-2.4.21.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+BuildRequires:	ed
 %ifarch sparc64
 BuildRequires:	egcs64
 #%else
@@ -285,7 +286,7 @@ BuildRequires:	egcs64
 %endif
 BuildRequires:	modutils
 Buildrequires:	perl
-BuildRequires:	sed >= 3.95
+BuildRequires:	sed
 Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.7.0
@@ -699,15 +700,14 @@ cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 %endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
-sed -i -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile
-sed -i -e 's/EXTRA_CFLAGS.*-g//g' net/ipsec/Makefile
+echo -e ',s/EXTRA_CFLAGS.*//g\n,w' | ed drivers/atm/Makefile
+echo -e ',s/EXTRA_CFLAGS.*-g//g\n,w' | ed net/ipsec/Makefile
 
 # Fix EXTRAVERSION and CC in main Makefile
-sed -i -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
+echo -e ',s/EXTRAVERSION =.*/EXTRAVERSION =/g\n,w' | ed Makefile
 %ifarch sparc64
-    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
+echo -e ',s/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g\n,w' | ed Makefile
 %endif
-    Makefile
 
 %build
 BuildKernel() {
@@ -764,9 +764,9 @@ BuildKernel() {
 %endif
 
 %ifarch i386
-	sed -i -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
-	       -e 's/CONFIG_DRM_\(.*\)=[ym]/# CONFIG_DRM_\1 is not set/' \
-		arch/%{base_arch}/defconfig
+	echo -e ',s/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/\n' \
+		',s/CONFIG_DRM_\(.*\)=[ym]/# CONFIG_DRM_\1 is not set/\n,w' |\
+		ed arch/%{base_arch}/defconfig
 %endif
 
 	%{__make} mrproper
@@ -986,10 +986,11 @@ echo "#include <linux/modsetver.h>" > include/linux/modversions.h
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well, after we fix the paths
 
-%if %{?_without_source:0}%{!?_without_source:1}
+%if 0%{!?_without_source:1}
 %{__make} depend 
-find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
-	xargs sed -i -e "s|$RPM_BUILD_ROOT\(/usr/src/linux\)|\1|g"
+for i in $(find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend"); do
+	echo -e ",s|$RPM_BUILD_ROOT\(/usr/src/linux\)|\1|g"'\n,w' | ed $i
+done
 
 %{__make} clean
 rm -f scripts/mkdep
@@ -997,7 +998,7 @@ rm -f drivers/net/hamradio/soundmodem/gentbl
 %endif
 
 # BOOT
-%if %{?_without_boot:0}%{!?_without_boot:1}
+%if 0%{!?_without_boot:1}
 %ifnarch i586 i686 athlon
 install -d $RPM_BUILD_ROOT/%{_libdir}/bootdisk
 cp -rdp $KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk/* $RPM_BUILD_ROOT/%{_libdir}/bootdisk
