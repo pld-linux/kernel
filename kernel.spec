@@ -15,7 +15,7 @@
 %define		ipvs_version		1.0.4
 %define		freeswan_version	1.97
 %define		IPperson_version	20020427-2.4.18
-%define		grsec_version		1.9.8-rc1
+%define		grsec_version		1.9.9
 %define		jfs_version		2.4-1.0.24
 %define		lvm_version		1.0.5
 %define		evms_version		1.2.0
@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	2%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	2.1%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -274,7 +274,7 @@ Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.7.0
 Provides:	bttv = 0.7.83
-Provides:	%{name}_netfilter = 1.2.7a
+Provides:	%{name}(netfilter) = 1.2.7a
 Provides:	%{name}(grsecurity) = %{grsec_version}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
@@ -330,7 +330,7 @@ Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
 Provides:	%{name}(cdrw)
 Provides:	%{name}(cdmrw)
-Provides:	%{name}_netfilter = 1.2.7a
+Provides:	%{name}(netfilter) = 1.2.7a
 Prereq:		fileutils
 Prereq:		modutils
 Prereq:		geninitrd >= 2.21
