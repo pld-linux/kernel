@@ -174,6 +174,11 @@ Patch80:	http://www.elektronikschule.de/~genannt/kernel-patche/lirc/lirc-2.6.5-2
 # from http://www.smcc.demon.nl/webcam/pwcx-9.0-beta-2.tar.gz
 Patch82:	2.6.6-pwcx.patch
 
+Patch84:	2.6.6-serial-fifo-lkml.patch
+Patch86:	2.6.6-NTFS-2.1.9-lkml.patch
+Patch88:	2.6.6-qsort-updated-lkml.patch
+Patch90:	2.6.6-xfs-qsort-lkml.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
