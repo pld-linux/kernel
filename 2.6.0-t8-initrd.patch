@@ -7,14 +7,14 @@ diff -urN linux-2.6.0-test8-orig/init/do_mounts_initrd.c linux-2.6.0-test8/init/
  		 */
 -		if (rd_load_image("/dev/initrd") && ROOT_DEV != Root_RAM0) {
 -			sys_unlink("/dev/initrd");
-+		if (rd_load_image("/initrd") && ROOT_DEV != Root_RAM0) {
-+			sys_unlink("/initrd");
++		if (rd_load_image("/initrd.img") && ROOT_DEV != Root_RAM0) {
++			sys_unlink("/initrd.img");
  			handle_initrd();
  			return 1;
  		}
  	}
 -	sys_unlink("/dev/initrd");
-+	sys_unlink("/initrd");
++	sys_unlink("/initrd.img");
  	return 0;
  }
 diff -urN linux-2.6.0-test8-orig/init/do_mounts_rd.c linux-2.6.0-test8/init/do_mounts_rd.c
@@ -25,7 +25,7 @@ diff -urN linux-2.6.0-test8-orig/init/do_mounts_rd.c linux-2.6.0-test8/init/do_m
  		devblocks >>= 1;
  
 -	if (strcmp(from, "/dev/initrd") == 0)
-+	if (strcmp(from, "/initrd") == 0)
++	if (strcmp(from, "/initrd.img") == 0)
  		devblocks = nblocks;
  
  	if (devblocks == 0) {
@@ -37,7 +37,7 @@ diff -urN linux-2.6.0-test8-orig/init/initramfs.c linux-2.6.0-test8/init/initram
  		}
  		printk("it isn't (%s); looks like an initrd\n", err);
 -		fd = sys_open("/dev/initrd", O_WRONLY|O_CREAT, 700);
-+		fd = sys_open("/initrd", O_WRONLY|O_CREAT, 700);
++		fd = sys_open("/initrd.img", O_WRONLY|O_CREAT, 700);
  		if (fd >= 0) {
  			sys_write(fd, (char *)initrd_start,
  					initrd_end - initrd_start);
