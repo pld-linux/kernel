@@ -1,0 +1,33 @@
+--- linux-2.4.3-pre1/kernel/sys.c	Tue Oct 17 06:58:51 2000
++++ linux-akpm/kernel/sys.c	Sun Mar  4 22:04:57 2001
+@@ -330,6 +330,12 @@
+ 	return 0;
+ }
+ 
++static void deferred_cad(void *dummy)
++{
++	notifier_call_chain(&reboot_notifier_list, SYS_RESTART, NULL);
++	machine_restart(NULL);
++}
++
+ /*
+  * This function gets called by ctrl-alt-del - ie the keyboard interrupt.
+  * As it's called within an interrupt, it may NOT sync: the only choice
+@@ -337,10 +343,13 @@
+  */
+ void ctrl_alt_del(void)
+ {
+-	if (C_A_D) {
+-		notifier_call_chain(&reboot_notifier_list, SYS_RESTART, NULL);
+-		machine_restart(NULL);
+-	} else
++	static struct tq_struct cad_tq = {
++		routine: deferred_cad,
++	};
++
++	if (C_A_D)
++		schedule_task(&cad_tq);
++	else
+ 		kill_proc(1, SIGINT, 1);
+ }
+
