@@ -22,7 +22,7 @@
 Summary:	The Linux kernel (the core of the Linux operating system)
 Name:		kernel
 Version:	2.6.4
-Release:	0.5
+Release:	0.6
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
@@ -37,7 +37,6 @@ Patch6:		2.6.0-t8-swap-include-lkml.patch
 Patch7:		2.6.0-t9-acpi_osl-lkml.patch
 Patch8:		2.6.1-kbuild-out-of-tree.diff
 Patch9:		2.6.1-squashfs1.3r3.patch
-Patch10:	2.6.4-shfs.patch
 Patch20:	2.6.4-paxgrsec.patch
 Patch21:	2.6.4-paxgrsec-gcc34.patch
 Patch30:	2.6.4-esfq.patch
@@ -122,7 +121,6 @@ hardware.
 %patch7 -p1
 %patch8 -p1
 %patch9 -p1
-%patch10 -p1
 
 %patch20 -p1
 %patch21 -p1
