@@ -9,7 +9,7 @@
 # _without_up		- don't build UP kernel
 #
 %define		test_build		0
-%define		krelease		2.36
+%define		krelease		2.37
 #
 %define base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 #
@@ -26,6 +26,7 @@
 %define		evms_version		1.0.1
 %define		tridentfb_version	0.7.0
 %define		ntfs_version		2.0.7d	
+%define		drm_xfree_version	4.2.0
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -64,6 +65,7 @@ Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_versio
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
 Source12:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source13:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
+Source14:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source50:	%{name}-sparc.config
@@ -490,7 +492,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -a3 -a5 -a7 -a10 -a11 -a12 -a13 -n linux
+%setup -q -a3 -a5 -a7 -a10 -a11 -a12 -a13 -a14 -n linux
 #%patch1000 -p1
 #%patch0 -p1
 %patch16 -p1
@@ -555,6 +557,10 @@ echo "Scheduler din't work on ARCH diffetern than Intel x86"
 %patch124 -p1
 
 %patch904 -p0
+
+# XFree DRM
+rm -rf drivers/char/drm
+mv -f drm drivers/char
 
 # Tekram DC395/315 U/UW SCSI host driver
 echo Adding Tekram DC395/315 driver
