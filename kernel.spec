@@ -27,12 +27,12 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1.1
+%define		_rel		1.2
 %define		_rc		0
 %define		_cset		20040113_0214
 
 ## netfilter snap 
-%define		_netfilter_snap		20040107
+%define		_netfilter_snap		20040114
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/amd64/x86_64/')
 
@@ -153,42 +153,35 @@ Patch60:	2.6.0-mount-rainier-lkml.patch
 Patch61:	2.6.0-mount-rainier-fix-lkml.patch
 Patch62:	2.6.0-mount-rainier-fix-EROFS.patch
 
-Patch68:	2.6.1-rc2-NF-time-%{_netfilter_snap}.patch
+Patch64:	linux-2.6-xfs-cvs-20040102.patch
+Patch65:	linux-2.6-xfs-secure-attr.patch
 
-Patch70:	linux-2.6-xfs-cvs-20040102.patch
-Patch71:	linux-2.6-xfs-secure-attr.patch
+Patch68:	http://www.saout.de/misc/dm-crypt.diff
 
-Patch74:	2.6.1-rc2-NF-u32-%{_netfilter_snap}.patch
-Patch76:	2.6.1-rc2-NF-osf-%{_netfilter_snap}.patch
-
-Patch78:	http://www.saout.de/misc/dm-crypt.diff
-
-Patch80:	2.6-pnp.patch
+Patch70:	2.6-pnp.patch
 
 # from ftp://ftp.lsil.com/HostAdapterDrivers/linux/Fusion-MPT/2.6-patches/3.00.00/
-Patch82:	2.6.1-rc2-mptlinux-3.00.00.patch
+Patch72:	2.6.1-rc2-mptlinux-3.00.00.patch
 
-Patch84:	2.6.1-rc2-ini9100u-lkml.patch
+Patch74:	2.6.1-rc2-ini9100u-lkml.patch
 
-Patch86:	2.6.1-rc2-radeon-yd-lkml.patch
+Patch76:	2.6.1-rc2-radeon-yd-lkml.patch
 
-Patch88:	2.6.1-rc2-request_firmware-lkml.patch
+Patch78:	2.6.1-rc2-request_firmware-lkml.patch
 
-Patch90:	2.6.1-rc2-NF-psd-%{_netfilter_snap}.patch
+Patch80:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 
-Patch92:	2.6.1-rc2-VLAN-NS83820-lkml.patch
+Patch82:	laptop-mode-2.6.1-7.patch
 
-Patch94:	laptop-mode-2.6.1-7.patch
+Patch84:	2.6.1-hash_table_size-lkml.patch
 
-Patch96:	2.6.1-hash_table_size-lkml.patch
+Patch86:	2.6.1-sii3512-lkml.patch
 
-Patch98:	2.6.1-sii3512-lkml.patch
+Patch88:	2.6.1-SIOCSIFNAME-lkml.patch
 
-Patch100:	2.6.1-SIOCSIFNAME-lkml.patch
+Patch90:	2.6.1-rq-not-task_running-lkml.patch
 
-Patch102:	2.6.1-rq-not-task_running-lkml.patch
-
-Patch104:	2.6.1-NF-connlimit-20040107.patch
+Patch92:	2.6.1-NF-20040114.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -579,12 +572,17 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch61 -p0
 %patch62 -p1
 
+%patch64 -p1
+%patch65 -p1
+
 %patch68 -p1
 
 %patch70 -p1
-%patch71 -p1
+
+%patch72 -p1
 
 %patch74 -p1
+
 %patch76 -p1
 
 %patch78 -p1
@@ -602,18 +600,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch90 -p1
 
 %patch92 -p1
-
-%patch94 -p1
-
-%patch96 -p1
-
-%patch98 -p1
-
-%patch100 -p1
-
-%patch102 -p1
-
-%patch104 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
