@@ -650,8 +650,8 @@ fi
 %dir /lib/modules/%{version}-%{release}
 /lib/modules/%{version}-%{release}/kernel
 #pcmcia stuff
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
+#%exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
+#%exclude /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
 #drm stuff
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 
@@ -660,8 +660,8 @@ fi
 
 %files pcmcia-cs
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
-/lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
+#/lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
+#/lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
 
 %files drm
 %defattr(644,root,root,755)
@@ -679,8 +679,8 @@ fi
 %dir /lib/modules/%{version}-%{release}smp
 /lib/modules/%{version}-%{release}smp/kernel
 #pcmcia stuff
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
+#%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
+#%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
 #drm stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 /lib/modules/%{version}-%{release}smp/build
@@ -688,8 +688,8 @@ fi
 
 %files -n kernel-smp-pcmcia-cs
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
+#/lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
+#/lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
 
 %files -n kernel-smp-drm
 %defattr(644,root,root,755)
