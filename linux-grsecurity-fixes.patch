@@ -1,21 +1,7 @@
-
-
-	Description:
-
-	fs/namei.c:1606:sys_link()
-	- they got lost in parentheses
-	fs/proc/base.c:750:proc_pid_make_inode()
-	- files belonging to !dumpable tasks were not set to PROC_GID
-	kernel/sysctl.c
-	- all features are turned off by default (via sysctl)
-
-	baggins
-
-
-diff -urN linux.grsec/Documentation/Configure.help linux.grsec.fixed/Documentation/Configure.help
---- linux.grsec/Documentation/Configure.help	Sun Sep 30 01:54:18 2001
-+++ linux.grsec.fixed/Documentation/Configure.help	Sun Sep 30 01:27:12 2001
-@@ -18498,7 +18498,7 @@
+diff -urN linux/Documentation/Configure.help linux.grsec/Documentation/Configure.help
+--- linux/Documentation/Configure.help	Tue Oct 23 20:03:03 2001
++++ linux.grsec/Documentation/Configure.help	Tue Oct 23 20:03:54 2001
+@@ -19164,7 +19164,7 @@
    grsecurity runs with at bootup, without having to recompile your
    kernel.  You can echo values to files in /proc/sys/kernel/grsecurity
    to enable (1) or disable (0) various features.  They can only be set
@@ -24,10 +10,10 @@ diff -urN linux.grsec/Documentation/Configure.help linux.grsec.fixed/Documentati
    Please note that this option could reduce the effectiveness
    of the added security of this patch if an ACL system is not put in
    place.  Your init scripts should be read-only, and root should not have
-diff -urN linux.grsec/fs/namei.c linux.grsec.fixed/fs/namei.c
---- linux.grsec/fs/namei.c	Sun Sep 30 01:54:20 2001
-+++ linux.grsec.fixed/fs/namei.c	Sun Sep 30 01:27:12 2001
-@@ -1882,44 +1882,43 @@
+diff -urN linux/fs/namei.c linux.grsec/fs/namei.c
+--- linux/fs/namei.c	Tue Oct 23 20:03:04 2001
++++ linux.grsec/fs/namei.c	Tue Oct 23 20:03:55 2001
+@@ -1927,44 +1927,43 @@
  		new_dentry = lookup_create(&nd, 0);
  		error = PTR_ERR(new_dentry);
  		if (!IS_ERR(new_dentry)) {
@@ -101,10 +87,10 @@ diff -urN linux.grsec/fs/namei.c linux.grsec.fixed/fs/namei.c
  			dput(new_dentry);
  		}
  		up(&nd.dentry->d_inode->i_sem);
-diff -urN linux.grsec/fs/proc/base.c linux.grsec.fixed/fs/proc/base.c
---- linux.grsec/fs/proc/base.c	Sun Sep 30 01:54:20 2001
-+++ linux.grsec.fixed/fs/proc/base.c	Sun Sep 30 01:27:12 2001
-@@ -747,13 +747,15 @@
+diff -urN linux/fs/proc/base.c linux.grsec/fs/proc/base.c
+--- linux/fs/proc/base.c	Tue Oct 23 20:03:04 2001
++++ linux.grsec/fs/proc/base.c	Tue Oct 23 20:03:55 2001
+@@ -704,13 +704,15 @@
  	get_task_struct(task);
  	inode->u.proc_i.task = task;
  	inode->i_uid = 0;
@@ -122,10 +108,10 @@ diff -urN linux.grsec/fs/proc/base.c linux.grsec.fixed/fs/proc/base.c
  #endif
  	}
  
-diff -urN linux.grsec/kernel/sysctl.c linux.grsec.fixed/kernel/sysctl.c
---- linux.grsec/kernel/sysctl.c	Sun Sep 30 01:54:20 2001
-+++ linux.grsec.fixed/kernel/sysctl.c	Sun Sep 30 01:27:12 2001
-@@ -286,6 +286,7 @@
+diff -urN linux/kernel/sysctl.c linux.grsec/kernel/sysctl.c
+--- linux/kernel/sysctl.c	Tue Oct 23 20:03:05 2001
++++ linux.grsec/kernel/sysctl.c	Tue Oct 23 20:07:00 2001
+@@ -283,6 +283,7 @@
  	{0}
  };
  
@@ -133,7 +119,7 @@ diff -urN linux.grsec/kernel/sysctl.c linux.grsec.fixed/kernel/sysctl.c
  #ifdef CONFIG_GRKERNSEC_LINK
  int grsec_enable_link= -1;
  #endif
-@@ -300,16 +301,10 @@
+@@ -297,26 +298,16 @@
  #endif
  #ifdef CONFIG_GRKERNSEC_FORKBOMB
  int grsec_enable_forkbomb= -1;
@@ -150,7 +136,17 @@ diff -urN linux.grsec/kernel/sysctl.c linux.grsec.fixed/kernel/sysctl.c
  #ifdef CONFIG_GRKERNSEC_EXECLOG
  int grsec_enable_execlog= -1;
  #endif
-@@ -345,11 +340,7 @@
+ #ifdef CONFIG_GRKERNSEC_EXECLOG_GROUP
+-#ifdef CONFIG_GRKERNSEC_SYSCTL
+-int grsec_execlog_gid= -1;
+-#else
+ int grsec_execlog_gid= CONFIG_GRKERNSEC_EXECLOG_GID;
+ #endif
+-#endif
+ #ifdef CONFIG_GRKERNSEC_SUID
+ int grsec_enable_suid= -1;
+ #endif
+@@ -352,11 +343,7 @@
  #endif
  #ifdef CONFIG_GRKERNSEC_TPE
  int grsec_enable_tpe= -1;
@@ -162,7 +158,7 @@ diff -urN linux.grsec/kernel/sysctl.c linux.grsec.fixed/kernel/sysctl.c
  #ifdef CONFIG_GRKERNSEC_TPE_GLIBC
  int grsec_enable_tpe_glibc= -1;  
  #endif
-@@ -371,36 +362,20 @@
+@@ -378,36 +365,20 @@
  #endif
  #ifdef CONFIG_GRKERNSEC_RANDTTL
  int grsec_enable_randttl= -1;
@@ -199,7 +195,7 @@ diff -urN linux.grsec/kernel/sysctl.c linux.grsec.fixed/kernel/sysctl.c
  #ifdef CONFIG_GRKERNSEC_STEALTH_RST
  int grsec_enable_stealth_rst= -1;
  #endif
-@@ -417,7 +392,153 @@
+@@ -424,7 +395,161 @@
  int grsec_enable_stealth_flags= -1;
  #endif
  
@@ -236,9 +232,17 @@ diff -urN linux.grsec/kernel/sysctl.c linux.grsec.fixed/kernel/sysctl.c
 +int grsec_enable_execlog= 0;
 +int grsec_enable_execlog_c= 0;
 +#endif
++#ifdef CONFIG_GRKERNSEC_EXECLOG_GROUP
++int grsec_execlog_gid= -1;
++int grsec_execlog_gid_c= 0;
++#endif
 +#ifdef CONFIG_GRKERNSEC_SUID
 +int grsec_enable_suid= 0;
 +int grsec_enable_suid_c= 0;
++#endif
++#ifdef CONFIG_GRKERNSEC_SUID_ROOT
++int grsec_enable_suid_root= -1;
++int grsec_enable_suid_root_c= -1;
 +#endif
 +#ifdef CONFIG_GRKERNSEC_SIGNAL
 +int grsec_enable_signal= 0;
@@ -352,9 +356,9 @@ diff -urN linux.grsec/kernel/sysctl.c linux.grsec.fixed/kernel/sysctl.c
 +#endif
 +
  enum {GS_LINK=1,GS_FIFO, GS_FD, GS_EXECVE, GS_FORK,
- GS_FORK_GID, GS_FORK_SEC, GS_FORK_MAX, GS_EXECLOG, GS_SUID,
- GS_SIGNAL, GS_COREDUMP, GS_FORKFAIL, GS_TIME, GS_KBMAP, GS_RANDNET,
-@@ -431,157 +552,157 @@
+ GS_FORK_GID, GS_FORK_SEC, GS_FORK_MAX, GS_EXECLOG, GS_EXECLOG_GID, 
+ GS_SUID, GS_SUID_ROOT, GS_SIGNAL, GS_COREDUMP, GS_FORKFAIL, GS_TIME, 
+@@ -438,165 +563,165 @@
  static ctl_table grsecurity_table[] = {
  #ifdef CONFIG_GRKERNSEC_LINK
         {GS_LINK, "linking_restrictions", &grsec_enable_link, sizeof (int),
@@ -395,10 +399,20 @@ diff -urN linux.grsec/kernel/sysctl.c linux.grsec.fixed/kernel/sysctl.c
 -        0640, NULL, &proc_dointvec},
 +        0640, NULL, &proc_dointvec, NULL, NULL, &grsec_enable_execlog_c},
  #endif
+ #ifdef CONFIG_GRKERNSEC_EXECLOG_GROUP
+        {GS_EXECLOG_GID, "exec_logging_gid", &grsec_execlog_gid, sizeof (int),
+-        0640, NULL, &proc_dointvec},
++        0640, NULL, &proc_dointvec, NULL, NULL, &grsec_execlog_gid_c},
+ #endif
  #ifdef CONFIG_GRKERNSEC_SUID
         {GS_SUID, "suid_logging", &grsec_enable_suid, sizeof (int),
 -        0640, NULL, &proc_dointvec},
 +        0640, NULL, &proc_dointvec, NULL, NULL, &grsec_enable_suid_c},
+ #endif
+ #ifdef CONFIG_GRKERNSEC_SUID_ROOT
+        {GS_SUID_ROOT, "suid_root_logging", &grsec_enable_suid_root, sizeof (int),
+-        0640, NULL, &proc_dointvec},
++        0640, NULL, &proc_dointvec, NULL, NULL, &grsec_enable_suid_root_c},
  #endif
  #ifdef CONFIG_GRKERNSEC_SIGNAL
         {GS_SIGNAL, "signal_logging", &grsec_enable_signal, sizeof (int),
@@ -552,7 +566,7 @@ diff -urN linux.grsec/kernel/sysctl.c linux.grsec.fixed/kernel/sysctl.c
  #endif
         {0}
  };
-@@ -1176,7 +1295,7 @@
+@@ -1181,7 +1306,7 @@
  		if(table->de->parent->name &&
  		(strlen(table->de->parent->name) == 10)) { 
  		if((!strcmp(table->de->parent->name,"grsecurity")) &&
@@ -561,7 +575,7 @@ diff -urN linux.grsec/kernel/sysctl.c linux.grsec.fixed/kernel/sysctl.c
                          security_alert("attempt to modify grsecurity "
                          "sysctl values by (%.16s:%d), UID (%d), EUID (%d), "
                          "parent (%.16s:%d), UID (%d), EUID (%d)",
-@@ -1272,6 +1391,14 @@
+@@ -1277,6 +1402,14 @@
  		return -EINVAL;
  	*lenp -= left;
  	filp->f_pos += *lenp;
