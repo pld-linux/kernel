@@ -32,7 +32,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	3.5%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	4%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -116,7 +116,7 @@ Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/pr
 # new version of netfilter.
 Patch8:		linux-2.4.20-netfilter-%{netfilter_snap}.patch.bz2
 
-#Patch9:
+Patch9:		linux-2.4.20-initrd-close-console.patch
 #Patch10:
 
 # http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
@@ -737,6 +737,8 @@ echo Fixed I810 Sound ...
 
 %patch42 -p1
 %patch43 -p1
+
+%patch9 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
