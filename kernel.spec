@@ -61,6 +61,11 @@ Patch10:	ipvs-ip_select_ident.patch
 Patch11:	linux-2.4.2-qreboot.patch
 Patch12:	linux-2.4.2-irda3.patch
 Patch13:	linux-2.4.2-irda4.patch
+## from LKL 28.II - 01.III
+Patch14:	linux-2.4.2-mqestro3-dma-fix.patch
+Patch15:	linux2.4.2-advantech-wdt-driver.patch
+Patch16:	linux-scsi-debug-bug.patch
+Patch17:	linux-smaller-parport_pc-non-pci-box.patch
 
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
@@ -332,10 +337,17 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
     -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
 %endif
     Makefile.orig >Makefile
+
 #patches from Linux kernel list
 %patch11 -p1
 %patch12 -p1
 %patch13 -p1
+
+## next patches
+%patch14 -p1
+%patch15 -p1
+%patch16 -p0
+%patch17 -p0
 
 %build
 BuildKernel() {
@@ -532,6 +544,11 @@ ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
+## next
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH16}
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH17}
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
