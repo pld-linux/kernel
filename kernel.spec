@@ -347,8 +347,8 @@ Summary(pl):	Modó³y PCMCIA-CS
 Group:		Base/Kernel
 Group(pl):	Podstawowe/Kernel
 Provides:	%{name}-pcmcia-cs=%{pcmcia_version}
-%description
-%description -l pl
+%description pcmcia-cs
+%description -l pl pcmcia-cs
 
 %package headers
 Summary:	Header files for the Linux kernel
