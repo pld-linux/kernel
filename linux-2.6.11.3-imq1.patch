@@ -574,9 +574,9 @@ diff -Nru linux-2.6.9.orig/include/linux/skbuff.h linux-2.6.9/include/linux/skbu
 --- linux-2.6.9.orig/include/linux/skbuff.h	2004-10-18 21:55:36.000000000 +0000
 +++ linux-2.6.9/include/linux/skbuff.h	2004-10-19 18:40:20.000000000 +0000
 @@ -251,6 +251,11 @@
- #if defined(CONFIG_NF_CONNTRACK) || defined(CONFIG_NF_CONNTRACK_MODULE)
- 	struct sk_buff          *nfct_reasm;
- #endif
+ 	__u32			nfcache;
+ 	__u32			nfctinfo;
+ 	struct nf_conntrack	*nfct;
 +
 +#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
 +       unsigned char           imq_flags;
@@ -726,9 +726,9 @@ diff -Nru linux-2.6.9.orig/net/ipv6/netfilter/Makefile linux-2.6.9/net/ipv6/netf
  obj-$(CONFIG_IP6_NF_MANGLE) += ip6table_mangle.o
  obj-$(CONFIG_IP6_NF_TARGET_MARK) += ip6t_MARK.o
 +obj-$(CONFIG_IP6_NF_TARGET_IMQ) += ip6t_IMQ.o
- obj-$(CONFIG_IP6_NF_TARGET_REJECT) += ip6t_REJECT.o
- obj-$(CONFIG_IP6_NF_TARGET_ROUTE) += ip6t_ROUIE.o
+ obj-$(CONFIG_IP6_NF_TARGET_ROUTE) += ip6t_ROUTE.o
  obj-$(CONFIG_IP6_NF_QUEUE) += ip6_queue.o
+ obj-$(CONFIG_IP6_NF_TARGET_LOG) += ip6t_LOG.o
 diff -Nru linux-2.6.9.orig/net/ipv6/netfilter/ip6t_IMQ.c linux-2.6.9/net/ipv6/netfilter/ip6t_IMQ.c
 --- linux-2.6.9.orig/net/ipv6/netfilter/ip6t_IMQ.c	1970-01-01 00:00:00.000000000 +0000
 +++ linux-2.6.9/net/ipv6/netfilter/ip6t_IMQ.c	2004-10-19 18:34:52.000000000 +0000
