@@ -12,9 +12,9 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		2
+%define		_rel		1
 %define		_test_ver	9
-%define		_cset		0
+%define		_cset		20031027_0405
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -79,7 +79,7 @@ Patch22:	fbdev.diff.gz
 
 Patch28:	2.6.0-t8-clean-mtd-lkml.patch
 Patch32:	2.6.0-t8-swap-include-lkml.patch
-Patch36:	2.6.0-t8-h8300-lkml.patch
+Patch36:	2.6.0-t9-h8300-lkml.patch
 
 # based on http://www.uclinux.org/pub/uClinux/uClinux-2.6.x/linux-2.6.0-test8-uc0.patch.gz
 Patch38:	2.6.0-t8-uc0.patch
@@ -98,6 +98,13 @@ Patch66:	2.6.0-t8-__div64_32-lkml.patch
 Patch68:	2.6.0-t8-umsdos-lkml.patch
 Patch70:	2.6.0-t9-ibmtr_cs-lkml.patch
 Patch72:	2.6.0-t9-NLS-module-lkml.patch
+
+Patch74:	2.6.0-t9-acpi_osl-lkml.patch
+Patch76:	2.6.0-t9-netfilter-lkml.patch
+Patch78:	2.6.0-test9-nforce-ideata133.patch
+Patch80:	2.6.0-test9-promise20378.patch
+Patch82:	2.6.0-test9-r8169-8110S.patch
+Patch84:	2.6.0-test9-wintv-d.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -409,7 +416,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch28 -p1
 %patch32 -p1
-%patch36 -p1
+#%%patch36 -p1
 
 %patch38 -p1
 
@@ -421,12 +428,19 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch52 -p1
 
 %patch54 -p1
-%patch64 -p1
+#%%patch64 -p1
 
-%patch66 -p1
+#%%patch66 -p1
 %patch68 -p1
 %patch70 -p1
 %patch72 -p1
+
+%patch74 -p1
+%patch76 -p1
+%patch78 -p1
+%patch80 -p1
+%patch82 -p1
+%patch84 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
