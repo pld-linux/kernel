@@ -16021,29 +16021,36 @@ diff -uNr linux-2.6.8/include/asm-i386/desc.h linux-2.6.8.grsecurity/include/asm
  {
  	_set_tssldt_desc(&cpu_gdt_table[cpu][entry], (int)addr,
  		offsetof(struct tss_struct, __cacheline_filler) - 1, 0x89);
-@@ -50,9 +110,20 @@
+@@ -50,11 +110,27 @@
  
  #define set_tss_desc(cpu,addr) __set_tss_desc(cpu, GDT_ENTRY_TSS, addr)
  
 -static inline void set_ldt_desc(unsigned int cpu, void *addr, unsigned int size)
-+static inline void set_ldt_desc(unsigned int cpu, const void *addr, unsigned int size)
++static inline void __set_ldt_desc(unsigned int cpu, const void *addr, unsigned int size)
  {
+ 	_set_tssldt_desc(&cpu_gdt_table[cpu][GDT_ENTRY_LDT], (int)addr, ((size << 3)-1), 0x82);
+ }
+ 
++static inline void set_ldt_desc(unsigned int cpu, const void *addr, unsigned int size)
++{
 +#ifdef CONFIG_PAX_KERNEXEC
 +	unsigned long flags, cr3;
 +
 +	pax_open_kernel(flags, cr3);
 +#endif
 +
- 	_set_tssldt_desc(&cpu_gdt_table[cpu][GDT_ENTRY_LDT], (int)addr, ((size << 3)-1), 0x82);
++	_set_tssldt_desc(&cpu_gdt_table[cpu][GDT_ENTRY_LDT], (int)addr, ((size << 3)-1), 0x82);
 +
 +#ifdef CONFIG_PAX_KERNEXEC
 +	pax_close_kernel(flags, cr3);
 +#endif
 +
- }
- 
++}
++
  #define LDT_entry_a(info) \
-@@ -68,7 +139,7 @@
+ 	((((info)->base_addr & 0x0000ffff) << 16) | ((info)->limit & 0x0ffff))
+ 
+@@ -68,7 +144,7 @@
  	((info)->seg_32bit << 22) | \
  	((info)->limit_in_pages << 23) | \
  	((info)->useable << 20) | \
@@ -16052,7 +16059,7 @@ diff -uNr linux-2.6.8/include/asm-i386/desc.h linux-2.6.8.grsecurity/include/asm
  
  #define LDT_empty(info) (\
  	(info)->base_addr	== 0	&& \
-@@ -105,7 +176,7 @@
+@@ -105,7 +181,7 @@
   */
  static inline void load_LDT_nolock(mm_context_t *pc, int cpu)
  {
@@ -16061,7 +16068,7 @@ diff -uNr linux-2.6.8/include/asm-i386/desc.h linux-2.6.8.grsecurity/include/asm
  	int count = pc->size;
  
  	if (likely(!count)) {
-@@ -124,6 +195,22 @@
+@@ -124,6 +200,22 @@
  	put_cpu();
  }
  
