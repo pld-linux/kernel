@@ -902,6 +902,8 @@ BuildKernel() {
 	KERNELRELEASE=$KernelVer
 	echo KERNEL RELEASE $KernelVer
 %endif
+	echo "CHECKING DEPENDENCIES FOR KERNEL MODULES"
+	depmod --basedir $KERNEL_INSTALL_DIR -ae -F $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer $KernelVer || echo
 }
 
 KERNEL_BUILD_DIR=`pwd`
