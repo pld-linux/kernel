@@ -186,6 +186,8 @@ Patch910:	dc395-PLD.fix
 Patch911:	linux-o1-sched-grsec-pre.patch
 Patch912:	linux-o1-sched-grsec-post.patch
 Patch913:	linux-o1-sched-abi.patch
+Patch914:	linux-o1-sched-pre.patch
+Patch915:	linux-o1-sched-post.patch
 
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
@@ -459,19 +461,19 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch5 -p1
 #%patch7 -p1
 %if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%patch914 -p1
 %patch14 -p1
-%patch913 -p1
 %else
 %patch8 -p1
 %endif
-%ifarch {ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%ifarch %{ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %patch911 -p1
 %endif
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
 %patch9 -p1
 %patch906 -p1
 %endif
-%ifarch{ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%ifarch %{ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %patch912 -p1
 %endif
 
