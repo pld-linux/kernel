@@ -1,0 +1,420 @@
+diff -u --recursive --new-file v2.4.12/linux/drivers/net/acenic.c linux/drivers/net/acenic.c
+--- v2.4.12/linux/drivers/net/acenic.c	Thu Oct 11 08:02:26 2001
++++ linux/drivers/net/acenic.c	Fri Oct 12 15:35:53 2001
+@@ -165,10 +165,6 @@
+ #define SMP_CACHE_BYTES	L1_CACHE_BYTES
+ #endif
+ 
+-#if (BITS_PER_LONG == 64) || defined(CONFIG_HIGHMEM)
+-#define ACE_64BIT_PTR	1
+-#endif
+-
+ #ifndef SET_MODULE_OWNER
+ #define SET_MODULE_OWNER(dev)		{do{} while(0);}
+ #define ACE_MOD_INC_USE_COUNT		MOD_INC_USE_COUNT
+@@ -203,9 +199,15 @@
+ 	*dma_handle = virt_to_bus(virt_ptr);
+ 	return virt_ptr;
+ }
++
+ #define pci_free_consistent(cookie, size, ptr, dma_ptr)	kfree(ptr)
+-#define pci_map_single(cookie, address, size, dir)	virt_to_bus(address)
+-#define pci_unmap_single(cookie, address, size, dir)
++#define pci_map_page(cookie, page, off, size, dir)	\
++	virt_to_bus(page_address(page)+(off))
++#define pci_unmap_page(cookie, address, size, dir)
++#define pci_set_dma_mask(dev, mask)		\
++	(((u64)(mask) & 0xffffffff00000000) == 0 ? 0 : -EIO)
++#define pci_dma_supported(dev, mask)		\
++	(((u64)(mask) & 0xffffffff00000000) == 0 ? 1 : 0)
+ #endif
+ 
+ #if (LINUX_VERSION_CODE < 0x02032b)
+@@ -263,10 +265,6 @@
+ #define ace_if_down(dev)			{do{} while(0);}
+ #endif
+ 
+-#ifndef pci_set_dma_mask
+-#define pci_set_dma_mask(dev, mask)		dev->dma_mask = mask;
+-#endif
+-
+ #if (LINUX_VERSION_CODE >= 0x02031b)
+ #define NEW_NETINIT
+ #define ACE_PROBE_ARG				void
+@@ -598,7 +596,7 @@
+ 		dev->irq = pdev->irq;
+ 		dev->open = &ace_open;
+ 		dev->hard_start_xmit = &ace_start_xmit;
+-		dev->features |= NETIF_F_SG | NETIF_F_IP_CSUM | NETIF_F_HIGHDMA;
++		dev->features |= NETIF_F_SG | NETIF_F_IP_CSUM;
+ 		if (1) {
+ 			static void ace_watchdog(struct net_device *dev);
+ 			dev->tx_timeout = &ace_watchdog;
+@@ -740,6 +738,8 @@
+ 			kfree(dev);
+ 			continue;
+ 		}
++		if (ap->pci_using_dac)
++			dev->features |= NETIF_F_HIGHDMA;
+ 
+ 		boards_found++;
+ 	}
+@@ -816,9 +816,9 @@
+ 				dma_addr_t mapping;
+ 
+ 				mapping = ap->skb->rx_std_skbuff[i].mapping;
+-				pci_unmap_single(ap->pdev, mapping,
+-						 ACE_STD_BUFSIZE - (2 + 16),
+-						 PCI_DMA_FROMDEVICE);
++				pci_unmap_page(ap->pdev, mapping,
++					       ACE_STD_BUFSIZE - (2 + 16),
++					       PCI_DMA_FROMDEVICE);
+ 
+ 				ap->rx_std_ring[i].size = 0;
+ 				ap->skb->rx_std_skbuff[i].skb = NULL;
+@@ -833,9 +833,9 @@
+ 					dma_addr_t mapping;
+ 
+ 					mapping = ap->skb->rx_mini_skbuff[i].mapping;
+-					pci_unmap_single(ap->pdev, mapping,
+-							 ACE_MINI_BUFSIZE - (2 + 16),
+-							 PCI_DMA_FROMDEVICE);
++					pci_unmap_page(ap->pdev, mapping,
++						       ACE_MINI_BUFSIZE - (2 + 16),
++						       PCI_DMA_FROMDEVICE);
+ 
+ 					ap->rx_mini_ring[i].size = 0;
+ 					ap->skb->rx_mini_skbuff[i].skb = NULL;
+@@ -849,9 +849,9 @@
+ 				dma_addr_t mapping;
+ 
+ 				mapping = ap->skb->rx_jumbo_skbuff[i].mapping;
+-				pci_unmap_single(ap->pdev, mapping,
+-						 ACE_JUMBO_BUFSIZE - (2 + 16),
+-						 PCI_DMA_FROMDEVICE);
++				pci_unmap_page(ap->pdev, mapping,
++					       ACE_JUMBO_BUFSIZE - (2 + 16),
++					       PCI_DMA_FROMDEVICE);
+ 
+ 				ap->rx_jumbo_ring[i].size = 0;
+ 				ap->skb->rx_jumbo_skbuff[i].skb = NULL;
+@@ -1210,12 +1210,6 @@
+ 		ap->pci_latency);
+ 
+ 	/*
+-	 * Make sure to enable the 64 bit DMA mask if we're in a 64bit slot
+-	 */
+-	if (!(pci_state & PCI_32BIT))
+-		pci_set_dma_mask(ap->pdev, (dma_addr_t)~0ULL);
+-
+-	/*
+ 	 * Set the max DMA transfer size. Seems that for most systems
+ 	 * the performance is better when no MAX parameter is
+ 	 * set. However for systems enabling PCI write and invalidate,
+@@ -1309,12 +1303,24 @@
+ #endif
+ 		
+ 	/*
++	 * Configure DMA attributes.
++	 */
++	if (!pci_set_dma_mask(ap->pdev, (u64) 0xffffffffffffffff)) {
++		ap->pci_using_dac = 1;
++	} else if (!pci_set_dma_mask(ap->pdev, (u64) 0xffffffff)) {
++		ap->pci_using_dac = 0;
++	} else {
++		ecode = -ENODEV;
++		goto init_error;
++	}
++
++	/*
+ 	 * Initialize the generic info block and the command+event rings
+ 	 * and the control blocks for the transmit and receive rings
+ 	 * as they need to be setup once and for all.
+ 	 */
+ 	if (!(info = pci_alloc_consistent(ap->pdev, sizeof(struct ace_info),
+-				    &ap->info_dma))) {
++					  &ap->info_dma))) {
+ 		ecode = -EAGAIN;
+ 		goto init_error;
+ 	}
+@@ -1355,12 +1361,8 @@
+ 	ace_load_firmware(dev);
+ 	ap->fw_running = 0;
+ 
+-	tmp_ptr = (unsigned long) ap->info_dma;
+-#ifdef ACE_64BIT_PTR
++	tmp_ptr = (u64) ap->info_dma;
+ 	writel(tmp_ptr >> 32, &regs->InfoPtrHi);
+-#else
+-	writel(0, &regs->InfoPtrHi);
+-#endif
+ 	writel(tmp_ptr & 0xffffffff, &regs->InfoPtrLo);
+ 
+ 	memset(ap->evt_ring, 0, EVT_RING_ENTRIES * sizeof(struct event));
+@@ -1796,9 +1798,12 @@
+ 		 * Make sure IP header starts on a fresh cache line.
+ 		 */
+ 		skb_reserve(skb, 2 + 16);
+-		mapping = pci_map_single(ap->pdev, skb->data,
+-					 ACE_STD_BUFSIZE - (2 + 16),
+-					 PCI_DMA_FROMDEVICE);
++		mapping = pci_map_page(ap->pdev,
++				       virt_to_page(skb->data),
++				       ((unsigned long) skb->data &
++					~PAGE_MASK),
++				       ACE_STD_BUFSIZE - (2 + 16),
++				       PCI_DMA_FROMDEVICE);
+ 		ap->skb->rx_std_skbuff[idx].skb = skb;
+ 		ap->skb->rx_std_skbuff[idx].mapping = mapping;
+ 
+@@ -1860,9 +1865,12 @@
+ 		 * Make sure the IP header ends up on a fresh cache line
+ 		 */
+ 		skb_reserve(skb, 2 + 16);
+-		mapping = pci_map_single(ap->pdev, skb->data,
+-					 ACE_MINI_BUFSIZE - (2 + 16),
+-					 PCI_DMA_FROMDEVICE);
++		mapping = pci_map_page(ap->pdev,
++				       virt_to_page(skb->data),
++				       ((unsigned long) skb->data &
++					~PAGE_MASK),
++				       ACE_MINI_BUFSIZE - (2 + 16),
++				       PCI_DMA_FROMDEVICE);
+ 		ap->skb->rx_mini_skbuff[idx].skb = skb;
+ 		ap->skb->rx_mini_skbuff[idx].mapping = mapping;
+ 
+@@ -1919,9 +1927,12 @@
+ 		 * Make sure the IP header ends up on a fresh cache line
+ 		 */
+ 		skb_reserve(skb, 2 + 16);
+-		mapping = pci_map_single(ap->pdev, skb->data,
+-					 ACE_JUMBO_BUFSIZE - (2 + 16),
+-					 PCI_DMA_FROMDEVICE);
++		mapping = pci_map_page(ap->pdev,
++				       virt_to_page(skb->data),
++				       ((unsigned long) skb->data &
++					~PAGE_MASK),
++				       ACE_JUMBO_BUFSIZE - (2 + 16),
++				       PCI_DMA_FROMDEVICE);
+ 		ap->skb->rx_jumbo_skbuff[idx].skb = skb;
+ 		ap->skb->rx_jumbo_skbuff[idx].mapping = mapping;
+ 
+@@ -2129,8 +2140,8 @@
+ 
+ 		skb = rip->skb;
+ 		rip->skb = NULL;
+-		pci_unmap_single(ap->pdev, rip->mapping, mapsize,
+-				 PCI_DMA_FROMDEVICE);
++		pci_unmap_page(ap->pdev, rip->mapping, mapsize,
++			       PCI_DMA_FROMDEVICE);
+ 		skb_put(skb, retdesc->size);
+ 
+ 		/*
+@@ -2198,8 +2209,8 @@
+ 		mapping = info->mapping;
+ 
+ 		if (mapping) {
+-			pci_unmap_single(ap->pdev, mapping, info->maplen,
+-					 PCI_DMA_TODEVICE);
++			pci_unmap_page(ap->pdev, mapping, info->maplen,
++				       PCI_DMA_TODEVICE);
+ 			info->mapping = 0;
+ 		}
+ 
+@@ -2488,11 +2499,10 @@
+ 
+ 		if (mapping) {
+ 			memset(ap->tx_ring+i, 0, sizeof(struct tx_desc));
+-			pci_unmap_single(ap->pdev, mapping, info->maplen,
+-					 PCI_DMA_TODEVICE);
++			pci_unmap_page(ap->pdev, mapping, info->maplen,
++				       PCI_DMA_TODEVICE);
+ 			info->mapping = 0;
+ 		}
+-
+ 		if (skb) {
+ 			dev_kfree_skb(skb);
+ 			info->skb = NULL;
+@@ -2512,75 +2522,35 @@
+ 	return 0;
+ }
+ 
+-
+-/*
+- * Following below should be (in more clean form!) in arch/ARCH/kernel/pci_*.
+- * For now, let it stay here.
+- */
+-#if defined(CONFIG_HIGHMEM) && MAX_SKB_FRAGS
+-
+-#if defined(CONFIG_X86)
+-#define DMAADDR_OFFSET	0
+-typedef unsigned long long dmaaddr_high_t;
+-#elif defined(CONFIG_PPC)
+-#define DMAADDR_OFFSET PCI_DRAM_OFFSET
+-typedef unsigned long dmaaddr_high_t;
+-#endif
+-
+-
+-static inline dmaaddr_high_t
+-pci_map_single_high(struct pci_dev *hwdev, struct page *page,
+-		    int offset, size_t size, int dir)
+-{
+-	dmaaddr_high_t phys;
+-
+-	phys = (page-mem_map) *	(dmaaddr_high_t) PAGE_SIZE + offset;
+-
+-	return (phys + DMAADDR_OFFSET);
+-}
+-
+-#else
+-
+-typedef unsigned long dmaaddr_high_t;
+-
+-static inline dmaaddr_high_t
+-pci_map_single_high(struct pci_dev *hwdev, struct page *page,
+-		    int offset, size_t size, int dir)
+-{
+-	return pci_map_single(hwdev, page_address(page) + offset, size, dir);
+-}
+-
+-#endif
+-
+-
+-static inline dmaaddr_high_t
++static inline dma_addr_t
+ ace_map_tx_skb(struct ace_private *ap, struct sk_buff *skb,
+ 	       struct sk_buff *tail, u32 idx)
+ {
+ 	unsigned long addr;
+ 	struct tx_ring_info *info;
+ 
+-	addr = pci_map_single(ap->pdev, skb->data, skb->len, PCI_DMA_TODEVICE);
++	addr = pci_map_page(ap->pdev,
++			    virt_to_page(skb->data),
++			    ((unsigned long) skb->data &
++			     ~PAGE_MASK),
++			    skb->len, PCI_DMA_TODEVICE);
+ 
+ 	info = ap->skb->tx_skbuff + idx;
+ 	info->skb = tail;
+ 	info->mapping = addr;
+ 	info->maplen = skb->len;
+-
+ 	return addr;
+ }
+ 
+ 
+ static inline void
+-ace_load_tx_bd(struct tx_desc *desc, dmaaddr_high_t addr, u32 flagsize)
++ace_load_tx_bd(struct tx_desc *desc, u64 addr, u32 flagsize)
+ {
+ #if !USE_TX_COAL_NOW
+ 	flagsize &= ~BD_FLG_COAL_NOW;
+ #endif
+ 
+-#ifdef ACE_64BIT_PTR
+ 	desc->addr.addrhi = addr >> 32;
+-#endif
+ 	desc->addr.addrlo = addr;
+ 	desc->flagsize = flagsize;
+ }
+@@ -2642,16 +2612,16 @@
+ 		for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
+ 			skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
+ 			struct tx_ring_info *info;
+-			dmaaddr_high_t phys;
++			dma_addr_t phys;
+ 
+ 			len += frag->size;
+ 			info = ap->skb->tx_skbuff + idx;
+ 			desc = ap->tx_ring + idx;
+ 
+-			phys = pci_map_single_high(ap->pdev, frag->page,
+-						   frag->page_offset,
+-						   frag->size,
+-						   PCI_DMA_TODEVICE);
++			phys = pci_map_page(ap->pdev, frag->page,
++					    frag->page_offset,
++					    frag->size,
++					    PCI_DMA_TODEVICE);
+ 
+ 			flagsize = (frag->size << 16);
+ 			if (skb->ip_summed == CHECKSUM_HW)
+@@ -2673,7 +2643,6 @@
+ 			}
+ 			info->mapping = phys;
+ 			info->maplen = frag->size;
+-
+ 			ace_load_tx_bd(desc, phys, flagsize);
+ 		}
+ 	}
+@@ -2995,7 +2964,7 @@
+ 
+ 	while (size > 0) {
+ 		tsize = min_t(u32, ((~dest & (ACE_WINDOW_SIZE - 1)) + 1),
+-				min_t(u32, size, ACE_WINDOW_SIZE));
++			    min_t(u32, size, ACE_WINDOW_SIZE));
+ 		tdest = (unsigned long)&regs->Window +
+ 			(dest & (ACE_WINDOW_SIZE - 1));
+ 		writel(dest & ~(ACE_WINDOW_SIZE - 1), &regs->WinBase);
+@@ -3026,7 +2995,7 @@
+ 
+ 	while (size > 0) {
+ 		tsize = min_t(u32, ((~dest & (ACE_WINDOW_SIZE - 1)) + 1),
+-			    min_t(u32, size, ACE_WINDOW_SIZE));
++				min_t(u32, size, ACE_WINDOW_SIZE));
+ 		tdest = (unsigned long)&regs->Window +
+ 			(dest & (ACE_WINDOW_SIZE - 1));
+ 		writel(dest & ~(ACE_WINDOW_SIZE - 1), &regs->WinBase);
+diff -u --recursive --new-file v2.4.12/linux/drivers/net/acenic.h linux/drivers/net/acenic.h
+--- v2.4.12/linux/drivers/net/acenic.h	Thu Oct 11 08:02:26 2001
++++ linux/drivers/net/acenic.h	Fri Oct 12 15:35:53 2001
+@@ -582,7 +582,6 @@
+ 	aceaddr	stats2_ptr;
+ };
+ 
+-
+ struct ring_info {
+ 	struct sk_buff		*skb;
+ 	dma_addr_t		mapping;
+@@ -684,6 +683,7 @@
+ 	u32			last_tx, last_std_rx, last_mini_rx;
+ #endif
+ 	struct net_device_stats stats;
++	int			pci_using_dac;
+ };
+ 
+ 
+@@ -705,31 +705,11 @@
+ 
+ static inline void set_aceaddr(aceaddr *aa, dma_addr_t addr)
+ {
+-	unsigned long baddr = (unsigned long) addr;
+-#ifdef ACE_64BIT_PTR
++	u64 baddr = (u64) addr;
+ 	aa->addrlo = baddr & 0xffffffff;
+ 	aa->addrhi = baddr >> 32;
+-#else
+-	/* Don't bother setting zero every time */
+-	aa->addrlo = baddr;
+-#endif
+ 	mb();
+ }
+-
+-
+-#if 0
+-static inline void *get_aceaddr(aceaddr *aa)
+-{
+-	unsigned long addr;
+-	mb();
+-#ifdef ACE_64BIT_PTR
+-	addr = (u64)aa->addrhi << 32 | aa->addrlo;
+-#else
+-	addr = aa->addrlo;
+-#endif
+-	return (void *)addr;
+-}
+-#endif
+ 
+ 
+ static inline void ace_set_txprd(struct ace_regs *regs,
