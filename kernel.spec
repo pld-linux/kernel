@@ -555,7 +555,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch78 -p1
 
-#5%patch82 -p1
+##%%patch82 -p1
 
 %patch85 -p1
 %patch86 -p1
