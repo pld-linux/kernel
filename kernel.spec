@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	1%{?_with_preemptive:_pr}
+Release:	1.1%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -55,6 +55,7 @@ Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
+Source1000:	%{name}-pre.config
 Source1001:	%{name}-abi.config
 Source1002:	%{name}-addon.config
 Source1003:	%{name}-netfilter.config
@@ -237,7 +238,7 @@ Patch919:	linux-2.4.20-ntfs.patch
 Patch920:	linux-2.4.20-squashfs.patch
 
 # Marcelo's -pre
-#Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
+Patch1000:	patch-2.4.21-pre1
 Patch2000:	sched-2.4.20-A0.patch.bz2
 
 ExclusiveOS:	Linux
@@ -494,7 +495,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %prep
 %setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a11 -n linux-%{version}
-#%patch1000 -p1
 %patch0 -p1
 %patch1 -p1
 %patch900 -p1
@@ -554,7 +554,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch124 -p1
 %patch125 -p1
 #%patch126 -p1
-#%patch127 -p1
+%patch127 -p1
 %patch128 -p1
 %patch129 -p0
 %patch130 -p0
@@ -666,6 +666,9 @@ echo AXP patches ...
 %patch204 -p1
 %endif
 
+echo Prepatch for 2.4.21
+%patch1000 -p1
+
 %if %{?_with_o1:1}%{!?_with_o1:0}
 echo O(1) Scheduler.
 #%patch2000 -p1
@@ -742,6 +745,7 @@ BuildKernel() {
 %ifarch athlon
 	echo "CONFIG_MK7=y" >> arch/%{base_arch}/defconfig
 %endif
+	cat %{SOURCE1000} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1001} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1002} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1003} >> arch/%{base_arch}/defconfig
@@ -921,6 +925,7 @@ echo "CONFIG_M686=y" >> .config
 %ifarch athlon
 echo "CONFIG_MK7=y" >> .config
 %endif
+cat %{SOURCE1000} >> .config
 cat %{SOURCE1001} >> .config
 cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
@@ -970,6 +975,7 @@ echo "CONFIG_M686=y" >> .config
 echo "CONFIG_MK7=y" >> .config
 %endif
 
+cat %{SOURCE1000} >> .config
 cat %{SOURCE1001} >> .config
 cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
