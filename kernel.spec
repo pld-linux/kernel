@@ -103,6 +103,7 @@ Patch105:	linux-2.2.19-bttv-%{bttv_version}.patch.bz2
 Patch106:	linux-2.2.20-undo-ioport.h.patch.bz2
 Patch107:	linux-2.2.20-icn-unresolved.patch.bz2
 Patch108:	linux-2.2.20-agp_backport.patch.bz2
+Patch109:	dc395-MAINTAINERS.patch
 
 Patch1500:	linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	%{name}-sparc-zs.h.patch
@@ -407,6 +408,7 @@ mv sym-%{symncr_version}/*.{c,h} drivers/scsi
 mv sym-%{symncr_version}/{README,ChangeLog}.* Documentation
 
 # Tekram DC395/315 U/UW SCSI host driver
+%patch109 -p1
 patch -p1 -s <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
@@ -709,8 +711,10 @@ mv sym-%{symncr_version}/{README,ChangeLog}.* $RPM_BUILD_ROOT/usr/src/linux-%{ve
 rm -rf sym-%{symncr_version}
 
 # Tekram DC395/315 U/UW SCSI host driver
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH109}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi/
+rm -rf dc395/
 
 # jfs 1.0.5
 #patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH104}
