@@ -940,7 +940,7 @@ fi
 %{_prefix}/src/linux-%{version}/scripts
 %{_prefix}/src/linux-%{version}/sound
 %{_prefix}/src/linux-%{version}/security
-%{_prefix}/src/linux-%{version}%{_prefix}
+%{_prefix}/src/linux-%{version}/usr
 %{_prefix}/src/linux-%{version}/COPYING
 %{_prefix}/src/linux-%{version}/CREDITS
 %{_prefix}/src/linux-%{version}/MAINTAINERS
@@ -951,16 +951,34 @@ fi
 
 %if %{with up}
 %files sound-oss
+%defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/sound/oss
 
 %files sound-alsa
-/lib/modules/%{version}-%{release}/kernel/sound/[^core,^oss,^soundcore]*
+%defattr(644,root,root,755)
+/lib/modules/%{version}-%{release}/kernel/sound/core
+/lib/modules/%{version}-%{release}/kernel/sound/drivers
+/lib/modules/%{version}-%{release}/kernel/sound/i2c
+/lib/modules/%{version}-%{release}/kernel/sound/isa
+/lib/modules/%{version}-%{release}/kernel/sound/pci
+/lib/modules/%{version}-%{release}/kernel/sound/pcmcia
+/lib/modules/%{version}-%{release}/kernel/sound/synth
+/lib/modules/%{version}-%{release}/kernel/sound/usb
 %endif
 
 %if %{with smp}
 %files smp-sound-oss
+%defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/sound/oss
 
 %files smp-sound-alsa
-/lib/modules/%{version}-%{release}smp/kernel/sound/[^core,^oss,^soundcore]*
+%defattr(644,root,root,755)
+/lib/modules/%{version}-%{release}smp/kernel/sound/core
+/lib/modules/%{version}-%{release}smp/kernel/sound/drivers
+/lib/modules/%{version}-%{release}smp/kernel/sound/i2c
+/lib/modules/%{version}-%{release}smp/kernel/sound/isa
+/lib/modules/%{version}-%{release}smp/kernel/sound/pci
+/lib/modules/%{version}-%{release}smp/kernel/sound/pcmcia
+/lib/modules/%{version}-%{release}smp/kernel/sound/synth
+/lib/modules/%{version}-%{release}smp/kernel/sound/usb
 %endif
