@@ -120,7 +120,7 @@ Patch22:	2.6.0-t9-acpi_osl-lkml.patch
 Patch24:	%{name}-nls_default.patch
 
 # rewriten based on: ftp://ftp.suse.com/pub/people/stepan/bootsplash/kernel/bootsplash-3.1.4-2.6.3.diff
-Patch26:	bootsplash-3.1.4-2.6.5.patch
+Patch26:	bootsplash-3.1.4-2.6.7.patch
 
 Patch28:	2.6.0-t11-AIC_and_db4-lkml.patch
 
@@ -555,8 +555,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch24 -p1
 
 ## bootsplash
-echo Bootsplash not available NOW.
-#%patch26 -p1
+%patch26 -p1
 
 %patch28 -p1
 
