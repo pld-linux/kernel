@@ -114,6 +114,7 @@ Patch111:	%{name}-reiser.patch
 Patch112:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.6-p1.06062001.patch.gz
 Patch113:	linux-reiserfs-rename.patch
 Patch114:	linux-via-fixes.patch
+Patch115:	linux-alpha-nfs-2.4.2.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -380,6 +381,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #%patch112 -p1
 %patch113 -p1
 %patch114 -p1
+%patch115 -p1
 
 %patch900 -p0 
 %patch901 -p0
@@ -644,6 +646,7 @@ patch -p4 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH111}
 #gzip -dc %{PATCH112} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH113}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH114}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH115}
 
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH900}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH901}
