@@ -1,6 +1,6 @@
+%define		pre_version		pre1
 %define		lids_version		1.0.5
 %define		ipvs_version		0.2.3
-%define		pre_version		pre4
 %define 	aacraid_version		1.0.6
 %define		lm_sensors_version	2.5.5
 %define		wlan_version		0.1.7
@@ -14,7 +14,7 @@ Release:	1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%version.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
@@ -26,7 +26,6 @@ Source7:	linux-netfilter-patches-20010215.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}-2.4.1.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source10:	http://www.linux-wlan.com/linux-wlan/linux-wlan-ng-%{wlan_version}.tar.gz
-#Source11:	http://www2.lm-sensors.nu/~lm/archive/lm_sensors-%{lm_sensors_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -48,10 +47,15 @@ Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.3.gz
 #Patch2:		linux-2.4.0-freeswan-%{freeswan_version}.patch
 #Patch3:		linux-ipv6-addrconf.patch
 Patch4:		kernel-i8255-asm-fix.patch
-#Patch5:		ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.2-%{pre_version}.gz
-Patch6:		dc395-patch-PLD-fix.patch
-Patch7:		linux-2.4.1-disable-message-printing.patch
-Patch8:		ftp://ftp.winds.org/linux/patches/2.4.1/aacraid-2.4.1-%{aacraid_version}.patch
+Patch5:		dc395-patch-PLD-fix.patch
+Patch6:		linux-2.4.1-disable-message-printing.patch
+Patch7:		ftp://ftp.winds.org/linux/patches/2.4.1/aacraid-2.4.1-%{aacraid_version}.patch
+# work around bugs in windows95/2000 VJ header compression implementations.
+Patch8:		linux-fix-win-vj.patch
+# Loopback fix
+Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/axboe/patches/2.4.2-pre4/loop-6.gz
+
+#Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -215,31 +219,38 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -n linux
-
-#kerneli patch
+# kerneli patch
 %patch0 -p1
-
-#i8255 fix
+# i8255 fix
 %patch4 -p0 
+%patch5 -p0
+# disable message printing
+%patch6 -p1
+# Adaptec RAID patch
+%patch7 -p1
+%patch8 -p1
+%patch9 -p1
+
+# Tekram DC395/315 U/UW SCSI host driver
+patch -p1 -s <dc395/dc395-integ24.diff
+install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # Fore 200e ATM NIC
 patch -p1 <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
 #patch -p1 <linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
 
-# Tekram DC395/315 U/UW SCSI host driver
-%patch6 -p0
-patch -p1 -s <dc395/dc395-integ24.diff
-install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
-
 # Netfilter
 for i in netfilter-patches/* ; do
-       [ -f $i -a "$i" != "netfilter-patches/isapplied" ] && patch -p1  <$i
+       [ -f $i -a "$i" != "netfilter-patches/isapplied" ] && patch -p1 <$i
 done
 (KERNEL_DIR=`pwd` ; export KERNEL_DIR
 cd netfilter-patches/patch-o-matic
 ANS=""
 for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
 echo -e $ANS | ./runme)
+
+# LIDS
+patch -p1 <lids-%{lids_version}-2.4.1/lids-%{lids_version}-2.4.1.patch
 
 # IPVS
 for i in ipvs-%{ipvs_version}/*.diff ; do
@@ -248,15 +259,6 @@ done
 mkdir net/ipv4/ipvs
 cp ipvs-%{ipvs_version}/ipvs/*.{c,h,in} net/ipv4/ipvs
 cp ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile net/ipv4/ipvs/Makefile
-
-# LIDS
-patch -p1 <lids-%{lids_version}-2.4.1/lids-%{lids_version}-2.4.1.patch
-
-# disable message printing
-%patch7 -p1
-
-# Adaptec RAID patch
-%patch8 -p1
 
 # Remove -g from drivers/atm/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
@@ -369,37 +371,54 @@ bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/
 mv -f $RPM_BUILD_ROOT/usr/src/linux $RPM_BUILD_ROOT/usr/src/linux-%{version}
 ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
 
-# install dc395 source
 gzip -dc %{SOURCE3} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
-# install FORE source
 gzip -dc %{SOURCE5} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
-#install i8255 chip source
 gzip -dc %{SOURCE6} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
-#install netfilter source
 gzip -dc %{SOURCE7} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{SOURCE8} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{SOURCE10} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
-# install Kerneli patch
+# Pre patch
+#gzip -dc %{PATCH100} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+
 gzip -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-# install i8255 fix patch
-patch -s -p0 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <%{PATCH4}
-#install FORE patch
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/ <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
+gzip -dc %{PATCH9} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
-#install dc395 patch
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/ <%{PATCH6}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/ <\
-$RPM_BUILD_ROOT/usr/src/linux-%{version}/dc395/dc395-integ24.diff
+# Tekram DC395/315 U/UW SCSI host driver
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/dc395/dc395-integ24.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
-#install disable message printing patch
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/ < %{PATCH7}
+# Fore 200e ATM NIC
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
+#patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
 
-# install Adaptec RAID patch 
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/ < %{PATCH8}
+# Netfilter
+(cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
+for i in netfilter-patches/* ; do
+       [ -f $i -a "$i" != "netfilter-patches/isapplied" ] && patch -p1 <$i
+done
+(KERNEL_DIR=`pwd` ; export KERNEL_DIR
+cd netfilter-patches/patch-o-matic
+ANS=""
+for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
+echo -e $ANS | ./runme))
 
-#gzip -dc %{SOURCE100} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
-#patch -s -p0 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
-#patch -s -p0 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH100}
+# LIDS
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/lids-%{lids_version}-2.4.1/lids-%{lids_version}-2.4.1.patch
+
+# IPVS
+for i in $RPM_BUILD_ROOT/usr/src/linux-%{version}/ipvs-%{ipvs_version}/*.diff ; do
+	patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $i
+done
+mkdir net/ipv4/ipvs
+cp $RPM_BUILD_ROOT/usr/src/linux-%{version}/ipvs-%{ipvs_version}/ipvs/*.{c,h,in} $RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipv4/ipvs
+cp $RPM_BUILD_ROOT/usr/src/linux-%{version}/ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile $RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipv4/ipvs/Makefile
 
 # Remove -g from drivers/atm/Makefile
 mv -f $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/atm/Makefile \
