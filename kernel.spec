@@ -131,7 +131,6 @@ Patch24:	%{name}-nls_default.patch
 Patch26:	bootsplash-3.1.4-2.6.7.patch
 
 Patch28:	2.6.0-t11-AIC_and_db4-lkml.patch
-Patch29:	2.6.7-x86-sys_sigaltstack-lkml.patch
 Patch30:	linux-tdfxfb-fillrect.patch
 Patch31:	linux-fbcon-margins.patch
 Patch32:	linux-tdfxfb-interlace+double.patch
@@ -626,7 +625,6 @@ echo "Not fixed !!"
 %endif
 
 %patch28 -p1
-%patch29 -p1
 %patch30 -p1
 %patch31 -p1
 %patch32 -p1
