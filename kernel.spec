@@ -182,6 +182,8 @@ Patch200:	grsecurity-2.1.1-2.6.10-200501131222.patch
 Patch201:	linux-2.6.10-secfix-200501071130.patch
 Patch202:	linux-2.6-expand-stack-race.patch
 
+Patch210:	linux-2.6-ftdi_sio-ever_ups.patch
+
 # linux vserver
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
 Patch250:	linux-2.6-vs.patch
@@ -589,6 +591,8 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch200 -p1
 %patch201 -p1
 %patch202 -p1
+
+%patch210 -p1
 
 %if %{with vserver}
 %patch250 -p1
