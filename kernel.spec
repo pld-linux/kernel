@@ -11,6 +11,7 @@
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.7
 %define		sym_ncr_version		sym-1.7.3-ncr-3.4.3
+%define		vlan_version		1.0.1
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -35,6 +36,7 @@ Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_versi
 Source10:	http://www.linux-wlan.com/linux-wlan/linux-wlan-ng-%{wlan_version}.tar.gz
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
 Source12:	http://www.komacke.com/ftp/rl2isa-driver/rl2_driver.tgz
+Source13:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -110,6 +112,7 @@ Patch902:	http://domsch.com/linux/aacraid/linux-2.4.4-axboe-scsi-max-sec.patch
 Patch903:	rl2-include.patch
 # patch to fix LIDS stupidity
 Patch904:	linux-lids-fixpatch.patch
+Patch905:	linux-vlan-fixpatch.patch
 
 # Linus's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.6-%{pre_version}.gz
@@ -323,7 +326,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -n linux
+%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -n linux
 #%patch1000 -p1
 %patch0 -p1
 #%patch1 -p1
@@ -354,7 +357,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch113 -p4
 #%patch114 -p1
 %patch115 -p1
-%patch116 -p1
+%patch116 -p0
 %patch117 -p1
 
 %patch900 -p0 
@@ -403,17 +406,6 @@ sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
 mv -f net/ipsec/Makefile net/ipsec/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*-g//g' net/ipsec/Makefile.orig > net/ipsec/Makefile
 
-# Fix EXTRAVERSION and CC in main Makefile
-mv -f Makefile Makefile.orig
-sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
-%ifarch %{ix86} alpha sparc
-    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= egcs/g' \
-%endif
-%ifarch sparc64
-    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
-%endif
-    Makefile.orig >Makefile
-
 ## install NCR/Symbios controler
 mv %{sym_ncr_version}/*.{c,h} drivers/scsi
 mv %{sym_ncr_version}/{README,ChangeLog}.* Documentation
@@ -425,6 +417,23 @@ rm -rf %{sym_ncr_version}
 
 ## must be here, in other time make errors with LIDS
 #%patch11 -p1
+
+# 802.1Q VLANs
+cd vlan.%{vlan_version}
+%patch905 -p1
+cd ..
+patch -p1 -s <vlan.%{vlan_version}/vlan_2.4.patch
+
+# Fix EXTRAVERSION and CC in main Makefile
+mv -f Makefile Makefile.orig
+sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
+%ifarch %{ix86} alpha sparc
+    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= egcs/g' \
+%endif
+%ifarch sparc64
+    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
+%endif
+    Makefile.orig >Makefile
 
 %build
 BuildKernel() {
