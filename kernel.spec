@@ -22,13 +22,13 @@
 %if %{test_ver} != 0
 %define		test	test%{test_ver}
 %else
-%define		test	%{nill}
+%define		test	%{nil}
 %endif
 
 %if %{_cset} != 0
 %define		cset	cset%{_cset}
 %else
-%define		cset	%{nill}
+%define		cset	%{nil}
 %endif
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
