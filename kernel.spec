@@ -14,6 +14,7 @@
 %bcond_with	pax		# enable PaX
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
+%bcond_with	regparm		# use register arguments (this break binary-only modules)
 
 %{?debug:%define with_verbose 1}
 
@@ -650,6 +651,9 @@ TuneUpConfigForIX86 () {
     %endif
     %ifarch i686 pentium3 pentium4
 	sed -i 's:CONFIG_MATH_EMULATION=y:# CONFIG_MATH_EMULATION is not set:' $1
+    %endif
+    %ifarch %{ix86}
+	sed -i 's:# CONFIG_REGPARM is not set:CONFIG_REGPARM=y:' $1
     %endif
 %endif
 }
