@@ -72,7 +72,7 @@ Patch10:	bridge-1.0.1-against-2.2.20.diff
 
 # in this place will be PLD patches
 
-#Patch100:	somepatch
+Patch100:	bridge-include.patch
 #Patch101:	somepatch2
 
 ExclusiveOS:	Linux
@@ -360,6 +360,8 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch9 -p1
 %patch10 -p1
 
+%patch100 -p1
+
 # 802.1Q VLANs
 #cd vlan.%{vlan_version}
 #%patch33 -p1
@@ -584,6 +586,8 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH7}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH9}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH10}
+
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH100}
 
 #DAC960 drivers
 tar xfz %{SOURCE8}
