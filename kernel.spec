@@ -543,12 +543,12 @@ DRM SMP kernel modules (%{drm_xfree_version}).
 %description smp-drm -l pl
 Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
 
-%package headers
-Summary:	Header files for the Linux kernel
-Summary(es):	Archivos de inclusión para núcleo (kernel) Linux.
-Summary(ja):	Linux ¥«¡¼¥Í¥ë¤Î¥Ø¥Ã¥À¥Õ¥¡¥¤¥ë
-Summary(pl):	Pliki nag³ówkowe j±dra
-Summary(pt_BR):	Arquivos de inclusão para o kernel Linux.
+%package headers-2.4
+Summary:	Header files for the Linux 2.4 kernel
+Summary(es):	Archivos de inclusión para núcleo (kernel) Linux 2.4
+Summary(ja):	Linux 2.4 ¥«¡¼¥Í¥ë¤Î¥Ø¥Ã¥À¥Õ¥¡¥¤¥ë
+Summary(pl):	Pliki nag³ówkowe j±dra Linuksa 2.4
+Summary(pt_BR):	Arquivos de inclusão para o kernel Linux 2.4
 Group:		Base/Kernel
 Requires(post,postun):	fileutils
 Requires(postun):	awk
@@ -560,52 +560,52 @@ Provides:	%{name}-headers(netfilter) = 1.2.9-%{netfilter_snap}
 Obsoletes:	kernel-i2c-devel
 AutoReqProv:	no
 
-%description headers
+%description headers-2.4
 These are the C header files for the Linux kernel, which define
 structures and constants that are needed when building most standard
 programs under Linux, as well as to rebuild the kernel.
 
-%description headers -l es
-Estos son los archivos de inclusión C para núcleo (kernel) Linux, que define
-estructuras y constantes que son necesarias a la construcción de la
-mayoría de los programas en el Linux, como también para reconstruir
-el núcleo (kernel).
+%description headers-2.4 -l es
+Estos son los archivos de inclusión C para núcleo (kernel) Linux, que
+define estructuras y constantes que son necesarias a la construcción
+de la mayoría de los programas en el Linux, como también para
+reconstruir el núcleo (kernel).
 
-%description headers -l ja
+%description headers-2.4 -l ja
 kernel-headers ¥Ñ¥Ã¥±¡¼¥¸¤Ë¤Ï Linux ¥«¡¼¥Í¥ë¤Î C ¥Ø¥Ã¥À¥Õ¥¡¥¤¥ë¤¬
 ¼ý¤á¤é¤ì¤Æ¤¤¤Þ¤¹¡¥¥Ø¥Ã¥À¥Õ¥¡¥¤¥ë¤Ë¤Ï¡¤Â¿¤¯¤Î¥×¥í¥°¥é¥à¤ò¥³¥ó¥Ñ¥¤¥ë
 ¤¹¤ëºÝ¡¤°¿¤¤¤Ï¥«¡¼¥Í¥ë¤òºÆ¹½ÃÛ¤¹¤ë¤Î¤ËÉ¬Í×¤Ê¹½Â¤¤äÀ©Ìó¤¬ÄêµÁ¤µ¤ì¤Æ¤¤¤Þ¤¹¡¥
 
-%description headers -l pl
+%description headers-2.4 -l pl
 Pakiet zawiera pliki nag³ówkowe j±dra, niezbêdne do rekompilacji j±dra
 oraz niektórych programów.
 
-%description headers -l pt_BR
+%description headers-2.4 -l pt_BR
 Estes são os arquivos de inclusão C para o kernel Linux, os
 quais definem estruturas e constantes que são necessárias para
 a construção da maioria dos programas no Linux, bem como para
 reconstruir o próprio kernel.
 
-%package source
-Summary:	Kernel source tree
-Summary(es):	Fuentes del núcleo (kernel) Linux
-Summary(ja):	Linux ¥«¡¼¥Í¥ë¤Î¥½¡¼¥¹¥³¡¼¥É
-Summary(pl):	Kod ¼ród³owy j±dra Linuksa
-Summary(pt_BR):	Fontes do kernel Linux
+%package source-2.4
+Summary:	Linux kernel 2.4 source tree
+Summary(es):	Fuentes del núcleo (kernel) Linux 2.4
+Summary(ja):	Linux 2.4 ¥«¡¼¥Í¥ë¤Î¥½¡¼¥¹¥³¡¼¥É
+Summary(pl):	Kod ¼ród³owy j±dra Linuksa 2.4
+Summary(pt_BR):	Fontes do kernel Linux 2.4
 Group:		Base/Kernel
-Requires:	%{name}-headers = %{version}-%{release}
+Requires:	%{name}-headers-2.4 = %{version}-%{release}
 %ifarch %{ix86}
 Requires:	bin86
 %endif
 AutoReqProv:	no
 
-%description source
+%description source-2.4
 This is the source code for the Linux kernel. It is required to build
 most C programs as they depend on constants defined in here. You can
 also build a custom kernel that is better tuned to your particular
 hardware.
 
-%description source -l de
+%description source-2.4 -l de
 Das Kernel-Source-Paket enthält den source code (C/Assembler-Code) des
 Linux-Kernels. Die Source-Dateien werden gebraucht, um viele
 C-Programme zu compilieren, da sie auf Konstanten zurückgreifen, die
@@ -613,14 +613,14 @@ im Kernel-Source definiert sind. Die Source-Dateien können auch
 benutzt werden, um einen Kernel zu compilieren, der besser auf Ihre
 Hardware ausgerichtet ist.
 
-%description source -l es
+%description source-2.4 -l es
 Este es el fuente para el núcleo (kernel) Linux. Se necesita para la
 construcción de la mayoría de los programas C, pues dependen de
-constantes definidas en él. Tu puedes también construir un núcleo (kernel)
-personalizado que será lo mejor configurado para tu hardware en
-particular.
+constantes definidas en él. Tu puedes también construir un núcleo
+(kernel) personalizado que será lo mejor configurado para tu hardware
+en particular.
 
-%description source -l fr
+%description source-2.4 -l fr
 Le package pour le kernel-source contient le code source pour le noyau
 linux. Ces sources sont nécessaires pour compiler la plupart des
 programmes C, car il dépend de constantes définies dans le code
@@ -628,17 +628,17 @@ source. Les sources peuvent être aussi utilisée pour compiler un noyau
 personnalisé pour avoir de meilleures performances sur des matériels
 particuliers.
 
-%description source -l ja
+%description source-2.4 -l ja
 kernel-source ¥Ñ¥Ã¥±¡¼¥¸¤Ë¤Ï Linux ¥«¡¼¥Í¥ë¤Î¥½¡¼¥¹¥³¡¼¥É¤¬´Þ¤Þ¤ì¤Æ
 ¤¤¤Þ¤¹¡¥¥«¡¼¥Í¥ë¤Î¥½¡¼¥¹¥³¡¼¥É¤ÏÂ¿¤¯¤Î C ¥×¥í¥°¥é¥à¤ÎºîÀ®¤ËÉ¬Í×¤Ç¤¹¡¥
 ¥«¡¼¥Í¥ë¤Î¥½¡¼¥¹¥³¡¼¥É¤ËÄêµÁ¤µ¤ì¤Æ¤¤¤ëÀ©¸Â¤Ë°ÍÂ¸¤¹¤ë¤³¤È¤¬¤¢¤ë¤«¤é¤Ç¤¹¡¥
 ¤³¤Î¥½¡¼¥¹¥³¡¼¥É¤ò»È¤Ã¤Æ¡¤¤¢¤Ê¤¿¤Î¥·¥¹¥Æ¥à¸þ¤±¤Ë¥Á¥å¡¼¥ó¥¢¥Ã¥×¤·¤¿
 ¥«¥¹¥¿¥à¥«¡¼¥Í¥ë¤òºîÀ®¤¹¤ë¤³¤È¤â¤Ç¤­¤Þ¤¹¡¥
 
-%description source -l pl
-Pakiet zawiera kod ¼ród³owy j±dra systemu.
+%description source-2.4 -l pl
+Pakiet zawiera kod ¼ród³owy j±dra Linuksa.
 
-%description source -l pt_BR
+%description source-2.4 -l pt_BR
 Este é o fonte para o kernel Linux. É necessário para a
 construção da maioria dos programas C, pois eles dependem de
 constantes definidas nele. Você também pode construir um kernel
@@ -651,12 +651,11 @@ Summary(ja):	¥«¡¼¥Í¥ë¥½¡¼¥¹¤Ë´Þ¤Þ¤ì¤ëÍÍ¡¹¤Ê¥É¥­¥å¥á¥ó¥È
 Summary(pl):	Dokumentacja do j±dra Linuksa
 Summary(pt_BR):	Documentação para os arquivos fontes do kernel Linux
 Group:		Base/Kernel
-Provides:	%{name}-doc = %{version}
 AutoReqProv:	no
 
 %description doc
 This is the documentation for the Linux kernel, as found in
-/usr/src/linux/Documentation directory.
+/usr/src/linux*/Documentation directory.
 
 %description doc -l es
 Documentación para los archivos fuente del núcleo (kernel) de Linux
@@ -671,7 +670,7 @@ Linux ¥«¡¼¥Í¥ë¥â¥¸¥å¡¼¥ë¤òÆÉ¤ß¹þ¤àºÝ¤Î°ú¿ô¤òÄ´¤Ù¤¿¤¤¾ì¹çÅù¡¤
 
 %description doc -l pl
 Pakiet zawiera dokumentacjê j±dra z katalogu
-/usr/src/linux/Documentation.
+/usr/src/linux*/Documentation.
 
 %description doc -l pt_BR
 Este pacote contém documentação para o kernel Linux.
@@ -1036,15 +1035,7 @@ for i in "" smp ; do
 			$RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
 	fi
 done
-ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
-ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
-
-%ifarch sparc sparc64
-ln -s /usr/src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
-ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
-%else
-ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
-%endif
+ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux-2.4
 
 %if %{with source}
 cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}
@@ -1332,15 +1323,15 @@ if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then
 	fi
 fi
 
-%post headers
-rm -f /usr/src/linux
-ln -snf linux-%{version} /usr/src/linux
+%post headers-2.4
+rm -f /usr/src/linux-2.4
+ln -snf linux-%{version} /usr/src/linux-2.4
 
-%postun headers
-if [ -L /usr/src/linux ]; then
-	if [ "`ls -l /usr/src/linux | awk '{ print $11 }'`" = "linux-%{version}" ]; then
+%postun headers-2.4
+if [ -L /usr/src/linux-2.4 ]; then
+	if [ "`ls -l /usr/src/linux-2.4 | awk '{ print $11 }'`" = "linux-%{version}" ]; then
 		if [ "$1" = "0" ]; then
-			rm -f /usr/src/linux
+			rm -f /usr/src/linux-2.4
 		fi
 	fi
 fi
@@ -1487,7 +1478,7 @@ fi
 %endif				# narch
 %endif				# %%{with boot}
 
-%files headers
+%files headers-2.4
 %defattr(644,root,root,755)
 %dir %{_prefix}/src/linux-%{version}
 %{_prefix}/src/linux-%{version}/include
@@ -1499,7 +1490,7 @@ fi
 %endif
 
 %if %{with source}
-%files source
+%files source-2.4
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/arch
 %{_prefix}/src/linux-%{version}/crypto
