@@ -10,7 +10,7 @@
 # _without_up		- don't build UP kernel
 #
 %define		test_build		0
-%define		krelease		2.44
+%define		krelease		2.45
 #
 %define base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 #
@@ -1043,8 +1043,8 @@ mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
 
-if [ ! -L /lib/modules/%{version} ] ; then
-	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
+if [ ! -L /lib/modules/%{version} -] ; then
+	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave > /dev/null 2>&1
 fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release} /lib/modules/%{version}
@@ -1067,11 +1067,11 @@ ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}smp /boot/System.map
 
 if [ ! -L /lib/modules/%{version} ] ; then
-	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
+	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave > /dev/null 2>&1
 fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
 
 /sbin/geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
 mv -f /boot/initrd /boot/initrd.old
@@ -1148,16 +1148,22 @@ fi
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
 %post smp-pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
 
 %postun smp-pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
+
+%post drm
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
 %postun drm
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
 %post smp-drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
+
+%postun smp-drm
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
 
 %if %{?_without_up:0}%{!?_without_up:1}
 %files
@@ -1231,7 +1237,7 @@ fi
 
 %files -n kernel-smp-drm
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/drivers/char/drm
+/lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 
 %files smp
 %defattr(644,root,root,755)
