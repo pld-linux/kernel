@@ -93,7 +93,6 @@ Patch10:	2.6.0-t6-usb-irq.patch
 Patch12:	2.6.0-t7-memleak-lkml.patch
 Patch13:	2.6.0-t7-memleak2-lkml.patch
 
-Patch16:	2.6.0-t8-clean-mtd-lkml.patch
 Patch18:	2.6.0-t8-swap-include-lkml.patch
 
 Patch22:	2.6.0-t8-VLSI-ix86-lkml.patch
@@ -512,7 +511,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch12 -p1
 %patch13 -p1
 
-%patch16 -p1
 %patch18 -p1
 
 %patch22 -p1
