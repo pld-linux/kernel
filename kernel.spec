@@ -82,6 +82,7 @@ Patch22:	linux-2.4.2-raw-ip.patch
 # from LKL 2001.03.03
 Patch23:	linux-2.4.2-epson-1640SU-scanner.patch
 Patch24:	PCI_ISA_bridge.patch
+Patch25:	linux-2.4.2-nvram-hdd.patch
 
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
@@ -325,6 +326,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 # LKL 2001.03.03
 %patch23 -p1
 %patch24 -p0
+%patch25 -p0
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -587,6 +589,7 @@ patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH21}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH22}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH23}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH24}
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH25}
 
 ## SymBios/NCR drivers install
 mv $RPM_BUILD_ROOT/usr/src/linux-%{version}/%{sym_ncr_version}/*.{c,h} $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi
