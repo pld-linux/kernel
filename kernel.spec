@@ -29,7 +29,7 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.5
+%define		_rel		0.6
 %define		_cset		20040302_0821
 
 ## netfilter snap 
@@ -153,6 +153,11 @@ Patch80:	2.6.4-rc1-sparc-sys_ioperm-fix.patch
 Patch82:	2.6.3-ini9100u-fix.patch
 
 Patch84:	2.6.4-rc1-macintosh_macserial-fix.patch
+
+Patch85:	2.6.4-rc1-01-esfq-imq.patch
+Patch86:	2.6.4-rc1-02-imq-nat-support.patch
+Patch87:	2.6.4-rc1-03-CONNMARK.patch
+Patch88:	2.6.4-rc1-04-ipp2p.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -567,6 +572,11 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch82 -p1
 
 %patch84 -p1
+
+%patch85 -p1
+%patch86 -p1
+%patch87 -p1
+%patch88 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
