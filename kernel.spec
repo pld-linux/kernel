@@ -121,6 +121,8 @@ Patch35:	linux-ram-disk-free.patch
 
 Patch36:	rl2-include.patch
 
+Patch37:	linux-abi-2.4.3.0-PLD.diff
+
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
 ExclusiveOS:	Linux
@@ -426,6 +428,9 @@ rm -rf %{sym_ncr_version}
 ## install RangeLAN2 driver
 #mv rl2-1.7.1 drivers/net/rl2
 #%patch36 -p1
+
+## must be here, in other time make errors with LIDS
+%patch37 -p1
 
 %build
 BuildKernel() {
