@@ -221,6 +221,8 @@ Patch108:	2.6.7-bridge_sysfs-lkml.patch
 
 Patch110:	ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.7/acpi-20040326-2.6.7.diff.gz
 
+Patch112:	linux-fbcon-con2fb-crash-workaround.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 %ifarch sparc sparc64
@@ -595,9 +597,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch24 -p1
 
 ## bootsplash
-%if %{with bootsplash}
 %patch26 -p1
-%endif
 
 %patch28 -p1
 
@@ -676,16 +676,12 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch88 -p1
 %patch90 -p1
 
-%if %{with execshield}
 patch -p1 -s < %{SOURCE4}
 patch -p1 -s < %{SOURCE5}
-%endif
 
 #grsec
 %ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
-%if %{with grsec}
 %patch94 -p1
-%endif
 %endif
 
 %patch96 -p1
@@ -702,6 +698,8 @@ patch -p1 -s < %{SOURCE5}
 %patch108 -p1
 
 %patch110 -p1
+
+%patch112 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
