@@ -101,50 +101,38 @@ Source80:	%{name}-netfilter.config
 Source90:	%{name}-grsec.config
 
 Patch0:		2.6.0-ksyms-add.patch
+Patch1:		2.6.0-t4-PPC-ENODEV.patch
+Patch2:		2.6.0-t6-usb-irq.patch
+Patch3:		2.6.0-t7-memleak-lkml.patch
+Patch4:		2.6.0-t7-memleak2-lkml.patch
+#Patch5:	2.6.0-t8-swap-include-lkml.patch
+Patch6:		2.6.0-t8-VLSI-ix86-lkml.patch
+Patch7:		2.6.0-t8-appletalk-SYSCTL-lkml.patch
+Patch8:		2.6.0-t8-umsdos-lkml.patch
+Patch9:		2.6.0-t9-acpi_osl-lkml.patch
+Patch10:	2.6.0-t11-AIC_and_db4-lkml.patch
+Patch11:	2.6.1-rc2-ini9100u-lkml.patch
+Patch12:	2.6.1-rc2-VLAN-NS83820-lkml.patch
+Patch13:	2.6.2-Initio9100U-Kconfig.patch
+# http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
+Patch14:	2.6.1-all-in-1.patch
 
-# from http://dl.sf.net/sourceforge/squashfs/
-Patch4:		squashfs2.0-patch
 
-Patch6:		2.6.0-t4-PPC-ENODEV.patch
-
-Patch8:		2.6.0-t6-usb-irq.patch
-
-Patch10:	2.6.0-t7-memleak-lkml.patch
-Patch11:	2.6.0-t7-memleak2-lkml.patch
-
-Patch14:	2.6.0-t8-swap-include-lkml.patch
-
-Patch16:	2.6.0-t8-VLSI-ix86-lkml.patch
-
-Patch18:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
-
-Patch20:	2.6.0-t8-umsdos-lkml.patch
-
-Patch22:	2.6.0-t9-acpi_osl-lkml.patch
-
-Patch24:	%{name}-nls_default.patch
-
+#Patch24:	%{name}-nls_default.patch
+Patch25:	squashfs2.0-patch
 # rewriten based on: ftp://ftp.suse.com/pub/people/stepan/bootsplash/kernel/bootsplash-3.1.4-2.6.3.diff
 Patch26:	bootsplash-3.1.4-2.6.7.patch
-
-Patch28:	2.6.0-t11-AIC_and_db4-lkml.patch
 
 Patch30:	linux-tdfxfb-fillrect.patch
 Patch31:	linux-fbcon-margins.patch
 Patch32:	linux-tdfxfb-interlace+double.patch
 Patch33:	linux-2.6-rivafb16.patch
 
-Patch34:	2.6.1-rc2-ini9100u-lkml.patch
-
-Patch36:	2.6.1-rc2-VLAN-NS83820-lkml.patch
-
 Patch38:	linux-kbuild-extmod.patch
 
 Patch40:	2.6.x-PD6729-lkml.patch
 
 Patch42:	2.6.x-ppp_mppe.patch
-
-Patch44:	2.6.2-Initio9100U-Kconfig.patch
 
 # netfilter
 Patch46:	2.6.7-pom-ng-%{_netfilter_snap}.patch
@@ -170,8 +158,6 @@ Patch61:	2.6.4-rc1-02-imq-nat-support.patch
 
 Patch64:	2.6.4-psion-5mx.patch
 
-#from:		http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
-Patch66:	2.6.1-all-in-1.patch
 
 Patch68:	2.6.5-sparc64-missing-include.patch
 
@@ -586,33 +572,29 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %setup -q -n linux-%{version}%{_rc}
 # -a2
 
-%patch0 -p1
-
 %if "%{_apply_cset}" != "0"
 zcat %{SOURCE3} | patch -p1 -s
 %endif
 
-
+%patch0 -p1
+%patch1 -p1
+%patch2 -p1
+%patch3 -p1
 %patch4 -p1
-
+#patch5 -p1
 %patch6 -p1
-
+%patch7 -p1
 %patch8 -p1
-
+%patch9 -p1
 %patch10 -p1
-%patch11 -p1
-
-#patch14 -p1
-
-%patch16 -p1
-
-%patch18 -p1
-
-%patch20 -p1
-
-%patch22 -p1
+#patch11 -p1
+%patch12 -p1
+%patch13 -p1
+%patch14 -p1
 
 #patch24 -p1
+# squashfs
+%patch25 -p1
 
 ## bootsplash
 %if %{with bootsplash}
@@ -620,16 +602,16 @@ echo "Not fixed !!"
 %patch26 -p1
 %endif
 
-%patch28 -p1
+
 
 %patch30 -p1
 %patch31 -p1
 %patch32 -p1
 #patch33 -p1
 
-##%patch34 -p1
 
-%patch36 -p1
+
+
 
 %patch38 -p1
 
@@ -637,7 +619,7 @@ echo "Not fixed !!"
 
 %patch42 -p1
 
-%patch44 -p1
+
 
 # netfilter
 %patch46 -p1
@@ -660,7 +642,7 @@ echo "Not fixed !!"
 
 %patch64 -p1
 
-%patch66 -p1
+
 
 %patch68 -p1
 
