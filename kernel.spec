@@ -57,8 +57,8 @@
 
 %define		_post_ver	1
 %define		_rel		0.94
-%define		_cset		20040813_0507
-%define		_apply_cset	0
+%define		_cset		20040823_0405
+%define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
 
@@ -89,11 +89,7 @@ Source1:	%{name}-autoconf.h
 Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 # Source2-md5:	85bdb0205de53b7787966f0932fd8dd9
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source4-md5:	37ccb34f8812ae89d9833758e7388bb5
-Source6:	ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.8/acpi-20040715-2.6.8.diff.gz
-# Source6-md5:	d8162768783a9007603f5a2d2ffb4697
-Source7:	ftp://ftp.alsa-project.org/pub/kernel-patches/alsa-bk-2004-08-15.patch.gz
-# Source7-md5:	1230b7176206801d2eedf61a303f03cf
+# Source4-md5:	ac158b344908f0f767de4f4a8af19774
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -170,7 +166,7 @@ Patch56:	linux-2.6-netfilter-syms.patch
 # pseudo terminal fix for older glibc
 #Patch60:	%{name}-pts.patch
 Patch61:	%{name}-MAX_INIT_ARGS.patch
-Patch62:	http://www.kernel.org/pub/linux/kernel/people/jgarzik/patchkits/2.6/2.6.8.1-libata2.patch.bz2
+Patch62:	alsa-1.0.6.patch
 
 # http://tahoe.pl/patch.htm
 Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
@@ -564,12 +560,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %if "%{_apply_cset}" != "0"
 zcat %{SOURCE4} | patch -p1 -s
 %endif
-
-# ACPI
-zcat %{SOURCE6} | patch -p1 -s
-
-# ALSA-1.0.6
-zcat %{SOURCE7} | patch -p1 -s
 
 %patch0 -p1
 %patch1 -p1
