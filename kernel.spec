@@ -399,7 +399,7 @@ rm -rf $KERNEL_INSTALL_DIR
 rm -rf $RPM_BUILD_ROOT
 umask 022
 
-install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{version}}
+install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 KERNEL_BUILD_DIR=`pwd`
 
