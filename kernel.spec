@@ -247,7 +247,7 @@ BuildKernel() {
     fi
     cp $RPM_SOURCE_DIR/kernel-$Config.config arch/$RPM_ARCH/defconfig
     # make sure EXTRAVERSION says what we want it to say
-    perl -p -i -e "s/^EXTRAVERSION.*/EXTRAVERSION = -%{release}$1/" Makefile
+#    perl -p -i -e "s/^EXTRAVERSION.*/EXTRAVERSION = -%{release}$1/" Makefile
     perl -p -i -e "s/-m386//" arch/i386/Makefile
     perl -p -i -e "s/-m486//" arch/i386/Makefile
     if [ "$1" = "BOOT" ]; then
@@ -347,6 +347,7 @@ install %{SOURCE10} .config
 make oldconfig 
 make symlinks 
 make include/linux/version.h
+make "`pwd`/include/linux/modversions.h"
 
 #this generates modversions info which we want to include and we may as
 #well include the depends stuff as well, after we fix the paths
