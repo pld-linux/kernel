@@ -80,6 +80,7 @@ Patch28:	ide.2.2.21.06162002-PLD.patch.gz
 Patch29:	ide.2.2.21_update_to_2.2.22.patch
 Patch30:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
 Patch31:	%{name}-flip.patch
+Patch32:	%{name}-2.2.22-config.patch
 Patch33:	%{name}-ipsec-bridge.patch
 Patch34:	%{name}-wanrouter-bridge.patch
 Patch35:	linux-netdrivers_vlan.patch
@@ -124,8 +125,9 @@ Patch508:	serial-5.05-ppc.patch
 Patch509:	2.2.21-ppc_macserial.patch
 Patch510:	2.2.21-ppc_openpic_fix.patch
 Patch511:	2.2.21-ppc_use_egcs.patch
+Patch512:	serial-5.05-alpha.patch
 
-Patch1500:     linux-sparc_ide_fix.patch.2.2.19
+Patch1500:	linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	%{name}-sparc-zs.h.patch
 Patch1502:	%{name}-sym53c8xx.patch
 Patch1503:	%{name}-sparc_netsyms.patch
@@ -447,6 +449,7 @@ Modu³y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 %patch29 -p1
 %patch30 -p1
 %patch31 -p1
+%patch32 -p1
 %patch33 -p1
 %patch34 -p1
 %patch35 -p1
@@ -473,6 +476,7 @@ cd serial-5.05
 %patch41 -p1
 %patch42 -p1
 %patch508 -p1
+%patch512 -p1
 ./install-in-kernel ../
 cd ..
 %endif
