@@ -168,8 +168,7 @@ Patch61:	%{name}-MAX_INIT_ARGS.patch
 
 # http://tahoe.pl/patch.htm
 Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
-# http://dev.gentoo.org/~spock/projects/vesafb-tng/
-Patch71:	vesafb-tng-0.9-rc5-2.6.10-rc1-mm2.patch
+
 # http://dev.gentoo.org/~spock/projects/gensplash/
 Patch72:	fbsplash-0.9.1-2.6.10-rc3-bk6.patch
 Patch73:	squashfs2.1-patch
@@ -605,7 +604,6 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch70 -p1
 
 %ifarch %{ix86}
-#patch71 -p1
 %if %{with fbsplash}
 %patch72 -p1
 %endif
