@@ -71,7 +71,7 @@
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
 %define		_rel		0.42
-%define		_cset		20041013_1507
+%define		_cset		20041020_0343
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -93,16 +93,16 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-#define		_rc	%{nil}
-%define		_rc	-rc4
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	6ff7c672c2cdea3201220f7e3d5a27d0
-# Source0-size:	36265012
-#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
+%define		_rc	%{nil}
+#define		_rc	-rc4
+#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
+# Source0-md5:	e921200f074ca97184e150ef5a4af825
+# Source0-size:	36261440
 Source1:	%{name}-autoconf.h
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
-# Source4-md5:	d29e4871b6fd4546c9390e98d9004fc7
-# Source4-size:	3636
+# Source4-md5:	6aaf52e4f5be6f631d5b598d3daa2e2e
+# Source4-size:	2209672
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -136,9 +136,8 @@ Patch6:		2.6.0-t8-VLSI-ix86-lkml.patch
 Patch8:		2.6.0-t8-umsdos-lkml.patch
 Patch9:		2.6.0-t9-acpi_osl-lkml.patch
 
-#Patch11:	2.6.8.1-qos-and-routing-conflict.patch	-- obsolete
 Patch12:	2.6.1-rc2-VLAN-NS83820-lkml.patch
-Patch13:	2.6.2-Initio9100U-Kconfig.patch
+
 # http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
 Patch14:	2.6.1-all-in-1.patch
 
@@ -155,7 +154,7 @@ Patch25:	2.6.7-alpha_compile.patch
 Patch26:	2.6.7-ppc-asm-defs.patch
 
 #Patch30:	2.6.x-ppp_mppe.patch
-#Patch31:	2.6.x-SGI_VW-fbdev-lkml.patch	-- obsolete
+
 Patch32:	2.6.x-TGA-fbdev-lkml.patch
 Patch33:	linux-kbuild-extmod.patch
 
@@ -580,7 +579,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch9 -p1
 
 %patch12 -p1
-%patch13 -p1
+
 %patch14 -p1
 
 %patch16 -p1
@@ -615,9 +614,9 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch61 -p1
 
 %patch70 -p1
-%patch71 -p1
 
 %if %{with fbsplash}
+%patch71 -p1
 %patch72 -p1
 %endif
 
