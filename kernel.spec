@@ -146,6 +146,8 @@ Patch74:	2.6.x-SGI_VW-fbdev-lkml.patch
 
 Patch76:	2.6.x-TGA-fbdev-lkml.patch
 
+Patch78:	linux-alpha-isa.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
@@ -551,6 +553,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch74 -p1
 
 %patch76 -p1
+
+%patch78 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
