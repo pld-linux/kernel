@@ -11100,20 +11100,14 @@ diff -uNr linux-2.6.7-rc1.orig/include/asm-alpha/a.out.h linux-2.6.7-rc1/include
 diff -uNr linux-2.6.7-rc1.orig/include/asm-alpha/pgtable.h linux-2.6.7-rc1/include/asm-alpha/pgtable.h
 --- linux-2.6.7-rc1.orig/include/asm-alpha/pgtable.h	2004-05-23 07:53:47.000000000 +0200
 +++ linux-2.6.7-rc1/include/asm-alpha/pgtable.h	2004-05-25 14:33:59.016388472 +0200
-@@ -96,6 +96,17 @@
+@@ -96,6 +96,11 @@
  #define PAGE_SHARED	__pgprot(_PAGE_VALID | __ACCESS_BITS)
  #define PAGE_COPY	__pgprot(_PAGE_VALID | __ACCESS_BITS | _PAGE_FOW)
  #define PAGE_READONLY	__pgprot(_PAGE_VALID | __ACCESS_BITS | _PAGE_FOW)
 +
-+#ifdef CONFIG_PAX_PAGEEXEC
-+# define PAGE_SHARED_NOEXEC	__pgprot(_PAGE_VALID | __ACCESS_BITS | _PAGE_FOE)
-+# define PAGE_COPY_NOEXEC	__pgprot(_PAGE_VALID | __ACCESS_BITS | _PAGE_FOW | _PAGE_FOE)
-+# define PAGE_READONLY_NOEXEC	__pgprot(_PAGE_VALID | __ACCESS_BITS | _PAGE_FOW | _PAGE_FOE)
-+#else
-+# define PAGE_SHARED_NOEXEC	PAGE_SHARED
-+# define PAGE_COPY_NOEXEC	PAGE_COPY
-+# define PAGE_READONLY_NOEXEC	PAGE_READONLY
-+#endif
++#define PAGE_SHARED_NOEXEC	PAGE_SHARED
++#define PAGE_COPY_NOEXEC	PAGE_COPY
++#define PAGE_READONLY_NOEXEC	PAGE_READONLY
 +
  #define PAGE_KERNEL	__pgprot(_PAGE_VALID | _PAGE_ASM | _PAGE_KRE | _PAGE_KWE)
  
@@ -11121,16 +11115,12 @@ diff -uNr linux-2.6.7-rc1.orig/include/asm-alpha/pgtable.h linux-2.6.7-rc1/inclu
 diff -uNr linux-2.6.7-rc1.orig/include/asm-i386/a.out.h linux-2.6.7-rc1/include/asm-i386/a.out.h
 --- linux-2.6.7-rc1.orig/include/asm-i386/a.out.h	2004-05-23 07:53:57.000000000 +0200
 +++ linux-2.6.7-rc1/include/asm-i386/a.out.h	2004-05-25 14:33:59.020387864 +0200
-@@ -19,7 +19,11 @@
+@@ -19,7 +19,7 @@
  
  #ifdef __KERNEL__
  
 -#define STACK_TOP	TASK_SIZE
-+#ifdef CONFIG_PAX_SEGMEXEC
-+#define __STACK_TOP ((current->flags & PF_PAX_SEGMEXEC)?TASK_SIZE/2:TASK_SIZE)
-+#else
 +#define __STACK_TOP TASK_SIZE
-+#endif
  
  #endif
  
@@ -11221,53 +11211,6 @@ diff -uNr linux-2.6.7-rc1.orig/include/asm-i386/desc.h linux-2.6.7-rc1/include/a
  #endif /* !__ASSEMBLY__ */
  
  #endif
-diff -uNr linux-2.6.7-rc1.orig/include/asm-i386/elf.h linux-2.6.7-rc1/include/asm-i386/elf.h
---- linux-2.6.7-rc1.orig/include/asm-i386/elf.h	2004-05-23 07:54:22.000000000 +0200
-+++ linux-2.6.7-rc1/include/asm-i386/elf.h	2004-05-25 14:33:59.049383456 +0200
-@@ -70,7 +70,22 @@
-    the loader.  We need to make sure that it is out of the way of the program
-    that it will "exec", and that there is sufficient room for the brk.  */
- 
-+#ifdef CONFIG_PAX_SEGMEXEC
-+#define ELF_ET_DYN_BASE		((current->flags & PF_PAX_SEGMEXEC)?SEGMEXEC_TASK_SIZE/3*2:TASK_SIZE/3*2)
-+#else
- #define ELF_ET_DYN_BASE         (TASK_SIZE / 3 * 2)
-+#endif
-+
-+#ifdef CONFIG_PAX_ASLR
-+#define PAX_ELF_ET_DYN_BASE(tsk)	0x08048000UL
-+
-+#define PAX_DELTA_MMAP_LSB(tsk)		PAGE_SHIFT
-+#define PAX_DELTA_MMAP_LEN(tsk)		16
-+#define PAX_DELTA_EXEC_LSB(tsk)		PAGE_SHIFT
-+#define PAX_DELTA_EXEC_LEN(tsk)		16
-+#define PAX_DELTA_STACK_LSB(tsk)	PAGE_SHIFT
-+#define PAX_DELTA_STACK_LEN(tsk)	((tsk)->flags & PF_PAX_SEGMEXEC ? 15 : 16)
-+#endif
- 
- /* regs is struct pt_regs, pr_reg is elf_gregset_t (which is
-    now struct_user_regs, they are different) */
-@@ -129,7 +144,14 @@
- 
- #define VSYSCALL_BASE	(__fix_to_virt(FIX_VSYSCALL))
- #define VSYSCALL_EHDR	((const struct elfhdr *) VSYSCALL_BASE)
-+
-+#ifndef CONFIG_PAX_NOVSYSCALL
-+#ifdef CONFIG_PAX_SEGMEXEC
-+#define VSYSCALL_ENTRY	((current->flags & PF_PAX_SEGMEXEC) ? (unsigned long) &__kernel_vsyscall - SEGMEXEC_TASK_SIZE : (unsigned long) &__kernel_vsyscall)
-+#else
- #define VSYSCALL_ENTRY	((unsigned long) &__kernel_vsyscall)
-+#endif
-+
- extern void __kernel_vsyscall;
- 
- #define ARCH_DLINFO						\
-@@ -185,3 +207,5 @@
- #endif
- 
- #endif
-+
-+#endif
 diff -uNr linux-2.6.7-rc1.orig/include/asm-i386/mach-default/apm.h linux-2.6.7-rc1/include/asm-i386/mach-default/apm.h
 --- linux-2.6.7-rc1.orig/include/asm-i386/mach-default/apm.h	2004-05-23 07:53:46.000000000 +0200
 +++ linux-2.6.7-rc1/include/asm-i386/mach-default/apm.h	2004-05-25 14:33:59.064381176 +0200
@@ -11336,22 +11279,14 @@ diff -uNr linux-2.6.7-rc1.orig/include/asm-i386/module.h linux-2.6.7-rc1/include
 diff -uNr linux-2.6.7-rc1.orig/include/asm-i386/page.h linux-2.6.7-rc1/include/asm-i386/page.h
 --- linux-2.6.7-rc1.orig/include/asm-i386/page.h	2004-05-23 07:53:45.000000000 +0200
 +++ linux-2.6.7-rc1/include/asm-i386/page.h	2004-05-25 14:33:59.091377072 +0200
-@@ -120,6 +120,19 @@
+@@ -120,6 +120,11 @@
  #define __PAGE_OFFSET		(0xC0000000UL)
  #endif
  
-+#ifdef CONFIG_PAX_KERNEXEC
-+#ifdef __ASSEMBLY__
-+#define __KERNEL_TEXT_OFFSET	(0xC0400000)
-+#else
-+#define __KERNEL_TEXT_OFFSET	(0xC0400000UL)
-+#endif
-+#else
 +#ifdef __ASSEMBLY__
 +#define __KERNEL_TEXT_OFFSET	(0)
 +#else
 +#define __KERNEL_TEXT_OFFSET	(0x0UL)
-+#endif
 +#endif
  
  #define PAGE_OFFSET		((unsigned long)__PAGE_OFFSET)
@@ -11371,24 +11306,18 @@ diff -uNr linux-2.6.7-rc1.orig/include/asm-i386/pgalloc.h linux-2.6.7-rc1/includ
 diff -uNr linux-2.6.7-rc1.orig/include/asm-i386/pgtable.h linux-2.6.7-rc1/include/asm-i386/pgtable.h
 --- linux-2.6.7-rc1.orig/include/asm-i386/pgtable.h	2004-05-23 07:54:29.000000000 +0200
 +++ linux-2.6.7-rc1/include/asm-i386/pgtable.h	2004-05-25 14:33:59.117373120 +0200
-@@ -136,6 +136,16 @@
+@@ -136,6 +136,10 @@
  #define PAGE_COPY	__pgprot(_PAGE_PRESENT | _PAGE_USER | _PAGE_ACCESSED)
  #define PAGE_READONLY	__pgprot(_PAGE_PRESENT | _PAGE_USER | _PAGE_ACCESSED)
  
-+#ifdef CONFIG_PAX_PAGEEXEC
-+# define PAGE_SHARED_NOEXEC	__pgprot(_PAGE_PRESENT | _PAGE_RW | _PAGE_ACCESSED)
-+# define PAGE_COPY_NOEXEC	__pgprot(_PAGE_PRESENT | _PAGE_ACCESSED)
-+# define PAGE_READONLY_NOEXEC	__pgprot(_PAGE_PRESENT | _PAGE_ACCESSED)
-+#else
-+# define PAGE_SHARED_NOEXEC	PAGE_SHARED
-+# define PAGE_COPY_NOEXEC	PAGE_COPY
-+# define PAGE_READONLY_NOEXEC	PAGE_READONLY
-+#endif
++#define PAGE_SHARED_NOEXEC	PAGE_SHARED
++#define PAGE_COPY_NOEXEC	PAGE_COPY
++#define PAGE_READONLY_NOEXEC	PAGE_READONLY
 +
  #define _PAGE_KERNEL \
  	(_PAGE_PRESENT | _PAGE_RW | _PAGE_DIRTY | _PAGE_ACCESSED)
  
-@@ -155,18 +165,18 @@
+@@ -155,18 +159,18 @@
   * This is the closest we can get..
   */
  #define __P000	PAGE_NONE
@@ -11586,19 +11515,13 @@ diff -uNr linux-2.6.7-rc1.orig/include/asm-sparc/a.out.h linux-2.6.7-rc1/include
 diff -uNr linux-2.6.7-rc1.orig/include/asm-sparc/pgtable.h linux-2.6.7-rc1/include/asm-sparc/pgtable.h
 --- linux-2.6.7-rc1.orig/include/asm-sparc/pgtable.h	2004-05-23 07:54:20.000000000 +0200
 +++ linux-2.6.7-rc1/include/asm-sparc/pgtable.h	2004-05-25 14:33:59.207359440 +0200
-@@ -131,6 +131,16 @@
+@@ -131,6 +131,10 @@
  #define PAGE_COPY      __pgprot(BTFIXUP_INT(page_copy))
  #define PAGE_READONLY  __pgprot(BTFIXUP_INT(page_readonly))
  
-+#ifdef CONFIG_PAX_PAGEEXEC
-+# define PAGE_SHARED_NOEXEC	__pgprot(BTFIXUP_INT(page_shared_noexec))
-+# define PAGE_COPY_NOEXEC	__pgprot(BTFIXUP_INT(page_copy_noexec))
-+# define PAGE_READONLY_NOEXEC	__pgprot(BTFIXUP_INT(page_readonly_noexec))
-+#else
-+# define PAGE_SHARED_NOEXEC	PAGE_SHARED
-+# define PAGE_COPY_NOEXEC	PAGE_COPY
-+# define PAGE_READONLY_NOEXEC	PAGE_READONLY
-+#endif
++#define PAGE_SHARED_NOEXEC	PAGE_SHARED
++#define PAGE_COPY_NOEXEC	PAGE_COPY
++#define PAGE_READONLY_NOEXEC	PAGE_READONLY
 +
  extern unsigned long page_kernel;
  
@@ -11640,7 +11563,7 @@ diff -uNr linux-2.6.7-rc1.orig/include/asm-sparc64/pgtable.h linux-2.6.7-rc1/inc
  #define _PAGE_ACCESSED	0x0000000000000400	/* Accessed Page (ie. referenced)     */
  #define _PAGE_READ	0x0000000000000200	/* Readable SW Bit                    */
  #define _PAGE_WRITE	0x0000000000000100	/* Writable SW Bit                    */
-@@ -160,34 +161,48 @@
+@@ -160,34 +161,39 @@
  
  /* Don't set the TTE _PAGE_W bit here, else the dirty bit never gets set. */
  #define PAGE_SHARED	__pgprot (_PAGE_PRESENT | _PAGE_VALID | _PAGE_CACHE | \
@@ -11660,18 +11583,9 @@ diff -uNr linux-2.6.7-rc1.orig/include/asm-sparc64/pgtable.h linux-2.6.7-rc1/inc
 +				  __PRIV_BITS | __ACCESS_BITS | __DIRTY_BITS | \
 +				  _PAGE_EXEC)
 +
-+#ifdef CONFIG_PAX_PAGEEXEC
-+# define PAGE_SHARED_NOEXEC	__pgprot (_PAGE_PRESENT | _PAGE_VALID | _PAGE_CACHE | \
-+					  __ACCESS_BITS | _PAGE_WRITE)
-+# define PAGE_COPY_NOEXEC	__pgprot (_PAGE_PRESENT | _PAGE_VALID | _PAGE_CACHE | \
-+					  __ACCESS_BITS)
-+# define PAGE_READONLY_NOEXEC	__pgprot (_PAGE_PRESENT | _PAGE_VALID | _PAGE_CACHE | \
-+					  __ACCESS_BITS)
-+#else
-+# define PAGE_SHARED_NOEXEC	PAGE_SHARED
-+# define PAGE_COPY_NOEXEC	PAGE_COPY
-+# define PAGE_READONLY_NOEXEC	PAGE_READONLY
-+#endif
++#define PAGE_SHARED_NOEXEC	PAGE_SHARED
++#define PAGE_COPY_NOEXEC	PAGE_COPY
++#define PAGE_READONLY_NOEXEC	PAGE_READONLY
  
  #define _PFN_MASK	_PAGE_PADDR
  
