@@ -192,7 +192,7 @@ Patch80:	http://www.elektronikschule.de/~genannt/kernel-patche/lirc/lirc-2.6.5-2
 Patch82:	2.6.6-pwcx.patch
 
 Patch84:	2.6.6-serial-fifo-lkml.patch
-Patch86:	2.6.6-NTFS-2.1.9-lkml.patch
+
 Patch88:	2.6.6-qsort-updated-lkml.patch
 Patch90:	2.6.6-xfs-qsort-lkml.patch
 
@@ -643,21 +643,15 @@ zcat %{SOURCE3} | patch -p1 -s
 %ifarch %{ix86}
 cp drivers/usb/media/libpwcx.a_ix86 drivers/usb/media/libpwcx.a_
 %endif
-%ifarch arm
-cp drivers/usb/media/libpwcx.a_arm drivers/usb/media/libpwcx.a_
-%endif
 %ifarch powerpc
 cp drivers/usb/media/libpwcx.a_powerpc drivers/usb/media/libpwcx.a_
 %endif
 %ifarch ppc
 cp drivers/usb/media/libpwcx.a_ppc drivers/usb/media/libpwcx.a_
 %endif
-%ifarch mipsel
-cp drivers/usb/media/libpwcx.a_mipsel drivers/usb/media/libpwcx.a_
-%endif
 
 %patch84 -p1
-%patch86 -p1
+
 %patch88 -p1
 %patch90 -p1
 
