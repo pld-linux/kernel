@@ -24,11 +24,11 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.25
-Release:	0.3
+Release:	0.4
 License:	GPL v2
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-2.4.24.tar.bz2
-# Source0-md5:	1e055c42921b2396a559d84df4c3d9aa
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
+# Source0-md5:	5fc8e9f43fa44ac29ddf9a9980af57d8
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
@@ -54,7 +54,7 @@ Source2000:	%{name}-win4lin.config
 
 # Essential stuff
 
-Patch0:		patch-2.4.25-rc1.bz2
+#Patch0:		patch-2.4.25-rc4.bz2
 
 Patch1:		%{name}-pldfblogo.patch
 
@@ -79,7 +79,7 @@ Patch24:	linux-2.4.23-libata1-include.patch
 Patch31:	linux-2.4.21-jfs-acl.patch
 Patch32:	linux-2.4.25-ea-acl-nfsacl-2.4.23-0.8.65.diff.gz
 # http://dl.sourceforge.net/linux-ntfs/
-Patch40:	linux-2.4.24-ntfs-2.1.6a.patch.bz2
+Patch40:	linux-2.4.25-ntfs-2.1.6a.patch.bz2
 # FC01_davfs_0.2.4.patch
 Patch50:	linux-2.4.20-davfs-0.2.4.patch.bz2
 # FC02_davfs__FUNCTION__.patch
@@ -676,11 +676,11 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 Este pacote contém documentação para o kernel Linux.
 
 %prep
-%setup -q -a3 -n linux-2.4.24
+%setup -q -a3 -n linux-%{version}
 # new JFS
 rm -fr fs/jfs
 gzip -dc %{SOURCE7} | tar -xf -
-%patch0 -p1
+#%patch0 -p1
 %patch1 -p1
 %patch10 -p1
 %patch12 -p1
