@@ -1399,11 +1399,6 @@ fi
 %files module-build
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Makefile
-#%{_prefix}/src/linux-%{version}/*/Makefile*
-#%{_prefix}/src/linux-%{version}/*/*/Makefile*
-#%{_prefix}/src/linux-%{version}/*/*/*/Makefile*
-#%{_prefix}/src/linux-%{version}/*/*/*/*/Makefile*
-#%{_prefix}/src/linux-%{version}/*/*/*/*/*/Makefile*
 %dir %{_prefix}/src/linux-%{version}/arch
 %dir %{_prefix}/src/linux-%{version}/arch/*
 %{_prefix}/src/linux-%{version}/arch/*/Makefile*
@@ -1414,10 +1409,7 @@ fi
 %dir %{_prefix}/src/linux-%{version}/scripts
 %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %{_prefix}/src/linux-%{version}/scripts/basic
-#%{_prefix}/src/linux-%{version}/scripts/*/*.l
-#%{_prefix}/src/linux-%{version}/scripts/*/*.c
 %{_prefix}/src/linux-%{version}/scripts/*.c
-#%{_prefix}/src/linux-%{version}/scripts/*/*.h
 %{_prefix}/src/linux-%{version}/scripts/*.h
 %{_prefix}/src/linux-%{version}/scripts/*.sh
 
@@ -1445,17 +1437,8 @@ fi
 %{_prefix}/src/linux-%{version}/net
 %{_prefix}/src/linux-%{version}/scripts/*
 %exclude %{_prefix}/src/linux-%{version}/scripts/Makefile*
-#%exclude %{_prefix}/src/linux-%{version}/Makefile*
-#%exclude %{_prefix}/src/linux-%{version}/*/Makefile*
-#%exclude %{_prefix}/src/linux-%{version}/*/*/Makefile*
-#%exclude %{_prefix}/src/linux-%{version}/*/*/*/Makefile*
-#%exclude %{_prefix}/src/linux-%{version}/*/*/*/*/Makefile*
-#%exclude %{_prefix}/src/linux-%{version}/*/*/*/*/*/Makefile*
-#%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.c
 %exclude %{_prefix}/src/linux-%{version}/scripts/basic
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.c
-#%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.l
-#%exclude %{_prefix}/src/linux-%{version}/scripts/*/*.h
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.h
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.sh
 %{_prefix}/src/linux-%{version}/sound
