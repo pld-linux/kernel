@@ -47,7 +47,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		3.4%{?with_mosix:m}
+%define		_rel		3.2%{?with_mosix:m}
 %define		_cset		20040707_0722
 %define		_apply_cset	0
 %define		_subversion	.1
@@ -292,9 +292,6 @@ Patch600:	%{name}-grsec.patch
 
 # openMosix support
 Patch700:	openMosix-2.6.7-PLD.patch
-
-Patch710:	kernel-SPARC64-binfmt_elf.patch
-Patch711:	kernel-ppc_asm_and_initializers-from-rc3-bk9.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -839,12 +836,6 @@ zcat %{SOURCE3} | patch -p1 -s
 %if %{with mosix}
 %patch700 -p1
 %endif
-
-%ifarch sparc64
-%patch710 -p1
-%endif
-
-%patch711 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
