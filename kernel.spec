@@ -4,6 +4,10 @@
 #		- add distcc support (and don't break crossbuild!)
 #		- fix vserver against new grsec
 #
+#		- add some extras from pom-ng
+#		- update reiserfs4
+#		- wait for l7 memleak fix
+#
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
