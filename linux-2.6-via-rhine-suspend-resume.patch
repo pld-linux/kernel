@@ -1,5 +1,5 @@
---- linux-2.6.8-rc3/drivers/net/via-rhine.c.org	2004-08-08 03:49:22.299019416 +0200
-+++ linux-2.6.8-rc3/drivers/net/via-rhine.c	2004-08-08 03:56:07.143473704 +0200
+--- linux.org/drivers/net/via-rhine.c.org	2004-08-11 17:06:32.099125648 +0200
++++ linux/drivers/net/via-rhine.c	2004-08-11 17:07:49.237398848 +0200
 @@ -492,6 +492,9 @@
  	dma_addr_t tx_bufs_dma;
  
@@ -10,16 +10,16 @@
  	struct net_device_stats stats;
  	struct timer_list timer;	/* Media monitoring timer. */
  	spinlock_t lock;
-@@ -796,6 +799,9 @@
- 	spin_lock_init(&rp->lock);
- 	rp->pdev = pdev;
+@@ -750,6 +753,9 @@
+ 	dev->base_addr = ioaddr;
+ 	rp = netdev_priv(dev);
  	rp->quirks = quirks;
 +#ifdef CONFIG_PM
 +	rp->pioaddr = ioaddr0;
 +#endif
- 	rp->mii_if.dev = dev;
- 	rp->mii_if.mdio_read = mdio_read;
- 	rp->mii_if.mdio_write = mdio_write;
+ 
+ 	rhine_power_init(dev);
+ 
 @@ -1936,12 +1942,70 @@
  	pci_set_drvdata(pdev, NULL);
  }
