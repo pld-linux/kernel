@@ -2,9 +2,6 @@
 # If you define the following as 1, only kernel, -headers and -source
 # packages will be built
 #
-# _with_lids		- build LIDS enabled kernels
-# _without_grsec	- build kernel without grsecurity patch
-# _with_preemptive	- build with Preemptive patch
 # _without_smp		- don't build SMP kernel
 #
 %define		test_build		0
@@ -35,6 +32,8 @@ Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
+
+Patch1:		kernel-net_divert.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -81,76 +80,6 @@ allocation de process, entrée/sortie de peripheriques, etc.
 Pakiet zawiera j±dro Linuxa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takich jak karty muzyczne, sterowniki dysków, etc.
-
-
-%if%{?_without_smp:0}%{!?_without_smp:1}
-%package smp
-Summary:	Kernel version %{version} compiled for SMP machines
-Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
-Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
-Group:		Base/Kernel
-Group(pl):	Podstawowe/J±dro
-Provides:	%{name} = %{version}
-Provides:	%{name}(reiserfs) = %{version}
-Provides:	%{name}(agpgart) = %{version}
-Prereq:		modutils
-Autoreqprov:	no
-
-%description smp
-This package includes a SMP version of the Linux %{version} kernel. It
-is required only on machines with two or more CPUs, although it should
-work fine on single-CPU boxes.
-
-%description -l de smp
-Dieses Paket enthält eine SMP (Multiprozessor)-Version von
-Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
-Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
-CPU laufen.
-
-%description -l fr smp
-Ce package inclu une version SMP du noyau de Linux version {version}.
-Il et nécessaire seulement pour les machine avec deux processeurs ou
-plus, il peut quand même fonctionner pour les système mono-processeur.
-
-%description -l pl smp
-Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono wymagane
-przez komputery zawieraj±ce dwa lub wiêcej procesorów. Powinno równie¿ dobrze 
-dzia³aæ na maszynach z jednym procesorem.
-%endif 
-
-%package BOOT
-Summary:	Kernel version %{version} used on the installation boot disks
-Summary(de):	Kernel version %{version} für Installationsdisketten
-Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation
-Group:		Base/Kernel
-Group(pl):	Podstawowe/J±dro
-Prereq:		modutils
-Autoreqprov:	no
-
-%description BOOT
-This package includes a trimmed down version of the Linux %{version}
-kernel. This kernel is used on the installation boot disks only and
-should not be used for an installed system, as many features in this
-kernel are turned off because of the size constraints.
-
-%description -l de BOOT
-Dieses Paket enthält eine verkleinerte Version vom Linux-Kernel
-version %{version}. Dieser Kernel wird auf den
-Installations-Bootdisketten benutzt und sollte nicht auf einem
-installierten System verwendet werden, da viele Funktionen wegen der
-Platzprobleme abgeschaltet sind.
-
-%description -l fr BOOT
-Ce package inclut une version allégée du noyau de Linux version
-%{version}. Ce kernel et utilisé pour les disquettes de boot
-d'installation et ne doivent pas être utilisées pour un système
-classique, beaucoup d'options dans le kernel ont étaient désactivées a
-cause de la contrainte d'espace.
-#'
-%description -l pl BOOT
-Pakiet zawiera j±dro Linuksa dedykowane dyskietkom startowym i powinno 
-byæ u¿ywane jedynie podczas instalacji systemu. Wiele u¿ytecznych opcji
-zosta³o wy³±czonych, aby jak najbardziej zmniejszyæ jego rozmiar.
 
 %package headers
 Summary:	Header files for the Linux kernel
@@ -209,6 +138,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -n linux-%{version}
+%patch1 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -320,26 +250,9 @@ KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
 rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
 
-# make drivers/scsi/ missing files
-	(cd drivers/scsi; make -f M)
-	
 # UP KERNEL
 BuildKernel 
 
-%if !%{test_build}
-# SMP KERNEL
-%if %{?_without_smp:0}%{!?_without_smp:1}
-BuildKernel smp
-%endif			# %{_without_smp}
-
-# BOOT kernel
-%ifnarch i586 i686
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk"
-rm -rf $KERNEL_INSTALL_DIR
-BuildKernel BOOT
-%endif
-
-%endif			# %{test_build}
 
 %install
 umask 022
@@ -349,12 +262,6 @@ install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{version}}
 KERNEL_BUILD_DIR=`pwd`
 cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
 
-for i in "" "-lids" smp smp-lids ; do
-	if [ -e  $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i ] ; then
-		rm -f $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
-		ln -sf /usr/src/linux-%{version} $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
-	fi
-done
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
 ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
 
@@ -392,12 +299,6 @@ echo "CONFIG_M586=y" >> .config
 echo "CONFIG_M686=y" >> .config
 %endif
 
-cat %{SOURCE1001} >> .config
-cat %{SOURCE1002} >> .config
-cat %{SOURCE1003} >> .config
-cat %{SOURCE1004} >> .config
-cat %{SOURCE1666} >> .config
-
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
 
@@ -422,11 +323,12 @@ echo "CONFIG_M686=y" >> .config
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
 
 
+
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
-%{__make} symlinks 
-%{__make} include/linux/version.h
-%{__make} "`pwd`/include/linux/modversions.h"
+#%{__make} symlinks 
+#%{__make} include/linux/version.h
+#%{__make} "`pwd`/include/linux/modversions.h"
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well, after we fix the paths
@@ -468,71 +370,6 @@ rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release} /lib/modules/%{version}
 depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
-%if%{?_without_smp:0}%{!?_without_smp:1}
-%post smp
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
-ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
-ln -sf System.map-%{version}-%{release}smp /boot/System.map
-
-geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
-mv -f /boot/initrd /boot/initrd.old
-ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
-
-if [ -x /sbin/rc-boot ] ; then
-	/sbin/rc-boot 1>&2 || :
-fi
-
-if [ ! -L /lib/modules/%{version} ] ; then
-	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
-fi
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release}smp /lib/modules/%{version}
-%endif			# %{_without_smp}
-
-%post BOOT
-if [ ! -L %{_libdir}/bootdisk/lib/modules/%{version} ] ; then
-	mv -f %{_libdir}/bootdisk/lib/modules/%{version} %{_libdir}/bootdisk/lib/modules/%{version}.rpmsave
-fi
-if [ ! -L %{_libdir}/bootdisk/boot/vmlinuz-%{version} ] ; then
-	mv -f %{_libdir}/bootdisk/boot/vmlinuz-%{version} %{_libdir}/bootdisk/boot/vmlinuz-%{version}.rpmsave
-fi
-rm -f %{_libdir}/bootdisk/lib/modules/%{version}
-ln -snf %{version}-%{release}BOOT %{_libdir}/bootdisk/lib/modules/%{version}
-rm -f %{_libdir}/bootdisk/boot/vmlinuz-%{version}
-ln -snf vmlinuz-%{version}-%{release}BOOT %{_libdir}/bootdisk/boot/vmlinuz-%{version}
-
-%postun
-if [ -L /lib/modules/%{version} ]; then 
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}" ]; then
-		if [ "$1" = "0" ]; then
-			rm -f /lib/modules/%{version}
-		fi
-	fi
-fi
-rm -f /boot/initrd-%{version}-%{release}.gz
-
-%if%{?_without_smp:0}%{!?_without_smp:1}
-%postun smp
-if [ -L /lib/modules/%{version} ]; then 
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp" ]; then
-		if [ "$1" = "0" ]; then
-			rm -f /lib/modules/%{version}
-		fi
-	fi
-fi
-rm -f /boot/initrd-%{version}-%{release}smp.gz
-%endif			# %{_without_smp}
-
-%postun BOOT
-if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then 
-	if [ "`ls -l %{_libdir}/bootdisk/lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}BOOT" ]; then
-		if [ "$1" = "0" ]; then
-			rm -f %{_libdir}/bootdisk/lib/modules/%{version}
-		fi
-	fi
-fi
-
 %post headers
 rm -f /usr/src/linux
 ln -snf linux-%{version} /usr/src/linux
@@ -554,55 +391,15 @@ fi
 /boot/vmlinuz-%{version}-%{release}
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
-%ifarch %{ix86}
-/lib/modules/%{version}-%{release}/pcmcia
-%endif
+#%ifarch %{ix86}
+#/lib/modules/%{version}-%{release}/pcmcia
+#%endif
 /lib/modules/%{version}-%{release}/kernel
 /lib/modules/%{version}-%{release}/build
 /lib/modules/%{version}-%{release}/modules.dep
 /lib/modules/%{version}-%{release}/modules.*map
 /lib/modules/%{version}-%{release}/modules.generic_string
 
-%if !%{test_build}
-
-%if%{?_without_smp:0}%{!?_without_smp:1}
-%files smp
-%defattr(644,root,root,755)
-%ifarch alpha sparc
-/boot/vmlinux-%{version}-%{release}smp
-%endif
-/boot/vmlinuz-%{version}-%{release}smp
-/boot/System.map-%{version}-%{release}smp
-%dir /lib/modules/%{version}-%{release}smp
-%ifarch %{ix86}
-/lib/modules/%{version}-%{release}smp/pcmcia
-%endif
-/lib/modules/%{version}-%{release}smp/kernel
-/lib/modules/%{version}-%{release}smp/build
-/lib/modules/%{version}-%{release}smp/modules.dep
-/lib/modules/%{version}-%{release}smp/modules.*map
-/lib/modules/%{version}-%{release}smp/modules.generic_string
-%endif			# %{_without_smp}
-
-%ifnarch i586 i686
-%files BOOT
-%defattr(644,root,root,755)
-%ifarch alpha sparc
-%{_libdir}/bootdisk/boot/vmlinux-%{version}-%{release}BOOT
-%endif
-%{_libdir}/bootdisk/boot/vmlinuz-%{version}-%{release}BOOT
-%{_libdir}/bootdisk/boot/System.map-%{version}-%{release}BOOT
-%dir %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT
-%ifarch i386
-%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/pcmcia
-%endif
-%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/kernel
-%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/build
-%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.dep
-%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.*map
-%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.generic_string
-%endif
-%endif
 
 %files headers
 %defattr(644,root,root,755)
