@@ -18,7 +18,7 @@ Summary(ru):	ñÄÒÏ Linux
 Summary(uk):	ñÄÒÏ Linux
 Name:		kernel
 Version:	2.2.21
-Release:	0.9
+Release:	1.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -179,7 +179,7 @@ fonctions basiques d'un système d'exploitation: allocation mémoire,
 allocation de process, entrée/sortie de peripheriques, etc.
 
 %description -l pl
-Pakiet zawiera j±dro Linuxa niezbêdne do prawid³owego dzia³ania
+Pakiet zawiera j±dro Linuksa niezbêdne do prawid³owego dzia³ania
 Twojego komputera.
 
 %description -l ru
@@ -326,7 +326,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %package source
 Summary:	Kernel source tree
-Summary(pl):	Kod ¼ród³owy j±dra Linuxa
+Summary(pl):	Kod ¼ród³owy j±dra Linuksa
 Summary(ru):	éÓÈÏÄÎÙÅ ÔÅËÓÔÙ ÑÄÒÁ Linux
 Summary(uk):	÷ÉÈ¦ÄÎ¦ ÔÅËÓÔÉ ÑÄÒÁ Linux
 Group:		Base/Kernel
