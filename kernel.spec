@@ -456,7 +456,7 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/li
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi/
-zcat %{SOURCE34} > $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/net/3c59x.c
+zcat %{SOURCE6} > $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/net/3c59x.c
 
 %ifarch sparc
 ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
