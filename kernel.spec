@@ -368,6 +368,7 @@ Patch2004:	linux-2.4.20-nfsd-xdr-secfix.patch
 Patch2005:	linux-2.4.20-sunrpc-noudpreuse.patch
 Patch2006:	linux-2.4.20-tty-fixes-grsec.patch
 ##Patch2007:	linux-2.4.20-tty-fixes.patch
+Patch2008:	linux-do_brk-bound-check.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -939,6 +940,7 @@ echo AXP patches ...
 %patch2005 -p1
 
 %patch2006 -p1
+%patch2008 -p1
 
 %patch916  -p1
 %patch915 -p1
