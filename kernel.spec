@@ -41,7 +41,6 @@ Source33:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_versio
 #Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.17+.gz
 # NFS server patches
 #Source40:	http://download.sourceforge.net/nfs/dhiggen_merge-4.1.tar.gz
-Source50:	i8255-chip.patch
 Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.1.gz
 Patch100:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.0-ac2.bz2
 Patch101:		%{name}-%{version}-dc395-patch-fix.patch
@@ -65,6 +64,8 @@ Patch7:			ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-%{freeswan_version}.t
 #Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
 # patch for console daemon.
 #Patch21:	wait_any_vt.diff
+Patch50:	i8255-chip.patch
+
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
