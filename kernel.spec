@@ -2,6 +2,7 @@
 # TODO:
 #		- fix lirc_sasem (usb api)
 #		- add distcc support (and don't break crossbuild!)
+#		- fix vserver against new grsec
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -584,7 +585,6 @@ bzcat %{SOURCE4} | patch -p1 -s
 #grsec
 %ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
 %if %{with grsec}
-# see TODO
 %patch90 -p1
 %patch91 -p1
 %endif
