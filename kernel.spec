@@ -924,9 +924,10 @@ BuildKernel() {
 	%{__make} include/linux/version.h
 
 # making  table for soundmodem.
-	(cd drivers/net/hamradio/soundmodem; \
-	%{__cc} -o gentbl -lm gentbl.c; \
-	./gentbl)
+	cd drivers/net/hamradio/soundmodem
+	%{__cc} -o gentbl -lm gentbl.c
+	./gentbl
+	cd ../../../..
 
 %ifarch %{ix86}
 	%{__make} bzImage
