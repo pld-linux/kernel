@@ -141,6 +141,7 @@ siê w komputerze, takich jak karty muzyczne, sterowniki dysków, etc.
 Summary:	Kernel version %{version} compiled for SMP machines
 Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
+Summary(pl):	J±dro Linuxa w wersji %{version} dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Provides:	%{name}-smp = %{epoch}:%{version}-%{release}
 Provides:	module-info
@@ -175,6 +176,7 @@ Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
 Summary:	Kernel version %{version} used on the installation boot disks
 Summary(de):	Kernel version %{version} für Installationsdisketten
 Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation
+Summary(pl):	J±dro Linuxa w wersji %{version} dla dyskietek startowych
 Group:		Base/Kernel
 Prereq:		module-init-tools
 Autoreqprov:	no
@@ -288,6 +290,10 @@ Summary(pl):	Sterowniki d¼wiêku ALSA
 Group:		Base/Kernel
 PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
+Provides:	alsa-driver
+Obsoletes:	alsa-driver
+Obsoletes:	alsa-driver-smp
+Obsoletes:	alsa-driver-up
 
 %description sound-alsa
 ALSA Sound driver.
@@ -301,6 +307,9 @@ Summary(pl):	Sterowniki d¼wiêku ALSA dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
+Provides:	alsa-driver
+Obsoletes:	alsa-driver
+Obsoletes:	alsa-driver-smp
 
 %description smp-sound-alsa
 ALSA SMP Sound driver.
@@ -327,7 +336,7 @@ structures and constants that are needed when building most standard
 programs under Linux, as well as to rebuild the kernel.
 
 %description headers -l pl
-Pakiet zawiera pliki nag³ówkowe j±dra, niezbedne do rekompilacji j±dra
+Pakiet zawiera pliki nag³ówkowe j±dra, niezbêdne do rekompilacji j±dra
 oraz niektórych programów.
 
 %package source
@@ -363,7 +372,7 @@ personnalisé pour avoir de meilleures performances sur des matériels
 particuliers.
 
 %description source -l pl
-Pakiet zawiera kod ¼ród³owy jadra systemu.
+Pakiet zawiera kod ¼ród³owy j±dra systemu.
 
 %package doc
 Summary:	Kernel documentation
