@@ -496,7 +496,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch4 -p1
 
-%patch6 -p1
+#%%patch6 -p1
 
 %patch8 -p1
 
