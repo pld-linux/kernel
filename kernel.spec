@@ -267,7 +267,7 @@ Patch908:	linux-2.4.19-PPC-o1_scheduler.patch
 #Patch909:	
 Patch910:	linux-2.4.21-pre4-ac4-via82cxxx_audio.patch.bz2
 Patch911:	linux-2.4.19-SPARC.patch
-Patch912:	linux-2.4.20-PPC-arch-Makefile.patch
+#Patch912:	
 #Patch913:	
 Patch914:	linux-2.4.20-MODULE_XXX.patch
 Patch915:	linux-2.4.19-usb-digitalcams.patch
@@ -712,7 +712,6 @@ echo PPC patches ...
 %patch130 -p0
 %patch205 -p1
 %patch903 -p1
-%patch912 -p1
 %endif
 %ifarch sparc64
 echo SPARC64 patches ...
