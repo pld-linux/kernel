@@ -2,8 +2,8 @@
 # If you define the following as 1, only kernel, -headers and -source
 # packages will be built
 #
-# _with_lids	- build LIDS enabled kernels
-# _with_grsec	- build kernel with grsecurity patch
+# _with_lids		- build LIDS enabled kernels
+# _without_grsec	- build kernel without grsecurity patch
 #
 %define		test_build		0
 #
@@ -23,7 +23,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.7
-Release:	2
+Release:	3
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -397,7 +397,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch7 -p1
 %patch8 -p1
 %patch9 -p1
-%if%{?_with_grsec:1}%{!?_with_grsec:0}
+%if%{?_without_grsec:0}%{!?_without_grsec:1}
 %patch10 -p1
 %endif
 
@@ -419,7 +419,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch116 -p1
 %patch117 -p1
 %patch118 -p1
-#%patch119 -p2
+%patch119 -p2
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
@@ -727,7 +727,7 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH115}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH116}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH117}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH118}
-#patch -p2 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH119}
+patch -p2 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH119}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH120}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH121}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH122}
@@ -1227,6 +1227,7 @@ fi
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
+%{_prefix}/src/linux-%{version}/grsecurity
 %{_prefix}/src/linux-%{version}/i8255
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
