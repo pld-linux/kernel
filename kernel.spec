@@ -30,7 +30,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	2.2
+Release:	2.21
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
@@ -90,7 +90,7 @@ Patch2:		freeswan-%{freeswan_version}-%{version}.patch.gz
 # from  http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.17.diff
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
-Patch5:		xfs-2.4.18-15042002.patch.gz
+Patch5:		xfs-2.4.18-19042002.patch.gz
 # Homepage of ABI:	http://linux-abi.sourceforge.net/
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2 
 Patch7:		linux-abi-2.4.17.0.patch.bz2
@@ -103,7 +103,7 @@ Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/pr
 Patch11:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-%{version}-1.patch
 Patch12:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-%{version}-1.patch
 Patch13:	http://www.linuxvirtualserver.org/software/kernel-2.4/linux-%{version}-ipvs-%{ipvs_version}.patch.gz
-Patch14:	http://people.redhat.com/mingo/O(1)-scheduler/sched-O1-2.4.17-K2.patch
+Patch14:	http://people.redhat.com/mingo/O(1)-scheduler/sched-O1-2.4.18-pre8-K3.patch
 
 Patch15:	http://luxik.cdi.cz/~devik/qos/htb/v2/htb2_2.4.17.diff
 
@@ -456,22 +456,22 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch4 -p1
 %patch5 -p1
 #%patch7 -p1
-#%if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
-#%patch14 -p1
-#%patch913 -p1
-#%else
-#%patch8 -p1
-#%endif
-#%ifarch {ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
-#%patch911 -p1
-#%endif
+%if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%patch14 -p1
+%patch913 -p1
+%else
+%patch8 -p1
+%endif
+%ifarch {ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%patch911 -p1
+%endif
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
 %patch9 -p1
-#%patch906 -p1
+%patch906 -p1
 %endif
-#%ifarch{ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
-#%patch912 -p1
-#%endif
+%ifarch{ix86}+%{?_without_grsec:0}%{!?_without_grsec:1}+%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%patch912 -p1
+%endif
 
 %patch15 -p1
 %patch17 -p1
@@ -606,7 +606,7 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 %endif
 
 # Trident FB
-echo Replacing Trident FB module ..
+echo Replacing Trident FB module .
 %patch140 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
