@@ -1,12 +1,4 @@
-%define		is_pre		yes
-
-%define		kernel_stable	2.4.21
-%define		kernel_pre	2.4.22-pre8
-
-%{!?_is_pre:%define	_kernel_version		%(echo %{kernel_pre} | sed s/-//g)}
-%{?_is_pre:%define	_kernel_version		%{kernel_stable}}
-%{!?_is_pre:%define	kernel_version		%{kernel_pre}}
-%{?_is_pre:%define	kernel_version		%{kernel_stable}}
+%define		ow_version		2.4.22-ow1
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -15,35 +7,48 @@ Summary(pl):	J±dro Linuksa
 Summary(ru):	Òƒ“œ Linux
 Summary(uk):	Òƒ“œ Linux
 Name:		kernel
-Version:	%{_kernel_version}
+Version:	2.4.22
 Release:	0.1
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{kernel_stable}.tar.bz2
-# Source0-md5:	f51e12efa18bb828cf57d9d4a81b2fb1
-Source1:	%{name}-alpha-BOOT.config
-Source2:	%{name}-alpha.config
-Source3:	%{name}-alpha-smp.config
-Source4:	%{name}-athlon.config
-Source5:	%{name}-athlon-smp.config
-Source6:	%{name}-i386-BOOT.config
-Source7:	%{name}-i386.config
-Source8:	%{name}-i386-smp.config
-Source9:	%{name}-i586.config
-Source10:	%{name}-i586-smp.config
-Source11:	%{name}-i686.config
-Source12:	%{name}-i686-smp.config
-Source13:	%{name}-ppc-BOOT.config
-Source14:	%{name}-ppc.config
-Source15:	%{name}-ppc-smp.config
-Source16:	%{name}-sparc64-BOOT.config
-Source17:	%{name}-sparc64.config
-Source18:	%{name}-sparc64-smp.config
-Source19:	%{name}-sparc-BOOT.config
-Source20:	%{name}-sparc.config
-Source21:	%{name}-sparc-smp.config
-Source22:	%{name}-autoconf.h
-%{!?_is_pre:Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-%{kernel_pre}.bz2}
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
+# Source0-md5:	75dc85149b06ac9432106b8941eb9f7b
+Source1:	%{name}-autoconf.h
+Source2:        http://www.openwall.com/linux/linux-%{ow_version}.tar.gz
+Source20:	%{name}-alpha-BOOT.config
+Source21:	%{name}-alpha.config
+Source22:	%{name}-alpha-smp.config
+Source23:	%{name}-athlon.config
+Source24:	%{name}-athlon-smp.config
+Source25:	%{name}-i386-BOOT.config
+Source26:	%{name}-i386.config
+Source27:	%{name}-i386-smp.config
+Source28:	%{name}-i586.config
+Source29:	%{name}-i586-smp.config
+Source30:	%{name}-i686.config
+Source31:	%{name}-i686-smp.config
+Source32:	%{name}-ppc-BOOT.config
+Source33:	%{name}-ppc.config
+Source34:	%{name}-ppc-smp.config
+Source35:	%{name}-sparc64-BOOT.config
+Source36:	%{name}-sparc64.config
+Source37:	%{name}-sparc64-smp.config
+Source38:	%{name}-sparc-BOOT.config
+Source39:	%{name}-sparc.config
+Source40:	%{name}-sparc-smp.config
+
+Patch0:         %{name}-pldfblogo.patch
+Patch1:		linux-2.4.22-owl_remove_extraversion.patch
+
+# bugfixes, found in core
+#Patch10:
+#Patch11:
+
+# network stuff, such as patch-o-matic, vtun, and others protocols
+# with compilation fixes
+#
+Source100:	http://www.netfilter.org/files/patch-o-matic-20030912.tar.bz2
+
 #Patch1:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/linux-2.4/2.4.21/patch-2.4.21-rc6-ac1.bz2
 ExclusiveOS:	Linux
 Autoreqprov:	no
@@ -236,9 +241,12 @@ PCMCIA-CS modules (%{pcmcia_kernel_version}).
 Modu≥y PCMCIA-CS (%{pcmcia_kernel_version}).
 
 %prep
-%setup -q -n linux-%{kernel_stable}
-%{!?_is_pre:%patch0 -p1}
-#%patch1 -p1
+%setup -q -a2 -a100 -n linux-%{version}
+# 2.4.22 openwall
+patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
+
+%patch0 -p1
+%patch1 -p1
 
 find  -name "*~" -print | xargs rm -f
 find  -name "*.orig" -print | xargs rm -f
@@ -259,7 +267,7 @@ BuildKernel() {
 	else
 		Config="%{_target_cpu}"
 	fi
-	KernelVer=%{kernel_version}-%{release}$1
+	KernelVer=%{version}-%{release}$1
 
 	cp $RPM_SOURCE_DIR/kernel-$Config.config .config
 
@@ -271,16 +279,16 @@ BuildKernel() {
 	done
 
 %ifarch %{ix86}
-	%{__make} bzImage EXTRAkernel_version="-%{release}"
+	%{__make} bzImage EXTRAversion="-%{release}"
 %endif
 %ifarch sparc
-	sparc32 %{__make} boot EXTRAkernel_version="-%{release}"
+	sparc32 %{__make} boot EXTRAversion="-%{release}"
 %endif
 %ifarch sparc64 sparcv9 alpha
-	%{__make} boot EXTRAkernel_version="-%{release}"
+	%{__make} boot EXTRAversion="-%{release}"
 %endif
 %ifarch ppc
-	%{__make} vmlinux EXTRAkernel_version="-%{release}"
+	%{__make} vmlinux EXTRAversion="-%{release}"
 %endif
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
@@ -300,11 +308,11 @@ BuildKernel() {
 %ifarch sparc
 	sparc32 \
 %endif
-	%{__make} modules EXTRAkernel_version="-%{release}"
+	%{__make} modules EXTRAversion="-%{release}"
 	%{__make} modules_install \
 		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 		KERNELRELEASE=$KernelVer \
-		EXTRAkernel_version="-%{release}"
+		EXTRAversion="-%{release}"
 	rm -rf $KERNEL_INSTALL_DIR/lib/modules/*/{pcmcia,build}
 }
 
@@ -325,7 +333,7 @@ BuildKernel BOOT
 
 %install
 rm -rf $RPM_BUILD_ROOT
-install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{kernel_version}}
+install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{version}}
 
 KERNEL_BUILD_DIR=`pwd`
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-build"
@@ -344,11 +352,11 @@ for target in clean oldconfig dep include/linux/version.h; do
 	%{__make} $target
 done
 
-cp -ar . $RPM_BUILD_ROOT%{_prefix}/src/linux-%{kernel_version}
+cp -ar . $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
-cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{kernel_version}
+cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
-find $RPM_BUILD_ROOT/usr/src/linux-%{kernel_version} -name ".*depend" | \
+find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
 while read file ; do
 	mv $file $file.old
 sed -e "s|$RPM_BUILD_ROOT\(/usr/src/linux-\)|\1|g" < $file.old > $file
@@ -363,37 +371,39 @@ rm -f drivers/net/hamradio/soundmodem/gentbl
 rm -rf $RPM_BUILD_ROOT{,-build}
 
 %post
-ln -sf vmlinuz-%{kernel_version}-%{release} /boot/vmlinuz
-ln -sf System.map-%{kernel_version}-%{release} /boot/System.map
+mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
+mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
+ln -sf System.map-%{version}-%{release} /boot/System.map
 
-depmod -a -F /boot/System.map-%{kernel_version}-%{release} %{kernel_version}-%{release}
-geninitrd -f --fs=rom /boot/initrd-%{kernel_version}-%{release}.gz %{kernel_version}-%{release}
+if [ ! -L /lib/modules/%{version} ] ; then
+	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave > /dev/null 2>&1
+fi
+rm -f /lib/modules/%{version}
+ln -snf %{version}-%{release} /lib/modules/%{version}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+
+/sbin/geninitrd -f --initrdfs=rom /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
 mv -f /boot/initrd /boot/initrd.old
-ln -sf initrd-%{kernel_version}-%{release}.gz /boot/initrd
+ln -sf initrd-%{version}-%{release}.gz /boot/initrd
 
 if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
-if [ ! -L /lib/modules/%{kernel_version} ] ; then
-	mv -f /lib/modules/%{kernel_version} /lib/modules/%{kernel_version}.rpmsave
-fi
-rm -f /lib/modules/%{kernel_version}
-ln -snf %{kernel_version}-%{release} /lib/modules/%{kernel_version}
-
 %post pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{kernel_version}-%{release} %{kernel_version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
 %postun pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{kernel_version}-%{release} %{kernel_version}-%{release}
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
 %post headers
 rm -f /usr/src/linux
-ln -snf linux-%{kernel_version} /usr/src/linux
+ln -snf linux-%{version} /usr/src/linux
 
 %postun headers
 if [ -L /usr/src/linux ]; then
-	if [ "`ls -l /usr/src/linux | awk '{ print $11 }'`" = "linux-%{kernel_version}" ]; then
+	if [ "`ls -l /usr/src/linux | awk '{ print $11 }'`" = "linux-%{version}" ]; then
 		if [ "$1" = "0" ]; then
 			rm -f /usr/src/linux
 		fi
@@ -403,59 +413,59 @@ fi
 %files
 %defattr(644,root,root,755)
 %ifarch alpha sparc
-/boot/vmlinux-%{kernel_version}-%{release}
+/boot/vmlinux-%{version}-%{release}
 %endif
-/boot/vmlinuz-%{kernel_version}-%{release}
-/boot/System.map-%{kernel_version}-%{release}
-%dir /lib/modules/%{kernel_version}-%{release}
-/lib/modules/%{kernel_version}-%{release}/kernel
-%ghost /lib/modules/%{kernel_version}-%{release}/modules.dep
-/lib/modules/%{kernel_version}-%{release}/modules.*map
-/lib/modules/%{kernel_version}-%{release}/modules.generic_string
+/boot/vmlinuz-%{version}-%{release}
+/boot/System.map-%{version}-%{release}
+%dir /lib/modules/%{version}-%{release}
+/lib/modules/%{version}-%{release}/kernel
+%ghost /lib/modules/%{version}-%{release}/modules.dep
+/lib/modules/%{version}-%{release}/modules.*map
+/lib/modules/%{version}-%{release}/modules.generic_string
 
 %if %{?_with_boot:1}0
 %files BOOT
 %defattr(644,root,root,755)
-%{_libdir}/bootdisk/boot/vmlinuz-%{kernel_version}-%{release}BOOT
-%{_libdir}/bootdisk/boot/System.map-%{kernel_version}-%{release}BOOT
-%dir %{_libdir}/bootdisk/lib/modules/%{kernel_version}-%{release}BOOT
-%{_libdir}/bootdisk/lib/modules/%{kernel_version}-%{release}BOOT/kernel
-%ghost %{_libdir}/bootdisk/lib/modules/%{kernel_version}-%{release}BOOT/modules.dep
-%{_libdir}/bootdisk/lib/modules/%{kernel_version}-%{release}BOOT/modules.*map
-%{_libdir}/bootdisk/lib/modules/%{kernel_version}-%{release}BOOT/modules.generic_string
+%{_libdir}/bootdisk/boot/vmlinuz-%{version}-%{release}BOOT
+%{_libdir}/bootdisk/boot/System.map-%{version}-%{release}BOOT
+%dir %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT
+%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/kernel
+%ghost %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.dep
+%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.*map
+%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.generic_string
 %endif
 
 %files headers
 %defattr(644,root,root,755)
-%dir /usr/src/linux-%{kernel_version}
-/usr/src/linux-%{kernel_version}/include
+%dir /usr/src/linux-%{version}
+/usr/src/linux-%{version}/include
 %{_includedir}/asm
 %{_includedir}/linux
 
 %files doc
 %defattr(644,root,root,755)
-/usr/src/linux-%{kernel_version}/Documentation
+/usr/src/linux-%{version}/Documentation
 
 %files source
 %defattr(644,root,root,755)
-/usr/src/linux-%{kernel_version}/arch
-/usr/src/linux-%{kernel_version}/drivers
-/usr/src/linux-%{kernel_version}/fs
-/usr/src/linux-%{kernel_version}/init
-/usr/src/linux-%{kernel_version}/ipc
-/usr/src/linux-%{kernel_version}/kernel
-/usr/src/linux-%{kernel_version}/lib
-/usr/src/linux-%{kernel_version}/mm
-/usr/src/linux-%{kernel_version}/net
-/usr/src/linux-%{kernel_version}/scripts
-/usr/src/linux-%{kernel_version}/.config
+/usr/src/linux-%{version}/arch
+/usr/src/linux-%{version}/drivers
+/usr/src/linux-%{version}/fs
+/usr/src/linux-%{version}/init
+/usr/src/linux-%{version}/ipc
+/usr/src/linux-%{version}/kernel
+/usr/src/linux-%{version}/lib
+/usr/src/linux-%{version}/mm
+/usr/src/linux-%{version}/net
+/usr/src/linux-%{version}/scripts
+/usr/src/linux-%{version}/.config
 #FIXME: this should be on, but not yet
-#/usr/src/linux-%{kernel_version}/.depend
-#/usr/src/linux-%{kernel_version}/.hdepend
-/usr/src/linux-%{kernel_version}/COPYING
-/usr/src/linux-%{kernel_version}/CREDITS
-/usr/src/linux-%{kernel_version}/MAINTAINERS
-/usr/src/linux-%{kernel_version}/Makefile
-/usr/src/linux-%{kernel_version}/README
-/usr/src/linux-%{kernel_version}/REPORTING-BUGS
-/usr/src/linux-%{kernel_version}/Rules.make
+#/usr/src/linux-%{version}/.depend
+#/usr/src/linux-%{version}/.hdepend
+/usr/src/linux-%{version}/COPYING
+/usr/src/linux-%{version}/CREDITS
+/usr/src/linux-%{version}/MAINTAINERS
+/usr/src/linux-%{version}/Makefile
+/usr/src/linux-%{version}/README
+/usr/src/linux-%{version}/REPORTING-BUGS
+/usr/src/linux-%{version}/Rules.make
