@@ -590,9 +590,11 @@ BuildKernel() {
 	ln -sf arch/%{base_arch}/defconfig .config
 
 %ifarch sparc
-	sparc32 %{__make} clean
+	sparc32 %{__make} clean \
+		RCS_FIND_IGNORE='-name build-done -prune -o'
 %else
-	%{__make} clean
+	%{__make} clean \
+		RCS_FIND_IGNORE='-name build-done -prune -o'
 %endif
 	%{__make} %{?debug:V=1} include/linux/version.h
 
