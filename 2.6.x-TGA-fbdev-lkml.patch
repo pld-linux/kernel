@@ -31,16 +31,16 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/logo/logo.c fbdev-2
 diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/drivers/video/tgafb.c
 --- linus-2.6/drivers/video/tgafb.c	2004-02-18 20:59:10.000000000 -0800
 +++ fbdev-2.6/drivers/video/tgafb.c	2004-02-18 20:53:34.000000000 -0800
-@@ -24,7 +24,7 @@
- #include <linux/fb.h>
+@@ -25,7 +25,7 @@
  #include <linux/pci.h>
+ #include <linux/selection.h>
  #include <asm/io.h>
 -#include <video/tgafb.h>
 +#include <video/tga.h>
  #include <linux/selection.h>
  
  /*
-@@ -41,6 +41,7 @@
+@@ -43,6 +43,7 @@
  static void tgafb_imageblit(struct fb_info *, const struct fb_image *);
  static void tgafb_fillrect(struct fb_info *, const struct fb_fillrect *);
  static void tgafb_copyarea(struct fb_info *, const struct fb_copyarea *);
@@ -48,7 +48,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  
  static int tgafb_pci_register(struct pci_dev *, const struct pci_device_id *);
  #ifdef MODULE
-@@ -49,7 +50,6 @@
+@@ -51,7 +52,6 @@
  
  static const char *mode_option = "640x480@60";
  
@@ -56,7 +56,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  /*
   *  Frame buffer operations
   */
-@@ -60,6 +60,7 @@
+@@ -62,6 +62,7 @@
  	.fb_set_par		= tgafb_set_par,
  	.fb_setcolreg		= tgafb_setcolreg,
  	.fb_blank		= tgafb_blank,
@@ -64,7 +64,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  	.fb_fillrect		= tgafb_fillrect,
  	.fb_copyarea		= tgafb_copyarea,
  	.fb_imageblit		= tgafb_imageblit,
-@@ -127,10 +128,10 @@
+@@ -129,10 +130,10 @@
  tgafb_set_par(struct fb_info *info)
  {
  	static unsigned int const deep_presets[4] = {
@@ -78,7 +78,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  	};
  	static unsigned int const rasterop_presets[4] = {
  		0x00000003,
-@@ -154,7 +155,7 @@
+@@ -156,7 +157,7 @@
  	struct tga_par *par = (struct tga_par *) info->par;
  	u32 htimings, vtimings, pll_freq;
  	u8 tga_type;
@@ -87,7 +87,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  
  	/* Encode video timings.  */
  	htimings = (((info->var.xres/4) & TGA_HORIZ_ACT_LSB)
-@@ -192,7 +193,8 @@
+@@ -194,7 +195,8 @@
  	while (TGA_READ_REG(par, TGA_CMD_STAT_REG) & 1) /* wait for not busy */
  		continue;
  	mb();
@@ -97,7 +97,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  	while (TGA_READ_REG(par, TGA_CMD_STAT_REG) & 1) /* wait for not busy */
  		continue;
  	mb();
-@@ -225,37 +227,13 @@
+@@ -227,37 +229,13 @@
  		BT485_WRITE(par, 0x20, BT485_CMD_2); /* cursor off, for now */
  		BT485_WRITE(par, 0xff, BT485_PIXEL_MASK);
  
@@ -136,7 +136,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  
  		BT463_WRITE(par, BT463_REG_ACC, BT463_READ_MASK_0, 0xff);
  		BT463_WRITE(par, BT463_REG_ACC, BT463_READ_MASK_1, 0xff);
-@@ -267,30 +245,6 @@
+@@ -269,30 +247,6 @@
  		BT463_WRITE(par, BT463_REG_ACC, BT463_BLINK_MASK_2, 0x00);
  		BT463_WRITE(par, BT463_REG_ACC, BT463_BLINK_MASK_3, 0x00);
  
@@ -167,7 +167,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  		/* Fill window type table after start of vertical retrace.  */
  		while (!(TGA_READ_REG(par, TGA_INTR_STAT_REG) & 0x01))
  			continue;
-@@ -314,6 +268,9 @@
+@@ -316,6 +270,9 @@
  
  	}
  
@@ -177,7 +177,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  	/* Finally, enable video scan (and pray for the monitor... :-) */
  	TGA_WRITE_REG(par, TGA_VALID_VIDEO, TGA_VALID_REG);
  
-@@ -509,16 +466,8 @@
+@@ -511,16 +468,8 @@
   *  Acceleration.
   */
  
@@ -195,7 +195,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  {
  	static unsigned char const bitrev[256] = {
  		0x00, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0,
-@@ -562,6 +511,17 @@
+@@ -564,6 +513,17 @@
  	const unsigned char *data;
  	void *regs_base, *fb_base;
  
@@ -213,7 +213,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  	dx = image->dx;
  	dy = image->dy;
  	width = image->width;
-@@ -579,18 +539,8 @@
+@@ -581,18 +541,8 @@
  	if (dy + height > vyres)
  		height = vyres - dy;
  
@@ -232,7 +232,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  
  	/* Expand the color values to fill 32-bits.  */
  	/* ??? Would be nice to notice colour changes elsewhere, so
-@@ -768,6 +718,86 @@
+@@ -770,6 +720,86 @@
  		     regs_base + TGA_MODE_REG);
  }
  
@@ -319,7 +319,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  /**
   *      tgafb_fillrect - REQUIRED function. Can use generic routines if 
   *                       non acclerated hardware and packed pixel based.
-@@ -1360,6 +1390,31 @@
+@@ -1362,6 +1392,31 @@
  	info->fix.ywrapstep = 0;
  
  	info->fix.accel = FB_ACCEL_DEC_TGA;
@@ -351,7 +351,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  }
  
  static __devinit int
-@@ -1371,15 +1426,10 @@
+@@ -1373,15 +1428,10 @@
  		0xffffffff,
  		TGA_24PLUSZ_FB_OFFSET
  	};
@@ -370,7 +370,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  	u8 tga_type;
  	int ret;
  
-@@ -1390,13 +1440,12 @@
+@@ -1392,13 +1442,12 @@
  	}
  
  	/* Allocate the fb and par structures.  */
@@ -387,7 +387,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  
  	/* Request the mem regions.  */
  	bar0_start = pci_resource_start(pdev, 0);
-@@ -1416,25 +1465,23 @@
+@@ -1418,25 +1467,23 @@
  
  	/* Grab info about the card.  */
  	tga_type = (readl(mem_base) >> 12) & 0x0f;
@@ -425,7 +425,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  			   NULL, 0, NULL,
  			   tga_type == TGA_TYPE_8PLANE ? 8 : 32);
  	if (ret == 0 || ret == 4) {
-@@ -1442,35 +1489,34 @@
+@@ -1445,36 +1492,35 @@
  		goto err1;
  	}
  
@@ -440,6 +440,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
 -	tgafb_init_fix(&all->info);
 +	tgafb_init_fix(info);
  
+ 	all->info.device = &pdev->dev;
 -	if (register_framebuffer(&all->info) < 0) {
 +	if (register_framebuffer(info) < 0) {
  		printk(KERN_ERR "tgafb: Could not register framebuffer\n");
@@ -467,7 +468,7 @@ diff -urN -X /home/jsimmons/dontdiff linus-2.6/drivers/video/tgafb.c fbdev-2.6/d
  	return ret;
  }
  
-@@ -1493,7 +1539,7 @@
+@@ -1491,7 +1537,7 @@
  	iounmap(par->tga_mem_base);
  	release_mem_region(pci_resource_start(pdev, 0),
  			   pci_resource_len(pdev, 0));
