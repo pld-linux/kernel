@@ -33,7 +33,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.21
-Release:	1.5
+Release:	1.6
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -266,6 +266,9 @@ Patch1416:	linux-2.4.21-no-FPU.patch
 Patch1417:	linux-2.4.21-ac4-ide.patch
 Patch1418:	linux-2.4.21-hpt372-chicken-egg-hack.patch
 Patch1419:	linux-2.4.21-agp-num_of_masks.patch
+# fix spare disk counting for raid 5
+Patch1420:	linux-raid5-spare-counting.patch
+
 # htb
 # http://luxik.cdi.cz/~devik/qos/htb/v3/
 Patch1500:	htb_3.10_3.12_2.diff
@@ -761,6 +764,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1417 -p1
 %patch1418 -p1
 %patch1419 -p1
+%patch1420 -p1
 %patch1500 -p1
 %patch1501 -p1
 
