@@ -22,7 +22,7 @@
 %define		aic_version		6.2.3-2.4.7
 %define		jfs_version		2.4-1.0.17
 %define		lvm_version		1.0.3
-%define		evms_version		1.0.0
+%define		evms_version		1.0.1
 %define		tridentfb_version	0.7.0
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -160,7 +160,7 @@ Patch133:	linux-2.4.18-netsyms-fix.patch
 Patch134:	linux-2.4.12-riva-ppc.patch.bz2
 Patch135:	linux-2.4.18-pre4-agp_uninorth-ppc.patch.bz2
 
-# EVMS support (http:	//www.sourceforge.net/projects/evms/)
+# EVMS support (http://www.sourceforge.net/projects/evms/)
 Patch136:	evms-%{evms_version}-linux-2.4.patch
 Patch137:	evms-linux-2.4.18-common-files.patch
 
