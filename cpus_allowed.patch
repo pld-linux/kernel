@@ -78,7 +78,7 @@
  };
  
  #define MAY_PTRACE(p) \
-@@ -495,25 +533,27 @@
+@@ -495,6 +533,7 @@
  	PROC_PID_STATM,
  	PROC_PID_MAPS,
  	PROC_PID_CPU,
@@ -86,38 +86,16 @@
  	PROC_PID_FD_DIR = 0x8000,	/* 0x8000-0xffff */
  };
  
- #define E(type,name,mode) {(type),sizeof(name)-1,(name),(mode)}
- static struct pid_entry base_stuff[] = {
--  E(PROC_PID_FD,	"fd",		S_IFDIR|S_IRUSR|S_IXUSR),
--  E(PROC_PID_ENVIRON,	"environ",	S_IFREG|S_IRUSR),
--  E(PROC_PID_STATUS,	"status",	S_IFREG|S_IRUGO),
--  E(PROC_PID_CMDLINE,	"cmdline",	S_IFREG|S_IRUGO),
--  E(PROC_PID_STAT,	"stat",		S_IFREG|S_IRUGO),
--  E(PROC_PID_STATM,	"statm",	S_IFREG|S_IRUGO),
-+  E(PROC_PID_FD,		"fd",		S_IFDIR|S_IRUSR|S_IXUSR),
-+  E(PROC_PID_ENVIRON,		"environ",	S_IFREG|S_IRUSR),
-+  E(PROC_PID_STATUS,		"status",	S_IFREG|S_IRUGO),
-+  E(PROC_PID_CMDLINE,		"cmdline",	S_IFREG|S_IRUGO),
-+  E(PROC_PID_STAT,		"stat",		S_IFREG|S_IRUGO),
-+  E(PROC_PID_STATM,		"statm",	S_IFREG|S_IRUGO),
+@@ -507,7 +550,8 @@
+   E(PROC_PID_STAT,	"stat",		S_IFREG|S_IRUGO),
+   E(PROC_PID_STATM,	"statm",	S_IFREG|S_IRUGO),
  #ifdef CONFIG_SMP
 -  E(PROC_PID_CPU,	"cpu",		S_IFREG|S_IRUGO),
 +  E(PROC_PID_CPU,		"cpu",		S_IFREG|S_IRUGO),
 +  E(PROC_PID_CPUS_ALLOWED,	"cpus_allowed",	S_IFREG|S_IRUGO|S_IWUSR),
  #endif
--  E(PROC_PID_MAPS,	"maps",		S_IFREG|S_IRUGO),
--  E(PROC_PID_MEM,	"mem",		S_IFREG|S_IRUSR|S_IWUSR),
--  E(PROC_PID_CWD,	"cwd",		S_IFLNK|S_IRWXUGO),
--  E(PROC_PID_ROOT,	"root",		S_IFLNK|S_IRWXUGO),
--  E(PROC_PID_EXE,	"exe",		S_IFLNK|S_IRWXUGO),
-+  E(PROC_PID_MAPS,		"maps",		S_IFREG|S_IRUGO),
-+  E(PROC_PID_MEM,		"mem",		S_IFREG|S_IRUSR|S_IWUSR),
-+  E(PROC_PID_CWD,		"cwd",		S_IFLNK|S_IRWXUGO),
-+  E(PROC_PID_ROOT,		"root",		S_IFLNK|S_IRWXUGO),
-+  E(PROC_PID_EXE,		"exe",		S_IFLNK|S_IRWXUGO),
-   {0,0,NULL,0}
- };
- #undef E
+   E(PROC_PID_MAPS,	"maps",		S_IFREG|S_IRUGO),
+   E(PROC_PID_MEM,	"mem",		S_IFREG|S_IRUSR|S_IWUSR),
 @@ -854,6 +894,11 @@
  		case PROC_PID_CPU:
  			inode->i_fop = &proc_info_file_operations;
