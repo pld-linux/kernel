@@ -533,7 +533,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch55 -p1
 %patch56 -p1
 
-%patch58 -p1
+#%%patch58 -p1
 
 #%%patch60 -p1
 #%%patch61 -p0
