@@ -19,17 +19,3 @@ diff -urN linux/fs/proc/base.c linux.fixed/fs/proc/base.c
  #endif
  	}
  
-diff -urN linux/kernel/sysctl.c linux.fixed/kernel/sysctl.c
---- linux/kernel/sysctl.c	Sat Dec  1 14:49:38 2001
-+++ linux.fixed/kernel/sysctl.c	Sun Dec  2 00:19:33 2001
-@@ -1060,7 +1060,9 @@
- 	
- 	i = (int *) table->data;
- #ifdef CONFIG_GRKERNSEC_SYSCTL
--		if(grsec_lock && write) { 
-+		if (grsec_lock && write && table->de->parent->name &&
-+				(strlen(table->de->parent->name) == 10) &&
-+				!strcmp(table->de->parent->name,"grsecurity")) {
-                         security_alert("attempt to modify grsecurity "
-                         "sysctl value: %.32s by " DEFAULTSECMSG,
-                         "attempted sysctl changes", table->de->name,
