@@ -266,9 +266,10 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -n linux
+%setup -q -a31 -n linux
 #%setup -q -a30 -a31 -a33 -n linux
 %patch0 -p1
+%patch1 -p1
 #%patch20 -p1
 #%patch1 -p1
 #%patch2 -p1
