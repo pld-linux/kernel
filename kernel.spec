@@ -27,7 +27,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.14
-Release:	0.4
+Release:	0.5
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -523,9 +523,9 @@ cp -f tulip-%{tulip_version}/src/ChangeLog drivers/net/tulip
 %patch909 -p0
 
 #preemptible kernel patch
-%if %{?_with_preemptive:1}%{!?_with_preemptive:0}
+%if%{?_with_preemptive:1}%{!?_with_preemptive:0}
 %patch132 -p1
-#endif
+%endif
 
 %patch133 -p1
 %patch134 -p0
