@@ -7,7 +7,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.16
-Release:	6
+Release:	7
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -334,21 +334,20 @@ BuildKernel() {
     %{__make} boot EXTRAVERSION="-%{release}" CC="egcs -D__KERNEL__ -I\$(HPATH)"
 %endif
     %{__make} modules EXTRAVERSION="-%{release}" CC="egcs -D__KERNEL__ -I\$(HPATH)"
-    mkdir -p $RPM_BUILD_ROOT/boot
-    install System.map $RPM_BUILD_ROOT/boot/System.map-$KernelVer
+    mkdir -p $KERNEL_BUILD_DIR-installed/boot
+    install System.map $KERNEL_BUILD_DIR-installed/boot/System.map-$KernelVer
 %ifarch %{ix86}
-     cp arch/i386/boot/bzImage $RPM_BUILD_ROOT/boot/vmlinuz-$KernelVer
+     cp arch/i386/boot/bzImage $KERNEL_BUILD_DIR-installed/boot/vmlinuz-$KernelVer
 %endif
 %ifarch alpha sparc
      gzip -cfv vmlinux > vmlinuz
-     install vmlinux $RPM_BUILD_ROOT/boot/vmlinux-$KernelVer
-     install vmlinuz $RPM_BUILD_ROOT/boot/vmlinuz-$KernelVer
+     install vmlinux $KERNEL_BUILD_DIR-installed/boot/vmlinux-$KernelVer
+     install vmlinuz $KERNEL_BUILD_DIR-installed/boot/vmlinuz-$KernelVer
 %endif
-     %{__make} INSTALL_MOD_PATH=$RPM_BUILD_ROOT modules_install KERNELRELEASE=$KernelVer
+     %{__make} INSTALL_MOD_PATH=$KERNEL_BUILD_DIR-installed modules_install KERNELRELEASE=$KernelVer
 }
 
 BuildPCMCIA() {
-KERNELDIR=`pwd`
 if [ -n "$1" ] ; then
 	PCMCIA_APM=--apm
 	KernelVer=%{version}-%{release}$1
@@ -368,9 +367,9 @@ cd pcmcia-cs-%{pcmcia_version}
 	--pnp \
 	--srctree \
 	$PCMCIA_APM \
-	--kernel=$KERNELDIR \
+	--kernel=$KERNEL_BUILD_DIR \
 	--moddir=/lib/modules/$KernelVer \
-	--target=$RPM_BUILD_ROOT
+	--target=$KERNEL_BUILD_DIR-installed
 
 mv config.mk config.mk.bak
 mv Makefile Makefile.bak
@@ -382,13 +381,15 @@ sed "s/.*= 8390\..$//" clients/Makefile.bak > clients/Makefile
 %{__make} all \
 	CC=egcs \
 	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
-	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNELDIR/include -D__KERNEL__ -DEXPORT_SYMTAB"
+	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNEL_BUILD_DIR/include -D__KERNEL__ -DEXPORT_SYMTAB"
 
-%{__make} PREFIX=$RPM_BUILD_ROOT install
+%{__make} PREFIX=$KERNEL_BUILD_DIR-installed install
 cd ..
 }
 
-rm -rf $RPM_BUILD_ROOT
+KERNEL_BUILD_DIR=`pwd`
+rm -rf $KERNEL_BUILD_DIR-installed
+install -d $KERNEL_BUILD_DIR-installed
 
 # NORMAL KERNEL
 BuildKernel
@@ -419,8 +420,11 @@ BuildPCMCIA BOOT
 %endif
 
 %install
-rm -rf $RPM_BUILD_ROOT%{_prefix}
+rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT%{_prefix}/{include,src}
+
+KERNEL_BUILD_DIR=`pwd`
+cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
 
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
 
