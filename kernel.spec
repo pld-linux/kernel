@@ -32,7 +32,7 @@
 
 %define		_rel		1
 %define		_rc		rc1
-%define		_cset		20040103_0508
+%define		_cset		20040105_0406
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -48,7 +48,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.6.1
-Release:	1.%{_rc}.%{_rel}
+Release:	1.%{_rc}.%{_rel}.cset%{_cset}
 Epoch:		1
 License:	GPL
 Group:		Base/Kernel
