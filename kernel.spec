@@ -802,7 +802,7 @@ PreInstallKernel (){
 }
 
 KERNEL_BUILD_DIR=`pwd`
-#echo "-%{release}" > localversion
+echo "-%{release}" > localversion
 
 # UP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
@@ -817,7 +817,7 @@ BuildConfig smp
 %{?with_smp:BuildKernel smp}
 %{?with_smp:PreInstallKernel smp}
 
-#rm -rf localversion
+rm -rf localversion
 
 %install
 rm -rf $RPM_BUILD_ROOT
