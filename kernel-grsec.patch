@@ -9226,7 +9226,7 @@ diff -uNr linux-2.6.7-rc1.orig/grsecurity/grsum.c linux-2.6.7-rc1/grsecurity/grs
 diff -uNr linux-2.6.7-rc1.orig/grsecurity/Kconfig linux-2.6.7-rc1/grsecurity/Kconfig
 --- linux-2.6.7-rc1.orig/grsecurity/Kconfig	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.7-rc1/grsecurity/Kconfig	2004-05-25 14:33:58.846414312 +0200
-@@ -0,0 +1,864 @@
+@@ -0,0 +1,819 @@
 +#
 +# grecurity configuration
 +#
@@ -9279,9 +9279,6 @@ diff -uNr linux-2.6.7-rc1.orig/grsecurity/Kconfig linux-2.6.7-rc1/grsecurity/Kco
 +
 +config GRKERNSEC_MEDIUM
 +	bool "Medium"
-+	select PAX_EI_PAX
-+	select PAX_PT_PAX_FLAGS
-+	select PAX_HAVE_ACL_FLAGS
 +	select GRKERNSEC_PROC_MEMMAP
 +	select GRKERNSEC_CHROOT_SYSCTL
 +	select GRKERNSEC_LINK
@@ -9306,9 +9303,6 @@ diff -uNr linux-2.6.7-rc1.orig/grsecurity/Kconfig linux-2.6.7-rc1/grsecurity/Kco
 +	select GRKERNSEC_CHROOT_MKNOD
 +	select GRKERNSEC_PROC
 +	select GRKERNSEC_PROC_USERGROUP
-+	select PAX_RANDUSTACK
-+	select PAX_ASLR
-+	select PAX_RANDMMAP
 +
 +	help
 +	  If you say Y here, several features in addition to those included
@@ -9332,7 +9326,6 @@ diff -uNr linux-2.6.7-rc1.orig/grsecurity/Kconfig linux-2.6.7-rc1/grsecurity/Kco
 +	  - Deny pivot_root in chroot
 +	  - Denied Writes of /dev/kmem, /dev/mem, and /dev/port
 +	  - /proc restrictions with special GID set to 10 (usually wheel)
-+	  - Address Space Layout Randomization (ASLR)
 +
 +config GRKERNSEC_HIGH
 +	bool "High"
@@ -9370,33 +9363,15 @@ diff -uNr linux-2.6.7-rc1.orig/grsecurity/Kconfig linux-2.6.7-rc1/grsecurity/Kco
 +	select GRKERNSEC_CHROOT_CHMOD
 +	select GRKERNSEC_CHROOT_NICE
 +	select GRKERNSEC_AUDIT_MOUNT
-+	select PAX_RANDUSTACK
-+	select PAX_ASLR
-+	select PAX_RANDMMAP
-+	select PAX_NOEXEC
-+	select PAX_MPROTECT
-+	select PAX_EI_PAX
-+	select PAX_PT_PAX_FLAGS
-+	select PAX_HAVE_ACL_FLAGS
-+	select PAX_KERNEXEC
-+	select PAX_RANDKSTACK
-+	select PAX_RANDEXEC
-+	select PAX_SEGMEXEC
-+	select PAX_EMUTRAMP
-+	select PAX_NOVSYSCALL
 +	help
 +	  If you say Y here, many of the features of grsecurity will be
 +	  enabled, which will protect you against many kinds of attacks
 +	  against your system.  The heightened security comes at a cost
 +	  of an increased chance of incompatibilities with rare software
-+	  on your machine.  Since this security level enables PaX, you should
-+	  view <http://pax.grsecurity.net> and read about the PaX
-+	  project.  While you are there, download chpax and run it on
-+	  binaries that cause problems with PaX.  Also remember that
-+	  since the /proc restrictions are enabled, you must run your
-+	  identd as gid 1001.  This security level enables the following 
-+	  features in addition to those listed in the low and medium 
-+	  security levels:
++	  on your machine. Also remember that since the /proc restrictions
++	  are enabled, you must run your identd as gid 1001.
++	  This security level enables the following features in addition
++	  to those listed in the low and medium security levels:
 +
 +	  - Additional /proc Restrictions
 +	  - Chmod Restrictions in chroot
@@ -9404,10 +9379,8 @@ diff -uNr linux-2.6.7-rc1.orig/grsecurity/Kconfig linux-2.6.7-rc1/grsecurity/Kco
 +	  - Capability Restrictions in chroot
 +	  - Deny fchdir out of chroot
 +	  - Priority Restrictions in chroot
-+	  - Segmentation-based Implementation of PaX
 +	  - Mprotect Restrictions
 +	  - Removal of Addresses from /proc/<pid>/[maps|stat]
-+	  - Kernel Stack Randomization
 +	  - Mount/Unmount/Remount Logging
 +	  - Kernel Symbol Hiding
 +	
@@ -9467,12 +9440,8 @@ diff -uNr linux-2.6.7-rc1.orig/grsecurity/Kconfig linux-2.6.7-rc1/grsecurity/Kco
 +config GRKERNSEC_PROC_MEMMAP
 +	bool "Remove addresses from /proc/<pid>/[maps|stat]"
 +	help
-+	  If you say Y here, the /proc/<pid>/maps and /proc/<pid>/stat files will
-+	  give no information about the addresses of its mappings if
-+	  PaX features that rely on random addresses are enabled on the task.
-+	  If you use PaX it is greatly recommended that you say Y here as it
-+	  closes up a hole that makes the full ASLR useless for suid
-+	  binaries.
++	  If you say Y here, the /proc/<pid>/maps and /proc/<pid>/stat files
++	  will give no information about the addresses of its mappings.
 +
 +config GRKERNSEC_HIDESYM
 +	bool "Hide kernel symbols"
@@ -9832,20 +9801,6 @@ diff -uNr linux-2.6.7-rc1.orig/grsecurity/Kconfig linux-2.6.7-rc1/grsecurity/Kco
 +	  to a local attack.  The entry is readable by only the owner of the
 +	  process (and root if he has CAP_DAC_OVERRIDE, which can be removed via
 +	  the RBAC system), and thus does not create privacy concerns.
-+
-+config GRKERNSEC_AUDIT_TEXTREL
-+	bool 'ELF text relocations logging (READ HELP)'
-+	depends on PAX_MPROTECT
-+	help
-+	  If you say Y here, text relocations will be logged with the filename
-+	  of the offending library or binary.  The purpose of the feature is
-+	  to help Linux distribution developers get rid of libraries and
-+	  binaries that need text relocations which hinder the future progress
-+	  of PaX.  Only Linux distribution developers should say Y here, and
-+	  never on a production machine, as this option creates an information
-+	  leak that could aid an attacker in defeating the randomization of
-+	  a single memory region.  If the sysctl option is enabled, a sysctl
-+	  option with name "audit_textrel" is created.
 +
 +endmenu
 +
@@ -13090,6 +13045,18 @@ diff -uNr linux-2.6.7-rc1.orig/net/unix/af_unix.c linux-2.6.7-rc1/net/unix/af_un
  		list = &unix_socket_table[addr->hash];
  	} else {
  		list = &unix_socket_table[dentry->d_inode->i_ino & (UNIX_HASH_SIZE-1)];
+diff -uNr linux-2.6.7-rc1.orig/security/Kconfig linux-2.6.7-rc1/security/Kconfig
+--- linux-2.6.7-rc1.orig/security/Kconfig	2004-05-23 07:54:23.000000000 +0200
++++ linux-2.6.7-rc1/security/Kconfig	2004-05-26 01:02:26.341672392 +0200
+@@ -2,6 +2,8 @@
+ # Security configuration
+ #
+ 
++source grsecurity/Kconfig
++
+ menu "Security options"
+ 
+ config SECURITY
 diff -uNr linux-2.6.7-rc1.orig/security/commoncap.c linux-2.6.7-rc1/security/commoncap.c
 --- linux-2.6.7-rc1.orig/security/commoncap.c	2004-05-23 07:53:57.000000000 +0200
 +++ linux-2.6.7-rc1/security/commoncap.c	2004-05-25 14:33:59.657291040 +0200
