@@ -12,7 +12,7 @@
 # _without_w4l		- don't build Win4Lin support
 #
 
-%define		patch_level	10
+%define		patch_level	11
 %define		_rel		5
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -67,7 +67,7 @@ Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
-#Source1000:	%{name}-pre.config
+Source1000:	%{name}-lsm.config
 Source1001:	%{name}-abi.config
 Source1002:	%{name}-addon.config
 Source1003:	%{name}-netfilter.config
@@ -310,7 +310,7 @@ Patch902:	linux-2.4.20-drm-Makefile.patch
 Patch903:	linux-2.4-ppc-procesor.patch
 Patch904:	linux-abi-put_user.patch
 Patch905:	linux-abi-fl_ibcs_to_linux.patch
-#Patch906:
+Patch906:	linux-2.4.20-LSM.patch.gz
 Patch907:	PPC-grsecurity-pgtable.h.patch
 #Patch908:
 #Patch909:	
@@ -785,6 +785,10 @@ echo Added LVM support version %{lvm_version}
 echo Added xattr for JFS ...
 %patch103 -p1
 
+# SLM
+echo Added LSM support...
+%patch906 -p1
+
 echo Added ARCH specific patches....
 %ifarch %{ix86}
 echo Ix86 patches ...
@@ -883,7 +887,7 @@ BuildKernel() {
 %ifarch athlon
 	echo "CONFIG_MK7=y" >> arch/%{base_arch}/defconfig
 %endif
-#	cat %{SOURCE1000} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1000} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1001} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1002} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1003} >> arch/%{base_arch}/defconfig
@@ -1090,7 +1094,7 @@ echo "CONFIG_M686=y" >> .config
 %ifarch athlon
 echo "CONFIG_MK7=y" >> .config
 %endif
-#cat %{SOURCE1000} >> .config
+cat %{SOURCE1000} >> .config
 cat %{SOURCE1001} >> .config
 cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
@@ -1154,7 +1158,7 @@ echo "CONFIG_M686=y" >> .config
 echo "CONFIG_MK7=y" >> .config
 %endif
 
-#cat %{SOURCE1000} >> .config
+cat %{SOURCE1000} >> .config
 cat %{SOURCE1001} >> .config
 cat %{SOURCE1002} >> .config
 cat %{SOURCE1003} >> .config
