@@ -10,7 +10,7 @@
 #
 %define		pre_version		pre1
 %define		lids_version		1.0.14-2.4.9
-%define		ipvs_version		0.9.7
+%define		ipvs_version		0.9.8
 %define		freeswan_version	snap2001sep23b
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.10
@@ -25,7 +25,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.16
-Release:	0.3
+Release:	0.4
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
