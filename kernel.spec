@@ -163,7 +163,7 @@ Patch50:	2.6.11.3-pom-ng-%{_netfilter_snap}.patch
 #Patch61:	%{name}-MAX_INIT_ARGS.patch
 
 # http://tahoe.pl/patch.htm
-#Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
+Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 
 # http://dev.gentoo.org/~spock/projects/gensplash/
 Patch72:	fbsplash-0.9.2-2.6.11.patch  
@@ -190,7 +190,7 @@ Patch200:	grsecurity-2.1.3-2.6.11-200503091157.patch
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
 Patch250:	linux-2.6-vs.patch
 
-Patch260:	http://dl.sourceforge.net/sourceforge/ifp-driver/iriverfs-r0.1.0.1.patch.gz
+#Patch260:	http://dl.sourceforge.net/sourceforge/ifp-driver/iriverfs-r0.1.0.1.patch.gz
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -567,7 +567,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 #patch60 -p1
 #%patch61 -p1
 
-#%patch70 -p1
+%patch70 -p1
 
 %patch72 -p1
 
