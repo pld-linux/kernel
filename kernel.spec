@@ -11,7 +11,7 @@ Version:	2.4.20
 Release:	0.1
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.gz
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-BuildASM.sh
 Source5:	http://dl.sourceforge.net/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
@@ -454,7 +454,7 @@ cp -a $KERNEL_INSTALL_DIR/* $RPM_BUILD_ROOT
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 
-gzip -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/
+bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/
 
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
