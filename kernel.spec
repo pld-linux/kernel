@@ -80,9 +80,14 @@ Patch26:	%{name}-sysctl-ipv6.patch
 Patch27:	%{name}-udf.patch
 
 # based on	http://people.redhat.com/mingo/raid-patches/raid-2.2.20-A0
-Patch30:	raid-2.2.20-A0
+Patch30:	raid-2.2.20-A0.patch.bz2
 # based on	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.19/ide.2.2.19.05042001.patch.bz2
 Patch31:	ide.2.2.20.11242001.patch.bz2
+Patch32:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
+
+Patch40:	%{name}-flip.patch
+Patch41:	%{name}-flip-serial5.05.patch
+Patch42:	%{name}-serial-initialisation.patch
 
 # in this place will be PLD patches
 
@@ -93,6 +98,10 @@ Patch103:	%{name}-bridge-extraversion.patch
 Patch104:	jfs-2.2.20-v%{jfs_version}-patch
 Patch105:	%{name}-wanrouter-bridge.patch
 Patch106:	linux-netdrivers_vlan.patch
+Patch107:	linux-atm.patch
+
+# hap linux
+Patch200:	http://www.theaimsgroup.com/~hlein/hap-linux/hap-linux-2.2.20-2.diff
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -391,13 +400,15 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %patch30 -p1
 %patch31 -p1
+%patch32 -p1
+
+%patch40 -p1
 
 %patch100 -p1
 %patch101 -p1
 %patch102 -p1
 %patch105 -p1
 %patch106 -p1
-#%patch107 -p1
 
 # 802.1Q VLANs
 #cd vlan.%{vlan_version}
@@ -405,8 +416,17 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #cd ..
 patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
 
+cd serial-5.05
+%patch41 -p1
+%patch42 -p1
+./install-in-kernel ../
+cd .. 
+
 # 2.2.20ow1
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
+
+# hap linux
+%patch200 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
@@ -414,6 +434,8 @@ install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 # JFS 1.0.5
 %patch104 -p1
 patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
+
+%patch107 -p1
 
 %build
 BuildKernel() {
@@ -514,7 +536,7 @@ cd pcmcia-cs-%{pcmcia_version}
 	$PCMCIA_APM \
 	--kernel=$KERNEL_BUILD_DIR \
 	--moddir=/lib/modules/$KernelVer \
-	--kflags="-march=i686" \
+	--kflags="-march=%{_target_cpu}" \
 	--target=$KERNEL_INSTALL_DIR
 
 mv config.mk config.mk.bak
@@ -792,7 +814,7 @@ fi
 %attr(600,root,root) /boot/vmlinuz-%{version}-%{release}
 %attr(600,root,root) /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
-#/lib/modules/%{version}-%{release}/atm
+/lib/modules/%{version}-%{release}/atm
 /lib/modules/%{version}-%{release}/block
 %ifnarch sparc sparc64
 /lib/modules/%{version}-%{release}/cdrom
@@ -820,7 +842,7 @@ fi
 %attr(600,root,root) /boot/vmlinuz-%{version}-%{release}smp
 %attr(600,root,root) /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
-#/lib/modules/%{version}-%{release}smp/atm
+/lib/modules/%{version}-%{release}smp/atm
 /lib/modules/%{version}-%{release}smp/block
 %ifnarch sparc sparc64
 /lib/modules/%{version}-%{release}smp/cdrom
