@@ -624,7 +624,7 @@ BuildConfig (){
 	cat $RPM_SOURCE_DIR/kernel-$Config.config >> arch/%{base_arch}/defconfig
 %ifarch i386
 	echo "CONFIG_M386=y" >> arch/%{base_arch}/defconfig
-	echo "$ CONFIG_ACPI is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_ACPI is not set" >> arch/%{base_arch}/defconfig
 %endif
 %ifarch i586
 	echo "CONFIG_M586=y" >> arch/%{base_arch}/defconfig
