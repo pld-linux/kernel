@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		3
+%define		_rel		4
 %define		_test_ver	8
 %define		_cset		0
 
@@ -79,6 +79,14 @@ Patch21:	2.6.0-t7-memleak2-lkml.patch
 
 Patch22:	fbdev.diff.gz
 Patch23:	2.6.0-t7-radeonfb-lkml.patch
+
+Patch24:	2.6.0-t8-CONFIG_XFRM-lkml.patch
+Patch26:	2.6.0-t8-LLC2-PROC_FS-lkml.patch
+Patch28:	2.6.0-t8-clean-mtd-lkml.patch
+Patch30:	2.6.0-t8-siimage-lkml.patch
+Patch32:	2.6.0-t8-swap-include-lkml.patch
+Patch34:	2.6.0-t8-toshiba-PROC_FS-lkml.patch
+Patch36:	2.6.0-t8-h8300-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -391,6 +399,13 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 #%%patch22 -p1
 %patch23 -p1
+
+%patch24 -p1
+%patch26 -p1
+%patch28 -p1
+%patch30 -p1
+%patch32 -p1
+%patch34 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
