@@ -559,7 +559,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch94 -p1
 
-%patch96 -p0
+%patch96 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
