@@ -59,20 +59,19 @@ Patch14:	linux-tasks.patch
 Patch15:	%{name}-ipvs-1.0.6-2.2.19.patch
 # based on ftp://ftp.kernel.org/pub/linux/kernel/people/sct/raw-io/kiobuf-2.2.18pre24.tar.gz
 Patch16:	linux-raw.patch
-Patch17:	linux-i815-support.patch
-Patch18:	%{name}-pcmcia.patch
-Patch19:	linux-sparc_ide_fix.patch
-Patch20:	%{name}-Config.in-CONFIG_AMIGA_PARTITION.patch
-Patch21:	%{name}-sysctl_security_fix.patch
-Patch22:	%{name}-wanrouter-bridge.patch
-Patch23:	%{name}-ipsec-bridge.patch
-Patch24:	%{name}-bridge-extraversion.patch
-Patch25:	%{name}-panaview_kbd.patch
-Patch26:	http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-6.1.11-2.2.19.patch.gz
-Patch27:	kernel-toshiba-2.2.19.patch
-Patch28:	linux-2.2.19-pci.patch 
-Patch29:	kernel-flip.patch 
-Patch30:	kernel-flip-serial5.05.patch
+Patch17:	%{name}-pcmcia.patch
+Patch18:	linux-sparc_ide_fix.patch
+Patch19:	%{name}-Config.in-CONFIG_AMIGA_PARTITION.patch
+Patch20:	%{name}-sysctl_security_fix.patch
+Patch21:	%{name}-wanrouter-bridge.patch
+Patch22:	%{name}-ipsec-bridge.patch
+Patch23:	%{name}-bridge-extraversion.patch
+Patch24:	%{name}-panaview_kbd.patch
+Patch25:	http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-6.1.11-2.2.19.patch.gz
+Patch26:	%{name}-toshiba-2.2.19.patch
+Patch27:	linux-2.2.19-pci.patch 
+Patch28:	%{name}-flip.patch 
+Patch29:	%{name}-flip-serial5.05.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -327,21 +326,25 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch14 -p1
 %patch15 -p1
 %patch16 -p1
-#%patch17 -p1
+%patch17 -p1
 %patch18 -p1
 %patch19 -p1
-%patch20 -p1
+#%patch20 -p1
 #%patch21 -p1
-#%patch22 -p1
-%patch23 -p1
-#%patch24 -p1
+%patch22 -p1
+#%patch23 -p1
 %ifarch %{x86}
-%patch25 -p1
+%patch24 -p1
 %endif
+%patch25 -p1
 %patch26 -p1
 %patch27 -p1
 %patch28 -p1
+
+cd  serial-5.05
 %patch29 -p1
+./install-in-kernel ../
+cd .. 
 
 #DAC960-2.2.10
 mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
@@ -357,11 +360,6 @@ patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 mv sym-1.7.3-ncr-3.4.3/*.{c,h} drivers/scsi
 mv sym-1.7.3-ncr-3.4.3/{README,ChangeLog}.* Documentation
 rm -rf sym-1.7.3-ncr-3.4.3
-
-cd  serial-5.05
-%patch30 -p1
-./install-in-kernel ../
-cd .. 
 
 
 %build
@@ -551,18 +549,25 @@ gzip -dc %{PATCH12} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH16}
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH17}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH17}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH18}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH19}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH20}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH19}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH20}
 #patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH21}
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH22}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH23}
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH24}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH22}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH23}
 %ifarch %{x86}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH25}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH24}
 %endif
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH26}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH25}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH26}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH27}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH28}
+cd serial-5.05
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH29}
+./install-in-kernel $RPM_BUILD_ROOT/usr/src/linux-%{version}
+cd ..
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
 
 tar xfz %{SOURCE8}
