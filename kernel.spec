@@ -545,7 +545,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}%{_rc} -a2
+%setup -q -n linux-%{version}%{_rc}
+# -a2
 
 %patch0 -p1
 %patch1 -p1
@@ -637,17 +638,17 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch80 -p1
 
 # Philips USB drivers.
-%patch82 -p1
+#patch82 -p1
 # selected library
-%ifarch %{ix86}
-cp drivers/usb/media/libpwcx.a_ix86 drivers/usb/media/libpwcx.a_
-%endif
-%ifarch powerpc
-cp drivers/usb/media/libpwcx.a_powerpc drivers/usb/media/libpwcx.a_
-%endif
-%ifarch ppc
-cp drivers/usb/media/libpwcx.a_ppc drivers/usb/media/libpwcx.a_
-%endif
+#ifarch %{ix86}
+#cp drivers/usb/media/libpwcx.a_ix86 drivers/usb/media/libpwcx.a_
+#endif
+#ifarch powerpc
+#cp drivers/usb/media/libpwcx.a_powerpc drivers/usb/media/libpwcx.a_
+#endif
+#ifarch ppc
+#cp drivers/usb/media/libpwcx.a_ppc drivers/usb/media/libpwcx.a_
+#endif
 
 %patch84 -p1
 
