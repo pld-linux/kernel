@@ -77,19 +77,10 @@ Patch23:		squashfs1.3-patch
 Patch26:		2.6.0-t3-eisa-bus.c-lkml.patch
 Patch27:		2.6.0-t3-initrd_load-lkml.patch
 
-Patch30:	2.6.0-t3-pmac_ide-lkml.patch
 Patch31:	2.6.0-t3-sysfs_mem-lkml.patch
 Patch32:	2.6.0-t3-trival-lkml.patch
 
 Patch40:	2.6.0-t3.c99.Documentation-lkml.patch
-Patch41:	2.6.0-t3.c99.arch-lkml.patch
-Patch42:	2.6.0-t3.c99.arch.ia64-lkml.patch
-Patch43:	2.6.0-t3.c99.arch.mips-lkml.patch
-Patch44:	2.6.0-t3.c99.arch.sh-lkml.patch
-Patch45:	2.6.0-t3.c99.drivers-lkml.patch
-Patch46:	2.6.0-t3.c99.fs-lkml.patch
-Patch47:	2.6.0-t3.c99.include-lkml.patch
-Patch48:	2.6.0-t3.c99.sound-lkml.patch
 
 Patch50:	2.6.0-t3-oprofile-1of3-lkml.patch
 Patch51:	2.6.0-t3-oprofile-2of3-lkml.patch
@@ -332,19 +323,10 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch26 -p1
 #%patch27 -p1
 
-%patch30 -p1
 %patch31 -p1
 #%patch32 -p1
 
 %patch40 -p1
-%patch41 -p1
-%patch42 -p1
-%patch43 -p1
-%patch44 -p1
-#%patch45 -p1
-%patch46 -p1
-%patch47 -p1
-#%patch48 -p1
 
 #%patch50 -p1
 #%patch51 -p1
