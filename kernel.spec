@@ -26,7 +26,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.23
-Release:	0.5.1
+Release:	0.6
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -103,7 +103,7 @@ Patch80:	linux-2.4.22-intermezzo-acl.patch
 Patch100:	linux-2.4.23-netfilter-%{netfilter_snap}.patch.gz
 Patch101:	linux-2.4.23-netfilter-IMQ-target.patch
 # http://ebtables.sourceforge.net/
-Patch110:	ebtables-brnf-2_vs_2.4.22.diff.gz
+Patch110:	ebtables-brnf-3_vs_2.4.22.diff.gz
 # http://trash.net/~kaber/imq/
 Patch120:	linux-2.4.21-imq-1.diff
 # ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
@@ -125,8 +125,7 @@ Patch152:	linux-2.4.22-fore200e-0.2f.patch
 # http://people.sistina.com/~thornber/patches/2.4-stable/
 Patch200:	linux-2.4.23-dm-3.patch
 
-# EVMS support (http://www.sourceforge.net/projects/evms/)
-# Disabled due to conflicts with LVM2 and device mapper tools
+# EVMS additional patches (http://www.sourceforge.net/projects/evms/)
 Patch205:	linux-2.4.22-evms-2.1.1.patch
 
 #from http://dl.sourceforge.net/i810fb/linux-2.4.20-i810fb.diff.bz2
@@ -154,9 +153,9 @@ Patch270:	dc395-tab.patch
 Patch275:	linux-2.4.20-qla2x00-v6.04.00-fo.patch.gz
 
 # TV stuff from http://bytesex.org/
-Patch301:	20_v4l2-2.4.22.diff.gz
-Patch302:	30_bt832-2.4.22.diff
-Patch303:	30_btaudio-2.4.22.diff
+Patch301:	20_v4l2-2.4.23-pre7.diff.gz
+Patch302:	30_bt832-2.4.23-pre7.diff
+Patch303:	30_btaudio-2.4.23-pre7.diff
 
 # The following go last as they touch a lot of code
 # and/or are on bcond and/or are ifarch
