@@ -272,6 +272,21 @@ programs under Linux, as well as to rebuild the kernel.
 Pakiet zawiera pliki nag³ówkowe j±dra, niezbedne do rekompilacji j±dra
 oraz niektórych programów.
 
+%package doc
+Summary:	Kernel documentation
+Summary(pl):	Dokumentacja j±dra
+Group:		Base/Kernel
+Group(pl):	Podstawowe/J±dro
+Provides:	%{name}-doc = %{version}
+Autoreqprov:	no
+
+%description doc
+This is the documentation for the Linux kernel, as found in
+/usr/src/linux/Documentation directory.
+
+%description doc -l pl
+Pakiet zawiera dokumentacjê j±dra z katalogu /usr/src/linux/Documentation.
+
 %package source
 Summary:	Kernel source tree
 Summary(pl):	Kod ¼ród³owy j±dra Linuxa
@@ -833,9 +848,12 @@ fi
 %endif
 %{_includedir}/linux
 
-%files source
+%files doc
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Documentation
+
+%files source
+%defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/arch
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
