@@ -777,7 +777,7 @@ BuildKernel() {
 %if%{?_with_preemptive:1}%{!?_with_preemptive:0}
 	cat %{SOURCE1999} >> arch/%{base_arch}/defconfig
 %endif
-%if%{?_with_ACPI:1}%{!?_with_ACPI}
+%if%{?_with_ACPI:1}%{!?_with_ACPI:0}
 	echo "CONFIG_ACPI=y">>arch/%{base_arch}/defconfig
 	echo "# CONFIG_ACPI_DEBUG is not set">>arch/%{base_arch}/defconfig
 	echo "CONFIG_ACPI_BUSMGR=m">>arch/%{base_arch}/defconfig
