@@ -312,10 +312,6 @@ Patch145:	linux-2.4.20-i2c-2.7.0.patch.gz
 #usb patches from ftp://ftp.kernel.org/pub/linux/people/gregkh/usb/*-2.4.20.*
 Patch146:	linux-2.4.20-USB.patch.bz2
 
-# oops in grsecurity caused by numeric sysctl on dirs removed from /proc
-# (even if grsecurity is whole disabled, only patch applied)
-Patch147:	linux-2.4-sysctl-empty.patch
-
 # Patches fixing other patches or 3rd party sources ;)
 # This patch allows to create more than one sound device using alsa
 # and devfs with two or more sound cards
@@ -335,7 +331,7 @@ Patch252:	http://luxik.cdi.cz/~devik/qos/htb/v3/htb_killdbg_2421.diff
 Patch260:	linux-2.4.18-esfq.diff
 
 Patch888:	linux-2.4.20-netfilter-1.2.8_20030914-fix.patch
-
+	
 # tweaks for grsecurity, description inside patch
 Patch900:	loop-jari-2.4.20.0.patch
 Patch901:	dc395-tab.patch
@@ -373,7 +369,6 @@ Patch2005:	linux-2.4.20-sunrpc-noudpreuse.patch
 Patch2006:	linux-2.4.20-tty-fixes-grsec.patch
 ##Patch2007:	linux-2.4.20-tty-fixes.patch
 Patch2008:	linux-do_brk-bound-check.patch
-Patch2009:	linux-2.4-do_mremap.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -666,9 +661,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-# CAN-2003-0985 fix (apply before grsec)
-%patch2009 -p1
-# grsecurity
 %patch6 -p1
 %ifarch ppc
 %patch907 -p1
@@ -783,8 +775,8 @@ echo Added NetMos card supprot
 
 %patch138 -p1
 
-# control of /dev/{k,}mem access by sysctl
-echo Sysctl for /dev/{k,}mem access control
+# sysctl controll of /dev/mem
+echo Sysctl controll access to /dev/kmem 
 %patch921 -p1 
 
 %patch143 -p1
@@ -792,9 +784,6 @@ echo Sysctl for /dev/{k,}mem access control
 
 # USB patches
 %patch146 -p1
-
-#
-%patch147 -p1
 
 # VIA82Cxxx
 echo Fixed VIA82Cxxx Audio ...
