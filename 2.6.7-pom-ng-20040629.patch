@@ -1,6 +1,6 @@
 --- linux-2.6.9-rc1/include/linux/netfilter_ipv4/ip_conntrack.h.orig	2004-08-29 16:44:31.000000000 +0200
 +++ linux-2.6.9-rc1/include/linux/netfilter_ipv4/ip_conntrack.h	2004-08-29 19:58:04.869439888 +0200
-@@ -220,6 +220,10 @@
+@@ -212,6 +212,10 @@
  	} nat;
  #endif /* CONFIG_IP_NF_NAT_NEEDED */
  
@@ -8,9 +8,9 @@
 +	unsigned long mark;
 +#endif
 +
- };
- 
- /* get master conntrack via master expectation */
+ 	/* Traversed often, so hopefully in different cacheline to top */
+ 	/* These are my tuples; original and reply */
+ 	struct ip_conntrack_tuple_hash tuplehash[IP_CT_DIR_MAX];
 diff -Nur --exclude '*.orig' linux-2.6.7.org/include/linux/netfilter_ipv4/ip_queue.h linux-2.6.7/include/linux/netfilter_ipv4/ip_queue.h
 --- linux-2.6.7.org/include/linux/netfilter_ipv4/ip_queue.h	2004-06-16 07:20:03.000000000 +0200
 +++ linux-2.6.7/include/linux/netfilter_ipv4/ip_queue.h	2004-06-29 12:35:08.141268712 +0200
@@ -955,9 +955,9 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv4/netfilter/Kconfig linux-2.
  endmenu
  
 diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv4/netfilter/Makefile linux-2.6.7/net/ipv4/netfilter/Makefile
---- linux-2.6.7.org/net/ipv4/netfilter/Makefile	2004-06-29 12:24:13.000000000 +0200
-+++ linux-2.6.7/net/ipv4/netfilter/Makefile	2004-06-29 12:36:14.615163144 +0200
-@@ -47,14 +47,22 @@
+--- linux-2.6.9-rc3/net/ipv4/netfilter/Makefile.orig	2004-09-30 05:04:23.000000000 +0200
++++ linux-2.6.9-rc3/net/ipv4/netfilter/Makefile	2004-10-10 15:36:53.055549920 +0200
+@@ -47,40 +47,61 @@
  obj-$(CONFIG_IP_NF_MATCH_HELPER) += ipt_helper.o
  obj-$(CONFIG_IP_NF_MATCH_LIMIT) += ipt_limit.o
  obj-$(CONFIG_IP_NF_MATCH_SCTP) += ipt_sctp.o
@@ -966,7 +966,6 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv4/netfilter/Makefile linux-2
  obj-$(CONFIG_IP_NF_MATCH_MARK) += ipt_mark.o
  obj-$(CONFIG_IP_NF_MATCH_MAC) += ipt_mac.o
  obj-$(CONFIG_IP_NF_MATCH_IPRANGE) += ipt_iprange.o
- 
  obj-$(CONFIG_IP_NF_MATCH_PKTTYPE) += ipt_pkttype.o
  obj-$(CONFIG_IP_NF_MATCH_MULTIPORT) += ipt_multiport.o
 +obj-$(CONFIG_IP_NF_MATCH_MPORT) += ipt_mport.o
@@ -977,13 +976,12 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv4/netfilter/Makefile linux-2
 +obj-$(CONFIG_IP_NF_MATCH_NTH) += ipt_nth.o
 +obj-$(CONFIG_IP_NF_MATCH_IPV4OPTIONS) += ipt_ipv4options.o
 +obj-$(CONFIG_IP_NF_MATCH_FUZZY) += ipt_fuzzy.o
- 
  obj-$(CONFIG_IP_NF_MATCH_RECENT) += ipt_recent.o
- 
-@@ -64,28 +72,40 @@
- 
+ obj-$(CONFIG_IP_NF_MATCH_ECN) += ipt_ecn.o
+ obj-$(CONFIG_IP_NF_MATCH_DSCP) += ipt_dscp.o
+ obj-$(CONFIG_IP_NF_MATCH_AH_ESP) += ipt_ah.o ipt_esp.o
  obj-$(CONFIG_IP_NF_MATCH_LENGTH) += ipt_length.o
- 
++
 +obj-$(CONFIG_IP_NF_MATCH_UNCLEAN) += ipt_unclean.o
 +obj-$(CONFIG_IP_NF_MATCH_STRING) += ipt_string.o
  obj-$(CONFIG_IP_NF_MATCH_TTL) += ipt_ttl.o
@@ -994,9 +992,9 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv4/netfilter/Makefile linux-2
  obj-$(CONFIG_IP_NF_MATCH_TCPMSS) += ipt_tcpmss.o
  obj-$(CONFIG_IP_NF_MATCH_REALM) += ipt_realm.o
  obj-$(CONFIG_IP_NF_MATCH_ADDRTYPE) += ipt_addrtype.o
- 
  obj-$(CONFIG_IP_NF_MATCH_PHYSDEV) += ipt_physdev.o
 +obj-$(CONFIG_IP_NF_MATCH_POLICY) += ipt_policy.o
+ obj-$(CONFIG_IP_NF_MATCH_COMMENT) += ipt_comment.o
  
  # targets
  obj-$(CONFIG_IP_NF_TARGET_REJECT) += ipt_REJECT.o
@@ -6016,7 +6014,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv6/netfilter/Kconfig linux-2.
 diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv6/netfilter/Makefile linux-2.6.7/net/ipv6/netfilter/Makefile
 --- linux-2.6.7.org/net/ipv6/netfilter/Makefile	2004-06-16 07:19:36.000000000 +0200
 +++ linux-2.6.7/net/ipv6/netfilter/Makefile	2004-06-29 12:35:40.083412768 +0200
-@@ -8,18 +8,25 @@
+@@ -8,11 +8,13 @@
  obj-$(CONFIG_IP6_NF_MATCH_MARK) += ip6t_mark.o
  obj-$(CONFIG_IP6_NF_MATCH_LENGTH) += ip6t_length.o
  obj-$(CONFIG_IP6_NF_MATCH_MAC) += ip6t_mac.o
@@ -6030,6 +6028,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv6/netfilter/Makefile linux-2
  obj-$(CONFIG_IP6_NF_MATCH_EUI64) += ip6t_eui64.o
  obj-$(CONFIG_IP6_NF_MATCH_MULTIPORT) += ip6t_multiport.o
  obj-$(CONFIG_IP6_NF_MATCH_OWNER) += ip6t_owner.o
+@@ -20,7 +22,11 @@
  obj-$(CONFIG_IP6_NF_FILTER) += ip6table_filter.o
  obj-$(CONFIG_IP6_NF_MANGLE) += ip6table_mangle.o
  obj-$(CONFIG_IP6_NF_TARGET_MARK) += ip6t_MARK.o
@@ -6037,7 +6036,6 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv6/netfilter/Makefile linux-2
 +obj-$(CONFIG_IP6_NF_TARGET_REJECT) += ip6t_REJECT.o
  obj-$(CONFIG_IP6_NF_QUEUE) += ip6_queue.o
  obj-$(CONFIG_IP6_NF_TARGET_LOG) += ip6t_LOG.o
-+
 +obj-$(CONFIG_IP6_NF_MATCH_NTH) += ip6t_nth.o
 +obj-$(CONFIG_IP6_NF_TARGET_HL) += ip6t_HL.o
  obj-$(CONFIG_IP6_NF_RAW) += ip6table_raw.o
