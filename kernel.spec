@@ -118,6 +118,8 @@ Patch120:	linux-2.4.21-imq-1.diff
 # ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
 Patch125:	linux-2.4.18-mppe.patch
 Patch130:	linux-2.4.22-tun-new-style.patch
+# http://www.bewley.net/linux/vlan/patches/vlan-3c59x.patch
+Patch135:	linux-2.4.25-vlan-3c59x.patch
 
 # ATM bugfixes
 # Patches by Chas Williams <chas@locutus.cmf.nrl.navy.mil>
@@ -714,6 +716,7 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch120 -p1
 %patch125 -p1
 %patch130 -p1
+%patch135 -p1
 # ???
 #%patch150 -p1
 %patch151 -p1
