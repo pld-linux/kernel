@@ -1213,6 +1213,15 @@ fi
 /lib/modules/%{version}-%{release}smp/pcmcia
 %endif
 /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
+/lib/modules/%{version}-%{release}smp/kernel/drivers/net/pcmcia
+/lib/modules/%{version}-%{release}smp/kernel/drivers/scsi/pcmcia
+/lib/modules/%{version}-%{release}smp/kernel/drivers/char/pcmcia
+/lib/modules/%{version}-%{release}smp/kernel/drivers/ide/ide-cs.o
+/lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o
+/lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o
+/lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.o
+/lib/modules/%{version}-%{release}smp/kernel/drivers/parport/*_cs.o
+/lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o
 
 %files -n kernel-smp-drm
 %defattr(644,root,root,755)
@@ -1228,6 +1237,15 @@ fi
 %dir /lib/modules/%{version}-%{release}smp
 /lib/modules/%{version}-%{release}smp/kernel
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/pcmcia
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/scsi/pcmcia
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/pcmcia
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/ide-cs.o
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.o
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/*_cs.o
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
