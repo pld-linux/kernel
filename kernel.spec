@@ -32,7 +32,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.21
-Release:	1.2
+Release:	1.3
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -109,8 +109,8 @@ Patch60:	linux-2.4.21-reiserfs-data-logging+quota.patch.gz
 #Patch35:	reiserfs-xattrs
 #Patch36:	reiserfs-acl
 #Patch37:	reiserfs-trusted
-# http://dl.sourceforge.net/squashfs/squashfs-1.1b.tar.gz
-Patch65:	squashfs1.2-2.4.21-patch
+# http://dl.sourceforge.net/squashfs/squashfs-1.3.tar.gz
+Patch65:	squashfs1.3-2.4.21-patch
 #Patch70:	linux-2.4.20-afs.patch.bz2
 #from http://sci.felk.cvut.cz/nwd/linux/nwd-patch-2.4.19
 Patch75:	nwd-2.4.21.patch
