@@ -1,6 +1,6 @@
 %define		pcmcia_version		3.1.24
 %define		lids_version		1.0.4
-%define		ipvs_version		0.2.1
+%define		ipvs_version		0.2.3
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -37,7 +37,7 @@ Source62:	%{name}-sparc64-BOOT.config
 Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
-Source100:	http://download.sourceforge.net/xmlprocfs/linux-2.4-xmlprocfs-0.1.tar.gz
+Source100:	ftp://download.sourceforge.net/pub/sourceforge/xmlprocfs/linux-2.4-xmlprocfs-0.1.tar.gz
 
 #manual update 
 Patch0:		patch-int-2.4.0.3.gz
