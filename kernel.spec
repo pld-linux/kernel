@@ -10,7 +10,7 @@
 # _without_up		- don't build UP kernel
 #
 %define		test_build		0
-%define		krelease		2.39
+%define		krelease		2.40
 #
 %define base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 #
@@ -353,7 +353,6 @@ Installations-Bootdisketten benutzt und sollte nicht auf einem
 installierten System verwendet werden, da viele Funktionen wegen der
 Platzprobleme abgeschaltet sind.
 
-%description -l fr BOOT
 %description -l pl BOOT
 Pakiet zawiera j±dro Linuksa dedykowane dyskietkom startowym i powinno
 byæ u¿ywane jedynie podczas instalacji systemu. Wiele u¿ytecznych
@@ -369,10 +368,10 @@ Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
 Prereq:		%{name}-up = %{version}-%{release}
 
 %description pcmcia-cs
-PCMCIA-CS modules.
+PCMCIA-CS modules (%{pcmcia_version}).
 
 %description -l pl pcmcia-cs
-Modu³y PCMCIA-CS.
+Modu³y PCMCIA-CS (%{pcmcia_version}).
 
 %package smp-pcmcia-cs
 Summary:	PCMCIA-CS modules for SMP kernel
@@ -383,10 +382,10 @@ Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
 Prereq:		%{name}-smp = %{version}-%{release}
 
 %description smp-pcmcia-cs
-PCMCIA-CS modules for SMP kernel.
+PCMCIA-CS modules for SMP kernel (%{pcmcia_version}).
 
 %description -l pl smp-pcmcia-cs
-Modu³y PCMCIA-CS dla maszyn SMP.
+Modu³y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 
 %package drm
 Summary:	DRM kernel modules
@@ -397,10 +396,10 @@ Provides:       %{name}-drm = %{drm_xfree_version}
 Prereq:		%{name}-up = %{version}-%{release}
 
 %description drm
-DRM kernel modules.
+DRM kernel modules (%{drm_xfree_version}).
 
 %description -l pl drm
-Sterowniki DRM.
+Sterowniki DRM (%{drm_xfree_version}).
 
 %package smp-drm
 Summary:	DRM SMP kernel modules
@@ -411,10 +410,10 @@ Provides:       %{name}-drm = %{drm_xfree_version}
 Prereq:		%{name}-smp = %{version}-%{release}
 
 %description smp-drm
-DRM SMP kernel modules.
+DRM SMP kernel modules (%{drm_xfree_version}).
 
 %description -l pl smp-drm
-Sterowniki DRM dla maszyn wieloprocesorowych.
+Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
 
 %package headers
 Summary:	Header files for the Linux kernel
@@ -1164,6 +1163,15 @@ fi
 %dir /lib/modules/%{version}-%{release}
 /lib/modules/%{version}-%{release}/kernel
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/pcmcia
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/scsi/pcmcia
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/pcmcia
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/ide/ide-cs.o
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/*_cs.o
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
@@ -1177,6 +1185,15 @@ fi
 /lib/modules/%{version}-%{release}/pcmcia
 %endif
 /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
+/lib/modules/%{version}-%{release}/kernel/drivers/net/pcmcia
+/lib/modules/%{version}-%{release}/kernel/drivers/scsi/pcmcia
+/lib/modules/%{version}-%{release}/kernel/drivers/char/pcmcia
+/lib/modules/%{version}-%{release}/kernel/drivers/ide/ide-cs.o
+/lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o
+/lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o
+/lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o
+/lib/modules/%{version}-%{release}/kernel/drivers/parport/*_cs.o
+/lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o
 
 %files drm
 %defattr(644,root,root,755)
