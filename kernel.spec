@@ -261,6 +261,7 @@ Patch3000:	linux-2.4.1-compilefailure.patch
 Patch3002:	linux-2.4.20-EXPORT_SYMBOL.patch
 Patch3003:	linux-2.4.20-missing-license-tags.patch
 Patch3004:	linux-2.4.20-sym53c8xx_old.patch
+Patch3005:	linux-2.4.21-gcc33.patch
 
 # Security fixes
 
