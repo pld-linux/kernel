@@ -2,9 +2,11 @@
 # If you define the following as 1, only kernel, -headers and -source
 # packages will be built
 #
+# _without_grsec	- build without grsecurity patch
 # _with_preemptive	- build with Preemptible patch
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
+# _without_boot		- don't build BOOT kernel
 # _without_source	- don't build source
 # _with_w4l		- build with Win4Lin support
 #
