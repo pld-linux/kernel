@@ -171,7 +171,7 @@ Patch270:	dc395-tab.patch
 # and/or are on bcond and/or are ifarch
 
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
-Patch800:	grsecurity-%{grsec_version}-%{version}.patch
+Patch800:	grsecurity-%{grsec_version}-%{version}.patch.bz2
 Patch801:	PPC-grsecurity-pgtable.h.patch
 Patch802:	linux-2.4.20-grsecurity-%{grsec_version}-kmem.patch
 
