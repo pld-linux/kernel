@@ -13,7 +13,7 @@
 %bcond_without source	# don't build kernel-source package
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
-%define		_rel		0.1
+%define		_rel		0.2
 %define		test_ver	5
 %define		patch_level	0
 %define		_cset		20030912_0513
@@ -93,6 +93,7 @@ Patch51:	2.6.0-t3-oprofile-2of3-lkml.patch
 Patch52:	2.6.0-t3-oprofile-3of3-lkml.patch
 
 Patch53:	2.6.0-t4-PPC-ENODEV.patch
+Patch54:	2.6.0-t5-PPC-fix.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -344,6 +345,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 #%patch51 -p1
 #%patch52 -p1
 %patch53 -p1
+%patch54 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
