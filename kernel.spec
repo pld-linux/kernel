@@ -383,9 +383,9 @@ BuildKernel() {
 
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
 	if [ "$smp" = "yes" ]; then
-		install $RPM_SOURCE_DIR/include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
+		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
 	else
-		install $RPM_SOURCE_DIR/include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
+		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
 	fi
 }
 
