@@ -339,36 +339,9 @@ bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/
 mv -f $RPM_BUILD_ROOT/usr/src/linux $RPM_BUILD_ROOT/usr/src/linux-%{version}
 ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
 
-bzip2 -dc %{PATCH100} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-gzip -dc %{PATCH1} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH3}
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH4}
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH5}
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
-
-#patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
-
-# Fore 200e ATM NIC
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
-
-# Tekram DC395/315 U/UW SCSI host driver
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH2}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <dc395/dc395-integ24.diff
-install dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi/
-
-# Netfilter
-for i in netfilter-patches/* ; do
-	if [ -f $i -a "$i" != "netfilter-patches/isapplied" ] ; then
-		patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <$i
-	fi
-done
-(KERNEL_DIR=$RPM_BUILD_ROOT/usr/src/linux-%{version} ; export KERNEL_DIR
-cd netfilter-patches/patch-o-matic
-ANS=""
-for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
-echo -e $ANS | ./runme)
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH101}
 
 # Remove -g from drivers/atm/Makefile
 mv -f $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/atm/Makefile \
