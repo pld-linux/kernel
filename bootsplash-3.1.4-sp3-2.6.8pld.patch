@@ -2705,7 +2705,7 @@ diff -uNr linux-2.6.8-rc2/drivers/video/console/fbcon.c linux-2.6.8-rc2.bootspla
  	region.color = attr_bgcol_ec(bgshift, vc);
  	region.dx = sx * vc->vc_font.width;
  	region.dy = sy * vc->vc_font.height;
-@@ -459,6 +485,17 @@
+@@ -459,6 +485,13 @@
  	struct fb_image image;
  	u8 *src, *dst;
  
@@ -2716,14 +2716,10 @@ diff -uNr linux-2.6.8-rc2/drivers/video/console/fbcon.c linux-2.6.8-rc2.bootspla
 +	}
 +#endif
 +
-+  	image.fg_color = attr_fgcol(fgshift, c);
-+  	image.bg_color = attr_bgcol(bgshift, c);
-+  	image.dx = xx * vc->vc_font.width;
-+
  	image.fg_color = attr_fgcol((vc->vc_hi_font_mask) ? 9 : 8,
  				    scr_readw(s));
  	image.bg_color = attr_bgcol((vc->vc_hi_font_mask) ? 13 : 12,
-@@ -526,6 +563,13 @@
+@@ -526,6 +559,13 @@
  	unsigned int bs = info->var.yres - bh;
  	struct fb_fillrect region;
  
@@ -2737,7 +2733,7 @@ diff -uNr linux-2.6.8-rc2/drivers/video/console/fbcon.c linux-2.6.8-rc2.bootspla
  	region.color = 0;
  	region.rop = ROP_COPY;
  
-@@ -622,6 +666,14 @@
+@@ -622,6 +662,13 @@
  
  	cols = info->var.xres / vc->vc_font.width;
  	rows = info->var.yres / vc->vc_font.height;
@@ -2746,13 +2742,12 @@ diff -uNr linux-2.6.8-rc2/drivers/video/console/fbcon.c linux-2.6.8-rc2.bootspla
 +	if (vc->vc_splash_data && vc->vc_splash_data->splash_state) {
 +		cols = vc->vc_splash_data->splash_text_wi / vc->vc_font.width;
 +		rows = vc->vc_splash_data->splash_text_he / vc->vc_font.height;
-+		logo = 0;
 +	}
 +#endif
  	vc_resize(vc->vc_num, cols, rows);
  
  	DPRINTK("mode:   %s\n", info->fix.id);
-@@ -843,6 +895,12 @@
+@@ -843,6 +890,12 @@
  		}
  	}
  
@@ -2765,7 +2760,7 @@ diff -uNr linux-2.6.8-rc2/drivers/video/console/fbcon.c linux-2.6.8-rc2.bootspla
  	if (vc->vc_num == display_fg && softback_buf) {
  		int l = fbcon_softback_size / vc->vc_size_row;
  		if (l > 5)
-@@ -948,6 +1006,13 @@
+@@ -948,6 +1001,13 @@
  	if (vt_cons[vc->vc_num]->vc_mode != KD_TEXT)
  		return;
  
@@ -2779,7 +2774,7 @@ diff -uNr linux-2.6.8-rc2/drivers/video/console/fbcon.c linux-2.6.8-rc2.bootspla
  	image.dx = xpos * vc->vc_font.width;
  	image.dy = real_y(p, ypos) * vc->vc_font.height;
  	image.width = vc->vc_font.width;
-@@ -1025,6 +1090,12 @@
+@@ -1025,6 +1085,12 @@
  		if (info->cursor.rop == ROP_XOR) {
  			info->cursor.enable = 0;
  			info->cursor.rop = ROP_COPY;
@@ -2792,7 +2787,7 @@ diff -uNr linux-2.6.8-rc2/drivers/video/console/fbcon.c linux-2.6.8-rc2.bootspla
  			info->fbops->fb_cursor(info, &cursor);
  		}	
  		break;
-@@ -1101,6 +1172,13 @@
+@@ -1101,6 +1167,13 @@
  				mask[i++] = 0xff;
  		}
          	info->cursor.rop = ROP_XOR;
@@ -2806,7 +2801,7 @@ diff -uNr linux-2.6.8-rc2/drivers/video/console/fbcon.c linux-2.6.8-rc2.bootspla
  		info->fbops->fb_cursor(info, &cursor);
  		vbl_cursor_cnt = CURSOR_DRAW_DELAY;
  		break;
-@@ -1540,6 +1618,10 @@
+@@ -1540,6 +1613,10 @@
  			fbcon_softback_note(vc, t, count);
  		if (logo_shown >= 0)
  			goto redraw_up;
@@ -2817,7 +2812,7 @@ diff -uNr linux-2.6.8-rc2/drivers/video/console/fbcon.c linux-2.6.8-rc2.bootspla
  		switch (p->scrollmode) {
  		case SCROLL_MOVE:
  			accel_bmove(vc, info, t + count, 0, t, 0,
-@@ -1625,6 +1707,10 @@
+@@ -1625,6 +1702,10 @@
  	case SM_DOWN:
  		if (count > vc->vc_rows)	/* Maximum realistic size */
  			count = vc->vc_rows;
@@ -2828,7 +2823,7 @@ diff -uNr linux-2.6.8-rc2/drivers/video/console/fbcon.c linux-2.6.8-rc2.bootspla
  		switch (p->scrollmode) {
  		case SCROLL_MOVE:
  			accel_bmove(vc, info, t, 0, t + count, 0,
-@@ -1767,6 +1853,15 @@
+@@ -1767,6 +1848,15 @@
  		}
  		return;
  	}
@@ -2844,7 +2839,7 @@ diff -uNr linux-2.6.8-rc2/drivers/video/console/fbcon.c linux-2.6.8-rc2.bootspla
  	accel_bmove(vc, info, real_y(p, sy), sx, real_y(p, dy), dx,
  			height, width);
  }
-@@ -1849,6 +1944,10 @@
+@@ -1849,6 +1939,10 @@
  	struct display *p = &fb_display[vc->vc_num];
  	int i;
  
@@ -2855,7 +2850,7 @@ diff -uNr linux-2.6.8-rc2/drivers/video/console/fbcon.c linux-2.6.8-rc2.bootspla
  	if (softback_top) {
  		int l = fbcon_softback_size / vc->vc_size_row;
  		if (softback_lines)
-@@ -1966,6 +2065,12 @@
+@@ -1966,6 +2060,12 @@
  	fbcon_cursor(vc, blank ? CM_ERASE : CM_DRAW);
  
  	if (!info->fbops->fb_blank) {
@@ -2868,7 +2863,7 @@ diff -uNr linux-2.6.8-rc2/drivers/video/console/fbcon.c linux-2.6.8-rc2.bootspla
  		if (blank) {
  			unsigned short oldc;
  			u_int height;
-@@ -2142,9 +2247,16 @@
+@@ -2142,9 +2242,16 @@
  	}
  
  	if (resize) {
@@ -2886,7 +2881,7 @@ diff -uNr linux-2.6.8-rc2/drivers/video/console/fbcon.c linux-2.6.8-rc2.bootspla
  		if (CON_IS_VISIBLE(vc) && softback_buf) {
  			int l = fbcon_softback_size / vc->vc_size_row;
  			if (l > 5)
-@@ -2339,7 +2451,44 @@
+@@ -2339,7 +2446,44 @@
  	else
  		palette_cmap.len = 16;
  	palette_cmap.start = 0;
@@ -2932,7 +2927,7 @@ diff -uNr linux-2.6.8-rc2/drivers/video/console/fbcon.c linux-2.6.8-rc2.bootspla
  }
  
  static u16 *fbcon_screen_pos(struct vc_data *vc, int offset)
-@@ -2634,6 +2783,10 @@
+@@ -2634,6 +2778,10 @@
  	if (!num_registered_fb)
  		return -ENODEV;
  
