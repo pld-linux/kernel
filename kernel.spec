@@ -111,7 +111,7 @@ Patch7:		2.6.0-t8-appletalk-SYSCTL-lkml.patch
 Patch8:		2.6.0-t8-umsdos-lkml.patch
 Patch9:		2.6.0-t9-acpi_osl-lkml.patch
 Patch10:	2.6.0-t11-AIC_and_db4-lkml.patch
-Patch11:	2.6.1-rc2-ini9100u-lkml.patch
+#Patch11:	2.6.1-rc2-ini9100u-lkml.patch
 Patch12:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch13:	2.6.2-Initio9100U-Kconfig.patch
 # http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
@@ -125,23 +125,24 @@ Patch20:	2.6.5-i386-cmpxchg.patch
 Patch21:	2.6.6-serial-fifo-lkml.patch
 Patch22:	2.6.6-qsort-updated-lkml.patch
 Patch23:	2.6.6-xfs-qsort-lkml.patch
-Patch24:	2.6.7-bridge_sysfs-lkml.patch
+#Patch24:	2.6.7-bridge_sysfs-lkml.patch
 Patch25:	2.6.7-alpha_compile.patch
 Patch26:	2.6.7-ppc-asm-defs.patch
 Patch27:	2.6.7-ppc-cciss-div.patch
 Patch28:	2.6.7-ppc-ipr-div.patch
 Patch29:	2.6.8-intel8x0-ck804-lkml.patch
-Patch30:	2.6.x-ppp_mppe.patch
+#Patch30:	2.6.x-ppp_mppe.patch
 Patch31:	2.6.x-SGI_VW-fbdev-lkml.patch
 Patch32:	2.6.x-TGA-fbdev-lkml.patch
 Patch33:	linux-kbuild-extmod.patch
+Patch34:	2.6.8-cpu_feature.patch
 
 # framebuffer fixes
 Patch40:	linux-tdfxfb-fillrect.patch
 Patch41:	linux-fbcon-margins.patch
 Patch42:	linux-tdfxfb-interlace+double.patch
-Patch43:	linux-2.6-rivafb16.patch
-Patch44:	linux-fbcon-con2fb-crash-workaround.patch
+#Patch43:	linux-2.6-rivafb16.patch
+#Patch44:	linux-fbcon-con2fb-crash-workaround.patch
 
 # netfilter
 Patch50:	2.6.7-pom-ng-%{_netfilter_snap}.patch
@@ -155,12 +156,12 @@ Patch55:	2.6.4-wrr.patch
 Patch56:	linux-2.6-netfilter-syms.patch
 
 # pseudo terminal fix for older glibc
-Patch60:	%{name}-pts.patch
+#Patch60:	%{name}-pts.patch
 Patch61:	%{name}-MAX_INIT_ARGS.patch
 
 # http://tahoe.pl/patch.htm
 Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
-Patch71:	linux-tahoe9xx-hdlc-update.patch
+#Patch71:	linux-tahoe9xx-hdlc-update.patch
 # http://www.bootsplash.de/files/bootsplash-3.1.4-sp3-2.6.7.diff
 Patch72:	bootsplash-3.1.4-sp3-2.6.8pld.patch
 Patch73:	squashfs2.0-patch
@@ -590,6 +591,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch31 -p1
 %patch32 -p1
 %patch33 -p1
+%patch34 -p1
 
 %patch40 -p1
 %patch41 -p1
