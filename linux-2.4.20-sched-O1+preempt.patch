@@ -1497,6 +1497,16 @@ diff -urN linux-2.4.20/arch/ppc/config.in linux-2.4.20-o1-preempt/arch/ppc/confi
 diff -urN linux-2.4.20/arch/ppc/kernel/entry.S linux-2.4.20-o1-preempt/arch/ppc/kernel/entry.S
 --- linux-2.4.20/arch/ppc/kernel/entry.S	Fri Nov 29 00:53:11 2002
 +++ linux-2.4.20-o1-preempt/arch/ppc/kernel/entry.S	Tue Feb 18 03:52:07 2003
+@@ -264,7 +264,9 @@
+ 
+ 	.globl	ret_from_fork
+ ret_from_fork:
++#if CONFIG_SMP
+ 	bl	schedule_tail
++#endif
+ 	lwz	r0,TASK_PTRACE(r2)
+ 	andi.	r0,r0,PT_TRACESYS
+ 	bnel-	syscall_trace
 @@ -278,6 +278,41 @@
  	 */
  	cmpi	0,r3,0
@@ -1747,6 +1757,18 @@ diff -urN linux-2.4.20/arch/ppc/mm/init.c linux-2.4.20-o1-preempt/arch/ppc/mm/in
  			{
  				iscur = 1;
  				printk("current");
+--- linux-2.4.20/arch/ppc64/kernel/entry.S.orig	Fri Nov 29 00:53:11 2002
++++ linux-2.4.20/arch/ppc64/kernel/entry.S	Fri Mar  7 23:47:29 2003
+@@ -292,7 +292,9 @@
+ 	blr
+ 
+ _GLOBAL(ret_from_fork)
++#if CONFIG_SMP
+ 	bl	.schedule_tail
++#endif
+ 	ld	r0,TASK_PTRACE(r13)
+ 	andi.	r0,r0,PT_TRACESYS
+ 	beq+	.ret_from_except
 diff -urN linux-2.4.20/arch/ppc64/kernel/idle.c linux-2.4.20-o1-preempt/arch/ppc64/kernel/idle.c
 --- linux-2.4.20/arch/ppc64/kernel/idle.c	Sat Aug  3 02:39:43 2002
 +++ linux-2.4.20-o1-preempt/arch/ppc64/kernel/idle.c	Tue Feb 18 03:51:29 2003
