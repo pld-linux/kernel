@@ -26,7 +26,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.16
-Release:	0.5
+Release:	0.6
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -694,20 +694,21 @@ cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 find  -name "*~" -print | xargs rm -f
 find  -name "*.orig" -print | xargs rm -f
 
-%ifarch i386
-echo "CONFIG_M386=y" > .config
-%endif
-%ifarch i586
-echo "CONFIG_M586=y" > .config
-%endif
-%ifarch i686
-echo "CONFIG_M686=y" > .config
-%endif
 
 %ifarch %{ix86}
-cat $RPM_SOURCE_DIR/kernel-ia32.config >> .config
+cat $RPM_SOURCE_DIR/kernel-ia32.config > .config
 %else
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
+%endif
+
+%ifarch i386
+echo "CONFIG_M386=y" >> .config
+%endif
+%ifarch i586
+echo "CONFIG_M586=y" >> .config
+%endif
+%ifarch i686
+echo "CONFIG_M686=y" >> .config
 %endif
 
 cat %{SOURCE1001} >> .config
@@ -719,20 +720,21 @@ cat %{SOURCE1666} >> .config
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
 
-%ifarch i386
-echo "CONFIG_M386=y" > .config
-%endif
-%ifarch i586
-echo "CONFIG_M586=y" > .config
-%endif
-%ifarch i686
-echo "CONFIG_M686=y" > .config
-%endif
 
 %ifarch %{ix86}
 cat $RPM_SOURCE_DIR/kernel-ia32-smp.config >> .config
 %else
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config .config
+%endif
+
+%ifarch i386
+echo "CONFIG_M386=y" >> .config
+%endif
+%ifarch i586
+echo "CONFIG_M586=y" >> .config
+%endif
+%ifarch i686
+echo "CONFIG_M686=y" >> .config
 %endif
 
 cat %{SOURCE1001} >> .config
@@ -860,8 +862,8 @@ if [ ! -L /lib/modules/%{version} ] ; then
 fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp-lids /lib/modules/%{version}
-%endif
-%endif
+%endif			# %{_with_lids}
+%endif			# %{_without_smp}
 
 %post BOOT
 if [ ! -L %{_libdir}/bootdisk/lib/modules/%{version} ] ; then
@@ -918,8 +920,8 @@ if [ -L /lib/modules/%{version} ]; then
 	fi
 fi
 rm -f /boot/initrd-%{version}-%{release}smp-lids.gz
-%endif
-%endif
+%endif			# %{_with_lids}
+%endif			# %{_without_smp}
 
 %postun BOOT
 if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then 
@@ -1015,8 +1017,8 @@ fi
 /lib/modules/%{version}-%{release}smp-lids/modules.dep
 /lib/modules/%{version}-%{release}smp-lids/modules.*map
 /lib/modules/%{version}-%{release}smp-lids/modules.generic_string
-%endif
-%endif
+%endif			# %{_with_lids}
+%endif			# %{_without_smp}
 
 %ifnarch i586 i686
 %files BOOT
@@ -1048,7 +1050,7 @@ fi
 %files source
 %defattr(-,root,root,755)
 %{_prefix}/src/linux-%{version}/Documentation
-#%{_prefix}/src/linux-%{version}/abi
+%{_prefix}/src/linux-%{version}/abi
 %{_prefix}/src/linux-%{version}/arch
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
