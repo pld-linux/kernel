@@ -9,40 +9,18 @@
 #
 %define		test_build		0
 #
-%define		pre_version		pre1
-%define		ipvs_version		0.9.8
-%define		freeswan_version	snap2001sep23b
-%define 	aacraid_version		1.0.6
-%define		wlan_version		0.1.10
-%define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
-%define		IPperson_version	20010724-2.4.7
-%define		grsec_version		1.9-2.4.16
-%define		aic_version		6.2.3-2.4.7
-%define		jfs_version		2.4-1.0.10
+# Kernel vannilized
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.5.1
-Release:	0.0
+Version:	2.5.7
+Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
-Source1:	%{name}-autoconf.h
-Source2:	%{name}-BuildASM.sh
-Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-134.tar.gz
-Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
-# Don't use following patch, it may hang the NIC (baggins)
-#Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
-# based on cvs cvs@pserver.samba.org:/cvsroot netfilter
-Source7:	linux-2.4.16-netfilter-20011201.tar.gz
-Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_version}.tar.gz
-# new -> ftp://ftp.tux.org/pub/roudier/drivers/portable/sym-2.1.x/sym-2.1.16-20011028.tar.gz
-Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
-Source12:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
-Source13:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}-patch.tar.gz
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -57,90 +35,6 @@ Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
-Source1001:	%{name}-abi.config
-Source1002:	%{name}-addon.config
-Source1003:	%{name}-netfilter.config
-Source1004:	%{name}-ipvs.config
-Source1666:	%{name}-grsec.config
-
-# New features
-
-Patch0:		%{name}-pldfblogo.patch
-#Patch1:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
-Patch1:		patch-int-2.4.15.0.gz
-Patch2:		linux-2.4.10-freeswan-%{freeswan_version}.patch.gz
-# http://domsch.com/linux/aacraid/linux-2.4.9-aacraid-20010816.patch
-Patch3:		linux-2.4.9-aacraid-20010816.patch
-# http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
-Patch4:		br2684-against2.4.15.diff
-# ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
-Patch5:		linux-2.4.16-xfs-20011129.patch.gz
-# Homepage of ABI : http://linux-abi.sourceforge.net/
-#ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2
-Patch7:		linux-abi-2.4.15.0.patch.bz2
-Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
-# grsecurity patch http://www.getrewted.net/
-# http://grsecurity.net/grsecurity-%{grsec_version}.patch
-Patch9:		grsecurity-%{grsec_version}.patch
-# Preemptive kernel  patch
-Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.16-1.patch
-
-Patch11:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-2.4.16-1.patch
-Patch12:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-2.4.16-1.patch
-Patch13:	http://www.linuxvirtualserver.org/software/kernel-2.4/linux-%{version}-ipvs-%{ipvs_version}.patch.gz
-
-# Assorted bugfixes
-
-# from LKML
-Patch100:	linux-scsi-debug-bug.patch
-Patch101:	linux-2.4.2-raw-ip.patch
-Patch102:	PCI_ISA_bridge.patch
-Patch103:	linux-2.4.2-nvram-hdd.patch
-# this patch adds support for "io" and "irq" options in PCNet32 driver module
-Patch105:	linux-2.4.2-pcnet-parms.patch
-Patch106:	http://linuxdiskcert.org/ide.2.4.16-p1.11242001.patch.bz2
-Patch107:	linux-reiserfs-rename.patch
-Patch108:	linux-alpha-nfs-2.4.2.patch
-Patch109:	linux-2.4-string.patch
-# raid5 xor fix for PIII/P4, should go away shortly
-Patch110:	linux-2.4.0-raid5xor.patch
-# disable some networking printk's
-Patch111:	linux-2.4.1-netdebug.patch
-# SCSI Reset patch for clustering stuff
-Patch112:	linux-2.4.1-scsi-reset.patch
-# Add an ioctl to the block layer so we can be EFI compliant
-Patch113:	linux-2.4.2-blkioctl-sector.patch
-# fix lun probing on multilun RAID chassis
-Patch115:	linux-2.4.12-scsi_scan.patch
-# fix pcnet32 networkdriver load vs ifconfig races
-Patch116:	linux-2.4.3-pcnet32.patch
-# fix rawio
-Patch117:	linux-2.4.3-rawio.patch
-# extra PnP id for sb32awe
-Patch118:	linux-2.4.3-sb.patch
-# another sb16 pnp id
-Patch119:	linux-2.4.6-sb_id.patch
-Patch120:	linux-2.4.10-aironet.patch
-Patch121:	linux-2.4.10-cpqfc.patch
-# Created from lvm.tgz:LVM/PATCHES by doing make
-Patch122:	linux-2.4.16-lvm-1.0.1rc4.patch
-# fixed xquad_portio
-Patch123:	xquad_portio.fix
-# 
-Patch124:	linux-proc_net_dev-counter-fix.patch
-
-# Patches fixing other patches or 3rd party sources ;)
-
-# patch to fix missing EXPORT_SYMBOLS from IDE patch
-Patch900:	ide-EXPORT_SYMBOL.fix
-Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
-# tweaks for grsecurity, description inside patch
-Patch906:	linux-grsecurity-fixes.patch
-Patch909:	linux-53c7,8xx-build.fix
-Patch910:	dc395-PLD.fix
-
-# Marcelo's -pre
-#Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -314,119 +208,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a5 -a7 -a10 -a11 -a12 -a13 -n linux
-#%patch1000 -p1
-#%patch0 -p1
-%patch1 -p1
-%patch2 -p1
-%patch3 -p1
-%patch4 -p1
-%patch5 -p1
-#%patch7 -p1
-%patch8 -p1
-%if%{?_without_grsec:0}%{!?_without_grsec:1}
-%ifarch %{ix86}
-%patch9 -p1
-%patch906 -p1
-%endif
-%endif
-
-%patch100 -p0
-%patch101 -p1
-%patch102 -p0
-%patch103 -p0
-%patch105 -p1
-%patch106 -p1
-%patch107 -p1
-%patch108 -p1
-%patch109 -p1
-%patch110 -p1
-%patch111 -p1
-%patch112 -p2
-%patch113 -p1
-%patch115 -p1
-%patch116 -p1
-%patch117 -p1
-%patch118 -p1
-%patch119 -p1
-%patch120 -p1
-%patch121 -p1
-%patch122 -p0
-%patch123 -p1
-%patch124 -p1
-
-%patch900 -p0
-%patch904 -p0
-
-# Tekram DC395/315 U/UW SCSI host driver
-echo Adding Tekram DC395/315 driver
-%patch910 -p0
-patch -p1 -s <dc395/dc395-integ24.diff
-install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
-
-# Fore 200e ATM NIC
-echo Adding FORE 200e ATM driver
-patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
-#patch -p1 -s <linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
-
-# Netfilter
-echo Adding Netfilter
-(KERNEL_DIR=`pwd` ; export KERNEL_DIR
-cd netfilter-patches/patch-o-matic
-ANS=""
-for suite in pending base extra pld ; do
-	for i in `echo ${suite}/*.patch.ipv6` `echo ${suite}/*.patch` ; do
-		ANS="${ANS}y\n"
-	done
-done
-echo -e $ANS | ./runme pld)
-
-# IPVS
-echo Adding IPVS
-%patch13 -p1
-
-# Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
-mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
-sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
-
-# Free S/Wan
-echo Adding Free S/Wan
-mv -f net/ipsec/Makefile net/ipsec/Makefile.orig
-sed -e 's/EXTRA_CFLAGS.*-g//g' net/ipsec/Makefile.orig > net/ipsec/Makefile
-
-# install NCR/Symbios controler
-echo Adding NCR/Symbios controler
-mv %{sym_ncr_version}/*.{c,h} drivers/scsi
-mv %{sym_ncr_version}/{README,ChangeLog}.* Documentation
-rm -rf %{sym_ncr_version}
-
-# IP personality
-echo Adding IP Personality 
-patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010724-linux-2.4.7.diff
-
-# JFS
-echo Adding JFS
-patch -p1 -s <jfs-2.4.common-1.0.10-patch
-patch -p1 -s <jfs-2.4.7-1.0.10-patch
-
-echo Fixed compile process for 53c7,8xx driver
-# fix 53c7,8xx build
-%patch909 -p0
-
-#preemptive kernel patch
-echo Installing Preemptive patch
-%if%{?_with_preemptive:1}%{!?_with_preemptive:0}
-%patch10 -p1
-%endif
-
-# netdev-random
-echo Installing Net Dev Random patch
-%patch11 -p1
-%patch12 -p1
-
-%ifarch %{x86}
-%patch7 -p1
-%endif
+%setup -q -n linux-%{version}
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -480,17 +262,6 @@ BuildKernel() {
 %endif
 %ifarch i686
 	echo "CONFIG_M686=y" >> arch/$RPM_ARCH/defconfig
-%endif
-	cat %{SOURCE1001} >> arch/$RPM_ARCH/defconfig
-	cat %{SOURCE1002} >> arch/$RPM_ARCH/defconfig
-	cat %{SOURCE1003} >> arch/$RPM_ARCH/defconfig
-	cat %{SOURCE1004} >> arch/$RPM_ARCH/defconfig
-%ifarch %{ix86}
-	if [ "$BOOT" ] ; then
-		echo "# CONFIG_GRKERNSEC is not set" >> arch/$RPM_ARCH/defconfig
-	else
-		cat %{SOURCE1666} >> arch/$RPM_ARCH/defconfig
-	fi
 %endif
 %ifarch i386
 	mv -f arch/$RPM_ARCH/defconfig arch/$RPM_ARCH/defconfig.orig
@@ -647,16 +418,9 @@ echo "CONFIG_M586=y" >> .config
 echo "CONFIG_M686=y" >> .config
 %endif
 
-cat %{SOURCE1001} >> .config
-cat %{SOURCE1002} >> .config
-cat %{SOURCE1003} >> .config
-cat %{SOURCE1004} >> .config
-cat %{SOURCE1666} >> .config
-
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
 
-install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
