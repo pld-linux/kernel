@@ -53,26 +53,26 @@ diff -uNr linux-2.6.7.orig/include/linux/netfilter_ipv4/ipt_layer7.h linux-2.6.7
 diff -uNr linux-2.6.7.orig/net/ipv4/netfilter/ip_conntrack_core.c linux-2.6.7/net/ipv4/netfilter/ip_conntrack_core.c
 --- linux-2.6.7.orig/net/ipv4/netfilter/ip_conntrack_core.c	2004-07-14 09:43:27.000000000 +0200
 +++ linux-2.6.7/net/ipv4/netfilter/ip_conntrack_core.c	2004-07-14 09:48:56.054940744 +0200
-@@ -339,6 +339,15 @@
+@@ -315,6 +315,15 @@
  		}
  		kmem_cache_free(ip_conntrack_expect_cachep, ct->master);
  	}
 +
-+	#if defined(CONFIG_IP_NF_MATCH_LAYER7) || defined(CONFIG_IP_NF_MATCH_LAYER7_MODULE)
++#if defined(CONFIG_IP_NF_MATCH_LAYER7) || defined(CONFIG_IP_NF_MATCH_LAYER7_MODULE)
 +	/* This ought to get free'd somewhere.  How about here? */
 +	if(ct->layer7.app_proto) /* this is sufficient, right? */
 +		kfree(ct->layer7.app_proto);
 +	if(ct->layer7.app_data)
 +		kfree(ct->layer7.app_data);
-+	#endif
-+	
++#endif
++
+ 	CONNTRACK_STAT_INC(delete);
  	WRITE_UNLOCK(&ip_conntrack_lock);
  
- 	if (master)
 diff -uNr linux-2.6.7.orig/net/ipv4/netfilter/ip_conntrack_standalone.c linux-2.6.7/net/ipv4/netfilter/ip_conntrack_standalone.c
 --- linux-2.6.7.orig/net/ipv4/netfilter/ip_conntrack_standalone.c	2004-07-14 09:43:27.000000000 +0200
 +++ linux-2.6.7/net/ipv4/netfilter/ip_conntrack_standalone.c	2004-07-14 09:49:35.000000000 +0200
-@@ -177,6 +177,12 @@
+@@ -156,6 +156,12 @@
  		return 1;
  #endif
  
@@ -82,7 +82,7 @@ diff -uNr linux-2.6.7.orig/net/ipv4/netfilter/ip_conntrack_standalone.c linux-2.
 +			return 1;
 +#endif
 +
- 	if (seq_printf(s, "\n"))
+ 	if (seq_printf(s, "use=%u\n", atomic_read(&conntrack->ct_general.use)))
  		return 1;
  
 diff -uNr linux-2.6.7.orig/net/ipv4/netfilter/ipt_layer7.c linux-2.6.7/net/ipv4/netfilter/ipt_layer7.c
