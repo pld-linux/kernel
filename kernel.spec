@@ -113,7 +113,7 @@ Patch502:	linux-2.2.19-ieee1394-ppc.patch.bz2
 Patch503:	2.2.20-ppc_ide.patch
 Patch504:	2.2.21-enable_ibmraid-ppc.patch
 Patch505:	2.2.21-ppc_asm.patch
-Patch506:	2.2.21-ppc_10.patch
+Patch506:	2.2.21-ppc_11.patch
 Patch507:	2.2.21-ppc_ieee1394.patch
 Patch508:	serial-5.05-ppc.patch
 Patch509:	2.2.21-ppc_macserial.patch
