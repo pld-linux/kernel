@@ -745,7 +745,7 @@ cat %{SOURCE1008} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
-mv .config config-up
+cp .config config-up
 
 %ifarch %{ix86}
 cat $RPM_SOURCE_DIR/kernel-ia32-smp.config >> .config
@@ -782,7 +782,7 @@ cat %{SOURCE1008} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
-mv .config config-smp
+cp .config config-smp
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
 
