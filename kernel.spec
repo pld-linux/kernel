@@ -163,6 +163,8 @@ Patch215:	%{name}-cdrw-packet.patch
 Patch216:	%{name}-cd-mrw-2.patch
 Patch220:	linux-2.4.19-pre8-konicawc.patch
 Patch225:	wrr-linux-2.4.9.patch
+
+# from http://people.FreeBSD.org/~gibbs/linux/SRC/aic79xx-linux-2.4-20030318_tar.gz
 Patch230:	linux-2.4-aic79xx-20030318.patch.bz2
 Patch235:	linux-2.4.20-audigy.patch.bz2
 Patch240:	linux-2.4.20-ecc.patch
