@@ -59,7 +59,7 @@ Source74:	%{name}-ppc-smp.config
 
 Source100:	%{name}-misc.config
 
-Patch1:		linux-2.6-miscfix.patch
+Patch1:		patch-2.6.0-test4-bk1
 Patch2:		2.6.0-t3-swim3.patch
 Patch3:		squashfs1.3-patch
 
@@ -314,7 +314,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %prep
 %setup -q -n linux-%{version}-%{test}
-#%patch1 -p1
+%patch1 -p1
 %patch2 -p1
 %patch3 -p1
 
