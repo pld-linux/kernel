@@ -45,6 +45,7 @@ Patch31:	2.6.4-imq.patch
 Patch32:	2.6.4-imq-nat.patch
 Patch50:	2.6.4-pom-ng-%{_netfilter_snap}-base.patch
 Patch51:	2.6.4-pom-ng-%{_netfilter_snap}-extra.patch
+Patch52:	2.6.4-unclean.patch
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 BuildRequires:	module-init-tools
@@ -137,6 +138,7 @@ hardware.
 
 %patch50 -p1
 %patch51 -p1
+%patch52 -p1
 
 %build
 sed -i 's/EXTRAVERSION =.*/EXTRAVERSION =/g' Makefile
