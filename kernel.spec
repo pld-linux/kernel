@@ -732,6 +732,7 @@ fi
 /boot/vmlinux-%{version}-%{release}
 %endif
 %ifarch sparc sparc64
+/boot/vmlinux-%{version}-%{release}
 /boot/vmlinux.aout-%{version}-%{release}
 %endif
 /boot/vmlinuz-%{version}-%{release}
