@@ -682,7 +682,6 @@ fi
 /lib/modules/%{version}-%{release}BOOT/net
 /lib/modules/%{version}-%{release}BOOT/scsi
 %ifarch i386
-/lib/modules/%{version}-%{release}BOOT/video
 /lib/modules/%{version}-%{release}BOOT/pcmcia
 %endif
 %endif
