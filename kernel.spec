@@ -203,7 +203,6 @@ Prereq:		geninitrd
 Obsoletes:      kernel-modules
 
 #i2c and bttv packages are obsolete
-Obsoletes:      i2c-devel
 Obsoletes:      kernel-smp-i2c
 Obsoletes:      bttv
 Obsoletes:      kernel-smp-misc-bttv
@@ -269,6 +268,7 @@ Provides:	i2c-devel = %{i2c_version}
 Provides:	%{name}-headers(ipvs) = %{version}
 Provides:	%{name}-headers(rawio) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
+Obsoletes:	i2c-devel
 Autoreqprov:	no
 
 %description headers
