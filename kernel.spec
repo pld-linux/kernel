@@ -436,7 +436,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch19 -p1
 %patch20 -p1
 %patch26 -p1
-%patch28 -p1
+# fixme
+#%patch28 -p1
 %patch29 -p1
 %patch30 -p1
 
@@ -501,12 +502,6 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 # IP personality
 #echo Adding IP Personality 
 #patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20020427-linux-2.4.18.diff
-
-# install NCR/Symbios controler
-# echo Adding NCR/Symbios controler
-# mv %{sym_ncr_version}/*.{c,h} drivers/scsi
-# mv %{sym_ncr_version}/{README,ChangeLog}.* Documentation
-# rm -rf %{sym_ncr_version}
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
