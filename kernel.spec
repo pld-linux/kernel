@@ -42,7 +42,7 @@ Patch5:		kernel-cpqarray-raid090.patch
 Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide.2.2.14.20000124.patch.gz
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
-BuildRoot:	/tmp/%{name}-%{version}-root
+BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Provides:	module-info
 Autoreqprov:	no
 Obsoletes:	kernel-modules
