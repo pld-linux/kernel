@@ -49,7 +49,7 @@
 %define		_oprofile_ver		0.5.3
 %define		_squashfs_ver		2.1
 
-%define		_rel		4.10%{?with_mosix:m}
+%define		_rel		4.11%{?with_mosix:m}
 %define		_cset		20040707_0722
 %define		_apply_cset	0
 %define		_subversion	.1
@@ -947,6 +947,7 @@ BuildConfig (){
 		KernelVer=%{version}-%{release}$1
 	fi
 	echo "Building config file for KERNEL $1..."
+#" stupid vim
 	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
 	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
 
@@ -1239,6 +1240,15 @@ install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/
 
 %clean
 rm -rf $RPM_BUILD_ROOT
+
+%pre
+# on target system the /boot might not be mounted (it's not required for system
+# to run properly), it could be also mounted ro
+# we will not do any fancy fstab parsing, because it does no harm if the boot
+# is not separate part or is already mounted properly.
+mount /boot >/dev/null 2>&1
+mount /boot -o remount,rw >/dev/null 2>&1
+exit 0
 
 %post
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
