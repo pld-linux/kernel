@@ -39,6 +39,7 @@ Source73:	%{name}-sparc64-BOOT.config
 Source81:	%{name}-alpha.config
 Source82:	%{name}-alpha-smp.config
 Source83:	%{name}-alpha-BOOT.config
+Source84:	serial-5.05.tar.gz
 Patch0:		%{name}-pldfblogo.patch
 Patch1:		linux-2.2.18-freeswan-%{freeswan_version}.patch
 Patch2:		wanrouter-v2215.patch.gz
@@ -304,7 +305,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -n linux
+%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a84 -n linux
 %patch0 -p1
 %patch1 -p1
 %patch2 -p1
@@ -350,6 +351,10 @@ patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 mv sym-1.7.2-ncr-3.4.2/*.{c,h} drivers/scsi
 mv sym-1.7.2-ncr-3.4.2/{README,ChangeLog}.* Documentation
 rm -rf sym-1.7.2-ncr-3.4.2
+
+cd  serial-5.05
+./install-in-kernel ../
+cd .. 
 
 %build
 BuildKernel() {
