@@ -23,7 +23,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.17
-Release:	0.0
+Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -331,7 +331,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch103 -p0
 %patch105 -p1
 %patch106 -p1
-%patch107 -p1
+#%patch107 -p1
 %patch108 -p1
 %patch109 -p1
 %patch110 -p1
