@@ -51,6 +51,7 @@
 
 %define		_netfilter_snap		20040608
 
+%define		_enable_debug_packages			0
 %define		no_install_post_strip			1
 %define		no_install_post_compress_modules	1
 %define		no_install_post_chrpath			1
