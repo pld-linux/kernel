@@ -1,0 +1,145 @@
+diff -urNp linux-2331/drivers/usb/storage/unusual_devs.h linux-2340/drivers/usb/storage/unusual_devs.h
+--- linux-2331/drivers/usb/storage/unusual_devs.h	
++++ linux-2340/drivers/usb/storage/unusual_devs.h	
+@@ -137,6 +137,12 @@ UNUSUAL_DEV(  0x04da, 0x0901, 0x0100, 0x
+                "LS-120 Camera",
+                US_SC_UFI, US_PR_CBI, NULL, 0),
+ 
++/* From Yukihiro Nakai, via zaitcev@yahoo.com. */
++UNUSUAL_DEV(  0x04da, 0x0d05, 0x0000, 0x0000,
++               "Sharp CE-CW05",
++               "CD-R/RW Drive",
++               US_SC_8070, US_PR_CB, NULL, 0),
++
+ /* Most of the following entries were developed with the help of
+  * Shuttle/SCM directly.
+  */
+@@ -404,7 +404,7 @@ UNUSUAL_DEV(  0x0781, 0x0002, 0x0009, 0x
+ 		"Sandisk",
+ 		"ImageMate SDDR-31",
+ 		US_SC_SCSI, US_PR_BULK, NULL,
+-		US_FL_IGNORE_SER),
++		US_FL_IGNORE_SER | US_FL_START_CHECK ),
+ 
+ UNUSUAL_DEV(  0x0781, 0x0100, 0x0100, 0x0100,
+                 "Sandisk",
+diff -urNp linux-1620/drivers/usb/storage/usb.c linux-2310/drivers/usb/storage/usb.c
+--- linux-1620/drivers/usb/storage/usb.c	
++++ linux-2310/drivers/usb/storage/usb.c	
+@@ -453,6 +453,20 @@ static int usb_stor_control_thread(void 
+ 					US_DEBUGP("Faking INQUIRY command\n");
+ 					fill_inquiry_response(us, data_ptr, 36);
+ 					us->srb->result = GOOD << 1;
++				} else if ((us->srb->cmnd[0] == START_STOP) &&
++				    (us->flags & US_FL_START_CHECK)) {
++					unsigned char saved_cdb[6];
++
++					/* Handle those devices which fake
++					 * START_STOP on us, this confuses
++					 * the hell out of media check code. */
++					US_DEBUGP("Convering START_STOP command\n");
++					memcpy(saved_cdb, us->srb->cmnd, 6);
++					memset(us->srb->cmnd, 0, 6);
++					us->srb->cmnd[0] = TEST_UNIT_READY;
++					US_DEBUG(usb_stor_show_command(us->srb));
++					us->proto_handler(us->srb, us);
++					memcpy(us->srb->cmnd, saved_cdb, 6);
+ 				} else {
+ 					/* we've got a command, let's do it! */
+ 					US_DEBUG(usb_stor_show_command(us->srb));
+diff -urNp linux-1620/drivers/usb/storage/usb.h linux-2310/drivers/usb/storage/usb.h
+--- linux-1620/drivers/usb/storage/usb.h	
++++ linux-2310/drivers/usb/storage/usb.h	
+@@ -98,6 +98,7 @@ struct us_unusual_dev {
+ #define US_FL_MODE_XLATE      0x00000002 /* translate _6 to _10 commands for
+ 						    Win/MacOS compatibility */
+ #define US_FL_START_STOP      0x00000004 /* ignore START_STOP commands	    */
++#define US_FL_START_CHECK     0x00000008 /* START_STOP => TEST UNIT READY   */
+ #define US_FL_IGNORE_SER      0x00000010 /* Ignore the serial number given  */
+ #define US_FL_SCM_MULT_TARG   0x00000020 /* supports multiple targets */
+ #define US_FL_FIX_INQUIRY     0x00000040 /* INQUIRY response needs fixing */
+--- linux-2.4.19/drivers/usb/usb-ohci.c	2002-08-02 17:39:45.000000000 -0700
++++ linux-2.4.19-p3/drivers/usb/usb-ohci.c	2002-10-23 14:22:24.000000000 -0700
+@@ -2165,7 +2165,19 @@
+ 
+   	/* Reset USB (needed by some controllers) */
+ 	writel (0, &ohci->regs->control);
+-      	
++
++	/*
++	 * Work around lockups in IBM i1200/i1300. We victimize all similar ALi
++	 * motherboards in the process, but it does not hurt them.
++	 * Fix from Alex T. H. Chou @ALi.
++	 */
++	if (ohci->ohci_dev->vendor == PCI_VENDOR_ID_AL &&
++	    ohci->ohci_dev->device == PCI_DEVICE_ID_AL_M5237) {
++		/* Force a state change from USBRESET to USBOPERATIONAL */
++		(void) readl (&ohci->regs->control);	/* PCI posting above */
++		writel (ohci->hc_control = OHCI_USB_OPER, &ohci->regs->control);
++	}
++
+ 	/* HC Reset requires max 10 ms delay */
+ 	writel (OHCI_HCR,  &ohci->regs->cmdstatus);
+ 	while ((readl (&ohci->regs->cmdstatus) & OHCI_HCR) != 0) {
+diff -urNp linux-2310/drivers/usb/inode.c linux-2330/drivers/usb/inode.c
+--- linux-2310/drivers/usb/inode.c	
++++ linux-2330/drivers/usb/inode.c	
+@@ -102,6 +102,27 @@ static void new_dev_inode(struct usb_dev
+ 		printk(KERN_ERR "usbdevfs: cannot create inode for bus %u device %u\n", busnum, devnum);
+ 		return;
+ 	}
++	if (inode->u.usbdev_i.slist.next != NULL) {
++		/*
++		 * We are on the list already. This is not supposed to happen.
++		 * The suspicion is that anaconda races khubd (we always get
++		 * here at khubd context from usbdevfs_add_device, with dev
++		 * pointer set correctly, even though khubd kmalloc's it).
++		 */
++		if (inode->u.usbdev_i.p.dev != NULL &&
++		    inode->u.usbdev_i.p.dev != dev) {
++			printk(KERN_WARNING
++			    "usbdevfs: confused by inode %d(0x%x)\n",
++			    (int) inode->i_ino, (int) inode->i_ino);
++		}
++		if (inode->i_fop != &usbdevfs_device_file_operations) {
++			printk(KERN_WARNING
++			    "usbdevfs: lost fops in inode %d(0x%x)\n",
++			    (int) inode->i_ino, (int) inode->i_ino);
++			inode->i_fop = &usbdevfs_device_file_operations;
++		}
++		return;
++	}
+ 	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
+ 	inode->i_uid = sb->u.usbdevfs_sb.devuid;
+ 	inode->i_gid = sb->u.usbdevfs_sb.devgid;
+@@ -158,9 +179,7 @@ static void free_inode(struct inode *ino
+ 	inode->i_uid = inode->i_gid = 0;
+ 	inode->i_size = 0;
+ 	list_del(&inode->u.usbdev_i.slist);
+-	INIT_LIST_HEAD(&inode->u.usbdev_i.slist);
+ 	list_del(&inode->u.usbdev_i.dlist);
+-	INIT_LIST_HEAD(&inode->u.usbdev_i.dlist);
+ 	iput(inode);
+ }
+ 
+@@ -512,8 +531,6 @@ static void usbdevfs_read_inode(struct i
+ 	inode->i_ctime = inode->i_mtime = inode->i_atime = CURRENT_TIME;
+ 	inode->i_mode = S_IFREG;
+ 	inode->i_gid = inode->i_uid = 0;
+-	INIT_LIST_HEAD(&inode->u.usbdev_i.dlist);
+-	INIT_LIST_HEAD(&inode->u.usbdev_i.slist);
+ 	inode->u.usbdev_i.p.dev = NULL;
+ 	inode->u.usbdev_i.p.bus = NULL;
+ 	switch (ITYPE(inode->i_ino)) {
+diff -urNp linux-2330/drivers/usb/pegasus.h linux-2331/drivers/usb/pegasus.h
+--- linux-2330/drivers/usb/pegasus.h	
++++ linux-2331/drivers/usb/pegasus.h	
+@@ -164,7 +164,7 @@ PEGASUS_DEV( "USB 10/100 Fast Ethernet",
+ PEGASUS_DEV( "Accton USB 10/100 Ethernet Adapter", VENDOR_ACCTON, 0x1046,
+ 		DEFAULT_GPIO_RESET )
+ PEGASUS_DEV( "SpeedStream USB 10/100 Ethernet", VENDOR_ACCTON, 0x5046,
+-		DEFAULT_GPIO_RESET )
++		DEFAULT_GPIO_RESET | PEGASUS_II )
+ PEGASUS_DEV( "ADMtek ADM8511 \"Pegasus II\" USB Ethernet",
+ 		VENDOR_ADMTEK, 0x8511,
+ 		DEFAULT_GPIO_RESET | PEGASUS_II )
