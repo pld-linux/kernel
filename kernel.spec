@@ -176,6 +176,7 @@ Patch76:	2.6.8-lirc-0.7.0-pre7.patch
 # derived from official grsecurity-2.1.0-2.6.10-200501071049.patch
 Patch90:	grsecurity-2.1.0-2.6.10-200501071049.patch
 Patch91:	linux-2.6.10-secfix-200501071130.patch
+Patch92:	linux-2.6-do_brk.patch
 
 # http://lkml.org/lkml/2004/6/2/233
 Patch95:	http://people.redhat.com/mingo/exec-shield/exec-shield-nx-2.6.7-A0
@@ -591,6 +592,8 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch91 -p1
 %endif
 %endif
+
+%patch92 -p1
 
 %if %{with execshield}
 install %{PATCH95} exec-shield.patch
