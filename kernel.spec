@@ -144,7 +144,11 @@ Patch910:	dc395-PLD.fix
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
-BuildRequires:	gcc >= 2.95.3
+%ifarch sparc64
+BuildRequires:	egcs64
+%else
+BuildRequires:	egcs
+%endif
 BuildRequires:	modutils
 Buildrequires:	perl
 Provides:	%{name}-up = %{version}
@@ -476,7 +480,12 @@ echo Installing Preemptive patch
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
-    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= %{__cc}/g' \
+%ifarch %{ix86} alpha sparc
+    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= egcs/g' \
+%endif
+%ifarch sparc64
+    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
+%endif
     Makefile.orig >Makefile
 
 
