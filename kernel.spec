@@ -94,8 +94,8 @@ Patch61:	06-kinoded-9.diff.gz
 Patch62:	06-write_times.diff.gz
 Patch63:	01-reiserfs-xattrs-2.4.23+datalogging+quota-03
 Patch64:	02-reiserfs-acl-2.4.23+datalogging+quota-03
-# http://dl.sourceforge.net/squashfs/squashfs-1.3.tar.gz
-Patch65:	squashfs1.3-2.4.21-patch
+# http://dl.sourceforge.net/squashfs/
+Patch65:	squashfs1.3r3-2.4.25.patch
 #from http://sci.felk.cvut.cz/nwd/linux/nwd-patch-2.4.19
 Patch70:	nwd-2.4.21.patch
 Patch80:	linux-2.4.25-intermezzo-acl.patch
