@@ -53,6 +53,7 @@
 %define		_rel		0.1%{?with_mosix:+mosx}
 %define		_cset		20040707_0722
 %define		_apply_cset	0
+%define		_subversion	.1
 
 %define		_netfilter_snap		20040629
 
@@ -76,7 +77,7 @@ License:	GPL
 Group:		Base/Kernel
 %define		_rc	%{nil}
 #define		_rc	-rc3
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.1.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_subversion}.tar.bz2
 # Source0-md5:	9517ca999e822b898fbdc7e72796b1aa
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
@@ -589,7 +590,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}%{_rc}
+%setup -q -n linux-%{version}%{_subversion}%{_rc}
 
 %patch0 -p1
 
