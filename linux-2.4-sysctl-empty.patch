@@ -1,0 +1,61 @@
+Don't register empty sysctl dirs in /proc/sys.
+They would be removed after registering some other sysctl(s) in the
+same directory (e.g. rtc in /proc/sys/dev) and unregistering all of
+them (then initially empty e.g. /proc/sys/dev disappears).
+After disappearing of directory topdir ->de (for "dev") points to
+structure which has been freed.
+It's harmless in vanilla 2.4, but with grsecurity causes an Oops
+on numeric sysctls referring to removed directory (even with all
+grsecurity features disabled, only patch applied).
+
+The same issue seems to exist in 2.6, and _probably_ can cause similar
+problems in selinux.
+
+	-- Jakub Bogusz <qboosh@pld-linux.org>
+
+--- linux-2.4.20/kernel/sysctl.c.orig	Mon Dec 15 11:05:08 2003
++++ linux-2.4.20/kernel/sysctl.c	Mon Dec 15 15:48:46 2003
+@@ -124,10 +124,8 @@
+ #ifdef CONFIG_NET
+ extern ctl_table net_table[];
+ #endif
+-static ctl_table proc_table[];
+ static ctl_table fs_table[];
+ static ctl_table debug_table[];
+-static ctl_table dev_table[];
+ extern ctl_table random_table[];
+ 
+ static ctl_table grsecurity_table[];
+@@ -163,10 +161,8 @@
+ #ifdef CONFIG_NET
+ 	{CTL_NET, "net", NULL, 0, 0555, net_table},
+ #endif
+-	{CTL_PROC, "proc", NULL, 0, 0555, proc_table},
+ 	{CTL_FS, "fs", NULL, 0, 0555, fs_table},
+ 	{CTL_DEBUG, "debug", NULL, 0, 0555, debug_table},
+-        {CTL_DEV, "dev", NULL, 0, 0555, dev_table},
+ 	{0}
+ };
+ 
+@@ -488,10 +484,6 @@
+ 	{0}
+ };
+ 
+-static ctl_table proc_table[] = {
+-	{0}
+-};
+-
+ static ctl_table fs_table[] = {
+ 	{FS_NRINODE, "inode-nr", &inodes_stat, 2*sizeof(int),
+ 	 0444, NULL, &proc_dointvec},
+@@ -526,10 +518,6 @@
+ 	{0}
+ };
+ 
+-static ctl_table dev_table[] = {
+-	{0}
+-};  
+-
+ extern void init_irq_proc (void);
+ 
+ void __init sysctl_init(void)
