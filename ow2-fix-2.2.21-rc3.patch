@@ -1,0 +1,62 @@
+diff -urN linux.orig/linux-2.2.20-ow2/linux-2.2.20-ow2.diff linux/linux-2.2.20-ow2/linux-2.2.20-ow2.diff
+--- linux.orig/linux-2.2.20-ow2/linux-2.2.20-ow2.diff	Sat Apr 20 15:57:25 2002
++++ linux/linux-2.2.20-ow2/linux-2.2.20-ow2.diff	Sat Apr 20 16:04:45 2002
+@@ -943,58 +943,6 @@
+  
+  #
+  # Watchdog
+-diff -urPX nopatch linux-2.2.20/drivers/char/bttv.c linux/drivers/char/bttv.c
+---- linux-2.2.20/drivers/char/bttv.c	Sat Nov  3 01:07:45 2001
+-+++ linux/drivers/char/bttv.c	Thu Feb 28 23:26:10 2002
+-@@ -1981,7 +1981,7 @@
+- 				}
+- 			} else if (vw.clipcount > 2048) 
+- 				return -ENOMEM;
+--			else {
+-+			else if (vw.clipcount) {
+- 				if((vcp=vmalloc(sizeof(struct video_clip)*
+- 					(vw.clipcount))) == NULL)
+- 					return -ENOMEM;
+-diff -urPX nopatch linux-2.2.20/drivers/net/zlib.c linux/drivers/net/zlib.c
+---- linux-2.2.20/drivers/net/zlib.c	Tue Feb 10 23:56:45 1998
+-+++ linux/drivers/net/zlib.c	Sat Mar  2 01:18:00 2002
+-@@ -3860,10 +3860,11 @@
+-                              &s->sub.trees.tb, z);
+-       if (t != Z_OK)
+-       {
+--        ZFREE(z, s->sub.trees.blens);
+-         r = t;
+--        if (r == Z_DATA_ERROR)
+-+        if (r == Z_DATA_ERROR) {
+-+          ZFREE(z, s->sub.trees.blens);
+-           s->mode = BADB;
+-+        }
+-         LEAVE
+-       }
+-       s->sub.trees.index = 0;
+-@@ -3928,11 +3929,12 @@
+- #endif
+-         t = inflate_trees_dynamic(257 + (t & 0x1f), 1 + ((t >> 5) & 0x1f),
+-                                   s->sub.trees.blens, &bl, &bd, &tl, &td, z);
+--        ZFREE(z, s->sub.trees.blens);
+-         if (t != Z_OK)
+-         {
+--          if (t == (uInt)Z_DATA_ERROR)
+-+          if (t == (uInt)Z_DATA_ERROR) {
+-+            ZFREE(z, s->sub.trees.blens);
+-             s->mode = BADB;
+-+          }
+-           r = t;
+-           LEAVE
+-         }
+-@@ -3949,6 +3951,7 @@
+-         s->sub.decode.tl = tl;
+-         s->sub.decode.td = td;
+-       }
+-+      ZFREE(z, s->sub.trees.blens);
+-       s->mode = CODES;
+-     case CODES:
+-       UPDATE
+ diff -urPX nopatch linux-2.2.20/drivers/scsi/st.c linux/drivers/scsi/st.c
+ --- linux-2.2.20/drivers/scsi/st.c	Sat Nov  3 01:07:50 2001
+ +++ linux/drivers/scsi/st.c	Thu Feb 28 23:26:10 2002
