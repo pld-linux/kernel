@@ -509,7 +509,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch18 -p1
 %patch20 -p1
 
-%patch22 -p1
+#%%patch22 -p1
 
 %patch24 -p1
 
@@ -532,7 +532,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch46 -p1
 
-%patch48 -p1
+# Arekm look into this - IMHO included in cset
+#%%patch48 -p1
 
 %patch50 -p1
 
@@ -544,12 +545,12 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch58 -p1
 
-%patch60 -p1
-%patch61 -p0
-%patch62 -p1
+#%%patch60 -p1
+#%%patch61 -p0
+#%%patch62 -p1
 
-%patch64 -p1
-%patch65 -p1
+#%%patch64 -p1
+#%%patch65 -p1
 
 %patch68 -p1
 
