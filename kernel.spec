@@ -2,7 +2,7 @@
 %define		pcmcia_version		3.1.24
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.29
-%define		i2c_version		2.5.4
+%define		i2c_version		2.5.5
 %define		wlan_version		0.3.4
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -10,7 +10,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.18
-Release:	12
+Release:	13
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -60,8 +60,8 @@ Patch15:	%{name}-ipvs-1.0.3-2.2.18.patch
 Patch16:	linux-raw.patch
 Patch17:	linux-i815-support.patch
 Patch18:	kernel-ide-geometry.patch
-#Patch:		linux-2.2.18pre21.ext3.diff
 Patch19:	kernel-pcmcia.patch
+Patch20:	linux-sparc_ide_fix.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -315,8 +315,10 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch14 -p1
 %patch15 -p1
 %patch16 -p1
+%patch17 -p1
 %patch18 -p1
 %patch19 -p1
+%patch20 -p1
 %ifarch %{ix86}
 cd ..
 rm -rf i2c-%{i2c_version}
@@ -529,7 +531,9 @@ gzip -dc %{PATCH13} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH16}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH17}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH18}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH20}
 
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
 
