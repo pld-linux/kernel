@@ -612,10 +612,10 @@ cd ../..
 
 cd tun-%{tun_version}
 aclocal
-autoconf
+%{__autoconf}
 (cd linux
 aclocal
-autoconf)
+%{__autoconf})
 %configure \
 	--with-kernel="$KERNEL_BUILD_DIR"
 make
