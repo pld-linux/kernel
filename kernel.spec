@@ -100,8 +100,6 @@ Source80:	%{name}-netfilter.config
 Source90:	%{name}-grsec.config
 
 Patch0:		2.6.0-ksyms-add.patch
-Patch1:		%{name}-isofs-128GB.patch
-Patch2:		linux-2.6-isofs-4G.patch
 
 # from http://dl.sf.net/sourceforge/squashfs/
 Patch4:		squashfs2.0-patch
@@ -586,16 +584,13 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}%{_rc} -a2
+%setup -q -n linux-%{version}%{_rc}
 
 %patch0 -p1
 
 %if "%{_apply_cset}" != "0"
 zcat %{SOURCE3} | patch -p1 -s
 %endif
-
-#patch1 -p1
-#patch2 -p1
 
 %patch4 -p1
 
