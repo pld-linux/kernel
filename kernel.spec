@@ -486,7 +486,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch500 -p1
 %patch501 -p1
 %endif
-%patch501 -p1
+%patch502 -p1
 
 %patch550 -p1
 %patch551 -p1
