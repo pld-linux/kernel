@@ -788,8 +788,8 @@ fi
 /lib/modules/%{version}-%{release}BOOT/net
 /lib/modules/%{version}-%{release}BOOT/scsi
 %ifarch %{ix86} 
-/lib/modules/%{version}-%{release}/usb
-/lib/modules/%{version}-%{release}/video
+/lib/modules/%{version}-%{release}BOOT/usb
+/lib/modules/%{version}-%{release}BOOT/video
 %endif
 %ifarch i386
 /lib/modules/%{version}-%{release}BOOT/pcmcia
