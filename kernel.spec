@@ -75,6 +75,8 @@ Patch12:	linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
 Patch15:	linux-2.4.20-sched-O1.patch
 Patch20:	http://dl.sourceforge.net/user-mode-linux/uml-patch-2.4.20-1.bz2
 Patch21:	linux-2.4.20-uml-o1.patch
+# http://unc.dl.sourceforge.net/sourceforge/user-mode-linux/host-skas3.patch
+Patch22:	linux-2.4.20-uml-host-skas3.patch
 
 # New filesystems
 
@@ -578,6 +580,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch15 -p1
 %patch20 -p1
 %patch21 -p1
+%patch22 -p1
 %patch25 -p1
 %patch26 -p1
 %patch30 -p1
