@@ -328,11 +328,11 @@ BuildKernel() {
     %{__make} dep 
     make include/linux/version.h 
 %ifarch %{ix86}
-    %{__make} bzImage EXTRAVERSION="-%{release}"
+    %{__make} bzImage EXTRAVERSION="-%{release}" CC="egcs -D__KERNEL__ -I\$(HPATH)"
 %else
-    %{__make} boot EXTRAVERSION="-%{release}"
+    %{__make} boot EXTRAVERSION="-%{release}" CC="egcs -D__KERNEL__ -I\$(HPATH)"
 %endif
-    %{__make} modules EXTRAVERSION="-%{release}"
+    %{__make} modules EXTRAVERSION="-%{release}" CC="egcs -D__KERNEL__ -I\$(HPATH)"
     mkdir -p $RPM_BUILD_ROOT/boot
     install System.map $RPM_BUILD_ROOT/boot/System.map-$KernelVer
 %ifarch %{ix86}
@@ -379,15 +379,13 @@ sed "s/^DIRS =.*//" Makefile.bak > Makefile
 sed "s/.*= 8390\..$//" clients/Makefile.bak > clients/Makefile
 
 %{__make} all \
+	CC=egcs \
 	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
 	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNELDIR/include -D__KERNEL__ -DEXPORT_SYMTAB"
 
 %{__make} PREFIX=$RPM_BUILD_ROOT install
 cd ..
 }
-
-CC="egcs -D__KERNEL__ -I\$\(HPATH\)"
-export CC
 
 rm -rf $RPM_BUILD_ROOT
 
