@@ -112,7 +112,7 @@ Patch903:	rl2-include.patch
 Patch904:	linux-lids-fixpatch.patch
 
 # Linus's -pre
-Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.6-%{pre_version}.gz
+#Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.6-%{pre_version}.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
