@@ -1,7 +1,7 @@
 %define		pcmcia_version		3.1.24
 %define		lids_version		1.0.5
 %define		ipvs_version		0.2.3
-%define		ac_version		ac2
+%define		ac_version		ac3
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
