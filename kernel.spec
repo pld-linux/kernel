@@ -374,7 +374,7 @@ PCMCIA-CS modules.
 %description -l pl pcmcia-cs
 Modu³y PCMCIA-CS.
 
-%package pcmcia-cs-smp
+%package -n kernel-smp-pcmcia-cs
 Summary:	PCMCIA-CS modules for SMP kernel
 Summary(pl):	Modu³y PCMCIA-CS dla maszyn SMP
 Group:		Base/Kernel
@@ -382,10 +382,10 @@ Group(pl):	Podstawowe/Kernel
 Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
 Prereq:		%{name}-smp = %{version}-%{release}
 
-%description pcmcia-cs-smp
+%description -n kernel-smp-pcmcia-cs
 PCMCIA-CS modules for SMP kernel.
 
-%description -l pl pcmcia-cs-smp
+%description -l pl -n kernel-smp-pcmcia-cs
 Modu³y PCMCIA-CS dla maszyn SMP.
 
 %package drm
@@ -402,7 +402,7 @@ DRM kernel modules.
 %description -l pl drm
 Sterowniki DRM.
 
-%package drm-smp
+%package -n kernel-smp-drm
 Summary:	DRM SMP kernel modules
 Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
 Group:		Base/Kernel
@@ -410,10 +410,10 @@ Group(pl):	Podstawowe/Kernel
 Provides:       %{name}-drm = %{drm_xfree_version}
 Prereq:		%{name}-smp = %{version}-%{release}
 
-%description drm-smp
+%description -n kernel-smp-drm
 DRM SMP kernel modules.
 
-%description -l pl drm-smp
+%description -l pl -n kernel-smp-drm
 Sterowniki DRM dla maszyn wieloprocesorowych.
 
 %package headers
@@ -1133,16 +1133,16 @@ fi
 %postun pcmcia-cs
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
-%post pcmcia-cs-smp
+%post -n kernel-smp-pcmcia-cs
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
 
-%postun pcmcia-cs-smp
+%postun -n kernel-smp-pcmcia-cs
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
 
 %postun drm
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
-%post drm-smp
+%post -n kernel-smp-drm
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
 
 %if %{?_without_up:0}%{!?_without_up:1}
@@ -1175,14 +1175,14 @@ fi
 /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 
 %if %{?_without_smp:0}%{!?_without_smp:1}
-%files pcmcia-cs-smp
+%files -n kernel-smp-pcmcia-cs
 %defattr(644,root,root,755)
 %ifarch %{ix86}
 /lib/modules/%{version}-%{release}smp/pcmcia
 %endif
 /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 
-%files drm-smp
+%files -n kernel-smp-drm
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 
