@@ -31,11 +31,11 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.4.20
-Release:	4.4%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Version:	2.4.21
+Release:	0.%{pre_version}.%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}.1
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.gz
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
@@ -72,7 +72,7 @@ Patch10:	patch-int-2.4.20.1.bz2
 Patch11:	loop-jari-2.4.20.0.patch
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch12:	linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
-Patch15:	linux-2.4.20-sched-O1.patch
+Patch15:	linux-2.4.21-sched-O1.patch
 Patch16:	linux-2.4.20-sched-O1-ingo-fixes.patch
 Patch20:	http://dl.sourceforge.net/user-mode-linux/uml-patch-2.4.20-1.bz2
 Patch21:	linux-2.4.20-uml-o1.patch
@@ -82,7 +82,7 @@ Patch22:	linux-2.4.20-uml-host-skas3.patch
 # New filesystems
 
 # http://linux-xfs.sgi.com/projects/xfs/
-Patch25:	linux-2.4.20-core-xfs-1.2.0.patch.bz2
+Patch25:	linux-2.4.21-core-xfs-1.2.0.patch.bz2
 Patch26:	linux-2.4.20-xfs-1.2.0.patch.bz2
 # http://acl.bestbits.at/
 Patch30:	linux-2.4.20-jfs-xattr.patch
@@ -207,7 +207,7 @@ Patch1008:	jam-15-fast-csum-D.patch
 Patch1009:	jam-21-mem-barriers.patch
 Patch1010:	jam-30-smptimers-A0.patch
 
-Patch1100:	linux-2.4.18-lvm-VFSlock.patch
+Patch1100:	linux-2.4.21-lvm-VFSlock.patch
 Patch1102:	linux-2.4.20-lvm-updates.patch
 
 # fix lun probing on multilun RAID chassis
@@ -302,6 +302,8 @@ Patch3004:	linux-2.4.20-sym53c8xx_old.patch
 # Security fixes
 
 Patch4000:	linux-2.4.20-ptrace-hole.patch
+
+Patch10000:	patch-2.4.21-pre6.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -571,6 +573,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %prep
 %setup -q -a3 -a6 -a8 -a9 -n linux-%{version}
+%patch10000 -p1
 # JFS 1.1.1
 rm -fr fs/jfs
 gzip -dc %{SOURCE7} | tar -xf -
@@ -581,101 +584,101 @@ bzip2 -dc %{SOURCE10} | tar -xf - -C drivers/scsi/
 cp -f drm/*.{c,h} drivers/char/drm/
 %patch0 -p1
 %patch10 -p1
-%patch11 -p1
+#%patch11 -p1
 %patch12 -p1
 %patch15 -p1
 %patch16 -p1
-%patch20 -p1
-%patch21 -p1
-%patch22 -p1
+#%patch20 -p1
+#%patch21 -p1
+#%patch22 -p1
 %patch25 -p1
 %patch26 -p1
-%patch30 -p1
-%patch31 -p1
-%patch32 -p1
-%patch33 -p1
-%patch40 -p1
-%patch41 -p1
+#%patch30 -p1
+#%patch31 -p1
+#%patch32 -p1
+#%patch33 -p1
+#%patch40 -p1
+#%patch41 -p1
 %patch45 -p1
 %patch50 -p1
 %patch55 -p1
-%patch60 -p1
-%patch65 -p1
+#%patch60 -p1
+#%patch65 -p1
 #%patch70 -p1
 %patch75 -p1
-%patch100 -p1
+#%patch100 -p1
 %patch110 -p1
 %patch111 -p1
 %patch115 -p1
 %patch120 -p1
 %patch125 -p1
-%patch150 -p1
-%patch151 -p1
-%patch152 -p1
-%patch153 -p1
-%patch154 -p1
-%patch155 -p1
-%patch156 -p1
-%patch157 -p1
-%patch158 -p1
-%patch159 -p1
-%patch160 -p1
-%patch161 -p1
-%patch162 -p0
-%patch180 -p1
-%patch181 -p1
-%patch185 -p1
-%patch200 -p1
-%patch201 -p1
-%patch205 -p1
-%patch206 -p1
-%patch210 -p1
-%patch215 -p1
-%patch216 -p1
-%patch220 -p1
-%patch225 -p1
-%patch230 -p1
+#%patch150 -p1
+#%patch151 -p1
+#%patch152 -p1
+#%patch153 -p1
+#%patch154 -p1
+#%patch155 -p1
+#%patch156 -p1
+#%patch157 -p1
+#%patch158 -p1
+#%patch159 -p1
+#%patch160 -p1
+#%patch161 -p1
+#%patch162 -p0
+#%patch180 -p1
+#%patch181 -p1
+#%patch185 -p1
+#%patch200 -p1
+#%patch201 -p1
+#%patch205 -p1
+#%patch206 -p1
+#%patch210 -p1
+#%patch215 -p1
+#%patch216 -p1
+#%patch220 -p1
+#%patch225 -p1
+#%patch230 -p1
 %patch235 -p1
 %patch240 -p1
 %patch245 -p1
 %patch246 -p1
-%patch255 -p1
-%patch260 -p1
+#%patch255 -p1
+#%patch260 -p1
 %patch265 -p1
 %patch275 -p1
 %patch1000 -p1
-%patch1001 -p1
+#%patch1001 -p1
 %patch1002 -p1
 %patch1003 -p1
 %patch1004 -p1
-%patch1005 -p1
+#%patch1005 -p1
 %patch1006 -p1
 %patch1007 -p1
 %patch1008 -p1
 %patch1009 -p1
-%patch1010 -p1
+#%patch1010 -p1
 %patch1100 -p1
 %patch1102 -p1
 %patch1105 -p1
 %patch1106 -p0
-%patch1110 -p1
+#%patch1110 -p1
 %patch1111 -p1
-%patch1112 -p1
-%patch1113 -p1
+#%patch1112 -p1
+#%patch1113 -p1
 %patch1150 -p1
 %patch1151 -p1
 %patch1152 -p1
 %patch1153 -p1
 %patch1154 -p1
-%patch1155 -p1
-%patch1200 -p1
-%patch1201 -p1
+#%patch1155 -p1
+#%patch1200 -p1
+#%patch1201 -p1
 %patch1202 -p1
 %patch1203 -p1
 %patch1205 -p1
-%patch1206 -p0
+#%patch1206 -p0
 %patch1207 -p1
-%patch1208 -p0
+#%patch1208 -p0
 %patch1209 -p1
 %patch1250 -p1
 %patch1251 -p1
@@ -687,12 +690,12 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1302 -p1
 %patch1303 -p1
 %patch1304 -p1
-%patch1305 -p1
-%patch1306 -p1
-%patch1350 -p1
-%patch1351 -p1
-%patch1352 -p1
-%patch1353 -p1
+#%patch1305 -p1
+#%patch1306 -p1
+#%patch1350 -p1
+#%patch1351 -p1
+#%patch1352 -p1
+#%patch1353 -p1
 %patch1354 -p1
 %patch1400 -p1
 %patch1401 -p1
@@ -706,24 +709,24 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1409 -p1
 %patch1410 -p1
 %patch1411 -p1
-%patch1412 -p1
+#%patch1412 -p1
 %patch1413 -p1
-%patch1414 -p1
+#%patch1414 -p1
 %patch1415 -p0
-%patch1416 -p1
-%patch1417 -p1
+#%patch1416 -p1
+#%patch1417 -p1
 
 %patch2000 -p0
 %patch2001 -p1
 %patch2002 -p1
 %patch2003 -p1
 
-%patch3000 -p1
-%patch3001 -p1
-%patch3002 -p1
-%patch3003 -p1
+#%patch3000 -p1
+#%patch3001 -p1
+#%patch3002 -p1
+#%patch3003 -p1
 %patch3004 -p1
-%patch4000 -p1
+#%patch4000 -p1
 
 mv -f drivers/scsi/sym53c8xx.c drivers/scsi/sym53c8xx_old.c
 
