@@ -903,9 +903,9 @@ echo SPARC patches ...
 
 %ifarch alpha
 echo AXP patches ...
-%patch119 -p0
+%patch119 -p1
 #EXPORT_SYBMOL for AXP
-%patch203 -p1
+#%%patch203 -p1
 %patch204 -p1
 %endif
 
