@@ -151,7 +151,6 @@ Patch76:	2.6.x-TGA-fbdev-lkml.patch
 Patch78:	linux-alpha-isa.patch
 
 Patch80:	linux-vfc_dev-include.patch
-Patch81:	linux-sparc-smp.patch
 
 Patch82:	2.6.3-ini9100u-fix.patch
 
@@ -567,7 +566,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch78 -p1
 
 %patch80 -p1
-%patch81 -p1
 
 %patch82 -p1
 
