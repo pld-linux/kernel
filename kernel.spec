@@ -33,7 +33,7 @@ Source19:	%{name}-sparc-BOOT.config
 Source20:	%{name}-sparc.config
 Source21:	%{name}-sparc-smp.config
 Source22:	%{name}-autoconf.h
-Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.22-pre1.bz2
+Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.22-pre7.bz2
 #Patch1:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/linux-2.4/2.4.21/patch-2.4.21-rc6-ac1.bz2
 ExclusiveOS:	Linux
 Autoreqprov:	no
