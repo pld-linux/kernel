@@ -141,20 +141,16 @@ Patch131:	kernel-2.4.18-personality.patch
 Patch132:	linux-2.4.18.secfix.patch
 Patch133:	linux-2.4.18-netsyms-fix.patch
 
-%ifarch ppc
 Patch134:	linux-2.4.12-riva-ppc.patch.bz2
 Patch135:	linux-2.4.18-pre4-agp_uninorth-ppc.patch.bz2
-%endif
 
 # EVMS support (http://www.sourceforge.net/projects/evms/)
 Patch136:	evms-%{evms_version}-linux-2.4.patch
 Patch137:	evms-linux-2.4.18-common-files.patch
 
-%ifarch ppc
 #from http://www.drfruitcake.com/linux/dma-bp.html
 Patch139:	http://www.uwsg.iu.edu/hypermail/linux/kernel/0201.2/att-1802/01-neofb-0.3.1-linux-2.4.18-pre6.patch
 
-%endif
 # Patches fixing other patches or 3rd party sources ;)
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
