@@ -1,0 +1,59 @@
+
+[ BUG during rename ]
+
+Well, sometimes even the simple things don't work right.  I was testing
+this patch by forcing an -EEXIST return value from reiserfs_rename,
+which should have stopped the entire mv operation, but somehow the
+rename was proceeding.  After leaving it alone for a bit, I did an
+strace on mv, stupid thing unlinks the target if rename returns -EEXIST,
+and then does a copy by hand.
+
+Anyway, I think the bug you are hitting is just a symptom of a problem zam
+found, where you've got a hidden entry lying around from some aborted 
+operations.  debugreiserfs has a nifty feature that allows us to 
+corrupt blocks at will, so I added a flag that turns a visible name into
+a hidden one and did some extra tests.
+
+The short version is that instead of an oops, you should now see clm-3000 
+and zam-7002 messages in your log files.  Please let me know if/when they are
+triggered.
+
+-chris
+
+diff -Nru a/fs/reiserfs/namei.c b/fs/reiserfs/namei.c
+--- a/fs/reiserfs/namei.c	Tue May  8 20:29:33 2001
++++ b/fs/reiserfs/namei.c	Tue May  8 20:29:33 2001
+@@ -1106,16 +1106,12 @@
+     retval = reiserfs_add_entry (&th, new_dir, new_dentry->d_name.name, new_dentry->d_name.len, 
+ 				 old_inode, 0);
+     if (retval == -EEXIST) {
+-	// FIXME: is it possible, that new_inode == 0 here? If yes, it
+-	// is not clear how does ext2 handle that
+ 	if (!new_inode) {
+-	    printk ("reiserfs_rename: new entry is found, new inode == 0\n");
+-	    BUG ();
++	    printk("clm-3000: name already found in dir %lu\n", new_dir->i_ino);
++	    goto error_out ;
+ 	}
+     } else if (retval) {
+-	pop_journal_writer(windex) ;
+-	journal_end(&th, old_dir->i_sb, jbegin_count) ;
+-	return retval;
++	goto error_out ;
+     }
+ 
+     reiserfs_update_inode_transaction(old_dir) ;
+@@ -1250,8 +1246,11 @@
+     if (new_inode)
+ 	reiserfs_update_sd (&th, new_inode);
+ 
++    retval = 0 ;
++
++error_out:
+     pop_journal_writer(windex) ;
+     journal_end(&th, old_dir->i_sb, jbegin_count) ;
+-    return 0;
++    return retval ;
+ }
+ 
+
