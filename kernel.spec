@@ -286,6 +286,10 @@ Patch3008:	linux-drm-4.2.0-force-cmpxchg.patch
 Patch4000:	linux-2.4.21-ow1-stack.patch
 Patch4001:	grsecurity-nopax-2.0-rc1-2.4.21.patch
 
+# From RH, fixes: CAN-2003-0461 CAN-2003-0462 CAN-2003-0476 CAN-2003-0501
+#		  CAN-2003-0550 CAN-2003-0551 CAN-2003-0552
+Patch5000:	linux-2.4.22-security.patch
+
 #Patch10000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc6.bz2
 
 ExclusiveOS:	Linux
@@ -762,6 +766,8 @@ cp -f drm/*.{c,h} drivers/char/drm/
 cd drivers/char/drm
 %patch3008 -p1
 cd ../../..
+
+%patch5000 -p1
 
 %patch4000 -p1
 %{!?_without_grsec:%patch4001 -p1}
