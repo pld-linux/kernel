@@ -98,6 +98,8 @@ Patch80:	2.6.0-t9-quirk_via_bridge-fix-lkml.patch
 
 Patch82:	patch-2.6.0-test9-qh0.12.diff.bz2
 
+Patch84:	2.6.0-t9-netfilter-p2p.patch
+
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -383,7 +385,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}-test%{_test_ver}
+%setup -q -n linux-%{version}-test%{_test_ver} 
 %patch0 -p1
 %if "%{_cset}" != "0"
 %patch1 -p1
@@ -424,7 +426,9 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch78 -p1
 %patch80 -p1
 
-%patch82 -p1
+#%%patch82 -p1
+
+%patch84 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
