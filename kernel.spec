@@ -70,8 +70,8 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.42
-%define		_cset		20041020_0343
+%define		_rel		0.10
+%define		_cset		20041025_0606
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -88,21 +88,21 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.6.9%{_post_ver}
+Version:	2.6.10%{_post_ver}
 Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-%define		_rc	%{nil}
-#define		_rc	-rc4
-#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	e921200f074ca97184e150ef5a4af825
-# Source0-size:	36261440
+#define		_rc	%{nil}
+%define		_rc	-rc1
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
+# Source0-md5:	4689a60980f79a223aca6c2244c456e4
+# Source0-size:	36213661
+#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
-# Source4-md5:	6aaf52e4f5be6f631d5b598d3daa2e2e
-# Source4-size:	2209672
+# Source4-md5:	cd094bec5b098c6a08ee1e6ab70689e8
+# Source4-size:	185470
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -212,6 +212,8 @@ Patch300:	linux-2.6-sparc-ksyms.patch
 Patch301:	linux-2.6-ppc-ksyms.patch
 Patch302:	2.6.7-kill-warnings.patch
 Patch303:	%{name}-hotfixes.patch
+Patch304:	linux-2.6-nptl-process-accounting.patch
+Patch305:	linux-2.6-nptl-sighup.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -659,6 +661,8 @@ patch -p1 -s < exec-shield.patch
 %patch301 -p1
 %patch302 -p1
 %patch303 -p1
+%patch304 -p1
+%patch305 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
