@@ -22,11 +22,11 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
-Version:	2.4.24
-Release:	0.5
+Version:	2.4.25
+Release:	0.1
 License:	GPL v2
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-2.4.24.tar.bz2
 # Source0-md5:	1e055c42921b2396a559d84df4c3d9aa
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
@@ -624,7 +624,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 Este pacote contém documentação para o kernel Linux.
 
 %prep
-%setup -q -a3 -n linux-%{version}
+%setup -q -a3 -n linux-2.4.24
 # new JFS
 rm -fr fs/jfs
 gzip -dc %{SOURCE7} | tar -xf -
