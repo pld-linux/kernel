@@ -3069,13 +3069,13 @@ diff -urN linux-2.4.21/fs/proc/proc_tty.c linux-2.4.21/fs/proc/proc_tty.c
 --- linux-2.4.21/fs/proc/proc_tty.c	2003-06-23 11:41:29.000000000 -0400
 +++ linux-2.4.21/fs/proc/proc_tty.c	2003-06-23 11:49:16.000000000 -0400
 @@ -174,7 +174,11 @@
- 	if (!proc_mkdir("tty", 0))
- 		return;
- 	proc_tty_ldisc = proc_mkdir("tty/ldisc", 0);
+ 	 * password lengths and inter-keystroke timings during password
+ 	 * entry.
+ 	 */
 +#ifdef CONFIG_GRKERNSEC_PROC
 +	proc_tty_driver = proc_priv_mkdir("tty/driver", 0);
 +#else
- 	proc_tty_driver = proc_mkdir("tty/driver", 0);
+ 	proc_tty_driver = proc_mkdir_mode("tty/driver", S_IRUSR | S_IXUSR, 0);
 +#endif
  
  	create_proc_read_entry("tty/ldiscs", 0, 0, tty_ldiscs_read_proc,NULL);
@@ -10885,9 +10885,9 @@ diff -urN linux-2.4.21/kernel/fork.c linux-2.4.21/kernel/fork.c
 --- linux-2.4.21/kernel/fork.c	2003-06-23 11:41:31.000000000 -0400
 +++ linux-2.4.21/kernel/fork.c	2003-06-23 11:49:17.000000000 -0400
 @@ -22,6 +22,7 @@
- #include <linux/namespace.h>
  #include <linux/personality.h>
  #include <linux/compiler.h>
+ #include <linux/mman.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/pgtable.h>
