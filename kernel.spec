@@ -596,7 +596,7 @@ echo "Scheduler didn't work on ARCH different than Intel x86"
 %endif
 # grsecurity patch
 %patch9 -p1
-%patch906 -p1
+%patch906 -p0
 %if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %ifarch%{ix86}
 # linux-o1-grsec-post
