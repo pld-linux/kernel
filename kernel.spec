@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 ## netfilter snap 
-%define		_netfilter_snap		20031219
+%define		_netfilter_snap		20031221
 ## Program required by kernel to work.
 %define		_binutils_ver		2.12
 %define		_util-linux_ver		2.10o
@@ -83,7 +83,7 @@ Patch6:		2.6.0-t3-sysfs_mem-lkml.patch
 Patch8:		2.6.0-t4-PPC-ENODEV.patch
 Patch10:	kernel-siimage-rqsize.patch
 
-Patch12:	2.6.0-pptp-conntrack-nat-%{_netfilter_snap}.patch
+#Patch12:	2.6.0-pptp-conntrack-nat-%{_netfilter_snap}.patch
 Patch14:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
 Patch16:	2.6.0-t6-usb-irq.patch
 
