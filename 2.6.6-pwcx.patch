@@ -1,15 +1,6 @@
 diff -Nur --exclude '*.orig' linux-2.6.6.org/drivers/usb/media/Kconfig linux-2.6.6/drivers/usb/media/Kconfig
 --- linux-2.6.6.org/drivers/usb/media/Kconfig	2004-05-10 04:31:57.000000000 +0200
 +++ linux-2.6.6/drivers/usb/media/Kconfig	2004-05-10 14:18:23.000000000 +0200
-@@ -108,7 +108,7 @@
- 
- config USB_PWC
- 	tristate "USB Philips Cameras"
--	depends on USB && VIDEO_DEV && BROKEN
-+	depends on USB && VIDEO_DEV
- 	---help---
- 	  Say Y or M here if you want to use one of these Philips & OEM
-           webcams:
 @@ -114,22 +114,22 @@
            webcams:
             * Philips PCA645, PCA646
@@ -1557,15 +1548,6 @@ diff -Nur --exclude '*.orig' linux-2.6.6.org/drivers/usb/media/pwc-if.c linux-2.
  	{ USB_DEVICE(0x0d81, 0x1910) }, /* Visionite */
  	{ USB_DEVICE(0x0d81, 0x1900) },
  	{ }
-@@ -129,7 +130,7 @@
- 
- static int pwc_video_open(struct inode *inode, struct file *file);
- static int pwc_video_close(struct inode *inode, struct file *file);
--static int pwc_video_release(struct video_device *);			  
-+static void pwc_video_release(struct video_device *);			  
- static ssize_t pwc_video_read(struct file *file, char *buf,
- 			  size_t count, loff_t *ppos);
- static unsigned int pwc_video_poll(struct file *file, poll_table *wait);
 @@ -259,7 +260,7 @@
  		return -ENXIO;
  	}
@@ -1749,18 +1731,6 @@ diff -Nur --exclude '*.orig' linux-2.6.6.org/drivers/usb/media/pwc-if.c linux-2.
  				Err("Failed to power down camera (%d)\n", i);
  		}
  	}
-@@ -1118,9 +1124,9 @@
- 	return 0;
- }
- 
--static int pwc_video_release(struct video_device *vfd)
-+static void pwc_video_release(struct video_device *vfd)
- {
--	Trace(TRACE_OPEN, "pwc_video_release() called. Now what?\n");
-+	Trace(TRACE_OPEN, "pwc_video_release() called. Nothing to do here. Honestly.\n");
- }
- 		
- 
 @@ -1143,6 +1149,7 @@
  	struct pwc_device *pdev;
  	int noblock = file->f_flags & O_NONBLOCK;
