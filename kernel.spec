@@ -48,6 +48,8 @@ Source32:	%{name}-sparc64-BOOT.config
 Source33:	%{name}-alpha.config
 Source34:	%{name}-alpha-smp.config
 Source35:	%{name}-alpha-BOOT.config
+Source36:	%{name}-ppc.config
+
 Patch0:		%{name}-pldfblogo.patch
 Patch1:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
 Patch2:		http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
@@ -107,6 +109,9 @@ Patch1501:	%{name}-sparc-zs.h.patch
 Patch1502:	%{name}-sparc_netsyms.patch
 Patch1503:	%{name}-sym53c8xx.patch
 
+# ppcs patches
+Patch2000:	2.2.20-ppc_ide.patch
+
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -118,7 +123,7 @@ BuildRequires:	egcs
 %ifarch sparc
 BuildRequires:	sparc32
 %endif
-Provides:	%{name}-up = %{version}
+Provides:	%{name}-up = %{version}-%{release}
 %ifarch %{ix86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(i2c) = %{i2c_version}
@@ -139,7 +144,7 @@ Obsoletes:	kernel-i2c
 Obsoletes:	bttv
 Obsoletes:	kernel-misc-bttv
 
-ExclusiveArch:	%{ix86} sparc sparc64 alpha
+ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
 BuildRequires:	bin86
 BuildRequires:	autoconf
@@ -174,7 +179,7 @@ Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
 Summary(pl):	Kernel %{version} skompilowany na maszyny SMP
 Group:		Base/Kernel
-Provides:	%{name} = %{version}
+Provides:	%{name} = %{version}-%{release}
 %ifarch %{ix86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(i2c) = %{i2c_version}
@@ -428,6 +433,11 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %endif
 %patch1503 -p1
 
+#some ppc hacks
+%ifarch ppc
+%patch2000 -p1
+%endif
+
 %build
 BuildKernel() {
 	%{?verbose:set -x}
@@ -486,6 +496,10 @@ BuildKernel() {
 	sparc32 %{__make} modules EXTRAVERSION="-%{release}"
 %else
 	%{__make} modules EXTRAVERSION="-%{release}"
+%else
+%endif
+%ifarch ppc
+    %{__make} vmlinux EXTRAVERSION="-%{release}"
 %endif
 
 	mkdir -p $KERNEL_INSTALL_DIR/boot
@@ -493,7 +507,7 @@ BuildKernel() {
 %ifarch %{ix86}
 	cp arch/i386/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
-%ifarch alpha sparc sparc64
+%ifarch alpha sparc sparc64 ppc
 	gzip -cfv vmlinux > vmlinuz
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
@@ -738,6 +752,10 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1502}
 %endif
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1503}
 
+%ifarch ppc
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2000}
+%endif
+
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
 %{__make} mrproper
@@ -864,7 +882,7 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%ifarch alpha sparc
+%ifarch alpha sparc ppc
 %attr(600,root,root) /boot/vmlinux-%{version}-%{release}
 %endif
 %attr(600,root,root) /boot/vmlinuz-%{version}-%{release}
@@ -895,7 +913,7 @@ fi
 
 %files smp
 %defattr(644,root,root,755)
-%ifarch alpha sparc
+%ifarch alpha sparc ppc
 %attr(600,root,root) /boot/vmlinux-%{version}-%{release}smp
 %endif
 %attr(600,root,root) /boot/vmlinuz-%{version}-%{release}smp
@@ -960,6 +978,10 @@ fi
 #%ifarch sparc sparc64
 #%{_includedir}/asm-sparc*
 #%endif
+%ifarch ppc
+%{_kerneldir}/include/asm-m68k
+%endif
+
 %{_includedir}/linux
 
 %files doc
