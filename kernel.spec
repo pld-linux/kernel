@@ -81,7 +81,7 @@ Group:		Base/Kernel
 #%define		_rc	%{nil}
 %define		_rc	-rc3
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	f18456c9da900820fba98576832d598c
+# Source0-md5:	80ccdb76ee74e839517e74827e8bef93
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 
