@@ -14,7 +14,18 @@
 # _without_source	- don't build source
 # _without_lsm		- don't build LSM/SELinux kernel
 
+%define		_rel		0
+%define		test_ver	4
+%define		patch_level	0
+
+%if	%{test_ver} != 0
+%define		test	test%{test_ver}
+%else
+%define		test	
+%endif
+
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
+
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
 
@@ -27,10 +38,14 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.6.0
-Release:	0.4.1
+%if	%{patch_level} != 0
+Release:	%{test}rel%{_rel}pl%{patch_level}
+%else
+Release:	%{test}rel%{_rel}
+%endif
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-test4.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-%{test}.tar.bz2
 # Source0-md5:	0c0472d42e56a4b571f92e58b0cf0c55
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
@@ -300,7 +315,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}-test4
+%setup -q -n linux-%{version}-%{test}
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
