@@ -12,7 +12,7 @@
 #
 
 %define		patch_level	0
-%define		_rel		11
+%define		_rel		12
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 #
