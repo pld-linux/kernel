@@ -155,7 +155,7 @@ Patch137:	evms-linux-2.4.18-common-files.patch
 Patch139:	http://www.uwsg.iu.edu/hypermail/linux/kernel/0201.2/att-1802/01-neofb-0.3.1-linux-2.4.18-pre6.patch
 
 #http://prdownloads.sourceforge.net/tridentfb/tridentfb-%{tridentfb_version}.tgz
-Patch140:	kernel-2.4.18-tridentfb.patch
+Patch140:	linux-2.4.18-tridentfb.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
