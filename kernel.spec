@@ -784,7 +784,7 @@ ConfigBOOT()
 	# CONFIG_NETPOLL_RX is not set
 	# CONFIG_NETPOLL_TRAP is not set
 	# CONFIG_FB is not set
-	EOF
+EOF
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
