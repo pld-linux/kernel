@@ -443,6 +443,7 @@ BuildConfig (){
 %endif
 
 	cat %{SOURCE100} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE99} >> arch/%{base_arch}/defconfig
 	ln -sf arch/%{base_arch}/defconfig .config
 
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
@@ -452,7 +453,6 @@ BuildConfig (){
 	else
 		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
 	fi
-	cat ${SOURCE99} >> arch/%{base_arch}/defconfig
 }
 
 BuildKernel() {
