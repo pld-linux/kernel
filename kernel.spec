@@ -79,8 +79,10 @@ Patch25:	linux-2.2.19-pci.patch
 Patch26:	%{name}-sysctl-ipv6.patch
 Patch27:	%{name}-udf.patch
 
+# based on	http://people.redhat.com/mingo/raid-patches/raid-2.2.20-A0
+Patch30:	raid-2.2.20-A0
 # based on	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.19/ide.2.2.19.05042001.patch.bz2
-Patch30:	ide.2.2.20.11242001.patch.bz2
+Patch31:	ide.2.2.20.11242001.patch.bz2
 
 # in this place will be PLD patches
 
@@ -90,6 +92,7 @@ Patch102:	%{name}-ipsec-bridge.patch
 Patch103:	%{name}-bridge-extraversion.patch
 Patch104:	jfs-2.2.20-v%{jfs_version}-patch
 Patch105:	%{name}-wanrouter-bridge.patch
+Patch106:	linux-netdrivers_vlan.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -386,12 +389,15 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch27 -p1
 
 %patch30 -p1
+%patch31 -p1
 
 %patch100 -p1
 %patch101 -p1
 %patch102 -p1
 %patch103 -p1
 %patch105 -p1
+%patch106 -p1
+#%patch107 -p1
 
 # 802.1Q VLANs
 #cd vlan.%{vlan_version}
@@ -631,7 +637,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH25}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH26}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH27}
 
-bzip2 -dc %{PATCH30} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+#bzip2 -dc %{PATCH31} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH100}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
@@ -639,6 +645,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH102}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH103}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH105}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH106}
 
 #DAC960 drivers
 tar xfz %{SOURCE8}
