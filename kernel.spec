@@ -309,8 +309,11 @@ BuildKernel() {
 %ifarch %{ix86}
 	%{__make} bzImage EXTRAVERSION="-%{release}"
 %endif
-%ifarch sparc sparc64 sparcv9 alpha
+%ifarch sparc
 	sparc32 %{__make} boot EXTRAVERSION="-%{release}"
+%endif
+%ifarch sparc64 sparcv9 alpha
+	%{__make} boot EXTRAVERSION="-%{release}"
 %endif
 %ifarch ppc
 	%{__make} vmlinux EXTRAVERSION="-%{release}"
