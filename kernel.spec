@@ -350,7 +350,7 @@ Provides:	%{name}(netfilter) = 1.2.7a-%{netfilter_snap}
 Provides:	%{name}(grsecurity) = %{grsec_version}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
-Provides:	%{name}(freeswan)
+Provides:	%{name}(freeswan) = %{freeswan_version}
 Provides:	%{name}(cdrw)
 Provides:	%{name}(cdmrw)
 Provides:	%{name}(hostap)
@@ -367,6 +367,7 @@ Conflicts:	iptables < 1.2.7a
 Conflicts:	lvm < 1.0.7
 Conflicts:	xfsprogs < 2.0.0
 Conflicts:	quota < 3.06
+Conflicts:	jfsutils < %{jfs_version}
 
 %description
 This package contains the Linux kernel that is used to boot and run
@@ -403,7 +404,7 @@ Provides:	%{name}(netfilter) = 1.2.7a-%{netfilter_snap}
 Provides:	%{name}(grsecurity) = %{grsec_version}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
-Provides:	%{name}(freeswan)
+Provides:	%{name}(freeswan) = %{freeswan_version}
 Provides:	%{name}(cdrw)
 Provides:	%{name}(cdmrw)
 Provides:	%{name}(hostap)
@@ -415,6 +416,7 @@ Conflicts:	iptables < 1.2.7a
 Conflicts:	lvm < 1.0.7
 Conflicts:	xfsprogs < 2.0.0
 Conflicts:	quota < 3.06
+Conflicts:	jfsutils < %{jfs_version}
 
 %description smp
 This package includes a SMP version of the Linux %{version} kernel. It
