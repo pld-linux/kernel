@@ -52,7 +52,9 @@ Patch2:		linux-2.4.2-freeswan-%{freeswan_version}.patch.gz
 Patch4:		kernel-i8255-asm-fix.patch
 Patch5:		dc395-patch-PLD-fix.patch
 Patch6:		linux-2.4.1-disable-message-printing.patch
-Patch7:		ftp://ftp.winds.org/linux/patches/2.4.1/aacraid-2.4.1-%{aacraid_version}.patch
+## orginal are here: http://domsch.com/linux/aacraid/linux-2.4.1-aacraid-030101.patch
+## this need small changes to applay in PLD.
+Patch7:		linux-2.4.1-aacraid-030101.patch
 # work around bugs in windows95/2000 VJ header compression implementations.
 Patch8:		linux-fix-win-vj.patch
 # Loopback fix
