@@ -27089,3 +27089,20 @@ diff -Nur linux.org/drivers/ide/via82cxxx.c linux/drivers/ide/via82cxxx.c
  
  #endif
  
+--- linux.org/fs/partitions/msdos.c	Mon Feb 25 20:38:09 2002
++++ linux-2.4.19-rc1-ac7/fs/partitions/msdos.c	Thu Jul 18 14:23:38 2002
+@@ -29,7 +29,13 @@
+ 
+ #ifdef CONFIG_BLK_DEV_IDE
+ #include <linux/ide.h>	/* IDE xlate */
+-#endif /* CONFIG_BLK_DEV_IDE */
++#elif defined(CONFIG_BLK_DEV_IDE_MODULE)
++#include <linux/module.h>
++
++int (*ide_xlate_1024_hook)(kdev_t, int, int, const char *);
++EXPORT_SYMBOL(ide_xlate_1024_hook);
++#define ide_xlate_1024 ide_xlate_1024_hook
++#endif
+ 
+ #include <asm/system.h>
+ 
