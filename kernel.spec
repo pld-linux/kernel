@@ -44,8 +44,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.3
-%define		_cset		20040515_0809
+%define		_rel		1.4
+%define		_cset		20040516_0107
 
 ## netfilter snap 
 %define		_netfilter_snap		20040429
@@ -190,6 +190,8 @@ Patch90:	2.6.6-xfs-qsort-lkml.patch
 Patch92:	2.6.6-pom-ng-20040429-REJECT-fix.patch
 
 Patch94:	grsecurity-2.0-2.6.6-unofficial.patch
+
+Patch96:	2.6.6-lirc_i2c.diff
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -638,6 +640,8 @@ cp drivers/usb/media/libpwcx.a_mipsel drivers/usb/media/libpwcx.a_
 
 #grsec
 %{?with_grsec:%patch94 -p1}
+
+%patch96 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
