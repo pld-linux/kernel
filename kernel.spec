@@ -26,8 +26,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.4.14
-Release:	0.5
+Version:	2.4.15
+Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
