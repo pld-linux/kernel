@@ -802,7 +802,7 @@ cd ..
 rm -rf $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/serial-5.05/
 
 # i2c
-%ifarch %{ix86}
+%ifarch %{ix86} ppc
 gzip -dc %{SOURCE13} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/i2c-%{i2c_version}
 mkpatch/mkpatch.pl . $RPM_BUILD_ROOT/usr/src/linux-%{version} | (cd $RPM_BUILD_ROOT/usr/src/linux-%{version}; patch -p1 -s)
