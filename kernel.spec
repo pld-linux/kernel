@@ -56,7 +56,7 @@
 %define		_oprofile_ver		0.5.3
 
 %define		_post_ver	1
-%define		_rel		0.93
+%define		_rel		0.94
 %define		_cset		20040813_0507
 %define		_apply_cset	0
 
@@ -76,7 +76,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.6.8
-Release:	%{_rel}%{?with_pax:pax}
+Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
@@ -1115,11 +1115,11 @@ if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
-echo "******************************************************************"
-echo " The serial port driver is compiled into the kernel.              "
-echo " You will have to release the port you want to use for LIRC with: "
-echo "    setserial /dev/ttySx uart none                                "
-echo "******************************************************************"
+echo "********************************************************************"
+echo "* The serial port driver is compiled into the kernel.              *"
+echo "* You will have to release the port you want to use for LIRC with: *"
+echo "*    setserial /dev/ttySx uart none                                *"
+echo "********************************************************************"
 
 %postun smp
 if [ -L /lib/modules/%{version} ]; then
