@@ -11,7 +11,6 @@
 %bcond_without	grsec		# build without grsec
 %bcond_with	vserver		# enable vserver (disables grsec)
 %bcond_with	pax		# enable PaX
-%bcond_with	execshield	# build with exec-shield
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 
@@ -176,10 +175,6 @@ Patch76:	2.6.8-lirc-0.7.0-pre7.patch
 # derived from official grsecurity-2.1.0-2.6.10-200501071049.patch
 Patch90:	grsecurity-2.1.0-2.6.10-200501071049.patch
 Patch91:	linux-2.6.10-secfix-200501071130.patch
-
-# http://lkml.org/lkml/2004/6/2/233
-Patch95:	http://people.redhat.com/mingo/exec-shield/exec-shield-nx-2.6.7-A0
-Patch96:	exec-shield-make-peace-with-grsecurity.patch
 
 # frpm http://www.ssi.bg/~ja/#routers
 #Patch100:	00_static_routes-2.6.0-test1-8.diff
@@ -590,14 +585,6 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch90 -p1
 %patch91 -p1
 %endif
-%endif
-
-%if %{with execshield}
-install %{PATCH95} exec-shield.patch
-%if %{with grsec}
-patch -s exec-shield.patch < %{PATCH96}
-%endif
-patch -p1 -s < exec-shield.patch
 %endif
 
 # routers
