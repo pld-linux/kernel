@@ -9,7 +9,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.18
-Release:	0.pre23.2
+Release:	0.pre24.1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -37,7 +37,7 @@ Source73:	%{name}-sparc64-BOOT.config
 Source81:	%{name}-alpha.config
 Source82:	%{name}-alpha-smp.config
 Source83:	%{name}-alpha-BOOT.config
-Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.2.18pre/pre-patch-2.2.18-23.gz
+Patch0:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.2.18pre/pre-patch-2.2.18-24.gz
 Patch1:		%{name}-pldfblogo.patch
 Patch2:		linux-2.2.16-freeswan-%{freeswan_version}.patch
 Patch3:		wanrouter-v2215.patch.gz
@@ -46,6 +46,7 @@ Patch5:		%{name}-3c90x.patch
 Patch6:		linux-ipv6-glibc2.2.patch
 Patch7:		http://milosch.net/pub/beos/2.2.18-pre2-beos09032000.patch
 Patch8:		ftp://ftp.kernel.org/pub/linux/kernel/people/mingo/raid-patches/raid-2.2.18-A2
+Patch9:		linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
 
 #Patch:	ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.17.10.gz
 #Patch:		linux-2.2.18pre21.ext3.diff
@@ -294,6 +295,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch6 -p1
 %patch7 -p1
 #%patch8 -p1
+%patch9 -p1
 
 %ifarch %{ix86}
 cd ..
