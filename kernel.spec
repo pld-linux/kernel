@@ -12,7 +12,7 @@
 # _without_glibc23	- build without support for glibc-kernel-headers
 #
 
-%define		patch_level	7
+%define		patch_level	8
 %define		_rel		9
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -27,7 +27,6 @@
 %define		evms_version		2.0.0
 %define		ntfs_version		2.1.4a
 %define		drm_xfree_version	4.3.0
-%define		hostap_version		0.0.2
 %define		netfilter_snap		20030914
 %define		iptables_version	1.2.8
 %define		ACL_version		0.8.56
@@ -55,7 +54,6 @@ Source6:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-%{jfs_version}.tar.gz
 Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
-Source10:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
 #Source11:	
 Source12:	linux-2.4.20-aacraid.tar.bz2
 
@@ -90,7 +88,6 @@ Source1012:	%{name}-i810fb.config
 Source1013:	%{name}-davfs.config
 Source1666:	%{name}-grsec.config
 Source1667:	%{name}-int.config
-Source1668:	%{name}-hostap.config
 Source1669:	%{name}-konicawc.config
 Source1670:	%{name}-wrr.config
 Source1671:	%{name}-squashfs.config
@@ -401,7 +398,6 @@ Provides:	%{name}(agpgart) = %{version}
 Provides:	%{name}(freeswan) = %{freeswan_version}
 Provides:	%{name}(cdrw)
 Provides:	%{name}(cdmrw)
-Provides:	%{name}(hostap) = %{hostap_version}
 Provides:	%{name}(evms)
 Autoreqprov:	no
 Prereq:		fileutils
@@ -412,7 +408,7 @@ ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
 BuildRequires:	bin86
 %endif
-BuildRequires:	module-init-tools
+##BuildRequires:	module-init-tools
 Conflicts:	iptables < 1.2.7a
 Conflicts:	lvm < 1.0.7
 Conflicts:	xfsprogs < 2.0.0
@@ -461,7 +457,6 @@ Provides:	%{name}(agpgart) = %{version}
 Provides:	%{name}(freeswan) = %{freeswan_version}
 Provides:	%{name}(cdrw)
 Provides:	%{name}(cdmrw)
-Provides:	%{name}(hostap) = %{hostap_version}
 Provides:	%{name}(evms)
 Prereq:		fileutils
 Prereq:		modutils
@@ -600,7 +595,6 @@ Provides:	%{name}-headers(freeswan) = %{freeswan_version}
 Provides:	%{name}-headers(evms)
 Provides:	%{name}-headers(cdrw)
 Provides:	%{name}-headers(cdmrw)
-Provides:	%{name}-headers(hostap) = %{hostap_version}
 Autoreqprov:	no
 
 %description headers
@@ -663,7 +657,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -a3 -a4 -a6 -a7 -a8 -a9 -a10 -a12 -n linux-%{version}
+%setup -q -a3 -a4 -a6 -a7 -a8 -a9 -a12 -n linux-%{version}
 %patch0 -p1
 %patch1 -p1
 %patch900 -p1
@@ -740,11 +734,6 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 %patch32 -p1
 %patch31 -p1
-
-# hostap
-echo Installing Host AP support
-patch -p1 -s < hostap-%{hostap_version}/kernel-patches/hostap-linux-%{version}.patch
-cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 
 # Konica USB camera support
 echo Installing Konica Support
@@ -1035,7 +1024,6 @@ BuildKernel() {
 	cat %{SOURCE1678} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1679} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1667} >> arch/%{base_arch}/defconfig
-	cat %{SOURCE1668} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1669} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1670} >> arch/%{base_arch}/defconfig
 	
@@ -1076,7 +1064,6 @@ BuildKernel() {
 		echo "CONFIG_ROMFS_FS=y" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_IP_NF_MATCH_STEALTH is not set">> arch/%{base_arch}/defconfig
 		echo "# CONFIG_NET_SCH_WRR is not set" >> arch/%{base_arch}/defconfig
-		echo "# CONFIG_HOSTAP is not set" >> arch/%{base_arch}/defconfig
 		echo "# CONFIG_USB_KONICAWC is not set">> arch/%{base_arch}/defconfig
 	fi
 
@@ -1262,7 +1249,6 @@ cat %{SOURCE1010} >> .config
 cat %{SOURCE1011} >> .config
 cat %{SOURCE1012} >> .config
 cat %{SOURCE1013} >> .config
-cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
 cat %{SOURCE1671} >> .config
@@ -1320,7 +1306,6 @@ cat %{SOURCE1010} >> .config
 cat %{SOURCE1011} >> .config
 cat %{SOURCE1012} >> .config
 cat %{SOURCE1013} >> .config
-cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
 cat %{SOURCE1671} >> .config
