@@ -580,7 +580,9 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch75 -p1
 %patch76 -p1
 
+%ifarch %{ix86}
 %patch80 -p1
+%endif
 
 #grsec
 %ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
