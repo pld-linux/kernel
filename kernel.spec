@@ -23,11 +23,12 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Name:		kernel
 %define		_ver	2.6.4
 Version:	%{_ver}+grsec
-Release:	1
+Release:	2
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{_ver}.tar.bz2
 # Source0-md5:	335f06eba1e5372ba38a0d2b253629bd
+Source1:	%{name}-config-nondist
 Patch0:		2.6.0-ksyms-add.patch
 Patch1:		2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
 Patch2:		2.6.0-t6-usb-irq.patch
@@ -136,7 +137,7 @@ hardware.
 cat << EOF > cleanup-nondist-kernel.sh
 #!/bin/sh
 CWD=\`pwd\`
-cd /usr/src/linux
+cd %{_kernelsrcdir}
 if [ -r ".config" ]; then
     mv .config config-nondist
 fi
@@ -153,7 +154,7 @@ if [ -r "config-nondist" ]; then
     chmod 644 include/linux/version.h
     rm .config
 else
-    echo "error: /usr/src/linux/(.config or config-nondist) - file not found!"
+    echo "error: %{_kernelsrcdir}/(.config or config-nondist) - file not found!"
 fi
 cd \$CWD
 EOF
@@ -161,11 +162,12 @@ EOF
 %install
 rm -rf $RPM_BUILD_ROOT
 umask 022
-install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-cp -R . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
-cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+install -d $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}
+cp -R . $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}/
+cd $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}
 find include/ -type d -maxdepth 1 -name "asm-*" ! -name asm-i386 ! -name asm-generic | xargs rm -rf
 %{__make} mrproper
+install %{SOURCE1} config-nondist
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -195,31 +197,32 @@ echo
 
 %files headers
 %defattr(644,root,root,755)
-%dir %{_prefix}/src/linux-%{version}
-%{_prefix}/src/linux-%{version}/include
+%dir %{_kernelsrcdir}-%{version}
+%{_kernelsrcdir}-%{version}/include
 
 %files source
 %defattr(644,root,root,755)
-%{_prefix}/src/linux-%{version}/Documentation
-%{_prefix}/src/linux-%{version}/arch
-%{_prefix}/src/linux-%{version}/crypto
-%{_prefix}/src/linux-%{version}/drivers
-%{_prefix}/src/linux-%{version}/fs
-%{_prefix}/src/linux-%{version}/grsecurity
-%{_prefix}/src/linux-%{version}/init
-%{_prefix}/src/linux-%{version}/ipc
-%{_prefix}/src/linux-%{version}/kernel
-%{_prefix}/src/linux-%{version}/lib
-%{_prefix}/src/linux-%{version}/mm
-%{_prefix}/src/linux-%{version}/net
-%{_prefix}/src/linux-%{version}/scripts
-%{_prefix}/src/linux-%{version}/sound
-%{_prefix}/src/linux-%{version}/security
-%{_prefix}/src/linux-%{version}/usr
-%{_prefix}/src/linux-%{version}/Makefile
-%{_prefix}/src/linux-%{version}/COPYING
-%{_prefix}/src/linux-%{version}/CREDITS
-%{_prefix}/src/linux-%{version}/MAINTAINERS
-%{_prefix}/src/linux-%{version}/README
-%{_prefix}/src/linux-%{version}/REPORTING-BUGS
-%attr(744,root,root) %{_prefix}/src/linux-%{version}/cleanup-nondist-kernel.sh
+%{_kernelsrcdir}-%{version}/Documentation
+%{_kernelsrcdir}-%{version}/arch
+%{_kernelsrcdir}-%{version}/crypto
+%{_kernelsrcdir}-%{version}/drivers
+%{_kernelsrcdir}-%{version}/fs
+%{_kernelsrcdir}-%{version}/grsecurity
+%{_kernelsrcdir}-%{version}/init
+%{_kernelsrcdir}-%{version}/ipc
+%{_kernelsrcdir}-%{version}/kernel
+%{_kernelsrcdir}-%{version}/lib
+%{_kernelsrcdir}-%{version}/mm
+%{_kernelsrcdir}-%{version}/net
+%{_kernelsrcdir}-%{version}/scripts
+%{_kernelsrcdir}-%{version}/sound
+%{_kernelsrcdir}-%{version}/security
+%{_kernelsrcdir}-%{version}%{_prefix}
+%{_kernelsrcdir}-%{version}/Makefile
+%{_kernelsrcdir}-%{version}/COPYING
+%{_kernelsrcdir}-%{version}/CREDITS
+%{_kernelsrcdir}-%{version}/MAINTAINERS
+%{_kernelsrcdir}-%{version}/README
+%{_kernelsrcdir}-%{version}/REPORTING-BUGS
+%attr(744,root,root) %{_kernelsrcdir}-%{version}/cleanup-nondist-kernel.sh
+%{_kernelsrcdir}-%{version}/config-nondist
