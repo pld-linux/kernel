@@ -68,6 +68,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Provides:	module-info
 Autoreqprov:	no
 Prereq:		fileutils
+Prereq:		modutils
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha
 %ifarch		%{ix86}
@@ -104,6 +105,7 @@ Group(pl):	Podstawowe/J±dro
 Provides:	%{name} %{version}
 Provides:	%{name}(reiserfs) %{version}
 Provides:	%{name}(agpgart) %{version}
+Prereq:		modutils
 Autoreqprov:	no
 
 %description smp
@@ -130,6 +132,7 @@ Group(pl):	Podstawowe/J±dro
 Provides:	%{name} %{version}
 Provides:	%{name}(reiserfs) %{version}
 Provides:	%{name}(agpgart) %{version}
+Prereq:		modutils
 Autoreqprov:	no
 
 %description fb
@@ -152,6 +155,7 @@ Group(pl):	Podstawowe/J±dro
 Provides:	%{name} %{version}
 Provides:	%{name}(reiserfs) %{version}
 Provides:	%{name}(agpgart) %{version}
+Prereq:		modutils
 Autoreqprov:	no
 
 %description smp-fb
@@ -178,6 +182,7 @@ Summary(de):	Kernel version %{version} für Installationsdisketten
 Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
+Prereq:		modutils
 Autoreqprov:	no
 
 %description BOOT
