@@ -274,7 +274,7 @@ Summary:	Kernel source tree
 Summary(pl):	Kod ¼ród³owy j±dra Linuxa
 Group:		Base/Kernel
 Autoreqprov:	no
-Requires:	%{name}-headers = %{version}-%{release}
+Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
 %ifarch %{ix86}
 Requires:	bin86
 %endif
