@@ -4,6 +4,7 @@
 #
 # _without_grsec	- build kernel without grsecurity patch
 # _with_preemptive	- build with Preemptive patch
+# _with_o1_sched	- build with new O(1) scheduler
 # _without_smp		- don't build SMP kernel
 #
 %define		test_build		0
@@ -85,6 +86,7 @@ Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/pr
 Patch11:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-%{version}-1.patch
 Patch12:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-%{version}-1.patch
 Patch13:	http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.16-ipvs-%{ipvs_version}.patch.gz
+Patch14:	http://people.redhat.com/mingo/O(1)-scheduler/sched-O1-2.4.17-J9.patch
 
 # Assorted bugfixes
 
@@ -139,6 +141,9 @@ Patch906:	linux-grsecurity-fixes.patch
 Patch907:	linux-loop-hvr-2.4.16.0.patch
 Patch909:	linux-53c7,8xx-build.fix
 Patch910:	dc395-PLD.fix
+Patch911:	linux-o1-sched-grsec-pre.patch
+Patch912:	linux-o1-sched-grsec-post.patch
+Patch913:	linux-o1-sched-abi.patch
 
 # Marcelo's -pre
 #Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
@@ -327,10 +332,20 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch5 -p1
 %patch7 -p1
 %patch8 -p1
+%if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%patch14 -p1
+%patch913 -p1
+%endif
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
 %ifarch %{ix86}
+%if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%patch911 -p1
+%endif
 %patch9 -p1
 %patch906 -p1
+%if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%patch912 -p1
+%endif
 %endif
 %endif
 
