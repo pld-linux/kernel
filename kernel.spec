@@ -8,7 +8,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.17
-Release:	5
+Release:	6
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -59,6 +59,7 @@ Patch13:	linux-ipv6-addrconf.patch
 Patch14:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
 # Linux Virtual Server: http://www.linuxvirtualserver.org/software/
 Patch15:	linux-ipvs-0.9.16-%{version}.patch
+Patch16:	%{name}-ltmodem.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -286,6 +287,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch12 -p1
 %patch13 -p1
 %patch15 -p1
+%ifarch %{ix86}
+%patch16 -p1
+%endif
 
 tar zxf %{SOURCE40} dhiggen-over-0.23.1
 patch -p2 -s <dhiggen-over-0.23.1
