@@ -1,0 +1,4100 @@
+diff -urN linux/Documentation/Configure.help linux/Documentation/Configure.help
+--- linux/Documentation/Configure.help	Thu Jul 19 20:48:15 2001
++++ linux/Documentation/Configure.help	Sat Jul 21 10:20:29 2001
+@@ -17569,6 +17569,287 @@
+    boards supported by this driver, and for further information 
+    on the use of this driver. 
+ 
++Non-executable Stack
++CONFIG_GRKERNSEC_STACK
++  If you say Y here, your system will not allow execution of
++  code on the stack, making buffer overflow exploitation more difficult.
++  Exploits will have to dabble in more obscure methods of
++  exploitation(bss,got,heap..)
++
++Gcc trampoline support
++CONFIG_GRKERNSEC_STACK_GCC
++  If you say Y here, the system will support trampoline code along
++  with the stack protection.  If you do not have any programs on
++  your system that require this (glibc 2.0 users must say YES to
++  this option) you may say no here.
++
++PaX protection
++CONFIG_GRKERNSEC_PAX
++  PaX (http://pax.low-level.net) enforces no execution on the stack
++  as well as all memory pages.  This not only stops buffer overflows
++  that execute code on the stack, but also many other methods of
++  exploitation including bss and the heap.  This greatly reduces the
++  window attackers have to compromise a system, and raises the difficulty 
++  of ways to do so.  It has a few drawbacks however, as compared to
++  the Openwall patch.  It incurs a greater performance hit; reportedly
++  5-8% for certain intensive operations, and a negligable amount for normal
++  operations.  It has problems with XFree86 4.x though, making it
++  kill random things in X and slowing it down to a crawl.  If you don't use
++  XFree86 4.x, it's highly recommended you say Y here instead of choosing
++  the Openwall patch.
++
++Proc Restrictions
++CONFIG_GRKERNSEC_PROC
++  If you say Y here, the permissions of the /proc filesystem
++  will be altered to enhance system security and privacy.  Depending
++  upon the options you choose, you can either restrict users to see
++  only the processes they themselves run, or choose a group that can
++  not see all processes, but can view other proc entries that would
++  normally be restricted to the user.  If you're running identd as
++  a non-root user, you will have to run it as the group you specify here.
++  
++Linking restrictions
++CONFIG_GRKERNSEC_LINK
++  If you say Y here, /tmp race exploits will be prevented, since users
++  will no longer be able to follow symlinks owned by other users in 
++  world-writeable +t directories (i.e. /tmp), unless the owner of the 
++  symlink is the owner of the directory. users will also not be
++  able to hardlink to files they do not own.
++
++FIFO restrictions
++CONFIG_GRKERNSEC_FIFO
++  If you say Y here, users will not be able to write to FIFOs they don't
++  own in world-writeable +t directories (i.e. /tmp), unless the owner of
++  the FIFO is the same owner of the directory it's held in.
++
++Secure file descriptors
++CONFIG_GRKERNSEC_FD
++  If you say Y here, set*id binaries will be protected from data spoofing
++  attacks (eg. making a program read /etc/shadow).  The patches do this
++  by opening up /dev/null to any of the stdin, stdout, stderr file descriptors
++  for set*id binaries that are open and run by a user that is not the owner
++  of the file.
++
++Exec process limiting
++CONFIG_GRKERNSEC_EXECVE
++  If you say Y here, users with a resource limit on processes will
++  have the value checked during execve() calls.  The current system
++  only checks the system limit during fork() calls.
++
++Exec logging
++CONFIG_GRKERNSEC_EXECLOG
++  If you say Y here, all execve() calls will be logged (since the
++  other exec*() calls are frontends to execve(), all execution
++  will be logged).  Useful for shell-servers that like to keep track
++  of their users.
++  WARNING: This option when enabled will produce a LOT of logs, especially
++  on an active system.
++ 
++Set*id logging
++CONFIG_GRKERNSEC_SUID
++  If you say Y here, all set*id() calls will be logged.  Such information
++  could be useful when detecting a possible intrusion attempt.
++
++Signal logging
++CONFIG_GRKERNSEC_SIGNAL
++  If you say Y here, certain important signals will be logged, such as
++  SIGSEGV, which will as a result inform you of when a error in a program
++  occured, which in some cases could mean a possible exploit attempt.
++
++BSD-style coredumps
++CONFIG_GRKERNSEC_COREDUMP
++  If you say Y here, linux will use a style similar to BSD for
++  coredumps, core.processname.  Not a security feature, just
++  a useful one.
++
++Fork failure logging
++CONFIG_GRKERNSEC_FORKFAIL
++  If you say Y here, all failed fork() attempts will be logged.
++  This could suggest a fork bomb, or someone attempting to overstep
++  their process limit.
++
++Time change logging
++CONFIG_GRKERNSEC_TIME
++  If you say Y here, any changes of the system clock will be logged.
++
++Secure keymap loading
++CONFIG_GRKERNSEC_KBMAP
++  If you say Y here, KDSKBENT and KDSKBSENT ioctl calls being
++  called by unprivileged users will be denied. If you answer N,
++  everyone will be able to modify keyboard bindings.
++
++  Saying N makes hacking root account easier for anyone who
++  has access to the console.                     
++
++Enhanced network randomness
++CONFIG_GRKERNSEC_RANDNET
++  If you say Y here, the functions controlling the randomness
++  of the Linux IP stack will be enhanced to decrease the chances
++  of being able to predict certain packets that require some
++  amount of randomness.
++
++Chroot jail restrictions
++CONFIG_GRKERNSEC_CHROOT
++  If you say Y here, processes in a chrooted jail will be much more
++  difficult to break out of.  It stops most generic ways of breaking
++  a chroot jail. Adding in chroot jail restrictions adds these
++  protective measures to the kernel:
++  No mknod()
++  No ptracing
++  No fchmod +s or chmod +s (usually used to create a rootshell)
++  No double chroots
++  Restricted signal sending to other processes
++  No mounting or remounting of devices
++  Enforced chdir("/") on all chroots
++
++Log all execs within a jail
++CONFIG_GRKERNSEC_CHROOT_EXECLOG
++  If you say Y here, all executions inside a chroot jail will be logged to
++  syslog.
++
++Chroot jail capability restrictions
++CONFIG_GRKERNSEC_CHROOT_CAPS
++  If you say Y here, the capabilities on all root processes within a
++  chroot jail will be lowered to stop module insertion, raw i/o,
++  system and net admin tasks, transferring capabilities, and
++  tty configuration tasks.  This is left an option because it breaks
++  some apps (glftpd)  Disable this if your chrooted apps are having
++  problems.
++
++Trusted path execution
++CONFIG_GRKERNSEC_TPE
++  If you say Y here, you will be able to choose a gid to add to the
++  supplementary groups of users you want to mark as "untrusted."
++  These users will not be able to execute any files that are not in
++  root-owned directories writeable only by root. 
++
++Partially restrict non-root users
++CONFIG_GRKERNSEC_TPE_ALL
++  If you say Y here, All other non-root users will only be allowed to
++  execute files in directories they own that are not group or
++  world-writeable, or in directories owned by root and writeable only by
++  root.
++
++Trusted path execution glibc protection
++CONFIG_GRKERNSEC_TPE_GLIBC
++  If you say Y here, all non-root users will not be able to execute
++  any files while glibc specific environment variables such as
++  LD_PRELOAD are set, which could be used to evade the trusted
++  path execution protection.  It also protects against evasion
++  through /lib/ld-2.*  It is recommended you say Y here also.
++
++Exec protection
++CONFIG_GRKERNSEC_NOEXEC
++  If you say Y here, you will be able to choose a gid to be used to
++  run remote daemons that do not normally execute files as.  You
++  can also setgid suid apps to provide protection as well.
++  Example:
++  chgrp noexec /bin/ping
++  chmod g+s /bin/ping
++  applications running as this group, even if running as root will
++  not be able to remove this group from their set or execute any
++  files.  Files that you want the processes to be able to execute
++  should be chgrp'd to the gid you choose here.  Processes running
++  as this group will be unable to change the group of files they
++  are not allowed to execute (all files without group of gid you
++  specify here) to this group to allow them to execute the file.
++
++Exec protection glibc protection
++CONFIG_GRKERNSEC_NOEXEC_GLIBC
++  If you say Y here, all users will not be able to execute
++  any files while glibc specific environment variables such as
++  LD_PRELOAD are set, which could be used to evade the exec 
++  protection.  It also protects against evasion
++  through /lib/ld-2.*  It is recommended you say Y here also.
++
++Exec protection capability restrictions
++CONFIG_GRKERNSEC_NOEXEC_CAPS
++  If you say Y here, the capability set for processes running as
++  the noexec group will be lowered, disallowing them from inserting
++  modules, using raw i/o, changing their capability set, rebooting
++  the system, performing network or system admin tasks, or changing
++  the attributes of immutable or append-only files on the system.
++  
++Suid/sgid root executable restrictions
++CONFIG_GRKERNSEC_SIDCAPS
++  If you say Y here, the capability set of all suid/sgid root
++  executables on your system will be lowered to increase security.
++  This would disallow any suid/sgid root programs on your system
++  from doing things like inserting modules, using raw i/o, changing
++  their capability set, rebooting the system, or changing the attributes 
++  of immutable or append-only files on the system.  This option should 
++  not cause a problem with nearly all suid/sgid root apps on your 
++  system, however if you have any suid/sgid apps that require those 
++  capabilities, consider perhaps removing the suid/sgid bit and running 
++  it only as root, or disable this option.
++
++Randomized PIDs
++CONFIG_GRKERNSEC_RANDPID
++  If you say Y here, all PIDs created on the system will be
++  pseudo-randomly generated.  This is extremely effective along
++  with the /proc restrictions to disallow an attacker from guessing
++  pids of daemons, etc.  PIDs are also used in some cases as part
++  of a naming system for temporary files, so this option would keep
++  those filenames from being predicted as well.  We also use code
++  to make sure that PID numbers aren't reused too soon.
++
++Randomized IP IDs
++CONFIG_GRKERNSEC_RANDID
++  If you say Y here, all the id field on all outgoing packets
++  will be randomized.  This hinders os fingerprinters and
++  keeps your machine from being used as a bounce for an untraceable
++  portscan.  Ids are used for fragmented packets, fragments belonging
++  to the same packet have the same id.  By default linux only
++  increments the id value on each packet sent to an individual host.
++  I've replaced the usage of all the other ip generation routines with
++  my own for speed.  I generate random data for 64 packets at once and
++  distribute them as needed.  I also keep track of the last 32 packets
++  so that we don't create two packets with the same ids too soon,
++  which would cause problems if the packets were fragmented and had
++  to be reassembled.
++  This option will make your system more OpenBSD-ish ;)
++
++Randomized TCP source ports
++CONFIG_GRKERNSEC_RANDSRC
++  If you say Y here, situations where a source port is generated on the
++  fly for the TCP protocol (ie. with connect() ) will be altered so that
++  the source port is generated at random, instead of a simple incrementing
++  algorithm.
++
++Altered Ping IDs
++CONFIG_GRKERNSEC_RANDPING
++  If you say Y here, the way Linux handles echo replies will be changed
++  so that the reply uses an ID equal to the ID of the echo request.
++  This will help in confusing OS detection.
++
++Randomized TTL
++CONFIG_GRKERNSEC_RANDTTL
++  If you say Y here, your TTL (time to live) for packets will be set at
++  random, with a base level you specify, to further confuse OS detection.
++  The default base level for this option is set to the Linux default.
++
++Socket restrictions
++CONFIG_GRKERNSEC_SOCKET
++  If you say Y here, you will be able to choose from several options.
++  If you assign a GID on your system and add it to the supplementary
++  groups of users you want to restrict socket access to, this patch
++  will do one of three things, based on the option(s) you choose.
++  Deny all socket access: keeps users from connecting to other hosts
++  from the machine or running servers from the machine
++  Deny all client sockets: keeps users from connecting to other machines
++  only
++  Deny all server sockets: keeps users from running servers on the machine
++  You should change the GID's from the default to what you have set up on
++  your system.
++
++Stealth network enhancements
++CONFIG_GRKERNSEC_STEALTH
++  If you say Y here, you will enable several enhancements that will
++  improve your system's protection against portscans.
++  Enabling these options and filtering all open ports should make
++  your machine very hard to detect, while not interfering with (most)
++  normal operation.
++  
+ #
+ # ARM options
+ #
+diff -urN linux/Makefile linux/Makefile
+--- linux/Makefile	Fri Jul 20 01:03:56 2001
++++ linux/Makefile	Sat Jul 21 10:21:01 2001
+@@ -1,7 +1,7 @@
+ VERSION = 2
+ PATCHLEVEL = 4
+ SUBLEVEL = 7
+-EXTRAVERSION =
++EXTRAVERSION = -grsecurity-1.5
+ 
+ KERNELRELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
+ 
+diff -urN linux/arch/i386/config.in linux/arch/i386/config.in
+--- linux/arch/i386/config.in	Sun Jul 15 19:15:44 2001
++++ linux/arch/i386/config.in	Sat Jul 21 10:20:29 2001
+@@ -391,3 +391,12 @@
+ #bool 'Debug kmalloc/kfree' CONFIG_DEBUG_MALLOC
+ bool 'Magic SysRq key' CONFIG_MAGIC_SYSRQ
+ endmenu
++
++mainmenu_option next_comment
++comment 'Getrewted Kernel Security'
++bool 'Getrewted Kernel Security' CONFIG_GRKERNSEC
++if [ "$CONFIG_GRKERNSEC" = "y" ]; then
++    source grsecurity/Config.in
++fi
++endmenu
++
+diff -urN linux/arch/i386/kernel/entry.S linux/arch/i386/kernel/entry.S
+--- linux/arch/i386/kernel/entry.S	Tue Jun 12 14:47:28 2001
++++ linux/arch/i386/kernel/entry.S	Sat Jul 21 10:20:29 2001
+@@ -292,6 +292,48 @@
+ 	addl $8,%esp
+ 	jmp ret_from_exception
+ 
++#ifdef CONFIG_GRKERNSEC_PAX
++	ALIGN
++	error_code_page_fault:
++	pushl %ds
++	pushl %eax
++	xorl %eax,%eax
++	pushl %ebp
++	pushl %edi
++	pushl %esi
++	pushl %edx
++	decl %eax# eax = -1
++	pushl %ecx
++	pushl %ebx
++	cld
++	movl %es,%cx
++	xchgl %eax, ORIG_EAX(%esp)  # orig_eax (get the error code. )
++	movl %esp,%edx
++	xchgl %ecx, ES(%esp)  # get the address and save es.
++	pushl %eax  # push the error code
++	pushl %edx
++	movl $(__KERNEL_DS),%edx
++	movl %dx,%ds
++	movl %dx,%es
++	GET_CURRENT(%ebx)
++	call *%ecx
++	addl $8,%esp
++	decl %eax
++	jnz ret_from_exception
++
++	popl %ebx
++	popl %ecx
++	popl %edx
++	popl %esi
++	popl %edi
++	popl %ebp
++	popl %eax
++	popl %ds
++	popl %es
++	addl $4,%esp
++	jmp system_call
++#endif
++
+ ENTRY(coprocessor_error)
+ 	pushl $0
+ 	pushl $ SYMBOL_NAME(do_coprocessor_error)
+@@ -382,8 +424,13 @@
+ 	jmp error_code
+ 
+ ENTRY(page_fault)
++#ifdef CONFIG_GRKERNSEC_PAX
++	pushl $ SYMBOL_NAME(pax_do_page_fault)
++	jmp error_code_page_fault
++#else
+ 	pushl $ SYMBOL_NAME(do_page_fault)
+ 	jmp error_code
++#endif
+ 
+ ENTRY(machine_check)
+ 	pushl $0
+diff -urN linux/arch/i386/kernel/head.S linux/arch/i386/kernel/head.S
+--- linux/arch/i386/kernel/head.S	Wed Jun 20 14:00:53 2001
++++ linux/arch/i386/kernel/head.S	Sat Jul 21 10:20:29 2001
+@@ -433,7 +433,11 @@
+ 	.quad 0x0000000000000000	/* not used */
+ 	.quad 0x00cf9a000000ffff	/* 0x10 kernel 4GB code at 0x00000000 */
+ 	.quad 0x00cf92000000ffff	/* 0x18 kernel 4GB data at 0x00000000 */
++#ifdef CONFIG_GRKERNSEC_STACK
++        .quad 0x00cbfa000000f7ff        /* 0x23 user   3GB-8MB code at 0 */
++#else
+ 	.quad 0x00cffa000000ffff	/* 0x23 user   4GB code at 0x00000000 */
++#endif
+ 	.quad 0x00cff2000000ffff	/* 0x2b user   4GB data at 0x00000000 */
+ 	.quad 0x0000000000000000	/* not used */
+ 	.quad 0x0000000000000000	/* not used */
+diff -urN linux/arch/i386/kernel/ptrace.c linux/arch/i386/kernel/ptrace.c
+--- linux/arch/i386/kernel/ptrace.c	Fri Jul 20 15:39:55 2001
++++ linux/arch/i386/kernel/ptrace.c	Sat Jul 21 10:51:53 2001
+@@ -20,7 +20,9 @@
+ #include <asm/processor.h>
+ #include <asm/i387.h>
+ #include <asm/debugreg.h>
+-
++#ifdef CONFIG_GRKERNSEC_CHROOT
++extern struct task_struct *child_reaper;
++#endif
+ /*
+  * does not yet catch signals sent when the child dies.
+  * in exit.c or in signal.c.
+@@ -177,6 +179,28 @@
+ 	}
+ 	if (child->p_pptr != current)
+ 		goto out_tsk;
++
++#ifdef CONFIG_GRKERNSEC_CHROOT
++               if(!(   (current->fs->root->d_inode->i_dev ==
++                       child_reaper->fs->root->d_inode->i_dev) &&
++                       (current->fs->root->d_inode->i_ino ==
++                       child_reaper->fs->root->d_inode->i_ino) ) &&
++                  !(   (current->fs->root->d_inode->i_dev ==
++                       child->fs->root->d_inode->i_dev) &&
++                       (current->fs->root->d_inode->i_ino ==
++                       child->fs->root->d_inode->i_ino) ) ) {
++                   security_alert("denied ptrace of process(%.16s:%d) within chroot() jail "
++                                  "(%.32s:%lu) by (%.16s:%d), UID (%d), EUID (%d), parent (%.16s:%d), "
++                                  "UID (%d), EUID(%d)","ptrace from chroot()",
++                                  child->comm,child->pid,kdevname(current->fs->root->d_inode->i_dev),
++                                  current->fs->root->d_inode->i_ino, current->comm, current->pid,
++                                  current->uid,current->euid,current->p_pptr->comm,current->p_pptr->pid,
++				  current->p_pptr->uid,current->p_pptr->euid);
++                                  goto out_tsk;
++                   }
++#endif
++
++
+ 	switch (request) {
+ 	/* when I and D space are separate, these will need to be fixed. */
+ 	case PTRACE_PEEKTEXT: /* read word at location addr. */ 
+diff -urN linux/arch/i386/kernel/signal.c linux/arch/i386/kernel/signal.c
+--- linux/arch/i386/kernel/signal.c	Wed Jul  4 17:41:33 2001
++++ linux/arch/i386/kernel/signal.c	Sat Jul 21 10:20:29 2001
+@@ -7,6 +7,7 @@
+  *  2000-06-20  Pentium III FXSR, SSE support by Gareth Hughes
+  */
+ 
++#include <linux/config.h>
+ #include <linux/sched.h>
+ #include <linux/mm.h>
+ #include <linux/smp.h>
+@@ -169,7 +170,11 @@
+ 	struct sigcontext sc;
+ 	struct _fpstate fpstate;
+ 	unsigned long extramask[_NSIG_WORDS-1];
++#ifdef CONFIG_GRKERNSEC_PAX
++	char retcode[16];
++#else
+ 	char retcode[8];
++#endif
+ };
+ 
+ struct rt_sigframe
+@@ -420,11 +425,21 @@
+ 	if (ka->sa.sa_flags & SA_RESTORER) {
+ 		err |= __put_user(ka->sa.sa_restorer, &frame->pretcode);
+ 	} else {
++#if defined(CONFIG_GRKERNSEC_STACK)
++		err |= __put_user(MAGIC_SIGRETURN, &frame->pretcode);
++#elif defined(CONFIG_GRKERNSEC_PAX)
++		unsigned long retcode = ((unsigned long)&frame->retcode + 7ul) & ~7ul;
++		err |= __put_user(retcode, &frame->pretcode);
++		err |= __put_user(0xb858, (short *)(retcode+0));
++		err |= __put_user(__NR_sigreturn, (int *)(retcode+2));
++		err |= __put_user(0x80cd, (short *)(retcode+6));
++#else
+ 		err |= __put_user(frame->retcode, &frame->pretcode);
+ 		/* This is popl %eax ; movl $,%eax ; int $0x80 */
+ 		err |= __put_user(0xb858, (short *)(frame->retcode+0));
+ 		err |= __put_user(__NR_sigreturn, (int *)(frame->retcode+2));
+ 		err |= __put_user(0x80cd, (short *)(frame->retcode+6));
++#endif
+ 	}
+ 
+ 	if (err)
+@@ -495,11 +510,21 @@
+ 	if (ka->sa.sa_flags & SA_RESTORER) {
+ 		err |= __put_user(ka->sa.sa_restorer, &frame->pretcode);
+ 	} else {
++#if defined(CONFIG_GRKERNSEC_STACK)
++		err |= __put_user(MAGIC_RT_SIGRETURN, &frame->pretcode);
++#elif defined(CONFIG_GRKERNSEC_PAX)
++		unsigned long retcode = ((unsigned long)&frame->retcode + 7ul) & ~7ul;
++		err |= __put_user(retcode, &frame->pretcode);
++		err |= __put_user(0xb8, (char *)(retcode+0));
++		err |= __put_user(__NR_rt_sigreturn, (int *)(retcode+1));
++		err |= __put_user(0x80cd, (short *)(retcode+5));
++#else
+ 		err |= __put_user(frame->retcode, &frame->pretcode);
+ 		/* This is movl $,%eax ; int $0x80 */
+ 		err |= __put_user(0xb8, (char *)(frame->retcode+0));
+ 		err |= __put_user(__NR_rt_sigreturn, (int *)(frame->retcode+1));
+ 		err |= __put_user(0x80cd, (short *)(frame->retcode+5));
++#endif
+ 	}
+ 
+ 	if (err)
+@@ -556,6 +581,18 @@
+ 				regs->eip -= 2;
+ 		}
+ 	}
++
++#ifdef CONFIG_GRKERNSEC_PAX
++	/* PaX: clean up as our trace attempt became obsolete */
++	if (current->ptrace & PT_PAX_TRACE) {
++		if (!(current->ptrace & PT_PAX_OLDTF)) {
++			regs->eflags &= ~TF_MASK;
++		}
++		current->ptrace &= ~(PT_PAX_TRACE | PT_PAX_KEEPTF | PT_PAX_OLDTF);
++		current->thread.pax_faults.eip = 0;
++		current->thread.pax_faults.count = 0;
++	}
++#endif
+ 
+ 	/* Set up the stack frame */
+ 	if (ka->sa.sa_flags & SA_SIGINFO)
+diff -urN linux/arch/i386/kernel/traps.c linux/arch/i386/kernel/traps.c
+--- linux/arch/i386/kernel/traps.c	Wed Jun 20 16:59:44 2001
++++ linux/arch/i386/kernel/traps.c	Sat Jul 21 10:20:29 2001
+@@ -321,15 +321,185 @@
+ DO_ERROR(11, SIGBUS,  "segment not present", segment_not_present)
+ DO_ERROR(12, SIGBUS,  "stack segment", stack_segment)
+ DO_ERROR_INFO(17, SIGBUS, "alignment check", alignment_check, BUS_ADRALN, get_cr2())
+-
++#if defined(CONFIG_GRKERNSEC_STACK) && defined(CONFIG_GRKERNSEC_STACK_GCC)
++static unsigned long *get_reg(struct pt_regs *regs, unsigned char regnum)
++{
++    switch (regnum) {
++	case 0: return &regs->eax;
++	case 1: return &regs->ecx;
++	case 2: return &regs->edx;
++	case 3: return &regs->ebx;
++	case 4: return &regs->esp;
++	case 5: return &regs->ebp;
++	case 6: return &regs->esi;
++	case 7: return &regs->edi;
++    }
++    return NULL;
++}
++static unsigned long get_modrm(struct pt_regs *regs, int *err)
++{
++       unsigned char modrm, sib;
++       signed char rel8;
++       unsigned long rel32;
++       int size, regnum, scale;
++       unsigned long index, base, addr, value;
++
++       *err |= __get_user(modrm, (unsigned char *)(regs->eip + 1));
++       size = 2;
++       regnum = modrm & 7;
++       addr = *get_reg(regs, regnum);
++       if (regnum == 4 && (modrm & 0xC0) != 0xC0) {
++               *err |= __get_user(sib, (unsigned char *)(regs->eip + 2));
++               size = 3;
++               scale = sib >> 6;
++               index = *get_reg(regs, (sib >> 3) & 7);
++               base = *get_reg(regs, sib & 7);
++               addr = base + (index << scale);
++       }
++
++       switch (modrm & 0xC0) {
++       case 0x00:
++               if (regnum == 5) {
++                       *err |= __get_user(addr,
++                               (unsigned long *)(regs->eip + 2));
++                       size = 6;
++               }
++               *err |= __get_user(value, (unsigned long *)addr);
++               break;
++
++       case 0x40:
++               *err |= __get_user(rel8, (signed char *)(regs->eip + size));
++               size++;
++               addr += rel8;
++               *err |= __get_user(value, (unsigned long *)addr);
++               break;
++
++       case 0x80:
++               *err |= __get_user(rel32, (unsigned long *)(regs->eip + size));
++               size += 4;
++               addr += rel32;
++               *err |= __get_user(value, (unsigned long *)addr);
++               break;
++
++       case 0xC0:
++       default:
++               value = addr;
++       }
++
++       if (*err) return 0;
++       regs->eip += size;
++       return value;
++}
++#endif
+ asmlinkage void do_general_protection(struct pt_regs * regs, long error_code)
+ {
++#ifdef CONFIG_GRKERNSEC_STACK
++    unsigned long addr;
++#ifdef CONFIG_GRKERNSEC_STACK_GCC
++    unsigned char insn;
++    int err, count;
++#endif
++#endif
+ 	if (regs->eflags & VM_MASK)
+ 		goto gp_in_vm86;
+ 
+ 	if (!(regs->xcs & 3))
+ 		goto gp_in_kernel;
+-
++#ifdef CONFIG_GRKERNSEC_STACK
++/* Check if it was return from a signal handler */
++        if ((regs->xcs & 0xFFFF) == __USER_CS)
++        if (*(unsigned char *)regs->eip == 0xC3)
++        if (!__get_user(addr, (unsigned long *)regs->esp)) {
++                if ((addr & 0xFFFFFFFE) == MAGIC_SIGRETURN) {
++/* Call sys_sigreturn() or sys_rt_sigreturn() to restore the context */
++                        regs->esp += 8;
++                        __asm__("movl %3,%%esi\n\t"
++                                "subl %1,%%esp\n\t"
++                                "movl %2,%%ecx\n\t"
++                                "movl %%esp,%%edi\n\t"
++                                "rep; movsl\n\t"
++                                "testl $1,%4\n\t"
++                                "jnz 1f\n\t"
++                                "call sys_sigreturn\n\t"
++                                "leal %3,%%edi\n\t"
++                                "jmp 2f\n\t"
++                                "1:\n\t"
++                                "call sys_rt_sigreturn\n\t"
++                                "leal %3,%%edi\n\t"
++                                "2:\n\t"
++                                "addl %1,%%edi\n\t"
++                                "movl %%esp,%%esi\n\t"
++                                "movl %2,%%ecx\n\t"
++                                "movl (%%edi),%%edi\n\t"
++                                "rep; movsl\n\t"
++                                "movl %%esi,%%esp"
++                        :
++/* %eax is returned separately */
++                        "=a" (regs->eax)
++                        :
++                        "i" (sizeof(*regs)),
++                        "i" (sizeof(*regs) >> 2),
++                        "m" (regs),
++                        "r" (addr)
++                        :
++                        "cx", "dx", "si", "di", "cc", "memory");
++                        return;
++                }
++/*
++ *  * Check if we're returning to the stack area, which is only likely to happen
++ *   * when attempting to exploit a buffer overflow.
++ *    */
++                if ((addr & 0xFF800000) == 0xBF800000 ||
++                    (addr >= PAGE_OFFSET - _STK_LIM && addr < PAGE_OFFSET))
++                        security_alert("return onto stack by (%.16s:%d), UID(%d), EUID (%d), parent (%.16s:%d), UID(%d), EUID (%d)",
++                                "returns onto stack",
++                                current->comm,current->pid,current->uid,
++				 current->euid,current->p_pptr->comm,current->p_pptr->pid,
++                                current->p_pptr->uid,current->p_pptr->euid);
++        }
++ 
++#ifdef CONFIG_GRKERNSEC_STACK_GCC
++/* Check if it could have been a trampoline call */
++        if ((regs->xcs & 0xFFFF) == __USER_CS)
++        if (*(unsigned char *)regs->eip == 0xFF)
++        if (!__get_user(insn, (unsigned char *)(regs->eip + 1)))
++        if ((insn & 0x38) == 0x10 && insn != 0xD4) {    /* call mod r/m */
++/* First, emulate the call */
++                err = 0;
++                addr = get_modrm(regs, &err);
++                if (!err) {
++                        regs->esp -= 4;
++                        err = __put_user(regs->eip, (unsigned long *)regs->esp);
++                        regs->eip = addr;
++                }  
++/* Then, start emulating the trampoline itself */
++               count = 0;
++               while (!err && !__get_user(insn, (unsigned char *)regs->eip++))
++               if ((insn & 0xF8) == 0xB8) {            /* movl imm32,%reg */
++/* We only have 8 GP registers, no reason to initialize one twice */
++                        if (count++ >= 8) break;
++                        err |= __get_user(addr, (unsigned long *)regs->eip);
++                        regs->eip += 4;
++                        *get_reg(regs, insn & 7) = addr;
++                } else
++                if (insn == 0xFF) {
++                        err |= __get_user(insn, (unsigned char *)regs->eip);
++                        if ((insn & 0xF8) == 0xE0) {    /* jmp *%reg */
++                                regs->eip = *get_reg(regs, insn & 7);
++                                if (err) break; else return;
++                        }
++                        break;
++                } else
++               if (insn == 0xE9) {                     /* jmp rel32 */
++                       err |= __get_user(addr, (unsigned long *)regs->eip);
++                       if (err) break;
++                       regs->eip += 4 + addr;
++                       return;
++               } else
++                       break;
++       }                        
++#endif
++#endif
+ 	current->thread.error_code = error_code;
+ 	current->thread.trap_no = 13;
+ 	force_sig(SIGSEGV, current);
+@@ -497,6 +667,10 @@
+ 	inb(0x71);		/* dummy */
+ }
+ 
++#ifdef CONFIG_GRKERNSEC_PAX
++void pax_handle_ptes(struct task_struct *tsk);
++#endif
++
+ /*
+  * Our handling of the processor debug registers is non-trivial.
+  * We do not clear them on entry and exit from the kernel. Therefore
+@@ -527,6 +701,22 @@
+ 
+ 	__asm__ __volatile__("movl %%db6,%0" : "=r" (condition));
+ 
++#ifdef CONFIG_GRKERNSEC_PAX
++	/* PaX: clean up */
++	if ((condition & DR_STEP) && (tsk->ptrace & PT_PAX_TRACE)) {
++		tsk->ptrace &= ~PT_PAX_TRACE;
++		pax_handle_ptes(tsk);
++		if (!(tsk->ptrace & PT_PAX_KEEPTF) && !(tsk->ptrace & PT_PAX_OLDTF))
++			regs->eflags &= ~TF_MASK;
++		tsk->ptrace &= ~PT_PAX_KEEPTF;
++		if (!(tsk->ptrace & PT_PAX_OLDTF)) {
++			condition &= ~DR_STEP;
++			if (!(condition & (DR_TRAP0|DR_TRAP1|DR_TRAP2|DR_TRAP3)))
++				return;
++		}
++		tsk->ptrace &= ~PT_PAX_OLDTF;
++	}
++#endif
+ 	/* Mask out spurious debug traps due to lazy DR7 setting */
+ 	if (condition & (DR_TRAP0|DR_TRAP1|DR_TRAP2|DR_TRAP3)) {
+ 		if (!tsk->thread.debugreg[7])
+diff -urN linux/arch/i386/mm/fault.c linux/arch/i386/mm/fault.c
+--- linux/arch/i386/mm/fault.c	Tue May 15 03:16:51 2001
++++ linux/arch/i386/mm/fault.c	Sat Jul 21 10:20:29 2001
+@@ -4,6 +4,7 @@
+  *  Copyright (C) 1995  Linus Torvalds
+  */
+ 
++#include <linux/config.h>
+ #include <linux/signal.h>
+ #include <linux/sched.h>
+ #include <linux/kernel.h>
+@@ -17,6 +18,9 @@
+ #include <linux/smp_lock.h>
+ #include <linux/interrupt.h>
+ #include <linux/init.h>
++#ifdef CONFIG_GRKERNSEC_PAX
++#include <linux/unistd.h>
++#endif
+ 
+ #include <asm/system.h>
+ #include <asm/uaccess.h>
+@@ -177,21 +181,37 @@
+ good_area:
+ 	info.si_code = SEGV_ACCERR;
+ 	write = 0;
++#ifdef CONFIG_GRKERNSEC_PAX
++	switch (error_code & 7) {
++#else
+ 	switch (error_code & 3) {
++#endif
+ 		default:	/* 3: write, present */
+ #ifdef TEST_VERIFY_AREA
+ 			if (regs->cs == KERNEL_CS)
+ 				printk("WP fault at %08lx\n", regs->eip);
+ #endif
+ 			/* fall through */
++#ifdef CONFIG_GRKERNSEC_PAX
++		case 7:		/* PaX: write, present, some protection violation */
++#endif
+ 		case 2:		/* write, not present */
++#ifdef CONFIG_GRKERNSEC_PAX
++		case 6:
++#endif
+ 			if (!(vma->vm_flags & VM_WRITE))
+ 				goto bad_area;
+ 			write++;
+ 			break;
+ 		case 1:		/* read, present */
+ 			goto bad_area;
++#ifdef CONFIG_GRKERNSEC_PAX
++		case 5:		/* PaX: read, present, protection violation */
++#endif
+ 		case 0:		/* read, not present */
++#ifdef CONFIG_GRKERNSEC_PAX
++		case 4:
++#endif
+ 			if (!(vma->vm_flags & (VM_READ | VM_EXEC)))
+ 				goto bad_area;
+ 	}
+@@ -358,3 +378,414 @@
+ 		return;
+ 	}
+ }
++#ifdef CONFIG_GRKERNSEC_PAX
++/* PaX: called with the page_table_lock spinlock held */
++static inline pte_t * pax_get_pte(struct mm_struct *mm, unsigned long address)
++{
++	pgd_t *pgd;
++	pmd_t *pmd;
++
++	pgd = pgd_offset(mm, address);
++	if (!pgd || !pgd_present(*pgd))
++		return 0;
++	pmd = pmd_offset(pgd, address);
++	if (!pmd || pmd_none(*pmd) || pmd_bad(*pmd) || !pmd_present(*pmd))
++		return 0;
++	return pte_offset(pmd, address);
++}
++
++/*
++ * PaX: decide what to do with offenders
++ *
++ * returns 0 when access should be allowed
++ *         1 when task should be killed
++ *         2 when sigreturn trampoline was detected
++ *         3 when rt_sigreturn trampoline was detected
++ *         4 when gcc trampoline was detected
++ */
++static inline int pax_handle_read_fault(struct pt_regs *regs, unsigned long address)
++{
++	unsigned char trans[8] = {6, 1, 2, 0, 13, 5, 3, 4};
++	int err;
++
++	if ((VM_MASK & regs->eflags) || regs->xcs != __USER_CS || regs->eip != address)
++		return 0;
++
++	{ /* PaX: sigreturn emulation */
++		unsigned char pop, mov;
++		unsigned short sys;
++		unsigned long nr;
++
++		err = __get_user(pop, (unsigned char *)(regs->eip));
++		err |= __get_user(mov, (unsigned char *)(regs->eip + 1));
++		err |= __get_user(nr, (unsigned long *)(regs->eip + 2));
++		err |= __get_user(sys, (unsigned short *)(regs->eip + 6));
++
++		if (!err) {
++			if (pop == 0x58 &&
++			    mov == 0xb8 &&
++			    nr == __NR_sigreturn &&
++			    sys == 0x80cd)
++			{
++				regs->esp += 4;
++				regs->eax = nr;
++				regs->eip += 8;
++				return 2;
++			}
++		}
++	}
++
++	{ /* PaX: rt_sigreturn emulation */
++		unsigned char mov;
++		unsigned short sys;
++		unsigned long nr;
++
++		err = __get_user(mov, (unsigned char *)(regs->eip));
++		err |= __get_user(nr, (unsigned long *)(regs->eip + 1));
++		err |= __get_user(sys, (unsigned short *)(regs->eip + 5));
++
++		if (!err) {
++			if (mov == 0xb8 &&
++			    nr == __NR_rt_sigreturn &&
++			    sys == 0x80cd)
++			{
++				regs->eax = nr;
++				regs->eip += 7;
++				return 3;
++			}
++		}
++	}
++
++	{ /* PaX: gcc trampoline emulation #1 */
++		unsigned char mov1, mov2;
++		unsigned short jmp;
++		unsigned long addr1, addr2, ret;
++
++		err = __get_user(mov1, (unsigned char *)(regs->eip));
++		err |= __get_user(addr1, (unsigned long *)(regs->eip + 1));
++		err |= __get_user(mov2, (unsigned char *)(regs->eip + 5));
++		err |= __get_user(addr2, (unsigned long *)(regs->eip + 6));
++		err |= __get_user(jmp, (unsigned short *)(regs->eip + 10));
++		err |= __get_user(ret, (unsigned long *)(regs->esp));
++
++		if (!err) {
++			unsigned short call;
++
++			err = __get_user(call, (unsigned short *)(ret-2));
++			if (!err) {
++				if ((mov1 & 0xF8) == 0xB8 &&
++				    (mov2 & 0xF8) == 0xB8 &&
++				    (mov1 & 0x07) != (mov2 & 0x07) &&
++				    (jmp & 0xF8FF) == 0xE0FF &&
++				    (mov2 & 0x07) == ((jmp>>8) & 0x07) &&
++				    (call & 0xF8FF) == 0xD0FF &&
++				    (regs->eip == ((unsigned long*)regs)[trans[(call>>8) & 0x07]]))
++				{
++					((unsigned long *)regs)[trans[mov1 & 0x07]] = addr1;
++					((unsigned long *)regs)[trans[mov2 & 0x07]] = addr2;
++					regs->eip = addr2;
++					return 4;
++				}
++			}
++		}
++	}
++
++	{ /* PaX: gcc trampoline emulation #2 */
++		unsigned char mov, jmp;
++		unsigned long addr1, addr2, ret;
++
++		err = __get_user(mov, (unsigned char *)(regs->eip));
++		err |= __get_user(addr1, (unsigned long *)(regs->eip + 1));
++		err |= __get_user(jmp, (unsigned char *)(regs->eip + 5));
++		err |= __get_user(addr2, (unsigned long *)(regs->eip + 6));
++		err |= __get_user(ret, (unsigned long *)(regs->esp));
++
++		if (!err) {
++			unsigned short call;
++
++			err = __get_user(call, (unsigned short *)(ret-2));
++			if (!err) {
++				if ((mov & 0xF8) == 0xB8 &&
++				    jmp == 0xE9 &&
++				    (call & 0xF8FF) == 0xD0FF &&
++				    (regs->eip == ((unsigned long*)regs)[trans[(call>>8) & 0x07]]))
++				{
++					((unsigned long *)regs)[trans[mov & 0x07]] = addr1;
++					regs->eip += addr2 + 10;
++					return 4;
++				}
++			}
++		}
++	}
++
++	return 1; /* PaX in action */
++}
++
++static int pax_handle_opcode(struct task_struct *tsk, struct pt_regs *regs)
++{
++	unsigned long eip = regs->eip;
++	unsigned long esp = regs->esp;
++	unsigned long opsize = 1;
++	unsigned long opsize_override = 0;
++	unsigned long i;
++
++	if (regs->eflags & TF_MASK)
++		tsk->ptrace |= PT_PAX_OLDTF;
++	else
++		tsk->ptrace &= ~PT_PAX_OLDTF;
++	tsk->ptrace &= ~PT_PAX_KEEPTF;
++
++	if (regs->eflags & VM_MASK) {
++		eip = (((regs->xcs)&0xFFFF)<<4) + ((regs->eip)&0xFFFF);
++		esp = (((regs->xss)&0xFFFF)<<4) + ((regs->esp)&0xFFFF);
++		opsize= 0;
++	}
++
++	for (i=0; i<15; i++) {
++		unsigned char opcode;
++		if (__get_user(opcode, (unsigned char*)(eip+i)))
++			break;
++		switch (opcode) {
++			case 0x26:
++			case 0x2E:
++			case 0x36:
++			case 0x3E:
++			case 0x64:
++			case 0x65:
++			case 0x67:
++			case 0xF0:
++			case 0xF2:
++			case 0xF3:
++					break;
++
++			case 0x66:
++					opsize_override = 1;
++					break;
++
++			case 0x9C: /* PUSHF */
++					if (opsize ^ opsize_override) {
++						__put_user(regs->eflags & 0x00FCFFFFul, (unsigned long*)(esp-4));
++						regs->esp -= 4;
++					} else {
++						__put_user(regs->eflags, (unsigned short*)(esp-2));
++						regs->esp -= 2;
++					}
++					regs->eip += i + 1;
++					return 1;
++
++			case 0x9D: /* POPF */
++			case 0xCF: /* IRET */
++					tsk->ptrace |= PT_PAX_KEEPTF;
++					return 0;
++
++			default:
++					return 0;
++		}
++	}
++	return 0;
++}
++
++static inline void pax_handle_pte(struct mm_struct *mm, unsigned long address)
++{
++	pte_t *pte;
++	pte = pax_get_pte(mm, address);
++	if (pte) {
++		set_pte(pte, pte_exprotect(*pte));
++		__flush_tlb_one(address);
++	}
++}
++
++#define PAX_SPIN_COUNT 16
++
++void pax_handle_ptes(struct task_struct *tsk)
++{
++	struct mm_struct *mm;
++
++	mm = tsk->mm;
++	spin_lock(&mm->page_table_lock);
++	switch (tsk->thread.pax_faults.count) {
++		default:
++				printk(KERN_ERR "PAX: wtf: %s:%d, %ld\n", tsk->comm, tsk->pid,
++				tsk->thread.pax_faults.count);
++				break;
++
++		case PAX_SPIN_COUNT+4:
++				pax_handle_pte(mm, tsk->thread.pax_faults.addresses[3]);
++
++		case PAX_SPIN_COUNT+3:
++				pax_handle_pte(mm, tsk->thread.pax_faults.addresses[2]);
++
++		case PAX_SPIN_COUNT+2:
++				pax_handle_pte(mm, tsk->thread.pax_faults.addresses[1]);
++
++		case PAX_SPIN_COUNT+1:
++				pax_handle_pte(mm, tsk->thread.pax_faults.addresses[0]);
++	}
++	spin_unlock(&mm->page_table_lock);
++	tsk->thread.pax_faults.eip = 0;
++	tsk->thread.pax_faults.count = 0;
++}
++
++/*
++ * PaX: handle the extra page faults or pass it down to the original handler
++ *
++ * returns 0 when nothing special was detected
++ *         1 when sigreturn trampoline (syscall) has to be emulated
++ */
++asmlinkage int pax_do_page_fault(struct pt_regs *regs, unsigned long error_code)
++{
++	struct task_struct *tsk = current;
++	struct mm_struct *mm = current->mm;
++	unsigned long address;
++	unsigned long pax_eip;
++	pte_t *pte;
++	unsigned char pte_mask;
++	int ret;
++
++	__asm__("movl %%cr2,%0":"=r" (address));
++
++	if (address >= TASK_SIZE || in_interrupt() || !mm || (error_code & 5) != 5)
++		goto chain;
++
++	/* It's safe to allow irq's after cr2 has been saved */
++	if (regs->eflags & X86_EFLAGS_IF)
++		local_irq_enable();
++
++	current->state = TASK_RUNNING;
++
++	/* PaX: it's our fault, let's handle it if we can */
++
++	/* PaX: take a look at read faults before acquiring any locks */
++	if (error_code == 5) { /* read/instruction fetch attempt from a protected page in user mode */
++		ret = pax_handle_read_fault(regs, address);
++		switch (ret) {
++			case 4:
++				tsk->thread.pax_faults.eip = 0;
++				tsk->thread.pax_faults.count = 0;
++				return 0;
++
++			case 3:
++			case 2:
++				tsk->thread.pax_faults.eip = 0;
++				tsk->thread.pax_faults.count = 0;
++				return 1;
++
++			default:
++			case 1:
++				printk(KERN_ERR "PAX: terminating task: %s:%d, EIP: %08lX, ESP: %08lX\n", tsk->comm, tsk->pid, regs->eip, regs->esp);
++				tsk->thread.pax_faults.eip = 0;
++				tsk->thread.pax_faults.count = 0;
++				tsk->ptrace &= ~(PT_PAX_TRACE | PT_PAX_KEEPTF | PT_PAX_OLDTF);
++				regs->eflags &= ~TF_MASK;
++				tsk->thread.cr2 = address;
++				tsk->thread.error_code = error_code;
++				tsk->thread.trap_no = 14;
++				force_sig(SIGKILL,tsk);
++				return 0;
++
++			case 0:
++		}
++	}
++
++	down_read(&mm->mmap_sem);
++	spin_lock(&mm->page_table_lock);
++	pte = pax_get_pte(mm, address);
++	if (!pte || pte_none(*pte) || !(pte_val(*pte) & _PAGE_PRESENT) || pte_exec(*pte)) {
++		spin_unlock(&mm->page_table_lock);
++		up_read(&mm->mmap_sem);
++		goto chain;
++	}
++
++	if (error_code == 5) { /* read/instruction fetch attempt from a protected page in user mode */
++		pte_mask = _PAGE_ACCESSED | _PAGE_USER;
++	} else if (!pte_write(*pte)) { /* write attempt to a protected page in user mode */
++		spin_unlock(&mm->page_table_lock);
++		up_read(&mm->mmap_sem);
++		goto chain;
++	} else {
++		pte_mask = _PAGE_DIRTY | _PAGE_ACCESSED | _PAGE_USER;
++	}
++
++	if (regs->eflags & VM_MASK) {
++		pax_eip = (((regs->xcs)&0xFFFF)<<4) + ((regs->eip)&0xFFFF);
++	} else {
++		pax_eip = regs->eip;
++	}
++
++	/*
++	 * PaX: fill DTLB with user rights and retry
++	 */
++	if (pax_eip != tsk->thread.pax_faults.eip) { /* detect DTLB trashing */
++		tsk->thread.pax_faults.eip = pax_eip;
++		tsk->thread.pax_faults.count = 0;
++
++		pax_emu:
++			__asm__ __volatile__ (
++			"orb %2,%1\n"
++			"invlpg %0\n"
++			"testb $0,%0\n"
++			"xorb %3,%1\n"
++			"testb $0,%0\n"
++			:
++			: "m" (*(char*)address), "m" (*(char*)pte) , "r" (pte_mask) , "i" (_PAGE_USER) 
++			: "memory", "cc");
++			spin_unlock(&mm->page_table_lock);
++			up_read(&mm->mmap_sem);
++			return 0;
++	}
++
++	if (tsk->thread.pax_faults.count < PAX_SPIN_COUNT) { 
++		++tsk->thread.pax_faults.count;
++		goto pax_emu;
++	}
++	spin_unlock(&mm->page_table_lock);
++
++	if (tsk->thread.pax_faults.count == PAX_SPIN_COUNT) {
++		if (pax_handle_opcode(tsk, regs)) {
++			up_read(&mm->mmap_sem);
++			tsk->thread.pax_faults.eip = 0;
++			tsk->thread.pax_faults.count = 0;
++			tsk->ptrace &= ~(PT_PAX_TRACE | PT_PAX_KEEPTF | PT_PAX_OLDTF);
++			return 0;
++		} else {
++			++tsk->thread.pax_faults.count;
++		}
++	}
++
++	if (tsk->thread.pax_faults.count > PAX_SPIN_COUNT+1+3) {
++		up_read(&mm->mmap_sem);
++		printk(KERN_ERR "PAX: preventing DoS: %s:%d, EIP: %08lX, ESP: %08lX\n", tsk->comm, tsk->pid, regs->eip, regs->esp);
++		tsk->thread.pax_faults.eip = 0;
++		tsk->thread.pax_faults.count = 0;
++		tsk->ptrace &= ~(PT_PAX_TRACE | PT_PAX_KEEPTF | PT_PAX_OLDTF);
++		regs->eflags &= ~TF_MASK;
++		tsk->thread.cr2 = address;
++		tsk->thread.error_code = error_code;
++		tsk->thread.trap_no = 14;
++		force_sig(SIGKILL,tsk);
++		return 0;
++	}
++
++	spin_lock(&mm->page_table_lock);
++	pte = pax_get_pte(mm, address);
++	if (pte) {
++		set_pte(pte, pte_mkexec(*pte));
++		__flush_tlb_one(address);
++		tsk->thread.pax_faults.addresses[tsk->thread.pax_faults.count-PAX_SPIN_COUNT-1] = address;
++		++tsk->thread.pax_faults.count;
++	}
++	spin_unlock(&mm->page_table_lock);
++	up_read(&mm->mmap_sem);
++	tsk->ptrace |= PT_PAX_TRACE;
++	regs->eflags |= TF_MASK;
++	/*
++	if (tsk->thread.pax_faults.count > PAX_SPIN_COUNT+1+2)
++		printk(KERN_ERR "PAX: DTLB trashing level %ld: %s:%d, EIP: %08lX, ESP: %08lX, cr2: %08lX\n", tsk->thread.pax_faults.count - (PAX_SPIN_COUNT+1), tsk->comm, tsk->pid, regs->eip, regs->esp, address);
++	*/
++	return 0;
++
++	chain:
++		do_page_fault(regs, error_code);
++		return 0;
++}
++#endif
+diff -urN linux/arch/i386/mm/init.c linux/arch/i386/mm/init.c
+--- linux/arch/i386/mm/init.c	Fri Apr 20 19:15:20 2001
++++ linux/arch/i386/mm/init.c	Sat Jul 21 10:20:29 2001
+@@ -397,7 +397,11 @@
+ 	pmd = pmd_offset(pgd, vaddr);
+ 	pte = pte_offset(pmd, vaddr);
+ 	old_pte = *pte;
++#ifdef CONFIG_GRKERNSEC_PAX
++	*pte = mk_pte_phys(0, PAGE_READONLY_EXEC);
++#else
+ 	*pte = mk_pte_phys(0, PAGE_READONLY);
++#endif
+ 	local_flush_tlb();
+ 
+ 	boot_cpu_data.wp_works_ok = do_test_wp_bit(vaddr);
+diff -urN linux/drivers/char/mem.c linux/drivers/char/mem.c
+--- linux/drivers/char/mem.c	Tue Jul 10 19:07:46 2001
++++ linux/drivers/char/mem.c	Sat Jul 21 10:20:29 2001
+@@ -205,9 +205,20 @@
+ 	/*
+ 	 * Don't dump addresses that are not real memory to a core file.
+ 	 */
++#ifdef CONFIG_GRKERNSEC_PAX
++	if (offset >= __pa(high_memory) || (file->f_flags & O_SYNC)) {
++#else 
+ 	if (offset >= __pa(high_memory) || (file->f_flags & O_SYNC))
++#endif
+ 		vma->vm_flags |= VM_IO;
+-
++#ifdef CONFIG_GRKERNSEC_PAX
++		/* it turned out to be device memory (eg. video RAM), don't apply PaX */
++		if (!(vma->vm_flags & VM_EXEC)) {
++			vma->vm_flags |= VM_EXEC | VM_MAYEXEC;
++			vma->vm_page_prot = protection_map[vma->vm_flags & 0x0f];
++		}                                                                                                          
++	}
++#endif
+ 	if (remap_page_range(vma->vm_start, offset, vma->vm_end-vma->vm_start,
+ 			     vma->vm_page_prot))
+ 		return -EAGAIN;
+@@ -368,8 +379,11 @@
+ 			count = size;
+ 
+ 		zap_page_range(mm, addr, count);
++#ifdef CONFIG_GRKERNSEC_PAX
++	        zeromap_page_range(addr, count, (vma->vm_flags & VM_EXEC) ? PAGE_COPY_EXEC : PAGE_COPY_NOEXEC); 
++#else
+         	zeromap_page_range(addr, count, PAGE_COPY);
+-
++#endif
+ 		size -= count;
+ 		buf += count;
+ 		addr += count;
+diff -urN linux/drivers/char/random.c linux/drivers/char/random.c
+--- linux/drivers/char/random.c	Mon Jul  2 16:56:41 2001
++++ linux/drivers/char/random.c	Sat Jul 21 10:20:29 2001
+@@ -253,9 +253,15 @@
+ /*
+  * Configuration information
+  */
++#ifdef CONFIG_GRKERNSEC_RANDNET
++#define DEFAULT_POOL_SIZE 4096
++#define SECONDARY_POOL_SIZE 1024
++#define BATCH_ENTROPY_SIZE 2048
++#else
+ #define DEFAULT_POOL_SIZE 512
+ #define SECONDARY_POOL_SIZE 128
+ #define BATCH_ENTROPY_SIZE 256
++#endif
+ #define USE_SHA
+ 
+ /*
+@@ -380,8 +386,13 @@
+ /*
+  * Static global variables
+  */
++#ifdef CONFIG_GRKERNSEC_RANDPID
++struct entropy_store *random_state; /* The default global store */
++struct entropy_store *sec_random_state; /* secondary store */
++#else
+ static struct entropy_store *random_state; /* The default global store */
+ static struct entropy_store *sec_random_state; /* secondary store */
++#endif
+ static DECLARE_WAIT_QUEUE_HEAD(random_read_wait);
+ static DECLARE_WAIT_QUEUE_HEAD(random_write_wait);
+ 
+diff -urN linux/drivers/char/vt.c linux/drivers/char/vt.c
+--- linux/drivers/char/vt.c	Fri Feb  9 14:30:22 2001
++++ linux/drivers/char/vt.c	Sat Jul 21 10:20:29 2001
+@@ -174,7 +174,11 @@
+ 		    val = (i ? K_HOLE : K_NOSUCHMAP);
+ 		return put_user(val, &user_kbe->kb_value);
+ 	case KDSKBENT:
++#ifdef CONFIG_GRKERNSEC_KBMAP
++		if (!perm || !suser())
++#else 
+ 		if (!perm)
++#endif
+ 			return -EPERM;
+ 		if (!i && v == K_NOSUCHMAP) {
+ 			/* disallocate map */
+@@ -293,7 +297,11 @@
+ 		put_user('\0', q);
+ 		return ((p && *p) ? -EOVERFLOW : 0);
+ 	case KDSKBSENT:
++#ifdef CONFIG_GRKERNSEC_KBMAP
++		if (!perm || !suser())
++#else 
+ 		if (!perm)
++#endif
+ 			return -EPERM;
+ 
+ 		q = func_table[i];
+diff -urN linux/drivers/ieee1394/video1394.c linux/drivers/ieee1394/video1394.c
+--- linux/drivers/ieee1394/video1394.c	Thu Jul 19 20:48:16 2001
++++ linux/drivers/ieee1394/video1394.c	Sat Jul 21 10:20:29 2001
+@@ -794,7 +794,11 @@
+         pos=(unsigned long) d->buf;
+         while (size > 0) {
+                 page = kvirt_to_pa(pos);
++#ifdef CONFIG_GRKERNSEC_PAX
++		if (remap_page_range(start, page, PAGE_SIZE, PAGE_SHARED_EXEC))
++#else
+                 if (remap_page_range(start, page, PAGE_SIZE, PAGE_SHARED))
++#endif
+                         return -EAGAIN;
+                 start+=PAGE_SIZE;
+                 pos+=PAGE_SIZE;
+diff -urN linux/drivers/media/video/bttv-driver.c linux/drivers/media/video/bttv-driver.c
+--- linux/drivers/media/video/bttv-driver.c	Mon Jul 16 18:13:32 2001
++++ linux/drivers/media/video/bttv-driver.c	Sat Jul 21 10:20:29 2001
+@@ -2037,7 +2037,11 @@
+         pos=(unsigned long) btv->fbuffer;
+         while (size > 0) {
+                 page = kvirt_to_pa(pos);
++#ifdef CONFIG_GRKERNSEC_PAX
++                if (remap_page_range(start, page, PAGE_SIZE, PAGE_SHARED_EXEC))
++#else
+                 if (remap_page_range(start, page, PAGE_SIZE, PAGE_SHARED))
++#endif
+                         return -EAGAIN;
+                 start+=PAGE_SIZE;
+                 pos+=PAGE_SIZE;
+diff -urN linux/drivers/media/video/cpia.c linux/drivers/media/video/cpia.c
+--- linux/drivers/media/video/cpia.c	Sat May 19 20:43:06 2001
++++ linux/drivers/media/video/cpia.c	Sat Jul 21 10:20:41 2001
+@@ -3004,7 +3004,11 @@
+ 	pos = (unsigned long)(cam->frame_buf);
+ 	while (size > 0) {
+ 		page = kvirt_to_pa(pos);
++#ifdef CONFIG_GRKERNSEC_PAX
++		if (remap_page_range(start, page, PAGE_SIZE, PAGE_SHARED_EXEC)) {
++#else
+ 		if (remap_page_range(start, page, PAGE_SIZE, PAGE_SHARED)) {
++#endif
+ 			up(&cam->busy_lock);
+ 			return -EAGAIN;
+ 		}
+diff -urN linux/drivers/media/video/planb.c linux/drivers/media/video/planb.c
+--- linux/drivers/media/video/planb.c	Wed Jun 27 20:10:55 2001
++++ linux/drivers/media/video/planb.c	Sat Jul 21 10:20:41 2001
+@@ -2001,7 +2001,11 @@
+ 	}
+ 	for (i = 0; i < pb->rawbuf_size; i++) {
+ 		if (remap_page_range(start, virt_to_phys((void *)pb->rawbuf[i]),
++#ifdef CONFIG_GRKERNSEC_PAX
++						PAGE_SIZE, PAGE_SHARED_EXEC))
++#else
+ 						PAGE_SIZE, PAGE_SHARED))
++#endif
+ 			return -EAGAIN;
+ 		start += PAGE_SIZE;
+ 		if (size <= PAGE_SIZE)
+diff -urN linux/drivers/media/video/zr36120.c linux/drivers/media/video/zr36120.c
+--- linux/drivers/media/video/zr36120.c	Mon Jul 16 18:13:32 2001
++++ linux/drivers/media/video/zr36120.c	Sat Jul 21 10:20:41 2001
+@@ -1475,7 +1475,11 @@
+ 	pos = (unsigned long)ztv->fbuffer;
+ 	while (size>0) {
+ 		unsigned long page = virt_to_phys((void*)pos);
++#ifdef CONFIG_GRKERNSEC_PAX
++		if (remap_page_range(start, page, PAGE_SIZE, PAGE_SHARED_EXEC))
++#else
+ 		if (remap_page_range(start, page, PAGE_SIZE, PAGE_SHARED))
++#endif
+ 			return -EAGAIN;
+ 		start += PAGE_SIZE;
+ 		pos += PAGE_SIZE;
+diff -urN linux/drivers/usb/ibmcam.c linux/drivers/usb/ibmcam.c
+--- linux/drivers/usb/ibmcam.c	Tue Jun 12 18:53:37 2001
++++ linux/drivers/usb/ibmcam.c	Sat Jul 21 10:20:41 2001
+@@ -2841,7 +2841,11 @@
+ 	pos = (unsigned long)ibmcam->fbuf;
+ 	while (size > 0) {
+ 		page = kvirt_to_pa(pos);
++#ifdef CONFIG_GRKERNSEC_PAX
++		if (remap_page_range(start, page, PAGE_SIZE, PAGE_SHARED_EXEC))
++#else
+ 		if (remap_page_range(start, page, PAGE_SIZE, PAGE_SHARED))
++#endif
+ 			return -EAGAIN;
+ 
+ 		start += PAGE_SIZE;
+diff -urN linux/drivers/usb/ov511.c linux/drivers/usb/ov511.c
+--- linux/drivers/usb/ov511.c	Mon Jul 16 18:13:32 2001
++++ linux/drivers/usb/ov511.c	Sat Jul 21 10:20:41 2001
+@@ -2756,7 +2756,11 @@
+ 	pos = (unsigned long)ov511->fbuf;
+ 	while (size > 0) {
+ 		page = kvirt_to_pa(pos);
++#ifdef CONFIG_GRKERNSEC_PAX
++		if (remap_page_range(start, page, PAGE_SIZE, PAGE_SHARED_EXEC))
++#else
+ 		if (remap_page_range(start, page, PAGE_SIZE, PAGE_SHARED))
++#endif
+ 			return -EAGAIN;
+ 		start += PAGE_SIZE;
+ 		pos += PAGE_SIZE;
+diff -urN linux/fs/binfmt_aout.c linux/fs/binfmt_aout.c
+--- linux/fs/binfmt_aout.c	Thu Jul 19 23:33:38 2001
++++ linux/fs/binfmt_aout.c	Sat Jul 21 10:20:41 2001
+@@ -5,6 +5,7 @@
+  */
+ 
+ #include <linux/module.h>
++#include <linux/config.h>
+ 
+ #include <linux/sched.h>
+ #include <linux/kernel.h>
+@@ -305,6 +306,9 @@
+ 	current->mm->mmap = NULL;
+ 	compute_creds(bprm);
+  	current->flags &= ~PF_FORKNOEXEC;
++#ifdef CONFIG_GRKERNSEC_STACK
++       if (N_FLAGS(ex) & F_STACKEXEC) current->flags |= PF_STACKEXEC;
++#endif
+ #ifdef __sparc__
+ 	if (N_MAGIC(ex) == NMAGIC) {
+ 		loff_t pos = fd_offset;
+@@ -391,7 +395,11 @@
+ 
+ 		down_write(&current->mm->mmap_sem);
+  		error = do_mmap(bprm->file, N_DATADDR(ex), ex.a_data,
++#ifdef CONFIG_GRKERNSEC_PAX
++				PROT_READ | PROT_WRITE,
++#else
+ 				PROT_READ | PROT_WRITE | PROT_EXEC,
++#endif
+ 				MAP_FIXED | MAP_PRIVATE | MAP_DENYWRITE | MAP_EXECUTABLE,
+ 				fd_offset + ex.a_text);
+ 		up_write(&current->mm->mmap_sem);
+diff -urN linux/fs/binfmt_elf.c linux/fs/binfmt_elf.c
+--- linux/fs/binfmt_elf.c	Mon Jul 16 17:37:16 2001
++++ linux/fs/binfmt_elf.c	Sat Jul 21 10:20:41 2001
+@@ -10,7 +10,7 @@
+  */
+ 
+ #include <linux/module.h>
+-
++#include <linux/config.h>
+ #include <linux/fs.h>
+ #include <linux/stat.h>
+ #include <linux/sched.h>
+@@ -71,7 +71,10 @@
+ #define ELF_PAGEOFFSET(_v) ((_v) & (ELF_MIN_ALIGN-1))
+ #define ELF_PAGEALIGN(_v) (((_v) + ELF_MIN_ALIGN - 1) & ~(ELF_MIN_ALIGN - 1))
+ 
+-static struct linux_binfmt elf_format = {
++#ifndef CONFIG_GRKERNSEC_STACK
++static
++#endif
++struct linux_binfmt elf_format = {
+ 	NULL, THIS_MODULE, load_elf_binary, load_elf_library, elf_core_dump, ELF_EXEC_PAGESIZE
+ };
+ 
+@@ -583,6 +586,9 @@
+ 	current->mm->end_code = 0;
+ 	current->mm->mmap = NULL;
+ 	current->flags &= ~PF_FORKNOEXEC;
++#ifdef CONFIG_GRKERNSEC_STACK
++       if (elf_ex.e_flags & EF_STACKEXEC) current->flags |= PF_STACKEXEC;
++#endif
+ 	elf_entry = (unsigned long) elf_ex.e_entry;
+ 
+ 	/* Do this immediately, since STACK_TOP as used in setup_arg_pages
+diff -urN linux/fs/exec.c linux/fs/exec.c
+--- linux/fs/exec.c	Thu Jul 19 23:32:54 2001
++++ linux/fs/exec.c	Sat Jul 21 10:22:07 2001
+@@ -45,6 +45,14 @@
+ #include <linux/kmod.h>
+ #endif
+ 
++#ifdef CONFIG_GRKERNSEC_FD
++#include <linux/major.h>
++#endif
++
++#ifdef CONFIG_GRKERNSEC_CHROOT
++extern struct task_struct *child_reaper;
++#endif
++
+ static struct linux_binfmt *formats;
+ static rwlock_t binfmt_lock = RW_LOCK_UNLOCKED;
+ 
+@@ -276,7 +284,11 @@
+ 		goto out;
+ 	flush_dcache_page(page);
+ 	flush_page_to_ram(page);
++#ifdef CONFIG_GRKERNSEC_PAX
++	set_pte(pte, pte_mkdirty(pte_mkwrite(mk_pte(page, PAGE_COPY_NOEXEC))));
++#else
+ 	set_pte(pte, pte_mkdirty(pte_mkwrite(mk_pte(page, PAGE_COPY))));
++#endif
+ 	tsk->mm->rss++;
+ 	spin_unlock(&tsk->mm->page_table_lock);
+ 
+@@ -311,7 +323,11 @@
+ 		mpnt->vm_mm = current->mm;
+ 		mpnt->vm_start = PAGE_MASK & (unsigned long) bprm->p;
+ 		mpnt->vm_end = STACK_TOP;
++#ifdef CONFIG_GRKERNSEC_PAX
++		mpnt->vm_page_prot = PAGE_COPY_NOEXEC;
++#else
+ 		mpnt->vm_page_prot = PAGE_COPY;
++#endif
+ 		mpnt->vm_flags = VM_STACK_FLAGS;
+ 		mpnt->vm_ops = NULL;
+ 		mpnt->vm_pgoff = 0;
+@@ -468,6 +484,65 @@
+ 	if (atomic_dec_and_test(&oldsig->count))
+ 		kmem_cache_free(sigact_cachep, oldsig);
+ }
++#ifdef CONFIG_GRKERNSEC_FD
++static inline int tweak_fd_open_null(struct linux_binprm *bprm)
++{
++    struct inode *i;
++    struct dentry *d;
++    struct file *f;
++
++    if(!(i = get_empty_inode()))
++        return -ENOMEM;
++    if(!(d = dget(d_alloc_root(i)))){
++        iput(i);
++        return -ENOMEM;
++    }
++    if(!(f = get_empty_filp())){
++        dput(d);
++        iput(i);
++        return -ENFILE;
++    }
++    i->i_mode = S_IFCHR | S_IRUGO | S_IWUGO;
++    i->i_uid = current->fsuid;
++    i->i_gid = current->fsgid;
++    i->i_rdev = MKDEV(MEM_MAJOR,3);
++    i->i_blksize = PAGE_SIZE;
++    i->i_blocks = 0;
++    i->i_atime = i->i_mtime = i->i_ctime = CURRENT_TIME;
++    i->i_op = &page_symlink_inode_operations;
++    i->i_state = I_DIRTY;
++    f->f_flags = O_RDWR;
++    f->f_mode = FMODE_READ | FMODE_WRITE;
++    f->f_dentry = d;
++    f->f_pos = 0;
++    f->f_reada = 0;
++    chrdev_open(i,f);
++    bprm->tweak_fd_null = f;
++    return 0;
++}
++
++static int tweak_fd_0_1_2(struct linux_binprm *bprm)
++{
++    int fd,new,retval;
++    struct file *f;
++    f = bprm->tweak_fd_null;
++    for(fd=0;fd<=2;fd++){
++        if(current->files->fd[fd]) continue;
++        if((new = get_unused_fd()) != fd) {
++            if(new >= 0) put_unused_fd(new);
++            return -EMFILE;
++        }
++        if(f)
++            atomic_inc(&f->f_count);
++        else
++            if((retval = tweak_fd_open_null(bprm)))
++                return retval;
++        fd_install(fd,bprm->tweak_fd_null);
++               bprm->tweak_fd_mask |= 1 << fd;
++    }
++    return 0;
++}
++#endif
+ 
+ /*
+  * These functions flushes out all traces of the currently running executable
+@@ -558,6 +633,9 @@
+ 				current->comm[i++] = ch;
+ 	}
+ 	current->comm[i] = '\0';
++#ifdef CONFIG_GRKERNSEC_STACK
++        current->flags &= ~PF_STACKEXEC;
++#endif
+ 
+ 	flush_thread();
+ 
+@@ -574,7 +652,10 @@
+ 			
+ 	flush_signal_handlers(current);
+ 	flush_old_files(current->files);
+-
++#ifdef CONFIG_GRKERNSEC_FD
++        if(bprm->priv_change)
++            return tweak_fd_0_1_2(bprm);
++#endif
+ 	return 0;
+ 
+ mmap_failed:
+@@ -604,6 +685,9 @@
+ {
+ 	int mode;
+ 	struct inode * inode = bprm->file->f_dentry->d_inode;
++#ifdef CONFIG_GRKERNSEC_FD
++	bprm->priv_change = 0;
++#endif
+ 
+ 	mode = inode->i_mode;
+ 	/* Huh? We had already checked for MAY_EXEC, WTF do we check this? */
+@@ -617,8 +701,16 @@
+ 
+ 	if(!IS_NOSUID(inode)) {
+ 		/* Set-uid? */
+-		if (mode & S_ISUID)
+-			bprm->e_uid = inode->i_uid;
++#ifdef CONFIG_GRKERNSEC_FD
++                if (mode & S_ISUID){
++                        bprm->e_uid = inode->i_uid;
++                        if(bprm->e_uid != current->euid)
++                            bprm->priv_change = 1;
++                }
++#else
++                if (mode & S_ISUID)
++                        bprm->e_uid = inode->i_uid;
++#endif
+ 
+ 		/* Set-gid? */
+ 		/*
+@@ -626,9 +718,17 @@
+ 		 * is a candidate for mandatory locking, not a setgid
+ 		 * executable.
+ 		 */
+-		if ((mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP))
+-			bprm->e_gid = inode->i_gid;
+-	}
++#ifdef CONFIG_GRKERNSEC_FD
++                if ((mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP)){
++                        bprm->e_gid = inode->i_gid;
++                        if(!in_group_p(bprm->e_gid))
++                            bprm->priv_change = 1;
++                }
++#else
++                if ((mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP))
++                        bprm->e_gid = inode->i_gid;
++#endif	
++}
+ 
+ 	/* We don't have VFS support for capabilities yet */
+ 	cap_clear(bprm->cap_inheritable);
+@@ -648,10 +748,10 @@
+ 			cap_set_full(bprm->cap_inheritable);
+ 			cap_set_full(bprm->cap_permitted);
+ 		}
+-		if (bprm->e_uid == 0) 
++
++		if (bprm->e_uid == 0)
+ 			cap_set_full(bprm->cap_effective);
+ 	}
+-
+ 	memset(bprm->buf,0,BINPRM_BUF_SIZE);
+ 	return kernel_read(bprm->file,0,bprm->buf,BINPRM_BUF_SIZE);
+ }
+@@ -699,6 +799,9 @@
+ 							current->cap_permitted);
+ 			}
+ 		}
++#ifdef CONFIG_GRKERNSEC_FD
++            tweak_fd_0_1_2(bprm);
++#endif
+ 		do_unlock = 1;
+ 	}
+ 
+@@ -847,6 +950,34 @@
+ 	struct file *file;
+ 	int retval;
+ 	int i;
++#ifdef CONFIG_GRKERNSEC_EXECLOG
++	int x;
++	char *grargs;
++	char grarg[68];
++#endif
++#ifdef CONFIG_GRKERNSEC_CHROOT_EXECLOG
++	if(!(	(current->fs->root->d_inode->i_dev ==
++		child_reaper->fs->root->d_inode->i_dev) &&
++		(current->fs->root->d_inode->i_ino ==
++		child_reaper->fs->root->d_inode->i_ino) ) ) {
++		security_alert("exec of %.64s within chroot() jail (%.32s:%lu) by process (%.16s:%d), "
++			       "UID (%d), EUID (%d), parent (%.16s:%d), UID (%d), EUID (%d)",
++			       "execs from chroot()",filename,kdevname(current->fs->root->d_inode->i_dev),
++			       current->fs->root->d_inode->i_ino,current->comm,current->pid,
++			       current->uid,current->euid,current->p_pptr->comm,current->p_pptr->pid,
++			       current->p_pptr->uid,current->p_pptr->euid);
++		}
++#endif
++#ifdef CONFIG_GRKERNSEC_EXECVE
++    if(current->user)
++    if(atomic_read(&current->user->processes) > current->rlim[RLIMIT_NPROC].rlim_cur)
++    {
++	security_alert("Attempt to overstep process limit by (%.16s:%d), UID(%d), EUID(%d), parent (%.16s:%d), UID(%d), EUID(%d)",
++		       "proc limit overstep",
++			current->comm,current->pid,current->uid,current->euid,current->p_pptr->comm,current->p_pptr->pid,current->p_pptr->uid,current->p_pptr->euid);
++	return -EAGAIN;
++    }
++#endif
+ 
+ 	file = open_exec(filename);
+ 
+@@ -854,6 +985,149 @@
+ 	if (IS_ERR(file))
+ 		return retval;
+ 
++#ifdef CONFIG_GRKERNSEC_TPE
++#ifdef CONFIG_GRKERNSEC_TPE_GLIBC
++#ifdef CONFIG_GRKERNSEC_TPE_ALL
++if(current->uid){
++#else
++if(in_group_p(CONFIG_GRKERNSEC_TPE_GID)){
++#endif
++		char **envpp=envp,*envpt;
++                while(*envpp){
++		envpt=*envpp;
++		if((*envpt == 'L') && (*(envpt + 1) == 'D') &&
++ 		(*(envpt + 2) == '_') && strchr(envpt,'=')){
++	security_alert("denied exec of %.32s by (%.16s:%d), UID (%d), "
++	"EUID (%d), parent (%.16s:%d), UID (%d), EUID (%d) reason: "
++	"malicious environment","denied execs",
++	filename,current->comm,current->pid,current->uid,current->euid,
++	current->p_pptr->comm,current->p_pptr->pid,current->p_pptr->uid,
++	current->p_pptr->euid);
++	dput(file->f_dentry);
++	return -EACCES;
++		}
++		*envpp=*++envpp;
++        }
++    if(!strncmp(file->f_dentry->d_name.name,"ld-2.",5) &&
++    !strncmp(file->f_dentry->d_parent->d_name.name,"lib",3)){
++	security_alert("denied exec of %.32s by (%.16s:%d), UID (%d), "
++	"EUID (%d), parent (%.16s:%d), UID (%d), EUID (%d) reason: "
++	"tried to bypass via ld","denied execs",
++	filename,current->comm,current->pid,current->uid,current->euid,
++	current->p_pptr->comm,current->p_pptr->pid,current->p_pptr->uid,
++	current->p_pptr->euid);
++	dput(file->f_dentry);
++	return -EACCES;
++    }
++}
++#endif
++if((current->uid) &&
++   ((file->f_dentry->d_parent->d_inode->i_uid) ||
++   (!(file->f_dentry->d_parent->d_inode->i_uid) &&
++   ((file->f_dentry->d_parent->d_inode->i_mode & S_IWGRP) ||
++    (file->f_dentry->d_parent->d_inode->i_mode & S_IWOTH)))) &&
++   (in_group_p(CONFIG_GRKERNSEC_TPE_GID))){
++security_alert("denied exec of %.32s by (%.16s:%d), UID (%d), "
++	"EUID (%d), parent (%.16s:%d), UID (%d), EUID (%d) reason: "
++	"untrusted","denied execs",
++	filename,current->comm,current->pid,current->uid,current->euid,
++	current->p_pptr->comm,current->p_pptr->pid,current->p_pptr->uid,
++	current->p_pptr->euid);
++	dput(file->f_dentry);
++	return -EACCES;
++}
++#ifdef CONFIG_GRKERNSEC_TPE_ALL
++else if((current->uid) && !(((!(file->f_dentry->d_parent->d_inode->i_uid) &&
++    !(file->f_dentry->d_parent->d_inode->i_mode & S_IWGRP) &&
++    !(file->f_dentry->d_parent->d_inode->i_mode & S_IWOTH)) ||
++    ((file->f_dentry->d_parent->d_inode->i_uid == current->uid) &&
++    !(file->f_dentry->d_parent->d_inode->i_mode & S_IWGRP) &&
++    !(file->f_dentry->d_parent->d_inode->i_mode & S_IWOTH))))){
++security_alert("denied exec of %.32s by (%.16s:%d), UID (%d), "
++	"EUID (%d), parent (%.16s:%d), UID (%d), EUID (%d) reason:"
++	" untrusted","denied execs",
++	filename,current->comm,current->pid,current->uid,current->euid,
++	current->p_pptr->comm,current->p_pptr->pid,current->p_pptr->uid,
++	current->p_pptr->euid);
++	dput(file->f_dentry);
++	return -EACCES;
++}
++#endif
++#endif
++#ifdef CONFIG_GRKERNSEC_NOEXEC
++	if(in_group_p(CONFIG_GRKERNSEC_NOEXEC_GID) &&
++	(file->f_dentry->d_inode->i_gid != CONFIG_GRKERNSEC_NOEXEC_GID)) {
++                security_alert("denied exec of %.32s by (%.16s:%d), UID(%d), "
++                "EUID(%d), parent (%.16s:%d), UID(%d), EUID(%d) reason: in "
++                "noexec group","denied noexec execs",filename,current->comm,
++		current->pid,current->uid,current->euid,current->p_pptr->comm,
++		current->p_pptr->pid,current->p_pptr->uid,current->p_pptr->euid);
++	        dput(file->f_dentry);
++                return -EACCES;
++        } else if(in_group_p(CONFIG_GRKERNSEC_NOEXEC_GID)){
++#ifdef CONFIG_GRKERNSEC_NOEXEC_GLIBC
++		char **envpp=envp,*envpt;
++                while(*envpp){
++		envpt=*envpp;
++		if((*envpt == 'L') && (*(envpt + 1) == 'D') &&
++ 		(*(envpt + 2) == '_') && strchr(envpt,'=')){
++	security_alert("denied exec of %.32s by (%.16s:%d), UID (%d), "
++	"EUID (%d), parent (%.16s:%d), UID (%d), EUID (%d) reason: "
++	"malicious environment","denied execs",
++	filename,current->comm,current->pid,current->uid,current->euid,
++	current->p_pptr->comm,current->p_pptr->pid,current->p_pptr->uid,
++	current->p_pptr->euid);
++	dput(file->f_dentry);
++	return -EACCES;
++		}
++		*envpp=*++envpp;
++        }
++    if(!strncmp(file->f_dentry->d_name.name,"ld-2.",5) &&
++    !strncmp(file->f_dentry->d_parent->d_name.name,"lib",3)){
++	security_alert("denied exec of %.32s by (%.16s:%d), UID (%d), "
++	"EUID (%d), parent (%.16s:%d), UID (%d), EUID (%d) reason: "
++	"tried to bypass via libs","denied execs",
++	filename,current->comm,current->pid,current->uid,current->euid,
++	current->p_pptr->comm,current->p_pptr->pid,current->p_pptr->uid,
++	current->p_pptr->euid);
++	dput(file->f_dentry);
++	return -EACCES;
++    }
++#endif
++
++#ifdef CONFIG_GRKERNSEC_NOEXEC_CAPS
++       cap_lower(current->cap_permitted,CAP_SETGID
++       & CAP_SETPCAP & CAP_SYS_RAWIO & CAP_SYS_MODULE & CAP_SYS_ADMIN &
++       CAP_NET_ADMIN & CAP_SYS_BOOT & CAP_LINUX_IMMUTABLE & CAP_SYS_PTRACE);
++       cap_lower(current->cap_effective,CAP_SETGID
++       & CAP_SETPCAP & CAP_SYS_RAWIO & CAP_SYS_MODULE & CAP_SYS_ADMIN &
++       CAP_NET_ADMIN & CAP_SYS_BOOT & CAP_LINUX_IMMUTABLE & CAP_SYS_PTRACE);
++       cap_lower(current->cap_inheritable,CAP_SETGID
++       & CAP_SETPCAP & CAP_SYS_RAWIO & CAP_SYS_MODULE & CAP_SYS_ADMIN &
++       CAP_NET_ADMIN & CAP_SYS_BOOT & CAP_LINUX_IMMUTABLE & CAP_SYS_PTRACE); 
++#else
++       cap_lower(current->cap_permitted,CAP_SETGID);
++       cap_lower(current->cap_effective,CAP_SETGID);
++       cap_lower(current->cap_inheritable,CAP_SETGID);
++#endif
++       }
++#endif
++#ifdef CONFIG_GRKERNSEC_SIDCAPS
++       if(((file->f_dentry->d_inode->i_mode & S_ISUID) &&
++       !(file->f_dentry->d_inode->i_uid)) ||
++       ((file->f_dentry->d_inode->i_mode & S_ISGID) &&
++       !(file->f_dentry->d_inode->i_gid))){
++       cap_lower(current->cap_permitted,
++       CAP_SETPCAP & CAP_SYS_RAWIO & CAP_SYS_MODULE &
++       CAP_SYS_BOOT & CAP_LINUX_IMMUTABLE & CAP_SYS_PTRACE);
++       cap_lower(current->cap_effective,
++       CAP_SETPCAP & CAP_SYS_RAWIO & CAP_SYS_MODULE &  
++       CAP_SYS_BOOT & CAP_LINUX_IMMUTABLE & CAP_SYS_PTRACE);
++       cap_lower(current->cap_inheritable,
++       CAP_SETPCAP & CAP_SYS_RAWIO & CAP_SYS_MODULE &
++       CAP_SYS_BOOT & CAP_LINUX_IMMUTABLE & CAP_SYS_PTRACE);
++       }
++#endif   
+ 	bprm.p = PAGE_SIZE*MAX_ARG_PAGES-sizeof(void *);
+ 	memset(bprm.page, 0, MAX_ARG_PAGES*sizeof(bprm.page[0])); 
+ 
+@@ -867,13 +1141,30 @@
+ 		fput(file);
+ 		return bprm.argc;
+ 	}
++#ifdef CONFIG_GRKERNSEC_EXECLOG
++	    for(x=0;x<sizeof(grarg);x++)
++		grarg[x]='\0';
++	    for(x=0;x<bprm.argc;x++) {
++		if((strlen(argv[x]) + strlen(grarg) + 2) < sizeof(grarg)) {
++		    grargs=strcat(grarg,argv[x]);
++		    if(x<bprm.argc-1)
++			grargs=strcat(grarg," ");
++		}
++	    }
++	    printk(KERN_INFO "GETREWTED EXEC: (%.68s) PID(%d) by UID(%d) EUID(%d) Process(%s:%d), "
++		"parent (%.16s:%d) UID(%d) EUID(%d)\n",grarg,current->pid,current->uid,current->euid,current->comm,
++		current->pid,current->p_pptr->comm,current->p_pptr->pid,current->uid,current->euid);
++#endif
+ 
+ 	if ((bprm.envc = count(envp, bprm.p / sizeof(void *))) < 0) {
+ 		allow_write_access(file);
+ 		fput(file);
+ 		return bprm.envc;
+ 	}
+-
++#ifdef CONFIG_GRKERNSEC_FD
++        bprm.tweak_fd_mask = 0;
++        bprm.tweak_fd_null = NULL;
++#endif
+ 	retval = prepare_binprm(&bprm);
+ 	if (retval < 0) 
+ 		goto out; 
+@@ -892,9 +1183,10 @@
+ 		goto out; 
+ 
+ 	retval = search_binary_handler(&bprm,regs);
+-	if (retval >= 0)
++	if (retval >= 0) {
+ 		/* execve success */
+ 		return retval;
++	}
+ 
+ out:
+ 	/* Something went wrong, return the inode and free the argument pages*/
+@@ -907,7 +1199,13 @@
+ 		if (page)
+ 			__free_page(page);
+ 	}
+-
++#ifdef CONFIG_GRKERNSEC_FD
++	if(bprm.tweak_fd_mask) {                                            
++	for(i=0;i<=2;i++)
++            if(bprm.tweak_fd_mask & (1 << i))
++                (void)sys_close(i);
++	}
++#endif
+ 	return retval;
+ }
+ 
+@@ -940,7 +1238,7 @@
+ 		goto fail;
+ 
+ 	memcpy(corename,"core.", 5);
+-#if 0
++#ifdef CONFIG_GRKERNSEC_COREDUMP
+ 	memcpy(corename+5,current->comm,sizeof(current->comm));
+ #else
+ 	corename[4] = '\0';
+diff -urN linux/fs/namei.c linux/fs/namei.c
+--- linux/fs/namei.c	Fri Jul 20 15:39:56 2001
++++ linux/fs/namei.c	Sat Jul 21 10:20:41 2001
+@@ -25,8 +25,13 @@
+ #include <asm/namei.h>
+ #include <asm/uaccess.h>
+ 
++
+ #define ACC_MODE(x) ("\000\004\002\006"[(x)&O_ACCMODE])
+ 
++#ifdef CONFIG_GRKERNSEC_CHROOT
++extern struct task_struct *child_reaper;
++#endif
++
+ /* [Feb-1997 T. Schoebel-Theuer]
+  * Fundamental changes in the pathname lookup mechanisms (namei)
+  * were necessary because of omirr.  The reason is that omirr needs
+@@ -309,6 +314,27 @@
+ 	if (current->link_count >= 8)
+ 		goto loop;
+ 	current->link_count++;
++#ifdef CONFIG_GRKERNSEC_LINK
++	if(S_ISLNK(dentry->d_inode->i_mode) &&
++	  (dentry->d_parent->d_inode->i_mode & S_ISVTX) &&
++	  dentry->d_parent->d_inode->i_uid != dentry->d_inode->i_uid &&
++	  (dentry->d_parent->d_inode->i_mode & S_IWOTH) &&
++	  current->fsuid != dentry->d_inode->i_uid) {
++	  security_alert("not following symlink (%.30s/%.30s) of [%.32s]:%lu owned by %d.%d "
++			 "by (%.16s:%d), UID (%d), EUID (%d), parent (%.16s:%d), "
++			 "UID (%d), EUID (%d)","symlinks not followed",
++			 dentry->d_parent->d_name.name,
++			 dentry->d_name.name,
++			 kdevname(dentry->d_inode->i_dev),
++			 dentry->d_inode->i_ino,
++			 dentry->d_inode->i_uid,
++			 dentry->d_inode->i_gid,current->comm,
++			 current->pid,current->uid,current->euid,
++			 current->p_pptr->comm,current->p_pptr->pid,
++			 current->p_pptr->uid,current->p_pptr->euid);
++	return -EACCES;
++	}
++#endif
+ 	UPDATE_ATIME(dentry->d_inode);
+ 	err = dentry->d_inode->i_op->follow_link(dentry, nd);
+ 	current->link_count--;
+@@ -1031,12 +1057,31 @@
+ 	error = permission(inode,acc_mode);
+ 	if (error)
+ 		goto exit;
+-
+ 	/*
+ 	 * FIFO's, sockets and device files are special: they don't
+ 	 * actually live on the filesystem itself, and as such you
+ 	 * can write to them even if the filesystem is read-only.
+ 	 */
++#ifdef CONFIG_GRKERNSEC_FIFO
++               if (S_ISFIFO(inode->i_mode) && !(flag & O_EXCL) &&
++                   (dentry->d_parent->d_inode->i_mode & S_ISVTX) &&
++                   inode->i_uid != dentry->d_parent->d_inode->i_uid &&
++                   current->fsuid != inode->i_uid) {
++                       if (!permission(inode, acc_mode))
++                       security_alert("denied writing FIFO (%.32s/%.32s) of %d.%d "
++                               "by (%.16s:%d), UID(%d), EUID(%d), parent "
++			       "(%.16s:%d), UID(%d), EUID(%d)",
++                               "writes into a FIFO denied",dentry->d_parent->d_name.name,dentry->d_name.name,
++                               inode->i_uid, inode->i_gid,
++			       current->comm,current->pid,
++                               current->uid, current->euid,
++                               current->p_pptr->comm,
++			       current->p_pptr->pid,current->p_pptr->uid,
++			       current->p_pptr->euid);
++                       error = -EACCES;
++                       goto exit;
++               }
++#endif
+ 	if (S_ISFIFO(inode->i_mode) || S_ISSOCK(inode->i_mode)) {
+ 	    	flag &= ~O_TRUNC;
+ 	} else if (S_ISBLK(inode->i_mode) || S_ISCHR(inode->i_mode)) {
+@@ -1111,6 +1156,29 @@
+ 	 * stored in nd->last.name and we will have to putname() it when we
+ 	 * are done. Procfs-like symlinks just set LAST_BIND.
+ 	 */
++#ifdef CONFIG_GRKERNSEC_LINK
++	if(S_ISLNK(dentry->d_inode->i_mode) &&
++	  (dentry->d_parent->d_inode->i_mode & S_ISVTX) &&
++	  dentry->d_parent->d_inode->i_uid != dentry->d_inode->i_uid &&
++	  (dentry->d_parent->d_inode->i_mode & S_IWOTH) &&
++	  current->fsuid != dentry->d_inode->i_uid) {
++	  security_alert("not following symlink (%.30s/%.30s) [%.32s]:%lu of %d.%d "
++			 "by (%.16s:%d), UID (%d), EUID (%d), parent (%.16s:%d), "
++			 "UID (%d), EUID (%d)","symlinks not followed",
++			 dentry->d_parent->d_name.name,
++			 dentry->d_name.name,
++			 kdevname(dentry->d_inode->i_dev),
++			 dentry->d_inode->i_ino,
++			 dentry->d_inode->i_uid,
++			 dentry->d_inode->i_gid,current->comm,
++			 current->pid,current->uid,current->euid,
++			 current->p_pptr->comm,current->p_pptr->pid,
++			 current->p_pptr->uid,current->p_pptr->euid);
++	error = -EACCES;
++	goto exit;
++	}
++#endif
++
+ 	UPDATE_ATIME(dentry->d_inode);
+ 	error = dentry->d_inode->i_op->follow_link(dentry, nd);
+ 	dput(dentry);
+@@ -1194,7 +1262,9 @@
+ 	char * tmp;
+ 	struct dentry * dentry;
+ 	struct nameidata nd;
+-
++#ifdef CONFIG_GRKERNSEC_CHROOT
++	char grdevmode;
++#endif
+ 	if (S_ISDIR(mode))
+ 		return -EPERM;
+ 	tmp = getname(filename);
+@@ -1210,6 +1280,32 @@
+ 
+ 	mode &= ~current->fs->umask;
+ 	if (!IS_ERR(dentry)) {
++#ifdef CONFIG_GRKERNSEC_CHROOT
++	if (!S_ISFIFO(mode)) {
++	    if(!(   (current->fs->root->d_inode->i_dev ==
++		    child_reaper->fs->root->d_inode->i_dev) &&
++		    (current->fs->root->d_inode->i_ino ==
++		    child_reaper->fs->root->d_inode->i_ino) ) ) {
++		switch (mode & S_IFMT) {
++		    case S_IFREG:	grdevmode = 'r';	break;
++		    case S_IFCHR:	grdevmode = 'c';	break;
++		    case S_IFBLK:	grdevmode = 'b';	break;
++		    case S_IFSOCK:	grdevmode = 's';	break;
++		    default:		grdevmode = 'u';
++		}
++		security_alert("refused attempt to mknod(%c:%.32s) (%.30s) from chroot() jail (%s:%lu) "
++			       "owned by %d %d by (%.16s:%d), UID (%d), EUID (%d), parent (%.16s:%d), UID "
++			       "(%d), EUID (%d)","chroot() mknods denied",grdevmode,kdevname(dev),tmp,
++			       kdevname(current->fs->root->d_inode->i_dev),current->fs->root->d_inode->i_ino,
++			       current->fs->root->d_inode->i_uid,current->fs->root->d_inode->i_gid,
++			       current->comm,current->pid,current->uid,current->euid,current->p_pptr->comm,
++			       current->p_pptr->pid,current->p_pptr->uid,current->p_pptr->euid);
++			dput(dentry);
++			error = -EPERM;
++			goto out;
++		}
++	}
++#endif		    		
+ 		switch (mode & S_IFMT) {
+ 		case 0: case S_IFREG:
+ 			error = vfs_create(nd.dentry->d_inode,dentry,mode);
+@@ -1604,6 +1700,23 @@
+ 		new_dentry = lookup_create(&nd, 0);
+ 		error = PTR_ERR(new_dentry);
+ 		if (!IS_ERR(new_dentry)) {
++#ifdef CONFIG_GRKERNSEC_LINK
++	error = -EPERM;
++	if(current->fsuid != old_nd.dentry->d_inode->i_uid &&
++	(!S_ISREG(old_nd.dentry->d_inode->i_mode) ||
++	(old_nd.dentry->d_inode->i_mode & S_ISUID) ||
++	((old_nd.dentry->d_inode->i_mode & (S_ISGID | S_IXGRP)) == 
++	(S_ISGID | S_IXGRP)) || (error = permission(old_nd.dentry->d_inode,
++	MAY_READ | MAY_WRITE))) && !capable(CAP_FOWNER) && current->uid) {
++	security_alert("denied hardlink of (%.30s to %.30s) to %d.%d for (%.16s:%d),"
++	" UID(%d), EUID(%d), parent (%.16s:%d), UID(%d), EUID(%d)",
++	"denied hardlinks",oldname,newname,old_nd.dentry->d_inode->i_uid,
++	old_nd.dentry->d_inode->i_gid,current->comm,current->pid,current->uid,
++	current->euid,current->p_pptr->comm,current->p_pptr->pid,
++	current->p_pptr->uid,current->p_pptr->euid);
++	goto exit;
++	}
++#endif	
+ 			error = vfs_link(old_nd.dentry, nd.dentry->d_inode, new_dentry);
+ 			dput(new_dentry);
+ 		}
+@@ -1846,8 +1959,6 @@
+ 	error = vfs_rename(old_dir->d_inode, old_dentry,
+ 				   new_dir->d_inode, new_dentry);
+ 	unlock_kernel();
+-
+-	dput(new_dentry);
+ exit4:
+ 	dput(old_dentry);
+ exit3:
+diff -urN linux/fs/open.c linux/fs/open.c
+--- linux/fs/open.c	Fri Feb  9 14:29:44 2001
++++ linux/fs/open.c	Sat Jul 21 10:20:41 2001
+@@ -19,6 +19,10 @@
+ 
+ #define special_file(m) (S_ISCHR(m)||S_ISBLK(m)||S_ISFIFO(m)||S_ISSOCK(m))
+ 
++#ifdef CONFIG_GRKERNSEC_CHROOT
++extern struct task_struct *child_reaper;
++#endif
++
+ int vfs_statfs(struct super_block *sb, struct statfs *buf)
+ {
+ 	int retval = -ENODEV;
+@@ -421,11 +425,45 @@
+ 		goto dput_and_out;
+ 
+ 	error = -EPERM;
+-	if (!capable(CAP_SYS_CHROOT))
+-		goto dput_and_out;
++ 	if (!capable(CAP_SYS_CHROOT))
++  		goto dput_and_out;
++#ifdef CONFIG_GRKERNSEC_CHROOT
++	if(!(	(current->fs->root->d_inode->i_dev ==
++		child_reaper->fs->root->d_inode->i_dev) &&
++		(current->fs->root->d_inode->i_ino ==
++		child_reaper->fs->root->d_inode->i_ino) ) ) {
++		security_alert("denied attempt to chroot() from (%.32s:%lu) to (%.30s)"
++			       ", process (%.16s:%d), UID (%d), EUID (%d), parent "
++			       "(%16s:%d), UID (%d), EUID (%d)", "double chroot() denied",
++			       kdevname(current->fs->root->d_inode->i_dev),current->fs->root->d_inode->i_ino,name,
++			       current->comm,current->pid,current->uid,current->euid,
++			       current->p_pptr->comm,current->p_pptr->pid,current->p_pptr->uid,
++			       current->p_pptr->euid);
++			goto dput_and_out;
++	}
++#endif	
+ 
+ 	set_fs_root(current->fs, nd.mnt, nd.dentry);
+ 	set_fs_altroot();
++#ifdef CONFIG_GRKERNSEC_CHROOT_CAPS
++	if(current->pid && current->pid > 1) {
++	    cap_lower(current->cap_permitted,CAP_FOWNER & CAP_SETPCAP & CAP_LINUX_IMMUTABLE &
++		      CAP_NET_ADMIN & CAP_SYS_MODULE & CAP_SYS_RAWIO & CAP_SYS_PACCT &
++		      CAP_SYS_ADMIN & CAP_SYS_BOOT & CAP_SYS_RESOURCE & CAP_SYS_TIME &
++		      CAP_SYS_TTY_CONFIG);
++	    cap_lower(current->cap_inheritable,CAP_FOWNER & CAP_SETPCAP & CAP_LINUX_IMMUTABLE &
++		      CAP_NET_ADMIN & CAP_SYS_MODULE & CAP_SYS_RAWIO & CAP_SYS_PACCT &
++		      CAP_SYS_ADMIN & CAP_SYS_BOOT & CAP_SYS_RESOURCE & CAP_SYS_TIME &
++		      CAP_SYS_TTY_CONFIG);
++	    cap_lower(current->cap_effective,CAP_FOWNER & CAP_SETPCAP & CAP_LINUX_IMMUTABLE &
++		      CAP_NET_ADMIN & CAP_SYS_MODULE & CAP_SYS_RAWIO & CAP_SYS_PACCT &
++		      CAP_SYS_ADMIN & CAP_SYS_BOOT & CAP_SYS_RESOURCE & CAP_SYS_TIME &
++		      CAP_SYS_TTY_CONFIG);
++	}
++#endif
++#ifdef CONFIG_GRKERNSEC_CHROOT
++	sys_chdir("/");
++#endif
+ 	error = 0;
+ dput_and_out:
+ 	path_release(&nd);
+@@ -456,6 +494,27 @@
+ 		goto out_putf;
+ 	if (mode == (mode_t) -1)
+ 		mode = inode->i_mode;
++#ifdef CONFIG_GRKERNSEC_CHROOT
++	if((mode & S_ISUID) || (mode & S_ISGID)) {
++	if(!( 	(current->fs->root->d_inode->i_dev ==
++		child_reaper->fs->root->d_inode->i_dev) &&
++		(current->fs->root->d_inode->i_ino ==
++		child_reaper->fs->root->d_inode->i_ino) ) ) {
++	    
++	    security_alert("denied attempt to fchmod() +s (%.32s:%lu) owned by %d.%d to mode 0%07o "
++			   "from chroot() jail (%.32s:%lu) of %d.%d by (%.16s:%d), UID (%d), "
++			   "EUID (%d), parent (%.16s:%d), UID (%d), EUID (%d)","denied fchmod() +s in chroot()",
++			   kdevname(inode->i_dev),inode->i_ino,inode->i_uid,inode->i_gid,mode,
++			   kdevname(current->fs->root->d_inode->i_dev),current->fs->root->d_inode->i_ino,
++			   current->fs->root->d_inode->i_uid,current->fs->root->d_inode->i_gid,
++			   current->comm,current->pid,current->uid,current->euid,
++			   current->p_pptr->comm,current->p_pptr->pid,current->p_pptr->uid,
++			   current->p_pptr->euid);
++		err = -EPERM;
++		goto out_putf;
++	    }
++	}	    
++#endif
+ 	newattrs.ia_mode = (mode & S_IALLUGO) | (inode->i_mode & ~S_IALLUGO);
+ 	newattrs.ia_valid = ATTR_MODE | ATTR_CTIME;
+ 	err = notify_change(dentry, &newattrs);
+@@ -488,6 +547,26 @@
+ 
+ 	if (mode == (mode_t) -1)
+ 		mode = inode->i_mode;
++#ifdef CONFIG_GRKERNSEC_CHROOT
++	if ((mode & S_ISUID) || (mode & S_ISGID)) {
++	if(!( 	(current->fs->root->d_inode->i_dev ==
++		child_reaper->fs->root->d_inode->i_dev) &&
++		(current->fs->root->d_inode->i_ino ==
++		child_reaper->fs->root->d_inode->i_ino) ) ) {
++	    security_alert("denied attempt to chmod() +s (%.32s:%lu) (%.30s) owned by %d.%d to mode 0%07o "
++			   "from chroot() jail (%.32s:%lu) of %d.%d by (%.16s:%d), UID (%d), "
++			   "EUID (%d), parent (%.16s:%d), UID (%d), EUID (%d)","denied fchmod() +s in chroot()",
++			   kdevname(inode->i_dev),inode->i_ino,filename,inode->i_uid,inode->i_gid,
++			   mode,kdevname(current->fs->root->d_inode->i_dev),
++			   current->fs->root->d_inode->i_ino,current->fs->root->d_inode->i_uid,
++			   current->fs->root->d_inode->i_gid,current->comm,current->pid,
++			   current->uid,current->euid,current->p_pptr->comm,current->p_pptr->pid,
++			   current->p_pptr->uid,current->p_pptr->euid);
++		    error = -EPERM;
++		    goto dput_and_out;
++	    }
++	}
++#endif
+ 	newattrs.ia_mode = (mode & S_IALLUGO) | (inode->i_mode & ~S_IALLUGO);
+ 	newattrs.ia_valid = ATTR_MODE | ATTR_CTIME;
+ 	error = notify_change(nd.dentry, &newattrs);
+@@ -512,6 +591,18 @@
+ 	error = -EROFS;
+ 	if (IS_RDONLY(inode))
+ 		goto out;
++#ifdef CONFIG_GRKERNSEC_NOEXEC
++	if(in_group_p(CONFIG_GRKERNSEC_NOEXEC_GID) &&
++	(group == CONFIG_GRKERNSEC_NOEXEC_GID)){
++	security_alert("denied chown of %.32s by (%.16s:%d), UID(%d), "
++	"EUID(%d), parent (%.16s:%d), UID(%d), EUID(%d) reason: tried to "
++	"bypass noexec","denied noexec chowns",dentry->d_name.name,current->comm,
++	current->pid,current->uid,current->euid,current->p_pptr->comm,
++	current->p_pptr->pid,current->p_pptr->uid,current->p_pptr->euid);
++	return -EPERM;
++	}
++#endif
++
+ 	error = -EPERM;
+ 	if (IS_IMMUTABLE(inode) || IS_APPEND(inode))
+ 		goto out;
+diff -urN linux/fs/proc/base.c linux/fs/proc/base.c
+--- linux/fs/proc/base.c	Fri Jul 20 15:39:56 2001
++++ linux/fs/proc/base.c	Sat Jul 21 10:20:41 2001
+@@ -527,6 +527,16 @@
+ static struct pid_entry base_stuff[] = {
+   E(PROC_PID_FD,	"fd",		S_IFDIR|S_IRUSR|S_IXUSR),
+   E(PROC_PID_ENVIRON,	"environ",	S_IFREG|S_IRUSR),
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++  E(PROC_PID_STATUS,	"status",	S_IFREG|S_IRUSR),
++  E(PROC_PID_CMDLINE,	"cmdline",	S_IFREG|S_IRUSR),
++  E(PROC_PID_STAT,	"stat",		S_IFREG|S_IRUSR),
++  E(PROC_PID_STATM,	"statm",	S_IFREG|S_IRUSR),
++#ifdef CONFIG_SMP
++  E(PROC_PID_CPU,	"cpu",		S_IFREG|S_IRUSR),
++#endif
++  E(PROC_PID_MAPS,	"maps",		S_IFREG|S_IRUSR),
++#else
+   E(PROC_PID_STATUS,	"status",	S_IFREG|S_IRUGO),
+   E(PROC_PID_CMDLINE,	"cmdline",	S_IFREG|S_IRUGO),
+   E(PROC_PID_STAT,	"stat",		S_IFREG|S_IRUGO),
+@@ -535,6 +545,7 @@
+   E(PROC_PID_CPU,	"cpu",		S_IFREG|S_IRUGO),
+ #endif
+   E(PROC_PID_MAPS,	"maps",		S_IFREG|S_IRUGO),
++#endif
+   E(PROC_PID_MEM,	"mem",		S_IFREG|S_IRUSR|S_IWUSR),
+   E(PROC_PID_CWD,	"cwd",		S_IFLNK|S_IRWXUGO),
+   E(PROC_PID_ROOT,	"root",		S_IFLNK|S_IRWXUGO),
+@@ -686,7 +697,9 @@
+ 	inode->i_gid = 0;
+ 	if (ino == PROC_PID_INO || task_dumpable(task)) {
+ 		inode->i_uid = task->euid;
++#ifndef CONFIG_GRKERNSEC_PROC_USERGROUP
+ 		inode->i_gid = task->egid;
++#endif
+ 	}
+ 
+ out:
+@@ -995,7 +1008,11 @@
+ 
+ 	if (!inode)
+ 		goto out;
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++	inode->i_mode = S_IFDIR|S_IRUSR|S_IXUSR;
++#else
+ 	inode->i_mode = S_IFDIR|S_IRUGO|S_IXUGO;
++#endif
+ 	inode->i_op = &proc_base_inode_operations;
+ 	inode->i_fop = &proc_base_operations;
+ 	inode->i_nlink = 3;
+diff -urN linux/fs/proc/inode.c linux/fs/proc/inode.c
+--- linux/fs/proc/inode.c	Wed Apr 18 02:16:39 2001
++++ linux/fs/proc/inode.c	Sat Jul 21 10:20:41 2001
+@@ -152,7 +152,11 @@
+ 		if (de->mode) {
+ 			inode->i_mode = de->mode;
+ 			inode->i_uid = de->uid;
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++			inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
++#else
+ 			inode->i_gid = de->gid;
++#endif
+ 		}
+ 		if (de->size)
+ 			inode->i_size = de->size;
+diff -urN linux/fs/super.c linux/fs/super.c
+--- linux/fs/super.c	Thu Jun 14 17:16:58 2001
++++ linux/fs/super.c	Sat Jul 21 10:20:41 2001
+@@ -42,6 +42,11 @@
+ #define __NO_VERSION__
+ #include <linux/module.h>
+ 
++#ifdef CONFIG_GRKERNSEC_CHROOT
++#include <linux/sched.h>
++extern struct task_struct *child_reaper;
++#endif
++
+ /*
+  * We use a semaphore to synchronize all mount/umount
+  * activity - imagine the mess if we have a race between
+@@ -1413,6 +1418,26 @@
+ 		retval = path_walk(dir_name, &nd);
+ 	if (retval)
+ 		return retval;
++
++#ifdef CONFIG_GRKERNSEC_CHROOT
++      if (!(  (current->fs->root->d_inode->i_dev ==
++              child_reaper->fs->root->d_inode->i_dev) &&
++              (current->fs->root->d_inode->i_ino ==
++              child_reaper->fs->root->d_inode->i_ino) ) ) {
++               security_alert("denied attempt to mount (%.30s) as %.64s from chroot() jail (%.32s:%lu) "
++               "of %d.%d by (%.16s:%d), UID (%d), EUID (%d), parent (%.16s:%d), "
++               "UID (%d), EUID (%d)","denied mounts in chroot()",dev_name,dir_name,
++	       kdevname(current->fs->root->d_inode->i_dev),
++	       current->fs->root->d_inode->i_ino,current->fs->root->d_inode->i_uid,
++	       current->fs->root->d_inode->i_gid,current->comm,current->pid,
++	       current->uid,current->euid,current->p_pptr->comm,current->p_pptr->pid,
++	       current->p_pptr->uid,current->p_pptr->euid);
++                      retval = -EPERM;
++                      path_release(&nd);
++		      return retval;
++      }
++#endif
++
+ 
+ 	if (flags & MS_REMOUNT)
+ 		retval = do_remount(&nd, flags&~MS_REMOUNT,
+diff -urN linux/grsecurity/Config.in linux/grsecurity/Config.in
+--- linux/grsecurity/Config.in	Wed Dec 31 19:00:00 1969
++++ linux/grsecurity/Config.in	Sat Jul 21 10:20:41 2001
+@@ -0,0 +1,98 @@
++mainmenu_option next_comment
++comment 'Buffer Overflow Protection'
++if [ "$CONFIG_GRKERNSEC_PAX" != "y" ]; then
++bool '   Openwall non-executable stack' CONFIG_GRKERNSEC_STACK
++if [ "$CONFIG_GRKERNSEC_STACK" != "n" ]; then
++bool '     Gcc trampoline support' CONFIG_GRKERNSEC_STACK_GCC
++fi
++fi
++if [ "$CONFIG_GRKERNSEC_STACK" != "y" ]; then
++bool '   PaX protection' CONFIG_GRKERNSEC_PAX
++fi
++endmenu
++mainmenu_option next_comment
++comment 'Filesystem Protections'
++bool '   Proc restrictions' CONFIG_GRKERNSEC_PROC
++if [ "$CONFIG_GRKERNSEC_PROC" != "n" ]; then
++bool '      Restrict to user only' CONFIG_GRKERNSEC_PROC_USER
++if [ "$CONFIG_GRKERNSEC_PROC_USER" != "y" ]; then
++bool '      Allow special group' CONFIG_GRKERNSEC_PROC_USERGROUP
++if [ "$CONFIG_GRKERNSEC_PROC_USERGROUP" != "n" ]; then
++int  '      GID for special group' CONFIG_GRKERNSEC_PROC_GID 1001
++fi
++fi
++fi
++bool '   Linking restrictions' CONFIG_GRKERNSEC_LINK
++bool '   FIFO restrictions' CONFIG_GRKERNSEC_FIFO
++bool '   Secure file descriptors' CONFIG_GRKERNSEC_FD
++bool '   Chroot jail restrictions' CONFIG_GRKERNSEC_CHROOT
++if [ "$CONFIG_GRKERNSEC_CHROOT" != "n" ]; then
++bool '     Log execs within jail' CONFIG_GRKERNSEC_CHROOT_EXECLOG
++bool '     Capability restrictions' CONFIG_GRKERNSEC_CHROOT_CAPS
++fi
++bool '   Secure keymap loading' CONFIG_GRKERNSEC_KBMAP
++endmenu
++mainmenu_option next_comment
++comment 'Security Logging'
++bool '   Exec logging' CONFIG_GRKERNSEC_EXECLOG
++bool '   Set*id logging' CONFIG_GRKERNSEC_SUID
++bool '   Signal logging' CONFIG_GRKERNSEC_SIGNAL
++bool '   Fork failure logging' CONFIG_GRKERNSEC_FORKFAIL
++bool '   Time change logging' CONFIG_GRKERNSEC_TIME
++endmenu
++mainmenu_option next_comment
++comment 'Executable Protections'
++bool '   Exec process limiting' CONFIG_GRKERNSEC_EXECVE
++bool '   Exec protection' CONFIG_GRKERNSEC_NOEXEC
++if [ "$CONFIG_GRKERNSEC_NOEXEC" != "n" ]; then
++bool '     Glibc protection' CONFIG_GRKERNSEC_NOEXEC_GLIBC
++bool '     Capability restrictions' CONFIG_GRKERNSEC_NOEXEC_CAPS
++int  '     GID for protected processes:' CONFIG_GRKERNSEC_NOEXEC_GID 1006
++fi
++bool '   Suid/sgid root executable restrictions' CONFIG_GRKERNSEC_SIDCAPS
++bool '   Trusted path execution' CONFIG_GRKERNSEC_TPE
++if [ "$CONFIG_GRKERNSEC_TPE" != "n" ]; then
++bool '     Glibc protection' CONFIG_GRKERNSEC_TPE_GLIBC
++bool '     Partially restrict non-root users' CONFIG_GRKERNSEC_TPE_ALL
++int  '     GID for untrusted users:' CONFIG_GRKERNSEC_TPE_GID 1005
++fi
++endmenu
++mainmenu_option next_comment
++comment 'Network Protections'
++bool '   Randomized PIDs' CONFIG_GRKERNSEC_RANDPID
++bool '   Randomized IP IDs' CONFIG_GRKERNSEC_RANDID
++bool '   Randomized TCP source ports' CONFIG_GRKERNSEC_RANDSRC
++bool '   Altered Ping IDs' CONFIG_GRKERNSEC_RANDPING
++bool '   Randomized TTL' CONFIG_GRKERNSEC_RANDTTL
++if [ "$CONFIG_GRKERNSEC_RANDTTL" != "n" ]; then
++int  '     TTL starting point:' CONFIG_GRKERNSEC_RANDTTL_THRESH 64
++fi
++bool '   Enhanced network randomness' CONFIG_GRKERNSEC_RANDNET
++bool '   Socket restrictions' CONFIG_GRKERNSEC_SOCKET
++if [ "$CONFIG_GRKERNSEC_SOCKET" != "n" ]; then
++bool '    Deny any sockets to group' CONFIG_GRKERNSEC_SOCKET_ALL
++if [ "$CONFIG_GRKERNSEC_SOCKET_ALL" != "n" ]; then
++int  '     GID to deny all sockets for:' CONFIG_GRKERNSEC_ALL_GID 1004
++fi
++bool '    Deny client sockets to group' CONFIG_GRKERNSEC_SOCKET_CLIENT
++if [ "$CONFIG_GRKERNSEC_SOCKET_CLIENT" != "n" ]; then
++int  '     GID to deny client sockets for:' CONFIG_GRKERNSEC_CLIENT_GID 1003
++fi
++bool '    Deny server sockets to group' CONFIG_GRKERNSEC_SOCKET_SERVER
++if [ "$CONFIG_GRKERNSEC_SOCKET_SERVER" != "n" ]; then
++int  '     GID to deny server sockets for:' CONFIG_GRKERNSEC_SERVER_GID 1002
++fi
++fi
++bool '   Stealth networking' CONFIG_GRKERNSEC_STEALTH
++if [ "$CONFIG_GRKERNSEC_STEALTH" != "n" ]; then
++bool '     Do not send Connection Resets' CONFIG_GRKERNSEC_STEALTH_RST
++bool '     Do not reply to UDP with ICMP unreachables' CONFIG_GRKERNSEC_STEALTH_UDP
++bool '     Do not reply to ICMP requests' CONFIG_GRKERNSEC_STEALTH_ICMP
++bool '     Do not reply to IGMP requests' CONFIG_GRKERNSEC_STEALTH_IGMP
++bool '     Drop packets with illegitimate flags' CONFIG_GRKERNSEC_FLAGS
++fi
++endmenu
++mainmenu_option next_comment
++comment 'Miscellaneous Enhancements'
++bool '   BSD-style coredumps' CONFIG_GRKERNSEC_COREDUMP
++endmenu
+diff -urN linux/include/asm-i386/a.out.h linux/include/asm-i386/a.out.h
+--- linux/include/asm-i386/a.out.h	Fri Jun 16 14:33:06 1995
++++ linux/include/asm-i386/a.out.h	Sat Jul 21 10:40:13 2001
+@@ -18,9 +18,11 @@
+ #define N_SYMSIZE(a)	((a).a_syms)
+ 
+ #ifdef __KERNEL__
+-
++#ifdef CONFIG_GRKERNSEC_STACK
++#define STACK_TOP 	((current->flags & PF_STACKEXEC) ? TASK_SIZE - _STK_LIM : TASK_SIZE)
++#else
+ #define STACK_TOP	TASK_SIZE
+-
++#endif
+ #endif
+ 
+ #endif /* __A_OUT_GNU_H__ */
+diff -urN linux/include/asm-i386/pgtable.h linux/include/asm-i386/pgtable.h
+--- linux/include/asm-i386/pgtable.h	Fri Jul 20 15:52:18 2001
++++ linux/include/asm-i386/pgtable.h	Sat Jul 21 10:40:14 2001
+@@ -180,9 +180,19 @@
+ #define _PAGE_CHG_MASK	(PTE_MASK | _PAGE_ACCESSED | _PAGE_DIRTY)
+ 
+ #define PAGE_NONE	__pgprot(_PAGE_PROTNONE | _PAGE_ACCESSED)
++#ifdef CONFIG_GRKERNSEC_PAX
++#define PAGE_SHARED_EXEC  __pgprot(_PAGE_PRESENT | _PAGE_RW |_PAGE_USER |_PAGE_ACCESSED)
++#define PAGE_COPY_EXEC  __pgprot(_PAGE_PRESENT | _PAGE_USER | _PAGE_ACCESSED)
++#define PAGE_READONLY_EXEC  __pgprot(_PAGE_PRESENT | _PAGE_USER | _PAGE_ACCESSED)
++
++#define PAGE_SHARED_NOEXEC  __pgprot(_PAGE_PRESENT | _PAGE_RW | _PAGE_ACCESSED)
++#define PAGE_COPY_NOEXEC  __pgprot(_PAGE_PRESENT | _PAGE_ACCESSED)
++#define PAGE_READONLY_NOEXEC  __pgprot(_PAGE_PRESENT | _PAGE_ACCESSED) 
++#else
+ #define PAGE_SHARED	__pgprot(_PAGE_PRESENT | _PAGE_RW | _PAGE_USER | _PAGE_ACCESSED)
+ #define PAGE_COPY	__pgprot(_PAGE_PRESENT | _PAGE_USER | _PAGE_ACCESSED)
+ #define PAGE_READONLY	__pgprot(_PAGE_PRESENT | _PAGE_USER | _PAGE_ACCESSED)
++#endif
+ 
+ #define __PAGE_KERNEL \
+ 	(_PAGE_PRESENT | _PAGE_RW | _PAGE_DIRTY | _PAGE_ACCESSED)
+@@ -216,6 +226,15 @@
+  * This is the closest we can get..
+  */
+ #define __P000	PAGE_NONE
++#ifdef CONFIG_GRKERNSEC_PAX
++#define __P001  PAGE_READONLY_NOEXEC
++#define __P010  PAGE_COPY_NOEXEC
++#define __P011  PAGE_COPY_NOEXEC
++#define __P100  PAGE_READONLY_EXEC
++#define __P101  PAGE_READONLY_EXEC
++#define __P110  PAGE_COPY_EXEC
++#define __P111  PAGE_COPY_EXEC
++#else
+ #define __P001	PAGE_READONLY
+ #define __P010	PAGE_COPY
+ #define __P011	PAGE_COPY
+@@ -223,8 +242,18 @@
+ #define __P101	PAGE_READONLY
+ #define __P110	PAGE_COPY
+ #define __P111	PAGE_COPY
++#endif
+ 
+ #define __S000	PAGE_NONE
++#ifdef CONFIG_GRKERNSEC_PAX
++#define __S001  PAGE_READONLY_NOEXEC
++#define __S010  PAGE_SHARED_NOEXEC
++#define __S011  PAGE_SHARED_NOEXEC
++#define __S100  PAGE_READONLY_EXEC
++#define __S101  PAGE_READONLY_EXEC
++#define __S110  PAGE_SHARED_EXEC
++#define __S111  PAGE_SHARED_EXEC
++#else
+ #define __S001	PAGE_READONLY
+ #define __S010	PAGE_SHARED
+ #define __S011	PAGE_SHARED
+@@ -232,6 +261,7 @@
+ #define __S101	PAGE_READONLY
+ #define __S110	PAGE_SHARED
+ #define __S111	PAGE_SHARED
++#endif
+ 
+ /*
+  * Define this if things work differently on an i386 and an i486:
+diff -urN linux/include/asm-i386/processor.h linux/include/asm-i386/processor.h
+--- linux/include/asm-i386/processor.h	Fri Jul 20 15:52:18 2001
++++ linux/include/asm-i386/processor.h	Sat Jul 21 10:40:13 2001
+@@ -264,12 +264,24 @@
+  * User space process size: 3GB (default).
+  */
+ #define TASK_SIZE	(PAGE_OFFSET)
+-
++#ifdef CONFIG_GRKERNSEC_STACK
++#define MAGIC_SIGRETURN		(PAGE_OFFSET + 0xDE0000)
++#define MAGIC_RT_SIGRETURN	(PAGE_OFFSET + 0xDE0001)
++#endif
+ /* This decides where the kernel will search for a free chunk of vm
+  * space during mmap's.
+  */
++#ifdef CONFIG_GRKERNSEC_STACK
++extern struct linux_binfmt elf_format;
++#define TASK_UNMAPPED_BASE(size) ( \
++       current->binfmt == &elf_format && \
++       !(current->flags & PF_STACKEXEC) && \
++       (size) < 0x00ef0000UL \
++       ? 0x00110000UL \
++       : TASK_SIZE / 3 )     
++#else
+ #define TASK_UNMAPPED_BASE	(TASK_SIZE / 3)
+-
++#endif
+ /*
+  * Size of io_bitmap in longwords: 32 is ports 0-0x3ff.
+  */
+@@ -360,6 +372,14 @@
+ 	unsigned long __cacheline_filler[5];
+ };
+ 
++#ifdef CONFIG_GRKERNSEC_PAX
++struct pax_fault_info {
++	unsigned long eip;
++	unsigned long addresses[4];
++	unsigned long count;
++};
++#endif
++
+ struct thread_struct {
+ 	unsigned long	esp0;
+ 	unsigned long	eip;
+@@ -370,6 +390,11 @@
+ 	unsigned long	debugreg[8];  /* %%db0-7 debug registers */
+ /* fault info */
+ 	unsigned long	cr2, trap_no, error_code;
++#ifdef CONFIG_GRKERNSEC_PAX
++/* PaX fault info */
++	struct pax_fault_info pax_faults;
++#endif
++
+ /* floating point info */
+ 	union i387_union	i387;
+ /* virtual 86 mode info */
+@@ -381,18 +406,36 @@
+ 	unsigned long	io_bitmap[IO_BITMAP_SIZE+1];
+ };
+ 
++#ifdef CONFIG_GRKERNSEC_PAX
+ #define INIT_THREAD  {						\
+ 	0,							\
+ 	0, 0, 0, 0, 						\
+ 	{ [0 ... 7] = 0 },	/* debugging registers */	\
+ 	0, 0, 0,						\
++	{0, {0}, 0},		/* PaX fault info */		\
+ 	{ { 0, }, },		/* 387 state */			\
+ 	0,0,0,0,0,0,						\
+ 	0,{~0,}			/* io permissions */		\
+ }
++#else
++#define INIT_THREAD  {						\
++	0,							\
++	0, 0, 0, 0, 						\
++	{ [0 ... 7] = 0 },	/* debugging registers */	\
++	0, 0, 0,						\
++	{ { 0, }, },		/* 387 state */			\
++	0,0,0,0,0,0,						\
++	0,{~0,}			/* io permissions */		\
++}
++#endif
+ 
++#ifdef CONFIG_GRKERNSEC_PAX
++#define INIT_MMAP \
++{ &init_mm, 0, 0, NULL, PAGE_SHARED_EXEC, VM_READ | VM_WRITE | VM_EXEC, 1, NULL, NULL }
++#else
+ #define INIT_MMAP \
+ { &init_mm, 0, 0, NULL, PAGE_SHARED, VM_READ | VM_WRITE | VM_EXEC, 1, NULL, NULL }
++#endif
+ 
+ #define INIT_TSS  {						\
+ 	0,0, /* back_link, __blh */				\
+diff -urN linux/include/linux/a.out.h linux/include/linux/a.out.h
+--- linux/include/linux/a.out.h	Fri Jul 20 15:52:18 2001
++++ linux/include/linux/a.out.h	Sat Jul 21 10:40:13 2001
+@@ -56,7 +56,9 @@
+ #define N_SET_FLAGS(exec, flags) \
+ 	((exec).a_info = \
+ 	 ((exec).a_info&0x00ffffff) | (((flags) & 0xff) << 24))
+-
++#ifdef CONFIG_GRKERNSEC_STACK
++#define F_STACKEXEC	1
++#endif
+ /* Code indicating object file or impure executable.  */
+ #define OMAGIC 0407
+ /* Code indicating pure executable.  */
+diff -urN linux/include/linux/binfmts.h linux/include/linux/binfmts.h
+--- linux/include/linux/binfmts.h	Fri Jul 20 15:52:18 2001
++++ linux/include/linux/binfmts.h	Sat Jul 21 10:40:13 2001
+@@ -1,6 +1,7 @@
+ #ifndef _LINUX_BINFMTS_H
+ #define _LINUX_BINFMTS_H
+ 
++#include <linux/config.h>
+ #include <linux/ptrace.h>
+ #include <linux/capability.h>
+ 
+@@ -30,6 +31,11 @@
+ 	int argc, envc;
+ 	char * filename;	/* Name of binary */
+ 	unsigned long loader, exec;
++#ifdef CONFIG_GRKERNSEC_FD
++        int priv_change;
++        int tweak_fd_mask;
++        struct file *tweak_fd_null;
++#endif
+ };
+ 
+ /*
+diff -urN linux/include/linux/elf.h linux/include/linux/elf.h
+--- linux/include/linux/elf.h	Fri Jul 20 15:54:20 2001
++++ linux/include/linux/elf.h	Sat Jul 21 10:46:09 2001
+@@ -83,7 +83,9 @@
+  * up with a final number.
+  */
+ #define EM_ALPHA	0x9026
+-
++#ifdef CONFIG_GRKERNSEC_STACK
++#define EF_STACKEXEC	1
++#endif
+ /*
+  * This is the old interim value for S/390 architecture
+  */
+diff -urN linux/include/linux/kernel.h linux/include/linux/kernel.h
+--- linux/include/linux/kernel.h	Tue Jun 12 14:51:43 2001
++++ linux/include/linux/kernel.h	Sat Jul 21 10:20:41 2001
+@@ -59,8 +59,12 @@
+ extern long simple_strtol(const char *,char **,unsigned int);
+ extern unsigned long long simple_strtoull(const char *,char **,unsigned int);
+ extern long long simple_strtoll(const char *,char **,unsigned int);
+-extern int sprintf(char * buf, const char * fmt, ...);
+-extern int vsprintf(char *buf, const char *, va_list);
++extern int sprintf(char * buf, const char * fmt, ...)
++	__attribute__ ((format (printf,2,3)));
++extern int vsprintf(char *buf, const char *, va_list)
++	__attribute__ ((format (printf,2,0)));
++extern int _vsnprintf(char *buf, int n, const char *, va_list)
++	__attribute__ ((format (printf,3,0)));
+ extern int get_option(char **str, int *pint);
+ extern char *get_options(char *str, int nints, int *ints);
+ extern unsigned long long memparse(char *ptr, char **retptr);
+@@ -105,6 +109,23 @@
+ 	((unsigned char *)&addr)[1], \
+ 	((unsigned char *)&addr)[2], \
+ 	((unsigned char *)&addr)[3]
++#define security_alert(normal_msg,flood_msg,args...) \
++({ \
++	static unsigned long warning_time = 0, no_flood_yet = 0; \
++	static spinlock_t security_alert_lock = SPIN_LOCK_UNLOCKED; \
++	\
++	spin_lock(&security_alert_lock); \
++	if(!warning_time || jiffies - warning_time > 30 * HZ) { \
++	    warning_time = jiffies; no_flood_yet = 1; \
++	    printk(KERN_ALERT "GETREWTED ALERT: " normal_msg "\n", ## args); \
++	} else if (no_flood_yet) { \
++	    warning_time = jiffies; no_flood_yet = 0; \
++	    printk(KERN_ALERT "GETREWTED ALERT: more " flood_msg \
++		    ", logging disabled for 30 seconds\n"); \
++	} \
++	\
++	spin_unlock(&security_alert_lock); \
++})
+ 
+ #define HIPQUAD(addr) \
+ 	((unsigned char *)&addr)[3], \
+diff -urN linux/include/linux/mm.h linux/include/linux/mm.h
+--- linux/include/linux/mm.h	Fri Jul 20 15:52:18 2001
++++ linux/include/linux/mm.h	Sat Jul 21 10:40:14 2001
+@@ -104,7 +104,11 @@
+ #define VM_DONTEXPAND	0x00040000	/* Cannot expand with mremap() */
+ #define VM_RESERVED	0x00080000	/* Don't unmap it from swap_out */
+ 
++#ifdef CONFIG_GRKERNSEC_PAX
++#define VM_STACK_FLAGS  0x00000133 
++#else
+ #define VM_STACK_FLAGS	0x00000177
++#endif
+ 
+ #define VM_READHINTMASK			(VM_SEQ_READ | VM_RAND_READ)
+ #define VM_ClearReadHint(v)		(v)->vm_flags &= ~VM_READHINTMASK
+diff -urN linux/include/linux/sched.h linux/include/linux/sched.h
+--- linux/include/linux/sched.h	Fri Jul 20 15:52:18 2001
++++ linux/include/linux/sched.h	Sat Jul 21 10:40:14 2001
+@@ -425,8 +425,17 @@
+ #define PT_PTRACED	0x00000001
+ #define PT_TRACESYS	0x00000002
+ #define PT_DTRACE	0x00000004	/* delayed trace (used on m68k, i386) */
++#ifdef CONFIG_GRKERNSEC_STACK
++#define PF_STACKEXEC    0x01000000
++#endif
+ #define PT_TRACESYSGOOD	0x00000008
+ 
++#ifdef CONFIG_GRKERNSEC_PAX
++/* PaX: for handling DTLB trashing */
++#define PT_PAX_TRACE    0x00000010
++#define PT_PAX_KEEPTF   0x00000020
++#define PT_PAX_OLDTF    0x00000040
++#endif
+ /*
+  * Limit the stack by to some sane default: root can always
+  * increase this limit if needed..  8MB seems reasonable.
+diff -urN linux/include/net/ip.h linux/include/net/ip.h
+--- linux/include/net/ip.h	Fri Jul 20 15:53:07 2001
++++ linux/include/net/ip.h	Sat Jul 21 11:15:32 2001
+@@ -185,7 +185,9 @@
+ 		(sk->protinfo.af_inet.pmtudisc == IP_PMTUDISC_WANT &&
+ 		 !(dst->mxlock&(1<<RTAX_MTU))));
+ }
+-
++#ifdef CONFIG_GRKERNSEC_RANDID
++extern u16 get_random_ip_id(void);
++#endif
+ extern void __ip_select_ident(struct iphdr *iph, struct dst_entry *dst);
+ 
+ static inline void ip_select_ident(struct iphdr *iph, struct dst_entry *dst, struct sock *sk)
+diff -urN linux/kernel/exit.c linux/kernel/exit.c
+--- linux/kernel/exit.c	Fri May  4 17:44:06 2001
++++ linux/kernel/exit.c	Sat Jul 21 10:20:41 2001
+@@ -419,7 +419,10 @@
+ 	}
+ 	write_unlock_irq(&tasklist_lock);
+ }
+-
++#ifdef CONFIG_GRKERNSEC_RANDPID
++pid_t last_pids[64];
++int cur_n_pids;
++#endif
+ NORET_TYPE void do_exit(long code)
+ {
+ 	struct task_struct *tsk = current;
+@@ -440,6 +443,10 @@
+ 	__exit_mm(tsk);
+ 
+ 	lock_kernel();
++#ifdef CONFIG_GRKERNSEC_RANDPID
++	last_pids[cur_n_pids++] = tsk -> pid;
++	cur_n_pids &= 63;
++#endif
+ 	sem_exit();
+ 	__exit_files(tsk);
+ 	__exit_fs(tsk);
+diff -urN linux/kernel/fork.c linux/kernel/fork.c
+--- linux/kernel/fork.c	Tue Jul 17 21:23:28 2001
++++ linux/kernel/fork.c	Sat Jul 21 10:23:46 2001
+@@ -19,12 +19,20 @@
+ #include <linux/module.h>
+ #include <linux/vmalloc.h>
+ #include <linux/completion.h>
++#ifdef CONFIG_GRKERNSEC_RANDPID
++#include <linux/random.h>
++#endif
+ 
+ #include <asm/pgtable.h>
+ #include <asm/pgalloc.h>
+ #include <asm/uaccess.h>
+ #include <asm/mmu_context.h>
+ 
++#ifdef CONFIG_GRKERNSEC_RANDPID
++extern struct entropy_store *random_state;
++extern struct entropy_store *sec_random_state;
++#endif
++
+ /* The idle threads do not count.. */
+ int nr_threads;
+ int nr_running;
+@@ -80,9 +88,18 @@
+ /* Protects next_safe and last_pid. */
+ spinlock_t lastpid_lock = SPIN_LOCK_UNLOCKED;
+ 
++#ifdef CONFIG_GRKERNSEC_RANDPID
++extern pid_t last_pids[64];
++extern int cur_n_pids;
++#endif
++
+ static int get_pid(unsigned long flags)
+ {
++#ifndef CONFIG_GRKERNSEC_RANDPID
+ 	static int next_safe = PID_MAX;
++#else
++	int loop;	
++#endif
+ 	struct task_struct *p;
+ 
+ 	if (flags & CLONE_PID)
+@@ -90,31 +107,58 @@
+ 
+ 	spin_lock(&lastpid_lock);
+ 	if((++last_pid) & 0xffff8000) {
++#ifndef CONFIG_GRKERNSEC_RANDPID
+ 		last_pid = 300;		/* Skip daemons etc. */
++#endif
+ 		goto inside;
+ 	}
++#ifndef CONFIG_GRKERNSEC_RANDPID
+ 	if(last_pid >= next_safe) {
++#else
++ 	if(last_pid > 1) {
++#endif
+ inside:
++#ifndef CONFIG_GRKERNSEC_RANDPID
+ 		next_safe = PID_MAX;
++#endif
+ 		read_lock(&tasklist_lock);
+ 	repeat:
++#ifdef CONFIG_GRKERNSEC_RANDPID
++                if((random_state) || (sec_random_state)){
++		do {
++                        get_random_bytes(&last_pid, sizeof(last_pid));
++                        last_pid %= PID_MAX;
++			if(last_pid < 0)
++				last_pid-=(2 * last_pid);
++                } while (last_pid < 1);
++		} else
++		last_pid = 1+((xtime.tv_usec * total_forks) % PID_MAX);
++		for(loop=0;loop<64;loop++){
++			if(last_pids[loop] == last_pid)
++				goto repeat;
++		}
++#endif
+ 		for_each_task(p) {
+ 			if(p->pid == last_pid	||
+ 			   p->pgrp == last_pid	||
+ 			   p->session == last_pid) {
++#ifndef CONFIG_GRKERNSEC_RANDPID
+ 				if(++last_pid >= next_safe) {
+ 					if(last_pid & 0xffff8000)
+ 						last_pid = 300;
+ 					next_safe = PID_MAX;
+ 				}
++#endif
+ 				goto repeat;
+ 			}
++#ifndef CONFIG_GRKERNSEC_RANDPID
+ 			if(p->pid > last_pid && next_safe > p->pid)
+ 				next_safe = p->pid;
+ 			if(p->pgrp > last_pid && next_safe > p->pgrp)
+ 				next_safe = p->pgrp;
+ 			if(p->session > last_pid && next_safe > p->session)
+ 				next_safe = p->session;
++#endif
+ 		}
+ 		read_unlock(&tasklist_lock);
+ 	}
+@@ -534,6 +578,7 @@
+ 	return 0;
+ }
+ 
++
+ static inline void copy_flags(unsigned long clone_flags, struct task_struct *p)
+ {
+ 	unsigned long new_flags = p->flags;
+@@ -740,6 +785,12 @@
+ 	free_uid(p->user);
+ bad_fork_free:
+ 	free_task_struct(p);
++#ifdef CONFIG_GRKERNSEC_FORKFAIL
++    security_alert("failed fork with errno %d by (%.16s:%d), UID (%d), EUID (%d), parent (%.16s:%d), "
++                  "UID (%d), EUID (%d)","failed forks",retval,current->comm,current->pid,
++		  current->uid,current->euid,current->p_pptr->comm,current->p_pptr->pid,
++                  current->p_pptr->uid,current->p_pptr->euid);
++#endif
+ 	goto fork_out;
+ }
+ 
+diff -urN linux/kernel/signal.c linux/kernel/signal.c
+--- linux/kernel/signal.c	Wed Jan  3 23:45:26 2001
++++ linux/kernel/signal.c	Sat Jul 21 10:20:41 2001
+@@ -16,6 +16,10 @@
+ 
+ #include <asm/uaccess.h>
+ 
++#ifdef CONFIG_GRKERNSEC_CHROOT
++extern struct task_struct *child_reaper;
++#endif
++
+ /*
+  * SLAB caches for signal bits.
+  */
+@@ -518,7 +522,31 @@
+ 	ret = -EPERM;
+ 	if (bad_signal(sig, info, t))
+ 		goto out_nolock;
+-
++#ifdef CONFIG_GRKERNSEC_CHROOT
++	if(	t->pid && current->pid && child_reaper && child_reaper->pid && current->fs && current->pid > 1
++		&& sig && 
++	    !( sig == SIGALRM || sig == SIGIO ||
++	      ((current->fs->root->d_inode->i_dev ==
++	      child_reaper->fs->root->d_inode->i_dev) &&
++	      (current->fs->root->d_inode->i_ino ==
++	      child_reaper->fs->root->d_inode->i_ino)) ||
++	      ((t->fs->root->d_inode->i_dev ==
++	      current->fs->root->d_inode->i_dev) &&
++	      (t->fs->root->d_inode->i_ino ==
++	      current->fs->root->d_inode->i_ino)) ||
++	      (t->pid == current->p_pptr->pid && sig == SIGCHLD) ) ) {
++	      security_alert("denied signal %d out of chroot() jail (%.32s:%lu) of %d.%d "
++	    		     "by (%.16s:%d), UID (%d), EUID (%d), parent (%.16s:%d), UID (%d), EUID (%d) "
++			     "to (%.16s:%d), UID (%d), EUID (%d), parent (%.16s:%d), UID (%d), EUID (%d)",
++			     "denied signals in chroot()",sig,kdevname(current->fs->root->d_inode->i_dev),
++			     current->fs->root->d_inode->i_ino,current->fs->root->d_inode->i_uid,
++			     current->fs->root->d_inode->i_gid,current->comm,current->pid,current->uid,
++			     current->euid,current->p_pptr->comm,current->p_pptr->pid,current->p_pptr->uid,
++			     current->p_pptr->euid,t->comm,t->pid,t->uid,t->euid,t->p_pptr->comm,
++			     t->p_pptr->pid,t->p_pptr->uid,t->p_pptr->euid);
++			goto out_nolock;
++	      }
++#endif
+ 	/* The null signal is a permissions and process existance probe.
+ 	   No signal is actually delivered.  Same goes for zombies. */
+ 	ret = 0;
+@@ -528,6 +556,24 @@
+ 	spin_lock_irqsave(&t->sigmask_lock, flags);
+ 	handle_stop_signal(sig, t);
+ 
++#ifdef CONFIG_GRKERNSEC_SIGNAL
++    if((sig == SIGSEGV) || (sig == SIGILL) || (sig == SIGABRT) || (sig == SIGBUS)) {
++	if(t->pid == current->pid) {
++	    security_alert("signal %d  sent to (%.16s:%d), UID (%d), EUID (%d), "
++			   "parent (%.16s:%d), UID (%d), EUID (%d)","signal warnings",sig,
++			   t->comm,t->pid,t->uid,t->euid,t->p_pptr->comm,t->p_pptr->pid,
++			   t->p_pptr->uid,t->p_pptr->euid);
++	} else {
++	    security_alert("signal %d sent to (%.16s:%d), UID (%d), EUID (%d), "
++			   "parent (%.16s:%d), UID (%d), EUID (%d) by (%.16s:%d), UID (%d), EUID (%d), "
++			   "parent (%.16s:%d), UID (%d), EUID (%d)","signal warnings",
++			   sig,t->comm,t->pid,t->uid,t->euid,t->p_pptr->comm,t->p_pptr->pid,
++			   t->p_pptr->uid,t->p_pptr->euid,current->comm,current->pid,
++			   current->uid,current->euid,current->p_pptr->comm,current->p_pptr->pid,
++			   current->p_pptr->uid,current->p_pptr->euid);
++	}
++    } 
++#endif
+ 	/* Optimize away the signal, if it's a signal that can be
+ 	   handled immediately (ie non-blocked and untraced) and
+ 	   that is ignored (either explicitly or by default).  */
+diff -urN linux/kernel/sys.c linux/kernel/sys.c
+--- linux/kernel/sys.c	Thu Jul 19 23:34:31 2001
++++ linux/kernel/sys.c	Sat Jul 21 10:20:41 2001
+@@ -4,6 +4,7 @@
+  *  Copyright (C) 1991, 1992  Linus Torvalds
+  */
+ 
++#include <linux/config.h>
+ #include <linux/module.h>
+ #include <linux/mm.h>
+ #include <linux/utsname.h>
+@@ -378,6 +379,12 @@
+ 	int old_egid = current->egid;
+ 	int new_rgid = old_rgid;
+ 	int new_egid = old_egid;
++#ifdef CONFIG_GRKERNSEC_SUID
++	printk(KERN_INFO "GETREWTED SGID: setregid(rgid=%d/egid=%d) by (%.16s:%d),UID(%d), EUID(%d), parent (%.16s:%d), "
++		       "UID(%d), EUID(%d)\n",rgid,egid,current->comm,current->pid,
++		       current->uid,current->euid,current->p_pptr->comm,current->p_pptr->pid,
++		       current->p_pptr->uid,current->p_pptr->euid);
++#endif		
+ 
+ 	if (rgid != (gid_t) -1) {
+ 		if ((old_rgid == rgid) ||
+@@ -419,6 +426,12 @@
+ asmlinkage long sys_setgid(gid_t gid)
+ {
+ 	int old_egid = current->egid;
++#ifdef CONFIG_GRKERNSEC_SUID
++	printk(KERN_INFO "GETREWTED SGID: setgid(%d) by (%.16s:%d), UID(%d), EUID(%d), parent (%.16s:%d), "
++		       "UID(%d), EUID(%d)\n",gid,current->comm,current->pid,
++		       current->uid,current->euid,current->p_pptr->comm,current->p_pptr->pid,
++		       current->p_pptr->uid,current->p_pptr->euid);
++#endif		
+ 
+ 	if (capable(CAP_SETGID))
+ 	{
+@@ -538,6 +551,12 @@
+ 	new_ruid = old_ruid = current->uid;
+ 	new_euid = old_euid = current->euid;
+ 	old_suid = current->suid;
++#ifdef CONFIG_GRKERNSEC_SUID
++	printk(KERN_INFO "GETREWTED SUID: setreuid(ruid=%d/euid=%d) by (%.16s:%d), UID(%d), EUID(%d), parent (%.16s:%d), "
++		       "UID(%d), EUID(%d)\n",ruid,euid,current->comm,current->pid,
++		       current->uid,current->euid,current->p_pptr->comm,current->p_pptr->pid,
++		       current->p_pptr->uid,current->p_pptr->euid);
++#endif		
+ 
+ 	if (ruid != (uid_t) -1) {
+ 		new_ruid = ruid;
+@@ -598,7 +617,12 @@
+ 	old_ruid = new_ruid = current->uid;
+ 	old_suid = current->suid;
+ 	new_suid = old_suid;
+-	
++#ifdef CONFIG_GRKERNSEC_SUID
++	printk(KERN_INFO "GETREWTED SUID: setuid(%d) by (%.16s:%d), UID(%d), EUID(%d), parent (%.16s:%d), "
++		       "UID(%d), EUID(%d)\n",uid,current->comm,current->pid,
++		       current->uid,current->euid,current->p_pptr->comm,current->p_pptr->pid,
++		       current->p_pptr->uid,current->p_pptr->euid);
++#endif		
+ 	if (capable(CAP_SETUID)) {
+ 		if (uid != old_ruid && set_user(uid, old_euid != uid) < 0)
+ 			return -EAGAIN;
+@@ -631,6 +655,12 @@
+ 	int old_ruid = current->uid;
+ 	int old_euid = current->euid;
+ 	int old_suid = current->suid;
++#ifdef CONFIG_GRKERNSEC_SUID
++	printk(KERN_INFO "GETREWTED SUID: setresuid(ruid=%d/suid=%d/euid=%d) by (%.16s:%d), UID(%d), EUID(%d), parent (%.16s:%d), "
++		       "UID(%d), EUID(%d)\n",ruid,suid,euid,current->comm,current->pid,
++		       current->uid,current->euid,current->p_pptr->comm,current->p_pptr->pid,
++		       current->p_pptr->uid,current->p_pptr->euid);
++#endif		
+ 
+ 	if (!capable(CAP_SETUID)) {
+ 		if ((ruid != (uid_t) -1) && (ruid != current->uid) &&
+@@ -682,6 +712,13 @@
+  */
+ asmlinkage long sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid)
+ {
++#ifdef CONFIG_GRKERNSEC_SUID
++	printk(KERN_INFO "GETREWTED SGID: setresgid(rgid=%d/sgid=%d/egid=%d) by (%.16s:%d), UID(%d), EUID(%d), parent (%.16s:%d), "
++		       "UID(%d), EUID(%d)\n",rgid,sgid,egid,current->comm,current->pid,
++		       current->uid,current->euid,current->p_pptr->comm,current->p_pptr->pid,
++		       current->p_pptr->uid,current->p_pptr->euid);
++#endif		
++
+ 	if (!capable(CAP_SETGID)) {
+ 		if ((rgid != (gid_t) -1) && (rgid != current->gid) &&
+ 		    (rgid != current->egid) && (rgid != current->sgid))
+@@ -730,6 +767,12 @@
+ asmlinkage long sys_setfsuid(uid_t uid)
+ {
+ 	int old_fsuid;
++#ifdef CONFIG_GRKERNSEC_SUID
++	printk(KERN_INFO "GETREWTED SUID: setfsuid(%d) by (%.16s:%d), UID(%d), EUID(%d), parent (%.16s:%d), "
++		       "UID(%d), EUID(%d)\n",uid,current->comm,current->pid,
++		       current->uid,current->euid,current->p_pptr->comm,current->p_pptr->pid,
++		       current->p_pptr->uid,current->p_pptr->euid);
++#endif		
+ 
+ 	old_fsuid = current->fsuid;
+ 	if (uid == current->uid || uid == current->euid ||
+@@ -772,6 +815,12 @@
+ asmlinkage long sys_setfsgid(gid_t gid)
+ {
+ 	int old_fsgid;
++#ifdef CONFIG_GRKERNSEC_SUID
++	printk(KERN_INFO "GETREWTED SGID: setfsgid(%d) by (%.16s:%d), UID(%d), EUID(%d), parent (%.16s:%d), "
++		       "UID(%d), EUID(%d)\n",gid,current->comm,current->pid,
++		       current->uid,current->euid,current->p_pptr->comm,current->p_pptr->pid,
++		       current->p_pptr->uid,current->p_pptr->euid);
++#endif		
+ 
+ 	old_fsgid = current->fsgid;
+ 	if (gid == current->gid || gid == current->egid ||
+diff -urN linux/kernel/time.c linux/kernel/time.c
+--- linux/kernel/time.c	Mon Oct 16 15:58:51 2000
++++ linux/kernel/time.c	Sat Jul 21 10:20:41 2001
+@@ -105,6 +105,12 @@
+ 	time_maxerror = NTP_PHASE_LIMIT;
+ 	time_esterror = NTP_PHASE_LIMIT;
+ 	write_unlock_irq(&xtime_lock);
++#ifdef CONFIG_GRKERNSEC_TIME
++    security_alert("time set by (%.16s:%d), UID (%d), EUID (%d), parent (%.16s:%d), UID (%d), EUID (%d)",
++		   "time sets", current->comm,current->pid,current->uid,current->euid,
++		   current->p_pptr->comm,current->p_pptr->pid,current->p_pptr->uid,
++		   current->p_pptr->euid);
++#endif
+ 	return 0;
+ }
+ 
+@@ -181,6 +187,12 @@
+ 		 * globally block out interrupts when it runs.
+ 		 */
+ 		do_settimeofday(tv);
++#ifdef CONFIG_GRKERNSEC_TIME
++    security_alert("time set by (%.16s:%d), UID (%d), EUID (%d), parent (%.16s:%d), UID (%d), EUID (%d)",
++		   "time sets", current->comm,current->pid,current->uid,current->euid,
++		   current->p_pptr->comm,current->p_pptr->pid,current->p_pptr->uid,
++		   current->p_pptr->euid);
++#endif
+ 	}
+ 	return 0;
+ }
+diff -urN linux/mm/mmap.c linux/mm/mmap.c
+--- linux/mm/mmap.c	Tue Jul  3 15:14:15 2001
++++ linux/mm/mmap.c	Sat Jul 21 10:20:41 2001
+@@ -196,6 +196,10 @@
+ 		_trans(prot, PROT_READ, VM_READ) |
+ 		_trans(prot, PROT_WRITE, VM_WRITE) |
+ 		_trans(prot, PROT_EXEC, VM_EXEC);
++#ifdef CONFIG_GRKERNSEC_PAX
++	prot_bits |=
++		_trans(prot, PROT_EXEC, VM_MAYEXEC);
++#endif
+ 	flag_bits =
+ 		_trans(flags, MAP_GROWSDOWN, VM_GROWSDOWN) |
+ 		_trans(flags, MAP_DENYWRITE, VM_DENYWRITE) |
+@@ -241,7 +245,11 @@
+ 	 * to. we assume access permissions have been handled by the open
+ 	 * of the memory object, so we don't do any here.
+ 	 */
++#ifdef CONFIG_GRKERNSEC_PAX
++	vm_flags = calc_vm_flags(prot,flags) | mm->def_flags | VM_MAYREAD | VM_MAYWRITE; 
++#else
+ 	vm_flags = calc_vm_flags(prot,flags) | mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
++#endif
+ 
+ 	/* mlock MCL_FUTURE? */
+ 	if (vm_flags & VM_LOCKED) {
+@@ -406,7 +414,11 @@
+ 	if (len > TASK_SIZE)
+ 		return -ENOMEM;
+ 	if (!addr)
+-		addr = TASK_UNMAPPED_BASE;
++#ifdef CONFIG_GRKERNSEC_STACK
++                addr = TASK_UNMAPPED_BASE(len);
++#else
++                addr = TASK_UNMAPPED_BASE;
++#endif
+ 	addr = PAGE_ALIGN(addr);
+ 
+ 	for (vma = find_vma(current->mm, addr); ; vma = vma->vm_next) {
+@@ -854,10 +866,18 @@
+ 	if (!vm_enough_memory(len >> PAGE_SHIFT))
+ 		return -ENOMEM;
+ 
++#ifdef CONFIG_GRKERNSEC_PAX
++	flags = calc_vm_flags(PROT_READ|PROT_WRITE,
++#else
+ 	flags = calc_vm_flags(PROT_READ|PROT_WRITE|PROT_EXEC,
++#endif
+ 				MAP_FIXED|MAP_PRIVATE) | mm->def_flags;
+ 
++#ifdef CONFIG_GRKERNSEC_PAX
++	flags |= VM_MAYREAD | VM_MAYWRITE; 
++#else
+ 	flags |= VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
++#endif
+ 	
+ 	/* Can we just expand an old anonymous mapping? */
+ 	if (addr) {
+diff -urN linux/mm/mprotect.c linux/mm/mprotect.c
+--- linux/mm/mprotect.c	Mon Mar 19 15:35:08 2001
++++ linux/mm/mprotect.c	Sat Jul 21 10:20:41 2001
+@@ -260,7 +260,12 @@
+ 			error = -EACCES;
+ 			break;
+ 		}
+-
++#ifdef CONFIG_GRKERNSEC_PAX
++/* PaX: disallow write access after relocs are done, hopefully noone else needs it... */
++		if ((prot & PROT_WRITE) && (vma->vm_flags & VM_MAYEXEC)) {
++			newflags &= ~VM_MAYWRITE;
++		}
++#endif
+ 		if (vma->vm_end >= end) {
+ 			error = mprotect_fixup(vma, nstart, end, newflags);
+ 			break;
+diff -urN linux/net/core/dev.c linux/net/core/dev.c
+--- linux/net/core/dev.c	Sun Jul 15 19:29:40 2001
++++ linux/net/core/dev.c	Sat Jul 21 10:20:42 2001
+@@ -2751,7 +2751,23 @@
+ 			dp = &dev->next;
+ 		}
+ 	}
+-
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++#ifdef CONFIG_PROC_FS
++	proc_net_create("dev", S_IRUSR|S_IRGRP, dev_get_info);
++	create_proc_read_entry("net/softnet_stat", S_IRUSR|S_IRGRP, 0, dev_proc_stats, NULL);
++#ifdef WIRELESS_EXT
++	proc_net_create("wireless", S_IRUSR|S_IRGRP, dev_get_wireless_info);
++#endif	/* WIRELESS_EXT */
++#endif	/* CONFIG_PROC_FS */
++#elif CONFIG_GRKERNSEC_PROC_USER
++#ifdef CONFIG_PROC_FS
++	proc_net_create("dev", S_IRUSR, dev_get_info);
++	create_proc_read_entry("net/softnet_stat", S_IRUSR, 0, dev_proc_stats, NULL);
++#ifdef WIRELESS_EXT
++	proc_net_create("wireless", S_IRUSR, dev_get_wireless_info);
++#endif	/* WIRELESS_EXT */
++#endif	/* CONFIG_PROC_FS */
++#else
+ #ifdef CONFIG_PROC_FS
+ 	proc_net_create("dev", 0, dev_get_info);
+ 	create_proc_read_entry("net/softnet_stat", 0, 0, dev_proc_stats, NULL);
+@@ -2759,7 +2775,7 @@
+ 	proc_net_create("wireless", 0, dev_get_wireless_info);
+ #endif	/* WIRELESS_EXT */
+ #endif	/* CONFIG_PROC_FS */
+-
++#endif
+ 	dev_boot_phase = 0;
+ 
+ 	open_softirq(NET_TX_SOFTIRQ, net_tx_action, NULL);
+diff -urN linux/net/core/utils.c linux/net/core/utils.c
+--- linux/net/core/utils.c	Mon Aug 23 13:01:02 1999
++++ linux/net/core/utils.c	Sat Jul 21 10:20:42 2001
+@@ -20,18 +20,39 @@
+ #include <linux/sched.h>
+ #include <linux/string.h>
+ #include <linux/mm.h>
+-
++#ifndef CONFIG_GRKERNSEC_RANDNET
+ static unsigned long net_rand_seed = 152L;
++#else
++#include <linux/random.h>
++#define RNG_N_STORED_WORDS 256
++unsigned long rng_storage[RNG_N_STORED_WORDS];
++int nleft=0;
++#endif
+ 
+ unsigned long net_random(void)
+ {
++#ifdef CONFIG_GRKERNSEC_RANDNET
++	if (!nleft)
++	{
++		get_random_bytes(rng_storage,sizeof(rng_storage));
++		nleft=RNG_N_STORED_WORDS;
++	}
++	
++	nleft --;
++	return rng_storage[nleft];
++#else
+ 	net_rand_seed=net_rand_seed*69069L+1;
+         return net_rand_seed^jiffies;
++#endif
+ }
+ 
+ void net_srandom(unsigned long entropy)
+ {
++#ifdef CONFIG_GRKERNSEC_RANDNET
++	add_mouse_randomness((__u32)entropy);
++#else
+ 	net_rand_seed ^= entropy;
++#endif
+ 	net_random();
+ }
+ 
+@@ -71,3 +92,31 @@
+ 	spin_unlock_irqrestore(&ratelimit_lock, flags);
+ 	return 0;
+ }
++
++#ifdef CONFIG_GRKERNSEC_RANDID
++u16 last_ip_ids[32];
++u16 big_ip_ids[64];
++int cur_n_ip_ids;
++int ip_ids_left = 0;
++
++u16 get_random_ip_id(void) {
++	int i=0,x=0;
++	if(!ip_ids_left) {
++	get_random_bytes(&big_ip_ids,sizeof(big_ip_ids));
++changed:
++	for(i=0;i<64;i++){
++		for(x=0;x<32;x++){
++			if(last_ip_ids[x] == big_ip_ids[i]){
++				get_random_bytes(&big_ip_ids[i],sizeof(big_ip_ids[i]));
++				goto changed;
++			}
++		}
++	}	
++	ip_ids_left=64;
++	}
++	ip_ids_left--;
++	last_ip_ids[cur_n_ip_ids++] = big_ip_ids[ip_ids_left];
++	cur_n_ip_ids &= 31;
++	return big_ip_ids[ip_ids_left];
++}
++#endif
+diff -urN linux/net/ipv4/af_inet.c linux/net/ipv4/af_inet.c
+--- linux/net/ipv4/af_inet.c	Thu Jun 21 00:00:55 2001
++++ linux/net/ipv4/af_inet.c	Sat Jul 21 11:21:02 2001
+@@ -83,6 +83,9 @@
+ #include <linux/init.h>
+ #include <linux/poll.h>
+ #include <linux/netfilter_ipv4.h>
++#ifdef CONFIG_GRKERNSEC_RANDTTL
++#include <linux/random.h>
++#endif
+ 
+ #include <asm/uaccess.h>
+ #include <asm/system.h>
+@@ -320,6 +323,10 @@
+         struct list_head *p;
+         struct inet_protosw *answer;
+ 
++#ifdef CONFIG_GRKERNSEC_RANDTTL
++      unsigned long randttl;
++#endif
++
+ 	sock->state = SS_UNCONNECTED;
+ 	sk = sk_alloc(PF_INET, GFP_KERNEL, 1);
+ 	if (sk == NULL) 
+@@ -372,7 +379,11 @@
+ 	else
+ 		sk->protinfo.af_inet.pmtudisc = IP_PMTUDISC_WANT;
+ 
++#ifdef CONFIG_GRKERNSEC_RANDID
++	sk->protinfo.af_inet.id = get_random_ip_id();
++#else
+ 	sk->protinfo.af_inet.id = 0;
++#endif
+ 
+ 	sock_init_data(sock,sk);
+ 
+@@ -384,7 +395,13 @@
+ 
+ 	sk->backlog_rcv = sk->prot->backlog_rcv;
+ 
+-	sk->protinfo.af_inet.ttl	= sysctl_ip_default_ttl;
++#ifdef CONFIG_GRKERNSEC_RANDTTL
++        get_random_bytes(&randttl,sizeof(randttl));
++        sk->protinfo.af_inet.ttl = CONFIG_GRKERNSEC_RANDTTL_THRESH +
++        (randttl % (256 - CONFIG_GRKERNSEC_RANDTTL_THRESH));
++#else                  
++	sk->protinfo.af_inet.ttl = sysctl_ip_default_ttl;
++#endif
+ 
+ 	sk->protinfo.af_inet.mc_loop	= 1;
+ 	sk->protinfo.af_inet.mc_ttl	= 1;
+@@ -1174,6 +1191,25 @@
+ 	/*
+ 	 *	Create all the /proc entries.
+ 	 */
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++#ifdef CONFIG_PROC_FS
++	proc_net_create ("raw", S_IRUSR|S_IRGRP, raw_get_info);
++	proc_net_create ("netstat", S_IRUSR|S_IRGRP, netstat_get_info);
++	proc_net_create ("snmp", S_IRUSR|S_IRGRP, snmp_get_info);
++	proc_net_create ("sockstat", S_IRUSR|S_IRGRP, afinet_get_info);
++	proc_net_create ("tcp", S_IRUSR|S_IRGRP, tcp_get_info);
++	proc_net_create ("udp", S_IRUSR|S_IRGRP, udp_get_info);
++#endif
++#elif CONFIG_GRKERNSEC_PROC_USER
++#ifdef CONFIG_PROC_FS
++	proc_net_create ("raw", S_IRUSR, raw_get_info);
++	proc_net_create ("netstat", S_IRUSR, netstat_get_info);
++	proc_net_create ("snmp", S_IRUSR, snmp_get_info);
++	proc_net_create ("sockstat", S_IRUSR, afinet_get_info);
++	proc_net_create ("tcp", S_IRUSR, tcp_get_info);
++	proc_net_create ("udp", S_IRUSR, udp_get_info);
++#endif
++#else
+ #ifdef CONFIG_PROC_FS
+ 	proc_net_create ("raw", 0, raw_get_info);
+ 	proc_net_create ("netstat", 0, netstat_get_info);
+@@ -1181,6 +1217,7 @@
+ 	proc_net_create ("sockstat", 0, afinet_get_info);
+ 	proc_net_create ("tcp", 0, tcp_get_info);
+ 	proc_net_create ("udp", 0, udp_get_info);
++#endif
+ #endif		/* CONFIG_PROC_FS */
+ 	return 0;
+ }
+diff -urN linux/net/ipv4/arp.c linux/net/ipv4/arp.c
+--- linux/net/ipv4/arp.c	Wed May 16 13:21:45 2001
++++ linux/net/ipv4/arp.c	Sat Jul 21 10:20:42 2001
+@@ -1196,8 +1196,13 @@
+ 	neigh_table_init(&arp_tbl);
+ 
+ 	dev_add_pack(&arp_packet_type);
+-
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++	proc_net_create ("arp", S_IRUSR|S_IRGRP, arp_get_info);
++#elif CONFIG_GRKERNSEC_PROC_USER
++	proc_net_create ("arp", S_IRUSR, arp_get_info);
++#else
+ 	proc_net_create ("arp", 0, arp_get_info);
++#endif
+ 
+ #ifdef CONFIG_SYSCTL
+ 	neigh_sysctl_register(NULL, &arp_tbl.parms, NET_IPV4, NET_IPV4_NEIGH, "ipv4");
+diff -urN linux/net/ipv4/fib_frontend.c linux/net/ipv4/fib_frontend.c
+--- linux/net/ipv4/fib_frontend.c	Mon Jun 11 22:15:27 2001
++++ linux/net/ipv4/fib_frontend.c	Sat Jul 21 10:20:42 2001
+@@ -642,9 +642,19 @@
+ 
+ void __init ip_fib_init(void)
+ {
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++#ifdef CONFIG_PROC_FS
++	proc_net_create("route",S_IRUSR|S_IRGRP,fib_get_procinfo);
++#endif		/* CONFIG_PROC_FS */
++#elif CONFIG_GRKERNSEC_PROC_USER
++#ifdef CONFIG_PROC_FS
++	proc_net_create("route",S_IRUSR,fib_get_procinfo);
++#endif		/* CONFIG_PROC_FS */
++#else
+ #ifdef CONFIG_PROC_FS
+ 	proc_net_create("route",0,fib_get_procinfo);
+ #endif		/* CONFIG_PROC_FS */
++#endif
+ 
+ #ifndef CONFIG_IP_MULTIPLE_TABLES
+ 	local_table = fib_hash_init(RT_TABLE_LOCAL);
+diff -urN linux/net/ipv4/icmp.c linux/net/ipv4/icmp.c
+--- linux/net/ipv4/icmp.c	Thu Jun 21 00:00:55 2001
++++ linux/net/ipv4/icmp.c	Sat Jul 21 10:20:42 2001
+@@ -87,6 +87,9 @@
+ #include <asm/system.h>
+ #include <asm/uaccess.h>
+ #include <net/checksum.h>
++#ifdef CONFIG_GRKERNSEC_RANDPING
++#include <linux/random.h>
++#endif
+ 
+ #define min(a,b)	((a)<(b)?(a):(b))
+ 
+@@ -728,11 +731,17 @@
+ 
+ 		icmp_param.data.icmph=*skb->h.icmph;
+ 		icmp_param.data.icmph.type=ICMP_ECHOREPLY;
++#ifdef CONFIG_GRKERNSEC_RANDPING
++		icmp_param.data.icmph.un.echo.id =
++		skb->h.icmph->un.echo.id;
++#endif
+ 		icmp_param.skb=skb;
+ 		icmp_param.offset=0;
+ 		icmp_param.data_len=skb->len;
+ 		icmp_param.head_len=sizeof(struct icmphdr);
++#ifndef CONFIG_GRKERNSEC_STEALTH_ICMP
+ 		icmp_reply(&icmp_param, skb);
++#endif		
+ 	}
+ }
+ 
+@@ -773,7 +782,9 @@
+ 	icmp_param.offset=0;
+ 	icmp_param.data_len=0;
+ 	icmp_param.head_len=sizeof(struct icmphdr)+12;
++#ifndef CONFIG_GRKERNSEC_STEALTH_ICMP
+ 	icmp_reply(&icmp_param, skb);
++#endif
+ }
+ 
+ 
+diff -urN linux/net/ipv4/igmp.c linux/net/ipv4/igmp.c
+--- linux/net/ipv4/igmp.c	Thu Apr 12 15:11:39 2001
++++ linux/net/ipv4/igmp.c	Sat Jul 21 11:23:31 2001
+@@ -98,7 +98,6 @@
+ #include <linux/mroute.h>
+ #endif
+ 
+-
+ #define IP_MAX_MEMBERSHIPS 20
+ 
+ #ifdef CONFIG_IP_MULTICAST
+@@ -199,7 +198,9 @@
+ 	struct igmphdr *ih;
+ 	struct rtable *rt;
+ 	u32	dst;
+-
++#ifdef CONFIG_GRKERNSEC_STEALTH_IGMP
++		return(-1);
++#endif
+ 	/* According to IGMPv2 specs, LEAVE messages are
+ 	 * sent to all-routers group.
+ 	 */
+@@ -235,7 +236,11 @@
+ 	iph->saddr    = rt->rt_src;
+ 	iph->protocol = IPPROTO_IGMP;
+ 	iph->tot_len  = htons(IGMP_SIZE);
++#ifdef CONFIG_GRKERNSEC_RANDID
++	iph->id = get_random_ip_id();
++#else
+ 	ip_select_ident(iph, &rt->u.dst, NULL);
++#endif
+ 	((u8*)&iph[1])[0] = IPOPT_RA;
+ 	((u8*)&iph[1])[1] = 4;
+ 	((u8*)&iph[1])[2] = 0;
+diff -urN linux/net/ipv4/inetpeer.c linux/net/ipv4/inetpeer.c
+--- linux/net/ipv4/inetpeer.c	Fri Jun 29 22:38:26 2001
++++ linux/net/ipv4/inetpeer.c	Sat Jul 21 11:24:21 2001
+@@ -67,6 +67,10 @@
+  *		ip_id_count: idlock
+  */
+ 
++#ifdef CONFIG_GRKERNSEC_RANDID
++extern u16 get_random_ip_id(void);
++#endif
++
+ spinlock_t inet_peer_idlock = SPIN_LOCK_UNLOCKED;
+ 
+ static kmem_cache_t *peer_cachep;
+@@ -390,7 +394,11 @@
+ 		return NULL;
+ 	n->v4daddr = daddr;
+ 	atomic_set(&n->refcnt, 1);
++#ifdef CONFIG_GRKERNSEC_RANDID
++	n->ip_id_count = get_random_ip_id();
++#else
+ 	n->ip_id_count = secure_ip_id(daddr);
++#endif
+ 	n->tcp_ts_stamp = 0;
+ 
+ 	write_lock_bh(&peer_pool_lock);
+diff -urN linux/net/ipv4/ip_gre.c linux/net/ipv4/ip_gre.c
+--- linux/net/ipv4/ip_gre.c	Tue May 15 04:29:35 2001
++++ linux/net/ipv4/ip_gre.c	Sat Jul 21 10:20:42 2001
+@@ -28,6 +28,9 @@
+ #include <linux/inetdevice.h>
+ #include <linux/igmp.h>
+ #include <linux/netfilter_ipv4.h>
++#ifdef CONFIG_GRKERNSEC_RANDTTL
++#include <linux/random.h>
++#endif
+ 
+ #include <net/sock.h>
+ #include <net/ip.h>
+@@ -846,6 +849,9 @@
+ 	iph->saddr		=	rt->rt_src;
+ 
+ 	if ((iph->ttl = tiph->ttl) == 0) {
++#ifdef CONFIG_GRKERNSEC_RANDTTL
++	unsigned long randttl;
++#endif
+ 		if (skb->protocol == __constant_htons(ETH_P_IP))
+ 			iph->ttl = old_iph->ttl;
+ #ifdef CONFIG_IPV6
+@@ -853,7 +859,15 @@
+ 			iph->ttl = ((struct ipv6hdr*)old_iph)->hop_limit;
+ #endif
+ 		else
++#ifdef CONFIG_GRKERNSEC_RANDTTL
++			{
++			get_random_bytes(&randttl,sizeof(randttl));
++			iph->ttl = CONFIG_GRKERNSEC_RANDTTL_THRESH +
++			(randttl % (256 - CONFIG_GRKERNSEC_RANDTTL_THRESH)); 
++			}
++#else
+ 			iph->ttl = sysctl_ip_default_ttl;
++#endif
+ 	}
+ 
+ 	((u16*)(iph+1))[0] = tunnel->parms.o_flags;
+diff -urN linux/net/ipv4/ip_output.c linux/net/ipv4/ip_output.c
+--- linux/net/ipv4/ip_output.c	Tue Jul 10 19:11:43 2001
++++ linux/net/ipv4/ip_output.c	Sat Jul 21 11:23:43 2001
+@@ -141,7 +141,11 @@
+ 	iph->saddr    = rt->rt_src;
+ 	iph->protocol = sk->protocol;
+ 	iph->tot_len  = htons(skb->len);
++#ifdef CONFIG_GRKERNSEC_RANDID
++	iph->id = get_random_ip_id();
++#else
+ 	ip_select_ident(iph, &rt->u.dst, sk);
++#endif
+ 	skb->nh.iph   = iph;
+ 
+ 	if (opt && opt->optlen) {
+@@ -307,7 +311,11 @@
+ 	if (ip_dont_fragment(sk, &rt->u.dst))
+ 		iph->frag_off |= __constant_htons(IP_DF);
+ 
++#ifdef CONFIG_GRKERNSEC_RANDID
++	iph->id = get_random_ip_id();
++#else
+ 	ip_select_ident(iph, &rt->u.dst, sk);
++#endif
+ 
+ 	/* Add an IP checksum. */
+ 	ip_send_check(iph);
+@@ -328,7 +336,13 @@
+ 		kfree_skb(skb);
+ 		return -EMSGSIZE;
+ 	}
++
++#ifdef CONFIG_GRKERNSEC_RANDID
++	iph->id = get_random_ip_id();
++#else
+ 	ip_select_ident(iph, &rt->u.dst, sk);
++#endif
++
+ 	if (skb->ip_summed == CHECKSUM_HW &&
+ 	    (skb = skb_checksum_help(skb)) == NULL)
+ 		return -ENOMEM;
+@@ -374,6 +388,9 @@
+ 	iph->tot_len = htons(skb->len);
+ 	iph->frag_off = 0;
+ 	iph->ttl      = sk->protinfo.af_inet.ttl;
++#ifdef CONFIG_GRKERNSEC_RANDID
++	iph->id = get_random_ip_id();
++#endif
+ 	iph->protocol = sk->protocol;
+ 	iph->saddr    = rt->rt_src;
+ 	iph->daddr    = rt->rt_dst;
+@@ -499,7 +516,11 @@
+ 	 *	Begin outputting the bytes.
+ 	 */
+ 
+-	id = sk->protinfo.af_inet.id++;
++#ifdef CONFIG_GRKERNSEC_RANDID
++       id = sk->protinfo.af_inet.id = get_random_ip_id();
++#else    
++       id = sk->protinfo.af_inet.id++;
++#endif
+ 
+ 	do {
+ 		char *data;
+@@ -552,9 +573,13 @@
+ 					 * for packets without DF or having
+ 					 * been fragmented.
+ 					 */
++#ifdef CONFIG_GRKERNSEC_RANDID
++					iph->id = get_random_ip_id();
++#else
+ 					__ip_select_ident(iph, &rt->u.dst);
+ 					id = iph->id;
+-				}
++#endif
++				} 
+ 
+ 				/*
+ 				 *	Any further fragments will have MF set.
+@@ -683,7 +708,11 @@
+ 		iph->tot_len = htons(length);
+ 		iph->frag_off = df;
+ 		iph->ttl=sk->protinfo.af_inet.mc_ttl;
++#ifdef CONFIG_GRKERNSEC_RANDID
++		iph->id = get_random_ip_id();
++#else
+ 		ip_select_ident(iph, &rt->u.dst, sk);
++#endif
+ 		if (rt->rt_type != RTN_MULTICAST)
+ 			iph->ttl=sk->protinfo.af_inet.ttl;
+ 		iph->protocol=sk->protocol;
+@@ -994,7 +1023,17 @@
+ 	ip_rt_init();
+ 	inet_initpeers();
+ 
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++#ifdef CONFIG_IP_MULTICAST
++	proc_net_create("igmp", S_IRUSR|S_IRGRP, ip_mc_procinfo);
++#endif
++#elif CONFIG_GRKERNSEC_PROC_USER
++#ifdef CONFIG_IP_MULTICAST
++	proc_net_create("igmp", S_IRUSR, ip_mc_procinfo);
++#endif
++#else
+ #ifdef CONFIG_IP_MULTICAST
+ 	proc_net_create("igmp", 0, ip_mc_procinfo);
++#endif
+ #endif
+ }
+diff -urN linux/net/ipv4/ip_sockglue.c linux/net/ipv4/ip_sockglue.c
+--- linux/net/ipv4/ip_sockglue.c	Thu Apr 12 15:11:39 2001
++++ linux/net/ipv4/ip_sockglue.c	Sat Jul 21 10:20:42 2001
+@@ -42,6 +42,9 @@
+ 
+ #include <linux/errqueue.h>
+ #include <asm/uaccess.h>
++#ifdef CONFIG_GRKERNSEC_RANDTTL
++#include <linux/random.h>
++#endif
+ 
+ #define MAX(a,b) ((a)>(b)?(a):(b))
+ 
+@@ -383,7 +386,9 @@
+ int ip_setsockopt(struct sock *sk, int level, int optname, char *optval, int optlen)
+ {
+ 	int val=0,err;
+-
++#ifdef CONFIG_GRKERNSEC_RANDTTL
++	unsigned long randttl;
++#endif
+ 	if (level != SOL_IP)
+ 		return -ENOPROTOOPT;
+ 
+@@ -501,7 +506,15 @@
+ 			if (optlen<1)
+ 				goto e_inval;
+ 			if(val==-1)
++#ifdef CONFIG_GRKERNSEC_RANDTTL
++                        {
++                        get_random_bytes(&randttl,sizeof(randttl));
++                        val = CONFIG_GRKERNSEC_RANDTTL_THRESH +
++                        (randttl % (256 - CONFIG_GRKERNSEC_RANDTTL_THRESH));
++                        }
++#else                  
+ 				val = sysctl_ip_default_ttl;
++#endif
+ 			if(val<1||val>255)
+ 				goto e_inval;
+ 			sk->protinfo.af_inet.ttl=val;
+diff -urN linux/net/ipv4/ipmr.c linux/net/ipv4/ipmr.c
+--- linux/net/ipv4/ipmr.c	Fri Jun 29 22:38:26 2001
++++ linux/net/ipv4/ipmr.c	Sat Jul 21 11:24:34 2001
+@@ -1095,7 +1095,11 @@
+ 	iph->protocol	=	IPPROTO_IPIP;
+ 	iph->ihl	=	5;
+ 	iph->tot_len	=	htons(skb->len);
++#ifdef CONFIG_GRKERNSEC_RANDID
++	iph->id = get_random_ip_id();
++#else
+ 	ip_select_ident(iph, skb->dst, NULL);
++#endif
+ 	ip_send_check(iph);
+ 
+ 	skb->h.ipiph = skb->nh.iph;
+@@ -1761,8 +1765,20 @@
+ 	init_timer(&ipmr_expire_timer);
+ 	ipmr_expire_timer.function=ipmr_expire_process;
+ 	register_netdevice_notifier(&ip_mr_notifier);
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++#ifdef CONFIG_PROC_FS	
++	proc_net_create("ip_mr_vif",S_IRUSR|S_IRGRP,ipmr_vif_info);
++	proc_net_create("ip_mr_cache",S_IRUSR|S_IRGRP,ipmr_mfc_info);
++#endif	
++#elif CONFIG_GRKERNSEC_PROC_USER
++#ifdef CONFIG_PROC_FS	
++	proc_net_create("ip_mr_vif",S_IRUSR,ipmr_vif_info);
++	proc_net_create("ip_mr_cache",S_IRUSR,ipmr_mfc_info);
++#endif	
++#else
+ #ifdef CONFIG_PROC_FS	
+ 	proc_net_create("ip_mr_vif",0,ipmr_vif_info);
+ 	proc_net_create("ip_mr_cache",0,ipmr_mfc_info);
+ #endif	
++#endif
+ }
+diff -urN linux/net/ipv4/raw.c linux/net/ipv4/raw.c
+--- linux/net/ipv4/raw.c	Tue Jul 10 19:11:43 2001
++++ linux/net/ipv4/raw.c	Sat Jul 21 11:23:19 2001
+@@ -296,7 +296,11 @@
+ 	 	 *	ip_build_xmit clean (well less messy).
+ 		 */
+ 		if (!iph->id)
++#ifdef CONFIG_GRKERNSEC_RANDID
++			iph->id = get_random_ip_id();
++#else
+ 			ip_select_ident(iph, rfh->dst, NULL);
++#endif
+ 		iph->check = ip_fast_csum((unsigned char *)iph, iph->ihl);
+ 	}
+ 	return 0;
+diff -urN linux/net/ipv4/route.c linux/net/ipv4/route.c
+--- linux/net/ipv4/route.c	Thu Jul 19 21:11:13 2001
++++ linux/net/ipv4/route.c	Sat Jul 21 11:24:44 2001
+@@ -2074,7 +2074,11 @@
+ 	ci.rta_error	= rt->u.dst.error;
+ 	ci.rta_id	= ci.rta_ts = ci.rta_tsage = 0;
+ 	if (rt->peer) {
++#ifndef CONFIG_GRKERNSEC_RANDID
+ 		ci.rta_id = rt->peer->ip_id_count;
++#else
++		ci.rta_id = get_random_ip_id();
++#endif
+ 		if (rt->peer->tcp_ts_stamp) {
+ 			ci.rta_ts = rt->peer->tcp_ts;
+ 			ci.rta_tsage = xtime.tv_sec - rt->peer->tcp_ts_stamp;
+@@ -2525,9 +2529,31 @@
+ 					ip_rt_gc_interval;
+ 	add_timer(&rt_periodic_timer);
+ 
+-	proc_net_create ("rt_cache", 0, rt_cache_get_info);
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++       proc_net_create ("rt_cache", S_IRUSR|S_IRGRP, rt_cache_get_info);
++#elif CONFIG_GRKERNSEC_PROC_USER
++       proc_net_create ("rt_cache", S_IRUSR, rt_cache_get_info);
++#else 
++        proc_net_create ("rt_cache", 0, rt_cache_get_info);
++#endif
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++	proc_net_create ("rt_cache_stat", S_IRUSR|S_IRGRP, rt_cache_stat_get_info);
++#elif CONFIG_GRKERNSEC_PROC_USER
++	proc_net_create ("rt_cache_stat", S_IRUSR, rt_cache_stat_get_info);
++#else 
+ 	proc_net_create ("rt_cache_stat", 0, rt_cache_stat_get_info);
++#endif
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++#ifdef CONFIG_NET_CLS_ROUTE
++      create_proc_read_entry("net/rt_acct", S_IRUSR|S_IRGRP, 0, ip_rt_acct_read, NULL);
++#endif
++#elif CONFIG_GRKERNSEC_PROC_USER
++#ifdef CONFIG_NET_CLS_ROUTE
++      create_proc_read_entry("net/rt_acct", S_IRUSR, 0, ip_rt_acct_read, NULL);
++#endif
++#else
+ #ifdef CONFIG_NET_CLS_ROUTE
+-	create_proc_read_entry("net/rt_acct", 0, 0, ip_rt_acct_read, NULL);
++       create_proc_read_entry("net/rt_acct", 0, 0, ip_rt_acct_read, NULL);
++#endif
+ #endif
+ }
+diff -urN linux/net/ipv4/tcp_ipv4.c linux/net/ipv4/tcp_ipv4.c
+--- linux/net/ipv4/tcp_ipv4.c	Wed Apr 25 17:57:39 2001
++++ linux/net/ipv4/tcp_ipv4.c	Sat Jul 21 10:20:42 2001
+@@ -63,6 +63,10 @@
+ #include <linux/stddef.h>
+ #include <linux/ipsec.h>
+ 
++#ifdef CONFIG_GRKERNSEC_RANDID
++extern u16 get_random_ip_id(void);
++#endif
++
+ extern int sysctl_ip_dynaddr;
+ 
+ /* Check TCP sequence numbers in ICMP packets. */
+@@ -177,12 +181,22 @@
+ 		int high = sysctl_local_port_range[1];
+ 		int remaining = (high - low) + 1;
+ 		int rover;
++#ifdef CONFIG_GRKERNSEC_RANDSRC
++                unsigned long longrover;
++#endif
+ 
+ 		spin_lock(&tcp_portalloc_lock);
++#ifdef CONFIG_GRKERNSEC_RANDSRC
++                remaining = 32767;
++                do {
++                    get_random_bytes(&longrover,sizeof(longrover));
++		    rover=low+(longrover % (high - low));
++#else
+ 		rover = tcp_port_rover;
+ 		do {	rover++;
+ 			if ((rover < low) || (rover > high))
+ 				rover = low;
++#endif
+ 			head = &tcp_bhash[tcp_bhashfn(rover)];
+ 			spin_lock(&head->lock);
+ 			for (tb = head->chain; tb; tb = tb->next)
+@@ -192,7 +206,26 @@
+ 		next:
+ 			spin_unlock(&head->lock);
+ 		} while (--remaining > 0);
++#ifndef CONFIG_GRKERNSEC_RANDSRC
+ 		tcp_port_rover = rover;
++#endif
++#ifdef CONFIG_GRKERNSEC_RANDSEC
++                remaining = (high - low) + 1;
++                rover = tcp_port_rover;
++                do {    rover++;
++                        if ((rover < low) || (rover > high))
++                                rover = low;
++                        head = &tcp_bhash[tcp_bhashfn(rover)];
++                        spin_lock(&head->lock);  
++                        for (tb = head->chain; tb; tb = tb->next)
++                                if (tb->port == rover)
++                                        goto next2;
++                        break;
++                next2:
++                        spin_unlock(&head->lock);
++                } while (--remaining > 0);
++                tcp_port_rover = rover;
++#endif
+ 		spin_unlock(&tcp_portalloc_lock);
+ 
+ 		/* Exhausted local port range during search? */
+@@ -718,7 +751,11 @@
+ 	tp->ext_header_len = 0;
+ 	if (sk->protinfo.af_inet.opt)
+ 		tp->ext_header_len = sk->protinfo.af_inet.opt->optlen;
++#ifdef CONFIG_GRKERNSEC_RANDID
++	sk->protinfo.af_inet.id = get_random_ip_id();
++#else
+ 	sk->protinfo.af_inet.id = tp->write_seq^jiffies;
++#endif
+ 
+ 	tp->mss_clamp = 536;
+ 
+@@ -1031,7 +1068,9 @@
+ 	struct tcphdr *th = skb->h.th;
+ 	struct tcphdr rth;
+ 	struct ip_reply_arg arg;
+-
++#ifdef CONFIG_GRKERNSEC_STEALTH_RST
++		return;
++#endif
+ 	/* Never send a reset in response to a reset. */
+ 	if (th->rst)
+ 		return;
+@@ -1444,7 +1483,11 @@
+ 	newtp->ext_header_len = 0;
+ 	if (newsk->protinfo.af_inet.opt)
+ 		newtp->ext_header_len = newsk->protinfo.af_inet.opt->optlen;
++#ifdef CONFIG_GRKERNSEC_RANDID
++	newsk->protinfo.af_inet.id = get_random_ip_id();
++#else
+ 	newsk->protinfo.af_inet.id = newtp->write_seq^jiffies;
++#endif
+ 
+ 	tcp_sync_mss(newsk, dst->pmtu);
+ 	newtp->advmss = dst->advmss;
+@@ -1608,6 +1651,16 @@
+ 
+ 	if (th->doff < sizeof(struct tcphdr)/4)
+ 		goto bad_packet;
++#ifdef CONFIG_GRKERNSEC_STEALTH_FLAGS
++          if(th->fin && th->syn)
++               goto discard_it;
++
++          if(!(th->ack || th->syn || th->rst) || th->res1)
++               goto discard_it;
++
++          if(th->fin && th->psh && th->urg)
++               goto discard_it;
++#endif
+ 	if (!pskb_may_pull(skb, th->doff*4))
+ 		goto discard_it;
+ 
+diff -urN linux/net/ipv4/udp.c linux/net/ipv4/udp.c
+--- linux/net/ipv4/udp.c	Thu Apr 12 15:11:39 2001
++++ linux/net/ipv4/udp.c	Sat Jul 21 11:22:18 2001
+@@ -738,7 +738,12 @@
+ 	sk->daddr = rt->rt_dst;
+ 	sk->dport = usin->sin_port;
+ 	sk->state = TCP_ESTABLISHED;
++
++#ifdef CONFIG_GRKERNSEC_RANDID
++	sk->protinfo.af_inet.id = get_random_ip_id();
++#else
+ 	sk->protinfo.af_inet.id = jiffies;
++#endif
+ 
+ 	sk_dst_set(sk, &rt->u.dst);
+ 	return(0);
+@@ -909,13 +914,14 @@
+ 		sock_put(sk);
+ 		return 0;
+ 	}
+-
+ 	/* No socket. Drop packet silently, if checksum is wrong */
+ 	if (udp_checksum_complete(skb))
+ 		goto csum_error;
+ 
+ 	UDP_INC_STATS_BH(UdpNoPorts);
++#ifndef CONFIG_GRKERNSEC_STEALTH_UDP
+ 	icmp_send(skb, ICMP_DEST_UNREACH, ICMP_PORT_UNREACH, 0);
++#endif	
+ 
+ 	/*
+ 	 * Hmm.  We got an UDP packet to a port to which we
+diff -urN linux/net/socket.c linux/net/socket.c
+--- linux/net/socket.c	Thu Jul 19 21:11:13 2001
++++ linux/net/socket.c	Sat Jul 21 10:20:42 2001
+@@ -914,7 +914,17 @@
+ {
+ 	int retval;
+ 	struct socket *sock;
+-
++#ifdef CONFIG_GRKERNSEC_SOCKET_ALL
++	if((in_group_p(CONFIG_GRKERNSEC_ALL_GID)) && (family != AF_UNIX) && (family != AF_LOCAL)){
++		security_alert("attempted socket(%d,%d,%d) by (%.16s:%d), "
++		"UID(%d), EUID(%d), parent (%.16s:%d), UID(%d), "
++		"EUID(%d)","attempted sockets",family,type,protocol,
++		current->comm,current->pid,current->uid,current->euid,
++		current->p_pptr->comm,current->p_pptr->pid,current->p_pptr->uid,
++		current->p_pptr->euid);
++		return -EACCES;
++	}
++#endif
+ 	retval = sock_create(family, type, protocol, &sock);
+ 	if (retval < 0)
+ 		goto out;
+@@ -1011,7 +1021,17 @@
+ 	struct socket *sock;
+ 	char address[MAX_SOCK_ADDR];
+ 	int err;
+-
++#ifdef CONFIG_GRKERNSEC_SOCKET_SERVER
++	if((in_group_p(CONFIG_GRKERNSEC_SERVER_GID)) && (umyaddr->sa_family != AF_UNIX) && (umyaddr->sa_family != AF_LOCAL)){
++		security_alert("attempted bind() by (%.16s:%d), "
++		"UID(%d), EUID(%d), parent (%.16s:%d), UID(%d), "
++		"EUID(%d)","attempted binds",
++		current->comm,current->pid,current->uid,current->euid,
++		current->p_pptr->comm,current->p_pptr->pid,current->p_pptr->uid,
++		current->p_pptr->euid);
++		return -EACCES;
++	}
++#endif
+ 	if((sock = sockfd_lookup(fd,&err))!=NULL)
+ 	{
+ 		if((err=move_addr_to_kernel(umyaddr,addrlen,address))>=0)
+@@ -1119,10 +1139,20 @@
+ 	struct socket *sock;
+ 	char address[MAX_SOCK_ADDR];
+ 	int err;
+-
+ 	sock = sockfd_lookup(fd, &err);
+ 	if (!sock)
+ 		goto out;
++#ifdef CONFIG_GRKERNSEC_SOCKET_CLIENT
++	if((in_group_p(CONFIG_GRKERNSEC_CLIENT_GID)) && (uservaddr->sa_family != AF_UNIX) && (uservaddr->sa_family != AF_LOCAL)){
++		security_alert("attempted connect() to fd %d by (%.16s:%d), "
++		"UID(%d), EUID(%d), parent (%.16s:%d), UID(%d), "
++		"EUID(%d)","attempted connects",fd,
++		current->comm,current->pid,current->uid,current->euid,
++		current->p_pptr->comm,current->p_pptr->pid,current->p_pptr->uid,
++		current->p_pptr->euid);
++		return -ENETUNREACH;
++	}
++#endif
+ 	err = move_addr_to_kernel(uservaddr, addrlen, address);
+ 	if (err < 0)
+ 		goto out_put;
