@@ -1014,7 +1014,9 @@ fi
 %files sound-alsa
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/sound
+%ifnarch sparc sparc64
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/oss
+%endif
 
 %ifnarch sparc sparc64
 %files sound-oss
@@ -1076,7 +1078,9 @@ fi
 %files smp-sound-alsa
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/sound
+%ifnarch sparc sparc64
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/oss
+%endif
 
 %ifnarch sparc sparc64
 %files smp-sound-oss
