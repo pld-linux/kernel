@@ -144,11 +144,8 @@ find arch/* -type d -maxdepth 0 ! -name i386 | xargs rm -rf
 find -name '*.orig' | xargs rm -rf
 make mrproper
 
-cat << EOF > cleanup-nondist-kernel.sh
+cat << EOF > regen-autoconf.sh
 #!/bin/sh
-if [ -r ".config" ]; then
-    mv .config config-nondist
-fi
 if [ -r "config-nondist" ]; then
     cp config-nondist .config
     make include/linux/autoconf.h
@@ -157,12 +154,20 @@ if [ -r "config-nondist" ]; then
     cd include
     ln -sf asm-i386 asm
     cd ..
+else
+    echo "regen-autoconf: config-nondist - file not found!"
+fi
+EOF
+
+cat << EOF > regen-version.sh
+#!/bin/sh
+if [ -r "config-nondist" ]; then
     cp config-nondist .config
     make include/linux/version.h
     chmod 644 include/linux/version.h
     rm .config
 else
-    echo "error: config-nondist - file not found!"
+    echo "regen-version: config-nondist - file not found!"
 fi
 EOF
 
@@ -232,7 +237,7 @@ echo
 %{_kernelsrcdir}-%{version}/scripts/*.h
 %{_kernelsrcdir}-%{version}/scripts/*.sh
 %{_kernelsrcdir}-%{version}/Makefile
-%attr(744,root,root) %{_kernelsrcdir}-%{version}/cleanup-nondist-kernel.sh
+%attr(744,root,root) %{_kernelsrcdir}-%{version}/regen-version.sh
 
 %files source
 %defattr(644,root,root,755)
@@ -265,3 +270,4 @@ echo
 %{_kernelsrcdir}-%{version}/MAINTAINERS
 %{_kernelsrcdir}-%{version}/README
 %{_kernelsrcdir}-%{version}/REPORTING-BUGS
+%attr(744,root,root) %{_kernelsrcdir}-%{version}/regen-autoconf.sh
