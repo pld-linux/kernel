@@ -41,8 +41,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.4
-%define		_cset		20040419_0610
+%define		_rel		0.10
+%define		_cset		0
 
 ## netfilter snap 
 %define		_netfilter_snap		20040419
@@ -65,8 +65,8 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc1.tar.bz2
-# Source0-md5:	98d19a536d4e6906ee32cdf281d580e8
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc2.tar.bz2
+# Source0-md5:	e50361c332f87a89ddf81399643dea3a
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -508,7 +508,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}-rc1
+%setup -q -n linux-%{version}-rc2
 
 %patch0 -p1
 
@@ -549,6 +549,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch48 -p1
 
 %patch50 -p1
+
+%patch56 -p1
 
 %patch58 -p1
 
@@ -591,8 +593,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %endif
 
 %patch106 -p1
-
-%patch56 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
