@@ -308,7 +308,7 @@ BuildRequires:	modutils
 BuildRequires:	perl-base
 Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
-Provides:	i2c = 2.7.0
+Provides:	i2c = 2.8.0
 Provides:	bttv = 0.7.83
 Provides:	%{name}(netfilter) = 1.2.8-%{netfilter_snap}
 Provides:	%{name}(reiserfs) = %{version}
@@ -380,7 +380,7 @@ Summary(pt_BR):	Kernel compilado para máquinas SMP
 Group:		Base/Kernel
 Provides:	%{name}-smp = %{version}-%{release}
 Provides:	module-info
-Provides:	i2c = 2.7.0
+Provides:	i2c = 2.8.0
 Provides:	bttv = 0.7.83
 Provides:	%{name}(netfilter) = 1.2.8-%{netfilter_snap}
 Provides:	%{name}(reiserfs) = %{version}
@@ -536,7 +536,7 @@ Group:		Base/Kernel
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
-Provides:	i2c-devel = 2.7.0
+Provides:	i2c-devel = 2.8.0
 Provides:	%{name}-headers(netfilter) = 1.2.8-%{netfilter_snap}
 Autoreqprov:	no
 
