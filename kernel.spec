@@ -800,7 +800,7 @@ KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig BOOT
 %{?with_boot:BuildKernel BOOT}
-%{?with_boot:PreInstallKernel boot}
+%{?with_boot:PreInstallKernel BOOT}
 %endif
 
 %install
