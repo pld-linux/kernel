@@ -203,8 +203,7 @@ Patch1006:	jam-10-highpage-init.patch
 Patch1007:	jam-11-self_exec_id.patch
 Patch1008:	jam-15-fast-csum-D.patch
 Patch1009:	jam-21-mem-barriers.patch
-Patch1010:	jam-23-config-nr_cpus.patch
-Patch1011:	jam-30-smptimers-A0.patch
+Patch1010:	jam-30-smptimers-A0.patch
 
 Patch1100:	linux-2.4.18-lvm-VFSlock.patch
 Patch1102:	linux-2.4.20-lvm-updates.patch
@@ -653,7 +652,6 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1008 -p1
 %patch1009 -p1
 %patch1010 -p1
-%patch1011 -p1
 %patch1100 -p1
 %patch1102 -p1
 %patch1105 -p1
