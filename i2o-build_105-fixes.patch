@@ -15,3 +15,53 @@
  		if(!drv->event_queue)
  		{
  			printk(KERN_ERR "i2o: Could not initialize event queue "
+--- linux-2.6.8/drivers/message/i2o/iop.c.orig	2004-08-18 17:59:08.000000000 +0200
++++ linux-2.6.8/drivers/message/i2o/iop.c	2004-08-18 20:53:48.639396832 +0200
+@@ -561,8 +561,19 @@
+ 	writel(0, &msg->tcntxt); //FIXME: use reasonable transaction context
+ 	writel(0, &msg->body[0]);
+ 	writel(0, &msg->body[1]);
++
++#ifdef CONFIG_X86_PAE
++/*
++ * sizeof(dma_addr_t) == 8
++ * sizeof(void *) == 4
++ * don't cast 'dma_addr_t' to 'void *'.
++*/
++	writel((u32) ((u64)c->status.phys), &msg->body[2]);
++	writel((u32)(((u64)c->status.phys) >> 32), &msg->body[3]);
++#else
+ 	writel(i2o_ptr_low((void *)c->status.phys), &msg->body[2]);
+ 	writel(i2o_ptr_high((void *)c->status.phys), &msg->body[3]);
++#endif
+ 
+ 	i2o_msg_post(c,m);
+ 
+@@ -875,8 +886,13 @@
+ 	writel(0, &msg->tcntxt); // FIXME: use resonable transaction context
+ 	writel(0, &msg->body[0]);
+ 	writel(0, &msg->body[1]);
++#ifdef CONFIG_X86_PAE
++	writel((u32) ((u64)c->status_block.phys), &msg->body[2]);
++	writel((u32)(((u64)c->status_block.phys) >> 32), &msg->body[3]);
++#else
+ 	writel(i2o_ptr_low((void *)c->status_block.phys), &msg->body[2]);
+ 	writel(i2o_ptr_high((void *)c->status_block.phys), &msg->body[3]);
++#endif
+ 	writel(sizeof(i2o_status_block), &msg->body[4]); /* always 88 bytes */
+ 
+ 	i2o_msg_post(c,m);
+@@ -992,8 +1008,13 @@
+ 	writel(MSG_FRAME_SIZE<<16|0x80, &msg->body[1]);	/* Outbound msg frame
+ 						size in words and Initcode */
+ 	writel(0xd0000004, &msg->body[2]);
++#ifdef CONFIG_X86_PAE
++	writel((u32) ((u64)c->status.phys), &msg->body[2]);
++	writel((u32)(((u64)c->status.phys) >> 32), &msg->body[3]);
++#else
+ 	writel(i2o_ptr_low((void *)c->status.phys), &msg->body[3]);
+ 	writel(i2o_ptr_high((void *)c->status.phys), &msg->body[4]);
++#endif
+ 
+ 	i2o_msg_post(c, m);
+ 
