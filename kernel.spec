@@ -763,7 +763,7 @@ echo Added Adapter AIC79XX controler support ...
 echo Fixed I810 Sound ...
 %patch40 -p1
 
-%patch41 -p1
+#%patch41 -p1
 %patch42 -p1
 %patch43 -p1
 
@@ -979,7 +979,7 @@ BuildKernel() {
 	KERNELRELEASE=$KernelVer
 	echo KERNEL RELEASE $KernelVer
 %endif
-}
+} # BuildKernel
 
 KERNEL_BUILD_DIR=`pwd`
 KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
@@ -988,7 +988,7 @@ install -d $KERNEL_INSTALL_DIR
 
 # make drivers/scsi/ missing files
 #	(cd drivers/scsi; make -f M)
-	
+
 # UP KERNEL
 %{!?_without_up:BuildKernel}
 
