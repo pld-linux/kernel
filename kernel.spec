@@ -74,7 +74,7 @@ Patch10:	bridge-1.0.1-against-2.2.20.diff
 
 Patch100:	bridge-include.patch
 Patch101:	bridge-netsyms.patch
-Patch102:	bridge-ipsec-bridge.patch
+Patch102:	%{name}-ipsec-bridge.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
