@@ -77,7 +77,8 @@ Patch20:	linux-2.4.20-sched-O1+preempt.patch
 # New filesystems
 
 # http://linux-xfs.sgi.com/projects/xfs/
-Patch25:	linux-2.4.20-xfs-20030306.patch.gz
+Patch25:	linux-2.4.20-core-xfs-1.2.0.patch.bz2
+Patch26:	linux-2.4.20-xfs-1.2.0.patch.bz2
 # http://acl.bestbits.at/
 Patch30:	linux-2.4.20-jfs-xattr.patch
 Patch31:	linux-2.4.20-jfs-1.1.1-acl.patch
@@ -551,6 +552,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch12 -p1
 %patch20 -p1
 %patch25 -p1
+%patch26 -p1
 %patch30 -p1
 %patch31 -p1
 %patch32 -p1
