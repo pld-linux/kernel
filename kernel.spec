@@ -6,7 +6,7 @@
 Summary:	The Linux kernel (the core of the Linux operating system)
 Name:		kernel
 Version:	2.6.6
-Release:	1.9
+Release:	1.10
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
@@ -142,54 +142,44 @@ find include/ -type d -maxdepth 1 -name "asm-*" ! -name asm-i386 ! -name asm-gen
 mv arch/{x86_64,i386}/kernel/early_printk.c
 find arch/* -type d -maxdepth 0 ! -name i386 | xargs rm -rf
 find -name '*.orig' | xargs rm -rf
-make mrproper
-
-cat << EOF > cleanup.sh
-#!/bin/sh
-CWD=`pwd`
-cd %{_kernelsrcdir}
-make mrproper
-cd \$CWD
-EOF
 
 cat << EOF > regen-autoconf.sh
 #!/bin/sh
 if [ -r "config-nondist" ]; then
-    CWD=`pwd`
-    cd %{_kernelsrcdir}
     cp config-nondist .config
     make include/linux/autoconf.h
     mv include/linux/autoconf{,-nondist}.h
     make mrproper
     cd include
     ln -sf asm-i386 asm
-    cd \$CWD
+    cd ..
 else
-    echo "regen-autoconf: config-nondist - file not found!"
+    echo "regen-autoconf.sh: config-nondist - file not found!"
 fi
 EOF
+chmod 744 regen-autoconf.sh
 
 cat << EOF > regen-version.sh
 #!/bin/sh
 if [ -r "config-nondist" ]; then
-    CWD=`pwd`
-    cd %{_kernelsrcdir}
     cp config-nondist .config
     make include/linux/version.h
     chmod 644 include/linux/version.h
     rm .config
-    cd \$CWD
 else
-    echo "regen-version: config-nondist - file not found!"
+    echo "regen-version.sh: config-nondist - file not found!"
 fi
 EOF
+chmod 744 regen-version.sh
+
+install %{SOURCE2} config-nondist
+./regen-autoconf.sh
+./regen-version.sh
 
 %install
 rm -rf $RPM_BUILD_ROOT
-umask 022
 install -d $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}
-cp -R . $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}/
-install %{SOURCE2} $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}/config-nondist
+cp -R . $RPM_BUILD_ROOT%{_kernelsrcdir}-%{version}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -197,10 +187,6 @@ rm -rf $RPM_BUILD_ROOT
 %post headers
 rm -f %{_kernelsrcdir}
 ln -snf linux-%{version} %{_kernelsrcdir}
-%{_kernelsrcdir}/regen-version.sh
-
-%preun headers
-rm -f include/linux/{autoconf-nondist.h,version.h}
 
 %postun headers
 if [ -L %{_kernelsrcdir} ]; then
@@ -212,11 +198,12 @@ if [ -L %{_kernelsrcdir} ]; then
 fi
 
 %preun source
-%{_kernelsrcdir}/cleanup.sh
-
-%post source
-%{_kernelsrcdir}/regen-autoconf.sh
-%{_kernelsrcdir}/regen-version.sh
+CWD=`pwd`
+cd %{_kernelsrcdir}
+make mrproper
+./regen-autoconf.sh
+./regen-version.sh
+cd $CWD
 
 %files doc
 %defattr(644,root,root,755)
