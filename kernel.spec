@@ -5,7 +5,7 @@
 %define		i2c_version		2.6.2
 %define		bttv_version		0.7.60
 %define		wlan_version		0.3.4
-%define		wlan-ng_version		0.1.12
+%define		wlan_ng_version		0.1.12
 %define		tun_version		1.1
 %define         vlan_version            1.0.1
 %define		aic7xxx_version		6.2.3-2.2.19
@@ -35,7 +35,7 @@ Source10:	http://vtun.sourceforge.net/tun/tun-%{tun_version}.tar.gz
 Source11:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
 Source12:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.2-%{jfs_version}-patch.tar.gz
 Source13:	http://www.netroedge.com/~lm78/archive/i2c-%{i2c_version}.tar.gz
-Source14:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-0.1.12.tar.gz
+Source14:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_ng_version}.tar.gz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -581,8 +581,8 @@ cd ../..
 
 # Linux WLAN-NG package extension for PCMCIA
 
-cp $RPM_SOURCE_DIR/kernel-wlan-ng.config linux-wlan-ng-%{wlan-ng_version}/
-cd linux-wlan-ng-%{wlan-ng_version}/
+cp $RPM_SOURCE_DIR/kernel-wlan-ng.config linux-wlan-ng-%{wlan_ng_version}/
+cd linux-wlan-ng-%{wlan_ng_version}/
 %{__make} clean
 rm config.mk
 cp kernel-wlan-ng.config config.mk
