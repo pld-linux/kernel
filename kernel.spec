@@ -140,6 +140,7 @@ Autoreqprov:	no
 PreReq:		coreutils
 PreReq:		module-init-tools >= 0.9.9
 PreReq:		geninitrd >= 2.57
+Requires(pre):	rc-scripts
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	module-info
 Provides:	%{name}(netfilter) = %{_netfilter_snap}
@@ -874,11 +875,12 @@ rm -rf $RPM_BUILD_ROOT
 rm -f /lib/modules/%{version}-%{release}/modules.*
 
 %pre
-# on target system the /boot might not be mounted (it's not required for system
-# to run properly), it could be also mounted ro
-mount /boot >/dev/null 2>&1
-mount /boot -o remount,rw >/dev/null 2>&1
-exit 0
+. /etc/rc.d/init.d/functions
+[ -f /etc/sysconfig/system ] && . /etc/sysconfig/system
+if is_yes "${MOUNT_BOOT_ON_INSTALL:-no}"; then
+	mount /boot >/dev/null 2>&1 || :
+	mount /boot -o remount,rw >/dev/null 2>&1 || :
+fi
 
 %post
 %ifarch ia64
