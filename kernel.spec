@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.4.21
-Release:	0.3
+Release:	0.4
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -657,6 +657,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch3002 -p1
 %patch3003 -p1
 %patch3004 -p1
+%patch3005 -p1
 
 mv -f drivers/scsi/sym53c8xx.c drivers/scsi/sym53c8xx_old.c
 
@@ -1149,7 +1150,6 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.o*
 %endif
 %ifnarch ppc sparc
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/ide/ide-cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o*
 %ifnarch alpha
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
@@ -1173,7 +1173,6 @@ fi
 /lib/modules/%{version}-%{release}/kernel/drivers/parport/*_cs.o*
 /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.o*
 %ifnarch ppc
-/lib/modules/%{version}-%{release}/kernel/drivers/ide/ide-cs.o*
 /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o*
 %ifnarch alpha
 /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
@@ -1209,7 +1208,6 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.o*
 %endif
 %ifnarch ppc sparc
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/ide-cs.o*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o*
 %ifnarch alpha
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o*
@@ -1233,7 +1231,6 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/*_cs.o*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/dtl1_cs.o*
 %ifnarch ppc
-/lib/modules/%{version}-%{release}smp/kernel/drivers/ide/ide-cs.o*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o*
 %ifnarch alpha
 /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o*
