@@ -125,7 +125,6 @@ Patch509:	2.2.21-ppc_macserial.patch
 Patch510:	2.2.21-ppc_openpic_fix.patch
 Patch511:	2.2.21-ppc_use_egcs.patch
 
-Patch1500:	linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	%{name}-sparc-zs.h.patch
 Patch1502:	%{name}-sym53c8xx.patch
 Patch1503:	%{name}-sparc_netsyms.patch
@@ -531,7 +530,6 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %endif
 
 %ifarch sparc sparc64
-%patch1500 -p1
 %patch1501 -p1
 %endif
 %ifarch sparc64
@@ -750,7 +748,7 @@ BuildPCMCIA smp
 %endif
 
 # BOOT kernel
-%ifnarch i586 i686 ppc
+%ifnarch i586 i686 ppc sparc sparc64
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk"
 rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
@@ -899,7 +897,6 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH511}
 %endif
 
 %ifarch sparc sparc64
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1500}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1501}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1502}
 %endif
@@ -915,11 +912,21 @@ find -name "*.orig" -print | xargs rm -f
 
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
 
+%ifarch sparc
+sparc32 %{__make} oldconfig
+%else
 %{__make} oldconfig
+%endif
+
 mv -f include/linux/autoconf.h include/linux/autoconf-up.h
 
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config .config
+
+%ifarch sparc
+sparc32 %{__make} oldconfig
+%else
 %{__make} oldconfig
+%endif
 mv -f include/linux/autoconf.h include/linux/autoconf-smp.h
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
@@ -1075,7 +1082,9 @@ fi
 /lib/modules/%{version}-%{release}/fc4
 %endif
 /lib/modules/%{version}-%{release}/fs
+%ifnarch sparc sparc64
 /lib/modules/%{version}-%{release}/ieee1394
+%endif
 /lib/modules/%{version}-%{release}/ipv4
 /lib/modules/%{version}-%{release}/ipv6
 /lib/modules/%{version}-%{release}/misc
@@ -1110,7 +1119,9 @@ fi
 /lib/modules/%{version}-%{release}/fc4
 %endif
 /lib/modules/%{version}-%{release}smp/fs
+%ifnarch sparc sparc64
 /lib/modules/%{version}-%{release}smp/ieee1394
+%endif
 /lib/modules/%{version}-%{release}smp/ipv4
 /lib/modules/%{version}-%{release}smp/ipv6
 /lib/modules/%{version}-%{release}smp/misc
@@ -1128,7 +1139,7 @@ fi
 /lib/modules/%{version}-%{release}smp/pcmcia
 %endif
 
-%ifnarch i586 i686 ppc
+%ifnarch i586 i686 ppc sparc
 %files BOOT
 %defattr(644,root,root,755)
 %ifarch alpha sparc
