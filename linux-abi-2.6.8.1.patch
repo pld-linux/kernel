@@ -27082,7 +27082,7 @@ diff -Nru linux-2.6.7/include/asm-i386/elf.h linux-2.6.7-abi/include/asm-i386/el
  #define AT_SYSINFO_EHDR		33
  
  #ifdef __KERNEL__
--#define SET_PERSONALITY(ex, ibcs2) set_personality((ibcs2)?PER_SVR4:PER_LINUX)
+-#define SET_PERSONALITY(ex, ibcs2) do { } while (0)
 +
 +#include <asm/elfmark.h>                                                      
 +                                                                              
@@ -27098,8 +27098,8 @@ diff -Nru linux-2.6.7/include/asm-i386/elf.h linux-2.6.7-abi/include/asm-i386/el
 +      set_personality(personality); \
 +} while (0)
  
- extern int dump_task_regs (struct task_struct *, elf_gregset_t *);
- extern int dump_task_fpu (struct task_struct *, elf_fpregset_t *);
+ /*
+  * An executable for which elf_read_imlies_exec() returns TRUE will
 diff -Nru linux-2.6.7/include/asm-i386/elfmark.h linux-2.6.7-abi/include/asm-i386/elfmark.h
 --- linux-2.6.7/include/asm-i386/elfmark.h	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.7-abi/include/asm-i386/elfmark.h	2004-07-22 17:44:21.000000000 +0200
@@ -27296,7 +27296,7 @@ diff -Nru linux-2.6.7/include/linux/personality.h linux-2.6.7-abi/include/linux/
  
  
  /*
-@@ -24,49 +27,85 @@
+@@ -24,18 +27,56 @@
  
  
  /*
@@ -27337,6 +27337,7 @@ diff -Nru linux-2.6.7/include/linux/personality.h linux-2.6.7-abi/include/linux/
  enum {
 +#if 1 /* only for compatibilty with old code */
  	MMAP_PAGE_ZERO =	0x0100000,
+ 	READ_IMPLIES_EXEC =	0x0400000,
  	ADDR_LIMIT_32BIT =	0x0800000,
  	SHORT_INODE =		0x1000000,
  	WHOLE_SECONDS =		0x2000000,
@@ -27353,6 +27354,10 @@ diff -Nru linux-2.6.7/include/linux/personality.h linux-2.6.7-abi/include/linux/
 +	PERF_ADDR_LIMIT_3GB = 	0x08000000,
 +	PERF_MASK = 		0xFFFFFF00,
  };
+ 
+ /*
+@@ -51,35 +51,33 @@
+ #define PER_CLEAR_ON_SETID (READ_IMPLIES_EXEC)
  
  /*
 - * Personality types.
@@ -28240,9 +28245,9 @@ diff -Nru linux-2.6.7/net/socket.c linux-2.6.7-abi/net/socket.c
  EXPORT_SYMBOL(move_addr_to_user);
  EXPORT_SYMBOL(sock_alloc);
 @@ -2040,3 +2040,8 @@
- EXPORT_SYMBOL(sock_unregister);
- EXPORT_SYMBOL(sock_wake_async);
  EXPORT_SYMBOL(sockfd_lookup);
+ EXPORT_SYMBOL(kernel_sendmsg);
+ EXPORT_SYMBOL(kernel_recvmsg);
 +/* symbol exports for LinuxABI Sytem V R4 support */                            
 +/* for ease of use we are exporting those needed symbols permanently */
 +/* #if CONFIG_ABI_SVR4 == m */
