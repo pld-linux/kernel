@@ -1,0 +1,58 @@
+diff -Naur --exclude '*.orig' --exclude '*.rej' linux-2.6.1-gentoo/drivers/char/drm/radeon_drv.h linux-2.6.1-gentoo-test/drivers/char/drm/radeon_drv.h
+--- linux-2.6.1-gentoo/drivers/char/drm/radeon_drv.h	2004-01-09 23:40:12.000000000 +0000
++++ linux-2.6.1-gentoo-test/drivers/char/drm/radeon_drv.h	2004-01-09 22:32:40.000000000 +0000
+@@ -125,6 +125,7 @@
+ 
+ 	drm_radeon_depth_clear_t depth_clear;
+ 	
++	unsigned long fb_base;
+ 	unsigned long fb_offset;
+ 	unsigned long mmio_offset;
+ 	unsigned long ring_offset;
+@@ -146,7 +147,6 @@
+ 	/* SW interrupt */
+    	wait_queue_head_t swi_queue;
+    	atomic_t swi_emitted;
+-
+ } drm_radeon_private_t;
+ 
+ typedef struct drm_radeon_buf_priv {
+diff -Naur --exclude '*.orig' --exclude '*.rej' linux-2.6.1-gentoo/drivers/char/drm/radeon_state.c linux-2.6.1-gentoo-test/drivers/char/drm/radeon_state.c
+--- linux-2.6.1-gentoo/drivers/char/drm/radeon_state.c	2004-01-09 23:40:12.000000000 +0000
++++ linux-2.6.1-gentoo-test/drivers/char/drm/radeon_state.c	2004-01-09 22:32:40.000000000 +0000
+@@ -153,7 +153,7 @@
+ 		OUT_RING( CP_PACKET0( RADEON_PP_TXFILTER_0, 5 ) );
+ 		OUT_RING( tex[0].pp_txfilter );
+ 		OUT_RING( tex[0].pp_txformat );
+-		OUT_RING( tex[0].pp_txoffset );
++		OUT_RING( tex[0].pp_txoffset + dev_priv->fb_base);
+ 		OUT_RING( tex[0].pp_txcblend );
+ 		OUT_RING( tex[0].pp_txablend );
+ 		OUT_RING( tex[0].pp_tfactor );
+@@ -167,7 +167,7 @@
+ 		OUT_RING( CP_PACKET0( RADEON_PP_TXFILTER_1, 5 ) );
+ 		OUT_RING( tex[1].pp_txfilter );
+ 		OUT_RING( tex[1].pp_txformat );
+-		OUT_RING( tex[1].pp_txoffset );
++		OUT_RING( tex[1].pp_txoffset + dev_priv->fb_base);
+ 		OUT_RING( tex[1].pp_txcblend );
+ 		OUT_RING( tex[1].pp_txablend );
+ 		OUT_RING( tex[1].pp_tfactor );
+@@ -181,7 +181,7 @@
+ 		OUT_RING( CP_PACKET0( RADEON_PP_TXFILTER_2, 5 ) );
+ 		OUT_RING( tex[2].pp_txfilter );
+ 		OUT_RING( tex[2].pp_txformat );
+-		OUT_RING( tex[2].pp_txoffset );
++		OUT_RING( tex[2].pp_txoffset + dev_priv->fb_base);
+ 		OUT_RING( tex[2].pp_txcblend );
+ 		OUT_RING( tex[2].pp_txablend );
+ 		OUT_RING( tex[2].pp_tfactor );
+@@ -1178,7 +1178,7 @@
+ 			     RADEON_GMC_CLR_CMP_CNTL_DIS |
+ 			     RADEON_GMC_WR_MSK_DIS);
+ 		
+-		buffer[2] = (tex->pitch << 22) | (tex->offset >> 10);
++		buffer[2] = (tex->pitch << 22) | ((tex->offset + dev_priv->fb_base) >> 10);
+ 		buffer[3] = 0xffffffff;
+ 		buffer[4] = 0xffffffff;
+ 		buffer[5] = (image->y << 16) | image->x;
