@@ -19,6 +19,8 @@
 %undefine	with_smp
 %endif
 
+%undefine	BOOT
+
 ## Program required by kernel to work.
 %define		_binutils_ver		2.12
 %define		_util_linux_ver		2.10o
@@ -35,7 +37,7 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.90
+%define		_rel		1
 %define		_cset		0
 
 ## netfilter snap 
@@ -846,13 +848,13 @@ BuildConfig smp
 %{?with_smp:PreInstallKernel smp}
 
 # BOOT kernel
-%ifnarch i586 i686 athlon
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
-rm -rf $KERNEL_INSTALL_DIR
-ConfigBOOT
+##%%ifnarch i586 i686 athlon
+##KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/BOOT"
+##rm -rf $KERNEL_INSTALL_DIR
+##ConfigBOOT
 ##%%{?with_BOOT:BuildKernel BOOT}
-%{?with_BOOT:PreInstallKernel BOOT}
-%endif
+##%{?with_BOOT:PreInstallKernel BOOT}
+##%endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
