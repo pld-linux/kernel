@@ -37,6 +37,33 @@ diff -urN linux-2.4.22.org/drivers/ide/ide.c linux-2.4.22/drivers/ide/ide.c
  	unregister_reboot_notifier(&ide_notifier);
  	for (index = 0; index < MAX_HWIFS; ++index) {
  		ide_unregister(index);
+diff -urN linux-2.4.22.org/drivers/ide/ide-probe.c linux-2.4.22/drivers/ide/ide-probe.c
+--- linux-2.4.22.org/drivers/ide/ide-probe.c	2003-11-22 22:08:09.000000000 +0100
++++ linux-2.4.22/drivers/ide/ide-probe.c	2003-11-22 23:37:35.000000000 +0100
+@@ -1423,23 +1423,4 @@
+ 
+ #ifdef MODULE
+ extern int (*ide_xlate_1024_hook)(kdev_t, int, int, const char *);
+-
+-int init_module (void)
+-{
+-	unsigned int index;
+-	
+-	for (index = 0; index < MAX_HWIFS; ++index)
+-		ide_unregister(index);
+-	ideprobe_init();
+-	create_proc_ide_interfaces();
+-	ide_xlate_1024_hook = ide_xlate_1024;
+-	return 0;
+-}
+-
+-void cleanup_module (void)
+-{
+-	ide_probe = NULL;
+-	ide_xlate_1024_hook = 0;
+-}
+-MODULE_LICENSE("GPL");
+ #endif /* MODULE */
 diff -urN linux-2.4.22.org/drivers/ide/Makefile linux-2.4.22/drivers/ide/Makefile
 --- linux-2.4.22.org/drivers/ide/Makefile	2003-11-22 22:11:09.000000000 +0100
 +++ linux-2.4.22/drivers/ide/Makefile	2003-11-22 23:29:25.000000000 +0100
@@ -59,4 +86,3 @@ diff -urN linux-2.4.22.org/drivers/ide/Makefile linux-2.4.22/drivers/ide/Makefil
  
  
  ifeq ($(CONFIG_BLK_DEV_IDEPCI),y)
-
