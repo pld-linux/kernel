@@ -1,6 +1,7 @@
---- linux-2.4.20-gw3/arch/i386/kernel/ioport.c	2003-05-16 23:42:47.000000000 +0100
-+++ linux-2.4.20-gw4/arch/i386/kernel/ioport.c	2003-05-16 23:42:49.000000000 +0100
-@@ -72,17 +72,18 @@
+diff -Nur --exclude='*.orig' linux-2.4.20.org/arch/i386/kernel/ioport.c linux-2.4.20/arch/i386/kernel/ioport.c
+--- linux-2.4.20.org/arch/i386/kernel/ioport.c	Fri May 23 14:53:00 2003
++++ linux-2.4.20/arch/i386/kernel/ioport.c	Fri May 23 15:01:26 2003
+@@ -81,17 +81,18 @@
  		 */
  		memset(t->io_bitmap,0xff,(IO_BITMAP_SIZE+1)*4);
  		t->ioperm = 1;
@@ -18,9 +19,32 @@
 +	if (tss->bitmap == IO_BITMAP_OFFSET) { /* already active? */
 +		set_bitmap(tss->io_bitmap, from, num, !turn_on);
 +	} else {
-+		memcpy(tss->io_bitmap, t->io_bitmap, IO_BITMAP_SIZE);
++		memcpy(tss->io_bitmap, t->io_bitmap, IO_BITMAP_BYTES);
 +		tss->bitmap = IO_BITMAP_OFFSET; /* Activate it in the TSS */
 +	}
  
  	return 0;
  }
+diff -Nur --exclude='*.orig' linux-2.4.20.org/arch/i386/kernel/process.c linux-2.4.20/arch/i386/kernel/process.c
+--- linux-2.4.20.org/arch/i386/kernel/process.c	Fri May 23 14:53:00 2003
++++ linux-2.4.20/arch/i386/kernel/process.c	Fri May 23 15:02:03 2003
+@@ -745,7 +745,7 @@
+ 			 * is not really acceptable.]
+ 			 */
+ 			memcpy(tss->io_bitmap, next->io_bitmap,
+-				 IO_BITMAP_SIZE*sizeof(unsigned long));
++				 IO_BITMAP_BYTES*sizeof(unsigned long));
+ 			tss->bitmap = IO_BITMAP_OFFSET;
+ 		} else
+ 			/*
+diff -Nur --exclude='*.orig' linux-2.4.20.org/include/asm-i386/processor.h linux-2.4.20/include/asm-i386/processor.h
+--- linux-2.4.20.org/include/asm-i386/processor.h	Fri May 23 14:53:02 2003
++++ linux-2.4.20/include/asm-i386/processor.h	Fri May 23 15:03:11 2003
+@@ -289,6 +289,7 @@
+  * Size of io_bitmap in longwords: 32 is ports 0-0x3ff.
+  */
+ #define IO_BITMAP_SIZE	32
++#define IO_BITMAP_BYTES (IO_BITMAP_SIZE * 4)
+ #define IO_BITMAP_OFFSET offsetof(struct tss_struct,io_bitmap)
+ #define INVALID_IO_BITMAP_OFFSET 0x8000
+ 
