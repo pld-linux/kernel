@@ -138,6 +138,8 @@ Patch51:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.
 # http://people.FreeBSD.org/~gibbs/linux/linux-aic7xxx-6.1.8-2.4.2.patch.gz
 Patch52:	linux-aic7xxx-6.1.8-2.4.2.patch.gz
 
+# RAM Disk free from LKL 23.03.2001
+Patch53:	linux-ram-disk-free.patch
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
 ExclusiveOS:	Linux
@@ -407,6 +409,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch50 -p4
 %patch51 -p1
 %patch52 -p1
+%patch53 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -637,6 +640,7 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH49}
 patch -p4 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH50}
 gzip -dc %{PATCH51} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH52} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH53}
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/dc395/dc395-integ24.diff
