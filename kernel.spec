@@ -14,6 +14,8 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J╠dro Linuksa
+Summary(ru):	Ядро Linux
+Summary(uk):	Ядро Linux
 Name:		kernel
 Version:	2.2.20
 Release:	18
@@ -173,6 +175,25 @@ allocation de process, entrИe/sortie de peripheriques, etc.
 Pakiet zawiera j╠dro Linuxa niezbЙdne do prawidЁowego dziaЁania
 Twojego komputera.
 
+%description -l ru
+Этот пакет содержит ядро Linux, которое необходимо для того, чтобы
+система загрузилась и работала. Набор драйверов устройств, включенных
+в ядро, ограничен до минимума. Большинство устройств поддерживаются
+при помощи модулей, загружаемых после загрузки ядра.
+
+Также этот пакет содержит модули, обеспечивающие поддержку всех
+устройств, поддерживаемых в Linux на сегодняшний день.
+
+%description -l uk
+Цей пакет м╕стить ядро Linux, яке необх╕дне для того, щоб система
+загрузилася ╕ працювала. К╕льк╕сть драйвер╕в перифер╕йних пристро╖в,
+вбудованих в ядро, обмежена до м╕н╕мума. Б╕льш╕сть пристро╕в
+п╕дтримуються за допомогою модул╕в, що загружаються п╕сля загрузки
+ядра.
+
+Також цей пакет м╕стить модул╕, що забезпечують п╕дтримку вс╕х
+перифер╕йних пристро╕в, як╕ Linux п╕дтриму╓ на сьогодняшн╕й день.
+
 %package smp
 Summary:	Kernel version %{version} compiled for SMP machines
 Summary(de):	Kernel version %{version} fЭr Multiprozessor-Maschinen
@@ -299,6 +320,8 @@ Pakiet zawiera dokumentacjЙ j╠dra z katalogu
 %package source
 Summary:	Kernel source tree
 Summary(pl):	Kod ╪rСdЁowy j╠dra Linuxa
+Summary(ru):	Исходные тексты ядра Linux
+Summary(uk):	Вих╕дн╕ тексти ядра Linux
 Group:		Base/Kernel
 Autoreqprov:	no
 Requires:	%{name}-headers = %{version}
@@ -333,6 +356,14 @@ Pakiet zawiera kod ╪rСdЁowy jadra systemu. Jest wymagany do budowania
 wiЙkszo╤ci programСw C, jako ©e s╠ one zale©ne od staЁych tutaj
 zawartych. Mo©esz rСwnie© skompilowaФ wЁasne j╠dro, lepiej dopasowane
 do twojego sprzЙtu.
+
+%description source -l ru
+Это исходные тексты ядра Linux. Используя их, вы можете построить свое
+ядро, которое лучше настроено на ваш набор устройств.
+
+%description source -l uk
+Це вих╕дн╕ тексти ядра Linux. Використовуючи ╖х ви можете побудувати
+ваше власне ядро, яке краще настро╓но на конф╕гурац╕ю вашо╖ машини.
 
 %prep
 %setup -q -a3 -a4 -a5 -a6 -a7 -a9 -a10 -a11 -a13 -n linux
@@ -637,14 +668,14 @@ ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT%{_includedir}/asm
 
 bzip2 -dc %{SOURCE0} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/
-mv -f $RPM_BUILD_ROOT%{_prefix}/src/linux $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
+mv -f $RPM_BUILD_ROOT%{_kernelsrcdir} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+ln -sf linux-%{version} $RPM_BUILD_ROOT%{_kernelsrcdir}
 gzip -dc %{SOURCE9} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH0}
 %ifnarch sparc sparc64
-gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+gzip -dc %{PATCH2} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 %endif
 bzip2 -dc %{PATCH3} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
