@@ -54,7 +54,7 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.95
+%define		_rel		0.95.1
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -145,7 +145,6 @@ Patch28:	%{name}-2.6-nm256_oops.patch
 
 Patch32:	2.6.x-TGA-fbdev-lkml.patch
 Patch33:	linux-kbuild-extmod.patch
-Patch34:	%{name}-version.patch
 
 # framebuffer fixes
 Patch41:	linux-fbcon-margins.patch
@@ -563,7 +562,6 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 #patch32 -p1	NEEDS UPDATE
 %patch33 -p1
-%patch34 -p1
 
 %patch41 -p1
 
