@@ -31,7 +31,7 @@
 
 
 %define		_rel		1
-%define		_rc		rc2
+%define		_rc		2
 %define		_cset		20040106_0706
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
@@ -48,11 +48,28 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.6.1
-Release:	1.%{_rc}.%{_rel}.cset%{_cset}
+%if "_rc" != "0"
+%if "_cset" != "0"
+Release:	1.rc%{_rc}.%{_rel}.cset%{_cset}
+%else
+Release:	1.rc%{_rc}.%{_rel}
+%endif
+%else
+%if "_cset" != "0"
+Release:	1.%{_rel}.cset%{_cset}
+%else
+Release:	1.%{_rel}
+%endif
+%endif
+
 Epoch:		1
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-%{_rc}.tar.bz2
+%if "_rc" != "0"
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc%{_rc}.tar.bz2
+%else
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
+%endif
 # Source0-md5:	0b4e662aaec673604387f59e4c4a7703
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
@@ -84,81 +101,72 @@ Patch6:		2.6.0-t3-sysfs_mem-lkml.patch
 
 Patch8:		2.6.0-t4-PPC-ENODEV.patch
 
-Patch14:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
-Patch16:	2.6.0-t6-usb-irq.patch
+Patch10:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
+Patch12:	2.6.0-t6-usb-irq.patch
 
-Patch18:	2.6.0-t7-memleak-lkml.patch
-Patch19:	2.6.0-t7-memleak2-lkml.patch
+Patch14:	2.6.0-t7-memleak-lkml.patch
+Patch15:	2.6.0-t7-memleak2-lkml.patch
 
-Patch22:	2.6.0-t8-clean-mtd-lkml.patch
-Patch24:	2.6.0-t8-swap-include-lkml.patch
+Patch18:	2.6.0-t8-clean-mtd-lkml.patch
+Patch20:	2.6.0-t8-swap-include-lkml.patch
 
-Patch26:	http://www.uclinux.org/pub/uClinux/uClinux-2.6.x/linux-2.6.0-test10-uc0.patch.gz
+Patch22:	http://www.uclinux.org/pub/uClinux/uClinux-2.6.x/linux-2.6.0-test10-uc0.patch.gz
 
-Patch28:	2.6.0-t8-VLSI-ix86-lkml.patch
+Patch24:	2.6.0-t8-VLSI-ix86-lkml.patch
 
-Patch30:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
+Patch26:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
 
-Patch32:	2.6.0-t8-pci_dma_sync_to_device-lkml.patch
+Patch28:	2.6.0-t8-pci_dma_sync_to_device-lkml.patch
 
-Patch34:	2.6.0-t8-umsdos-lkml.patch
+Patch30:	2.6.0-t8-umsdos-lkml.patch
 
-Patch38:	2.6.0-t9-acpi_osl-lkml.patch
+Patch32:	2.6.0-t9-acpi_osl-lkml.patch
 
-Patch40:	2.6.0-t9-forcedeth-lkml.patch
+Patch34:	2.6.0-t9-forcedeth-lkml.patch
 
-Patch44:	2.6.0-t9-PPC-smp.patch
+Patch36:	2.6.0-t9-PPC-smp.patch
 
-Patch52:	2.6.0-t10-POSIX_message_queues-1of2-lkml.patch
-Patch53:	2.6.0-t10-POSIX_message_queues-2of2-lkml.patch
+Patch38:	2.6.0-t10-POSIX_message_queues-1of2-lkml.patch
+Patch39:	2.6.0-t10-POSIX_message_queues-2of2-lkml.patch
 
-Patch62:	2.6.0-t11-EPoX-sound-lkml.patch
+Patch42:	2.6.0-t11-EPoX-sound-lkml.patch
 
-Patch64:	bootsplash-3.1.3-2.6.0-test9.diff
+Patch44:	bootsplash-3.1.3-2.6.0-test9.diff
 
-Patch66:	2.6.0-t11-AIC_and_db4-lkml.patch
+Patch46:	2.6.0-t11-AIC_and_db4-lkml.patch
 
 # http://bytesex.org/patches/2.6.0-1/patch-2.6.0-kraxel.gz
-Patch68:	patch-2.6.0-kraxel.gz
+Patch48:	patch-2.6.0-kraxel.gz
 
-Patch70:	2.6.0-t11-r8169-getstats.patch
+Patch50:	2.6.0-t11-r8169-getstats.patch
 
-Patch72:	2.6.0-t11-ALI-M1563-lkml.patch
+Patch52:	2.6.0-t11-ALI-M1563-lkml.patch
 
-Patch80:	linux-tdfxfb-fillrect.patch
-Patch81:	linux-fbcon-margins.patch
-Patch82:	linux-tdfxfb-interlace+double.patch
+Patch54:	linux-tdfxfb-fillrect.patch
+Patch55:	linux-fbcon-margins.patch
+Patch56:	linux-tdfxfb-interlace+double.patch
 
-Patch84:	linux-sound-oss-devinit-oops.patch
+Patch58:	acpi-20031203-2.6.0.diff.gz
 
-Patch86:	2.6.0-t11-ini9100_dma.patch
+Patch60:	2.6.0-mount-rainier-lkml.patch
+Patch61:	2.6.0-mount-rainier-fix-lkml.patch
+Patch62:	2.6.0-mount-rainier-fix-EROFS.patch
 
-Patch88:	2.6.0-sensors-chip-update-1of4-lkml.patch
-Patch89:	2.6.0-sensors-chip-update-2of4-lkml.patch
-Patch90:	2.6.0-sensors-chip-update-3of4-lkml.patch
-Patch91:	2.6.0-sensors-chip-update-4of4-lkml.patch
+Patch64:	2.6.0-sysfs-1of4-lkml.patch
+Patch65:	2.6.0-sysfs-3of4-lkml.patch
+Patch66:	2.6.0-sysfs-4of4-lkml.patch
 
-Patch94:	acpi-20031203-2.6.0.diff.gz
+Patch68:	2.6.0-NF-time-20031226.patch
 
-Patch96:	2.6.0-mount-rainier-lkml.patch
-Patch97:	2.6.0-mount-rainier-fix-lkml.patch
-Patch98:	2.6.0-mount-rainier-fix-EROFS.patch
+Patch70:	linux-2.6-xfs-cvs-20040102.patch
+Patch71:	linux-2.6-xfs-secure-attr.patch
 
-Patch100:	2.6.0-sysfs-1of4-lkml.patch
-Patch101:	2.6.0-sysfs-3of4-lkml.patch
-Patch102:	2.6.0-sysfs-4of4-lkml.patch
+Patch74:	2.6.1-rc1-NF-u32-%{_netfilter_snap}.patch
+Patch76:	2.6.1-rc1-NF-osf-%{_netfilter_snap}.patch
 
-Patch106:	2.6.0-NF-time-20031226.patch
+Patch78:	http://www.saout.de/misc/dm-crypt.diff
 
-Patch110:	linux-2.6-xfs-cvs-20040102.patch
-Patch111:	linux-2.6-xfs-secure-attr.patch
-
-Patch114:	2.6.1-rc1-NF-u32-%{_netfilter_snap}.patch
-Patch116:	2.6.1-rc1-NF-osf-%{_netfilter_snap}.patch
-
-Patch120:	http://www.saout.de/misc/dm-crypt.diff
-
-Patch122:	2.6-pnp.patch
+Patch80:	2.6-pnp.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -482,7 +490,12 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}-%{_rc}
+%if "_rc" != "0"
+%setup -q -n linux-%{version}-rc%{_rc}
+%else
+%setup -q -n linux-%{version}
+%endif
+
 %patch0 -p1
 %if "%{_cset}" != "0"
 %patch1 -p1
@@ -494,13 +507,17 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch8 -p1
 
+%patch10 -p1
+%patch12 -p1
+
 %patch14 -p1
-%patch16 -p1
+%patch15 -p1
 
 %patch18 -p1
-%patch19 -p1
+%patch20 -p1
 
 %patch22 -p1
+
 %patch24 -p1
 
 %patch26 -p1
@@ -513,54 +530,48 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch34 -p1
 
-%patch38 -p1
+%patch36 -p1
 
-%patch40 -p1
+%patch38 -p1
+%patch39 -p1
+
+%patch42 -p1
 
 %patch44 -p1
 
-%patch52 -p1
-%patch53 -p1
+%patch46 -p1
 
+%patch48 -p1
+
+%patch50 -p1
+
+%patch52 -p1
+
+%patch54 -p1
+%patch55 -p1
+%patch56 -p1
+
+%patch58 -p1
+
+%patch60 -p1
+%patch61 -p0
 %patch62 -p1
 
 %patch64 -p1
-
+%patch65 -p1
 %patch66 -p1
 
 %patch68 -p1
 
 %patch70 -p1
+%patch71 -p1
 
-%patch72 -p1
+%patch74 -p1
+%patch76 -p1
+
+%patch78 -p1
 
 %patch80 -p1
-%patch81 -p1
-%patch82 -p1
-
-%patch84 -p1
-
-%patch94 -p1
-
-%patch96 -p1
-%patch97 -p0
-%patch98 -p1
-
-%patch100 -p1
-%patch101 -p1
-%patch102 -p1
-
-%patch106 -p1
-
-%patch110 -p1
-%patch111 -p1
-
-%patch114 -p1
-%patch116 -p1
-
-%patch120 -p1
-
-%patch122 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
