@@ -61,3 +61,32 @@ diff -ur linux-2.4.20/net/ipv4/netfilter/ipt_fuzzy.c linux-2.4.20.fpu/net/ipv4/n
  			return 0 ;
  		else
  			return 1; /* It can't pass ( It matches ) */
+--- linux-2.4.20/net/ipv6/netfilter/ip6t_fuzzy.c.org	Tue Apr 15 16:50:05 2003
++++ linux-2.4.20/net/ipv6/netfilter/ip6t_fuzzy.c	Tue Apr 15 16:53:51 2003
+@@ -31,7 +31,7 @@
+  Expressed in percentage
+ */
+ 
+-#define PAR_LOW		0.01
++#define PAR_LOW		1/100
+ #define PAR_HIGH	1
+ 
+ static spinlock_t fuzzy_lock = SPIN_LOCK_UNLOCKED;
+@@ -109,7 +109,7 @@
+ 		howlow  = mf_low(info->mean_rate,info->minimum_rate,info->maximum_rate);
+ 
+ 		info->acceptance_rate = (u_int8_t) \
+-				(PAR_LOW * howhigh + PAR_HIGH * howlow);
++				(howhigh * PAR_LOW + PAR_HIGH * howlow);
+ 
+ 	/* In fact, the above defuzzification would require a denominator
+ 	 * proportional to (howhigh+howlow) but, in this particular case,
+@@ -129,7 +129,7 @@
+ 		get_random_bytes((void *)(&random_number), 1);
+ 
+ 		/*  If within the acceptance , it can pass => don't match */
+-		if (random_number <= 2.55 * info->acceptance_rate)
++		if (random_number <= (255 * info->acceptance_rate) / 100)
+ 			return 0;
+ 		else
+ 			return 1; /* It can't pass (It matches) */
