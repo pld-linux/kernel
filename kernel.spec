@@ -222,6 +222,7 @@ BuildRequires:	%{kgcc_package}
 %endif
 BuildRequires:	modutils
 Buildrequires:	perl
+BuildRequires:	rpm >= 4.0.4
 Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.6.1
@@ -1074,7 +1075,8 @@ fi
 /boot/vmlinuz-%{version}-%{release}
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
-/lib/modules/%{version}-%{release}/kernel/[^drivers/pcmcia]*
+/lib/modules/%{version}-%{release}/kernel
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}/build
 /lib/modules/%{version}-%{release}/modules.dep
 /lib/modules/%{version}-%{release}/modules.[^pic]*map
@@ -1108,7 +1110,8 @@ fi
 /boot/vmlinuz-%{version}-%{release}smp
 /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
-/lib/modules/%{version}-%{release}smp/kernel/[^drivers/pcmcia]*
+/lib/modules/%{version}-%{release}smp/kernel
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}smp/build
 /lib/modules/%{version}-%{release}smp/modules.dep
 /lib/modules/%{version}-%{release}smp/modules.[^pci]*map
