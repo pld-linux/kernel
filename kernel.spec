@@ -1,13 +1,13 @@
 #
 %define		_netfilter_snap		20040429
-%define		_cset			20040515_0809
+%define		_cset			20040517_0407
 %define		no_install_post_strip	1
 #
 Summary:	The Linux kernel (the core of the Linux operating system)
 Name:		kernel
 %define		_ver	2.6.6
 Version:	%{_ver}+grsec
-Release:	1.2
+Release:	1.3
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{_ver}.tar.bz2
