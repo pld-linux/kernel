@@ -147,7 +147,10 @@ Patch74:	2.6.x-SGI_VW-fbdev-lkml.patch
 Patch76:	2.6.x-TGA-fbdev-lkml.patch
 
 Patch78:	linux-alpha-isa.patch
-Patch79:	linux-3c505-mdelay.patch
+
+Patch80:	linux-3c505-mdelay.patch
+
+Patch82:	2.6.3-ini9100u-fix.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -556,7 +559,10 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch76 -p1
 
 %patch78 -p1
-%patch79 -p1
+
+%patch80 -p1
+
+%patch82 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
