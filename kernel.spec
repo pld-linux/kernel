@@ -284,8 +284,6 @@ Patch3012:	linux-2.4.22-gcc-ext3.patch
 Patch4000:	linux-2.4.22-ow1.diff
 Patch4001:	linux-grsecurity-minimal.patch
 
-Patch5000:	linux-2.4.22-security.patch
-
 #Patch10000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.21-rc6.bz2
 
 ExclusiveOS:	Linux
@@ -774,8 +772,6 @@ cd ../../..
 
 %patch3011 -p1
 %patch3012 -p1
-
-%patch5000 -p1
 
 %patch4000 -p1
 %patch4001 -p1
