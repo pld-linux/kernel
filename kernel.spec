@@ -24,13 +24,14 @@
 %define		lvm_version		1.0.4
 %define		evms_version		1.0.1
 %define		tridentfb_version	0.7.0
+%define		ntfs_version		2.0.7a
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	2.27
+Release:	2.28
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
@@ -111,6 +112,7 @@ Patch15:	http://luxik.cdi.cz/~devik/qos/htb/v2/htb2_2.4.17.diff
 Patch16:	linux-2.4.19-shared-zlib.bz2
 Patch17:	%{name}-gcc31.patch
 Patch18:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{version}-patch
+Patch19:	http://unc.dl.sourceforge.net/sourceforge/linux-ntfs/linux-2.4.18-ntfs-%{ntfs_version}.patch.bz2
 
 # Assorted bugfixes
 
@@ -475,6 +477,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch2 -p1
 %patch4 -p1
 %patch5 -p1
+%patch19 -p1
 #%patch7 -p1
 %if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %ifarch %{ix86}
