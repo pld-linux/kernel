@@ -109,19 +109,19 @@ Patch29:	linux-2.4.2-Davicom-card.patch
 Patch30:	http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 
 # aacraid fix
-Patch32:	http://domsch.com/linux/aacraid/linux-2.4.3-axboe-scsi-max-sec.patch
+Patch31:	http://domsch.com/linux/aacraid/linux-2.4.3-axboe-scsi-max-sec.patch
 
 # Kernel crashes during making reiser-module:
-Patch33:	%{name}-reiser.patch
+Patch32:	%{name}-reiser.patch
 
-Patch34:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.3-p4.03132001.patch.gz
+Patch33:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.3-p4.03132001.patch.gz
 
 # RAM Disk free from LKL 23.03.2001
-Patch35:	linux-ram-disk-free.patch
+Patch34:	linux-ram-disk-free.patch
 
-Patch36:	rl2-include.patch
+Patch35:	rl2-include.patch
 
-Patch37:	linux-abi-2.4.3.0-PLD.diff
+Patch36:	linux-abi-2.4.3.0-PLD.diff
 
 #Patch100:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.3-%{pre_version}.gz
 
@@ -363,11 +363,10 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch28 -p1
 #%patch29 -p0
 %patch30 -p1
-#%patch31 -p1
-%patch32 -p1
-%patch33 -p4
+%patch31 -p1
+%patch32 -p4
+%patch33 -p1
 %patch34 -p1
-%patch35 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -406,8 +405,8 @@ mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
 
 # Free S/Wan
-#mv -f net/ipsec/Makefile net/ipsec/Makefile.orig
-#sed -e 's/EXTRA_CFLAGS.*-g//g' net/ipsec/Makefile.orig > net/ipsec/Makefile
+mv -f net/ipsec/Makefile net/ipsec/Makefile.orig
+sed -e 's/EXTRA_CFLAGS.*-g//g' net/ipsec/Makefile.orig > net/ipsec/Makefile
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -427,10 +426,10 @@ rm -rf %{sym_ncr_version}
 
 ## install RangeLAN2 driver
 #mv rl2-1.7.1 drivers/net/rl2
-#%patch36 -p1
+#%patch35 -p1
 
 ## must be here, in other time make errors with LIDS
-%patch37 -p1
+%patch36 -p1
 
 %build
 BuildKernel() {
@@ -590,10 +589,10 @@ patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH28}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH29}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH30}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH31}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH32}
-patch -p4 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH33}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH34}
-gzip -dc %{PATCH35} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -p4 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH32}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH33}
+gzip -dc %{PATCH34} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH35}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH36}
 
 # Tekram DC395/315 U/UW SCSI host driver
