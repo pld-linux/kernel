@@ -65,7 +65,9 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.6.11.2
+%define		_postver	.2
+#define		_postver	%{nil}
+Version:	2.6.11%{_postver}
 Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
@@ -540,7 +542,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch62 -p1
 %patch63 -p1
 %patch64 -p1
-#patch65 -p1
+#patch65 -p1		NEEDS UPDATE
 
 %patch70 -p1
 
@@ -557,13 +559,11 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch201 -p1
 %endif
 
-#patch399 -p1
+%patch399 -p1
 %patch400 -p1
 
 # Fix EXTRAVERSION in main Makefile
-sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
-
-sed -i 's:\-pipe::' arch/*/Makefile
+sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
 
 # on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
@@ -1155,7 +1155,6 @@ fi
 %files doc
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Documentation
-#%%{_prefix}/src/linux-%{version}/netfilter-patch-o-matic
 
 %if %{with source}
 %files source
