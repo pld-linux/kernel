@@ -640,6 +640,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1007 -p1
 %ifarch %{ix86}
 %patch1008 -p1
+%patch3004 -p1
 %endif
 %patch1009 -p1
 %patch1010 -p1
@@ -712,8 +713,6 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch3001 -p1
 %patch3002 -p1
 %patch3003 -p1
-
-%patch3004 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 echo Adding Tekram DC395/315 driver
