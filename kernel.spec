@@ -996,7 +996,6 @@ CrossOpts=""
 %endif
 
 install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-install -d $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}{,smp}/misc
 
 install %{SOURCE40} FAQ-pl
 
@@ -1011,6 +1010,7 @@ for i in "" smp ; do
 		rm -f $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
 		ln -sf %{_prefix}/src/linux-%{version} \
 			$RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
+		install -d $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/misc
 	fi
 done
 
