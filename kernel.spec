@@ -143,7 +143,7 @@ Patch22:	linux-2.4.20-promise-st6000.patch.bz2
 #Patch23:
 # from MDK kernel DV08__i810fb.patch
 Patch24:	linux-2.4.20-I810FB.patch.bz2
-Patch25:	linux-2.4.20-I820FB_lock_page_fix.patch
+Patch25:	linux-2.4.20-I810FB_lock_page_fix.patch
 
 # Support for CDRW packet writing
 Patch26:	%{name}-cdrw-packet.patch
