@@ -26,7 +26,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.23
-Release:	0.7.2
+Release:	0.8
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -51,9 +51,6 @@ Source1000:	%{name}-addon.config
 Source1001:	%{name}-netfilter.config
 Source1002:	%{name}-grsec.config
 Source2000:	%{name}-win4lin.config
-
-# Interesting URLs, patches:
-# http://www.hardrock.org/kernel/current-updates/
 
 # New features/updates/backports
 
@@ -263,8 +260,12 @@ Patch3010:	linux-2.4.21-ipsec-sparc64.patch
 Patch3011:	linux-2.4.22-gcc33-inline.patch
 Patch3012:	linux-2.4.22-gcc-ext3.patch
 Patch3013:	linux-2.4.23-ppc-symbols.patch
+
 # Security patches/fixes
 
+# modified http://www.hardrock.org/kernel/current-updates/linux-2.4.23-updates.patch
+# since we already have some of these fixes applied
+Patch3500:	http://www.hardrock.org/kernel/current-updates/linux-2.4.23-updates.patch
 Patch4000:	grsecurity-2.0-rc3-2.4.22-O1.patch
 
 ExclusiveOS:	Linux
@@ -739,6 +740,7 @@ cd ../../..
 %patch3012 -p1
 %patch3013 -p1
 
+%patch3500 -p1
 %{?with_grsec:%patch4000 -p1}
 
 mv -f drivers/scsi/sym53c8xx.c drivers/scsi/sym53c8xx_old.c
