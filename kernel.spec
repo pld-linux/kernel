@@ -33,6 +33,8 @@ Source21:	%{name}-ia32-smp.config
 #Source73:	%{name}-ppc.config
 #Source74:	%{name}-ppc-smp.config
 Patch0:		http://piorun.ds.pg.gda.pl/~blues/linux-2.5.67-genrtc_fix.patch
+# SELinux:
+Patch1:		http://www.nsa.gov/selinux/patches/linux-2.5-2003040709.patch.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -264,6 +266,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %prep
 %setup -q -n linux-%{version}
 %patch0 -p1
+%patch1 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
