@@ -18,7 +18,7 @@
 %define		grsec_version		1.9.7d-2.4.20
 %define		jfs_version		2.4-1.0.24
 %define		lvm_version		1.0.5
-%define		evms_version		1.1.0
+%define		evms_version		1.2.0
 %define		ntfs_version		2.1.0a
 %define		drm_xfree_version	4.2.0
 %define		hostap_version		2002-10-12
@@ -38,7 +38,7 @@ Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source4:	http://christophe.lizzi.free.fr/linux/linux-2.4.0-test9-fore200e-0.3.tar.gz
-Source5:	linux-2.4.19-netfilter-20021125.tar.bz2
+Source5:	linux-2.4.20-netfilter-20021125.tar.bz2
 Source6:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
@@ -76,37 +76,55 @@ Source1999:	%{name}-preemptive.config
 # New features
 
 Patch0:		%{name}-pldfblogo.patch
+
 # from ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/testing/
 Patch1:		patch-int-2.4.20.0.bz2
+
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch2:		linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
+
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/Release-1.2pre3/kernel_patches/
 Patch3:		linux-2.4.20-core-xfs-1.2pre3.patch.bz2
 Patch4:		linux-2.4.20-xfs-1.2pre3.patch.bz2
+
 # Homepage of ABI:	http://linux-abi.sourceforge.net/
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.18.0.patch.bz2 
 Patch5:		linux-abi-2.4.20.0.patch.bz2
+
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
-Patch6:		grsecurity-%{grsec_version}.patch
+Patch6:		grsecurity-%{grsec_version}.patch.bz2
+
 # Preemptive kernel  patch
 Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-kernel-rml-2.4.19-rc5-3.patch
 Patch8:		preempt_sched_O1_ck3_2.4.19.patch.bz2
 Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-2.4.18-1.patch
 Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-2.4.18-1.patch
+
 # http://www.linuxvirtualserver.org/software/kernel-2.4/linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
 Patch11:	linux-2.4.18-ipvs-%{ipvs_version}.patch.gz
 Patch12:	htb3.6-2.4.17.patch.bz2
 Patch13:	http://luxik.cdi.cz/~devik/qos/imq-2.4.18.diff-10
-# http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4.18-patch
-Patch14:	jfs-2.4.19-patch
-Patch15:	http://unc.dl.sourceforge.net/sourceforge/linux-ntfs/linux-2.4.19-ntfs-%{ntfs_version}.patch.bz2
+
+Patch14:	jfs-2.4.20.patch
+
+# http://unc.dl.sourceforge.net/sourceforge/linux-ntfs/
+Patch15:	linux-2.4.20-ntfs-%{ntfs_version}.patch.bz2
+
 # ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
 Patch16:	linux-2.4.18-mppe.patch
+
 Patch17:	hfsplus-20011213.patch
+
 # EVMS support (http://www.sourceforge.net/projects/evms/)
 Patch18:	evms-%{evms_version}-linux-2.4.patch
-Patch19:	evms-linux-2.4.19-rc3-common-files.patch
+Patch19:	evms-linux-2.4.20-common-files.patch
 Patch20:	linux-2.4.19-pre8-VFS-lock.patch
+#Patch21:
+#Patch22:
+#Patch23:
+#Patch24:
+#Patch25:
+
 # Support for CDRW packet writing
 Patch26:	%{name}-cdrw-packet.patch
 Patch27:	%{name}-cd-mrw-2.patch
@@ -116,21 +134,21 @@ Patch28:	pcsp1.4-ss4-2.4.19.diff
 Patch29:	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw_handlers.w14-5.diff
 Patch30:	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw252_we15-5.diff
 Patch31:	linux-2.4.20-pre5-ac4-drm.patch.bz2
-Patch32:	ebtables-v2.0-rc1_vs_2.4.18.patch
+Patch32:	ebtables-v2.0-rc1_vs_2.4.20.patch
 Patch33:	linux-2.4.19-pre8-konicawc.patch
 Patch34:	wrr-linux-2.4.9.patch
 Patch35:	%{name}-pswscancode.patch
-Patch36:	linux-2.4.20-rc3-USB.patch
-Patch37:	linux-2.4.20-rc3-bluetooth-USB.patch
-Patch38:	linux-2.4.20-rc3-cpia_usb-USB.patch
-Patch39:	linux-2.4.20-rc3-iforce-USB.patch
-Patch40:	linux-2.4.20-rc3-irda-usb-USB.patch
-Patch41:	linux-2.4.20-rc3-isdn-hisax-USB.patch
-Patch42:	linux-2.4.20-rc3-ticable.h-USB.patch
-#Patch43:	linux-2.4.20-rc1-IDE.patch
+#Patch36:	
+#Patch37:	
+#Patch38:	
+#Patch39:	
+#Patch40:	
+#Patch41:	
+#Patch42:	
+#Patch43:	
 Patch44:	kernel-2.4-NTfix.patch
 Patch45:	linux-2.4.19-ACL-0.8.54.patch.bz2
-Patch46:	linux-2.4.19-HP715.patch
+#Patch46:	
 
 # Assorted bugfixes
 
@@ -156,7 +174,7 @@ Patch111:	linux-2.4.3-rawio.patch
 #Patch112:
 Patch113:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
-Patch114:	http://people.sistina.com/~mauelshagen/lvm_patches/lvm_%{lvm_version}+_25.07.2002.patch
+#Patch114:	http://people.sistina.com/~mauelshagen/lvm_patches/lvm_%{lvm_version}+_25.07.2002.patch
 Patch115:	ftp://ftp.kernel.org/pub/linux/kernel/people/sct/ext3/v2.4/ext3-0.9.18-2.4.19pre8.patch
 Patch116:	linux-proc_net_dev-counter-fix.patch
 Patch117:	01-sigxfs-vs-blkdev.patch
@@ -465,7 +483,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -n linux-%{version}
+%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a11 -n linux-%{version}
 #%patch1000 -p1
 %patch0 -p1
 %patch1 -p1
@@ -475,7 +493,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch4 -p1
 %patch5 -p1
 %patch904 -p1
-exit 0
 %{!?_without_grsec:%patch6 -p1}
 %ifarch ppc
 %patch907 -p1
@@ -484,9 +501,8 @@ exit 0
 %{?_with_preemptive:%patch8 -p1}
 #%patch9 -p1
 #%patch10 -p1
-exit 1
 %patch11 -p1
-%patch12 -p1
+#%patch12 -p1
 %patch13 -p1
 %patch14 -p1
 %patch15 -p1
@@ -499,14 +515,14 @@ exit 1
 %patch27 -p1
 # fixme
 #%patch28 -p1
-%patch29 -p1
-%patch30 -p1
+#%patch29 -p1
+#%patch30 -p1
 
 
 %patch100 -p0
 %patch101 -p1
 %patch102 -p0
-%patch103 -p0
+#%patch103 -p0
 %patch104 -p1
 # Tru64 NFS kludge
 #%patch105 -p1
@@ -516,8 +532,8 @@ exit 1
 %patch110 -p1
 %patch111 -p1
 %patch113 -p1
-%patch114 -p1
-%patch115 -p0
+#%patch114 -p1
+#%patch115 -p0
 %patch116 -p1
 %{!?_without_grsec:%patch117 -p1}
 %patch118 -p1
@@ -534,8 +550,8 @@ exit 1
 %patch131 -p0
 %{!?_without_grsec:%patch132 -p0}
 %patch133 -p1
-%patch134 -p1
-%patch135 -p1
+#%patch134 -p1
+#%patch135 -p1
 %patch136 -p0
 #%patch137 -p1
 
@@ -615,7 +631,7 @@ patch -p1 -s < squashfs1.0c/squashfs-patch
 echo Added ACL support
 %patch45 -p1
 
-%patch46 -p0
+#%patch46 -p0
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
