@@ -99,16 +99,19 @@ Source7:	ftp://ftp.alsa-project.org/pub/kernel-patches/alsa-bk-2004-08-15.patch.
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
-Source30:	%{name}-x86_64.config
-Source31:	%{name}-x86_64-smp.config
-Source50:	%{name}-sparc.config
-Source51:	%{name}-sparc-smp.config
-Source60:	%{name}-sparc64.config
-Source61:	%{name}-sparc64-smp.config
-Source70:	%{name}-alpha.config
-Source71:	%{name}-alpha-smp.config
-Source73:	%{name}-ppc.config
-Source74:	%{name}-ppc-smp.config
+Source22:	%{name}-x86_64.config
+Source23:	%{name}-x86_64-smp.config
+Source24:	%{name}-sparc.config
+Source25:	%{name}-sparc-smp.config
+Source26:	%{name}-sparc64.config
+Source27:	%{name}-sparc64-smp.config
+Source28:	%{name}-alpha.config
+Source29:	%{name}-alpha-smp.config
+Source30:	%{name}-ppc.config
+Source31:	%{name}-ppc-smp.config
+
+Source40:	%{name}.FAQ-pl
+
 Source80:	%{name}-netfilter.config
 Source90:	%{name}-grsec.config
 Source91:	%{name}-grsec+pax.config
@@ -981,6 +984,8 @@ CrossOpts=""
 install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 install -d $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}{,smp}/misc
 
+install %{SOURCE40} FAQ-pl
+
 KERNEL_BUILD_DIR=`pwd`
 
 %if %{with up} || %{with smp}
@@ -1054,12 +1059,6 @@ if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
-echo "******************************************************************"
-echo " The serial port driver is compiled into the kernel.              "
-echo " You will have to release the port you want to use for LIRC with: "
-echo "    setserial /dev/ttySx uart none                                "
-echo "******************************************************************"
-
 %postun
 if [ -L /lib/modules/%{version} ]; then
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $10 }'`" = "%{version}-%{release}" ]; then
@@ -1114,12 +1113,6 @@ ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
-
-echo "********************************************************************"
-echo "* The serial port driver is compiled into the kernel.              *"
-echo "* You will have to release the port you want to use for LIRC with: *"
-echo "*    setserial /dev/ttySx uart none                                *"
-echo "********************************************************************"
 
 %postun smp
 if [ -L /lib/modules/%{version} ]; then
@@ -1192,6 +1185,7 @@ fi
 %if %{with up}
 %files
 %defattr(644,root,root,755)
+%doc FAQ-pl
 %ifarch alpha ppc
 /boot/vmlinux-%{version}-%{release}
 %endif
@@ -1280,6 +1274,7 @@ fi
 %if %{with smp}
 %files smp
 %defattr(644,root,root,755)
+%doc FAQ-pl
 %ifarch alpha sparc sparc64 ppc
 /boot/vmlinux-%{version}-%{release}smp
 %endif
