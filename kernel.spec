@@ -29,7 +29,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	2.7%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	2.8%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -76,6 +76,7 @@ Source1670:	%{name}-wrr.config
 Source1671:	%{name}-squashfs.config
 Source1672:	%{name}-ACL.config
 Source1673:	%{name}-IMQ.config
+Source1674:	%{name}-DVB.config
 Source1999:	%{name}-preemptive.config
 Source2000:	%{name}-win4lin.config
 
@@ -159,6 +160,7 @@ Patch44:	kernel-2.4-NTfix.patch
 # from http://acl.bestbits.at/
 Patch45:	linux-2.4.20-ACL-0.8.54.patch.bz2
 Patch46:	linux-2.4.19-netmos_pci_parallel_n_serial.patch
+Patch47:	linux-2.4.20-DVB-0.9.4.patch.bz2
 
 # Assorted bugfixes
 
@@ -698,6 +700,10 @@ echo Added support for V4L2
 # USB patches
 %patch146 -p1
 
+# DVB
+echo Adding DVB support
+%patch47 -p1
+
 echo Added ARCH specific patches....
 %ifarch %{ix86}
 echo Ix86 patches ...
@@ -803,6 +809,7 @@ BuildKernel() {
 	cat %{SOURCE1671} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1672} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1673} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1674} >> arch/%{base_arch}/defconfig
 	
 	if [ "$BOOT" = "yes" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
@@ -1002,6 +1009,7 @@ cat %{SOURCE1670} >> .config
 cat %{SOURCE1671} >> .config
 cat %{SOURCE1672} >> .config
 cat %{SOURCE1673} >> .config
+cat %{SOURCE1674} >> .config
 
 %ifarch %{ix86}
 cat %{SOURCE2000} >> .config
@@ -1057,6 +1065,7 @@ cat %{SOURCE1670} >> .config
 cat %{SOURCE1671} >> .config
 cat %{SOURCE1672} >> .config
 cat %{SOURCE1673} >> .config
+cat %{SOURCE1674} >> .config
 
 %ifarch %{ix86}
 cat %{SOURCE2000} >> .config
