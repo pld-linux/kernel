@@ -112,10 +112,6 @@ Patch115:	linux-2.4.12-scsi_scan.patch
 Patch116:	linux-2.4.3-pcnet32.patch
 # fix rawio
 Patch117:	linux-2.4.3-rawio.patch
-# extra PnP id for sb32awe
-Patch118:	linux-2.4.3-sb.patch
-# another sb16 pnp id
-Patch119:	linux-2.4.6-sb_id.patch
 Patch120:	linux-2.4.10-aironet.patch
 Patch121:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
@@ -350,8 +346,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch115 -p1
 %patch116 -p1
 %patch117 -p1
-%patch118 -p1
-%patch119 -p1
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
