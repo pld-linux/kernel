@@ -508,7 +508,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch52 -p1
 
-%patch54 -p1
+#%%patch54 -p1
 
 %patch56 -p1
 
