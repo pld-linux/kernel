@@ -8,7 +8,6 @@
 # _without_up		- don't build UP kernel
 # _without_boot		- don't build BOOT kernel
 # _without_source	- don't build source
-# _with_w4l		- build with Win4Lin support
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -207,28 +206,38 @@ Patch130:	linux-PPC-SMP.patch
 Patch131:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch132:	ide-EXPORT_SYMBOL.fix
 Patch133:	linux-proc_get_inode.patch
+
 # added support for VIA8235
 Patch134:	vt8235-2.4.19.patch
-# quota for reiserfs
-Patch135:	linux-2.4.19-reiserfs-quota-22.patch.gz
+#Patch135:	
 Patch136:	piix-ide-fix.patch
-Patch137:	linux-2.4.19-truncate-fix.patch
+#Patch137:	
 Patch138:	http://www.uwsg.indiana.edu/hypermail/linux/kernel/0212.0/att-1445/01-sound.diff
+
 # Video 4 Linux 2
 Patch139:	linux-2.4.20-v4l2.patch.bz2 
+
 # PWC USB Webcam Driver update (only for 2.4.20; 2.4.21 should have this fix)
 Patch140:	linux-2.4.20-pwc.patch
+
 # rivafb - fix for text background in 16bpp modes
 Patch141:	linux-rivafb16.patch
+
 # misc tdfxfb fixes - detailed description inside
 Patch142:	linux-tdfxfb-fixes.patch
+
+# quota for reiserfs
 Patch143:	linux-2.4.20-reiserfs-quota.patch.bz2
+
 #support for VIA KT400 chipset in agpgart
 Patch144:	linux-2.4.20-kt400.patch
+
 #i2c - version 2.7.0
 Patch145:	linux-2.4.20-i2c-2.7.0.patch.gz
+
 #usb patches from ftp://ftp.kernel.org/pub/linux/people/gregkh/usb/*-2.4.20.*
 Patch146:	linux-2.4.20-USB.patch.bz2
+
 # Patches fixing other patches or 3rd party sources ;)
 # This patch allows to create more than one sound device using alsa
 # and devfs with two or more sound cards
@@ -591,9 +600,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch132 -p0
 %patch133 -p1
 #%patch134 -p1
-#%patch135 -p1
 %patch136 -p0
-#%patch137 -p1
 %patch140 -p1
 %patch141 -p1
 %patch142 -p1
@@ -714,12 +721,10 @@ echo AXP patches ...
 %patch204 -p1
 %endif
 
-%if %{?_with_w4l:1}%{!?_with_w4l:0}
 %ifarch %{ix86}
 echo Win4Lin patch ...
 %patch1000 -p1
 %patch1001 -p1
-%endif
 %endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
@@ -794,27 +799,23 @@ BuildKernel() {
 	cat %{SOURCE1671} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1672} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1673} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1667} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1668} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1669} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1670} >> arch/%{base_arch}/defconfig
 	
-#	if [ "$BOOT" = "yes" ] ; then
-#		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
-#		echo "# CONFIG_CRYPTO is not set" >> arch/%{base_arch}/defconfig
-#		echo "CONFIG_ROMFS_FS=y" >> arch/%{base_arch}/defconfig
-#		echo "# CONFIG_IP_NF_MATCH_STEALTH is not set">> arch/%{base_arch}/defconfig
-#		echo "# CONFIG_NET_SCH_WRR is not set" >> arch/%{base_arch}/defconfig
-#		echo "# CONFIG_HOSTAP is not set" >> arch/%{base_arch}/defconfig
-#		echo "# CONFIG_USB_KONICAWC is not set">> arch/%{base_arch}/defconfig
-%ifnarch %{ix86}
-#		echo "# CONFIG_IP_NF_MATCH_FUZZY is not set">> arch/%{base_arch}/defconfig
-%endif	
-%ifarch %{ix86}
-#		echo "# CONFIG_MKI is not set" >> arch/%{base_arch}/defconfig
-%endif
-#	else
-		cat %{SOURCE1667} >> arch/%{base_arch}/defconfig
-		cat %{SOURCE1668} >> arch/%{base_arch}/defconfig
-		cat %{SOURCE1669} >> arch/%{base_arch}/defconfig
-		cat %{SOURCE1670} >> arch/%{base_arch}/defconfig
-#	fi
+	if [ "$BOOT" = "yes" ] ; then
+		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_CRYPTO is not set" >> arch/%{base_arch}/defconfig
+		echo "CONFIG_ROMFS_FS=y" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_IP_NF_MATCH_STEALTH is not set">> arch/%{base_arch}/defconfig
+		echo "# CONFIG_NET_SCH_WRR is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_HOSTAP is not set" >> arch/%{base_arch}/defconfig
+		echo "# CONFIG_USB_KONICAWC is not set">> arch/%{base_arch}/defconfig
+	%ifarch %{ix86}
+		echo "# CONFIG_MKI is not set" >> arch/%{base_arch}/defconfig
+	%endif
+	fi
 %ifnarch %{ix86}
 		echo "# CONFIG_IP_NF_MATCH_FUZZY is not set">> arch/%{base_arch}/defconfig
 %endif	
@@ -942,6 +943,7 @@ ln -s ../src/linux/include/asm-sparc64 $RPM_BUILD_ROOT%{_includedir}/asm-sparc64
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 %endif
 
+%if %{?_without_source:0}%{!?_without_source:1}
 cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
 
 %ifarch sparc sparc64
@@ -1088,6 +1090,9 @@ done
 %{__make} clean
 rm -f scripts/mkdep
 rm -f drivers/net/hamradio/soundmodem/gentbl
+%else
+
+%endif
 
 # BOOT
 %ifnarch i586 i686 athlon
