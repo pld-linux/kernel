@@ -9,10 +9,10 @@
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 #
-%define		test_build		0
 %define		krelease		3.01
 #
-%define base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
+%define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
+%define		no_install_post_strip	1
 #
 %define		pre_version		pre1
 %define		ipvs_version		1.0.0
@@ -244,9 +244,9 @@ ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
 BuildRequires:	bin86
 %endif
-# conflicts section
 Conflicts:	iptables < 1.2.6
 Conflicts:	lvm < 1.0.4
+Conflicts:	xfsprogs < 2.0.0
 
 %description
 This package contains the Linux kernel that is used to boot and run
@@ -270,8 +270,6 @@ Pakiet zawiera j±dro Linuxa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takich jak karty muzyczne, sterowniki dysków, etc.
 
-
-%if%{?_without_smp:0}%{!?_without_smp:1}
 %package smp
 Summary:	Kernel version %{version} compiled for SMP machines
 Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
@@ -318,7 +316,6 @@ plus, il peut quand même fonctionner pour les système mono-processeur.
 Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono
 wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
 Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
-%endif 
 
 %package BOOT
 Summary:	Kernel version %{version} used on the installation boot disks
@@ -552,7 +549,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch14 -p1
 %patch915 -p1
 %else
-echo "Scheduler din't work on ARCH diffetern than Intel x86"
+echo "Scheduler didn't work on ARCH different than Intel x86"
 %endif
 %else
 %patch8 -p1
@@ -561,7 +558,7 @@ echo "Scheduler din't work on ARCH diffetern than Intel x86"
 %ifarch%{ix86}
 %patch911 -p1
 %else
-echo "Scheduler din't work on ARCH diffetern than Intel x86"
+echo "Scheduler didn't work on ARCH different than Intel x86"
 %endif
 %endif
 %patch9 -p1
@@ -570,7 +567,7 @@ echo "Scheduler din't work on ARCH diffetern than Intel x86"
 %ifarch%{ix86}
 %patch912 -p1
 %else
-echo "Scheduler din't work on ARCH diffetern than Intel x86"
+echo "Scheduler didn't work on ARCH different than Intel x86"
 %endif
 %endif
 %patch15 -p1
@@ -753,7 +750,7 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
 
 %build
 BuildKernel() {
-	%{?verbose:set -x}
+	%{?_debug:set -x}
 	# is this a special kernel we want to build?
 	BOOT=
 	smp=
@@ -796,9 +793,8 @@ BuildKernel() {
 	cat %{SOURCE1002} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1003} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1004} >> arch/%{base_arch}/defconfig
-%if %{?_with_preemptive:1}%{!?_with_preemptive:0}
-	cat %{SOURCE1999} >> arch/%{base_arch}/defconfig
-%endif
+	%{?_with_preemptive:cat %{SOURCE1999} >> arch/%{base_arch}/defconfig}
+
 %if %{?_with_acpi:1}%{!?_with_acpi:0}
 	echo "CONFIG_ACPI=y" >> arch/%{base_arch}/defconfig
 	echo "# CONFIG_ACPI_DEBUG is not set" >> arch/%{base_arch}/defconfig
@@ -883,24 +879,17 @@ install -d $KERNEL_INSTALL_DIR
 	(cd drivers/scsi; make -f M)
 	
 # UP KERNEL
-%if %{?_without_up:0}%{!?_without_up:1}
-BuildKernel 
-%endif
+%{!?_without_up:BuildKernel}
 
-%if !%{test_build}
 # SMP KERNEL
-%if %{?_without_smp:0}%{!?_without_smp:1}
-BuildKernel smp
-%endif			# %{_without_smp}
+%{!?_without_smp:BuildKernel smp}
 
 # BOOT kernel
 %ifnarch i586 i686 athlon
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk"
 rm -rf $KERNEL_INSTALL_DIR
-BuildKernel BOOT
+%{!?_without_boot:BuildKernel BOOT}
 %endif
-
-%endif			# %{test_build}
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -909,12 +898,17 @@ umask 022
 install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{version}}
 
 KERNEL_BUILD_DIR=`pwd`
-cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
+
+KERNEL_BUILD_INSTALL=no
+%{!?_without_up:KERNEL_BUILD_INSTALL=yes}
+%{!?_without_smp:KERNEL_BUILD_INSTALL=yes}
+[ "$KERNEL_BUILD_INSTALL" = "yes" ] && cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
 
 for i in "" smp ; do
 	if [ -e  $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i ] ; then
 		rm -f $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
-ln -sf %{_prefix}/src/linux-%{version} $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
+		ln -sf %{_prefix}/src/linux-%{version} \
+			$RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
 	fi
 done
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
@@ -962,9 +956,7 @@ cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
-%if %{?_with_preemptive:1}%{!?_with_preemptive:0}
-	cat %{SOURCE1999} >> .config
-%endif
+%{?_with_preemptive:cat %{SOURCE1999} >> .config}
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
@@ -994,9 +986,7 @@ cat %{SOURCE1003} >> .config
 cat %{SOURCE1004} >> .config
 cat %{SOURCE1666} >> .config
 cat %{SOURCE1667} >> .config
-%if %{?_with_preemptive:1}%{!?_with_preemptive:0}
-	cat %{SOURCE1999} >> .config
-%endif
+%{?_with_preemptive:cat %{SOURCE1999} >> .config}
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
@@ -1028,7 +1018,6 @@ rm -f drivers/net/hamradio/soundmodem/gentbl
 rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_DIR/linux-installed
 
-%if %{?_without_up:0}%{!?_without_up:1}
 %post
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null 
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
@@ -1049,9 +1038,7 @@ ln -sf initrd-%{version}-%{release}.gz /boot/initrd
 if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
-%endif			# %{_without_up}
 
-%if %{?_without_smp:0}%{!?_without_smp:1}
 %post smp
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
@@ -1072,7 +1059,6 @@ ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 if [ -x /sbin/rc-boot ] ; then
 	/sbin/rc-boot 1>&2 || :
 fi
-%endif			# %{_without_smp}
 
 %post BOOT
 if [ ! -L %{_libdir}/bootdisk/lib/modules/%{version} ] ; then
@@ -1086,7 +1072,6 @@ ln -snf %{version}-%{release}BOOT %{_libdir}/bootdisk/lib/modules/%{version}
 rm -f %{_libdir}/bootdisk/boot/vmlinuz-%{version}
 ln -snf vmlinuz-%{version}-%{release}BOOT %{_libdir}/bootdisk/boot/vmlinuz-%{version}
 
-%if %{?_without_up:0}%{!?_without_up:1}
 %postun
 if [ -L /lib/modules/%{version} ]; then 
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}" ]; then
@@ -1096,9 +1081,19 @@ if [ -L /lib/modules/%{version} ]; then
 	fi
 fi
 rm -f /boot/initrd-%{version}-%{release}.gz
-%endif			# %{_without_up}
 
-%if %{?_without_smp:0}%{!?_without_smp:1}
+%post pcmcia-cs
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+
+%postun pcmcia-cs
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+
+%post drm
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+
+%postun drm
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+
 %postun smp
 if [ -L /lib/modules/%{version} ]; then 
 	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp" ]; then
@@ -1108,7 +1103,18 @@ if [ -L /lib/modules/%{version} ]; then
 	fi
 fi
 rm -f /boot/initrd-%{version}-%{release}smp.gz
-%endif			# %{_without_smp}
+
+%post smp-pcmcia-cs
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
+
+%postun smp-pcmcia-cs
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
+
+%post smp-drm
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
+
+%postun smp-drm
+/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
 
 %postun BOOT
 if [ -L %{_libdir}/bootdisk/lib/modules/%{version} ]; then 
@@ -1131,31 +1137,6 @@ if [ -L /usr/src/linux ]; then
 		fi
 	fi
 fi
-
-
-%post pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
-
-%postun pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
-
-%post smp-pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
-
-%postun smp-pcmcia-cs
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
-
-%post drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
-
-%postun drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
-
-%post smp-drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
-
-%postun smp-drm
-/sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
 
 %if %{?_without_up:0}%{!?_without_up:1}
 %files
@@ -1182,9 +1163,6 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
-%endif			# %{_without_up}
-
-#%if !%{test_build}
 
 %files pcmcia-cs
 %defattr(644,root,root,755)
@@ -1207,30 +1185,9 @@ fi
 %files drm
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
+%endif			# %%{_without_up}
 
 %if %{?_without_smp:0}%{!?_without_smp:1}
-%files -n kernel-smp-pcmcia-cs
-%defattr(644,root,root,755)
-%ifarch %{ix86}
-/lib/modules/%{version}-%{release}smp/pcmcia
-%endif
-/lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/net/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/scsi/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/char/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.o
-/lib/modules/%{version}-%{release}smp/kernel/drivers/parport/*_cs.o
-%ifnarch ppc
-/lib/modules/%{version}-%{release}smp/kernel/drivers/ide/ide-cs.o
-/lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o
-/lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o
-/lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o
-%endif
-
-%files -n kernel-smp-drm
-%defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
-
 %files smp
 %defattr(644,root,root,755)
 %ifarch alpha sparc ppc
@@ -1255,8 +1212,31 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
-%endif			# %{_without_smp}
 
+%files -n kernel-smp-pcmcia-cs
+%defattr(644,root,root,755)
+%ifarch %{ix86}
+/lib/modules/%{version}-%{release}smp/pcmcia
+%endif
+/lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
+/lib/modules/%{version}-%{release}smp/kernel/drivers/net/pcmcia
+/lib/modules/%{version}-%{release}smp/kernel/drivers/scsi/pcmcia
+/lib/modules/%{version}-%{release}smp/kernel/drivers/char/pcmcia
+/lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.o
+/lib/modules/%{version}-%{release}smp/kernel/drivers/parport/*_cs.o
+%ifnarch ppc
+/lib/modules/%{version}-%{release}smp/kernel/drivers/ide/ide-cs.o
+/lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o
+/lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o
+/lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o
+%endif
+
+%files -n kernel-smp-drm
+%defattr(644,root,root,755)
+/lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
+%endif			# %%{_without_smp}
+
+%if %{?_without_boot:0}%{!?_without_boot:1}
 %ifnarch i586 i686 athlon 		# narch
 %files BOOT
 %defattr(644,root,root,755)
@@ -1273,6 +1253,7 @@ fi
 %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/build
 %ghost %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.*
 %endif				# narch
+%endif				# %%{_without_boot}
 
 %files headers
 %defattr(644,root,root,755)
