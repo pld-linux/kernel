@@ -8,41 +8,43 @@ Release:	1
 Copyright:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-URL:		http://www.kernel.org/
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
-Source1:	kernel-i386.config
-Source20:	kernel-2.2-i386.config
-Source21:	kernel-2.2-i386-smp.config
-Source22:	kernel-2.2-i386-BOOT.config
-Source23:	kernel-2.2-alpha.config
-Source24:	kernel-2.2-alpha-smp.config
-Source25:	kernel-2.2-sparc.config
-Source26:	kernel-2.2-sparc-smp.config
-Source27:	kernel-2.2-sparc64.config
-Source28:	kernel-2.2-sparc64-smp.config
-Source29:	kernel-2.2-i686.config
-Source30:	kernel-2.2-i686-smp.config
-Source31:	kernel-2.2-alpha-BOOT.config
-Source32:	kernel-2.2-sparc-BOOT.config
-Source33:	kernel-2.2-sparc64-BOOT.config
-Source34:	kernel-2.2-i586.config
-Source35:	kernel-2.2-i586-smp.config
-Source36:	kernel-2.2-i386-fb.config
-Source37:	kernel-2.2-i386-smp-fb.config
-Source38:	kernel-2.2-i586-fb.config
-Source39:	kernel-2.2-i586-smp-fb.config
-Source40:	kernel-2.2-i686-fb.config
-Source41:	kernel-2.2-i686-smp-fb.config
-#Requires:	rc-scripts
+Source10:	kernel-i386.config
+Source11:	kernel-i386-fb.config
+Source12:	kernel-i386-smp.config
+Source13:	kernel-i386-smp-fb.config
+Source14:	kernel-i386-BOOT.config
+Source15:	kernel-i586.config
+Source16:	kernel-i586-fb.config
+Source17:	kernel-i586-smp.config
+Source18:	kernel-i586-smp-fb.config
+Source19:	kernel-i586-BOOT.config
+Source20:	kernel-i686.config
+Source21:	kernel-i686-fb.config
+Source22:	kernel-i686-smp.config
+Source23:	kernel-i686-smp-fb.config
+Source24:	kernel-i686-BOOT.config
+Source25:	kernel-sparc.config
+Source26:	kernel-sparc-smp.config
+Source27:	kernel-sparc-BOOT.config
+Source28:	kernel-sparc64.config
+Source29:	kernel-sparc64-smp.config
+Source30:	kernel-sparc64-BOOT.config
+Source31:	kernel-alpha.config
+Source32:	kernel-alpha-smp.config
+Source33:	kernel-alpha-BOOT.config
 ExclusiveOS:	Linux
+URL:		http://www.kernel.org/
 BuildRoot:	/tmp/%{name}-%{version}-root
-BuildRequires:	bin86
+Provides:	module-info
 Autoreqprov:	no
-#Obsoletes:	kernel-modules
-ExclusiveArch:	i386
+Obsoletes:	kernel-modules
+ExclusiveArch:	i386 i486 i586 i686 sparc sparc64 alpha
+%ifarch		i386 i486 i586 i686
+BuildRequires:	bin86
+%endif
 
 %description
-
 This package contains the Linux kernel that is used to boot and run your
 system. It contains few device drivers for specific hardware. Most hardware
 is instead supported by modules loaded after booting.
@@ -206,15 +208,85 @@ oraz niektórych programów.
 %prep
 %setup -q -n linux
 
-install %{SOURCE1} .config
-
-
+install  .config
 
 %build
-make oldconfig
-make dep
+BuildKernel() {
+    # is this a special kernel we want to build?
+    if [ -n "$1" ] ; then
+	Config=$RPM_ARCH-$1
+	KernelVer=%{version}-%{release}$1
+	echo BUILDING A KERNEL FOR $1...
+    else
+	Config=$RPM_ARCH
+	KernelVer=%{version}-%{release}
+	echo BUILDING THE NORMAL KERNEL...
+    fi
+    cp $RPM_SOURCE_DIR/kernel-$Config.config arch/$RPM_ARCH/defconfig
+    # make sure EXTRAVERSION says what we want it to say
+    perl -p -i -e "s/^EXTRAVERSION.*/EXTRAVERSION = -%{release}$1/" Makefile
+    perl -p -i -e "s/-m386//" arch/i386/Makefile
+    perl -p -i -e "s/-m486//" arch/i386/Makefile
+    if [ $1 = "BOOT" ]; then
+#	SIZE_OPT_FLAGS=`echo "$RPM_OPT_FLAGS" | sed -e s/-O[0-9]//`
+#	SIZE_OPT_FLAGS="$SIZE_OPT_FLAGS -g0 -O -Os -fomit-frame-pointer -fno-exceptions -fno-rtti -s -funroll-all-loops"
+# Due to the RISC core nature of recent CPUs, optimized binaries are generally
+# a bit larger than non-optimized ones. Therefore, we completely ignore
+# RPM_OPT_FLAGS settings for the boot kernel, and replace them with the ones
+# known to produce the smallest binaries.
+	SIZE_OPT_FLAGS="-g0 -O -fomit-frame-pointer -fno-exceptions -fno-rtti -funroll-all-loops -ffast-math -m386 -march=pentium -pipe -s -Os"
+        perl -p -i -e "s/^HOSTCFLAGS.*/HOSTCFLAGS = $SIZE_OPT_FLAGS/" Makefile
+        perl -p -i -e "s/^CFLAGS_NSR.*/CFLAGS_NSR := $SIZE_OPT_FLAGS/" arch/i386/Makefile
+#	Doesn't seem to work well: perl -p -i -e "s/-malign-loops=2 -malign-jumps=2 -malign-functions=2/-malign-loops=0 -malign-jumps=0 -malign-functions=0/" arch/i386/Makefile
+    else
+        perl -p -i -e "s/^HOSTCFLAGS.*/HOSTCFLAGS = $RPM_OPT_FLAGS/" Makefile
+        perl -p -i -e "s/^CFLAGS_NSR.*/CFLAGS_NSR := $RPM_OPT_FLAGS/" arch/i386/Makefile
+	# undo damage from BOOT 
+#	perl -p -i -e "s/-malign-loops=0 -malign-jumps=0 -malign-functions=0/-malign-loops=2 -malign-jumps=2 -malign-functions=2/" arch/i386/Makefile
+   fi
+    rm -f .config
+    make mrproper
+    ln -s arch/$RPM_ARCH/defconfig .config
 
-make bzImage modules
+    export CFLAGS="$RPM_OPT_FLAGS"
+    export CXXFLAGS="$RPM_OPT_FLAGS"
+    make oldconfig
+    make dep 
+    make include/linux/version.h 
+%ifarch i386 i486 i586 i686
+    make bzImage
+%else
+    make boot
+%endif
+    make modules 
+    mkdir -p $RPM_BUILD_ROOT/boot
+    install -m 644 System.map $RPM_BUILD_ROOT/boot/System.map-$KernelVer
+%ifarch i386 i486 i586 i686
+     cp arch/i386/boot/bzImage $RPM_BUILD_ROOT/boot/vmlinuz-$KernelVer
+%endif
+%ifarch alpha sparc
+     gzip -cfv vmlinux > vmlinuz
+     install -m 755 vmlinux $RPM_BUILD_ROOT/boot/vmlinux-$KernelVer
+     install -m 644 vmlinuz $RPM_BUILD_ROOT/boot/vmlinuz-$KernelVer
+%endif
+     mkdir -p $RPM_BUILD_ROOT/lib/modules/$KernelVer/{block,cdrom,fs,ipv4,misc,net,scsi}
+     make INSTALL_MOD_PATH=$RPM_BUILD_ROOT modules_install KERNELRELEASE=$KernelVer
+}
+
+# NORMAL KERNEL
+BuildKernel
+
+# FB-ENABLED KERNEL
+BuildKernel fb
+
+# SMP-ENABLED KERNEL
+BuildKernel smp
+
+# SMP and FB-ENABLED KERNEL
+BuildKernel smp-fb
+
+# BOOT kernel
+BuildKernel BOOT
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -257,9 +329,9 @@ make include/linux/version.h
 make depend 
 find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
 while read file ; do
-    mv $file $file.old
-    sed -e "s|[^ ]*\(/usr/src/linux\)|\1|g" < $file.old > $file
-    rm -f $file.old
+	mv $file $file.old
+	sed -e "s|[^ ]*\(/usr/src/linux\)|\1|g" < $file.old > $file
+	rm -f $file.old
 done
 
 make clean
