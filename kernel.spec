@@ -44,7 +44,7 @@ Source21:	%{name}-ia32-smp.config
 #Source73:	%{name}-ppc.config
 #Source74:	%{name}-ppc-smp.config
 
-Patch0:		patch-2.6.0-test1-aca.tar.bz2
+Patch0:		patch-2.6.0-test1-ac1.bz2
 Patch1:		2.6.0-test1-lkml.patch
 
 ExclusiveOS:	Linux
