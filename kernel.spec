@@ -1,6 +1,9 @@
+# NOTE:
+# - no grsecurity (not planned, use selinux)
+# - no devfs (devfs is obsolete, use udev from HEAD)
 #
 # TODO:
-#	- everything
+# - everything
 #
 # Conditional build:
 %bcond_without	BOOT		# don't build BOOT kernel
