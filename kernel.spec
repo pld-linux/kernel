@@ -137,8 +137,7 @@ Patch23:	2.6.6-xfs-qsort-lkml.patch
 Patch25:	2.6.7-alpha_compile.patch
 Patch26:	2.6.7-ppc-asm-defs.patch
 Patch27:	linux-ppc-oops.patch
-Patch28:	%{name}-2.6-nm256_oops.patch
-Patch29:	linux-2.6-sparc-ksyms.patch
+Patch28:	linux-2.6-sparc-ksyms.patch
 
 #Patch30:	2.6.x-ppp_mppe.patch
 
@@ -171,6 +170,7 @@ Patch73:	squashfs2.1-patch
 Patch74:	linux-static-dev.patch
 Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
 Patch76:	linux-2.6-lirc-0.7.patch
+Patch77:	linux-2.6-alsa-1.0.8.patch
 
 # psmouse extension for ThinkPad laptops from http://www.clarkson.edu/~evanchsa/
 Patch80:	trackpoint-2.6.9.patch
@@ -550,7 +550,6 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch26 -p1
 %patch27 -p1
 %patch28 -p1
-%patch29 -p1
 
 #patch30 -p1
 
@@ -579,6 +578,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch74 -p1
 %patch75 -p1
 %patch76 -p1
+%patch77 -p1
 
 %patch80 -p1
 
