@@ -693,11 +693,12 @@ cd driver
 cd ../..
 
 cd tun-%{tun_version}
-aclocal
-autoconf
-(cd linux
-aclocal
-autoconf)
+%{__aclocal}
+%{__autoconf}
+cd linux
+%{__aclocal}
+%{__autoconf}
+cd ..
 %configure \
 	--with-kernel="$KERNEL_BUILD_DIR"
 make
