@@ -882,7 +882,7 @@ $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 
 %{__make} $CrossOpts mrproper
 install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
-install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/version.h
+install %{SOURCE2} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/version.h
 
 %clean
 rm -rf $RPM_BUILD_ROOT
