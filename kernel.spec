@@ -55,8 +55,8 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.18
-%define		_cset		20050131_1654
+%define		_rel		0.19
+%define		_cset		20050203_1913
 %define		_apply_cset	0
 
 %define		_netfilter_snap		20041118
@@ -79,7 +79,7 @@ Epoch:		3
 License:	GPL
 Group:		Base/Kernel
 #%define		_rc	%{nil}
-%define		_rc	-rc2
+%define		_rc	-rc3
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 # Source0-md5:	f18456c9da900820fba98576832d598c
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
