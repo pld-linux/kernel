@@ -392,7 +392,7 @@ rm -rf $RPM_BUILD_ROOT
 
 # NORMAL KERNEL
 BuildKernel
-%ifnarch sparc sparc64
+%ifarch %{ix86}
 BuildPCMCIA
 %endif
 
@@ -402,7 +402,7 @@ BuildPCMCIA
 # SMP-ENABLED KERNEL
 %ifnarch i386
 BuildKernel smp
-%ifnarch sparc sparc64
+%ifarch %{ix86}
 BuildPCMCIA smp
 %endif
 %endif
@@ -413,7 +413,7 @@ BuildPCMCIA smp
 # BOOT kernel
 %ifnarch i586 i686
 BuildKernel BOOT
-%ifnarch sparc sparc64
+%ifarch %{ix86}
 BuildPCMCIA BOOT
 %endif
 %endif
@@ -458,7 +458,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
 #patch -s -p1 -R -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
