@@ -9,6 +9,7 @@ Version:	2.4.20
 Release:	0.3
 License:	GPL
 Group:		Base/Kernel
+# Source0-md5:	c439d5c93d7fc9a1480a90842465bb97
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-alpha-BOOT.config
 Source2:	%{name}-alpha.config
