@@ -7,8 +7,8 @@
 # _without_source	- don't build source
 # _without_lsm		- don't build LSM/SELinux kernel
 
-%define		_rel		0
-%define		patch_level	5
+%define		_rel		0.1
+%define		patch_level	0
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -30,8 +30,8 @@ Release:	%{_rel}
 %endif
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-test1.tar.bz2
-# Source0-md5:	e732d9fc3a59262a129700d9f4f300e0
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-test2.tar.bz2
+# Source0-md5:	7d274d5fcd3d86a8d95c2749a702f830
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -283,15 +283,15 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}-test1
-%patch0 -p1
-%patch1 -p1
+%setup -q -n linux-%{version}-test2
+#%patch0 -p1
+#%patch1 -p1
 
 %patch5 -p1
 
-%patch10 -p1
+#%patch10 -p1
 
-%patch15 -p1
+#%patch15 -p1
 
 %patch20 -p1 
 %patch21 -p1
