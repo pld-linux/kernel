@@ -202,7 +202,7 @@ Patch915:	linux-o1-sched-post.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
-BuildRequires:	rpm-build >= 4.0.2-53
+BuildRequires:	rpm-build >= 4.0.4
 %ifarch sparc64
 BuildRequires:	egcs64
 %else
@@ -224,6 +224,7 @@ ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 %ifarch		%{ix86}
 BuildRequires:	bin86
 %endif
+Conflicts:	iptables < 1.2.6
 #BuildRequires:	kernel-headers
 
 %description
@@ -482,20 +483,24 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %else
 %patch8 -p1
 %endif
-%ifarch%{ix86}+f%{?_without_grsec:0}%{!?_without_grsec:1}+f%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%ifarch%{ix86}
+%if %{?_without_grsec:0}%{!?_without_grsec:1}
+%if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %patch911 -p1
 %endif
-#%endif
-#%endif
+%endif
+%endif
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
 %patch9 -p1
 %patch906 -p1
 %endif
-%ifarch%{ix86}+f%{?_without_grsec:0}%{!?_without_grsec:1}+f%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%ifarch%{ix86}
+%if%{?_without_grsec:0}%{!?_without_grsec:1}
+%if%{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %patch912 -p1
 %endif
-#%endif
-#%endif
+%endif
+%endif
 %patch15 -p1
 %patch17 -p1
 
