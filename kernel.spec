@@ -691,7 +691,7 @@ cp -a %{SOURCE2} $RPM_BUILD_ROOT%{_includedir}/asm/BuildASM
 ln -sf ../src/linux/include/asm $RPM_BUILD_ROOT/usr/include/asm
 %endif
 
-cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/
+(umask 022 ; cp -a . $RPM_BUILD_ROOT/usr/src/linux-%{version}/)
 
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
@@ -1066,7 +1066,7 @@ fi
 %{_includedir}/linux
 
 %files source
-%defattr(644,root,root,755)
+%defattr(-,root,root,755)
 %{_prefix}/src/linux-%{version}/Documentation
 %{_prefix}/src/linux-%{version}/abi
 %{_prefix}/src/linux-%{version}/arch
