@@ -80,7 +80,6 @@ Patch3:		linux-2.4.9-aacraid-20010816.patch
 Patch4:		br2684-against2.4.10.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/
 # based on file xfs-2.4.14-all.bz2
-#Patch5:		linux-2.4.13-xfs-20011026.patch.gz
 Patch5:		linux-xfs-2.4.14-PLD.patch.gz
 # Compressed iso9660 filesystem
 Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-unified-2.4.12.diff.gz
@@ -451,16 +450,16 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # Netfilter
 echo Adding Netfilter
-for i in netfilter-patches/* ; do
-	if [ -f $i -a "$i" != "netfilter-patches/isapplied" ] ; then
-	patch -p1 <$i
-	fi
-done
-(KERNEL_DIR=`pwd` ; export KERNEL_DIR
-cd netfilter-patches/patch-o-matic
-ANS=""
-for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
-echo -e $ANS | ./runme)
+#for i in netfilter-patches/* ; do
+#	if [ -f $i -a "$i" != "netfilter-patches/isapplied" ] ; then
+#	patch -p1 <$i
+#	fi
+#done
+#(KERNEL_DIR=`pwd` ; export KERNEL_DIR
+#cd netfilter-patches/patch-o-matic
+#ANS=""
+#for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
+#echo -e $ANS | ./runme)
 
 %if %{?_with_lids:1}%{!?_with_lids:0}
 # LIDS
@@ -529,6 +528,10 @@ cp -f tulip-%{tulip_version}/src/ChangeLog drivers/net/tulip
 
 %patch133 -p1
 %patch134 -p0
+
+# install 8139too driver
+echo Updated RTL 8139 Driver
+cp -f %{SOURCE16} drivers/net/8139too.c
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
