@@ -1,0 +1,34 @@
+	Cleanup one_highpage_init() as in 2.5.
+	Author: Christoph Hellwig <hch@sgi.com>
+
+--- linux-2.4.20-pre5/arch/i386/mm/init.c	Tue Aug 20 11:36:59 2002
++++ linux/arch/i386/mm/init.c	Fri Sep  6 13:14:37 2002
+@@ -442,21 +442,14 @@ static inline int page_kills_ppro(unsign
+ #ifdef CONFIG_HIGHMEM
+ void __init one_highpage_init(struct page *page, int pfn, int bad_ppro)
+ {
+-	if (!page_is_ram(pfn)) {
++	if (page_is_ram(pfn) && !(bad_ppro && page_kills_ppro(pfn))) {
++		ClearPageReserved(page);
++		set_bit(PG_highmem, &page->flags);
++		set_page_count(page, 1);
++		__free_page(page);
++		totalhigh_pages++;
++	} else
+ 		SetPageReserved(page);
+-		return;
+-	}
+-	
+-	if (bad_ppro && page_kills_ppro(pfn)) {
+-		SetPageReserved(page);
+-		return;
+-	}
+-	
+-	ClearPageReserved(page);
+-	set_bit(PG_highmem, &page->flags);
+-	atomic_set(&page->count, 1);
+-	__free_page(page);
+-	totalhigh_pages++;
+ }
+ #endif /* CONFIG_HIGHMEM */
+ 
