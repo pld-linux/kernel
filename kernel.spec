@@ -55,7 +55,7 @@
 
 %define		_post_ver	.2
 #define		_post_ver	%{nil}
-%define		_rel		0.35
+%define		_rel		0.36
 %define		_cset		20050302_0807
 %define		_apply_cset	0
 
@@ -583,8 +583,6 @@ bzcat %{SOURCE4} | patch -p1 -s
 #%patch100 -p1
 
 #%patch110 -p1
-
-%patch260 -p1
 
 # <bconded_patches>
 
