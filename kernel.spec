@@ -564,11 +564,11 @@ install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoco
 if [ -e $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h ]; then
 install $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h \
 $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
-
+fi
 if [ -e $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h ]; then
 install $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h \
 $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
-
+fi
 install $KERNEL_BUILD_DIR-installed/usr/src/linux-%{version}/include/linux/* \
 $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 
