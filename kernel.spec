@@ -162,6 +162,8 @@ Patch96:	2.6.1-modular-ide-lkml.patch
 # ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/
 Patch100:	linux-2.6.2-rc1-raid6-2.patch
 
+Patch102:	2.6.x-pnp-lkml.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
@@ -571,6 +573,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch96 -p1
 
 #%%patch100 -p1
+
+%patch102 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
