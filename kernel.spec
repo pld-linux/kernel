@@ -853,7 +853,7 @@ echo Added xattr for JFS ...
 %patch105 -p1
 
 # to fix compile on gcc-3.3
-#%patch904 -p1    -- someone with gcc3.3 please, fix
+%patch904 -p1 
 
 # Hash FiX. Initial by Qboosh, ipdated by me.
 %patch112 -p1
