@@ -1,5 +1,5 @@
-%define		ow_version	2.2.16-ow1
-%define		pcmcia_version	3.1.17
+%define		ow_version	2.2.17-ow1
+%define		pcmcia_version	3.1.20
 %define		freeswan_version	1.5
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -36,24 +36,24 @@ Source29:	%{name}-alpha-BOOT.config
 Source30:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
 Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-127.tar.gz
 Source32:	%{name}-BuildASM.sh
-Source33:	ftp://sourceforge.org/pcmcia/pcmcia-cs-%{pcmcia_version}.tar.gz
-#Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.17-pre18
+Source33:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
+Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.17+.gz
 # NFS server patches
 Source40:	http://download.sourceforge.net/nfs/dhiggen_merge-4.1.tar.gz
-Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.16.4.gz
+Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.17.2.gz
 Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.17-reiserfs-3.5.25-patch.gz
 Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
 Patch3:		linux-tasks.patch
 # patch based on http://www.redhat.com/~mingo/raid-patches/
 Patch4:		raid-2.2.17-A0.gz
-Patch5:		http://republika.pl/bkz/ide.2.2.17pre15.all.20000722.patch.bz2
+Patch5:		http://www.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.17/ide.2.2.17.all.20000904.patch.bz2
 Patch6:		%{name}-pldfblogo.patch
 Patch7:		linux-2.2.16-freeswan-%{freeswan_version}.patch
 Patch8:		wanrouter-v2215.patch.gz
 Patch10:	linux-newagpdist.patch
 Patch11:	linux-agphjlfixes.patch
 Patch12:	linux-agpgart-2.4-compat.patch
-Patch14:	http://www.linux.org.uk/VERSION/2.2.16combo
+#Patch14:	http://www.linux.org.uk/VERSION/2.2.16combo
 Patch15:	linux-ipv6-addrconf.patch
 # NFS client patch
 Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
@@ -276,11 +276,11 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch11 -p1
 %patch12 -p1
 #%patch13 -p1 .serek
-%patch14 -p1 
+#%patch14 -p1 
 %patch15 -p1
 
-tar zxf %{SOURCE40} dhiggen-over-0.21.3
-patch -p2 -s <dhiggen-over-0.21.3
+tar zxf %{SOURCE40} dhiggen-over-0.23.1
+patch -p2 -s <dhiggen-over-0.23.1
 
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 # Tekram DC395/315 U/UW SCSI host driver
@@ -437,9 +437,9 @@ ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
 
 # NFS patches must go first
 bzip2 -dc %{PATCH20} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-tar zxf %{SOURCE40} dhiggen-over-0.21.3
-patch -s -p2 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < dhiggen-over-0.21.3
-rm -f dhiggen-over-0.21.3
+tar zxf %{SOURCE40} dhiggen-over-0.23.1
+patch -s -p2 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < dhiggen-over-0.23.1
+rm -f dhiggen-over-0.23.1
 
 gzip -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH1} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
@@ -457,7 +457,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
 #patch -s -p1 -R -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-%{ow_version}/linux-%{ow_version}.diff
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < dc395/dc395-integ22.diff
