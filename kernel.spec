@@ -262,8 +262,8 @@ patch -p1 <lids-%{lids_version}-2.4.1/lids-%{lids_version}-2.4.1.patch
 # Adaptec RAID patch
 %patch8 -p1
 
-# ????
-%patch9 -p1
+# ???? Patch is broken.
+#%patch9 -p1
 
 # Remove -g from drivers/atm/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
