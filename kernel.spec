@@ -1164,7 +1164,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o*
 %endif
 %endif
-%ifnarch sparc
+%ifnarch sparc i386
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 %endif
 /lib/modules/%{version}-%{release}/build
@@ -1189,7 +1189,7 @@ fi
 %endif
 %endif
 
-%ifnarch sparc
+%ifnarch sparc i386
 %files drm
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
@@ -1222,7 +1222,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o*
 %endif
 %endif
-%ifnarch sparc
+%ifnarch sparc i386
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 %endif
 /lib/modules/%{version}-%{release}smp/build
@@ -1247,7 +1247,7 @@ fi
 %endif
 %endif
 
-%ifnarch sparc
+%ifnarch sparc i386
 %files -n kernel-smp-drm
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
