@@ -662,9 +662,11 @@ patch -p1 -s < exec-shield.patch
 %patch203 -p1
 
 # suspend/resume
+%ifarch %{ix86}
 %patch219 -p1
 %patch220 -p1
 %patch221 -p1
+%endif
 
 # hotfixes
 %patch300 -p1
