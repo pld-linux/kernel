@@ -271,6 +271,8 @@ Patch3013:	linux-2.4.23-ppc-symbols.patch
 # modified http://www.hardrock.org/kernel/current-updates/linux-2.4.23-updates.patch
 # since we already have some of these fixes applied
 Patch3500:	http://www.hardrock.org/kernel/current-updates/linux-2.4.23-updates.patch
+# ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.4.24/acpi-20031203-2.4.24.diff.bz2
+Patch3510:      acpi-20031203-2.4.24.diff.bz2
 Patch3600:	linux-2.4-sysctl-empty.patch
 Patch4000:	grsecurity-2.0-rc3-2.4.22-O1.patch
 
@@ -749,6 +751,7 @@ cd ../../..
 %patch3013 -p1
 
 %patch3500 -p1
+%patch3510 -p1
 %patch3600 -p1
 %{?with_grsec:%patch4000 -p1}
 
