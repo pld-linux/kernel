@@ -30,7 +30,7 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1
+%define		_rel		2
 %define		_test_ver	11
 %define		_cset		20031215_0306
 
@@ -526,11 +526,11 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch72 -p1
 
-%patch74 -p1
-#%%patch75 -p1
-%patch76 -p1
+#%%patch74 -p1
+##%%patch75 -p1
+#%%patch76 -p1
 
-%patch78 -p1
+#%%patch78 -p1
 
 %patch80 -p1
 %patch81 -p1
