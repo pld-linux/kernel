@@ -116,6 +116,8 @@ Patch122:       bttv-symbols.patch.bz2
 #Patch123:	bridge-module_build.patch.bz2
 
 Patch1000:	%{name}-vlan_bridge.patch
+Patch1500:	linux-sparc_ide_fix.patch.2.2.19
+Patch1501:	kernel-sparc-zs.h.patch
 
 # HTB from http://luxik.cdi.cz/~devik/qos/htb/
 Patch200:	htb2_2.2.17.diff
@@ -526,6 +528,9 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 #%patch111 -p1
 %patch101 -p1
 %patch43 -p1
+
+%patch1500 -p1
+%patch1501 -p1
 
 %build
 BuildKernel() {
