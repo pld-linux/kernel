@@ -32,7 +32,7 @@
 
 %define		_rel		1
 %define		_rc		rc1
-%define		_cset		20040105_0406
+%define		_cset		20040105_2008
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -157,8 +157,6 @@ Patch114:	2.6.1-rc1-NF-u32-%{_netfilter_snap}.patch
 Patch116:	2.6.1-rc1-NF-osf-%{_netfilter_snap}.patch
 
 Patch120:	http://www.saout.de/misc/dm-crypt.diff
-
-Patch122:	2.6-mremap-lkml.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -559,8 +557,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch116 -p1
 
 %patch120 -p1
-
-%patch122 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
