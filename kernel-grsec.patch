@@ -13518,40 +13518,15 @@ diff -uNr linux-2.6.7-rc1.orig/kernel/sysctl.c linux-2.6.7-rc1/kernel/sysctl.c
  
  /* External variables not in a header file. */
  extern int panic_timeout;
-@@ -145,6 +153,32 @@
+@@ -145,6 +153,7 @@
  #ifdef CONFIG_UNIX98_PTYS
  extern ctl_table pty_table[];
  #endif
 +extern ctl_table grsecurity_table[];
-+
-+#ifdef CONFIG_PAX_SOFTMODE
-+static ctl_table pax_table[] = {
-+
-+#if defined(CONFIG_PAX_RANDMMAP) || defined(CONFIG_PAX_RANDUSTACK) || defined(CONFIG_PAX_RANDKSTACK)
-+	{
-+		.ctl_name	= PAX_ASLR,
-+		.procname	= "aslr",
-+		.data		= &pax_aslr,
-+		.maxlen		= sizeof(unsigned int),
-+		.mode		= 0600,
-+		.proc_handler	= &proc_dointvec,
-+	},
-+#endif
-+
-+	{
-+		.ctl_name	= PAX_SOFTMODE,
-+		.procname	= "softmode",
-+		.data		= &pax_softmode,
-+		.maxlen		= sizeof(unsigned int),
-+		.mode		= 0600,
-+		.proc_handler	= &proc_dointvec,
-+	}
-+};
-+#endif
  
  /* /proc declarations: */
  
-@@ -639,6 +673,14 @@
+@@ -639,6 +648,14 @@
  		.mode		= 0444,
  		.proc_handler	= &proc_dointvec,
  	},
@@ -13566,7 +13541,7 @@ diff -uNr linux-2.6.7-rc1.orig/kernel/sysctl.c linux-2.6.7-rc1/kernel/sysctl.c
  	{ .ctl_name = 0 }
  };
  
-@@ -1000,6 +1042,10 @@
+@@ -1000,6 +1017,10 @@
  static inline int ctl_perm(ctl_table *table, int op)
  {
  	int error;
@@ -13577,7 +13552,7 @@ diff -uNr linux-2.6.7-rc1.orig/kernel/sysctl.c linux-2.6.7-rc1/kernel/sysctl.c
  	error = security_sysctl(table, op);
  	if (error)
  		return error;
-@@ -1036,6 +1082,10 @@
+@@ -1036,6 +1057,10 @@
  				table = table->child;
  				goto repeat;
  			}
@@ -13681,69 +13656,25 @@ diff -uNr linux-2.6.7-rc1.orig/mm/memory.c linux-2.6.7-rc1/mm/memory.c
 diff -uNr linux-2.6.7-rc1.orig/mm/mlock.c linux-2.6.7-rc1/mm/mlock.c
 --- linux-2.6.7-rc1.orig/mm/mlock.c	2004-05-23 07:53:32.000000000 +0200
 +++ linux-2.6.7-rc1/mm/mlock.c	2004-05-25 14:33:59.574303656 +0200
-@@ -7,11 +7,43 @@
- 
+@@ -8,6 +8,7 @@
  #include <linux/mman.h>
  #include <linux/mm.h>
-+#include <linux/grsecurity.h>
  
-+#if defined(CONFIG_PAX_SEGMEXEC) || defined(CONFIG_PAX_RANDEXEC)
-+static int __mlock_fixup(struct vm_area_struct * vma, 
-+	unsigned long start, unsigned long end, unsigned int newflags);
++#include <linux/grsecurity.h>
  
  static int mlock_fixup(struct vm_area_struct * vma, 
  	unsigned long start, unsigned long end, unsigned int newflags)
- {
-+	if (vma->vm_flags & VM_MIRROR) {
-+		struct vm_area_struct * vma_m;
-+		unsigned long start_m, end_m;
-+		int error;
-+
-+		start_m = vma->vm_start + (unsigned long)vma->vm_private_data;
-+		vma_m = find_vma(vma->vm_mm, start_m);
-+		if (vma_m && vma_m->vm_start == start_m && (vma_m->vm_flags & VM_MIRROR)) {
-+			start_m = start + (unsigned long)vma->vm_private_data;
-+			end_m = end + (unsigned long)vma->vm_private_data;
-+			error = __mlock_fixup(vma_m, start_m, end_m, newflags);
-+			if (error)
-+				return error;
-+		} else {
-+			printk("PAX: VMMIRROR: mlock bug in %s, %08lx\n", current->comm, vma->vm_start);
-+			return -ENOMEM;
-+		}
-+	}
-+	return __mlock_fixup(vma, start, end, newflags);
-+}
-+
-+static int __mlock_fixup(struct vm_area_struct * vma, 
-+	unsigned long start, unsigned long end, unsigned int newflags)
-+#else
-+static int mlock_fixup(struct vm_area_struct * vma, 
-+	unsigned long start, unsigned long end, unsigned int newflags)
-+#endif
-+{
- 	struct mm_struct * mm = vma->vm_mm;
- 	int pages;
- 	int ret = 0;
-@@ -68,6 +100,17 @@
+@@ -68,6 +69,9 @@
  		return -EINVAL;
  	if (end == start)
  		return 0;
-+
-+#ifdef CONFIG_PAX_SEGMEXEC
-+	if (current->flags & PF_PAX_SEGMEXEC) {
-+		if (end > SEGMEXEC_TASK_SIZE)
-+			return -EINVAL;
-+	} else
-+#endif
-+
 +	if (end > TASK_SIZE)
 +		return -EINVAL;
 +
  	vma = find_vma(current->mm, start);
  	if (!vma || vma->vm_start > start)
  		return -ENOMEM;
-@@ -118,6 +161,7 @@
+@@ -118,6 +122,7 @@
  	lock_limit >>= PAGE_SHIFT;
  
  	/* check against resource limits */
@@ -13751,24 +13682,17 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mlock.c linux-2.6.7-rc1/mm/mlock.c
  	if (locked <= lock_limit)
  		error = do_mlock(start, len, 1);
  	up_write(&current->mm->mmap_sem);
-@@ -154,6 +198,16 @@
+@@ -154,6 +159,9 @@
  	for (vma = current->mm->mmap; vma ; vma = vma->vm_next) {
  		unsigned int newflags;
  
-+#ifdef CONFIG_PAX_SEGMEXEC
-+		if (current->flags & PF_PAX_SEGMEXEC) {
-+			if (vma->vm_end > SEGMEXEC_TASK_SIZE)
-+				break;
-+		} else
-+#endif
-+
 +		if (vma->vm_end > TASK_SIZE)
 +			break;
 +
  		newflags = vma->vm_flags | VM_LOCKED;
  		if (!(flags & MCL_CURRENT))
  			newflags &= ~VM_LOCKED;
-@@ -177,6 +231,7 @@
+@@ -177,6 +185,7 @@
  	lock_limit >>= PAGE_SHIFT;
  
  	ret = -ENOMEM;
@@ -14022,18 +13946,10 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mprotect.c linux-2.6.7-rc1/mm/mprotect.c
 diff -uNr linux-2.6.7-rc1.orig/mm/mremap.c linux-2.6.7-rc1/mm/mremap.c
 --- linux-2.6.7-rc1.orig/mm/mremap.c	2004-05-23 07:54:19.000000000 +0200
 +++ linux-2.6.7-rc1/mm/mremap.c	2004-05-25 14:33:59.584302136 +0200
-@@ -267,6 +267,18 @@
+@@ -267,6 +267,10 @@
  	if (!new_len)
  		goto out;
  
-+#ifdef CONFIG_PAX_SEGMEXEC
-+	if (current->flags & PF_PAX_SEGMEXEC) {
-+		if (new_len > SEGMEXEC_TASK_SIZE || addr > SEGMEXEC_TASK_SIZE-new_len ||
-+		    old_len > SEGMEXEC_TASK_SIZE || addr > SEGMEXEC_TASK_SIZE-old_len)
-+			goto out;
-+	} else
-+#endif
-+
 +	if (new_len > TASK_SIZE || addr > TASK_SIZE-new_len ||
 +	    old_len > TASK_SIZE || addr > TASK_SIZE-old_len)
 +		goto out;
