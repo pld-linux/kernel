@@ -145,9 +145,7 @@ Patch205:	linux-2.4.20-promise.patch.bz2
 Patch206:	linux-2.4.20-promise-st6000.patch.bz2
 
 #from http://prdownloads.sourceforge.net/i810fb/linux-2.4.20-i810fb.diff.bz2
-# from MDK kernel DV08__i810fb.patch
 Patch210:	linux-2.4.20-I810FB.patch.bz2
-Patch211:	linux-2.4.20-I810FB_lock_page_fix.patch
 
 # Support for CDRW packet writing
 Patch215:	%{name}-cdrw-packet.patch
@@ -171,7 +169,7 @@ Patch270:	dc395-tab.patch
 # and/or are on bcond and/or are ifarch
 
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
-Patch800:	grsecurity-%{grsec_version}-%{version}.patch.bz2
+Patch800:	grsecurity-%{grsec_version}-%{version}.patch
 Patch801:	PPC-grsecurity-pgtable.h.patch
 Patch802:	linux-2.4.20-grsecurity-%{grsec_version}-kmem.patch
 
