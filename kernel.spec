@@ -22,7 +22,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.6
-Release:	2
+Release:	3
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -84,6 +84,10 @@ Patch9:		linux-abi-PLD-2.4.7-pre6.diff
 Patch10:	http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
 Patch11:	linux-grsecurity-1.4-PLD-2.4.7-pre6.patch
+# Linux Compressed cache
+Patch12:	http://prdownloads.sourceforge.net/linuxcompressed/patch-comp-cache-2.4.6-0.17.bz
+# JFS		http://www10.software.ibm.com/developer/opensource/pub/jfs-1.0.1-patch.tar.gz
+Patch13:	jfs-1.0.1-patch.tar.gz
 
 # Assorted bugfixes
 
@@ -439,6 +443,10 @@ cd vlan.%{vlan_version}
 %patch904 -p1
 cd ..
 patch -p1 -s <vlan.%{vlan_version}/vlan_2.4.patch
+
+# IP personality
+echo Adding IP Personality 
+patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010703-linux-2.4.5.diff
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
