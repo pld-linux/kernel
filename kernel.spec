@@ -1,7 +1,7 @@
 %define		ow_version		2.2.19-ow1
 %define		pcmcia_version		3.1.26
 %define		freeswan_version	1.8
-%define		reiserfs_version	3.5.32
+%define		reiserfs_version	3.5.34
 %define		i2c_version		2.5.5
 %define		wlan_version		0.3.4
 %define		tun_version		1.1
@@ -13,7 +13,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.19
-Release:	18
+Release:	19
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -54,7 +54,7 @@ Patch4:		%{name}-3c90x.patch
 Patch5:		linux-ipv6-glibc2.2.patch
 Patch6:		http://milosch.net/pub/beos/2.2.18-pre2-beos09032000.patch
 Patch7:		http://www.kernel.org/pub/linux/kernel/people/mingo/raid-patches/raid-2.2.19-A1
-Patch8:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.19-reiserfs-3.5.33-patch.bz2
+Patch8:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.19-reiserfs-%{reiserfs_version}-patch.bz2
 Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.19/ide.2.2.19.05042001.patch.bz2
 Patch10:	http://www.math.leidenuniv.nl/~buytenh/bridge/patches/bridge-0.0.9-against-2.2.19.diff
 Patch11:	http://download.sourceforge.net/linux1394/ieee1394-2.2.19-20010527.gz
@@ -83,6 +83,7 @@ Patch33:	linux-vlan-fixpatch.patch
 Patch34:	%{name}-sparc-zs.h.patch
 Patch35:	%{name}-sym53c8xx.patch
 Patch36:	ip_masq_irc-2.2.19-dcc_check-3.diff
+Patch37:	%{name}-udf.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -413,6 +414,7 @@ rm -rf sym-1.7.3c-ncr-3.4.3b
 %patch34 -p1
 %patch35 -p1
 %patch36 -p1
+%patch37 -p1
 
 %build
 BuildKernel() {
@@ -551,7 +553,12 @@ cd driver
 cd ../..
 
 cd tun-%{tun_version}
-%configure2_13 \
+aclocal
+autoconf
+(cd linux
+aclocal
+autoconf)
+%configure \
 	--with-kernel="$KERNEL_BUILD_DIR"
 make
 install linux/tun.o "$KERNEL_INSTALL_DIR/lib/modules/$KernelVer/net"
@@ -662,6 +669,8 @@ rm -rf sym-1.7.3c-ncr-3.4.3b
 
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH34}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH35}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH36}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH37}
 
 %ifarch sparc sparc64
 ln -s ../src/linux/include/asm-sparc $RPM_BUILD_ROOT%{_includedir}/asm-sparc
