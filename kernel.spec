@@ -124,6 +124,7 @@ Patch903:	linux-lids-with-abi.patch
 Patch904:	linux-vlan-fixpatch-2.4.7-pre6.patch
 Patch905:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch906:	linux-UDF.fix
+Patch907:	linux-jfs+xfs-PLD.fix
 
 # Linus's -pre
 Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.7-%{pre_version}.gz
@@ -374,7 +375,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch111 -p4
 #%patch112 -p1
 %patch113 -p1
-%patch114 -p0
+%patch114 -p1
 
 %patch900 -p0 
 %patch901 -p0
@@ -453,6 +454,7 @@ patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010703-l
 
 # JFS
 echo Adding JFS
+%patch907 -p0
 patch -p1 -s <jfs-common-v1.0.1-patch
 patch -p1 -s <jfs-2.4.5-v1.0.1-patch
 
