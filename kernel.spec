@@ -259,7 +259,7 @@ Patch917:	linux-2.4.19-EXPORT_SYMBOL-netsyms.c-rm.patch
 Patch918:	linux-2.4.20-ext3.patch
 Patch919:	linux-2.4.20-ntfs.patch
 Patch920:	linux-2.4.20-squashfs.patch
-Patch921:	linux-2.4.20-grsecurity-1.9.9-rc3-kmem.patch
+Patch921:	linux-2.4.20-grsecurity-%{grsec_ver}-kmem.patch
 
 # Win4Lin
 Patch1000:	linux-2.4.20-Win4Lin.PLD.patch.bz2
