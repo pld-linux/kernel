@@ -16,33 +16,34 @@
 %define		freeswan_version	1.97
 %define		IPperson_version	20020427-2.4.18
 %define		grsec_version		1.9.7-2.4.19
-%define		jfs_version		2.4-1.0.20
+%define		jfs_version		2.4-1.0.24
 %define		lvm_version		1.0.5
 %define		evms_version		1.1.0
 %define		ntfs_version		2.0.23b
 %define		drm_xfree_version	4.2.0
+%define		hostap_version		2002-10-12
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	2.8%{?_with_preemptive:_pr}
+Release:	2.9%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
-Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
+#Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
-#Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
+Source4:	http://christophe.lizzi.free.fr/linux/linux-2.4.0-test9-fore200e-0.3.tar.gz
 Source5:	linux-2.4.19-netfilter-20021020.tar.bz2
 #Source6:	
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
 Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
-Source10:	http://hostap.epitest.fi/releases/hostap-2002-09-12.tar.gz
+Source10:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
 Source11:	http://download.sourceforge.net/squashfs/squashfs1.0c.tar.gz
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -74,8 +75,8 @@ Source1999:	%{name}-preemptive.config
 # New features
 
 Patch0:		%{name}-pldfblogo.patch
-# from ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
-Patch1:		patch-int-2.4.18.3.bz2
+# from ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/testing/
+Patch1:		patch-int-2.4.19.2.bz2
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch2:		linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
 Patch3:		http://people.redhat.com/mingo/O(1)-scheduler/sched-2.4.19-rc2-A4
@@ -546,8 +547,8 @@ install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # Fore 200e ATM NIC
 echo Adding FORE 200e ATM driver
-patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
-#patch -p1 -s <linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
+#patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
+patch -p1 -s <linux-2.4.0-test9-fore200e-0.3/linux-2.4.0-test9-fore200e-0.3.patch
 
 # Netfilter
 (KERNEL_DIR=`pwd` ; export KERNEL_DIR ; cd netfilter-patch-o-matic ; ./runme --batch userspace)
@@ -567,8 +568,8 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 
 # hostap
 echo Installing Host AP support
-patch -p1 -s < hostap-2002-09-12/kernel-patches/hostap-linux-2.4.19-rc3.patch
-cp hostap-2002-09-12/driver/modules/hostap*.[ch] drivers/net/wireless/
+patch -p1 -s < hostap-%{hostap_version}/kernel-patches/hostap-linux-2.4.19-rc3.patch
+cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 
 %ifarch sparc
 %patch911 -p1
