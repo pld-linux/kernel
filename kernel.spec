@@ -1,4 +1,4 @@
-%define		ow_version		2.2.19-ow1
+%define		ow_version		2.2.19-ow3
 %define		pcmcia_version		3.1.29
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.34
@@ -16,7 +16,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.19
-Release:	24
+Release:	25
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
