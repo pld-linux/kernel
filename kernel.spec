@@ -40,7 +40,7 @@ Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-141.tar.gz
 # Source3-md5:	8ed492197244b6a772270417c66214d3
 Source4:	linux-2.4.22-netfilter-%{netfilter_snap}.tar.gz
-# Source4-md5:	fbbbe9b0669c7e766ddf125dfa11781c
+# Source4-md5:	6b6cff7293a7b75474c97c9740628bf4
 Source5:	linux-2.4.19-netfilter-IMQ.patch.tar.bz2
 # Source5-md5:	b8f2f7a268a5cb75fabcaec3b5d45fcd
 Source7:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-1.1.2.tar.gz
@@ -251,7 +251,7 @@ Patch1413:	linux-2.4.22-andrea-9980_fix-pausing-6.patch
 Patch1414:	linux-2.4.21-oopsmeharder.patch
 Patch1415:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch1416:	linux-2.4.21-no-FPU.patch
-Patch1417:	linux-2.4.22-ac3-ide+sata.patch
+Patch1417:	linux-2.4.22-ac4-ide+sata.patch
 Patch1418:	linux-2.4.21-hpt372-chicken-egg-hack.patch
 Patch1419:	linux-2.4.21-agp-num_of_masks.patch
 # fix spare disk counting for raid 5
