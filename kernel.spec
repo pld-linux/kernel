@@ -98,6 +98,8 @@ Patch60:	linux-2.4.20-reiserfs-quota.patch.bz2
 # http://dl.sourceforge.net/squashfs/squashfs-1.1b.tar.gz
 Patch65:	linux-2.4.20-squashfs.patch
 #Patch70:	linux-2.4.20-afs.patch.bz2
+#from http://sci.felk.cvut.cz/nwd/linux/nwd-patch-2.4.19
+Patch75:	nwd-2.4.20.patch
 
 # Networking
 
@@ -586,6 +588,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch60 -p1
 %patch65 -p1
 #%patch70 -p1
+%patch75 -p1
 %patch100 -p1
 %patch110 -p1
 %patch111 -p1
