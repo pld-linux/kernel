@@ -50,7 +50,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		4.2%{?with_mosix:m}
+%define		_rel		5%{?with_mosix:m}
 %define		_cset		20040707_0722
 %define		_apply_cset	1
 
@@ -1028,7 +1028,7 @@ KERNEL_BUILD_DIR=`pwd`
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig
-##%{?with_up:BuildKernel}
+%{?with_up:BuildKernel}
 %{?with_up:PreInstallKernel}
 
 # SMP KERNEL
