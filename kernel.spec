@@ -106,6 +106,9 @@ Patch110:	linux-2.2.20-pcmcia-without-iee1394.patch.bz2
 # hap linux based on http://www.theaimsgroup.com/~hlein/hap-linux/hap-linux-2.2.20-2.diff
 Patch200:	hap-linux-2.2.20-2.diff
 
+# HTB from http://luxik.cdi.cz/~devik/qos/htb/
+Patch210:	htb2_2.2.17.diff
+
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -446,6 +449,8 @@ install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 
 %patch107 -p1
+
+%patch210 -p1
 
 %build
 BuildKernel() {
