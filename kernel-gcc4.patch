@@ -1,11 +1,13 @@
- Makefile                        |    2 +-
- drivers/char/isicom.c           |    6 +++---
- drivers/input/mouse/psmouse.h   |    2 ++
- drivers/media/dvb/bt8xx/bt878.h |    6 +++---
- drivers/media/video/bttvp.h     |   21 ++++++++++-----------
- include/linux/generic_serial.h  |    2 --
- include/linux/i2c.h             |   32 ++++++++++++++++----------------
- 7 files changed, 35 insertions(+), 36 deletions(-)
+
+ Makefile                          |    2 +-
+ drivers/char/isicom.c             |    6 +++---
+ drivers/input/mouse/psmouse.h     |    2 ++
+ drivers/media/dvb/bt8xx/bt878.h   |    6 +++---
+ drivers/media/video/bttvp.h       |   21 ++++++++++-----------
+ drivers/net/hamradio/baycom_epp.c |   16 ++++++++--------
+ include/linux/generic_serial.h    |    2 --
+ include/linux/i2c.h               |   32 ++++++++++++++++----------------
+ 8 files changed, 43 insertions(+), 44 deletions(-)
 
 --- a/Makefile.orig	2005-03-30 13:10:50.000000000 +0200
 +++ b/Makefile	2005-03-30 13:11:15.000000000 +0200
@@ -167,3 +169,61 @@
  /* private ioctls */
  #define BTTV_VERSION            _IOR('v' , BASE_VIDIOCPRIVATE+6, int)
  #define BTTV_VBISIZE            _IOR('v' , BASE_VIDIOCPRIVATE+8, int)
+--- a/drivers/net/hamradio/baycom_epp.c.orig	2005-03-26 04:28:38.000000000 +0100
++++ b/drivers/net/hamradio/baycom_epp.c	2005-04-03 21:34:42.000000000 +0200
+@@ -398,14 +398,14 @@
+  */
+ 
+ #define ENCODEITERA(j)                         \
+-({                                             \
++{                                              \
+         if (!(notbitstream & (0x1f0 << j)))    \
+                 goto stuff##j;                 \
+   encodeend##j:    	;                      \
+-})
++}
+ 
+ #define ENCODEITERB(j)                                          \
+-({                                                              \
++{                                                               \
+   stuff##j:                                                     \
+         bitstream &= ~(0x100 << j);                             \
+         bitbuf = (bitbuf & (((2 << j) << numbit) - 1)) |        \
+@@ -413,7 +413,7 @@
+         numbit++;                                               \
+         notbitstream = ~bitstream;                              \
+         goto encodeend##j;                                      \
+-})
++}
+ 
+ 
+ static void encode_hdlc(struct baycom_state *bc)
+@@ -631,16 +631,16 @@
+ }
+ 
+ #define DECODEITERA(j)                                                        \
+-({                                                                            \
++{                                                                             \
+         if (!(notbitstream & (0x0fc << j)))              /* flag or abort */  \
+                 goto flgabrt##j;                                              \
+         if ((bitstream & (0x1f8 << j)) == (0xf8 << j))   /* stuffed bit */    \
+                 goto stuff##j;                                                \
+   enditer##j:      ;                                                           \
+-})
++}
+ 
+ #define DECODEITERB(j)                                                                 \
+-({                                                                                     \
++{                                                                                      \
+   flgabrt##j:                                                                          \
+         if (!(notbitstream & (0x1fc << j))) {              /* abort received */        \
+                 state = 0;                                                             \
+@@ -659,7 +659,7 @@
+         numbits--;                                                                     \
+         bitbuf = (bitbuf & ((~0xff) << j)) | ((bitbuf & ~((~0xff) << j)) << 1);        \
+         goto enditer##j;                                                               \
+-})
++}
+         
+ static int receive(struct net_device *dev, int cnt)
+ {
