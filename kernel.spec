@@ -23,16 +23,15 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
-Source50:	%{name}-sparc.config
-Source51:	%{name}-sparc-smp.config
-Source60:	%{name}-sparc64.config
-Source61:	%{name}-sparc64-smp.config
-Source70:	%{name}-alpha.config
-Source71:	%{name}-alpha-smp.config
-Source73:	%{name}-ppc.config
-Source74:	%{name}-ppc-smp.config
-
-# New features
+#Source50:	%{name}-sparc.config
+#Source51:	%{name}-sparc-smp.config
+#Source60:	%{name}-sparc64.config
+#Source61:	%{name}-sparc64-smp.config
+#Source70:	%{name}-alpha.config
+#Source71:	%{name}-alpha-smp.config
+#Source73:	%{name}-ppc.config
+#Source74:	%{name}-ppc-smp.config
+Patch0:		%{name}-%{version}-complex.patch
 
 
 ExclusiveOS:	Linux
@@ -267,7 +266,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %prep
 %setup -q -n linux-%{version}
-
+%patch0 -p1 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
@@ -318,7 +317,6 @@ BuildKernel() {
 	echo "CONFIG_MK7=y" >> arch/%{base_arch}/defconfig
 %endif
 
-	fi
 %ifarch i386
 	mv -f arch/%{base_arch}/defconfig arch/%{base_arch}/defconfig.orig
 	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
@@ -378,9 +376,6 @@ KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
 rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
 
-# make drivers/scsi/ missing files
-	(cd drivers/scsi; make -f M)
-	
 # UP KERNEL
 %{!?_without_up:BuildKernel}
 
@@ -645,42 +640,33 @@ fi
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
 /lib/modules/%{version}-%{release}/kernel
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/pcmcia
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/scsi/pcmcia
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/pcmcia
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/*_cs.o*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/dtl1_cs.o*
-%ifnarch ppc
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/ide/ide-cs.o*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o*
-%endif
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
+#pcmcia stuff
+%exclude /lib/modules/%{version}-%{release}/kernel/*pcmcia*
+%exclude /lib/modules/%{version}-%{release}/kernel/*_cs.o*
+#drm stuff
+%exclude /lib/modules/%{version}-%{release}/kernel/tdfx.o
+%exclude /lib/modules/%{version}-%{release}/kernel/mga.o
+%exclude /lib/modules/%{version}-%{release}/kernel/i810.o
+%exclude /lib/modules/%{version}-%{release}/kernel/i830.o
+%exclude /lib/modules/%{version}-%{release}/kernel/radeon.o
+%exclude /lib/modules/%{version}-%{release}/kernel/r128.o
+
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
 
 %files pcmcia-cs
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
-/lib/modules/%{version}-%{release}/kernel/drivers/net/pcmcia
-/lib/modules/%{version}-%{release}/kernel/drivers/scsi/pcmcia
-/lib/modules/%{version}-%{release}/kernel/drivers/char/pcmcia
-/lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o*
-/lib/modules/%{version}-%{release}/kernel/drivers/parport/*_cs.o*
-/lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/dtl1_cs.o*
-%ifnarch ppc
-/lib/modules/%{version}-%{release}/kernel/drivers/ide/ide-cs.o*
-/lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
-/lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o*
-/lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o*
-%endif
+/lib/modules/%{version}-%{release}/kernel/*pcmcia*
+/lib/modules/%{version}-%{release}/kernel/*_cs.o*
 
 %files drm
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/drivers/char/drm
+/lib/modules/%{version}-%{release}/kernel/tdfx.o
+/lib/modules/%{version}-%{release}/kernel/mga.o
+/lib/modules/%{version}-%{release}/kernel/i810.o
+/lib/modules/%{version}-%{release}/kernel/i830.o
+/lib/modules/%{version}-%{release}/kernel/radeon.o
+/lib/modules/%{version}-%{release}/kernel/r128.o
 %endif			# %%{_without_up}
 
 %if %{?_without_smp:0}%{!?_without_smp:1}
@@ -693,42 +679,32 @@ fi
 /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
 /lib/modules/%{version}-%{release}smp/kernel
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/pcmcia
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/scsi/pcmcia
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/pcmcia
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.o*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/*_cs.o*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/dtl1_cs.o*
-%ifnarch ppc
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/ide-cs.o*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o*
-%endif
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
+#pcmcia stuff
+%exclude /lib/modules/%{version}-%{release}smp/kernel/*pcmcia*
+%exclude /lib/modules/%{version}-%{release}smp/kernel/*_cs.o*
+#drm stuff
+%exclude /lib/modules/%{version}-%{release}smp/kernel/tdfx.o
+%exclude /lib/modules/%{version}-%{release}smp/kernel/mga.o
+%exclude /lib/modules/%{version}-%{release}smp/kernel/i810.o
+%exclude /lib/modules/%{version}-%{release}smp/kernel/i830.o
+%exclude /lib/modules/%{version}-%{release}smp/kernel/radeon.o
+%exclude /lib/modules/%{version}-%{release}smp/kernel/r128.o
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
 
 %files -n kernel-smp-pcmcia-cs
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/net/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/scsi/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/char/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.o*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/parport/*_cs.o*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/dtl1_cs.o*
-%ifnarch ppc
-/lib/modules/%{version}-%{release}smp/kernel/drivers/ide/ide-cs.o*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/avmb1/avm_cs.o*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o*
-%endif
+/lib/modules/%{version}-%{release}smp/kernel/*pcmcia*
+/lib/modules/%{version}-%{release}smp/kernel/*_cs.o*
 
 %files -n kernel-smp-drm
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
+/lib/modules/%{version}-%{release}smp/kernel/tdfx.o
+/lib/modules/%{version}-%{release}smp/kernel/mga.o
+/lib/modules/%{version}-%{release}smp/kernel/i810.o
+/lib/modules/%{version}-%{release}smp/kernel/i830.o
+/lib/modules/%{version}-%{release}smp/kernel/radeon.o
+/lib/modules/%{version}-%{release}smp/kernel/r128.o
 %endif			# %%{_without_smp}
 
 %if %{?_without_boot:0}%{!?_without_boot:1}
@@ -761,22 +737,21 @@ fi
 %if %{?_without_source:0}%{!?_without_source:1}
 %files source
 %defattr(644,root,root,755)
-%{_prefix}/src/linux-%{version}/abi
 %{_prefix}/src/linux-%{version}/arch
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
-%{!?_without_grsec:%{_prefix}/src/linux-%{version}/grsecurity}
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
-%{_prefix}/src/linux-%{version}/kdb
 %{_prefix}/src/linux-%{version}/kernel
 %{_prefix}/src/linux-%{version}/lib
 %{_prefix}/src/linux-%{version}/mm
 %{_prefix}/src/linux-%{version}/net
 %{_prefix}/src/linux-%{version}/scripts
+%{_prefix}/src/linux-%{version}/sound
+%{_prefix}/src/linux-%{version}/security
+%{_prefix}/src/linux-%{version}/usr
 %{_prefix}/src/linux-%{version}/.config
-%{_prefix}/src/linux-%{version}/.depend
 %{_prefix}/src/linux-%{version}/.hdepend
 %{_prefix}/src/linux-%{version}/COPYING
 %{_prefix}/src/linux-%{version}/CREDITS
@@ -785,5 +760,4 @@ fi
 %{_prefix}/src/linux-%{version}/README
 %{_prefix}/src/linux-%{version}/REPORTING-BUGS
 %{_prefix}/src/linux-%{version}/Rules.make
-%{_prefix}/src/linux-%{version}/config*
 %endif
