@@ -472,14 +472,12 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch900 -p1
 %patch2 -p1
 %patch2000 -p1
-#%ifarch ppc
-#%patch908 -p1
-#%endif
+%ifarch ppc
+%patch908 -p1
+%endif
 %patch3 -p1
 %patch4 -p1
-%ifarch %{ix86} athlon
 %patch5 -p1
-%endif
 %patch904 -p1
 %{!?_without_grsec:%patch6 -p1}
 %ifarch ppc
