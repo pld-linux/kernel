@@ -1,7 +1,7 @@
-diff -uNr linux-2.4.18/Documentation/Configure.help pkt/Documentation/Configure.help
---- linux-2.4.18/Documentation/Configure.help	Mon Jul  8 23:47:08 2002
-+++ pkt/Documentation/Configure.help	Mon Jul 29 10:01:15 2002
-@@ -677,6 +677,27 @@
+diff -u -r -N ../../linus/2.4/linux/Documentation/Configure.help linux/Documentation/Configure.help
+--- ../../linus/2.4/linux/Documentation/Configure.help	Tue Aug  6 21:13:55 2002
++++ linux/Documentation/Configure.help	Tue Aug  6 21:21:50 2002
+@@ -694,6 +694,27 @@
    say M here and read <file:Documentation/modules.txt>.  The module
    will be called ide-cd.o.
  
@@ -29,10 +29,10 @@ diff -uNr linux-2.4.18/Documentation/Configure.help pkt/Documentation/Configure.
  Include IDE/ATAPI TAPE support
  CONFIG_BLK_DEV_IDETAPE
    If you have an IDE tape drive using the ATAPI protocol, say Y.
-diff -uNr linux-2.4.18/arch/sparc64/kernel/ioctl32.c pkt/arch/sparc64/kernel/ioctl32.c
---- linux-2.4.18/arch/sparc64/kernel/ioctl32.c	Mon Feb 25 20:37:56 2002
-+++ pkt/arch/sparc64/kernel/ioctl32.c	Mon Jul 29 09:10:29 2002
-@@ -88,6 +88,7 @@
+diff -u -r -N ../../linus/2.4/linux/arch/sparc64/kernel/ioctl32.c linux/arch/sparc64/kernel/ioctl32.c
+--- ../../linus/2.4/linux/arch/sparc64/kernel/ioctl32.c	Tue Aug  6 21:14:27 2002
++++ linux/arch/sparc64/kernel/ioctl32.c	Tue Aug  6 21:22:04 2002
+@@ -90,6 +90,7 @@
  #include <linux/atm_tcp.h>
  #include <linux/sonet.h>
  #include <linux/atm_suni.h>
@@ -40,7 +40,7 @@ diff -uNr linux-2.4.18/arch/sparc64/kernel/ioctl32.c pkt/arch/sparc64/kernel/ioc
  #include <linux/mtd/mtd.h>
  
  #include <net/bluetooth/bluetooth.h>
-@@ -846,6 +847,41 @@
+@@ -849,6 +850,41 @@
  	return ret;
  }
  
@@ -82,10 +82,10 @@ diff -uNr linux-2.4.18/arch/sparc64/kernel/ioctl32.c pkt/arch/sparc64/kernel/ioc
  struct hd_geometry32 {
  	unsigned char heads;
  	unsigned char sectors;
-@@ -4529,6 +4565,12 @@
- COMPATIBLE_IOCTL(WIOCSTART)
- COMPATIBLE_IOCTL(WIOCSTOP)
- COMPATIBLE_IOCTL(WIOCGSTAT)
+@@ -4553,6 +4589,12 @@
+ COMPATIBLE_IOCTL(RNDADDENTROPY)
+ COMPATIBLE_IOCTL(RNDZAPENTCNT)
+ COMPATIBLE_IOCTL(RNDCLEARPOOL)
 +/* Big X, CDRW Packet Driver */
 +#if defined(CONFIG_CDROM_PKTCDVD)
 +COMPATIBLE_IOCTL(PACKET_SETUP_DEV)
@@ -95,55 +95,36 @@ diff -uNr linux-2.4.18/arch/sparc64/kernel/ioctl32.c pkt/arch/sparc64/kernel/ioc
  /* Bluetooth ioctls */
  COMPATIBLE_IOCTL(HCIDEVUP)
  COMPATIBLE_IOCTL(HCIDEVDOWN)
-diff -uNr linux-2.4.18/drivers/block/Config.in pkt/drivers/block/Config.in
---- linux-2.4.18/drivers/block/Config.in	Fri Sep 14 23:04:06 2001
-+++ pkt/drivers/block/Config.in	Mon Jul 29 09:10:29 2002
-@@ -37,6 +37,12 @@
- dep_tristate 'Compaq Smart Array 5xxx support' CONFIG_BLK_CPQ_CISS_DA $CONFIG_PCI 
+diff -u -r -N ../../linus/2.4/linux/drivers/block/Config.in linux/drivers/block/Config.in
+--- ../../linus/2.4/linux/drivers/block/Config.in	Tue Aug  6 21:14:34 2002
++++ linux/drivers/block/Config.in	Tue Aug  6 21:22:08 2002
+@@ -39,6 +39,11 @@
  dep_tristate 'Mylex DAC960/DAC1100 PCI RAID Controller support' CONFIG_BLK_DEV_DAC960 $CONFIG_PCI
+ dep_tristate 'Micro Memory MM5415 Battery Backed RAM support' CONFIG_BLK_DEV_UMEM $CONFIG_PCI $CONFIG_EXPERIMENTAL
  
 +tristate 'Packet writing on CD/DVD media' CONFIG_CDROM_PKTCDVD
 +if [ "$CONFIG_CDROM_PKTCDVD" != "n" ]; then
-+    comment 'Use write caching at YOUR OWN RISK'
 +    bool '   Enable write caching' CONFIG_CDROM_PKTCDVD_WCACHE n
 +fi
 +   
  tristate 'Loopback device support' CONFIG_BLK_DEV_LOOP
  dep_tristate 'Network block device support' CONFIG_BLK_DEV_NBD $CONFIG_NET
  
-diff -uNr linux-2.4.18/drivers/block/Makefile pkt/drivers/block/Makefile
---- linux-2.4.18/drivers/block/Makefile	Mon Feb 25 20:37:57 2002
-+++ pkt/drivers/block/Makefile	Mon Jul 29 09:10:29 2002
-@@ -10,7 +10,7 @@
- 
- O_TARGET := block.o
- 
--export-objs	:= ll_rw_blk.o blkpg.o loop.o DAC960.o genhd.o
-+export-objs	:= ll_rw_blk.o blkpg.o loop.o DAC960.o genhd.o elevator.o
- 
- obj-y	:= ll_rw_blk.o blkpg.o genhd.o elevator.o
- 
-@@ -29,6 +29,7 @@
- obj-$(CONFIG_BLK_CPQ_DA)	+= cpqarray.o
- obj-$(CONFIG_BLK_CPQ_CISS_DA)  += cciss.o
+diff -u -r -N ../../linus/2.4/linux/drivers/block/Makefile linux/drivers/block/Makefile
+--- ../../linus/2.4/linux/drivers/block/Makefile	Tue Aug  6 21:14:34 2002
++++ linux/drivers/block/Makefile	Tue Aug  6 21:22:08 2002
+@@ -31,6 +31,7 @@
  obj-$(CONFIG_BLK_DEV_DAC960)	+= DAC960.o
+ obj-$(CONFIG_BLK_DEV_UMEM)	+= umem.o
+ obj-$(CONFIG_BLK_DEV_NBD)	+= nbd.o
 +obj-$(CONFIG_CDROM_PKTCDVD)	+= pktcdvd.o
  
- obj-$(CONFIG_BLK_DEV_NBD)	+= nbd.o
+ subdir-$(CONFIG_PARIDE) += paride
  
-diff -uNr linux-2.4.18/drivers/block/elevator.c pkt/drivers/block/elevator.c
---- linux-2.4.18/drivers/block/elevator.c	Fri Jul 20 05:59:41 2001
-+++ pkt/drivers/block/elevator.c	Mon Jul 29 09:10:29 2002
-@@ -220,3 +220,5 @@
- 	*elevator = type;
- 	elevator->queue_ID = queue_ID++;
- }
-+
-+EXPORT_SYMBOL(elevator_init);
-diff -uNr linux-2.4.18/drivers/block/ll_rw_blk.c pkt/drivers/block/ll_rw_blk.c
---- linux-2.4.18/drivers/block/ll_rw_blk.c	Mon Jul  8 23:42:05 2002
-+++ pkt/drivers/block/ll_rw_blk.c	Mon Jul 29 09:10:29 2002
-@@ -834,6 +834,7 @@
+diff -u -r -N ../../linus/2.4/linux/drivers/block/ll_rw_blk.c linux/drivers/block/ll_rw_blk.c
+--- ../../linus/2.4/linux/drivers/block/ll_rw_blk.c	Tue Aug  6 21:14:34 2002
++++ linux/drivers/block/ll_rw_blk.c	Tue Aug  6 21:22:08 2002
+@@ -1046,6 +1046,7 @@
  	/* Test device size, when known. */
  	if (blk_size[major])
  		minorsize = blk_size[major][MINOR(bh->b_rdev)];
@@ -151,7 +132,7 @@ diff -uNr linux-2.4.18/drivers/block/ll_rw_blk.c pkt/drivers/block/ll_rw_blk.c
  	if (minorsize) {
  		unsigned long maxsector = (minorsize << 1) + 1;
  		unsigned long sector = bh->b_rsector;
-@@ -857,6 +858,7 @@
+@@ -1069,6 +1070,7 @@
  			return;
  		}
  	}
@@ -159,10 +140,21 @@ diff -uNr linux-2.4.18/drivers/block/ll_rw_blk.c pkt/drivers/block/ll_rw_blk.c
  
  	/*
  	 * Resolve the mapping until finished. (drivers are
-diff -uNr linux-2.4.18/drivers/block/pktcdvd.c pkt/drivers/block/pktcdvd.c
---- linux-2.4.18/drivers/block/pktcdvd.c	Thu Jan  1 01:00:00 1970
-+++ pkt/drivers/block/pktcdvd.c	Mon Jul 29 09:10:29 2002
-@@ -0,0 +1,2570 @@
+@@ -1270,8 +1272,8 @@
+ 
+ 	req->errors = 0;
+ 	if (!uptodate)
+-		printk("end_request: I/O error, dev %s (%s), sector %lu\n",
+-			kdevname(req->rq_dev), name, req->sector);
++		printk("end_request: I/O error, cmd %d dev %s (%s), sector %lu\n",
++			req->cmd, kdevname(req->rq_dev), name, req->sector);
+ 
+ 	if ((bh = req->bh) != NULL) {
+ 		nsect = bh->b_size >> 9;
+diff -u -r -N ../../linus/2.4/linux/drivers/block/pktcdvd.c linux/drivers/block/pktcdvd.c
+--- ../../linus/2.4/linux/drivers/block/pktcdvd.c	Thu Jan  1 01:00:00 1970
++++ linux/drivers/block/pktcdvd.c	Thu Aug  8 20:44:32 2002
+@@ -0,0 +1,2524 @@
 +/*
 + * Copyright (C) 2000 Jens Axboe <axboe@suse.de>
 + *
@@ -470,6 +462,70 @@ diff -uNr linux-2.4.18/drivers/block/pktcdvd.c pkt/drivers/block/pktcdvd.c
 +	return i;
 +}
 +
++/*
++ * These functions manage a simple pool of buffer_heads.
++ */
++static struct buffer_head *pkt_get_stacked_bh(struct pktcdvd_device *pd)
++{
++	unsigned long flags;
++	struct buffer_head *bh;
++
++	spin_lock_irqsave(&pd->lock, flags);
++	bh = pd->stacked_bhlist;
++	if (bh) {
++		pd->stacked_bhlist = bh->b_next;
++		bh->b_next = NULL;
++		pd->stacked_bhcnt--;
++		BUG_ON(pd->stacked_bhcnt < 0);
++	}
++	spin_unlock_irqrestore(&pd->lock, flags);
++
++	return bh;
++}
++
++static void pkt_put_stacked_bh(struct pktcdvd_device *pd, struct buffer_head *bh)
++{
++	unsigned long flags;
++
++	spin_lock_irqsave(&pd->lock, flags);
++	if (pd->stacked_bhcnt < STACKED_BH_POOL_SIZE) {
++		bh->b_next = pd->stacked_bhlist;
++		pd->stacked_bhlist = bh;
++		pd->stacked_bhcnt++;
++		bh = NULL;
++	}
++	spin_unlock_irqrestore(&pd->lock, flags);
++	if (bh) {
++		kmem_cache_free(bh_cachep, bh);
++	}
++}
++
++static void pkt_shrink_stacked_bhlist(struct pktcdvd_device *pd)
++{
++	struct buffer_head *bh;
++
++	while ((bh = pkt_get_stacked_bh(pd)) != NULL) {
++		kmem_cache_free(bh_cachep, bh);
++	}
++}
++
++static int pkt_grow_stacked_bhlist(struct pktcdvd_device *pd)
++{
++	struct buffer_head *bh;
++	int i;
++
++	for (i = 0; i < STACKED_BH_POOL_SIZE; i++) {
++		bh = kmem_cache_alloc(bh_cachep, GFP_KERNEL);
++		if (!bh) {
++			pkt_shrink_stacked_bhlist(pd);
++			return 0;
++		}
++		pkt_put_stacked_bh(pd, bh);
++	}
++	return 1;
++}
++
++
 +static request_queue_t *pkt_get_queue(kdev_t dev)
 +{
 +	struct pktcdvd_device *pd = pkt_find_dev(dev);
@@ -580,72 +636,6 @@ diff -uNr linux-2.4.18/drivers/block/pktcdvd.c pkt/drivers/block/pktcdvd.c
 +	mark_buffer_uptodate(bh, uptodate);
 +	unlock_buffer(bh);
 +}
-+
-+#if 0
-+static struct buffer_head *pkt_get_page_hash(unsigned long block)
-+{
-+	struct inode *inode = pkt->pkt_dentry->d_inode;
-+	struct address_space *mapping;
-+	struct buffer_head *bh;
-+	unsigned long index, b;
-+	struct page *page;
-+	int i;
-+
-+	if (!inode) {
-+		printk("pktcdvd: sorry, no inode\n");
-+		return NULL;
-+	}
-+	if (!inode->i_sb) {
-+		printk("pktcdvd: sorry no i_sb\n");
-+		return NULL;
-+	}
-+
-+	mapping = inode->i_mapping;
-+	if (!mapping) {
-+		printk("pktcdvd: sorry no mapping\n");
-+		return NULL;
-+	}
-+
-+	index = block >> (PAGE_CACHE_SHIFT - inode->i_sb->s_blocksize_bits);
-+	page = grab_cache_page(mapping, index);
-+	if (!page) {
-+		printk("pktcdvd: sorry no page found\n");
-+		return NULL;
-+	}
-+
-+	if (!PageLocked(page))
-+		BUG();
-+
-+	if (!page->buffers)
-+		create_empty_buffer(page, inode->i_dev, inode->i_sb->s_blocksize);
-+
-+	i = 0;
-+	b = block;
-+	bh = page->buffers;
-+	do {
-+		if (!buffer_mapped(bh)) {
-+			if (get_block(inode, b, bh, 1))
-+				goto err;
-+
-+			if (buffer_new(bh))
-+				unmap_underlying_metadata(bh);
-+		}
-+		bh = bh->b_this_page;
-+		b++;
-+	} while (bh != page->buffers);
-+
-+	lock_buffer(bh);
-+	bh->b_end_io = pkt_end_io_write_page;
-+	atomic_inc(&bh->b_count);
-+	set_bit(BH_Uptodate, &bh->b_state);
-+	clear_bit(BH_Dirty, &bh->b_state);
-+	return bh;
-+err:
-+	ClearPageUptodate(page);
-+	UnlockPage(page);
-+	return NULL;
-+}
-+#endif
 +
 +/*
 + * if the buffer is already in the buffer cache, grab it if we can lock
@@ -810,8 +800,8 @@ diff -uNr linux-2.4.18/drivers/block/pktcdvd.c pkt/drivers/block/pktcdvd.c
 +
 +	__pkt_end_io_write(pd, bh, uptodate);
 +	rbh->b_end_io(rbh, uptodate);
-+	kmem_cache_free(bh_cachep, bh);
-+	atomic_dec(&pd->bhcnt);
++	pkt_put_stacked_bh(pd, bh);
++	wake_up(&pd_bh_wait);
 +}
 +
 +static int pkt_init_rq(struct pktcdvd_device *pd, struct request *rq)
@@ -1898,57 +1888,6 @@ diff -uNr linux-2.4.18/drivers/block/pktcdvd.c pkt/drivers/block/pktcdvd.c
 +	return 0;
 +}
 +
-+#if 0
-+static int pkt_track_capacity(struct pktcdvd_device *pd)
-+{
-+	disc_information di;
-+	track_information ti;
-+	int l_track, i, ret;
-+	unsigned long size = 0;
-+
-+	memset(&di, 0, sizeof(disc_information));
-+	memset(&ti, 0, sizeof(track_information));
-+
-+	if ((ret = cdrom_get_disc_info(pd->dev, &di))) {
-+		DPRINTK("failed get_disc\n");
-+		return ret;
-+	}
-+
-+	l_track = di.last_track_lsb | di.last_track_msb >> 8;
-+	DPRINTK("pktcdvd: last track %d\n", l_track);
-+	for (i = di.n_first_track; i <= l_track; i++) {
-+		if ((ret = cdrom_get_track_info(pd->dev, i, 1, &ti))) {
-+			DPRINTK("pktcdvd: failed get_track\n");
-+			return ret;
-+		}
-+		size += be32_to_cpu(ti.track_size);
-+	}
-+	pkt_sizes[MINOR(pd->pkt_dev)] = size << 1;
-+	return 0;
-+}
-+
-+static int pkt_set_capacity(struct pktcdvd_device *pd)
-+{
-+	struct cdrom_generic_command cgc;
-+	struct cdrom_device_info *cdi = pd->cdi;
-+	struct cdvd_capacity cap;
-+	int ret;
-+
-+	init_cdrom_command(&cgc, &cap, sizeof(cap));
-+	cgc.cmd[0] = GPCMD_READ_CDVD_CAPACITY;
-+	if ((ret = cdi->ops->generic_packet(cdi, &cgc)))
-+		return ret;
-+
-+	/*
-+	 * We should probably give up if read capacity fails, since then
-+	 * then disc is not ready to be written to -- for now I use
-+	 * raw devices and this is fine.
-+	 */
-+	pkt_sizes[MINOR(pd->pkt_dev)] = be32_to_cpu(cap.lba) << 1;
-+	return 0;
-+}
-+#endif
-+
 +static int pkt_open_write(struct pktcdvd_device *pd)
 +{
 +	int ret;
@@ -2192,7 +2131,6 @@ diff -uNr linux-2.4.18/drivers/block/pktcdvd.c pkt/drivers/block/pktcdvd.c
 +{
 +	struct pktcdvd_device *pd;
 +	struct buffer_head *new_bh;
-+	int pending;
 +
 +	if (MINOR(bh->b_rdev) >= MAX_WRITERS) {
 +		printk("pktcdvd: %s out of range\n", kdevname(bh->b_rdev));
@@ -2235,22 +2173,28 @@ diff -uNr linux-2.4.18/drivers/block/pktcdvd.c pkt/drivers/block/pktcdvd.c
 +	}
 +
 +	/*
-+	 * should be deadlock safe, since if we end up sleeping progress
-+	 * is guaranteed (there are pd->bhcnt buffers in flight)
++	 * This is deadlock safe, since pkt_get_stacked_bh can only
++	 * fail if there are already buffers in flight for this
++	 * packet device. When the in-flight buffers finish, we
++	 * will be woken up and try again.
 +	 */
-+	do {
-+		new_bh = kmem_cache_alloc(bh_cachep, GFP_NOIO);
-+		if (new_bh)
-+			break;
++	new_bh = kmem_cache_alloc(bh_cachep, GFP_ATOMIC);
++	while (!new_bh) {
++		DECLARE_WAITQUEUE(wait, current);
 +
-+		pending = atomic_read(&pd->bhcnt) - 8 * PACKET_MAX_SIZE;
-+		if (pending < 0)
-+			pending = 0;
++		generic_unplug_device(q);
 +
-+		wait_event(pd_bh_wait, atomic_read(&pd->bhcnt) <= pending);
-+	} while (1);
++		add_wait_queue(&pd_bh_wait, &wait);
++		set_current_state(TASK_UNINTERRUPTIBLE);
 +
-+	atomic_inc(&pd->bhcnt);
++		new_bh = pkt_get_stacked_bh(pd);
++		if (!new_bh)
++			schedule();
++
++		set_current_state(TASK_RUNNING);
++		remove_wait_queue(&pd_bh_wait, &wait);
++	}
++
 +	new_bh->b_size = bh->b_size;
 +	new_bh->b_list = PKT_BUF_LIST + 1;
 +	new_bh->b_dev = bh->b_dev;
@@ -2425,11 +2369,7 @@ diff -uNr linux-2.4.18/drivers/block/pktcdvd.c pkt/drivers/block/pktcdvd.c
 +	for (i = 0; i < MAX_WRITERS; i++)
 +		if (pd == &pkt_devs[i])
 +			break;
-+
-+	if (i == MAX_WRITERS) {
-+		printk("pktcdvd: max %d writers supported\n", MAX_WRITERS);
-+		return -ENXIO;
-+	}
++	BUG_ON(i == MAX_WRITERS);
 +
 +	cdi = cdrom_find_device(dev);
 +	if (cdi == NULL) {
@@ -2449,6 +2389,13 @@ diff -uNr linux-2.4.18/drivers/block/pktcdvd.c pkt/drivers/block/pktcdvd.c
 +		return -ENOMEM;
 +	}
 +
++	pd->stacked_bhcnt = 0;
++	if (!pkt_grow_stacked_bhlist(pd)) {
++		MOD_DEC_USE_COUNT;
++		printk("pktcdvd: not enough memory for buffer heads\n");
++		return -ENOMEM;
++	}
++
 +	set_blocksize(dev, CD_FRAMESIZE);
 +	pd->cdi = cdi;
 +	pd->dev = dev;
@@ -2457,7 +2404,6 @@ diff -uNr linux-2.4.18/drivers/block/pktcdvd.c pkt/drivers/block/pktcdvd.c
 +	sprintf(pd->name, "pktcdvd%d", i);
 +	atomic_set(&pd->refcnt, 0);
 +	atomic_set(&pd->wrqcnt, 0);
-+	atomic_set(&pd->bhcnt, 0);
 +	init_MUTEX(&pd->cache_sync_mutex);
 +	pd->unflushed_writes = 0;
 +	init_waitqueue_head(&pd->wqueue);
@@ -2468,19 +2414,18 @@ diff -uNr linux-2.4.18/drivers/block/pktcdvd.c pkt/drivers/block/pktcdvd.c
 +	 * scatter-gather tables)
 +	 */
 +	q = blk_get_queue(dev);
-+	spin_lock_irq(&io_request_lock);
 +	pkt_init_queue(pd);
 +	pd->cdrw.front_merge_fn = q->front_merge_fn;
 +	pd->cdrw.back_merge_fn = q->back_merge_fn;
 +	pd->cdrw.merge_requests_fn = q->merge_requests_fn;
 +	pd->cdrw.queuedata = q->queuedata;
-+	spin_unlock_irq(&io_request_lock);
 +
 +	pd->cdrw.pid = kernel_thread(kcdrwd, pd, CLONE_FS | CLONE_FILES | CLONE_SIGHAND);
 +	if (pd->cdrw.pid < 0) {
 +		MOD_DEC_USE_COUNT;
 +		printk("pktcdvd: can't start kernel thread\n");
 +		blk_cleanup_queue(&pd->cdrw.r_queue);
++		pkt_shrink_stacked_bhlist(pd);
 +		pkt_shrink_bhlist(pd, PACKET_MAX_SIZE);
 +		memset(pd, 0, sizeof(*pd));
 +		return -EBUSY;
@@ -2550,6 +2495,7 @@ diff -uNr linux-2.4.18/drivers/block/pktcdvd.c pkt/drivers/block/pktcdvd.c
 +	 */
 +	invalidate_device(pd->pkt_dev, 1);
 +
++	pkt_shrink_stacked_bhlist(pd);
 +	if ((ret = pkt_shrink_bhlist(pd, PACKET_MAX_SIZE)) != PACKET_MAX_SIZE)
 +		printk("pktcdvd: leaked %d buffers\n", PACKET_MAX_SIZE - ret);
 +
@@ -2588,12 +2534,12 @@ diff -uNr linux-2.4.18/drivers/block/pktcdvd.c pkt/drivers/block/pktcdvd.c
 +		break;
 +
 +	case PACKET_SETUP_DEV:
++		if (!capable(CAP_SYS_ADMIN))
++			return -EPERM;
 +		if (pd->dev) {
 +			printk("pktcdvd: dev already setup\n");
 +			return -EBUSY;
 +		}
-+		if (!capable(CAP_SYS_ADMIN))
-+			return -EPERM;
 +		return pkt_setup_dev(pd, arg);
 +
 +	case PACKET_TEARDOWN_DEV:
@@ -2733,9 +2679,9 @@ diff -uNr linux-2.4.18/drivers/block/pktcdvd.c pkt/drivers/block/pktcdvd.c
 +
 +module_init(pkt_init);
 +module_exit(pkt_exit);
-diff -uNr linux-2.4.18/drivers/cdrom/Makefile pkt/drivers/cdrom/Makefile
---- linux-2.4.18/drivers/cdrom/Makefile	Fri Dec 29 23:07:21 2000
-+++ pkt/drivers/cdrom/Makefile	Mon Jul 29 09:10:29 2002
+diff -u -r -N ../../linus/2.4/linux/drivers/cdrom/Makefile linux/drivers/cdrom/Makefile
+--- ../../linus/2.4/linux/drivers/cdrom/Makefile	Tue Aug  6 21:14:34 2002
++++ linux/drivers/cdrom/Makefile	Tue Aug  6 21:22:09 2002
 @@ -27,6 +27,7 @@
  obj-$(CONFIG_BLK_DEV_IDECD)	+=              cdrom.o
  obj-$(CONFIG_BLK_DEV_SR)	+=              cdrom.o
@@ -2744,9 +2690,9 @@ diff -uNr linux-2.4.18/drivers/cdrom/Makefile pkt/drivers/cdrom/Makefile
  
  obj-$(CONFIG_AZTCD)		+= aztcd.o
  obj-$(CONFIG_CDU31A)		+= cdu31a.o     cdrom.o
-diff -uNr linux-2.4.18/drivers/ide/ide-cd.c pkt/drivers/ide/ide-cd.c
---- linux-2.4.18/drivers/ide/ide-cd.c	Mon Jul  8 23:42:05 2002
-+++ pkt/drivers/ide/ide-cd.c	Mon Jul 29 09:10:30 2002
+diff -u -r -N ../../linus/2.4/linux/drivers/ide/ide-cd.c linux/drivers/ide/ide-cd.c
+--- ../../linus/2.4/linux/drivers/ide/ide-cd.c	Tue Aug  6 21:14:39 2002
++++ linux/drivers/ide/ide-cd.c	Tue Aug  6 21:22:36 2002
 @@ -292,9 +292,11 @@
   *			  correctly reporting tray status -- from
   *			  Michael D Johnson <johnsom@orst.edu>
@@ -2800,7 +2746,7 @@ diff -uNr linux-2.4.18/drivers/ide/ide-cd.c pkt/drivers/ide/ide-cd.c
  }
  
  
-@@ -2683,15 +2693,10 @@
+@@ -2685,15 +2695,10 @@
  		printk(" %dX", CDROM_CONFIG_FLAGS(drive)->max_speed);
  	printk(" %s", CDROM_CONFIG_FLAGS(drive)->dvd ? "DVD-ROM" : "CD-ROM");
  
@@ -2820,7 +2766,7 @@ diff -uNr linux-2.4.18/drivers/ide/ide-cd.c pkt/drivers/ide/ide-cd.c
  
          if (CDROM_CONFIG_FLAGS (drive)->is_changer) 
          	printk (" changer w/%d slots", nslots);
-@@ -2714,7 +2719,7 @@
+@@ -2716,7 +2721,7 @@
  	int major = HWIF(drive)->major;
  	int minor = drive->select.b.unit << PARTN_BITS;
  
@@ -2829,7 +2775,7 @@ diff -uNr linux-2.4.18/drivers/ide/ide-cd.c pkt/drivers/ide/ide-cd.c
  	ide_add_setting(drive,	"file_readahead",	SETTING_RW, BLKFRAGET, BLKFRASET, TYPE_INTA, 0, INT_MAX, 1, 1024, &max_readahead[major][minor],	NULL);
  	ide_add_setting(drive,	"max_kb_per_request",	SETTING_RW, BLKSECTGET, BLKSECTSET, TYPE_INTA, 1, 255, 1, 2, &max_sectors[major][minor], NULL);
  	ide_add_setting(drive,	"dsc_overlap",		SETTING_RW, -1, -1, TYPE_BYTE, 0, 1, 1,	1, &drive->dsc_overlap, NULL);
-@@ -2731,7 +2736,7 @@
+@@ -2733,7 +2738,7 @@
  	/*
  	 * default to read-only always and fix latter at the bottom
  	 */
@@ -2838,9 +2784,9 @@ diff -uNr linux-2.4.18/drivers/ide/ide-cd.c pkt/drivers/ide/ide-cd.c
  	set_blocksize(MKDEV(HWIF(drive)->major, minor), CD_FRAMESIZE);
  
  	drive->special.all	= 0;
-diff -uNr linux-2.4.18/drivers/scsi/Config.in pkt/drivers/scsi/Config.in
---- linux-2.4.18/drivers/scsi/Config.in	Mon Jul  8 23:42:06 2002
-+++ pkt/drivers/scsi/Config.in	Mon Jul 29 09:10:30 2002
+diff -u -r -N ../../linus/2.4/linux/drivers/scsi/Config.in linux/drivers/scsi/Config.in
+--- ../../linus/2.4/linux/drivers/scsi/Config.in	Tue Aug  6 21:15:02 2002
++++ linux/drivers/scsi/Config.in	Tue Aug  6 21:23:16 2002
 @@ -20,10 +20,6 @@
  
  comment 'Some SCSI devices (e.g. CD jukebox) support multiple LUNs'
@@ -2852,9 +2798,9 @@ diff -uNr linux-2.4.18/drivers/scsi/Config.in pkt/drivers/scsi/Config.in
  bool '  Probe all LUNs on each SCSI device' CONFIG_SCSI_MULTI_LUN
    
  bool '  Verbose SCSI error reporting (kernel size +=12K)' CONFIG_SCSI_CONSTANTS
-diff -uNr linux-2.4.18/drivers/scsi/scsi_merge.c pkt/drivers/scsi/scsi_merge.c
---- linux-2.4.18/drivers/scsi/scsi_merge.c	Mon Jul  8 23:42:04 2002
-+++ pkt/drivers/scsi/scsi_merge.c	Mon Jul 29 09:10:30 2002
+diff -u -r -N ../../linus/2.4/linux/drivers/scsi/scsi_merge.c linux/drivers/scsi/scsi_merge.c
+--- ../../linus/2.4/linux/drivers/scsi/scsi_merge.c	Tue Aug  6 21:15:21 2002
++++ linux/drivers/scsi/scsi_merge.c	Tue Aug  6 21:23:18 2002
 @@ -71,11 +71,6 @@
   */
  #define DMA_SEGMENT_SIZE_LIMITED
@@ -2929,9 +2875,9 @@ diff -uNr linux-2.4.18/drivers/scsi/scsi_merge.c pkt/drivers/scsi/scsi_merge.c
  	}
  	if (!dma_host) {
  		return 1;
-diff -uNr linux-2.4.18/drivers/scsi/sr.c pkt/drivers/scsi/sr.c
---- linux-2.4.18/drivers/scsi/sr.c	Mon Feb 25 20:38:04 2002
-+++ pkt/drivers/scsi/sr.c	Mon Jul 29 09:10:30 2002
+diff -u -r -N ../../linus/2.4/linux/drivers/scsi/sr.c linux/drivers/scsi/sr.c
+--- ../../linus/2.4/linux/drivers/scsi/sr.c	Tue Aug  6 21:15:22 2002
++++ linux/drivers/scsi/sr.c	Tue Aug  6 21:23:18 2002
 @@ -28,12 +28,16 @@
   *       Modified by Jens Axboe <axboe@suse.de> - support DVD-RAM
   *	 transparently and loose the GHOST hack
@@ -2949,7 +2895,7 @@ diff -uNr linux-2.4.18/drivers/scsi/sr.c pkt/drivers/scsi/sr.c
  
  #include <linux/fs.h>
  #include <linux/kernel.h>
-@@ -696,7 +700,7 @@
+@@ -716,7 +720,7 @@
  	cmd[2] = 0x2a;
  	cmd[4] = 128;
  	cmd[3] = cmd[5] = 0;
@@ -2958,7 +2904,7 @@ diff -uNr linux-2.4.18/drivers/scsi/sr.c pkt/drivers/scsi/sr.c
  
  	if (rc) {
  		/* failed, drive doesn't have capabilities mode page */
-@@ -728,16 +732,13 @@
+@@ -748,16 +752,13 @@
  	if ((buffer[n + 2] & 0x8) == 0)
  		/* not a DVD drive */
  		scsi_CDs[i].cdi.mask |= CDC_DVD;
@@ -2977,7 +2923,7 @@ diff -uNr linux-2.4.18/drivers/scsi/sr.c pkt/drivers/scsi/sr.c
  		/* can't write CD-RW media */
  		scsi_CDs[i].cdi.mask |= CDC_CD_RW;
  	if ((buffer[n + 3] & 0x1) == 0)
-@@ -757,6 +758,10 @@
+@@ -777,6 +778,10 @@
  	/*else    I don't think it can close its tray
  	   scsi_CDs[i].cdi.mask |= CDC_CLOSE_TRAY; */
  
@@ -2988,7 +2934,7 @@ diff -uNr linux-2.4.18/drivers/scsi/sr.c pkt/drivers/scsi/sr.c
  	scsi_free(buffer, 512);
  }
  
-@@ -772,7 +777,10 @@
+@@ -792,7 +797,10 @@
  	if (device->scsi_level <= SCSI_2)
  		cgc->cmd[1] |= device->lun << 5;
  
@@ -3000,9 +2946,9 @@ diff -uNr linux-2.4.18/drivers/scsi/sr.c pkt/drivers/scsi/sr.c
  
  	return cgc->stat;
  }
-diff -uNr linux-2.4.18/drivers/scsi/sr.h pkt/drivers/scsi/sr.h
---- linux-2.4.18/drivers/scsi/sr.h	Tue Jul  9 00:38:01 2002
-+++ pkt/drivers/scsi/sr.h	Mon Jul 29 09:10:30 2002
+diff -u -r -N ../../linus/2.4/linux/drivers/scsi/sr.h linux/drivers/scsi/sr.h
+--- ../../linus/2.4/linux/drivers/scsi/sr.h	Tue Aug  6 21:15:22 2002
++++ linux/drivers/scsi/sr.h	Tue Aug  6 21:23:18 2002
 @@ -36,7 +36,7 @@
  
  extern Scsi_CD *scsi_CDs;
@@ -3012,9 +2958,9 @@ diff -uNr linux-2.4.18/drivers/scsi/sr.h pkt/drivers/scsi/sr.h
  
  int sr_lock_door(struct cdrom_device_info *, int);
  int sr_tray_move(struct cdrom_device_info *, int);
-diff -uNr linux-2.4.18/drivers/scsi/sr_ioctl.c pkt/drivers/scsi/sr_ioctl.c
---- linux-2.4.18/drivers/scsi/sr_ioctl.c	Mon Oct 15 22:27:42 2001
-+++ pkt/drivers/scsi/sr_ioctl.c	Mon Jul 29 09:10:30 2002
+diff -u -r -N ../../linus/2.4/linux/drivers/scsi/sr_ioctl.c linux/drivers/scsi/sr_ioctl.c
+--- ../../linus/2.4/linux/drivers/scsi/sr_ioctl.c	Tue Aug  6 21:15:22 2002
++++ linux/drivers/scsi/sr_ioctl.c	Tue Aug  6 21:23:18 2002
 @@ -68,14 +68,14 @@
  	sr_cmd[6] = trk1_te.cdte_addr.msf.minute;
  	sr_cmd[7] = trk1_te.cdte_addr.msf.second;
@@ -3122,9 +3068,9 @@ diff -uNr linux-2.4.18/drivers/scsi/sr_ioctl.c pkt/drivers/scsi/sr_ioctl.c
  
  	return rc;
  }
-diff -uNr linux-2.4.18/drivers/scsi/sr_vendor.c pkt/drivers/scsi/sr_vendor.c
---- linux-2.4.18/drivers/scsi/sr_vendor.c	Thu Jul  5 20:28:17 2001
-+++ pkt/drivers/scsi/sr_vendor.c	Mon Jul 29 09:10:30 2002
+diff -u -r -N ../../linus/2.4/linux/drivers/scsi/sr_vendor.c linux/drivers/scsi/sr_vendor.c
+--- ../../linus/2.4/linux/drivers/scsi/sr_vendor.c	Tue Aug  6 21:15:22 2002
++++ linux/drivers/scsi/sr_vendor.c	Tue Aug  6 21:23:18 2002
 @@ -60,6 +60,8 @@
  
  #define VENDOR_ID (scsi_CDs[minor].vendor)
@@ -3188,9 +3134,1826 @@ diff -uNr linux-2.4.18/drivers/scsi/sr_vendor.c pkt/drivers/scsi/sr_vendor.c
  		if (rc != 0) {
  			break;
  		}
-diff -uNr linux-2.4.18/include/linux/cdrom.h pkt/include/linux/cdrom.h
---- linux-2.4.18/include/linux/cdrom.h	Tue Jul  9 00:40:52 2002
-+++ pkt/include/linux/cdrom.h	Mon Jul 29 09:03:07 2002
+diff -u -r -N ../../linus/2.4/linux/fs/udf/balloc.c linux/fs/udf/balloc.c
+--- ../../linus/2.4/linux/fs/udf/balloc.c	Tue Aug  6 21:16:21 2002
++++ linux/fs/udf/balloc.c	Thu Aug  8 20:44:32 2002
+@@ -461,8 +461,7 @@
+ 	elen = 0;
+ 	obloc = nbloc = UDF_I_LOCATION(table);
+ 
+-	obh = nbh = udf_tread(sb, udf_get_lb_pblock(sb, nbloc, 0));
+-	atomic_inc(&nbh->b_count);
++	obh = nbh = NULL;
+ 
+ 	while (count && (etype =
+ 		udf_next_aext(table, &nbloc, &nextoffset, &eloc, &elen, &nbh, 1)) != -1)
+@@ -506,7 +505,7 @@
+ 			udf_write_aext(table, obloc, &oextoffset, eloc, elen, obh, 1);
+ 		}
+ 
+-		if (memcmp(&nbloc, &obloc, sizeof(lb_addr)))
++		if (nbh != obh)
+ 		{
+ 			i = -1;
+ 			obloc = nbloc;
+@@ -580,7 +579,10 @@
+ 			{
+ 				loffset = nextoffset;
+ 				aed->lengthAllocDescs = cpu_to_le32(adsize);
+-				sptr = (obh)->b_data + nextoffset - adsize;
++				if (obh)
++					sptr = UDF_I_DATA(inode) + nextoffset -  udf_file_entry_alloc_offset(inode) + UDF_I_LENEATTR(inode) - adsize;
++				else
++					sptr = obh->b_data + nextoffset - adsize;
+ 				dptr = nbh->b_data + sizeof(struct allocExtDesc);
+ 				memcpy(dptr, sptr, adsize);
+ 				nextoffset = sizeof(struct allocExtDesc) + adsize;
+@@ -591,8 +593,8 @@
+ 				aed->lengthAllocDescs = cpu_to_le32(0);
+ 				sptr = (obh)->b_data + nextoffset;
+ 				nextoffset = sizeof(struct allocExtDesc);
+-	
+-				if (memcmp(&UDF_I_LOCATION(table), &obloc, sizeof(lb_addr)))
++
++				if (obh)
+ 				{
+ 					aed = (struct allocExtDesc *)(obh)->b_data;
+ 					aed->lengthAllocDescs =
+@@ -631,15 +633,20 @@
+ 					break;
+ 				}
+ 			}
+-			udf_update_tag(obh->b_data, loffset);
+-			mark_buffer_dirty(obh);
++			if (obh)
++			{
++				udf_update_tag(obh->b_data, loffset);
++				mark_buffer_dirty(obh);
++			}
++			else
++				mark_inode_dirty(table);
+ 		}
+ 
+ 		if (elen) /* It's possible that stealing the block emptied the extent */
+ 		{
+ 			udf_write_aext(table, nbloc, &nextoffset, eloc, elen, nbh, 1);
+ 
+-			if (!memcmp(&UDF_I_LOCATION(table), &nbloc, sizeof(lb_addr)))
++			if (!nbh)
+ 			{
+ 				UDF_I_LENALLOC(table) += adsize;
+ 				mark_inode_dirty(table);
+@@ -690,7 +697,7 @@
+ 	extoffset = sizeof(struct unallocSpaceEntry);
+ 	bloc = UDF_I_LOCATION(table);
+ 
+-	bh = udf_tread(sb, udf_get_lb_pblock(sb, bloc, 0));
++	bh = NULL;
+ 	eloc.logicalBlockNum = 0xFFFFFFFF;
+ 
+ 	while (first_block != eloc.logicalBlockNum && (etype =
+@@ -768,8 +775,7 @@
+ 	extoffset = sizeof(struct unallocSpaceEntry);
+ 	bloc = UDF_I_LOCATION(table);
+ 
+-	goal_bh = bh = udf_tread(sb, udf_get_lb_pblock(sb, bloc, 0));
+-	atomic_inc(&goal_bh->b_count);
++	goal_bh = bh = NULL;
+ 
+ 	while (spread && (etype =
+ 		udf_next_aext(table, &bloc, &extoffset, &eloc, &elen, &bh, 1)) != -1)
+diff -u -r -N ../../linus/2.4/linux/fs/udf/dir.c linux/fs/udf/dir.c
+--- ../../linus/2.4/linux/fs/udf/dir.c	Tue Aug  6 21:16:21 2002
++++ linux/fs/udf/dir.c	Thu Aug  8 20:44:32 2002
+@@ -122,7 +122,9 @@
+ 		nf_pos = (udf_ext0_offset(dir) >> 2);
+ 
+ 	fibh.soffset = fibh.eoffset = (nf_pos & ((dir->i_sb->s_blocksize - 1) >> 2)) << 2;
+-	if (inode_bmap(dir, nf_pos >> (dir->i_sb->s_blocksize_bits - 2),
++	if (UDF_I_ALLOCTYPE(dir) == ICBTAG_FLAG_AD_IN_ICB)
++		fibh.sbh = fibh.ebh = NULL;
++	else if (inode_bmap(dir, nf_pos >> (dir->i_sb->s_blocksize_bits - 2),
+ 		&bloc, &extoffset, &eloc, &elen, &offset, &bh) == (EXT_RECORDED_ALLOCATED >> 30))
+ 	{
+ 		offset >>= dir->i_sb->s_blocksize_bits;
+@@ -136,40 +138,40 @@
+ 		}
+ 		else
+ 			offset = 0;
+-	}
+-	else
+-	{
+-		udf_release_data(bh);
+-		return -ENOENT;
+-	}
+-
+-	if (!(fibh.sbh = fibh.ebh = udf_tread(dir->i_sb, block)))
+-	{
+-		udf_release_data(bh);
+-		return -EIO;
+-	}
+ 
+-	if (!(offset & ((16 >> (dir->i_sb->s_blocksize_bits - 9))-1)))
+-	{
+-		i = 16 >> (dir->i_sb->s_blocksize_bits - 9);
+-		if (i+offset > (elen >> dir->i_sb->s_blocksize_bits))
+-			i = (elen >> dir->i_sb->s_blocksize_bits)-offset;
+-		for (num=0; i>0; i--)
++		if (!(fibh.sbh = fibh.ebh = udf_tread(dir->i_sb, block)))
+ 		{
+-			block = udf_get_lb_pblock(dir->i_sb, eloc, offset+i);
+-			tmp = udf_tgetblk(dir->i_sb, block);
+-			if (tmp && !buffer_uptodate(tmp) && !buffer_locked(tmp))
+-				bha[num++] = tmp;
+-			else
+-				brelse(tmp);
++			udf_release_data(bh);
++			return -EIO;
+ 		}
+-		if (num)
++	
++		if (!(offset & ((16 >> (dir->i_sb->s_blocksize_bits - 9))-1)))
+ 		{
+-			ll_rw_block(READA, num, bha);
+-			for (i=0; i<num; i++)
+-				brelse(bha[i]);
++			i = 16 >> (dir->i_sb->s_blocksize_bits - 9);
++			if (i+offset > (elen >> dir->i_sb->s_blocksize_bits))
++				i = (elen >> dir->i_sb->s_blocksize_bits)-offset;
++			for (num=0; i>0; i--)
++			{
++				block = udf_get_lb_pblock(dir->i_sb, eloc, offset+i);
++				tmp = udf_tgetblk(dir->i_sb, block);
++				if (tmp && !buffer_uptodate(tmp) && !buffer_locked(tmp))
++					bha[num++] = tmp;
++				else
++					brelse(tmp);
++			}
++			if (num)
++			{
++				ll_rw_block(READA, num, bha);
++				for (i=0; i<num; i++)
++					brelse(bha[i]);
++			}
+ 		}
+ 	}
++	else
++	{
++		udf_release_data(bh);
++		return -ENOENT;
++	}
+ 
+ 	while ( nf_pos < size )
+ 	{
+diff -u -r -N ../../linus/2.4/linux/fs/udf/directory.c linux/fs/udf/directory.c
+--- ../../linus/2.4/linux/fs/udf/directory.c	Tue Aug  6 21:16:21 2002
++++ linux/fs/udf/directory.c	Thu Aug  8 20:44:32 2002
+@@ -17,6 +17,7 @@
+  */
+ 
+ #include "udfdecl.h"
++#include "udf_i.h"
+ 
+ #include <linux/fs.h>
+ #include <linux/string.h>
+@@ -84,6 +85,21 @@
+ 
+ 	fibh->soffset = fibh->eoffset;
+ 
++	if (UDF_I_ALLOCTYPE(dir) == ICBTAG_FLAG_AD_IN_ICB)
++	{
++		fi = udf_get_fileident(UDF_I_DATA(dir) - udf_file_entry_alloc_offset(dir),
++			dir->i_sb->s_blocksize, &(fibh->eoffset));
++
++		if (!fi)
++			return NULL;
++
++		*nf_pos += ((fibh->eoffset - fibh->soffset) >> 2);
++
++		memcpy((uint8_t *)cfi, (uint8_t *)fi, sizeof(struct fileIdentDesc));
++
++		return fi;
++	}
++
+ 	if (fibh->eoffset == dir->i_sb->s_blocksize)
+ 	{
+ 		int lextoffset = *extoffset;
+@@ -275,53 +291,43 @@
+ }
+ 
+ short_ad *
+-udf_get_fileshortad(void * buffer, int maxoffset, int *offset, int inc)
++udf_get_fileshortad(uint8_t *ptr, int maxoffset, int *offset, int inc)
+ {
+-	short_ad * sa;
+-	uint8_t * ptr;
++	short_ad *sa;
+ 
+-	if ( (!buffer) || (!offset) )
++	if ( (!ptr) || (!offset) )
+ 	{
+ 		printk(KERN_ERR "udf: udf_get_fileshortad() invalidparms\n");
+ 		return NULL;
+ 	}
+ 
+-	ptr = (uint8_t *)buffer;
+-
+-	if ( (*offset > 0) && (*offset < maxoffset) )
+-		ptr += *offset;
+-	else
++	if ( (*offset < 0) || ((*offset + sizeof(short_ad)) > maxoffset) )
+ 		return NULL;
+-
+-	if ((sa = (short_ad *)ptr)->extLength == 0)
++	else if ((sa = (short_ad *)ptr)->extLength == 0)
+ 		return NULL;
+-	else if (inc)
+-		(*offset) += sizeof(short_ad);
++
++	if (inc)
++		*offset += sizeof(short_ad);
+ 	return sa;
+ }
+ 
+ long_ad *
+-udf_get_filelongad(void * buffer, int maxoffset, int * offset, int inc)
++udf_get_filelongad(uint8_t *ptr, int maxoffset, int * offset, int inc)
+ {
+-	long_ad * la;
+-	uint8_t * ptr;
++	long_ad *la;
+ 
+-	if ( (!buffer) || !(offset) ) 
++	if ( (!ptr) || (!offset) ) 
+ 	{
+ 		printk(KERN_ERR "udf: udf_get_filelongad() invalidparms\n");
+ 		return NULL;
+ 	}
+ 
+-	ptr = (uint8_t *)buffer;
+-
+-	if ( (*offset > 0) && (*offset < maxoffset) )
+-		ptr += *offset;
+-	else
++	if ( (*offset < 0) || ((*offset + sizeof(long_ad)) > maxoffset) )
+ 		return NULL;
+-
+-	if ((la = (long_ad *)ptr)->extLength == 0)
++	else if ((la = (long_ad *)ptr)->extLength == 0)
+ 		return NULL;
+-	else if (inc)
+-		(*offset) += sizeof(long_ad);
++
++	if (inc)
++		*offset += sizeof(long_ad);
+ 	return la;
+ }
+diff -u -r -N ../../linus/2.4/linux/fs/udf/ecma_167.h linux/fs/udf/ecma_167.h
+--- ../../linus/2.4/linux/fs/udf/ecma_167.h	Tue Aug  6 21:16:21 2002
++++ linux/fs/udf/ecma_167.h	Tue Aug  6 21:23:58 2002
+@@ -606,7 +606,7 @@
+ #define FE_RECORD_FMT_CRLF		0x0A
+ #define FE_RECORD_FMT_LFCR		0x0B
+ 
+-#define Record Display Attributes (ECMA 167r3 4/14.9.8) */
++/*  Record Display Attributes (ECMA 167r3 4/14.9.8) */
+ #define FE_RECORD_DISPLAY_ATTR_UNDEF	0x00
+ #define FE_RECORD_DISPLAY_ATTR_1	0x01
+ #define FE_RECORD_DISPLAY_ATTR_2	0x02
+diff -u -r -N ../../linus/2.4/linux/fs/udf/file.c linux/fs/udf/file.c
+--- ../../linus/2.4/linux/fs/udf/file.c	Tue Aug  6 21:16:21 2002
++++ linux/fs/udf/file.c	Thu Aug  8 20:44:32 2002
+@@ -46,64 +46,36 @@
+ static int udf_adinicb_readpage(struct file *file, struct page * page)
+ {
+ 	struct inode *inode = page->mapping->host;
+-
+-	struct buffer_head *bh;
+-	int block;
+ 	char *kaddr;
+-	int err = 0;
+ 
+ 	if (!PageLocked(page))
+ 		PAGE_BUG(page);
+ 
+ 	kaddr = kmap(page);
+ 	memset(kaddr, 0, PAGE_CACHE_SIZE);
+-	block = udf_get_lb_pblock(inode->i_sb, UDF_I_LOCATION(inode), 0);
+-	bh = sb_bread(inode->i_sb, block);
+-	if (!bh)
+-	{
+-		SetPageError(page);
+-		err = -EIO;
+-		goto out;
+-	}
+-	memcpy(kaddr, bh->b_data + udf_ext0_offset(inode), inode->i_size);
+-	brelse(bh);
++	memcpy(kaddr, UDF_I_DATA(inode) + UDF_I_LENEATTR(inode), inode->i_size);
+ 	flush_dcache_page(page);
+ 	SetPageUptodate(page);
+-out:
+ 	kunmap(page);
+ 	UnlockPage(page);
+-	return err;
++	return 0;
+ }
+ 
+ static int udf_adinicb_writepage(struct page *page)
+ {
+ 	struct inode *inode = page->mapping->host;
+-
+-	struct buffer_head *bh;
+-	int block;
+ 	char *kaddr;
+-	int err = 0;
+ 
+ 	if (!PageLocked(page))
+ 		PAGE_BUG(page);
+ 
+ 	kaddr = kmap(page);
+-	block = udf_get_lb_pblock(inode->i_sb, UDF_I_LOCATION(inode), 0);
+-	bh = sb_bread(inode->i_sb, block);
+-	if (!bh)
+-	{
+-		SetPageError(page);
+-		err = -EIO;
+-		goto out;
+-	}
+-	memcpy(bh->b_data + udf_ext0_offset(inode), kaddr, inode->i_size);
+-	mark_buffer_dirty(bh);
+-	brelse(bh);
++	memcpy(UDF_I_DATA(inode) + UDF_I_LENEATTR(inode), kaddr, inode->i_size);
++	mark_inode_dirty(inode);
+ 	SetPageUptodate(page);
+-out:
+ 	kunmap(page);
+ 	UnlockPage(page);
+-	return err;
++	return 0;
+ }
+ 
+ static int udf_adinicb_prepare_write(struct file *file, struct page *page, unsigned offset, unsigned to)
+@@ -115,31 +87,17 @@
+ static int udf_adinicb_commit_write(struct file *file, struct page *page, unsigned offset, unsigned to)
+ {
+ 	struct inode *inode = page->mapping->host;
+-
+-	struct buffer_head *bh;
+-	int block;
+ 	char *kaddr = page_address(page);
+-	int err = 0;
+ 
+-	block = udf_get_lb_pblock(inode->i_sb, UDF_I_LOCATION(inode), 0);
+-	bh = sb_bread(inode->i_sb, block);
+-	if (!bh)
+-	{
+-		SetPageError(page);
+-		err = -EIO;
+-		goto out;
+-	}
+-	memcpy(bh->b_data + udf_file_entry_alloc_offset(inode) + offset,
++	memcpy(UDF_I_DATA(inode) + UDF_I_LENEATTR(inode) + offset,
+ 		kaddr + offset, to - offset);
+-	mark_buffer_dirty(bh);
+-	brelse(bh);
++	mark_inode_dirty(inode);
+ 	SetPageUptodate(page);
+-out:
+ 	kunmap(page);
+ 	/* only one page here */
+ 	if (to > inode->i_size)
+ 		inode->i_size = to;
+-	return err;
++	return 0;
+ }
+ 
+ struct address_space_operations udf_adinicb_aops = {
+@@ -231,9 +189,6 @@
+ 	unsigned long arg)
+ {
+ 	int result = -EINVAL;
+-	struct buffer_head *bh = NULL;
+-	long_ad eaicb;
+-	uint8_t *ea = NULL;
+ 
+ 	if ( permission(inode, MAY_READ) != 0 )
+ 	{
+@@ -248,7 +203,6 @@
+ 		return -EINVAL;
+ 	}
+ 
+-	/* first, do ioctls that don't need to udf_read */
+ 	switch (cmd)
+ 	{
+ 		case UDF_GETVOLIDENT:
+@@ -266,50 +220,16 @@
+ 
+ 			return result;
+ 		}
+-	}
+-
+-	/* ok, we need to read the inode */
+-	bh = udf_tread(inode->i_sb,
+-		udf_get_lb_pblock(inode->i_sb, UDF_I_LOCATION(inode), 0));
+-
+-	if (!bh)
+-	{
+-		udf_debug("bread failed (inode=%ld)\n", inode->i_ino);
+-		return -EIO;
+-	}
+-
+-	if (UDF_I_EXTENDED_FE(inode) == 0)
+-	{
+-		struct fileEntry *fe;
+-
+-		fe = (struct fileEntry *)bh->b_data;
+-		eaicb = lela_to_cpu(fe->extendedAttrICB);
+-		if (UDF_I_LENEATTR(inode))
+-			ea = fe->extendedAttr;
+-	}
+-	else
+-	{
+-		struct extendedFileEntry *efe;
+-
+-		efe = (struct extendedFileEntry *)bh->b_data;
+-		eaicb = lela_to_cpu(efe->extendedAttrICB);
+-		if (UDF_I_LENEATTR(inode))
+-			ea = efe->extendedAttr;
+-	}
+-
+-	switch (cmd) 
+-	{
+ 		case UDF_GETEASIZE:
+ 			result = put_user(UDF_I_LENEATTR(inode), (int *)arg);
+ 			break;
+ 
+ 		case UDF_GETEABLOCK:
+-			result = copy_to_user((char *)arg, ea,
++			result = copy_to_user((char *)arg, UDF_I_DATA(inode),
+ 				UDF_I_LENEATTR(inode)) ? -EFAULT : 0;
+ 			break;
+ 	}
+ 
+-	udf_release_data(bh);
+ 	return result;
+ }
+ 
+diff -u -r -N ../../linus/2.4/linux/fs/udf/ialloc.c linux/fs/udf/ialloc.c
+--- ../../linus/2.4/linux/fs/udf/ialloc.c	Tue Aug  6 21:16:21 2002
++++ linux/fs/udf/ialloc.c	Thu Aug  8 20:44:32 2002
+@@ -28,6 +28,7 @@
+ #include <linux/locks.h>
+ #include <linux/quotaops.h>
+ #include <linux/udf_fs.h>
++#include <linux/slab.h>
+ 
+ #include "udf_i.h"
+ #include "udf_sb.h"
+@@ -130,13 +131,20 @@
+ 	inode->i_blocks = 0;
+ 	UDF_I_LENEATTR(inode) = 0;
+ 	UDF_I_LENALLOC(inode) = 0;
++	UDF_I_USE(inode) = 0;
+ 	if (UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_USE_EXTENDED_FE))
+ 	{
+-		UDF_I_EXTENDED_FE(inode) = 1;
++		UDF_I_EFE(inode) = 1;
+ 		UDF_UPDATE_UDFREV(inode->i_sb, UDF_VERS_USE_EXTENDED_FE);
++		UDF_I_DATA(inode) = kmalloc(inode->i_sb->s_blocksize - sizeof(struct extendedFileEntry), GFP_KERNEL);
++		memset(UDF_I_DATA(inode), 0x00, inode->i_sb->s_blocksize - sizeof(struct extendedFileEntry));
+ 	}
+ 	else
+-		UDF_I_EXTENDED_FE(inode) = 0;
++	{
++		UDF_I_EFE(inode) = 0;
++		UDF_I_DATA(inode) = kmalloc(inode->i_sb->s_blocksize - sizeof(struct fileEntry), GFP_KERNEL);
++		memset(UDF_I_DATA(inode), 0x00, inode->i_sb->s_blocksize - sizeof(struct fileEntry));
++	}
+ 	if (UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_USE_AD_IN_ICB))
+ 		UDF_I_ALLOCTYPE(inode) = ICBTAG_FLAG_AD_IN_ICB;
+ 	else if (UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_USE_SHORT_AD))
+@@ -147,7 +155,6 @@
+ 		UDF_I_CRTIME(inode) = CURRENT_TIME;
+ 	UDF_I_UMTIME(inode) = UDF_I_UCTIME(inode) =
+ 		UDF_I_UCRTIME(inode) = CURRENT_UTIME;
+-	UDF_I_NEW_INODE(inode) = 1;
+ 	insert_inode_hash(inode);
+ 	mark_inode_dirty(inode);
+ 
+diff -u -r -N ../../linus/2.4/linux/fs/udf/inode.c linux/fs/udf/inode.c
+--- ../../linus/2.4/linux/fs/udf/inode.c	Tue Aug  6 21:16:21 2002
++++ linux/fs/udf/inode.c	Thu Aug  8 20:44:32 2002
+@@ -38,6 +38,7 @@
+ #include <linux/mm.h>
+ #include <linux/smp_lock.h>
+ #include <linux/module.h>
++#include <linux/slab.h>
+ 
+ #include "udf_i.h"
+ #include "udf_sb.h"
+@@ -122,6 +123,11 @@
+ 	clear_inode(inode);
+ }
+ 
++void udf_clear_inode(struct inode *inode)
++{
++	kfree(UDF_I_DATA(inode));
++}
++
+ void udf_discard_prealloc(struct inode * inode)
+ {
+ 	if (inode->i_size && inode->i_size != UDF_I_LENEXTENTS(inode) &&
+@@ -162,10 +168,8 @@
+ 
+ void udf_expand_file_adinicb(struct inode * inode, int newsize, int * err)
+ {
+-	struct buffer_head *bh = NULL;
+ 	struct page *page;
+ 	char *kaddr;
+-	int block;
+ 
+ 	/* from now on we have normal address_space methods */
+ 	inode->i_data.a_ops = &udf_aops;
+@@ -180,10 +184,6 @@
+ 		return;
+ 	}
+ 
+-	block = udf_get_lb_pblock(inode->i_sb, UDF_I_LOCATION(inode), 0);
+-	bh = udf_tread(inode->i_sb, block);
+-	if (!bh)
+-		return;
+ 	page = grab_cache_page(inode->i_mapping, 0);
+ 	if (!PageLocked(page))
+ 		PAGE_BUG(page);
+@@ -192,21 +192,19 @@
+ 		kaddr = kmap(page);
+ 		memset(kaddr + UDF_I_LENALLOC(inode), 0x00,
+ 			PAGE_CACHE_SIZE - UDF_I_LENALLOC(inode));
+-		memcpy(kaddr, bh->b_data + udf_file_entry_alloc_offset(inode),
++		memcpy(kaddr, UDF_I_DATA(inode) + UDF_I_LENEATTR(inode),
+ 			UDF_I_LENALLOC(inode));
+ 		flush_dcache_page(page);
+ 		SetPageUptodate(page);
+ 		kunmap(page);
+ 	}
+-	memset(bh->b_data + udf_file_entry_alloc_offset(inode),
+-		0, UDF_I_LENALLOC(inode));
++	memset(UDF_I_DATA(inode) + UDF_I_LENEATTR(inode), 0x00,
++		UDF_I_LENALLOC(inode));
+ 	UDF_I_LENALLOC(inode) = 0;
+ 	if (UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_USE_SHORT_AD))
+ 		UDF_I_ALLOCTYPE(inode) = ICBTAG_FLAG_AD_SHORT;
+ 	else
+ 		UDF_I_ALLOCTYPE(inode) = ICBTAG_FLAG_AD_LONG;
+-	mark_buffer_dirty_inode(bh, inode);
+-	udf_release_data(bh);
+ 
+ 	inode->i_data.a_ops->writepage(page);
+ 	page_cache_release(page);
+@@ -221,18 +219,21 @@
+ 	struct buffer_head *sbh = NULL, *dbh = NULL;
+ 	lb_addr bloc, eloc;
+ 	uint32_t elen, extoffset;
++	uint8_t alloctype;
+ 
+ 	struct udf_fileident_bh sfibh, dfibh;
+ 	loff_t f_pos = udf_ext0_offset(inode) >> 2;
+ 	int size = (udf_ext0_offset(inode) + inode->i_size) >> 2;
+ 	struct fileIdentDesc cfi, *sfi, *dfi;
+ 
++	if (UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_USE_SHORT_AD))
++		alloctype = ICBTAG_FLAG_AD_SHORT;
++	else
++		alloctype = ICBTAG_FLAG_AD_LONG;
++
+ 	if (!inode->i_size)
+ 	{
+-		if (UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_USE_SHORT_AD))
+-			UDF_I_ALLOCTYPE(inode) = ICBTAG_FLAG_AD_SHORT;
+-		else
+-			UDF_I_ALLOCTYPE(inode) = ICBTAG_FLAG_AD_LONG;
++		UDF_I_ALLOCTYPE(inode) = alloctype;
+ 		mark_inode_dirty(inode);
+ 		return NULL;
+ 	}
+@@ -248,9 +249,6 @@
+ 		UDF_I_LOCATION(inode).partitionReferenceNum, 0);
+ 	if (!newblock)
+ 		return NULL;
+-	sbh = udf_tread(inode->i_sb, inode->i_ino);
+-	if (!sbh)
+-		return NULL;
+ 	dbh = udf_tgetblk(inode->i_sb, newblock);
+ 	if (!dbh)
+ 		return NULL;
+@@ -261,18 +259,19 @@
+ 	mark_buffer_dirty_inode(dbh, inode);
+ 
+ 	sfibh.soffset = sfibh.eoffset = (f_pos & ((inode->i_sb->s_blocksize - 1) >> 2)) << 2;
+-	sfibh.sbh = sfibh.ebh = sbh;
++	sbh = sfibh.sbh = sfibh.ebh = NULL;
+ 	dfibh.soffset = dfibh.eoffset = 0;
+ 	dfibh.sbh = dfibh.ebh = dbh;
+ 	while ( (f_pos < size) )
+ 	{
++		UDF_I_ALLOCTYPE(inode) = ICBTAG_FLAG_AD_IN_ICB;
+ 		sfi = udf_fileident_read(inode, &f_pos, &sfibh, &cfi, NULL, NULL, NULL, NULL, NULL, NULL);
+ 		if (!sfi)
+ 		{
+-			udf_release_data(sbh);
+ 			udf_release_data(dbh);
+ 			return NULL;
+ 		}
++		UDF_I_ALLOCTYPE(inode) = alloctype;
+ 		sfi->descTag.tagLocation = *block;
+ 		dfibh.soffset = dfibh.eoffset;
+ 		dfibh.eoffset += (sfibh.eoffset - sfibh.soffset);
+@@ -280,21 +279,15 @@
+ 		if (udf_write_fi(inode, sfi, dfi, &dfibh, sfi->impUse,
+ 			sfi->fileIdent + sfi->lengthOfImpUse))
+ 		{
+-			udf_release_data(sbh);
++			UDF_I_ALLOCTYPE(inode) = ICBTAG_FLAG_AD_IN_ICB;
+ 			udf_release_data(dbh);
+ 			return NULL;
+ 		}
+ 	}
+ 	mark_buffer_dirty_inode(dbh, inode);
+ 
+-	memset(sbh->b_data + udf_file_entry_alloc_offset(inode),
+-		0, UDF_I_LENALLOC(inode));
+-
++	memset(UDF_I_DATA(inode) + UDF_I_LENEATTR(inode), 0, UDF_I_LENALLOC(inode));
+ 	UDF_I_LENALLOC(inode) = 0;
+-	if (UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_USE_SHORT_AD))
+-		UDF_I_ALLOCTYPE(inode) = ICBTAG_FLAG_AD_SHORT;
+-	else
+-		UDF_I_ALLOCTYPE(inode) = ICBTAG_FLAG_AD_LONG;
+ 	bloc = UDF_I_LOCATION(inode);
+ 	eloc.logicalBlockNum = *block;
+ 	eloc.partitionReferenceNum = UDF_I_LOCATION(inode).partitionReferenceNum;
+@@ -304,7 +297,6 @@
+ 	udf_add_aext(inode, &bloc, &extoffset, eloc, elen, &sbh, 0);
+ 	/* UniqueID stuff */
+ 
+-	mark_buffer_dirty(sbh);
+ 	udf_release_data(sbh);
+ 	mark_inode_dirty(inode);
+ 	inode->i_version ++;
+@@ -732,7 +724,7 @@
+ 
+ 				if (elen > numalloc)
+ 				{
+-					laarr[c].extLength -=
++					laarr[i].extLength -=
+ 						(numalloc << inode->i_sb->s_blocksize_bits);
+ 					numalloc = 0;
+ 				}
+@@ -854,7 +846,6 @@
+ void udf_truncate(struct inode * inode)
+ {
+ 	int offset;
+-	struct buffer_head *bh;
+ 	int err;
+ 
+ 	if (!(S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode) ||
+@@ -879,16 +870,8 @@
+ 		}
+ 		else
+ 		{
+-			offset = (inode->i_size & (inode->i_sb->s_blocksize - 1)) +
+-				udf_file_entry_alloc_offset(inode);
+-
+-			if ((bh = udf_tread(inode->i_sb,
+-				udf_get_lb_pblock(inode->i_sb, UDF_I_LOCATION(inode), 0))))
+-			{
+-				memset(bh->b_data + offset, 0x00, inode->i_sb->s_blocksize - offset);
+-				mark_buffer_dirty(bh);
+-				udf_release_data(bh);
+-			}
++			offset = inode->i_size & (inode->i_sb->s_blocksize - 1);
++			memset(UDF_I_DATA(inode) + UDF_I_LENEATTR(inode) + offset, 0x00, inode->i_sb->s_blocksize - offset - udf_file_entry_alloc_offset(inode));
+ 			UDF_I_LENALLOC(inode) = inode->i_size;
+ 		}
+ 	}
+@@ -1037,7 +1020,6 @@
+ 	int offset, alen;
+ 
+ 	inode->i_version = ++event;
+-	UDF_I_NEW_INODE(inode) = 0;
+ 
+ 	fe = (struct fileEntry *)bh->b_data;
+ 	efe = (struct extendedFileEntry *)bh->b_data;
+@@ -1049,14 +1031,28 @@
+ 
+ 	UDF_I_ALLOCTYPE(inode) = le16_to_cpu(fe->icbTag.flags) & ICBTAG_FLAG_AD_MASK;
+ 	if (le16_to_cpu(fe->descTag.tagIdent) == TAG_IDENT_EFE)
+-		UDF_I_EXTENDED_FE(inode) = 1;
++	{
++		UDF_I_EFE(inode) = 1;
++		UDF_I_USE(inode) = 0;
++		UDF_I_DATA(inode) = kmalloc(inode->i_sb->s_blocksize - sizeof(struct extendedFileEntry), GFP_KERNEL);
++		memcpy(UDF_I_DATA(inode), bh->b_data + sizeof(struct extendedFileEntry), inode->i_sb->s_blocksize - sizeof(struct extendedFileEntry));
++	}
+ 	else if (le16_to_cpu(fe->descTag.tagIdent) == TAG_IDENT_FE)
+-		UDF_I_EXTENDED_FE(inode) = 0;
++	{
++		UDF_I_EFE(inode) = 0;
++		UDF_I_USE(inode) = 0;
++		UDF_I_DATA(inode) = kmalloc(inode->i_sb->s_blocksize - sizeof(struct fileEntry), GFP_KERNEL);
++		memcpy(UDF_I_DATA(inode), bh->b_data + sizeof(struct fileEntry), inode->i_sb->s_blocksize - sizeof(struct fileEntry));
++	}
+ 	else if (le16_to_cpu(fe->descTag.tagIdent) == TAG_IDENT_USE)
+ 	{
++		UDF_I_EFE(inode) = 0;
++		UDF_I_USE(inode) = 1;
+ 		UDF_I_LENALLOC(inode) =
+ 			le32_to_cpu(
+ 				((struct unallocSpaceEntry *)bh->b_data)->lengthAllocDescs);
++		UDF_I_DATA(inode) = kmalloc(inode->i_sb->s_blocksize - sizeof(struct unallocSpaceEntry), GFP_KERNEL);
++		memcpy(UDF_I_DATA(inode), bh->b_data + sizeof(struct unallocSpaceEntry), inode->i_sb->s_blocksize - sizeof(struct unallocSpaceEntry));
+ 		return;
+ 	}
+ 
+@@ -1079,7 +1075,7 @@
+ 	UDF_I_NEXT_ALLOC_BLOCK(inode) = 0;
+ 	UDF_I_NEXT_ALLOC_GOAL(inode) = 0;
+ 
+-	if (UDF_I_EXTENDED_FE(inode) == 0)
++	if (UDF_I_EFE(inode) == 0)
+ 	{
+ 		inode->i_blocks = le64_to_cpu(fe->logicalBlocksRecorded) <<
+ 			(inode->i_sb->s_blocksize_bits - 9);
+@@ -1325,19 +1321,11 @@
+ 		udf_debug("bread failure\n");
+ 		return -EIO;
+ 	}
++
++	memset(bh->b_data, 0x00, inode->i_sb->s_blocksize);
++
+ 	fe = (struct fileEntry *)bh->b_data;
+ 	efe = (struct extendedFileEntry *)bh->b_data;
+-	if (UDF_I_NEW_INODE(inode) == 1)
+-	{
+-		if (UDF_I_EXTENDED_FE(inode) == 0)
+-			memset(bh->b_data, 0x00, sizeof(struct fileEntry));
+-		else
+-			memset(bh->b_data, 0x00, sizeof(struct extendedFileEntry));
+-		memset(bh->b_data + udf_file_entry_alloc_offset(inode) +
+-			UDF_I_LENALLOC(inode), 0x0, inode->i_sb->s_blocksize -
+-			udf_file_entry_alloc_offset(inode) - UDF_I_LENALLOC(inode));
+-		UDF_I_NEW_INODE(inode) = 0;
+-	}
+ 
+ 	if (le16_to_cpu(fe->descTag.tagIdent) == TAG_IDENT_USE)
+ 	{
+@@ -1345,6 +1333,7 @@
+ 			(struct unallocSpaceEntry *)bh->b_data;
+ 
+ 		use->lengthAllocDescs = cpu_to_le32(UDF_I_LENALLOC(inode));
++		memcpy(bh->b_data + sizeof(struct unallocSpaceEntry), UDF_I_DATA(inode), inode->i_sb->s_blocksize - sizeof(struct unallocSpaceEntry));
+ 		crclen = sizeof(struct unallocSpaceEntry) + UDF_I_LENALLOC(inode) -
+ 			sizeof(tag);
+ 		use->descTag.tagLocation = cpu_to_le32(UDF_I_LOCATION(inode).logicalBlockNum);
+@@ -1415,8 +1404,9 @@
+ 		udf_release_data(tbh);
+ 	}
+ 
+-	if (UDF_I_EXTENDED_FE(inode) == 0)
++	if (UDF_I_EFE(inode) == 0)
+ 	{
++		memcpy(bh->b_data + sizeof(struct fileEntry), UDF_I_DATA(inode), inode->i_sb->s_blocksize - sizeof(struct fileEntry));
+ 		fe->logicalBlocksRecorded = cpu_to_le64(
+ 			(inode->i_blocks + (1 << (inode->i_sb->s_blocksize_bits - 9)) - 1) >>
+ 			(inode->i_sb->s_blocksize_bits - 9));
+@@ -1439,6 +1429,7 @@
+ 	}
+ 	else
+ 	{
++		memcpy(bh->b_data + sizeof(struct extendedFileEntry), UDF_I_DATA(inode), inode->i_sb->s_blocksize - sizeof(struct extendedFileEntry));
+ 		efe->objectSize = cpu_to_le64(inode->i_size);
+ 		efe->logicalBlocksRecorded = cpu_to_le64(
+ 			(inode->i_blocks + (1 << (inode->i_sb->s_blocksize_bits - 9)) - 1) >>
+@@ -1619,17 +1610,12 @@
+ 	long_ad *lad = NULL;
+ 	struct allocExtDesc *aed;
+ 	int8_t etype;
++	uint8_t *ptr;
+ 
+-	if (!(*bh))
+-	{
+-		if (!(*bh = udf_tread(inode->i_sb,
+-			udf_get_lb_pblock(inode->i_sb, *bloc, 0))))
+-		{
+-			udf_debug("reading block %d failed!\n",
+-				udf_get_lb_pblock(inode->i_sb, *bloc, 0));
+-			return -1;
+-		}
+-	}
++	if (!*bh)
++		ptr = UDF_I_DATA(inode) + *extoffset - udf_file_entry_alloc_offset(inode) + UDF_I_LENEATTR(inode);
++	else
++		ptr = (*bh)->b_data + *extoffset;
+ 
+ 	if (UDF_I_ALLOCTYPE(inode) == ICBTAG_FLAG_AD_SHORT)
+ 		adsize = sizeof(short_ad);
+@@ -1668,7 +1654,7 @@
+ 		{
+ 			loffset = *extoffset;
+ 			aed->lengthAllocDescs = cpu_to_le32(adsize);
+-			sptr = (*bh)->b_data + *extoffset - adsize;
++			sptr = ptr - adsize;
+ 			dptr = nbh->b_data + sizeof(struct allocExtDesc);
+ 			memcpy(dptr, sptr, adsize);
+ 			*extoffset = sizeof(struct allocExtDesc) + adsize;
+@@ -1677,10 +1663,10 @@
+ 		{
+ 			loffset = *extoffset + adsize;
+ 			aed->lengthAllocDescs = cpu_to_le32(0);
+-			sptr = (*bh)->b_data + *extoffset;
++			sptr = ptr;
+ 			*extoffset = sizeof(struct allocExtDesc);
+ 
+-			if (memcmp(&UDF_I_LOCATION(inode), &obloc, sizeof(lb_addr)))
++			if (*bh)
+ 			{
+ 				aed = (struct allocExtDesc *)(*bh)->b_data;
+ 				aed->lengthAllocDescs =
+@@ -1720,18 +1706,23 @@
+ 				break;
+ 			}
+ 		}
+-		if (!UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_STRICT) || UDF_SB_UDFREV(inode->i_sb) >= 0x0201)
+-			udf_update_tag((*bh)->b_data, loffset);
++		if (*bh)
++		{
++			if (!UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_STRICT) || UDF_SB_UDFREV(inode->i_sb) >= 0x0201)
++				udf_update_tag((*bh)->b_data, loffset);
++			else
++				udf_update_tag((*bh)->b_data, sizeof(struct allocExtDesc));
++			mark_buffer_dirty_inode(*bh, inode);
++			udf_release_data(*bh);
++		}
+ 		else
+-			udf_update_tag((*bh)->b_data, sizeof(struct allocExtDesc));
+-		mark_buffer_dirty_inode(*bh, inode);
+-		udf_release_data(*bh);
++			mark_inode_dirty(inode);
+ 		*bh = nbh;
+ 	}
+ 
+ 	etype = udf_write_aext(inode, *bloc, extoffset, eloc, elen, *bh, inc);
+ 
+-	if (!memcmp(&UDF_I_LOCATION(inode), bloc, sizeof(lb_addr)))
++	if (!*bh)
+ 	{
+ 		UDF_I_LENALLOC(inode) += adsize;
+ 		mark_inode_dirty(inode);
+@@ -1755,49 +1746,40 @@
+     lb_addr eloc, uint32_t elen, struct buffer_head *bh, int inc)
+ {
+ 	int adsize;
+-	short_ad *sad = NULL;
+-	long_ad *lad = NULL;
++	uint8_t *ptr;
+ 
+-	if (!(bh))
+-	{
+-		if (!(bh = udf_tread(inode->i_sb,
+-			udf_get_lb_pblock(inode->i_sb, bloc, 0))))
+-		{
+-			udf_debug("reading block %d failed!\n",
+-				udf_get_lb_pblock(inode->i_sb, bloc, 0));
+-			return -1;
+-		}
+-	}
++	if (!bh)
++		ptr = UDF_I_DATA(inode) + *extoffset - udf_file_entry_alloc_offset(inode) + UDF_I_LENEATTR(inode);
+ 	else
++	{
++		ptr = bh->b_data + *extoffset;
+ 		atomic_inc(&bh->b_count);
+-
+-	if (UDF_I_ALLOCTYPE(inode) == ICBTAG_FLAG_AD_SHORT)
+-		adsize = sizeof(short_ad);
+-	else if (UDF_I_ALLOCTYPE(inode) == ICBTAG_FLAG_AD_LONG)
+-		adsize = sizeof(long_ad);
+-	else
+-		return -1;
++	}
+ 
+ 	switch (UDF_I_ALLOCTYPE(inode))
+ 	{
+ 		case ICBTAG_FLAG_AD_SHORT:
+ 		{
+-			sad = (short_ad *)((bh)->b_data + *extoffset);
++			short_ad *sad = (short_ad *)ptr;
+ 			sad->extLength = cpu_to_le32(elen);
+ 			sad->extPosition = cpu_to_le32(eloc.logicalBlockNum);
++			adsize = sizeof(short_ad);
+ 			break;
+ 		}
+ 		case ICBTAG_FLAG_AD_LONG:
+ 		{
+-			lad = (long_ad *)((bh)->b_data + *extoffset);
++			long_ad *lad = (long_ad *)ptr;
+ 			lad->extLength = cpu_to_le32(elen);
+ 			lad->extLocation = cpu_to_lelb(eloc);
+ 			memset(lad->impUse, 0x00, sizeof(lad->impUse));
++			adsize = sizeof(long_ad);
+ 			break;
+ 		}
++		default:
++			return -1;
+ 	}
+ 
+-	if (memcmp(&UDF_I_LOCATION(inode), &bloc, sizeof(lb_addr)))
++	if (bh)
+ 	{
+ 		if (!UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_STRICT) || UDF_SB_UDFREV(inode->i_sb) >= 0x0201)
+ 		{
+@@ -1806,30 +1788,28 @@
+ 				le32_to_cpu(aed->lengthAllocDescs) + sizeof(struct allocExtDesc));
+ 		}
+ 		mark_buffer_dirty_inode(bh, inode);
++		udf_release_data(bh);
+ 	}
+ 	else
+-	{
+ 		mark_inode_dirty(inode);
+-		mark_buffer_dirty(bh);
+-	}
+ 
+ 	if (inc)
+ 		*extoffset += adsize;
+-	udf_release_data(bh);
+ 	return (elen >> 30);
+ }
+ 
+ int8_t udf_next_aext(struct inode *inode, lb_addr *bloc, int *extoffset,
+ 	lb_addr *eloc, uint32_t *elen, struct buffer_head **bh, int inc)
+ {
+-	uint16_t tagIdent;
+-	int pos, alen;
+ 	int8_t etype;
+ 
+-	if (!(*bh))
++	while ((etype = udf_current_aext(inode, bloc, extoffset, eloc, elen, bh, inc)) ==
++		(EXT_NEXT_EXTENT_ALLOCDECS >> 30))
+ 	{
+-		if (!(*bh = udf_tread(inode->i_sb,
+-			udf_get_lb_pblock(inode->i_sb, *bloc, 0))))
++		*bloc = *eloc;
++		*extoffset = sizeof(struct allocExtDesc);
++		udf_release_data(*bh);
++		if (!(*bh = udf_tread(inode->i_sb, udf_get_lb_pblock(inode->i_sb, *bloc, 0))))
+ 		{
+ 			udf_debug("reading block %d failed!\n",
+ 				udf_get_lb_pblock(inode->i_sb, *bloc, 0));
+@@ -1837,154 +1817,38 @@
+ 		}
+ 	}
+ 
+-	tagIdent = le16_to_cpu(((tag *)(*bh)->b_data)->tagIdent);
+-
+-	if (!memcmp(&UDF_I_LOCATION(inode), bloc, sizeof(lb_addr)))
+-	{
+-		if (tagIdent == TAG_IDENT_FE || tagIdent == TAG_IDENT_EFE ||
+-			UDF_I_NEW_INODE(inode))
+-		{
+-			pos = udf_file_entry_alloc_offset(inode);
+-			alen = UDF_I_LENALLOC(inode) + pos;
+-		}
+-		else if (tagIdent == TAG_IDENT_USE)
+-		{
+-			pos = sizeof(struct unallocSpaceEntry);
+-			alen = UDF_I_LENALLOC(inode) + pos;
+-		}
+-		else
+-			return -1;
+-	}
+-	else if (tagIdent == TAG_IDENT_AED)
+-	{
+-		struct allocExtDesc *aed = (struct allocExtDesc *)(*bh)->b_data;
+-
+-		pos = sizeof(struct allocExtDesc);
+-		alen = le32_to_cpu(aed->lengthAllocDescs) + pos;
+-	}
+-	else
+-		return -1;
+-
+-	if (!(*extoffset))
+-		*extoffset = pos;
+-
+-	switch (UDF_I_ALLOCTYPE(inode))
+-	{
+-		case ICBTAG_FLAG_AD_SHORT:
+-		{
+-			short_ad *sad;
+-
+-			if (!(sad = udf_get_fileshortad((*bh)->b_data, alen, extoffset, inc)))
+-				return -1;
+-
+-			if ((etype = le32_to_cpu(sad->extLength) >> 30) == (EXT_NEXT_EXTENT_ALLOCDECS >> 30))
+-			{
+-				bloc->logicalBlockNum = le32_to_cpu(sad->extPosition);
+-				*extoffset = 0;
+-				udf_release_data(*bh);
+-				*bh = NULL;
+-				return udf_next_aext(inode, bloc, extoffset, eloc, elen, bh, inc);
+-			}
+-			else
+-			{
+-				eloc->logicalBlockNum = le32_to_cpu(sad->extPosition);
+-				eloc->partitionReferenceNum = UDF_I_LOCATION(inode).partitionReferenceNum;
+-				*elen = le32_to_cpu(sad->extLength) & UDF_EXTENT_LENGTH_MASK;
+-			}
+-			break;
+-		}
+-		case ICBTAG_FLAG_AD_LONG:
+-		{
+-			long_ad *lad;
+-
+-			if (!(lad = udf_get_filelongad((*bh)->b_data, alen, extoffset, inc)))
+-				return -1;
+-
+-			if ((etype = le32_to_cpu(lad->extLength) >> 30) == (EXT_NEXT_EXTENT_ALLOCDECS >> 30))
+-			{
+-				*bloc = lelb_to_cpu(lad->extLocation);
+-				*extoffset = 0;
+-				udf_release_data(*bh);
+-				*bh = NULL;
+-				return udf_next_aext(inode, bloc, extoffset, eloc, elen, bh, inc);
+-			}
+-			else
+-			{
+-				*eloc = lelb_to_cpu(lad->extLocation);
+-				*elen = le32_to_cpu(lad->extLength) & UDF_EXTENT_LENGTH_MASK;
+-			}
+-			break;
+-		}
+-		case ICBTAG_FLAG_AD_IN_ICB:
+-		{
+-			if (UDF_I_LENALLOC(inode) == 0)
+-				return -1;
+-			etype = (EXT_RECORDED_ALLOCATED >> 30);
+-			*eloc = UDF_I_LOCATION(inode);
+-			*elen = UDF_I_LENALLOC(inode);
+-			break;
+-		}
+-		default:
+-		{
+-			udf_debug("alloc_type = %d unsupported\n", UDF_I_ALLOCTYPE(inode));
+-			return -1;
+-		}
+-	}
+-	if (*elen)
+-		return etype;
+-
+-	udf_debug("Empty Extent, inode=%ld, alloctype=%d, eloc=%d, elen=%d, etype=%d, extoffset=%d\n",
+-		inode->i_ino, UDF_I_ALLOCTYPE(inode), eloc->logicalBlockNum, *elen, etype, *extoffset);
+-	if (UDF_I_ALLOCTYPE(inode) == ICBTAG_FLAG_AD_SHORT)
+-		*extoffset -= sizeof(short_ad);
+-	else if (UDF_I_ALLOCTYPE(inode) == ICBTAG_FLAG_AD_LONG)
+-		*extoffset -= sizeof(long_ad);
+-	return -1;
++	return etype;
+ }
+ 
+ int8_t udf_current_aext(struct inode *inode, lb_addr *bloc, int *extoffset,
+ 	lb_addr *eloc, uint32_t *elen, struct buffer_head **bh, int inc)
+ {
+-	int pos, alen;
++	int alen;
+ 	int8_t etype;
++	uint8_t *ptr;
+ 
+-	if (!(*bh))
++	if (!*bh)
+ 	{
+-		if (!(*bh = udf_tread(inode->i_sb,
+-			udf_get_lb_pblock(inode->i_sb, *bloc, 0))))
+-		{
+-			udf_debug("reading block %d failed!\n",
+-				udf_get_lb_pblock(inode->i_sb, *bloc, 0));
+-			return -1;
+-		}
+-	}
+-
+-	if (!memcmp(&UDF_I_LOCATION(inode), bloc, sizeof(lb_addr)))
+-	{
+-		if (!(UDF_I_EXTENDED_FE(inode)))
+-			pos = sizeof(struct fileEntry) + UDF_I_LENEATTR(inode);
+-		else
+-			pos = sizeof(struct extendedFileEntry) + UDF_I_LENEATTR(inode);
+-		alen = UDF_I_LENALLOC(inode) + pos;
++		if (!(*extoffset))
++			*extoffset = udf_file_entry_alloc_offset(inode);
++		ptr = UDF_I_DATA(inode) + *extoffset - udf_file_entry_alloc_offset(inode) + UDF_I_LENEATTR(inode);
++		alen = udf_file_entry_alloc_offset(inode) + UDF_I_LENALLOC(inode);
+ 	}
+ 	else
+ 	{
+-		struct allocExtDesc *aed = (struct allocExtDesc *)(*bh)->b_data;
+-
+-		pos = sizeof(struct allocExtDesc);
+-		alen = le32_to_cpu(aed->lengthAllocDescs) + pos;
++		if (!(*extoffset))
++			*extoffset = sizeof(struct allocExtDesc);
++		ptr = (*bh)->b_data + *extoffset;
++		alen = le32_to_cpu(((struct allocExtDesc *)(*bh)->b_data)->lengthAllocDescs);
+ 	}
+ 
+-	if (!(*extoffset))
+-		*extoffset = pos;
+-
+ 	switch (UDF_I_ALLOCTYPE(inode))
+ 	{
+ 		case ICBTAG_FLAG_AD_SHORT:
+ 		{
+ 			short_ad *sad;
+ 
+-			if (!(sad = udf_get_fileshortad((*bh)->b_data, alen, extoffset, inc)))
++			if (!(sad = udf_get_fileshortad(ptr, alen, extoffset, inc)))
+ 				return -1;
+ 
+ 			etype = le32_to_cpu(sad->extLength) >> 30;
+@@ -1997,7 +1861,7 @@
+ 		{
+ 			long_ad *lad;
+ 
+-			if (!(lad = udf_get_filelongad((*bh)->b_data, alen, extoffset, inc)))
++			if (!(lad = udf_get_filelongad(ptr, alen, extoffset, inc)))
+ 				return -1;
+ 
+ 			etype = le32_to_cpu(lad->extLength) >> 30;
+@@ -2011,15 +1875,8 @@
+ 			return -1;
+ 		}
+ 	}
+-	if (*elen)
+-		return etype;
+ 
+-	udf_debug("Empty Extent!\n");
+-	if (UDF_I_ALLOCTYPE(inode) == ICBTAG_FLAG_AD_SHORT)
+-		*extoffset -= sizeof(short_ad);
+-	else if (UDF_I_ALLOCTYPE(inode) == ICBTAG_FLAG_AD_LONG)
+-		*extoffset -= sizeof(long_ad);
+-	return -1;
++	return etype;
+ }
+ 
+ int8_t udf_insert_aext(struct inode *inode, lb_addr bloc, int extoffset,
+@@ -2029,17 +1886,7 @@
+ 	uint32_t oelen;
+ 	int8_t etype;
+ 
+-	if (!bh)
+-	{
+-		if (!(bh = udf_tread(inode->i_sb,
+-			udf_get_lb_pblock(inode->i_sb, bloc, 0))))
+-		{
+-			udf_debug("reading block %d failed!\n",
+-				udf_get_lb_pblock(inode->i_sb, bloc, 0));
+-			return -1;
+-		}
+-	}
+-	else
++	if (bh)
+ 		atomic_inc(&bh->b_count);
+ 
+ 	while ((etype = udf_next_aext(inode, &bloc, &extoffset, &oeloc, &oelen, &bh, 0)) != -1)
+@@ -2063,19 +1910,11 @@
+ 	int8_t etype;
+ 	struct allocExtDesc *aed;
+ 
+-	if (!(nbh))
++	if (nbh)
+ 	{
+-		if (!(nbh = udf_tread(inode->i_sb,
+-			udf_get_lb_pblock(inode->i_sb, nbloc, 0))))
+-		{
+-			udf_debug("reading block %d failed!\n",
+-				udf_get_lb_pblock(inode->i_sb, nbloc, 0));
+-			return -1;
+-		}
+-	}
+-	else
+ 		atomic_inc(&nbh->b_count);
+-	atomic_inc(&nbh->b_count);
++		atomic_inc(&nbh->b_count);
++	}
+ 
+ 	if (UDF_I_ALLOCTYPE(inode) == ICBTAG_FLAG_AD_SHORT)
+ 		adsize = sizeof(short_ad);
+@@ -2094,7 +1933,7 @@
+ 	while ((etype = udf_next_aext(inode, &nbloc, &nextoffset, &eloc, &elen, &nbh, 1)) != -1)
+ 	{
+ 		udf_write_aext(inode, obloc, &oextoffset, eloc, (etype << 30) | elen, obh, 1);
+-		if (memcmp(&nbloc, &obloc, sizeof(lb_addr)))
++		if (obh != nbh)
+ 		{
+ 			obloc = nbloc;
+ 			udf_release_data(obh);
+@@ -2106,12 +1945,12 @@
+ 	memset(&eloc, 0x00, sizeof(lb_addr));
+ 	elen = 0;
+ 
+-	if (memcmp(&nbloc, &obloc, sizeof(lb_addr)))
++	if (nbh != obh)
+ 	{
+ 		udf_free_blocks(inode->i_sb, inode, nbloc, 0, 1);
+ 		udf_write_aext(inode, obloc, &oextoffset, eloc, elen, obh, 1);
+ 		udf_write_aext(inode, obloc, &oextoffset, eloc, elen, obh, 1);
+-		if (!memcmp(&UDF_I_LOCATION(inode), &obloc, sizeof(lb_addr)))
++		if (!obh)
+ 		{
+ 			UDF_I_LENALLOC(inode) -= (adsize * 2);
+ 			mark_inode_dirty(inode);
+@@ -2131,7 +1970,7 @@
+ 	else
+ 	{
+ 		udf_write_aext(inode, obloc, &oextoffset, eloc, elen, obh, 1);
+-		if (!memcmp(&UDF_I_LOCATION(inode), &obloc, sizeof(lb_addr)))
++		if (!obh)
+ 		{
+ 			UDF_I_LENALLOC(inode) -= adsize;
+ 			mark_inode_dirty(inode);
+@@ -2206,9 +2045,7 @@
+ 		ret = 0;
+ 
+ 	unlock_kernel();
+-
+-	if (bh)
+-		udf_release_data(bh);
++	udf_release_data(bh);
+ 
+ 	if (UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_VARCONV))
+ 		return udf_fixed_to_variable(ret);
+diff -u -r -N ../../linus/2.4/linux/fs/udf/misc.c linux/fs/udf/misc.c
+--- ../../linus/2.4/linux/fs/udf/misc.c	Tue Aug  6 21:16:21 2002
++++ linux/fs/udf/misc.c	Thu Aug  8 20:44:32 2002
+@@ -73,7 +73,7 @@
+ 
+ 	*bh = udf_tread(inode->i_sb, inode->i_ino);
+ 
+-	if (UDF_I_EXTENDED_FE(inode) == 0)
++	if (UDF_I_EFE(inode) == 0)
+ 	{
+ 		struct fileEntry *fe;
+ 
+@@ -189,7 +189,7 @@
+ 
+ 	*bh = udf_tread(inode->i_sb, inode->i_ino);
+ 
+-	if (UDF_I_EXTENDED_FE(inode) == 0)
++	if (UDF_I_EFE(inode) == 0)
+ 	{
+ 		struct fileEntry *fe;
+ 
+diff -u -r -N ../../linus/2.4/linux/fs/udf/namei.c linux/fs/udf/namei.c
+--- ../../linus/2.4/linux/fs/udf/namei.c	Tue Aug  6 21:16:21 2002
++++ linux/fs/udf/namei.c	Thu Aug  8 20:44:32 2002
+@@ -56,12 +56,16 @@
+ 	uint8_t lfi = cfi->lengthFileIdent;
+ 	int padlen = fibh->eoffset - fibh->soffset - liu - lfi -
+ 		sizeof(struct fileIdentDesc);
++	int adinicb = 0;
++
++	if (UDF_I_ALLOCTYPE(inode) == ICBTAG_FLAG_AD_IN_ICB)
++		adinicb = 1;
+ 
+ 	offset = fibh->soffset + sizeof(struct fileIdentDesc);
+ 
+ 	if (impuse)
+ 	{
+-		if (offset + liu < 0)
++		if (adinicb || (offset + liu < 0))
+ 			memcpy((uint8_t *)sfi->impUse, impuse, liu);
+ 		else if (offset >= 0)
+ 			memcpy(fibh->ebh->b_data + offset, impuse, liu);
+@@ -76,7 +80,7 @@
+ 
+ 	if (fileident)
+ 	{
+-		if (offset + lfi < 0)
++		if (adinicb || (offset + lfi < 0))
+ 			memcpy((uint8_t *)sfi->fileIdent + liu, fileident, lfi);
+ 		else if (offset >= 0)
+ 			memcpy(fibh->ebh->b_data + offset, fileident, lfi);
+@@ -89,7 +93,7 @@
+ 
+ 	offset += lfi;
+ 
+-	if (offset + padlen < 0)
++	if (adinicb || (offset + padlen < 0))
+ 		memset((uint8_t *)sfi->padding + liu + lfi, 0x00, padlen);
+ 	else if (offset >= 0)
+ 		memset(fibh->ebh->b_data + offset, 0x00, padlen);
+@@ -123,7 +127,7 @@
+ 			checksum += ((uint8_t *)&cfi->descTag)[i];
+ 
+ 	cfi->descTag.tagChecksum = checksum;
+-	if (sizeof(struct fileIdentDesc) <= -fibh->soffset)
++	if (adinicb || (sizeof(struct fileIdentDesc) <= -fibh->soffset))
+ 		memcpy((uint8_t *)sfi, (uint8_t *)cfi, sizeof(struct fileIdentDesc));
+ 	else
+ 	{
+@@ -132,9 +136,14 @@
+ 			sizeof(struct fileIdentDesc) + fibh->soffset);
+ 	}
+ 
+-	if (fibh->sbh != fibh->ebh)
+-		mark_buffer_dirty_inode(fibh->ebh, inode);
+-	mark_buffer_dirty_inode(fibh->sbh, inode);
++	if (adinicb)
++		mark_inode_dirty(inode);
++	else
++	{
++		if (fibh->sbh != fibh->ebh)
++			mark_buffer_dirty_inode(fibh->ebh, inode);
++		mark_buffer_dirty_inode(fibh->sbh, inode);
++	}
+ 	return 0;
+ }
+ 
+@@ -161,7 +170,9 @@
+ 	f_pos = (udf_ext0_offset(dir) >> 2);
+ 
+ 	fibh->soffset = fibh->eoffset = (f_pos & ((dir->i_sb->s_blocksize - 1) >> 2)) << 2;
+-	if (inode_bmap(dir, f_pos >> (dir->i_sb->s_blocksize_bits - 2),
++	if (UDF_I_ALLOCTYPE(dir) == ICBTAG_FLAG_AD_IN_ICB)
++		fibh->sbh = fibh->ebh = NULL;
++	else if (inode_bmap(dir, f_pos >> (dir->i_sb->s_blocksize_bits - 2),
+ 		&bloc, &extoffset, &eloc, &elen, &offset, &bh) == (EXT_RECORDED_ALLOCATED >> 30))
+ 	{
+ 		offset >>= dir->i_sb->s_blocksize_bits;
+@@ -175,6 +186,12 @@
+ 		}
+ 		else
+ 			offset = 0;
++
++		if (!(fibh->sbh = fibh->ebh = udf_tread(dir->i_sb, block)))
++		{
++			udf_release_data(bh);
++			return NULL;
++		}
+ 	}
+ 	else
+ 	{
+@@ -182,12 +199,6 @@
+ 		return NULL;
+ 	}
+ 
+-	if (!(fibh->sbh = fibh->ebh = udf_tread(dir->i_sb, block)))
+-	{
+-		udf_release_data(bh);
+-		return NULL;
+-	}
+-
+ 	while ( (f_pos < size) )
+ 	{
+ 		fi = udf_fileident_read(dir, &f_pos, fibh, cfi, &bloc, &extoffset, &eloc, &elen, &offset, &bh);
+@@ -388,7 +399,9 @@
+ 	f_pos = (udf_ext0_offset(dir) >> 2);
+ 
+ 	fibh->soffset = fibh->eoffset = (f_pos & ((dir->i_sb->s_blocksize - 1) >> 2)) << 2;
+-	if (inode_bmap(dir, f_pos >> (dir->i_sb->s_blocksize_bits - 2),
++	if (UDF_I_ALLOCTYPE(dir) == ICBTAG_FLAG_AD_IN_ICB)
++		fibh->sbh = fibh->ebh = NULL;
++	else if (inode_bmap(dir, f_pos >> (dir->i_sb->s_blocksize_bits - 2),
+ 		&bloc, &extoffset, &eloc, &elen, &offset, &bh) == (EXT_RECORDED_ALLOCATED >> 30))
+ 	{
+ 		offset >>= dir->i_sb->s_blocksize_bits;
+@@ -409,94 +422,89 @@
+ 			*err = -EIO;
+ 			return NULL;
+ 		}
+-	
++
+ 		block = UDF_I_LOCATION(dir).logicalBlockNum;
+-	
+-		while ( (f_pos < size) )
++
++	}
++	else
++	{
++		block = udf_get_lb_pblock(dir->i_sb, UDF_I_LOCATION(dir), 0);
++		fibh->sbh = fibh->ebh = NULL;
++		fibh->soffset = fibh->eoffset = sb->s_blocksize;
++		goto add;
++	}
++
++	while ( (f_pos < size) )
++	{
++		fi = udf_fileident_read(dir, &f_pos, fibh, cfi, &bloc, &extoffset, &eloc, &elen, &offset, &bh);
++
++		if (!fi)
+ 		{
+-			fi = udf_fileident_read(dir, &f_pos, fibh, cfi, &bloc, &extoffset, &eloc, &elen, &offset, &bh);
+-	
+-			if (!fi)
+-			{
+-				if (fibh->sbh != fibh->ebh)
+-					udf_release_data(fibh->ebh);
+-				udf_release_data(fibh->sbh);
+-				udf_release_data(bh);
+-				*err = -EIO;
+-				return NULL;
+-			}
+-	
+-			liu = le16_to_cpu(cfi->lengthOfImpUse);
+-			lfi = cfi->lengthFileIdent;
+-	
+-			if (fibh->sbh == fibh->ebh)
+-				nameptr = fi->fileIdent + liu;
++			if (fibh->sbh != fibh->ebh)
++				udf_release_data(fibh->ebh);
++			udf_release_data(fibh->sbh);
++			udf_release_data(bh);
++			*err = -EIO;
++			return NULL;
++		}
++
++		liu = le16_to_cpu(cfi->lengthOfImpUse);
++		lfi = cfi->lengthFileIdent;
++
++		if (fibh->sbh == fibh->ebh)
++			nameptr = fi->fileIdent + liu;
++		else
++		{
++			int poffset;	/* Unpaded ending offset */
++
++			poffset = fibh->soffset + sizeof(struct fileIdentDesc) + liu + lfi;
++
++			if (poffset >= lfi)
++				nameptr = (char *)(fibh->ebh->b_data + poffset - lfi);
+ 			else
+ 			{
+-				int poffset;	/* Unpaded ending offset */
+-	
+-				poffset = fibh->soffset + sizeof(struct fileIdentDesc) + liu + lfi;
+-	
+-				if (poffset >= lfi)
+-					nameptr = (char *)(fibh->ebh->b_data + poffset - lfi);
+-				else
+-				{
+-					nameptr = fname;
+-					memcpy(nameptr, fi->fileIdent + liu, lfi - poffset);
+-					memcpy(nameptr + lfi - poffset, fibh->ebh->b_data, poffset);
+-				}
++				nameptr = fname;
++				memcpy(nameptr, fi->fileIdent + liu, lfi - poffset);
++				memcpy(nameptr + lfi - poffset, fibh->ebh->b_data, poffset);
+ 			}
+-	
+-			if ( (cfi->fileCharacteristics & FID_FILE_CHAR_DELETED) != 0 )
++		}
++
++		if ( (cfi->fileCharacteristics & FID_FILE_CHAR_DELETED) != 0 )
++		{
++			if (((sizeof(struct fileIdentDesc) + liu + lfi + 3) & ~3) == nfidlen)
+ 			{
+-				if (((sizeof(struct fileIdentDesc) + liu + lfi + 3) & ~3) == nfidlen)
++				udf_release_data(bh);
++				cfi->descTag.tagSerialNum = cpu_to_le16(1);
++				cfi->fileVersionNum = cpu_to_le16(1);
++				cfi->fileCharacteristics = 0;
++				cfi->lengthFileIdent = namelen;
++				cfi->lengthOfImpUse = cpu_to_le16(0);
++				if (!udf_write_fi(dir, cfi, fi, fibh, NULL, name))
++					return fi;
++				else
+ 				{
+-					udf_release_data(bh);
+-					cfi->descTag.tagSerialNum = cpu_to_le16(1);
+-					cfi->fileVersionNum = cpu_to_le16(1);
+-					cfi->fileCharacteristics = 0;
+-					cfi->lengthFileIdent = namelen;
+-					cfi->lengthOfImpUse = cpu_to_le16(0);
+-					if (!udf_write_fi(dir, cfi, fi, fibh, NULL, name))
+-						return fi;
+-					else
+-					{
+-						*err = -EIO;
+-						return NULL;
+-					}
++					*err = -EIO;
++					return NULL;
+ 				}
+ 			}
++		}
+ 
+-			if (!lfi || !dentry)
+-				continue;
++		if (!lfi || !dentry)
++			continue;
+ 
+-			if ((flen = udf_get_filename(dir->i_sb, nameptr, fname, lfi)) &&
+-				udf_match(flen, fname, &(dentry->d_name)))
+-			{
+-				if (fibh->sbh != fibh->ebh)
+-					udf_release_data(fibh->ebh);
+-				udf_release_data(fibh->sbh);
+-				udf_release_data(bh);
+-				*err = -EEXIST;
+-				return NULL;
+-			}
+-		}
+-	}
+-	else
+-	{
+-		block = udf_get_lb_pblock(dir->i_sb, UDF_I_LOCATION(dir), 0);
+-		if (UDF_I_ALLOCTYPE(dir) == ICBTAG_FLAG_AD_IN_ICB)
++		if ((flen = udf_get_filename(dir->i_sb, nameptr, fname, lfi)) &&
++			udf_match(flen, fname, &(dentry->d_name)))
+ 		{
+-			fibh->sbh = fibh->ebh = udf_tread(dir->i_sb, block);
+-			fibh->soffset = fibh->eoffset = udf_file_entry_alloc_offset(dir);
+-		}
+-		else
+-		{
+-			fibh->sbh = fibh->ebh = NULL;
+-			fibh->soffset = fibh->eoffset = sb->s_blocksize;
++			if (fibh->sbh != fibh->ebh)
++				udf_release_data(fibh->ebh);
++			udf_release_data(fibh->sbh);
++			udf_release_data(bh);
++			*err = -EEXIST;
++			return NULL;
+ 		}
+ 	}
+ 
++add:
+ 	f_pos += nfidlen;
+ 
+ 	if (UDF_I_ALLOCTYPE(dir) == ICBTAG_FLAG_AD_IN_ICB &&
+@@ -533,13 +541,17 @@
+ 			fibh->sbh = fibh->ebh;
+ 		}
+ 
+-		if (UDF_I_ALLOCTYPE(dir) != ICBTAG_FLAG_AD_IN_ICB)
++		if (UDF_I_ALLOCTYPE(dir) == ICBTAG_FLAG_AD_IN_ICB)
++		{
++			block = UDF_I_LOCATION(dir).logicalBlockNum;
++			fi = (struct fileIdentDesc *)(UDF_I_DATA(dir) + fibh->soffset - udf_ext0_offset(dir));
++		}
++		else
++		{
+ 			block = eloc.logicalBlockNum + ((elen - 1) >>
+ 				dir->i_sb->s_blocksize_bits);
+-		else
+-			block = UDF_I_LOCATION(dir).logicalBlockNum;
+-				
+-		fi = (struct fileIdentDesc *)(fibh->sbh->b_data + fibh->soffset);
++			fi = (struct fileIdentDesc *)(fibh->sbh->b_data + fibh->soffset);
++		}
+ 	}
+ 	else
+ 	{
+@@ -784,7 +796,10 @@
+ 	f_pos = (udf_ext0_offset(dir) >> 2);
+ 
+ 	fibh.soffset = fibh.eoffset = (f_pos & ((dir->i_sb->s_blocksize - 1) >> 2)) << 2;
+-	if (inode_bmap(dir, f_pos >> (dir->i_sb->s_blocksize_bits - 2),
++
++	if (UDF_I_ALLOCTYPE(dir) == ICBTAG_FLAG_AD_IN_ICB)
++		fibh.sbh = fibh.ebh = NULL;
++	else if (inode_bmap(dir, f_pos >> (dir->i_sb->s_blocksize_bits - 2),
+ 		&bloc, &extoffset, &eloc, &elen, &offset, &bh) == (EXT_RECORDED_ALLOCATED >> 30))
+ 	{
+ 		offset >>= dir->i_sb->s_blocksize_bits;
+@@ -798,6 +813,12 @@
+ 		}
+ 		else
+ 			offset = 0;
++
++		if (!(fibh.sbh = fibh.ebh = udf_tread(dir->i_sb, block)))
++		{
++			udf_release_data(bh);
++			return 0;
++		}
+ 	}
+ 	else
+ 	{
+@@ -805,8 +826,6 @@
+ 		return 0;
+ 	}
+ 
+-	if (!(fibh.sbh = fibh.ebh = udf_tread(dir->i_sb, block)))
+-		return 0;
+ 
+ 	while ( (f_pos < size) )
+ 	{
+@@ -823,6 +842,9 @@
+ 
+ 		if (cfi.lengthFileIdent && (cfi.fileCharacteristics & FID_FILE_CHAR_DELETED) == 0)
+ 		{
++			if (fibh.sbh != fibh.ebh)
++				udf_release_data(fibh.ebh);
++			udf_release_data(fibh.sbh);
+ 			udf_release_data(bh);
+ 			return 0;
+ 		}
+diff -u -r -N ../../linus/2.4/linux/fs/udf/super.c linux/fs/udf/super.c
+--- ../../linus/2.4/linux/fs/udf/super.c	Tue Aug  6 21:16:21 2002
++++ linux/fs/udf/super.c	Thu Aug  8 20:44:32 2002
+@@ -104,6 +104,7 @@
+ 	write_inode:		udf_write_inode,
+ 	put_inode:		udf_put_inode,
+ 	delete_inode:		udf_delete_inode,
++	clear_inode:		udf_clear_inode,
+ 	put_super:		udf_put_super,
+ 	write_super:		udf_write_super,
+ 	statfs:			udf_statfs,
+@@ -313,10 +314,6 @@
+ 	UDF_SB(sb)->s_gid   = uopt.gid;
+ 	UDF_SB(sb)->s_umask = uopt.umask;
+ 
+-#if UDFFS_RW != 1
+-	*flags |= MS_RDONLY;
+-#endif
+-
+ 	if ((*flags & MS_RDONLY) == (sb->s_flags & MS_RDONLY))
+ 		return 0;
+ 	if (*flags & MS_RDONLY)
+@@ -1373,10 +1370,6 @@
+ 
+ 	memset(UDF_SB(sb), 0x00, sizeof(struct udf_sb_info));
+ 
+-#if UDFFS_RW != 1
+-	sb->s_flags |= MS_RDONLY;
+-#endif
+-
+ 	if (!udf_parse_options((char *)options, &uopt))
+ 		goto error_out;
+ 
+@@ -1488,8 +1481,8 @@
+ 	{
+ 		timestamp ts;
+ 		udf_time_to_stamp(&ts, UDF_SB_RECORDTIME(sb), 0);
+-		udf_info("UDF %s-%s (%s) Mounting volume '%s', timestamp %04u/%02u/%02u %02u:%02u (%x)\n",
+-			UDFFS_VERSION, UDFFS_RW ? "rw" : "ro", UDFFS_DATE,
++		udf_info("UDF %s (%s) Mounting volume '%s', timestamp %04u/%02u/%02u %02u:%02u (%x)\n",
++			UDFFS_VERSION, UDFFS_DATE,
+ 			UDF_SB_VOLIDENT(sb), ts.year, ts.month, ts.day, ts.hour, ts.minute,
+ 			ts.typeAndTimezone);
+ 	}
+diff -u -r -N ../../linus/2.4/linux/fs/udf/symlink.c linux/fs/udf/symlink.c
+--- ../../linus/2.4/linux/fs/udf/symlink.c	Tue Aug  6 21:16:21 2002
++++ linux/fs/udf/symlink.c	Thu Aug  8 20:44:32 2002
+@@ -87,14 +87,7 @@
+ 	
+ 	lock_kernel();
+ 	if (UDF_I_ALLOCTYPE(inode) == ICBTAG_FLAG_AD_IN_ICB)
+-	{
+-		bh = udf_tread(inode->i_sb, inode->i_ino);
+-
+-		if (!bh)
+-			goto out;
+-
+-		symlink = bh->b_data + udf_file_entry_alloc_offset(inode);
+-	}
++		symlink = UDF_I_DATA(inode) + UDF_I_LENALLOC(inode);
+ 	else
+ 	{
+ 		bh = sb_bread(inode->i_sb, udf_block_map(inode, 0));
+diff -u -r -N ../../linus/2.4/linux/fs/udf/truncate.c linux/fs/udf/truncate.c
+--- ../../linus/2.4/linux/fs/udf/truncate.c	Tue Aug  6 21:16:21 2002
++++ linux/fs/udf/truncate.c	Thu Aug  8 20:44:32 2002
+@@ -57,7 +57,9 @@
+ 		if (last_block - first_block > 0)
+ 		{
+ 			if (etype == (EXT_RECORDED_ALLOCATED >> 30))
++			{
+ 				mark_inode_dirty(inode);
++			}
+ 
+ 			if (etype != (EXT_NOT_RECORDED_NOT_ALLOCATED >> 30))
+ 				udf_free_blocks(inode->i_sb, inode, eloc, first_block, last_block - first_block);
+@@ -94,7 +96,7 @@
+ 		else
+ 			lenalloc = extoffset - adsize;
+ 
+-		if (!memcmp(&UDF_I_LOCATION(inode), &bloc, sizeof(lb_addr)))
++		if (!bh)
+ 			lenalloc -= udf_file_entry_alloc_offset(inode);
+ 		else
+ 			lenalloc -= sizeof(struct allocExtDesc);
+@@ -107,15 +109,15 @@
+ 				extoffset = 0;
+ 				if (lelen)
+ 				{
+-					if (!memcmp(&UDF_I_LOCATION(inode), &bloc, sizeof(lb_addr)))
+-						memset(bh->b_data, 0x00, udf_file_entry_alloc_offset(inode));
++					if (!bh)
++						BUG();
+ 					else
+ 						memset(bh->b_data, 0x00, sizeof(struct allocExtDesc));
+ 					udf_free_blocks(inode->i_sb, inode, bloc, 0, lelen);
+ 				}
+ 				else
+ 				{
+-					if (!memcmp(&UDF_I_LOCATION(inode), &bloc, sizeof(lb_addr)))
++					if (!bh)
+ 					{
+ 						UDF_I_LENALLOC(inode) = lenalloc;
+ 						mark_inode_dirty(inode);
+@@ -134,9 +136,9 @@
+ 				}
+ 
+ 				udf_release_data(bh);
+-				bh = NULL;
+-
++				extoffset = sizeof(struct allocExtDesc);
+ 				bloc = eloc;
++				bh = udf_tread(inode->i_sb, udf_get_lb_pblock(inode->i_sb, bloc, 0));
+ 				if (elen)
+ 					lelen = (elen + inode->i_sb->s_blocksize - 1) >>
+ 						inode->i_sb->s_blocksize_bits;
+@@ -152,15 +154,15 @@
+ 
+ 		if (lelen)
+ 		{
+-			if (!memcmp(&UDF_I_LOCATION(inode), &bloc, sizeof(lb_addr)))
+-				memset(bh->b_data, 0x00, udf_file_entry_alloc_offset(inode));
++			if (!bh)
++				BUG();
+ 			else
+ 				memset(bh->b_data, 0x00, sizeof(struct allocExtDesc));
+ 			udf_free_blocks(inode->i_sb, inode, bloc, 0, lelen);
+ 		}
+ 		else
+ 		{
+-			if (!memcmp(&UDF_I_LOCATION(inode), &bloc, sizeof(lb_addr)))
++			if (!bh)
+ 			{
+ 				UDF_I_LENALLOC(inode) = lenalloc;
+ 				mark_inode_dirty(inode);
+diff -u -r -N ../../linus/2.4/linux/fs/udf/udf_i.h linux/fs/udf/udf_i.h
+--- ../../linus/2.4/linux/fs/udf/udf_i.h	Tue Aug  6 21:16:21 2002
++++ linux/fs/udf/udf_i.h	Thu Aug  8 20:44:32 2002
+@@ -9,14 +9,17 @@
+ #define UDF_I_LENEXTENTS(X)	( UDF_I(X)->i_lenExtents )
+ #define UDF_I_UNIQUE(X)		( UDF_I(X)->i_unique )
+ #define UDF_I_ALLOCTYPE(X)	( UDF_I(X)->i_alloc_type )
+-#define UDF_I_EXTENDED_FE(X)	( UDF_I(X)->i_extended_fe )
+-#define UDF_I_STRAT4096(X)	( UDF_I(X)->i_strat_4096 )
+-#define UDF_I_NEW_INODE(X)	( UDF_I(X)->i_new_inode )
++#define UDF_I_EFE(X)		( UDF_I(X)->i_efe )
++#define UDF_I_USE(X)		( UDF_I(X)->i_use )
++#define UDF_I_STRAT4096(X)	( UDF_I(X)->i_strat4096 )
+ #define UDF_I_NEXT_ALLOC_BLOCK(X)	( UDF_I(X)->i_next_alloc_block )
+ #define UDF_I_NEXT_ALLOC_GOAL(X)	( UDF_I(X)->i_next_alloc_goal )
+ #define UDF_I_UMTIME(X)		( UDF_I(X)->i_umtime )
+ #define UDF_I_UCTIME(X)		( UDF_I(X)->i_uctime )
+ #define UDF_I_CRTIME(X)		( UDF_I(X)->i_crtime )
+ #define UDF_I_UCRTIME(X)	( UDF_I(X)->i_ucrtime )
++#define UDF_I_SAD(X)		( UDF_I(X)->i_ext.i_sad )
++#define UDF_I_LAD(X)		( UDF_I(X)->i_ext.i_lad )
++#define UDF_I_DATA(X)		( UDF_I(X)->i_ext.i_data )
+ 
+ #endif /* !defined(_LINUX_UDF_I_H) */
+diff -u -r -N ../../linus/2.4/linux/fs/udf/udfdecl.h linux/fs/udf/udfdecl.h
+--- ../../linus/2.4/linux/fs/udf/udfdecl.h	Tue Aug  6 21:16:21 2002
++++ linux/fs/udf/udfdecl.h	Thu Aug  8 20:44:32 2002
+@@ -34,9 +34,11 @@
+ #define CURRENT_UTIME	(xtime.tv_usec)
+ 
+ #define udf_file_entry_alloc_offset(inode)\
+-	((UDF_I_EXTENDED_FE(inode) ?\
+-		sizeof(struct extendedFileEntry) :\
+-		sizeof(struct fileEntry)) + UDF_I_LENEATTR(inode))
++	(UDF_I_USE(inode) ?\
++		sizeof(struct unallocSpaceEntry) :\
++		((UDF_I_EFE(inode) ?\
++			sizeof(struct extendedFileEntry) :\
++			sizeof(struct fileEntry)) + UDF_I_LENEATTR(inode)))
+ 
+ #define udf_ext0_offset(inode)\
+ 	(UDF_I_ALLOCTYPE(inode) == ICBTAG_FLAG_AD_IN_ICB ?\
+@@ -113,6 +115,7 @@
+ extern void udf_read_inode(struct inode *);
+ extern void udf_put_inode(struct inode *);
+ extern void udf_delete_inode(struct inode *);
++extern void udf_clear_inode(struct inode *);
+ extern void udf_write_inode(struct inode *, int);
+ extern long udf_block_map(struct inode *, long);
+ extern int8_t inode_bmap(struct inode *, int, lb_addr *, uint32_t *, lb_addr *, uint32_t *, uint32_t *, struct buffer_head **);
+@@ -199,8 +202,8 @@
+ /* directory.c */
+ extern struct fileIdentDesc * udf_get_fileident(void * buffer, int bufsize, int * offset);
+ extern extent_ad * udf_get_fileextent(void * buffer, int bufsize, int * offset);
+-extern long_ad * udf_get_filelongad(void * buffer, int bufsize, int * offset, int);
+-extern short_ad * udf_get_fileshortad(void * buffer, int bufsize, int * offset, int);
++extern long_ad * udf_get_filelongad(uint8_t *, int, int *, int);
++extern short_ad * udf_get_fileshortad(uint8_t *, int, int *, int);
+ extern uint8_t * udf_get_filead(struct fileEntry *, uint8_t *, int, int, int, int *);
+ 
+ #endif /* __UDF_DECL_H */
+diff -u -r -N ../../linus/2.4/linux/include/linux/cdrom.h linux/include/linux/cdrom.h
+--- ../../linus/2.4/linux/include/linux/cdrom.h	Tue Aug  6 21:17:10 2002
++++ linux/include/linux/cdrom.h	Tue Aug  6 21:24:33 2002
 @@ -494,6 +494,7 @@
  /* Mode page codes for mode sense/set */
  #define GPMODE_R_W_ERROR_PAGE		0x01
@@ -3211,10 +4974,10 @@ diff -uNr linux-2.4.18/include/linux/cdrom.h pkt/include/linux/cdrom.h
  
  
  /* DVD struct types */
-diff -uNr linux-2.4.18/include/linux/fs.h pkt/include/linux/fs.h
---- linux-2.4.18/include/linux/fs.h	Tue Jul  9 00:51:20 2002
-+++ pkt/include/linux/fs.h	Mon Jul 29 10:02:28 2002
-@@ -931,6 +931,7 @@
+diff -u -r -N ../../linus/2.4/linux/include/linux/fs.h linux/include/linux/fs.h
+--- ../../linus/2.4/linux/include/linux/fs.h	Tue Aug  6 21:17:11 2002
++++ linux/include/linux/fs.h	Tue Aug  6 21:24:33 2002
+@@ -894,6 +894,7 @@
  	int (*remount_fs) (struct super_block *, int *, char *);
  	void (*clear_inode) (struct inode *);
  	void (*umount_begin) (struct super_block *);
@@ -3222,9 +4985,9 @@ diff -uNr linux-2.4.18/include/linux/fs.h pkt/include/linux/fs.h
  
  	/* Following are for knfsd to interact with "interesting" filesystems
  	 * Currently just reiserfs, but possibly FAT and others later
-diff -uNr linux-2.4.18/include/linux/major.h pkt/include/linux/major.h
---- linux-2.4.18/include/linux/major.h	Tue Sep 18 08:23:40 2001
-+++ pkt/include/linux/major.h	Mon Jul 29 10:02:28 2002
+diff -u -r -N ../../linus/2.4/linux/include/linux/major.h linux/include/linux/major.h
+--- ../../linus/2.4/linux/include/linux/major.h	Tue Aug  6 21:17:15 2002
++++ linux/include/linux/major.h	Tue Aug  6 21:24:45 2002
 @@ -108,6 +108,8 @@
  #define SPECIALIX_NORMAL_MAJOR 75
  #define SPECIALIX_CALLOUT_MAJOR 76
@@ -3234,10 +4997,10 @@ diff -uNr linux-2.4.18/include/linux/major.h pkt/include/linux/major.h
  #define COMPAQ_CISS_MAJOR 	104
  #define COMPAQ_CISS_MAJOR1	105
  #define COMPAQ_CISS_MAJOR2      106
-diff -uNr linux-2.4.18/include/linux/pktcdvd.h pkt/include/linux/pktcdvd.h
---- linux-2.4.18/include/linux/pktcdvd.h	Thu Jan  1 01:00:00 1970
-+++ pkt/include/linux/pktcdvd.h	Mon Jul 29 09:11:41 2002
-@@ -0,0 +1,212 @@
+diff -u -r -N ../../linus/2.4/linux/include/linux/pktcdvd.h linux/include/linux/pktcdvd.h
+--- ../../linus/2.4/linux/include/linux/pktcdvd.h	Thu Jan  1 01:00:00 1970
++++ linux/include/linux/pktcdvd.h	Wed Aug  7 21:55:25 2002
+@@ -0,0 +1,215 @@
 +/*
 + * Copyright (C) 2000 Jens Axboe <axboe@suse.de>
 + *
@@ -3257,6 +5020,8 @@ diff -uNr linux-2.4.18/include/linux/pktcdvd.h pkt/include/linux/pktcdvd.h
 +#define PACKET_DEBUG		1
 +
 +#define	MAX_WRITERS		8
++
++#define STACKED_BH_POOL_SIZE	64
 +
 +/*
 + * use drive write caching -- we need deferred error handling to be
@@ -3299,7 +5064,7 @@ diff -uNr linux-2.4.18/include/linux/pktcdvd.h pkt/include/linux/pktcdvd.h
 +/*
 + * flags
 + */
-+#define PACKET_WRITEABLE	1	/* pd is writeable */	
++#define PACKET_WRITEABLE	1	/* pd is writeable */
 +#define PACKET_NWA_VALID	2	/* next writeable address valid */
 +#define PACKET_LRA_VALID	3	/* last recorded address valid */
 +#define PACKET_READONLY		4	/* read only pd */
@@ -3416,7 +5181,8 @@ diff -uNr linux-2.4.18/include/linux/pktcdvd.h pkt/include/linux/pktcdvd.h
 +	wait_queue_head_t		wqueue;
 +	struct request			*rq;
 +	atomic_t			wrqcnt;
-+	atomic_t			bhcnt;
++	struct buffer_head		*stacked_bhlist;
++	int				stacked_bhcnt;
 +
 +	struct semaphore		cache_sync_mutex;
 +	int				unflushed_writes;
@@ -3450,3 +5216,119 @@ diff -uNr linux-2.4.18/include/linux/pktcdvd.h pkt/include/linux/pktcdvd.h
 +#endif /* __KERNEL__ */
 +
 +#endif /* __PKTCDVD_H */
+diff -u -r -N ../../linus/2.4/linux/include/linux/udf_fs.h linux/include/linux/udf_fs.h
+--- ../../linus/2.4/linux/include/linux/udf_fs.h	Tue Aug  6 21:17:20 2002
++++ linux/include/linux/udf_fs.h	Thu Aug  8 20:44:32 2002
+@@ -30,7 +30,6 @@
+  * HISTORY
+  *
+  */
+-#include <linux/config.h>
+ 
+ #ifndef _UDF_FS_H
+ #define _UDF_FS_H 1
+@@ -38,19 +37,9 @@
+ #define UDF_PREALLOCATE
+ #define UDF_DEFAULT_PREALLOC_BLOCKS	8
+ 
+-#define UDFFS_DATE			"2002/03/11"
++#define UDFFS_DATE			"2002/03/14"
+ #define UDFFS_VERSION			"0.9.6"
+ 
+-#if !defined(UDFFS_RW)
+-
+-#if defined(CONFIG_UDF_RW)
+-#define UDFFS_RW			1
+-#else /* !defined(CONFIG_UDF_RW) */
+-#define UDFFS_RW			0
+-#endif /* defined(CONFIG_UDF_RW) */
+-
+-#endif /* !defined(UDFFS_RW) */
+-
+ #define UDFFS_DEBUG
+ 
+ #ifdef UDFFS_DEBUG
+@@ -67,4 +56,12 @@
+ #define udf_info(f, a...) \
+ 		printk (KERN_INFO "UDF-fs INFO " f, ##a);
+ 
++#ifdef __KERNEL__
++
++#ifndef LINUX_VERSION_CODE
++#include <linux/version.h>
++#endif
++
++#endif /* __KERNEL__ */
++
+ #endif /* _UDF_FS_H */
+diff -u -r -N ../../linus/2.4/linux/include/linux/udf_fs_i.h linux/include/linux/udf_fs_i.h
+--- ../../linus/2.4/linux/include/linux/udf_fs_i.h	Tue Aug  6 21:17:20 2002
++++ linux/include/linux/udf_fs_i.h	Thu Aug  8 20:44:32 2002
+@@ -23,30 +23,49 @@
+ #ifndef _ECMA_167_H
+ typedef struct
+ {
+-	__u32 logicalBlockNum;
+-	__u16 partitionReferenceNum;
++	__u32			logicalBlockNum;
++	__u16			partitionReferenceNum;
+ } __attribute__ ((packed)) lb_addr;
++
++typedef struct
++{
++	__u32			extLength;
++	__u32			extPosition;
++} __attribute__ ((packed)) short_ad;
++
++typedef struct
++{
++	__u32			extLength;
++	lb_addr			extLocation;
++	__u8			impUse[6];
++} __attribute__ ((packed)) long_ad;
+ #endif
+ 
+ struct udf_inode_info
+ {
+-	long i_umtime;
+-	long i_uctime;
+-	long i_crtime;
+-	long i_ucrtime;
++	long			i_umtime;
++	long			i_uctime;
++	long			i_crtime;
++	long			i_ucrtime;
+ 	/* Physical address of inode */
+-	lb_addr i_location;
+-	__u64 i_unique;
+-	__u32 i_lenEAttr;
+-	__u32 i_lenAlloc;
+-	__u64 i_lenExtents;
+-	__u32 i_next_alloc_block;
+-	__u32 i_next_alloc_goal;
+-	unsigned i_alloc_type : 3;
+-	unsigned i_extended_fe : 1;
+-	unsigned i_strat_4096 : 1;
+-	unsigned i_new_inode : 1;
+-	unsigned reserved : 26;
++	lb_addr			i_location;
++	__u64			i_unique;
++	__u32			i_lenEAttr;
++	__u32			i_lenAlloc;
++	__u64			i_lenExtents;
++	__u32			i_next_alloc_block;
++	__u32			i_next_alloc_goal;
++	unsigned		i_alloc_type : 3;
++	unsigned		i_efe : 1;
++	unsigned		i_use : 1;
++	unsigned		i_strat4096 : 1;
++	unsigned		reserved : 26;
++	union
++	{
++		short_ad	*i_sad;
++		long_ad		*i_lad;
++		__u8		*i_data;
++	} i_ext;
+ };
+ 
+ #endif
