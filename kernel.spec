@@ -8,21 +8,11 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	grsec		# build without grsec
-%bcond_without	swsuspend	# build with software suspend
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	mosix		# build with openMosix support
 
 %{?debug:%define with_verbose 1}
-
-%ifnarch %{ix86}
-%undefine	with_swsuspend
-%endif
-
-# not fixed yet
-%if %{with swsuspend}
-%undefine	with_grsec
-%endif
 
 %ifarch sparc
 # sparc32 is missing important updates from 2.5 cycle - won't build
@@ -770,7 +760,7 @@ zcat %{SOURCE3} | patch -p1 -s
 #patch470 -p1
 
 # software suspend
-%if %{with swsuspend}
+%ifarch %{ix86}
 %patch500 -p1
 %patch501 -p1
 %patch502 -p1
