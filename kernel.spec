@@ -45,7 +45,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.2
+%define		_rel		1.3
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -169,6 +169,7 @@ Patch103:	linux-2.6-tty-overrun-notify.patch
 Patch104:	linux-2.6-tcp-unaligned-access.patch
 Patch105:	linux-2.6-align-udp-packet.patch
 Patch106:	linux-2.6-smbfs.patch
+Patch107:	linux-2.6-jbd-temp-unlink.patch
 
 # linux vserver
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
@@ -560,6 +561,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch104 -p1
 %patch105 -p1
 %patch106 -p1
+%patch107 -p1
 
 %if %{with vserver}
 %patch200 -p1
@@ -987,23 +989,7 @@ fi
 #drm stuff
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 %endif
-%ifnarch sparc sparc64
-#oss sound stuff
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/oss
-%endif
-#alsa sound stuff
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/core
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/drivers
-%ifnarch sparc sparc64
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/i2c
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/isa
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/pci
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/synth
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/usb
-%endif
-%ifarch sparc sparc64
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/sparc
-%endif
+%exclude /lib/modules/%{version}-%{release}/kernel/sound
 
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
@@ -1027,18 +1013,8 @@ fi
 
 %files sound-alsa
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/sound/core
-/lib/modules/%{version}-%{release}/kernel/sound/drivers
-%ifnarch sparc sparc64
-/lib/modules/%{version}-%{release}/kernel/sound/i2c
-/lib/modules/%{version}-%{release}/kernel/sound/isa
-/lib/modules/%{version}-%{release}/kernel/sound/pci
-/lib/modules/%{version}-%{release}/kernel/sound/synth
-/lib/modules/%{version}-%{release}/kernel/sound/usb
-%endif
-%ifarch sparc sparc64
-/lib/modules/%{version}-%{release}/kernel/sound/sparc
-%endif
+/lib/modules/%{version}-%{release}/kernel/sound
+%exclude /lib/modules/%{version}-%{release}/kernel/sound/oss
 
 %ifnarch sparc sparc64
 %files sound-oss
@@ -1075,23 +1051,7 @@ fi
 #drm stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 %endif
-%ifnarch sparc sparc64
-#oss sound stuff
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/oss
-%endif
-#alsa sound stuff
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/core
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/drivers
-%ifnarch sparc sparc64
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/i2c
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/isa
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/pci
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/synth
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/usb
-%endif
-%ifarch sparc sparc64
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/sparc
-%endif
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound
 
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
@@ -1115,18 +1075,8 @@ fi
 
 %files smp-sound-alsa
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/sound/core
-/lib/modules/%{version}-%{release}smp/kernel/sound/drivers
-%ifnarch sparc sparc64
-/lib/modules/%{version}-%{release}smp/kernel/sound/i2c
-/lib/modules/%{version}-%{release}smp/kernel/sound/isa
-/lib/modules/%{version}-%{release}smp/kernel/sound/pci
-/lib/modules/%{version}-%{release}smp/kernel/sound/synth
-/lib/modules/%{version}-%{release}smp/kernel/sound/usb
-%endif
-%ifarch sparc sparc64
-/lib/modules/%{version}-%{release}smp/kernel/sound/sparc
-%endif
+/lib/modules/%{version}-%{release}smp/kernel/sound
+%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/oss
 
 %ifnarch sparc sparc64
 %files smp-sound-oss
