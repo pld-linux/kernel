@@ -6,7 +6,6 @@
 #
 # TODO:
 #		- check I2C
-#		- fix bootsplash
 #		- pwc
 #
 # Conditional build:
@@ -19,7 +18,7 @@
 %bcond_with	pramfs		# build pramfs support (EXPERIMENTAL)
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
-%bcond_with	bootsplash	# build with bootsplash
+%bcond_without	bootsplash	# build with bootsplash
 
 %{?debug:%define with_verbose 1}
 
@@ -160,8 +159,8 @@ Patch61:	%{name}-MAX_INIT_ARGS.patch
 # http://tahoe.pl/patch.htm
 Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 Patch71:	linux-tahoe9xx-hdlc-update.patch
-# rewriten based on: ftp://ftp.suse.com/pub/people/stepan/bootsplash/kernel/bootsplash-3.1.4-2.6.3.diff
-Patch72:	bootsplash-3.1.4-2.6.7.patch
+# http://www.bootsplash.de/files/bootsplash-3.1.4-sp3-2.6.7.diff
+Patch72:	bootsplash-3.1.4-sp3-2.6.8pld.patch
 Patch73:	squashfs2.0-patch
 # http://dl.sourceforge.net/sourceforge/pramfs/
 Patch74:	pramfs-2.6.4.patch
