@@ -4,7 +4,7 @@
 # TODO:
 #		- fix lirc_sasem (usb api)
 #		- update grsecurity patch
-#		- update fbslpash (wait for 2.6.10 release)
+#		- update fbsplash (wait for 2.6.10 release)
 #		- add distcc support (and don't break crossbuild!)
 #
 # Conditional build:
@@ -14,7 +14,7 @@
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	grsec		# build without grsec
 %bcond_with	pax		# enable PaX
-%bcond_with	execshield	# build without exec-shield
+%bcond_with	execshield	# build with exec-shield
 %bcond_with	pramfs		# build pramfs support (EXPERIMENTAL)
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
