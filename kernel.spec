@@ -42,7 +42,7 @@ Source10:	http://www.linux-wlan.com/linux-wlan/linux-wlan-ng-%{wlan_version}.tar
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
 Source12:	http://scry.wanfear.com/~greear/vlan/vlan.%{vlan_version}.tar.gz
 Source13:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
-Source14:	http://www10.software.ibm.com/developer/opensource/pub/jfs-2.4-1.0.5-patch.tar.gz
+Source14:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-2.4-1.0.6-patch.tar.gz
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
 Source22:	%{name}-i386-BOOT.config
@@ -518,8 +518,8 @@ patch -p1 -s <ippersonality-%{IPperson_version}/patches/ippersonality-20010724-l
 
 # JFS
 echo Adding JFS
-patch -p1 -s <jfs-2.4.common-v1.0.5-patch
-patch -p1 -s <jfs-2.4.7-v1.0.5-patch
+patch -p1 -s <jfs-2.4.common-v1.0.6-patch
+patch -p1 -s <jfs-2.4.7-v1.0.6-patch
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
