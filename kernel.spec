@@ -1,6 +1,6 @@
 #
 %define		_netfilter_snap		20040518
-%define		_cset			20040518_0506
+%define		_cset			20040521_0734
 %define		no_install_post_strip	1
 #
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -22,20 +22,17 @@ Patch2:		2.6.0-t7-memleak-lkml.patch
 Patch3:		2.6.0-t7-memleak2-lkml.patch
 Patch4:		2.6.0-t8-swap-include-lkml.patch
 Patch5:		2.6.0-t9-acpi_osl-lkml.patch
-Patch6:		2.6.1-squashfs1.3r3.patch
+Patch6:		2.6.6-squashfs2.0.patch
 Patch7:		2.6.6-pramfs.patch
-#Patch8:		%{name}-Makefile.patch
-Patch8:		%{name}-ssp.patch
-Patch9:		linux-kbuild-extmod.patch
-Patch10:	2.6.4-esfq.patch
-Patch11:	2.6.4-imq.patch
-Patch12:	2.6.4-imq-nat.patch
-Patch13:	2.6.4-wrr.patch
-Patch14:	2.6.6-pom-ng-%{_netfilter_snap}.patch
-Patch15:	2.6.5-pom-ng-fixes.patch
+Patch8:		linux-kbuild-extmod.patch
+Patch20:	2.6.4-esfq.patch
+Patch21:	2.6.4-imq.patch
+Patch22:	2.6.4-imq-nat.patch
+Patch23:	2.6.4-wrr.patch
+Patch30:	2.6.6-pom-ng-%{_netfilter_snap}.patch
+Patch31:	2.6.5-pom-ng-fixes.patch
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
-BuildRequires:	gcc(ssp)
 BuildRequires:	module-init-tools
 BuildRequires:	sed >= 4.0
 Autoreqprov:	no
@@ -109,13 +106,14 @@ hardware.
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
-%patch9 -p1
-%patch10 -p1
-%patch11 -p1
-%patch12 -p1
-%patch13 -p1
-%patch14 -p1
-%patch15 -p1
+
+%patch20 -p1
+%patch21 -p1
+%patch22 -p1
+%patch23 -p1
+
+%patch30 -p1
+%patch31 -p1
 
 %build
 find include/ -type d -maxdepth 1 -name "asm-*" ! -name asm-i386 ! -name asm-generic | xargs rm -rf
