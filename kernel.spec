@@ -10,8 +10,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.4.0
-Release:	2
+Version:	2.4.1
+Release:	1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -221,9 +221,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -a4 -a6 -a7 -a8 -a10 -a11 -n linux
-%patch100 -p1
-%patch0 -p1
-%patch2 -p0
+#%patch100 -p1
+#%patch0 -p1
+#%patch2 -p0
 #%patch3 -p1
 #%patch4 -p1
 #%patch5 -p1
@@ -233,36 +233,36 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 
 # Fore 200e ATM NIC
-patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
+#patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
 
 # Tekram DC395/315 U/UW SCSI host driver
-patch -p1 -s <dc395/dc395-integ24.diff
-install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
+#patch -p1 -s <dc395/dc395-integ24.diff
+#install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # Netfilter
-for i in netfilter-patches/* ; do
-	[ -f $i -a "$i" != "netfilter-patches/isapplied" ] && patch -p1 -s <$i
-done
-(KERNEL_DIR=`pwd` ; export KERNEL_DIR
-cd netfilter-patches/patch-o-matic
-ANS=""
-for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
-echo -e $ANS | ./runme)
+#for i in netfilter-patches/* ; do
+#	[ -f $i -a "$i" != "netfilter-patches/isapplied" ] && patch -p1 -s <$i
+#done
+#(KERNEL_DIR=`pwd` ; export KERNEL_DIR
+#cd netfilter-patches/patch-o-matic
+#ANS=""
+#for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
+#echo -e $ANS | ./runme)
 
 # Remove -g from drivers/atm/Makefile
-mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
-sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
+#mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
+#sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
 
 # Fix EXTRAVERSION and CC in main Makefile
-mv -f Makefile Makefile.orig
-sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
-%ifarch %{ix86} alpha sparc
-    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= egcs/g' \
-%endif
-%ifarch sparc64
-    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
-%endif
-    Makefile.orig >Makefile
+#mv -f Makefile Makefile.orig
+#sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
+#%ifarch %{ix86} alpha sparc
+#    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= egcs/g' \
+#%endif
+#%ifarch sparc64
+#    -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
+#%endif
+#    Makefile.orig >Makefile
 
 #LIDS patch
 #patch -p1 <lids-1.0.4-2.4.0/lids-1.0.4-2.4.0.patch
@@ -271,11 +271,11 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
 %patch1003 -p0
 
 # Patch IPVS
-%patch10 -p0
-patch -p1 <ipvs-%{ipvs_version}/linux-2.4.0_kernel_ksyms_c.diff
+#%patch10 -p0
+#patch -p1 <ipvs-%{ipvs_version}/linux-2.4.0_kernel_ksyms_c.diff
 
 # POSIX timer patch from LWN
-%patch1004 -p1
+#%patch1004 -p1
 
 # RAID5 patch from LWN
 #%patch1005 -p1
