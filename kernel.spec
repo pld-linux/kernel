@@ -26,8 +26,8 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.21
-%define		_cset		20040201_0405
+%define		_rel		0.22
+%define		_cset		20040202_0305
 
 ## netfilter snap 
 %define		_netfilter_snap		20040130
@@ -78,91 +78,71 @@ Patch1:		cset-%{_cset}.txt.gz
 
 Patch4:		squashfs1.3r2-patch
 
-Patch6:		2.6.0-t3-sysfs_mem-lkml.patch
+Patch6:		2.6.0-t4-PPC-ENODEV.patch
 
-Patch8:		2.6.0-t4-PPC-ENODEV.patch
+Patch8:		2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
+Patch10:	2.6.0-t6-usb-irq.patch
 
-Patch10:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
-Patch12:	2.6.0-t6-usb-irq.patch
+Patch12:	2.6.0-t7-memleak-lkml.patch
+Patch13:	2.6.0-t7-memleak2-lkml.patch
 
-Patch14:	2.6.0-t7-memleak-lkml.patch
-Patch15:	2.6.0-t7-memleak2-lkml.patch
+Patch16:	2.6.0-t8-clean-mtd-lkml.patch
+Patch18:	2.6.0-t8-swap-include-lkml.patch
 
-Patch18:	2.6.0-t8-clean-mtd-lkml.patch
-Patch20:	2.6.0-t8-swap-include-lkml.patch
+Patch22:	2.6.0-t8-VLSI-ix86-lkml.patch
 
-Patch22:	http://www.uclinux.org/pub/uClinux/uClinux-2.6.x/linux-2.6.0-test10-uc0.patch.gz
+Patch24:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
 
-Patch24:	2.6.0-t8-VLSI-ix86-lkml.patch
+Patch26:	2.6.0-t8-pci_dma_sync_to_device-lkml.patch
 
-Patch26:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
+Patch28:	2.6.0-t8-umsdos-lkml.patch
 
-Patch28:	2.6.0-t8-pci_dma_sync_to_device-lkml.patch
+Patch30:	2.6.0-t9-acpi_osl-lkml.patch
 
-Patch30:	2.6.0-t8-umsdos-lkml.patch
+Patch32:	2.6.0-t9-PPC-smp.patch
 
-Patch32:	2.6.0-t9-acpi_osl-lkml.patch
+Patch34:	2.6.0-t11-EPoX-sound-lkml.patch
 
-Patch36:	2.6.0-t9-PPC-smp.patch
+Patch36:	bootsplash-3.1.3-2.6.0-test9.diff
 
-Patch42:	2.6.0-t11-EPoX-sound-lkml.patch
+Patch38:	2.6.0-t11-AIC_and_db4-lkml.patch
 
-Patch44:	bootsplash-3.1.3-2.6.0-test9.diff
+Patch40:	2.6.0-t11-r8169-getstats.patch
 
-Patch46:	2.6.0-t11-AIC_and_db4-lkml.patch
+Patch42:	2.6.0-t11-ALI-M1563-lkml.patch
 
-Patch50:	2.6.0-t11-r8169-getstats.patch
+Patch44:	linux-tdfxfb-fillrect.patch
+Patch45:	linux-fbcon-margins.patch
+Patch46:	linux-tdfxfb-interlace+double.patch
 
-Patch52:	2.6.0-t11-ALI-M1563-lkml.patch
-
-Patch54:	linux-tdfxfb-fillrect.patch
-Patch55:	linux-fbcon-margins.patch
-Patch56:	linux-tdfxfb-interlace+double.patch
-
-Patch58:	acpi-20040116-2.6.2.diff.gz
-
-Patch60:	2.6.0-mount-rainier-lkml.patch
-Patch61:	2.6.0-mount-rainier-fix-lkml.patch
-Patch62:	2.6.0-mount-rainier-fix-EROFS.patch
-
-Patch64:	linux-2.6-xfs-cvs-20040102.patch
-Patch65:	linux-2.6-xfs-secure-attr.patch
-
-Patch68:	http://www.saout.de/misc/dm-crypt.diff
-
-Patch70:	2.6-pnp.patch
+Patch48:	2.6-pnp.patch
 
 # from ftp://ftp.lsil.com/HostAdapterDrivers/linux/Fusion-MPT/2.6-patches/3.00.00/
-Patch72:	2.6.1-rc2-mptlinux-3.00.00.patch
+Patch50:	2.6.1-rc2-mptlinux-3.00.00.patch
 
-Patch74:	2.6.1-rc2-ini9100u-lkml.patch
+Patch52:	2.6.1-rc2-ini9100u-lkml.patch
 
-Patch76:	2.6.1-rc2-radeon-yd-lkml.patch
+Patch54:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 
-Patch78:	2.6.1-rc2-request_firmware-lkml.patch
+Patch56:	laptop-mode-2.6.1-7.patch
 
-Patch80:	2.6.1-rc2-VLAN-NS83820-lkml.patch
+Patch58:	2.6.1-hash_table_size-lkml.patch
 
-Patch82:	laptop-mode-2.6.1-7.patch
+Patch60:	2.6.1-SIOCSIFNAME-lkml.patch
 
-Patch84:	2.6.1-hash_table_size-lkml.patch
+Patch62:	2.6-p-o-m-ng-%{_netfilter_snap}.patch
 
-Patch86:	2.6.1-sii3512-lkml.patch
+Patch64:	2.6.x-pnp-lkml.patch
 
-Patch88:	2.6.1-SIOCSIFNAME-lkml.patch
+Patch66:	kbuild-out-of-tree.diff
 
-Patch90:	2.6.1-rq-not-task_running-lkml.patch
+Patch68:	2.6.x-PD6729-lkml.patch
 
-Patch92:	2.6-p-o-m-ng-%{_netfilter_snap}.patch
+Patch70:	2.6.x-cpu_2_node-lkml.patch
 
-Patch94:	2.6.1-sysfs4oss-lkml.patch
+Patch72:	2.6.x-neofb-trivial-fix-lkml.patch
 
-Patch96:	2.6.1-modular-ide-lkml.patch
-
-# ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/
-Patch100:	linux-2.6.2-rc1-raid6-2.patch
-
-Patch102:	2.6.x-pnp-lkml.patch
+Patch74:	2.6.x-parport-C99-lkml.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -494,20 +474,18 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch4 -p1
 
-#%%patch6 -p1
+%patch6 -p1
 
 %patch8 -p1
-
 %patch10 -p1
+
 %patch12 -p1
+%patch13 -p1
 
-%patch14 -p1
-%patch15 -p1
-
+%patch16 -p1
 %patch18 -p1
-%patch20 -p1
 
-#%%patch22 -p1
+%patch22 -p1
 
 %patch24 -p1
 
@@ -519,63 +497,47 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch32 -p1
 
+%patch34 -p1
+
 %patch36 -p1
+
+%patch38 -p1
+
+%patch40 -p1
 
 %patch42 -p1
 
 %patch44 -p1
-
+%patch45 -p1
 %patch46 -p1
+
+%patch48 -p1
 
 %patch50 -p1
 
 %patch52 -p1
 
 %patch54 -p1
-%patch55 -p1
+
 %patch56 -p1
 
-#%%patch58 -p1
+%patch58 -p1
 
-#%%patch60 -p1
-#%%patch61 -p0
-#%%patch62 -p1
+%patch60 -p1
 
-#%%patch64 -p1
-#%%patch65 -p1
+%patch62 -p1
 
-#%%patch68 -p1
+%patch64 -p1
+
+%patch66 -p1
+
+%patch68 -p1
 
 %patch70 -p1
 
 %patch72 -p1
 
 %patch74 -p1
-
-#%%patch76 -p1
-
-#%%patch78 -p1
-
-%patch80 -p1
-
-%patch82 -p1
-
-%patch84 -p1
-
-#%%patch86 -p1
-
-#%%patch90 -p1
-
-%patch92 -p1
-
-#%%patch94 -p1
-
-%patch96 -p1
-
-#%%patch100 -p1
-
-%patch102 -p1
-
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
