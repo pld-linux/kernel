@@ -1,0 +1,39 @@
+# This is a BitKeeper generated diff -Nru style patch.
+#
+# ChangeSet
+#   2005/03/13 16:16:16-08:00 mason@suse.com 
+#   [PATCH] reiserfs: make sure data=journal buffers are cleaned on free
+#   
+#   In data=journal mode, when blocks are freed and their buffers are dirty,
+#   reiserfs can remove them from the transaction without cleaning them.  These
+#   buffers never get cleaned, resulting in an unfreeable page.
+#   
+#   Signed-off-by: Chris Mason <mason@suse.com>
+#   Signed-off-by: Andrew Morton <akpm@osdl.org>
+#   Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+# 
+# fs/reiserfs/journal.c
+#   2005/03/13 15:29:39-08:00 mason@suse.com +4 -0
+#   reiserfs: make sure data=journal buffers are cleaned on free
+# 
+diff -Nru a/fs/reiserfs/journal.c b/fs/reiserfs/journal.c
+--- a/fs/reiserfs/journal.c	2005-03-24 16:05:24 +01:00
++++ b/fs/reiserfs/journal.c	2005-03-24 16:05:24 +01:00
+@@ -3011,6 +3011,8 @@
+ 
+   if (!already_cleaned) {
+     clear_buffer_journal_dirty (bh);
++    clear_buffer_dirty(bh);
++    clear_buffer_journal_test (bh);
+     put_bh(bh) ;
+     if (atomic_read(&(bh->b_count)) < 0) {
+       reiserfs_warning (p_s_sb, "journal-1752: remove from trans, b_count < 0");
+@@ -3317,6 +3319,8 @@
+ 	    ** in the current trans
+ 	    */
+             clear_buffer_journal_dirty (cn->bh);
++	    clear_buffer_dirty(cn->bh);
++	    clear_buffer_journal_test(cn->bh);
+ 	    cleaned = 1 ;
+ 	    put_bh(cn->bh) ;
+ 	    if (atomic_read(&(cn->bh->b_count)) < 0) {

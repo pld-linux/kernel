@@ -1,0 +1,34 @@
+From: Pavel Fedin <sonic_amiga@rambler.ru>
+
+Current smbfs has a bug: you can't supply "user, noauto" flags
+for it in /etc/fstab. smbmount tool expands this to "noexec, nosuid,
+nodev, user, noauto" and smbfs rejects all arguments because
+it doesn't know any of these keywords.
+
+This patch fixes it. It introduces these arguments to the smbfs
+which will silently ignore them in the same way as cifs does.
+
+--- linux-2.6.11.1/fs/smbfs/inode.c.orig	2005-03-04 12:26:29.000000000 -0500
++++ linux-2.6.11.1/fs/smbfs/inode.c	2005-03-15 11:57:52.000000000 -0500
+@@ -351,6 +351,11 @@
+ 	{ "iocharset",	0, 'i' },
+ 	{ "codepage",	0, 'c' },
+ 	{ "ttl",	0, 't' },
++	{ "noexec",	SMB_MOUNT_IGNORE, 1},
++	{ "nosuid",	SMB_MOUNT_IGNORE, 1},
++	{ "nodev",	SMB_MOUNT_IGNORE, 1},
++	{ "user",	SMB_MOUNT_IGNORE, 1},
++	{ "noauto",	SMB_MOUNT_IGNORE, 1},
+ 	{ NULL,		0, 0}
+ };
+ 
+--- linux-2.6.11.1/include/linux/smb_mount.h.orig	2005-03-04 12:26:27.000000000 -0500
++++ linux-2.6.11.1/include/linux/smb_mount.h	2005-03-15 11:38:28.000000000 -0500
+@@ -42,6 +42,7 @@
+ #define SMB_MOUNT_GID		0x0040  /* Use user specified gid */
+ #define SMB_MOUNT_FMODE		0x0080  /* Use user specified file mode */
+ #define SMB_MOUNT_DMODE		0x0100  /* Use user specified dir mode */
++#define SMB_MOUNT_IGNORE	0x8000  /* Dummy flag */
+ 
+ struct smb_mount_data_kernel {
+ 	int version;

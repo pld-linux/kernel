@@ -1,0 +1,15 @@
+Remove dquot structures from quota file on quotaon - quota code does not
+expect them to be there.
+
+Signed-off-by: Jan Kara <jack@suse.cz>
+
+--- a/fs/dquot.c	2005-03-30 13:37:05.000000000 +0200
++++ b/fs/dquot.c	2005-03-31 14:03:45.000000000 +0200
+@@ -1444,6 +1444,7 @@ static int vfs_quota_on_inode(struct ino
+ 	oldflags = inode->i_flags & (S_NOATIME | S_IMMUTABLE | S_NOQUOTA);
+ 	inode->i_flags |= S_NOQUOTA | S_NOATIME | S_IMMUTABLE;
+ 	up_write(&dqopt->dqptr_sem);
++	sb->dq_op->drop(inode);
+ 
+ 	error = -EIO;
+ 	dqopt->files[type] = igrab(inode);
