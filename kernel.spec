@@ -179,6 +179,8 @@ Patch86:	2.6.1-rc2-radeon-yd-lkml.patch
 
 Patch88:	2.6.1-rc2-request_firmware-lkml.patch
 
+Patch90:	2.6.1-rc2-NF-psd-%{_netfilter_snap}.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
@@ -591,6 +593,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch86 -p1
 
 %patch88 -p1
+
+%patch90 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
