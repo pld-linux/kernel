@@ -6,7 +6,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.16
-Release:	1
+Release:	2
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -37,7 +37,7 @@ Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-127.tar.gz
 Source32:	kernel-BuildASM.sh
 Source33:	ftp://sourceforge.org/pcmcia/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x.c-2.2.16-pre4-6.gz
-Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.14.1.gz
+Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.16.2.gz
 Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.15-reiserfs-3.5.21-patch.gz
 Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
 Patch3:		linux-tasks.patch
@@ -53,9 +53,8 @@ Patch10:	linux-newagpdist.patch
 Patch11:	linux-agphjlfixes.patch
 # serek: do _not_ use DPT smartRAID controllers with linux at al!
 #Patch12:	ftp://shiva.poland.com/people/serek/kernel-DPT-smartRAID-serek.patch
-# Wiget: obsoleted by raid patch
-#Patch13:	http://www.linux.org.uk/VERSION/2216.raidfix
-Patch14:	http://www.linux.org.uk/VERSION/2216.decbug
+# Wiget: I remove md fix because is in raid patch
+Patch14:	http://www.linux.org.uk/VERSION/2.2.16combo
 Patch15:	linux-ipv6-addrconf.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -261,7 +260,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch11 -p1
 #%patch12 -p1 .serek
 #%patch13 -p1 -R -b .wiget
-%patch14 -p1 -R
+%patch14 -p1 
 %patch15 -p1
 
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
@@ -425,9 +424,9 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
 #patch -s -p1 -R -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
-patch -s -p1 -R -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-%{ow_version}/linux-%{ow_version}.diff
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < dc395/dc395-integ22.diff
