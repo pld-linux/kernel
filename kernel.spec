@@ -66,6 +66,7 @@ Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.16-nfsv3-0.21.3.dif.bz2
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+BuildRequires:	egcs
 Provides:	module-info
 Autoreqprov:	no
 Prereq:		fileutils
@@ -384,6 +385,9 @@ sed "s/.*= 8390\..$//" clients/Makefile.bak > clients/Makefile
 %{__make} PREFIX=$RPM_BUILD_ROOT install
 cd ..
 }
+
+CC="egcs -D__KERNEL__ -I\$\(HPATH\)"
+export CC
 
 rm -rf $RPM_BUILD_ROOT
 
