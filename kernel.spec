@@ -34,7 +34,7 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.32
+%define		_rel		0.33
 %define		_cset		0
 
 ## netfilter snap 
@@ -162,6 +162,8 @@ Patch96:	2.6.1-all-in-1.patch
 Patch98:	2.6.5-sparc64-missing-include.patch
 
 Patch100:	2.6.5-3C920b-Tornado.patch
+
+Patch102:	2.6.5-rc3-EXPORT_SYMBOL.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -580,6 +582,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch98 -p1
 
 %patch100 -p1
+
+%patch102 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
