@@ -243,7 +243,6 @@ BuildRequires:	%{kgcc_package}
 %endif
 BuildRequires:	modutils
 Buildrequires:	perl
-BuildRequires:	rpm >= 4.0.4
 Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.6.1
