@@ -14,8 +14,8 @@
 # _without_source	- don't build source
 # _without_lsm		- don't build LSM/SELinux kernel
 
-%define		_rel		1
-%define		test_ver	3
+%define		_rel		0.1
+%define		test_ver	0
 %define		patch_level	0
 
 %if	%{test_ver} != 0
@@ -43,8 +43,8 @@ Release:	%{test}_r%{_rel}
 %endif
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-test3.tar.bz2
-# Source0-md5:	b7eb2c72aacb289b1448a8ea574ceab3
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}-test4.tar.bz2
+# Source0-md5:	0c0472d42e56a4b571f92e58b0cf0c55
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -311,31 +311,31 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}-test3
-%patch1 -p1
+%setup -q -n linux-%{version}-test4
+#%patch1 -p1
 %patch2 -p1
 
-%patch5 -p1
+#%patch5 -p1
 %patch6 -p1
-%patch7 -p1
+#%patch7 -p1
 
 %patch10 -p1
 %patch11 -p1
-%patch12 -p1
+#%patch12 -p1
 
 %patch20 -p1
 %patch21 -p1
 %patch22 -p1
 %patch23 -p1
 %patch24 -p1
-%patch25 -p1
+#%patch25 -p1
 %patch26 -p1
 %patch27 -p1
-%patch28 -p1
+#%patch28 -p1
 
-%patch30 -p1
-%patch31 -p1
-%patch32 -p1
+#%patch30 -p1
+#%patch31 -p1
+#%patch32 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
