@@ -189,6 +189,7 @@ Patch118:	linux-2.6-ext2-corruption.patch
 Patch119:	linux-2.6-quota-dropfix.patch
 Patch120:	linux-2.6-quota-format.patch
 Patch121:	linux-2.6-procfs-hardlink-counts.patch
+Patch122:	linux-2.6-cxt48-misdetection.patch
 
 # linux vserver
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
@@ -600,6 +601,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch119 -p1
 %patch120 -p1
 %patch121 -p1
+%patch122 -p1
 
 %if %{with vserver}
 %patch200 -p1
