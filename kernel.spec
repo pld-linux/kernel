@@ -9,7 +9,7 @@
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 #
-%define		krelease		3.02
+%define		krelease		3.03
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -59,8 +59,8 @@ Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-140.tar.gz
 Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
-# based on cvs cvs@pserver.samba.org:/cvsroot netfilter
-#Source7:	netfilter-27052002.tar.gz
+# based on cvs cvs@pserver.samba.org:/cvsroot netfilter/userspace
+Source7:	netfilter-30052002.tar.gz
 Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_version}.tar.gz
 # new -> ftp://ftp.tux.org/pub/roudier/drivers/portable/sym-2.1.x/sym-2.1.16-20011028.tar.gz
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
@@ -127,7 +127,7 @@ Patch21:	linux-2.4.18-hpfs.patch
 # ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
 Patch22:	linux-2.4.18-mppe.patch
 
-Patch23:	netfilter-27052002.patch.gz
+Patch23:	hfsplus-20011213.patch
 
 # Assorted bugfixes
 
@@ -199,7 +199,7 @@ Patch144:	amd762_irq_router.patch
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
 Patch900:	ide-EXPORT_SYMBOL.fix
-Patch901:	netfilter-ip_nat_pptp.patch
+#Patch901:	netfilter-ip_nat_pptp.patch
 Patch902:	linux-2.4.19pre7-VIA.patch
 Patch903:	linux-PPC-SMP.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
@@ -534,7 +534,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -a3 -a5 -a10 -a11 -a12 -a13 -a14 -n linux
+%setup -q -a3 -a5 -a7 -a10 -a11 -a12 -a13 -a14 -n linux
 #%patch1000 -p1
 #%patch0 -p1
 %patch16 -p1
@@ -619,20 +619,18 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 #patch -p1 -s <linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
 
 # Netfilter
-echo Adding Netfilter snapshot from 15.04.2002
-#(KERNEL_DIR=`pwd` ; export KERNEL_DIR
-#cd netfilter-patches/patch-o-matic
-#ANS=""
-#for suite in submitted pending base extra pld ; do
-#	for i in `echo ${suite}/*.patch.ipv6` `echo ${suite}/*.patch` ; do
-#		ANS="${ANS}y\n\n"
-#	done
-#done
-#echo -e $ANS | ./runme pld)
+echo Adding Netfilter snapshot from 30.05.2002
+(KERNEL_DIR=`pwd` ; export KERNEL_DIR
+cd netfilter-patches/patch-o-matic
+ANS=""
+for suite in base submitted pending extra pld ; do
+	for i in `echo ${suite}/*.patch.ipv6` `echo ${suite}/*.patch` ; do
+	ANS="${ANS}y\n\n"
+	done
+done
+echo -e $ANS | ./runme pld )
 
-#patch -p1 < netfilter-patches/patch-o-matic/pld/log.patch
-#%patch901 -p0
-%patch23 -p1
+patch -p1 < netfilter-patches/patch-o-matic/pld/log.patch
 %patch917 -p0
 
 # IPVS
@@ -738,6 +736,9 @@ echo Updating VIA Southbridge
 
 # MPPE (ppp)
 %patch22 -p1
+
+# hfsplus
+%patch23 -p1
 
 # ADM router
 %patch144 -p1
