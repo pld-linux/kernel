@@ -31,7 +31,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	2.28
+Release:	2.28.5
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
@@ -99,7 +99,7 @@ Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # from http://grsecurity.net/grsecurity-%{grsec_version}.patch
 Patch9:		grsecurity-%{grsec_version}.patch
 # Preemptive kernel  patch
-Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-%{name}-rml-%{version}-2.patch
+Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/preempt-%{name}-rml-%{version}-4.patch
 
 Patch11:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-core-rml-%{version}-1.patch
 Patch12:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/netdev-random/v2.4/netdev-random-drivers-rml-%{version}-1.patch
@@ -113,6 +113,10 @@ Patch16:	linux-2.4.19-shared-zlib.bz2
 Patch17:	%{name}-gcc31.patch
 Patch18:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{version}-patch
 Patch19:	http://unc.dl.sourceforge.net/sourceforge/linux-ntfs/linux-2.4.18-ntfs-%{ntfs_version}.patch.bz2
+
+Patch20:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/ingo-O1-sched/preempt-%{name}-rml-%{version}-rc1-ingo-K3-1.patch
+
+Patch21:	linux-2.4.18-hpfs.patch
 
 # Assorted bugfixes
 
@@ -592,7 +596,11 @@ echo Fixed compile process for 53c7,8xx driver
 #preemptble kernel patch
 %if%{?_with_preemptible:1}%{!?_with_preemptible:0}
 echo Installing Preemptible patch
+%if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
+%patch20 -p1
+%else
 %patch10 -p1
+%endif
 %endif
 
 # netdev-random
@@ -653,6 +661,9 @@ echo Updating VIA Southbridge
 
 %patch141 -p1
 %patch142 -p1
+
+#HPFS fix.
+%patch20 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
