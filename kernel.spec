@@ -45,8 +45,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.24
-%define		_cset		20040609_2108
+%define		_rel		0.25
+%define		_cset		20040610_1612
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040608
@@ -75,7 +75,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 Source1:	%{name}-autoconf.h
 Source2:	2.6.6-pwcx.tar.bz2
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	68bea490d1b8f2f96f32578d883f97dc
+# Source3-md5:	96b6b7b2977946ab07ab62d3f2b96678
 # http://lkml.org/lkml/2004/6/2/228
 Source4:	http://redhat.com/~mingo/nx-patches/nx-2.6.7-rc2-bk2-AF
 # Source4-md5:	9d45d98ad5e27747c6e930a46dc9e37f
