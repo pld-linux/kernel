@@ -74,6 +74,7 @@ Patch10:	bridge-1.0.1-against-2.2.20.diff
 
 Patch100:	bridge-include.patch
 Patch101:	bridge-netsyms.patch
+Patch102:	bridge-ipsec-bridge.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -362,6 +363,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %patch100 -p1
 %patch101 -p1
+%patch102 -p1
 
 # 802.1Q VLANs
 #cd vlan.%{vlan_version}
@@ -590,6 +592,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH10}
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH100}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH102}
 
 #DAC960 drivers
 tar xfz %{SOURCE8}
