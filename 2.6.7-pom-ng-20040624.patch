@@ -2235,7 +2235,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv4/ah4.c linux-2.6.7/net/ipv4
  		err = -EHOSTUNREACH;
  		goto error_nolock;
  	}
-+	IPCB(skb)->flags |= IPSKB_XFRM_TRANSFORMED;
++	IPCB(*pskb)->flags |= IPSKB_XFRM_TRANSFORMED;
  	return NET_XMIT_BYPASS;
  
  error:
@@ -2254,7 +2254,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv4/esp4.c linux-2.6.7/net/ipv
  		err = -EHOSTUNREACH;
  		goto error_nolock;
  	}
-+	IPCB(skb)->flags |= IPSKB_XFRM_TRANSFORMED;
++	IPCB(*pskb)->flags |= IPSKB_XFRM_TRANSFORMED;
  	return NET_XMIT_BYPASS;
  
  error:
@@ -2413,7 +2413,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv4/ip_output.c linux-2.6.7/ne
  		return ip_finish_output(skb);
  }
  
--int ip_output(struct sk_buff **pskb)
+-int ip_output(struct sk_buff *skb)
 +static inline int ip_output2(struct sk_buff *skb)
  {
  	struct sk_buff *skb = *pskb;
@@ -2460,7 +2460,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv4/ipcomp.c linux-2.6.7/net/i
  		err = -EHOSTUNREACH;
  		goto error_nolock;
  	}
-+	IPCB(skb)->flags |= IPSKB_XFRM_TRANSFORMED;
++	IPCB(*pskb)->flags |= IPSKB_XFRM_TRANSFORMED;
  	err = NET_XMIT_BYPASS;
  
  out_exit:
@@ -3649,7 +3649,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv4/netfilter/ip_conntrack_egg
 +			NIPQUAD(t.src.ip), ntohs(t.src.u.tcp.port),
 +			NIPQUAD(t.dst.ip), ntohs(t.dst.u.tcp.port));
 +
-+		ip_conntrack_expect_related(ct, &exp);
++		ip_conntrack_expect_related(&exp, ct);
 +		break;
 +	}
 +	return NF_ACCEPT;
@@ -3841,7 +3841,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv4/netfilter/ip_conntrack_h32
 +			exp->expectfn = NULL;
 +			
 +			/* Ignore failure; should only happen with NAT */
-+			ip_conntrack_expect_related(ct, exp);
++			ip_conntrack_expect_related(exp, ct);
 +
 +			UNLOCK_BH(&ip_h323_lock);
 +		}
@@ -3970,7 +3970,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv4/netfilter/ip_conntrack_h32
 +				exp->expectfn = h225_expect;
 +				
 +				/* Ignore failure */
-+				ip_conntrack_expect_related(ct, exp);
++				ip_conntrack_expect_related(exp, ct);
 +
 +				DEBUGP("ct_h225_help: new H.245 requested %u.%u.%u.%u->%u.%u.%u.%u:%u\n",
 +					NIPQUAD(ct->tuplehash[!dir].tuple.src.ip),
@@ -4279,7 +4279,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv4/netfilter/ip_conntrack_mms
 +		             { { 0xFFFFFFFF, { 0 } },
 +		               { 0xFFFFFFFF, { .tcp = { 0xFFFF } }, 0xFFFF }});
 +		exp->expectfn = NULL;
-+		ip_conntrack_expect_related(ct, &expect);
++		ip_conntrack_expect_related(&expect, ct);
 +		UNLOCK_BH(&ip_mms_lock);
 +	}
 +
@@ -5261,7 +5261,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv4/netfilter/ip_conntrack_qua
 +		                       { 0xFFFFFFFF, { .udp = { 0xFFFF } }, 0xFFFF }});
 +			exp.expectfn = NULL;
 +
-+			ip_conntrack_expect_related(ct, &exp);
++			ip_conntrack_expect_related(&exp, ct);
 +		}
 +
 +	}
@@ -5566,7 +5566,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv4/netfilter/ip_conntrack_rsh
 +
 +	exp->expectfn = NULL;
 +
-+	ip_conntrack_expect_related(ct, &expect);
++	ip_conntrack_expect_related(&expect, ct);
 +
 +	DEBUGP("expect related ip   %u.%u.%u.%u:%u-%u.%u.%u.%u:%u\n",
 +		NIPQUAD(exp->tuple.src.ip),
@@ -6016,7 +6016,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv4/netfilter/ip_conntrack_rts
 +                ntohs(exp.tuple.dst.u.tcp.port));
 +
 +        /* pass the request off to the nat helper */
-+        rc = ip_conntrack_expect_related(ct, &exp);
++        rc = ip_conntrack_expect_related(&exp, ct);
 +        UNLOCK_BH(&ip_rtsp_lock);
 +        if (rc == 0)
 +        {
@@ -6360,7 +6360,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv4/netfilter/ip_conntrack_tal
 +		       NIPQUAD(exp->tuple.dst.ip), ntohs(exp->tuple.dst.u.udp.port));
 +
 +		/* Ignore failure; should only happen with NAT */
-+		ip_conntrack_expect_related(ct, &expect);
++		ip_conntrack_expect_related(&expect, ct);
 +		UNLOCK_BH(&ip_talk_lock);
 +	}
 +	if (type == LOOK_UP) {
@@ -6389,7 +6389,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv4/netfilter/ip_conntrack_tal
 +		       NIPQUAD(exp->tuple.dst.ip), ntohs(exp->tuple.dst.u.tcp.port));
 +
 +		/* Ignore failure; should only happen with NAT */
-+		ip_conntrack_expect_related(ct, &expect);
++		ip_conntrack_expect_related(&expect, ct);
 +		UNLOCK_BH(&ip_talk_lock);
 +	}
 +		    
@@ -16305,7 +16305,7 @@ diff -Nur --exclude '*.orig' linux-2.6.7.org/net/ipv4/xfrm4_tunnel.c linux-2.6.7
  		err = -EHOSTUNREACH;
  		goto error_nolock;
  	}
-+	IPCB(skb)->flags |= IPSKB_XFRM_TRANSFORMED;
++	IPCB(*pskb)->flags |= IPSKB_XFRM_TRANSFORMED;
  	return NET_XMIT_BYPASS;
  
  error_nolock:
