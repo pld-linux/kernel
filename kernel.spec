@@ -328,6 +328,11 @@ Patch203:	linux-2.4.20-AXP-EXPORT_SYMBOL.patch
 Patch204:	linux-2.4.20-AXP-avma1_cs.patch
 Patch205:	linux-2.4.20-PPC-EXPORT_SYMBOL.patch
 
+#htb
+Patch250:	linux-2.4.20to21-htb.patch
+Patch251:	http://luxik.cdi.cz/~devik/qos/htb/v3/htb_3.10_3.12_2.diff
+Patch252:	http://luxik.cdi.cz/~devik/qos/htb/v3/htb_killdbg_2421.diff
+
 # tweaks for grsecurity, description inside patch
 Patch900:	loop-jari-2.4.20.0.patch
 Patch901:	dc395-tab.patch
@@ -735,6 +740,11 @@ cp drm/*.{c,h} drivers/char/drm/
 # WRR
 echo Installing WRR Support
 %patch34 -p1
+
+# htb
+%patch250 -p1
+%patch251 -p1
+%patch252 -p1
 
 # scancode
 %patch35 -p1
