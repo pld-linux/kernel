@@ -1,5 +1,5 @@
 #
-%define		_netfilter_snap		20040429
+%define		_netfilter_snap		20040518
 %define		_cset			20040518_0506
 %define		no_install_post_strip	1
 #
@@ -100,7 +100,7 @@ hardware.
 %if "%{_cset}" != "0"
 %patch0 -p1
 %endif
-%{__patch} -p1 < %{SOURCE1}
+%{__patch} -p1 -s < %{SOURCE1}
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
