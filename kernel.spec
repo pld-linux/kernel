@@ -50,7 +50,7 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-2.6.2.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-2.6.3-rc1.tar.bz2
 # Source0-md5:	2a745088acba366f22f8bd3e284a84d4
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
@@ -462,7 +462,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-2.6.2
+%setup -q -n linux-2.6.3-rc1
 
 %patch0 -p1
 %patch1 -p1
