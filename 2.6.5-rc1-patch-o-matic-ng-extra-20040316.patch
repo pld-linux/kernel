@@ -437,24 +437,6 @@ diff -Nur --exclude '*.orig' linux-2.6.5-rc1.org/include/linux/netfilter_ipv4/ip
 +};
 +
 +#endif /* _IPT_STRING_H */
-diff -Nur --exclude '*.orig' linux-2.6.5-rc1.org/include/linux/netfilter_ipv6/ip6t_owner.h linux-2.6.5-rc1/include/linux/netfilter_ipv6/ip6t_owner.h
---- linux-2.6.5-rc1.org/include/linux/netfilter_ipv6/ip6t_owner.h	2004-03-16 05:46:45.000000000 +0000
-+++ linux-2.6.5-rc1/include/linux/netfilter_ipv6/ip6t_owner.h	2004-03-16 12:04:42.000000000 +0000
-@@ -6,12 +6,14 @@
- #define IP6T_OWNER_GID	0x02
- #define IP6T_OWNER_PID	0x04
- #define IP6T_OWNER_SID	0x08
-+#define IP6T_OWNER_COMM 0x10
- 
- struct ip6t_owner_info {
-     uid_t uid;
-     gid_t gid;
-     pid_t pid;
-     pid_t sid;
-+    char comm[16];
-     u_int8_t match, invert;	/* flags */
- };
- 
 diff -Nur --exclude '*.orig' linux-2.6.5-rc1.org/include/linux/netfilter_mime.h linux-2.6.5-rc1/include/linux/netfilter_mime.h
 --- linux-2.6.5-rc1.org/include/linux/netfilter_mime.h	1970-01-01 00:00:00.000000000 +0000
 +++ linux-2.6.5-rc1/include/linux/netfilter_mime.h	2004-03-16 12:04:49.000000000 +0000
@@ -3310,58 +3292,3 @@ diff -Nur --exclude '*.orig' linux-2.6.5-rc1.org/net/ipv4/udp.c linux-2.6.5-rc1/
  
  #ifdef CONFIG_PROC_FS
  EXPORT_SYMBOL(udp_proc_register);
-diff -Nur --exclude '*.orig' linux-2.6.5-rc1.org/net/ipv6/netfilter/ip6t_owner.c linux-2.6.5-rc1/net/ipv6/netfilter/ip6t_owner.c
---- linux-2.6.5-rc1.org/net/ipv6/netfilter/ip6t_owner.c	2004-03-16 05:47:17.000000000 +0000
-+++ linux-2.6.5-rc1/net/ipv6/netfilter/ip6t_owner.c	2004-03-16 12:04:42.000000000 +0000
-@@ -21,6 +21,38 @@
- MODULE_LICENSE("GPL");
- 
- static int
-+match_comm(const struct sk_buff *skb, const char *comm)
-+{
-+	struct task_struct *p;
-+	struct files_struct *files;
-+	int i;
-+
-+	read_lock(&tasklist_lock);
-+	for_each_task(p) {
-+		if(strncmp(p->comm, comm, sizeof(p->comm)))
-+			continue;
-+
-+		task_lock(p);
-+		files = p->files;
-+		if(files) {
-+			read_lock(&files->file_lock);
-+			for (i=0; i < files->max_fds; i++) {
-+				if (fcheck_files(files, i) == skb->sk->socket->file) {
-+					read_unlock(&files->file_lock);
-+					task_unlock(p);
-+					read_unlock(&tasklist_lock);
-+					return 1;
-+				}
-+			}
-+			read_unlock(&files->file_lock);
-+		}
-+		task_unlock(p);
-+	}
-+	read_unlock(&tasklist_lock);
-+	return 0;
-+}
-+
-+static int
- match_pid(const struct sk_buff *skb, pid_t pid)
- {
- 	struct task_struct *p;
-@@ -125,6 +157,12 @@
- 			return 0;
- 	}
- 
-+	if(info->match & IP6T_OWNER_COMM) {
-+		if (!match_comm(skb, info->comm) ^
-+		    !!(info->invert & IP6T_OWNER_COMM))
-+			return 0;
-+	}
-+
- 	return 1;
- }
- 
