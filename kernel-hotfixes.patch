@@ -4,6 +4,7 @@
  arch/i386/mm/init.c                    |    1 +
  arch/ppc/kernel/setup.c                |    1 +
  drivers/char/rocket.c                  |   10 ++++------
+ drivers/media/video/bt819.c            |    3 ++-
  drivers/scsi/megaraid/Kconfig.megaraid |    2 --
  drivers/usb/gadget/serial.c            |    8 ++------
  fs/afs/main.c                          |   32 ++++++++++++++------------------
@@ -11,7 +12,7 @@
  include/linux/spinlock.h               |    2 +-
  net/ipv4/netfilter/ipt_hashlimit.c     |    2 +-
  net/rxrpc/main.c                       |   10 +++-------
- 12 files changed, 34 insertions(+), 41 deletions(-)
+ 13 files changed, 36 insertions(+), 42 deletions(-)
 
 --- a/include/linux/spinlock.h	2004-09-05 02:05:53.243858818 -0500
 +++ b/include/linux/spinlock.h	2004-09-05 02:06:06.177805993 -0500
@@ -268,3 +269,15 @@
  /* Used by sysrq-p, among others.  I don't believe r9-r15 are ever
     saved in the context it's used.  */
  
+--- a/drivers/media/video/bt819.c	2005-03-19 07:34:51.000000000 +0100
++++ b/drivers/media/video/bt819.c	2005-03-23 12:53:28.000000000 +0100
+@@ -236,7 +236,8 @@
+ 	init[0x07 * 2 - 1] = timing->hactive & 0xff;
+ 	init[0x08 * 2 - 1] = timing->hscale >> 8;
+ 	init[0x09 * 2 - 1] = timing->hscale & 0xff;
+-	init[0x19*2-1] = decoder->norm == 0 ? 115 : 93;	/* Chroma burst delay */
++	/* 0x15 in array is address 0x19 */
++	init[0x15 * 2 - 1] = (decoder->norm == 0) ? 115 : 93;	/* Chroma burst delay */
+ 	/* reset */
+ 	bt819_write(client, 0x1f, 0x00);
+ 	mdelay(1);
