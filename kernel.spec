@@ -81,6 +81,7 @@ Source1010:	%{name}-i2c.config
 Source1011:	%{name}-promise_st.config
 Source1012:	%{name}-i810fb.config
 Source1013:	%{name}-davfs.config
+Source1014:	%{name}-supermount.config
 Source1666:	%{name}-grsec.config
 Source1667:	%{name}-int.config
 Source1668:	%{name}-hostap.config
@@ -217,6 +218,8 @@ Patch45:	linux-2.4.20-ACL-%{ACL_version}.patch.bz2
 Patch46:	linux-2.4.19-netmos_pci_parallel_n_serial.patch
 
 Patch47:	linux-2.4-3com-vlan.patch
+
+Patch48:	%{name}-supermount.patch
 
 # Assorted bugfixes
 
@@ -794,6 +797,8 @@ echo Fixed I810 Sound ...
 echo Updated 3Com drivers for VLAN ...
 %patch47 -p1
 
+%patch48 -p1
+
 # LVM 1.0.7
 echo Added LVM support version %{lvm_version}
 %patch114 -p1
@@ -923,6 +928,7 @@ BuildKernel() {
 	cat %{SOURCE1011} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1012} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1013} >> arch/%{base_arch}/defconfig
+	cat %{SOURCE1014} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1671} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1672} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1673} >> arch/%{base_arch}/defconfig
@@ -1132,6 +1138,7 @@ cat %{SOURCE1010} >> .config
 cat %{SOURCE1011} >> .config
 cat %{SOURCE1012} >> .config
 cat %{SOURCE1013} >> .config
+cat %{SOURCE1014} >> .config
 cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
@@ -1196,6 +1203,7 @@ cat %{SOURCE1010} >> .config
 cat %{SOURCE1011} >> .config
 cat %{SOURCE1012} >> .config
 cat %{SOURCE1013} >> .config
+cat %{SOURCE1014} >> .config
 cat %{SOURCE1668} >> .config
 cat %{SOURCE1669} >> .config
 cat %{SOURCE1670} >> .config
