@@ -385,6 +385,7 @@ BuildConfig (){
 %endif
 %ifarch athlon
 	echo "CONFIG_MK7=y" >> arch/%{base_arch}/defconfig
+	echo "CONFIG_X86_USE_3DNOW=y" >> arch/%{base_arch}/defconfig
 %endif
 
 %ifarch i386
