@@ -12,9 +12,9 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		6
+%define		_rel		1
 %define		_test_ver	8
-%define		_cset		0
+%define		_cset		20031021_0506
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -63,7 +63,6 @@ Patch1:		cset-%{_cset}.txt.gz
 
 Patch4:		squashfs1.3-patch
 
-Patch5:		2.6.0-t8-initrd.patch
 Patch6:		2.6.0-t3-sysfs_mem-lkml.patch
 
 Patch8:		2.6.0-t4-PPC-ENODEV.patch
@@ -83,7 +82,6 @@ Patch23:	2.6.0-t7-radeonfb-lkml.patch
 Patch24:	2.6.0-t8-CONFIG_XFRM-lkml.patch
 Patch26:	2.6.0-t8-LLC2-PROC_FS-lkml.patch
 Patch28:	2.6.0-t8-clean-mtd-lkml.patch
-Patch30:	2.6.0-t8-siimage-lkml.patch
 Patch32:	2.6.0-t8-swap-include-lkml.patch
 Patch34:	2.6.0-t8-toshiba-PROC_FS-lkml.patch
 Patch36:	2.6.0-t8-h8300-lkml.patch
@@ -96,6 +94,12 @@ Patch42:	2.6.0-t8-quota-locking-fix-lkml.patch
 
 Patch44:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
 Patch46:	2.6.0-t8-sis900_net-lkml.patch
+
+Patch48:	2.6.0-t8-linuxTV-1of3-lkml.patch
+Patch49:	2.6.0-t8-linuxTV-2of3-lkml.patch
+Patch50:	2.6.0-t8-linuxTV-3of3-lkml.patch
+
+Patch52:	2.6.0-t8-pci_dma_sync_to_device-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -390,8 +394,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch4 -p1
 
-%patch5 -p1
-
 %patch6 -p1
 
 %patch8 -p1
@@ -406,13 +408,11 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch20 -p1
 %patch21 -p1
 
-#%%patch22 -p1
 %patch23 -p1
 
 %patch24 -p1
 %patch26 -p1
 %patch28 -p1
-%patch30 -p1
 %patch32 -p1
 %patch34 -p1
 %patch36 -p1
@@ -424,6 +424,12 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %patch44 -p1
 %patch46 -p1
+
+%patch48 -p1
+%patch49 -p1
+%patch50 -p1
+
+%patch52 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
