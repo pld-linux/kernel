@@ -32,7 +32,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	2.13%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	3%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -1448,7 +1448,7 @@ fi
 %{!?_without_grsec:%{_prefix}/src/linux-%{version}/grsecurity}
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
-#%{_prefix}/src/linux-%{version}/kdb
+#%%{_prefix}/src/linux-%{version}/kdb
 %{_prefix}/src/linux-%{version}/kernel
 %{_prefix}/src/linux-%{version}/lib
 %{_prefix}/src/linux-%{version}/mm
