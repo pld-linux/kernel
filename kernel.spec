@@ -101,8 +101,6 @@ Source80:	%{name}-netfilter.config
 Source90:	%{name}-grsec.config
 
 Patch0:		2.6.0-ksyms-add.patch
-Patch1:		%{name}-isofs-128GB.patch
-Patch2:		linux-2.6-isofs-4G.patch
 
 # from http://dl.sf.net/sourceforge/squashfs/
 Patch4:		squashfs2.0-patch
@@ -239,7 +237,7 @@ Patch304:	2.6.7-ppc-ipr-div.patch
 Patch305:	2.6.7-ppc-proxydict-workaround.patch
 
 Patch310:	linux-2.6-sparc-ksyms.patch
-Patch311:	linux-2.6-gfs-noswitch64.patch
+
 Patch312:	linux-2.6-ppc-ksyms.patch
 
 Patch400:	2.6.7-kill-warnings.patch
@@ -594,8 +592,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 zcat %{SOURCE3} | patch -p1 -s
 %endif
 
-#patch1 -p1
-#patch2 -p1
 
 %patch4 -p1
 
@@ -748,9 +744,7 @@ patch -p1 -s < exec-shield.patch
 %patch305 -p1
 
 %patch310 -p1
-%ifarch ppc sparc
-%patch311 -p1
-%endif
+
 %patch312 -p1
 
 %patch400 -p1
