@@ -238,7 +238,7 @@ Patch919:	linux-2.4.20-ntfs.patch
 Patch920:	linux-2.4.20-squashfs.patch
 
 # Marcelo's -pre
-Patch1000:	patch-2.4.21-pre1
+Patch1000:	patch-2.4.21-pre2.bz2
 Patch2000:	sched-2.4.20-A0.patch.bz2
 
 ExclusiveOS:	Linux
@@ -666,7 +666,7 @@ echo AXP patches ...
 %patch204 -p1
 %endif
 
-echo Prepatch for 2.4.21
+echo Prepatch #2 for 2.4.21
 %patch1000 -p1
 
 %if %{?_with_o1:1}%{!?_with_o1:0}
