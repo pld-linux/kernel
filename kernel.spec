@@ -1,6 +1,7 @@
 %define		pcmcia_version		3.1.24
 %define		lids_version		1.0.4
 %define		ipvs_version		0.2.3
+%define		ac_version		ac1
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -41,7 +42,8 @@ Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.3.gz
 #Patch1:		%{name}-pldfblogo.patch
 #Patch2:		linux-2.4.0-freeswan-%{freeswan_version}.patch
 #Patch3:		linux-ipv6-addrconf.patch
-#Patch4:		kernel-i8255-asm-fix.patch
+Patch4:		kernel-i8255-asm-fix.patch
+Patch5:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.1-%{ac_version}.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -209,8 +211,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #kerneli patch
 %patch0 -p1
 #i8255 fix
-#%patch4 -p0 
+%patch4 -p0 
 
+%patch5
 
 # Fore 200e ATM NIC
 patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
