@@ -159,6 +159,10 @@ Patch301:	20_v4l2-2.4.23-pre7.diff.gz
 Patch302:	30_bt832-2.4.23-pre7.diff
 Patch303:	30_btaudio-2.4.23-pre7.diff
 
+# I18N stuff
+# Adds a sysctl for controlling the default iocharset
+Patch400:	%{name}-nls_default.patch
+
 # The following go last as they touch a lot of code
 # and/or are on bcond and/or are ifarch
 
@@ -665,6 +669,7 @@ gzip -dc %{SOURCE7} | tar -xf -
 %patch301 -p1
 %patch302 -p1
 %patch303 -p1
+%patch400 -p1
 %patch950 -p1
 %patch1000 -p1
 %patch1002 -p1
