@@ -16,7 +16,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	10
+Release:	11
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -66,6 +66,12 @@ Patch10:	bridge-1.0.2-against-2.2.20.diff
 Patch11:	bridge-ipchains-against-1.0.2-against-2.2.20.diff
 Patch12:	2.2.21-pre2_VIA.patch
 Patch13:	2.2.21-pre2_ati.patch
+Patch14:	2.2.21-pre2_doc_and_maintainers.patch
+Patch15:	2.2.21-pre2_zImage.patch
+Patch16:	2.2.21-pre2_page_alloc_race_fix.patch
+Patch17:	2.2.21-pre2_sym53x8xx.patch
+Patch18:	2.2.21-pre2_8139too_tune.patch
+Patch19:	2.2.21-pre2_menuconfig_fix.patch
 Patch20:	http://download.sourceforge.net/linux1394/ieee1394-2.2.19-20010527.gz
 Patch21:	linux-tasks.patch
 Patch22:	%{name}-ipvs-1.0.8-2.2.19.patch
@@ -83,19 +89,18 @@ Patch33:	%{name}-ipsec-bridge.patch
 Patch34:	%{name}-wanrouter-bridge.patch
 Patch35:	linux-netdrivers_vlan.patch
 Patch36:	atm-unresolved.patch
-Patch37:	af-unresolved.patch
 Patch38:	linux-2.2.20-pcmcia-without-iee1394.patch.bz2
 # based on ftp://ftp.kernel.org/people/andrea/kernels/v2.2/2.2.20pre9aa2/40_lfs-2.2.20pre9aa2-27.bz2
 #Patch39:       linux-2.2.20-lfs.patch
-Patch40:        %{name}-scripts-include-dir.patch
+Patch40:        2.2.21-pre2_Makefile.patch
 Patch41:	%{name}-serial-initialisation.patch
 Patch42:	%{name}-flip-serial5.05.patch
 Patch43:	%{name}-vlan_bridge.patch
 Patch44:	tulip-patch-0.91.patch.bz2
 Patch100:	jfs-2.2.20-v%{jfs_version}-patch
 Patch101:	linux-atm.patch
+# HTB from http://luxik.cdi.cz/~devik/qos/htb/
 Patch102:	htb2_2.2.17.diff
-Patch103:	bridge-netsyms.patch
 #i2o patch from ftp://ftp.adaptec.com/raid/asr/unix/asr_linux_v242_drv.rpm 
 Patch104:	dpt_i2o-2.2.19.diff
 Patch105:	linux-2.2.19-bttv-%{bttv_version}.patch.bz2
@@ -108,10 +113,6 @@ Patch1500:	linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	%{name}-sparc-zs.h.patch
 Patch1502:	%{name}-sparc_netsyms.patch
 Patch1503:	%{name}-sym53c8xx.patch
-
-Patch2000:	%{name}-source.patch
-
-# HTB from http://luxik.cdi.cz/~devik/qos/htb/
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -141,7 +142,6 @@ Prereq:		geninitrd
 Obsoletes:	kernel-modules
 
 #i2c and bttv packages are obsolete
-Obsoletes:	i2c-devel
 Obsoletes:	kernel-i2c
 Obsoletes:	bttv
 Obsoletes:	kernel-misc-bttv
@@ -350,6 +350,12 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch11 -p1
 %patch12 -p1
 %patch13 -p1
+%patch14 -p1
+%patch15 -p1
+%patch16 -p1
+%patch17 -p1
+%patch18 -p1
+%patch19 -p1
 %patch20 -p1
 %patch21 -p1
 %patch22 -p1
@@ -367,7 +373,6 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch34 -p1
 %patch35 -p1
 %patch36 -p1
-%patch37 -p1
 %patch38 -p1
 #%patch39 -p1
 %patch40 -p1
@@ -419,7 +424,6 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 
 %patch101 -p1
 %patch102 -p1
-%patch103 -p1
 %patch104 -p1
 %patch107 -p1
 %patch108 -p1
@@ -647,6 +651,11 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH10}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH11}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH12}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH13}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH14}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH15}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH16}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH17}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH18}
 gzip -dc %{PATCH20} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH21}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH22}
@@ -663,7 +672,6 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH33}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH34}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH35}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH36}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH37}
 #patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH39}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH40}
 bzip2 -dc %{PATCH44} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
@@ -730,7 +738,6 @@ rm $RPM_BUILD_ROOT/usr/src/linux-%{version}/jfs-*
 
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH101}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH102}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH103}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH104}
 bzip2 -dc %{PATCH107} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 bzip2 -dc %{PATCH108} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
@@ -741,8 +748,6 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1501}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1502}
 %endif
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1503}
-
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH2000}
 
 cd $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
