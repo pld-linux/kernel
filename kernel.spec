@@ -54,11 +54,11 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.93
+%define		_rel		0.94
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
-%define		_netfilter_snap		20050104
+%define		_netfilter_snap		20041118
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
