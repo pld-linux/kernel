@@ -40,7 +40,6 @@ Source62:	%{name}-sparc64-BOOT.config
 Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
-Source1001:	ftp://fb9nt.uni-duisburg.de/pub/linux/dmsdos/dmsdos-0.9.2.3-pre2.tgz
 Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.0.3.gz
 Patch1:		ftp://ftp.reiserfs.org/pub/2.4/linux-%{version}-ac2-reiserfs-%{reiserfs_version}-patch.gz
 #Patch1:		ftp://ftp.reiserfs.org/pub/2.4/linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
@@ -55,6 +54,7 @@ Patch1000:	linux-2.4-misc.patch
 
 Patch1001:	http://oss.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}-patch.tar.gz
 Patch1002:	bug-report-2.4.0.patch
+Patch1003:	%{name}-%{version}-i8255-asm-fix.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -262,7 +262,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%setup -q -a4 -a6 -a7 -a8 -a10 -a1001 -n linux
+%setup -q -a4 -a6 -a7 -a8 -a10 -n linux
 %patch100 -p1
 %patch0 -p1
 # conflict with other patches - commented.
@@ -310,6 +310,9 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION = -%{release}/g' \
 
 #LIDS patch
 patch -p1 <lids-1.0.4-2.4.0/lids-1.0.4-2.4.0.patch
+
+#i8255 patch
+%patch1003 -p0
 
 %build
 BuildKernel() {
