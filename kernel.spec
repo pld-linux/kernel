@@ -73,7 +73,7 @@ Patch27:	%{name}-udf.patch
 # based on	http://people.redhat.com/mingo/raid-patches/raid-2.2.20-A0
 Patch28:	raid-2.2.20-A0.patch.bz2
 # based on	http://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.20/ide-2.2.20.01102002.patch.bz2
-Patch29:	ide-2.2.21.03152002.patch.bz2
+Patch29:	ide-2.2.21.03172002.patch.bz2
 Patch30:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
 Patch31:	%{name}-flip.patch
 Patch33:	%{name}-ipsec-bridge.patch
@@ -102,6 +102,8 @@ Patch109:	dc395-MAINTAINERS.patch
 Patch110:	linux-2.2.20-rivafb.patch.bz2
 Patch111:	ide-2.2.21_unresolved.patch
 Patch112:	linux-2.2.20-pcilynx_unresolved.patch
+Patch113: 	ide-2.2.21-compilation_fix.patch
+Patch114:	ide-2.2.21-printk.patch
 
 Patch300:	patch-2.2.21-rc2.gz
 Patch320:	fix-prename.patch
@@ -439,6 +441,8 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch110 -p1
 %patch111 -p1
 %patch112 -p1
+%patch113 -p1
+%patch114 -p1
 
 %ifarch sparc sparc64
 %patch1500 -p1
@@ -766,6 +770,8 @@ bzip2 -dc %{PATCH108} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ve
 bzip2 -dc %{PATCH110} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH111}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH112}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH113}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH114}
 %ifarch sparc sparc64
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1500}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1501}
