@@ -294,6 +294,7 @@ zcat %{SOURCE34} > drivers/net/3c59x.c
 
 %build
 BuildKernel() {
+	%{?verbose:set -x}
 	# is this a special kernel we want to build?
 	if [ -n "$1" ] ; then
 		Config="%{_target_cpu}"-$1
