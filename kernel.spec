@@ -700,7 +700,7 @@ echo AXP patches ...
 
 %ifarch %{ix86}
 echo Win4Lin patch ...
-%{?_wihtout_grsec:%patch1000 -p1}
+%{?_without_grsec:%patch1000 -p1}
 %{!?_without_grsec:%patch1001 -p1}
 %endif
 
