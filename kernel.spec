@@ -2,6 +2,7 @@
 %define		lids_version		1.0.5
 %define		ipvs_version		0.2.3
 %define		ac_version		ac5
+%define 	aacraid_version		1.0.6
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -48,6 +49,7 @@ Patch4:		kernel-i8255-asm-fix.patch
 Patch5:		ftp://ftp.kernel.org/pub/linux/kernel/people/alan/2.4/patch-2.4.1-%{ac_version}.gz
 Patch6:		dc395-patch-PLD-fix.patch
 Patch7:		linux-2.4.1-disable-message-printing.patch
+Patch8:		ftp://ftp.winds.org/linux/patches/2.4.1/aacraid-%{version}-%{aacraid_version}.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -252,6 +254,9 @@ echo -e $ANS | ./runme)
 
 # disable message printing
 %patch7 -p1
+
+# AAdaptec RAID patch
+%patch8 -p1
 
 # Remove -g from drivers/atm/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
