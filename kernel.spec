@@ -94,6 +94,7 @@ Patch102:	htb2_2.2.17.diff
 Patch104:	dpt_i2o-2.2.19.diff
 Patch105:	linux-2.2.19-bttv-%{bttv_version}.patch.bz2
 Patch106:	linux-2.2.20-undo-ioport.h.patch.bz2
+Patch107:	linux-2.2.20-icn-unresolved.patch.bz2
 Patch108:	linux-2.2.20-agp_backport.patch.bz2
 Patch109:	dc395-MAINTAINERS.patch
 
@@ -396,6 +397,7 @@ mkpatch/mkpatch.pl . ../../linux | (cd ../../linux; patch -p1 -s)
 cd ..
 %patch105 -p1
 %patch106 -p1
+%patch107 -p1
 %endif
 
 # 2.2.20ow1
@@ -425,7 +427,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch1502 -p1
 %endif
 %patch1503 -p1
-
+%patch1503 -p1
 %build
 BuildKernel() {
 	%{?verbose:set -x}
@@ -694,6 +696,7 @@ cd ..
 rm -rf i2c-%{i2c_version}/
 bzip2 -dc %{PATCH105} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 bzip2 -dc %{PATCH106} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+bzip2 -dc %{PATCH107} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 %endif
 
 # 2.2.20ow
