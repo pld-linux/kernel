@@ -10,7 +10,6 @@
 %define		test_build		0
 #
 %define		pre_version		pre1
-%define		lids_version		1.0.14-2.4.9
 %define		ipvs_version		0.9.8
 %define		freeswan_version	snap2001sep23b
 %define 	aacraid_version		1.0.6
@@ -39,7 +38,6 @@ Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 # based on cvs cvs@pserver.samba.org:/cvsroot netfilter
 Source7:	linux-2.4.16-netfilter-20011201.tar.gz
-Source8:	http://www.lids.org/download/lids-%{lids_version}.tar.gz
 Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_version}.tar.gz
 # new -> ftp://ftp.tux.org/pub/roudier/drivers/portable/sym-2.1.x/sym-2.1.16-20011028.tar.gz
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
@@ -59,7 +57,6 @@ Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
-Source1000:	%{name}-lids.config
 Source1001:	%{name}-abi.config
 Source1002:	%{name}-addon.config
 Source1003:	%{name}-netfilter.config
@@ -136,10 +133,6 @@ Patch124:	linux-proc_net_dev-counter-fix.patch
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
 Patch900:	ide-EXPORT_SYMBOL.fix
-# patch fixing problem with ABI and LIDS
-Patch901:	linux-lids-with-abi.patch
-# patch fixing LIDS stupidity
-#Patch903:	linux-lids-fixpatch.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
@@ -195,29 +188,6 @@ Pakiet zawiera j±dro Linuxa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takich jak karty muzyczne, sterowniki dysków, etc.
 
-%if %{?_with_lids:1}%{!?_with_lids:0}
-%package lids
-Summary:	LIDS enabled kernel version %{version}
-Group:		Base/Kernel
-Group(pl):	Podstawowe/J±dro
-Provides:	%{name} = %{version}
-Provides:	%{name}(reiserfs) = %{version}
-Provides:	%{name}(agpgart) = %{version}
-Prereq:		modutils
-Autoreqprov:	no
-
-%description lids
-This package includes a LIDS enabled version of the Linux %{version} kernel.
-It is required only when you want maximum security.
-
-See http://www.lids.org/ for details.
-
-%description -l pl lids
-Pakiet zawiera j±dro Linuksa w wersji %{version} z w³±czonym LIDS.
-Jest ono wymagane jedynie gdy potrzebne jest maksymalne bezpieczeñstwo.
-
-Szczegó³y pod http://www.lids.org/.
-%endif
 
 %if%{?_without_smp:0}%{!?_without_smp:1}
 %package smp
@@ -253,34 +223,6 @@ Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono wymagane
 przez komputery zawieraj±ce dwa lub wiêcej procesorów. Powinno równie¿ dobrze 
 dzia³aæ na maszynach z jednym procesorem.
 %endif 
-
-%if %{?_without_smp:0}%{!?_without_smp:1}
-%if %{?_with_lids:1}%{!?_with_lids:0}
-%package lids-smp
-Summary:	LIDS enabled kernel version %{version} compiled for SMP machines
-Group:		Base/Kernel
-Group(pl):	Podstawowe/J±dro
-Provides:	%{name} = %{version}
-Provides:	%{name}(reiserfs) = %{version}
-Provides:	%{name}(agpgart) = %{version}
-Prereq:		modutils
-Autoreqprov:	no
-
-%description lids-smp
-This package includes a LIDS enabled SMP version of the Linux %{version}
-kernel. It is required only on machines with two or more CPUs, when you want
-maximum security.
-
-See http://www.lids.org/ for details.
-
-%description -l pl lids-smp
-Pakiet zawiera j±dro SMP Linuksa w wersji %{version} z w³±czonym LIDS.
-Jest ono wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów,
-jedynie gdy wymagane jest maksymalne bezpieczeñstwo.
-
-Szczegó³y pod http://www.lids.org/.
-%endif
-%endif
 
 %package BOOT
 Summary:	Kernel version %{version} used on the installation boot disks
@@ -372,8 +314,7 @@ particuliers.
 Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
-%{?_with_lids:%setup -q -a3 -a5 -a7 -a8 -a10 -a11 -a12 -a13 -n linux}
-%{!?_with_lids:%setup -q -a3 -a5 -a7 -a10 -a11 -a12 -a13 -n linux}
+%setup -q -a3 -a5 -a7 -a10 -a11 -a12 -a13 -n linux
 #%patch1000 -p1
 #%patch0 -p1
 %patch1 -p1
@@ -440,15 +381,6 @@ for suite in pending base extra pld ; do
 done
 echo -e $ANS | ./runme pld)
 
-%if %{?_with_lids:1}%{!?_with_lids:0}
-# LIDS
-echo Adding LIDS
-cd lids-%{lids_version}
-%patch901 -p1
-cd ..
-patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
-%endif
-
 # IPVS
 echo Adding IPVS
 %patch13 -p1
@@ -511,13 +443,6 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
 %build
 BuildKernel() {
 	%{?verbose:set -x}
-	# is this a LIDS enabled kernel?
-	if [ "$1" = "lids" ] ; then
-		LIDS="lids"
-		shift
-	else
-		LIDS=""
-	fi
 	# is this a special kernel we want to build?
 	BOOT=
 	if [ -n "$1" ] ; then
@@ -567,11 +492,6 @@ BuildKernel() {
 		cat %{SOURCE1666} >> arch/$RPM_ARCH/defconfig
 	fi
 %endif
-	if [ "$LIDS" = "lids" ] ; then
-		echo ENABLING LIDS...
-		cat %{SOURCE1000} >> arch/$RPM_ARCH/defconfig
-		KernelVer="${KernelVer}-lids"
-	fi
 %ifarch i386
 	mv -f arch/$RPM_ARCH/defconfig arch/$RPM_ARCH/defconfig.orig
 	sed -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
@@ -640,16 +560,6 @@ BuildKernel
 %if %{?_without_smp:0}%{!?_without_smp:1}
 BuildKernel smp
 %endif			# %{_without_smp}
-
-%if %{?_with_lids:1}%{!?_with_lids:0}
-# UP LIDS KERNEL
-BuildKernel lids
-
-%if%{?_without_smp:0}%{!?_without_smp:1}
-# SMP LIDS KERNEL
-BuildKernel lids smp
-%endif			# %{_without_smp}
-%endif			# %{_with_lids}
 
 # BOOT kernel
 %ifnarch i586 i686
@@ -769,11 +679,6 @@ done
 rm -f scripts/mkdep
 rm -f drivers/net/hamradio/soundmodem/gentbl
 
-%if %{?_with_lids:1}%{!?_with_lids:0}
-# LIDS config
-cat %{SOURCE1000} >> $RPM_BUILD_ROOT/usr/src/linux-%{version}/.config.lids
-%endif
-
 %clean
 rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_DIR/linux-installed
@@ -799,28 +704,6 @@ rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release} /lib/modules/%{version}
 depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
-%if %{?_with_lids:1}%{!?_with_lids:0}
-%post lids
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
-ln -sf vmlinuz-%{version}-%{release}-lids /boot/vmlinuz
-ln -sf System.map-%{version}-%{release}-lids /boot/System.map
-
-geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}-lids.gz %{version}-%{release}-lids
-mv -f /boot/initrd /boot/initrd.old
-ln -sf initrd-%{version}-%{release}-lids.gz /boot/initrd
-
-if [ -x /sbin/rc-boot ] ; then
-	/sbin/rc-boot 1>&2 || :
-fi
-
-if [ ! -L /lib/modules/%{version} ] ; then
-	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
-fi
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release}-lids /lib/modules/%{version}
-%endif
-
 %if%{?_without_smp:0}%{!?_without_smp:1}
 %post smp
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
@@ -841,28 +724,6 @@ if [ ! -L /lib/modules/%{version} ] ; then
 fi
 rm -f /lib/modules/%{version}
 ln -snf %{version}-%{release}smp /lib/modules/%{version}
-
-%if %{?_with_lids:1}%{!?_with_lids:0}
-%post lids-smp
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
-ln -sf vmlinuz-%{version}-%{release}smp-lids /boot/vmlinuz
-ln -sf System.map-%{version}-%{release}smp-lids /boot/System.map
-
-geninitrd -f --fs=rom /boot/initrd-%{version}-%{release}smp-lids.gz %{version}-%{release}smp-lids
-mv -f /boot/initrd /boot/initrd.old
-ln -sf initrd-%{version}-%{release}smp-lids.gz /boot/initrd
-
-if [ -x /sbin/rc-boot ] ; then
-	/sbin/rc-boot 1>&2 || :
-fi
-
-if [ ! -L /lib/modules/%{version} ] ; then
-	mv -f /lib/modules/%{version} /lib/modules/%{version}.rpmsave
-fi
-rm -f /lib/modules/%{version}
-ln -snf %{version}-%{release}smp-lids /lib/modules/%{version}
-%endif			# %{_with_lids}
 %endif			# %{_without_smp}
 
 %post BOOT
@@ -887,18 +748,6 @@ if [ -L /lib/modules/%{version} ]; then
 fi
 rm -f /boot/initrd-%{version}-%{release}.gz
 
-%if %{?_with_lids:1}%{!?_with_lids:0}
-%postun lids
-if [ -L /lib/modules/%{version} ]; then 
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}-lids" ]; then
-		if [ "$1" = "0" ]; then
-			rm -f /lib/modules/%{version}
-		fi
-	fi
-fi
-rm -f /boot/initrd-%{version}-%{release}-lids.gz
-%endif
-
 %if%{?_without_smp:0}%{!?_without_smp:1}
 %postun smp
 if [ -L /lib/modules/%{version} ]; then 
@@ -909,18 +758,6 @@ if [ -L /lib/modules/%{version} ]; then
 	fi
 fi
 rm -f /boot/initrd-%{version}-%{release}smp.gz
-
-%if %{?_with_lids:1}%{!?_with_lids:0}
-%postun lids-smp
-if [ -L /lib/modules/%{version} ]; then 
-	if [ "`ls -l /lib/modules/%{version} | awk '{ print $11 }'`" = "%{version}-%{release}smp-lids" ]; then
-		if [ "$1" = "0" ]; then
-			rm -f /lib/modules/%{version}
-		fi
-	fi
-fi
-rm -f /boot/initrd-%{version}-%{release}smp-lids.gz
-%endif			# %{_with_lids}
 %endif			# %{_without_smp}
 
 %postun BOOT
@@ -963,24 +800,6 @@ fi
 /lib/modules/%{version}-%{release}/modules.generic_string
 
 %if !%{test_build}
-%if %{?_with_lids:1}%{!?_with_lids:0}
-%files lids
-%defattr(644,root,root,755)
-%ifarch alpha sparc
-/boot/vmlinux-%{version}-%{release}-lids
-%endif
-/boot/vmlinuz-%{version}-%{release}-lids
-/boot/System.map-%{version}-%{release}-lids
-%dir /lib/modules/%{version}-%{release}-lids
-%ifarch %{ix86}
-/lib/modules/%{version}-%{release}-lids/pcmcia
-%endif
-/lib/modules/%{version}-%{release}-lids/kernel
-/lib/modules/%{version}-%{release}-lids/build
-/lib/modules/%{version}-%{release}-lids/modules.dep
-/lib/modules/%{version}-%{release}-lids/modules.*map
-/lib/modules/%{version}-%{release}-lids/modules.generic_string
-%endif
 
 %if%{?_without_smp:0}%{!?_without_smp:1}
 %files smp
@@ -999,25 +818,6 @@ fi
 /lib/modules/%{version}-%{release}smp/modules.dep
 /lib/modules/%{version}-%{release}smp/modules.*map
 /lib/modules/%{version}-%{release}smp/modules.generic_string
-
-%if %{?_with_lids:1}%{!?_with_lids:0}
-%files lids-smp
-%defattr(644,root,root,755)
-%ifarch alpha sparc
-/boot/vmlinux-%{version}-%{release}smp-lids
-%endif
-/boot/vmlinuz-%{version}-%{release}smp-lids
-/boot/System.map-%{version}-%{release}smp-lids
-%dir /lib/modules/%{version}-%{release}smp-lids
-%ifarch %{ix86}
-/lib/modules/%{version}-%{release}smp-lids/pcmcia
-%endif
-/lib/modules/%{version}-%{release}smp-lids/kernel
-/lib/modules/%{version}-%{release}smp-lids/build
-/lib/modules/%{version}-%{release}smp-lids/modules.dep
-/lib/modules/%{version}-%{release}smp-lids/modules.*map
-/lib/modules/%{version}-%{release}smp-lids/modules.generic_string
-%endif			# %{_with_lids}
 %endif			# %{_without_smp}
 
 %ifnarch i586 i686
@@ -1065,7 +865,6 @@ fi
 %{_prefix}/src/linux-%{version}/net
 %{_prefix}/src/linux-%{version}/scripts
 %{_prefix}/src/linux-%{version}/.config
-%{?_with_lids:%{_prefix}/src/linux-%{version}/.config.lids}
 %{_prefix}/src/linux-%{version}/.depend
 %{_prefix}/src/linux-%{version}/.hdepend
 %{_prefix}/src/linux-%{version}/COPYING
