@@ -52,7 +52,7 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.97
+%define		_rel		0.98
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -174,16 +174,19 @@ Patch76:	linux-2.6-lirc-0.7.patch
 # psmouse extension for ThinkPad laptops from http://www.clarkson.edu/~evanchsa/
 Patch80:	trackpoint-2.6.9.patch
 
-# derived from official grsecurity-2.1.0-2.6.10-200501071049.patch
-Patch90:	grsecurity-2.1.0-2.6.10-200501071049.patch
-Patch91:	linux-2.6.10-secfix-200501071130.patch
-Patch92:	linux-2.6.10-grsec_sparc.patch
+# http://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.10/
+Patch90:	acpi-20041210-2.6.10.diff
 
 # frpm http://www.ssi.bg/~ja/#routers
 Patch100:	routes-2.6.10-11.diff
 
 # http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.10-rc2/2.6.10-rc-mm2/broken-out
-Patch200:	linux-reiser4.patch.bz2
+Patch110:	linux-reiser4.patch.bz2
+
+# derived from official grsecurity-2.1.0-2.6.10-200501071049.patch
+Patch200:	grsecurity-2.1.0-2.6.10-200501071049.patch
+Patch201:	linux-2.6.10-secfix-200501071130.patch
+Patch202:	linux-2.6.10-grsec_sparc.patch
 
 # linux vserver
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
@@ -579,27 +582,31 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch75 -p1
 %patch76 -p1
 
-%ifarch %{ix86}
 %patch80 -p1
-%endif
 
-#grsec
-%ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
-%if %{with grsec}
 %patch90 -p1
-%patch91 -p1
-%patch92 -p1
-%endif
-%endif
 
 # routers
 %patch100 -p1
 
+%patch110 -p1
+
+# <bconded_patches>
+
+#grsec
+%ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
+%if %{with grsec}
 %patch200 -p1
+%patch201 -p1
+%patch202 -p1
+%endif
+%endif
 
 %if %{with vserver}
 %patch250 -p1
 %endif
+
+# </bconded_patches
 
 # hotfixes
 %patch300 -p1
