@@ -31,7 +31,7 @@ Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.gz
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-133.tar.gz
@@ -73,26 +73,21 @@ Source1666:	%{name}-grsec.config
 
 Patch0:		%{name}-pldfblogo.patch
 #Patch1:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
-Patch1:		patch-int-2.4.5.0.gz
+Patch1:		patch-int-2.4.15.0.gz
 Patch2:		linux-2.4.10-freeswan-%{freeswan_version}.patch.gz
 # http://domsch.com/linux/aacraid/linux-2.4.9-aacraid-20010816.patch
 Patch3:		linux-2.4.9-aacraid-20010816.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
-Patch4:		br2684-against2.4.10.diff
+Patch4:		br2684-against2.4.15.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/
 # based on file xfs-2.4.14-all.bz2
 Patch5:		linux-xfs-2.4.14-PLD.patch.gz
-# Compressed iso9660 filesystem
-Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-unified-2.4.12.diff.gz
 # Homepage of ABI : http://linux-abi.sourceforge.net/
 # http://prdownloads.sourceforge.net/linux-abi/
 Patch7:		linux-abi-2.4.3-PLD.patch
 Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 # grsecurity patch http://www.getrewted.net/
 Patch9:		linux-grsecurity-%{grsec_version}.patch
-# EXT3
-# http://www.uow.edu.au/~andrewm/linux/ext3/
-Patch10:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.15-2414.gz
 
 # Assorted bugfixes
 
@@ -103,7 +98,7 @@ Patch102:	PCI_ISA_bridge.patch
 Patch103:	linux-2.4.2-nvram-hdd.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch105:	linux-2.4.2-pcnet-parms.patch
-Patch106:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.6-p1.06062001.patch.gz
+Patch106:	http://linuxdiskcert.org/ide.2.4.14.11192001.patch.bz2
 Patch107:	linux-reiserfs-rename.patch
 Patch108:	linux-alpha-nfs-2.4.2.patch
 Patch109:	linux-2.4-string.patch
@@ -131,16 +126,7 @@ Patch121:	linux-2.4.10-cpqfc.patch
 Patch122:	linux-2.4.14-lvm-1.0.1rc4cvs.patch
 # HTP360/370 driver update
 Patch124:	linux-drivers_ide_hpt366.c.diff
-Patch125:	linux-2.4.13-usb-ohci.patch
 
-# Not needed Patch126:	kernel-deactivate_page-fix.patch
-# IRDA patches.
-Patch127:	ir243_endian_fix.diff
-Patch128:	ir243_lap_lmp_races-2.diff
-Patch129:	ir243_ttp_sock_races-2.diff
-Patch130:	ir243_usb_descr.diff
-# 
-Patch131:	kernel-real_root_dev-s390.patch
 # Preemptible kernel  patch
 Patch132:	ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/2.4/preempt-kernel-rml-2.4.14-2.patch
 # fixed xquad_portio
@@ -387,20 +373,16 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %{!?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
 #%patch1000 -p1
 #%patch0 -p1
-#%patch126 -p1
-%patch131 -p1
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-%patch10 -p1
-%patch5 -p1
-#%patch6 -p1
+##%patch5 -p1
 #%patch7 -p1
 %patch8 -p1
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
 %ifarch %{ix86}
-%patch9 -p1
+##%patch9 -p1
 %endif
 %endif
 
@@ -416,7 +398,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch110 -p1
 %patch111 -p1
 %patch112 -p2
-%patch113 -p1
+##%patch113 -p1
 %patch115 -p1
 %patch116 -p1
 %patch117 -p1
@@ -424,23 +406,16 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch119 -p1
 %patch120 -p1
 %patch121 -p1
-%patch122 -p1
+##%patch122 -p1
 %patch124 -p1
-#%patch125 -p1
-
-# IRDA patches
-%patch127 -p1
-%patch128 -p1
-%patch129 -p1
-%patch130 -p1
 
 %patch900 -p0 
 %patch904 -p0
-#%if%{?_without_grsec:0}%{!?_without_grsec:1}
-#%ifarch %{ix86}
-#%patch906 -p1
-#%endif
-#%endif
+%if%{?_without_grsec:0}%{!?_without_grsec:1}
+%ifarch %{ix86}
+##%patch906 -p1
+%endif
+%endif
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
