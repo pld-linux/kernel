@@ -93,6 +93,7 @@ Source90:	%{name}-grsec.config
 Patch0:		2.6.0-ksyms-add.patch
 
 %if "%{_cset}" != "0"
+# http://www.kernel.org/pub/linux/kernel/v2.6/testing/cset/
 # http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/
 Patch2:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
 %endif
