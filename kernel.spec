@@ -1,4 +1,4 @@
-%define		ow_version		2.4.23-ow1
+%define		ow_version		2.4.24-ow1
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -7,15 +7,15 @@ Summary(pl):	J±dro Linuksa
 Summary(ru):	Òƒ“œ Linux
 Summary(uk):	Òƒ“œ Linux
 Name:		kernel
-Version:	2.4.23
+Version:	2.4.24
 Release:	0.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
-# Source0-md5:	75dc85149b06ac9432106b8941eb9f7b
+# Source0-md5:	1e055c42921b2396a559d84df4c3d9aa
 Source1:	%{name}-autoconf.h
 Source2:        http://www.openwall.com/linux/linux-%{ow_version}.tar.gz
-# Source2-md5:	24bfc766280cb46aad1c9ff32a840e3a
+# Source2-md5:	a2a870b0dbfea6c81542b09c85e00dbc
 Source20:	%{name}-alpha-BOOT.config
 Source21:	%{name}-alpha.config
 Source22:	%{name}-alpha-smp.config
