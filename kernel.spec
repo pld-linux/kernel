@@ -143,6 +143,11 @@ Patch131:	kernel-2.4.18-personality.patch
 
 Patch132:	linux-2.4.18.secfix.patch
 Patch133:	linux-2.4.18-netsyms-fix.patch
+
+%ifarch ppc
+Patch134:	linux-2.4.12-riva-ppc.patch.bz2
+Patch135:	linux-2.4.18-pre4-agp_uninorth-ppc.patch.bz2
+%endif
 # Patches fixing other patches or 3rd party sources ;)
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
@@ -498,6 +503,11 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 %patch130 -p0
 
 %patch133 -p0
+
+%ifarch ppc
+%patch134 -p1
+%patch135 -p1
+%endif
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
