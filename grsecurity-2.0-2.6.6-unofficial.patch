@@ -3150,8 +3150,8 @@ diff -uNr linux-2.6.6/fs/Kconfig linux-2.6.6.grsec/fs/Kconfig
  
  config SYSFS
 diff -uNr linux-2.6.6/fs/namei.c linux-2.6.6.grsec/fs/namei.c
---- linux-2.6.6/fs/namei.c	2004-05-10 04:32:27.000000000 +0200
-+++ linux-2.6.6.grsec/fs/namei.c	2004-05-13 16:52:25.000000000 +0200
+--- linux-2.6.6/fs/namei.c.orig	2004-05-23 09:12:29.409731800 +0200
++++ linux-2.6.6/fs/namei.c	2004-05-23 09:18:08.106242104 +0200
 @@ -27,6 +27,7 @@
  #include <linux/security.h>
  #include <linux/mount.h>
@@ -3401,13 +3401,13 @@ diff -uNr linux-2.6.6/fs/namei.c linux-2.6.6.grsec/fs/namei.c
  		dentry = lookup_create(&nd, 0);
  		error = PTR_ERR(dentry);
  		if (!IS_ERR(dentry)) {
--			error = vfs_symlink(nd.dentry->d_inode, dentry, from);
+-			error = vfs_symlink(nd.dentry->d_inode, dentry, from, S_IALLUGO);
 +			error = 0;
 +			if (!gr_acl_handle_symlink(dentry, nd.dentry, nd.mnt, from))
 +				error = -EACCES;
 +
 +			if (!error)
-+				error = vfs_symlink(nd.dentry->d_inode, dentry, from);
++				error = vfs_symlink(nd.dentry->d_inode, dentry, from, S_IALLUGO);
 +
 +			if (!error)
 +				gr_handle_create(dentry, nd.mnt);
@@ -4199,18 +4199,18 @@ diff -uNr linux-2.6.6/fs/proc/task_mmu.c linux-2.6.6.grsec/fs/proc/task_mmu.c
  			flags & VM_WRITE ? 'w' : '-',
  			flags & VM_EXEC ? 'x' : '-',
 diff -uNr linux-2.6.6/fs/readdir.c linux-2.6.6.grsec/fs/readdir.c
---- linux-2.6.6/fs/readdir.c	2004-05-10 04:32:29.000000000 +0200
-+++ linux-2.6.6.grsec/fs/readdir.c	2004-05-13 16:52:25.000000000 +0200
-@@ -14,6 +14,8 @@
- #include <linux/fs.h>
+--- linux-2.6.6/fs/readdir.c.orig	2004-05-23 09:12:30.781523256 +0200
++++ linux-2.6.6/fs/readdir.c	2004-05-23 09:19:02.448980752 +0200
+@@ -15,6 +15,8 @@
  #include <linux/dirent.h>
  #include <linux/security.h>
+ #include <linux/unistd.h>
 +#include <linux/namei.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
  
-@@ -64,6 +66,7 @@
+@@ -65,6 +67,7 @@
  struct readdir_callback {
  	struct old_linux_dirent __user * dirent;
  	int result;
@@ -4218,7 +4218,7 @@ diff -uNr linux-2.6.6/fs/readdir.c linux-2.6.6.grsec/fs/readdir.c
  };
  
  static int fillonedir(void * __buf, const char * name, int namlen, loff_t offset,
-@@ -74,6 +77,10 @@
+@@ -75,6 +78,10 @@
  
  	if (buf->result)
  		return -EINVAL;
@@ -4229,7 +4229,7 @@ diff -uNr linux-2.6.6/fs/readdir.c linux-2.6.6.grsec/fs/readdir.c
  	buf->result++;
  	dirent = buf->dirent;
  	if (!access_ok(VERIFY_WRITE, (unsigned long)dirent,
-@@ -106,6 +113,9 @@
+@@ -107,6 +114,9 @@
  	buf.result = 0;
  	buf.dirent = dirent;
  
@@ -4239,7 +4239,7 @@ diff -uNr linux-2.6.6/fs/readdir.c linux-2.6.6.grsec/fs/readdir.c
  	error = vfs_readdir(file, fillonedir, &buf);
  	if (error >= 0)
  		error = buf.result;
-@@ -133,6 +143,7 @@
+@@ -134,6 +144,7 @@
  	struct linux_dirent __user * previous;
  	int count;
  	int error;
@@ -4247,7 +4247,7 @@ diff -uNr linux-2.6.6/fs/readdir.c linux-2.6.6.grsec/fs/readdir.c
  };
  
  static int filldir(void * __buf, const char * name, int namlen, loff_t offset,
-@@ -145,6 +156,10 @@
+@@ -146,6 +157,10 @@
  	buf->error = -EINVAL;	/* only used if we fail.. */
  	if (reclen > buf->count)
  		return -EINVAL;
@@ -4258,7 +4258,7 @@ diff -uNr linux-2.6.6/fs/readdir.c linux-2.6.6.grsec/fs/readdir.c
  	dirent = buf->previous;
  	if (dirent) {
  		if (__put_user(offset, &dirent->d_off))
-@@ -192,6 +207,9 @@
+@@ -193,6 +208,9 @@
  	buf.count = count;
  	buf.error = 0;
  
@@ -4268,7 +4268,7 @@ diff -uNr linux-2.6.6/fs/readdir.c linux-2.6.6.grsec/fs/readdir.c
  	error = vfs_readdir(file, filldir, &buf);
  	if (error < 0)
  		goto out_putf;
-@@ -217,6 +235,7 @@
+@@ -218,6 +236,7 @@
  	struct linux_dirent64 __user * previous;
  	int count;
  	int error;
@@ -4276,7 +4276,7 @@ diff -uNr linux-2.6.6/fs/readdir.c linux-2.6.6.grsec/fs/readdir.c
  };
  
  static int filldir64(void * __buf, const char * name, int namlen, loff_t offset,
-@@ -229,6 +248,10 @@
+@@ -230,6 +249,10 @@
  	buf->error = -EINVAL;	/* only used if we fail.. */
  	if (reclen > buf->count)
  		return -EINVAL;
@@ -4287,7 +4287,7 @@ diff -uNr linux-2.6.6/fs/readdir.c linux-2.6.6.grsec/fs/readdir.c
  	dirent = buf->previous;
  	if (dirent) {
  		if (__put_user(offset, &dirent->d_off))
-@@ -278,6 +301,9 @@
+@@ -279,6 +302,9 @@
  	buf.count = count;
  	buf.error = 0;
  
