@@ -857,7 +857,7 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%ifarch alpha sparc
+%ifarch alpha sparc ppc
 /boot/vmlinux-%{version}-%{release}
 %endif
 /boot/vmlinuz-%{version}-%{release}
@@ -877,7 +877,7 @@ fi
 %if%{?_without_smp:0}%{!?_without_smp:1}
 %files smp
 %defattr(644,root,root,755)
-%ifarch alpha sparc
+%ifarch alpha sparc ppc
 /boot/vmlinux-%{version}-%{release}smp
 %endif
 /boot/vmlinuz-%{version}-%{release}smp
@@ -896,7 +896,7 @@ fi
 %ifnarch i586 i686 ppc
 %files BOOT
 %defattr(644,root,root,755)
-%ifarch alpha sparc
+%ifarch alpha sparc ppc
 %{_libdir}/bootdisk/boot/vmlinux-%{version}-%{release}BOOT
 %endif
 %{_libdir}/bootdisk/boot/vmlinuz-%{version}-%{release}BOOT
