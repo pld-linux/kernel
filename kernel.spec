@@ -11,7 +11,7 @@
 # _without_doc		- don't build documentation package
 #
 
-%define		patch_level	pl1
+%define		patch_level	pl2
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
@@ -20,14 +20,14 @@
 %define		ipvs_version		1.0.7
 %define		freeswan_version	1.97
 %define		IPperson_version	20020819-2.4.19
-%define		grsec_version		1.9.9c
+%define		grsec_version		1.9.9e
 %define		jfs_version		2.4-1.0.24
 %define		lvm_version		1.0.5
 %define		evms_version		1.2.1
 %define		ntfs_version		2.1.0a
 %define		drm_xfree_version	4.2.99
 %define		hostap_version		2002-10-12
-%define		netfilter_snap		20030306
+%define		netfilter_snap		20030326
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -168,7 +168,7 @@ Patch27:	%{name}-cd-mrw-2.patch
 #Patch28:	pcsp1.4-ss4-2.4.19.diff
 
 Patch29:	linux-2.4.20-no-FPU.patch
-Patch30:	linux-2.4.20-ptrace-hole.patch
+#Patch30:	
 
 # from http://users.pandora.be/bart.de.schuymer/ebtables/sourcecode.html
 #		bridge-nf-0.0.10-against-2.4.20.diff
@@ -745,7 +745,6 @@ echo Fixed I810 Sound ...
 %patch9 -p1
 
 %patch29 -p1
-%patch30 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
