@@ -346,30 +346,6 @@ diff -uNr linux-2.6.7-rc1.orig/arch/sparc64/kernel/ptrace.c linux-2.6.7-rc1/arch
  	if ((current->personality == PER_SUNOS && request == PTRACE_SUNATTACH)
  	    || (current->personality != PER_SUNOS && request == PTRACE_ATTACH)) {
  		if (ptrace_attach(child)) {
-diff -uNr linux-2.6.7-rc1.orig/arch/sparc64/kernel/sys_sparc32.c linux-2.6.7-rc1/arch/sparc64/kernel/sys_sparc32.c
---- linux-2.6.7-rc1.orig/arch/sparc64/kernel/sys_sparc32.c	2004-05-23 07:54:22.000000000 +0200
-+++ linux-2.6.7-rc1/arch/sparc64/kernel/sys_sparc32.c	2004-05-25 14:33:57.978546248 +0200
-@@ -54,6 +54,8 @@
- #include <linux/netfilter_ipv4/ip_tables.h>
- #include <linux/ptrace.h>
- #include <linux/highuid.h>
-+#include <linux/random.h>
-+#include <linux/grsecurity.h>
- 
- #include <asm/types.h>
- #include <asm/ipc.h>
-@@ -197,6 +199,11 @@
- asmlinkage long sys32_getgroups16(int gidsetsize, u16 *grouplist)
- {
- 	int i;
-+#ifdef CONFIG_GRKERNSEC
-+	struct file *old_exec_file;
-+	struct acl_subject_label *old_acl;
-+	struct rlimit old_rlim[RLIM_NLIMITS];
-+#endif
- 
- 	if (gidsetsize < 0)
- 		return -EINVAL;
 diff -uNr linux-2.6.7-rc1.orig/arch/sparc64/kernel/sys_sparc.c linux-2.6.7-rc1/arch/sparc64/kernel/sys_sparc.c
 --- linux-2.6.7-rc1.orig/arch/sparc64/kernel/sys_sparc.c	2004-05-23 07:54:19.000000000 +0200
 +++ linux-2.6.7-rc1/arch/sparc64/kernel/sys_sparc.c	2004-05-25 14:33:57.955549744 +0200
