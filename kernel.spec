@@ -479,7 +479,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 # Fix EXTRAVERSION in main Makefile
 sed -i -e 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
-sed -i -e 's#CC.*$(CROSS_COMPILE)gcc#CC		= $(CROSS_COMPILE)$(CC)#g' Makefile
+sed -i -e 's#CC.*$(CROSS_COMPILE)gcc#CC		= $(CROSS_COMPILE)$(OURCC)#g' Makefile
 sed -i -e 's#\-pipe##' arch/*/Makefile
 
 %build
@@ -520,13 +520,13 @@ TuneUpConfigForIX86 () {
 }
 
 %if "%{_target_base_arch}" != "%{_arch}"
-Opts="ARCH=\"%{_target_base_arch}\" CROSS_COMPILE=\"%{_target_cpu}-pld-linux-\" CC=\"gcc\""
+Opts="ARCH=\"%{_target_base_arch}\" CROSS_COMPILE=\"%{_target_cpu}-pld-linux-\" OURCC=\"gcc\""
 %else
 %ifarch %{ix86} alpha sparc ppc
-Opts="CC=\"%{__cc}\""
+Opts="OURCC=\"%{__cc}\""
 %endif
 %ifarch sparc64
-Opts="CC=\"sparc64-pld-linux-gcc\""
+Opts="OURCC=\"sparc64-pld-linux-gcc\""
 %endif
 %endif
 
@@ -777,13 +777,13 @@ PreInstallKernel BOOT
 rm -rf $RPM_BUILD_ROOT
 umask 022
 %if "%{_target_base_arch}" != "%{_arch}"
-Opts="ARCH=\"%{_target_base_arch}\" CROSS_COMPILE=\"%{_target_cpu}-pld-linux-\" CC=\"gcc\""
+Opts="ARCH=\"%{_target_base_arch}\" CROSS_COMPILE=\"%{_target_cpu}-pld-linux-\" OURCC=\"gcc\""
 %else
 %ifarch %{ix86} alpha sparc ppc
-Opts="CC=\"%{__cc}\""
+Opts="OURCC=\"%{__cc}\""
 %endif
 %ifarch sparc64
-Opts="CC=\"sparc64-pld-linux-gcc\""
+Opts="OURCC=\"sparc64-pld-linux-gcc\""
 %endif
 %endif
 
