@@ -1,70 +1,72 @@
-%define		ow_version	2.2.16-ow1
+%define		ow_version	2.2.17-ow1
+%define		pcmcia_version	3.1.20
 %define		freeswan_version	1.5
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.4.0-test4
-Release:	1
+Version:	2.2.17
+Release:	2
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
-Source1:	kernel-autoconf.h
-Source10:	kernel-i386.config
-#Source11:	kernel-i386-fb.config
-Source12:	kernel-i386-BOOT.config
-Source13:	kernel-i586.config
-#Source14:	kernel-i586-fb.config
-Source15:	kernel-i586-smp.config
-#Source16:	kernel-i586-smp-fb.config
-Source17:	kernel-i686.config
-#Source18:	kernel-i686-fb.config
-Source19:	kernel-i686-smp.config
-#Source20:	kernel-i686-smp-fb.config
-Source21:	kernel-sparc.config
-Source22:	kernel-sparc-smp.config
-Source23:	kernel-sparc-BOOT.config
-#Source24:	kernel-sparc64.config
-#Source25:	kernel-sparc64-smp.config
-#Source26:	kernel-sparc64-BOOT.config
-#Source27:	kernel-alpha.config
-#Source28:	kernel-alpha-smp.config
-#Source29:	kernel-alpha-BOOT.config
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
+Source1:	%{name}-autoconf.h
+Source10:	%{name}-i386.config
+#Source11:	%{name}-i386-fb.config
+Source12:	%{name}-i386-BOOT.config
+Source13:	%{name}-i586.config
+#Source14:	%{name}-i586-fb.config
+Source15:	%{name}-i586-smp.config
+#Source16:	%{name}-i586-smp-fb.config
+Source17:	%{name}-i686.config
+#Source18:	%{name}-i686-fb.config
+Source19:	%{name}-i686-smp.config
+#Source20:	%{name}-i686-smp-fb.config
+Source21:	%{name}-sparc.config
+Source22:	%{name}-sparc-smp.config
+Source23:	%{name}-sparc-BOOT.config
+Source24:	%{name}-sparc64.config
+#Source25:	%{name}-sparc64-smp.config
+#Source26:	%{name}-sparc64-BOOT.config
+Source27:	%{name}-alpha.config
+Source28:	%{name}-alpha-smp.config
+Source29:	%{name}-alpha-BOOT.config
 Source30:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
 Source31:	http://www.garloff.de/kurt/linux/dc395/dc395-127.tar.gz
-Source32:	kernel-BuildASM.sh
-Source33:	ftp://sourceforge.org/pcmcia/pcmcia-cs-%{pcmcia_version}.tar.gz
-Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x.c-2.2.16-pre4-6.gz
+Source32:	%{name}-BuildASM.sh
+Source33:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
+Source34:	http://www.uow.edu.au/~andrewm/linux/3c59x-2.2.17+.gz
 # NFS server patches
-Source40:	http://download.sourceforge.net/nfs/kernel-nfs-dhiggen_merge-3.0.tar.gz
-Patch0:		ftp://ftp.kerneli.org/pub/kerneli/v2.2/patch-int-2.2.16.4.gz
-Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.16-reiserfs-3.5.23-patch.gz
+Source40:	http://download.sourceforge.net/nfs/dhiggen_merge-4.1.tar.gz
+Patch0:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.17.2.gz
+Patch1:		ftp://ftp.devlinux.com/pub/namesys/linux-2.2.17-reiserfs-3.5.25-patch.gz
 Patch2:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
 Patch3:		linux-tasks.patch
-# Wiget: Using unofficial raid patch, waiting for mingo update
-#Patch4:		http://www.redhat.com/~mingo/raid-patches/raid-2.2.15-A0.gz
-Patch4:		ftp://ftp.sime.com/pub/linux/raid-2.2.16-mabene
-# Wiget: WARNING: hand modified patch
-Patch5:		http://republika.pl/bkz/ide.2.2.16.patch.bz2
+# patch based on http://www.redhat.com/~mingo/raid-patches/
+Patch4:		raid-2.2.17-A0.gz
+Patch5:		http://www.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.17/ide.2.2.17.all.20000904.patch.bz2
 Patch6:		%{name}-pldfblogo.patch
 Patch7:		linux-2.2.16-freeswan-%{freeswan_version}.patch
 Patch8:		wanrouter-v2215.patch.gz
 Patch10:	linux-newagpdist.patch
 Patch11:	linux-agphjlfixes.patch
-# serek: do _not_ use DPT smartRAID controllers with linux at al!
-#Patch12:	ftp://shiva.poland.com/people/serek/kernel-DPT-smartRAID-serek.patch
-# Wiget: I remove md fix because is in raid patch
-Patch14:	http://www.linux.org.uk/VERSION/2.2.16combo
+Patch12:	linux-agpgart-2.4-compat.patch
+#Patch14:	http://www.linux.org.uk/VERSION/2.2.16combo
 Patch15:	linux-ipv6-addrconf.patch
 # NFS client patch
-Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.16-nfsv3-0.21.3.dif.bz2
-# don't use this
-#Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.16-nfsv3-0.22.0.dif.bz2
+Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
+# patch for console daemon.
+Patch21:	wait_any_vt.diff
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+%ifarch sparc64
+BuildRequires:	egcs64
+%else
+BuildRequires:	egcs
+%endif
 Provides:	module-info
 Autoreqprov:	no
 Prereq:		fileutils
@@ -76,25 +78,25 @@ BuildRequires:	bin86
 %endif
 
 %description
-This package contains the Linux kernel that is used to boot and run your
-system. It contains few device drivers for specific hardware. Most hardware
-is instead supported by modules loaded after booting.
+This package contains the Linux kernel that is used to boot and run
+your system. It contains few device drivers for specific hardware.
+Most hardware is instead supported by modules loaded after booting.
 
 %description -l de
 Das Kernel-Paket enthält den Linux-Kernel (vmlinuz), den Kern des
-Linux-Betriebssystems. Der Kernel ist für grundliegende Systemfunktionen
-verantwortlich: Speicherreservierung, Prozeß-Management, Geräte Ein- und
-Ausgaben, usw.
+Linux-Betriebssystems. Der Kernel ist für grundliegende
+Systemfunktionen verantwortlich: Speicherreservierung,
+Prozeß-Management, Geräte Ein- und Ausgaben, usw.
 
 %description -l fr
-Le package kernel contient le kernel linux (vmlinuz), la partie centrale
-d'un système d'exploitation Linux. Le noyau traite les fonctions basiques
-d'un système d'exploitation: allocation mémoire, allocation de process,
-entrée/sortie de peripheriques, etc.
+Le package kernel contient le kernel linux (vmlinuz), la partie
+centrale d'un système d'exploitation Linux. Le noyau traite les
+fonctions basiques d'un système d'exploitation: allocation mémoire,
+allocation de process, entrée/sortie de peripheriques, etc.
 
 %description -l pl
-Pakiet zawiera j±dro Linuxa niezbêdne do prawid³owego dzia³ania Twojego
-komputera.
+Pakiet zawiera j±dro Linuxa niezbêdne do prawid³owego dzia³ania
+Twojego komputera.
 
 %package smp
 Summary:	Kernel version %{version} compiled for SMP machines
@@ -102,26 +104,27 @@ Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Provides:	%{name} %{version}
-Provides:	%{name}(reiserfs) %{version}
-Provides:	%{name}(agpgart) %{version}
+Provides:	%{name} = %{version}
+Provides:	%{name}(reiserfs) = %{version}
+Provides:	%{name}(agpgart) = %{version}
 Prereq:		modutils
 Autoreqprov:	no
 
 %description smp
-This package includes a SMP version of the Linux %{version} kernel. It is
-required only on machines with two or more CPUs, although it should work
-fine on single-CPU boxes.
+This package includes a SMP version of the Linux %{version} kernel. It
+is required only on machines with two or more CPUs, although it should
+work fine on single-CPU boxes.
 
 %description -l fr smp
-Ce package inclu une version SMP du noyau de Linux version {version}. Il et
-nécessaire seulement pour les machine avec deux processeurs ou plus, il
-peut quand même fonctionner pour les système mono-processeur.
+Ce package inclu une version SMP du noyau de Linux version {version}.
+Il et nécessaire seulement pour les machine avec deux processeurs ou
+plus, il peut quand même fonctionner pour les système mono-processeur.
 
 %description -l de smp
-Dieses Paket enthält eine SMP (Multiprozessor)-Version von Linux-Kernel
-%{version}. Es wird für Maschinen mit zwei oder mehr Prozessoren gebraucht,
-sollte aber auch auf Computern mit nur einer CPU laufen.
+Dieses Paket enthält eine SMP (Multiprozessor)-Version von
+Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
+Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
+CPU laufen.
 
 %package fb
 Summary:	Kernel version %{version} with framebuffer support
@@ -129,9 +132,9 @@ Summary(de):	Kernel version %{version} mit Framebuffer-Support
 Summary(fr):	Kernel version %{version} avec framebuffer
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Provides:	%{name} %{version}
-Provides:	%{name}(reiserfs) %{version}
-Provides:	%{name}(agpgart) %{version}
+Provides:	%{name} = %{version}
+Provides:	%{name}(reiserfs) = %{version}
+Provides:	%{name}(agpgart) = %{version}
 Prereq:		modutils
 Autoreqprov:	no
 
@@ -140,7 +143,8 @@ This package includes a version of the Linux %{version} kernel with
 framebuffer support.
 
 %description -l fr fb
-Ce package inclu une version de Linux version %{version} avec framebuffer.
+Ce package inclu une version de Linux version %{version} avec
+framebuffer.
 
 %description -l de fb
 Dieses Paket enthält eine Version von Linux-Kernel %{version} mit
@@ -152,29 +156,30 @@ Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen mit framebuf
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur avec fb
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Provides:	%{name} %{version}
-Provides:	%{name}(reiserfs) %{version}
-Provides:	%{name}(agpgart) %{version}
+Provides:	%{name} = %{version}
+Provides:	%{name}(reiserfs) = %{version}
+Provides:	%{name}(agpgart) = %{version}
 Prereq:		modutils
 Autoreqprov:	no
 
 %description smp-fb
-This package includes a SMP version of the Linux %{version} kernel. It is
-required only on machines with two or more CPUs, although it should work
-fine on single-CPU boxes. It also contains support for framebuffer
-(graphical console) devices.
+This package includes a SMP version of the Linux %{version} kernel. It
+is required only on machines with two or more CPUs, although it should
+work fine on single-CPU boxes. It also contains support for
+framebuffer (graphical console) devices.
 
 %description -l fr smp-fb
-Ce package inclu une version SMP du noyau de Linux version %{version} avec
-framebuffer. Il et nécessaire seulement pour les machine avec deux
-processeurs ou plus, il peut quand même fonctionner pour les système
-mono-processeur.
+Ce package inclu une version SMP du noyau de Linux version %{version}
+avec framebuffer. Il et nécessaire seulement pour les machine avec
+deux processeurs ou plus, il peut quand même fonctionner pour les
+système mono-processeur.
 
 %description -l de smp-fb
-Dieses Paket enthält eine SMP (Multiprozessor)-Version von Linux-Kernel
-%{version}. Es wird für Maschinen mit zwei oder mehr Prozessoren gebraucht,
-sollte aber auch auf Computern mit nur einer CPU laufen. Außerdem ist
-Support für Framebuffer-Devices (Console im Grafikmodus) enthalten.
+Dieses Paket enthält eine SMP (Multiprozessor)-Version von
+Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
+Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
+CPU laufen. Außerdem ist Support für Framebuffer-Devices (Console im
+Grafikmodus) enthalten.
 
 %package BOOT
 Summary:	Kernel version %{version} used on the installation boot disks
@@ -187,39 +192,41 @@ Autoreqprov:	no
 
 %description BOOT
 This package includes a trimmed down version of the Linux %{version}
-kernel. This kernel is used on the installation boot disks only and should
-not be used for an installed system, as many features in this kernel are
-turned off because of the size constraints.
+kernel. This kernel is used on the installation boot disks only and
+should not be used for an installed system, as many features in this
+kernel are turned off because of the size constraints.
 
 %description -l fr BOOT
-Ce package inclut une version allégée du noyau de Linux version %{version}.
-Ce kernel et utilisé pour les disquettes de boot d'installation et ne
-doivent pas être utilisées pour un système classique, beaucoup d'options
-dans le kernel ont étaient désactivées a cause de la contrainte d'espace.
+Ce package inclut une version allégée du noyau de Linux version
+%{version}. Ce kernel et utilisé pour les disquettes de boot
+d'installation et ne doivent pas être utilisées pour un système
+classique, beaucoup d'options dans le kernel ont étaient désactivées a
+cause de la contrainte d'espace.
 
 %description -l de BOOT
-Dieses Paket enthält eine verkleinerte Version vom Linux-Kernel version
-%{version}. Dieser Kernel wird auf den Installations-Bootdisketten benutzt
-und sollte nicht auf einem installierten System verwendet werden, da viele
-Funktionen wegen der Platzprobleme abgeschaltet sind.
+Dieses Paket enthält eine verkleinerte Version vom Linux-Kernel
+version %{version}. Dieser Kernel wird auf den
+Installations-Bootdisketten benutzt und sollte nicht auf einem
+installierten System verwendet werden, da viele Funktionen wegen der
+Platzprobleme abgeschaltet sind.
 
 %package headers
 Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
-Provides:	%{name}-headers(agpgart) %{version}
-Provides:	%{name}-headers(reiserfs) %{version}
+Provides:	%{name}-headers(agpgart) = %{version}
+Provides:	%{name}-headers(reiserfs) = %{version}
 Autoreqprov:	no
 
 %description headers
-These are the C header files for the Linux kernel, which define structures
-and constants that are needed when building most standard programs under
-Linux, as well as to rebuild the kernel.
+These are the C header files for the Linux kernel, which define
+structures and constants that are needed when building most standard
+programs under Linux, as well as to rebuild the kernel.
 
 %description headers -l pl
-Pakiet zawiera pliki nag³ówkowe j±dra, niezbedne do rekompilacji j±dra oraz
-niektórych programów.
+Pakiet zawiera pliki nag³ówkowe j±dra, niezbedne do rekompilacji j±dra
+oraz niektórych programów.
 
 %package source
 Summary:	Kernel source tree
@@ -233,23 +240,26 @@ Requires:	bin86
 %endif
 
 %description source
-This is the source code for the Linux kernel. It is required to build most
-C programs as they depend on constants defined in here. You can also build
-a custom kernel that is better tuned to your particular hardware.
+This is the source code for the Linux kernel. It is required to build
+most C programs as they depend on constants defined in here. You can
+also build a custom kernel that is better tuned to your particular
+hardware.
 
 %description -l de source
 Das Kernel-Source-Paket enthält den source code (C/Assembler-Code) des
-Linux-Kernels. Die Source-Dateien werden gebraucht, um viele C-Programme zu
-compilieren, da sie auf Konstanten zurückgreifen, die im Kernel-Source
-definiert sind. Die Source-Dateien können auch benutzt werden, um einen
-Kernel zu compilieren, der besser auf Ihre Hardware ausgerichtet ist.
+Linux-Kernels. Die Source-Dateien werden gebraucht, um viele
+C-Programme zu compilieren, da sie auf Konstanten zurückgreifen, die
+im Kernel-Source definiert sind. Die Source-Dateien können auch
+benutzt werden, um einen Kernel zu compilieren, der besser auf Ihre
+Hardware ausgerichtet ist.
 
 %description -l fr source
 Le package pour le kernel-source contient le code source pour le noyau
-linux. Ces sources sont nécessaires pour compiler la plupart des programmes
-C, car il dépend de constantes définies dans le code source. Les sources
-peuvent être aussi utilisée pour compiler un noyau personnalisé pour avoir
-de meilleures performances sur des matériels particuliers.
+linux. Ces sources sont nécessaires pour compiler la plupart des
+programmes C, car il dépend de constantes définies dans le code
+source. Les sources peuvent être aussi utilisée pour compiler un noyau
+personnalisé pour avoir de meilleures performances sur des matériels
+particuliers.
 
 %description source -l pl
 Pakiet zawiera kod ¼ród³owy jadra systemu.
@@ -270,13 +280,13 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch8 -p1
 %patch10 -p1
 %patch11 -p1
-#%patch12 -p1 .serek
-#%patch13 -p1 -R -b .wiget
-%patch14 -p1 
+%patch12 -p1
+#%patch13 -p1 .serek
+#%patch14 -p1 
 %patch15 -p1
 
-tar zxf %{SOURCE40} dhiggen-over-0.21.3
-patch -p2 -s <dhiggen-over-0.21.3
+tar zxf %{SOURCE40} dhiggen-over-0.23.1
+patch -p2 -s <dhiggen-over-0.23.1
 
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 # Tekram DC395/315 U/UW SCSI host driver
@@ -284,60 +294,76 @@ patch -p1 -s <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 zcat %{SOURCE34} > drivers/net/3c59x.c
 
+patch21 -p1
+
 %build
 BuildKernel() {
-    # is this a special kernel we want to build?
-    if [ -n "$1" ] ; then
-	if [ "%{_target_cpu}" = "i586" -o "%{_target_cpu}" = "i686" ] ; then
-	    Config="%{_target_cpu}"-$1
+	# is this a special kernel we want to build?
+	if [ -n "$1" ] ; then
+		if [ "%{_target_cpu}" = "i586" -o \
+			"%{_target_cpu}" = "i686" -o \
+			"%{_target_cpu}" = "sparc64" ]; then
+			Config="%{_target_cpu}"-$1
+		else
+			Config=$RPM_ARCH-$1
+		fi
+		KernelVer=%{version}-%{release}$1
+		echo BUILDING A KERNEL FOR $1...
 	else
-	    Config=$RPM_ARCH-$1
+		if [ "%{_target_cpu}" = "i586" -o \
+			"%{_target_cpu}" = "i686" -o \
+			"%{_target_cpu}" = "sparc64" ] ; then
+			Config="%{_target_cpu}"
+		else
+			Config=$RPM_ARCH
+		fi
+		KernelVer=%{version}-%{release}
+		echo BUILDING THE NORMAL KERNEL...
 	fi
-	KernelVer=%{version}-%{release}$1
-	echo BUILDING A KERNEL FOR $1...
-    else
-	if [ "%{_target_cpu}" = "i586" -o "%{_target_cpu}" = "i686" ] ; then
-	    Config="%{_target_cpu}"
-	else
-	    Config=$RPM_ARCH
-	fi
-	KernelVer=%{version}-%{release}
-	echo BUILDING THE NORMAL KERNEL...
-    fi
-    cp $RPM_SOURCE_DIR/kernel-$Config.config arch/$RPM_ARCH/defconfig
-%ifarch %{ix86}
-    perl -p -i -e "s/-m486//" arch/i386/Makefile
-    perl -p -i -e "s/-DCPU=486/-m486 -DCPU=486/" arch/i386/Makefile
-    perl -p -i -e "s/-DCPU=586/-mpentium -DCPU=586/" arch/i386/Makefile
-    perl -p -i -e "s/-DCPU=686/-mpentiumpro -DCPU=686/" arch/i386/Makefile
-%endif
-    %{__make} mrproper
-    ln -sf arch/$RPM_ARCH/defconfig .config
+	cp $RPM_SOURCE_DIR/kernel-$Config.config arch/$RPM_ARCH/defconfig
 
-    %{__make} oldconfig
-    %{__make} dep 
-    make include/linux/version.h 
 %ifarch %{ix86}
-    %{__make} bzImage EXTRAVERSION="-%{release}"
+	perl -p -i -e "s/-m486//" arch/i386/Makefile
+	perl -p -i -e "s/-DCPU=486/-m486 -DCPU=486/" arch/i386/Makefile
+	perl -p -i -e "s/-DCPU=586/-mpentium -DCPU=586/" arch/i386/Makefile
+	perl -p -i -e "s/-DCPU=686/-mpentiumpro -DCPU=686/" arch/i386/Makefile
+%endif
+
+	%{__make} mrproper
+	ln -sf arch/$RPM_ARCH/defconfig .config
+
+	%{__make} oldconfig
+	%{__make} dep 
+	make include/linux/version.h 
+
+%ifarch %{ix86} alpha sparc
+	KERNELCC="egcs"
+%endif
+%ifarch sparc64
+	KERNELCC="sparc64-linux-gcc"
+%endif
+
+%ifarch %{ix86}
+	%{__make} bzImage EXTRAVERSION="-%{release}"
 %else
-    %{__make} boot EXTRAVERSION="-%{release}"
+	%{__make} boot EXTRAVERSION="-%{release}"
 %endif
-    %{__make} modules EXTRAVERSION="-%{release}"
-    mkdir -p $RPM_BUILD_ROOT/boot
-    install System.map $RPM_BUILD_ROOT/boot/System.map-$KernelVer
+	%{__make} modules EXTRAVERSION="-%{release}"
+
+	mkdir -p $KERNEL_BUILD_DIR-installed/boot
+	install System.map $KERNEL_BUILD_DIR-installed/boot/System.map-$KernelVer
 %ifarch %{ix86}
-     cp arch/i386/boot/bzImage $RPM_BUILD_ROOT/boot/vmlinuz-$KernelVer
+	cp arch/i386/boot/bzImage $KERNEL_BUILD_DIR-installed/boot/vmlinuz-$KernelVer
 %endif
-%ifarch alpha sparc
-     gzip -cfv vmlinux > vmlinuz
-     install vmlinux $RPM_BUILD_ROOT/boot/vmlinux-$KernelVer
-     install vmlinuz $RPM_BUILD_ROOT/boot/vmlinuz-$KernelVer
+%ifarch alpha sparc sparc64
+	gzip -cfv vmlinux > vmlinuz
+	install vmlinux $KERNEL_BUILD_DIR-installed/boot/vmlinux-$KernelVer
+	install vmlinuz $KERNEL_BUILD_DIR-installed/boot/vmlinuz-$KernelVer
 %endif
-     %{__make} INSTALL_MOD_PATH=$RPM_BUILD_ROOT modules_install KERNELRELEASE=$KernelVer
+     %{__make} INSTALL_MOD_PATH=$KERNEL_BUILD_DIR-installed modules_install KERNELRELEASE=$KernelVer
 }
 
 BuildPCMCIA() {
-KERNELDIR=`pwd`
 if [ -n "$1" ] ; then
 	PCMCIA_APM=--apm
 	KernelVer=%{version}-%{release}$1
@@ -357,9 +383,9 @@ cd pcmcia-cs-%{pcmcia_version}
 	--pnp \
 	--srctree \
 	$PCMCIA_APM \
-	--kernel=$KERNELDIR \
+	--kernel=$KERNEL_BUILD_DIR \
 	--moddir=/lib/modules/$KernelVer \
-	--target=$RPM_BUILD_ROOT
+	--target=$KERNEL_BUILD_DIR-installed
 
 mv config.mk config.mk.bak
 mv Makefile Makefile.bak
@@ -369,18 +395,21 @@ sed "s/^DIRS =.*//" Makefile.bak > Makefile
 sed "s/.*= 8390\..$//" clients/Makefile.bak > clients/Makefile
 
 %{__make} all \
+	CC=egcs \
 	CFLAGS="$RPM_OPT_FLAGS -Wall -Wstrict-prototypes -pipe" \
-	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNELDIR/include -D__KERNEL__ -DEXPORT_SYMTAB"
+	XFLAGS="$RPM_OPT_FLAGS -O -pipe -I../include -I$KERNEL_BUILD_DIR/include -D__KERNEL__ -DEXPORT_SYMTAB"
 
-%{__make} PREFIX=$RPM_BUILD_ROOT install
+%{__make} PREFIX=$KERNEL_BUILD_DIR-installed install
 cd ..
 }
 
-rm -rf $RPM_BUILD_ROOT
+KERNEL_BUILD_DIR=`pwd`
+rm -rf $KERNEL_BUILD_DIR-installed
+install -d $KERNEL_BUILD_DIR-installed
 
 # NORMAL KERNEL
 BuildKernel
-%ifnarch sparc sparc64
+%ifarch %{ix86}
 BuildPCMCIA
 %endif
 
@@ -390,7 +419,7 @@ BuildPCMCIA
 # SMP-ENABLED KERNEL
 %ifnarch i386
 BuildKernel smp
-%ifnarch sparc sparc64
+%ifarch %{ix86}
 BuildPCMCIA smp
 %endif
 %endif
@@ -401,14 +430,17 @@ BuildPCMCIA smp
 # BOOT kernel
 %ifnarch i586 i686
 BuildKernel BOOT
-%ifnarch sparc sparc64
+%ifarch %{ix86}
 BuildPCMCIA BOOT
 %endif
 %endif
 
 %install
-rm -rf $RPM_BUILD_ROOT%{_prefix}
+rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT%{_prefix}/{include,src}
+
+KERNEL_BUILD_DIR=`pwd`
+cp -a $KERNEL_BUILD_DIR-installed/* $RPM_BUILD_ROOT
 
 ln -sf ../src/linux/include/linux $RPM_BUILD_ROOT%{_includedir}/linux
 
@@ -428,9 +460,9 @@ ln -sf linux-%{version} $RPM_BUILD_ROOT/usr/src/linux
 
 # NFS patches must go first
 bzip2 -dc %{PATCH20} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-tar zxf %{SOURCE40} dhiggen-over-0.21.3
-patch -s -p2 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < dhiggen-over-0.21.3
-rm -f dhiggen-over-0.21.3
+tar zxf %{SOURCE40} dhiggen-over-0.23.1
+patch -s -p2 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < dhiggen-over-0.23.1
+rm -f dhiggen-over-0.23.1
 
 gzip -dc %{PATCH0} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH1} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
@@ -446,9 +478,9 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH6}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH7}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
-#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
 #patch -s -p1 -R -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
+#patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-%{ow_version}/linux-%{ow_version}.diff
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < dc395/dc395-integ22.diff
@@ -601,7 +633,6 @@ fi
 %endif
 /boot/vmlinuz-%{version}-%{release}
 /boot/System.map-%{version}-%{release}
-%dir /lib/modules
 %dir /lib/modules/%{version}-%{release}
 /lib/modules/%{version}-%{release}/atm
 /lib/modules/%{version}-%{release}/block
@@ -612,8 +643,10 @@ fi
 /lib/modules/%{version}-%{release}/misc
 /lib/modules/%{version}-%{release}/net
 /lib/modules/%{version}-%{release}/scsi
-%ifarch %{ix86}
+%ifarch %{ix86} alpha
 /lib/modules/%{version}-%{release}/video
+%endif
+%ifarch %{ix86}
 /lib/modules/%{version}-%{release}/pcmcia
 %endif
 
@@ -625,7 +658,6 @@ fi
 %endif
 /boot/vmlinuz-%{version}-%{release}smp
 /boot/System.map-%{version}-%{release}smp
-%dir /lib/modules
 %dir /lib/modules/%{version}-%{release}smp
 /lib/modules/%{version}-%{release}smp/atm
 /lib/modules/%{version}-%{release}smp/block
@@ -636,8 +668,10 @@ fi
 /lib/modules/%{version}-%{release}smp/misc
 /lib/modules/%{version}-%{release}smp/net
 /lib/modules/%{version}-%{release}smp/scsi
-%ifarch %{ix86}
+%ifarch %{ix86} alpha
 /lib/modules/%{version}-%{release}smp/video
+%endif
+%ifarch %{ix86}
 /lib/modules/%{version}-%{release}smp/pcmcia
 %endif
 %endif
@@ -650,11 +684,12 @@ fi
 %endif
 /boot/vmlinuz-%{version}-%{release}BOOT
 /boot/System.map-%{version}-%{release}BOOT
-%dir /lib/modules
 %dir /lib/modules/%{version}-%{release}BOOT
 #/lib/modules/%{version}-%{release}BOOT/atm
 /lib/modules/%{version}-%{release}BOOT/block
+%ifnarch alpha
 /lib/modules/%{version}-%{release}BOOT/cdrom
+%endif
 /lib/modules/%{version}-%{release}BOOT/fs
 #/lib/modules/%{version}-%{release}BOOT/ipv4
 #/lib/modules/%{version}-%{release}BOOT/ipv6
