@@ -1,6 +1,3 @@
-#
-# Conditional build:
-%bcond_with	verbose		# verbose build (V=1)
 
 ## Program required by kernel to work.
 %define		_binutils_ver		2.12
