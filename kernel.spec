@@ -170,8 +170,8 @@ Patch235:	linux-2.4.20-audigy.patch.bz2
 Patch240:	linux-2.4.20-ecc.patch
 Patch245:	linux-2.4.20-01-edd.patch
 Patch246:	linux-2.4.20-02-edd-allocate.patch
-# i2c - version 2.7.0
-Patch255:	linux-2.4.21-i2c-2.7.0.patch.gz
+# i2c - version 2.8.0
+Patch255:	linux-2.4.21-i2c-2.8.0.patch.gz
 Patch265:	linux-2.4.20-e820.patch
 # Syntax bug
 Patch270:	dc395-tab.patch
