@@ -1,64 +1,234 @@
-diff -puN include/linux/namespace.h~vfsmount_lock-fix include/linux/namespace.h
---- linux-2.6.0-test1/include/linux/namespace.h~vfsmount_lock-fix	2003-07-14 12:24:33.000000000 +0530
-+++ linux-2.6.0-test1-maneesh/include/linux/namespace.h	2003-07-14 12:24:33.000000000 +0530
-@@ -2,7 +2,7 @@
- #define _NAMESPACE_H_
- #ifdef __KERNEL__
- 
--#include <linux/dcache.h>
-+#include <linux/mount.h>
- #include <linux/sched.h>
- 
- struct namespace {
-@@ -19,9 +19,9 @@ static inline void put_namespace(struct 
+diff -Nur linux-2.6.0-test1.org/drivers/input/mouse/synaptics.c linux-2.6.0-test1/drivers/input/mouse/synaptics.c
+--- linux-2.6.0-test1.org/drivers/input/mouse/synaptics.c	Mon Jul 14 03:32:41 2003
++++ linux-2.6.0-test1/drivers/input/mouse/synaptics.c	Sun Jul 20 16:42:47 2003
+@@ -81,6 +81,8 @@
  {
- 	if (atomic_dec_and_test(&namespace->count)) {
- 		down_write(&namespace->sem);
--		spin_lock(&dcache_lock);
-+		spin_lock(&vfsmount_lock);
- 		umount_tree(namespace->root);
--		spin_unlock(&dcache_lock);
-+		spin_unlock(&vfsmount_lock);
- 		up_write(&namespace->sem);
- 		kfree(namespace);
+ 	unsigned char r[2];
+ 
++	return 0;
++
+ 	if (psmouse_command(psmouse, r, PSMOUSE_CMD_RESET_BAT))
+ 		return -1;
+ 	if (r[0] == 0xAA && r[1] == 0x00)
+diff -Nur linux-2.6.0-test1.org/fs/reiserfs/hashes.c linux-2.6.0-test1/fs/reiserfs/hashes.c
+--- linux-2.6.0-test1.org/fs/reiserfs/hashes.c	Mon Jul 14 03:36:43 2003
++++ linux-2.6.0-test1/fs/reiserfs/hashes.c	Sun Jul 20 16:42:58 2003
+@@ -90,10 +90,6 @@
+ 
+ 	if (len >= 12)
+ 	{
+-	    	//assert(len < 16);
+-		if (len >= 16)
+-		    BUG();
+-
+ 		a = (u32)msg[ 0]      |
+ 		    (u32)msg[ 1] << 8 |
+ 		    (u32)msg[ 2] << 16|
+@@ -116,9 +112,6 @@
  	}
-
---- linux-2.5-ppc/arch/ppc/kernel/time.c~	2003-07-14 13:15:17.000000000 +0200
-+++ linux-2.5-ppc/arch/ppc/kernel/time.c	2003-07-14 13:18:02.000000000 +0200
-@@ -244,7 +244,7 @@
- 	time_t wtm_sec, new_sec = tv->tv_sec;
- 	long wtm_nsec, new_nsec = tv->tv_nsec;
- 	unsigned long flags;
--	int tb_delta, new_nsec, new_sec;
-+	int tb_delta;
+ 	else if (len >= 8)
+ 	{
+-	    	//assert(len < 12);
+-		if (len >= 12)
+-		    BUG();
+ 		a = (u32)msg[ 0]      |
+ 		    (u32)msg[ 1] << 8 |
+ 		    (u32)msg[ 2] << 16|
+@@ -137,9 +130,6 @@
+ 	}
+ 	else if (len >= 4)
+ 	{
+-	    	//assert(len < 8);
+-		if (len >= 8)
+-		    BUG();
+ 		a = (u32)msg[ 0]      |
+ 		    (u32)msg[ 1] << 8 |
+ 		    (u32)msg[ 2] << 16|
+@@ -154,9 +144,6 @@
+ 	}
+ 	else
+ 	{
+-	    	//assert(len < 4);
+-		if (len >= 4)
+-		    BUG();
+ 		a = b = c = d = pad;
+ 		for(i = 0; i < len; i++)
+ 		{
+diff -Nur linux-2.6.0-test1.org/include/asm-i386/stat.h linux-2.6.0-test1/include/asm-i386/stat.h
+--- linux-2.6.0-test1.org/include/asm-i386/stat.h	Mon Jul 14 03:30:01 2003
++++ linux-2.6.0-test1/include/asm-i386/stat.h	Sun Jul 20 16:43:07 2003
+@@ -8,7 +8,7 @@
+ 	unsigned short st_nlink;
+ 	unsigned short st_uid;
+ 	unsigned short st_gid;
+-	unsigned short st_rdev;
++	unsigned int   st_rdev;
+ 	unsigned long  st_size;
+ 	unsigned long  st_atime;
+ 	unsigned long  st_mtime;
+diff -Nur linux-2.6.0-test1.org/include/asm-i386/stat.h.orig linux-2.6.0-test1/include/asm-i386/stat.h.orig
+--- linux-2.6.0-test1.org/include/asm-i386/stat.h.orig	Thu Jan  1 00:00:00 1970
++++ linux-2.6.0-test1/include/asm-i386/stat.h.orig	Mon Jul 14 03:30:01 2003
+@@ -0,0 +1,78 @@
++#ifndef _I386_STAT_H
++#define _I386_STAT_H
++
++struct __old_kernel_stat {
++	unsigned short st_dev;
++	unsigned short st_ino;
++	unsigned short st_mode;
++	unsigned short st_nlink;
++	unsigned short st_uid;
++	unsigned short st_gid;
++	unsigned short st_rdev;
++	unsigned long  st_size;
++	unsigned long  st_atime;
++	unsigned long  st_mtime;
++	unsigned long  st_ctime;
++};
++
++struct stat {
++	unsigned long  st_dev;
++	unsigned long  st_ino;
++	unsigned short st_mode;
++	unsigned short st_nlink;
++	unsigned short st_uid;
++	unsigned short st_gid;
++	unsigned long  st_rdev;
++	unsigned long  st_size;
++	unsigned long  st_blksize;
++	unsigned long  st_blocks;
++	unsigned long  st_atime;
++	unsigned long  st_atime_nsec;
++	unsigned long  st_mtime;
++	unsigned long  st_mtime_nsec;
++	unsigned long  st_ctime;
++	unsigned long  st_ctime_nsec;
++	unsigned long  __unused4;
++	unsigned long  __unused5;
++};
++
++/* This matches struct stat64 in glibc2.1, hence the absolutely
++ * insane amounts of padding around dev_t's.
++ */
++struct stat64 {
++	unsigned long long	st_dev;
++	unsigned char	__pad0[4];
++
++#define STAT64_HAS_BROKEN_ST_INO	1
++	unsigned long	__st_ino;
++
++	unsigned int	st_mode;
++	unsigned int	st_nlink;
++
++	unsigned long	st_uid;
++	unsigned long	st_gid;
++
++	unsigned long long	st_rdev;
++	unsigned char	__pad3[4];
++
++	long long	st_size;
++	unsigned long	st_blksize;
++
++	unsigned long	st_blocks;	/* Number 512-byte blocks allocated. */
++	unsigned long	__pad4;		/* future possible st_blocks high bits */
++
++	unsigned long	st_atime;
++	unsigned long	st_atime_nsec;
++
++	unsigned long	st_mtime;
++	unsigned int	st_mtime_nsec;
++
++	unsigned long	st_ctime;
++	unsigned long	st_ctime_nsec;
++
++	unsigned long long	st_ino;
++};
++
++#define STAT_HAVE_NSEC 1
++
++#endif
+diff -Nur linux-2.6.0-test1.org/include/asm-sparc64/floppy.h linux-2.6.0-test1/include/asm-sparc64/floppy.h
+--- linux-2.6.0-test1.org/include/asm-sparc64/floppy.h	Mon Jul 14 03:39:23 2003
++++ linux-2.6.0-test1/include/asm-sparc64/floppy.h	Sun Jul 20 16:45:28 2003
+@@ -214,7 +214,7 @@
+ }
  
- 	if ((unsigned long)tv->tv_nsec >= NSEC_PER_SEC)
- 		return -EINVAL;
-
---- linux-2.6.0/drivers/block/Kconfig.old	2003-07-14 18:41:20.000000000 +1000
-+++ linux-2.6.0/drivers/block/Kconfig	2003-07-14 18:41:48.000000000 +1000
-@@ -264,6 +264,7 @@
+ /* Our low-level entry point in arch/sparc/kernel/entry.S */
+-extern void floppy_hardint(int irq, void *unused, struct pt_regs *regs);
++extern irqreturn_t floppy_hardint(int irq, void *unused, struct pt_regs *regs);
  
- config BLK_DEV_CRYPTOLOOP
- 	tristate "Cryptoloop Support"
-+	select CRYPTO
- 	depends on BLK_DEV_LOOP
- 	---help---
- 	  Say Y here if you want to be able to use the ciphers that are 
---- 2.5/mm/slab.c	2003-07-10 23:27:00.000000000 +0200
-+++ build-2.5/mm/slab.c	2003-07-14 19:36:26.000000000 +0200
-@@ -1628,7 +1628,13 @@
- 	kfree_debugcheck(objp);
- 	page = virt_to_page(objp);
+ static int sun_fd_request_irq(void)
+ {
+@@ -224,7 +224,7 @@
+ 	if(!once) {
+ 		once = 1;
  
--	BUG_ON(GET_PAGE_CACHE(page) != cachep);
-+	if (GET_PAGE_CACHE(page) != cachep) {
-+		printk(KERN_ERR "mismatch in kmem_cache_free: expected cache %p, got %p\n",
-+				GET_PAGE_CACHE(page),cachep);
-+		printk(KERN_ERR "%p is %s.\n", cachep, cachep->name);
-+		printk(KERN_ERR "%p is %s.\n", GET_PAGE_CACHE(page), GET_PAGE_CACHE(page)->name);
-+		WARN_ON(1);
-+	}
- 	slabp = GET_PAGE_SLAB(page);
+-		error = request_fast_irq(FLOPPY_IRQ, floppy_hardint, 
++		error = request_fast_irq(FLOPPY_IRQ, &floppy_hardint, 
+ 					 SA_INTERRUPT, "floppy", NULL);
  
- 	if (cachep->flags & SLAB_STORE_USER) {
+ 		return ((error == 0) ? 0 : -1);
+@@ -277,7 +277,7 @@
+ static struct sun_pci_dma_op sun_pci_dma_current = { -1U, 0, 0, NULL};
+ static struct sun_pci_dma_op sun_pci_dma_pending = { -1U, 0, 0, NULL};
+ 
+-extern void floppy_interrupt(int irq, void *dev_id, struct pt_regs *regs);
++extern irqreturn_t floppy_interrupt(int irq, void *dev_id, struct pt_regs *regs);
+ 
+ static unsigned char sun_pci_fd_inb(unsigned long port)
+ {
+diff -Nur linux-2.6.0-test1.org/mm/slab.c linux-2.6.0-test1/mm/slab.c
+--- linux-2.6.0-test1.org/mm/slab.c	Sun Jul 20 16:37:17 2003
++++ linux-2.6.0-test1/mm/slab.c	Sun Jul 20 16:43:53 2003
+@@ -2488,11 +2488,11 @@
+ 		seq_puts(m, "slabinfo - version: 2.0\n");
+ #endif
+ 		seq_puts(m, "# name            <active_objs> <num_objs> <objsize> <objperslab> <pagesperslab>");
+-		seq_puts(m, " : tunables <batchcount> <limit <sharedfactor>");
++		seq_puts(m, " : tunables <batchcount> <limit> <sharedfactor>");
+ 		seq_puts(m, " : slabdata <active_slabs> <num_slabs> <sharedavail>");
+ #if STATS
+ 		seq_puts(m, " : globalstat <listallocs> <maxobjs> <grown> <reaped> <error> <maxfreeable> <freelimit>");
+-		seq_puts(m, " : cpustat <allochit <allocmiss <freehit <freemiss>");
++		seq_puts(m, " : cpustat <allochit> <allocmiss> <freehit> <freemiss>");
+ #endif
+ 		seq_putc(m, '\n');
+ 	}
+diff -Nur linux-2.6.0-test1.org/net/sunrpc/xprt.c linux-2.6.0-test1/net/sunrpc/xprt.c
+--- linux-2.6.0-test1.org/net/sunrpc/xprt.c	Mon Jul 14 03:36:06 2003
++++ linux-2.6.0-test1/net/sunrpc/xprt.c	Sun Jul 20 16:43:41 2003
+@@ -66,8 +66,6 @@
+ #include <net/udp.h>
+ #include <net/tcp.h>
+ 
+-#include <asm/uaccess.h>
+-
+ /*
+  * Local variables
+  */
+diff -Nur linux-2.6.0-test1.org/scripts/ver_linux linux-2.6.0-test1/scripts/ver_linux
+--- linux-2.6.0-test1.org/scripts/ver_linux	Sun Jul 20 16:37:17 2003
++++ linux-2.6.0-test1/scripts/ver_linux	Sun Jul 20 16:43:15 2003
+@@ -28,7 +28,7 @@
+ 
+ mount --version | awk -F\- '{print "mount                 ", $NF}'
+ 
+-depmod -V  2>&1 | grep version | awk 'NR==1 {print "module-init-tools     ",$NF}'
++depmod -V  2>&1 | awk 'NR==1 {print "module-init-tools     ",$NF}'
+ 
+ tune2fs 2>&1 | grep "^tune2fs" | sed 's/,//' |  awk \
+ 'NR==1 {print "e2fsprogs             ", $2}'
+diff -Nur linux-2.6.0-test1.org/sound/core/memalloc.c linux-2.6.0-test1/sound/core/memalloc.c
+--- linux-2.6.0-test1.org/sound/core/memalloc.c	Mon Jul 14 03:38:48 2003
++++ linux-2.6.0-test1/sound/core/memalloc.c	Sun Jul 20 16:43:26 2003
+@@ -886,7 +886,9 @@
+ 
+ static int __init snd_mem_init(void)
+ {
++#ifdef CONFIG_PROC_FS
+ 	create_proc_read_entry("driver/snd-page-alloc", 0, 0, snd_mem_proc_read, NULL);
++#endif
+ #ifdef ENABLE_PREALLOC
+ 	preallocate_cards();
+ #endif
