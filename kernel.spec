@@ -125,6 +125,7 @@ Patch509:	2.2.21-ppc_macserial.patch
 Patch510:	2.2.21-ppc_openpic_fix.patch
 Patch511:	2.2.21-ppc_use_egcs.patch
 
+Patch1500:     linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	%{name}-sparc-zs.h.patch
 Patch1502:	%{name}-sym53c8xx.patch
 Patch1503:	%{name}-sparc_netsyms.patch
@@ -530,6 +531,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %endif
 
 %ifarch sparc sparc64
+%patch1500 -p1
 %patch1501 -p1
 %endif
 %ifarch sparc64
@@ -897,6 +899,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH511}
 %endif
 
 %ifarch sparc sparc64
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1500}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1501}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH1502}
 %endif
