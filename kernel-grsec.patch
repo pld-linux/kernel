@@ -12650,20 +12650,6 @@ diff -uNr linux-2.6.7-rc1.orig/net/ipv4/udp.c linux-2.6.7-rc1/net/ipv4/udp.c
  	if (copied > len) {
  		copied = len;
  		msg->msg_flags |= MSG_TRUNC;
-@@ -901,7 +920,12 @@
- 	inet->daddr = rt->rt_dst;
- 	inet->dport = usin->sin_port;
- 	sk->sk_state = TCP_ESTABLISHED;
--	inet->id = jiffies;
-+#ifdef CONFIG_GRKERNSEC_RANDID
-+	if (grsec_enable_randid)
-+		inet->id = htons(ip_randomid());
-+	else
-+#endif
-+		inet->id = jiffies;
- 
- 	sk_dst_set(sk, &rt->u.dst);
- 	return(0);
 diff -uNr linux-2.6.7-rc1.orig/net/socket.c linux-2.6.7-rc1/net/socket.c
 --- linux-2.6.7-rc1.orig/net/socket.c	2004-05-23 07:53:57.000000000 +0200
 +++ linux-2.6.7-rc1/net/socket.c	2004-05-25 14:33:59.634294536 +0200
