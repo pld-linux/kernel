@@ -327,7 +327,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %setup -q -n linux-%{version}-test4
 %patch1 -p1
 
-%patch22 -p1
+#%patch22 -p1
 %patch23 -p1
 
 %patch25 -p1
