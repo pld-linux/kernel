@@ -8,7 +8,7 @@
 #
 %define		test_build		0
 #
-%define		pre_version		pre6
+%define		pre_version		pre1
 %define		lids_version		1.0.14-2.4.9
 %define		ipvs_version		0.9.4
 %define		freeswan_version	snap2001sep23b
@@ -82,6 +82,8 @@ Patch4:		br2684-against2.4.15.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/
 # based on file xfs-2.4.14-all.bz2
 Patch5:		linux-xfs-2.4.14-PLD.patch.gz
+# GRSECURITY
+Patch6:		http://grsecurity.net/grsecurity-%{grsec_version}.patch
 # Homepage of ABI : http://linux-abi.sourceforge.net/
 # http://prdownloads.sourceforge.net/linux-abi/
 #Patch7:		linux-abi-2.4.3-PLD.patch
@@ -150,9 +152,10 @@ Patch906:	linux-grsecurity-fixes.patch
 Patch907:	jfs_defconfig.fix
 Patch908:	kernel-kallsyms.fix
 Patch909:	linux-53c7,8xx-build.fix
+Patch910:	dc395-PLD.fix
 
 # Linus's -pre
-#Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.13-%{pre_version}.gz
+Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/testing/patch-2.4.16-%{pre_version}.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -373,7 +376,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %prep
 %{?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
 %{!?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -a14 -a15 -n linux}
-#%patch1000 -p1
+%patch1000 -p1
 #%patch0 -p1
 %patch1 -p1
 %patch2 -p1
@@ -384,7 +387,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch8 -p1
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
 %ifarch %{ix86}
-##%patch9 -p1
+%patch9 -p1
 %endif
 %endif
 
@@ -417,12 +420,13 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch904 -p0
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
 %ifarch %{ix86}
-##%patch906 -p1
+%patch906 -p1
 %endif
 %endif
 
 # Tekram DC395/315 U/UW SCSI host driver
 echo Adding Tekram DC395/315 driver
+%patch910 -p0
 patch -p1 -s <dc395/dc395-integ24.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
