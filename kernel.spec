@@ -24,7 +24,7 @@ Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
 Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
-Source5:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
+Source5:	ftp://ftp.sourceforge.net/pub/sourceforge/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source6:	ftp://ftp.tux.org/tux/roudier/drivers/linux/stable/sym-%{symncr_version}.tar.gz
 Source7:	http://www.linux-wlan.com/linux-wlan/linux-wlan-%{wlan_version}.tar.gz
 Source8:	http://www.dandelion.com/Linux/DAC960-2.2.10.tar.gz
