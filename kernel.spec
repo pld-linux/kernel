@@ -633,7 +633,7 @@ echo USB 2.0 Support from Linux-2.4.20-rc1.
 echo Added ACL support
 %patch45 -p1
 
-%patch46 -p1
+%patch46 -p0
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
