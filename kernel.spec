@@ -134,6 +134,7 @@ Patch901:	jfs-fix.patch
 Patch902:	netfilter-ctnetlink-fix.patch
 Patch903:	netfilter-ftp-fxp-fix.patch
 Patch904:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
+Patch905:	netfilter-pptp-conntrack-nat-fix.patch
 # tweaks for grsecurity, description inside patch
 Patch906:	linux-grsecurity-fixes.patch
 Patch909:	linux-53c7,8xx-build.fix
@@ -377,6 +378,7 @@ echo Adding Netfilter
 cd netfilter-patches/patch-o-matic/extra
 %patch902 -p0
 %patch903 -p0
+%patch905 -p0
 cd ..
 ANS=""
 for suite in pending base extra pld ; do
