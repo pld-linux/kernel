@@ -669,7 +669,7 @@ diff -urN linux-orig/cluster/dlm/ast.c linux-patched/cluster/dlm/ast.c
 +	init_MUTEX(&ast_queue_lock);
 +	init_waitqueue_head(&astd_waitchan);
 +
-+	p = kthread_run(dlm_astd, NULL, "dlm_astd");
++	p = kthread_run(dlm_astd, NULL, 0, "dlm_astd");
 +	if (IS_ERR(p))
 +		error = PTR_ERR(p);
 +	else
@@ -7997,7 +7997,7 @@ diff -urN linux-orig/cluster/dlm/lowcomms.c linux-patched/cluster/dlm/lowcomms.c
 +	struct task_struct *p;
 +	int error;
 +
-+	p = kthread_run(dlm_recvd, NULL, "dlm_recvd");
++	p = kthread_run(dlm_recvd, NULL, 0, "dlm_recvd");
 +	error = IS_ERR(p);
 +       	if (error) {
 +		log_print("can't start dlm_recvd %d", error);
@@ -8005,7 +8005,7 @@ diff -urN linux-orig/cluster/dlm/lowcomms.c linux-patched/cluster/dlm/lowcomms.c
 +	}
 +	recv_task = p;
 +
-+	p = kthread_run(dlm_sendd, NULL, "dlm_sendd");
++	p = kthread_run(dlm_sendd, NULL, 0, "dlm_sendd");
 +	error = IS_ERR(p);
 +       	if (error) {
 +		log_print("can't start dlm_sendd %d", error);
@@ -13979,7 +13979,7 @@ diff -urN linux-orig/cluster/dlm/recoverd.c linux-patched/cluster/dlm/recoverd.c
 +        set_bit(LSFL_WORK, &ls->ls_flags);
 +
 +	if (!ls->ls_recoverd_task) {
-+	    	p = kthread_run(dlm_recoverd, (void *) ls, "dlm_recoverd");
++	    	p = kthread_run(dlm_recoverd, (void *) ls, 0, "dlm_recoverd");
 +		if (IS_ERR(p)) {
 +			log_error(ls, "can't start dlm_recoverd %ld",
 +				  PTR_ERR(p));
