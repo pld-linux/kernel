@@ -62,6 +62,7 @@ Source1007:	%{name}-acpi.config
 Source1008:	%{name}-ebtables.config
 Source1666:	%{name}-grsec.config
 Source1667:	%{name}-int.config
+Source1668:	%{name}-hostap.config
 Source1999:	%{name}-preemptive.config
 
 # New features
@@ -421,7 +422,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -a3 -a4 -a5  -a7 -a8 -a9 -n linux-%{version}
+%setup -q -a3 -a4 -a5  -a7 -a8 -a9 -a10 -n linux-%{version}
 #%patch1000 -p1
 %patch0 -p1
 %patch1 -p1
@@ -524,6 +525,11 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 %patch32 -p1
 %patch910 -p1
 
+# hostap
+echo Installing Host AP support
+patch -p1 -s < hostap-2002-09-12/kernel-patches/hostap-linux-2.4.19-rc3.patch
+cp hostap-2002-09-12/driver/modules/hostap*.[ch] drivers/net/wireless/
+
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
@@ -599,6 +605,7 @@ BuildKernel() {
 	else
 		cat %{SOURCE1667} >> arch/%{base_arch}/defconfig
 		cat %{SOURCE1666} >> arch/%{base_arch}/defconfig
+		cat %{SOURCE1668} >> arch/%{base_arch}/defconfig
 	fi
 %ifarch i386
 	mv -f arch/%{base_arch}/defconfig arch/%{base_arch}/defconfig.orig
@@ -747,6 +754,7 @@ cat %{SOURCE1667} >> .config
 	cat %{SOURCE1007} >> .config
 %endif
 cat %{SOURCE1008} >> .config
+cat %{SOURCE1668} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-up.h
@@ -784,6 +792,7 @@ cat %{SOURCE1667} >> .config
 	cat %{SOURCE1007} >> .config
 %endif
 cat %{SOURCE1008} >> .config
+cat %{SOURCE1668} >> .config
 
 %{__make} oldconfig
 mv include/linux/autoconf.h include/linux/autoconf-smp.h
@@ -968,6 +977,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o
 %endif
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
 
@@ -989,6 +999,7 @@ fi
 /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o
 /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o
 %endif
+/lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o
 
 %files drm
 %defattr(644,root,root,755)
@@ -1019,6 +1030,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o
 %endif
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
 
@@ -1040,6 +1052,7 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hisax/*_cs.o
 /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/*_pcmcia.o
 %endif
+/lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o
 
 %files -n kernel-smp-drm
 %defattr(644,root,root,755)
