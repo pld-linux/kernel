@@ -23,7 +23,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.17
-Release:	0.3
+Release:	0.4
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -381,9 +381,7 @@ echo Adding Netfilter
 (KERNEL_DIR=`pwd` ; export KERNEL_DIR
 cd netfilter-patches/patch-o-matic/extra
 #%patch902 -p0
-#%patch903 -p0
-#rm -f pptp-*
-#rm -f tcp-wi*
+%patch903 -p0
 cd ..
 ANS=""
 for suite in pending base extra pld ; do
