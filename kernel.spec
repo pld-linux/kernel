@@ -38,7 +38,7 @@
 %define		_cset		20040307_0107
 
 ## netfilter snap 
-%define		_netfilter_snap		20040305
+%define		_netfilter_snap		20040307
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/;s/pentium3/i386/;s/amd64/x86_64/')
 
@@ -153,8 +153,6 @@ Patch78:	linux-alpha-isa.patch
 Patch80:	linux-vfc_dev-include.patch
 
 Patch82:	2.6.3-ini9100u-fix.patch
-
-Patch84:	2.6.4-rc1-macintosh_macserial-fix.patch
 
 Patch85:	2.6.4-rc1-01-esfq-imq.patch
 Patch86:	2.6.4-rc1-02-imq-nat-support.patch
@@ -568,8 +566,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch80 -p1
 
 %patch82 -p1
-
-%patch84 -p1
 
 %patch85 -p1
 %patch86 -p1
