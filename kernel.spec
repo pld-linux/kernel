@@ -88,7 +88,7 @@ Patch8:		http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 Patch9:		linux-grsecurity-%{grsec_version}.patch
 # EXT3
 # http://www.uow.edu.au/~andrewm/linux/ext3/
-Patch10:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.10-2410.gz
+Patch10:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.13-2413p6.gz
 
 # Assorted bugfixes
 
@@ -367,7 +367,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
-##%patch10 -p1
+%patch10 -p1
 %patch5 -p1
 %patch6 -p1
 #%patch7 -p1
@@ -398,11 +398,11 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch119 -p1
 %patch120 -p1
 %patch121 -p1
-#%patch122 -p1
+%patch122 -p1
 
 %patch900 -p0 
 %patch904 -p0
-#%patch906 -p1
+%patch906 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -436,7 +436,7 @@ patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
 
 # IPVS
 echo Adding IPVS
-#%patch905 -p1
+%patch905 -p1
 for i in ipvs-%{ipvs_version}/*.diff ; do
 	patch -p1 -s <$i
 done
