@@ -137,6 +137,9 @@ Patch70:	2.6.x-ppp_mppe.patch
 
 Patch72:	2.6.2-Initio9100U-Kconfig.patch
 
+# from http://www.digriz.org.uk/jdg-qos-script/patches-2.6/
+Patch74:	01_linux-2.6.0-test11-esfq-imq.diff
+Patch75:	02_linux-2.6.0-test11-imq-nat-support.diff
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
