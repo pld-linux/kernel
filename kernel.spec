@@ -196,6 +196,7 @@ Patch300:	linux-2.6-sparc-ksyms.patch
 Patch301:	linux-2.6-ppc-ksyms.patch
 Patch302:	2.6.7-kill-warnings.patch
 Patch303:	%{name}-hotfixes.patch
+Patch304:	linux-2.6-acpi-s3-pae.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -649,6 +650,7 @@ patch -p1 -s < exec-shield.patch
 %patch301 -p1
 %patch302 -p1
 %patch303 -p1
+%patch304 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
