@@ -14,7 +14,7 @@
 
 %define		_rel		1
 %define		_test_ver	8
-%define		_cset		20031022_0506
+%define		_cset		20031023_0405
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -79,7 +79,6 @@ Patch21:	2.6.0-t7-memleak2-lkml.patch
 Patch22:	fbdev.diff.gz
 Patch23:	2.6.0-t7-radeonfb-lkml.patch
 
-Patch24:	2.6.0-t8-CONFIG_XFRM-lkml.patch
 Patch26:	2.6.0-t8-LLC2-PROC_FS-lkml.patch
 Patch28:	2.6.0-t8-clean-mtd-lkml.patch
 Patch32:	2.6.0-t8-swap-include-lkml.patch
@@ -96,6 +95,14 @@ Patch44:	2.6.0-t8-appletalk-SYSCTL-lkml.patch
 Patch46:	2.6.0-t8-sis900_net-lkml.patch
 
 Patch52:	2.6.0-t8-pci_dma_sync_to_device-lkml.patch
+
+Patch54:	2.6.0-t8-ISAPnP-lkml.patch
+Patch56:	2.6.0-t8-cpuset-1of4-lkml.patch
+Patch58:	2.6.0-t8-cpuset-2of4-lkml.patch
+Patch60:	2.6.0-t8-cpuset-3of4-lkml.patch
+Patch62:	2.6.0-t8-cpuset-4of4-lkml.patch
+
+Patch64:	2.6.0-t8-x86_64-declaration_fix-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -404,24 +411,27 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch20 -p1
 %patch21 -p1
 
-%patch23 -p1
+%patch22 -p1
 
-%patch24 -p1
-%patch26 -p1
 %patch28 -p1
 %patch32 -p1
-%patch34 -p1
 %patch36 -p1
 
 %patch38 -p1
 
 %patch40 -p1
-%patch42 -p1
 
 %patch44 -p1
 %patch46 -p1
 
 %patch52 -p1
+
+%patch54 -p1
+%patch56 -p1
+%patch58 -p1
+%patch60 -p1
+%patch62 -p1
+%patch64 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
