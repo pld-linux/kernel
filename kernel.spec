@@ -834,7 +834,7 @@ zcat %{SOURCE3} | patch -p1 -s
 
 %ifarch %{ix86} amd64
 %patch720 -p1
-%ndif
+%endif
 
 ## Add ALL patches before this section !!
 
