@@ -55,8 +55,8 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.10
-%define		_cset		20050124_0106
+%define		_rel		0.11
+%define		_cset		20050125_0406
 %define		_apply_cset	0
 
 %define		_netfilter_snap		20041118
