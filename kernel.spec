@@ -16,7 +16,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	12
+Release:	14
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -123,7 +123,7 @@ BuildRequires:	egcs
 %ifarch sparc
 BuildRequires:	sparc32
 %endif
-Provides:	%{name}-up = %{version}
+Provides:	%{name}-up = %{version}-%{release}
 %ifarch %{ix86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(i2c) = %{i2c_version}
@@ -179,7 +179,7 @@ Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
 Summary(pl):	Kernel %{version} skompilowany na maszyny SMP
 Group:		Base/Kernel
-Provides:	%{name} = %{version}
+Provides:	%{name} = %{version}-%{release}
 %ifarch %{ix86}
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(i2c) = %{i2c_version}
