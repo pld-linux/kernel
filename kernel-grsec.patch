@@ -1773,7 +1773,19 @@ diff -uNr linux-2.6.7-rc1.orig/fs/exec.c linux-2.6.7-rc1/fs/exec.c
  	task_unlock(current);
  }
  
-@@ -1082,6 +1088,20 @@
+@@ -1073,6 +1079,11 @@
+ 	struct file *file;
+ 	int retval;
+ 	int i;
++#ifdef CONFIG_GRKERNSEC
++	struct file *old_exec_file;
++	struct acl_subject_label *old_acl;
++	struct rlimit old_rlim[RLIM_NLIMITS];
++#endif
+ 
+ 	sched_balance_exec();
+ 
+@@ -1082,6 +1093,20 @@
  	if (IS_ERR(file))
  		return retval;
  
@@ -1794,7 +1806,7 @@ diff -uNr linux-2.6.7-rc1.orig/fs/exec.c linux-2.6.7-rc1/fs/exec.c
  	bprm.p = PAGE_SIZE*MAX_ARG_PAGES-sizeof(void *);
  	memset(bprm.page, 0, MAX_ARG_PAGES*sizeof(bprm.page[0]));
  
-@@ -1089,6 +1109,7 @@
+@@ -1089,6 +1114,7 @@
  	bprm.filename = filename;
  	bprm.interp = filename;
  	bprm.sh_bang = 0;
@@ -1802,7 +1814,7 @@ diff -uNr linux-2.6.7-rc1.orig/fs/exec.c linux-2.6.7-rc1/fs/exec.c
  	bprm.loader = 0;
  	bprm.exec = 0;
  	bprm.security = NULL;
-@@ -1117,11 +1138,26 @@
+@@ -1117,11 +1143,26 @@
  	if (retval < 0)
  		goto out;
  
@@ -1829,7 +1841,7 @@ diff -uNr linux-2.6.7-rc1.orig/fs/exec.c linux-2.6.7-rc1/fs/exec.c
  	retval = copy_strings(bprm.envc, envp, &bprm);
  	if (retval < 0)
  		goto out;
-@@ -1130,8 +1166,22 @@
+@@ -1130,8 +1171,22 @@
  	if (retval < 0)
  		goto out;
  
@@ -1852,7 +1864,7 @@ diff -uNr linux-2.6.7-rc1.orig/fs/exec.c linux-2.6.7-rc1/fs/exec.c
  		free_arg_pages(&bprm);
  
  		/* execve success */
-@@ -1139,6 +1189,13 @@
+@@ -1139,6 +1194,13 @@
  		return retval;
  	}
  
@@ -1866,7 +1878,7 @@ diff -uNr linux-2.6.7-rc1.orig/fs/exec.c linux-2.6.7-rc1/fs/exec.c
  out:
  	/* Something went wrong, return the inode and free the argument pages*/
  	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
-@@ -1365,6 +1422,7 @@
+@@ -1365,6 +1427,7 @@
  	current->signal->group_exit_code = exit_code;
  	coredump_wait(mm);
  
@@ -1874,7 +1886,7 @@ diff -uNr linux-2.6.7-rc1.orig/fs/exec.c linux-2.6.7-rc1/fs/exec.c
  	if (current->rlim[RLIMIT_CORE].rlim_cur < binfmt->min_coredump)
  		goto fail_unlock;
  
-@@ -1384,7 +1442,7 @@
+@@ -1384,7 +1447,7 @@
  		goto close_fail;
  	if (!file->f_op->write)
  		goto close_fail;
@@ -2550,37 +2562,17 @@ diff -uNr linux-2.6.7-rc1.orig/fs/open.c linux-2.6.7-rc1/fs/open.c
 diff -uNr linux-2.6.7-rc1.orig/fs/proc/array.c linux-2.6.7-rc1/fs/proc/array.c
 --- linux-2.6.7-rc1.orig/fs/proc/array.c	2004-05-23 07:54:21.000000000 +0200
 +++ linux-2.6.7-rc1/fs/proc/array.c	2004-05-25 14:33:58.797421760 +0200
-@@ -289,9 +289,20 @@
- #if defined(CONFIG_ARCH_S390)
- 	buffer = task_show_regs(task, buffer);
- #endif
-+
-+#if defined(CONFIG_PAX_NOEXEC) || defined(CONFIG_PAX_ASLR)
-+	buffer = task_pax(task, buffer);
-+#endif
-+
- 	return buffer - orig;
- }
- 
-+#ifdef CONFIG_GRKERNSEC_PROC_MEMMAP
-+#define PAX_RAND_FLAGS (task->flags & PF_PAX_RANDMMAP || \
-+			task->flags & PF_PAX_SEGMEXEC || \
-+			task->flags & PF_PAX_RANDEXEC)
-+#endif
-+
- extern unsigned long task_vsize(struct mm_struct *);
- int proc_pid_stat(struct task_struct *task, char * buffer)
- {
-@@ -323,6 +334,19 @@
+@@ -323,6 +323,20 @@
  
  	wchan = get_wchan(task);
  
 +#ifdef CONFIG_GRKERNSEC_PROC_MEMMAP
-+	if (PAX_RAND_FLAGS) {
++// FIXME
++//	if (PAX_RAND_FLAGS) {
 +		eip = 0;
 +		esp = 0;
 +		wchan = 0;
-+	}
++//	}
 +#endif
 +#ifdef CONFIG_GRKERNSEC_HIDESYM
 +	wchan = 0;
@@ -2591,23 +2583,7 @@ diff -uNr linux-2.6.7-rc1.orig/fs/proc/array.c linux-2.6.7-rc1/fs/proc/array.c
  	sigemptyset(&sigign);
  	sigemptyset(&sigcatch);
  	read_lock(&tasklist_lock);
-@@ -382,9 +406,15 @@
- 		vsize,
- 		mm ? mm->rss : 0, /* you might want to shift this left 3 */
- 		task->rlim[RLIMIT_RSS].rlim_cur,
-+#ifdef CONFIG_GRKERNSEC_PROC_MEMMAP
-+		PAX_RAND_FLAGS ? 0 : (mm ? mm->start_code : 0),
-+		PAX_RAND_FLAGS ? 0 : (mm ? mm->end_code : 0),
-+		PAX_RAND_FLAGS ? 0 : (mm ? mm->start_stack : 0),
-+#else
- 		mm ? mm->start_code : 0,
- 		mm ? mm->end_code : 0,
- 		mm ? mm->start_stack : 0,
-+#endif
- 		esp,
- 		eip,
- 		/* The signal information here is obsolete.
-@@ -424,3 +454,14 @@
+@@ -424,3 +438,14 @@
  	return sprintf(buffer,"%d %d %d %d %d %d %d\n",
  		       size, resident, shared, text, lib, data, 0);
  }
@@ -2948,16 +2924,8 @@ diff -uNr linux-2.6.7-rc1.orig/fs/proc/root.c linux-2.6.7-rc1/fs/proc/root.c
 diff -uNr linux-2.6.7-rc1.orig/fs/proc/task_mmu.c linux-2.6.7-rc1/fs/proc/task_mmu.c
 --- linux-2.6.7-rc1.orig/fs/proc/task_mmu.c	2004-05-23 07:53:35.000000000 +0200
 +++ linux-2.6.7-rc1/fs/proc/task_mmu.c	2004-05-25 14:33:58.821418112 +0200
-@@ -76,8 +76,17 @@
- 	return size;
- }
+@@ -78,6 +78,9 @@
  
-+#ifdef CONFIG_GRKERNSEC_PROC_MEMMAP
-+#define PAX_RAND_FLAGS (task->flags & PF_PAX_RANDMMAP || \
-+			task->flags & PF_PAX_SEGMEXEC || \
-+			task->flags & PF_PAX_RANDEXEC)
-+#endif
-+
  static int show_map(struct seq_file *m, void *v)
  {
 +#ifdef CONFIG_GRKERNSEC_PROC_MEMMAP
@@ -2966,21 +2934,6 @@ diff -uNr linux-2.6.7-rc1.orig/fs/proc/task_mmu.c linux-2.6.7-rc1/fs/proc/task_m
  	struct vm_area_struct *map = v;
  	struct file *file = map->vm_file;
  	int flags = map->vm_flags;
-@@ -92,8 +101,14 @@
- 	}
- 
- 	seq_printf(m, "%08lx-%08lx %c%c%c%c %08lx %02x:%02x %lu %n",
-+#ifdef CONFIG_GRKERNSEC_PROC_MEMMAP
-+			PAX_RAND_FLAGS ? 0UL : map->vm_start,
-+			PAX_RAND_FLAGS ? 0UL : map->vm_end,
-+#else
- 			map->vm_start,
- 			map->vm_end,
-+#endif
-+
- 			flags & VM_READ ? 'r' : '-',
- 			flags & VM_WRITE ? 'w' : '-',
- 			flags & VM_EXEC ? 'x' : '-',
 diff -uNr linux-2.6.7-rc1.orig/fs/readdir.c linux-2.6.7-rc1/fs/readdir.c
 --- linux-2.6.7-rc1.orig/fs/readdir.c	2004-05-23 07:54:17.000000000 +0200
 +++ linux-2.6.7-rc1/fs/readdir.c	2004-05-25 14:33:58.841415072 +0200
@@ -11416,7 +11369,7 @@ diff -uNr linux-2.6.7-rc1.orig/include/asm-i386/a.out.h linux-2.6.7-rc1/include/
 diff -uNr linux-2.6.7-rc1.orig/include/asm-i386/desc.h linux-2.6.7-rc1/include/asm-i386/desc.h
 --- linux-2.6.7-rc1.orig/include/asm-i386/desc.h	2004-05-23 07:53:29.000000000 +0200
 +++ linux-2.6.7-rc1/include/asm-i386/desc.h	2004-05-25 14:33:59.025387104 +0200
-@@ -8,11 +8,19 @@
+@@ -8,8 +8,11 @@
  
  #include <linux/preempt.h>
  #include <linux/smp.h>
@@ -11428,15 +11381,7 @@ diff -uNr linux-2.6.7-rc1.orig/include/asm-i386/desc.h linux-2.6.7-rc1/include/a
  
  extern struct desc_struct cpu_gdt_table[NR_CPUS][GDT_ENTRIES];
  
-+static inline void pax_switch_segments(struct task_struct * tsk, int cpu)
-+{
-+	cpu_gdt_table[cpu][GDT_ENTRY_DEFAULT_USER_CS].b = tsk->flags & PF_PAX_SEGMEXEC ? 0x60c9fb00U : 0x00cffb00U;
-+}
-+
- struct Xgt_desc_struct {
- 	unsigned short size;
- 	unsigned long address __attribute__((packed));
-@@ -28,7 +36,7 @@
+@@ -28,7 +31,7 @@
   * This is the ldt that every process will get unless we need
   * something other than this.
   */
@@ -11445,7 +11390,7 @@ diff -uNr linux-2.6.7-rc1.orig/include/asm-i386/desc.h linux-2.6.7-rc1/include/a
  extern void set_intr_gate(unsigned int irq, void * addr);
  
  #define _set_tssldt_desc(n,addr,limit,type) \
-@@ -42,16 +50,50 @@
+@@ -42,14 +45,19 @@
  	"rorl $16,%%eax" \
  	: "=m"(*(n)) : "a" (addr), "r"(n), "ir"(limit), "i"(type))
  
@@ -11463,42 +11408,11 @@ diff -uNr linux-2.6.7-rc1.orig/include/asm-i386/desc.h linux-2.6.7-rc1/include/a
 +	_set_tssldt_desc(&cpu_gdt_table[cpu][GDT_ENTRY_LDT], (int)addr, ((size << 3)-1), 0x82);
 +}
 +
-+#define pax_open_kernel(flags, cr3)		\
-+do {						\
-+	typecheck(unsigned long,flags);		\
-+	typecheck(unsigned long,cr3);		\
-+	local_irq_save(flags);			\
-+	asm("movl %%cr3,%0":"=r" (cr3));	\
-+	load_cr3(kernexec_pg_dir);		\
-+} while(0)
-+
-+#define pax_close_kernel(flags, cr3)		\
-+do {						\
-+	typecheck(unsigned long,flags);		\
-+	typecheck(unsigned long,cr3);		\
-+	asm("movl %0,%%cr3": :"r" (cr3));	\
-+	local_irq_restore(flags);		\
-+} while(0)
-+
 +static inline void set_ldt_desc(unsigned int cpu, const void *addr, unsigned int size)
  {
-+
-+#ifdef CONFIG_PAX_KERNEXEC
-+	unsigned long flags, cr3;
-+
-+	pax_open_kernel(flags, cr3);
-+#endif
-+
  	_set_tssldt_desc(&cpu_gdt_table[cpu][GDT_ENTRY_LDT], (int)addr, ((size << 3)-1), 0x82);
-+
-+#ifdef CONFIG_PAX_KERNEXEC
-+	pax_close_kernel(flags, cr3);
-+#endif
-+
  }
- 
- #define LDT_entry_a(info) \
-@@ -67,7 +109,7 @@
+@@ -67,7 +75,7 @@
  	((info)->seg_32bit << 22) | \
  	((info)->limit_in_pages << 23) | \
  	((info)->useable << 20) | \
@@ -11507,7 +11421,7 @@ diff -uNr linux-2.6.7-rc1.orig/include/asm-i386/desc.h linux-2.6.7-rc1/include/a
  
  #define LDT_empty(info) (\
  	(info)->base_addr	== 0	&& \
-@@ -104,7 +146,7 @@
+@@ -104,7 +112,7 @@
   */
  static inline void load_LDT_nolock(mm_context_t *pc, int cpu)
  {
@@ -11516,7 +11430,7 @@ diff -uNr linux-2.6.7-rc1.orig/include/asm-i386/desc.h linux-2.6.7-rc1/include/a
  	int count = pc->size;
  
  	if (likely(!count)) {
-@@ -123,6 +165,22 @@
+@@ -123,6 +131,22 @@
  	put_cpu();
  }
  
@@ -14225,23 +14139,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  	if (rlim < RLIM_INFINITY && brk - mm->start_data > rlim)
  		goto out;
  
-@@ -714,6 +716,15 @@
- 			unsigned long len, unsigned long prot,
- 			unsigned long flags, unsigned long pgoff)
- {
-+	unsigned long ret = -EINVAL;
-+	ret = __do_mmap_pgoff(file, addr, len, prot, flags, pgoff);
-+	return ret;
-+}
-+
-+unsigned long __do_mmap_pgoff(struct file * file, unsigned long addr,
-+			unsigned long len, unsigned long prot,
-+			unsigned long flags, unsigned long pgoff)
-+{
- 	struct mm_struct * mm = current->mm;
- 	struct vm_area_struct * vma, * prev;
- 	struct inode *inode;
-@@ -766,6 +777,9 @@
+@@ -766,6 +768,9 @@
  	vm_flags = calc_vm_prot_bits(prot) | calc_vm_flag_bits(flags) |
  			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
  
@@ -14251,7 +14149,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  	if (flags & MAP_LOCKED) {
  		if (!capable(CAP_IPC_LOCK))
  			return -EPERM;
-@@ -775,6 +789,7 @@
+@@ -775,6 +780,7 @@
  	if (vm_flags & VM_LOCKED) {
  		unsigned long locked = mm->locked_vm << PAGE_SHIFT;
  		locked += len;
@@ -14259,7 +14157,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  		if (locked > current->rlim[RLIMIT_MEMLOCK].rlim_cur)
  			return -EAGAIN;
  	}
-@@ -833,6 +848,9 @@
+@@ -833,6 +839,9 @@
  	if (error)
  		return error;
  		
@@ -14269,7 +14167,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  	/* Clear old maps */
  	error = -ENOMEM;
  munmap_back:
-@@ -844,6 +862,7 @@
+@@ -844,6 +853,7 @@
  	}
  
  	/* Check against address space limit. */
@@ -14277,7 +14175,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  	if ((mm->total_vm << PAGE_SHIFT) + len
  	    > current->rlim[RLIMIT_AS].rlim_cur)
  		return -ENOMEM;
-@@ -890,6 +909,7 @@
+@@ -890,6 +900,7 @@
  	vma->vm_start = addr;
  	vma->vm_end = addr + len;
  	vma->vm_flags = vm_flags;
@@ -14285,15 +14183,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  	vma->vm_page_prot = protection_map[vm_flags & 0x0f];
  	vma->vm_pgoff = pgoff;
  
-@@ -974,6 +994,7 @@
- }
- 
- EXPORT_SYMBOL(do_mmap_pgoff);
-+EXPORT_SYMBOL(__do_mmap_pgoff);
- 
- /* Get an address range which is currently unmapped.
-  * For shmat() with addr=0.
-@@ -1001,6 +1022,7 @@
+@@ -1001,6 +1012,7 @@
  	if (addr) {
  		addr = PAGE_ALIGN(addr);
  		vma = find_vma(mm, addr);
@@ -14301,7 +14191,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  		if (TASK_SIZE - len >= addr &&
  		    (!vma || addr + len <= vma->vm_start))
  			return addr;
-@@ -1015,6 +1037,7 @@
+@@ -1015,6 +1027,7 @@
  			 * Start a new search - just in case we missed
  			 * some holes.
  			 */
@@ -14309,7 +14199,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  			if (start_addr != TASK_UNMAPPED_BASE) {
  				start_addr = addr = TASK_UNMAPPED_BASE;
  				goto full_search;
-@@ -1183,9 +1206,17 @@
+@@ -1183,9 +1196,17 @@
  		return -ENOMEM;
  	}
  	
@@ -14328,7 +14218,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  		anon_vma_unlock(vma);
  		vm_unacct_memory(grow);
  		return -ENOMEM;
-@@ -1243,10 +1274,18 @@
+@@ -1243,10 +1264,18 @@
  		anon_vma_unlock(vma);
  		return -ENOMEM;
  	}
@@ -14349,7 +14239,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  		anon_vma_unlock(vma);
  		vm_unacct_memory(grow);
  		return -ENOMEM;
-@@ -1358,15 +1397,15 @@
+@@ -1358,15 +1387,15 @@
  {
  	size_t len = area->vm_end - area->vm_start;
  
@@ -14369,7 +14259,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  
  	remove_vm_struct(area);
  }
-@@ -1420,7 +1459,7 @@
+@@ -1420,7 +1449,7 @@
   */
  static void
  detach_vmas_to_be_unmapped(struct mm_struct *mm, struct vm_area_struct *vma,
@@ -14378,7 +14268,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  {
  	struct vm_area_struct **insertion_point;
  	struct vm_area_struct *tail_vma = NULL;
-@@ -1429,9 +1468,10 @@
+@@ -1429,9 +1458,10 @@
  	do {
  		rb_erase(&vma->vm_rb, &mm->mm_rb);
  		mm->map_count--;
@@ -14390,7 +14280,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  	*insertion_point = vma;
  	tail_vma->vm_next = NULL;
  	mm->mmap_cache = NULL;		/* Kill the cache. */
-@@ -1532,6 +1572,7 @@
+@@ -1532,6 +1562,7 @@
  	 * places tmp vma above, and higher split_vma places tmp vma below.
  	 */
  	if (start > mpnt->vm_start) {
@@ -14398,7 +14288,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  		if (split_vma(mm, mpnt, start, 0))
  			return -ENOMEM;
  		prev = mpnt;
-@@ -1540,6 +1581,7 @@
+@@ -1540,6 +1571,7 @@
  	/* Does it split the last one? */
  	last = find_vma(mm, end);
  	if (last && end > last->vm_start) {
@@ -14406,7 +14296,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  		if (split_vma(mm, last, end, 1))
  			return -ENOMEM;
  	}
-@@ -1548,7 +1590,7 @@
+@@ -1548,7 +1580,7 @@
  	/*
  	 * Remove the vma's, and unmap the actual pages
  	 */
@@ -14415,7 +14305,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  	spin_lock(&mm->page_table_lock);
  	unmap_region(mm, mpnt, prev, start, end);
  	spin_unlock(&mm->page_table_lock);
-@@ -1598,6 +1640,7 @@
+@@ -1598,6 +1630,7 @@
  	if (mm->def_flags & VM_LOCKED) {
  		unsigned long locked = mm->locked_vm << PAGE_SHIFT;
  		locked += len;
@@ -14423,7 +14313,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  		if (locked > current->rlim[RLIMIT_MEMLOCK].rlim_cur)
  			return -EAGAIN;
  	}
-@@ -1614,6 +1657,7 @@
+@@ -1614,6 +1647,7 @@
  	}
  
  	/* Check against address space limits *after* clearing old maps... */
@@ -14431,7 +14321,7 @@ diff -uNr linux-2.6.7-rc1.orig/mm/mmap.c linux-2.6.7-rc1/mm/mmap.c
  	if ((mm->total_vm << PAGE_SHIFT) + len
  	    > current->rlim[RLIMIT_AS].rlim_cur)
  		return -ENOMEM;
-@@ -1646,6 +1690,7 @@
+@@ -1646,6 +1680,7 @@
  	vma->vm_end = addr + len;
  	vma->vm_pgoff = pgoff;
  	vma->vm_flags = flags;
