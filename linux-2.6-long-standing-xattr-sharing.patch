@@ -1,0 +1,27 @@
+Subject: [FIX] Long-standing xattr sharing bug
+From: Andreas Gruenbacher <agruen@suse.de>
+
+When looking for identical xattr blocks to share, we were not comparing
+the name_index fields. This could lead to false sharing when two xattr
+blocks ended up with identical attribute names and values, and the only
+dif. was in name_index. Specifically this could trigger with default acls.
+Because acls are cached, the bug was hidden until the next reload
+of the affected inode.
+
+  $ mkdir -m 700 a b
+  $ setfacl -m u:bin:rwx a
+	< acl of a goes in the mbcache
+
+  $ setfacl -dm u:bin:rwx b
+	< acl of b differs only in name_index, so a's acl is reused
+
+  $ getfacl b
+	< shows the result from the inode cache
+
+  < empty inode cache (remount, etc.)
+
+  $ getfacl b
+	< shows an access acl instead of a default acl.
+
+Signed-off-by: Andreas Gruenbacher <agruen@suse.de>
+
