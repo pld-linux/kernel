@@ -48,6 +48,7 @@ Source71:	%{name}-alpha-smp.config
 Source73:	%{name}-ppc.config
 Source74:	%{name}-ppc-smp.config
 
+Source99:	%{name}-sound-oss.config
 Source100:	%{name}-misc.config
 
 Patch0:		2.6.0-ksyms-add.patch
@@ -451,7 +452,7 @@ BuildConfig (){
 	else
 		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
 	fi
-	cat $RPM_SOURCE_DIR/kernel-sound-oss.config >> arch/%{base_arch}/defconfig
+	cat ${SOURCE99} >> arch/%{base_arch}/defconfig
 }
 
 BuildKernel() {
