@@ -41,6 +41,10 @@
 # sparc32 is missing important updates from 2.5 cycle - won't build
 %undefine	with_smp
 %endif
+%ifarch ia64
+# broken
+%undefine	with_up
+%endif
 
 %ifarch i586 i686 pentium3 pentium4 athlon
 %undefine	with_BOOT
@@ -112,6 +116,8 @@ Source28:	%{name}-alpha.config
 Source29:	%{name}-alpha-smp.config
 Source30:	%{name}-ppc.config
 Source31:	%{name}-ppc-smp.config
+Source32:	%{name}-ia64.config
+Source33:	%{name}-ia64-smp.config
 
 Source40:	%{name}.FAQ-pl
 
