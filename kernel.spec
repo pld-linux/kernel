@@ -1,5 +1,7 @@
 #
-# TODO: check pramfs
+# TODO:
+#	check:	pramfs, swsuspend
+#	add:	fbsplash
 #
 # Conditional build:
 %bcond_without	BOOT		# don't build BOOT kernel
