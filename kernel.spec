@@ -16,7 +16,6 @@
 #
 %define		pre_version		rc6
 %define		drm_xfree_version	4.3.0
-%define		hostap_version		2002-10-12
 %define		netfilter_snap		20030915
 %define		i2c_version		2.8.0
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -27,7 +26,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.22
-Release:	1
+Release:	1.1
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -44,8 +43,6 @@ Source7:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-
 # Source7-md5:	2473f345c66683a03ad27ff132d405b7
 Source8:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
 # Source8-md5:	34515784c7b67f6cc9169aa9eed982c7
-Source9:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
-# Source9-md5:	f5170147792a591120437dd33dbb106d
 Source10:	linux-2.4.20-aacraid.tar.bz2
 # Source10-md5:	3da1f4b229685766cb4f2f5ce242c0d2
 Source20:	%{name}-ia32.config
@@ -130,9 +127,6 @@ Patch130:	linux-2.4.22-tun-new-style.patch
 Patch150:	linux-2.4.21-atm_diffs.patch
 Patch151:	ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch152:	linux-2.4.22-fore200e-0.2f.patch
-
-# patch for patch in Source9
-Patch190:	hostap-2.4.19-rc3-patch.patch
 
 # New devices/drivers
 
@@ -312,7 +306,6 @@ Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
 #Provides:	%{name}(cdrw)
 #Provides:	%{name}(cdmrw)
-Provides:	%{name}(hostap)
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha ppc
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -384,7 +377,6 @@ Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
 #Provides:	%{name}(cdrw)
 #Provides:	%{name}(cdmrw)
-Provides:	%{name}(hostap)
 Conflicts:	iptables < 1.2.8
 Conflicts:	lvm < 1.0.4
 Conflicts:	xfsprogs < 2.1.0
@@ -633,10 +625,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 Este pacote contém documentação para o kernel Linux.
 
 %prep
-%setup -q -a3 -a8 -a9 -n linux-%{version}
-cd hostap-2002-10-12
-%patch190 -p1
-cd ..
+%setup -q -a3 -a8 -n linux-%{version}
 # JFS 1.1.1
 rm -fr fs/jfs
 gzip -dc %{SOURCE7} | tar -xf -
@@ -791,11 +780,6 @@ echo Adding Tekram DC395/315 driver
 patch -p1 -s <dc395/dc395-integ24.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 %patch270 -p1
-
-# hostap
-echo Installing Host AP support
-patch -p1 -s < hostap-%{hostap_version}/kernel-patches/hostap-linux-2.4.19-rc3.patch
-cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 
 # The following go last as they touch a lot of code
 # and/or are on bcond and/or are ifarch
