@@ -67,7 +67,7 @@ Source1999:	%{name}-preemptive.config
 
 Patch0:		%{name}-pldfblogo.patch
 # ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
-Patch1:		patch-int-2.4.17.0.gz
+Patch1:		patch-int-2.4.15.0.gz
 Patch2:		linux-%{version}-freeswan-%{freeswan_version}.patch.gz
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.17.diff
