@@ -611,7 +611,7 @@ echo USB 2.0 Support from Linux-2.4.20-rc1.
 %patch915 -p1
 
 # IDE subsystem
-%patch43 -p1
+#%patch43 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
