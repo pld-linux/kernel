@@ -58,8 +58,8 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.94
-%define		_cset		20040828_2024
+%define		_rel		0.11
+%define		_cset		20040829_0610
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -70,7 +70,7 @@
 
 %define		pcmcia_version		3.1.22
 %define		drm_xfree_version	4.3.0
-%define		pwc_version		9.0.2
+#define		pwc_version		9.0.2
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -88,10 +88,10 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 # Source0-md5:	3ab9f09dcc012eb3d927c4f0af8a2819
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
-Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
+#Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 # Source2-md5:	85bdb0205de53b7787966f0932fd8dd9
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
-# Source4-md5:	9f182edba002316186e279afff45fb25
+# Source4-md5:	ac5372ed008e73669a65f8a1215faf3a
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -119,10 +119,10 @@ Patch3:		2.6.0-t7-memleak-lkml.patch
 Patch4:		2.6.0-t7-memleak2-lkml.patch
 #Patch5:	2.6.0-t8-swap-include-lkml.patch
 Patch6:		2.6.0-t8-VLSI-ix86-lkml.patch
-#Patch7:		2.6.0-t8-appletalk-SYSCTL-lkml.patch	-- obsolete
+#Patch7:	2.6.0-t8-appletalk-SYSCTL-lkml.patch	-- obsolete
 Patch8:		2.6.0-t8-umsdos-lkml.patch
 Patch9:		2.6.0-t9-acpi_osl-lkml.patch
-Patch10:	2.6.0-t11-AIC_and_db4-lkml.patch
+
 #Patch11:	2.6.8.1-qos-and-routing-conflict.patch	-- obsolete
 Patch12:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch13:	2.6.2-Initio9100U-Kconfig.patch
@@ -564,10 +564,10 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}%{_rc} -a2 
+%setup -q -n linux-%{version}%{_rc}
 
 %if "%{_apply_cset}" != "0"
-zcat %{SOURCE4} | patch -p1 -s
+bzcat %{SOURCE4} | patch -p1 -s
 %endif
 
 %patch0 -p1
@@ -580,12 +580,10 @@ zcat %{SOURCE4} | patch -p1 -s
 
 %patch8 -p1
 %patch9 -p1
-%patch10 -p1
 
 %patch12 -p1
 %patch13 -p1
 %patch14 -p1
-%patch15 -p1
 %patch16 -p1
 %patch17 -p1
 %patch18 -p1
@@ -598,13 +596,10 @@ zcat %{SOURCE4} | patch -p1 -s
 %patch25 -p1
 %patch26 -p1
 
-%patch28 -p1
-
 #patch30 -p1
 
 %patch32 -p1
 %patch33 -p1
-%patch34 -p1
 
 %patch41 -p1
 
@@ -635,7 +630,7 @@ zcat %{SOURCE4} | patch -p1 -s
 %patch77 -p1
 %patch78 -p1
 
-cp -f pwc-%{pwc_version}/2.6/pwc* drivers/usb/media
+#cp -f pwc-%{pwc_version}/2.6/pwc* drivers/usb/media
 rm -rf pwc-%{pwc_version}
 
 #grsec
