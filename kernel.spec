@@ -124,6 +124,7 @@ Provides:	module-info
 Autoreqprov:	no
 Prereq:		fileutils
 Prereq:		modutils
+Prereq:		geninitrd
 Obsoletes:	kernel-modules
 ExclusiveArch:	%{ix86} sparc sparc64 alpha
 %ifarch		%{ix86}
