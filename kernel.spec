@@ -11,7 +11,7 @@
 %bcond_without source	# don't build kernel-source package
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
-%define		_rel		1
+%define		_rel		2
 %define		_test_ver	7
 %define		_cset		20031012_0407
 
@@ -79,7 +79,7 @@ BuildRequires:	binutils >= 2.12
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
-Provides:	%{name}-up = %{version}-%{release}
+Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	module-info
 Autoreqprov:	no
 Prereq:		coreutils
@@ -116,7 +116,7 @@ Summary:	Kernel version %{version} compiled for SMP machines
 Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
 Group:		Base/Kernel
-Provides:	%{name}-smp = %{version}-%{release}
+Provides:	%{name}-smp = %{epoch}:%{version}-%{release}
 Provides:	module-info
 Prereq:		coreutils
 Prereq:		module-init-tools >= 0.9.9
