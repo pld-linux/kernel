@@ -9,3 +9,27 @@
  #include <linux/blkdev.h>
  #include <linux/vmalloc.h>
  
+--- linux-2.4.20/fs/squashfs/inode.c.org	Fri Dec  6 09:28:39 2002
++++ linux-2.4.20/fs/squashfs/inode.c	Fri Dec  6 11:20:29 2002
+@@ -164,9 +164,9 @@
+ 		stream.avail_in = c_byte;
+ 		stream.next_out = buffer;
+ 		stream.avail_out = msBlk->read_size;
+-		if(((zlib_err = zlib_fs_inflateInit(&stream)) != Z_OK) ||
+-				((zlib_err = zlib_fs_inflate(&stream, Z_FINISH)) != Z_STREAM_END) ||
+-				((zlib_err = zlib_fs_inflateEnd(&stream)) != Z_OK)) {
++		if(((zlib_err = zlib_inflateInit(&stream)) != Z_OK) ||
++				((zlib_err = zlib_inflate(&stream, Z_FINISH)) != Z_STREAM_END) ||
++				((zlib_err = zlib_inflateEnd(&stream)) != Z_OK)) {
+ 			ERROR("zlib_fs returned unexpected result 0x%x\n", zlib_err);
+ 			bytes = 0;
+ 		} else
+@@ -806,7 +806,7 @@
+ static int __init init_squashfs_fs(void)
+ {
+ 
+-	if(!(stream.workspace = (char *) vmalloc(zlib_fs_inflate_workspacesize()))) {
++	if(!(stream.workspace = (char *) vmalloc(zlib_inflate_workspacesize()))) {
+ 		ERROR("Failed to allocate zlib workspace\n");
+ 		return -ENOMEM;
+ 	}
