@@ -32,7 +32,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	3%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	3.1%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -141,8 +141,10 @@ Patch20:	linux-2.4.19-pre8-VFS-lock.patch
 Patch21:	linux-2.4.20-promise.patch.bz2
 # from http://www.promise.com/support/file/driver/st6000src_1.30_01_0326.tgz
 Patch22:	linux-2.4.20-promise-st6000.patch.bz2
+
 # from ftp://ftp.lsil.com/pub/symchips/scsi/FusionMPT/Linux/2.03.00/mptlinux-2.03.00-src.tar.gz
-#Patch23:
+Patch23:	linux-2.4.20-mptlinux-2.3.00.patch.bz2
+
 # from MDK kernel DV08__i810fb.patch
 Patch24:	linux-2.4.20-I810FB.patch.bz2
 Patch25:	linux-2.4.20-I810FB_lock_page_fix.patch
@@ -150,13 +152,20 @@ Patch25:	linux-2.4.20-I810FB_lock_page_fix.patch
 # Support for CDRW packet writing
 Patch26:	%{name}-cdrw-packet.patch
 Patch27:	%{name}-cd-mrw-2.patch
+
 # PC Speaker driver
 #Patch28:	pcsp1.4-ss4-2.4.19.diff
+
 # Wireless Extensions
 #Patch29:	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw_handlers.w14-5.diff
 #Patch30:	http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw252_we15-5.diff
-#Patch31:
-Patch32:	ebtables-v2.0.002_vs_2.4.20.patch
+
+# from http://users.pandora.be/bart.de.schuymer/ebtables/sourcecode.html
+#		bridge-nf-0.0.10-against-2.4.20.diff
+Patch31:	linux-2.4.20-bridge-nf-0.0.10.patch.bz2
+#		ebtables_v2.0.003_vs_2.4.20.diff
+Patch32:	ebtables-v2.0.003_vs_2.4.20.patch.bz2
+
 Patch33:	linux-2.4.19-pre8-konicawc.patch
 Patch34:	wrr-linux-2.4.9.patch
 Patch35:	%{name}-pswscancode.patch
@@ -584,6 +593,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch18 -p1
 %patch19 -p1
 %patch20 -p1
+%patch23 -p1
 %patch26 -p1
 %patch27 -p1
 # fixme
