@@ -7,9 +7,15 @@
 # _without_source	- don't build source
 # _without_lsm		- don't build LSM/SELinux kernel
 
-%define		_rel		0.1
-%define		patch_level	0
+%define		_rel		0
+%define		test_ver	3
+%define		patch_level	1
 
+%if	%{test_ver} != 0
+%define		test		test%{test_ver}
+%else
+%undefine		test
+%endif
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
@@ -24,7 +30,7 @@ Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.6.0
 %if %{patch_level} != 0
-Release:	%{_rel}pl%{patch_level}
+Release:	%{_rel}%{test}pl%{patch_level}
 %else
 Release:	%{_rel}
 %endif
@@ -46,17 +52,12 @@ Source74:	%{name}-ppc-smp.config
 
 Source100:	%{name}-misc.config
 
-Patch0:		patch-2.6.0-test1-ac2.bz2
-Patch1:		2.6.0-test1-lkml.patch
-Patch5:		kernel-2.6.0-test1-axp-alsa.patch
-Patch10:	2.6.0-t1-v850-lkml.patch.bz2
-Patch15:	2.6.0-t1-s390-lkml.patch.bz2
-Patch20:	2.6.0-t1-squashfs.patch
-Patch21:	2.6.0-t1-vesafb.patch
-Patch22:	2.6.0-t1-v4l-m-lkml.patch
-#Patch23:	2.6.0-t1-microstate-lkml.patch
-Patch100:	linux-2.6-miscfix.patch
-Patch101:	2.6.0-t3-swim3.patch
+Patch1:		linux-2.6-miscfix.patch
+Patch2:		2.6.0-t3-swim3.patch
+
+Patch5:		2.6.0-t3-64-bit_kdev-fix-lkml.patch
+Patch6:		2.6.0-t3-eisa-bus.c-lkml.patch
+Patch7:		2.6.0-t3-initrd_load-lkml.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -285,20 +286,12 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %prep
 %setup -q -n linux-%{version}-test3
-#%patch0 -p1
-#%patch1 -p1
+%patch1 -p1
+%patch2 -p1
 
 %patch5 -p1
-
-#%patch10 -p1
-
-#%patch15 -p1
-
-%patch20 -p1 
-%patch21 -p1
-#%patch22 -p1
-%patch100 -p1
-%patch101 -p1
+%patch6 -p1
+%patch7 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
