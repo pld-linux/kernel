@@ -463,33 +463,33 @@ ser utilizada *apenas* no disco de instalação, e não deve ser utilizada
 em máquinas já instaladas, pois várias características do kernel
 são desabilitadas para diminuir o tamanho final do kernel a ser utilizado.
 
-%package pcmcia-cs
-Summary:	PCMCIA-CS modules
-Summary(pl):	Modu³y PCMCIA-CS
+%package pcmcia
+Summary:	PCMCIA modules
+Summary(pl):	Modu³y PCMCIA
 Group:		Base/Kernel
 PreReq:		%{name}-up = %{version}-%{release}
 Requires(postun):	%{name}-up = %{version}-%{release}
-Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
+Provides:	kernel(pcmcia)
 
-%description pcmcia-cs
-PCMCIA-CS modules (%{pcmcia_version}).
+%description pcmcia
+Kernel PCMCIA modules.
 
-%description pcmcia-cs -l pl
-Modu³y PCMCIA-CS (%{pcmcia_version}).
+%description pcmcia -l pl
+Modu³y PCMCIA z kernela.
 
-%package smp-pcmcia-cs
-Summary:	PCMCIA-CS modules for SMP kernel
-Summary(pl):	Modu³y PCMCIA-CS dla maszyn SMP
+%package smp-pcmcia
+Summary:	PCMCIA modules for SMP kernel
+Summary(pl):	Modu³y PCMCIA dla maszyn SMP
 Group:		Base/Kernel
 PreReq:		%{name}-smp = %{version}-%{release}
 Requires(postun):	%{name}-smp = %{version}-%{release}
-Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
+Provides:	kernel(pcmcia)
 
-%description smp-pcmcia-cs
-PCMCIA-CS modules for SMP kernel (%{pcmcia_version}).
+%description smp-pcmcia
+Kernel PCMCIA modules for SMP kernel.
 
-%description smp-pcmcia-cs -l pl
-Modu³y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
+%description smp-pcmcia -l pl
+Modu³y PCMCIA z kernela dla maszyn SMP.
 
 %package drm
 Summary:	DRM kernel modules
@@ -1198,10 +1198,10 @@ if [ -L /lib/modules/%{version} ]; then
 fi
 rm -f /boot/initrd-%{version}-%{release}.gz
 
-%post pcmcia-cs
+%post pcmcia
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
 
-%postun pcmcia-cs
+%postun pcmcia
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release} > /dev/null 2>&1
 
 %post drm
@@ -1220,10 +1220,10 @@ if [ -L /lib/modules/%{version} ]; then
 fi
 rm -f /boot/initrd-%{version}-%{release}smp.gz
 
-%post smp-pcmcia-cs
+%post smp-pcmcia
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
 
-%postun smp-pcmcia-cs
+%postun smp-pcmcia
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp > /dev/null 2>&1
 
 %post smp-drm
@@ -1289,7 +1289,7 @@ fi
 %ghost /lib/modules/%{version}-%{release}/modules.*
 
 %ifnarch sparc sparc64
-%files pcmcia-cs
+%files pcmcia
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}/kernel/drivers/ide/legacy/*-cs.o*
@@ -1351,7 +1351,7 @@ fi
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
 
 %ifnarch sparc sparc64
-%files -n kernel-smp-pcmcia-cs
+%files -n kernel-smp-pcmcia
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/legacy/*-cs.o*
