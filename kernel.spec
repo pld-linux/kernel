@@ -1,4 +1,4 @@
-%define		ow_version		2.2.19-ow3
+%define		ow_version		2.2.19-ow4
 %define		pcmcia_version		3.1.29
 %define		freeswan_version	1.8
 %define		reiserfs_version	3.5.34
@@ -443,7 +443,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 
 %patch41 -p1
 
-%patch42 -p1
+#%patch42 -p1
 
 %build
 BuildKernel() {
