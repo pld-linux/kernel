@@ -34,7 +34,7 @@ Group(pl):	Podstawowe/J±dro
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
-Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-133.tar.gz
+Source3:	http://www.garloff.de/kurt/linux/dc395/dc395-134.tar.gz
 Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0.2f.tar.gz
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
@@ -418,25 +418,27 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %endif
 
 # Tekram DC395/315 U/UW SCSI host driver
+echo Adding Tekram DC395/315 driver
 patch -p1 -s <dc395/dc395-integ24.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 
 # Fore 200e ATM NIC
+echo Adding FORE 200e ATM driver
 patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.patch
 #patch -p1 -s <linux-2.4.0-test3-fore200e-0.2g/linux-2.4.0-test3-fore200e-0.2g.patch
 
 # Netfilter
 echo Adding Netfilter
-#for i in netfilter-patches/* ; do
-#	if [ -f $i -a "$i" != "netfilter-patches/isapplied" ] ; then
-#	patch -p1 <$i
-#	fi
-#done
-#(KERNEL_DIR=`pwd` ; export KERNEL_DIR
-#cd netfilter-patches/patch-o-matic
-#ANS=""
-#for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
-#echo -e $ANS | ./runme)
+for i in netfilter-patches/* ; do
+	if [ -f $i -a "$i" != "netfilter-patches/isapplied" ] ; then
+	patch -p1 <$i
+	fi
+done
+(KERNEL_DIR=`pwd` ; export KERNEL_DIR
+cd netfilter-patches/patch-o-matic
+ANS=""
+for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
+echo -e $ANS | ./runme)
 
 %if %{?_with_lids:1}%{!?_with_lids:0}
 # LIDS
@@ -491,14 +493,16 @@ patch -p1 -s <jfs-2.4.7-1.0.9-patch
 
 # Tulip driver installed.
 echo Replaced Tulip driver
-cp -f tulip-%{tulip_version}/src/*.{c,h} drivers/net/tulip
-cp -f tulip-%{tulip_version}/src/ChangeLog drivers/net/tulip
+#cp -f tulip-%{tulip_version}/src/*.{c,h} drivers/net/tulip
+#cp -f tulip-%{tulip_version}/src/ChangeLog drivers/net/tulip
 
-%patch908 -p0
+#%patch908 -p0
+echo Fixed compile process for 53c7,8xx driver
 # fix 53c7,8xx build
 %patch909 -p0
 
 #preemptible kernel patch
+echo Installing Preemptive patch
 %if%{?_with_preemptive:1}%{!?_with_preemptive:0}
 %patch132 -p1
 %endif
