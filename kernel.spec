@@ -72,8 +72,8 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.21
-%define		_cset		20040913_2305
+%define		_rel		0.22
+%define		_cset		20040914_1622
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -104,7 +104,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 Source1:	%{name}-autoconf.h
 #Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
-# Source4-md5:	3d47b367d32efe0d3031b8091cb42346
+# Source4-md5:	462cbc68049412fdd73625a6c312bcda
 
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
