@@ -536,11 +536,10 @@
  	if (TQ_ACTIVE(tq_timer))
  		mark_bh(TQUEUE_BH);
  }
-@@ -938,3 +1022,23 @@
- 	}
+@@ -874,3 +940,22 @@
  	return 0;
  }
-+
+ 
 +void __init init_timers(void)
 +{
 +	int i, j;
@@ -562,19 +561,21 @@
 +}
 --- linux/kernel/sched.c.orig	Tue Nov 27 13:29:39 2001
 +++ linux/kernel/sched.c	Tue Nov 27 13:30:37 2001
-@@ -1749,7 +1749,6 @@
- 	idle->preempt_count = (idle->lock_depth >= 0);
+@@ -1367,8 +1367,6 @@
+ 	clear_bit(current->processor, &wait_init_idle);
  }
  
--extern void init_timervecs(void);
- extern void timer_bh(void);
- extern void tqueue_bh(void);
- extern void immediate_bh(void);
-@@ -1790,8 +1789,7 @@
- 	current->cpu = smp_processor_id();
- 	wake_up_process(current);
+-extern void init_timervecs (void);
+-
+ void __init sched_init(void)
+ {
+ 	/*
+@@ -1383,9 +1381,7 @@
+ 	for(nr = 0; nr < PIDHASH_SZ; nr++)
+ 		pidhash[nr] = NULL;
  
 -	init_timervecs();
+-
 -	init_bh(TIMER_BH, timer_bh);
 +	init_timers();
  	init_bh(TQUEUE_BH, tqueue_bh);
