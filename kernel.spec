@@ -83,7 +83,6 @@ Patch34:	%{name}-wanrouter-bridge.patch
 Patch35:	linux-netdrivers_vlan.patch
 Patch36:	atm-unresolved.patch
 Patch38:	linux-2.2.20-pcmcia-without-iee1394.patch.bz2
-# based on ftp://ftp.kernel.org/people/andrea/kernels/v2.2/2.2.20pre9aa2/40_lfs-2.2.20pre9aa2-27.bz2
 Patch40:	2.2.21-pre2_Makefile.patch
 Patch41:	%{name}-serial-initialisation.patch
 Patch42:	%{name}-flip-serial5.05.patch
@@ -103,6 +102,7 @@ Patch108:	linux-2.2.20-agp_backport.patch.bz2
 Patch109:	dc395-MAINTAINERS.patch
 Patch110:	%{name}-nfs-fixes.patch
 Patch111:	linux-2.2.20-pcilynx_unresolved.patch
+# based on ftp://ftp.kernel.org/people/andrea/kernels/v2.2/2.2.20pre9aa2/40_lfs-2.2.20pre9aa2-27.bz2
 Patch112:	linux-2.2.20-lfs.patch
 Patch113:	bigmem-2.2.21-0.1.bz2
 Patch114:	linux-2.2.21-mppe.patch
@@ -116,7 +116,7 @@ Patch502:	linux-2.2.19-ieee1394-ppc.patch.bz2
 Patch503:	2.2.20-ppc_ide.patch
 Patch504:	2.2.21-enable_ibmraid-ppc.patch
 Patch505:	2.2.21-ppc_asm.patch
-Patch506:	2.2.21-ppc_11.patch
+Patch506:	2.2.21-ppc_12.patch
 Patch507:	2.2.21-ppc_ieee1394.patch
 Patch508:	serial-5.05-ppc.patch
 Patch509:	2.2.21-ppc_macserial.patch
@@ -501,10 +501,9 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch108 -p1
 %patch110 -p1
 %patch111 -p1
+%patch112 -p1
 
 %ifarch ppc
-#enable lfs on ppc
-#%patch112 -p1
 %patch500 -p1
 %patch501 -p1
 %patch502 -p1
@@ -845,8 +844,9 @@ bzip2 -dc %{PATCH107} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ve
 bzip2 -dc %{PATCH108} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH110}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH111}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH112}
+
 %ifarch ppc
-#patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH112}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH500}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH501}
 bzip2 -dc %{PATCH502} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
