@@ -12,6 +12,7 @@
 #		- update grsecurity patch
 #		- update i2o patchset
 #		- update software suspend patch
+#		- add distcc support (and don't break crossbuild!)
 #
 # Conditional build:
 %bcond_without	BOOT		# don't build BOOT kernel
