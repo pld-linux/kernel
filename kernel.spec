@@ -34,7 +34,7 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.6
+%define		_rel		0.10
 %define		_cset		20040319_1910
 
 ## netfilter snap 
@@ -58,7 +58,7 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc1.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc2.tar.bz2
 # Source0-md5:	9004640c435dcfab071f58a8af1aab36
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
