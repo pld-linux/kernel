@@ -30,7 +30,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	1
+Release:	2
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
@@ -760,7 +760,7 @@ BuildKernel smp
 %endif			# %{_without_smp}
 
 # BOOT kernel
-%ifnarch i586 i686 ppc
+%ifnarch i586 i686
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR-installed/%{_libdir}/bootdisk"
 rm -rf $KERNEL_INSTALL_DIR
 BuildKernel BOOT
@@ -771,7 +771,7 @@ BuildKernel BOOT
 %install
 rm -rf $RPM_BUILD_ROOT
 umask 022
-rm -rf $RPM_BUILD_ROOT
+
 install -d $RPM_BUILD_ROOT%{_prefix}/{include,src/linux-%{version}}
 
 KERNEL_BUILD_DIR=`pwd`
