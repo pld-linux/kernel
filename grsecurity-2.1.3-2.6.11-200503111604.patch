@@ -17375,7 +17375,7 @@ diff -urNp linux-2.6.11/include/asm-i386/processor.h linux-2.6.11/include/asm-i3
  
  /* flag for disabling the tsc */
  extern int tsc_disable;
-@@ -29,7 +28,7 @@ struct desc_struct {
+@@ -29,7 +28,7 @@
  };
  
  #define desc_empty(desc) \
@@ -17384,18 +17384,17 @@ diff -urNp linux-2.6.11/include/asm-i386/processor.h linux-2.6.11/include/asm-i3
  
  #define desc_equal(desc1, desc2) \
  		(((desc1)->a == (desc2)->a) && ((desc1)->b == (desc2)->b))
-@@ -87,7 +86,10 @@ struct cpuinfo_x86 {
+@@ -87,7 +86,9 @@
  extern struct cpuinfo_x86 boot_cpu_data;
  extern struct cpuinfo_x86 new_cpu_data;
  extern struct tss_struct doublefault_tss;
 +#if 0
  DECLARE_PER_CPU(struct tss_struct, init_tss);
 +#endif
-+extern struct tss_struct init_tss[NR_CPUS];
  
  #ifdef CONFIG_SMP
  extern struct cpuinfo_x86 cpu_data[];
-@@ -301,10 +303,23 @@ extern int bootloader_type;
+@@ -301,10 +302,23 @@
   */
  #define TASK_SIZE	(PAGE_OFFSET)
  
@@ -17419,7 +17418,16 @@ diff -urNp linux-2.6.11/include/asm-i386/processor.h linux-2.6.11/include/asm-i3
  
  #define HAVE_ARCH_PICK_MMAP_LAYOUT
  
-@@ -509,16 +524,12 @@ void show_trace(struct task_struct *task
+@@ -418,6 +432,8 @@
+ 	unsigned long stack[64];
+ } __attribute__((packed));
+ 
++extern struct tss_struct init_tss[NR_CPUS];
++
+ #define ARCH_MIN_TASKALIGN	16
+ 
+ struct thread_struct {
+@@ -509,16 +525,12 @@
  unsigned long get_wchan(struct task_struct *p);
  
  #define THREAD_SIZE_LONGS      (THREAD_SIZE/sizeof(unsigned long))
@@ -17438,7 +17446,7 @@ diff -urNp linux-2.6.11/include/asm-i386/processor.h linux-2.6.11/include/asm-i3
         __regs__ - 1;                                                   \
  })
  
-@@ -642,7 +653,7 @@ static inline void rep_nop(void)
+@@ -642,7 +654,7 @@
  extern inline void prefetch(const void *x)
  {
  	alternative_input(ASM_NOP4,
@@ -17447,7 +17455,7 @@ diff -urNp linux-2.6.11/include/asm-i386/processor.h linux-2.6.11/include/asm-i3
  			  X86_FEATURE_XMM,
  			  "r" (x));
  }
-@@ -656,7 +667,7 @@ extern inline void prefetch(const void *
+@@ -656,7 +668,7 @@
  extern inline void prefetchw(const void *x)
  {
  	alternative_input(ASM_NOP4,
