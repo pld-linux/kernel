@@ -976,7 +976,7 @@ mv asm-generic _asm_keep
 %ifarch sparc sparc64
 	mv asm-sparc* _asm_keep
 %else
-	mv `resolvesymlink asm` _asm_keep
+	mv `resolvesymlink asm 2> /dev/null || readlink asm 2> /dev/null` _asm_keep
 %endif
 rm -rf asm-*
 mv _asm_keep/* .
