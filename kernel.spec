@@ -30,7 +30,7 @@
 %define		_oprofile_ver		0.5.3
 
 
-%define		_rel		1.7
+%define		_rel		1.8
 %define		_test_ver	0
 %define		_cset		0
 
@@ -85,7 +85,6 @@ Patch6:		2.6.0-t3-sysfs_mem-lkml.patch
 Patch8:		2.6.0-t4-PPC-ENODEV.patch
 Patch10:	kernel-siimage-rqsize.patch
 
-#Patch12:	2.6.0-pptp-conntrack-nat-%{_netfilter_snap}.patch
 Patch14:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
 Patch16:	2.6.0-t6-usb-irq.patch
 
@@ -158,8 +157,6 @@ Patch96:	2.6.0-mount-rainier-lkml.patch
 Patch97:	2.6.0-mount-rainier-fix-lkml.patch
 
 Patch98:	x86_64-2.6.0-1-pld.patch
-
-Patch99:	2.6.0-coda-newapi.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -496,9 +493,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch8 -p1
 #%%patch10 -p1
 
-# broken
-#%%patch12 -p1
-
 %patch14 -p1
 %patch16 -p1
 
@@ -569,8 +563,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch97 -p0
 
 %patch98 -p1
-
-%patch99 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
