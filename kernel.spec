@@ -479,7 +479,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 # Fix EXTRAVERSION in main Makefile
 sed -i -e 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
-sed -i -e 's#CC.*$(CROSS_COMPILE)gcc#CC.*$(CROSS_COMPILE)$(CC)#g' Makefile
+sed -i -e 's#CC.*$(CROSS_COMPILE)gcc#CC		= $(CROSS_COMPILE)$(CC)#g' Makefile
 sed -i -e 's#\-pipe##' arch/*/Makefile
 
 %build
