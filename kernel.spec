@@ -152,6 +152,7 @@ Patch134:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/2.4.7.pending/2.4.7-old-fo
 Patch135:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/2.4.7.pending/2.4.7-unlink-truncate-rename-rmdir.dif.bz2
 Patch136:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/2.4.7.pending/journal-replay.patch
 Patch137:	ftp://ftp.reiserfs.org/pub/reiserfs-for-2.4/2.4.7.pending/panic-in-reiserfs_read_super.patch
+Patch138:	linux-quota-bug.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -445,6 +446,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch135 -p1
 %patch136 -p1
 %patch137 -p1
+%patch138 -p1
 
 %patch900 -p0 
 %patch901 -p0
