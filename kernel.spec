@@ -19,6 +19,7 @@ Source25:	%{name}-i686.config
 Source26:	%{name}-i686-smp.config
 Source27:	%{name}-athlon.config
 Source28:	%{name}-athlon-smp.config
+Source30:	%{name}-ppc.config
 
 Patch1: 	http://www.kernel.org/pub/linux/kernel/people/davej/patches/2.5/%{version}/patch-%{version}-dj2.diff.gz
 Patch2:		patch-agp-dj2
