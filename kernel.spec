@@ -127,9 +127,9 @@ Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/rml/preempt-kernel/v2.4/pr
 
 # new version of netfilter.
 %if %{netfilter_snap} != 0
-Patch8:		linux-2.4.20-netfilter-%{iptables_version}_%{netfilter_snap}.patch
+Patch8:		linux-2.4.20-netfilter-%{iptables_version}_%{netfilter_snap}.patch.gz
 %else
-Patch8:		linux-2.4.20-netfilter-%{iptables_version}.patch
+Patch8:		linux-2.4.20-netfilter-%{iptables_version}.patch.gz
 %endif
 
 Patch9:		linux-2.4.20-initrd-close-console.patch
