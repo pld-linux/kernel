@@ -154,10 +154,6 @@ Patch60:	2.6.0-mount-rainier-lkml.patch
 Patch61:	2.6.0-mount-rainier-fix-lkml.patch
 Patch62:	2.6.0-mount-rainier-fix-EROFS.patch
 
-Patch64:	2.6.0-sysfs-1of4-lkml.patch
-Patch65:	2.6.0-sysfs-3of4-lkml.patch
-Patch66:	2.6.0-sysfs-4of4-lkml.patch
-
 Patch68:	2.6.1-rc2-NF-time-%{_netfilter_snap}.patch
 
 Patch70:	linux-2.6-xfs-cvs-20040102.patch
@@ -569,10 +565,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch60 -p1
 %patch61 -p0
 %patch62 -p1
-
-%patch64 -p1
-%patch65 -p1
-%patch66 -p1
 
 %patch68 -p1
 
