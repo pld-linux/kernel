@@ -12,7 +12,7 @@
 #
 
 %define		patch_level	0
-%define		_rel		8
+%define		_rel		9
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 #
@@ -855,8 +855,8 @@ echo Added xattr for JFS ...
 %patch56 -p1
 
 #iForce joystick
-%patch57 -p1
-%patch58 -p1
+#%%patch57 -p1
+#%%patch58 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
