@@ -159,7 +159,9 @@ Patch137:	evms-linux-2.4.18-common-files.patch
 
 %ifarch ppc
 #from http://www.drfruitcake.com/linux/dma-bp.html
-Patch138:	dmasound.patch.bz2
+#Patch138:	dmasound.patch.bz2
+Patch139:	http://www.uwsg.iu.edu/hypermail/linux/kernel/0201.2/att-1802/01-neofb-0.3.1-linux-2.4.18-pre6.patch
+
 %endif
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -527,7 +529,9 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 #Fixed sysctl export symbols.
 %patch130 -p0
 
+%if%{?_without_grsec:0}%{!?_without_grsec:1}
 %patch133 -p0
+%endif
 
 %ifarch ppc
 %patch134 -p1
@@ -539,13 +543,14 @@ echo Fixed SYSCALL errors for DEC Alpha arch.
 %patch137 -p1
 
 %ifarch ppc
-%patch138 -p1
+#%patch138 -p1
+%patch139 -p1
 %endif
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
-%ifarch %{ix86} alpha sparc ppc
+%ifarch %{ix86} alpha sparc
     -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= %{kgcc}/g' \
 %endif
 %ifarch sparc64
