@@ -113,9 +113,10 @@ Patch502:	linux-2.2.19-ieee1394-ppc.patch.bz2
 Patch503:	2.2.20-ppc_ide.patch
 Patch504:	2.2.21-enable_ibmraid-ppc.patch
 Patch505:	2.2.21-ppc_asm.patch
-Patch506:	2.2.21-ppc_9.patch
+Patch506:	2.2.21-ppc_10.patch
 Patch507:	2.2.21-ppc_ieee1394.patch
 Patch508:	serial-5.05-ppc.patch
+Patch509:	2.2.21-ppc_macserial.patch
 
 Patch1500:	linux-sparc_ide_fix.patch.2.2.19
 Patch1501:	%{name}-sparc-zs.h.patch
@@ -507,6 +508,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch504 -p1
 %patch505 -p1
 %patch507 -p1
+%patch509 -p1
 %endif
 
 %ifnarch ppc sparc sparc64
@@ -844,6 +846,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH503}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH504}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH505}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH507}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH509}
 %endif
 
 %ifnarch ppc sparc sparc64
