@@ -9,7 +9,7 @@
 # _without_up		- don't build UP kernel
 #
 %define		test_build		0
-%define		krelease		2.35
+%define		krelease		2.36
 #
 %define base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 #
@@ -187,6 +187,7 @@ Patch140:	linux-2.4.18-tridentfb.patch
 Patch141:	linux-tulip-vlan.patch
 Patch142:	linux-modules-fixed.patch
 Patch143:	linux-ppc-procesor.patch
+Patch144:	amd762_irq_router.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -682,6 +683,9 @@ echo Updating VIA Southbridge
 # MPPE (ppp)
 %patch22 -p1
 
+# ADM router
+%patch144 -p1
+
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
@@ -1064,7 +1068,16 @@ fi
 
 
 %post pcmcia-cs
+depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+
 %postun pcmcia-cs
+depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
+
+%post pcmcia-cs-smp
+depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
+
+%postun pcmcia-cs-smp
+depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}
 
 %if %{?_without_up:0}%{!?_without_up:1}
 %files
