@@ -10,7 +10,6 @@
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
 %define		no_install_post_compress_modules	1
-%define		_without_selinux	1
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -18,7 +17,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.5.68
-Release:	0.6
+Release:	0.7
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
@@ -35,8 +34,8 @@ Source21:	%{name}-ia32-smp.config
 #Source74:	%{name}-ppc-smp.config
 Patch0:		http://piorun.ds.pg.gda.pl/~blues/linux-2.5.67-genrtc_fix.patch
 # SELinux
-#Patch1:		http://www.nsa.gov/selinux/patches/linux-2.5-2003040709.patch.gz
-Patch1:		lsm-2.5.67.patch.gz
+Patch1:		http://www.nsa.gov/selinux/lk/2.5.68-selinux1.patch.gz
+Patch2:		http://www.nsa.gov/selinux/lk/libfs.patch.gz
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -263,6 +262,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %setup -q -n linux-%{version}
 %patch0 -p0
 %{!?_without_selinux:%patch1 -p1}
+%{!?_without_selinux:%patch2 -p1}
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -469,10 +469,11 @@ ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
 %endif
 
 %if %{?_without_selinux:0}%{!?_without_selinux:1}
-install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/{linux,asm-i386}/flask
-install security/lids/include/linux/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
+#install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/{linux,asm-i386}/flask
+install -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/flask
+#install security/lids/include/linux/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 install security/selinux/include/linux/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/flask
-install security/selinux/include/asm-i386/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/asm-i386/flask
+#install security/selinux/include/asm-i386/flask/*.h $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/asm-i386/flask
 %endif			# _without_selinux
 
 %{__make} include/linux/version.h
