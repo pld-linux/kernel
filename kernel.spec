@@ -15,7 +15,7 @@ File: kernel.spec
 	RA-branch                tag on the above
 	RA-1_0                   kernel-2.2.22-6 (Ra 1.0)
 	LINUX_2_4_DZIMI_DEVEL    ?
-	NEST_STABLE              ?
+	NEST_STABLE              (dead) tag no longer used
 	LINUX_2_2_DEVEL          (dead) 2.2.x development branch for Ra
 	LINUX_2_4_STABLE         dropped 2.4.18-for-Ra branch
 	LINUX_2_4                2.4.20 developed mainly for Ra
