@@ -487,6 +487,12 @@ echo Adding JFS
 patch -p1 -s <jfs-2.4.common-v1.0.5-patch
 patch -p1 -s <jfs-2.4.7-v1.0.5-patch
 
+# Net dev random
+echo Network Device Random
+%patch12 -p1
+%patch13 -p1
+
+
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
 sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
