@@ -49,7 +49,7 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.108
+%define		_rel		0.109
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -206,6 +206,7 @@ Patch305:	linux-2.6-radeonfb-fix-section-usage.patch
 Patch306:	linux-2.6-fix-ooops-unmounting-a-defect-dvd.patch
 Patch307:	linux-2.6-long-standing-xattr-sharing.patch
 Patch308:	linux-2.6-nvidia-pci-ids.patch
+Patch309:	linux-2.6-pty-is-losing-bytes.patch
 
 # em8300
 Patch400:	linux-em8300-2.6.10.patch
@@ -627,6 +628,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch306 -p1
 %patch307 -p1
 %patch308 -p1
+%patch309 -p1
 
 %if %{with em8300}
 %patch400 -p1
