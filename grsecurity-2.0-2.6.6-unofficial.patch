@@ -1042,20 +1042,6 @@ diff -uNr linux-2.6.6/arch/i386/kernel/traps.c linux-2.6.6.fixed/arch/i386/kerne
  
  	if (!stack)
  		stack = (unsigned long*)&stack;
-@@ -108,11 +104,12 @@
- 	while (1) {
- 		struct thread_info *context;
- 		context = (struct thread_info*) ((unsigned long)stack & (~(THREAD_SIZE - 1)));
--		while (!kstack_end(stack)) {
-+		while (i && !kstack_end(stack)) {
- 			addr = *stack++;
- 			if (kernel_text_address(addr)) {
- 				printk(" [<%08lx>] ", addr);
- 				print_symbol("%s\n", addr);
-+				--i;
- 			}
- 		}
- 		stack = (unsigned long*)context->previous_esp;
 @@ -197,14 +194,23 @@
  		show_stack(NULL, (unsigned long*)esp);
  
