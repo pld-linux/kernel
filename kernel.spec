@@ -85,6 +85,7 @@ Patch20:	uml-patch-2.4.20-6-21.bz2
 Patch21:	linux-2.4.21-uml-o1.patch
 # http://dl.sourceforge.net/user-mode-linux/host-skas3.patch
 Patch22:	linux-2.4.20-uml-host-skas3.patch
+Patch23:	linux-bigger-printk-buffer.patch
 
 # New filesystems
 
@@ -672,6 +673,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch20 -p1
 %patch21 -p1
 %patch22 -p1
+%patch23 -p1
 %patch25 -p1
 %patch26 -p1
 %patch30 -p1
