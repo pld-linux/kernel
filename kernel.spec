@@ -62,10 +62,10 @@ Source71:	%{name}-alpha-smp.config
 Source72:	%{name}-alpha-BOOT.config
 Source1000:	%{name}-lids.config
 Source1001:	%{name}-abi.config
-Source1002:	%{name}-grsec.config
-Source1003:	%{name}-addon.config
-Source1004:	%{name}-netfilter.config
-Source1005:	%{name}-ipvs.config
+Source1002:	%{name}-addon.config
+Source1003:	%{name}-netfilter.config
+Source1004:	%{name}-ipvs.config
+Source1666:	%{name}-grsec.config
 
 # New features
 
@@ -128,11 +128,14 @@ Patch120:	linux-2.4.10-aironet.patch
 Patch121:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
 Patch122:	linux-2.4.13-pre6-lvm-1.0.1rc4cvs.patch
-# someone (davem?) broke acenic in 2.4.13-pre
-Patch123:	linux-2.4.13-acenic-rollback.patch
+# davem broke acenic in 2.4.13-pre
+Patch123:	linux-acenic-dma64.patch
 # BTTV update
 Patch124:	http://bytesex.org/patches/btaudio-2.4.13-pre2.diff.gz
 Patch125:	http://bytesex.org/patches/bttv-%{bttv_version}-2.4.13-pre2.diff.gz
+# HTP360/370 driver update
+Patch126:	linux-drivers_ide_hpt366.c.diff
+
 # Patches fixing other patches or 3rd party sources ;)
 
 Patch900:	kernel-i8255-asm-fix.patch
@@ -147,7 +150,7 @@ Patch905:	linux-ipvs+ext3.patch
 Patch906:	linux-grsecurity-fixes.patch
 
 # Linus's -pre
-Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.13-%{pre_version}.gz
+#Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.13-%{pre_version}.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -378,7 +381,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #%patch7 -p1
 %patch8 -p1
 %if%{?_without_grsec:0}%{!?_without_grsec:1}
+%ifarch %{ix86}
 %patch9 -p1
+%endif
 %endif
 
 %patch100 -p0
@@ -403,13 +408,18 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
-%patch123 -p1 -R
+%patch123 -p1
 %patch124 -p1
 %patch125 -p1
+%patch126 -p1
 
 %patch900 -p0 
 %patch904 -p0
+%if%{?_without_grsec:0}%{!?_without_grsec:1}
+%ifarch %{ix86}
 %patch906 -p1
+%endif
+%endif
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -547,7 +557,9 @@ BuildKernel() {
 	cat %{SOURCE1002} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1003} >> arch/$RPM_ARCH/defconfig
 	cat %{SOURCE1004} >> arch/$RPM_ARCH/defconfig
-	cat %{SOURCE1005} >> arch/$RPM_ARCH/defconfig
+%ifarch %{ix86}
+	cat %{SOURCE1666} >> arch/$RPM_ARCH/defconfig
+%endif
 	if [ "$LIDS" = "lids" ] ; then
 		echo ENABLING LIDS...
 		cat %{SOURCE1000} >> arch/$RPM_ARCH/defconfig
