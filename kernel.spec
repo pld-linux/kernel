@@ -166,7 +166,7 @@ Patch27:	%{name}-cd-mrw-2.patch
 #Patch28:	pcsp1.4-ss4-2.4.19.diff
 
 Patch29:	linux-2.4.20-no-FPU.patch
-#patch30:
+Patch30:	linux-2.4.20-ptrace-hole.patch
 
 # from http://users.pandora.be/bart.de.schuymer/ebtables/sourcecode.html
 #		bridge-nf-0.0.10-against-2.4.20.diff
@@ -743,6 +743,7 @@ echo Fixed I810 Sound ...
 %patch9 -p1
 
 %patch29 -p1
+%patch30 -p1
 
 echo Added ARCH specific patches....
 %ifarch %{ix86}
