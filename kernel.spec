@@ -226,7 +226,7 @@ Provides:	%{name}(rawio) = %{version}
 PreReq:		modutils
 PreReq:		fileutils
 PreReq:		geninitrd
-Prereq:		rc-boot
+#Prereq:		rc-boot
 Obsoletes:	kernel-modules
 
 # i2c and bttv packages are obsolete
@@ -931,9 +931,9 @@ geninitrd /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
 test ! -f /boot/initrd || mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}.gz /boot/initrd
 
-if [ -x /sbin/rc-boot ] ; then
-	/sbin/rc-boot 1>&2 || :
-fi
+#if [ -x /sbin/rc-boot ] ; then
+#	/sbin/rc-boot 1>&2 || :
+#fi
 
 %post pcmcia-cs
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release} %{version}-%{release}
@@ -955,9 +955,9 @@ geninitrd /boot/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
 test ! -f /boot/initrd || mv -f /boot/initrd /boot/initrd.old 2> /dev/null > /dev/null
 ln -sf initrd-%{version}-%{release}smp.gz /boot/initrd
 
-if [ -x /sbin/rc-boot ] ; then
-	/sbin/rc-boot 1>&2 || :
-fi
+#if [ -x /sbin/rc-boot ] ; then
+#	/sbin/rc-boot 1>&2 || :
+#fi
 
 %post smp-pcmcia-cs
 /sbin/depmod -a -F /boot/System.map-%{version}-%{release}smp %{version}-%{release}smp
