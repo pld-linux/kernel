@@ -296,6 +296,7 @@ Patch3000:	linux-2.4.1-compilefailure.patch
 Patch3001:	linux-2.4.20-nicupdates.patch
 Patch3002:	linux-2.4.20-EXPORT_SYMBOL.patch
 Patch3003:	linux-2.4.20-missing-license-tags.patch
+Patch3004:	linux-2.4.20-sym53c8xx_old.patchx
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -717,6 +718,9 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch3001 -p1
 %patch3002 -p1
 %patch3003 -p1
+%patch3004 -p1
+
+mv -f drivers/scsi/sym53c8xx.c drivers/scsi/sym53c8xx_old.c
 
 # Tekram DC395/315 U/UW SCSI host driver
 echo Adding Tekram DC395/315 driver
