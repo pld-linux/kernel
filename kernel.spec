@@ -11,7 +11,7 @@
 # _without_doc		- don't build documentation package
 #
 
-%define		patch_level	7
+%define		patch_level	8
 %define		_rel		6
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -241,24 +241,24 @@ Patch109:	linux-2.4.2-blkioctl-sector.patch
 Patch110:	linux-2.4.12-scsi_scan.patch
 # fix rawio
 Patch111:	linux-2.4.3-rawio.patch
-#Patch112:
+Patch112:	linux-2.4.20-nethashfix.patch
 Patch113:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
 #from ftp://ftp.sistina.com/pub/LVM/1.0/lvm_%{lvm_version}.tar.gz
 Patch114:	linux-2.4.20-LVM-%{lvm_version}.patch.bz2
 
-#Patch115:	ftp://ftp.kernel.org/pub/linux/kernel/people/sct/ext3/v2.4/ext3-0.9.18-2.4.19pre8.patch
+Patch115:	linux-2.4.20-ioperm.patch
 Patch116:	linux-proc_net_dev-counter-fix.patch
 Patch117:	01-sigxfs-vs-blkdev.patch
 Patch118:	%{name}-2.4.18-SPARC64-PLD.patch
 Patch119:	linux-AXP.patch
 Patch120:	%{name}-Makefile-include-fix.patch
 Patch121:	%{name}-2.4.17-netsyms-export-fix.patch
-#Patch122:	linux-2.4.12-riva-ppc.patch.bz2
+Patch122:	linux-2.4.20-netfilter-conntrack-endian.patch
 Patch123:	linux-2.4.20-agp_uninorth.patch
 Patch124:	%{name}-gcc31.patch
 Patch125:	linux-2.4.18-hpfs.patch
-#Patch126:	linux-tulip-vlan.patch
+Patch126:	linux-2.4.20-crc32.patch
 Patch127:	linux-modules-fixed.patch
 Patch128:	hpt3xx.patch
 Patch129:	linux-53c7,8xx-build.fix
@@ -267,12 +267,12 @@ Patch131:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch132:	ide-EXPORT_SYMBOL.fix
 Patch133:	linux-proc_get_inode.patch
 
-# added support for VIA8235
-#Patch134:	vt8235-2.4.19.patch
+# added support for VIA8237
+Patch134:	linux-2.4.20-vt8237.patch
 
 Patch135:	linux-2.4.20-radeonfb_clean.patch
 Patch136:	piix-ide-fix.patch
-#Patch137:	
+Patch137:	linux-2.4.20-km266-kl266-agp.patch
 Patch138:	http://www.uwsg.indiana.edu/hypermail/linux/kernel/0212.0/att-1445/01-sound.diff
 
 # Video 4 Linux 2
@@ -806,6 +806,18 @@ echo Added xattr for JFS ...
 # to fix compile on gcc-3.3
 %patch904 -p1
 
+# Hash FiX. Initial by Qboosh, ipdated by me.
+%patch112 -p1
+
+# fix for netfilter for endian
+%patch122 -p1
+
+# smell cleanup with crc32.
+%patch126 -p1
+
+#ioperm
+%patch115 -p1 
+
 echo Added ARCH specific patches....
 %ifarch %{ix86}
 echo Ix86 patches ...
@@ -819,6 +831,10 @@ echo Added support for KT400 chipset
 #usb gadget
 echo Added USB gadget ...
 %patch30 -p1
+#kt266/kl266 AGP
+%patch137 -p1
+#VIA8237 support
+%patch134 -p1
 %endif
 %ifarch ppc
 echo PPC patches ...
