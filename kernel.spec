@@ -26,8 +26,8 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.20
-%define		_cset		0
+%define		_rel		0.21
+%define		_cset		20040201_0405
 
 ## netfilter snap 
 %define		_netfilter_snap		20040130
@@ -59,7 +59,7 @@ Source30:	%{name}-amd64.config
 Source31:	%{name}-amd64-smp.config
 Source50:	%{name}-sparc.config
 Source51:	%{name}-sparc-smp.config
-#Source60:	%{name}-sparc64.config
+Source60:	%{name}-sparc64.config
 Source61:	%{name}-sparc64-smp.config
 Source70:	%{name}-alpha.config
 Source71:	%{name}-alpha-smp.config
