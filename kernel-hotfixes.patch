@@ -17,196 +17,6 @@
  
  int scsi_sysfs_register(void)
  {
---- linux-2.6.9-rc1/drivers/scsi/qla2xxx/qla_os.c.orig	2004-08-29 16:44:20.000000000 +0200
-+++ linux-2.6.9-rc1/drivers/scsi/qla2xxx/qla_os.c	2004-08-29 18:39:44.022077312 +0200
-@@ -229,72 +229,10 @@
- 
- void qla2x00_cmd_timeout(srb_t *);
- 
--static __inline__ void qla2x00_callback(scsi_qla_host_t *, struct scsi_cmnd *);
--static __inline__ void sp_put(struct scsi_qla_host * ha, srb_t *sp);
--static __inline__ void sp_get(struct scsi_qla_host * ha, srb_t *sp);
--static __inline__ void
--qla2x00_delete_from_done_queue(scsi_qla_host_t *, srb_t *); 
--
--/**************************************************************************
--* sp_put
--*
--* Description:
--*   Decrement reference count and call the callback if we're the last
--*   owner of the specified sp. Will get the host_lock before calling
--*   the callback.
--*
--* Input:
--*   ha - pointer to the scsi_qla_host_t where the callback is to occur.
--*   sp - pointer to srb_t structure to use.
--*
--* Returns:
--*
--**************************************************************************/
--static inline void
--sp_put(struct scsi_qla_host * ha, srb_t *sp)
--{
--        if (atomic_read(&sp->ref_count) == 0) {
--		qla_printk(KERN_INFO, ha,
--			"%s(): **** SP->ref_count not zero\n",
--			__func__);
--                DEBUG2(BUG();)
--
--                return;
--	}
--
--        if (!atomic_dec_and_test(&sp->ref_count)) {
--                return;
--        }
--
--        qla2x00_callback(ha, sp->cmd);
--}
--
--/**************************************************************************
--* sp_get
--*
--* Description:
--*   Increment reference count of the specified sp.
--*
--* Input:
--*   sp - pointer to srb_t structure to use.
--*
--* Returns:
--*
--**************************************************************************/
-+static inline void sp_put(struct scsi_qla_host * ha, srb_t *sp);
-+static inline void sp_get(struct scsi_qla_host * ha, srb_t *sp);
- static inline void
--sp_get(struct scsi_qla_host * ha, srb_t *sp)
--{
--        atomic_inc(&sp->ref_count);
--
--        if (atomic_read(&sp->ref_count) > 2) {
--		qla_printk(KERN_INFO, ha,
--			"%s(): **** SP->ref_count greater than two\n",
--			__func__);
--                DEBUG2(BUG();)
--
--		return;
--	}
--}
-+qla2x00_delete_from_done_queue(scsi_qla_host_t *, srb_t *); 
- 
- /*
- * qla2x00_callback
-@@ -366,6 +304,68 @@
- 	(*(cmd)->scsi_done)(cmd);
- }
- 
-+/**************************************************************************
-+* sp_put
-+*
-+* Description:
-+*   Decrement reference count and call the callback if we're the last
-+*   owner of the specified sp. Will get the host_lock before calling
-+*   the callback.
-+*
-+* Input:
-+*   ha - pointer to the scsi_qla_host_t where the callback is to occur.
-+*   sp - pointer to srb_t structure to use.
-+*
-+* Returns:
-+*
-+**************************************************************************/
-+static inline void
-+sp_put(struct scsi_qla_host * ha, srb_t *sp)
-+{
-+        if (atomic_read(&sp->ref_count) == 0) {
-+		qla_printk(KERN_INFO, ha,
-+			"%s(): **** SP->ref_count not zero\n",
-+			__func__);
-+                DEBUG2(BUG();)
-+
-+                return;
-+	}
-+
-+        if (!atomic_dec_and_test(&sp->ref_count)) {
-+                return;
-+        }
-+
-+        qla2x00_callback(ha, sp->cmd);
-+}
-+
-+/**************************************************************************
-+* sp_get
-+*
-+* Description:
-+*   Increment reference count of the specified sp.
-+*
-+* Input:
-+*   sp - pointer to srb_t structure to use.
-+*
-+* Returns:
-+*
-+**************************************************************************/
-+static inline void
-+sp_get(struct scsi_qla_host * ha, srb_t *sp)
-+{
-+        atomic_inc(&sp->ref_count);
-+
-+        if (atomic_read(&sp->ref_count) > 2) {
-+		qla_printk(KERN_INFO, ha,
-+			"%s(): **** SP->ref_count greater than two\n",
-+			__func__);
-+                DEBUG2(BUG();)
-+
-+		return;
-+	}
-+}
-+
-+
- static inline void 
- qla2x00_delete_from_done_queue(scsi_qla_host_t *dest_ha, srb_t *sp) 
- {
---- linux-2.6.9-rc1/drivers/scsi/qla2xxx/qla_rscn.c.orig	2004-08-24 09:02:26.000000000 +0200
-+++ linux-2.6.9-rc1/drivers/scsi/qla2xxx/qla_rscn.c	2004-08-29 18:50:47.678186248 +0200
-@@ -242,6 +242,20 @@
- }
- 
- /**
-+ * qla2x00_remove_iodesc_timer() - Remove an active timer from an IO descriptor.
-+ * @iodesc: io descriptor
-+ */
-+static inline void
-+qla2x00_remove_iodesc_timer(struct io_descriptor *iodesc)
-+{
-+	if (iodesc->timer.function != NULL) {
-+		del_timer_sync(&iodesc->timer);
-+		iodesc->timer.data = (unsigned long) NULL;
-+		iodesc->timer.function = NULL;
-+	}
-+}
-+
-+/**
-  * qla2x00_init_io_descriptors() - Initialize the pool of IO descriptors.
-  * @ha: HA context
-  */
-@@ -311,19 +325,6 @@
- 	add_timer(&iodesc->timer);
- }
- 
--/**
-- * qla2x00_remove_iodesc_timer() - Remove an active timer from an IO descriptor.
-- * @iodesc: io descriptor
-- */
--static inline void
--qla2x00_remove_iodesc_timer(struct io_descriptor *iodesc)
--{
--	if (iodesc->timer.function != NULL) {
--		del_timer_sync(&iodesc->timer);
--		iodesc->timer.data = (unsigned long) NULL;
--		iodesc->timer.function = NULL;
--	}
--}
- 
- /** 
-  * IO descriptor support routines.
 diff -puN include/linux/spinlock.h~fix_outofline_spinlocks include/linux/spinlock.h
 --- gr_work/include/linux/spinlock.h~fix_outofline_spinlocks	2004-09-05 02:05:53.243858818 -0500
 +++ gr_work-anton/include/linux/spinlock.h	2004-09-05 02:06:06.177805993 -0500
@@ -231,19 +41,19 @@ linux-new/arch/i386/mm/init.c
  
  DEFINE_PER_CPU(struct mmu_gather, mmu_gathers);
  unsigned long highstart_pfn, highend_pfn;
-diff -uNr linux-2.6.9-rc4.orig/arch/i386/kernel/irq.c linux-2.6.9-rc4/arch/i386/kernel/irq.c
---- linux-2.6.9-rc4.orig/arch/i386/kernel/irq.c	2004-10-11 04:57:02.000000000 +0200
-+++ linux-2.6.9-rc4/arch/i386/kernel/irq.c	2004-10-12 18:35:56.734235704 +0200
-@@ -515,7 +515,7 @@
- 			/* build the stack frame on the IRQ stack */
- 			isp = (u32*) ((char*)irqctx + sizeof(*irqctx));
- 			irqctx->tinfo.task = curctx->tinfo.task;
--			irqctx->tinfo.previous_esp = current_stack_pointer();
-+			irqctx->tinfo.previous_esp = current_stack_pointer;
+diff -uNr linux-2.6.9.orig/arch/i386/kernel/irq.c linux-2.6.9/arch/i386/kernel/irq.c
+--- linux-2.6.9/arch/i386/kernel/irq.c.orig	2004-10-20 18:26:32.738937568 +0200
++++ linux-2.6.9/arch/i386/kernel/irq.c	2004-10-20 18:29:14.241385464 +0200
+@@ -85,7 +85,7 @@
+ 		/* build the stack frame on the IRQ stack */
+ 		isp = (u32*) ((char*)irqctx + sizeof(*irqctx));
+ 		irqctx->tinfo.task = curctx->tinfo.task;
+-		irqctx->tinfo.previous_esp = current_stack_pointer();
++		irqctx->tinfo.previous_esp = current_stack_pointer;
  
- 			*--isp = (u32) action;
- 			*--isp = (u32) &regs;
-@@ -1135,7 +1135,7 @@
+ 		*--isp = (u32) &regs;
+ 		*--isp = (u32) irq;
+@@ -168,7 +168,7 @@
  		curctx = current_thread_info();
  		irqctx = softirq_ctx[smp_processor_id()];
  		irqctx->tinfo.task = curctx->task;
@@ -252,9 +62,9 @@ diff -uNr linux-2.6.9-rc4.orig/arch/i386/kernel/irq.c linux-2.6.9-rc4/arch/i386/
  
  		/* build the stack frame on the softirq stack */
  		isp = (u32*) ((char*)irqctx + sizeof(*irqctx));
-diff -uNr linux-2.6.9-rc4.orig/include/asm-i386/thread_info.h linux-2.6.9-rc4/include/asm-i386/thread_info.h
---- linux-2.6.9-rc4.orig/include/asm-i386/thread_info.h	2004-10-11 04:57:04.000000000 +0200
-+++ linux-2.6.9-rc4/include/asm-i386/thread_info.h	2004-10-12 18:35:41.420563736 +0200
+diff -uNr linux-2.6.9.orig/include/asm-i386/thread_info.h linux-2.6.9/include/asm-i386/thread_info.h
+--- linux-2.6.9/include/asm-i386/thread_info.h.orig	2004-10-20 18:33:35.330693856 +0200
++++ linux-2.6.9/include/asm-i386/thread_info.h	2004-10-20 18:34:06.293986720 +0200
 @@ -92,12 +92,7 @@
  }
  
@@ -265,7 +75,7 @@ diff -uNr linux-2.6.9-rc4.orig/include/asm-i386/thread_info.h linux-2.6.9-rc4/in
 -	__asm__("movl %%esp,%0; ":"=r" (ti) : );
 -	return ti;
 -}
-+register unsigned long current_stack_pointer asm ("esp");
++register unsigned long current_stack_pointer asm("esp");
  
  /* thread information allocation */
  #ifdef CONFIG_DEBUG_STACK_USAGE
