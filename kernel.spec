@@ -691,13 +691,13 @@ rm -rf $RPM_BUILD_DIR/linux-installed
 
 
 %post
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null 
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+test ! -f /boot/vmlinuz || mv -f /boot/vmlinuz /boot/vmlinuz.oldm
+test ! -f /boot/System.map || mv -f /boot/System.map /boot/System.map.old
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
 
 geninitrd /boot/initrd-%{version}-%{release}.gz %{version}-%{release}
-test ! -f /boot/initrd || mv -f /boot/initrd /boot/initrd.old 2> /dev/null > /dev/null
+test ! -f /boot/initrd || mv -f /boot/initrd /boot/initrd.old
 ln -sf initrd-%{version}-%{release}.gz /boot/initrd
 
 if [ -x /sbin/lilo -a -f /etc/lilo.conf ]; then
