@@ -1,0 +1,1307 @@
+ # CAN-2003-0001 fix
+ (extracted from Debian's patch, with missing sun3_82586 chunk (1.884.35.15),
+ fixed smc9194 change (1.930.9.68) and later davem's skb_padto fix (1.930.17.10);
+ 1.1063.1.51 not included here)
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/3c501.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/3c501.c
+@@ -35,6 +35,9 @@
+     Cleaned up for 2.3.x because we broke SMP now. 
+     		20000208 Alan Cox <alan@redhat.com>
+     		
++    Fixed zero fill corner case 
++    		20030104 Alan Cox <alan@redhat.com>
++    		
+ */
+ 
+ 
+@@ -503,8 +506,15 @@
+ 
+ 	do
+ 	{
+-		int gp_start = 0x800 - (ETH_ZLEN < skb->len ? skb->len : ETH_ZLEN);
++		int len = skb->len;
++		int pad = 0;
++		int gp_start;
+ 		unsigned char *buf = skb->data;
++		
++		if(len < ETH_ZLEN)
++			pad = ETH_ZLEN - len;
++			
++		gp_start = 0x800 - ( len + pad );
+ 
+ 		lp->tx_pkt_start = gp_start;
+     		lp->collisions = 0;
+@@ -532,7 +542,12 @@
+ 		
+ 		outw(0x00, RX_BUF_CLR);		/* Set rx packet area to 0. */
+ 		outw(gp_start, GP_LOW);		/* aim - packet will be loaded into buffer start */
+-		outsb(DATAPORT,buf,skb->len);	/* load buffer (usual thing each byte increments the pointer) */
++		outsb(DATAPORT,buf,len);	/* load buffer (usual thing each byte increments the pointer) */
++		if(pad)
++		{
++			while(pad--)		/* Zero fill buffer tail */
++				outb(0, DATAPORT);
++		}
+ 		outw(gp_start, GP_LOW);		/* the board reuses the same register */
+ 	
+ 		if(lp->loading != 2)
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/3c505.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/3c505.c
+@@ -1036,8 +1036,9 @@
+ 	adapter->current_dma.direction = 1;
+ 	adapter->current_dma.start_time = jiffies;
+ 
+-	if ((unsigned long)(skb->data + nlen) >= MAX_DMA_ADDRESS) {
+-		memcpy(adapter->dma_buffer, skb->data, nlen);
++	if ((unsigned long)(skb->data + nlen) >= MAX_DMA_ADDRESS || nlen != skb->len) {
++		memcpy(adapter->dma_buffer, skb->data, skb->len);
++		memset(adapter->dma_buffer+skb->len, 0, nlen-skb->len);
+ 		target = virt_to_bus(adapter->dma_buffer);
+ 	}
+ 	else {
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/3c507.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/3c507.c
+@@ -303,7 +303,7 @@
+ static struct net_device_stats *el16_get_stats(struct net_device *dev);
+ static void el16_tx_timeout (struct net_device *dev);
+ 
+-static void hardware_send_packet(struct net_device *dev, void *buf, short length);
++static void hardware_send_packet(struct net_device *dev, void *buf, short length, short pad);
+ static void init_82586_mem(struct net_device *dev);
+ static int netdev_ioctl (struct net_device *dev, struct ifreq *rq, int cmd);
+ 
+@@ -505,7 +505,7 @@
+ 	/* Disable the 82586's input to the interrupt line. */
+ 	outb (0x80, ioaddr + MISC_CTRL);
+ 
+-	hardware_send_packet (dev, buf, length);
++	hardware_send_packet (dev, buf, skb->len, length - skb->len);
+ 
+ 	dev->trans_start = jiffies;
+ 	/* Enable the 82586 interrupt input. */
+@@ -758,12 +758,13 @@
+ 	return;
+ }
+ 
+-static void hardware_send_packet(struct net_device *dev, void *buf, short length)
++static void hardware_send_packet(struct net_device *dev, void *buf, short length, short pad)
+ {
+ 	struct net_local *lp = (struct net_local *)dev->priv;
+ 	short ioaddr = dev->base_addr;
+ 	ushort tx_block = lp->tx_head;
+ 	unsigned long write_ptr = dev->mem_start + tx_block;
++	static char padding[ETH_ZLEN];
+ 
+ 	/* Set the write pointer to the Tx block, and put out the header. */
+ 	isa_writew(0x0000,write_ptr);			/* Tx status */
+@@ -772,7 +773,7 @@
+ 	isa_writew(tx_block+8,write_ptr+=2);			/* Data Buffer offset. */
+ 
+ 	/* Output the data buffer descriptor. */
+-	isa_writew(length | 0x8000,write_ptr+=2);		/* Byte count parameter. */
++	isa_writew((pad + length) | 0x8000,write_ptr+=2);		/* Byte count parameter. */
+ 	isa_writew(-1,write_ptr+=2);			/* No next data buffer. */
+ 	isa_writew(tx_block+22+SCB_BASE,write_ptr+=2);	/* Buffer follows the NoOp command. */
+ 	isa_writew(0x0000,write_ptr+=2);			/* Buffer address high bits (always zero). */
+@@ -784,6 +785,8 @@
+ 
+ 	/* Output the packet at the write pointer. */
+ 	isa_memcpy_toio(write_ptr+2, buf, length);
++	if(pad)
++		isa_memcpy_toio(write_ptr+length+2, padding, pad);
+ 
+ 	/* Set the old command link pointing to this send packet. */
+ 	isa_writew(tx_block,dev->mem_start + lp->tx_cmd_link);
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/3c523.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/3c523.c
+@@ -1121,8 +1121,11 @@
+ 
+ 	netif_stop_queue(dev);
+ 
+-	memcpy((char *) p->xmit_cbuffs[p->xmit_count], (char *) (skb->data), skb->len);
+ 	len = (ETH_ZLEN < skb->len) ? skb->len : ETH_ZLEN;
++	
++	if(len != skb->len)
++		memset((char *) p->xmit_cbuffs[p->xmit_count], 0, ETH_ZLEN);
++	memcpy((char *) p->xmit_cbuffs[p->xmit_count], (char *) (skb->data), skb->len);
+ 
+ #if (NUM_XMIT_BUFFS == 1)
+ #ifdef NO_NOPCOMMANDS
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/3c527.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/3c527.c
+@@ -1086,6 +1086,12 @@
+ 	/* We will need this to flush the buffer out */
+ 	lp->tx_ring[lp->tx_ring_head].skb=skb;
+    	   
++   	if(skb->len < ETH_ZLEN)
++   	{
++   		skb = skb_padto(skb, ETH_ZLEN);
++   		if(skb == NULL)
++   			goto out;
++   	}
+ 	np->length = (skb->len < ETH_ZLEN) ? ETH_ZLEN : skb->len; 
+ 			
+ 	np->data	= virt_to_bus(skb->data);
+@@ -1094,7 +1100,7 @@
+ 	wmb();
+ 		
+ 	p->control     &= ~CONTROL_EOL;     /* Clear EOL on p */ 
+-	
++out:	
+ 	restore_flags(flags);
+ 
+ 	netif_wake_queue(dev);
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/7990.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/7990.c
+@@ -531,6 +531,8 @@
+         ib->btx_ring [entry].length = (-len) | 0xf000;
+         ib->btx_ring [entry].misc = 0;
+     
++    	if(skb->len < ETH_ZLEN)
++    		memset((char *)&ib->tx_buf[entry][0], 0, ETH_ZLEN);
+         memcpy ((char *)&ib->tx_buf [entry][0], skb->data, skblen);
+     
+         /* Now, give the packet to the lance */
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/8139too.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/8139too.c
+@@ -1655,6 +1659,8 @@
+ 	entry = tp->cur_tx % NUM_TX_DESC;
+ 
+ 	if (likely(len < TX_BUF_SIZE)) {
++		if(len < ETH_ZLEN)
++			memset(tp->tx_buf[entry], 0, ETH_ZLEN);
+ 		skb_copy_and_csum_dev(skb, tp->tx_buf[entry]);
+ 		dev_kfree_skb(skb);
+ 	} else {
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/82596.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/82596.c
+@@ -1032,12 +1032,19 @@
+ 	struct i596_private *lp = (struct i596_private *) dev->priv;
+ 	struct tx_cmd *tx_cmd;
+ 	struct i596_tbd *tbd;
+-	short length = ETH_ZLEN < skb->len ? skb->len : ETH_ZLEN;
++	short length = skb->len;
+ 	dev->trans_start = jiffies;
+ 
+ 	DEB(DEB_STARTTX,printk(KERN_DEBUG "%s: i596_start_xmit(%x,%x) called\n", dev->name,
+ 				skb->len, (unsigned int)skb->data));
+ 
++	if(skb->len < ETH_ZLEN)
++	{
++		skb = skb_padto(skb, ETH_ZLEN);
++		if(skb == NULL)
++			return 0;
++		length = ETH_ZLEN;
++	}
+ 	netif_stop_queue(dev);
+ 
+ 	tx_cmd = lp->tx_cmds + lp->next_tx_cmd;
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/8390.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/8390.c
+@@ -270,6 +270,7 @@
+ 	struct ei_device *ei_local = (struct ei_device *) dev->priv;
+ 	int length, send_length, output_page;
+ 	unsigned long flags;
++	char scratch[ETH_ZLEN];
+ 
+ 	length = skb->len;
+ 
+@@ -340,8 +341,16 @@
+ 	 * isn't already sending. If it is busy, the interrupt handler will
+ 	 * trigger the send later, upon receiving a Tx done interrupt.
+ 	 */
+-
+-	ei_block_output(dev, length, skb->data, output_page);
++	 
++	if(length == send_length)
++		ei_block_output(dev, length, skb->data, output_page);
++	else
++	{
++		memset(scratch, 0, ETH_ZLEN);
++		memcpy(scratch, skb->data, skb->len);
++		ei_block_output(dev, ETH_ZLEN, scratch, output_page);
++	}
++		
+ 	if (! ei_local->txing) 
+ 	{
+ 		ei_local->txing = 1;
+@@ -373,7 +382,14 @@
+ 	 * reasonable hardware if you only use one Tx buffer.
+ 	 */
+ 
+-	ei_block_output(dev, length, skb->data, ei_local->tx_start_page);
++	if(length == send_length)
++		ei_block_output(dev, length, skb->data, ei_local->tx_start_page);
++	else
++	{
++		memset(scratch, 0, ETH_ZLEN);
++		memcpy(scratch, skb->data, skb->len);
++		ei_block_output(dev, ETH_ZLEN, scratch, ei_local->tx_start_page);
++	}
+ 	ei_local->txing = 1;
+ 	NS8390_trigger_send(dev, send_length, ei_local->tx_start_page);
+ 	dev->trans_start = jiffies;
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/a2065.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/a2065.c
+@@ -572,6 +572,15 @@
+ 	unsigned long flags;
+ 
+ 	skblen = skb->len;
++	len = skblen;
++	
++	if(len < ETH_ZLEN)
++	{
++		len = ETH_ZLEN:
++		skb = skb_padto(skb, ETH_ZLEN);
++		if(skb == NULL)
++			return 0;
++	}
+ 
+ 	save_flags(flags);
+ 	cli();
+@@ -593,7 +602,6 @@
+ 		}
+ 	}
+ #endif
+-	len = (skblen <= ETH_ZLEN) ? ETH_ZLEN : skblen;
+ 	entry = lp->tx_new & lp->tx_ring_mod_mask;
+ 	ib->btx_ring [entry].length = (-len) | 0xf000;
+ 	ib->btx_ring [entry].misc = 0;
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/am79c961a.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/am79c961a.c
+@@ -428,10 +428,19 @@
+ am79c961_sendpacket(struct sk_buff *skb, struct net_device *dev)
+ {
+ 	struct dev_priv *priv = (struct dev_priv *)dev->priv;
+-	unsigned int length = ETH_ZLEN < skb->len ? skb->len : ETH_ZLEN;
++	unsigned int length = skb->len;
+ 	unsigned int hdraddr, bufaddr;
+ 	unsigned int head;
+ 	unsigned long flags;
++	
++	/* FIXME: I thought the 79c961 could do padding - RMK ??? */
++	if(length < ETH_ZLEN)
++	{
++		skb = skb_padto(skb, ETH_ZLEN);
++		if(skb == NULL)
++			return 0;
++		length = ETH_ZLEN;
++	}
+ 
+ 	head = priv->txhead;
+ 	hdraddr = priv->txhdr + (head << 3);
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/ariadne.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/ariadne.c
+@@ -577,6 +577,7 @@
+     volatile struct Am79C960 *lance = (struct Am79C960*)dev->base_addr;
+     int entry;
+     unsigned long flags;
++    int len = skb->len;
+ 
+ #if 0
+     if (ariadne_debug > 3) {
+@@ -587,6 +588,15 @@
+     }
+ #endif
+ 
++    /* FIXME: is the 79C960 new enough to do its own padding right ? */
++    if(skb->len < ETH_ZLEN)
++    {
++    	skb = skb_padto(skb, ETH_ZLEN);
++    	if(skb == NULL)
++    	    return 0;
++    	len = ETH_ZLEN;
++    }
++
+     /* Fill in a Tx ring entry */
+ 
+ #if 0
+@@ -617,8 +627,7 @@
+ 
+     priv->tx_ring[entry]->TMD2 = swapw((u_short)-skb->len);
+     priv->tx_ring[entry]->TMD3 = 0x0000;
+-    memcpyw(priv->tx_buff[entry], (u_short *)skb->data,
+-	    skb->len <= ETH_ZLEN ? ETH_ZLEN : skb->len);
++    memcpyw(priv->tx_buff[entry], (u_short *)skb->data, len);
+ 
+ #if 0
+     {
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/at1700.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/at1700.c
+@@ -577,7 +577,9 @@
+ 	struct net_local *lp = (struct net_local *) dev->priv;
+ 	int ioaddr = dev->base_addr;
+ 	short length = ETH_ZLEN < skb->len ? skb->len : ETH_ZLEN;
++	short len = skb->len;
+ 	unsigned char *buf = skb->data;
++	static u8 pad[ETH_ZLEN];
+ 
+ 	netif_stop_queue (dev);
+ 
+@@ -589,7 +591,17 @@
+ 	lp->tx_queue_ready = 0;
+ 	{
+ 		outw (length, ioaddr + DATAPORT);
+-		outsw (ioaddr + DATAPORT, buf, (length + 1) >> 1);
++		/* Packet data */
++		outsw (ioaddr + DATAPORT, buf, len >> 1);
++		/* Check for dribble byte */
++		if(len & 1)
++		{
++			outw(skb->data[skb->len-1], ioaddr + DATAPORT);
++			len++;
++		}
++		/* Check for packet padding */
++		if(length != skb->len)
++			outsw(ioaddr + DATAPORT, pad, (length - len + 1) >> 1);
+ 
+ 		lp->tx_queue++;
+ 		lp->tx_queue_len += length + 2;
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/atarilance.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/atarilance.c
+@@ -786,6 +786,22 @@
+ 	DPRINTK( 2, ( "%s: lance_start_xmit() called, csr0 %4.4x.\n",
+ 				  dev->name, DREG ));
+ 
++
++	/* The old LANCE chips doesn't automatically pad buffers to min. size. */
++	len = skb->len;
++	if(len < ETH_ZLEN)
++		len = ETH_ZLEN;
++	/* PAM-Card has a bug: Can only send packets with even number of bytes! */
++	else if (lp->cardtype == PAM_CARD && (len & 1))
++		++len;
++		
++	if(len > skb->len)
++	{
++		skb = skb_padto(skb, len);
++		if(skb == NULL)
++			return 0;
++	}
++		
+ 	netif_stop_queue (dev);
+ 
+ 	/* Fill in a Tx ring entry */
+@@ -815,11 +831,6 @@
+ 	 * last.
+ 	 */
+ 
+-	/* The old LANCE chips doesn't automatically pad buffers to min. size. */
+-	len = (ETH_ZLEN < skb->len) ? skb->len : ETH_ZLEN;
+-	/* PAM-Card has a bug: Can only send packets with even number of bytes! */
+-	if (lp->cardtype == PAM_CARD && (len & 1))
+-		++len;
+ 
+ 	head->length = -len;
+ 	head->misc = 0;
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/atp.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/atp.c
+@@ -202,7 +202,7 @@
+ static unsigned short eeprom_op(long ioaddr, unsigned int cmd);
+ static int net_open(struct net_device *dev);
+ static void hardware_init(struct net_device *dev);
+-static void write_packet(long ioaddr, int length, unsigned char *packet, int mode);
++static void write_packet(long ioaddr, int length, unsigned char *packet, int pad, int mode);
+ static void trigger_send(long ioaddr, int length);
+ static int	atp_send_packet(struct sk_buff *skb, struct net_device *dev);
+ static void atp_interrupt(int irq, void *dev_id, struct pt_regs *regs);
+@@ -499,15 +499,23 @@
+ 	write_reg(ioaddr, CMR1, CMR1_Xmit);
+ }
+ 
+-static void write_packet(long ioaddr, int length, unsigned char *packet, int data_mode)
++static void write_packet(long ioaddr, int length, unsigned char *packet, int pad_len, int data_mode)
+ {
+-    length = (length + 1) & ~1;		/* Round up to word length. */
++    if(length & 1)
++    {
++    	length++;
++    	pad_len++;
++    }
++
+     outb(EOC+MAR, ioaddr + PAR_DATA);
+     if ((data_mode & 1) == 0) {
+ 		/* Write the packet out, starting with the write addr. */
+ 		outb(WrAddr+MAR, ioaddr + PAR_DATA);
+ 		do {
+ 			write_byte_mode0(ioaddr, *packet++);
++		} while (--length > pad_len) ;
++		do {
++			write_byte_mode0(ioaddr, 0);
+ 		} while (--length > 0) ;
+     } else {
+ 		/* Write the packet out in slow mode. */
+@@ -521,8 +529,10 @@
+ 		outbyte >>= 4;
+ 		outb(outbyte & 0x0f, ioaddr + PAR_DATA);
+ 		outb(Ctrl_HNibWrite + Ctrl_IRQEN, ioaddr + PAR_CONTROL);
+-		while (--length > 0)
++		while (--length > pad_len)
+ 			write_byte_mode1(ioaddr, *packet++);
++		while (--length > 0)
++			write_byte_mode1(ioaddr, 0);
+     }
+     /* Terminate the Tx frame.  End of write: ECB. */
+     outb(0xff, ioaddr + PAR_DATA);
+@@ -564,7 +574,7 @@
+ 	write_reg_high(ioaddr, IMR, 0);
+ 	spin_unlock_irqrestore(&lp->lock, flags);
+ 
+-	write_packet(ioaddr, length, skb->data, dev->if_port);
++	write_packet(ioaddr, length, skb->data, length-skb->len, dev->if_port);
+ 
+ 	lp->pac_cnt_in_tx_buf++;
+ 	if (lp->tx_unit_busy == 0) {
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/bagetlance.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/bagetlance.c
+@@ -835,6 +835,19 @@
+ 	struct lance_tx_head *head;
+ 	unsigned long flags;
+ 
++	/* The old LANCE chips doesn't automatically pad buffers to min. size. */
++	len = (ETH_ZLEN < skb->len) ? skb->len : ETH_ZLEN;
++	/* PAM-Card has a bug: Can only send packets with even number of bytes! */
++	if (lp->cardtype == PAM_CARD && (len & 1))
++		++len;
++
++	if (len > skb->len)
++	{
++		skb = skb_padto(skb, len);
++		if(skb == NULL)
++			return 0;
++	}	
++
+ 	/* Transmitter timeout, serious problems. */
+ 	if (dev->tbusy) {
+ 		int tickssofar = jiffies - dev->trans_start;
+@@ -920,12 +933,6 @@
+ 	/* Caution: the write order is important here, set the "ownership" bits
+ 	 * last.
+ 	 */
+-
+-	/* The old LANCE chips doesn't automatically pad buffers to min. size. */
+-	len = (ETH_ZLEN < skb->len) ? skb->len : ETH_ZLEN;
+-	/* PAM-Card has a bug: Can only send packets with even number of bytes! */
+-	if (lp->cardtype == PAM_CARD && (len & 1))
+-		++len;
+ 
+ 	head->length = -len;
+ 	head->misc = 0;
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/de600.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/de600.c
+@@ -403,6 +403,7 @@
+ 	int	len;
+ 	int	tickssofar;
+ 	byte	*buffer = skb->data;
++	int	i;
+ 
+ 	if (free_tx_pages <= 0) {	/* Do timeouts, to avoid hangs. */
+ 		tickssofar = jiffies - dev->trans_start;
+@@ -447,8 +448,10 @@
+ #endif
+ 
+ 	de600_setup_address(transmit_from, RW_ADDR);
+-	for ( ; len > 0; --len, ++buffer)
++	for (i = 0;  i < skb->len ; ++i, ++buffer)
+ 		de600_put_byte(*buffer);
++	for (; i < len; ++i)
++		de600_put_byte(0);
+ 
+ 	if (free_tx_pages-- == TX_PAGES) { /* No transmission going on */
+ 		dev->trans_start = jiffies;
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/de620.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/de620.c
+@@ -316,7 +316,7 @@
+ }
+ 
+ static inline void
+-de620_write_block(struct net_device *dev, byte *buffer, int count)
++de620_write_block(struct net_device *dev, byte *buffer, int count, int pad)
+ {
+ #ifndef LOWSPEED
+ 	byte uflip = NIC_Cmd ^ (DS0 | DS1);
+@@ -335,6 +335,9 @@
+ 	for ( ; count > 0; --count, ++buffer) {
+ 		de620_put_byte(dev,*buffer);
+ 	}
++	for ( count = pad ; count > 0; --count, ++buffer) {
++		de620_put_byte(dev, 0);
++	}
+ 	de620_send_command(dev,W_DUMMY);
+ #ifdef COUNT_LOOPS
+ 	/* trial debug output: loops per byte in de620_ready() */
+@@ -570,7 +573,7 @@
+ 		restore_flags(flags);
+ 		return 1;
+ 	}
+-	de620_write_block(dev, buffer, len);
++	de620_write_block(dev, buffer, skb->len, len-skb->len);
+ 
+ 	dev->trans_start = jiffies;
+ 	if(!(using_txbuf == (TXBF0 | TXBF1)))
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/declance.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/declance.c
+@@ -871,7 +871,15 @@
+ 
+ 	skblen = skb->len;
+ 
+-	len = (skblen <= ETH_ZLEN) ? ETH_ZLEN : skblen;
++	len = skblen;
++	
++	if(len < ETH_ZLEN)
++	{
++		skb = skb_padto(skb, ETH_ZLEN);
++		if(skb == NULL)
++			return 0;
++		len = ETH_ZLEN;
++	}
+ 
+ 	lp->stats.tx_bytes += len;
+ 
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/depca.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/depca.c
+@@ -875,6 +875,13 @@
+ 	if (skb->len < 1)
+ 		goto out;
+ 
++	if(skb->len < ETH_ZLEN)
++	{
++		skb = skb_padto(skb, ETH_ZLEN);
++		if(skb == NULL)
++			goto out;
++	}
++
+ 	netif_stop_queue(dev);
+ 
+ 	if (TX_BUFFS_AVAIL) {	/* Fill in a Tx ring entry */
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/eepro.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/eepro.c
+@@ -1125,17 +1125,24 @@
+ 	struct eepro_local *lp = (struct eepro_local *)dev->priv;
+ 	unsigned long flags;
+ 	int ioaddr = dev->base_addr;
++	short length = skb->len;
+ 
+ 	if (net_debug > 5)
+ 		printk(KERN_DEBUG  "%s: entering eepro_send_packet routine.\n", dev->name);
+ 
++	if(length < ETH_ZLEN)
++	{
++		skb = skb_padto(skb, ETH_ZLEN);
++		if(skb == NULL)
++			return 0;
++		length = ETH_ZLEN;
++	}
+ 	netif_stop_queue (dev);
+ 
+ 	eepro_dis_int(ioaddr);
+ 	spin_lock_irqsave(&lp->lock, flags);
+ 
+ 	{
+-		short length = ETH_ZLEN < skb->len ? skb->len : ETH_ZLEN;
+ 		unsigned char *buf = skb->data;
+ 
+ 		if (hardware_send_packet(dev, buf, length))
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/eexpress.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/eexpress.c
+@@ -614,6 +614,7 @@
+ static int eexp_xmit(struct sk_buff *buf, struct net_device *dev)
+ {
+ 	struct net_local *lp = (struct net_local *)dev->priv;
++	short length = buf->len;
+ #ifdef CONFIG_SMP
+ 	unsigned long flags;
+ #endif
+@@ -622,6 +623,14 @@
+ 	printk(KERN_DEBUG "%s: eexp_xmit()\n", dev->name);
+ #endif
+ 
++	if(buf->len < ETH_ZLEN)
++	{
++		buf = skb_padto(buf, ETH_ZLEN);
++		if(buf == NULL)
++			return 0;
++		length = buf->len;
++	}
++
+ 	disable_irq(dev->irq);
+ 
+ 	/*
+@@ -634,8 +643,6 @@
+ #endif
+   
+ 	{
+-		unsigned short length = (ETH_ZLEN < buf->len) ? buf->len :
+-			ETH_ZLEN;
+ 		unsigned short *data = (unsigned short *)buf->data;
+ 
+ 		lp->stats.tx_bytes += length;
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/epic100.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/epic100.c
+@@ -959,6 +959,13 @@
+ 	int entry, free_count;
+ 	u32 ctrl_word;
+ 	long flags;
++	
++	if(skb->len < ETH_ZLEN)
++	{
++		skb = skb_padto(skb, ETH_ZLEN);
++		if(skb == NULL)
++			return 0;
++	}
+ 
+ 	/* Caution: the write order is important here, set the field with the
+ 	   "ownership" bit last. */
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/eth16i.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/eth16i.c
+@@ -1056,10 +1056,17 @@
+ 	struct eth16i_local *lp = (struct eth16i_local *)dev->priv;
+ 	int ioaddr = dev->base_addr;
+ 	int status = 0;
+-	ushort length = ETH_ZLEN < skb->len ? skb->len : ETH_ZLEN;
++	ushort length = skb->len;
+ 	unsigned char *buf = skb->data;
+ 	unsigned long flags;
+ 
++	if(length < ETH_ZLEN)
++	{
++		skb = skb_padto(skb, ETH_ZLEN);
++		if(skb == NULL)
++			return 0;
++		length = ETH_ZLEN;
++	}
+ 
+ 	netif_stop_queue(dev);
+ 		
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/fmv18x.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/fmv18x.c
+@@ -369,7 +369,7 @@
+ {
+ 	struct net_local *lp = dev->priv;
+ 	int ioaddr = dev->base_addr;
+-	short length = ETH_ZLEN < skb->len ? skb->len : ETH_ZLEN;
++	short length = skb->len;
+ 	unsigned char *buf = skb->data;
+ 	unsigned long flags;
+ 
+@@ -381,6 +381,15 @@
+ 				dev->name, length);
+ 		return 1;
+ 	}
++	
++	if (length < ETH_ZLEN)
++	{
++		skb = skb_padto(skb, ETH_ZLEN);
++		if(skb == NULL)
++			return 0;
++		length = ETH_ZLEN;
++	}
++	
+ 	if (net_debug > 4)
+ 		printk("%s: Transmitting a packet of length %lu.\n", dev->name,
+ 			   (unsigned long)skb->len);
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/hp100.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/hp100.c
+@@ -1511,6 +1511,13 @@
+ 
+ 	if (skb->len <= 0)
+ 		return 0;
++		
++	if (skb->len < ETH_ZLEN && lp->chip == HP100_CHIPID_SHASTA)
++	{
++		skb = skb_padto(skb, ETH_ZLEN);
++		if(skb == NULL)
++			return 0;
++	}
+ 
+ 	/* Get Tx ring tail pointer */
+ 	if (lp->txrtail->next == lp->txrhead) {
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/lance.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/lance.c
+@@ -893,8 +893,15 @@
+ 
+ 	/* The old LANCE chips doesn't automatically pad buffers to min. size. */
+ 	if (chip_table[lp->chip_version].flags & LANCE_MUST_PAD) {
+-		lp->tx_ring[entry].length =
+-			-(ETH_ZLEN < skb->len ? skb->len : ETH_ZLEN);
++		if(skb->len < ETH_ZLEN)
++		{
++			skb = skb_padto(skb, ETH_ZLEN);
++			if(skb == NULL)
++				goto out;
++			lp->tx_ring[entry].length = -ETH_ZLEN;
++		}
++		else 
++			lp->tx_ring[entry].length = -skb->len;
+ 	} else
+ 		lp->tx_ring[entry].length = -skb->len;
+ 
+@@ -927,6 +934,7 @@
+ 	if ((lp->cur_tx - lp->dirty_tx) >= TX_RING_SIZE)
+ 		netif_stop_queue(dev);
+ 
++out:
+ 	spin_unlock_irqrestore(&lp->devlock, flags);
+ 	return 0;
+ }
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/lasi_82596.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/lasi_82596.c
+@@ -1061,11 +1061,19 @@
+ 	struct i596_private *lp = (struct i596_private *) dev->priv;
+ 	struct tx_cmd *tx_cmd;
+ 	struct i596_tbd *tbd;
+-	short length = ETH_ZLEN < skb->len ? skb->len : ETH_ZLEN;
++	short length = skb->len;
+ 	dev->trans_start = jiffies;
+ 
+ 	DEB(DEB_STARTTX,printk("%s: i596_start_xmit(%x,%p) called\n", dev->name,
+ 				skb->len, skb->data));
++
++	if(length < ETH_ZLEN)
++	{
++		skb = skb_padto(skb, ETH_ZLEN);
++		if(skb == NULL)
++			return 0;
++		length = ETH_ZLEN;
++	}
+ 
+ 	netif_stop_queue(dev);
+ 
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/lp486e.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/lp486e.c
+@@ -886,7 +886,16 @@
+ 	if (skb->len <= 0)
+ 		return 0;
+ 
+-	length = (ETH_ZLEN < skb->len) ? skb->len : ETH_ZLEN;
++	length = skb->len;
++	
++	if(length < ETH_ZLEN)
++	{
++		skb = skb_padto(skb, ETH_ZLEN);
++		if(skb == NULL)
++			return 0;
++		length = ETH_ZLEN;
++	}
++	
+ 	dev->trans_start = jiffies;
+ 
+ 	tx_cmd = (struct tx_cmd *)
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/ni5010.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/ni5010.c
+@@ -114,7 +114,7 @@
+ 
+ static int	process_xmt_interrupt(struct net_device *dev);
+ #define tx_done(dev) 1
+-static void	hardware_send_packet(struct net_device *dev, char *buf, int length);
++static void	hardware_send_packet(struct net_device *dev, char *buf, int length, int pad);
+ static void 	chipset_init(struct net_device *dev, int startp);
+ static void	dump_packet(void *buf, int len);
+ static void 	ni5010_show_registers(struct net_device *dev);
+@@ -437,7 +437,7 @@
+ 	 */
+ 	
+ 	netif_stop_queue(dev);
+-	hardware_send_packet(dev, (unsigned char *)skb->data, length);
++	hardware_send_packet(dev, (unsigned char *)skb->data, skb->len, length-skb->len);
+ 	dev->trans_start = jiffies;
+ 	dev_kfree_skb (skb);
+ 	return 0;
+@@ -661,7 +661,7 @@
+ 	}
+ }
+ 
+-static void hardware_send_packet(struct net_device *dev, char *buf, int length)
++static void hardware_send_packet(struct net_device *dev, char *buf, int length, int pad)
+ {
+ 	struct ni5010_local *lp = (struct ni5010_local *)dev->priv;
+ 	int ioaddr = dev->base_addr;
+@@ -686,8 +686,8 @@
+ 	
+ 	if (NI5010_DEBUG > 3) dump_packet(buf, length);
+ 
+-        buf_offs = NI5010_BUFSIZE - length;
+-        lp->o_pkt_size = length;
++        buf_offs = NI5010_BUFSIZE - length - pad;
++        lp->o_pkt_size = length + pad;
+ 
+ 	save_flags(flags);	
+ 	cli();
+@@ -698,6 +698,9 @@
+ 
+ 	outw(buf_offs, IE_GP); /* Point GP at start of packet */
+ 	outsb(IE_XBUF, buf, length); /* Put data in buffer */
++	while(pad--)
++		outb(0, IE_XBUF);
++		
+ 	outw(buf_offs, IE_GP); /* Rewrite where packet starts */
+ 
+ 	/* should work without that outb() (Crynwr used it) */
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/ni52.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/ni52.c
+@@ -1162,7 +1162,12 @@
+ #endif
+ 	{
+ 		memcpy((char *)p->xmit_cbuffs[p->xmit_count],(char *)(skb->data),skb->len);
+-		len = (ETH_ZLEN < skb->len) ? skb->len : ETH_ZLEN;
++		len = skb->len;
++		if(len < ETH_ZLEN)
++		{
++			len = ETH_ZLEN;
++			memset((char *)p->xmit_cbuffs[p->xmit_count]+skb->len, 0, len - skb->len);
++		}
+ 
+ #if (NUM_XMIT_BUFFS == 1)
+ #	ifdef NO_NOPCOMMANDS
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/ni65.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/ni65.c
+@@ -1109,6 +1109,8 @@
+ 
+ 			memcpy((char *) p->tmdbounce[p->tmdbouncenum] ,(char *)skb->data,
+ 							 (skb->len > T_BUF_SIZE) ? T_BUF_SIZE : skb->len);
++			if(len > skb->len)
++				memset((char *)p->tmdbounce[p->tmdbouncenum]+skb->len, 0, len-skb->len);
+ 			dev_kfree_skb (skb);
+ 
+ 			save_flags(flags);
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/seeq8005.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/seeq8005.c
+@@ -378,9 +378,16 @@
+ static int seeq8005_send_packet(struct sk_buff *skb, struct net_device *dev)
+ {
+ 	struct net_local *lp = (struct net_local *)dev->priv;
+-	short length = ETH_ZLEN < skb->len ? skb->len : ETH_ZLEN;
++	short length = skb->len;
+ 	unsigned char *buf = skb->data;
+ 
++	if(length < ETH_ZLEN)
++	{
++		skb = skb_padto(skb, ETH_ZLEN);
++		if(skb == NULL)
++			return 0;
++		length = ETH_ZLEN;
++	}
+ 	/* Block a timer-based transmit from overlapping */
+ 	netif_stop_queue(dev);
+ 	
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/sgiseeq.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/sgiseeq.c
+@@ -535,6 +535,8 @@
+ 	 *    added this new entry and restarted it.
+ 	 */
+ 	memcpy((char *)(long)td->buf_vaddr, skb->data, skblen);
++	if(len != skblen)
++		memset((char *)(long)td->buf_vaddr + skb->len, 0, len-skblen);
+ 	td->tdma.cntinfo = (len & HPCDMA_BCNT) |
+ 	                   (HPCDMA_XIU | HPCDMA_EOXP | HPCDMA_XIE | HPCDMA_EOX);
+ 	if (sp->tx_old != sp->tx_new) {
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/sk_g16.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/sk_g16.c
+@@ -1256,6 +1256,7 @@
+ {
+     struct priv *p = (struct priv *) dev->priv;
+     struct tmd *tmdp;
++    static char pad[64];
+ 
+     PRINTK2(("## %s: SK_send_packet() called, CSR0 %#04x.\n", 
+ 	    SK_NAME, SK_read_reg(CSR0)));
+@@ -1280,6 +1281,8 @@
+ 	/* Copy data into dual ported ram */
+ 
+ 	memcpy_toio((tmdp->u.buffer & 0x00ffffff), skb->data, skb->len);
++	if(len != skb->len)
++		memcpy_toio((tmdp->u.buffer & 0x00ffffff) + sb->len, pad, len-skb->len);
+ 
+ 	writew(-len, &tmdp->blen);            /* set length to transmit */
+ 
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/smc9194.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/smc9194.c
+@@ -514,8 +514,18 @@
+ 	}
+-	lp->saved_skb = skb;
+ 
+-	length = ETH_ZLEN < skb->len ? skb->len : ETH_ZLEN;
++	length = skb->len;
+ 
++	if(length < ETH_ZLEN)
++	{
++		skb = skb_padto(skb, ETH_ZLEN);
++		if(skb == NULL)
++		{
++			netif_wake_queue(dev);
++			return 0;
++		}
++		length = ETH_ZLEN;
++	}
++	lp->saved_skb = skb;
+ 		
+ 	/*
+ 	** The MMU wants the number of pages to be the number of 256 bytes
+--- linux-2.4.20.orig/drivers/net/sun3_82586.c
++++ linux-2.4.20/drivers/net/sun3_82586.c
+@@ -1024,8 +1024,13 @@
+ 	else
+ #endif
+ 	{
++		len = skb->len;
++		if(len < ETH_ZLEN)
++		{
++			memset((char *)p->xmit_cbuffs[p->xmit_count], 0, ETH_ZLEN);
++			len = ETH_ZLEN;
++		}
+ 		memcpy((char *)p->xmit_cbuffs[p->xmit_count],(char *)(skb->data),skb->len);
+-		len = (ETH_ZLEN < skb->len) ? skb->len : ETH_ZLEN;
+ 
+ #if (NUM_XMIT_BUFFS == 1)
+ #	ifdef NO_NOPCOMMANDS
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/sun3lance.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/sun3lance.c
+@@ -561,6 +561,9 @@
+ 	head->misc = 0;
+ 
+ 	memcpy( PKTBUF_ADDR(head), (void *)skb->data, skb->len );
++	if(len != skb->len)
++		memset(PKTBUF_ADDR(head) + skb->len, 0, len-skb->len);
++
+ 	head->flag = TMD1_OWN_CHIP | TMD1_ENP | TMD1_STP;
+ 	lp->new_tx = (lp->new_tx + 1) & TX_RING_MOD_MASK;
+ 	lp->stats.tx_bytes += skb->len;
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/via-rhine.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/via-rhine.c
+@@ -1198,6 +1198,12 @@
+ 	/* Calculate the next Tx descriptor entry. */
+ 	entry = np->cur_tx % TX_RING_SIZE;
+ 
++	if (skb->len < ETH_ZLEN) {
++		skb = skb_padto(skb, ETH_ZLEN);
++		if(skb == NULL)
++			return 0;
++	}
++
+ 	np->tx_skbuff[entry] = skb;
+ 
+ 	if ((np->drv_flags & ReqTxAlign) &&
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/wavelan.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/wavelan.c
+@@ -2822,6 +2822,13 @@
+ 	       (unsigned) skb);
+ #endif
+ 
++	if(skb->len < ETH_ZLEN)
++	{
++		skb = skb_padto(skb, ETH_ZLEN);
++		if(skb == NULL)
++			return 0;
++	}
++
+ 	/*
+ 	 * Block a timer-based transmit from overlapping.
+ 	 * In other words, prevent reentering this routine.
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/yellowfin.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/yellowfin.c
+@@ -856,6 +856,7 @@
+ {
+ 	struct yellowfin_private *yp = dev->priv;
+ 	unsigned entry;
++	int len = skb->len;
+ 
+ 	netif_stop_queue (dev);
+ 
+@@ -871,27 +872,37 @@
+ 		int cacheline_end = ((unsigned long)skb->data + skb->len) % 32;
+ 		/* Fix GX chipset errata. */
+ 		if (cacheline_end > 24  || cacheline_end == 0)
+-			skb->len += 32 - cacheline_end + 1;
++		{
++			len = skb->len + 32 - cacheline_end + 1;
++			if(len != skb->len)
++				skb = skb_padto(skb, len);
++		}
++		if(skb == NULL)
++		{
++			yp->tx_skbuff[entry] = NULL;
++			netif_wake_queue(dev);
++			return 0;
++		}
+ 	}
+ #ifdef NO_TXSTATS
+ 	yp->tx_ring[entry].addr = cpu_to_le32(pci_map_single(yp->pci_dev, 
+-		skb->data, skb->len, PCI_DMA_TODEVICE));
++		skb->data, len, PCI_DMA_TODEVICE));
+ 	yp->tx_ring[entry].result_status = 0;
+ 	if (entry >= TX_RING_SIZE-1) {
+ 		/* New stop command. */
+ 		yp->tx_ring[0].dbdma_cmd = cpu_to_le32(CMD_STOP);
+ 		yp->tx_ring[TX_RING_SIZE-1].dbdma_cmd =
+-			cpu_to_le32(CMD_TX_PKT|BRANCH_ALWAYS | skb->len);
++			cpu_to_le32(CMD_TX_PKT|BRANCH_ALWAYS | len);
+ 	} else {
+ 		yp->tx_ring[entry+1].dbdma_cmd = cpu_to_le32(CMD_STOP);
+ 		yp->tx_ring[entry].dbdma_cmd =
+-			cpu_to_le32(CMD_TX_PKT | BRANCH_IFTRUE | skb->len);
++			cpu_to_le32(CMD_TX_PKT | BRANCH_IFTRUE | len);
+ 	}
+ 	yp->cur_tx++;
+ #else
+-	yp->tx_ring[entry<<1].request_cnt = skb->len;
++	yp->tx_ring[entry<<1].request_cnt = len;
+ 	yp->tx_ring[entry<<1].addr = cpu_to_le32(pci_map_single(yp->pci_dev, 
+-		skb->data, skb->len, PCI_DMA_TODEVICE));
++		skb->data, len, PCI_DMA_TODEVICE));
+ 	/* The input_last (status-write) command is constant, but we must 
+ 	   rewrite the subsequent 'stop' command. */
+ 
+@@ -904,7 +915,7 @@
+ 
+ 	yp->tx_ring[entry<<1].dbdma_cmd =
+ 		cpu_to_le32( ((entry % 6) == 0 ? CMD_TX_PKT|INTR_ALWAYS|BRANCH_IFTRUE :
+-					  CMD_TX_PKT | BRANCH_IFTRUE) | skb->len);
++					  CMD_TX_PKT | BRANCH_IFTRUE) | len);
+ #endif
+ 
+ 	/* Non-x86 Todo: explicitly flush cache lines here. */
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/znet.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/znet.c
+@@ -348,10 +348,19 @@
+ 	int ioaddr = dev->base_addr;
+ 	struct net_local *lp = (struct net_local *)dev->priv;
+ 	unsigned long flags;
++	short length = skb->len;
+ 
+ 	if (znet_debug > 4)
+ 		printk(KERN_DEBUG "%s: ZNet_send_packet.\n", dev->name);
+ 
++	if(length < ETH_ZLEN)
++	{
++		skb = skb_padto(skb, ETH_ZLEN);
++		if(skb == NULL)
++			return 0;
++		length = ETH_ZLEN;
++	}
++	
+ 	netif_stop_queue (dev);
+ 	
+ 	/* Check that the part hasn't reset itself, probably from suspend. */
+@@ -362,7 +371,6 @@
+ 	  hardware_init(dev);
+ 
+ 	if (1) {
+-		short length = ETH_ZLEN < skb->len ? skb->len : ETH_ZLEN;
+ 		unsigned char *buf = (void *)skb->data;
+ 		ushort *tx_link = zn.tx_cur - 1;
+ 		ushort rnd_len = (length + 1)>>1;
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/pcmcia/axnet_cs.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/pcmcia/axnet_cs.c
+@@ -1139,7 +1139,8 @@
+ 	struct ei_device *ei_local = (struct ei_device *) dev->priv;
+ 	int length, send_length, output_page;
+ 	unsigned long flags;
+-
++	u8 packet[ETH_ZLEN];
++	
+ 	netif_stop_queue(dev);
+ 
+ 	length = skb->len;
+@@ -1164,7 +1165,7 @@
+ 	ei_local->irqlock = 1;
+ 
+ 	send_length = ETH_ZLEN < length ? length : ETH_ZLEN;
+-    
++	
+ 	/*
+ 	 * We have two Tx slots available for use. Find the first free
+ 	 * slot, and then perform some sanity checks. With two Tx bufs,
+@@ -1209,7 +1210,15 @@
+ 	 * trigger the send later, upon receiving a Tx done interrupt.
+ 	 */
+ 
+-	ei_block_output(dev, length, skb->data, output_page);
++	if(length == skb->len)
++		ei_block_output(dev, length, skb->data, output_page);
++	else
++	{
++		memset(packet, 0, ETH_ZLEN);
++		memcpy(packet, skb->data, skb->len);
++		ei_block_output(dev, length, packet, output_page);
++	}
++	
+ 	if (! ei_local->txing) 
+ 	{
+ 		ei_local->txing = 1;
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/pcmcia/fmvj18x_cs.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/pcmcia/fmvj18x_cs.c
+@@ -865,11 +865,19 @@
+ {
+     struct local_info_t *lp = (struct local_info_t *)dev->priv;
+     ioaddr_t ioaddr = dev->base_addr;
++    short length = skb->len;
++    
++    if(length < ETH_ZLEN)
++    {
++    	skb = skb_padto(skb, ETH_ZLEN);
++    	if(skb == NULL)
++    		return 0;
++    	length = ETH_ZLEN;
++    }
+ 
+     netif_stop_queue(dev);
+ 
+     {
+-	short length = ETH_ZLEN < skb->len ? skb->len : ETH_ZLEN;
+ 	unsigned char *buf = skb->data;
+ 
+ 	if (length > ETH_FRAME_LEN) {
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/pcmcia/ray_cs.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/pcmcia/ray_cs.c
+@@ -1042,7 +1042,7 @@
+ {
+     ray_dev_t *local = dev->priv;
+     dev_link_t *link = local->finder;
+-    short length;
++    short length = skb->len;
+ 
+     if (!(link->state & DEV_PRESENT)) {
+         DEBUG(2,"ray_dev_start_xmit - device not present\n");
+@@ -1058,7 +1058,13 @@
+         }
+     }
+ 
+-    length = ETH_ZLEN < skb->len ? skb->len : ETH_ZLEN;
++    if(length < ETH_ZLEN)
++    {
++    	skb = skb_padto(skb, ETH_ZLEN);
++    	if(skb == NULL)
++    		return 0;
++    	length = ETH_ZLEN;
++    }
+     switch (ray_hw_xmit( skb->data, length, dev, DATA_TYPE)) {
+         case XMIT_NO_CCS:
+         case XMIT_NEED_AUTH:
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/pcmcia/xirc2ps_cs.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/pcmcia/xirc2ps_cs.c
+@@ -1546,7 +1546,6 @@
+     DEBUG(1, "do_start_xmit(skb=%p, dev=%p) len=%u\n",
+ 	  skb, dev, pktlen);
+ 
+-    netif_stop_queue(dev);
+ 
+     /* adjust the packet length to min. required
+      * and hope that the buffer is large enough
+@@ -1556,8 +1555,14 @@
+      * pad this in his buffer with random bytes
+      */
+     if (pktlen < ETH_ZLEN)
++    {
++        skb = skb_padto(skb, ETH_ZLEN);
++        if(skb == NULL)
++        	return 0;
+ 	pktlen = ETH_ZLEN;
++    }
+ 
++    netif_stop_queue(dev);
+     SelectPage(0);
+     PutWord(XIRCREG0_TRS, (u_short)pktlen+2);
+     freespace = GetWord(XIRCREG0_TSO);
+--- kernel-source-2.4.18-2.4.18.orig/drivers/net/pcmcia/xircom_tulip_cb.c
++++ kernel-source-2.4.18-2.4.18/drivers/net/pcmcia/xircom_tulip_cb.c
+@@ -922,6 +922,14 @@
+ 	/* Calculate the next Tx descriptor entry. */
+ 	entry = tp->cur_tx % TX_RING_SIZE;
+ 
++	/* Seems to be needed even though the docs disagree */
++	if(skb->len < ETH_ZLEN)
++	{
++		skb = skb_padto(skb, ETH_ZLEN);
++		if(skb == NULL)
++			return 0;
++	}
++	
+ 	tp->tx_skbuff[entry] = skb;
+ #ifdef CARDBUS
+ 	if (tp->chip_id == X3201_3) {
+--- kernel-source-2.4.18-2.4.18.orig/include/linux/skbuff.h
++++ kernel-source-2.4.18-2.4.18/include/linux/skbuff.h
+@@ -240,6 +240,7 @@
+ 						int newheadroom,
+ 						int newtailroom,
+ 						int priority);
++extern struct sk_buff *		skb_pad(struct sk_buff *skb, int pad);
+ #define dev_kfree_skb(a)	kfree_skb(a)
+ extern void	skb_over_panic(struct sk_buff *skb, int len, void *here);
+ extern void	skb_under_panic(struct sk_buff *skb, int len, void *here);
+@@ -1079,6 +1080,26 @@
+ 	if (delta || skb_cloned(skb))
+ 		return pskb_expand_head(skb, (delta+15)&~15, 0, GFP_ATOMIC);
+ 	return 0;
++}
++
++/**
++ *	skb_padto	- pad an skbuff up to a minimal size
++ *	@skb: buffer to pad
++ *	@len: minimal length
++ *
++ *	Pads up a buffer to ensure the trailing bytes exist and are
++ *	blanked. If the buffer already contains sufficient data it
++ *	is untouched. Returns the buffer, which may be a replacement
++ *	for the original, or NULL for out of memory - in which case
++ *	the original buffer is still freed.
++ */
++ 
++static inline struct sk_buff *skb_padto(struct sk_buff *skb, unsigned int len)
++{
++	unsigned int size = skb->len;
++	if(likely(size >= len))
++		return skb;
++	return skb_pad(skb, len-size);
+ }
+ 
+ /**
+--- kernel-source-2.4.18-2.4.18.orig/net/netsyms.c
++++ kernel-source-2.4.18-2.4.18/net/netsyms.c
+@@ -489,6 +489,7 @@
+ EXPORT_SYMBOL(__kfree_skb);
+ EXPORT_SYMBOL(skb_clone);
+ EXPORT_SYMBOL(skb_copy);
++EXPORT_SYMBOL(skb_pad);
+ EXPORT_SYMBOL(netif_rx);
+ EXPORT_SYMBOL(dev_add_pack);
+ EXPORT_SYMBOL(dev_remove_pack);
+--- kernel-source-2.4.18-2.4.18.orig/net/core/skbuff.c
++++ kernel-source-2.4.18-2.4.18/net/core/skbuff.c
+@@ -731,6 +731,36 @@
+ 	return n;
+ }
+ 
++/**
++ *	skb_pad			-	zero pad the tail of an skb
++ *	@skb: buffer to pad
++ *	@pad: space to pad
++ *
++ *	Ensure that a buffer is followed by a padding area that is zero
++ *	filled. Used by network drivers which may DMA or transfer data
++ *	beyond the buffer end onto the wire.
++ *
++ *	May return NULL in out of memory cases.
++ */
++ 
++struct sk_buff *skb_pad(struct sk_buff *skb, int pad)
++{
++	struct sk_buff *nskb;
++	
++	/* If the skbuff is non linear tailroom is always zero.. */
++	if(skb_tailroom(skb) >= pad)
++	{
++		memset(skb->data+skb->len, 0, pad);
++		return skb;
++	}
++	
++	nskb = skb_copy_expand(skb, skb_headroom(skb), skb_tailroom(skb) + pad, GFP_ATOMIC);
++	kfree_skb(skb);
++	if(nskb)
++		memset(nskb->data+nskb->len, 0, pad);
++	return nskb;
++}	
++ 
+ /* Trims skb to length len. It can change skb pointers, if "realloc" is 1.
+  * If realloc==0 and trimming is impossible without change of data,
+  * it is BUG().

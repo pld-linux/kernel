@@ -1,0 +1,21 @@
+ # (from RH - fixes CAN-2003-0248)
+--- linux-2.4.20/arch/i386/kernel/i387.c~	2003-05-27 14:10:53.000000000 +0200
++++ linux-2.4.20/arch/i386/kernel/i387.c	2003-05-27 14:10:53.000000000 +0200
+@@ -384,12 +384,14 @@
+ static int restore_i387_fxsave( struct _fpstate *buf )
+ {
+ 	struct task_struct *tsk = current;
++	int err;
+ 	clear_fpu( tsk );
+-	if ( __copy_from_user( &tsk->thread.i387.fxsave, &buf->_fxsr_env[0],
++	err = __copy_from_user( &tsk->thread.i387.fxsave, &buf->_fxsr_env[0],
+-			       sizeof(struct i387_fxsave_struct) ) )
++			       sizeof(struct i387_fxsave_struct) ) ;
+-		return 1;
+ 	/* mxcsr bit 6 and 31-16 must be zero for security reasons */
+ 	tsk->thread.i387.fxsave.mxcsr &= 0xffbf;
++	if (err)
++		return 1;
+ 	return convert_fxsr_from_user( &tsk->thread.i387.fxsave, buf );
+ }
+ 
