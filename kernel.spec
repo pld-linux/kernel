@@ -432,7 +432,7 @@ cd ..
 patch -p1 -s <vlan.%{vlan_version}/vlan_2.4.patch
 
 # grsecurity
-%patch906 -p1
+#%patch906 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
