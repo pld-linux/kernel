@@ -28,7 +28,7 @@
 %define		ntfs_version		2.1.4a
 %define		drm_xfree_version	4.3.0
 %define		hostap_version		0.0.2
-%define		netfilter_snap		20030914
+%define		netfilter_snap		20030605
 %define		iptables_version	1.2.8
 %define		ACL_version		0.8.56
 Summary:	The Linux kernel (the core of the Linux operating system)
