@@ -27,7 +27,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.19
-Release:	0.6%{?_with_preemptive:_pr}
+Release:	0.7%{?_with_preemptive:_pr}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -39,7 +39,7 @@ Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 #Source4:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 Source5:	linux-2.4.19-netfilter-20020808.tar.gz
 # new -> ftp://ftp.tux.org/pub/roudier/drivers/portable/sym-2.1.x/sym-2.1.16-20011028.tar.gz
-Source6:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
+#Source6:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
 Source7:	http://download.sourceforge.net/ippersonality/ippersonality-%{IPperson_version}.tar.gz
 Source8:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-%{jfs_version}.tar.gz
 Source9:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
@@ -116,7 +116,7 @@ Patch103:	linux-2.4.2-nvram-hdd.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch104:	linux-2.4.19-pcnet-parms.patch
 Patch105:	linux-alpha-nfs-2.4.19.patch
-Patch106:	linux-2.4-string.patch
+#Patch106:
 # raid5 xor fix for PIII/P4, should go away shortly
 Patch107:	linux-2.4.0-raid5xor.patch
 # disable some networking printk's
@@ -127,7 +127,7 @@ Patch109:	linux-2.4.2-blkioctl-sector.patch
 Patch110:	linux-2.4.12-scsi_scan.patch
 # fix rawio
 Patch111:	linux-2.4.3-rawio.patch
-Patch112:	linux-2.4.10-aironet.patch
+#Patch112:
 Patch113:	linux-2.4.10-cpqfc.patch
 # Created from lvm.tgz:LVM/PATCHES by doing make
 Patch114:	http://people.sistina.com/~mauelshagen/lvm_patches/lvm_%{lvm_version}+_25.07.2002.patch
@@ -144,7 +144,7 @@ Patch124:	%{name}-gcc31.patch
 Patch125:	linux-2.4.18-hpfs.patch
 Patch126:	linux-tulip-vlan.patch
 Patch127:	linux-modules-fixed.patch
-Patch128:	amd762_irq_router.patch
+#Patch128:
 Patch129:	linux-53c7,8xx-build.fix
 Patch130:	linux-PPC-SMP.patch
 Patch131:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
@@ -408,8 +408,9 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -n linux-%{version}
+%setup -q -a3 -a4 -a5  -a7 -a8 -a9 -n linux-%{version}
 #%patch1000 -p1
+#fixme
 #%patch0 -p1
 %patch1 -p1
 %patch900 -p1
@@ -441,13 +442,11 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch104 -p1
 # Tru64 NFS kludge
 #%patch105 -p1
-%patch106 -p1
 %patch107 -p1
 %patch108 -p1
 %patch109 -p1
 %patch110 -p1
 %patch111 -p1
-%patch112 -p1
 %patch113 -p1
 %patch114 -p1
 %patch115 -p0
@@ -466,7 +465,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch125 -p1
 %patch126 -p1
 %patch127 -p1
-%patch128 -p1
 %patch129 -p0
 %patch130 -p0
 %patch131 -p0
