@@ -613,23 +613,29 @@ gzip -dc %{PATCH24} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 bzip2 -dc %{PATCH25} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} 
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH26}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH27}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH28}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH29}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH30}
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH31}
-cd serial-5.05
-./install-in-kernel $RPM_BUILD_ROOT/usr/src/linux
+
+# 802.1Q VLANs
+cd vlan.%{vlan_version}
+patch -p1 -s < %{PACTH905}
 cd ..
-patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <vlan.%{vlan_version}/vlan_2.2.patch
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH31}
+
+cd serial-5.05
+patch -p1 -s < %{PACTH28}
+patch -p1 -s < %{PACTH29}
+./install-in-kernel $RPM_BUILD_ROOT/usr/src/linux-%{version}
+cd ..
 
 tar xfz %{SOURCE8}
 mv RELEASE_NOTES.DAC960 README.DAC960 Documentation
 mv DAC960.[ch] drivers/block
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} <linux-%{ow_version}/linux-%{ow_version}.diff
 
 # symbios drivers
 tar zxf %{SOURCE6}
-mv sym-1.7.3-ncr-3.4.3/*.{c,h} drivers/scsi
-mv sym-1.7.3-ncr-3.4.3/{README,ChangeLog}.* Documentation
+mv sym-1.7.3-ncr-3.4.3/*.{c,h} $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi
+mv sym-1.7.3-ncr-3.4.3/{README,ChangeLog}.* $RPM_BUILD_ROOT/usr/src/linux-%{version}/Documentation
 rm -rf sym-1.7.3-ncr-3.4.3
 
 %ifarch sparc sparc64
