@@ -14,7 +14,7 @@
 
 %define		_rel		1
 %define		_test_ver	9
-%define		_cset		20031107_0706
+%define		_cset		20031109_1808
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 
@@ -93,7 +93,6 @@ Patch72:	2.6.0-t9-NLS-module-lkml.patch
 Patch74:	2.6.0-t9-acpi_osl-lkml.patch
 
 Patch76:	2.6.0-t9-forcedeth-lkml.patch
-Patch80:	2.6.0-t9-quirk_via_bridge-fix-lkml.patch
 
 Patch84:	2.6.0-t9-netfilter-p2p.patch
 
@@ -420,7 +419,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch74 -p1
 
 %patch76 -p1
-%patch80 -p1
 
 %patch84 -p1
 
