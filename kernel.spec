@@ -792,7 +792,7 @@ fi
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Documentation
 %{_prefix}/src/linux-%{version}/arch
-#%{_prefix}/src/linux-%{version}/crypto
+%{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
 %{_prefix}/src/linux-%{version}/init
