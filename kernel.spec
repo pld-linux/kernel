@@ -9,7 +9,7 @@
 # _without_up		- don't build UP kernel
 # _without_wrr		- don't build WRR support
 #
-%define		krelease		5.910
+%define		krelease		5.911
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -145,7 +145,8 @@ Patch103:	linux-2.4.2-nvram-hdd.patch
 Patch104:	linux-2.4-module.fix.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
 Patch105:	linux-2.4.2-pcnet-parms.patch
-Patch106:	http://www.kernel.org/pub/linux/kernel/people/hedrick/ide-%{version}/ide.%{version}-rc1.02152002.patch.bz2
+#Patch106:	http://www.kernel.org/pub/linux/kernel/people/hedrick/ide-%{version}/ide.%{version}-rc1.02152002.patch.bz2
+Patch106:	linux-2.4.19-rc1-ac7-ide.patch
 Patch107:	linux-reiserfs-rename.patch
 Patch108:	linux-alpha-nfs-2.4.2.patch
 Patch109:	linux-2.4-string.patch
