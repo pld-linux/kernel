@@ -37,8 +37,8 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.1
-%define		_cset		0
+%define		_rel		0.2
+%define		_cset		20040415_1914
 
 ## netfilter snap 
 %define		_netfilter_snap		20040415
@@ -158,7 +158,7 @@ Patch87:	2.6.4-rc1-03-CONNMARK.patch
 
 Patch90:	2.6.4-psion-5mx.patch
 
-#Patch94:	2.6.5-patch-o-matic-ng-extra-%{_netfilter_snap}.patch
+Patch94:	2.6.6-rc1-patch-o-matic-ng-extra-%{_netfilter_snap}.patch
 
 #from:		http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
 Patch96:	2.6.1-all-in-1.patch
@@ -170,6 +170,8 @@ Patch100:	2.6.5-3C920b-Tornado.patch
 Patch102:	2.6.5-rc3-EXPORT_SYMBOL.patch
 
 Patch104:	2.6.5-i386-cmpxchg.patch
+
+Patch106:	2.6.4-wrr.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
@@ -566,12 +568,11 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch85 -p1
 %patch86 -p1
-exit 1
-# to fix
-#%patch90 -p1
+
+%patch90 -p1
 
 # netfilter - extra
-##%patch94 -p1
+%patch94 -p1
 
 %patch96 -p1
 
@@ -584,6 +585,8 @@ exit 1
 %ifarch i386
 %patch104 -p1
 %endif
+
+%patch106 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
