@@ -159,6 +159,8 @@ Patch94:	%{version}-patch-o-matic-ng-extra-%{_netfilter_snap}.patch
 #from:		http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
 Patch96:	2.6.1-all-in-1.patch
 
+Patch98:	2.6.5-sparc64-missing-include.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
@@ -572,6 +574,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch94 -p1
 
 %patch96 -p1
+
+%patch98 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
