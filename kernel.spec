@@ -18,7 +18,7 @@ Summary(ru):	Ядро Linux
 Summary(uk):	Ядро Linux
 Name:		kernel
 Version:	2.2.25
-Release:	3
+Release:	4
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -131,6 +131,7 @@ Patch119:	linux-remove_htb2_header.diff
 Patch120:	ds9-2.2.21-2.diff
 Patch121:	rbtree-2.2.21-1.diff
 Patch122:	ds9-htb3-2.2.21-2.diff
+Patch123:	linux-2.2-mremap-munmap.patch
 
 Patch150:	2.2.25-fix-ow_configure.help.patch
 
@@ -549,6 +550,7 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
+%patch123 -p1
 
 %ifarch ppc
 #enable lfs on ppc
