@@ -648,7 +648,7 @@ echo Updating VIA Southbridge
 
 %ifarch ppc
 %patch138 -p1
-#%patch143 -p0
+%patch143 -p0
 %endif
 
 %patch141 -p1
