@@ -679,6 +679,7 @@ ConfigBOOT()
 
 	echo "# CONFIG_APM is not set" >> arch/%{base_arch}/defconfig
 	echo "# CONFIG_ACPI is not set" >> arch/%{base_arch}/defconfig
+	echo "# CONFIG_ACPI_BOOT is not set" >> arch/%{base_arch}/defconfig
 	echo "# CONFIG_MTD is not set" >> arch/%{base_arch}/defconfig
 	echo "# CONFIG_NETFILTER is not set" >> arch/%{base_arch}/defconfig
 	echo "# CONFIG_WAN is not set" >> arch/%{base_arch}/defconfig
