@@ -720,7 +720,11 @@ TuneUpConfigForIX86 () {
 %endif
 }
 
-#CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_platform}-"
+%if "%{_target_base_arch}" != "%{_arch}"
+CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
+%else
+CrossOpts=""
+%endif
 
 BuildConfig (){
 	%{?_debug:set -x}
@@ -958,7 +962,11 @@ PreInstallKernel BOOT
 %install
 rm -rf $RPM_BUILD_ROOT
 umask 022
-#CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_platform}-"
+%if "%{_target_base_arch}" != "%{_arch}"
+CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
+%else
+CrossOpts=""
+%endif
 
 install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 install -d $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}{,smp}/misc
