@@ -55,6 +55,7 @@ Patch12:	ftp://shiva.poland.com/people/serek/kernel-DPT-smartRAID-serek.patch
 # Wiget: obsoleted by raid patch
 #Patch13:	http://www.linux.org.uk/VERSION/2216.raidfix
 Patch14:	http://www.linux.org.uk/VERSION/2216.decbug
+Patch15:	linux-ipv6-addrconf.patch
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -260,6 +261,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch12 -p1
 #%patch13 -p1 -R -b .wiget
 %patch14 -p1 -R
+%patch15 -p1
 
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 # Tekram DC395/315 U/UW SCSI host driver
@@ -425,6 +427,7 @@ patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH12}
 #patch -s -p1 -R -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH13}
 patch -s -p1 -R -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH14}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH15}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < linux-%{ow_version}/linux-%{ow_version}.diff
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/scsi/
