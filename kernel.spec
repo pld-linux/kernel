@@ -648,6 +648,26 @@ echo Added ACL support
 echo Added NetMos card supprot
 %patch46 -p1
 
+%if %{?_with_o1:1}
+echo O(1) Scheduler.
+#%patch2000 -p1
+%ifarch ppc
+echo Not included NOW.
+%endif
+%ifarch ppc64
+echo Not included NOW.
+%endif
+%ifarch sparc
+echo Not included NOW.
+%endif
+%ifarch sparc64
+echo Not included NOW.
+%endif
+%ifarch alpha
+echo Not included NOW.
+%endif
+%endif
+
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
 sed -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile.orig > drivers/atm/Makefile
