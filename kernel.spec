@@ -23,7 +23,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.23
-Release:	0.9.2
+Release:	0.9.3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -1290,11 +1290,13 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/*_cs.o*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.o*
 %endif
-%ifnarch ppc sparc sparc64
+%ifnarch sparc sparc64
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o*
 %ifnarch alpha
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
+%ifnarch ppc
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o*
+%endif
 %endif
 %endif
 %ifnarch sparc
@@ -1315,10 +1317,10 @@ fi
 /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.o*
 /lib/modules/%{version}-%{release}/kernel/drivers/parport/*_cs.o*
 /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.o*
-%ifnarch ppc
 /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hisax/*_cs.o*
 %ifnarch alpha
 /lib/modules/%{version}-%{release}/kernel/drivers/isdn/avmb1/avm_cs.o*
+%ifnarch ppc
 /lib/modules/%{version}-%{release}/kernel/drivers/telephony/*_pcmcia.o*
 %endif
 %endif
