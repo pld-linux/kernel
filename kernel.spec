@@ -14,7 +14,7 @@
 %define		pre_version		pre1
 %define		ipvs_version		1.0.4
 %define		freeswan_version	1.97
-%define		IPperson_version	20020427-2.4.18
+%define		IPperson_version	20020819-2.4.19
 %define		grsec_version		1.9.9-rc3
 %define		jfs_version		2.4-1.0.24
 %define		lvm_version		1.0.5
@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	2.2%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	2.3%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -247,7 +247,7 @@ Patch906:	linux-netfilter-newnat-conntrack-nat-udp.patch
 Patch907:	PPC-grsecurity-pgtable.h.patch
 Patch908:	linux-2.4.19-PPC-o1_scheduler.patch
 Patch909:	linux-2.4.19-PPC-agpgart_be.patch
-Patch910:	linux-2.4.19-grsecurity-1.9.7-fix.patch
+Patch910:	linux-2.4.20-grsec-1.9.8-EXPORT_SYMBOL.patch
 Patch911:	linux-2.4.19-SPARC.patch
 Patch912:	linux-2.4.19-grsec-1.9.7-PAX-sysctl.patch
 
@@ -519,7 +519,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a12 -n linux-%{version}
+%setup -q -a3 -a4 -a5 -a6 -a7 -a8 -a9 -a10 -a12 -n linux-%{version}
 %patch0 -p1
 %patch1 -p1
 %patch900 -p1
@@ -629,7 +629,7 @@ patch -p1 -s <linux-2.3.99-pre6-fore200e-0.2f/linux-2.3.99-pre6-fore200e-0.2f.pa
 %endif
 
 %patch32 -p1
-#%{!?_without_grsec:%patch910 -p1}
+%{!?_without_grsec:%patch910 -p1}
 
 # hostap
 #echo Installing Host AP support
