@@ -1163,13 +1163,13 @@ fi
 %{_libdir}/bootdisk/boot/vmlinuz-%{version}
 %{_libdir}/bootdisk/boot/System.map-%{version}
 %dir %{_libdir}/bootdisk/lib/modules/%{version}
-#%{_libdir}/bootdisk/lib/modules/%{version}/atm
+#%%{_libdir}/bootdisk/lib/modules/%{version}/atm
 %{_libdir}/bootdisk/lib/modules/%{version}/block
 %ifnarch sparc sparc64 alpha
 %{_libdir}/bootdisk/lib/modules/%{version}/cdrom
 %endif
 %{_libdir}/bootdisk/lib/modules/%{version}/fs
-#%{_libdir}/bootdisk/lib/modules/%{version}/ipv4
+#%%{_libdir}/bootdisk/lib/modules/%{version}/ipv4
 %{_libdir}/bootdisk/lib/modules/%{version}/ipv6
 %{_libdir}/bootdisk/lib/modules/%{version}/misc
 %{_libdir}/bootdisk/lib/modules/%{version}/net
@@ -1188,7 +1188,7 @@ fi
 %{_prefix}/src/linux-%{version}/include
 %{_includedir}/asm
 #%ifarch sparc sparc64
-#%{_includedir}/asm-sparc*
+#%%{_includedir}/asm-sparc*
 #%endif
 %ifarch ppc
 %{_kernelsrcdir}/include/asm-ppc
