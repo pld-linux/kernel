@@ -9,7 +9,7 @@
 # _without_smp		- don't build SMP kernel
 # _without_up		- don't build UP kernel
 #
-%define		krelease		3.05
+%define		krelease		3.06
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -195,6 +195,10 @@ Patch142:	linux-modules-fixed.patch
 Patch143:	linux-ppc-procesor.patch
 Patch144:	amd762_irq_router.patch
 
+# pathces required for iptables 1.2.7
+Patch145:	netfilter_ipv4-iptables-1.2.7.patch
+Patch146:	netfilter_ipv6-iptables-1.2.7.patch
+
 # Patches fixing other patches or 3rd party sources ;)
 
 # patch to fix missing EXPORT_SYMBOLS from IDE patch
@@ -239,6 +243,9 @@ Provides:	%{name}-up = %{version}-%{release}
 Provides:	module-info
 Provides:	i2c = 2.6.1
 Provides:	bttv = 0.7.83
+Provides:	%{name}_netfilter = 1.2.7
+Provides:	%{name}(reiserfs) = %{version}
+Provides:	%{name}(agpgart) = %{version}
 Autoreqprov:	no
 Prereq:		fileutils
 Prereq:		modutils
@@ -294,9 +301,13 @@ Group(ru):	‚¡⁄¡/Òƒ“œ
 Group(sl):	Osnova/Jedro
 Group(sv):	Bas/K‰rna
 Group(uk):	‚¡⁄¡/Òƒ“œ
-Provides:	%{name} = %{version}-%{release}
+Provides:	%{name}-smp = %{version}-%{release}
+Provides:	module-info
+Provides:	i2c = 2.6.1
+Provides:	bttv = 0.7.83
 Provides:	%{name}(reiserfs) = %{version}
 Provides:	%{name}(agpgart) = %{version}
+Provides:	%{name}_netfilter = 1.2.7
 Prereq:		modutils
 Autoreqprov:	no
 
@@ -746,6 +757,9 @@ echo Updating VIA Southbridge
 
 # ADM router
 %patch144 -p1
+
+%patch145 -p1
+%patch146 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
