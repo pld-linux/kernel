@@ -83,7 +83,6 @@ Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 # Source0-md5:	cffcd2919d9c8ef793ce1ac07a440eda
 Source1:	%{name}-autoconf.h
-Source2:	%{name}-version.h
 
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
 
@@ -145,6 +144,7 @@ Patch28:	%{name}-2.6-nm256_oops.patch
 
 Patch32:	2.6.x-TGA-fbdev-lkml.patch
 Patch33:	linux-kbuild-extmod.patch
+Patch34:	%{name}-version.patch
 
 # framebuffer fixes
 Patch41:	linux-fbcon-margins.patch
@@ -559,6 +559,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 #patch32 -p1	NEEDS UPDATE
 %patch33 -p1
+%patch34 -p1
 
 %patch41 -p1
 
@@ -702,15 +703,11 @@ BuildConfig (){
 	if [ "$smp" = "yes" ]; then
 		install include/linux/autoconf.h \
 			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
-		install include/linux/version.h \
-			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/version-smp.h
 		install .config \
 			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/config-smp
 	else
 		install include/linux/autoconf.h \
 			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
-		install include/linux/version.h \
-			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/version-up.h
 		install .config \
 			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/config-up
 	fi
@@ -801,19 +798,17 @@ PreInstallKernel (){
 }
 
 KERNEL_BUILD_DIR=`pwd`
+echo "-%{release}" > localversion
 
 # UP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 rm -rf $KERNEL_INSTALL_DIR
-echo "-%{release}" > localversion
 BuildConfig
 %{?with_up:BuildKernel}
 %{?with_up:PreInstallKernel}
-
 # SMP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
-echo "-%{release}smp" > localversion
 BuildConfig smp
 %{?with_smp:BuildKernel smp}
 %{?with_smp:PreInstallKernel smp}
@@ -862,16 +857,12 @@ find -name "*.orig" -exec rm -f "{}" ";"
 if [ -e $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h ]; then
 install $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h \
 	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
-install $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/version-up.h \
-	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 install	$KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/config-up \
 	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 fi
 
 if [ -e $KERNEL_BUILD_DIR/build-done/kernel-SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h ]; then
 install $KERNEL_BUILD_DIR/build-done/kernel-SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h \
-	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
-install $KERNEL_BUILD_DIR/build-done/kernel-SMP/usr/src/linux-%{version}/include/linux/version-smp.h \
 	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 install	$KERNEL_BUILD_DIR/build-done/kernel-SMP/usr/src/linux-%{version}/config-smp \
 	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
@@ -885,7 +876,6 @@ $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 
 %{__make} $CrossOpts mrproper
 install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
-install %{SOURCE2} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/version.h
 
 %clean
 rm -rf $RPM_BUILD_ROOT
