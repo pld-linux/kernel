@@ -461,6 +461,9 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch131 -p0
 %patch132 -p0
 
+%patch901 -p1
+%patch905 -p1
+
 # XFree DRM
 %ifarch %{ix86}
 %patch902 -p0
@@ -492,9 +495,6 @@ echo Adding NCR/Symbios controler
 mv %{sym_ncr_version}/*.{c,h} drivers/scsi
 mv %{sym_ncr_version}/{README,ChangeLog}.* Documentation
 rm -rf %{sym_ncr_version}
-
-%patch901 -p1
-%patch905 -p1
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
