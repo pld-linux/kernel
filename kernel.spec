@@ -6,7 +6,7 @@
 %define		wlan_version		0.3.4
 %define		tun_version		1.1
 %define         vlan_version            1.0.1
-%define		aic7xxx_version		6.2.4-2.2.19
+%define		aic7xxx_version		6.2.3-2.2.19
 %define		symncr_version		1.7.3c-ncr-3.4.3b
 %define		jfs_version		1.0.5
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -61,6 +61,7 @@ Patch7:		linux-ipv6-addrconf.patch
 # based on http://support.3com.com/infodeli/tools/nic/linux/3c90x-1.0.0i.tar.gz
 Patch8:		%{name}-3c90x.patch
 Patch9:		linux-ipv6-glibc2.2.patch
+Patch10:	aic7xxx_fix_module_ver.patch
 
 # in this place i will make new Patches nad Sources
 
@@ -347,6 +348,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch7 -p1
 %patch8 -p1
 %patch9 -p1
+%patch10 -p1
 
 # 802.1Q VLANs
 #cd vlan.%{vlan_version}
@@ -571,6 +573,7 @@ gzip -dc %{PATCH6} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{versi
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH7}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH8}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH9}
+patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH10}
 
 #DAC960 drivers
 tar xfz %{SOURCE8}
