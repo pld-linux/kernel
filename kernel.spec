@@ -117,7 +117,7 @@ Patch52:	2.6.0-t10-POSIX_message_queues-1of2-lkml.patch
 Patch53:	2.6.0-t10-POSIX_message_queues-2of2-lkml.patch
 
 # http://bytesex.org/patches/2.6.0-test10-2/
-Patch60:	patch-2.6.0-test10-kraxel.gz
+Patch60:	patch-2.6.0-test11-kraxel.gz
 
 Patch62:	2.6.0-t11-EPoX-sound-lkml.patch
 
