@@ -80,6 +80,7 @@ Patch2:		acpi-irq-fixes.patch
 
 Patch22:	2.6.0-t3-swim3.patch
 Patch23:	squashfs1.3-patch
+Patch24:	2.6.0-t5-isdn.patch
 
 Patch26:	2.6.0-t3-eisa-bus.c-lkml.patch
 Patch27:	2.6.0-t3-initrd_load-lkml.patch
@@ -332,6 +333,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 #%patch22 -p1
 %patch23 -p1
+%patch24 -p1
 
 #%patch26 -p1
 #%patch27 -p1
