@@ -127,13 +127,13 @@ Source90:	%{name}-grsec.config
 Source91:	%{name}-grsec+pax.config
 
 Patch0:		2.6.0-ksyms-add.patch
-Patch1:		2.6.0-t4-PPC-ENODEV.patch
+
 Patch2:		2.6.0-t6-usb-irq.patch
 Patch3:		2.6.0-t7-memleak-lkml.patch
 Patch4:		2.6.0-t7-memleak2-lkml.patch
 #Patch5:	2.6.0-t8-swap-include-lkml.patch
 Patch6:		2.6.0-t8-VLSI-ix86-lkml.patch
-#Patch7:	2.6.0-t8-appletalk-SYSCTL-lkml.patch	-- obsolete
+
 Patch8:		2.6.0-t8-umsdos-lkml.patch
 Patch9:		2.6.0-t9-acpi_osl-lkml.patch
 
@@ -142,7 +142,7 @@ Patch12:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch13:	2.6.2-Initio9100U-Kconfig.patch
 # http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
 Patch14:	2.6.1-all-in-1.patch
-#Patch15:	2.6.x-apm-disabled.patch	-- obsolete
+
 Patch16:	linux-alpha-isa.patch
 Patch17:	2.6.4-psion-5mx.patch
 Patch18:	2.6.5-sparc64-missing-include.patch
@@ -154,7 +154,7 @@ Patch23:	2.6.6-xfs-qsort-lkml.patch
 #Patch24:	2.6.7-bridge_sysfs-lkml.patch
 Patch25:	2.6.7-alpha_compile.patch
 Patch26:	2.6.7-ppc-asm-defs.patch
-#Patch27:	2.6.7-ppc-cciss-div.patch	-- obsolete
+
 Patch28:	2.6.7-ppc-ipr-div.patch
 
 #Patch30:	2.6.x-ppp_mppe.patch
@@ -589,7 +589,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %endif
 
 %patch0 -p1
-%patch1 -p1
+
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
