@@ -97,7 +97,7 @@ Patch11:	http://prdownloads.sourceforge.net/linuxcompressed/patch-comp-cache-2.4
 Patch100:	quota-fix-2.4.7.diff.gz
 # from LKML
 Patch101:	linux-scsi-debug-bug.patch
-Patch102:	linux-2.4.5-oom-killer.patch
+Patch102:	linux-2.4.7-oom-killer.patch
 Patch103:	linux-2.4.2-raw-ip.patch
 Patch104:	PCI_ISA_bridge.patch
 Patch105:	linux-2.4.2-nvram-hdd.patch
