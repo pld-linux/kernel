@@ -177,8 +177,6 @@ Patch104:	2.6.5-i386-cmpxchg.patch
 
 Patch106:	2.6.4-wrr.patch
 
-Patch108:	2.6.6-ALPS-touchpad-driver.patch
-
 URL:		http://www.kernel.org/
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
@@ -595,8 +593,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %endif
 
 %patch106 -p1
-
-%patch108 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
