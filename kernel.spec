@@ -874,10 +874,14 @@ BuildKernel() {
 %endif
 	cat %{SOURCE1000} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1001} >> arch/%{base_arch}/defconfig
+
 %ifarch sparc64
 	perl -pi -e 's/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/' \
 		arch/%{base_arch}/defconfig
+	perl -pi -e 's/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/' \
+		arch/%{base_arch}/defconfig
 %endif
+
 	if [ "$BOOT" = "yes" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
 	else
@@ -890,8 +894,6 @@ BuildKernel() {
 
 %ifarch i386
 	perl -pi -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
-		arch/%{base_arch}/defconfig
-	perl -pi -e 's/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/' \
 		arch/%{base_arch}/defconfig
 %endif
 
@@ -1047,6 +1049,13 @@ cat %{SOURCE1000} >> .config
 cat %{SOURCE1001} >> .config
 %{!?_without_grsec:cat %{SOURCE1002} >> .config}
 
+%ifarch sparc64
+	perl -pi -e 's/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/' \
+		arch/%{base_arch}/defconfig
+	perl -pi -e 's/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/' \
+		arch/%{base_arch}/defconfig
+%endif
+
 %ifarch %{ix86}
 cat %{SOURCE2000} >> .config
 %endif
@@ -1082,6 +1091,13 @@ echo "CONFIG_MK7=y" >> .config
 cat %{SOURCE1000} >> .config
 cat %{SOURCE1001} >> .config
 %{!?_without_grsec:cat %{SOURCE1002} >> .config}
+
+%ifarch sparc64
+	perl -pi -e 's/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/' \
+		arch/%{base_arch}/defconfig
+	perl -pi -e 's/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/' \
+		arch/%{base_arch}/defconfig
+%endif
 
 %ifarch %{ix86}
 cat %{SOURCE2000} >> .config
