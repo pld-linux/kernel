@@ -101,7 +101,7 @@ URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 BuildRequires:	module-init-tools
 Buildrequires:	perl
-BuildRequires:	binutils >= 2.12
+BuildRequires:	binutils >= 2.14.90.0.7
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
