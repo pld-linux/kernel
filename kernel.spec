@@ -869,7 +869,10 @@ BuildKernel() {
 %endif
 	cat %{SOURCE1000} >> arch/%{base_arch}/defconfig
 	cat %{SOURCE1001} >> arch/%{base_arch}/defconfig
-	
+%ifarch sparc64
+	perl -pi -e 's/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/' \
+		arch/%{base_arch}/defconfig
+%endif
 	if [ "$BOOT" = "yes" ] ; then
 		echo "# CONFIG_GRKERNSEC is not set" >> arch/%{base_arch}/defconfig
 	else
