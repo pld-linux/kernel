@@ -104,6 +104,7 @@ Patch114:	ide.2.4.5-05302001.patch.gz
 Patch115:	http://www.eax.com/patches/linux-245-ov511-diff
 Patch116:	linux-2.4.5-umount.patch
 Patch117:	linux-reiserfs-rename.patch
+Patch118:	linux-2.4.5-rd_ioctl.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -361,6 +362,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch115 -p1
 %patch116 -p0
 %patch117 -p1
+%patch118 -p1
 
 %patch900 -p0 
 %patch901 -p0
@@ -596,6 +598,7 @@ gzip -dc %{PATCH114} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH115}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH116}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH117}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH118}
 
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH900}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH901}
