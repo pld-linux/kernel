@@ -93,7 +93,7 @@ Patch12:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.4-247.gz
 
 # Quota fixes
 # Patch100:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.6-2.diff.gz
-Patch100:	quota-fix-2.4.7.diff.gz
+Patch100:	quota-fix-2.4.7-1.diff.gz
 # from LKML
 Patch101:	linux-scsi-debug-bug.patch
 Patch102:	linux-2.4.7-oom-killer.patch
