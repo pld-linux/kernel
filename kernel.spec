@@ -1,7 +1,7 @@
 %define		ow_version		2.2.18-ow1
 %define		pcmcia_version		3.1.22
 %define		freeswan_version	1.8
-%define		reiserfs_version	3.5.28
+%define		reiserfs_version	3.5.29
 %define		i2c_version		2.5.4
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -9,7 +9,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.2.18
-Release:	2
+Release:	3
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
