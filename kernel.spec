@@ -56,6 +56,8 @@ Patch12:	linux-agpgart-2.4-compat.patch
 Patch13:	linux-ipv6-addrconf.patch
 # NFS client patch
 Patch20:	http://www.fys.uio.no/~trondmy/src/linux-2.2.17-nfsv3-0.23.1.dif.bz2
+# patch from Console Daemon
+Patch21:	wait_any_vt.diff
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -288,6 +290,8 @@ patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 patch -p1 -s <dc395/dc395-integ22.diff
 install dc395/dc395x_trm.? dc395/README.dc395x drivers/scsi/
 zcat %{SOURCE34} > drivers/net/3c59x.c
+
+patch21 -p1
 
 %build
 BuildKernel() {
