@@ -29,7 +29,7 @@
 %define		_procps_ver		3.1.13
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.17
+%define		_rel		0.1
 %define		_cset		0
 
 ## netfilter snap 
@@ -48,13 +48,13 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-Version:	2.6.3
+Version:	2.6.4
 Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
-# Source0-md5:	6063a7e424355ec52e0cb559fb99034d
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}-rc1.tar.bz2
+# Source0-md5:	dec2860320ce0993990501b1e092de0a
 Source1:	%{name}-autoconf.h
 Source20:	%{name}-ia32.config
 Source21:	%{name}-ia32-smp.config
@@ -73,12 +73,10 @@ Source80:	%{name}-netfilter.config
 
 Patch0:		2.6.0-ksyms-add.patch
 
-#%%if "%{_cset}" != "0"
+%if "%{_cset}" != "0"
 # http://www.kernel.org/pub/linux/kernel/v2.6/testing/cset/
-#%Patch2:		cset-%{_cset}.txt.gz
-#%%endif
-# last changes in 2.6.3 - needed to build.
-Patch2:		patch-2.6.4-rc1.bz2
+Patch2:		cset-%{_cset}.txt.gz
+%endif
 
 Patch4:		squashfs1.3r2-patch
 
@@ -485,13 +483,13 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}
+%setup -q -n linux-%{version}-rc1
 
 %patch0 -p1
 
-#%%if "%{_cset}" != "0"
+%if "%{_cset}" != "0"
 %patch2 -p1
-#%%endif
+%endif
 
 %patch4 -p1
 
