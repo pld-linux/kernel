@@ -1014,9 +1014,7 @@ install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{version}/include/l
 $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 %endif
 
-%ifarch %{ix86}
-ln -sf asm-i386 $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
-%endif
+ln -sf asm-%{_arch} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/asm
 
 %{__make} mrproper
 
