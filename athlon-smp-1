@@ -1,0 +1,91 @@
+--- 2.4.2-athlon/arch/i386/lib/mmx.c.~1~	Sat Feb 10 02:34:03 2001
++++ 2.4.2-athlon/arch/i386/lib/mmx.c	Fri Mar  2 02:16:15 2001
+@@ -3,6 +3,7 @@
+ #include <linux/sched.h>
+ 
+ #include <asm/i387.h>
++#include <asm/hardirq.h> 
+ 
+ /*
+  *	MMX 3DNow! library helper functions
+@@ -25,8 +26,14 @@
+  
+ void *_mmx_memcpy(void *to, const void *from, size_t len)
+ {
+-	void *p=to;
+-	int i= len >> 6;	/* len/64 */
++	void *p;
++	int i;
++
++	if (in_interrupt())
++		return __memcpy(to, from, len);
++
++	p = to;
++	i = len >> 6; /* len/64 */
+ 
+ 	kernel_fpu_begin();
+ 
+--- 2.4.2-athlon/include/asm-i386/string.h.~1~	Tue Feb 27 06:00:30 2001
++++ 2.4.2-athlon/include/asm-i386/string.h	Fri Mar  2 02:18:56 2001
+@@ -287,13 +287,6 @@
+ 
+ #ifdef CONFIG_X86_USE_3DNOW
+ 
+-/* All this just for in_interrupt() ... */
+-
+-#include <asm/system.h>
+-#include <asm/ptrace.h>
+-#include <linux/smp.h>
+-#include <linux/spinlock.h>
+-#include <linux/interrupt.h>
+ #include <asm/mmx.h>
+ 
+ /*
+@@ -302,14 +295,14 @@
+ 
+ static inline void * __constant_memcpy3d(void * to, const void * from, size_t len)
+ {
+-	if(len<512 || in_interrupt())
++	if (len < 512)
+ 		return __constant_memcpy(to, from, len);
+ 	return _mmx_memcpy(to, from, len);
+ }
+ 
+ extern __inline__ void *__memcpy3d(void *to, const void *from, size_t len)
+ {
+-	if(len<512 || in_interrupt())
++	if (len < 512)
+ 		return __memcpy(to, from, len);
+ 	return _mmx_memcpy(to, from, len);
+ }
+--- 2.4.2-athlon/include/asm-i386/string-486.h.~1~	Fri Mar  2 01:12:34 2001
++++ 2.4.2-athlon/include/asm-i386/string-486.h	Fri Mar  2 02:18:56 2001
+@@ -352,11 +352,6 @@
+ 
+ #ifdef CONFIG_X86_USE_3DNOW
+ 
+-#include <linux/spinlock.h>
+-#include <asm/system.h>
+-#include <asm/ptrace.h>
+-#include <linux/smp.h>
+-#include <linux/interrupt.h>
+ #include <asm/mmx.h>
+ 
+ /*
+@@ -365,14 +360,14 @@
+ 
+ static inline void * __constant_memcpy3d(void * to, const void * from, size_t len)
+ {
+-	if(len<512 || in_interrupt())
++	if (len < 512)
+ 		return __memcpy_c(to, from, len);
+ 	return _mmx_memcpy(to, from, len);
+ }
+ 
+ static inline void *__memcpy3d(void *to, const void *from, size_t len)
+ {
+-	if(len<512 || in_interrupt())
++	if(len < 512)
+ 		return __memcpy_g(to, from, len);
+ 	return _mmx_memcpy(to, from, len);
+ }
