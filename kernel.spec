@@ -114,6 +114,8 @@ Patch120:	imq-2.4.18.diff-10
 # ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
 Patch125:	linux-2.4.18-mppe.patch
 Patch130:	linux-2.4.22-tun-new-style.patch
+# ftp://ftp.pm.waw.pl/pub/Linux/hdlc/hdlc-2.4.21-1.14a.patch
+Patch132:     hdlc-2.4.21-1.14a.patch
 
 # ATM bugfixes
 # Patches by Chas Williams <chas@locutus.cmf.nrl.navy.mil>
@@ -668,6 +670,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch120 -p1
 %patch125 -p1
 %patch130 -p1
+%patch132 -p1
 #%patch150 -p1
 %patch151 -p1
 %patch152 -p1
@@ -1413,6 +1416,7 @@ fi
 
 %if %{?_without_doc:0}%{!?_without_doc:1}
 %files doc
+
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Documentation
 %endif
