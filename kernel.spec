@@ -200,9 +200,7 @@ Patch144:	amd762_irq_router.patch
 Patch145:	netfilter_ipv4-iptables-1.2.7.patch
 Patch146:	netfilter_ipv6-iptables-1.2.7.patch
 
-Patch147:	linux-o1-sched-xfs.patch
-
-Patch148:	http://www.hojdpunkten.ac.se/054/samba/00-smbfs-2.4.18-codepage.patch.gz
+Patch147:	http://www.hojdpunkten.ac.se/054/samba/00-smbfs-2.4.18-codepage.patch.gz
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -573,8 +571,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 #%patch7 -p1
 %if %{?_with_o1_sched:1}%{!?_with_o1_sched:0}
 %ifarch %{ix86}
-# patch to allow compile scheduler with XFS
-%patch147 -p1
 # patch o1-scheduler-pre
 %patch914 -p1
 # O(1) scheduler patch
@@ -629,7 +625,7 @@ echo "Scheduler didn't work on ARCH different than Intel x86"
 %patch121 -p1
 %patch122 -p1
 %patch124 -p1
-%patch148 -p1
+%patch147 -p1
 
 %patch904 -p0
 
