@@ -127,6 +127,7 @@ Patch125:	linux-%{version}-devfs-v199.7.patch
 Patch126:	linux-%{version}-cramfs.patch
 Patch127:	linux-%{version}-sparc64-fix.patch
 Patch128:	linux-%{version}-AXP-fix.patch
+Patch129:	kernel-Makefile-include-fix.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -469,6 +470,9 @@ echo Fixed SYSCALL errors for SPARC 64 arch.
 echo Fixed SYSCALL errors for DEC Alpha arch.
 %patch128 -p0
 %endif
+
+# Fided include path
+%patch129 -p0
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
