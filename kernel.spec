@@ -1127,10 +1127,10 @@ sed "s/^KERNELDIR := .*/KERNELDIR := $kernelbase/" Makefile-2.4.bak > Makefile-2
 cd ../..
 
 	mkdir -p $KERNEL_INSTALL_DIR/boot
-	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
+#	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
 
 %ifarch %{ix86}
-	cp arch/i386/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+#	cp arch/i386/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
 %ifarch alpha sparc sparc64
 	gzip -cfv vmlinux > vmlinuz
@@ -1154,8 +1154,8 @@ cd ../..
 %endif
 
 # install ipt_p2p
-cp ipt_p2p-0.2.2/kernel/ipt_p2p.o $KERNEL_INSTALL_DIR/lib/modules/$KernelVer/kernel/net/ipv4/netfilter/
-rm -rf ipt_p2p-0.2.2
+cp $KERNEL_BUILD_DIR/ipt_p2p-0.2.2/kernel/ipt_p2p.o $KERNEL_INSTALL_DIR/lib/modules/$KernelVer/kernel/net/ipv4/netfilter/
+rm -rf $KERNEL_BUILD_DIR/ipt_p2p-0.2.2
 
 } # BuildKernel
 
@@ -1163,7 +1163,6 @@ KERNEL_BUILD_DIR=`pwd`
 KERNEL_INSTALL_DIR=$KERNEL_BUILD_DIR-installed
 rm -rf $KERNEL_INSTALL_DIR
 install -d $KERNEL_INSTALL_DIR
-
 # make drivers/scsi/ missing files
 #	(cd drivers/scsi; make -f M)
 
