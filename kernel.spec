@@ -1027,9 +1027,6 @@ fi
 
 %files pcmcia-cs
 %defattr(644,root,root,755)
-%ifarch %{ix86}
-#/lib/modules/%{version}-%{release}/pcmcia
-%endif
 /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}/kernel/drivers/net/pcmcia
 /lib/modules/%{version}-%{release}/kernel/drivers/scsi/pcmcia
@@ -1078,9 +1075,6 @@ fi
 
 %files -n kernel-smp-pcmcia-cs
 %defattr(644,root,root,755)
-%ifarch %{ix86}
-#/lib/modules/%{version}-%{release}smp/pcmcia
-%endif
 /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}smp/kernel/drivers/net/pcmcia
 /lib/modules/%{version}-%{release}smp/kernel/drivers/scsi/pcmcia
@@ -1110,9 +1104,6 @@ fi
 %{_libdir}/bootdisk/boot/vmlinuz-%{version}-%{release}BOOT
 %{_libdir}/bootdisk/boot/System.map-%{version}-%{release}BOOT
 %dir %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT
-%ifarch i386			# i386_arch
-%{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/pcmcia
-%endif				# i386_arch
 %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/kernel
 %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/build
 %ghost %{_libdir}/bootdisk/lib/modules/%{version}-%{release}BOOT/modules.*
