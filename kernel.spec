@@ -759,6 +759,42 @@ sed -e 's#EXTRAVERSION =.*#EXTRAVERSION =#g' \
 sed -i 's:\-pipe::' arch/*/Makefile
 
 %build
+TuneUpConfigForIX86 () {
+%ifarch %{ix86}
+    %ifarch i386
+	sed -i 's:# CONFIG_M386 is not set:CONFIG_M386=y:' $1
+    %endif
+    %ifarch i486
+	sed -i 's:# CONFIG_M486 is not set:CONFIG_M486=y:' $1
+    %endif
+    %ifarch i586
+	sed -i 's:# CONFIG_M586 is not set:CONFIG_M586=y:' $1
+    %endif
+    %ifarch i686
+	sed -i 's:# CONFIG_M686 is not set:CONFIG_M686=y:' $1
+    %endif
+    %ifarch pentium3
+	sed -i 's:# CONFIG_MPENTIUMIII is not set:CONFIG_MPENTIUMIII=y:' $1
+    %endif
+    %ifarch pentium4
+	sed -i 's:# CONFIG_MPENTIUM4 is not set:CONFIG_MPENTIUM4=y:' $1
+    %endif
+    %ifarch athlon
+	sed -i 's:# CONFIG_MK7 is not set:CONFIG_MK7=y:' $1
+    %endif
+    %ifarch pentium3 pentium4 athlon
+#	kernel-i386-smp.config contains 64G support by default.
+	%if %{with up}
+	    sed -i "s:CONFIG_HIGHMEM4G=y:# CONFIG_HIGHMEM4G is not set:" $1
+	    sed -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" $1
+	%endif
+    %endif
+    %ifarch i386 i486 i586
+	sed -i 's:# CONFIG_MATH_EMULATION is not set:CONFIG_MATH_EMULATION=y:' $1
+    %endif
+%endif
+}
+
 BuildConfig (){
 	%{?_debug:set -x}
 	# is this a special kernel we want to build?
@@ -777,59 +813,27 @@ BuildConfig (){
 		KernelVer=%{version}-%{release}$1
 	fi
 	echo "Building config file for KERNEL $1..."
-
 	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
-%ifarch i386
-	echo "CONFIG_M386=y" >> arch/%{_target_base_arch}/defconfig
-%endif
-%ifarch i486
-	echo "CONFIG_M486=y" >> arch/%{_target_base_arch}/defconfig
-%endif
-%ifarch i586
-	echo "CONFIG_M586=y" >> arch/%{_target_base_arch}/defconfig
-%endif
-%ifarch i686
-	echo "CONFIG_M686=y" >> arch/%{_target_base_arch}/defconfig
-%endif
-%ifarch pentium3
-	echo "CONFIG_MPENTIUMIII=y" >> arch/%{_target_base_arch}/defconfig
-%endif
-%ifarch pentium4
-	echo "CONFIG_MPENTIUM4=y" >> arch/%{_target_base_arch}/defconfig
-%endif
-%ifarch athlon
-	echo "CONFIG_MK7=y" >> arch/%{_target_base_arch}/defconfig
-%endif
-%{?with_preemptive:echo "CONFIG_PREEMPT=y" >> arch/%{_target_base_arch}/defconfig}
+	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
 
-# netfilter	
+%if %{with preemptive}
+	sed -i 's:# CONFIG_PREEMPT is not set:CONFIG_PREEMPT=y:' arch/%{_target_base_arch}/defconfig
+%endif
+
+#	netfilter	
 	cat %{SOURCE80} >> arch/%{_target_base_arch}/defconfig
-
-#grsec
+#	grsecurity
 	cat %{SOURCE90} >> arch/%{_target_base_arch}/defconfig
 
-
-%ifarch pentium3 pentium4 athlon
-# kernel-i386-smp.config contains 64G support by default.
-%if %{with up}
-	sed -i "s:CONFIG_HIGHMEM4G=y:# CONFIG_HIGHMEM4G is not set:" arch/%{_target_base_arch}/defconfig
-	sed -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" arch/%{_target_base_arch}/defconfig
-%endif
-%endif
-
-%ifarch i386 i486 i586
-	sed -i 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
-		arch/%{_target_base_arch}/defconfig
-%endif
-
 	ln -sf arch/%{_target_base_arch}/defconfig .config
-
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
 	%{__make} include/linux/autoconf.h
 	if [ "$smp" = "yes" ]; then
-		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
+		install include/linux/autoconf.h \
+			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
 	else
-		install include/linux/autoconf.h $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
+		install include/linux/autoconf.h \
+			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
 	fi
 }
 
