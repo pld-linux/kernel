@@ -14,7 +14,7 @@ Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
 # Source0-md5:	1e055c42921b2396a559d84df4c3d9aa
 Source1:	%{name}-autoconf.h
-Source2:        http://www.openwall.com/linux/linux-%{ow_version}.tar.gz
+Source2:	http://www.openwall.com/linux/linux-%{ow_version}.tar.gz
 # Source2-md5:	a2a870b0dbfea6c81542b09c85e00dbc
 Source20:	%{name}-alpha-BOOT.config
 Source21:	%{name}-alpha.config
@@ -353,8 +353,8 @@ PreReq:		geninitrd
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 Obsoletes:	kernel-modules
 
-%define		no_install_post_strip                   yes
-%define		no_install_post_compress_modules        yes
+%define		no_install_post_strip			yes
+%define		no_install_post_compress_modules	yes
 %ifarch i386 sparc sparcv9 sparcv9 alpha
 %define		_with_boot				1
 %endif
