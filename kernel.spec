@@ -3,15 +3,7 @@
 #		- fix lirc_sasem (usb api)
 #		- add distcc support (and don't break crossbuild!)
 #		- fix vserver against new grsec
-#
-#		- undefined symbols / amd64:
-#		*** Warning: "rxrpc_initialise" [net/rxrpc/rxrpc.ko] undefined!
-#		*** Warning: "rxrpc_cleanup" [net/rxrpc/rxrpc.ko] undefined!
-#		*** Warning: "afs_exit" [fs/afs/kafs.ko] undefined!
-#		*** Warning: "afs_init" [fs/afs/kafs.ko] undefined!
-#		*** Warning: "gs_module_init" [drivers/usb/gadget/g_serial.ko] undefined!
-#		*** Warning: "gs_module_exit" [drivers/usb/gadget/g_serial.ko] undefined!
-#		*** Warning: "rp_cleanup_module" [drivers/char/rocket.ko] undefined!
+#		- fix pty (http://lkml.org/lkml/2005/2/14/212)
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
