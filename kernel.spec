@@ -29,7 +29,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.4.21
-Release:	0.1
+Release:	0.2
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -49,7 +49,7 @@ Source7:	http://www10.software.ibm.com/developer/opensource/jfs/project/pub/jfs-
 Source8:	http://www.xfree86.org/~alanh/linux-drm-%{drm_xfree_version}-kernelsource.tar.gz
 # Source8-md5:	34515784c7b67f6cc9169aa9eed982c7
 Source9:	http://hostap.epitest.fi/releases/hostap-%{hostap_version}.tar.gz
-# Source9-md5:	4d5dd3fef2f5537ee07e64cdd1378e80
+# Source9-md5:	f5170147792a591120437dd33dbb106d
 Source10:	linux-2.4.20-aacraid.tar.bz2
 # Source10-md5:	3da1f4b229685766cb4f2f5ce242c0d2
 Source20:	%{name}-ia32.config
@@ -118,6 +118,9 @@ Patch65:	squashfs1.2-2.4.21-patch
 #Patch70:	linux-2.4.20-afs.patch.bz2
 #from http://sci.felk.cvut.cz/nwd/linux/nwd-patch-2.4.19
 Patch75:	nwd-2.4.21.patch
+
+# patch for patch in Source9 
+Patch90:	hostap-2.4.19-rc3-patch.patch
 
 # Networking
 
@@ -536,6 +539,9 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 
 %prep
 %setup -q -a3 -a6 -a8 -a9 -n linux-%{version}
+cd hostap-2002-10-12
+%patch90 -p1  
+cd ..
 # JFS 1.1.1
 rm -fr fs/jfs
 gzip -dc %{SOURCE7} | tar -xf -
