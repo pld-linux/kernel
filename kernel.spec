@@ -9,7 +9,7 @@
 # _without_up		- don't build UP kernel
 # _without_wrr		- don't build WRR support
 #
-%define		krelease		7
+%define		krelease		8
 #
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
 %define		no_install_post_strip	1
@@ -208,7 +208,6 @@ Patch144:	amd762_irq_router.patch
 Patch145:	linux-2.4.18-iptables.fix.patch
 
 Patch147:	http://www.hojdpunkten.ac.se/054/samba/00-smbfs-2.4.18-codepage.patch.gz
-Patch148:	%{name}-tun-new_style.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
@@ -563,7 +562,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %prep
 %setup -q -a3 -a5 -a7 -a10 -a11 -a12 -a13 -a14 -n linux
 #%patch1000 -p1
-%patch0 -p0
+%patch0 -p1
 %patch16 -p1
 %patch1 -p1
 %patch907 -p1
@@ -633,7 +632,6 @@ echo "Scheduler didn't work on ARCH different than Intel x86"
 %patch122 -p1
 %patch124 -p1
 %patch147 -p1
-%patch148 -p1
 
 %patch904 -p0
 
