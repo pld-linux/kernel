@@ -4,6 +4,8 @@
 #		- add distcc support (and don't break crossbuild!)
 #		- fix vserver against new grsec
 #		- backport patch78 (expand-stack-race).
+#		- fix SMP version - it looks for modules in /lib/modules/2.6.X-Y
+#		  instead of 2.6.X-Ysmp
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
