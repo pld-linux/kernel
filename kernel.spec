@@ -6,9 +6,9 @@
 #
 %define		test_build		0
 #
-%define		pre_version		pre5
-%define		lids_version		1.0.9-2.4.5
-%define		ipvs_version		0.9.0
+%define		pre_version		pre3
+%define		lids_version		1.0.11-2.4.6
+%define		ipvs_version		0.9.2
 %define		freeswan_version	snap2001jun14R
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.7
@@ -32,7 +32,7 @@ Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 Source6:	http://www.xs4all.nl/~sgraaf/i8255/i8255-0.2.tar.gz
-Source7:	linux-netfilter-patches-20010530.tar.gz
+Source7:	linux-netfilter-patches-20010709.tar.gz
 Source8:	http://www.lids.org/download/lids-%{lids_version}.tar.gz
 Source9:	http://www.linuxvirtualserver.org/software/kernel-2.4/ipvs-%{ipvs_version}.tar.gz
 Source10:	http://www.linux-wlan.com/linux-wlan/linux-wlan-ng-%{wlan_version}.tar.gz
@@ -69,22 +69,24 @@ Patch2:		linux-2.4.5-freeswan-%{freeswan_version}.patch.gz
 # http://domsch.com/linux/aacraid/linux-2.4.4-aacraid-043001.patch
 Patch3:		linux-2.4.4-aacraid-043001.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
-Patch4:		br2684-against2.4.5.diff
+Patch4:		br2684-against2.4.7.diff
 # XFS patches
 #Patch5:		ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4.4-core-xfs-1.0.patch.gz
 #Patch6:		ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4-xfs-1.0.patch.gz
-Patch6:		linux-2.4.6-pre3-xfs-20010616.patch.gz
+Patch6:		linux-2.4.7-pre3-xfs-20010709.patch.gz
 # Compressed iso9660 filesystem
 Patch7:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/filemap-2.4.4-1.diff.gz
 Patch8:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-2.4.5-pre1-8.diff.gz
 Patch9:		linux-abi-2.4.3.0-PLD.diff
 Patch10:	http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
+# grsecurity patch http://www.getrewted.net/
+Patch11:	linux-grsecurity-1.4-2.4.5-PLD.patch
 
 # Assorted bugfixes
 
 # Quota fixes
 # Patch100:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.6-2.diff.gz
-Patch100:	quota-fix-2.4.6-2.diff.gz
+Patch100:	quota-fix-2.4.7.diff.gz
 # from LKML
 Patch101:	linux-scsi-debug-bug.patch
 Patch102:	linux-2.4.5-oom-killer.patch
@@ -102,25 +104,21 @@ Patch111:	%{name}-reiser.patch
 Patch112:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.6-p1.06062001.patch.gz
 Patch113:	linux-reiserfs-rename.patch
 Patch114:	linux-via-timer.patch
-Patch115:	linux-udf-quota-fix.patch
 
 # Patches fixing other patches or 3rd party sources ;)
 
 Patch900:	kernel-i8255-asm-fix.patch
 Patch901:	dc395-patch-PLD-fix.patch
 # aacraid fix
-Patch902:	http://domsch.com/linux/aacraid/linux-2.4.4-axboe-scsi-max-sec.patch
-Patch903:	rl2-include.patch
+Patch902:	rl2-include.patch
 # patch to fix LIDS stupidity
 #Patch904:	linux-lids-fixpatch.patch
 # patch to fix problem wit ABI and LIDS
-Patch904:	linux-lids-with-abi.patch
-Patch905:	linux-vlan-fixpatch.patch
-# grsecurity patch http://www.getrewted.net/
-Patch906:	linux-grsecurity-1.4-2.4.5-PLD.patch
+Patch903:	linux-lids-with-abi.patch
+Patch904:	linux-vlan-fixpatch.patch
 
 # Linus's -pre
-Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.6-%{pre_version}.gz
+Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.7-%{pre_version}.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -338,19 +336,20 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %prep
 %{?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -a13 -n linux}
 %{!?_with_lids:%setup -q -a3 -a5 -a6 -a7 -a9 -a10 -a11 -a12 -a13 -n linux}
-#%patch1000 -p1
+%patch1000 -p1
 #%patch0 -p1
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
-#%patch4 -p1
-#%patch100 -p1
+%patch4 -p1
+%patch100 -p1
 #%patch5 -p1
-#%patch6 -p1
+%patch6 -p1
 %patch7 -p1
 %patch8 -p1
 #%patch9 -p1
 %patch10 -p1
+#%patch11 -p1
 
 %patch101 -p0
 %patch102 -p0
@@ -366,11 +365,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 #%patch112 -p1
 %patch113 -p1
 %patch114 -p0
-%patch115 -p1
 
 %patch900 -p0 
 %patch901 -p0
-%patch902 -p1
 
 # Tekram DC395/315 U/UW SCSI host driver
 patch -p1 -s <dc395/dc395-integ24.diff
@@ -395,7 +392,7 @@ echo -e $ANS | ./runme)
 %if %{?_with_lids:1}%{!?_with_lids:0}
 # LIDS
 cd lids-%{lids_version}
-%patch904 -p1
+%patch903 -p1
 cd ..
 patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
 %endif
@@ -423,16 +420,13 @@ rm -rf %{sym_ncr_version}
 
 ## install RangeLAN2 driver
 #mv rl2-1.7.1 drivers/net/rl2
-#%patch903 -p1
+#%patch902 -p1
 
-# 802.1Q VLANs
-cd vlan.%{vlan_version}
-%patch905 -p1
-cd ..
-patch -p1 -s <vlan.%{vlan_version}/vlan_2.4.patch
-
-# grsecurity
-#%patch906 -p1
+## 802.1Q VLANs
+#cd vlan.%{vlan_version}
+#%patch904 -p1
+#cd ..
+#patch -p1 -s <vlan.%{vlan_version}/vlan_2.4.patch
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -591,6 +585,7 @@ gzip -dc %{PATCH7} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH8} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH9}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH10}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH11}
 
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH101}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH102}
@@ -606,7 +601,6 @@ patch -p4 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH111}
 gzip -dc %{PATCH112} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH113}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH114}
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH115}
 
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH900}
 patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH901}
@@ -635,7 +629,7 @@ echo -e $ANS | ./runme))
 
 %if %{?_with_lids:1}%{!?_with_lids:0}
 # LIDS
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/lids-%{lids_version} < %{PATCH904}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/lids-%{lids_version} < %{PATCH903}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/lids-%{lids_version}/lids-%{lids_version}.patch
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config $RPM_BUILD_ROOT/usr/src/linux-%{version}/.config.lids
 %endif
@@ -667,13 +661,13 @@ rm -rf $RPM_BUILD_ROOT/usr/src/linux-%{version}/%{sym_ncr_version}
 
 # install RangeLAN2 driver
 #mv rl2-1.7.1 drivers/net/rl2
-#%patch903 -p1
+#%patch902 -p1
 
 ## must be here, in other time make errors with LIDS
 #patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH9}
 
 # 802.1Q VLANs
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/vlan.%{vlan_version} < %{PATCH905}
+patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}/vlan.%{vlan_version} < %{PATCH904}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} \
 	< $RPM_BUILD_ROOT/usr/src/linux-%{version}/vlan.%{vlan_version}/vlan_2.4.patch
 
