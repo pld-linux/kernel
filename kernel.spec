@@ -110,7 +110,7 @@ Source91:	%{name}-grsec+pax.config
 Source92:	%{name}-vserver.config
 
 #Patch0:		2.6.0-ksyms-add.patch
-
+Patch1:			linux-2.6-alsa-1.0.8-silent-output.patch
 #Patch2:		2.6.0-t6-usb-irq.patch
 #Patch3:		2.6.0-t7-memleak-lkml.patch
 #Patch4:		2.6.0-t7-memleak2-lkml.patch
@@ -526,7 +526,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %endif
 
 #%patch0 -p1
-
+%patch1 -p1
 #%patch2 -p1
 #%patch3 -p1
 #%patch4 -p1
