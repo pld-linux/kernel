@@ -1,7 +1,7 @@
 #%define		ow_version	2.2.17-ow1
 %define		pcmcia_version	3.1.23
 %define		reiserfs_version	3.6.24
-#%define		freeswan_version	1.5
+%define		freeswan_version	1.8
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -51,6 +51,7 @@ Patch1:		ftp://ftp.reiserfs.org/pub/2.4/linux-%{version}-reiserfs-%{reiserfs_ver
 #Patch4:		raid-2.2.17-A0.gz
 #Patch5:		http://www.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.17/ide.2.2.17.all.20000904.patch.bz2
 #Patch6:		%{name}-pldfblogo.patch
+Patch7:			ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-%{freeswan_version}.tar.gz
 #Patch7:		linux-2.2.16-freeswan-%{freeswan_version}.patch
 #Patch8:		wanrouter-v2215.patch.gz
 #Patch10:	linux-newagpdist.patch
