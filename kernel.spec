@@ -28,7 +28,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.20
-Release:	2.4%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
+Release:	2.5%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -83,7 +83,7 @@ Source2000:	%{name}-win4lin.config
 Patch0:		%{name}-pldfblogo.patch
 
 # from ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/testing/
-Patch1:		patch-int-2.4.20.0.bz2
+Patch1:		patch-int-2.4.20.1.bz2
 
 # from ftp://ftp.xs4all.nl/pub/crypto/freeswan/freeswan-*
 Patch2:		linux-2.4.18-freeswan-%{freeswan_version}.patch.gz
