@@ -25,7 +25,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	0.4
+Release:	0.5
 License:	GPL
 Group:		Base/Kernel
 Group(pl):	Podstawowe/J±dro
@@ -893,7 +893,7 @@ fi
 /lib/modules/%{version}-%{release}smp/modules.generic_string
 %endif			# %{_without_smp}
 
-%ifnarch i586 i686
+%ifnarch i586 i686 ppc
 %files BOOT
 %defattr(644,root,root,755)
 %ifarch alpha sparc
