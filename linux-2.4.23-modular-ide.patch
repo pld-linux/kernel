@@ -1,6 +1,17 @@
 diff -urN linux-2.4.22.org/drivers/ide/ide.c linux-2.4.22/drivers/ide/ide.c
 --- linux-2.4.22.org/drivers/ide/ide.c	2003-11-22 22:11:12.000000000 +0100
-+++ linux-2.4.22/drivers/ide/ide.c	2003-11-23 02:00:54.000000000 +0100
++++ linux-2.4.22/drivers/ide/ide.c	2003-11-23 02:57:57.000000000 +0100
+@@ -2349,8 +2349,8 @@
+ #ifdef CONFIG_BLK_DEV_CMD640
+ 			case -14: /* "cmd640_vlb" */
+ 			{
+-				extern void init_cmd640_vlb (void);
+-				init_cmd640_vlb();
++//				extern void init_cmd640_vlb (void);
++//				init_cmd640_vlb();
+ 				goto done;
+ 			}
+ #endif /* CONFIG_BLK_DEV_CMD640 */
 @@ -3040,6 +3040,8 @@
  	return 0;
  }
@@ -10,42 +21,37 @@ diff -urN linux-2.4.22.org/drivers/ide/ide.c linux-2.4.22/drivers/ide/ide.c
  #ifdef MODULE
  char *options = NULL;
  MODULE_PARM(options,"s");
-@@ -3061,14 +3063,30 @@
- 
- int init_module (void)
- {
-+	unsigned int index;
-+    	int ret;
-+	
- 	parse_options(options);
--	return ide_init();
-+	ret = ide_init();
-+
-+	if (ret)
-+	    return ret;
-+
-+        for (index = 0; index < MAX_HWIFS; ++index)
-+                ide_unregister(index);
-+        ideprobe_init();
-+        create_proc_ide_interfaces();
-+        ide_xlate_1024_hook = ide_xlate_1024;
-+        return 0;
+@@ -3084,6 +3085,29 @@
+ 	devfs_unregister (ide_devfs_handle);
  }
  
- void cleanup_module (void)
- {
- 	int index;
- 
-+	ide_probe = NULL;
-+	ide_xlate_1024_hook = 0;
++int ideprobe_real_init_module(void)
++{
++	unsigned int index;
++	
++	for (index = 0; index < MAX_HWIFS; ++index)
++	    ide_unregister(index);
++	ideprobe_init();
++	create_proc_ide_interfaces();
++	ide_xlate_1024_hook = ide_xlate_1024;
++	return 0;
++}
 +
- 	unregister_reboot_notifier(&ide_notifier);
- 	for (index = 0; index < MAX_HWIFS; ++index) {
- 		ide_unregister(index);
-diff -urN linux-2.4.22.org/drivers/ide/ide-probe.c linux-2.4.22/drivers/ide/ide-probe.c
---- linux-2.4.22.org/drivers/ide/ide-probe.c	2003-11-22 22:08:09.000000000 +0100
-+++ linux-2.4.22/drivers/ide/ide-probe.c	2003-11-23 02:01:08.000000000 +0100
-@@ -1423,23 +1423,4 @@
++EXPORT_SYMBOL(ideprobe_real_init_module);
++
++int ideprobe_real_cleanup_module(void)
++{
++    	ide_probe = NULL;
++    	ide_xlate_1024_hook = 0;
++    	return 0;
++}
++
++EXPORT_SYMBOL(ideprobe_real_cleanup_module);
++
+ #else /* !MODULE */
+ 
+ __setup("", ide_setup);
+@@ -1423,23 +1415,4 @@
  
  #ifdef MODULE
  extern int (*ide_xlate_1024_hook)(kdev_t, int, int, const char *);
@@ -69,41 +75,107 @@ diff -urN linux-2.4.22.org/drivers/ide/ide-probe.c linux-2.4.22/drivers/ide/ide-
 -}
 -MODULE_LICENSE("GPL");
  #endif /* MODULE */
+diff -urN linux-2.4.22.org/drivers/ide/ide-probe-mini.c linux-2.4.22/drivers/ide/ide-probe-mini.c
+--- linux-2.4.22.org/drivers/ide/ide-probe-mini.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.4.22/drivers/ide/ide-probe-mini.c	2003-11-23 03:00:18.000000000 +0100
+@@ -0,0 +1,76 @@
++/*
++ *  linux/drivers/ide/ide-probe.c	Version 1.11	Mar 05, 2003
++ *
++ *  Copyright (C) 1994-1998  Linus Torvalds & authors (see below)
++ */
++
++/*
++ *  Mostly written by Mark Lord <mlord@pobox.com>
++ *                and Gadi Oxman <gadio@netvision.net.il>
++ *                and Andre Hedrick <andre@linux-ide.org>
++ *
++ *  See linux/MAINTAINERS for address of current maintainer.
++ *
++ * This is the IDE probe module, as evolved from hd.c and ide.c.
++ *
++ * Version 1.00		move drive probing code from ide.c to ide-probe.c
++ * Version 1.01		fix compilation problem for m68k
++ * Version 1.02		increase WAIT_PIDENTIFY to avoid CD-ROM locking at boot
++ *			 by Andrea Arcangeli
++ * Version 1.03		fix for (hwif->chipset == ide_4drives)
++ * Version 1.04		fixed buggy treatments of known flash memory cards
++ *
++ * Version 1.05		fix for (hwif->chipset == ide_pdc4030)
++ *			added ide6/7/8/9
++ *			allowed for secondary flash card to be detectable
++ *			 with new flag : drive->ata_flash : 1;
++ * Version 1.06		stream line request queue and prep for cascade project.
++ * Version 1.07		max_sect <= 255; slower disks would get behind and
++ * 			then fall over when they get to 256.	Paul G.
++ * Version 1.10		Update set for new IDE. drive->id is now always
++ *			valid after probe time even with noprobe
++ */
++
++#undef REALLY_SLOW_IO		/* most systems can safely undef this */
++
++#include <linux/config.h>
++#include <linux/module.h>
++#include <linux/types.h>
++#include <linux/string.h>
++#include <linux/kernel.h>
++#include <linux/timer.h>
++#include <linux/mm.h>
++#include <linux/interrupt.h>
++#include <linux/major.h>
++#include <linux/errno.h>
++#include <linux/genhd.h>
++#include <linux/slab.h>
++#include <linux/delay.h>
++#include <linux/ide.h>
++#include <linux/spinlock.h>
++#include <linux/pci.h>
++#include <linux/kmod.h>
++
++#include <asm/byteorder.h>
++#include <asm/irq.h>
++#include <asm/uaccess.h>
++#include <asm/io.h>
++
++
++
++#ifdef MODULE
++extern int ideprobe_real_init_module(void);
++
++int init_module (void)
++{
++    return ideprobe_real_init_module();
++}
++
++extern int ideprobe_real_cleanup_module(void);
++
++void cleanup_module (void)
++{
++    ideprobe_real_cleanup_module();
++}
++MODULE_LICENSE("GPL");
++#endif /* MODULE */
 diff -urN linux-2.4.22.org/drivers/ide/Makefile linux-2.4.22/drivers/ide/Makefile
 --- linux-2.4.22.org/drivers/ide/Makefile	2003-11-22 22:11:09.000000000 +0100
-+++ linux-2.4.22/drivers/ide/Makefile	2003-11-23 01:58:26.000000000 +0100
++++ linux-2.4.22/drivers/ide/Makefile	2003-11-23 02:58:39.000000000 +0100
 @@ -9,7 +9,7 @@
  #
  
  
 -export-objs := ide-iops.o ide-taskfile.o ide-proc.o ide.o ide-probe.o ide-dma.o ide-lib.o setup-pci.o ide-io.o ide-disk.o
-+export-objs := ide-iops.o ide-taskfile.o ide-proc.o ide.o ide-dma.o ide-lib.o setup-pci.o ide-io.o ide-disk.o
++export-objs := ide-iops.o ide-taskfile.o ide-proc.o ide.o ide-probe-mini.o ide-dma.o ide-lib.o setup-pci.o ide-io.o ide-disk.o
  
  all-subdirs	:= arm legacy pci ppc raid
  mod-subdirs	:= arm legacy pci ppc raid
-@@ -28,8 +28,7 @@
+@@ -28,9 +28,8 @@
  
  # Core IDE code - must come before legacy
  
 -ide-core-objs	:= ide-iops.o ide-taskfile.o ide.o ide-lib.o ide-io.o ide-default.o ide-proc.o
 -ide-detect-objs	:= ide-probe.o ide-geometry.o
+-
 +ide-core-objs	:= ide-iops.o ide-taskfile.o ide.o ide-lib.o ide-io.o ide-default.o ide-proc.o ide-geometry.o
- 
++ide-detect-objs	:= ide-probe-mini.o
  
  ifeq ($(CONFIG_BLK_DEV_IDEPCI),y)
-@@ -66,8 +65,6 @@
- obj-$(CONFIG_BLK_DEV_IDETAPE)		+= ide-tape.o
- obj-$(CONFIG_BLK_DEV_IDEFLOPPY)		+= ide-floppy.o
- 
--obj-$(CONFIG_BLK_DEV_IDE) += ide-detect.o
--
- ifeq ($(CONFIG_BLK_DEV_IDE),y)
- # RAID must be last of all
-   obj-y		+= raid/idedriver-raid.o
-@@ -81,6 +78,3 @@
- ide-core.o:	$(ide-core-objs)
- 	$(LD) -r -o $@ $(ide-core-objs)
- 
--ide-detect.o:	$(ide-detect-objs)
--	$(LD) -r -o $@ $(ide-detect-objs)
--
+ ide-core-objs += setup-pci.o
