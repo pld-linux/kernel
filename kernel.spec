@@ -142,7 +142,7 @@ Patch70:	2.6.3-sparc32-fix.patch
 # http://www.tahoe.pl/drivers/tahoe9xx-2.6.2.patch
 Patch72:	tahoe9xx-2.6.2.patch
 
-Patch74:	2.6.x-SGI_VW-fbdwv-lkml.patch
+Patch74:	2.6.x-SGI_VW-fbdev-lkml.patch
 
 Patch76:	2.6.x-TGA-fbdev-lkml.patch
 
