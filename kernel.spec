@@ -45,7 +45,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1
+%define		_rel		1.1
 %define		_cset		20040615_1609
 %define		_apply_cset	0
 
@@ -216,6 +216,8 @@ Patch104:	01_arp_prefsrc-2.5.50-5.diff
 Patch105:	05_nf_reroute-2.6.7-10.diff
 
 Patch108:	2.6.7-bridge_sysfs-lkml.patch
+
+Patch110:	ftp://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.7/acpi-20040326-2.6.7.diff.gz
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -690,6 +692,8 @@ patch -p1 -s < %{SOURCE5}
 %patch105 -p1
 
 %patch108 -p1
+
+%patch110 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
