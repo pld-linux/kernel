@@ -30,7 +30,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.22
-Release:	0.1
+Release:	0.2
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -108,6 +108,7 @@ Patch61:	linux-2.4.22-reiserfs-data-logging+quota.patch.gz
 Patch65:	squashfs1.3-2.4.21-patch
 #from http://sci.felk.cvut.cz/nwd/linux/nwd-patch-2.4.19
 Patch70:	nwd-2.4.21.patch
+Patch80:	linux-2.4.22-intermezzo-acl.patch
 
 # Networking
 
@@ -121,6 +122,7 @@ Patch115:	linux-2.4.22-ipvs-1.0.9.patch.gz
 Patch120:	imq-2.4.18.diff-10
 # ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
 Patch125:	linux-2.4.18-mppe.patch
+Patch130:	linux-2.4.22-tun-new-style.patch
 
 # ATM bugfixes
 # Patches by Chas Williams <chas@locutus.cmf.nrl.navy.mil>
@@ -249,7 +251,7 @@ Patch1413:	linux-2.4.22-andrea-9980_fix-pausing-6.patch
 Patch1414:	linux-2.4.21-oopsmeharder.patch
 Patch1415:	linux-mtd-missing-include-fix-2.4.7-pre6.patch
 Patch1416:	linux-2.4.21-no-FPU.patch
-Patch1417:	linux-2.4.21-ac4-ide.patch
+Patch1417:	linux-2.4.22-ac3-ide+sata.patch
 Patch1418:	linux-2.4.21-hpt372-chicken-egg-hack.patch
 Patch1419:	linux-2.4.21-agp-num_of_masks.patch
 # fix spare disk counting for raid 5
@@ -276,6 +278,7 @@ Patch3006:	linux-2.4.21-sparc-gcc3.patch
 Patch3008:	linux-drm-4.2.0-force-cmpxchg.patch
 Patch3009:	linux-2.4.21-alpha-gcc33.patch
 Patch3010:	linux-2.4.21-ipsec-sparc64.patch
+Patch3011:	linux-2.4.22-gcc33-inline.patch
 
 # Security patches/fixes
 
@@ -293,7 +296,7 @@ BuildRequires:	bin86
 %endif
 #BuildRequires:	%{kgcc_package}
 BuildRequires:	modutils
-BuildRequires:	perl-base
+BuildRequires:	ed
 Autoreqprov:	no
 PreReq:		modutils
 PreReq:		geninitrd >= 2.40
@@ -322,6 +325,7 @@ Conflicts:	util-linux < 2.10o
 Conflicts:	modutils < 2.4.2
 Conflicts:	quota < 3.06
 Conflicts:	linux-atm < 2.4.1
+Conflicts:	device-mapper < 1.00.05
 
 %description
 This package contains the Linux kernel that is used to boot and run
@@ -390,6 +394,7 @@ Conflicts:	util-linux < 2.10o
 Conflicts:	modutils < 2.4.2
 Conflicts:	quota < 3.06
 Conflicts:	linux-atm < 2.4.1
+Conflicts:	device-mapper < 1.00.05
 
 %description smp
 This package includes a SMP version of the Linux %{version} kernel. It
@@ -659,11 +664,13 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch61 -p1
 %patch65 -p1
 %patch70 -p1
+%patch80 -p1
 %patch100 -p1
 %patch110 -p1
 %patch115 -p1
 %patch120 -p1
 %patch125 -p1
+%patch130 -p1
 #%patch150 -p1
 %patch151 -p1
 %patch200 -p1
@@ -729,12 +736,12 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1408 -p1
 %patch1410 -p1
 %patch1411 -p1
-#%patch1413 -p1
+%patch1413 -p1
 %patch1414 -p1
 %patch1415 -p0
 %patch1416 -p1
-#%patch1417 -p1
-#%patch1418 -p1
+%patch1417 -p1
+%patch1418 -p1
 %patch1419 -p1
 %patch1420 -p1
 %patch1421 -p1
@@ -762,6 +769,8 @@ cd ../../..
 %ifarch sparc64
 %patch3010 -p1
 %endif
+
+%patch3011 -p1
 
 %patch5000 -p1
 
@@ -791,13 +800,13 @@ cp hostap-%{hostap_version}/driver/modules/hostap*.[ch] drivers/net/wireless/
 %endif
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
-perl -pi -e 's/EXTRA_CFLAGS.*//g' drivers/atm/Makefile
-perl -pi -e 's/EXTRA_CFLAGS.*-g//g' net/ipsec/Makefile
+echo -e ',s/EXTRA_CFLAGS.*//g\n,w' | ed drivers/atm/Makefile
+echo -e ',s/EXTRA_CFLAGS.*-g//g\n,w' | ed net/ipsec/Makefile
 
 # Fix EXTRAVERSION and CC in main Makefile
-perl -pi -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' Makefile
+echo -e ',s/EXTRAVERSION =.*/EXTRAVERSION =/g\n,w' | ed Makefile
 %ifarch sparc64
-perl -pi -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' Makefile
+echo -e ',s/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g\n,w' | ed Makefile
 %endif
 
 %build
@@ -845,12 +854,12 @@ BuildKernel() {
 	cat %{SOURCE1001} >> arch/%{base_arch}/defconfig
 
 %ifarch sparc64
-	perl -pi -e 's/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/' \
-		arch/%{base_arch}/defconfig
-	perl -pi -e 's/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/' \
-		arch/%{base_arch}/defconfig
-	perl -pi -e 's/CONFIG_DIGEST_SHA1=m/# CONFIG_DIGEST_SHA1 is not set/' \
-		arch/%{base_arch}/defconfig
+	echo -e ',s/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/g\n,w' | \
+		ed arch/%{base_arch}/defconfig
+	echo -e ',s/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/g\n,w' | \
+		ed arch/%{base_arch}/defconfig
+	echo -e ',s/CONFIG_DIGEST_SHA1=m/# CONFIG_DIGEST_SHA1 is not set/g\n,w' | \
+		ed arch/%{base_arch}/defconfig
 %endif
 
 	if [ "$BOOT" = "yes" ] ; then
@@ -864,8 +873,8 @@ BuildKernel() {
 %endif
 
 %ifarch i386
-	perl -pi -e 's/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/' \
-		arch/%{base_arch}/defconfig
+	echo -e ',s/# CONFIG_MATH_EMULATION is not set/CONFIG_MATH_EMULATION=y/g\n,w' | \
+		ed arch/%{base_arch}/defconfig
 %endif
 
 	%{__make} mrproper
@@ -1022,12 +1031,12 @@ cat %{SOURCE1001} >> .config
 %{!?_without_grsec:cat %{SOURCE1002} >> .config}
 
 %ifarch sparc64
-	perl -pi -e 's/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/' \
-		arch/%{base_arch}/defconfig
-	perl -pi -e 's/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/' \
-		arch/%{base_arch}/defconfig
-	perl -pi -e 's/CONFIG_DIGEST_SHA1=m/# CONFIG_DIGEST_SHA1 is not set/' \
-		arch/%{base_arch}/defconfig
+	echo -e ',s/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/g\n,w' | \
+		ed arch/%{base_arch}/defconfig
+	echo -e ',s/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/g\n,w' | \
+		ed arch/%{base_arch}/defconfig
+	echo -e ',s/CONFIG_DIGEST_SHA1=m/# CONFIG_DIGEST_SHA1 is not set/g\n,w' | \
+		ed arch/%{base_arch}/defconfig
 %endif
 
 %ifarch %{ix86}
@@ -1067,12 +1076,12 @@ cat %{SOURCE1001} >> .config
 %{!?_without_grsec:cat %{SOURCE1002} >> .config}
 
 %ifarch sparc64
-	perl -pi -e 's/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/' \
-		arch/%{base_arch}/defconfig
-	perl -pi -e 's/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/' \
-		arch/%{base_arch}/defconfig
-	perl -pi -e 's/CONFIG_DIGEST_SHA1=m/# CONFIG_DIGEST_SHA1 is not set/' \
-		arch/%{base_arch}/defconfig
+	echo -e ',s/^CONFIG_FB_I810=.*/# CONFIG_FB_I810 is not set/g\n,w' | \
+		ed arch/%{base_arch}/defconfig
+	echo -e ',s/CONFIG_IPSEC_AUTH_HMAC_SHA1=y/# CONFIG_IPSEC_AUTH_HMAC_SHA1 is not set/g\n,w' | \
+		ed arch/%{base_arch}/defconfig
+	echo -e ',s/CONFIG_DIGEST_SHA1=m/# CONFIG_DIGEST_SHA1 is not set/g\n,w' | \
+		ed arch/%{base_arch}/defconfig
 %endif
 
 %ifarch %{ix86}
@@ -1106,8 +1115,8 @@ echo "#include <linux/modsetver.h>" > include/linux/modversions.h
 
 %if %{?_without_source:0}%{!?_without_source:1}
 %{__make} depend
-find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
-	xargs perl -pi -e "s|$RPM_BUILD_ROOT\(/usr/src/linux\)|\1|g"
+find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" \
+	-exec /bin/sh -c "echo -e \",s|$RPM_BUILD_ROOT||g\n,w\" | ed {}" \;
 
 %{__make} clean
 rm -f scripts/mkdep
