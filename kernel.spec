@@ -1,6 +1,6 @@
-%define		ow_version		2.2.17-ow1
+%define		ow_version		2.2.18-ow1
 %define		pcmcia_version		3.1.22
-%define		freeswan_version	1.5
+%define		freeswan_version	1.8
 %define		reiserfs_version	3.5.28
 %define		i2c_version		2.5.4
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -17,7 +17,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-BuildASM.sh
 Source3:	ftp://ftp.openwall.com/linux/linux-%{ow_version}.tar.gz
-Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-127.tar.gz
+Source4:	http://www.garloff.de/kurt/linux/dc395/dc395-132.tar.gz
 Source5:	ftp://projects.sourceforge.net/pub/pcmcia-cs/pcmcia-cs-%{pcmcia_version}.tar.gz
 Source6:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/sym-1.7.2-ncr-3.4.2.tar.gz
 Source7:	http://www2.lm-sensors.nu/~lm78/archive/i2c-%{i2c_version}.tar.gz
@@ -38,20 +38,20 @@ Source81:	%{name}-alpha.config
 Source82:	%{name}-alpha-smp.config
 Source83:	%{name}-alpha-BOOT.config
 Patch0:		%{name}-pldfblogo.patch
-Patch1:		linux-2.2.16-freeswan-%{freeswan_version}.patch
+Patch1:		linux-2.2.18-freeswan-%{freeswan_version}.patch
 Patch2:		wanrouter-v2215.patch.gz
 Patch3:		linux-ipv6-addrconf.patch
 Patch4:		%{name}-3c90x.patch
 Patch5:		linux-ipv6-glibc2.2.patch
 Patch6:		http://milosch.net/pub/beos/2.2.18-pre2-beos09032000.patch
 Patch7:		kernel-autoraidraid.patch
+#		ftp://ftp.devlinux.com/pub/namesys/
 Patch8:		linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
 Patch9: 	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide.2.2.18.1209.patch.gz
 Patch10:	http://www.math.leidenuniv.nl/~buytenh/bridge/patches/bridge-0.0.9-against-2.2.18.diff
 patch11:	http://download.sourceforge.net/linux1394/ieee1394-2.2.17-20001012.gz
-#Patch:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.17.10.gz
+Patch12:	ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
 #Patch:		linux-2.2.18pre21.ext3.diff
-#Patch:		ftp://ftp.devlinux.com/pub/namesys/linux-%{version}-reiserfs-%{reiserfs_version}-patch.gz
 #Patch:		linux-2.2.15-atm-0.59-fore200e-0.1f.patch.gz
 #Patch:		linux-tasks.patch
 # Linux Virtual Server: http://www.linuxvirtualserver.org/software/
