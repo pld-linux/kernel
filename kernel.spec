@@ -13,7 +13,7 @@
 %bcond_without source	# don't build kernel-source package
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
-%define		_rel		1
+%define		_rel		2
 %define		_test_ver	6
 %define		_cset		20030929_1907
 
@@ -88,6 +88,7 @@ Patch66:	2.6.0-t5-SELinux-convert_context-lkml.patch
 Patch67:	2.6.0-t5-security_inode_permission-lkml.patch
 Patch68:	2.6.0-t5-documented_unused_pte_bits_i386-lkml.patch
 Patch69:	2.6.0-t5-enbd-2.4.31_20030506.patch
+Patch70:	2.6.0-t6-usb-irq.patch
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -355,6 +356,7 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch67 -p1
 %patch68 -p1
 #%%patch69 -p1
+%patch70 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
