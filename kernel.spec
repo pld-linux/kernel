@@ -147,6 +147,8 @@ Patch53:	2.6.10-esfq.patch
 Patch54:	2.6.10-imq.patch
 Patch55:	2.6.4-wrr.patch
 Patch56:	linux-2.6-netfilter-syms.patch
+# http://kernel.umbrella.ro/net/ (included in 2.6.11-rc1)
+Patch57:	kernel-match-nfmark-in-u32.patch
 
 # pseudo terminal fix for older glibc
 #Patch60:	%{name}-pts.patch
@@ -559,6 +561,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch54 -p1
 %patch55 -p1
 %patch56 -p1
+%patch57 -p1
 
 #patch60 -p1
 %patch61 -p1
