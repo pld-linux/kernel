@@ -7,7 +7,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Name:		kernel
 %define		_ver	2.6.6
 Version:	%{_ver}+grsec
-Release:	1.7
+Release:	1.8
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{_ver}.tar.bz2
@@ -31,6 +31,8 @@ Patch22:	2.6.4-imq-nat.patch
 Patch23:	2.6.4-wrr.patch
 Patch30:	2.6.6-pom-ng-%{_netfilter_snap}.patch
 Patch31:	2.6.5-pom-ng-fixes.patch
+# http://www.barbara.eu.org/~quaker/ipt_account/
+Patch32:	2.6.6-ipt_account.patch
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 BuildRequires:	module-init-tools
@@ -114,6 +116,7 @@ hardware.
 
 %patch30 -p1
 %patch31 -p1
+%patch32 -p1
 
 %build
 find include/ -type d -maxdepth 1 -name "asm-*" ! -name asm-i386 ! -name asm-generic | xargs rm -rf
@@ -134,9 +137,7 @@ if [ -r "config-nondist" ]; then
     make include/linux/autoconf.h
     mv include/linux/autoconf{,-nondist}.h
     make mrproper
-    cd include/linux
-    ln -sf autoconf{-nondist,}.h
-    cd ..
+    cd include
     ln -sf asm-i386 asm
     cd ..
     cp config-nondist .config
