@@ -1,0 +1,259 @@
+diff -urN linux-2.2.20br/include/linux/ip_fw.h linux-2.2.20brfw/include/linux/ip_fw.h
+--- linux-2.2.20br/include/linux/ip_fw.h	Mon Dec 10 16:39:01 2001
++++ linux-2.2.20brfw/include/linux/ip_fw.h	Mon Dec 10 16:43:24 2001
+@@ -28,6 +28,7 @@
+ #include <linux/ip.h>
+ #include <linux/tcp.h>
+ #include <linux/udp.h>
++#include <linux/skbuff.h>
+ #endif /* __KERNEL__ */
+ #define IP_FW_MAX_LABEL_LENGTH 8
+ typedef char ip_chainlabel[IP_FW_MAX_LABEL_LENGTH+1];
+@@ -188,6 +189,10 @@
+ #ifdef CONFIG_IP_MASQUERADE
+ extern int ip_masq_uctl(int, char *, int);
+ #endif
++extern int ip_fw_check_from_bridge(const char *brifname,
++				   struct sk_buff *skb,
++				   struct iphdr *ip,
++				   const char *destifname);
+ #endif /* KERNEL */
+ 
+ #endif /* _IP_FWCHAINS_H */
+diff -urN linux-2.2.20br/net/Makefile linux-2.2.20brfw/net/Makefile
+--- linux-2.2.20br/net/Makefile	Mon Dec 10 16:24:28 2001
++++ linux-2.2.20brfw/net/Makefile	Mon Dec 10 16:43:24 2001
+@@ -59,6 +59,7 @@
+ 
+ ifeq ($(CONFIG_BRIDGE),y)
+ SUB_DIRS += bridge
++MOD_SUB_DIRS += bridge
+ else
+   ifeq ($(CONFIG_BRIDGE),m)
+     MOD_SUB_DIRS += bridge
+diff -urN linux-2.2.20br/net/bridge/Makefile linux-2.2.20brfw/net/bridge/Makefile
+--- linux-2.2.20br/net/bridge/Makefile	Mon Dec 10 16:24:28 2001
++++ linux-2.2.20brfw/net/bridge/Makefile	Mon Dec 10 16:43:24 2001
+@@ -8,9 +8,9 @@
+ # Note 2! The CFLAGS definition is now in the main makefile...
+ 
+ O_TARGET	:= bridge.o
+-O_OBJS		:= br.o br_device.o br_fdb.o br_forward.o br_if.o br_input.o \
+-			br_ioctl.o br_notify.o br_stp.o br_stp_bpdu.o \
+-			br_stp_if.o br_stp_timer.o
++O_OBJS		:= br.o br_device.o br_fdb.o br_forward.o br_fw.o br_if.o \
++			br_input.o br_ioctl.o br_notify.o br_stp.o \
++			br_stp_bpdu.o br_stp_if.o br_stp_timer.o
+ M_OBJS		:= $(O_TARGET)
+ 
+ include $(TOPDIR)/Rules.make
+diff -urN linux-2.2.20br/net/bridge/br.c linux-2.2.20brfw/net/bridge/br.c
+--- linux-2.2.20br/net/bridge/br.c	Mon Dec 10 16:25:36 2001
++++ linux-2.2.20brfw/net/bridge/br.c	Mon Dec 10 16:43:24 2001
+@@ -41,10 +41,10 @@
+ 	br_ioctl_hook = br_ioctl_deviceless_stub;
+ 	register_netdevice_notifier(&br_device_notifier);
+ 
+-	return 0;
++	return brfw_init();
+ }
+ 
+-#ifdef MODULE
++#ifdef CONFIG_BRIDGE_MODULE
+ EXPORT_NO_SYMBOLS;
+ 
+ int init_module(void)
+@@ -54,6 +54,7 @@
+ 
+ void cleanup_module(void)
+ {
++	brfw_uninit();
+ 	unregister_netdevice_notifier(&br_device_notifier);
+ 	br_ioctl_hook = NULL;
+ 	br_handle_frame_hook = NULL;
+diff -urN linux-2.2.20br/net/bridge/br_forward.c linux-2.2.20brfw/net/bridge/br_forward.c
+--- linux-2.2.20br/net/bridge/br_forward.c	Mon Dec 10 16:24:28 2001
++++ linux-2.2.20brfw/net/bridge/br_forward.c	Mon Dec 10 16:43:24 2001
+@@ -24,10 +24,20 @@
+ 
+ static inline int should_forward(struct net_bridge_port *p, struct sk_buff *skb)
+ {
+-	if (skb->dev != p->dev && p->state == BR_STATE_FORWARDING)
+-		return 1;
++	struct sk_buff *sk;
+ 
+-	return 0;
++	if (skb->dev == p->dev || p->state != BR_STATE_FORWARDING)
++		return 0;
++
++	sk = skb;
++	if (call_fw_firewall(PF_BRIDGE, p->dev, skb->mac.raw,
++			     p->dev->name, &sk) != FW_ACCEPT)
++		return 0;
++
++	if (skb != sk)
++		printk(KERN_CRIT "br: prepare for armageddon!\n");
++
++	return 1;
+ }
+ 
+ static void __br_forward(struct net_bridge_port *to, struct sk_buff *skb)
+diff -urN linux-2.2.20br/net/bridge/br_fw.c linux-2.2.20brfw/net/bridge/br_fw.c
+--- linux-2.2.20br/net/bridge/br_fw.c	Thu Jan  1 01:00:00 1970
++++ linux-2.2.20brfw/net/bridge/br_fw.c	Mon Dec 10 16:43:24 2001
+@@ -0,0 +1,93 @@
++/*
++ *	Firewall for the ethernet bridge, using ipchains
++ *	Linux ethernet bridge
++ *
++ *	Authors:
++ *	Lennert Buytenhek		<buytenh@gnu.org>
++ *	Joachim Ott			<ott@ardala.han.de>
++ *
++ *	$Id$
++ *
++ *	This program is free software; you can redistribute it and/or
++ *	modify it under the terms of the GNU General Public License
++ *	as published by the Free Software Foundation; either version
++ *	2 of the License, or (at your option) any later version.
++ */
++
++#include <linux/config.h>
++#include <linux/kernel.h>
++#include <linux/netdevice.h>
++#include <linux/init.h>
++#include <linux/firewall.h>
++#include <linux/ip_fw.h>
++#include <linux/if_bridge.h>
++#include <asm/uaccess.h>
++#include "br_private.h"
++
++
++
++int brfw_forward_check(struct firewall_ops *this, int pf, struct device *dev,
++		       void *phdr, void *arg, struct sk_buff **pskb)
++{
++	struct net_bridge *br;
++	int err;
++	struct iphdr *ip;
++	unsigned char *ptr;
++	struct sk_buff *skb;
++
++	br = dev->br_port->br;
++	skb = *pskb;
++	ptr = skb->data;
++	ip = (struct iphdr *)(ptr + ETH_HLEN);
++
++	if (ptr[12] != 0x08 || ptr[13] != 0x00)		/* ETH_P_IP */
++		return FW_ACCEPT;
++
++	err = ip_fw_check_from_bridge(br->name, skb, ip, arg);
++	if (err != FW_SKIP)
++		return err;
++
++	return FW_ACCEPT;
++}
++
++int brfw_input_check(struct firewall_ops *this, int pf, struct device *dev,
++		     void *phdr, void *arg, struct sk_buff **pskb)
++{
++	return FW_ACCEPT;
++}
++
++int brfw_output_check(struct firewall_ops *this, int pf, struct device *dev,
++		      void *phdr, void *arg, struct sk_buff **pskb)
++{
++	return FW_ACCEPT;
++}
++
++
++
++
++struct firewall_ops brfw_ops =
++{
++	NULL,
++	brfw_forward_check,
++	brfw_input_check,
++	brfw_output_check,
++	PF_BRIDGE,
++	0
++};
++
++__initfunc(int brfw_init(void))
++{
++	printk(KERN_INFO "NET4: Ethernet Bridge Firewall 001 for NET4.0\n");
++
++	if (register_firewall(PF_BRIDGE, &brfw_ops) < 0) {
++		printk(KERN_ALERT "br: unable to register PF_BRIDGE firewall\n");
++		return 1;
++	}
++
++	return 0;
++}
++
++void brfw_uninit(void)
++{
++	unregister_firewall(PF_BRIDGE, &brfw_ops);
++}
+diff -urN linux-2.2.20br/net/bridge/br_private.h linux-2.2.20brfw/net/bridge/br_private.h
+--- linux-2.2.20br/net/bridge/br_private.h	Mon Dec 10 16:39:30 2001
++++ linux-2.2.20brfw/net/bridge/br_private.h	Mon Dec 10 16:43:24 2001
+@@ -166,6 +166,10 @@
+ 	      struct sk_buff *skb,
+ 	      int clone);
+ 
++/* br_fw.c */
++int brfw_init(void);
++void brfw_uninit(void);
++
+ /* br_if.c */
+ int br_add_bridge(char *name);
+ int br_del_bridge(char *name);
+diff -urN linux-2.2.20br/net/ipv4/ip_fw.c linux-2.2.20brfw/net/ipv4/ip_fw.c
+--- linux-2.2.20br/net/ipv4/ip_fw.c	Sun Mar 25 18:31:12 2001
++++ linux-2.2.20brfw/net/ipv4/ip_fw.c	Mon Dec 10 16:43:24 2001
+@@ -841,6 +841,25 @@
+ #endif
+ }
+ 
++#if defined(CONFIG_BRIDGE) || defined(CONFIG_BRIDGE_MODULE)
++int ip_fw_check_from_bridge(const char *brifname, struct sk_buff *skb, struct iphdr *ip, const char *destifname)
++{
++	struct ip_chain *chain;
++	int ret;
++
++	ret = FW_SKIP;
++	if (ip->ihl * 4 >= sizeof(struct iphdr) &&
++	    skb->len >= sizeof(struct iphdr)) {
++		if ((chain = find_label((char *)brifname)) != NULL) {
++			ret = ip_fw_check(ip, destifname, NULL, chain,
++					  skb, SLOT_NUMBER(), 0);
++		}
++	}
++
++	return ret;
++}
++#endif
++
+ /* Must have write lock & interrupts off for any of these */
+ 
+ /* This function sets all the byte counters in a chain to zero.  The
+diff -urN linux-2.2.20br/net/netsyms.c linux-2.2.20brfw/net/netsyms.c
+--- linux-2.2.20br/net/netsyms.c	Mon Dec 10 16:24:28 2001
++++ linux-2.2.20brfw/net/netsyms.c	Mon Dec 10 16:43:24 2001
+@@ -17,6 +17,7 @@
+ #include <linux/trdevice.h>
+ #include <linux/fcdevice.h>
+ #include <linux/ioport.h>
++#include <linux/ip_fw.h>
+ #include <net/neighbour.h>
+ #include <net/snmp.h>
+ #include <net/dst.h>
+@@ -224,6 +225,7 @@
+ 
+ #if defined(CONFIG_BRIDGE) || defined(CONFIG_BRIDGE_MODULE)
+ EXPORT_SYMBOL(br_handle_frame_hook);
++EXPORT_SYMBOL(ip_fw_check_from_bridge);
+ #endif
+ EXPORT_SYMBOL(br_ioctl_hook);
+ 

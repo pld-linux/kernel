@@ -1,0 +1,215 @@
+diff -u --new-file --recursive --exclude-from /usr/src/exclude linux.vanilla/drivers/pci/oldproc.c linux.21p2/drivers/pci/oldproc.c
+--- linux.vanilla/drivers/pci/oldproc.c	Sat Dec 29 16:57:22 2001
++++ linux.21p2/drivers/pci/oldproc.c	Tue Jan  1 22:40:32 2002
+@@ -344,11 +344,11 @@
+ 	DEVICE( VIA,		VIA_82C585,	"VT 82C585 Apollo VP1/VPX"),
+ 	DEVICE( VIA,		VIA_82C586_0,	"VT 82C586 Apollo ISA"),
+ 	DEVICE( VIA,		VIA_82C595,	"VT 82C595 Apollo VP2"),
+-	DEVICE( VIA,		VIA_82C596_0,	"VT 82C596 Apollo Pro"),
++	DEVICE( VIA,		VIA_82C596,	"VT 82C596 Apollo Pro"),
+ 	DEVICE( VIA,		VIA_82C597_0,	"VT 82C597 Apollo VP3"),
+ 	DEVICE( VIA,		VIA_82C598_0,	"VT 82C598 Apollo MVP3"),
+ 	DEVICE( VIA,		VIA_82C926,	"VT 82C926 Amazon"),
+-	DEVICE( VIA,		VIA_82C416,	"VT 82C416MV"),
++	DEVICE( VIA,		VIA_82C576_1,	"VT 82C416MV"),
+ 	DEVICE( VIA,		VIA_82C595_97,	"VT 82C595 Apollo VP2/97"),
+ 	DEVICE( VIA,		VIA_82C586_2,	"VT 82C586 Apollo USB"),
+ 	DEVICE( VIA,		VIA_82C586_3,	"VT 82C586B Apollo ACPI"),
+diff -u --new-file --recursive --exclude-from /usr/src/exclude linux.vanilla/drivers/pci/quirks.c linux.21p2/drivers/pci/quirks.c
+--- linux.vanilla/drivers/pci/quirks.c	Sun Mar 25 17:31:36 2001
++++ linux.21p2/drivers/pci/quirks.c	Tue Jan  1 22:39:14 2002
+@@ -144,6 +144,96 @@
+ 	}
+ }
+ 
++/*
++ *	VIA Apollo KT133 needs PCI latency patch
++ *	Made according to a windows driver based patch by George E. Breese
++ *	see PCI Latency Adjust on http://www.viahardware.com/download/viatweak.shtm
++ *      Also see http://home.tiscalinet.de/au-ja/review-kt133a-1-en.html for
++ *      the info on which Mr Breese based his work.
++ *
++ *	Updated based on further information from the site and also on
++ *	information provided by VIA 
++ */
++
++__initfunc(static void quirk_vialatency(struct pci_dev *dev, int arg))
++{
++	struct pci_dev *p;
++	u8 rev;
++	u8 busarb;
++	/* Ok we have a potential problem chipset here. Now see if we have
++	   a buggy southbridge */
++	   
++	p=pci_find_device(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_82C686, NULL);
++	if(p!=NULL)
++	{
++		pci_read_config_byte(p, PCI_CLASS_REVISION, &rev);
++		/* 0x40 - 0x4f == 686B, 0x10 - 0x2f == 686A; thanks Dan Hollis */
++		/* Check for buggy part revisions */
++		if (rev < 0x40 || rev > 0x42) 
++			return;
++	}
++	else
++	{
++		p = pci_find_device(PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_8231, NULL);
++		if(p==NULL)	/* No problem parts */
++			return;
++		pci_read_config_byte(p, PCI_CLASS_REVISION, &rev);
++		/* Check for buggy part revisions */
++		if (rev < 0x10 || rev > 0x12) 
++			return;
++	}
++	
++	/*
++	 *	Ok we have the problem. Now set the PCI master grant to 
++	 *	occur every master grant. The apparent bug is that under high
++	 *	PCI load (quite common in Linux of course) you can get data
++	 *	loss when the CPU is held off the bus for 3 bus master requests
++	 *	This happens to include the IDE controllers....
++	 *
++	 *	VIA only apply this fix when an SB Live! is present but under
++	 *	both Linux and Windows this isnt enough, and we have seen
++	 *	corruption without SB Live! but with things like 3 UDMA IDE
++	 *	controllers. So we ignore that bit of the VIA recommendation..
++	 */
++
++	pci_read_config_byte(dev, 0x76, &busarb);
++	/* Set bit 4 and bi 5 of byte 76 to 0x01 
++	   "Master priority rotation on every PCI master grant */
++	busarb &= ~(1<<5);
++	busarb |= (1<<4);
++	pci_write_config_byte(dev, 0x76, busarb);
++	printk(KERN_INFO "Applying VIA southbridge workaround.\n");
++}
++
++/*
++ * Fix some problems with 'movntq' copies on Athlons. We need to ensure the
++ * non functional memory stuff wasn't enabled by the BIOS (and thus fix
++ * crashes when we use 100% memory bandwidth)
++ *
++ * VIA 8363 chipset:
++ * VIA 8363,8622,8361 Northbridges:
++ *  - bits  5, 6, 7 at offset 0x55 need to be turned off
++ * VIA 8367 (KT266x) Northbridges:
++ *  - bits  5, 6, 7 at offset 0x95 need to be turned off
++ */
++
++__initfunc(static void pci_fixup_via_athlon_bug(struct pci_dev *d, int arg))
++{
++ 	u8 v;
++	int where = 0x55;
++
++	if (d->device == PCI_DEVICE_ID_VIA_8367_0) {
++	        where = 0x95; /* the memory write queue timer register is 
++                                different for the kt266x's: 0x95 not 0x55 */
++	}
++	pci_read_config_byte(d, where, &v);
++	if (v & 0xe0) {
++		printk("Trying to stomp on Athlon bug...\n");
++		v &= 0x1f; /* clear bits 5, 6, 7 */
++		pci_write_config_byte(d, where, v);
++	}
++}
++
+ 
+ typedef void (*quirk_handler)(struct pci_dev *, int);
+ 
+@@ -162,6 +252,7 @@
+ #endif
+ 	{ quirk_passive_release,"Passive release enable" },
+ 	{ quirk_isa_dma_hangs,	"Work around ISA DMA hangs" },
++	{ pci_fixup_via_athlon_bug, "Athlon/VIA fixup" },
+ };
+ 
+ 
+@@ -201,7 +292,14 @@
+ 	 * This is the 82C586 variants.
+ 	 */
+ 	{ PCI_VENDOR_ID_VIA,	PCI_DEVICE_ID_VIA_82C586_0,	quirk_isa_dma_hangs,	0x00 },
+-	{ PCI_VENDOR_ID_VIA,	PCI_DEVICE_ID_VIA_82C596_0,	quirk_isa_dma_hangs,	0x00 },
++	{ PCI_VENDOR_ID_VIA,	PCI_DEVICE_ID_VIA_82C596,	quirk_isa_dma_hangs,	0x00 },
++	{ PCI_VENDOR_ID_VIA,	PCI_DEVICE_ID_VIA_8363_0,	pci_fixup_via_athlon_bug, 0x00 },
++	{ PCI_VENDOR_ID_VIA,	PCI_DEVICE_ID_VIA_8622,	        pci_fixup_via_athlon_bug, 0x00 },
++	{ PCI_VENDOR_ID_VIA,	PCI_DEVICE_ID_VIA_8361,	        pci_fixup_via_athlon_bug, 0x00 },
++	{ PCI_VENDOR_ID_VIA,	PCI_DEVICE_ID_VIA_8367_0,	pci_fixup_via_athlon_bug, 0x00 },
++	{ PCI_VENDOR_ID_VIA,	PCI_DEVICE_ID_VIA_8363_0,	quirk_vialatency, 0x00 },
++	{ PCI_VENDOR_ID_VIA,	PCI_DEVICE_ID_VIA_8371_1,	quirk_vialatency, 0x00 },
++	{ PCI_VENDOR_ID_VIA,	0x3112	/* Not out yet ? */,	quirk_vialatency, 0x00 },
+ };
+ 
+ __initfunc(void pci_quirks_init(void))
+diff -u --new-file --recursive --exclude-from /usr/src/exclude linux.vanilla/include/linux/pci.h linux.21p2/include/linux/pci.h
+--- linux.vanilla/include/linux/pci.h	Sat Dec 29 16:57:24 2001
++++ linux.21p2/include/linux/pci.h	Tue Jan  1 22:42:06 2002
+@@ -830,7 +830,9 @@
+ #define PCI_DEVICE_ID_TTI_HPT343	0x0003
+ 
+ #define PCI_VENDOR_ID_VIA		0x1106
+-#define PCI_DEVICE_ID_VIA_8371_0        0x0391
++#define PCI_DEVICE_ID_VIA_8363_0	0x0305
++#define PCI_DEVICE_ID_VIA_8371_0	0x0391
++#define PCI_DEVICE_ID_VIA_8501_0	0x0501
+ #define PCI_DEVICE_ID_VIA_82C505	0x0505
+ #define PCI_DEVICE_ID_VIA_82C561	0x0561
+ #define PCI_DEVICE_ID_VIA_82C586_1	0x0571
+@@ -838,18 +840,47 @@
+ #define PCI_DEVICE_ID_VIA_82C585	0x0585
+ #define PCI_DEVICE_ID_VIA_82C586_0	0x0586
+ #define PCI_DEVICE_ID_VIA_82C595	0x0595
+-#define PCI_DEVICE_ID_VIA_82C596_0	0x0596
++#define PCI_DEVICE_ID_VIA_82C596	0x0596
+ #define PCI_DEVICE_ID_VIA_82C597_0	0x0597
+-#define PCI_DEVICE_ID_VIA_82C598_0      0x0598
++#define PCI_DEVICE_ID_VIA_82C598_0	0x0598
++#define PCI_DEVICE_ID_VIA_8601_0	0x0601
++#define PCI_DEVICE_ID_VIA_8605_0	0x0605
++#define PCI_DEVICE_ID_VIA_82C680	0x0680
++#define PCI_DEVICE_ID_VIA_82C686	0x0686
++#define PCI_DEVICE_ID_VIA_82C691	0x0691
++#define PCI_DEVICE_ID_VIA_82C693	0x0693
++#define PCI_DEVICE_ID_VIA_82C693_1	0x0698
+ #define PCI_DEVICE_ID_VIA_82C926	0x0926
+-#define PCI_DEVICE_ID_VIA_82C416	0x1571
++#define PCI_DEVICE_ID_VIA_82C576_1	0x1571
+ #define PCI_DEVICE_ID_VIA_82C595_97	0x1595
+ #define PCI_DEVICE_ID_VIA_82C586_2	0x3038
+ #define PCI_DEVICE_ID_VIA_82C586_3	0x3040
++#define PCI_DEVICE_ID_VIA_6305		0x3044
++#define PCI_DEVICE_ID_VIA_82C596_3	0x3050
++#define PCI_DEVICE_ID_VIA_82C596B_3	0x3051
++#define PCI_DEVICE_ID_VIA_82C686_4	0x3057
+ #define PCI_DEVICE_ID_VIA_82C686_5	0x3058
++#define PCI_DEVICE_ID_VIA_8233_5	0x3059
++#define PCI_DEVICE_ID_VIA_8233_7	0x3065
++#define PCI_DEVICE_ID_VIA_82C686_6	0x3068
++#define PCI_DEVICE_ID_VIA_8233_0	0x3074
++#define PCI_DEVICE_ID_VIA_8233C_0	0x3109
++#define PCI_DEVICE_ID_VIA_8633_0	0x3091
++#define PCI_DEVICE_ID_VIA_8367_0	0x3099
++#define PCI_DEVICE_ID_VIA_8622          0x3102
++#define PCI_DEVICE_ID_VIA_8361          0x3112
+ #define PCI_DEVICE_ID_VIA_86C100A	0x6100
++#define PCI_DEVICE_ID_VIA_8231		0x8231
++#define PCI_DEVICE_ID_VIA_8231_4	0x8235
++#define PCI_DEVICE_ID_VIA_8365_1	0x8305
++#define PCI_DEVICE_ID_VIA_8371_1	0x8391
++#define PCI_DEVICE_ID_VIA_8501_1	0x8501
+ #define PCI_DEVICE_ID_VIA_82C597_1	0x8597
+-#define PCI_DEVICE_ID_VIA_82C598_1      0x8598
++#define PCI_DEVICE_ID_VIA_82C598_1	0x8598
++#define PCI_DEVICE_ID_VIA_8601_1	0x8601
++#define PCI_DEVICE_ID_VIA_8505_1	0X8605
++#define PCI_DEVICE_ID_VIA_8633_1	0xB091
++#define PCI_DEVICE_ID_VIA_8367_1	0xB099
+ 
+ #define PCI_VENDOR_ID_SMC2             0x1113
+ #define PCI_DEVICE_ID_SMC2_1211TX      0x1211
+@@ -1070,6 +1101,7 @@
+ #define PCI_DEVICE_ID_AVM_A1		0x0a00
+ #define PCI_DEVICE_ID_AVM_B1		0x0700
+ #define PCI_DEVICE_ID_AVM_C4		0x0800
++#define PCI_DEVICE_ID_AVM_C2		0x1100
+ #define PCI_DEVICE_ID_AVM_T1		0x1200
+ 
+ #define PCI_VENDOR_ID_DIPIX		0x1246
