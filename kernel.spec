@@ -16,7 +16,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.2.20
-Release:	5
+Release:	6
 License:	GPL
 Group:		Base/Kernel
 Group(de):	Grundsätzlich/Kern
@@ -71,7 +71,8 @@ Patch8:		%{name}-3c90x.patch
 Patch9:		linux-ipv6-glibc2.2.patch
 # based on http://bridge.sourceforge.net/patches/bridge-1.0.1-against-2.2.20.diff
 # but diffrent
-Patch10:	bridge-1.0.1-against-2.2.20.diff
+Patch10:	bridge-1.0.2-against-2.2.20.diff
+Patch11:	bridge-ipchains-against-1.0.2-against-2.2.20.diff
 
 Patch20:	http://download.sourceforge.net/linux1394/ieee1394-2.2.19-20010527.gz
 Patch21:	linux-tasks.patch
@@ -84,8 +85,7 @@ Patch27:	%{name}-udf.patch
 
 # based on	http://people.redhat.com/mingo/raid-patches/raid-2.2.20-A0
 Patch30:	raid-2.2.20-A0.patch.bz2
-# based on	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.19/ide.2.2.19.05042001.patch.bz2
-Patch31:	ide.2.2.21.05042001-Ole.patch.gz
+Patch31:	http://www.ans.pl/ide/ide.2.2.21.01152002-Ole.patch.gz
 Patch32:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
 
 Patch40:	%{name}-flip.patch
@@ -94,7 +94,7 @@ Patch42:	%{name}-serial-initialisation.patch
 
 # in this place will be PLD patches
 
-Patch100:	bridge-include.patch
+#Patch100:	bridge-include.patch
 Patch101:	bridge-netsyms.patch
 Patch102:	%{name}-ipsec-bridge.patch
 
@@ -106,12 +106,14 @@ Patch108:	atm-unresolved.patch
 Patch109:	af-unresolved.patch
 Patch110:	linux-2.2.20-pcmcia-without-iee1394.patch.bz2
 # based on ftp://ftp.kernel.org/people/andrea/kernels/v2.2/2.2.20pre9aa2/40_lfs-2.2.20pre9aa2-27.bz2
-Patch111:       linux-2.2.20-lfs.patch
+#Patch111:       linux-2.2.20-lfs.patch
 Patch112:       %{name}-scripts-include-dir.patch
 Patch120:	bttv-makefile.patch
 Patch121:	tulip-patch-0.91.patch.bz2
 Patch122:       bttv-symbols.patch.bz2
-Patch123:	bridge-module_build.patch.bz2
+#Patch123:	bridge-module_build.patch.bz2
+
+Patch1000:	%{name}-vlan_bridge.patch
 
 # HTB from http://luxik.cdi.cz/~devik/qos/htb/
 Patch200:	htb2_2.2.17.diff
@@ -408,6 +410,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
+%patch11 -p1
 
 %patch20 -p1
 %patch21 -p1
@@ -424,8 +427,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %patch40 -p1
 
-%patch100 -p1
-%patch101 -p1
+#%patch100 -p1
 %patch102 -p1
 %patch105 -p1
 %patch106 -p1
@@ -435,6 +437,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch112 -p1
 
 # 802.1Q VLANs
+%patch1000 -p1
 patch -p1 -s <vlan.%{vlan_version}/vlan_2.2.patch
 
 cd serial-5.05
@@ -477,9 +480,10 @@ patch -p1 -s <jfs-2.2.common-v%{jfs_version}-patch
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
-%patch123 -p1
+#%patch123 -p1
 
-%patch111 -p1
+#%patch111 -p1
+%patch101 -p1
 
 %build
 BuildKernel() {
