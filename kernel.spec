@@ -29,7 +29,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
 Version:	2.4.21
-Release:	1.1
+Release:	1.2
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -141,8 +141,9 @@ Patch190:	hostap-2.4.19-rc3-patch.patch
 
 # New devices/drivers
 
-# from http://people.sistina.com/~thornber/patches/2.4-stable/2.4.20/2.4.20-dm-10.tar.bz2
-Patch200:	linux-2.4.21-dm-20-10.patch.gz
+# taken at 2003-07-19
+Patch200:	ftp://ftp.sistina.com/pub/LVM2/device-mapper/patches-version4/combined-linux-2.4.21-devmapper-ioctl.patch
+
 # EVMS support (http://www.sourceforge.net/projects/evms/)
 # Disabled due to conflicts with LVM2 and device mapper tools
 Patch201:	linux-2.4.21-evms-2.0.1.patch.gz
@@ -155,6 +156,7 @@ Patch210:	linux-2.4.21-I810FB.patch.gz
 Patch215:	%{name}-cdrw-packet.patch
 Patch216:	%{name}-cd-mrw-2.patch
 Patch225:	wrr-linux-2.4.9.patch
+Patch226:	linux-2.4.18-esfq.diff
 
 # http://people.FreeBSD.org/~gibbs/linux/SRC/aic79xx-linux-2.4-20030603-tar.gz
 Patch230:	linux-2.4-aic79xx-20030603.patch.gz
@@ -256,6 +258,10 @@ Patch1416:	linux-2.4.21-no-FPU.patch
 Patch1417:	linux-2.4.21-ac4-ide.patch
 Patch1418:	linux-2.4.21-hpt372-chicken-egg-hack.patch
 Patch1419:	linux-2.4.21-agp-num_of_masks.patch
+# htb
+Patch1500:	http://luxik.cdi.cz/~devik/qos/htb/v3/htb_3.10_3.12_2.diff
+Patch1501:	http://luxik.cdi.cz/~devik/qos/htb/v3/htb_killdbg_2421.diff
+
 
 Patch2000:	linux-PPC-SMP.patch
 Patch2001:	linux-2.4-ppc-procesor.patch
@@ -599,6 +605,7 @@ cp -f drm/*.{c,h} drivers/char/drm/
 #%patch215 -p1
 #%patch216 -p1
 %patch225 -p1
+%patch226 -p1
 %patch230 -p1
 %patch231 -p1
 %patch235 -p1
@@ -666,6 +673,8 @@ cd ../..
 %patch1417 -p1
 %patch1418 -p1
 %patch1419 -p1
+%patch1500 -p1
+%patch1501 -p1
 
 %patch2000 -p0
 %patch2001 -p1
