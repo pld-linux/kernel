@@ -16,7 +16,7 @@
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.10
 %define		sym_ncr_version		sym-1.7.3c-ncr-3.4.3b
-%define		vlan_version		1.4
+%define		vlan_version		1.5
 %define		IPperson_version	20010724-2.4.7
 %define		grsec_version		1.8-2.4.7
 %define		tulip_version		1.1.8
@@ -94,8 +94,8 @@ Patch9:		linux-grsecurity-%{grsec_version}.patch
 # http://www.uow.edu.au/~andrewm/linux/ext3/
 Patch10:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.5-247.gz
 # http://sci.felk.cvut.cz/nwd/linux-2.4/
-Patch11:	ndw-1.4-2.4.7-PLD.patch
-Patch12:	ndw-1.4-pre.common.patch
+Patch11:	nwd-1.4-2.4.7-PLD.patch
+Patch12:	nwd-1.4-pre.common.patch
 # http://www.dandelion.com/Linux/DAC960-2.4.11.tar.gz
 Patch13:	DAC960-2.4.11.patch.gz
 
@@ -549,7 +549,7 @@ echo Replaced Tulip driver
 cp -f tulip-%{tulip_version}/src/*.{c,h} drivers/net/tulip
 cp -f tulip-%{tulip_version}/src/ChangeLog drivers/net/tulip
 
-# NDW patch installed
+# NWD patch installed
 echo Network disk device support
 %patch11 -p1
 %patch12 -p1
