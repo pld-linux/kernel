@@ -798,6 +798,8 @@ Opts="OURCC=\"sparc64-pld-linux-gcc\""
 %endif
 %endif
 
+sed -i -e 's#CC.*$(CROSS_COMPILE)$(OURCC)#CC	= $(CROSS_COMPILE)gcc#g' Makefile
+
 install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 install -d $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}{,smp}/misc
 
