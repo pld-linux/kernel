@@ -116,6 +116,7 @@ Patch42:	2.6.0-t11-ALI-M1563-lkml.patch
 Patch44:	linux-tdfxfb-fillrect.patch
 Patch45:	linux-fbcon-margins.patch
 Patch46:	linux-tdfxfb-interlace+double.patch
+Patch47:	linux-tdfxfb-nofloat.patch
 
 Patch48:	2.6.1-rc2-ini9100u-lkml.patch
 
@@ -518,6 +519,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch44 -p1
 %patch45 -p1
 %patch46 -p1
+%patch47 -p1
 
 %patch48 -p1
 
