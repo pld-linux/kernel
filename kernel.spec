@@ -76,8 +76,6 @@ Patch0:		2.6.0-ksyms-add.patch
 Patch1:		cset-%{_cset}.txt.gz
 %endif
 
-Patch3:		http://vserver.13thfloor.at/Experimental/patch-2.6.2-rc1-vs0.05.1.diff
-
 Patch4:		squashfs1.3r2-patch
 
 Patch6:		2.6.0-t3-sysfs_mem-lkml.patch
@@ -491,8 +489,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %if "%{_cset}" != "0"
 %patch1 -p1
 %endif
-
-%patch3 -p1
 
 %patch4 -p1
 
