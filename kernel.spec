@@ -5,8 +5,8 @@
 %define		test_build		0
 #
 %define		pre_version		pre1
-%define		lids_version		1.0.7-2.4.3
-%define		ipvs_version		0.2.8
+%define		lids_version		1.0.8-2.4.4
+%define		ipvs_version		0.9.0
 %define		freeswan_version	snap2001feb24b
 %define 	aacraid_version		1.0.6
 %define		wlan_version		0.1.7
@@ -16,7 +16,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
-Version:	2.4.4
+Version:	2.4.5
 Release:	1
 License:	GPL
 Group:		Base/Kernel
@@ -58,31 +58,30 @@ Source1000:	%{name}-lids.config
 Patch0:		%{name}-pldfblogo.patch
 Patch1:		ftp://ftp.kerneli.org/pub/linux/kernel/crypto/v2.4/patch-int-2.4.3.1.gz
 Patch2:		linux-2.4.2-freeswan-%{freeswan_version}.patch.gz
-## orginal are here: http://domsch.com/linux/aacraid/linux-2.4.3-aacraid-030101.patch
-## this need small changes to applay in PLD.
-Patch3:		linux-2.4.3-aacraid-030101.patch
+# http://domsch.com/linux/aacraid/linux-2.4.4-aacraid-043001.patch
+Patch3:		linux-2.4.4-aacraid-043001.patch
 # Reiserfs/NFS patches
 Patch4:		linux-nfsd_operations.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
-Patch5:		br2684-against2.4.4.diff
+Patch5:		br2684-against2.4.5.diff
 # XFS patches
 #Patch6:		ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4.4-core-xfs-1.0.patch.gz
 #Patch7:		ftp://linux-xfs.sgi.com/projects/xfs/download/latest/patches/linux-2.4-xfs-1.0.patch.gz
 #Patch8:		linux-2.4-xfs-nfsdops.patch
 # Compressed iso9660 filesystem
 Patch9:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/filemap-2.4.4-1.diff.gz
-Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-2.4.5-pre1-5.diff.gz
-Patch11:	linux-abi-2.4.3.0-PLD.patch
+Patch10:	ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs-2.4.5-pre1-8.diff.gz
+Patch11:	linux-abi-2.4.3.0-PLD.diff
 Patch12:	http://www.uow.edu.au/~andrewm/linux/cpus_allowed.patch
 
 # Assorted bugfixes
 
 # Quota fixes
-# ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.3-1.diff
-Patch100:	quota-fix-2.4.4-1.diff.gz
+# ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.4-2.diff
+Patch100:	quota-fix-2.4.5.diff.gz
 # from LKML
 Patch101:	linux-scsi-debug-bug.patch
-Patch102:	linux-2.4.2-oom-killer.patch
+Patch102:	linux-2.4.5-oom-killer.patch
 Patch103:	linux-2.4.2-raw-ip.patch
 Patch104:	PCI_ISA_bridge.patch
 Patch105:	linux-2.4.2-nvram-hdd.patch
@@ -91,33 +90,26 @@ Patch107:	patch-uk3
 Patch108:	patch-uk5
 Patch109:	epca-fix-missing-unregister-driver.patch
 Patch110:	ramdisk-VM.fix
-Patch111:	linux-2.4.2-Davicom-card.patch
-Patch112:	linux-ram-disk-free.patch
+Patch111:	linux-ram-disk-free.patch
 # this patch adds support for "io" and "irq" options in PCNet32 driver module
-Patch113:	linux-2.4.2-pcnet-parms.patch
+Patch112:	linux-2.4.2-pcnet-parms.patch
 # Kernel crashes during making reiser-module:
-Patch114:	%{name}-reiser.patch
-Patch115:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.3-p4.03132001.patch.gz
+Patch113:	%{name}-reiser.patch
+Patch114:	ftp://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.4.3/ide.2.4.5-p1.05132001.patch.gz
+Patch115:	http://www.eax.com/patches/linux-245-ov511-diff
 
 # Patches fixing other patches or 3rd party sources ;)
 
 Patch900:	kernel-i8255-asm-fix.patch
 Patch901:	dc395-patch-PLD-fix.patch
 # aacraid fix
-Patch902:	http://domsch.com/linux/aacraid/linux-2.4.3-axboe-scsi-max-sec.patch
+Patch902:	http://domsch.com/linux/aacraid/linux-2.4.4-axboe-scsi-max-sec.patch
 Patch903:	rl2-include.patch
-# work around bugs in windows95/2000 VJ header compression implementations.
-Patch904:	ipvs-ip_select_ident.patch
-# patch for fix LIDS install
-Patch905:	linux-lids-1.0.7-PLD.fix
-
-# Adaptec AIC7XXX patch rewriten to PLD.
-# orginal was here.
-# http://people.FreeBDS.org/~gibbs/linux/linux-aic7xxx-6.1.13-2.4.4.patch.gz
-Patch906:	linux-aic7xxx-6.1.13-PLD.patch.gz
+# patch to fix LIDS stupidity
+Patch904:	linux-lids-fixpatch.patch
 
 # Linus's -pre
-Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.5-%{pre_version}.gz
+Patch1000:	ftp://ftp.kernel.org/pub/linux/kernel/testing/patch-2.4.6-%{pre_version}.gz
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -329,9 +321,9 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -a3 -a5 -a6 -a7 -a8 -a9 -a10 -a11 -a12 -n linux
-%patch1000 -p1
+#%patch1000 -p1
 %patch0 -p1
-%patch1 -p1
+#%patch1 -p1
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
@@ -354,10 +346,10 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch108 -p1
 %patch109 -p1
 %patch110 -p1
-#%patch111 -p0
+%patch111 -p1
 %patch112 -p1
-%patch113 -p1
-%patch114 -p4
+%patch113 -p4
+#%patch114 -p1
 %patch115 -p1
 
 %patch900 -p0 
@@ -385,7 +377,9 @@ for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
 echo -e $ANS | ./runme)
 
 # LIDS
-%patch905 -p0
+cd lids-%{lids_version}
+%patch904 -p1
+cd ..
 patch -p1 -s <lids-%{lids_version}/lids-%{lids_version}.patch
 
 # IPVS
@@ -395,7 +389,6 @@ done
 mkdir net/ipv4/ipvs
 cp ipvs-%{ipvs_version}/ipvs/*.{c,h,in} net/ipv4/ipvs
 cp ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile net/ipv4/ipvs/Makefile
-patch -p1 -s < %{PATCH904}
 
 # Remove -g from drivers/atm/Makefile and net/ipsec/Makefile
 mv -f drivers/atm/Makefile drivers/atm/Makefile.orig
@@ -426,10 +419,7 @@ rm -rf %{sym_ncr_version}
 #%patch903 -p1
 
 ## must be here, in other time make errors with LIDS
-%patch11 -p1
-
-## Adaptec AIC7XXX patch
-%patch906 -p1
+#%patch11 -p1
 
 %build
 BuildKernel() {
@@ -556,7 +546,7 @@ gzip -dc %{SOURCE10} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{SOURCE11} | tar -xf - -C $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
 # Pre patch
-gzip -dc %{PATCH1000} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
+#gzip -dc %{PATCH1000} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH0}
 gzip -dc %{PATCH1} | patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
@@ -615,7 +605,7 @@ for i in `echo *.patch.ipv6` `echo *.patch` ; do ANS="${ANS}y\n" ; done
 echo -e $ANS | ./runme))
 
 # LIDS
-patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH905}
+patch -p0 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH904}
 patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/lids-%{lids_version}/lids-%{lids_version}.patch
 install $RPM_SOURCE_DIR/kernel-%{_target_cpu}-smp.config $RPM_BUILD_ROOT/usr/src/linux-%{version}/.config.lids
 
@@ -626,7 +616,6 @@ done
 mkdir $RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipv4/ipvs
 cp $RPM_BUILD_ROOT/usr/src/linux-%{version}/ipvs-%{ipvs_version}/ipvs/*.{c,h,in} $RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipv4/ipvs
 cp $RPM_BUILD_ROOT/usr/src/linux-%{version}/ipvs-%{ipvs_version}/ipvs/linux_net_ipv4_ipvs_Makefile $RPM_BUILD_ROOT/usr/src/linux-%{version}/net/ipv4/ipvs/Makefile
-patch -p1 -s -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH904}
 
 # Remove -g from drivers/atm/Makefile
 mv -f $RPM_BUILD_ROOT/usr/src/linux-%{version}/drivers/atm/Makefile \
