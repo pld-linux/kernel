@@ -20,7 +20,7 @@
 %define		IPperson_version	20010724-2.4.7
 %define		grsec_version		1.9.4-2.4.18
 %define		aic_version		6.2.3-2.4.7
-%define		jfs_version		2.4-1.0.16
+%define		jfs_version		2.4-1.0.17
 %define		lvm_version		1.0.3
 %define		evms_version		1.0.0
 %define		tridentfb_version	0.7.0
@@ -30,7 +30,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.4.18
-Release:	2
+Release:	2.1
 License:	GPL
 Group:		Base/Kernel
 Group(cs):	Základ/Jádro
@@ -56,7 +56,7 @@ Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.3.99-pre6-fore200e-0
 # Don't use following patch, it may hang the NIC (baggins)
 #Source5:	http://tulipe.cnam.fr/personne/lizzi/linux/linux-2.4.0-test3-fore200e-0.2g.tar.gz
 # based on cvs cvs@pserver.samba.org:/cvsroot netfilter
-Source7:	linux-%{version}-netfilter.tar.gz
+Source7:	netfilter-15042002.tar.gz
 Source10:	ftp://ftp.linux-wlan.org/pub/linux-wlan-ng/linux-wlan-ng-%{wlan_version}.tar.gz
 # new -> ftp://ftp.tux.org/pub/roudier/drivers/portable/sym-2.1.x/sym-2.1.16-20011028.tar.gz
 Source11:	ftp://ftp.tux.org/pub/people/gerard-roudier/drivers/linux/stable/%{sym_ncr_version}.tar.gz
@@ -90,7 +90,7 @@ Patch2:		freeswan-%{freeswan_version}-%{version}.patch.gz
 # from  http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.17.diff
 # from ftp://linux-xfs.sgi.com/projects/xfs/download/patches/
-Patch5:		xfs-2.4.18-12032002.patch.gz
+Patch5:		xfs-2.4.18-15042002.patch.gz
 # Homepage of ABI:	http://linux-abi.sourceforge.net/
 # from ftp://ftp.kernel.org/pub/linux/kernel/people/hch/linux-abi/v2.4/linux-abi-2.4.15.0.patch.bz2 
 Patch7:		linux-abi-2.4.17.0.patch.bz2
@@ -518,7 +518,7 @@ echo Adding Netfilter
 #
 (KERNEL_DIR=`pwd` ; export KERNEL_DIR
 cd netfilter-patches/patch-o-matic/extra
-%patch903 -p0
+#%patch903 -p0
 cd ..
 ANS=""
 for suite in submitted pending base extra pld ; do
