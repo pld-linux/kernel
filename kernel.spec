@@ -848,8 +848,13 @@ ln -snf %{version}-%{release}smp-lids /lib/modules/%{version}
 if [ ! -L %{_libdir}/bootdisk/lib/modules/%{version} ] ; then
 	mv -f %{_libdir}/bootdisk/lib/modules/%{version} %{_libdir}/bootdisk/lib/modules/%{version}.rpmsave
 fi
+if [ ! -L %{_libdir}/bootdisk/boot/vmlinuz-%{version} ] ; then
+	mv -f %{_libdir}/bootdisk/boot/vmlinuz-%{version} %{_libdir}/bootdisk/boot/vmlinuz-%{version}.rpmsave
+fi
 rm -f %{_libdir}/bootdisk/lib/modules/%{version}
 ln -snf %{version}-%{release}BOOT %{_libdir}/bootdisk/lib/modules/%{version}
+rm -f %{_libdir}/bootdisk/boot/vmlinuz-%{version}
+ln -snf vmlinuz-%{version}-%{release}BOOT %{_libdir}/bootdisk/boot/vmlinuz-%{version}
 
 %postun
 if [ -L /lib/modules/%{version} ]; then 
