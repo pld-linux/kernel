@@ -75,7 +75,7 @@ Patch27:	%{name}-udf.patch
 # based on	http://people.redhat.com/mingo/raid-patches/raid-2.2.20-A0
 Patch28:	raid-2.2.20-A0.patch.bz2
 # based on	http://ftp.kernel.org/pub/linux/kernel/people/hedrick/ide-2.2.20/ide-2.2.20.01102002.patch.bz2
-Patch29:	ide.2.2.21.03262002-Ole.patch.bz2
+Patch29:	ide.2.2.21.04022002-Ole.patch.bz2
 Patch30:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
 Patch31:	%{name}-flip.patch
 Patch33:	%{name}-ipsec-bridge.patch
@@ -106,7 +106,7 @@ Patch112:	linux-2.2.20-pcilynx_unresolved.patch
 Patch114:	ide-2.2.21-ide.c-ide-cd.c_license.patch
 Patch115:	ide-2.2.21-printk.patch
 
-Patch300:	patch-2.2.21-rc2.gz
+Patch300:	patch-2.2.21-rc3.gz
 Patch320:	fix-prename.patch
 Patch321:	ow1-fix-2.2.21-pre1.patch
 
