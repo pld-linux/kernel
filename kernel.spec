@@ -26,7 +26,7 @@ Summary(pl):	J±dro Linuksa
 Summary(pt_BR):	Kernel Linux (a parte central do sistema operacional Linux)
 Name:		kernel
 Version:	2.4.22
-Release:	1.1
+Release:	1.2
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.4/linux-%{version}.tar.bz2
@@ -253,10 +253,14 @@ Patch1421:	linux-2.4.21-bttv-typo.patch
 Patch1422:	linux-2.4.21-ipt_TRACE-typo.patch
 Patch1423:	linux-2.4.22-alpha-kmap_types.patch
 
+# http://www.hardrock.org/kernel/current-updates/
+# taken at 20031008 (update this date if you update patch)
+# also rememver to remove EXTRAVERSION from this patch
+Patch1424:	linux-2.4.22-updates.patch
+
 # htb
 # http://luxik.cdi.cz/~devik/qos/htb/v3/
 Patch1501:	htb_killdbg_2421.diff
-Patch1600:	linux-pcwd.patch
 
 Patch2000:	linux-PPC-SMP.patch
 Patch2001:	linux-2.4-ppc-procesor.patch
@@ -741,9 +745,10 @@ cp -f drm/*.{c,h} drivers/char/drm/
 %patch1421 -p1
 %patch1422 -p1
 %patch1423 -p1
-%patch1501 -p1
 
-%patch1600 -p1
+%patch1424 -p1
+
+%patch1501 -p1
 
 %patch2000 -p0
 %patch2001 -p1
