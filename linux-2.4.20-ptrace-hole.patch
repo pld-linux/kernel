@@ -1,0 +1,617 @@
+Vulnerability: CAN-2003-0127
+
+The Linux 2.2 and Linux 2.4 kernels have a flaw in ptrace. This hole allows
+local users to obtain full privileges. Remote exploitation of this hole is
+not possible. Linux 2.5 is not believed to be vulnerable.
+
+Linux 2.2.25 has been released to correct Linux 2.2. It contains no other
+changes. The bug fixes that would have been in 2.2.5pre1 will now appear in
+2.2.26pre1. The patch will apply directly to most older 2.2 releases.
+
+A patch for Linux 2.4.20/Linux 2.4.21pre is attached. The patch also
+subtly changes the PR_SET_DUMPABLE prctl. We believe this is neccessary and 
+that it will not affect any software. The functionality change is specific 
+to unusual debugging situations.
+
+We would like to thank Andrzej Szombierski who found the problem, and
+wrote an initial patch. Seth Arnold cleaned up the 2.2 change. Arjan van
+de Ven and Ben LaHaise identified additional problems with the original 
+fix.
+
+Alan
+
+diff -purN linux.orig/arch/alpha/kernel/entry.S linux/arch/alpha/kernel/entry.S
+--- linux.orig/arch/alpha/kernel/entry.S	Thu Mar 13 12:01:46 2003
++++ linux/arch/alpha/kernel/entry.S	Thu Mar 13 13:28:49 2003
+@@ -231,12 +231,12 @@ kernel_clone:
+ .end	kernel_clone
+ 
+ /*
+- * kernel_thread(fn, arg, clone_flags)
++ * arch_kernel_thread(fn, arg, clone_flags)
+  */
+ .align 3
+ .globl	kernel_thread
+ .ent	kernel_thread
+-kernel_thread:
++arch_kernel_thread:
+ 	ldgp	$29,0($27)	/* we can be called from a module */
+ 	.frame $30, 4*8, $26
+ 	subq	$30,4*8,$30
+diff -purN linux.orig/arch/arm/kernel/process.c linux/arch/arm/kernel/process.c
+--- linux.orig/arch/arm/kernel/process.c	Thu Mar 13 12:01:29 2003
++++ linux/arch/arm/kernel/process.c	Thu Mar 13 13:25:56 2003
+@@ -366,7 +366,7 @@ void dump_thread(struct pt_regs * regs, 
+  * a system call from a "real" process, but the process memory space will
+  * not be free'd until both the parent and the child have exited.
+  */
+-pid_t kernel_thread(int (*fn)(void *), void *arg, unsigned long flags)
++pid_t arch_kernel_thread(int (*fn)(void *), void *arg, unsigned long flags)
+ {
+ 	pid_t __ret;
+ 
+diff -purN linux.orig/arch/cris/kernel/entry.S linux/arch/cris/kernel/entry.S
+--- linux.orig/arch/cris/kernel/entry.S	Thu Mar 13 12:01:29 2003
++++ linux/arch/cris/kernel/entry.S	Thu Mar 13 13:30:30 2003
+@@ -736,12 +736,12 @@ hw_bp_trig_ptr:
+  * the grosser the code, at least with the gcc version in cris-dist-1.13.
+  */
+ 
+-/* int kernel_thread(int (*fn)(void *), void * arg, unsigned long flags) */
++/* int arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags) */
+ /*                   r10                r11         r12  */
+ 
+ 	.text
+-	.global kernel_thread
+-kernel_thread:
++	.global arch_kernel_thread
++arch_kernel_thread:
+ 
+ 	/* Save ARG for later.  */
+ 	move.d $r11, $r13
+diff -purN linux.orig/arch/i386/kernel/process.c linux/arch/i386/kernel/process.c
+--- linux.orig/arch/i386/kernel/process.c	Thu Mar 13 12:01:57 2003
++++ linux/arch/i386/kernel/process.c	Thu Mar 13 13:26:08 2003
+@@ -495,7 +495,7 @@ void release_segments(struct mm_struct *
+ /*
+  * Create a kernel thread
+  */
+-int kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
++int arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
+ {
+ 	long retval, d0;
+ 
+@@ -518,6 +518,7 @@ int kernel_thread(int (*fn)(void *), voi
+ 		 "r" (arg), "r" (fn),
+ 		 "b" (flags | CLONE_VM)
+ 		: "memory");
++
+ 	return retval;
+ }
+ 
+diff -purN linux.orig/arch/ia64/kernel/process.c linux/arch/ia64/kernel/process.c
+--- linux.orig/arch/ia64/kernel/process.c	Thu Mar 13 12:01:29 2003
++++ linux/arch/ia64/kernel/process.c	Thu Mar 13 13:26:15 2003
+@@ -220,7 +220,7 @@ ia64_load_extra (struct task_struct *tas
+  *	|                     | <-- sp (lowest addr)
+  *	+---------------------+
+  *
+- * Note: if we get called through kernel_thread() then the memory
++ * Note: if we get called through arch_kernel_thread() then the memory
+  * above "(highest addr)" is valid kernel stack memory that needs to
+  * be copied as well.
+  *
+@@ -469,7 +469,7 @@ ia64_set_personality (struct elf64_hdr *
+ }
+ 
+ pid_t
+-kernel_thread (int (*fn)(void *), void *arg, unsigned long flags)
++arch_kernel_thread (int (*fn)(void *), void *arg, unsigned long flags)
+ {
+ 	struct task_struct *parent = current;
+ 	int result, tid;
+diff -purN linux.orig/arch/m68k/kernel/process.c linux/arch/m68k/kernel/process.c
+--- linux.orig/arch/m68k/kernel/process.c	Thu Mar 13 12:01:29 2003
++++ linux/arch/m68k/kernel/process.c	Thu Mar 13 13:26:18 2003
+@@ -124,7 +124,7 @@ void show_regs(struct pt_regs * regs)
+ /*
+  * Create a kernel thread
+  */
+-int kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
++int arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
+ {
+ 	int pid;
+ 	mm_segment_t fs;
+diff -purN linux.orig/arch/mips/kernel/process.c linux/arch/mips/kernel/process.c
+--- linux.orig/arch/mips/kernel/process.c	Thu Mar 13 12:01:29 2003
++++ linux/arch/mips/kernel/process.c	Thu Mar 13 13:26:28 2003
+@@ -155,7 +155,7 @@ void dump_thread(struct pt_regs *regs, s
+ /*
+  * Create a kernel thread
+  */
+-int kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
++int arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
+ {
+ 	long retval;
+ 
+diff -purN linux.orig/arch/mips64/kernel/process.c linux/arch/mips64/kernel/process.c
+--- linux.orig/arch/mips64/kernel/process.c	Thu Mar 13 12:01:29 2003
++++ linux/arch/mips64/kernel/process.c	Thu Mar 13 13:26:23 2003
+@@ -152,7 +152,7 @@ void dump_thread(struct pt_regs *regs, s
+ /*
+  * Create a kernel thread
+  */
+-int kernel_thread(int (*fn)(void *), void *arg, unsigned long flags)
++int arch_kernel_thread(int (*fn)(void *), void *arg, unsigned long flags)
+ {
+ 	int retval;
+ 
+diff -purN linux.orig/arch/parisc/kernel/process.c linux/arch/parisc/kernel/process.c
+--- linux.orig/arch/parisc/kernel/process.c	Fri Feb  9 14:29:44 2001
++++ linux/arch/parisc/kernel/process.c	Thu Mar 13 13:26:36 2003
+@@ -118,7 +118,7 @@ void machine_heartbeat(void)
+  */
+ 
+ extern pid_t __kernel_thread(int (*fn)(void *), void *arg, unsigned long flags);
+-pid_t kernel_thread(int (*fn)(void *), void *arg, unsigned long flags)
++pid_t arch_kernel_thread(int (*fn)(void *), void *arg, unsigned long flags)
+ {
+ 
+ 	/*
+diff -purN linux.orig/arch/ppc/kernel/misc.S linux/arch/ppc/kernel/misc.S
+--- linux.orig/arch/ppc/kernel/misc.S	Thu Mar 13 12:01:29 2003
++++ linux/arch/ppc/kernel/misc.S	Thu Mar 13 13:32:21 2003
+@@ -899,9 +899,9 @@ _GLOBAL(cvt_df)
+ 
+ /*
+  * Create a kernel thread
+- *   kernel_thread(fn, arg, flags)
++ *   arch_kernel_thread(fn, arg, flags)
+  */
+-_GLOBAL(kernel_thread)
++_GLOBAL(arch_kernel_thread)
+ 	mr	r6,r3		/* function */
+ 	ori	r3,r5,CLONE_VM	/* flags */
+ 	li	r0,__NR_clone
+diff -purN linux.orig/arch/ppc64/kernel/misc.S linux/arch/ppc64/kernel/misc.S
+--- linux.orig/arch/ppc64/kernel/misc.S	Thu Mar 13 12:01:30 2003
++++ linux/arch/ppc64/kernel/misc.S	Thu Mar 13 13:29:42 2003
+@@ -493,9 +493,9 @@ _GLOBAL(cvt_df)
+ 
+ /*
+  * Create a kernel thread
+- *   kernel_thread(fn, arg, flags)
++ *   arch_kernel_thread(fn, arg, flags)
+  */
+-_GLOBAL(kernel_thread)
++_GLOBAL(arch_kernel_thread)
+ 	mr	r6,r3		/* function */
+ 	ori	r3,r5,CLONE_VM	/* flags */
+ 	li	r0,__NR_clone
+diff -purN linux.orig/arch/s390/kernel/process.c linux/arch/s390/kernel/process.c
+--- linux.orig/arch/s390/kernel/process.c	Thu Mar 13 12:01:30 2003
++++ linux/arch/s390/kernel/process.c	Thu Mar 13 13:26:43 2003
+@@ -105,7 +105,7 @@ void show_regs(struct pt_regs *regs)
+ 		show_trace((unsigned long *) regs->gprs[15]);
+ }
+ 
+-int kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
++int arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
+ {
+         int clone_arg = flags | CLONE_VM;
+         int retval;
+diff -purN linux.orig/arch/s390x/kernel/process.c linux/arch/s390x/kernel/process.c
+--- linux.orig/arch/s390x/kernel/process.c	Thu Mar 13 12:01:30 2003
++++ linux/arch/s390x/kernel/process.c	Thu Mar 13 13:26:46 2003
+@@ -102,7 +102,7 @@ void show_regs(struct pt_regs *regs)
+ 		show_trace((unsigned long *) regs->gprs[15]);
+ }
+ 
+-int kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
++int arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
+ {
+         int clone_arg = flags | CLONE_VM;
+         int retval;
+diff -purN linux.orig/arch/sh/kernel/process.c linux/arch/sh/kernel/process.c
+--- linux.orig/arch/sh/kernel/process.c	Mon Oct 15 16:36:48 2001
++++ linux/arch/sh/kernel/process.c	Thu Mar 13 13:26:49 2003
+@@ -118,7 +118,7 @@ void free_task_struct(struct task_struct
+  * This is the mechanism for creating a new kernel thread.
+  *
+  */
+-int kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
++int arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
+ {	/* Don't use this in BL=1(cli).  Or else, CPU resets! */
+ 	register unsigned long __sc0 __asm__ ("r0");
+ 	register unsigned long __sc3 __asm__ ("r3") = __NR_clone;
+diff -purN linux.orig/arch/sparc/kernel/process.c linux/arch/sparc/kernel/process.c
+--- linux.orig/arch/sparc/kernel/process.c	Thu Mar 13 12:01:30 2003
++++ linux/arch/sparc/kernel/process.c	Thu Mar 13 13:26:58 2003
+@@ -676,7 +676,7 @@ out:
+  * a system call from a "real" process, but the process memory space will
+  * not be free'd until both the parent and the child have exited.
+  */
+-pid_t kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
++pid_t arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
+ {
+ 	long retval;
+ 
+diff -purN linux.orig/arch/sparc64/kernel/process.c linux/arch/sparc64/kernel/process.c
+--- linux.orig/arch/sparc64/kernel/process.c	Thu Mar 13 12:01:30 2003
++++ linux/arch/sparc64/kernel/process.c	Thu Mar 13 13:26:54 2003
+@@ -658,7 +658,7 @@ int copy_thread(int nr, unsigned long cl
+  * a system call from a "real" process, but the process memory space will
+  * not be free'd until both the parent and the child have exited.
+  */
+-pid_t kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
++pid_t arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
+ {
+ 	long retval;
+ 
+diff -purN linux.orig/arch/um/kernel/process_kern.c linux/arch/um/kernel/process_kern.c
+--- linux.orig/arch/um/kernel/process_kern.c	Thu Mar 13 12:01:48 2003
++++ linux/arch/um/kernel/process_kern.c	Thu Mar 13 13:27:37 2003
+@@ -171,14 +171,14 @@ static int new_thread_proc(void *stack)
+ 	os_usr1_process(os_getpid());
+ }
+ 
+-int kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
++int arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
+ {
+ 	int pid;
+ 
+ 	current->thread.request.u.thread.proc = fn;
+ 	current->thread.request.u.thread.arg = arg;
+ 	pid = do_fork(CLONE_VM | flags, 0, NULL, 0);
+-	if(pid < 0) panic("do_fork failed in kernel_thread");
++	if(pid < 0) panic("do_fork failed in arch_kernel_thread");
+ 	return(pid);
+ }
+ 
+diff -purN linux.orig/fs/exec.c linux/fs/exec.c
+--- linux.orig/fs/exec.c	Thu Mar 13 12:01:46 2003
++++ linux/fs/exec.c	Thu Mar 13 14:19:08 2003
+@@ -559,8 +559,10 @@ int flush_old_exec(struct linux_binprm *
+ 
+ 	current->sas_ss_sp = current->sas_ss_size = 0;
+ 
+-	if (current->euid == current->uid && current->egid == current->gid)
++	if (current->euid == current->uid && current->egid == current->gid) {
+ 		current->mm->dumpable = 1;
++		current->task_dumpable = 1;
++	}
+ 	name = bprm->filename;
+ 	for (i=0; (ch = *(name++)) != '\0';) {
+ 		if (ch == '/')
+@@ -952,7 +954,7 @@ int do_coredump(long signr, struct pt_re
+ 	binfmt = current->binfmt;
+ 	if (!binfmt || !binfmt->core_dump)
+ 		goto fail;
+-	if (!current->mm->dumpable)
++	if (!is_dumpable(current))
+ 		goto fail;
+ 	current->mm->dumpable = 0;
+ 	if (current->rlim[RLIMIT_CORE].rlim_cur < binfmt->min_coredump)
+diff -purN linux.orig/include/asm-alpha/processor.h linux/include/asm-alpha/processor.h
+--- linux.orig/include/asm-alpha/processor.h	Fri Oct  5 15:11:05 2001
++++ linux/include/asm-alpha/processor.h	Thu Mar 13 13:35:18 2003
+@@ -119,7 +119,7 @@ struct task_struct;
+ extern void release_thread(struct task_struct *);
+ 
+ /* Create a kernel thread without removing it from tasklists.  */
+-extern long kernel_thread(int (*fn)(void *), void *arg, unsigned long flags);
++extern long arch_kernel_thread(int (*fn)(void *), void *arg, unsigned long flags);
+ 
+ #define copy_segments(tsk, mm)		do { } while (0)
+ #define release_segments(mm)		do { } while (0)
+diff -purN linux.orig/include/asm-arm/processor.h linux/include/asm-arm/processor.h
+--- linux.orig/include/asm-arm/processor.h	Thu Mar 13 12:01:35 2003
++++ linux/include/asm-arm/processor.h	Thu Mar 13 13:35:18 2003
+@@ -117,7 +117,7 @@ extern void __free_task_struct(struct ta
+ /*
+  * Create a new kernel thread
+  */
+-extern int kernel_thread(int (*fn)(void *), void *arg, unsigned long flags);
++extern int arch_kernel_thread(int (*fn)(void *), void *arg, unsigned long flags);
+ 
+ #endif
+ 
+diff -purN linux.orig/include/asm-cris/processor.h linux/include/asm-cris/processor.h
+--- linux.orig/include/asm-cris/processor.h	Thu Mar 13 12:01:35 2003
++++ linux/include/asm-cris/processor.h	Thu Mar 13 13:35:18 2003
+@@ -81,7 +81,7 @@ struct thread_struct {
+ #define INIT_THREAD  { \
+    0, 0, 0x20 }  /* ccr = int enable, nothing else */
+ 
+-extern int kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
++extern int arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
+ 
+ /* give the thread a program location
+  * set user-mode (The 'U' flag (User mode flag) is CCR/DCCR bit 8) 
+diff -purN linux.orig/include/asm-i386/processor.h linux/include/asm-i386/processor.h
+--- linux.orig/include/asm-i386/processor.h	Thu Mar 13 12:01:57 2003
++++ linux/include/asm-i386/processor.h	Thu Mar 13 13:51:02 2003
+@@ -433,7 +433,7 @@ extern void release_thread(struct task_s
+ /*
+  * create a kernel thread without removing it from tasklists
+  */
+-extern int kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
++extern int arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
+ 
+ /* Copy and release all segment info associated with a VM */
+ extern void copy_segments(struct task_struct *p, struct mm_struct * mm);
+diff -purN linux.orig/include/asm-ia64/processor.h linux/include/asm-ia64/processor.h
+--- linux.orig/include/asm-ia64/processor.h	Thu Mar 13 12:01:35 2003
++++ linux/include/asm-ia64/processor.h	Thu Mar 13 13:35:18 2003
+@@ -476,7 +476,7 @@ struct task_struct;
+  * do_basic_setup() and the timing is such that free_initmem() has
+  * been called already.
+  */
+-extern int kernel_thread (int (*fn)(void *), void *arg, unsigned long flags);
++extern int arch_kernel_thread (int (*fn)(void *), void *arg, unsigned long flags);
+ 
+ /* Copy and release all segment info associated with a VM */
+ #define copy_segments(tsk, mm)			do { } while (0)
+diff -purN linux.orig/include/asm-m68k/processor.h linux/include/asm-m68k/processor.h
+--- linux.orig/include/asm-m68k/processor.h	Fri Oct  5 15:11:05 2001
++++ linux/include/asm-m68k/processor.h	Thu Mar 13 13:35:18 2003
+@@ -105,7 +105,7 @@ static inline void release_thread(struct
+ {
+ }
+ 
+-extern int kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
++extern int arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
+ 
+ #define copy_segments(tsk, mm)		do { } while (0)
+ #define release_segments(mm)		do { } while (0)
+diff -purN linux.orig/include/asm-mips/processor.h linux/include/asm-mips/processor.h
+--- linux.orig/include/asm-mips/processor.h	Thu Mar 13 12:01:36 2003
++++ linux/include/asm-mips/processor.h	Thu Mar 13 13:35:18 2003
+@@ -186,7 +186,7 @@ struct thread_struct {
+ /* Free all resources held by a thread. */
+ #define release_thread(thread) do { } while(0)
+ 
+-extern int kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
++extern int arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
+ 
+ /* Copy and release all segment info associated with a VM */
+ #define copy_segments(p, mm) do { } while(0)
+diff -purN linux.orig/include/asm-mips64/processor.h linux/include/asm-mips64/processor.h
+--- linux.orig/include/asm-mips64/processor.h	Thu Mar 13 12:01:36 2003
++++ linux/include/asm-mips64/processor.h	Thu Mar 13 13:35:18 2003
+@@ -245,7 +245,7 @@ struct thread_struct {
+ /* Free all resources held by a thread. */
+ #define release_thread(thread) do { } while(0)
+ 
+-extern int kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
++extern int arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
+ 
+ /* Copy and release all segment info associated with a VM */
+ #define copy_segments(p, mm) do { } while(0)
+diff -purN linux.orig/include/asm-parisc/processor.h linux/include/asm-parisc/processor.h
+--- linux.orig/include/asm-parisc/processor.h	Fri Oct  5 15:11:05 2001
++++ linux/include/asm-parisc/processor.h	Thu Mar 13 13:35:18 2003
+@@ -305,7 +305,7 @@ struct task_struct;
+ 
+ /* Free all resources held by a thread. */
+ extern void release_thread(struct task_struct *);
+-extern int kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
++extern int arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
+ 
+ #define copy_segments(tsk, mm)	do { } while (0)
+ #define release_segments(mm)	do { } while (0)
+diff -purN linux.orig/include/asm-ppc/processor.h linux/include/asm-ppc/processor.h
+--- linux.orig/include/asm-ppc/processor.h	Thu Mar 13 12:01:36 2003
++++ linux/include/asm-ppc/processor.h	Thu Mar 13 13:35:18 2003
+@@ -593,7 +593,7 @@ void release_thread(struct task_struct *
+ /*
+  * Create a new kernel thread.
+  */
+-extern long kernel_thread(int (*fn)(void *), void *arg, unsigned long flags);
++extern long arch_kernel_thread(int (*fn)(void *), void *arg, unsigned long flags);
+ 
+ /*
+  * Bus types
+diff -purN linux.orig/include/asm-ppc64/processor.h linux/include/asm-ppc64/processor.h
+--- linux.orig/include/asm-ppc64/processor.h	Thu Mar 13 12:01:36 2003
++++ linux/include/asm-ppc64/processor.h	Thu Mar 13 13:35:18 2003
+@@ -609,7 +609,7 @@ void release_thread(struct task_struct *
+ /*
+  * Create a new kernel thread.
+  */
+-extern long kernel_thread(int (*fn)(void *), void *arg, unsigned long flags);
++extern long arch_kernel_thread(int (*fn)(void *), void *arg, unsigned long flags);
+ 
+ /*
+  * Bus types
+diff -purN linux.orig/include/asm-s390/processor.h linux/include/asm-s390/processor.h
+--- linux.orig/include/asm-s390/processor.h	Thu Mar 13 12:01:36 2003
++++ linux/include/asm-s390/processor.h	Thu Mar 13 13:35:18 2003
+@@ -113,7 +113,7 @@ struct mm_struct;
+ 
+ /* Free all resources held by a thread. */
+ extern void release_thread(struct task_struct *);
+-extern int kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
++extern int arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
+ 
+ /* Copy and release all segment info associated with a VM */
+ #define copy_segments(nr, mm)           do { } while (0)
+diff -purN linux.orig/include/asm-s390x/processor.h linux/include/asm-s390x/processor.h
+--- linux.orig/include/asm-s390x/processor.h	Thu Mar 13 12:01:36 2003
++++ linux/include/asm-s390x/processor.h	Thu Mar 13 13:35:18 2003
+@@ -127,7 +127,7 @@ struct mm_struct;
+ 
+ /* Free all resources held by a thread. */
+ extern void release_thread(struct task_struct *);
+-extern int kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
++extern int arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
+ 
+ /* Copy and release all segment info associated with a VM */
+ #define copy_segments(nr, mm)           do { } while (0)
+diff -purN linux.orig/include/asm-sh/processor.h linux/include/asm-sh/processor.h
+--- linux.orig/include/asm-sh/processor.h	Fri Oct  5 15:11:05 2001
++++ linux/include/asm-sh/processor.h	Thu Mar 13 13:35:18 2003
+@@ -137,7 +137,7 @@ extern void release_thread(struct task_s
+ /*
+  * create a kernel thread without removing it from tasklists
+  */
+-extern int kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
++extern int arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
+ 
+ /*
+  * Bus types
+diff -purN linux.orig/include/asm-sparc/processor.h linux/include/asm-sparc/processor.h
+--- linux.orig/include/asm-sparc/processor.h	Thu Oct 11 02:42:47 2001
++++ linux/include/asm-sparc/processor.h	Thu Mar 13 13:35:18 2003
+@@ -146,7 +146,7 @@ extern __inline__ void start_thread(stru
+ 
+ /* Free all resources held by a thread. */
+ #define release_thread(tsk)		do { } while(0)
+-extern pid_t kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
++extern pid_t arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
+ 
+ 
+ #define copy_segments(tsk, mm)		do { } while (0)
+diff -purN linux.orig/include/asm-sparc64/processor.h linux/include/asm-sparc64/processor.h
+--- linux.orig/include/asm-sparc64/processor.h	Thu Mar 13 12:01:36 2003
++++ linux/include/asm-sparc64/processor.h	Thu Mar 13 13:35:18 2003
+@@ -270,7 +270,7 @@ do { \
+ /* Free all resources held by a thread. */
+ #define release_thread(tsk)		do { } while(0)
+ 
+-extern pid_t kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
++extern pid_t arch_kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
+ 
+ #define copy_segments(tsk, mm)		do { } while (0)
+ #define release_segments(mm)		do { } while (0)
+diff -purN linux.orig/include/linux/sched.h linux/include/linux/sched.h
+--- linux.orig/include/linux/sched.h	Thu Mar 13 12:01:57 2003
++++ linux/include/linux/sched.h	Thu Mar 13 13:54:05 2003
+@@ -362,6 +362,7 @@ struct task_struct {
+ 	/* ??? */
+ 	unsigned long personality;
+ 	int did_exec:1, in_page_fault:1;
++	unsigned task_dumpable:1;
+ 	pid_t pid;
+ 	pid_t pgrp;
+ 	pid_t tty_old_pgrp;
+@@ -485,6 +486,8 @@ struct task_struct {
+ #define PT_TRACESYSGOOD	0x00000008
+ #define PT_PTRACE_CAP	0x00000010	/* ptracer can follow suid-exec */
+ 
++#define is_dumpable(tsk)	((tsk)->task_dumpable && (tsk)->mm->dumpable)
++
+ /*
+  * Limit the stack by to some sane default: root can always
+  * increase this limit if needed..  8MB seems reasonable.
+@@ -848,6 +851,8 @@ extern void FASTCALL(remove_wait_queue(w
+ 
+ extern void wait_task_inactive(task_t * p);
+ extern void kick_if_running(task_t * p);
++extern long kernel_thread(int (*fn)(void *), void * arg, unsigned long flags);
++
+ 
+ #define __wait_event(wq, condition) 					\
+ do {									\
+diff -purN linux.orig/kernel/fork.c linux/kernel/fork.c
+--- linux.orig/kernel/fork.c	Thu Mar 13 12:01:57 2003
++++ linux/kernel/fork.c	Thu Mar 13 13:51:24 2003
+@@ -28,6 +28,7 @@
+ #include <asm/pgalloc.h>
+ #include <asm/uaccess.h>
+ #include <asm/mmu_context.h>
++#include <asm/processor.h>
+ 
+ /* The idle threads do not count.. */
+ int nr_threads;
+@@ -575,6 +576,31 @@ static inline void copy_flags(unsigned l
+ 	p->flags = new_flags;
+ }
+ 
++long kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
++{
++	struct task_struct *task = current;
++	unsigned old_task_dumpable;
++	long ret;
++
++	/* lock out any potential ptracer */
++	task_lock(task);
++	if (task->ptrace) {
++		task_unlock(task);
++		return -EPERM;
++	}
++
++	old_task_dumpable = task->task_dumpable;
++	task->task_dumpable = 0;
++	task_unlock(task);
++
++	ret = arch_kernel_thread(fn, arg, flags);
++
++	/* never reached in child process, only in parent */
++	current->task_dumpable = old_task_dumpable;
++
++	return ret;
++}
++
+ /*
+  *  Ok, this is the main fork-routine. It copies the system process
+  * information (task[nr]) and sets up the necessary registers. It also
+diff -purN linux.orig/kernel/ptrace.c linux/kernel/ptrace.c
+--- linux.orig/kernel/ptrace.c	Thu Mar 13 12:01:46 2003
++++ linux/kernel/ptrace.c	Thu Mar 13 13:47:16 2003
+@@ -21,6 +21,10 @@
+  */
+ int ptrace_check_attach(struct task_struct *child, int kill)
+ {
++	mb();
++	if (!is_dumpable(child))
++		return -EPERM;
++
+ 	if (!(child->ptrace & PT_PTRACED))
+ 		return -ESRCH;
+ 
+@@ -57,7 +61,7 @@ int ptrace_attach(struct task_struct *ta
+  	    (current->gid != task->gid)) && !capable(CAP_SYS_PTRACE))
+ 		goto bad;
+ 	rmb();
+-	if (!task->mm->dumpable && !capable(CAP_SYS_PTRACE))
++	if (!is_dumpable(task) && !capable(CAP_SYS_PTRACE))
+ 		goto bad;
+ 	/* the same process cannot be attached many times */
+ 	if (task->ptrace & PT_PTRACED)
+@@ -123,6 +127,8 @@ int access_process_vm(struct task_struct
+ 	/* Worry about races with exit() */
+ 	task_lock(tsk);
+ 	mm = tsk->mm;
++	if (!is_dumpable(tsk) || (&init_mm == mm))
++		mm = NULL;
+ 	if (mm)
+ 		atomic_inc(&mm->mm_users);
+ 	task_unlock(tsk);
+diff -purN linux.orig/kernel/sys.c linux/kernel/sys.c
+--- linux.orig/kernel/sys.c	Thu Mar 13 12:01:57 2003
++++ linux/kernel/sys.c	Thu Mar 13 13:41:25 2003
+@@ -1286,7 +1286,7 @@ asmlinkage long sys_prctl(int option, un
+ 			error = put_user(current->pdeath_signal, (int *)arg2);
+ 			break;
+ 		case PR_GET_DUMPABLE:
+-			if (current->mm->dumpable)
++			if (is_dumpable(current))
+ 				error = 1;
+ 			break;
+ 		case PR_SET_DUMPABLE:
+@@ -1294,7 +1294,8 @@ asmlinkage long sys_prctl(int option, un
+ 				error = -EINVAL;
+ 				break;
+ 			}
+-			current->mm->dumpable = arg2;
++			if (is_dumpable(current))
++				current->mm->dumpable = arg2;
+ 			break;
+ 	        case PR_SET_UNALIGN:
+ #ifdef SET_UNALIGN_CTL
+-
+To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at  http://www.tux.org/lkml/
