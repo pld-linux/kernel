@@ -25,10 +25,10 @@
 %define		jfs_version		2.4-1.1.2
 %define		lvm_version		1.0.7
 %define		evms_version		2.0.0
-%define		ntfs_version		2.1.2a
+%define		ntfs_version		2.1.3a
 %define		drm_xfree_version	4.3.0
 %define		hostap_version		0.0.1
-%define		netfilter_snap		20030418
+%define		netfilter_snap		20030425
 %define		iptables_version	1.2.8
 %define		ACL_version		0.8.56
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -143,7 +143,7 @@ Patch13:	http://luxik.cdi.cz/~devik/qos/imq-2.4.18.diff-10
 Patch14:	jfs-2.4.20.patch
 
 # http://unc.dl.sourceforge.net/sourceforge/linux-ntfs/
-Patch15:	linux-2.4.20-ntfs-%{ntfs_version}.patch.bz2
+Patch15:	linux-2.4.20-ntfs-%{ntfs_version}.patch.gz
 
 # ftp://ftp.samba.org/pub/unpacked/ppp/linux/mppe/
 Patch16:	linux-2.4.18-mppe.patch
@@ -217,6 +217,9 @@ Patch45:	linux-2.4.20-ACL-%{ACL_version}.patch.bz2
 Patch46:	linux-2.4.19-netmos_pci_parallel_n_serial.patch
 
 Patch47:	linux-2.4-3com-vlan.patch
+
+#from http://www.gelato.unsw.edu.au/patches/2.4.20-lbd-1.patch
+Patch48:	linux-2.4.20-lbd.patch
 
 # Assorted bugfixes
 
@@ -824,6 +827,8 @@ echo Added support for KT400 chipset
 #usb gadget
 echo Added USB gadget ...
 %patch30 -p1
+echo LBD
+#%patch48 -p1
 %endif
 %ifarch ppc
 echo PPC patches ...
