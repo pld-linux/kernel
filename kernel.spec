@@ -54,9 +54,9 @@
 
 #define		_post_ver	.1
 %define		_post_ver	%{nil}
-%define		_rel		0.37
+%define		_rel		0.90
 %define		_cset		20041220_1904
-%define		_apply_cset	1
+%define		_apply_cset	0
 
 %define		_netfilter_snap		20041118
 
@@ -77,11 +77,11 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL
 Group:		Base/Kernel
-#define		_rc	%{nil}
-%define		_rc	-rc3
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	a106fbe90fb55448331efeb40d7572a9
-#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
+%define		_rc	%{nil}
+#define		_rc	-rc3
+#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
+# Source0-md5:	cffcd2919d9c8ef793ce1ac07a440eda
 Source1:	%{name}-autoconf.h
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
 
