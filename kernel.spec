@@ -435,6 +435,11 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch18 -p1
 %patch19 -p1
 %patch20 -p1
+%patch26 -p1
+%patch28 -p1
+%patch29 -p1
+%patch30 -p1
+
 
 %patch100 -p0
 %patch101 -p1
@@ -457,11 +462,6 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch119 -p0
 %patch120 -p0
 %patch121 -p0
-%ifarch ppc
-# fixme
-#%patch122 -p1
-#%patch123 -p1
-%endif
 %patch124 -p1
 %patch125 -p1
 %patch126 -p1
@@ -524,13 +524,6 @@ sed -e 's/EXTRAVERSION =.*/EXTRAVERSION =/g' \
     -e 's/CC.*$(CROSS_COMPILE)gcc/CC		= sparc64-linux-gcc/g' \
 %endif
     Makefile.orig >Makefile
-
-%patch26 -p1
-
-%patch28 -p1
-
-%patch29 -p1
-%patch30 -p1
 
 %build
 BuildKernel() {
