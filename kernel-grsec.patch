@@ -5299,7 +5299,7 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
  
  	/* Some simple consistency checks for the interpreter */
  	if (elf_interpreter) {
-@@ -689,8 +938,64 @@
+@@ -689,9 +942,65 @@
  	current->mm->end_data = 0;
  	current->mm->end_code = 0;
  	current->mm->mmap = NULL;
@@ -5319,6 +5319,7 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
 +#endif
 +
  	current->flags &= ~PF_FORKNOEXEC;
+ 	current->mm->def_flags = def_flags;
  
 +#if defined(CONFIG_PAX_EI_PAX) || defined(CONFIG_PAX_PT_PAX_FLAGS)
 +	if (0 > pax_parse_elf_flags(&elf_ex, elf_phdata)) {
@@ -5360,7 +5361,7 @@ diff -urN linux-2.6.7/fs/binfmt_elf.c linux-2.6.7/fs/binfmt_elf.c
 +		current->mm->delta_stack = pax_delta_mask(pax_get_random_long(), PAX_DELTA_STACK_LSB(current), PAX_DELTA_STACK_LEN(current));
 +	}
 +#endif
-+
++	
  	/* Do this immediately, since STACK_TOP as used in setup_arg_pages
  	   may depend on the personality.  */
  	SET_PERSONALITY(elf_ex, ibcs2_interpreter);
@@ -5587,9 +5588,9 @@ diff -urN linux-2.6.7/fs/buffer.c linux-2.6.7/fs/buffer.c
  #include <linux/notifier.h>
  #include <linux/cpu.h>
 +#include <linux/grsecurity.h>
+ #include <linux/init.h>
+ #include <linux/swap.h>
  #include <asm/bitops.h>
- 
- static void invalidate_bh_lrus(void);
 @@ -2231,6 +2232,9 @@
  	int err;
  
