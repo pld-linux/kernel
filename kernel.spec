@@ -12,7 +12,7 @@
 %bcond_without lsm	# don't build LSM/SELinux kernel
 
 
-%define		_rel		2
+%define		_rel		3
 %define		_test_ver	11
 %define		_cset		0
 
@@ -104,6 +104,9 @@ Patch53:	2.6.0-t10-POSIX_message_queues-2of2-lkml.patch
 Patch60:	patch-2.6.0-test10-kraxel.gz
 
 Patch62:	2.6.0-t11-EPoX-sound-lkml.patch
+
+Patch64:	bootsplash-3.1.3-2.6.0-test9.diff
+
 
 ExclusiveOS:	Linux
 URL:		http://www.kernel.org/
@@ -450,6 +453,8 @@ Pakiet zawiera dokumentacjê j±dra z katalogu
 %patch60 -p1
 
 %patch62 -p1
+
+%patch64 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
