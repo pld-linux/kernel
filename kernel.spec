@@ -7,7 +7,7 @@
 #
 %define		test_build		0
 #
-%define		pre_version		pre9
+%define		pre_version		pre11
 %define		lids_version		1.0.11-2.4.6
 %define		ipvs_version		0.9.3
 %define		freeswan_version	snap2001jun14R
@@ -76,7 +76,7 @@ Patch3:		linux-2.4.9-aacraid-20010816.patch
 # http://home.sch.bme.hu/~cell/br2684/dist/010402/br2684-against2.4.2.diff
 Patch4:		br2684-against2.4.7.diff
 # ftp://linux-xfs.sgi.com/projects/xfs/download/
-Patch5:		linux-2.4.10pre9-xfs-20010915.patch.gz
+#Patch5:		linux-2.4.10pre9-xfs-20010915.patch.gz
 # Compressed iso9660 filesystem
 Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/people/hpa/zisofs+filemap-2.4.7-1.diff.gz
 Patch8:		linux-abi-2.4.3-PLD.patch
@@ -93,7 +93,7 @@ Patch12:	http://www.zip.com.au/~akpm/ext3-2.4-0.9.9-2410p4.gz
 
 # Quota fixes
 # Patch100:	ftp://atrey.karlin.mff.cuni.cz/pub/local/jack/quota/v2.4/quota-fix-2.4.6-2.diff.gz
-Patch100:	quota-fix-2.4.10-pre4-2.diff.gz
+#Patch100:	quota-fix-2.4.10-pre4-2.diff.gz
 # from LKML
 Patch101:	linux-scsi-debug-bug.patch
 Patch102:	linux-2.4.7-oom-killer.patch
@@ -382,7 +382,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 %patch4 -p1
 %patch12 -p1
 #%patch100 -p1
-%patch5 -p1
+#%patch5 -p1
 %patch6 -p1
 #%patch8 -p1
 %patch9 -p1
