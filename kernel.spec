@@ -1,6 +1,6 @@
 %define		ow_version		2.2.25-ow1
 %define		pcmcia_version		3.1.30
-%define		freeswan_version	1.8
+%define		freeswan_version	2.00
 %define		reiserfs_version	3.5.35
 %define		i2c_version		2.6.2
 %define		bttv_version		0.7.60
@@ -18,7 +18,7 @@ Summary(ru):	Òƒ“œ Linux
 Summary(uk):	Òƒ“œ Linux
 Name:		kernel
 Version:	2.2.25
-Release:	2
+Release:	3
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.2/linux-%{version}.tar.bz2
@@ -60,7 +60,8 @@ Patch3:		pcmcia-cs-%{pcmcia_version}-smp-compilation-fix.patch
 Patch4:		http://people.freebsd.org/~gibbs/linux/linux-aic7xxx-%{aic7xxx_version}.patch.gz
 Patch5:		ftp://ftp.reiserfs.org/pub/reiserfs-for-2.2/linux-2.2.20-reiserfs-%{reiserfs_version}.diff.bz2
 Patch6:		ftp://ftp.kernel.org/pub/linux/kernel/crypto/v2.2/patch-int-2.2.18.3.gz
-Patch7:		linux-2.2.18-freeswan-%{freeswan_version}.patch
+# from ftp://ftp.xs4all.nl/pub/crypto/freeswan/kernpatch/
+Patch7:		freeswan-%{freeswan_version}.k2.2.patch.gz
 Patch8:		wanrouter-v2215.patch.gz
 # based on http://bridge.sourceforge.net/patches/bridge-1.0.2-against-2.2.20.diff
 Patch10:	bridge-1.0.2-against-2.2.20.diff
@@ -82,7 +83,6 @@ Patch29:	ide.2.2.21_update_to_2.2.22.patch
 Patch30:	linux-2.2.18-atm-0.59-fore200e-0.1f.patch.gz
 Patch31:	%{name}-flip.patch
 Patch32:	%{name}-2.2.22-config.patch
-Patch33:	%{name}-ipsec-bridge.patch
 Patch34:	%{name}-wanrouter-bridge.patch
 Patch35:	linux-netdrivers_vlan.patch
 Patch36:	atm-unresolved.patch
@@ -119,6 +119,8 @@ Patch119:	linux-remove_htb2_header.diff
 Patch120:	ds9-2.2.21-2.diff
 Patch121:	rbtree-2.2.21-1.diff
 Patch122:	ds9-htb3-2.2.21-2.diff
+
+Patch150:	fix-ow_configure.help.patch
 
 Patch500:	2.2.20-reiserfs_ppc.patch
 Patch501:	2.2.21-ppc-smp.patch
@@ -457,7 +459,6 @@ Modu≥y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 %patch30 -p1
 %patch31 -p1
 %patch32 -p1
-%patch33 -p1
 %patch34 -p1
 %patch35 -p1
 %patch36 -p1
@@ -499,6 +500,7 @@ cd ..
 %endif
 
 # 2.2.23ow1
+%patch150 -p1
 patch -p1 -s <linux-%{ow_version}/linux-%{ow_version}.diff
 
 # symbios drivers
@@ -805,7 +807,7 @@ gzip -dc %{PATCH4} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{versi
 %endif
 bzip2 -dc %{PATCH5} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 gzip -dc %{PATCH6} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH7}
+gzip -dc %{PATCH7} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 gzip -dc %{PATCH8} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH10}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH11}
@@ -823,7 +825,6 @@ gzip -dc %{PATCH28} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH29}
 gzip -dc %{PATCH30} | patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH31}
-patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH33}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH34}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH35}
 patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version} < %{PATCH36}
@@ -869,6 +870,7 @@ bzip2 -dc %{PATCH106} | patch -s -p1 -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ve
 
 # 2.2.23ow1
 gzip -dc %{SOURCE3} | tar -xf - -C $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < %{PATCH150}
 patch -s -p1 -d $RPM_BUILD_ROOT/usr/src/linux-%{version} < $RPM_BUILD_ROOT/usr/src/linux-%{version}/linux-%{ow_version}/linux-%{ow_version}.diff
 rm -rf $RPM_BUILD_ROOT/usr/src/linux-%{version}/linux-%{ow_version}/
 
@@ -962,6 +964,9 @@ sparc32 %{__make} oldconfig
 mv -f include/linux/autoconf.h include/linux/autoconf-smp.h
 
 install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoconf.h
+
+# back to up config (because we back to %{SOURCE1} as default autoconf.h
+install $RPM_SOURCE_DIR/kernel-%{_target_cpu}.config .config
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
