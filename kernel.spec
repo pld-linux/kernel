@@ -5,7 +5,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.5.20
-Release:	0.1
+Release:	dj3-0.2
 License:	GPL
 Group:		Base/Kernel
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.5/linux-%{version}.tar.bz2
@@ -20,7 +20,7 @@ Source26:	%{name}-i686-smp.config
 Source27:	%{name}-athlon.config
 Source28:	%{name}-athlon-smp.config
 
-#Patch1:		http://www.kernel.org/pub/linux/kernel/people/davej/patches/2.5/%{version}/patch-%{version}-dj1.diff.gz
+Patch1:		http://www.kernel.org/pub/linux/kernel/people/davej/patches/2.5/%{version}/patch-%{version}-dj3.diff.gz
 
 #This shit is because now only x86 is supported
 ExclusiveArch:	%{ix86}
@@ -208,7 +208,7 @@ Pakiet zawiera kod ¼ród³owy jadra systemu.
 
 %prep
 %setup -q -n linux-%{version}
-#%patch1 -p1
+%patch1 -p1
 
 # Fix EXTRAVERSION and CC in main Makefile
 mv -f Makefile Makefile.orig
@@ -304,13 +304,13 @@ install %{SOURCE1} $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux/autoco
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well
-%{__make} symlinks
+#%{__make} symlinks
 %{__make} include/linux/version.h
 
 # this generates modversions info which we want to include and we may as
 # well include the depends stuff as well, after we fix the paths
 
-%{__make} depend
+#%{__make} depend
 find $RPM_BUILD_ROOT/usr/src/linux-%{version} -name ".*depend" | \
 while read file ; do
 	mv $file $file.old
@@ -400,7 +400,6 @@ fi
 %dir /lib/modules/%{version}-%{release}
 /lib/modules/%{version}-%{release}/kernel
 /lib/modules/%{version}-%{release}/build
-/lib/modules/%{version}-%{release}/pcmcia
 /lib/modules/%{version}-%{release}/modules.dep
 /lib/modules/%{version}-%{release}/modules.*map
 /lib/modules/%{version}-%{release}/modules.generic_string
@@ -411,7 +410,6 @@ fi
 %attr(600,root,root) /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
 /lib/modules/%{version}-%{release}smp/kernel
-/lib/modules/%{version}-%{release}smp/pcmcia
 /lib/modules/%{version}-%{release}smp/build
 /lib/modules/%{version}-%{release}smp/modules.dep
 /lib/modules/%{version}-%{release}smp/modules.*map
@@ -453,8 +451,9 @@ fi
 %{_kernelsrcdir}-%{version}/net
 %{_kernelsrcdir}-%{version}/scripts
 %{_kernelsrcdir}-%{version}/.config
-%{_kernelsrcdir}-%{version}/.depend
-%{_kernelsrcdir}-%{version}/.hdepend
+#FIXME: this should be on, but not yet
+#%{_kernelsrcdir}-%{version}/.depend
+#%{_kernelsrcdir}-%{version}/.hdepend
 %{_kernelsrcdir}-%{version}/COPYING
 %{_kernelsrcdir}-%{version}/CREDITS
 %{_kernelsrcdir}-%{version}/MAINTAINERS
