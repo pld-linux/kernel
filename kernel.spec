@@ -17,7 +17,7 @@
 %define		_rel		0.1
 %define		test_ver	4
 %define		patch_level	0
-%define		_bk_ver		6
+%define		_cset		2213
 
 %if %{test_ver} != 0
 %define		test	test%{test_ver}
@@ -25,10 +25,10 @@
 %define		test	%{nill}
 %endif
 
-%if %{_bk_ver} != 0
-%define		bk_i	bk%{_bk_ver}
+%if %{_cset} != 0
+%define		cset	cset%{_cset}
 %else
-%define		bk_i	%{nill}
+%define		cset	%{nill}
 %endif
 
 %define		base_arch %(echo %{_target_cpu} | sed 's/i.86/i386/;s/athlon/i386/')
@@ -46,9 +46,9 @@ Summary(pl):	J±dro Linuxa
 Name:		kernel
 Version:	2.6.0
 %if	%{patch_level} != 0
-Release:	%{test}%{bk_i}rel%{_rel}pl%{patch_level}
+Release:	%{test}%{cset}rel%{_rel}pl%{patch_level}
 %else
-Release:	%{test}%{bk_i}rel%{_rel}
+Release:	%{test}%{cset}rel%{_rel}
 %endif
 License:	GPL
 Group:		Base/Kernel
@@ -69,13 +69,15 @@ Source74:	%{name}-ppc-smp.config
 Source100:	%{name}-misc.config
 
 # ftp://ftp.kernel.org:/pub/linux/kernel/v2.6/snapshots/
-Patch1:		patch-2.6.0-test4-bk%{_bk_ver}
+#Patch1:		patch-2.6.0-test4-bk%{_bk_ver}
+# http://www.kernel.org/pub/linux/kernel/v2.5/testing/cset/
+Patch1:		cset-20030904_%{_cset}.txt.gz
 
-Patch22:		2.6.0-t3-swim3.patch
-Patch23:		squashfs1.3-patch
+Patch22:	2.6.0-t3-swim3.patch
+Patch23:	squashfs1.3-patch
 
-Patch26:		2.6.0-t3-eisa-bus.c-lkml.patch
-Patch27:		2.6.0-t3-initrd_load-lkml.patch
+Patch26:	2.6.0-t3-eisa-bus.c-lkml.patch
+Patch27:	2.6.0-t3-initrd_load-lkml.patch
 
 Patch31:	2.6.0-t3-sysfs_mem-lkml.patch
 Patch32:	2.6.0-t3-trival-lkml.patch
