@@ -757,7 +757,7 @@ echo Replacing Trident FB module.
 
 # VIA Southbridge update
 echo Updating VIA Southbridge
-%patch902 -p1
+#%patch902 -p1
 
 echo
 %patch903 -p0
