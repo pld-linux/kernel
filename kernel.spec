@@ -136,6 +136,7 @@ Patch28:	2.6.0-t11-AIC_and_db4-lkml.patch
 Patch30:	linux-tdfxfb-fillrect.patch
 Patch31:	linux-fbcon-margins.patch
 Patch32:	linux-tdfxfb-interlace+double.patch
+Patch33:	linux-2.6-rivafb16.patch
 
 Patch34:	2.6.1-rc2-ini9100u-lkml.patch
 
@@ -589,6 +590,7 @@ zcat %{SOURCE3} | patch -p1 -s
 %patch30 -p1
 %patch31 -p1
 %patch32 -p1
+%patch33 -p1
 
 ##%patch34 -p1
 
