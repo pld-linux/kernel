@@ -10,7 +10,6 @@
 #		- update HP-OmniBook patchset (2.6.1-all-in-1.patch)
 #		- reiserfs4
 #		- update grsecurity patch
-#		- update i2o patchset
 #		- add distcc support (and don't break crossbuild!)
 #
 # Conditional build:
@@ -187,10 +186,6 @@ Patch74:	pramfs-2.6.4.patch
 Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
 # http://lirc.sourceforge.net/software/snapshots/lirc-0.7.0pre7.tar.bz2
 Patch76:	2.6.8-lirc-0.7.0-pre7.patch
-# http://i2o.shadowconnect.com/
-# NEEDS UPDATE
-Patch77:	2.6.8-i2o-build_105.patch.gz
-Patch78:	i2o-build_105-fixes.patch
 
 # derived from official grsecurity-2.0.1-2.6.7.patch
 # NEEDS UPDATE
@@ -629,9 +624,6 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %patch75 -p1
 %patch76 -p1
-# see TODO
-#patch77 -p1
-#patch78 -p1
 
 #grsec
 %ifarch alpha %{ix86} ia64 ppc sparc sparc64 amd64
