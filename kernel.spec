@@ -50,8 +50,8 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.41
-%define		_cset		20040810_2207
+%define		_rel		0.42
+%define		_cset		20040813_0507
 %define		_apply_cset	1
 
 %define		_netfilter_snap		20040629
@@ -83,7 +83,7 @@ Source1:	%{name}-autoconf.h
 Source2:	http://www.smcc.demon.nl/webcam/pwc-%{pwc_version}.tar.gz
 # Source2-md5:	85bdb0205de53b7787966f0932fd8dd9
 Source3:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.gz
-# Source3-md5:	5b66eee22e4f84ca8a201e5b42bf3931
+# Source3-md5:	37ccb34f8812ae89d9833758e7388bb5
 Source4:	dpt_i2o-2.5.0-2331.tgz
 Source20:	%{name}-i386.config
 Source21:	%{name}-i386-smp.config
@@ -677,7 +677,6 @@ patch -p1 -s < exec-shield.patch
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
-sed -i 's#CC.*$(CROSS_COMPILE)gcc#CC		= %{_target_platform}-gcc#g' Makefile
 sed -i 's:\-pipe::' arch/*/Makefile
 
 # on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
