@@ -91,7 +91,7 @@ Patch26:	linux-2.4.20-xfs-1.2.0.patch.bz2
 Patch30:	linux-2.4.21-jfs-xattr.patch
 Patch31:	linux-2.4.21-jfs-acl.patch
 Patch32:	linux-2.4.21-ea+acl+nfsacl-0.8.58.diff.gz
-Patch33:	linux-2.4.20-acl-intermezzo-fix.patch
+Patch33:	linux-2.4.21-acl-intermezzo-fix.patch
 # http://unc.dl.sourceforge.net/sourceforge/linux-ntfs/
 Patch40:	linux-2.4.21-ntfs-%{ntfs_version}.patch.gz
 Patch41:	linux-2.4.20-ntfs.patch
