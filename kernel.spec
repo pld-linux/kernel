@@ -239,8 +239,7 @@ Patch205:	linux-2.4.20-PPC-EXPORT_SYMBOL.patch
 # tweaks for grsecurity, description inside patch
 Patch900:	loop-jari-2.4.20.0.patch
 Patch901:	dc395-tab.patch
-# DRM (note that this doesn't fix drm when running on 386 or 486 CPU!)
-#Patch902:
+Patch902:	linux-2.4.20-drm-Makefile.patch
 Patch903:	linux-2.4-ppc-procesor.patch
 Patch904:	linux-abi-put_user.patch
 Patch905:	linux-abi-fl_ibcs_to_linux.patch
@@ -650,6 +649,7 @@ echo Installing Konica Support
 # Changing DRM source ....
 echo Installing NEW DRM Source ...
 cp drm/*.{c,h} drivers/char/drm/
+%patch902 -p1
 
 # WRR
 echo Installing WRR Support
