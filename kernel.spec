@@ -44,7 +44,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		4.4
+%define		_rel		4.5
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -190,6 +190,7 @@ Patch119:	linux-2.6-quota-dropfix.patch
 Patch120:	linux-2.6-quota-format.patch
 Patch121:	linux-2.6-procfs-hardlink-counts.patch
 Patch122:	linux-2.6-cxt48-misdetection.patch
+Patch123:	linux-2.6-bttv-freeze.patch
 
 # linux vserver
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
@@ -602,6 +603,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
+%patch123 -p1
 
 %if %{with vserver}
 %patch200 -p1
@@ -1015,7 +1017,9 @@ fi
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}/kernel
+%ifnarch ppc sparc
 /lib/modules/%{version}-%{release}/kernel/arch
+%endif
 /lib/modules/%{version}-%{release}/kernel/crypto
 /lib/modules/%{version}-%{release}/kernel/drivers
 /lib/modules/%{version}-%{release}/kernel/fs
@@ -1089,7 +1093,9 @@ fi
 /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp/kernel
+%ifnarch ppc sparc
 /lib/modules/%{version}-%{release}smp/kernel/arch
+%endif
 /lib/modules/%{version}-%{release}smp/kernel/crypto
 /lib/modules/%{version}-%{release}smp/kernel/drivers
 /lib/modules/%{version}-%{release}smp/kernel/fs
