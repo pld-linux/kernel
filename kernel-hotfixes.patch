@@ -1,6 +1,7 @@
 
  arch/alpha/kernel/alpha_ksyms.c        |    3 +++
  arch/alpha/kernel/process.c            |    2 ++
+ arch/i386/Makefile                     |    7 +++++++
  arch/i386/mm/init.c                    |    1 +
  arch/ppc/kernel/setup.c                |    1 +
  drivers/char/rocket.c                  |   10 ++++------
@@ -13,7 +14,7 @@
  mm/mmap.c                              |    2 +-
  net/ipv4/netfilter/ipt_hashlimit.c     |    2 +-
  net/rxrpc/main.c                       |   10 +++-------
- 14 files changed, 37 insertions(+), 43 deletions(-)
+ 15 files changed, 44 insertions(+), 43 deletions(-)
 
 --- a/include/linux/spinlock.h	2004-09-05 02:05:53.243858818 -0500
 +++ b/include/linux/spinlock.h	2004-09-05 02:06:06.177805993 -0500
@@ -26,6 +27,22 @@
  
  int __lockfunc _spin_trylock(spinlock_t *lock);
  int __lockfunc _write_trylock(rwlock_t *lock);
+--- a/arch/i386/Makefile	2005-03-26 04:28:18.000000000 +0100
++++ b/arch/i386/Makefile	2005-04-07 13:06:01.000000000 +0200
+@@ -15,6 +15,13 @@
+ #           Added '-march' and '-mpreferred-stack-boundary' support
+ #
+ 
++HAS_BIARCH      := $(call cc-option-yn, -m32)
++ifeq ($(HAS_BIARCH),y)
++AS              := $(AS) --32
++LD              := $(LD) -m elf_i386
++CC              := $(CC) -m32
++endif
++
+ LDFLAGS		:= -m elf_i386
+ OBJCOPYFLAGS	:= -O binary -R .note -R .comment -S
+ LDFLAGS_vmlinux :=
 --- a/arch/i386/mm/init.c	2004-09-26 03:43:57.944613000 +1000
 +++ b/arch/i386/mm/init.c	2004-09-28 02:37:21.787922000 +1000
 @@ -41,6 +41,7 @@
