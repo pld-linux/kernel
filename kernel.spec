@@ -79,9 +79,9 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 #define		_rc	%{nil}
-%define		_rc	-rc1
+%define		_rc	-rc2
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	ff769e52bebd0b07587acc21083aa4a5
+# Source0-md5:	b8b75ddeca0f48221f085703f2f72692
 ##Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 
@@ -101,6 +101,7 @@ Source30:	%{name}-ppc.config
 Source31:	%{name}-ppc-smp.config
 Source32:	%{name}-ia64.config
 Source33:	%{name}-ia64-smp.config
+Source35:	%{name}-netfilter.config
 
 Source40:	%{name}.FAQ-pl
 
@@ -505,7 +506,7 @@ BuildConfig (){
 %endif
 
 #	netfilter	
-#	cat %{SOURCE80} >> arch/%{_target_base_arch}/defconfig
+	cat %{SOURCE35} >> arch/%{_target_base_arch}/defconfig
 #	grsecurity
 #if !%{with pax}
 #	cat %{SOURCE90} >> arch/%{_target_base_arch}/defconfig
