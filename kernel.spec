@@ -44,7 +44,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.1
+%define		_rel		0.2
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -142,6 +142,8 @@ Patch55:	linux-2.6-netfilter-syms.patch
 Patch56:	routes-2.6.11-12.diff
 # http://developer.osdl.org/shemminger/skge/
 Patch57:	linux-2.6-skge-0.5.patch
+# http://www.edoceo.com/creo/inotify/
+Patch58:	inotify-0.22-rml-2.6.11-1.patch
 
 # http://dev.gentoo.org/~spock/projects/gensplash/
 Patch60:	fbsplash-0.9.2-2.6.11.patch
@@ -564,6 +566,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch55 -p1
 %patch56 -p1
 %patch57 -p1
+%patch58 -p1
 
 %patch60 -p1
 %patch61 -p1
