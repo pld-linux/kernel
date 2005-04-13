@@ -73,11 +73,11 @@
 
 %define		_post_ver	.7
 #define		_post_ver	%{nil}
-%define		_rel		0.1
+%define		_rel		0.5
 %define		_cset		20050302_0807
 %define		_apply_cset	0
 
-%define		_netfilter_snap		20050405
+%define		_netfilter_snap		20050413
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
@@ -170,7 +170,7 @@ Patch33:		linux-kbuild-extmod.patch
 Patch41:		linux-fbcon-margins.patch
 
 # netfilter
-Patch50:	2.6.11.6-pom-ng-%{_netfilter_snap}.patch
+Patch50:	%{version}-pom-ng-%{_netfilter_snap}.patch
 # http://l7-filter.sourceforge.net/
 #Patch52:	2.6.8-ipt_layer7.patch
 #Patch53:	2.6.10-esfq.patch
@@ -217,6 +217,8 @@ Patch260:	iriverfs-r0.1.0.1.patch.gz
 Patch262:	2.6.11.5-dst_cache_overflow.patch
 
 Patch264:	2.6.11.5-invalid_mac_fix.patch
+
+Patch270:	http://www.saillard.org/linux/pwc/patches/linux-2.6.11.7_pwc-10.0.7.patch.bz2
 
 # openMosix from: http://openmosix.snarc.org/files/releases/2.6/patch-2.6.11-om-r557.bz2
 Patch700:	openMosix-2.6.11.6-r557.patch
@@ -617,6 +619,8 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %patch262 -p1
 %patch264 -p1
+
+%patch270 -p1
 
 # <bconded_patches>
 
