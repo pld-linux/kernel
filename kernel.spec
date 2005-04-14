@@ -44,7 +44,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.2
+%define		_rel		0.3
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -705,6 +705,7 @@ BuildConfig (){
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
+	rm -f include/linux/autoconf.h
 	%{__make} $CrossOpts include/linux/autoconf.h
 	if [ "$smp" = "yes" ]; then
 		install include/linux/autoconf.h \
