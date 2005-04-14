@@ -2,7 +2,6 @@
 # TODO:
 #		- fix lirc_sasem (usb api)
 #		- add distcc support (and don't break crossbuild!)
-#		- fix vserver against new grsec
 #		- wait for l7 memleak fix
 #		- add valid conntrack-pptp to the netfiler
 #
@@ -143,7 +142,7 @@ Patch56:	routes-2.6.11-12.diff
 # http://developer.osdl.org/shemminger/skge/
 Patch57:	linux-2.6-skge-0.5.patch
 # http://www.edoceo.com/creo/inotify/
-Patch58:	inotify-0.22-rml-2.6.11-1.patch
+Patch58:	inotify-0.22-rml-2.6.12-rc2-mm1-2.patch
 
 # http://dev.gentoo.org/~spock/projects/gensplash/
 Patch60:	fbsplash-0.9.2-2.6.11.patch
