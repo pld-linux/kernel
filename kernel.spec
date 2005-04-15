@@ -155,8 +155,8 @@ Patch63:	iriverfs-r0.1.0.1.patch
 Patch64:	squashfs2.1-patch
 Patch65:	linux-reiser4-2.6.11-mm4.patch.bz2
 
-# http://grsecurity.net
-Patch70:	grsecurity-2.1.3-2.6.11-200503111604.patch
+# derived from http://www.grsecurity.net/grsecurity-2.1.5-2.6.11.7-200504111924.patch.gz
+Patch70:	grsecurity-2.1.5-2.6.11.7-200504111924.patch
 
 # http://tahoe.pl/patch.htm
 Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
