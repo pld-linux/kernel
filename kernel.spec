@@ -4,7 +4,6 @@
 #		- add distcc support (and don't break crossbuild!)
 #		- wait for l7 memleak fix
 #		- add valid conntrack-pptp to the netfiler
-#		- include <linux/autoconf.h/config.h> stoppers
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -76,6 +75,7 @@ Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 # Source0-md5:	04f5efb260ff6fb4eaa221fb5b880d8e
 Source1:	%{name}-autoconf.h
+Source2:	%{name}-configf.h
 
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
 
@@ -885,6 +885,7 @@ $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 %{__make} $CrossOpts mrproper
 %{__make} $CrossOpts include/linux/version.h
 install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
+install %{SOURCE2} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/config.h
 
 %clean
 rm -rf $RPM_BUILD_ROOT
