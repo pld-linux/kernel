@@ -16470,25 +16470,29 @@ diff -NurpP --minimal linux-2.6.11.5/mm/memory.c linux-2.6.11.5-vs1.9.5/mm/memor
 diff -NurpP --minimal linux-2.6.11.5/mm/mlock.c linux-2.6.11.5-vs1.9.5/mm/mlock.c
 --- linux-2.6.11.5/mm/mlock.c	2005-03-02 12:39:08 +0100
 +++ linux-2.6.11.5-vs1.9.5/mm/mlock.c	2005-03-23 21:34:32 +0100
-@@ -8,6 +8,7 @@
+@@ -9,6 +9,7 @@
  #include <linux/mm.h>
  #include <linux/syscalls.h>
  #include <linux/grsecurity.h>
 +#include <linux/vs_memory.h>
  
- 
- static int mlock_fixup(struct vm_area_struct * vma, 
-@@ -49,7 +50,8 @@ static int mlock_fixup(struct vm_area_st
- 		if (!(newflags & VM_IO))
+ static int __mlock_fixup(struct vm_area_struct * vma, 
+ 	unsigned long start, unsigned long end, unsigned int newflags);
+@@ -70,11 +71,11 @@ static int mlock_fixup(struct vm_area_st
  			ret = make_pages_present(start, end);
  	}
--	vma->vm_mm->locked_vm -= pages;
-+	// vma->vm_mm->locked_vm -= pages;
-+	vx_vmlocked_sub(vma->vm_mm, pages);
+ 
+-	mm->locked_vm -= pages;
++	vx_vmlocked_sub(mm, pages);
+ 
+ #if defined(CONFIG_PAX_SEGMEXEC) || defined(CONFIG_PAX_RANDEXEC)
+ 	if (vma->vm_flags & VM_MIRROR)
+-		mm->locked_vm -= pages;
++		vx_vmlocked_sub(mm, pages);
+ #endif
  
  	if (ret == -ENOMEM)
- 		ret = -EAGAIN;
-@@ -103,7 +105,7 @@ static int do_mlock(unsigned long start,
+@@ -164,7 +165,7 @@ static int do_mlock(unsigned long start,
  
  asmlinkage long sys_mlock(unsigned long start, size_t len)
  {
@@ -16497,7 +16501,7 @@ diff -NurpP --minimal linux-2.6.11.5/mm/mlock.c linux-2.6.11.5-vs1.9.5/mm/mlock.
  	unsigned long lock_limit;
  	int error = -ENOMEM;
  
-@@ -114,8 +116,10 @@ asmlinkage long sys_mlock(unsigned long 
+@@ -175,8 +176,10 @@ asmlinkage long sys_mlock(unsigned long 
  	len = PAGE_ALIGN(len + (start & ~PAGE_MASK));
  	start &= PAGE_MASK;
  
@@ -16510,15 +16514,15 @@ diff -NurpP --minimal linux-2.6.11.5/mm/mlock.c linux-2.6.11.5-vs1.9.5/mm/mlock.
  
  	lock_limit = current->signal->rlim[RLIMIT_MEMLOCK].rlim_cur;
  	lock_limit >>= PAGE_SHIFT;
-@@ -123,6 +127,7 @@ asmlinkage long sys_mlock(unsigned long 
- 	/* check against resource limits */
+@@ -185,6 +188,7 @@ asmlinkage long sys_mlock(unsigned long 
+ 	gr_learn_resource(current, RLIMIT_MEMLOCK, (current->mm->locked_vm << PAGE_SHIFT) + len, 1);
  	if ((locked <= lock_limit) || capable(CAP_IPC_LOCK))
  		error = do_mlock(start, len, 1);
 +out:
  	up_write(&current->mm->mmap_sem);
  	return error;
  }
-@@ -182,6 +187,8 @@ asmlinkage long sys_mlockall(int flags)
+@@ -254,6 +258,8 @@ asmlinkage long sys_mlockall(int flags)
  	lock_limit >>= PAGE_SHIFT;
  
  	ret = -ENOMEM;
