@@ -4,6 +4,7 @@
 #		- add distcc support (and don't break crossbuild!)
 #		- wait for l7 memleak fix
 #		- add valid conntrack-pptp to the netfiler
+#		- include <linux/autoconf.h/config.h> stoppers
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -201,6 +202,8 @@ Patch201:	linux-em8300-2.6.11.2.patch
 
 Patch399:	%{name}-gcc4.patch
 Patch400:	%{name}-hotfixes.patch
+# http://www.kernel.org/pub/linux/devel/binutils/linux-2.6-seg-5.patch
+Patch401:	linux-2.6-seg-5.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -616,6 +619,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %patch399 -p1
 %patch400 -p1
+%patch401 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
