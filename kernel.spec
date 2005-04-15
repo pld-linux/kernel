@@ -75,7 +75,7 @@ Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 # Source0-md5:	04f5efb260ff6fb4eaa221fb5b880d8e
 Source1:	%{name}-autoconf.h
-Source2:	%{name}-configf.h
+Source2:	%{name}-config.h
 
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
 
