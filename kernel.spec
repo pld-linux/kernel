@@ -73,7 +73,7 @@
 
 %define		_post_ver	.7
 #define		_post_ver	%{nil}
-%define		_rel		1
+%define		_rel		1.1
 %define		_cset		20050302_0807
 %define		_apply_cset	0
 
@@ -172,7 +172,7 @@ Patch41:		linux-fbcon-margins.patch
 # netfilter
 Patch50:	%{version}-pom-ng-%{_netfilter_snap}.patch
 # http://l7-filter.sourceforge.net/
-#Patch52:	2.6.8-ipt_layer7.patch
+Patch52:	%{name}-2.6.11-layer7-1.2.patch
 #Patch53:	2.6.10-esfq.patch
 # from http://www.linuximq.net/patchs/linux-2.6.9-imq1.diff
 Patch54:	linux-2.6.11.3-imq1.patch
@@ -587,7 +587,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 # netfilter
 %patch50 -p1
 
-#%patch52 -p1
+%patch52 -p1
 #%patch53 -p1
 %patch54 -p1
 #%patch55 -p1
