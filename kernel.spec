@@ -140,12 +140,12 @@ Source100:	%{name}-openMosix.config
 #Patch9:		2.6.0-t9-acpi_osl-lkml.patch
 
 # http://www.consultmatt.co.uk/downloads/patches/kernel/2.6/
-#Patch10:		2.6.0-powernow-k7.patch
+Patch10:		2.6.0-powernow-k7.patch
 #Patch11:		2.6.0-enable-radeon-igp-rendering.patch
-#Patch12:		2.6.0-omnikeys.patch
+Patch12:		2.6.0-omnikeys.patch
 
 #Patch13:		2.6.1-rc2-VLAN-NS83820-lkml.patch
-#Patch14:		linux-2.6-omnibook-20040916.patch
+Patch14:		linux-2.6-omnibook-20040916.patch
 #Patch15:		linux-2.6-enable-broken-advansys.patch
 #Patch16:		linux-alpha-isa.patch
 #Patch17:		2.6.4-psion-5mx.patch
@@ -557,11 +557,11 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 #%patch8 -p1
 #%patch9 -p1
-#%patch10 -p1
+%patch10 -p1
 #%patch11 -p1
-#%patch12 -p1
+%patch12 -p1
 #%patch13 -p1
-#%patch14 -p1
+%patch14 -p1
 #%patch15 -p1
 #%patch16 -p1
 #%patch17 -p1
