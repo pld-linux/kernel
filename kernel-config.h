@@ -1,2 +1,6 @@
-#error Runtime kernel's config detection not available.
-#error Please use appropriate kernel config to produce config.h instead.
+#ifndef _LINUX_CONFIG_H
+#define _LINUX_CONFIG_H
+
+#include <linux/autoconf.h>
+
+#endif
