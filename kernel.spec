@@ -43,11 +43,10 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.4
+%define		_rel		0.5
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
-%define		_netfilter_snap		20050311
 %define		_l7_ver			1.0
 
 %define		_enable_debug_packages			0
@@ -130,14 +129,14 @@ Patch29:	linux-2.6-ppc-no-pc-serial.patch
 Patch30:	2.6.x-TGA-fbdev-lkml.patch
 
 # netfilter
-Patch50:	linux-2.6-pom-ng-%{_netfilter_snap}.patch
-# http://l7-filter.sourceforge.net/
-#Patch51:	linux-2.6-layer7-%{_l7_ver}.patch	WAITING FOR MEMLEAK FIX
+# NFY!!!
+Patch50:	linux-2.6-pom-ng-branch.diff
+
 Patch52:	linux-2.6-esfq.patch
 # http://www.linuximq.net/patchs/linux-2.6.9-imq1.diff
 Patch53:	2.6.10-imq.patch
 Patch54:	2.6.4-wrr.patch
-Patch55:	linux-2.6-netfilter-syms.patch
+
 # frpm http://www.ssi.bg/~ja/#routers
 Patch56:	routes-2.6.11-12.diff
 # http://developer.osdl.org/shemminger/skge/
@@ -220,7 +219,6 @@ PreReq:		module-init-tools >= 0.9.9
 PreReq:		geninitrd >= 2.57
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	module-info
-Provides:	%{name}(netfilter) = %{_netfilter_snap}
 Obsoletes:	kernel-modules
 Obsoletes:	kernel-net-ipp2p
 Conflicts:	util-linux < %{_util_linux_ver}
@@ -341,7 +339,6 @@ PreReq:		module-init-tools >= 0.9.9
 PreReq:		geninitrd >= 2.26
 Provides:	%{name} = %{epoch}:%{version}-%{release}
 Provides:	module-info
-Provides:	%{name}(netfilter) = %{_netfilter_snap}
 Obsoletes:	kernel-smp-net-ipp2p
 Conflicts:	util-linux < %{_util_linux_ver}
 Conflicts:	module-init-tool < %{_module_init_tool_ver}
@@ -450,7 +447,6 @@ Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
 Provides:	kernel-i2c-devel
-Provides:	%{name}-headers(netfilter) = %{_netfilter_snap}
 Provides:	%{name}-headers(alsa-drivers)
 Obsoletes:	kernel-i2c-devel
 Autoreqprov:	no
@@ -560,12 +556,13 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch29 -p1
 %patch30 -p1
 
-%patch50 -p1
-#patch51 -p1		WAITING FOR MEMLEAK FIX
+%patch50 -p0
+mv -f {,netfilter.}status
+
 %patch52 -p1
 %patch53 -p1
 %patch54 -p1
-%patch55 -p1
+
 %patch56 -p1
 %patch57 -p1
 %patch58 -p1
