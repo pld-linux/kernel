@@ -43,11 +43,11 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.5
+%define		_rel		1
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
-%define		_l7_ver			1.0
+%define		_netfilter_snap		20050422
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
@@ -129,7 +129,6 @@ Patch29:	linux-2.6-ppc-no-pc-serial.patch
 Patch30:	2.6.x-TGA-fbdev-lkml.patch
 
 # netfilter
-# NFY!!!
 Patch50:	linux-2.6-pom-ng-branch.diff
 
 Patch52:	linux-2.6-esfq.patch
@@ -218,6 +217,7 @@ PreReq:		coreutils
 PreReq:		module-init-tools >= 0.9.9
 PreReq:		geninitrd >= 2.57
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
+Provides:	%{name}(netfilter) = %{_netfilter_snap}
 Provides:	module-info
 Obsoletes:	kernel-modules
 Obsoletes:	kernel-net-ipp2p
@@ -338,6 +338,7 @@ PreReq:		coreutils
 PreReq:		module-init-tools >= 0.9.9
 PreReq:		geninitrd >= 2.26
 Provides:	%{name} = %{epoch}:%{version}-%{release}
+Provides:	%{name}(netfilter) = %{_netfilter_snap}
 Provides:	module-info
 Obsoletes:	kernel-smp-net-ipp2p
 Conflicts:	util-linux < %{_util_linux_ver}
@@ -447,6 +448,7 @@ Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
 Provides:	%{name}-headers(bridging) = %{version}
 Provides:	kernel-i2c-devel
+Provides:	%{name}-headers(netfilter) = %{_netfilter_snap}
 Provides:	%{name}-headers(alsa-drivers)
 Obsoletes:	kernel-i2c-devel
 Autoreqprov:	no
