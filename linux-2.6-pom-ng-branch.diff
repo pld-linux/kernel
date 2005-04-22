@@ -70,7 +70,7 @@
  net/ipv4/netfilter/Kconfig                           |  472 ++++
  net/ipv4/netfilter/Makefile                          |   46 
  net/ipv4/netfilter/ip_conntrack_amanda.c             |    1 
- net/ipv4/netfilter/ip_conntrack_core.c               |  208 +
+ net/ipv4/netfilter/ip_conntrack_core.c               |  210 +-
  net/ipv4/netfilter/ip_conntrack_ftp.c                |   14 
  net/ipv4/netfilter/ip_conntrack_h323.c               |  446 ++++
  net/ipv4/netfilter/ip_conntrack_irc.c                |    2 
@@ -160,7 +160,7 @@
  net/netfilter/nf_conntrack_standalone.c              |  821 +++++++
  net/netfilter/nfnetlink.c                            |  345 +++
  status                                               |   41 
- 162 files changed, 29889 insertions(+), 238 deletions(-)
+ 162 files changed, 29891 insertions(+), 238 deletions(-)
 
 Index: include/linux/netfilter_ipv6/ip6t_fuzzy.h
 ===================================================================
@@ -7057,7 +7057,7 @@ Index: net/ipv4/netfilter/ip_conntrack_core.c
  {
  	struct ip_conntrack_expect *i, *tmp;
  
-@@ -217,9 +244,16 @@
+@@ -217,9 +244,17 @@
  	LIST_DELETE(&ip_conntrack_hash[hr], &ct->tuplehash[IP_CT_DIR_REPLY]);
  
  	/* Destroy all pending expectations */
@@ -7071,6 +7071,7 @@ Index: net/ipv4/netfilter/ip_conntrack_core.c
 +	atomic_dec(&ip_conntrack_count);
 +	kmem_cache_free(ip_conntrack_cachep, conntrack);
 +}
++EXPORT_SYMBOL(ip_conntrack_free);
 +
  static void
  destroy_conntrack(struct nf_conntrack *nfct)
@@ -7127,7 +7128,7 @@ Index: net/ipv4/netfilter/ip_conntrack_core.c
  __ip_conntrack_find(const struct ip_conntrack_tuple *tuple,
  		    const struct ip_conntrack *ignored_conntrack)
  {
-@@ -322,6 +365,19 @@
+@@ -322,6 +365,20 @@
  	return h;
  }
  
@@ -7143,6 +7144,7 @@ Index: net/ipv4/netfilter/ip_conntrack_core.c
 +	list_add_tail(&ct->tuplehash[IP_CT_DIR_REPLY].list,
 +		      &ip_conntrack_hash[repl_hash]);
 +}
++EXPORT_SYMBOL(ip_conntrack_insert);
 +
  /* Confirm a connection given skb; places it in hash table */
  int
