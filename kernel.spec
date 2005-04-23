@@ -55,7 +55,7 @@
 
 #define		_post_ver	.5
 %define		_post_ver	%{nil}
-%define		_rel		0.1
+%define		_rel		0.2
 %define		_cset		20050302_0807
 %define		_apply_cset	0
 
@@ -79,9 +79,9 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 #define		_rc	%{nil}
-%define		_rc	-rc2
+%define		_rc	-rc3
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	b8b75ddeca0f48221f085703f2f72692
+# Source0-md5:	b2d54008e0d2b634bc546afd563ae372
 ##Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	%{name}-autoconf.h
 
