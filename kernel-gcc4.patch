@@ -1,13 +1,18 @@
 
  Makefile                          |    2 +-
+ arch/ppc/kernel/time.c            |    2 +-
+ arch/ppc/syslib/open_pic_defs.h   |    3 ---
  drivers/char/isicom.c             |    6 +++---
  drivers/input/mouse/psmouse.h     |    2 ++
  drivers/media/dvb/bt8xx/bt878.h   |    6 +++---
  drivers/media/video/bttvp.h       |   21 ++++++++++-----------
  drivers/net/hamradio/baycom_epp.c |   16 ++++++++--------
+ include/asm-m68k/setup.h          |    3 ++-
+ include/asm-ppc/prom.h            |    3 ---
+ include/asm-ppc/time.h            |    2 +-
  include/linux/generic_serial.h    |    2 --
  include/linux/i2c.h               |   32 ++++++++++++++++----------------
- 8 files changed, 43 insertions(+), 44 deletions(-)
+ 13 files changed, 47 insertions(+), 53 deletions(-)
 
 --- a/Makefile.orig	2005-03-30 13:10:50.000000000 +0200
 +++ b/Makefile	2005-03-30 13:11:15.000000000 +0200
@@ -20,6 +25,69 @@
  HOSTCXXFLAGS	= -O2
  
  # 	Decide whether to build built-in, modular, or both.
+--- a/arch/ppc/kernel/time.c.orig	2005-04-07 20:57:57.000000000 +0200
++++ b/arch/ppc/kernel/time.c	2005-04-26 12:20:24.000000000 +0200
+@@ -89,7 +89,7 @@
+ 
+ extern unsigned long wall_jiffies;
+ 
+-static long time_offset;
++long time_offset;
+ 
+ DEFINE_SPINLOCK(rtc_lock);
+ 
+--- a/arch/ppc/syslib/open_pic_defs.h.orig	2005-04-26 12:28:54.000000000 +0200
++++ b/arch/ppc/syslib/open_pic_defs.h	2005-04-26 12:28:58.000000000 +0200
+@@ -172,9 +172,6 @@
+     OpenPIC_Processor Processor[OPENPIC_MAX_PROCESSORS];
+ };
+ 
+-extern volatile struct OpenPIC __iomem *OpenPIC;
+-
+-
+     /*
+      *  Current Task Priority Register
+      */
+--- a/include/asm-m68k/setup.h.orig	2005-04-07 20:57:45.000000000 +0200
++++ b/include/asm-m68k/setup.h	2005-04-26 12:16:54.000000000 +0200
+@@ -362,12 +362,13 @@
+ #ifndef __ASSEMBLY__
+ extern int m68k_num_memory;		/* # of memory blocks found (and used) */
+ extern int m68k_realnum_memory;		/* real # of memory blocks found */
+-extern struct mem_info m68k_memory[NUM_MEMINFO];/* memory description */
+ 
+ struct mem_info {
+ 	unsigned long addr;		/* physical address of memory chunk */
+ 	unsigned long size;		/* length of memory chunk (in bytes) */
+ };
++
++extern struct mem_info m68k_memory[NUM_MEMINFO];/* memory description */
+ #endif
+ 
+ #endif /* __KERNEL__ */
+--- a/include/asm-ppc/prom.h.orig	2005-04-07 20:57:54.000000000 +0200
++++ b/include/asm-ppc/prom.h	2005-04-26 12:26:25.000000000 +0200
+@@ -13,9 +13,6 @@
+ typedef void *phandle;
+ typedef void *ihandle;
+ 
+-extern char *prom_display_paths[];
+-extern unsigned int prom_num_displays;
+-
+ struct address_range {
+ 	unsigned int space;
+ 	unsigned int address;
+--- a/include/asm-ppc/time.h.orig	2005-04-07 20:57:09.000000000 +0200
++++ b/include/asm-ppc/time.h	2005-04-26 12:19:19.000000000 +0200
+@@ -58,7 +58,7 @@
+ /* Accessor functions for the timebase (RTC on 601) registers. */
+ /* If one day CONFIG_POWER is added just define __USE_RTC as 1 */
+ #ifdef CONFIG_6xx
+-extern __inline__ int const __USE_RTC(void) {
++static __inline__ int __USE_RTC(void) {
+ 	return (mfspr(SPRN_PVR)>>16) == 1;
+ }
+ #else
 --- a/include/linux/generic_serial.h.orig	2005-03-16 01:09:11.000000000 +0100
 +++ b/include/linux/generic_serial.h	2005-03-16 10:21:23.000000000 +0100
 @@ -91,6 +91,4 @@
