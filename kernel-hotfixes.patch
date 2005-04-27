@@ -299,3 +299,18 @@
  
  	/* Too many mappings? */
  	if (mm->map_count > sysctl_max_map_count)
+--- a/fs/reiser4/plugin/cryptcompress.c	2005-04-23 11:14:15.000000000 +0200
++++ b/fs/reiser4/plugin/cryptcompress.c	2005-04-26 16:36:35.000000000 +0200
+@@ -2870,7 +2870,12 @@
+ 	       clust.dstat == UNPR_DISK_CLUSTER);
+ 
+ 	hole_size -= nr_zeroes;
++#ifndef CONFIG_PPC32 
+ 	if (!hole_size)
++#else
++	/* workaround for http://gcc.gnu.org/PR21237 */
++	if (((u32)hole_size != 0) || ((u32)(hole_size >> 32) != 0))
++#endif
+ 		/* nothing to append anymore */
+ 		goto out;
+  fake_append:
