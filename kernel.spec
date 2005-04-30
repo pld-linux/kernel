@@ -43,7 +43,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		2
+%define		_rel		0.1
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -61,7 +61,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-%define		_postver	.7
+%define		_postver	.8
 #define		_postver	%{nil}
 Version:	2.6.11%{_postver}
 Release:	%{_rel}
@@ -72,7 +72,7 @@ Group:		Base/Kernel
 #define		_rc	-rc3
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	04f5efb260ff6fb4eaa221fb5b880d8e
+# Source0-md5:	08ef09252e3d1428e69fc011f23b5c70
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-config.h
 
@@ -190,7 +190,7 @@ Patch119:	linux-2.6-quota-dropfix.patch
 Patch120:	linux-2.6-quota-format.patch
 Patch121:	linux-2.6-procfs-hardlink-counts.patch
 Patch122:	linux-2.6-cxt48-misdetection.patch
-Patch123:	linux-2.6-bttv-freeze.patch
+#Patch123:	linux-2.6-bttv-freeze.patch		OBSOLETE
 Patch124:	linux-2.6-tty-races.patch
 Patch125:	linux-2.6-jiffies-rounding.patch
 Patch126:	linux-2.6-cputime-misscalculation.patch
@@ -610,7 +610,7 @@ mv -f {,netfilter.}status
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
-%patch123 -p1
+#patch123 -p1	OBSOLETE
 %patch124 -p1
 %patch125 -p1
 %patch126 -p1
