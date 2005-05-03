@@ -184,7 +184,7 @@ Patch111:	linux-2.6-iriver-backing-device-capability-information-fix.patch
 Patch112:	linux-2.6-sata-sil-corruption-lockup.patch
 Patch113:	linux-2.6-xfrm-policy-destructor.patch
 Patch114:	linux-2.6-dst-cache-overflow.patch
-Patch115:	linux-2.6-invalid-mac-address-after-reboot.patch
+Patch115:	linux-2.6-3c95x-invalid-mac-address-after-reboot.patch
 Patch116:	linux-2.6-null-tty-driver-oops.patch
 Patch117:	linux-2.6-sata-sil-mod15write-workaround.patch
 Patch118:	linux-2.6-ext2-corruption.patch
@@ -199,6 +199,8 @@ Patch126:	linux-2.6-cputime-misscalculation.patch
 Patch127:	linux-2.6-jfs-fsync-wrong-behavior.patch
 Patch128:	linux-2.6-hfsplus-leak-and-oops.patch
 Patch129:	linux-2.6-vfs-two-read-without-clear-between.patch
+Patch130:	linux-2.6-fix-via82xx-resume.patch
+Patch131:	linux-2.6-ppc-fix-sleep-on-old-101-powerbook.patch
 
 # linux vserver
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
@@ -621,6 +623,8 @@ mv -f {,netfilter.}status
 %patch127 -p1
 %patch128 -p1
 %patch129 -p1
+%patch130 -p1
+%patch131 -p1
 
 %if %{with vserver}
 %patch200 -p1
