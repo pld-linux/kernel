@@ -43,11 +43,11 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.2
+%define		_rel		1
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
-%define		_netfilter_snap		20050422
+%define		_netfilter_snap		20050503
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
@@ -107,6 +107,8 @@ Patch2:		ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2
 Patch3:		2.6.0-t9-acpi_osl-lkml.patch
 Patch4:		linux-kbuild-extmod.patch
 Patch5:		%{name}-MAX_INIT_ARGS.patch
+# http://www.kernel.org/pub/linux/devel/binutils/linux-2.6-seg-5.patch
+Patch6:		linux-2.6-seg-5.patch
 
 Patch10:	2.6.0-powernow-k7.patch
 
@@ -141,7 +143,7 @@ Patch56:	routes-2.6.11-12.diff
 # http://developer.osdl.org/shemminger/skge/
 Patch57:	linux-2.6-skge-0.5.patch
 # http://www.edoceo.com/creo/inotify/
-Patch58:	inotify-0.22-rml-2.6.12-rc2-mm1-2.patch
+Patch58:	inotify-2.6.12-rc3.patch
 
 # http://dev.gentoo.org/~spock/projects/gensplash/
 Patch60:	fbsplash-0.9.2-2.6.11.patch
@@ -190,10 +192,13 @@ Patch119:	linux-2.6-quota-dropfix.patch
 Patch120:	linux-2.6-quota-format.patch
 Patch121:	linux-2.6-procfs-hardlink-counts.patch
 Patch122:	linux-2.6-cxt48-misdetection.patch
-#Patch123:	linux-2.6-bttv-freeze.patch		OBSOLETE
+Patch123:	linux-2.6-cpuid-x87-bit-on-AMD-falsely-marked-as-PNI.patch
 Patch124:	linux-2.6-tty-races.patch
 Patch125:	linux-2.6-jiffies-rounding.patch
 Patch126:	linux-2.6-cputime-misscalculation.patch
+Patch127:	linux-2.6-jfs-fsync-wrong-behavior.patch
+Patch128:	linux-2.6-hfsplus-leak-and-oops.patch
+Patch129:	linux-2.6-vfs-two-read-without-clear-between.patch
 
 # linux vserver
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
@@ -203,8 +208,6 @@ Patch201:	linux-em8300-2.6.11.2.patch
 
 Patch399:	%{name}-gcc4.patch
 Patch400:	%{name}-hotfixes.patch
-# http://www.kernel.org/pub/linux/devel/binutils/linux-2.6-seg-5.patch
-Patch401:	linux-2.6-seg-5.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -540,6 +543,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
+%patch6 -p1
 
 %patch10 -p1
 
@@ -610,10 +614,13 @@ mv -f {,netfilter.}status
 %patch120 -p1
 %patch121 -p1
 %patch122 -p1
-#patch123 -p1	OBSOLETE
+%patch123 -p1
 %patch124 -p1
 %patch125 -p1
 %patch126 -p1
+%patch127 -p1
+%patch128 -p1
+%patch129 -p1
 
 %if %{with vserver}
 %patch200 -p1
@@ -624,7 +631,6 @@ mv -f {,netfilter.}status
 
 %patch399 -p1
 %patch400 -p1
-%patch401 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
