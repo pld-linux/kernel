@@ -1068,7 +1068,7 @@ fi
 %endif
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
-%{_mandir}/man4/sk98lin.4
+%{_mandir}/man4/sk98lin.4*
 
 %ifnarch sparc sparc64
 %files drm
@@ -1144,7 +1144,7 @@ fi
 %endif
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
-%{_mandir}/man4/sk98lin.4
+%{_mandir}/man4/sk98lin.4*
 
 %ifnarch sparc sparc64
 %files smp-drm
