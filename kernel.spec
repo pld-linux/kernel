@@ -1,9 +1,8 @@
 #
 # TODO:
-#		- fix lirc_sasem (usb api)
 #		- add distcc support (and don't break crossbuild!)
-#		- wait for l7 memleak fix
 #		- add valid conntrack-pptp to the netfiler
+#		- update/separate lirc(fix lirc_sasem)/iriverfs/squashfs patches
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -43,11 +42,11 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		2
+%define		_rel		2.1
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
-%define		_netfilter_snap		20050503
+%define		_netfilter_snap		20050504
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
