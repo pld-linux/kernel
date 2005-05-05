@@ -73,7 +73,7 @@
 
 %define		_post_ver	.7
 #define		_post_ver	%{nil}
-%define		_rel		1.1
+%define		_rel		1.3
 %define		_cset		20050302_0807
 %define		_apply_cset	0
 
@@ -178,6 +178,9 @@ Patch52:	%{name}-2.6.11-layer7-1.2.patch
 Patch54:	linux-2.6.11.3-imq1.patch
 #Patch55:	2.6.4-wrr.patch
 #Patch56:	linux-2.6-netfilter-syms.patch
+
+# http://developer.osdl.org/shemminger/skge/
+Patch57:        linux-2.6-skge-0.5.patch
 
 # pseudo terminal fix for older glibc
 #Patch60:	%{name}-pts.patch
@@ -592,6 +595,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch54 -p1
 #%patch55 -p1
 #%patch56 -p1
+%patch57 -p1
 
 #patch60 -p1
 #%patch61 -p1
