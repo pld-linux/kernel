@@ -1,7 +1,6 @@
 #
 # TODO:
 #		- add distcc support (and don't break crossbuild!)
-#		- add valid conntrack-pptp to the netfiler
 #		- update/separate lirc(fix lirc_sasem)/iriverfs/squashfs patches
 #
 # Conditional build:
@@ -102,7 +101,7 @@ Source93:	%{name}-em8300.config
 
 Patch0:		2.6.0-ksyms-add.patch
 Patch1:		linux-2.6-version.patch
-Patch2:		ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
+
 Patch3:		2.6.0-t9-acpi_osl-lkml.patch
 Patch4:		linux-kbuild-extmod.patch
 Patch5:		%{name}-MAX_INIT_ARGS.patch
@@ -540,7 +539,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %patch0 -p1
 %patch1 -p0
-%patch2 -p1
+
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
