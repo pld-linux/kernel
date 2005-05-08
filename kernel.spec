@@ -218,7 +218,7 @@ BuildRequires:	elftoaout
 %endif
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
-BuildRequires:	rpmbuild(macros) >= 1.153
+BuildRequires:	rpmbuild(macros) >= 1.211
 Autoreqprov:	no
 PreReq:		coreutils
 PreReq:		module-init-tools >= 0.9.9
@@ -240,7 +240,7 @@ Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
 Conflicts:	nfs-utils < %{_nfs_utils_ver}
 Conflicts:	procps < %{_procps_ver}
 Conflicts:	oprofile < %{_oprofile_ver}
-ExclusiveArch:	%{ix86} alpha amd64 ia64 ppc sparc sparc64
+ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc sparc sparc64
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -784,7 +784,7 @@ PreInstallKernel (){
 
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
-%ifarch %{ix86} amd64
+%ifarch %{ix86} %{x8664}
 	install arch/%{_target_base_arch}/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
 %ifarch alpha sparc sparc64
