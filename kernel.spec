@@ -41,7 +41,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		3
+%define		_rel		4
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -200,6 +200,7 @@ Patch128:	linux-2.6-hfsplus-leak-and-oops.patch
 Patch129:	linux-2.6-vfs-two-read-without-clear-between.patch
 Patch130:	linux-2.6-fix-via82xx-resume.patch
 Patch131:	linux-2.6-ppc-fix-sleep-on-old-101-powerbook.patch
+Patch132:	linux-2.6-rmap-oops.patch
 
 # linux vserver
 # adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
@@ -624,6 +625,7 @@ mv -f {,netfilter.}status
 %patch129 -p1
 %patch130 -p1
 %patch131 -p1
+%patch132 -p1
 
 %if %{with vserver}
 %patch200 -p1
@@ -873,6 +875,7 @@ cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 %{__make} $CrossOpts mrproper \
 	RCS_FIND_IGNORE='-name build-done -prune -o'
+
 find -name "*~" -exec rm -f "{}" ";"
 find -name "*.orig" -exec rm -f "{}" ";"
 
