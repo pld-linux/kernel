@@ -12,7 +12,7 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	grsec		# build without grsec
-%bcond_with     mosix           # build with openMosix support
+%bcond_with	mosix		# build with openMosix support
 %bcond_with	pax		# enable PaX
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	regparm		# use register arguments (this break binary-only modules)
@@ -47,7 +47,7 @@
 
 %if %{with mosix}
 # openMosix not compile with SMP
-%undefine       with_smp
+%undefine	with_smp
 %define		mosix		m
 %endif
 
@@ -180,7 +180,7 @@ Patch54:	linux-2.6.11.3-imq1.patch
 #Patch56:	linux-2.6-netfilter-syms.patch
 
 # http://developer.osdl.org/shemminger/skge/
-Patch57:        linux-2.6-skge-0.5.patch
+Patch57:	linux-2.6-skge-0.5.patch
 
 # pseudo terminal fix for older glibc
 #Patch60:	%{name}-pts.patch
@@ -190,7 +190,7 @@ Patch57:        linux-2.6-skge-0.5.patch
 Patch70:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.10.patch
 
 # http://dev.gentoo.org/~spock/projects/gensplash/
-Patch72:	fbsplash-0.9.2-2.6.11.patch  
+Patch72:	fbsplash-0.9.2-2.6.11.patch
 Patch73:	squashfs2.1-patch
 Patch74:	linux-static-dev.patch
 Patch75:	ftp://ftp.kernel.org/pub/linux/kernel/people/mbligh/patches/2.6.6-rc3/2.6.6-rc3-mjb1/350-autoswap
@@ -229,7 +229,7 @@ Patch270:	linux-2.6-alsa-1.0.8-azx.patch
 # openMosix from: http://openmosix.snarc.org/files/releases/2.6/patch-2.6.11-om-r557.bz2
 Patch700:	openMosix-2.6.11.6-r557.patch
 
-Patch401: %{name}-gnbd.patch
+Patch401:	%{name}-gnbd.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -840,7 +840,7 @@ PreInstallKernel (){
 %endif
 	%{__make} $CrossOpts modules_install \
 		%{?with_verbose:V=1} \
-     		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
+		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 		KERNELRELEASE=$KernelVer
 
 	echo "CHECKING DEPENDENCIES FOR KERNEL MODULES"
@@ -886,7 +886,7 @@ cp -a $KERNEL_BUILD_DIR/build-done/kernel-*/* $RPM_BUILD_ROOT
 %endif
 
 for i in "" smp ; do
-	if [ -e  $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i ] ; then
+	if [ -e $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i ] ; then
 		rm -f $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
 		ln -sf %{_prefix}/src/linux-%{version} \
 			$RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
