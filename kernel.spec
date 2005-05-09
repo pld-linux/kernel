@@ -71,7 +71,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_post_ver	.7
+%define		_post_ver	.8
 #define		_post_ver	%{nil}
 %define		_rel		1.3
 %define		_cset		20050302_0807
@@ -99,7 +99,7 @@ Group:		Base/Kernel
 %define		_rc	%{nil}
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	04f5efb260ff6fb4eaa221fb5b880d8e
+# Source0-md5:	08ef09252e3d1428e69fc011f23b5c70
 Source1:	%{name}-autoconf.h
 
 ## Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
@@ -170,7 +170,7 @@ Patch33:		linux-kbuild-extmod.patch
 Patch41:		linux-fbcon-margins.patch
 
 # netfilter
-Patch50:	%{version}-pom-ng-%{_netfilter_snap}.patch
+Patch50:	2.6.11.7-pom-ng-%{_netfilter_snap}.patch
 # http://l7-filter.sourceforge.net/
 Patch52:	%{name}-2.6.11-layer7-1.2.patch
 #Patch53:	2.6.10-esfq.patch
@@ -220,6 +220,9 @@ Patch260:	iriverfs-r0.1.0.1.patch.gz
 Patch262:	2.6.11.5-dst_cache_overflow.patch
 
 Patch264:	2.6.11.5-invalid_mac_fix.patch
+
+# from http://www.syskonnect.com/syskonnect/support/driver/zip/linux/install-8_16.tar.bz2
+Patch268:	kernel-2.6.11.7-sk98lin-8.16.patch
 
 # openMosix from: http://openmosix.snarc.org/files/releases/2.6/patch-2.6.11-om-r557.bz2
 Patch700:	openMosix-2.6.11.6-r557.patch
@@ -621,6 +624,8 @@ bzcat %{SOURCE4} | patch -p1 -s
 
 %patch262 -p1
 %patch264 -p1
+
+%patch268 -p1
 
 # <bconded_patches>
 
