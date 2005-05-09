@@ -229,8 +229,6 @@ Patch270:	linux-2.6-alsa-1.0.8-azx.patch
 # openMosix from: http://openmosix.snarc.org/files/releases/2.6/patch-2.6.11-om-r557.bz2
 Patch700:	openMosix-2.6.11.6-r557.patch
 
-Patch401:	%{name}-gnbd.patch
-
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 BuildRequires:	diffutils
@@ -654,9 +652,6 @@ bzcat %{SOURCE4} | patch -p1 -s
 %endif
 
 # </bconded_patches
-
-
-%patch401 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_post_ver}#g' Makefile
