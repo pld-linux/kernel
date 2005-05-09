@@ -73,7 +73,7 @@
 
 %define		_post_ver	.8
 #define		_post_ver	%{nil}
-%define		_rel		1.3
+%define		_rel		2
 %define		_cset		20050302_0807
 %define		_apply_cset	0
 
@@ -223,6 +223,8 @@ Patch264:	2.6.11.5-invalid_mac_fix.patch
 
 # from http://www.syskonnect.com/syskonnect/support/driver/zip/linux/install-8_16.tar.bz2
 Patch268:	kernel-2.6.11.7-sk98lin-8.16.patch
+
+Patch270:	linux-2.6-alsa-1.0.8-azx.patch
 
 # openMosix from: http://openmosix.snarc.org/files/releases/2.6/patch-2.6.11-om-r557.bz2
 Patch700:	openMosix-2.6.11.6-r557.patch
@@ -626,6 +628,8 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch264 -p1
 
 %patch268 -p1
+
+%patch270 -p1
 
 # <bconded_patches>
 
