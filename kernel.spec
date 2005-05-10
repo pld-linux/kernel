@@ -73,7 +73,7 @@
 
 %define		_post_ver	.8
 #define		_post_ver	%{nil}
-%define		_rel		2
+%define		_rel		3
 %define		_cset		20050302_0807
 %define		_apply_cset	0
 
@@ -211,8 +211,8 @@ Patch200:	grsecurity-2.1.3-2.6.11-200503091157.patch
 #Patch201:	linux-2.6.10-secfix-200501071130.patch
 
 # linux vserver
-# adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
-Patch250:	linux-2.6-vs.patch
+# adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.11.8-vs2.0-pre4.diff
+Patch250:	linux-2.6.11.8-vs2.0-pre4.patch
 
 # iRiverFS support from http://dl.sourceforge.net/sourceforge/ifp-driver/
 Patch260:	iriverfs-r0.1.0.1.patch.gz
