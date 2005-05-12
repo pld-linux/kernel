@@ -71,9 +71,9 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_post_ver	.8
+%define		_post_ver	.9
 #define		_post_ver	%{nil}
-%define		_rel		3
+%define		_rel		1
 %define		_cset		20050302_0807
 %define		_apply_cset	0
 
@@ -99,7 +99,7 @@ Group:		Base/Kernel
 %define		_rc	%{nil}
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	08ef09252e3d1428e69fc011f23b5c70
+# Source0-md5:	e4e23abca482dff11f85119403a703ec
 Source1:	%{name}-autoconf.h
 
 ## Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
