@@ -20,13 +20,17 @@ diff -ur linux-2.6.11-ac2/arch/i386/kernel/cpu/common.c linux-2.6.11-ac2-stk/arc
  
  	if (cpu_test_and_set(cpu, cpu_initialized)) {
  		printk(KERN_WARNING "CPU#%d already initialized!\n", cpu);
-@@ -579,6 +584,13 @@
+@@ -579,6 +584,17 @@
  	 */
  	memcpy(&per_cpu(cpu_gdt_table, cpu), cpu_gdt_table,
  	       GDT_SIZE);
 +
 +	/* Set up GDT entry for 16bit stack */
++#ifndef CONFIG_GRKERNSEC
++	*(__u64 *)&(per_cpu(cpu_gdt_table, cpu)[GDT_ENTRY_ESPFIX_SS]) |=
++#else
 +	*(__u64 *)&(cpu_gdt_table[cpu][GDT_ENTRY_ESPFIX_SS]) |=
++#endif
 +		((((__u64)stk16_off) << 16) & 0x000000ffffff0000ULL) |
 +		((((__u64)stk16_off) << 32) & 0xff00000000000000ULL) |
 +		(CPU_16BIT_STACK_SIZE - 1);
