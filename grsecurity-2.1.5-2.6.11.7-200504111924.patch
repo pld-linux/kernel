@@ -505,9 +505,9 @@ diff -urNp linux-2.6.11.7/arch/i386/kernel/cpu/common.c linux-2.6.11.7/arch/i386
 -EXPORT_PER_CPU_SYMBOL(cpu_gdt_table);
 +EXPORT_SYMBOL_GPL(cpu_gdt_table);
  
- static int cachesize_override __initdata = -1;
- static int disable_x86_fxsr __initdata = 0;
-@@ -369,6 +367,10 @@ void __init identify_cpu(struct cpuinfo_
+ unsigned char cpu_16bit_stack[CPU_16BIT_STACK_SIZE];
+ DEFINE_PER_CPU(unsigned char, cpu_16bit_stack[CPU_16BIT_STACK_SIZE]);
+@@ -373,6 +371,10 @@
  	if (this_cpu->c_init)
  		this_cpu->c_init(c);
  
@@ -518,28 +518,32 @@ diff -urNp linux-2.6.11.7/arch/i386/kernel/cpu/common.c linux-2.6.11.7/arch/i386
  	/* Disable the PN if appropriate */
  	squash_the_stupid_serial_number(c);
  
-@@ -555,7 +557,7 @@ void __init early_cpu_init(void)
+@@ -559,7 +561,7 @@
  void __init cpu_init (void)
  {
  	int cpu = smp_processor_id();
 -	struct tss_struct * t = &per_cpu(init_tss, cpu);
 +	struct tss_struct * t = init_tss + cpu;
  	struct thread_struct *thread = &current->thread;
+ 	__u32 stk16_off = (__u32)&per_cpu(cpu_16bit_stack, cpu);
  
- 	if (cpu_test_and_set(cpu, cpu_initialized)) {
-@@ -577,17 +579,16 @@ void __init cpu_init (void)
+@@ -582,8 +584,8 @@
  	 * Initialize the per-CPU GDT with the boot GDT,
  	 * and set up the GDT descriptor:
  	 */
 -	memcpy(&per_cpu(cpu_gdt_table, cpu), cpu_gdt_table,
 -	       GDT_SIZE);
--	cpu_gdt_descr[cpu].size = GDT_SIZE - 1;
--	cpu_gdt_descr[cpu].address =
--	    (unsigned long)&per_cpu(cpu_gdt_table, cpu);
 +	if (cpu) {
-+		memcpy(cpu_gdt_table[cpu], cpu_gdt_table[0], GDT_SIZE);
-+		cpu_gdt_descr[cpu].size = GDT_SIZE - 1;
-+		cpu_gdt_descr[cpu].address = (unsigned long)cpu_gdt_table[cpu];
++	memcpy(cpu_gdt_table[cpu], cpu_gdt_table[0], GDT_SIZE);
+ 
+ 	/* Set up GDT entry for 16bit stack */
+ 	*(__u64 *)&(cpu_gdt_table[cpu][GDT_ENTRY_ESPFIX_SS]) |=
+@@ -593,13 +595,13 @@
+ 
+ 	cpu_gdt_descr[cpu].size = GDT_SIZE - 1;
+ 	cpu_gdt_descr[cpu].address =
+-	    (unsigned long)&per_cpu(cpu_gdt_table, cpu);
++	    (unsigned long)cpu_gdt_table[cpu];
 +	}
  
  	/*
@@ -551,7 +555,7 @@ diff -urNp linux-2.6.11.7/arch/i386/kernel/cpu/common.c linux-2.6.11.7/arch/i386
  
  	__asm__ __volatile__("lgdt %0" : : "m" (cpu_gdt_descr[cpu]));
  	__asm__ __volatile__("lidt %0" : : "m" (idt_descr));
-@@ -609,7 +610,7 @@ void __init cpu_init (void)
+@@ -621,7 +623,7 @@
  	load_esp0(t, thread);
  	set_tss_desc(cpu,t);
  	load_TR_desc();
