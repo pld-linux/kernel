@@ -7,12 +7,18 @@
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
+%bcond_with	grsecurity	# enable grsecurity
+%bcond_with	pax		# enable PaX (depends on grsecurity)
+%bcond_with	omosix		# enable openMosix
 %bcond_with	vserver		# enable vserver
-%bcond_with	pax		# enable PaX
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	regparm		# (ix86) use register arguments (this break binary-only modules)
 %bcond_with	em8300		# DXR3/Hollywood
+
+%if %{with pax}
+%define		with_grsecurity
+%endif
 
 %{?debug:%define with_verbose 1}
 
@@ -96,8 +102,9 @@ Source40:	%{name}.FAQ-pl
 Source80:	%{name}-netfilter.config
 Source90:	%{name}-grsec.config
 Source91:	%{name}-grsec+pax.config
-Source92:	%{name}-vserver.config
-Source93:	%{name}-em8300.config
+#Source92:	%{name}-omosix.config
+Source93:	%{name}-vserver.config
+Source94:	%{name}-em8300.config
 
 Patch0:		2.6.0-ksyms-add.patch
 Patch1:		linux-2.6-version.patch
@@ -155,9 +162,6 @@ Patch64:	squashfs2.1-patch
 Patch65:	linux-reiser4-2.6.11-mm4.patch.bz2
 Patch66:	linux-2.6-alsa-1.0.8-azx.patch
 
-# derived from http://www.grsecurity.net/grsecurity-2.1.5-2.6.11.7-200504111924.patch.gz
-Patch70:	grsecurity-2.1.5-2.6.11.7-200504111924.patch
-
 # http://tahoe.pl/patch.htm
 Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 # psmouse extension for ThinkPad laptops from http://www.clarkson.edu/~evanchsa/
@@ -203,14 +207,16 @@ Patch130:	linux-2.6-fix-via82xx-resume.patch
 Patch131:	linux-2.6-ppc-fix-sleep-on-old-101-powerbook.patch
 Patch132:	linux-2.6-rmap-oops.patch
 
-# linux vserver
-# adapted from http://vserver.13thfloor.at/Experimental/patch-2.6.10-vs1.9.3.17.diff
-Patch200:	linux-2.6-vs.patch
-# em8300
-Patch201:	linux-em8300-2.6.11.2.patch
+# derived from http://www.grsecurity.net/grsecurity-2.1.5-2.6.11.7-200504111924.patch.gz
+Patch200:	grsecurity-2.1.5-2.6.11.7-200504111924.patch
+# openMosix
+#Patch201:	linux-2.6-omosix.patch
+# linux vserver-2.0-pre4
+Patch202:	linux-2.6-vs2.patch
 
-Patch399:	%{name}-gcc4.patch
-Patch400:	%{name}-hotfixes.patch
+Patch400:	%{name}-gcc4.patch
+Patch401:	%{name}-hotfixes.patch
+Patch402:	linux-em8300-2.6.11.2.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -587,8 +593,6 @@ mv -f {,netfilter.}status
 %patch65 -p1
 %patch66 -p1
 
-%patch70 -p1
-
 %patch80 -p1
 %patch81 -p1
 
@@ -597,7 +601,7 @@ mv -f {,netfilter.}status
 
 %patch100 -p1
 %patch101 -p1
-%{__patch} -p1 -F3 < %{PATCH102}
+%patch102 -p1
 %patch103 -p1
 %patch104 -p1
 %patch105 -p1
@@ -629,15 +633,21 @@ mv -f {,netfilter.}status
 %patch131 -p1
 %patch132 -p1
 
-%if %{with vserver}
-%patch200 -p1
+%if %{with grsecurity}
+%{__patch} -p1 -F3 < %{PATCH200}
 %endif
-%if %{with em8300}
-%patch201 -p1
+%if %{with omosix}
+%{__patch} -p1 -F3 < %{PATCH201}
+%endif
+%if %{with vserver}
+%{__patch} -p1 -F3 < %{PATCH202}
 %endif
 
-%patch399 -p1
 %patch400 -p1
+%patch401 -p1
+%if %{with em8300}
+%patch402 -p1
+%endif
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
@@ -710,18 +720,19 @@ BuildConfig (){
 	sed -i 's:# CONFIG_PREEMPT is not set:CONFIG_PREEMPT=y:' arch/%{_target_base_arch}/defconfig
 %endif
 
-#	netfilter	
 	cat %{SOURCE80} >> arch/%{_target_base_arch}/defconfig
-#	grsecurity
-%if !%{with pax}
-	cat %{SOURCE90} >> arch/%{_target_base_arch}/defconfig
-%else
-	cat %{SOURCE91} >> arch/%{_target_base_arch}/defconfig
+
+%if %{with grsecurity}
+	cat %{!?with_pax:%{SOURCE90}}%{?with_pax:%{SOURCE91}} >> arch/%{_target_base_arch}/defconfig
 %endif
-#	vserver
-	cat %{SOURCE92} >> arch/%{_target_base_arch}/defconfig
-%if %{with em8300}
+#if %{with omosix}
+#	cat #{SOURCE92} >> arch/%{_target_base_arch}/defconfig
+#endif
+%if %{with vserver}
 	cat %{SOURCE93} >> arch/%{_target_base_arch}/defconfig
+%endif
+%if %{with em8300}
+	cat %{SOURCE94} >> arch/%{_target_base_arch}/defconfig
 %endif
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
