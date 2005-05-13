@@ -5362,9 +5362,9 @@ diff -NurpP --minimal linux-2.6.11.8/fs/proc/base.c linux-2.6.11.8-vs2.0-pre4/fs
  	d_drop(dentry);
  	return 0;
  }
-@@ -1337,6 +1362,9 @@ static struct file_operations proc_tgid_
- static struct inode_operations proc_tgid_attr_inode_operations;
- #endif
+@@ -1339,6 +1364,9 @@ static struct inode_operations proc_tgid
+ 
+ static int get_tid_list(int index, unsigned int *tids, struct inode *dir);
  
 +extern int proc_pid_vx_info(struct task_struct *, char *);
 +extern int proc_pid_nx_info(struct task_struct *, char *);
@@ -5372,7 +5372,7 @@ diff -NurpP --minimal linux-2.6.11.8/fs/proc/base.c linux-2.6.11.8-vs2.0-pre4/fs
  /* SMP-safe */
  static struct dentry *proc_pident_lookup(struct inode *dir, 
  					 struct dentry *dentry,
-@@ -1498,15 +1526,33 @@ static struct dentry *proc_pident_lookup
+@@ -1500,15 +1528,33 @@ static struct dentry *proc_pident_lookup
  			inode->i_fop = &proc_loginuid_operations;
  			break;
  #endif
@@ -5408,7 +5408,7 @@ diff -NurpP --minimal linux-2.6.11.8/fs/proc/base.c linux-2.6.11.8-vs2.0-pre4/fs
  out:
  	return ERR_PTR(error);
  }
-@@ -1590,14 +1636,14 @@ static int proc_self_readlink(struct den
+@@ -1592,14 +1638,14 @@ static int proc_self_readlink(struct den
  			      int buflen)
  {
  	char tmp[30];
@@ -5425,7 +5425,7 @@ diff -NurpP --minimal linux-2.6.11.8/fs/proc/base.c linux-2.6.11.8-vs2.0-pre4/fs
  	return vfs_follow_link(nd,tmp);
  }	
  
-@@ -1656,6 +1702,20 @@ void proc_pid_flush(struct dentry *proc_
+@@ -1658,6 +1704,20 @@ void proc_pid_flush(struct dentry *proc_
  	}
  }
  
@@ -5446,7 +5446,7 @@ diff -NurpP --minimal linux-2.6.11.8/fs/proc/base.c linux-2.6.11.8-vs2.0-pre4/fs
  /* SMP-safe */
  struct dentry *proc_pid_lookup(struct inode *dir, struct dentry * dentry, struct nameidata *nd)
  {
-@@ -1692,13 +1752,14 @@ struct dentry *proc_pid_lookup(struct in
+@@ -1694,13 +1754,14 @@ struct dentry *proc_pid_lookup(struct in
  	if (!task)
  		goto out;
  
@@ -5466,7 +5466,7 @@ diff -NurpP --minimal linux-2.6.11.8/fs/proc/base.c linux-2.6.11.8-vs2.0-pre4/fs
  	inode->i_mode = S_IFDIR|S_IRUGO|S_IXUGO;
  	inode->i_op = &proc_tgid_base_inode_operations;
  	inode->i_fop = &proc_tgid_base_operations;
-@@ -1723,6 +1784,8 @@ struct dentry *proc_pid_lookup(struct in
+@@ -1729,6 +1790,8 @@ struct dentry *proc_pid_lookup(struct in
  		goto out;
  	}
  	return NULL;
@@ -5475,7 +5475,7 @@ diff -NurpP --minimal linux-2.6.11.8/fs/proc/base.c linux-2.6.11.8-vs2.0-pre4/fs
  out:
  	return ERR_PTR(-ENOENT);
  }
-@@ -1738,6 +1801,8 @@ static struct dentry *proc_task_lookup(s
+@@ -1744,6 +1807,8 @@ static struct dentry *proc_task_lookup(s
  	tid = name_to_int(dentry);
  	if (tid == ~0U)
  		goto out;
@@ -5484,7 +5484,7 @@ diff -NurpP --minimal linux-2.6.11.8/fs/proc/base.c linux-2.6.11.8-vs2.0-pre4/fs
  
  	read_lock(&tasklist_lock);
  	task = find_task_by_pid(tid);
-@@ -1749,11 +1814,14 @@ static struct dentry *proc_task_lookup(s
+@@ -1755,11 +1820,14 @@ static struct dentry *proc_task_lookup(s
  	if (leader->tgid != task->tgid)
  		goto out_drop_task;
  
@@ -5501,7 +5501,7 @@ diff -NurpP --minimal linux-2.6.11.8/fs/proc/base.c linux-2.6.11.8-vs2.0-pre4/fs
  	inode->i_mode = S_IFDIR|S_IRUGO|S_IXUGO;
  	inode->i_op = &proc_tid_base_inode_operations;
  	inode->i_fop = &proc_tid_base_operations;
-@@ -1789,7 +1857,7 @@ static int get_tgid_list(int index, unsi
+@@ -1799,7 +1867,7 @@ static int get_tgid_list(int index, unsi
  	read_lock(&tasklist_lock);
  	p = NULL;
  	if (version) {
@@ -5510,7 +5510,7 @@ diff -NurpP --minimal linux-2.6.11.8/fs/proc/base.c linux-2.6.11.8-vs2.0-pre4/fs
  		if (p && !thread_group_leader(p))
  			p = NULL;
  	}
-@@ -1801,11 +1869,15 @@ static int get_tgid_list(int index, unsi
+@@ -1811,11 +1879,15 @@ static int get_tgid_list(int index, unsi
  
  	for ( ; p != &init_task; p = next_task(p)) {
  		int tgid = p->pid;
@@ -5527,21 +5527,23 @@ diff -NurpP --minimal linux-2.6.11.8/fs/proc/base.c linux-2.6.11.8-vs2.0-pre4/fs
  		nr_tgids++;
  		if (nr_tgids >= PROC_MAXPIDS)
  			break;
-@@ -1835,9 +1907,12 @@ static int get_tid_list(int index, unsig
+@@ -1845,10 +1917,14 @@ static int get_tid_list(int index, unsig
  	if (pid_alive(task)) do {
  		int tid = task->pid;
  
 +		/* check for context visibility */
 +		if (!proc_pid_visible(task, tid))
 +			continue;
++
  		if (--index >= 0)
  			continue;
--		tids[nr_tids] = tid;
-+		tids[nr_tids] = vx_map_pid(tid);
+ 		if (tids != NULL)
+-			tids[nr_tids] = tid;
++			tids[nr_tids] = vx_map_pid(tid);
  		nr_tids++;
  		if (nr_tids >= PROC_MAXPIDS)
  			break;
-@@ -1913,11 +1988,14 @@ static int proc_task_readdir(struct file
+@@ -1924,11 +2000,14 @@ static int proc_task_readdir(struct file
  	unsigned int nr_tids, i;
  	struct dentry *dentry = filp->f_dentry;
  	struct inode *inode = dentry->d_inode;
