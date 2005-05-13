@@ -597,7 +597,7 @@ mv -f {,netfilter.}status
 
 %patch100 -p1
 %patch101 -p1
-%patch102 -p1
+%{__patch} -p1 -F3 < %{PATCH102}
 %patch103 -p1
 %patch104 -p1
 %patch105 -p1
