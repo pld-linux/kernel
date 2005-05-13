@@ -2565,15 +2565,6 @@ diff -NurpP --minimal linux-2.6.11.8/fs/attr.c linux-2.6.11.8-vs2.0-pre4/fs/attr
  	mark_inode_dirty(inode);
  out:
  	return error;
-@@ -118,6 +165,8 @@ int setattr_mask(unsigned int ia_valid)
- 		dn_mask |= DN_ATTRIB;
- 	if (ia_valid & ATTR_GID)
- 		dn_mask |= DN_ATTRIB;
-+	if (ia_valid & ATTR_XID)
-+		dn_mask |= DN_ATTRIB;
- 	if (ia_valid & ATTR_SIZE)
- 		dn_mask |= DN_MODIFY;
- 	/* both times implies a utime(s) call */
 @@ -184,7 +233,8 @@ int notify_change(struct dentry * dentry
  			error = security_inode_setattr(dentry, attr);
  		if (!error) {
@@ -3872,10 +3863,10 @@ diff -NurpP --minimal linux-2.6.11.8/fs/fcntl.c linux-2.6.11.8-vs2.0-pre4/fs/fcn
 diff -NurpP --minimal linux-2.6.11.8/fs/file_table.c linux-2.6.11.8-vs2.0-pre4/fs/file_table.c
 --- linux-2.6.11.8/fs/file_table.c	2005-03-02 12:38:44 +0100
 +++ linux-2.6.11.8-vs2.0-pre4/fs/file_table.c	2005-05-02 22:12:28 +0200
-@@ -16,6 +16,8 @@
- #include <linux/eventpoll.h>
+@@ -17,6 +17,8 @@
  #include <linux/mount.h>
  #include <linux/cdev.h>
+ #include <linux/fsnotify.h>
 +#include <linux/vs_limit.h>
 +#include <linux/vs_context.h>
  
@@ -6837,9 +6828,9 @@ diff -NurpP --minimal linux-2.6.11.8/include/linux/init_task.h linux-2.6.11.8-vs
 +	.vx_info	= NULL,						\
 +	.nid		= 0,						\
 +	.nx_info	= NULL,						\
+  	.private_pages	= LIST_HEAD_INIT(tsk.private_pages),		\
+  	.private_pages_count = 0,					\
  }
- 
- 
 diff -NurpP --minimal linux-2.6.11.8/include/linux/ip.h linux-2.6.11.8-vs2.0-pre4/include/linux/ip.h
 --- linux-2.6.11.8/include/linux/ip.h	2005-03-02 12:38:52 +0100
 +++ linux-2.6.11.8-vs2.0-pre4/include/linux/ip.h	2005-05-02 22:12:28 +0200
@@ -19599,3 +19590,16 @@ diff -NurpP --minimal linux-2.6.11.8/security/security.c linux-2.6.11.8-vs2.0-pr
  EXPORT_SYMBOL(capable);
 +EXPORT_SYMBOL(vx_capable);
  EXPORT_SYMBOL(security_ops);
+--- linux-2.6.11.8/include/linux/fsnotify.h.orig	2005-05-14 00:46:49.000000000 +0200
++++ linux-2.6.11.8/include/linux/fsnotify.h	2005-05-14 00:50:25.000000000 +0200
+@@ -157,6 +157,10 @@
+ 		in_mask |= IN_ATTRIB;
+ 		dn_mask |= DN_ATTRIB;
+ 	}
++	if (ia_valid & ATTR_XID) {
++		in_mask |= DN_ATTRIB;
++		dn_mask |= DN_ATTRIB;
++	}
+ 	if (ia_valid & ATTR_SIZE) {
+ 		in_mask |= IN_MODIFY;
+ 		dn_mask |= DN_MODIFY;
