@@ -1,7 +1,7 @@
 #
 # TODO:
 #		- add distcc support (and don't break crossbuild!)
-#		- update/separate lirc(fix lirc_sasem)/iriverfs/squashfs patches
+#		- move em8300/lirc/iriverfs/squashfs stuff to separeated specs
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -45,7 +45,7 @@
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
-%define		_netfilter_snap		20050505
+%define		_netfilter_snap		20050513
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
