@@ -7,17 +7,33 @@
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
-%bcond_with	grsecurity	# enable grsecurity
+%bcond_without	grsecurity	# disable grsecurity
 %bcond_with	pax		# enable PaX (depends on grsecurity)
-%bcond_with	omosix		# enable openMosix
-%bcond_with	vserver		# enable vserver
+%bcond_with	omosix		# enable openMosix (conflicts with vserver)
+%bcond_with	vserver		# enable vserver (conflicts with grsecurity/omosix)
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	regparm		# (ix86) use register arguments (this break binary-only modules)
 %bcond_with	em8300		# DXR3/Hollywood
 
-%if %{with pax}
-%define		with_grsecurity
+%if !%{with grsecurity}
+%undefine	with_pax
+%endif
+
+%ifnarch %{ix86} %{x8664} ppc
+%undefine	with_omosix
+%endif
+
+%if %{with omosix}
+%undefine	with_smp
+%endif
+
+%if %{with omosix} && %{with vserver}
+openmosix conflicts with vserver
+%endif
+
+%if %{with grsecurity} && %{with vserver}
+grsecurity conflicts with vserver
 %endif
 
 %{?debug:%define with_verbose 1}
@@ -102,7 +118,7 @@ Source40:	%{name}.FAQ-pl
 Source80:	%{name}-netfilter.config
 Source90:	%{name}-grsec.config
 Source91:	%{name}-grsec+pax.config
-#Source92:	%{name}-omosix.config
+Source92:	%{name}-omosix.config
 Source93:	%{name}-vserver.config
 Source94:	%{name}-em8300.config
 
@@ -209,9 +225,9 @@ Patch132:	linux-2.6-rmap-oops.patch
 
 # derived from http://www.grsecurity.net/grsecurity-2.1.5-2.6.11.7-200504111924.patch.gz
 Patch200:	grsecurity-2.1.5-2.6.11.7-200504111924.patch
-# openMosix
-#Patch201:	linux-2.6-omosix.patch
-# linux vserver-2.0-pre4
+# derived from openMosix-r557.patch
+Patch201:	linux-2.6-omosix.patch
+# vserver-2.0-pre4
 Patch202:	linux-2.6-vs2.patch
 
 Patch400:	%{name}-gcc4.patch
@@ -634,13 +650,14 @@ mv -f {,netfilter.}status
 %patch132 -p1
 
 %if %{with grsecurity}
-%{__patch} -p1 -F3 < %{PATCH200}
+#{__patch} -p1 -F3 < #{PATCH200}
+%patch200 -p1
 %endif
 %if %{with omosix}
-%{__patch} -p1 -F3 < %{PATCH201}
+%patch201 -p1
 %endif
 %if %{with vserver}
-%{__patch} -p1 -F3 < %{PATCH202}
+%patch202 -p1
 %endif
 
 %patch400 -p1
@@ -725,9 +742,9 @@ BuildConfig (){
 %if %{with grsecurity}
 	cat %{!?with_pax:%{SOURCE90}}%{?with_pax:%{SOURCE91}} >> arch/%{_target_base_arch}/defconfig
 %endif
-#if %{with omosix}
-#	cat #{SOURCE92} >> arch/%{_target_base_arch}/defconfig
-#endif
+%if %{with omosix}
+	cat %{SOURCE92} >> arch/%{_target_base_arch}/defconfig
+%endif
 %if %{with vserver}
 	cat %{SOURCE93} >> arch/%{_target_base_arch}/defconfig
 %endif
