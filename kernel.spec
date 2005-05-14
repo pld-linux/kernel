@@ -84,7 +84,7 @@ Name:		kernel
 %define		_postver	.9
 #define		_postver	%{nil}
 Version:	2.6.11%{_postver}
-Release:	%{_rel}
+Release:	%{_rel}%{?with_grsecurity:g}%{?with_omosix:m}%{?with_vserver:v}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
