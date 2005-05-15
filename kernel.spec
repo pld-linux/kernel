@@ -2,7 +2,6 @@
 # TODO:
 #		- add distcc support (and don't break crossbuild!)
 #		- move em8300/lirc/iriverfs/squashfs stuff to separeated specs
-#		- update openMosix patch to r564
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -231,7 +230,7 @@ Patch132:	linux-2.6-rmap-oops.patch
 # derived from http://www.grsecurity.net/grsecurity-2.1.5-2.6.11.7-200504111924.patch.gz
 Patch200:	grsecurity-2.1.5-2.6.11.7-200504111924.patch
 # http://openmosix.snarc.org/files/releases/2.6/
-# derived from openMosix-r557.patch
+# derived from openMosix-r570.patch
 Patch201:	linux-2.6-omosix.patch
 # vserver-2.0-pre4
 Patch202:	linux-2.6-vs2.patch
