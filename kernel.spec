@@ -67,7 +67,7 @@ grsecurity conflicts with vserver
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.10
+%define		_rel		1
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -85,7 +85,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel
-%define		_postver	.9
+%define		_postver	.10
 #define		_postver	%{nil}
 Version:	2.6.11%{_postver}
 Release:	%{_rel}%{?with_grsecurity:g}%{?with_omosix:m}%{?with_vserver:v}
@@ -96,7 +96,7 @@ Group:		Base/Kernel
 #define		_rc	-rc3
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	e4e23abca482dff11f85119403a703ec
+# Source0-md5:	6a66a372a1f8395f241f248f5fe8222a
 Source1:	%{name}-autoconf.h
 Source2:	%{name}-config.h
 
@@ -655,7 +655,6 @@ mv -f {,netfilter.}status
 %patch132 -p1
 
 %if %{with grsecurity}
-#{__patch} -p1 -F3 < #{PATCH200}
 %patch200 -p1
 %endif
 %if %{with omosix}
