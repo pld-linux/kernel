@@ -143,7 +143,7 @@ Patch14:	linux-2.6-omnibook-20040916.patch
 Patch15:	linux-2.6-enable-broken-advansys.patch
 Patch16:	linux-alpha-isa.patch
 Patch17:	linux-fbcon-margins.patch
-Patch18:	2.6.5-sparc64-missing-include.patch
+
 Patch19:	2.6.5-3C920b-Tornado.patch
 Patch20:	2.6.5-i386-cmpxchg.patch
 Patch21:	2.6.6-serial-fifo-lkml.patch
@@ -583,7 +583,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch15 -p1
 %patch16 -p1
 %patch17 -p1
-%patch18 -p1
+
 %patch19 -p1
 %patch20 -p1
 %patch21 -p1
@@ -794,10 +794,10 @@ BuildKernel() {
 # make does vmlinux, modules and bzImage at once
 %ifarch sparc sparc64
 %ifarch sparc64
-	%{__make} image \
+	%{__make} $CrossOpts image \
 		%{?with_verbose:V=1}
 
-	%{__make} modules \
+	%{__make} $CrossOpts modules \
 		%{?with_verbose:V=1}
 %else
 	sparc32 %{__make} \
