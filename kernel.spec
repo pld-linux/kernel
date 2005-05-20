@@ -67,7 +67,7 @@ grsecurity conflicts with vserver
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1
+%define		_rel		2
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -247,7 +247,7 @@ BuildRequires:	elftoaout
 %endif
 BuildRequires:	module-init-tools
 BuildRequires:	perl-base
-BuildRequires:	rpmbuild(macros) >= 1.211
+BuildRequires:	rpmbuild(macros) >= 1.217
 Autoreqprov:	no
 PreReq:		coreutils
 PreReq:		module-init-tools >= 0.9.9
