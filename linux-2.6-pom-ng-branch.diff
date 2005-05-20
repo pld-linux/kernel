@@ -13,11 +13,11 @@
  include/linux/netfilter/nf_conntrack_tuple.h         |  201 +
  include/linux/netfilter/nfnetlink.h                  |  123 +
  include/linux/netfilter_ipv4.h                       |   31 
- include/linux/netfilter_ipv4/ip_conntrack.h          |  208 +
+ include/linux/netfilter_ipv4/ip_conntrack.h          |  207 +
  include/linux/netfilter_ipv4/ip_conntrack_amanda.h   |    2 
  include/linux/netfilter_ipv4/ip_conntrack_core.h     |    8 
  include/linux/netfilter_ipv4/ip_conntrack_ftp.h      |    2 
- include/linux/netfilter_ipv4/ip_conntrack_h323.h     |   40 
+ include/linux/netfilter_ipv4/ip_conntrack_h323.h     |   38 
  include/linux/netfilter_ipv4/ip_conntrack_helper.h   |    7 
  include/linux/netfilter_ipv4/ip_conntrack_mms.h      |   37 
  include/linux/netfilter_ipv4/ip_conntrack_netlink.h  |  113 +
@@ -72,11 +72,16 @@
  net/Makefile                                         |    1 
  net/core/skbuff.c                                    |   11 
  net/ipv4/netfilter/Kconfig                           |  497 ++++
- net/ipv4/netfilter/Makefile                          |   49 
+ net/ipv4/netfilter/Makefile                          |   50 
+ net/ipv4/netfilter/asn1_per.c                        |  353 +++
+ net/ipv4/netfilter/asn1_per.h                        |   83 
  net/ipv4/netfilter/ip_conntrack_amanda.c             |    1 
  net/ipv4/netfilter/ip_conntrack_core.c               |  224 +-
  net/ipv4/netfilter/ip_conntrack_ftp.c                |   14 
- net/ipv4/netfilter/ip_conntrack_h323.c               |  446 ++++
+ net/ipv4/netfilter/ip_conntrack_h323.c               |  448 ++++
+ net/ipv4/netfilter/ip_conntrack_h323_core.c          |   38 
+ net/ipv4/netfilter/ip_conntrack_h323_h225.c          |  406 +++
+ net/ipv4/netfilter/ip_conntrack_h323_h245.c          |  960 +++++++++
  net/ipv4/netfilter/ip_conntrack_irc.c                |    2 
  net/ipv4/netfilter/ip_conntrack_mms.c                |  353 +++
  net/ipv4/netfilter/ip_conntrack_netlink.c            | 1378 +++++++++++++
@@ -88,7 +93,7 @@
  net/ipv4/netfilter/ip_conntrack_standalone.c         |   76 
  net/ipv4/netfilter/ip_conntrack_tftp.c               |    1 
  net/ipv4/netfilter/ip_nat_core.c                     |    9 
- net/ipv4/netfilter/ip_nat_h323.c                     |  149 +
+ net/ipv4/netfilter/ip_nat_h323.c                     |  197 +
  net/ipv4/netfilter/ip_nat_mms.c                      |  197 +
  net/ipv4/netfilter/ip_nat_standalone.c               |   54 
  net/ipv4/netfilter/ip_queue.c                        |   35 
@@ -100,7 +105,7 @@
  net/ipv4/netfilter/ip_set_nethash.c                  |  449 ++++
  net/ipv4/netfilter/ip_set_portmap.c                  |  325 +++
  net/ipv4/netfilter/ip_tables.c                       |    2 
- net/ipv4/netfilter/ipt_ACCOUNT.c                     | 1105 ++++++++++
+ net/ipv4/netfilter/ipt_ACCOUNT.c                     | 1103 ++++++++++
  net/ipv4/netfilter/ipt_CLASSIFY.c                    |   29 
  net/ipv4/netfilter/ipt_CLUSTERIP.c                   |    7 
  net/ipv4/netfilter/ipt_IPMARK.c                      |   81 
@@ -109,13 +114,13 @@
  net/ipv4/netfilter/ipt_ROUTE.c                       |  464 ++++
  net/ipv4/netfilter/ipt_SAME.c                        |   25 
  net/ipv4/netfilter/ipt_SET.c                         |  128 +
- net/ipv4/netfilter/ipt_TARPIT.c                      |  290 ++
+ net/ipv4/netfilter/ipt_TARPIT.c                      |  295 ++
  net/ipv4/netfilter/ipt_TTL.c                         |  120 +
  net/ipv4/netfilter/ipt_ULOG.c                        |    4 
  net/ipv4/netfilter/ipt_XOR.c                         |  117 +
  net/ipv4/netfilter/ipt_account.c                     |  937 ++++++++
  net/ipv4/netfilter/ipt_addrtype.c                    |    4 
- net/ipv4/netfilter/ipt_connlimit.c                   |  227 ++
+ net/ipv4/netfilter/ipt_connlimit.c                   |  228 ++
  net/ipv4/netfilter/ipt_fuzzy.c                       |  185 +
  net/ipv4/netfilter/ipt_geoip.c                       |  275 ++
  net/ipv4/netfilter/ipt_hashlimit.c                   |   89 
@@ -169,12 +174,12 @@
  net/netfilter/nf_conntrack_standalone.c              |  821 +++++++
  net/netfilter/nfnetlink.c                            |  349 +++
  status                                               |   45 
- 171 files changed, 30871 insertions(+), 262 deletions(-)
+ 176 files changed, 32763 insertions(+), 262 deletions(-)
 
 Index: include/linux/netfilter_ipv6/ip6t_fuzzy.h
 ===================================================================
 --- include/linux/netfilter_ipv6/ip6t_fuzzy.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv6/ip6t_fuzzy.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv6/ip6t_fuzzy.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,21 @@
 +#ifndef _IP6T_FUZZY_H
 +#define _IP6T_FUZZY_H
@@ -200,7 +205,7 @@ Index: include/linux/netfilter_ipv6/ip6t_fuzzy.h
 Index: include/linux/netfilter_ipv6/ip6t_nth.h
 ===================================================================
 --- include/linux/netfilter_ipv6/ip6t_nth.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv6/ip6t_nth.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv6/ip6t_nth.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,19 @@
 +#ifndef _IP6T_NTH_H
 +#define _IP6T_NTH_H
@@ -224,7 +229,7 @@ Index: include/linux/netfilter_ipv6/ip6t_nth.h
 Index: include/linux/netfilter_ipv6/ip6t_ROUTE.h
 ===================================================================
 --- include/linux/netfilter_ipv6/ip6t_ROUTE.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv6/ip6t_ROUTE.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv6/ip6t_ROUTE.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,23 @@
 +/* Header file for iptables ip6t_ROUTE target
 + *
@@ -252,7 +257,7 @@ Index: include/linux/netfilter_ipv6/ip6t_ROUTE.h
 Index: include/linux/netfilter_ipv6/ip6t_policy.h
 ===================================================================
 --- include/linux/netfilter_ipv6/ip6t_policy.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv6/ip6t_policy.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv6/ip6t_policy.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,52 @@
 +#ifndef _IP6T_POLICY_H
 +#define _IP6T_POLICY_H
@@ -309,7 +314,7 @@ Index: include/linux/netfilter_ipv6/ip6t_policy.h
 Index: include/linux/netfilter_ipv6/ip6t_HL.h
 ===================================================================
 --- include/linux/netfilter_ipv6/ip6t_HL.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv6/ip6t_HL.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv6/ip6t_HL.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,22 @@
 +/* Hop Limit modification module for ip6tables
 + * Maciej Soltysiak <solt@dns.toxicfilms.tv>
@@ -336,7 +341,7 @@ Index: include/linux/netfilter_ipv6/ip6t_HL.h
 Index: include/linux/netfilter_ipv6/ip6t_REJECT.h
 ===================================================================
 --- include/linux/netfilter_ipv6/ip6t_REJECT.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv6/ip6t_REJECT.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv6/ip6t_REJECT.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,18 @@
 +#ifndef _IP6T_REJECT_H
 +#define _IP6T_REJECT_H
@@ -358,8 +363,8 @@ Index: include/linux/netfilter_ipv6/ip6t_REJECT.h
 +#endif /*_IP6T_REJECT_H*/
 Index: include/linux/netfilter.h
 ===================================================================
---- include/linux/netfilter.h	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ include/linux/netfilter.h	(.../trunk)	(revision 5956)
+--- include/linux/netfilter.h	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ include/linux/netfilter.h	(.../trunk)	(revision 6009)
 @@ -21,7 +21,7 @@
  #define NF_MAX_VERDICT NF_REPEAT
  
@@ -371,8 +376,8 @@ Index: include/linux/netfilter.h
  
 Index: include/linux/netfilter_ipv4.h
 ===================================================================
---- include/linux/netfilter_ipv4.h	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ include/linux/netfilter_ipv4.h	(.../trunk)	(revision 5956)
+--- include/linux/netfilter_ipv4.h	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ include/linux/netfilter_ipv4.h	(.../trunk)	(revision 6009)
 @@ -8,34 +8,6 @@
  #include <linux/config.h>
  #include <linux/netfilter.h>
@@ -420,8 +425,8 @@ Index: include/linux/netfilter_ipv4.h
  
 Index: include/linux/netfilter_ipv6.h
 ===================================================================
---- include/linux/netfilter_ipv6.h	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ include/linux/netfilter_ipv6.h	(.../trunk)	(revision 5956)
+--- include/linux/netfilter_ipv6.h	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ include/linux/netfilter_ipv6.h	(.../trunk)	(revision 6009)
 @@ -56,6 +56,7 @@
  
  enum nf_ip6_hook_priorities {
@@ -439,8 +444,8 @@ Index: include/linux/netfilter_ipv6.h
  #endif /*__LINUX_IP6_NETFILTER_H*/
 Index: include/linux/skbuff.h
 ===================================================================
---- include/linux/skbuff.h	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ include/linux/skbuff.h	(.../trunk)	(revision 5956)
+--- include/linux/skbuff.h	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ include/linux/skbuff.h	(.../trunk)	(revision 6009)
 @@ -251,6 +251,9 @@
  	__u32			nfcache;
  	__u32			nfctinfo;
@@ -480,8 +485,8 @@ Index: include/linux/skbuff.h
  #endif
 Index: include/linux/sysctl.h
 ===================================================================
---- include/linux/sysctl.h	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ include/linux/sysctl.h	(.../trunk)	(revision 5956)
+--- include/linux/sysctl.h	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ include/linux/sysctl.h	(.../trunk)	(revision 6009)
 @@ -192,6 +192,7 @@
  	NET_DECNET=15,
  	NET_ECONET=16,
@@ -535,8 +540,8 @@ Index: include/linux/sysctl.h
  {
 Index: include/linux/netlink.h
 ===================================================================
---- include/linux/netlink.h	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ include/linux/netlink.h	(.../trunk)	(revision 5956)
+--- include/linux/netlink.h	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ include/linux/netlink.h	(.../trunk)	(revision 6009)
 @@ -14,6 +14,7 @@
  #define NETLINK_SELINUX		7	/* SELinux event notifications */
  #define NETLINK_ARPD		8
@@ -548,7 +553,7 @@ Index: include/linux/netlink.h
 Index: include/linux/netfilter/nf_conntrack_tcp.h
 ===================================================================
 --- include/linux/netfilter/nf_conntrack_tcp.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter/nf_conntrack_tcp.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter/nf_conntrack_tcp.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,63 @@
 +/*
 + * TCP tracking.
@@ -616,7 +621,7 @@ Index: include/linux/netfilter/nf_conntrack_tcp.h
 Index: include/linux/netfilter/ipv4/nf_conntrack_icmp.h
 ===================================================================
 --- include/linux/netfilter/ipv4/nf_conntrack_icmp.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter/ipv4/nf_conntrack_icmp.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter/ipv4/nf_conntrack_icmp.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,17 @@
 +/*
 + * ICMP tracking.
@@ -638,7 +643,7 @@ Index: include/linux/netfilter/ipv4/nf_conntrack_icmp.h
 Index: include/linux/netfilter/ipv4/nf_conntrack_ipv4.h
 ===================================================================
 --- include/linux/netfilter/ipv4/nf_conntrack_ipv4.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter/ipv4/nf_conntrack_ipv4.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter/ipv4/nf_conntrack_ipv4.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,40 @@
 +/*
 + * IPv4 support for nf_conntrack.
@@ -683,7 +688,7 @@ Index: include/linux/netfilter/ipv4/nf_conntrack_ipv4.h
 Index: include/linux/netfilter/nf_conntrack_core.h
 ===================================================================
 --- include/linux/netfilter/nf_conntrack_core.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter/nf_conntrack_core.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter/nf_conntrack_core.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,72 @@
 +/*
 + * This header is used to share core functionality between the
@@ -760,7 +765,7 @@ Index: include/linux/netfilter/nf_conntrack_core.h
 Index: include/linux/netfilter/ipv6/nf_conntrack_icmpv6.h
 ===================================================================
 --- include/linux/netfilter/ipv6/nf_conntrack_icmpv6.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter/ipv6/nf_conntrack_icmpv6.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter/ipv6/nf_conntrack_icmpv6.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,27 @@
 +/*
 + * ICMPv6 tracking.
@@ -792,7 +797,7 @@ Index: include/linux/netfilter/ipv6/nf_conntrack_icmpv6.h
 Index: include/linux/netfilter/nf_conntrack_ftp.h
 ===================================================================
 --- include/linux/netfilter/nf_conntrack_ftp.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter/nf_conntrack_ftp.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter/nf_conntrack_ftp.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,59 @@
 +/*
 + * nf_conntrack_ftp.h
@@ -856,7 +861,7 @@ Index: include/linux/netfilter/nf_conntrack_ftp.h
 Index: include/linux/netfilter/nf_conntrack_sctp.h
 ===================================================================
 --- include/linux/netfilter/nf_conntrack_sctp.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter/nf_conntrack_sctp.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter/nf_conntrack_sctp.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,30 @@
 +/*
 + * SCTP tracking.
@@ -891,7 +896,7 @@ Index: include/linux/netfilter/nf_conntrack_sctp.h
 Index: include/linux/netfilter/nf_conntrack_tuple.h
 ===================================================================
 --- include/linux/netfilter/nf_conntrack_tuple.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter/nf_conntrack_tuple.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter/nf_conntrack_tuple.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,201 @@
 +/*
 + * Definitions and Declarations for tuple.
@@ -1097,7 +1102,7 @@ Index: include/linux/netfilter/nf_conntrack_tuple.h
 Index: include/linux/netfilter/nf_conntrack_helper.h
 ===================================================================
 --- include/linux/netfilter/nf_conntrack_helper.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter/nf_conntrack_helper.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter/nf_conntrack_helper.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,50 @@
 +/*
 + * connection tracking helpers.
@@ -1152,7 +1157,7 @@ Index: include/linux/netfilter/nf_conntrack_helper.h
 Index: include/linux/netfilter/nf_conntrack.h
 ===================================================================
 --- include/linux/netfilter/nf_conntrack.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter/nf_conntrack.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter/nf_conntrack.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,302 @@
 +/*
 + * Connection state tracking for netfilter.  This is separated from,
@@ -1459,7 +1464,7 @@ Index: include/linux/netfilter/nf_conntrack.h
 Index: include/linux/netfilter/nf_conntrack_protocol.h
 ===================================================================
 --- include/linux/netfilter/nf_conntrack_protocol.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter/nf_conntrack_protocol.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter/nf_conntrack_protocol.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,105 @@
 +/*
 + * Header for use in defining a given protocol for connection tracking.
@@ -1569,7 +1574,7 @@ Index: include/linux/netfilter/nf_conntrack_protocol.h
 Index: include/linux/netfilter/nf_conntrack_l3proto.h
 ===================================================================
 --- include/linux/netfilter/nf_conntrack_l3proto.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter/nf_conntrack_l3proto.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter/nf_conntrack_l3proto.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,93 @@
 +/*
 + * Copyright (C)2003,2004 USAGI/WIDE Project
@@ -1667,7 +1672,7 @@ Index: include/linux/netfilter/nf_conntrack_l3proto.h
 Index: include/linux/netfilter/nfnetlink.h
 ===================================================================
 --- include/linux/netfilter/nfnetlink.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter/nfnetlink.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter/nfnetlink.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,123 @@
 +#ifndef _NFNETLINK_H
 +#define _NFNETLINK_H
@@ -1794,8 +1799,8 @@ Index: include/linux/netfilter/nfnetlink.h
 +#endif	/* _NFNETLINK_H */
 Index: include/linux/netfilter_ipv4/ipt_recent.h
 ===================================================================
---- include/linux/netfilter_ipv4/ipt_recent.h	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ include/linux/netfilter_ipv4/ipt_recent.h	(.../trunk)	(revision 5956)
+--- include/linux/netfilter_ipv4/ipt_recent.h	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ include/linux/netfilter_ipv4/ipt_recent.h	(.../trunk)	(revision 6009)
 @@ -2,7 +2,7 @@
  #define _IPT_RECENT_H
  
@@ -1808,7 +1813,7 @@ Index: include/linux/netfilter_ipv4/ipt_recent.h
 Index: include/linux/netfilter_ipv4/ipt_set.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_set.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_set.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_set.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,21 @@
 +#ifndef _IPT_SET_H
 +#define _IPT_SET_H
@@ -1834,7 +1839,7 @@ Index: include/linux/netfilter_ipv4/ipt_set.h
 Index: include/linux/netfilter_ipv4/ipt_connlimit.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_connlimit.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_connlimit.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_connlimit.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,12 @@
 +#ifndef _IPT_CONNLIMIT_H
 +#define _IPT_CONNLIMIT_H
@@ -1851,8 +1856,8 @@ Index: include/linux/netfilter_ipv4/ipt_connlimit.h
 Index: include/linux/netfilter_ipv4/ip_conntrack_h323.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ip_conntrack_h323.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ip_conntrack_h323.h	(.../trunk)	(revision 5956)
-@@ -0,0 +1,40 @@
++++ include/linux/netfilter_ipv4/ip_conntrack_h323.h	(.../trunk)	(revision 6009)
+@@ -0,0 +1,38 @@
 +#ifndef _IP_CONNTRACK_H323_H
 +#define _IP_CONNTRACK_H323_H
 +/* H.323 connection tracking. */
@@ -1862,13 +1867,9 @@ Index: include/linux/netfilter_ipv4/ip_conntrack_h323.h
 +/* Default H.225 port */
 +#define H225_PORT	1720
 +
-+/* This structure exists only once per master */
-+struct ip_ct_h225_master {
-+	int dummy;
-+};
-+
 +struct ip_conntrack_expect;
 +struct ip_conntrack;
++struct ip_conntrack_helper;
 +
 +extern int (*ip_nat_h245_hook)(struct sk_buff **pskb,
 +			       enum ip_conntrack_info ctinfo,
@@ -1887,6 +1888,8 @@ Index: include/linux/netfilter_ipv4/ip_conntrack_h323.h
 +				       int dir,
 +				       int orig_dir);
 +
++extern struct ip_conntrack_helper ip_conntrack_helper_h225;
++
 +void ip_conntrack_h245_expect(struct ip_conntrack *new,
 +			      struct ip_conntrack_expect *this);
 +
@@ -1896,7 +1899,7 @@ Index: include/linux/netfilter_ipv4/ip_conntrack_h323.h
 Index: include/linux/netfilter_ipv4/ipt_ROUTE.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_ROUTE.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_ROUTE.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_ROUTE.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,23 @@
 +/* Header file for iptables ipt_ROUTE target
 + *
@@ -1923,8 +1926,8 @@ Index: include/linux/netfilter_ipv4/ipt_ROUTE.h
 +#endif /*_IPT_ROUTE_H_target*/
 Index: include/linux/netfilter_ipv4/ip_conntrack.h
 ===================================================================
---- include/linux/netfilter_ipv4/ip_conntrack.h	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ include/linux/netfilter_ipv4/ip_conntrack.h	(.../trunk)	(revision 5956)
+--- include/linux/netfilter_ipv4/ip_conntrack.h	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ include/linux/netfilter_ipv4/ip_conntrack.h	(.../trunk)	(revision 6009)
 @@ -65,15 +65,72 @@
  
  	/* Both together */
@@ -2013,12 +2016,11 @@ Index: include/linux/netfilter_ipv4/ip_conntrack.h
  #include <linux/netfilter_ipv4/ip_conntrack_amanda.h>
  #include <linux/netfilter_ipv4/ip_conntrack_ftp.h>
  #include <linux/netfilter_ipv4/ip_conntrack_irc.h>
-@@ -98,10 +157,13 @@
+@@ -98,10 +157,12 @@
  /* per conntrack: application helper private data */
  union ip_conntrack_help {
  	/* insert conntrack helper private data (master) here */
 +	struct ip_ct_mms_master ct_mms_info;
-+	struct ip_ct_h225_master ct_h225_info;
  	struct ip_ct_ftp_master ct_ftp_info;
  	struct ip_ct_irc_master ct_irc_info;
  };
@@ -2027,7 +2029,7 @@ Index: include/linux/netfilter_ipv4/ip_conntrack.h
  #ifdef CONFIG_IP_NF_NAT_NEEDED
  #include <linux/netfilter_ipv4/ip_nat.h>
  #endif
-@@ -122,12 +184,6 @@
+@@ -122,12 +183,6 @@
  #define IP_NF_ASSERT(x)
  #endif
  
@@ -2040,7 +2042,7 @@ Index: include/linux/netfilter_ipv4/ip_conntrack.h
  struct ip_conntrack_helper;
  
  struct ip_conntrack
-@@ -136,6 +192,9 @@
+@@ -136,6 +191,9 @@
             plus 1 for any connection(s) we are `master' for */
  	struct nf_conntrack ct_general;
  
@@ -2050,7 +2052,7 @@ Index: include/linux/netfilter_ipv4/ip_conntrack.h
  	/* Have we seen traffic both ways yet? (bitset) */
  	unsigned long status;
  
-@@ -177,6 +236,15 @@
+@@ -177,6 +235,15 @@
  	/* Traversed often, so hopefully in different cacheline to top */
  	/* These are my tuples; original and reply */
  	struct ip_conntrack_tuple_hash tuplehash[IP_CT_DIR_MAX];
@@ -2066,7 +2068,7 @@ Index: include/linux/netfilter_ipv4/ip_conntrack.h
  };
  
  struct ip_conntrack_expect
-@@ -197,6 +265,8 @@
+@@ -197,6 +264,8 @@
  	/* Timer function; deletes the expectation. */
  	struct timer_list timeout;
  
@@ -2075,7 +2077,7 @@ Index: include/linux/netfilter_ipv4/ip_conntrack.h
  #ifdef CONFIG_IP_NF_NAT_NEEDED
  	/* This is the original per-proto part, used to map the
  	 * expected connection the way the recipient expects. */
-@@ -236,7 +306,12 @@
+@@ -236,7 +305,12 @@
  }
  
  /* decrement reference count on a conntrack */
@@ -2089,7 +2091,7 @@ Index: include/linux/netfilter_ipv4/ip_conntrack.h
  
  /* call to create an explicit dependency on ip_conntrack. */
  extern void need_ip_conntrack(void);
-@@ -247,7 +322,7 @@
+@@ -247,7 +321,7 @@
  /* Refresh conntrack for this many jiffies */
  extern void ip_ct_refresh_acct(struct ip_conntrack *ct,
  			       enum ip_conntrack_info ctinfo,
@@ -2098,7 +2100,7 @@ Index: include/linux/netfilter_ipv4/ip_conntrack.h
  			       unsigned long extra_jiffies);
  
  /* These are for NAT.  Icky. */
-@@ -271,12 +346,43 @@
+@@ -271,12 +345,43 @@
  ip_ct_iterate_cleanup(int (*iter)(struct ip_conntrack *i, void *data),
  		      void *data);
  
@@ -2142,7 +2144,7 @@ Index: include/linux/netfilter_ipv4/ip_conntrack.h
  extern unsigned int ip_conntrack_htable_size;
   
  struct ip_conntrack_stat
-@@ -300,6 +406,80 @@
+@@ -300,6 +405,80 @@
  
  #define CONNTRACK_STAT_INC(count) (__get_cpu_var(ip_conntrack_stat).count++)
  
@@ -2226,7 +2228,7 @@ Index: include/linux/netfilter_ipv4/ip_conntrack.h
 Index: include/linux/netfilter_ipv4/ipt_ipv4options.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_ipv4options.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_ipv4options.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_ipv4options.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,21 @@
 +#ifndef __ipt_ipv4options_h_included__
 +#define __ipt_ipv4options_h_included__
@@ -2252,7 +2254,7 @@ Index: include/linux/netfilter_ipv4/ipt_ipv4options.h
 Index: include/linux/netfilter_ipv4/ipt_policy.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_policy.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_policy.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_policy.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,52 @@
 +#ifndef _IPT_POLICY_H
 +#define _IPT_POLICY_H
@@ -2309,7 +2311,7 @@ Index: include/linux/netfilter_ipv4/ipt_policy.h
 Index: include/linux/netfilter_ipv4/ipt_layer7.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_layer7.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_layer7.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_layer7.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,26 @@
 +/* 
 +  By Matthew Strait <quadong@users.sf.net>, Dec 2003.
@@ -2339,8 +2341,8 @@ Index: include/linux/netfilter_ipv4/ipt_layer7.h
 +#endif /* _IPT_LAYER7_H */
 Index: include/linux/netfilter_ipv4/ip_conntrack_core.h
 ===================================================================
---- include/linux/netfilter_ipv4/ip_conntrack_core.h	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ include/linux/netfilter_ipv4/ip_conntrack_core.h	(.../trunk)	(revision 5956)
+--- include/linux/netfilter_ipv4/ip_conntrack_core.h	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ include/linux/netfilter_ipv4/ip_conntrack_core.h	(.../trunk)	(revision 6009)
 @@ -39,10 +39,14 @@
  /* Confirm a connection: returns NF_DROP if packet must be dropped. */
  static inline int ip_conntrack_confirm(struct sk_buff **pskb)
@@ -2360,8 +2362,8 @@ Index: include/linux/netfilter_ipv4/ip_conntrack_core.h
  extern struct list_head *ip_conntrack_hash;
 Index: include/linux/netfilter_ipv4/ip_conntrack_ftp.h
 ===================================================================
---- include/linux/netfilter_ipv4/ip_conntrack_ftp.h	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ include/linux/netfilter_ipv4/ip_conntrack_ftp.h	(.../trunk)	(revision 5956)
+--- include/linux/netfilter_ipv4/ip_conntrack_ftp.h	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ include/linux/netfilter_ipv4/ip_conntrack_ftp.h	(.../trunk)	(revision 6009)
 @@ -31,6 +31,7 @@
  
  struct ip_conntrack_expect;
@@ -2378,8 +2380,8 @@ Index: include/linux/netfilter_ipv4/ip_conntrack_ftp.h
  #endif /* _IP_CONNTRACK_FTP_H */
 Index: include/linux/netfilter_ipv4/ipt_addrtype.h
 ===================================================================
---- include/linux/netfilter_ipv4/ipt_addrtype.h	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ include/linux/netfilter_ipv4/ipt_addrtype.h	(.../trunk)	(revision 5956)
+--- include/linux/netfilter_ipv4/ipt_addrtype.h	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ include/linux/netfilter_ipv4/ipt_addrtype.h	(.../trunk)	(revision 6009)
 @@ -4,8 +4,8 @@
  struct ipt_addrtype_info {
  	u_int16_t	source;		/* source-type mask */
@@ -2393,8 +2395,8 @@ Index: include/linux/netfilter_ipv4/ipt_addrtype.h
  #endif
 Index: include/linux/netfilter_ipv4/ip_conntrack_protocol.h
 ===================================================================
---- include/linux/netfilter_ipv4/ip_conntrack_protocol.h	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ include/linux/netfilter_ipv4/ip_conntrack_protocol.h	(.../trunk)	(revision 5956)
+--- include/linux/netfilter_ipv4/ip_conntrack_protocol.h	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ include/linux/netfilter_ipv4/ip_conntrack_protocol.h	(.../trunk)	(revision 6009)
 @@ -10,6 +10,8 @@
  	/* Protocol number. */
  	u_int8_t proto;
@@ -2443,7 +2445,7 @@ Index: include/linux/netfilter_ipv4/ip_conntrack_protocol.h
 Index: include/linux/netfilter_ipv4/ip_set_nethash.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ip_set_nethash.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ip_set_nethash.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ip_set_nethash.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,55 @@
 +#ifndef __IP_SET_NETHASH_H
 +#define __IP_SET_NETHASH_H
@@ -2503,7 +2505,7 @@ Index: include/linux/netfilter_ipv4/ip_set_nethash.h
 Index: include/linux/netfilter_ipv4/ip_conntrack_netlink.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ip_conntrack_netlink.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ip_conntrack_netlink.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ip_conntrack_netlink.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,113 @@
 +#ifndef _NFNETLINK_CONNTRACK_H
 +#define _NFNETLINK_CONNTRACK_H
@@ -2621,7 +2623,7 @@ Index: include/linux/netfilter_ipv4/ip_conntrack_netlink.h
 Index: include/linux/netfilter_ipv4/ipt_IPMARK.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_IPMARK.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_IPMARK.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_IPMARK.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,13 @@
 +#ifndef _IPT_IPMARK_H_target
 +#define _IPT_IPMARK_H_target
@@ -2639,7 +2641,7 @@ Index: include/linux/netfilter_ipv4/ipt_IPMARK.h
 Index: include/linux/netfilter_ipv4/ip_set_jhash.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ip_set_jhash.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ip_set_jhash.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ip_set_jhash.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,148 @@
 +#ifndef _LINUX_IPSET_JHASH_H
 +#define _LINUX_IPSET_JHASH_H
@@ -2792,7 +2794,7 @@ Index: include/linux/netfilter_ipv4/ip_set_jhash.h
 Index: include/linux/netfilter_ipv4/ipt_nth.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_nth.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_nth.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_nth.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,19 @@
 +#ifndef _IPT_NTH_H
 +#define _IPT_NTH_H
@@ -2816,7 +2818,7 @@ Index: include/linux/netfilter_ipv4/ipt_nth.h
 Index: include/linux/netfilter_ipv4/ipt_quota.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_quota.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_quota.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_quota.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,12 @@
 +#ifndef _IPT_QUOTA_H
 +#define _IPT_QUOTA_H
@@ -2832,8 +2834,8 @@ Index: include/linux/netfilter_ipv4/ipt_quota.h
 +#endif /*_IPT_QUOTA_H*/
 Index: include/linux/netfilter_ipv4/ip_conntrack_helper.h
 ===================================================================
---- include/linux/netfilter_ipv4/ip_conntrack_helper.h	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ include/linux/netfilter_ipv4/ip_conntrack_helper.h	(.../trunk)	(revision 5956)
+--- include/linux/netfilter_ipv4/ip_conntrack_helper.h	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ include/linux/netfilter_ipv4/ip_conntrack_helper.h	(.../trunk)	(revision 6009)
 @@ -9,6 +9,8 @@
  {	
  	struct list_head list; 		/* Internal use. */
@@ -2863,7 +2865,7 @@ Index: include/linux/netfilter_ipv4/ip_conntrack_helper.h
 Index: include/linux/netfilter_ipv4/ip_set_ipmap.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ip_set_ipmap.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ip_set_ipmap.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ip_set_ipmap.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,56 @@
 +#ifndef __IP_SET_IPMAP_H
 +#define __IP_SET_IPMAP_H
@@ -2924,7 +2926,7 @@ Index: include/linux/netfilter_ipv4/ip_set_ipmap.h
 Index: include/linux/netfilter_ipv4/ipt_time.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_time.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_time.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_time.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,15 @@
 +#ifndef __ipt_time_h_included__
 +#define __ipt_time_h_included__
@@ -2944,7 +2946,7 @@ Index: include/linux/netfilter_ipv4/ipt_time.h
 Index: include/linux/netfilter_ipv4/ipt_geoip.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_geoip.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_geoip.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_geoip.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,50 @@
 +/* ipt_geoip.h header file for libipt_geoip.c and ipt_geoip.c
 + * 
@@ -2999,7 +3001,7 @@ Index: include/linux/netfilter_ipv4/ipt_geoip.h
 Index: include/linux/netfilter_ipv4/ip_set_portmap.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ip_set_portmap.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ip_set_portmap.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ip_set_portmap.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,25 @@
 +#ifndef __IP_SET_PORTMAP_H
 +#define __IP_SET_PORTMAP_H
@@ -3029,7 +3031,7 @@ Index: include/linux/netfilter_ipv4/ip_set_portmap.h
 Index: include/linux/netfilter_ipv4/ip_conntrack_mms.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ip_conntrack_mms.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ip_conntrack_mms.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ip_conntrack_mms.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,37 @@
 +#ifndef _IP_CONNTRACK_MMS_H
 +#define _IP_CONNTRACK_MMS_H
@@ -3071,7 +3073,7 @@ Index: include/linux/netfilter_ipv4/ip_conntrack_mms.h
 Index: include/linux/netfilter_ipv4/ip_set_macipmap.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ip_set_macipmap.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ip_set_macipmap.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ip_set_macipmap.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,38 @@
 +#ifndef __IP_SET_MACIPMAP_H
 +#define __IP_SET_MACIPMAP_H
@@ -3114,7 +3116,7 @@ Index: include/linux/netfilter_ipv4/ip_set_macipmap.h
 Index: include/linux/netfilter_ipv4/ipt_psd.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_psd.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_psd.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_psd.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,40 @@
 +#ifndef _IPT_PSD_H
 +#define _IPT_PSD_H
@@ -3159,7 +3161,7 @@ Index: include/linux/netfilter_ipv4/ipt_psd.h
 Index: include/linux/netfilter_ipv4/ipt_fuzzy.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_fuzzy.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_fuzzy.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_fuzzy.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,21 @@
 +#ifndef _IPT_FUZZY_H
 +#define _IPT_FUZZY_H
@@ -3185,7 +3187,7 @@ Index: include/linux/netfilter_ipv4/ipt_fuzzy.h
 Index: include/linux/netfilter_ipv4/ipt_osf.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_osf.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_osf.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_osf.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,150 @@
 +/*
 + * ipt_osf.h
@@ -3340,7 +3342,7 @@ Index: include/linux/netfilter_ipv4/ipt_osf.h
 Index: include/linux/netfilter_ipv4/ipt_ipp2p.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_ipp2p.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_ipp2p.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_ipp2p.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,29 @@
 +#ifndef __IPT_IPP2P_H
 +#define __IPT_IPP2P_H
@@ -3374,7 +3376,7 @@ Index: include/linux/netfilter_ipv4/ipt_ipp2p.h
 Index: include/linux/netfilter_ipv4/ipt_account.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_account.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_account.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_account.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,26 @@
 +/* 
 + * accounting match (ipt_account.c)
@@ -3405,7 +3407,7 @@ Index: include/linux/netfilter_ipv4/ipt_account.h
 Index: include/linux/netfilter_ipv4/ip_set_malloc.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ip_set_malloc.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ip_set_malloc.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ip_set_malloc.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,34 @@
 +#ifndef _IP_SET_MALLOC_H
 +#define _IP_SET_MALLOC_H
@@ -3444,7 +3446,7 @@ Index: include/linux/netfilter_ipv4/ip_set_malloc.h
 Index: include/linux/netfilter_ipv4/ipt_TTL.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_TTL.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_TTL.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_TTL.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,21 @@
 +/* TTL modification module for IP tables
 + * (C) 2000 by Harald Welte <laforge@gnumonks.org> */
@@ -3470,7 +3472,7 @@ Index: include/linux/netfilter_ipv4/ipt_TTL.h
 Index: include/linux/netfilter_ipv4/ip_set_iphash.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ip_set_iphash.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ip_set_iphash.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ip_set_iphash.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,30 @@
 +#ifndef __IP_SET_IPHASH_H
 +#define __IP_SET_IPHASH_H
@@ -3505,7 +3507,7 @@ Index: include/linux/netfilter_ipv4/ip_set_iphash.h
 Index: include/linux/netfilter_ipv4/ipt_string.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_string.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_string.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_string.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,21 @@
 +#ifndef _IPT_STRING_H
 +#define _IPT_STRING_H
@@ -3531,7 +3533,7 @@ Index: include/linux/netfilter_ipv4/ipt_string.h
 Index: include/linux/netfilter_ipv4/ipt_u32.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_u32.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_u32.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_u32.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,40 @@
 +#ifndef _IPT_U32_H
 +#define _IPT_U32_H
@@ -3576,7 +3578,7 @@ Index: include/linux/netfilter_ipv4/ipt_u32.h
 Index: include/linux/netfilter_ipv4/ip_set_iptree.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ip_set_iptree.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ip_set_iptree.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ip_set_iptree.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,39 @@
 +#ifndef __IP_SET_IPTREE_H
 +#define __IP_SET_IPTREE_H
@@ -3619,8 +3621,8 @@ Index: include/linux/netfilter_ipv4/ip_set_iptree.h
 +#endif	/* __IP_SET_IPTREE_H */
 Index: include/linux/netfilter_ipv4/ip_tables.h
 ===================================================================
---- include/linux/netfilter_ipv4/ip_tables.h	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ include/linux/netfilter_ipv4/ip_tables.h	(.../trunk)	(revision 5956)
+--- include/linux/netfilter_ipv4/ip_tables.h	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ include/linux/netfilter_ipv4/ip_tables.h	(.../trunk)	(revision 6009)
 @@ -109,7 +109,8 @@
  
  /* Values for "flag" field in struct ipt_ip (general ip structure). */
@@ -3658,7 +3660,7 @@ Index: include/linux/netfilter_ipv4/ip_tables.h
 Index: include/linux/netfilter_ipv4/ipt_ACCOUNT.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_ACCOUNT.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_ACCOUNT.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_ACCOUNT.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,100 @@
 +/***************************************************************************
 + *   Copyright (C) 2004 by Intra2net AG                                    *
@@ -3762,8 +3764,8 @@ Index: include/linux/netfilter_ipv4/ipt_ACCOUNT.h
 +#endif /*_IPT_ACCOUNT_H*/
 Index: include/linux/netfilter_ipv4/ip_conntrack_amanda.h
 ===================================================================
---- include/linux/netfilter_ipv4/ip_conntrack_amanda.h	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ include/linux/netfilter_ipv4/ip_conntrack_amanda.h	(.../trunk)	(revision 5956)
+--- include/linux/netfilter_ipv4/ip_conntrack_amanda.h	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ include/linux/netfilter_ipv4/ip_conntrack_amanda.h	(.../trunk)	(revision 6009)
 @@ -3,9 +3,11 @@
  /* AMANDA tracking. */
  
@@ -3778,8 +3780,8 @@ Index: include/linux/netfilter_ipv4/ip_conntrack_amanda.h
  #endif /* _IP_CONNTRACK_AMANDA_H */
 Index: include/linux/netfilter_ipv4/ip_queue.h
 ===================================================================
---- include/linux/netfilter_ipv4/ip_queue.h	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ include/linux/netfilter_ipv4/ip_queue.h	(.../trunk)	(revision 5956)
+--- include/linux/netfilter_ipv4/ip_queue.h	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ include/linux/netfilter_ipv4/ip_queue.h	(.../trunk)	(revision 6009)
 @@ -47,10 +47,20 @@
  	unsigned char payload[0];	/* Optional replacement packet */
  } ipq_verdict_msg_t;
@@ -3813,7 +3815,7 @@ Index: include/linux/netfilter_ipv4/ip_queue.h
 Index: include/linux/netfilter_ipv4/ip_set_prime.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ip_set_prime.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ip_set_prime.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ip_set_prime.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,34 @@
 +#ifndef __IP_SET_PRIME_H
 +#define __IP_SET_PRIME_H
@@ -3852,7 +3854,7 @@ Index: include/linux/netfilter_ipv4/ip_set_prime.h
 Index: include/linux/netfilter_ipv4/ip_set.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ip_set.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ip_set.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ip_set.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,489 @@
 +#ifndef _IP_SET_H
 +#define _IP_SET_H
@@ -4346,7 +4348,7 @@ Index: include/linux/netfilter_ipv4/ip_set.h
 Index: include/linux/netfilter_ipv4/ipt_XOR.h
 ===================================================================
 --- include/linux/netfilter_ipv4/ipt_XOR.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ include/linux/netfilter_ipv4/ipt_XOR.h	(.../trunk)	(revision 5956)
++++ include/linux/netfilter_ipv4/ipt_XOR.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,9 @@
 +#ifndef _IPT_XOR_H
 +#define _IPT_XOR_H
@@ -4359,8 +4361,8 @@ Index: include/linux/netfilter_ipv4/ipt_XOR.h
 +#endif /* _IPT_XOR_H */
 Index: include/linux/netfilter_ipv4/ipt_CLUSTERIP.h
 ===================================================================
---- include/linux/netfilter_ipv4/ipt_CLUSTERIP.h	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ include/linux/netfilter_ipv4/ipt_CLUSTERIP.h	(.../trunk)	(revision 5956)
+--- include/linux/netfilter_ipv4/ipt_CLUSTERIP.h	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ include/linux/netfilter_ipv4/ipt_CLUSTERIP.h	(.../trunk)	(revision 6009)
 @@ -9,7 +9,7 @@
  
  #define CLUSTERIP_HASHMODE_MAX CLUSTERIP_HASHMODE_SIP_SPT_DPT
@@ -4373,7 +4375,7 @@ Index: include/linux/netfilter_ipv4/ipt_CLUSTERIP.h
 Index: status
 ===================================================================
 --- status	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ status	(.../trunk)	(revision 5956)
++++ status	(.../trunk)	(revision 6009)
 @@ -0,0 +1,45 @@
 +account					added+fixed	(v0.1.7)
 +ACCOUNT					added+fixed	(v1.5)
@@ -4422,8 +4424,8 @@ Index: status
 +XOR					added
 Index: net/Kconfig
 ===================================================================
---- net/Kconfig	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/Kconfig	(.../trunk)	(revision 5956)
+--- net/Kconfig	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/Kconfig	(.../trunk)	(revision 6009)
 @@ -216,6 +216,7 @@
  source "net/ipv6/netfilter/Kconfig"
  source "net/decnet/netfilter/Kconfig"
@@ -4434,8 +4436,8 @@ Index: net/Kconfig
  
 Index: net/ipv4/netfilter/ipt_NETMAP.c
 ===================================================================
---- net/ipv4/netfilter/ipt_NETMAP.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ipt_NETMAP.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ipt_NETMAP.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ipt_NETMAP.c	(.../trunk)	(revision 6009)
 @@ -97,10 +97,10 @@
  }
  
@@ -4453,8 +4455,8 @@ Index: net/ipv4/netfilter/ipt_NETMAP.c
  static int __init init(void)
 Index: net/ipv4/netfilter/ipt_SAME.c
 ===================================================================
---- net/ipv4/netfilter/ipt_SAME.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ipt_SAME.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ipt_SAME.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ipt_SAME.c	(.../trunk)	(revision 6009)
 @@ -1,13 +1,8 @@
  /* Same.  Just like SNAT, only try to make the connections
   * 	  between client A and server B always have the same source ip.
@@ -4518,8 +4520,8 @@ Index: net/ipv4/netfilter/ipt_SAME.c
  	return ip_nat_setup_info(ct, &newrange, hooknum);
 Index: net/ipv4/netfilter/ip_conntrack_proto_icmp.c
 ===================================================================
---- net/ipv4/netfilter/ip_conntrack_proto_icmp.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ip_conntrack_proto_icmp.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ip_conntrack_proto_icmp.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ip_conntrack_proto_icmp.c	(.../trunk)	(revision 6009)
 @@ -89,7 +89,7 @@
  
  /* Returns verdict for packet, or -1 for invalid. */
@@ -4587,8 +4589,8 @@ Index: net/ipv4/netfilter/ip_conntrack_proto_icmp.c
  };
 Index: net/ipv4/netfilter/ip_conntrack_proto_udp.c
 ===================================================================
---- net/ipv4/netfilter/ip_conntrack_proto_udp.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ip_conntrack_proto_udp.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ip_conntrack_proto_udp.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ip_conntrack_proto_udp.c	(.../trunk)	(revision 6009)
 @@ -64,7 +64,7 @@
  
  /* Returns verdict for packet, and may modify conntracktype */
@@ -4616,8 +4618,8 @@ Index: net/ipv4/netfilter/ip_conntrack_proto_udp.c
  };
 Index: net/ipv4/netfilter/ip_conntrack_irc.c
 ===================================================================
---- net/ipv4/netfilter/ip_conntrack_irc.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ip_conntrack_irc.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ip_conntrack_irc.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ip_conntrack_irc.c	(.../trunk)	(revision 6009)
 @@ -275,6 +275,8 @@
  		hlpr->timeout = dcc_timeout;
  		hlpr->me = THIS_MODULE;
@@ -4630,7 +4632,7 @@ Index: net/ipv4/netfilter/ip_conntrack_irc.c
 Index: net/ipv4/netfilter/ipt_set.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_set.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_set.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_set.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,112 @@
 +/* Copyright (C) 2000-2002 Joakim Axelsson <gozem@linux.nu>
 + *                         Patrick Schaaf <bof@bof.de>
@@ -4747,8 +4749,8 @@ Index: net/ipv4/netfilter/ipt_set.c
 Index: net/ipv4/netfilter/ipt_connlimit.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_connlimit.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_connlimit.c	(.../trunk)	(revision 5956)
-@@ -0,0 +1,227 @@
++++ net/ipv4/netfilter/ipt_connlimit.c	(.../trunk)	(revision 6009)
+@@ -0,0 +1,228 @@
 +/*
 + * netfilter module to limit the number of parallel tcp
 + * connections per IP address.
@@ -4806,7 +4808,7 @@ Index: net/ipv4/netfilter/ipt_connlimit.c
 +	struct ipt_connlimit_conn *conn;
 +	struct list_head *hash,*lh;
 +
-+	spin_lock(&data->lock);
++	spin_lock_bh(&data->lock);
 +	tuple = ct->tuplehash[0].tuple;
 +	hash = &data->iphash[ipt_iphash(addr & mask)];
 +
@@ -4815,9 +4817,10 @@ Index: net/ipv4/netfilter/ipt_connlimit.c
 +		struct ip_conntrack *found_ct = NULL;
 +		conn = list_entry(lh,struct ipt_connlimit_conn,list);
 +		found = ip_conntrack_find_get(&conn->tuple,ct);
-+		if (0 == memcmp(&conn->tuple,&tuple,sizeof(tuple)) &&
-+		    found != NULL && (found_ct = tuplehash_to_ctrack(found)) != NULL &&
-+		    found_ct->proto.tcp.state != TCP_CONNTRACK_TIME_WAIT) {
++		 if (found != NULL 
++		     && (found_ct = tuplehash_to_ctrack(found)) != NULL
++		     && 0 == memcmp(&conn->tuple,&tuple,sizeof(tuple)) 
++		     && found_ct->proto.tcp.state != TCP_CONNTRACK_TIME_WAIT) {
 +			/* Just to be sure we have it only once in the list.
 +			   We should'nt see tuples twice unless someone hooks this
 +			   into a table without "-p tcp --syn" */
@@ -4862,7 +4865,7 @@ Index: net/ipv4/netfilter/ipt_connlimit.c
 +#endif
 +		conn = kmalloc(sizeof(*conn),GFP_ATOMIC);
 +		if (NULL == conn) {
-+			spin_unlock(&data->lock);
++			spin_unlock_bh(&data->lock);
 +			return -1;
 +		}
 +		memset(conn,0,sizeof(*conn));
@@ -4871,7 +4874,7 @@ Index: net/ipv4/netfilter/ipt_connlimit.c
 +		list_add(&conn->list,hash);
 +		matches++;
 +	}
-+	spin_unlock(&data->lock);
++	spin_unlock_bh(&data->lock);
 +	return matches;
 +}
 +
@@ -4979,8 +4982,8 @@ Index: net/ipv4/netfilter/ipt_connlimit.c
 Index: net/ipv4/netfilter/ip_conntrack_h323.c
 ===================================================================
 --- net/ipv4/netfilter/ip_conntrack_h323.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ip_conntrack_h323.c	(.../trunk)	(revision 5956)
-@@ -0,0 +1,446 @@
++++ net/ipv4/netfilter/ip_conntrack_h323.c	(.../trunk)	(revision 6009)
+@@ -0,0 +1,448 @@
 +/*
 + * H.323 'brute force' extension for H.323 connection tracking.
 + * Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
@@ -5143,7 +5146,8 @@ Index: net/ipv4/netfilter/ip_conntrack_h323.c
 +}
 +
 +/* H.245 helper is not registered! */
-+static struct ip_conntrack_helper h245 = {
++static struct ip_conntrack_helper h245 =
++{
 +	.name = "H.245",
 +	.max_expected = 8,
 +	.timeout = 240,
@@ -5402,7 +5406,8 @@ Index: net/ipv4/netfilter/ip_conntrack_h323.c
 +	return ret;
 +}
 +
-+static struct ip_conntrack_helper h225 = {
++static struct ip_conntrack_helper h225 =
++{
 +	.name = "H.225",
 +	.me = THIS_MODULE,
 +	.max_expected = 2,
@@ -5430,7 +5435,7 @@ Index: net/ipv4/netfilter/ip_conntrack_h323.c
 Index: net/ipv4/netfilter/ipt_ROUTE.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_ROUTE.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_ROUTE.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_ROUTE.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,464 @@
 +/*
 + * This implements the ROUTE target, which enables you to setup unusual
@@ -5899,7 +5904,7 @@ Index: net/ipv4/netfilter/ipt_ROUTE.c
 Index: net/ipv4/netfilter/ipt_ipv4options.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_ipv4options.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_ipv4options.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_ipv4options.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,172 @@
 +/*
 +  This is a module which is used to match ipv4 options.
@@ -6076,7 +6081,7 @@ Index: net/ipv4/netfilter/ipt_ipv4options.c
 Index: net/ipv4/netfilter/ipt_policy.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_policy.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_policy.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_policy.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,176 @@
 +/* IP tables module for matching IPsec policy
 + *
@@ -6257,17 +6262,17 @@ Index: net/ipv4/netfilter/ipt_policy.c
 Index: net/ipv4/netfilter/ipt_TARPIT.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_TARPIT.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_TARPIT.c	(.../trunk)	(revision 5956)
-@@ -0,0 +1,290 @@
-+/* 
-+ * Kernel module to capture and hold incoming TCP connections using 
++++ net/ipv4/netfilter/ipt_TARPIT.c	(.../trunk)	(revision 6009)
+@@ -0,0 +1,295 @@
++/*
++ * Kernel module to capture and hold incoming TCP connections using
 + * no local per-connection resources.
-+ * 
-+ * Based on ipt_REJECT.c and offering functionality similar to 
++ *
++ * Based on ipt_REJECT.c and offering functionality similar to
 + * LaBrea <http://www.hackbusters.net/LaBrea/>.
-+ * 
++ *
 + * Copyright (c) 2002 Aaron Hopkins <tools@die.net>
-+ * 
++ *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
@@ -6281,13 +6286,13 @@ Index: net/ipv4/netfilter/ipt_TARPIT.c
 + * You should have received a copy of the GNU General Public License
 + * along with this program; if not, write to the Free Software
 + * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-+ * 
++ *
 + * Goal:
 + * - Allow incoming TCP connections to be established.
-+ * - Passing data should result in the connection being switched to the 
-+ *   persist state (0 byte window), in which the remote side stops sending 
++ * - Passing data should result in the connection being switched to the
++ *   persist state (0 byte window), in which the remote side stops sending
 + *   data and asks to continue every 60 seconds.
-+ * - Attempts to shut down the connection should be ignored completely, so 
++ * - Attempts to shut down the connection should be ignored completely, so
 + *   the remote side ends up having to time it out.
 + *
 + * This means:
@@ -6297,6 +6302,7 @@ Index: net/ipv4/netfilter/ipt_TARPIT.c
 + */
 +
 +#include <linux/config.h>
++#include <linux/version.h>
 +#include <linux/module.h>
 +#include <linux/skbuff.h>
 +#include <linux/ip.h>
@@ -6323,19 +6329,19 @@ Index: net/ipv4/netfilter/ipt_TARPIT.c
 +	struct dst_entry *dst = skb->dst;
 +	struct hh_cache *hh = dst->hh;
 +
-+	if (hh) {    
++	if (hh) {
 +		read_lock_bh(&hh->hh_lock);
 +		memcpy(skb->data - 16, hh->hh_data, 16);
-+                read_unlock_bh(&hh->hh_lock);
-+                skb_push(skb, hh->hh_len);
-+                return hh->hh_output(skb);
-+        } else if (dst->neighbour)
-+                return dst->neighbour->output(skb);
++		read_unlock_bh(&hh->hh_lock);
++		skb_push(skb, hh->hh_len);
++		return hh->hh_output(skb);
++	} else if (dst->neighbour)
++		return dst->neighbour->output(skb);
 +
 +	if (net_ratelimit())
 +		printk(KERN_DEBUG "TARPIT ip_direct_send: no header cache and no neighbor!\n");
-+        kfree_skb(skb);
-+        return -EINVAL;
++	kfree_skb(skb);
++	return -EINVAL;
 +}
 +
 +
@@ -6353,8 +6359,8 @@ Index: net/ipv4/netfilter/ipt_TARPIT.c
 +	if (oskb->len < (oskb->nh.iph->ihl*4) + sizeof(struct tcphdr))
 +		return;
 +
-+	otcph = (struct tcphdr *)((u_int32_t*)oskb->nh.iph 
-+                                  + oskb->nh.iph->ihl);
++	otcph = (struct tcphdr *)((u_int32_t*)oskb->nh.iph
++				  + oskb->nh.iph->ihl);
 +	otcplen = oskb->len - oskb->nh.iph->ihl*4;
 +
 +	/* No replies for RST or FIN */
@@ -6400,11 +6406,11 @@ Index: net/ipv4/netfilter/ipt_TARPIT.c
 +	ntcph->dest = tmp;
 +
 +	/* Use supplied sequence number or make a new one */
-+	ntcph->seq = otcph->ack ? otcph->ack_seq 
-+                     : htonl(secure_tcp_sequence_number(nskb->nh.iph->saddr, 
-+						        nskb->nh.iph->daddr, 
-+						        ntcph->source, 
-+			     			        ntcph->dest));
++	ntcph->seq = otcph->ack ? otcph->ack_seq
++		: htonl(secure_tcp_sequence_number(nskb->nh.iph->saddr,
++						   nskb->nh.iph->daddr,
++						   ntcph->source,
++						   ntcph->dest));
 +
 +	/* Our SYN-ACKs must have a >0 window */
 +	ntcph->window = (otcph->syn && !otcph->ack) ? htons(5) : 0;
@@ -6440,7 +6446,7 @@ Index: net/ipv4/netfilter/ipt_TARPIT.c
 +
 +	/* Adjust IP checksum */
 +	nskb->nh.iph->check = 0;
-+	nskb->nh.iph->check = ip_fast_csum((unsigned char *)nskb->nh.iph, 
++	nskb->nh.iph->check = ip_fast_csum((unsigned char *)nskb->nh.iph,
 +					   nskb->nh.iph->ihl);
 +
 +	fl.nl_u.ip4_u.daddr = nskb->nh.iph->daddr;
@@ -6455,7 +6461,11 @@ Index: net/ipv4/netfilter/ipt_TARPIT.c
 +	nskb->dst = &nrt->u.dst;
 +
 +	/* "Never happens" */
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,12)
++	if (nskb->len > dst_mtu(nskb->dst))
++#else
 +	if (nskb->len > dst_pmtu(nskb->dst))
++#endif
 +		goto free_nskb;
 +
 +	ip_direct_send (nskb);
@@ -6481,22 +6491,22 @@ Index: net/ipv4/netfilter/ipt_TARPIT.c
 +	if (!rt)
 +		return NF_DROP;
 +
-+        /* No replies to physical multicast/broadcast */
-+        if (skb->pkt_type != PACKET_HOST && skb->pkt_type != PACKET_OTHERHOST)
-+     		return NF_DROP;
++	/* No replies to physical multicast/broadcast */
++	if (skb->pkt_type != PACKET_HOST && skb->pkt_type != PACKET_OTHERHOST)
++		return NF_DROP;
 +
-+        /* Now check at the protocol level */
++	/* Now check at the protocol level */
 +	if (rt->rt_flags&(RTCF_BROADCAST|RTCF_MULTICAST))
-+                return NF_DROP;
++		return NF_DROP;
 +
 +	/* Our naive response construction doesn't deal with IP
 +           options, and probably shouldn't try. */
 +	if (skb->nh.iph->ihl*4 != sizeof(struct iphdr))
 +		return NF_DROP;
 +
-+        /* We aren't interested in fragments */
++	/* We aren't interested in fragments */
 +	if (skb->nh.iph->frag_off & htons(IP_OFFSET))
-+                return NF_DROP;
++		return NF_DROP;
 +
 +	tarpit_tcp(skb,rt,hooknum == NF_IP_LOCAL_IN);
 +
@@ -6515,8 +6525,8 @@ Index: net/ipv4/netfilter/ipt_TARPIT.c
 +		DEBUGP("TARPIT: bad table %s'.\n", tablename);
 +		return 0;
 +	}
-+	if ((hook_mask & ~((1 << NF_IP_LOCAL_IN) 
-+                           | (1 << NF_IP_FORWARD))) != 0) {
++	if ((hook_mask & ~((1 << NF_IP_LOCAL_IN)
++			   | (1 << NF_IP_FORWARD))) != 0) {
 +		DEBUGP("TARPIT: bad hook mask %X\n", hook_mask);
 +		return 0;
 +	}
@@ -6530,7 +6540,7 @@ Index: net/ipv4/netfilter/ipt_TARPIT.c
 +	return 1;
 +}
 +
-+static struct ipt_target ipt_tarpit_reg = { 
++static struct ipt_target ipt_tarpit_reg = {
 +	.name = "TARPIT",
 +	.target = tarpit,
 +	.checkentry = check,
@@ -6552,7 +6562,7 @@ Index: net/ipv4/netfilter/ipt_TARPIT.c
 Index: net/ipv4/netfilter/ipt_layer7.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_layer7.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_layer7.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_layer7.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,552 @@
 +/* 
 +  Kernel module to match application layer (OSI layer 7) 
@@ -7108,8 +7118,8 @@ Index: net/ipv4/netfilter/ipt_layer7.c
 +module_exit(fini);
 Index: net/ipv4/netfilter/ip_nat_standalone.c
 ===================================================================
---- net/ipv4/netfilter/ip_nat_standalone.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ip_nat_standalone.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ip_nat_standalone.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ip_nat_standalone.c	(.../trunk)	(revision 6009)
 @@ -230,6 +230,25 @@
  	return ret;
  }
@@ -7204,8 +7214,8 @@ Index: net/ipv4/netfilter/ip_nat_standalone.c
   cleanup_inops:
 Index: net/ipv4/netfilter/ip_conntrack_core.c
 ===================================================================
---- net/ipv4/netfilter/ip_conntrack_core.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ip_conntrack_core.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ip_conntrack_core.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ip_conntrack_core.c	(.../trunk)	(revision 6009)
 @@ -37,6 +37,7 @@
  #include <linux/err.h>
  #include <linux/percpu.h>
@@ -7672,8 +7682,8 @@ Index: net/ipv4/netfilter/ip_conntrack_core.c
  	free_conntrack_hash();
 Index: net/ipv4/netfilter/ipt_ULOG.c
 ===================================================================
---- net/ipv4/netfilter/ipt_ULOG.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ipt_ULOG.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ipt_ULOG.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ipt_ULOG.c	(.../trunk)	(revision 6009)
 @@ -164,7 +164,7 @@
  	return skb;
  }
@@ -7693,8 +7703,8 @@ Index: net/ipv4/netfilter/ipt_ULOG.c
  module_exit(fini);
 Index: net/ipv4/netfilter/ip_conntrack_ftp.c
 ===================================================================
---- net/ipv4/netfilter/ip_conntrack_ftp.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ip_conntrack_ftp.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ip_conntrack_ftp.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ip_conntrack_ftp.c	(.../trunk)	(revision 6009)
 @@ -263,7 +263,8 @@
  }
  
@@ -7742,7 +7752,7 @@ Index: net/ipv4/netfilter/ip_conntrack_ftp.c
 Index: net/ipv4/netfilter/ipt_IPV4OPTSSTRIP.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_IPV4OPTSSTRIP.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_IPV4OPTSSTRIP.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_IPV4OPTSSTRIP.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,89 @@
 +/**
 + * Strip all IP options in the IP packet header.
@@ -7836,7 +7846,7 @@ Index: net/ipv4/netfilter/ipt_IPV4OPTSSTRIP.c
 Index: net/ipv4/netfilter/ip_nat_mms.c
 ===================================================================
 --- net/ipv4/netfilter/ip_nat_mms.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ip_nat_mms.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ip_nat_mms.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,197 @@
 +/* MMS extension for TCP NAT alteration.
 + * (C) 2002 by Filip Sneppe <filip.sneppe@cronos.be>
@@ -8037,8 +8047,8 @@ Index: net/ipv4/netfilter/ip_nat_mms.c
 +module_exit(fini);
 Index: net/ipv4/netfilter/ipt_addrtype.c
 ===================================================================
---- net/ipv4/netfilter/ipt_addrtype.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ipt_addrtype.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ipt_addrtype.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ipt_addrtype.c	(.../trunk)	(revision 6009)
 @@ -8,11 +8,9 @@
   *  published by the Free Software Foundation.
   */
@@ -8062,8 +8072,8 @@ Index: net/ipv4/netfilter/ipt_addrtype.c
  	}
 Index: net/ipv4/netfilter/ipt_CLASSIFY.c
 ===================================================================
---- net/ipv4/netfilter/ipt_CLASSIFY.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ipt_CLASSIFY.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ipt_CLASSIFY.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ipt_CLASSIFY.c	(.../trunk)	(revision 6009)
 @@ -1,10 +1,11 @@
  /*
   * This is a module which is used for setting the skb->priority field
@@ -8134,15 +8144,16 @@ Index: net/ipv4/netfilter/ipt_CLASSIFY.c
  static int __init init(void)
 Index: net/ipv4/netfilter/Makefile
 ===================================================================
---- net/ipv4/netfilter/Makefile	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/Makefile	(.../trunk)	(revision 5956)
-@@ -8,17 +8,26 @@
+--- net/ipv4/netfilter/Makefile	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/Makefile	(.../trunk)	(revision 6009)
+@@ -8,17 +8,27 @@
  
  # connection tracking
  obj-$(CONFIG_IP_NF_CONNTRACK) += ip_conntrack.o
 + 
 +# H.323 support
 +obj-$(CONFIG_IP_NF_H323) += ip_conntrack_h323.o
++ip_conntrack_h323-objs := ip_conntrack_h323_core.o ip_conntrack_h323_h225.o ip_conntrack_h323_h245.o asn1_per.o
 +obj-$(CONFIG_IP_NF_NAT_H323) += ip_nat_h323.o
  
 +# conntrack netlink interface
@@ -8163,7 +8174,7 @@ Index: net/ipv4/netfilter/Makefile
  obj-$(CONFIG_IP_NF_NAT_AMANDA) += ip_nat_amanda.o
  obj-$(CONFIG_IP_NF_NAT_TFTP) += ip_nat_tftp.o
  obj-$(CONFIG_IP_NF_NAT_FTP) += ip_nat_ftp.o
-@@ -36,49 +45,83 @@
+@@ -36,49 +46,83 @@
  # matches
  obj-$(CONFIG_IP_NF_MATCH_HELPER) += ipt_helper.o
  obj-$(CONFIG_IP_NF_MATCH_LIMIT) += ipt_limit.o
@@ -8247,7 +8258,7 @@ Index: net/ipv4/netfilter/Makefile
  # generic ARP tables
  obj-$(CONFIG_IP_NF_ARPTABLES) += arp_tables.o
  obj-$(CONFIG_IP_NF_ARP_MANGLE) += arpt_mangle.o
-@@ -87,3 +130,9 @@
+@@ -87,3 +131,9 @@
  obj-$(CONFIG_IP_NF_ARPFILTER) += arptable_filter.o
  
  obj-$(CONFIG_IP_NF_QUEUE) += ip_queue.o
@@ -8260,7 +8271,7 @@ Index: net/ipv4/netfilter/Makefile
 Index: net/ipv4/netfilter/ip_set_nethash.c
 ===================================================================
 --- net/ipv4/netfilter/ip_set_nethash.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ip_set_nethash.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ip_set_nethash.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,449 @@
 +/* Copyright (C) 2003-2004 Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
 + *
@@ -8714,7 +8725,7 @@ Index: net/ipv4/netfilter/ip_set_nethash.c
 Index: net/ipv4/netfilter/ip_conntrack_netlink.c
 ===================================================================
 --- net/ipv4/netfilter/ip_conntrack_netlink.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ip_conntrack_netlink.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ip_conntrack_netlink.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,1378 @@
 +/* Connection tracking via netlink socket. Allows for user space
 + * protocol helpers and general trouble making from userspace.
@@ -10097,7 +10108,7 @@ Index: net/ipv4/netfilter/ip_conntrack_netlink.c
 Index: net/ipv4/netfilter/ipt_IPMARK.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_IPMARK.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_IPMARK.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_IPMARK.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,81 @@
 +/* This is a module which is used for setting the NFMARK field of an skb. */
 +#include <linux/module.h>
@@ -10183,7 +10194,7 @@ Index: net/ipv4/netfilter/ipt_IPMARK.c
 Index: net/ipv4/netfilter/ipt_unclean.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_unclean.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_unclean.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_unclean.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,611 @@
 +/* Kernel module to match suspect packets. */
 +#include <linux/module.h>
@@ -10798,8 +10809,8 @@ Index: net/ipv4/netfilter/ipt_unclean.c
 +MODULE_LICENSE("GPL");
 Index: net/ipv4/netfilter/ip_conntrack_proto_tcp.c
 ===================================================================
---- net/ipv4/netfilter/ip_conntrack_proto_tcp.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ip_conntrack_proto_tcp.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ip_conntrack_proto_tcp.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ip_conntrack_proto_tcp.c	(.../trunk)	(revision 6009)
 @@ -755,6 +755,7 @@
  {
  	[TH_SYN]			= 1,
@@ -10853,7 +10864,7 @@ Index: net/ipv4/netfilter/ip_conntrack_proto_tcp.c
 Index: net/ipv4/netfilter/ipt_nth.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_nth.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_nth.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_nth.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,166 @@
 +/*
 +  This is a module which is used for match support for every Nth packet
@@ -11024,7 +11035,7 @@ Index: net/ipv4/netfilter/ipt_nth.c
 Index: net/ipv4/netfilter/ipt_quota.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_quota.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_quota.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_quota.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,96 @@
 +/* 
 + * netfilter module to enforce network quotas
@@ -11125,7 +11136,7 @@ Index: net/ipv4/netfilter/ipt_quota.c
 Index: net/ipv4/netfilter/ipt_SET.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_SET.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_SET.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_SET.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,128 @@
 +/* Copyright (C) 2000-2002 Joakim Axelsson <gozem@linux.nu>
 + *                         Patrick Schaaf <bof@bof.de>
@@ -11258,7 +11269,7 @@ Index: net/ipv4/netfilter/ipt_SET.c
 Index: net/ipv4/netfilter/ip_set_ipmap.c
 ===================================================================
 --- net/ipv4/netfilter/ip_set_ipmap.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ip_set_ipmap.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ip_set_ipmap.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,313 @@
 +/* Copyright (C) 2000-2002 Joakim Axelsson <gozem@linux.nu>
 + *                         Patrick Schaaf <bof@bof.de>
@@ -11576,7 +11587,7 @@ Index: net/ipv4/netfilter/ip_set_ipmap.c
 Index: net/ipv4/netfilter/regexp/regexp.h
 ===================================================================
 --- net/ipv4/netfilter/regexp/regexp.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/regexp/regexp.h	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/regexp/regexp.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,27 @@
 +/*
 + * Definitions etc. for regexp(3) routines.
@@ -11608,7 +11619,7 @@ Index: net/ipv4/netfilter/regexp/regexp.h
 Index: net/ipv4/netfilter/regexp/regmagic.h
 ===================================================================
 --- net/ipv4/netfilter/regexp/regmagic.h	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/regexp/regmagic.h	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/regexp/regmagic.h	(.../trunk)	(revision 6009)
 @@ -0,0 +1,5 @@
 +/*
 + * The first byte of the regexp internal "program" is actually this magic
@@ -11618,7 +11629,7 @@ Index: net/ipv4/netfilter/regexp/regmagic.h
 Index: net/ipv4/netfilter/regexp/regsub.c
 ===================================================================
 --- net/ipv4/netfilter/regexp/regsub.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/regexp/regsub.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/regexp/regsub.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,95 @@
 +/*
 + * regsub
@@ -11718,7 +11729,7 @@ Index: net/ipv4/netfilter/regexp/regsub.c
 Index: net/ipv4/netfilter/regexp/regexp.c
 ===================================================================
 --- net/ipv4/netfilter/regexp/regexp.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/regexp/regexp.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/regexp/regexp.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,1195 @@
 +/*
 + * regcomp and regexec -- regsub and regerror are elsewhere
@@ -12918,7 +12929,7 @@ Index: net/ipv4/netfilter/regexp/regexp.c
 Index: net/ipv4/netfilter/ipt_time.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_time.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_time.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_time.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,191 @@
 +/*
 +  This is a module which is used for time matching
@@ -13111,10 +13122,975 @@ Index: net/ipv4/netfilter/ipt_time.c
 +	r->tm_mon=i;
 +	r->tm_mday=work-__spm[i]+1;
 +}
+Index: net/ipv4/netfilter/ip_conntrack_h323_h245.c
+===================================================================
+--- net/ipv4/netfilter/ip_conntrack_h323_h245.c	(.../branches/linux-2.6.11.8)	(revision 0)
++++ net/ipv4/netfilter/ip_conntrack_h323_h245.c	(.../trunk)	(revision 6009)
+@@ -0,0 +1,960 @@
++/*
++ * H.323/H.245 connection tracking helper
++ * (c) 2005 Max Kellermann <max@duempel.org>
++ *
++ * Based on the 'brute force' H.323 connection tracking module by
++ * Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
++ */
++
++
++#include <linux/module.h>
++#include <linux/netfilter.h>
++#include <linux/ip.h>
++#include <net/checksum.h>
++#include <net/tcp.h>
++
++#include <linux/netfilter_ipv4/lockhelp.h>
++#include <linux/netfilter_ipv4/ip_conntrack.h>
++#include <linux/netfilter_ipv4/ip_conntrack_core.h>
++#include <linux/netfilter_ipv4/ip_conntrack_helper.h>
++#include <linux/netfilter_ipv4/ip_conntrack_tuple.h>
++#include <linux/netfilter_ipv4/ip_conntrack_h323.h>
++
++#include "asn1_per.h"
++
++/* This is slow, but it's simple. --RR */
++static char h245_buffer[65536];
++
++static DECLARE_LOCK(ip_h245_lock);
++
++struct module *ip_conntrack_h245 = THIS_MODULE;
++
++int (*ip_nat_h245_hook)(struct sk_buff **pskb,
++			enum ip_conntrack_info ctinfo,
++			unsigned int offset,
++			struct ip_conntrack_expect *exp);
++EXPORT_SYMBOL_GPL(ip_nat_h245_hook);
++
++#if 0
++#define DEBUGP printk
++#else
++#define DEBUGP(format, args...)
++#endif
++
++/**
++ * Skip an H.245 NonStandardIdentifier, discarding its value.
++ */
++static void h245_skip_nonstandard_id(struct asn1_per_buffer *bb) {
++	unsigned choice;
++
++	choice = asn1_per_read_bits(bb, 1);
++	switch (choice) {
++	case 0:
++		asn1_per_skip_object_id(bb);
++		break;
++
++	case 1:
++		asn1_per_read_unsigned(bb, 0, 255);
++		asn1_per_read_unsigned(bb, 0, 255);
++		asn1_per_read_unsigned(bb, 0, 65535);
++		break;
++	}
++}
++
++/**
++ * Skip an H.245 NonStandardParameter, discarding its value.
++ */
++static void h245_skip_nonstandard_param(struct asn1_per_buffer *bb) {
++	h245_skip_nonstandard_id(bb);
++	asn1_per_skip_octet_string(bb);
++}
++
++/**
++ * Skip an H.245 VideoCapability, discarding its value.
++ */
++static void h245_skip_video_capability(struct asn1_per_buffer *bb) {
++	unsigned choice, after;
++
++	choice = asn1_per_read_choice_header(bb, 1, 5, &after);
++	DEBUGP("video_capability: choice=%u after=%u error=%d\n",
++	       choice, after, bb->error);
++
++	if (bb->error)
++		return;
++
++	/* XXX support the rest */
++	switch (choice) {
++	case 0: /* nonStandard */
++		h245_skip_nonstandard_param(bb);
++		break;
++
++	default:
++		if (after == 0) {
++			DEBUGP("unsupported audio_capability %u\n", choice);
++			bb->error = 1;
++		}
++	}
++
++	if (after > 0)
++		bb->i = after;
++}
++
++/**
++ * Skip an H.245 AudioCapability, discarding its value.
++ */
++static void h245_skip_audio_capability(struct asn1_per_buffer *bb) {
++	unsigned choice, after;
++
++	choice = asn1_per_read_choice_header(bb, 1, 14, &after);
++	DEBUGP("audio_capability: audio_capability=%u after=%u error=%d\n", choice, after, bb->error);
++
++	if (bb->error)
++		return;
++
++	/* XXX support the rest */
++	switch (choice) {
++		unsigned value;
++
++	case 0: /* nonStandard */
++		h245_skip_nonstandard_param(bb);
++		break;
++
++	case 1:
++	case 2:
++	case 3:
++	case 4:
++	case 5:
++	case 6:
++	case 7:
++	case 9:
++	case 10:
++	case 11:
++	case 14:
++	case 17:
++		value = asn1_per_read_unsigned(bb, 1, 256);
++		DEBUGP("value %u = %u\n", choice, value);
++		break;
++	default:
++		if (after == 0) {
++			DEBUGP("unsupported audio_capability %u\n", choice);
++			bb->error = 1;
++		}
++	}
++
++	if (after > 0)
++		bb->i = after;
++}
++
++/**
++ * Skip an H.245 DataType, discarding its value.
++ */
++static void h245_skip_data_type(struct asn1_per_buffer *bb) {
++	unsigned choice, after;
++
++	choice = asn1_per_read_choice_header(bb, 1, 6, &after);
++
++	if (bb->error)
++		return;
++
++	/* XXX support the rest */
++	switch (choice) {
++	case 0: /* nonStandard */
++		h245_skip_nonstandard_param(bb);
++		break;
++
++	case 1: /* nullData */
++		break;
++
++	case 2: /* videoData */
++		h245_skip_video_capability(bb);
++		break;
++
++	case 3: /* audioData */
++		h245_skip_audio_capability(bb);
++		break;
++
++	default:
++		if (after == 0) {
++			DEBUGP("unsupported data_type %u\n", choice);
++			bb->error = 1;
++		}
++	}
++
++	if (after > 0)
++		bb->i = after;
++}
++
++/**
++ * Parse an H.245 UnicastAddress and return the position of the IP
++ * address (if present). Returns 1 on success.
++ */
++static int h245_parse_unicast_address(struct asn1_per_buffer *bb, unsigned *i,
++				      u_int32_t *ip, u_int16_t *port) {
++	unsigned choice, after;
++
++	choice = asn1_per_read_choice_header(bb, 1, 5, &after);
++	DEBUGP("Parsing UnicastAddress choice=%u after=%u\n", choice, after);
++	switch (choice) {
++	case 0: /* iPAddress */
++		asn1_per_read_bit(bb); /* XXX use this bit */
++		asn1_per_byte_align(bb);
++		*i = bb->i;
++		asn1_per_read_bytes(bb, ip, sizeof(*ip));
++		asn1_per_read_bytes(bb, port, sizeof(*port));
++		return !bb->error;
++	default:
++		if (after == 0) {
++			DEBUGP("UnicastAddress %u not yet supported\n", choice);
++			bb->error = 1;
++		} else {
++			bb->i = after;
++		}
++		return 0;
++	}
++}
++
++/**
++ * Parse an H.245 TransportAddress and return the position of the
++ * Unicast IP address (if present). Returns 1 on success.
++ */
++static int h245_parse_transport_address(struct asn1_per_buffer *bb, unsigned *i,
++					u_int32_t *ip, u_int16_t *port) {
++	unsigned choice, after;
++
++	choice = asn1_per_read_choice_header(bb, 1, 2, &after);
++	switch (choice) {
++	case 0: /* UnicastAddress */
++		return h245_parse_unicast_address(bb, i, ip, port);
++	case 1: /* MulticastAddress */
++		/* XXX */
++		DEBUGP("MulticastAddress not yet supported\n");
++		bb->error = 1;
++		return 0;
++	default:
++		if (after == 0) {
++			DEBUGP("ERROR7\n");
++			bb->error = 1;
++		} else {
++			bb->i = after;
++		}
++		return 0;
++	}
++}
++
++/**
++ * Skip an H.245 TerminalLabel, discarding its value.
++ */
++static void h245_skip_terminal_label(struct asn1_per_buffer *bb) {
++	struct asn1_per_sequence_header hdr;
++
++	asn1_per_read_sequence_header(bb, 1, 0, &hdr);
++
++	/* mcuNumber */
++	asn1_per_read_unsigned(bb, 0, 192);
++	/* terminalNumber */
++	asn1_per_read_unsigned(bb, 0, 192);
++
++	asn1_per_skip_sequence_extension(bb, &hdr);
++}
++
++/**
++ * Parse an H.245 H2250LogicalChannelParameters request packet and
++ * handle NAT/expectations for the logical channel address.
++ */
++static int h245_parse_h2250_lchannel_params(struct sk_buff **pskb,
++					    struct ip_conntrack *ct,
++					    enum ip_conntrack_info ctinfo,
++					    struct asn1_per_buffer *bb) {
++	struct asn1_per_sequence_header hdr;
++	unsigned session_id;
++
++	asn1_per_read_sequence_header(bb, 1, 10, &hdr);
++
++	/* nonStandard */
++	if (asn1_per_bitmap_get(&hdr.present, 0))
++		h245_skip_nonstandard_param(bb);
++
++	/* sessionID */
++	session_id = asn1_per_read_unsigned(bb, 0, 255);
++
++	/* associatedSessionID */
++	if (asn1_per_bitmap_get(&hdr.present, 1))
++		asn1_per_read_unsigned(bb, 1, 255);
++
++	/* mediaChannel */
++	DEBUGP("lchannel_params mediaChannel: i=%u bit=%u\n", bb->i, bb->bit);
++	if (asn1_per_bitmap_get(&hdr.present, 2)) {
++		int dir = CTINFO2DIR(ctinfo);
++		struct ip_conntrack_expect *exp;
++		int ret;
++		unsigned i;
++		u_int32_t ip;
++		u_int16_t port;
++
++		ret = h245_parse_transport_address(bb, &i, &ip, &port);
++		if (ret)
++			DEBUGP("mediaChannel IPv4 address: %u.%u.%u.%u:%u\n",
++			       NIPQUAD(ip), ntohs(port));
++		if (ret && ip == ct->tuplehash[dir].tuple.src.ip) {
++			/* match found: create an expectation */
++			exp = ip_conntrack_expect_alloc();
++			if (exp == NULL)
++				return NF_ACCEPT;
++
++			exp->tuple = ((struct ip_conntrack_tuple)
++					{ { ct->tuplehash[!dir].tuple.src.ip,
++					    { 0 } },
++					  { ct->tuplehash[!dir].tuple.dst.ip,
++					    { .udp = { port } },
++					    IPPROTO_UDP }});
++			exp->mask = ((struct ip_conntrack_tuple)
++					{ { 0xFFFFFFFF, { 0 } },
++					  { 0xFFFFFFFF, { .udp = { 0xFFFF } }, 0xFF }});
++
++			exp->master = ct;
++
++			/* call NAT hook and register expectation */
++			if (ip_nat_h245_hook != NULL) {
++				return ip_nat_h245_hook(pskb, ctinfo, i,
++							exp);
++			} else {
++				/* Can't expect this?  Best to drop packet now. */
++				if (ip_conntrack_expect_related(exp) != 0) {
++					ip_conntrack_expect_free(exp);
++					return NF_DROP;
++				} else {
++					return NF_ACCEPT;
++				}
++			}
++		}
++	}
++
++	/* mediaGuaranteedDelivery */
++	if (asn1_per_bitmap_get(&hdr.present, 3))
++		asn1_per_read_bit(bb);
++
++	/* mediaControlChannel */
++	DEBUGP("lchannel_params controlChannel: i=%u bit=%u\n", bb->i, bb->bit);
++	if (asn1_per_bitmap_get(&hdr.present, 4)) {
++		int dir = CTINFO2DIR(ctinfo);
++		struct ip_conntrack_expect *exp;
++		int ret;
++		unsigned i;
++		u_int32_t ip;
++		u_int16_t port;
++
++		ret = h245_parse_transport_address(bb, &i, &ip, &port);
++		if (ret)
++			DEBUGP("mediaControlChannel IPv4 address: %u.%u.%u.%u:%u\n",
++			       NIPQUAD(ip), ntohs(port));
++		if (ret && ip == ct->tuplehash[dir].tuple.src.ip) {
++			/* match found: create an expectation */
++			exp = ip_conntrack_expect_alloc();
++			if (exp == NULL)
++				return NF_ACCEPT;
++
++			exp->tuple = ((struct ip_conntrack_tuple)
++					{ { ct->tuplehash[!dir].tuple.src.ip,
++					    { 0 } },
++					  { ct->tuplehash[!dir].tuple.dst.ip,
++					    { .udp = { port } },
++					    IPPROTO_UDP }});
++			exp->mask = ((struct ip_conntrack_tuple)
++					{ { 0xFFFFFFFF, { 0 } },
++					  { 0xFFFFFFFF, { .udp = { 0xFFFF } }, 0xFF }});
++
++			exp->master = ct;
++
++			/* call NAT hook and register expectation */
++			if (ip_nat_h245_hook != NULL) {
++				return ip_nat_h245_hook(pskb, ctinfo, i,
++							exp);
++			} else {
++				/* Can't expect this?  Best to drop packet now. */
++				if (ip_conntrack_expect_related(exp) != 0) {
++					ip_conntrack_expect_free(exp);
++					return NF_DROP;
++				} else {
++					return NF_ACCEPT;
++				}
++			}
++		}
++	}
++
++	/* mediaControlGuaranteedDelivery */
++	if (asn1_per_bitmap_get(&hdr.present, 5))
++		asn1_per_read_bit(bb);
++
++	/* silenceSuppression */
++	if (asn1_per_bitmap_get(&hdr.present, 6))
++		asn1_per_read_bit(bb);
++
++	/* destination */
++	if (asn1_per_bitmap_get(&hdr.present, 7))
++		h245_skip_terminal_label(bb);
++
++	/* dynamicRTPPayloadType */
++	if (asn1_per_bitmap_get(&hdr.present, 8))
++		asn1_per_read_unsigned(bb, 96, 127);
++
++	/* mediaPacketization */
++	if (asn1_per_bitmap_get(&hdr.present, 9)) {
++		unsigned choice, after;
++
++		choice = asn1_per_read_choice_header(bb, 1, 1, &after);
++		switch (choice) {
++		case 0: /* h261aVideoPacketization */
++			break;
++
++		default:
++			if (after == 0) {
++				DEBUGP("ERROR7\n");
++				bb->error = 1;
++				return NF_ACCEPT;
++			}
++
++			bb->i = after;
++		}
++	}
++
++	/* XXX */
++
++	asn1_per_skip_sequence_extension(bb, &hdr);
++
++	return NF_ACCEPT;
++}
++
++/**
++ * Parse an H.245 OpenLogicalChannel request packet and handle
++ * NAT/expectations for the logical channel address.
++ */
++static int h245_parse_open_lchannel(struct sk_buff **pskb,
++				    struct ip_conntrack *ct,
++				    enum ip_conntrack_info ctinfo,
++				    struct asn1_per_buffer *bb) {
++	struct asn1_per_sequence_header hdr, hdr2;
++	unsigned forwardLogicalChannelNumber;
++	unsigned choice, after;
++
++	asn1_per_read_sequence_header(bb, 1, 1, &hdr);
++
++	forwardLogicalChannelNumber = asn1_per_read_unsigned(bb, 1, 65535);
++
++	/* entering forwardLogicalChannelParameters */
++	asn1_per_read_sequence_header(bb, 1, 1, &hdr2);
++	if (asn1_per_bitmap_get(&hdr2.present, 0))
++		asn1_per_read_unsigned(bb, 0, 65535);
++
++	h245_skip_data_type(bb);
++
++	/* multiplexParameters */
++	choice = asn1_per_read_choice_header(bb, 1, 3, &after);
++	if (bb->error)
++		return NF_ACCEPT;
++
++	switch (choice) {
++	case 3: /* h2250LogicalChannelParameters */
++		h245_parse_h2250_lchannel_params(pskb, ct, ctinfo, bb);
++		break;
++	default:
++		if (after == 0) {
++			DEBUGP("unsupported multiplex_parameter %u\n", choice);
++			bb->error = 1;
++			return NF_ACCEPT;
++		}
++	}
++
++	if (bb->error)
++		return NF_ACCEPT;
++
++	if (after > 0)
++		bb->i = after;
++
++	asn1_per_skip_sequence_extension(bb, &hdr2);
++
++	/* leaving multiplexParameters, forwardLogicalChannelParameters */
++
++	/* reverseLogicalChannelParameters */
++	if (asn1_per_bitmap_get(&hdr.present, 0)) {
++		asn1_per_read_sequence_header(bb, 1, 1, &hdr2);
++
++		h245_skip_data_type(bb);
++
++		/* multiplexParameters */
++		if (asn1_per_bitmap_get(&hdr2.present, 0)) {
++			choice = asn1_per_read_choice_header(bb, 1, 2, &after);
++			if (bb->error)
++				return NF_ACCEPT;
++
++			DEBUGP("reverse_parameter multiplex=%u after=%u\n", choice, after);
++
++			switch (choice) {
++			case 2: /* h2250LogicalChannelParameters */
++				h245_parse_h2250_lchannel_params(pskb, ct, ctinfo, bb);
++				break;
++			default:
++				if (after == 0) {
++					DEBUGP("unsupported multiplex_parameter %u\n", choice);
++					bb->error = 1;
++					return NF_ACCEPT;
++				}
++			}
++
++			if (bb->error)
++				return NF_ACCEPT;
++
++			if (after > 0)
++				bb->i = after;
++		}
++
++		asn1_per_skip_sequence_extension(bb, &hdr2);
++	}
++
++	asn1_per_skip_sequence_extension(bb, &hdr);
++
++	/* XXX */
++	return NF_ACCEPT;
++}
++
++/**
++ * Parse an H.245 request packet and handle NAT/expectations for the
++ * logical channel address.
++ */
++static int h245_parse_request(struct sk_buff **pskb,
++			      struct ip_conntrack *ct,
++			      enum ip_conntrack_info ctinfo,
++			      struct asn1_per_buffer *bb) {
++	unsigned choice, after;
++
++	choice = asn1_per_read_choice_header(bb, 1, 11, &after);
++	DEBUGP("H.245: message_type=%u\n", choice);
++	switch (choice) {
++	case 3:
++		return h245_parse_open_lchannel(pskb, ct, ctinfo, bb);
++	default:
++		return NF_ACCEPT;
++	}
++}
++
++/**
++ * Parse an H.245 H222LogicalChannelParameters response packet and
++ * handle NAT/expectations for the logical channel address.
++ */
++static int h245_parse_h222_lchannel_params(struct sk_buff **pskb,
++					   struct ip_conntrack *ct,
++					   enum ip_conntrack_info ctinfo,
++					   struct asn1_per_buffer *bb) {
++	struct asn1_per_sequence_header hdr;
++
++	asn1_per_read_sequence_header(bb, 1, 3, &hdr);
++
++	if (bb->error)
++		return NF_ACCEPT;
++
++	/* resourceID */
++	asn1_per_read_unsigned(bb, 0, 65535);
++
++	/* subChannelID */
++	asn1_per_read_unsigned(bb, 0, 8191);
++
++	/* pcr-pid */
++	if (asn1_per_bitmap_get(&hdr.present, 0))
++		asn1_per_read_unsigned(bb, 0, 8191);
++
++	/* programDescriptors */
++	if (asn1_per_bitmap_get(&hdr.present, 1))
++		asn1_per_skip_octet_string(bb);
++
++	/* streamDescriptors */
++	if (asn1_per_bitmap_get(&hdr.present, 2))
++		asn1_per_skip_octet_string(bb);
++
++	asn1_per_skip_sequence_extension(bb, &hdr);
++
++	return NF_ACCEPT;
++}
++
++/**
++ * Parse an H.245 H2250LogicalChannelAckParameters response packet and
++ * handle NAT/expectations for the logical channel address.
++ */
++static int h245_parse_h2250_lchannel_ack_params(struct sk_buff **pskb,
++						struct ip_conntrack *ct,
++						enum ip_conntrack_info ctinfo,
++						struct asn1_per_buffer *bb) {
++	struct asn1_per_sequence_header hdr;
++	unsigned count;
++
++	DEBUGP("entering h245_parse_h2250_lchannel_ack_params\n");
++
++	asn1_per_read_sequence_header(bb, 1, 5, &hdr);
++
++	/* nonStandard */
++	if (asn1_per_bitmap_get(&hdr.present, 0)) {
++		count = asn1_per_read_length(bb, 0, UINT_MAX);
++		while (count > 0) {
++			h245_skip_nonstandard_param(bb);
++			if (bb->error)
++				return NF_ACCEPT;
++		}
++	}
++
++	/* sessionID */
++	if (asn1_per_bitmap_get(&hdr.present, 1))
++		asn1_per_read_unsigned(bb, 1, 255);
++
++	/* mediaChannel */
++	if (asn1_per_bitmap_get(&hdr.present, 2)) {
++		int ret;
++		unsigned i;
++		u_int32_t ip;
++		u_int16_t port;
++		int dir = CTINFO2DIR(ctinfo);
++		struct ip_conntrack_expect *exp;
++
++		ret = h245_parse_transport_address(bb, &i, &ip, &port);
++		DEBUGP("entering mediaChannel ret=%d i=%u ip=%x port=%u\n",
++		       ret, i, ip, port);
++		if (ret && ip == ct->tuplehash[dir].tuple.src.ip) {
++			/* match found: create an expectation */
++			exp = ip_conntrack_expect_alloc();
++			if (exp == NULL)
++				return NF_ACCEPT;
++
++			exp->tuple = ((struct ip_conntrack_tuple)
++					{ { ct->tuplehash[!dir].tuple.src.ip,
++					    { 0 } },
++					  { ct->tuplehash[!dir].tuple.dst.ip,
++					    { .udp = { port } },
++					    IPPROTO_UDP }});
++			exp->mask = ((struct ip_conntrack_tuple)
++					{ { 0xFFFFFFFF, { 0 } },
++					  { 0xFFFFFFFF, { .udp = { 0xFFFF } }, 0xFF }});
++
++			exp->master = ct;
++
++			/* call NAT hook and register expectation */
++			if (ip_nat_h245_hook != NULL) {
++				ret = ip_nat_h245_hook(pskb, ctinfo, i, exp);
++				if (ret != NF_ACCEPT)
++					return ret;
++			} else {
++				/* Can't expect this?  Best to drop packet now. */
++				if (ip_conntrack_expect_related(exp) != 0) {
++					ip_conntrack_expect_free(exp);
++					return NF_DROP;
++				} else {
++					return NF_ACCEPT;
++				}
++			}
++		}
++	}
++
++	/* mediaControlChannel */
++	if (asn1_per_bitmap_get(&hdr.present, 3)) {
++		int ret;
++		unsigned i;
++		u_int32_t ip;
++		u_int16_t port;
++		int dir = CTINFO2DIR(ctinfo);
++		struct ip_conntrack_expect *exp;
++
++		ret = h245_parse_transport_address(bb, &i, &ip, &port);
++		DEBUGP("entering mediaControlChannel ret=%d i=%u ip=%x port=%u\n",
++		       ret, i, ip, port);
++		if (ret && ip == ct->tuplehash[dir].tuple.src.ip) {
++			/* match found: create an expectation */
++			exp = ip_conntrack_expect_alloc();
++			if (exp == NULL)
++				return NF_ACCEPT;
++
++			exp->tuple = ((struct ip_conntrack_tuple)
++					{ { ct->tuplehash[!dir].tuple.src.ip,
++					    { 0 } },
++					  { ct->tuplehash[!dir].tuple.dst.ip,
++					    { .udp = { port } },
++					    IPPROTO_UDP }});
++			exp->mask = ((struct ip_conntrack_tuple)
++					{ { 0xFFFFFFFF, { 0 } },
++					  { 0xFFFFFFFF, { .udp = { 0xFFFF } }, 0xFF }});
++
++			exp->master = ct;
++
++			/* call NAT hook and register expectation */
++			if (ip_nat_h245_hook != NULL) {
++				ret = ip_nat_h245_hook(pskb, ctinfo, i, exp);
++				if (ret != NF_ACCEPT)
++					return ret;
++			} else {
++				/* Can't expect this?  Best to drop packet now. */
++				if (ip_conntrack_expect_related(exp) != 0) {
++					ip_conntrack_expect_free(exp);
++					return NF_DROP;
++				} else {
++					return NF_ACCEPT;
++				}
++			}
++		}
++	}
++
++	/* dynamicRTPPayloadType */
++	if (asn1_per_bitmap_get(&hdr.present, 1))
++		asn1_per_read_unsigned(bb, 96, 127);
++
++	asn1_per_skip_sequence_extension(bb, &hdr);
++
++	return NF_ACCEPT;
++}
++
++/**
++ * Parse an H.245 OpenLogicalChannelAck response packet and handle
++ * NAT/expectations for the logical channel address.
++ */
++static int h245_parse_open_lchannel_ack(struct sk_buff **pskb,
++					struct ip_conntrack *ct,
++					enum ip_conntrack_info ctinfo,
++					struct asn1_per_buffer *bb) {
++	struct asn1_per_sequence_header hdr, hdr2;
++	struct asn1_per_sequence_extension_header ext;
++	unsigned forwardLogicalChannelNumber;
++	unsigned choice, after, after2, i;
++
++	asn1_per_read_sequence_header(bb, 1, 1, &hdr);
++
++	forwardLogicalChannelNumber = asn1_per_read_unsigned(bb, 1, 65535);
++	DEBUGP("forwardLogicalChannelNumber=%u\n", forwardLogicalChannelNumber);
++
++	/* reverseLogicalChannelParameters */
++	if (asn1_per_bitmap_get(&hdr.present, 0)) {
++		DEBUGP("reverseLogicalChannelParameters present\n");
++		asn1_per_read_sequence_header(bb, 1, 2, &hdr2);
++
++		/* reverseLogicalChannelNumber */
++		asn1_per_read_unsigned(bb, 1, 65535);
++
++		/* portNumber */
++		if (asn1_per_bitmap_get(&hdr.present, 0))
++			asn1_per_read_unsigned(bb, 0, 65535);
++
++		/* multiplexParameters */
++		if (asn1_per_bitmap_get(&hdr2.present, 1)) {
++			choice = asn1_per_read_choice_header(bb, 1, 1, &after);
++			if (bb->error)
++				return NF_ACCEPT;
++
++			switch (choice) {
++			case 0: /* h222LogicalChannelParameters */
++				h245_parse_h222_lchannel_params(pskb, ct,
++								ctinfo, bb);
++				break;
++			case 1: /* h2250LogicalChannelParameters */
++				h245_parse_h2250_lchannel_params(pskb, ct,
++								 ctinfo, bb);
++				break;
++			default:
++				if (after == 0) {
++					DEBUGP("unsupported multiplex_parameter %u\n", choice);
++					bb->error = 1;
++					return NF_ACCEPT;
++				}
++			}
++
++			if (bb->error)
++				return NF_ACCEPT;
++
++			if (after > 0)
++				bb->i = after;
++		}
++
++		asn1_per_skip_sequence_extension(bb, &hdr2);
++	}
++
++	asn1_per_read_sequence_extension_header(bb, &hdr, &ext);
++	if (bb->error)
++		return NF_ACCEPT;
++
++	/* separateStack */
++	if (asn1_per_bitmap_get(&ext.present, 0))
++		asn1_per_skip_octet_string(bb);
++
++	/* forwardMultiplexAckParameters */
++	if (asn1_per_bitmap_get(&ext.present, 1)) {
++		DEBUGP("forwardMultiplexAckParameters present\n");
++
++		after = asn1_per_read_octet_string_header(bb);
++		DEBUGP("forwardMultiplexAckParameters present length=%u i=%u after=%u end=%u\n",
++		       after, bb->i, bb->i + after, bb->length);
++		after += bb->i;
++
++		choice = asn1_per_read_choice_header(bb, 1, 1, &after2);
++		if (bb->error)
++			return NF_ACCEPT;
++
++		DEBUGP("entering forwardMultiplexAckParameters choice=%u after=%u\n", choice, after2);
++
++		switch (choice) {
++		case 0: /* h2250LogicalChannelAckParameters */
++			h245_parse_h2250_lchannel_ack_params(pskb, ct,
++							     ctinfo, bb);
++			break;
++		}
++
++		if (bb->error)
++			return NF_ACCEPT;
++
++		bb->i = after;
++	}
++
++	for (i = 2; i < ext.count; i++)
++		if (asn1_per_bitmap_get(&ext.present, i))
++			asn1_per_skip_octet_string(bb);
++
++	return NF_ACCEPT;
++}
++
++/**
++ * Parse an H.245 response packet and handle NAT/expectations for the
++ * logical channel address.
++ */
++static int h245_parse_response(struct sk_buff **pskb,
++			       struct ip_conntrack *ct,
++			       enum ip_conntrack_info ctinfo,
++			       struct asn1_per_buffer *bb) {
++	unsigned choice, after;
++
++	choice = asn1_per_read_choice_header(bb, 1, 19, &after);
++	DEBUGP("H.245: response type=%u\n", choice);
++	switch (choice) {
++	case 5: /* openLogicalChannelAck */
++		return h245_parse_open_lchannel_ack(pskb, ct, ctinfo, bb);
++
++	default:
++		return NF_ACCEPT;
++	}
++}
++
++/**
++ * Parse an H.245 packet and handle NAT/expectations for the logical
++ * channel address.
++ */
++static int h245_parse(struct sk_buff **pskb,
++		      struct ip_conntrack *ct,
++		      enum ip_conntrack_info ctinfo,
++		      struct asn1_per_buffer *bb) {
++	unsigned choice, after;
++
++	choice = asn1_per_read_choice_header(bb, 1, 4, &after);
++	DEBUGP("H.245: message_class=%u\n", choice);
++	switch (choice) {
++	case 0:
++		return h245_parse_request(pskb, ct, ctinfo, bb);
++	case 1:
++		return h245_parse_response(pskb, ct, ctinfo, bb);
++	default:
++		return NF_ACCEPT;
++	}
++}
++
++/**
++ * Parse a TPKT/H.245 packet and handle NAT/expectations for the
++ * logical channel transport address (if applicable).
++ */
++static int h245_parse_tpkt(struct sk_buff **pskb,
++			   struct ip_conntrack *ct,
++			   enum ip_conntrack_info ctinfo,
++			   const unsigned char *data,
++			   unsigned datalen) {
++	unsigned int i = 0;
++	u_int16_t tpkt_len;
++	struct asn1_per_buffer bb;
++
++	if (i + 4 > datalen)
++		return NF_ACCEPT;
++
++	/* expect TPKT header, see RFC 1006 */
++	if (data[0] != 0x03 || data[1] != 0x00)
++		return NF_ACCEPT;
++
++	i += 2;
++
++	tpkt_len = ntohs(*(u_int16_t*)(data + i));
++	if (tpkt_len < datalen)
++		datalen = tpkt_len;
++
++	i += 2;
++
++	/* parse H.245 packet (ASN.1 PER) */
++	asn1_per_initialize(&bb, data, datalen, i);
++
++	return h245_parse(pskb, ct, ctinfo, &bb);
++}
++
++static int h245_help(struct sk_buff **pskb,
++		     struct ip_conntrack *ct,
++		     enum ip_conntrack_info ctinfo)
++{
++	struct tcphdr _tcph, *tcph;
++	unsigned char *data;
++	unsigned dataoff, datalen;
++	int ret;
++
++	/* Until there's been traffic both ways, don't look in packets. */
++	if (ctinfo != IP_CT_ESTABLISHED
++	    && ctinfo != IP_CT_ESTABLISHED + IP_CT_IS_REPLY) {
++		DEBUGP("ct_h245_help: Conntrackinfo = %u\n", ctinfo);
++		return NF_ACCEPT;
++	}
++
++	tcph = skb_header_pointer(*pskb, (*pskb)->nh.iph->ihl*4,
++				  sizeof(_tcph), &_tcph);
++	if (tcph == NULL)
++		return NF_ACCEPT;
++
++	DEBUGP("ct_h245_help: help entered %u.%u.%u.%u:%u->%u.%u.%u.%u:%u\n",
++		NIPQUAD((*pskb)->nh.iph->saddr), ntohs(tcph->source),
++		NIPQUAD((*pskb)->nh.iph->daddr), ntohs(tcph->dest));
++
++	dataoff = (*pskb)->nh.iph->ihl*4 + tcph->doff*4;
++	/* No data? */
++	if (dataoff >= (*pskb)->len) {
++		DEBUGP("ct_h245_help: skblen = %u\n", (*pskb)->len);
++		return NF_ACCEPT;
++	}
++	datalen = (*pskb)->len - dataoff;
++
++	if (datalen < 16)
++		return NF_ACCEPT;
++
++	LOCK_BH(&ip_h245_lock);
++	data = skb_header_pointer((*pskb), dataoff,
++				  datalen, h245_buffer);
++	BUG_ON(data == NULL);
++
++	ret = h245_parse_tpkt(pskb, ct, ctinfo,
++			      data, datalen);
++
++	UNLOCK_BH(&ip_h245_lock);
++	return ret;
++}
++
++/* H.245 helper is not registered! */
++static struct ip_conntrack_helper h245 =
++{
++	.name = "H.245",
++	.max_expected = 8,
++	.timeout = 240,
++	.tuple = { .dst = { .protonum = IPPROTO_TCP } },
++	.mask = { .src = { .u = { 0xFFFF } },
++		  .dst = { .protonum = 0xFF } },
++	.help = h245_help
++};
++
++void ip_conntrack_h245_expect(struct ip_conntrack *new,
++			      struct ip_conntrack_expect *this)
++{
++	WRITE_LOCK(&ip_conntrack_lock);
++	new->helper = &h245;
++	DEBUGP("h225_expect: helper for %p added\n", new);
++	WRITE_UNLOCK(&ip_conntrack_lock);
++}
++EXPORT_SYMBOL_GPL(ip_conntrack_h245_expect);
 Index: net/ipv4/netfilter/ipt_geoip.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_geoip.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_geoip.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_geoip.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,275 @@
 +/* netfilter's kernel module for the geoip match
 + * 
@@ -13393,8 +14369,8 @@ Index: net/ipv4/netfilter/ipt_geoip.c
 +module_exit(fini);
 Index: net/ipv4/netfilter/ip_conntrack_standalone.c
 ===================================================================
---- net/ipv4/netfilter/ip_conntrack_standalone.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ip_conntrack_standalone.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ip_conntrack_standalone.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ip_conntrack_standalone.c	(.../trunk)	(revision 6009)
 @@ -152,6 +152,12 @@
  		return 1;
  #endif
@@ -13546,7 +14522,7 @@ Index: net/ipv4/netfilter/ip_conntrack_standalone.c
 Index: net/ipv4/netfilter/ip_set_portmap.c
 ===================================================================
 --- net/ipv4/netfilter/ip_set_portmap.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ip_set_portmap.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ip_set_portmap.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,325 @@
 +/* Copyright (C) 2003-2004 Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
 + *
@@ -13876,7 +14852,7 @@ Index: net/ipv4/netfilter/ip_set_portmap.c
 Index: net/ipv4/netfilter/ip_conntrack_mms.c
 ===================================================================
 --- net/ipv4/netfilter/ip_conntrack_mms.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ip_conntrack_mms.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ip_conntrack_mms.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,353 @@
 +/* MMS extension for IP connection tracking
 + * (C) 2002 by Filip Sneppe <filip.sneppe@cronos.be>
@@ -14233,8 +15209,8 @@ Index: net/ipv4/netfilter/ip_conntrack_mms.c
 +module_exit(fini);
 Index: net/ipv4/netfilter/ip_conntrack_proto_generic.c
 ===================================================================
---- net/ipv4/netfilter/ip_conntrack_proto_generic.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ip_conntrack_proto_generic.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ip_conntrack_proto_generic.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ip_conntrack_proto_generic.c	(.../trunk)	(revision 6009)
 @@ -49,7 +49,7 @@
  
  /* Returns verdict for packet, or -1 for invalid. */
@@ -14246,8 +15222,8 @@ Index: net/ipv4/netfilter/ip_conntrack_proto_generic.c
  	ip_ct_refresh_acct(conntrack, ctinfo, skb, ip_ct_generic_timeout);
 Index: net/ipv4/netfilter/iptable_raw.c
 ===================================================================
---- net/ipv4/netfilter/iptable_raw.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/iptable_raw.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/iptable_raw.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/iptable_raw.c	(.../trunk)	(revision 6009)
 @@ -103,13 +103,15 @@
  	  .hook = ipt_hook, 
  	  .pf = PF_INET, 
@@ -14269,7 +15245,7 @@ Index: net/ipv4/netfilter/iptable_raw.c
 Index: net/ipv4/netfilter/ip_set_macipmap.c
 ===================================================================
 --- net/ipv4/netfilter/ip_set_macipmap.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ip_set_macipmap.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ip_set_macipmap.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,338 @@
 +/* Copyright (C) 2000-2002 Joakim Axelsson <gozem@linux.nu>
 + *                         Patrick Schaaf <bof@bof.de>
@@ -14611,8 +15587,8 @@ Index: net/ipv4/netfilter/ip_set_macipmap.c
 +module_exit(fini);
 Index: net/ipv4/netfilter/ipt_hashlimit.c
 ===================================================================
---- net/ipv4/netfilter/ipt_hashlimit.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ipt_hashlimit.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ipt_hashlimit.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ipt_hashlimit.c	(.../trunk)	(revision 6009)
 @@ -3,7 +3,7 @@
   *
   * (C) 2003-2004 by Harald Welte <laforge@netfilter.org>
@@ -14851,8 +15827,8 @@ Index: net/ipv4/netfilter/ipt_hashlimit.c
  
 Index: net/ipv4/netfilter/Kconfig
 ===================================================================
---- net/ipv4/netfilter/Kconfig	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/Kconfig	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/Kconfig	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/Kconfig	(.../trunk)	(revision 6009)
 @@ -128,6 +128,36 @@
  
  	  To compile it as a module, choose M here.  If unsure, say N.
@@ -15457,7 +16433,7 @@ Index: net/ipv4/netfilter/Kconfig
 Index: net/ipv4/netfilter/nf_conntrack_proto_icmp.c
 ===================================================================
 --- net/ipv4/netfilter/nf_conntrack_proto_icmp.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/nf_conntrack_proto_icmp.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/nf_conntrack_proto_icmp.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,299 @@
 +/* (C) 1999-2001 Paul `Rusty' Russell
 + * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
@@ -15760,8 +16736,8 @@ Index: net/ipv4/netfilter/nf_conntrack_proto_icmp.c
 +EXPORT_SYMBOL(nf_conntrack_protocol_icmp);
 Index: net/ipv4/netfilter/ipt_iprange.c
 ===================================================================
---- net/ipv4/netfilter/ipt_iprange.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ipt_iprange.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ipt_iprange.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ipt_iprange.c	(.../trunk)	(revision 6009)
 @@ -1,11 +1,9 @@
  /*
   * iptables module to match IP address ranges
@@ -15805,7 +16781,7 @@ Index: net/ipv4/netfilter/ipt_iprange.c
 Index: net/ipv4/netfilter/ipt_psd.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_psd.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_psd.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_psd.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,358 @@
 +/*
 +  This is a module which is used for PSD (portscan detection)
@@ -16168,7 +17144,7 @@ Index: net/ipv4/netfilter/ipt_psd.c
 Index: net/ipv4/netfilter/ipt_fuzzy.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_fuzzy.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_fuzzy.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_fuzzy.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,185 @@
 +/*
 + *  This module implements a simple TSK FLC 
@@ -16358,7 +17334,7 @@ Index: net/ipv4/netfilter/ipt_fuzzy.c
 Index: net/ipv4/netfilter/ipt_osf.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_osf.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_osf.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_osf.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,870 @@
 +/*
 + * ipt_osf.c
@@ -17233,7 +18209,7 @@ Index: net/ipv4/netfilter/ipt_osf.c
 Index: net/ipv4/netfilter/ipt_ipp2p.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_ipp2p.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_ipp2p.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_ipp2p.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,640 @@
 +#include <linux/module.h>
 +#include <linux/netfilter_ipv4/ip_tables.h>
@@ -17877,8 +18853,8 @@ Index: net/ipv4/netfilter/ipt_ipp2p.c
 +
 Index: net/ipv4/netfilter/ip_conntrack_tftp.c
 ===================================================================
---- net/ipv4/netfilter/ip_conntrack_tftp.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ip_conntrack_tftp.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ip_conntrack_tftp.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ip_conntrack_tftp.c	(.../trunk)	(revision 6009)
 @@ -134,6 +134,7 @@
  		tftp[i].timeout = 5 * 60; /* 5 minutes */
  		tftp[i].me = THIS_MODULE;
@@ -17887,10 +18863,368 @@ Index: net/ipv4/netfilter/ip_conntrack_tftp.c
  
  		tmpname = &tftp_names[i][0];
  		if (ports[i] == TFTP_PORT)
+Index: net/ipv4/netfilter/asn1_per.c
+===================================================================
+--- net/ipv4/netfilter/asn1_per.c	(.../branches/linux-2.6.11.8)	(revision 0)
++++ net/ipv4/netfilter/asn1_per.c	(.../trunk)	(revision 6009)
+@@ -0,0 +1,353 @@
++/*
++ * Tiny ASN.1 packet encoding rules (PER) library.
++ *
++ * This is a tiny library which helps parsing ASN.1/PER packets
++ * (i.e. read only). It is meant to be secure and small.
++ *
++ * Warning, this library may still be incomplete and buggy.
++ *
++ * (c) 2005 Max Kellermann <max@duempel.org>
++ */
++
++#include <linux/kernel.h>
++#include <linux/string.h>
++
++#include "asn1_per.h"
++
++void asn1_per_initialize(struct asn1_per_buffer *bb,
++			 const unsigned char *data,
++			 unsigned length, unsigned position) {
++	*bb = (struct asn1_per_buffer){
++		.data = data,
++		.length = length,
++		.i = position,
++		.bit = 8,
++		.error = 0,
++	};
++}
++
++int asn1_per_read_bit(struct asn1_per_buffer *bb) {
++	int value;
++
++	if (bb->error)
++		return 0;
++
++	if (bb->i >= bb->length) {
++		bb->error = 1;
++		return 0;
++	}
++
++	bb->bit--;
++
++	value = (bb->data[bb->i] & (1 << bb->bit)) != 0;
++
++	if (bb->bit == 0) {
++		bb->bit = 8;
++		bb->i++;
++	}
++
++	return value;
++}
++
++unsigned asn1_per_read_bits(struct asn1_per_buffer *bb, unsigned count) {
++	unsigned value;
++
++	if (bb->error)
++		return 0;
++	if (bb->i >= bb->length) {
++		bb->error = 1;
++		return 0;
++	}
++
++	if (count > 32) {
++		/* XXX support more than 32 bits in the future here? */
++		bb->error = 1;
++		return 0;
++	}
++
++	if (count <= bb->bit) {
++		value = (bb->data[bb->i] >> (bb->bit - count)) & (0xff >> (8 - count));
++
++		bb->bit -= count;
++		if (bb->bit == 0) {
++			bb->bit = 8;
++			bb->i++;
++		}
++
++		return value;
++	}
++
++	count -= bb->bit;
++
++	value = bb->data[bb->i] & (0xff >> (8 - bb->bit));
++	bb->i++;
++
++	while (count >= 8) {
++		if (bb->i >= bb->length) {
++			bb->error = 1;
++			return 0;
++		}
++
++		value = (value << 8) | bb->data[bb->i];
++
++		bb->i++;
++		count -= 8;
++	}
++
++	if (count > 0) {
++		if (bb->i >= bb->length) {
++			bb->error = 1;
++			return 0;
++		}
++
++		value = (value << count) | (bb->data[bb->i] >> (8 - count));
++	}
++
++	bb->bit = 8 - count;
++
++	return value;
++}
++
++void asn1_per_read_bitmap(struct asn1_per_buffer *bb, unsigned count,
++			  struct asn1_per_bitmap *bitmap) {
++	unsigned char *p;
++
++	memset(bitmap, 0, sizeof(*bitmap));
++
++	if (bb->error)
++		return;
++
++	if (count > sizeof(bitmap->data) * 8) {
++		/* XXX limited bit map support */
++		bb->error = 1;
++		return;
++	}
++
++	for (p = bitmap->data; count > 8; count -= 8)
++		*p++ = (unsigned char)asn1_per_read_bits(bb, 8);
++
++	if (count > 0)
++		*p = asn1_per_read_bits(bb, count) << (8 - count);
++
++	return;
++}
++
++void asn1_per_read_bytes(struct asn1_per_buffer *bb,
++			 void *buffer, unsigned count) {
++	if (bb->error)
++		return;
++
++	if (bb->bit != 8) {
++		bb->error = 1;
++		return;
++	}
++
++	if (bb->i + count > bb->length) {
++		bb->error = 1;
++		return;
++	}
++
++	memcpy(buffer, bb->data + bb->i, count);
++
++	bb->i += count;
++}
++
++void asn1_per_byte_align(struct asn1_per_buffer *bb) {
++	if (bb->bit < 8) {
++		bb->bit = 8;
++		bb->i++;
++	}
++}
++
++static unsigned count_bits(unsigned range) {
++	unsigned bits = 0;
++
++	if (range == 0)
++		return 32;
++
++	if (range == 1)
++		return 1;
++
++	while (bits < 32 && range > (unsigned)(1 << bits))
++		bits++;
++
++	return bits;
++}
++
++unsigned asn1_per_read_unsigned(struct asn1_per_buffer *bb,
++				unsigned lower, unsigned upper) {
++	unsigned range = (upper - lower) + 1;
++	unsigned bits = count_bits(range);
++
++	if (lower == upper)
++		return lower;
++
++	if (range == 0 || range > 255) {
++		if (bits > 16)
++			bits = asn1_per_read_length(bb, 1, (bits+7)/8) * 8;
++		else if (bits > 8)
++			bits = 16;
++		asn1_per_byte_align(bb);
++	}
++
++	return lower + asn1_per_read_bits(bb, bits);
++}
++
++unsigned asn1_per_read_length(struct asn1_per_buffer *bb,
++			      unsigned lower, unsigned upper) {
++	if (upper < 65536)
++		return asn1_per_read_unsigned(bb, lower, upper);
++
++	asn1_per_byte_align(bb);
++
++	if (!asn1_per_read_bit(bb))
++		return asn1_per_read_bits(bb, 7);
++
++	if (!asn1_per_read_bit(bb))
++		return asn1_per_read_bits(bb, 14);
++
++	bb->error = 1;
++	return 0;
++}
++
++unsigned asn1_per_read_small(struct asn1_per_buffer *bb) {
++	unsigned length;
++
++	if (!asn1_per_read_bit(bb))
++		return asn1_per_read_bits(bb, 6);
++
++	length = asn1_per_read_length(bb, 0, INT_MAX);
++
++	asn1_per_byte_align(bb);
++
++	return asn1_per_read_bits(bb, length * 8);
++}
++
++unsigned asn1_per_read_choice_header(struct asn1_per_buffer *bb,
++				     int extendable,
++				     unsigned options, unsigned *after) {
++	int extended;
++	unsigned choice;
++
++	extended = extendable && asn1_per_read_bit(bb);
++	if (extended) {
++		unsigned length;
++
++		choice = asn1_per_read_small(bb) + options;
++		length = asn1_per_read_length(bb, 0, INT_MAX);
++		*after = bb->i + length;
++	} else if (options < 2) {
++		choice = 0;
++		*after = 0;
++	} else {
++		choice = asn1_per_read_bits(bb, count_bits(options));
++		*after = 0;
++	}
++
++	return choice;
++}
++
++void asn1_per_read_sequence_header(struct asn1_per_buffer *bb, int extendable,
++				   unsigned optional_count,
++				   struct asn1_per_sequence_header *hdr) {
++	hdr->extended = extendable && asn1_per_read_bit(bb);
++	asn1_per_read_bitmap(bb, optional_count, &hdr->present);
++}
++
++void asn1_per_read_sequence_extension_header(struct asn1_per_buffer *bb,
++					     const struct asn1_per_sequence_header *hdr,
++					     struct asn1_per_sequence_extension_header *ext) {
++	if (!hdr->extended) {
++		memset(ext, 0, sizeof(*ext));
++		return;
++	}
++
++	ext->count = asn1_per_read_small(bb) + 1;
++	if (bb->error)
++		return;
++
++	asn1_per_read_bitmap(bb, ext->count, &ext->present);
++}
++
++void asn1_per_skip_sequence_extension(struct asn1_per_buffer *bb,
++				      const struct asn1_per_sequence_header *hdr) {
++	struct asn1_per_sequence_extension_header ext;
++	unsigned i;
++
++	asn1_per_read_sequence_extension_header(bb, hdr, &ext);
++	if (bb->error)
++		return;
++
++	for (i = 0; i < ext.count && !bb->error; i++) {
++		if (asn1_per_bitmap_get(&ext.present, i))
++			asn1_per_skip_octet_string(bb);
++	}
++}
++
++void asn1_per_skip_object_id(struct asn1_per_buffer *bb) {
++	unsigned length;
++
++	length = asn1_per_read_length(bb, 0, 255);
++	switch (length) {
++	case 0:
++		break;
++
++	case 1:
++		asn1_per_read_bits(bb, 8);
++		break;
++
++	case 2:
++		asn1_per_read_bits(bb, 16);
++		break;
++
++	default:
++		asn1_per_byte_align(bb);
++
++		bb->i += length;
++		if (bb->i > bb->length)
++			bb->error = 1;
++	}
++}
++
++unsigned asn1_per_read_octet_string_header(struct asn1_per_buffer *bb) {
++	unsigned length;
++
++	length = asn1_per_read_length(bb, 0, INT_MAX);
++	if (length > 2)
++		asn1_per_byte_align(bb);
++
++	return length;
++}
++
++void asn1_per_skip_octet_string(struct asn1_per_buffer *bb) {
++	unsigned length;
++
++	length = asn1_per_read_length(bb, 0, INT_MAX);
++	switch (length) {
++	case 0:
++		break;
++
++	case 1:
++		asn1_per_read_bits(bb, 8);
++		break;
++
++	case 2:
++		asn1_per_read_bits(bb, 16);
++		break;
++
++	default:
++		asn1_per_byte_align(bb);
++
++		bb->i += length;
++		if (bb->i > bb->length)
++			bb->error = 1;
++	}
++}
++
++
++int asn1_per_bitmap_get(const struct asn1_per_bitmap *bitmap, unsigned i) {
++	if (i >= sizeof(bitmap->data) * 8)
++		return 0;
++
++	return (bitmap->data[i / 8] & (1 << (7 - (i % 8)))) != 0;
++}
 Index: net/ipv4/netfilter/ipt_account.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_account.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_account.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_account.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,937 @@
 +/* 
 + * accounting match (ipt_account.c)
@@ -18831,8 +20165,8 @@ Index: net/ipv4/netfilter/ipt_account.c
 +
 Index: net/ipv4/netfilter/ipt_realm.c
 ===================================================================
---- net/ipv4/netfilter/ipt_realm.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ipt_realm.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ipt_realm.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ipt_realm.c	(.../trunk)	(revision 6009)
 @@ -1,6 +1,6 @@
  /* IP tables module for matching the routing realm
   *
@@ -18873,10 +20207,98 @@ Index: net/ipv4/netfilter/ipt_realm.c
  	return 1;
  }
  
+Index: net/ipv4/netfilter/asn1_per.h
+===================================================================
+--- net/ipv4/netfilter/asn1_per.h	(.../branches/linux-2.6.11.8)	(revision 0)
++++ net/ipv4/netfilter/asn1_per.h	(.../trunk)	(revision 6009)
+@@ -0,0 +1,83 @@
++/*
++ * Tiny ASN.1 packet encoding rules (PER) library.
++ *
++ * This is a tiny library which helps parsing ASN.1/PER packets
++ * (i.e. read only). It is meant to be secure and small.
++ *
++ * Warning, this library may still be incomplete and buggy.
++ *
++ * (c) 2005 Max Kellermann <max@duempel.org>
++ */
++
++#ifndef __ASN1_PER_H
++#define __ASN1_PER_H
++
++struct asn1_per_buffer {
++	const unsigned char *data;
++	unsigned length, i, bit;
++	int error;
++};
++
++struct asn1_per_bitmap {
++	unsigned char data[16];
++};
++
++struct asn1_per_sequence_header {
++	int extended;
++	struct asn1_per_bitmap present;
++};
++
++struct asn1_per_sequence_extension_header {
++	unsigned count;
++	struct asn1_per_bitmap present;
++};
++
++void asn1_per_initialize(struct asn1_per_buffer *bb,
++			 const unsigned char *data,
++			 unsigned length, unsigned position);
++
++int asn1_per_read_bit(struct asn1_per_buffer *bb);
++
++unsigned asn1_per_read_bits(struct asn1_per_buffer *bb, unsigned count);
++
++void asn1_per_read_bitmap(struct asn1_per_buffer *bb, unsigned count,
++			  struct asn1_per_bitmap *bitmap);
++
++void asn1_per_read_bytes(struct asn1_per_buffer *bb,
++			 void *buffer, unsigned count);
++
++void asn1_per_byte_align(struct asn1_per_buffer *bb);
++
++unsigned asn1_per_read_unsigned(struct asn1_per_buffer *bb,
++				unsigned lower, unsigned upper);
++
++unsigned asn1_per_read_length(struct asn1_per_buffer *bb,
++			      unsigned lower, unsigned upper);
++
++unsigned asn1_per_read_small(struct asn1_per_buffer *bb);
++
++unsigned asn1_per_read_choice_header(struct asn1_per_buffer *bb,
++				     int extendable,
++				     unsigned options, unsigned *after);
++
++void asn1_per_read_sequence_header(struct asn1_per_buffer *bb, int extendable,
++				   unsigned optional_count,
++				   struct asn1_per_sequence_header *hdr);
++
++void asn1_per_read_sequence_extension_header(struct asn1_per_buffer *bb,
++					     const struct asn1_per_sequence_header *hdr,
++					     struct asn1_per_sequence_extension_header *ext);
++
++void asn1_per_skip_sequence_extension(struct asn1_per_buffer *bb,
++				      const struct asn1_per_sequence_header *hdr);
++
++void asn1_per_skip_object_id(struct asn1_per_buffer *bb);
++
++unsigned asn1_per_read_octet_string_header(struct asn1_per_buffer *bb);
++
++void asn1_per_skip_octet_string(struct asn1_per_buffer *bb);
++
++
++int asn1_per_bitmap_get(const struct asn1_per_bitmap *bitmap, unsigned i);
++
++#endif
 Index: net/ipv4/netfilter/ip_set_iphash.c
 ===================================================================
 --- net/ipv4/netfilter/ip_set_iphash.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ip_set_iphash.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ip_set_iphash.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,379 @@
 +/* Copyright (C) 2003-2004 Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
 + *
@@ -19260,7 +20682,7 @@ Index: net/ipv4/netfilter/ip_set_iphash.c
 Index: net/ipv4/netfilter/ipt_TTL.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_TTL.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_TTL.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_TTL.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,120 @@
 +/* TTL modification target for IP tables
 + * (C) 2000 by Harald Welte <laforge@gnumonks.org>
@@ -19385,7 +20807,7 @@ Index: net/ipv4/netfilter/ipt_TTL.c
 Index: net/ipv4/netfilter/ipt_string.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_string.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_string.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_string.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,183 @@
 +/* Kernel module to match a string into a packet.
 + *
@@ -19573,7 +20995,7 @@ Index: net/ipv4/netfilter/ipt_string.c
 Index: net/ipv4/netfilter/ipt_u32.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_u32.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_u32.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_u32.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,213 @@
 +/* Kernel module to match u32 packet content. */
 +
@@ -19791,7 +21213,7 @@ Index: net/ipv4/netfilter/ipt_u32.c
 Index: net/ipv4/netfilter/nf_conntrack_l3proto_ipv4.c
 ===================================================================
 --- net/ipv4/netfilter/nf_conntrack_l3proto_ipv4.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/nf_conntrack_l3proto_ipv4.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/nf_conntrack_l3proto_ipv4.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,549 @@
 +/* (C) 1999-2001 Paul `Rusty' Russell
 + * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
@@ -20345,7 +21767,7 @@ Index: net/ipv4/netfilter/nf_conntrack_l3proto_ipv4.c
 Index: net/ipv4/netfilter/ip_set_iptree.c
 ===================================================================
 --- net/ipv4/netfilter/ip_set_iptree.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ip_set_iptree.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ip_set_iptree.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,510 @@
 +/* Copyright (C) 2005 Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
 + *
@@ -20859,8 +22281,8 @@ Index: net/ipv4/netfilter/ip_set_iptree.c
 +module_exit(fini);
 Index: net/ipv4/netfilter/ip_tables.c
 ===================================================================
---- net/ipv4/netfilter/ip_tables.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ip_tables.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ip_tables.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ip_tables.c	(.../trunk)	(revision 6009)
 @@ -343,7 +343,7 @@
  					continue;
  				}
@@ -20873,8 +22295,8 @@ Index: net/ipv4/netfilter/ip_tables.c
 Index: net/ipv4/netfilter/ipt_ACCOUNT.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_ACCOUNT.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_ACCOUNT.c	(.../trunk)	(revision 5956)
-@@ -0,0 +1,1105 @@
++++ net/ipv4/netfilter/ipt_ACCOUNT.c	(.../trunk)	(revision 6009)
+@@ -0,0 +1,1103 @@
 +/***************************************************************************
 + *   This is a module which is used for counting packets.                  *
 + *   See http://www.intra2net.com/opensource/ipt_account                   *
@@ -21469,13 +22891,11 @@ Index: net/ipv4/netfilter/ipt_ACCOUNT.c
 +            (struct ipt_acc_mask_8 *)ipt_acc_tables[table_nr].data;
 +        struct ipt_acc_mask_8 *network_8 = 
 +            (struct ipt_acc_mask_8 *)dest->data;
-+        u_int32_t a;
++        struct ipt_acc_mask_16 *src_16, *network_16;
++        u_int32_t a, b;
 +
 +        for (a = 0; a <= 255; a++) {
 +            if (src_8->mask_16[a]) {
-+                struct ipt_acc_mask_16 *src_16, *network_16;
-+                u_int32_t b;
-+
 +                if ((network_8->mask_16[a] = 
 +                     (void*)get_zeroed_page(GFP_ATOMIC)) == NULL) {
 +                    printk("ACCOUNT: out of memory during copy of 24 bit network"
@@ -21980,11 +23400,422 @@ Index: net/ipv4/netfilter/ipt_ACCOUNT.c
 +module_init(init);
 +module_exit(fini);
 +MODULE_LICENSE("GPL");
+Index: net/ipv4/netfilter/ip_conntrack_h323_h225.c
+===================================================================
+--- net/ipv4/netfilter/ip_conntrack_h323_h225.c	(.../branches/linux-2.6.11.8)	(revision 0)
++++ net/ipv4/netfilter/ip_conntrack_h323_h225.c	(.../trunk)	(revision 6009)
+@@ -0,0 +1,406 @@
++/*
++ * H.323/H.225 connection tracking helper
++ * (c) 2005 Max Kellermann <max@duempel.org>
++ *
++ * Uses Sampsa Ranta's excellent idea on using expectfn to 'bind'
++ * the unregistered helpers to the conntrack entries.
++ */
++
++
++#include <linux/module.h>
++#include <linux/netfilter.h>
++#include <linux/ip.h>
++#include <net/checksum.h>
++#include <net/tcp.h>
++
++#include <linux/netfilter_ipv4/lockhelp.h>
++#include <linux/netfilter_ipv4/ip_conntrack.h>
++#include <linux/netfilter_ipv4/ip_conntrack_core.h>
++#include <linux/netfilter_ipv4/ip_conntrack_helper.h>
++#include <linux/netfilter_ipv4/ip_conntrack_tuple.h>
++#include <linux/netfilter_ipv4/ip_conntrack_h323.h>
++
++#include "asn1_per.h"
++
++/* This is slow, but it's simple. --RR */
++static char h225_buffer[65536];
++
++static DECLARE_LOCK(ip_h225_lock);
++
++int (*ip_nat_h225_hook)(struct sk_buff **pskb,
++			enum ip_conntrack_info ctinfo,
++			unsigned int offset,
++			struct ip_conntrack_expect *exp);
++EXPORT_SYMBOL_GPL(ip_nat_h225_hook);
++
++void (*ip_nat_h225_signal_hook)(struct sk_buff **pskb,
++				struct ip_conntrack *ct,
++				enum ip_conntrack_info ctinfo,
++				unsigned int offset,
++				int dir,
++				int orig_dir);
++EXPORT_SYMBOL_GPL(ip_nat_h225_signal_hook);
++
++#if 0
++#define DEBUGP printk
++#else
++#define DEBUGP(format, args...)
++#endif
++
++/**
++ * Parse an H.225 TransportAddress and return the position of the IP
++ * address (if present). Returns 1 on success.
++ */
++static int h225_parse_transport_address(struct asn1_per_buffer *bb, unsigned *i,
++					u_int32_t *ip, u_int16_t *port) {
++	unsigned choice, after;
++
++	choice = asn1_per_read_choice_header(bb, 1, 7, &after);
++	if (bb->error)
++		return 0;
++
++	switch (choice) {
++	case 0: /* ipAddress */
++		asn1_per_byte_align(bb);
++		*i = bb->i;
++		asn1_per_read_bytes(bb, ip, sizeof(*ip));
++		asn1_per_read_bytes(bb, port, sizeof(*port));
++		return !bb->error;
++
++	default:
++		if (after == 0) {
++			DEBUGP("TransportAddress %u not yet supported\n", choice);
++			bb->error = 1;
++		} else {
++			bb->i = after;
++		}
++		return 0;
++	}
++}
++
++/**
++ * Parse a H.225 Connect-UUIE packet and handle NAT/expectations for
++ * the H.245 transport address.
++ */
++static int h225_parse_connect_uuie(struct sk_buff **pskb,
++				   struct ip_conntrack *ct,
++				   enum ip_conntrack_info ctinfo,
++				   struct asn1_per_buffer *bb) {
++	struct asn1_per_sequence_header hdr;
++
++	asn1_per_read_sequence_header(bb, 1, 1, &hdr);
++
++	/* protocolIdentifier */
++	asn1_per_skip_object_id(bb);
++
++	/* h245Address */
++	if (asn1_per_bitmap_get(&hdr.present, 0)) {
++		int dir = CTINFO2DIR(ctinfo);
++		struct ip_conntrack_expect *exp;
++		int ret;
++		unsigned i;
++		u_int32_t ip;
++		u_int16_t port;
++
++		ret = h225_parse_transport_address(bb, &i, &ip, &port);
++		if (ret) {
++			DEBUGP("H.245 transportAddress: %u.%u.%u.%u:%u\n",
++			       NIPQUAD(ip), ntohs(port));
++		}
++		if (ret && ip == ct->tuplehash[dir].tuple.src.ip) {
++			/* match found: create an expectation */
++			exp = ip_conntrack_expect_alloc();
++			if (exp == NULL)
++				return NF_ACCEPT;
++
++			exp->tuple = ((struct ip_conntrack_tuple)
++					{ { ct->tuplehash[!dir].tuple.src.ip,
++					    { 0 } },
++					  { ct->tuplehash[!dir].tuple.dst.ip,
++					    { .tcp = { port } },
++					    IPPROTO_TCP }});
++			exp->mask = ((struct ip_conntrack_tuple)
++					{ { 0xFFFFFFFF, { 0 } },
++					  { 0xFFFFFFFF, { .tcp = { 0xFFFF } }, 0xFF }});
++
++			exp->expectfn = ip_conntrack_h245_expect;
++			exp->master = ct;
++
++			/* call NAT hook and register expectation */
++			if (ip_nat_h225_hook != NULL) {
++				return ip_nat_h225_hook(pskb, ctinfo, i,
++							exp);
++			} else {
++				/* Can't expect this?  Best to drop packet now. */
++				if (ip_conntrack_expect_related(exp) != 0) {
++					ip_conntrack_expect_free(exp);
++					return NF_DROP;
++				} else {
++					return NF_ACCEPT;
++				}
++			}
++		}
++	}
++
++	/* XXX */
++	bb->error = 1;
++
++	asn1_per_skip_sequence_extension(bb, &hdr);
++
++	return NF_ACCEPT;
++}
++
++/**
++ * Parse a H.225 H323-UU-PDU packet and handle NAT/expectations for
++ * the H.245 transport address.
++ */
++static int h225_parse_uu_pdu(struct sk_buff **pskb,
++			     struct ip_conntrack *ct,
++			     enum ip_conntrack_info ctinfo,
++			     struct asn1_per_buffer *bb) {
++	struct asn1_per_sequence_header hdr;
++	unsigned choice, after;
++	int ret;
++
++	asn1_per_read_sequence_header(bb, 1, 1, &hdr);
++
++	/* h323-message-body */
++	choice = asn1_per_read_choice_header(bb, 1, 7, &after);
++	switch (choice) {
++	case 2: /* connect */
++		ret = h225_parse_connect_uuie(pskb, ct, ctinfo, bb);
++		if (ret != NF_ACCEPT)
++			return ret;
++		break;
++
++	default:
++		if (after == 0) {
++			bb->error = 1;
++			return NF_ACCEPT;
++		}
++
++		bb->i = after;
++	}
++
++	asn1_per_skip_sequence_extension(bb, &hdr);
++
++	return NF_ACCEPT;
++}
++
++/**
++ * Parse a H.225 packet and handle NAT/expectations for the H.245
++ * transport address.
++ */
++static int h225_parse(struct sk_buff **pskb,
++		      struct ip_conntrack *ct,
++		      enum ip_conntrack_info ctinfo,
++		      struct asn1_per_buffer *bb) {
++	struct asn1_per_sequence_header hdr;
++
++	asn1_per_read_sequence_header(bb, 1, 1, &hdr);
++
++	return h225_parse_uu_pdu(pskb, ct, ctinfo, bb);
++}
++
++/**
++ * Parse a Q.931 CONNECT packet and handle NAT/expectations for the
++ * H.245 transport address.
++ */
++static int h225_parse_q931_connect(struct sk_buff **pskb,
++				   struct ip_conntrack *ct,
++				   enum ip_conntrack_info ctinfo,
++				   const unsigned char *data,
++				   unsigned i, unsigned length)
++{
++	struct asn1_per_buffer bb;
++
++	if (i + 2 > length)
++		return NF_ACCEPT;
++
++	if (data[i++] != 0x05) /* X.208 / X.209 */
++		return NF_ACCEPT;
++
++	asn1_per_initialize(&bb, data, length, i);
++
++	return h225_parse(pskb, ct, ctinfo, &bb);
++}
++
++/**
++ * Scan a Q.931 packet for a user-to-user information element
++ * (IE). Return the index, or 0 if none found.
++ */
++static unsigned q931_find_u2u(const unsigned char *data,
++			      unsigned datalen,
++			      unsigned int i,
++			      unsigned *lengthp) {
++	unsigned char type;
++	unsigned length;
++
++	/* traverse all Q.931 information elements (IE) */
++	while (i + 2 <= datalen) {
++		type = data[i++];
++
++		/* highest bit set means one-byte IE */
++		if (type & 0x80)
++			continue;
++
++		length = data[i++];
++
++		if (type == 0x7e) { /* user-to-user */
++			/* user-to-user IEs have a 16 bit length
++			   field */
++			length = (length << 8) | data[i++];
++			if (i + length > datalen)
++				return 0;
++
++			*lengthp = length;
++			return i;
++		}
++
++		i += length;
++	}
++
++	return 0;
++}
++
++/**
++ * Parse a Q.931/H.225 packet and handle NAT/expectations for the
++ * H.245 transport address (if applicable).
++ */
++static int h225_parse_q931(struct sk_buff **pskb,
++			   struct ip_conntrack *ct,
++			   enum ip_conntrack_info ctinfo,
++			   const unsigned char *data,
++			   unsigned datalen, unsigned i) {
++	u_int8_t q931_message_type;
++	unsigned length;
++
++	if (i + 3 > datalen)
++		return NF_ACCEPT;
++
++	/* parse Q.931 packet */
++	if (data[i++] != 0x08) /* protocol discriminator */
++		return NF_ACCEPT;
++
++	/* call reference */
++	i += 1 + data[i];
++	if (i >= datalen)
++		return NF_ACCEPT;
++
++	/* only some Q.931 message types can contain a H.245 transport
++	   address - we can ignore the rest in this module */
++	q931_message_type = data[i++];
++	if (q931_message_type == 0x07) {
++		/* CONNECT */
++
++		/* find a user-to-user information element (IE) */
++		i = q931_find_u2u(data, datalen, i, &length);
++		if (i == 0)
++			return NF_ACCEPT;
++
++		/* the length returned by q931_find_u2u() is relative
++		   to i */
++		length += i;
++
++		return h225_parse_q931_connect(pskb, ct, ctinfo,
++					       data, i, length);
++	} else {
++		/* XXX handle q931_message_type 0x01, 0x02, 0x03 */
++		return NF_ACCEPT;
++	}
++}
++
++/**
++ * Parse a TPKT/Q.931/H.225 packet and handle NAT/expectations for the
++ * H.245 transport address (if applicable).
++ */
++static int h225_parse_tpkt(struct sk_buff **pskb,
++			   struct ip_conntrack *ct,
++			   enum ip_conntrack_info ctinfo,
++			   const unsigned char *data,
++			   unsigned datalen) {
++	unsigned int i = 0;
++	u_int16_t tpkt_len;
++
++	if (i + 4 > datalen)
++		return NF_ACCEPT;
++
++	/* expect TPKT header, see RFC 1006 */
++	if (data[0] != 0x03 || data[1] != 0x00)
++		return NF_ACCEPT;
++
++	i += 2;
++
++	tpkt_len = ntohs(*(u_int16_t*)(data + i));
++	if (tpkt_len < datalen)
++		datalen = tpkt_len;
++
++	i += 2;
++
++	/* parse Q.931 packet */
++	return h225_parse_q931(pskb, ct, ctinfo,
++			       data, datalen, i);
++}
++
++static int h225_help(struct sk_buff **pskb,
++		     struct ip_conntrack *ct,
++		     enum ip_conntrack_info ctinfo)
++{
++	struct tcphdr _tcph, *tcph;
++	unsigned char *data;
++	unsigned dataoff, datalen;
++	int ret = NF_ACCEPT;
++
++	/* Until there's been traffic both ways, don't look in packets. */
++	if (ctinfo != IP_CT_ESTABLISHED
++	    && ctinfo != IP_CT_ESTABLISHED + IP_CT_IS_REPLY) {
++		DEBUGP("ct_h225_help: Conntrackinfo = %u\n", ctinfo);
++		return NF_ACCEPT;
++	}
++
++	tcph = skb_header_pointer((*pskb), (*pskb)->nh.iph->ihl*4,
++				  sizeof(_tcph), &_tcph);
++	if (tcph == NULL)
++		return NF_ACCEPT;
++
++	DEBUGP("ct_h225_help: help entered %u.%u.%u.%u:%u->%u.%u.%u.%u:%u\n",
++		NIPQUAD((*pskb)->nh.iph->saddr), ntohs(tcph->source),
++		NIPQUAD((*pskb)->nh.iph->daddr), ntohs(tcph->dest));
++
++	dataoff = (*pskb)->nh.iph->ihl*4 + tcph->doff*4;
++	/* No data? */
++	if (dataoff >= (*pskb)->len) {
++		DEBUGP("ct_h225_help: skblen = %u\n", (*pskb)->len);
++		return NF_ACCEPT;
++	}
++	datalen = (*pskb)->len - dataoff;
++
++	if (datalen < 16)
++		return NF_ACCEPT;
++
++	/* get data portion, and evaluate it */
++	LOCK_BH(&ip_h225_lock);
++	data = skb_header_pointer((*pskb), dataoff,
++				  datalen, h225_buffer);
++	BUG_ON(data == NULL);
++
++	ret = h225_parse_tpkt(pskb, ct, ctinfo,
++			      data, datalen);
++
++	UNLOCK_BH(&ip_h225_lock);
++	return ret;
++}
++
++struct ip_conntrack_helper ip_conntrack_helper_h225 =
++{
++	.name = "H.225",
++	.me = THIS_MODULE,
++	.max_expected = 2,
++	.timeout = 240,
++	.tuple = { .src = { .u = { __constant_htons(H225_PORT) } },
++		   .dst = { .protonum = IPPROTO_TCP } },
++	.mask = { .src = { .u = { 0xFFFF } },
++		  .dst = { .protonum = 0xFF } },
++	.help = h225_help
++};
++EXPORT_SYMBOL_GPL(ip_conntrack_helper_h225);
 Index: net/ipv4/netfilter/ip_nat_h323.c
 ===================================================================
 --- net/ipv4/netfilter/ip_nat_h323.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ip_nat_h323.c	(.../trunk)	(revision 5956)
-@@ -0,0 +1,149 @@
++++ net/ipv4/netfilter/ip_nat_h323.c	(.../trunk)	(revision 6009)
+@@ -0,0 +1,197 @@
 +/*
 + * H.323 'brute force' extension for NAT alteration.
 + * Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
@@ -22113,6 +23944,54 @@ Index: net/ipv4/netfilter/ip_nat_h323.c
 +	return NF_ACCEPT;
 +}
 +
++static int ip_nat_h245(struct sk_buff **pskb,
++		       enum ip_conntrack_info ctinfo,
++		       unsigned int offset,
++		       struct ip_conntrack_expect *exp)
++{
++	u_int16_t port;
++	struct {
++		u_int32_t ip;
++		u_int16_t port;
++	} __attribute__ ((__packed__)) newdata;
++	int dir = CTINFO2DIR(ctinfo);
++	struct ip_conntrack *ct = exp->master;
++	int ret;
++
++	/* Connection will come from wherever this packet goes, hence !dir */
++	newdata.ip = ct->tuplehash[!dir].tuple.dst.ip;
++	exp->saved_proto.tcp.port = exp->tuple.dst.u.tcp.port;
++	exp->dir = !dir;
++
++	/* When you see the packet, we need to NAT it the same as the
++	 * this one. */
++	exp->expectfn = ip_nat_follow_master;
++
++	/* Try to get same port: if not, try to change it. */
++	for (port = ntohs(exp->saved_proto.tcp.port); port != 0; port++) {
++		exp->tuple.dst.u.tcp.port = htons(port);
++		if (ip_conntrack_expect_related(exp) == 0)
++			break;
++	}
++
++	if (port == 0) {
++		ip_conntrack_expect_free(exp);
++		return NF_DROP;
++	}
++
++	newdata.port = htons(port);
++
++	/* now mangle packet */
++	ret = ip_nat_mangle_tcp_packet(pskb, ct, ctinfo,
++				       offset,
++				       sizeof(newdata),
++				       (const char*)&newdata, sizeof(newdata));
++	if (!ret)
++		return NF_DROP;
++
++	return NF_ACCEPT;
++}
++
 +static int __init init(void)
 +{
 +	BUG_ON(ip_nat_h225_hook != NULL);
@@ -22120,7 +23999,7 @@ Index: net/ipv4/netfilter/ip_nat_h323.c
 +
 +	ip_nat_h225_hook = ip_nat_h225;
 +	ip_nat_h225_signal_hook = ip_nat_h225_signal;
-+	ip_nat_h245_hook = ip_nat_h225;
++	ip_nat_h245_hook = ip_nat_h245;
 +
 +	return 0;
 +}
@@ -22136,8 +24015,8 @@ Index: net/ipv4/netfilter/ip_nat_h323.c
 +module_exit(fini);
 Index: net/ipv4/netfilter/ip_conntrack_amanda.c
 ===================================================================
---- net/ipv4/netfilter/ip_conntrack_amanda.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ip_conntrack_amanda.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ip_conntrack_amanda.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ip_conntrack_amanda.c	(.../trunk)	(revision 6009)
 @@ -151,6 +151,7 @@
  	.mask = { .src = { .u = { 0xFFFF } },
  		 .dst = { .protonum = 0xFF },
@@ -22148,8 +24027,8 @@ Index: net/ipv4/netfilter/ip_conntrack_amanda.c
  static void __exit fini(void)
 Index: net/ipv4/netfilter/ip_queue.c
 ===================================================================
---- net/ipv4/netfilter/ip_queue.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ip_queue.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ip_queue.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ip_queue.c	(.../trunk)	(revision 6009)
 @@ -425,6 +425,33 @@
  }
  
@@ -22199,10 +24078,53 @@ Index: net/ipv4/netfilter/ip_queue.c
  	default:
  		status = -EINVAL;
  	}
+Index: net/ipv4/netfilter/ip_conntrack_h323_core.c
+===================================================================
+--- net/ipv4/netfilter/ip_conntrack_h323_core.c	(.../branches/linux-2.6.11.8)	(revision 0)
++++ net/ipv4/netfilter/ip_conntrack_h323_core.c	(.../trunk)	(revision 6009)
+@@ -0,0 +1,38 @@
++/*
++ * H.323 connection tracking helper
++ * (c) 2005 Max Kellermann <max@duempel.org>
++ *
++ * Based on the 'brute force' H.323 connection tracking module by
++ * Jozsef Kadlecsik <kadlec@blackhole.kfki.hu>
++ */
++
++
++#include <linux/module.h>
++#include <linux/netfilter.h>
++#include <linux/ip.h>
++#include <net/checksum.h>
++#include <net/tcp.h>
++
++#include <linux/netfilter_ipv4/lockhelp.h>
++#include <linux/netfilter_ipv4/ip_conntrack.h>
++#include <linux/netfilter_ipv4/ip_conntrack_core.h>
++#include <linux/netfilter_ipv4/ip_conntrack_helper.h>
++#include <linux/netfilter_ipv4/ip_conntrack_tuple.h>
++#include <linux/netfilter_ipv4/ip_conntrack_h323.h>
++
++MODULE_AUTHOR("Max Kellermann <max@duempel.org>");
++MODULE_DESCRIPTION("H.323 connection tracking helper");
++MODULE_LICENSE("GPL");
++
++static int __init init(void)
++{
++	return ip_conntrack_helper_register(&ip_conntrack_helper_h225);
++}
++
++static void __exit fini(void)
++{
++	ip_conntrack_helper_unregister(&ip_conntrack_helper_h225);
++}
++
++module_init(init);
++module_exit(fini);
 Index: net/ipv4/netfilter/ip_nat_core.c
 ===================================================================
---- net/ipv4/netfilter/ip_nat_core.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ip_nat_core.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ip_nat_core.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ip_nat_core.c	(.../trunk)	(revision 6009)
 @@ -356,15 +356,6 @@
  	unsigned long statusbit;
  	enum ip_nat_manip_type mtype = HOOK2MANIP(hooknum);
@@ -22222,7 +24144,7 @@ Index: net/ipv4/netfilter/ip_nat_core.c
 Index: net/ipv4/netfilter/ip_set.c
 ===================================================================
 --- net/ipv4/netfilter/ip_set.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ip_set.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ip_set.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,1989 @@
 +/* Copyright (C) 2000-2002 Joakim Axelsson <gozem@linux.nu>
 + *                         Patrick Schaaf <bof@bof.de>
@@ -24216,7 +26138,7 @@ Index: net/ipv4/netfilter/ip_set.c
 Index: net/ipv4/netfilter/ipt_XOR.c
 ===================================================================
 --- net/ipv4/netfilter/ipt_XOR.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv4/netfilter/ipt_XOR.c	(.../trunk)	(revision 5956)
++++ net/ipv4/netfilter/ipt_XOR.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,117 @@
 +/* XOR target for IP tables
 + * (C) 2000 by Tim Vandermeersch <Tim.Vandermeersch@pandora.be>
@@ -24337,8 +26259,8 @@ Index: net/ipv4/netfilter/ipt_XOR.c
 +module_exit(fini);
 Index: net/ipv4/netfilter/ipt_sctp.c
 ===================================================================
---- net/ipv4/netfilter/ipt_sctp.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ipt_sctp.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ipt_sctp.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ipt_sctp.c	(.../trunk)	(revision 6009)
 @@ -42,7 +42,7 @@
  {
  	int offset;
@@ -24433,8 +26355,8 @@ Index: net/ipv4/netfilter/ipt_sctp.c
   					info->flag_info, info->flag_count, 
 Index: net/ipv4/netfilter/ipt_CLUSTERIP.c
 ===================================================================
---- net/ipv4/netfilter/ipt_CLUSTERIP.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ipt_CLUSTERIP.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ipt_CLUSTERIP.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ipt_CLUSTERIP.c	(.../trunk)	(revision 6009)
 @@ -29,7 +29,6 @@
  #include <linux/netfilter_ipv4/ip_tables.h>
  #include <linux/netfilter_ipv4/ipt_CLUSTERIP.h>
@@ -24472,8 +26394,8 @@ Index: net/ipv4/netfilter/ipt_CLUSTERIP.c
  #define PROC_WRITELEN	10
 Index: net/ipv4/netfilter/ip_conntrack_proto_sctp.c
 ===================================================================
---- net/ipv4/netfilter/ip_conntrack_proto_sctp.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ip_conntrack_proto_sctp.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ip_conntrack_proto_sctp.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ip_conntrack_proto_sctp.c	(.../trunk)	(revision 6009)
 @@ -310,7 +310,7 @@
  
  /* Returns verdict for packet, or -1 for invalid. */
@@ -24512,8 +26434,8 @@ Index: net/ipv4/netfilter/ip_conntrack_proto_sctp.c
  #ifdef CONFIG_SYSCTL
 Index: net/ipv4/netfilter/ipt_recent.c
 ===================================================================
---- net/ipv4/netfilter/ipt_recent.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv4/netfilter/ipt_recent.c	(.../trunk)	(revision 5956)
+--- net/ipv4/netfilter/ipt_recent.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv4/netfilter/ipt_recent.c	(.../trunk)	(revision 6009)
 @@ -15,6 +15,7 @@
  #include <linux/ctype.h>
  #include <linux/ip.h>
@@ -24598,8 +26520,8 @@ Index: net/ipv4/netfilter/ipt_recent.c
  #endif
 Index: net/ipv6/ip6_output.c
 ===================================================================
---- net/ipv6/ip6_output.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv6/ip6_output.c	(.../trunk)	(revision 5956)
+--- net/ipv6/ip6_output.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv6/ip6_output.c	(.../trunk)	(revision 6009)
 @@ -473,9 +473,15 @@
  #ifdef CONFIG_NETFILTER
  	to->nfmark = from->nfmark;
@@ -24618,8 +26540,8 @@ Index: net/ipv6/ip6_output.c
  	to->nf_bridge = from->nf_bridge;
 Index: net/ipv6/ipv6_syms.c
 ===================================================================
---- net/ipv6/ipv6_syms.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv6/ipv6_syms.c	(.../trunk)	(revision 5956)
+--- net/ipv6/ipv6_syms.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv6/ipv6_syms.c	(.../trunk)	(revision 6009)
 @@ -36,6 +36,8 @@
  #ifdef CONFIG_XFRM
  EXPORT_SYMBOL(xfrm6_rcv);
@@ -24631,8 +26553,8 @@ Index: net/ipv6/ipv6_syms.c
 +EXPORT_SYMBOL(ip6_dst_lookup);
 Index: net/ipv6/netfilter/Kconfig
 ===================================================================
---- net/ipv6/netfilter/Kconfig	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv6/netfilter/Kconfig	(.../trunk)	(revision 5956)
+--- net/ipv6/netfilter/Kconfig	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv6/netfilter/Kconfig	(.../trunk)	(revision 6009)
 @@ -56,6 +56,15 @@
  
  	  To compile it as a module, choose M here.  If unsure, say N.
@@ -24784,7 +26706,7 @@ Index: net/ipv6/netfilter/Kconfig
 Index: net/ipv6/netfilter/ip6t_HL.c
 ===================================================================
 --- net/ipv6/netfilter/ip6t_HL.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv6/netfilter/ip6t_HL.c	(.../trunk)	(revision 5956)
++++ net/ipv6/netfilter/ip6t_HL.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,112 @@
 +/* 
 + * Hop Limit modification target for ip6tables
@@ -24901,7 +26823,7 @@ Index: net/ipv6/netfilter/ip6t_HL.c
 Index: net/ipv6/netfilter/ip6t_REJECT.c
 ===================================================================
 --- net/ipv6/netfilter/ip6t_REJECT.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv6/netfilter/ip6t_REJECT.c	(.../trunk)	(revision 5956)
++++ net/ipv6/netfilter/ip6t_REJECT.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,305 @@
 +/*
 + * IP6 tables REJECT target module
@@ -25211,7 +27133,7 @@ Index: net/ipv6/netfilter/ip6t_REJECT.c
 Index: net/ipv6/netfilter/ip6t_fuzzy.c
 ===================================================================
 --- net/ipv6/netfilter/ip6t_fuzzy.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv6/netfilter/ip6t_fuzzy.c	(.../trunk)	(revision 5956)
++++ net/ipv6/netfilter/ip6t_fuzzy.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,187 @@
 +/*
 + * This module implements a simple TSK FLC
@@ -25403,7 +27325,7 @@ Index: net/ipv6/netfilter/ip6t_fuzzy.c
 Index: net/ipv6/netfilter/nf_conntrack_l3proto_ipv6.c
 ===================================================================
 --- net/ipv6/netfilter/nf_conntrack_l3proto_ipv6.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv6/netfilter/nf_conntrack_l3proto_ipv6.c	(.../trunk)	(revision 5956)
++++ net/ipv6/netfilter/nf_conntrack_l3proto_ipv6.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,630 @@
 +/*
 + * Copyright (C)2004 USAGI/WIDE Project
@@ -26037,8 +27959,8 @@ Index: net/ipv6/netfilter/nf_conntrack_l3proto_ipv6.c
 +PROVIDES_CONNTRACK(ipv6);
 Index: net/ipv6/netfilter/Makefile
 ===================================================================
---- net/ipv6/netfilter/Makefile	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/ipv6/netfilter/Makefile	(.../trunk)	(revision 5956)
+--- net/ipv6/netfilter/Makefile	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/ipv6/netfilter/Makefile	(.../trunk)	(revision 6009)
 @@ -8,19 +8,32 @@
  obj-$(CONFIG_IP6_NF_MATCH_MARK) += ip6t_mark.o
  obj-$(CONFIG_IP6_NF_MATCH_LENGTH) += ip6t_length.o
@@ -26075,7 +27997,7 @@ Index: net/ipv6/netfilter/Makefile
 Index: net/ipv6/netfilter/ip6t_ROUTE.c
 ===================================================================
 --- net/ipv6/netfilter/ip6t_ROUTE.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv6/netfilter/ip6t_ROUTE.c	(.../trunk)	(revision 5956)
++++ net/ipv6/netfilter/ip6t_ROUTE.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,308 @@
 +/*
 + * This implements the ROUTE v6 target, which enables you to setup unusual
@@ -26388,7 +28310,7 @@ Index: net/ipv6/netfilter/ip6t_ROUTE.c
 Index: net/ipv6/netfilter/ip6t_policy.c
 ===================================================================
 --- net/ipv6/netfilter/ip6t_policy.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv6/netfilter/ip6t_policy.c	(.../trunk)	(revision 5956)
++++ net/ipv6/netfilter/ip6t_policy.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,199 @@
 +/* IP tables module for matching IPsec policy
 + *
@@ -26592,7 +28514,7 @@ Index: net/ipv6/netfilter/ip6t_policy.c
 Index: net/ipv6/netfilter/ip6t_ULOG.c
 ===================================================================
 --- net/ipv6/netfilter/ip6t_ULOG.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv6/netfilter/ip6t_ULOG.c	(.../trunk)	(revision 5956)
++++ net/ipv6/netfilter/ip6t_ULOG.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,142 @@
 +/*
 + * netfilter module for userspace packet logging daemons
@@ -26739,7 +28661,7 @@ Index: net/ipv6/netfilter/ip6t_ULOG.c
 Index: net/ipv6/netfilter/nf_conntrack_proto_icmpv6.c
 ===================================================================
 --- net/ipv6/netfilter/nf_conntrack_proto_icmpv6.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv6/netfilter/nf_conntrack_proto_icmpv6.c	(.../trunk)	(revision 5956)
++++ net/ipv6/netfilter/nf_conntrack_proto_icmpv6.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,271 @@
 +/*
 + * Copyright (C)2003,2004 USAGI/WIDE Project
@@ -27015,7 +28937,7 @@ Index: net/ipv6/netfilter/nf_conntrack_proto_icmpv6.c
 Index: net/ipv6/netfilter/ip6t_nth.c
 ===================================================================
 --- net/ipv6/netfilter/ip6t_nth.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv6/netfilter/ip6t_nth.c	(.../trunk)	(revision 5956)
++++ net/ipv6/netfilter/ip6t_nth.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,171 @@
 +/*
 +  This is a module which is used for match support for every Nth packet
@@ -27191,7 +29113,7 @@ Index: net/ipv6/netfilter/ip6t_nth.c
 Index: net/ipv6/netfilter/nf_conntrack_reasm.c
 ===================================================================
 --- net/ipv6/netfilter/nf_conntrack_reasm.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/ipv6/netfilter/nf_conntrack_reasm.c	(.../trunk)	(revision 5956)
++++ net/ipv6/netfilter/nf_conntrack_reasm.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,887 @@
 +/*
 + * IPv6 fragment reassembly for connection tracking
@@ -28082,8 +30004,8 @@ Index: net/ipv6/netfilter/nf_conntrack_reasm.c
 +}
 Index: net/core/skbuff.c
 ===================================================================
---- net/core/skbuff.c	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/core/skbuff.c	(.../trunk)	(revision 5956)
+--- net/core/skbuff.c	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/core/skbuff.c	(.../trunk)	(revision 6009)
 @@ -293,6 +293,9 @@
  	}
  #ifdef CONFIG_NETFILTER
@@ -28119,7 +30041,7 @@ Index: net/core/skbuff.c
 Index: net/netfilter/nf_conntrack_ftp.c
 ===================================================================
 --- net/netfilter/nf_conntrack_ftp.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/netfilter/nf_conntrack_ftp.c	(.../trunk)	(revision 5956)
++++ net/netfilter/nf_conntrack_ftp.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,690 @@
 +/* FTP extension for connection tracking. */
 +
@@ -28814,7 +30736,7 @@ Index: net/netfilter/nf_conntrack_ftp.c
 Index: net/netfilter/nf_conntrack_proto_tcp.c
 ===================================================================
 --- net/netfilter/nf_conntrack_proto_tcp.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/netfilter/nf_conntrack_proto_tcp.c	(.../trunk)	(revision 5956)
++++ net/netfilter/nf_conntrack_proto_tcp.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,1146 @@
 +/* (C) 1999-2001 Paul `Rusty' Russell
 + * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
@@ -29965,7 +31887,7 @@ Index: net/netfilter/nf_conntrack_proto_tcp.c
 Index: net/netfilter/Kconfig
 ===================================================================
 --- net/netfilter/Kconfig	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/netfilter/Kconfig	(.../trunk)	(revision 5956)
++++ net/netfilter/Kconfig	(.../trunk)	(revision 6009)
 @@ -0,0 +1,74 @@
 +#
 +# protocol independent part of netfilter configuration
@@ -30044,7 +31966,7 @@ Index: net/netfilter/Kconfig
 Index: net/netfilter/nf_conntrack_proto_udp.c
 ===================================================================
 --- net/netfilter/nf_conntrack_proto_udp.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/netfilter/nf_conntrack_proto_udp.c	(.../trunk)	(revision 5956)
++++ net/netfilter/nf_conntrack_proto_udp.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,212 @@
 +/* (C) 1999-2001 Paul `Rusty' Russell
 + * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
@@ -30261,7 +32183,7 @@ Index: net/netfilter/nf_conntrack_proto_udp.c
 Index: net/netfilter/nf_conntrack_proto_sctp.c
 ===================================================================
 --- net/netfilter/nf_conntrack_proto_sctp.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/netfilter/nf_conntrack_proto_sctp.c	(.../trunk)	(revision 5956)
++++ net/netfilter/nf_conntrack_proto_sctp.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,668 @@
 +/*
 + * Connection tracking protocol helper module for SCTP.
@@ -30934,7 +32856,7 @@ Index: net/netfilter/nf_conntrack_proto_sctp.c
 Index: net/netfilter/nf_conntrack_l3proto_generic.c
 ===================================================================
 --- net/netfilter/nf_conntrack_l3proto_generic.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/netfilter/nf_conntrack_l3proto_generic.c	(.../trunk)	(revision 5956)
++++ net/netfilter/nf_conntrack_l3proto_generic.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,99 @@
 +/*
 + * (C) 2003,2004 USAGI/WIDE Project <http://www.linux-ipv6.org>
@@ -31038,7 +32960,7 @@ Index: net/netfilter/nf_conntrack_l3proto_generic.c
 Index: net/netfilter/nf_conntrack_proto_generic.c
 ===================================================================
 --- net/netfilter/nf_conntrack_proto_generic.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/netfilter/nf_conntrack_proto_generic.c	(.../trunk)	(revision 5956)
++++ net/netfilter/nf_conntrack_proto_generic.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,85 @@
 +/* (C) 1999-2001 Paul `Rusty' Russell
 + * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
@@ -31128,7 +33050,7 @@ Index: net/netfilter/nf_conntrack_proto_generic.c
 Index: net/netfilter/nfnetlink.c
 ===================================================================
 --- net/netfilter/nfnetlink.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/netfilter/nfnetlink.c	(.../trunk)	(revision 5956)
++++ net/netfilter/nfnetlink.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,349 @@
 +/* Netfilter messages via netlink socket. Allows for user space
 + * protocol helpers and general trouble making from userspace.
@@ -31482,7 +33404,7 @@ Index: net/netfilter/nfnetlink.c
 Index: net/netfilter/Makefile
 ===================================================================
 --- net/netfilter/Makefile	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/netfilter/Makefile	(.../trunk)	(revision 5956)
++++ net/netfilter/Makefile	(.../trunk)	(revision 6009)
 @@ -0,0 +1,9 @@
 +nf_conntrack-objs	:= nf_conntrack_core.o nf_conntrack_standalone.o nf_conntrack_l3proto_generic.o nf_conntrack_proto_generic.o nf_conntrack_proto_tcp.o nf_conntrack_proto_udp.o
 +
@@ -31496,7 +33418,7 @@ Index: net/netfilter/Makefile
 Index: net/netfilter/nf_conntrack_core.c
 ===================================================================
 --- net/netfilter/nf_conntrack_core.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/netfilter/nf_conntrack_core.c	(.../trunk)	(revision 5956)
++++ net/netfilter/nf_conntrack_core.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,1390 @@
 +/* Connection state tracking for netfilter.  This is separated from,
 +   but required by, the NAT layer; it can also be used by an iptables
@@ -32891,7 +34813,7 @@ Index: net/netfilter/nf_conntrack_core.c
 Index: net/netfilter/nf_conntrack_standalone.c
 ===================================================================
 --- net/netfilter/nf_conntrack_standalone.c	(.../branches/linux-2.6.11.8)	(revision 0)
-+++ net/netfilter/nf_conntrack_standalone.c	(.../trunk)	(revision 5956)
++++ net/netfilter/nf_conntrack_standalone.c	(.../trunk)	(revision 6009)
 @@ -0,0 +1,821 @@
 +/* This file contains all the functions required for the standalone
 +   nf_conntrack module.
@@ -33716,8 +35638,8 @@ Index: net/netfilter/nf_conntrack_standalone.c
 +EXPORT_SYMBOL(__nf_conntrack_attach);
 Index: net/Makefile
 ===================================================================
---- net/Makefile	(.../branches/linux-2.6.11.8)	(revision 5956)
-+++ net/Makefile	(.../trunk)	(revision 5956)
+--- net/Makefile	(.../branches/linux-2.6.11.8)	(revision 6009)
++++ net/Makefile	(.../trunk)	(revision 6009)
 @@ -42,6 +42,7 @@
  obj-$(CONFIG_ECONET)		+= econet/
  obj-$(CONFIG_VLAN_8021Q)	+= 8021q/
