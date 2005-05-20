@@ -504,6 +504,7 @@ Summary:	Development files for building kernel modules
 Summary(pl):	Pliki s³u¿±ce do budowania modu³ów j±dra
 Group:		Base/Kernel
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
+Provides:	kernel-module-build = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description module-build
