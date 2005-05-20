@@ -154,6 +154,7 @@ Patch27:	linux-ppc-oops.patch
 Patch28:	linux-2.6-sparc-ksyms.patch
 Patch29:	linux-2.6-ppc-no-pc-serial.patch
 Patch30:	2.6.x-TGA-fbdev-lkml.patch
+Patch31:	linux-2.6-ppc-no-i8042.patch
 
 # netfilter
 Patch50:	linux-2.6-pom-ng-branch.diff
@@ -596,6 +597,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch28 -p1
 %patch29 -p1
 %patch30 -p1
+%patch31 -p1
 
 %patch50 -p0
 mv -f {,netfilter.}status
