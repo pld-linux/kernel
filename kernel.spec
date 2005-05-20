@@ -718,11 +718,12 @@ TuneUpConfigForIX86 () {
 
 %if "%{_target_base_arch}" != "%{_arch}"
 CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
+export DEPMOD=/bin/true
 %else
 CrossOpts=""
 %endif
 
-BuildConfig (){
+BuildConfig() {
 	%{?debug:set -x}
 	# is this a special kernel we want to build?
 	smp=
@@ -808,7 +809,7 @@ BuildKernel() {
 %endif
 }
 
-PreInstallKernel (){
+PreInstallKernel() {
 	smp=
 	[ "$1" = "smp" -o "$2" = "smp" ] && smp=yes
 	if [ "$smp" = "yes" ]; then
@@ -852,7 +853,10 @@ PreInstallKernel (){
 		KERNELRELEASE=$KernelVer
 
 	echo "CHECKING DEPENDENCIES FOR KERNEL MODULES"
+	[ -z $CrossOpts ] && \
 	/sbin/depmod --basedir $KERNEL_INSTALL_DIR -ae -F $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer -r $KernelVer || echo
+	[ ! -z $CrossOpts ] && \
+	touch $KERNEL_INSTALL_DIR/modules.dep
 
 	echo "KERNEL RELEASE $KernelVer DONE"
 
@@ -880,6 +884,7 @@ rm -rf $RPM_BUILD_ROOT
 umask 022
 %if "%{_target_base_arch}" != "%{_arch}"
 CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
+export DEPMOD=/bin/true
 %else
 CrossOpts=""
 %endif
