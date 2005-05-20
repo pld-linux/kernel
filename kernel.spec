@@ -84,11 +84,11 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
-Name:		kernel
+Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}
 %define		_postver	.10
 #define		_postver	%{nil}
 Version:	2.6.11%{_postver}
-Release:	%{_rel}%{?with_grsecurity:g}%{?with_omosix:m}%{?with_vserver:v}
+Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
@@ -97,41 +97,41 @@ Group:		Base/Kernel
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 # Source0-md5:	6a66a372a1f8395f241f248f5fe8222a
-Source1:	%{name}-autoconf.h
-Source2:	%{name}-config.h
+Source1:	kernel-autoconf.h
+Source2:	kernel-config.h
 
 Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
 
-Source20:	%{name}-i386.config
-Source21:	%{name}-i386-smp.config
-Source22:	%{name}-x86_64.config
-Source23:	%{name}-x86_64-smp.config
-Source24:	%{name}-sparc.config
-Source25:	%{name}-sparc-smp.config
-Source26:	%{name}-sparc64.config
-Source27:	%{name}-sparc64-smp.config
-Source28:	%{name}-alpha.config
-Source29:	%{name}-alpha-smp.config
-Source30:	%{name}-ppc.config
-Source31:	%{name}-ppc-smp.config
-Source32:	%{name}-ia64.config
-Source33:	%{name}-ia64-smp.config
+Source20:	kernel-i386.config
+Source21:	kernel-i386-smp.config
+Source22:	kernel-x86_64.config
+Source23:	kernel-x86_64-smp.config
+Source24:	kernel-sparc.config
+Source25:	kernel-sparc-smp.config
+Source26:	kernel-sparc64.config
+Source27:	kernel-sparc64-smp.config
+Source28:	kernel-alpha.config
+Source29:	kernel-alpha-smp.config
+Source30:	kernel-ppc.config
+Source31:	kernel-ppc-smp.config
+Source32:	kernel-ia64.config
+Source33:	kernel-ia64-smp.config
 
-Source40:	%{name}.FAQ-pl
+Source40:	kernel.FAQ-pl
 
-Source80:	%{name}-netfilter.config
-Source90:	%{name}-grsec.config
-Source91:	%{name}-grsec+pax.config
-Source92:	%{name}-omosix.config
-Source93:	%{name}-vserver.config
-Source94:	%{name}-em8300.config
+Source80:	kernel-netfilter.config
+Source90:	kernel-grsec.config
+Source91:	kernel-grsec+pax.config
+Source92:	kernel-omosix.config
+Source93:	kernel-vserver.config
+Source94:	kernel-em8300.config
 
 Patch0:		2.6.0-ksyms-add.patch
 Patch1:		linux-2.6-version.patch
 
 Patch3:		2.6.0-t9-acpi_osl-lkml.patch
 Patch4:		linux-kbuild-extmod.patch
-Patch5:		%{name}-MAX_INIT_ARGS.patch
+Patch5:		kernel-MAX_INIT_ARGS.patch
 # http://www.kernel.org/pub/linux/devel/binutils/linux-2.6-seg-5.patch
 Patch6:		linux-2.6-seg-5.patch
 
@@ -235,8 +235,8 @@ Patch201:	linux-2.6-omosix.patch
 # vserver-2.0-pre4
 Patch202:	linux-2.6-vs2.patch
 
-Patch400:	%{name}-gcc4.patch
-Patch401:	%{name}-hotfixes.patch
+Patch400:	kernel-gcc4.patch
+Patch401:	kernel-hotfixes.patch
 Patch402:	linux-em8300-2.6.11.2.patch
 
 URL:		http://www.kernel.org/
@@ -252,8 +252,9 @@ Autoreqprov:	no
 PreReq:		coreutils
 PreReq:		module-init-tools >= 0.9.9
 PreReq:		geninitrd >= 2.57
+Provides:	kernel = %{epoch}:%{version}-%{release}
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
-Provides:	%{name}(netfilter) = %{_netfilter_snap}
+Provides:	kernel(netfilter) = %{_netfilter_snap}
 Provides:	module-info
 Obsoletes:	kernel-modules
 Obsoletes:	kernel-net-ipp2p
@@ -307,7 +308,7 @@ Summary(pl):	Sterowniki DRM
 Group:		Base/Kernel
 PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
-Provides:	%{name}-drm = %{drm_xfree_version}
+Provides:	kernel-drm = %{drm_xfree_version}
 Autoreqprov:	no
 
 %description drm
@@ -322,7 +323,7 @@ Summary(pl):	Modu³y PCMCIA
 Group:		Base/Kernel
 PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
-Provides:	%{name}-pcmcia = %{pcmcia_version}
+Provides:	kernel-pcmcia = %{pcmcia_version}
 Provides:	kernel(pcmcia)
 Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
 Autoreqprov:	no
@@ -373,8 +374,8 @@ Group:		Base/Kernel
 PreReq:		coreutils
 PreReq:		module-init-tools >= 0.9.9
 PreReq:		geninitrd >= 2.26
-Provides:	%{name} = %{epoch}:%{version}-%{release}
-Provides:	%{name}(netfilter) = %{_netfilter_snap}
+Provides:	kernel = %{epoch}:%{version}-%{release}
+Provides:	kernel(netfilter) = %{_netfilter_snap}
 Provides:	module-info
 Obsoletes:	kernel-smp-net-ipp2p
 Conflicts:	util-linux < %{_util_linux_ver}
@@ -418,7 +419,7 @@ Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
-Provides:	%{name}-drm = %{drm_xfree_version}
+Provides:	kernel-drm = %{drm_xfree_version}
 Autoreqprov:	no
 
 %description smp-drm
@@ -433,7 +434,7 @@ Summary(pl):	Modu³y PCMCIA dla maszyn SMP
 Group:		Base/Kernel
 PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
-Provides:	%{name}-pcmcia = %{pcmcia_version}
+Provides:	kernel-pcmcia = %{pcmcia_version}
 Provides:	kernel(pcmcia)
 Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
 Autoreqprov:	no
@@ -480,12 +481,12 @@ Sterowniki OSS (Open Sound System) dla maszyn wieloprocesorowych.
 Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra Linuksa
 Group:		Base/Kernel
-Provides:	%{name}-headers(agpgart) = %{version}
-Provides:	%{name}-headers(reiserfs) = %{version}
-Provides:	%{name}-headers(bridging) = %{version}
+Provides:	kernel-headers(agpgart) = %{version}
+Provides:	kernel-headers(reiserfs) = %{version}
+Provides:	kernel-headers(bridging) = %{version}
 Provides:	kernel-i2c-devel
-Provides:	%{name}-headers(netfilter) = %{_netfilter_snap}
-Provides:	%{name}-headers(alsa-drivers)
+Provides:	kernel-headers(netfilter) = %{_netfilter_snap}
+Provides:	kernel-headers(alsa-drivers)
 Obsoletes:	kernel-i2c-devel
 Autoreqprov:	no
 
@@ -549,7 +550,7 @@ Pakiet zawiera kod ¼ród³owy j±dra systemu.
 Summary:	Kernel documentation
 Summary(pl):	Dokumentacja do j±dra Linuksa
 Group:		Base/Kernel
-Provides:	%{name}-doc = %{version}
+Provides:	kernel-doc = %{version}
 Autoreqprov:	no
 
 %description doc
