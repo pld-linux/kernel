@@ -488,6 +488,7 @@ Provides:	kernel-headers(bridging) = %{version}
 Provides:	kernel-i2c-devel
 Provides:	kernel-headers(netfilter) = %{_netfilter_snap}
 Provides:	kernel-headers(alsa-drivers)
+Provides:	kernel-headers = %{epoch}:%{version}-%{release}
 Obsoletes:	kernel-i2c-devel
 Autoreqprov:	no
 
