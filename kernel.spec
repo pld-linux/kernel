@@ -67,7 +67,7 @@ grsecurity conflicts with vserver
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		3
+%define		_rel		4
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -522,6 +522,7 @@ Summary:	Kernel source tree
 Summary(pl):	Kod ¼ród³owy j±dra Linuksa
 Group:		Base/Kernel
 Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
+Provides:	kernel-source = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description source
