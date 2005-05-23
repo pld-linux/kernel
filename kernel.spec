@@ -948,7 +948,8 @@ $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
 install %{SOURCE2} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/config.h
 
-install -D drivers/net/sk98lin/sk98lin.4 $RPM_BUILD_ROOT%{_mandir}/man4/sk98lin.4
+# moved updated file to man-pages
+#install -D drivers/net/sk98lin/sk98lin.4 $RPM_BUILD_ROOT%{_mandir}/man4/sk98lin.4
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -1115,7 +1116,7 @@ fi
 %endif
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
-%{_mandir}/man4/sk98lin.4*
+#%{_mandir}/man4/sk98lin.4*
 
 %ifnarch sparc sparc64
 %files drm
@@ -1191,7 +1192,7 @@ fi
 %endif
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
-%{_mandir}/man4/sk98lin.4*
+#%{_mandir}/man4/sk98lin.4*
 
 %ifnarch sparc sparc64
 %files smp-drm
