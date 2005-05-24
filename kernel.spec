@@ -376,6 +376,7 @@ PreReq:		coreutils
 PreReq:		module-init-tools >= 0.9.9
 PreReq:		geninitrd >= 2.26
 Provides:	kernel = %{epoch}:%{version}-%{release}
+Provides:	kernel-smp = %{epoch}:%{version}-%{release}
 Provides:	kernel(netfilter) = %{_netfilter_snap}
 Provides:	module-info
 Obsoletes:	kernel-smp-net-ipp2p
