@@ -921,8 +921,7 @@ cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 %{__make} $CrossOpts mrproper \
 	RCS_FIND_IGNORE='-name build-done -prune -o'
 
-find -name "*~" -exec rm -f "{}" ";"
-find -name "*.orig" -exec rm -f "{}" ";"
+find '(' -name '*~' -o -name '*.orig' ')' -print0 | xargs -0 -r -l512 rm -f
 
 if [ -e $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h ]; then
 install $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h \
@@ -957,6 +956,9 @@ rm -rf $RPM_BUILD_ROOT
 
 %preun
 rm -f /lib/modules/%{version}-%{release}/modules.*
+if [ -x /sbin/new-kernel-pkg ]; then
+    /sbin/new-kernel-pkg --remove %{version}-%{release}
+fi
 
 %post
 %ifarch ia64
@@ -976,7 +978,9 @@ ln -sf System.map-%{version}-%{release} /boot/System.map
 mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old
 ln -sf initrd-%{version}-%{release}.gz %{initrd_dir}/initrd
 
-if [ -x /sbin/rc-boot ] ; then
+if [ -x /sbin/new-kernel-pkg ]; then
+	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{version}-%{release}.gz --install %{version}-%{release}
+elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
@@ -1009,6 +1013,9 @@ rm -f %{initrd_dir}/initrd-%{version}-%{release}.gz
 
 %preun smp
 rm -f /lib/modules/%{version}-%{release}smp/modules.*
+if [ -x /sbin/new-kernel-pkg ]; then
+    /sbin/new-kernel-pkg --remove %{version}-%{release}
+fi
 
 %post smp
 %ifarch ia64
@@ -1028,7 +1035,9 @@ ln -sf System.map-%{version}-%{release}smp /boot/System.map
 mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old
 ln -sf initrd-%{version}-%{release}smp.gz %{initrd_dir}/initrd
 
-if [ -x /sbin/rc-boot ] ; then
+if [ -x /sbin/new-kernel-pkg ]; then
+	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{version}-%{release}.gz --install %{version}-%{release}
+elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
