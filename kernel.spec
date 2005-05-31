@@ -67,7 +67,7 @@ grsecurity conflicts with vserver
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		6
+%define		_rel		1
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -85,7 +85,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}
-%define		_postver	.10
+%define		_postver	.11
 #define		_postver	%{nil}
 Version:	2.6.11%{_postver}
 Release:	%{_rel}
@@ -96,7 +96,7 @@ Group:		Base/Kernel
 #define		_rc	-rc3
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	6a66a372a1f8395f241f248f5fe8222a
+# Source0-md5:	d074fe2ef6ccbd635ebc6c327bb82a2b
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 
@@ -209,7 +209,7 @@ Patch111:	linux-2.6-iriver-backing-device-capability-information-fix.patch
 Patch112:	linux-2.6-sata-sil-corruption-lockup.patch
 Patch113:	linux-2.6-xfrm-policy-destructor.patch
 Patch114:	linux-2.6-dst-cache-overflow.patch
-Patch115:	linux-2.6-3c95x-invalid-mac-address-after-reboot.patch
+
 Patch116:	linux-2.6-null-tty-driver-oops.patch
 Patch117:	linux-2.6-sata-sil-mod15write-workaround.patch
 Patch118:	linux-2.6-ext2-corruption.patch
@@ -641,7 +641,7 @@ mv -f {,netfilter.}status
 %patch112 -p1
 %patch113 -p1
 %patch114 -p1
-%patch115 -p1
+
 %patch116 -p1
 %patch117 -p1
 %patch118 -p1
