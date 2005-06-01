@@ -209,7 +209,7 @@ Patch111:	linux-2.6-iriver-backing-device-capability-information-fix.patch
 Patch112:	linux-2.6-sata-sil-corruption-lockup.patch
 Patch113:	linux-2.6-xfrm-policy-destructor.patch
 Patch114:	linux-2.6-dst-cache-overflow.patch
-
+Patch115:	linux-2.6-net-sundance-ip100A-pciids.patch
 Patch116:	linux-2.6-null-tty-driver-oops.patch
 Patch117:	linux-2.6-sata-sil-mod15write-workaround.patch
 Patch118:	linux-2.6-ext2-corruption.patch
@@ -239,7 +239,6 @@ Patch202:	linux-2.6-vs2.patch
 Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
 Patch402:	linux-em8300-2.6.11.2.patch
-Patch404:	linux-2.6.12-net-sundance-ip100A.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -642,7 +641,7 @@ mv -f {,netfilter.}status
 %patch112 -p1
 %patch113 -p1
 %patch114 -p1
-
+%patch115 -p1
 %patch116 -p1
 %patch117 -p1
 %patch118 -p1
@@ -676,7 +675,6 @@ mv -f {,netfilter.}status
 %if %{with em8300}
 %patch402 -p1
 %endif
-%patch404 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
