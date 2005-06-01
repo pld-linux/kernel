@@ -67,7 +67,7 @@ grsecurity conflicts with vserver
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1
+%define		_rel		1.1
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -239,6 +239,7 @@ Patch202:	linux-2.6-vs2.patch
 Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
 Patch402:	linux-em8300-2.6.11.2.patch
+Patch404:	linux-2.6.12-net-sundance-ip100A.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -675,6 +676,7 @@ mv -f {,netfilter.}status
 %if %{with em8300}
 %patch402 -p1
 %endif
+%patch404 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
