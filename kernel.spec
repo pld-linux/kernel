@@ -67,7 +67,7 @@ grsecurity conflicts with vserver
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1.1
+%define		_rel		2
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -227,6 +227,8 @@ Patch129:	linux-2.6-vfs-two-read-without-clear-between.patch
 Patch130:	linux-2.6-fix-via82xx-resume.patch
 Patch131:	linux-2.6-ppc-fix-sleep-on-old-101-powerbook.patch
 Patch132:	linux-2.6-rmap-oops.patch
+Patch133:	linux-2.6-via82c586-irq-routing.patch
+Patch134:	linux-2.6-udp-locking.patch
 
 # derived from http://www.grsecurity.net/grsecurity-2.1.5-2.6.11.7-200504111924.patch.gz
 Patch200:	grsecurity-2.1.5-2.6.11.7-200504111924.patch
@@ -659,6 +661,8 @@ mv -f {,netfilter.}status
 %patch130 -p1
 %patch131 -p1
 %patch132 -p1
+%patch133 -p1
+%patch134 -p1
 
 %if %{with grsecurity}
 %patch200 -p1
