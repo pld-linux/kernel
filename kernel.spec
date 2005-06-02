@@ -67,7 +67,7 @@ grsecurity conflicts with vserver
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		2
+%define		_rel		2.1
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -125,6 +125,7 @@ Source91:	kernel-grsec+pax.config
 Source92:	kernel-omosix.config
 Source93:	kernel-vserver.config
 Source94:	kernel-em8300.config
+Source95:	kernel-linuxabi.config
 
 Patch0:		2.6.0-ksyms-add.patch
 Patch1:		linux-2.6-version.patch
@@ -229,6 +230,8 @@ Patch131:	linux-2.6-ppc-fix-sleep-on-old-101-powerbook.patch
 Patch132:	linux-2.6-rmap-oops.patch
 Patch133:	linux-2.6-via82c586-irq-routing.patch
 Patch134:	linux-2.6-udp-locking.patch
+# derived from http://adsl-brisbane.lubemobile.com.au/ras/debian/sarge/kernel-patch-linuxabi/
+Patch135:	linux-2.6-unix-abi.patch
 
 # derived from http://www.grsecurity.net/grsecurity-2.1.5-2.6.11.7-200504111924.patch.gz
 Patch200:	grsecurity-2.1.5-2.6.11.7-200504111924.patch
@@ -663,12 +666,15 @@ mv -f {,netfilter.}status
 %patch132 -p1
 %patch133 -p1
 %patch134 -p1
+%ifarch %{ix86}
+%patch135 -p1
+%endif
 
 %if %{with grsecurity}
 %patch200 -p1
 %endif
 %if %{with omosix}
-%patch201 -p1
+%{__patch} -p1 -F3 < %{PATCH201}
 %endif
 %if %{with vserver}
 %patch202 -p1
@@ -720,9 +726,10 @@ TuneUpConfigForIX86 () {
     %ifarch i686 pentium3 pentium4
 	sed -i 's:CONFIG_MATH_EMULATION=y:# CONFIG_MATH_EMULATION is not set:' $1
     %endif
-    %ifarch %{ix86}
+    %if %{with regparm}
 	sed -i 's:# CONFIG_REGPARM is not set:CONFIG_REGPARM=y:' $1
     %endif
+    cat %{SOURCE95} >> $1
 %endif
 }
 
