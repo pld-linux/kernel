@@ -1104,6 +1104,7 @@ fi
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}/kernel
+/lib/modules/%{version}-%{release}/kernel/abi
 %ifnarch ppc sparc
 /lib/modules/%{version}-%{release}/kernel/arch
 %endif
@@ -1180,6 +1181,7 @@ fi
 /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp/kernel
+/lib/modules/%{version}-%{release}smp/kernel/abi
 %ifnarch ppc sparc
 /lib/modules/%{version}-%{release}smp/kernel/arch
 %endif
