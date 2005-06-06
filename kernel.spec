@@ -67,7 +67,7 @@ grsecurity conflicts with vserver
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		2.1
+%define		_rel		2.2
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -1276,6 +1276,7 @@ fi
 %if %{with source}
 %files source
 %defattr(644,root,root,755)
+%{_prefix}/src/linux-%{version}/abi
 %{_prefix}/src/linux-%{version}/arch/*/[!Mk]*
 %{_prefix}/src/linux-%{version}/arch/*/kernel/[!M]*
 %exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
