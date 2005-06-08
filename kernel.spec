@@ -67,7 +67,7 @@ grsecurity conflicts with vserver
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		2.2
+%define		_rel		2.3
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -657,7 +657,7 @@ mv -f {,netfilter.}status
 %patch129 -p1
 %patch130 -p1
 %patch131 -p1
-%patch132 -p1
+#%patch132 -p1
 %patch133 -p1
 %patch134 -p1
 %ifarch %{ix86}
