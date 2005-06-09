@@ -660,7 +660,9 @@ mv -f {,netfilter.}status
 #%patch132 -p1
 %patch133 -p1
 %patch134 -p1
+%ifarch %{ix86}
 %patch135 -p1
+%endif
 
 %if %{with grsecurity}
 %patch200 -p1
