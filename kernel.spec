@@ -660,9 +660,7 @@ mv -f {,netfilter.}status
 #%patch132 -p1
 %patch133 -p1
 %patch134 -p1
-%ifarch %{ix86}
 %patch135 -p1
-%endif
 
 %if %{with grsecurity}
 %patch200 -p1
@@ -1104,7 +1102,9 @@ fi
 /boot/System.map-%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}/kernel
+%ifarch %{ix86}
 /lib/modules/%{version}-%{release}/kernel/abi
+%endif
 %ifnarch ppc sparc
 /lib/modules/%{version}-%{release}/kernel/arch
 %endif
@@ -1181,7 +1181,9 @@ fi
 /boot/System.map-%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp/kernel
+%ifarch %{ix86}
 /lib/modules/%{version}-%{release}smp/kernel/abi
+%endif
 %ifnarch ppc sparc
 /lib/modules/%{version}-%{release}smp/kernel/arch
 %endif
