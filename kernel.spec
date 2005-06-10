@@ -954,6 +954,14 @@ install %{SOURCE2} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/
 # moved updated file to man-pages
 #install -D drivers/net/sk98lin/sk98lin.4 $RPM_BUILD_ROOT%{_mandir}/man4/sk98lin.4
 
+# ghosted initrd
+%if %{with up}
+> $RPM_BUILD_ROOT/boot/initrd-%{version}-%{release}.gz
+%endif
+%if %{with smp}
+> $RPM_BUILD_ROOT/boot/initrd-%{version}-%{release}smp.gz
+%endif
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -1100,6 +1108,7 @@ fi
 %endif
 /boot/vmlinuz-%{version}-%{release}
 /boot/System.map-%{version}-%{release}
+%ghost /boot/initrd-%{version}-%{release}.gz
 %dir /lib/modules/%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}/kernel
 %ifarch %{ix86}
@@ -1179,6 +1188,7 @@ fi
 %endif
 /boot/vmlinuz-%{version}-%{release}smp
 /boot/System.map-%{version}-%{release}smp
+%ghost /boot/initrd-%{version}-%{release}smp.gz
 %dir /lib/modules/%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp/kernel
 %ifarch %{ix86}
