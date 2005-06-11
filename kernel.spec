@@ -135,6 +135,9 @@ Source30:	kernel-ppc.config
 Source31:	kernel-ppc-smp.config
 Source32:	kernel-ia64.config
 Source33:	kernel-ia64-smp.config
+Source34:	kernel-xen0.config
+#Source35:	kernel-xen0-smp.config
+#Source36:	kernel-xenU.config
 
 Source40:	kernel.FAQ-pl
 
