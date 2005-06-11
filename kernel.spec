@@ -249,7 +249,7 @@ Patch128:	linux-2.6-hfsplus-leak-and-oops.patch
 Patch129:	linux-2.6-vfs-two-read-without-clear-between.patch
 Patch130:	linux-2.6-fix-via82xx-resume.patch
 Patch131:	linux-2.6-ppc-fix-sleep-on-old-101-powerbook.patch
-Patch132:	linux-2.6-rmap-oops.patch
+
 Patch133:	linux-2.6-via82c586-irq-routing.patch
 Patch134:	linux-2.6-udp-locking.patch
 # derived from http://adsl-brisbane.lubemobile.com.au/ras/debian/sarge/kernel-patch-linuxabi/
@@ -685,7 +685,7 @@ mv -f {,netfilter.}status
 %patch129 -p1
 %patch130 -p1
 %patch131 -p1
-#%patch132 -p1
+
 %patch133 -p1
 %patch134 -p1
 %patch135 -p1
