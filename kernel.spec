@@ -16,13 +16,10 @@
 %bcond_with	regparm		# (ix86) use register arguments (this break binary-only modules)
 %bcond_with	em8300		# DXR3/Hollywood
 %bcond_with	xen0		# build Xen0 kernel
+%bcond_with	xenU		# build XenU kernel
 
-%if %{with xen0}
+%if %{with xen0} || %{with xenU}
 %define with_xen 1
-%endif
-
-%if %{with xen} && %{with grsecurity}
-xen conflics with grsecurity
 %endif
 
 %if !%{with grsecurity}
@@ -49,6 +46,14 @@ grsecurity conflicts with omosix
 grsecurity conflicts with vserver
 %endif
 
+%if %{with xen} && %{with grsecurity}
+xen conflicts with grsecurity
+%endif
+
+%if %{with xen0} && %{with xenU}
+xen0 conflicts with xenU
+%endif
+
 %{?debug:%define with_verbose 1}
 
 %ifarch sparc
@@ -58,6 +63,11 @@ grsecurity conflicts with vserver
 %ifarch ia64
 # broken
 %undefine	with_up
+%endif
+
+%if %{with xenU}
+# guest is only UP
+%undefine	with_smp
 %endif
 
 ## Program required by kernel to work.
@@ -93,7 +103,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
-Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}
+Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 %define		_postver	.11
 #define		_postver	%{nil}
 Version:	2.6.11%{_postver}
