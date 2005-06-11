@@ -249,13 +249,12 @@ Patch200:	grsecurity-2.1.5-2.6.11.7-200504111924.patch
 Patch201:	linux-2.6-omosix.patch
 # vserver-2.0-pre4
 Patch202:	linux-2.6-vs2.patch
+# xen 2.0.6
+Patch203:	linux-xen-2.0.6.patch
 
 Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
 Patch402:	linux-em8300-2.6.11.2.patch
-
-# xen 2.0.6
-Patch500:	linux-xen-2.0.6.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -288,7 +287,11 @@ Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
 Conflicts:	nfs-utils < %{_nfs_utils_ver}
 Conflicts:	procps < %{_procps_ver}
 Conflicts:	oprofile < %{_oprofile_ver}
+%if %{with xen}
+ExclusiveArch:	%{ix86}
+%else
 ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc sparc sparc64
+%endif
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -683,16 +686,15 @@ mv -f {,netfilter.}status
 %if %{with vserver}
 %patch202 -p1
 %endif
+%if %{with xen}
+%patch203 -p1
+%endif 
 
 %patch400 -p1
 %patch401 -p1
 %if %{with em8300}
 %patch402 -p1
 %endif
-
-%if %{with xen}
-%patch500 -p1
-%endif 
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
