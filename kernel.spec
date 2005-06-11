@@ -15,6 +15,15 @@
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	regparm		# (ix86) use register arguments (this break binary-only modules)
 %bcond_with	em8300		# DXR3/Hollywood
+%bcond_with	xen0		# build Xen0 kernel
+
+%if %{with xen0}
+%define with_xen 1
+%endif
+
+%if %{with xen} && %{with grsecurity}
+xen conflics with grsecurity
+%endif
 
 %if !%{with grsecurity}
 %undefine	with_pax
@@ -84,7 +93,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
-Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}
+Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}
 %define		_postver	.11
 #define		_postver	%{nil}
 Version:	2.6.11%{_postver}
@@ -244,6 +253,9 @@ Patch202:	linux-2.6-vs2.patch
 Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
 Patch402:	linux-em8300-2.6.11.2.patch
+
+# xen 2.0.6
+Patch500:	linux-xen-2.0.6.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -677,6 +689,10 @@ mv -f {,netfilter.}status
 %if %{with em8300}
 %patch402 -p1
 %endif
+
+%if %{with xen}
+%patch500 -p1
+%endif 
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
