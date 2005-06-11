@@ -698,7 +698,7 @@ mv -f {,netfilter.}status
 %endif
 %if %{with xen}
 %patch203 -p1
-%endif 
+%endif
 
 %patch400 -p1
 %patch401 -p1
@@ -760,15 +760,24 @@ export DEPMOD=/bin/true
 CrossOpts=""
 %endif
 
+%if %{with xen}
+CrossOpts="ARCH=xen"
+%define _main_target_base_arch i386
+%define _target_base_arch xen
+%endif
+
 BuildConfig() {
 	%{?debug:set -x}
 	# is this a special kernel we want to build?
 	smp=
 	[ "$1" = "smp" -o "$2" = "smp" ] && smp=yes
+	xen=
+	%{?with_xen0:xen="0"}
+	%{?with_xenU:xen="U"}
 	if [ "$smp" = "yes" ]; then
-		Config="%{_target_base_arch}-smp"
+		Config="%{_target_base_arch}$xen-smp"
 	else
-		Config="%{_target_base_arch}"
+		Config="%{_target_base_arch}$xen"
 	fi
 	KernelVer=%{version}-%{release}$1
 	echo "Building config file for KERNEL $1..."
@@ -797,6 +806,9 @@ BuildConfig() {
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
 	rm -f include/linux/autoconf.h
+%if %{with xen}
+	%{__make} $CrossOpts oldconfig
+%endif
 	%{__make} $CrossOpts include/linux/autoconf.h
 	if [ "$smp" = "yes" ]; then
 		install include/linux/autoconf.h \
@@ -827,6 +839,10 @@ BuildKernel() {
 %endif
 	%{__make} $CrossOpts include/linux/version.h \
 		%{?with_verbose:V=1}
+
+%if %{with xen}
+	%{__make} $CrossOpts oldconfig
+%endif
 
 # make does vmlinux, modules and bzImage at once
 %ifarch sparc sparc64
@@ -859,7 +875,11 @@ PreInstallKernel() {
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
 %ifarch %{ix86} %{x8664}
+%if %{with xen}
+	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%else
 	install arch/%{_target_base_arch}/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%endif
 %endif
 %ifarch alpha sparc sparc64
 	gzip -cfv vmlinux > vmlinuz
