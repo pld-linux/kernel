@@ -65,8 +65,8 @@ xen0 conflicts with xenU
 %undefine	with_up
 %endif
 
-%if %{with xenU}
-# guest is only UP
+%if %{with xen}
+# xen (for now) is only UP
 %undefine	with_smp
 %endif
 
@@ -262,7 +262,7 @@ Patch200:	grsecurity-2.1.5-2.6.11.7-200504111924.patch
 Patch201:	linux-2.6-omosix.patch
 # vserver-2.0-pre4
 Patch202:	linux-2.6-vs2.patch
-# xen 2.0.6
+# xen 2.0.6 http://www.cl.cam.ac.uk/Research/SRG/netos/xen/index.html
 Patch203:	linux-xen-2.0.6.patch
 
 Patch400:	kernel-gcc4.patch
@@ -937,9 +937,11 @@ BuildConfig
 # SMP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
+%if !%{with xen}
 BuildConfig smp
 %{?with_smp:BuildKernel smp}
 %{?with_smp:PreInstallKernel smp}
+%endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -1297,7 +1299,9 @@ fi
 %defattr(644,root,root,755)
 %dir %{_prefix}/src/linux-%{version}
 %{_prefix}/src/linux-%{version}/include
+%if !%{with xen}
 %{_prefix}/src/linux-%{version}/config-smp
+%endif
 %{_prefix}/src/linux-%{version}/config-up
 
 %files module-build
