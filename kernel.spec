@@ -86,7 +86,7 @@ xen0 conflicts with xenU
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		2.3
+%define		_rel		1
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -104,7 +104,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
-%define		_postver	.11
+%define		_postver	.12
 #define		_postver	%{nil}
 Version:	2.6.11%{_postver}
 Release:	%{_rel}
@@ -115,7 +115,7 @@ Group:		Base/Kernel
 #define		_rc	-rc3
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	d074fe2ef6ccbd635ebc6c327bb82a2b
+# Source0-md5:	7e3b6e630bb05c1a8c1ba46e010dbe44
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 
@@ -245,7 +245,7 @@ Patch124:	linux-2.6-tty-races.patch
 Patch125:	linux-2.6-jiffies-rounding.patch
 Patch126:	linux-2.6-cputime-misscalculation.patch
 Patch127:	linux-2.6-jfs-fsync-wrong-behavior.patch
-Patch128:	linux-2.6-hfsplus-leak-and-oops.patch
+
 Patch129:	linux-2.6-vfs-two-read-without-clear-between.patch
 Patch130:	linux-2.6-fix-via82xx-resume.patch
 Patch131:	linux-2.6-ppc-fix-sleep-on-old-101-powerbook.patch
@@ -681,7 +681,7 @@ mv -f {,netfilter.}status
 %patch125 -p1
 %patch126 -p1
 %patch127 -p1
-%patch128 -p1
+
 %patch129 -p1
 %patch130 -p1
 %patch131 -p1
