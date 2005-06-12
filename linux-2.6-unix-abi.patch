@@ -1805,7 +1805,7 @@ diff -uNr linux-2.6.11.11/abi/isc/sysent.c linux-2.6.11.11.linuxabi/abi/isc/syse
 diff -uNr linux-2.6.11.11/abi/Kconfig linux-2.6.11.11.linuxabi/abi/Kconfig
 --- linux-2.6.11.11/abi/Kconfig	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.11.11.linuxabi/abi/Kconfig	2005-06-02 11:23:24.000000000 +0200
-@@ -0,0 +1,166 @@
+@@ -0,0 +1,169 @@
 +#
 +# Linux-ABI configuration
 +#
@@ -1815,7 +1815,7 @@ diff -uNr linux-2.6.11.11/abi/Kconfig linux-2.6.11.11.linuxabi/abi/Kconfig
 +
 +config ABI
 +        bool "Extended Linux-ABI support (alien binarys and syscalls)"
-+	depends on X86=y
++	depends on X86=y && !64BIT
 +        default n
 +        help
 +          Support for a few alien syscall interfaces. This allows you to run
@@ -1942,12 +1942,14 @@ diff -uNr linux-2.6.11.11/abi/Kconfig linux-2.6.11.11.linuxabi/abi/Kconfig
 +# there are syscall interfaces which do get statically linked
 +config ABI_SYSCALL_STATICS
 +        bool
++        depends on ABI
 +        default y if ABI_UW7=y || ABI_SOLARIS=y || ABI_IBCS=y || ABI_ISC=y || ABI_SCO=y || ABI_WYSE=y
 +        default n
 +
 +# there are syscall interfaces which do get build as module
 +config ABI_SYSCALL_MODULES
 +        bool
++        depends on ABI
 +        default y if ABI_UW7=m || ABI_SOLARIS=m || ABI_IBCS=m || ABI_ISC=m || ABI_SCO=m || ABI_WYSE=m
 +        default n
 +
@@ -1957,6 +1959,7 @@ diff -uNr linux-2.6.11.11/abi/Kconfig linux-2.6.11.11.linuxabi/abi/Kconfig
 +# if there is no module at all then we dont need the LCALL7 code.
 +config ABI_LCALL7
 +        tristate
++        depends on ABI
 +        default y if ABI_SYSCALL_STATICS=y
 +        default m if ABI_SYSCALL_MODULES=y
 +        default n
