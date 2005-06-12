@@ -1006,12 +1006,7 @@ install %{SOURCE2} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/
 #install -D drivers/net/sk98lin/sk98lin.4 $RPM_BUILD_ROOT%{_mandir}/man4/sk98lin.4
 
 # ghosted initrd
-%if %{with up}
-> $RPM_BUILD_ROOT/boot/initrd-%{version}-%{release}.gz
-%endif
-%if %{with smp}
-> $RPM_BUILD_ROOT/boot/initrd-%{version}-%{release}smp.gz
-%endif
+touch $RPM_BUILD_ROOT/boot/initrd-%{version}-%{release}{,smp}.gz
 
 %clean
 rm -rf $RPM_BUILD_ROOT
