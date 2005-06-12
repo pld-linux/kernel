@@ -1,6 +1,6 @@
 
  Makefile                          |    2 +-
- arch/ppc/kernel/time.c            |    2 --
+ arch/ppc/kernel/time.c            |   12 ++++++------
  arch/ppc/syslib/open_pic_defs.h   |    3 ---
  arch/sparc64/kernel/smp.c         |    2 +-
  drivers/char/isicom.c             |    6 +++---
@@ -14,7 +14,7 @@
  include/asm-sparc64/mostek.h      |    2 --
  include/linux/generic_serial.h    |    2 --
  include/linux/i2c.h               |   32 ++++++++++++++++----------------
- 15 files changed, 47 insertions(+), 57 deletions(-)
+ 15 files changed, 53 insertions(+), 61 deletions(-)
 
 --- a/Makefile.orig	2005-03-30 13:10:50.000000000 +0200
 +++ b/Makefile	2005-03-30 13:11:15.000000000 +0200
@@ -27,17 +27,49 @@
  HOSTCXXFLAGS	= -O2
  
  # 	Decide whether to build built-in, modular, or both.
---- a/arch/ppc/kernel/time.c.orig	2005-04-07 20:57:57.000000000 +0200
-+++ b/arch/ppc/kernel/time.c	2005-04-26 12:20:24.000000000 +0200
-@@ -89,8 +89,6 @@
+--- a/arch/ppc/kernel/time.c.orig	2005-06-12 04:45:37.000000000 +0200
++++ b/arch/ppc/kernel/time.c	2005-06-12 14:35:38.000000000 +0200
+@@ -89,7 +89,7 @@
  
  extern unsigned long wall_jiffies;
  
 -static long time_offset;
--
++static long ppc_time_offset;
+ 
  DEFINE_SPINLOCK(rtc_lock);
  
- EXPORT_SYMBOL(rtc_lock);
+@@ -172,7 +172,7 @@
+ 		     xtime.tv_sec - last_rtc_update >= 659 &&
+ 		     abs((xtime.tv_nsec / 1000) - (1000000-1000000/HZ)) < 500000/HZ &&
+ 		     jiffies - wall_jiffies == 1) {
+-		  	if (ppc_md.set_rtc_time(xtime.tv_sec+1 + time_offset) == 0)
++		  	if (ppc_md.set_rtc_time(xtime.tv_sec+1 + ppc_time_offset) == 0)
+ 				last_rtc_update = xtime.tv_sec+1;
+ 			else
+ 				/* Try again one minute later */
+@@ -289,7 +289,7 @@
+ 	unsigned old_stamp, stamp, elapsed;
+ 
+         if (ppc_md.time_init != NULL)
+-                time_offset = ppc_md.time_init();
++                ppc_time_offset = ppc_md.time_init();
+ 
+ 	if (__USE_RTC()) {
+ 		/* 601 processor: dec counts down by 128 every 128ns */
+@@ -334,10 +334,10 @@
+ 	set_dec(tb_ticks_per_jiffy);
+ 
+ 	/* If platform provided a timezone (pmac), we correct the time */
+-        if (time_offset) {
+-		sys_tz.tz_minuteswest = -time_offset / 60;
++        if (ppc_time_offset) {
++		sys_tz.tz_minuteswest = -ppc_time_offset / 60;
+ 		sys_tz.tz_dsttime = 0;
+-		xtime.tv_sec -= time_offset;
++		xtime.tv_sec -= ppc_time_offset;
+         }
+         set_normalized_timespec(&wall_to_monotonic,
+                                 -xtime.tv_sec, -xtime.tv_nsec);
 --- a/arch/ppc/syslib/open_pic_defs.h.orig	2005-04-26 12:28:54.000000000 +0200
 +++ b/arch/ppc/syslib/open_pic_defs.h	2005-04-26 12:28:58.000000000 +0200
 @@ -172,9 +172,6 @@
