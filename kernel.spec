@@ -86,7 +86,7 @@ xen0 conflicts with xenU
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1
+%define		_rel		2
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -1257,7 +1257,6 @@ fi
 %endif
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
-#%{_mandir}/man4/sk98lin.4*
 
 %ifnarch sparc sparc64
 %files smp-drm
