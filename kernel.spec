@@ -1002,9 +1002,6 @@ $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
 install %{SOURCE2} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/config.h
 
-# moved updated file to man-pages
-#install -D drivers/net/sk98lin/sk98lin.4 $RPM_BUILD_ROOT%{_mandir}/man4/sk98lin.4
-
 # ghosted initrd
 touch $RPM_BUILD_ROOT/boot/initrd-%{version}-%{release}{,smp}.gz
 
@@ -1040,9 +1037,6 @@ if [ -x /sbin/new-kernel-pkg ]; then
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
-
-%postun
-rm -f %{initrd_dir}/initrd-%{version}-%{release}.gz
 
 %post drm
 %depmod %{version}-%{release}
@@ -1097,9 +1091,6 @@ if [ -x /sbin/new-kernel-pkg ]; then
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
-
-%postun smp
-rm -f %{initrd_dir}/initrd-%{version}-%{release}smp.gz
 
 %post smp-drm
 %depmod %{version}-%{release}smp
@@ -1187,7 +1178,6 @@ fi
 %endif
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
-#%{_mandir}/man4/sk98lin.4*
 
 %ifnarch sparc sparc64
 %files drm
