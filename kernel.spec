@@ -15,6 +15,12 @@
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	regparm		# (ix86) use register arguments (this break binary-only modules)
 %bcond_with	em8300		# DXR3/Hollywood
+%bcond_with	xen0		# build Xen0 kernel
+%bcond_with	xenU		# build XenU kernel
+
+%if %{with xen0} || %{with xenU}
+%define with_xen 1
+%endif
 
 %if !%{with grsecurity}
 %undefine	with_pax
@@ -40,6 +46,14 @@ grsecurity conflicts with omosix
 grsecurity conflicts with vserver
 %endif
 
+%if %{with xen} && %{with grsecurity}
+xen conflicts with grsecurity
+%endif
+
+%if %{with xen0} && %{with xenU}
+xen0 conflicts with xenU
+%endif
+
 %{?debug:%define with_verbose 1}
 
 %ifarch sparc
@@ -49,6 +63,11 @@ grsecurity conflicts with vserver
 %ifarch ia64
 # broken
 %undefine	with_up
+%endif
+
+%if %{with xen}
+# xen (for now) is only UP
+%undefine	with_smp
 %endif
 
 ## Program required by kernel to work.
@@ -67,11 +86,11 @@ grsecurity conflicts with vserver
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		1
+%define		_rel		3
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
-%define		_netfilter_snap		20050520
+%define		_netfilter_snap		20050611
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
@@ -84,8 +103,8 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
-Name:		kernel%{?!with_grsecurity:-no_grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}
-%define		_postver	.11
+Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
+%define		_postver	.12
 #define		_postver	%{nil}
 Version:	2.6.11%{_postver}
 Release:	%{_rel}
@@ -96,7 +115,7 @@ Group:		Base/Kernel
 #define		_rc	-rc3
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	d074fe2ef6ccbd635ebc6c327bb82a2b
+# Source0-md5:	7e3b6e630bb05c1a8c1ba46e010dbe44
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 
@@ -116,6 +135,9 @@ Source30:	kernel-ppc.config
 Source31:	kernel-ppc-smp.config
 Source32:	kernel-ia64.config
 Source33:	kernel-ia64-smp.config
+Source34:	kernel-xen0.config
+#Source35:	kernel-xen0-smp.config
+#Source36:	kernel-xenU.config
 
 Source40:	kernel.FAQ-pl
 
@@ -125,6 +147,7 @@ Source91:	kernel-grsec+pax.config
 Source92:	kernel-omosix.config
 Source93:	kernel-vserver.config
 Source94:	kernel-em8300.config
+Source95:	kernel-linuxabi.config
 
 Patch0:		2.6.0-ksyms-add.patch
 Patch1:		linux-2.6-version.patch
@@ -209,7 +232,7 @@ Patch111:	linux-2.6-iriver-backing-device-capability-information-fix.patch
 Patch112:	linux-2.6-sata-sil-corruption-lockup.patch
 Patch113:	linux-2.6-xfrm-policy-destructor.patch
 Patch114:	linux-2.6-dst-cache-overflow.patch
-
+Patch115:	linux-2.6-net-sundance-ip100A-pciids.patch
 Patch116:	linux-2.6-null-tty-driver-oops.patch
 Patch117:	linux-2.6-sata-sil-mod15write-workaround.patch
 Patch118:	linux-2.6-ext2-corruption.patch
@@ -222,11 +245,15 @@ Patch124:	linux-2.6-tty-races.patch
 Patch125:	linux-2.6-jiffies-rounding.patch
 Patch126:	linux-2.6-cputime-misscalculation.patch
 Patch127:	linux-2.6-jfs-fsync-wrong-behavior.patch
-Patch128:	linux-2.6-hfsplus-leak-and-oops.patch
+
 Patch129:	linux-2.6-vfs-two-read-without-clear-between.patch
 Patch130:	linux-2.6-fix-via82xx-resume.patch
 Patch131:	linux-2.6-ppc-fix-sleep-on-old-101-powerbook.patch
-Patch132:	linux-2.6-rmap-oops.patch
+
+Patch133:	linux-2.6-via82c586-irq-routing.patch
+Patch134:	linux-2.6-udp-locking.patch
+# derived from http://adsl-brisbane.lubemobile.com.au/ras/debian/sarge/kernel-patch-linuxabi/
+Patch135:	linux-2.6-unix-abi.patch
 
 # derived from http://www.grsecurity.net/grsecurity-2.1.5-2.6.11.7-200504111924.patch.gz
 Patch200:	grsecurity-2.1.5-2.6.11.7-200504111924.patch
@@ -235,6 +262,8 @@ Patch200:	grsecurity-2.1.5-2.6.11.7-200504111924.patch
 Patch201:	linux-2.6-omosix.patch
 # vserver-2.0-pre4
 Patch202:	linux-2.6-vs2.patch
+# xen 2.0.6 http://www.cl.cam.ac.uk/Research/SRG/netos/xen/index.html
+Patch203:	linux-xen-2.0.6.patch
 
 Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
@@ -271,7 +300,11 @@ Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
 Conflicts:	nfs-utils < %{_nfs_utils_ver}
 Conflicts:	procps < %{_procps_ver}
 Conflicts:	oprofile < %{_oprofile_ver}
+%if %{with xen}
+ExclusiveArch:	%{ix86}
+%else
 ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc sparc sparc64
+%endif
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -635,7 +668,7 @@ mv -f {,netfilter.}status
 %patch112 -p1
 %patch113 -p1
 %patch114 -p1
-
+%patch115 -p1
 %patch116 -p1
 %patch117 -p1
 %patch118 -p1
@@ -648,20 +681,28 @@ mv -f {,netfilter.}status
 %patch125 -p1
 %patch126 -p1
 %patch127 -p1
-%patch128 -p1
+
 %patch129 -p1
 %patch130 -p1
 %patch131 -p1
-%patch132 -p1
+
+%patch133 -p1
+%patch134 -p1
+%ifarch %{ix86}
+%patch135 -p1
+%endif
 
 %if %{with grsecurity}
 %patch200 -p1
 %endif
 %if %{with omosix}
-%patch201 -p1
+%{__patch} -p1 -F3 < %{PATCH201}
 %endif
 %if %{with vserver}
 %patch202 -p1
+%endif
+%if %{with xen}
+%patch203 -p1
 %endif
 
 %patch400 -p1
@@ -710,9 +751,10 @@ TuneUpConfigForIX86 () {
     %ifarch i686 pentium3 pentium4
 	sed -i 's:CONFIG_MATH_EMULATION=y:# CONFIG_MATH_EMULATION is not set:' $1
     %endif
-    %ifarch %{ix86}
+    %if %{with regparm}
 	sed -i 's:# CONFIG_REGPARM is not set:CONFIG_REGPARM=y:' $1
     %endif
+    cat %{SOURCE95} >> $1
 %endif
 }
 
@@ -723,15 +765,24 @@ export DEPMOD=/bin/true
 CrossOpts=""
 %endif
 
+%if %{with xen}
+CrossOpts="ARCH=xen"
+%define _main_target_base_arch i386
+%define _target_base_arch xen
+%endif
+
 BuildConfig() {
 	%{?debug:set -x}
 	# is this a special kernel we want to build?
 	smp=
 	[ "$1" = "smp" -o "$2" = "smp" ] && smp=yes
+	xen=
+	%{?with_xen0:xen="0"}
+	%{?with_xenU:xen="U"}
 	if [ "$smp" = "yes" ]; then
-		Config="%{_target_base_arch}-smp"
+		Config="%{_target_base_arch}$xen-smp"
 	else
-		Config="%{_target_base_arch}"
+		Config="%{_target_base_arch}$xen"
 	fi
 	KernelVer=%{version}-%{release}$1
 	echo "Building config file for KERNEL $1..."
@@ -760,6 +811,9 @@ BuildConfig() {
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
 	rm -f include/linux/autoconf.h
+%if %{with xen}
+	%{__make} $CrossOpts oldconfig
+%endif
 	%{__make} $CrossOpts include/linux/autoconf.h
 	if [ "$smp" = "yes" ]; then
 		install include/linux/autoconf.h \
@@ -790,6 +844,10 @@ BuildKernel() {
 %endif
 	%{__make} $CrossOpts include/linux/version.h \
 		%{?with_verbose:V=1}
+
+%if %{with xen}
+	%{__make} $CrossOpts oldconfig
+%endif
 
 # make does vmlinux, modules and bzImage at once
 %ifarch sparc sparc64
@@ -822,7 +880,11 @@ PreInstallKernel() {
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
 %ifarch %{ix86} %{x8664}
+%if %{with xen}
+	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%else
 	install arch/%{_target_base_arch}/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%endif
 %endif
 %ifarch alpha sparc sparc64
 	gzip -cfv vmlinux > vmlinuz
@@ -875,9 +937,11 @@ BuildConfig
 # SMP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
+%if !%{with xen}
 BuildConfig smp
 %{?with_smp:BuildKernel smp}
 %{?with_smp:PreInstallKernel smp}
+%endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -942,8 +1006,8 @@ $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
 install %{SOURCE2} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/config.h
 
-# moved updated file to man-pages
-#install -D drivers/net/sk98lin/sk98lin.4 $RPM_BUILD_ROOT%{_mandir}/man4/sk98lin.4
+# ghosted initrd
+touch $RPM_BUILD_ROOT/boot/initrd-%{version}-%{release}{,smp}.gz
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -977,9 +1041,6 @@ if [ -x /sbin/new-kernel-pkg ]; then
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
-
-%postun
-rm -f %{initrd_dir}/initrd-%{version}-%{release}.gz
 
 %post drm
 %depmod %{version}-%{release}
@@ -1035,9 +1096,6 @@ elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
-%postun smp
-rm -f %{initrd_dir}/initrd-%{version}-%{release}smp.gz
-
 %post smp-drm
 %depmod %{version}-%{release}smp
 
@@ -1091,8 +1149,12 @@ fi
 %endif
 /boot/vmlinuz-%{version}-%{release}
 /boot/System.map-%{version}-%{release}
+%ghost /boot/initrd-%{version}-%{release}.gz
 %dir /lib/modules/%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}/kernel
+%ifarch %{ix86}
+/lib/modules/%{version}-%{release}/kernel/abi
+%endif
 %ifnarch ppc sparc
 /lib/modules/%{version}-%{release}/kernel/arch
 %endif
@@ -1120,7 +1182,6 @@ fi
 %endif
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
-#%{_mandir}/man4/sk98lin.4*
 
 %ifnarch sparc sparc64
 %files drm
@@ -1167,8 +1228,12 @@ fi
 %endif
 /boot/vmlinuz-%{version}-%{release}smp
 /boot/System.map-%{version}-%{release}smp
+%ghost /boot/initrd-%{version}-%{release}smp.gz
 %dir /lib/modules/%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp/kernel
+%ifarch %{ix86}
+/lib/modules/%{version}-%{release}smp/kernel/abi
+%endif
 %ifnarch ppc sparc
 /lib/modules/%{version}-%{release}smp/kernel/arch
 %endif
@@ -1196,7 +1261,6 @@ fi
 %endif
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
-#%{_mandir}/man4/sk98lin.4*
 
 %ifnarch sparc sparc64
 %files smp-drm
@@ -1235,7 +1299,9 @@ fi
 %defattr(644,root,root,755)
 %dir %{_prefix}/src/linux-%{version}
 %{_prefix}/src/linux-%{version}/include
+%if !%{with xen}
 %{_prefix}/src/linux-%{version}/config-smp
+%endif
 %{_prefix}/src/linux-%{version}/config-up
 
 %files module-build
@@ -1263,6 +1329,9 @@ fi
 %if %{with source}
 %files source
 %defattr(644,root,root,755)
+%ifarch %{ix86}
+%{_prefix}/src/linux-%{version}/abi
+%endif
 %{_prefix}/src/linux-%{version}/arch/*/[!Mk]*
 %{_prefix}/src/linux-%{version}/arch/*/kernel/[!M]*
 %exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
