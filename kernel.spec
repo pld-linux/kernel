@@ -6,8 +6,9 @@ File: kernel.spec
 	djurban-LINUX_2_6        djurban's kernel branch for desktop users
 	ac-2_6_5-1               2.6.5 official kernel
 	LINUX_2_5                dead 2.5.x branch
-	LINUX_2_6                2.6.x (with grsecurity) development branch
-	LINUX_2_6_8		 2.6.8 (with grsecurity) stable branch
+	LINUX_2_6                2.6.x development branch
+	LINUX_2_6_8              2.6.8 (with grsecurity) stable branch
+	LINUX_2_6_11             2.6.11 (with grsecurity/vserver/omosix/xen) stable branch
 	KERNEL_2_4_for_RA        ?
 	HEAD                     arekm's kernel branch for his laptop
 	DEVEL                    ?
