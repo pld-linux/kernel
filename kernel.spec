@@ -86,7 +86,7 @@ xen0 conflicts with xenU
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		3
+%define		_rel		3.1
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -103,7 +103,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
-Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
+Name:		kernel%{!?with_grsecurity:-no_grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 %define		_postver	.12
 #define		_postver	%{nil}
 Version:	2.6.11%{_postver}
@@ -268,6 +268,10 @@ Patch203:	linux-xen-2.0.6.patch
 Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
 Patch402:	linux-em8300-2.6.11.2.patch
+
+#from:
+## http://www.kernel.org/pub/linux/kernel/people/gregkh/gregkh-2.6/gregkh-05-devfs/devfs-die-die-die.patch
+Patch500:	devfs-die-die-die.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -710,6 +714,8 @@ mv -f {,netfilter.}status
 %if %{with em8300}
 %patch402 -p1
 %endif
+
+%patch500 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
