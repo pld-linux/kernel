@@ -715,6 +715,7 @@ mv -f {,netfilter.}status
 %patch402 -p1
 %endif
 
+# probably not needed
 ##%patch500 -p1
 
 # Fix EXTRAVERSION in main Makefile
