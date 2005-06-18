@@ -86,7 +86,7 @@ xen0 conflicts with xenU
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		3.1
+%define		_rel		0.1
 %define		_cset		20041220_1904
 %define		_apply_cset	0
 
@@ -104,9 +104,9 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
-%define		_postver	.12
-#define		_postver	%{nil}
-Version:	2.6.11%{_postver}
+#define		_postver	.12
+%define		_postver	%{nil}
+Version:	2.6.12%{_postver}
 Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
@@ -715,7 +715,7 @@ mv -f {,netfilter.}status
 %patch402 -p1
 %endif
 
-%patch500 -p1
+##%patch500 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
