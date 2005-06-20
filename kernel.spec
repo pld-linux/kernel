@@ -609,7 +609,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
-%patch6 -p1
+##%patch6 -p1 - applayed in kernel
 
 %patch10 -p1
 
@@ -629,7 +629,7 @@ bzcat %{SOURCE4} | patch -p1 -s
 %patch27 -p1
 %patch28 -p1
 %patch29 -p1
-%patch30 -p1
+## %patch30 -p1 - broken or included in kernel
 %patch31 -p1
 
 %patch50 -p0
