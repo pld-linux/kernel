@@ -32,14 +32,14 @@
  sk98lin/skaddr.c      |   79 -
  sk98lin/skcsum.c      |    6 
  sk98lin/skdim.c       | 1027 ++++---------
- sk98lin/skethtool.c   | 1383 ++++++++++++++----
- sk98lin/skge.c        | 3819 +++++++++++++++++++++++++++++++-------------------
+ sk98lin/skethtool.c   | 1380 ++++++++++++++----
+ sk98lin/skge.c        | 3797 +++++++++++++++++++++++++++++++-------------------
  sk98lin/skgehwt.c     |   52 
- sk98lin/skgeinit.c    | 1683 +++++++++++++++-------
+ sk98lin/skgeinit.c    | 1683 ++++++++++++++++------
  sk98lin/skgemib.c     |  186 ++
- sk98lin/skgepnmi.c    | 2282 ++++++++++++++---------------
+ sk98lin/skgepnmi.c    | 2282 ++++++++++++++----------------
  sk98lin/skgesirq.c    | 1244 ++++++++++------
- sk98lin/ski2c.c       | 1296 ----------------
+ sk98lin/ski2c.c       | 1296 -----------------
  sk98lin/sklm80.c      |   10 
  sk98lin/skproc.c      |  587 +++++--
  sk98lin/skqueue.c     |  103 +
@@ -48,14 +48,14 @@
  sk98lin/sktwsi.c      | 1355 +++++++++++++++++
  sk98lin/skvpd.c       |  195 +-
  sk98lin/skxmac2.c     | 2275 ++++++++++++++++++-----------
- sk98lin/sky2.c        | 2739 +++++++++++++++++++++++++++++++++++
+ sk98lin/sky2.c        | 2739 ++++++++++++++++++++++++++++++++++++
  sk98lin/sky2le.c      |  510 ++++++
- 52 files changed, 20041 insertions(+), 8751 deletions(-)
+ 52 files changed, 20029 insertions(+), 8738 deletions(-)
 
-diff -uNr linux-2.6.11.9/drivers/net.orig/Kconfig linux-2.6.11.9/drivers/net/Kconfig
---- linux-2.6.11.9/drivers/net.orig/Kconfig	2005-05-16 00:07:55.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/Kconfig	2005-05-16 00:11:54.000000000 +0200
-@@ -2125,6 +2125,22 @@
+diff -uNr linux-2.6.12/drivers/net.orig/Kconfig linux-2.6.12/drivers/net/Kconfig
+--- linux-2.6.12/drivers/net.orig/Kconfig	2005-06-22 16:04:21.000000000 +0200
++++ linux-2.6.12/drivers/net/Kconfig	2005-06-22 16:04:47.000000000 +0200
+@@ -2076,6 +2076,22 @@
  	  by this driver:
  	    - 3Com 3C940 Gigabit LOM Ethernet Adapter
  	    - 3Com 3C941 Gigabit LOM Ethernet Adapter
@@ -78,7 +78,7 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/Kconfig linux-2.6.11.9/drivers/net/Kco
  	    - Allied Telesyn AT-2970LX Gigabit Ethernet Adapter
  	    - Allied Telesyn AT-2970LX/2SC Gigabit Ethernet Adapter
  	    - Allied Telesyn AT-2970SX Gigabit Ethernet Adapter
-@@ -2135,31 +2151,78 @@
+@@ -2086,31 +2102,78 @@
  	    - Allied Telesyn AT-2971T Gigabit Ethernet Adapter
  	    - Belkin Gigabit Desktop Card 10/100/1000Base-T Adapter, Copper RJ-45
  	    - DGE-530T Gigabit Ethernet Adapter
@@ -170,7 +170,7 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/Kconfig linux-2.6.11.9/drivers/net/Kco
  	    - N-Way PCI-Bus Giga-Card 1000/100/10Mbps(L)
  	    - SK-9521 10/100/1000Base-T Adapter
  	    - SK-9521 V2.0 10/100/1000Base-T Adapter
-@@ -2179,21 +2242,36 @@
+@@ -2130,21 +2193,36 @@
  	    - SK-9871 Gigabit Ethernet Server Adapter (SK-NET GE-ZX)
  	    - SK-9871 V2.0 Gigabit Ethernet 1000Base-ZX Adapter
  	    - SK-9872 Gigabit Ethernet Server Adapter (SK-NET GE-ZX dual link)
@@ -211,9 +211,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/Kconfig linux-2.6.11.9/drivers/net/Kco
  
  config VIA_VELOCITY
  	tristate "VIA Velocity support"
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/lm80.h linux-2.6.11.9/drivers/net/sk98lin/h/lm80.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/lm80.h	2005-05-12 00:42:56.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/lm80.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/lm80.h linux-2.6.12/drivers/net/sk98lin/h/lm80.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/lm80.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/lm80.h	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	lm80.h	
@@ -225,9 +225,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/lm80.h linux-2.6.11.9/driver
   * Purpose:	Contains all defines for the LM80 Chip
   *		(National Semiconductor).
   *
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skaddr.h linux-2.6.11.9/drivers/net/sk98lin/h/skaddr.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/skaddr.h	2005-05-12 00:42:07.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/skaddr.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/skaddr.h linux-2.6.12/drivers/net/sk98lin/h/skaddr.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/skaddr.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/skaddr.h	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skaddr.h
@@ -239,9 +239,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skaddr.h linux-2.6.11.9/driv
   * Purpose:	Header file for Address Management (MC, UC, Prom).
   *
   ******************************************************************************/
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skcsum.h linux-2.6.11.9/drivers/net/sk98lin/h/skcsum.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/skcsum.h	2005-05-12 00:41:11.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/skcsum.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/skcsum.h linux-2.6.12/drivers/net/sk98lin/h/skcsum.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/skcsum.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/skcsum.h	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skcsum.h
@@ -263,9 +263,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skcsum.h linux-2.6.11.9/driv
  
  	/* The protocol statistics structure; one per supported protocol. */
  	SKCS_PROTO_STATS ProtoStats[SK_MAX_NETS][SKCS_NUM_PROTOCOLS];
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skdebug.h linux-2.6.11.9/drivers/net/sk98lin/h/skdebug.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/skdebug.h	2005-05-12 00:42:04.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/skdebug.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/skdebug.h linux-2.6.12/drivers/net/sk98lin/h/skdebug.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/skdebug.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/skdebug.h	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skdebug.h
@@ -319,9 +319,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skdebug.h linux-2.6.11.9/dri
  
  /* Debug events */
  
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skdrv1st.h linux-2.6.11.9/drivers/net/sk98lin/h/skdrv1st.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/skdrv1st.h	2005-05-12 00:41:09.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/skdrv1st.h	2005-04-25 16:06:59.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/skdrv1st.h linux-2.6.12/drivers/net/sk98lin/h/skdrv1st.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/skdrv1st.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/skdrv1st.h	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skdrv1st.h
@@ -381,9 +381,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skdrv1st.h linux-2.6.11.9/dr
  #include <asm/byteorder.h>
 +#include <asm/bitops.h>
  #include <asm/io.h>
+ #include <asm/irq.h>
  #include <linux/netdevice.h>
- #include <linux/etherdevice.h>
-@@ -78,11 +67,7 @@
+@@ -79,11 +68,7 @@
  #include <net/checksum.h>
  
  #define SK_CS_CALCULATE_CHECKSUM
@@ -396,7 +396,7 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skdrv1st.h linux-2.6.11.9/dr
  
  #include	"h/sktypes.h"
  #include	"h/skerror.h"
-@@ -90,6 +75,10 @@
+@@ -91,6 +76,10 @@
  #include	"h/lm80.h"
  #include	"h/xmac_ii.h"
  
@@ -407,7 +407,7 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skdrv1st.h linux-2.6.11.9/dr
  #ifdef __LITTLE_ENDIAN
  #define SK_LITTLE_ENDIAN
  #else
-@@ -109,7 +98,7 @@
+@@ -110,7 +99,7 @@
  #define SK_MAX_MACS		2
  #define SK_MAX_NETS		2
  
@@ -416,7 +416,7 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skdrv1st.h linux-2.6.11.9/dr
  
  typedef struct s_DrvRlmtMbuf SK_MBUF;
  
-@@ -188,3 +177,8 @@
+@@ -189,3 +178,8 @@
  
  #endif
  
@@ -425,9 +425,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skdrv1st.h linux-2.6.11.9/dr
 + * End of file
 + *
 + ******************************************************************************/
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skdrv2nd.h linux-2.6.11.9/drivers/net/sk98lin/h/skdrv2nd.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/skdrv2nd.h	2005-05-12 00:43:15.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/skdrv2nd.h	2005-04-25 16:06:59.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/skdrv2nd.h linux-2.6.12/drivers/net/sk98lin/h/skdrv2nd.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/skdrv2nd.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/skdrv2nd.h	2005-06-22 16:04:47.000000000 +0200
 @@ -1,17 +1,17 @@
  /******************************************************************************
   *
@@ -1522,9 +1522,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skdrv2nd.h linux-2.6.11.9/dr
 + * End of file
 + *
 + ******************************************************************************/
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skerror.h linux-2.6.11.9/drivers/net/sk98lin/h/skerror.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/skerror.h	2005-05-12 00:42:00.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/skerror.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/skerror.h linux-2.6.12/drivers/net/sk98lin/h/skerror.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/skerror.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/skerror.h	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skerror.h
@@ -1570,9 +1570,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skerror.h linux-2.6.11.9/dri
  
  #endif	/* _INC_SKERROR_H_ */
 +
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgedrv.h linux-2.6.11.9/drivers/net/sk98lin/h/skgedrv.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgedrv.h	2005-05-12 00:42:23.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/skgedrv.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/skgedrv.h linux-2.6.12/drivers/net/sk98lin/h/skgedrv.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/skgedrv.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/skgedrv.h	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skgedrv.h
@@ -1584,9 +1584,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgedrv.h linux-2.6.11.9/dri
   * Purpose:	Interface with the driver
   *
   ******************************************************************************/
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgehw.h linux-2.6.11.9/drivers/net/sk98lin/h/skgehw.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgehw.h	2005-05-12 00:43:07.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/skgehw.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/skgehw.h linux-2.6.12/drivers/net/sk98lin/h/skgehw.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/skgehw.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/skgehw.h	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skgehw.h
@@ -3746,9 +3746,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgehw.h linux-2.6.11.9/driv
  
  #endif	/* __INC_SKGEHW_H */
 +
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgehwt.h linux-2.6.11.9/drivers/net/sk98lin/h/skgehwt.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgehwt.h	2005-05-12 00:41:39.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/skgehwt.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/skgehwt.h linux-2.6.12/drivers/net/sk98lin/h/skgehwt.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/skgehwt.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/skgehwt.h	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skhwt.h
@@ -3760,9 +3760,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgehwt.h linux-2.6.11.9/dri
   * Purpose:	Defines for the hardware timer functions
   *
   ******************************************************************************/
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgei2c.h linux-2.6.11.9/drivers/net/sk98lin/h/skgei2c.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgei2c.h	2005-05-12 00:43:47.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/skgei2c.h	1970-01-01 01:00:00.000000000 +0100
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/skgei2c.h linux-2.6.12/drivers/net/sk98lin/h/skgei2c.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/skgei2c.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/skgei2c.h	1970-01-01 01:00:00.000000000 +0100
 @@ -1,210 +0,0 @@
 -/******************************************************************************
 - *
@@ -3974,9 +3974,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgei2c.h linux-2.6.11.9/dri
 -
 -extern	int SkLm80ReadSensor(SK_AC *pAC, SK_IOC IoC, SK_SENSOR *pSen);
 -#endif	/* n_INC_SKGEI2C_H */
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgeinit.h linux-2.6.11.9/drivers/net/sk98lin/h/skgeinit.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgeinit.h	2005-05-12 00:43:47.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/skgeinit.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/skgeinit.h linux-2.6.12/drivers/net/sk98lin/h/skgeinit.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/skgeinit.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/skgeinit.h	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skgeinit.h
@@ -4621,9 +4621,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgeinit.h linux-2.6.11.9/dr
  
  #endif	/* __INC_SKGEINIT_H_ */
 +
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgepnm2.h linux-2.6.11.9/drivers/net/sk98lin/h/skgepnm2.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgepnm2.h	2005-05-12 00:42:25.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/skgepnm2.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/skgepnm2.h linux-2.6.12/drivers/net/sk98lin/h/skgepnm2.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/skgepnm2.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/skgepnm2.h	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skgepnm2.h
@@ -4657,9 +4657,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgepnm2.h linux-2.6.11.9/dr
  
  #else	/* !DEBUG */
  
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgepnmi.h linux-2.6.11.9/drivers/net/sk98lin/h/skgepnmi.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgepnmi.h	2005-05-12 00:41:11.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/skgepnmi.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/skgepnmi.h linux-2.6.12/drivers/net/sk98lin/h/skgepnmi.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/skgepnmi.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/skgepnmi.h	2005-06-22 16:04:47.000000000 +0200
 @@ -1,9 +1,9 @@
  /*****************************************************************************
   *
@@ -4944,9 +4944,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgepnmi.h linux-2.6.11.9/dr
  #ifdef SK_DIAG_SUPPORT
  	SK_U32			DiagAttached;
  #endif /* SK_DIAG_SUPPORT */
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgesirq.h linux-2.6.11.9/drivers/net/sk98lin/h/skgesirq.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgesirq.h	2005-05-12 00:43:02.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/skgesirq.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/skgesirq.h linux-2.6.12/drivers/net/sk98lin/h/skgesirq.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/skgesirq.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/skgesirq.h	2005-06-22 16:04:47.000000000 +0200
 @@ -2,22 +2,21 @@
   *
   * Name:	skgesirq.h
@@ -5024,9 +5024,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgesirq.h linux-2.6.11.9/dr
  
  #endif	/* _INC_SKGESIRQ_H_ */
 +
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgetwsi.h linux-2.6.11.9/drivers/net/sk98lin/h/skgetwsi.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgetwsi.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/skgetwsi.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/skgetwsi.h linux-2.6.12/drivers/net/sk98lin/h/skgetwsi.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/skgetwsi.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.12/drivers/net/sk98lin/h/skgetwsi.h	2005-06-22 16:04:47.000000000 +0200
 @@ -0,0 +1,241 @@
 +/******************************************************************************
 + *
@@ -5269,9 +5269,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skgetwsi.h linux-2.6.11.9/dr
 +extern	int SkLm80ReadSensor(SK_AC *pAC, SK_IOC IoC, SK_SENSOR *pSen);
 +#endif	/* n_INC_SKGETWSI_H */
 +
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/ski2c.h linux-2.6.11.9/drivers/net/sk98lin/h/ski2c.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/ski2c.h	2005-05-12 00:41:29.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/ski2c.h	1970-01-01 01:00:00.000000000 +0100
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/ski2c.h linux-2.6.12/drivers/net/sk98lin/h/ski2c.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/ski2c.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/ski2c.h	1970-01-01 01:00:00.000000000 +0100
 @@ -1,177 +0,0 @@
 -/******************************************************************************
 - *
@@ -5450,9 +5450,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/ski2c.h linux-2.6.11.9/drive
 -#endif /* !SK_DIAG */
 -#endif /* n_SKI2C_H */
 -
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skqueue.h linux-2.6.11.9/drivers/net/sk98lin/h/skqueue.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/skqueue.h	2005-05-12 00:43:48.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/skqueue.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/skqueue.h linux-2.6.12/drivers/net/sk98lin/h/skqueue.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/skqueue.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/skqueue.h	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skqueue.h
@@ -5486,9 +5486,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skqueue.h linux-2.6.11.9/dri
 +#define	SKERR_Q_E005MSG	"Event scheduler called in Init Level 0 or 1"
  #endif	/* _SKQUEUE_H_ */
  
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skrlmt.h linux-2.6.11.9/drivers/net/sk98lin/h/skrlmt.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/skrlmt.h	2005-05-12 00:43:24.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/skrlmt.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/skrlmt.h linux-2.6.12/drivers/net/sk98lin/h/skrlmt.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/skrlmt.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/skrlmt.h	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skrlmt.h
@@ -5500,9 +5500,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skrlmt.h linux-2.6.11.9/driv
   * Purpose:	Header file for Redundant Link ManagemenT.
   *
   ******************************************************************************/
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/sktimer.h linux-2.6.11.9/drivers/net/sk98lin/h/sktimer.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/sktimer.h	2005-05-12 00:41:14.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/sktimer.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/sktimer.h linux-2.6.12/drivers/net/sk98lin/h/sktimer.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/sktimer.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/sktimer.h	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	sktimer.h
@@ -5514,9 +5514,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/sktimer.h linux-2.6.11.9/dri
   * Purpose:	Defines for the timer functions
   *
   ******************************************************************************/
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/sktwsi.h linux-2.6.11.9/drivers/net/sk98lin/h/sktwsi.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/sktwsi.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/sktwsi.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/sktwsi.h linux-2.6.12/drivers/net/sk98lin/h/sktwsi.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/sktwsi.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.12/drivers/net/sk98lin/h/sktwsi.h	2005-06-22 16:04:47.000000000 +0200
 @@ -0,0 +1,177 @@
 +/******************************************************************************
 + *
@@ -5695,9 +5695,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/sktwsi.h linux-2.6.11.9/driv
 +#endif /* !SK_DIAG */
 +#endif /* n_SKTWSI_H */
 +
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/sktypes.h linux-2.6.11.9/drivers/net/sk98lin/h/sktypes.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/sktypes.h	2005-05-12 00:43:19.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/sktypes.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/sktypes.h linux-2.6.12/drivers/net/sk98lin/h/sktypes.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/sktypes.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/sktypes.h	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	sktypes.h
@@ -5787,9 +5787,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/sktypes.h linux-2.6.11.9/dri
 + * End of file
 + *
 + ******************************************************************************/
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skversion.h linux-2.6.11.9/drivers/net/sk98lin/h/skversion.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/skversion.h	2005-05-12 00:42:13.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/skversion.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/skversion.h linux-2.6.12/drivers/net/sk98lin/h/skversion.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/skversion.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/skversion.h	2005-06-22 16:04:47.000000000 +0200
 @@ -1,17 +1,17 @@
  /******************************************************************************
   *
@@ -5842,9 +5842,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skversion.h linux-2.6.11.9/d
 + * End of file
 + *
 + ******************************************************************************/
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skvpd.h linux-2.6.11.9/drivers/net/sk98lin/h/skvpd.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/skvpd.h	2005-05-12 00:41:32.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/skvpd.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/skvpd.h linux-2.6.12/drivers/net/sk98lin/h/skvpd.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/skvpd.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/skvpd.h	2005-06-22 16:04:47.000000000 +0200
 @@ -1,22 +1,22 @@
  /******************************************************************************
   *
@@ -6055,9 +6055,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/skvpd.h linux-2.6.11.9/drive
  
  #endif	/* __INC_SKVPD_H_ */
 +
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/sky2le.h linux-2.6.11.9/drivers/net/sk98lin/h/sky2le.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/sky2le.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/sky2le.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/sky2le.h linux-2.6.12/drivers/net/sk98lin/h/sky2le.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/sky2le.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.12/drivers/net/sk98lin/h/sky2le.h	2005-06-22 16:04:47.000000000 +0200
 @@ -0,0 +1,891 @@
 +/******************************************************************************
 + *
@@ -6950,9 +6950,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/sky2le.h linux-2.6.11.9/driv
 +
 +#endif	/* __INC_SKY2LE_H */
 +
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/xmac_ii.h linux-2.6.11.9/drivers/net/sk98lin/h/xmac_ii.h
---- linux-2.6.11.9/drivers/net.orig/sk98lin/h/xmac_ii.h	2005-05-12 00:42:52.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/h/xmac_ii.h	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/h/xmac_ii.h linux-2.6.12/drivers/net/sk98lin/h/xmac_ii.h
+--- linux-2.6.12/drivers/net.orig/sk98lin/h/xmac_ii.h	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/h/xmac_ii.h	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	xmac_ii.h
@@ -7869,9 +7869,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/h/xmac_ii.h linux-2.6.11.9/dri
  
  /* typedefs *******************************************************************/
  
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/Makefile linux-2.6.11.9/drivers/net/sk98lin/Makefile
---- linux-2.6.11.9/drivers/net.orig/sk98lin/Makefile	2005-05-12 00:41:08.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/Makefile	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/Makefile linux-2.6.12/drivers/net/sk98lin/Makefile
+--- linux-2.6.12/drivers/net.orig/sk98lin/Makefile	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/Makefile	2005-06-22 16:04:47.000000000 +0200
 @@ -1,6 +1,59 @@
 +#******************************************************************************
  #
@@ -7968,9 +7968,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/Makefile linux-2.6.11.9/driver
 -
 -
 -
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/sk98lin.4 linux-2.6.11.9/drivers/net/sk98lin/sk98lin.4
---- linux-2.6.11.9/drivers/net.orig/sk98lin/sk98lin.4	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.11.9/drivers/net/sk98lin/sk98lin.4	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/sk98lin.4 linux-2.6.12/drivers/net/sk98lin/sk98lin.4
+--- linux-2.6.12/drivers/net.orig/sk98lin/sk98lin.4	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.12/drivers/net/sk98lin/sk98lin.4	2005-06-22 16:04:47.000000000 +0200
 @@ -0,0 +1,470 @@
 +.\" (C)Copyright 1999-2005 Marvell(R). -- linux@syskonnect.de
 +.\" sk98lin.4 1.1 2005/04/25 15:13:26
@@ -8442,9 +8442,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/sk98lin.4 linux-2.6.11.9/drive
 +Mirko Lindner \- mlindner@syskonnect.de
 +.SH "SEE ALSO"
 +modprobe(8), insmod(8), ifconfig(8).
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/sk98lin.htm linux-2.6.11.9/drivers/net/sk98lin/sk98lin.htm
---- linux-2.6.11.9/drivers/net.orig/sk98lin/sk98lin.htm	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.11.9/drivers/net/sk98lin/sk98lin.htm	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/sk98lin.htm linux-2.6.12/drivers/net/sk98lin/sk98lin.htm
+--- linux-2.6.12/drivers/net.orig/sk98lin/sk98lin.htm	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.12/drivers/net/sk98lin/sk98lin.htm	2005-06-22 16:04:47.000000000 +0200
 @@ -0,0 +1,772 @@
 +<HTML>
 +<HEAD>
@@ -9218,9 +9218,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/sk98lin.htm linux-2.6.11.9/dri
 +</PRE>
 +</BODY>
 +</HTML>
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/sk98lin.txt linux-2.6.11.9/drivers/net/sk98lin/sk98lin.txt
---- linux-2.6.11.9/drivers/net.orig/sk98lin/sk98lin.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.11.9/drivers/net/sk98lin/sk98lin.txt	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/sk98lin.txt linux-2.6.12/drivers/net/sk98lin/sk98lin.txt
+--- linux-2.6.12/drivers/net.orig/sk98lin/sk98lin.txt	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.12/drivers/net/sk98lin/sk98lin.txt	2005-06-22 16:04:47.000000000 +0200
 @@ -0,0 +1,681 @@
 +(C)Copyright 1999-2005 Marvell(R).
 +All rights reserved.
@@ -9903,9 +9903,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/sk98lin.txt linux-2.6.11.9/dri
 +
 +
 +***End of Readme File***
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skaddr.c linux-2.6.11.9/drivers/net/sk98lin/skaddr.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/skaddr.c	2005-05-12 00:42:16.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/skaddr.c	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/skaddr.c linux-2.6.12/drivers/net/sk98lin/skaddr.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/skaddr.c	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/skaddr.c	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skaddr.c
@@ -10229,9 +10229,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skaddr.c linux-2.6.11.9/driver
  #if (!defined(SK_SLIM) || defined(DEBUG))
  	if (PortNumber >= (SK_U32) pAC->GIni.GIMacsFound) {
  		return (SK_ADDR_ILLEGAL_PORT);
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skcsum.c linux-2.6.11.9/drivers/net/sk98lin/skcsum.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/skcsum.c	2005-05-12 00:41:10.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/skcsum.c	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/skcsum.c linux-2.6.12/drivers/net/sk98lin/skcsum.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/skcsum.c	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/skcsum.c	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skcsum.c
@@ -10252,9 +10252,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skcsum.c linux-2.6.11.9/driver
  #endif	/* !lint */
  
  /******************************************************************************
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skdim.c linux-2.6.11.9/drivers/net/sk98lin/skdim.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/skdim.c	2005-05-12 00:41:25.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/skdim.c	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/skdim.c linux-2.6.12/drivers/net/sk98lin/skdim.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/skdim.c	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/skdim.c	2005-06-22 16:04:47.000000000 +0200
 @@ -1,18 +1,29 @@
  /******************************************************************************
   *
@@ -11339,9 +11339,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skdim.c linux-2.6.11.9/drivers
 + * End of file
 + *
 + ******************************************************************************/
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skethtool.c linux-2.6.11.9/drivers/net/sk98lin/skethtool.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/skethtool.c	2005-05-12 00:43:45.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/skethtool.c	2005-04-25 16:06:59.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/skethtool.c linux-2.6.12/drivers/net/sk98lin/skethtool.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/skethtool.c	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/skethtool.c	2005-06-22 16:05:34.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:        skethtool.c
@@ -12079,7 +12079,7 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skethtool.c linux-2.6.11.9/dri
 -	strlcpy(info->driver, DRIVER_FILE_NAME, sizeof(info->driver));
 -	strcpy(info->version, vers);
 -	strcpy(info->fw_version, "N/A");
--	strlcpy(info->bus_info, pAC->PciDev->slot_name, ETHTOOL_BUSINFO_LEN);
+-	strlcpy(info->bus_info, pci_name(pAC->PciDev), ETHTOOL_BUSINFO_LEN);
 -}
 -
 -/*
@@ -12638,7 +12638,7 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skethtool.c linux-2.6.11.9/dri
   *
   * Description:
   *	This function is used if the user want to locate a particular NIC.
-@@ -425,131 +1159,178 @@
+@@ -425,128 +1159,178 @@
   *	!=0:	one locateNIC test runs already
   *
   */
@@ -12667,9 +12667,6 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skethtool.c linux-2.6.11.9/dri
 -	pAC->LedsOn = 0;
 -	mod_timer(&pAC->BlinkTimer, jiffies);
 -	msleep_interruptible(data * 1000);
--
--	set_current_state(TASK_INTERRUPTIBLE);
--	schedule_timeout(data * HZ);
 -	del_timer_sync(&pAC->BlinkTimer);
 -	toggleLeds(pNet, 0);
 +	if (netif_running(pAC->dev[port])) {
@@ -12915,9 +12912,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skethtool.c linux-2.6.11.9/dri
 + * End of file
 + *
 + ******************************************************************************/
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skge.c linux-2.6.11.9/drivers/net/sk98lin/skge.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/skge.c	2005-05-12 00:41:12.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/skge.c	2005-04-25 16:06:59.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/skge.c linux-2.6.12/drivers/net/sk98lin/skge.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/skge.c	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/skge.c	2005-06-22 16:05:40.000000000 +0200
 @@ -1,25 +1,23 @@
  /******************************************************************************
   *
@@ -13209,11 +13206,11 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skge.c linux-2.6.11.9/drivers/
 -static const char 	SKRootName[] = "sk98lin";
 -static struct		proc_dir_entry *pSkRootDir;
 -extern struct	file_operations sk_proc_fops;
--
+ 
 -static inline void SkGeProcCreate(struct net_device *dev)
 -{
 -	struct proc_dir_entry *pe;
- 
+-
 -	if (pSkRootDir && 
 -	    (pe = create_proc_entry(dev->name, S_IRUGO, pSkRootDir))) {
 -		pe->proc_fops = &sk_proc_fops;
@@ -14312,8 +14309,8 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skge.c linux-2.6.11.9/drivers/
 +		pAC->ChipsetType = 2;	/* Yukon2 chipset (list logic) */
 +	} else {
 +		pAC->ChipsetType = 0;	/* Genesis chipset (descriptor logic) */
-+	}
-+
+ 	}
+ 
 +	/* wake on lan support */
 +	pAC->WolInfo.SupportedWolOptions = 0;
 +#if defined (ETHTOOL_GWOL) && defined (ETHTOOL_SWOL)
@@ -14324,10 +14321,10 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skge.c linux-2.6.11.9/drivers/
 +				pAC->WolInfo.SupportedWolOptions = 0;
 +			}
 +		} 
- 	}
++	}
 +#endif
 +	pAC->WolInfo.ConfiguredWolOptions = pAC->WolInfo.SupportedWolOptions;
- 
++
  	GetConfiguration(pAC);
  	if (pAC->RlmtNets == 2) {
 -		pAC->GIni.GIPortUsage = SK_MUL_LINK;
@@ -14885,9 +14882,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skge.c linux-2.6.11.9/drivers/
 +	SkGeYellowLED(pAC, pAC->IoBase, 1);
  	SkDimEnableModerationIfNeeded(pAC);	
 -	SkDimDisplayModerationSettings(pAC);
--
--	pAC->GIni.GIValIrqMask &= IRQ_MASK;
  
+-	pAC->GIni.GIValIrqMask &= IRQ_MASK;
+-
 -	/* enable Interrupts */
 -	SK_OUT32(pAC->IoBase, B0_IMSK, pAC->GIni.GIValIrqMask);
 -	SK_OUT32(pAC->IoBase, B0_HWE_IMSK, IRQ_HWE_MASK);
@@ -16153,15 +16150,6 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skge.c linux-2.6.11.9/drivers/
  		if (!capable(CAP_NET_ADMIN)) return -EPERM;
  		if (Ioctl.Len < (sizeof(pAC->PnmiStruct) + HeaderLength)) {
  			Length = Ioctl.Len;
-@@ -3058,7 +4024,7 @@
- 		*/
- 		* ((SK_U32 *)pMemBuf) = 0;
- 		* ((SK_U32 *)pMemBuf + 1) = pdev->bus->number;
--		* ((SK_U32 *)pMemBuf + 2) = ParseDeviceNbrFromSlotName(pdev->slot_name);
-+		* ((SK_U32 *)pMemBuf + 2) = ParseDeviceNbrFromSlotName(pci_name(pdev));
- 		if(copy_to_user(Ioctl.pData, pMemBuf, Length) ) {
- 			Err = -EFAULT;
- 			goto fault_diag;
 @@ -3071,7 +4037,6 @@
  fault_diag:
  		kfree(pMemBuf); /* cleanup everything */
@@ -17142,21 +17130,18 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skge.c linux-2.6.11.9/drivers/
  		spin_unlock_irqrestore(
  			&pAC->TxPort[FromPort][TX_PRIO_LOW].TxDesRingLock,
  			Flags);
--		break;
--	case SK_DRV_RLMT_SEND:	 /* SK_MBUF *pMb */
+ 		break;
+ 	case SK_DRV_RLMT_SEND:	 /* SK_MBUF *pMb */
 -		SK_DBG_MSG(NULL, SK_DBGMOD_DRV, SK_DBGCAT_DRV_EVENT,
 -			("RLS "));
--		pRlmtMbuf = (SK_MBUF*) Param.pParaPtr;
--		pMsg = (struct sk_buff*) pRlmtMbuf->pOs;
--		skb_put(pMsg, pRlmtMbuf->Length);
++		SK_DBG_MSG(NULL,SK_DBGMOD_DRV,SK_DBGCAT_DRV_EVENT,("RLS "));
+ 		pRlmtMbuf = (SK_MBUF*) Param.pParaPtr;
+ 		pMsg = (struct sk_buff*) pRlmtMbuf->pOs;
+ 		skb_put(pMsg, pRlmtMbuf->Length);
 -		if (XmitFrame(pAC, &pAC->TxPort[pRlmtMbuf->PortIdx][TX_PRIO_LOW],
 -			pMsg) < 0)
-+		break;
-+	case SK_DRV_RLMT_SEND:	 /* SK_MBUF *pMb */
-+		SK_DBG_MSG(NULL,SK_DBGMOD_DRV,SK_DBGCAT_DRV_EVENT,("RLS "));
-+		pRlmtMbuf = (SK_MBUF*) Param.pParaPtr;
-+		pMsg = (struct sk_buff*) pRlmtMbuf->pOs;
-+		skb_put(pMsg, pRlmtMbuf->Length);
+-
+-			DEV_KFREE_SKB_ANY(pMsg);
 +		if (!CHIP_ID_YUKON_2(pAC)) {
 +			if (XmitFrame(pAC, &pAC->TxPort[pRlmtMbuf->PortIdx][TX_PRIO_LOW],
 +				pMsg) < 0) {
@@ -17167,12 +17152,27 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skge.c linux-2.6.11.9/drivers/
 +				DEV_KFREE_SKB_ANY(pMsg);
 +			}
 +		}
-+		break;
-+	case SK_DRV_TIMER:
-+		if (Param.Para32[0] == SK_DRV_MODERATION_TIMER) {
+ 		break;
+ 	case SK_DRV_TIMER:
+ 		if (Param.Para32[0] == SK_DRV_MODERATION_TIMER) {
+-			/*
+-			** expiration of the moderation timer implies that
+-			** dynamic moderation is to be applied
+-			*/
 +			/* check what IRQs are to be moderated */
-+			SkDimStartModerationTimer(pAC);
-+			SkDimModerate(pAC);
+ 			SkDimStartModerationTimer(pAC);
+ 			SkDimModerate(pAC);
+-                        if (pAC->DynIrqModInfo.DisplayStats) {
+-			    SkDimDisplayModerationSettings(pAC);
+-                        }
+-                } else if (Param.Para32[0] == SK_DRV_RX_CLEANUP_TIMER) {
+-			/*
+-			** check if we need to check for descriptors which
+-			** haven't been handled the last millisecs
+-			*/
+-			StartDrvCleanupTimer(pAC);
+-			if (pAC->GIni.GIMacsFound == 2) {
+-				ReceiveIrq(pAC, &pAC->RxPort[1], SK_FALSE);
 +		} else {
 +			printk("Expiration of unknown timer\n");
 +		}
@@ -17291,8 +17291,10 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skge.c linux-2.6.11.9/drivers/
 +				SkY2PortStart(pAC, IoC, 1);
 +			} else {
 +				SkY2PortStart(pAC, IoC, FromPort);
-+			}
-+		} else {
+ 			}
+-			ReceiveIrq(pAC, &pAC->RxPort[0], SK_FALSE);
+ 		} else {
+-			printk("Expiration of unknown timer\n");
 +			/* tschilling: Handling of return value inserted. */
 +			if (SkGeInitPort(pAC, IoC, FromPort)) {
 +				if (FromPort == 0) {
@@ -17309,32 +17311,7 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skge.c linux-2.6.11.9/drivers/
 +		spin_unlock_irqrestore(
 +			&pAC->TxPort[FromPort][TX_PRIO_LOW].TxDesRingLock,
 +			Flags);
- 
--			DEV_KFREE_SKB_ANY(pMsg);
--		break;
--	case SK_DRV_TIMER:
--		if (Param.Para32[0] == SK_DRV_MODERATION_TIMER) {
--			/*
--			** expiration of the moderation timer implies that
--			** dynamic moderation is to be applied
--			*/
--			SkDimStartModerationTimer(pAC);
--			SkDimModerate(pAC);
--                        if (pAC->DynIrqModInfo.DisplayStats) {
--			    SkDimDisplayModerationSettings(pAC);
--                        }
--                } else if (Param.Para32[0] == SK_DRV_RX_CLEANUP_TIMER) {
--			/*
--			** check if we need to check for descriptors which
--			** haven't been handled the last millisecs
--			*/
--			StartDrvCleanupTimer(pAC);
--			if (pAC->GIni.GIMacsFound == 2) {
--				ReceiveIrq(pAC, &pAC->RxPort[1], SK_FALSE);
--			}
--			ReceiveIrq(pAC, &pAC->RxPort[0], SK_FALSE);
--		} else {
--			printk("Expiration of unknown timer\n");
++
 +#if 0
 +		/* restart the kernel timer */
 +		pNet = (DEV_NET *) pAC->dev[FromPort]->priv;
@@ -17713,7 +17690,7 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skge.c linux-2.6.11.9/drivers/
  	for (i=0; i < size; ) {
  		l = (long) *p;
  		hex_buffer[haddr] = HEXCHAR[(l >> 28) & 0xf];
-@@ -4899,286 +6207,9 @@
+@@ -4899,288 +6207,9 @@
  
  #endif
  
@@ -17970,8 +17947,10 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skge.c linux-2.6.11.9/drivers/
 -	{ 0, }
 -};
 -
+-MODULE_DEVICE_TABLE(pci, skge_pci_tbl);
+-
 -static struct pci_driver skge_driver = {
--	.name		= "skge",
+-	.name		= "sk98lin",
 -	.id_table	= skge_pci_tbl,
 -	.probe		= skge_probe_one,
 -	.remove		= __devexit_p(skge_remove_one),
@@ -18005,9 +17984,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skge.c linux-2.6.11.9/drivers/
  
 -module_init(skge_init);
 -module_exit(skge_exit);
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skgehwt.c linux-2.6.11.9/drivers/net/sk98lin/skgehwt.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/skgehwt.c	2005-05-12 00:42:58.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/skgehwt.c	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/skgehwt.c linux-2.6.12/drivers/net/sk98lin/skgehwt.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/skgehwt.c	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/skgehwt.c	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skgehwt.c
@@ -18144,9 +18123,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skgehwt.c linux-2.6.11.9/drive
  	SkTimerDone(pAC, Ioc);
  }
  
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skgeinit.c linux-2.6.11.9/drivers/net/sk98lin/skgeinit.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/skgeinit.c	2005-05-12 00:42:07.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/skgeinit.c	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/skgeinit.c linux-2.6.12/drivers/net/sk98lin/skgeinit.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/skgeinit.c	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/skgeinit.c	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skgeinit.c
@@ -20782,9 +20761,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skgeinit.c linux-2.6.11.9/driv
  	return(0);
  }	/* SkGeInitPort */
 +
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skgemib.c linux-2.6.11.9/drivers/net/sk98lin/skgemib.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/skgemib.c	2005-05-12 00:41:08.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/skgemib.c	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/skgemib.c linux-2.6.12/drivers/net/sk98lin/skgemib.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/skgemib.c	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/skgemib.c	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skgemib.c
@@ -20992,9 +20971,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skgemib.c linux-2.6.11.9/drive
  	{OID_SKGE_BOARDLEVEL,
  		0,
  		0,
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skgepnmi.c linux-2.6.11.9/drivers/net/sk98lin/skgepnmi.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/skgepnmi.c	2005-05-12 00:42:35.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/skgepnmi.c	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/skgepnmi.c linux-2.6.12/drivers/net/sk98lin/skgepnmi.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/skgepnmi.c	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/skgepnmi.c	2005-06-22 16:04:47.000000000 +0200
 @@ -1,9 +1,9 @@
  /*****************************************************************************
   *
@@ -26316,9 +26295,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skgepnmi.c linux-2.6.11.9/driv
 +    return (RetCode);
 +}
 +#endif /* SK_ASF */
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skgesirq.c linux-2.6.11.9/drivers/net/sk98lin/skgesirq.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/skgesirq.c	2005-05-12 00:41:08.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/skgesirq.c	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/skgesirq.c linux-2.6.12/drivers/net/sk98lin/skgesirq.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/skgesirq.c	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/skgesirq.c	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skgesirq.c
@@ -28534,9 +28513,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skgesirq.c linux-2.6.11.9/driv
  SK_U16	IStatus)	/* Interrupt Status */
  {
  	SK_EVPARA	Para;
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/ski2c.c linux-2.6.11.9/drivers/net/sk98lin/ski2c.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/ski2c.c	2005-05-12 00:41:08.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/ski2c.c	1970-01-01 01:00:00.000000000 +0100
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/ski2c.c linux-2.6.12/drivers/net/sk98lin/ski2c.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/ski2c.c	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/ski2c.c	1970-01-01 01:00:00.000000000 +0100
 @@ -1,1296 +0,0 @@
 -/******************************************************************************
 - *
@@ -29834,9 +29813,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/ski2c.c linux-2.6.11.9/drivers
 -}	/* SkI2cEvent*/
 -
 -#endif /* !SK_DIAG */
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/sklm80.c linux-2.6.11.9/drivers/net/sk98lin/sklm80.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/sklm80.c	2005-05-12 00:42:54.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/sklm80.c	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/sklm80.c linux-2.6.12/drivers/net/sk98lin/sklm80.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/sklm80.c	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/sklm80.c	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	sklm80.c
@@ -29872,9 +29851,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/sklm80.c linux-2.6.11.9/driver
   */
  int SkLm80ReadSensor(
  SK_AC		*pAC,	/* Adapter Context */
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skproc.c linux-2.6.11.9/drivers/net/sk98lin/skproc.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/skproc.c	2005-05-12 00:41:11.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/skproc.c	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/skproc.c linux-2.6.12/drivers/net/sk98lin/skproc.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/skproc.c	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/skproc.c	2005-06-22 16:04:47.000000000 +0200
 @@ -2,28 +2,37 @@
   *
   * Name:	skproc.c
@@ -30536,9 +30515,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skproc.c linux-2.6.11.9/driver
  }
  
  /*******************************************************************************
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skqueue.c linux-2.6.11.9/drivers/net/sk98lin/skqueue.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/skqueue.c	2005-05-12 00:41:20.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/skqueue.c	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/skqueue.c linux-2.6.12/drivers/net/sk98lin/skqueue.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/skqueue.c	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/skqueue.c	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skqueue.c
@@ -30704,9 +30683,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skqueue.c linux-2.6.11.9/drive
  			return(Rtv);
  		}
  
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skrlmt.c linux-2.6.11.9/drivers/net/sk98lin/skrlmt.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/skrlmt.c	2005-05-12 00:42:20.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/skrlmt.c	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/skrlmt.c linux-2.6.12/drivers/net/sk98lin/skrlmt.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/skrlmt.c	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/skrlmt.c	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skrlmt.c
@@ -31636,9 +31615,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skrlmt.c linux-2.6.11.9/driver
  		SK_ERR_LOG(pAC, SK_ERRCL_SW, SKERR_RLMT_E003, SKERR_RLMT_E003_MSG);
  		break;
  	}	/* switch() */
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/sktimer.c linux-2.6.11.9/drivers/net/sk98lin/sktimer.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/sktimer.c	2005-05-12 00:41:11.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/sktimer.c	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/sktimer.c linux-2.6.12/drivers/net/sk98lin/sktimer.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/sktimer.c	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/sktimer.c	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	sktimer.c
@@ -31808,9 +31787,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/sktimer.c linux-2.6.11.9/drive
  		SkEventQueue(pAC,pTComp->TmClass, pTComp->TmEvent, pTComp->TmPara);
  	}
  
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/sktwsi.c linux-2.6.11.9/drivers/net/sk98lin/sktwsi.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/sktwsi.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.11.9/drivers/net/sk98lin/sktwsi.c	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/sktwsi.c linux-2.6.12/drivers/net/sk98lin/sktwsi.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/sktwsi.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.12/drivers/net/sk98lin/sktwsi.c	2005-06-22 16:04:47.000000000 +0200
 @@ -0,0 +1,1355 @@
 +/******************************************************************************
 + *
@@ -33167,9 +33146,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/sktwsi.c linux-2.6.11.9/driver
 +
 +#endif /* !SK_DIAG */
 +
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skvpd.c linux-2.6.11.9/drivers/net/sk98lin/skvpd.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/skvpd.c	2005-05-12 00:42:14.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/skvpd.c	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/skvpd.c linux-2.6.12/drivers/net/sk98lin/skvpd.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/skvpd.c	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/skvpd.c	2005-06-22 16:04:47.000000000 +0200
 @@ -1,22 +1,22 @@
  /******************************************************************************
   *
@@ -33772,9 +33751,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skvpd.c linux-2.6.11.9/drivers
  	if (len > VPD_MAX_LEN) {
  		/* cut it */
  		len = VPD_MAX_LEN;
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skxmac2.c linux-2.6.11.9/drivers/net/sk98lin/skxmac2.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/skxmac2.c	2005-05-12 00:43:09.000000000 +0200
-+++ linux-2.6.11.9/drivers/net/sk98lin/skxmac2.c	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/skxmac2.c linux-2.6.12/drivers/net/sk98lin/skxmac2.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/skxmac2.c	2005-06-17 21:48:29.000000000 +0200
++++ linux-2.6.12/drivers/net/sk98lin/skxmac2.c	2005-06-22 16:04:47.000000000 +0200
 @@ -2,8 +2,8 @@
   *
   * Name:	skxmac2.c
@@ -38035,9 +38014,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/skxmac2.c linux-2.6.11.9/drive
  
  /* End of file */
 +
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/sky2.c linux-2.6.11.9/drivers/net/sk98lin/sky2.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/sky2.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.11.9/drivers/net/sk98lin/sky2.c	2005-04-25 16:06:59.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/sky2.c linux-2.6.12/drivers/net/sk98lin/sky2.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/sky2.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.12/drivers/net/sk98lin/sky2.c	2005-06-22 16:04:47.000000000 +0200
 @@ -0,0 +1,2739 @@
 +/******************************************************************************
 + *
@@ -40778,9 +40757,9 @@ diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/sky2.c linux-2.6.11.9/drivers/
 + * End of file
 + *
 + ******************************************************************************/
-diff -uNr linux-2.6.11.9/drivers/net.orig/sk98lin/sky2le.c linux-2.6.11.9/drivers/net/sk98lin/sky2le.c
---- linux-2.6.11.9/drivers/net.orig/sk98lin/sky2le.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.11.9/drivers/net/sk98lin/sky2le.c	2005-04-25 16:06:58.000000000 +0200
+diff -uNr linux-2.6.12/drivers/net.orig/sk98lin/sky2le.c linux-2.6.12/drivers/net/sk98lin/sky2le.c
+--- linux-2.6.12/drivers/net.orig/sk98lin/sky2le.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.12/drivers/net/sk98lin/sky2le.c	2005-06-22 16:04:47.000000000 +0200
 @@ -0,0 +1,510 @@
 +/*****************************************************************************
 + *
