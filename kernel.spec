@@ -7,7 +7,7 @@
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
-%bcond_without	grsecurity	# disable grsecurity
+%bcond_with	grsecurity	# enable grsecurity
 %bcond_with	pax		# enable PaX (depends on grsecurity)
 %bcond_with	omosix		# enable openMosix (conflicts with grsecurity/vserver)
 %bcond_with	vserver		# enable vserver (conflicts with grsecurity/omosix)
@@ -89,7 +89,7 @@ xen0 conflicts with xenU
 
 %define		_rel		0.1
 
-%define		_netfilter_snap		20050611
+%define		_netfilter_snap		20050622
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
@@ -643,7 +643,6 @@ mv -f {,netfilter.}status
 %patch110 -p1
 %patch111 -p1
 %patch112 -p1
-nfy
 
 %ifarch %{ix86}
 %patch135 -p1
