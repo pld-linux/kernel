@@ -187,7 +187,7 @@ Patch56:	routes-2.6.12-12.diff
 # http://developer.osdl.org/shemminger/skge/
 Patch57:	linux-2.6-skge-0.5.patch
 # http://www.edoceo.com/creo/inotify/
-Patch58:	inotify-2.6.12-rc3.patch
+Patch58:	inotify-2.6.12.patch
 # derived from http://www.syskonnect.com/syskonnect/support/driver/zip/linux/install-8_18.tar.bz2
 Patch59:	linux-2.6-sk98lin-8.18.2.2.patch
 # http://dev.gentoo.org/~spock/projects/gensplash/
@@ -645,6 +645,7 @@ mv -f {,netfilter.}status
 %patch80 -p1
 %patch81 -p1
 
+nfy
 %patch90 -p1
 %patch95 -p1
 
