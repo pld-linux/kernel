@@ -87,8 +87,6 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 
 %define		_rel		0.1
-%define		_cset		20041220_1904
-%define		_apply_cset	0
 
 %define		_netfilter_snap		20050611
 
@@ -118,8 +116,6 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.
 # Source0-md5:	c5d2a1b62e1dad502c871bba267337d5
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
-
-Source4:	http://ftp.kernel.org/pub/linux/kernel/v2.6/testing/cset/cset-%{_cset}.txt.bz2
 
 Source20:	kernel-i386.config
 Source21:	kernel-i386-smp.config
@@ -598,10 +594,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %prep
 %setup -q -n linux-%{version}%{_rc}
-
-%if "%{_apply_cset}" != "0"
-bzcat %{SOURCE4} | patch -p1 -s
-%endif
 
 %patch0 -p1
 %patch1 -p0
