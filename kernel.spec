@@ -190,7 +190,7 @@ Patch58:	inotify-2.6.12-rc3.patch
 # derived from http://www.syskonnect.com/syskonnect/support/driver/zip/linux/install-8_18.tar.bz2
 Patch59:	linux-2.6-sk98lin-8.18.2.2.patch
 # http://dev.gentoo.org/~spock/projects/gensplash/
-Patch60:	fbsplash-0.9.2-2.6.11.patch
+Patch60:	fbsplash-0.9.2-r3-2.6.12-rc3.patch
 # reserve dynamic minors for fbsplash and device mapper
 Patch61:	linux-static-dev.patch
 Patch62:	linux-2.6-lirc-0.7.patch
