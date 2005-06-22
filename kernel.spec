@@ -199,6 +199,7 @@ Patch62:	linux-2.6-lirc-0.7.patch
 Patch63:	iriverfs-r0.1.0.1.patch
 Patch64:	squashfs2.1-patch
 Patch65:	reiser4-2.6.12-mm1.patch
+# TODO: azx needs checking for newer version
 Patch66:	linux-2.6-alsa-1.0.8-azx.patch
 Patch67:	linux-2.6-alsa-1.0.9plus-20050622.patch
 
@@ -207,47 +208,26 @@ Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 # psmouse extension for ThinkPad laptops from http://www.clarkson.edu/~evanchsa/
 Patch81:	trackpoint-2.6.11.patch
 
-# http://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.11/
-Patch90:	acpi-20050309-2.6.11.diff
+# derived from http://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.12/
+Patch90:	acpi-20050408-2.6.12.diff
 
 # http://www.kismetwireless.net/download.shtml#orinoco2611
 Patch95:	orinoco-2.6.12-rfmon-dragorn-1.diff
 
 Patch100:	linux-2.6-nvidia-pci-ids.patch
 Patch101:	linux-2.6-pty-is-losing-bytes.patch
-Patch102:	linux-2.6-esp-corruption-cpu-bug.patch
-Patch103:	linux-2.6-tty-overrun-notify.patch
-Patch104:	linux-2.6-tcp-unaligned-access.patch
-Patch105:	linux-2.6-align-udp-packet.patch
-Patch106:	linux-2.6-smbfs.patch
-Patch107:	linux-2.6-jbd-temp-unlink.patch
-Patch108:	linux-2.6-vm-orphaned-pages.patch
-Patch109:	linux-2.6-reiserfs-page-leak.patch
-Patch110:	linux-2.6-bdi-provide-backing-device-capability-information.patch
-Patch111:	linux-2.6-iriver-backing-device-capability-information-fix.patch
-Patch112:	linux-2.6-sata-sil-corruption-lockup.patch
-Patch113:	linux-2.6-xfrm-policy-destructor.patch
-Patch114:	linux-2.6-dst-cache-overflow.patch
-Patch115:	linux-2.6-net-sundance-ip100A-pciids.patch
-Patch116:	linux-2.6-null-tty-driver-oops.patch
-Patch117:	linux-2.6-sata-sil-mod15write-workaround.patch
-Patch118:	linux-2.6-ext2-corruption.patch
-Patch119:	linux-2.6-quota-dropfix.patch
-Patch120:	linux-2.6-quota-format.patch
-Patch121:	linux-2.6-procfs-hardlink-counts.patch
-Patch122:	linux-2.6-cxt48-misdetection.patch
-Patch123:	linux-2.6-cpuid-x87-bit-on-AMD-falsely-marked-as-PNI.patch
-Patch124:	linux-2.6-tty-races.patch
-Patch125:	linux-2.6-jiffies-rounding.patch
-Patch126:	linux-2.6-cputime-misscalculation.patch
-Patch127:	linux-2.6-jfs-fsync-wrong-behavior.patch
+Patch102:	linux-2.6-smbfs.patch
+Patch103:	linux-2.6-iriver-backing-device-capability-information-fix.patch
+#Patch104:	linux-2.6-dst-cache-overflow.patch		NEEDS UPDATE
+Patch105:	linux-2.6-net-sundance-ip100A-pciids.patch
+Patch106:	linux-2.6-null-tty-driver-oops.patch
+Patch107:	linux-2.6-sata-sil-mod15write-workaround.patch
+Patch108:	linux-2.6-tty-races.patch
+Patch109:	linux-2.6-jiffies-rounding.patch
+Patch110:	linux-2.6-cputime-misscalculation.patch
+Patch111:	linux-2.6-vfs-two-read-without-clear-between.patch
+Patch112:	linux-2.6-via82c586-irq-routing.patch
 
-Patch129:	linux-2.6-vfs-two-read-without-clear-between.patch
-Patch130:	linux-2.6-fix-via82xx-resume.patch
-Patch131:	linux-2.6-ppc-fix-sleep-on-old-101-powerbook.patch
-
-Patch133:	linux-2.6-via82c586-irq-routing.patch
-Patch134:	linux-2.6-udp-locking.patch
 # derived from http://adsl-brisbane.lubemobile.com.au/ras/debian/sarge/kernel-patch-linuxabi/
 Patch135:	linux-2.6-unix-abi.patch
 
@@ -647,7 +627,6 @@ mv -f {,netfilter.}status
 %patch80 -p1
 %patch81 -p1
 
-nfy
 %patch90 -p1
 %patch95 -p1
 
@@ -655,7 +634,7 @@ nfy
 %patch101 -p1
 %patch102 -p1
 %patch103 -p1
-%patch104 -p1
+#patch104 -p1		NEEDS UPDATE
 %patch105 -p1
 %patch106 -p1
 %patch107 -p1
@@ -664,28 +643,8 @@ nfy
 %patch110 -p1
 %patch111 -p1
 %patch112 -p1
-%patch113 -p1
-%patch114 -p1
-%patch115 -p1
-%patch116 -p1
-%patch117 -p1
-%patch118 -p1
-%patch119 -p1
-%patch120 -p1
-%patch121 -p1
-%patch122 -p1
-%patch123 -p1
-%patch124 -p1
-%patch125 -p1
-%patch126 -p1
-%patch127 -p1
+nfy
 
-%patch129 -p1
-%patch130 -p1
-%patch131 -p1
-
-%patch133 -p1
-%patch134 -p1
 %ifarch %{ix86}
 %patch135 -p1
 %endif
