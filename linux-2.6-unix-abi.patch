@@ -17626,7 +17626,7 @@ diff -uNr linux-2.6.11.11/arch/ia64/ia32/ia32priv.h linux-2.6.11.11.linuxabi/arc
 diff -uNr linux-2.6.11.11/arch/parisc/kernel/signal.c linux-2.6.11.11.linuxabi/arch/parisc/kernel/signal.c
 --- linux-2.6.11.11/arch/parisc/kernel/signal.c	2005-05-27 07:06:46.000000000 +0200
 +++ linux-2.6.11.11.linuxabi/arch/parisc/kernel/signal.c	2005-06-02 11:23:24.000000000 +0200
-@@ -75,7 +75,7 @@
+@@ -76,7 +76,7 @@
  #ifdef __LP64__
  	compat_sigset_t newset32;
  
@@ -17635,29 +17635,25 @@ diff -uNr linux-2.6.11.11/arch/parisc/kernel/signal.c linux-2.6.11.11.linuxabi/a
  		/* XXX: Don't preclude handling different sized sigset_t's.  */
  		if (sigsetsize != sizeof(compat_sigset_t))
  			return -EINVAL;
-@@ -151,8 +151,8 @@
- #ifdef __LP64__
+@@ -153,7 +153,7 @@
  	compat_sigset_t compat_set;
- 	struct compat_rt_sigframe * compat_frame;
--	
+ 	struct compat_rt_sigframe __user * compat_frame;
+ 	
 -	if(personality(current->personality) == PER_LINUX32)
-+
 +	if(is_cur_personality_id(PERID_LINUX32))
  		sigframe_size = PARISC_RT_SIGFRAME_SIZE32;
  #endif
  
-@@ -164,8 +164,8 @@
- 
+@@ -166,7 +166,7 @@
  #ifdef __LP64__
- 	compat_frame = (struct compat_rt_sigframe *)frame;
--	
+ 	compat_frame = (struct compat_rt_sigframe __user *)frame;
+ 	
 -	if(personality(current->personality) == PER_LINUX32){
-+
 +	if(is_cur_personality_id(PERID_LINUX32)){
  		DBG(2,"sys_rt_sigreturn: ELF32 process.\n");
  		if (__copy_from_user(&compat_set, &compat_frame->uc.uc_sigmask, sizeof(compat_set)))
  			goto give_sigsegv;
-@@ -185,7 +185,7 @@
+@@ -186,7 +186,7 @@
  
  	/* Good thing we saved the old gr[30], eh? */
  #ifdef __LP64__
@@ -17666,18 +17662,16 @@ diff -uNr linux-2.6.11.11/arch/parisc/kernel/signal.c linux-2.6.11.11.linuxabi/a
  		DBG(1,"sys_rt_sigreturn: compat_frame->uc.uc_mcontext 0x%p\n",
  				&compat_frame->uc.uc_mcontext);
  // FIXME: Load upper half from register file
-@@ -314,8 +314,8 @@
- #ifdef __LP64__
+@@ -316,7 +316,7 @@
  
- 	compat_frame = (struct compat_rt_sigframe *)frame;
--	
+ 	compat_frame = (struct compat_rt_sigframe __user *)frame;
+ 	
 -	if(personality(current->personality) == PER_LINUX32) {
-+
-+	if(is_personality_id(PERID_LINUX32)) {
++	if(is_cur_personality_id(PERID_LINUX32)) {
  		DBG(1,"setup_rt_frame: frame->info = 0x%p\n", &compat_frame->info);
  		err |= compat_copy_siginfo_to_user(&compat_frame->info, info);
  		DBG(1,"SETUP_RT_FRAME: 1\n");
-@@ -392,7 +392,7 @@
+@@ -393,7 +393,7 @@
  	haddr = A(ka->sa.sa_handler);
  	/* The sa_handler may be a pointer to a function descriptor */
  #ifdef __LP64__
@@ -17686,7 +17680,7 @@ diff -uNr linux-2.6.11.11/arch/parisc/kernel/signal.c linux-2.6.11.11.linuxabi/a
  #endif
  		if (haddr & PA_PLABEL_FDESC) {
  			Elf32_Fdesc fdesc;
-@@ -427,19 +427,19 @@
+@@ -428,19 +428,19 @@
  	 */
  	sigframe_size = PARISC_RT_SIGFRAME_SIZE;
  #ifdef __LP64__
@@ -17709,7 +17703,7 @@ diff -uNr linux-2.6.11.11/arch/parisc/kernel/signal.c linux-2.6.11.11.linuxabi/a
  			psw |= PSW_W;
  #endif
  
-@@ -452,7 +452,7 @@
+@@ -465,7 +465,7 @@
  	regs->gr[26] = sig;               /* signal number */
  	
  #ifdef __LP64__
@@ -17727,7 +17721,7 @@ diff -uNr linux-2.6.11.11/arch/x86_64/ia32/sys_ia32.c linux-2.6.11.11.linuxabi/a
  	int ret;
 -	if (personality(current->personality) == PER_LINUX32 && 
 +
-+	if (is_personality_id(PERID_LINUX32) &&
++	if (is_cur_personality_id(PERID_LINUX32) &&
  		personality == PER_LINUX)
  		personality = PER_LINUX32;
  	ret = sys_personality(personality);
@@ -27490,14 +27484,14 @@ diff -uNr linux-2.6.11.11/include/asm-i386/namei.h linux-2.6.11.11.linuxabi/incl
 diff -uNr linux-2.6.11.11/include/asm-i386/signal.h linux-2.6.11.11.linuxabi/include/asm-i386/signal.h
 --- linux-2.6.11.11/include/asm-i386/signal.h	2005-05-27 07:06:46.000000000 +0200
 +++ linux-2.6.11.11.linuxabi/include/asm-i386/signal.h	2005-06-02 11:23:25.000000000 +0200
-@@ -223,6 +223,7 @@
+@@ -196,6 +196,7 @@
  
  struct pt_regs;
  extern int FASTCALL(do_signal(struct pt_regs *regs, sigset_t *oldset));
 +extern int signal_suspend(struct pt_regs * regs, old_sigset_t mask);
- #define ptrace_signal_deliver(regs, cookie) do { } while (0)
  
- #endif /* __KERNEL__ */
+ #define ptrace_signal_deliver(regs, cookie)		\
+ 	do {						\
 diff -uNr linux-2.6.11.11/include/asm-i386/unistd.h linux-2.6.11.11.linuxabi/include/asm-i386/unistd.h
 --- linux-2.6.11.11/include/asm-i386/unistd.h	2005-05-27 07:06:46.000000000 +0200
 +++ linux-2.6.11.11.linuxabi/include/asm-i386/unistd.h	2005-06-02 11:23:25.000000000 +0200
@@ -27628,10 +27622,10 @@ diff -uNr linux-2.6.11.11/include/linux/personality.h linux-2.6.11.11.linuxabi/i
   */
  enum {
 +#if 1 /* only for compatibilty with old code */
+ 	ADDR_NO_RANDOMIZE = 	0x0040000,	/* disable randomization of VA space */
  	FDPIC_FUNCPTRS =	0x0080000,	/* userspace function ptrs point to descriptors
  						 * (signal handling)
- 						 */
-@@ -29,6 +70,17 @@
+@@ -30,6 +71,17 @@
  	WHOLE_SECONDS =		0x2000000,
  	STICKY_TIMEOUTS	=	0x4000000,
  	ADDR_LIMIT_3GB = 	0x8000000,
@@ -27649,8 +27643,8 @@ diff -uNr linux-2.6.11.11/include/linux/personality.h linux-2.6.11.11.linuxabi/i
  };
  
  /*
-@@ -38,36 +90,33 @@
- #define PER_CLEAR_ON_SETID (READ_IMPLIES_EXEC)
+@@ -39,36 +91,33 @@
+ #define PER_CLEAR_ON_SETID (READ_IMPLIES_EXEC|ADDR_NO_RANDOMIZE)
  
  /*
 - * Personality types.
@@ -27711,7 +27705,7 @@ diff -uNr linux-2.6.11.11/include/linux/personality.h linux-2.6.11.11.linuxabi/i
  };
  
  
-@@ -82,8 +131,8 @@
+@@ -83,8 +132,8 @@
  struct exec_domain {
  	const char		*name;		/* name of the execdomain */
  	handler_t		handler;	/* handler for syscalls */
@@ -27722,7 +27716,7 @@ diff -uNr linux-2.6.11.11/include/linux/personality.h linux-2.6.11.11.linuxabi/i
  	unsigned long		*signal_map;	/* signal mapping */
  	unsigned long		*signal_invmap;	/* reverse signal mapping */
  	struct map_segment	*err_map;	/* error mapping */
-@@ -95,19 +144,72 @@
+@@ -96,19 +145,72 @@
  };
  
  /*
@@ -28000,14 +27994,14 @@ diff -uNr linux-2.6.11.11/include/linux/xout.h linux-2.6.11.11.linuxabi/include/
 diff -uNr linux-2.6.11.11/include/net/sock.h linux-2.6.11.11.linuxabi/include/net/sock.h
 --- linux-2.6.11.11/include/net/sock.h	2005-05-27 07:06:46.000000000 +0200
 +++ linux-2.6.11.11.linuxabi/include/net/sock.h	2005-06-02 11:23:25.000000000 +0200
-@@ -391,6 +391,7 @@
+@@ -375,6 +375,7 @@
  	SOCK_DESTROY,
  	SOCK_BROADCAST,
  	SOCK_TIMESTAMP,
-+        SOCK_BSDISM,
- };
- 
- static inline void sock_set_flag(struct sock *sk, enum sock_flags flag)
++	SOCK_BSDISM,
+ 	SOCK_ZAPPED,
+ 	SOCK_USE_WRITE_QUEUE, /* whether to call sk->sk_write_space in sock_wfree */
+ 	SOCK_DBG, /* %SO_DEBUG setting */
 diff -uNr linux-2.6.11.11/kernel/exec_domain.c linux-2.6.11.11.linuxabi/kernel/exec_domain.c
 --- linux-2.6.11.11/kernel/exec_domain.c	2005-05-27 07:06:46.000000000 +0200
 +++ linux-2.6.11.11.linuxabi/kernel/exec_domain.c	2005-06-02 11:42:14.000000000 +0200
@@ -28372,8 +28366,8 @@ diff -uNr linux-2.6.11.11/kernel/Makefile linux-2.6.11.11.linuxabi/kernel/Makefi
  	    sysctl.o capability.o ptrace.o timer.o user.o \
  	    signal.o sys.o kmod.o workqueue.o pid.o \
  	    rcupdate.o intermodule.o extable.o params.o posix-timers.o \
--	    kthread.o wait.o kfifo.o sys_ni.o
-+	    kthread.o wait.o kfifo.o sys_ni.o syscall_ksyms.o
+-	    kthread.o wait.o kfifo.o sys_ni.o posix-cpu-timers.o
++	    kthread.o wait.o kfifo.o sys_ni.o posix-cpu-timers.o syscall_ksyms.o
  
  obj-$(CONFIG_FUTEX) += futex.o
  obj-$(CONFIG_GENERIC_ISA_DMA) += dma.o
