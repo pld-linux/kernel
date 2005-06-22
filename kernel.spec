@@ -209,7 +209,7 @@ Patch81:	trackpoint-2.6.11.patch
 Patch90:	acpi-20050309-2.6.11.diff
 
 # http://www.kismetwireless.net/download.shtml#orinoco2611
-Patch95:	orinoco-2.6.11-rfmon-dragorn-1.diff
+Patch95:	orinoco-2.6.12-rfmon-dragorn-1.diff
 
 Patch100:	linux-2.6-nvidia-pci-ids.patch
 Patch101:	linux-2.6-pty-is-losing-bytes.patch
