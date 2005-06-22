@@ -77,6 +77,7 @@ xen0 conflicts with xenU
 %define		_e2fsprogs_ver		1.29
 %define		_jfsutils_ver		1.1.3
 %define		_reiserfsprogs_ver	3.6.3
+%define		_reiser4progs_ver	1.0.0
 %define		_xfsprogs_ver		2.6.0
 %define		_pcmcia_cs_ver		3.1.21
 %define		_quota_tools_ver	3.09
@@ -197,7 +198,7 @@ Patch62:	linux-2.6-lirc-0.7.patch
 # http://ifp-driver.sourceforge.net/
 Patch63:	iriverfs-r0.1.0.1.patch
 Patch64:	squashfs2.1-patch
-Patch65:	linux-reiser4-2.6.11-mm4.patch.bz2
+Patch65:	reiser4-2.6.12-mm1.patch
 Patch66:	linux-2.6-alsa-1.0.8-azx.patch
 
 # http://tahoe.pl/patch.htm
@@ -291,6 +292,7 @@ Conflicts:	module-init-tool < %{_module_init_tool_ver}
 Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
 Conflicts:	jfsutils < %{_jfsutils_ver}
 Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
+Conflicts:	reiser4progs < %{_reiser4progs_ver}
 Conflicts:	xfsprogs < %{_xfsprogs_ver}
 Conflicts:	quota-tools < %{_quota_tools_ver}
 Conflicts:	PPP < %{_PPP_ver}
