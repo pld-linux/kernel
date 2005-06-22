@@ -151,8 +151,6 @@ Patch1:		linux-2.6-version.patch
 Patch3:		2.6.0-t9-acpi_osl-lkml.patch
 Patch4:		linux-kbuild-extmod.patch
 Patch5:		kernel-MAX_INIT_ARGS.patch
-# http://www.kernel.org/pub/linux/devel/binutils/linux-2.6-seg-5.patch
-Patch6:		linux-2.6-seg-5.patch
 
 Patch10:	2.6.0-powernow-k7.patch
 
@@ -184,7 +182,7 @@ Patch53:	2.6.10-imq.patch
 Patch54:	2.6.4-wrr.patch
 
 # frpm http://www.ssi.bg/~ja/#routers
-Patch56:	routes-2.6.11-12.diff
+Patch56:	routes-2.6.12-12.diff
 # http://developer.osdl.org/shemminger/skge/
 Patch57:	linux-2.6-skge-0.5.patch
 # http://www.edoceo.com/creo/inotify/
@@ -601,7 +599,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
-##%patch6 -p1 - applayed in kernel
 
 %patch10 -p1
 
