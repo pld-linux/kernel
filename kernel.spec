@@ -723,16 +723,22 @@ TuneUpConfigForIX86 () {
 }
 
 %if "%{_target_base_arch}" != "%{_arch}"
-CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
-export DEPMOD=/bin/true
+    CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
+    export DEPMOD=/bin/true
+    %if "%{_arch}" == "x86_64"
+	%if "%{_target_base_arch}" == "i386"
+	    CrossOpts="ARCH=%{_target_base_arch}"
+	    unset DEPMOD
+	%endif
+    %endif
 %else
-CrossOpts=""
+    CrossOpts=""
 %endif
 
 %if %{with xen}
 CrossOpts="ARCH=xen"
-%define _main_target_base_arch i386
-%define _target_base_arch xen
+%define _main_target_base_arch	i386
+%define _target_base_arch	xen
 %endif
 
 BuildConfig() {
@@ -910,11 +916,24 @@ BuildConfig smp
 %install
 rm -rf $RPM_BUILD_ROOT
 umask 022
+
 %if "%{_target_base_arch}" != "%{_arch}"
-CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
-export DEPMOD=/bin/true
+    CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
+    export DEPMOD=/bin/true
+    %if "%{_arch}" == "x86_64"
+	%if "%{_target_base_arch}" == "i386"
+	    CrossOpts="ARCH=%{_target_base_arch}"
+	    unset DEPMOD
+	%endif
+    %endif
 %else
-CrossOpts=""
+    CrossOpts=""
+%endif
+
+%if %{with xen}
+CrossOpts="ARCH=xen"
+%define _main_target_base_arch	i386
+%define _target_base_arch	xen
 %endif
 
 install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
