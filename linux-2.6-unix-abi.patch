@@ -459,12 +459,12 @@ diff -uNr linux-2.6.11.11/abi/cxenix/signal.c linux-2.6.11.11.linuxabi/abi/cxeni
 @@ -0,0 +1,89 @@
 +#ident "%W% %G%"
 +
++#define __KERNEL_SYSCALLS__
++#include <linux/unistd.h>
 +#include <linux/module.h>
 +#include <linux/kernel.h>
 +#include <linux/personality.h>
 +#include <linux/sched.h>
-+#define __KERNEL_SYSCALLS__
-+#include <linux/unistd.h>
 +#include <asm/uaccess.h>
 +
 +#include <abi/cxenix/signal.h>
@@ -2377,6 +2377,8 @@ diff -uNr linux-2.6.11.11/abi/sco/ptrace.c linux-2.6.11.11.linuxabi/abi/sco/ptra
 +/*
 + * This file is nearly identical to abi/wyse/ptrace.c, please keep it in sync.
 + */
++#define __KERNEL_SYSCALLS__
++#include <linux/unistd.h>
 +#include <linux/module.h>
 +#include <linux/errno.h>
 +#include <linux/sched.h>
@@ -2384,8 +2386,6 @@ diff -uNr linux-2.6.11.11/abi/sco/ptrace.c linux-2.6.11.11.linuxabi/abi/sco/ptra
 +#include <linux/mm.h>
 +#include <linux/personality.h>
 +#include <linux/user.h>
-+#define __KERNEL_SYSCALLS__
-+#include <linux/unistd.h>
 +#include <linux/ptrace.h>
 +
 +#include <asm/uaccess.h>
@@ -5898,6 +5898,8 @@ diff -uNr linux-2.6.11.11/abi/svr4/ipc.c linux-2.6.11.11.linuxabi/abi/svr4/ipc.c
 +
 +#ident "%W% %G%"
 +
++#define __KERNEL_SYSCALLS__
++#include <linux/unistd.h>
 +#include <linux/module.h>
 +#include <linux/errno.h>
 +#include <linux/fs.h>
@@ -5906,8 +5908,6 @@ diff -uNr linux-2.6.11.11/abi/svr4/ipc.c linux-2.6.11.11.linuxabi/abi/svr4/ipc.c
 +#include <linux/ptrace.h>
 +#include <linux/sched.h>
 +#include <linux/string.h>
-+#define __KERNEL_SYSCALLS__
-+#include <linux/unistd.h>
 +#include <linux/syscalls.h>
 +#include <linux/ipc.h>
 +#include <linux/sem.h>
@@ -7691,14 +7691,14 @@ diff -uNr linux-2.6.11.11/abi/svr4/signal.c linux-2.6.11.11.linuxabi/abi/svr4/si
 +
 +#ident "%W% %G%"
 +
++#define __KERNEL_SYSCALLS__
++#include <linux/unistd.h>
 +#include <linux/module.h>
 +#include <linux/errno.h>
 +#include <linux/sched.h>
 +#include <linux/kernel.h>
 +#include <linux/mm.h>
 +#include <linux/stddef.h>
-+#define __KERNEL_SYSCALLS__
-+#include <linux/unistd.h>
 +#include <linux/ptrace.h>
 +#include <linux/fcntl.h>
 +#include <linux/personality.h>
@@ -8517,7 +8517,7 @@ diff -uNr linux-2.6.11.11/abi/svr4/sockio.c linux-2.6.11.11.linuxabi/abi/svr4/so
 +		goto fput;
 +
 +#if defined(CONFIG_ABI_XTI)
-+	if (ip->i_sock) {
++	if (S_ISSOCK(ip->i_mode)) {
 +		struct T_private *ti = Priv(fp);
 +
 +		if (IS_SOCKSYS(ip))
@@ -8562,7 +8562,7 @@ diff -uNr linux-2.6.11.11/abi/svr4/sockio.c linux-2.6.11.11.linuxabi/abi/svr4/so
 +		goto fput;
 +
 +	error = 0;
-+	if (!ip->i_sock)
++	if (!S_ISSOCK(ip->i_mode))
 +		goto fput;
 +
 +	if (IS_SOCKSYS(ip))
@@ -8650,7 +8650,7 @@ diff -uNr linux-2.6.11.11/abi/svr4/sockio.c linux-2.6.11.11.linuxabi/abi/svr4/so
 +	/*
 +	 * Special hack^H^Hndling for socksys fds
 +	 */
-+	if (ip->i_sock == 0 && IS_SOCKSYS(ip)) {
++	if (!S_ISSOCK(ip->i_mode) && IS_SOCKSYS(ip)) {
 +		error = socksys_fdinit(fd, 0, NULL, NULL);
 +		if (error < 0)
 +			return error;
@@ -9197,7 +9197,7 @@ diff -uNr linux-2.6.11.11/abi/svr4/socksys.c linux-2.6.11.11.linuxabi/abi/svr4/s
 +	 * Not being a socket is not an error - it is probably
 +	 * just the pseudo device transport provider.
 +	 */
-+	if (!ip || !ip->i_sock)
++	if (!ip || !S_ISSOCK(ip->i_mode))
 +		goto out;
 +
 +	if (fp->private_data) {
@@ -9229,7 +9229,7 @@ diff -uNr linux-2.6.11.11/abi/svr4/socksys.c linux-2.6.11.11.linuxabi/abi/svr4/s
 +	 * If this is a timod transport end point and there
 +	 * is a control message queued we have readable data.
 +	 */
-+	if (ip && ip->i_sock && MINOR(ip->i_rdev) != 1) {
++	if (ip && S_ISSOCK(ip->i_mode) && MINOR(ip->i_rdev) != 1) {
 +		if (Priv(fp) && Priv(fp)->pfirst) {
 +			if (Priv(fp)->pfirst->pri == MSG_HIPRI)
 +				mask |= POLLPRI;
@@ -9247,7 +9247,7 @@ diff -uNr linux-2.6.11.11/abi/svr4/socksys.c linux-2.6.11.11.linuxabi/abi/svr4/s
 +{
 +	int			fd, error;
 +
-+	if (fp->f_dentry->d_inode->i_sock)
++	if (S_ISSOCK(fp->f_dentry->d_inode->i_mode))
 +		BUG();
 +
 +	for (fd = 0; fd < current->files->max_fdset; fd++) {
@@ -9269,7 +9269,7 @@ diff -uNr linux-2.6.11.11/abi/svr4/socksys.c linux-2.6.11.11.linuxabi/abi/svr4/s
 +{
 +	int			fd, error;
 +
-+	if (fp->f_dentry->d_inode->i_sock)
++	if (S_ISSOCK(fp->f_dentry->d_inode->i_mode))
 +		BUG();
 +
 +	for (fd = 0; fd < current->files->max_fdset; fd++) {
@@ -9452,7 +9452,7 @@ diff -uNr linux-2.6.11.11/abi/svr4/socksys.c linux-2.6.11.11.linuxabi/abi/svr4/s
 +	ip = fp->f_dentry->d_inode;
 +
 +	fput(fp); /* this looks boguos */
-+	if (!ip || !ip->i_sock)
++	if (!ip || !S_ISSOCK(ip->i_mode))
 +		return -EBADF;
 +
 +
@@ -10433,7 +10433,7 @@ diff -uNr linux-2.6.11.11/abi/svr4/stream.c linux-2.6.11.11.linuxabi/abi/svr4/st
 +	fp = fget(fd);
 +	if (fp) {
 +		ip = fp->f_dentry->d_inode;
-+		if (ip->i_sock)
++		if (S_ISSOCK(ip->i_mode))
 +			error = timod_getmsg(fd, ip, 0, regs);
 +		fput(fp);
 +	}
@@ -10452,7 +10452,7 @@ diff -uNr linux-2.6.11.11/abi/svr4/stream.c linux-2.6.11.11.linuxabi/abi/svr4/st
 +	fp = fget(fd);
 +	if (fp) {
 +		ip = fp->f_dentry->d_inode;
-+		if (ip->i_sock || IS_SPX(ip))
++		if (S_ISSOCK(ip->i_mode) || IS_SPX(ip))
 +			error = timod_putmsg(fd, ip, 0, regs);
 +		fput(fp);
 +	}
@@ -10472,7 +10472,7 @@ diff -uNr linux-2.6.11.11/abi/svr4/stream.c linux-2.6.11.11.linuxabi/abi/svr4/st
 +	fp = fget(fd);
 +	if (fp) {
 +		ip = fp->f_dentry->d_inode;
-+		if (ip->i_sock)
++		if (S_ISSOCK(ip->i_mode))
 +			error = timod_getmsg(fd, ip, 1, regs);
 +		fput(fp);
 +	}
@@ -10491,7 +10491,7 @@ diff -uNr linux-2.6.11.11/abi/svr4/stream.c linux-2.6.11.11.linuxabi/abi/svr4/st
 +	fp = fget(fd);
 +	if (fp) {
 +		ip = fp->f_dentry->d_inode;
-+		if (ip->i_sock || IS_SPX(ip))
++		if (S_ISSOCK(ip->i_mode) || IS_SPX(ip))
 +			error = timod_putmsg(fd, ip, 1, regs);
 +		fput(fp);
 +	}
@@ -14963,10 +14963,10 @@ diff -uNr linux-2.6.11.11/abi/uw7/context.c linux-2.6.11.11.linuxabi/abi/uw7/con
 + */
 +
 +
-+#include <linux/ptrace.h>
-+#include <linux/errno.h>
 +#define __KERNEL_SYSCALLS__
 +#include <linux/unistd.h>
++#include <linux/ptrace.h>
++#include <linux/errno.h>
 +#include <linux/syscalls.h>
 +#include <asm/uaccess.h>
 +
@@ -16382,6 +16382,8 @@ diff -uNr linux-2.6.11.11/abi/wyse/ptrace.c linux-2.6.11.11.linuxabi/abi/wyse/pt
 +/*
 + * This file is nearly identical to abi/sco/ptrace.c, please keep it in sync.
 + */
++#define __KERNEL_SYSCALLS__
++#include <linux/unistd.h>
 +#include <linux/module.h>
 +#include <linux/errno.h>
 +#include <linux/sched.h>
@@ -16390,8 +16392,6 @@ diff -uNr linux-2.6.11.11/abi/wyse/ptrace.c linux-2.6.11.11.linuxabi/abi/wyse/pt
 +#include <linux/mm.h>
 +#include <linux/personality.h>
 +#include <linux/user.h>
-+#define __KERNEL_SYSCALLS__
-+#include <linux/unistd.h>
 +
 +#include <asm/uaccess.h>
 +
@@ -22809,6 +22809,8 @@ diff -uNr linux-2.6.11.11/fs/binfmt_xout.c linux-2.6.11.11.linuxabi/fs/binfmt_xo
 + * the ELF object file format. Any errors are most likely my own however.
 + */
 +#include <linux/config.h>
++#define __KERNEL_SYSCALLS__
++#include <linux/unistd.h>
 +#include <linux/module.h>
 +#include <linux/init.h>
 +#include <linux/fs.h>
@@ -22825,8 +22827,6 @@ diff -uNr linux-2.6.11.11/fs/binfmt_xout.c linux-2.6.11.11.linuxabi/fs/binfmt_xo
 +#include <linux/personality.h>
 +#include <linux/file.h>
 +#include <linux/slab.h>
-+#define __KERNEL_SYSCALLS__
-+#include <linux/unistd.h>
 +#include <linux/syscalls.h>
 +#include <linux/xout.h>
 +
