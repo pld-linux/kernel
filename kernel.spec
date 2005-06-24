@@ -17,7 +17,6 @@
 %bcond_with	em8300		# DXR3/Hollywood
 %bcond_with	xen0		# build Xen0 kernel
 %bcond_with	xenU		# build XenU kernel
-%bcond_with	abi		# build Unix-ABI
 
 %if %{with xen0} || %{with xenU}
 %define with_xen 1
@@ -646,10 +645,7 @@ mv -f {,netfilter.}status
 %patch112 -p1
 
 %ifarch %{ix86}
-%if %{with abi}
-echo Unix - ABI is brooken.
-##patch135 -p1
-%endif
+%patch135 -p1
 %endif
 
 %if %{with grsecurity}
@@ -1136,9 +1132,7 @@ fi
 %dir /lib/modules/%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}/kernel
 %ifarch %{ix86}
-%if %{with abi}
 /lib/modules/%{version}-%{release}/kernel/abi
-%endif
 %endif
 %ifnarch ppc sparc
 /lib/modules/%{version}-%{release}/kernel/arch
@@ -1217,9 +1211,7 @@ fi
 %dir /lib/modules/%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp/kernel
 %ifarch %{ix86}
-%if %{with abi}
 /lib/modules/%{version}-%{release}smp/kernel/abi
-%endif
 %endif
 %ifnarch ppc sparc
 /lib/modules/%{version}-%{release}smp/kernel/arch
@@ -1317,9 +1309,7 @@ fi
 %files source
 %defattr(644,root,root,755)
 %ifarch %{ix86}
-%if %with abi}
 %{_prefix}/src/linux-%{version}/abi
-%endif
 %endif
 %{_prefix}/src/linux-%{version}/arch/*/[!Mk]*
 %{_prefix}/src/linux-%{version}/arch/*/kernel/[!M]*
