@@ -149,7 +149,7 @@ Source95:	kernel-linuxabi.config
 
 Patch0:		2.6.0-ksyms-add.patch
 Patch1:		linux-2.6-version.patch
-
+Patch2:		linux-2.6-biarch-build.patch
 Patch3:		2.6.0-t9-acpi_osl-lkml.patch
 Patch4:		linux-kbuild-extmod.patch
 Patch5:		kernel-MAX_INIT_ARGS.patch
@@ -579,7 +579,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch0 -p1
 %patch1 -p0
-
+%patch2 -p1
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
