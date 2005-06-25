@@ -199,9 +199,7 @@ Patch62:	linux-2.6-lirc-0.7.patch
 Patch63:	iriverfs-r0.1.0.1.patch
 Patch64:	squashfs2.1-patch
 Patch65:	reiser4-2.6.12-mm1.patch
-# TODO: azx needs checking for newer version
-Patch66:	linux-2.6-alsa-1.0.8-azx.patch
-Patch67:	linux-2.6-alsa-1.0.9plus-20050622.patch
+Patch66:	linux-2.6-alsa-1.0.9plus-20050622.patch
 
 # http://tahoe.pl/patch.htm
 Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
@@ -622,7 +620,6 @@ mv -f {,netfilter.}status
 %patch64 -p1
 %patch65 -p1
 %patch66 -p1
-%patch67 -p1
 
 %patch80 -p1
 %patch81 -p1
