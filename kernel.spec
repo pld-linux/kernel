@@ -86,9 +86,9 @@ xen0 conflicts with xenU
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		3
+%define		_rel		3.1
 
-%define		_netfilter_snap		20050611
+%define		_netfilter_snap		20050626
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
@@ -251,8 +251,8 @@ Patch134:	linux-2.6-udp-locking.patch
 # derived from http://adsl-brisbane.lubemobile.com.au/ras/debian/sarge/kernel-patch-linuxabi/
 Patch135:	linux-2.6-unix-abi.patch
 
-# derived from http://www.grsecurity.net/grsecurity-2.1.5-2.6.11.7-200504111924.patch.gz
-Patch200:	grsecurity-2.1.5-2.6.11.7-200504111924.patch
+# derived from http://grsecurity.net/grsecurity-2.1.6-2.6.11.12-200506141713.patch.gz
+Patch200:	grsecurity-2.1.6-2.6.11.12-200506141713.patch
 # http://openmosix.snarc.org/files/releases/2.6/
 # derived from openMosix-r570.patch
 Patch201:	linux-2.6-omosix.patch
