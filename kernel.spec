@@ -87,7 +87,7 @@ xen0 conflicts with xenU
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.2
+%define		_rel		0.1
 
 %define		_netfilter_snap		20050622
 
@@ -103,7 +103,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
-%define		_postver	.1
+%define		_postver	.2
 #define		_postver	%{nil}
 Version:	2.6.12%{_postver}
 Release:	%{_rel}
@@ -114,7 +114,7 @@ Group:		Base/Kernel
 #define		_rc	-rc3
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	542d5aa1657f8da60b41d4d08b098841
+# Source0-md5:	6ee5bf307335e58193c8d2ac0d35677b
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 
