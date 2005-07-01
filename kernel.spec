@@ -87,7 +87,7 @@ xen0 conflicts with xenU
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.1
+%define		_rel		0.2
 
 %define		_netfilter_snap		20050622
 
@@ -145,6 +145,7 @@ Source92:	kernel-omosix.config
 Source93:	kernel-vserver.config
 Source94:	kernel-em8300.config
 Source95:	kernel-linuxabi.config
+Source96:	kernel-ocfs2.config
 
 Patch0:		2.6.0-ksyms-add.patch
 Patch1:		linux-2.6-version.patch
@@ -246,6 +247,8 @@ Patch402:	linux-em8300-2.6.11.2.patch
 #from:
 ## http://www.kernel.org/pub/linux/kernel/people/gregkh/gregkh-2.6/gregkh-05-devfs/devfs-die-die-die.patch
 Patch500:	devfs-die-die-die.patch
+
+Patch502:	ocfs2-2005.06.17.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -667,6 +670,7 @@ echo Grsecurity not implemented
 
 # probably not needed
 ##%patch500 -p1
+%patch502 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
@@ -770,6 +774,8 @@ BuildConfig() {
 %if %{with em8300}
 	cat %{SOURCE94} >> arch/%{_target_base_arch}/defconfig
 %endif
+##  ocfs2 config
+	cat %{SOURCE96} >> arch/%{_target_base_arch}/defconfig
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
