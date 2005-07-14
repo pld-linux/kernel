@@ -1019,7 +1019,18 @@ mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old
 ln -sf initrd-%{version}-%{release}.gz %{initrd_dir}/initrd
 
 if [ -x /sbin/new-kernel-pkg ]; then
-	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{version}-%{release}.gz --install %{version}-%{release}
+	if [ -f /etc/pld-release ]; then
+		title=$(sed 's/^[0-9.]\+ //' < /etc/pld-release)
+	else
+		title='PLD Linux'
+	fi
+
+	ext='%{?with_grsecurity:grsecurity}%{?with_omosix:openMosix}%{?with_vserver:vserver}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
+	if [ "$ext" ]; then
+		title="$title $ext"
+	fi
+
+	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{version}-%{release}.gz --install %{version}-%{release} --banner "$title"
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
@@ -1051,7 +1062,7 @@ fi
 %preun smp
 rm -f /lib/modules/%{version}-%{release}smp/modules.*
 if [ -x /sbin/new-kernel-pkg ]; then
-    /sbin/new-kernel-pkg --remove %{version}-%{release}
+    /sbin/new-kernel-pkg --remove %{version}-%{release}smp
 fi
 
 %post smp
@@ -1073,7 +1084,18 @@ mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old
 ln -sf initrd-%{version}-%{release}smp.gz %{initrd_dir}/initrd
 
 if [ -x /sbin/new-kernel-pkg ]; then
-	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{version}-%{release}.gz --install %{version}-%{release}
+	if [ -f /etc/pld-release ]; then
+		title=$(sed 's/^[0-9.]\+ //' < /etc/pld-release)
+	else
+		title='PLD Linux'
+	fi
+
+	ext='%{?with_grsecurity:grsecurity}%{?with_omosix:openMosix}%{?with_vserver:vserver}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
+	if [ "$ext" ]; then
+		title="$title $ext"
+	fi
+
+	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{version}-%{release}smp.gz --install %{version}-%{release}smp --banner "$title"
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
