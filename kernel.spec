@@ -70,6 +70,10 @@ xen0 conflicts with xenU
 %undefine	with_smp
 %endif
 
+%if %{with grsecurity}
+%undefine grsecurity
+%endif
+
 ## Program required by kernel to work.
 %define		_binutils_ver		2.12
 %define		_util_linux_ver		2.10o
