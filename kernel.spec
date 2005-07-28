@@ -91,9 +91,9 @@ xen0 conflicts with xenU
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.1
+%define		_rel		0.2
 
-%define		_netfilter_snap		20050622
+%define		_netfilter_snap		20050727
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
@@ -202,9 +202,10 @@ Patch61:	linux-static-dev.patch
 Patch62:	linux-2.6-lirc-0.7.patch
 # http://ifp-driver.sourceforge.net/
 Patch63:	iriverfs-r0.1.0.1.patch
-Patch64:	squashfs2.1-patch
+Patch64:	squashfs2.2-patch
 Patch65:	reiser4-2.6.12-mm1.patch
 Patch66:	linux-2.6-alsa-1.0.9plus-20050622.patch
+Patch67:	ocfs2-2005.06.17.patch
 
 # http://tahoe.pl/patch.htm
 Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
@@ -252,7 +253,7 @@ Patch402:	linux-em8300-2.6.11.2.patch
 ## http://www.kernel.org/pub/linux/kernel/people/gregkh/gregkh-2.6/gregkh-05-devfs/devfs-die-die-die.patch
 Patch500:	devfs-die-die-die.patch
 
-Patch502:	ocfs2-2005.06.17.patch
+
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -627,6 +628,7 @@ mv -f {,netfilter.}status
 %patch64 -p1
 %patch65 -p1
 %patch66 -p1
+%patch67 -p1
 
 %patch80 -p1
 %patch81 -p1
@@ -671,10 +673,6 @@ echo Grsecurity not implemented
 %if %{with em8300}
 %patch402 -p1
 %endif
-
-# probably not needed
-##%patch500 -p1
-%patch502 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
