@@ -252,6 +252,7 @@ Patch203:	linux-xen-2.0.6.patch
 Patch204:	linux-2.6.12-smp-alts.patch
 Patch205:	linux-2.6.12.3-xen.patch
 Patch206:	linux-2.6.12.3-xenbus.patch
+Patch207:	linux-2.6.12.3-xen-fixes.patch
 
 Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
@@ -675,6 +676,7 @@ echo Grsecurity not implemented
 %patch204 -p1
 %patch205 -p1
 %patch206 -p1
+%patch207 -p1
 %else
 %patch203 -p1
 %endif
