@@ -25,7 +25,7 @@
 %endif
 
 %ifarch %{x8664}
-%if %{with xendev} && %{with xen0}
+%if %{with xendev}
 %undefine	with_pcmcia
 %endif
 %endif
