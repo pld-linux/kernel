@@ -17,9 +17,14 @@
 %bcond_with	em8300		# DXR3/Hollywood
 %bcond_with	xen0		# build Xen0 kernel
 %bcond_with	xenU		# build XenU kernel
+%bcond_with	xendev		# build Xen-devel kernel
 
 %if %{with xen0} || %{with xenU}
 %define with_xen 1
+%endif
+
+%if %{with xendev} && %{without xen}
+cannot build xendev kernel without xen0/xenU
 %endif
 
 %if !%{with grsecurity}
@@ -136,9 +141,9 @@ Source30:	kernel-ppc.config
 Source31:	kernel-ppc-smp.config
 Source32:	kernel-ia64.config
 Source33:	kernel-ia64-smp.config
-Source34:	kernel-xen0.config
-#Source35:	kernel-xen0-smp.config
-#Source36:	kernel-xenU.config
+Source34:	kernel-xen0-x86_32-2.0.config
+Source35:	kernel-xen0-x86_32-3.0.config
+Source36:	kernel-xen0-x86_64-3.0.config
 
 Source40:	kernel.FAQ-pl
 
@@ -242,8 +247,11 @@ Patch200:	grsecurity-2.1.5-2.6.11.7-200504111924.patch
 Patch201:	linux-2.6-omosix.patch
 # vserver-2.0-pre4
 Patch202:	linux-2.6-vs2.patch
-# xen 2.0.6 http://www.cl.cam.ac.uk/Research/SRG/netos/xen/index.html
+# xen http://www.cl.cam.ac.uk/Research/SRG/netos/xen/index.html
 Patch203:	linux-xen-2.0.6.patch
+Patch204:	linux-2.6.12-smp-alts.patch
+Patch205:	linux-2.6.12.3-xen.patch
+Patch206:	linux-2.6.12.3-xenbus.patch
 
 Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
@@ -282,7 +290,11 @@ Conflicts:	nfs-utils < %{_nfs_utils_ver}
 Conflicts:	procps < %{_procps_ver}
 Conflicts:	oprofile < %{_oprofile_ver}
 %if %{with xen}
+%if %{with xendev}
+ExclusiveArch:	%{ix86} %{x8664}
+%else
 ExclusiveArch:	%{ix86}
+%endif
 %else
 ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc sparc sparc64
 %endif
@@ -659,7 +671,13 @@ echo Grsecurity not implemented
 %patch202 -p1
 %endif
 %if %{with xen}
+%if %{with xendev}
+%patch204 -p1
+%patch205 -p1
+%patch206 -p1
+%else
 %patch203 -p1
+%endif
 %endif
 
 %patch400 -p1
@@ -730,7 +748,12 @@ TuneUpConfigForIX86 () {
 
 %if %{with xen}
 CrossOpts="ARCH=xen"
+%ifarch %{ix86}
 %define _main_target_base_arch	i386
+%endif 
+%ifarch %{x8664}
+%define _main_target_base_arch	x86_64
+%endif
 %define _target_base_arch	xen
 %endif
 
@@ -740,12 +763,27 @@ BuildConfig() {
 	smp=
 	[ "$1" = "smp" -o "$2" = "smp" ] && smp=yes
 	xen=
-	%{?with_xen0:xen="0"}
-	%{?with_xenU:xen="U"}
+	xenver=
+	xenarch=
+	%if %{with xen}
+    	    %{?with_xen0:xen="0"}
+	    %{?with_xenU:xen="U"}
+	    %if %{with xendev}
+		xenver="-3.0"
+	    %else
+		xenver="-2.0"
+    	    %endif
+	    %ifarch %{ix86}
+		xenarch="-x86_32"
+	    %endif
+	    %ifarch %{x8664}
+		xenarch="-x86_64"
+	    %endif
+	%endif
 	if [ "$smp" = "yes" ]; then
-		Config="%{_target_base_arch}$xen-smp"
+		Config="%{_target_base_arch}$xen$xenarch$xenver-smp"
 	else
-		Config="%{_target_base_arch}$xen"
+		Config="%{_target_base_arch}$xen$xenarch$xenver"
 	fi
 	KernelVer=%{version}-%{release}$1
 	echo "Building config file for KERNEL $1..."
@@ -927,7 +965,12 @@ umask 022
 
 %if %{with xen}
 CrossOpts="ARCH=xen"
+%ifarch %{ix86}
 %define _main_target_base_arch	i386
+%endif 
+%ifarch %{x8664}
+%define _main_target_base_arch	x86_64
+%endif
 %define _target_base_arch	xen
 %endif
 
