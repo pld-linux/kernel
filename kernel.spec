@@ -151,8 +151,11 @@ Source33:	kernel-ia64-smp.config
 Source34:	kernel-xen0-x86_32-2.0.config
 Source35:	kernel-xen0-x86_32-3.0.config
 Source36:	kernel-xen0-x86_64-3.0.config
+#Source37:	kernel-xenU-x86_32-2.0.config
+Source38:	kernel-xenU-x86_32-3.0.config
+#Source39:	kernel-xenU-x86_64-3.0.config
 
-Source40:	kernel.FAQ-pl
+Source50:	kernel.FAQ-pl
 
 Source80:	kernel-netfilter.config
 Source90:	kernel-grsec.config
@@ -938,7 +941,7 @@ PreInstallKernel() {
 
 KERNEL_BUILD_DIR=`pwd`
 echo "-%{release}" > localversion
-install -m 644 %{SOURCE40} FAQ-pl
+install -m 644 %{SOURCE50} FAQ-pl
 
 # UP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
@@ -1216,9 +1219,12 @@ fi
 /lib/modules/%{version}-%{release}/kernel/lib
 /lib/modules/%{version}-%{release}/kernel/net
 /lib/modules/%{version}-%{release}/kernel/security
+%if !%{with xenU}
 %dir /lib/modules/%{version}-%{release}/kernel/sound
 /lib/modules/%{version}-%{release}/kernel/sound/soundcore.*
+%endif
 %dir /lib/modules/%{version}-%{release}/misc
+%if !%{with xenU}
 %if %{with pcmcia}
 %ifnarch sparc sparc64
 #pcmcia stuff
@@ -1234,9 +1240,11 @@ fi
 #drm stuff
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 %endif
+%endif		# %%{with xenU}
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
 
+%if !%{with xenU}
 %ifnarch sparc sparc64
 %files drm
 %defattr(644,root,root,755)
@@ -1271,6 +1279,7 @@ fi
 /lib/modules/%{version}-%{release}/kernel/sound/oss
 %endif
 %endif			# %%{with up}
+%endif			# %%{with xenU}
 
 %if %{with smp}
 %files smp
