@@ -7,6 +7,7 @@
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
+%bcond_without	pcmcia		# don't build pcmcia
 %bcond_with	grsecurity	# enable grsecurity
 %bcond_with	pax		# enable PaX (depends on grsecurity)
 %bcond_with	omosix		# enable openMosix (conflicts with grsecurity/vserver)
@@ -21,6 +22,12 @@
 
 %if %{with xen0} || %{with xenU}
 %define with_xen 1
+%endif
+
+%ifarch %{x8664}
+%if %{with xendev} && %{with xen0}
+%undefine	with_pcmcia
+%endif
 %endif
 
 %if %{with xendev} && %{without xen}
@@ -1212,6 +1219,7 @@ fi
 %dir /lib/modules/%{version}-%{release}/kernel/sound
 /lib/modules/%{version}-%{release}/kernel/sound/soundcore.*
 %dir /lib/modules/%{version}-%{release}/misc
+%if %{with pcmcia}
 %ifnarch sparc sparc64
 #pcmcia stuff
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
@@ -1220,6 +1228,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko*
+%endif
 %endif
 %ifnarch sparc sparc64
 #drm stuff
@@ -1234,6 +1243,7 @@ fi
 /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 %endif
 
+%if %{with pcmcia}
 %ifnarch sparc sparc64
 %files pcmcia
 %defattr(644,root,root,755)
@@ -1243,6 +1253,7 @@ fi
 /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko*
 /lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko*
 /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko*
+%endif
 %endif
 
 %files sound-alsa
@@ -1291,6 +1302,7 @@ fi
 %dir /lib/modules/%{version}-%{release}smp/kernel/sound
 /lib/modules/%{version}-%{release}smp/kernel/sound/soundcore.*
 %dir /lib/modules/%{version}-%{release}smp/misc
+%if %{with pcmcia}
 %ifnarch sparc sparc64
 #pcmcia stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
@@ -1299,6 +1311,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko*
+%endif
 %endif
 %ifnarch sparc sparc64
 #drm stuff
@@ -1313,6 +1326,7 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 %endif
 
+%if %{with pcmcia}
 %ifnarch sparc sparc64
 %files smp-pcmcia
 %defattr(644,root,root,755)
@@ -1322,6 +1336,7 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko*
+%endif
 %endif
 
 %files smp-sound-alsa
