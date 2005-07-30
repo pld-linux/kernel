@@ -153,7 +153,7 @@ Source35:	kernel-xen0-x86_32-3.0.config
 Source36:	kernel-xen0-x86_64-3.0.config
 #Source37:	kernel-xenU-x86_32-2.0.config
 Source38:	kernel-xenU-x86_32-3.0.config
-#Source39:	kernel-xenU-x86_64-3.0.config
+Source39:	kernel-xenU-x86_64-3.0.config
 
 Source50:	kernel.FAQ-pl
 
