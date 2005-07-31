@@ -103,7 +103,7 @@ xen0 conflicts with xenU
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.2
+%define		_rel		0.3
 
 %define		_netfilter_snap		20050727
 
@@ -174,14 +174,15 @@ Patch4:		linux-kbuild-extmod.patch
 Patch5:		kernel-MAX_INIT_ARGS.patch
 
 Patch10:	2.6.0-powernow-k7.patch
-
+# derived from http://hem.bredband.net/ekmlar/patch-vt1211-2.6.11.txt
+Patch11:	linux-2.6-vt1211-sensor.patch
 Patch12:	2.6.0-omnikeys.patch
 Patch13:	2.6.1-rc2-VLAN-NS83820-lkml.patch
 Patch14:	linux-2.6-omnibook-20040916.patch
 Patch15:	linux-2.6-enable-broken-advansys.patch
 Patch16:	linux-alpha-isa.patch
 Patch17:	linux-fbcon-margins.patch
-
+Patch18:	linux-2.6-3Com_IBM-fix.patch
 Patch19:	2.6.5-3C920b-Tornado.patch
 Patch20:	2.6.5-i386-cmpxchg.patch
 Patch21:	2.6.6-serial-fifo-lkml.patch
@@ -228,7 +229,7 @@ Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 Patch81:	trackpoint-2.6.11.patch
 
 # derived from http://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.12/
-Patch90:	acpi-20050408-2.6.12.diff
+Patch90:	acpi-20050729-2.6.12.patch
 
 # http://www.kismetwireless.net/download.shtml#orinoco2611
 Patch95:	orinoco-2.6.12-rfmon-dragorn-1.diff
@@ -607,14 +608,14 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch5 -p1
 
 %patch10 -p1
-
+%patch11 -p1
 %patch12 -p1
 %patch13 -p1
 %patch14 -p1
 %patch15 -p1
 %patch16 -p1
 %patch17 -p1
-
+%patch18 -p1
 %patch19 -p1
 %patch20 -p1
 %patch21 -p1
