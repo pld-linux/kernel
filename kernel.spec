@@ -182,7 +182,7 @@ Patch14:	linux-2.6-omnibook-20040916.patch
 Patch15:	linux-2.6-enable-broken-advansys.patch
 Patch16:	linux-alpha-isa.patch
 Patch17:	linux-fbcon-margins.patch
-Patch18:	linux-2.6-3Com_IBM-fix.patch
+
 Patch19:	2.6.5-3C920b-Tornado.patch
 Patch20:	2.6.5-i386-cmpxchg.patch
 Patch21:	2.6.6-serial-fifo-lkml.patch
@@ -247,6 +247,7 @@ Patch109:	linux-2.6-jiffies-rounding.patch
 Patch110:	linux-2.6-cputime-misscalculation.patch
 Patch111:	linux-2.6-vfs-two-read-without-clear-between.patch
 Patch112:	linux-2.6-via82c586-irq-routing.patch
+Patch113:	linux-2.6-3Com_IBM-fix.patch
 
 # derived from http://adsl-brisbane.lubemobile.com.au/ras/debian/sarge/kernel-patch-linuxabi/
 Patch135:	linux-2.6-unix-abi.patch
@@ -615,7 +616,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch15 -p1
 %patch16 -p1
 %patch17 -p1
-%patch18 -p1
+
 %patch19 -p1
 %patch20 -p1
 %patch21 -p1
@@ -667,6 +668,7 @@ mv -f {,netfilter.}status
 %patch110 -p1
 %patch111 -p1
 %patch112 -p1
+%patch113 -p1
 
 %ifarch %{ix86}
 %patch135 -p1
