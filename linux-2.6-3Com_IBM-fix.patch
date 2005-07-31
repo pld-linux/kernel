@@ -1,10 +1,3 @@
- arch/sparc64/kernel/pci.c |    6 ++++
- drivers/pci/pci.c         |   59 ++++++++++++++++++++++++++++++++++++++++++----
- drivers/pci/setup-res.c   |    2 -
- include/linux/pci.h       |    3 ++
- 4 files changed, 65 insertions(+), 5 deletions(-)
-
-diff --git a/arch/sparc64/kernel/pci.c b/arch/sparc64/kernel/pci.c
 --- a/arch/sparc64/kernel/pci.c
 +++ b/arch/sparc64/kernel/pci.c
 @@ -413,6 +413,12 @@ static int pci_assign_bus_resource(const
@@ -20,7 +13,6 @@ diff --git a/arch/sparc64/kernel/pci.c b/arch/sparc64/kernel/pci.c
  int pci_assign_resource(struct pci_dev *pdev, int resource)
  {
  	struct pcidev_cookie *pcp = pdev->sysdata;
-diff --git a/drivers/pci/pci.c b/drivers/pci/pci.c
 --- a/drivers/pci/pci.c
 +++ b/drivers/pci/pci.c
 @@ -222,6 +222,37 @@ pci_find_parent_resource(const struct pc
@@ -61,7 +53,7 @@ diff --git a/drivers/pci/pci.c b/drivers/pci/pci.c
   * pci_set_power_state - Set the power state of a PCI device
   * @dev: PCI device to be suspended
   * @state: PCI power state (D0, D1, D2, D3hot, D3cold) we're entering
-@@ -239,7 +270,7 @@ int (*platform_pci_set_power_state)(stru
+@@ -239,7 +270,7 @@ pci_find_parent_resource(const struct pc
  int
  pci_set_power_state(struct pci_dev *dev, pci_power_t state)
  {
@@ -91,11 +83,10 @@ diff --git a/drivers/pci/pci.c b/drivers/pci/pci.c
  		pmcsr &= ~PCI_PM_CTRL_STATE_MASK;
  		pmcsr |= state;
  	}
-@@ -308,6 +342,22 @@ pci_set_power_state(struct pci_dev *dev,
- 		platform_pci_set_power_state(dev, state);
- 
+@@ -301,6 +335,21 @@ pci_set_power_state(struct pci_dev *dev,
+ 		udelay(200);
  	dev->current_state = state;
-+
+ 
 +	/* According to section 5.4.1 of the "PCI BUS POWER MANAGEMENT
 +	 * INTERFACE SPECIFICATION, REV. 1.2", a device transitioning
 +	 * from D3hot to D0 _may_ perform an internal reset, thereby
@@ -114,7 +105,7 @@ diff --git a/drivers/pci/pci.c b/drivers/pci/pci.c
  	return 0;
  }
  
-@@ -805,6 +855,7 @@ struct pci_dev *isa_bridge;
+@@ -795,6 +844,7 @@ struct pci_dev *isa_bridge;
  EXPORT_SYMBOL(isa_bridge);
  #endif
  
@@ -122,7 +113,6 @@ diff --git a/drivers/pci/pci.c b/drivers/pci/pci.c
  EXPORT_SYMBOL(pci_enable_device_bars);
  EXPORT_SYMBOL(pci_enable_device);
  EXPORT_SYMBOL(pci_disable_device);
-diff --git a/drivers/pci/setup-res.c b/drivers/pci/setup-res.c
 --- a/drivers/pci/setup-res.c
 +++ b/drivers/pci/setup-res.c
 @@ -26,7 +26,7 @@
@@ -134,7 +124,6 @@ diff --git a/drivers/pci/setup-res.c b/drivers/pci/setup-res.c
  pci_update_resource(struct pci_dev *dev, struct resource *res, int resno)
  {
  	struct pci_bus_region region;
-diff --git a/include/linux/pci.h b/include/linux/pci.h
 --- a/include/linux/pci.h
 +++ b/include/linux/pci.h
 @@ -225,6 +225,7 @@
