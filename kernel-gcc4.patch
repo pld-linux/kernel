@@ -1,14 +1,35 @@
 --- a/Makefile	2005-03-30 13:10:50.000000000 +0200
 +++ b/Makefile	2005-03-30 13:11:15.000000000 +0200
-@@ -202,7 +202,7 @@
+@@ -200,10 +200,10 @@
+ 	  else if [ -x /bin/bash ]; then echo /bin/bash; \
+ 	  else echo sh; fi ; fi)
  
- HOSTCC  	= gcc
- HOSTCXX  	= g++
+-HOSTCC  	= gcc
+-HOSTCXX  	= g++
 -HOSTCFLAGS	= -Wall -Wstrict-prototypes -O2 -fomit-frame-pointer
-+HOSTCFLAGS	= -Wall -Wstrict-prototypes -O2 -fomit-frame-pointer $(call cc-option,-Wno-pointer-sign,)
- HOSTCXXFLAGS	= -O2
+-HOSTCXXFLAGS	= -O2
++HOSTCC  	:= gcc
++HOSTCXX  	:= g++
++HOSTCFLAGS	:= -Wall -Wstrict-prototypes -O2 -fomit-frame-pointer
++HOSTCXXFLAGS	:= -O2
  
  # 	Decide whether to build built-in, modular, or both.
+ #	Normally, just do built-in.
+@@ -545,6 +545,14 @@
+ # disable pointer signedness warnings in gcc 4.0
+ CFLAGS += $(call cc-option,-Wno-pointer-sign,)
+ 
++HOSTCFLAGS += $(shell if $(HOSTCC) $(HOSTCFLAGS) -Wno-pointer-sign -S \
++              -o /dev/null -xc /dev/null > /dev/null 2>&1; then \
++               echo "-Wno-pointer-sign"; fi ;)
++
++HOSTCXXFLAGS += $(shell if $(HOSTCXX) $(HOSTCXXFLAGS) -Wno-pointer-sign -S \
++              -o /dev/null -xc /dev/null > /dev/null 2>&1; then \
++               echo "-Wno-pointer-sign"; fi ;)
++
+ # Default kernel image to build when no specific target is given.
+ # KBUILD_IMAGE may be overruled on the commandline or
+ # set in the environment
 --- a/arch/sparc64/kernel/smp.c	2005-05-12 00:41:08.000000000 +0200
 +++ b/arch/sparc64/kernel/smp.c	2005-05-16 01:52:11.000000000 +0200
 @@ -41,7 +41,7 @@
