@@ -750,15 +750,16 @@ TuneUpConfigForIX86 () {
 
 %if "%{_target_base_arch}" != "%{_arch}"
     CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
-    export DEPMOD=/bin/true
+    DepMod=/bin/true
     %if "%{_arch}" == "x86_64"
 	%if "%{_target_base_arch}" == "i386"
 	    CrossOpts="ARCH=%{_target_base_arch}"
-	    unset DEPMOD
+	    DepMod=/sbin/depmod
 	%endif
     %endif
 %else
     CrossOpts=""
+    DepMod=/sbin/depmod
 %endif
 
 %if %{with xen}
@@ -823,7 +824,6 @@ BuildConfig() {
 %if %{with em8300}
 	cat %{SOURCE94} >> arch/%{_target_base_arch}/defconfig
 %endif
-##  ocfs2 config
 	cat %{SOURCE96} >> arch/%{_target_base_arch}/defconfig
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
@@ -929,7 +929,7 @@ PreInstallKernel() {
 %endif
 	%{__make} $CrossOpts modules_install \
 		%{?with_verbose:V=1} \
-		DEPMOD=$DEPMOD \
+		DEPMOD=$DepMod \
      		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 		KERNELRELEASE=$KernelVer
 
@@ -938,9 +938,7 @@ PreInstallKernel() {
 	/sbin/depmod --basedir $KERNEL_INSTALL_DIR -ae -F $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer -r $KernelVer || echo
 	[ ! -z "$CrossOpts" ] && \
 	touch $KERNEL_INSTALL_DIR/modules.dep
-
 	echo "KERNEL RELEASE $KernelVer DONE"
-
 }
 
 KERNEL_BUILD_DIR=`pwd`
