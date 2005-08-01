@@ -929,13 +929,14 @@ PreInstallKernel() {
 %endif
 	%{__make} $CrossOpts modules_install \
 		%{?with_verbose:V=1} \
+		DEPMOD=$DEPMOD \
      		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 		KERNELRELEASE=$KernelVer
 
 	echo "CHECKING DEPENDENCIES FOR KERNEL MODULES"
-	[ -z $CrossOpts ] && \
+	[ -z "$CrossOpts" ] && \
 	/sbin/depmod --basedir $KERNEL_INSTALL_DIR -ae -F $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer -r $KernelVer || echo
-	[ ! -z $CrossOpts ] && \
+	[ ! -z "$CrossOpts" ] && \
 	touch $KERNEL_INSTALL_DIR/modules.dep
 
 	echo "KERNEL RELEASE $KernelVer DONE"
