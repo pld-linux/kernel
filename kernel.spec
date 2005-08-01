@@ -103,9 +103,9 @@ xen0 conflicts with xenU
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.3
+%define		_rel		0.4
 
-%define		_netfilter_snap		20050727
+%define		_netfilter_snap		20050801
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
@@ -182,7 +182,7 @@ Patch14:	linux-2.6-omnibook-20040916.patch
 Patch15:	linux-2.6-enable-broken-advansys.patch
 Patch16:	linux-alpha-isa.patch
 Patch17:	linux-fbcon-margins.patch
-
+Patch18:	linux-2.6-modpost_new-sparc-elf-header.patch
 Patch19:	2.6.5-3C920b-Tornado.patch
 Patch20:	2.6.5-i386-cmpxchg.patch
 Patch21:	2.6.6-serial-fifo-lkml.patch
@@ -616,7 +616,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch15 -p1
 %patch16 -p1
 %patch17 -p1
-
+%patch18 -p1
 %patch19 -p1
 %patch20 -p1
 %patch21 -p1
