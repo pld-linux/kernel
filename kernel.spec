@@ -103,7 +103,7 @@ xen0 conflicts with xenU
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.4
+%define		_rel		0.5
 
 %define		_netfilter_snap		20050801
 
@@ -1041,8 +1041,10 @@ $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
 install %{SOURCE2} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/config.h
 
+%if %{with up} || %{with smp}
 # ghosted initrd
 touch $RPM_BUILD_ROOT/boot/initrd-%{version}-%{release}{,smp}.gz
+%endif
 
 %clean
 rm -rf $RPM_BUILD_ROOT
