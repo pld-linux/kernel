@@ -19,6 +19,7 @@
 %bcond_with	xen0		# build Xen0 kernel
 %bcond_with	xenU		# build XenU kernel
 %bcond_with	xendev		# build Xen-devel kernel
+%bcond_with	abi		# build with unix abi support
 
 %if %{with xen0} || %{with xenU}
 %define with_xen 1
@@ -671,7 +672,9 @@ mv -f {,netfilter.}status
 %patch113 -p1
 
 %ifarch %{ix86}
+%if %{with abi}
 %patch135 -p1
+%endif
 %endif
 
 %if %{with grsecurity}
@@ -744,7 +747,9 @@ TuneUpConfigForIX86 () {
     %if %{with regparm}
 	sed -i 's:# CONFIG_REGPARM is not set:CONFIG_REGPARM=y:' $1
     %endif
+    %if %{with abi}
     cat %{SOURCE95} >> $1
+    %endif
 %endif
 }
 
@@ -1211,8 +1216,10 @@ fi
 %ghost /boot/initrd-%{version}-%{release}.gz
 %dir /lib/modules/%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}/kernel
+%if %{with abi}
 %ifarch %{ix86}
 /lib/modules/%{version}-%{release}/kernel/abi
+%endif
 %endif
 %ifnarch ppc sparc
 /lib/modules/%{version}-%{release}/kernel/arch
@@ -1300,8 +1307,10 @@ fi
 %ghost /boot/initrd-%{version}-%{release}smp.gz
 %dir /lib/modules/%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp/kernel
+%if %{with abi}
 %ifarch %{ix86}
 /lib/modules/%{version}-%{release}smp/kernel/abi
+%endif
 %endif
 %ifnarch ppc sparc
 /lib/modules/%{version}-%{release}smp/kernel/arch
@@ -1402,8 +1411,10 @@ fi
 %if %{with source}
 %files source
 %defattr(644,root,root,755)
+%if %{with abi}
 %ifarch %{ix86}
 %{_prefix}/src/linux-%{version}/abi
+%endif
 %endif
 %{_prefix}/src/linux-%{version}/arch/*/[!Mk]*
 %{_prefix}/src/linux-%{version}/arch/*/kernel/[!M]*
