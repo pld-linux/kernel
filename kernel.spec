@@ -231,6 +231,9 @@ Patch81:	trackpoint-2.6.11.patch
 
 # derived from http://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.12/
 Patch90:	acpi-20050729-2.6.12.patch
+# http://gaugusch.at/acpi-dsdt-initrd-patches/
+Patch91:	acpi-dsdt-initrd-v0.7d-2.6.12.patch
+Patch92:	acpi-dsdt-initramfs-fix-2.6.10-cleanup.patch
 
 # http://www.kismetwireless.net/download.shtml#orinoco2611
 Patch95:	orinoco-2.6.12-rfmon-dragorn-1.diff
@@ -654,6 +657,8 @@ mv -f {,netfilter.}status
 %patch81 -p1
 
 %patch90 -p1
+%patch91 -p1
+%patch92 -p1
 %patch95 -p1
 
 %patch100 -p1
