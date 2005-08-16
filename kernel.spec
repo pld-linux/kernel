@@ -120,7 +120,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
-%define		_postver	.4
+%define		_postver	.5
 #define		_postver	%{nil}
 Version:	2.6.12%{_postver}
 Release:	%{_rel}
@@ -131,7 +131,7 @@ Group:		Base/Kernel
 #define		_rc	-rc3
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	5fa86c8e199cf3c08db3b356618d2834
+# Source0-md5:	076f0dc714112c764c790fbaef19e228
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 
