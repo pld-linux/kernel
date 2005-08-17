@@ -281,6 +281,8 @@ BuildRequires:	diffutils
 BuildRequires:	elftoaout
 %endif
 BuildRequires:	module-init-tools
+# for hostname command
+BuildRequires:	net-tools
 BuildRequires:	perl-base
 BuildRequires:	rpmbuild(macros) >= 1.217
 Autoreqprov:	no
