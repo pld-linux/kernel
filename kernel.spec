@@ -104,7 +104,7 @@ xen0 conflicts with xenU
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.2
+%define		_rel		0.3
 
 %define		_netfilter_snap		20050801
 
@@ -212,8 +212,7 @@ Patch57:	linux-2.6-skge-0.5.patch
 Patch58:	inotify-2.6.12.patch
 # derived from http://www.syskonnect.com/syskonnect/support/driver/zip/linux/install-8_18.tar.bz2
 Patch59:	linux-2.6-sk98lin-8.18.2.2.patch
-# http://dev.gentoo.org/~spock/projects/gensplash/
-Patch60:	fbsplash-0.9.2-r3-2.6.12-rc3.patch
+Patch60:	bootsplash-3.1.6-2.6.12.diff
 # reserve dynamic minors for fbsplash and device mapper
 Patch61:	linux-static-dev.patch
 Patch62:	linux-2.6-lirc-0.7.patch
