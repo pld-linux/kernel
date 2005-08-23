@@ -1,0 +1,116 @@
+diff -NurpP --minimal linux-2.6.12.3-vs2.0.0.1/fs/ext2/ialloc.c linux-2.6.12.3-vs2.0.0.2/fs/ext2/ialloc.c
+--- linux-2.6.12.3-vs2.0.0.1/fs/ext2/ialloc.c	2005-08-17 23:29:16 +0200
++++ linux-2.6.12.3-vs2.0.0.2/fs/ext2/ialloc.c	2005-08-18 00:28:04 +0200
+@@ -126,9 +126,9 @@ void ext2_free_inode (struct inode * ino
+ 	if (!is_bad_inode(inode)) {
+ 		/* Quota is already initialized in iput() */
+ 		ext2_xattr_delete_inode(inode);
+-		DLIMIT_FREE_INODE(inode);
+ 	    	DQUOT_FREE_INODE(inode);
+ 		DQUOT_DROP(inode);
++		DLIMIT_FREE_INODE(inode);
+ 	}
+ 
+ 	es = EXT2_SB(sb)->s_es;
+diff -NurpP --minimal linux-2.6.12.3-vs2.0.0.1/fs/ext3/ialloc.c linux-2.6.12.3-vs2.0.0.2/fs/ext3/ialloc.c
+--- linux-2.6.12.3-vs2.0.0.1/fs/ext3/ialloc.c	2005-08-17 23:26:01 +0200
++++ linux-2.6.12.3-vs2.0.0.2/fs/ext3/ialloc.c	2005-08-18 00:27:03 +0200
+@@ -127,9 +127,9 @@ void ext3_free_inode (handle_t *handle, 
+ 	 */
+ 	DQUOT_INIT(inode);
+ 	ext3_xattr_delete_inode(handle, inode);
+-	DLIMIT_FREE_INODE(inode);
+ 	DQUOT_FREE_INODE(inode);
+ 	DQUOT_DROP(inode);
++	DLIMIT_FREE_INODE(inode);
+ 
+ 	is_directory = S_ISDIR(inode->i_mode);
+ 
+@@ -450,7 +450,7 @@ struct inode *ext3_new_inode(handle_t *h
+ 	inode->i_xid = vx_current_fsxid(sb);
+ 	if (DLIMIT_ALLOC_INODE(inode)) {
+ 		err = -ENOSPC;
+-		goto out;
++		goto out_dlimit;
+ 	}
+ 	ei = EXT3_I(inode);
+ 
+@@ -623,9 +623,10 @@ got:
+ 	ext3_debug("allocating inode %lu\n", inode->i_ino);
+ 	goto really_out;
+ fail:
+-	DLIMIT_FREE_INODE(inode);
+ 	ext3_std_error(sb, err);
+ out:
++	DLIMIT_FREE_INODE(inode);
++out_dlimit:
+ 	iput(inode);
+ 	ret = ERR_PTR(err);
+ really_out:
+diff -NurpP --minimal linux-2.6.12.3-vs2.0.0.1/fs/jfs/inode.c linux-2.6.12.3-vs2.0.0.2/fs/jfs/inode.c
+--- linux-2.6.12.3-vs2.0.0.1/fs/jfs/inode.c	2005-06-22 02:38:36 +0200
++++ linux-2.6.12.3-vs2.0.0.2/fs/jfs/inode.c	2005-08-18 00:54:20 +0200
+@@ -22,6 +22,7 @@
+ #include <linux/buffer_head.h>
+ #include <linux/pagemap.h>
+ #include <linux/quotaops.h>
++#include <linux/vs_dlimit.h>
+ #include "jfs_incore.h"
+ #include "jfs_filsys.h"
+ #include "jfs_imap.h"
+@@ -146,6 +147,7 @@ void jfs_delete_inode(struct inode *inod
+ 	DQUOT_INIT(inode);
+ 	DQUOT_FREE_INODE(inode);
+ 	DQUOT_DROP(inode);
++	DLIMIT_FREE_INODE(inode);
+ 
+ 	clear_inode(inode);
+ }
+diff -NurpP --minimal linux-2.6.12.3-vs2.0.0.1/fs/reiserfs/inode.c linux-2.6.12.3-vs2.0.0.2/fs/reiserfs/inode.c
+--- linux-2.6.12.3-vs2.0.0.1/fs/reiserfs/inode.c	2005-08-17 23:49:12 +0200
++++ linux-2.6.12.3-vs2.0.0.2/fs/reiserfs/inode.c	2005-08-18 00:22:52 +0200
+@@ -55,8 +55,8 @@ void reiserfs_delete_inode (struct inode
+ 	/* Do quota update inside a transaction for journaled quotas. We must do that
+ 	 * after delete_object so that quota updates go into the same transaction as
+ 	 * stat data deletion */
+-	DLIMIT_FREE_INODE(inode);
+ 	DQUOT_FREE_INODE(inode);
++	DLIMIT_FREE_INODE(inode);
+ 
+ 	if (journal_end(&th, inode->i_sb, jbegin_count)) {
+ 	    up (&inode->i_sem);
+@@ -1699,14 +1699,14 @@ int reiserfs_new_inode (struct reiserfs_
+ 
+     BUG_ON (!th->t_trans_id);
+   
+-    if (DQUOT_ALLOC_INODE(inode)) {
+-	err = -EDQUOT;
+-	goto out_end_trans;
+-    }
+     if (DLIMIT_ALLOC_INODE(inode)) {
+ 	err = -ENOSPC;
+ 	goto out_bad_dlimit;
+     }
++    if (DQUOT_ALLOC_INODE(inode)) {
++	err = -EDQUOT;
++	goto out_end_trans;
++    }
+     if (!dir || !dir->i_nlink) {
+ 	err = -EPERM;
+ 	goto out_bad_inode;
+@@ -1877,12 +1877,13 @@ out_bad_inode:
+     /* Invalidate the object, nothing was inserted yet */
+     INODE_PKEY(inode)->k_objectid = 0;
+ 
+-    DLIMIT_FREE_INODE(inode);
+-out_bad_dlimit:
+     /* Quota change must be inside a transaction for journaling */
+     DQUOT_FREE_INODE(inode);
+ 
+ out_end_trans:
++    DLIMIT_FREE_INODE(inode);
++
++out_bad_dlimit:
+     journal_end(th, th->t_super, th->t_blocks_allocated) ;
+     /* Drop can be outside and it needs more credits so it's better to have it outside */
+     DQUOT_DROP(inode);

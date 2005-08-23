@@ -1,0 +1,31 @@
+diff -NurpP --minimal linux-2.6.12.3-vs2.0.0.2/fs/reiserfs/bitmap.c linux-2.6.12.3-vs2.0.0.3/fs/reiserfs/bitmap.c
+--- linux-2.6.12.3-vs2.0.0.2/fs/reiserfs/bitmap.c	2005-08-17 23:48:22 +0200
++++ linux-2.6.12.3-vs2.0.0.3/fs/reiserfs/bitmap.c	2005-08-19 02:20:51 +0200
+@@ -974,8 +974,10 @@ static inline int blocknrs_and_prealloc_
+ 	    quota_ret = DQUOT_PREALLOC_BLOCK_NODIRTY(hint->inode, hint->prealloc_size);
+ 	    if (quota_ret)
+ 		hint->preallocate=hint->prealloc_size=0;
+-	    if (DLIMIT_ALLOC_BLOCK(hint->inode, hint->prealloc_size))
++	    if (DLIMIT_ALLOC_BLOCK(hint->inode, hint->prealloc_size)) {
++		DQUOT_FREE_BLOCK_NODIRTY(hint->inode, hint->prealloc_size);
+ 		hint->preallocate=hint->prealloc_size=0;
++	    }
+ 	}
+ 	/* for unformatted nodes, force large allocations */
+ 	bigalloc = amount_needed;
+diff -NurpP --minimal linux-2.6.12.3-vs2.0.0.2/kernel/vserver/dlimit.c linux-2.6.12.3-vs2.0.0.3/kernel/vserver/dlimit.c
+--- linux-2.6.12.3-vs2.0.0.2/kernel/vserver/dlimit.c	2005-08-01 10:32:46 +0200
++++ linux-2.6.12.3-vs2.0.0.3/kernel/vserver/dlimit.c	2005-08-19 06:24:01 +0200
+@@ -494,6 +494,12 @@ void vx_vsi_statfs(struct super_block *s
+ 	if (buf->f_files > dli->dl_inodes_total)
+ 		buf->f_files = dli->dl_inodes_total;
+ 
++	/* inode hack for reiserfs */
++	if ((buf->f_files == 0) && (dli->dl_inodes_total > 0)) {
++		buf->f_files = dli->dl_inodes_total;
++		buf->f_ffree = dli->dl_inodes_total;
++	}
++
+ 	ifree = dli->dl_inodes_total - dli->dl_inodes_used;
+ 	/* reduce free inodes to min */
+ 	if (ifree < buf->f_ffree)
