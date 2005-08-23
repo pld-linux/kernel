@@ -261,14 +261,23 @@ Patch200:	grsecurity-2.1.5-2.6.11.7-200504111924.patch
 # http://openmosix.snarc.org/files/releases/2.6/
 # derived from openMosix-r570.patch
 Patch201:	linux-2.6-omosix.patch
-# vserver-2.0-pre4
-Patch202:	linux-2.6-vs2.patch
 # xen http://www.cl.cam.ac.uk/Research/SRG/netos/xen/index.html
 Patch203:	linux-xen-2.0.6.patch
 Patch204:	linux-2.6.12-smp-alts.patch
 Patch205:	linux-2.6.12.3-xen.patch
 Patch206:	linux-2.6.12.3-xenbus.patch
 Patch207:	linux-2.6.12.3-xen-fixes.patch
+
+# vserver-2.0
+Patch300:	linux-2.6-vs2.patch
+# Bind Mount Extensions
+Patch301:	linux-2.6-vs2-BME.patch
+# http://vserver.13thfloor.at/Experimental/FOR-2.0.1/
+Patch310:	delta-vroot-fix01.diff
+Patch311:	delta-dlimit-feat01.diff
+Patch312:	delta-dlimit-fix01.diff
+Patch313:	delta-loopback-fix01.diff
+Patch314:	delta-dlimit-fix02.diff
 
 Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
@@ -693,7 +702,13 @@ echo Grsecurity not implemented
 %{__patch} -p1 -F3 < %{PATCH201}
 %endif
 %if %{with vserver}
-%patch202 -p1
+%patch300 -p1
+%patch301 -p1
+%patch310 -p1
+%patch311 -p1
+%patch312 -p1
+%patch313 -p1
+%patch314 -p1
 %endif
 %if %{with xen}
 %if %{with xendev}
