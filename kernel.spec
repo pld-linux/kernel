@@ -2,8 +2,6 @@
 # TODO:
 #		- add distcc support (and don't break crossbuild!)
 #		- move em8300/lirc/iriverfs/squashfs stuff to separeated specs
-#		- check and maybe port ATM patches from 2.4
-#			linux-2.4.22-fore200e-0.2f.patch
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
