@@ -4,7 +4,6 @@
 #		- move em8300/lirc/iriverfs/squashfs stuff to separeated specs
 #		- check and maybe port ATM patches from 2.4
 #			linux-2.4.22-fore200e-0.2f.patch
-#			linux-2.4.25-atmdd.patch
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -257,6 +256,7 @@ Patch113:	linux-2.6-3Com_IBM-fix.patch
 Patch114:	linux-2.6-nptl-signal-delivery-deadlock.patch
 # Derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch115:	linux-2.6-atm-vbr.patch
+Patch116:	linux-2.6-atmdd.patch
 
 # derived from http://adsl-brisbane.lubemobile.com.au/ras/debian/sarge/kernel-patch-linuxabi/
 Patch135:	linux-2.6-unix-abi.patch
@@ -693,6 +693,7 @@ mv -f {,netfilter.}status
 %patch113 -p1
 %patch114 -p1
 %patch115 -p1
+%patch116 -p1
 
 %ifarch %{ix86}
 %if %{with abi}
