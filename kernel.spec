@@ -252,6 +252,8 @@ Patch111:	linux-2.6-vfs-two-read-without-clear-between.patch
 Patch112:	linux-2.6-via82c586-irq-routing.patch
 Patch113:	linux-2.6-3Com_IBM-fix.patch
 Patch114:	linux-2.6-nptl-signal-delivery-deadlock.patch
+# Derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
+Patch115:	linux-2.6-atm-vbr.patch
 
 # derived from http://adsl-brisbane.lubemobile.com.au/ras/debian/sarge/kernel-patch-linuxabi/
 Patch135:	linux-2.6-unix-abi.patch
@@ -687,6 +689,7 @@ mv -f {,netfilter.}status
 %patch112 -p1
 %patch113 -p1
 %patch114 -p1
+%patch115 -p1
 
 %ifarch %{ix86}
 %if %{with abi}
