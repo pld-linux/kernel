@@ -104,7 +104,7 @@ xen0 conflicts with xenU
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.3
+%define		_rel		0.4
 
 %define		_netfilter_snap		20050801
 
@@ -258,6 +258,9 @@ Patch116:	linux-2.6-atmdd.patch
 
 # derived from http://adsl-brisbane.lubemobile.com.au/ras/debian/sarge/kernel-patch-linuxabi/
 Patch135:	linux-2.6-unix-abi.patch
+
+# derived from http://www.spinics.net/lists/vfl/msg15217.html
+Patch145:       linux-2.6-cx88-blackbird.patch
 
 # derived from http://www.grsecurity.net/grsecurity-2.1.5-2.6.11.7-200504111924.patch.gz
 Patch200:	grsecurity-2.1.5-2.6.11.7-200504111924.patch
@@ -697,6 +700,7 @@ mv -f {,netfilter.}status
 %if %{with abi}
 %patch135 -p1
 %endif
+%patch145 -p0
 %endif
 
 %if %{with grsecurity}
