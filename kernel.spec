@@ -693,8 +693,8 @@ mv -f {,netfilter.}status
 %patch112 -p1
 %patch113 -p1
 %patch114 -p1
-#%%patch115 -p1
-#%%patch116 -p1
+%patch115 -p1
+%patch116 -p1
 
 %ifarch %{ix86}
 %if %{with abi}
