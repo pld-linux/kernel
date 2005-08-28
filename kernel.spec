@@ -114,7 +114,6 @@ xen0 conflicts with xenU
 
 %define		pcmcia_version		3.1.22
 %define		drm_xfree_version	4.3.0
-%define		mISDN_version		CVS-2005-07-06	
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -167,10 +166,6 @@ Source93:	kernel-vserver.config
 Source94:	kernel-em8300.config
 Source95:	kernel-linuxabi.config
 Source96:	kernel-ocfs2.config
-
-Source100:      ftp://ftp.isdn4linux.de/pub/isdn4linux/CVS-Snapshots/mISDN-%{mISDN_version}.tar.bz2
-# Source100-md5:	f8892d49e00e3fa26e65e22084edd472
-
 
 Patch0:		2.6.0-ksyms-add.patch
 Patch1:		linux-2.6-version.patch
@@ -625,7 +620,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}%{_rc} -a 100
+%setup -q -n linux-%{version}%{_rc} 
 
 %patch0 -p1
 %patch1 -p0
@@ -746,12 +741,6 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
 
 # on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
-
-# mISDN
-%ifarch %{ix86}
-cd mISDN-%{mISDN_version}
-./std2kern -k ../
-%endif
 
 %build
 TuneUpConfigForIX86 () {
