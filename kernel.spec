@@ -104,7 +104,7 @@ xen0 conflicts with xenU
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.5
+%define		_rel		0.1
 
 %define		_netfilter_snap		20050801
 
@@ -120,7 +120,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
-%define		_postver	.5
+%define		_postver	.6
 #define		_postver	%{nil}
 Version:	2.6.12%{_postver}
 Release:	%{_rel}
@@ -131,7 +131,7 @@ Group:		Base/Kernel
 #define		_rc	-rc3
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	076f0dc714112c764c790fbaef19e228
+# Source0-md5:	1592bb2a8ec0deb1ff32e8238f25ecc5
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 
@@ -251,7 +251,6 @@ Patch110:	linux-2.6-cputime-misscalculation.patch
 Patch111:	linux-2.6-vfs-two-read-without-clear-between.patch
 Patch112:	linux-2.6-via82c586-irq-routing.patch
 Patch113:	linux-2.6-3Com_IBM-fix.patch
-Patch114:	linux-2.6-nptl-signal-delivery-deadlock.patch
 # Derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch115:	linux-2.6-atm-vbr.patch
 Patch116:	linux-2.6-atmdd.patch
@@ -692,7 +691,6 @@ mv -f {,netfilter.}status
 %patch111 -p1
 %patch112 -p1
 %patch113 -p1
-%patch114 -p1
 %patch115 -p1
 %patch116 -p1
 
