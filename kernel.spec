@@ -704,6 +704,7 @@ mv -f {,netfilter.}status
 %if %{with grsecurity}
 echo Grsecurity not implemented
 ##patch200 -p1
+exit 1
 %endif
 %if %{with omosix}
 %{__patch} -p1 -F3 < %{PATCH201}
