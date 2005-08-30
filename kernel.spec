@@ -9,7 +9,6 @@
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
 %bcond_with	grsecurity	# enable grsecurity
-%bcond_without	grsec_basic	# enable basic grsecurity functionality (proc,link,fifo)
 %bcond_with	pax		# enable PaX (depends on grsecurity)
 %bcond_with	omosix		# enable openMosix (conflicts with grsecurity/vserver)
 %bcond_with	vserver		# enable vserver (conflicts with grsecurity/omosix)
@@ -105,7 +104,7 @@ xen0 conflicts with xenU
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.2
+%define		_rel		0.1
 
 %define		_netfilter_snap		20050801
 
@@ -262,7 +261,6 @@ Patch135:	linux-2.6-unix-abi.patch
 # derived from http://www.spinics.net/lists/vfl/msg15217.html
 Patch145:       linux-2.6-cx88-blackbird.patch
 
-Patch199:	linux-2.6-grsec-minimal.patch
 # derived from http://www.grsecurity.net/grsecurity-2.1.5-2.6.11.7-200504111924.patch.gz
 Patch200:	grsecurity-2.1.5-2.6.11.7-200504111924.patch
 # http://openmosix.snarc.org/files/releases/2.6/
@@ -706,9 +704,6 @@ mv -f {,netfilter.}status
 %if %{with grsecurity}
 echo Grsecurity not implemented
 ##patch200 -p1
-exit 1
-%else
-%{?with_grsec_basic:%patch199 -p1}
 %endif
 %if %{with omosix}
 %{__patch} -p1 -F3 < %{PATCH201}
@@ -854,10 +849,6 @@ BuildConfig() {
 
 %if %{with grsecurity}
 	cat %{!?with_pax:%{SOURCE90}}%{?with_pax:%{SOURCE91}} >> arch/%{_target_base_arch}/defconfig
-%else
-%if %{with grsec_basic}
-	cat %{SOURCE90} >> arch/%{_target_base_arch}/defconfig
-%endif
 %endif
 %if %{with omosix}
 	cat %{SOURCE92} >> arch/%{_target_base_arch}/defconfig
