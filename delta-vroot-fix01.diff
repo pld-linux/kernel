@@ -1,0 +1,22 @@
+;
+; this issue was found on Aug. 11th 2005 by the famous
+; guru Brian "Neubix" ...
+;
+--- ./drivers/block/vroot.c.orig	2005-08-09 03:47:35 +0200
++++ ./drivers/block/vroot.c	2005-08-11 15:30:26 +0200
+@@ -265,3 +268,15 @@ void vroot_exit(void)
+ module_init(vroot_init);
+ module_exit(vroot_exit);
+ 
++#ifndef MODULE
++
++static int __init max_vroot_setup(char *str)
++{
++	max_vroot = simple_strtol(str, NULL, 0);
++	return 1;
++}
++
++__setup("max_vroot=", max_vroot_setup);
++
++#endif
++

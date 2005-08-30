@@ -1,0 +1,911 @@
+;
+; http://vserver.13thfloor.at/Experimental/BME/delta-2.6.11.5-vs1.9.5.3-bme0.06.1.diff
+;
+; Bind Mount Extensions 
+;
+; this patch adds some functionality to the --bind
+; type of vfs mounts.
+;
+; (C) 2003-2004 Herbert Pötzl <herbert@13thfloor.at>
+;
+; Changelog:  
+;
+;   0.01  - readonly bind mounts
+;   0.02  - added ro truncate handling
+;         - added ro (f)chown, (f)chmod handling
+;   0.03  - added ro utime(s) handling
+;         - added ro access and *_ioctl
+;   0.04  - added noatime and nodiratime
+;         - made autofs4 update_atime uncond
+;   0.05  - rewrite regarding (a)time
+;         - adapted to new 2.6 vfs
+;   0.05.1  check for *->mnt added
+;
+; this patch is free software; you can redistribute it and/or
+; modify it under the terms of the GNU General Public License
+; as published by the Free Software Foundation; either version 2
+; of the License, or (at your option) any later version.
+; 
+; this patch is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+; GNU General Public License for more details.
+
+diff -NurpP --minimal linux-2.6.11.5-vs1.9.5.3/arch/sparc64/solaris/fs.c linux-2.6.11.5-vs1.9.5.3-bme0.06.1/arch/sparc64/solaris/fs.c
+--- linux-2.6.11.5-vs1.9.5.3/arch/sparc64/solaris/fs.c	2004-12-25 01:54:50 +0100
++++ linux-2.6.11.5-vs1.9.5.3-bme0.06.1/arch/sparc64/solaris/fs.c	2005-03-26 00:25:23 +0100
+@@ -362,7 +362,7 @@ static int report_statvfs(struct vfsmoun
+ 		int j = strlen (p);
+ 		
+ 		if (j > 15) j = 15;
+-		if (IS_RDONLY(inode)) i = 1;
++		if (IS_RDONLY(inode) || MNT_IS_RDONLY(mnt)) i = 1;
+ 		if (mnt->mnt_flags & MNT_NOSUID) i |= 2;
+ 		if (!sysv_valid_dev(inode->i_sb->s_dev))
+ 			return -EOVERFLOW;
+@@ -398,7 +398,7 @@ static int report_statvfs64(struct vfsmo
+ 		int j = strlen (p);
+ 		
+ 		if (j > 15) j = 15;
+-		if (IS_RDONLY(inode)) i = 1;
++		if (IS_RDONLY(inode) || MNT_IS_RDONLY(mnt)) i = 1;
+ 		if (mnt->mnt_flags & MNT_NOSUID) i |= 2;
+ 		if (!sysv_valid_dev(inode->i_sb->s_dev))
+ 			return -EOVERFLOW;
+diff -NurpP --minimal linux-2.6.11.5-vs1.9.5.3/fs/ext2/ioctl.c linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/ext2/ioctl.c
+--- linux-2.6.11.5-vs1.9.5.3/fs/ext2/ioctl.c	2005-03-23 21:34:31 +0100
++++ linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/ext2/ioctl.c	2005-03-26 00:25:23 +0100
+@@ -29,7 +29,8 @@ int ext2_ioctl (struct inode * inode, st
+ 	case EXT2_IOC_SETFLAGS: {
+ 		unsigned int oldflags;
+ 
+-		if (IS_RDONLY(inode))
++		if (IS_RDONLY(inode) ||
++			(filp && MNT_IS_RDONLY(filp->f_vfsmnt)))
+ 			return -EROFS;
+ 
+ 		if ((current->fsuid != inode->i_uid) && !capable(CAP_FOWNER))
+@@ -70,7 +71,8 @@ int ext2_ioctl (struct inode * inode, st
+ 	case EXT2_IOC_SETVERSION:
+ 		if ((current->fsuid != inode->i_uid) && !capable(CAP_FOWNER))
+ 			return -EPERM;
+-		if (IS_RDONLY(inode))
++		if (IS_RDONLY(inode) ||
++			(filp && MNT_IS_RDONLY(filp->f_vfsmnt)))
+ 			return -EROFS;
+ 		if (get_user(inode->i_generation, (int __user *) arg))
+ 			return -EFAULT;	
+diff -NurpP --minimal linux-2.6.11.5-vs1.9.5.3/fs/ext3/ioctl.c linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/ext3/ioctl.c
+--- linux-2.6.11.5-vs1.9.5.3/fs/ext3/ioctl.c	2005-03-23 21:34:33 +0100
++++ linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/ext3/ioctl.c	2005-03-26 00:25:23 +0100
+@@ -36,7 +36,8 @@ int ext3_ioctl (struct inode * inode, st
+ 		unsigned int oldflags;
+ 		unsigned int jflag;
+ 
+-		if (IS_RDONLY(inode))
++		if (IS_RDONLY(inode) ||
++			(filp && MNT_IS_RDONLY(filp->f_vfsmnt)))
+ 			return -EROFS;
+ 
+ 		if ((current->fsuid != inode->i_uid) && !capable(CAP_FOWNER))
+@@ -114,7 +115,8 @@ flags_err:
+ 
+ 		if ((current->fsuid != inode->i_uid) && !capable(CAP_FOWNER))
+ 			return -EPERM;
+-		if (IS_RDONLY(inode))
++		if (IS_RDONLY(inode) ||
++			(filp && MNT_IS_RDONLY(filp->f_vfsmnt)))
+ 			return -EROFS;
+ 		if (get_user(generation, (int __user *) arg))
+ 			return -EFAULT;
+@@ -165,7 +167,8 @@ flags_err:
+ 		if (!test_opt(inode->i_sb, RESERVATION) ||!S_ISREG(inode->i_mode))
+ 			return -ENOTTY;
+ 
+-		if (IS_RDONLY(inode))
++		if (IS_RDONLY(inode) ||
++			(filp && MNT_IS_RDONLY(filp->f_vfsmnt)))
+ 			return -EROFS;
+ 
+ 		if ((current->fsuid != inode->i_uid) && !capable(CAP_FOWNER))
+@@ -186,7 +189,8 @@ flags_err:
+ 		if (!capable(CAP_SYS_RESOURCE))
+ 			return -EPERM;
+ 
+-		if (IS_RDONLY(inode))
++		if (IS_RDONLY(inode) ||
++			(filp && MNT_IS_RDONLY(filp->f_vfsmnt)))
+ 			return -EROFS;
+ 
+ 		if (get_user(n_blocks_count, (__u32 __user *)arg))
+@@ -207,7 +211,8 @@ flags_err:
+ 		if (!capable(CAP_SYS_RESOURCE))
+ 			return -EPERM;
+ 
+-		if (IS_RDONLY(inode))
++		if (IS_RDONLY(inode) ||
++			(filp && MNT_IS_RDONLY(filp->f_vfsmnt)))
+ 			return -EROFS;
+ 
+ 		if (copy_from_user(&input, (struct ext3_new_group_input __user *)arg,
+diff -NurpP --minimal linux-2.6.11.5-vs1.9.5.3/fs/hfsplus/ioctl.c linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/hfsplus/ioctl.c
+--- linux-2.6.11.5-vs1.9.5.3/fs/hfsplus/ioctl.c	2005-03-02 12:38:44 +0100
++++ linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/hfsplus/ioctl.c	2005-03-26 00:25:23 +0100
+@@ -34,7 +34,8 @@ int hfsplus_ioctl(struct inode *inode, s
+ 			flags |= EXT2_FLAG_NODUMP; /* EXT2_NODUMP_FL */
+ 		return put_user(flags, (int __user *)arg);
+ 	case HFSPLUS_IOC_EXT2_SETFLAGS: {
+-		if (IS_RDONLY(inode))
++		if (IS_RDONLY(inode) ||
++			(filp && MNT_IS_RDONLY(filp->f_vfsmnt)))
+ 			return -EROFS;
+ 
+ 		if ((current->fsuid != inode->i_uid) && !capable(CAP_FOWNER))
+diff -NurpP --minimal linux-2.6.11.5-vs1.9.5.3/fs/namei.c linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/namei.c
+--- linux-2.6.11.5-vs1.9.5.3/fs/namei.c	2005-03-25 23:52:18 +0100
++++ linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/namei.c	2005-03-26 00:25:23 +0100
+@@ -242,7 +242,7 @@ int permission(struct inode *inode, int 
+ 		/*
+ 		 * Nobody gets write access to a read-only fs.
+ 		 */
+-		if (IS_RDONLY(inode) &&
++		if ((IS_RDONLY(inode) || (nd && MNT_IS_RDONLY(nd->mnt))) &&
+ 		    (S_ISREG(mode) || S_ISDIR(mode) || S_ISLNK(mode)))
+ 			return -EROFS;
+ 
+@@ -1162,7 +1162,8 @@ static inline int check_sticky(struct in
+  * 10. We don't allow removal of NFS sillyrenamed files; it's handled by
+  *     nfs_async_unlink().
+  */
+-static inline int may_delete(struct inode *dir,struct dentry *victim,int isdir)
++static inline int may_delete(struct inode *dir, struct dentry *victim,
++	int isdir, struct nameidata *nd)
+ {
+ 	int error;
+ 
+@@ -1171,7 +1172,7 @@ static inline int may_delete(struct inod
+ 
+ 	BUG_ON(victim->d_parent->d_inode != dir);
+ 
+-	error = permission(dir,MAY_WRITE | MAY_EXEC, NULL);
++	error = permission(dir,MAY_WRITE | MAY_EXEC, nd);
+ 	if (error)
+ 		return error;
+ 	if (IS_APPEND(dir))
+@@ -1332,7 +1333,8 @@ int may_open(struct nameidata *nd, int a
+ 			return -EACCES;
+ 
+ 		flag &= ~O_TRUNC;
+-	} else if (IS_RDONLY(inode) && (flag & FMODE_WRITE))
++	} else if ((IS_RDONLY(inode) || MNT_IS_RDONLY(nd->mnt))
++		&& (flag & FMODE_WRITE))
+ 		return -EROFS;
+ 	/*
+ 	 * An append-only file must be opened in append mode for writing.
+@@ -1580,9 +1582,10 @@ fail:
+ }
+ EXPORT_SYMBOL_GPL(lookup_create);
+ 
+-int vfs_mknod(struct inode *dir, struct dentry *dentry, int mode, dev_t dev)
++int vfs_mknod(struct inode *dir, struct dentry *dentry,
++	int mode, dev_t dev, struct nameidata *nd)
+ {
+-	int error = may_create(dir, dentry, NULL);
++	int error = may_create(dir, dentry, nd);
+ 
+ 	if (error)
+ 		return error;
+@@ -1624,7 +1627,6 @@ asmlinkage long sys_mknod(const char __u
+ 		goto out;
+ 	dentry = lookup_create(&nd, 0);
+ 	error = PTR_ERR(dentry);
+-
+ 	if (!IS_POSIXACL(nd.dentry->d_inode))
+ 		mode &= ~current->fs->umask;
+ 	if (!IS_ERR(dentry)) {
+@@ -1633,11 +1635,12 @@ asmlinkage long sys_mknod(const char __u
+ 			error = vfs_create(nd.dentry->d_inode,dentry,mode,&nd);
+ 			break;
+ 		case S_IFCHR: case S_IFBLK:
+-			error = vfs_mknod(nd.dentry->d_inode,dentry,mode,
+-					new_decode_dev(dev));
++			error = vfs_mknod(nd.dentry->d_inode, dentry, mode,
++					new_decode_dev(dev), &nd);
+ 			break;
+ 		case S_IFIFO: case S_IFSOCK:
+-			error = vfs_mknod(nd.dentry->d_inode,dentry,mode,0);
++			error = vfs_mknod(nd.dentry->d_inode, dentry, mode,
++					0, &nd);
+ 			break;
+ 		case S_IFDIR:
+ 			error = -EPERM;
+@@ -1655,9 +1658,10 @@ out:
+ 	return error;
+ }
+ 
+-int vfs_mkdir(struct inode *dir, struct dentry *dentry, int mode)
++int vfs_mkdir(struct inode *dir, struct dentry *dentry,
++	int mode, struct nameidata *nd)
+ {
+-	int error = may_create(dir, dentry, NULL);
++	int error = may_create(dir, dentry, nd);
+ 
+ 	if (error)
+ 		return error;
+@@ -1698,7 +1702,8 @@ asmlinkage long sys_mkdir(const char __u
+ 		if (!IS_ERR(dentry)) {
+ 			if (!IS_POSIXACL(nd.dentry->d_inode))
+ 				mode &= ~current->fs->umask;
+-			error = vfs_mkdir(nd.dentry->d_inode, dentry, mode);
++			error = vfs_mkdir(nd.dentry->d_inode, dentry,
++				mode, &nd);
+ 			dput(dentry);
+ 		}
+ 		up(&nd.dentry->d_inode->i_sem);
+@@ -1742,9 +1747,10 @@ void dentry_unhash(struct dentry *dentry
+ 	spin_unlock(&dcache_lock);
+ }
+ 
+-int vfs_rmdir(struct inode *dir, struct dentry *dentry)
++int vfs_rmdir(struct inode *dir, struct dentry *dentry,
++	struct nameidata *nd)
+ {
+-	int error = may_delete(dir, dentry, 1);
++	int error = may_delete(dir, dentry, 1, nd);
+ 
+ 	if (error)
+ 		return error;
+@@ -1806,7 +1812,7 @@ asmlinkage long sys_rmdir(const char __u
+ 	dentry = lookup_hash(&nd.last, nd.dentry);
+ 	error = PTR_ERR(dentry);
+ 	if (!IS_ERR(dentry)) {
+-		error = vfs_rmdir(nd.dentry->d_inode, dentry);
++		error = vfs_rmdir(nd.dentry->d_inode, dentry, &nd);
+ 		dput(dentry);
+ 	}
+ 	up(&nd.dentry->d_inode->i_sem);
+@@ -1817,9 +1823,10 @@ exit:
+ 	return error;
+ }
+ 
+-int vfs_unlink(struct inode *dir, struct dentry *dentry)
++int vfs_unlink(struct inode *dir, struct dentry *dentry,
++	struct nameidata *nd)
+ {
+-	int error = may_delete(dir, dentry, 0);
++	int error = may_delete(dir, dentry, 0, nd);
+ 
+ 	if (error)
+ 		return error;
+@@ -1881,7 +1888,7 @@ asmlinkage long sys_unlink(const char __
+ 		inode = dentry->d_inode;
+ 		if (inode)
+ 			atomic_inc(&inode->i_count);
+-		error = vfs_unlink(nd.dentry->d_inode, dentry);
++		error = vfs_unlink(nd.dentry->d_inode, dentry, &nd);
+ 	exit2:
+ 		dput(dentry);
+ 	}
+@@ -1900,9 +1907,10 @@ slashes:
+ 	goto exit2;
+ }
+ 
+-int vfs_symlink(struct inode *dir, struct dentry *dentry, const char *oldname, int mode)
++int vfs_symlink(struct inode *dir, struct dentry *dentry,
++	const char *oldname, int mode, struct nameidata *nd)
+ {
+-	int error = may_create(dir, dentry, NULL);
++	int error = may_create(dir, dentry, nd);
+ 
+ 	if (error)
+ 		return error;
+@@ -1944,7 +1952,8 @@ asmlinkage long sys_symlink(const char _
+ 		dentry = lookup_create(&nd, 0);
+ 		error = PTR_ERR(dentry);
+ 		if (!IS_ERR(dentry)) {
+-			error = vfs_symlink(nd.dentry->d_inode, dentry, from, S_IALLUGO);
++			error = vfs_symlink(nd.dentry->d_inode, dentry,
++				from, S_IALLUGO, &nd);
+ 			dput(dentry);
+ 		}
+ 		up(&nd.dentry->d_inode->i_sem);
+@@ -1956,7 +1965,8 @@ out:
+ 	return error;
+ }
+ 
+-int vfs_link(struct dentry *old_dentry, struct inode *dir, struct dentry *new_dentry)
++int vfs_link(struct dentry *old_dentry, struct inode *dir,
++	struct dentry *new_dentry, struct nameidata *nd)
+ {
+ 	struct inode *inode = old_dentry->d_inode;
+ 	int error;
+@@ -1964,7 +1974,7 @@ int vfs_link(struct dentry *old_dentry, 
+ 	if (!inode)
+ 		return -ENOENT;
+ 
+-	error = may_create(dir, new_dentry, NULL);
++	error = may_create(dir, new_dentry, nd);
+ 	if (error)
+ 		return error;
+ 
+@@ -2028,7 +2038,8 @@ asmlinkage long sys_link(const char __us
+ 	new_dentry = lookup_create(&nd, 0);
+ 	error = PTR_ERR(new_dentry);
+ 	if (!IS_ERR(new_dentry)) {
+-		error = vfs_link(old_nd.dentry, nd.dentry->d_inode, new_dentry);
++		error = vfs_link(old_nd.dentry, nd.dentry->d_inode,
++			new_dentry, &nd);
+ 		dput(new_dentry);
+ 	}
+ 	up(&nd.dentry->d_inode->i_sem);
+@@ -2158,14 +2169,14 @@ int vfs_rename(struct inode *old_dir, st
+ 	if (old_dentry->d_inode == new_dentry->d_inode)
+  		return 0;
+  
+-	error = may_delete(old_dir, old_dentry, is_dir);
++	error = may_delete(old_dir, old_dentry, is_dir, NULL);
+ 	if (error)
+ 		return error;
+ 
+ 	if (!new_dentry->d_inode)
+ 		error = may_create(new_dir, new_dentry, NULL);
+ 	else
+-		error = may_delete(new_dir, new_dentry, is_dir);
++		error = may_delete(new_dir, new_dentry, is_dir, NULL);
+ 	if (error)
+ 		return error;
+ 
+@@ -2241,6 +2252,9 @@ static inline int do_rename(const char *
+ 	error = -EINVAL;
+ 	if (old_dentry == trap)
+ 		goto exit4;
++	error = -EROFS;
++	if (MNT_IS_RDONLY(newnd.mnt))
++		goto exit4;
+ 	new_dentry = lookup_hash(&newnd.last, new_dir);
+ 	error = PTR_ERR(new_dentry);
+ 	if (IS_ERR(new_dentry))
+diff -NurpP --minimal linux-2.6.11.5-vs1.9.5.3/fs/namespace.c linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/namespace.c
+--- linux-2.6.11.5-vs1.9.5.3/fs/namespace.c	2005-03-23 21:34:32 +0100
++++ linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/namespace.c	2005-03-26 00:20:19 +0100
+@@ -252,24 +252,26 @@ static int show_vfsmnt(struct seq_file *
+ 	struct vfsmount *mnt = v;
+ 	int err = 0;
+ 	static struct proc_fs_info {
+-		int flag;
+-		char *str;
++		int s_flag;
++		int mnt_flag;
++		char *set_str;
++		char *unset_str;
+ 	} fs_info[] = {
+-		{ MS_SYNCHRONOUS, ",sync" },
+-		{ MS_DIRSYNC, ",dirsync" },
+-		{ MS_MANDLOCK, ",mand" },
+-		{ MS_NOATIME, ",noatime" },
+-		{ MS_NODIRATIME, ",nodiratime" },
+-		{ MS_TAGXID, ",tagxid" },
+-		{ 0, NULL }
+-	};
+-	static struct proc_fs_info mnt_info[] = {
+-		{ MNT_NOSUID, ",nosuid" },
+-		{ MNT_NODEV, ",nodev" },
+-		{ MNT_NOEXEC, ",noexec" },
+-		{ 0, NULL }
++		{ MS_RDONLY, MNT_RDONLY, "ro", "rw" },
++		{ MS_SYNCHRONOUS, 0, ",sync", NULL },
++		{ MS_DIRSYNC, 0, ",dirsync", NULL },
++		{ MS_MANDLOCK, 0, ",mand", NULL },
++		{ MS_NOATIME, MNT_NOATIME, ",noatime", NULL },
++		{ MS_NODIRATIME, MNT_NODIRATIME, ",nodiratime", NULL },
++		{ 0, MNT_NOSUID, ",nosuid", NULL },
++		{ 0, MNT_NODEV, ",nodev", NULL },
++		{ 0, MNT_NOEXEC, ",noexec", NULL },
++		{ MS_TAGXID, 0, ",tagxid", NULL },
++		{ 0, 0, NULL, NULL }
+ 	};
+-	struct proc_fs_info *fs_infop;
++	struct proc_fs_info *p;
++	unsigned long s_flags = mnt->mnt_sb->s_flags;
++	int mnt_flags = mnt->mnt_flags;
+ 
+ 	if (vx_flags(VXF_HIDE_MOUNT, 0))
+ 		return 0;
+@@ -285,14 +287,15 @@ static int show_vfsmnt(struct seq_file *
+ 		seq_putc(m, ' ');
+ 	}
+ 	mangle(m, mnt->mnt_sb->s_type->name);
+-	seq_puts(m, mnt->mnt_sb->s_flags & MS_RDONLY ? " ro" : " rw");
+-	for (fs_infop = fs_info; fs_infop->flag; fs_infop++) {
+-		if (mnt->mnt_sb->s_flags & fs_infop->flag)
+-			seq_puts(m, fs_infop->str);
+-	}
+-	for (fs_infop = mnt_info; fs_infop->flag; fs_infop++) {
+-		if (mnt->mnt_flags & fs_infop->flag)
+-			seq_puts(m, fs_infop->str);
++	seq_putc(m, ' ');
++	for (p = fs_info; (p->s_flag | p->mnt_flag) ; p++) {
++		if ((s_flags & p->s_flag) || (mnt_flags & p->mnt_flag)) {
++			if (p->set_str)
++				seq_puts(m, p->set_str);
++		} else {
++			if (p->unset_str)
++				seq_puts(m, p->unset_str);
++		}
+ 	}
+ 	if (mnt->mnt_flags & MNT_XID)
+ 		seq_printf(m, ",xid=%d", mnt->mnt_xid);
+@@ -684,7 +687,8 @@ out_unlock:
+ /*
+  * do loopback mount.
+  */
+-static int do_loopback(struct nameidata *nd, char *old_name, xid_t xid, int flags)
++static int do_loopback(struct nameidata *nd, char *old_name,
++	xid_t xid, int flags, int mnt_flags)
+ {
+ 	struct nameidata old_nd;
+ 	struct vfsmount *mnt = NULL;
+@@ -725,6 +729,7 @@ static int do_loopback(struct nameidata 
+ 			spin_unlock(&vfsmount_lock);
+ 		} else
+ 			mntput(mnt);
++		mnt->mnt_flags = mnt_flags;
+ 	}
+ 
+ 	up_write(&current->namespace->sem);
+@@ -1112,12 +1117,18 @@ long do_mount(char * dev_name, char * di
+ 	}
+ 
+ 	/* Separate the per-mountpoint flags */
++	if (flags & MS_RDONLY)
++		mnt_flags |= MNT_RDONLY;
+ 	if (flags & MS_NOSUID)
+ 		mnt_flags |= MNT_NOSUID;
+ 	if (flags & MS_NODEV)
+ 		mnt_flags |= MNT_NODEV;
+ 	if (flags & MS_NOEXEC)
+ 		mnt_flags |= MNT_NOEXEC;
++	if (flags & MS_NOATIME)
++		mnt_flags |= MNT_NOATIME;
++	if (flags & MS_NODIRATIME)
++		mnt_flags |= MNT_NODIRATIME;
+ 	flags &= ~(MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_ACTIVE);
+ 
+ 	if (vx_ccaps(VXC_SECURE_MOUNT))
+@@ -1136,7 +1147,7 @@ long do_mount(char * dev_name, char * di
+ 		retval = do_remount(&nd, flags & ~MS_REMOUNT, mnt_flags,
+ 				    data_page, xid);
+ 	else if (flags & MS_BIND)
+-		retval = do_loopback(&nd, dev_name, xid, flags);
++		retval = do_loopback(&nd, dev_name, xid, flags, mnt_flags);
+ 	else if (flags & MS_MOVE)
+ 		retval = do_move_mount(&nd, dev_name);
+ 	else
+diff -NurpP --minimal linux-2.6.11.5-vs1.9.5.3/fs/nfs/dir.c linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/nfs/dir.c
+--- linux-2.6.11.5-vs1.9.5.3/fs/nfs/dir.c	2005-03-23 21:34:32 +0100
++++ linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/nfs/dir.c	2005-03-26 00:25:23 +0100
+@@ -773,7 +773,8 @@ static int is_atomic_open(struct inode *
+ 	if (nd->flags & LOOKUP_DIRECTORY)
+ 		return 0;
+ 	/* Are we trying to write to a read only partition? */
+-	if (IS_RDONLY(dir) && (nd->intent.open.flags & (O_CREAT|O_TRUNC|FMODE_WRITE)))
++	if ((IS_RDONLY(dir) || MNT_IS_RDONLY(nd->mnt)) &&
++		(nd->intent.open.flags & (O_CREAT|O_TRUNC|FMODE_WRITE)))
+ 		return 0;
+ 	return 1;
+ }
+diff -NurpP --minimal linux-2.6.11.5-vs1.9.5.3/fs/nfsd/vfs.c linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/nfsd/vfs.c
+--- linux-2.6.11.5-vs1.9.5.3/fs/nfsd/vfs.c	2005-03-02 12:38:45 +0100
++++ linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/nfsd/vfs.c	2005-03-26 00:25:23 +0100
+@@ -1115,13 +1115,13 @@ nfsd_create(struct svc_rqst *rqstp, stru
+ 		err = vfs_create(dirp, dchild, iap->ia_mode, NULL);
+ 		break;
+ 	case S_IFDIR:
+-		err = vfs_mkdir(dirp, dchild, iap->ia_mode);
++		err = vfs_mkdir(dirp, dchild, iap->ia_mode, NULL);
+ 		break;
+ 	case S_IFCHR:
+ 	case S_IFBLK:
+ 	case S_IFIFO:
+ 	case S_IFSOCK:
+-		err = vfs_mknod(dirp, dchild, iap->ia_mode, rdev);
++		err = vfs_mknod(dirp, dchild, iap->ia_mode, rdev, NULL);
+ 		break;
+ 	default:
+ 	        printk("nfsd: bad file type %o in nfsd_create\n", type);
+@@ -1397,11 +1397,13 @@ nfsd_symlink(struct svc_rqst *rqstp, str
+ 		else {
+ 			strncpy(path_alloced, path, plen);
+ 			path_alloced[plen] = 0;
+-			err = vfs_symlink(dentry->d_inode, dnew, path_alloced, mode);
++			err = vfs_symlink(dentry->d_inode, dnew,
++				path_alloced, mode, NULL);
+ 			kfree(path_alloced);
+ 		}
+ 	} else
+-		err = vfs_symlink(dentry->d_inode, dnew, path, mode);
++		err = vfs_symlink(dentry->d_inode, dnew,
++			path, mode, NULL);
+ 
+ 	if (!err) {
+ 		if (EX_ISSYNC(fhp->fh_export))
+@@ -1459,7 +1461,7 @@ nfsd_link(struct svc_rqst *rqstp, struct
+ 	dold = tfhp->fh_dentry;
+ 	dest = dold->d_inode;
+ 
+-	err = vfs_link(dold, dirp, dnew);
++	err = vfs_link(dold, dirp, dnew, NULL);
+ 	if (!err) {
+ 		if (EX_ISSYNC(ffhp->fh_export)) {
+ 			nfsd_sync_dir(ddir);
+@@ -1620,9 +1622,9 @@ nfsd_unlink(struct svc_rqst *rqstp, stru
+ 			err = nfserr_perm;
+ 		} else
+ #endif
+-		err = vfs_unlink(dirp, rdentry);
++		err = vfs_unlink(dirp, rdentry, NULL);
+ 	} else { /* It's RMDIR */
+-		err = vfs_rmdir(dirp, rdentry);
++		err = vfs_rmdir(dirp, rdentry, NULL);
+ 	}
+ 
+ 	dput(rdentry);
+@@ -1734,7 +1736,8 @@ nfsd_permission(struct svc_export *exp, 
+ 	 */
+ 	if (!(acc & MAY_LOCAL_ACCESS))
+ 		if (acc & (MAY_WRITE | MAY_SATTR | MAY_TRUNC)) {
+-			if (EX_RDONLY(exp) || IS_RDONLY(inode))
++			if (EX_RDONLY(exp) || IS_RDONLY(inode)
++				|| MNT_IS_RDONLY(exp->ex_mnt))
+ 				return nfserr_rofs;
+ 			if (/* (acc & MAY_WRITE) && */ IS_IMMUTABLE(inode))
+ 				return nfserr_perm;
+diff -NurpP --minimal linux-2.6.11.5-vs1.9.5.3/fs/open.c linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/open.c
+--- linux-2.6.11.5-vs1.9.5.3/fs/open.c	2005-03-23 21:34:32 +0100
++++ linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/open.c	2005-03-26 00:25:24 +0100
+@@ -244,7 +244,7 @@ static inline long do_sys_truncate(const
+ 		goto dput_and_out;
+ 
+ 	error = -EROFS;
+-	if (IS_RDONLY(inode))
++	if (IS_RDONLY(inode) || MNT_IS_RDONLY(nd.mnt))
+ 		goto dput_and_out;
+ 
+ 	error = -EPERM;
+@@ -368,7 +368,7 @@ asmlinkage long sys_utime(char __user * 
+ 	inode = nd.dentry->d_inode;
+ 
+ 	error = -EROFS;
+-	if (IS_RDONLY(inode))
++	if (IS_RDONLY(inode) || MNT_IS_RDONLY(nd.mnt))
+ 		goto dput_and_out;
+ 
+ 	/* Don't worry, the checks are done in inode_change_ok() */
+@@ -425,7 +425,7 @@ long do_utimes(char __user * filename, s
+ 	inode = nd.dentry->d_inode;
+ 
+ 	error = -EROFS;
+-	if (IS_RDONLY(inode))
++	if (IS_RDONLY(inode) || MNT_IS_RDONLY(nd.mnt))
+ 		goto dput_and_out;
+ 
+ 	/* Don't worry, the checks are done in inode_change_ok() */
+@@ -507,7 +507,8 @@ asmlinkage long sys_access(const char __
+ 	if (!res) {
+ 		res = permission(nd.dentry->d_inode, mode, &nd);
+ 		/* SuS v2 requires we report a read only fs too */
+-		if(!res && (mode & S_IWOTH) && IS_RDONLY(nd.dentry->d_inode)
++		if(!res && (mode & S_IWOTH)
++		   && (IS_RDONLY(nd.dentry->d_inode) || MNT_IS_RDONLY(nd.mnt))
+ 		   && !special_file(nd.dentry->d_inode->i_mode))
+ 			res = -EROFS;
+ 		path_release(&nd);
+@@ -613,7 +614,7 @@ asmlinkage long sys_fchmod(unsigned int 
+ 	inode = dentry->d_inode;
+ 
+ 	err = -EROFS;
+-	if (IS_RDONLY(inode))
++	if (IS_RDONLY(inode) || MNT_IS_RDONLY(file->f_vfsmnt))
+ 		goto out_putf;
+ 	err = -EPERM;
+ 	if (IS_IMMUTABLE(inode) || IS_APPEND(inode))
+@@ -645,7 +646,7 @@ asmlinkage long sys_chmod(const char __u
+ 	inode = nd.dentry->d_inode;
+ 
+ 	error = -EROFS;
+-	if (IS_RDONLY(inode))
++	if (IS_RDONLY(inode) || MNT_IS_RDONLY(nd.mnt))
+ 		goto dput_and_out;
+ 
+ 	error = -EPERM;
+@@ -666,7 +667,8 @@ out:
+ 	return error;
+ }
+ 
+-static int chown_common(struct dentry * dentry, uid_t user, gid_t group)
++static int chown_common(struct dentry *dentry, struct vfsmount *mnt,
++	uid_t user, gid_t group)
+ {
+ 	struct inode * inode;
+ 	int error;
+@@ -678,7 +680,7 @@ static int chown_common(struct dentry * 
+ 		goto out;
+ 	}
+ 	error = -EROFS;
+-	if (IS_RDONLY(inode))
++	if (IS_RDONLY(inode) || MNT_IS_RDONLY(mnt))
+ 		goto out;
+ 	error = -EPERM;
+ 	if (IS_IMMUTABLE(inode) || IS_APPEND(inode))
+@@ -709,7 +711,7 @@ asmlinkage long sys_chown(const char __u
+ 
+ 	error = user_path_walk(filename, &nd);
+ 	if (!error) {
+-		error = chown_common(nd.dentry, user, group);
++		error = chown_common(nd.dentry, nd.mnt, user, group);
+ 		path_release(&nd);
+ 	}
+ 	return error;
+@@ -722,7 +724,7 @@ asmlinkage long sys_lchown(const char __
+ 
+ 	error = user_path_walk_link(filename, &nd);
+ 	if (!error) {
+-		error = chown_common(nd.dentry, user, group);
++		error = chown_common(nd.dentry, nd.mnt, user, group);
+ 		path_release(&nd);
+ 	}
+ 	return error;
+@@ -736,7 +738,7 @@ asmlinkage long sys_fchown(unsigned int 
+ 
+ 	file = fget(fd);
+ 	if (file) {
+-		error = chown_common(file->f_dentry, user, group);
++		error = chown_common(file->f_dentry, file->f_vfsmnt, user, group);
+ 		fput(file);
+ 	}
+ 	return error;
+diff -NurpP --minimal linux-2.6.11.5-vs1.9.5.3/fs/reiserfs/ioctl.c linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/reiserfs/ioctl.c
+--- linux-2.6.11.5-vs1.9.5.3/fs/reiserfs/ioctl.c	2005-03-23 21:34:31 +0100
++++ linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/reiserfs/ioctl.c	2005-03-26 00:25:24 +0100
+@@ -41,7 +41,8 @@ int reiserfs_ioctl (struct inode * inode
+ 		flags &= REISERFS_FL_USER_VISIBLE;
+ 		return put_user(flags, (int __user *) arg);
+ 	case REISERFS_IOC_SETFLAGS: {
+-		if (IS_RDONLY(inode))
++		if (IS_RDONLY(inode) ||
++			(filp && MNT_IS_RDONLY(filp->f_vfsmnt)))
+ 			return -EROFS;
+ 
+ 		if ((current->fsuid != inode->i_uid) && !capable(CAP_FOWNER))
+@@ -80,7 +81,8 @@ int reiserfs_ioctl (struct inode * inode
+ 	case REISERFS_IOC_SETVERSION:
+ 		if ((current->fsuid != inode->i_uid) && !capable(CAP_FOWNER))
+ 			return -EPERM;
+-		if (IS_RDONLY(inode))
++		if (IS_RDONLY(inode) ||
++			(filp && MNT_IS_RDONLY(filp->f_vfsmnt)))
+ 			return -EROFS;
+ 		if (get_user(inode->i_generation, (int __user *) arg))
+ 			return -EFAULT;	
+diff -NurpP --minimal linux-2.6.11.5-vs1.9.5.3/fs/reiserfs/xattr.c linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/reiserfs/xattr.c
+--- linux-2.6.11.5-vs1.9.5.3/fs/reiserfs/xattr.c	2005-03-02 12:38:46 +0100
++++ linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/reiserfs/xattr.c	2005-03-26 00:25:24 +0100
+@@ -834,7 +834,7 @@ reiserfs_delete_xattrs (struct inode *in
+     if (dir->d_inode->i_nlink <= 2) {
+         root = get_xa_root (inode->i_sb);
+         reiserfs_write_lock_xattrs (inode->i_sb);
+-        err = vfs_rmdir (root->d_inode, dir);
++	err = vfs_rmdir (root->d_inode, dir, NULL);
+         reiserfs_write_unlock_xattrs (inode->i_sb);
+         dput (root);
+     } else {
+@@ -1355,7 +1355,7 @@ __reiserfs_permission (struct inode *ino
+ 		/*
+ 		 * Nobody gets write access to a read-only fs.
+ 		 */
+-		if (IS_RDONLY(inode) &&
++		if ((IS_RDONLY(inode) || (nd && MNT_IS_RDONLY(nd->mnt))) &&
+ 		    (S_ISREG(mode) || S_ISDIR(mode) || S_ISLNK(mode)))
+ 			return -EROFS;
+ 
+diff -NurpP --minimal linux-2.6.11.5-vs1.9.5.3/fs/xattr.c linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/xattr.c
+--- linux-2.6.11.5-vs1.9.5.3/fs/xattr.c	2004-12-25 01:55:21 +0100
++++ linux-2.6.11.5-vs1.9.5.3-bme0.06.1/fs/xattr.c	2005-03-26 00:25:03 +0100
+@@ -23,7 +23,7 @@
+  */
+ static long
+ setxattr(struct dentry *d, char __user *name, void __user *value,
+-	 size_t size, int flags)
++	 size_t size, int flags, struct vfsmount *mnt)
+ {
+ 	int error;
+ 	void *kvalue = NULL;
+@@ -56,6 +56,9 @@ setxattr(struct dentry *d, char __user *
+ 		error = security_inode_setxattr(d, kname, kvalue, size, flags);
+ 		if (error)
+ 			goto out;
++		error = -EROFS;
++		if (MNT_IS_RDONLY(mnt))
++			goto out;
+ 		error = d->d_inode->i_op->setxattr(d, kname, kvalue, size, flags);
+ 		if (!error) {
+			fsnotify_xattr(d);
+@@ -77,7 +80,7 @@ sys_setxattr(char __user *path, char __u
+ 	error = user_path_walk(path, &nd);
+ 	if (error)
+ 		return error;
+-	error = setxattr(nd.dentry, name, value, size, flags);
++	error = setxattr(nd.dentry, name, value, size, flags, nd.mnt);
+ 	path_release(&nd);
+ 	return error;
+ }
+@@ -92,7 +95,7 @@ sys_lsetxattr(char __user *path, char __
+ 	error = user_path_walk_link(path, &nd);
+ 	if (error)
+ 		return error;
+-	error = setxattr(nd.dentry, name, value, size, flags);
++	error = setxattr(nd.dentry, name, value, size, flags, nd.mnt);
+ 	path_release(&nd);
+ 	return error;
+ }
+@@ -107,7 +110,7 @@ sys_fsetxattr(int fd, char __user *name,
+ 	f = fget(fd);
+ 	if (!f)
+ 		return error;
+-	error = setxattr(f->f_dentry, name, value, size, flags);
++	error = setxattr(f->f_dentry, name, value, size, flags, f->f_vfsmnt);
+ 	fput(f);
+ 	return error;
+ }
+@@ -285,7 +288,7 @@ sys_flistxattr(int fd, char __user *list
+  * Extended attribute REMOVE operations
+  */
+ static long
+-removexattr(struct dentry *d, char __user *name)
++removexattr(struct dentry *d, char __user *name, struct vfsmount *mnt)
+ {
+ 	int error;
+ 	char kname[XATTR_NAME_MAX + 1];
+@@ -301,6 +304,9 @@ removexattr(struct dentry *d, char __use
+ 		error = security_inode_removexattr(d, kname);
+ 		if (error)
+ 			goto out;
++		error = -EROFS;
++		if (MNT_IS_RDONLY(mnt))
++			goto out;
+ 		down(&d->d_inode->i_sem);
+ 		error = d->d_inode->i_op->removexattr(d, kname);
+ 		up(&d->d_inode->i_sem);
+@@ -318,7 +324,7 @@ sys_removexattr(char __user *path, char 
+ 	error = user_path_walk(path, &nd);
+ 	if (error)
+ 		return error;
+-	error = removexattr(nd.dentry, name);
++	error = removexattr(nd.dentry, name, nd.mnt);
+ 	path_release(&nd);
+ 	return error;
+ }
+@@ -332,7 +338,7 @@ sys_lremovexattr(char __user *path, char
+ 	error = user_path_walk_link(path, &nd);
+ 	if (error)
+ 		return error;
+-	error = removexattr(nd.dentry, name);
++	error = removexattr(nd.dentry, name, nd.mnt);
+ 	path_release(&nd);
+ 	return error;
+ }
+@@ -346,7 +352,7 @@ sys_fremovexattr(int fd, char __user *na
+ 	f = fget(fd);
+ 	if (!f)
+ 		return error;
+-	error = removexattr(f->f_dentry, name);
++	error = removexattr(f->f_dentry, name, f->f_vfsmnt);
+ 	fput(f);
+ 	return error;
+ }
+diff -NurpP --minimal linux-2.6.11.5-vs1.9.5.3/include/linux/fs.h linux-2.6.11.5-vs1.9.5.3-bme0.06.1/include/linux/fs.h
+--- linux-2.6.11.5-vs1.9.5.3/include/linux/fs.h	2005-03-23 21:34:32 +0100
++++ linux-2.6.11.5-vs1.9.5.3-bme0.06.1/include/linux/fs.h	2005-03-26 00:24:49 +0100
+@@ -9,6 +9,7 @@
+ #include <linux/config.h>
+ #include <linux/limits.h>
+ #include <linux/ioctl.h>
++#include <linux/mount.h>
+ 
+ /*
+  * It's silly to have NR_OPEN bigger than NR_FILE, but you can change
+@@ -149,7 +150,7 @@ extern int dir_notify_enable;
+  */
+ #define __IS_FLG(inode,flg) ((inode)->i_sb->s_flags & (flg))
+ 
+-#define IS_RDONLY(inode) ((inode)->i_sb->s_flags & MS_RDONLY)
++#define IS_RDONLY(inode)	__IS_FLG(inode, MS_RDONLY)
+ #define IS_SYNC(inode)		(__IS_FLG(inode, MS_SYNCHRONOUS) || \
+ 					((inode)->i_flags & S_SYNC))
+ #define IS_DIRSYNC(inode)	(__IS_FLG(inode, MS_SYNCHRONOUS|MS_DIRSYNC) || \
+@@ -850,12 +851,12 @@ static inline void unlock_super(struct s
+  * VFS helper functions..
+  */
+ extern int vfs_create(struct inode *, struct dentry *, int, struct nameidata *);
+-extern int vfs_mkdir(struct inode *, struct dentry *, int);
+-extern int vfs_mknod(struct inode *, struct dentry *, int, dev_t);
+-extern int vfs_symlink(struct inode *, struct dentry *, const char *, int);
+-extern int vfs_link(struct dentry *, struct inode *, struct dentry *);
+-extern int vfs_rmdir(struct inode *, struct dentry *);
+-extern int vfs_unlink(struct inode *, struct dentry *);
++extern int vfs_mkdir(struct inode *, struct dentry *, int, struct nameidata *);
++extern int vfs_mknod(struct inode *, struct dentry *, int, dev_t, struct nameidata *);
++extern int vfs_symlink(struct inode *, struct dentry *, const char *, int, struct nameidata *);
++extern int vfs_link(struct dentry *, struct inode *, struct dentry *, struct nameidata *);
++extern int vfs_rmdir(struct inode *, struct dentry *, struct nameidata *);
++extern int vfs_unlink(struct inode *, struct dentry *, struct nameidata *);
+ extern int vfs_rename(struct inode *, struct dentry *, struct inode *, struct dentry *);
+ 
+ /*
+@@ -1053,8 +1054,16 @@ static inline void mark_inode_dirty_sync
+ 
+ static inline void touch_atime(struct vfsmount *mnt, struct dentry *dentry)
+ {
+-	/* per-mountpoint checks will go here */
+-	update_atime(dentry->d_inode);
++	struct inode *inode = dentry->d_inode;
++
++	if (MNT_IS_NOATIME(mnt))
++		return;
++	if (S_ISDIR(inode->i_mode) && MNT_IS_NODIRATIME(mnt))
++		return;
++	if (IS_RDONLY(inode) || MNT_IS_RDONLY(mnt))
++		return;
++
++	update_atime(inode);
+ }
+ 
+ static inline void file_accessed(struct file *file)
+diff -NurpP --minimal linux-2.6.11.5-vs1.9.5.3/include/linux/mount.h linux-2.6.11.5-vs1.9.5.3-bme0.06.1/include/linux/mount.h
+--- linux-2.6.11.5-vs1.9.5.3/include/linux/mount.h	2005-03-23 21:34:32 +0100
++++ linux-2.6.11.5-vs1.9.5.3-bme0.06.1/include/linux/mount.h	2005-03-26 00:21:46 +0100
+@@ -19,6 +19,9 @@
+ #define MNT_NOSUID	1
+ #define MNT_NODEV	2
+ #define MNT_NOEXEC	4
++#define MNT_RDONLY	8
++#define MNT_NOATIME	16
++#define MNT_NODIRATIME	32
+ #define MNT_XID		256
+ 
+ struct vfsmount
+@@ -40,6 +43,10 @@ struct vfsmount
+ 	xid_t mnt_xid;			/* xid tagging used for vfsmount */
+ };
+ 
++#define	MNT_IS_RDONLY(m)	((m) && ((m)->mnt_flags & MNT_RDONLY))
++#define	MNT_IS_NOATIME(m)	((m) && ((m)->mnt_flags & MNT_NOATIME))
++#define	MNT_IS_NODIRATIME(m)	((m) && ((m)->mnt_flags & MNT_NODIRATIME))
++
+ static inline struct vfsmount *mntget(struct vfsmount *mnt)
+ {
+ 	if (mnt)
+diff -NurpP --minimal linux-2.6.11.5-vs1.9.5.3/ipc/mqueue.c linux-2.6.11.5-vs1.9.5.3-bme0.06.1/ipc/mqueue.c
+--- linux-2.6.11.5-vs1.9.5.3/ipc/mqueue.c	2005-03-23 21:34:32 +0100
++++ linux-2.6.11.5-vs1.9.5.3-bme0.06.1/ipc/mqueue.c	2005-03-26 00:24:49 +0100
+@@ -737,7 +737,7 @@ asmlinkage long sys_mq_unlink(const char
+ 	if (inode)
+ 		atomic_inc(&inode->i_count);
+ 
+-	err = vfs_unlink(dentry->d_parent->d_inode, dentry);
++	err = vfs_unlink(dentry->d_parent->d_inode, dentry, NULL);
+ out_err:
+ 	dput(dentry);
+ 
+diff -NurpP --minimal linux-2.6.11.5-vs1.9.5.3/net/unix/af_unix.c linux-2.6.11.5-vs1.9.5.3-bme0.06.1/net/unix/af_unix.c
+--- linux-2.6.11.5-vs1.9.5.3/net/unix/af_unix.c	2005-03-23 21:34:30 +0100
++++ linux-2.6.11.5-vs1.9.5.3-bme0.06.1/net/unix/af_unix.c	2005-03-26 00:24:49 +0100
+@@ -797,7 +797,7 @@ static int unix_bind(struct socket *sock
+ 		 */
+ 		mode = S_IFSOCK |
+ 		       (SOCK_INODE(sock)->i_mode & ~current->fs->umask);
+-		err = vfs_mknod(nd.dentry->d_inode, dentry, mode, 0);
++		err = vfs_mknod(nd.dentry->d_inode, dentry, mode, 0, NULL);
+ 		if (err)
+ 			goto out_mknod_dput;
+ 		up(&nd.dentry->d_inode->i_sem);

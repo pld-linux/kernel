@@ -1,0 +1,880 @@
+diff -NurpP --minimal linux-2.6.12.3-vs2.0/fs/ext2/balloc.c linux-2.6.12.3-vs2.0.0.1/fs/ext2/balloc.c
+--- linux-2.6.12.3-vs2.0/fs/ext2/balloc.c	2005-08-01 10:32:46 +0200
++++ linux-2.6.12.3-vs2.0.0.1/fs/ext2/balloc.c	2005-08-17 23:13:13 +0200
+@@ -261,7 +261,7 @@ do_more:
+ 	}
+ error_return:
+ 	brelse(bitmap_bh);
+-	DLIMIT_FREE_BLOCK(sb, inode->i_xid, freed);
++	DLIMIT_FREE_BLOCK(inode, freed);
+ 	release_blocks(sb, freed);
+ 	DQUOT_FREE_BLOCK(inode, freed);
+ }
+@@ -365,7 +365,7 @@ int ext2_new_block(struct inode *inode, 
+ 		*err = -ENOSPC;
+ 		goto out_dquot;
+ 	}
+-	if (DLIMIT_ALLOC_BLOCK(sb, inode->i_xid, es_alloc)) {
++	if (DLIMIT_ALLOC_BLOCK(inode, es_alloc)) {
+ 		*err = -ENOSPC;
+ 		goto out_dlimit;
+ 	}
+@@ -516,7 +516,7 @@ got_block:
+ 	*err = 0;
+ out_release:
+ 	group_release_blocks(sb, group_no, desc, gdp_bh, group_alloc);
+-	DLIMIT_FREE_BLOCK(sb, inode->i_xid, es_alloc);
++	DLIMIT_FREE_BLOCK(inode, es_alloc);
+ out_dlimit:
+ 	release_blocks(sb, es_alloc);
+ out_dquot:
+diff -NurpP --minimal linux-2.6.12.3-vs2.0/fs/ext2/ialloc.c linux-2.6.12.3-vs2.0.0.1/fs/ext2/ialloc.c
+--- linux-2.6.12.3-vs2.0/fs/ext2/ialloc.c	2005-08-01 10:32:46 +0200
++++ linux-2.6.12.3-vs2.0.0.1/fs/ext2/ialloc.c	2005-08-17 23:29:16 +0200
+@@ -126,7 +126,7 @@ void ext2_free_inode (struct inode * ino
+ 	if (!is_bad_inode(inode)) {
+ 		/* Quota is already initialized in iput() */
+ 		ext2_xattr_delete_inode(inode);
+-		DLIMIT_FREE_INODE(sb, inode->i_xid);
++		DLIMIT_FREE_INODE(inode);
+ 	    	DQUOT_FREE_INODE(inode);
+ 		DQUOT_DROP(inode);
+ 	}
+@@ -469,7 +469,7 @@ struct inode *ext2_new_inode(struct inod
+ 		return ERR_PTR(-ENOMEM);
+ 
+ 	inode->i_xid = vx_current_fsxid(sb);
+-	if (DLIMIT_ALLOC_INODE(sb, inode->i_xid)) {
++	if (DLIMIT_ALLOC_INODE(inode)) {
+ 		err = -ENOSPC;
+ 		goto fail_dlim;
+ 	}
+@@ -615,28 +615,29 @@ got:
+ 
+ 	if (DQUOT_ALLOC_INODE(inode)) {
+ 		DQUOT_DROP(inode);
+-		err = -ENOSPC;
++		err = -EDQUOT;
+ 		goto fail2;
+ 	}
+ 	err = ext2_init_acl(inode, dir);
+-	if (err) {
+-		DQUOT_FREE_INODE(inode);
+-		goto fail2;
+-	}
++	if (err)
++		goto fail2_free;
++
+ 	mark_inode_dirty(inode);
+ 	ext2_debug("allocating inode %lu\n", inode->i_ino);
+ 	ext2_preread_inode(inode);
+ 	return inode;
+ 
++fail2_free:
++	DQUOT_FREE_INODE(inode);
+ fail2:
+-	DLIMIT_FREE_INODE(sb, inode->i_xid);
++	DLIMIT_FREE_INODE(inode);
+ 	inode->i_flags |= S_NOQUOTA;
+ 	inode->i_nlink = 0;
+ 	iput(inode);
+ 	return ERR_PTR(err);
+ 
+ fail:
+-	DLIMIT_FREE_INODE(sb, inode->i_xid);
++	DLIMIT_FREE_INODE(inode);
+ fail_dlim:
+ 	make_bad_inode(inode);
+ 	iput(inode);
+diff -NurpP --minimal linux-2.6.12.3-vs2.0/fs/ext2/xattr.c linux-2.6.12.3-vs2.0.0.1/fs/ext2/xattr.c
+--- linux-2.6.12.3-vs2.0/fs/ext2/xattr.c	2005-08-01 10:32:46 +0200
++++ linux-2.6.12.3-vs2.0.0.1/fs/ext2/xattr.c	2005-08-17 23:21:26 +0200
+@@ -651,11 +651,11 @@ ext2_xattr_set2(struct inode *inode, str
+ 				ea_bdebug(new_bh, "reusing block");
+ 
+ 				error = -ENOSPC;
+-				if (DLIMIT_ALLOC_BLOCK(sb, inode->i_xid, 1))
++				if (DLIMIT_ALLOC_BLOCK(inode, 1))
+ 					goto cleanup;
+ 				error = -EDQUOT;
+ 				if (DQUOT_ALLOC_BLOCK(inode, 1)) {
+-					DLIMIT_FREE_BLOCK(sb, inode->i_xid, 1);
++					DLIMIT_FREE_BLOCK(inode, 1);
+ 					unlock_buffer(new_bh);
+ 					goto cleanup;
+ 				}
+@@ -749,7 +749,7 @@ ext2_xattr_set2(struct inode *inode, str
+ 				le32_to_cpu(HDR(old_bh)->h_refcount) - 1);
+ 			if (ce)
+ 				mb_cache_entry_release(ce);
+-			DLIMIT_FREE_BLOCK(sb, inode->i_xid, 1);
++			DLIMIT_FREE_BLOCK(inode, 1);
+ 			DQUOT_FREE_BLOCK(inode, 1);
+ 			mark_buffer_dirty(old_bh);
+ 			ea_bdebug(old_bh, "refcount now=%d",
+@@ -810,7 +810,7 @@ ext2_xattr_delete_inode(struct inode *in
+ 		mark_buffer_dirty(bh);
+ 		if (IS_SYNC(inode))
+ 			sync_dirty_buffer(bh);
+-		DLIMIT_FREE_BLOCK(inode->i_sb, inode->i_xid, 1);
++		DLIMIT_FREE_BLOCK(inode, 1);
+ 		DQUOT_FREE_BLOCK(inode, 1);
+ 	}
+ 	ea_bdebug(bh, "refcount now=%d", le32_to_cpu(HDR(bh)->h_refcount) - 1);
+Files linux-2.6.12.3-vs2.0/fs/ext3/.ialloc.c.swp and linux-2.6.12.3-vs2.0.0.1/fs/ext3/.ialloc.c.swp differ
+diff -NurpP --minimal linux-2.6.12.3-vs2.0/fs/ext3/balloc.c linux-2.6.12.3-vs2.0.0.1/fs/ext3/balloc.c
+--- linux-2.6.12.3-vs2.0/fs/ext3/balloc.c	2005-08-01 10:32:46 +0200
++++ linux-2.6.12.3-vs2.0.0.1/fs/ext3/balloc.c	2005-08-17 23:22:11 +0200
+@@ -505,7 +505,7 @@ void ext3_free_blocks(handle_t *handle, 
+ 	}
+ 	ext3_free_blocks_sb(handle, sb, block, count, &dquot_freed_blocks);
+ 	if (dquot_freed_blocks) {
+-		DLIMIT_FREE_BLOCK(sb, inode->i_xid, dquot_freed_blocks);
++		DLIMIT_FREE_BLOCK(inode, dquot_freed_blocks);
+ 		DQUOT_FREE_BLOCK(inode, dquot_freed_blocks);
+ 	}
+ 	return;
+@@ -1218,7 +1218,7 @@ int ext3_new_block(handle_t *handle, str
+ 		*errp = -EDQUOT;
+ 		return 0;
+ 	}
+-	if (DLIMIT_ALLOC_BLOCK(sb, inode->i_xid, 1))
++	if (DLIMIT_ALLOC_BLOCK(inode, 1))
+ 	    goto out_dlimit;
+ 
+ 	sbi = EXT3_SB(sb);
+@@ -1421,7 +1421,7 @@ io_error:
+ 	*errp = -EIO;
+ out:
+ 	if (!performed_allocation)
+-		DLIMIT_FREE_BLOCK(sb, inode->i_xid, 1);
++		DLIMIT_FREE_BLOCK(inode, 1);
+ out_dlimit:
+ 	if (fatal) {
+ 		*errp = fatal;
+diff -NurpP --minimal linux-2.6.12.3-vs2.0/fs/ext3/ialloc.c linux-2.6.12.3-vs2.0.0.1/fs/ext3/ialloc.c
+--- linux-2.6.12.3-vs2.0/fs/ext3/ialloc.c	2005-08-01 10:32:46 +0200
++++ linux-2.6.12.3-vs2.0.0.1/fs/ext3/ialloc.c	2005-08-17 23:26:01 +0200
+@@ -127,7 +127,7 @@ void ext3_free_inode (handle_t *handle, 
+ 	 */
+ 	DQUOT_INIT(inode);
+ 	ext3_xattr_delete_inode(handle, inode);
+-	DLIMIT_FREE_INODE(sb, inode->i_xid);
++	DLIMIT_FREE_INODE(inode);
+ 	DQUOT_FREE_INODE(inode);
+ 	DQUOT_DROP(inode);
+ 
+@@ -448,7 +448,7 @@ struct inode *ext3_new_inode(handle_t *h
+ 		return ERR_PTR(-ENOMEM);
+ 
+ 	inode->i_xid = vx_current_fsxid(sb);
+-	if (DLIMIT_ALLOC_INODE(sb, inode->i_xid)) {
++	if (DLIMIT_ALLOC_INODE(inode)) {
+ 		err = -ENOSPC;
+ 		goto out;
+ 	}
+@@ -606,27 +606,24 @@ got:
+ 		sizeof(struct ext3_inode) - EXT3_GOOD_OLD_INODE_SIZE : 0;
+ 
+ 	ret = inode;
+-	if(DQUOT_ALLOC_INODE(inode)) {
++	if (DQUOT_ALLOC_INODE(inode)) {
+ 		DQUOT_DROP(inode);
+ 		err = -EDQUOT;
+ 		goto fail2;
+ 	}
+ 	err = ext3_init_acl(handle, inode, dir);
+-	if (err) {
+-		DQUOT_FREE_INODE(inode);
+-		goto fail2;
+-  	}
++	if (err)
++		goto fail2_free;
+ 	err = ext3_mark_inode_dirty(handle, inode);
+ 	if (err) {
+ 		ext3_std_error(sb, err);
+-		DQUOT_FREE_INODE(inode);
+-		goto fail2;
++		goto fail2_free;
+ 	}
+ 
+ 	ext3_debug("allocating inode %lu\n", inode->i_ino);
+ 	goto really_out;
+ fail:
+-	DLIMIT_FREE_INODE(sb, inode->i_xid);
++	DLIMIT_FREE_INODE(inode);
+ 	ext3_std_error(sb, err);
+ out:
+ 	iput(inode);
+@@ -635,8 +632,10 @@ really_out:
+ 	brelse(bitmap_bh);
+ 	return ret;
+ 
++fail2_free:
++	DQUOT_FREE_INODE(inode);
+ fail2:
+-	DLIMIT_FREE_INODE(sb, inode->i_xid);
++	DLIMIT_FREE_INODE(inode);
+ 	inode->i_flags |= S_NOQUOTA;
+ 	inode->i_nlink = 0;
+ 	iput(inode);
+diff -NurpP --minimal linux-2.6.12.3-vs2.0/fs/ext3/xattr.c linux-2.6.12.3-vs2.0.0.1/fs/ext3/xattr.c
+--- linux-2.6.12.3-vs2.0/fs/ext3/xattr.c	2005-08-01 10:32:46 +0200
++++ linux-2.6.12.3-vs2.0.0.1/fs/ext3/xattr.c	2005-08-17 23:30:04 +0200
+@@ -496,7 +496,7 @@ ext3_xattr_release_block(handle_t *handl
+ 			ext3_journal_dirty_metadata(handle, bh);
+ 			if (IS_SYNC(inode))
+ 				handle->h_sync = 1;
+-			DLIMIT_FREE_BLOCK(inode->i_sb, inode->i_xid, 1);
++			DLIMIT_FREE_BLOCK(inode, 1);
+ 			DQUOT_FREE_BLOCK(inode, 1);
+ 			unlock_buffer(bh);
+ 			ea_bdebug(bh, "refcount now=%d; releasing",
+@@ -766,7 +766,7 @@ inserted:
+ 				ea_bdebug(new_bh, "keeping");
+ 			else {
+ 				error = -ENOSPC;
+-				if (DLIMIT_ALLOC_BLOCK(sb, inode->i_xid, 1))
++				if (DLIMIT_ALLOC_BLOCK(inode, 1))
+ 					goto cleanup;
+ 				/* The old block is released after updating
+ 				   the inode. */
+@@ -849,7 +849,7 @@ cleanup:
+ cleanup_dquot:
+ 	DQUOT_FREE_BLOCK(inode, 1);
+ cleanup_dlimit:
+-	DLIMIT_FREE_BLOCK(sb, inode->i_xid, 1);
++	DLIMIT_FREE_BLOCK(inode, 1);
+ 	goto cleanup;
+ 
+ bad_block:
+diff -NurpP --minimal linux-2.6.12.3-vs2.0/fs/jfs/jfs_dtree.c linux-2.6.12.3-vs2.0.0.1/fs/jfs/jfs_dtree.c
+--- linux-2.6.12.3-vs2.0/fs/jfs/jfs_dtree.c	2005-06-22 02:38:36 +0200
++++ linux-2.6.12.3-vs2.0.0.1/fs/jfs/jfs_dtree.c	2005-08-17 23:45:37 +0200
+@@ -102,6 +102,7 @@
+ 
+ #include <linux/fs.h>
+ #include <linux/quotaops.h>
++#include <linux/vs_dlimit.h>
+ #include "jfs_incore.h"
+ #include "jfs_superblock.h"
+ #include "jfs_filsys.h"
+@@ -381,9 +382,11 @@ static u32 add_index(tid_t tid, struct i
+ 		 * It's time to move the inline table to an external
+ 		 * page and begin to build the xtree
+ 		 */
+-		if (DQUOT_ALLOC_BLOCK(ip, sbi->nbperpage) ||
++		if (DQUOT_ALLOC_BLOCK(ip, sbi->nbperpage))
++			goto clean_up;
++		if (DLIMIT_ALLOC_BLOCK(ip, sbi->nbperpage) ||
+ 		    dbAlloc(ip, 0, sbi->nbperpage, &xaddr))
+-			goto clean_up;	/* No space */
++			goto clean_up_dlim;	/* No space */
+ 
+ 		/*
+ 		 * Save the table, we're going to overwrite it with the
+@@ -474,6 +477,9 @@ static u32 add_index(tid_t tid, struct i
+ 
+ 	return index;
+ 
++      clean_up_dlim:
++	DQUOT_FREE_BLOCK(ip, sbi->nbperpage);
++
+       clean_up:
+ 
+ 	jfs_ip->next_index--;
+@@ -925,7 +931,8 @@ int dtInsert(tid_t tid, struct inode *ip
+ static int dtSplitUp(tid_t tid,
+ 	  struct inode *ip, struct dtsplit * split, struct btstack * btstack)
+ {
+-	struct jfs_sb_info *sbi = JFS_SBI(ip->i_sb);
++	struct super_block *sb = ip->i_sb;
++	struct jfs_sb_info *sbi = JFS_SBI(sb);
+ 	int rc = 0;
+ 	struct metapage *smp;
+ 	dtpage_t *sp;		/* split page */
+@@ -947,6 +954,7 @@ static int dtSplitUp(tid_t tid,
+ 	struct tlock *tlck;
+ 	struct lv *lv;
+ 	int quota_allocation = 0;
++	int dlimit_allocation = 0;
+ 
+ 	/* get split page */
+ 	smp = split->mp;
+@@ -1028,6 +1036,12 @@ static int dtSplitUp(tid_t tid,
+ 		}
+ 		quota_allocation += n;
+ 
++		if (DLIMIT_ALLOC_BLOCK(ip, n)) {
++			rc = -ENOSPC;
++			goto extendOut;
++		}
++		dlimit_allocation += n;
++
+ 		if ((rc = dbReAlloc(sbi->ipbmap, xaddr, (s64) xlen,
+ 				    (s64) n, &nxaddr)))
+ 			goto extendOut;
+@@ -1296,6 +1310,9 @@ static int dtSplitUp(tid_t tid,
+       freeKeyName:
+ 	kfree(key.name);
+ 
++	/* Rollback dlimit allocation */
++	if (rc && dlimit_allocation)
++		DLIMIT_FREE_BLOCK(ip, dlimit_allocation);
+ 	/* Rollback quota allocation */
+ 	if (rc && quota_allocation)
+ 		DQUOT_FREE_BLOCK(ip, quota_allocation);
+@@ -1363,6 +1380,12 @@ static int dtSplitPage(tid_t tid, struct
+ 		release_metapage(rmp);
+ 		return -EDQUOT;
+ 	}
++	/* Allocate blocks to dlimit. */
++	if (DLIMIT_ALLOC_BLOCK(ip, lengthPXD(pxd))) {
++		DQUOT_FREE_BLOCK(ip, lengthPXD(pxd));
++		release_metapage(rmp);
++		return -ENOSPC;
++	}
+ 
+ 	jfs_info("dtSplitPage: ip:0x%p smp:0x%p rmp:0x%p", ip, smp, rmp);
+ 
+@@ -1913,6 +1936,12 @@ static int dtSplitRoot(tid_t tid,
+ 		release_metapage(rmp);
+ 		return -EDQUOT;
+ 	}
++	/* Allocate blocks to dlimit. */
++	if (DLIMIT_ALLOC_BLOCK(ip, lengthPXD(pxd))) {
++		DQUOT_FREE_BLOCK(ip, lengthPXD(pxd));
++		release_metapage(rmp);
++		return -ENOSPC;
++	}
+ 
+ 	BT_MARK_DIRTY(rmp, ip);
+ 	/*
+@@ -2279,6 +2308,8 @@ static int dtDeleteUp(tid_t tid, struct 
+ 
+ 	xlen = lengthPXD(&fp->header.self);
+ 
++	/* Free dlimit allocation. */
++	DLIMIT_FREE_BLOCK(ip, xlen);
+ 	/* Free quota allocation. */
+ 	DQUOT_FREE_BLOCK(ip, xlen);
+ 
+@@ -2355,6 +2386,8 @@ static int dtDeleteUp(tid_t tid, struct 
+ 
+ 				xlen = lengthPXD(&p->header.self);
+ 
++				/* Free dlimit allocation */
++				DLIMIT_FREE_BLOCK(ip, xlen);
+ 				/* Free quota allocation */
+ 				DQUOT_FREE_BLOCK(ip, xlen);
+ 
+diff -NurpP --minimal linux-2.6.12.3-vs2.0/fs/jfs/jfs_extent.c linux-2.6.12.3-vs2.0.0.1/fs/jfs/jfs_extent.c
+--- linux-2.6.12.3-vs2.0/fs/jfs/jfs_extent.c	2004-10-23 05:06:16 +0200
++++ linux-2.6.12.3-vs2.0.0.1/fs/jfs/jfs_extent.c	2005-08-17 23:46:44 +0200
+@@ -18,6 +18,7 @@
+ 
+ #include <linux/fs.h>
+ #include <linux/quotaops.h>
++#include <linux/vs_dlimit.h>
+ #include "jfs_incore.h"
+ #include "jfs_superblock.h"
+ #include "jfs_dmap.h"
+@@ -151,6 +152,13 @@ extAlloc(struct inode *ip, s64 xlen, s64
+ 		up(&JFS_IP(ip)->commit_sem);
+ 		return -EDQUOT;
+ 	}
++	/* Allocate blocks to dlimit. */
++	if (DLIMIT_ALLOC_BLOCK(ip, nxlen)) {
++		DQUOT_FREE_BLOCK(ip, nxlen);
++		dbFree(ip, nxaddr, (s64) nxlen);
++		up(&JFS_IP(ip)->commit_sem);
++		return -ENOSPC;
++	}
+ 
+ 	/* determine the value of the extent flag */
+ 	xflag = (abnr == TRUE) ? XAD_NOTRECORDED : 0;
+@@ -169,6 +177,7 @@ extAlloc(struct inode *ip, s64 xlen, s64
+ 	 */
+ 	if (rc) {
+ 		dbFree(ip, nxaddr, nxlen);
++		DLIMIT_FREE_BLOCK(ip, nxlen);
+ 		DQUOT_FREE_BLOCK(ip, nxlen);
+ 		up(&JFS_IP(ip)->commit_sem);
+ 		return (rc);
+@@ -266,6 +275,13 @@ int extRealloc(struct inode *ip, s64 nxl
+ 		up(&JFS_IP(ip)->commit_sem);
+ 		return -EDQUOT;
+ 	}
++	/* Allocate blocks to dlimit. */
++	if (DLIMIT_ALLOC_BLOCK(ip, nxlen)) {
++		DQUOT_FREE_BLOCK(ip, nxlen);
++		dbFree(ip, nxaddr, (s64) nxlen);
++		up(&JFS_IP(ip)->commit_sem);
++		return -ENOSPC;
++	}
+ 
+ 	delta = nxlen - xlen;
+ 
+@@ -302,6 +318,7 @@ int extRealloc(struct inode *ip, s64 nxl
+ 		/* extend the extent */
+ 		if ((rc = xtExtend(0, ip, xoff + xlen, (int) nextend, 0))) {
+ 			dbFree(ip, xaddr + xlen, delta);
++			DLIMIT_FREE_BLOCK(ip, nxlen);
+ 			DQUOT_FREE_BLOCK(ip, nxlen);
+ 			goto exit;
+ 		}
+@@ -313,6 +330,7 @@ int extRealloc(struct inode *ip, s64 nxl
+ 		 */
+ 		if ((rc = xtTailgate(0, ip, xoff, (int) ntail, nxaddr, 0))) {
+ 			dbFree(ip, nxaddr, nxlen);
++			DLIMIT_FREE_BLOCK(ip, nxlen);
+ 			DQUOT_FREE_BLOCK(ip, nxlen);
+ 			goto exit;
+ 		}
+diff -NurpP --minimal linux-2.6.12.3-vs2.0/fs/jfs/jfs_inode.c linux-2.6.12.3-vs2.0.0.1/fs/jfs/jfs_inode.c
+--- linux-2.6.12.3-vs2.0/fs/jfs/jfs_inode.c	2005-08-01 10:32:42 +0200
++++ linux-2.6.12.3-vs2.0.0.1/fs/jfs/jfs_inode.c	2005-08-17 23:46:24 +0200
+@@ -18,6 +18,7 @@
+ 
+ #include <linux/fs.h>
+ #include <linux/quotaops.h>
++#include <linux/vs_dlimit.h>
+ #include <linux/vserver/xid.h>
+ #include "jfs_incore.h"
+ #include "jfs_filsys.h"
+@@ -61,12 +62,18 @@ struct inode *ialloc(struct inode *paren
+ 			mode |= S_ISGID;
+ 	} else
+ 		inode->i_gid = current->fsgid;
++
+ 	inode->i_xid = vx_current_fsxid(sb);
++	if (DLIMIT_ALLOC_INODE(inode)) {
++		iput(inode);
++		return NULL;
++	}
+ 
+ 	/*
+ 	 * Allocate inode to quota.
+ 	 */
+ 	if (DQUOT_ALLOC_INODE(inode)) {
++		DLIMIT_FREE_INODE(inode);
+ 		DQUOT_DROP(inode);
+ 		inode->i_flags |= S_NOQUOTA;
+ 		inode->i_nlink = 0;
+diff -NurpP --minimal linux-2.6.12.3-vs2.0/fs/jfs/jfs_xtree.c linux-2.6.12.3-vs2.0.0.1/fs/jfs/jfs_xtree.c
+--- linux-2.6.12.3-vs2.0/fs/jfs/jfs_xtree.c	2005-06-22 02:38:36 +0200
++++ linux-2.6.12.3-vs2.0.0.1/fs/jfs/jfs_xtree.c	2005-08-17 23:45:13 +0200
+@@ -21,6 +21,7 @@
+ 
+ #include <linux/fs.h>
+ #include <linux/quotaops.h>
++#include <linux/vs_dlimit.h>
+ #include "jfs_incore.h"
+ #include "jfs_filsys.h"
+ #include "jfs_metapage.h"
+@@ -849,7 +850,12 @@ int xtInsert(tid_t tid,		/* transaction 
+ 			hint = 0;
+ 		if ((rc = DQUOT_ALLOC_BLOCK(ip, xlen)))
+ 			goto out;
++		if ((rc = DLIMIT_ALLOC_BLOCK(ip, xlen))) {
++			DQUOT_FREE_BLOCK(ip, xlen);
++			goto out;
++		}
+ 		if ((rc = dbAlloc(ip, hint, (s64) xlen, &xaddr))) {
++			DLIMIT_FREE_BLOCK(ip, xlen);
+ 			DQUOT_FREE_BLOCK(ip, xlen);
+ 			goto out;
+ 		}
+@@ -879,6 +885,7 @@ int xtInsert(tid_t tid,		/* transaction 
+ 			/* undo data extent allocation */
+ 			if (*xaddrp == 0) {
+ 				dbFree(ip, xaddr, (s64) xlen);
++				DLIMIT_FREE_BLOCK(ip, xlen);
+ 				DQUOT_FREE_BLOCK(ip, xlen);
+ 			}
+ 			return rc;
+@@ -927,7 +934,6 @@ int xtInsert(tid_t tid,		/* transaction 
+       out:
+ 	/* unpin the leaf page */
+ 	XT_PUTPAGE(mp);
+-
+ 	return rc;
+ }
+ 
+@@ -1239,6 +1245,7 @@ xtSplitPage(tid_t tid, struct inode *ip,
+ 	struct tlock *tlck;
+ 	struct xtlock *sxtlck = NULL, *rxtlck = NULL;
+ 	int quota_allocation = 0;
++	int dlimit_allocation = 0;
+ 
+ 	smp = split->mp;
+ 	sp = XT_PAGE(ip, smp);
+@@ -1251,13 +1258,19 @@ xtSplitPage(tid_t tid, struct inode *ip,
+ 	rbn = addressPXD(pxd);
+ 
+ 	/* Allocate blocks to quota. */
+-       if (DQUOT_ALLOC_BLOCK(ip, lengthPXD(pxd))) {
++	if (DQUOT_ALLOC_BLOCK(ip, lengthPXD(pxd))) {
+ 	       rc = -EDQUOT;
+ 	       goto clean_up;
+ 	}
+-
+ 	quota_allocation += lengthPXD(pxd);
+ 
++	/* Allocate blocks to dlimit. */
++	if (DLIMIT_ALLOC_BLOCK(ip, lengthPXD(pxd))) {
++	       rc = -ENOSPC;
++	       goto clean_up;
++	}
++	dlimit_allocation += lengthPXD(pxd);
++
+ 	/*
+ 	 * allocate the new right page for the split
+ 	 */
+@@ -1459,6 +1472,9 @@ xtSplitPage(tid_t tid, struct inode *ip,
+ 
+       clean_up:
+ 
++	/* Rollback dlimit allocation. */
++	if (dlimit_allocation)
++		DLIMIT_FREE_BLOCK(ip, dlimit_allocation);
+ 	/* Rollback quota allocation. */
+ 	if (quota_allocation)
+ 		DQUOT_FREE_BLOCK(ip, quota_allocation);
+@@ -1523,6 +1539,12 @@ xtSplitRoot(tid_t tid,
+ 		release_metapage(rmp);
+ 		return -EDQUOT;
+ 	}
++	/* Allocate blocks to dlimit. */
++	if (DLIMIT_ALLOC_BLOCK(ip, lengthPXD(pxd))) {
++		DQUOT_FREE_BLOCK(ip, lengthPXD(pxd));
++		release_metapage(rmp);
++		return -ENOSPC;
++	}
+ 
+ 	jfs_info("xtSplitRoot: ip:0x%p rmp:0x%p", ip, rmp);
+ 
+@@ -3949,6 +3971,8 @@ s64 xtTruncate(tid_t tid, struct inode *
+ 	else
+ 		ip->i_size = newsize;
+ 
++	/* update dlimit allocation to reflect freed blocks */
++	DLIMIT_FREE_BLOCK(ip, nfreed);
+ 	/* update quota allocation to reflect freed blocks */
+ 	DQUOT_FREE_BLOCK(ip, nfreed);
+ 
+diff -NurpP --minimal linux-2.6.12.3-vs2.0/fs/jfs/xattr.c linux-2.6.12.3-vs2.0.0.1/fs/jfs/xattr.c
+--- linux-2.6.12.3-vs2.0/fs/jfs/xattr.c	2005-03-02 12:38:44 +0100
++++ linux-2.6.12.3-vs2.0.0.1/fs/jfs/xattr.c	2005-08-17 23:47:01 +0200
+@@ -20,6 +20,7 @@
+ #include <linux/fs.h>
+ #include <linux/xattr.h>
+ #include <linux/quotaops.h>
++#include <linux/vs_dlimit.h>
+ #include "jfs_incore.h"
+ #include "jfs_superblock.h"
+ #include "jfs_dmap.h"
+@@ -275,9 +276,16 @@ static int ea_write(struct inode *ip, st
+ 	if (DQUOT_ALLOC_BLOCK(ip, nblocks)) {
+ 		return -EDQUOT;
+ 	}
++	/* Allocate new blocks to dlimit. */
++	if (DLIMIT_ALLOC_BLOCK(ip, nblocks)) {
++		DQUOT_FREE_BLOCK(ip, nblocks);
++		return -ENOSPC;
++	}
+ 
+ 	rc = dbAlloc(ip, INOHINT(ip), nblocks, &blkno);
+ 	if (rc) {
++		/*Rollback dlimit allocation. */
++		DLIMIT_FREE_BLOCK(ip, nblocks);
+ 		/*Rollback quota allocation. */
+ 		DQUOT_FREE_BLOCK(ip, nblocks);
+ 		return rc;
+@@ -344,6 +352,8 @@ static int ea_write(struct inode *ip, st
+ 
+       failed:
+ 	/* Rollback quota allocation. */
++	DLIMIT_FREE_BLOCK(ip, nblocks);
++	/* Rollback quota allocation. */
+ 	DQUOT_FREE_BLOCK(ip, nblocks);
+ 
+ 	dbFree(ip, blkno, nblocks);
+@@ -480,6 +490,7 @@ static int ea_get(struct inode *inode, s
+ 	s64 blkno;
+ 	int rc;
+ 	int quota_allocation = 0;
++	int dlimit_allocation = 0;
+ 
+ 	/* When fsck.jfs clears a bad ea, it doesn't clear the size */
+ 	if (ji->ea.flag == 0)
+@@ -552,9 +563,14 @@ static int ea_get(struct inode *inode, s
+ 		/* Allocate new blocks to quota. */
+ 		if (DQUOT_ALLOC_BLOCK(inode, blocks_needed))
+ 			return -EDQUOT;
+-
+ 		quota_allocation = blocks_needed;
+ 
++		/* Allocate new blocks to dlimit. */
++		rc = -ENOSPC;
++		if (DLIMIT_ALLOC_BLOCK(inode, blocks_needed))
++			goto clean_up;
++		dlimit_allocation = blocks_needed;
++
+ 		rc = dbAlloc(inode, INOHINT(inode), (s64) blocks_needed,
+ 			     &blkno);
+ 		if (rc)
+@@ -611,6 +627,9 @@ static int ea_get(struct inode *inode, s
+ 	return ea_size;
+ 
+       clean_up:
++	/* Rollback dlimit allocation */
++	if (dlimit_allocation)
++		DLIMIT_FREE_BLOCK(inode, dlimit_allocation);
+ 	/* Rollback quota allocation */
+ 	if (quota_allocation)
+ 		DQUOT_FREE_BLOCK(inode, quota_allocation);
+@@ -690,8 +709,10 @@ static int ea_put(struct inode *inode, s
+ 	}
+ 
+ 	/* If old blocks exist, they must be removed from quota allocation. */
+-	if (old_blocks)
++	if (old_blocks) {
++		DLIMIT_FREE_BLOCK(inode, old_blocks);
+ 		DQUOT_FREE_BLOCK(inode, old_blocks);
++	}
+ 
+ 	inode->i_ctime = CURRENT_TIME;
+ 	rc = txCommit(tid, 1, &inode, 0);
+diff -NurpP --minimal linux-2.6.12.3-vs2.0/fs/reiserfs/bitmap.c linux-2.6.12.3-vs2.0.0.1/fs/reiserfs/bitmap.c
+--- linux-2.6.12.3-vs2.0/fs/reiserfs/bitmap.c	2005-06-22 02:38:37 +0200
++++ linux-2.6.12.3-vs2.0.0.1/fs/reiserfs/bitmap.c	2005-08-17 23:48:22 +0200
+@@ -13,6 +13,7 @@
+ #include <linux/reiserfs_fs_sb.h>
+ #include <linux/reiserfs_fs_i.h>
+ #include <linux/quotaops.h>
++#include <linux/vs_dlimit.h>
+ 
+ #define PREALLOCATION_SIZE 9
+ 
+@@ -952,6 +953,7 @@ static inline int blocknrs_and_prealloc_
+     int passno = 0;
+     int nr_allocated = 0;
+     int bigalloc = 0;
++    int blocks;
+ 
+     determine_prealloc_size(hint);
+     if (!hint->formatted_node) {
+@@ -962,6 +964,9 @@ static inline int blocknrs_and_prealloc_
+ 	quota_ret = DQUOT_ALLOC_BLOCK_NODIRTY(hint->inode, amount_needed);
+ 	if (quota_ret)    /* Quota exceeded? */
+ 	    return QUOTA_EXCEEDED;
++	if (DLIMIT_ALLOC_BLOCK(hint->inode, amount_needed))
++	    goto out_dlimit;
++
+ 	if (hint->preallocate && hint->prealloc_size ) {
+ #ifdef REISERQUOTA_DEBUG
+ 	    reiserfs_debug (s, REISERFS_DEBUG_CODE, "reiserquota: allocating (prealloc) %d blocks id=%u", hint->prealloc_size, hint->inode->i_uid);
+@@ -969,6 +974,8 @@ static inline int blocknrs_and_prealloc_
+ 	    quota_ret = DQUOT_PREALLOC_BLOCK_NODIRTY(hint->inode, hint->prealloc_size);
+ 	    if (quota_ret)
+ 		hint->preallocate=hint->prealloc_size=0;
++	    if (DLIMIT_ALLOC_BLOCK(hint->inode, hint->prealloc_size))
++		hint->preallocate=hint->prealloc_size=0;
+ 	}
+ 	/* for unformatted nodes, force large allocations */
+ 	bigalloc = amount_needed;
+@@ -1012,7 +1019,9 @@ static inline int blocknrs_and_prealloc_
+ #ifdef REISERQUOTA_DEBUG
+ 		reiserfs_debug (s, REISERFS_DEBUG_CODE, "reiserquota: freeing (nospace) %d blocks id=%u", amount_needed + hint->prealloc_size - nr_allocated, hint->inode->i_uid);
+ #endif
+-		DQUOT_FREE_BLOCK_NODIRTY(hint->inode, amount_needed + hint->prealloc_size - nr_allocated);     /* Free not allocated blocks */
++		blocks = amount_needed + hint->prealloc_size - nr_allocated;
++		DLIMIT_FREE_BLOCK(hint->inode, blocks);
++		DQUOT_FREE_BLOCK_NODIRTY(hint->inode, blocks);     /* Free not allocated blocks */
+ 	    }
+   	    while (nr_allocated --)
+ 		reiserfs_free_block(hint->th, hint->inode, new_blocknrs[nr_allocated], !hint->formatted_node);
+@@ -1032,12 +1041,16 @@ static inline int blocknrs_and_prealloc_
+ #ifdef REISERQUOTA_DEBUG
+ 	reiserfs_debug (s, REISERFS_DEBUG_CODE, "reiserquota: freeing (failed prealloc) %d blocks id=%u", amount_needed + hint->prealloc_size - nr_allocated - REISERFS_I(hint->inode)->i_prealloc_count, hint->inode->i_uid);
+ #endif
+-	DQUOT_FREE_BLOCK_NODIRTY(hint->inode, amount_needed +
+-	                         hint->prealloc_size - nr_allocated -
+-				 REISERFS_I(hint->inode)->i_prealloc_count);
++	blocks = amount_needed + hint->prealloc_size - nr_allocated -
++		REISERFS_I(hint->inode)->i_prealloc_count;
++	DLIMIT_FREE_BLOCK(hint->inode, blocks);
++	DQUOT_FREE_BLOCK_NODIRTY(hint->inode, blocks);
+     }
+-
+     return CARRY_ON;
++
++out_dlimit:
++    DQUOT_FREE_BLOCK_NODIRTY(hint->inode, amount_needed);
++    return NO_DISK_SPACE;
+ }
+ 
+ /* grab new blocknrs from preallocated list */
+diff -NurpP --minimal linux-2.6.12.3-vs2.0/fs/reiserfs/inode.c linux-2.6.12.3-vs2.0.0.1/fs/reiserfs/inode.c
+--- linux-2.6.12.3-vs2.0/fs/reiserfs/inode.c	2005-08-01 10:32:42 +0200
++++ linux-2.6.12.3-vs2.0.0.1/fs/reiserfs/inode.c	2005-08-17 23:49:12 +0200
+@@ -17,6 +17,7 @@
+ #include <linux/mpage.h>
+ #include <linux/writeback.h>
+ #include <linux/quotaops.h>
++#include <linux/vs_dlimit.h>
+ #include <linux/vserver/xid.h>
+ 
+ extern int reiserfs_default_io_size; /* default io size devuned in super.c */
+@@ -54,6 +55,7 @@ void reiserfs_delete_inode (struct inode
+ 	/* Do quota update inside a transaction for journaled quotas. We must do that
+ 	 * after delete_object so that quota updates go into the same transaction as
+ 	 * stat data deletion */
++	DLIMIT_FREE_INODE(inode);
+ 	DQUOT_FREE_INODE(inode);
+ 
+ 	if (journal_end(&th, inode->i_sb, jbegin_count)) {
+@@ -1701,6 +1703,10 @@ int reiserfs_new_inode (struct reiserfs_
+ 	err = -EDQUOT;
+ 	goto out_end_trans;
+     }
++    if (DLIMIT_ALLOC_INODE(inode)) {
++	err = -ENOSPC;
++	goto out_bad_dlimit;
++    }
+     if (!dir || !dir->i_nlink) {
+ 	err = -EPERM;
+ 	goto out_bad_inode;
+@@ -1871,6 +1877,8 @@ out_bad_inode:
+     /* Invalidate the object, nothing was inserted yet */
+     INODE_PKEY(inode)->k_objectid = 0;
+ 
++    DLIMIT_FREE_INODE(inode);
++out_bad_dlimit:
+     /* Quota change must be inside a transaction for journaling */
+     DQUOT_FREE_INODE(inode);
+ 
+diff -NurpP --minimal linux-2.6.12.3-vs2.0/fs/reiserfs/stree.c linux-2.6.12.3-vs2.0.0.1/fs/reiserfs/stree.c
+--- linux-2.6.12.3-vs2.0/fs/reiserfs/stree.c	2005-06-22 02:38:37 +0200
++++ linux-2.6.12.3-vs2.0.0.1/fs/reiserfs/stree.c	2005-08-17 23:49:29 +0200
+@@ -57,6 +57,7 @@
+ #include <linux/smp_lock.h>
+ #include <linux/buffer_head.h>
+ #include <linux/quotaops.h>
++#include <linux/vs_dlimit.h>
+ 
+ /* Does the buffer contain a disk block which is in the tree. */
+ inline int B_IS_IN_TREE (const struct buffer_head * p_s_bh)
+@@ -1324,6 +1325,7 @@ int reiserfs_delete_item (struct reiserf
+ #ifdef REISERQUOTA_DEBUG
+     reiserfs_debug (p_s_sb, REISERFS_DEBUG_CODE, "reiserquota delete_item(): freeing %u, id=%u type=%c", quota_cut_bytes, p_s_inode->i_uid, head2type(&s_ih));
+ #endif
++    DLIMIT_FREE_SPACE(p_s_inode, quota_cut_bytes);
+     DQUOT_FREE_SPACE_NODIRTY(p_s_inode, quota_cut_bytes);
+ 
+     /* Return deleted body length */
+@@ -1401,6 +1403,7 @@ void reiserfs_delete_solid_item (struct 
+ #ifdef REISERQUOTA_DEBUG
+ 		reiserfs_debug (th->t_super, REISERFS_DEBUG_CODE, "reiserquota delete_solid_item(): freeing %u id=%u type=%c", quota_cut_bytes, inode->i_uid, key2type(key));
+ #endif
++		DLIMIT_FREE_SPACE(inode, quota_cut_bytes);
+ 		DQUOT_FREE_SPACE_NODIRTY(inode, quota_cut_bytes);
+ 	    }
+ 	    break;
+@@ -1722,6 +1725,7 @@ int reiserfs_cut_from_item (struct reise
+ #ifdef REISERQUOTA_DEBUG
+     reiserfs_debug (p_s_inode->i_sb, REISERFS_DEBUG_CODE, "reiserquota cut_from_item(): freeing %u id=%u type=%c", quota_cut_bytes, p_s_inode->i_uid, '?');
+ #endif
++    DLIMIT_FREE_SPACE(p_s_inode, quota_cut_bytes);
+     DQUOT_FREE_SPACE_NODIRTY(p_s_inode, quota_cut_bytes);
+     return n_ret_value;
+ }
+@@ -1940,6 +1944,11 @@ int reiserfs_paste_into_item (struct rei
+ 	pathrelse(p_s_search_path);
+ 	return -EDQUOT;
+     }
++    if (DLIMIT_ALLOC_SPACE(inode, n_pasted_size)) {
++	DQUOT_FREE_SPACE_NODIRTY(inode, n_pasted_size);
++	pathrelse(p_s_search_path);
++	return -ENOSPC;
++    }
+     init_tb_struct(th, &s_paste_balance, th->t_super, p_s_search_path, n_pasted_size);
+ #ifdef DISPLACE_NEW_PACKING_LOCALITIES
+     s_paste_balance.key = p_s_key->on_disk_key;
+@@ -1984,6 +1993,7 @@ error_out:
+ #ifdef REISERQUOTA_DEBUG
+     reiserfs_debug (inode->i_sb, REISERFS_DEBUG_CODE, "reiserquota paste_into_item(): freeing %u id=%u type=%c", n_pasted_size, inode->i_uid, key2type(&(p_s_key->on_disk_key)));
+ #endif
++    DLIMIT_FREE_SPACE(inode, n_pasted_size);
+     DQUOT_FREE_SPACE_NODIRTY(inode, n_pasted_size);
+     return retval ;
+ }
+@@ -2023,6 +2033,11 @@ int reiserfs_insert_item(struct reiserfs
+ 	    pathrelse(p_s_path);
+ 	    return -EDQUOT;
+ 	}
++	if (DLIMIT_ALLOC_SPACE(inode, quota_bytes)) {
++	    DQUOT_FREE_SPACE_NODIRTY(inode, quota_bytes);
++	    pathrelse(p_s_path);
++	    return -ENOSPC;
++	}
+     }
+     init_tb_struct(th, &s_ins_balance, th->t_super, p_s_path, IH_SIZE + ih_item_len(p_s_ih));
+ #ifdef DISPLACE_NEW_PACKING_LOCALITIES
+@@ -2063,8 +2078,10 @@ error_out:
+ #ifdef REISERQUOTA_DEBUG
+     reiserfs_debug (th->t_super, REISERFS_DEBUG_CODE, "reiserquota insert_item(): freeing %u id=%u type=%c", quota_bytes, inode->i_uid, head2type(p_s_ih));
+ #endif
+-    if (inode)
++    if (inode) {
++	DLIMIT_FREE_SPACE(inode, quota_bytes) ;
+ 	DQUOT_FREE_SPACE_NODIRTY(inode, quota_bytes) ;
++    }
+     return retval; 
+ }
+ 
+diff -NurpP --minimal linux-2.6.12.3-vs2.0/include/linux/vs_dlimit.h linux-2.6.12.3-vs2.0.0.1/include/linux/vs_dlimit.h
+--- linux-2.6.12.3-vs2.0/include/linux/vs_dlimit.h	2005-08-01 10:32:36 +0200
++++ linux-2.6.12.3-vs2.0.0.1/include/linux/vs_dlimit.h	2005-08-17 23:44:11 +0200
+@@ -179,22 +179,30 @@ static inline void __dl_adjust_block(str
+ 	put_dl_info(dli);
+ }
+ 
++#define DLIMIT_ALLOC_SPACE(in, bytes) \
++	__dl_alloc_space((in)->i_sb, (in)->i_xid, (dlsize_t)(bytes), \
++		__FILE__, __LINE__ )
+ 
+-#define DLIMIT_ALLOC_BLOCK(sb, xid, nr) \
+-	__dl_alloc_space(sb, xid, \
+-		((dlsize_t)(nr)) << (sb)->s_blocksize_bits, \
++#define DLIMIT_FREE_SPACE(in, bytes) \
++	__dl_free_space((in)->i_sb, (in)->i_xid, (dlsize_t)(bytes), \
+ 		__FILE__, __LINE__ )
+ 
+-#define DLIMIT_FREE_BLOCK(sb, xid, nr) \
+-	__dl_free_space(sb, xid, \
+-		((dlsize_t)(nr)) << (sb)->s_blocksize_bits, \
++#define DLIMIT_ALLOC_BLOCK(in, nr) \
++	__dl_alloc_space((in)->i_sb, (in)->i_xid, \
++		((dlsize_t)(nr)) << (in)->i_sb->s_blocksize_bits, \
+ 		__FILE__, __LINE__ )
+ 
+-#define DLIMIT_ALLOC_INODE(sb, xid) \
+-	__dl_alloc_inode(sb, xid, __FILE__, __LINE__ )
++#define DLIMIT_FREE_BLOCK(in, nr) \
++	__dl_free_space((in)->i_sb, (in)->i_xid, \
++		((dlsize_t)(nr)) << (in)->i_sb->s_blocksize_bits, \
++		__FILE__, __LINE__ )
+ 
+-#define DLIMIT_FREE_INODE(sb, xid) \
+-	__dl_free_inode(sb, xid, __FILE__, __LINE__ )
++
++#define DLIMIT_ALLOC_INODE(in) \
++	__dl_alloc_inode((in)->i_sb, (in)->i_xid, __FILE__, __LINE__ )
++
++#define DLIMIT_FREE_INODE(in) \
++	__dl_free_inode((in)->i_sb, (in)->i_xid, __FILE__, __LINE__ )
+ 
+ 
+ #define DLIMIT_ADJUST_BLOCK(sb, xid, fb, rb) \
