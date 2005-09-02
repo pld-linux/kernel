@@ -631,7 +631,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch5 -p1
 
 %patch10 -p1
-##%patch11 -p1 req checkg
+%patch11 -p1
 %patch12 -p1
 %patch13 -p1
 %patch14 -p1
