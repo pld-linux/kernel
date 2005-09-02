@@ -638,14 +638,14 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch15 -p1
 %patch16 -p1
 %patch17 -p1
-##%patch18 -p1 included in kernel
+# patch18 included in kernel 
 %patch19 -p1
 %patch20 -p1
 %patch21 -p1
 
 %patch25 -p1
 %patch26 -p1
-##%patch27 -p1 included in kernel
+# patch27 included in kernel
 %patch28 -p1
 %patch29 -p1
 ## %patch30 -p1 - broken or included in kernel
