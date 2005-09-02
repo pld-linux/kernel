@@ -105,7 +105,7 @@ xen0 conflicts with xenU
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.2
+%define		_rel		0.0.1
 
 %define		_netfilter_snap		20050801
 
@@ -121,9 +121,9 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
-%define		_postver	.6
-#define		_postver	%{nil}
-Version:	2.6.12%{_postver}
+#define		_postver	.6
+%define		_postver	%{nil}
+Version:	2.6.13%{_postver}
 Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
@@ -132,7 +132,7 @@ Group:		Base/Kernel
 #define		_rc	-rc3
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	1592bb2a8ec0deb1ff32e8238f25ecc5
+# Source0-md5:	560f5fadf59f172973e67939868a4cae
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 
@@ -631,56 +631,57 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch5 -p1
 
 %patch10 -p1
-%patch11 -p1
+##%patch11 -p1 req checkg
 %patch12 -p1
 %patch13 -p1
 %patch14 -p1
 %patch15 -p1
 %patch16 -p1
 %patch17 -p1
-%patch18 -p1
+##%patch18 -p1 included in kernel
 %patch19 -p1
 %patch20 -p1
 %patch21 -p1
 
 %patch25 -p1
 %patch26 -p1
-%patch27 -p1
+##%patch27 -p1 included in kernel
 %patch28 -p1
 %patch29 -p1
 ## %patch30 -p1 - broken or included in kernel
 %patch31 -p1
 
-%patch50 -p0
-mv -f {,netfilter.}status
+echo NETFILTER !!!!!
+##%patch50 -p0
+##mv -f {,netfilter.}status
 
 %patch52 -p1
 %patch53 -p1
 %patch54 -p1
 
 %patch56 -p1
-%patch57 -p1
-%patch58 -p1
-%patch59 -p1
+##%patch57 -p1 - REQCHK
+##%patch58 -p1 included in kernel
+##%patch59 -p1 - REQCHK
 %patch60 -p1
-%patch61 -p1
+##%patch61 -p1 - REQCHK
 %patch62 -p1
 %patch63 -p1
 %patch64 -p1
 %patch65 -p1
-%patch66 -p1
-%patch67 -p1
+##%patch66 -p1 included in kernel 
+##%patch67 -p1 included in kernel
 
 %patch80 -p1
-%patch81 -p1
+##%patch81 -p1 - REQCHK
 
-%patch90 -p1
+##%patch90 -p1 inclded in kernel
 %patch91 -p1
 %patch92 -p1
-%patch95 -p1
+##%patch95 -p1 - REQCHK
 
-%patch100 -p1
-%patch101 -p1
+##%patch100 -p1 included in kernel
+##%patch101 -p1 including in kernel
 %patch102 -p1
 %patch103 -p1
 #patch104 -p1		NEEDS UPDATE
@@ -690,8 +691,8 @@ mv -f {,netfilter.}status
 %patch108 -p1
 %patch109 -p1
 %patch110 -p1
-%patch111 -p1
-%patch112 -p1
+##%patch111 -p1 - REQCHK
+##%patch112 -p1 - REQCHK
 %patch113 -p1
 %patch115 -p1
 %patch116 -p1
@@ -700,7 +701,7 @@ mv -f {,netfilter.}status
 %if %{with abi}
 %patch135 -p1
 %endif
-%patch145 -p0
+##%patch145 -p0 - REQCHK
 %endif
 
 %if %{with grsecurity}
@@ -708,7 +709,7 @@ echo Grsecurity not implemented
 ##patch200 -p1
 exit 1
 %else
-%{?with_grsec_basic:%patch199 -p1}
+## %{?with_grsec_basic:%patch199 -p1} - REQCHK
 %endif
 %if %{with omosix}
 %{__patch} -p1 -F3 < %{PATCH201}
@@ -733,7 +734,7 @@ exit 1
 %endif
 %endif
 
-%patch400 -p1
+##%patch400 -p1 - REQCHK
 %patch401 -p1
 %if %{with em8300}
 %patch402 -p1
