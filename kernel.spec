@@ -105,7 +105,7 @@ xen0 conflicts with xenU
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 
-%define		_rel		0.0.1
+%define		_rel		0.0.2
 
 %define		_netfilter_snap		20050801
 
@@ -668,7 +668,7 @@ echo NETFILTER !!!!!
 %patch62 -p1
 %patch63 -p1
 %patch64 -p1
-%patch65 -p1
+##%patch65 -p1 broken or included (builds without it)
 ##%patch66 -p1 included in kernel 
 ##%patch67 -p1 included in kernel
 
