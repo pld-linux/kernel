@@ -104,6 +104,7 @@ xen0 conflicts with xenU
 %define		_nfs_utils_ver		1.0.5
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
+%define		_udev_ver		058
 
 %define		_rel		0.0.2
 
@@ -324,6 +325,7 @@ Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
 Conflicts:	nfs-utils < %{_nfs_utils_ver}
 Conflicts:	procps < %{_procps_ver}
 Conflicts:	oprofile < %{_oprofile_ver}
+Conflicts:	udev < %{_udev_ver}
 %if %{with xen}
 %if %{with xendev}
 ExclusiveArch:	%{ix86} %{x8664}
