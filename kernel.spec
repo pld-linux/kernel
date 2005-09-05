@@ -653,7 +653,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 ## %patch30 -p1 - broken or included in kernel
 %patch31 -p1
 
-%patch50 -p1
+%patch50 -p0
 mv -f {,netfilter.}status
 
 %patch52 -p1
