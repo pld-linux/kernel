@@ -106,7 +106,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.0.2
+%define		_rel		0.0.4
 
 %define		_netfilter_snap		20050801
 
@@ -653,20 +653,19 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 ## %patch30 -p1 - broken or included in kernel
 %patch31 -p1
 
-echo NETFILTER !!!!!
-##%patch50 -p0
-##mv -f {,netfilter.}status
+%patch50 -p1
+mv -f {,netfilter.}status
 
 %patch52 -p1
 %patch53 -p1
 %patch54 -p1
 
-%patch56 -p1
-##%patch57 -p1 - REQCHK
+##%patch56 -p1 - req checking !!
+##%patch57 -p1 included in kernel
 ##%patch58 -p1 included in kernel
 ##%patch59 -p1 - REQCHK
 %patch60 -p1
-##%patch61 -p1 - REQCHK
+##%patch61 -p1
 %patch62 -p1
 %patch63 -p1
 %patch64 -p1
@@ -675,12 +674,12 @@ echo NETFILTER !!!!!
 ##%patch67 -p1 included in kernel
 
 %patch80 -p1
-##%patch81 -p1 - REQCHK
+%patch81 -p1
 
 ##%patch90 -p1 inclded in kernel
 %patch91 -p1
 %patch92 -p1
-##%patch95 -p1 - REQCHK
+##%patch95 -p1 - REQ ??
 
 ##%patch100 -p1 included in kernel
 ##%patch101 -p1 including in kernel
