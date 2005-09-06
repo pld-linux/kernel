@@ -1,33 +1,3 @@
-diff -uNr a/drivers/video/logo/Kconfig b/drivers/video/logo/Kconfig
---- a/drivers/video/logo/Kconfig	2004-12-24 22:34:32.000000000 +0100
-+++ b/drivers/video/logo/Kconfig	2005-01-25 11:47:20.000000000 +0100
-@@ -25,7 +25,7 @@
- 
- config LOGO_DEC_CLUT224
- 	bool "224-color Digital Equipment Corporation Linux logo"
--	depends on LOGO && MACH_DECSTATION
-+	depends on LOGO && (MACH_DECSTATION || ALPHA)
- 	default y
- 
- config LOGO_MAC_CLUT224
-diff -uNr a/drivers/video/logo/logo.c b/drivers/video/logo/logo.c
---- a/drivers/video/logo/logo.c	2004-12-24 22:34:58.000000000 +0100
-+++ b/drivers/video/logo/logo.c	2005-01-25 11:47:20.000000000 +0100
-@@ -66,9 +66,14 @@
- 		logo = &logo_linux_clut224;
- #endif
- #ifdef CONFIG_LOGO_DEC_CLUT224
-+# if defined(CONFIG_MIPS) || defined(CONFIG_MIPS64)
- 		/* DEC Linux logo on MIPS/MIPS64 */
- 		if (mips_machgroup == MACH_GROUP_DEC)
- 			logo = &logo_dec_clut224;
-+# else
-+		/* Assume DEC Linux logo on ALPHA */
-+		logo = &logo_dec_clut224;
-+# endif
- #endif
- #ifdef CONFIG_LOGO_MAC_CLUT224
- 		/* Macintosh Linux logo on m68k */
 diff -uNr a/drivers/video/tgafb.c b/drivers/video/tgafb.c
 --- a/drivers/video/tgafb.c	2004-12-24 22:35:23.000000000 +0100
 +++ b/drivers/video/tgafb.c	2005-01-25 12:41:07.565680400 +0100
@@ -38,7 +8,7 @@ diff -uNr a/drivers/video/tgafb.c b/drivers/video/tgafb.c
 +static int tgafb_pan_display(struct fb_var_screeninfo *var, struct fb_info *info);
  
  static int tgafb_pci_register(struct pci_dev *, const struct pci_device_id *);
- #ifdef MODULE
+ static void tgafb_pci_unregister(struct pci_dev *);
 @@ -62,6 +63,7 @@
  	.fb_set_par		= tgafb_set_par,
  	.fb_setcolreg		= tgafb_setcolreg,
@@ -47,22 +17,6 @@ diff -uNr a/drivers/video/tgafb.c b/drivers/video/tgafb.c
  	.fb_fillrect		= tgafb_fillrect,
  	.fb_copyarea		= tgafb_copyarea,
  	.fb_imageblit		= tgafb_imageblit,
-@@ -78,6 +80,7 @@
- 	  0, 0, 0 }
- };
- 
-+
- static struct pci_driver tgafb_driver = {
- 	.name			= "tgafb",
- 	.id_table		= tgafb_pci_table,
-@@ -85,7 +88,6 @@
- 	.remove			= __devexit_p(tgafb_pci_unregister),
- };
- 
--
- /**
-  *      tgafb_check_var - Optional function.  Validates a var passed in.
-  *      @var: frame buffer variable screen structure
 @@ -129,10 +131,10 @@
  tgafb_set_par(struct fb_info *info)
  {
@@ -427,7 +381,7 @@ diff -uNr a/drivers/video/tgafb.c b/drivers/video/tgafb.c
  			   NULL, 0, NULL,
  			   tga_type == TGA_TYPE_8PLANE ? 8 : 32);
  	if (ret == 0 || ret == 4) {
-@@ -1451,41 +1500,40 @@
+@@ -1451,40 +1500,39 @@
  		goto err1;
  	}
  
@@ -471,7 +425,6 @@ diff -uNr a/drivers/video/tgafb.c b/drivers/video/tgafb.c
  	return ret;
  }
  
- #ifdef MODULE
 -static void __exit
 +static void __devexit
  tgafb_pci_unregister(struct pci_dev *pdev)
@@ -485,7 +438,7 @@ diff -uNr a/drivers/video/tgafb.c b/drivers/video/tgafb.c
 +	framebuffer_release(info);
  }
  
- static void __exit
+ #ifdef MODULE
 diff -uNr a/include/video/tgafb.h b/include/video/tgafb.h
 --- a/include/video/tgafb.h	2004-12-24 22:35:24.000000000 +0100
 +++ b/include/video/tgafb.h	2005-01-25 12:41:44.717032536 +0100
