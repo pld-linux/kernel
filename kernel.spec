@@ -238,8 +238,6 @@ Patch107:	linux-2.6-sata-sil-mod15write-workaround.patch
 Patch108:	linux-2.6-tty-races.patch
 Patch109:	linux-2.6-jiffies-rounding.patch
 Patch110:	linux-2.6-cputime-misscalculation.patch
-Patch111:	linux-2.6-vfs-two-read-without-clear-between.patch
-Patch112:	linux-2.6-via82c586-irq-routing.patch
 Patch113:	linux-2.6-3Com_IBM-fix.patch
 # Derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch115:	linux-2.6-atm-vbr.patch
@@ -639,32 +637,30 @@ mv -f {,netfilter.}status
 %patch54 -p1
 
 %patch56 -p1
-##%patch59 -p1 - REQCHK
+##%patch59 -p1		NEEDS UPDATE
 %patch60 -p1
 %patch61 -p1
 %patch62 -p1
 %patch63 -p1
 %patch64 -p1
-##%patch65 -p1 NEEDS UPDATE
+##%patch65 -p1		NEEDS UPDATE
 
 %patch80 -p1
 %patch81 -p1
 
 %patch91 -p1
 %patch92 -p1
-##%patch95 -p1 - REQ ??
+##%patch95 -p1		NEEDS UPDATE
 
 %patch102 -p1
 %patch103 -p1
-#patch104 -p1		NEEDS UPDATE
+##%patch104 -p1		NEEDS UPDATE
 %patch105 -p1
 %patch106 -p1
 %patch107 -p1
 %patch108 -p1
 %patch109 -p1
 %patch110 -p1
-##%patch111 -p1 - REQCHK
-##%patch112 -p1 - REQCHK
 %patch113 -p1
 %patch115 -p1
 %patch116 -p1
@@ -673,7 +669,7 @@ mv -f {,netfilter.}status
 %if %{with abi}
 %patch135 -p1
 %endif
-##%patch145 -p0 - REQCHK
+##%patch145 -p0		NEEDS UPDATE
 %endif
 
 %if %{with grsecurity}
@@ -700,7 +696,7 @@ exit 1
 %endif
 %endif
 
-##%patch400 -p1 - REQCHK
+%patch400 -p1
 %patch401 -p1
 %if %{with em8300}
 %patch402 -p1
