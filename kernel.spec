@@ -185,14 +185,12 @@ Patch14:	linux-2.6-omnibook-20040916.patch
 Patch15:	linux-2.6-enable-broken-advansys.patch
 Patch16:	linux-alpha-isa.patch
 Patch17:	linux-fbcon-margins.patch
-Patch18:	linux-2.6-modpost_new-sparc-elf-header.patch
 Patch19:	2.6.5-3C920b-Tornado.patch
 Patch20:	2.6.5-i386-cmpxchg.patch
 Patch21:	2.6.6-serial-fifo-lkml.patch
 
 Patch25:	2.6.7-alpha_compile.patch
 Patch26:	2.6.7-ppc-asm-defs.patch
-Patch27:	linux-ppc-oops.patch
 Patch28:	linux-2.6-sparc-ksyms.patch
 Patch29:	linux-2.6-ppc-no-pc-serial.patch
 Patch30:	2.6.x-TGA-fbdev-lkml.patch
@@ -206,12 +204,8 @@ Patch52:	linux-2.6-esfq.patch
 Patch53:	2.6.10-imq.patch
 Patch54:	2.6.4-wrr.patch
 
-# frpm http://www.ssi.bg/~ja/#routers
-Patch56:	routes-2.6.12-12.diff
-# http://developer.osdl.org/shemminger/skge/
-Patch57:	linux-2.6-skge-0.5.patch
-# http://www.edoceo.com/creo/inotify/
-Patch58:	inotify-2.6.12.patch
+# from http://www.ssi.bg/~ja/#routers
+Patch56:	routes-2.6.13-12.diff
 # derived from http://www.syskonnect.com/syskonnect/support/driver/zip/linux/install-8_18.tar.bz2
 Patch59:	linux-2.6-sk98lin-8.18.2.2.patch
 Patch60:	bootsplash-3.1.6-2.6.12.diff
@@ -222,16 +216,12 @@ Patch62:	linux-2.6-lirc-0.7.patch
 Patch63:	iriverfs-r0.1.0.1.patch
 Patch64:	squashfs2.2-patch
 Patch65:	reiser4-2.6.12-mm1.patch
-Patch66:	linux-2.6-alsa-1.0.9plus-20050622.patch
-Patch67:	ocfs2-2005.06.17.patch
 
 # http://tahoe.pl/patch.htm
 Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 # psmouse extension for ThinkPad laptops from http://www.clarkson.edu/~evanchsa/
 Patch81:	trackpoint-2.6.11.patch
 
-# derived from http://ftp.kernel.org/pub/linux/kernel/people/lenb/acpi/patches/release/2.6.12/
-Patch90:	acpi-20050729-2.6.12.patch
 # http://gaugusch.at/acpi-dsdt-initrd-patches/
 Patch91:	acpi-dsdt-initrd-v0.7d-2.6.12.patch
 Patch92:	acpi-dsdt-initramfs-fix-2.6.10-cleanup.patch
@@ -239,11 +229,9 @@ Patch92:	acpi-dsdt-initramfs-fix-2.6.10-cleanup.patch
 # http://www.kismetwireless.net/download.shtml#orinoco2611
 Patch95:	orinoco-2.6.12-rfmon-dragorn-1.diff
 
-Patch100:	linux-2.6-nvidia-pci-ids.patch
-Patch101:	linux-2.6-pty-is-losing-bytes.patch
 Patch102:	linux-2.6-smbfs.patch
 Patch103:	linux-2.6-iriver-backing-device-capability-information-fix.patch
-#Patch104:	linux-2.6-dst-cache-overflow.patch		NEEDS UPDATE
+Patch104:	linux-2.6-dst-cache-overflow.patch
 Patch105:	linux-2.6-net-sundance-ip100A-pciids.patch
 Patch106:	linux-2.6-null-tty-driver-oops.patch
 Patch107:	linux-2.6-sata-sil-mod15write-workaround.patch
@@ -278,14 +266,6 @@ Patch207:	linux-2.6.12.3-xen-fixes.patch
 
 # vserver-2.0
 Patch300:	linux-2.6-vs2.patch
-# Bind Mount Extensions
-Patch301:	linux-2.6-vs2-BME.patch
-# http://vserver.13thfloor.at/Experimental/FOR-2.0.1/
-Patch310:	delta-vroot-fix01.diff
-Patch311:	delta-dlimit-feat01.diff
-Patch312:	delta-dlimit-fix01.diff
-Patch313:	delta-loopback-fix01.diff
-Patch314:	delta-dlimit-fix02.diff
 
 Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
@@ -640,17 +620,15 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch15 -p1
 %patch16 -p1
 %patch17 -p1
-# patch18 included in kernel 
 %patch19 -p1
 %patch20 -p1
 %patch21 -p1
 
 %patch25 -p1
 %patch26 -p1
-# patch27 included in kernel
 %patch28 -p1
 %patch29 -p1
-## %patch30 -p1 - broken or included in kernel
+%patch30 -p1
 %patch31 -p1
 
 %patch50 -p0
@@ -660,29 +638,22 @@ mv -f {,netfilter.}status
 %patch53 -p1
 %patch54 -p1
 
-##%patch56 -p1 - req checking !!
-##%patch57 -p1 included in kernel
-##%patch58 -p1 included in kernel
+%patch56 -p1
 ##%patch59 -p1 - REQCHK
 %patch60 -p1
-##%patch61 -p1
+%patch61 -p1
 %patch62 -p1
 %patch63 -p1
 %patch64 -p1
-##%patch65 -p1 broken or included (builds without it)
-##%patch66 -p1 included in kernel 
-##%patch67 -p1 included in kernel
+##%patch65 -p1 NEEDS UPDATE
 
 %patch80 -p1
 %patch81 -p1
 
-##%patch90 -p1 inclded in kernel
 %patch91 -p1
 %patch92 -p1
 ##%patch95 -p1 - REQ ??
 
-##%patch100 -p1 included in kernel
-##%patch101 -p1 including in kernel
 %patch102 -p1
 %patch103 -p1
 #patch104 -p1		NEEDS UPDATE
@@ -710,19 +681,13 @@ echo Grsecurity not implemented
 ##patch200 -p1
 exit 1
 %else
-## %{?with_grsec_basic:%patch199 -p1} - REQCHK
+%{?with_grsec_basic:%patch199 -p1}
 %endif
 %if %{with omosix}
 %{__patch} -p1 -F3 < %{PATCH201}
 %endif
 %if %{with vserver}
 %patch300 -p1
-%patch301 -p1
-%patch310 -p1
-%patch311 -p1
-%patch312 -p1
-%patch313 -p1
-%patch314 -p1
 %endif
 %if %{with xen}
 %if %{with xendev}
