@@ -1225,7 +1225,7 @@ fi
 /lib/modules/%{version}-%{release}/kernel/abi
 %endif
 %endif
-%ifnarch ppc sparc
+%ifnarch sparc
 /lib/modules/%{version}-%{release}/kernel/arch
 %endif
 /lib/modules/%{version}-%{release}/kernel/crypto
@@ -1316,7 +1316,7 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/abi
 %endif
 %endif
-%ifnarch ppc sparc
+%ifnarch sparc
 /lib/modules/%{version}-%{release}smp/kernel/arch
 %endif
 /lib/modules/%{version}-%{release}smp/kernel/crypto
