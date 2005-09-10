@@ -106,7 +106,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.0.4
+%define		_rel		0.0.1
 
 %define		_netfilter_snap		20050801
 
@@ -200,7 +200,7 @@ Patch31:	linux-2.6-ppc-no-i8042.patch
 Patch50:	linux-2.6-pom-ng-branch.diff
 
 Patch52:	linux-2.6-esfq.patch
-# http://www.linuximq.net/patchs/linux-2.6.9-imq1.diff
+# http://www.linuximq.net/patchs/linux-2.6.13-imq2.diff
 Patch53:	2.6.10-imq.patch
 Patch54:	2.6.4-wrr.patch
 
@@ -629,8 +629,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch30 -p1
 %patch31 -p1
 
-%patch50 -p0
-mv -f {,netfilter.}status
+#%patch50 -p0 NEEDS UPDATE
+#mv -f {,netfilter.}status
 
 %patch52 -p1
 %patch53 -p1
