@@ -629,8 +629,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch30 -p1
 %patch31 -p1
 
-#%patch50 -p0 NEEDS UPDATE
-#mv -f {,netfilter.}status
+%patch50 -p0
+mv -f {,netfilter.}status
 
 %patch52 -p1
 %patch53 -p1
