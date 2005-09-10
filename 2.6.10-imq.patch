@@ -573,14 +573,16 @@ diff -Nru linux-2.6.13/include/linux/netfilter_ipv6/ip6t_IMQ.h linux-2.6.13-imq/
 diff -Nru linux-2.6.13/include/linux/skbuff.h linux-2.6.13-imq/include/linux/skbuff.h
 --- linux-2.6.13/include/linux/skbuff.h	2005-08-28 23:41:01.000000000 +0000
 +++ linux-2.6.13-imq/include/linux/skbuff.h	2005-08-29 21:04:31.000000000 +0000
-@@ -263,6 +263,10 @@
- #ifdef CONFIG_NETFILTER_DEBUG
- 	unsigned int		nf_debug;
- #endif
+@@ -263,6 +263,12 @@
+ 	__u32			nfcache;
+ 	__u32			nfctinfo;
+ 	struct nf_conntrack	*nfct;
++
 +#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
 +	unsigned char           imq_flags;
 +	struct nf_info          *nf_info;
 +#endif
++
  #ifdef CONFIG_BRIDGE_NETFILTER
  	struct nf_bridge_info	*nf_bridge;
  #endif
@@ -613,9 +615,9 @@ diff -Nru linux-2.6.13/net/ipv4/netfilter/Makefile linux-2.6.13-imq/net/ipv4/net
  obj-$(CONFIG_IP_NF_TARGET_DSCP) += ipt_DSCP.o
  obj-$(CONFIG_IP_NF_TARGET_MARK) += ipt_MARK.o
 +obj-$(CONFIG_IP_NF_TARGET_IMQ) += ipt_IMQ.o
- obj-$(CONFIG_IP_NF_TARGET_IPMARK) += ipt_IPMARK.o
  obj-$(CONFIG_IP_NF_TARGET_MASQUERADE) += ipt_MASQUERADE.o
  obj-$(CONFIG_IP_NF_TARGET_REDIRECT) += ipt_REDIRECT.o
+ obj-$(CONFIG_IP_NF_TARGET_NETMAP) += ipt_NETMAP.o
 diff -Nru linux-2.6.13/net/ipv4/netfilter/ipt_IMQ.c linux-2.6.13-imq/net/ipv4/netfilter/ipt_IMQ.c
 --- linux-2.6.13/net/ipv4/netfilter/ipt_IMQ.c	1970-01-01 00:00:00.000000000 +0000
 +++ linux-2.6.13-imq/net/ipv4/netfilter/ipt_IMQ.c	2005-08-29 21:02:39.000000000 +0000
@@ -725,9 +727,9 @@ diff -Nru linux-2.6.13/net/ipv6/netfilter/Makefile linux-2.6.13-imq/net/ipv6/net
  obj-$(CONFIG_IP6_NF_MANGLE) += ip6table_mangle.o
  obj-$(CONFIG_IP6_NF_TARGET_MARK) += ip6t_MARK.o
 +obj-$(CONFIG_IP6_NF_TARGET_IMQ) += ip6t_IMQ.o
- obj-$(CONFIG_IP6_NF_TARGET_ROUTE) += ip6t_ROUTE.o
  obj-$(CONFIG_IP6_NF_QUEUE) += ip6_queue.o
  obj-$(CONFIG_IP6_NF_TARGET_LOG) += ip6t_LOG.o
+ obj-$(CONFIG_IP6_NF_RAW) += ip6table_raw.o
 diff -Nru linux-2.6.13/net/ipv6/netfilter/ip6t_IMQ.c linux-2.6.13-imq/net/ipv6/netfilter/ip6t_IMQ.c
 --- linux-2.6.13/net/ipv6/netfilter/ip6t_IMQ.c	1970-01-01 00:00:00.000000000 +0000
 +++ linux-2.6.13-imq/net/ipv6/netfilter/ip6t_IMQ.c	2005-08-29 21:02:39.000000000 +0000
