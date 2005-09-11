@@ -106,7 +106,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.0.1
+%define		_rel		0.0.2
 
 %define		_netfilter_snap		20050801
 
@@ -208,7 +208,7 @@ Patch54:	2.6.4-wrr.patch
 Patch56:	routes-2.6.13-12.diff
 # derived from http://www.syskonnect.com/syskonnect/support/driver/zip/linux/install-8_18.tar.bz2
 Patch59:	linux-2.6-sk98lin-8.18.2.2.patch
-Patch60:	bootsplash-3.1.6-2.6.12.diff
+Patch60:	bootsplash-3.1.6-2.6.13.diff
 # reserve dynamic minors for fbsplash and device mapper
 Patch61:	linux-static-dev.patch
 Patch62:	linux-2.6-lirc-0.7.patch
