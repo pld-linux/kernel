@@ -1395,8 +1395,10 @@ fi
 %{_prefix}/src/linux-%{version}/include
 %if !%{with xen}
 %{_prefix}/src/linux-%{version}/config-smp
+%{?with_smp:%{_prefix}/src/linux-%{version}/Module.symvers-smp}
 %endif
 %{_prefix}/src/linux-%{version}/config-up
+%{?with_up:%{_prefix}/src/linux-%{version}/Module.symvers-up}
 
 %files module-build
 %defattr(644,root,root,755)
