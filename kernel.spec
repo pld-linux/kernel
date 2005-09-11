@@ -942,6 +942,14 @@ PreInstallKernel() {
      		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 		KERNELRELEASE=$KernelVer
 
+	if [ "$smp" = "yes" ]; then
+		install Module.symvers \
+			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/Module.symvers-smp
+	else
+		install Module.symvers \
+			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/Module.symvers-up
+	fi
+
 	echo "CHECKING DEPENDENCIES FOR KERNEL MODULES"
 	[ -z "$CrossOpts" ] && \
 	/sbin/depmod --basedir $KERNEL_INSTALL_DIR -ae -F $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer -r $KernelVer || echo
