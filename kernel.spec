@@ -251,7 +251,8 @@ Patch145:       linux-2.6-cx88-blackbird.patch
 
 Patch199:	linux-2.6-grsec-minimal.patch
 # derived from http://www.grsecurity.net/grsecurity-2.1.5-2.6.11.7-200504111924.patch.gz
-Patch200:	grsecurity-2.1.5-2.6.11.7-200504111924.patch
+#Patch200:	grsecurity-2.1.5-2.6.11.7-200504111924.patch
+Patch200:	linux-2.6.13.1-grsec.patch
 # http://openmosix.snarc.org/files/releases/2.6/
 # derived from openMosix-r570.patch
 Patch201:	linux-2.6-omosix.patch
@@ -630,10 +631,10 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch31 -p1
 
 %patch50 -p0
-mv -f {,netfilter.}status
+#mv -f {,netfilter.}status
 
 %patch52 -p1
-%patch53 -p1
+#patch53 -p1 do poprawki
 %patch54 -p1
 
 %patch56 -p1
@@ -674,8 +675,7 @@ mv -f {,netfilter.}status
 
 %if %{with grsecurity}
 echo Grsecurity not implemented
-##patch200 -p1
-exit 1
+%patch200 -p1
 %else
 %{?with_grsec_basic:%patch199 -p1}
 %endif
