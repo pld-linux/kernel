@@ -106,7 +106,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.0.2
+%define		_rel		0.0.3
 
 %define		_netfilter_snap		20050801
 
