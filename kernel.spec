@@ -108,7 +108,7 @@ xen0 conflicts with xenU
 
 %define		_rel		0.0.4
 
-%define		_netfilter_snap		20050801
+%define		_netfilter_snap		20050915
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
@@ -217,27 +217,37 @@ Patch54:	linux-2.6-nf-set.patch
 Patch55:	linux-2.6-nf-time.patch
 Patch56:	linux-2.6-nf-u32.patch
 # [extra]
-#linux-2.6-nf-conntrack-event-api.patch
+Patch57:	linux-2.6-nf-IPMARK.patch
+Patch58:	linux-2.6-nf-TARPIT.patch
+Patch59:	linux-2.6-nf-ULOG.patch
+Patch60:	linux-2.6-nf-XOR.patch
+Patch61:	linux-2.6-nf-geoip.patch
+Patch62:	linux-2.6-nf-goto.patch
+Patch63:	linux-2.6-nf-ipp2p.patch
+Patch64:	linux-2.6-nf-ip_queue_vwmark.patch
+Patch65:	linux-2.6-nf-policy.patch
+Patch66:	linux-2.6-nf-unclean.patch
+# [extra/conntrack]
+Patch67:	linux-2.6-nf-conntrack-event-api.patch
 
-
-Patch50:	linux-2.6-pom-ng-branch.diff
-Patch52:	linux-2.6-esfq.patch
+#Patch50:	linux-2.6-pom-ng-branch.diff
+#Patch52:	linux-2.6-esfq.patch
 # http://www.linuximq.net/patchs/linux-2.6.13-imq2.diff
-Patch53:	2.6.10-imq.patch
-Patch54:	2.6.4-wrr.patch
+#Patch53:	2.6.10-imq.patch
+#Patch54:	2.6.4-wrr.patch
 
 # from http://www.ssi.bg/~ja/#routers
-Patch56:	routes-2.6.13-12.diff
+#Patch56:	routes-2.6.13-12.diff
 # derived from http://www.syskonnect.com/syskonnect/support/driver/zip/linux/install-8_18.tar.bz2
-Patch59:	linux-2.6-sk98lin-8.18.2.2.patch
-Patch60:	bootsplash-3.1.6-2.6.13.diff
+#Patch59:	linux-2.6-sk98lin-8.18.2.2.patch
+#Patch60:	bootsplash-3.1.6-2.6.13.diff
 # reserve dynamic minors for fbsplash and device mapper
-Patch61:	linux-static-dev.patch
-Patch62:	linux-2.6-lirc-0.7.patch
+#Patch61:	linux-static-dev.patch
+#Patch62:	linux-2.6-lirc-0.7.patch
 # http://ifp-driver.sourceforge.net/
-Patch63:	iriverfs-r0.1.0.1.patch
-Patch64:	squashfs2.2-patch
-Patch65:	reiser4-2.6.12-mm1.patch
+#Patch63:	iriverfs-r0.1.0.1.patch
+#Patch64:	squashfs2.2-patch
+#Patch65:	reiser4-2.6.12-mm1.patch
 
 # http://tahoe.pl/patch.htm
 Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
@@ -669,6 +679,17 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch54 -p1
 %patch55 -p1
 %patch56 -p1
+%patch57 -p1
+%patch58 -p1
+%patch59 -p1
+%patch60 -p1
+%patch61 -p1
+%patch62 -p1
+%patch63 -p1
+%patch64 -p1
+%patch65 -p1
+%patch66 -p1
+%patch67 -p1
 #patch -p1
 
 %if 0
