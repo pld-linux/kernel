@@ -196,6 +196,16 @@ Patch29:	linux-2.6-ppc-no-pc-serial.patch
 Patch30:	2.6.x-TGA-fbdev-lkml.patch
 Patch31:	linux-2.6-ppc-no-i8042.patch
 
+# http://fatooh.org/esfq-2.6/
+Patch35:	linux-2.6-esfq.patch
+# http://www.linuximq.net/
+Patch36:	linux-2.6.13-imq2.diff
+# http://www.zz9.dk/wrr/
+# derived from http://www.zz9.dk/wrr-linux-2.6.12.2.patch.gz
+Patch37:	wrr-linux-2.6.12.2.patch
+# from http://www.ssi.bg/~ja/#routers
+Patch38:	routes-2.6.13-12.diff
+
 # patch-o-matic-ng
 # [submitted]
 Patch40:	linux-2.6-nf-ownercmd.patch
@@ -229,40 +239,33 @@ Patch65:	linux-2.6-nf-policy.patch
 Patch66:	linux-2.6-nf-unclean.patch
 # [extra/conntrack]
 Patch67:	linux-2.6-nf-conntrack-event-api.patch
-
-#Patch50:	linux-2.6-pom-ng-branch.diff
-#Patch52:	linux-2.6-esfq.patch
-# http://www.linuximq.net/patchs/linux-2.6.13-imq2.diff
-#Patch53:	2.6.10-imq.patch
-#Patch54:	2.6.4-wrr.patch
-
-# from http://www.ssi.bg/~ja/#routers
-#Patch56:	routes-2.6.13-12.diff
-# derived from http://www.syskonnect.com/syskonnect/support/driver/zip/linux/install-8_18.tar.bz2
-#Patch59:	linux-2.6-sk98lin-8.18.2.2.patch
-#Patch60:	bootsplash-3.1.6-2.6.13.diff
-# reserve dynamic minors for fbsplash and device mapper
-#Patch61:	linux-static-dev.patch
-#Patch62:	linux-2.6-lirc-0.7.patch
-# http://ifp-driver.sourceforge.net/
-#Patch63:	iriverfs-r0.1.0.1.patch
-#Patch64:	squashfs2.2-patch
+# netfilter nfy...
 
 # http://tahoe.pl/patch.htm
 Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 # psmouse extension for ThinkPad laptops from http://www.clarkson.edu/~evanchsa/
 Patch81:	trackpoint-2.6.11.patch
+# derived from http://www.syskonnect.de/syskonnect/support/driver/zip/linux/install-8_23.tar.bz2
+Patch82:	linux-2.6-sk98lin-8.23.1.3.patch
+Patch83:	bootsplash-3.1.6-2.6.13.diff
+# reserve dynamic minors for device mapper
+Patch84:	linux-static-dev.patch
+Patch85:	linux-2.6-lirc-0.7.patch
+# http://ifp-driver.sourceforge.net/
+Patch86:	iriverfs-r0.1.0.1.patch
+Patch87:	squashfs2.2-patch
+Patch88:	reiser4-2.6.13-mm3.patch
 
 # http://gaugusch.at/acpi-dsdt-initrd-patches/
 Patch91:	acpi-dsdt-initrd-v0.7d-2.6.12.patch
 Patch92:	acpi-dsdt-initramfs-fix-2.6.10-cleanup.patch
 
 # http://www.kismetwireless.net/download.shtml#orinoco2611
-Patch95:	orinoco-2.6.12-rfmon-dragorn-1.diff
+#Patch95:	orinoco-2.6.12-rfmon-dragorn-1.diff	NEEDS UPDATE
 
 Patch102:	linux-2.6-smbfs.patch
 Patch103:	linux-2.6-iriver-backing-device-capability-information-fix.patch
-Patch104:	linux-2.6-dst-cache-overflow.patch
+#Patch104:	linux-2.6-dst-cache-overflow.patch	NEEDS UPDATE
 Patch105:	linux-2.6-net-sundance-ip100A-pciids.patch
 Patch106:	linux-2.6-null-tty-driver-oops.patch
 Patch107:	linux-2.6-sata-sil-mod15write-workaround.patch
@@ -661,6 +664,11 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch30 -p1
 %patch31 -p1
 
+%patch35 -p1
+%patch36 -p1
+%patch37 -p1
+%patch38 -p1
+
 %patch40 -p1
 %patch41 -p1
 %patch42 -p1
@@ -689,27 +697,16 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch65 -p1
 %patch66 -p1
 %patch67 -p1
-#patch -p1
-
-%if 0
-%patch50 -p0
-#mv -f {,netfilter.}status
-
-%patch52 -p1
-#patch53 -p1 do poprawki
-%patch54 -p1
-
-%patch56 -p1
-##%patch59 -p1		NEEDS UPDATE
-%patch60 -p1
-%patch61 -p1
-%patch62 -p1
-%patch63 -p1
-%patch64 -p1
-%patch65 -p1
 
 %patch80 -p1
 %patch81 -p1
+%patch82 -p1
+%patch83 -p1
+%patch84 -p1
+%patch85 -p1
+%patch86 -p1
+%patch87 -p1
+%patch88 -p1
 
 %patch91 -p1
 %patch92 -p1
@@ -762,8 +759,6 @@ echo Grsecurity not implemented
 %patch401 -p1
 %if %{with em8300}
 %patch402 -p1
-%endif
-
 %endif
 
 # Fix EXTRAVERSION in main Makefile
