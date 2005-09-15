@@ -9,7 +9,7 @@
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
 %bcond_with	grsecurity	# enable grsecurity
-%bcond_without	grsec_basic	# enable basic grsecurity functionality (proc,link,fifo)
+%bcond_without	grsec_basic	# disable basic grsecurity functionality (proc,link,fifo)
 %bcond_with	pax		# enable PaX (depends on grsecurity)
 %bcond_with	omosix		# enable openMosix (conflicts with grsecurity/vserver)
 %bcond_with	vserver		# enable vserver (conflicts with grsecurity/omosix)
@@ -106,7 +106,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.0.4
+%define		_rel		0.0.5
 
 %define		_netfilter_snap		20050915
 
@@ -239,6 +239,8 @@ Patch65:	linux-2.6-nf-policy.patch
 Patch66:	linux-2.6-nf-unclean.patch
 # [extra/conntrack]
 Patch67:	linux-2.6-nf-conntrack-event-api.patch
+# [unofficial/external]
+Patch68:	linux-2.6-nf-string.patch
 # netfilter nfy...
 
 # http://tahoe.pl/patch.htm
@@ -697,6 +699,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch65 -p1
 %patch66 -p1
 %patch67 -p1
+%patch68 -p1
 
 %patch80 -p1
 %patch81 -p1
