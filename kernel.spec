@@ -248,9 +248,6 @@ Patch67:	linux-2.6-nf-conntrack-event-api.patch
 #Patch63:	iriverfs-r0.1.0.1.patch
 #Patch64:	squashfs2.2-patch
 
-# reiser4 from the mm patches
-Patch65:	reiser4-2.6.13-mm3.patch
-
 # http://tahoe.pl/patch.htm
 Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 # psmouse extension for ThinkPad laptops from http://www.clarkson.edu/~evanchsa/
