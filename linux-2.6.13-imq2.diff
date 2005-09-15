@@ -583,8 +583,8 @@ diff -Nru linux-2.6.13/include/linux/skbuff.h linux-2.6.13-imq/include/linux/skb
 +	struct nf_info          *nf_info;
 +#endif
 +
- #if defined(CONFIG_NF_CONNTRACK) || defined(CONFIG_NF_CONNTRACK_MODULE)
- 	struct sk_buff		*nfct_reasm;
+ #ifdef CONFIG_BRIDGE_NETFILTER
+ 	struct nf_bridge_info	*nf_bridge;
  #endif
 diff -Nru linux-2.6.13/net/ipv4/netfilter/Kconfig linux-2.6.13-imq/net/ipv4/netfilter/Kconfig
 --- linux-2.6.13/net/ipv4/netfilter/Kconfig	2005-08-28 23:41:01.000000000 +0000
@@ -610,14 +610,14 @@ diff -Nru linux-2.6.13/net/ipv4/netfilter/Kconfig linux-2.6.13-imq/net/ipv4/netf
 diff -Nru linux-2.6.13/net/ipv4/netfilter/Makefile linux-2.6.13-imq/net/ipv4/netfilter/Makefile
 --- linux-2.6.13/net/ipv4/netfilter/Makefile	2005-08-28 23:41:01.000000000 +0000
 +++ linux-2.6.13-imq/net/ipv4/netfilter/Makefile	2005-08-29 21:02:39.000000000 +0000
-@@ -113,6 +113,7 @@
+@@ -66,6 +66,7 @@
  obj-$(CONFIG_IP_NF_TARGET_ECN) += ipt_ECN.o
  obj-$(CONFIG_IP_NF_TARGET_DSCP) += ipt_DSCP.o
  obj-$(CONFIG_IP_NF_TARGET_MARK) += ipt_MARK.o
 +obj-$(CONFIG_IP_NF_TARGET_IMQ) += ipt_IMQ.o
- obj-$(CONFIG_IP_NF_TARGET_IPMARK) += ipt_IPMARK.o
  obj-$(CONFIG_IP_NF_TARGET_MASQUERADE) += ipt_MASQUERADE.o
  obj-$(CONFIG_IP_NF_TARGET_REDIRECT) += ipt_REDIRECT.o
+ obj-$(CONFIG_IP_NF_TARGET_NETMAP) += ipt_NETMAP.o
 diff -Nru linux-2.6.13/net/ipv4/netfilter/ipt_IMQ.c linux-2.6.13-imq/net/ipv4/netfilter/ipt_IMQ.c
 --- linux-2.6.13/net/ipv4/netfilter/ipt_IMQ.c	1970-01-01 00:00:00.000000000 +0000
 +++ linux-2.6.13-imq/net/ipv4/netfilter/ipt_IMQ.c	2005-08-29 21:02:39.000000000 +0000
@@ -722,14 +722,14 @@ diff -Nru linux-2.6.13/net/ipv6/netfilter/Kconfig linux-2.6.13-imq/net/ipv6/netf
 diff -Nru linux-2.6.13/net/ipv6/netfilter/Makefile linux-2.6.13-imq/net/ipv6/netfilter/Makefile
 --- linux-2.6.13/net/ipv6/netfilter/Makefile	2005-08-28 23:41:01.000000000 +0000
 +++ linux-2.6.13-imq/net/ipv6/netfilter/Makefile	2005-08-29 21:02:39.000000000 +0000
-@@ -22,6 +22,7 @@
+@@ -20,6 +20,7 @@
  obj-$(CONFIG_IP6_NF_FILTER) += ip6table_filter.o
  obj-$(CONFIG_IP6_NF_MANGLE) += ip6table_mangle.o
  obj-$(CONFIG_IP6_NF_TARGET_MARK) += ip6t_MARK.o
 +obj-$(CONFIG_IP6_NF_TARGET_IMQ) += ip6t_IMQ.o
- obj-$(CONFIG_IP6_NF_TARGET_ROUTE) += ip6t_ROUTE.o
  obj-$(CONFIG_IP6_NF_QUEUE) += ip6_queue.o
  obj-$(CONFIG_IP6_NF_TARGET_LOG) += ip6t_LOG.o
+ obj-$(CONFIG_IP6_NF_RAW) += ip6table_raw.o
 diff -Nru linux-2.6.13/net/ipv6/netfilter/ip6t_IMQ.c linux-2.6.13-imq/net/ipv6/netfilter/ip6t_IMQ.c
 --- linux-2.6.13/net/ipv6/netfilter/ip6t_IMQ.c	1970-01-01 00:00:00.000000000 +0000
 +++ linux-2.6.13-imq/net/ipv6/netfilter/ip6t_IMQ.c	2005-08-29 21:02:39.000000000 +0000
