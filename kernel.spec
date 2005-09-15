@@ -247,7 +247,9 @@ Patch67:	linux-2.6-nf-conntrack-event-api.patch
 # http://ifp-driver.sourceforge.net/
 #Patch63:	iriverfs-r0.1.0.1.patch
 #Patch64:	squashfs2.2-patch
-#Patch65:	reiser4-2.6.12-mm1.patch
+
+# reiser4 from the mm patches
+Patch65:	reiser4-2.6.13-mm3.patch
 
 # http://tahoe.pl/patch.htm
 Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
@@ -707,7 +709,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch62 -p1
 %patch63 -p1
 %patch64 -p1
-##%patch65 -p1		NEEDS UPDATE
+%patch65 -p1
 
 %patch80 -p1
 %patch81 -p1
