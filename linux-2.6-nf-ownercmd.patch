@@ -1,0 +1,90 @@
+ include/linux/netfilter_ipv6/ip6t_owner.h |    2 +
+ net/ipv6/netfilter/ip6t_owner.c           |   44 ++++++++++++++++++++++++++++--
+ 2 files changed, 44 insertions(+), 2 deletions(-)
+
+diff -Nur linux-2.6.13.1.org/include/linux/netfilter_ipv6/ip6t_owner.h linux-2.6.13.1/include/linux/netfilter_ipv6/ip6t_owner.h
+--- linux-2.6.13.1.org/include/linux/netfilter_ipv6/ip6t_owner.h	2005-09-10 04:42:58.000000000 +0200
++++ linux-2.6.13.1/include/linux/netfilter_ipv6/ip6t_owner.h	2005-09-15 09:01:39.000000000 +0200
+@@ -6,12 +6,14 @@
+ #define IP6T_OWNER_GID	0x02
+ #define IP6T_OWNER_PID	0x04
+ #define IP6T_OWNER_SID	0x08
++#define IP6T_OWNER_COMM 0x10
+ 
+ struct ip6t_owner_info {
+     uid_t uid;
+     gid_t gid;
+     pid_t pid;
+     pid_t sid;
++    char comm[16];
+     u_int8_t match, invert;	/* flags */
+ };
+ 
+diff -Nur linux-2.6.13.1.org/net/ipv6/netfilter/ip6t_owner.c linux-2.6.13.1/net/ipv6/netfilter/ip6t_owner.c
+--- linux-2.6.13.1.org/net/ipv6/netfilter/ip6t_owner.c	2005-09-10 04:42:58.000000000 +0200
++++ linux-2.6.13.1/net/ipv6/netfilter/ip6t_owner.c	2005-09-15 09:01:39.000000000 +0200
+@@ -21,6 +21,39 @@
+ MODULE_LICENSE("GPL");
+ 
+ static int
++match_comm(const struct sk_buff *skb, const char *comm)
++{
++	struct task_struct *p, *g;
++	struct files_struct *files;
++	int i;
++
++	read_lock(&tasklist_lock);
++	do_each_thread(g, p) {
++		if(strncmp(p->comm, comm, sizeof(p->comm)))
++			continue;
++
++		task_lock(p);
++		files = p->files;
++		if(files) {
++			spin_lock(&files->file_lock);
++			for (i=0; i < files->max_fds; i++) {
++				if (fcheck_files(files, i) ==
++				    skb->sk->sk_socket->file) {
++					spin_unlock(&files->file_lock);
++					task_unlock(p);
++					read_unlock(&tasklist_lock);
++					return 1;
++				}
++			}
++			spin_unlock(&files->file_lock);
++		}
++		task_unlock(p);
++	} while_each_thread(g, p);
++	read_unlock(&tasklist_lock);
++	return 0;
++}
++
++static int
+ match_pid(const struct sk_buff *skb, pid_t pid)
+ {
+ 	struct task_struct *p;
+@@ -124,6 +157,12 @@
+ 			return 0;
+ 	}
+ 
++	if(info->match & IP6T_OWNER_COMM) {
++		if (!match_comm(skb, info->comm) ^
++		    !!(info->invert & IP6T_OWNER_COMM))
++			return 0;
++	}
++
+ 	return 1;
+ }
+ 
+@@ -145,8 +184,9 @@
+ #ifdef CONFIG_SMP
+ 	/* files->file_lock can not be used in a BH */
+ 	if (((struct ip6t_owner_info *)matchinfo)->match
+-	    & (IP6T_OWNER_PID|IP6T_OWNER_SID)) {
+-		printk("ip6t_owner: pid and sid matching is broken on SMP.\n");
++	    & (IP6T_OWNER_PID|IP6T_OWNER_SID|IP6T_OWNER_COMM)) {
++		printk("ip6t_owner: pid, sid and command matching is broken "
++		       "on SMP.\n");
+ 		return 0;
+ 	}
+ #endif
