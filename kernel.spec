@@ -2,12 +2,14 @@
 # TODO:
 #		- add distcc support (and don't break crossbuild!)
 #		- move em8300/lirc/iriverfs/squashfs stuff to separeated specs
+#		
+#		- grsercurity is not working (anybody cares?)
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
-%bcond_without	grsecurity	# disable grsecurity
+%bcond_with	grsecurity	# enable grsecurity
 %bcond_with	pax		# enable PaX (depends on grsecurity)
 %bcond_with	omosix		# enable openMosix (conflicts with grsecurity/vserver)
 %bcond_with	vserver		# enable vserver (conflicts with grsecurity/omosix)
@@ -188,7 +190,7 @@ Patch56:	routes-2.6.11-12.diff
 # http://developer.osdl.org/shemminger/skge/
 Patch57:	linux-2.6-skge-0.5.patch
 # http://www.edoceo.com/creo/inotify/
-Patch58:	inotify-2.6.12-rc3.patch
+Patch58:	inotify-0.22-rml-2.6.12-rc3-3.patch
 # derived from http://www.syskonnect.com/syskonnect/support/driver/zip/linux/install-8_18.tar.bz2
 Patch59:	linux-2.6-sk98lin-8.18.2.2.patch
 # http://dev.gentoo.org/~spock/projects/gensplash/
@@ -199,7 +201,7 @@ Patch62:	linux-2.6-lirc-0.7.patch
 # http://ifp-driver.sourceforge.net/
 Patch63:	iriverfs-r0.1.0.1.patch
 Patch64:	squashfs2.2-patch
-Patch65:	linux-reiser4-2.6.11-mm4.patch.bz2
+Patch65:	reiser4-2.6.12-mm1.patch
 Patch66:	linux-2.6-alsa-1.0.8-azx.patch
 
 # http://tahoe.pl/patch.htm
