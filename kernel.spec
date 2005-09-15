@@ -106,7 +106,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.0.3
+%define		_rel		0.0.4
 
 %define		_netfilter_snap		20050801
 
@@ -196,9 +196,31 @@ Patch29:	linux-2.6-ppc-no-pc-serial.patch
 Patch30:	2.6.x-TGA-fbdev-lkml.patch
 Patch31:	linux-2.6-ppc-no-i8042.patch
 
-# netfilter
-Patch50:	linux-2.6-pom-ng-branch.diff
+# patch-o-matic-ng
+# [submitted]
+Patch40:	linux-2.6-nf-ownercmd.patch
+# [base]
+Patch41:	linux-2.6-nf-HOPLIMIT.patch
+Patch42:	linux-2.6-nf-IPV4OPTSSTRIP.patch
+Patch43:	linux-2.6-nf-TTL.patch
+Patch44:	linux-2.6-nf-REJECT.patch
+Patch45:	linux-2.6-nf-connlimit.patch
+Patch46:	linux-2.6-nf-expire.patch
+Patch47:	linux-2.6-nf-fuzzy.patch
+Patch48:	linux-2.6-nf-ipv4options.patch
+Patch49:	linux-2.6-nf-nth.patch
+Patch50:	linux-2.6-nf-osf.patch
+Patch51:	linux-2.6-nf-psd.patch
+Patch52:	linux-2.6-nf-quota.patch
+Patch53:	linux-2.6-nf-random.patch
+Patch54:	linux-2.6-nf-set.patch
+Patch55:	linux-2.6-nf-time.patch
+Patch56:	linux-2.6-nf-u32.patch
+# [extra]
+#linux-2.6-nf-conntrack-event-api.patch
 
+
+Patch50:	linux-2.6-pom-ng-branch.diff
 Patch52:	linux-2.6-esfq.patch
 # http://www.linuximq.net/patchs/linux-2.6.13-imq2.diff
 Patch53:	2.6.10-imq.patch
@@ -630,6 +652,26 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch30 -p1
 %patch31 -p1
 
+%patch40 -p1
+%patch41 -p1
+%patch42 -p1
+%patch43 -p1
+%patch44 -p1
+%patch45 -p1
+%patch46 -p1
+%patch47 -p1
+%patch48 -p1
+%patch49 -p1
+%patch50 -p1
+%patch51 -p1
+%patch52 -p1
+%patch53 -p1
+%patch54 -p1
+%patch55 -p1
+%patch56 -p1
+#patch -p1
+
+%if 0
 %patch50 -p0
 #mv -f {,netfilter.}status
 
@@ -700,6 +742,8 @@ echo Grsecurity not implemented
 %patch401 -p1
 %if %{with em8300}
 %patch402 -p1
+%endif
+
 %endif
 
 # Fix EXTRAVERSION in main Makefile
