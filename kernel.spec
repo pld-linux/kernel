@@ -106,7 +106,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.0.5
+%define		_rel		0.0.6
 
 %define		_netfilter_snap		20050915
 
@@ -227,20 +227,23 @@ Patch54:	linux-2.6-nf-set.patch
 Patch55:	linux-2.6-nf-time.patch
 Patch56:	linux-2.6-nf-u32.patch
 # [extra]
-Patch57:	linux-2.6-nf-IPMARK.patch
-Patch58:	linux-2.6-nf-TARPIT.patch
-Patch59:	linux-2.6-nf-ULOG.patch
-Patch60:	linux-2.6-nf-XOR.patch
-Patch61:	linux-2.6-nf-geoip.patch
-Patch62:	linux-2.6-nf-goto.patch
-Patch63:	linux-2.6-nf-ipp2p.patch
-Patch64:	linux-2.6-nf-ip_queue_vwmark.patch
-Patch65:	linux-2.6-nf-policy.patch
-Patch66:	linux-2.6-nf-unclean.patch
+Patch60:	linux-2.6-nf-ACCOUNT.patch
+Patch61:	linux-2.6-nf-IPMARK.patch
+Patch62:	linux-2.6-nf-ROUTE.patch
+Patch63:	linux-2.6-nf-TARPIT.patch
+Patch64:	linux-2.6-nf-ULOG.patch
+Patch65:	linux-2.6-nf-XOR.patch
+Patch66:	linux-2.6-nf-account.patch
+Patch67:	linux-2.6-nf-geoip.patch
+Patch68:	linux-2.6-nf-goto.patch
+Patch69:	linux-2.6-nf-ipp2p.patch
+Patch70:	linux-2.6-nf-ip_queue_vwmark.patch
+Patch71:	linux-2.6-nf-policy.patch
+Patch72:	linux-2.6-nf-unclean.patch
 # [extra/conntrack]
-Patch67:	linux-2.6-nf-conntrack-event-api.patch
+Patch73:	linux-2.6-nf-conntrack-event-api.patch
 # [unofficial/external]
-Patch68:	linux-2.6-nf-string.patch
+Patch74:	linux-2.6-nf-string.patch
 # netfilter nfy...
 
 # http://tahoe.pl/patch.htm
@@ -671,7 +674,10 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch37 -p1
 %patch38 -p1
 
+#Netfilter
+#[submitted]
 %patch40 -p1
+#[base]
 %patch41 -p1
 %patch42 -p1
 %patch43 -p1
@@ -688,9 +694,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch54 -p1
 %patch55 -p1
 %patch56 -p1
-%patch57 -p1
-%patch58 -p1
-%patch59 -p1
+#[extra]
 %patch60 -p1
 %patch61 -p1
 %patch62 -p1
@@ -700,6 +704,14 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch66 -p1
 %patch67 -p1
 %patch68 -p1
+%patch69 -p1
+%patch70 -p1
+%patch71 -p1
+%patch72 -p1
+#[extra/conntrack]
+%patch73 -p1
+#[unofficial/external]
+%patch74 -p1
 
 %patch80 -p1
 %patch81 -p1
