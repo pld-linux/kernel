@@ -1,12 +1,12 @@
  include/linux/netfilter_ipv4/ipt_random.h  |   11 +++
  include/linux/netfilter_ipv6/ip6t_random.h |   11 +++
  net/ipv4/netfilter/Kconfig                 |   11 +++
- net/ipv4/netfilter/Makefile                |    2 
+ net/ipv4/netfilter/Makefile                |    1 
  net/ipv4/netfilter/ipt_random.c            |   92 +++++++++++++++++++++++++++
  net/ipv6/netfilter/Kconfig                 |   11 +++
- net/ipv6/netfilter/Makefile                |    2 
- net/ipv6/netfilter/ip6t_random.c           |   97 +++++++++++++++++++++++++++++
- 8 files changed, 237 insertions(+)
+ net/ipv6/netfilter/Makefile                |    1 
+ net/ipv6/netfilter/ip6t_random.c           |   96 +++++++++++++++++++++++++++++
+ 8 files changed, 234 insertions(+)
 
 diff -uNr linux-2.6.13.1/include.orig/linux/netfilter_ipv4/ipt_random.h linux-2.6.13.1/include/linux/netfilter_ipv4/ipt_random.h
 --- linux-2.6.13.1/include.orig/linux/netfilter_ipv4/ipt_random.h	1970-01-01 01:00:00.000000000 +0100
@@ -96,7 +96,7 @@ diff -uNr linux-2.6.13.1/net.orig/ipv4/netfilter/ipt_random.c linux-2.6.13.1/net
 +
 +	if (matchsize != IPT_ALIGN(sizeof(struct ipt_rand_info))) {
 +		printk("ipt_random: matchsize %u != %u\n", matchsize,
-+		       IPT_ALIGN(sizeof(struct ipt_rand_info)));
++		       (unsigned)IPT_ALIGN(sizeof(struct ipt_rand_info)));
 +		return 0;
 +	}
 +
@@ -162,7 +162,7 @@ diff -uNr linux-2.6.13.1/net.orig/ipv4/netfilter/Makefile linux-2.6.13.1/net/ipv
 diff -uNr linux-2.6.13.1/net.orig/ipv6/netfilter/ip6t_random.c linux-2.6.13.1/net/ipv6/netfilter/ip6t_random.c
 --- linux-2.6.13.1/net.orig/ipv6/netfilter/ip6t_random.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.13.1/net/ipv6/netfilter/ip6t_random.c	2005-09-15 10:28:07.538573500 +0200
-@@ -0,0 +1,97 @@
+@@ -0,0 +1,96 @@
 +/*
 +  This is a module which is used for a "random" match support.
 +  This file is distributed under the terms of the GNU General Public
@@ -190,8 +190,7 @@ diff -uNr linux-2.6.13.1/net.orig/ipv6/netfilter/ip6t_random.c linux-2.6.13.1/ne
 +	       const struct net_device *out,
 +	       const void *matchinfo,
 +	       int offset,
-+	       const void *hdr,
-+	       u_int16_t datalen,
++	       unsigned protoff,
 +	       int *hotdrop)
 +{
 +	/* Parameters from userspace */
@@ -220,7 +219,7 @@ diff -uNr linux-2.6.13.1/net.orig/ipv6/netfilter/ip6t_random.c linux-2.6.13.1/ne
 +
 +	if (matchsize != IP6T_ALIGN(sizeof(struct ip6t_rand_info))) {
 +		printk("ip6t_random: matchsize %u != %u\n", matchsize,
-+		       IP6T_ALIGN(sizeof(struct ip6t_rand_info)));
++		       (unsigned)IP6T_ALIGN(sizeof(struct ip6t_rand_info)));
 +		return 0;
 +	}
 +
