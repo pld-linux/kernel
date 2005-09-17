@@ -885,7 +885,6 @@ BuildConfig() {
 
 %if %{with preemptive}
 	sed -i 's:CONFIG_PREEMPT_NONE=y:# CONFIG_PREEMPT_NONE is not set:' arch/%{_target_base_arch}/defconfig
-	sed -i 's:# CONFIG_PREEMPT_VOLUNTARY is not set:CONFIG_PREEMPT_VOLUNTARY=y:' arch/%{_target_base_arch}/defconfig
 	sed -i 's:# CONFIG_PREEMPT is not set:CONFIG_PREEMPT=y:' arch/%{_target_base_arch}/defconfig
 	sed -i 's:# CONFIG_PREEMPT_BKL is not set:CONFIG_PREEMPT_BKL=y:' arch/%{_target_base_arch}/defconfig
 %endif
