@@ -286,7 +286,7 @@ Patch116:	linux-2.6-atmdd.patch
 Patch135:	linux-2.6-unix-abi.patch
 
 # derived from http://www.spinics.net/lists/vfl/msg15217.html
-Patch145:       linux-2.6-cx88-blackbird.patch
+Patch145:	linux-2.6-cx88-blackbird.patch
 
 Patch199:	linux-2.6-grsec-minimal.patch
 # derived from http://www.grsecurity.net/grsecurity-2.1.5-2.6.11.7-200504111924.patch.gz
@@ -569,8 +569,8 @@ Autoreqprov:	no
 
 %description headers
 These are the C header files for the Linux kernel, which define
-structures and constants that are needed when rebuilding the kernel
-or building kernel modules.
+structures and constants that are needed when rebuilding the kernel or
+building kernel modules.
 
 %description headers -l pl
 Pakiet zawiera pliki nag³ówkowe j±dra, niezbêdne do rekompilacji j±dra
@@ -641,7 +641,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}%{_rc} 
+%setup -q -n linux-%{version}%{_rc}
 
 %patch0 -p1
 %patch1 -p0
@@ -843,7 +843,7 @@ TuneUpConfigForIX86 () {
 CrossOpts="ARCH=xen"
 %ifarch %{ix86}
 %define _main_target_base_arch	i386
-%endif 
+%endif
 %ifarch %{x8664}
 %define _main_target_base_arch	x86_64
 %endif
@@ -931,7 +931,7 @@ BuildConfig() {
 
 BuildKernel() {
 	%{?debug:set -x}
-	echo "Building kernel $1 ..."	
+	echo "Building kernel $1 ..."
 	%{__make} $CrossOpts mrproper \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 	ln -sf arch/%{_target_base_arch}/defconfig .config
@@ -1072,7 +1072,7 @@ umask 022
 CrossOpts="ARCH=xen"
 %ifarch %{ix86}
 %define _main_target_base_arch	i386
-%endif 
+%endif
 %ifarch %{x8664}
 %define _main_target_base_arch	x86_64
 %endif
