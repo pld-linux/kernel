@@ -1,7 +1,7 @@
 #
 # TODO:
 #		- add distcc support (and don't break crossbuild!)
-#		- move em8300/lirc/iriverfs/squashfs stuff to separeated specs
+#		- move em8300 stuff to separeated specs
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -101,7 +101,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.2
+%define		_rel		0.3
 
 %define		_netfilter_snap		20050915
 
@@ -251,7 +251,6 @@ Patch82:	linux-2.6-sk98lin-8.23.1.3.patch
 Patch83:	bootsplash-3.1.6-2.6.13.diff
 # reserve dynamic minors for device mapper
 Patch84:	linux-static-dev.patch
-Patch85:	linux-2.6-lirc-0.7.patch
 # http://ifp-driver.sourceforge.net/
 Patch86:	iriverfs-r0.1.0.1.patch
 Patch87:	squashfs2.2-patch
@@ -715,7 +714,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch82 -p1
 %patch83 -p1
 %patch84 -p1
-%patch85 -p1
 %patch86 -p1
 %patch87 -p1
 %patch88 -p1
