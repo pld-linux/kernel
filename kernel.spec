@@ -152,6 +152,8 @@ Source36:	kernel-xen0-x86_64-3.0.config
 #Source37:	kernel-xenU-x86_32-2.0.config
 Source38:	kernel-xenU-x86_32-3.0.config
 Source39:	kernel-xenU-x86_64-3.0.config
+Source40:	kernel-ppc64.config
+Source41:	kernel-ppc64-smp.config
 
 Source50:	kernel.FAQ-pl
 
@@ -346,7 +348,7 @@ ExclusiveArch:	%{ix86} %{x8664}
 ExclusiveArch:	%{ix86}
 %endif
 %else
-ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc sparc sparc64
+ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc ppc64 sparc sparc64
 %endif
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -988,7 +990,7 @@ PreInstallKernel() {
 	install vmlinux.aout $KERNEL_INSTALL_DIR/boot/vmlinux.aout-$KernelVer
 %endif
 %endif
-%ifarch ppc
+%ifarch ppc ppc64
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
@@ -1275,7 +1277,7 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc FAQ-pl
-%ifarch alpha ppc
+%ifarch alpha ppc ppc64
 /boot/vmlinux-%{version}-%{release}
 %endif
 %ifarch sparc sparc64
@@ -1370,7 +1372,7 @@ fi
 %files smp
 %defattr(644,root,root,755)
 %doc FAQ-pl
-%ifarch alpha sparc sparc64 ppc
+%ifarch alpha sparc sparc64 ppc ppc64
 /boot/vmlinux-%{version}-%{release}smp
 %endif
 %ifarch ia64
