@@ -9,6 +9,8 @@
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
 %bcond_without	grsecurity	# disable grsecurity
+%bcond_with	grsec_basic	# enable basic grsecurity functionality (proc,link,fifo)
+				# bcond only valid "without  grsecurity"
 %bcond_with	pax		# enable PaX (depends on grsecurity)
 %bcond_with	omosix		# enable openMosix (conflicts with grsecurity/vserver)
 %bcond_with	vserver		# enable vserver (conflicts with grsecurity/omosix)
@@ -746,6 +748,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %if %{with grsecurity}
 %patch200 -p1
+%else
+%{?with_grsec_basic:%patch199 -p1}
 %endif
 %if %{with omosix}
 %{__patch} -p1 -F3 < %{PATCH201}
@@ -887,6 +891,10 @@ BuildConfig() {
 
 %if %{with grsecurity}
 	cat %{!?with_pax:%{SOURCE90}}%{?with_pax:%{SOURCE91}} >> arch/%{_target_base_arch}/defconfig
+%else
+%if %{with grsec_basic}
+	cat %{SOURCE90} >> arch/%{_target_base_arch}/defconfig
+%endif
 %endif
 %if %{with omosix}
 	cat %{SOURCE92} >> arch/%{_target_base_arch}/defconfig
