@@ -106,7 +106,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.1
+%define		_rel		0.2
 
 %define		_netfilter_snap		20050915
 
@@ -175,6 +175,7 @@ Patch2:		linux-2.6-biarch-build.patch
 Patch3:		2.6.0-t9-acpi_osl-lkml.patch
 Patch4:		linux-kbuild-extmod.patch
 Patch5:		kernel-MAX_INIT_ARGS.patch
+Patch6:		linux-2.6-extended-utf8.patch
 
 Patch10:	2.6.0-powernow-k7.patch
 # derived from http://hem.bredband.net/ekmlar/patch-vt1211-2.6.11.txt
@@ -649,6 +650,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch3 -p1
 %patch4 -p1
 %patch5 -p1
+%patch6 -p1
 
 %patch10 -p1
 %patch11 -p1
