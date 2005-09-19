@@ -1026,7 +1026,7 @@ PreInstallKernel() {
 	[ -z "$CrossOpts" ] && \
 	/sbin/depmod --basedir $KERNEL_INSTALL_DIR -ae -F $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer -r $KernelVer || echo
 	[ ! -z "$CrossOpts" ] && \
-	touch $KERNEL_INSTALL_DIR/modules.dep
+	touch $KERNEL_INSTALL_DIR/lib/modules/$KernelVer/modules.dep
 	echo "KERNEL RELEASE $KernelVer DONE"
 }
 
