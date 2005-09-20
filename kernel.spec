@@ -3,6 +3,31 @@
 #		- add distcc support (and don't break crossbuild!)
 #		- move em8300 stuff to separeated specs
 #
+#		- undefined symbols on sparc64:
+#
+#	"sbus_build_irq" [drivers/serial/sunzilog.ko] undefined!
+#	"build_irq" [drivers/serial/sunzilog.ko] undefined!
+#	"apply_central_ranges" [drivers/serial/sunzilog.ko] undefined!
+#	"apply_fhc_ranges" [drivers/serial/sunzilog.ko] undefined!
+#	"prom_halt" [drivers/serial/sunzilog.ko] undefined!
+#	"prom_printf" [drivers/serial/sunzilog.ko] undefined!
+#	"central_bus" [drivers/serial/sunzilog.ko] undefined!
+#	"bus_to_virt_not_defined_use_pci_map" [drivers/scsi/tmscsim.ko] undefined!
+#	"isa_memset_io" [drivers/net/hp100.ko] undefined!
+#	"isa_memcpy_toio" [drivers/net/hp100.ko] undefined!
+#	"isa_readl" [drivers/net/hp100.ko] undefined!
+#	"isa_memcpy_fromio" [drivers/net/hp100.ko] undefined!
+#	"bus_to_virt_not_defined_use_pci_map" [drivers/media/video/zr36067.ko] undefined!
+#	"virt_to_bus_not_defined_use_pci_map" [drivers/media/video/zr36067.ko] undefined!
+#	"virt_to_bus_not_defined_use_pci_map" [drivers/media/video/stradis.ko] undefined!
+#	"bus_to_virt_not_defined_use_pci_map" [drivers/atm/zatm.ko] undefined!
+#	"virt_to_bus_not_defined_use_pci_map" [drivers/atm/zatm.ko] undefined!
+#	"bus_to_virt_not_defined_use_pci_map" [drivers/atm/horizon.ko] undefined!
+#	"virt_to_bus_not_defined_use_pci_map" [drivers/atm/firestream.ko] undefined!
+#	"bus_to_virt_not_defined_use_pci_map" [drivers/atm/firestream.ko] undefined!
+#	"virt_to_bus_not_defined_use_pci_map" [drivers/atm/ambassador.ko] undefined!
+#	"bus_to_virt_not_defined_use_pci_map" [drivers/atm/ambassador.ko] undefined!
+#
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
