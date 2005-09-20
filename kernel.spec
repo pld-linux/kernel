@@ -264,6 +264,8 @@ Patch88:	reiser4-2.6.13-mm3.patch
 Patch91:	acpi-dsdt-initrd-v0.7d-2.6.12.patch
 Patch92:	acpi-dsdt-initramfs-fix-2.6.10-cleanup.patch
 
+Patch93:	linux-btc-8190urf.patch
+
 # http://www.kismetwireless.net/download.shtml#orinoco2611
 #Patch95:	orinoco-2.6.12-rfmon-dragorn-1.diff	NEEDS UPDATE
 
@@ -724,6 +726,9 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch91 -p1
 %patch92 -p1
+
+%patch93 -p1
+
 ##%patch95 -p1		NEEDS UPDATE
 
 %patch102 -p1
