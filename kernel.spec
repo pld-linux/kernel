@@ -128,7 +128,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.3
+%define		_rel		0.4
 
 %define		_netfilter_snap		20050915
 
@@ -267,8 +267,9 @@ Patch71:	linux-2.6-nf-policy.patch
 Patch72:	linux-2.6-nf-unclean.patch
 # [extra/conntrack]
 Patch73:	linux-2.6-nf-conntrack-event-api.patch
+Patch74:	linux-2.6-nf-pptp-conntrack-nat.patch
 # [unofficial/external]
-Patch74:	linux-2.6-nf-string.patch
+Patch75:	linux-2.6-nf-string.patch
 # netfilter nfy...
 
 # http://tahoe.pl/patch.htm
@@ -737,8 +738,9 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch72 -p1
 #[extra/conntrack]
 %patch73 -p1
-#[unofficial/external]
 %patch74 -p1
+#[unofficial/external]
+%patch75 -p1
 
 %patch80 -p1
 %patch81 -p1
