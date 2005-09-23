@@ -738,7 +738,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch72 -p1
 #[extra/conntrack]
 %patch73 -p1
-%patch74 -p1
+#patch74 -p1
 #[unofficial/external]
 %patch75 -p1
 
