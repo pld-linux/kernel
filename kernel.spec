@@ -919,6 +919,11 @@ BuildConfig() {
 
 %if %{with grsecurity}
 	cat %{!?with_pax:%{SOURCE90}}%{?with_pax:%{SOURCE91}} >> arch/%{_target_base_arch}/defconfig
+	%if %{with pax}
+		sed -i 's:CONFIG_KALLSYMS=y:# CONFIG_KALLSYMS is not set:' arch/%{_target_base_arch}/defconfig  
+		sed -i 's:CONFIG_KALLSYMS_ALL=y:# CONFIG_KALLSYMS_ALL is not set:' arch/%{_target_base_arch}/defconfig
+		sed -i 's:CONFIG_KALLSYMS_EXTRA_PASS=y:# CONFIG_KALLSYMS_EXTRA_PASS is not set:' arch/%{_target_base_arch}/defconfig
+	%endif
 %else
 %if %{with grsec_basic}
 	cat %{SOURCE90} >> arch/%{_target_base_arch}/defconfig
