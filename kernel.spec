@@ -34,6 +34,7 @@
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
 %bcond_without	grsecurity	# disable grsecurity
+%bcond_without	pld_vers	# disable pld-specific UTS_NAME changes
 %bcond_with	grsec_basic	# enable basic grsecurity functionality (proc,link,fifo)
 				# bcond only valid "without  grsecurity"
 %bcond_with	pax		# enable PaX (depends on grsecurity)
@@ -668,7 +669,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %setup -q -n linux-%{version}%{_rc}
 
 %patch0 -p1
-%patch1 -p0
+%{?with_pld_vers:%patch1 -p0}
 %patch2 -p1
 %patch3 -p1
 %patch4 -p1
