@@ -1,25 +1,26 @@
---- linux-2.6.10-rc2/drivers/acpi/osl.c.orig	2004-11-15 02:28:18.000000000 +0100
-+++ linux-2.6.10-rc2/drivers/acpi/osl.c	2004-11-19 15:53:57.437348968 +0100
-@@ -40,6 +40,7 @@
- #include <asm/io.h>
+--- a/drivers/acpi/osl.c.orig	2005-09-20 03:00:41.000000000 +0000
++++ b/drivers/acpi/osl.c	2005-09-30 21:28:29.241229960 +0000
+@@ -42,6 +42,7 @@
  #include <acpi/acpi_bus.h>
+ #include <acpi/processor.h>
  #include <asm/uaccess.h>
 +#include <asm/hardirq.h>
  
  #include <linux/efi.h>
  
-@@ -308,8 +309,12 @@
- void
- acpi_os_sleep(acpi_integer ms)
+@@ -313,8 +314,13 @@
+ 
+ void acpi_os_sleep(acpi_integer ms)
  {
 -	current->state = TASK_INTERRUPTIBLE;
--	schedule_timeout(((signed long) ms * HZ) / 1000);
+-	schedule_timeout(((signed long)ms * HZ) / 1000);
 +	if (!in_atomic()) {
 +		current->state = TASK_INTERRUPTIBLE;
 +		schedule_timeout(((long)ms * HZ) / 1000);
 +	} else {
 +		acpi_os_stall((long)ms * 1000);
 +	}
++
  }
  
- void
+ EXPORT_SYMBOL(acpi_os_sleep);
