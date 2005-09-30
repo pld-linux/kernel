@@ -1,7 +1,7 @@
---- linux-2.6.11-rc4/./init/initramfs.c.bak	2005-02-23 00:42:19.000000000 +0100
-+++ linux-2.6.11-rc4/./init/initramfs.c	2005-02-23 00:53:42.000000000 +0100
-@@ -468,6 +468,31 @@ extern char __initramfs_start[], __initr
- #include <linux/initrd.h>
+--- linux-2.6.14-rc2/init/initramfs.c.orig	2005-09-20 03:00:41.000000000 +0000
++++ linux-2.6.14-rc2/init/initramfs.c	2005-09-30 22:29:39.415278696 +0000
+@@ -476,6 +476,31 @@
+ 
  #endif
  
 +#ifdef CONFIG_ACPI_CUSTOM_DSDT_INITRD
@@ -32,7 +32,7 @@
  void __init populate_rootfs(void)
  {
  	char *err = unpack_to_rootfs(__initramfs_start,
-@@ -477,13 +502,22 @@ void __init populate_rootfs(void)
+@@ -485,13 +510,22 @@
  #ifdef CONFIG_BLK_DEV_INITRD
  	if (initrd_start) {
  		int fd;
@@ -54,6 +54,15 @@
  			unpack_to_rootfs((char *)initrd_start,
 -				initrd_end - initrd_start, 0);
 +				initramfs_len, 0);
- 			free_initrd_mem(initrd_start, initrd_end);
+ 			free_initrd();
  			return;
+ 		}
+@@ -499,7 +533,7 @@
+ 		fd = sys_open("/initrd.image", O_WRONLY|O_CREAT, 700);
+ 		if (fd >= 0) {
+ 			sys_write(fd, (char *)initrd_start,
+-					initrd_end - initrd_start);
++					initramfs_len);
+ 			sys_close(fd);
+ 			free_initrd();
  		}
