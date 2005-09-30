@@ -129,7 +129,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		1
+%define		_rel		0.1
 
 %define		_netfilter_snap		20050915
 
@@ -145,20 +145,22 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
-%define		_postver	.2
-#define		_postver	%{nil}
-Version:	2.6.13%{_postver}
+#define		_postver	.2
+%define		_postver	%{nil}
+Version:	2.6.14%{_postver}
 Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-%define		_rc	%{nil}
-#define		_rc	-rc3
-#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	6ef3f302348f5b55d0e6e3d53bfbb57b
+#define		_rc	%{nil}
+%define		_rc	-rc2
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
+# Source0-md5:	d750cc3500e5c5057639d3fa12bc20ca
+#Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
+Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git9.bz2
+# Source3-md5:	8662ee91a109884b225bd63f76af07f8
 
 Source20:	kernel-i386.config
 Source21:	kernel-i386-smp.config
@@ -667,6 +669,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %prep
 %setup -q -n linux-%{version}%{_rc}
+bzip2 -d -c %{SOURCE3} | patch -p1 -s
 
 %patch0 -p1
 %{?with_pld_vers:%patch1 -p0}
