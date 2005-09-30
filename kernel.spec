@@ -305,7 +305,7 @@ Patch107:	linux-2.6-sata-sil-mod15write-workaround.patch
 Patch108:	linux-2.6-tty-races.patch
 
 Patch110:	linux-2.6-cputime-misscalculation.patch
-Patch113:	linux-2.6-3Com_IBM-fix.patch
+
 # Derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch115:	linux-2.6-atm-vbr.patch
 Patch116:	linux-2.6-atmdd.patch
@@ -750,7 +750,7 @@ bzip2 -d -c %{SOURCE3} | patch -p1 -s
 %patch84 -p1
 %patch86 -p1
 %patch87 -p1
-%patch88 -p1
+#patch88 -p1	NEEDS UPDATE
 
 %patch91 -p1
 %patch92 -p1
@@ -768,7 +768,7 @@ bzip2 -d -c %{SOURCE3} | patch -p1 -s
 %patch108 -p1
 
 %patch110 -p1
-%patch113 -p1
+
 %patch115 -p1
 %patch116 -p1
 
