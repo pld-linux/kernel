@@ -76,9 +76,9 @@ testing is complete.
 #   2005/03/15 16:36:21+09:00 tj@htj.dyndns.org +139 -11
 #   initial implementaion of mod15write workaround
 # 
---- linux-2.6.11.6/drivers/scsi/sata_sil.c.orig	2005-03-31 19:40:17.000000000 +0200
-+++ linux-2.6.11.6/drivers/scsi/sata_sil.c	2005-03-31 19:41:52.000000000 +0200
-@@ -71,9 +71,12 @@
+--- linux-2.6.14-rc2/drivers/scsi/sata_sil.c.orig	2005-09-20 03:00:41.000000000 +0000
++++ linux-2.6.14-rc2/drivers/scsi/sata_sil.c	2005-09-30 22:38:19.044283080 +0000
+@@ -82,9 +82,12 @@
  
  static int sil_init_one (struct pci_dev *pdev, const struct pci_device_id *ent);
  static void sil_dev_config(struct ata_port *ap, struct ata_device *dev);
@@ -89,9 +89,9 @@ testing is complete.
  static void sil_post_set_mode (struct ata_port *ap);
 +static void sil_host_stop (struct ata_host_set *host_set);
  
+ 
  static struct pci_device_id sil_pci_tbl[] = {
- 	{ 0x1095, 0x3112, PCI_ANY_ID, PCI_ANY_ID, 0, 0, sil_3112 },
-@@ -152,16 +155,16 @@
+@@ -164,16 +167,16 @@
  	.bmdma_start            = ata_bmdma_start,
  	.bmdma_stop		= ata_bmdma_stop,
  	.bmdma_status		= ata_bmdma_status,
@@ -106,12 +106,12 @@ testing is complete.
  	.scr_write		= sil_scr_write,
  	.port_start		= ata_port_start,
  	.port_stop		= ata_port_stop,
--	.host_stop		= ata_host_stop,
+-	.host_stop		= ata_pci_host_stop,
 +	.host_stop		= sil_host_stop,
  };
  
  static struct ata_port_info sil_port_info[] = {
-@@ -201,6 +205,53 @@
+@@ -226,6 +229,53 @@
  	/* ... port 3 */
  };
  
@@ -165,7 +165,7 @@ testing is complete.
  MODULE_AUTHOR("Jeff Garzik");
  MODULE_DESCRIPTION("low-level driver for Silicon Image SATA controller");
  MODULE_LICENSE("GPL");
-@@ -241,6 +292,227 @@
+@@ -268,6 +318,227 @@
  	readl(addr);	/* flush */
  }
  
@@ -393,7 +393,7 @@ testing is complete.
  static inline unsigned long sil_scr_addr(struct ata_port *ap, unsigned int sc_reg)
  {
  	unsigned long offset = ap->ioaddr.scr_addr;
-@@ -275,6 +547,12 @@
+@@ -302,6 +573,12 @@
  		writel(val, mmio);
  }
  
@@ -406,7 +406,7 @@ testing is complete.
  /**
   *	sil_dev_config - Apply device/host-specific errata fixups
   *	@ap: Port containing device to be examined
-@@ -285,17 +563,12 @@
+@@ -312,17 +589,12 @@
   *	We apply two errata fixups which are specific to Silicon Image,
   *	a Seagate and a Maxtor fixup.
   *
@@ -426,7 +426,7 @@ testing is complete.
   *	20040111 - Seagate drives affected by the Mod15Write bug are blacklisted
   *	The Maxtor quirk is in the blacklist, but I'm keeping the original
   *	pessimistic fix for the following reasons...
-@@ -303,6 +576,15 @@
+@@ -330,6 +602,15 @@
   *	Windows	driver, maybe only one is affected.  More info would be greatly
   *	appreciated.
   *	- But then again UDMA5 is hardly anything to complain about
@@ -442,7 +442,7 @@ testing is complete.
   */
  static void sil_dev_config(struct ata_port *ap, struct ata_device *dev)
  {
-@@ -310,6 +592,7 @@
+@@ -337,6 +618,7 @@
  	unsigned char model_num[40];
  	const char *s;
  	unsigned int len;
@@ -450,13 +450,13 @@ testing is complete.
  
  	ata_dev_id_string(dev->id, model_num, ATA_ID_PROD_OFS,
  			  sizeof(model_num));
-@@ -327,15 +610,23 @@
+@@ -354,16 +636,21 @@
  			break;
  		}
- 	
+ 
 -	/* limit requests to 15 sectors */
 +	/* Activate mod15write quirk workaround */
- 	if (quirks & SIL_QUIRK_MOD15WRITE) {
+ 	if ((ap->flags & SIL_FLAG_MOD15WRITE) && (quirks & SIL_QUIRK_MOD15WRITE)) {
 +		struct sil_m15w_cxt *cxt;
 +
  		printk(KERN_INFO "ata%u(%u): applying Seagate errata fix\n",
@@ -464,21 +464,20 @@ testing is complete.
 -		ap->host->max_sectors = 15;
 -		ap->host->hostt->max_sectors = 15;
 -		dev->flags |= ATA_DFLAG_LOCK_SECTORS;
-+
 +		cxt = ap->host_set->private_data;
 +		cxt += ap->port_no * ATA_MAX_QUEUE;
 +		for (i = 0; i < ATA_MAX_QUEUE; i++)
 +			ap->qcmd[i].private_data = cxt++;
-+
  		return;
  	}
+-
 +	/* Clear qcmd->private_data if mod15write quirk isn't present */
 +	for (i = 0; i < ATA_MAX_QUEUE; i++)
 +		ap->qcmd[i].private_data = NULL;
- 
  	/* limit to udma5 */
  	if (quirks & SIL_QUIRK_UDMA5MAX) {
-@@ -349,7 +640,8 @@
+ 		printk(KERN_INFO "ata%u(%u): applying Maxtor errata fix %s\n",
+@@ -376,7 +663,8 @@
  static int sil_init_one (struct pci_dev *pdev, const struct pci_device_id *ent)
  {
  	static int printed_version;
@@ -486,9 +485,9 @@ testing is complete.
 +	struct ata_probe_ent *probe_ent;
 +	struct sil_m15w_cxt *m15w_cxt;
  	unsigned long base;
- 	void *mmio_base;
+ 	void __iomem *mmio_base;
  	int rc;
-@@ -382,11 +674,17 @@
+@@ -409,11 +697,17 @@
  	if (rc)
  		goto err_out_regions;
  
@@ -510,15 +509,15 @@ testing is complete.
  
  	memset(probe_ent, 0, sizeof(*probe_ent));
  	INIT_LIST_HEAD(&probe_ent->node);
-@@ -400,6 +698,7 @@
+@@ -427,6 +721,7 @@
         	probe_ent->irq = pdev->irq;
         	probe_ent->irq_flags = SA_SHIRQ;
  	probe_ent->host_flags = sil_port_info[ent->driver_data].host_flags;
 +	probe_ent->private_data = m15w_cxt;
  
- 	mmio_base = ioremap(pci_resource_start(pdev, 5),
- 		            pci_resource_len(pdev, 5));
-@@ -466,6 +765,8 @@
+ 	mmio_base = pci_iomap(pdev, 5, 0);
+ 	if (mmio_base == NULL) {
+@@ -502,6 +797,8 @@
  
  err_out_free_ent:
  	kfree(probe_ent);
