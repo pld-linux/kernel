@@ -277,8 +277,7 @@ Patch75:	linux-2.6-nf-string.patch
 
 # http://tahoe.pl/patch.htm
 Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
-# psmouse extension for ThinkPad laptops from http://www.clarkson.edu/~evanchsa/
-Patch81:	trackpoint-2.6.11.patch
+
 # derived from http://www.syskonnect.de/syskonnect/support/driver/zip/linux/install-8_23.tar.bz2
 Patch82:	linux-2.6-sk98lin-8.23.1.3.patch
 Patch83:	bootsplash-3.1.6-2.6.13.diff
@@ -292,7 +291,6 @@ Patch88:	reiser4-2.6.13-mm3.patch
 # http://gaugusch.at/acpi-dsdt-initrd-patches/
 Patch91:	acpi-dsdt-initrd-v0.7d-2.6.12.patch
 Patch92:	acpi-dsdt-initramfs-fix-2.6.10-cleanup.patch
-
 Patch93:	linux-btc-8190urf.patch
 
 # http://www.kismetwireless.net/download.shtml#orinoco2611
@@ -300,12 +298,12 @@ Patch93:	linux-btc-8190urf.patch
 
 Patch102:	linux-2.6-smbfs.patch
 Patch103:	linux-2.6-iriver-backing-device-capability-information-fix.patch
-#Patch104:	linux-2.6-dst-cache-overflow.patch	NEEDS UPDATE
+
 Patch105:	linux-2.6-net-sundance-ip100A-pciids.patch
 Patch106:	linux-2.6-null-tty-driver-oops.patch
 Patch107:	linux-2.6-sata-sil-mod15write-workaround.patch
 Patch108:	linux-2.6-tty-races.patch
-#Patch109:	linux-2.6-jiffies-rounding.patch	NEEDS FIX
+
 Patch110:	linux-2.6-cputime-misscalculation.patch
 Patch113:	linux-2.6-3Com_IBM-fix.patch
 # Derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
@@ -703,6 +701,7 @@ bzip2 -d -c %{SOURCE3} | patch -p1 -s
 %patch37 -p1
 %patch38 -p1
 
+%if 0
 #Netfilter
 #[submitted]
 %patch40 -p1
@@ -742,9 +741,10 @@ bzip2 -d -c %{SOURCE3} | patch -p1 -s
 %patch74 -p1
 #[unofficial/external]
 %patch75 -p1
+%endif
 
 %patch80 -p1
-%patch81 -p1
+
 %patch82 -p1
 %patch83 -p1
 %patch84 -p1
@@ -761,12 +761,12 @@ bzip2 -d -c %{SOURCE3} | patch -p1 -s
 
 %patch102 -p1
 %patch103 -p1
-##%patch104 -p1		NEEDS UPDATE
+
 %patch105 -p1
 %patch106 -p1
 %patch107 -p1
 %patch108 -p1
-#patch109 -p1		NEEDS FIX
+
 %patch110 -p1
 %patch113 -p1
 %patch115 -p1
