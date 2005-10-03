@@ -678,7 +678,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch6 -p1
 
 %patch10 -p1
-%patch11 -p1
+#patch11 -p1		NEEDS CHECK (compilation error)
 %patch12 -p1
 %patch13 -p1
 %patch14 -p1
