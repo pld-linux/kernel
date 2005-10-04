@@ -1,0 +1,36 @@
+diff -NurpP --minimal linux-2.6.13.1-vs2.1.0-rc2.1b/kernel/vserver/helper.c linux-2.6.13.1-vs2.1.0-rc2.2/kernel/vserver/helper.c
+--- linux-2.6.13.1-vs2.1.0-rc2.1b/kernel/vserver/helper.c	2005-09-28 03:10:59 +0200
++++ linux-2.6.13.1-vs2.1.0-rc2.2/kernel/vserver/helper.c	2005-09-28 03:06:41 +0200
+@@ -105,6 +105,9 @@ long vs_reboot(unsigned int cmd, void * 
+ 	struct vx_info *vxi = current->vx_info;
+ 	long ret = 0;
+ 
++	vxdprintk(VXD_CBIT(misc, 5),
++		"vs_reboot(%p[#%d],%d)",
++		vxi, vxi?vxi->vx_id:0, cmd);
+ 	if (vx_info_flags(vxi, VXF_REBOOT_KILL, 0)) {
+ 		switch (cmd) {
+ 		case LINUX_REBOOT_CMD_RESTART:
+diff -NurpP --minimal linux-2.6.13.1-vs2.1.0-rc2.1b/kernel/vserver/signal.c linux-2.6.13.1-vs2.1.0-rc2.2/kernel/vserver/signal.c
+--- linux-2.6.13.1-vs2.1.0-rc2.1b/kernel/vserver/signal.c	2005-09-16 01:19:15 +0200
++++ linux-2.6.13.1-vs2.1.0-rc2.2/kernel/vserver/signal.c	2005-09-28 03:06:06 +0200
+@@ -26,6 +26,9 @@ int vx_info_kill(struct vx_info *vxi, in
+ 	unsigned long priv = 0;
+ 
+ 	retval = -ESRCH;
++	vxdprintk(VXD_CBIT(misc, 4),
++		"vx_info_kill(%p[#%d],%d,%d)*",
++		vxi, vxi->vx_id, pid, sig);
+ 	read_lock(&tasklist_lock);
+ 	switch (pid) {
+ 	case  0:
+@@ -61,6 +64,9 @@ int vx_info_kill(struct vx_info *vxi, in
+ 		break;
+ 	}
+ 	read_unlock(&tasklist_lock);
++	vxdprintk(VXD_CBIT(misc, 4),
++		"vx_info_kill(%p[#%d],%d,%d) = %d",
++		vxi, vxi->vx_id, pid, sig, retval);
+ 	return retval;
+ }
+ 
