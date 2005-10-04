@@ -1,0 +1,189 @@
+--- linux-2.6.13-rc7-vs2.1.0-pre4/include/linux/vserver/context.h	2005-08-24 20:59:58 +0200
++++ linux-2.6.13-rc7-vs2.1.0-pre5/include/linux/vserver/context.h	2005-08-26 01:23:45 +0200
+@@ -36,7 +36,8 @@
+ #define VXF_STATE_SETUP		(1ULL<<32)
+ #define VXF_STATE_INIT		(1ULL<<33)
+ 
+-#define VXF_STATE_HELPER	(1ULL<<36)
++#define VXF_SC_HELPER		(1ULL<<36)
++#define VXF_REBOOT_KILL		(1ULL<<37)
+ 
+ #define VXF_FORK_RSS		(1ULL<<48)
+ #define VXF_PROLIFIC		(1ULL<<49)
+only in patch2:
+unchanged:
+--- linux-2.6.13-rc7-vs2.1.0-pre4/include/linux/vserver/network.h	2005-08-24 20:59:58 +0200
++++ linux-2.6.13-rc7-vs2.1.0-pre5/include/linux/vserver/network.h	2005-08-26 01:26:23 +0200
+@@ -15,7 +15,7 @@
+ 
+ #define NXF_STATE_SETUP		(1ULL<<32)
+ 
+-#define NXF_STATE_HELPER	(1ULL<<36)
++#define NXF_SC_HELPER		(1ULL<<36)
+ 
+ #define NXF_ONE_TIME		(0x0001ULL<<32)
+ 
+only in patch2:
+unchanged:
+--- linux-2.6.13-rc7-vs2.1.0-pre4/kernel/vserver/helper.c	2005-08-24 20:59:58 +0200
++++ linux-2.6.13-rc7-vs2.1.0-pre5/kernel/vserver/helper.c	2005-08-26 04:06:10 +0200
+@@ -52,7 +52,7 @@ int do_vshelper(char *name, char *argv[]
+  *      envp [*] = type-specific parameters
+  */
+ 
+-long vs_reboot(unsigned int cmd, void * arg)
++long vs_reboot_helper(struct vx_info *vxi, int cmd, void *arg)
+ {
+ 	char id_buf[8], cmd_buf[16];
+ 	char uid_buf[16], pid_buf[16];
+@@ -63,7 +63,7 @@ long vs_reboot(unsigned int cmd, void * 
+ 			"PATH=/sbin:/usr/sbin:/bin:/usr/bin",
+ 			uid_buf, pid_buf, cmd_buf, 0};
+ 
+-	snprintf(id_buf, sizeof(id_buf)-1, "%d", vx_current_xid());
++	snprintf(id_buf, sizeof(id_buf)-1, "%d", vxi->vx_id);
+ 
+ 	snprintf(cmd_buf, sizeof(cmd_buf)-1, "VS_CMD=%08x", cmd);
+ 	snprintf(uid_buf, sizeof(uid_buf)-1, "VS_UID=%d", current->uid);
+@@ -99,6 +99,21 @@ long vs_reboot(unsigned int cmd, void * 
+ }
+ 
+ 
++long vs_reboot(unsigned int cmd, void * arg)
++{
++	struct vx_info *vxi = current->vx_info;
++	long ret;
++
++	if (vx_info_flags(vxi, VXF_REBOOT_KILL, 0)) {
++		vx_info_kill(vxi, 0, SIGKILL);
++
++	} else {
++		ret = vs_reboot_helper(vxi, cmd, arg);
++	}
++	return ret;
++}
++
++
+ /*
+  *      argv [0] = vshelper_path;
+  *      argv [1] = action: "startup", "shutdown"
+@@ -114,7 +129,7 @@ long vs_state_change(struct vx_info *vxi
+ 	char *envp[] = {"HOME=/", "TERM=linux",
+ 			"PATH=/sbin:/usr/sbin:/bin:/usr/bin", cmd_buf, 0};
+ 
+-	if (!vx_info_flags(vxi, VXF_STATE_HELPER, 0))
++	if (!vx_info_flags(vxi, VXF_SC_HELPER, 0))
+ 		return 0;
+ 
+ 	snprintf(id_buf, sizeof(id_buf)-1, "%d", vxi->vx_id);
+@@ -151,7 +166,7 @@ long vs_net_change(struct nx_info *nxi, 
+ 	char *envp[] = {"HOME=/", "TERM=linux",
+ 			"PATH=/sbin:/usr/sbin:/bin:/usr/bin", cmd_buf, 0};
+ 
+-	if (!nx_info_flags(nxi, NXF_STATE_HELPER, 0))
++	if (!nx_info_flags(nxi, NXF_SC_HELPER, 0))
+ 		return 0;
+ 
+ 	snprintf(id_buf, sizeof(id_buf)-1, "%d", nxi->nx_id);
+only in patch2:
+unchanged:
+--- linux-2.6.13-rc7-vs2.1.0-pre4/kernel/vserver/signal.c	2005-08-24 20:59:58 +0200
++++ linux-2.6.13-rc7-vs2.1.0-pre5/kernel/vserver/signal.c	2005-08-26 03:28:14 +0200
+@@ -19,37 +19,26 @@
+ #include <linux/vserver/signal_cmd.h>
+ 
+ 
+-int vc_ctx_kill(uint32_t id, void __user *data)
++int vx_info_kill(struct vx_info *vxi, int pid, int sig)
+ {
+ 	int retval, count=0;
+-	struct vcmd_ctx_kill_v0 vc_data;
+ 	struct task_struct *p;
+-	struct vx_info *vxi;
+ 	unsigned long priv = 0;
+ 
+-	if (!vx_check(0, VX_ADMIN))
+-		return -ENOSYS;
+-	if (copy_from_user (&vc_data, data, sizeof(vc_data)))
+-		return -EFAULT;
+-
+-	vxi = locate_vx_info(id);
+-	if (!vxi)
+-		return -ESRCH;
+-
+ 	retval = -ESRCH;
+ 	read_lock(&tasklist_lock);
+-	switch (vc_data.pid) {
++	switch (pid) {
+ 	case  0:
+ 		priv = 1;
+ 	case -1:
+ 		for_each_process(p) {
+ 			int err = 0;
+ 
+-			if (vx_task_xid(p) != id || p->pid <= 1 ||
+-				(vc_data.pid && vxi->vx_initpid == p->pid))
++			if (vx_task_xid(p) != vxi->vx_id || p->pid <= 1 ||
++				(pid && vxi->vx_initpid == p->pid))
+ 				continue;
+ 
+-			err = group_send_sig_info(vc_data.sig, (void*)priv, p);
++			err = group_send_sig_info(sig, (void*)priv, p);
+ 			++count;
+ 			if (err != -EPERM)
+ 				retval = err;
+@@ -58,20 +47,39 @@ int vc_ctx_kill(uint32_t id, void __user
+ 
+ 	case 1:
+ 		if (vxi->vx_initpid) {
+-			vc_data.pid = vxi->vx_initpid;
++			pid = vxi->vx_initpid;
+ 			priv = 1;
+ 		}
+ 		/* fallthrough */
+ 	default:
+-		p = find_task_by_real_pid(vc_data.pid);
++		p = find_task_by_real_pid(pid);
+ 		if (p) {
+-			if ((id == -1) || (vx_task_xid(p) == id))
+-				retval = group_send_sig_info(vc_data.sig,
++			if (vx_task_xid(p) == vxi->vx_id)
++				retval = group_send_sig_info(sig,
+ 					(void*)priv, p);
+ 		}
+ 		break;
+ 	}
+ 	read_unlock(&tasklist_lock);
++	return retval;
++}
++
++int vc_ctx_kill(uint32_t id, void __user *data)
++{
++	int retval;
++	struct vcmd_ctx_kill_v0 vc_data;
++	struct vx_info *vxi;
++
++	if (!vx_check(0, VX_ADMIN))
++		return -ENOSYS;
++	if (copy_from_user (&vc_data, data, sizeof(vc_data)))
++		return -EFAULT;
++
++	vxi = locate_vx_info(id);
++	if (!vxi)
++		return -ESRCH;
++
++	retval = vx_info_kill(vxi, vc_data.pid, vc_data.sig);
+ 	put_vx_info(vxi);
+ 	return retval;
+ }
+diff -NurpP --minimal linux-2.6.13.2/include/linux/vserver/signal_cmd.h linux-2.6.13.2-vs2.0.1-pre2/include/linux/vserver/signal_cmd.h
+--- linux-2.6.13.2/include/linux/vserver/signal_cmd.h	1970-01-01 01:00:00 +0100
++++ linux-2.6.13.2-vs2.0.1-pre2/include/linux/vserver/signal_cmd.h	2005-09-26 16:14:25 +0200
+@@ -17,6 +17,7 @@
+ 
+ #ifdef	__KERNEL__
+ 
++extern int vx_info_kill(struct vx_info *vxi, int pid, int sig);
+ extern int vc_ctx_kill(uint32_t, void __user *);
+ extern int vc_wait_exit(uint32_t, void __user *);
+ 
