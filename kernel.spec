@@ -129,7 +129,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		1
+%define		_rel		2
 
 %define		_netfilter_snap		20050915
 
@@ -329,6 +329,10 @@ Patch207:	linux-2.6.12.3-xen-fixes.patch
 
 # vserver-2.0
 Patch300:	linux-2.6-vs2.patch
+Patch301:	http://vserver.13thfloor.at/Experimental/delta-rkill-feat01.diff
+Patch302:	http://vserver.13thfloor.at/Experimental/delta-rkill-fix01.diff
+Patch303:	http://vserver.13thfloor.at/Experimental/delta-rkill-fix02.diff
+Patch304:	http://vserver.13thfloor.at/Experimental/delta-rkill_debug-feat01.diff
 
 Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
@@ -775,6 +779,13 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %endif
 %endif
 
+%if %{with vserver}
+%patch300 -p1
+%patch301 -p1
+%patch302 -p1
+%patch303 -p1
+%patch304 -p1
+%endif
 %if %{with grsecurity}
 %patch200 -p1
 %else
@@ -782,9 +793,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %endif
 %if %{with omosix}
 %{__patch} -p1 -F3 < %{PATCH201}
-%endif
-%if %{with vserver}
-%patch300 -p1
 %endif
 %if %{with xen}
 %if %{with xendev}
