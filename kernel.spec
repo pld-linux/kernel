@@ -129,7 +129,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.1
+%define		_rel		0.2
 
 %define		_netfilter_snap		20050915
 
@@ -159,8 +159,8 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 #Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
-Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git5.bz2
-# Source3-md5:	4f48444c115fb1b44f1ef5977f9ef701
+Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git6.bz2
+# Source3-md5:	64ba6f8067d055e581d37f22aa5381cc
 
 Source20:	kernel-i386.config
 Source21:	kernel-i386-smp.config
@@ -667,7 +667,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %prep
 %setup -q -n linux-%{version}%{_rc}
-#bzip2 -d -c %{SOURCE3} | patch -p1 -s
+bzip2 -d -c %{SOURCE3} | patch -p1 -s
 
 %patch0 -p1
 %{?with_pld_vers:%patch1 -p0}
@@ -699,7 +699,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch35 -p1
 %patch36 -p1
 %patch37 -p1
-%patch38 -p1
+#patch38 -p1		NEEDS UPDATE
 
 %if 0
 #Netfilter
@@ -1511,6 +1511,7 @@ fi
 
 %files module-build
 %defattr(644,root,root,755)
+%{_prefix}/src/linux-%{version}/Kbuild
 %{_prefix}/src/linux-%{version}/Makefile
 %{_prefix}/src/linux-%{version}/localversion
 %dir %{_prefix}/src/linux-%{version}/arch
@@ -1521,6 +1522,7 @@ fi
 %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
 %{_prefix}/src/linux-%{version}/arch/*/kernel/sigframe.h
 %dir %{_prefix}/src/linux-%{version}/scripts
+%{_prefix}/src/linux-%{version}/scripts/Kbuild.include
 %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %{_prefix}/src/linux-%{version}/scripts/basic
 %{_prefix}/src/linux-%{version}/scripts/mod
