@@ -1561,6 +1561,7 @@ fi
 %{_prefix}/src/linux-%{version}/mm
 %{_prefix}/src/linux-%{version}/net
 %{_prefix}/src/linux-%{version}/scripts/*
+%exclude %{_prefix}/src/linux-%{version}/scripts/Kbuild.include
 %exclude %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %exclude %{_prefix}/src/linux-%{version}/scripts/basic
 %exclude %{_prefix}/src/linux-%{version}/scripts/mod
