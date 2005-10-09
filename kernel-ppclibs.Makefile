@@ -28,6 +28,8 @@ boot_LIBS += simple/misc-prep.o
 boot_LIBS += simple/mpc10x_memory.o
 boot_LIBS += simple/dummy.o
 
+boot_LIBS += ld.script
+
 kernel_LIBS += lib.a
 
 UTILS += addnote
