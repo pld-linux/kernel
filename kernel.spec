@@ -161,6 +161,7 @@ Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git7.bz2
 # Source3-md5:	90e7b66a30dd4987e073df5a92b938a3
+Source5:	kernel-ppclibs.Makefile
 
 Source20:	kernel-i386.config
 Source21:	kernel-i386-smp.config
@@ -448,6 +449,21 @@ PCMCIA modules (%{pcmcia_version}).
 %description pcmcia -l pl
 Modu³y PCMCIA (%{pcmcia_version}).
 
+%package libs
+Summary:	Libraries for preparing bootable kernel on PowerPCs
+Summary(pl):	Biblioteki do przygotowania bootowalnego j±dra dla PowerPC
+Group:		Base/Kernel
+Requires:	%{name}-up = %{epoch}:%{version}-%{release}
+Autoreqprov:	no
+
+%description libs
+Libraries for preparing bootable kernel on PowerPCs.
+Script called mkvmlinuz may be useful for this.
+
+%description libs -l pl
+Biblioteki do przygotowania bootowalnego j±dra dla PowerPC.
+Skrypt mkvmlinuz mo¿e byæ do tego przydatny.
+
 %package sound-alsa
 Summary:	ALSA kernel modules
 Summary(pl):	Sterowniki d¼wiêku ALSA
@@ -563,6 +579,21 @@ PCMCIA modules for SMP kernel (%{pcmcia_version}).
 
 %description smp-pcmcia -l pl
 Modu³y PCMCIA dla maszyn SMP (%{pcmcia_version}).
+
+%package smp-libs
+Summary:	Libraries for preparing bootable SMP kernel on PowerPCs
+Summary(pl):	Biblioteki do przygotowania bootowalnego j±dra dla wieloprocesorowych PowerPC
+Group:		Base/Kernel
+Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
+Autoreqprov:	no
+
+%description smp-libs
+Libraries for preparing bootable SMP kernel on PowerPCs.
+Script called mkvmlinuz may be useful for this.
+
+%description smp-libs -l pl
+Biblioteki do przygotowania bootowalnego j±dra dla wieloprocesorowych
+PowerPC. Skrypt mkvmlinuz mo¿e byæ do tego przydatny.
 
 %package smp-sound-alsa
 Summary:	ALSA SMP kernel modules
@@ -683,6 +714,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %prep
 %setup -q -n linux-%{version}%{_rc}
 bzip2 -d -c %{SOURCE3} | patch -p1 -s
+install %{SOURCE5} Makefile.ppclibs
 
 %patch0 -p1
 %{?with_pld_vers:%patch1 -p0}
@@ -1052,6 +1084,8 @@ PreInstallKernel() {
 %ifarch ppc ppc64
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+	%{__make} -f Makefile.ppclibs install \
+		DESTDIR=$KERNEL_INSTALL_DIR/boot/libs-$KernelVer
 %endif
 %ifarch ia64
 	gzip -cfv vmlinux > vmlinuz
@@ -1410,6 +1444,20 @@ fi
 %endif
 %endif
 
+%ifarch ppc
+%files libs
+%defattr(644,root,root,755)
+%dir /boot/libs-%{version}-%{release}
+/boot/libs-%{version}-%{release}/common
+/boot/libs-%{version}-%{release}/kernel
+/boot/libs-%{version}-%{release}/lib
+/boot/libs-%{version}-%{release}/of1275
+/boot/libs-%{version}-%{release}/openfirmware
+/boot/libs-%{version}-%{release}/simple
+%dir /boot/libs-%{version}-%{release}/utils
+%attr(755,root,root) /boot/libs-%{version}-%{release}/utils/*
+%endif
+
 %files sound-alsa
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/sound
@@ -1494,6 +1542,20 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko*
 %endif
+%endif
+
+%ifarch ppc
+%files smp-libs
+%defattr(644,root,root,755)
+%dir /boot/libs-%{version}-%{release}smp
+/boot/libs-%{version}-%{release}smp/common
+/boot/libs-%{version}-%{release}smp/kernel
+/boot/libs-%{version}-%{release}smp/lib
+/boot/libs-%{version}-%{release}smp/of1275
+/boot/libs-%{version}-%{release}smp/openfirmware
+/boot/libs-%{version}-%{release}smp/simple
+%dir /boot/libs-%{version}-%{release}smp/utils
+%attr(755,root,root) /boot/libs-%{version}-%{release}smp/utils/*
 %endif
 
 %files smp-sound-alsa
