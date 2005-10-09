@@ -1456,6 +1456,7 @@ fi
 /boot/libs-%{version}-%{release}/simple
 %dir /boot/libs-%{version}-%{release}/utils
 %attr(755,root,root) /boot/libs-%{version}-%{release}/utils/*
+/boot/libs-%{version}-%{release}/ld.script
 %endif
 
 %files sound-alsa
@@ -1556,6 +1557,7 @@ fi
 /boot/libs-%{version}-%{release}smp/simple
 %dir /boot/libs-%{version}-%{release}smp/utils
 %attr(755,root,root) /boot/libs-%{version}-%{release}smp/utils/*
+/boot/libs-%{version}-%{release}smp/ld.script
 %endif
 
 %files smp-sound-alsa
