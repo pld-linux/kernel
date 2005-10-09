@@ -352,11 +352,13 @@ PreReq:		geninitrd >= 2.57
 Provides:	kernel = %{epoch}:%{version}-%{release}
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	kernel(netfilter) = %{_netfilter_snap}
+Provides:	kernel-misc-fuse
 Provides:	kernel-net-hostap = 0.4.4
 Provides:	kernel-net-ieee80211
 Provides:	kernel-net-ipw2100 = 1.1.0
 Provides:	kernel-net-ipw2200 = 1.0.0
 Provides:	module-info
+Obsoletes:	kernel-misc-fuse
 Obsoletes:	kernel-modules
 Obsoletes:	kernel-net-hostap
 Obsoletes:	kernel-net-ieee80211
@@ -486,11 +488,13 @@ PreReq:		module-init-tools >= 0.9.9
 PreReq:		geninitrd >= 2.26
 Provides:	kernel = %{epoch}:%{version}-%{release}
 Provides:	kernel(netfilter) = %{_netfilter_snap}
+Provides:	kernel-smp-misc-fuse
 Provides:	kernel-smp-net-hostap = 0.4.4
 Provides:	kernel-smp-net-ieee80211
 Provides:	kernel-smp-net-ipw2100 = 1.1.0
 Provides:	kernel-smp-net-ipw2200 = 1.0.0
 Provides:	module-info
+Obsoletes:	kernel-smp-misc-fuse
 Obsoletes:	kernel-smp-net-hostap
 Obsoletes:	kernel-smp-net-ieee80211
 Obsoletes:	kernel-smp-net-ipp2p
