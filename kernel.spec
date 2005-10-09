@@ -194,7 +194,6 @@ Source92:	kernel-omosix.config
 Source93:	kernel-vserver.config
 Source94:	kernel-em8300.config
 Source95:	kernel-linuxabi.config
-Source96:	kernel-ocfs2.config
 
 Patch0:		2.6.0-ksyms-add.patch
 Patch1:		linux-2.6-version.patch
@@ -958,7 +957,6 @@ BuildConfig() {
 %if %{with em8300}
 	cat %{SOURCE94} >> arch/%{_target_base_arch}/defconfig
 %endif
-	cat %{SOURCE96} >> arch/%{_target_base_arch}/defconfig
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
