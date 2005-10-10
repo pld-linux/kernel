@@ -602,7 +602,7 @@ diff -ur v2.6.13/linux/net/ipv4/fib_semantics.c linux/net/ipv4/fib_semantics.c
 +				if (nh->nh_flags&RTNH_F_DEAD) {
 +					if (fi->fib_protocol!=RTPROT_STATIC ||
 +					    nh->nh_dev == NULL ||
-+					    __in_dev_get(nh->nh_dev) == NULL ||
++					    !__in_dev_get_rtnl(nh->nh_dev) ||
 +					    nh->nh_dev->flags&IFF_UP)
 +						dead++;
 +				} else if (nh->nh_dev == dev &&
@@ -623,7 +623,7 @@ diff -ur v2.6.13/linux/net/ipv4/fib_semantics.c linux/net/ipv4/fib_semantics.c
 +					write_unlock_bh(&fib_nhflags_lock);
 +					if (fi->fib_protocol!=RTPROT_STATIC ||
 +					    force ||
-+					    __in_dev_get(dev) == NULL)
++					    !__in_dev_get_rtnl(dev))
 +						dead++;
  				}
  #ifdef CONFIG_IP_ROUTE_MULTIPATH
