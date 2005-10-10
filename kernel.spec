@@ -159,8 +159,8 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 #Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
-Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git7.bz2
-# Source3-md5:	90e7b66a30dd4987e073df5a92b938a3
+Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git8.bz2
+# Source3-md5:	2f401ab4a6f5e21c726bd35cc28b354c
 Source5:	kernel-ppclibs.Makefile
 
 Source20:	kernel-i386.config
