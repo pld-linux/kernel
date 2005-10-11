@@ -153,13 +153,13 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 #define		_rc	%{nil}
-%define		_rc	-rc3
+%define		_rc	-rc4
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	f88fda568d578cdb9e807b95a5e42413
+# Source0-md5:	b047e15c0fca97c5ca80af2fd39ee80b
 #Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
-Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git8.bz2
+#Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git8.bz2
 # Source3-md5:	2f401ab4a6f5e21c726bd35cc28b354c
 Source5:	kernel-ppclibs.Makefile
 
@@ -713,7 +713,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %prep
 %setup -q -n linux-%{version}%{_rc}
-bzip2 -d -c %{SOURCE3} | patch -p1 -s
+#bzip2 -d -c %{SOURCE3} | patch -p1 -s
 install %{SOURCE5} Makefile.ppclibs
 
 %patch0 -p1
