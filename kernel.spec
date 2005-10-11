@@ -454,6 +454,7 @@ Modu³y PCMCIA (%{pcmcia_version}).
 Summary:	Libraries for preparing bootable kernel on PowerPCs
 Summary(pl):	Biblioteki do przygotowania bootowalnego j±dra dla PowerPC
 Group:		Base/Kernel
+PreReq:		mkvmlinuz
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
@@ -585,6 +586,7 @@ Modu³y PCMCIA dla maszyn SMP (%{pcmcia_version}).
 Summary:	Libraries for preparing bootable SMP kernel on PowerPCs
 Summary(pl):	Biblioteki do przygotowania bootowalnego j±dra dla wieloprocesorowych PowerPC
 Group:		Base/Kernel
+PreReq:		mkvmlinuz
 Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
@@ -1266,6 +1268,9 @@ elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
+%post libs
+%{_sbindir}/mkvmlinuz /boot/zImage-%{version}-%{release} %{version}-%{release}
+
 %post drm
 %depmod %{version}-%{release}
 
@@ -1330,6 +1335,9 @@ if [ -x /sbin/new-kernel-pkg ]; then
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
+
+%post smp-libs
+%{_sbindir}/mkvmlinuz /boot/zImage-%{version}-%{release}smp %{version}-%{release}smp
 
 %post smp-drm
 %depmod %{version}-%{release}smp
