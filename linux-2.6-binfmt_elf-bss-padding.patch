@@ -1,0 +1,21 @@
+Nir Tzachar <tzachar@cs.bgu.ac.il> points out that if an ELF file specifies
+a zero-length bss at a whacky address, we cannot load that binary because
+padzero() tries to zero out the end of the page at the whacky address,
+and that may not be writeable.
+
+So teach load_elf_binary() to skip the bss settng altogether if the elf file
+has a zero-length bss segment.
+
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+
+--- 25/fs/binfmt_elf.c~binfmt_elf-bss-padding-fix	2005-05-11 21:15:02.000000000 -0700
++++ 25-akpm/fs/binfmt_elf.c	2005-05-11 21:15:02.000000000 -0700
+@@ -905,7 +905,7 @@ static int load_elf_binary(struct linux_
+ 		send_sig(SIGKILL, current, 0);
+ 		goto out_free_dentry;
+ 	}
+-	if (padzero(elf_bss)) {
++	if (likely(elf_bss != elf_brk) && unlikely(padzero(elf_bss))) {
+ 		send_sig(SIGSEGV, current, 0);
+ 		retval = -EFAULT; /* Nobody gets to see this, but.. */
+ 		goto out_free_dentry;
