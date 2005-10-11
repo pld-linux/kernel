@@ -153,14 +153,3 @@
          
              /* Point socket buffer at the right VCC before giving to socket layer */
              ATM_SKB(skb)->vcc = vcc;
---- a/fs/binfmt_elf.c	2005-09-30 23:17:35.000000000 +0200
-+++ b/fs/binfmt_elf.c	2005-10-07 11:46:27.159874250 +0200
-@@ -905,7 +905,7 @@ static int load_elf_binary(struct linux_
- 		send_sig(SIGKILL, current, 0);
- 		goto out_free_dentry;
- 	}
--	if (padzero(elf_bss)) {
-+	if ((elf_bss != elf_brk) && padzero(elf_bss)) {
- 		send_sig(SIGSEGV, current, 0);
- 		retval = -EFAULT; /* Nobody gets to see this, but.. */
- 		goto out_free_dentry;
