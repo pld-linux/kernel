@@ -30,7 +30,7 @@ diff -urN linux-2.4.25/drivers/atm/Kconfig linux-2.4.25-atmdd/drivers/atm/Kconfi
 diff -urN linux-2.4.25/drivers/atm/atmdd.c linux-2.4.25-atmdd/drivers/atm/atmdd.c
 --- linux-2.4.25/drivers/atm/atmdd.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.4.25-atmdd/drivers/atm/atmdd.c	2004-02-29 22:58:11.000000000 +0100
-@@ -0,0 +1,920 @@
+@@ -0,0 +1,922 @@
 +/*
 +#######################################################################
 +#
@@ -244,6 +244,7 @@ diff -urN linux-2.4.25/drivers/atm/atmdd.c linux-2.4.25-atmdd/drivers/atm/atmdd.
 +    while ((skb = myatmdd_rxq_dequeue(&priv->rxqueue, &pkt_len)))
 +    {
 +        struct sk_buff *newskb;
++        struct timeval stamp;
 +
 +        /* Get a new skb to replace the one just consumed */
 +        if (!(newskb = dev_alloc_skb(AAL5_BUFLEN)))
@@ -275,7 +276,8 @@ diff -urN linux-2.4.25/drivers/atm/atmdd.c linux-2.4.25-atmdd/drivers/atm/atmdd.
 +            atomic_inc(&vcc->stats->rx);
 +
 +            /* add timestamp for upper layers to use */
-+	    do_gettimeofday(&skb->stamp);
++	    do_gettimeofday(&stamp);
++	    skb_set_timestamp(skb, &stamp);
 +        
 +            /* Point socket buffer at the right VCC before giving to socket layer */
 +            ATM_SKB(skb)->vcc = vcc;

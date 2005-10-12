@@ -133,23 +133,3 @@
  /* Used by sysrq-p, among others.  I don't believe r9-r15 are ever
     saved in the context it's used.  */
  
---- a/drivers/atm/atmdd.c	2005-10-03 13:17:48.000000000 +0200
-+++ b/drivers/atm/atmdd.c	2005-10-03 17:51:59.322010250 +0200
-@@ -211,6 +211,7 @@
-     while ((skb = myatmdd_rxq_dequeue(&priv->rxqueue, &pkt_len)))
-     {
-         struct sk_buff *newskb;
-+        struct timeval stamp;
- 
-         /* Get a new skb to replace the one just consumed */
-         if (!(newskb = dev_alloc_skb(AAL5_BUFLEN)))
-@@ -242,7 +243,8 @@
-             atomic_inc(&vcc->stats->rx);
- 
-             /* add timestamp for upper layers to use */
--	    do_gettimeofday(&skb->stamp);
-+	    do_gettimeofday(&stamp);
-+	    skb_set_timestamp(skb, &stamp);
-         
-             /* Point socket buffer at the right VCC before giving to socket layer */
-             ATM_SKB(skb)->vcc = vcc;
