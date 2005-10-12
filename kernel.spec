@@ -33,7 +33,7 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
-%bcond_without	grsecurity	# disable grsecurity
+%bcond_with	grsecurity	# enable grsecurity
 %bcond_without	pld_vers	# disable pld-specific UTS_NAME changes
 %bcond_with	grsec_basic	# enable basic grsecurity functionality (proc,link,fifo)
 				# bcond only valid "without  grsecurity"
@@ -129,7 +129,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.5
+%define		_rel		0.6
 
 %define		_netfilter_snap		20050915
 
@@ -144,7 +144,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
-Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
+Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_preemptive:-preempt}
 #define		_postver	.2
 %define		_postver	%{nil}
 Version:	2.6.14%{_postver}
@@ -161,9 +161,8 @@ Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git1.bz2
 # Source3-md5:	782d23f524f50d2d3ad3df707384ef20
-Source4:	http://people.redhat.com/mingo/realtime-preempt/patch-2.6.14-rc4-rt1
-# Source4-md5:	6c3693a2d3a4a16dfac2996043a24dd7
-
+# derived from http://people.redhat.com/mingo/realtime-preempt/patch-2.6.14-rc4-rt1
+Source4:	patch-2.6.14-rc4-rt1
 Source5:	kernel-ppclibs.Makefile
 
 Source20:	kernel-i386.config
@@ -722,10 +721,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %prep
 %setup -q -n linux-%{version}%{_rc}
 bzip2 -d -c %{SOURCE3} | patch -p1 -s
-%if %{with preemptive}
-patch -p1 -s < %{SOURCE4}
-sed -i 's:SPIN_LOCK_UNLOCKED:SPIN_LOCK_UNLOCKED(SendCmplPktQ.QueueLock):' drivers/net/sk98lin/sky2.c
-%endif
+%{?with_preemptive:patch -p1 -s < %{SOURCE4}}
 install %{SOURCE5} Makefile.ppclibs
 
 %patch0 -p1
@@ -806,6 +802,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch80 -p1
 
 %patch82 -p1
+%{?with_preemptive:sed -i 's:SPIN_LOCK_UNLOCKED:SPIN_LOCK_UNLOCKED(SendCmplPktQ.QueueLock):' drivers/net/sk98lin/sky2.c}
 %patch83 -p1
 %patch84 -p1
 %patch86 -p1
