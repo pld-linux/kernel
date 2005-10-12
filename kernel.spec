@@ -208,6 +208,7 @@ Patch3:		2.6.0-t9-acpi_osl-lkml.patch
 Patch4:		linux-kbuild-extmod.patch
 Patch5:		kernel-MAX_INIT_ARGS.patch
 Patch6:		linux-2.6-extended-utf8.patch
+Patch7:		linux-2.6-realtime-lsm-0.1.1.patch
 
 Patch10:	2.6.0-powernow-k7.patch
 # derived from http://hem.bredband.net/ekmlar/patch-vt1211-2.6.11.txt
@@ -734,6 +735,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
+%patch7 -p1
 
 %patch10 -p1
 #patch11 -p1		NEEDS CHECK (compilation error)
