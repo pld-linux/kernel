@@ -721,7 +721,10 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %prep
 %setup -q -n linux-%{version}%{_rc}
 bzip2 -d -c %{SOURCE3} | patch -p1 -s
-%{?with_preemptive:patch -p1 -s < %{SOURCE4}}
+%if %{with preemptive}
+patch -p1 -s < %{SOURCE4}
+sed -i 's:SPIN_LOCK_UNLOCKED:SPIN_LOCK_UNLOCKED(SendCmplPktQ.QueueLock):' drivers/net/sk98lin/sky2.c
+%endif
 install %{SOURCE5} Makefile.ppclibs
 
 %patch0 -p1
