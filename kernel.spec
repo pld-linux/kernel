@@ -41,7 +41,7 @@
 %bcond_with	omosix		# enable openMosix (conflicts with grsecurity/vserver)
 %bcond_with	vserver		# enable vserver (conflicts with grsecurity/omosix)
 %bcond_with	verbose		# verbose build (V=1)
-%bcond_with	preemptive	# build preemptive kernel
+%bcond_with	preemptive	# build preemptive (realtime) kernel
 %bcond_with	regparm		# (ix86) use register arguments (this break binary-only modules)
 %bcond_with	em8300		# DXR3/Hollywood
 %bcond_with	xen0		# build Xen0 kernel
@@ -161,6 +161,8 @@ Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git1.bz2
 # Source3-md5:	782d23f524f50d2d3ad3df707384ef20
+Source4:	http://people.redhat.com/mingo/realtime-preempt/patch-2.6.14-rc4-rt1
+# Source4-md5:	6c3693a2d3a4a16dfac2996043a24dd7
 
 Source5:	kernel-ppclibs.Makefile
 
@@ -190,12 +192,14 @@ Source41:	kernel-ppc64-smp.config
 Source50:	kernel.FAQ-pl
 
 Source80:	kernel-netfilter.config
+
 Source90:	kernel-grsec.config
 Source91:	kernel-grsec+pax.config
 Source92:	kernel-omosix.config
 Source93:	kernel-vserver.config
 Source94:	kernel-em8300.config
 Source95:	kernel-linuxabi.config
+Source96:	kernel-rt.config
 
 Patch0:		2.6.0-ksyms-add.patch
 Patch1:		linux-2.6-version.patch
@@ -717,6 +721,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %prep
 %setup -q -n linux-%{version}%{_rc}
 bzip2 -d -c %{SOURCE3} | patch -p1 -s
+%{?with_preemptive:patch -p1 -s < %{SOURCE4}}
 install %{SOURCE5} Makefile.ppclibs
 
 %patch0 -p1
@@ -963,12 +968,6 @@ BuildConfig() {
 	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
 	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
 
-%if %{with preemptive}
-	sed -i 's:CONFIG_PREEMPT_NONE=y:# CONFIG_PREEMPT_NONE is not set:' arch/%{_target_base_arch}/defconfig
-	sed -i 's:# CONFIG_PREEMPT is not set:CONFIG_PREEMPT=y:' arch/%{_target_base_arch}/defconfig
-	sed -i 's:# CONFIG_PREEMPT_BKL is not set:CONFIG_PREEMPT_BKL=y:' arch/%{_target_base_arch}/defconfig
-%endif
-
 	cat %{SOURCE80} >> arch/%{_target_base_arch}/defconfig
 
 %if %{with grsecurity}
@@ -991,6 +990,9 @@ BuildConfig() {
 %endif
 %if %{with em8300}
 	cat %{SOURCE94} >> arch/%{_target_base_arch}/defconfig
+%endif
+%if %{with preemptive}
+	cat %{SOURCE96} >> arch/%{_target_base_arch}/defconfig
 %endif
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
