@@ -129,7 +129,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.4
+%define		_rel		0.5
 
 %define		_netfilter_snap		20050915
 
@@ -159,8 +159,9 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 #Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
-#Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git8.bz2
-# Xource3-md5:	2f401ab4a6f5e21c726bd35cc28b354c
+Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git1.bz2
+# Source3-md5:	782d23f524f50d2d3ad3df707384ef20
+
 Source5:	kernel-ppclibs.Makefile
 
 Source20:	kernel-i386.config
@@ -203,7 +204,6 @@ Patch3:		2.6.0-t9-acpi_osl-lkml.patch
 Patch4:		linux-kbuild-extmod.patch
 Patch5:		kernel-MAX_INIT_ARGS.patch
 Patch6:		linux-2.6-extended-utf8.patch
-Patch7:		linux-2.6-binfmt_elf-bss-padding.patch
 
 Patch10:	2.6.0-powernow-k7.patch
 # derived from http://hem.bredband.net/ekmlar/patch-vt1211-2.6.11.txt
@@ -716,7 +716,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %prep
 %setup -q -n linux-%{version}%{_rc}
-#bzip2 -d -c %{SOURCE3} | patch -p1 -s
+bzip2 -d -c %{SOURCE3} | patch -p1 -s
 install %{SOURCE5} Makefile.ppclibs
 
 %patch0 -p1
@@ -726,7 +726,6 @@ install %{SOURCE5} Makefile.ppclibs
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
-%patch7 -p1
 
 %patch10 -p1
 #patch11 -p1		NEEDS CHECK (compilation error)
