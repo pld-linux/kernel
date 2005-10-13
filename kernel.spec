@@ -129,9 +129,10 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.6
+%define		_rel		0.7
 
 %define		_netfilter_snap		20050915
+%define		_nf_hipac_ver		0.9.1
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
@@ -208,6 +209,7 @@ Patch4:		linux-kbuild-extmod.patch
 Patch5:		kernel-MAX_INIT_ARGS.patch
 Patch6:		linux-2.6-extended-utf8.patch
 Patch7:		linux-2.6-realtime-lsm-0.1.1.patch
+Patch8:		nf-hipac-%{_nf_hipac_ver}.patch
 
 Patch10:	2.6.0-powernow-k7.patch
 # derived from http://hem.bredband.net/ekmlar/patch-vt1211-2.6.11.txt
@@ -357,6 +359,7 @@ PreReq:		geninitrd >= 2.57
 Provides:	kernel = %{epoch}:%{version}-%{release}
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	kernel(netfilter) = %{_netfilter_snap}
+Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
 Provides:	kernel-misc-fuse
 Provides:	kernel-net-hostap = 0.4.4
 Provides:	kernel-net-ieee80211
@@ -509,6 +512,7 @@ PreReq:		module-init-tools >= 0.9.9
 PreReq:		geninitrd >= 2.26
 Provides:	kernel = %{epoch}:%{version}-%{release}
 Provides:	kernel(netfilter) = %{_netfilter_snap}
+Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
 Provides:	kernel-smp-misc-fuse
 Provides:	kernel-smp-net-hostap = 0.4.4
 Provides:	kernel-smp-net-ieee80211
@@ -732,6 +736,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
+%patch8 -p1
 
 %patch10 -p1
 #patch11 -p1		NEEDS CHECK (compilation error)
