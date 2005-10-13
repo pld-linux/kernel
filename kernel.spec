@@ -737,6 +737,10 @@ install %{SOURCE5} Makefile.ppclibs
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
+%if %{with preemptive}
+sed -i 's:SPIN_LOCK_UNLOCKED:SPIN_LOCK_UNLOCKED(dev_lock)' net/ipv4/netfilter/nf-hipac/nfhp_dev.c
+sed -i 's:RW_LOCK_UNLOCKED:RW_LOCK_UNLOCKED(data->lock)' net/ipv4/netfilter/nf-hipac/nfhp_proc.c
+%endif
 
 %patch10 -p1
 #patch11 -p1		NEEDS CHECK (compilation error)
