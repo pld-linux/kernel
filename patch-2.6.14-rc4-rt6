@@ -828,15 +828,6 @@ Index: linux/Makefile
 ===================================================================
 --- linux.orig/Makefile
 +++ linux/Makefile
-@@ -1,7 +1,7 @@
- VERSION = 2
- PATCHLEVEL = 6
- SUBLEVEL = 14
--EXTRAVERSION =-rc4
-+EXTRAVERSION =-rc4-rt6
- NAME=Affluent Albatross
- 
- # *DOCUMENTATION*
 @@ -517,10 +517,14 @@ CFLAGS		+= $(call add-align,CONFIG_CC_AL
  CFLAGS		+= $(call add-align,CONFIG_CC_ALIGN_LOOPS,-loops)
  CFLAGS		+= $(call add-align,CONFIG_CC_ALIGN_JUMPS,-jumps)
@@ -3245,9 +3236,9 @@ Index: linux/arch/arm/mach-l7200/core.c
  #include <linux/kernel.h>
  #include <linux/init.h>
 +#include <linux/irq.h>
+ #include <linux/device.h>
  
- #include <asm/hardware.h>
- #include <asm/page.h>
+ #include <asm/types.h>
 Index: linux/arch/arm/mach-lh7a40x/arch-kev7a400.c
 ===================================================================
 --- linux.orig/arch/arm/mach-lh7a40x/arch-kev7a400.c
@@ -53578,4 +53569,34 @@ Index: linux/sound/oss/emu10k1/midi.c
 +static DEFINE_SPINLOCK(midi_spinlock);
  
  static void init_midi_hdr(struct midi_hdr *midihdr)
+ {
+--- linux.orig/kernel/time.c	2005-10-15 11:29:19.000000000 -0400
++++ linux/kernel/time.c	2005-10-16 04:03:57.000000000 -0400
+@@ -631,6 +631,7 @@
+ 
+ 	return ((u64)ts.tv_sec * NSEC_PER_SEC) + ts.tv_nsec;
+ }
++EXPORT_SYMBOL_GPL(do_monotonic_clock);
+
+ #endif /* !CONFIG_GENERIC_TIME */
+ 
+--- linux.orig/kernel/time/timeofday.c	2005-10-15 11:29:19.000000000 -0400
++++ linux/kernel/time/timeofday.c	2005-10-16 04:04:07.000000000 -0400
+@@ -213,6 +213,7 @@
+ 
+ 	return ret;
+ }
++EXPORT_SYMBOL_GPL(do_monotonic_clock);
+
+ /**
+  * getnsmonotonic - Returns the monotonic time in a timespec
+--- .orig/arch/i386/kernel/i8253.c	2005-10-16 04:12:44.000000000 -0400
++++ /arch/i386/kernel/i8253.c	2005-10-16 04:16:07.000000000 -0400
+@@ -14,6 +14,7 @@
+ #include "io_ports.h"
+ 
+ DEFINE_RAW_SPINLOCK(i8253_lock);
++EXPORT_SYMBOL(i8253_lock);
+
+ static void init_pit_timer(int mode)
  {
