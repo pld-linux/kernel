@@ -129,7 +129,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.7
+%define		_rel		0.8
 
 %define		_netfilter_snap		20050915
 %define		_nf_hipac_ver		0.9.1
@@ -160,10 +160,10 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 #Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
-Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git4.bz2
-# Source3-md5:	5ae602ee792278ee13bca6058051ffda
-# derived from http://people.redhat.com/mingo/realtime-preempt/patch-2.6.14-rc4-rt1
-Source4:	patch-2.6.14-rc4-rt1
+Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git5.bz2
+# Source3-md5:	844e0aafe4a1d6ebb306b98fb6ad5847
+# derived from http://people.redhat.com/mingo/realtime-preempt/patch-2.6.14-rc4-rt6
+Source4:	patch-2.6.14-rc4-rt6
 Source5:	kernel-ppclibs.Makefile
 
 Source20:	kernel-i386.config
@@ -360,6 +360,7 @@ Provides:	kernel = %{epoch}:%{version}-%{release}
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	kernel(netfilter) = %{_netfilter_snap}
 Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
+Provides:	kernel(realtime-lsm) = 0.1.1
 Provides:	kernel-misc-fuse
 Provides:	kernel-net-hostap = 0.4.4
 Provides:	kernel-net-ieee80211
@@ -513,6 +514,7 @@ PreReq:		geninitrd >= 2.26
 Provides:	kernel = %{epoch}:%{version}-%{release}
 Provides:	kernel(netfilter) = %{_netfilter_snap}
 Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
+Provides:	kernel(realtime-lsm) = 0.1.1
 Provides:	kernel-smp-misc-fuse
 Provides:	kernel-smp-net-hostap = 0.4.4
 Provides:	kernel-smp-net-ieee80211
@@ -738,8 +740,8 @@ install %{SOURCE5} Makefile.ppclibs
 %patch7 -p1
 %patch8 -p1
 %if %{with preemptive}
-sed -i 's:SPIN_LOCK_UNLOCKED:SPIN_LOCK_UNLOCKED(dev_lock)' net/ipv4/netfilter/nf-hipac/nfhp_dev.c
-sed -i 's:RW_LOCK_UNLOCKED:RW_LOCK_UNLOCKED(data->lock)' net/ipv4/netfilter/nf-hipac/nfhp_proc.c
+sed -i 's:SPIN_LOCK_UNLOCKED:SPIN_LOCK_UNLOCKED(dev_lock):' net/ipv4/netfilter/nf-hipac/nfhp_dev.c
+sed -i 's:RW_LOCK_UNLOCKED:RW_LOCK_UNLOCKED(data->lock):' net/ipv4/netfilter/nf-hipac/nfhp_proc.c
 %endif
 
 %patch10 -p1
