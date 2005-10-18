@@ -173,18 +173,18 @@ diff -urN linux-2.6.12.6/fs/proc/base.c linux-2.6.12.6-gr-minimal/fs/proc/base.c
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
 +	PROC_TGID_IPADDR,
 +#endif
- 	PROC_TGID_FD_DIR,
  	PROC_TGID_OOM_SCORE,
  	PROC_TGID_OOM_ADJUST,
+ 	PROC_TID_INO,
 @@ -152,6 +155,9 @@
  	E(PROC_TGID_ROOT,      "root",    S_IFLNK|S_IRWXUGO),
  	E(PROC_TGID_EXE,       "exe",     S_IFLNK|S_IRWXUGO),
  	E(PROC_TGID_MOUNTS,    "mounts",  S_IFREG|S_IRUGO),
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
-+	E(PROC_TGID_IPADDR,     "ipaddr",  S_IFREG|S_IRUSR),
++	E(PROC_TGID_IPADDR,    "ipaddr",  S_IFREG|S_IRUSR),
 +#endif
- #ifdef CONFIG_SECURITY
- 	E(PROC_TGID_ATTR,      "attr",    S_IFDIR|S_IRUGO|S_IXUGO),
+ #ifdef CONFIG_MMU
+ 	E(PROC_TGID_SMAPS,     "smaps",    S_IFDIR|S_IRUGO),
  #endif
 @@ -1149,6 +1155,9 @@
  		inode->i_uid = task->euid;
@@ -614,11 +614,14 @@ diff -urN linux-2.6.12.6/security/Kconfig linux-2.6.12.6-gr-minimal/security/Kco
 diff -urN linux-2.6.12.6/security/Makefile linux-2.6.12.6-gr-minimal/security/Makefile
 --- linux-2.6.12.6/security/Makefile	2005-08-29 18:55:27.000000000 +0200
 +++ linux-2.6.12.6-gr-minimal/security/Makefile	2005-08-30 16:57:57.950820408 +0200
-@@ -17,3 +17,4 @@
+@@ -17,6 +17,7 @@
  obj-$(CONFIG_SECURITY_CAPABILITIES)	+= commoncap.o capability.o
  obj-$(CONFIG_SECURITY_ROOTPLUG)		+= commoncap.o root_plug.o
  obj-$(CONFIG_SECURITY_SECLVL)		+= seclvl.o
 +obj-$(CONFIG_GRKERNSEC)			+= grsec_sock.o
+ 
+ obj-m					+= realtime.o
+ realtime-objs				:= realcap.o commoncap.o
 diff -urN linux-2.6.12.6/security/grsec_sock.c linux-2.6.12.6-gr-minimal/security/grsec_sock.c
 --- linux-2.6.12.6/security/grsec_sock.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.12.6-gr-minimal/security/grsec_sock.c	2005-08-30 16:57:11.727847368 +0200
