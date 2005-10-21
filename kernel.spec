@@ -154,14 +154,14 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 #define		_rc	%{nil}
-%define		_rc	-rc4
+%define		_rc	-rc5
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	b047e15c0fca97c5ca80af2fd39ee80b
+# Source0-md5:	8df479f7adf99ab902cfebce1470acec
 #Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
-Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git5.bz2
-# Source3-md5:	844e0aafe4a1d6ebb306b98fb6ad5847
+Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git1.bz2
+# Source3-md5:	275a3e7dcef22878162f4a31763283ab
 # derived from http://people.redhat.com/mingo/realtime-preempt/patch-2.6.14-rc4-rt6
 Source4:	patch-2.6.14-rc4-rt6
 Source5:	kernel-ppclibs.Makefile
