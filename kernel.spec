@@ -1444,6 +1444,7 @@ fi
 %endif
 
 %ifarch ppc
+%if "%{_arch}" == "ppc"
 %files libs
 %defattr(644,root,root,755)
 %dir /boot/libs-%{version}-%{release}
@@ -1456,6 +1457,7 @@ fi
 %dir /boot/libs-%{version}-%{release}/utils
 %attr(755,root,root) /boot/libs-%{version}-%{release}/utils/*
 /boot/libs-%{version}-%{release}/ld.script
+%endif
 %endif
 
 %files sound-alsa
@@ -1545,6 +1547,7 @@ fi
 %endif
 
 %ifarch ppc
+%if "%{_arch}" == "ppc"
 %files smp-libs
 %defattr(644,root,root,755)
 %dir /boot/libs-%{version}-%{release}smp
@@ -1557,6 +1560,7 @@ fi
 %dir /boot/libs-%{version}-%{release}smp/utils
 %attr(755,root,root) /boot/libs-%{version}-%{release}smp/utils/*
 /boot/libs-%{version}-%{release}smp/ld.script
+%endif
 %endif
 
 %files smp-sound-alsa
