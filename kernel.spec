@@ -160,10 +160,10 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 #Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
-Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git1.bz2
-# Source3-md5:	275a3e7dcef22878162f4a31763283ab
+Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git2.bz2
+# Source3-md5:	6d783b848c800f070581d0856658bc1d
 # derived from http://people.redhat.com/mingo/realtime-preempt/patch-2.6.14-rc4-rt6
-Source4:	patch-2.6.14-rc4-rt6
+Source4:	patch-2.6.14-rc5-rt3
 Source5:	kernel-ppclibs.Makefile
 
 Source20:	kernel-i386.config
