@@ -129,7 +129,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.8
+%define		_rel		0.9
 
 %define		_netfilter_snap		20050915
 %define		_nf_hipac_ver		0.9.1
@@ -160,8 +160,8 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 #Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
-Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git5.bz2
-# Source3-md5:	ed65945da321ab1963a072720164cbe1
+Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git6.bz2
+# Source3-md5:	011d306c6dd193984226521f2245105b
 # derived from http://people.redhat.com/mingo/realtime-preempt/patch-2.6.14-rc4-rt6
 Source4:	patch-2.6.14-rc5-rt3
 Source5:	kernel-ppclibs.Makefile
