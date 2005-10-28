@@ -131,7 +131,7 @@ xen0 conflicts with xenU
 
 %define		_rel		0.0
 
-%define		_netfilter_snap		20050915
+%define		_netfilter_snap		20051028
 %define		_nf_hipac_ver		0.9.1
 
 %define		_enable_debug_packages			0
@@ -243,24 +243,20 @@ Patch38:	routes-2.6.13-12.diff
 
 # patch-o-matic-ng
 # [submitted]
-Patch40:	linux-2.6-nf-ownercmd.patch
 # [base]
-Patch41:	linux-2.6-nf-HOPLIMIT.patch
-Patch42:	linux-2.6-nf-IPV4OPTSSTRIP.patch
-Patch43:	linux-2.6-nf-TTL.patch
-Patch44:	linux-2.6-nf-REJECT.patch
-Patch45:	linux-2.6-nf-connlimit.patch
-Patch46:	linux-2.6-nf-expire.patch
-Patch47:	linux-2.6-nf-fuzzy.patch
-Patch48:	linux-2.6-nf-ipv4options.patch
-Patch49:	linux-2.6-nf-nth.patch
-Patch50:	linux-2.6-nf-osf.patch
-Patch51:	linux-2.6-nf-psd.patch
-Patch52:	linux-2.6-nf-quota.patch
-Patch53:	linux-2.6-nf-random.patch
-Patch54:	linux-2.6-nf-set.patch
-Patch55:	linux-2.6-nf-time.patch
-Patch56:	linux-2.6-nf-u32.patch
+Patch40:	linux-2.6-nf-IPV4OPTSSTRIP.patch
+Patch41:	linux-2.6-nf-connlimit.patch
+Patch42:	linux-2.6-nf-expire.patch
+Patch43:	linux-2.6-nf-fuzzy.patch
+Patch44:	linux-2.6-nf-ipv4options.patch
+Patch45:	linux-2.6-nf-nth.patch
+Patch46:	linux-2.6-nf-osf.patch
+Patch47:	linux-2.6-nf-psd.patch
+Patch48:	linux-2.6-nf-quota.patch
+Patch49:	linux-2.6-nf-random.patch
+Patch50:	linux-2.6-nf-set.patch
+Patch51:	linux-2.6-nf-time.patch
+Patch52:	linux-2.6-nf-u32.patch
 # [extra]
 Patch60:	linux-2.6-nf-ACCOUNT.patch
 Patch61:	linux-2.6-nf-IPMARK.patch
@@ -768,11 +764,10 @@ sed -i 's:RW_LOCK_UNLOCKED:RW_LOCK_UNLOCKED(data->lock):' net/ipv4/netfilter/nf-
 %patch37 -p1
 #patch38 -p1		NEEDS UPDATE
 
-%if 0
 #Netfilter
 #[submitted]
-%patch40 -p1
 #[base]
+%patch40 -p1
 %patch41 -p1
 %patch42 -p1
 %patch43 -p1
@@ -783,32 +778,27 @@ sed -i 's:RW_LOCK_UNLOCKED:RW_LOCK_UNLOCKED(data->lock):' net/ipv4/netfilter/nf-
 %patch48 -p1
 %patch49 -p1
 %patch50 -p1
-%patch51 -p1
-%patch52 -p1
-%patch53 -p1
-%patch54 -p1
 %patch55 -p1
 %patch56 -p1
 #[extra]
-%patch60 -p1
-%patch61 -p1
-%patch62 -p1
-%patch63 -p1
-%patch64 -p1
-%patch65 -p1
-%patch66 -p1
-%patch67 -p1
-%patch68 -p1
-%patch69 -p1
-%patch70 -p1
-%patch71 -p1
-%patch72 -p1
+#%patch60 -p1
+#%patch61 -p1
+#%patch62 -p1
+#%patch63 -p1
+#%patch64 -p1
+#%patch65 -p1
+#%patch66 -p1
+#%patch67 -p1
+#%patch68 -p1
+#%patch69 -p1
+#%patch70 -p1
+#%patch71 -p1
+#%patch72 -p1
 #[extra/conntrack]
-%patch73 -p1
-%patch74 -p1
+#%patch73 -p1
+#%patch74 -p1
 #[unofficial/external]
-%patch75 -p1
-%endif
+#%patch75 -p1
 
 %patch80 -p1
 
