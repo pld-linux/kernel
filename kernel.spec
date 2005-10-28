@@ -778,8 +778,8 @@ sed -i 's:RW_LOCK_UNLOCKED:RW_LOCK_UNLOCKED(data->lock):' net/ipv4/netfilter/nf-
 %patch48 -p1
 %patch49 -p1
 %patch50 -p1
-%patch55 -p1
-%patch56 -p1
+%patch51 -p1
+%patch52 -p1
 #[extra]
 #%patch60 -p1
 #%patch61 -p1
