@@ -1,16 +1,16 @@
  include/linux/netfilter_ipv4/ipt_nth.h  |   19 +++
  include/linux/netfilter_ipv6/ip6t_nth.h |   19 +++
  net/ipv4/netfilter/Kconfig              |   24 ++++
- net/ipv4/netfilter/Makefile             |    2 
+ net/ipv4/netfilter/Makefile             |    1 
  net/ipv4/netfilter/ipt_nth.c            |  166 ++++++++++++++++++++++++++++++
  net/ipv6/netfilter/Kconfig              |   24 ++++
- net/ipv6/netfilter/Makefile             |    2 
+ net/ipv6/netfilter/Makefile             |    1 
  net/ipv6/netfilter/ip6t_nth.c           |  173 ++++++++++++++++++++++++++++++++
- 8 files changed, 429 insertions(+)
+ 8 files changed, 427 insertions(+)
 
-diff -uNr linux-2.6.13.1/include.orig/linux/netfilter_ipv4/ipt_nth.h linux-2.6.13.1/include/linux/netfilter_ipv4/ipt_nth.h
---- linux-2.6.13.1/include.orig/linux/netfilter_ipv4/ipt_nth.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.13.1/include/linux/netfilter_ipv4/ipt_nth.h	2005-09-15 10:12:52.293374250 +0200
+diff -Nur --exclude '*.orig' linux-2.6.14.org/include/linux/netfilter_ipv4/ipt_nth.h linux-2.6.14/include/linux/netfilter_ipv4/ipt_nth.h
+--- linux-2.6.14.org/include/linux/netfilter_ipv4/ipt_nth.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.14/include/linux/netfilter_ipv4/ipt_nth.h	2005-10-28 14:11:28.000000000 +0200
 @@ -0,0 +1,19 @@
 +#ifndef _IPT_NTH_H
 +#define _IPT_NTH_H
@@ -31,9 +31,9 @@ diff -uNr linux-2.6.13.1/include.orig/linux/netfilter_ipv4/ipt_nth.h linux-2.6.1
 +};
 +
 +#endif /*_IPT_NTH_H*/
-diff -uNr linux-2.6.13.1/include.orig/linux/netfilter_ipv6/ip6t_nth.h linux-2.6.13.1/include/linux/netfilter_ipv6/ip6t_nth.h
---- linux-2.6.13.1/include.orig/linux/netfilter_ipv6/ip6t_nth.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.13.1/include/linux/netfilter_ipv6/ip6t_nth.h	2005-09-15 10:12:52.293374250 +0200
+diff -Nur --exclude '*.orig' linux-2.6.14.org/include/linux/netfilter_ipv6/ip6t_nth.h linux-2.6.14/include/linux/netfilter_ipv6/ip6t_nth.h
+--- linux-2.6.14.org/include/linux/netfilter_ipv6/ip6t_nth.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.14/include/linux/netfilter_ipv6/ip6t_nth.h	2005-10-28 14:11:28.000000000 +0200
 @@ -0,0 +1,19 @@
 +#ifndef _IP6T_NTH_H
 +#define _IP6T_NTH_H
@@ -54,9 +54,47 @@ diff -uNr linux-2.6.13.1/include.orig/linux/netfilter_ipv6/ip6t_nth.h linux-2.6.
 +};
 +
 +#endif /*_IP6T_NTH_H*/
-diff -uNr linux-2.6.13.1/net.orig/ipv4/netfilter/ipt_nth.c linux-2.6.13.1/net/ipv4/netfilter/ipt_nth.c
---- linux-2.6.13.1/net.orig/ipv4/netfilter/ipt_nth.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.13.1/net/ipv4/netfilter/ipt_nth.c	2005-09-15 10:12:52.293374250 +0200
+diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/Kconfig linux-2.6.14/net/ipv4/netfilter/Kconfig
+--- linux-2.6.14.org/net/ipv4/netfilter/Kconfig	2005-10-28 02:02:08.000000000 +0200
++++ linux-2.6.14/net/ipv4/netfilter/Kconfig	2005-10-28 14:11:28.000000000 +0200
+@@ -821,5 +821,29 @@
+ 	  Allows altering the ARP packet payload: source and destination
+ 	  hardware and network addresses.
+ 
++config IP_NF_MATCH_NTH
++	tristate  'Nth match support'
++	depends on IP_NF_IPTABLES
++	help
++	  This option adds a `Nth' match, which allow you to make
++	  rules that match every Nth packet.  By default there are 
++	  16 different counters.
++	
++	  [options]
++	   --every     Nth              Match every Nth packet
++	  [--counter]  num              Use counter 0-15 (default:0)
++	  [--start]    num              Initialize the counter at the number 'num'
++	                                instead of 0. Must be between 0 and Nth-1
++	  [--packet]   num              Match on 'num' packet. Must be between 0
++	                                and Nth-1.
++	
++	                                If --packet is used for a counter than
++	                                there must be Nth number of --packet
++	                                rules, covering all values between 0 and
++	                                Nth-1 inclusively.
++	 
++	  If you want to compile it as a module, say M here and read
++	  Documentation/modules.txt.  If unsure, say `N'.
++
+ endmenu
+ 
+diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/Makefile linux-2.6.14/net/ipv4/netfilter/Makefile
+--- linux-2.6.14.org/net/ipv4/netfilter/Makefile	2005-10-28 02:02:08.000000000 +0200
++++ linux-2.6.14/net/ipv4/netfilter/Makefile	2005-10-28 14:11:28.000000000 +0200
+@@ -0,0 +0,1 @@
++obj-$(CONFIG_IP_NF_MATCH_NTH) += ipt_nth.o
+diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ipt_nth.c linux-2.6.14/net/ipv4/netfilter/ipt_nth.c
+--- linux-2.6.14.org/net/ipv4/netfilter/ipt_nth.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.14/net/ipv4/netfilter/ipt_nth.c	2005-10-28 14:11:28.000000000 +0200
 @@ -0,0 +1,166 @@
 +/*
 +  This is a module which is used for match support for every Nth packet
@@ -224,16 +262,16 @@ diff -uNr linux-2.6.13.1/net.orig/ipv4/netfilter/ipt_nth.c linux-2.6.13.1/net/ip
 +
 +module_init(init);
 +module_exit(fini);
-diff -uNr linux-2.6.13.1/net.orig/ipv4/netfilter/Kconfig linux-2.6.13.1/net/ipv4/netfilter/Kconfig
---- linux-2.6.13.1/net.orig/ipv4/netfilter/Kconfig	2005-09-10 04:42:58.000000000 +0200
-+++ linux-2.6.13.1/net/ipv4/netfilter/Kconfig	2005-09-15 10:12:52.301374750 +0200
-@@ -692,5 +692,29 @@
- 	  Allows altering the ARP packet payload: source and destination
- 	  hardware and network addresses.
+diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv6/netfilter/Kconfig linux-2.6.14/net/ipv6/netfilter/Kconfig
+--- linux-2.6.14.org/net/ipv6/netfilter/Kconfig	2005-10-28 02:02:08.000000000 +0200
++++ linux-2.6.14/net/ipv6/netfilter/Kconfig	2005-10-28 14:11:28.000000000 +0200
+@@ -278,5 +278,29 @@
+ 	  If you want to compile it as a module, say M here and read
+ 	  <file:Documentation/modules.txt>.  If unsure, say `N'.
  
-+config IP_NF_MATCH_NTH
++config IP6_NF_MATCH_NTH
 +	tristate  'Nth match support'
-+	depends on IP_NF_IPTABLES
++	depends on IP6_NF_IPTABLES
 +	help
 +	  This option adds a `Nth' match, which allow you to make
 +	  rules that match every Nth packet.  By default there are 
@@ -257,14 +295,14 @@ diff -uNr linux-2.6.13.1/net.orig/ipv4/netfilter/Kconfig linux-2.6.13.1/net/ipv4
 +
  endmenu
  
-diff -uNr linux-2.6.13.1/net.orig/ipv4/netfilter/Makefile linux-2.6.13.1/net/ipv4/netfilter/Makefile
---- linux-2.6.13.1/net.orig/ipv4/netfilter/Makefile	2005-09-10 04:42:58.000000000 +0200
-+++ linux-2.6.13.1/net/ipv4/netfilter/Makefile	2005-09-15 10:12:52.305375000 +0200
+diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv6/netfilter/Makefile linux-2.6.14/net/ipv6/netfilter/Makefile
+--- linux-2.6.14.org/net/ipv6/netfilter/Makefile	2005-10-28 02:02:08.000000000 +0200
++++ linux-2.6.14/net/ipv6/netfilter/Makefile	2005-10-28 14:11:28.000000000 +0200
 @@ -0,0 +0,1 @@
-+obj-$(CONFIG_IP_NF_MATCH_NTH) += ipt_nth.o
-diff -uNr linux-2.6.13.1/net.orig/ipv6/netfilter/ip6t_nth.c linux-2.6.13.1/net/ipv6/netfilter/ip6t_nth.c
---- linux-2.6.13.1/net.orig/ipv6/netfilter/ip6t_nth.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.13.1/net/ipv6/netfilter/ip6t_nth.c	2005-09-15 10:12:52.297374500 +0200
++obj-$(CONFIG_IP6_NF_MATCH_NTH) += ip6t_nth.o
+diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv6/netfilter/ip6t_nth.c linux-2.6.14/net/ipv6/netfilter/ip6t_nth.c
+--- linux-2.6.14.org/net/ipv6/netfilter/ip6t_nth.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.14/net/ipv6/netfilter/ip6t_nth.c	2005-10-28 14:11:28.000000000 +0200
 @@ -0,0 +1,173 @@
 +/*
 +  This is a module which is used for match support for every Nth packet
@@ -439,41 +477,3 @@ diff -uNr linux-2.6.13.1/net.orig/ipv6/netfilter/ip6t_nth.c linux-2.6.13.1/net/i
 +
 +module_init(init);
 +module_exit(fini);
-diff -uNr linux-2.6.13.1/net.orig/ipv6/netfilter/Kconfig linux-2.6.13.1/net/ipv6/netfilter/Kconfig
---- linux-2.6.13.1/net.orig/ipv6/netfilter/Kconfig	2005-09-10 04:42:58.000000000 +0200
-+++ linux-2.6.13.1/net/ipv6/netfilter/Kconfig	2005-09-15 10:12:52.309375250 +0200
-@@ -238,5 +238,29 @@
- 	  If you want to compile it as a module, say M here and read
- 	  <file:Documentation/modules.txt>.  If unsure, say `N'.
- 
-+config IP6_NF_MATCH_NTH
-+	tristate  'Nth match support'
-+	depends on IP6_NF_IPTABLES
-+	help
-+	  This option adds a `Nth' match, which allow you to make
-+	  rules that match every Nth packet.  By default there are 
-+	  16 different counters.
-+	
-+	  [options]
-+	   --every     Nth              Match every Nth packet
-+	  [--counter]  num              Use counter 0-15 (default:0)
-+	  [--start]    num              Initialize the counter at the number 'num'
-+	                                instead of 0. Must be between 0 and Nth-1
-+	  [--packet]   num              Match on 'num' packet. Must be between 0
-+	                                and Nth-1.
-+	
-+	                                If --packet is used for a counter than
-+	                                there must be Nth number of --packet
-+	                                rules, covering all values between 0 and
-+	                                Nth-1 inclusively.
-+	 
-+	  If you want to compile it as a module, say M here and read
-+	  Documentation/modules.txt.  If unsure, say `N'.
-+
- endmenu
- 
-diff -uNr linux-2.6.13.1/net.orig/ipv6/netfilter/Makefile linux-2.6.13.1/net/ipv6/netfilter/Makefile
---- linux-2.6.13.1/net.orig/ipv6/netfilter/Makefile	2005-09-10 04:42:58.000000000 +0200
-+++ linux-2.6.13.1/net/ipv6/netfilter/Makefile	2005-09-15 10:12:52.309375250 +0200
-@@ -0,0 +0,1 @@
-+obj-$(CONFIG_IP6_NF_MATCH_NTH) += ip6t_nth.o
