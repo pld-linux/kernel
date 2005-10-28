@@ -116,15 +116,15 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ipt_time.c linu
 +	u_int16_t packet_time;
 +
 +	/* We might not have a timestamp, get one */
-+	if (skb->stamp.tv_sec == 0)
-+		do_gettimeofday((struct timeval *)&skb->stamp);
++	if (skb->tstamp.off_sec == 0) /* mod by SAS for 2.6.14 */
++		do_gettimeofday((struct timeval *)&skb->tstamp);
 +
 +	/* First we make sure we are in the date start-stop boundaries */
-+	if ((skb->stamp.tv_sec < info->date_start) || (skb->stamp.tv_sec > info->date_stop))
++	if ((skb->tstamp.off_sec < info->date_start) || (skb->tstamp.off_sec > info->date_stop))
 +		return 0; /* We are outside the date boundaries */
 +
 +	/* Transform the timestamp of the packet, in a human readable form */
-+	localtime(&skb->stamp.tv_sec, &currenttime);
++	localtime(&skb->tstamp.off_sec, &currenttime);
 +
 +	/* check if we match this timestamp, we start by the days... */
 +	if ((days_of_week[currenttime.tm_wday] & info->days_match) != days_of_week[currenttime.tm_wday])
