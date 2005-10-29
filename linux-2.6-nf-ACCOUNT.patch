@@ -1,66 +1,12 @@
- include/linux/netfilter_ipv4/ip_tables.h   |   11 
- include/linux/netfilter_ipv4/ipt_ACCOUNT.h |  100 ++
- net/ipv4/netfilter/Makefile                |    1 
- net/ipv4/netfilter/ipt_ACCOUNT.c           | 1103 +++++++++++++++++++++++++++++
+ kernel-2.4.25.ipt_ACCOUNT/include/linux/netfilter_ipv4/ip_tables.h |   11 
+ linux-2.6.14/include/linux/netfilter_ipv4/ipt_ACCOUNT.h            |  100 
+ linux-2.6.14/net/ipv4/netfilter/Makefile                           |    1 
+ linux-2.6.14/net/ipv4/netfilter/ipt_ACCOUNT.c                      | 1103 ++++++++++
  4 files changed, 1215 insertions(+)
 
---- linux-2.6.13.1.org/net/ipv4/netfilter/Kconfig	(.../branches/vanilla-2.6.12.x)	(revision 6284)
-+++ linux-2.6.13.1/net/ipv4/netfilter/Kconfig	(.../trunk)	(revision 6284)
-@@ -419,6 +445,25 @@
- 
- 	  To compile it as a module, choose M here.  If unsure, say N.
- 
-+config IP_NF_TARGET_ACCOUNT
-+	tristate "ACCOUNT target support"
-+	depends on IP_NF_IPTABLES
-+	help
-+	  The ACCOUNT target is a high performance accounting system for local networks.
-+	  It takes two parameters: --addr network/netmask and --tname NAME.
-+
-+	  --addr is the subnet which is accounted for
-+	  --tname is the table name where the information is stored
-+
-+	  The data can be queried later using the libipt_ACCOUNT userspace library
-+	  or by the "iptaccount" tool which is part of the libipt_ACCOUNT package.
-+
-+	  A special subnet is "0.0.0.0/0": All data is stored in the src_bytes
-+	  and src_packets structure of slot "0". This is useful if you want
-+	  to account the overall traffic to/from your internet provider.
-+
-+	  To compile it as a module, choose M here.  If unsure, say N.
-+
- config IP_NF_TARGET_TCPMSS
- 	tristate "TCPMSS target support"
- 	depends on IP_NF_IPTABLES
-diff -Nur --exclude '*.orig' linux-2.6.13.1.org/include/linux/netfilter_ipv4/ip_tables.h linux-2.6.13.1/include/linux/netfilter_ipv4/ip_tables.h
---- linux-2.6.13.1.org/include/linux/netfilter_ipv4/ip_tables.h	2005-09-10 04:42:58.000000000 +0200
-+++ linux-2.6.13.1/include/linux/netfilter_ipv4/ip_tables.h	2005-09-16 16:08:00.000000000 +0200
-@@ -156,11 +156,22 @@
- #define IPT_SO_SET_ADD_COUNTERS	(IPT_BASE_CTL + 1)
- #define IPT_SO_SET_MAX		IPT_SO_SET_ADD_COUNTERS
- 
-+#define IPT_SO_SET_ACCOUNT_HANDLE_FREE	(IPT_BASE_CTL + 3)
-+#define IPT_SO_SET_ACCOUNT_HANDLE_FREE_ALL (IPT_BASE_CTL + 4)
-+#define IPT_SO_SET_ACCOUNT_MAX		IPT_SO_SET_ACCOUNT_HANDLE_FREE_ALL
-+
- #define IPT_SO_GET_INFO			(IPT_BASE_CTL)
- #define IPT_SO_GET_ENTRIES		(IPT_BASE_CTL + 1)
- #define IPT_SO_GET_REVISION_MATCH	(IPT_BASE_CTL + 2)
- #define IPT_SO_GET_REVISION_TARGET	(IPT_BASE_CTL + 3)
- #define IPT_SO_GET_MAX			IPT_SO_GET_REVISION_TARGET
-+ 
-+#define IPT_SO_GET_ACCOUNT_PREPARE_READ (IPT_BASE_CTL + 5)
-+#define IPT_SO_GET_ACCOUNT_PREPARE_READ_FLUSH (IPT_BASE_CTL + 6)
-+#define IPT_SO_GET_ACCOUNT_GET_DATA (IPT_BASE_CTL + 7)
-+#define IPT_SO_GET_ACCOUNT_GET_HANDLE_USAGE (IPT_BASE_CTL + 8)
-+#define IPT_SO_GET_ACCOUNT_GET_TABLE_NAMES (IPT_BASE_CTL + 9)
-+#define IPT_SO_GET_ACCOUNT_MAX      IPT_SO_GET_ACCOUNT_GET_TABLE_NAMES
- 
- /* CONTINUE verdict for targets */
- #define IPT_CONTINUE 0xFFFFFFFF
-diff -Nur --exclude '*.orig' linux-2.6.13.1.org/include/linux/netfilter_ipv4/ipt_ACCOUNT.h linux-2.6.13.1/include/linux/netfilter_ipv4/ipt_ACCOUNT.h
---- linux-2.6.13.1.org/include/linux/netfilter_ipv4/ipt_ACCOUNT.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.13.1/include/linux/netfilter_ipv4/ipt_ACCOUNT.h	2005-09-16 16:04:05.000000000 +0200
+diff -Nur --exclude '*.orig' linux-2.6.14.org/include/linux/netfilter_ipv4/ipt_ACCOUNT.h linux-2.6.14/include/linux/netfilter_ipv4/ipt_ACCOUNT.h
+--- linux-2.6.14.org/include/linux/netfilter_ipv4/ipt_ACCOUNT.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.14/include/linux/netfilter_ipv4/ipt_ACCOUNT.h	2005-10-29 22:13:51.000000000 +0200
 @@ -0,0 +1,100 @@
 +/***************************************************************************
 + *   Copyright (C) 2004 by Intra2net AG                                    *
@@ -162,15 +108,15 @@ diff -Nur --exclude '*.orig' linux-2.6.13.1.org/include/linux/netfilter_ipv4/ipt
 +};
 +
 +#endif /*_IPT_ACCOUNT_H*/
-diff -Nur --exclude '*.orig' linux-2.6.13.1.org/net/ipv4/netfilter/Makefile linux-2.6.13.1/net/ipv4/netfilter/Makefile
---- linux-2.6.13.1.org/net/ipv4/netfilter/Makefile	2005-09-10 04:42:58.000000000 +0200
-+++ linux-2.6.13.1/net/ipv4/netfilter/Makefile	2005-09-16 16:04:05.000000000 +0200
+diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/Makefile linux-2.6.14/net/ipv4/netfilter/Makefile
+--- linux-2.6.14.org/net/ipv4/netfilter/Makefile	2005-10-28 02:02:08.000000000 +0200
++++ linux-2.6.14/net/ipv4/netfilter/Makefile	2005-10-29 22:13:51.000000000 +0200
 @@ -0,0 +0,1 @@
 +obj-$(CONFIG_IP_NF_TARGET_ACCOUNT) += ipt_ACCOUNT.o
-diff -Nur --exclude '*.orig' linux-2.6.13.1.org/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6.13.1/net/ipv4/netfilter/ipt_ACCOUNT.c
---- linux-2.6.13.1.org/net/ipv4/netfilter/ipt_ACCOUNT.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.13.1/net/ipv4/netfilter/ipt_ACCOUNT.c	2005-09-16 16:04:05.000000000 +0200
-@@ -0,0 +1,1102 @@
+diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6.14/net/ipv4/netfilter/ipt_ACCOUNT.c
+--- linux-2.6.14.org/net/ipv4/netfilter/ipt_ACCOUNT.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.14/net/ipv4/netfilter/ipt_ACCOUNT.c	2005-10-29 22:13:51.000000000 +0200
+@@ -0,0 +1,1103 @@
 +/***************************************************************************
 + *   This is a module which is used for counting packets.                  *
 + *   See http://www.intra2net.com/opensource/ipt_account                   *
@@ -192,6 +138,7 @@ diff -Nur --exclude '*.orig' linux-2.6.13.1.org/net/ipv4/netfilter/ipt_ACCOUNT.c
 +#include <net/udp.h>
 +#include <net/tcp.h>
 +#include <linux/netfilter_ipv4/ip_tables.h>
++#include <linux/netfilter_ipv4/lockhelp.h>
 +#include <asm/semaphore.h>
 +#include <linux/kernel.h>
 +#include <linux/mm.h>
@@ -216,7 +163,7 @@ diff -Nur --exclude '*.orig' linux-2.6.13.1.org/net/ipv4/netfilter/ipt_ACCOUNT.c
 +static void *ipt_acc_tmpbuf = NULL;
 +
 +/* Spinlock used for manipulating the current accounting tables/data */
-+DEFINE_SPINLOCK(ipt_acc_lock);
++DECLARE_LOCK(ipt_acc_lock);
 +/* Mutex (semaphore) used for manipulating userspace handles/snapshot data */
 +static struct semaphore ipt_acc_userspace_mutex;
 +
@@ -373,10 +320,10 @@ diff -Nur --exclude '*.orig' linux-2.6.13.1.org/net/ipv4/netfilter/ipt_ACCOUNT.c
 +        return 0;
 +    }
 +
-+    spin_lock_bh(&ipt_acc_lock);
++    LOCK_BH(&ipt_acc_lock);
 +    table_nr = ipt_acc_table_insert(info->table_name, info->net_ip,
 +                                                      info->net_mask);
-+    spin_unlock_bh(&ipt_acc_lock);
++    UNLOCK_BH(&ipt_acc_lock);
 +    
 +    if (table_nr == -1) {
 +        printk("ACCOUNT: Table insert problem. Aborting\n");
@@ -399,7 +346,7 @@ diff -Nur --exclude '*.orig' linux-2.6.13.1.org/net/ipv4/netfilter/ipt_ACCOUNT.c
 +               targinfosize, IPT_ALIGN(sizeof(struct ipt_acc_info)));
 +    }
 +
-+    spin_lock_bh(&ipt_acc_lock);
++    LOCK_BH(&ipt_acc_lock);
 +
 +    DEBUGP("ACCOUNT: ipt_acc_deleteentry called for table: %s (#%d)\n", 
 +           info->table_name, info->table_nr);
@@ -425,14 +372,14 @@ diff -Nur --exclude '*.orig' linux-2.6.13.1.org/net/ipv4/netfilter/ipt_ACCOUNT.c
 +                       sizeof(struct ipt_acc_table));
 +            }
 +
-+            spin_unlock_bh(&ipt_acc_lock);
++            UNLOCK_BH(&ipt_acc_lock);
 +            return;
 +        }
 +    }
 +
 +    /* Table not found */
 +    printk("ACCOUNT: Table %s not found for destroy\n", info->table_name);
-+    spin_unlock_bh(&ipt_acc_lock);
++    UNLOCK_BH(&ipt_acc_lock);
 +}
 +
 +static void ipt_acc_depth0_insert(struct ipt_acc_mask_24 *mask_24,
@@ -598,13 +545,13 @@ diff -Nur --exclude '*.orig' linux-2.6.13.1.org/net/ipv4/netfilter/ipt_ACCOUNT.c
 +    u_int32_t dst_ip = (*pskb)->nh.iph->daddr;
 +    u_int32_t size = ntohs((*pskb)->nh.iph->tot_len);
 +
-+    spin_lock_bh(&ipt_acc_lock);
++    LOCK_BH(&ipt_acc_lock);
 +
 +    if (ipt_acc_tables[info->table_nr].name[0] == 0) {
 +        printk("ACCOUNT: ipt_acc_target: Invalid table id %u. "
 +               "IPs %u.%u.%u.%u/%u.%u.%u.%u\n", info->table_nr, 
 +               NIPQUAD(src_ip), NIPQUAD(dst_ip));
-+        spin_unlock_bh(&ipt_acc_lock);
++        UNLOCK_BH(&ipt_acc_lock);
 +        return IPT_CONTINUE;
 +    }
 +
@@ -616,7 +563,7 @@ diff -Nur --exclude '*.orig' linux-2.6.13.1.org/net/ipv4/netfilter/ipt_ACCOUNT.c
 +            ipt_acc_tables[info->table_nr].ip, 
 +            ipt_acc_tables[info->table_nr].netmask,
 +            src_ip, dst_ip, size, &ipt_acc_tables[info->table_nr].itemcount);
-+        spin_unlock_bh(&ipt_acc_lock);
++        UNLOCK_BH(&ipt_acc_lock);
 +        return IPT_CONTINUE;
 +    }
 +
@@ -627,7 +574,7 @@ diff -Nur --exclude '*.orig' linux-2.6.13.1.org/net/ipv4/netfilter/ipt_ACCOUNT.c
 +            ipt_acc_tables[info->table_nr].ip, 
 +            ipt_acc_tables[info->table_nr].netmask,
 +            src_ip, dst_ip, size, &ipt_acc_tables[info->table_nr].itemcount);
-+        spin_unlock_bh(&ipt_acc_lock);
++        UNLOCK_BH(&ipt_acc_lock);
 +        return IPT_CONTINUE;
 +    }
 +
@@ -638,7 +585,7 @@ diff -Nur --exclude '*.orig' linux-2.6.13.1.org/net/ipv4/netfilter/ipt_ACCOUNT.c
 +            ipt_acc_tables[info->table_nr].ip, 
 +            ipt_acc_tables[info->table_nr].netmask,
 +            src_ip, dst_ip, size, &ipt_acc_tables[info->table_nr].itemcount);
-+        spin_unlock_bh(&ipt_acc_lock);
++        UNLOCK_BH(&ipt_acc_lock);
 +        return IPT_CONTINUE;
 +    }
 +
@@ -646,7 +593,7 @@ diff -Nur --exclude '*.orig' linux-2.6.13.1.org/net/ipv4/netfilter/ipt_ACCOUNT.c
 +           "Table id %u. IPs %u.%u.%u.%u/%u.%u.%u.%u\n", 
 +           info->table_nr, NIPQUAD(src_ip), NIPQUAD(dst_ip));
 +
-+    spin_unlock_bh(&ipt_acc_lock);
++    UNLOCK_BH(&ipt_acc_lock);
 +    return IPT_CONTINUE;
 +}
 +
@@ -1047,14 +994,14 @@ diff -Nur --exclude '*.orig' linux-2.6.13.1.org/net/ipv4/netfilter/ipt_ACCOUNT.c
 +                break;
 +            }
 +    
-+            spin_lock_bh(&ipt_acc_lock);
++            LOCK_BH(&ipt_acc_lock);
 +            if (cmd == IPT_SO_GET_ACCOUNT_PREPARE_READ_FLUSH)
 +                ret = ipt_acc_handle_prepare_read_flush(
 +                                    handle.name, &dest, &handle.itemcount);
 +            else
 +                ret = ipt_acc_handle_prepare_read(
 +                                    handle.name, &dest, &handle.itemcount);
-+            spin_unlock_bh(&ipt_acc_lock);
++            UNLOCK_BH(&ipt_acc_lock);
 +            // Error occured during prepare_read?
 +           if (ret == -1)
 +                return -EINVAL;
@@ -1147,7 +1094,7 @@ diff -Nur --exclude '*.orig' linux-2.6.13.1.org/net/ipv4/netfilter/ipt_ACCOUNT.c
 +            u_int32_t size = 0, i, name_len;
 +            char *tnames;
 +
-+            spin_lock_bh(&ipt_acc_lock);
++            LOCK_BH(&ipt_acc_lock);
 +
 +            /* Determine size of table names */
 +            for (i = 0; i < ACCOUNT_MAX_TABLES; i++) {
@@ -1157,7 +1104,7 @@ diff -Nur --exclude '*.orig' linux-2.6.13.1.org/net/ipv4/netfilter/ipt_ACCOUNT.c
 +            size += 1;    /* Terminating NULL character */
 +
 +            if (*len < size || size > PAGE_SIZE) {
-+                spin_unlock_bh(&ipt_acc_lock);
++                UNLOCK_BH(&ipt_acc_lock);
 +                printk("ACCOUNT: ipt_acc_get_ctl: not enough space (%u < %u < %lu)"
 +                       " to store table names\n", *len, size, PAGE_SIZE);
 +                ret = -ENOMEM;
@@ -1172,7 +1119,7 @@ diff -Nur --exclude '*.orig' linux-2.6.13.1.org/net/ipv4/netfilter/ipt_ACCOUNT.c
 +                    tnames += name_len;
 +                }
 +            }
-+            spin_unlock_bh(&ipt_acc_lock);
++            UNLOCK_BH(&ipt_acc_lock);
 +            
 +            /* Terminating NULL character */
 +            *tnames = 0;
@@ -1273,3 +1220,28 @@ diff -Nur --exclude '*.orig' linux-2.6.13.1.org/net/ipv4/netfilter/ipt_ACCOUNT.c
 +module_init(init);
 +module_exit(fini);
 +MODULE_LICENSE("GPL");
+diff -u -r kernel-2.4.25/include/linux/netfilter_ipv4/ip_tables.h kernel-2.4.25.ipt_ACCOUNT/include/linux/netfilter_ipv4/ip_tables.h
+--- kernel-2.4.25/include/linux/netfilter_ipv4/ip_tables.h	Mon Apr 12 20:02:19 2004
++++ kernel-2.4.25.ipt_ACCOUNT/include/linux/netfilter_ipv4/ip_tables.h	Mon Apr 12 17:37:20 2004
+@@ -151,10 +151,21 @@
+ #define IPT_SO_SET_ADD_COUNTERS	(IPT_BASE_CTL + 1)
+ #define IPT_SO_SET_MAX		IPT_SO_SET_ADD_COUNTERS
+ 
++#define IPT_SO_SET_ACCOUNT_HANDLE_FREE	(IPT_BASE_CTL + 3)
++#define IPT_SO_SET_ACCOUNT_HANDLE_FREE_ALL (IPT_BASE_CTL + 4)
++#define IPT_SO_SET_ACCOUNT_MAX		IPT_SO_SET_ACCOUNT_HANDLE_FREE_ALL
++
+ #define IPT_SO_GET_INFO		(IPT_BASE_CTL)
+ #define IPT_SO_GET_ENTRIES	(IPT_BASE_CTL + 1)
+ #define IPT_SO_GET_MAX		IPT_SO_GET_ENTRIES
+ 
++#define IPT_SO_GET_ACCOUNT_PREPARE_READ (IPT_BASE_CTL + 3)
++#define IPT_SO_GET_ACCOUNT_PREPARE_READ_FLUSH (IPT_BASE_CTL + 4)
++#define IPT_SO_GET_ACCOUNT_GET_DATA (IPT_BASE_CTL + 5)
++#define IPT_SO_GET_ACCOUNT_GET_HANDLE_USAGE (IPT_BASE_CTL + 6)
++#define IPT_SO_GET_ACCOUNT_GET_TABLE_NAMES (IPT_BASE_CTL + 7)
++#define IPT_SO_GET_ACCOUNT_MAX      IPT_SO_GET_ACCOUNT_GET_TABLE_NAMES
++
+ /* CONTINUE verdict for targets */
+ #define IPT_CONTINUE 0xFFFFFFFF
+ 
