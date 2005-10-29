@@ -767,13 +767,13 @@ sed -i 's:RW_LOCK_UNLOCKED:RW_LOCK_UNLOCKED(data->lock):' net/ipv4/netfilter/nf-
 #Netfilter
 #[submitted]
 #[base]
-###########%patch40 -p1
+%patch40 -p1
 %patch41 -p1
 %patch42 -p1
 %patch43 -p1
 %patch44 -p1
 %patch45 -p1
-###########%patch46 -p1
+%patch46 -p1
 %patch47 -p1
 %patch48 -p1
 %patch49 -p1
@@ -781,10 +781,10 @@ sed -i 's:RW_LOCK_UNLOCKED:RW_LOCK_UNLOCKED(data->lock):' net/ipv4/netfilter/nf-
 %patch51 -p1
 %patch52 -p1
 #[extra]
-#%patch60 -p1
-#%patch61 -p1
-#%patch62 -p1
-#%patch63 -p1
+%patch60 -p1
+%patch61 -p1
+%patch62 -p1
+%patch63 -p1
 #%patch64 -p1
 #%patch65 -p1
 #%patch66 -p1
