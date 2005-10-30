@@ -100,7 +100,7 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ipt_time.c linu
 +};
 +
 +void
-+localtime(const time_t *timepr, struct tm *r);
++localtime(const struct skb_timeval *stime, struct tm *r);
 +
 +static int
 +match(const struct sk_buff *skb,
@@ -124,7 +124,7 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ipt_time.c linu
 +		return 0; /* We are outside the date boundaries */
 +
 +	/* Transform the timestamp of the packet, in a human readable form */
-+	localtime(&skb->tstamp.off_sec, &currenttime);
++	localtime(&skb->tstamp, &currenttime);
 +
 +	/* check if we match this timestamp, we start by the days... */
 +	if ((days_of_week[currenttime.tm_wday] & info->days_match) != days_of_week[currenttime.tm_wday])
@@ -199,7 +199,7 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ipt_time.c linu
 +#define SPD 24*60*60
 +
 +void
-+localtime(const time_t *timepr, struct tm *r) {
++localtime(const struct skb_timeval *stime, struct tm *r) {
 +	time_t i;
 +	time_t timep;
 +	extern struct timezone sys_tz;
@@ -219,7 +219,7 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ipt_time.c linu
 +		};
 +	register time_t work;
 +
-+	timep = (*timepr) - (sys_tz.tz_minuteswest * 60);
++	timep = (time_t)(stime->off_sec) - (sys_tz.tz_minuteswest * 60);
 +	work=timep%(SPD);
 +	r->tm_sec=work%60; work/=60;
 +	r->tm_min=work%60; r->tm_hour=work/60;
