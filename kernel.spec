@@ -210,7 +210,7 @@ Patch5:		kernel-MAX_INIT_ARGS.patch
 Patch6:		linux-2.6-extended-utf8.patch
 Patch7:		linux-2.6-realtime-lsm-0.1.1.patch
 Patch8:		nf-hipac-%{_nf_hipac_ver}.patch
-
+Patch9:		linux-2.6-x8664-bitops-fix-for-size-optimized-kernel.patch
 Patch10:	2.6.0-powernow-k7.patch
 # derived from http://hem.bredband.net/ekmlar/patch-vt1211-2.6.11.txt
 Patch11:	linux-2.6-vt1211-sensor.patch
@@ -738,7 +738,7 @@ install %{SOURCE5} Makefile.ppclibs
 sed -i 's:SPIN_LOCK_UNLOCKED:SPIN_LOCK_UNLOCKED(dev_lock):' net/ipv4/netfilter/nf-hipac/nfhp_dev.c
 sed -i 's:RW_LOCK_UNLOCKED:RW_LOCK_UNLOCKED(data->lock):' net/ipv4/netfilter/nf-hipac/nfhp_proc.c
 %endif
-
+%patch9 -p0
 %patch10 -p1
 #patch11 -p1		NEEDS CHECK (compilation error)
 %patch12 -p1
