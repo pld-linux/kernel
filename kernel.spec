@@ -788,7 +788,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch68 -p1
 %patch69 -p1
 %patch70 -p1
-%patch71 -p1
+##%patch71 -p1
 %patch72 -p1
 #[extra/conntrack]
 #%patch73 -p1
