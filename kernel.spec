@@ -268,7 +268,8 @@ Patch66:	linux-2.6-nf-geoip.patch
 Patch67:	linux-2.6-nf-h323-conntrack-nat.patch
 Patch68:	linux-2.6-nf-ip_queue_vwmark.patch
 Patch69:	linux-2.6-nf-ipp2p.patch
-Patch71:	linux-2.6-nf-policy.patch
+Patch70:	linux-2.6-nf-policy.patch
+Patch71:	linux-2.6-nf-rpc.patch
 Patch72:	linux-2.6-nf-unclean.patch
 # [extra/conntrack]
 Patch73:	linux-2.6-nf-conntrack-event-api.patch
@@ -785,10 +786,10 @@ install %{SOURCE5} Makefile.ppclibs
 %patch66 -p1
 %patch67 -p1
 %patch68 -p1
-#%patch69 -p1
-#%patch70 -p1
-#%patch71 -p1
-#%patch72 -p1
+%patch69 -p1
+%patch70 -p1
+%patch71 -p1
+%patch72 -p1
 #[extra/conntrack]
 #%patch73 -p1
 #%patch74 -p1
