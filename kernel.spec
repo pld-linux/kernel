@@ -735,7 +735,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
-%patch9 -p0
+%patch9 -p1
 %patch10 -p1
 #patch11 -p1		NEEDS CHECK (compilation error)
 %patch12 -p1
