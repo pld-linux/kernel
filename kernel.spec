@@ -734,10 +734,6 @@ install %{SOURCE5} Makefile.ppclibs
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
-%if %{with preemptive}
-sed -i 's:SPIN_LOCK_UNLOCKED:SPIN_LOCK_UNLOCKED(dev_lock):' net/ipv4/netfilter/nf-hipac/nfhp_dev.c
-sed -i 's:RW_LOCK_UNLOCKED:RW_LOCK_UNLOCKED(data->lock):' net/ipv4/netfilter/nf-hipac/nfhp_proc.c
-%endif
 %patch9 -p0
 %patch10 -p1
 #patch11 -p1		NEEDS CHECK (compilation error)
@@ -802,7 +798,6 @@ sed -i 's:RW_LOCK_UNLOCKED:RW_LOCK_UNLOCKED(data->lock):' net/ipv4/netfilter/nf-
 %patch80 -p1
 
 %patch82 -p1
-%{?with_preemptive:sed -i 's:SPIN_LOCK_UNLOCKED:SPIN_LOCK_UNLOCKED(SendCmplPktQ.QueueLock):' drivers/net/sk98lin/sky2.c}
 %patch83 -p1
 %patch84 -p1
 %patch86 -p1
@@ -868,6 +863,25 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
 
 # on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
+
+%if %{with xpreemptive}
+sed -i 's:SPIN_LOCK_UNLOCKED:SPIN_LOCK_UNLOCKED(SendCmplPktQ.QueueLock):' drivers/net/sk98lin/sky2.c
+for f in \
+	net/ipv4/netfilter/ip_set.c \
+	net/ipv4/netfilter/ipt_account.c \
+	net/ipv4/netfilter/ipt_expire.c \
+	net/ipv4/netfilter/ipt_fuzzy.c \
+	net/ipv4/netfilter/ipt_geoip.c \
+	net/ipv4/netfilter/ipt_osf.c \
+	net/ipv4/netfilter/ipt_quota.c \
+	net/ipv4/netfilter/nf-hipac/nfhp_dev.c \
+	net/ipv4/netfilter/nf-hipac/nfhp_proc.c \
+	net/ipv6/netfilter/ip6t_expire.c \
+	net/ipv6/netfilter/ip6t_fuzzy.c \
+; do
+	perl -pi -e 's/(.*\s+(.*)\s+=\s+\w+_LOCK_UNLOCKED)\s*;/$1\($2\);/' $f
+done
+%endif
 
 %build
 TuneUpConfigForIX86 () {
