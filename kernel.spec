@@ -870,6 +870,7 @@ for f in \
 	net/ipv4/netfilter/ipt_quota.c \
 	net/ipv4/netfilter/nf-hipac/nfhp_dev.c \
 	net/ipv4/netfilter/nf-hipac/nfhp_proc.c \
+	net/ipv4/fib_semantics.c \
 	net/ipv6/netfilter/ip6t_expire.c \
 	net/ipv6/netfilter/ip6t_fuzzy.c \
 ; do
