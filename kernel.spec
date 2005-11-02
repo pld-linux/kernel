@@ -239,7 +239,7 @@ Patch36:	linux-2.6.13-imq2.diff
 # derived from http://www.zz9.dk/wrr-linux-2.6.12.2.patch.gz
 Patch37:	wrr-linux-2.6.12.2.patch
 # from http://www.ssi.bg/~ja/#routers
-Patch38:	routes-2.6.13-12.diff
+Patch38:	routes-2.6.14-12.diff
 
 # patch-o-matic-ng
 # [submitted]
@@ -272,11 +272,6 @@ Patch70:	linux-2.6-nf-policy.patch
 Patch71:	linux-2.6-nf-rpc.patch
 Patch72:	linux-2.6-nf-unclean.patch
 # [extra/conntrack]
-Patch73:	linux-2.6-nf-conntrack-event-api.patch
-Patch74:	linux-2.6-nf-pptp-conntrack-nat.patch
-# [unofficial/external]
-Patch75:	linux-2.6-nf-string.patch
-# netfilter nfy...
 
 # http://tahoe.pl/patch.htm
 Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
@@ -758,11 +753,10 @@ install %{SOURCE5} Makefile.ppclibs
 %patch35 -p1
 %patch36 -p1
 %patch37 -p1
-#patch38 -p1		NEEDS UPDATE
+%patch38 -p1
 
-#Netfilter
-#[submitted]
-#[base]
+# netfilter patchset
+# [base]
 %patch40 -p1
 %patch41 -p1
 %patch42 -p1
@@ -776,8 +770,8 @@ install %{SOURCE5} Makefile.ppclibs
 %patch50 -p1
 %patch51 -p1
 %patch52 -p1
-#[extra]
-#%patch60 -p1
+# [extra]
+#patch60 -p1
 %patch61 -p1
 %patch62 -p1
 %patch63 -p1
@@ -788,13 +782,10 @@ install %{SOURCE5} Makefile.ppclibs
 %patch68 -p1
 %patch69 -p1
 %patch70 -p1
-##%patch71 -p1
+%patch71 -p1
 %patch72 -p1
-#[extra/conntrack]
-#%patch73 -p1
-#%patch74 -p1
-#[unofficial/external]
-#%patch75 -p1
+# [extra/conntrack]
+# end of netfilter patchset
 
 %patch80 -p1
 
