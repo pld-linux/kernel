@@ -232,7 +232,7 @@ Patch30:	2.6.x-TGA-fbdev-lkml.patch
 Patch31:	linux-2.6-ppc-no-i8042.patch
 
 # http://fatooh.org/esfq-2.6/
-Patch35:	linux-2.6-esfq.patch
+Patch35:	esfq-kernel.patch
 # http://www.linuximq.net/
 Patch36:	linux-2.6.13-imq2.diff
 # http://www.zz9.dk/wrr/
@@ -272,6 +272,7 @@ Patch70:	linux-2.6-nf-policy.patch
 Patch71:	linux-2.6-nf-rpc.patch
 Patch72:	linux-2.6-nf-unclean.patch
 # [extra/conntrack]
+# /patch-o-matic-ng
 
 # http://tahoe.pl/patch.htm
 Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
@@ -755,7 +756,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch37 -p1
 %patch38 -p1
 
-# netfilter patchset
+# patch-o-matic-ng
 # [base]
 %patch40 -p1
 %patch41 -p1
@@ -771,7 +772,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch51 -p1
 %patch52 -p1
 # [extra]
-#patch60 -p1
+%patch60 -p1
 %patch61 -p1
 %patch62 -p1
 %patch63 -p1
@@ -785,7 +786,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch71 -p1
 %patch72 -p1
 # [extra/conntrack]
-# end of netfilter patchset
+# /patch-o-matic-ng
 
 %patch80 -p1
 
