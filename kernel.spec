@@ -302,7 +302,7 @@ Patch105:	linux-2.6-net-sundance-ip100A-pciids.patch
 Patch106:	linux-2.6-null-tty-driver-oops.patch
 Patch107:	linux-2.6-sata-sil-mod15write-workaround.patch
 Patch108:	linux-2.6-tty-races.patch
-
+Patch109:	linux-2.6-kbz5514.patch
 Patch110:	linux-2.6-cputime-misscalculation.patch
 
 # Derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
@@ -812,7 +812,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch106 -p1
 %patch107 -p1
 %patch108 -p1
-
+%patch109 -p1
 %patch110 -p1
 
 %patch115 -p1
