@@ -167,7 +167,7 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/Makefile linux-
 diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c linux-2.6.14/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c
 --- linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.14/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c	2005-10-31 19:33:03.000000000 +0100
-@@ -0,0 +1,562 @@
+@@ -0,0 +1,561 @@
 +/* RPC extension for IP (TCP) connection tracking, Version 2.2
 + * (C) 2000 by Marcelo Barbosa Lima <marcelo.lima@dcc.unicamp.br>
 + *	- original rpc tracking module
@@ -233,7 +233,6 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 +#include <linux/stddef.h>
 +#include <linux/list.h>
 +
-+#include <linux/netfilter_ipv4/lockhelp.h>
 +#include <linux/netfilter_ipv4/ip_tables.h>
 +#include <linux/netfilter_ipv4/ip_conntrack_helper.h>
 +#include <linux/netfilter_ipv4/ip_conntrack_rpc.h>
@@ -265,8 +264,8 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 +#endif
 +
 +DECLARE_RWLOCK(ipct_rpc_tcp_lock);
-+#define ASSERT_READ_LOCK(x) MUST_BE_READ_LOCKED(&ipct_rpc_tcp_lock)
-+#define ASSERT_WRITE_LOCK(x) MUST_BE_WRITE_LOCKED(&ipct_rpc_tcp_lock)
++#define ASSERT_READ_LOCK(x)	/* dont use that */
++#define ASSERT_WRITE_LOCK(x)	/* dont use that */
 +#include <linux/netfilter_ipv4/listhelp.h>
 +
 +/* For future conections RPC, using client's cache bindings
@@ -279,9 +278,9 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 +{
 +	struct request_p *p = (void *)request_p_ul;
 +	
-+	WRITE_LOCK(&ipct_rpc_tcp_lock);
++	write_lock_bh(&ipct_rpc_tcp_lock);
 +	LIST_DELETE(&request_p_list_tcp, p);
-+	WRITE_UNLOCK(&ipct_rpc_tcp_lock);
++	write_unlock_bh(&ipct_rpc_tcp_lock);
 +	kfree(p);
 +	return;
 +}
@@ -289,10 +288,10 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 +
 +static void req_cl(struct request_p * r)
 +{
-+	WRITE_LOCK(&ipct_rpc_tcp_lock);
++	write_lock_bh(&ipct_rpc_tcp_lock);
 +	del_timer(&r->timeout);
 +	LIST_DELETE(&request_p_list_tcp, r);
-+	WRITE_UNLOCK(&ipct_rpc_tcp_lock);
++	write_unlock_bh(&ipct_rpc_tcp_lock);
 +	kfree(r);
 +	return;
 +}
@@ -323,7 +322,7 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 +	struct request_p *req_p;
 +	
 +	/* Verifies if entry already exists */
-+	WRITE_LOCK(&ipct_rpc_tcp_lock);
++	write_lock_bh(&ipct_rpc_tcp_lock);
 +	req_p = LIST_FIND(&request_p_list_tcp, request_p_cmp,
 +		struct request_p *, xid, ip, port);
 +
@@ -333,11 +332,11 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 +			req_p->timeout.expires = jiffies + EXP;
 +			add_timer(&req_p->timeout);	
 +		} 
-+		WRITE_UNLOCK(&ipct_rpc_tcp_lock);
++		write_unlock_bh(&ipct_rpc_tcp_lock);
 +		return;	
 +
 +	}
-+	WRITE_UNLOCK(&ipct_rpc_tcp_lock);
++	write_unlock_bh(&ipct_rpc_tcp_lock);
 +	
 +	/* Allocate new request_p */
 +	req_p = (struct request_p *) kmalloc(sizeof(struct request_p), GFP_ATOMIC);
@@ -361,9 +360,9 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 +	add_timer(&req_p->timeout); 
 +
 +	/* Put in list */
-+	WRITE_LOCK(&ipct_rpc_tcp_lock);
++	write_lock_bh(&ipct_rpc_tcp_lock);
 +	list_prepend(&request_p_list_tcp, req_p);
-+	WRITE_UNLOCK(&ipct_rpc_tcp_lock); 
++	write_unlock_bh(&ipct_rpc_tcp_lock); 
 +	return; 
 +}
 +
@@ -479,7 +478,7 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 +		if (port_buf && port_buf != nsrexec) {
 +			DEBUGP("port found: %u\n", port_buf);
 +
-+                        exp = ip_conntrack_expect_alloc();
++                        exp = ip_conntrack_expect_alloc(ct);
 +                        if (!exp) {
 +                          ret = NF_DROP;
 +                          goto out;
@@ -528,10 +527,10 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 +				NIPQUAD(exp->mask.dst.ip),
 +				exp->mask.dst.protonum);
 +
-+			if (ip_conntrack_expect_related(exp) != 0) {
-+		                ip_conntrack_expect_free(exp);
++			if (ip_conntrack_expect_related(exp) != 0)
 +        		        ret = NF_DROP;
-+        		}
++
++			ip_conntrack_expect_put(exp);
 +
 +		}
 +
@@ -733,7 +732,7 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rpc_udp.c linux-2.6.14/net/ipv4/netfilter/ip_conntrack_rpc_udp.c
 --- linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rpc_udp.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.14/net/ipv4/netfilter/ip_conntrack_rpc_udp.c	2005-10-31 19:33:03.000000000 +0100
-@@ -0,0 +1,536 @@
+@@ -0,0 +1,535 @@
 +/* RPC extension for IP (UDP) connection tracking, Version 2.2
 + * (C) 2000 by Marcelo Barbosa Lima <marcelo.lima@dcc.unicamp.br>
 + *	- original rpc tracking module
@@ -793,7 +792,6 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 +#include <linux/stddef.h>
 +#include <linux/list.h>
 +
-+#include <linux/netfilter_ipv4/lockhelp.h>
 +#include <linux/netfilter_ipv4/ip_tables.h>
 +#include <linux/netfilter_ipv4/ip_conntrack_helper.h>
 +#include <linux/netfilter_ipv4/ip_conntrack_rpc.h>
@@ -822,8 +820,8 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 +#endif
 +
 +DECLARE_RWLOCK(ipct_rpc_udp_lock);
-+#define ASSERT_READ_LOCK(x) MUST_BE_READ_LOCKED(&ipct_rpc_udp_lock)
-+#define ASSERT_WRITE_LOCK(x) MUST_BE_WRITE_LOCKED(&ipct_rpc_udp_lock)
++#define ASSERT_READ_LOCK(x)	/* dont use that */
++#define ASSERT_WRITE_LOCK(x)	/* dont use that */
 +#include <linux/netfilter_ipv4/listhelp.h>
 +
 +/* For future conections RPC, using client's cache bindings
@@ -836,9 +834,9 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 +{
 +	struct request_p *p = (void *)request_p_ul;
 +	
-+	WRITE_LOCK(&ipct_rpc_udp_lock);
++	write_lock_bh(&ipct_rpc_udp_lock);
 +	LIST_DELETE(&request_p_list_udp, p);
-+	WRITE_UNLOCK(&ipct_rpc_udp_lock);
++	write_unlock_bh(&ipct_rpc_udp_lock);
 +	kfree(p);
 +	return;
 +}
@@ -846,10 +844,10 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 +
 +static void req_cl(struct request_p * r)
 +{
-+	WRITE_LOCK(&ipct_rpc_udp_lock);
++	write_lock_bh(&ipct_rpc_udp_lock);
 +	del_timer(&r->timeout);
 +	LIST_DELETE(&request_p_list_udp, r);
-+	WRITE_UNLOCK(&ipct_rpc_udp_lock);
++	write_unlock_bh(&ipct_rpc_udp_lock);
 +	kfree(r);
 +	return;
 +}
@@ -880,7 +878,7 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 +	struct request_p *req_p;
 +        
 +	/* Verifies if entry already exists */
-+	WRITE_LOCK(&ipct_rpc_udp_lock);
++	write_lock_bh(&ipct_rpc_udp_lock);
 +	req_p = LIST_FIND(&request_p_list_udp, request_p_cmp,
 +		struct request_p *, xid, ip, port);
 +
@@ -890,11 +888,11 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 +			req_p->timeout.expires = jiffies + EXP;
 +			add_timer(&req_p->timeout);	
 +		} 
-+		WRITE_UNLOCK(&ipct_rpc_udp_lock);
++		write_unlock_bh(&ipct_rpc_udp_lock);
 +		return;	
 +
 +	}
-+	WRITE_UNLOCK(&ipct_rpc_udp_lock);
++	write_unlock_bh(&ipct_rpc_udp_lock);
 +	
 +	/* Allocate new request_p */
 +	req_p = (struct request_p *) kmalloc(sizeof(struct request_p), GFP_ATOMIC);
@@ -918,9 +916,9 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 +	add_timer(&req_p->timeout); 
 +
 +	/* Put in list */
-+	WRITE_LOCK(&ipct_rpc_udp_lock);
++	write_lock_bh(&ipct_rpc_udp_lock);
 +	list_prepend(&request_p_list_udp, req_p);
-+	WRITE_UNLOCK(&ipct_rpc_udp_lock); 
++	write_unlock_bh(&ipct_rpc_udp_lock); 
 +	return; 
 +
 +}
@@ -1032,7 +1030,7 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 +		if (port_buf) {
 +			DEBUGP("port found: %u\n", port_buf);
 +
-+                        exp = ip_conntrack_expect_alloc();
++                        exp = ip_conntrack_expect_alloc(ct);
 +                        if (!exp) {
 +                          ret = NF_DROP;
 +                          goto out;
@@ -1076,10 +1074,10 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 +				NIPQUAD(exp->mask.dst.ip),
 +				exp->mask.dst.protonum);
 +
-+			if (ip_conntrack_expect_related(exp) != 0) {
-+		                ip_conntrack_expect_free(exp);
++			if (ip_conntrack_expect_related(exp) != 0)
 +        		        ret = NF_DROP;
-+        		}
++
++			ip_conntrack_expect_put(exp);
 +		}
 +
 +out:
@@ -1273,7 +1271,7 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ip_conntrack_rp
 diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ipt_rpc.c linux-2.6.14/net/ipv4/netfilter/ipt_rpc.c
 --- linux-2.6.14.org/net/ipv4/netfilter/ipt_rpc.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.14/net/ipv4/netfilter/ipt_rpc.c	2005-10-31 19:33:03.000000000 +0100
-@@ -0,0 +1,439 @@
+@@ -0,0 +1,425 @@
 +/* RPC extension for IP connection matching, Version 2.2
 + * (C) 2000 by Marcelo Barbosa Lima <marcelo.lima@dcc.unicamp.br>
 + *	- original rpc tracking module
@@ -1329,7 +1327,6 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ipt_rpc.c linux
 +#include <linux/netfilter_ipv4/ip_conntrack.h>
 +#include <linux/netfilter_ipv4/ip_tables.h>
 +#include <linux/netfilter_ipv4/ip_conntrack_rpc.h>
-+#include <linux/netfilter_ipv4/lockhelp.h>
 +#include <linux/netfilter_ipv4/ipt_rpc.h>
 +
 +#define MAX_PORTS 8
@@ -1365,24 +1362,11 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ipt_rpc.c linux
 +extern struct list_head request_p_list_udp;
 +extern struct module *ip_conntrack_rpc_udp;
 +
-+DECLARE_RWLOCK_EXTERN(ipct_rpc_tcp_lock);
-+DECLARE_RWLOCK_EXTERN(ipct_rpc_udp_lock);
++extern rwlock_t ipct_rpc_tcp_lock;
++extern rwlock_t ipct_rpc_udp_lock;
 +
-+#define ASSERT_READ_LOCK(x)					\
-+do {								\
-+	if (x == &request_p_list_udp)				\
-+		MUST_BE_READ_LOCKED(&ipct_rpc_udp_lock);	\
-+	else if (x == &request_p_list_tcp)			\
-+		MUST_BE_READ_LOCKED(&ipct_rpc_tcp_lock);	\
-+} while (0)
-+
-+#define ASSERT_WRITE_LOCK(x)					\
-+do {								\
-+	if (x == &request_p_list_udp)				\
-+		MUST_BE_WRITE_LOCKED(&ipct_rpc_udp_lock);	\
-+	else if (x == &request_p_list_tcp)			\
-+		MUST_BE_WRITE_LOCKED(&ipct_rpc_tcp_lock);	\
-+} while (0)
++#define ASSERT_READ_LOCK(x)	/* dont use that */
++#define ASSERT_WRITE_LOCK(x)	/* dont use that */
 +
 +#include <linux/netfilter_ipv4/listhelp.h>
 +
@@ -1478,9 +1462,9 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ipt_rpc.c linux
 +
 +		switch (ct->tuplehash[0].tuple.dst.protonum) {
 +			case IPPROTO_UDP:
-+				WRITE_LOCK(&ipct_rpc_udp_lock);
++				write_lock_bh(&ipct_rpc_udp_lock);
 +			case IPPROTO_TCP:
-+				WRITE_LOCK(&ipct_rpc_tcp_lock);
++				write_lock_bh(&ipct_rpc_tcp_lock);
 +		}
 +		req_p = LIST_FIND(&request_p_list, request_p_cmp,
 +				  struct request_p *, xid,
@@ -1509,9 +1493,9 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ipt_rpc.c linux
 +		}
 +		switch (ct->tuplehash[0].tuple.dst.protonum) {
 +			case IPPROTO_UDP:
-+				WRITE_UNLOCK(&ipct_rpc_udp_lock);
++				write_unlock_bh(&ipct_rpc_udp_lock);
 +			case IPPROTO_TCP:
-+				WRITE_UNLOCK(&ipct_rpc_tcp_lock);
++				write_unlock_bh(&ipct_rpc_tcp_lock);
 +		}
 +
 +		if(rpcinfo->strict == 1)
