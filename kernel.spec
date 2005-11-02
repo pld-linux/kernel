@@ -129,7 +129,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.1
+%define		_rel		0.2
 
 %define		_netfilter_snap		20051028
 %define		_nf_hipac_ver		0.9.1
@@ -163,7 +163,7 @@ Source2:	kernel-config.h
 Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git2.bz2
 # Source3-md5:	3db58f38e8a3c001d1a18eb1ee27db3b
 # derived from http://people.redhat.com/mingo/realtime-preempt/patch-2.6.14-rt1
-Source4:	patch-2.6.14-rt1
+Source4:	patch-2.6.14-rt2
 Source5:	kernel-ppclibs.Makefile
 
 Source20:	kernel-i386.config
@@ -297,7 +297,7 @@ Patch93:	linux-btc-8190urf.patch
 
 Patch102:	linux-2.6-smbfs.patch
 Patch103:	linux-2.6-iriver-backing-device-capability-information-fix.patch
-
+Patch104:	linux-2.6-datagram-core.patch
 Patch105:	linux-2.6-net-sundance-ip100A-pciids.patch
 Patch106:	linux-2.6-null-tty-driver-oops.patch
 Patch107:	linux-2.6-sata-sil-mod15write-workaround.patch
@@ -719,6 +719,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %prep
 %setup -q -n linux-%{version}%{_rc}
 #bzip2 -d -c %{SOURCE3} | patch -p1 -s
+#sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = #g' Makefile
 %{?with_preemptive:patch -p1 -s < %{SOURCE4}}
 install %{SOURCE5} Makefile.ppclibs
 
@@ -806,7 +807,7 @@ install %{SOURCE5} Makefile.ppclibs
 
 %patch102 -p1
 %patch103 -p1
-
+%patch104 -p1
 %patch105 -p1
 %patch106 -p1
 %patch107 -p1
