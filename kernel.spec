@@ -129,7 +129,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.2
+%define		_rel		0.3
 
 %define		_netfilter_snap		20051028
 %define		_nf_hipac_ver		0.9.1
@@ -163,7 +163,7 @@ Source2:	kernel-config.h
 Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git2.bz2
 # Source3-md5:	3db58f38e8a3c001d1a18eb1ee27db3b
 # derived from http://people.redhat.com/mingo/realtime-preempt/patch-2.6.14-rt1
-Source4:	patch-2.6.14-rt2
+Source4:	patch-2.6.14-rt3
 Source5:	kernel-ppclibs.Makefile
 
 Source20:	kernel-i386.config
@@ -1004,6 +1004,10 @@ BuildConfig() {
 %if %{with preemptive}
 	cat %{SOURCE96} >> arch/%{_target_base_arch}/defconfig
 %endif
+
+%{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{_target_base_arch}/defconfig}
+%{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" arch/%{_target_base_arch}/defconfig}
+%{?debug:sed -i "s:# CONFIG_RT_DEADLOCK_DETECT is not set:CONFIG_RT_DEADLOCK_DETECT=y:" arch/%{_target_base_arch}/defconfig}
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
