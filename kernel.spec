@@ -356,6 +356,7 @@ Provides:	kernel(realtime-lsm) = 0.1.1
 Provides:	kernel-misc-fuse
 Provides:	kernel-net-hostap = 0.4.4
 Provides:	kernel-net-ieee80211
+Provides:	kernel-net-ipp2p = 1:0.8.0
 Provides:	kernel-net-ipw2100 = 1.1.0
 Provides:	kernel-net-ipw2200 = 1.0.0
 Provides:	module-info
@@ -510,6 +511,7 @@ Provides:	kernel(realtime-lsm) = 0.1.1
 Provides:	kernel-smp-misc-fuse
 Provides:	kernel-smp-net-hostap = 0.4.4
 Provides:	kernel-smp-net-ieee80211
+Provides:	kernel-smp-net-ipp2p = 1:0.8.0
 Provides:	kernel-smp-net-ipw2100 = 1.1.0
 Provides:	kernel-smp-net-ipw2200 = 1.0.0
 Provides:	module-info
