@@ -129,7 +129,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.5
+%define		_rel		0.6
 
 %define		_netfilter_snap		20051028
 %define		_nf_hipac_ver		0.9.1
@@ -267,11 +267,15 @@ Patch65:	linux-2.6-nf-account.patch
 Patch66:	linux-2.6-nf-geoip.patch
 Patch67:	linux-2.6-nf-h323-conntrack-nat.patch
 Patch68:	linux-2.6-nf-ip_queue_vwmark.patch
-Patch69:	linux-2.6-nf-ipp2p.patch
-Patch70:	linux-2.6-nf-policy.patch
-Patch71:	linux-2.6-nf-rpc.patch
-Patch72:	linux-2.6-nf-unclean.patch
+Patch69:	linux-2.6-nf-policy.patch
+Patch70:	linux-2.6-nf-rpc.patch
+Patch71:	linux-2.6-nf-unclean.patch
 # [extra/conntrack]
+# [external]
+# http://www.ipp2p.org/news_en.html (ipp2p v0.8.0)
+Patch72:	linux-2.6-nf-ipp2p.patch
+# http://l7-filter.sourceforge.net/ (2.0-beta)
+Patch73:	linux-2.6-nf-layer7.patch
 # /patch-o-matic-ng
 
 # http://tahoe.pl/patch.htm
@@ -787,8 +791,10 @@ install %{SOURCE5} Makefile.ppclibs
 %patch69 -p1
 %patch70 -p1
 %patch71 -p1
-%patch72 -p1
 # [extra/conntrack]
+# [external]
+%patch72 -p1
+%patch73 -p1
 # /patch-o-matic-ng
 
 %patch80 -p1
@@ -863,6 +869,7 @@ sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 %if %{with preemptive}
 sed -i 's:SPIN_LOCK_UNLOCKED:SPIN_LOCK_UNLOCKED(SendCmplPktQ.QueueLock):' drivers/net/sk98lin/sky2.c
 for f in \
+	drivers/char/omnibook/ec.c \
 	net/ipv4/netfilter/ip_set.c \
 	net/ipv4/netfilter/ipt_account.c \
 	net/ipv4/netfilter/ipt_expire.c \
