@@ -212,7 +212,7 @@ Patch7:		linux-2.6-realtime-lsm-0.1.1.patch
 Patch8:		nf-hipac-%{_nf_hipac_ver}.patch
 Patch9:		linux-2.6-x8664-bitops-fix-for-size-optimized-kernel.patch
 Patch10:	2.6.0-powernow-k7.patch
-# derived from http://hem.bredband.net/ekmlar/patch-vt1211-2.6.11.txt
+# http://hem.bredband.net/ekmlar/
 Patch11:	linux-2.6-vt1211-sensor.patch
 Patch12:	2.6.0-omnikeys.patch
 Patch13:	2.6.1-rc2-VLAN-NS83820-lkml.patch
@@ -740,7 +740,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
-#patch11 -p1		NEEDS CHECK (compilation error)
+%patch11 -p1
 %patch12 -p1
 %patch13 -p1
 %patch14 -p1
