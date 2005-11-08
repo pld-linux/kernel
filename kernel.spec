@@ -337,6 +337,8 @@ Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
 Patch402:	linux-em8300-2.6.11.2.patch
 
+Patch410:	kernel-pcmcia_bufor.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 BuildRequires:	diffutils
@@ -859,6 +861,8 @@ install %{SOURCE5} Makefile.ppclibs
 %if %{with em8300}
 %patch402 -p1
 %endif
+
+%patch410 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
