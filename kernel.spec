@@ -299,6 +299,7 @@ Patch93:	linux-btc-8190urf.patch
 # http://www.kismetwireless.net/download.shtml#orinoco2611
 #Patch95:	orinoco-2.6.12-rfmon-dragorn-1.diff	NEEDS UPDATE
 
+Patch101:	kernel-pcmcia_bufor.patch
 Patch102:	linux-2.6-smbfs.patch
 Patch103:	linux-2.6-iriver-backing-device-capability-information-fix.patch
 Patch104:	linux-2.6-datagram-core.patch
@@ -337,7 +338,7 @@ Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
 Patch402:	linux-em8300-2.6.11.2.patch
 
-Patch410:	kernel-pcmcia_bufor.patch
+
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -815,6 +816,7 @@ install %{SOURCE5} Makefile.ppclibs
 
 ##%patch95 -p1		NEEDS UPDATE
 
+%patch101 -p1
 %patch102 -p1
 %patch103 -p1
 %patch104 -p1
@@ -861,8 +863,6 @@ install %{SOURCE5} Makefile.ppclibs
 %if %{with em8300}
 %patch402 -p1
 %endif
-
-%patch410 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
