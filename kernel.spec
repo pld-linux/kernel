@@ -133,7 +133,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.6
+%define		_rel		0.1
 
 %define		_netfilter_snap		20051028
 %define		_nf_hipac_ver		0.9.1
@@ -150,8 +150,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_preemptive:-preempt}
-#define		_postver	.2
-%define		_postver	%{nil}
+%define		_postver	.1
+#define		_postver	%{nil}
 Version:	2.6.14%{_postver}
 Release:	%{_rel}
 Epoch:		3
@@ -161,10 +161,10 @@ Group:		Base/Kernel
 #define		_rc	-rc5
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	66d02cbd723876c6d69846a067875a22
+# Source0-md5:	df4e4bf5d97a501977a5dbedbcc90a82
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
-Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-%{version}%{_rc}-git2.bz2
+Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
 # Source3-md5:	3db58f38e8a3c001d1a18eb1ee27db3b
 Source4:	http://people.redhat.com/mingo/realtime-preempt/patch-2.6.14-rt4
 # Source4-md5:	46a2a0d621bac7c4895beea2c5dcd321
