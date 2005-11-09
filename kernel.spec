@@ -1,5 +1,9 @@
 #
 # TODO:
+#		- fix time warps for amd64 dual core!
+#		http://bugzilla.kernel.org/show_bug.cgi?id=3341
+#		http://bugzilla.kernel.org/show_bug.cgi?id=3927
+#
 #		- add distcc support (and don't break crossbuild!)
 #		- move em8300 stuff to separeated specs
 #
