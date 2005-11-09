@@ -747,7 +747,9 @@ install %{SOURCE5} Makefile.ppclibs
 %patch8 -p1
 %patch9 -p1
 %patch10 -p1
+%ifarch %{ix86}
 %patch11 -p1
+%endif
 %patch12 -p1
 %patch13 -p1
 %patch14 -p1
