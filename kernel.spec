@@ -35,7 +35,7 @@
 %bcond_without	pcmcia		# don't build pcmcia
 %bcond_with	grsecurity	# enable grsecurity
 %bcond_without	pld_vers	# disable pld-specific UTS_NAME changes
-%bcond_with	grsec_basic	# enable basic grsecurity functionality (proc,link,fifo)
+%bcond_without	grsec_basic	# don't build basic grsecurity functionality (proc,link,fifo)
 				# bcond only valid "without  grsecurity"
 %bcond_with	pax		# enable PaX (depends on grsecurity)
 %bcond_with	omosix		# enable openMosix (conflicts with grsecurity/vserver)
