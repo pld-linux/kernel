@@ -102,8 +102,10 @@ xen0 conflicts with xenU
 %{?debug:%define with_verbose 1}
 
 %ifarch sparc
-# sparc32 is missing important updates from 2.5 cycle - won't build
-%undefine	with_smp
+# sparc32 is missing important updates from 2.5 cycle - won't build.
+# We force sparc64 here.
+%define		_target_base_arch	sparc64
+%define		_target_cpu		sparc64
 %endif
 %ifarch ia64
 # broken
@@ -347,6 +349,9 @@ Patch402:	linux-em8300-2.6.11.2.patch
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
 BuildRequires:	diffutils
+%ifarch sparc
+BuildRequires:	crosssparc64-gcc
+%endif
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
