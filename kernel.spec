@@ -295,7 +295,7 @@ Patch84:	linux-static-dev.patch
 # http://ifp-driver.sourceforge.net/
 Patch86:	iriverfs-r0.1.0.1.patch
 Patch87:	squashfs2.2-patch
-Patch88:	reiser4-2.6.13-mm3.patch
+Patch88:	reiser4-for-2.6.14-1.patch.gz
 
 # http://gaugusch.at/acpi-dsdt-initrd-patches/
 Patch91:	acpi-dsdt-initrd-v0.7d-2.6.12.patch
@@ -816,7 +816,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch84 -p1
 %patch86 -p1
 %patch87 -p1
-#patch88 -p1	NEEDS UPDATE
+%patch88 -p1
 
 %patch91 -p1
 %patch92 -p1
