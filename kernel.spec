@@ -135,7 +135,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		1
+%define		_rel		0.1
 
 %define		_netfilter_snap		20051028
 %define		_nf_hipac_ver		0.9.1
@@ -830,12 +830,12 @@ install %{SOURCE5} Makefile.ppclibs
 %patch101 -p1
 %patch102 -p1
 %patch103 -p1
-%patch104 -p1
+#patch104 -p1
 %patch105 -p1
 %patch106 -p1
 %patch107 -p1
 %patch108 -p1
-%patch109 -p1
+#patch109 -p1
 %patch110 -p1
 
 %patch115 -p1
@@ -870,7 +870,7 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 %patch400 -p1
-%patch401 -p1
+#patch401 -p1
 %if %{with em8300}
 %patch402 -p1
 %endif
