@@ -53,6 +53,8 @@
 %bcond_with	xendev		# build Xen-devel kernel
 %bcond_with	abi		# build with unix abi support
 
+%define		_target_base_cpu	%{_target_cpu}
+
 %if %{with xen0} || %{with xenU}
 %define with_xen 1
 %endif
@@ -105,7 +107,7 @@ xen0 conflicts with xenU
 # sparc32 is missing important updates from 2.5 cycle - won't build.
 # We force sparc64 here.
 %define		_target_base_arch	sparc64
-%define		_target_cpu		sparc64
+%define		_target_base_cpu	sparc64
 %endif
 %ifarch ia64
 # broken
@@ -942,7 +944,7 @@ TuneUpConfigForIX86 () {
 }
 
 %if "%{_target_base_arch}" != "%{_arch}"
-    CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
+    CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_base_cpu}-pld-linux-"
     DepMod=/bin/true
     %if "%{_arch}" == "x86_64"
 	%if "%{_target_base_arch}" == "i386"
@@ -1179,7 +1181,7 @@ rm -rf $RPM_BUILD_ROOT
 umask 022
 
 %if "%{_target_base_arch}" != "%{_arch}"
-    CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
+    CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_base_cpu}-pld-linux-"
     export DEPMOD=/bin/true
     %if "%{_arch}" == "x86_64"
 	%if "%{_target_base_arch}" == "i386"
