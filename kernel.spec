@@ -135,7 +135,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		0.1
+%define		_rel		1
 
 %define		_netfilter_snap		20051028
 %define		_nf_hipac_ver		0.9.1
@@ -308,12 +308,10 @@ Patch93:	linux-btc-8190urf.patch
 Patch101:	kernel-pcmcia_bufor.patch
 Patch102:	linux-2.6-smbfs.patch
 Patch103:	linux-2.6-iriver-backing-device-capability-information-fix.patch
-Patch104:	linux-2.6-datagram-core.patch
 Patch105:	linux-2.6-net-sundance-ip100A-pciids.patch
 Patch106:	linux-2.6-null-tty-driver-oops.patch
 Patch107:	linux-2.6-sata-sil-mod15write-workaround.patch
 Patch108:	linux-2.6-tty-races.patch
-Patch109:	linux-2.6-kbz5514.patch
 Patch110:	linux-2.6-cputime-misscalculation.patch
 
 # Derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
@@ -830,12 +828,10 @@ install %{SOURCE5} Makefile.ppclibs
 %patch101 -p1
 %patch102 -p1
 %patch103 -p1
-#patch104 -p1
 %patch105 -p1
 %patch106 -p1
 %patch107 -p1
 %patch108 -p1
-#patch109 -p1
 %patch110 -p1
 
 %patch115 -p1
@@ -870,7 +866,7 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 %patch400 -p1
-#patch401 -p1
+%patch401 -p1
 %if %{with em8300}
 %patch402 -p1
 %endif
