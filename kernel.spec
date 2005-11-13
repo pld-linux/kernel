@@ -280,7 +280,7 @@ Patch71:	linux-2.6-nf-unclean.patch
 # [external]
 # http://www.ipp2p.org/news_en.html (ipp2p v0.8.0)
 Patch72:	linux-2.6-nf-ipp2p.patch
-# http://l7-filter.sourceforge.net/ (2.0-beta)
+# http://l7-filter.sourceforge.net/ (2.0)
 Patch73:	linux-2.6-nf-layer7.patch
 # /patch-o-matic-ng
 
