@@ -322,9 +322,9 @@ Patch116:	linux-2.6-atmdd.patch
 Patch135:	linux-2.6-unix-abi.patch
 
 Patch199:	linux-2.6-grsec-minimal.patch
-# derived from http://www.grsecurity.net/grsecurity-2.1.5-2.6.11.7-200504111924.patch.gz
-#Patch200:	grsecurity-2.1.5-2.6.11.7-200504111924.patch
-Patch200:	linux-2.6.13.1-grsec.patch
+# derived from http://www.grsecurity.net/grsecurity-2.1.7-2.6.14.2-200511120003.patch.gz
+Patch200:	grsecurity-2.1.7-2.6.14.2-200511120003.patch.gz
+#Patch200:	linux-2.6.13.1-grsec.patch
 # http://openmosix.snarc.org/files/releases/2.6/
 # derived from openMosix-r570.patch
 Patch201:	linux-2.6-omosix.patch
