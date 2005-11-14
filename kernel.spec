@@ -7,6 +7,13 @@
 #		- add distcc support (and don't break crossbuild!)
 #		- move em8300 stuff to separeated specs
 #
+#		- fix build kernel --with grsecurity for -smp package:
+#		
+#		LD      .tmp_vmlinux1
+#		fs/built-in.o(.text+0x3948d): In function `show_numa_map':
+#		task_mmu.c: undefined reference to `PAX_RAND_FLAGS'
+#		make: *** [.tmp_vmlinux1] Error 1
+#
 #		- undefined symbols on sparc64:
 #
 #	"sbus_build_irq" [drivers/serial/sunzilog.ko] undefined!
