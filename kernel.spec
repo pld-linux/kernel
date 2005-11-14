@@ -207,7 +207,6 @@ Source94:	kernel-em8300.config
 Source95:	kernel-linuxabi.config
 Source96:	kernel-rt.config
 
-Patch0:		2.6.0-ksyms-add.patch
 Patch1:		linux-2.6-version.patch
 Patch2:		linux-2.6-biarch-build.patch
 Patch3:		2.6.0-t9-acpi_osl-lkml.patch
@@ -308,10 +307,12 @@ Patch93:	linux-btc-8190urf.patch
 Patch101:	kernel-pcmcia_bufor.patch
 Patch102:	linux-2.6-smbfs.patch
 Patch103:	linux-2.6-iriver-backing-device-capability-information-fix.patch
+Patch104:	linux-2.6-smbfs-names_cache-memory-leak.patch
 Patch105:	linux-2.6-net-sundance-ip100A-pciids.patch
 Patch106:	linux-2.6-null-tty-driver-oops.patch
 Patch107:	linux-2.6-sata-sil-mod15write-workaround.patch
 Patch108:	linux-2.6-tty-races.patch
+
 Patch110:	linux-2.6-cputime-misscalculation.patch
 
 # Derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
@@ -340,8 +341,6 @@ Patch300:	linux-2.6-vs2.patch
 Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
 Patch402:	linux-em8300-2.6.11.2.patch
-
-
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -738,7 +737,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %{?with_preemptive:patch -p1 -s < %{SOURCE4}}
 install %{SOURCE5} Makefile.ppclibs
 
-%patch0 -p1
 %{?with_pld_vers:%patch1 -p0}
 %patch2 -p1
 %patch3 -p1
@@ -827,10 +825,12 @@ install %{SOURCE5} Makefile.ppclibs
 %patch101 -p1
 %patch102 -p1
 %patch103 -p1
+%patch104 -p1
 %patch105 -p1
 %patch106 -p1
 %patch107 -p1
 %patch108 -p1
+
 %patch110 -p1
 
 %patch115 -p1
