@@ -8046,12 +8046,16 @@ diff -urNp linux-2.6.14.2/fs/proc/task_mmu.c linux-2.6.14.2/fs/proc/task_mmu.c
  
  	if (m->count < m->size)  /* vma is copied successfully */
  		m->version = (vma != get_gate_vma(task))? vma->vm_start: 0;
-@@ -444,7 +497,7 @@ static int show_numa_map(struct seq_file
+@@ -444,7 +497,12 @@ static int show_numa_map(struct seq_file
  	if (!md)
  		return 0;
  
--	seq_printf(m, "%08lx", vma->vm_start);
++#ifdef CONFIG_GRKERNSEC_PROC_MEMMAP
 +	seq_printf(m, "%08lx", PAX_RAND_FLAGS(vma->vm_mm) ? 0UL : vma->vm_start);
++#else
+ 	seq_printf(m, "%08lx", vma->vm_start);
++#endif
++
  	pol = get_vma_policy(task, vma, vma->vm_start);
  	/* Print policy */
  	switch (pol->policy) {
