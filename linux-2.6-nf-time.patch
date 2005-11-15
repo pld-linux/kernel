@@ -57,7 +57,7 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/Makefile linux-
 diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ipt_time.c linux-2.6.14/net/ipv4/netfilter/ipt_time.c
 --- linux-2.6.14.org/net/ipv4/netfilter/ipt_time.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.14/net/ipv4/netfilter/ipt_time.c	2005-10-28 14:41:16.000000000 +0200
-@@ -0,0 +1,179 @@
+@@ -0,0 +1,178 @@
 +/*
 +  This is a module which is used for time matching
 +  It is using some modified code from dietlibc (localtime() function)
@@ -100,7 +100,7 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ipt_time.c linu
 +};
 +
 +void
-+localtime(const struct skb_timeval *stime, struct tm *r);
++localtime(const u32 time, struct tm *r);
 +
 +static int
 +match(const struct sk_buff *skb,
@@ -116,15 +116,15 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ipt_time.c linu
 +	u_int16_t packet_time;
 +
 +	/* We might not have a timestamp, get one */
-+	if (skb->tstamp.off_sec == 0) /* mod by SAS for 2.6.14 */
-+		do_gettimeofday((struct timeval *)&skb->tstamp);
++	if (skb->tstamp.off_sec == 0)
++		__net_timestamp((struct sk_buff *)skb);
 +
 +	/* First we make sure we are in the date start-stop boundaries */
 +	if ((skb->tstamp.off_sec < info->date_start) || (skb->tstamp.off_sec > info->date_stop))
 +		return 0; /* We are outside the date boundaries */
 +
 +	/* Transform the timestamp of the packet, in a human readable form */
-+	localtime(&skb->tstamp, &currenttime);
++	localtime(skb->tstamp.off_sec, &currenttime);
 +
 +	/* check if we match this timestamp, we start by the days... */
 +	if ((days_of_week[currenttime.tm_wday] & info->days_match) != days_of_week[currenttime.tm_wday])
@@ -199,9 +199,8 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ipt_time.c linu
 +#define SPD 24*60*60
 +
 +void
-+localtime(const struct skb_timeval *stime, struct tm *r) {
-+	time_t i;
-+	time_t timep;
++localtime(const u32 time, struct tm *r) {
++	u32 i, timep;
 +	extern struct timezone sys_tz;
 +	const unsigned int __spm[12] =
 +		{ 0,
@@ -217,9 +216,9 @@ diff -Nur --exclude '*.orig' linux-2.6.14.org/net/ipv4/netfilter/ipt_time.c linu
 +		  (31+28+31+30+31+30+31+31+30+31),
 +		  (31+28+31+30+31+30+31+31+30+31+30),
 +		};
-+	register time_t work;
++	register u32 work;
 +
-+	timep = (time_t)(stime->off_sec) - (sys_tz.tz_minuteswest * 60);
++	timep = time - (sys_tz.tz_minuteswest * 60);
 +	work=timep%(SPD);
 +	r->tm_sec=work%60; work/=60;
 +	r->tm_min=work%60; r->tm_hour=work/60;
