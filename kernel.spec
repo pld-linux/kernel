@@ -57,6 +57,10 @@
 %define with_xen 1
 %endif
 
+%if %{with vserver}
+%define with_grsec_basic 1
+%endif
+
 %ifarch %{x8664}
 %if %{with xendev}
 %undefine	with_pcmcia
@@ -335,8 +339,8 @@ Patch205:	linux-2.6.12.3-xen.patch
 Patch206:	linux-2.6.12.3-xenbus.patch
 Patch207:	linux-2.6.12.3-xen-fixes.patch
 
-# vserver-2.0
-Patch300:	linux-2.6-vs2.patch
+# vserver-2.1.0
+Patch300:	linux-2.6-vs2.1.patch
 
 Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
