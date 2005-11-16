@@ -1,7 +1,5 @@
 #
 # TODO:
-#		- fix time warps for amd64 dual core!
-#		http://bugzilla.kernel.org/show_bug.cgi?id=3341
 #
 #		- add distcc support (and don't break crossbuild!)
 #		- move em8300 stuff to separeated specs
@@ -138,7 +136,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		3
+%define		_rel		4
 
 %define		_netfilter_snap		20051115
 %define		_nf_hipac_ver		0.9.1
@@ -233,6 +231,7 @@ Patch17:	linux-fbcon-margins.patch
 Patch19:	2.6.5-3C920b-Tornado.patch
 Patch20:	2.6.5-i386-cmpxchg.patch
 Patch21:	2.6.6-serial-fifo-lkml.patch
+Patch22:	linux-2.6-kernel-clock-is-running-3-times-too-fast.patch
 
 Patch25:	2.6.7-alpha_compile.patch
 Patch26:	2.6.7-ppc-asm-defs.patch
@@ -741,7 +740,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 #sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = #g' Makefile
 %{?with_preemptive:patch -p1 -s < %{SOURCE4}}
 install %{SOURCE5} Makefile.ppclibs
-bzip2 -c -d %{SOURCE6} | patch -p1 -s
+gzip -c -d %{SOURCE6} | patch -p1 -s
 
 %{?with_pld_vers:%patch1 -p0}
 %patch2 -p1
@@ -765,6 +764,7 @@ bzip2 -c -d %{SOURCE6} | patch -p1 -s
 %patch19 -p1
 %patch20 -p1
 %patch21 -p1
+%patch22 -p1
 
 %patch25 -p1
 %patch26 -p1
