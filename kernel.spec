@@ -175,6 +175,8 @@ Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc
 Source4:	http://people.redhat.com/mingo/realtime-preempt/patch-2.6.14-rt4
 # Source4-md5:	46a2a0d621bac7c4895beea2c5dcd321
 Source5:	kernel-ppclibs.Makefile
+Source6:	ftp://ftp.alsa-project.org/pub/kernel-patches/alsa-git-2005-11-07.patch.gz
+# Source6-md5:	f1d0ff07344cf5e2def66883077b3221
 
 Source20:	kernel-i386.config
 Source21:	kernel-i386-smp.config
@@ -740,6 +742,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 #sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = #g' Makefile
 %{?with_preemptive:patch -p1 -s < %{SOURCE4}}
 install %{SOURCE5} Makefile.ppclibs
+bzip2 -c -d %{SOURCE6} | patch -p1 -s
 
 %{?with_pld_vers:%patch1 -p0}
 %patch2 -p1
@@ -815,6 +818,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch82 -p1
 %patch83 -p1
 %patch84 -p1
+
 %patch86 -p1
 %patch87 -p1
 %patch88 -p1
