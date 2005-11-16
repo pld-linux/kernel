@@ -167,7 +167,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.
 # Source0-md5:	ace4ef323111e6cffbb159a1f5ffc550
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
-Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
+#Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
 # Source3-md5:	3db58f38e8a3c001d1a18eb1ee27db3b
 Source4:	http://people.redhat.com/mingo/realtime-preempt/patch-2.6.14-rt4
 # Source4-md5:	46a2a0d621bac7c4895beea2c5dcd321
