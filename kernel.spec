@@ -139,9 +139,9 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		2
+%define		_rel		3
 
-%define		_netfilter_snap		20051028
+%define		_netfilter_snap		20051115
 %define		_nf_hipac_ver		0.9.1
 
 %define		_enable_debug_packages			0
@@ -319,7 +319,7 @@ Patch108:	linux-2.6-tty-races.patch
 
 Patch110:	linux-2.6-cputime-misscalculation.patch
 
-# Derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
+# derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch115:	linux-2.6-atm-vbr.patch
 Patch116:	linux-2.6-atmdd.patch
 
@@ -327,8 +327,8 @@ Patch116:	linux-2.6-atmdd.patch
 Patch135:	linux-2.6-unix-abi.patch
 
 Patch199:	linux-2.6-grsec-minimal.patch
-# derived from http://www.grsecurity.net/grsecurity-2.1.7-2.6.14.2-200511120003.patch.gz
-Patch200:	grsecurity-2.1.7-2.6.14.2-200511120003.patch
+# http://grsecurity.net/
+Patch200:	grsecurity-2.1.7-2.6.14.2-200511150641.patch
 # http://openmosix.snarc.org/files/releases/2.6/
 # derived from openMosix-r570.patch
 Patch201:	linux-2.6-omosix.patch
