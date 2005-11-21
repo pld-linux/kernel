@@ -136,7 +136,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		4
+%define		_rel		5
 
 %define		_netfilter_snap		20051115
 %define		_nf_hipac_ver		0.9.1
@@ -345,6 +345,8 @@ Patch300:	linux-2.6-vs2.1.patch
 Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
 Patch402:	linux-em8300-2.6.11.2.patch
+# http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.14-rc2/2.6.14-rc2-mm2/broken-out/sis5513-support-sis-965l.patch
+Patch403:       sis5513-support-sis-965l.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -876,6 +878,7 @@ gzip -c -d %{SOURCE6} | patch -p1 -s
 %if %{with em8300}
 %patch402 -p1
 %endif
+%patch403 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
