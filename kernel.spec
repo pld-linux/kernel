@@ -136,7 +136,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		5
+%define		_rel		5.1
 
 %define		_netfilter_snap		20051115
 %define		_nf_hipac_ver		0.9.1
@@ -231,14 +231,18 @@ Patch17:	linux-fbcon-margins.patch
 Patch19:	2.6.5-3C920b-Tornado.patch
 Patch20:	2.6.5-i386-cmpxchg.patch
 Patch21:	2.6.6-serial-fifo-lkml.patch
+# http://bugzilla.kernel.org/show_bug.cgi?id=3341
 Patch22:	linux-2.6-kernel-clock-is-running-3-times-too-fast.patch
-
+# http://bugzilla.kernel.org/show_bug.cgi?id=3927
+Patch23:	linux-2.6-x8664-kernel-clock-is-running-2-times-too-fast.patch
+Patch24:	linux-2.6-ix86-ati-xpress200-fall-back-from-ioapicIRQ-to-i8259AIRQ.patch
 Patch25:	2.6.7-alpha_compile.patch
 Patch26:	2.6.7-ppc-asm-defs.patch
 Patch28:	linux-2.6-sparc-ksyms.patch
 Patch29:	linux-2.6-ppc-no-pc-serial.patch
 Patch30:	2.6.x-TGA-fbdev-lkml.patch
 Patch31:	linux-2.6-ppc-no-i8042.patch
+Patch32:	sis5513-support-sis-965l.patch
 
 # http://fatooh.org/esfq-2.6/
 Patch35:	esfq-kernel.patch
@@ -345,8 +349,6 @@ Patch300:	linux-2.6-vs2.1.patch
 Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
 Patch402:	linux-em8300-2.6.11.2.patch
-# http://kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.14-rc2/2.6.14-rc2-mm2/broken-out/sis5513-support-sis-965l.patch
-Patch403:       sis5513-support-sis-965l.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -767,13 +769,15 @@ gzip -c -d %{SOURCE6} | patch -p1 -s
 %patch20 -p1
 %patch21 -p1
 %patch22 -p1
-
+%patch23 -p1
+%patch24 -p1
 %patch25 -p1
 %patch26 -p1
 %patch28 -p1
 %patch29 -p1
 %patch30 -p1
 %patch31 -p1
+%patch32 -p1
 
 %patch35 -p1
 %patch36 -p1
@@ -878,7 +882,6 @@ gzip -c -d %{SOURCE6} | patch -p1 -s
 %if %{with em8300}
 %patch402 -p1
 %endif
-%patch403 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
