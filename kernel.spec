@@ -136,7 +136,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		5.1
+%define		_rel		6
 
 %define		_netfilter_snap		20051115
 %define		_nf_hipac_ver		0.9.1
@@ -231,8 +231,7 @@ Patch17:	linux-fbcon-margins.patch
 Patch19:	2.6.5-3C920b-Tornado.patch
 Patch20:	2.6.5-i386-cmpxchg.patch
 Patch21:	2.6.6-serial-fifo-lkml.patch
-# http://bugzilla.kernel.org/show_bug.cgi?id=3341
-Patch22:	linux-2.6-kernel-clock-is-running-3-times-too-fast.patch
+
 # http://bugzilla.kernel.org/show_bug.cgi?id=3927
 Patch23:	linux-2.6-x8664-kernel-clock-is-running-2-times-too-fast.patch
 Patch24:	linux-2.6-ix86-ati-xpress200-fall-back-from-ioapicIRQ-to-i8259AIRQ.patch
@@ -768,7 +767,7 @@ gzip -c -d %{SOURCE6} | patch -p1 -s
 %patch19 -p1
 %patch20 -p1
 %patch21 -p1
-%patch22 -p1
+
 %patch23 -p1
 %patch24 -p1
 %patch25 -p1
