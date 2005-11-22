@@ -677,6 +677,7 @@ oraz budowania modu³ów j±dra.
 Summary:	Development files for building kernel modules
 Summary(pl):	Pliki s³u¿±ce do budowania modu³ów j±dra
 Group:		Base/Kernel
+Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
 Provides:	kernel-module-build = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
@@ -692,7 +693,7 @@ Linuksa z zewnêtrznych pakietów.
 %package source
 Summary:	Kernel source tree
 Summary(pl):	Kod ¼ród³owy j±dra Linuksa
-Group:		Base/Kernel
+Group:		Development/Building
 Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
 Provides:	kernel-source = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
@@ -725,7 +726,7 @@ Pakiet zawiera kod ¼ród³owy j±dra systemu.
 %package doc
 Summary:	Kernel documentation
 Summary(pl):	Dokumentacja do j±dra Linuksa
-Group:		Base/Kernel
+Group:		Documentation
 Provides:	kernel-doc = %{version}
 Autoreqprov:	no
 
