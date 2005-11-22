@@ -653,7 +653,7 @@ Sterowniki OSS (Open Sound System) dla maszyn wieloprocesorowych.
 %package headers
 Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra Linuksa
-Group:		Base/Kernel
+Group:		Development/Building
 Provides:	kernel-headers(agpgart) = %{version}
 Provides:	kernel-headers(reiserfs) = %{version}
 Provides:	kernel-headers(bridging) = %{version}
