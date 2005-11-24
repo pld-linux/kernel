@@ -402,6 +402,7 @@ ExclusiveArch:	%{ix86}
 %else
 ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc ppc64 sparc sparc64
 %endif
+ExcludeArch:	sparc
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
