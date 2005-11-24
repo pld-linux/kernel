@@ -136,7 +136,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel		6
+%define		_rel			1
 
 %define		_netfilter_snap		20051115
 %define		_nf_hipac_ver		0.9.1
@@ -153,7 +153,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_preemptive:-preempt}
-%define		_postver	.2
+%define		_postver	.3
 #define		_postver	%{nil}
 Version:	2.6.14%{_postver}
 Release:	%{_rel}
@@ -164,7 +164,7 @@ Group:		Base/Kernel
 #define		_rc	-rc5
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	ace4ef323111e6cffbb159a1f5ffc550
+# Source0-md5:	982717a9cb246e3c427cc45e3fc86097
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 #Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
@@ -172,8 +172,6 @@ Source2:	kernel-config.h
 Source4:	http://people.redhat.com/mingo/realtime-preempt/patch-2.6.14-rt4
 # Source4-md5:	46a2a0d621bac7c4895beea2c5dcd321
 Source5:	kernel-ppclibs.Makefile
-Source6:	ftp://ftp.alsa-project.org/pub/kernel-patches/alsa-git-2005-11-07.patch.gz
-# Source6-md5:	f1d0ff07344cf5e2def66883077b3221
 
 Source20:	kernel-i386.config
 Source21:	kernel-i386-smp.config
@@ -252,6 +250,8 @@ Patch36:	linux-2.6.13-imq2.diff
 Patch37:	wrr-linux-2.6.12.2.patch
 # from http://www.ssi.bg/~ja/#routers
 Patch38:	routes-2.6.14-12.diff
+
+Patch39:	alsa-git-2005-11-07.patch.gz
 
 # patch-o-matic-ng
 # [submitted]
@@ -744,7 +744,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 #sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = #g' Makefile
 %{?with_preemptive:patch -p1 -s < %{SOURCE4}}
 install %{SOURCE5} Makefile.ppclibs
-gzip -c -d %{SOURCE6} | patch -p1 -s
 
 %{?with_pld_vers:%patch1 -p0}
 %patch2 -p1
@@ -783,6 +782,8 @@ gzip -c -d %{SOURCE6} | patch -p1 -s
 %patch36 -p1
 %patch37 -p1
 %patch38 -p1
+
+%patch39 -p1
 
 # patch-o-matic-ng
 # [base]
