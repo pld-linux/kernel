@@ -324,6 +324,8 @@ Patch110:	linux-2.6-cputime-misscalculation.patch
 Patch115:	linux-2.6-atm-vbr.patch
 Patch116:	linux-2.6-atmdd.patch
 
+Patch120:	linux-2.6-cpuset_virtualization.patch
+
 # derived from http://adsl-brisbane.lubemobile.com.au/ras/debian/sarge/kernel-patch-linuxabi/
 Patch135:	linux-2.6-unix-abi.patch
 
@@ -845,6 +847,8 @@ install %{SOURCE5} Makefile.ppclibs
 
 %patch115 -p1
 %patch116 -p1
+
+%patch120 -p1
 
 %ifarch %{ix86}
 %if %{with abi}
