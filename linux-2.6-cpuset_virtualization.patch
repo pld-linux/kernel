@@ -463,6 +463,14 @@ diff -ur linux-2.6.14.3/kernel/kthread.c linux-2.6.14.3-cpusetvirt/kernel/kthrea
 diff -ur linux-2.6.14.3/kernel/sched.c linux-2.6.14.3-cpusetvirt/kernel/sched.c
 --- linux-2.6.14.3/kernel/sched.c	2005-11-24 23:10:21.000000000 +0100
 +++ linux-2.6.14.3-cpusetvirt/kernel/sched.c	2005-11-25 19:28:28.087979472 +0100
+@@ -3802,7 +3802,6 @@
+ {
+ 	task_t *p;
+ 	int retval;
+-	cpumask_t cpus_allowed;
+ 
+ 	lock_cpu_hotplug();
+ 	read_lock(&tasklist_lock);
 @@ -3827,9 +3827,11 @@
  			!capable(CAP_SYS_NICE))
  		goto out_unlock;
@@ -496,10 +504,10 @@ diff -ur linux-2.6.14.3/kernel/sched.c linux-2.6.14.3-cpusetvirt/kernel/sched.c
  	retval = 0;
 -	cpus_and(*mask, p->cpus_allowed, cpu_possible_map);
 +#ifdef CONFIG_CPUSETS
-+	if (cpuset_get_cpus_virt_affinity(p, &mask) < 0)
-+		cpus_and(mask, p->cpus_allowed, cpu_possible_map);
++	if (cpuset_get_cpus_virt_affinity(p, mask) < 0)
++		cpus_and(*mask, p->cpus_allowed, cpu_possible_map);
 +#else
-+  	cpus_and(mask, p->cpus_allowed, cpu_possible_map);
++  	cpus_and(*mask, p->cpus_allowed, cpu_possible_map);
 +#endif
  
  out_unlock:
