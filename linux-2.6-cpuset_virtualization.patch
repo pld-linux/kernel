@@ -161,13 +161,11 @@ diff -ur linux-2.6.14.3/include/linux/cpuset.h linux-2.6.14.3-cpusetvirt/include
 diff -ur linux-2.6.14.3/include/linux/init_task.h linux-2.6.14.3-cpusetvirt/include/linux/init_task.h
 --- linux-2.6.14.3/include/linux/init_task.h	2005-11-24 23:10:21.000000000 +0100
 +++ linux-2.6.14.3-cpusetvirt/include/linux/init_task.h	2005-11-25 19:28:28.079980688 +0100
-@@ -88,6 +88,9 @@
+@@ -88,6 +88,7 @@
  	.static_prio	= MAX_PRIO-20,					\
  	.policy		= SCHED_NORMAL,					\
  	.cpus_allowed	= CPU_MASK_ALL,					\
-+#ifdef CONFIG_CPUSETS
 +	.cpus_virt_allowed	= CPU_MASK_ALL,				\
-+#endif
  	.mm		= NULL,						\
  	.active_mm	= &init_mm,					\
  	.run_list	= LIST_HEAD_INIT(tsk.run_list),			\
@@ -175,13 +173,13 @@ diff -ur linux-2.6.14.3/include/linux/sched.h linux-2.6.14.3-cpusetvirt/include/
 --- linux-2.6.14.3/include/linux/sched.h	2005-11-24 23:10:21.000000000 +0100
 +++ linux-2.6.14.3-cpusetvirt/include/linux/sched.h	2005-11-25 19:28:28.081980384 +0100
 @@ -808,6 +808,7 @@
+ 	struct mempolicy *mempolicy;
  	short il_next;
  #endif
- #ifdef CONFIG_CPUSETS
 +	cpumask_t cpus_virt_allowed;
+ #ifdef CONFIG_CPUSETS
  	struct cpuset *cpuset;
  	nodemask_t mems_allowed;
- 	int cpuset_mems_generation;
 diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.c
 --- linux-2.6.14.3/kernel/cpuset.c	2005-11-24 23:10:21.000000000 +0100
 +++ linux-2.6.14.3-cpusetvirt/kernel/cpuset.c	2005-11-25 19:28:28.084979928 +0100
