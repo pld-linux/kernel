@@ -134,7 +134,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel			1.1
+%define		_rel			2.1
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -248,7 +248,6 @@ Patch36:	linux-2.6.13-imq2.diff
 Patch37:	wrr-linux-2.6.12.2.patch
 # from http://www.ssi.bg/~ja/#routers
 Patch38:	routes-2.6.14-12.diff
-
 Patch39:	alsa-git-2005-11-07.patch.gz
 
 # patch-o-matic-ng
@@ -317,7 +316,7 @@ Patch105:	linux-2.6-net-sundance-ip100A-pciids.patch
 Patch106:	linux-2.6-null-tty-driver-oops.patch
 Patch107:	linux-2.6-sata-sil-mod15write-workaround.patch
 Patch108:	linux-2.6-tty-races.patch
-
+Patch109:	linux-2.6-secunia-17786-1.patch
 Patch110:	linux-2.6-cputime-misscalculation.patch
 
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
@@ -780,7 +779,6 @@ install %{SOURCE5} Makefile.ppclibs
 %patch36 -p1
 %patch37 -p1
 %patch38 -p1
-
 %patch39 -p1
 
 # patch-o-matic-ng
@@ -842,7 +840,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch106 -p1
 %patch107 -p1
 %patch108 -p1
-
+%patch109 -p1
 %patch110 -p1
 
 %patch115 -p1
