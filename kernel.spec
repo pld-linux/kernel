@@ -29,6 +29,38 @@
 #	"virt_to_bus_not_defined_use_pci_map" [drivers/atm/ambassador.ko] undefined!
 #	"bus_to_virt_not_defined_use_pci_map" [drivers/atm/ambassador.ko] undefined!
 #
+#		- undefined symbols on powerpc:
+#
+#	"isa_virt_to_bus" [drivers/scsi/wd7000.ko] undefined!
+#	"isa_page_to_bus" [drivers/scsi/wd7000.ko] undefined!
+#	"isa_bus_to_virt" [drivers/scsi/wd7000.ko] undefined!
+#	"isa_readb" [drivers/scsi/in2000.ko] undefined!
+#	"isa_readl" [drivers/scsi/in2000.ko] undefined!
+#	"isa_page_to_bus" [drivers/scsi/aha1542.ko] undefined!
+#	"isa_virt_to_bus" [drivers/scsi/aha1542.ko] undefined!
+#	"isa_bus_to_virt" [drivers/net/ni65.ko] undefined!
+#	"isa_virt_to_bus" [drivers/net/ni65.ko] undefined!
+#	"isa_bus_to_virt" [drivers/net/ni52.ko] undefined!
+#	"isa_bus_to_virt" [drivers/net/lance.ko] undefined!
+#	"isa_readl" [drivers/net/lance.ko] undefined!
+#	"isa_virt_to_bus" [drivers/net/lance.ko] undefined!
+#	"isa_readw" [drivers/net/lance.ko] undefined!
+#	"isa_memset_io" [drivers/net/hp100.ko] undefined!
+#	"isa_memcpy_toio" [drivers/net/hp100.ko] undefined!
+#	"isa_readl" [drivers/net/hp100.ko] undefined!
+#	"isa_memcpy_fromio" [drivers/net/hp100.ko] undefined!
+#	"isa_memcpy_toio" [drivers/net/hp-plus.ko] undefined!
+#	"isa_memcpy_fromio" [drivers/net/hp-plus.ko] undefined!
+#	"isa_writeb" [drivers/net/arcnet/com90xx.ko] undefined!
+#	"isa_readb" [drivers/net/arcnet/com90xx.ko] undefined!
+#	"isa_readb" [drivers/net/arcnet/arc-rimi.ko] undefined!
+#	"isa_writeb" [drivers/net/arcnet/arc-rimi.ko] undefined!
+#	"isa_bus_to_virt" [drivers/net/3c515.ko] undefined!
+#	"isa_virt_to_bus" [drivers/net/3c515.ko] undefined!
+#	"isa_virt_to_bus" [drivers/net/3c505.ko] undefined!
+#	"pci_get_legacy_ide_irq" [drivers/ide/pci/amd74xx.ko] undefined!
+#	"isa_virt_to_bus" [drivers/char/synclink.ko] undefined!
+#
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
