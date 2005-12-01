@@ -134,7 +134,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel			2.1
+%define		_rel			2.2
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -292,7 +292,7 @@ Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 
 # derived from http://www.syskonnect.de/syskonnect/support/driver/zip/linux/install-8_23.tar.bz2
 Patch82:	linux-2.6-sk98lin-8.23.1.3.patch
-Patch83:	bootsplash-3.1.6-2.6.13.diff
+Patch83:	fbsplash-0.9.2-r5-2.6.14.patch
 # reserve dynamic minors for device mapper
 Patch84:	linux-static-dev.patch
 # http://ifp-driver.sourceforge.net/
