@@ -166,7 +166,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel			2.2
+%define		_rel			2.3
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -274,7 +274,9 @@ Patch32:	sis5513-support-sis-965l.patch
 # http://fatooh.org/esfq-2.6/
 Patch35:	esfq-kernel.patch
 # http://www.linuximq.net/
-Patch36:	linux-2.6.13-imq2.diff
+#Patch36:	linux-2.6.13-imq2.diff		OBSOLETE ?
+Patch36:	linux-2.6-dummy-as-imq-replacement.patch
+
 # http://www.zz9.dk/wrr/
 # derived from http://www.zz9.dk/wrr-linux-2.6.12.2.patch.gz
 Patch37:	wrr-linux-2.6.12.2.patch
