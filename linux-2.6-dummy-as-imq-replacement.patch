@@ -1,0 +1,276 @@
+--- a/drivers/net/dummy.c.orig	2004-12-24 16:34:33.000000000 -0500
++++ b/drivers/net/dummy.c	2005-01-18 06:43:47.000000000 -0500
+@@ -26,7 +26,14 @@
+ 			Nick Holloway, 27th May 1994
+ 	[I tweaked this explanation a little but that's all]
+ 			Alan Cox, 30th May 1994
++
+ */
++/*
++	* This driver isnt abused enough ;->
++	* Here to add only just a feeew more features,
++	* 10 years after AC added comment above ;-> hehe - JHS
++*/
++
+
+ #include <linux/config.h>
+ #include <linux/module.h>
+@@ -35,11 +42,128 @@
+ #include <linux/etherdevice.h>
+ #include <linux/init.h>
+ #include <linux/moduleparam.h>
++#ifdef CONFIG_NET_CLS_ACT
++#include <net/pkt_sched.h> 
++#endif
++
++#define TX_TIMEOUT  (2*HZ)
++                                                                                
++#define TX_Q_LIMIT    32
++struct dummy_private {
++	struct net_device_stats stats;
++#ifdef CONFIG_NET_CLS_ACT
++	struct tasklet_struct   dummy_tasklet;
++	int     tasklet_pending;
++	/* mostly debug stats leave in for now */
++	unsigned long   stat_r1;
++	unsigned long   stat_r2;
++	unsigned long   stat_r3;
++	unsigned long   stat_r4;
++	unsigned long   stat_r5;
++	unsigned long   stat_r6;
++	unsigned long   stat_r7;
++	unsigned long   stat_r8;
++	struct sk_buff_head     rq;
++	struct sk_buff_head     tq;
++#endif
++};
++
++#ifdef CONFIG_NET_CLS_ACT
++static void ri_tasklet(unsigned long dev);
++#endif
++
+ 
+ static int numdummies = 1;
+ 
+ static int dummy_xmit(struct sk_buff *skb, struct net_device *dev);
+ static struct net_device_stats *dummy_get_stats(struct net_device *dev);
++static void dummy_timeout(struct net_device *dev);
++static int dummy_open(struct net_device *dev);
++static int dummy_close(struct net_device *dev);
++
++static void dummy_timeout(struct net_device *dev) {
++
++	int cpu = smp_processor_id();
++
++	dev->trans_start = jiffies;
++	printk("%s: BUG tx timeout on CPU %d\n",dev->name,cpu);
++	if (spin_is_locked((&dev->xmit_lock)))
++		printk("xmit lock grabbed already\n");
++	if (spin_is_locked((&dev->queue_lock)))
++		printk("queue lock grabbed already\n");
++}
++
++#ifdef CONFIG_NET_CLS_ACT
++static void ri_tasklet(unsigned long dev) {
++
++	struct net_device *dv = (struct net_device *)dev;
++	struct dummy_private *dp = ((struct net_device *)dev)->priv;
++	struct net_device_stats *stats = &dp->stats;
++	struct sk_buff *skb = NULL;
++
++	dp->stat_r4 +=1;
++	if (NULL == (skb = skb_peek(&dp->tq))) {
++		dp->stat_r5 +=1;
++		if (spin_trylock(&dv->xmit_lock)) {
++			dp->stat_r8 +=1;
++			while (NULL != (skb = skb_dequeue(&dp->rq))) {
++				skb_queue_tail(&dp->tq, skb);
++			}
++			spin_unlock(&dv->xmit_lock);
++		} else {
++	/* reschedule */
++			dp->stat_r1 +=1;
++			goto resched;
++		}
++	}
++
++	while (NULL != (skb = skb_dequeue(&dp->tq))) {
++		__u32 from = G_TC_FROM(skb->tc_verd);
++
++		skb->tc_verd = 0;
++		skb->tc_verd = SET_TC_NCLS(skb->tc_verd);
++		stats->tx_packets++;
++		stats->tx_bytes+=skb->len;
++		if (from & AT_EGRESS) {
++			dp->stat_r6 +=1;
++			dev_queue_xmit(skb);
++		} else if (from & AT_INGRESS) {
++
++			dp->stat_r7 +=1;
++			netif_rx(skb);
++		} else {
++			/* if netfilt is compiled in and packet is
++			tagged, we could reinject the packet back
++			this would make it do remaining 10%
++			of what current IMQ does  
++			if someone really really insists then
++			this is the spot .. jhs */
++			dev_kfree_skb(skb);
++			stats->tx_dropped++;
++		}
++	}
++
++	if (spin_trylock(&dv->xmit_lock)) {
++		dp->stat_r3 +=1;
++		if (NULL == (skb = skb_peek(&dp->rq))) {
++			dp->tasklet_pending = 0;
++		if (netif_queue_stopped(dv))
++			//netif_start_queue(dv);
++			netif_wake_queue(dv);
++		} else {
++			dp->stat_r2 +=1;
++			spin_unlock(&dv->xmit_lock);
++			goto resched;
++		}
++		spin_unlock(&dv->xmit_lock);
++		} else {
++resched:
++			dp->tasklet_pending = 1;
++			tasklet_schedule(&dp->dummy_tasklet);
++		}
++
++}
++#endif
+ 
+ static int dummy_set_address(struct net_device *dev, void *p)
+ {
+@@ -62,12 +186,17 @@
+ 	/* Initialize the device structure. */
+ 	dev->get_stats = dummy_get_stats;
+ 	dev->hard_start_xmit = dummy_xmit;
++	dev->tx_timeout = &dummy_timeout;
++	dev->watchdog_timeo = TX_TIMEOUT;
++	dev->open = &dummy_open;
++	dev->stop = &dummy_close;
++
+ 	dev->set_multicast_list = set_multicast_list;
+ 	dev->set_mac_address = dummy_set_address;
+ 
+ 	/* Fill in device structure with ethernet-generic values. */
+ 	ether_setup(dev);
+-	dev->tx_queue_len = 0;
++	dev->tx_queue_len = TX_Q_LIMIT;
+ 	dev->change_mtu = NULL;
+ 	dev->flags |= IFF_NOARP;
+ 	dev->flags &= ~IFF_MULTICAST;
+@@ -77,18 +206,64 @@
+ 
+ static int dummy_xmit(struct sk_buff *skb, struct net_device *dev)
+ {
+-	struct net_device_stats *stats = netdev_priv(dev);
++	struct dummy_private *dp = ((struct net_device *)dev)->priv;
++	struct net_device_stats *stats = &dp->stats;
++	int ret = 0;
+
++	{
+ 	stats->tx_packets++;
+ 	stats->tx_bytes+=skb->len;
++	}
++#ifdef CONFIG_NET_CLS_ACT
++	__u32 from = G_TC_FROM(skb->tc_verd);
++	if (!from || !skb->input_dev ) {
++dropped:
++		 dev_kfree_skb(skb);
++		 stats->rx_dropped++;
++		 return ret;
++	} else {
++		if (skb->input_dev)
++			skb->dev = skb->input_dev;
++		else
++			printk("warning!!! no idev %s\n",skb->dev->name);
+
++		skb->input_dev = dev;
++		if (from & AT_INGRESS) {
++			skb_pull(skb, skb->dev->hard_header_len);
++		} else {
++			if (!(from & AT_EGRESS)) {
++				goto dropped;
++			}
++		}
++	}
++	if (skb_queue_len(&dp->rq) >= dev->tx_queue_len) {
++		netif_stop_queue(dev);
++	}
++	dev->trans_start = jiffies;
++	skb_queue_tail(&dp->rq, skb);
++	if (!dp->tasklet_pending) {
++		dp->tasklet_pending = 1;
++		tasklet_schedule(&dp->dummy_tasklet);
++	}
++
++#else
++	stats->rx_dropped++;
+ 	dev_kfree_skb(skb);
+-	return 0;
++#endif
++	return ret;
+ }
+ 
+ static struct net_device_stats *dummy_get_stats(struct net_device *dev)
+ {
+-	return netdev_priv(dev);
++	struct dummy_private *dp = ((struct net_device *)dev)->priv;
++	struct net_device_stats *stats = &dp->stats;
++#ifdef CONFIG_NET_CLS_ACT_DEB
++	printk("tasklets stats %ld:%ld:%ld:%ld:%ld:%ld:%ld:%ld \n",
++		dp->stat_r1,dp->stat_r2,dp->stat_r3,dp->stat_r4,
++		dp->stat_r5,dp->stat_r6,dp->stat_r7,dp->stat_r8);
++#endif
++
++	return stats;
+ }
+ 
+ static struct net_device **dummies;
+@@ -97,12 +272,41 @@
+ module_param(numdummies, int, 0);
+ MODULE_PARM_DESC(numdummies, "Number of dummy pseudo devices");
+ 
++static int dummy_close(struct net_device *dev)
++{
++
++#ifdef CONFIG_NET_CLS_ACT
++	struct dummy_private *dp = ((struct net_device *)dev)->priv;
++
++	tasklet_kill(&dp->dummy_tasklet);
++	skb_queue_purge(&dp->rq);
++	skb_queue_purge(&dp->tq);
++#endif
++	netif_stop_queue(dev);
++	return 0;
++}
++
++static int dummy_open(struct net_device *dev)
++{
++
++#ifdef CONFIG_NET_CLS_ACT
++	struct dummy_private *dp = ((struct net_device *)dev)->priv;
++
++	tasklet_init(&dp->dummy_tasklet, ri_tasklet, (unsigned long)dev);
++	skb_queue_head_init(&dp->rq);
++	skb_queue_head_init(&dp->tq);
++#endif
++	netif_start_queue(dev);
++	return 0;
++}
++
++
+ static int __init dummy_init_one(int index)
+ {
+ 	struct net_device *dev_dummy;
+ 	int err;
+ 
+-	dev_dummy = alloc_netdev(sizeof(struct net_device_stats),
++	dev_dummy = alloc_netdev(sizeof(struct dummy_private),
+ 				 "dummy%d", dummy_setup);
+ 
+ 	if (!dev_dummy)
