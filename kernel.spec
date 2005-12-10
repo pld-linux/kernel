@@ -136,8 +136,9 @@ xen0 conflicts with xenU
 
 %ifarch sparc
 # sparc32 is missing important updates from 2.5 cycle - won't build.
-%define		_target_base_arch	sparc64
+%undefine	with_smp
 %endif
+
 %ifarch ia64
 # broken
 %undefine	with_up
@@ -437,7 +438,6 @@ ExclusiveArch:	%{ix86}
 %else
 ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc ppc64 sparc sparc64
 %endif
-ExcludeArch:	sparc
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
