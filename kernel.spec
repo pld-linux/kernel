@@ -1210,13 +1210,13 @@ rm -rf $KERNEL_INSTALL_DIR
 BuildConfig
 %{?with_up:BuildKernel}
 %{?with_up:PreInstallKernel}
+%if %{with smp}
 # SMP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
-%if !%{with xen}
 BuildConfig smp
-%{?with_smp:BuildKernel smp}
-%{?with_smp:PreInstallKernel smp}
+BuildKernel smp
+PreInstallKernel smp
 %endif
 
 %install
@@ -1676,9 +1676,9 @@ fi
 %defattr(644,root,root,755)
 %dir %{_prefix}/src/linux-%{version}
 %{_prefix}/src/linux-%{version}/include
-%if !%{with xen}
+%if %{with smp}
 %{_prefix}/src/linux-%{version}/config-smp
-%{?with_smp:%{_prefix}/src/linux-%{version}/Module.symvers-smp}
+%{_prefix}/src/linux-%{version}/Module.symvers-smp
 %endif
 %{_prefix}/src/linux-%{version}/config-up
 %{?with_up:%{_prefix}/src/linux-%{version}/Module.symvers-up}
