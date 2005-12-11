@@ -4,24 +4,6 @@
 #		- add distcc support (and don't break crossbuild!)
 #		- move em8300 stuff to separeated specs
 #
-#		- undefined symbols on sparc64:
-#
-#	"bus_to_virt_not_defined_use_pci_map" [drivers/scsi/tmscsim.ko] undefined!
-#	"bus_to_virt_not_defined_use_pci_map" [drivers/media/video/zr36067.ko] undefined!
-#	"virt_to_bus_not_defined_use_pci_map" [drivers/media/video/zr36067.ko] undefined!
-#	"virt_to_bus_not_defined_use_pci_map" [drivers/media/video/stradis.ko] undefined!
-#	"bus_to_virt_not_defined_use_pci_map" [drivers/atm/zatm.ko] undefined!
-#	"virt_to_bus_not_defined_use_pci_map" [drivers/atm/zatm.ko] undefined!
-#	"bus_to_virt_not_defined_use_pci_map" [drivers/atm/horizon.ko] undefined!
-#	"virt_to_bus_not_defined_use_pci_map" [drivers/atm/firestream.ko] undefined!
-#	"bus_to_virt_not_defined_use_pci_map" [drivers/atm/firestream.ko] undefined!
-#	"virt_to_bus_not_defined_use_pci_map" [drivers/atm/ambassador.ko] undefined!
-#	"bus_to_virt_not_defined_use_pci_map" [drivers/atm/ambassador.ko] undefined!
-#
-#		- undefined symbols on powerpc:
-#
-#	"pci_get_legacy_ide_irq" [drivers/ide/pci/amd74xx.ko] undefined!
-#
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
@@ -232,6 +214,7 @@ Patch29:	linux-2.6-ppc-no-pc-serial.patch
 Patch30:	2.6.x-TGA-fbdev-lkml.patch
 Patch31:	linux-2.6-ppc-no-i8042.patch
 Patch32:	sis5513-support-sis-965l.patch
+Patch33:	linux-2.6-ppc-ideirq.patch
 
 # http://fatooh.org/esfq-2.6/
 Patch35:	esfq-kernel.patch
@@ -769,6 +752,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch30 -p1
 %patch31 -p1
 %patch32 -p1
+%patch33 -p1
 
 %patch35 -p1
 %patch36 -p1
@@ -950,11 +934,12 @@ TuneUpConfigForIX86 () {
 %if "%{_target_base_arch}" != "%{_arch}"
     CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
     DepMod=/bin/true
-    %if "%{_arch}" == "x86_64"
-	%if "%{_target_base_arch}" == "i386"
-	    CrossOpts="ARCH=%{_target_base_arch}"
-	    DepMod=/sbin/depmod
-	%endif
+    %if "%{_arch}" == "sparc" && "%{_target_base_arch}" == "sparc64"
+	DepMod=/sbin/depmod
+    %endif
+    %if "%{_arch}" == "x86_64" && "%_target_base_arch}" == "i386"
+	CrossOpts="ARCH=%{_target_base_arch}"
+	DepMod=/sbin/depmod
     %endif
 %else
     CrossOpts=""
