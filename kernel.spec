@@ -3,6 +3,9 @@
 #
 #		- add distcc support (and don't break crossbuild!)
 #		- move em8300 stuff to separeated specs
+# sparc64:
+# net/ieee80211/ieee80211_crypt_tkip.ko needs unknown symbol wireless_send_event
+# drivers/char/ipmi/ipmi_poweroff.ko needs unknown symbol pm_power_off
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -1172,11 +1175,12 @@ umask 022
 %if "%{_target_base_arch}" != "%{_arch}"
     CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
     export DEPMOD=/bin/true
-    %if "%{_arch}" == "x86_64"
-	%if "%{_target_base_arch}" == "i386"
-	    CrossOpts="ARCH=%{_target_base_arch}"
-	    unset DEPMOD
-	%endif
+    %if "%{_arch}" == "sparc" && "%{_target_base_arch}" == "sparc64"
+	unset DEPMOD
+    %endif
+    %if "%{_arch}" == "x86_64" && "%{_target_base_arch}" == "i386"
+	CrossOpts="ARCH=%{_target_base_arch}"
+	unset DEPMOD
     %endif
 %else
     CrossOpts=""
