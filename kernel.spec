@@ -1477,9 +1477,14 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko*
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/ide/legacy/ide-cs.ko*
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko*
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko*
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/telephony/ixj_pcmcia.ko*
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
@@ -1496,9 +1501,14 @@ fi
 /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
 /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko*
+/lib/modules/%{version}-%{release}/kernel/drivers/ide/legacy/ide-cs.ko*
+/lib/modules/%{version}-%{release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
 /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko*
+/lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
 /lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko*
 /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko*
+/lib/modules/%{version}-%{release}/kernel/drivers/telephony/ixj_pcmcia.ko*
+/lib/modules/%{version}-%{release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 
 %ifarch ppc
@@ -1579,9 +1589,14 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko*
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/legacy/ide-cs.ko*
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko*
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko*
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/ixj_pcmcia.ko*
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
@@ -1598,9 +1613,14 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
 /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko*
+/lib/modules/%{version}-%{release}smp/kernel/drivers/ide/legacy/ide-cs.ko*
+/lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko*
+/lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko*
+/lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/ixj_pcmcia.ko*
+/lib/modules/%{version}-%{release}smp/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 
 %ifarch ppc
