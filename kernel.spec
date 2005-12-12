@@ -3,11 +3,6 @@
 #
 #		- add distcc support (and don't break crossbuild!)
 #		- move em8300 stuff to separeated specs
-# ppc:
-# [and without sound-oss installed (probably all archs - move to -sound-oss?)]
-# drivers/media/radio/miropcm20.ko.gz needs unknown symbol aci_version
-# drivers/media/radio/miropcm20.ko.gz needs unknown symbol aci_port
-# drivers/media/radio/miropcm20.ko.gz needs unknown symbol aci_rw_cmd
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -100,6 +95,12 @@ xen0 conflicts with xenU
 %define		have_drm	1
 %define		have_oss	1
 %define		have_sound	1
+
+%ifarch %{ix86} alpha ppc
+%define		have_isa	1
+%else
+%define		have_isa	0
+%endif
 
 %ifnarch %{ix86}
 %undefine	with_abi
@@ -1461,7 +1462,7 @@ fi
 %if %{have_drm}
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 %endif
-%if %{have_oss}
+%if %{have_oss} && %{have_isa}
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 /lib/modules/%{version}-%{release}/kernel/fs
@@ -1542,7 +1543,9 @@ fi
 %files sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/sound/oss
+%if %{have_isa}
 /lib/modules/%{version}-%{release}/kernel/drivers/media/radio/miropcm20.ko*
+%endif
 %endif
 %endif			# %%{have_sound}
 %endif			# %%{with up}
@@ -1573,7 +1576,7 @@ fi
 %if %{have_drm}
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 %endif
-%if %{have_oss}
+%if %{have_oss} && %{have_isa}
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 /lib/modules/%{version}-%{release}smp/kernel/fs
@@ -1654,7 +1657,9 @@ fi
 %files smp-sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/sound/oss
+%if %{have_isa}
 /lib/modules/%{version}-%{release}smp/kernel/drivers/media/radio/miropcm20.ko*
+%endif
 %endif
 %endif			# %%{have_sound}
 %endif			# %%{with smp}
