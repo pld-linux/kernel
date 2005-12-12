@@ -230,7 +230,7 @@ Patch17:	linux-fbcon-margins.patch
 Patch19:	2.6.5-3C920b-Tornado.patch
 Patch20:	2.6.5-i386-cmpxchg.patch
 Patch21:	2.6.6-serial-fifo-lkml.patch
-
+Patch22:	linux-2.6-i386-ksyms.patch
 # http://bugzilla.kernel.org/show_bug.cgi?id=3927
 Patch23:	linux-2.6-x8664-kernel-clock-is-running-2-times-too-fast.patch
 Patch24:	linux-2.6-ix86-ati-xpress200-fall-back-from-ioapicIRQ-to-i8259AIRQ.patch
@@ -769,7 +769,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch19 -p1
 %patch20 -p1
 %patch21 -p1
-
+%patch22 -p1
 %patch23 -p1
 %patch24 -p1
 %patch25 -p1
