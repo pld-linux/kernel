@@ -1458,6 +1458,12 @@ fi
 %endif
 /lib/modules/%{version}-%{release}/kernel/crypto
 /lib/modules/%{version}-%{release}/kernel/drivers
+%if %{have_drm}
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
+%endif
+%if %{have_oss}
+%exclude /lib/modules/%{version}-%{release}/kernel/drivers/media/radio/miropcm20.ko*
+%endif
 /lib/modules/%{version}-%{release}/kernel/fs
 /lib/modules/%{version}-%{release}/kernel/lib
 /lib/modules/%{version}-%{release}/kernel/net
@@ -1474,9 +1480,6 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko*
-%endif
-%if %{have_drm}
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 %endif
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
@@ -1529,6 +1532,7 @@ fi
 %files sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/sound/oss
+/lib/modules/%{version}-%{release}/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 %endif			# %%{have_sound}
 %endif			# %%{with up}
@@ -1556,6 +1560,12 @@ fi
 %endif
 /lib/modules/%{version}-%{release}smp/kernel/crypto
 /lib/modules/%{version}-%{release}smp/kernel/drivers
+%if %{have_drm}
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
+%endif
+%if %{have_oss}
+%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/media/radio/miropcm20.ko*
+%endif
 /lib/modules/%{version}-%{release}smp/kernel/fs
 /lib/modules/%{version}-%{release}smp/kernel/lib
 /lib/modules/%{version}-%{release}smp/kernel/net
@@ -1572,9 +1582,6 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko*
-%endif
-%if %{have_drm}
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 %endif
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
@@ -1627,6 +1634,7 @@ fi
 %files smp-sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/sound/oss
+/lib/modules/%{version}-%{release}smp/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 %endif			# %%{have_sound}
 %endif			# %%{with smp}
