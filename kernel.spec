@@ -38,12 +38,6 @@
 %define with_grsec_basic 1
 %endif
 
-%ifarch %{x8664}
-%if %{with xendev}
-%undefine	with_pcmcia
-%endif
-%endif
-
 %if %{with xendev} && %{without xen}
 cannot build xendev kernel without xen0/xenU
 %endif
@@ -95,6 +89,33 @@ xen0 conflicts with xenU
 %if %{with xen}
 # xen (for now) is only UP
 %undefine	with_smp
+%endif
+
+%ifarch %{x8664}
+%if %{with xendev}
+%undefine	with_pcmcia
+%endif
+%endif
+
+%define		have_drm	1
+%define		have_oss	1
+%define		have_sound	1
+
+%ifnarch %{ix86}
+%undefine	with_abi
+%endif
+
+%ifarch sparc sparc64
+%undefine	with_pcmcia
+%define		have_drm	0
+%define		have_oss	0
+%endif
+
+%if %{with xenU}
+%undefine	with_pcmcia
+%define		have_drm	0
+%define		have_oss	0
+%define		have_sound	0
 %endif
 
 ## Program required by kernel to work.
@@ -1430,9 +1451,7 @@ fi
 %dir /lib/modules/%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}/kernel
 %if %{with abi}
-%ifarch %{ix86}
 /lib/modules/%{version}-%{release}/kernel/abi
-%endif
 %endif
 %ifnarch sparc
 /lib/modules/%{version}-%{release}/kernel/arch
@@ -1443,15 +1462,12 @@ fi
 /lib/modules/%{version}-%{release}/kernel/lib
 /lib/modules/%{version}-%{release}/kernel/net
 /lib/modules/%{version}-%{release}/kernel/security
-%if !%{with xenU}
+%if %{have_sound}
 %dir /lib/modules/%{version}-%{release}/kernel/sound
 /lib/modules/%{version}-%{release}/kernel/sound/soundcore.*
 %endif
 %dir /lib/modules/%{version}-%{release}/misc
-%if !%{with xenU}
 %if %{with pcmcia}
-%ifnarch sparc sparc64
-#pcmcia stuff
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko*
@@ -1459,24 +1475,19 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko*
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko*
 %endif
-%endif
-%ifnarch sparc sparc64
-#drm stuff
+%if %{have_drm}
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 %endif
-%endif		# %%{with xenU}
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
 
-%if !%{with xenU}
-%ifnarch sparc sparc64
+%if %{have_drm}
 %files drm
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 %endif
 
 %if %{with pcmcia}
-%ifnarch sparc sparc64
 %files pcmcia
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
@@ -1485,7 +1496,6 @@ fi
 /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko*
 /lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko*
 /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko*
-%endif
 %endif
 
 %ifarch ppc
@@ -1505,22 +1515,23 @@ fi
 %endif
 %endif
 
+%if %{have_sound}
 %files sound-alsa
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/sound
 %exclude %dir /lib/modules/%{version}-%{release}/kernel/sound
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/soundcore.*
-%ifnarch sparc sparc64
+%if %{have_oss}
 %exclude /lib/modules/%{version}-%{release}/kernel/sound/oss
 %endif
 
-%ifnarch sparc sparc64
+%if %{have_oss}
 %files sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/sound/oss
 %endif
+%endif			# %%{have_sound}
 %endif			# %%{with up}
-%endif			# %%{with xenU}
 
 %if %{with smp}
 %files smp
@@ -1538,9 +1549,7 @@ fi
 %dir /lib/modules/%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp/kernel
 %if %{with abi}
-%ifarch %{ix86}
 /lib/modules/%{version}-%{release}smp/kernel/abi
-%endif
 %endif
 %ifnarch sparc
 /lib/modules/%{version}-%{release}smp/kernel/arch
@@ -1551,12 +1560,12 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/lib
 /lib/modules/%{version}-%{release}smp/kernel/net
 /lib/modules/%{version}-%{release}smp/kernel/security
+%if %{have_sound}
 %dir /lib/modules/%{version}-%{release}smp/kernel/sound
 /lib/modules/%{version}-%{release}smp/kernel/sound/soundcore.*
+%endif
 %dir /lib/modules/%{version}-%{release}smp/misc
 %if %{with pcmcia}
-%ifnarch sparc sparc64
-#pcmcia stuff
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko*
@@ -1564,22 +1573,19 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko*
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko*
 %endif
-%endif
-%ifnarch sparc sparc64
-#drm stuff
+%if %{have_drm}
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 %endif
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
 
-%ifnarch sparc sparc64
+%if %{have_drm}
 %files smp-drm
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 %endif
 
 %if %{with pcmcia}
-%ifnarch sparc sparc64
 %files smp-pcmcia
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
@@ -1588,7 +1594,6 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko*
 /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko*
-%endif
 %endif
 
 %ifarch ppc
@@ -1608,20 +1613,22 @@ fi
 %endif
 %endif
 
+%if %{have_sound}
 %files smp-sound-alsa
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/sound
 %exclude %dir /lib/modules/%{version}-%{release}smp/kernel/sound
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/soundcore.*
-%ifnarch sparc sparc64
+%if %{have_oss}
 %exclude /lib/modules/%{version}-%{release}smp/kernel/sound/oss
 %endif
 
-%ifnarch sparc sparc64
+%if %{have_oss}
 %files smp-sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/sound/oss
 %endif
+%endif			# %%{have_sound}
 %endif			# %%{with smp}
 
 %files headers
@@ -1663,9 +1670,7 @@ fi
 %files source
 %defattr(644,root,root,755)
 %if %{with abi}
-%ifarch %{ix86}
 %{_prefix}/src/linux-%{version}/abi
-%endif
 %endif
 %{_prefix}/src/linux-%{version}/arch/*/[!Mk]*
 %{_prefix}/src/linux-%{version}/arch/*/kernel/[!M]*
