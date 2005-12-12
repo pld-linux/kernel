@@ -3,9 +3,15 @@
 #
 #		- add distcc support (and don't break crossbuild!)
 #		- move em8300 stuff to separeated specs
-# sparc64:
-# net/ieee80211/ieee80211_crypt_tkip.ko needs unknown symbol wireless_send_event
-# drivers/char/ipmi/ipmi_poweroff.ko needs unknown symbol pm_power_off
+# ppc:
+# drivers/block/swim3.ko.gz needs unknown symbol cli
+# drivers/block/swim3.ko.gz needs unknown symbol restore_flags
+# drivers/block/swim3.ko.gz needs unknown symbol save_flags
+# drivers/block/swim3.ko.gz needs unknown symbol sti
+# [and without sound-oss installed (probably all archs - move to -sound-oss?)]
+# drivers/media/radio/miropcm20.ko.gz needs unknown symbol aci_version
+# drivers/media/radio/miropcm20.ko.gz needs unknown symbol aci_port
+# drivers/media/radio/miropcm20.ko.gz needs unknown symbol aci_rw_cmd
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
