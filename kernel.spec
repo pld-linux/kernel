@@ -4,10 +4,6 @@
 #		- add distcc support (and don't break crossbuild!)
 #		- move em8300 stuff to separeated specs
 # ppc:
-# drivers/block/swim3.ko.gz needs unknown symbol cli
-# drivers/block/swim3.ko.gz needs unknown symbol restore_flags
-# drivers/block/swim3.ko.gz needs unknown symbol save_flags
-# drivers/block/swim3.ko.gz needs unknown symbol sti
 # [and without sound-oss installed (probably all archs - move to -sound-oss?)]
 # drivers/media/radio/miropcm20.ko.gz needs unknown symbol aci_version
 # drivers/media/radio/miropcm20.ko.gz needs unknown symbol aci_port
@@ -224,7 +220,7 @@ Patch30:	2.6.x-TGA-fbdev-lkml.patch
 Patch31:	linux-2.6-ppc-no-i8042.patch
 Patch32:	sis5513-support-sis-965l.patch
 Patch33:	linux-2.6-ppc-ideirq.patch
-
+Patch34:	linux-2.6-swim3-spinlock.patch
 # http://fatooh.org/esfq-2.6/
 Patch35:	esfq-kernel.patch
 # http://www.linuximq.net/
@@ -762,7 +758,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch31 -p1
 %patch32 -p1
 %patch33 -p1
-
+%patch34 -p1
 %patch35 -p1
 %patch36 -p1
 %patch37 -p1
