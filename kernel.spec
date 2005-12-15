@@ -137,7 +137,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel			0.1
+%define		_rel			0.99
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -861,7 +861,7 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 %if %{with grsecurity}
-## patch200 -p1 need update
+%patch200 -p1
 %else
 %{?with_grsec_basic:%patch199 -p1}
 %endif
@@ -1302,7 +1302,7 @@ ln -sf System.map-%{version}-%{release} /boot/System.map
 
 %depmod %{version}-%{release}
 
-/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}.gz %{version}-%{release}
+/sbin/geninitrd -v -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}.gz %{version}-%{release}
 mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
 ln -sf initrd-%{version}-%{release}.gz %{initrd_dir}/initrd
 
@@ -1370,7 +1370,7 @@ ln -sf System.map-%{version}-%{release}smp /boot/System.map
 
 %depmod %{version}-%{release}smp
 
-/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
+/sbin/geninitrd -v -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
 mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
 ln -sf initrd-%{version}-%{release}smp.gz %{initrd_dir}/initrd
 
