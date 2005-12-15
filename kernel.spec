@@ -254,7 +254,7 @@ Patch36:	linux-2.6-dummy-as-imq-replacement.patch
 Patch37:	wrr-linux-2.6.12.2.patch
 # from http://www.ssi.bg/~ja/#routers
 Patch38:	routes-2.6.14-12.diff
-Patch39:	alsa-git-2005-11-07.patch.gz
+Patch39:	alsa-git-2005-11-07.patch
 
 # patch-o-matic-ng
 # [submitted]
@@ -785,7 +785,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch36 -p1
 %patch37 -p1
 %patch38 -p1
-##patch39 -p1 need up[date
+%patch39 -p1
 
 # patch-o-matic-ng
 # [base]
