@@ -137,7 +137,7 @@ xen0 conflicts with xenU
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel			2.6
+%define		_rel			0.1
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -154,7 +154,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_preemptive:-preempt}
-%define		_postver	.3
+%define		_postver	.4
 #define		_postver	%{nil}
 Version:	2.6.14%{_postver}
 Release:	%{_rel}
@@ -165,7 +165,7 @@ Group:		Base/Kernel
 #define		_rc	-rc5
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	982717a9cb246e3c427cc45e3fc86097
+# Source0-md5:	45be19ffe79b2729baf27f7468527e08
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 #Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
@@ -785,7 +785,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch36 -p1
 %patch37 -p1
 %patch38 -p1
-%patch39 -p1
+##patch39 -p1 need up[date
 
 # patch-o-matic-ng
 # [base]
@@ -861,7 +861,7 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 %if %{with grsecurity}
-%patch200 -p1
+## patch200 -p1 need update
 %else
 %{?with_grsec_basic:%patch199 -p1}
 %endif
