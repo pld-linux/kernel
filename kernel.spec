@@ -24,6 +24,7 @@
 %bcond_with	xenU		# build XenU kernel
 %bcond_with	xendev		# build Xen-devel kernel
 %bcond_with	abi		# build with unix abi support
+%bcond_with	bootsplash	# build with bootsplash instead of fbsplash
 
 %if %{with xen0} || %{with xenU}
 %define with_xen 1
@@ -84,6 +85,7 @@ xen0 conflicts with xenU
 %if %{with xen}
 # xen (for now) is only UP
 %undefine	with_smp
+%undefine	with_bootsplash
 %endif
 
 %ifarch %{x8664}
@@ -299,8 +301,9 @@ Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 # derived from http://www.syskonnect.de/syskonnect/support/driver/zip/linux/install-8_23.tar.bz2
 Patch82:	linux-2.6-sk98lin-8.23.1.3.patch
 Patch83:	fbsplash-0.9.2-r5-2.6.14.patch
+Patch84:	bootsplash-3.1.6-2.6.13.diff
 # reserve dynamic minors for device mapper
-Patch84:	linux-static-dev.patch
+Patch85:	linux-static-dev.patch
 # http://ifp-driver.sourceforge.net/
 Patch86:	iriverfs-r0.1.0.1.patch
 Patch87:	squashfs2.2-patch
@@ -824,8 +827,13 @@ install %{SOURCE5} Makefile.ppclibs
 %patch80 -p1
 
 %patch82 -p1
+%if !%{with bootsplash}
 %patch83 -p1
+%else
 %patch84 -p1
+%endif
+
+%patch85 -p1
 
 %patch86 -p1
 %patch87 -p1
@@ -1042,6 +1050,10 @@ BuildConfig() {
 %endif
 %if %{with preemptive}
 	cat %{SOURCE96} >> arch/%{_target_base_arch}/defconfig
+%endif
+%if %{with bootsplash}
+	sed -i 's,CONFIG_FB_SPLASH,CONFIG_BOOTSPLASH,' arch/%{_target_base_arch}/defconfig
+	sed -i 's,CONFIG_LOGO=y,# CONFIG_LOGO is not set,' arch/%{_target_base_arch}/defconfig
 %endif
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{_target_base_arch}/defconfig}
