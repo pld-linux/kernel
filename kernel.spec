@@ -71,8 +71,10 @@ xen conflicts with grsecurity
 xen0 conflicts with xenU
 %endif
 
+%if %{with suspend}
 %ifnarch %{ix86}
 software suspend works only on ix86 platforms
+%endif
 %endif
 
 %{?debug:%define with_verbose 1}
@@ -1036,7 +1038,7 @@ BuildConfig() {
 %if %{with grsecurity}
 	cat %{!?with_pax:%{SOURCE90}}%{?with_pax:%{SOURCE91}} >> arch/%{_target_base_arch}/defconfig
 	%if %{with pax}
-		sed -i 's:CONFIG_KALLSYMS=y:# CONFIG_KALLSYMS is not set:' arch/%{_target_base_arch}/defconfig  
+		sed -i 's:CONFIG_KALLSYMS=y:# CONFIG_KALLSYMS is not set:' arch/%{_target_base_arch}/defconfig
 		sed -i 's:CONFIG_KALLSYMS_ALL=y:# CONFIG_KALLSYMS_ALL is not set:' arch/%{_target_base_arch}/defconfig
 		sed -i 's:CONFIG_KALLSYMS_EXTRA_PASS=y:# CONFIG_KALLSYMS_EXTRA_PASS is not set:' arch/%{_target_base_arch}/defconfig
 	%endif
