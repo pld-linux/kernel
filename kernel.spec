@@ -1063,7 +1063,7 @@ BuildConfig() {
 	sed -i 's,CONFIG_FB_SPLASH,CONFIG_BOOTSPLASH,' arch/%{_target_base_arch}/defconfig
 	sed -i 's,CONFIG_LOGO=y,# CONFIG_LOGO is not set,' arch/%{_target_base_arch}/defconfig
 %endif
-%if %{with_suspend}
+%if %{with suspend}
 	if [ "$smp" != "yes" ]; then
 		cat %{SOURCE97} >> arch/%{_target_base_arch}/defconfig
 	fi
