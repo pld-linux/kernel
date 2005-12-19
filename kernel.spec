@@ -25,6 +25,7 @@
 %bcond_with	xendev		# build Xen-devel kernel
 %bcond_with	abi		# build with unix abi support
 %bcond_with	bootsplash	# build with bootsplash instead of fbsplash
+%bcond_with	suspend		# build with software suspend
 
 %if %{with xen0} || %{with xenU}
 %define with_xen 1
@@ -68,6 +69,10 @@ xen conflicts with grsecurity
 
 %if %{with xen0} && %{with xenU}
 xen0 conflicts with xenU
+%endif
+
+%ifnarch %{ix86}
+software suspend works only on ix86 platforms
 %endif
 
 %{?debug:%define with_verbose 1}
@@ -210,6 +215,7 @@ Source93:	kernel-vserver.config
 Source94:	kernel-em8300.config
 Source95:	kernel-linuxabi.config
 Source96:	kernel-rt.config
+Source97:	kernel-suspend.config
 
 Patch1:		linux-2.6-version.patch
 Patch2:		linux-2.6-biarch-build.patch
@@ -1054,6 +1060,11 @@ BuildConfig() {
 %if %{with bootsplash}
 	sed -i 's,CONFIG_FB_SPLASH,CONFIG_BOOTSPLASH,' arch/%{_target_base_arch}/defconfig
 	sed -i 's,CONFIG_LOGO=y,# CONFIG_LOGO is not set,' arch/%{_target_base_arch}/defconfig
+%endif
+%if %{with_suspend}
+	if [ "$smp" != "yes" ]; then
+		cat %{SOURCE97} >> arch/%{_target_base_arch}/defconfig
+	fi
 %endif
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{_target_base_arch}/defconfig}
