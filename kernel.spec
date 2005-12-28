@@ -146,7 +146,7 @@ software suspend works only on ix86 platforms
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel			0.99.5
+%define		_rel			1
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -335,6 +335,7 @@ Patch107:	linux-2.6-sata-sil-mod15write-workaround.patch
 Patch108:	linux-2.6-tty-races.patch
 Patch109:	linux-2.6-secunia-17786-1.patch
 Patch110:	linux-2.6-cputime-misscalculation.patch
+Patch111:	linux-2.6-improve-text-size.patch
 
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch115:	linux-2.6-atm-vbr.patch
@@ -864,6 +865,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch108 -p1
 %patch109 -p1
 %patch110 -p1
+%patch111 -p1
 
 %patch115 -p1
 %patch116 -p1
