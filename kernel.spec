@@ -162,7 +162,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
-Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_preemptive:-preempt}
+Name:		kernel%{!?with_grsecurity:-no_grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_preemptive:-preempt}
 %define		_postver	.5
 #define		_postver	%{nil}
 Version:	2.6.14%{_postver}
@@ -179,8 +179,8 @@ Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 #Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
 ## Source3-md5:	3db58f38e8a3c001d1a18eb1ee27db3b
-Source4:	http://people.redhat.com/mingo/realtime-preempt/patch-2.6.14-rt4
-# Source4-md5:	46a2a0d621bac7c4895beea2c5dcd321
+Source4:	http://people.redhat.com/mingo/realtime-preempt/older/patch-2.6.14-rt22
+# Source4-md5:	28a0817f6b12bf95758cf08995de348e
 Source5:	kernel-ppclibs.Makefile
 
 Source20:	kernel-i386.config
