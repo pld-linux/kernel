@@ -146,7 +146,7 @@ software suspend works only on ix86 platforms
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel			1
+%define		_rel			0.1
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -163,9 +163,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_preemptive:-preempt}
-%define		_postver	.5
-#define		_postver	%{nil}
-Version:	2.6.14%{_postver}
+%define		_postver	%{nil}
+Version:	2.6.15%{_postver}
 Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
@@ -174,7 +173,7 @@ Group:		Base/Kernel
 #define		_rc	-rc5
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	9f057e3bd31c50dc48553def01bc8037
+# Source0-md5:	cdf95e00f5111e31f78e1d97304d9522
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 #Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
