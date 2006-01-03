@@ -146,7 +146,7 @@ software suspend works only on ix86 platforms
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel			0.1
+%define		_rel			0
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -163,6 +163,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_preemptive:-preempt}
+#define		_postver	.5
 %define		_postver	%{nil}
 Version:	2.6.15%{_postver}
 Release:	%{_rel}
@@ -760,13 +761,13 @@ install %{SOURCE5} Makefile.ppclibs
 
 %{?with_pld_vers:%patch1 -p0}
 %patch2 -p1
-%patch3 -p1
+#patch3 -p1
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
-%patch9 -p1
+#patch9 -p1
 %patch10 -p1
 %ifarch %{ix86}
 %patch11 -p1
@@ -791,12 +792,12 @@ install %{SOURCE5} Makefile.ppclibs
 %patch31 -p1
 %patch32 -p1
 %patch33 -p1
-%patch34 -p1
+#patch34 -p1
 %patch35 -p1
 %patch36 -p1
 %patch37 -p1
 %patch38 -p1
-%patch39 -p1
+#patch39 -p1
 
 # patch-o-matic-ng
 # [base]
@@ -834,9 +835,9 @@ install %{SOURCE5} Makefile.ppclibs
 
 %patch80 -p1
 
-%patch82 -p1
+#patch82 -p1
 %if !%{with bootsplash}
-%patch83 -p1
+#patch83 -p1
 %else
 %patch84 -p1
 %endif
@@ -845,7 +846,7 @@ install %{SOURCE5} Makefile.ppclibs
 
 %patch86 -p1
 %patch87 -p1
-%patch88 -p1
+#patch88 -p1
 
 %patch91 -p1
 %patch92 -p1
@@ -857,17 +858,17 @@ install %{SOURCE5} Makefile.ppclibs
 %patch101 -p1
 %patch102 -p1
 %patch103 -p1
-%patch104 -p1
+#patch104 -p1
 %patch105 -p1
 %patch106 -p1
 %patch107 -p1
 %patch108 -p1
-%patch109 -p1
+#patch109 -p1
 %patch110 -p1
 %patch111 -p1
 
 %patch115 -p1
-%patch116 -p1
+#patch116 -p1
 
 %patch120 -p1
 
@@ -878,7 +879,7 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 %if %{with grsecurity}
-%patch200 -p1
+#patch200 -p1
 %else
 %{?with_grsec_basic:%patch199 -p1}
 %endif
