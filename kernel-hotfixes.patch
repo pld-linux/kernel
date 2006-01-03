@@ -74,42 +74,6 @@
  
  /* TTY Driver */
  
---- a/drivers/char/rocket.c	2004-12-24 22:35:21.000000000 +0100
-+++ b/drivers/char/rocket.c	2005-02-15 09:48:39.050645896 +0100
-@@ -210,11 +210,6 @@
- module_param_array(pc104_4, ulong, NULL, 0);
- MODULE_PARM_DESC(pc104_4, "set interface types for ISA(PC104) board #4 (e.g. pc104_4=232,232,485,485,...");
- 
--int rp_init(void);
--static void rp_cleanup_module(void);
--
--module_init(rp_init);
--module_exit(rp_cleanup_module);
- 
- #endif
- 
-@@ -2422,10 +2417,11 @@
- 
- 	return 0;
- }
-+module_init(rp_init);
- 
- #ifdef MODULE
- 
--static void rp_cleanup_module(void)
-+static void __exit rp_cleanup_module(void)
- {
- 	int retval;
- 	int i;
-@@ -2451,6 +2447,8 @@
- 	if (controller)
- 		release_region(controller, 4);
- }
-+module_exit(rp_cleanup_module);
-+
- #endif
- 
- #ifndef TRUE
 --- a/arch/alpha/kernel/alpha_ksyms.c	2005-03-13 07:44:05.000000000 +0100
 +++ b/arch/alpha/kernel/alpha_ksyms.c	2005-03-15 23:20:00.405832368 +0100
 @@ -67,6 +67,9 @@
