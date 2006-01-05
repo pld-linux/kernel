@@ -182,6 +182,8 @@ Source2:	kernel-config.h
 Source4:	http://people.redhat.com/mingo/realtime-preempt/older/patch-2.6.14-rt22
 # Source4-md5:	28a0817f6b12bf95758cf08995de348e
 Source5:	kernel-ppclibs.Makefile
+Source6:	http://people.redhat.com/mingo/debloating-patches/debloating-patches-2.6.15-rc7.tar.gz
+# Source6-md5:	ca7a1cdef3e5c95f182d039cebd92b5e
 
 Source20:	kernel-i386.config
 Source21:	kernel-i386-smp.config
@@ -757,6 +759,13 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 #sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = #g' Makefile
 %{?with_preemptive:patch -p1 -s < %{SOURCE4}}
 install %{SOURCE5} Makefile.ppclibs
+
+%if 0
+# debloating patches (not finished yet)
+tar xzf %{SOURCE6}
+for i in `ls patches/gcc-*.patch`; do patch -p1 -F3 < $i; done
+rm -rf patches
+%endif
 
 %{?with_pld_vers:%patch1 -p0}
 %patch2 -p1
