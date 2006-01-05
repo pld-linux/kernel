@@ -335,7 +335,6 @@ Patch107:	linux-2.6-sata-sil-mod15write-workaround.patch
 Patch108:	linux-2.6-tty-races.patch
 Patch109:	linux-2.6-secunia-17786-1.patch
 Patch110:	linux-2.6-cputime-misscalculation.patch
-Patch111:	linux-2.6-improve-text-size.patch
 
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch115:	linux-2.6-atm-vbr.patch
@@ -865,7 +864,6 @@ install %{SOURCE5} Makefile.ppclibs
 %patch108 -p1
 #patch109 -p1
 %patch110 -p1
-%patch111 -p1
 
 %patch115 -p1
 #patch116 -p1
