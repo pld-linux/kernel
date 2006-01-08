@@ -146,7 +146,7 @@ software suspend works only on ix86 platforms
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel			2
+%define		_rel			2.1
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -1169,8 +1169,10 @@ PreInstallKernel() {
 %ifarch ppc ppc64
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%ifarch ppc
 	%{__make} -f Makefile.ppclibs install \
 		DESTDIR=$KERNEL_INSTALL_DIR/boot/libs-$KernelVer
+%endif
 %endif
 %ifarch ia64
 	gzip -cfv vmlinux > vmlinuz
