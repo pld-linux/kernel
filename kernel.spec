@@ -756,7 +756,9 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 #bzip2 -d -c %{SOURCE3} | patch -p1 -s
 #sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = #g' Makefile
 %{?with_preemptive:patch -p1 -s < %{SOURCE4}}
+%ifarch ppc
 install %{SOURCE5} Makefile.ppclibs
+%endif
 
 %{?with_pld_vers:%patch1 -p0}
 %patch2 -p1
