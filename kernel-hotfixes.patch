@@ -140,23 +140,6 @@
  EXPORT_SYMBOL(ip_queue_xmit);
  EXPORT_SYMBOL(ip_send_check);
 +EXPORT_SYMBOL(sysctl_ip_default_ttl);
-From: Shaohua Li <shaohua.li@intel.com>
-Date: Wed, 30 Nov 2005 03:34:42 +0000 (-0800)
-Subject: [PATCH] setting irq affinity is broken in ia32 with MSI enabled
-X-Git-Tag: v2.6.15-rc4
-X-Git-Url: http://www.kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=fe655d3a06488c8a188461bca493e9f23fc8c448
-
-[PATCH] setting irq affinity is broken in ia32 with MSI enabled
-
-Setting irq affinity stops working when MSI is enabled.  With MSI, move_irq
-is empty, so we can't change irq affinity.  It appears a typo in Ashok's
-original commit for this issue.  X86_64 actually is using move_native_irq.
-
-Signed-off-by: Shaohua Li <shaohua.li@intel.com>
-Signed-off-by: Andrew Morton <akpm@osdl.org>
-Signed-off-by: Linus Torvalds <torvalds@osdl.org>
----
-
 --- a/arch/i386/kernel/io_apic.c
 +++ b/arch/i386/kernel/io_apic.c
 @@ -2009,7 +2009,7 @@ static void ack_edge_ioapic_vector(unsig
@@ -177,3 +160,21 @@ Signed-off-by: Linus Torvalds <torvalds@osdl.org>
  	end_level_ioapic_irq(irq);
  }
  
+--- a/include/linux/smp.h	2006-01-08 02:15:24.000000000 +0000
++++ b/include/linux/smp.h	2006-01-08 20:49:58.053351752 +0000
+@@ -10,13 +10,14 @@
+ 
+ extern void cpu_idle(void);
+ 
++#include <asm/smp.h>
++
+ #ifdef CONFIG_SMP
+ 
+ #include <linux/preempt.h>
+ #include <linux/kernel.h>
+ #include <linux/compiler.h>
+ #include <linux/thread_info.h>
+-#include <asm/smp.h>
+ #include <asm/bug.h>
+ 
+ /*
