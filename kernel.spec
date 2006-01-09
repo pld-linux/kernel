@@ -9,7 +9,7 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
-%bcond_without	grsecurity	# grsecurity
+%bcond_with	grsecurity	# grsecurity  - temporary
 %bcond_without	pld_vers	# disable pld-specific UTS_NAME changes
 %bcond_with	grsec_basic	# basic grsecurity functionality (proc,link,fifo)
 				# bcond only valid "without  grsecurity"
@@ -857,7 +857,7 @@ rm -rf patches
 %patch87 -p1
 %if %{with reiser4}
 %patch88 -p1
-%else
+%endif
 
 %patch91 -p1
 %patch92 -p1
