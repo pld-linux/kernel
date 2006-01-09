@@ -121,6 +121,10 @@ software suspend works only on ix86 platforms
 %define		have_oss	0
 %endif
 
+%ifarch ppc64
+%define		have_oss	0
+%endif
+
 %if %{with xenU}
 %undefine	with_pcmcia
 %define		have_drm	0
