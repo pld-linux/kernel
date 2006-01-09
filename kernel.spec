@@ -26,6 +26,7 @@
 %bcond_with	abi		# build with unix abi support
 %bcond_with	bootsplash	# build with bootsplash instead of fbsplash
 %bcond_with	suspend		# build with software suspend
+%bcond_with	reiser4		# build with reiserfs4 support
 
 %if %{with xen0} || %{with xenU}
 %define with_xen 1
@@ -310,7 +311,7 @@ Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 
 # derived from http://www.syskonnect.de/syskonnect/support/driver/zip/linux/install-8_23.tar.bz2
 Patch82:	linux-2.6-sk98lin-8.23.1.3.patch
-Patch83:	fbsplash-0.9.2-r5-2.6.14.patch
+Patch83:	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.15-rc1.patch
 Patch84:	bootsplash-3.1.6-2.6.13.diff
 # reserve dynamic minors for device mapper
 Patch85:	linux-static-dev.patch
@@ -775,7 +776,7 @@ rm -rf patches
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
-#patch9 -p1
+#patch9 -p1 applied
 %patch10 -p1
 %ifarch %{ix86}
 %patch11 -p1
@@ -800,12 +801,12 @@ rm -rf patches
 %patch31 -p1
 %patch32 -p1
 %patch33 -p1
-#patch34 -p1
+#patch34 -p1 applied
 %patch35 -p1
 %patch36 -p1
 %patch37 -p1
 %patch38 -p1
-#patch39 -p1
+#patch39 -p1 applied
 
 # patch-o-matic-ng
 # [base]
@@ -845,7 +846,7 @@ rm -rf patches
 
 #patch82 -p1
 %if !%{with bootsplash}
-#patch83 -p1
+%patch83 -p1
 %else
 %patch84 -p1
 %endif
@@ -854,7 +855,9 @@ rm -rf patches
 
 %patch86 -p1
 %patch87 -p1
-#patch88 -p1
+%if %{with reiser4}
+%patch88 -p1
+%else
 
 %patch91 -p1
 %patch92 -p1
@@ -866,16 +869,16 @@ rm -rf patches
 %patch101 -p1
 %patch102 -p1
 %patch103 -p1
-#patch104 -p1
+#patch104 -p1 applied
 %patch105 -p1
 %patch106 -p1
 %patch107 -p1
 %patch108 -p1
-#patch109 -p1
+#patch109 -p1 applied
 %patch110 -p1
 
 %patch115 -p1
-#patch116 -p1
+%patch116 -p1
 
 %patch120 -p1
 
@@ -886,7 +889,7 @@ rm -rf patches
 %endif
 
 %if %{with grsecurity}
-#patch200 -p1
+%patch200 -p1
 %else
 %{?with_grsec_basic:%patch199 -p1}
 %endif
