@@ -150,7 +150,7 @@ software suspend works only on ix86 platforms
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel			2.1
+%define		_rel			3
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -1156,6 +1156,7 @@ PreInstallKernel() {
 %else
 	install arch/%{_target_base_arch}/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
+	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 %endif
 %ifarch alpha sparc sparc64
 	gzip -cfv vmlinux > vmlinuz
@@ -1325,11 +1326,13 @@ fi
 %ifarch ia64
 mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
 %endif
+mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 %ifarch ia64
 ln -sf vmlinuz-%{version}-%{release} /boot/efi/vmlinuz
 %endif
+ln -sf vmlinux-%{version}-%{release} /boot/vmlinux
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
 
@@ -1393,11 +1396,13 @@ fi
 %ifarch ia64
 mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
 %endif
+mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 %ifarch ia64
 ln -sf vmlinuz-%{version}-%{release}smp /boot/efi/vmlinuz
 %endif
+ln -sf vmlinux-%{version}-%{release}smp /boot/vmlinux
 ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}smp /boot/System.map
 
@@ -1469,11 +1474,10 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc FAQ-pl
-%ifarch alpha ppc ppc64
+%ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
 /boot/vmlinux-%{version}-%{release}
 %endif
 %ifarch sparc sparc64
-/boot/vmlinux-%{version}-%{release}
 /boot/vmlinux.aout-%{version}-%{release}
 %endif
 %ifarch ia64
@@ -1587,7 +1591,7 @@ fi
 %files smp
 %defattr(644,root,root,755)
 %doc FAQ-pl
-%ifarch alpha sparc sparc64 ppc ppc64
+%ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
 /boot/vmlinux-%{version}-%{release}smp
 %endif
 %ifarch ia64
