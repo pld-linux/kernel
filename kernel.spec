@@ -260,7 +260,8 @@ Patch34:	linux-2.6-swim3-spinlock.patch
 Patch35:	esfq-kernel.patch
 # http://www.linuximq.net/
 #Patch36:	linux-2.6.13-imq2.diff		OBSOLETE ?
-Patch36:	linux-2.6-dummy-as-imq-replacement.patch
+Patch36:	http://www.linuximq.net/patchs/linux-2.6.14-imq6.diff
+#Patch36:	linux-2.6-dummy-as-imq-replacement.patch
 
 # http://www.zz9.dk/wrr/
 # derived from http://www.zz9.dk/wrr-linux-2.6.12.2.patch.gz
