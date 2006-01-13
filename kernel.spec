@@ -28,6 +28,8 @@
 %bcond_with	suspend		# build with software suspend
 %bcond_with	reiser4		# build with reiserfs4 support
 
+%bcond_without netfilter	# build without netfiler support
+
 %if %{with xen0} || %{with xenU}
 %define with_xen 1
 %endif
@@ -809,6 +811,7 @@ rm -rf patches
 %patch38 -p1
 #patch39 -p1 applied
 
+%if %{with netfiler}
 # patch-o-matic-ng
 # [base]
 %patch40 -p1
@@ -816,11 +819,11 @@ rm -rf patches
 %patch42 -p1
 %patch43 -p1
 %patch44 -p1
-%patch45 -p1
+#patch45 -p1 needs update
 %patch46 -p1
 %patch47 -p1
 %patch48 -p1
-%patch49 -p1
+#patch49 -p1 needs update
 %patch50 -p1
 %patch51 -p1
 %patch52 -p1
@@ -842,6 +845,7 @@ rm -rf patches
 %patch72 -p1
 %patch73 -p1
 # /patch-o-matic-ng
+%endif
 
 %patch80 -p1
 
@@ -873,7 +877,7 @@ rm -rf patches
 #patch104 -p1 applied
 %patch105 -p1
 %patch106 -p1
-%patch107 -p1
+#patch107 -p1 needs update
 %patch108 -p1
 #patch109 -p1 applied
 %patch110 -p1
