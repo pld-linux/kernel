@@ -322,8 +322,7 @@ Patch87:	squashfs2.2-patch
 Patch88:	reiser4-for-2.6.14-1.patch.gz
 
 # http://gaugusch.at/acpi-dsdt-initrd-patches/
-Patch91:	acpi-dsdt-initrd-v0.7d-2.6.12.patch
-Patch92:	acpi-dsdt-initramfs-fix-2.6.10-cleanup.patch
+Patch91:	acpi-dsdt-initrd-v0.8b-2.6.14.patch
 Patch93:	linux-btc-8190urf.patch
 
 # http://www.kismetwireless.net/download.shtml#orinoco2611
@@ -854,7 +853,6 @@ install %{SOURCE5} Makefile.ppclibs
 %patch88 -p1
 
 %patch91 -p1
-%patch92 -p1
 
 %patch93 -p1
 
