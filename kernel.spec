@@ -250,17 +250,17 @@ Patch23:	linux-2.6-x8664-kernel-clock-is-running-2-times-too-fast.patch
 Patch24:	linux-2.6-ix86-ati-xpress200-fall-back-from-ioapicIRQ-to-i8259AIRQ.patch
 Patch25:	2.6.7-alpha_compile.patch
 Patch26:	2.6.7-ppc-asm-defs.patch
-Patch28:	linux-2.6-sparc-ksyms.patch
-Patch29:	linux-2.6-ppc-no-pc-serial.patch
-Patch30:	2.6.x-TGA-fbdev-lkml.patch
-Patch31:	linux-2.6-ppc-no-i8042.patch
-Patch32:	sis5513-support-sis-965l.patch
-Patch33:	linux-2.6-ppc-ideirq.patch
-Patch34:	linux-2.6-swim3-spinlock.patch
+Patch27:	linux-2.6-sparc-ksyms.patch
+Patch28:	linux-2.6-ppc-no-pc-serial.patch
+Patch29:	2.6.x-TGA-fbdev-lkml.patch
+Patch30:	linux-2.6-ppc-no-i8042.patch
+Patch31:	sis5513-support-sis-965l.patch
+Patch32:	linux-2.6-ppc-ideirq.patch
+Patch33:	linux-2.6-swim3-spinlock.patch
 # http://fatooh.org/esfq-2.6/
-Patch35:	esfq-kernel.patch
+Patch34:	esfq-kernel.patch
 # http://www.linuximq.net/
-#Patch36:	linux-2.6.13-imq2.diff		OBSOLETE ?
+Patch35:	linux-2.6.14-imq6.diff
 Patch36:	linux-2.6-dummy-as-imq-replacement.patch
 
 # http://www.zz9.dk/wrr/
@@ -790,6 +790,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch24 -p1
 %patch25 -p1
 %patch26 -p1
+%patch27 -p1
 %patch28 -p1
 %patch29 -p1
 %patch30 -p1
