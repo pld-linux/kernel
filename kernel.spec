@@ -150,7 +150,7 @@ software suspend works only on ix86 platforms
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel			3
+%define		_rel			4
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -1728,6 +1728,7 @@ fi
 %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %{_prefix}/src/linux-%{version}/scripts/basic
 %{_prefix}/src/linux-%{version}/scripts/mod
+%{_prefix}/src/linux-%{version}/scripts/setlocalversion
 %{_prefix}/src/linux-%{version}/scripts/*.c
 %{_prefix}/src/linux-%{version}/scripts/*.sh
 
@@ -1765,6 +1766,7 @@ fi
 %exclude %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %exclude %{_prefix}/src/linux-%{version}/scripts/basic
 %exclude %{_prefix}/src/linux-%{version}/scripts/mod
+%exclude %{_prefix}/src/linux-%{version}/scripts/setlocalversion
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.c
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.sh
 %{_prefix}/src/linux-%{version}/sound
