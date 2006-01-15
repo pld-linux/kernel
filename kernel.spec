@@ -313,7 +313,7 @@ Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 # derived from http://www.syskonnect.de/syskonnect/support/driver/zip/linux/install-8_23.tar.bz2
 Patch82:	linux-2.6-sk98lin-8.23.1.3.patch
 Patch83:	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.15-rc1.patch
-Patch84:	bootsplash-3.1.6-2.6.13.diff
+Patch84:	bootsplash-3.1.6-2.6.15.diff
 # reserve dynamic minors for device mapper
 Patch85:	linux-static-dev.patch
 # http://ifp-driver.sourceforge.net/
