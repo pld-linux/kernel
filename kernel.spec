@@ -9,7 +9,7 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
-%bcond_with	grsecurity	# grsecurity  - temporary
+%bcond_without	grsecurity	# grsecurity
 %bcond_without	pld_vers	# disable pld-specific UTS_NAME changes
 %bcond_with	pax		# enable PaX (depends on grsecurity)
 %bcond_with	omosix		# enable openMosix (conflicts with grsecurity/vserver)
@@ -802,7 +802,7 @@ rm -rf patches
 %patch33 -p1
 #patch34 -p1 applied
 %patch35 -p1
-#patch36 -p1
+%patch36 -p1
 %patch37 -p1
 %patch38 -p1
 #patch39 -p1 applied
@@ -845,7 +845,7 @@ rm -rf patches
 
 #patch82 -p1
 %if !%{with bootsplash}
-#patch83 -p1
+%patch83 -p1
 %else
 %patch84 -p1
 %endif
@@ -892,12 +892,15 @@ rm -rf patches
 %else
 %patch199 -p1
 %endif
+
 %if %{with omosix}
 %{__patch} -p1 -F3 < %{PATCH201}
 %endif
+
 %if %{with vserver}
 %patch300 -p1
 %endif
+
 %if %{with xen}
 %if %{with xendev}
 %patch204 -p1
@@ -911,6 +914,7 @@ rm -rf patches
 
 %patch400 -p1
 %patch401 -p1
+
 %if %{with em8300}
 %patch402 -p1
 %endif
