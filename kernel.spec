@@ -258,7 +258,7 @@ Patch34:	linux-2.6-swim3-spinlock.patch
 Patch35:	esfq-kernel.patch
 # http://www.linuximq.net/
 #Patch36:	linux-2.6.13-imq2.diff		OBSOLETE ?
-Patch36:	http://www.linuximq.net/patchs/linux-2.6.14-imq6.diff
+#Patch36:	http://www.linuximq.net/patchs/linux-2.6.14-imq6.diff
 #Patch36:	linux-2.6-dummy-as-imq-replacement.patch
 
 # http://www.zz9.dk/wrr/
@@ -310,7 +310,7 @@ Patch80:	http://www.tahoe.pl/drivers/tahoe9xx-2.6.4-5.patch
 
 # derived from http://www.syskonnect.de/syskonnect/support/driver/zip/linux/install-8_23.tar.bz2
 Patch82:	linux-2.6-sk98lin-8.23.1.3.patch
-Patch83:	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.15-rc1.patch
+#Patch83:	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.15-rc1.patch
 Patch84:	bootsplash-3.1.6-2.6.15.diff
 # reserve dynamic minors for device mapper
 Patch85:	linux-static-dev.patch
@@ -802,7 +802,7 @@ rm -rf patches
 %patch33 -p1
 #patch34 -p1 applied
 %patch35 -p1
-%patch36 -p1
+#patch36 -p1
 %patch37 -p1
 %patch38 -p1
 #patch39 -p1 applied
@@ -845,7 +845,7 @@ rm -rf patches
 
 #patch82 -p1
 %if !%{with bootsplash}
-%patch83 -p1
+#patch83 -p1
 %else
 %patch84 -p1
 %endif
