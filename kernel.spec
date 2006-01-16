@@ -11,8 +11,6 @@
 %bcond_without	pcmcia		# don't build pcmcia
 %bcond_with	grsecurity	# grsecurity  - temporary
 %bcond_without	pld_vers	# disable pld-specific UTS_NAME changes
-%bcond_with	grsec_basic	# basic grsecurity functionality (proc,link,fifo)
-				# bcond only valid "without  grsecurity"
 %bcond_with	pax		# enable PaX (depends on grsecurity)
 %bcond_with	omosix		# enable openMosix (conflicts with grsecurity/vserver)
 %bcond_with	vserver		# enable vserver (conflicts with grsecurity/omosix)
@@ -33,7 +31,7 @@
 %endif
 
 %if %{with vserver}
-%define with_grsec_basic 1
+%undefine grsecurity
 %endif
 
 %if %{with xendev} && %{without xen}
@@ -892,7 +890,7 @@ rm -rf patches
 %if %{with grsecurity}
 %patch200 -p1
 %else
-%{?with_grsec_basic:%patch199 -p1}
+%patch199 -p1
 %endif
 %if %{with omosix}
 %{__patch} -p1 -F3 < %{PATCH201}
@@ -1056,9 +1054,7 @@ BuildConfig() {
 		sed -i 's:CONFIG_KALLSYMS_EXTRA_PASS=y:# CONFIG_KALLSYMS_EXTRA_PASS is not set:' arch/%{_target_base_arch}/defconfig
 	%endif
 %else
-%if %{with grsec_basic}
 	cat %{SOURCE90} >> arch/%{_target_base_arch}/defconfig
-%endif
 %endif
 %if %{with omosix}
 	cat %{SOURCE92} >> arch/%{_target_base_arch}/defconfig
