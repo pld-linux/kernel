@@ -1,0 +1,20 @@
+[PATCH] pcmcia: delay creation of 'pseudo' devices
+
+Pseudo secondary PCMCIA devices work best if the primary PCMCIA device
+is configured already. Therefore, delay things a bit...
+
+Signed-off-by: Dominik Brodowski <linux@dominikbrodowski.net>
+
+diff --git a/drivers/pcmcia/ds.c b/drivers/pcmcia/ds.c
+index d419f17..3e3bb09 100644
+--- a/drivers/pcmcia/ds.c
++++ b/drivers/pcmcia/ds.c
+@@ -679,7 +679,7 @@ static inline void pcmcia_add_pseudo_dev
+ {
+ 	if (!s->pcmcia_state.device_add_pending) {
+ 		s->pcmcia_state.device_add_pending = 1;
+-		schedule_work(&s->device_add);
++		schedule_delayed_work(&s->device_add, 10);
+ 	}
+ 	return;
+ }
