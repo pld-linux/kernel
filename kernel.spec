@@ -1264,6 +1264,7 @@ CrossOpts="ARCH=xen"
 %endif
 
 install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{version}-%{release}{,smp}
 
 KERNEL_BUILD_DIR=`pwd`
 
@@ -1534,6 +1535,7 @@ fi
 %endif
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
+%dir %{_sysconfdir}/modprobe.d/%{version}-%{release}
 
 %if %{have_drm}
 %files drm
@@ -1648,6 +1650,7 @@ fi
 %endif
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
+%dir %{_sysconfdir}/modprobe.d/%{version}-%{release}smp
 
 %if %{have_drm}
 %files smp-drm
