@@ -9,7 +9,7 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
-%bcond_without	grsecurity	# grsecurity
+%bcond_with	grsecurity	# don't build grsecurity - applay grsec_basic
 %bcond_without	pld_vers	# disable pld-specific UTS_NAME changes
 %bcond_with	pax		# enable PaX (depends on grsecurity)
 %bcond_with	omosix		# enable openMosix (conflicts with grsecurity/vserver)
@@ -349,7 +349,7 @@ Patch135:	linux-2.6-unix-abi.patch
 
 Patch199:	linux-2.6-grsec-minimal.patch
 # http://grsecurity.net/
-Patch200:	grsecurity-2.1.7-2.6.14.2-200511150641.patch
+Patch200:	grsecurity-2.1.8-2.6.14.6-200601121820.patch
 # http://openmosix.snarc.org/files/releases/2.6/
 # derived from openMosix-r570.patch
 Patch201:	linux-2.6-omosix.patch
