@@ -920,7 +920,7 @@ rm -rf patches
 %patch402 -p1
 %endif
 
-%patch403 -p1
+#patch403 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
