@@ -266,7 +266,7 @@ Patch36:	kernel-imq6.patch
 Patch37:	wrr-linux-2.6.12.2.patch
 # from http://www.ssi.bg/~ja/#routers
 Patch38:	routes-2.6.14-12.diff
-Patch39:	alsa-git-2005-11-07.patch
+Patch39:	alsa-git-2006-01-22.patch
 
 # patch-o-matic-ng
 # [submitted]
