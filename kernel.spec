@@ -1347,7 +1347,7 @@ ln -sf System.map-%{version}-%{release} /boot/System.map
 
 %depmod %{version}-%{release}
 
-/sbin/geninitrd -v -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}.gz %{version}-%{release}
+/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}.gz %{version}-%{release}
 mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
 ln -sf initrd-%{version}-%{release}.gz %{initrd_dir}/initrd
 
@@ -1417,7 +1417,7 @@ ln -sf System.map-%{version}-%{release}smp /boot/System.map
 
 %depmod %{version}-%{release}smp
 
-/sbin/geninitrd -v -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
+/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
 mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
 ln -sf initrd-%{version}-%{release}smp.gz %{initrd_dir}/initrd
 
