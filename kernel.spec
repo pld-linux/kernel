@@ -150,7 +150,7 @@ software suspend works only on ix86 platforms
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel			5
+%define		_rel			5.1
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -179,8 +179,6 @@ Group:		Base/Kernel
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 # Source0-md5:	57368527b7e6f3ce072f0da541cca9c6
-Source1:	kernel-autoconf.h
-Source2:	kernel-config.h
 #Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
 ## Source3-md5:	3db58f38e8a3c001d1a18eb1ee27db3b
 Source4:	http://people.redhat.com/mingo/realtime-preempt/older/patch-2.6.14-rt22
@@ -226,7 +224,6 @@ Source97:	kernel-suspend.config
 Patch1:		linux-2.6-version.patch
 Patch2:		linux-2.6-biarch-build.patch
 Patch3:		2.6.0-t9-acpi_osl-lkml.patch
-Patch4:		linux-kbuild-extmod.patch
 Patch5:		kernel-MAX_INIT_ARGS.patch
 Patch6:		linux-2.6-extended-utf8.patch
 Patch7:		linux-2.6-realtime-lsm-0.1.1.patch
@@ -767,7 +764,6 @@ install %{SOURCE5} Makefile.ppclibs
 %{?with_pld_vers:%patch1 -p0}
 %patch2 -p1
 %patch3 -p1
-%patch4 -p1
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
@@ -1304,8 +1300,6 @@ $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 
 %{__make} $CrossOpts mrproper
 %{__make} $CrossOpts include/linux/version.h
-install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
-install %{SOURCE2} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/config.h
 
 %if %{with up} || %{with smp}
 # ghosted initrd
@@ -1727,6 +1721,7 @@ fi
 %{_prefix}/src/linux-%{version}/scripts/Kbuild.include
 %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %{_prefix}/src/linux-%{version}/scripts/basic
+%{_prefix}/src/linux-%{version}/scripts/mkmakefile
 %{_prefix}/src/linux-%{version}/scripts/mod
 %{_prefix}/src/linux-%{version}/scripts/setlocalversion
 %{_prefix}/src/linux-%{version}/scripts/*.c
@@ -1765,6 +1760,7 @@ fi
 %exclude %{_prefix}/src/linux-%{version}/scripts/Kbuild.include
 %exclude %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %exclude %{_prefix}/src/linux-%{version}/scripts/basic
+%exclude %{_prefix}/src/linux-%{version}/scripts/mkmakefile
 %exclude %{_prefix}/src/linux-%{version}/scripts/mod
 %exclude %{_prefix}/src/linux-%{version}/scripts/setlocalversion
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.c
