@@ -365,6 +365,7 @@ Patch300:	linux-2.6-vs2.1.patch
 Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
 Patch402:	linux-em8300-2.6.11.2.patch
+Patch403:	linux-2.6.14-cx88-debug-printk.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -906,6 +907,7 @@ install %{SOURCE5} Makefile.ppclibs
 %if %{with em8300}
 %patch402 -p1
 %endif
+%patch403 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
