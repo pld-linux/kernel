@@ -150,7 +150,7 @@ software suspend works only on ix86 platforms
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel			5.1
+%define		_rel			6
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -366,6 +366,7 @@ Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
 Patch402:	linux-em8300-2.6.11.2.patch
 Patch403:	linux-2.6.14-cx88-debug-printk.patch
+Patch404:	linux-2.6.14-skb_reserve.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -908,6 +909,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch402 -p1
 %endif
 %patch403 -p1
+%patch404 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
