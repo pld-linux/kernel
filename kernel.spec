@@ -224,6 +224,7 @@ Source97:	kernel-suspend.config
 Patch1:		linux-2.6-version.patch
 Patch2:		linux-2.6-biarch-build.patch
 Patch3:		2.6.0-t9-acpi_osl-lkml.patch
+
 Patch5:		kernel-MAX_INIT_ARGS.patch
 Patch6:		linux-2.6-extended-utf8.patch
 Patch7:		linux-2.6-realtime-lsm-0.1.1.patch
@@ -335,6 +336,8 @@ Patch107:	linux-2.6-sata-sil-mod15write-workaround.patch
 Patch108:	linux-2.6-tty-races.patch
 Patch109:	linux-2.6-secunia-17786-1.patch
 Patch110:	linux-2.6-cputime-misscalculation.patch
+Patch111:	linux-2.6.14-cx88-debug-printk.patch
+Patch112:	linux-2.6.14-skb_reserve.patch
 
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch115:	linux-2.6-atm-vbr.patch
@@ -365,8 +368,6 @@ Patch300:	linux-2.6-vs2.1.patch
 Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
 Patch402:	linux-em8300-2.6.11.2.patch
-Patch403:	linux-2.6.14-cx88-debug-printk.patch
-Patch404:	linux-2.6.14-skb_reserve.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
@@ -766,6 +767,7 @@ install %{SOURCE5} Makefile.ppclibs
 %{?with_pld_vers:%patch1 -p0}
 %patch2 -p1
 %patch3 -p1
+
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
@@ -868,6 +870,8 @@ install %{SOURCE5} Makefile.ppclibs
 %patch108 -p1
 %patch109 -p1
 %patch110 -p1
+%patch111 -p1
+%patch112 -p1
 
 %patch115 -p1
 %patch116 -p1
@@ -908,8 +912,6 @@ install %{SOURCE5} Makefile.ppclibs
 %if %{with em8300}
 %patch402 -p1
 %endif
-%patch403 -p1
-%patch404 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
