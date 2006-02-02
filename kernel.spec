@@ -1512,6 +1512,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 /lib/modules/%{version}-%{release}/kernel/fs
+/lib/modules/%{version}-%{release}/kernel/kernel
 /lib/modules/%{version}-%{release}/kernel/lib
 /lib/modules/%{version}-%{release}/kernel/net
 /lib/modules/%{version}-%{release}/kernel/security
@@ -1627,6 +1628,7 @@ fi
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 /lib/modules/%{version}-%{release}smp/kernel/fs
+/lib/modules/%{version}-%{release}smp/kernel/kernel
 /lib/modules/%{version}-%{release}smp/kernel/lib
 /lib/modules/%{version}-%{release}smp/kernel/net
 /lib/modules/%{version}-%{release}smp/kernel/security
