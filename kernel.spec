@@ -338,6 +338,7 @@ Patch109:	linux-2.6-secunia-17786-1.patch
 Patch110:	linux-2.6-cputime-misscalculation.patch
 Patch111:	linux-2.6.14-cx88-debug-printk.patch
 Patch112:	linux-2.6.14-skb_reserve.patch
+Patch113:	linux-2.6.14-ahci-JMB360.patch
 
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch115:	linux-2.6-atm-vbr.patch
@@ -872,6 +873,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch110 -p1
 %patch111 -p1
 %patch112 -p1
+%patch113 -p1
 
 %patch115 -p1
 %patch116 -p1
