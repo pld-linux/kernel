@@ -24,7 +24,6 @@
 %bcond_with	abi		# build with unix abi support
 %bcond_with	bootsplash	# build with bootsplash instead of fbsplash
 %bcond_with	suspend		# build with software suspend
-%bcond_with	reiser4		# build with reiserfs4 support
 
 %if %{with xen0} || %{with xenU}
 %define with_xen 1
@@ -145,7 +144,7 @@ software suspend works only on ix86 platforms
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel			0.2
+%define		_rel			0.3
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -855,9 +854,7 @@ rm -rf patches
 
 %patch86 -p1
 %patch87 -p1
-%if %{with reiser4}
 %patch88 -p1
-%endif
 
 %patch91 -p1
 %patch92 -p1
