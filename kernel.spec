@@ -1222,12 +1222,14 @@ rm -rf $KERNEL_INSTALL_DIR
 BuildConfig
 %{?with_up:BuildKernel}
 %{?with_up:PreInstallKernel}
+%if %{with smp}
 # SMP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig smp
-%{?with_smp:BuildKernel smp}
-%{?with_smp:PreInstallKernel smp}
+BuildKernel smp
+PreInstallKernel smp
+%endif
 
 %install
 rm -rf $RPM_BUILD_ROOT
