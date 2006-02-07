@@ -858,7 +858,7 @@ rm -rf patches
 
 %patch88 -p1
 %ifarch ppc ppc64 sparc sparc64
-%patch98 -p1
+%patch89 -p1
 %endif
 
 %patch91 -p1
