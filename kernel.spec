@@ -145,7 +145,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
-%define		_postver	.4
+%define		_postver	.5
 #define		_postver	%{nil}
 Version:	2.6.13%{_postver}
 Release:	%{_rel}
@@ -156,7 +156,7 @@ Group:		Base/Kernel
 #define		_rc	-rc3
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	94768d7eef90a9d8174639b2a7d3f58d
+# Source0-md5:	d6ba1208a8ace03e36b432b9ba179177
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 Source5:	kernel-ppclibs.Makefile
@@ -330,10 +330,11 @@ Patch207:	linux-2.6.12.3-xen-fixes.patch
 
 # vserver-2.0
 Patch300:	linux-2.6-vs2.patch
-Patch301:	http://vserver.13thfloor.at/Experimental/delta-rkill-feat01.diff
-Patch302:	http://vserver.13thfloor.at/Experimental/delta-rkill-fix01.diff
-Patch303:	http://vserver.13thfloor.at/Experimental/delta-rkill-fix02.diff
-Patch304:	http://vserver.13thfloor.at/Experimental/delta-rkill_debug-feat01.diff
+# http://vserver.13thfloor.at/Experimental/
+Patch301:	delta-rkill-feat01.diff
+Patch302:	delta-rkill-fix01.diff
+Patch303:	delta-rkill-fix02.diff
+Patch304:	delta-rkill_debug-feat01.diff
 
 Patch400:	kernel-gcc4.patch
 Patch401:	kernel-hotfixes.patch
