@@ -144,7 +144,7 @@ software suspend works only on ix86 platforms
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel			0.2
+%define		_rel			0.3
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -317,6 +317,7 @@ Patch85:	linux-static-dev.patch
 Patch86:	iriverfs-r0.1.0.1.patch
 Patch87:	squashfs2.2-patch
 Patch88:	reiser4-for-2.6.15-1.patch.gz
+Patch89:	reiser4-for-2.6.15-1.patch.patch
 
 # http://gaugusch.at/acpi-dsdt-initrd-patches/
 Patch91:	acpi-dsdt-initrd-v0.7d-2.6.12.patch
@@ -855,8 +856,9 @@ rm -rf patches
 %patch86 -p1
 %patch87 -p1
 
-%ifnarch ppc ppc64
 %patch88 -p1
+%ifarch ppc ppc64 sparc sparc64
+%patch98 -p1
 %endif
 
 %patch91 -p1
