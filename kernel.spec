@@ -144,7 +144,7 @@ software suspend works only on ix86 platforms
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel			0.1
+%define		_rel			0.2
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -854,6 +854,7 @@ rm -rf patches
 
 %patch86 -p1
 %patch87 -p1
+
 %ifnarch ppc ppc64
 %patch88 -p1
 %endif
