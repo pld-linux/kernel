@@ -16311,7 +16311,7 @@ diff -NurpP --minimal linux-2.6.15.4/include/linux/vserver/namespace_cmd.h linux
 diff -NurpP --minimal linux-2.6.15.4/include/linux/vserver/network.h linux-2.6.15.4-vs2.1.1-rc3/include/linux/vserver/network.h
 --- linux-2.6.15.4/include/linux/vserver/network.h	1970-01-01 01:00:00 +0100
 +++ linux-2.6.15.4-vs2.1.1-rc3/include/linux/vserver/network.h	2006-01-09 20:14:13 +0100
-@@ -0,0 +1,116 @@
+@@ -0,0 +1,139 @@
 +#ifndef _VX_NETWORK_H
 +#define _VX_NETWORK_H
 +
@@ -16417,12 +16417,35 @@ diff -NurpP --minimal linux-2.6.15.4/include/linux/vserver/network.h linux-2.6.1
 +struct in_ifaddr;
 +struct net_device;
 +
++#ifdef CONFIG_INET
 +int ifa_in_nx_info(struct in_ifaddr *, struct nx_info *);
 +int dev_in_nx_info(struct net_device *, struct nx_info *);
 +
++#else /* CONFIG_INET */
++static inline
++int ifa_in_nx_info(struct in_ifaddr *a, struct nx_info *n)
++{
++	return 1;
++}
++
++static inline
++int dev_in_nx_info(struct net_device *d, struct nx_info *n)
++{
++	return 1;
++}
++#endif /* CONFIG_INET */
++
 +struct sock;
 +
++#ifdef CONFIG_INET
 +int nx_addr_conflict(struct nx_info *, uint32_t, struct sock *);
++#else /* CONFIG_INET */
++static inline
++int nx_addr_conflict(struct nx_info *n, uint32_t a, struct sock *s)
++{
++	return 1;
++}
++#endif /* CONFIG_INET */
 +
 +#endif	/* __KERNEL__ */
 +#else	/* _VX_NETWORK_H */
@@ -16849,13 +16872,12 @@ diff -NurpP --minimal linux-2.6.15.4/include/linux/vserver/switch.h linux-2.6.15
 diff -NurpP --minimal linux-2.6.15.4/include/linux/vserver/tag.h linux-2.6.15.4-vs2.1.1-rc3/include/linux/vserver/tag.h
 --- linux-2.6.15.4/include/linux/vserver/tag.h	1970-01-01 01:00:00 +0100
 +++ linux-2.6.15.4-vs2.1.1-rc3/include/linux/vserver/tag.h	2006-02-13 05:26:55 +0100
-@@ -0,0 +1,156 @@
+@@ -0,0 +1,155 @@
 +#ifndef _DX_TAG_H
 +#define _DX_TAG_H
 +
-+#ifndef CONFIG_VSERVER
-+#warning config options missing
-+#endif
++#include <linux/config.h>
++
 +
 +#define DX_TAG(in)	(IS_TAGGED(in))
 +
@@ -22852,7 +22874,7 @@ diff -NurpP --minimal linux-2.6.15.4/kernel/vserver/namespace.c linux-2.6.15.4-v
 diff -NurpP --minimal linux-2.6.15.4/kernel/vserver/network.c linux-2.6.15.4-vs2.1.1-rc3/kernel/vserver/network.c
 --- linux-2.6.15.4/kernel/vserver/network.c	1970-01-01 01:00:00 +0100
 +++ linux-2.6.15.4-vs2.1.1-rc3/kernel/vserver/network.c	2006-01-09 20:24:33 +0100
-@@ -0,0 +1,801 @@
+@@ -0,0 +1,803 @@
 +/*
 + *  linux/kernel/vserver/network.c
 + *
@@ -23267,9 +23289,10 @@ diff -NurpP --minimal linux-2.6.15.4/kernel/vserver/network.c linux-2.6.15.4-vs2
 +}
 +
 +
++#ifdef CONFIG_INET
++
 +#include <linux/netdevice.h>
 +#include <linux/inetdevice.h>
-+
 +
 +int ifa_in_nx_info(struct in_ifaddr *ifa, struct nx_info *nxi)
 +{
@@ -23369,6 +23392,7 @@ diff -NurpP --minimal linux-2.6.15.4/kernel/vserver/network.c linux-2.6.15.4-vs2
 +	}
 +}
 +
++#endif /* CONFIG_INET */
 +
 +/* vserver syscall commands below here */
 +
