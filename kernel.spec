@@ -150,7 +150,7 @@ software suspend works only on ix86 platforms
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel			2
+%define		_rel			3
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -222,7 +222,7 @@ Source96:	kernel-rt.config
 Source97:	kernel-suspend.config
 
 Patch1:		linux-2.6-version.patch
-Patch2:		linux-2.6-biarch-build.patch
+
 Patch3:		2.6.0-t9-acpi_osl-lkml.patch
 
 Patch5:		kernel-MAX_INIT_ARGS.patch
@@ -352,7 +352,7 @@ Patch135:	linux-2.6-unix-abi.patch
 
 Patch199:	linux-2.6-grsec-minimal.patch
 # http://grsecurity.net/
-Patch200:	grsecurity-2.1.7-2.6.14.2-200511150641.patch
+Patch200:	grsecurity-2.1.8-2.6.14.6-200601211647.patch
 # http://openmosix.snarc.org/files/releases/2.6/
 # derived from openMosix-r570.patch
 Patch201:	linux-2.6-omosix.patch
@@ -766,7 +766,7 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 %{?with_pld_vers:%patch1 -p0}
-%patch2 -p1
+
 %patch3 -p1
 
 %patch5 -p1
