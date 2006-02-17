@@ -454,6 +454,15 @@ Pakiet zawiera j±dro Linuksa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takiego jak sterowniki dysków itp.
 
+
+%package vmlinux
+Summary:	kernel vmlinux file
+Summary(pl):	plik vmlinux
+Group:		Base/Kernel
+
+%description vmlinux
+%description vmlinux -l pl
+
 %package drm
 Summary:	DRM kernel modules
 Summary(pl):	Sterowniki DRM
@@ -588,6 +597,14 @@ plus, il peut quand même fonctionner pour les système mono-processeur.
 Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono
 wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
 Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
+
+%package smp-vmlinux
+Summary:	kernel SMP vmlinux file
+Summary(pl):	plik SMP vmlinux
+Group:		Base/Kernel
+
+%description smp-vmlinux
+%description smp-vmlinux -l pl
 
 %package smp-drm
 Summary:	DRM SMP kernel modules
@@ -1482,15 +1499,18 @@ if [ "$1" = "0" ]; then
 fi
 
 %if %{with up}
-%files
+%files vmlinux
 %defattr(644,root,root,755)
-%doc FAQ-pl
 %ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
 /boot/vmlinux-%{version}-%{release}
 %endif
 %ifarch sparc sparc64
 /boot/vmlinux.aout-%{version}-%{release}
 %endif
+
+%files
+%defattr(644,root,root,755)
+%doc FAQ-pl
 %ifarch ia64
 /boot/efi/vmlinuz-%{version}-%{release}
 %endif
@@ -1601,15 +1621,18 @@ fi
 %endif			# %%{with up}
 
 %if %{with smp}
-%files smp
+%files smp-vmlinux
 %defattr(644,root,root,755)
-%doc FAQ-pl
 %ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
 /boot/vmlinux-%{version}-%{release}smp
 %endif
 %ifarch ia64
 /boot/efi/vmlinuz-%{version}-%{release}smp
 %endif
+
+%files smp
+%defattr(644,root,root,755)
+%doc FAQ-pl
 /boot/vmlinuz-%{version}-%{release}smp
 /boot/System.map-%{version}-%{release}smp
 %ghost /boot/initrd-%{version}-%{release}smp.gz
