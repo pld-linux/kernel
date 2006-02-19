@@ -178,8 +178,8 @@ Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 #Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
 ## Source3-md5:	3db58f38e8a3c001d1a18eb1ee27db3b
-Source4:	http://people.redhat.com/mingo/realtime-preempt/older/patch-2.6.14-rt22
-# Source4-md5:	28a0817f6b12bf95758cf08995de348e
+Source4:	http://people.redhat.com/mingo/realtime-preempt/patch-2.6.15-rt16
+# Source4-md5:	554d73044e665022d052d2f9c782c750
 Source5:	kernel-ppclibs.Makefile
 Source6:	http://people.redhat.com/mingo/debloating-patches/debloating-patches-2.6.15-rc7.tar.gz
 # Source6-md5:	ca7a1cdef3e5c95f182d039cebd92b5e
@@ -775,8 +775,10 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %prep
 %setup -q -n linux-%{version}%{_rc}
 #bzip2 -d -c %{SOURCE3} | patch -p1 -s
-#sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = #g' Makefile
-%{?with_preemptive:patch -p1 -s < %{SOURCE4}}
+%if %{with preemptive}
+sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
+patch -p1 -s < %{SOURCE4}
+%endif
 install %{SOURCE5} Makefile.ppclibs
 
 %if 0
@@ -808,9 +810,9 @@ rm -rf patches
 %patch19 -p1
 %patch20 -p1
 %patch21 -p1
-%patch22 -p1
+%{!?with_preemptive:%patch22 -p1}
 %patch23 -p1
-%patch24 -p1
+%{!?with_preemptive:%patch24 -p1}
 %patch25 -p1
 %patch26 -p1
 %patch28 -p1
@@ -908,10 +910,12 @@ rm -rf patches
 %endif
 %endif
 
+%if %{without preemptive}
 %if %{with grsecurity}
 %patch200 -p1
 %else
 %patch199 -p1
+%endif
 %endif
 
 %if %{with omosix}
@@ -949,7 +953,9 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 
 %if %{with preemptive}
-sed -i 's:SPIN_LOCK_UNLOCKED:SPIN_LOCK_UNLOCKED(SendCmplPktQ.QueueLock):' drivers/net/sk98lin/sky2.c
+# probably won't be enough
+sed 's:SPIN_LOCK_UNLOCKED:RAW_SPIN_LOCK_UNLOCKED:' \
+	-i fs/reiser4/plugin/plugin_set.c
 for f in \
 	drivers/char/omnibook/ec.c \
 	net/ipv4/netfilter/ip_set.c \
@@ -964,6 +970,10 @@ for f in \
 	net/ipv4/fib_semantics.c \
 	net/ipv6/netfilter/ip6t_expire.c \
 	net/ipv6/netfilter/ip6t_fuzzy.c \
+	fs/reiser4/block_alloc.c \
+	fs/reiser4/debug.c \
+	fs/reiser4/fsdata.c \
+	fs/reiser4/txnmgr.c \
 ; do
 	perl -pi -e 's/(.*\s+(.*)\s+=\s+\w+_LOCK_UNLOCKED)\s*;/$1\($2\);/' $f
 done
@@ -1093,6 +1103,7 @@ BuildConfig() {
 	cat %{SOURCE94} >> arch/%{_target_base_arch}/defconfig
 %endif
 %if %{with preemptive}
+	sed '/CONFIG_PREEMPT/d' -i arch/%{_target_base_arch}/defconfig
 	cat %{SOURCE96} >> arch/%{_target_base_arch}/defconfig
 %endif
 %if %{with bootsplash}
