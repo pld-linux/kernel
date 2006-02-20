@@ -1,8 +1,8 @@
 #
 # TODO:
-#
-#		- add distcc support (and don't break crossbuild!)
-#		- move em8300 stuff to separeated specs
+#	- add distcc support (and don't break crossbuild!)
+#	- move em8300 stuff to separeated specs
+#	- what is the sense of packaging uncompressed vmlinuz (=vmlinux) on ppc*?
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -455,14 +455,16 @@ Pakiet zawiera j±dro Linuksa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takiego jak sterowniki dysków itp.
 
-
 %package vmlinux
-Summary:	kernel vmlinux file
-Summary(pl):	plik vmlinux
+Summary:	vmlinux - uncompressed kernel image
+Summary(pl):	vmlinux - rozpakowany obraz j±dra
 Group:		Base/Kernel
 
 %description vmlinux
+vmlinux - uncompressed kernel image.
+
 %description vmlinux -l pl
+vmlinux - rozpakowany obraz j±dra.
 
 %package drm
 Summary:	DRM kernel modules
@@ -600,12 +602,15 @@ wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
 Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
 
 %package smp-vmlinux
-Summary:	kernel SMP vmlinux file
-Summary(pl):	plik SMP vmlinux
+Summary:	vmlinux - uncompressed SMP kernel image
+Summary(pl):	vmlinux - rozpakowany obraz j±dra SMP
 Group:		Base/Kernel
 
 %description smp-vmlinux
+vmlinux - uncompressed SMP kernel image.
+
 %description smp-vmlinux -l pl
+vmlinux - rozpakowany obraz j±dra SMP.
 
 %package smp-drm
 Summary:	DRM SMP kernel modules
@@ -1366,13 +1371,11 @@ fi
 %ifarch ia64
 mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
 %endif
-mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 %ifarch ia64
 ln -sf vmlinuz-%{version}-%{release} /boot/efi/vmlinuz
 %endif
-ln -sf vmlinux-%{version}-%{release} /boot/vmlinux
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
 
@@ -1398,6 +1401,10 @@ if [ -x /sbin/new-kernel-pkg ]; then
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
+
+%post vmlinux
+mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
+ln -sf vmlinux-%{version}-%{release} /boot/vmlinux
 
 %post libs
 %{_sbindir}/mkvmlinuz /boot/zImage-%{version}-%{release} %{version}-%{release}
@@ -1436,13 +1443,11 @@ fi
 %ifarch ia64
 mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
 %endif
-mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 %ifarch ia64
 ln -sf vmlinuz-%{version}-%{release}smp /boot/efi/vmlinuz
 %endif
-ln -sf vmlinux-%{version}-%{release}smp /boot/vmlinux
 ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}smp /boot/System.map
 
@@ -1468,6 +1473,10 @@ if [ -x /sbin/new-kernel-pkg ]; then
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
+
+%post smp-vmlinux
+mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
+ln -sf vmlinux-%{version}-%{release}smp /boot/vmlinux
 
 %post smp-libs
 %{_sbindir}/mkvmlinuz /boot/zImage-%{version}-%{release}smp %{version}-%{release}smp
@@ -1511,18 +1520,12 @@ if [ "$1" = "0" ]; then
 fi
 
 %if %{with up}
-%files vmlinux
-%defattr(644,root,root,755)
-%ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
-/boot/vmlinux-%{version}-%{release}
-%endif
-%ifarch sparc sparc64
-/boot/vmlinux.aout-%{version}-%{release}
-%endif
-
 %files
 %defattr(644,root,root,755)
 %doc FAQ-pl
+%ifarch sparc sparc64
+/boot/vmlinux.aout-%{version}-%{release}
+%endif
 %ifarch ia64
 /boot/efi/vmlinuz-%{version}-%{release}
 %endif
@@ -1571,6 +1574,12 @@ fi
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
 %dir %{_sysconfdir}/modprobe.d/%{version}-%{release}
+
+%ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
+%files vmlinux
+%defattr(644,root,root,755)
+/boot/vmlinux-%{version}-%{release}
+%endif
 
 %if %{have_drm}
 %files drm
@@ -1633,18 +1642,12 @@ fi
 %endif			# %%{with up}
 
 %if %{with smp}
-%files smp-vmlinux
-%defattr(644,root,root,755)
-%ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
-/boot/vmlinux-%{version}-%{release}smp
-%endif
-%ifarch ia64
-/boot/efi/vmlinuz-%{version}-%{release}smp
-%endif
-
 %files smp
 %defattr(644,root,root,755)
 %doc FAQ-pl
+%ifarch ia64
+/boot/efi/vmlinuz-%{version}-%{release}smp
+%endif
 /boot/vmlinuz-%{version}-%{release}smp
 /boot/System.map-%{version}-%{release}smp
 %ghost /boot/initrd-%{version}-%{release}smp.gz
@@ -1690,6 +1693,12 @@ fi
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
 %dir %{_sysconfdir}/modprobe.d/%{version}-%{release}smp
+
+%ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
+%files smp-vmlinux
+%defattr(644,root,root,755)
+/boot/vmlinux-%{version}-%{release}smp
+%endif
 
 %if %{have_drm}
 %files smp-drm
