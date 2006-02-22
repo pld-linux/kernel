@@ -178,8 +178,8 @@ Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 #Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
 ## Source3-md5:	3db58f38e8a3c001d1a18eb1ee27db3b
-Source4:	http://people.redhat.com/mingo/realtime-preempt/patch-2.6.15-rt16
-# Source4-md5:	554d73044e665022d052d2f9c782c750
+Source4:	http://people.redhat.com/mingo/realtime-preempt/patch-2.6.15-rt17
+# Source4-md5:	f0840be03282598e84efbe28137cf345
 Source5:	kernel-ppclibs.Makefile
 Source6:	http://people.redhat.com/mingo/debloating-patches/debloating-patches-2.6.15-rc7.tar.gz
 # Source6-md5:	ca7a1cdef3e5c95f182d039cebd92b5e
@@ -870,10 +870,12 @@ rm -rf patches
 %patch80 -p1
 
 #patch82 -p1
+%if %{without preemptive}
 %if !%{with bootsplash}
 %patch83 -p1
 %else
 %patch84 -p1
+%endif
 %endif
 
 %patch85 -p1
