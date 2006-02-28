@@ -150,7 +150,7 @@ software suspend works only on ix86 platforms
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
 
-%define		_rel			4
+%define		_rel			4.1
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -352,7 +352,7 @@ Patch135:	linux-2.6-unix-abi.patch
 
 Patch199:	linux-2.6-grsec-minimal.patch
 # http://grsecurity.net/
-Patch200:	grsecurity-2.1.8-2.6.14.6-200601211647.patch
+Patch200:	grsecurity-2.1.9-2.6.14.7-200602141849.patch
 # http://openmosix.snarc.org/files/releases/2.6/
 # derived from openMosix-r570.patch
 Patch201:	linux-2.6-omosix.patch
