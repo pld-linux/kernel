@@ -178,8 +178,6 @@ Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 #Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
 ## Source3-md5:	3db58f38e8a3c001d1a18eb1ee27db3b
-Source4:	http://people.redhat.com/mingo/realtime-preempt/patch-2.6.15-rt21
-# Source4-md5:	31d14f6ae5f09223faea5cf8bc421721
 Source5:	kernel-ppclibs.Makefile
 Source6:	http://people.redhat.com/mingo/debloating-patches/debloating-patches-2.6.15-rc7.tar.gz
 # Source6-md5:	ca7a1cdef3e5c95f182d039cebd92b5e
@@ -219,6 +217,9 @@ Source94:	kernel-em8300.config
 Source95:	kernel-linuxabi.config
 Source96:	kernel-rt.config
 Source97:	kernel-suspend.config
+
+# http://people.redhat.com/mingo/realtime-preempt/
+Patch0:		kernel-preempt-rt.patch
 
 Patch1:		linux-2.6-version.patch
 Patch2:		linux-2.6-biarch-build.patch
@@ -781,8 +782,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %setup -q -n linux-%{version}%{_rc}
 #bzip2 -d -c %{SOURCE3} | patch -p1 -s
 %if %{with preemptive}
-sed -i 's#EXTRAVERSION =.*#EXTRAVERSION =#g' Makefile
-patch -p1 -s < %{SOURCE4}
+%patch0 -p1
 %endif
 install %{SOURCE5} Makefile.ppclibs
 
