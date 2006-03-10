@@ -162,7 +162,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_preemptive:-preempt}
-%define		_postver	.5
+%define		_postver	.6
 #define		_postver	%{nil}
 Version:	2.6.15%{_postver}
 Release:	%{_rel}
@@ -173,13 +173,13 @@ Group:		Base/Kernel
 #define		_rc	-rc5
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	1b9d99238a2f8516101462b37f4679c3
+# Source0-md5:	2ea7c865d6c09a02cbe6ce5fddcd02ca
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 #Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
 ## Source3-md5:	3db58f38e8a3c001d1a18eb1ee27db3b
-Source4:	http://people.redhat.com/mingo/realtime-preempt/patch-2.6.15-rt18
-# Source4-md5:	a3461605465d3a4071d12c5e57dab8fb
+Source4:	http://people.redhat.com/mingo/realtime-preempt/patch-2.6.15-rt21
+# Source4-md5:	31d14f6ae5f09223faea5cf8bc421721
 Source5:	kernel-ppclibs.Makefile
 Source6:	http://people.redhat.com/mingo/debloating-patches/debloating-patches-2.6.15-rc7.tar.gz
 # Source6-md5:	ca7a1cdef3e5c95f182d039cebd92b5e
