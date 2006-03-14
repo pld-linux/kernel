@@ -239,7 +239,6 @@ Patch14:	linux-2.6-omnibook-20040916.patch
 Patch15:	linux-2.6-enable-broken-advansys.patch
 Patch16:	linux-alpha-isa.patch
 Patch17:	linux-fbcon-margins.patch
-Patch19:	2.6.5-3C920b-Tornado.patch
 Patch20:	2.6.5-i386-cmpxchg.patch
 Patch21:	2.6.6-serial-fifo-lkml.patch
 Patch22:	linux-2.6-i386-ksyms.patch
@@ -812,7 +811,6 @@ rm -rf patches
 %patch15 -p1
 %patch16 -p1
 %patch17 -p1
-%patch19 -p1
 %patch20 -p1
 %patch21 -p1
 %{!?with_preemptive:%patch22 -p1}
