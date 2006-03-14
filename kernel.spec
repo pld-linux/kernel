@@ -456,6 +456,17 @@ Pakiet zawiera j±dro Linuksa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takiego jak sterowniki dysków itp.
 
+%package vmlinux
+Summary:	vmlinux - uncompressed kernel image
+Summary(pl):	vmlinux - rozpakowany obraz j±dra
+Group:		Base/Kernel
+
+%description vmlinux
+vmlinux - uncompressed kernel image.
+
+%description vmlinux -l pl
+vmlinux - rozpakowany obraz j±dra.
+
 %package drm
 Summary:	DRM kernel modules
 Summary(pl):	Sterowniki DRM
@@ -590,6 +601,17 @@ plus, il peut quand même fonctionner pour les système mono-processeur.
 Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono
 wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
 Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
+
+%package smp-vmlinux
+Summary:	vmlinux - uncompressed SMP kernel image
+Summary(pl):	vmlinux - rozpakowany obraz j±dra SMP
+Group:		Base/Kernel
+
+%description smp-vmlinux
+vmlinux - uncompressed SMP kernel image.
+
+%description smp-vmlinux -l pl
+vmlinux - rozpakowany obraz j±dra SMP.
 
 %package smp-drm
 Summary:	DRM SMP kernel modules
@@ -1329,13 +1351,11 @@ fi
 %ifarch ia64
 mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
 %endif
-mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 %ifarch ia64
 ln -sf vmlinuz-%{version}-%{release} /boot/efi/vmlinuz
 %endif
-ln -sf vmlinux-%{version}-%{release} /boot/vmlinux
 ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
 ln -sf System.map-%{version}-%{release} /boot/System.map
 
@@ -1361,6 +1381,10 @@ if [ -x /sbin/new-kernel-pkg ]; then
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
+
+%post vmlinux
+mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
+ln -sf vmlinux-%{version}-%{release} /boot/vmlinux
 
 %post libs
 %{_sbindir}/mkvmlinuz /boot/zImage-%{version}-%{release} %{version}-%{release}
@@ -1399,13 +1423,11 @@ fi
 %ifarch ia64
 mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
 %endif
-mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 %ifarch ia64
 ln -sf vmlinuz-%{version}-%{release}smp /boot/efi/vmlinuz
 %endif
-ln -sf vmlinux-%{version}-%{release}smp /boot/vmlinux
 ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
 ln -sf System.map-%{version}-%{release}smp /boot/System.map
 
@@ -1431,6 +1453,10 @@ if [ -x /sbin/new-kernel-pkg ]; then
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
+
+%post smp-vmlinux
+mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
+ln -sf vmlinux-%{version}-%{release}smp /boot/vmlinux
 
 %post smp-libs
 %{_sbindir}/mkvmlinuz /boot/zImage-%{version}-%{release}smp %{version}-%{release}smp
@@ -1477,9 +1503,6 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc FAQ-pl
-%ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
-/boot/vmlinux-%{version}-%{release}
-%endif
 %ifarch sparc sparc64
 /boot/vmlinux.aout-%{version}-%{release}
 %endif
@@ -1529,6 +1552,12 @@ fi
 %endif
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
+
+%ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
+%files vmlinux
+%defattr(644,root,root,755)
+/boot/vmlinux-%{version}-%{release}
+%endif
 
 %if %{have_drm}
 %files drm
@@ -1594,9 +1623,6 @@ fi
 %files smp
 %defattr(644,root,root,755)
 %doc FAQ-pl
-%ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
-/boot/vmlinux-%{version}-%{release}smp
-%endif
 %ifarch ia64
 /boot/efi/vmlinuz-%{version}-%{release}smp
 %endif
@@ -1643,6 +1669,12 @@ fi
 %endif
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
+
+%ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
+%files smp-vmlinux
+%defattr(644,root,root,755)
+/boot/vmlinux-%{version}-%{release}smp
+%endif
 
 %if %{have_drm}
 %files smp-drm
