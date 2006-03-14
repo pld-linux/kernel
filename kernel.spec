@@ -9,7 +9,7 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
-%bcond_with	grsecurity	# don't build grsecurity - applay grsec_basic
+%bcond_with	grsecurity	# full grsecurity instead of grsec_basic
 %bcond_without	pld_vers	# disable pld-specific UTS_NAME changes
 %bcond_with	pax		# enable PaX (depends on grsecurity)
 %bcond_with	omosix		# enable openMosix (conflicts with grsecurity/vserver)
@@ -136,13 +136,14 @@ software suspend works only on ix86 platforms
 %define		_reiser4progs_ver	1.0.0
 %define		_xfsprogs_ver		2.6.0
 %define		_pcmcia_cs_ver		3.1.21
+%define		_pcmciautils_ver	004
 %define		_quota_tools_ver	3.09
 %define		_PPP_ver		2.4.0
 %define		_isdn4k_utils_ver	3.1pre1
 %define		_nfs_utils_ver		1.0.5
 %define		_procps_ver		3.2.0
-%define		_oprofile_ver		0.5.3
-%define		_udev_ver		058
+%define		_oprofile_ver		0.9
+%define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
 %define		_rel			1
@@ -491,6 +492,7 @@ Requires:	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	kernel(pcmcia)
 Provides:	kernel-pcmcia = %{pcmcia_version}
 Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
+Conflicts:	pcmciautils < %{_pcmciautils_ver}
 Autoreqprov:	no
 
 %description pcmcia
@@ -637,6 +639,7 @@ Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
 Provides:	kernel(pcmcia)
 Provides:	kernel-pcmcia = %{pcmcia_version}
 Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
+Conflicts:	pcmciautils < %{_pcmciautils_ver}
 Autoreqprov:	no
 
 %description smp-pcmcia
