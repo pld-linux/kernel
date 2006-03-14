@@ -255,7 +255,7 @@ Patch30:	2.6.x-TGA-fbdev-lkml.patch
 Patch31:	linux-2.6-ppc-no-i8042.patch
 Patch32:	sis5513-support-sis-965l.patch
 Patch33:	linux-2.6-ppc-ideirq.patch
-Patch34:	linux-2.6-swim3-spinlock.patch
+#Patch34:	-- EMPTY --
 # http://fatooh.org/esfq-2.6/
 Patch35:	esfq-kernel.patch
 # http://www.linuximq.net/
@@ -333,12 +333,12 @@ Patch93:	linux-btc-8190urf.patch
 Patch101:	kernel-pcmcia_bufor.patch
 Patch102:	linux-2.6-smbfs.patch
 Patch103:	linux-2.6-iriver-backing-device-capability-information-fix.patch
-Patch104:	linux-2.6-smbfs-names_cache-memory-leak.patch
+#Patch104:	-- EMPTY --
 Patch105:	linux-2.6-net-sundance-ip100A-pciids.patch
 Patch106:	linux-2.6-null-tty-driver-oops.patch
 Patch107:	linux-2.6-sata-sil-mod15write-workaround.patch
 Patch108:	linux-2.6-tty-races.patch
-Patch109:	linux-2.6-secunia-17786-1.patch
+#Patch109:	-- EMPTY --
 Patch110:	linux-2.6-cputime-misscalculation.patch
 
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
@@ -829,7 +829,7 @@ rm -rf patches
 %patch31 -p1
 %patch32 -p1
 %patch33 -p1
-#patch34 -p1 applied
+#patch34 -p1 ## EMPTY
 %patch35 -p1
 %patch36 -p1
 %patch37 -p1
@@ -901,12 +901,12 @@ rm -rf patches
 %patch101 -p1
 %patch102 -p1
 %patch103 -p1
-#patch104 -p1 applied
+#patch104 -p1 ## EMPTY
 %patch105 -p1
 %patch106 -p1
 #patch107 -p1 needs update
 %patch108 -p1
-#patch109 -p1 applied
+#patch109 -p1 ## EMPTY
 %patch110 -p1
 
 %patch115 -p1
