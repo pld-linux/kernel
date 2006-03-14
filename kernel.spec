@@ -230,7 +230,6 @@ Patch5:		kernel-MAX_INIT_ARGS.patch
 Patch6:		linux-2.6-extended-utf8.patch
 Patch7:		linux-2.6-realtime-lsm-0.1.1.patch
 Patch8:		nf-hipac-%{_nf_hipac_ver}.patch
-Patch9:		linux-2.6-x8664-bitops-fix-for-size-optimized-kernel.patch
 Patch10:	2.6.0-powernow-k7.patch
 # http://hem.bredband.net/ekmlar/
 Patch11:	linux-2.6-vt1211-sensor.patch
@@ -259,7 +258,6 @@ Patch33:	linux-2.6-ppc-ideirq.patch
 # http://fatooh.org/esfq-2.6/
 Patch35:	esfq-kernel.patch
 # http://www.linuximq.net/
-#Patch36:	linux-2.6.13-imq2.diff		OBSOLETE ?
 Patch36:	kernel-imq6.patch
 #Patch36:	linux-2.6-dummy-as-imq-replacement.patch
 
@@ -804,7 +802,6 @@ rm -rf patches
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
-#patch9 -p1 applied
 %patch10 -p1
 %ifarch %{ix86}
 %patch11 -p1
@@ -834,7 +831,7 @@ rm -rf patches
 %patch36 -p1
 %patch37 -p1
 %patch38 -p1
-#patch39 -p1 applied
+#patch39 -p1 doesn't seem to be applied in 2.6.15.6
 
 # patch-o-matic-ng
 # [base]
