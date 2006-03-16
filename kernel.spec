@@ -149,6 +149,7 @@ software suspend works only on ix86 platforms
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
+%define		_mkvmlinuz_ver		1.3
 
 %define		_rel			4.1
 
@@ -503,8 +504,8 @@ Modu³y PCMCIA (%{pcmcia_version}).
 Summary:	Libraries for preparing bootable kernel on PowerPCs
 Summary(pl):	Biblioteki do przygotowania bootowalnego j±dra dla PowerPC
 Group:		Base/Kernel
-PreReq:		mkvmlinuz
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
+Requires:	mkvmlinuz >= %{_mkvmlinuz_ver}
 Autoreqprov:	no
 
 %description libs
@@ -649,8 +650,8 @@ Modu³y PCMCIA dla maszyn SMP (%{pcmcia_version}).
 Summary:	Libraries for preparing bootable SMP kernel on PowerPCs
 Summary(pl):	Biblioteki do przygotowania bootowalnego j±dra dla wieloprocesorowych PowerPC
 Group:		Base/Kernel
-PreReq:		mkvmlinuz
 Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
+Requires:	mkvmlinuz >= %{_mkvmlinuz_ver}
 Autoreqprov:	no
 
 %description smp-libs
