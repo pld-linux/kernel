@@ -575,6 +575,7 @@ Conflicts:	oprofile < %{_oprofile_ver}
 Conflicts:	ppp < %{_ppp_ver}
 Conflicts:	procps < %{_procps_ver}
 Conflicts:	quota-tools < %{_quota_tools_ver}
+Conflicts:	reiser4progs < %{_reiser4progs_ver}
 Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
 Conflicts:	util-linux < %{_util_linux_ver}
 Conflicts:	xfsprogs < %{_xfsprogs_ver}
