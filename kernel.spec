@@ -138,7 +138,7 @@ software suspend works only on ix86 platforms
 %define		_pcmcia_cs_ver		3.1.21
 %define		_pcmciautils_ver	004
 %define		_quota_tools_ver	3.09
-%define		_PPP_ver		2.4.0
+%define		_ppp_ver		1:2.4.0
 %define		_isdn4k_utils_ver	3.1pre1
 %define		_nfs_utils_ver		1.0.5
 %define		_procps_ver		3.2.0
@@ -400,13 +400,13 @@ Obsoletes:	kernel-modules
 Obsoletes:	kernel-net-hostap
 Obsoletes:	kernel-net-ieee80211
 Obsoletes:	kernel-net-ipp2p
-Conflicts:	PPP < %{_PPP_ver}
 Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
 Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
 Conflicts:	jfsutils < %{_jfsutils_ver}
 Conflicts:	module-init-tool < %{_module_init_tool_ver}
 Conflicts:	nfs-utils < %{_nfs_utils_ver}
 Conflicts:	oprofile < %{_oprofile_ver}
+Conflicts:	ppp < %{_ppp_ver}
 Conflicts:	procps < %{_procps_ver}
 Conflicts:	quota-tools < %{_quota_tools_ver}
 Conflicts:	reiser4progs < %{_reiser4progs_ver}
@@ -566,13 +566,13 @@ Obsoletes:	kernel-smp-misc-fuse
 Obsoletes:	kernel-smp-net-hostap
 Obsoletes:	kernel-smp-net-ieee80211
 Obsoletes:	kernel-smp-net-ipp2p
-Conflicts:	PPP < %{_PPP_ver}
 Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
 Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
 Conflicts:	jfsutils < %{_jfsutils_ver}
 Conflicts:	module-init-tool < %{_module_init_tool_ver}
 Conflicts:	nfs-utils < %{_nfs_utils_ver}
 Conflicts:	oprofile < %{_oprofile_ver}
+Conflicts:	ppp < %{_ppp_ver}
 Conflicts:	procps < %{_procps_ver}
 Conflicts:	quota-tools < %{_quota_tools_ver}
 Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
