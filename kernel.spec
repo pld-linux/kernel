@@ -717,7 +717,6 @@ oraz budowania modu³ów j±dra.
 %package module-build
 Summary:	Development files for building kernel modules
 Summary(pl):	Pliki s³u¿±ce do budowania modu³ów j±dra
-Group:		Base/Kernel
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
 Provides:	kernel-module-build = %{epoch}:%{version}-%{release}
