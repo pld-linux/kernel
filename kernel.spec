@@ -1117,6 +1117,7 @@ BuildConfig() {
 %endif
 %if %{with suspend}
 	if [ "$smp" != "yes" ]; then
+		sed -i '/# CONFIG_SOFTWARE_SUSPEND is not set/d' arch/%{_target_base_arch}/defconfig
 		cat %{SOURCE97} >> arch/%{_target_base_arch}/defconfig
 	fi
 %endif
