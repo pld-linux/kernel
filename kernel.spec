@@ -151,7 +151,7 @@ software suspend works only on ix86 platforms
 %define		_udev_ver		058
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			4.1
+%define		_rel			5
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
