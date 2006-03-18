@@ -315,7 +315,7 @@ Patch84:	bootsplash-3.1.6-2.6.15.diff
 Patch85:	linux-static-dev.patch
 # http://ifp-driver.sourceforge.net/
 Patch86:	iriverfs-r0.1.0.1.patch
-Patch87:	squashfs2.2-patch
+Patch87:	kernel-squashfs.patch
 Patch88:	reiser4-for-2.6.15-1.patch.gz
 Patch89:	reiser4-for-2.6.15-1.patch.patch
 
