@@ -110,6 +110,7 @@ Source31:	kernel-ppc-smp.config
 Source32:	kernel-ia64.config
 Source33:	kernel-ia64-smp.config
 
+Source40:	kernel-netfilter.config
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -567,9 +568,6 @@ TuneUpConfigForIX86 () {
     %if %{with regparm}
 	sed -i 's:# CONFIG_REGPARM is not set:CONFIG_REGPARM=y:' $1
     %endif
-    %if %{with abi}
-    cat %{SOURCE95} >> $1
-    %endif
 %endif
 }
 
@@ -604,13 +602,8 @@ BuildConfig() {
 	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
 	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
 
-	cat %{SOURCE80} >> arch/%{_target_base_arch}/defconfig
-
-%if %{with preemptive}
-	sed '/CONFIG_PREEMPT/d' -i arch/%{_target_base_arch}/defconfig
-	cat %{SOURCE96} >> arch/%{_target_base_arch}/defconfig
-%endif
-
+	cat %{SOURCE40} >> arch/%{_target_base_arch}/defconfig
+	
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{_target_base_arch}/defconfig}
 %{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" arch/%{_target_base_arch}/defconfig}
 %{?debug:sed -i "s:# CONFIG_RT_DEADLOCK_DETECT is not set:CONFIG_RT_DEADLOCK_DETECT=y:" arch/%{_target_base_arch}/defconfig}
@@ -733,7 +726,7 @@ PreInstallKernel() {
 
 KERNEL_BUILD_DIR=`pwd`
 echo "-%{release}" > localversion
-install -m 644 %{SOURCE50} FAQ-pl
+#install -m 644 %{SOURCE50} FAQ-pl
 
 # UP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
