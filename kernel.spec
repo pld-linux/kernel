@@ -1,79 +1,14 @@
 #
 # TODO:
-#	- add distcc support (and don't break crossbuild!)
-#	- move em8300 stuff to separeated specs
-#	- what is the sense of packaging uncompressed vmlinuz (=vmlinux) on ppc*?
+#		ALL
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
-%bcond_with	grsecurity	# full grsecurity instead of grsec_basic
-%bcond_without	pld_vers	# disable pld-specific UTS_NAME changes
-%bcond_with	pax		# enable PaX (depends on grsecurity)
-%bcond_with	omosix		# enable openMosix (conflicts with grsecurity/vserver)
-%bcond_with	vserver		# enable vserver (conflicts with grsecurity/omosix)
 %bcond_with	verbose		# verbose build (V=1)
-%bcond_with	preemptive	# build preemptive (realtime) kernel
-%bcond_with	regparm		# (ix86) use register arguments (this break binary-only modules)
-%bcond_with	em8300		# DXR3/Hollywood
-%bcond_with	xen0		# build Xen0 kernel
-%bcond_with	xenU		# build XenU kernel
-%bcond_with	xendev		# build Xen-devel kernel
-%bcond_with	abi		# build with unix abi support
-%bcond_with	bootsplash	# build with bootsplash instead of fbsplash
-%bcond_with	suspend		# build with software suspend
 
-%if %{with xen0} || %{with xenU}
-%define with_xen 1
-%endif
-
-%if %{with vserver}
-%undefine grsecurity
-%endif
-
-%if %{with xendev} && %{without xen}
-cannot build xendev kernel without xen0/xenU
-%endif
-
-%if !%{with grsecurity}
-%undefine	with_pax
-%endif
-
-%ifnarch %{ix86} %{x8664} ppc
-%undefine	with_omosix
-%endif
-
-%if %{with omosix}
-%undefine	with_smp
-%endif
-
-%if %{with omosix} && %{with vserver}
-openmosix conflicts with vserver
-%endif
-
-%if %{with grsecurity} && %{with omosix}
-grsecurity conflicts with omosix
-%endif
-
-%if %{with grsecurity} && %{with vserver}
-grsecurity conflicts with vserver
-%endif
-
-%if %{with xen} && %{with grsecurity}
-xen conflicts with grsecurity
-%endif
-
-%if %{with xen0} && %{with xenU}
-xen0 conflicts with xenU
-%endif
-
-%if %{with suspend}
-%ifnarch %{ix86}
-software suspend works only on ix86 platforms
-%endif
-%endif
 
 %{?debug:%define with_verbose 1}
 
@@ -87,18 +22,6 @@ software suspend works only on ix86 platforms
 %undefine	with_up
 %endif
 
-%if %{with xen}
-# xen (for now) is only UP
-%undefine	with_smp
-%undefine	with_bootsplash
-%endif
-
-%ifarch %{x8664}
-%if %{with xendev}
-%undefine	with_pcmcia
-%endif
-%endif
-
 %define		have_drm	1
 %define		have_oss	1
 %define		have_sound	1
@@ -109,21 +32,10 @@ software suspend works only on ix86 platforms
 %define		have_isa	0
 %endif
 
-%ifnarch %{ix86}
-%undefine	with_abi
-%endif
-
 %ifarch sparc sparc64
 %undefine	with_pcmcia
 %define		have_drm	0
 %define		have_oss	0
-%endif
-
-%if %{with xenU}
-%undefine	with_pcmcia
-%define		have_drm	0
-%define		have_oss	0
-%define		have_sound	0
 %endif
 
 ## Program required by kernel to work.
@@ -146,7 +58,7 @@ software suspend works only on ix86 platforms
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			1
+%define		_rel			0.0
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -163,9 +75,9 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_preemptive:-preempt}
-%define		_postver	.6
-#define		_postver	%{nil}
-Version:	2.6.15%{_postver}
+#define		_postver	.6
+%define		_postver	%{nil}
+Version:	2.6.16%{_postver}
 Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
@@ -174,13 +86,13 @@ Group:		Base/Kernel
 #define		_rc	-rc5
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	2ea7c865d6c09a02cbe6ce5fddcd02ca
+# Source0-md5:	9a91b2719949ff0856b40bc467fd47be
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 #Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
 ## Source3-md5:	3db58f38e8a3c001d1a18eb1ee27db3b
-Source5:	kernel-ppclibs.Makefile
-Source6:	http://people.redhat.com/mingo/debloating-patches/debloating-patches-2.6.15-rc7.tar.gz
+#Source5:	kernel-ppclibs.Makefile
+#Source6:	http://people.redhat.com/mingo/debloating-patches/debloating-patches-2.6.15-rc7.tar.gz
 # Source6-md5:	ca7a1cdef3e5c95f182d039cebd92b5e
 
 Source20:	kernel-i386.config
@@ -197,176 +109,7 @@ Source30:	kernel-ppc.config
 Source31:	kernel-ppc-smp.config
 Source32:	kernel-ia64.config
 Source33:	kernel-ia64-smp.config
-Source34:	kernel-xen0-x86_32-2.0.config
-Source35:	kernel-xen0-x86_32-3.0.config
-Source36:	kernel-xen0-x86_64-3.0.config
-#Source37:	kernel-xenU-x86_32-2.0.config
-Source38:	kernel-xenU-x86_32-3.0.config
-Source39:	kernel-xenU-x86_64-3.0.config
-Source40:	kernel-ppc64.config
-Source41:	kernel-ppc64-smp.config
 
-Source50:	kernel.FAQ-pl
-
-Source80:	kernel-netfilter.config
-
-Source90:	kernel-grsec.config
-Source91:	kernel-grsec+pax.config
-Source92:	kernel-omosix.config
-Source93:	kernel-vserver.config
-Source94:	kernel-em8300.config
-Source95:	kernel-linuxabi.config
-Source96:	kernel-rt.config
-Source97:	kernel-suspend.config
-
-# http://people.redhat.com/mingo/realtime-preempt/
-Patch0:		kernel-preempt-rt.patch
-
-Patch1:		linux-2.6-version.patch
-Patch2:		linux-2.6-biarch-build.patch
-Patch3:		2.6.0-t9-acpi_osl-lkml.patch
-Patch4:		linux-kbuild-extmod.patch
-Patch5:		kernel-MAX_INIT_ARGS.patch
-Patch6:		linux-2.6-extended-utf8.patch
-Patch7:		linux-2.6-realtime-lsm-0.1.1.patch
-Patch8:		nf-hipac-%{_nf_hipac_ver}.patch
-Patch10:	2.6.0-powernow-k7.patch
-# http://hem.bredband.net/ekmlar/
-Patch11:	linux-2.6-vt1211-sensor.patch
-Patch12:	2.6.0-omnikeys.patch
-Patch13:	2.6.1-rc2-VLAN-NS83820-lkml.patch
-Patch14:	linux-2.6-omnibook-20040916.patch
-Patch15:	linux-2.6-enable-broken-advansys.patch
-Patch16:	linux-alpha-isa.patch
-Patch17:	linux-fbcon-margins.patch
-Patch20:	2.6.5-i386-cmpxchg.patch
-Patch21:	2.6.6-serial-fifo-lkml.patch
-Patch22:	linux-2.6-i386-ksyms.patch
-# http://bugzilla.kernel.org/show_bug.cgi?id=3927
-Patch23:	linux-2.6-x8664-kernel-clock-is-running-2-times-too-fast.patch
-Patch24:	linux-2.6-ix86-ati-xpress200-fall-back-from-ioapicIRQ-to-i8259AIRQ.patch
-Patch25:	2.6.7-alpha_compile.patch
-Patch26:	2.6.7-ppc-asm-defs.patch
-Patch28:	linux-2.6-sparc-ksyms.patch
-Patch29:	linux-2.6-ppc-no-pc-serial.patch
-Patch30:	2.6.x-TGA-fbdev-lkml.patch
-Patch31:	linux-2.6-ppc-no-i8042.patch
-Patch32:	sis5513-support-sis-965l.patch
-Patch33:	linux-2.6-ppc-ideirq.patch
-#Patch34:	-- EMPTY --
-# http://fatooh.org/esfq-2.6/
-Patch35:	esfq-kernel.patch
-# http://www.linuximq.net/
-Patch36:	kernel-imq6.patch
-#Patch36:	linux-2.6-dummy-as-imq-replacement.patch
-
-# http://www.zz9.dk/wrr/
-# derived from http://www.zz9.dk/wrr-linux-2.6.12.2.patch.gz
-Patch37:	wrr-linux-2.6.12.2.patch
-# from http://www.ssi.bg/~ja/#routers
-Patch38:	routes-2.6.14-12.diff
-Patch39:	alsa-git-2006-01-22.patch
-
-# patch-o-matic-ng
-# [submitted]
-# [base]
-Patch40:	linux-2.6-nf-IPV4OPTSSTRIP.patch
-Patch41:	linux-2.6-nf-connlimit.patch
-Patch42:	linux-2.6-nf-expire.patch
-Patch43:	linux-2.6-nf-fuzzy.patch
-Patch44:	linux-2.6-nf-ipv4options.patch
-Patch45:	linux-2.6-nf-nth.patch
-Patch46:	linux-2.6-nf-osf.patch
-Patch47:	linux-2.6-nf-psd.patch
-Patch48:	linux-2.6-nf-quota.patch
-Patch49:	linux-2.6-nf-random.patch
-Patch50:	linux-2.6-nf-set.patch
-Patch51:	linux-2.6-nf-time.patch
-Patch52:	linux-2.6-nf-u32.patch
-# [extra]
-Patch60:	linux-2.6-nf-ACCOUNT.patch
-Patch61:	linux-2.6-nf-IPMARK.patch
-Patch62:	linux-2.6-nf-ROUTE.patch
-Patch63:	linux-2.6-nf-TARPIT.patch
-Patch64:	linux-2.6-nf-XOR.patch
-Patch65:	linux-2.6-nf-account.patch
-Patch66:	linux-2.6-nf-geoip.patch
-Patch67:	linux-2.6-nf-h323-conntrack-nat.patch
-Patch68:	linux-2.6-nf-ip_queue_vwmark.patch
-Patch69:	linux-2.6-nf-policy.patch
-Patch70:	linux-2.6-nf-rpc.patch
-Patch71:	linux-2.6-nf-unclean.patch
-# [extra/conntrack]
-# [external]
-# http://www.ipp2p.org/news_en.html (ipp2p v0.8.0)
-Patch72:	linux-2.6-nf-ipp2p.patch
-# http://l7-filter.sourceforge.net/ (2.0)
-Patch73:	linux-2.6-nf-layer7.patch
-# /patch-o-matic-ng
-
-# http://tahoe.pl/patch.htm
-Patch80:	kernel-tahoe9xx.patch
-
-# derived from http://www.syskonnect.de/syskonnect/support/driver/zip/linux/install-8_23.tar.bz2
-Patch82:	linux-2.6-sk98lin-8.23.1.3.patch
-Patch83:	kernel-fbsplash.patch
-Patch84:	bootsplash-3.1.6-2.6.15.diff
-# reserve dynamic minors for device mapper
-Patch85:	linux-static-dev.patch
-# http://ifp-driver.sourceforge.net/
-Patch86:	iriverfs-r0.1.0.1.patch
-Patch87:	kernel-squashfs.patch
-Patch88:	reiser4-for-2.6.15-1.patch.gz
-Patch89:	reiser4-for-2.6.15-1.patch.patch
-
-# http://gaugusch.at/acpi-dsdt-initrd-patches/
-Patch91:	acpi-dsdt-initrd-v0.7d-2.6.12.patch
-Patch92:	acpi-dsdt-initramfs-fix-2.6.10-cleanup.patch
-Patch93:	linux-btc-8190urf.patch
-
-# http://www.kismetwireless.net/download.shtml#orinoco2611
-#Patch95:	orinoco-2.6.12-rfmon-dragorn-1.diff	NEEDS UPDATE
-
-Patch101:	kernel-pcmcia_bufor.patch
-Patch102:	linux-2.6-smbfs.patch
-Patch103:	linux-2.6-iriver-backing-device-capability-information-fix.patch
-#Patch104:	-- EMPTY --
-Patch105:	linux-2.6-net-sundance-ip100A-pciids.patch
-Patch106:	linux-2.6-null-tty-driver-oops.patch
-Patch107:	linux-2.6-sata-sil-mod15write-workaround.patch
-Patch108:	linux-2.6-tty-races.patch
-#Patch109:	-- EMPTY --
-Patch110:	linux-2.6-cputime-misscalculation.patch
-
-# derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
-Patch115:	linux-2.6-atm-vbr.patch
-Patch116:	linux-2.6-atmdd.patch
-
-Patch120:	linux-2.6-cpuset_virtualization.patch
-
-# derived from http://adsl-brisbane.lubemobile.com.au/ras/debian/sarge/kernel-patch-linuxabi/
-Patch135:	linux-2.6-unix-abi.patch
-
-Patch199:	linux-2.6-grsec-minimal.patch
-# http://grsecurity.net/
-Patch200:	grsecurity-2.1.8-2.6.14.6-200601121820.patch
-# http://openmosix.snarc.org/files/releases/2.6/
-# derived from openMosix-r570.patch
-Patch201:	linux-2.6-omosix.patch
-# xen http://www.cl.cam.ac.uk/Research/SRG/netos/xen/index.html
-Patch203:	linux-xen-2.0.6.patch
-Patch204:	linux-2.6.12-smp-alts.patch
-Patch205:	linux-2.6.12.3-xen.patch
-Patch206:	linux-2.6.12.3-xenbus.patch
-Patch207:	linux-2.6.12.3-xen-fixes.patch
-
-# vserver-2.1.0
-Patch300:	linux-2.6-vs2.1.patch
-
-Patch400:	kernel-gcc4.patch
-Patch401:	kernel-hotfixes.patch
-Patch402:	linux-em8300-2.6.11.2.patch
-Patch403:	kernel-2.6-pcmcia.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -780,209 +523,12 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %prep
 %setup -q -n linux-%{version}%{_rc}
-#bzip2 -d -c %{SOURCE3} | patch -p1 -s
-%if %{with preemptive}
-%patch0 -p1
-%endif
-install %{SOURCE5} Makefile.ppclibs
-
-%if 0
-# debloating patches (not finished yet)
-tar xzf %{SOURCE6}
-for i in `ls patches/gcc-*.patch`; do patch -p1 -F3 < $i; done
-rm -rf patches
-%endif
-
-%{?with_pld_vers:%patch1 -p0}
-%patch2 -p1
-#patch3 -p1
-%patch4 -p1
-%patch5 -p1
-%patch6 -p1
-%patch7 -p1
-%patch8 -p1
-%patch10 -p1
-%ifarch %{ix86}
-%patch11 -p1
-%endif
-%patch12 -p1
-%patch13 -p1
-%patch14 -p1
-%patch15 -p1
-%patch16 -p1
-%patch17 -p1
-%patch20 -p1
-%patch21 -p1
-%{!?with_preemptive:%patch22 -p1}
-%patch23 -p1
-%{!?with_preemptive:%patch24 -p1}
-%patch25 -p1
-%patch26 -p1
-%patch28 -p1
-%patch29 -p1
-%patch30 -p1
-%patch31 -p1
-%patch32 -p1
-%patch33 -p1
-#patch34 -p1 ## EMPTY
-%patch35 -p1
-%patch36 -p1
-%patch37 -p1
-%patch38 -p1
-#patch39 -p1 doesn't seem to be applied in 2.6.15.6
-
-# patch-o-matic-ng
-# [base]
-%patch40 -p1
-%patch41 -p1
-%patch42 -p1
-%patch43 -p1
-%patch44 -p1
-%patch45 -p1
-%patch46 -p1
-%patch47 -p1
-%patch48 -p1
-%patch49 -p1
-%patch50 -p1
-%patch51 -p1
-%patch52 -p1
-# [extra]
-%patch60 -p1
-%patch61 -p1
-%patch62 -p1
-%patch63 -p1
-%patch64 -p1
-%patch65 -p1
-%patch66 -p1
-%patch67 -p1
-%patch68 -p1
-%patch69 -p1
-%patch70 -p1
-%patch71 -p1
-# [extra/conntrack]
-# [external]
-%patch72 -p1
-%patch73 -p1
-# /patch-o-matic-ng
-
-%patch80 -p1
-
-#patch82 -p1
-%if %{without preemptive}
-%if !%{with bootsplash}
-%patch83 -p1
-%else
-%patch84 -p1
-%endif
-%endif
-
-%patch85 -p1
-
-%patch86 -p1
-%patch87 -p1
-
-%patch88 -p1
-%ifarch ppc ppc64 sparc sparc64
-%patch89 -p1
-%endif
-
-%patch91 -p1
-%patch92 -p1
-
-%patch93 -p1
-
-##%patch95 -p1		NEEDS UPDATE
-
-%patch101 -p1
-%patch102 -p1
-%patch103 -p1
-#patch104 -p1 ## EMPTY
-%patch105 -p1
-%patch106 -p1
-#patch107 -p1 needs update
-%patch108 -p1
-#patch109 -p1 ## EMPTY
-%patch110 -p1
-
-%patch115 -p1
-%patch116 -p1
-
-%patch120 -p1
-
-%ifarch %{ix86}
-%if %{with abi}
-%patch135 -p1
-%endif
-%endif
-
-%if %{without preemptive}
-%if %{with grsecurity}
-%patch200 -p1
-%else
-%patch199 -p1
-%endif
-%endif
-
-%if %{with omosix}
-%{__patch} -p1 -F3 < %{PATCH201}
-%endif
-
-%if %{with vserver}
-%patch300 -p1
-%endif
-
-%if %{with xen}
-%if %{with xendev}
-%patch204 -p1
-%patch205 -p1
-%patch206 -p1
-%patch207 -p1
-%else
-%patch203 -p1
-%endif
-%endif
-
-%patch400 -p1
-%patch401 -p1
-
-%if %{with em8300}
-%patch402 -p1
-%endif
-
-#patch403 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
 
 # on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
-
-%if %{with preemptive}
-# probably won't be enough
-sed 's:SPIN_LOCK_UNLOCKED:RAW_SPIN_LOCK_UNLOCKED:' \
-	-i fs/reiser4/plugin/plugin_set.c
-for f in \
-	drivers/char/omnibook/ec.c \
-	net/ipv4/netfilter/ip_set.c \
-	net/ipv4/netfilter/ipt_account.c \
-	net/ipv4/netfilter/ipt_expire.c \
-	net/ipv4/netfilter/ipt_fuzzy.c \
-	net/ipv4/netfilter/ipt_geoip.c \
-	net/ipv4/netfilter/ipt_osf.c \
-	net/ipv4/netfilter/ipt_quota.c \
-	net/ipv4/netfilter/nf-hipac/nfhp_dev.c \
-	net/ipv4/netfilter/nf-hipac/nfhp_proc.c \
-	net/ipv4/fib_semantics.c \
-	net/ipv6/netfilter/ip6t_expire.c \
-	net/ipv6/netfilter/ip6t_fuzzy.c \
-	fs/reiser4/block_alloc.c \
-	fs/reiser4/debug.c \
-	fs/reiser4/fsdata.c \
-	fs/reiser4/txnmgr.c \
-; do
-	perl -pi -e 's/(.*\s+(.*)\s+=\s+\w+_LOCK_UNLOCKED)\s*;/$1\($2\);/' $f
-done
-%endif
 
 %build
 TuneUpConfigForIX86 () {
@@ -1042,40 +588,12 @@ TuneUpConfigForIX86 () {
     DepMod=/sbin/depmod
 %endif
 
-%if %{with xen}
-CrossOpts="ARCH=xen"
-%ifarch %{ix86}
-%define _main_target_base_arch	i386
-%endif
-%ifarch %{x8664}
-%define _main_target_base_arch	x86_64
-%endif
-%define _target_base_arch	xen
-%endif
 
 BuildConfig() {
 	%{?debug:set -x}
 	# is this a special kernel we want to build?
 	smp=
 	[ "$1" = "smp" -o "$2" = "smp" ] && smp=yes
-	xen=
-	xenver=
-	xenarch=
-	%if %{with xen}
-    	    %{?with_xen0:xen="0"}
-	    %{?with_xenU:xen="U"}
-	    %if %{with xendev}
-		xenver="-3.0"
-	    %else
-		xenver="-2.0"
-    	    %endif
-	    %ifarch %{ix86}
-		xenarch="-x86_32"
-	    %endif
-	    %ifarch %{x8664}
-		xenarch="-x86_64"
-	    %endif
-	%endif
 	if [ "$smp" = "yes" ]; then
 		Config="%{_target_base_arch}$xen$xenarch$xenver-smp"
 	else
@@ -1088,38 +606,9 @@ BuildConfig() {
 
 	cat %{SOURCE80} >> arch/%{_target_base_arch}/defconfig
 
-%if %{with grsecurity}
-	cat %{!?with_pax:%{SOURCE90}}%{?with_pax:%{SOURCE91}} >> arch/%{_target_base_arch}/defconfig
-	%if %{with pax}
-		sed -i 's:CONFIG_KALLSYMS=y:# CONFIG_KALLSYMS is not set:' arch/%{_target_base_arch}/defconfig
-		sed -i 's:CONFIG_KALLSYMS_ALL=y:# CONFIG_KALLSYMS_ALL is not set:' arch/%{_target_base_arch}/defconfig
-		sed -i 's:CONFIG_KALLSYMS_EXTRA_PASS=y:# CONFIG_KALLSYMS_EXTRA_PASS is not set:' arch/%{_target_base_arch}/defconfig
-	%endif
-%else
-	cat %{SOURCE90} >> arch/%{_target_base_arch}/defconfig
-%endif
-%if %{with omosix}
-	cat %{SOURCE92} >> arch/%{_target_base_arch}/defconfig
-%endif
-%if %{with vserver}
-	cat %{SOURCE93} >> arch/%{_target_base_arch}/defconfig
-%endif
-%if %{with em8300}
-	cat %{SOURCE94} >> arch/%{_target_base_arch}/defconfig
-%endif
 %if %{with preemptive}
 	sed '/CONFIG_PREEMPT/d' -i arch/%{_target_base_arch}/defconfig
 	cat %{SOURCE96} >> arch/%{_target_base_arch}/defconfig
-%endif
-%if %{with bootsplash}
-	sed -i 's,CONFIG_FB_SPLASH,CONFIG_BOOTSPLASH,' arch/%{_target_base_arch}/defconfig
-	sed -i 's,CONFIG_LOGO=y,# CONFIG_LOGO is not set,' arch/%{_target_base_arch}/defconfig
-%endif
-%if %{with suspend}
-	if [ "$smp" != "yes" ]; then
-		sed -i '/# CONFIG_SOFTWARE_SUSPEND is not set/d' arch/%{_target_base_arch}/defconfig
-		cat %{SOURCE97} >> arch/%{_target_base_arch}/defconfig
-	fi
 %endif
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{_target_base_arch}/defconfig}
@@ -1129,9 +618,6 @@ BuildConfig() {
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
 	rm -f include/linux/autoconf.h
-%if %{with xen}
-	%{__make} $CrossOpts oldconfig
-%endif
 	%{__make} $CrossOpts include/linux/autoconf.h
 	if [ "$smp" = "yes" ]; then
 		install include/linux/autoconf.h \
@@ -1163,9 +649,6 @@ BuildKernel() {
 	%{__make} $CrossOpts include/linux/version.h \
 		%{?with_verbose:V=1}
 
-%if %{with xen}
-	%{__make} $CrossOpts oldconfig
-%endif
 
 # make does vmlinux, modules and bzImage at once
 %ifarch sparc sparc64
@@ -1198,11 +681,7 @@ PreInstallKernel() {
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
 %ifarch %{ix86} %{x8664}
-%if %{with xen}
-	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
-%else
 	install arch/%{_target_base_arch}/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
-%endif
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 %endif
 %ifarch alpha sparc sparc64
@@ -1289,16 +768,6 @@ umask 022
     CrossOpts=""
 %endif
 
-%if %{with xen}
-CrossOpts="ARCH=xen"
-%ifarch %{ix86}
-%define _main_target_base_arch	i386
-%endif
-%ifarch %{x8664}
-%define _main_target_base_arch	x86_64
-%endif
-%define _target_base_arch	xen
-%endif
 
 install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{version}-%{release}{,smp}
@@ -1535,9 +1004,6 @@ fi
 %ghost /boot/initrd-%{version}-%{release}.gz
 %dir /lib/modules/%{version}-%{release}
 %dir /lib/modules/%{version}-%{release}/kernel
-%if %{with abi}
-/lib/modules/%{version}-%{release}/kernel/abi
-%endif
 %ifnarch sparc
 /lib/modules/%{version}-%{release}/kernel/arch
 %endif
@@ -1654,9 +1120,6 @@ fi
 %ghost /boot/initrd-%{version}-%{release}smp.gz
 %dir /lib/modules/%{version}-%{release}smp
 %dir /lib/modules/%{version}-%{release}smp/kernel
-%if %{with abi}
-/lib/modules/%{version}-%{release}smp/kernel/abi
-%endif
 %ifnarch sparc
 /lib/modules/%{version}-%{release}smp/kernel/arch
 %endif
@@ -1800,9 +1263,6 @@ fi
 %if %{with source}
 %files source
 %defattr(644,root,root,755)
-%if %{with abi}
-%{_prefix}/src/linux-%{version}/abi
-%endif
 %{_prefix}/src/linux-%{version}/arch/*/[!Mk]*
 %{_prefix}/src/linux-%{version}/arch/*/kernel/[!M]*
 %exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
@@ -1811,12 +1271,6 @@ fi
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
-%if %{with grsecurity}
-%{_prefix}/src/linux-%{version}/grsecurity
-%endif
-%if %{with omosix}
-%{_prefix}/src/linux-%{version}/hpc
-%endif
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
 %{_prefix}/src/linux-%{version}/kernel
