@@ -118,6 +118,7 @@ BuildRequires:	diffutils
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
+BuildRequires:	gcc >= 5:3.2
 BuildRequires:	module-init-tools
 # for hostname command
 BuildRequires:	net-tools
