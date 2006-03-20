@@ -93,7 +93,7 @@ Source2:	kernel-config.h
 ## Source3-md5:	3db58f38e8a3c001d1a18eb1ee27db3b
 #Source5:	kernel-ppclibs.Makefile
 #Source6:	http://people.redhat.com/mingo/debloating-patches/debloating-patches-2.6.15-rc7.tar.gz
-# Source6-md5:	ca7a1cdef3e5c95f182d039cebd92b5e
+## Source6-md5:	ca7a1cdef3e5c95f182d039cebd92b5e
 
 Source20:	kernel-i386.config
 Source21:	kernel-i386-smp.config
