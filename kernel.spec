@@ -7,6 +7,8 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
+
+%bcond_with     preemptive      # build preemptive (realtime) kernel
 %bcond_with	verbose		# verbose build (V=1)
 
 
@@ -58,7 +60,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.1
+%define		_rel			0.2
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -604,6 +606,12 @@ BuildConfig() {
 	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
 
 	cat %{SOURCE40} >> arch/%{_target_base_arch}/defconfig
+
+%if %{with preemptive}
+	sed -i "s:CONFIG_PREEMPT_NONE=y:# CONFIG_PREEMPT_NONE is not set:" arch/%{_target_base_arch}/defconfig
+	sed -i "s:# CONFIG_PREEMPT is not set:CONFIG_PREEMPT=y:" arch/%{_target_base_arch}/defconfig
+	echo "# CONFIG_DEBUG_PREEMPT is not set" >> arch/%{_target_base_arch}/defconfig
+%endif
 	
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{_target_base_arch}/defconfig}
 %{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" arch/%{_target_base_arch}/defconfig}
