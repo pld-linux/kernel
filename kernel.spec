@@ -72,6 +72,8 @@
 %define		pcmcia_version		3.1.22
 %define		drm_xfree_version	4.3.0
 
+%define		squashfs_version	3.0
+
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -113,6 +115,11 @@ Source32:	kernel-ia64.config
 Source33:	kernel-ia64-smp.config
 
 Source40:	kernel-netfilter.config
+Source41:	kernel-squashfs.config
+
+# directly from http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.0.tar.gz 
+#		from linux-2.6.15 
+Patch20:	squashfs%{squashfs_version}-patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -528,6 +535,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %prep
 %setup -q -n linux-%{version}%{_rc}
 
+%patch20 -p1
+
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
 
@@ -605,8 +614,13 @@ BuildConfig() {
 	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
 	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
 
+	# netfilter
 	cat %{SOURCE40} >> arch/%{_target_base_arch}/defconfig
-
+	
+	# squashfs
+	cat %{SOURCE41} >> arch/%{_target_base_arch}/defconfig
+	
+	
 %if %{with preemptive}
 	sed -i "s:CONFIG_PREEMPT_NONE=y:# CONFIG_PREEMPT_NONE is not set:" arch/%{_target_base_arch}/defconfig
 	sed -i "s:# CONFIG_PREEMPT is not set:CONFIG_PREEMPT=y:" arch/%{_target_base_arch}/defconfig
