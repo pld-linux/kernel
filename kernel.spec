@@ -986,7 +986,7 @@ fi
 %if %{with up}
 %files
 %defattr(644,root,root,755)
-%doc FAQ-pl
+#doc FAQ-pl
 %ifarch sparc sparc64
 /boot/vmlinux.aout-%{version}-%{release}
 %endif
@@ -1105,7 +1105,7 @@ fi
 %if %{with smp}
 %files smp
 %defattr(644,root,root,755)
-%doc FAQ-pl
+#doc FAQ-pl
 %ifarch ia64
 /boot/efi/vmlinuz-%{version}-%{release}smp
 %endif
