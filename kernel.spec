@@ -594,12 +594,12 @@ BuildConfig() {
 	smp=
 	[ "$1" = "smp" -o "$2" = "smp" ] && smp=yes
 	if [ "$smp" = "yes" ]; then
-		Config="%{_target_base_arch}$xen$xenarch$xenver-smp"
+		Config="%{_target_base_arch}-smp"
 	else
-		Config="%{_target_base_arch}$xen$xenarch$xenver"
+		Config="%{_target_base_arch}"
 	fi
 	KernelVer=%{version}-%{release}$1
-	echo "Building config file for KERNEL $1..."
+	echo "Building config file for KERNEL $1... Using config: kernel-$Config.config"
 	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
 	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
 
