@@ -8,7 +8,7 @@
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
 
-%bcond_with     preemptive      # build preemptive (realtime) kernel
+%bcond_with     preemptive      # build preemptive kernel
 %bcond_with	verbose		# verbose build (V=1)
 
 
