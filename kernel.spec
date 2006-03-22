@@ -61,7 +61,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.3.1
+%define		_rel			0.3.2
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -554,6 +554,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 for i in suspend2-%{suspend_version}-for-%{version}/*.patch; do
 patch -p1 -s < $i
 done
+patch -p1 -s < suspend2-%{suspend_version}-for-%{version}/3010*
 %endif
 
 %patch0 -p1
