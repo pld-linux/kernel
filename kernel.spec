@@ -117,10 +117,18 @@ Source33:	kernel-ia64-smp.config
 Source40:	kernel-netfilter.config
 Source41:	kernel-squashfs.config
 
+###
+#	Patches
+###
+Patch0:		linux-kbuild-extmod.patch
 # directly from http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.0.tar.gz 
 #		from linux-2.6.15 
 Patch20:	squashfs%{squashfs_version}-patch
 
+
+###
+#	End
+###
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
 BuildRequires:	diffutils
@@ -534,6 +542,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %prep
 %setup -q -n linux-%{version}%{_rc}
+
+%patch0 -p1
 
 %patch20 -p1
 
