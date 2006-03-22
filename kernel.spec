@@ -61,7 +61,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.3
+%define		_rel			0.3.1
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -74,6 +74,7 @@
 %define		drm_xfree_version	4.3.0
 
 %define		squashfs_version	3.0
+%define		suspend_version		2.2.1
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -550,7 +551,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %setup -q -n linux-%{version}%{_rc} -a10
 
 %if %{with suspend2}
-for i in suspend2-2.2.1-for-2.6.16/*.patch; do
+for i in suspend2-%{suspend_version}-for-%{version}/*.patch; do
 patch -p1 -s < $i
 done
 %endif
