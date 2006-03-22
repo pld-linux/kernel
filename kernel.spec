@@ -562,7 +562,7 @@ install %{SOURCE5} Makefile.ppclibs
 for i in suspend2-%{suspend_version}-for-%{version}/*.patch; do
 patch -p1 -s < $i
 done
-patch -p1 -s < suspend2-%{suspend_version}-for-%{version}/3010*
+patch -p1 -s < suspend2-%{suspend_version}-for-%{version}/3010-fork-non-conflicting-pages-for-copyback
 %endif
 
 %patch0 -p1
