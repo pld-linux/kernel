@@ -9,6 +9,7 @@
 %bcond_without	pcmcia		# don't build pcmcia
 
 %bcond_with     preemptive      # build preemptive kernel
+%bcond_with	suspend2	# build software suspend support
 %bcond_with	verbose		# verbose build (V=1)
 
 
@@ -60,7 +61,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.2
+%define		_rel			0.3
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -99,6 +100,9 @@ Source2:	kernel-config.h
 #Source6:	http://people.redhat.com/mingo/debloating-patches/debloating-patches-2.6.15-rc7.tar.gz
 ## Source6-md5:	ca7a1cdef3e5c95f182d039cebd92b5e
 
+Source10:	http://suspend2.net/downloads/all/suspend2-2.2.1-for-2.6.16.tar.bz2
+# Source10-md5:	a235b258487dcce5db8a6f52a3b13bc3
+
 Source20:	kernel-i386.config
 Source21:	kernel-i386-smp.config
 Source22:	kernel-x86_64.config
@@ -129,6 +133,7 @@ Patch20:	squashfs%{squashfs_version}-patch
 ###
 #	End
 ###
+
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
 BuildRequires:	diffutils
@@ -541,7 +546,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}%{_rc}
+%setup -q -n linux-%{version}%{_rc} -a10
 
 %patch0 -p1
 
@@ -630,6 +635,8 @@ BuildConfig() {
 	# squashfs
 	cat %{SOURCE41} >> arch/%{_target_base_arch}/defconfig
 	
+%if %{with suspend2}
+%endif
 	
 %if %{with preemptive}
 	sed -i "s:CONFIG_PREEMPT_NONE=y:# CONFIG_PREEMPT_NONE is not set:" arch/%{_target_base_arch}/defconfig
