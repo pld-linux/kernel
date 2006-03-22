@@ -97,7 +97,7 @@ Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 #Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
 ## Source3-md5:	3db58f38e8a3c001d1a18eb1ee27db3b
-#Source5:	kernel-ppclibs.Makefile
+Source5:	kernel-ppclibs.Makefile
 #Source6:	http://people.redhat.com/mingo/debloating-patches/debloating-patches-2.6.15-rc7.tar.gz
 ## Source6-md5:	ca7a1cdef3e5c95f182d039cebd92b5e
 
@@ -549,6 +549,10 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %prep
 %setup -q -n linux-%{version}%{_rc} -a10
+
+%ifarch ppc
+install %{SOURCE5} Makefile.ppclibs
+%endif
 
 %if %{with suspend2}
 for i in suspend2-%{suspend_version}-for-%{version}/*.patch; do
