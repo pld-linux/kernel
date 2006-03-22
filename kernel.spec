@@ -120,6 +120,7 @@ Source33:	kernel-ia64-smp.config
 
 Source40:	kernel-netfilter.config
 Source41:	kernel-squashfs.config
+Source42:	kernel-suspend2.config
 
 ###
 #	Patches
@@ -548,6 +549,12 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %prep
 %setup -q -n linux-%{version}%{_rc} -a10
 
+%if %{with suspend2}
+for i in suspend2-2.2.1-for-2.6.16/*.patch; do
+patch -p1 -s < $i
+done
+%endif
+
 %patch0 -p1
 
 %patch20 -p1
@@ -636,6 +643,7 @@ BuildConfig() {
 	cat %{SOURCE41} >> arch/%{_target_base_arch}/defconfig
 	
 %if %{with suspend2}
+	cat %{SOURCE42} >> arch/%{_target_base_arch}/defconfig
 %endif
 	
 %if %{with preemptive}
