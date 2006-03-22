@@ -61,7 +61,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.3.2
+%define		_rel			0.4
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -127,6 +127,10 @@ Source42:	kernel-suspend2.config
 #	Patches
 ###
 Patch0:		linux-kbuild-extmod.patch
+
+# tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
+Patch2:		tahoe9xx-2.6.11.5.patch
+
 # directly from http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.0.tar.gz 
 #		from linux-2.6.15 
 Patch20:	squashfs%{squashfs_version}-patch
@@ -562,6 +566,8 @@ patch -p1 -s < suspend2-%{suspend_version}-for-%{version}/3010*
 %endif
 
 %patch0 -p1
+
+%patch2 -p1
 
 %patch20 -p1
 
