@@ -61,7 +61,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.4
+%define		_rel			0.5
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -130,6 +130,9 @@ Patch0:		linux-kbuild-extmod.patch
 
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
 Patch2:		tahoe9xx-2.6.11.5.patch
+
+#	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.16.patch
+Patch4:		fbsplash-0.9.2-r5-2.6.16.patch
 
 # directly from http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.0.tar.gz 
 #		from linux-2.6.15 
@@ -569,6 +572,8 @@ patch -p1 -s < suspend2-%{suspend_version}-for-%{version}/3010-fork-non-conflict
 
 %patch2 -p1
 
+%patch4 -p1
+
 %patch20 -p1
 
 # Fix EXTRAVERSION in main Makefile
@@ -657,7 +662,11 @@ BuildConfig() {
 %if %{with suspend2}
 	cat %{SOURCE42} >> arch/%{_target_base_arch}/defconfig
 %endif
-	
+
+	# fbsplash
+	echo "CONFIG_FB_SPLASH=y" >> arch/%{_target_base_arch}/defconfig
+
+
 %if %{with preemptive}
 	sed -i "s:CONFIG_PREEMPT_NONE=y:# CONFIG_PREEMPT_NONE is not set:" arch/%{_target_base_arch}/defconfig
 	sed -i "s:# CONFIG_PREEMPT is not set:CONFIG_PREEMPT=y:" arch/%{_target_base_arch}/defconfig
