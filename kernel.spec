@@ -46,7 +46,7 @@
 %endif
 
 ## Program required by kernel to work.
-%define		_binutils_ver		2.12
+%define		_binutils_ver		2.12.1
 %define		_util_linux_ver		2.10o
 %define		_module_init_tool_ver	0.9.10
 %define		_e2fsprogs_ver		1.29
