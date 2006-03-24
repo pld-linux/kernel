@@ -649,9 +649,17 @@ BuildConfig() {
 		Config="%{_target_base_arch}"
 	fi
 	KernelVer=%{version}-%{release}$1
+%ifarch ppc64
+	echo "Building config file [using ppc-$smp.conf] for KERNEL $1..."
+	cat $RPM_SOURCE_DIR/kernel-ppc-$smp.config > arch/%{_target_base_arch}/defconfig
+	sed -i "s:# CONFIG_PPC64 is not set:CONFIG_PPC64=y:" arch/%{_target_base_arch}/defconfig
+%else
 	echo "Building config file [using $Config.conf] for KERNEL $1..."
 	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
+%endif
+%ifarch %{ix86}	
 	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
+%endif
 
 	# netfilter
 	cat %{SOURCE40} >> arch/%{_target_base_arch}/defconfig
