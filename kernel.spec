@@ -35,8 +35,8 @@
 %define		have_isa	0
 %endif
 
-%ifarch	ppc64
-%define		_target_base_arch	ppc
+%ifarch	ppc64 ppc
+%define		_target_base_arch	powerpc
 %endif
 
 %ifarch sparc sparc64
@@ -653,8 +653,15 @@ BuildConfig() {
 		Config="%{_target_base_arch}"
 	fi
 	KernelVer=%{version}-%{release}$1
-%ifarch %{ix86}	
+
 	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
+	
+%ifarch ppc ppc64
+	if [ "$smp" = "yes" ]; then
+	    install %{SOURCE31} arch/powerpc/defconfig
+	else
+	    install %{SOURCE30} arch/powerpc/defconfig
+	fi
 %endif
 
 %ifarch ppc64
@@ -801,14 +808,18 @@ PreInstallKernel() {
 	echo "KERNEL RELEASE $KernelVer DONE"
 }
 
+echo "Builde begining ..."
+
 KERNEL_BUILD_DIR=`pwd`
 echo "-%{release}" > localversion
+echo %{_arch}
 #install -m 644 %{SOURCE50} FAQ-pl
 
 # UP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig
+exit 0
 %{?with_up:BuildKernel}
 %{?with_up:PreInstallKernel}
 # SMP KERNEL
