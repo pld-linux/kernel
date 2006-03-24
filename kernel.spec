@@ -65,7 +65,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.5
+%define		_rel			0.6
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -130,7 +130,6 @@ Source42:	kernel-suspend2.config
 ###
 #	Patches
 ###
-Patch0:		linux-kbuild-extmod.patch
 
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
 Patch2:		tahoe9xx-2.6.11.5.patch
@@ -571,8 +570,6 @@ patch -p1 -s < $i
 done
 patch -p1 -s < suspend2-%{suspend_version}-for-%{version}/3010-fork-non-conflicting-pages-for-copyback
 %endif
-
-%patch0 -p1
 
 %patch2 -p1
 
