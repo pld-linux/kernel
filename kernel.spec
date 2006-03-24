@@ -808,18 +808,14 @@ PreInstallKernel() {
 	echo "KERNEL RELEASE $KernelVer DONE"
 }
 
-echo "Builde begining ..."
-
 KERNEL_BUILD_DIR=`pwd`
 echo "-%{release}" > localversion
-echo %{_arch}
 #install -m 644 %{SOURCE50} FAQ-pl
 
 # UP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig
-exit 0
 %{?with_up:BuildKernel}
 %{?with_up:PreInstallKernel}
 # SMP KERNEL
