@@ -35,9 +35,9 @@
 %define		have_isa	0
 %endif
 
-%ifarch	ppc64 ppc
-%define		_target_base_arch	powerpc
-%endif
+#ifarch	ppc64 ppc
+#define		_target_base_arch	powerpc
+#endif
 
 %ifarch sparc sparc64
 %undefine	with_pcmcia
@@ -655,9 +655,9 @@ BuildConfig() {
 	
 %ifarch ppc ppc64
 	if [ "$smp" = "yes" ]; then
-	    install %{SOURCE31} arch/powerpc/defconfig
+	    install %{SOURCE31} arch/%{_target_base_arch}/defconfig
 	else
-	    install %{SOURCE30} arch/powerpc/defconfig
+	    install %{SOURCE30} arch/%{_target_base_arch}/defconfig
 	fi
 %endif
 
