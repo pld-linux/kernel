@@ -774,6 +774,8 @@ PreInstallKernel() {
 %ifarch ppc ppc64
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%endif
+%ifarch ppc-broken
 	%{__make} -f Makefile.ppclibs install \
 		DESTDIR=$KERNEL_INSTALL_DIR/boot/libs-$KernelVer
 %endif
@@ -1144,7 +1146,7 @@ fi
 /lib/modules/%{version}-%{release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 
-%ifarch ppc
+%ifarch ppc-broken
 %if "%{_arch}" == "ppc"
 %files libs
 %defattr(644,root,root,755)
@@ -1260,7 +1262,7 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 
-%ifarch ppc
+%ifarch ppc-broken
 %if "%{_arch}" == "ppc"
 %files smp-libs
 %defattr(644,root,root,755)
