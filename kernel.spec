@@ -655,6 +655,9 @@ BuildConfig() {
 	fi
 	KernelVer=%{version}-%{release}$1
 
+	echo "Building config file [using $Config.conf] for KERNEL $1..."
+	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
+
 	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
 	
 %ifarch ppc ppc64
