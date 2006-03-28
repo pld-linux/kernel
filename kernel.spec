@@ -65,7 +65,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.7
+%define		_rel			0.8
 
 %define		_netfilter_snap		20060328
 %define		_nf_hipac_ver		0.9.1
@@ -107,6 +107,8 @@ Source5:	kernel-ppclibs.Makefile
 
 Source10:	http://suspend2.net/downloads/all/suspend2-2.2.1-for-2.6.16.tar.bz2
 # Source10-md5:	a235b258487dcce5db8a6f52a3b13bc3
+Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.16/reiser4-for-2.6.16-1.patch.gz
+# Source12-md5:	f51303b5e445432b974a729b76036c40
 
 Source20:	kernel-i386.config
 Source21:	kernel-i386-smp.config
@@ -572,6 +574,9 @@ patch -p1 -s < $i
 done
 patch -p1 -s < suspend2-%{suspend_version}-for-%{version}/3010-fork-non-conflicting-pages-for-copyback
 %endif
+
+# reiserfs4
+%{__gzip} -dc %{SOURCE12} | %{__patch} -s -p1
 
 %patch2 -p1
 
