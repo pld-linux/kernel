@@ -65,9 +65,9 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.6
+%define		_rel			0.7
 
-%define		_netfilter_snap		20051125
+%define		_netfilter_snap		20060328
 %define		_nf_hipac_ver		0.9.1
 
 %define		_enable_debug_packages			0
@@ -139,9 +139,11 @@ Patch4:		fbsplash-0.9.2-r5-2.6.16.patch
 
 # directly from http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.0.tar.gz 
 #		from linux-2.6.15 
-Patch20:	squashfs%{squashfs_version}-patch
+Patch6:		squashfs%{squashfs_version}-patch
 
 
+# netfilter snap
+Patch8:		pom-ng-%{_netfilter_snap}.patch
 ###
 #	End
 ###
@@ -575,7 +577,9 @@ patch -p1 -s < suspend2-%{suspend_version}-for-%{version}/3010-fork-non-conflict
 
 %patch4 -p1
 
-%patch20 -p1
+%patch6 -p1
+
+%patch8 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
