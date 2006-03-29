@@ -65,9 +65,9 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.8
+%define		_rel			0.9
 
-%define		_netfilter_snap		20060328
+%define		_netfilter_snap		20060329
 %define		_nf_hipac_ver		0.9.1
 
 %define		_enable_debug_packages			0
@@ -145,7 +145,28 @@ Patch6:		squashfs%{squashfs_version}-patch
 
 
 # netfilter snap
-Patch8:		pom-ng-%{_netfilter_snap}.patch
+## submitted
+Patch8:		pom-ng-comment%{_netfilter_snap}.patch
+
+## base
+Patch9: 	pom-ng-IPV4OPTSSTRIP%{_netfilter_snap}.patch
+Patch10:	pom-ng-NETLINK%{_netfilter_snap}.patch
+Patch11:	pom-ng-NETMAP%{_netfilter_snap}.patch
+Patch12:	pom-ng-connlimit%{_netfilter_snap}.patch
+Patch13:	pom-ng-expire%{_netfilter_snap}.patch
+Patch14:	pom-ng-fuzzy%{_netfilter_snap}.patch
+Patch15:	pom-ng-ipv4options%{_netfilter_snap}.patch
+Patch16:	pom-ng-nth%{_netfilter_snap}.patch
+Patch17:	pom-ng-osf%{_netfilter_snap}.patch
+Patch18:	pom-ng-psd%{_netfilter_snap}.patch
+Patch19:	pom-ng-quota%{_netfilter_snap}.patch
+Patch20:	pom-ng-random%{_netfilter_snap}.patch
+Patch21:	pom-ng-set%{_netfilter_snap}.patch
+Patch22:	pom-ng-time%{_netfilter_snap}.patch
+Patch23:	pom-ng-u32%{_netfilter_snap}.patch
+
+## extra
+
 ###
 #	End
 ###
@@ -584,7 +605,26 @@ patch -p1 -s < suspend2-%{suspend_version}-for-%{version}/3010-fork-non-conflict
 
 %patch6 -p1
 
+## netfilter
+# submitted
 %patch8 -p1
+
+# base
+%patch9 -p1
+%patch10 -p1
+%patch11 -p1
+%patch12 -p1
+%patch13 -p1
+%patch14 -p1
+%patch15 -p1
+%patch16 -p1
+%patch17 -p1
+%patch18 -p1
+%patch19 -p1
+%patch20 -p1
+%patch21 -p1
+%patch22 -p1
+%patch23 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
