@@ -11,7 +11,7 @@
 %bcond_with     preemptive      # build preemptive kernel
 %bcond_with	suspend2	# build software suspend support
 %bcond_with	verbose		# verbose build (V=1)
-
+%bcond_with	vserver		# added vserver.
 
 %{?debug:%define with_verbose 1}
 
@@ -65,7 +65,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.1
+%define		_rel			0.2
 
 %define		_netfilter_snap		20060329
 %define		_nf_hipac_ver		0.9.1
@@ -128,6 +128,7 @@ Source33:	kernel-ia64-smp.config
 Source40:	kernel-netfilter.config
 Source41:	kernel-squashfs.config
 Source42:	kernel-suspend2.config
+Source43:	kernel-vserver.config
 
 ###
 #	Patches
@@ -165,8 +166,16 @@ Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
 ## extra
 
 ###
-#	End
+#	End netfilter
 ###
+
+# vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.0.2-rc14.diff
+Patch100:	patch-2.6.16-vs2.0.2-rc14.diff
+
+# grsecurity snap for 2.6.16.
+# from http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.16-200603292139.patch
+## [pl]nienaklada sie 
+#Patch9999:	grsecurity-2.1.9-2.6.16-200603292139.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -620,6 +629,13 @@ patch -p1 -s < suspend2-%{suspend_version}-for-%{version}/3010-fork-non-conflict
 %patch21 -p1
 %patch22 -p1
 
+
+%if %{with vserver}
+%patch100 -p1
+%endif
+
+#patch9999 -p1
+
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
 
@@ -719,6 +735,10 @@ BuildConfig() {
 	
 %if %{with suspend2}
 	cat %{SOURCE42} >> arch/%{_target_base_arch}/defconfig
+%endif
+
+%if %{with vserver}
+	cat %{SOURCE43} >> arch/%{_target_base_arch}/defconfig
 %endif
 
 	# fbsplash
