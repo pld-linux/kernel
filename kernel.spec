@@ -65,7 +65,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.2
+%define		_rel			0.3
 
 %define		_netfilter_snap		20060329
 %define		_nf_hipac_ver		0.9.1
@@ -168,6 +168,9 @@ Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
 ###
 #	End netfilter
 ###
+
+# from http://www.linuximq.net/patchs/linux-2.6.16-imq2.diff
+Patch50:	linux-2.6.16-imq2.diff
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.0.2-rc14.diff
 Patch100:	patch-2.6.16-vs2.0.2-rc14.diff
@@ -629,6 +632,8 @@ patch -p1 -s < suspend2-%{suspend_version}-for-%{version}/3010-fork-non-conflict
 %patch21 -p1
 %patch22 -p1
 
+
+%patch50 -p1
 
 %if %{with vserver}
 %patch100 -p1
