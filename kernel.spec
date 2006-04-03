@@ -139,6 +139,7 @@ Patch2:		tahoe9xx-2.6.11.5.patch
 
 #	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.16.patch
 Patch4:		fbsplash-0.9.2-r5-2.6.16.patch
+Patch5:		linux-2.6-vesafb-tng.patch
 
 # directly from http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.0.tar.gz 
 #		from linux-2.6.15 
