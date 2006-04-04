@@ -65,7 +65,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.3
+%define		_rel			0.4
 
 %define		_netfilter_snap		20060329
 %define		_nf_hipac_ver		0.9.1
@@ -1408,6 +1408,7 @@ fi
 %{_prefix}/src/linux-%{version}/scripts/setlocalversion
 %{_prefix}/src/linux-%{version}/scripts/*.c
 %{_prefix}/src/linux-%{version}/scripts/*.sh
+%{_prefix}/src/linux-%{version}/scripts/kconfig/*
 
 %files doc
 %defattr(644,root,root,755)
@@ -1434,6 +1435,7 @@ fi
 %exclude %{_prefix}/src/linux-%{version}/scripts/Kbuild.include
 %exclude %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %exclude %{_prefix}/src/linux-%{version}/scripts/basic
+%exclude %{_prefix}/src/linux-%{version}/scripts/kconfig
 %exclude %{_prefix}/src/linux-%{version}/scripts/mod
 %exclude %{_prefix}/src/linux-%{version}/scripts/setlocalversion
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.c
