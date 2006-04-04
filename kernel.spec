@@ -173,6 +173,9 @@ Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
 # from http://www.linuximq.net/patchs/linux-2.6.16-imq2.diff
 Patch50:	linux-2.6.16-imq2.diff
 
+
+Patch51:	http://bluetooth-alsa.sourceforge.net/sco-mtu.patch
+
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.0.2-rc14.diff
 Patch100:	patch-2.6.16-vs2.0.2-rc14.diff
 
@@ -635,6 +638,8 @@ patch -p1 -s < suspend2-%{suspend_version}-for-%{version}/3010-fork-non-conflict
 
 
 %patch50 -p1
+
+%patch51 -p1
 
 %if %{with vserver}
 %patch100 -p1
