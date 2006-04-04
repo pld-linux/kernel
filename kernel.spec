@@ -615,6 +615,7 @@ patch -p1 -s < suspend2-%{suspend_version}-for-%{version}/3010-fork-non-conflict
 %patch2 -p1
 
 %patch4 -p1
+%patch5 -p1
 
 %patch6 -p1
 
