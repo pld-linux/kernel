@@ -145,6 +145,9 @@ Patch5:		linux-2.6-vesafb-tng.patch
 #		from linux-2.6.15 
 Patch6:		squashfs%{squashfs_version}-patch
 
+Patch7:		linux-alpha-isa.patch
+Patch8:		linux-fbcon-margins.patch
+Patch9:		linux-static-dev.patch
 
 # netfilter snap
 ## submitted
@@ -618,6 +621,10 @@ patch -p1 -s < suspend2-%{suspend_version}-for-%{version}/3010-fork-non-conflict
 %patch5 -p1
 
 %patch6 -p1
+
+%patch7 -p1
+%patch8 -p1
+%patch9 -p1
 
 ## netfilter
 # submitted
