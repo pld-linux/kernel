@@ -65,7 +65,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.4
+%define		_rel			0.5
 
 %define		_netfilter_snap		20060329
 %define		_nf_hipac_ver		0.9.1
@@ -129,6 +129,7 @@ Source40:	kernel-netfilter.config
 Source41:	kernel-squashfs.config
 Source42:	kernel-suspend2.config
 Source43:	kernel-vserver.config
+Source44:	kernel-vesafb-tng.config
 
 ###
 #	Patches
@@ -759,6 +760,9 @@ BuildConfig() {
 %if %{with vserver}
 	cat %{SOURCE43} >> arch/%{_target_base_arch}/defconfig
 %endif
+
+	# vesafb-tng
+	cat %{SOURCE44} >> arch/%{_target_base_arch}/defconfig
 
 	# fbsplash
 	echo "CONFIG_FB_SPLASH=y" >> arch/%{_target_base_arch}/defconfig
