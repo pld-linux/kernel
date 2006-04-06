@@ -7,6 +7,7 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
+%bcond_without	vesafb_tng	# build without vesafb-tng patch applied (breaks other fb modules)
 
 %bcond_with     preemptive      # build preemptive kernel
 %bcond_with	suspend2	# build software suspend support
@@ -179,6 +180,11 @@ Patch50:	linux-2.6.16-imq2.diff
 
 
 Patch51:	http://bluetooth-alsa.sourceforge.net/sco-mtu.patch
+
+# support for HDAPS (Hard Disk Active Protection System) 
+# that can be found in IBM/Lenovo ThinkPad laptops
+# from: http://www.dresco.co.uk/hdaps/hdaps_protect.20060326.patch
+Patch52:	linux-hdaps_protect.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.0.2-rc14.diff
 Patch100:	patch-2.6.16-vs2.0.2-rc14.diff
@@ -607,10 +613,10 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 %if %{with suspend2}
-for i in suspend2-%{suspend_version}-for-%{version}/*.patch; do
+for i in suspend2-%{suspend_version}-for-2.6.16/*.patch; do
 patch -p1 -s < $i
 done
-patch -p1 -s < suspend2-%{suspend_version}-for-%{version}/3010-fork-non-conflicting-pages-for-copyback
+patch -p1 -s < suspend2-%{suspend_version}-for-2.6.16/3010-fork-non-conflicting-pages-for-copyback
 %endif
 
 # reiserfs4
@@ -619,7 +625,9 @@ patch -p1 -s < suspend2-%{suspend_version}-for-%{version}/3010-fork-non-conflict
 %patch2 -p1
 
 %patch4 -p1
+%if %{with vesafb_tng}
 %patch5 -p1
+%endif
 
 %patch6 -p1
 
@@ -649,6 +657,8 @@ patch -p1 -s < suspend2-%{suspend_version}-for-%{version}/3010-fork-non-conflict
 %patch50 -p1
 
 %patch51 -p1
+
+%patch52 -p1
 
 %if %{with vserver}
 %patch100 -p1
@@ -762,7 +772,9 @@ BuildConfig() {
 %endif
 
 	# vesafb-tng
+%if %{with vesafb_tng}
 	cat %{SOURCE44} >> arch/%{_target_base_arch}/defconfig
+%endif
 
 	# fbsplash
 	echo "CONFIG_FB_SPLASH=y" >> arch/%{_target_base_arch}/defconfig
