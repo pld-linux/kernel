@@ -170,6 +170,7 @@ Patch21:	pom-ng-time-%{_netfilter_snap}.patch
 Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
 
 ## extra
+Patch30:	pom-ng-ipp2p-%{_netfilter_snap}.patch
 
 ###
 #	End netfilter
@@ -625,8 +626,10 @@ patch -p1 -s < suspend2-%{suspend_version}-for-2.6.16/3010-fork-non-conflicting-
 %patch2 -p1
 
 %patch4 -p1
-%if %{with vesafb_tng}
-%patch5 -p1
+%ifarch %{ix86}
+    %if %{with vesafb_tng}
+	%patch5 -p1
+    %endif
 %endif
 
 %patch6 -p1
@@ -653,6 +656,11 @@ patch -p1 -s < suspend2-%{suspend_version}-for-2.6.16/3010-fork-non-conflicting-
 %patch21 -p1
 %patch22 -p1
 
+## extra
+%patch30 -p1
+
+##
+# end of netfilter
 
 %patch50 -p1
 
