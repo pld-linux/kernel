@@ -66,7 +66,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.5
+%define		_rel			0.6
 
 %define		_netfilter_snap		20060329
 %define		_nf_hipac_ver		0.9.1
@@ -1435,7 +1435,11 @@ fi
 %dir %{_prefix}/src/linux-%{version}/arch
 %dir %{_prefix}/src/linux-%{version}/arch/*
 %{_prefix}/src/linux-%{version}/arch/*/Makefile*
-%{_prefix}/src/linux-%{version}/arch/*/Kconfig*
+%{_prefix}/src/linux-%{version}/*/Kconfig*
+%{_prefix}/src/linux-%{version}/*/*/Kconfig*
+%{_prefix}/src/linux-%{version}/*/*/*/Kconfig*
+%{_prefix}/src/linux-%{version}/*/*/*/*/Kconfig*
+%{_prefix}/src/linux-%{version}/*/*/*/*/*/Kconfig*
 %dir %{_prefix}/src/linux-%{version}/arch/*/kernel
 %{_prefix}/src/linux-%{version}/arch/*/kernel/Makefile
 %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
@@ -1458,10 +1462,15 @@ fi
 %if %{with source}
 %files source
 %defattr(644,root,root,755)
-%{_prefix}/src/linux-%{version}/arch/*/[!MkK]*
-%{_prefix}/src/linux-%{version}/arch/*/kernel/[!MK]*
+%{_prefix}/src/linux-%{version}/arch/*/[!Mk]*
+%{_prefix}/src/linux-%{version}/arch/*/kernel/[!M]*
 %exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
 %exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/sigframe.h
+%exclude %{_prefix}/src/linux-%{version}/*/Kconfig*
+%exclude %{_prefix}/src/linux-%{version}/*/*/Kconfig*
+%exclude %{_prefix}/src/linux-%{version}/*/*/*/Kconfig*
+%exclude %{_prefix}/src/linux-%{version}/*/*/*/*/Kconfig*
+%exclude %{_prefix}/src/linux-%{version}/*/*/*/*/*/Kconfig*
 %{_prefix}/src/linux-%{version}/block
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
