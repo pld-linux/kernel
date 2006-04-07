@@ -187,6 +187,10 @@ Patch51:	http://bluetooth-alsa.sourceforge.net/sco-mtu.patch
 # from: http://www.dresco.co.uk/hdaps/hdaps_protect.20060326.patch
 Patch52:	linux-hdaps_protect.patch
 
+# esfq
+# from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
+Patch53:	esfq-kernel.patch
+
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.0.2-rc14.diff
 Patch100:	patch-2.6.16-vs2.0.2-rc14.diff
 
@@ -668,6 +672,8 @@ patch -p1 -s < suspend2-%{suspend_version}-for-2.6.16/3010-fork-non-conflicting-
 %patch51 -p1
 
 %patch52 -p1
+
+%patch53 -p1
 
 %if %{with vserver}
 %patch100 -p1
