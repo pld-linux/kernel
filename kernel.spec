@@ -1435,6 +1435,7 @@ fi
 %dir %{_prefix}/src/linux-%{version}/arch
 %dir %{_prefix}/src/linux-%{version}/arch/*
 %{_prefix}/src/linux-%{version}/arch/*/Makefile*
+%{_prefix}/src/linux-%{version}/arch/*/Kconfig*
 %dir %{_prefix}/src/linux-%{version}/arch/*/kernel
 %{_prefix}/src/linux-%{version}/arch/*/kernel/Makefile
 %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
@@ -1443,6 +1444,7 @@ fi
 %{_prefix}/src/linux-%{version}/scripts/Kbuild.include
 %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %{_prefix}/src/linux-%{version}/scripts/basic
+%{_prefix}/src/linux-%{version}/scripts/mkmakefile
 %{_prefix}/src/linux-%{version}/scripts/mod
 %{_prefix}/src/linux-%{version}/scripts/setlocalversion
 %{_prefix}/src/linux-%{version}/scripts/*.c
@@ -1456,8 +1458,8 @@ fi
 %if %{with source}
 %files source
 %defattr(644,root,root,755)
-%{_prefix}/src/linux-%{version}/arch/*/[!Mk]*
-%{_prefix}/src/linux-%{version}/arch/*/kernel/[!M]*
+%{_prefix}/src/linux-%{version}/arch/*/[!MkK]*
+%{_prefix}/src/linux-%{version}/arch/*/kernel/[!MK]*
 %exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
 %exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/sigframe.h
 %{_prefix}/src/linux-%{version}/block
@@ -1475,6 +1477,7 @@ fi
 %exclude %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %exclude %{_prefix}/src/linux-%{version}/scripts/basic
 %exclude %{_prefix}/src/linux-%{version}/scripts/kconfig
+%exclude %{_prefix}/src/linux-%{version}/scripts/mkmakefile
 %exclude %{_prefix}/src/linux-%{version}/scripts/mod
 %exclude %{_prefix}/src/linux-%{version}/scripts/setlocalversion
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.c
