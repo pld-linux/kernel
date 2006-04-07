@@ -626,10 +626,11 @@ patch -p1 -s < suspend2-%{suspend_version}-for-2.6.16/3010-fork-non-conflicting-
 %patch2 -p1
 
 %patch4 -p1
+
 %ifarch %{ix86}
-    %if %{with vesafb_tng}
-	%patch5 -p1
-    %endif
+%if %{with vesafb_tng}
+%patch5 -p1
+%endif
 %endif
 
 %patch6 -p1
