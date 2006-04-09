@@ -1,6 +1,6 @@
 diff -urN linux-2.6.16.original/block/ll_rw_blk.c linux-2.6.16.hdaps/block/ll_rw_blk.c
 --- linux-2.6.16.original/block/ll_rw_blk.c	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/block/ll_rw_blk.c	2006-03-26 14:18:58.000000000 +0100
++++ linux-2.6.16.hdaps/block/ll_rw_blk.c	2006-03-28 20:39:03.000000000 +0100
 @@ -39,6 +39,8 @@
  static void drive_stat_acct(struct request *rq, int nr_sectors, int new_io);
  static void init_request_from_bio(struct request *req, struct bio *bio);
@@ -159,8 +159,19 @@ diff -urN linux-2.6.16.original/block/ll_rw_blk.c linux-2.6.16.hdaps/block/ll_rw
 +}
 diff -urN linux-2.6.16.original/drivers/ide/ide-disk.c linux-2.6.16.hdaps/drivers/ide/ide-disk.c
 --- linux-2.6.16.original/drivers/ide/ide-disk.c	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/drivers/ide/ide-disk.c	2006-03-26 14:23:42.000000000 +0100
-@@ -727,6 +727,141 @@
++++ linux-2.6.16.hdaps/drivers/ide/ide-disk.c	2006-04-07 17:52:42.000000000 +0100
+@@ -71,6 +71,10 @@
+ #include <asm/io.h>
+ #include <asm/div64.h>
+ 
++int protect_method = 0;
++module_param(protect_method, int, 0444);
++MODULE_PARM_DESC(protect_method, "hdaps disk protection method (0=autodetect, 1=unload, 2=standby)");
++
+ struct ide_disk_obj {
+ 	ide_drive_t	*drive;
+ 	ide_driver_t	*driver;
+@@ -727,6 +731,154 @@
  }
  
  /*
@@ -278,6 +289,7 @@ diff -urN linux-2.6.16.original/drivers/ide/ide-disk.c linux-2.6.16.hdaps/driver
 +int idedisk_issue_protect_fn(request_queue_t *q)
 +{
 +	ide_drive_t		*drive = q->queuedata;
++	int unload;
 +
 +	/*
 +	 * Check capability of the device -
@@ -285,12 +297,24 @@ diff -urN linux-2.6.16.original/drivers/ide/ide-disk.c linux-2.6.16.hdaps/driver
 +	 *    we use "standby immediate" and live with spinning down the drive..
 +	 *    (Word 84, bit 13 of IDENTIFY DEVICE data)
 +	 */
-+	if (drive->id->cfsse & (1 << 13))
-+		printk(KERN_DEBUG "idedisk_issue_protect_fn(): unload support reported..\n");
-+	else
-+		printk(KERN_DEBUG "idedisk_issue_protect_fn(): unload support NOT reported!..\n");
++	if (protect_method == 1) {
++		unload = 1;	
++		printk(KERN_DEBUG "idedisk_issue_protect_fn(): unload method requested, overriding drive capability check..\n");
++	}
++	else if (protect_method == 2) {
++		unload = 0;	
++		printk(KERN_DEBUG "idedisk_issue_protect_fn(): standby method requested, overriding drive capability check..\n");
++	}
++	else if (drive->id->cfsse & (1 << 13)) {
++		unload = 1;
++		printk(KERN_DEBUG "idedisk_issue_protect_fn(): unload support reported by drive..\n");
++	}
++	else {
++		unload = 0;
++		printk(KERN_DEBUG "idedisk_issue_protect_fn(): unload support NOT reported by drive!..\n");
++	}
 +
-+	return ide_protect_queue(q, (drive->id->cfsse & (1 << 13)) ? 1: 0);
++	return ide_protect_queue(q, unload);
 +}
 +
 +int idedisk_issue_unprotect_fn(request_queue_t *q)
@@ -302,7 +326,7 @@ diff -urN linux-2.6.16.original/drivers/ide/ide-disk.c linux-2.6.16.hdaps/driver
   * This is tightly woven into the driver->do_special can not touch.
   * DON'T do it again until a total personality rewrite is committed.
   */
-@@ -984,6 +1119,9 @@
+@@ -984,6 +1136,9 @@
  		drive->wcache = 1;
  
  	write_cache(drive, 1);
@@ -314,7 +338,7 @@ diff -urN linux-2.6.16.original/drivers/ide/ide-disk.c linux-2.6.16.hdaps/driver
  static void ide_cacheflush_p(ide_drive_t *drive)
 diff -urN linux-2.6.16.original/drivers/ide/ide-io.c linux-2.6.16.hdaps/drivers/ide/ide-io.c
 --- linux-2.6.16.original/drivers/ide/ide-io.c	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/drivers/ide/ide-io.c	2006-03-22 17:56:14.000000000 +0000
++++ linux-2.6.16.hdaps/drivers/ide/ide-io.c	2006-03-26 15:10:44.000000000 +0100
 @@ -1180,6 +1180,17 @@
  		}
  
@@ -343,10 +367,35 @@ diff -urN linux-2.6.16.original/drivers/ide/ide-io.c linux-2.6.16.hdaps/drivers/
  	__elv_add_request(drive->queue, rq, where, 0);
  	ide_do_request(hwgroup, IDE_NO_IRQ);
  	spin_unlock_irqrestore(&ide_lock, flags);
+diff -urN linux-2.6.16.original/drivers/scsi/libata-core.c linux-2.6.16.hdaps/drivers/scsi/libata-core.c
+--- linux-2.6.16.original/drivers/scsi/libata-core.c	2006-03-20 05:53:29.000000000 +0000
++++ linux-2.6.16.hdaps/drivers/scsi/libata-core.c	2006-04-07 17:39:19.000000000 +0100
+@@ -78,6 +78,10 @@
+ static unsigned int ata_unique_id = 1;
+ static struct workqueue_struct *ata_wq;
+ 
++int protect_method = 0;
++module_param(protect_method, int, 0444);
++MODULE_PARM_DESC(protect_method, "hdaps disk protection method (0=autodetect, 1=unload, 2=standby)");
++
+ int atapi_enabled = 0;
+ module_param(atapi_enabled, int, 0444);
+ MODULE_PARM_DESC(atapi_enabled, "Enable discovery of ATAPI devices (0=off, 1=on)");
+diff -urN linux-2.6.16.original/drivers/scsi/libata.h linux-2.6.16.hdaps/drivers/scsi/libata.h
+--- linux-2.6.16.original/drivers/scsi/libata.h	2006-03-20 05:53:29.000000000 +0000
++++ linux-2.6.16.hdaps/drivers/scsi/libata.h	2006-04-07 17:39:47.000000000 +0100
+@@ -40,6 +40,7 @@
+ };
+ 
+ /* libata-core.c */
++extern int protect_method;
+ extern int atapi_enabled;
+ extern int libata_fua;
+ extern struct ata_queued_cmd *ata_qc_new_init(struct ata_port *ap,
 diff -urN linux-2.6.16.original/drivers/scsi/libata-scsi.c linux-2.6.16.hdaps/drivers/scsi/libata-scsi.c
 --- linux-2.6.16.original/drivers/scsi/libata-scsi.c	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/drivers/scsi/libata-scsi.c	2006-03-26 14:24:06.000000000 +0100
-@@ -662,6 +662,29 @@
++++ linux-2.6.16.hdaps/drivers/scsi/libata-scsi.c	2006-04-07 17:40:11.000000000 +0100
+@@ -662,6 +662,42 @@
  	}
  }
  
@@ -358,14 +407,27 @@ diff -urN linux-2.6.16.original/drivers/scsi/libata-scsi.c linux-2.6.16.hdaps/dr
 +	struct scsi_device *sdev = q->queuedata;
 +	struct ata_port *ap = (struct ata_port *) &sdev->host->hostdata[0];
 +	struct ata_device *dev = &ap->device[sdev->id];
++	int unload;
 +
-+	if (ata_id_has_unload(dev->id))
-+		printk(KERN_DEBUG "ata_scsi_issue_protect_fn(): unload support reported..\n");
-+	else
-+		printk(KERN_DEBUG "ata_scsi_issue_protect_fn(): unload support NOT reported!..\n");
++	if (protect_method == 1) {
++		unload = 1;	
++		printk(KERN_DEBUG "ata_scsi_issue_protect_fn(): unload method requested, overriding drive capability check..\n");
++	}
++	else if (protect_method == 2) {
++		unload = 0;	
++		printk(KERN_DEBUG "ata_scsi_issue_protect_fn(): standby method requested, overriding drive capability check..\n");
++	}
++	else if (ata_id_has_unload(dev->id)) {
++		unload = 1;
++		printk(KERN_DEBUG "ata_scsi_issue_protect_fn(): unload support reported by drive..\n");
++	}
++	else {
++		unload = 0;
++		printk(KERN_DEBUG "ata_scsi_issue_protect_fn(): unload support NOT reported by drive!..\n");
++	}
 +
 +	/* call scsi_protect_queue, requesting either unload or standby */
-+	return scsi_protect_queue(q, ata_id_has_unload(dev->id) ? 1 : 0);
++	return scsi_protect_queue(q, unload);
 +}
 +
 +static int ata_scsi_issue_unprotect_fn(request_queue_t *q)
@@ -376,7 +438,7 @@ diff -urN linux-2.6.16.original/drivers/scsi/libata-scsi.c linux-2.6.16.hdaps/dr
  /**
   *	ata_scsi_slave_config - Set SCSI device attributes
   *	@sdev: SCSI device to examine
-@@ -712,6 +735,8 @@
+@@ -712,6 +748,8 @@
  			blk_queue_max_hw_segments(q, q->max_hw_segments - 1);
  		}
  	}
@@ -387,7 +449,7 @@ diff -urN linux-2.6.16.original/drivers/scsi/libata-scsi.c linux-2.6.16.hdaps/dr
  }
 diff -urN linux-2.6.16.original/drivers/scsi/scsi_lib.c linux-2.6.16.hdaps/drivers/scsi/scsi_lib.c
 --- linux-2.6.16.original/drivers/scsi/scsi_lib.c	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/drivers/scsi/scsi_lib.c	2006-03-26 14:22:19.000000000 +0100
++++ linux-2.6.16.hdaps/drivers/scsi/scsi_lib.c	2006-03-26 15:10:44.000000000 +0100
 @@ -2307,3 +2307,189 @@
  	return 1;
  }
@@ -580,7 +642,7 @@ diff -urN linux-2.6.16.original/drivers/scsi/scsi_lib.c linux-2.6.16.hdaps/drive
 +EXPORT_SYMBOL_GPL(scsi_protect_queue);
 diff -urN linux-2.6.16.original/include/linux/ata.h linux-2.6.16.hdaps/include/linux/ata.h
 --- linux-2.6.16.original/include/linux/ata.h	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/include/linux/ata.h	2006-03-22 21:21:32.000000000 +0000
++++ linux-2.6.16.hdaps/include/linux/ata.h	2006-03-26 14:26:24.000000000 +0100
 @@ -250,6 +250,7 @@
  #define ata_id_is_sata(id)	((id)[93] == 0)
  #define ata_id_rahead_enabled(id) ((id)[85] & (1 << 6))
@@ -591,7 +653,7 @@ diff -urN linux-2.6.16.original/include/linux/ata.h linux-2.6.16.hdaps/include/l
  #define ata_id_has_flush_ext(id) ((id)[83] & (1 << 13))
 diff -urN linux-2.6.16.original/include/linux/blkdev.h linux-2.6.16.hdaps/include/linux/blkdev.h
 --- linux-2.6.16.original/include/linux/blkdev.h	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/include/linux/blkdev.h	2006-03-22 21:25:02.000000000 +0000
++++ linux-2.6.16.hdaps/include/linux/blkdev.h	2006-03-26 14:26:24.000000000 +0100
 @@ -293,6 +293,8 @@
  typedef int (issue_flush_fn) (request_queue_t *, struct gendisk *, sector_t *);
  typedef void (prepare_flush_fn) (request_queue_t *, struct request *);
@@ -621,7 +683,7 @@ diff -urN linux-2.6.16.original/include/linux/blkdev.h linux-2.6.16.hdaps/includ
  extern void blk_dump_rq_flags(struct request *, char *);
 diff -urN linux-2.6.16.original/include/linux/ide.h linux-2.6.16.hdaps/include/linux/ide.h
 --- linux-2.6.16.original/include/linux/ide.h	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/include/linux/ide.h	2006-03-22 17:56:14.000000000 +0000
++++ linux-2.6.16.hdaps/include/linux/ide.h	2006-03-26 14:26:24.000000000 +0100
 @@ -1081,6 +1081,7 @@
   */
  typedef enum {
