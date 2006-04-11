@@ -66,7 +66,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			1.1
+%define		_rel			1.2
 
 %define		_netfilter_snap		20060329
 %define		_nf_hipac_ver		0.9.1
@@ -197,9 +197,10 @@ Patch53:	esfq-kernel.patch
 
 # by Baggins request:
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
-Patch55:       linux-2.6-atm-vbr.patch
-Patch56:       linux-2.6-atmdd.patch
+Patch55:	linux-2.6-atm-vbr.patch
+Patch56:	linux-2.6-atmdd.patch
 
+Patch57:	linux-2.6-cpuset_virtualization.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.0.2-rc14.diff
 Patch100:	patch-2.6.16-vs2.0.2-rc14.diff
@@ -692,6 +693,10 @@ patch -p1 -s < suspend2-%{suspend_version}-for-2.6.16/3010-fork-non-conflicting-
 
 %patch55 -p1
 %patch56 -p1
+
+%ifarch %{ix86} ia64 x86_64
+%patch57 -p1
+%endif
 
 %if %{with vserver}
 %patch100 -p1
