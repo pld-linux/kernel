@@ -171,9 +171,10 @@ Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
 
 ## extra
 Patch30:	pom-ng-IPMARK-%{_netfilter_snap}.patch
-Patch31:	pom-ng-TARPIT-%{_netfilter_snap}.patch
-Patch32:	pom-ng-ipp2p-%{_netfilter_snap}.patch
-Patch33:	pom-ng-rpc-%{_netfilter_snap}.patch
+Patch31:	pom-ng-ROUTE-%{_netfilter_snap}.patch
+Patch32:	pom-ng-TARPIT-%{_netfilter_snap}.patch
+Patch33:	pom-ng-ipp2p-%{_netfilter_snap}.patch
+Patch34:	pom-ng-rpc-%{_netfilter_snap}.patch
 
 ###
 #	End netfilter
@@ -675,6 +676,7 @@ patch -p1 -s < suspend2-%{suspend_version}-for-2.6.16/3010-fork-non-conflicting-
 %patch31 -p1
 %patch32 -p1
 %patch33 -p1
+%patch34 -p1
 
 ##
 # end of netfilter
