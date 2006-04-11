@@ -202,8 +202,8 @@ Patch56:	linux-2.6-atmdd.patch
 
 Patch57:	linux-2.6-cpuset_virtualization.patch
 
-# vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.0.2-rc14.diff
-Patch100:	patch-2.6.16-vs2.0.2-rc14.diff
+# vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.1.1-rc15.diff
+Patch100:	linux-2.6-vs2.1.patch
 
 # grsecurity snap for 2.6.16.
 # from http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.16-200603292139.patch
