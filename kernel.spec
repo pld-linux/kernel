@@ -66,7 +66,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			1.5
+%define		_rel			1.6
 
 %define		_netfilter_snap		20060329
 %define		_nf_hipac_ver		0.9.1
@@ -170,11 +170,13 @@ Patch21:	pom-ng-time-%{_netfilter_snap}.patch
 Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
 
 ## extra
-Patch30:	pom-ng-IPMARK-%{_netfilter_snap}.patch
-Patch31:	pom-ng-ROUTE-%{_netfilter_snap}.patch
-Patch32:	pom-ng-TARPIT-%{_netfilter_snap}.patch
-Patch33:	pom-ng-ipp2p-%{_netfilter_snap}.patch
-Patch34:	pom-ng-rpc-%{_netfilter_snap}.patch
+Patch30:	pom-ng-ACCOUNT-%{_netfilter_snap}.patch
+Patch31:	pom-ng-IPMARK-%{_netfilter_snap}.patch
+Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
+Patch33:	pom-ng-TARPIT-%{_netfilter_snap}.patch
+Patch34:	pom-ng-account-%{_netfilter_snap}.patch
+Patch35:	pom-ng-ipp2p-%{_netfilter_snap}.patch
+Patch36:	pom-ng-rpc-%{_netfilter_snap}.patch
 
 ###
 #	End netfilter
@@ -678,6 +680,8 @@ patch -p1 -s < suspend2-%{suspend_version}-for-2.6.16/3010-fork-non-conflicting-
 %patch32 -p1
 %patch33 -p1
 %patch34 -p1
+%patch35 -p1
+%patch36 -p1
 
 ##
 # end of netfilter
