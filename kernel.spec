@@ -848,6 +848,7 @@ BuildConfig() {
 %endif
 
 %if %{with vserver}
+	sed -i 's/^CONFIG_VMSPLIT_//g' arch/%{_target_base_arch}/defconfig
 	cat %{SOURCE43} >> arch/%{_target_base_arch}/defconfig
 %endif
 
