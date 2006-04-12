@@ -81,9 +81,9 @@ diff -urN linux-2.6.16.2/fs/namei.c linux-2.6.16.2-grsec/fs/namei.c
 --- linux-2.6.16.2/fs/namei.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/fs/namei.c	2006-04-11 18:10:35.961452750 +0200
 @@ -32,6 +32,7 @@
- #include <linux/file.h>
- #include <linux/fcntl.h>
- #include <linux/namei.h>
+ #include <linux/vserver/inode.h>
+ #include <linux/vs_tag.h>
+ #include <linux/vserver/debug.h>
 +#include <linux/grsecurity.h>
  #include <asm/namei.h>
  #include <asm/uaccess.h>
@@ -130,18 +130,20 @@ diff -urN linux-2.6.16.2/fs/namei.c linux-2.6.16.2-grsec/fs/namei.c
  	error = __do_follow_link(&path, nd);
  	if (error)
  		return error;
-@@ -2251,7 +2273,13 @@
+@@ -2251,8 +2273,14 @@
  	new_dentry = lookup_create(&nd, 0);
  	error = PTR_ERR(new_dentry);
  	if (!IS_ERR(new_dentry)) {
--		error = vfs_link(old_nd.dentry, nd.dentry->d_inode, new_dentry);
+-		error = vfs_link(old_nd.dentry, nd.dentry->d_inode,
+-			new_dentry, &nd);
 +		error = 0;
 +		if (gr_handle_hardlink(old_nd.dentry, old_nd.mnt,
 +				       old_nd.dentry->d_inode,
 +				       old_nd.dentry->d_inode->i_mode, to))
 +			error = -EPERM;
 +		if (!error)
-+			error = vfs_link(old_nd.dentry, nd.dentry->d_inode, new_dentry);
++			error = vfs_link(old_nd.dentry, nd.dentry->d_inode,
++				new_dentry, &nd);
  		dput(new_dentry);
  	}
  	mutex_unlock(&nd.dentry->d_inode->i_mutex);
@@ -187,9 +189,9 @@ diff -urN linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
  	E(PROC_TGID_SMAPS,     "smaps",   S_IFREG|S_IRUGO),
  #endif
 @@ -1330,6 +1336,9 @@
- 		inode->i_uid = task->euid;
- 		inode->i_gid = task->egid;
  	}
+ 	/* procfs is xid tagged */
+ 	inode->i_tag = (tag_t)vx_task_xid(task);
 +#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
 +	inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
 +#endif
@@ -219,9 +221,9 @@ diff -urN linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
  		case PROC_TID_STAT:
  			inode->i_fop = &proc_info_file_operations;
  			ei->op.proc_read = proc_tid_stat;
-@@ -1985,6 +2002,17 @@
- 	if (!task)
- 		goto out;
+@@ -1985,11 +2002,29 @@
+ 	if (!proc_pid_visible(task, tgid))
+ 		goto out_drop_task;
  
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	if (current->uid && (task->uid != current->uid)
@@ -235,13 +237,9 @@ diff -urN linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
 +#endif
 +
  	inode = proc_pid_make_inode(dir->i_sb, task, PROC_TGID_INO);
+ 	if (!inode)
+ 		goto out_drop_task;
  
- 
-@@ -1992,7 +2020,15 @@
- 		put_task_struct(task);
- 		goto out;
- 	}
-+
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +	inode->i_mode = S_IFDIR|S_IRUSR|S_IXUSR;
 +#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
@@ -264,8 +262,8 @@ diff -urN linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
  
  	index--;
 @@ -2104,6 +2143,14 @@
- 		int tgid = p->pid;
- 		if (!pid_alive(p))
+ 		/* check for context visibility */
+ 		if (!proc_pid_visible(p, tgid))
  			continue;
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +		if (tmp->uid && (p->uid != tmp->uid)
@@ -277,7 +275,7 @@ diff -urN linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
 +#endif
  		if (--index >= 0)
  			continue;
- 		tgids[nr_tgids] = tgid;
+ 		tgids[nr_tgids] = vx_map_tgid(tgid);
 diff -urN linux-2.6.16.2/fs/proc/inode.c linux-2.6.16.2-grsec/fs/proc/inode.c
 --- linux-2.6.16.2/fs/proc/inode.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/fs/proc/inode.c	2006-04-11 17:44:40.077707500 +0200
@@ -291,8 +289,8 @@ diff -urN linux-2.6.16.2/fs/proc/inode.c linux-2.6.16.2-grsec/fs/proc/inode.c
  			inode->i_gid = de->gid;
 +#endif
  		}
- 		if (de->size)
- 			inode->i_size = de->size;
+ 		if (de->vx_flags)
+ 			PROC_I(inode)->vx_flags = de->vx_flags;
 diff -urN linux-2.6.16.2/fs/proc/internal.h linux-2.6.16.2-grsec/fs/proc/internal.h
 --- linux-2.6.16.2/fs/proc/internal.h	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/fs/proc/internal.h	2006-04-11 17:44:40.077707500 +0200
@@ -410,9 +408,9 @@ diff -urN linux-2.6.16.2/fs/proc/root.c linux-2.6.16.2-grsec/fs/proc/root.c
 +#else
  	proc_bus = proc_mkdir("bus", NULL);
 +#endif
+ 	proc_vx_init();
  }
  
- static int proc_root_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat
 diff -urN linux-2.6.16.2/grsecurity/Kconfig linux-2.6.16.2-grsec/grsecurity/Kconfig
 --- linux-2.6.16.2/grsecurity/Kconfig	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.16.2-grsec/grsecurity/Kconfig	2006-04-11 19:03:04.020561250 +0200
@@ -1065,9 +1063,9 @@ diff -urN linux-2.6.16.2/include/linux/sysctl.h linux-2.6.16.2-grsec/include/lin
 --- linux-2.6.16.2/include/linux/sysctl.h	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/include/linux/sysctl.h	2006-04-11 18:09:09.244033250 +0200
 @@ -148,6 +148,9 @@
- 	KERN_SPIN_RETRY=70,	/* int: number of spinlock retries */
  	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
  	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
+ 	KERN_FBSPLASH=73,	/* string: path to fbsplash helper */
 +#ifdef CONFIG_GRKERNSEC
 +	KERN_GRSECURITY=98,	/* grsecurity */
 +#endif
@@ -1078,9 +1076,9 @@ diff -urN linux-2.6.16.2/ipc/shm.c linux-2.6.16.2-grsec/ipc/shm.c
 --- linux-2.6.16.2/ipc/shm.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/ipc/shm.c	2006-04-11 17:44:40.121710250 +0200
 @@ -30,6 +30,7 @@
- #include <linux/capability.h>
- #include <linux/ptrace.h>
  #include <linux/seq_file.h>
+ #include <linux/vs_context.h>
+ #include <linux/vs_limit.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
@@ -1158,9 +1156,9 @@ diff -urN linux-2.6.16.2/kernel/signal.c linux-2.6.16.2-grsec/kernel/signal.c
  #include <linux/audit.h>
  #include <linux/capability.h>
 +#include <linux/grsecurity.h>
+ #include <linux/vs_pid.h>
  #include <asm/param.h>
  #include <asm/uaccess.h>
- #include <asm/unistd.h>
 @@ -380,6 +381,7 @@
  		}
  		if (tsk == sig->curr_target)
@@ -1257,8 +1255,8 @@ diff -urN linux-2.6.16.2/net/socket.c linux-2.6.16.2-grsec/net/socket.c
  #ifdef CONFIG_NET_RADIO
  #include <linux/wireless.h>		/* Note : will define WIRELESS_EXT */
 @@ -97,6 +98,7 @@
- #include <net/sock.h>
  #include <linux/netfilter.h>
+ #include <linux/vs_socket.h>
  
 +extern void gr_attach_curr_ip(const struct sock *sk);
  static int sock_no_open(struct inode *irrelevant, struct file *dontcare);
