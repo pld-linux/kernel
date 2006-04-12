@@ -730,9 +730,7 @@ patch -p1 -s < suspend2-%{suspend_version}-for-2.6.16/3010-fork-non-conflicting-
 %patch57 -p1
 %endif
 
-# breaks build
-# drivers/net/sk98lin/sky2.c:996: error: dereferencing pointer to incomplete type
-#%patch60 -p1
+%patch60 -p1
 
 %if %{with vserver}
 %patch100 -p1
