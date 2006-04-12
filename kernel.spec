@@ -26,12 +26,12 @@
 
 %if %{with grsec_full}
 %undefine	with_grsec_minimal
-%define		with_grsecurity
+%define		with_grsecurity		1
 %endif
 
 %if %{with grsec_minimal}
 %undefine	with_grsec_full
-%define		with_grsecurity
+%define		with_grsecurity		1
 %endif
 
 %if %{with grsec_full} && %{with vserver}                                       
