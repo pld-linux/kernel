@@ -88,7 +88,7 @@ full grsecurity conflicts with vserver
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			1.7
+%define		_rel			1.8
 
 %define		_netfilter_snap		20060329
 %define		_nf_hipac_ver		0.9.1
@@ -226,6 +226,9 @@ Patch55:	linux-2.6-atm-vbr.patch
 Patch56:	linux-2.6-atmdd.patch
 
 Patch57:	linux-2.6-cpuset_virtualization.patch
+
+# Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_31.tar.bz2
+Patch60:	linux-2.6-sk98lin-8.31.2.3.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.1.1-rc15.diff
 Patch100:	linux-2.6-vs2.1.patch
@@ -726,6 +729,8 @@ patch -p1 -s < suspend2-%{suspend_version}-for-2.6.16/3010-fork-non-conflicting-
 %ifarch %{ix86} ia64 x86_64
 %patch57 -p1
 %endif
+
+%patch60 -p1
 
 %if %{with vserver}
 %patch100 -p1
