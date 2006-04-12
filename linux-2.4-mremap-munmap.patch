@@ -1,0 +1,28 @@
+diff -Nur linux-2.4.22.before/mm/mremap.c linux-2.4.22/mm/mremap.c
+--- linux-2.4.22.before/mm/mremap.c	2004-02-19 12:01:33.000000000 +0100
++++ linux-2.4.22/mm/mremap.c	2004-02-19 12:55:09.000000000 +0100
+@@ -273,7 +273,9 @@
+ 		if ((addr <= new_addr) && (addr+old_len) > new_addr)
+ 			goto out;
+ 
+-		do_munmap(current->mm, new_addr, new_len, 1);
++		ret = do_munmap(current->mm, new_addr, new_len, 1);
++		if (ret && new_len)
++			goto out;
+ 	}
+ 
+ 	/*
+@@ -281,9 +283,11 @@
+ 	 * the unnecessary pages..
+ 	 * do_munmap does all the needed commit accounting
+ 	 */
+-	ret = addr;
+ 	if (old_len >= new_len) {
+-		do_munmap(current->mm, addr+new_len, old_len - new_len, 1);
++		ret = do_munmap(current->mm, addr+new_len, old_len - new_len, 1);
++		if (ret && old_len != new_len)
++			goto out;
++		ret = addr;
+ 		if (!(flags & MREMAP_FIXED) || (new_addr == addr))
+ 			goto out;
+ 	}

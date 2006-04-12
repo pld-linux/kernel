@@ -1,0 +1,21 @@
+diff -urNp linux-2432/net/core/sock.c linux-2450/net/core/sock.c
+--- linux-2432/net/core/sock.c	
++++ linux-2450/net/core/sock.c	
+@@ -785,7 +785,6 @@ struct sk_buff *sock_alloc_send_pskb(str
+ 
+ 				npages = (data_len + (PAGE_SIZE - 1)) >> PAGE_SHIFT;
+ 				skb->truesize += data_len;
+-				skb_shinfo(skb)->nr_frags = npages;
+ 				for (i = 0; i < npages; i++) {
+ 					struct page *page;
+ 					skb_frag_t *frag;
+@@ -804,6 +803,9 @@ struct sk_buff *sock_alloc_send_pskb(str
+ 						      PAGE_SIZE :
+ 						      data_len);
+ 					data_len -= PAGE_SIZE;
++
++					/* frag[i] is now initialized */
++					skb_shinfo(skb)->nr_frags = i + 1;
+ 				}
+ 
+ 				/* Full success... */

@@ -1,0 +1,30 @@
+--- linux-2.4.2/net/ipv4/raw.c	Fri Feb  9 14:29:44 2001
++++ linux/net/ipv4/raw.c	Wed Feb 28 17:43:59 2001
+@@ -54,6 +54,7 @@
+ #include <linux/inet.h>
+ #include <linux/netdevice.h>
+ #include <linux/mroute.h>
++#include <linux/igmp.h>
+ #include <net/ip.h>
+ #include <net/protocol.h>
+ #include <linux/skbuff.h>
+@@ -107,6 +108,18 @@
+ 		   !(s->rcv_saddr && s->rcv_saddr != laddr)	&&
+ 		   !(s->bound_dev_if && s->bound_dev_if != dif))
+ 			break; /* gotcha */
++		if (LOCAL_MCAST(laddr)) {
++
++		    struct ip_mc_socklist *iml;
++		    struct ip_mreqn *imr;
++
++		    for (iml=sk->protinfo.af_inet.mc_list; iml; iml=iml->next) {
++		      imr = &(iml->multi);
++		      if ((imr->imr_multiaddr.s_addr == laddr) && !(imr->imr_ifindex && imr->imr_ifindex != dif))
++			        return s;
++		    }
++
++		}
+ 	}
+ 	return s;
+ }
+

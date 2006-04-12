@@ -25,6 +25,7 @@
 %bcond_with	xendev		# build Xen-devel kernel
 %bcond_with	abi		# build with unix abi support
 %bcond_with	bootsplash	# build with bootsplash instead of fbsplash
+%bcond_with	suspend		# build with software suspend
 
 %if %{with xen0} || %{with xenU}
 %define with_xen 1
@@ -68,6 +69,12 @@ xen conflicts with grsecurity
 
 %if %{with xen0} && %{with xenU}
 xen0 conflicts with xenU
+%endif
+
+%if %{with suspend}
+%ifnarch %{ix86}
+software suspend works only on ix86 platforms
+%endif
 %endif
 
 %{?debug:%define with_verbose 1}
@@ -114,6 +121,10 @@ xen0 conflicts with xenU
 %define		have_oss	0
 %endif
 
+%ifarch ppc64
+%define		have_oss	0
+%endif
+
 %if %{with xenU}
 %undefine	with_pcmcia
 %define		have_drm	0
@@ -138,8 +149,9 @@ xen0 conflicts with xenU
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.5.3
 %define		_udev_ver		058
+%define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.99
+%define		_rel			5
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -156,7 +168,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_preemptive:-preempt}
-%define		_postver	.4
+%define		_postver	.7
 #define		_postver	%{nil}
 Version:	2.6.14%{_postver}
 Release:	%{_rel}
@@ -167,13 +179,11 @@ Group:		Base/Kernel
 #define		_rc	-rc5
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	45be19ffe79b2729baf27f7468527e08
-Source1:	kernel-autoconf.h
-Source2:	kernel-config.h
+# Source0-md5:	cdc8b60949f1cea6634fd9cfe9670ada
 #Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
 ## Source3-md5:	3db58f38e8a3c001d1a18eb1ee27db3b
-Source4:	http://people.redhat.com/mingo/realtime-preempt/patch-2.6.14-rt4
-# Source4-md5:	46a2a0d621bac7c4895beea2c5dcd321
+Source4:	http://people.redhat.com/mingo/realtime-preempt/older/patch-2.6.14-rt22
+# Source4-md5:	28a0817f6b12bf95758cf08995de348e
 Source5:	kernel-ppclibs.Makefile
 
 Source20:	kernel-i386.config
@@ -210,11 +220,12 @@ Source93:	kernel-vserver.config
 Source94:	kernel-em8300.config
 Source95:	kernel-linuxabi.config
 Source96:	kernel-rt.config
+Source97:	kernel-suspend.config
 
 Patch1:		linux-2.6-version.patch
-Patch2:		linux-2.6-biarch-build.patch
+
 Patch3:		2.6.0-t9-acpi_osl-lkml.patch
-Patch4:		linux-kbuild-extmod.patch
+
 Patch5:		kernel-MAX_INIT_ARGS.patch
 Patch6:		linux-2.6-extended-utf8.patch
 Patch7:		linux-2.6-realtime-lsm-0.1.1.patch
@@ -238,17 +249,17 @@ Patch23:	linux-2.6-x8664-kernel-clock-is-running-2-times-too-fast.patch
 Patch24:	linux-2.6-ix86-ati-xpress200-fall-back-from-ioapicIRQ-to-i8259AIRQ.patch
 Patch25:	2.6.7-alpha_compile.patch
 Patch26:	2.6.7-ppc-asm-defs.patch
-Patch28:	linux-2.6-sparc-ksyms.patch
-Patch29:	linux-2.6-ppc-no-pc-serial.patch
-Patch30:	2.6.x-TGA-fbdev-lkml.patch
-Patch31:	linux-2.6-ppc-no-i8042.patch
-Patch32:	sis5513-support-sis-965l.patch
-Patch33:	linux-2.6-ppc-ideirq.patch
-Patch34:	linux-2.6-swim3-spinlock.patch
+Patch27:	linux-2.6-sparc-ksyms.patch
+Patch28:	linux-2.6-ppc-no-pc-serial.patch
+Patch29:	2.6.x-TGA-fbdev-lkml.patch
+Patch30:	linux-2.6-ppc-no-i8042.patch
+Patch31:	sis5513-support-sis-965l.patch
+Patch32:	linux-2.6-ppc-ideirq.patch
+Patch33:	linux-2.6-swim3-spinlock.patch
 # http://fatooh.org/esfq-2.6/
-Patch35:	esfq-kernel.patch
+Patch34:	esfq-kernel.patch
 # http://www.linuximq.net/
-#Patch36:	linux-2.6.13-imq2.diff		OBSOLETE ?
+Patch35:	linux-2.6.14-imq6.diff
 Patch36:	linux-2.6-dummy-as-imq-replacement.patch
 
 # http://www.zz9.dk/wrr/
@@ -310,8 +321,7 @@ Patch87:	squashfs2.2-patch
 Patch88:	reiser4-for-2.6.14-1.patch.gz
 
 # http://gaugusch.at/acpi-dsdt-initrd-patches/
-Patch91:	acpi-dsdt-initrd-v0.7d-2.6.12.patch
-Patch92:	acpi-dsdt-initramfs-fix-2.6.10-cleanup.patch
+Patch91:	acpi-dsdt-initrd-v0.8b-2.6.14.patch
 Patch93:	linux-btc-8190urf.patch
 
 # http://www.kismetwireless.net/download.shtml#orinoco2611
@@ -327,10 +337,14 @@ Patch107:	linux-2.6-sata-sil-mod15write-workaround.patch
 Patch108:	linux-2.6-tty-races.patch
 Patch109:	linux-2.6-secunia-17786-1.patch
 Patch110:	linux-2.6-cputime-misscalculation.patch
+Patch111:	linux-2.6.14-cx88-debug-printk.patch
+Patch112:	linux-2.6.14-skb_reserve.patch
+Patch113:	linux-2.6.14-ahci-JMB360.patch
 
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch115:	linux-2.6-atm-vbr.patch
 Patch116:	linux-2.6-atmdd.patch
+Patch117:	linux-2.6-ueagle.patch
 
 Patch120:	linux-2.6-cpuset_virtualization.patch
 
@@ -339,7 +353,7 @@ Patch135:	linux-2.6-unix-abi.patch
 
 Patch199:	linux-2.6-grsec-minimal.patch
 # http://grsecurity.net/
-Patch200:	grsecurity-2.1.7-2.6.14.2-200511150641.patch
+Patch200:	grsecurity-2.1.9-2.6.14.7-200602141849.patch
 # http://openmosix.snarc.org/files/releases/2.6/
 # derived from openMosix-r570.patch
 Patch201:	linux-2.6-omosix.patch
@@ -443,6 +457,17 @@ Pakiet zawiera j±dro Linuksa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takiego jak sterowniki dysków itp.
 
+%package vmlinux
+Summary:	vmlinux - uncompressed kernel image
+Summary(pl):	vmlinux - rozpakowany obraz j±dra
+Group:		Base/Kernel
+
+%description vmlinux
+vmlinux - uncompressed kernel image.
+
+%description vmlinux -l pl
+vmlinux - rozpakowany obraz j±dra.
+
 %package drm
 Summary:	DRM kernel modules
 Summary(pl):	Sterowniki DRM
@@ -479,8 +504,8 @@ Modu³y PCMCIA (%{pcmcia_version}).
 Summary:	Libraries for preparing bootable kernel on PowerPCs
 Summary(pl):	Biblioteki do przygotowania bootowalnego j±dra dla PowerPC
 Group:		Base/Kernel
-PreReq:		mkvmlinuz
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
+Requires:	mkvmlinuz >= %{_mkvmlinuz_ver}
 Autoreqprov:	no
 
 %description libs
@@ -578,6 +603,17 @@ Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono
 wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
 Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
 
+%package smp-vmlinux
+Summary:	vmlinux - uncompressed SMP kernel image
+Summary(pl):	vmlinux - rozpakowany obraz j±dra SMP
+Group:		Base/Kernel
+
+%description smp-vmlinux
+vmlinux - uncompressed SMP kernel image.
+
+%description smp-vmlinux -l pl
+vmlinux - rozpakowany obraz j±dra SMP.
+
 %package smp-drm
 Summary:	DRM SMP kernel modules
 Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
@@ -614,8 +650,8 @@ Modu³y PCMCIA dla maszyn SMP (%{pcmcia_version}).
 Summary:	Libraries for preparing bootable SMP kernel on PowerPCs
 Summary(pl):	Biblioteki do przygotowania bootowalnego j±dra dla wieloprocesorowych PowerPC
 Group:		Base/Kernel
-PreReq:		mkvmlinuz
 Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
+Requires:	mkvmlinuz >= %{_mkvmlinuz_ver}
 Autoreqprov:	no
 
 %description smp-libs
@@ -748,12 +784,14 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 #bzip2 -d -c %{SOURCE3} | patch -p1 -s
 #sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = #g' Makefile
 %{?with_preemptive:patch -p1 -s < %{SOURCE4}}
+%ifarch ppc
 install %{SOURCE5} Makefile.ppclibs
+%endif
 
 %{?with_pld_vers:%patch1 -p0}
-%patch2 -p1
+
 %patch3 -p1
-%patch4 -p1
+
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
@@ -777,6 +815,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch24 -p1
 %patch25 -p1
 %patch26 -p1
+%patch27 -p1
 %patch28 -p1
 %patch29 -p1
 %patch30 -p1
@@ -840,7 +879,6 @@ install %{SOURCE5} Makefile.ppclibs
 %patch88 -p1
 
 %patch91 -p1
-%patch92 -p1
 
 %patch93 -p1
 
@@ -856,9 +894,13 @@ install %{SOURCE5} Makefile.ppclibs
 %patch108 -p1
 %patch109 -p1
 %patch110 -p1
+%patch111 -p1
+%patch112 -p1
+%patch113 -p1
 
 %patch115 -p1
 %patch116 -p1
+%patch117 -p1
 
 %patch120 -p1
 
@@ -972,7 +1014,7 @@ TuneUpConfigForIX86 () {
     %if "%{_arch}" == "sparc" && "%{_target_base_arch}" == "sparc64"
 	DepMod=/sbin/depmod
     %endif
-    %if "%{_arch}" == "x86_64" && "%_target_base_arch}" == "i386"
+    %if "%{_arch}" == "x86_64" && "%{_target_base_arch}" == "i386"
 	CrossOpts="ARCH=%{_target_base_arch}"
 	DepMod=/sbin/depmod
     %endif
@@ -1030,7 +1072,7 @@ BuildConfig() {
 %if %{with grsecurity}
 	cat %{!?with_pax:%{SOURCE90}}%{?with_pax:%{SOURCE91}} >> arch/%{_target_base_arch}/defconfig
 	%if %{with pax}
-		sed -i 's:CONFIG_KALLSYMS=y:# CONFIG_KALLSYMS is not set:' arch/%{_target_base_arch}/defconfig  
+		sed -i 's:CONFIG_KALLSYMS=y:# CONFIG_KALLSYMS is not set:' arch/%{_target_base_arch}/defconfig
 		sed -i 's:CONFIG_KALLSYMS_ALL=y:# CONFIG_KALLSYMS_ALL is not set:' arch/%{_target_base_arch}/defconfig
 		sed -i 's:CONFIG_KALLSYMS_EXTRA_PASS=y:# CONFIG_KALLSYMS_EXTRA_PASS is not set:' arch/%{_target_base_arch}/defconfig
 	%endif
@@ -1054,6 +1096,11 @@ BuildConfig() {
 %if %{with bootsplash}
 	sed -i 's,CONFIG_FB_SPLASH,CONFIG_BOOTSPLASH,' arch/%{_target_base_arch}/defconfig
 	sed -i 's,CONFIG_LOGO=y,# CONFIG_LOGO is not set,' arch/%{_target_base_arch}/defconfig
+%endif
+%if %{with suspend}
+	if [ "$smp" != "yes" ]; then
+		cat %{SOURCE97} >> arch/%{_target_base_arch}/defconfig
+	fi
 %endif
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{_target_base_arch}/defconfig}
@@ -1137,6 +1184,7 @@ PreInstallKernel() {
 %else
 	install arch/%{_target_base_arch}/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
+	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 %endif
 %ifarch alpha sparc sparc64
 	gzip -cfv vmlinux > vmlinuz
@@ -1154,8 +1202,10 @@ PreInstallKernel() {
 %ifarch ppc ppc64
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%ifarch ppc
 	%{__make} -f Makefile.ppclibs install \
 		DESTDIR=$KERNEL_INSTALL_DIR/boot/libs-$KernelVer
+%endif
 %endif
 %ifarch ia64
 	gzip -cfv vmlinux > vmlinuz
@@ -1283,8 +1333,6 @@ $RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 
 %{__make} $CrossOpts mrproper
 %{__make} $CrossOpts include/linux/version.h
-install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
-install %{SOURCE2} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/config.h
 
 %if %{with up} || %{with smp}
 # ghosted initrd
@@ -1314,7 +1362,7 @@ ln -sf System.map-%{version}-%{release} /boot/System.map
 
 %depmod %{version}-%{release}
 
-/sbin/geninitrd -v -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}.gz %{version}-%{release}
+/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}.gz %{version}-%{release}
 mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
 ln -sf initrd-%{version}-%{release}.gz %{initrd_dir}/initrd
 
@@ -1334,6 +1382,10 @@ if [ -x /sbin/new-kernel-pkg ]; then
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
+
+%post vmlinux
+mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
+ln -sf vmlinux-%{version}-%{release} /boot/vmlinux
 
 %post libs
 %{_sbindir}/mkvmlinuz /boot/zImage-%{version}-%{release} %{version}-%{release}
@@ -1382,7 +1434,7 @@ ln -sf System.map-%{version}-%{release}smp /boot/System.map
 
 %depmod %{version}-%{release}smp
 
-/sbin/geninitrd -v -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
+/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
 mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
 ln -sf initrd-%{version}-%{release}smp.gz %{initrd_dir}/initrd
 
@@ -1402,6 +1454,10 @@ if [ -x /sbin/new-kernel-pkg ]; then
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
+
+%post smp-vmlinux
+mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
+ln -sf vmlinux-%{version}-%{release}smp /boot/vmlinux
 
 %post smp-libs
 %{_sbindir}/mkvmlinuz /boot/zImage-%{version}-%{release}smp %{version}-%{release}smp
@@ -1448,11 +1504,7 @@ fi
 %files
 %defattr(644,root,root,755)
 %doc FAQ-pl
-%ifarch alpha ppc ppc64
-/boot/vmlinux-%{version}-%{release}
-%endif
 %ifarch sparc sparc64
-/boot/vmlinux-%{version}-%{release}
 /boot/vmlinux.aout-%{version}-%{release}
 %endif
 %ifarch ia64
@@ -1501,6 +1553,12 @@ fi
 %endif
 /lib/modules/%{version}-%{release}/build
 %ghost /lib/modules/%{version}-%{release}/modules.*
+
+%ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
+%files vmlinux
+%defattr(644,root,root,755)
+/boot/vmlinux-%{version}-%{release}
+%endif
 
 %if %{have_drm}
 %files drm
@@ -1566,9 +1624,6 @@ fi
 %files smp
 %defattr(644,root,root,755)
 %doc FAQ-pl
-%ifarch alpha sparc sparc64 ppc ppc64
-/boot/vmlinux-%{version}-%{release}smp
-%endif
 %ifarch ia64
 /boot/efi/vmlinuz-%{version}-%{release}smp
 %endif
@@ -1615,6 +1670,12 @@ fi
 %endif
 /lib/modules/%{version}-%{release}smp/build
 %ghost /lib/modules/%{version}-%{release}smp/modules.*
+
+%ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
+%files smp-vmlinux
+%defattr(644,root,root,755)
+/boot/vmlinux-%{version}-%{release}smp
+%endif
 
 %if %{have_drm}
 %files smp-drm
@@ -1703,7 +1764,9 @@ fi
 %{_prefix}/src/linux-%{version}/scripts/Kbuild.include
 %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %{_prefix}/src/linux-%{version}/scripts/basic
+%{_prefix}/src/linux-%{version}/scripts/mkmakefile
 %{_prefix}/src/linux-%{version}/scripts/mod
+%{_prefix}/src/linux-%{version}/scripts/setlocalversion
 %{_prefix}/src/linux-%{version}/scripts/*.c
 %{_prefix}/src/linux-%{version}/scripts/*.sh
 
@@ -1740,7 +1803,9 @@ fi
 %exclude %{_prefix}/src/linux-%{version}/scripts/Kbuild.include
 %exclude %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %exclude %{_prefix}/src/linux-%{version}/scripts/basic
+%exclude %{_prefix}/src/linux-%{version}/scripts/mkmakefile
 %exclude %{_prefix}/src/linux-%{version}/scripts/mod
+%exclude %{_prefix}/src/linux-%{version}/scripts/setlocalversion
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.c
 %exclude %{_prefix}/src/linux-%{version}/scripts/*.sh
 %{_prefix}/src/linux-%{version}/sound

@@ -1,5 +1,19 @@
---- a/arch/i386/mm/init.c	2004-09-26 03:43:57.944613000 +1000
-+++ b/arch/i386/mm/init.c	2004-09-28 02:37:21.787922000 +1000
+
+ arch/alpha/kernel/alpha_ksyms.c        |    3 +++
+ arch/alpha/kernel/process.c            |    2 ++
+ arch/i386/kernel/io_apic.c             |    4 ++--
+ arch/i386/mm/init.c                    |    1 +
+ arch/ppc/kernel/setup.c                |    1 +
+ arch/ppc64/kernel/setup.c              |    3 +++
+ drivers/char/rocket.c                  |   10 ++++------
+ drivers/scsi/megaraid/Kconfig.megaraid |    2 --
+ drivers/usb/gadget/serial.c            |    8 ++------
+ include/linux/smp.h                    |    3 ++-
+ net/ipv4/ip_output.c                   |    1 +
+ 11 files changed, 21 insertions(+), 17 deletions(-)
+
+--- a/arch/i386/mm/init.c
++++ b/arch/i386/mm/init.c
 @@ -41,6 +41,7 @@
  #include <asm/sections.h>
  
@@ -8,8 +22,8 @@
  
  DEFINE_PER_CPU(struct mmu_gather, mmu_gathers);
  unsigned long highstart_pfn, highend_pfn;
---- a/drivers/scsi/megaraid/Kconfig.megaraid	2004-12-24 22:34:01.000000000 +0100
-+++ b/drivers/scsi/megaraid/Kconfig.megaraid	2005-01-30 12:48:22.248759048 +0100
+--- a/drivers/scsi/megaraid/Kconfig.megaraid
++++ b/drivers/scsi/megaraid/Kconfig.megaraid
 @@ -64,7 +64,6 @@
  	To compile this driver as a module, choose M here: the
  	module will be called megaraid_mbox
@@ -26,8 +40,8 @@
  
  config MEGARAID_SAS
  	tristate "LSI Logic MegaRAID SAS RAID Module"
---- a/arch/ppc/kernel/setup.c	2004-12-24 22:35:28.000000000 +0100
-+++ b/arch/ppc/kernel/setup.c	2005-02-02 10:09:21.763162752 +0100
+--- a/arch/ppc/kernel/setup.c
++++ b/arch/ppc/kernel/setup.c
 @@ -84,6 +84,7 @@
  
  #ifdef CONFIG_VGA_CONSOLE
@@ -36,8 +50,8 @@
  #endif
  
  struct machdep_calls ppc_md;
---- a/drivers/usb/gadget/serial.c	2004-12-24 22:35:24.000000000 +0100
-+++ b/drivers/usb/gadget/serial.c	2005-02-15 09:39:48.408315792 +0100
+--- a/drivers/usb/gadget/serial.c
++++ b/drivers/usb/gadget/serial.c
 @@ -329,10 +329,6 @@
  
  /* Functions */
@@ -74,8 +88,8 @@
  
  /* TTY Driver */
  
---- a/drivers/char/rocket.c	2004-12-24 22:35:21.000000000 +0100
-+++ b/drivers/char/rocket.c	2005-02-15 09:48:39.050645896 +0100
+--- a/drivers/char/rocket.c
++++ b/drivers/char/rocket.c
 @@ -210,11 +210,6 @@
  module_param_array(pc104_4, ulong, NULL, 0);
  MODULE_PARM_DESC(pc104_4, "set interface types for ISA(PC104) board #4 (e.g. pc104_4=232,232,485,485,...");
@@ -110,8 +124,8 @@
  #endif
  
  #ifndef TRUE
---- a/arch/alpha/kernel/alpha_ksyms.c	2005-03-13 07:44:05.000000000 +0100
-+++ b/arch/alpha/kernel/alpha_ksyms.c	2005-03-15 23:20:00.405832368 +0100
+--- a/arch/alpha/kernel/alpha_ksyms.c
++++ b/arch/alpha/kernel/alpha_ksyms.c
 @@ -67,6 +67,9 @@
  EXPORT_SYMBOL(alpha_using_srm);
  #endif /* CONFIG_ALPHA_GENERIC */
@@ -122,8 +136,8 @@
  /* platform dependent support */
  EXPORT_SYMBOL(strcat);
  EXPORT_SYMBOL(strcmp);
---- a/arch/alpha/kernel/process.c	2005-03-13 07:44:40.000000000 +0100
-+++ b/arch/alpha/kernel/process.c	2005-03-15 23:28:15.687538104 +0100
+--- a/arch/alpha/kernel/process.c
++++ b/arch/alpha/kernel/process.c
 @@ -183,6 +183,8 @@
  
  EXPORT_SYMBOL(machine_power_off);
@@ -133,10 +147,40 @@
  /* Used by sysrq-p, among others.  I don't believe r9-r15 are ever
     saved in the context it's used.  */
  
---- a/net/ipv4/ip_output.c	2005-10-28 02:02:08.000000000 +0200
-+++ b/net/ipv4/ip_output.c	2005-11-02 17:45:33.000000000 +0100
+--- a/arch/ppc64/kernel/setup.c
++++ b/arch/ppc64/kernel/setup.c
+@@ -677,6 +677,9 @@
+ /* Used by the G5 thermal driver */
+ EXPORT_SYMBOL_GPL(machine_power_off);
+ 
++void (*pm_power_off)(void) = machine_power_off;
++EXPORT_SYMBOL(pm_power_off);
++
+ void machine_halt(void)
+ {
+ 	machine_shutdown();
+--- a/net/ipv4/ip_output.c
++++ b/net/ipv4/ip_output.c
 @@ -1329,3 +1329,4 @@
  EXPORT_SYMBOL(ip_generic_getfrag);
  EXPORT_SYMBOL(ip_queue_xmit);
  EXPORT_SYMBOL(ip_send_check);
 +EXPORT_SYMBOL(sysctl_ip_default_ttl);
+--- a/include/linux/smp.h
++++ b/include/linux/smp.h
+@@ -10,13 +10,14 @@
+ 
+ extern void cpu_idle(void);
+ 
++#include <asm/smp.h>
++
+ #ifdef CONFIG_SMP
+ 
+ #include <linux/preempt.h>
+ #include <linux/kernel.h>
+ #include <linux/compiler.h>
+ #include <linux/thread_info.h>
+-#include <asm/smp.h>
+ #include <asm/bug.h>
+ 
+ /*

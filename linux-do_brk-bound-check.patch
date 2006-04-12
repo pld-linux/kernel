@@ -1,0 +1,12 @@
+--- linux-2.4.22/mm/mmap.c	2004-02-14 01:14:59.000000000 +0100
++++ linux-2.4.22/mm/mmap.c.new	2004-02-14 02:54:20.000000000 +0100
+@@ -1396,6 +1396,9 @@
+ 	if (!len)
+ 		return addr;
+ 
++	/* security fix (CAN-2003-0961) */
++	if ((addr + len) > TASK_SIZE || (addr + len) < addr)
++		return -EINVAL;
+ #ifdef CONFIG_MOSIX
+ 	if(current->mosix.dflags & DDEPUTY)
+ 		return(mosix_deputy_brk(addr, len));

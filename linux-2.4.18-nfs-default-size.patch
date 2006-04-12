@@ -1,0 +1,22 @@
+diff -urNp linux-1380/fs/nfs/inode.c linux-1391/fs/nfs/inode.c
+--- linux-1380/fs/nfs/inode.c	
++++ linux-1391/fs/nfs/inode.c	
+@@ -418,10 +418,16 @@ nfs_read_super(struct super_block *sb, v
+         }
+ 
+ 	/* Work out a lot of parameters */
+-	if (data->rsize == 0)
++	if (data->rsize == 0) {
+ 		server->rsize = nfs_block_size(fsinfo.rtpref, NULL);
+-	if (data->wsize == 0)
++		if (server->rsize > NFS_DEF_FILE_IO_BUFFER_SIZE)
++			server->rsize = NFS_DEF_FILE_IO_BUFFER_SIZE;
++	}
++	if (data->wsize == 0) {
+ 		server->wsize = nfs_block_size(fsinfo.wtpref, NULL);
++		if (server->wsize > NFS_DEF_FILE_IO_BUFFER_SIZE)
++			server->wsize = NFS_DEF_FILE_IO_BUFFER_SIZE;
++	}
+ 	/* NFSv3: we don't have bsize, but rather rtmult and wtmult... */
+ 	if (!fsinfo.bsize)
+ 		fsinfo.bsize = (fsinfo.rtmult>fsinfo.wtmult) ? fsinfo.rtmult : fsinfo.wtmult;

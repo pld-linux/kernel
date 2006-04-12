@@ -1,0 +1,165 @@
+
+  "new style" netdevice allocation patch for TUN driver (2.4.18 kernel)
+
+From: Jacek Konieczny (jajcus@pld.org.pl)
+Date: Thu Aug 01 2002 - 08:35:06 EST
+
+I had a lot of problem with tun devices created with both openvpn and
+vtund. When I wanted to shut down my system when the devices were in
+use (eg. TCP connection established on tun0 interface), even if the
+tunneling daemon was killed, it stopped while trying to deconfigure
+network. And "unregister_netdevice: waiting for tun0 to become free"
+message was displayed again and again. I tried to resolve this problem
+using Google, but I have only found out, that this is behaviour of 2.4
+kernels, and that it is proper. After further investigation, in kernel
+sources, I found out, that there are "old style" and "new style" network
+devices, and that only the "old style" devices have this problem.
+I had similar problem with VLAN devices some time ago, so I checked VLAN
+driver sources too. As I suspected, it was "new style" device now.
+The patch below is my try to make tun device "new style" too. It seems
+to work for me, but I am not sure if it is 100% proper. This is patch
+against 2.4.18 sources.
+
+Sorry, for spamming all those addresses, but I am not sure which one is
+correct. Driver on URL given in MAINTAINERS file seems to be a bit
+outdated.
+
+Greets,
+        Jacek
+
+diff -ur linux-2.4.22-up/drivers/net/tun.c linux-2.4.22-tun/drivers/net/tun.c
+--- linux-2.4.22-up/drivers/net/tun.c	Sat Aug  3 02:39:44 2002
++++ linux-2.4.22-tun/drivers/net/tun.c	Sun Sep 21 00:08:08 2003
+@@ -20,6 +20,14 @@
+  *    Modifications for 2.3.99-pre5 kernel.
+  */
+ 
++/*
++ * 01.08.2002
++ * Jacek Konieczny <jajcus@pld.org.pl>
++ * Modifications for "new style" device allocation
++ * (fixes "wating for tunX to become free" problem)
++ */
++
++
+ #define TUN_VER "1.5"
+ 
+ #include <linux/config.h>
+@@ -159,6 +167,17 @@
+ 	return 0;
+ }
+ 
++void tun_net_destruct(struct net_device *dev)
++{
++	if (dev) {
++		if (dev->priv) {
++			kfree(dev->priv);
++			dev->priv=NULL;
++			MOD_DEC_USE_COUNT;
++		}
++	}
++}
++
+ /* Character device part */
+ 
+ /* Poll */
+@@ -202,14 +221,14 @@
+ 	skb_reserve(skb, 2);
+ 	memcpy_fromiovec(skb_put(skb, len), iv, len);
+ 
+-	skb->dev = &tun->dev;
++	skb->dev = tun->dev;
+ 	switch (tun->flags & TUN_TYPE_MASK) {
+ 	case TUN_TUN_DEV:
+ 		skb->mac.raw = skb->data;
+ 		skb->protocol = pi.proto;
+ 		break;
+ 	case TUN_TAP_DEV:
+-		skb->protocol = eth_type_trans(skb, &tun->dev);
++		skb->protocol = eth_type_trans(skb, tun->dev);
+ 		break;
+ 	};
+ 
+@@ -326,7 +345,7 @@
+ 			schedule();
+ 			continue;
+ 		}
+-		netif_start_queue(&tun->dev);
++		netif_start_queue(tun->dev);
+ 
+ 		ret = tun_put_user(tun, skb, (struct iovec *) iv, len);
+ 
+@@ -378,8 +397,6 @@
+ 		init_waitqueue_head(&tun->read_wait);
+ 
+ 		tun->owner = -1;
+-		tun->dev.init = tun_net_init;
+-		tun->dev.priv = tun;
+ 
+ 		err = -EINVAL;
+ 
+@@ -398,18 +415,24 @@
+ 		if (*ifr->ifr_name)
+ 			name = ifr->ifr_name;
+ 
+-		if ((err = dev_alloc_name(&tun->dev, name)) < 0)
++		dev = dev_alloc(name, &err);
++		if (!dev)
+ 			goto failed;
+-		if ((err = register_netdevice(&tun->dev)))
++
++		tun->dev=dev;
++		dev->init = tun_net_init;
++		dev->priv = tun;
++		dev->destructor = tun_net_destruct;
++		dev->features |= NETIF_F_DYNALLOC;
++		tun->name = dev->name;
++
++		err=register_netdevice(dev);
++		if (err<0)
+ 			goto failed;
+-	
+-		MOD_INC_USE_COUNT;
+ 
+-		tun->name = tun->dev.name;
++		MOD_INC_USE_COUNT;
+ 	}
+ 
+-	DBG(KERN_INFO "%s: tun_set_iff\n", tun->name);
+-
+ 	if (ifr->ifr_flags & IFF_NO_PI)
+ 		tun->flags |= TUN_NO_PI;
+ 
+@@ -423,6 +446,7 @@
+ 	return 0;
+ 
+ failed:
++	kfree(dev);
+ 	kfree(tun);
+ 	return err;
+ }
+@@ -553,10 +577,8 @@
+ 	skb_queue_purge(&tun->readq);
+ 
+ 	if (!(tun->flags & TUN_PERSIST)) {
+-		dev_close(&tun->dev);
+-		unregister_netdevice(&tun->dev);
+-		kfree(tun);
+-		MOD_DEC_USE_COUNT;
++		dev_close(tun->dev);
++		unregister_netdevice(tun->dev);
+ 	}
+ 
+ 	rtnl_unlock();
+diff -ur linux-2.4.22-up/include/linux/if_tun.h linux-2.4.22-tun/include/linux/if_tun.h
+--- linux-2.4.22-up/include/linux/if_tun.h	Tue Jun 12 04:15:27 2001
++++ linux-2.4.22-tun/include/linux/if_tun.h	Sun Sep 21 00:08:08 2003
+@@ -40,7 +40,7 @@
+ 	wait_queue_head_t	read_wait;
+ 	struct sk_buff_head	readq;
+ 
+-	struct net_device	dev;
++	struct net_device	*dev;
+ 	struct net_device_stats	stats;
+ 
+ 	struct fasync_struct    *fasync;
