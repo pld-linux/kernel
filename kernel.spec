@@ -13,8 +13,30 @@
 %bcond_with	suspend2	# build software suspend support
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	vserver		# added vserver.
+%bcond_without	grsecurity	# don't build grsecurity at all
+%bcond_without	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
+%bcond_with	grsec_full	# build full grsecurity
 
 %{?debug:%define with_verbose 1}
+
+%if %{without grsecurity}
+%undefine	with_grsec_full
+%undefine	with_grsec_minimal
+%endif
+
+%if %{with grsec_full}
+%undefine	with_grsec_minimal
+%define		with_grsecurity
+%endif
+
+%if %{with grsec_minimal}
+%undefine	with_grsec_full
+%define		with_grsecurity
+%endif
+
+%if %{with grsec_full} && %{with vserver}                                       
+full grsecurity conflicts with vserver                                               
+%endif                                                                          
 
 %ifarch sparc
 # sparc32 is missing important updates from 2.5 cycle - won't build.
@@ -66,7 +88,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			1.6
+%define		_rel			1.7
 
 %define		_netfilter_snap		20060329
 %define		_nf_hipac_ver		0.9.1
@@ -85,7 +107,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
-Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_preemptive:-preempt}
+Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_preemptive:-preempt}
 %define		_postver	.4
 #define		_postver	%{nil}
 Version:	2.6.16%{_postver}
@@ -131,6 +153,7 @@ Source41:	kernel-squashfs.config
 Source42:	kernel-suspend2.config
 Source43:	kernel-vserver.config
 Source44:	kernel-vesafb-tng.config
+Source45:	kernel-grsec.config
 
 ###
 #	Patches
@@ -206,7 +229,9 @@ Patch57:	linux-2.6-cpuset_virtualization.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.1.1-rc15.diff
 Patch100:	linux-2.6-vs2.1.patch
+Patch101:	linux-2.6-vs2.1-grsec-minimal.patch
 
+Patch1000:	linux-2.6-grsec-minimal.patch
 # grsecurity snap for 2.6.16.
 # from http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.16-200603292139.patch
 ## [pl]nienaklada sie 
@@ -704,9 +729,17 @@ patch -p1 -s < suspend2-%{suspend_version}-for-2.6.16/3010-fork-non-conflicting-
 
 %if %{with vserver}
 %patch100 -p1
+%if %{with grsec_minimal}
+%patch101 -p1
+%endif
 %endif
 
+%if %{with grsec_minimal}
+patch1000 -p1
+%endif
+%if %{with grsec_full}
 #patch9999 -p1
+%endif
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
@@ -816,6 +849,10 @@ BuildConfig() {
 	# vesafb-tng
 %if %{with vesafb_tng}
 	cat %{SOURCE44} >> arch/%{_target_base_arch}/defconfig
+%endif
+
+%if %{with grsecurity}
+	cat %{SOURCE45} >> arch/%{_target_base_arch}/defconfig
 %endif
 
 	# fbsplash
@@ -1081,7 +1118,7 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title='PLD Linux'
 	fi
 
-	ext='%{?with_grsecurity:grsecurity}%{?with_omosix:openMosix}%{?with_vserver:vserver}%{?with_xen0:Xen0}%{?with_xenU:XenU}%{?with_preemptive:preempt}'
+	ext='%{?with_grsec_full:grsecurity}%{?with_omosix:openMosix}%{?with_vserver:vserver}%{?with_xen0:Xen0}%{?with_xenU:XenU}%{?with_preemptive:preempt}'
 	if [ "$ext" ]; then
 		title="$title $ext"
 	fi
@@ -1153,7 +1190,7 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title='PLD Linux'
 	fi
 
-	ext='%{?with_grsecurity:grsecurity}%{?with_omosix:openMosix}%{?with_vserver:vserver}%{?with_xen0:Xen0}%{?with_xenU:XenU}%{?with_preemptive:preempt}'
+	ext='%{?with_grsec_full:grsecurity}%{?with_omosix:openMosix}%{?with_vserver:vserver}%{?with_xen0:Xen0}%{?with_xenU:XenU}%{?with_preemptive:preempt}'
 	if [ "$ext" ]; then
 		title="$title $ext"
 	fi
@@ -1502,6 +1539,9 @@ fi
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
+%if %{with grsecurity}
+%{_prefix}/src/linux-%{version}/grsecurity
+%endif
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
 %{_prefix}/src/linux-%{version}/kernel
