@@ -734,10 +734,10 @@ patch -p1 -s < suspend2-%{suspend_version}-for-2.6.16/3010-fork-non-conflicting-
 %endif
 %endif
 
-%if %{with grsec_minimal}
-patch1000 -p1
+%if %{with grsec_minimal} && %{without vserver}
+%patch1000 -p1
 %endif
-%if %{with grsec_full}
+%if %{with grsec_full} && %{without vserver}
 #patch9999 -p1
 %endif
 
