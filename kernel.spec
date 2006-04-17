@@ -34,9 +34,9 @@
 %define		with_grsecurity		1
 %endif
 
-%if %{with grsec_full} && %{with vserver}                                       
-full grsecurity conflicts with vserver                                               
-%endif                                                                          
+%if %{with grsec_full} && %{with vserver}
+full grsecurity conflicts with vserver
+%endif
 
 %ifarch sparc
 # sparc32 is missing important updates from 2.5 cycle - won't build.
@@ -166,8 +166,8 @@ Patch2:		tahoe9xx-2.6.11.5.patch
 Patch4:		fbsplash-0.9.2-r5-2.6.16.patch
 Patch5:		linux-2.6-vesafb-tng.patch
 
-# directly from http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.0.tar.gz 
-#		from linux-2.6.15 
+# directly from http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.0.tar.gz
+#		from linux-2.6.15
 Patch6:		squashfs%{squashfs_version}-patch
 
 Patch7:		linux-alpha-isa.patch
@@ -178,7 +178,7 @@ Patch9:		linux-static-dev.patch
 ## submitted
 
 ## base
-Patch10: 	pom-ng-IPV4OPTSSTRIP-%{_netfilter_snap}.patch
+Patch10:	pom-ng-IPV4OPTSSTRIP-%{_netfilter_snap}.patch
 Patch11:	pom-ng-connlimit-%{_netfilter_snap}.patch
 Patch12:	pom-ng-expire-%{_netfilter_snap}.patch
 Patch13:	pom-ng-fuzzy-%{_netfilter_snap}.patch
@@ -211,7 +211,7 @@ Patch50:	linux-2.6.16-imq2.diff
 
 Patch51:	http://bluetooth-alsa.sourceforge.net/sco-mtu.patch
 
-# support for HDAPS (Hard Disk Active Protection System) 
+# support for HDAPS (Hard Disk Active Protection System)
 # that can be found in IBM/Lenovo ThinkPad laptops
 # from: http://www.dresco.co.uk/hdaps/hdaps_protect.20060326.patch
 Patch52:	linux-hdaps_protect.patch
@@ -824,12 +824,12 @@ BuildConfig() {
 	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
 
 	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
-	
+
 %ifarch ppc ppc64
 	if [ "$smp" = "yes" ]; then
-	    install %{SOURCE31} arch/%{_target_base_arch}/defconfig
+		install %{SOURCE31} arch/%{_target_base_arch}/defconfig
 	else
-	    install %{SOURCE30} arch/%{_target_base_arch}/defconfig
+		install %{SOURCE30} arch/%{_target_base_arch}/defconfig
 	fi
 %endif
 
@@ -839,10 +839,10 @@ BuildConfig() {
 
 	# netfilter
 	cat %{SOURCE40} >> arch/%{_target_base_arch}/defconfig
-	
+
 	# squashfs
 	cat %{SOURCE41} >> arch/%{_target_base_arch}/defconfig
-	
+
 %if %{with suspend2}
 	cat %{SOURCE42} >> arch/%{_target_base_arch}/defconfig
 %endif
