@@ -796,7 +796,7 @@ TuneUpConfigForIX86 () {
 	    sed -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" $1
 	%endif
     %endif
-    %ifarch i686 pentium3 pentium4
+    %ifarch i686 pentium3 pentium4 athlon
 	sed -i 's:CONFIG_MATH_EMULATION=y:# CONFIG_MATH_EMULATION is not set:' $1
     %endif
     %if %{with regparm}
