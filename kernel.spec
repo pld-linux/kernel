@@ -13,6 +13,7 @@
 %bcond_with	suspend2	# build software suspend support
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	vserver		# added vserver.
+%bcond_with	xen		# added Xen support.
 %bcond_without	grsecurity	# don't build grsecurity at all
 %bcond_without	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
 %bcond_with	grsec_full	# build full grsecurity
@@ -107,7 +108,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
-Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_preemptive:-preempt}
+Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_vserver:-vserver}%{?with_xen:-xen}%{?with_preemptive:-preempt}
 %define		_postver	.9
 #define		_postver	%{nil}
 Version:	2.6.16%{_postver}
@@ -234,6 +235,10 @@ Patch60:	linux-2.6-sk98lin-8.31.2.3.patch
 Patch100:	linux-2.6-vs2.1.patch
 Patch101:	linux-2.6-vs2.1-grsec-minimal.patch
 
+# from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
+Patch120:	xen-3.0-2.6.16.patch
+
+
 Patch1000:	linux-2.6-grsec-minimal.patch
 # grsecurity snap for 2.6.16.
 # from http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.16-200603292139.patch
@@ -288,11 +293,7 @@ Conflicts:	udev < %{_udev_ver}
 Conflicts:	util-linux < %{_util_linux_ver}
 Conflicts:	xfsprogs < %{_xfsprogs_ver}
 %if %{with xen}
-%if %{with xendev}
-ExclusiveArch:	%{ix86} %{x8664}
-%else
 ExclusiveArch:	%{ix86}
-%endif
 %else
 ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc ppc64 sparc sparc64
 %endif
@@ -739,6 +740,14 @@ patch -p1 -s < suspend2-%{suspend_version}-for-2.6.16/3010-fork-non-conflicting-
 %endif
 %endif
 
+%if %{with xen}
+%ifarch %{ix86}
+%patch120 -p1
+%endif
+%else
+echo "Arch: $arch is not supported by Xen"
+%endif
+
 %if %{with grsec_minimal} && %{without vserver}
 %patch1000 -p1
 %endif
@@ -1124,7 +1133,7 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title='PLD Linux'
 	fi
 
-	ext='%{?with_grsec_full:grsecurity}%{?with_omosix:openMosix}%{?with_vserver:vserver}%{?with_xen0:Xen0}%{?with_xenU:XenU}%{?with_preemptive:preempt}'
+	ext='%{?with_grsec_full:grsecurity}%{?with_vserver:vserver}%{?with_xen:Xen}%{?with_preemptive:preempt}'
 	if [ "$ext" ]; then
 		title="$title $ext"
 	fi
@@ -1196,7 +1205,7 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title='PLD Linux'
 	fi
 
-	ext='%{?with_grsec_full:grsecurity}%{?with_omosix:openMosix}%{?with_vserver:vserver}%{?with_xen0:Xen0}%{?with_xenU:XenU}%{?with_preemptive:preempt}'
+	ext='%{?with_grsec_full:grsecurity}%{?with_vserver:vserver}%{?with_xen:Xen}%{?with_preemptive:preempt}'
 	if [ "$ext" ]; then
 		title="$title $ext"
 	fi
