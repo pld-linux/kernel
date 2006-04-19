@@ -1,0 +1,909 @@
+--- linux-2.6.16/drivers/base/bus.c	2006-03-16 10:50:20.000000000 -0500
++++ linux-2.6.16/drivers/base/bus.c	2006-03-16 11:02:08.000000000 -0500
+@@ -188,6 +188,11 @@ static ssize_t driver_bind(struct device
+ 		up(&dev->sem);
+ 		if (dev->parent)
+ 			up(&dev->parent->sem);
++
++		if (err > 0) 		/* success */
++			err = count;
++		else if (err == 0)	/* driver didn't accept device */
++			err = -ENODEV;
+ 	}
+ 	put_device(dev);
+ 	put_bus(bus);
+diff -pruN ../pristine-linux-2.6.16/arch/i386/kernel/traps.c ./arch/i386/kernel/traps.c
+--- ../pristine-linux-2.6.16/arch/i386/kernel/traps.c	2006-03-20 05:53:29.000000000 +0000
++++ ./arch/i386/kernel/traps.c	2006-03-20 19:38:17.000000000 +0000
+@@ -567,18 +567,11 @@ static void mem_parity_error(unsigned ch
+ 
+ static void io_check_error(unsigned char reason, struct pt_regs * regs)
+ {
+-	unsigned long i;
+-
+ 	printk(KERN_EMERG "NMI: IOCK error (debug interrupt?)\n");
+ 	show_registers(regs);
+ 
+ 	/* Re-enable the IOCK line, wait for a few seconds */
+-	reason = (reason & 0xf) | 8;
+-	outb(reason, 0x61);
+-	i = 2000;
+-	while (--i) udelay(1000);
+-	reason &= ~8;
+-	outb(reason, 0x61);
++	clear_io_check_error(reason);
+ }
+ 
+ static void unknown_nmi_error(unsigned char reason, struct pt_regs * regs)
+diff -pruN ../pristine-linux-2.6.16/include/asm-i386/mach-default/mach_traps.h ./include/asm-i386/mach-default/mach_traps.h
+--- ../pristine-linux-2.6.16/include/asm-i386/mach-default/mach_traps.h	2006-03-20 05:53:29.000000000 +0000
++++ ./include/asm-i386/mach-default/mach_traps.h	2006-03-20 19:38:17.000000000 +0000
+@@ -15,6 +15,18 @@ static inline void clear_mem_error(unsig
+ 	outb(reason, 0x61);
+ }
+ 
++static inline void clear_io_check_error(unsigned char reason)
++{
++	unsigned long i;
++
++	reason = (reason & 0xf) | 8;
++	outb(reason, 0x61);
++	i = 2000;
++	while (--i) udelay(1000);
++	reason &= ~8;
++	outb(reason, 0x61);
++}
++
+ static inline unsigned char get_nmi_reason(void)
+ {
+ 	return inb(0x61);
+diff -pruN ../pristine-linux-2.6.16/net/ipv4/netfilter/ip_nat_proto_tcp.c ./net/ipv4/netfilter/ip_nat_proto_tcp.c
+--- ../pristine-linux-2.6.16/net/ipv4/netfilter/ip_nat_proto_tcp.c	2006-03-20 05:53:29.000000000 +0000
++++ ./net/ipv4/netfilter/ip_nat_proto_tcp.c	2006-03-20 19:38:19.000000000 +0000
+@@ -129,10 +129,14 @@ tcp_manip_pkt(struct sk_buff **pskb,
+ 	if (hdrsize < sizeof(*hdr))
+ 		return 1;
+ 
+-	hdr->check = ip_nat_cheat_check(~oldip, newip,
++	if ((*pskb)->proto_csum_blank) {
++		hdr->check = ip_nat_cheat_check(oldip, ~newip, hdr->check);
++	} else {
++		hdr->check = ip_nat_cheat_check(~oldip, newip,
+ 					ip_nat_cheat_check(oldport ^ 0xFFFF,
+ 							   newport,
+ 							   hdr->check));
++	}
+ 	return 1;
+ }
+ 
+diff -pruN ../pristine-linux-2.6.16/net/ipv4/netfilter/ip_nat_proto_udp.c ./net/ipv4/netfilter/ip_nat_proto_udp.c
+--- ../pristine-linux-2.6.16/net/ipv4/netfilter/ip_nat_proto_udp.c	2006-03-20 05:53:29.000000000 +0000
++++ ./net/ipv4/netfilter/ip_nat_proto_udp.c	2006-03-20 19:38:19.000000000 +0000
+@@ -113,11 +113,16 @@ udp_manip_pkt(struct sk_buff **pskb,
+ 		newport = tuple->dst.u.udp.port;
+ 		portptr = &hdr->dest;
+ 	}
+-	if (hdr->check) /* 0 is a special case meaning no checksum */
+-		hdr->check = ip_nat_cheat_check(~oldip, newip,
++	if (hdr->check) { /* 0 is a special case meaning no checksum */
++		if ((*pskb)->proto_csum_blank) {
++			hdr->check = ip_nat_cheat_check(oldip, ~newip, hdr->check);
++		} else {
++			hdr->check = ip_nat_cheat_check(~oldip, newip,
+ 					ip_nat_cheat_check(*portptr ^ 0xFFFF,
+ 							   newport,
+ 							   hdr->check));
++		}
++	}
+ 	*portptr = newport;
+ 	return 1;
+ }
+diff -pruN ../pristine-linux-2.6.16/arch/i386/mm/pageattr.c ./arch/i386/mm/pageattr.c
+--- ../pristine-linux-2.6.16/arch/i386/mm/pageattr.c	2006-03-20 05:53:29.000000000 +0000
++++ ./arch/i386/mm/pageattr.c	2006-03-20 19:38:23.000000000 +0000
+@@ -78,7 +78,7 @@ static void set_pmd_pte(pte_t *kpte, uns
+ 	unsigned long flags;
+ 
+ 	set_pte_atomic(kpte, pte); 	/* change init_mm */
+-	if (PTRS_PER_PMD > 1)
++	if (HAVE_SHARED_KERNEL_PMD)
+ 		return;
+ 
+ 	spin_lock_irqsave(&pgd_lock, flags);
+diff -pruN ../pristine-linux-2.6.16/arch/i386/mm/pgtable.c ./arch/i386/mm/pgtable.c
+--- ../pristine-linux-2.6.16/arch/i386/mm/pgtable.c	2006-03-20 05:53:29.000000000 +0000
++++ ./arch/i386/mm/pgtable.c	2006-03-20 19:38:23.000000000 +0000
+@@ -215,9 +215,10 @@ void pgd_ctor(void *pgd, kmem_cache_t *c
+ 		spin_lock_irqsave(&pgd_lock, flags);
+ 	}
+ 
+-	clone_pgd_range((pgd_t *)pgd + USER_PTRS_PER_PGD,
+-			swapper_pg_dir + USER_PTRS_PER_PGD,
+-			KERNEL_PGD_PTRS);
++	if (PTRS_PER_PMD == 1 || HAVE_SHARED_KERNEL_PMD)
++		clone_pgd_range((pgd_t *)pgd + USER_PTRS_PER_PGD,
++				swapper_pg_dir + USER_PTRS_PER_PGD,
++				KERNEL_PGD_PTRS);
+ 	if (PTRS_PER_PMD > 1)
+ 		return;
+ 
+@@ -249,6 +250,30 @@ pgd_t *pgd_alloc(struct mm_struct *mm)
+ 			goto out_oom;
+ 		set_pgd(&pgd[i], __pgd(1 + __pa(pmd)));
+ 	}
++
++	if (!HAVE_SHARED_KERNEL_PMD) {
++		unsigned long flags;
++
++		for (i = USER_PTRS_PER_PGD; i < PTRS_PER_PGD; i++) {
++			pmd_t *pmd = kmem_cache_alloc(pmd_cache, GFP_KERNEL);
++			if (!pmd)
++				goto out_oom;
++			set_pgd(&pgd[USER_PTRS_PER_PGD], __pgd(1 + __pa(pmd)));
++		}
++
++		spin_lock_irqsave(&pgd_lock, flags);
++		for (i = USER_PTRS_PER_PGD; i < PTRS_PER_PGD; i++) {
++			unsigned long v = (unsigned long)i << PGDIR_SHIFT;
++			pgd_t *kpgd = pgd_offset_k(v);
++			pud_t *kpud = pud_offset(kpgd, v);
++			pmd_t *kpmd = pmd_offset(kpud, v);
++			pmd_t *pmd = (void *)__va(pgd_val(pgd[i])-1);
++			memcpy(pmd, kpmd, PAGE_SIZE);
++		}
++		pgd_list_add(pgd);
++		spin_unlock_irqrestore(&pgd_lock, flags);
++	}
++
+ 	return pgd;
+ 
+ out_oom:
+@@ -263,9 +288,23 @@ void pgd_free(pgd_t *pgd)
+ 	int i;
+ 
+ 	/* in the PAE case user pgd entries are overwritten before usage */
+-	if (PTRS_PER_PMD > 1)
+-		for (i = 0; i < USER_PTRS_PER_PGD; ++i)
+-			kmem_cache_free(pmd_cache, (void *)__va(pgd_val(pgd[i])-1));
++	if (PTRS_PER_PMD > 1) {
++		for (i = 0; i < USER_PTRS_PER_PGD; ++i) {
++			pmd_t *pmd = (void *)__va(pgd_val(pgd[i])-1);
++			kmem_cache_free(pmd_cache, pmd);
++		}
++		if (!HAVE_SHARED_KERNEL_PMD) {
++			unsigned long flags;
++			spin_lock_irqsave(&pgd_lock, flags);
++			pgd_list_del(pgd);
++			spin_unlock_irqrestore(&pgd_lock, flags);
++			for (i = USER_PTRS_PER_PGD; i < PTRS_PER_PGD; i++) {
++				pmd_t *pmd = (void *)__va(pgd_val(pgd[i])-1);
++				memset(pmd, 0, PTRS_PER_PMD*sizeof(pmd_t));
++				kmem_cache_free(pmd_cache, pmd);
++			}
++		}
++	}
+ 	/* in the non-PAE case, free_pgtables() clears user pgd entries */
+ 	kmem_cache_free(pgd_cache, pgd);
+ }
+diff -pruN ../pristine-linux-2.6.16/include/asm-i386/pgtable-2level-defs.h ./include/asm-i386/pgtable-2level-defs.h
+--- ../pristine-linux-2.6.16/include/asm-i386/pgtable-2level-defs.h	2006-03-20 05:53:29.000000000 +0000
++++ ./include/asm-i386/pgtable-2level-defs.h	2006-03-20 19:38:23.000000000 +0000
+@@ -1,6 +1,8 @@
+ #ifndef _I386_PGTABLE_2LEVEL_DEFS_H
+ #define _I386_PGTABLE_2LEVEL_DEFS_H
+ 
++#define HAVE_SHARED_KERNEL_PMD 0
++
+ /*
+  * traditional i386 two-level paging structure:
+  */
+diff -pruN ../pristine-linux-2.6.16/include/asm-i386/pgtable-3level-defs.h ./include/asm-i386/pgtable-3level-defs.h
+--- ../pristine-linux-2.6.16/include/asm-i386/pgtable-3level-defs.h	2006-03-20 05:53:29.000000000 +0000
++++ ./include/asm-i386/pgtable-3level-defs.h	2006-03-20 19:38:23.000000000 +0000
+@@ -1,6 +1,8 @@
+ #ifndef _I386_PGTABLE_3LEVEL_DEFS_H
+ #define _I386_PGTABLE_3LEVEL_DEFS_H
+ 
++#define HAVE_SHARED_KERNEL_PMD 1
++
+ /*
+  * PGDIR_SHIFT determines what a top-level page table entry can map
+  */
+diff -pruN ../pristine-linux-2.6.16/arch/i386/Kconfig ./arch/i386/Kconfig
+--- ../pristine-linux-2.6.16/arch/i386/Kconfig	2006-03-20 05:53:29.000000000 +0000
++++ ./arch/i386/Kconfig	2006-03-20 19:38:27.000000000 +0000
+@@ -202,6 +202,19 @@ config SMP
+ 
+ 	  If you don't know what to do here, say N.
+ 
++config SMP_ALTERNATIVES
++	bool "SMP alternatives support (EXPERIMENTAL)"
++	depends on SMP && EXPERIMENTAL
++	help
++	  Try to reduce the overhead of running an SMP kernel on a uniprocessor
++	  host slightly by replacing certain key instruction sequences
++	  according to whether we currently have more than one CPU available.
++	  This should provide a noticeable boost to performance when
++	  running SMP kernels on UP machines, and have negligible impact
++	  when running on an true SMP host.
++
++          If unsure, say N.
++	  
+ config NR_CPUS
+ 	int "Maximum number of CPUs (2-255)"
+ 	range 2 255
+diff -pruN ../pristine-linux-2.6.16/arch/i386/kernel/Makefile ./arch/i386/kernel/Makefile
+--- ../pristine-linux-2.6.16/arch/i386/kernel/Makefile	2006-03-20 05:53:29.000000000 +0000
++++ ./arch/i386/kernel/Makefile	2006-03-20 19:38:27.000000000 +0000
+@@ -37,6 +37,7 @@ obj-$(CONFIG_EFI) 		+= efi.o efi_stub.o
+ obj-$(CONFIG_DOUBLEFAULT) 	+= doublefault.o
+ obj-$(CONFIG_VM86)		+= vm86.o
+ obj-$(CONFIG_EARLY_PRINTK)	+= early_printk.o
++obj-$(CONFIG_SMP_ALTERNATIVES)  += smpalts.o
+ 
+ EXTRA_AFLAGS   := -traditional
+ 
+diff -pruN ../pristine-linux-2.6.16/arch/i386/kernel/smpalts.c ./arch/i386/kernel/smpalts.c
+--- ../pristine-linux-2.6.16/arch/i386/kernel/smpalts.c	1970-01-01 01:00:00.000000000 +0100
++++ ./arch/i386/kernel/smpalts.c	2006-03-20 19:38:27.000000000 +0000
+@@ -0,0 +1,85 @@
++#include <linux/kernel.h>
++#include <asm/system.h>
++#include <asm/smp_alt.h>
++#include <asm/processor.h>
++#include <asm/string.h>
++
++struct smp_replacement_record {
++	unsigned char targ_size;
++	unsigned char smp1_size;
++	unsigned char smp2_size;
++	unsigned char up_size;
++	unsigned char feature;
++	unsigned char data[0];
++};
++
++struct smp_alternative_record {
++	void *targ_start;
++	struct smp_replacement_record *repl;
++};
++
++extern struct smp_alternative_record __start_smp_alternatives_table,
++  __stop_smp_alternatives_table;
++extern unsigned long __init_begin, __init_end;
++
++void prepare_for_smp(void)
++{
++	struct smp_alternative_record *r;
++	printk(KERN_INFO "Enabling SMP...\n");
++	for (r = &__start_smp_alternatives_table;
++	     r != &__stop_smp_alternatives_table;
++	     r++) {
++		BUG_ON(r->repl->targ_size < r->repl->smp1_size);
++		BUG_ON(r->repl->targ_size < r->repl->smp2_size);
++		BUG_ON(r->repl->targ_size < r->repl->up_size);
++               if (system_state == SYSTEM_RUNNING &&
++                   r->targ_start >= (void *)&__init_begin &&
++                   r->targ_start < (void *)&__init_end)
++                       continue;
++		if (r->repl->feature != (unsigned char)-1 &&
++		    boot_cpu_has(r->repl->feature)) {
++			memcpy(r->targ_start,
++			       r->repl->data + r->repl->smp1_size,
++			       r->repl->smp2_size);
++			memset(r->targ_start + r->repl->smp2_size,
++			       0x90,
++			       r->repl->targ_size - r->repl->smp2_size);
++		} else {
++			memcpy(r->targ_start,
++			       r->repl->data,
++			       r->repl->smp1_size);
++			memset(r->targ_start + r->repl->smp1_size,
++			       0x90,
++			       r->repl->targ_size - r->repl->smp1_size);
++		}
++	}
++	/* Paranoia */
++	asm volatile ("jmp 1f\n1:");
++	mb();
++}
++
++void unprepare_for_smp(void)
++{
++	struct smp_alternative_record *r;
++	printk(KERN_INFO "Disabling SMP...\n");
++	for (r = &__start_smp_alternatives_table;
++	     r != &__stop_smp_alternatives_table;
++	     r++) {
++		BUG_ON(r->repl->targ_size < r->repl->smp1_size);
++		BUG_ON(r->repl->targ_size < r->repl->smp2_size);
++		BUG_ON(r->repl->targ_size < r->repl->up_size);
++               if (system_state == SYSTEM_RUNNING &&
++                   r->targ_start >= (void *)&__init_begin &&
++                   r->targ_start < (void *)&__init_end)
++                       continue;
++		memcpy(r->targ_start,
++		       r->repl->data + r->repl->smp1_size + r->repl->smp2_size,
++		       r->repl->up_size);
++		memset(r->targ_start + r->repl->up_size,
++		       0x90,
++		       r->repl->targ_size - r->repl->up_size);
++	}
++	/* Paranoia */
++	asm volatile ("jmp 1f\n1:");
++	mb();
++}
+diff -pruN ../pristine-linux-2.6.16/arch/i386/kernel/smpboot.c ./arch/i386/kernel/smpboot.c
+--- ../pristine-linux-2.6.16/arch/i386/kernel/smpboot.c	2006-03-20 05:53:29.000000000 +0000
++++ ./arch/i386/kernel/smpboot.c	2006-03-20 19:38:27.000000000 +0000
+@@ -1218,6 +1218,11 @@ static void __init smp_boot_cpus(unsigne
+ 		if (max_cpus <= cpucount+1)
+ 			continue;
+ 
++#ifdef CONFIG_SMP_ALTERNATIVES
++		if (kicked == 1)
++			prepare_for_smp();
++#endif
++
+ 		if (((cpu = alloc_cpu_id()) <= 0) || do_boot_cpu(apicid, cpu))
+ 			printk("CPU #%d not responding - cannot use it.\n",
+ 								apicid);
+@@ -1396,6 +1401,11 @@ int __devinit __cpu_up(unsigned int cpu)
+ 		return -EIO;
+ 	}
+ 
++#ifdef CONFIG_SMP_ALTERNATIVES
++	if (num_online_cpus() == 1)
++		prepare_for_smp();
++#endif
++
+ 	local_irq_enable();
+ 	per_cpu(cpu_state, cpu) = CPU_UP_PREPARE;
+ 	/* Unleash the CPU! */
+diff -pruN ../pristine-linux-2.6.16/arch/i386/kernel/vmlinux.lds.S ./arch/i386/kernel/vmlinux.lds.S
+--- ../pristine-linux-2.6.16/arch/i386/kernel/vmlinux.lds.S	2006-03-20 05:53:29.000000000 +0000
++++ ./arch/i386/kernel/vmlinux.lds.S	2006-03-20 19:38:27.000000000 +0000
+@@ -34,6 +34,13 @@ SECTIONS
+   __ex_table : AT(ADDR(__ex_table) - LOAD_OFFSET) { *(__ex_table) }
+   __stop___ex_table = .;
+ 
++  . = ALIGN(16);
++  __start_smp_alternatives_table = .;
++  __smp_alternatives : { *(__smp_alternatives) }
++  __stop_smp_alternatives_table = .;
++
++  __smp_replacements : { *(__smp_replacements) }
++
+   RODATA
+ 
+   /* writeable */
+diff -pruN ../pristine-linux-2.6.16/include/asm-i386/atomic.h ./include/asm-i386/atomic.h
+--- ../pristine-linux-2.6.16/include/asm-i386/atomic.h	2006-03-20 05:53:29.000000000 +0000
++++ ./include/asm-i386/atomic.h	2006-03-20 19:38:27.000000000 +0000
+@@ -4,18 +4,13 @@
+ #include <linux/config.h>
+ #include <linux/compiler.h>
+ #include <asm/processor.h>
++#include <asm/smp_alt.h>
+ 
+ /*
+  * Atomic operations that C can't guarantee us.  Useful for
+  * resource counting etc..
+  */
+ 
+-#ifdef CONFIG_SMP
+-#define LOCK "lock ; "
+-#else
+-#define LOCK ""
+-#endif
+-
+ /*
+  * Make sure gcc doesn't try to be clever and move things around
+  * on us. We need to use _exactly_ the address the user gave us,
+diff -pruN ../pristine-linux-2.6.16/include/asm-i386/bitops.h ./include/asm-i386/bitops.h
+--- ../pristine-linux-2.6.16/include/asm-i386/bitops.h	2006-03-20 05:53:29.000000000 +0000
++++ ./include/asm-i386/bitops.h	2006-03-20 19:38:27.000000000 +0000
+@@ -7,6 +7,7 @@
+ 
+ #include <linux/config.h>
+ #include <linux/compiler.h>
++#include <asm/smp_alt.h>
+ 
+ /*
+  * These have to be done with inline assembly: that way the bit-setting
+@@ -16,12 +17,6 @@
+  * bit 0 is the LSB of addr; bit 32 is the LSB of (addr+1).
+  */
+ 
+-#ifdef CONFIG_SMP
+-#define LOCK_PREFIX "lock ; "
+-#else
+-#define LOCK_PREFIX ""
+-#endif
+-
+ #define ADDR (*(volatile long *) addr)
+ 
+ /**
+@@ -41,7 +36,7 @@
+  */
+ static inline void set_bit(int nr, volatile unsigned long * addr)
+ {
+-	__asm__ __volatile__( LOCK_PREFIX
++	__asm__ __volatile__( LOCK
+ 		"btsl %1,%0"
+ 		:"+m" (ADDR)
+ 		:"Ir" (nr));
+@@ -76,7 +71,7 @@ static inline void __set_bit(int nr, vol
+  */
+ static inline void clear_bit(int nr, volatile unsigned long * addr)
+ {
+-	__asm__ __volatile__( LOCK_PREFIX
++	__asm__ __volatile__( LOCK
+ 		"btrl %1,%0"
+ 		:"+m" (ADDR)
+ 		:"Ir" (nr));
+@@ -121,7 +116,7 @@ static inline void __change_bit(int nr, 
+  */
+ static inline void change_bit(int nr, volatile unsigned long * addr)
+ {
+-	__asm__ __volatile__( LOCK_PREFIX
++	__asm__ __volatile__( LOCK
+ 		"btcl %1,%0"
+ 		:"+m" (ADDR)
+ 		:"Ir" (nr));
+@@ -140,7 +135,7 @@ static inline int test_and_set_bit(int n
+ {
+ 	int oldbit;
+ 
+-	__asm__ __volatile__( LOCK_PREFIX
++	__asm__ __volatile__( LOCK
+ 		"btsl %2,%1\n\tsbbl %0,%0"
+ 		:"=r" (oldbit),"+m" (ADDR)
+ 		:"Ir" (nr) : "memory");
+@@ -180,7 +175,7 @@ static inline int test_and_clear_bit(int
+ {
+ 	int oldbit;
+ 
+-	__asm__ __volatile__( LOCK_PREFIX
++	__asm__ __volatile__( LOCK
+ 		"btrl %2,%1\n\tsbbl %0,%0"
+ 		:"=r" (oldbit),"+m" (ADDR)
+ 		:"Ir" (nr) : "memory");
+@@ -231,7 +226,7 @@ static inline int test_and_change_bit(in
+ {
+ 	int oldbit;
+ 
+-	__asm__ __volatile__( LOCK_PREFIX
++	__asm__ __volatile__( LOCK
+ 		"btcl %2,%1\n\tsbbl %0,%0"
+ 		:"=r" (oldbit),"+m" (ADDR)
+ 		:"Ir" (nr) : "memory");
+diff -pruN ../pristine-linux-2.6.16/include/asm-i386/futex.h ./include/asm-i386/futex.h
+--- ../pristine-linux-2.6.16/include/asm-i386/futex.h	2006-03-20 05:53:29.000000000 +0000
++++ ./include/asm-i386/futex.h	2006-03-20 19:38:27.000000000 +0000
+@@ -28,7 +28,7 @@
+ "1:	movl	%2, %0\n\
+ 	movl	%0, %3\n"					\
+ 	insn "\n"						\
+-"2:	" LOCK_PREFIX "cmpxchgl %3, %2\n\
++"2:	" LOCK "cmpxchgl %3, %2\n\
+ 	jnz	1b\n\
+ 3:	.section .fixup,\"ax\"\n\
+ 4:	mov	%5, %1\n\
+@@ -68,7 +68,7 @@ futex_atomic_op_inuser (int encoded_op, 
+ #endif
+ 		switch (op) {
+ 		case FUTEX_OP_ADD:
+-			__futex_atomic_op1(LOCK_PREFIX "xaddl %0, %2", ret,
++			__futex_atomic_op1(LOCK "xaddl %0, %2", ret,
+ 					   oldval, uaddr, oparg);
+ 			break;
+ 		case FUTEX_OP_OR:
+diff -pruN ../pristine-linux-2.6.16/include/asm-i386/rwsem.h ./include/asm-i386/rwsem.h
+--- ../pristine-linux-2.6.16/include/asm-i386/rwsem.h	2006-03-20 05:53:29.000000000 +0000
++++ ./include/asm-i386/rwsem.h	2006-03-20 19:38:27.000000000 +0000
+@@ -40,6 +40,7 @@
+ 
+ #include <linux/list.h>
+ #include <linux/spinlock.h>
++#include <asm/smp_alt.h>
+ 
+ struct rwsem_waiter;
+ 
+@@ -99,7 +100,7 @@ static inline void __down_read(struct rw
+ {
+ 	__asm__ __volatile__(
+ 		"# beginning down_read\n\t"
+-LOCK_PREFIX	"  incl      (%%eax)\n\t" /* adds 0x00000001, returns the old value */
++LOCK	        "  incl      (%%eax)\n\t" /* adds 0x00000001, returns the old value */
+ 		"  js        2f\n\t" /* jump if we weren't granted the lock */
+ 		"1:\n\t"
+ 		LOCK_SECTION_START("")
+@@ -130,7 +131,7 @@ static inline int __down_read_trylock(st
+ 		"  movl	     %1,%2\n\t"
+ 		"  addl      %3,%2\n\t"
+ 		"  jle	     2f\n\t"
+-LOCK_PREFIX	"  cmpxchgl  %2,%0\n\t"
++LOCK	        "  cmpxchgl  %2,%0\n\t"
+ 		"  jnz	     1b\n\t"
+ 		"2:\n\t"
+ 		"# ending __down_read_trylock\n\t"
+@@ -150,7 +151,7 @@ static inline void __down_write(struct r
+ 	tmp = RWSEM_ACTIVE_WRITE_BIAS;
+ 	__asm__ __volatile__(
+ 		"# beginning down_write\n\t"
+-LOCK_PREFIX	"  xadd      %%edx,(%%eax)\n\t" /* subtract 0x0000ffff, returns the old value */
++LOCK	        "  xadd      %%edx,(%%eax)\n\t" /* subtract 0x0000ffff, returns the old value */
+ 		"  testl     %%edx,%%edx\n\t" /* was the count 0 before? */
+ 		"  jnz       2f\n\t" /* jump if we weren't granted the lock */
+ 		"1:\n\t"
+@@ -188,7 +189,7 @@ static inline void __up_read(struct rw_s
+ 	__s32 tmp = -RWSEM_ACTIVE_READ_BIAS;
+ 	__asm__ __volatile__(
+ 		"# beginning __up_read\n\t"
+-LOCK_PREFIX	"  xadd      %%edx,(%%eax)\n\t" /* subtracts 1, returns the old value */
++LOCK	        "  xadd      %%edx,(%%eax)\n\t" /* subtracts 1, returns the old value */
+ 		"  js        2f\n\t" /* jump if the lock is being waited upon */
+ 		"1:\n\t"
+ 		LOCK_SECTION_START("")
+@@ -214,7 +215,7 @@ static inline void __up_write(struct rw_
+ 	__asm__ __volatile__(
+ 		"# beginning __up_write\n\t"
+ 		"  movl      %2,%%edx\n\t"
+-LOCK_PREFIX	"  xaddl     %%edx,(%%eax)\n\t" /* tries to transition 0xffff0001 -> 0x00000000 */
++LOCK	        "  xaddl     %%edx,(%%eax)\n\t" /* tries to transition 0xffff0001 -> 0x00000000 */
+ 		"  jnz       2f\n\t" /* jump if the lock is being waited upon */
+ 		"1:\n\t"
+ 		LOCK_SECTION_START("")
+@@ -239,7 +240,7 @@ static inline void __downgrade_write(str
+ {
+ 	__asm__ __volatile__(
+ 		"# beginning __downgrade_write\n\t"
+-LOCK_PREFIX	"  addl      %2,(%%eax)\n\t" /* transitions 0xZZZZ0001 -> 0xYYYY0001 */
++LOCK	        "  addl      %2,(%%eax)\n\t" /* transitions 0xZZZZ0001 -> 0xYYYY0001 */
+ 		"  js        2f\n\t" /* jump if the lock is being waited upon */
+ 		"1:\n\t"
+ 		LOCK_SECTION_START("")
+@@ -263,7 +264,7 @@ LOCK_PREFIX	"  addl      %2,(%%eax)\n\t"
+ static inline void rwsem_atomic_add(int delta, struct rw_semaphore *sem)
+ {
+ 	__asm__ __volatile__(
+-LOCK_PREFIX	"addl %1,%0"
++LOCK	          "addl %1,%0"
+ 		: "=m"(sem->count)
+ 		: "ir"(delta), "m"(sem->count));
+ }
+@@ -276,7 +277,7 @@ static inline int rwsem_atomic_update(in
+ 	int tmp = delta;
+ 
+ 	__asm__ __volatile__(
+-LOCK_PREFIX	"xadd %0,(%2)"
++LOCK  	          "xadd %0,(%2)"
+ 		: "+r"(tmp), "=m"(sem->count)
+ 		: "r"(sem), "m"(sem->count)
+ 		: "memory");
+diff -pruN ../pristine-linux-2.6.16/include/asm-i386/smp_alt.h ./include/asm-i386/smp_alt.h
+--- ../pristine-linux-2.6.16/include/asm-i386/smp_alt.h	1970-01-01 01:00:00.000000000 +0100
++++ ./include/asm-i386/smp_alt.h	2006-03-20 19:38:27.000000000 +0000
+@@ -0,0 +1,32 @@
++#ifndef __ASM_SMP_ALT_H__
++#define __ASM_SMP_ALT_H__
++
++#include <linux/config.h>
++
++#ifdef CONFIG_SMP
++#if defined(CONFIG_SMP_ALTERNATIVES) && !defined(MODULE)
++#define LOCK \
++        "6677: nop\n" \
++	".section __smp_alternatives,\"a\"\n" \
++	".long 6677b\n" \
++	".long 6678f\n" \
++	".previous\n" \
++	".section __smp_replacements,\"a\"\n" \
++	"6678: .byte 1\n" \
++	".byte 1\n" \
++	".byte 0\n" \
++        ".byte 1\n" \
++	".byte -1\n" \
++	"lock\n" \
++	"nop\n" \
++	".previous\n"
++void prepare_for_smp(void);
++void unprepare_for_smp(void);
++#else
++#define LOCK "lock ; "
++#endif
++#else
++#define LOCK ""
++#endif
++
++#endif /* __ASM_SMP_ALT_H__ */
+diff -pruN ../pristine-linux-2.6.16/include/asm-i386/spinlock.h ./include/asm-i386/spinlock.h
+--- ../pristine-linux-2.6.16/include/asm-i386/spinlock.h	2006-03-20 05:53:29.000000000 +0000
++++ ./include/asm-i386/spinlock.h	2006-03-20 19:38:27.000000000 +0000
+@@ -6,6 +6,7 @@
+ #include <asm/page.h>
+ #include <linux/config.h>
+ #include <linux/compiler.h>
++#include <asm/smp_alt.h>
+ 
+ /*
+  * Your basic SMP spinlocks, allowing only a single CPU anywhere
+@@ -23,7 +24,8 @@
+ 
+ #define __raw_spin_lock_string \
+ 	"\n1:\t" \
+-	"lock ; decb %0\n\t" \
++	LOCK \
++	"decb %0\n\t" \
+ 	"jns 3f\n" \
+ 	"2:\t" \
+ 	"rep;nop\n\t" \
+@@ -34,7 +36,8 @@
+ 
+ #define __raw_spin_lock_string_flags \
+ 	"\n1:\t" \
+-	"lock ; decb %0\n\t" \
++	LOCK \
++	"decb %0\n\t" \
+ 	"jns 4f\n\t" \
+ 	"2:\t" \
+ 	"testl $0x200, %1\n\t" \
+@@ -65,10 +68,34 @@ static inline void __raw_spin_lock_flags
+ static inline int __raw_spin_trylock(raw_spinlock_t *lock)
+ {
+ 	char oldval;
++#ifdef CONFIG_SMP_ALTERNATIVES
+ 	__asm__ __volatile__(
+-		"xchgb %b0,%1"
++		"1:movb %1,%b0\n"
++		"movb $0,%1\n"
++		"2:"
++		".section __smp_alternatives,\"a\"\n"
++		".long 1b\n"
++		".long 3f\n"
++		".previous\n"
++		".section __smp_replacements,\"a\"\n"
++		"3: .byte 2b - 1b\n"
++		".byte 5f-4f\n"
++		".byte 0\n"
++		".byte 6f-5f\n"
++		".byte -1\n"
++		"4: xchgb %b0,%1\n"
++		"5: movb %1,%b0\n"
++		"movb $0,%1\n"
++		"6:\n"
++		".previous\n"
+ 		:"=q" (oldval), "=m" (lock->slock)
+ 		:"0" (0) : "memory");
++#else
++	__asm__ __volatile__(
++		"xchgb %b0,%1\n"
++		:"=q" (oldval), "=m" (lock->slock)
++		:"0" (0) : "memory");
++#endif
+ 	return oldval > 0;
+ }
+ 
+@@ -178,12 +205,12 @@ static inline int __raw_write_trylock(ra
+ 
+ static inline void __raw_read_unlock(raw_rwlock_t *rw)
+ {
+-	asm volatile("lock ; incl %0" :"=m" (rw->lock) : : "memory");
++	asm volatile(LOCK "incl %0" :"=m" (rw->lock) : : "memory");
+ }
+ 
+ static inline void __raw_write_unlock(raw_rwlock_t *rw)
+ {
+-	asm volatile("lock ; addl $" RW_LOCK_BIAS_STR ", %0"
++	asm volatile(LOCK "addl $" RW_LOCK_BIAS_STR ", %0"
+ 				 : "=m" (rw->lock) : : "memory");
+ }
+ 
+diff -pruN ../pristine-linux-2.6.16/include/asm-i386/system.h ./include/asm-i386/system.h
+--- ../pristine-linux-2.6.16/include/asm-i386/system.h	2006-03-20 05:53:29.000000000 +0000
++++ ./include/asm-i386/system.h	2006-03-20 19:38:27.000000000 +0000
+@@ -5,7 +5,7 @@
+ #include <linux/kernel.h>
+ #include <asm/segment.h>
+ #include <asm/cpufeature.h>
+-#include <linux/bitops.h> /* for LOCK_PREFIX */
++#include <asm/smp_alt.h>
+ 
+ #ifdef __KERNEL__
+ 
+@@ -271,19 +271,19 @@ static inline unsigned long __cmpxchg(vo
+ 	unsigned long prev;
+ 	switch (size) {
+ 	case 1:
+-		__asm__ __volatile__(LOCK_PREFIX "cmpxchgb %b1,%2"
++		__asm__ __volatile__(LOCK "cmpxchgb %b1,%2"
+ 				     : "=a"(prev)
+ 				     : "q"(new), "m"(*__xg(ptr)), "0"(old)
+ 				     : "memory");
+ 		return prev;
+ 	case 2:
+-		__asm__ __volatile__(LOCK_PREFIX "cmpxchgw %w1,%2"
++		__asm__ __volatile__(LOCK "cmpxchgw %w1,%2"
+ 				     : "=a"(prev)
+ 				     : "r"(new), "m"(*__xg(ptr)), "0"(old)
+ 				     : "memory");
+ 		return prev;
+ 	case 4:
+-		__asm__ __volatile__(LOCK_PREFIX "cmpxchgl %1,%2"
++		__asm__ __volatile__(LOCK "cmpxchgl %1,%2"
+ 				     : "=a"(prev)
+ 				     : "r"(new), "m"(*__xg(ptr)), "0"(old)
+ 				     : "memory");
+@@ -336,7 +336,7 @@ static inline unsigned long long __cmpxc
+ 				      unsigned long long new)
+ {
+ 	unsigned long long prev;
+-	__asm__ __volatile__(LOCK_PREFIX "cmpxchg8b %3"
++	__asm__ __volatile__(LOCK "cmpxchg8b %3"
+ 			     : "=A"(prev)
+ 			     : "b"((unsigned long)new),
+ 			       "c"((unsigned long)(new >> 32)),
+@@ -503,11 +503,55 @@ struct alt_instr { 
+ #endif
+ 
+ #ifdef CONFIG_SMP
++#if defined(CONFIG_SMP_ALTERNATIVES) && !defined(MODULE)
++#define smp_alt_mb(instr)                                           \
++__asm__ __volatile__("6667:\nnop\nnop\nnop\nnop\nnop\nnop\n6668:\n" \
++		     ".section __smp_alternatives,\"a\"\n"          \
++		     ".long 6667b\n"                                \
++                     ".long 6673f\n"                                \
++		     ".previous\n"                                  \
++		     ".section __smp_replacements,\"a\"\n"          \
++		     "6673:.byte 6668b-6667b\n"                     \
++		     ".byte 6670f-6669f\n"                          \
++		     ".byte 6671f-6670f\n"                          \
++                     ".byte 0\n"                                    \
++		     ".byte %c0\n"                                  \
++		     "6669:lock;addl $0,0(%%esp)\n"                 \
++		     "6670:" instr "\n"                             \
++		     "6671:\n"                                      \
++		     ".previous\n"                                  \
++		     :                                              \
++		     : "i" (X86_FEATURE_XMM2)                       \
++		     : "memory")
++#define smp_rmb() smp_alt_mb("lfence")
++#define smp_mb()  smp_alt_mb("mfence")
++#define set_mb(var, value) do {                                     \
++unsigned long __set_mb_temp;                                        \
++__asm__ __volatile__("6667:movl %1, %0\n6668:\n"                    \
++		     ".section __smp_alternatives,\"a\"\n"          \
++		     ".long 6667b\n"                                \
++		     ".long 6673f\n"                                \
++		     ".previous\n"                                  \
++		     ".section __smp_replacements,\"a\"\n"          \
++		     "6673: .byte 6668b-6667b\n"                    \
++		     ".byte 6670f-6669f\n"                          \
++		     ".byte 0\n"                                    \
++		     ".byte 6671f-6670f\n"                          \
++		     ".byte -1\n"                                   \
++		     "6669: xchg %1, %0\n"                          \
++		     "6670:movl %1, %0\n"                           \
++		     "6671:\n"                                      \
++		     ".previous\n"                                  \
++		     : "=m" (var), "=r" (__set_mb_temp)             \
++		     : "1" (value)                                  \
++		     : "memory"); } while (0)
++#else
+ #define smp_mb()	mb()
+ #define smp_rmb()	rmb()
++#define set_mb(var, value) do { (void) xchg(&var, value); } while (0)
++#endif
+ #define smp_wmb()	wmb()
+ #define smp_read_barrier_depends()	read_barrier_depends()
+-#define set_mb(var, value) do { (void) xchg(&var, value); } while (0)
+ #else
+ #define smp_mb()	barrier()
+ #define smp_rmb()	barrier()
+Subject: Increase x86 interrupt vector range
+
+Remove the limit of 256 interrupt vectors by changing the value
+stored in orig_{e,r}ax to be the negated interrupt vector.
+The orig_{e,r}ax needs to be < 0 to allow the signal code to
+distinguish between return from interrupt and return from syscall.
+With this change applied, NR_IRQS can be > 256.
+
+Signed-off-by: Christian Limpach <Christian.Limpach@cl.cam.ac.uk>
+---
+ arch/i386/kernel/entry.S    |    4 ++--
+ arch/i386/kernel/irq.c      |    4 ++--
+ arch/x86_64/kernel/entry.S  |    2 +-
+ arch/x86_64/kernel/irq.c    |    4 ++--
+ arch/x86_64/kernel/smp.c    |    4 ++--
+ include/asm-x86_64/hw_irq.h |    2 +-
+ 6 files changed, 10 insertions(+), 10 deletions(-)
+
+diff -r 7d239c83edea arch/i386/kernel/entry.S
+--- a/arch/i386/kernel/entry.S	Mon Mar 20 06:00:20 2006 +0000
++++ b/arch/i386/kernel/entry.S	Fri Mar 31 17:01:35 2006 +0100
+@@ -406,7 +406,7 @@ ENTRY(irq_entries_start)
+ ENTRY(irq_entries_start)
+ .rept NR_IRQS
+ 	ALIGN
+-1:	pushl $vector-256
++1:	pushl $~(vector)
+ 	jmp common_interrupt
+ .data
+ 	.long 1b
+@@ -423,7 +423,7 @@ common_interrupt:
+ 
+ #define BUILD_INTERRUPT(name, nr)	\
+ ENTRY(name)				\
+-	pushl $nr-256;			\
++	pushl $~(nr);			\
+ 	SAVE_ALL			\
+ 	movl %esp,%eax;			\
+ 	call smp_/**/name;		\
+diff -r 7d239c83edea arch/i386/kernel/irq.c
+--- a/arch/i386/kernel/irq.c	Mon Mar 20 06:00:20 2006 +0000
++++ b/arch/i386/kernel/irq.c	Fri Mar 31 17:01:35 2006 +0100
+@@ -53,8 +53,8 @@ static union irq_ctx *softirq_ctx[NR_CPU
+  */
+ fastcall unsigned int do_IRQ(struct pt_regs *regs)
+ {	
+-	/* high bits used in ret_from_ code */
+-	int irq = regs->orig_eax & 0xff;
++	/* high bit used in ret_from_ code */
++	int irq = ~regs->orig_eax;
+ #ifdef CONFIG_4KSTACKS
+ 	union irq_ctx *curctx, *irqctx;
+ 	u32 *isp;
+diff -r 7d239c83edea arch/x86_64/kernel/entry.S
+--- a/arch/x86_64/kernel/entry.S	Mon Mar 20 06:00:20 2006 +0000
++++ b/arch/x86_64/kernel/entry.S	Fri Mar 31 17:01:35 2006 +0100
+@@ -609,7 +609,7 @@ retint_kernel:
+  */		
+ 	.macro apicinterrupt num,func
+ 	INTR_FRAME
+-	pushq $\num-256
++	pushq $~(\num)
+ 	CFI_ADJUST_CFA_OFFSET 8
+ 	interrupt \func
+ 	jmp ret_from_intr
+diff -r 7d239c83edea arch/x86_64/kernel/irq.c
+--- a/arch/x86_64/kernel/irq.c	Mon Mar 20 06:00:20 2006 +0000
++++ b/arch/x86_64/kernel/irq.c	Fri Mar 31 17:01:35 2006 +0100
+@@ -96,8 +96,8 @@ skip:
+  */
+ asmlinkage unsigned int do_IRQ(struct pt_regs *regs)
+ {	
+-	/* high bits used in ret_from_ code  */
+-	unsigned irq = regs->orig_rax & 0xff;
++	/* high bit used in ret_from_ code  */
++	unsigned irq = ~regs->orig_rax;
+ 
+ 	exit_idle();
+ 	irq_enter();
+diff -r 7d239c83edea arch/x86_64/kernel/smp.c
+--- a/arch/x86_64/kernel/smp.c	Mon Mar 20 06:00:20 2006 +0000
++++ b/arch/x86_64/kernel/smp.c	Fri Mar 31 17:01:35 2006 +0100
+@@ -135,10 +135,10 @@ asmlinkage void smp_invalidate_interrupt
+ 
+ 	cpu = smp_processor_id();
+ 	/*
+-	 * orig_rax contains the interrupt vector - 256.
++	 * orig_rax contains the negated interrupt vector.
+ 	 * Use that to determine where the sender put the data.
+ 	 */
+-	sender = regs->orig_rax + 256 - INVALIDATE_TLB_VECTOR_START;
++	sender = ~regs->orig_rax - INVALIDATE_TLB_VECTOR_START;
+ 	f = &per_cpu(flush_state, sender);
+ 
+ 	if (!cpu_isset(cpu, f->flush_cpumask))
+diff -r 7d239c83edea include/asm-x86_64/hw_irq.h
+--- a/include/asm-x86_64/hw_irq.h	Mon Mar 20 06:00:20 2006 +0000
++++ b/include/asm-x86_64/hw_irq.h	Fri Mar 31 17:01:35 2006 +0100
+@@ -127,7 +127,7 @@ __asm__( \
+ __asm__( \
+ "\n.p2align\n" \
+ "IRQ" #nr "_interrupt:\n\t" \
+-	"push $" #nr "-256 ; " \
++	"push $~(" #nr ") ; " \
+ 	"jmp common_interrupt");
+ 
+ #if defined(CONFIG_X86_IO_APIC)
