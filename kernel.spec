@@ -211,8 +211,8 @@ Patch36:	pom-ng-rpc-%{_netfilter_snap}.patch
 # from http://www.linuximq.net/patchs/linux-2.6.16-imq2.diff
 Patch50:	linux-2.6.16-imq2.diff
 
-
-Patch51:	http://bluetooth-alsa.sourceforge.net/sco-mtu.patch
+# from http://bluetooth-alsa.sourceforge.net/sco-mtu.patch
+Patch51:	sco-mtu.patch
 
 # support for HDAPS (Hard Disk Active Protection System)
 # that can be found in IBM/Lenovo ThinkPad laptops
