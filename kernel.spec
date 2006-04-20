@@ -89,7 +89,7 @@ full grsecurity conflicts with vserver
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.3
+%define		_rel			0.4
 
 %define		_netfilter_snap		20060329
 %define		_nf_hipac_ver		0.9.1
@@ -242,10 +242,11 @@ Patch120:	xen-3.0-2.6.16.patch
 
 
 Patch1000:	linux-2.6-grsec-minimal.patch
-# grsecurity snap for 2.6.16.
-# from http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.16-200603292139.patch
-## [pl]nienaklada sie 
-#Patch9999:	grsecurity-2.1.9-2.6.16-200603292139.patch
+
+# grsecurity snap for 2.6.16.9
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.16.2-200604101732.patch
+
+Patch9999:	grsecurity-2.1.9-2.6.16.9.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -759,8 +760,9 @@ echo "Arch: $arch is not supported by Xen"
 %if %{with grsec_minimal} && %{without vserver}
 %patch1000 -p1
 %endif
+
 %if %{with grsec_full} && %{without vserver}
-#patch9999 -p1
+%patch9999 -p1
 %endif
 
 # Fix EXTRAVERSION in main Makefile
