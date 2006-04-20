@@ -102,7 +102,7 @@ full grsecurity conflicts with vserver
 %define		drm_xfree_version	4.3.0
 
 %define		squashfs_version	3.0
-%define		suspend_version		2.2.1
+%define		suspend_version		2.2.4.2
 
 %define		xen_version		3.0.2
 
@@ -131,8 +131,8 @@ Source5:	kernel-ppclibs.Makefile
 #Source6:	http://people.redhat.com/mingo/debloating-patches/debloating-patches-2.6.15-rc7.tar.gz
 ## Source6-md5:	ca7a1cdef3e5c95f182d039cebd92b5e
 
-Source10:	http://suspend2.net/downloads/all/suspend2-2.2.1-for-2.6.16.tar.bz2
-# Source10-md5:	a235b258487dcce5db8a6f52a3b13bc3
+Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.16.9.tar.bz2
+# Source10-md5:	558da693ae56f6e6693ae7ff70359305
 Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.16/reiser4-for-2.6.16-1.patch.gz
 # Source12-md5:	f51303b5e445432b974a729b76036c40
 
@@ -669,10 +669,10 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 %if %{with suspend2}
-for i in suspend2-%{suspend_version}-for-2.6.16/*.patch; do
+for i in suspend2-%{suspend_version}-for-2.6.16.9/*.patch; do
 patch -p1 -s < $i
 done
-patch -p1 -s < suspend2-%{suspend_version}-for-2.6.16/3010-fork-non-conflicting-pages-for-copyback
+patch -p1 -s < suspend2-%{suspend_version}-for-2.6.16.9/3010-fork-non-conflicting-pages-for-copyback
 %endif
 
 # reiserfs4
