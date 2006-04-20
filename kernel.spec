@@ -89,7 +89,7 @@ full grsecurity conflicts with vserver
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.4
+%define		_rel			0.5
 
 %define		_netfilter_snap		20060329
 %define		_nf_hipac_ver		0.9.1
@@ -240,6 +240,8 @@ Patch101:	linux-2.6-vs2.1-grsec-minimal.patch
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 Patch120:	xen-3.0-2.6.16.patch
 
+# Fix foobar in suspend2 patch for 2.6.16.6+
+Patch200:	suspend2-2.2.4.2-for-2.6.16.9-fix.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
@@ -668,11 +670,11 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 install %{SOURCE5} Makefile.ppclibs
 %endif
 
+%patch200 -p1
 %if %{with suspend2}
-for i in suspend2-%{suspend_version}-for-2.6.16.9/*.patch; do
+for i in suspend2-%{suspend_version}-for-2.6.16.9/[0-9]*; do
 patch -p1 -s < $i
 done
-patch -p1 -s < suspend2-%{suspend_version}-for-2.6.16.9/3010-fork-non-conflicting-pages-for-copyback
 %endif
 
 # reiserfs4
