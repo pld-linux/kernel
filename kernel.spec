@@ -751,9 +751,9 @@ done
 %if %{with xen}
 %ifarch %{ix86}
 %patch120 -p1
-%endif
 %else
 echo "Arch: $arch is not supported by Xen"
+%endif
 %endif
 
 %if %{with grsec_minimal} && %{without vserver}
