@@ -7,7 +7,7 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
-%bcond_without	vesafb_tng	# build without vesafb-tng patch applied (breaks other fb modules)
+%bcond_with	vesafb_tng	# build with vesafb-tng patch applied (breaks other fb modules)
 
 %bcond_with     preemptive      # build preemptive kernel
 %bcond_with	suspend2	# build software suspend support
