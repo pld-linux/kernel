@@ -8,7 +8,7 @@
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
 
-%bcond_with     preemptive      # build preemptive kernel
+%bcond_with	preemptive	# build preemptive kernel
 %bcond_with	suspend2	# build software suspend support
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	vserver		# added vserver.
@@ -773,51 +773,51 @@ sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 %build
 TuneUpConfigForIX86 () {
 %ifarch %{ix86}
-    %ifnarch i386
+	%ifnarch i386
 	sed -i 's:CONFIG_M386=y:# CONFIG_M386 is not set:' $1
-    %endif
-    %ifarch i486
+	%endif
+	%ifarch i486
 	sed -i 's:# CONFIG_M486 is not set:CONFIG_M486=y:' $1
-    %endif
-    %ifarch i586
+	%endif
+	%ifarch i586
 	sed -i 's:# CONFIG_M586 is not set:CONFIG_M586=y:' $1
-    %endif
-    %ifarch i686
+	%endif
+	%ifarch i686
 	sed -i 's:# CONFIG_M686 is not set:CONFIG_M686=y:' $1
-    %endif
-    %ifarch pentium3
+	%endif
+	%ifarch pentium3
 	sed -i 's:# CONFIG_MPENTIUMIII is not set:CONFIG_MPENTIUMIII=y:' $1
-    %endif
-    %ifarch pentium4
+	%endif
+	%ifarch pentium4
 	sed -i 's:# CONFIG_MPENTIUM4 is not set:CONFIG_MPENTIUM4=y:' $1
-    %endif
-    %ifarch athlon
+	%endif
+	%ifarch athlon
 	sed -i 's:# CONFIG_MK7 is not set:CONFIG_MK7=y:' $1
-    %endif
-    %ifarch i686 athlon pentium3 pentium4
+	%endif
+	%ifarch i686 athlon pentium3 pentium4
 	sed -i "s:CONFIG_HIGHMEM4G=y:# CONFIG_HIGHMEM4G is not set:" $1
 	sed -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" $1
 	sed -i 's:CONFIG_MATH_EMULATION=y:# CONFIG_MATH_EMULATION is not set:' $1
-    %endif
-    %if %{with regparm}
+	%endif
+	%if %{with regparm}
 	sed -i 's:# CONFIG_REGPARM is not set:CONFIG_REGPARM=y:' $1
-    %endif
+	%endif
 %endif
 }
 
 %if "%{_target_base_arch}" != "%{_arch}"
-    CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
-    DepMod=/bin/true
-    %if "%{_arch}" == "sparc" && "%{_target_base_arch}" == "sparc64"
+	CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
+	DepMod=/bin/true
+	%if "%{_arch}" == "sparc" && "%{_target_base_arch}" == "sparc64"
 	DepMod=/sbin/depmod
-    %endif
-    %if "%{_arch}" == "x86_64" && "%_target_base_arch}" == "i386"
+	%endif
+	%if "%{_arch}" == "x86_64" && "%_target_base_arch}" == "i386"
 	CrossOpts="ARCH=%{_target_base_arch}"
 	DepMod=/sbin/depmod
-    %endif
+	%endif
 %else
-    CrossOpts=""
-    DepMod=/sbin/depmod
+	CrossOpts=""
+	DepMod=/sbin/depmod
 %endif
 
 
@@ -985,7 +985,7 @@ PreInstallKernel() {
 	%{__make} $CrossOpts modules_install \
 		%{?with_verbose:V=1} \
 		DEPMOD=$DepMod \
-     		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
+		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 		KERNELRELEASE=$KernelVer
 
 	if [ "$smp" = "yes" ]; then
@@ -1028,17 +1028,17 @@ rm -rf $RPM_BUILD_ROOT
 umask 022
 
 %if "%{_target_base_arch}" != "%{_arch}"
-    CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
-    export DEPMOD=/bin/true
-    %if "%{_arch}" == "sparc" && "%{_target_base_arch}" == "sparc64"
+	CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
+	export DEPMOD=/bin/true
+	%if "%{_arch}" == "sparc" && "%{_target_base_arch}" == "sparc64"
 	unset DEPMOD
-    %endif
-    %if "%{_arch}" == "x86_64" && "%{_target_base_arch}" == "i386"
+	%endif
+	%if "%{_arch}" == "x86_64" && "%{_target_base_arch}" == "i386"
 	CrossOpts="ARCH=%{_target_base_arch}"
 	unset DEPMOD
-    %endif
+	%endif
 %else
-    CrossOpts=""
+	CrossOpts=""
 %endif
 
 
@@ -1107,7 +1107,7 @@ rm -rf $RPM_BUILD_ROOT
 %preun
 rm -f /lib/modules/%{version}-%{release}/modules.*
 if [ -x /sbin/new-kernel-pkg ]; then
-    /sbin/new-kernel-pkg --remove %{version}-%{release}
+	/sbin/new-kernel-pkg --remove %{version}-%{release}
 fi
 
 %post
@@ -1179,7 +1179,7 @@ ln -sf vmlinux-%{version}-%{release} /boot/vmlinux
 %preun smp
 rm -f /lib/modules/%{version}-%{release}smp/modules.*
 if [ -x /sbin/new-kernel-pkg ]; then
-    /sbin/new-kernel-pkg --remove %{version}-%{release}smp
+	/sbin/new-kernel-pkg --remove %{version}-%{release}smp
 fi
 
 %post smp
