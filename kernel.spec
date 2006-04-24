@@ -1012,8 +1012,11 @@ echo "-%{release}" > localversion
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig
-%{?with_up:BuildKernel}
-%{?with_up:PreInstallKernel}
+%if %{with up}
+BuildKernel
+PreInstallKernel
+%endif
+
 # SMP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
@@ -1088,7 +1091,7 @@ fi
 %if %{with up} || %{with smp}
 # UP or SMP
 install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{version}/include/linux/* \
-$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
+	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 %endif
 
 %{__make} $CrossOpts mrproper
@@ -1249,7 +1252,6 @@ ln -sf vmlinux-%{version}-%{release}smp /boot/vmlinux
 %depmod %{version}-%{release}smp
 
 %post headers
-# TODO: avoid %%post here and package symlink?
 rm -f /usr/src/linux
 ln -snf linux-%{version} /usr/src/linux
 
