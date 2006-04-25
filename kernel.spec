@@ -1,6 +1,7 @@
 #
 # TODO:
 #		ALL
+# WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -11,8 +12,8 @@
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	suspend2	# build software suspend support
 %bcond_with	verbose		# verbose build (V=1)
-%bcond_with	vserver		# added vserver.
-%bcond_with	xen		# added Xen support.
+%bcond_with	vserver		# added vserver
+%bcond_with	xen		# added Xen support
 %bcond_without	grsecurity	# don't build grsecurity at all
 %bcond_without	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
 %bcond_with	grsec_full	# build full grsecurity
@@ -110,7 +111,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_vserver:-vserver}%{?with_xen:-xen}%{?with_preemptive:-preempt}
-%define		_postver	.10
+%define		_postver	.11
 #define		_postver	%{nil}
 Version:	2.6.16%{_postver}
 Release:	%{_rel}
@@ -121,7 +122,7 @@ Group:		Base/Kernel
 #define		_rc	-rc5
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	fa033b62ca83b51ce016adab195aabe6
+# Source0-md5:	0854d832be6227fd757f75ae018ba8c7
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 #Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
@@ -881,7 +882,7 @@ BuildConfig() {
 	sed -i "s:# CONFIG_PREEMPT is not set:CONFIG_PREEMPT=y:" arch/%{_target_base_arch}/defconfig
 	echo "# CONFIG_DEBUG_PREEMPT is not set" >> arch/%{_target_base_arch}/defconfig
 %endif
-	
+
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{_target_base_arch}/defconfig}
 %{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" arch/%{_target_base_arch}/defconfig}
 %{?debug:sed -i "s:# CONFIG_RT_DEADLOCK_DETECT is not set:CONFIG_RT_DEADLOCK_DETECT=y:" arch/%{_target_base_arch}/defconfig}
