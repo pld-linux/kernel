@@ -111,7 +111,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
-Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_vserver:-vserver}%{?with_xen:-xen}%{?with_preemptive:-preempt}
+Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_preemptive:-preempt}
 %define		_postver	.11
 #define		_postver	%{nil}
 Version:	2.6.16%{_postver}
