@@ -9,14 +9,15 @@
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
 
+%bcond_with	grsec_full	# build full grsecurity
 %bcond_with	preemptive	# build preemptive kernel
 %bcond_with	suspend2	# build software suspend support
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	vserver		# added vserver
-%bcond_with	xen		# added Xen support
+%bcond_with	xen0		# added Xen0 support
+%bcond_with	xenU		# added XenU support
 %bcond_without	grsecurity	# don't build grsecurity at all
 %bcond_without	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
-%bcond_with	grsec_full	# build full grsecurity
 
 %{?debug:%define with_verbose 1}
 
@@ -157,6 +158,8 @@ Source42:	kernel-suspend2.config
 Source43:	kernel-vserver.config
 Source44:	kernel-vesafb-tng.config
 Source45:	kernel-grsec.config
+Source46:	kernel-xen0.config
+Source47:	kernel-xenU.config
 
 ###
 #	Patches
@@ -271,7 +274,7 @@ Provides:	kernel = %{epoch}:%{version}-%{release}
 Provides:	kernel(netfilter) = %{_netfilter_snap}
 Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
 Provides:	kernel(realtime-lsm) = 0.1.1
-%if %{with xen}
+%if %{with xen0} || %{with xenU}
 Provides:	kernel(xen) = %{_xen_version}
 %endif
 Provides:	kernel-misc-fuse
@@ -300,7 +303,7 @@ Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
 Conflicts:	udev < %{_udev_ver}
 Conflicts:	util-linux < %{_util_linux_ver}
 Conflicts:	xfsprogs < %{_xfsprogs_ver}
-%if %{with xen}
+%if %{with xen0} || %{with xenU}
 ExclusiveArch:	%{ix86}
 %else
 ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc ppc64 sparc sparc64
@@ -437,7 +440,7 @@ Provides:	kernel = %{epoch}:%{version}-%{release}
 Provides:	kernel(netfilter) = %{_netfilter_snap}
 Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
 Provides:	kernel(realtime-lsm) = 0.1.1
-%if %{with xen}
+%if %{with xen0} || %{with xenU}
 Provides:	kernel(xen) = %{_xen_version}
 %endif
 Provides:	kernel-smp-misc-fuse
@@ -749,11 +752,9 @@ done
 %endif
 %endif
 
-%if %{with xen}
+%if %{with xen0} || %{with xenU}
 %ifarch %{ix86}
 %patch120 -p1
-%else
-echo "Arch: $arch is not supported by Xen"
 %endif
 %endif
 
@@ -873,6 +874,14 @@ BuildConfig() {
 	cat %{SOURCE45} >> arch/%{_target_base_arch}/defconfig
 %endif
 
+%if %{with xen0}
+	cat %{SOURCE46} >> arch/%{_target_base_arch}/defconfig
+%endif	
+
+%if %{with xenU}
+	cat %{SOURCE47} >> arch/%{_target_base_arch}/defconfig
+%endif	
+	
 	# fbsplash
 	echo "CONFIG_FB_SPLASH=y" >> arch/%{_target_base_arch}/defconfig
 
@@ -1139,7 +1148,7 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title='PLD Linux'
 	fi
 
-	ext='%{?with_grsec_full:grsecurity}%{?with_vserver:vserver}%{?with_xen:Xen}%{?with_preemptive:preempt}'
+	ext='%{?with_grsec_full:grsecurity}%{?with_vserver:vserver}%{?with_xen0:Xen0}%{?with_xenU:XenU}%{?with_preemptive:preempt}'
 	if [ "$ext" ]; then
 		title="$title $ext"
 	fi
@@ -1211,7 +1220,7 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title='PLD Linux'
 	fi
 
-	ext='%{?with_grsec_full:grsecurity}%{?with_vserver:vserver}%{?with_xen:Xen}%{?with_preemptive:preempt}'
+	ext='%{?with_grsec_full:grsecurity}%{?with_vserver:vserver}%{?with_xen0:Xen0}%{?with_xenU:XenU}%{?with_preemptive:preempt}'
 	if [ "$ext" ]; then
 		title="$title $ext"
 	fi
