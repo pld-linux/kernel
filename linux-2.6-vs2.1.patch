@@ -4,7 +4,6 @@ diff -NurpP --minimal linux-2.6.16.8/Documentation/vserver/debug.txt linux-2.6.1
 @@ -0,0 +1,108 @@
 +
 +debug_cvirt:
-B0rken, don't use until baggins fix it
 +
 + 2   4	"vx_map_tgid: %p/%llx: %d -> %d"
 +	"vx_rmap_tgid: %p/%llx: %d -> %d"
@@ -7437,7 +7436,7 @@ diff -NurpP --minimal linux-2.6.16.8/fs/namespace.c linux-2.6.16.8-vs2.1.1-rc17/
  
  	retval = -EPERM;
 -	if (!capable(CAP_SYS_ADMIN))
-+	if (!(capable(CAP_SYS_ADMIN) && vx_ccaps(VXC_SECURE_MOUNT)))
++	if (!capable(CAP_SYS_ADMIN) && !vx_ccaps(VXC_SECURE_MOUNT))
  		goto dput_and_out;
  
  	retval = do_umount(nd.mnt, flags);
@@ -7497,7 +7496,7 @@ diff -NurpP --minimal linux-2.6.16.8/fs/namespace.c linux-2.6.16.8-vs2.1.1-rc17/
  	struct super_block *sb = nd->mnt->mnt_sb;
  
 -	if (!capable(CAP_SYS_ADMIN))
-+	if (!(capable(CAP_SYS_ADMIN) && vx_ccaps(VXC_SECURE_REMOUNT)))
++	if (!capable(CAP_SYS_ADMIN) && !vx_ccaps(VXC_SECURE_REMOUNT))
  		return -EPERM;
  
  	if (!check_mnt(nd->mnt))
@@ -7506,7 +7505,7 @@ diff -NurpP --minimal linux-2.6.16.8/fs/namespace.c linux-2.6.16.8-vs2.1.1-rc17/
  	struct vfsmount *p;
  	int err = 0;
 -	if (!capable(CAP_SYS_ADMIN))
-+	if (!(capable(CAP_SYS_ADMIN) && vx_ccaps(VXC_SECURE_MOUNT)))
++	if (!capable(CAP_SYS_ADMIN) && !vx_ccaps(VXC_SECURE_MOUNT))
  		return -EPERM;
  	if (!old_name || !*old_name)
  		return -EINVAL;
@@ -7515,7 +7514,7 @@ diff -NurpP --minimal linux-2.6.16.8/fs/namespace.c linux-2.6.16.8-vs2.1.1-rc17/
  
  	/* we need capabilities... */
 -	if (!capable(CAP_SYS_ADMIN))
-+	if (!(capable(CAP_SYS_ADMIN) && vx_ccaps(VXC_SECURE_MOUNT)))
++	if (!capable(CAP_SYS_ADMIN) && !vx_ccaps(VXC_SECURE_MOUNT))
  		return -EPERM;
  
  	mnt = do_kern_mount(type, flags, name, data);
@@ -7573,7 +7572,7 @@ diff -NurpP --minimal linux-2.6.16.8/fs/namespace.c linux-2.6.16.8-vs2.1.1-rc17/
  		return 0;
  
 -	if (!capable(CAP_SYS_ADMIN)) {
-+	if (!(capable(CAP_SYS_ADMIN) && vx_ccaps(VXC_SECURE_MOUNT))) {
++	if (!capable(CAP_SYS_ADMIN) && !vx_ccaps(VXC_SECURE_MOUNT)) {
  		err = -EPERM;
  		goto out;
  	}
@@ -9084,12 +9083,12 @@ diff -NurpP --minimal linux-2.6.16.8/fs/quota.c linux-2.6.16.8-vs2.1.1-rc17/fs/q
  		if (((type == USRQUOTA && current->euid != id) ||
  		     (type == GRPQUOTA && !in_egroup_p(id))) &&
 -		    !capable(CAP_SYS_ADMIN))
-+		    !(capable(CAP_SYS_ADMIN) && vx_ccaps(VXC_QUOTA_CTL)))
++		    !capable(CAP_SYS_ADMIN) && !vx_ccaps(VXC_QUOTA_CTL))
  			return -EPERM;
  	}
  	else if (cmd != Q_GETFMT && cmd != Q_SYNC && cmd != Q_GETINFO)
 -		if (!capable(CAP_SYS_ADMIN))
-+		if (!(capable(CAP_SYS_ADMIN) && vx_ccaps(VXC_QUOTA_CTL)))
++		if (!capable(CAP_SYS_ADMIN) && !vx_ccaps(VXC_QUOTA_CTL))
  			return -EPERM;
  
  	return 0;
@@ -9142,11 +9141,11 @@ diff -NurpP --minimal linux-2.6.16.8/fs/quota.c linux-2.6.16.8-vs2.1.1-rc17/fs/q
  		if (((type == XQM_USRQUOTA && current->euid != id) ||
  		     (type == XQM_GRPQUOTA && !in_egroup_p(id))) &&
 -		     !capable(CAP_SYS_ADMIN))
-+		     !(capable(CAP_SYS_ADMIN) && vx_ccaps(VXC_QUOTA_CTL)))
++		     !capable(CAP_SYS_ADMIN) && !vx_ccaps(VXC_QUOTA_CTL))
  			return -EPERM;
  	} else if (cmd != Q_XGETQSTAT && cmd != Q_XQUOTASYNC) {
 -		if (!capable(CAP_SYS_ADMIN))
-+		if (!(capable(CAP_SYS_ADMIN) && vx_ccaps(VXC_QUOTA_CTL)))
++		if (!capable(CAP_SYS_ADMIN) && !vx_ccaps(VXC_QUOTA_CTL))
  			return -EPERM;
  	}
  
@@ -11082,7 +11081,7 @@ diff -NurpP --minimal linux-2.6.16.8/fs/super.c linux-2.6.16.8-vs2.1.1-rc17/fs/s
  
 +	sb = ERR_PTR(-EPERM);
 +	if ((type->fs_flags & FS_BINARY_MOUNTDATA) &&
-+		!(capable(CAP_SYS_ADMIN) && vx_ccaps(VXC_BINARY_MOUNT)))
++		!capable(CAP_SYS_ADMIN) && !vx_ccaps(VXC_BINARY_MOUNT))
 +		goto out;
 +
 +	sb = ERR_PTR(-ENOMEM);
@@ -11712,7 +11711,7 @@ diff -NurpP --minimal linux-2.6.16.8/fs/xfs/quota/xfs_qm_syscalls.c linux-2.6.16
  	int			nculprits;
  
 -	if (!force && !capable(CAP_SYS_ADMIN))
-+	if (!force && !(capable(CAP_SYS_ADMIN) && vx_ccaps(VXC_QUOTA_CTL)))
++	if (!force && !capable(CAP_SYS_ADMIN) && !vx_ccaps(VXC_QUOTA_CTL))
  		return XFS_ERROR(EPERM);
  	/*
  	 * No file system can have quotas enabled on disk but not in core.
@@ -11721,7 +11720,7 @@ diff -NurpP --minimal linux-2.6.16.8/fs/xfs/quota/xfs_qm_syscalls.c linux-2.6.16
  	xfs_inode_t	*qip;
  
 -	if (!capable(CAP_SYS_ADMIN))
-+	if (!(capable(CAP_SYS_ADMIN) && vx_ccaps(VXC_QUOTA_CTL)))
++	if (!capable(CAP_SYS_ADMIN) && !vx_ccaps(VXC_QUOTA_CTL))
  		return XFS_ERROR(EPERM);
  	error = 0;
  	if (!XFS_SB_VERSION_HASQUOTA(&mp->m_sb) || flags == 0) {
@@ -11730,7 +11729,7 @@ diff -NurpP --minimal linux-2.6.16.8/fs/xfs/quota/xfs_qm_syscalls.c linux-2.6.16
  	__int64_t	sbflags;
  
 -	if (!capable(CAP_SYS_ADMIN))
-+	if (!(capable(CAP_SYS_ADMIN) && vx_ccaps(VXC_QUOTA_CTL)))
++	if (!capable(CAP_SYS_ADMIN) && !vx_ccaps(VXC_QUOTA_CTL))
  		return XFS_ERROR(EPERM);
  
  	flags &= (XFS_ALL_QUOTA_ACCT | XFS_ALL_QUOTA_ENFD);
@@ -11739,7 +11738,7 @@ diff -NurpP --minimal linux-2.6.16.8/fs/xfs/quota/xfs_qm_syscalls.c linux-2.6.16
  	xfs_qcnt_t		hard, soft;
  
 -	if (!capable(CAP_SYS_ADMIN))
-+	if (!(capable(CAP_SYS_ADMIN) && vx_ccaps(VXC_QUOTA_CTL)))
++	if (!capable(CAP_SYS_ADMIN) && !vx_ccaps(VXC_QUOTA_CTL))
  		return XFS_ERROR(EPERM);
  
  	if ((newlim->d_fieldmask &
@@ -13563,7 +13562,7 @@ diff -NurpP --minimal linux-2.6.16.8/include/linux/vs_base.h linux-2.6.16.8-vs2.
 +
 +#define vx_info_ccaps(v,c)	(__vx_ccaps(v) & (c))
 +
-+#define vx_ccaps(c)	vx_info_ccaps(current->vx_info,(c))
++#define vx_ccaps(c)	(vx_info_ccaps(current->vx_info,(c)) && (current->euid == 0))
 +
 +
 +#define __vx_mcaps(v)	((v) ? (v)->vx_ccaps >> 32UL : ~0 )
@@ -19239,7 +19238,7 @@ diff -NurpP --minimal linux-2.6.16.8/kernel/sys.c linux-2.6.16.8-vs2.1.1-rc17/ke
  	char tmp[__NEW_UTS_LEN];
  
 -	if (!capable(CAP_SYS_ADMIN))
-+	if (!(capable(CAP_SYS_ADMIN) && vx_ccaps(VXC_SET_UTSNAME)))
++	if (!capable(CAP_SYS_ADMIN) && !vx_ccaps(VXC_SET_UTSNAME))
  		return -EPERM;
  	if (len < 0 || len > __NEW_UTS_LEN)
  		return -EINVAL;
@@ -19280,7 +19279,7 @@ diff -NurpP --minimal linux-2.6.16.8/kernel/sys.c linux-2.6.16.8-vs2.1.1-rc17/ke
  	char tmp[__NEW_UTS_LEN];
  
 -	if (!capable(CAP_SYS_ADMIN))
-+	if (!(capable(CAP_SYS_ADMIN) && vx_ccaps(VXC_SET_UTSNAME)))
++	if (!capable(CAP_SYS_ADMIN) && !vx_ccaps(VXC_SET_UTSNAME))
  		return -EPERM;
  	if (len < 0 || len > __NEW_UTS_LEN)
  		return -EINVAL;
@@ -19302,7 +19301,7 @@ diff -NurpP --minimal linux-2.6.16.8/kernel/sys.c linux-2.6.16.8-vs2.1.1-rc17/ke
  	old_rlim = current->signal->rlim + resource;
  	if ((new_rlim.rlim_max > old_rlim->rlim_max) &&
 -	    !capable(CAP_SYS_RESOURCE))
-+	    !(capable(CAP_SYS_RESOURCE) && vx_ccaps(VXC_SET_RLIMIT)))
++	    !capable(CAP_SYS_RESOURCE) && !vx_ccaps(VXC_SET_RLIMIT))
  		return -EPERM;
  	if (resource == RLIMIT_NOFILE && new_rlim.rlim_max > NR_OPEN)
  			return -EPERM;
@@ -28396,7 +28395,7 @@ diff -NurpP --minimal linux-2.6.16.8/security/commoncap.c linux-2.6.16.8-vs2.1.1
  {
 -	if ((type != 3 && type != 10) && !capable(CAP_SYS_ADMIN))
 +	if ((type != 3 && type != 10) &&
-+		!(capable(CAP_SYS_ADMIN) && vx_ccaps(VXC_SYSLOG)))
++		!capable(CAP_SYS_ADMIN) && !vx_ccaps(VXC_SYSLOG))
  		return -EPERM;
  	return 0;
  }
