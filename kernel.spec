@@ -246,6 +246,9 @@ Patch120:	xen-3.0-2.6.16.patch
 # Fix foobar in suspend2 patch for 2.6.16.6+
 Patch200:	suspend2-2.2.4.2-for-2.6.16.9-fix.patch
 
+# Alpha compile fix
+Patch300:	linux-2.6-alpha-for_each_possible_cpu.patch
+
 Patch1000:	linux-2.6-grsec-minimal.patch
 
 # grsecurity snap for 2.6.16.9
@@ -738,6 +741,10 @@ done
 
 %patch55 -p1
 %patch56 -p1
+
+
+%patch300 -p1
+
 
 %ifarch %{ix86} ia64 x86_64
 %patch57 -p1
