@@ -1,0 +1,37 @@
+* Ernst Herzberg wrote:
+> arch/alpha/kernel/setup.c: In function `register_cpus':
+> arch/alpha/kernel/setup.c:486: warning: implicit declaration of function `for_each_possible_cpu'
+> arch/alpha/kernel/setup.c:486: error: syntax error before '{' token
+> arch/alpha/kernel/setup.c:488: error: `p' undeclared (first use in this function)
+> arch/alpha/kernel/setup.c:488: error: (Each undeclared identifier is reported only once
+> arch/alpha/kernel/setup.c:488: error: for each function it appears in.)
+> arch/alpha/kernel/setup.c: At top level:
+> arch/alpha/kernel/setup.c:492: error: syntax error before "return"
+
+From: Andrew Morton <akpm@osdl.org>
+
+Backport for_each_possible_cpu() into 2.6.16.  Fixes the alpha build, and any
+future occurrences.
+
+
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+---
+
+ include/linux/cpumask.h |    1 +
+ 1 files changed, 1 insertion(+)
+
+--- a/include/linux/cpumask.h   2006-04-24 19:28:56.000000000 +0200
++++ b/include/linux/cpumask.h   2006-04-24 19:29:21.000000000 +0200
+@@ -408,6 +408,7 @@
+ })
+ 
+ #define for_each_cpu(cpu)        for_each_cpu_mask((cpu), cpu_possible_map)
++#define for_each_possible_cpu(cpu)  for_each_cpu_mask((cpu), cpu_possible_map)
+ #define for_each_online_cpu(cpu)  for_each_cpu_mask((cpu), cpu_online_map)
+ #define for_each_present_cpu(cpu) for_each_cpu_mask((cpu), cpu_present_map)
+ 
+-
+To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at  http://www.tux.org/lkml/
