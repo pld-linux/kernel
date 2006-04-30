@@ -253,7 +253,7 @@ Patch30:	2.6.x-TGA-fbdev-lkml.patch
 Patch31:	linux-2.6-ppc-no-i8042.patch
 Patch32:	sis5513-support-sis-965l.patch
 Patch33:	linux-2.6-ppc-ideirq.patch
-#Patch34:	-- EMPTY --
+Patch34:	linux-iforce-trust_ffrm.patch
 # http://fatooh.org/esfq-2.6/
 Patch35:	esfq-kernel.patch
 # http://www.linuximq.net/
@@ -824,7 +824,7 @@ rm -rf patches
 %patch31 -p1
 %patch32 -p1
 %patch33 -p1
-#patch34 -p1 ## EMPTY
+%patch34 -p1
 %patch35 -p1
 %patch36 -p1
 %patch37 -p1
