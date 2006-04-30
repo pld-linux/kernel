@@ -226,6 +226,7 @@ Patch52:	linux-hdaps_protect.patch
 # from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
 Patch53:	esfq-kernel.patch
 
+Patch54:	linux-iforce-trust_ffrm.patch
 # by Baggins request:
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch55:	linux-2.6-atm-vbr.patch
@@ -738,6 +739,7 @@ done
 
 %patch53 -p1
 
+%patch54 -p1
 
 %patch55 -p1
 %patch56 -p1
