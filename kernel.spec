@@ -90,7 +90,7 @@ full grsecurity conflicts with vserver
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			4
+%define		_rel			1
 
 %define		_netfilter_snap		20060329
 %define		_nf_hipac_ver		0.9.1
@@ -112,7 +112,7 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_preemptive:-preempt}
-%define		_postver	.11
+%define		_postver	.12
 #define		_postver	%{nil}
 Version:	2.6.16%{_postver}
 Release:	%{_rel}
@@ -123,7 +123,7 @@ Group:		Base/Kernel
 #define		_rc	-rc5
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	0854d832be6227fd757f75ae018ba8c7
+# Source0-md5:	93bfa0f0454c368be5fbb6ed71ce5c55
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 #Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
@@ -246,9 +246,6 @@ Patch120:	xen-3.0-2.6.16.patch
 
 # Fix foobar in suspend2 patch for 2.6.16.6+
 Patch200:	suspend2-2.2.4.2-for-2.6.16.9-fix.patch
-
-# Alpha compile fix
-Patch300:	linux-2.6-alpha-for_each_possible_cpu.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
@@ -743,9 +740,6 @@ done
 
 %patch55 -p1
 %patch56 -p1
-
-
-%patch300 -p1
 
 
 %ifarch %{ix86} ia64 x86_64
