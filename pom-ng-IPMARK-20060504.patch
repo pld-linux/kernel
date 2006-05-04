@@ -1,0 +1,138 @@
+ include/linux/netfilter_ipv4/ipt_IPMARK.h |   13 ++++
+ net/ipv4/netfilter/Kconfig                |   18 ++++++
+ net/ipv4/netfilter/Makefile               |    1 
+ net/ipv4/netfilter/ipt_IPMARK.c           |   79 ++++++++++++++++++++++++++++++
+ 4 files changed, 111 insertions(+)
+
+diff -Nur --exclude '*.orig' linux.org/include/linux/netfilter_ipv4/ipt_IPMARK.h linux/include/linux/netfilter_ipv4/ipt_IPMARK.h
+--- linux.org/include/linux/netfilter_ipv4/ipt_IPMARK.h	1970-01-01 01:00:00.000000000 +0100
++++ linux/include/linux/netfilter_ipv4/ipt_IPMARK.h	2006-05-04 11:19:22.000000000 +0200
+@@ -0,0 +1,13 @@
++#ifndef _IPT_IPMARK_H_target
++#define _IPT_IPMARK_H_target
++
++struct ipt_ipmark_target_info {
++	unsigned long andmask;
++	unsigned long ormask;
++	unsigned char addr;
++};
++
++#define IPT_IPMARK_SRC    0
++#define IPT_IPMARK_DST    1
++
++#endif /*_IPT_IPMARK_H_target*/
+diff -Nur --exclude '*.orig' linux.org/net/ipv4/netfilter/Kconfig linux/net/ipv4/netfilter/Kconfig
+--- linux.org/net/ipv4/netfilter/Kconfig	2006-05-02 23:38:44.000000000 +0200
++++ linux/net/ipv4/netfilter/Kconfig	2006-05-04 11:19:22.000000000 +0200
+@@ -606,5 +606,23 @@
+ 	  Allows altering the ARP packet payload: source and destination
+ 	  hardware and network addresses.
+ 
++config IP_NF_TARGET_IPMARK
++	tristate  'IPMARK target support'
++	depends on IP_NF_MANGLE
++	help
++	  This option adds a `IPMARK' target, which allows you to create rules
++	  in the `mangle' table which alter the netfilter mark field basing
++	  on the source or destination ip address of the packet.
++	  This is very useful for very fast massive shaping - using only one
++	  rule you can direct packets to houndreds different queues.
++	  You will probably find it helpful only if your linux machine acts as
++	  a shaper for many others computers.
++
++	  If you want to compile it as a module, say M here and read
++	  <file:Documentation/modules.txt>. The module will be called
++	  ipt_IPMARK.o.  If unsure, say `N'.
++
++
++
+ endmenu
+ 
+diff -Nur --exclude '*.orig' linux.org/net/ipv4/netfilter/Makefile linux/net/ipv4/netfilter/Makefile
+--- linux.org/net/ipv4/netfilter/Makefile	2006-05-02 23:38:44.000000000 +0200
++++ linux/net/ipv4/netfilter/Makefile	2006-05-04 11:19:22.000000000 +0200
+@@ -0,0 +0,1 @@
++obj-$(CONFIG_IP_NF_TARGET_IPMARK) += ipt_IPMARK.o
+diff -Nur --exclude '*.orig' linux.org/net/ipv4/netfilter/ipt_IPMARK.c linux/net/ipv4/netfilter/ipt_IPMARK.c
+--- linux.org/net/ipv4/netfilter/ipt_IPMARK.c	1970-01-01 01:00:00.000000000 +0100
++++ linux/net/ipv4/netfilter/ipt_IPMARK.c	2006-05-04 11:19:22.000000000 +0200
+@@ -0,0 +1,79 @@
++#include <linux/module.h>
++#include <linux/skbuff.h>
++#include <linux/ip.h>
++#include <net/checksum.h>
++
++#include <linux/netfilter_ipv4/ip_tables.h>
++#include <linux/netfilter_ipv4/ipt_IPMARK.h>
++
++MODULE_AUTHOR("Grzegorz Janoszka <Grzegorz@Janoszka.pl>");
++MODULE_DESCRIPTION("IP tables IPMARK: mark based on ip address");
++MODULE_LICENSE("GPL");
++
++static unsigned int
++target(struct sk_buff **pskb,
++       const struct net_device *in,
++       const struct net_device *out,
++       unsigned int hooknum,
++       const void *targinfo,
++       void *userinfo)
++{
++	const struct ipt_ipmark_target_info *ipmarkinfo = targinfo;
++	struct iphdr *iph = (*pskb)->nh.iph;
++	unsigned long mark;
++
++	if (ipmarkinfo->addr == IPT_IPMARK_SRC)
++		mark = (unsigned long) ntohl(iph->saddr);
++	else
++		mark = (unsigned long) ntohl(iph->daddr);
++
++	mark &= ipmarkinfo->andmask;
++	mark |= ipmarkinfo->ormask;
++	
++	if ((*pskb)->nfmark != mark)
++		(*pskb)->nfmark = mark;
++
++	return IPT_CONTINUE;
++}
++
++static int
++checkentry(const char *tablename,
++	   const struct ipt_entry *e,
++           void *targinfo,
++           unsigned int targinfosize,
++           unsigned int hook_mask)
++{
++	if (targinfosize != IPT_ALIGN(sizeof(struct ipt_ipmark_target_info))) {
++		printk(KERN_WARNING "IPMARK: targinfosize %u != %Zu\n",
++		       targinfosize,
++		       IPT_ALIGN(sizeof(struct ipt_ipmark_target_info)));
++		return 0;
++	}
++
++	if (strcmp(tablename, "mangle") != 0) {
++		printk(KERN_WARNING "IPMARK: can only be called from \"mangle\" table, not \"%s\"\n", tablename);
++		return 0;
++	}
++
++	return 1;
++}
++
++static struct ipt_target ipt_ipmark_reg = { 
++	.name = "IPMARK",
++	.target = target,
++	.checkentry = checkentry,
++	.me = THIS_MODULE
++};
++
++static int __init init(void)
++{
++	return ipt_register_target(&ipt_ipmark_reg);
++}
++
++static void __exit fini(void)
++{
++	ipt_unregister_target(&ipt_ipmark_reg);
++}
++
++module_init(init);
++module_exit(fini);
