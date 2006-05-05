@@ -200,9 +200,11 @@ Patch30:	pom-ng-ACCOUNT-%{_netfilter_snap}.patch
 Patch31:	pom-ng-IPMARK-%{_netfilter_snap}.patch
 Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
 Patch33:	pom-ng-TARPIT-%{_netfilter_snap}.patch
-Patch34:	pom-ng-account-%{_netfilter_snap}.patch
-Patch35:	pom-ng-ipp2p-%{_netfilter_snap}.patch
-Patch36:	pom-ng-rpc-%{_netfilter_snap}.patch
+Patch34:	pom-ng-XOR-%{_netfilter_snap}.patch
+Patch35:	pom-ng-account-%{_netfilter_snap}.patch
+Patch36:	pom-ng-ipp2p-%{_netfilter_snap}.patch
+Patch37:	pom-ng-rpc-%{_netfilter_snap}.patch
+Patch38:	pom-ng-unclean-%{_netfilter_snap}.patch
 
 ###
 #	End netfilter
@@ -718,6 +720,8 @@ done
 %patch34 -p1
 %patch35 -p1
 %patch36 -p1
+%patch37 -p1
+%patch38 -p1
 
 ##
 # end of netfilter
