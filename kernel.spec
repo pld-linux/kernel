@@ -10,10 +10,7 @@
 %bcond_without	pcmcia		# don't build pcmcia
 
 %bcond_with	grsec_full	# build full grsecurity
-%bcond_with	preemptive	# build preemptive kernel
-%bcond_with	suspend2	# build software suspend support
 %bcond_with	verbose		# verbose build (V=1)
-%bcond_with	vserver		# added vserver
 %bcond_with	xen0		# added Xen0 support
 %bcond_with	xenU		# added XenU support
 %bcond_without	grsecurity	# don't build grsecurity at all
@@ -36,8 +33,8 @@
 %define		with_grsecurity		1
 %endif
 
-%if %{with grsec_full} && %{with vserver}
-full grsecurity conflicts with vserver
+%if %{with grsec_full}
+TODO: full grsecurity conflicts with vserver
 %endif
 
 %ifarch sparc
@@ -111,7 +108,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
-Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_preemptive:-preempt}
+Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 %define		_postver	.13
 #define		_postver	%{nil}
 Version:	2.6.16%{_postver}
@@ -675,11 +672,9 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 %patch200 -p1
-%if %{with suspend2}
 for i in suspend2-%{suspend_version}-for-2.6.16.9/[0-9]*; do
 patch -p1 -s < $i
 done
-%endif
 
 # reiserfs4
 %{__gzip} -dc %{SOURCE12} | %{__patch} -s -p1
@@ -748,11 +743,9 @@ done
 
 %patch60 -p1
 
-%if %{with vserver}
 %patch100 -p1
 %if %{with grsec_minimal}
 %patch101 -p1
-%endif
 %endif
 
 %if %{with xen0} || %{with xenU}
@@ -761,11 +754,8 @@ done
 %endif
 %endif
 
-%if %{with grsec_minimal} && %{without vserver}
-%patch1000 -p1
-%endif
-
-%if %{with grsec_full} && %{without vserver}
+%if %{with grsec_full}
+%error TODO
 %patch9999 -p1
 %endif
 
@@ -861,14 +851,11 @@ BuildConfig() {
 	# squashfs
 	cat %{SOURCE41} >> arch/%{_target_base_arch}/defconfig
 
-%if %{with suspend2}
 	cat %{SOURCE42} >> arch/%{_target_base_arch}/defconfig
-%endif
 
-%if %{with vserver}
+	# Vserver hack, TODO: move it to .config
 	sed -i 's/^CONFIG_VMSPLIT_//g' arch/%{_target_base_arch}/defconfig
 	cat %{SOURCE43} >> arch/%{_target_base_arch}/defconfig
-%endif
 
 	# vesafb-tng
 	cat %{SOURCE44} >> arch/%{_target_base_arch}/defconfig
@@ -887,13 +874,6 @@ BuildConfig() {
 	
 	# fbsplash
 	echo "CONFIG_FB_SPLASH=y" >> arch/%{_target_base_arch}/defconfig
-
-
-%if %{with preemptive}
-	sed -i "s:CONFIG_PREEMPT_NONE=y:# CONFIG_PREEMPT_NONE is not set:" arch/%{_target_base_arch}/defconfig
-	sed -i "s:# CONFIG_PREEMPT is not set:CONFIG_PREEMPT=y:" arch/%{_target_base_arch}/defconfig
-	echo "# CONFIG_DEBUG_PREEMPT is not set" >> arch/%{_target_base_arch}/defconfig
-%endif
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{_target_base_arch}/defconfig}
 %{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" arch/%{_target_base_arch}/defconfig}
@@ -1151,7 +1131,7 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title='PLD Linux'
 	fi
 
-	ext='%{?with_grsec_full:grsecurity}%{?with_vserver:vserver}%{?with_xen0:Xen0}%{?with_xenU:XenU}%{?with_preemptive:preempt}'
+	ext='%{?with_grsec_full:grsecurity}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
 	if [ "$ext" ]; then
 		title="$title $ext"
 	fi
@@ -1223,7 +1203,7 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title='PLD Linux'
 	fi
 
-	ext='%{?with_grsec_full:grsecurity}%{?with_vserver:vserver}%{?with_xen0:Xen0}%{?with_xenU:XenU}%{?with_preemptive:preempt}'
+	ext='%{?with_grsec_full:grsecurity}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
 	if [ "$ext" ]; then
 		title="$title $ext"
 	fi
