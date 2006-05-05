@@ -100,7 +100,7 @@ TODO: full grsecurity conflicts with vserver
 %define		drm_xfree_version	4.3.0
 
 %define		squashfs_version	3.0
-%define		suspend_version		2.2.4.2
+%define		suspend_version		2.2.5
 
 %define		xen_version		3.0.2
 
@@ -130,7 +130,7 @@ Source5:	kernel-ppclibs.Makefile
 ## Source6-md5:	ca7a1cdef3e5c95f182d039cebd92b5e
 
 Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.16.9.tar.bz2
-# Source10-md5:	558da693ae56f6e6693ae7ff70359305
+# Source10-md5:	34345b1f7ad1505f6b264427a21e8a04
 Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.16/reiser4-for-2.6.16-1.patch.gz
 # Source12-md5:	f51303b5e445432b974a729b76036c40
 
@@ -241,9 +241,6 @@ Patch100:	linux-2.6-vs2.1.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 Patch120:	xen-3.0-2.6.16.patch
-
-# Fix foobar in suspend2 patch for 2.6.16.6+
-Patch200:	suspend2-2.2.4.2-for-2.6.16.9-fix.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
@@ -672,7 +669,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 install %{SOURCE5} Makefile.ppclibs
 %endif
 
-%patch200 -p1
 for i in suspend2-%{suspend_version}-for-2.6.16.9/[0-9]*; do
 patch -p1 -s < $i
 done
