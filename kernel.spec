@@ -236,6 +236,8 @@ Patch57:	linux-2.6-cpuset_virtualization.patch
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_31.tar.bz2
 Patch60:	linux-2.6-sk98lin-8.31.2.3.patch
 
+Patch70:	linux-2.6-suspend2-avoid-redef.patch
+
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.1.1-rc15.diff
 Patch100:	linux-2.6-vs2.1.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
@@ -673,6 +675,7 @@ install %{SOURCE5} Makefile.ppclibs
 for i in suspend2-%{suspend_version}-for-2.6.16.9/[0-9]*; do
 patch -p1 -s < $i
 done
+%patch70 -p1
 
 # reiserfs4
 %{__gzip} -dc %{SOURCE12} | %{__patch} -s -p1
