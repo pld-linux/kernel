@@ -847,16 +847,12 @@ BuildConfig() {
 
 	# netfilter
 	cat %{SOURCE40} >> arch/%{_target_base_arch}/defconfig
-
 	# squashfs
 	cat %{SOURCE41} >> arch/%{_target_base_arch}/defconfig
-
+	# suspend2
 	cat %{SOURCE42} >> arch/%{_target_base_arch}/defconfig
-
-	# Vserver hack, TODO: move it to .config
-	sed -i 's/^CONFIG_VMSPLIT_//g' arch/%{_target_base_arch}/defconfig
+	# vserver
 	cat %{SOURCE43} >> arch/%{_target_base_arch}/defconfig
-
 	# vesafb-tng
 	cat %{SOURCE44} >> arch/%{_target_base_arch}/defconfig
 
