@@ -236,7 +236,6 @@ Patch60:	linux-2.6-sk98lin-8.31.2.3.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.1.1-rc15.diff
 Patch100:	linux-2.6-vs2.1.patch
-Patch101:	linux-2.6-vs2.1-grsec-minimal.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 Patch120:	xen-3.0-2.6.16.patch
@@ -737,23 +736,23 @@ done
 %patch56 -p1
 
 
-%ifarch %{ix86} ia64 x86_64
+%ifarch %{ix86} %{x8664} ia64
 %patch57 -p1
 %endif
 
 %patch60 -p1
 
 %patch100 -p1
-%if %{with grsec_minimal}
-%patch101 -p1
-%endif
 
 %if %{with xen0} || %{with xenU}
-%ifarch %{ix86}
+%ifarch %{ix86} %{x8664} ia64
 %patch120 -p1
 %endif
 %endif
 
+%if %{with grsec_minimal}
+%patch1000 -p1
+%endif
 %if %{with grsec_full}
 %error TODO
 %patch9999 -p1
