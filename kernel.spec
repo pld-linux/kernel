@@ -774,6 +774,8 @@ sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 %build
 TuneUpConfigForIX86 () {
 %ifarch %{ix86}
+	smp=
+	[ "$2" = "yes" ] && smp=yes
 	%ifnarch i386
 	sed -i 's:CONFIG_M386=y:# CONFIG_M386 is not set:' $1
 	%endif
@@ -796,8 +798,12 @@ TuneUpConfigForIX86 () {
 	sed -i 's:# CONFIG_MK7 is not set:CONFIG_MK7=y:' $1
 	%endif
 	%ifarch i686 athlon pentium3 pentium4
-	sed -i "s:CONFIG_HIGHMEM4G=y:# CONFIG_HIGHMEM4G is not set:" $1
-	sed -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" $1
+	if [ "$smp" = "yes" ]; then
+		sed -i "s:CONFIG_HIGHMEM4G=y:# CONFIG_HIGHMEM4G is not set:" $1
+		sed -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" $1
+	fi
+	%endif
+	%ifarch i586 i686 athlon pentium3 pentium4
 	sed -i 's:CONFIG_MATH_EMULATION=y:# CONFIG_MATH_EMULATION is not set:' $1
 	%endif
 	%if %{with regparm}
@@ -837,7 +843,7 @@ BuildConfig() {
 	echo "Building config file [using $Config.conf] for KERNEL $1..."
 	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
 
-	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
+	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig "$smp"
 
 %ifarch ppc ppc64
 	if [ "$smp" = "yes" ]; then
