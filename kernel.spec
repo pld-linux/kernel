@@ -33,10 +33,6 @@
 %define		with_grsecurity		1
 %endif
 
-%if %{with grsec_full}
-TODO: full grsecurity conflicts with vserver
-%endif
-
 %ifarch sparc
 # sparc32 is missing important updates from 2.5 cycle - won't build.
 %undefine	with_smp
@@ -87,7 +83,7 @@ TODO: full grsecurity conflicts with vserver
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.2
+%define		_rel			0.3
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
@@ -248,10 +244,10 @@ Patch120:	xen-3.0-2.6.16.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
-# grsecurity snap for 2.6.16.9
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.16.2-200604101732.patch
+# grsecurity snap for 2.6.16.14
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.16.14-200605060936.patch
 
-Patch9999:	grsecurity-2.1.9-2.6.16.9.patch
+Patch9999:	grsecurity-2.1.9-2.6.16.14.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -758,10 +754,9 @@ done
 %endif
 
 %if %{with grsec_minimal}
-%patch1000 -p1
+#%%patch1000 -p1
 %endif
 %if %{with grsec_full}
-%error TODO
 %patch9999 -p1
 %endif
 
