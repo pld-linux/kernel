@@ -159,13 +159,13 @@ diff -urN linux-2.6.16.original/block/ll_rw_blk.c linux-2.6.16.hdaps/block/ll_rw
 +}
 diff -urN linux-2.6.16.original/drivers/ide/ide-disk.c linux-2.6.16.hdaps/drivers/ide/ide-disk.c
 --- linux-2.6.16.original/drivers/ide/ide-disk.c	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/drivers/ide/ide-disk.c	2006-04-07 17:52:42.000000000 +0100
++++ linux-2.6.16.hdaps/drivers/ide/ide-disk.c	2006-04-30 13:24:35.000000000 +0100
 @@ -71,6 +71,10 @@
  #include <asm/io.h>
  #include <asm/div64.h>
  
-+int protect_method = 0;
-+module_param(protect_method, int, 0444);
++int idedisk_protect_method = 0;
++module_param_named(protect_method, idedisk_protect_method, int, 0444);
 +MODULE_PARM_DESC(protect_method, "hdaps disk protection method (0=autodetect, 1=unload, 2=standby)");
 +
  struct ide_disk_obj {
@@ -297,11 +297,11 @@ diff -urN linux-2.6.16.original/drivers/ide/ide-disk.c linux-2.6.16.hdaps/driver
 +	 *    we use "standby immediate" and live with spinning down the drive..
 +	 *    (Word 84, bit 13 of IDENTIFY DEVICE data)
 +	 */
-+	if (protect_method == 1) {
++	if (idedisk_protect_method == 1) {
 +		unload = 1;	
 +		printk(KERN_DEBUG "idedisk_issue_protect_fn(): unload method requested, overriding drive capability check..\n");
 +	}
-+	else if (protect_method == 2) {
++	else if (idedisk_protect_method == 2) {
 +		unload = 0;	
 +		printk(KERN_DEBUG "idedisk_issue_protect_fn(): standby method requested, overriding drive capability check..\n");
 +	}
@@ -369,13 +369,13 @@ diff -urN linux-2.6.16.original/drivers/ide/ide-io.c linux-2.6.16.hdaps/drivers/
  	spin_unlock_irqrestore(&ide_lock, flags);
 diff -urN linux-2.6.16.original/drivers/scsi/libata-core.c linux-2.6.16.hdaps/drivers/scsi/libata-core.c
 --- linux-2.6.16.original/drivers/scsi/libata-core.c	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/drivers/scsi/libata-core.c	2006-04-07 17:39:19.000000000 +0100
++++ linux-2.6.16.hdaps/drivers/scsi/libata-core.c	2006-04-30 13:25:24.000000000 +0100
 @@ -78,6 +78,10 @@
  static unsigned int ata_unique_id = 1;
  static struct workqueue_struct *ata_wq;
  
-+int protect_method = 0;
-+module_param(protect_method, int, 0444);
++int libata_protect_method = 0;
++module_param_named(protect_method, libata_protect_method, int, 0444);
 +MODULE_PARM_DESC(protect_method, "hdaps disk protection method (0=autodetect, 1=unload, 2=standby)");
 +
  int atapi_enabled = 0;
@@ -383,18 +383,18 @@ diff -urN linux-2.6.16.original/drivers/scsi/libata-core.c linux-2.6.16.hdaps/dr
  MODULE_PARM_DESC(atapi_enabled, "Enable discovery of ATAPI devices (0=off, 1=on)");
 diff -urN linux-2.6.16.original/drivers/scsi/libata.h linux-2.6.16.hdaps/drivers/scsi/libata.h
 --- linux-2.6.16.original/drivers/scsi/libata.h	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/drivers/scsi/libata.h	2006-04-07 17:39:47.000000000 +0100
++++ linux-2.6.16.hdaps/drivers/scsi/libata.h	2006-04-30 13:25:33.000000000 +0100
 @@ -40,6 +40,7 @@
  };
  
  /* libata-core.c */
-+extern int protect_method;
++extern int libata_protect_method;
  extern int atapi_enabled;
  extern int libata_fua;
  extern struct ata_queued_cmd *ata_qc_new_init(struct ata_port *ap,
 diff -urN linux-2.6.16.original/drivers/scsi/libata-scsi.c linux-2.6.16.hdaps/drivers/scsi/libata-scsi.c
 --- linux-2.6.16.original/drivers/scsi/libata-scsi.c	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/drivers/scsi/libata-scsi.c	2006-04-07 17:40:11.000000000 +0100
++++ linux-2.6.16.hdaps/drivers/scsi/libata-scsi.c	2006-04-30 13:24:56.000000000 +0100
 @@ -662,6 +662,42 @@
  	}
  }
@@ -409,11 +409,11 @@ diff -urN linux-2.6.16.original/drivers/scsi/libata-scsi.c linux-2.6.16.hdaps/dr
 +	struct ata_device *dev = &ap->device[sdev->id];
 +	int unload;
 +
-+	if (protect_method == 1) {
++	if (libata_protect_method == 1) {
 +		unload = 1;	
 +		printk(KERN_DEBUG "ata_scsi_issue_protect_fn(): unload method requested, overriding drive capability check..\n");
 +	}
-+	else if (protect_method == 2) {
++	else if (libata_protect_method == 2) {
 +		unload = 0;	
 +		printk(KERN_DEBUG "ata_scsi_issue_protect_fn(): standby method requested, overriding drive capability check..\n");
 +	}
