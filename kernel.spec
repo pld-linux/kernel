@@ -13,6 +13,7 @@
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	xen0		# added Xen0 support
 %bcond_with	xenU		# added XenU support
+%bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_without	grsecurity	# don't build grsecurity at all
 %bcond_without	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
 
@@ -246,7 +247,6 @@ Patch1000:	linux-2.6-grsec-minimal.patch
 
 # grsecurity snap for 2.6.16.14
 # based on http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.16.14-200605060936.patch
-
 Patch9999:	grsecurity-2.1.9-2.6.16.14.patch
 
 URL:		http://www.kernel.org/
@@ -754,7 +754,7 @@ done
 %endif
 
 %if %{with grsec_minimal}
-#%%patch1000 -p1
+%patch1000 -p1
 %endif
 %if %{with grsec_full}
 %patch9999 -p1
@@ -769,8 +769,11 @@ sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 %build
 TuneUpConfigForIX86 () {
 %ifarch %{ix86}
-	smp=
-	[ "$2" = "yes" ] && smp=yes
+	pae=
+	[ "$2" = "yes" ] && pae=yes
+	%if %{with pae}
+	pae=yes
+	%endif
 	%ifnarch i386
 	sed -i 's:CONFIG_M386=y:# CONFIG_M386 is not set:' $1
 	%endif
@@ -793,7 +796,7 @@ TuneUpConfigForIX86 () {
 	sed -i 's:# CONFIG_MK7 is not set:CONFIG_MK7=y:' $1
 	%endif
 	%ifarch i686 athlon pentium3 pentium4
-	if [ "$smp" = "yes" ]; then
+	if [ "$pae" = "yes" ]; then
 		sed -i "s:CONFIG_HIGHMEM4G=y:# CONFIG_HIGHMEM4G is not set:" $1
 		sed -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" $1
 	fi
