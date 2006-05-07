@@ -243,6 +243,8 @@ Patch101:	linux-2.6-vs2.1-suspend2.patch
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 Patch120:	xen-3.0-2.6.16.patch
 
+Patch200:	linux-2.6-ppc-ICE-hacks.patch
+
 Patch1000:	linux-2.6-grsec-minimal.patch
 
 # grsecurity snap for 2.6.16.14
@@ -758,6 +760,10 @@ done
 %endif
 %if %{with grsec_full}
 %patch9999 -p1
+%endif
+
+%ifarch ppc ppc64
+%patch200 -p1
 %endif
 
 # Fix EXTRAVERSION in main Makefile
