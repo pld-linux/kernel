@@ -13,9 +13,11 @@
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	xen0		# added Xen0 support
 %bcond_with	xenU		# added XenU support
-%bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_without	grsecurity	# don't build grsecurity at all
 %bcond_without	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
+
+%bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
+%bcond_with	nfsroot		# build with root on NFS support
 
 %{?debug:%define with_verbose 1}
 
@@ -887,6 +889,11 @@ BuildConfig() {
 	
 	# fbsplash
 	echo "CONFIG_FB_SPLASH=y" >> arch/%{_target_base_arch}/defconfig
+
+%if %{with nfsroot}
+	sed -i "s:CONFIG_NFS_FS=m:CONFIG_NFS_FS=y:" $1
+	echo "CONFIG_ROOT_NFS=y" >>$1
+%endif
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{_target_base_arch}/defconfig}
 %{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" arch/%{_target_base_arch}/defconfig}
