@@ -865,6 +865,9 @@ BuildConfig() {
 	cat %{SOURCE41} >> arch/%{_target_base_arch}/defconfig
 	# suspend2
 	cat %{SOURCE42} >> arch/%{_target_base_arch}/defconfig
+%ifarch ppc ppc64
+	sed -i "s:CONFIG_SUSPEND2=y:# CONFIG_SUSPEND2 is not set:" arch/%{_target_base_arch}/defconfig
+%endif
 	# vserver
 	cat %{SOURCE43} >> arch/%{_target_base_arch}/defconfig
 	# vesafb-tng
