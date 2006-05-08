@@ -891,8 +891,8 @@ BuildConfig() {
 	echo "CONFIG_FB_SPLASH=y" >> arch/%{_target_base_arch}/defconfig
 
 %if %{with nfsroot}
-	sed -i "s:CONFIG_NFS_FS=m:CONFIG_NFS_FS=y:" $1
-	echo "CONFIG_ROOT_NFS=y" >>$1
+	sed -i "s:CONFIG_NFS_FS=m:CONFIG_NFS_FS=y:" arch/%{_target_base_arch}/defconfig
+	echo "CONFIG_ROOT_NFS=y" >> arch/%{_target_base_arch}/defconfig
 %endif
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{_target_base_arch}/defconfig}
