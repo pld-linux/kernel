@@ -86,7 +86,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.1
+%define		_rel			1
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
@@ -809,9 +809,6 @@ TuneUpConfigForIX86 () {
 		sed -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" $1
 	fi
 	sed -i 's:CONFIG_MATH_EMULATION=y:# CONFIG_MATH_EMULATION is not set:' $1
-	%endif
-	%if %{with regparm}
-	sed -i 's:# CONFIG_REGPARM is not set:CONFIG_REGPARM=y:' $1
 	%endif
 %endif
 }
