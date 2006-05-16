@@ -86,7 +86,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			1.1
+%define		_rel			2
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
@@ -775,9 +775,6 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
 # on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 
-# cleanup
-find . -type f -name '*.orig' -o -name '.gitignore' -exec rm "{}" ";"
-
 %build
 TuneUpConfigForIX86 () {
 %ifarch %{ix86}
@@ -1040,6 +1037,7 @@ BuildKernel smp
 PreInstallKernel smp
 %endif
 
+find . -type f -name '*.orig' -o -name '.gitignore' | xargs rm
 find . -type f -name 'Kconfig*' -o -name 'Makefile*' | grep -v Documentation | grep -v scripts > tmp_aux
 sed -i 's:^./::g' tmp_aux
 perl %{SOURCE6} tmp_aux %{_prefix}/src/linux-%{version} | sort | uniq > aux_files && rm tmp_aux
