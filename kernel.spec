@@ -86,7 +86,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			1
+%define		_rel			1.1
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
@@ -127,6 +127,7 @@ Source2:	kernel-config.h
 Source5:	kernel-ppclibs.Makefile
 #Source6:	http://people.redhat.com/mingo/debloating-patches/debloating-patches-2.6.15-rc7.tar.gz
 ## Source6-md5:	ca7a1cdef3e5c95f182d039cebd92b5e
+Source6:	kernel-module-build.pl
 
 Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.16.9.tar.bz2
 # Source10-md5:	34345b1f7ad1505f6b264427a21e8a04
@@ -774,6 +775,9 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
 # on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 
+# cleanup
+find . -type f -name '*.orig' -o -name '.gitignore' -exec rm "{}" ";"
+
 %build
 TuneUpConfigForIX86 () {
 %ifarch %{ix86}
@@ -1035,6 +1039,12 @@ BuildConfig smp
 BuildKernel smp
 PreInstallKernel smp
 %endif
+
+find . -type f -name 'Kconfig*' -o -name 'Makefile*' | grep -v Documentation | grep -v scripts > tmp_aux
+sed -i 's:^./::g' tmp_aux
+perl %{SOURCE6} tmp_aux %{_prefix}/src/linux-%{version} | sort | uniq > aux_files && rm tmp_aux
+cp -f aux_files aux_files_exc
+sed -i 's:^:%exclude :g' aux_files_exc
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -1520,24 +1530,14 @@ fi
 %{_prefix}/src/linux-%{version}/config-up
 %{?with_up:%{_prefix}/src/linux-%{version}/Module.symvers-up}
 
-%files module-build
+%files module-build -f aux_files
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/Kbuild
-%{_prefix}/src/linux-%{version}/Makefile
 %{_prefix}/src/linux-%{version}/localversion
-%dir %{_prefix}/src/linux-%{version}/arch
-%dir %{_prefix}/src/linux-%{version}/arch/*
-%{_prefix}/src/linux-%{version}/arch/*/Makefile*
-%{_prefix}/src/linux-%{version}/*/Kconfig*
-%{_prefix}/src/linux-%{version}/*/*/Kconfig*
-%{_prefix}/src/linux-%{version}/*/*/*/Kconfig*
-%{_prefix}/src/linux-%{version}/*/*/*/*/Kconfig*
-%{_prefix}/src/linux-%{version}/*/*/*/*/*/Kconfig*
-%dir %{_prefix}/src/linux-%{version}/arch/*/kernel
-%{_prefix}/src/linux-%{version}/arch/*/kernel/Makefile
 %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
 %{_prefix}/src/linux-%{version}/arch/*/kernel/sigframe.h
 %dir %{_prefix}/src/linux-%{version}/scripts
+%dir %{_prefix}/src/linux-%{version}/scripts/kconfig
 %{_prefix}/src/linux-%{version}/scripts/Kbuild.include
 %{_prefix}/src/linux-%{version}/scripts/Makefile*
 %{_prefix}/src/linux-%{version}/scripts/basic
@@ -1553,17 +1553,12 @@ fi
 %{_prefix}/src/linux-%{version}/Documentation
 
 %if %{with source}
-%files source
+%files source -f aux_files_exc
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{version}/arch/*/[!Mk]*
 %{_prefix}/src/linux-%{version}/arch/*/kernel/[!M]*
 %exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
 %exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/sigframe.h
-%exclude %{_prefix}/src/linux-%{version}/*/Kconfig*
-%exclude %{_prefix}/src/linux-%{version}/*/*/Kconfig*
-%exclude %{_prefix}/src/linux-%{version}/*/*/*/Kconfig*
-%exclude %{_prefix}/src/linux-%{version}/*/*/*/*/Kconfig*
-%exclude %{_prefix}/src/linux-%{version}/*/*/*/*/*/Kconfig*
 %{_prefix}/src/linux-%{version}/block
 %{_prefix}/src/linux-%{version}/crypto
 %{_prefix}/src/linux-%{version}/drivers
