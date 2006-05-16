@@ -127,7 +127,7 @@ Source2:	kernel-config.h
 Source5:	kernel-ppclibs.Makefile
 #Source6:	http://people.redhat.com/mingo/debloating-patches/debloating-patches-2.6.15-rc7.tar.gz
 ## Source6-md5:	ca7a1cdef3e5c95f182d039cebd92b5e
-Source6:	kernel-module-build.pl
+Source7:	kernel-module-build.pl
 
 Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.16.9.tar.bz2
 # Source10-md5:	34345b1f7ad1505f6b264427a21e8a04
@@ -1040,7 +1040,7 @@ PreInstallKernel smp
 find . -type f -name '*.orig' -o -name '.gitignore' | xargs rm
 find . -type f -name 'Kconfig*' -o -name 'Makefile*' | grep -v Documentation | grep -v scripts > tmp_aux
 sed -i 's:^./::g' tmp_aux
-perl %{SOURCE6} tmp_aux %{_prefix}/src/linux-%{version} | sort | uniq > aux_files && rm tmp_aux
+perl %{SOURCE7} tmp_aux %{_prefix}/src/linux-%{version} | sort | uniq > aux_files && rm tmp_aux
 cp -f aux_files aux_files_exc
 sed -i 's:^:%exclude :g' aux_files_exc
 
