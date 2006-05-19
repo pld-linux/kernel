@@ -775,6 +775,9 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
 # on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 
+# cleanup backups after patching
+find . '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
+
 %build
 TuneUpConfigForIX86 () {
 %ifarch %{ix86}
@@ -1037,7 +1040,6 @@ BuildKernel smp
 PreInstallKernel smp
 %endif
 
-find . -type f -name '*.orig' -o -name '.gitignore' | xargs rm
 find . -type f -name 'Kconfig*' -o -name 'Makefile*' | grep -v Documentation | grep -v scripts > tmp_aux
 sed -i 's:^./::g' tmp_aux
 perl %{SOURCE7} tmp_aux %{_prefix}/src/linux-%{version} | sort | uniq > aux_files && rm tmp_aux
@@ -1089,8 +1091,6 @@ cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
 %{__make} $CrossOpts mrproper \
 	RCS_FIND_IGNORE='-name build-done -prune -o'
-
-find '(' -name '*~' -o -name '*.orig' ')' -print0 | xargs -0 -r -l512 rm -f
 
 if [ -e $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h ]; then
 install $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h \
