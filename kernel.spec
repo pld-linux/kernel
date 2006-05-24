@@ -56,10 +56,6 @@
 %define		have_isa	0
 %endif
 
-#ifarch	ppc64 ppc
-#define		_target_base_arch	powerpc
-#endif
-
 %ifarch sparc sparc64
 %undefine	with_pcmcia
 %define		have_drm	0
@@ -125,8 +121,6 @@ Source2:	kernel-config.h
 #Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
 ## Source3-md5:	3db58f38e8a3c001d1a18eb1ee27db3b
 Source5:	kernel-ppclibs.Makefile
-#Source6:	http://people.redhat.com/mingo/debloating-patches/debloating-patches-2.6.15-rc7.tar.gz
-## Source6-md5:	ca7a1cdef3e5c95f182d039cebd92b5e
 Source7:	kernel-module-build.pl
 
 Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.16.9.tar.bz2
@@ -267,6 +261,9 @@ BuildRequires:	net-tools
 BuildRequires:	perl-base
 BuildRequires:	rpmbuild(macros) >= 1.217
 Autoreqprov:	no
+Requires(post):	coreutils
+Requires(post):	geninitrd >= 2.57
+Requires(post):	module-init-tools >= 0.9.9
 Requires:	coreutils
 Requires:	geninitrd >= 2.57
 Requires:	module-init-tools >= 0.9.9
@@ -434,6 +431,9 @@ Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
 Summary(pl):	J±dro Linuksa w wersji %{version} dla maszyn wieloprocesorowych
 Group:		Base/Kernel
+Requires(post):	coreutils
+Requires(post):	geninitrd >= 2.57
+Requires(post):	module-init-tools >= 0.9.9
 Requires:	coreutils
 Requires:	geninitrd >= 2.26
 Requires:	module-init-tools >= 0.9.9
@@ -832,7 +832,6 @@ TuneUpConfigForIX86 () {
 	DepMod=/sbin/depmod
 %endif
 
-
 BuildConfig() {
 	%{?debug:set -x}
 	# is this a special kernel we want to build?
@@ -933,7 +932,6 @@ BuildKernel() {
 %endif
 	%{__make} $CrossOpts include/linux/version.h \
 		%{?with_verbose:V=1}
-
 
 # make does vmlinux, modules and bzImage at once
 %ifarch sparc sparc64
@@ -1063,7 +1061,6 @@ umask 022
 %else
 	CrossOpts=""
 %endif
-
 
 install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{version}-%{release}{,smp}
