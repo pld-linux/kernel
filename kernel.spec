@@ -752,6 +752,7 @@ done
 
 %patch100 -p1
 %patch101 -p1
+%patch102 -p1
 
 %if %{with xen0} || %{with xenU}
 %ifarch %{ix86} %{x8664} ia64
