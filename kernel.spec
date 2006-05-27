@@ -156,6 +156,12 @@ Source47:	kernel-xenU.config
 #	Patches
 ###
 
+#
+# PATA ports on SATA Promise controller; patch based on:
+# http://cvs.fedora.redhat.com/viewcvs/*checkout*/rpms/kernel/devel/linux-2.6-sata-promise-pata-ports.patch
+#
+Patch1:		linux-2.6-sata-promise-pata-ports.patch
+
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
 Patch2:		tahoe9xx-2.6.11.5.patch
 
@@ -674,6 +680,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %ifarch ppc
 install %{SOURCE5} Makefile.ppclibs
 %endif
+
+%patch1 -p1
 
 for i in suspend2-%{suspend_version}-for-2.6.16.9/[0-9]*; do
 patch -p1 -s < $i
