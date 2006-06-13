@@ -1048,12 +1048,6 @@ BuildKernel smp
 PreInstallKernel smp
 %endif
 
-find . -type f -name 'Kconfig*' -o -name 'Makefile*' | grep -v Documentation | grep -v scripts > tmp_aux
-sed -i 's:^./::g' tmp_aux
-perl %{SOURCE7} tmp_aux %{_prefix}/src/linux-%{version} | sort | uniq > aux_files && rm tmp_aux
-cp -f aux_files aux_files_exc
-sed -i 's:^:%exclude :g' aux_files_exc
-
 %install
 rm -rf $RPM_BUILD_ROOT
 umask 022
@@ -1123,6 +1117,9 @@ install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{version}/include/l
 %{__make} $CrossOpts include/linux/version.h
 install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
 install %{SOURCE2} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/config.h
+
+# collect module-build files and directories
+perl %{SOURCE5} %{_prefix}/src/linux-%{ver} $KERNEL_BUILD_DIR
 
 %if %{with up} || %{with smp}
 # ghosted initrd
