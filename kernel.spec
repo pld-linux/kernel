@@ -1119,7 +1119,7 @@ install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/
 install %{SOURCE2} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/config.h
 
 # collect module-build files and directories
-perl %{SOURCE5} %{_prefix}/src/linux-%{ver} $KERNEL_BUILD_DIR
+perl %{SOURCE7} %{_prefix}/src/linux-%{version} $KERNEL_BUILD_DIR
 
 %if %{with up} || %{with smp}
 # ghosted initrd
