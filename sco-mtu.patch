@@ -1,0 +1,14 @@
+--- linux/net/bluetooth/hci_event.c	2006-01-31 07:52:07.000000000 +0100
++++ linux/net/bluetooth/hci_event.c	2006-02-13 10:46:30.000000000 +0100
+@@ -320,9 +320,9 @@
+ 		}
+ 
+ 		hdev->acl_mtu  = __le16_to_cpu(bs->acl_mtu);
+-		hdev->sco_mtu  = bs->sco_mtu ? bs->sco_mtu : 64;
++		hdev->sco_mtu  = (bs->sco_mtu < 64) ? 64 : bs->sco_mtu;
+ 		hdev->acl_pkts = hdev->acl_cnt = __le16_to_cpu(bs->acl_max_pkt);
+-		hdev->sco_pkts = hdev->sco_cnt = __le16_to_cpu(bs->sco_max_pkt);
++		hdev->sco_pkts = hdev->sco_cnt = bs->sco_max_pkt ? __le16_to_cpu(bs->sco_max_pkt) : 8;
+ 
+ 		BT_DBG("%s mtu: acl %d, sco %d max_pkt: acl %d, sco %d", hdev->name,
+ 			hdev->acl_mtu, hdev->sco_mtu, hdev->acl_pkts, hdev->sco_pkts);
