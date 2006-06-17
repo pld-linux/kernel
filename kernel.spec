@@ -824,6 +824,7 @@ TuneUpConfigForIX86 () {
 	fi
 	sed -i 's:CONFIG_MATH_EMULATION=y:# CONFIG_MATH_EMULATION is not set:' $1
 	%endif
+	return 0
 %endif
 }
 
