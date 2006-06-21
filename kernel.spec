@@ -165,6 +165,8 @@ Patch1:		linux-2.6-sata-promise-pata-ports.patch
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
 Patch2:		tahoe9xx-2.6.11.5.patch
 
+Patch3:		linux-2.6-ntfs_flush_dcache_pages.patch
+
 #	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.16.patch
 Patch4:		fbsplash-0.9.2-r5-2.6.16.patch
 Patch5:		linux-2.6-vesafb-tng.patch
@@ -693,7 +695,7 @@ done
 %{__gzip} -dc %{SOURCE12} | %{__patch} -s -p1
 
 %patch2 -p1
-
+%patch3 -p1
 %patch4 -p1
 
 %ifarch %{ix86}
