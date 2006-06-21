@@ -104,9 +104,10 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
-#define		_postver	.20
+%define		_basever	2.6.17
 %define		_postver	.1
-Version:	2.6.17%{_postver}
+#define		_postver	%{nil}
+Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
@@ -114,12 +115,14 @@ Group:		Base/Kernel
 %define		_rc	%{nil}
 #define		_rc	-rc5
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	0a8f1a66646bc6ac7b3ec3e8f51652a0
-Source1:	kernel-autoconf.h
-Source2:	kernel-config.h
-#Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
-## Source3-md5:	3db58f38e8a3c001d1a18eb1ee27db3b
+Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
+# Source0-md5:	37ddefe96625502161f075b9d907f21e
+%if "%{_postver}" != "%{nil}"
+Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
+# Source1-md5:	f7197c29beb5bd28b6f566b58260ece8
+%endif
+Source3:	kernel-autoconf.h
+Source4:	kernel-config.h
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
 
@@ -675,10 +678,14 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}%{_rc} -a10
+%setup -q -n linux-%{_basever}%{_rc} -a10
 
 %ifarch ppc
 install %{SOURCE5} Makefile.ppclibs
+%endif
+
+%if "%{_postver}" != "%{nil}"
+%{__bzip2} -dc %{SOURCE1} | patch -p1 -s
 %endif
 
 %patch1 -p1
@@ -1116,8 +1123,8 @@ install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{version}/include/l
 
 %{__make} $CrossOpts mrproper
 %{__make} $CrossOpts include/linux/version.h
-install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
-install %{SOURCE2} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/config.h
+install %{SOURCE3} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
+install %{SOURCE4} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/config.h
 
 # collect module-build files and directories
 perl %{SOURCE7} %{_prefix}/src/linux-%{version} $KERNEL_BUILD_DIR
