@@ -95,7 +95,7 @@
 %define		drm_xfree_version	4.3.0
 
 %define		squashfs_version	3.0
-%define		suspend_version		2.2.5
+%define		suspend_version		2.2.5.2
 
 %define		xen_version		3.0.2
 
@@ -126,8 +126,8 @@ Source4:	kernel-config.h
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
 
-Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.16.9.tar.bz2
-# Source10-md5:	34345b1f7ad1505f6b264427a21e8a04
+Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.17-rc6.tar.bz2
+# Source10-md5:	0e38acc161c4bd7e3766de67caad994b
 Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.16/reiser4-for-2.6.16-1.patch.gz
 # Source12-md5:	f51303b5e445432b974a729b76036c40
 
@@ -690,7 +690,7 @@ install %{SOURCE5} Makefile.ppclibs
 
 %patch1 -p1
 
-for i in suspend2-%{suspend_version}-for-2.6.16.9/[0-9]*; do
+for i in suspend2-%{suspend_version}-for-2.6.17-rc6/[0-9]*; do
 patch -p1 -s < $i
 done
 %patch70 -p1
