@@ -1,7 +1,7 @@
-diff -urN linux-2.6.16.16/drivers/scsi/libata-core.c mod/drivers/scsi/libata-core.c
---- linux-2.6.16.16/drivers/scsi/libata-core.c	2006-05-11 03:56:24.000000000 +0200
-+++ mod/drivers/scsi/libata-core.c	2006-05-20 03:14:57.165778500 +0200
-@@ -4431,6 +4431,7 @@
+diff -urN linux-2.6.17.1/drivers/scsi/libata-core.c mod/drivers/scsi/libata-core.c
+--- linux-2.6.17.1/drivers/scsi/libata-core.c	2006-06-20 11:31:55.000000000 +0200
++++ mod/drivers/scsi/libata-core.c	2006-06-21 16:38:05.000000000 +0200
+@@ -4453,6 +4453,7 @@
  	ap->mwdma_mask = ent->mwdma_mask;
  	ap->udma_mask = ent->udma_mask;
  	ap->flags |= ent->host_flags;
@@ -9,10 +9,10 @@ diff -urN linux-2.6.16.16/drivers/scsi/libata-core.c mod/drivers/scsi/libata-cor
  	ap->ops = ent->port_ops;
  	ap->cbl = ATA_CBL_NONE;
  	ap->active_tag = ATA_TAG_POISON;
-diff -urN linux-2.6.16.16/drivers/scsi/sata_promise.c mod/drivers/scsi/sata_promise.c
---- linux-2.6.16.16/drivers/scsi/sata_promise.c	2006-05-11 03:56:24.000000000 +0200
-+++ mod/drivers/scsi/sata_promise.c	2006-05-20 03:29:36.708746500 +0200
-@@ -165,7 +165,7 @@
+diff -urN linux-2.6.17.1/drivers/scsi/sata_promise.c mod/drivers/scsi/sata_promise.c
+--- linux-2.6.17.1/drivers/scsi/sata_promise.c	2006-06-20 11:31:55.000000000 +0200
++++ mod/drivers/scsi/sata_promise.c	2006-06-21 16:40:53.000000000 +0200
+@@ -171,7 +171,7 @@
  	/* board_2037x */
  	{
  		.sht		= &pdc_ata_sht,
@@ -21,7 +21,7 @@ diff -urN linux-2.6.16.16/drivers/scsi/sata_promise.c mod/drivers/scsi/sata_prom
  		.pio_mask	= 0x1f, /* pio0-4 */
  		.mwdma_mask	= 0x07, /* mwdma0-2 */
  		.udma_mask	= 0x7f, /* udma0-6 ; FIXME */
-@@ -322,15 +322,34 @@
+@@ -359,15 +359,34 @@
  
  static void pdc_sata_phy_reset(struct ata_port *ap)
  {
@@ -60,7 +60,7 @@ diff -urN linux-2.6.16.16/drivers/scsi/sata_promise.c mod/drivers/scsi/sata_prom
  
  	pdc_reset_port(ap);
  	ata_port_probe(ap);
-@@ -646,6 +665,7 @@
+@@ -672,6 +691,7 @@
  	unsigned int board_idx = (unsigned int) ent->driver_data;
  	int pci_dev_busy = 0;
  	int rc;
@@ -68,7 +68,7 @@ diff -urN linux-2.6.16.16/drivers/scsi/sata_promise.c mod/drivers/scsi/sata_prom
  
  	if (!printed_version++)
  		dev_printk(KERN_DEBUG, &pdev->dev, "version " DRV_VERSION "\n");
-@@ -705,6 +725,9 @@
+@@ -740,6 +760,9 @@
  	probe_ent->port[0].scr_addr = base + 0x400;
  	probe_ent->port[1].scr_addr = base + 0x500;
  
@@ -77,15 +77,19 @@ diff -urN linux-2.6.16.16/drivers/scsi/sata_promise.c mod/drivers/scsi/sata_prom
 +	
  	/* notice 4-port boards */
  	switch (board_idx) {
- 	case board_20319:
-@@ -715,9 +738,25 @@
+ 	case board_40518:
+@@ -754,13 +777,28 @@
  
  		probe_ent->port[2].scr_addr = base + 0x600;
  		probe_ent->port[3].scr_addr = base + 0x700;
 +
-+		probe_ent->port_flags[2] = ATA_FLAG_SATA;       /* pata fix */
-+		probe_ent->port_flags[3] = ATA_FLAG_SATA;       /* pata fix */
++		probe_ent->port_flags[2] = ATA_FLAG_SATA;	/* pata fix */
++		probe_ent->port_flags[3] = ATA_FLAG_SATA;	/* pata fix */
  		break;
+ 	case board_2057x:
+ 		/* Override hotplug offset for SATAII150 */
+ 		hp->hotplug_offset = PDC2_SATA_PLUG_CSR;
+ 		/* Fall through */
  	case board_2037x:
 -		probe_ent->n_ports = 2;
 +/*		probe_ent->n_ports = 2; */					/* pata fix */
@@ -96,16 +100,15 @@ diff -urN linux-2.6.16.16/drivers/scsi/sata_promise.c mod/drivers/scsi/sata_prom
 +		{								/* pata fix */
 +			probe_ent->n_ports = 3;					/* pata fix */
 +			pdc_ata_setup_port(&probe_ent->port[2], base + 0x300);	/* pata fix */
-+			probe_ent->port_flags[2] = ATA_FLAG_SLAVE_POSS;         /* pata fix */
-+			printk(KERN_INFO DRV_NAME " PATA port found\n");        /* pata fix */
-+		}                                               		/* pata fix */
-+		else                                            		/* pata fix */
-+			probe_ent->n_ports = 2;					/* pata fix */
-+		
++			probe_ent->port_flags[2] = ATA_FLAG_SLAVE_POSS;		/* pata fix */
++			printk(KERN_INFO DRV_NAME " PATA port found\n");	/* pata fix */
++		}								/* pata fix */
++		else								/* pata fix */
++       			probe_ent->n_ports = 2;				/* pata fix */
  		break;
  	case board_20771:
  		probe_ent->n_ports = 2;
-@@ -730,6 +769,9 @@
+@@ -773,6 +811,9 @@
  
  		probe_ent->port[2].scr_addr = base + 0x600;
  		probe_ent->port[3].scr_addr = base + 0x700;
@@ -115,14 +118,14 @@ diff -urN linux-2.6.16.16/drivers/scsi/sata_promise.c mod/drivers/scsi/sata_prom
  		break;
  	default:
  		BUG();
-diff -urN linux-2.6.16.16/include/linux/libata.h mod/include/linux/libata.h
---- linux-2.6.16.16/include/linux/libata.h	2006-05-11 03:56:24.000000000 +0200
-+++ mod/include/linux/libata.h	2006-05-20 03:31:46.216840250 +0200
-@@ -237,6 +237,7 @@
+diff -urN linux-2.6.17.1/include/linux/libata.h mod/include/linux/libata.h
+--- linux-2.6.17.1/include/linux/libata.h	2006-06-20 11:31:55.000000000 +0200
++++ mod/include/linux/libata.h	2006-06-21 16:38:05.000000000 +0200
+@@ -281,6 +281,7 @@
  	unsigned long		irq;
  	unsigned int		irq_flags;
  	unsigned long		host_flags;
-+	unsigned long           port_flags[ATA_MAX_PORTS];      /* pata fix */
++	unsigned long		port_flags[ATA_MAX_PORTS];	/* pata fix */
+ 	unsigned long		host_set_flags;
  	void __iomem		*mmio_base;
  	void			*private_data;
- };
