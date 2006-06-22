@@ -45,23 +45,23 @@ diff -urN linux-2.6.16.2/drivers/char/keyboard.c linux-2.6.16.2-grsec/drivers/ch
 diff -urN linux-2.6.16.2/drivers/pci/proc.c linux-2.6.16.2-grsec/drivers/pci/proc.c
 --- linux-2.6.16.2/drivers/pci/proc.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/drivers/pci/proc.c	2006-04-11 17:44:40.073707250 +0200
-@@ -569,7 +569,15 @@
+@@ -407,7 +407,15 @@
+ 	}
  
- static void legacy_proc_init(void)
- {
+ 	sprintf(name, "%02x.%x", PCI_SLOT(dev->devfn), PCI_FUNC(dev->devfn));
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
-+	struct proc_dir_entry * entry = create_proc_entry("pci", S_IRUSR, NULL);
++	e = create_proc_entry(name, S_IFREG | S_IRUGO | S_IWUSR | S_IRUSR, bus->procdir);
 +#elif CONFIG_GRKERNSEC_PROC_USERGROUP
-+	struct proc_dir_entry * entry = create_proc_entry("pci", S_IRUSR | S_IRGRP, NULL);
++	e = create_proc_entry(name, S_IFREG | S_IRUGO | S_IWUSR | S_IRUSR | S_IRGRP, bus->procdir);
 +#endif
 +#else
- 	struct proc_dir_entry * entry = create_proc_entry("pci", 0, NULL);
+ 	e = create_proc_entry(name, S_IFREG | S_IRUGO | S_IWUSR, bus->procdir);
 +#endif
- 	if (entry)
- 		entry->proc_fops = &proc_pci_operations;
- }
-@@ -598,7 +606,15 @@
+ 	if (!e)
+ 		return -ENOMEM;
+ 	e->proc_fops = &proc_bus_pci_operations;
+@@ -473,7 +481,15 @@
  {
  	struct proc_dir_entry *entry;
  	struct pci_dev *dev = NULL;
@@ -190,10 +190,11 @@ diff -urN linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
  	PROC_TGID_OOM_SCORE,
  	PROC_TGID_OOM_ADJUST,
  	PROC_TID_INO,
-@@ -201,6 +204,9 @@
+@@ -201,7 +204,10 @@
  	E(PROC_TGID_ROOT,      "root",    S_IFLNK|S_IRWXUGO),
  	E(PROC_TGID_EXE,       "exe",     S_IFLNK|S_IRWXUGO),
  	E(PROC_TGID_MOUNTS,    "mounts",  S_IFREG|S_IRUGO),
+ 	E(PROC_TGID_MOUNTSTATS, "mountstats", S_IFREG|S_IRUSR),
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
 +	E(PROC_TGID_IPADDR,     "ipaddr",  S_IFREG|S_IRUSR),
 +#endif
@@ -338,7 +339,7 @@ diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_m
  		{"locks",	locks_read_proc},
  		{"execdomains",	execdomains_read_proc},
  		{NULL,}
-@@ -731,31 +735,49 @@
+@@ -708,19 +712,37 @@
  	for (p = simple_ones; p->name; p++)
  		create_proc_read_entry(p->name, 0, NULL, p->read_proc, NULL);
  
@@ -372,10 +373,11 @@ diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_m
 +	create_seq_entry("slabinfo",S_IWUSR|gr_mode,&proc_slabinfo_operations);
 +#else
  	create_seq_entry("slabinfo",S_IWUSR|S_IRUGO,&proc_slabinfo_operations);
- #endif
 +#endif
- 	create_seq_entry("buddyinfo",S_IRUGO, &fragmentation_file_operations);
- 	create_seq_entry("vmstat",S_IRUGO, &proc_vmstat_file_operations);
+ #ifdef CONFIG_DEBUG_SLAB_LEAK
+ 	create_seq_entry("slab_allocators", 0 ,&proc_slabstats_operations);
+ #endif
+@@ -730,12 +752,12 @@
  	create_seq_entry("zoneinfo",S_IRUGO, &proc_zoneinfo_file_operations);
  	create_seq_entry("diskstats", 0, &proc_diskstats_operations);
  #ifdef CONFIG_MODULES
@@ -1160,25 +1162,25 @@ diff -urN linux-2.6.16.2/ipc/shm.c linux-2.6.16.2-grsec/ipc/shm.c
 +#endif
 +	return;
 +}
-diff -urN linux-2.6.16.2/kernel/signal.c linux-2.6.16.2-grsec/kernel/signal.c
---- linux-2.6.16.2/kernel/signal.c	2006-04-07 18:56:47.000000000 +0200
-+++ linux-2.6.16.2-grsec/kernel/signal.c	2006-04-11 17:44:40.125710500 +0200
-@@ -26,6 +26,7 @@
- #include <linux/signal.h>
- #include <linux/audit.h>
- #include <linux/capability.h>
+diff -urN linux-2.6.16.2/kernel/exit.c linux-2.6.16.2-grsec/kernel/exit.c
+--- linux-2.6.16.2/kernel/exit.c	2006-04-07 18:56:47.000000000 +0200
++++ linux-2.6.16.2-grsec/kernel/exit.c	2006-04-11 17:44:40.125710500 +0200
+@@ -36,6 +36,7 @@
+ #include <linux/compat.h>
+ #include <linux/pipe_fs_i.h>
+ #include <linux/audit.h> /* for audit_free() */
 +#include <linux/grsecurity.h>
- #include <linux/vs_pid.h>
- #include <asm/param.h>
- #include <asm/uaccess.h>
-@@ -380,6 +381,7 @@
+ #include <linux/vs_limit.h>
+ #include <linux/vs_context.h>
+ #include <linux/vs_network.h>
+@@ -97,6 +98,7 @@
  		}
  		if (tsk == sig->curr_target)
  			sig->curr_target = next_thread(tsk);
 +		gr_del_task_from_ip_table(tsk);
- 		tsk->signal = NULL;
  		/*
  		 * Accumulate here the counters for all threads but the
+ 		 * group leader as they die, so they can be added into
 diff -urN linux-2.6.16.2/kernel/sysctl.c linux-2.6.16.2-grsec/kernel/sysctl.c
 --- linux-2.6.16.2/kernel/sysctl.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/kernel/sysctl.c	2006-04-11 17:44:40.125710500 +0200
@@ -1258,14 +1260,14 @@ diff -urN linux-2.6.16.2/net/ipv4/inet_hashtables.c linux-2.6.16.2-grsec/net/ipv
 diff -urN linux-2.6.16.2/net/socket.c linux-2.6.16.2-grsec/net/socket.c
 --- linux-2.6.16.2/net/socket.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/net/socket.c	2006-04-11 17:44:40.125710500 +0200
-@@ -84,6 +84,7 @@
+@@ -85,6 +85,7 @@
  #include <linux/compat.h>
  #include <linux/kmod.h>
  #include <linux/audit.h>
 +#include <linux/in.h>
+ #include <linux/wireless.h>
  
- #ifdef CONFIG_NET_RADIO
- #include <linux/wireless.h>		/* Note : will define WIRELESS_EXT */
+ #include <asm/uaccess.h>
 @@ -97,6 +98,7 @@
  #include <linux/netfilter.h>
  #include <linux/vs_socket.h>
