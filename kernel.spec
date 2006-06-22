@@ -236,8 +236,8 @@ Patch56:	linux-2.6-atmdd.patch
 
 Patch57:	linux-2.6-cpuset_virtualization.patch
 
-# Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_31.tar.bz2
-Patch60:	linux-2.6-sk98lin-8.31.2.3.patch
+# Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_32.tar.bz2
+Patch60:	linux-2.6-sk98lin-8.32.2.3.patch
 
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
