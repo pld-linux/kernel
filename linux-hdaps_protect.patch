@@ -37,14 +37,15 @@ diff -urN linux-2.6.16.original/block/ll_rw_blk.c linux-2.6.16.hdaps/block/ll_rw
  	return 0;
  }
  
-@@ -3825,9 +3840,119 @@
+@@ -3825,10 +3840,120 @@
  	request_queue_t *q = disk->queue;
  
  	if (q && q->request_fn) {
 +		blk_protect_unregister(q);
  		elv_unregister_queue(q);
  
- 		kobject_unregister(&q->kobj);
+ 		kobject_uevent(&q->kobj, KOBJ_REMOVE);
+ 		kobject_del(&q->kobj);
  		kobject_put(&disk->kobj);
  	}
  }
@@ -370,7 +371,7 @@ diff -urN linux-2.6.16.original/drivers/ide/ide-io.c linux-2.6.16.hdaps/drivers/
 diff -urN linux-2.6.16.original/drivers/scsi/libata-core.c linux-2.6.16.hdaps/drivers/scsi/libata-core.c
 --- linux-2.6.16.original/drivers/scsi/libata-core.c	2006-03-20 05:53:29.000000000 +0000
 +++ linux-2.6.16.hdaps/drivers/scsi/libata-core.c	2006-04-30 13:25:24.000000000 +0100
-@@ -78,6 +78,10 @@
+@@ -73,6 +73,10 @@
  static unsigned int ata_unique_id = 1;
  static struct workqueue_struct *ata_wq;
  
@@ -378,7 +379,7 @@ diff -urN linux-2.6.16.original/drivers/scsi/libata-core.c linux-2.6.16.hdaps/dr
 +module_param_named(protect_method, libata_protect_method, int, 0444);
 +MODULE_PARM_DESC(protect_method, "hdaps disk protection method (0=autodetect, 1=unload, 2=standby)");
 +
- int atapi_enabled = 0;
+ int atapi_enabled = 1;
  module_param(atapi_enabled, int, 0444);
  MODULE_PARM_DESC(atapi_enabled, "Enable discovery of ATAPI devices (0=off, 1=on)");
 diff -urN linux-2.6.16.original/drivers/scsi/libata.h linux-2.6.16.hdaps/drivers/scsi/libata.h
@@ -450,10 +451,9 @@ diff -urN linux-2.6.16.original/drivers/scsi/libata-scsi.c linux-2.6.16.hdaps/dr
 diff -urN linux-2.6.16.original/drivers/scsi/scsi_lib.c linux-2.6.16.hdaps/drivers/scsi/scsi_lib.c
 --- linux-2.6.16.original/drivers/scsi/scsi_lib.c	2006-03-20 05:53:29.000000000 +0000
 +++ linux-2.6.16.hdaps/drivers/scsi/scsi_lib.c	2006-03-26 15:10:44.000000000 +0100
-@@ -2307,3 +2307,189 @@
- 	return 1;
+@@ -2307,2 +2307,188 @@
  }
- EXPORT_SYMBOL_GPL(scsi_execute_in_process_context);
+ EXPORT_SYMBOL_GPL(scsi_target_unblock);
 +
 +/*
 + * As per scsi_wait_req_end_io(), which was removed in 2.6.15
@@ -643,11 +643,11 @@ diff -urN linux-2.6.16.original/drivers/scsi/scsi_lib.c linux-2.6.16.hdaps/drive
 diff -urN linux-2.6.16.original/include/linux/ata.h linux-2.6.16.hdaps/include/linux/ata.h
 --- linux-2.6.16.original/include/linux/ata.h	2006-03-20 05:53:29.000000000 +0000
 +++ linux-2.6.16.hdaps/include/linux/ata.h	2006-03-26 14:26:24.000000000 +0100
-@@ -250,6 +250,7 @@
- #define ata_id_is_sata(id)	((id)[93] == 0)
+@@ -253,6 +253,7 @@
  #define ata_id_rahead_enabled(id) ((id)[85] & (1 << 6))
  #define ata_id_wcache_enabled(id) ((id)[85] & (1 << 5))
-+#define ata_id_has_unload(id) ((id)[84] & (1 << 13))
+ #define ata_id_hpa_enabled(id)	((id)[85] & (1 << 10))
++#define ata_id_has_unload(id)	((id)[84] & (1 << 13))
  #define ata_id_has_fua(id)	((id)[84] & (1 << 6))
  #define ata_id_has_flush(id)	((id)[83] & (1 << 12))
  #define ata_id_has_flush_ext(id) ((id)[83] & (1 << 13))
