@@ -104,22 +104,20 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
-%define		_postver	.21
-#define		_postver	%{nil}
-Version:	2.6.16%{_postver}
+%define		_basever	2.6.16
+%define		_postver	.22
+Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-%define		_rc	%{nil}
-#define		_rc	-rc5
-#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	74a0ec53b3cca229e85985f61d1ee894
+Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
+# Source0-md5:	9a91b2719949ff0856b40bc467fd47be
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
-#Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.14%{_rc}-git2.bz2
-## Source3-md5:	3db58f38e8a3c001d1a18eb1ee27db3b
+Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
+# Source3-md5:	826870e367fdcbc16f8b3ad8ca4f27d7
+
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
 
@@ -164,8 +162,6 @@ Patch1:		linux-2.6-sata-promise-pata-ports.patch
 
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
 Patch2:		tahoe9xx-2.6.11.5.patch
-
-Patch3:		linux-2.6-ntfs_flush_dcache_pages.patch
 
 #	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.16.patch
 Patch4:		fbsplash-0.9.2-r5-2.6.16.patch
@@ -679,7 +675,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{version}%{_rc} -a10
+%setup -q -n linux-%{_basever} -a10
+%{__bzip2} -dc %{SOURCE3} | patch -p1 -s
 
 %ifarch ppc
 install %{SOURCE5} Makefile.ppclibs
@@ -697,7 +694,7 @@ done
 %{__gzip} -dc %{SOURCE12} | %{__patch} -s -p1
 
 %patch2 -p1
-%patch3 -p1
+
 %patch4 -p1
 
 %ifarch %{ix86}
