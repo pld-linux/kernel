@@ -1,6 +1,9 @@
 #
 # TODO:
-#		ALL
+#	- update full grsecurity patch for 2.6.17.x
+#	- update xen patch for 2.6.17.x
+#	- update reiser4 patch when version for 2.6.17.x will be available
+#
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
 #
 # Conditional build:
