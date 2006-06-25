@@ -1091,7 +1091,7 @@ for i in "" smp ; do
 		rm -f $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
 		ln -sf %{_prefix}/src/linux-%{version} \
 			$RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
-		install -d $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/misc
+		install -d $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/{cluster,misc}
 	fi
 done
 
