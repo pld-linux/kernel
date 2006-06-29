@@ -235,7 +235,7 @@ diff -NurpP --minimal linux-2.6.16.17/arch/alpha/kernel/osf_sys.c linux-2.6.16.1
  			break;
  	}
  	up_read(&uts_sem);
-@@ -607,17 +612,6 @@ osf_sigstack(struct sigstack __user *uss
+@@ -607,30 +612,30 @@ osf_sigstack(struct sigstack __user *uss
  asmlinkage long
  osf_sysinfo(int command, char __user *buf, long count)
  {
@@ -253,7 +253,13 @@ diff -NurpP --minimal linux-2.6.16.17/arch/alpha/kernel/osf_sys.c linux-2.6.16.1
  	unsigned long offset;
  	char *res;
  	long len, err = -EINVAL;
-@@ -630,7 +624,18 @@ osf_sysinfo(int command, char __user *bu
+ 
+ 	offset = command-1;
+-	if (offset >= sizeof(sysinfo_table)/sizeof(char *)) {
++	if (offset >= 9) {
+ 		/* Digital UNIX has a few unpublished interfaces here */
+ 		printk("sysinfo(%d)", command);
+ 		goto out;
  	}
  	
  	down_read(&uts_sem);
