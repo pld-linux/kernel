@@ -66,13 +66,16 @@
 
 %if %{with xen0} 
 %define		xen	xen0
-%define		pae		1
+%define		dashxen	\-xen0
+%define		pae	1
 %else
 %if %{with xenU}
 %define		xen	xenU
-%define		pae		1
+%define		dashxen	\-xenU
+%define		pae	1
 %else
 %define		xen	%{nil}
+%define		dashxen	%{nil}
 %endif
 %endif
 
@@ -1181,22 +1184,22 @@ fi
 
 %post
 %ifarch ia64
-mv -f /boot/efi/vmlinuz%{xen} /boot/efi/vmlinuz%{xen}.old 2> /dev/null > /dev/null
+mv -f /boot/efi/vmlinuz%{dashxen} /boot/efi/vmlinuz%{dashxen}.old 2> /dev/null > /dev/null
 %endif
-mv -f /boot/vmlinuz%{xen} /boot/vmlinuz%{xen}.old 2> /dev/null > /dev/null
-mv -f /boot/System.map%{xen} /boot/System.map%{xen}.old 2> /dev/null > /dev/null
+mv -f /boot/vmlinuz%{dashxen} /boot/vmlinuz%{dashxen}.old 2> /dev/null > /dev/null
+mv -f /boot/System.map%{dashxen} /boot/System.map%{dashxen}.old 2> /dev/null > /dev/null
 %ifarch ia64
-ln -sf vmlinuz-%{version}-%{release}%{xen} /boot/efi/vmlinuz%{xen}
+ln -sf vmlinuz-%{version}-%{release}%{xen} /boot/efi/vmlinuz%{dashxen}
 %endif
-ln -sf vmlinuz-%{version}-%{release}%{xen} /boot/vmlinuz%{xen}
-ln -sf System.map-%{version}-%{release}%{xen} /boot/System.map%{xen}
+ln -sf vmlinuz-%{version}-%{release}%{xen} /boot/vmlinuz%{dashxen}
+ln -sf System.map-%{version}-%{release}%{xen} /boot/System.map%{dashxen}
 
 %depmod %{version}-%{release}%{xen}
 
 %if %{without xenU}
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}%{xen}.gz %{version}-%{release}%{xen}
-mv -f %{initrd_dir}/initrd%{xen} %{initrd_dir}/initrd%{xen}.old 2> /dev/null > /dev/null
-ln -sf initrd-%{version}-%{release}%{xen}.gz %{initrd_dir}/initrd%{xen}
+mv -f %{initrd_dir}/initrd%{dashxen} %{initrd_dir}/initrd%{dashxen}.old 2> /dev/null > /dev/null
+ln -sf initrd-%{version}-%{release}%{xen}.gz %{initrd_dir}/initrd%{dashxen}
 
 if [ -x /sbin/new-kernel-pkg ]; then
 	if [ -f /etc/pld-release ]; then
@@ -1217,8 +1220,8 @@ fi
 %endif
 
 %post vmlinux
-mv -f /boot/vmlinux%{xen} /boot/vmlinux%{xen}.old 2> /dev/null > /dev/null
-ln -sf vmlinux-%{version}-%{release}%{xen} /boot/vmlinux%{xen}
+mv -f /boot/vmlinux%{dashxen} /boot/vmlinux%{dashxen}.old 2> /dev/null > /dev/null
+ln -sf vmlinux-%{version}-%{release}%{xen} /boot/vmlinux%{dashxen}
 
 %post libs
 %{_sbindir}/mkvmlinuz /boot/zImage-%{version}-%{release} %{version}-%{release}
@@ -1257,19 +1260,19 @@ fi
 %ifarch ia64
 mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
 %endif
-mv -f /boot/vmlinuz%{xen} /boot/vmlinuz%{xen}.old 2> /dev/null > /dev/null
-mv -f /boot/System.map%{xen} /boot/System.map%{xen}.old 2> /dev/null > /dev/null
+mv -f /boot/vmlinuz%{dashxen} /boot/vmlinuz%{dashxen}.old 2> /dev/null > /dev/null
+mv -f /boot/System.map%{dashxen} /boot/System.map%{dashxen}.old 2> /dev/null > /dev/null
 %ifarch ia64
 ln -sf vmlinuz-%{version}-%{release}smp /boot/efi/vmlinuz
 %endif
-ln -sf vmlinuz-%{version}-%{release}%{xen}smp /boot/vmlinuz%{xen}
-ln -sf System.map-%{version}-%{release}%{xen}smp /boot/System.map%{xen}
+ln -sf vmlinuz-%{version}-%{release}%{xen}smp /boot/vmlinuz%{dashxen}
+ln -sf System.map-%{version}-%{release}%{xen}smp /boot/System.map%{dashxen}
 
 %depmod %{version}-%{release}%{xen}smp
 
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}%{xen}smp.gz %{version}-%{release}%{xen}smp
-mv -f %{initrd_dir}/initrd%{xen} %{initrd_dir}/initrd%{xen}.old 2> /dev/null > /dev/null
-ln -sf initrd-%{version}-%{release}%{xen}smp.gz %{initrd_dir}/initrd%{xen}
+mv -f %{initrd_dir}/initrd%{dashxen} %{initrd_dir}/initrd%{dashxen}.old 2> /dev/null > /dev/null
+ln -sf initrd-%{version}-%{release}%{xen}smp.gz %{initrd_dir}/initrd%{dashxen}
 
 if [ -x /sbin/new-kernel-pkg ]; then
 	if [ -f /etc/pld-release ]; then
@@ -1289,8 +1292,8 @@ elif [ -x /sbin/rc-boot ]; then
 fi
 
 %post smp-vmlinux
-mv -f /boot/vmlinux%{xen} /boot/vmlinux%{xen}.old 2> /dev/null > /dev/null
-ln -sf vmlinux-%{version}-%{release}%{xen}smp /boot/vmlinux%{xen}
+mv -f /boot/vmlinux%{dashxen} /boot/vmlinux%{dashxen}.old 2> /dev/null > /dev/null
+ln -sf vmlinux-%{version}-%{release}%{xen}smp /boot/vmlinux%{dashxen}
 
 %post smp-libs
 %{_sbindir}/mkvmlinuz /boot/zImage-%{version}-%{release}smp %{version}-%{release}smp
