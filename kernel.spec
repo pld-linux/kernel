@@ -1270,6 +1270,7 @@ ln -sf System.map-%{version}-%{release}%{xen}smp /boot/System.map%{dashxen}
 
 %depmod %{version}-%{release}%{xen}smp
 
+%if %{without xenU}
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}%{xen}smp.gz %{version}-%{release}%{xen}smp
 mv -f %{initrd_dir}/initrd%{dashxen} %{initrd_dir}/initrd%{dashxen}.old 2> /dev/null > /dev/null
 ln -sf initrd-%{version}-%{release}%{xen}smp.gz %{initrd_dir}/initrd%{dashxen}
@@ -1290,6 +1291,7 @@ if [ -x /sbin/new-kernel-pkg ]; then
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
+%endif
 
 %post smp-vmlinux
 mv -f /boot/vmlinux%{dashxen} /boot/vmlinux%{dashxen}.old 2> /dev/null > /dev/null
