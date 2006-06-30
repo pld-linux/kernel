@@ -1,5 +1,7 @@
 #
 # TODO:
+#	- patch scripts/Makefile.xen not to require bash
+#       - make PAE usage configurable when Xen is on
 #		ALL
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
 #
@@ -62,6 +64,18 @@
 %define		have_oss	0
 %endif
 
+%if %{with xen0} 
+%define		xen	xen0
+%define		pae		1
+%else
+%if %{with xenU}
+%define		xen	xenU
+%define		pae		1
+%else
+%define		xen	%{nil}
+%endif
+%endif
+
 ## Program required by kernel to work.
 %define		_binutils_ver		2.12.1
 %define		_util_linux_ver		2.10o
@@ -82,7 +96,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			2
+%define		_rel			3
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
@@ -149,6 +163,7 @@ Source44:	kernel-vesafb-tng.config
 Source45:	kernel-grsec.config
 Source46:	kernel-xen0.config
 Source47:	kernel-xenU.config
+Source48:	kernel-xen-extra.config
 
 ###
 #	Patches
@@ -247,6 +262,7 @@ Patch102:	linux-2.6-vs2.1-128IPs.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 Patch120:	xen-3.0-2.6.16.patch
+Patch121:	linux-xen-page_alloc.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
@@ -257,6 +273,9 @@ Patch1000:	linux-2.6-grsec-minimal.patch
 Patch9999:	grsecurity-2.1.9-2.6.16.14.patch
 
 URL:		http://www.kernel.org/
+%if %{with xen0} || %{with xenU}
+BuildRequires:	bash
+%endif
 BuildRequires:	binutils >= 3:2.14.90.0.7
 BuildRequires:	diffutils
 %ifarch sparc sparc64
@@ -281,7 +300,7 @@ Provides:	kernel(netfilter) = %{_netfilter_snap}
 Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
 Provides:	kernel(realtime-lsm) = 0.1.1
 %if %{with xen0} || %{with xenU}
-Provides:	kernel(xen) = %{_xen_version}
+Provides:	kernel(xen) = %{xen_version}
 %endif
 Provides:	kernel-misc-fuse
 Provides:	kernel-net-hostap = 0.4.4
@@ -770,6 +789,7 @@ done
 %if %{with xen0} || %{with xenU}
 %ifarch %{ix86} %{x8664} ia64
 %patch120 -p1
+%patch121 -p1
 %endif
 %endif
 
@@ -858,7 +878,7 @@ BuildConfig() {
 	else
 		Config="%{_target_base_arch}"
 	fi
-	KernelVer=%{version}-%{release}$1
+	KernelVer=%{version}-%{release}%{xen}$1
 
 	echo "Building config file [using $Config.conf] for KERNEL $1..."
 	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
@@ -893,6 +913,17 @@ BuildConfig() {
 
 %if %{with grsecurity}
 	cat %{SOURCE45} >> arch/%{_target_base_arch}/defconfig
+%endif
+
+%if %{with xen0} || %{with xenU}
+	sed -i "s:CONFIG_X86_PC=y:# CONFIG_X86_PC is not set:" arch/%{_target_base_arch}/defconfig
+	sed -i "s:CONFIG_RIO=[ym]:# CONFIG_RIO is not set:" arch/%{_target_base_arch}/defconfig
+
+	# framebuffer devices generally don't work with xen
+	# and kernel will crash on boot if vesafb-tng is compiled in (even if off by default)
+	sed -i "s:CONFIG_FB=y:# CONFIG_FB is not set:" arch/%{_target_base_arch}/defconfig
+
+	cat %{SOURCE48} >> arch/%{_target_base_arch}/defconfig
 %endif
 
 %if %{with xen0}
@@ -963,6 +994,9 @@ BuildKernel() {
 %endif
 %else
 	%{__make} $CrossOpts \
+%if %{with xen0} || %{with xenU}
+		SHELL=/bin/bash \
+%endif
 		%{?with_verbose:V=1}
 %endif
 }
@@ -975,12 +1009,16 @@ PreInstallKernel() {
 	else
 		Config="%{_target_base_arch}"
 	fi
-	KernelVer=%{version}-%{release}$1
+	KernelVer=%{version}-%{release}%{xen}$1
 
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
 %ifarch %{ix86} %{x8664}
+%if %{with xen0} || %{with xenU}
+	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%else
 	install arch/%{_target_base_arch}/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%endif
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 %endif
 %ifarch alpha sparc sparc64
@@ -1033,7 +1071,7 @@ PreInstallKernel() {
 }
 
 KERNEL_BUILD_DIR=`pwd`
-echo "-%{release}" > localversion
+echo "-%{release}%{xen}" > localversion
 #install -m 644 %{SOURCE50} FAQ-pl
 
 # UP KERNEL
@@ -1073,7 +1111,7 @@ umask 022
 %endif
 
 install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{version}-%{release}{,smp}
+install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{version}-%{release}%{xen}{,smp}
 
 KERNEL_BUILD_DIR=`pwd`
 
@@ -1082,11 +1120,11 @@ cp -a $KERNEL_BUILD_DIR/build-done/kernel-*/* $RPM_BUILD_ROOT
 %endif
 
 for i in "" smp ; do
-	if [ -e  $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i ] ; then
-		rm -f $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
+	if [ -e  $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}%{xen}$i ] ; then
+		rm -f $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}%{xen}$i/build
 		ln -sf %{_prefix}/src/linux-%{version} \
-			$RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
-		install -d $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/{cluster,misc}
+			$RPM_BUILD_ROOT/lib/modules/%{version}-%{release}%{xen}$i/build
+		install -d $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}%{xen}$i/{cluster,misc}
 	fi
 done
 
@@ -1129,35 +1167,36 @@ perl %{SOURCE7} %{_prefix}/src/linux-%{version} $KERNEL_BUILD_DIR
 
 %if %{with up} || %{with smp}
 # ghosted initrd
-touch $RPM_BUILD_ROOT/boot/initrd-%{version}-%{release}{,smp}.gz
+touch $RPM_BUILD_ROOT/boot/initrd-%{version}-%{release}%{xen}{,smp}.gz
 %endif
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %preun
-rm -f /lib/modules/%{version}-%{release}/modules.*
+rm -f /lib/modules/%{version}-%{release}%{xen}/modules.*
 if [ -x /sbin/new-kernel-pkg ]; then
-	/sbin/new-kernel-pkg --remove %{version}-%{release}
+	/sbin/new-kernel-pkg --remove %{version}-%{release}%{xen}
 fi
 
 %post
 %ifarch ia64
-mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
+mv -f /boot/efi/vmlinuz%{xen} /boot/efi/vmlinuz%{xen}.old 2> /dev/null > /dev/null
 %endif
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+mv -f /boot/vmlinuz%{xen} /boot/vmlinuz%{xen}.old 2> /dev/null > /dev/null
+mv -f /boot/System.map%{xen} /boot/System.map%{xen}.old 2> /dev/null > /dev/null
 %ifarch ia64
-ln -sf vmlinuz-%{version}-%{release} /boot/efi/vmlinuz
+ln -sf vmlinuz-%{version}-%{release}%{xen} /boot/efi/vmlinuz%{xen}
 %endif
-ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
-ln -sf System.map-%{version}-%{release} /boot/System.map
+ln -sf vmlinuz-%{version}-%{release}%{xen} /boot/vmlinuz%{xen}
+ln -sf System.map-%{version}-%{release}%{xen} /boot/System.map%{xen}
 
-%depmod %{version}-%{release}
+%depmod %{version}-%{release}%{xen}
 
-/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}.gz %{version}-%{release}
-mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
-ln -sf initrd-%{version}-%{release}.gz %{initrd_dir}/initrd
+%if %{without xenU}
+/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}%{xen}.gz %{version}-%{release}%{xen}
+mv -f %{initrd_dir}/initrd%{xen} %{initrd_dir}/initrd%{xen}.old 2> /dev/null > /dev/null
+ln -sf initrd-%{version}-%{release}%{xen}.gz %{initrd_dir}/initrd%{xen}
 
 if [ -x /sbin/new-kernel-pkg ]; then
 	if [ -f /etc/pld-release ]; then
@@ -1171,65 +1210,66 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title="$title $ext"
 	fi
 
-	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{version}-%{release}.gz --install %{version}-%{release} --banner "$title"
+	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{version}-%{release}%{xen}.gz --install %{version}-%{release}%{xen} --banner "$title"
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
+%endif
 
 %post vmlinux
-mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
-ln -sf vmlinux-%{version}-%{release} /boot/vmlinux
+mv -f /boot/vmlinux%{xen} /boot/vmlinux%{xen}.old 2> /dev/null > /dev/null
+ln -sf vmlinux-%{version}-%{release}%{xen} /boot/vmlinux%{xen}
 
 %post libs
 %{_sbindir}/mkvmlinuz /boot/zImage-%{version}-%{release} %{version}-%{release}
 
 %post drm
-%depmod %{version}-%{release}
+%depmod %{version}-%{release}%{xen}
 
 %postun drm
-%depmod %{version}-%{release}
+%depmod %{version}-%{release}%{xen}
 
 %post pcmcia
-%depmod %{version}-%{release}
+%depmod %{version}-%{release}%{xen}
 
 %postun pcmcia
-%depmod %{version}-%{release}
+%depmod %{version}-%{release}%{xen}
 
 %post sound-alsa
-%depmod %{version}-%{release}
+%depmod %{version}-%{release}%{xen}
 
 %postun sound-alsa
-%depmod %{version}-%{release}
+%depmod %{version}-%{release}%{xen}
 
 %post sound-oss
-%depmod %{version}-%{release}
+%depmod %{version}-%{release}%{xen}
 
 %postun sound-oss
-%depmod %{version}-%{release}
+%depmod %{version}-%{release}%{xen}
 
 %preun smp
-rm -f /lib/modules/%{version}-%{release}smp/modules.*
+rm -f /lib/modules/%{version}-%{release}%{xen}smp/modules.*
 if [ -x /sbin/new-kernel-pkg ]; then
-	/sbin/new-kernel-pkg --remove %{version}-%{release}smp
+	/sbin/new-kernel-pkg --remove %{version}-%{release}%{xen}smp
 fi
 
 %post smp
 %ifarch ia64
 mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
 %endif
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+mv -f /boot/vmlinuz%{xen} /boot/vmlinuz%{xen}.old 2> /dev/null > /dev/null
+mv -f /boot/System.map%{xen} /boot/System.map%{xen}.old 2> /dev/null > /dev/null
 %ifarch ia64
 ln -sf vmlinuz-%{version}-%{release}smp /boot/efi/vmlinuz
 %endif
-ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
-ln -sf System.map-%{version}-%{release}smp /boot/System.map
+ln -sf vmlinuz-%{version}-%{release}%{xen}smp /boot/vmlinuz%{xen}
+ln -sf System.map-%{version}-%{release}%{xen}smp /boot/System.map%{xen}
 
-%depmod %{version}-%{release}smp
+%depmod %{version}-%{release}%{xen}smp
 
-/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
-mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
-ln -sf initrd-%{version}-%{release}smp.gz %{initrd_dir}/initrd
+/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}%{xen}smp.gz %{version}-%{release}%{xen}smp
+mv -f %{initrd_dir}/initrd%{xen} %{initrd_dir}/initrd%{xen}.old 2> /dev/null > /dev/null
+ln -sf initrd-%{version}-%{release}%{xen}smp.gz %{initrd_dir}/initrd%{xen}
 
 if [ -x /sbin/new-kernel-pkg ]; then
 	if [ -f /etc/pld-release ]; then
@@ -1243,41 +1283,41 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title="$title $ext"
 	fi
 
-	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{version}-%{release}smp.gz --install %{version}-%{release}smp --banner "$title"
+	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{version}-%{release}%{xen}smp.gz --install %{version}-%{release}%{xen}smp --banner "$title"
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
 %post smp-vmlinux
-mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
-ln -sf vmlinux-%{version}-%{release}smp /boot/vmlinux
+mv -f /boot/vmlinux%{xen} /boot/vmlinux%{xen}.old 2> /dev/null > /dev/null
+ln -sf vmlinux-%{version}-%{release}%{xen}smp /boot/vmlinux%{xen}
 
 %post smp-libs
 %{_sbindir}/mkvmlinuz /boot/zImage-%{version}-%{release}smp %{version}-%{release}smp
 
 %post smp-drm
-%depmod %{version}-%{release}smp
+%depmod %{version}-%{release}%{xen}smp
 
 %postun smp-drm
-%depmod %{version}-%{release}smp
+%depmod %{version}-%{release}%{xen}smp
 
 %post smp-pcmcia
-%depmod %{version}-%{release}smp
+%depmod %{version}-%{release}%{xen}smp
 
 %postun smp-pcmcia
-%depmod %{version}-%{release}smp
+%depmod %{version}-%{release}%{xen}smp
 
 %post smp-sound-alsa
-%depmod %{version}-%{release}smp
+%depmod %{version}-%{release}%{xen}smp
 
 %postun smp-sound-alsa
-%depmod %{version}-%{release}smp
+%depmod %{version}-%{release}%{xen}smp
 
 %post smp-sound-oss
-%depmod %{version}-%{release}smp
+%depmod %{version}-%{release}%{xen}smp
 
 %postun smp-sound-oss
-%depmod %{version}-%{release}smp
+%depmod %{version}-%{release}%{xen}smp
 
 %post headers
 rm -f /usr/src/linux
@@ -1297,115 +1337,115 @@ fi
 %defattr(644,root,root,755)
 #doc FAQ-pl
 %ifarch sparc sparc64
-/boot/vmlinux.aout-%{version}-%{release}
+/boot/vmlinux.aout-%{version}-%{release}%{xen}
 %endif
 %ifarch ia64
-/boot/efi/vmlinuz-%{version}-%{release}
+/boot/efi/vmlinuz-%{version}-%{release}%{xen}
 %endif
-/boot/vmlinuz-%{version}-%{release}
-/boot/System.map-%{version}-%{release}
-%ghost /boot/initrd-%{version}-%{release}.gz
-%dir /lib/modules/%{version}-%{release}
-%dir /lib/modules/%{version}-%{release}/kernel
+/boot/vmlinuz-%{version}-%{release}%{xen}
+/boot/System.map-%{version}-%{release}%{xen}
+%ghost /boot/initrd-%{version}-%{release}%{xen}.gz
+%dir /lib/modules/%{version}-%{release}%{xen}
+%dir /lib/modules/%{version}-%{release}%{xen}/kernel
 %ifnarch sparc
-/lib/modules/%{version}-%{release}/kernel/arch
+/lib/modules/%{version}-%{release}%{xen}/kernel/arch
 %endif
-/lib/modules/%{version}-%{release}/kernel/crypto
-/lib/modules/%{version}-%{release}/kernel/drivers
+/lib/modules/%{version}-%{release}%{xen}/kernel/crypto
+/lib/modules/%{version}-%{release}%{xen}/kernel/drivers
 %if %{have_drm}
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
+%exclude /lib/modules/%{version}-%{release}%{xen}/kernel/drivers/char/drm
 %endif
-%if %{have_oss} && %{have_isa}
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/media/radio/miropcm20.ko*
+%if %{have_oss} && %{have_isa} && %{without xen0} && %{without xenU}
+%exclude /lib/modules/%{version}-%{release}%{xen}/kernel/drivers/media/radio/miropcm20.ko*
 %endif
-/lib/modules/%{version}-%{release}/kernel/fs
-/lib/modules/%{version}-%{release}/kernel/kernel
-/lib/modules/%{version}-%{release}/kernel/lib
-/lib/modules/%{version}-%{release}/kernel/net
-/lib/modules/%{version}-%{release}/kernel/security
+/lib/modules/%{version}-%{release}%{xen}/kernel/fs
+/lib/modules/%{version}-%{release}%{xen}/kernel/kernel
+/lib/modules/%{version}-%{release}%{xen}/kernel/lib
+/lib/modules/%{version}-%{release}%{xen}/kernel/net
+/lib/modules/%{version}-%{release}%{xen}/kernel/security
 %if %{have_sound}
-%dir /lib/modules/%{version}-%{release}/kernel/sound
-/lib/modules/%{version}-%{release}/kernel/sound/soundcore.*
+%dir /lib/modules/%{version}-%{release}%{xen}/kernel/sound
+/lib/modules/%{version}-%{release}%{xen}/kernel/sound/soundcore.*
 %endif
-%dir /lib/modules/%{version}-%{release}/misc
+%dir /lib/modules/%{version}-%{release}%{xen}/misc
 %if %{with pcmcia}
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/ide/legacy/ide-cs.ko*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/telephony/ixj_pcmcia.ko*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/usb/host/sl811_cs.ko*
+%exclude /lib/modules/%{version}-%{release}%{xen}/kernel/drivers/pcmcia
+%exclude /lib/modules/%{version}-%{release}%{xen}/kernel/drivers/*/pcmcia
+%exclude /lib/modules/%{version}-%{release}%{xen}/kernel/drivers/bluetooth/*_cs.ko*
+%exclude /lib/modules/%{version}-%{release}%{xen}/kernel/drivers/ide/legacy/ide-cs.ko*
+%exclude /lib/modules/%{version}-%{release}%{xen}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
+%exclude /lib/modules/%{version}-%{release}%{xen}/kernel/drivers/net/wireless/*_cs.ko*
+%exclude /lib/modules/%{version}-%{release}%{xen}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
+%exclude /lib/modules/%{version}-%{release}%{xen}/kernel/drivers/parport/parport_cs.ko*
+%exclude /lib/modules/%{version}-%{release}%{xen}/kernel/drivers/serial/serial_cs.ko*
+%exclude /lib/modules/%{version}-%{release}%{xen}/kernel/drivers/telephony/ixj_pcmcia.ko*
+%exclude /lib/modules/%{version}-%{release}%{xen}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
-/lib/modules/%{version}-%{release}/build
-%ghost /lib/modules/%{version}-%{release}/modules.*
-%dir %{_sysconfdir}/modprobe.d/%{version}-%{release}
+/lib/modules/%{version}-%{release}%{xen}/build
+%ghost /lib/modules/%{version}-%{release}%{xen}/modules.*
+%dir %{_sysconfdir}/modprobe.d/%{version}-%{release}%{xen}
 
 %ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
 %files vmlinux
 %defattr(644,root,root,755)
-/boot/vmlinux-%{version}-%{release}
+/boot/vmlinux-%{version}-%{release}%{xen}
 %endif
 
 %if %{have_drm}
 %files drm
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/drivers/char/drm
+/lib/modules/%{version}-%{release}%{xen}/kernel/drivers/char/drm
 %endif
 
 %if %{with pcmcia}
 %files pcmcia
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
-/lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
-/lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko*
-/lib/modules/%{version}-%{release}/kernel/drivers/ide/legacy/ide-cs.ko*
-/lib/modules/%{version}-%{release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
-/lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko*
-/lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
-/lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko*
-/lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko*
-/lib/modules/%{version}-%{release}/kernel/drivers/telephony/ixj_pcmcia.ko*
-/lib/modules/%{version}-%{release}/kernel/drivers/usb/host/sl811_cs.ko*
+/lib/modules/%{version}-%{release}%{xen}/kernel/drivers/pcmcia
+/lib/modules/%{version}-%{release}%{xen}/kernel/drivers/*/pcmcia
+/lib/modules/%{version}-%{release}%{xen}/kernel/drivers/bluetooth/*_cs.ko*
+/lib/modules/%{version}-%{release}%{xen}/kernel/drivers/ide/legacy/ide-cs.ko*
+/lib/modules/%{version}-%{release}%{xen}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
+/lib/modules/%{version}-%{release}%{xen}/kernel/drivers/net/wireless/*_cs.ko*
+/lib/modules/%{version}-%{release}%{xen}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
+/lib/modules/%{version}-%{release}%{xen}/kernel/drivers/parport/parport_cs.ko*
+/lib/modules/%{version}-%{release}%{xen}/kernel/drivers/serial/serial_cs.ko*
+/lib/modules/%{version}-%{release}%{xen}/kernel/drivers/telephony/ixj_pcmcia.ko*
+/lib/modules/%{version}-%{release}%{xen}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 
 %ifarch ppc-broken
 %if "%{_arch}" == "ppc"
 %files libs
 %defattr(644,root,root,755)
-%dir /boot/libs-%{version}-%{release}
-/boot/libs-%{version}-%{release}/common
-/boot/libs-%{version}-%{release}/kernel
-/boot/libs-%{version}-%{release}/lib
-/boot/libs-%{version}-%{release}/of1275
-/boot/libs-%{version}-%{release}/openfirmware
-/boot/libs-%{version}-%{release}/simple
-%dir /boot/libs-%{version}-%{release}/utils
-%attr(755,root,root) /boot/libs-%{version}-%{release}/utils/*
-/boot/libs-%{version}-%{release}/ld.script
+%dir /boot/libs-%{version}-%{release}%{xen}
+/boot/libs-%{version}-%{release}%{xen}/common
+/boot/libs-%{version}-%{release}%{xen}/kernel
+/boot/libs-%{version}-%{release}%{xen}/lib
+/boot/libs-%{version}-%{release}%{xen}/of1275
+/boot/libs-%{version}-%{release}%{xen}/openfirmware
+/boot/libs-%{version}-%{release}%{xen}/simple
+%dir /boot/libs-%{version}-%{release}%{xen}/utils
+%attr(755,root,root) /boot/libs-%{version}-%{release}%{xen}/utils/*
+/boot/libs-%{version}-%{release}%{xen}/ld.script
 %endif
 %endif
 
 %if %{have_sound}
 %files sound-alsa
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/sound
-%exclude %dir /lib/modules/%{version}-%{release}/kernel/sound
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/soundcore.*
+/lib/modules/%{version}-%{release}%{xen}/kernel/sound
+%exclude %dir /lib/modules/%{version}-%{release}%{xen}/kernel/sound
+%exclude /lib/modules/%{version}-%{release}%{xen}/kernel/sound/soundcore.*
 %if %{have_oss}
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/oss
+%exclude /lib/modules/%{version}-%{release}%{xen}/kernel/sound/oss
 %endif
 
 %if %{have_oss}
 %files sound-oss
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/sound/oss
-%if %{have_isa}
-/lib/modules/%{version}-%{release}/kernel/drivers/media/radio/miropcm20.ko*
+/lib/modules/%{version}-%{release}%{xen}/kernel/sound/oss
+%if %{have_isa} && %{without xen0} && %{without xenU}
+/lib/modules/%{version}-%{release}%{xen}/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 %endif
 %endif			# %%{have_sound}
@@ -1416,112 +1456,112 @@ fi
 %defattr(644,root,root,755)
 #doc FAQ-pl
 %ifarch ia64
-/boot/efi/vmlinuz-%{version}-%{release}smp
+/boot/efi/vmlinuz-%{version}-%{release}%{xen}smp
 %endif
-/boot/vmlinuz-%{version}-%{release}smp
-/boot/System.map-%{version}-%{release}smp
-%ghost /boot/initrd-%{version}-%{release}smp.gz
-%dir /lib/modules/%{version}-%{release}smp
-%dir /lib/modules/%{version}-%{release}smp/kernel
+/boot/vmlinuz-%{version}-%{release}%{xen}smp
+/boot/System.map-%{version}-%{release}%{xen}smp
+%ghost /boot/initrd-%{version}-%{release}%{xen}smp.gz
+%dir /lib/modules/%{version}-%{release}%{xen}smp
+%dir /lib/modules/%{version}-%{release}%{xen}smp/kernel
 %ifnarch sparc
-/lib/modules/%{version}-%{release}smp/kernel/arch
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/arch
 %endif
-/lib/modules/%{version}-%{release}smp/kernel/crypto
-/lib/modules/%{version}-%{release}smp/kernel/drivers
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/crypto
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers
 %if %{have_drm}
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
+%exclude /lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/char/drm
 %endif
-%if %{have_oss} && %{have_isa}
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/media/radio/miropcm20.ko*
+%if %{have_oss} && %{have_isa} && %{without xen0} && %{without xenU}
+%exclude /lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/media/radio/miropcm20.ko*
 %endif
-/lib/modules/%{version}-%{release}smp/kernel/fs
-/lib/modules/%{version}-%{release}smp/kernel/kernel
-/lib/modules/%{version}-%{release}smp/kernel/lib
-/lib/modules/%{version}-%{release}smp/kernel/net
-/lib/modules/%{version}-%{release}smp/kernel/security
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/fs
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/kernel
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/lib
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/net
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/security
 %if %{have_sound}
-%dir /lib/modules/%{version}-%{release}smp/kernel/sound
-/lib/modules/%{version}-%{release}smp/kernel/sound/soundcore.*
+%dir /lib/modules/%{version}-%{release}%{xen}smp/kernel/sound
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/sound/soundcore.*
 %endif
-%dir /lib/modules/%{version}-%{release}smp/misc
+%dir /lib/modules/%{version}-%{release}%{xen}smp/misc
 %if %{with pcmcia}
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/legacy/ide-cs.ko*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/ixj_pcmcia.ko*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/usb/host/sl811_cs.ko*
+%exclude /lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/pcmcia
+%exclude /lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/*/pcmcia
+%exclude /lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/bluetooth/*_cs.ko*
+%exclude /lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/ide/legacy/ide-cs.ko*
+%exclude /lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
+%exclude /lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/net/wireless/*_cs.ko*
+%exclude /lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
+%exclude /lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/parport/parport_cs.ko*
+%exclude /lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/serial/serial_cs.ko*
+%exclude /lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/telephony/ixj_pcmcia.ko*
+%exclude /lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
-/lib/modules/%{version}-%{release}smp/build
-%ghost /lib/modules/%{version}-%{release}smp/modules.*
-%dir %{_sysconfdir}/modprobe.d/%{version}-%{release}smp
+/lib/modules/%{version}-%{release}%{xen}smp/build
+%ghost /lib/modules/%{version}-%{release}%{xen}smp/modules.*
+%dir %{_sysconfdir}/modprobe.d/%{version}-%{release}%{xen}smp
 
 %ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
 %files smp-vmlinux
 %defattr(644,root,root,755)
-/boot/vmlinux-%{version}-%{release}smp
+/boot/vmlinux-%{version}-%{release}%{xen}smp
 %endif
 
 %if %{have_drm}
 %files smp-drm
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/char/drm
 %endif
 
 %if %{with pcmcia}
 %files smp-pcmcia
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/ide/legacy/ide-cs.ko*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/ixj_pcmcia.ko*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/usb/host/sl811_cs.ko*
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/pcmcia
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/*/pcmcia
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/bluetooth/*_cs.ko*
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/ide/legacy/ide-cs.ko*
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/net/wireless/*_cs.ko*
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/parport/parport_cs.ko*
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/serial/serial_cs.ko*
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/telephony/ixj_pcmcia.ko*
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 
 %ifarch ppc-broken
 %if "%{_arch}" == "ppc"
 %files smp-libs
 %defattr(644,root,root,755)
-%dir /boot/libs-%{version}-%{release}smp
-/boot/libs-%{version}-%{release}smp/common
-/boot/libs-%{version}-%{release}smp/kernel
-/boot/libs-%{version}-%{release}smp/lib
-/boot/libs-%{version}-%{release}smp/of1275
-/boot/libs-%{version}-%{release}smp/openfirmware
-/boot/libs-%{version}-%{release}smp/simple
-%dir /boot/libs-%{version}-%{release}smp/utils
-%attr(755,root,root) /boot/libs-%{version}-%{release}smp/utils/*
-/boot/libs-%{version}-%{release}smp/ld.script
+%dir /boot/libs-%{version}-%{release}%{xen}smp
+/boot/libs-%{version}-%{release}%{xen}smp/common
+/boot/libs-%{version}-%{release}%{xen}smp/kernel
+/boot/libs-%{version}-%{release}%{xen}smp/lib
+/boot/libs-%{version}-%{release}%{xen}smp/of1275
+/boot/libs-%{version}-%{release}%{xen}smp/openfirmware
+/boot/libs-%{version}-%{release}%{xen}smp/simple
+%dir /boot/libs-%{version}-%{release}%{xen}smp/utils
+%attr(755,root,root) /boot/libs-%{version}-%{release}%{xen}smp/utils/*
+/boot/libs-%{version}-%{release}%{xen}smp/ld.script
 %endif
 %endif
 
 %if %{have_sound}
 %files smp-sound-alsa
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/sound
-%exclude %dir /lib/modules/%{version}-%{release}smp/kernel/sound
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/soundcore.*
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/sound
+%exclude %dir /lib/modules/%{version}-%{release}%{xen}smp/kernel/sound
+%exclude /lib/modules/%{version}-%{release}%{xen}smp/kernel/sound/soundcore.*
 %if %{have_oss}
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/oss
+%exclude /lib/modules/%{version}-%{release}%{xen}smp/kernel/sound/oss
 %endif
 
 %if %{have_oss}
 %files smp-sound-oss
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/sound/oss
-%if %{have_isa}
-/lib/modules/%{version}-%{release}smp/kernel/drivers/media/radio/miropcm20.ko*
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/sound/oss
+%if %{have_isa} && %{without xen0} && %{without xenU}
+/lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 %endif
 %endif			# %%{have_sound}
