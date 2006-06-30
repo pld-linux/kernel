@@ -271,6 +271,10 @@ Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
+# sec-fixes
+# NETFILTER: SCTP conntrack: fix crash triggered by packet without chunks [CVE-2006-2934]
+Patch2000:	kernel-CVE-2006-2934.patch
+
 # grsecurity snap for 2.6.16.14
 # based on http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.16.14-200605060936.patch
 Patch9999:	grsecurity-2.1.9-2.6.16.14.patch
@@ -806,6 +810,9 @@ done
 %ifarch ppc ppc64
 %patch200 -p1
 %endif
+
+# sec-fixes
+%patch2000 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
