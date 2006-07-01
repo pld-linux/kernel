@@ -99,7 +99,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			3
+%define		_rel			1
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
@@ -122,7 +122,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 %define		_basever	2.6.16
-%define		_postver	.22
+%define		_postver	.23
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
@@ -133,7 +133,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source3-md5:	826870e367fdcbc16f8b3ad8ca4f27d7
+# Source3-md5:	056162f469f3ef9b3b120aec3736c7e5
 
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
@@ -270,10 +270,6 @@ Patch121:	linux-xen-page_alloc.patch
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
-
-# sec-fixes
-# NETFILTER: SCTP conntrack: fix crash triggered by packet without chunks [CVE-2006-2934]
-Patch2000:	kernel-CVE-2006-2934.patch
 
 # grsecurity snap for 2.6.16.14
 # based on http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.16.14-200605060936.patch
@@ -810,9 +806,6 @@ done
 %ifarch ppc ppc64
 %patch200 -p1
 %endif
-
-# sec-fixes
-%patch2000 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
