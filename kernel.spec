@@ -20,6 +20,7 @@
 %bcond_without	grsecurity	# don't build grsecurity at all
 %bcond_without	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
 
+%bcond_with	vesafb_tng	# vesafb-tng, vesafb replacement from gentoo
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
 
@@ -86,7 +87,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.2
+%define		_rel			0.3
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
@@ -708,7 +709,7 @@ done
 %patch4 -p1
 
 %ifarch %{ix86}
-%patch5 -p1
+%{?with_vesafb_tng:%patch5 -p1}
 %endif
 
 %patch6 -p1
