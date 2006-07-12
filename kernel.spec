@@ -18,7 +18,7 @@
 %bcond_without	grsecurity	# don't build grsecurity at all
 %bcond_without	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
 
-%bcond_with	bootsplash	# build with bootsplash instead of fbsplash
+%bcond_without	bootsplash	# build with bootsplash instead of fbsplash
 %bcond_with	vesafb_tng	# vesafb-tng, vesafb replacement from gentoo
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
@@ -101,7 +101,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.1
+%define		_rel			1
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
