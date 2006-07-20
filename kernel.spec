@@ -1,5 +1,7 @@
 #
 # TODO:
+#	- test pax stuff (btw. tested ok in softmode)
+#	- prepare config for non SEGMEXEC capable archs (ie not x86/32bit)
 #	- patch scripts/Makefile.xen not to require bash
 #       - make PAE usage configurable when Xen is on
 #		ALL
@@ -12,6 +14,7 @@
 %bcond_without	pcmcia		# don't build pcmcia
 
 %bcond_with	grsec_full	# build full grsecurity
+%bcond_with	pax		# build PaX and full grsecurity
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	xen0		# added Xen0 support
 %bcond_with	xenU		# added XenU support
@@ -28,6 +31,13 @@
 %if %{without grsecurity}
 %undefine	with_grsec_full
 %undefine	with_grsec_minimal
+%undefine	with_pax
+%endif
+
+%if %{with pax}
+%undefine	with_grsec_minimal
+%undefine	with_grsec_full
+%define		with_grsecurity		1
 %endif
 
 %if %{with grsec_full}
@@ -37,6 +47,7 @@
 
 %if %{with grsec_minimal}
 %undefine	with_grsec_full
+%undefine	with_pax
 %define		with_grsecurity		1
 %endif
 
@@ -101,7 +112,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			1
+%define		_rel			2
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
@@ -122,7 +133,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
-Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
+Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 %define		_basever	2.6.16
 %define		_postver	.27
 Version:	%{_basever}%{_postver}
@@ -169,7 +180,7 @@ Source45:	kernel-grsec.config
 Source46:	kernel-xen0.config
 Source47:	kernel-xenU.config
 Source48:	kernel-xen-extra.config
-
+Source49:	kernel-grsec+pax.config
 ###
 #	Patches
 ###
@@ -811,6 +822,10 @@ done
 %patch9999 -p1
 %endif
 
+%if %{with pax}
+%patch9999 -p1
+%endif
+
 %ifarch ppc ppc64
 %patch200 -p1
 %endif
@@ -923,7 +938,11 @@ BuildConfig() {
 	cat %{SOURCE44} >> arch/%{_target_base_arch}/defconfig
 
 %if %{with grsecurity}
-	cat %{SOURCE45} >> arch/%{_target_base_arch}/defconfig
+	%if %{with pax}
+		cat %{SOURCE49} >> arch/%{_target_base_arch}/defconfig
+	%else
+		cat %{SOURCE45} >> arch/%{_target_base_arch}/defconfig
+	%endif
 %endif
 
 %if %{with xen0} || %{with xenU}
@@ -1218,7 +1237,7 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title='PLD Linux'
 	fi
 
-	ext='%{?with_grsec_full:grsecurity}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
+	ext='%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
 	if [ "$ext" ]; then
 		title="$title $ext"
 	fi
@@ -1292,7 +1311,7 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title='PLD Linux'
 	fi
 
-	ext='%{?with_grsec_full:grsecurity}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
+	ext='%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
 	if [ "$ext" ]; then
 		title="$title $ext"
 	fi
