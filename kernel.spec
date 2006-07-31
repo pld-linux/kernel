@@ -87,7 +87,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.3
+%define		_rel			0.1
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
@@ -248,7 +248,7 @@ Patch60:	linux-2.6-sk98lin-8.32.2.3.patch
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
 
-# vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.1.1-rc15.diff
+# vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.17.7-vs2.1.1-rc27.diff
 Patch100:	linux-2.6-vs2.1.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
