@@ -898,7 +898,7 @@ BuildConfig() {
 %endif
 
 	# netfilter
-	#cat %{SOURCE40} >> arch/%{_target_base_arch}/defconfig
+	cat %{SOURCE40} >> arch/%{_target_base_arch}/defconfig
 	# squashfs
 	cat %{SOURCE41} >> arch/%{_target_base_arch}/defconfig
 	# suspend2
@@ -912,7 +912,7 @@ BuildConfig() {
 	cat %{SOURCE44} >> arch/%{_target_base_arch}/defconfig
 
 %if %{with grsecurity}
-	#cat %{SOURCE45} >> arch/%{_target_base_arch}/defconfig
+	cat %{SOURCE45} >> arch/%{_target_base_arch}/defconfig
 %endif
 
 %if %{with xen0}
