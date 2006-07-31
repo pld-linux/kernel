@@ -87,7 +87,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.1
+%define		_rel			0.2
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
@@ -259,6 +259,8 @@ Patch120:	xen-3.0-2.6.16.patch
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
+
+Patch2000:	kernel-small_fixes.patch
 
 # grsecurity snap for 2.6.16.14
 # based on http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.16.14-200605060936.patch
@@ -797,6 +799,9 @@ done
 %patch200 -p1
 %endif
 
+##Small fixes:
+%patch2000 -p1
+
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
 
@@ -808,6 +813,7 @@ find . '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xarg
 
 %build
 TuneUpConfigForIX86 () {
+	set -x
 %ifarch %{ix86}
 	pae=
 	[ "$2" = "yes" ] && pae=yes
@@ -863,6 +869,7 @@ TuneUpConfigForIX86 () {
 
 BuildConfig() {
 	%{?debug:set -x}
+	set -x
 	# is this a special kernel we want to build?
 	smp=
 	[ "$1" = "smp" -o "$2" = "smp" ] && smp=yes
@@ -891,7 +898,7 @@ BuildConfig() {
 %endif
 
 	# netfilter
-	cat %{SOURCE40} >> arch/%{_target_base_arch}/defconfig
+	#cat %{SOURCE40} >> arch/%{_target_base_arch}/defconfig
 	# squashfs
 	cat %{SOURCE41} >> arch/%{_target_base_arch}/defconfig
 	# suspend2
@@ -905,7 +912,7 @@ BuildConfig() {
 	cat %{SOURCE44} >> arch/%{_target_base_arch}/defconfig
 
 %if %{with grsecurity}
-	cat %{SOURCE45} >> arch/%{_target_base_arch}/defconfig
+	#cat %{SOURCE45} >> arch/%{_target_base_arch}/defconfig
 %endif
 
 %if %{with xen0}
@@ -947,6 +954,7 @@ BuildConfig() {
 
 BuildKernel() {
 	%{?debug:set -x}
+	set -x
 	echo "Building kernel $1 ..."
 	%{__make} $CrossOpts mrproper \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
