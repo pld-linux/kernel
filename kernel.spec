@@ -100,7 +100,7 @@
 %define		drm_xfree_version	4.3.0
 
 %define		squashfs_version	3.0
-%define		suspend_version		2.2.5.2
+%define		suspend_version		2.2.7.3
 
 %define		xen_version		3.0.2
 
@@ -110,7 +110,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 %define		_basever	2.6.17
-%define		_postver	.4
+%define		_postver	.7
 #define		_postver	%{nil}
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
@@ -124,17 +124,18 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar
 # Source0-md5:	37ddefe96625502161f075b9d907f21e
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	c3b9e8e7b63d6273c5476a999a3b6280
+# Source1-md5:	f2c255cdf482ba589151f5da03fed418
 %endif
 Source3:	kernel-autoconf.h
 Source4:	kernel-config.h
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
 
-Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.17-rc6.tar.bz2
-# Source10-md5:	0e38acc161c4bd7e3766de67caad994b
-Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.16/reiser4-for-2.6.16-1.patch.gz
-# Source12-md5:	f51303b5e445432b974a729b76036c40
+Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.17.tar.bz2
+# Source10-md5:	93c5fff0ce771cd547043db91718706f
+#Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.16/reiser4-for-2.6.16-1.patch.gz
+Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.17/reiser4-for-2.6.17-3.patch.gz
+# Source12-md5:	593c3296ddf40c5b116ee129781da341
 
 Source20:	kernel-i386.config
 Source21:	kernel-i386-smp.config
@@ -695,14 +696,18 @@ install %{SOURCE5} Makefile.ppclibs
 
 %patch1 -p1
 
-for i in suspend2-%{suspend_version}-for-2.6.17-rc6/[0-9]*; do
+# TEMPORARY - review if it's still needed after upgrade!!
+rm suspend2-2.2.7.3-for-2.6.17/9930-pdflush-fix.patch
+
+## suspend2:
+for i in suspend2-%{suspend_version}-for-2.6.17/[0-9]*; do
 patch -p1 -s < $i
 done
 %patch70 -p1
 %patch71 -p1
 
 # reiserfs4
-# %{__gzip} -dc %{SOURCE12} | %{__patch} -s -p1
+ %{__gzip} -dc %{SOURCE12} | %{__patch} -s -p1
 
 %patch2 -p1
 
@@ -770,6 +775,7 @@ done
 
 %patch60 -p1
 
+# vserver:
 %patch100 -p1
 %patch101 -p1
 %patch102 -p1
