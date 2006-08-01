@@ -319,7 +319,7 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
 +{
 +	int retval;
 +
-+	down(&callback_sem);
++	mutex_lock(&callback_mutex);
 +	if (is_virtualized(p->cpuset))
 +		retval = set_cpus_virt_allowed(p, mask);
 +	else {
@@ -328,7 +328,7 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
 +		cpus_and(mask, mask, cpus_allowed);
 +		retval = set_cpus_allowed(p, mask);
 +	}
-+	up(&callback_sem);
++	mutex_unlock(&callback_mutex);
 +	return retval;
 +}
 +
