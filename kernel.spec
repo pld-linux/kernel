@@ -87,7 +87,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.2
+%define		_rel			0.3
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
@@ -274,6 +274,8 @@ BuildRequires:	elftoaout
 %endif
 BuildRequires:	gcc >= 5:3.2
 BuildRequires:	module-init-tools
+# That package provides dummy module-init-tools:
+Conflicts:	vserver-packages
 # for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
@@ -868,7 +870,6 @@ TuneUpConfigForIX86 () {
 %endif
 
 BuildConfig() {
-	%{?debug:set -x}
 	set -x
 	# is this a special kernel we want to build?
 	smp=
@@ -953,7 +954,6 @@ BuildConfig() {
 }
 
 BuildKernel() {
-	%{?debug:set -x}
 	set -x
 	echo "Building kernel $1 ..."
 	%{__make} $CrossOpts mrproper \
