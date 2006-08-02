@@ -1,9 +1,9 @@
 #
 # TODO:
-#	- update grsecurity-2.1.9-2.6.17.3.patch for vserver patched kernel
-#	- update xen patch for 2.6.17.x
-#	- update reiser4 patch when version for 2.6.17.x will be available
-#	- all netfilter patches needs update (API changed again)
+# - update grsecurity-2.1.9-2.6.17.3.patch for vserver patched kernel
+# - update xen patch for 2.6.17.x
+# - all netfilter patches needs update (API changed again)
+# - update configs other than x86 and amd64 archs
 #
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
 #
