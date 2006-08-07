@@ -89,6 +89,7 @@
 
 %define		_rel			0.5
 
+## !!!!!! Need update this is for 2.6.16.X kernel !!!!
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
 
