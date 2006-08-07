@@ -110,7 +110,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 %define		_basever	2.6.17
-%define		_postver	.7
+%define		_postver	.8
 #define		_postver	%{nil}
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
@@ -124,7 +124,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar
 # Source0-md5:	37ddefe96625502161f075b9d907f21e
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	f2c255cdf482ba589151f5da03fed418
+# Source1-md5:	791940106e40ff60fa1756e29f7b0488
 %endif
 Source3:	kernel-autoconf.h
 Source4:	kernel-config.h
@@ -133,7 +133,6 @@ Source7:	kernel-module-build.pl
 
 Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.17.tar.bz2
 # Source10-md5:	93c5fff0ce771cd547043db91718706f
-#Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.16/reiser4-for-2.6.16-1.patch.gz
 Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.17/reiser4-for-2.6.17-3.patch.gz
 # Source12-md5:	593c3296ddf40c5b116ee129781da341
 
@@ -711,7 +710,7 @@ done
 %patch71 -p1
 
 # reiserfs4
- %{__gzip} -dc %{SOURCE12} | %{__patch} -s -p1
+%{__gzip} -dc %{SOURCE12} | %{__patch} -s -p1
 
 %patch2 -p1
 
