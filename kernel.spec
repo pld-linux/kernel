@@ -860,7 +860,7 @@ TuneUpConfigForIX86 () {
 	%if "%{_arch}" == "sparc" && "%{_target_base_arch}" == "sparc64"
 	DepMod=/sbin/depmod
 	%endif
-	%if "%{_arch}" == "x86_64" && "%_target_base_arch}" == "i386"
+	%if "%{_arch}" == "x86_64" && "%{_target_base_arch}" == "i386"
 	CrossOpts="ARCH=%{_target_base_arch}"
 	DepMod=/sbin/depmod
 	%endif
