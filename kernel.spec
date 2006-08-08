@@ -1,6 +1,5 @@
 #
 # TODO:
-# - update grsecurity-2.1.9-2.6.17.3.patch for vserver patched kernel
 # - update xen patch for 2.6.17.x
 # - all netfilter patches needs update (API changed again)
 # - update configs other than x86 and amd64 archs
@@ -265,9 +264,9 @@ Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
 
-# grsecurity snap for 2.6.16.14
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.16.14-200605060936.patch
-Patch9999:	grsecurity-2.1.9-2.6.16.14.patch
+# official grsecurity for 2.6.17.7
+# based on http://www.grsecurity.net/grsecurity-2.1.9-2.6.17.7-200608012135.patch.gz
+Patch9999:	grsecurity-2.1.9-2.6.17.7.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
