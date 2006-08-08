@@ -20,6 +20,7 @@
 %bcond_without	grsecurity	# don't build grsecurity at all
 %bcond_without	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
 
+%bcond_with	fbsplash	# fbsplash instead of bootsplash
 %bcond_with	vesafb_tng	# vesafb-tng, vesafb replacement from gentoo
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
@@ -174,6 +175,8 @@ Patch1:		linux-2.6-sata-promise-pata-ports.patch
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
 Patch2:		tahoe9xx-2.6.11.5.patch
 
+#	ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.15.diff
+Patch3:		bootsplash-3.1.6-2.6.15.diff
 #	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.16.patch
 Patch4:		fbsplash-0.9.2-r5-2.6.16.patch
 Patch5:		linux-2.6-vesafb-tng.patch
@@ -715,7 +718,13 @@ done
 
 %patch2 -p1
 
+%patch8 -p1
+
+%if %{without fbsplash}
+%patch3 -p1
+%else
 %patch4 -p1
+%endif
 
 %ifarch %{ix86}
 %{?with_vesafb_tng:%patch5 -p1}
@@ -724,7 +733,6 @@ done
 %patch6 -p1
 
 %patch7 -p1
-%patch8 -p1
 %patch9 -p1
 
 ## netfilter
