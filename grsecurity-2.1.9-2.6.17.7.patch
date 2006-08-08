@@ -22042,18 +22042,8 @@ diff -urNp linux-2.6.17.7/include/linux/shm.h linux-2.6.17.7/include/linux/shm.h
 diff -urNp linux-2.6.17.7/include/linux/sysctl.h linux-2.6.17.7/include/linux/sysctl.h
 --- linux-2.6.17.7/include/linux/sysctl.h	2006-07-24 23:36:01.000000000 -0400
 +++ linux-2.6.17.7/include/linux/sysctl.h	2006-08-01 20:29:48.000000000 -0400
-@@ -148,8 +148,21 @@ enum
- 	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
- 	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
- 	KERN_FBSPLASH=73,	/* string: path to fbsplash helper */
-+#ifdef CONFIG_GRKERNSEC
-+	KERN_GRSECURITY=98,	/* grsecurity */
-+#endif
-+
-+#ifdef CONFIG_PAX_SOFTMODE
-+	KERN_PAX=99,		/* PaX control */
-+#endif
-+
+@@ -78,9 +78,22 @@
+ 	INOTIFY_MAX_QUEUED_EVENTS=3	/* max queued events per instance */
  };
  
 +#ifdef CONFIG_PAX_SOFTMODE
@@ -22061,9 +22051,20 @@ diff -urNp linux-2.6.17.7/include/linux/sysctl.h linux-2.6.17.7/include/linux/sy
 +	PAX_SOFTMODE=1		/* PaX: disable/enable soft mode */
 +};
 +#endif
- 
- /* CTL_VM names: */
++
+ /* CTL_KERN names: */
  enum
+ {
++#ifdef CONFIG_GRKERNSEC
++	KERN_GRSECURITY=98,	/* grsecurity */
++#endif
++
++#ifdef CONFIG_PAX_SOFTMODE
++	KERN_PAX=99,		/* PaX control */
++#endif
+ 	KERN_OSTYPE=1,		/* string: system version */
+ 	KERN_OSRELEASE=2,	/* string: system release */
+ 	KERN_OSREV=3,		/* int: system revision */
 diff -urNp linux-2.6.17.7/init/Kconfig linux-2.6.17.7/init/Kconfig
 --- linux-2.6.17.7/init/Kconfig	2006-07-24 23:36:01.000000000 -0400
 +++ linux-2.6.17.7/init/Kconfig	2006-08-01 20:29:48.000000000 -0400
