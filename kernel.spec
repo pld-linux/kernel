@@ -932,8 +932,9 @@ BuildConfig() {
 	cat %{SOURCE47} >> arch/%{_target_base_arch}/defconfig
 %endif	
 	
-	# fbsplash
+	# fbsplash && bootsplash
 	echo "CONFIG_FB_SPLASH=y" >> arch/%{_target_base_arch}/defconfig
+	echo "CONFIG_BOOTSPLASH=y" >> arch/%{_target_base_arch}/defconfig
 
 %if %{with nfsroot}
 	sed -i "s:CONFIG_NFS_FS=m:CONFIG_NFS_FS=y:" arch/%{_target_base_arch}/defconfig
