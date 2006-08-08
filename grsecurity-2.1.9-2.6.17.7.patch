@@ -8558,7 +8558,7 @@ diff -urNp linux-2.6.17.7/fs/exec.c linux-2.6.17.7/fs/exec.c
  	down_write(&mm->mmap_sem);
  	{
  		mpnt->vm_mm = mm;
-@@ -430,13 +473,50 @@ int setup_arg_pages(struct linux_binprm 
+@@ -430,14 +473,51 @@ int setup_arg_pages(struct linux_binprm 
  		else
  			mpnt->vm_flags = VM_STACK_FLAGS;
  		mpnt->vm_flags |= mm->def_flags;
@@ -8581,7 +8581,8 @@ diff -urNp linux-2.6.17.7/fs/exec.c linux-2.6.17.7/fs/exec.c
 +
  			return ret;
  		}
- 		mm->stack_vm = mm->total_vm = vma_pages(mpnt);
+ 		vx_vmpages_sub(mm, mm->total_vm - vma_pages(mpnt));
+ 		mm->stack_vm = mm->total_vm;
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
 +		if (mpnt_m) {
@@ -9043,21 +9044,22 @@ diff -urNp linux-2.6.17.7/fs/namei.c linux-2.6.17.7/fs/namei.c
  		dput(dentry);
  	}
  	mutex_unlock(&nd.dentry->d_inode->i_mutex);
-@@ -1908,9 +1985,19 @@ asmlinkage long sys_mkdirat(int dfd, con
+@@ -1908,10 +1985,19 @@ asmlinkage long sys_mkdirat(int dfd, con
  		dentry = lookup_create(&nd, 1);
  		error = PTR_ERR(dentry);
  		if (!IS_ERR(dentry)) {
 +			error = 0;
  			if (!IS_POSIXACL(nd.dentry->d_inode))
  				mode &= ~current->fs->umask;
--			error = vfs_mkdir(nd.dentry->d_inode, dentry, mode);
+-			error = vfs_mkdir(nd.dentry->d_inode, dentry,
+-				mode, &nd);
 +
 +			if (!gr_acl_handle_mkdir(dentry, nd.dentry, nd.mnt))
 +				error = -EACCES;
 +
 +			if (!error)
-+				error = vfs_mkdir(nd.dentry->d_inode, dentry, mode);
-+
++				error = vfs_mkdir(nd.dentry->d_inode, dentry,
++					mode, &nd);
 +			if (!error)
 +				gr_handle_create(dentry, nd.mnt);
 +
@@ -9077,7 +9079,7 @@ diff -urNp linux-2.6.17.7/fs/namei.c linux-2.6.17.7/fs/namei.c
  	dentry = lookup_hash(&nd);
  	error = PTR_ERR(dentry);
  	if (!IS_ERR(dentry)) {
--		error = vfs_rmdir(nd.dentry->d_inode, dentry);
+-		error = vfs_rmdir(nd.dentry->d_inode, dentry, &nd);
 +		error = 0;
 +		if (dentry->d_inode) {
 +			if (dentry->d_inode->i_nlink <= 1) {
@@ -9090,7 +9092,7 @@ diff -urNp linux-2.6.17.7/fs/namei.c linux-2.6.17.7/fs/namei.c
 +		}
 +
 +		if (!error)
-+			error = vfs_rmdir(nd.dentry->d_inode, dentry);
++			error = vfs_rmdir(nd.dentry->d_inode, dentry, &nd);
 +		if (!error && (saved_dev || saved_ino))
 +			gr_handle_delete(saved_ino, saved_dev);
  		dput(dentry);
@@ -9125,37 +9127,39 @@ diff -urNp linux-2.6.17.7/fs/namei.c linux-2.6.17.7/fs/namei.c
 +				error = -EACCES;
 +
  			atomic_inc(&inode->i_count);
--		error = vfs_unlink(nd.dentry->d_inode, dentry);
+-		error = vfs_unlink(nd.dentry->d_inode, dentry, &nd);
 +		}
 +		if (!error)
-+			error = vfs_unlink(nd.dentry->d_inode, dentry);
++			error = vfs_unlink(nd.dentry->d_inode, dentry, &nd);
 +		if (!error && (saved_ino || saved_dev))
 +			gr_handle_delete(saved_ino, saved_dev);
  	exit2:
  		dput(dentry);
  	}
-@@ -2176,7 +2294,15 @@ asmlinkage long sys_symlinkat(const char
+@@ -2176,8 +2294,15 @@ asmlinkage long sys_symlinkat(const char
  		dentry = lookup_create(&nd, 0);
  		error = PTR_ERR(dentry);
  		if (!IS_ERR(dentry)) {
--			error = vfs_symlink(nd.dentry->d_inode, dentry, from, S_IALLUGO);
+-			error = vfs_symlink(nd.dentry->d_inode, dentry,
+-				from, S_IALLUGO, &nd);
 +			error = 0;
 +			if (!gr_acl_handle_symlink(dentry, nd.dentry, nd.mnt, from))
 +				error = -EACCES;
 +
 +			if (!error)
-+				error = vfs_symlink(nd.dentry->d_inode, dentry, from, S_IALLUGO);
-+
++				error = vfs_symlink(nd.dentry->d_inode, dentry,
++					from, S_IALLUGO, &nd);
 +			if (!error)
 +				gr_handle_create(dentry, nd.mnt);
  			dput(dentry);
  		}
  		mutex_unlock(&nd.dentry->d_inode->i_mutex);
-@@ -2268,7 +2394,20 @@ asmlinkage long sys_linkat(int olddfd, c
+@@ -2268,8 +2394,20 @@ asmlinkage long sys_linkat(int olddfd, c
  	new_dentry = lookup_create(&nd, 0);
  	error = PTR_ERR(new_dentry);
  	if (!IS_ERR(new_dentry)) {
--		error = vfs_link(old_nd.dentry, nd.dentry->d_inode, new_dentry);
+-		error = vfs_link(old_nd.dentry, nd.dentry->d_inode,
+-			new_dentry, &nd);
 +		error = 0;
 +		if (gr_handle_hardlink(old_nd.dentry, old_nd.mnt,
 +				       old_nd.dentry->d_inode,
@@ -9165,8 +9169,8 @@ diff -urNp linux-2.6.17.7/fs/namei.c linux-2.6.17.7/fs/namei.c
 +					old_nd.dentry, old_nd.mnt, to))
 +			error = -EACCES;
 +		if (!error)
-+			error = vfs_link(old_nd.dentry, nd.dentry->d_inode, new_dentry);
-+
++			error = vfs_link(old_nd.dentry, nd.dentry->d_inode, new_dentry,
++				&nd);
 +		if (!error)
 +			gr_handle_create(new_dentry, nd.mnt);
 +
@@ -19154,10 +19158,9 @@ diff -urNp linux-2.6.17.7/include/asm-i386/elf.h linux-2.6.17.7/include/asm-i386
 --- linux-2.6.17.7/include/asm-i386/elf.h	2006-07-24 23:36:01.000000000 -0400
 +++ linux-2.6.17.7/include/asm-i386/elf.h	2006-08-01 20:29:47.000000000 -0400
 @@ -71,6 +71,17 @@ typedef struct user_fxsr_struct elf_fpxr
-    that it will "exec", and that there is sufficient room for the brk.  */
  
  #define ELF_ET_DYN_BASE         ((TASK_UNMAPPED_BASE) * 2)
-+
+ 
 +#ifdef CONFIG_PAX_ASLR
 +#define PAX_ELF_ET_DYN_BASE(tsk)	0x10000000UL
 +
@@ -19168,9 +19171,10 @@ diff -urNp linux-2.6.17.7/include/asm-i386/elf.h linux-2.6.17.7/include/asm-i386
 +#define PAX_DELTA_STACK_LSB(tsk)	PAGE_SHIFT
 +#define PAX_DELTA_STACK_LEN(tsk)	((tsk)->mm->pax_flags & MF_PAX_SEGMEXEC ? 15 : 16)
 +#endif
- 
++
  /* regs is struct pt_regs, pr_reg is elf_gregset_t (which is
     now struct_user_regs, they are different) */
+ 
 @@ -131,7 +146,14 @@ extern int dump_task_extended_fpu (struc
  
  #define VSYSCALL_BASE	(__fix_to_virt(FIX_VSYSCALL))
@@ -22039,9 +22043,9 @@ diff -urNp linux-2.6.17.7/include/linux/sysctl.h linux-2.6.17.7/include/linux/sy
 --- linux-2.6.17.7/include/linux/sysctl.h	2006-07-24 23:36:01.000000000 -0400
 +++ linux-2.6.17.7/include/linux/sysctl.h	2006-08-01 20:29:48.000000000 -0400
 @@ -148,8 +148,21 @@ enum
- 	KERN_SPIN_RETRY=70,	/* int: number of spinlock retries */
  	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
  	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
+ 	KERN_FBSPLASH=73,	/* string: path to fbsplash helper */
 +#ifdef CONFIG_GRKERNSEC
 +	KERN_GRSECURITY=98,	/* grsecurity */
 +#endif
@@ -23793,9 +23797,9 @@ diff -urNp linux-2.6.17.7/mm/mlock.c linux-2.6.17.7/mm/mlock.c
 --- linux-2.6.17.7/mm/mlock.c	2006-07-24 23:36:01.000000000 -0400
 +++ linux-2.6.17.7/mm/mlock.c	2006-08-01 20:29:48.000000000 -0400
 @@ -10,14 +10,85 @@
- #include <linux/mm.h>
  #include <linux/mempolicy.h>
  #include <linux/syscalls.h>
+ #include <linux/vs_memory.h>
 +#include <linux/grsecurity.h>
  
 +static int __mlock_fixup(struct vm_area_struct *vma, struct vm_area_struct **prev,
@@ -23917,7 +23921,7 @@ diff -urNp linux-2.6.17.7/mm/mlock.c linux-2.6.17.7/mm/mlock.c
 -			ret = make_pages_present(start, end);
 -	}
 -
--	vma->vm_mm->locked_vm -= pages;
+-	vx_vmlocked_sub(vma->vm_mm, pages);
  out:
  	if (ret == -ENOMEM)
  		ret = -EAGAIN;
@@ -23946,7 +23950,7 @@ diff -urNp linux-2.6.17.7/mm/mlock.c linux-2.6.17.7/mm/mlock.c
 +	gr_learn_resource(current, RLIMIT_MEMLOCK, (current->mm->locked_vm << PAGE_SHIFT) + len, 1);
  	if ((locked <= lock_limit) || capable(CAP_IPC_LOCK))
  		error = do_mlock(start, len, 1);
- 	up_write(&current->mm->mmap_sem);
+ out:
 @@ -173,6 +234,16 @@ static int do_mlockall(int flags)
  	for (vma = current->mm->mmap; vma ; vma = prev->vm_next) {
  		unsigned int newflags;
@@ -23965,9 +23969,9 @@ diff -urNp linux-2.6.17.7/mm/mlock.c linux-2.6.17.7/mm/mlock.c
  		if (!(flags & MCL_CURRENT))
  			newflags &= ~VM_LOCKED;
 @@ -202,6 +273,7 @@ asmlinkage long sys_mlockall(int flags)
- 	lock_limit >>= PAGE_SHIFT;
- 
  	ret = -ENOMEM;
+ 	if (!vx_vmlocked_avail(current->mm, current->mm->total_vm))
+		goto out;
 +	gr_learn_resource(current, RLIMIT_MEMLOCK, current->mm->total_vm, 1);
  	if (!(flags & MCL_CURRENT) || (current->mm->total_vm <= lock_limit) ||
  	    capable(CAP_IPC_LOCK))
