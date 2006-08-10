@@ -112,7 +112,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			2
+%define		_rel			3
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
@@ -281,7 +281,8 @@ Patch102:	linux-2.6-vs2.1-128IPs.patch
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 Patch120:	xen-3.0-2.6.16.patch
 Patch121:	linux-xen-page_alloc.patch
-
+# from  http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw266_we20-6.diff
+Patch140:	linux-2.6.16-we20-6.patch
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
@@ -814,6 +815,8 @@ done
 %patch121 -p1
 %endif
 %endif
+
+%patch140 -p1
 
 %if %{with grsec_minimal}
 %patch1000 -p1
