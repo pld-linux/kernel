@@ -227,11 +227,6 @@ Patch50:	linux-2.6.16-imq2.diff
 # from http://bluetooth-alsa.sourceforge.net/sco-mtu.patch
 Patch51:	sco-mtu.patch
 
-# support for HDAPS (Hard Disk Active Protection System)
-# that can be found in IBM/Lenovo ThinkPad laptops
-# from: http://www.dresco.co.uk/hdaps/hdaps_protect.20060326.patch
-Patch52:	linux-hdaps_protect.patch
-
 # esfq
 # from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
 Patch53:	esfq-kernel.patch
@@ -769,8 +764,6 @@ done
 %patch50 -p1
 
 %patch51 -p1
-
-%patch52 -p1
 
 %patch53 -p1
 
