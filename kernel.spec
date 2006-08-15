@@ -87,10 +87,10 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.6
+%define		_rel			0.7
 
 ## !!!!!! Need update this is for 2.6.16.X kernel !!!!
-%define		_netfilter_snap		20060504
+%define		_netfilter_snap		20060815
 %define		_nf_hipac_ver		0.9.1
 
 %define		_enable_debug_packages			0
