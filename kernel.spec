@@ -87,7 +87,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.5
+%define		_rel			0.6
 
 ## !!!!!! Need update this is for 2.6.16.X kernel !!!!
 %define		_netfilter_snap		20060504
@@ -258,6 +258,9 @@ Patch200:	linux-2.6-ppc-ICE-hacks.patch
 Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
+
+# http://lkml.org/lkml/2006/7/22/98
+Patch2001:	kernel-2.6-pnpbios.patch
 
 # official grsecurity for 2.6.17.7
 # based on http://www.grsecurity.net/grsecurity-2.1.9-2.6.17.7-200608012135.patch.gz
@@ -803,6 +806,7 @@ done
 
 ##Small fixes:
 %patch2000 -p1
+%patch2001 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
