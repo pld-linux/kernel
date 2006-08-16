@@ -9813,3 +9813,25 @@ diff -urN linux-2.4.24.org/net/bluetooth/cmtp/core.c linux-2.4.24/net/bluetooth/
  
  	set_fs(KERNEL_DS);
  
+--- linux-2.4.33/arch/i386/kernel/i387.c.orig	2006-08-11 06:18:20.000000000 +0200
++++ linux-2.4.33/arch/i386/kernel/i387.c	2006-08-16 16:03:30.925971000 +0200
+@@ -68,15 +68,18 @@
+  * FPU lazy state save handling.
+  */
+ 
++unsigned long nr_context_switches(void);
++
+ static inline void __save_init_fpu( struct task_struct *tsk )
+ {
+ 	if ( cpu_has_fxsr ) {
++		unsigned int cswtch = nr_context_switches();
+ 		asm volatile( "fxsave %0"
+ 			      : "=m" (tsk->thread.i387.fxsave) );
+ 		if (tsk->thread.i387.fxsave.swd & (1<<7))
+ 			asm volatile("fnclex");
+ 		/* AMD CPUs leak F?P. Clear it here */
+-		asm volatile("ffree %%st(7) ; fildl %0" :: "m" (kstat.context_swtch));
++		asm volatile("ffree %%st(7) ; fildl %0" :: "m" (cswtch));
+ 	} else {
+ 		asm volatile( "fnsave %0 ; fwait"
+ 			      : "=m" (tsk->thread.i387.fsave) );
