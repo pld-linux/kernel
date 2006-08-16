@@ -87,7 +87,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.7
+%define		_rel			0.8
 
 ## !!!!!! Need update this is for 2.6.16.X kernel !!!!
 %define		_netfilter_snap		20060815
@@ -226,6 +226,9 @@ Patch50:	linux-2.6.16-imq2.diff
 
 # from http://bluetooth-alsa.sourceforge.net/sco-mtu.patch
 Patch51:	sco-mtu.patch
+
+# decode OEM Strings
+Patch52:	linux-dmi-decode-and-save-oem-string-information.patch
 
 # esfq
 # from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
@@ -767,6 +770,8 @@ done
 %patch50 -p1
 
 %patch51 -p1
+
+%patch52 -p1
 
 %patch53 -p1
 
