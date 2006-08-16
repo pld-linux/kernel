@@ -1,23 +1,16 @@
---- linux-2.4.21-rc7/fs/namei.c	Sun Jun  8 23:57:33 2003
-+++ linux-2.4.21-rc7-silly/fs/namei.c	Tue Jun 10 23:49:08 2003
-@@ -1482,13 +1482,14 @@ int vfs_unlink(struct inode *dir, struct
- 				lock_kernel();
- 				error = dir->i_op->unlink(dir, dentry);
- 				unlock_kernel();
--				if (!error)
-+				if (!error &&
-+				    !(dentry->d_flags & DCACHE_NFSFS_RENAMED))
- 					d_delete(dentry);
- 			}
- 		}
- 	}
- 	up(&dir->i_zombie);
--	if (!error)
-+	if (!error && !(dentry->d_flags & DCACHE_NFSFS_RENAMED))
+--- linux-2.4.33/fs/namei.c.orig	2006-08-16 13:23:40.315971000 +0200
++++ linux-2.4.33/fs/namei.c	2006-08-16 13:44:39.595971000 +0200
+@@ -1505,7 +1505,8 @@
+ 	double_up(&dir->i_zombie, &inode->i_zombie);
+ 	iput(inode);
+ 
+-	if (!error) {
++	/* We don't d_delete() NFS sillyrenamed files--they still exist. */
++	if (!error && !(dentry->d_flags & DCACHE_NFSFS_RENAMED)) {
+ 		d_delete(dentry);
  		inode_dir_notify(dir, DN_DELETE);
- 	return error;
- }
-@@ -1830,6 +1831,11 @@ int vfs_rename(struct inode *old_dir, st
+ 	}
+@@ -1851,6 +1852,11 @@
  	       struct inode *new_dir, struct dentry *new_dentry)
  {
  	int error;
