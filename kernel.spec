@@ -87,7 +87,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.8
+%define		_rel			0.1
 
 ## !!!!!! Need update this is for 2.6.16.X kernel !!!!
 %define		_netfilter_snap		20060815
@@ -111,7 +111,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 %define		_basever	2.6.17
-%define		_postver	.8
+%define		_postver	.9
 #define		_postver	%{nil}
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
@@ -125,7 +125,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar
 # Source0-md5:	37ddefe96625502161f075b9d907f21e
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	791940106e40ff60fa1756e29f7b0488
+# Source1-md5:	c8b993c60b04ab50e88f77eba9eaff68
 %endif
 Source3:	kernel-autoconf.h
 Source4:	kernel-config.h
