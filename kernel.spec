@@ -313,8 +313,8 @@ Provides:	kernel = %{epoch}:%{version}-%{release}
 Provides:	kernel(netfilter) = %{_netfilter_snap}
 Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
 Provides:	kernel(realtime-lsm) = 0.1.1
-%if %{with xen0} || %{with xenU}
-Provides:	kernel(xen) = %{xen_version}
+%if %{with xen0}
+Provides:	kernel(xen0) = %{xen_version}
 %endif
 Provides:	kernel-misc-fuse
 Provides:	kernel-net-hostap = 0.4.4
@@ -482,8 +482,8 @@ Provides:	kernel = %{epoch}:%{version}-%{release}
 Provides:	kernel(netfilter) = %{_netfilter_snap}
 Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
 Provides:	kernel(realtime-lsm) = 0.1.1
-%if %{with xen0} || %{with xenU}
-Provides:	kernel(xen) = %{_xen_version}
+%if %{with xen0}
+Provides:	kernel(xen0) = %{xen_version}
 %endif
 Provides:	kernel-smp-misc-fuse
 Provides:	kernel-smp-net-hostap = 0.4.4
