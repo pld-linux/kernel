@@ -739,30 +739,30 @@ done
 # submitted
 
 # base
-%patch10 -p1
-%patch11 -p1
-%patch12 -p1
-%patch13 -p1
-%patch14 -p1
-%patch15 -p1
-%patch16 -p1
-%patch17 -p1
-%patch18 -p1
-%patch19 -p1
-%patch20 -p1
-%patch21 -p1
-%patch22 -p1
+#patch10 -p1
+#patch11 -p1
+#patch12 -p1
+#patch13 -p1
+#patch14 -p1
+#patch15 -p1
+#patch16 -p1
+#patch17 -p1
+#patch18 -p1
+#patch19 -p1
+#patch20 -p1
+#patch21 -p1
+#patch22 -p1
 
 ## extra
-%patch30 -p1
-%patch31 -p1
-%patch32 -p1
-%patch33 -p1
-%patch34 -p1
-%patch35 -p1
-%patch36 -p1
-%patch37 -p1
-%patch38 -p1
+#patch30 -p1
+#patch31 -p1
+#patch32 -p1
+#patch33 -p1
+#patch34 -p1
+#patch35 -p1
+#patch36 -p1
+#patch37 -p1
+#patch38 -p1
 
 ##
 # end of netfilter
