@@ -90,7 +90,7 @@
 %define		_rel			0.1
 
 ## !!!!!! Need update this is for 2.6.16.X kernel !!!!
-%define		_netfilter_snap		20060815
+%define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
 
 %define		_enable_debug_packages			0
@@ -111,7 +111,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 %define		_basever	2.6.17
-%define		_postver	.9
+%define		_postver	.11
 #define		_postver	%{nil}
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
@@ -125,7 +125,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar
 # Source0-md5:	37ddefe96625502161f075b9d907f21e
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	c8b993c60b04ab50e88f77eba9eaff68
+# Source1-md5:	e2449d6cbef24200a5ee65831edb8806
 %endif
 Source3:	kernel-autoconf.h
 Source4:	kernel-config.h
@@ -739,30 +739,30 @@ done
 # submitted
 
 # base
-#%patch10 -p1
-#%patch11 -p1
-#%patch12 -p1
-#%patch13 -p1
-#%patch14 -p1
-#%patch15 -p1
-#%patch16 -p1
-#%patch17 -p1
-#%patch18 -p1
-#%patch19 -p1
-#%patch20 -p1
-#%patch21 -p1
-#%patch22 -p1
+%patch10 -p1
+%patch11 -p1
+%patch12 -p1
+%patch13 -p1
+%patch14 -p1
+%patch15 -p1
+%patch16 -p1
+%patch17 -p1
+%patch18 -p1
+%patch19 -p1
+%patch20 -p1
+%patch21 -p1
+%patch22 -p1
 
 ## extra
-#%patch30 -p1
-#%patch31 -p1
-#%patch32 -p1
-#%patch33 -p1
-#%patch34 -p1
-#%patch35 -p1
-#%patch36 -p1
-#%patch37 -p1
-#%patch38 -p1
+%patch30 -p1
+%patch31 -p1
+%patch32 -p1
+%patch33 -p1
+%patch34 -p1
+%patch35 -p1
+%patch36 -p1
+%patch37 -p1
+%patch38 -p1
 
 ##
 # end of netfilter
@@ -788,9 +788,9 @@ done
 %patch60 -p1
 
 # vserver:
-%patch100 -p1
-%patch101 -p1
-%patch102 -p1
+#patch100 -p1
+#patch101 -p1
+#patch102 -p1
 
 %if %{with xen0} || %{with xenU}
 %ifarch %{ix86} %{x8664} ia64
@@ -799,10 +799,10 @@ done
 %endif
 
 %if %{with grsec_minimal}
-%patch1000 -p1
+#%patch1000 -p1
 %endif
 %if %{with grsec_full}
-%patch9999 -p1
+#%patch9999 -p1
 %endif
 
 %ifarch ppc ppc64
