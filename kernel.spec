@@ -124,7 +124,7 @@
 %define		pcmcia_version		3.1.22
 %define		drm_xfree_version	4.3.0
 
-%define		squashfs_version	3.0
+%define		squashfs_version	3.1
 %define		suspend_version		2.2.5
 
 %define		xen_version		3.0.2
@@ -200,8 +200,8 @@ Patch3:		bootsplash-3.1.6-2.6.15.diff
 Patch4:		fbsplash-0.9.2-r5-2.6.16.patch
 Patch5:		linux-2.6-vesafb-tng.patch
 
-# directly from http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.0.tar.gz
-#		from linux-2.6.15
+# directly from http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.1.tar.gz
+#		from linux-2.6.16
 Patch6:		squashfs%{squashfs_version}-patch
 
 Patch7:		linux-alpha-isa.patch
