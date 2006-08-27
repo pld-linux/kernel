@@ -1,0 +1,163 @@
+diff -uNr linux-2.6.16.orig/arch/x86_64/Kconfig linux-2.6.16/arch/x86_64/Kconfig
+--- linux-2.6.16.orig/arch/x86_64/Kconfig	2006-08-27 09:02:03.754054500 +0200
++++ linux-2.6.16/arch/x86_64/Kconfig	2006-08-27 09:12:33.514413750 +0200
+@@ -464,6 +464,30 @@
+ 
+ 	  If unsure, say Y. Only embedded should say N here.
+ 
++config CC_STACKPROTECTOR
++	bool "Enable -fstack-protector buffer overflow detection (EXPRIMENTAL)"
++	depends on EXPERIMENTAL
++	help
++         This option turns on the -fstack-protector GCC feature. This
++	  feature puts, at the beginning of critical functions, a canary
++	  value on the stack just before the return address, and validates
++	  the value just before actually returning.  Stack based buffer
++	  overflows (that need to overwrite this return address) now also
++	  overwrite the canary, which gets detected and the attack is then
++	  neutralized via a kernel panic.
++
++	  This feature requires gcc version 4.2 or above, or a distribution
++	  gcc with the feature backported. Older versions are automatically
++	  detected and for those versions, this configuration option is ignored.
++
++config CC_STACKPROTECTOR_ALL
++	bool "Use stack-protector for all functions"
++	depends on CC_STACKPROTECTOR
++	help
++	  Normally, GCC only inserts the canary value protection for
++	  functions that use large-ish on-stack buffers. By enabling
++	  this option, GCC will be asked to do this for ALL functions.
++
+ source kernel/Kconfig.hz
+ 
+ endmenu
+diff -uNr linux-2.6.16.orig/arch/x86_64/kernel/process.c linux-2.6.16/arch/x86_64/kernel/process.c
+--- linux-2.6.16.orig/arch/x86_64/kernel/process.c	2006-08-27 09:02:03.798035250 +0200
++++ linux-2.6.16/arch/x86_64/kernel/process.c	2006-08-27 09:12:52.254211500 +0200
+@@ -598,6 +598,14 @@
+ 
+ 	write_pda(kernelstack,
+ 		  task_stack_page(next_p) + THREAD_SIZE - PDA_STACKOFFSET);
++#ifdef CONFIG_CC_STACKPROTECTOR
++	write_pda(stack_canary, next_p->stack_canary);
++	/*
++	 * Build time only check to make sure the stack_canary is at
++	 * offset 40 in the pda; this is a gcc ABI requirement
++	 */
++	BUILD_BUG_ON(offsetof(struct x8664_pda, stack_canary) != 40);
++#endif
+ 
+ 	/*
+ 	 * Now maybe reload the debug registers
+diff -uNr linux-2.6.16.orig/arch/x86_64/Makefile linux-2.6.16/arch/x86_64/Makefile
+--- linux-2.6.16.orig/arch/x86_64/Makefile	2006-03-20 06:53:29.000000000 +0100
++++ linux-2.6.16/arch/x86_64/Makefile	2006-08-27 09:13:17.898987000 +0200
+@@ -29,6 +29,14 @@
+ 
+ cflags-$(CONFIG_MK8) += $(call cc-option,-march=k8)
+ cflags-$(CONFIG_MPSC) += $(call cc-option,-march=nocona)
++
++stack-protector = $(shell $(CONFIG_SHELL) \
++	$(srctree)/scripts/gcc-x86_64-has-stack-protector.sh $(1))
++cflags-$(CONFIG_CC_STACKPROTECTOR) += \
++	$(call stack-protector, $(CC) -fstack-protector)
++cflags-$(CONFIG_CC_STACKPROTECTOR_ALL) += \
++	$(call stack-protector, $(CC) -fstack-protector-all)
++
+ CFLAGS += $(cflags-y)
+ 
+ CFLAGS += -m64
+diff -uNr linux-2.6.16.orig/include/asm-x86_64/pda.h linux-2.6.16/include/asm-x86_64/pda.h
+--- linux-2.6.16.orig/include/asm-x86_64/pda.h	2006-03-20 06:53:29.000000000 +0100
++++ linux-2.6.16/include/asm-x86_64/pda.h	2006-08-27 09:12:52.254211500 +0200
+@@ -9,14 +9,16 @@
+ 
+ /* Per processor datastructure. %gs points to it while the kernel runs */ 
+ struct x8664_pda {
+-	struct task_struct *pcurrent;	/* Current process */
+-	unsigned long data_offset;	/* Per cpu data offset from linker address */
+-	unsigned long kernelstack;  /* top of kernel stack for current */ 
+-	unsigned long oldrsp; 	    /* user rsp for system call */
+-#if DEBUG_STKSZ > EXCEPTION_STKSZ
+-	unsigned long debugstack;   /* #DB/#BP stack. */
++	struct task_struct *pcurrent;	/*  0 */  /* Current process */
++	unsigned long data_offset;	/*  8 */  /* Per cpu data offset from linker address */
++	unsigned long kernelstack;	/* 16 */  /* top of kernel stack for current */
++	unsigned long oldrsp;		/* 24 */  /* user rsp for system call */
++	unsigned long debugstack;	/* 32 */  /* #DB/#BP stack. */
++#ifdef CONFIG_CC_STACKPROTECTOR
++	unsigned long stack_canary;	/* 40 */  /* stack canary value */
++					/* gcc-ABI: this canary MUST be at offset 40!!! */
+ #endif
+-        int irqcount;		    /* Irq nesting counter. Starts with -1 */  	
++	int irqcount;			/* 48 */  /* Irq nesting counter. Starts with -1 */
+ 	int cpunumber;		    /* Logical CPU number */
+ 	char *irqstackptr;	/* top of irqstack */
+ 	int nodenumber;		    /* number of current node */
+diff -uNr linux-2.6.16.orig/include/linux/sched.h linux-2.6.16/include/linux/sched.h
+--- linux-2.6.16.orig/include/linux/sched.h	2006-08-27 09:02:04.285821750 +0200
++++ linux-2.6.16/include/linux/sched.h	2006-08-27 09:12:52.254211500 +0200
+@@ -755,6 +755,11 @@
+ 	unsigned did_exec:1;
+ 	pid_t pid;
+ 	pid_t tgid;
++
++#ifdef CONFIG_CC_STACKPROTECTOR
++	/* Canary value for the -fstack-protector gcc feature */
++	unsigned long stack_canary;
++#endif
+ 	/* 
+ 	 * pointers to (original) parent process, youngest child, younger sibling,
+ 	 * older sibling, respectively.  (p->father can be replaced with 
+diff -uNr linux-2.6.16.orig/kernel/fork.c linux-2.6.16/kernel/fork.c
+--- linux-2.6.16.orig/kernel/fork.c	2006-08-27 09:02:04.097904000 +0200
++++ linux-2.6.16/kernel/fork.c	2006-08-27 09:12:52.254211500 +0200
+@@ -45,6 +45,7 @@
+ #include <linux/acct.h>
+ #include <linux/cn_proc.h>
+ #include <linux/vs_context.h>
++#include <linux/random.h>
+ #include <linux/vs_network.h>
+ #include <linux/vs_limit.h>
+ #include <linux/vs_memory.h>
+@@ -184,6 +185,10 @@
+ 	tsk->thread_info = ti;
+ 	setup_thread_stack(tsk, orig);
+ 
++#ifdef CONFIG_CC_STACKPROTECTOR
++	tsk->stack_canary = get_random_int();
++#endif
++
+ 	/* One for us, one for whoever does the "release_task()" (usually parent) */
+ 	atomic_set(&tsk->usage,2);
+ 	atomic_set(&tsk->fs_excl, 0);
+diff -uNr linux-2.6.16.orig/kernel/panic.c linux-2.6.16/kernel/panic.c
+--- linux-2.6.16.orig/kernel/panic.c	2006-03-20 06:53:29.000000000 +0100
++++ linux-2.6.16/kernel/panic.c	2006-08-27 09:13:06.200107500 +0200
+@@ -174,3 +174,15 @@
+ 	tainted |= flag;
+ }
+ EXPORT_SYMBOL(add_taint);
++
++#ifdef CONFIG_CC_STACKPROTECTOR
++/*
++ * Called when gcc's -fstack-protector feature is used, and
++ * gcc detects corruption of the on-stack canary value
++ */
++void __stack_chk_fail(void)
++{
++	panic("stack-protector: Kernel stack is corrupted");
++}
++EXPORT_SYMBOL(__stack_chk_fail);
++#endif
+diff -uNr linux-2.6.16.orig/scripts/gcc-x86_64-has-stack-protector.sh linux-2.6.16/scripts/gcc-x86_64-has-stack-protector.sh
+--- linux-2.6.16.orig/scripts/gcc-x86_64-has-stack-protector.sh	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.16/scripts/gcc-x86_64-has-stack-protector.sh	2006-08-27 09:13:17.898987000 +0200
+@@ -0,0 +1,6 @@
++#!/bin/sh
++
++echo "int foo(void) { char X[200]; return 3; }" | $1 -S -xc -c -O0 -mcmodel=kernel -fstack-protector - -o - | grep -q "%gs"
++if [ "$?" -eq "0" ] ; then
++	echo $2
++fi
