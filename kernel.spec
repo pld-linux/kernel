@@ -276,9 +276,12 @@ Patch102:	linux-2.6-vs2.1-128IPs.patch
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 Patch120:	xen-3.0-2.6.16.patch
 Patch121:	linux-xen-page_alloc.patch
+
 # from  http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw266_we20-6.diff
 Patch140:	linux-2.6.16-we20-6.patch
+
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
+Patch201:	linux-2.6-x86_64-stack-protector.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
@@ -811,6 +814,13 @@ done
 
 %patch140 -p1
 
+%ifarch ppc ppc64
+%patch200 -p1
+%endif
+%ifarch %{x8664}
+%patch201 -p1
+%endif
+
 %if %{with grsec_minimal}
 %patch1000 -p1
 %endif
@@ -820,10 +830,6 @@ done
 
 %if %{with pax}
 %patch9999 -p1
-%endif
-
-%ifarch ppc ppc64
-%patch200 -p1
 %endif
 
 # Fix EXTRAVERSION in main Makefile
