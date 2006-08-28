@@ -100,7 +100,7 @@
 %define		pcmcia_version		3.1.22
 %define		drm_xfree_version	4.3.0
 
-%define		squashfs_version	3.0
+%define		squashfs_version	3.1
 %define		suspend_version		2.2.7.3
 
 %define		xen_version		3.0.2
