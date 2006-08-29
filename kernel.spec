@@ -1614,7 +1614,7 @@ fi
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
 %if %{with grsecurity}
-%{_prefix}/src/linux-%{version}/grsecurity
+#{_prefix}/src/linux-%{version}/grsecurity
 %endif
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
