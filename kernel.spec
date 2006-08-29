@@ -87,7 +87,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.3
+%define		_rel			0.4
 
 %define		_netfilter_snap		20060829
 %define		_nf_hipac_ver		0.9.1
@@ -799,9 +799,9 @@ done
 %patch60 -p1
 
 # vserver:
-#patch100 -p1
-#patch101 -p1
-#patch102 -p1
+%patch100 -p1
+%patch101 -p1
+%patch102 -p1
 
 %if %{with xen0} || %{with xenU}
 %ifarch %{ix86} %{x8664} ia64
