@@ -87,10 +87,10 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.1
+%define		_rel			0.2
 
 ## !!!!!! Need update this is for 2.6.16.X kernel !!!!
-%define		_netfilter_snap		20060504
+%define		_netfilter_snap		20060829
 %define		_nf_hipac_ver		0.9.1
 
 %define		_enable_debug_packages			0
@@ -192,30 +192,30 @@ Patch9:		linux-static-dev.patch
 ## submitted
 
 ## base
-Patch10:	pom-ng-IPV4OPTSSTRIP-%{_netfilter_snap}.patch
-Patch11:	pom-ng-connlimit-%{_netfilter_snap}.patch
-Patch12:	pom-ng-expire-%{_netfilter_snap}.patch
-Patch13:	pom-ng-fuzzy-%{_netfilter_snap}.patch
-Patch14:	pom-ng-ipv4options-%{_netfilter_snap}.patch
-Patch15:	pom-ng-nth-%{_netfilter_snap}.patch
-Patch16:	pom-ng-osf-%{_netfilter_snap}.patch
-Patch17:	pom-ng-psd-%{_netfilter_snap}.patch
-Patch18:	pom-ng-quota-%{_netfilter_snap}.patch
-Patch19:	pom-ng-random-%{_netfilter_snap}.patch
-Patch20:	pom-ng-set-%{_netfilter_snap}.patch
-Patch21:	pom-ng-time-%{_netfilter_snap}.patch
+#Patch10:	pom-ng-IPV4OPTSSTRIP-%{_netfilter_snap}.patch
+#Patch11:	pom-ng-connlimit-%{_netfilter_snap}.patch
+#Patch12:	pom-ng-expire-%{_netfilter_snap}.patch
+#Patch13:	pom-ng-fuzzy-%{_netfilter_snap}.patch
+#Patch14:	pom-ng-ipv4options-%{_netfilter_snap}.patch
+#Patch15:	pom-ng-nth-%{_netfilter_snap}.patch
+#Patch16:	pom-ng-osf-%{_netfilter_snap}.patch
+#Patch17:	pom-ng-psd-%{_netfilter_snap}.patch
+#Patch18:	pom-ng-quota-%{_netfilter_snap}.patch
+#Patch19:	pom-ng-random-%{_netfilter_snap}.patch
+#Patch20:	pom-ng-set-%{_netfilter_snap}.patch
+#Patch21:	pom-ng-time-%{_netfilter_snap}.patch
 Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
 
 ## extra
-Patch30:	pom-ng-ACCOUNT-%{_netfilter_snap}.patch
-Patch31:	pom-ng-IPMARK-%{_netfilter_snap}.patch
-Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
-Patch33:	pom-ng-TARPIT-%{_netfilter_snap}.patch
-Patch34:	pom-ng-XOR-%{_netfilter_snap}.patch
-Patch35:	pom-ng-account-%{_netfilter_snap}.patch
-Patch36:	pom-ng-ipp2p-%{_netfilter_snap}.patch
-Patch37:	pom-ng-rpc-%{_netfilter_snap}.patch
-Patch38:	pom-ng-unclean-%{_netfilter_snap}.patch
+#Patch30:	pom-ng-ACCOUNT-%{_netfilter_snap}.patch
+#Patch31:	pom-ng-IPMARK-%{_netfilter_snap}.patch
+#Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
+#Patch33:	pom-ng-TARPIT-%{_netfilter_snap}.patch
+#Patch34:	pom-ng-XOR-%{_netfilter_snap}.patch
+#Patch35:	pom-ng-account-%{_netfilter_snap}.patch
+#Patch36:	pom-ng-ipp2p-%{_netfilter_snap}.patch
+#Patch37:	pom-ng-rpc-%{_netfilter_snap}.patch
+#Patch38:	pom-ng-unclean-%{_netfilter_snap}.patch
 
 ###
 #	End netfilter
@@ -751,7 +751,7 @@ done
 #patch19 -p1
 #patch20 -p1
 #patch21 -p1
-#patch22 -p1
+%patch22 -p1
 
 ## extra
 #patch30 -p1
