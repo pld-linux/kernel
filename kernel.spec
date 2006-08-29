@@ -282,6 +282,7 @@ Patch140:	linux-2.6.16-we20-6.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 Patch201:	linux-2.6-x86_64-stack-protector.patch
+Patch202:	linux-2.6-unwind-through-signal-frames.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
@@ -819,6 +820,9 @@ done
 %endif
 %ifarch %{x8664}
 %patch201 -p1
+%endif
+%ifarch ppc ppc64 %{ix86} %{x8664}
+%patch202 -p1
 %endif
 
 %if %{with grsec_minimal}
