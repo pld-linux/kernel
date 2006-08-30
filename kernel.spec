@@ -87,7 +87,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.4
+%define		_rel			0.5
 
 %define		_netfilter_snap		20060829
 %define		_nf_hipac_ver		0.9.1
@@ -269,8 +269,8 @@ Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-2.6-pnpbios.patch
 
 # official grsecurity for 2.6.17.7
-# based on http://www.grsecurity.net/grsecurity-2.1.9-2.6.17.7-200608012135.patch.gz
-Patch9999:	grsecurity-2.1.9-2.6.17.7.patch
+# based on http://www.grsecurity.net/grsecurity-2.1.9-2.6.17.11-200608282236.patch.gz
+Patch9999:	grsecurity-2.1.9-2.6.17.11.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -810,10 +810,10 @@ done
 %endif
 
 %if %{with grsec_minimal}
-#%patch1000 -p1
+%patch1000 -p1
 %endif
 %if %{with grsec_full}
-#%patch9999 -p1
+%patch9999 -p1
 %endif
 
 %ifarch ppc ppc64
