@@ -984,6 +984,11 @@ BuildConfig() {
 %{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" arch/%{_target_base_arch}/defconfig}
 %{?debug:sed -i "s:# CONFIG_RT_DEADLOCK_DETECT is not set:CONFIG_RT_DEADLOCK_DETECT=y:" arch/%{_target_base_arch}/defconfig}
 
+	if [ "$smp" = "yes" ]; then
+		sed -e 's:CONFIG_LOCALVERSION="":CONFIG_LOCALVERSION="smp":'	\
+			-i arch/%{_target_base_arch}/defconfig
+	fi
+
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
 	rm -f include/linux/autoconf.h
