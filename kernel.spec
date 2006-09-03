@@ -2,7 +2,6 @@
 # TODO:
 # - update xen patch for 2.6.17.x
 # - all netfilter patches needs update (API changed again)
-# - update configs other than x86 and amd64 archs
 #
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
 #
@@ -87,7 +86,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.6
+%define		_rel			0.7
 
 %define		_netfilter_snap		20060829
 %define		_nf_hipac_ver		0.9.1
