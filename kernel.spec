@@ -86,7 +86,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.8
+%define		_rel			0.9
 
 %define		_netfilter_snap		20060829
 %define		_nf_hipac_ver		0.9.1
@@ -825,7 +825,8 @@ done
 %patch2000 -p1
 %patch2001 -p1
 
-%patch3000 -p1
+#wanpipe is brooken
+#patch3000 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
@@ -1622,7 +1623,7 @@ fi
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
 %if %{with grsecurity}
-#{_prefix}/src/linux-%{version}/grsecurity
+%{_prefix}/src/linux-%{version}/grsecurity
 %endif
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
