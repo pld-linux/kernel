@@ -156,6 +156,7 @@ Source30:	kernel-ppc.config
 Source31:	kernel-ppc-smp.config
 Source32:	kernel-ia64.config
 Source33:	kernel-ia64-smp.config
+Source34:	kernel-abi.config
 
 Source40:	kernel-netfilter.config
 Source41:	kernel-squashfs.config
@@ -1032,6 +1033,12 @@ BuildConfig() {
 	echo "CONFIG_ROOT_NFS=y" >> arch/%{_target_base_arch}/defconfig
 %endif
 
+%ifarch %{ix86}
+%if %{with abi}
+	cat %{SOURCE34} >> arch/%{_target_base_arch}/defconfig
+%endif
+%endif
+
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{_target_base_arch}/defconfig}
 %{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" arch/%{_target_base_arch}/defconfig}
 %{?debug:sed -i "s:# CONFIG_RT_DEADLOCK_DETECT is not set:CONFIG_RT_DEADLOCK_DETECT=y:" arch/%{_target_base_arch}/defconfig}
@@ -1689,6 +1696,9 @@ fi
 %if %{with source}
 %files source -f aux_files_exc
 %defattr(644,root,root,755)
+%if %{with abi}
+%{_prefix}/src/linux-%{version}/abi
+%endif /* abi */
 %{_prefix}/src/linux-%{version}/arch/*/[!Mk]*
 %{_prefix}/src/linux-%{version}/arch/*/kernel/[!M]*
 %exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
