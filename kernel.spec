@@ -11,6 +11,7 @@
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
 
+%bcond_with	abi		# build ABI support only ix86 !!
 %bcond_with	grsec_full	# build full grsecurity
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	xen0		# added Xen0 support
@@ -50,6 +51,10 @@
 %undefine	with_up
 %endif
 
+%ifnarch %{ix86}
+%undefine	abi
+%endif
+
 %define		have_drm	1
 %define		have_oss	1
 %define		have_sound	1
@@ -86,7 +91,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.9
+%define		_rel			0.10
 
 %define		_netfilter_snap		20060829
 %define		_nf_hipac_ver		0.9.1
@@ -134,6 +139,8 @@ Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.
 # Source10-md5:	93c5fff0ce771cd547043db91718706f
 Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.17/reiser4-for-2.6.17-3.patch.gz
 # Source12-md5:	593c3296ddf40c5b116ee129781da341
+Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
+# Source14-md5: f2563a2d748c7480559e8d3ff77eb18a
 
 Source20:	kernel-i386.config
 Source21:	kernel-i386-smp.config
@@ -349,11 +356,27 @@ This package contains the Linux kernel that is used to boot and run
 your system. It contains few device drivers for specific hardware.
 Most hardware is instead supported by modules loaded after booting.
 
+%{?with_abi:Linux ABI suppor - enabled}
+%{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_xen0:Xen 0 - enabled}
+%{?with_xenU:Xen U - enabled}
+%{?with_fbsplash:Fbsplash - enabled }
+%{?with_vesafb_tng:VesaFB New generation - enabled}
+%{?with_nfsroot:Root on NFS - enabled}
+
 %description -l de
 Das Kernel-Paket enthält den Linux-Kernel (vmlinuz), den Kern des
 Linux-Betriebssystems. Der Kernel ist für grundliegende
 Systemfunktionen verantwortlich: Speicherreservierung,
 Prozeß-Management, Geräte Ein- und Ausgaben, usw.
+
+%{?with_abi:Linux ABI suppor - enabled}
+%{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_xen0:Xen 0 - enabled}
+%{?with_xenU:Xen U - enabled}
+%{?with_fbsplash:Fbsplash - enabled }
+%{?with_vesafb_tng:VesaFB New generation - enabled}
+%{?with_nfsroot:Root on NFS - enabled}
 
 %description -l fr
 Le package kernel contient le kernel linux (vmlinuz), la partie
@@ -361,10 +384,26 @@ centrale d'un système d'exploitation Linux. Le noyau traite les
 fonctions basiques d'un système d'exploitation: allocation mémoire,
 allocation de process, entrée/sortie de peripheriques, etc.
 
+%{?with_abi:Linux ABI suppor - enabled}
+%{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_xen0:Xen 0 - enabled}
+%{?with_xenU:Xen U - enabled}
+%{?with_fbsplash:Fbsplash - enabled }
+%{?with_vesafb_tng:VesaFB New generation - enabled}
+%{?with_nfsroot:Root on NFS - enabled}
+
 %description -l pl
 Pakiet zawiera j±dro Linuksa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takiego jak sterowniki dysków itp.
+
+%{?with_abi:Linux ABI suppor - enabled}
+%{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_xen0:Xen 0 - enabled}
+%{?with_xenU:Xen U - enabled}
+%{?with_fbsplash:Fbsplash - enabled }
+%{?with_vesafb_tng:VesaFB New generation - enabled}
+%{?with_nfsroot:Root on NFS - enabled}
 
 %package vmlinux
 Summary:	vmlinux - uncompressed kernel image
@@ -504,21 +543,53 @@ This package includes a SMP version of the Linux %{version} kernel. It
 is required only on machines with two or more CPUs, although it should
 work fine on single-CPU boxes.
 
+%{?with_abi:Linux ABI suppor - enabled}
+%{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_xen0:Xen 0 - enabled}
+%{?with_xenU:Xen U - enabled}
+%{?with_fbsplash:Fbsplash - enabled }
+%{?with_vesafb_tng:VesaFB New generation - enabled}
+%{?with_nfsroot:Root on NFS - enabled}
+
 %description smp -l de
 Dieses Paket enthält eine SMP (Multiprozessor)-Version von
 Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
 Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
 CPU laufen.
 
+%{?with_abi:Linux ABI suppor - enabled}
+%{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_xen0:Xen 0 - enabled}
+%{?with_xenU:Xen U - enabled}
+%{?with_fbsplash:Fbsplash - enabled }
+%{?with_vesafb_tng:VesaFB New generation - enabled}
+%{?with_nfsroot:Root on NFS - enabled}
+
 %description smp -l fr
 Ce package inclu une version SMP du noyau de Linux version {version}.
 Il et nécessaire seulement pour les machine avec deux processeurs ou
 plus, il peut quand même fonctionner pour les système mono-processeur.
 
+%{?with_abi:Linux ABI suppor - enabled}
+%{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_xen0:Xen 0 - enabled}
+%{?with_xenU:Xen U - enabled}
+%{?with_fbsplash:Fbsplash - enabled }
+%{?with_vesafb_tng:VesaFB New generation - enabled}
+%{?with_nfsroot:Root on NFS - enabled}
+
 %description smp -l pl
 Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono
 wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
 Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
+
+%{?with_abi:Linux ABI suppor - enabled}
+%{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_xen0:Xen 0 - enabled}
+%{?with_xenU:Xen U - enabled}
+%{?with_fbsplash:Fbsplash - enabled }
+%{?with_vesafb_tng:VesaFB New generation - enabled}
+%{?with_nfsroot:Root on NFS - enabled}
 
 %package smp-vmlinux
 Summary:	vmlinux - uncompressed SMP kernel image
@@ -695,7 +766,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{_basever}%{_rc} -a10
+%setup -q -n linux-%{_basever}%{_rc} -a10 %{?with_abi:-a14}
 
 %ifarch ppc
 install %{SOURCE5} Makefile.ppclibs
@@ -824,6 +895,10 @@ done
 ##Small fixes:
 %patch2000 -p1
 %patch2001 -p1
+
+%if %{with abi}
+patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
+%endif
 
 #wanpipe is brooken
 #patch3000 -p1
