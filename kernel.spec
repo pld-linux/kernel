@@ -91,7 +91,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.10
+%define		_rel			0.1
 
 %define		_netfilter_snap		20060829
 %define		_nf_hipac_ver		0.9.1
@@ -114,7 +114,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 %define		_basever	2.6.17
-%define		_postver	.11
+%define		_postver	.13
 #define		_postver	%{nil}
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
@@ -128,7 +128,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar
 # Source0-md5:	37ddefe96625502161f075b9d907f21e
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	e2449d6cbef24200a5ee65831edb8806
+# Source1-md5:	8bba5493a097abac45df584d863fba67
 %endif
 Source3:	kernel-autoconf.h
 Source4:	kernel-config.h
@@ -140,7 +140,7 @@ Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.
 Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.17/reiser4-for-2.6.17-3.patch.gz
 # Source12-md5:	593c3296ddf40c5b116ee129781da341
 Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
-# Source14-md5: f2563a2d748c7480559e8d3ff77eb18a
+# Source14-md5:	f2563a2d748c7480559e8d3ff77eb18a
 
 Source20:	kernel-i386.config
 Source21:	kernel-i386-smp.config
