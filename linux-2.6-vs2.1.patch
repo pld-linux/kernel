@@ -3207,22 +3207,22 @@ diff -NurpP --minimal linux-2.6.17.11/drivers/md/dm-ioctl.c linux-2.6.17.11-vs2.
  	unsigned int h = hash_str(str);
  
  	list_for_each_entry (hc, _name_buckets + h, name_list)
--		if (!strcmp(hc->name, str))
+-		if (!strcmp(hc->name, str)) {
 +		if (vx_check(dm_get_xid(hc->md), VX_WATCH_P|VX_IDENT) &&
-+			!strcmp(hc->name, str))
++			!strcmp(hc->name, str)) {
+ 			dm_get(hc->md);
  			return hc;
- 
- 	return NULL;
+ 		}
 @@ -114,7 +115,8 @@ static struct hash_cell *__get_uuid_cell
  	unsigned int h = hash_str(str);
  
  	list_for_each_entry (hc, _uuid_buckets + h, uuid_list)
--		if (!strcmp(hc->uuid, str))
+-		if (!strcmp(hc->uuid, str)) {
 +		if (vx_check(dm_get_xid(hc->md), VX_WATCH_P|VX_IDENT) &&
-+			!strcmp(hc->uuid, str))
++			!strcmp(hc->uuid, str)) {
+ 			dm_get(hc->md);
  			return hc;
- 
- 	return NULL;
+ 		}
 @@ -344,6 +346,9 @@ typedef int (*ioctl_fn)(struct dm_ioctl 
  
  static int remove_all(struct dm_ioctl *param, size_t param_size)
@@ -3254,13 +3254,13 @@ diff -NurpP --minimal linux-2.6.17.11/drivers/md/dm-ioctl.c linux-2.6.17.11-vs2.
 @@ -612,7 +621,8 @@ static struct hash_cell *__find_device_h
  
  	md = dm_get_md(huge_decode_dev(param->dev));
- 	if (md) {
+ 	if (md)
 -		mdptr = dm_get_mdptr(md);
 +		if (vx_check(dm_get_xid(md), VX_WATCH_P|VX_IDENT))
 +			mdptr = dm_get_mdptr(md);
- 		dm_put(md);
- 	}
  
+ 	return mdptr;
+ }
 @@ -1390,8 +1400,8 @@ static int ctl_ioctl(struct inode *inode
  	ioctl_fn fn = NULL;
  	size_t param_size;
@@ -3289,9 +3289,9 @@ diff -NurpP --minimal linux-2.6.17.11/drivers/md/dm.c linux-2.6.17.11-vs2.1.1-rc
  	md = inode->i_bdev->bd_disk->private_data;
 +	if (!vx_check(md->xid, VX_IDENT))
 +		return -EACCES;
- 	dm_get(md);
- 	return 0;
- }
+ 	if (!md)
+ 		goto out;
+ 
 @@ -352,6 +355,14 @@ int dm_set_geometry(struct mapped_device
  	return 0;
  }
