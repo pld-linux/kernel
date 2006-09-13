@@ -135,7 +135,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 %define		_basever	2.6.16
-%define		_postver	.28
+%define		_postver	.29
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
@@ -146,7 +146,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source3-md5:	736e7d741c0650c320c2b37bf6de3c0b
+# Source3-md5:	eaac691e53491e9523e0adea2bb0a3c0
 
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
@@ -265,7 +265,6 @@ Patch60:	linux-2.6-sk98lin-8.31.2.3.patch
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
 
-Patch80:	linux-2.6.16-hda-sound-dc7600.patch
 Patch81:	linux-2.6-md.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.1.1-rc15.diff
@@ -799,7 +798,6 @@ done
 
 %patch60 -p1
 
-%patch80 -p1
 %patch81 -p1
 
 %patch100 -p1
