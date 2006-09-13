@@ -634,8 +634,6 @@ Provides:	kernel-headers(alsa-drivers)
 Provides:	kernel-headers(bridging) = %{version}
 Provides:	kernel-headers(netfilter) = %{_netfilter_snap}
 Provides:	kernel-headers(reiserfs) = %{version}
-Provides:	kernel-i2c-devel
-Obsoletes:	kernel-i2c-devel
 Autoreqprov:	no
 
 %description headers
@@ -889,7 +887,7 @@ TuneUpConfigForIX86 () {
 	%if "%{_arch}" == "sparc" && "%{_target_base_arch}" == "sparc64"
 	DepMod=/sbin/depmod
 	%endif
-	%if "%{_arch}" == "x86_64" && "%_target_base_arch}" == "i386"
+	%if "%{_arch}" == "x86_64" && "%{_target_base_arch}" == "i386"
 	CrossOpts="ARCH=%{_target_base_arch}"
 	DepMod=/sbin/depmod
 	%endif
