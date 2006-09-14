@@ -275,9 +275,11 @@ Patch2000:	kernel-small_fixes.patch
 # http://lkml.org/lkml/2006/7/22/98
 Patch2001:	kernel-2.6-pnpbios.patch
 
-
 #wanpipe 
-Patch3000:	wanpipe-beta7-2.3.4.patch
+#Patch3000:	wanpipe-beta7-2.3.4.patch
+
+# for test only in this moment
+Patch3000:	kernel-ieee80211-1.2.15.patch
 
 # official grsecurity for 2.6.17.7
 # based on http://www.grsecurity.net/grsecurity-2.1.9-2.6.17.11-200608282236.patch.gz
@@ -901,8 +903,7 @@ done
 patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
 %endif
 
-#wanpipe is brooken
-#patch3000 -p1
+%patch3000 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
