@@ -7946,7 +7946,7 @@ diff -urNp linux-2.6.17.11/fs/binfmt_elf.c linux-2.6.17.11/fs/binfmt_elf.c
  	int retval, i, size;
  
  	/* First of all, some simple consistency checks */
-@@ -360,59 +366,80 @@ static unsigned long load_elf_interp(str
+@@ -360,42 +366,64 @@
  		goto out_close;
  	}
  
@@ -7983,52 +7983,30 @@ diff -urNp linux-2.6.17.11/fs/binfmt_elf.c linux-2.6.17.11/fs/binfmt_elf.c
 -		load_addr = map_addr - ELF_PAGESTART(vaddr);
 -		load_addr_set = 1;
 -	    }
--
--	    /*
--	     * Check to see if the section's size will overflow the
--	     * allowed task size. Note that p_filesz must always be
--	     * <= p_memsize so it is only necessary to check p_memsz.
--	     */
++	    if (eppnt->p_type != PT_LOAD)
++		continue;
+ 
+ 	    /*
+ 	     * Check to see if the section's size will overflow the
+ 	     * allowed task size. Note that p_filesz must always be
+ 	     * <= p_memsize so it is only necessary to check p_memsz.
+ 	     */
 -	    k = load_addr + eppnt->p_vaddr;
--	    if (k > TASK_SIZE || eppnt->p_filesz > eppnt->p_memsz ||
+-	    if (BAD_ADDR(k) || eppnt->p_filesz > eppnt->p_memsz ||
 -		eppnt->p_memsz > TASK_SIZE || TASK_SIZE - eppnt->p_memsz < k) {
 -	        error = -ENOMEM;
-+		if (eppnt->p_type != PT_LOAD)
-+			continue;
++	    if (eppnt->p_filesz > eppnt->p_memsz || eppnt->p_vaddr >= eppnt->p_vaddr + eppnt->p_memsz)
++		goto out_close;
 +
-+		/*
-+		 * Check to see if the section's size will overflow the
-+		 * allowed task size. Note that p_filesz must always be
-+		 * <= p_memsize so it is only necessary to check p_memsz.
-+		 */
-+		if (eppnt->p_filesz > eppnt->p_memsz || eppnt->p_vaddr >= eppnt->p_vaddr + eppnt->p_memsz)
-+			goto out_close;
-+
-+		if (min_addr > ELF_PAGESTART(eppnt->p_vaddr))
-+			min_addr = ELF_PAGESTART(eppnt->p_vaddr);
-+		if (max_addr < ELF_PAGEALIGN(eppnt->p_vaddr + eppnt->p_memsz))
-+			max_addr = ELF_PAGEALIGN(eppnt->p_vaddr + eppnt->p_memsz);
++	    if (min_addr > ELF_PAGESTART(eppnt->p_vaddr))
++		min_addr = ELF_PAGESTART(eppnt->p_vaddr);
++	    if (max_addr < ELF_PAGEALIGN(eppnt->p_vaddr + eppnt->p_memsz))
++		max_addr = ELF_PAGEALIGN(eppnt->p_vaddr + eppnt->p_memsz);
 +	}
 +	if (min_addr >= max_addr)
  		goto out_close;
 -	    }
- 
--	    /*
--	     * Find the end of the file mapping for this phdr, and keep
--	     * track of the largest address we see for this.
--	     */
--	    k = load_addr + eppnt->p_vaddr + eppnt->p_filesz;
--	    if (k > elf_bss)
--		elf_bss = k;
--
--	    /*
--	     * Do the same thing for the memory mapping - between
--	     * elf_bss and last_bss is the bss section.
--	     */
--	    k = load_addr + eppnt->p_memsz + eppnt->p_vaddr;
--	    if (k > last_bss)
--		last_bss = k;
--	  }
++	
 +	eppnt = elf_phdata;
 +	for (i=0; i<interp_elf_ex->e_phnum; i++, eppnt++) {
 +		int elf_type = MAP_PRIVATE | MAP_DENYWRITE | MAP_FIXED;
@@ -8057,22 +8035,14 @@ diff -urNp linux-2.6.17.11/fs/binfmt_elf.c linux-2.6.17.11/fs/binfmt_elf.c
 +		error = map_addr;
 +		if (BAD_ADDR(map_addr))
 +			goto out_close;
-+
-+		/*
-+		 * Find the end of the file mapping for this phdr, and keep
-+		 * track of the largest address we see for this.
-+		 */
-+		k = load_addr + eppnt->p_vaddr + eppnt->p_filesz;
-+		if (k > elf_bss)
-+			elf_bss = k;
-+
-+		/*
-+		 * Do the same thing for the memory mapping - between
-+		 * elf_bss and last_bss is the bss section.
-+		 */
-+		k = load_addr + eppnt->p_memsz + eppnt->p_vaddr;
-+		if (k > last_bss)
-+			last_bss = k;
+ 
+ 	    /*
+ 	     * Find the end of the file mapping for this phdr, and keep
+@@ -412,7 +440,6 @@
+ 	    k = load_addr + eppnt->p_memsz + eppnt->p_vaddr;
+ 	    if (k > last_bss)
+ 		last_bss = k;
+-	  }
  	}
  
  	/*
@@ -8388,14 +8358,12 @@ diff -urNp linux-2.6.17.11/fs/binfmt_elf.c linux-2.6.17.11/fs/binfmt_elf.c
  		}
  
  		error = elf_map(bprm->file, load_bias + vaddr, elf_ppnt, elf_prot, elf_flags);
-@@ -878,9 +1163,9 @@ static int load_elf_binary(struct linux_
- 		 * allowed task size. Note that p_filesz must always be
+@@ -878,8 +1163,8 @@ static int load_elf_binary(struct linux_
  		 * <= p_memsz so it is only necessary to check p_memsz.
  		 */
--		if (k > TASK_SIZE || elf_ppnt->p_filesz > elf_ppnt->p_memsz ||
+ 		if (BAD_ADDR(k) || elf_ppnt->p_filesz > elf_ppnt->p_memsz ||
 -		    elf_ppnt->p_memsz > TASK_SIZE ||
 -		    TASK_SIZE - elf_ppnt->p_memsz < k) {
-+		if (k > task_size || elf_ppnt->p_filesz > elf_ppnt->p_memsz ||
 +		    elf_ppnt->p_memsz > task_size ||
 +		    task_size - elf_ppnt->p_memsz < k) {
  			/* set_brk can never work.  Avoid overflows.  */
@@ -8414,15 +8382,6 @@ diff -urNp linux-2.6.17.11/fs/binfmt_elf.c linux-2.6.17.11/fs/binfmt_elf.c
  	/* Calling set_brk effectively mmaps the pages that we need
  	 * for the bss and break sections.  We must do this before
  	 * mapping in the interpreter, to make sure it doesn't wind
-@@ -935,7 +1226,7 @@ static int load_elf_binary(struct linux_
- 			printk(KERN_ERR "Unable to load interpreter %.128s\n",
- 				elf_interpreter);
- 			force_sig(SIGSEGV, current);
--			retval = -ENOEXEC; /* Nobody gets to see this, but.. */
-+			retval = elf_entry; /* Nobody gets to see this, but.. */
- 			goto out_free_dentry;
- 		}
- 		reloc_func_desc = interp_load_addr;
 @@ -1159,7 +1450,7 @@ static int dump_seek(struct file *file, 
   *
   * I think we should skip something. But I am not sure how. H.J.
