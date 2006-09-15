@@ -278,9 +278,6 @@ Patch2001:	kernel-2.6-pnpbios.patch
 #wanpipe 
 #Patch3000:	wanpipe-beta7-2.3.4.patch
 
-# for test only in this moment
-Patch3000:	kernel-ieee80211-1.2.15.patch
-
 # official grsecurity for 2.6.17.7
 # based on http://www.grsecurity.net/grsecurity-2.1.9-2.6.17.11-200608282236.patch.gz
 Patch9999:	grsecurity-2.1.9-2.6.17.11.patch
@@ -903,7 +900,8 @@ done
 patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
 %endif
 
-%patch3000 -p1
+# wanpipe
+#patch3000 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
