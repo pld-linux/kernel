@@ -93,6 +93,7 @@
 
 %define		_rel			0.1
 
+%define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
 %define		_nf_hipac_ver		0.9.1
 
@@ -198,26 +199,26 @@ Patch9:		linux-static-dev.patch
 ## submitted
 
 ## base
-#Patch10:	pom-ng-IPV4OPTSSTRIP-%{_netfilter_snap}.patch
-#Patch12:	pom-ng-expire-%{_netfilter_snap}.patch
-#Patch13:	pom-ng-fuzzy-%{_netfilter_snap}.patch
+Patch10:	pom-ng-IPV4OPTSSTRIP-%{_old_netfilter_snap}.patch
+Patch12:	pom-ng-expire-%{_old_netfilter_snap}.patch
+Patch13:	pom-ng-fuzzy-%{_old_netfilter_snap}.patch
 Patch14:	pom-ng-ipv4options-%{_netfilter_snap}.patch
-#Patch15:	pom-ng-nth-%{_netfilter_snap}.patch
-#Patch16:	pom-ng-osf-%{_netfilter_snap}.patch
-#Patch17:	pom-ng-psd-%{_netfilter_snap}.patch
-#Patch18:	pom-ng-quota-%{_netfilter_snap}.patch
-#Patch19:	pom-ng-random-%{_netfilter_snap}.patch
+Patch15:	pom-ng-nth-%{_old_netfilter_snap}.patch
+Patch16:	pom-ng-osf-%{_old_netfilter_snap}.patch
+Patch17:	pom-ng-psd-%{_old_netfilter_snap}.patch
+Patch18:	pom-ng-quota-%{_old_netfilter_snap}.patch
+Patch19:	pom-ng-random-%{_old_netfilter_snap}.patch
 Patch20:	pom-ng-set-%{_netfilter_snap}.patch
 Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
 
 ## extra
-#Patch30:	pom-ng-ACCOUNT-%{_netfilter_snap}.patch
+Patch30:	pom-ng-ACCOUNT-%{_old_netfilter_snap}.patch
 Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
-#Patch33:	pom-ng-TARPIT-%{_netfilter_snap}.patch
-#Patch34:	pom-ng-XOR-%{_netfilter_snap}.patch
-#Patch35:	pom-ng-account-%{_netfilter_snap}.patch
-#Patch37:	pom-ng-rpc-%{_netfilter_snap}.patch
-#Patch38:	pom-ng-unclean-%{_netfilter_snap}.patch
+Patch33:	pom-ng-TARPIT-%{_old_netfilter_snap}.patch
+Patch34:	pom-ng-XOR-%{_old_netfilter_snap}.patch
+Patch35:	pom-ng-account-%{_old_netfilter_snap}.patch
+Patch37:	pom-ng-rpc-%{_old_netfilter_snap}.patch
+Patch38:	pom-ng-unclean-%{_old_netfilter_snap}.patch
 
 
 ##external
@@ -814,30 +815,30 @@ done
 # submitted
 
 # base
-#patch10 -p1
+%patch10 -p1
 #patch11 -p1
-#patch12 -p1
-#patch13 -p1
+%patch12 -p1
+%patch13 -p1
 %patch14 -p1
-#patch15 -p1
-#patch16 -p1
-#patch17 -p1
-#patch18 -p1
-#patch19 -p1
+%patch15 -p1
+%patch16 -p1
+%patch17 -p1
+%patch18 -p1
+%patch19 -p1
 %patch20 -p1
 #patch21 -p1
 %patch22 -p1
 
 ## extra
-#patch30 -p1
+%patch30 -p1
 #patch31 -p1
 %patch32 -p1
-#patch33 -p1
-#patch34 -p1
-#patch35 -p1
+%patch33 -p1
+%patch34 -p1
+%patch35 -p1
 #patch36 -p1
-#patch37 -p1
-#patch38 -p1
+%patch37 -p1
+%patch38 -p1
 
 
 ## external
