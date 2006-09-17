@@ -817,26 +817,26 @@ done
 # submitted
 
 # base
-%{!?without_old_netfiltersnap:%patch10 -p1}
-%{!?without_old_netfiltersnap:%patch12 -p1}
-%{!?without_old_netfiltersnap:%patch13 -p1}
+%{!?without_old_netfilter:%patch10 -p1}
+%{!?without_old_netfilter:%patch12 -p1}
+%{!?without_old_netfilter:%patch13 -p1}
 %patch14 -p1
-%{!?without_old_netfiltersnap:%patch15 -p1}
-%{!?without_old_netfiltersnap:%patch16 -p1}
-%{!?without_old_netfiltersnap:%patch17 -p1}
-%{!?without_old_netfiltersnap:%patch18 -p1}
-%{!?without_old_netfiltersnap:%patch19 -p1}
+%{!?without_old_netfilter:%patch15 -p1}
+%{!?without_old_netfilter:%patch16 -p1}
+%{!?without_old_netfilter:%patch17 -p1}
+%{!?without_old_netfilter:%patch18 -p1}
+%{!?without_old_netfilter:%patch19 -p1}
 %patch20 -p1
 %patch22 -p1
 
 ## extra
-%{!?without_old_netfiltersnap:%patch30 -p1}
+%{!?without_old_netfilter:%patch30 -p1}
 %patch32 -p1
-%{!?without_old_netfiltersnap:%patch33 -p1}
-%{!?without_old_netfiltersnap:%patch34 -p1}
-%{!?without_old_netfiltersnap:%patch35 -p1}
-%{!?without_old_netfiltersnap:%patch37 -p1}
-%{!?without_old_netfiltersnap:%patch38 -p1}
+%{!?without_old_netfilter:%patch33 -p1}
+%{!?without_old_netfilter:%patch34 -p1}
+%{!?without_old_netfilter:%patch35 -p1}
+%{!?without_old_netfilter:%patch37 -p1}
+%{!?without_old_netfilter:%patch38 -p1}
 
 
 ## external
