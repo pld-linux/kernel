@@ -16,8 +16,10 @@
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	xen0		# added Xen0 support
 %bcond_with	xenU		# added XenU support
+
 %bcond_without	grsecurity	# don't build grsecurity at all
 %bcond_without	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
+%bcond_without	old_netfilter	# don't build old netfilter module [not supported in this time may not work]
 
 %bcond_with	fbsplash	# fbsplash instead of bootsplash
 %bcond_with	vesafb_tng	# vesafb-tng, vesafb replacement from gentoo
@@ -91,7 +93,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.1
+%define		_rel			0.2
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
@@ -815,30 +817,26 @@ done
 # submitted
 
 # base
-%patch10 -p1
-#patch11 -p1
-%patch12 -p1
-%patch13 -p1
+%{!?without_old_netfiltersnap:%patch10 -p1}
+%{!?without_old_netfiltersnap:%patch12 -p1}
+%{!?without_old_netfiltersnap:%patch13 -p1}
 %patch14 -p1
-%patch15 -p1
-%patch16 -p1
-%patch17 -p1
-%patch18 -p1
-%patch19 -p1
+%{!?without_old_netfiltersnap:%patch15 -p1}
+%{!?without_old_netfiltersnap:%patch16 -p1}
+%{!?without_old_netfiltersnap:%patch17 -p1}
+%{!?without_old_netfiltersnap:%patch18 -p1}
+%{!?without_old_netfiltersnap:%patch19 -p1}
 %patch20 -p1
-#patch21 -p1
 %patch22 -p1
 
 ## extra
-%patch30 -p1
-#patch31 -p1
+%{!?without_old_netfiltersnap:%patch30 -p1}
 %patch32 -p1
-%patch33 -p1
-%patch34 -p1
-%patch35 -p1
-#patch36 -p1
-%patch37 -p1
-%patch38 -p1
+%{!?without_old_netfiltersnap:%patch33 -p1}
+%{!?without_old_netfiltersnap:%patch34 -p1}
+%{!?without_old_netfiltersnap:%patch35 -p1}
+%{!?without_old_netfiltersnap:%patch37 -p1}
+%{!?without_old_netfiltersnap:%patch38 -p1}
 
 
 ## external
