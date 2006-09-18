@@ -127,8 +127,8 @@ Group:		Base/Kernel
 #define		_rc	%{nil}
 %define		_rc	-rc7
 Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
+# Source0-md5:	c8d0c8c1498909ed09c002ace34522b0
 #Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
-# Source0-md5:	37ddefe96625502161f075b9d907f21e
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	8bba5493a097abac45df584d863fba67
