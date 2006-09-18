@@ -107,7 +107,7 @@
 %define		drm_xfree_version	4.3.0
 
 %define		squashfs_version	3.1
-%define		suspend_version		2.2.7.3
+%define		suspend_version		2.2.7.6
 
 %define		xen_version		3.0.2
 
@@ -138,8 +138,8 @@ Source4:	kernel-config.h
 #Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
 
-#Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.17.tar.bz2
-# Source10-md5:	93c5fff0ce771cd547043db91718706f
+Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.18-rc7.tar.bz2
+# Source10-md5:	6dd58c454e916cf9df62a44bdecb0aab
 #Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.17/reiser4-for-2.6.17-3.patch.gz
 # Source12-md5:	593c3296ddf40c5b116ee129781da341
 #Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
