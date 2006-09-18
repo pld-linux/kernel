@@ -93,7 +93,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			1
+%define		_rel			0.0
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
@@ -116,18 +116,18 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
-%define		_basever	2.6.17
-%define		_postver	.13
-#define		_postver	%{nil}
+%define		_basever	2.6.18
+#define		_postver	.13
+%define		_postver	%{nil}
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-%define		_rc	%{nil}
-#define		_rc	-rc5
-#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
+#define		_rc	%{nil}
+%define		_rc	-rc7
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
+#Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
 # Source0-md5:	37ddefe96625502161f075b9d907f21e
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
@@ -135,14 +135,14 @@ Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 %endif
 Source3:	kernel-autoconf.h
 Source4:	kernel-config.h
-Source5:	kernel-ppclibs.Makefile
+#Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
 
-Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.17.tar.bz2
+#Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.17.tar.bz2
 # Source10-md5:	93c5fff0ce771cd547043db91718706f
-Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.17/reiser4-for-2.6.17-3.patch.gz
+#Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.17/reiser4-for-2.6.17-3.patch.gz
 # Source12-md5:	593c3296ddf40c5b116ee129781da341
-Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
+#Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
 # Source14-md5:	f2563a2d748c7480559e8d3ff77eb18a
 
 Source20:	kernel-i386.config
@@ -178,112 +178,112 @@ Source47:	kernel-xenU.config
 # PATA ports on SATA Promise controller; patch based on:
 # http://cvs.fedora.redhat.com/viewcvs/*checkout*/rpms/kernel/devel/linux-2.6-sata-promise-pata-ports.patch
 #
-Patch1:		linux-2.6-sata-promise-pata-ports.patch
+#Patch1:		linux-2.6-sata-promise-pata-ports.patch
 
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
 Patch2:		tahoe9xx-2.6.11.5.patch
 
 #	ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.15.diff
-Patch3:		bootsplash-3.1.6-2.6.15.diff
+#Patch3:		bootsplash-3.1.6-2.6.15.diff
 #	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.16.patch
-Patch4:		fbsplash-0.9.2-r5-2.6.16.patch
-Patch5:		linux-2.6-vesafb-tng.patch
+#Patch4:		fbsplash-0.9.2-r5-2.6.16.patch
+#Patch5:		linux-2.6-vesafb-tng.patch
 
 # directly from http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.0.tar.gz
 #		from linux-2.6.15
 Patch6:		squashfs%{squashfs_version}-patch
 
-Patch7:		linux-alpha-isa.patch
-Patch8:		linux-fbcon-margins.patch
-Patch9:		linux-static-dev.patch
+#Patch7:		linux-alpha-isa.patch
+#Patch8:		linux-fbcon-margins.patch
+#Patch9:		linux-static-dev.patch
 
 # netfilter snap
 ## submitted
 
 ## base
-Patch10:	pom-ng-IPV4OPTSSTRIP-%{_old_netfilter_snap}.patch
-Patch12:	pom-ng-expire-%{_old_netfilter_snap}.patch
-Patch13:	pom-ng-fuzzy-%{_old_netfilter_snap}.patch
-Patch14:	pom-ng-ipv4options-%{_netfilter_snap}.patch
-Patch15:	pom-ng-nth-%{_old_netfilter_snap}.patch
-Patch16:	pom-ng-osf-%{_old_netfilter_snap}.patch
-Patch17:	pom-ng-psd-%{_old_netfilter_snap}.patch
-Patch18:	pom-ng-quota-%{_old_netfilter_snap}.patch
-Patch19:	pom-ng-random-%{_old_netfilter_snap}.patch
-Patch20:	pom-ng-set-%{_netfilter_snap}.patch
-Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
-
+#Patch10:	pom-ng-IPV4OPTSSTRIP-%{_old_netfilter_snap}.patch
+#Patch12:	pom-ng-expire-%{_old_netfilter_snap}.patch
+#Patch13:	pom-ng-fuzzy-%{_old_netfilter_snap}.patch
+#Patch14:	pom-ng-ipv4options-%{_netfilter_snap}.patch
+#Patch15:	pom-ng-nth-%{_old_netfilter_snap}.patch
+#Patch16:	pom-ng-osf-%{_old_netfilter_snap}.patch
+#Patch17:	pom-ng-psd-%{_old_netfilter_snap}.patch
+#Patch18:	pom-ng-quota-%{_old_netfilter_snap}.patch
+#Patch19:	pom-ng-random-%{_old_netfilter_snap}.patch
+#Patch20:	pom-ng-set-%{_netfilter_snap}.patch
+#Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
+#
 ## extra
-Patch30:	pom-ng-ACCOUNT-%{_old_netfilter_snap}.patch
-Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
-Patch33:	pom-ng-TARPIT-%{_old_netfilter_snap}.patch
-Patch34:	pom-ng-XOR-%{_old_netfilter_snap}.patch
-Patch35:	pom-ng-account-%{_old_netfilter_snap}.patch
-Patch37:	pom-ng-rpc-%{_old_netfilter_snap}.patch
-Patch38:	pom-ng-unclean-%{_old_netfilter_snap}.patch
-
-
+#Patch30:	pom-ng-ACCOUNT-%{_old_netfilter_snap}.patch
+#Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
+#Patch33:	pom-ng-TARPIT-%{_old_netfilter_snap}.patch
+#Patch34:	pom-ng-XOR-%{_old_netfilter_snap}.patch
+#Patch35:	pom-ng-account-%{_old_netfilter_snap}.patch
+#Patch37:	pom-ng-rpc-%{_old_netfilter_snap}.patch
+#Patch38:	pom-ng-unclean-%{_old_netfilter_snap}.patch
+#
+#
 ##external
-Patch40:	pom-ng-IPMARK-%{_netfilter_snap}.patch
-Patch41:	pom-ng-condition-%{_netfilter_snap}.patch
-Patch42:	pom-ng-connlimit-%{_netfilter_snap}.patch
-Patch43:	pom-ng-ipp2p-%{_netfilter_snap}.patch
-Patch44:	pom-ng-time-%{_netfilter_snap}.patch
-
+#Patch40:	pom-ng-IPMARK-%{_netfilter_snap}.patch
+#Patch41:	pom-ng-condition-%{_netfilter_snap}.patch
+#Patch42:	pom-ng-connlimit-%{_netfilter_snap}.patch
+#Patch43:	pom-ng-ipp2p-%{_netfilter_snap}.patch
+#Patch44:	pom-ng-time-%{_netfilter_snap}.patch
+#
 ###
 #	End netfilter
 ###
 
 # from http://www.linuximq.net/patchs/linux-2.6.16-imq2.diff
-Patch50:	linux-2.6.16-imq2.diff
+#Patch50:	linux-2.6.16-imq2.diff
 
 # from http://bluetooth-alsa.sourceforge.net/sco-mtu.patch
-Patch51:	sco-mtu.patch
+#Patch51:	sco-mtu.patch
 
 # decode OEM Strings
-Patch52:	linux-dmi-decode-and-save-oem-string-information.patch
+#Patch52:	linux-dmi-decode-and-save-oem-string-information.patch
 
 # esfq
 # from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
-Patch53:	esfq-kernel.patch
+#Patch53:	esfq-kernel.patch
 
-Patch54:	linux-iforce-trust_ffrm.patch
+#Patch54:	linux-iforce-trust_ffrm.patch
 # by Baggins request:
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
-Patch55:	linux-2.6-atm-vbr.patch
-Patch56:	linux-2.6-atmdd.patch
+#Patch55:	linux-2.6-atm-vbr.patch
+#Patch56:	linux-2.6-atmdd.patch
 
-Patch57:	linux-2.6-cpuset_virtualization.patch
+#Patch57:	linux-2.6-cpuset_virtualization.patch
 
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_32.tar.bz2
-Patch60:	linux-2.6-sk98lin-8.32.2.3.patch
+#Patch60:	linux-2.6-sk98lin-8.32.2.3.patch
 
-Patch70:	linux-2.6-suspend2-avoid-redef.patch
-Patch71:	linux-2.6-suspend2-page.patch
+#Patch70:	linux-2.6-suspend2-avoid-redef.patch
+#Patch71:	linux-2.6-suspend2-page.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.17.11-vs2.1.1-rc31.diff
-Patch100:	linux-2.6-vs2.1.patch
-Patch101:	linux-2.6-vs2.1-suspend2.patch
-Patch102:	linux-2.6-vs2.1-128IPs.patch
+#Patch100:	linux-2.6-vs2.1.patch
+#Patch101:	linux-2.6-vs2.1-suspend2.patch
+#Patch102:	linux-2.6-vs2.1-128IPs.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
-Patch120:	xen-3.0-2.6.16.patch
+#Patch120:	xen-3.0-2.6.16.patch
 
-Patch200:	linux-2.6-ppc-ICE-hacks.patch
+#Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
-Patch1000:	linux-2.6-grsec-minimal.patch
+#Patch1000:	linux-2.6-grsec-minimal.patch
 
-Patch2000:	kernel-small_fixes.patch
+#Patch2000:	kernel-small_fixes.patch
 
 # http://lkml.org/lkml/2006/7/22/98
-Patch2001:	kernel-2.6-pnpbios.patch
+#Patch2001:	kernel-2.6-pnpbios.patch
 
 #wanpipe 
 #Patch3000:	wanpipe-beta7-2.3.4.patch
 
 # official grsecurity for 2.6.17.7
 # based on http://www.grsecurity.net/grsecurity-2.1.9-2.6.17.11-200608282236.patch.gz
-Patch9999:	grsecurity-2.1.9-2.6.17.11.patch
+#Patch9999:	grsecurity-2.1.9-2.6.17.11.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -786,134 +786,134 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %prep
 %setup -q -n linux-%{_basever}%{_rc} -a10 %{?with_abi:-a14}
-
-%ifarch ppc
-install %{SOURCE5} Makefile.ppclibs
-%endif
+#
+#%ifarch ppc
+#install %{SOURCE5} Makefile.ppclibs
+#%endif
 
 %if "%{_postver}" != "%{nil}"
 %{__bzip2} -dc %{SOURCE1} | patch -p1 -s
 %endif
 
-%patch1 -p1
+#%patch1 -p1
 
 # TEMPORARY - review if it's still needed after upgrade!!
-rm suspend2-2.2.7.3-for-2.6.17/9930-pdflush-fix.patch
+#rm suspend2-2.2.7.3-for-2.6.17/9930-pdflush-fix.patch
 
 ## suspend2:
-for i in suspend2-%{suspend_version}-for-2.6.17/[0-9]*; do
-patch -p1 -s < $i
-done
-%patch70 -p1
-%patch71 -p1
+#for i in suspend2-%{suspend_version}-for-2.6.17/[0-9]*; do
+#patch -p1 -s < $i
+#done
+#%patch70 -p1
+#%patch71 -p1
 
 # reiserfs4
-%{__gzip} -dc %{SOURCE12} | %{__patch} -s -p1
+#%{__gzip} -dc %{SOURCE12} | %{__patch} -s -p1
 
 %patch2 -p1
 
-%patch8 -p1
+#%patch8 -p1
 
-%if %{without fbsplash}
-%patch3 -p1
-%else
-%patch4 -p1
-%endif
+#%if %{without fbsplash}
+#%patch3 -p1
+#%else
+#%patch4 -p1
+#%endif
 
-%ifarch %{ix86}
-%{?with_vesafb_tng:%patch5 -p1}
-%endif
+#%ifarch %{ix86}
+#%{?with_vesafb_tng:%patch5 -p1}
+#%endif
 
 %patch6 -p1
 
-%patch7 -p1
-%patch9 -p1
+#%patch7 -p1
+#%patch9 -p1
 
 ## netfilter
 # submitted
 
 # base
-%{!?without_old_netfilter:%patch10 -p1}
-%{!?without_old_netfilter:%patch12 -p1}
-%{!?without_old_netfilter:%patch13 -p1}
-%patch14 -p1
-%{!?without_old_netfilter:%patch15 -p1}
-%{!?without_old_netfilter:%patch16 -p1}
-%{!?without_old_netfilter:%patch17 -p1}
-%{!?without_old_netfilter:%patch18 -p1}
-%{!?without_old_netfilter:%patch19 -p1}
-%patch20 -p1
-%patch22 -p1
+#%{!?without_old_netfilter:%patch10 -p1}
+#%{!?without_old_netfilter:%patch12 -p1}
+#%{!?without_old_netfilter:%patch13 -p1}
+#%patch14 -p1
+#%{!?without_old_netfilter:%patch15 -p1}
+#%{!?without_old_netfilter:%patch16 -p1}
+#%{!?without_old_netfilter:%patch17 -p1}
+#%{!?without_old_netfilter:%patch18 -p1}
+#%{!?without_old_netfilter:%patch19 -p1}
+#%patch20 -p1
+#%patch22 -p1
 
 ## extra
-%{!?without_old_netfilter:%patch30 -p1}
-%patch32 -p1
-%{!?without_old_netfilter:%patch33 -p1}
-%{!?without_old_netfilter:%patch34 -p1}
-%{!?without_old_netfilter:%patch35 -p1}
-%{!?without_old_netfilter:%patch37 -p1}
-%{!?without_old_netfilter:%patch38 -p1}
-
+#%{!?without_old_netfilter:%patch30 -p1}
+#%patch32 -p1
+#%{!?without_old_netfilter:%patch33 -p1}
+#%{!?without_old_netfilter:%patch34 -p1}
+#%{!?without_old_netfilter:%patch35 -p1}
+#%{!?without_old_netfilter:%patch37 -p1}
+#%{!?without_old_netfilter:%patch38 -p1}
+#
 
 ## external
-%patch40 -p1
-%patch41 -p1
-%patch42 -p1
-%patch43 -p1
-%patch44 -p1
-
+#%patch40 -p1
+#%patch41 -p1
+#%patch42 -p1
+#%patch43 -p1
+#%patch44 -p1
+#
 ##
 # end of netfilter
 
-%patch50 -p1
+#%patch50 -p1
 
-%patch51 -p1
+#%patch51 -p1
 
-%patch52 -p1
+#%patch52 -p1
 
-%patch53 -p1
+#%patch53 -p1
 
-%patch54 -p1
+#%patch54 -p1
 
-%patch55 -p1
-%patch56 -p1
+#%patch55 -p1
+#%patch56 -p1
 
 
-%ifarch %{ix86} %{x8664} ia64
-%patch57 -p1
-%endif
+#%ifarch %{ix86} %{x8664} ia64
+#%patch57 -p1
+#%endif
 
-%patch60 -p1
+#%patch60 -p1
 
 # vserver:
-%patch100 -p1
-%patch101 -p1
-%patch102 -p1
+#%patch100 -p1
+#%patch101 -p1
+#%patch102 -p1
 
-%if %{with xen0} || %{with xenU}
-%ifarch %{ix86} %{x8664} ia64
-%patch120 -p1
-%endif
-%endif
+#%if %{with xen0} || %{with xenU}
+#%ifarch %{ix86} %{x8664} ia64
+#%patch120 -p1
+#%endif
+#%endif
 
-%if %{with grsec_minimal}
-%patch1000 -p1
-%endif
-%if %{with grsec_full}
-%patch9999 -p1
-%endif
+#%if %{with grsec_minimal}
+#%patch1000 -p1
+#%endif
+#%if %{with grsec_full}
+#%patch9999 -p1
+#%endif
 
-%ifarch ppc ppc64
-%patch200 -p1
-%endif
+#%ifarch ppc ppc64
+#%patch200 -p1
+#%endif
 
 ##Small fixes:
-%patch2000 -p1
-%patch2001 -p1
+#%patch2000 -p1
+#%patch2001 -p1
 
-%if %{with abi}
-patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
-%endif
+#%if %{with abi}
+#patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
+#%endif
 
 # wanpipe
 #patch3000 -p1
