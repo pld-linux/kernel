@@ -93,7 +93,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.2
+%define		_rel			1
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
@@ -359,6 +359,8 @@ This package contains the Linux kernel that is used to boot and run
 your system. It contains few device drivers for specific hardware.
 Most hardware is instead supported by modules loaded after booting.
 
+Netfilter module dated: %{_netfilter_nap}
+%{!?withour_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
@@ -373,6 +375,8 @@ Linux-Betriebssystems. Der Kernel ist für grundliegende
 Systemfunktionen verantwortlich: Speicherreservierung,
 Prozeß-Management, Geräte Ein- und Ausgaben, usw.
 
+Netfilter module dated: %{_netfilter_nap}
+%{!?withour_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
@@ -387,6 +391,8 @@ centrale d'un système d'exploitation Linux. Le noyau traite les
 fonctions basiques d'un système d'exploitation: allocation mémoire,
 allocation de process, entrée/sortie de peripheriques, etc.
 
+Netfilter module dated: %{_netfilter_nap}
+%{!?withour_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
@@ -400,6 +406,8 @@ Pakiet zawiera j±dro Linuksa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takiego jak sterowniki dysków itp.
 
+Netfilter module dated: %{_netfilter_nap}
+%{!?withour_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
@@ -546,6 +554,8 @@ This package includes a SMP version of the Linux %{version} kernel. It
 is required only on machines with two or more CPUs, although it should
 work fine on single-CPU boxes.
 
+Netfilter module dated: %{_netfilter_nap}
+%{!?withour_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
@@ -560,6 +570,8 @@ Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
 Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
 CPU laufen.
 
+Netfilter module dated: %{_netfilter_nap}
+%{!?withour_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
@@ -573,6 +585,8 @@ Ce package inclu une version SMP du noyau de Linux version {version}.
 Il et nécessaire seulement pour les machine avec deux processeurs ou
 plus, il peut quand même fonctionner pour les système mono-processeur.
 
+Netfilter module dated: %{_netfilter_nap}
+%{!?withour_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
@@ -586,6 +600,8 @@ Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono
 wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
 Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
 
+Netfilter module dated: %{_netfilter_nap}
+%{!?withour_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
