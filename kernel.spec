@@ -1,6 +1,5 @@
 #
 # TODO:
-# - update xen patch for 2.6.17.x
 # - all netfilter patches needs update (API changed again)
 #
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
@@ -169,6 +168,7 @@ Source44:	kernel-vesafb-tng.config
 Source45:	kernel-grsec.config
 Source46:	kernel-xen0.config
 Source47:	kernel-xenU.config
+Source48:	kernel-xen-extra.config
 
 ###
 #	Patches
@@ -222,7 +222,6 @@ Patch35:	pom-ng-account-%{_old_netfilter_snap}.patch
 Patch37:	pom-ng-rpc-%{_old_netfilter_snap}.patch
 Patch38:	pom-ng-unclean-%{_old_netfilter_snap}.patch
 
-
 ##external
 Patch40:	pom-ng-IPMARK-%{_netfilter_snap}.patch
 Patch41:	pom-ng-condition-%{_netfilter_snap}.patch
@@ -267,7 +266,7 @@ Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
-Patch120:	xen-3.0-2.6.16.patch
+Patch120:	linux-2.6-xen.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
@@ -278,7 +277,7 @@ Patch2000:	kernel-small_fixes.patch
 # http://lkml.org/lkml/2006/7/22/98
 Patch2001:	kernel-2.6-pnpbios.patch
 
-#wanpipe 
+#wanpipe
 #Patch3000:	wanpipe-beta7-2.3.4.patch
 
 # official grsecurity for 2.6.17.7
@@ -359,7 +358,7 @@ This package contains the Linux kernel that is used to boot and run
 your system. It contains few device drivers for specific hardware.
 Most hardware is instead supported by modules loaded after booting.
 
-Netfilter module dated: %{_netfilter_nap}
+Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
@@ -375,7 +374,7 @@ Linux-Betriebssystems. Der Kernel ist für grundliegende
 Systemfunktionen verantwortlich: Speicherreservierung,
 Prozeß-Management, Geräte Ein- und Ausgaben, usw.
 
-Netfilter module dated: %{_netfilter_nap}
+Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
@@ -391,7 +390,7 @@ centrale d'un système d'exploitation Linux. Le noyau traite les
 fonctions basiques d'un système d'exploitation: allocation mémoire,
 allocation de process, entrée/sortie de peripheriques, etc.
 
-Netfilter module dated: %{_netfilter_nap}
+Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
@@ -406,7 +405,7 @@ Pakiet zawiera j±dro Linuksa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takiego jak sterowniki dysków itp.
 
-Netfilter module dated: %{_netfilter_nap}
+Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
@@ -554,7 +553,7 @@ This package includes a SMP version of the Linux %{version} kernel. It
 is required only on machines with two or more CPUs, although it should
 work fine on single-CPU boxes.
 
-Netfilter module dated: %{_netfilter_nap}
+Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
@@ -570,7 +569,7 @@ Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
 Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
 CPU laufen.
 
-Netfilter module dated: %{_netfilter_nap}
+Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
@@ -585,7 +584,7 @@ Ce package inclu une version SMP du noyau de Linux version {version}.
 Il et nécessaire seulement pour les machine avec deux processeurs ou
 plus, il peut quand même fonctionner pour les système mono-processeur.
 
-Netfilter module dated: %{_netfilter_nap}
+Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
@@ -600,7 +599,7 @@ Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono
 wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
 Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
 
-Netfilter module dated: %{_netfilter_nap}
+Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
@@ -854,7 +853,6 @@ done
 %{!?without_old_netfilter:%patch37 -p1}
 %{!?without_old_netfilter:%patch38 -p1}
 
-
 ## external
 %patch40 -p1
 %patch41 -p1
@@ -1030,6 +1028,16 @@ BuildConfig() {
 	cat %{SOURCE45} >> arch/%{_target_base_arch}/defconfig
 %endif
 
+%if %{with xen0} || %{with xenU}
+	sed -i "s:CONFIG_X86_PC=y:# CONFIG_X86_PC is not set:" arch/%{_target_base_arch}/defconfig
+	sed -i "s:CONFIG_RIO=[ym]:# CONFIG_RIO is not set:" arch/%{_target_base_arch}/defconfig
+
+	# framebuffer devices generally don't work with xen
+	# and kernel will crash on boot if vesafb-tng is compiled in (even if off by default)
+	sed -i "s:CONFIG_FB=y:# CONFIG_FB is not set:" arch/%{_target_base_arch}/defconfig
+	cat %{SOURCE48} >> arch/%{_target_base_arch}/defconfig
+%endif
+
 %if %{with xen0}
 	cat %{SOURCE46} >> arch/%{_target_base_arch}/defconfig
 %endif	
@@ -1127,7 +1135,11 @@ PreInstallKernel() {
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
 %ifarch %{ix86} %{x8664}
+%if %{with xen0} || %{with xenU}
+	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%else
 	install arch/%{_target_base_arch}/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%endif
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 %endif
 %ifarch alpha sparc sparc64
@@ -1462,8 +1474,10 @@ fi
 %if %{have_drm}
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 %endif
+%if %{without xen0} && %{without xenU}
 %if %{have_oss} && %{have_isa}
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/media/radio/miropcm20.ko*
+%endif
 %endif
 /lib/modules/%{version}-%{release}/kernel/fs
 /lib/modules/%{version}-%{release}/kernel/kernel
@@ -1551,8 +1565,11 @@ fi
 %files sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/sound/oss
+
+%if %{without xen0} && %{without xenU}
 %if %{have_isa}
 /lib/modules/%{version}-%{release}/kernel/drivers/media/radio/miropcm20.ko*
+%endif
 %endif
 %endif
 %endif			# %%{have_sound}
@@ -1578,8 +1595,10 @@ fi
 %if %{have_drm}
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 %endif
+%if %{without xen0} && %{without xenU}
 %if %{have_oss} && %{have_isa}
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/media/radio/miropcm20.ko*
+%endif
 %endif
 /lib/modules/%{version}-%{release}smp/kernel/fs
 /lib/modules/%{version}-%{release}smp/kernel/kernel
@@ -1667,8 +1686,10 @@ fi
 %files smp-sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/sound/oss
+%if %{without xen0} && %{without xenU}
 %if %{have_isa}
 /lib/modules/%{version}-%{release}smp/kernel/drivers/media/radio/miropcm20.ko*
+%endif
 %endif
 %endif
 %endif			# %%{have_sound}
