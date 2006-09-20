@@ -93,7 +93,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.1
+%define		_rel			1
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
@@ -1461,9 +1461,6 @@ fi
 %if %{have_drm}
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 %endif
-%if %{have_oss} && %{have_isa}
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/media/radio/miropcm20.ko*
-%endif
 /lib/modules/%{version}-%{release}/kernel/fs
 /lib/modules/%{version}-%{release}/kernel/kernel
 /lib/modules/%{version}-%{release}/kernel/lib
@@ -1550,9 +1547,6 @@ fi
 %files sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/sound/oss
-%if %{have_isa}
-/lib/modules/%{version}-%{release}/kernel/drivers/media/radio/miropcm20.ko*
-%endif
 %endif
 %endif			# %%{have_sound}
 %endif			# %%{with up}
@@ -1576,9 +1570,6 @@ fi
 /lib/modules/%{version}-%{release}smp/kernel/drivers
 %if %{have_drm}
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
-%endif
-%if %{have_oss} && %{have_isa}
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 /lib/modules/%{version}-%{release}smp/kernel/fs
 /lib/modules/%{version}-%{release}smp/kernel/kernel
@@ -1666,9 +1657,6 @@ fi
 %files smp-sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/sound/oss
-%if %{have_isa}
-/lib/modules/%{version}-%{release}smp/kernel/drivers/media/radio/miropcm20.ko*
-%endif
 %endif
 %endif			# %%{have_sound}
 %endif			# %%{with smp}
@@ -1721,7 +1709,7 @@ fi
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
 %if %{with grsecurity}
-%{_prefix}/src/linux-%{version}/grsecurity
+#%{_prefix}/src/linux-%{version}/grsecurity
 %endif
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
