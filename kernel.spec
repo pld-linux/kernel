@@ -879,7 +879,7 @@ done
 
 # vserver:
 #%patch100 -p1
-%patch101 -p1
+#%patch101 -p1
 #%patch102 -p1
 
 #%if %{with xen0} || %{with xenU}
