@@ -93,7 +93,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.0
+%define		_rel			0.1
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
@@ -124,11 +124,11 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-#define		_rc	%{nil}
-%define		_rc	-rc7
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	c8d0c8c1498909ed09c002ace34522b0
-#Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
+%define		_rc	%{nil}
+#define		_rc	-rc7
+#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
+Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
+# Source0-md5:	296a6d150d260144639c3664d127d174
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	8bba5493a097abac45df584d863fba67
@@ -204,18 +204,18 @@ Patch6:		squashfs%{squashfs_version}-patch
 #Patch10:	pom-ng-IPV4OPTSSTRIP-%{_old_netfilter_snap}.patch
 #Patch12:	pom-ng-expire-%{_old_netfilter_snap}.patch
 #Patch13:	pom-ng-fuzzy-%{_old_netfilter_snap}.patch
-#Patch14:	pom-ng-ipv4options-%{_netfilter_snap}.patch
+Patch14:	pom-ng-ipv4options-%{_netfilter_snap}.patch
 #Patch15:	pom-ng-nth-%{_old_netfilter_snap}.patch
 #Patch16:	pom-ng-osf-%{_old_netfilter_snap}.patch
 #Patch17:	pom-ng-psd-%{_old_netfilter_snap}.patch
 #Patch18:	pom-ng-quota-%{_old_netfilter_snap}.patch
 #Patch19:	pom-ng-random-%{_old_netfilter_snap}.patch
-#Patch20:	pom-ng-set-%{_netfilter_snap}.patch
-#Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
+Patch20:	pom-ng-set-%{_netfilter_snap}.patch
+Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
 #
 ## extra
 #Patch30:	pom-ng-ACCOUNT-%{_old_netfilter_snap}.patch
-#Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
+Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
 #Patch33:	pom-ng-TARPIT-%{_old_netfilter_snap}.patch
 #Patch34:	pom-ng-XOR-%{_old_netfilter_snap}.patch
 #Patch35:	pom-ng-account-%{_old_netfilter_snap}.patch
@@ -224,18 +224,18 @@ Patch6:		squashfs%{squashfs_version}-patch
 #
 #
 ##external
-#Patch40:	pom-ng-IPMARK-%{_netfilter_snap}.patch
-#Patch41:	pom-ng-condition-%{_netfilter_snap}.patch
-#Patch42:	pom-ng-connlimit-%{_netfilter_snap}.patch
-#Patch43:	pom-ng-ipp2p-%{_netfilter_snap}.patch
-#Patch44:	pom-ng-time-%{_netfilter_snap}.patch
+Patch40:	pom-ng-IPMARK-%{_netfilter_snap}.patch
+Patch41:	pom-ng-condition-%{_netfilter_snap}.patch
+Patch42:	pom-ng-connlimit-%{_netfilter_snap}.patch
+Patch43:	pom-ng-ipp2p-%{_netfilter_snap}.patch
+Patch44:	pom-ng-time-%{_netfilter_snap}.patch
 #
 ###
 #	End netfilter
 ###
 
 # from http://www.linuximq.net/patchs/linux-2.6.16-imq2.diff
-#Patch50:	linux-2.6.16-imq2.diff
+Patch50:	linux-2.6.16-imq2.diff
 
 # from http://bluetooth-alsa.sourceforge.net/sco-mtu.patch
 #Patch51:	sco-mtu.patch
@@ -245,7 +245,7 @@ Patch6:		squashfs%{squashfs_version}-patch
 
 # esfq
 # from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
-#Patch53:	esfq-kernel.patch
+Patch53:	esfq-kernel.patch
 
 #Patch54:	linux-iforce-trust_ffrm.patch
 # by Baggins request:
@@ -256,7 +256,7 @@ Patch6:		squashfs%{squashfs_version}-patch
 #Patch57:	linux-2.6-cpuset_virtualization.patch
 
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_32.tar.bz2
-#Patch60:	linux-2.6-sk98lin-8.32.2.3.patch
+Patch60:	linux-2.6-sk98lin-8.32.2.3.patch
 
 #Patch70:	linux-2.6-suspend2-avoid-redef.patch
 #Patch71:	linux-2.6-suspend2-page.patch
@@ -836,31 +836,30 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 #%{!?without_old_netfilter:%patch10 -p1}
 #%{!?without_old_netfilter:%patch12 -p1}
 #%{!?without_old_netfilter:%patch13 -p1}
-#%patch14 -p1
+%patch14 -p1
 #%{!?without_old_netfilter:%patch15 -p1}
 #%{!?without_old_netfilter:%patch16 -p1}
 #%{!?without_old_netfilter:%patch17 -p1}
 #%{!?without_old_netfilter:%patch18 -p1}
 #%{!?without_old_netfilter:%patch19 -p1}
-#%patch20 -p1
-#%patch22 -p1
+%patch20 -p1
+%patch22 -p1
 
 ## extra
 #%{!?without_old_netfilter:%patch30 -p1}
-#%patch32 -p1
+%patch32 -p1
 #%{!?without_old_netfilter:%patch33 -p1}
 #%{!?without_old_netfilter:%patch34 -p1}
 #%{!?without_old_netfilter:%patch35 -p1}
 #%{!?without_old_netfilter:%patch37 -p1}
 #%{!?without_old_netfilter:%patch38 -p1}
-#
 
 ## external
-#%patch40 -p1
-#%patch41 -p1
-#%patch42 -p1
-#%patch43 -p1
-#%patch44 -p1
+%patch40 -p1
+%patch41 -p1
+%patch42 -p1
+%patch43 -p1
+%patch44 -p1
 #
 ##
 # end of netfilter
