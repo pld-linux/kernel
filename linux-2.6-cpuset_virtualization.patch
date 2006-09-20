@@ -34,7 +34,7 @@ diff -ur linux-2.6.14.3/arch/ia64/kernel/setup.c linux-2.6.14.3-cpusetvirt/arch/
 --- linux-2.6.14.3/arch/ia64/kernel/setup.c	2005-11-24 23:10:21.000000000 +0100
 +++ linux-2.6.14.3-cpusetvirt/arch/ia64/kernel/setup.c	2005-11-25 19:28:28.090979016 +0100
 @@ -43,6 +43,7 @@
- #include <linux/platform.h>
+ #include <linux/initrd.h>
  #include <linux/pm.h>
  #include <linux/cpufreq.h>
 +#include <linux/cpuset.h>
@@ -42,7 +42,7 @@ diff -ur linux-2.6.14.3/arch/ia64/kernel/setup.c linux-2.6.14.3-cpusetvirt/arch/
  #include <asm/ia32.h>
  #include <asm/machvec.h>
 @@ -476,6 +477,11 @@
- 	unsigned long mask;
+ 	unsigned long proc_freq;
  	int i;
  
 +#ifdef CONFIG_CPUSETS
@@ -65,13 +65,12 @@ diff -ur linux-2.6.14.3/arch/ia64/kernel/setup.c linux-2.6.14.3-cpusetvirt/arch/
 +#endif
 +		   c->vendor, family, c->model, c->revision, c->archrev,
  		   features, c->ppn, c->number,
- 		   c->proc_freq / 1000000, c->proc_freq % 1000000,
+ 		   proc_freq / 1000, proc_freq % 1000,
  		   c->itc_freq / 1000000, c->itc_freq % 1000000,
 diff -ur linux-2.6.14.3/arch/x86_64/kernel/setup.c linux-2.6.14.3-cpusetvirt/arch/x86_64/kernel/setup.c
 --- linux-2.6.14.3/arch/x86_64/kernel/setup.c	2005-11-24 23:10:21.000000000 +0100
 +++ linux-2.6.14.3-cpusetvirt/arch/x86_64/kernel/setup.c	2005-11-25 19:37:48.755745016 +0100
-@@ -42,7 +42,8 @@
- #include <linux/cpufreq.h>
+@@ -42,6 +42,7 @@
  #include <linux/dmi.h>
  #include <linux/dma-mapping.h>
  #include <linux/ctype.h>
@@ -113,7 +112,7 @@ diff -ur linux-2.6.14.3/fs/proc/proc_misc.c linux-2.6.14.3-cpusetvirt/fs/proc/pr
  #include <asm/uaccess.h>
  #include <asm/pgtable.h>
 @@ -353,6 +354,10 @@
- 	for_each_cpu(i) {
+ 	for_each_possible_cpu(i) {
  		int j;
  
 +#ifdef CONFIG_CPUSETS
@@ -150,20 +149,20 @@ diff -ur linux-2.6.14.3/include/linux/cpuset.h linux-2.6.14.3-cpusetvirt/include
 --- linux-2.6.14.3/include/linux/cpuset.h	2005-11-24 23:10:21.000000000 +0100
 +++ linux-2.6.14.3-cpusetvirt/include/linux/cpuset.h	2005-11-25 19:28:28.093978560 +0100
 @@ -28,6 +28,9 @@
- extern struct file_operations proc_cpuset_operations;
- extern char *cpuset_task_status_allowed(struct task_struct *task, char *buffer);
+ 	return current->flags & PF_SPREAD_SLAB;
+ }
  
 +int cpu_visible_in_cpuset(int cpu, struct cpuset * cs);
 +int cpuid_in_cpuset(int cpu, struct cpuset * cs);
 +
  #else /* !CONFIG_CPUSETS */
  
- static inline int cpuset_init(void) { return 0; }
+ static inline int cpuset_init_early(void) { return 0; }
 diff -ur linux-2.6.14.3/include/linux/init_task.h linux-2.6.14.3-cpusetvirt/include/linux/init_task.h
 --- linux-2.6.14.3/include/linux/init_task.h	2005-11-24 23:10:21.000000000 +0100
 +++ linux-2.6.14.3-cpusetvirt/include/linux/init_task.h	2005-11-25 19:28:28.079980688 +0100
 @@ -88,6 +88,7 @@
- 	.static_prio	= MAX_PRIO-20,					\
+ 	.normal_prio	= MAX_PRIO-20,					\
  	.policy		= SCHED_NORMAL,					\
  	.cpus_allowed	= CPU_MASK_ALL,					\
 +	.cpus_virt_allowed	= CPU_MASK_ALL,				\
@@ -174,7 +173,7 @@ diff -ur linux-2.6.14.3/include/linux/sched.h linux-2.6.14.3-cpusetvirt/include/
 --- linux-2.6.14.3/include/linux/sched.h	2005-11-24 23:10:21.000000000 +0100
 +++ linux-2.6.14.3-cpusetvirt/include/linux/sched.h	2005-11-25 19:28:28.081980384 +0100
 @@ -808,6 +808,7 @@
- 	struct mempolicy *mempolicy;
+   	struct mempolicy *mempolicy;
  	short il_next;
  #endif
 +	cpumask_t cpus_virt_allowed;
@@ -190,19 +189,19 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
  	CS_MEMORY_MIGRATE,
 +	CS_VIRTUALIZED,
  	CS_REMOVED,
- 	CS_NOTIFY_ON_RELEASE
- } cpuset_flagbits_t;
+ 	CS_NOTIFY_ON_RELEASE,
+ 	CS_SPREAD_PAGE,
 @@ -98,6 +99,10 @@
- 	return !!test_bit(CS_MEM_EXCLUSIVE, &cs->flags);
+ 	return test_bit(CS_MEM_EXCLUSIVE, &cs->flags);
  }
  
 +static inline int is_virtualized(const struct cpuset *cs)
 +{
-+	return !!test_bit(CS_VIRTUALIZED, &cs->flags);
++	return test_bit(CS_VIRTUALIZED, &cs->flags);
 +}
  static inline int is_removed(const struct cpuset *cs)
  {
- 	return !!test_bit(CS_REMOVED, &cs->flags);
+ 	return test_bit(CS_REMOVED, &cs->flags);
 @@ -590,6 +595,145 @@
  		is_mem_exclusive(p) <= is_mem_exclusive(q);
  }
@@ -399,8 +398,8 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
  	FILE_MEM_EXCLUSIVE,
 +	FILE_VIRTUALIZE,
  	FILE_NOTIFY_ON_RELEASE,
- 	FILE_TASKLIST,
- } cpuset_filetype_t;
+ 	FILE_MEMORY_PRESSURE_ENABLED,
+ 	FILE_MEMORY_PRESSURE,
 @@ -887,6 +1055,9 @@
  	case FILE_MEM_EXCLUSIVE:
  		retval = update_flag(CS_MEM_EXCLUSIVE, cs, buffer);
@@ -441,7 +440,7 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
 +		return err;
  	if ((err = cpuset_add_file(cs_dentry, &cft_notify_on_release)) < 0)
  		return err;
- 	if ((err = cpuset_add_file(cs_dentry, &cft_tasks)) < 0)
+ 	if ((err = cpuset_add_file(cs_dentry, &cft_memory_migrate)) < 0)
 diff -ur linux-2.6.14.3/kernel/kthread.c linux-2.6.14.3-cpusetvirt/kernel/kthread.c
 --- linux-2.6.14.3/kernel/kthread.c	2005-11-24 23:10:21.000000000 +0100
 +++ linux-2.6.14.3-cpusetvirt/kernel/kthread.c	2005-11-25 19:28:28.094978408 +0100
@@ -464,7 +463,7 @@ diff -ur linux-2.6.14.3/kernel/kthread.c linux-2.6.14.3-cpusetvirt/kernel/kthrea
 diff -ur linux-2.6.14.3/kernel/sched.c linux-2.6.14.3-cpusetvirt/kernel/sched.c
 --- linux-2.6.14.3/kernel/sched.c	2005-11-24 23:10:21.000000000 +0100
 +++ linux-2.6.14.3-cpusetvirt/kernel/sched.c	2005-11-25 19:28:28.087979472 +0100
-@@ -3798,11 +3798,15 @@
+@@ -3798,9 +3798,13 @@
  	return retval;
  }
  
@@ -475,14 +474,12 @@ diff -ur linux-2.6.14.3/kernel/sched.c linux-2.6.14.3-cpusetvirt/kernel/sched.c
 +
  long sched_setaffinity(pid_t pid, cpumask_t new_mask)
  {
- 	task_t *p;
- 	int retval;
 -	cpumask_t cpus_allowed;
+ 	struct task_struct *p;
+ 	int retval;
  
- 	lock_cpu_hotplug();
- 	read_lock(&tasklist_lock);
 @@ -3827,9 +3827,11 @@
- 			!capable(CAP_SYS_NICE))
+ 	if (retval)
  		goto out_unlock;
  
 -	cpus_allowed = cpuset_cpus_allowed(p);
@@ -497,9 +494,9 @@ diff -ur linux-2.6.14.3/kernel/sched.c linux-2.6.14.3-cpusetvirt/kernel/sched.c
  out_unlock:
  	put_task_struct(p);
 @@ -3897,7 +3904,12 @@
+ 	if (retval)
  		goto out_unlock;
  
- 	retval = 0;
 -	cpus_and(*mask, p->cpus_allowed, cpu_online_map);
 +#ifdef CONFIG_CPUSETS
 +	if (cpuset_get_cpus_virt_affinity(p, mask) < 0)
