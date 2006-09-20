@@ -249,7 +249,7 @@ Patch53:	esfq-kernel.patch
 Patch55:	linux-2.6-atm-vbr.patch
 Patch56:	linux-2.6-atmdd.patch
 
-#Patch57:	linux-2.6-cpuset_virtualization.patch
+Patch57:	linux-2.6-cpuset_virtualization.patch
 
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_32.tar.bz2
 Patch60:	linux-2.6-sk98lin-8.32.2.3.patch
@@ -265,14 +265,11 @@ Patch71:	linux-2.6-suspend2-page.patch
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 #Patch120:	xen-3.0-2.6.16.patch
 
-#Patch200:	linux-2.6-ppc-ICE-hacks.patch
+Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
 #Patch1000:	linux-2.6-grsec-minimal.patch
 
-#Patch2000:	kernel-small_fixes.patch
-
-# http://lkml.org/lkml/2006/7/22/98
-#Patch2001:	kernel-2.6-pnpbios.patch
+Patch2000:	kernel-small_fixes.patch
 
 #wanpipe 
 #Patch3000:	wanpipe-beta7-2.3.4.patch
@@ -867,9 +864,9 @@ done
 %patch56 -p1
 
 
-#%ifarch %{ix86} %{x8664} ia64
-#%patch57 -p1
-#%endif
+%ifarch %{ix86} %{x8664} ia64
+%patch57 -p1
+%endif
 
 #%patch60 -p1
 
@@ -891,13 +888,12 @@ done
 #%patch9999 -p1
 #%endif
 
-#%ifarch ppc ppc64
-#%patch200 -p1
-#%endif
+%ifarch ppc ppc64
+%patch200 -p1
+%endif
 
-##Small fixes:
-#%patch2000 -p1
-#%patch2001 -p1
+#Small fixes:
+%patch2000 -p1
 
 #%if %{with abi}
 #patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
