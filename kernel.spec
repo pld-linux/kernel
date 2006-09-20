@@ -135,7 +135,7 @@ Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 %endif
 Source3:	kernel-autoconf.h
 Source4:	kernel-config.h
-#Source5:	kernel-ppclibs.Makefile
+Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
 
 Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.18.tar.bz2
@@ -178,15 +178,15 @@ Source47:	kernel-xenU.config
 # PATA ports on SATA Promise controller; patch based on:
 # http://cvs.fedora.redhat.com/viewcvs/*checkout*/rpms/kernel/devel/linux-2.6-sata-promise-pata-ports.patch
 #
-#Patch1:		linux-2.6-sata-promise-pata-ports.patch
+Patch1:		linux-2.6-sata-promise-pata-ports.patch
 
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
 Patch2:		tahoe9xx-2.6.11.5.patch
 
 #	ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.15.diff
-#Patch3:		bootsplash-3.1.6-2.6.15.diff
-#	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.16.patch
-#Patch4:		fbsplash-0.9.2-r5-2.6.16.patch
+Patch3:		bootsplash-3.1.6-2.6.15.diff
+#	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.18-rc4.patch
+Patch4:		fbsplash-0.9.2-r5-2.6.18-rc4.patch
 #Patch5:		linux-2.6-vesafb-tng.patch
 
 # directly from http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.0.tar.gz
@@ -198,9 +198,9 @@ Patch8:		linux-fbcon-margins.patch
 Patch9:		linux-static-dev.patch
 
 # netfilter snap
-## submitted
+# submitted
 
-## base
+# base
 #Patch10:	pom-ng-IPV4OPTSSTRIP-%{_old_netfilter_snap}.patch
 #Patch12:	pom-ng-expire-%{_old_netfilter_snap}.patch
 #Patch13:	pom-ng-fuzzy-%{_old_netfilter_snap}.patch
@@ -212,8 +212,8 @@ Patch14:	pom-ng-ipv4options-%{_netfilter_snap}.patch
 #Patch19:	pom-ng-random-%{_old_netfilter_snap}.patch
 Patch20:	pom-ng-set-%{_netfilter_snap}.patch
 Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
-#
-## extra
+
+# extra
 #Patch30:	pom-ng-ACCOUNT-%{_old_netfilter_snap}.patch
 Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
 #Patch33:	pom-ng-TARPIT-%{_old_netfilter_snap}.patch
@@ -221,21 +221,21 @@ Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
 #Patch35:	pom-ng-account-%{_old_netfilter_snap}.patch
 #Patch37:	pom-ng-rpc-%{_old_netfilter_snap}.patch
 #Patch38:	pom-ng-unclean-%{_old_netfilter_snap}.patch
-#
-#
-##external
+
+
+#external
 Patch40:	pom-ng-IPMARK-%{_netfilter_snap}.patch
 Patch41:	pom-ng-condition-%{_netfilter_snap}.patch
 Patch42:	pom-ng-connlimit-%{_netfilter_snap}.patch
 Patch43:	pom-ng-ipp2p-%{_netfilter_snap}.patch
 Patch44:	pom-ng-time-%{_netfilter_snap}.patch
-#
+
 ###
 #	End netfilter
 ###
 
 # from http://www.linuximq.net/patchs/linux-2.6.16-imq2.diff
-Patch50:	linux-2.6.16-imq2.diff
+#Patch50:	linux-2.6.16-imq2.diff
 
 # decode OEM Strings
 Patch52:	linux-dmi-decode-and-save-oem-string-information.patch
@@ -259,7 +259,7 @@ Patch71:	linux-2.6-suspend2-page.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.17.11-vs2.1.1-rc31.diff
 #Patch100:	linux-2.6-vs2.1.patch
-#Patch101:	linux-2.6-vs2.1-suspend2.patch
+Patch101:	linux-2.6-vs2.1-suspend2.patch
 #Patch102:	linux-2.6-vs2.1-128IPs.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
@@ -779,16 +779,16 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %prep
 %setup -q -n linux-%{_basever}%{_rc} -a10 %{?with_abi:-a14}
-#
-#%ifarch ppc
-#install %{SOURCE5} Makefile.ppclibs
-#%endif
+
+%ifarch ppc
+install %{SOURCE5} Makefile.ppclibs
+%endif
 
 %if "%{_postver}" != "%{nil}"
 %{__bzip2} -dc %{SOURCE1} | patch -p1 -s
 %endif
 
-#%patch1 -p1
+%patch1 -p1
 
 # suspend2:
 for i in suspend2-%{suspend_version}-for-*/[0-9]*; do
@@ -804,11 +804,11 @@ done
 
 %patch8 -p1
 
-#%if %{without fbsplash}
-#%patch3 -p1
-#%else
-#%patch4 -p1
-#%endif
+%if %{without fbsplash}
+%patch3 -p1
+%else
+%patch4 -p1
+%endif
 
 #%ifarch %{ix86}
 #%{?with_vesafb_tng:%patch5 -p1}
@@ -858,7 +858,7 @@ done
 
 %patch52 -p1
 
-#%patch53 -p1
+%patch53 -p1
 
 %patch55 -p1
 %patch56 -p1
@@ -872,7 +872,7 @@ done
 
 # vserver:
 #%patch100 -p1
-#%patch101 -p1
+%patch101 -p1
 #%patch102 -p1
 
 #%if %{with xen0} || %{with xenU}
