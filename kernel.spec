@@ -193,9 +193,9 @@ Patch2:		tahoe9xx-2.6.11.5.patch
 #		from linux-2.6.15
 Patch6:		squashfs%{squashfs_version}-patch
 
-#Patch7:		linux-alpha-isa.patch
-#Patch8:		linux-fbcon-margins.patch
-#Patch9:		linux-static-dev.patch
+Patch7:		linux-alpha-isa.patch
+Patch8:		linux-fbcon-margins.patch
+Patch9:		linux-static-dev.patch
 
 # netfilter snap
 ## submitted
@@ -237,21 +237,17 @@ Patch44:	pom-ng-time-%{_netfilter_snap}.patch
 # from http://www.linuximq.net/patchs/linux-2.6.16-imq2.diff
 Patch50:	linux-2.6.16-imq2.diff
 
-# from http://bluetooth-alsa.sourceforge.net/sco-mtu.patch
-#Patch51:	sco-mtu.patch
-
 # decode OEM Strings
-#Patch52:	linux-dmi-decode-and-save-oem-string-information.patch
+Patch52:	linux-dmi-decode-and-save-oem-string-information.patch
 
 # esfq
 # from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
 Patch53:	esfq-kernel.patch
 
-#Patch54:	linux-iforce-trust_ffrm.patch
 # by Baggins request:
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
-#Patch55:	linux-2.6-atm-vbr.patch
-#Patch56:	linux-2.6-atmdd.patch
+Patch55:	linux-2.6-atm-vbr.patch
+Patch56:	linux-2.6-atmdd.patch
 
 #Patch57:	linux-2.6-cpuset_virtualization.patch
 
@@ -809,7 +805,7 @@ done
 
 %patch2 -p1
 
-#%patch8 -p1
+%patch8 -p1
 
 #%if %{without fbsplash}
 #%patch3 -p1
@@ -823,8 +819,8 @@ done
 
 %patch6 -p1
 
-#%patch7 -p1
-#%patch9 -p1
+%patch7 -p1
+%patch9 -p1
 
 ## netfilter
 # submitted
@@ -863,16 +859,12 @@ done
 
 #%patch50 -p1
 
-#%patch51 -p1
-
-#%patch52 -p1
+%patch52 -p1
 
 #%patch53 -p1
 
-#%patch54 -p1
-
-#%patch55 -p1
-#%patch56 -p1
+%patch55 -p1
+%patch56 -p1
 
 
 #%ifarch %{ix86} %{x8664} ia64
