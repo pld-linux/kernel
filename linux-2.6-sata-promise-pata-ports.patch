@@ -7,7 +7,7 @@ diff -urN linux-2.6.17.1/drivers/scsi/libata-core.c mod/drivers/scsi/libata-core
  	ap->flags |= ent->host_flags;
 +	ap->flags |= ent->port_flags[port_no];	/* pata fix */
  	ap->ops = ent->port_ops;
- 	ap->cbl = ATA_CBL_NONE;
+ 	ap->hw_sata_spd_limit = UINT_MAX;
  	ap->active_tag = ATA_TAG_POISON;
 diff -urN linux-2.6.17.1/drivers/scsi/sata_promise.c mod/drivers/scsi/sata_promise.c
 --- linux-2.6.17.1/drivers/scsi/sata_promise.c	2006-06-20 11:31:55.000000000 +0200
@@ -21,7 +21,7 @@ diff -urN linux-2.6.17.1/drivers/scsi/sata_promise.c mod/drivers/scsi/sata_promi
  		.pio_mask	= 0x1f, /* pio0-4 */
  		.mwdma_mask	= 0x07, /* mwdma0-2 */
  		.udma_mask	= 0x7f, /* udma0-6 ; FIXME */
-@@ -359,15 +359,34 @@
+@@ -359,8 +359,16 @@
  
  static void pdc_sata_phy_reset(struct ata_port *ap)
  {
@@ -39,27 +39,7 @@ diff -urN linux-2.6.17.1/drivers/scsi/sata_promise.c mod/drivers/scsi/sata_promi
 +		pdc_pata_phy_reset(ap);	/* pata fix */
  }
  
- static void pdc_pata_phy_reset(struct ata_port *ap)
- {
- 	/* FIXME: add cable detect.  Don't assume 40-pin cable */
--	ap->cbl = ATA_CBL_PATA40;
--	ap->udma_mask &= ATA_UDMA_MASK_40C;
-+/*	ap->cbl = ATA_CBL_PATA40; */			/* pata fix */
-+/*	ap->udma_mask &= ATA_UDMA_MASK_40C; */		/* pata fix */
-+	/* add cable detection code for pata drives */	/* pata fix */
-+	u8 tmp;						/* pata fix */
-+	void *mmio = (void *) ap->ioaddr.cmd_addr + PDC_CTLSTAT + 0x03;	/* pata fix */
-+	tmp = readb(mmio);				/* pata fix */
-+	if (tmp & 0x01)					/* pata fix */
-+	{						/* pata fix */
-+		ap->cbl = ATA_CBL_PATA40;		/* pata fix */
-+		ap->udma_mask &= ATA_UDMA_MASK_40C;	/* pata fix */
-+	}						/* pata fix */
-+	else						/* pata fix */
-+		ap->cbl = ATA_CBL_PATA80;		/* pata fix */
- 
- 	pdc_reset_port(ap);
- 	ata_port_probe(ap);
+ static void pdc_pata_cbl_detect(struct ata_port *ap)
 @@ -672,6 +691,7 @@
  	unsigned int board_idx = (unsigned int) ent->driver_data;
  	int pci_dev_busy = 0;
