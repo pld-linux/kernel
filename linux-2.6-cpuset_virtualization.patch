@@ -299,7 +299,7 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
 + *	on set_cpus_allowed(), that should, for instance, migrate the task 
 + *	if necessary.
 + */
-+static int set_cpus_virt_allowed(task_t *p, cpumask_t mask)
++static int set_cpus_virt_allowed(struct task_struct *p, cpumask_t mask)
 +{
 +	cpumask_t new_mask;
 +	int retval;
@@ -314,7 +314,7 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
 + *	This is the exported entry point that will be called
 + *	by sched_setaffinity().
 + */
-+int cpuset_set_cpus_affinity(task_t *p, cpumask_t mask)
++int cpuset_set_cpus_affinity(struct task_struct *p, cpumask_t mask)
 +{
 +	int retval;
 +
@@ -335,7 +335,7 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
 + *	This is the exported entry point that will be called
 + *	by sched_getaffinity().
 + */
-+int cpuset_get_cpus_virt_affinity(task_t *p, cpumask_t *mask)
++int cpuset_get_cpus_virt_affinity(struct task_struct *p, cpumask_t *mask)
 +{
 +	if (is_virtualized(p->cpuset)) {
 +		*mask = p->cpus_virt_allowed;
@@ -468,8 +468,8 @@ diff -ur linux-2.6.14.3/kernel/sched.c linux-2.6.14.3-cpusetvirt/kernel/sched.c
  }
  
 +#ifdef CONFIG_CPUSETS
-+int cpuset_set_cpus_affinity(task_t *p, cpumask_t mask);
-+int cpuset_get_cpus_virt_affinity(task_t *p, cpumask_t *mask);
++int cpuset_set_cpus_affinity(struct task_struct *p, cpumask_t mask);
++int cpuset_get_cpus_virt_affinity(struct task_struct *p, cpumask_t *mask);
 +#endif
 +
  long sched_setaffinity(pid_t pid, cpumask_t new_mask)
