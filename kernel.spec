@@ -798,11 +798,13 @@ install %{SOURCE5} Makefile.ppclibs
 %patch1 -p1
 
 # suspend2:
+%ifnarch ppc
 for i in suspend2-%{suspend_version}-for-*/[0-9]*; do
 patch -p1 -s < $i
 done
 %patch70 -p1
 %patch71 -p1
+%endif
 
 # reiserfs4
 #%{__gzip} -dc %{SOURCE12} | %{__patch} -s -p1
