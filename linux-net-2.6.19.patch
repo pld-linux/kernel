@@ -13349,7 +13349,7 @@ diff -Nur linux-2.6.18-rc5/net/ipv4/tcp_input.c linux-2.6.19/net/ipv4/tcp_input.
 +int sysctl_tcp_nometrics_save __read_mostly;
  
 -int sysctl_tcp_moderate_rcvbuf = 1;
--int sysctl_tcp_abc = 1;
+-int sysctl_tcp_abc;
 +int sysctl_tcp_moderate_rcvbuf __read_mostly = 1;
 +int sysctl_tcp_abc __read_mostly = 1;
  
@@ -13373,22 +13373,6 @@ diff -Nur linux-2.6.18-rc5/net/ipv4/tcp_input.c linux-2.6.19/net/ipv4/tcp_input.
  		icsk->icsk_ack.pending |= ICSK_ACK_PUSHED;
  	}
  }
-@@ -2505,8 +2507,13 @@
- 	if (before(ack, prior_snd_una))
- 		goto old_ack;
- 
--	if (sysctl_tcp_abc && icsk->icsk_ca_state < TCP_CA_CWR)
--		tp->bytes_acked += ack - prior_snd_una;
-+	if (sysctl_tcp_abc) {
-+		if (icsk->icsk_ca_state < TCP_CA_CWR)
-+			tp->bytes_acked += ack - prior_snd_una;
-+		else if (icsk->icsk_ca_state == TCP_CA_Loss)
-+			/* we assume just one segment left network */
-+			tp->bytes_acked += min(ack - prior_snd_una, tp->mss_cache);
-+	}
- 
- 	if (!(flag&FLAG_SLOWPATH) && after(ack, prior_snd_una)) {
- 		/* Window is constant, pure forward advance.
 diff -Nur linux-2.6.18-rc5/net/ipv4/tcp_ipv4.c linux-2.6.19/net/ipv4/tcp_ipv4.c
 --- linux-2.6.18-rc5/net/ipv4/tcp_ipv4.c	2006-08-28 05:41:48.000000000 +0200
 +++ linux-2.6.19/net/ipv4/tcp_ipv4.c	2006-09-22 10:04:58.000000000 +0200
