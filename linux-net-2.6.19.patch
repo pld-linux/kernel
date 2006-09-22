@@ -41730,3 +41730,3377 @@ diff -Nur linux-2.6.18-rc5/include/linux/xfrm.h linux-2.6.19/include/linux/xfrm.
  	__XFRMNLGRP_MAX
  };
  #define XFRMNLGRP_MAX	(__XFRMNLGRP_MAX - 1)
+diff -Nur linux-2.6.18-rc5/include/net/act_api.h linux-2.6.19/include/net/act_api.h
+--- linux-2.6.18-rc5/include/net/act_api.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/act_api.h	2006-09-22 10:04:57.000000000 +0200
+@@ -8,70 +8,110 @@
+ #include <net/sch_generic.h>
+ #include <net/pkt_sched.h>
+ 
+-#define tca_gen(name) \
+-struct tcf_##name *next; \
+-	u32 index; \
+-	int refcnt; \
+-	int bindcnt; \
+-	u32 capab; \
+-	int action; \
+-	struct tcf_t tm; \
+-	struct gnet_stats_basic bstats; \
+-	struct gnet_stats_queue qstats; \
+-	struct gnet_stats_rate_est rate_est; \
+-	spinlock_t *stats_lock; \
+-	spinlock_t lock
++struct tcf_common {
++	struct tcf_common		*tcfc_next;
++	u32				tcfc_index;
++	int				tcfc_refcnt;
++	int				tcfc_bindcnt;
++	u32				tcfc_capab;
++	int				tcfc_action;
++	struct tcf_t			tcfc_tm;
++	struct gnet_stats_basic		tcfc_bstats;
++	struct gnet_stats_queue		tcfc_qstats;
++	struct gnet_stats_rate_est	tcfc_rate_est;
++	spinlock_t			*tcfc_stats_lock;
++	spinlock_t			tcfc_lock;
++};
++#define tcf_next	common.tcfc_next
++#define tcf_index	common.tcfc_index
++#define tcf_refcnt	common.tcfc_refcnt
++#define tcf_bindcnt	common.tcfc_bindcnt
++#define tcf_capab	common.tcfc_capab
++#define tcf_action	common.tcfc_action
++#define tcf_tm		common.tcfc_tm
++#define tcf_bstats	common.tcfc_bstats
++#define tcf_qstats	common.tcfc_qstats
++#define tcf_rate_est	common.tcfc_rate_est
++#define tcf_stats_lock	common.tcfc_stats_lock
++#define tcf_lock	common.tcfc_lock
++
++struct tcf_police {
++	struct tcf_common	common;
++	int			tcfp_result;
++	u32			tcfp_ewma_rate;
++	u32			tcfp_burst;
++	u32			tcfp_mtu;
++	u32			tcfp_toks;
++	u32			tcfp_ptoks;
++	psched_time_t		tcfp_t_c;
++	struct qdisc_rate_table	*tcfp_R_tab;
++	struct qdisc_rate_table	*tcfp_P_tab;
++};
++#define to_police(pc)	\
++	container_of(pc, struct tcf_police, common)
+ 
+-struct tcf_police
+-{
+-	tca_gen(police);
+-	int		result;
+-	u32		ewma_rate;
+-	u32		burst;
+-	u32		mtu;
+-	u32		toks;
+-	u32		ptoks;
+-	psched_time_t	t_c;
+-	struct qdisc_rate_table *R_tab;
+-	struct qdisc_rate_table *P_tab;
++struct tcf_hashinfo {
++	struct tcf_common	**htab;
++	unsigned int		hmask;
++	rwlock_t		*lock;
+ };
+ 
++static inline unsigned int tcf_hash(u32 index, unsigned int hmask)
++{
++	return index & hmask;
++}
++
+ #ifdef CONFIG_NET_CLS_ACT
+ 
+ #define ACT_P_CREATED 1
+ #define ACT_P_DELETED 1
+ 
+-struct tcf_act_hdr
+-{
+-	tca_gen(act_hdr);
++struct tcf_act_hdr {
++	struct tcf_common	common;
+ };
+ 
+-struct tc_action
+-{
+-	void *priv;
+-	struct tc_action_ops *ops;
+-	__u32   type;   /* for backward compat(TCA_OLD_COMPAT) */
+-	__u32   order; 
+-	struct tc_action *next;
++struct tc_action {
++	void			*priv;
++	struct tc_action_ops	*ops;
++	__u32			type; /* for backward compat(TCA_OLD_COMPAT) */
++	__u32			order;
++	struct tc_action	*next;
+ };
+ 
+ #define TCA_CAP_NONE 0
+-struct tc_action_ops
+-{
++struct tc_action_ops {
+ 	struct tc_action_ops *next;
++	struct tcf_hashinfo *hinfo;
+ 	char    kind[IFNAMSIZ];
+ 	__u32   type; /* TBD to match kind */
+ 	__u32 	capab;  /* capabilities includes 4 bit version */
+ 	struct module		*owner;
+ 	int     (*act)(struct sk_buff *, struct tc_action *, struct tcf_result *);
+ 	int     (*get_stats)(struct sk_buff *, struct tc_action *);
+-	int     (*dump)(struct sk_buff *, struct tc_action *,int , int);
++	int     (*dump)(struct sk_buff *, struct tc_action *, int, int);
+ 	int     (*cleanup)(struct tc_action *, int bind);
+-	int     (*lookup)(struct tc_action *, u32 );
+-	int     (*init)(struct rtattr *,struct rtattr *,struct tc_action *, int , int );
+-	int     (*walk)(struct sk_buff *, struct netlink_callback *, int , struct tc_action *);
++	int     (*lookup)(struct tc_action *, u32);
++	int     (*init)(struct rtattr *, struct rtattr *, struct tc_action *, int , int);
++	int     (*walk)(struct sk_buff *, struct netlink_callback *, int, struct tc_action *);
+ };
+ 
++extern struct tcf_common *tcf_hash_lookup(u32 index,
++					  struct tcf_hashinfo *hinfo);
++extern void tcf_hash_destroy(struct tcf_common *p, struct tcf_hashinfo *hinfo);
++extern int tcf_hash_release(struct tcf_common *p, int bind,
++			    struct tcf_hashinfo *hinfo);
++extern int tcf_generic_walker(struct sk_buff *skb, struct netlink_callback *cb,
++			      int type, struct tc_action *a);
++extern u32 tcf_hash_new_index(u32 *idx_gen, struct tcf_hashinfo *hinfo);
++extern int tcf_hash_search(struct tc_action *a, u32 index);
++extern struct tcf_common *tcf_hash_check(u32 index, struct tc_action *a,
++					 int bind, struct tcf_hashinfo *hinfo);
++extern struct tcf_common *tcf_hash_create(u32 index, struct rtattr *est,
++					  struct tc_action *a, int size,
++					  int bind, u32 *idx_gen,
++					  struct tcf_hashinfo *hinfo);
++extern void tcf_hash_insert(struct tcf_common *p, struct tcf_hashinfo *hinfo);
++
+ extern int tcf_register_action(struct tc_action_ops *a);
+ extern int tcf_unregister_action(struct tc_action_ops *a);
+ extern void tcf_action_destroy(struct tc_action *a, int bind);
+@@ -96,17 +136,17 @@
+ 	int ret = 0;
+ #ifdef CONFIG_NET_CLS_ACT
+ 	if (p) {
+-		if (bind) {
+-			 p->bindcnt--;
+-		}
+-		p->refcnt--;
+-		if (p->refcnt <= 0 && !p->bindcnt) {
++		if (bind)
++			p->tcf_bindcnt--;
++
++		p->tcf_refcnt--;
++		if (p->tcf_refcnt <= 0 && !p->tcf_bindcnt) {
+ 			tcf_police_destroy(p);
+ 			ret = 1;
+ 		}
+ 	}
+ #else
+-	if (p && --p->refcnt == 0)
++	if (p && --p->tcf_refcnt == 0)
+ 		tcf_police_destroy(p);
+ 
+ #endif /* CONFIG_NET_CLS_ACT */
+diff -Nur linux-2.6.18-rc5/include/net/act_generic.h linux-2.6.19/include/net/act_generic.h
+--- linux-2.6.18-rc5/include/net/act_generic.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/act_generic.h	1970-01-01 01:00:00.000000000 +0100
+@@ -1,142 +0,0 @@
+-/*
+- * include/net/act_generic.h
+- *
+-*/
+-#ifndef _NET_ACT_GENERIC_H
+-#define _NET_ACT_GENERIC_H
+-static inline int tcf_defact_release(struct tcf_defact *p, int bind)
+-{
+-	int ret = 0;
+-	if (p) {
+-		if (bind) {
+-			p->bindcnt--;
+-		}
+-		p->refcnt--;
+-		if (p->bindcnt <= 0 && p->refcnt <= 0) {
+-			kfree(p->defdata);
+-			tcf_hash_destroy(p);
+-			ret = 1;
+-		}
+-	}
+-	return ret;
+-}
+-
+-static inline int
+-alloc_defdata(struct tcf_defact *p, u32 datalen, void *defdata)
+-{
+-	p->defdata = kmalloc(datalen, GFP_KERNEL);
+-	if (p->defdata == NULL)
+-		return -ENOMEM;
+-	p->datalen = datalen;
+-	memcpy(p->defdata, defdata, datalen);
+-	return 0;
+-}
+-
+-static inline int
+-realloc_defdata(struct tcf_defact *p, u32 datalen, void *defdata)
+-{
+-	/* safer to be just brute force for now */
+-	kfree(p->defdata);
+-	return alloc_defdata(p, datalen, defdata);
+-}
+-
+-static inline int
+-tcf_defact_init(struct rtattr *rta, struct rtattr *est,
+-		struct tc_action *a, int ovr, int bind)
+-{
+-	struct rtattr *tb[TCA_DEF_MAX];
+-	struct tc_defact *parm;
+-	struct tcf_defact *p;
+-	void *defdata;
+-	u32 datalen = 0;
+-	int ret = 0;
+-
+-	if (rta == NULL || rtattr_parse_nested(tb, TCA_DEF_MAX, rta) < 0)
+-		return -EINVAL;
+-
+-	if (tb[TCA_DEF_PARMS - 1] == NULL || 
+-	    RTA_PAYLOAD(tb[TCA_DEF_PARMS - 1]) < sizeof(*parm))
+-		return -EINVAL;
+-
+-	parm = RTA_DATA(tb[TCA_DEF_PARMS - 1]);
+-	defdata = RTA_DATA(tb[TCA_DEF_DATA - 1]);
+-	if (defdata == NULL)
+-		return -EINVAL;
+-
+-	datalen = RTA_PAYLOAD(tb[TCA_DEF_DATA - 1]);
+-	if (datalen <= 0)
+-		return -EINVAL;
+-
+-	p = tcf_hash_check(parm->index, a, ovr, bind);
+-	if (p == NULL) {
+-		p = tcf_hash_create(parm->index, est, a, sizeof(*p), ovr, bind);
+-		if (p == NULL)
+-			return -ENOMEM;
+-
+-		ret = alloc_defdata(p, datalen, defdata);
+-		if (ret < 0) {
+-			kfree(p);
+-			return ret;
+-		}
+-		ret = ACT_P_CREATED;
+-	} else {
+-		if (!ovr) {
+-			tcf_defact_release(p, bind);
+-			return -EEXIST;
+-		}
+-		realloc_defdata(p, datalen, defdata);
+-	}
+-
+-	spin_lock_bh(&p->lock);
+-	p->action = parm->action;
+-	spin_unlock_bh(&p->lock);
+-	if (ret == ACT_P_CREATED)
+-		tcf_hash_insert(p);
+-	return ret;
+-}
+-
+-static inline int tcf_defact_cleanup(struct tc_action *a, int bind)
+-{
+-	struct tcf_defact *p = PRIV(a, defact);
+-
+-	if (p != NULL)
+-		return tcf_defact_release(p, bind);
+-	return 0;
+-}
+-
+-static inline int
+-tcf_defact_dump(struct sk_buff *skb, struct tc_action *a, int bind, int ref)
+-{
+-	unsigned char *b = skb->tail;
+-	struct tc_defact opt;
+-	struct tcf_defact *p = PRIV(a, defact);
+-	struct tcf_t t;
+-
+-	opt.index = p->index;
+-	opt.refcnt = p->refcnt - ref;
+-	opt.bindcnt = p->bindcnt - bind;
+-	opt.action = p->action;
+-	RTA_PUT(skb, TCA_DEF_PARMS, sizeof(opt), &opt);
+-	RTA_PUT(skb, TCA_DEF_DATA, p->datalen, p->defdata);
+-	t.install = jiffies_to_clock_t(jiffies - p->tm.install);
+-	t.lastuse = jiffies_to_clock_t(jiffies - p->tm.lastuse);
+-	t.expires = jiffies_to_clock_t(p->tm.expires);
+-	RTA_PUT(skb, TCA_DEF_TM, sizeof(t), &t);
+-	return skb->len;
+-
+-rtattr_failure:
+-	skb_trim(skb, b - skb->data);
+-	return -1;
+-}
+-
+-#define tca_use_default_ops \
+-	.dump           =       tcf_defact_dump, \
+-	.cleanup        =       tcf_defact_cleanup, \
+-	.init           =       tcf_defact_init, \
+-	.walk           =       tcf_generic_walker, \
+-
+-#define tca_use_default_defines(name) \
+-	static u32 idx_gen; \
+-	static struct tcf_defact *tcf_##name_ht[MY_TAB_SIZE]; \
+-	static DEFINE_RWLOCK(##name_lock);
+-#endif /* _NET_ACT_GENERIC_H */
+diff -Nur linux-2.6.18-rc5/include/net/addrconf.h linux-2.6.19/include/net/addrconf.h
+--- linux-2.6.18-rc5/include/net/addrconf.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/addrconf.h	2006-09-22 10:04:57.000000000 +0200
+@@ -61,6 +61,13 @@
+ extern int			ipv6_chk_addr(struct in6_addr *addr,
+ 					      struct net_device *dev,
+ 					      int strict);
++/* XXX: this is a placeholder till addrconf supports */
++#ifdef CONFIG_IPV6_MIP6
++static inline int ipv6_chk_home_addr(struct in6_addr *addr)
++{
++	return 0;
++}
++#endif
+ extern struct inet6_ifaddr *	ipv6_get_ifaddr(struct in6_addr *addr,
+ 						struct net_device *dev,
+ 						int strict);
+diff -Nur linux-2.6.18-rc5/include/net/cipso_ipv4.h linux-2.6.19/include/net/cipso_ipv4.h
+--- linux-2.6.18-rc5/include/net/cipso_ipv4.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.19/include/net/cipso_ipv4.h	2006-09-22 10:04:57.000000000 +0200
+@@ -0,0 +1,246 @@
++/*
++ * CIPSO - Commercial IP Security Option
++ *
++ * This is an implementation of the CIPSO 2.2 protocol as specified in
++ * draft-ietf-cipso-ipsecurity-01.txt with additional tag types as found in
++ * FIPS-188, copies of both documents can be found in the Documentation
++ * directory.  While CIPSO never became a full IETF RFC standard many vendors
++ * have chosen to adopt the protocol and over the years it has become a
++ * de-facto standard for labeled networking.
++ *
++ * Author: Paul Moore <paul.moore@hp.com>
++ *
++ */
++
++/*
++ * (c) Copyright Hewlett-Packard Development Company, L.P., 2006
++ *
++ * This program is free software;  you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY;  without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
++ * the GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program;  if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
++ *
++ */
++
++#ifndef _CIPSO_IPV4_H
++#define _CIPSO_IPV4_H
++
++#include <linux/types.h>
++#include <linux/rcupdate.h>
++#include <linux/list.h>
++#include <linux/net.h>
++#include <linux/skbuff.h>
++#include <net/netlabel.h>
++
++/* known doi values */
++#define CIPSO_V4_DOI_UNKNOWN          0x00000000
++
++/* tag types */
++#define CIPSO_V4_TAG_INVALID          0
++#define CIPSO_V4_TAG_RBITMAP          1
++#define CIPSO_V4_TAG_ENUM             2
++#define CIPSO_V4_TAG_RANGE            5
++#define CIPSO_V4_TAG_PBITMAP          6
++#define CIPSO_V4_TAG_FREEFORM         7
++
++/* doi mapping types */
++#define CIPSO_V4_MAP_UNKNOWN          0
++#define CIPSO_V4_MAP_STD              1
++#define CIPSO_V4_MAP_PASS             2
++
++/* limits */
++#define CIPSO_V4_MAX_REM_LVLS         256
++#define CIPSO_V4_INV_LVL              0x80000000
++#define CIPSO_V4_MAX_LOC_LVLS         (CIPSO_V4_INV_LVL - 1)
++#define CIPSO_V4_MAX_REM_CATS         65536
++#define CIPSO_V4_INV_CAT              0x80000000
++#define CIPSO_V4_MAX_LOC_CATS         (CIPSO_V4_INV_CAT - 1)
++
++/*
++ * CIPSO DOI definitions
++ */
++
++/* DOI definition struct */
++#define CIPSO_V4_TAG_MAXCNT           5
++struct cipso_v4_doi {
++	u32 doi;
++	u32 type;
++	union {
++		struct cipso_v4_std_map_tbl *std;
++	} map;
++	u8 tags[CIPSO_V4_TAG_MAXCNT];
++
++	u32 valid;
++	struct list_head list;
++	struct rcu_head rcu;
++	struct list_head dom_list;
++};
++
++/* Standard CIPSO mapping table */
++/* NOTE: the highest order bit (i.e. 0x80000000) is an 'invalid' flag, if the
++ *       bit is set then consider that value as unspecified, meaning the
++ *       mapping for that particular level/category is invalid */
++struct cipso_v4_std_map_tbl {
++	struct {
++		u32 *cipso;
++		u32 *local;
++		u32 cipso_size;
++		u32 local_size;
++	} lvl;
++	struct {
++		u32 *cipso;
++		u32 *local;
++		u32 cipso_size;
++		u32 local_size;
++	} cat;
++};
++
++/*
++ * Sysctl Variables
++ */
++
++#ifdef CONFIG_NETLABEL
++extern int cipso_v4_cache_enabled;
++extern int cipso_v4_cache_bucketsize;
++extern int cipso_v4_rbm_optfmt;
++extern int cipso_v4_rbm_strictvalid;
++#endif
++
++/*
++ * Helper Functions
++ */
++
++#define CIPSO_V4_OPTEXIST(x) (IPCB(x)->opt.cipso != 0)
++#define CIPSO_V4_OPTPTR(x) ((x)->nh.raw + IPCB(x)->opt.cipso)
++
++/*
++ * DOI List Functions
++ */
++
++#ifdef CONFIG_NETLABEL
++int cipso_v4_doi_add(struct cipso_v4_doi *doi_def);
++int cipso_v4_doi_remove(u32 doi, void (*callback) (struct rcu_head * head));
++struct cipso_v4_doi *cipso_v4_doi_getdef(u32 doi);
++struct sk_buff *cipso_v4_doi_dump_all(size_t headroom);
++struct sk_buff *cipso_v4_doi_dump(u32 doi, size_t headroom);
++int cipso_v4_doi_domhsh_add(struct cipso_v4_doi *doi_def, const char *domain);
++int cipso_v4_doi_domhsh_remove(struct cipso_v4_doi *doi_def,
++			       const char *domain);
++#else
++static inline int cipso_v4_doi_add(struct cipso_v4_doi *doi_def)
++{
++	return -ENOSYS;
++}
++
++static inline int cipso_v4_doi_remove(u32 doi,
++				    void (*callback) (struct rcu_head * head))
++{
++	return 0;
++}
++
++static inline struct cipso_v4_doi *cipso_v4_doi_getdef(u32 doi)
++{
++	return NULL;
++}
++
++static inline struct sk_buff *cipso_v4_doi_dump_all(size_t headroom)
++{
++	return NULL;
++}
++
++static inline struct sk_buff *cipso_v4_doi_dump(u32 doi, size_t headroom)
++{
++	return NULL;
++}
++
++static inline int cipso_v4_doi_domhsh_add(struct cipso_v4_doi *doi_def,
++					  const char *domain)
++{
++	return -ENOSYS;
++}
++
++static inline int cipso_v4_doi_domhsh_remove(struct cipso_v4_doi *doi_def,
++					     const char *domain)
++{
++	return 0;
++}
++#endif /* CONFIG_NETLABEL */
++
++/*
++ * Label Mapping Cache Functions
++ */
++
++#ifdef CONFIG_NETLABEL
++void cipso_v4_cache_invalidate(void);
++int cipso_v4_cache_add(const struct sk_buff *skb,
++		       const struct netlbl_lsm_secattr *secattr);
++#else
++static inline void cipso_v4_cache_invalidate(void)
++{
++	return;
++}
++
++static inline int cipso_v4_cache_add(const struct sk_buff *skb,
++				     const struct netlbl_lsm_secattr *secattr)
++{
++	return 0;
++}
++#endif /* CONFIG_NETLABEL */
++
++/*
++ * Protocol Handling Functions
++ */
++
++#ifdef CONFIG_NETLABEL
++void cipso_v4_error(struct sk_buff *skb, int error, u32 gateway);
++int cipso_v4_socket_setattr(const struct socket *sock,
++			    const struct cipso_v4_doi *doi_def,
++			    const struct netlbl_lsm_secattr *secattr);
++int cipso_v4_socket_getattr(const struct socket *sock,
++			    struct netlbl_lsm_secattr *secattr);
++int cipso_v4_skbuff_getattr(const struct sk_buff *skb,
++			    struct netlbl_lsm_secattr *secattr);
++int cipso_v4_validate(unsigned char **option);
++#else
++static inline void cipso_v4_error(struct sk_buff *skb,
++				  int error,
++				  u32 gateway)
++{
++	return;
++}
++
++static inline int cipso_v4_socket_setattr(const struct socket *sock,
++				  const struct cipso_v4_doi *doi_def,
++				  const struct netlbl_lsm_secattr *secattr)
++{
++	return -ENOSYS;
++}
++
++static inline int cipso_v4_socket_getattr(const struct socket *sock,
++					  struct netlbl_lsm_secattr *secattr)
++{
++	return -ENOSYS;
++}
++
++static inline int cipso_v4_skbuff_getattr(const struct sk_buff *skb,
++					  struct netlbl_lsm_secattr *secattr)
++{
++	return -ENOSYS;
++}
++
++static inline int cipso_v4_validate(unsigned char **option)
++{
++	return -ENOSYS;
++}
++#endif /* CONFIG_NETLABEL */
++
++#endif /* _CIPSO_IPV4_H */
+diff -Nur linux-2.6.18-rc5/include/net/dn_fib.h linux-2.6.19/include/net/dn_fib.h
+--- linux-2.6.18-rc5/include/net/dn_fib.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/dn_fib.h	2006-09-22 10:04:57.000000000 +0200
+@@ -22,7 +22,7 @@
+ };
+ 
+ struct dn_fib_res {
+-	struct dn_fib_rule *r;
++	struct fib_rule *r;
+ 	struct dn_fib_info *fi;
+ 	unsigned char prefixlen;
+ 	unsigned char nh_sel;
+@@ -94,7 +94,8 @@
+ 
+ 
+ struct dn_fib_table {
+-	int n;
++	struct hlist_node hlist;
++	u32 n;
+ 
+ 	int (*insert)(struct dn_fib_table *t, struct rtmsg *r, 
+ 			struct dn_kern_rta *rta, struct nlmsghdr *n, 
+@@ -130,14 +131,11 @@
+ extern void dn_fib_flush(void);
+ extern void dn_fib_select_multipath(const struct flowi *fl,
+ 					struct dn_fib_res *res);
+-extern int dn_fib_sync_down(__le16 local, struct net_device *dev,
+-				int force);
+-extern int dn_fib_sync_up(struct net_device *dev);
+ 
+ /*
+  * dn_tables.c
+  */
+-extern struct dn_fib_table *dn_fib_get_table(int n, int creat);
++extern struct dn_fib_table *dn_fib_get_table(u32 n, int creat);
+ extern struct dn_fib_table *dn_fib_empty_table(void);
+ extern void dn_fib_table_init(void);
+ extern void dn_fib_table_cleanup(void);
+@@ -147,10 +145,8 @@
+  */
+ extern void dn_fib_rules_init(void);
+ extern void dn_fib_rules_cleanup(void);
+-extern void dn_fib_rule_put(struct dn_fib_rule *);
+-extern __le16 dn_fib_rules_policy(__le16 saddr, struct dn_fib_res *res, unsigned *flags);
+ extern unsigned dnet_addr_type(__le16 addr);
+-extern int dn_fib_lookup(const struct flowi *fl, struct dn_fib_res *res);
++extern int dn_fib_lookup(struct flowi *fl, struct dn_fib_res *res);
+ 
+ /*
+  * rtnetlink interface
+@@ -176,11 +172,9 @@
+ 	if (res->fi)
+ 		dn_fib_info_put(res->fi);
+ 	if (res->r)
+-		dn_fib_rule_put(res->r);
++		fib_rule_put(res->r);
+ }
+ 
+-extern struct dn_fib_table *dn_fib_tables[];
+-
+ #else /* Endnode */
+ 
+ #define dn_fib_init()  do { } while(0)
+diff -Nur linux-2.6.18-rc5/include/net/dst.h linux-2.6.19/include/net/dst.h
+--- linux-2.6.18-rc5/include/net/dst.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/dst.h	2006-09-22 10:04:57.000000000 +0200
+@@ -54,6 +54,7 @@
+ 	unsigned long		expires;
+ 
+ 	unsigned short		header_len;	/* more space at head required */
++	unsigned short		nfheader_len;	/* more non-fragment space at head required */
+ 	unsigned short		trailer_len;	/* space to reserve at tail */
+ 
+ 	u32			metrics[RTAX_MAX];
+diff -Nur linux-2.6.18-rc5/include/net/esp.h linux-2.6.19/include/net/esp.h
+--- linux-2.6.18-rc5/include/net/esp.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/esp.h	2006-09-22 10:04:57.000000000 +0200
+@@ -14,13 +14,14 @@
+ 	struct {
+ 		u8			*key;		/* Key */
+ 		int			key_len;	/* Key length */
+-		u8			*ivec;		/* ivec buffer */
++		int			padlen;		/* 0..255 */
+ 		/* ivlen is offset from enc_data, where encrypted data start.
+ 		 * It is logically different of crypto_tfm_alg_ivsize(tfm).
+ 		 * We assume that it is either zero (no ivec), or
+ 		 * >= crypto_tfm_alg_ivsize(tfm). */
+ 		int			ivlen;
+-		int			padlen;		/* 0..255 */
++		int			ivinitted;
++		u8			*ivec;		/* ivec buffer */
+ 		struct crypto_tfm	*tfm;		/* crypto handle */
+ 	} conf;
+ 
+diff -Nur linux-2.6.18-rc5/include/net/fib_rules.h linux-2.6.19/include/net/fib_rules.h
+--- linux-2.6.18-rc5/include/net/fib_rules.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.19/include/net/fib_rules.h	2006-09-22 10:04:57.000000000 +0200
+@@ -0,0 +1,97 @@
++#ifndef __NET_FIB_RULES_H
++#define __NET_FIB_RULES_H
++
++#include <linux/types.h>
++#include <linux/netdevice.h>
++#include <linux/fib_rules.h>
++#include <net/flow.h>
++#include <net/netlink.h>
++
++struct fib_rule
++{
++	struct list_head	list;
++	atomic_t		refcnt;
++	int			ifindex;
++	char			ifname[IFNAMSIZ];
++	u32			pref;
++	u32			flags;
++	u32			table;
++	u8			action;
++	struct rcu_head		rcu;
++};
++
++struct fib_lookup_arg
++{
++	void			*lookup_ptr;
++	void			*result;
++	struct fib_rule		*rule;
++};
++
++struct fib_rules_ops
++{
++	int			family;
++	struct list_head	list;
++	int			rule_size;
++
++	int			(*action)(struct fib_rule *,
++					  struct flowi *, int,
++					  struct fib_lookup_arg *);
++	int			(*match)(struct fib_rule *,
++					 struct flowi *, int);
++	int			(*configure)(struct fib_rule *,
++					     struct sk_buff *,
++					     struct nlmsghdr *,
++					     struct fib_rule_hdr *,
++					     struct nlattr **);
++	int			(*compare)(struct fib_rule *,
++					   struct fib_rule_hdr *,
++					   struct nlattr **);
++	int			(*fill)(struct fib_rule *, struct sk_buff *,
++					struct nlmsghdr *,
++					struct fib_rule_hdr *);
++	u32			(*default_pref)(void);
++
++	int			nlgroup;
++	struct nla_policy	*policy;
++	struct list_head	*rules_list;
++	struct module		*owner;
++};
++
++static inline void fib_rule_get(struct fib_rule *rule)
++{
++	atomic_inc(&rule->refcnt);
++}
++
++static inline void fib_rule_put_rcu(struct rcu_head *head)
++{
++	struct fib_rule *rule = container_of(head, struct fib_rule, rcu);
++	kfree(rule);
++}
++
++static inline void fib_rule_put(struct fib_rule *rule)
++{
++	if (atomic_dec_and_test(&rule->refcnt))
++		call_rcu(&rule->rcu, fib_rule_put_rcu);
++}
++
++static inline u32 frh_get_table(struct fib_rule_hdr *frh, struct nlattr **nla)
++{
++	if (nla[FRA_TABLE])
++		return nla_get_u32(nla[FRA_TABLE]);
++	return frh->table;
++}
++
++extern int			fib_rules_register(struct fib_rules_ops *);
++extern int			fib_rules_unregister(struct fib_rules_ops *);
++
++extern int			fib_rules_lookup(struct fib_rules_ops *,
++						 struct flowi *, int flags,
++						 struct fib_lookup_arg *);
++
++extern int			fib_nl_newrule(struct sk_buff *,
++					       struct nlmsghdr *, void *);
++extern int			fib_nl_delrule(struct sk_buff *,
++					       struct nlmsghdr *, void *);
++extern int			fib_rules_dump(struct sk_buff *,
++					       struct netlink_callback *, int);
++#endif
+diff -Nur linux-2.6.18-rc5/include/net/flow.h linux-2.6.19/include/net/flow.h
+--- linux-2.6.18-rc5/include/net/flow.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/flow.h	2006-09-22 10:04:57.000000000 +0200
+@@ -26,6 +26,7 @@
+ 		struct {
+ 			struct in6_addr		daddr;
+ 			struct in6_addr		saddr;
++			__u32			fwmark;
+ 			__u32			flowlabel;
+ 		} ip6_u;
+ 
+@@ -42,6 +43,7 @@
+ #define fld_scope	nl_u.dn_u.scope
+ #define fl6_dst		nl_u.ip6_u.daddr
+ #define fl6_src		nl_u.ip6_u.saddr
++#define fl6_fwmark	nl_u.ip6_u.fwmark
+ #define fl6_flowlabel	nl_u.ip6_u.flowlabel
+ #define fl4_dst		nl_u.ip4_u.daddr
+ #define fl4_src		nl_u.ip4_u.saddr
+@@ -72,12 +74,22 @@
+ 		} dnports;
+ 
+ 		__u32		spi;
++
++#ifdef CONFIG_IPV6_MIP6
++		struct {
++			__u8	type;
++		} mht;
++#endif
+ 	} uli_u;
+ #define fl_ip_sport	uli_u.ports.sport
+ #define fl_ip_dport	uli_u.ports.dport
+ #define fl_icmp_type	uli_u.icmpt.type
+ #define fl_icmp_code	uli_u.icmpt.code
+ #define fl_ipsec_spi	uli_u.spi
++#ifdef CONFIG_IPV6_MIP6
++#define fl_mh_type	uli_u.mht.type
++#endif
++	__u32           secid;	/* used by xfrm; see secid.txt */
+ } __attribute__((__aligned__(BITS_PER_LONG/8)));
+ 
+ #define FLOW_DIR_IN	0
+@@ -85,10 +97,10 @@
+ #define FLOW_DIR_FWD	2
+ 
+ struct sock;
+-typedef void (*flow_resolve_t)(struct flowi *key, u32 sk_sid, u16 family, u8 dir,
++typedef void (*flow_resolve_t)(struct flowi *key, u16 family, u8 dir,
+ 			       void **objp, atomic_t **obj_refp);
+ 
+-extern void *flow_cache_lookup(struct flowi *key, u32 sk_sid, u16 family, u8 dir,
++extern void *flow_cache_lookup(struct flowi *key, u16 family, u8 dir,
+ 	 		       flow_resolve_t resolver);
+ extern void flow_cache_flush(void);
+ extern atomic_t flow_cache_genid;
+diff -Nur linux-2.6.18-rc5/include/net/genetlink.h linux-2.6.19/include/net/genetlink.h
+--- linux-2.6.18-rc5/include/net/genetlink.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/genetlink.h	2006-09-22 10:04:57.000000000 +0200
+@@ -27,8 +27,6 @@
+ 	struct list_head	family_list;	/* private */
+ };
+ 
+-#define GENL_ADMIN_PERM		0x01
+-
+ /**
+  * struct genl_info - receiving information
+  * @snd_seq: sending sequence number
+@@ -133,11 +131,12 @@
+  * @skb: netlink message as socket buffer
+  * @pid: own netlink pid to avoid sending to yourself
+  * @group: multicast group id
++ * @flags: allocation flags
+  */
+ static inline int genlmsg_multicast(struct sk_buff *skb, u32 pid,
+-				    unsigned int group)
++				    unsigned int group, gfp_t flags)
+ {
+-	return nlmsg_multicast(genl_sock, skb, pid, group);
++	return nlmsg_multicast(genl_sock, skb, pid, group, flags);
+ }
+ 
+ /**
+diff -Nur linux-2.6.18-rc5/include/net/inet_connection_sock.h linux-2.6.19/include/net/inet_connection_sock.h
+--- linux-2.6.18-rc5/include/net/inet_connection_sock.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/inet_connection_sock.h	2006-09-22 10:04:57.000000000 +0200
+@@ -147,7 +147,8 @@
+ enum inet_csk_ack_state_t {
+ 	ICSK_ACK_SCHED	= 1,
+ 	ICSK_ACK_TIMER  = 2,
+-	ICSK_ACK_PUSHED = 4
++	ICSK_ACK_PUSHED = 4,
++	ICSK_ACK_PUSHED2 = 8
+ };
+ 
+ extern void inet_csk_init_xmit_timers(struct sock *sk,
+diff -Nur linux-2.6.18-rc5/include/net/inet_hashtables.h linux-2.6.19/include/net/inet_hashtables.h
+--- linux-2.6.18-rc5/include/net/inet_hashtables.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/inet_hashtables.h	2006-09-22 10:04:57.000000000 +0200
+@@ -271,38 +271,15 @@
+ 	return ((struct rtable *)skb->dst)->rt_iif;
+ }
+ 
+-extern struct sock *__inet_lookup_listener(const struct hlist_head *head,
++extern struct sock *__inet_lookup_listener(struct inet_hashinfo *hashinfo,
+ 					   const u32 daddr,
+ 					   const unsigned short hnum,
+ 					   const int dif);
+ 
+-/* Optimize the common listener case. */
+-static inline struct sock *
+-		inet_lookup_listener(struct inet_hashinfo *hashinfo,
+-				     const u32 daddr,
+-				     const unsigned short hnum, const int dif)
++static inline struct sock *inet_lookup_listener(struct inet_hashinfo *hashinfo,
++						u32 daddr, u16 dport, int dif)
+ {
+-	struct sock *sk = NULL;
+-	const struct hlist_head *head;
+-
+-	read_lock(&hashinfo->lhash_lock);
+-	head = &hashinfo->listening_hash[inet_lhashfn(hnum)];
+-	if (!hlist_empty(head)) {
+-		const struct inet_sock *inet = inet_sk((sk = __sk_head(head)));
+-
+-		if (inet->num == hnum && !sk->sk_node.next &&
+-		    (!inet->rcv_saddr || inet->rcv_saddr == daddr) &&
+-		    (sk->sk_family == PF_INET || !ipv6_only_sock(sk)) &&
+-		    !sk->sk_bound_dev_if)
+-			goto sherry_cache;
+-		sk = __inet_lookup_listener(head, daddr, hnum, dif);
+-	}
+-	if (sk) {
+-sherry_cache:
+-		sock_hold(sk);
+-	}
+-	read_unlock(&hashinfo->lhash_lock);
+-	return sk;
++	return __inet_lookup_listener(hashinfo, daddr, ntohs(dport), dif);
+ }
+ 
+ /* Socket demux engine toys. */
+@@ -391,14 +368,25 @@
+ 	goto out;
+ }
+ 
++static inline struct sock *
++	inet_lookup_established(struct inet_hashinfo *hashinfo,
++				const u32 saddr, const u16 sport,
++				const u32 daddr, const u16 dport,
++				const int dif)
++{
++	return __inet_lookup_established(hashinfo, saddr, sport, daddr,
++					 ntohs(dport), dif);
++}
++
+ static inline struct sock *__inet_lookup(struct inet_hashinfo *hashinfo,
+ 					 const u32 saddr, const u16 sport,
+-					 const u32 daddr, const u16 hnum,
++					 const u32 daddr, const u16 dport,
+ 					 const int dif)
+ {
++	u16 hnum = ntohs(dport);
+ 	struct sock *sk = __inet_lookup_established(hashinfo, saddr, sport, daddr,
+ 						    hnum, dif);
+-	return sk ? : inet_lookup_listener(hashinfo, daddr, hnum, dif);
++	return sk ? : __inet_lookup_listener(hashinfo, daddr, hnum, dif);
+ }
+ 
+ static inline struct sock *inet_lookup(struct inet_hashinfo *hashinfo,
+@@ -409,7 +397,7 @@
+ 	struct sock *sk;
+ 
+ 	local_bh_disable();
+-	sk = __inet_lookup(hashinfo, saddr, sport, daddr, ntohs(dport), dif);
++	sk = __inet_lookup(hashinfo, saddr, sport, daddr, dport, dif);
+ 	local_bh_enable();
+ 
+ 	return sk;
+diff -Nur linux-2.6.18-rc5/include/net/inet_sock.h linux-2.6.19/include/net/inet_sock.h
+--- linux-2.6.18-rc5/include/net/inet_sock.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/inet_sock.h	2006-09-22 10:04:57.000000000 +0200
+@@ -27,7 +27,6 @@
+ /** struct ip_options - IP Options
+  *
+  * @faddr - Saved first hop address
+- * @is_setbyuser - Set by setsockopt?
+  * @is_data - Options in __data, rather than skb
+  * @is_strictroute - Strict source route
+  * @srr_is_hit - Packet destination addr was our one
+@@ -42,8 +41,7 @@
+ 	unsigned char	srr;
+ 	unsigned char	rr;
+ 	unsigned char	ts;
+-	unsigned char	is_setbyuser:1,
+-			is_data:1,
++	unsigned char	is_data:1,
+ 			is_strictroute:1,
+ 			srr_is_hit:1,
+ 			is_changed:1,
+@@ -51,7 +49,7 @@
+ 			ts_needtime:1,
+ 			ts_needaddr:1;
+ 	unsigned char	router_alert;
+-	unsigned char	__pad1;
++	unsigned char	cipso;
+ 	unsigned char	__pad2;
+ 	unsigned char	__data[0];
+ };
+diff -Nur linux-2.6.18-rc5/include/net/ip6_fib.h linux-2.6.19/include/net/ip6_fib.h
+--- linux-2.6.18-rc5/include/net/ip6_fib.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/ip6_fib.h	2006-09-22 10:04:57.000000000 +0200
+@@ -16,14 +16,35 @@
+ #ifdef __KERNEL__
+ 
+ #include <linux/ipv6_route.h>
+-
+-#include <net/dst.h>
+-#include <net/flow.h>
+ #include <linux/rtnetlink.h>
+ #include <linux/spinlock.h>
++#include <net/dst.h>
++#include <net/flow.h>
++#include <net/netlink.h>
+ 
+ struct rt6_info;
+ 
++struct fib6_config
++{
++	u32		fc_table;
++	u32		fc_metric;
++	int		fc_dst_len;
++	int		fc_src_len;
++	int		fc_ifindex;
++	u32		fc_flags;
++	u32		fc_protocol;
++
++	struct in6_addr	fc_dst;
++	struct in6_addr	fc_src;
++	struct in6_addr	fc_gateway;
++
++	unsigned long	fc_expires;
++	struct nlattr	*fc_mx;
++	int		fc_mx_len;
++
++	struct nl_info	fc_nlinfo;
++};
++
+ struct fib6_node
+ {
+ 	struct fib6_node	*parent;
+@@ -39,6 +60,11 @@
+ 	__u32			fn_sernum;
+ };
+ 
++#ifndef CONFIG_IPV6_SUBTREES
++#define FIB6_SUBTREE(fn)	NULL
++#else
++#define FIB6_SUBTREE(fn)	((fn)->subtree)
++#endif
+ 
+ /*
+  *	routing information
+@@ -51,6 +77,8 @@
+ 	int		plen;
+ };
+ 
++struct fib6_table;
++
+ struct rt6_info
+ {
+ 	union {
+@@ -71,6 +99,7 @@
+ 	u32				rt6i_flags;
+ 	u32				rt6i_metric;
+ 	atomic_t			rt6i_ref;
++	struct fib6_table		*rt6i_table;
+ 
+ 	struct rt6key			rt6i_dst;
+ 	struct rt6key			rt6i_src;
+@@ -89,28 +118,6 @@
+ 	void *args;
+ };
+ 
+-extern struct fib6_walker_t fib6_walker_list;
+-extern rwlock_t fib6_walker_lock;
+-
+-static inline void fib6_walker_link(struct fib6_walker_t *w)
+-{
+-	write_lock_bh(&fib6_walker_lock);
+-	w->next = fib6_walker_list.next;
+-	w->prev = &fib6_walker_list;
+-	w->next->prev = w;
+-	w->prev->next = w;
+-	write_unlock_bh(&fib6_walker_lock);
+-}
+-
+-static inline void fib6_walker_unlink(struct fib6_walker_t *w)
+-{
+-	write_lock_bh(&fib6_walker_lock);
+-	w->next->prev = w->prev;
+-	w->prev->next = w->next;
+-	w->prev = w->next = w;
+-	write_unlock_bh(&fib6_walker_lock);
+-}
+-
+ struct rt6_statistics {
+ 	__u32		fib_nodes;
+ 	__u32		fib_route_nodes;
+@@ -143,12 +150,41 @@
+ 
+ typedef void			(*f_pnode)(struct fib6_node *fn, void *);
+ 
+-extern struct fib6_node		ip6_routing_table;
++struct fib6_table {
++	struct hlist_node	tb6_hlist;
++	u32			tb6_id;
++	rwlock_t		tb6_lock;
++	struct fib6_node	tb6_root;
++};
++
++#define RT6_TABLE_UNSPEC	RT_TABLE_UNSPEC
++#define RT6_TABLE_MAIN		RT_TABLE_MAIN
++#define RT6_TABLE_DFLT		RT6_TABLE_MAIN
++#define RT6_TABLE_INFO		RT6_TABLE_MAIN
++#define RT6_TABLE_PREFIX	RT6_TABLE_MAIN
++
++#ifdef CONFIG_IPV6_MULTIPLE_TABLES
++#define FIB6_TABLE_MIN		1
++#define FIB6_TABLE_MAX		RT_TABLE_MAX
++#define RT6_TABLE_LOCAL		RT_TABLE_LOCAL
++#else
++#define FIB6_TABLE_MIN		RT_TABLE_MAIN
++#define FIB6_TABLE_MAX		FIB6_TABLE_MIN
++#define RT6_TABLE_LOCAL		RT6_TABLE_MAIN
++#endif
++
++typedef struct rt6_info *(*pol_lookup_t)(struct fib6_table *,
++					 struct flowi *, int);
+ 
+ /*
+  *	exported functions
+  */
+ 
++extern struct fib6_table *	fib6_get_table(u32 id);
++extern struct fib6_table *	fib6_new_table(u32 id);
++extern struct dst_entry *	fib6_rule_lookup(struct flowi *fl, int flags,
++						 pol_lookup_t lookup);
++
+ extern struct fib6_node		*fib6_lookup(struct fib6_node *root,
+ 					     struct in6_addr *daddr,
+ 					     struct in6_addr *saddr);
+@@ -157,32 +193,29 @@
+ 					     struct in6_addr *daddr, int dst_len,
+ 					     struct in6_addr *saddr, int src_len);
+ 
+-extern void			fib6_clean_tree(struct fib6_node *root,
+-						int (*func)(struct rt6_info *, void *arg),
+-						int prune, void *arg);
+-
+-extern int			fib6_walk(struct fib6_walker_t *w);
+-extern int			fib6_walk_continue(struct fib6_walker_t *w);
++extern void			fib6_clean_all(int (*func)(struct rt6_info *, void *arg),
++					       int prune, void *arg);
+ 
+ extern int			fib6_add(struct fib6_node *root,
+ 					 struct rt6_info *rt,
+-					 struct nlmsghdr *nlh,
+-					 void *rtattr,
+-					 struct netlink_skb_parms *req);
++					 struct nl_info *info);
+ 
+ extern int			fib6_del(struct rt6_info *rt,
+-					 struct nlmsghdr *nlh,
+-					 void *rtattr,
+-					 struct netlink_skb_parms *req);
++					 struct nl_info *info);
+ 
+ extern void			inet6_rt_notify(int event, struct rt6_info *rt,
+-						struct nlmsghdr *nlh,
+-						struct netlink_skb_parms *req);
++						struct nl_info *info);
+ 
+ extern void			fib6_run_gc(unsigned long dummy);
+ 
+ extern void			fib6_gc_cleanup(void);
+ 
+ extern void			fib6_init(void);
++
++extern void			fib6_rules_init(void);
++extern void			fib6_rules_cleanup(void);
++extern int			fib6_rules_dump(struct sk_buff *,
++						struct netlink_callback *);
++
+ #endif
+ #endif
+diff -Nur linux-2.6.18-rc5/include/net/ip6_route.h linux-2.6.19/include/net/ip6_route.h
+--- linux-2.6.18-rc5/include/net/ip6_route.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/ip6_route.h	2006-09-22 10:04:57.000000000 +0200
+@@ -32,6 +32,10 @@
+ #include <linux/ip.h>
+ #include <linux/ipv6.h>
+ 
++#define RT6_LOOKUP_F_IFACE	0x1
++#define RT6_LOOKUP_F_REACHABLE	0x2
++#define RT6_LOOKUP_F_HAS_SADDR	0x4
++
+ struct pol_chain {
+ 	int			type;
+ 	int			priority;
+@@ -41,6 +45,11 @@
+ 
+ extern struct rt6_info	ip6_null_entry;
+ 
++#ifdef CONFIG_IPV6_MULTIPLE_TABLES
++extern struct rt6_info	ip6_prohibit_entry;
++extern struct rt6_info	ip6_blk_hole_entry;
++#endif
++
+ extern int ip6_rt_gc_interval;
+ 
+ extern void			ip6_route_input(struct sk_buff *skb);
+@@ -55,18 +64,9 @@
+ 
+ extern int			ipv6_route_ioctl(unsigned int cmd, void __user *arg);
+ 
+-extern int			ip6_route_add(struct in6_rtmsg *rtmsg,
+-					      struct nlmsghdr *,
+-					      void *rtattr,
+-					      struct netlink_skb_parms *req);
+-extern int			ip6_ins_rt(struct rt6_info *,
+-					   struct nlmsghdr *,
+-					   void *rtattr,
+-					   struct netlink_skb_parms *req);
+-extern int			ip6_del_rt(struct rt6_info *,
+-					   struct nlmsghdr *,
+-					   void *rtattr,
+-					   struct netlink_skb_parms *req);
++extern int			ip6_route_add(struct fib6_config *cfg);
++extern int			ip6_ins_rt(struct rt6_info *);
++extern int			ip6_del_rt(struct rt6_info *);
+ 
+ extern int			ip6_rt_addr_add(struct in6_addr *addr,
+ 						struct net_device *dev,
+@@ -114,6 +114,7 @@
+ 					      struct in6_addr *gwaddr);
+ 
+ extern void			rt6_redirect(struct in6_addr *dest,
++					     struct in6_addr *src,
+ 					     struct in6_addr *saddr,
+ 					     struct neighbour *neigh,
+ 					     u8 *lladdr,
+@@ -131,6 +132,13 @@
+ extern int inet6_rtm_delroute(struct sk_buff *skb, struct nlmsghdr* nlh, void *arg);
+ extern int inet6_rtm_getroute(struct sk_buff *skb, struct nlmsghdr* nlh, void *arg);
+ 
++struct rt6_rtnl_dump_arg
++{
++	struct sk_buff *skb;
++	struct netlink_callback *cb;
++};
++
++extern int rt6_dump_route(struct rt6_info *rt, void *p_arg);
+ extern void rt6_ifdown(struct net_device *dev);
+ extern void rt6_mtu_change(struct net_device *dev, unsigned mtu);
+ 
+@@ -140,21 +148,24 @@
+  *	Store a destination cache entry in a socket
+  */
+ static inline void __ip6_dst_store(struct sock *sk, struct dst_entry *dst,
+-				   struct in6_addr *daddr)
++				   struct in6_addr *daddr, struct in6_addr *saddr)
+ {
+ 	struct ipv6_pinfo *np = inet6_sk(sk);
+ 	struct rt6_info *rt = (struct rt6_info *) dst;
+ 
+ 	sk_setup_caps(sk, dst);
+ 	np->daddr_cache = daddr;
++#ifdef CONFIG_IPV6_SUBTREES
++	np->saddr_cache = saddr;
++#endif
+ 	np->dst_cookie = rt->rt6i_node ? rt->rt6i_node->fn_sernum : 0;
+ }
+ 
+ static inline void ip6_dst_store(struct sock *sk, struct dst_entry *dst,
+-				 struct in6_addr *daddr)
++				 struct in6_addr *daddr, struct in6_addr *saddr)
+ {
+ 	write_lock(&sk->sk_dst_lock);
+-	__ip6_dst_store(sk, dst, daddr);
++	__ip6_dst_store(sk, dst, daddr, saddr);
+ 	write_unlock(&sk->sk_dst_lock);
+ }
+ 
+diff -Nur linux-2.6.18-rc5/include/net/ip_fib.h linux-2.6.19/include/net/ip_fib.h
+--- linux-2.6.18-rc5/include/net/ip_fib.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/ip_fib.h	2006-09-22 10:04:57.000000000 +0200
+@@ -18,26 +18,34 @@
+ 
+ #include <net/flow.h>
+ #include <linux/seq_file.h>
++#include <net/fib_rules.h>
+ 
+-/* WARNING: The ordering of these elements must match ordering
+- *          of RTA_* rtnetlink attribute numbers.
+- */
+-struct kern_rta {
+-	void		*rta_dst;
+-	void		*rta_src;
+-	int		*rta_iif;
+-	int		*rta_oif;
+-	void		*rta_gw;
+-	u32		*rta_priority;
+-	void		*rta_prefsrc;
+-	struct rtattr	*rta_mx;
+-	struct rtattr	*rta_mp;
+-	unsigned char	*rta_protoinfo;
+-	u32		*rta_flow;
+-	struct rta_cacheinfo *rta_ci;
+-	struct rta_session *rta_sess;
+-	u32		*rta_mp_alg;
+-};
++struct fib_config {
++	u8			fc_family;
++	u8			fc_dst_len;
++	u8			fc_src_len;
++	u8			fc_tos;
++	u8			fc_protocol;
++	u8			fc_scope;
++	u8			fc_type;
++	/* 1 byte unused */
++	u32			fc_table;
++	u32			fc_dst;
++	u32			fc_src;
++	u32			fc_gw;
++	int			fc_oif;
++	u32			fc_flags;
++	u32			fc_priority;
++	u32			fc_prefsrc;
++	struct nlattr		*fc_mx;
++	struct rtnexthop	*fc_mp;
++	int			fc_mx_len;
++	int			fc_mp_len;
++	u32			fc_flow;
++	u32			fc_mp_alg;
++	u32			fc_nlflags;
++	struct nl_info		fc_nlinfo;
++ };
+ 
+ struct fib_info;
+ 
+@@ -149,15 +157,12 @@
+ #endif /* CONFIG_IP_ROUTE_MULTIPATH_WRANDOM */
+ 
+ struct fib_table {
+-	unsigned char	tb_id;
++	struct hlist_node tb_hlist;
++	u32		tb_id;
+ 	unsigned	tb_stamp;
+ 	int		(*tb_lookup)(struct fib_table *tb, const struct flowi *flp, struct fib_result *res);
+-	int		(*tb_insert)(struct fib_table *table, struct rtmsg *r,
+-				     struct kern_rta *rta, struct nlmsghdr *n,
+-				     struct netlink_skb_parms *req);
+-	int		(*tb_delete)(struct fib_table *table, struct rtmsg *r,
+-				     struct kern_rta *rta, struct nlmsghdr *n,
+-				     struct netlink_skb_parms *req);
++	int		(*tb_insert)(struct fib_table *, struct fib_config *);
++	int		(*tb_delete)(struct fib_table *, struct fib_config *);
+ 	int		(*tb_dump)(struct fib_table *table, struct sk_buff *skb,
+ 				     struct netlink_callback *cb);
+ 	int		(*tb_flush)(struct fib_table *table);
+@@ -172,14 +177,14 @@
+ extern struct fib_table *ip_fib_local_table;
+ extern struct fib_table *ip_fib_main_table;
+ 
+-static inline struct fib_table *fib_get_table(int id)
++static inline struct fib_table *fib_get_table(u32 id)
+ {
+ 	if (id != RT_TABLE_LOCAL)
+ 		return ip_fib_main_table;
+ 	return ip_fib_local_table;
+ }
+ 
+-static inline struct fib_table *fib_new_table(int id)
++static inline struct fib_table *fib_new_table(u32 id)
+ {
+ 	return fib_get_table(id);
+ }
+@@ -199,35 +204,19 @@
+ }
+ 
+ #else /* CONFIG_IP_MULTIPLE_TABLES */
+-#define ip_fib_local_table (fib_tables[RT_TABLE_LOCAL])
+-#define ip_fib_main_table (fib_tables[RT_TABLE_MAIN])
+-
+-extern struct fib_table * fib_tables[RT_TABLE_MAX+1];
+-extern int fib_lookup(const struct flowi *flp, struct fib_result *res);
+-extern struct fib_table *__fib_new_table(int id);
+-extern void fib_rule_put(struct fib_rule *r);
+-
+-static inline struct fib_table *fib_get_table(int id)
+-{
+-	if (id == 0)
+-		id = RT_TABLE_MAIN;
+-
+-	return fib_tables[id];
+-}
+-
+-static inline struct fib_table *fib_new_table(int id)
+-{
+-	if (id == 0)
+-		id = RT_TABLE_MAIN;
++#define ip_fib_local_table fib_get_table(RT_TABLE_LOCAL)
++#define ip_fib_main_table fib_get_table(RT_TABLE_MAIN)
+ 
+-	return fib_tables[id] ? : __fib_new_table(id);
+-}
++extern int fib_lookup(struct flowi *flp, struct fib_result *res);
+ 
++extern struct fib_table *fib_new_table(u32 id);
++extern struct fib_table *fib_get_table(u32 id);
+ extern void fib_select_default(const struct flowi *flp, struct fib_result *res);
+ 
+ #endif /* CONFIG_IP_MULTIPLE_TABLES */
+ 
+ /* Exported by fib_frontend.c */
++extern struct nla_policy rtm_ipv4_policy[];
+ extern void		ip_fib_init(void);
+ extern int inet_rtm_delroute(struct sk_buff *skb, struct nlmsghdr* nlh, void *arg);
+ extern int inet_rtm_newroute(struct sk_buff *skb, struct nlmsghdr* nlh, void *arg);
+@@ -243,23 +232,20 @@
+ extern int ip_fib_check_default(u32 gw, struct net_device *dev);
+ extern int fib_sync_down(u32 local, struct net_device *dev, int force);
+ extern int fib_sync_up(struct net_device *dev);
+-extern int fib_convert_rtentry(int cmd, struct nlmsghdr *nl, struct rtmsg *rtm,
+-			       struct kern_rta *rta, struct rtentry *r);
+ extern u32  __fib_res_prefsrc(struct fib_result *res);
+ 
+ /* Exported by fib_hash.c */
+-extern struct fib_table *fib_hash_init(int id);
++extern struct fib_table *fib_hash_init(u32 id);
+ 
+ #ifdef CONFIG_IP_MULTIPLE_TABLES
+-/* Exported by fib_rules.c */
++extern int fib4_rules_dump(struct sk_buff *skb, struct netlink_callback *cb);
++
++extern void __init fib4_rules_init(void);
+ 
+-extern int inet_rtm_delrule(struct sk_buff *skb, struct nlmsghdr* nlh, void *arg);
+-extern int inet_rtm_newrule(struct sk_buff *skb, struct nlmsghdr* nlh, void *arg);
+-extern int inet_dump_rules(struct sk_buff *skb, struct netlink_callback *cb);
+ #ifdef CONFIG_NET_CLS_ROUTE
+ extern u32 fib_rules_tclass(struct fib_result *res);
+ #endif
+-extern void fib_rules_init(void);
++
+ #endif
+ 
+ static inline void fib_combine_itag(u32 *itag, struct fib_result *res)
+diff -Nur linux-2.6.18-rc5/include/net/ipv6.h linux-2.6.19/include/net/ipv6.h
+--- linux-2.6.18-rc5/include/net/ipv6.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/ipv6.h	2006-09-22 10:04:57.000000000 +0200
+@@ -40,6 +40,7 @@
+ #define NEXTHDR_ICMP		58	/* ICMP for IPv6. */
+ #define NEXTHDR_NONE		59	/* No next header */
+ #define NEXTHDR_DEST		60	/* Destination options header. */
++#define NEXTHDR_MOBILITY	135	/* Mobility header. */
+ 
+ #define NEXTHDR_MAX		255
+ 
+@@ -229,7 +230,7 @@
+ 					       void (*destructor)(struct sock *));
+ 
+ 
+-extern int			ipv6_parse_hopopts(struct sk_buff *skb);
++extern int			ipv6_parse_hopopts(struct sk_buff **skbp);
+ 
+ extern struct ipv6_txoptions *  ipv6_dup_options(struct sock *sk, struct ipv6_txoptions *opt);
+ extern struct ipv6_txoptions *	ipv6_renew_options(struct sock *sk, struct ipv6_txoptions *opt,
+@@ -506,6 +507,8 @@
+ 
+ extern int 			ipv6_ext_hdr(u8 nexthdr);
+ 
++extern int ipv6_find_tlv(struct sk_buff *skb, int offset, int type);
++
+ extern struct ipv6_txoptions *	ipv6_invert_rthdr(struct sock *sk,
+ 						  struct ipv6_rt_hdr *hdr);
+ 
+diff -Nur linux-2.6.18-rc5/include/net/mip6.h linux-2.6.19/include/net/mip6.h
+--- linux-2.6.18-rc5/include/net/mip6.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.19/include/net/mip6.h	2006-09-22 10:04:57.000000000 +0200
+@@ -0,0 +1,61 @@
++/*
++ * Copyright (C)2003-2006 Helsinki University of Technology
++ * Copyright (C)2003-2006 USAGI/WIDE Project
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++ */
++/*
++ * Authors:
++ *	Noriaki TAKAMIYA @USAGI
++ *	Masahide NAKAMURA @USAGI
++ *	YOSHIFUJI Hideaki @USAGI
++ */
++#ifndef _NET_MIP6_H
++#define _NET_MIP6_H
++
++#include <linux/skbuff.h>
++#include <net/sock.h>
++
++#define MIP6_OPT_PAD_1	0
++#define MIP6_OPT_PAD_N	1
++
++/*
++ * Mobility Header
++ */
++struct ip6_mh {
++	__u8	ip6mh_proto;
++	__u8	ip6mh_hdrlen;
++	__u8	ip6mh_type;
++	__u8	ip6mh_reserved;
++	__u16	ip6mh_cksum;
++	/* Followed by type specific messages */
++	__u8	data[0];
++} __attribute__ ((__packed__));
++
++#define IP6_MH_TYPE_BRR		0   /* Binding Refresh Request */
++#define IP6_MH_TYPE_HOTI	1   /* HOTI Message   */
++#define IP6_MH_TYPE_COTI	2   /* COTI Message  */
++#define IP6_MH_TYPE_HOT		3   /* HOT Message   */
++#define IP6_MH_TYPE_COT		4   /* COT Message  */
++#define IP6_MH_TYPE_BU		5   /* Binding Update */
++#define IP6_MH_TYPE_BACK	6   /* Binding ACK */
++#define IP6_MH_TYPE_BERROR	7   /* Binding Error */
++#define IP6_MH_TYPE_MAX		IP6_MH_TYPE_BERROR
++
++extern int mip6_init(void);
++extern void mip6_fini(void);
++extern int mip6_mh_filter(struct sock *sk, struct sk_buff *skb);
++
++#endif
+diff -Nur linux-2.6.18-rc5/include/net/neighbour.h linux-2.6.19/include/net/neighbour.h
+--- linux-2.6.18-rc5/include/net/neighbour.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/neighbour.h	2006-09-22 10:04:57.000000000 +0200
+@@ -1,6 +1,8 @@
+ #ifndef _NET_NEIGHBOUR_H
+ #define _NET_NEIGHBOUR_H
+ 
++#include <linux/neighbour.h>
++
+ /*
+  *	Generic neighbour manipulation
+  *
+@@ -14,40 +16,6 @@
+  *		- Add neighbour cache statistics like rtstat
+  */
+ 
+-/* The following flags & states are exported to user space,
+-   so that they should be moved to include/linux/ directory.
+- */
+-
+-/*
+- *	Neighbor Cache Entry Flags
+- */
+-
+-#define NTF_PROXY	0x08	/* == ATF_PUBL */
+-#define NTF_ROUTER	0x80
+-
+-/*
+- *	Neighbor Cache Entry States.
+- */
+-
+-#define NUD_INCOMPLETE	0x01
+-#define NUD_REACHABLE	0x02
+-#define NUD_STALE	0x04
+-#define NUD_DELAY	0x08
+-#define NUD_PROBE	0x10
+-#define NUD_FAILED	0x20
+-
+-/* Dummy states */
+-#define NUD_NOARP	0x40
+-#define NUD_PERMANENT	0x80
+-#define NUD_NONE	0x00
+-
+-/* NUD_NOARP & NUD_PERMANENT are pseudostates, they never change
+-   and make no address resolution or NUD.
+-   NUD_PERMANENT is also cannot be deleted by garbage collectors.
+- */
+-
+-#ifdef __KERNEL__
+-
+ #include <asm/atomic.h>
+ #include <linux/netdevice.h>
+ #include <linux/skbuff.h>
+@@ -133,7 +101,7 @@
+ 	__u8			dead;
+ 	atomic_t		probes;
+ 	rwlock_t		lock;
+-	unsigned char		ha[(MAX_ADDR_LEN+sizeof(unsigned long)-1)&~(sizeof(unsigned long)-1)];
++	unsigned char		ha[ALIGN(MAX_ADDR_LEN, sizeof(unsigned long))];
+ 	struct hh_cache		*hh;
+ 	atomic_t		refcnt;
+ 	int			(*output)(struct sk_buff *skb);
+@@ -374,6 +342,3 @@
+ #define NEIGH_CB(skb)	((struct neighbour_cb *)(skb)->cb)
+ 
+ #endif
+-#endif
+-
+-
+diff -Nur linux-2.6.18-rc5/include/net/netlabel.h linux-2.6.19/include/net/netlabel.h
+--- linux-2.6.18-rc5/include/net/netlabel.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.19/include/net/netlabel.h	2006-09-22 10:04:57.000000000 +0200
+@@ -0,0 +1,292 @@
++/*
++ * NetLabel System
++ *
++ * The NetLabel system manages static and dynamic label mappings for network
++ * protocols such as CIPSO and RIPSO.
++ *
++ * Author: Paul Moore <paul.moore@hp.com>
++ *
++ */
++
++/*
++ * (c) Copyright Hewlett-Packard Development Company, L.P., 2006
++ *
++ * This program is free software;  you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY;  without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
++ * the GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program;  if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
++ *
++ */
++
++#ifndef _NETLABEL_H
++#define _NETLABEL_H
++
++#include <linux/types.h>
++#include <linux/net.h>
++#include <linux/skbuff.h>
++#include <net/netlink.h>
++
++/*
++ * NetLabel - A management interface for maintaining network packet label
++ *            mapping tables for explicit packet labling protocols.
++ *
++ * Network protocols such as CIPSO and RIPSO require a label translation layer
++ * to convert the label on the packet into something meaningful on the host
++ * machine.  In the current Linux implementation these mapping tables live
++ * inside the kernel; NetLabel provides a mechanism for user space applications
++ * to manage these mapping tables.
++ *
++ * NetLabel makes use of the Generic NETLINK mechanism as a transport layer to
++ * send messages between kernel and user space.  The general format of a
++ * NetLabel message is shown below:
++ *
++ *  +-----------------+-------------------+--------- --- -- -
++ *  | struct nlmsghdr | struct genlmsghdr | payload
++ *  +-----------------+-------------------+--------- --- -- -
++ *
++ * The 'nlmsghdr' and 'genlmsghdr' structs should be dealt with like normal.
++ * The payload is dependent on the subsystem specified in the
++ * 'nlmsghdr->nlmsg_type' and should be defined below, supporting functions
++ * should be defined in the corresponding net/netlabel/netlabel_<subsys>.h|c
++ * file.  All of the fields in the NetLabel payload are NETLINK attributes, the
++ * length of each field is the length of the NETLINK attribute payload, see
++ * include/net/netlink.h for more information on NETLINK attributes.
++ *
++ */
++
++/*
++ * NetLabel NETLINK protocol
++ */
++
++#define NETLBL_PROTO_VERSION            1
++
++/* NetLabel NETLINK types/families */
++#define NETLBL_NLTYPE_NONE              0
++#define NETLBL_NLTYPE_MGMT              1
++#define NETLBL_NLTYPE_MGMT_NAME         "NLBL_MGMT"
++#define NETLBL_NLTYPE_RIPSO             2
++#define NETLBL_NLTYPE_RIPSO_NAME        "NLBL_RIPSO"
++#define NETLBL_NLTYPE_CIPSOV4           3
++#define NETLBL_NLTYPE_CIPSOV4_NAME      "NLBL_CIPSOv4"
++#define NETLBL_NLTYPE_CIPSOV6           4
++#define NETLBL_NLTYPE_CIPSOV6_NAME      "NLBL_CIPSOv6"
++#define NETLBL_NLTYPE_UNLABELED         5
++#define NETLBL_NLTYPE_UNLABELED_NAME    "NLBL_UNLBL"
++
++/* NetLabel return codes */
++#define NETLBL_E_OK                     0
++
++/*
++ * Helper functions
++ */
++
++#define NETLBL_LEN_U8                   nla_total_size(sizeof(u8))
++#define NETLBL_LEN_U16                  nla_total_size(sizeof(u16))
++#define NETLBL_LEN_U32                  nla_total_size(sizeof(u32))
++
++/**
++ * netlbl_netlink_alloc_skb - Allocate a NETLINK message buffer
++ * @head: the amount of headroom in bytes
++ * @body: the desired size (minus headroom) in bytes
++ * @gfp_flags: the alloc flags to pass to alloc_skb()
++ *
++ * Description:
++ * Allocate a NETLINK message buffer based on the sizes given in @head and
++ * @body.  If @head is greater than zero skb_reserve() is called to reserve
++ * @head bytes at the start of the buffer.  Returns a valid sk_buff pointer on
++ * success, NULL on failure.
++ *
++ */
++static inline struct sk_buff *netlbl_netlink_alloc_skb(size_t head,
++						       size_t body,
++						       int gfp_flags)
++{
++	struct sk_buff *skb;
++
++	skb = alloc_skb(NLMSG_ALIGN(head + body), gfp_flags);
++	if (skb == NULL)
++		return NULL;
++	if (head > 0) {
++		skb_reserve(skb, head);
++		if (skb_tailroom(skb) < body) {
++			kfree_skb(skb);
++			return NULL;
++		}
++	}
++
++	return skb;
++}
++
++/*
++ * NetLabel - Kernel API for accessing the network packet label mappings.
++ *
++ * The following functions are provided for use by other kernel modules,
++ * specifically kernel LSM modules, to provide a consistent, transparent API
++ * for dealing with explicit packet labeling protocols such as CIPSO and
++ * RIPSO.  The functions defined here are implemented in the
++ * net/netlabel/netlabel_kapi.c file.
++ *
++ */
++
++/* Domain mapping definition struct */
++struct netlbl_dom_map;
++
++/* Domain mapping operations */
++int netlbl_domhsh_remove(const char *domain);
++
++/* LSM security attributes */
++struct netlbl_lsm_cache {
++	void (*free) (const void *data);
++	void *data;
++};
++struct netlbl_lsm_secattr {
++	char *domain;
++
++	u32 mls_lvl;
++	u32 mls_lvl_vld;
++	unsigned char *mls_cat;
++	size_t mls_cat_len;
++
++	struct netlbl_lsm_cache cache;
++};
++
++/*
++ * LSM security attribute operations
++ */
++
++
++/**
++ * netlbl_secattr_init - Initialize a netlbl_lsm_secattr struct
++ * @secattr: the struct to initialize
++ *
++ * Description:
++ * Initialize an already allocated netlbl_lsm_secattr struct.  Returns zero on
++ * success, negative values on error.
++ *
++ */
++static inline int netlbl_secattr_init(struct netlbl_lsm_secattr *secattr)
++{
++	memset(secattr, 0, sizeof(*secattr));
++	return 0;
++}
++
++/**
++ * netlbl_secattr_destroy - Clears a netlbl_lsm_secattr struct
++ * @secattr: the struct to clear
++ * @clear_cache: cache clear flag
++ *
++ * Description:
++ * Destroys the @secattr struct, including freeing all of the internal buffers.
++ * If @clear_cache is true then free the cache fields, otherwise leave them
++ * intact.  The struct must be reset with a call to netlbl_secattr_init()
++ * before reuse.
++ *
++ */
++static inline void netlbl_secattr_destroy(struct netlbl_lsm_secattr *secattr,
++					  u32 clear_cache)
++{
++	if (clear_cache && secattr->cache.data != NULL && secattr->cache.free)
++		secattr->cache.free(secattr->cache.data);
++	kfree(secattr->domain);
++	kfree(secattr->mls_cat);
++}
++
++/**
++ * netlbl_secattr_alloc - Allocate and initialize a netlbl_lsm_secattr struct
++ * @flags: the memory allocation flags
++ *
++ * Description:
++ * Allocate and initialize a netlbl_lsm_secattr struct.  Returns a valid
++ * pointer on success, or NULL on failure.
++ *
++ */
++static inline struct netlbl_lsm_secattr *netlbl_secattr_alloc(int flags)
++{
++	return kzalloc(sizeof(struct netlbl_lsm_secattr), flags);
++}
++
++/**
++ * netlbl_secattr_free - Frees a netlbl_lsm_secattr struct
++ * @secattr: the struct to free
++ * @clear_cache: cache clear flag
++ *
++ * Description:
++ * Frees @secattr including all of the internal buffers.  If @clear_cache is
++ * true then free the cache fields, otherwise leave them intact.
++ *
++ */
++static inline void netlbl_secattr_free(struct netlbl_lsm_secattr *secattr,
++				       u32 clear_cache)
++{
++	netlbl_secattr_destroy(secattr, clear_cache);
++	kfree(secattr);
++}
++
++/*
++ * LSM protocol operations
++ */
++
++#ifdef CONFIG_NETLABEL
++int netlbl_socket_setattr(const struct socket *sock,
++			  const struct netlbl_lsm_secattr *secattr);
++int netlbl_socket_getattr(const struct socket *sock,
++			  struct netlbl_lsm_secattr *secattr);
++int netlbl_skbuff_getattr(const struct sk_buff *skb,
++			  struct netlbl_lsm_secattr *secattr);
++void netlbl_skbuff_err(struct sk_buff *skb, int error);
++#else
++static inline int netlbl_socket_setattr(const struct socket *sock,
++				     const struct netlbl_lsm_secattr *secattr)
++{
++	return -ENOSYS;
++}
++
++static inline int netlbl_socket_getattr(const struct socket *sock,
++					struct netlbl_lsm_secattr *secattr)
++{
++	return -ENOSYS;
++}
++
++static inline int netlbl_skbuff_getattr(const struct sk_buff *skb,
++					struct netlbl_lsm_secattr *secattr)
++{
++	return -ENOSYS;
++}
++
++static inline void netlbl_skbuff_err(struct sk_buff *skb, int error)
++{
++	return;
++}
++#endif /* CONFIG_NETLABEL */
++
++/*
++ * LSM label mapping cache operations
++ */
++
++#ifdef CONFIG_NETLABEL
++void netlbl_cache_invalidate(void);
++int netlbl_cache_add(const struct sk_buff *skb,
++		     const struct netlbl_lsm_secattr *secattr);
++#else
++static inline void netlbl_cache_invalidate(void)
++{
++	return;
++}
++
++static inline int netlbl_cache_add(const struct sk_buff *skb,
++				   const struct netlbl_lsm_secattr *secattr)
++{
++	return 0;
++}
++#endif /* CONFIG_NETLABEL */
++
++#endif /* _NETLABEL_H */
+diff -Nur linux-2.6.18-rc5/include/net/netlink.h linux-2.6.19/include/net/netlink.h
+--- linux-2.6.18-rc5/include/net/netlink.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/netlink.h	2006-09-22 10:04:57.000000000 +0200
+@@ -35,12 +35,15 @@
+  *   nlmsg_put()			add a netlink message to an skb
+  *   nlmsg_put_answer()			callback based nlmsg_put()
+  *   nlmsg_end()			finanlize netlink message
++ *   nlmsg_get_pos()			return current position in message
++ *   nlmsg_trim()			trim part of message
+  *   nlmsg_cancel()			cancel message construction
+  *   nlmsg_free()			free a netlink message
+  *
+  * Message Sending:
+  *   nlmsg_multicast()			multicast message to several groups
+  *   nlmsg_unicast()			unicast a message to a single socket
++ *   nlmsg_notify()			send notification message
+  *
+  * Message Length Calculations:
+  *   nlmsg_msg_size(payload)		length of message w/o padding
+@@ -62,6 +65,9 @@
+  *   nlmsg_validate()			validate netlink message incl. attrs
+  *   nlmsg_for_each_attr()		loop over all attributes
+  *
++ * Misc:
++ *   nlmsg_report()			report back to application?
++ *
+  * ------------------------------------------------------------------------
+  *                          Attributes Interface
+  * ------------------------------------------------------------------------
+@@ -80,8 +86,10 @@
+  *   struct nlattr			netlink attribtue header
+  *
+  * Attribute Construction:
+- *   nla_reserve(skb, type, len)	reserve skb tailroom for an attribute
++ *   nla_reserve(skb, type, len)	reserve room for an attribute
++ *   nla_reserve_nohdr(skb, len)	reserve room for an attribute w/o hdr
+  *   nla_put(skb, type, len, data)	add attribute to skb
++ *   nla_put_nohdr(skb, len, data)	add attribute w/o hdr
+  *
+  * Attribute Construction for Basic Types:
+  *   nla_put_u8(skb, type, value)	add u8 attribute to skb
+@@ -139,6 +147,7 @@
+  *   nla_next(nla, remaining)		get next netlink attribute
+  *   nla_validate()			validate a stream of attributes
+  *   nla_find()				find attribute in stream of attributes
++ *   nla_find_nested()			find attribute in nested attributes
+  *   nla_parse()			parse and validate stream of attrs
+  *   nla_parse_nested()			parse nested attribuets
+  *   nla_for_each_attr()		loop over all attributes
+@@ -158,6 +167,7 @@
+ 	NLA_FLAG,
+ 	NLA_MSECS,
+ 	NLA_NESTED,
++	NLA_NUL_STRING,
+ 	__NLA_TYPE_MAX,
+ };
+ 
+@@ -166,21 +176,37 @@
+ /**
+  * struct nla_policy - attribute validation policy
+  * @type: Type of attribute or NLA_UNSPEC
+- * @minlen: Minimal length of payload required to be available
++ * @len: Type specific length of payload
+  *
+  * Policies are defined as arrays of this struct, the array must be
+  * accessible by attribute type up to the highest identifier to be expected.
+  *
++ * Meaning of `len' field:
++ *    NLA_STRING           Maximum length of string
++ *    NLA_NUL_STRING       Maximum length of string (excluding NUL)
++ *    NLA_FLAG             Unused
++ *    All other            Exact length of attribute payload
++ *
+  * Example:
+  * static struct nla_policy my_policy[ATTR_MAX+1] __read_mostly = {
+  * 	[ATTR_FOO] = { .type = NLA_U16 },
+- *	[ATTR_BAR] = { .type = NLA_STRING },
+- *	[ATTR_BAZ] = { .minlen = sizeof(struct mystruct) },
++ *	[ATTR_BAR] = { .type = NLA_STRING, len = BARSIZ },
++ *	[ATTR_BAZ] = { .len = sizeof(struct mystruct) },
+  * };
+  */
+ struct nla_policy {
+ 	u16		type;
+-	u16		minlen;
++	u16		len;
++};
++
++/**
++ * struct nl_info - netlink source information
++ * @nlh: Netlink message header of original request
++ * @pid: Netlink PID of requesting application
++ */
++struct nl_info {
++	struct nlmsghdr		*nlh;
++	u32			pid;
+ };
+ 
+ extern void		netlink_run_queue(struct sock *sk, unsigned int *qlen,
+@@ -188,6 +214,9 @@
+ 						    struct nlmsghdr *, int *));
+ extern void		netlink_queue_skip(struct nlmsghdr *nlh,
+ 					   struct sk_buff *skb);
++extern int		nlmsg_notify(struct sock *sk, struct sk_buff *skb,
++				     u32 pid, unsigned int group, int report,
++				     gfp_t flags);
+ 
+ extern int		nla_validate(struct nlattr *head, int len, int maxtype,
+ 				     struct nla_policy *policy);
+@@ -203,12 +232,18 @@
+ extern int		nla_strcmp(const struct nlattr *nla, const char *str);
+ extern struct nlattr *	__nla_reserve(struct sk_buff *skb, int attrtype,
+ 				      int attrlen);
++extern void *		__nla_reserve_nohdr(struct sk_buff *skb, int attrlen);
+ extern struct nlattr *	nla_reserve(struct sk_buff *skb, int attrtype,
+ 				    int attrlen);
++extern void *		nla_reserve_nohdr(struct sk_buff *skb, int attrlen);
+ extern void		__nla_put(struct sk_buff *skb, int attrtype,
+ 				  int attrlen, const void *data);
++extern void		__nla_put_nohdr(struct sk_buff *skb, int attrlen,
++					const void *data);
+ extern int		nla_put(struct sk_buff *skb, int attrtype,
+ 				int attrlen, const void *data);
++extern int		nla_put_nohdr(struct sk_buff *skb, int attrlen,
++				      const void *data);
+ 
+ /**************************************************************************
+  * Netlink Messages
+@@ -364,6 +399,17 @@
+ }
+ 
+ /**
++ * nlmsg_report - need to report back to application?
++ * @nlh: netlink message header
++ *
++ * Returns 1 if a report back to the application is requested.
++ */
++static inline int nlmsg_report(struct nlmsghdr *nlh)
++{
++	return !!(nlh->nlmsg_flags & NLM_F_ECHO);
++}
++
++/**
+  * nlmsg_for_each_attr - iterate over a stream of attributes
+  * @pos: loop counter, set to current attribute
+  * @nlh: netlink message header
+@@ -453,12 +499,13 @@
+ /**
+  * nlmsg_new - Allocate a new netlink message
+  * @size: maximum size of message
++ * @flags: the type of memory to allocate.
+  *
+  * Use NLMSG_GOODSIZE if size isn't know and you need a good default size.
+  */
+-static inline struct sk_buff *nlmsg_new(int size)
++static inline struct sk_buff *nlmsg_new(int size, gfp_t flags)
+ {
+-	return alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
++	return alloc_skb(size, flags);
+ }
+ 
+ /**
+@@ -480,6 +527,32 @@
+ }
+ 
+ /**
++ * nlmsg_get_pos - return current position in netlink message
++ * @skb: socket buffer the message is stored in
++ *
++ * Returns a pointer to the current tail of the message.
++ */
++static inline void *nlmsg_get_pos(struct sk_buff *skb)
++{
++	return skb->tail;
++}
++
++/**
++ * nlmsg_trim - Trim message to a mark
++ * @skb: socket buffer the message is stored in
++ * @mark: mark to trim to
++ *
++ * Trims the message to the provided mark. Returns -1.
++ */
++static inline int nlmsg_trim(struct sk_buff *skb, void *mark)
++{
++	if (mark)
++		skb_trim(skb, (unsigned char *) mark - skb->data);
++
++	return -1;
++}
++
++/**
+  * nlmsg_cancel - Cancel construction of a netlink message
+  * @skb: socket buffer the message is stored in
+  * @nlh: netlink message header
+@@ -489,9 +562,7 @@
+  */
+ static inline int nlmsg_cancel(struct sk_buff *skb, struct nlmsghdr *nlh)
+ {
+-	skb_trim(skb, (unsigned char *) nlh - skb->data);
+-
+-	return -1;
++	return nlmsg_trim(skb, nlh);
+ }
+ 
+ /**
+@@ -509,15 +580,16 @@
+  * @skb: netlink message as socket buffer
+  * @pid: own netlink pid to avoid sending to yourself
+  * @group: multicast group id
++ * @flags: allocation flags
+  */
+ static inline int nlmsg_multicast(struct sock *sk, struct sk_buff *skb,
+-				  u32 pid, unsigned int group)
++				  u32 pid, unsigned int group, gfp_t flags)
+ {
+ 	int err;
+ 
+ 	NETLINK_CB(skb).dst_group = group;
+ 
+-	err = netlink_broadcast(sk, skb, pid, group, GFP_KERNEL);
++	err = netlink_broadcast(sk, skb, pid, group, flags);
+ 	if (err > 0)
+ 		err = 0;
+ 
+@@ -631,6 +703,18 @@
+ }
+ 
+ /**
++ * nla_find_nested - find attribute in a set of nested attributes
++ * @nla: attribute containing the nested attributes
++ * @attrtype: type of attribute to look for
++ *
++ * Returns the first attribute which matches the specified type.
++ */
++static inline struct nlattr *nla_find_nested(struct nlattr *nla, int attrtype)
++{
++	return nla_find(nla_data(nla), nla_len(nla), attrtype);
++}
++
++/**
+  * nla_parse_nested - parse nested attributes
+  * @tb: destination array with maxtype+1 elements
+  * @maxtype: maximum attribute type to be expected
+@@ -751,7 +835,7 @@
+ #define NLA_PUT_STRING(skb, attrtype, value) \
+ 	NLA_PUT(skb, attrtype, strlen(value) + 1, value)
+ 
+-#define NLA_PUT_FLAG(skb, attrtype, value) \
++#define NLA_PUT_FLAG(skb, attrtype) \
+ 	NLA_PUT(skb, attrtype, 0, NULL)
+ 
+ #define NLA_PUT_MSECS(skb, attrtype, jiffies) \
+@@ -862,10 +946,7 @@
+  */
+ static inline int nla_nest_cancel(struct sk_buff *skb, struct nlattr *start)
+ {
+-	if (start)
+-		skb_trim(skb, (unsigned char *) start - skb->data);
+-
+-	return -1;
++	return nlmsg_trim(skb, start);
+ }
+ 
+ /**
+@@ -880,4 +961,13 @@
+ 	     nla_ok(pos, rem); \
+ 	     pos = nla_next(pos, &(rem)))
+ 
++/**
++ * nla_for_each_nested - iterate over nested attributes
++ * @pos: loop counter, set to current attribute
++ * @nla: attribute containing the nested attributes
++ * @rem: initialized to len, holds bytes currently remaining in stream
++ */
++#define nla_for_each_nested(pos, nla, rem) \
++	nla_for_each_attr(pos, nla_data(nla), nla_len(nla), rem)
++
+ #endif
+diff -Nur linux-2.6.18-rc5/include/net/nexthop.h linux-2.6.19/include/net/nexthop.h
+--- linux-2.6.18-rc5/include/net/nexthop.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.19/include/net/nexthop.h	2006-09-22 10:04:57.000000000 +0200
+@@ -0,0 +1,33 @@
++#ifndef __NET_NEXTHOP_H
++#define __NET_NEXTHOP_H
++
++#include <linux/rtnetlink.h>
++#include <net/netlink.h>
++
++static inline int rtnh_ok(const struct rtnexthop *rtnh, int remaining)
++{
++	return remaining >= sizeof(*rtnh) &&
++	       rtnh->rtnh_len >= sizeof(*rtnh) &&
++	       rtnh->rtnh_len <= remaining;
++}
++
++static inline struct rtnexthop *rtnh_next(const struct rtnexthop *rtnh,
++                                         int *remaining)
++{
++	int totlen = NLA_ALIGN(rtnh->rtnh_len);
++
++	*remaining -= totlen;
++	return (struct rtnexthop *) ((char *) rtnh + totlen);
++}
++
++static inline struct nlattr *rtnh_attrs(const struct rtnexthop *rtnh)
++{
++	return (struct nlattr *) ((char *) rtnh + NLA_ALIGN(sizeof(*rtnh)));
++}
++
++static inline int rtnh_attrlen(const struct rtnexthop *rtnh)
++{
++	return rtnh->rtnh_len - NLA_ALIGN(sizeof(*rtnh));
++}
++
++#endif
+diff -Nur linux-2.6.18-rc5/include/net/pkt_act.h linux-2.6.19/include/net/pkt_act.h
+--- linux-2.6.18-rc5/include/net/pkt_act.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/pkt_act.h	1970-01-01 01:00:00.000000000 +0100
+@@ -1,273 +0,0 @@
+-#ifndef __NET_PKT_ACT_H
+-#define __NET_PKT_ACT_H
+-
+-#include <asm/uaccess.h>
+-#include <asm/system.h>
+-#include <linux/bitops.h>
+-#include <linux/types.h>
+-#include <linux/kernel.h>
+-#include <linux/sched.h>
+-#include <linux/string.h>
+-#include <linux/mm.h>
+-#include <linux/socket.h>
+-#include <linux/sockios.h>
+-#include <linux/in.h>
+-#include <linux/errno.h>
+-#include <linux/interrupt.h>
+-#include <linux/skbuff.h>
+-#include <linux/rtnetlink.h>
+-#include <linux/module.h>
+-#include <linux/init.h>
+-#include <linux/proc_fs.h>
+-#include <net/sock.h>
+-#include <net/pkt_sched.h>
+-
+-#define tca_st(val) (struct tcf_##val *)
+-#define PRIV(a,name) ( tca_st(name) (a)->priv)
+-
+-#if 0 /* control */
+-#define DPRINTK(format,args...) printk(KERN_DEBUG format,##args)
+-#else
+-#define DPRINTK(format,args...)
+-#endif
+-
+-#if 0 /* data */
+-#define D2PRINTK(format,args...) printk(KERN_DEBUG format,##args)
+-#else
+-#define D2PRINTK(format,args...)
+-#endif
+-
+-static __inline__ unsigned
+-tcf_hash(u32 index)
+-{
+-	return index & MY_TAB_MASK;
+-}
+-
+-/* probably move this from being inline
+- * and put into act_generic
+-*/
+-static inline void
+-tcf_hash_destroy(struct tcf_st *p)
+-{
+-	unsigned h = tcf_hash(p->index);
+-	struct tcf_st **p1p;
+-
+-	for (p1p = &tcf_ht[h]; *p1p; p1p = &(*p1p)->next) {
+-		if (*p1p == p) {
+-			write_lock_bh(&tcf_t_lock);
+-			*p1p = p->next;
+-			write_unlock_bh(&tcf_t_lock);
+-#ifdef CONFIG_NET_ESTIMATOR
+-			gen_kill_estimator(&p->bstats, &p->rate_est);
+-#endif
+-			kfree(p);
+-			return;
+-		}
+-	}
+-	BUG_TRAP(0);
+-}
+-
+-static inline int
+-tcf_hash_release(struct tcf_st *p, int bind )
+-{
+-	int ret = 0;
+-	if (p) {
+-		if (bind) {
+-			p->bindcnt--;
+-		}
+-		p->refcnt--;
+-	       	if(p->bindcnt <=0 && p->refcnt <= 0) {
+-			tcf_hash_destroy(p);
+-			ret = 1;
+-		}
+-	}
+-	return ret;
+-}
+-
+-static __inline__ int
+-tcf_dump_walker(struct sk_buff *skb, struct netlink_callback *cb,
+-		struct tc_action *a)
+-{
+-	struct tcf_st *p;
+-	int err =0, index =  -1,i= 0, s_i = 0, n_i = 0;
+-	struct rtattr *r ;
+-
+-	read_lock(&tcf_t_lock);
+-
+-	s_i = cb->args[0];
+-
+-	for (i = 0; i < MY_TAB_SIZE; i++) {
+-		p = tcf_ht[tcf_hash(i)];
+-
+-		for (; p; p = p->next) {
+-			index++;
+-			if (index < s_i)
+-				continue;
+-			a->priv = p;
+-			a->order = n_i;
+-			r = (struct rtattr*) skb->tail;
+-			RTA_PUT(skb, a->order, 0, NULL);
+-			err = tcf_action_dump_1(skb, a, 0, 0);
+-			if (0 > err) {
+-				index--;
+-				skb_trim(skb, (u8*)r - skb->data);
+-				goto done;
+-			}
+-			r->rta_len = skb->tail - (u8*)r;
+-			n_i++;
+-			if (n_i >= TCA_ACT_MAX_PRIO) {
+-				goto done;
+-			}
+-		}
+-	}
+-done:
+-	read_unlock(&tcf_t_lock);
+-	if (n_i)
+-		cb->args[0] += n_i;
+-	return n_i;
+-
+-rtattr_failure:
+-	skb_trim(skb, (u8*)r - skb->data);
+-	goto done;
+-}
+-
+-static __inline__ int
+-tcf_del_walker(struct sk_buff *skb, struct tc_action *a)
+-{
+-	struct tcf_st *p, *s_p;
+-	struct rtattr *r ;
+-	int i= 0, n_i = 0;
+-
+-	r = (struct rtattr*) skb->tail;
+-	RTA_PUT(skb, a->order, 0, NULL);
+-	RTA_PUT(skb, TCA_KIND, IFNAMSIZ, a->ops->kind);
+-	for (i = 0; i < MY_TAB_SIZE; i++) {
+-		p = tcf_ht[tcf_hash(i)];
+-
+-		while (p != NULL) {
+-			s_p = p->next;
+-			if (ACT_P_DELETED == tcf_hash_release(p, 0)) {
+-				 module_put(a->ops->owner);
+-			}
+-			n_i++;
+-			p = s_p;
+-		}
+-	}
+-	RTA_PUT(skb, TCA_FCNT, 4, &n_i);
+-	r->rta_len = skb->tail - (u8*)r;
+-
+-	return n_i;
+-rtattr_failure:
+-	skb_trim(skb, (u8*)r - skb->data);
+-	return -EINVAL;
+-}
+-
+-static __inline__ int
+-tcf_generic_walker(struct sk_buff *skb, struct netlink_callback *cb, int type,
+-		struct tc_action *a)
+-{
+-		if (type == RTM_DELACTION) {
+-			return tcf_del_walker(skb,a);
+-		} else if (type == RTM_GETACTION) {
+-			return tcf_dump_walker(skb,cb,a);
+-		} else {
+-			printk("tcf_generic_walker: unknown action %d\n",type);
+-			return -EINVAL;
+-		}
+-}
+-
+-static __inline__ struct tcf_st *
+-tcf_hash_lookup(u32 index)
+-{
+-	struct tcf_st *p;
+-
+-	read_lock(&tcf_t_lock);
+-	for (p = tcf_ht[tcf_hash(index)]; p; p = p->next) {
+-		if (p->index == index)
+-			break;
+-	}
+-	read_unlock(&tcf_t_lock);
+-	return p;
+-}
+-
+-static __inline__ u32
+-tcf_hash_new_index(void)
+-{
+-	do {
+-		if (++idx_gen == 0)
+-			idx_gen = 1;
+-	} while (tcf_hash_lookup(idx_gen));
+-
+-	return idx_gen;
+-}
+-
+-
+-static inline int
+-tcf_hash_search(struct tc_action *a, u32 index)
+-{
+-	struct tcf_st *p = tcf_hash_lookup(index);
+-
+-	if (p != NULL) {
+-		a->priv = p;
+-		return 1;
+-	}
+-	return 0;
+-}
+-
+-#ifdef CONFIG_NET_ACT_INIT
+-static inline struct tcf_st *
+-tcf_hash_check(u32 index, struct tc_action *a, int ovr, int bind)
+-{
+-	struct tcf_st *p = NULL;
+-	if (index && (p = tcf_hash_lookup(index)) != NULL) {
+-		if (bind) {
+-			p->bindcnt++;
+-			p->refcnt++;
+-		}
+-		a->priv = p;
+-	}
+-	return p;
+-}
+-
+-static inline struct tcf_st *
+-tcf_hash_create(u32 index, struct rtattr *est, struct tc_action *a, int size, int ovr, int bind)
+-{
+-	struct tcf_st *p = NULL;
+-
+-	p = kmalloc(size, GFP_KERNEL);
+-	if (p == NULL)
+-		return p;
+-
+-	memset(p, 0, size);
+-	p->refcnt = 1;
+-
+-	if (bind) {
+-		p->bindcnt = 1;
+-	}
+-
+-	spin_lock_init(&p->lock);
+-	p->stats_lock = &p->lock;
+-	p->index = index ? : tcf_hash_new_index();
+-	p->tm.install = jiffies;
+-	p->tm.lastuse = jiffies;
+-#ifdef CONFIG_NET_ESTIMATOR
+-	if (est)
+-		gen_new_estimator(&p->bstats, &p->rate_est, p->stats_lock, est);
+-#endif
+-	a->priv = (void *) p;
+-	return p;
+-}
+-
+-static inline void tcf_hash_insert(struct tcf_st *p)
+-{
+-	unsigned h = tcf_hash(p->index);
+-
+-	write_lock_bh(&tcf_t_lock);
+-	p->next = tcf_ht[h];
+-	tcf_ht[h] = p;
+-	write_unlock_bh(&tcf_t_lock);
+-}
+-
+-#endif
+-
+-#endif
+diff -Nur linux-2.6.18-rc5/include/net/request_sock.h linux-2.6.19/include/net/request_sock.h
+--- linux-2.6.18-rc5/include/net/request_sock.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/request_sock.h	2006-09-22 10:04:57.000000000 +0200
+@@ -53,6 +53,7 @@
+ 	unsigned long			expires;
+ 	struct request_sock_ops		*rsk_ops;
+ 	struct sock			*sk;
++	u32				secid;
+ };
+ 
+ static inline struct request_sock *reqsk_alloc(struct request_sock_ops *ops)
+diff -Nur linux-2.6.18-rc5/include/net/route.h linux-2.6.19/include/net/route.h
+--- linux-2.6.18-rc5/include/net/route.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/route.h	2006-09-22 10:04:57.000000000 +0200
+@@ -32,6 +32,7 @@
+ #include <linux/route.h>
+ #include <linux/ip.h>
+ #include <linux/cache.h>
++#include <linux/security.h>
+ 
+ #ifndef __KERNEL__
+ #warning This file is not supposed to be used outside of kernel.
+@@ -166,6 +167,7 @@
+ 		ip_rt_put(*rp);
+ 		*rp = NULL;
+ 	}
++	security_sk_classify_flow(sk, &fl);
+ 	return ip_route_output_flow(rp, &fl, sk, 0);
+ }
+ 
+@@ -182,6 +184,7 @@
+ 		fl.proto = protocol;
+ 		ip_rt_put(*rp);
+ 		*rp = NULL;
++		security_sk_classify_flow(sk, &fl);
+ 		return ip_route_output_flow(rp, &fl, sk, 0);
+ 	}
+ 	return 0;
+diff -Nur linux-2.6.18-rc5/include/net/sctp/constants.h linux-2.6.19/include/net/sctp/constants.h
+--- linux-2.6.18-rc5/include/net/sctp/constants.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/sctp/constants.h	2006-09-22 10:04:57.000000000 +0200
+@@ -264,10 +264,10 @@
+ enum { SCTP_MAX_GABS = 16 };
+ 
+ /* Heartbeat interval - 30 secs */
+-#define SCTP_DEFAULT_TIMEOUT_HEARTBEAT	(30 * HZ)
++#define SCTP_DEFAULT_TIMEOUT_HEARTBEAT	(30*1000)
+ 
+ /* Delayed sack timer - 200ms */
+-#define SCTP_DEFAULT_TIMEOUT_SACK	((200 * HZ) / 1000)
++#define SCTP_DEFAULT_TIMEOUT_SACK	(200)
+ 
+ /* RTO.Initial              - 3  seconds
+  * RTO.Min                  - 1  second
+@@ -275,9 +275,9 @@
+  * RTO.Alpha                - 1/8
+  * RTO.Beta                 - 1/4
+  */
+-#define SCTP_RTO_INITIAL	(3 * HZ)
+-#define SCTP_RTO_MIN		(1 * HZ)
+-#define SCTP_RTO_MAX		(60 * HZ)
++#define SCTP_RTO_INITIAL	(3 * 1000)
++#define SCTP_RTO_MIN		(1 * 1000)
++#define SCTP_RTO_MAX		(60 * 1000)
+ 
+ #define SCTP_RTO_ALPHA          3   /* 1/8 when converted to right shifts. */
+ #define SCTP_RTO_BETA           2   /* 1/4 when converted to right shifts. */
+@@ -290,8 +290,7 @@
+ #define SCTP_DEF_MAX_INIT 6
+ #define SCTP_DEF_MAX_SEND 10
+ 
+-#define SCTP_DEFAULT_COOKIE_LIFE_SEC	60 /* seconds */
+-#define SCTP_DEFAULT_COOKIE_LIFE_USEC	0  /* microseconds */
++#define SCTP_DEFAULT_COOKIE_LIFE	(60 * 1000) /* 60 seconds */
+ 
+ #define SCTP_DEFAULT_MINWINDOW	1500	/* default minimum rwnd size */
+ #define SCTP_DEFAULT_MAXWINDOW	65535	/* default rwnd size */
+diff -Nur linux-2.6.18-rc5/include/net/sctp/sctp.h linux-2.6.19/include/net/sctp/sctp.h
+--- linux-2.6.18-rc5/include/net/sctp/sctp.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/sctp/sctp.h	2006-09-22 10:04:57.000000000 +0200
+@@ -128,6 +128,8 @@
+ 				     int flags);
+ extern struct sctp_pf *sctp_get_pf_specific(sa_family_t family);
+ extern int sctp_register_pf(struct sctp_pf *, sa_family_t);
++int sctp_inetaddr_event(struct notifier_block *this, unsigned long ev,
++                        void *ptr);
+ 
+ /*
+  * sctp/socket.c
+@@ -178,6 +180,17 @@
+ 			  struct sock *oldsk, struct sock *newsk);
+ 
+ /*
++ * sctp/proc.c
++ */
++int sctp_snmp_proc_init(void);
++void sctp_snmp_proc_exit(void);
++int sctp_eps_proc_init(void);
++void sctp_eps_proc_exit(void);
++int sctp_assocs_proc_init(void);
++void sctp_assocs_proc_exit(void);
++
++
++/*
+  *  Section:  Macros, externs, and inlines
+  */
+ 
+@@ -216,6 +229,50 @@
+ 
+ #endif /* !TEST_FRAME */
+ 
++/* sctp mib definitions */
++enum
++{
++	SCTP_MIB_NUM = 0,
++	SCTP_MIB_CURRESTAB,			/* CurrEstab */
++	SCTP_MIB_ACTIVEESTABS,			/* ActiveEstabs */
++	SCTP_MIB_PASSIVEESTABS,			/* PassiveEstabs */
++	SCTP_MIB_ABORTEDS,			/* Aborteds */
++	SCTP_MIB_SHUTDOWNS,			/* Shutdowns */
++	SCTP_MIB_OUTOFBLUES,			/* OutOfBlues */
++	SCTP_MIB_CHECKSUMERRORS,		/* ChecksumErrors */
++	SCTP_MIB_OUTCTRLCHUNKS,			/* OutCtrlChunks */
++	SCTP_MIB_OUTORDERCHUNKS,		/* OutOrderChunks */
++	SCTP_MIB_OUTUNORDERCHUNKS,		/* OutUnorderChunks */
++	SCTP_MIB_INCTRLCHUNKS,			/* InCtrlChunks */
++	SCTP_MIB_INORDERCHUNKS,			/* InOrderChunks */
++	SCTP_MIB_INUNORDERCHUNKS,		/* InUnorderChunks */
++	SCTP_MIB_FRAGUSRMSGS,			/* FragUsrMsgs */
++	SCTP_MIB_REASMUSRMSGS,			/* ReasmUsrMsgs */
++	SCTP_MIB_OUTSCTPPACKS,			/* OutSCTPPacks */
++	SCTP_MIB_INSCTPPACKS,			/* InSCTPPacks */
++	SCTP_MIB_T1_INIT_EXPIREDS,
++	SCTP_MIB_T1_COOKIE_EXPIREDS,
++	SCTP_MIB_T2_SHUTDOWN_EXPIREDS,
++	SCTP_MIB_T3_RTX_EXPIREDS,
++	SCTP_MIB_T4_RTO_EXPIREDS,
++	SCTP_MIB_T5_SHUTDOWN_GUARD_EXPIREDS,
++	SCTP_MIB_DELAY_SACK_EXPIREDS,
++	SCTP_MIB_AUTOCLOSE_EXPIREDS,
++	SCTP_MIB_T3_RETRANSMITS,
++	SCTP_MIB_PMTUD_RETRANSMITS,
++	SCTP_MIB_FAST_RETRANSMITS,
++	SCTP_MIB_IN_PKT_SOFTIRQ,
++	SCTP_MIB_IN_PKT_BACKLOG,
++	SCTP_MIB_IN_PKT_DISCARDS,
++	SCTP_MIB_IN_DATA_CHUNK_DISCARDS,
++	__SCTP_MIB_MAX
++};
++
++#define SCTP_MIB_MAX    __SCTP_MIB_MAX
++struct sctp_mib {
++        unsigned long   mibs[SCTP_MIB_MAX];
++} __SNMP_MIB_ALIGN__;
++
+ 
+ /* Print debugging messages.  */
+ #if SCTP_DEBUG
+diff -Nur linux-2.6.18-rc5/include/net/sctp/structs.h linux-2.6.19/include/net/sctp/structs.h
+--- linux-2.6.18-rc5/include/net/sctp/structs.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/sctp/structs.h	2006-09-22 10:04:57.000000000 +0200
+@@ -127,9 +127,9 @@
+ 	 * RTO.Alpha		    - 1/8  (3 when converted to right shifts.)
+ 	 * RTO.Beta		    - 1/4  (2 when converted to right shifts.)
+ 	 */
+-	unsigned long rto_initial;
+-	unsigned long rto_min;
+-	unsigned long rto_max;
++	unsigned int rto_initial;
++	unsigned int rto_min;
++	unsigned int rto_max;
+ 
+ 	/* Note: rto_alpha and rto_beta are really defined as inverse
+ 	 * powers of two to facilitate integer operations.
+@@ -144,13 +144,13 @@
+ 	int cookie_preserve_enable;
+ 
+ 	/* Valid.Cookie.Life	    - 60  seconds  */
+-	unsigned long valid_cookie_life;
++	unsigned int valid_cookie_life;
+ 
+ 	/* Delayed SACK timeout  200ms default*/
+-	unsigned long sack_timeout;
++	unsigned int sack_timeout;
+ 
+ 	/* HB.interval		    - 30 seconds  */
+-	unsigned long hb_interval;
++	unsigned int hb_interval;
+ 
+ 	/* Association.Max.Retrans  - 10 attempts
+ 	 * Path.Max.Retrans	    - 5	 attempts (per destination address)
+diff -Nur linux-2.6.18-rc5/include/net/snmp.h linux-2.6.19/include/net/snmp.h
+--- linux-2.6.18-rc5/include/net/snmp.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/snmp.h	2006-09-22 10:04:57.000000000 +0200
+@@ -100,12 +100,6 @@
+ 	unsigned long	mibs[UDP_MIB_MAX];
+ } __SNMP_MIB_ALIGN__;
+ 
+-/* SCTP */
+-#define SCTP_MIB_MAX	__SCTP_MIB_MAX
+-struct sctp_mib {
+-	unsigned long	mibs[SCTP_MIB_MAX];
+-} __SNMP_MIB_ALIGN__;
+-
+ /* Linux */
+ #define LINUX_MIB_MAX	__LINUX_MIB_MAX
+ struct linux_mib {
+diff -Nur linux-2.6.18-rc5/include/net/sock.h linux-2.6.19/include/net/sock.h
+--- linux-2.6.18-rc5/include/net/sock.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/sock.h	2006-09-22 10:04:57.000000000 +0200
+@@ -862,30 +862,24 @@
+  *
+  */
+ 
+-static inline int sk_filter(struct sock *sk, struct sk_buff *skb, int needlock)
++static inline int sk_filter(struct sock *sk, struct sk_buff *skb)
+ {
+ 	int err;
++	struct sk_filter *filter;
+ 	
+ 	err = security_sock_rcv_skb(sk, skb);
+ 	if (err)
+ 		return err;
+ 	
+-	if (sk->sk_filter) {
+-		struct sk_filter *filter;
+-		
+-		if (needlock)
+-			bh_lock_sock(sk);
+-		
+-		filter = sk->sk_filter;
+-		if (filter) {
+-			unsigned int pkt_len = sk_run_filter(skb, filter->insns,
+-							     filter->len);
+-			err = pkt_len ? pskb_trim(skb, pkt_len) : -EPERM;
+-		}
+-
+-		if (needlock)
+-			bh_unlock_sock(sk);
++	rcu_read_lock_bh();
++	filter = sk->sk_filter;
++	if (filter) {
++		unsigned int pkt_len = sk_run_filter(skb, filter->insns,
++				filter->len);
++		err = pkt_len ? pskb_trim(skb, pkt_len) : -EPERM;
+ 	}
++ 	rcu_read_unlock_bh();
++
+ 	return err;
+ }
+ 
+@@ -897,6 +891,12 @@
+  *	Remove a filter from a socket and release its resources.
+  */
+  
++static inline void sk_filter_rcu_free(struct rcu_head *rcu)
++{
++	struct sk_filter *fp = container_of(rcu, struct sk_filter, rcu);
++	kfree(fp);
++}
++
+ static inline void sk_filter_release(struct sock *sk, struct sk_filter *fp)
+ {
+ 	unsigned int size = sk_filter_len(fp);
+@@ -904,7 +904,7 @@
+ 	atomic_sub(size, &sk->sk_omem_alloc);
+ 
+ 	if (atomic_dec_and_test(&fp->refcnt))
+-		kfree(fp);
++		call_rcu_bh(&fp->rcu, sk_filter_rcu_free);
+ }
+ 
+ static inline void sk_filter_charge(struct sock *sk, struct sk_filter *fp)
+@@ -969,9 +969,23 @@
+ 	sk->sk_sleep = &parent->wait;
+ 	parent->sk = sk;
+ 	sk->sk_socket = parent;
++	security_sock_graft(sk, parent);
+ 	write_unlock_bh(&sk->sk_callback_lock);
+ }
+ 
++static inline void sock_copy(struct sock *nsk, const struct sock *osk)
++{
++#ifdef CONFIG_SECURITY_NETWORK
++	void *sptr = nsk->sk_security;
++#endif
++
++	memcpy(nsk, osk, osk->sk_prot->obj_size);
++#ifdef CONFIG_SECURITY_NETWORK
++	nsk->sk_security = sptr;
++	security_sk_clone(osk, nsk);
++#endif
++}
++
+ extern int sock_i_uid(struct sock *sk);
+ extern unsigned long sock_i_ino(struct sock *sk);
+ 
+diff -Nur linux-2.6.18-rc5/include/net/tc_act/tc_defact.h linux-2.6.19/include/net/tc_act/tc_defact.h
+--- linux-2.6.18-rc5/include/net/tc_act/tc_defact.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/tc_act/tc_defact.h	2006-09-22 10:04:57.000000000 +0200
+@@ -3,11 +3,12 @@
+ 
+ #include <net/act_api.h>
+ 
+-struct tcf_defact
+-{
+-	tca_gen(defact);
+-	u32     datalen;
+-	void    *defdata;
++struct tcf_defact {
++	struct tcf_common	common;
++	u32     		tcfd_datalen;
++	void    		*tcfd_defdata;
+ };
++#define to_defact(pc) \
++	container_of(pc, struct tcf_defact, common)
+ 
+-#endif
++#endif /* __NET_TC_DEF_H */
+diff -Nur linux-2.6.18-rc5/include/net/tc_act/tc_gact.h linux-2.6.19/include/net/tc_act/tc_gact.h
+--- linux-2.6.18-rc5/include/net/tc_act/tc_gact.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/tc_act/tc_gact.h	2006-09-22 10:04:57.000000000 +0200
+@@ -3,15 +3,15 @@
+ 
+ #include <net/act_api.h>
+ 
+-struct tcf_gact
+-{
+-        tca_gen(gact);
++struct tcf_gact {
++	struct tcf_common	common;
+ #ifdef CONFIG_GACT_PROB
+-        u16                 ptype;
+-        u16                 pval;
+-        int                 paction;
++        u16			tcfg_ptype;
++        u16			tcfg_pval;
++        int			tcfg_paction;
+ #endif
+-                                                                                
+ };
+-                                                                                
+-#endif
++#define to_gact(pc) \
++	container_of(pc, struct tcf_gact, common)
++
++#endif /* __NET_TC_GACT_H */
+diff -Nur linux-2.6.18-rc5/include/net/tc_act/tc_ipt.h linux-2.6.19/include/net/tc_act/tc_ipt.h
+--- linux-2.6.18-rc5/include/net/tc_act/tc_ipt.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/tc_act/tc_ipt.h	2006-09-22 10:04:57.000000000 +0200
+@@ -5,12 +5,13 @@
+ 
+ struct xt_entry_target;
+ 
+-struct tcf_ipt
+-{
+-	tca_gen(ipt);
+-	u32 hook;
+-	char *tname;
+-	struct xt_entry_target *t;
++struct tcf_ipt {
++	struct tcf_common	common;
++	u32			tcfi_hook;
++	char			*tcfi_tname;
++	struct xt_entry_target	*tcfi_t;
+ };
++#define to_ipt(pc) \
++	container_of(pc, struct tcf_ipt, common)
+ 
+-#endif
++#endif /* __NET_TC_IPT_H */
+diff -Nur linux-2.6.18-rc5/include/net/tc_act/tc_mirred.h linux-2.6.19/include/net/tc_act/tc_mirred.h
+--- linux-2.6.18-rc5/include/net/tc_act/tc_mirred.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/tc_act/tc_mirred.h	2006-09-22 10:04:57.000000000 +0200
+@@ -3,13 +3,14 @@
+ 
+ #include <net/act_api.h>
+ 
+-struct tcf_mirred
+-{
+-	tca_gen(mirred);
+-	int eaction;
+-	int ifindex;
+-	int ok_push;
+-	struct net_device *dev;
++struct tcf_mirred {
++	struct tcf_common	common;
++	int			tcfm_eaction;
++	int			tcfm_ifindex;
++	int			tcfm_ok_push;
++	struct net_device	*tcfm_dev;
+ };
++#define to_mirred(pc) \
++	container_of(pc, struct tcf_mirred, common)
+ 
+-#endif
++#endif /* __NET_TC_MIR_H */
+diff -Nur linux-2.6.18-rc5/include/net/tc_act/tc_pedit.h linux-2.6.19/include/net/tc_act/tc_pedit.h
+--- linux-2.6.18-rc5/include/net/tc_act/tc_pedit.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/tc_act/tc_pedit.h	2006-09-22 10:04:57.000000000 +0200
+@@ -3,12 +3,13 @@
+ 
+ #include <net/act_api.h>
+ 
+-struct tcf_pedit
+-{
+-	tca_gen(pedit);
+-	unsigned char           nkeys;
+-	unsigned char           flags;
+-	struct tc_pedit_key     *keys;
++struct tcf_pedit {
++	struct tcf_common	common;
++	unsigned char		tcfp_nkeys;
++	unsigned char		tcfp_flags;
++	struct tc_pedit_key	*tcfp_keys;
+ };
++#define to_pedit(pc) \
++	container_of(pc, struct tcf_pedit, common)
+ 
+-#endif
++#endif /* __NET_TC_PED_H */
+diff -Nur linux-2.6.18-rc5/include/net/udp.h linux-2.6.19/include/net/udp.h
+--- linux-2.6.18-rc5/include/net/udp.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/udp.h	2006-09-22 10:04:57.000000000 +0200
+@@ -30,25 +30,9 @@
+ 
+ #define UDP_HTABLE_SIZE		128
+ 
+-/* udp.c: This needs to be shared by v4 and v6 because the lookup
+- *        and hashing code needs to work with different AF's yet
+- *        the port space is shared.
+- */
+ extern struct hlist_head udp_hash[UDP_HTABLE_SIZE];
+ extern rwlock_t udp_hash_lock;
+ 
+-extern int udp_port_rover;
+-
+-static inline int udp_lport_inuse(u16 num)
+-{
+-	struct sock *sk;
+-	struct hlist_node *node;
+-
+-	sk_for_each(sk, node, &udp_hash[num & (UDP_HTABLE_SIZE - 1)])
+-		if (inet_sk(sk)->num == num)
+-			return 1;
+-	return 0;
+-}
+ 
+ /* Note: this must match 'valbool' in sock_setsockopt */
+ #define UDP_CSUM_NOXMIT		1
+@@ -63,6 +47,8 @@
+ 
+ struct sk_buff;
+ 
++extern int	udp_get_port(struct sock *sk, unsigned short snum,
++			     int (*saddr_cmp)(const struct sock *, const struct sock *));
+ extern void	udp_err(struct sk_buff *, u32);
+ 
+ extern int	udp_sendmsg(struct kiocb *iocb, struct sock *sk,
+diff -Nur linux-2.6.18-rc5/include/net/xfrm.h linux-2.6.19/include/net/xfrm.h
+--- linux-2.6.18-rc5/include/net/xfrm.h	2006-08-28 05:41:48.000000000 +0200
++++ linux-2.6.19/include/net/xfrm.h	2006-09-22 10:04:57.000000000 +0200
+@@ -10,6 +10,7 @@
+ #include <linux/socket.h>
+ #include <linux/crypto.h>
+ #include <linux/pfkeyv2.h>
++#include <linux/ipsec.h>
+ #include <linux/in6.h>
+ #include <linux/mutex.h>
+ 
+@@ -94,8 +95,9 @@
+ struct xfrm_state
+ {
+ 	/* Note: bydst is re-used during gc */
+-	struct list_head	bydst;
+-	struct list_head	byspi;
++	struct hlist_node	bydst;
++	struct hlist_node	bysrc;
++	struct hlist_node	byspi;
+ 
+ 	atomic_t		refcnt;
+ 	spinlock_t		lock;
+@@ -103,6 +105,8 @@
+ 	struct xfrm_id		id;
+ 	struct xfrm_selector	sel;
+ 
++	u32			genid;
++
+ 	/* Key manger bits */
+ 	struct {
+ 		u8		state;
+@@ -133,6 +137,9 @@
+ 	/* Data for encapsulator */
+ 	struct xfrm_encap_tmpl	*encap;
+ 
++	/* Data for care-of address */
++	xfrm_address_t	*coaddr;
++
+ 	/* IPComp needs an IPIP tunnel for handling uncompressed packets */
+ 	struct xfrm_state	*tunnel;
+ 
+@@ -163,6 +170,9 @@
+ 	struct xfrm_lifetime_cur curlft;
+ 	struct timer_list	timer;
+ 
++	/* Last used time */
++	u64			lastused;
++
+ 	/* Reference to data common to all the instances of this
+ 	 * transformer. */
+ 	struct xfrm_type	*type;
+@@ -196,6 +206,7 @@
+ 		u32 proto;
+ 		u32 byid;
+ 		u32 aevent;
++		u32 type;
+ 	} data;
+ 
+ 	u32	seq;
+@@ -212,6 +223,7 @@
+ 	struct dst_ops		*dst_ops;
+ 	void			(*garbage_collect)(void);
+ 	int			(*dst_lookup)(struct xfrm_dst **dst, struct flowi *fl);
++	int			(*get_saddr)(xfrm_address_t *saddr, xfrm_address_t *daddr);
+ 	struct dst_entry	*(*find_bundle)(struct flowi *fl, struct xfrm_policy *policy);
+ 	int			(*bundle_create)(struct xfrm_policy *policy, 
+ 						 struct xfrm_state **xfrm, 
+@@ -235,16 +247,12 @@
+ 
+ struct xfrm_state_afinfo {
+ 	unsigned short		family;
+-	struct list_head	*state_bydst;
+-	struct list_head	*state_byspi;
+ 	int			(*init_flags)(struct xfrm_state *x);
+ 	void			(*init_tempsel)(struct xfrm_state *x, struct flowi *fl,
+ 						struct xfrm_tmpl *tmpl,
+ 						xfrm_address_t *daddr, xfrm_address_t *saddr);
+-	struct xfrm_state	*(*state_lookup)(xfrm_address_t *daddr, u32 spi, u8 proto);
+-	struct xfrm_state	*(*find_acq)(u8 mode, u32 reqid, u8 proto, 
+-					     xfrm_address_t *daddr, xfrm_address_t *saddr, 
+-					     int create);
++	int			(*tmpl_sort)(struct xfrm_tmpl **dst, struct xfrm_tmpl **src, int n);
++	int			(*state_sort)(struct xfrm_state **dst, struct xfrm_state **src, int n);
+ };
+ 
+ extern int xfrm_state_register_afinfo(struct xfrm_state_afinfo *afinfo);
+@@ -257,11 +265,17 @@
+ 	char			*description;
+ 	struct module		*owner;
+ 	__u8			proto;
++	__u8			flags;
++#define XFRM_TYPE_NON_FRAGMENT	1
+ 
+ 	int			(*init_state)(struct xfrm_state *x);
+ 	void			(*destructor)(struct xfrm_state *);
+ 	int			(*input)(struct xfrm_state *, struct sk_buff *skb);
+ 	int			(*output)(struct xfrm_state *, struct sk_buff *pskb);
++	int			(*reject)(struct xfrm_state *, struct sk_buff *, struct flowi *);
++	int			(*hdr_offset)(struct xfrm_state *, struct sk_buff *, u8 **);
++	xfrm_address_t		*(*local_addr)(struct xfrm_state *, xfrm_address_t *);
++	xfrm_address_t		*(*remote_addr)(struct xfrm_state *, xfrm_address_t *);
+ 	/* Estimate maximal size of result of transformation of a dgram */
+ 	u32			(*get_max_size)(struct xfrm_state *, int size);
+ };
+@@ -273,7 +287,7 @@
+ 
+ struct xfrm_mode {
+ 	int (*input)(struct xfrm_state *x, struct sk_buff *skb);
+-	int (*output)(struct sk_buff *skb);
++	int (*output)(struct xfrm_state *x,struct sk_buff *skb);
+ 
+ 	struct module *owner;
+ 	unsigned int encap;
+@@ -299,7 +313,7 @@
+ 
+ 	__u32			reqid;
+ 
+-/* Mode: transport/tunnel */
++/* Mode: transport, tunnel etc. */
+ 	__u8			mode;
+ 
+ /* Sharing mode: unique, this session only, this user only etc. */
+@@ -314,18 +328,20 @@
+ 	__u32			calgos;
+ };
+ 
+-#define XFRM_MAX_DEPTH		4
++#define XFRM_MAX_DEPTH		6
+ 
+ struct xfrm_policy
+ {
+ 	struct xfrm_policy	*next;
+-	struct list_head	list;
++	struct hlist_node	bydst;
++	struct hlist_node	byidx;
+ 
+ 	/* This lock only affects elements except for entry. */
+ 	rwlock_t		lock;
+ 	atomic_t		refcnt;
+ 	struct timer_list	timer;
+ 
++	u8			type;
+ 	u32			priority;
+ 	u32			index;
+ 	struct xfrm_selector	selector;
+@@ -363,16 +379,16 @@
+ 	char			*id;
+ 	int			(*notify)(struct xfrm_state *x, struct km_event *c);
+ 	int			(*acquire)(struct xfrm_state *x, struct xfrm_tmpl *, struct xfrm_policy *xp, int dir);
+-	struct xfrm_policy	*(*compile_policy)(u16 family, int opt, u8 *data, int len, int *dir);
++	struct xfrm_policy	*(*compile_policy)(struct sock *sk, int opt, u8 *data, int len, int *dir);
+ 	int			(*new_mapping)(struct xfrm_state *x, xfrm_address_t *ipaddr, u16 sport);
+ 	int			(*notify_policy)(struct xfrm_policy *x, int dir, struct km_event *c);
++	int			(*report)(u8 proto, struct xfrm_selector *sel, xfrm_address_t *addr);
+ };
+ 
+ extern int xfrm_register_km(struct xfrm_mgr *km);
+ extern int xfrm_unregister_km(struct xfrm_mgr *km);
+ 
+-
+-extern struct xfrm_policy *xfrm_policy_list[XFRM_POLICY_MAX*2];
++extern unsigned int xfrm_policy_count[XFRM_POLICY_MAX*2];
+ 
+ static inline void xfrm_pol_hold(struct xfrm_policy *policy)
+ {
+@@ -388,67 +404,19 @@
+ 		__xfrm_policy_destroy(policy);
+ }
+ 
+-#define XFRM_DST_HSIZE		1024
+-
+-static __inline__
+-unsigned __xfrm4_dst_hash(xfrm_address_t *addr)
+-{
+-	unsigned h;
+-	h = ntohl(addr->a4);
+-	h = (h ^ (h>>16)) % XFRM_DST_HSIZE;
+-	return h;
+-}
+-
+-static __inline__
+-unsigned __xfrm6_dst_hash(xfrm_address_t *addr)
+-{
+-	unsigned h;
+-	h = ntohl(addr->a6[2]^addr->a6[3]);
+-	h = (h ^ (h>>16)) % XFRM_DST_HSIZE;
+-	return h;
+-}
+-
+-static __inline__
+-unsigned xfrm_dst_hash(xfrm_address_t *addr, unsigned short family)
+-{
+-	switch (family) {
+-	case AF_INET:
+-		return __xfrm4_dst_hash(addr);
+-	case AF_INET6:
+-		return __xfrm6_dst_hash(addr);
+-	}
+-	return 0;
+-}
+-
+-static __inline__
+-unsigned __xfrm4_spi_hash(xfrm_address_t *addr, u32 spi, u8 proto)
++#ifdef CONFIG_XFRM_SUB_POLICY
++static inline void xfrm_pols_put(struct xfrm_policy **pols, int npols)
+ {
+-	unsigned h;
+-	h = ntohl(addr->a4^spi^proto);
+-	h = (h ^ (h>>10) ^ (h>>20)) % XFRM_DST_HSIZE;
+-	return h;
++	int i;
++	for (i = npols - 1; i >= 0; --i)
++		xfrm_pol_put(pols[i]);
+ }
+-
+-static __inline__
+-unsigned __xfrm6_spi_hash(xfrm_address_t *addr, u32 spi, u8 proto)
+-{
+-	unsigned h;
+-	h = ntohl(addr->a6[2]^addr->a6[3]^spi^proto);
+-	h = (h ^ (h>>10) ^ (h>>20)) % XFRM_DST_HSIZE;
+-	return h;
+-}
+-
+-static __inline__
+-unsigned xfrm_spi_hash(xfrm_address_t *addr, u32 spi, u8 proto, unsigned short family)
++#else
++static inline void xfrm_pols_put(struct xfrm_policy **pols, int npols)
+ {
+-	switch (family) {
+-	case AF_INET:
+-		return __xfrm4_spi_hash(addr, spi, proto);
+-	case AF_INET6:
+-		return __xfrm6_spi_hash(addr, spi, proto);
+-	}
+-	return 0;	/*XXX*/
++	xfrm_pol_put(pols[0]);
+ }
++#endif
+ 
+ extern void __xfrm_state_destroy(struct xfrm_state *);
+ 
+@@ -508,6 +476,11 @@
+ 	case IPPROTO_ICMPV6:
+ 		port = htons(fl->fl_icmp_type);
+ 		break;
++#ifdef CONFIG_IPV6_MIP6
++	case IPPROTO_MH:
++		port = htons(fl->fl_mh_type);
++		break;
++#endif
+ 	default:
+ 		port = 0;	/*XXX*/
+ 	}
+@@ -608,6 +581,7 @@
+ 		struct rt6_info		rt6;
+ 	} u;
+ 	struct dst_entry *route;
++	u32 genid;
+ 	u32 route_mtu_cached;
+ 	u32 child_mtu_cached;
+ 	u32 route_cookie;
+@@ -659,6 +633,18 @@
+ }
+ 
+ static inline int
++xfrm_addr_any(xfrm_address_t *addr, unsigned short family)
++{
++	switch (family) {
++	case AF_INET:
++		return addr->a4 == 0;
++	case AF_INET6:
++		return ipv6_addr_any((struct in6_addr *)&addr->a6);
++	}
++	return 0;
++}
++
++static inline int
+ __xfrm4_state_addr_cmp(struct xfrm_tmpl *tmpl, struct xfrm_state *x)
+ {
+ 	return	(tmpl->saddr.a4 &&
+@@ -692,8 +678,8 @@
+ {
+ 	if (sk && sk->sk_policy[XFRM_POLICY_IN])
+ 		return __xfrm_policy_check(sk, dir, skb, family);
+-		
+-	return	(!xfrm_policy_list[dir] && !skb->sp) ||
++
++	return	(!xfrm_policy_count[dir] && !skb->sp) ||
+ 		(skb->dst->flags & DST_NOPOLICY) ||
+ 		__xfrm_policy_check(sk, dir, skb, family);
+ }
+@@ -713,7 +699,7 @@
+ 
+ static inline int xfrm_route_forward(struct sk_buff *skb, unsigned short family)
+ {
+-	return	!xfrm_policy_list[XFRM_POLICY_OUT] ||
++	return	!xfrm_policy_count[XFRM_POLICY_OUT] ||
+ 		(skb->dst->flags & DST_NOXFRM) ||
+ 		__xfrm_route_forward(skb, family);
+ }
+@@ -831,11 +817,36 @@
+ 	return 0;
+ }
+ 
++static __inline__ int
++xfrm_state_addr_flow_check(struct xfrm_state *x, struct flowi *fl,
++			   unsigned short family)
++{
++	switch (family) {
++	case AF_INET:
++		return __xfrm4_state_addr_check(x,
++						(xfrm_address_t *)&fl->fl4_dst,
++						(xfrm_address_t *)&fl->fl4_src);
++	case AF_INET6:
++		return __xfrm6_state_addr_check(x,
++						(xfrm_address_t *)&fl->fl6_dst,
++						(xfrm_address_t *)&fl->fl6_src);
++	}
++	return 0;
++}
++
+ static inline int xfrm_state_kern(struct xfrm_state *x)
+ {
+ 	return atomic_read(&x->tunnel_users);
+ }
+ 
++static inline int xfrm_id_proto_match(u8 proto, u8 userproto)
++{
++	return (!userproto || proto == userproto ||
++		(userproto == IPSEC_PROTO_ANY && (proto == IPPROTO_AH ||
++						  proto == IPPROTO_ESP ||
++						  proto == IPPROTO_COMP)));
++}
++
+ /*
+  * xfrm algorithm information
+  */
+@@ -902,6 +913,25 @@
+ extern int xfrm_state_add(struct xfrm_state *x);
+ extern int xfrm_state_update(struct xfrm_state *x);
+ extern struct xfrm_state *xfrm_state_lookup(xfrm_address_t *daddr, u32 spi, u8 proto, unsigned short family);
++extern struct xfrm_state *xfrm_state_lookup_byaddr(xfrm_address_t *daddr, xfrm_address_t *saddr, u8 proto, unsigned short family);
++#ifdef CONFIG_XFRM_SUB_POLICY
++extern int xfrm_tmpl_sort(struct xfrm_tmpl **dst, struct xfrm_tmpl **src,
++			  int n, unsigned short family);
++extern int xfrm_state_sort(struct xfrm_state **dst, struct xfrm_state **src,
++			   int n, unsigned short family);
++#else
++static inline int xfrm_tmpl_sort(struct xfrm_tmpl **dst, struct xfrm_tmpl **src,
++				 int n, unsigned short family)
++{
++	return -ENOSYS;
++}
++
++static inline int xfrm_state_sort(struct xfrm_state **dst, struct xfrm_state **src,
++				  int n, unsigned short family)
++{
++	return -ENOSYS;
++}
++#endif
+ extern struct xfrm_state *xfrm_find_acq_byseq(u32 seq);
+ extern int xfrm_state_delete(struct xfrm_state *x);
+ extern void xfrm_state_flush(u8 proto);
+@@ -917,12 +947,16 @@
+ extern int xfrm4_tunnel_deregister(struct xfrm_tunnel *handler);
+ extern int xfrm6_rcv_spi(struct sk_buff *skb, u32 spi);
+ extern int xfrm6_rcv(struct sk_buff **pskb);
++extern int xfrm6_input_addr(struct sk_buff *skb, xfrm_address_t *daddr,
++			    xfrm_address_t *saddr, u8 proto);
+ extern int xfrm6_tunnel_register(struct xfrm6_tunnel *handler);
+ extern int xfrm6_tunnel_deregister(struct xfrm6_tunnel *handler);
+ extern u32 xfrm6_tunnel_alloc_spi(xfrm_address_t *saddr);
+ extern void xfrm6_tunnel_free_spi(xfrm_address_t *saddr);
+ extern u32 xfrm6_tunnel_spi_lookup(xfrm_address_t *saddr);
+ extern int xfrm6_output(struct sk_buff *skb);
++extern int xfrm6_find_1stfragopt(struct xfrm_state *x, struct sk_buff *skb,
++				 u8 **prevhdr);
+ 
+ #ifdef CONFIG_XFRM
+ extern int xfrm4_rcv_encap(struct sk_buff *skb, __u16 encap_type);
+@@ -947,27 +981,27 @@
+ #endif
+ 
+ struct xfrm_policy *xfrm_policy_alloc(gfp_t gfp);
+-extern int xfrm_policy_walk(int (*func)(struct xfrm_policy *, int, int, void*), void *);
++extern int xfrm_policy_walk(u8 type, int (*func)(struct xfrm_policy *, int, int, void*), void *);
+ int xfrm_policy_insert(int dir, struct xfrm_policy *policy, int excl);
+-struct xfrm_policy *xfrm_policy_bysel_ctx(int dir, struct xfrm_selector *sel,
++struct xfrm_policy *xfrm_policy_bysel_ctx(u8 type, int dir,
++					  struct xfrm_selector *sel,
+ 					  struct xfrm_sec_ctx *ctx, int delete);
+-struct xfrm_policy *xfrm_policy_byid(int dir, u32 id, int delete);
+-void xfrm_policy_flush(void);
++struct xfrm_policy *xfrm_policy_byid(u8, int dir, u32 id, int delete);
++void xfrm_policy_flush(u8 type);
+ u32 xfrm_get_acqseq(void);
+ void xfrm_alloc_spi(struct xfrm_state *x, u32 minspi, u32 maxspi);
+ struct xfrm_state * xfrm_find_acq(u8 mode, u32 reqid, u8 proto, 
+ 				  xfrm_address_t *daddr, xfrm_address_t *saddr, 
+ 				  int create, unsigned short family);
+-extern void xfrm_policy_flush(void);
++extern void xfrm_policy_flush(u8 type);
+ extern int xfrm_sk_policy_insert(struct sock *sk, int dir, struct xfrm_policy *pol);
+-extern int xfrm_flush_bundles(void);
+-extern void xfrm_flush_all_bundles(void);
+-extern int xfrm_bundle_ok(struct xfrm_dst *xdst, struct flowi *fl, int family);
++extern int xfrm_bundle_ok(struct xfrm_dst *xdst, struct flowi *fl, int family, int strict);
+ extern void xfrm_init_pmtu(struct dst_entry *dst);
+ 
+ extern wait_queue_head_t km_waitq;
+ extern int km_new_mapping(struct xfrm_state *x, xfrm_address_t *ipaddr, u16 sport);
+ extern void km_policy_expired(struct xfrm_policy *pol, int dir, int hard, u32 pid);
++extern int km_report(u8 proto, struct xfrm_selector *sel, xfrm_address_t *addr);
+ 
+ extern void xfrm_input_init(void);
+ extern int xfrm_parse_spi(struct sk_buff *skb, u8 nexthdr, u32 *spi, u32 *seq);
