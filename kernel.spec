@@ -181,6 +181,7 @@ Source47:	kernel-xenU.config
 #	Patches
 ###
 
+Patch0:		linux-net-2.6.19.patch
 #
 # PATA ports on SATA Promise controller; patch based on:
 # http://cvs.fedora.redhat.com/viewcvs/*checkout*/rpms/kernel/devel/linux-2.6-sata-promise-pata-ports.patch
@@ -787,6 +788,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %prep
 %setup -q -n linux-%{_basever}%{_rc} -a10 %{?with_abi:-a14}
 
+%patch0 -p1
+
 %ifarch ppc
 install %{SOURCE5} Makefile.ppclibs
 %endif
@@ -798,7 +801,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch1 -p1
 
 # suspend2:
-%ifnarch ppc
+%ifnarch ppc sparc sparc64
 for i in suspend2-%{suspend_version}-for-*/[0-9]*; do
 patch -p1 -s < $i
 done
