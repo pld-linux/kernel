@@ -880,7 +880,7 @@ done
 %patch57 -p1
 %endif
 
-#%patch60 -p1
+%patch60 -p1
 
 # vserver:
 #%patch100 -p1
