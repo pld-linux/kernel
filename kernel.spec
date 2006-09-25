@@ -4,7 +4,6 @@
 # - all netfilter patches needs update (API changed again)
 # - VESAFB-TNG
 # - IMQ
-# - Vserver
 # - grsecurity
 # - wanpipe
 # - reiser4
@@ -265,10 +264,10 @@ Patch60:	linux-2.6-sk98lin-8.36.1.3.patch
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
 
-# vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.17.11-vs2.1.1-rc31.diff
-#Patch100:	linux-2.6-vs2.1.patch
+# vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.18-vs2.1.1-rc35-t1.diff
+Patch100:	linux-2.6-vs2.1.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
-#Patch102:	linux-2.6-vs2.1-128IPs.patch
+Patch102:	linux-2.6-vs2.1-128IPs.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 #Patch120:	xen-3.0-2.6.16.patch
@@ -884,9 +883,9 @@ done
 %patch60 -p1
 
 # vserver:
-#%patch100 -p1
-#%patch101 -p1
-#%patch102 -p1
+%patch100 -p1
+%patch101 -p1
+%patch102 -p1
 
 #%if %{with xen0} || %{with xenU}
 #%ifarch %{ix86} %{x8664} ia64
