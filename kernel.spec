@@ -92,7 +92,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			1
+%define		_rel			2
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
@@ -259,6 +259,9 @@ Patch60:	linux-2.6-sk98lin-8.32.2.3.patch
 
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
+
+# cx88-blackbird based tv tuner card audio fix
+Patch80:        linux-2.6.17-cx88-tvaudio.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.17.11-vs2.1.1-rc31.diff
 Patch100:	linux-2.6-vs2.1.patch
@@ -882,6 +885,8 @@ done
 %endif
 
 %patch60 -p1
+
+%patch80 -p1
 
 # vserver:
 %patch100 -p1
