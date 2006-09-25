@@ -788,7 +788,8 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %prep
 %setup -q -n linux-%{_basever}%{_rc} -a10 %{?with_abi:-a14}
 
-%patch0 -p1
+# borooken in this time.
+#patch0 -p1
 
 %ifarch ppc
 install %{SOURCE5} Makefile.ppclibs
