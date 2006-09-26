@@ -250,7 +250,8 @@ Patch52:	linux-dmi-decode-and-save-oem-string-information.patch
 # esfq
 # from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
 Patch53:	esfq-kernel.patch
-
+# from http://memebeam.org/free-software/toshiba_acpi/
+Patch54:	linux-2.6-toshiba_acpi_0.18-dev_toshiba_test4.patch
 # by Baggins request:
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch55:	linux-2.6-atm-vbr.patch
@@ -871,7 +872,7 @@ done
 %patch52 -p1
 
 %patch53 -p1
-
+%patch54 -p1
 %patch55 -p1
 %patch56 -p1
 
