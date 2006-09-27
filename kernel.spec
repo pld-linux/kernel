@@ -4,7 +4,7 @@
 # - all netfilter patches needs update (API changed again)
 # - VESAFB-TNG
 # - IMQ
-# - grsecurity
+# - grsecurity_minimal
 # - wanpipe
 # - reiser4
 # - Linux ABI
@@ -282,9 +282,9 @@ Patch2000:	kernel-small_fixes.patch
 #wanpipe 
 #Patch3000:	wanpipe-beta7-2.3.4.patch
 
-# official grsecurity for 2.6.17.7
-# based on http://www.grsecurity.net/grsecurity-2.1.9-2.6.17.11-200608282236.patch.gz
-#Patch9999:	grsecurity-2.1.9-2.6.17.11.patch
+# unofficial grsecurity for 2.6.18
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.18-200609261743.patch
+Patch9999:	grsecurity-2.1.9-2.6.18.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -897,9 +897,9 @@ done
 #%if %{with grsec_minimal}
 #%patch1000 -p1
 #%endif
-#%if %{with grsec_full}
-#%patch9999 -p1
-#%endif
+%if %{with grsec_full}
+%patch9999 -p1
+%endif
 
 %ifarch ppc ppc64
 %patch200 -p1
