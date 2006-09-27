@@ -1,6 +1,8 @@
 #
 # TODO:
 # - all netfilter patches needs update (API changed again)
+# - PaX support cleanup
+# - separate PaX and grsecurity support
 #
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
 #
@@ -12,6 +14,7 @@
 
 %bcond_with	abi		# build ABI support only ix86 !!
 %bcond_with	grsec_full	# build full grsecurity
+%bcond_with	pax		# build PaX and full grsecurity
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	xen0		# added Xen0 support
 %bcond_with	xenU		# added XenU support
@@ -30,6 +33,13 @@
 %if %{without grsecurity}
 %undefine	with_grsec_full
 %undefine	with_grsec_minimal
+%undefine	with_pax
+%endif
+
+%if %{with pax}
+%undefine	with_grsec_minimal
+%undefine	with_grsec_full
+%define		with_grsecurity		1
 %endif
 
 %if %{with grsec_full}
@@ -40,6 +50,7 @@
 %if %{with grsec_minimal}
 %undefine	with_grsec_full
 %define		with_grsecurity		1
+%undefine	with_pax
 %endif
 
 %ifarch sparc
@@ -92,7 +103,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			2
+%define		_rel			3
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
@@ -114,7 +125,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
-Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
+Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 %define		_basever	2.6.17
 %define		_postver	.13
 #define		_postver	%{nil}
@@ -169,6 +180,8 @@ Source45:	kernel-grsec.config
 Source46:	kernel-xen0.config
 Source47:	kernel-xenU.config
 Source48:	kernel-xen-extra.config
+Source49:       kernel-pax.config
+Source50:	kernel-no-pax.config
 
 ###
 #	Patches
@@ -259,6 +272,10 @@ Patch60:	linux-2.6-sk98lin-8.32.2.3.patch
 
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
+
+# ide s3 wakeup for hp nx8220 notebooks
+# from http://hehe.pl/drg/trash/nx8220-s3/
+Patch75:	linux-2.6.15_ide-gtm-stm.diff
 
 # cx88-blackbird based tv tuner card audio fix
 Patch80:        linux-2.6.17-cx88-tvaudio.patch
@@ -886,6 +903,10 @@ done
 
 %patch60 -p1
 
+# ide s3 wakeup on hp nx8220
+%patch75 -p1 
+
+# cx88-tvaudio
 %patch80 -p1
 
 # vserver:
@@ -903,6 +924,10 @@ done
 %patch1000 -p1
 %endif
 %if %{with grsec_full}
+%patch9999 -p1
+%endif
+
+%if %{with pax}
 %patch9999 -p1
 %endif
 
@@ -1031,6 +1056,12 @@ BuildConfig() {
 
 %if %{with grsecurity}
 	cat %{SOURCE45} >> arch/%{_target_base_arch}/defconfig
+%endif
+
+%if %{with pax}
+	cat %{SOURCE49} >> arch/%{_target_base_arch}/defconfig
+%else
+	cat %{SOURCE50} >> arch/%{_target_base_arch}/defconfig
 %endif
 
 %if %{with xen0} || %{with xenU}
@@ -1330,7 +1361,7 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title='PLD Linux'
 	fi
 
-	ext='%{?with_grsec_full:grsecurity}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
+	ext='%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
 	if [ "$ext" ]; then
 		title="$title $ext"
 	fi
@@ -1402,7 +1433,7 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title='PLD Linux'
 	fi
 
-	ext='%{?with_grsec_full:grsecurity}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
+	ext='%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
 	if [ "$ext" ]; then
 		title="$title $ext"
 	fi
