@@ -112,7 +112,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			1
+%define		_rel			2
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
@@ -1023,16 +1023,20 @@ BuildKernel() {
 %ifarch sparc sparc64
 %ifarch sparc64
 	%{__make} $CrossOpts image \
+		CC="%{__cc}" \
 		%{?with_verbose:V=1}
 
 	%{__make} $CrossOpts modules \
+		CC="%{__cc}" \
 		%{?with_verbose:V=1}
 %else
 	sparc32 %{__make} \
+		CC="%{__cc}" \
 		%{?with_verbose:V=1}
 %endif
 %else
 	%{__make} $CrossOpts \
+		CC="%{__cc}" \
 %if %{with xen0} || %{with xenU}
 		SHELL=/bin/bash \
 %endif
