@@ -358,6 +358,24 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		initrd_dir	/boot
 %endif
 
+%if "%{_target_base_arch}" != "%{_arch}"
+	%define	CrossOpts ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-
+	%define	DepMod /bin/true
+
+	%if "%{_arch}" == "sparc" && "%{_target_base_arch}" == "sparc64"
+	%define	DepMod /sbin/depmod
+	%endif
+
+	%if "%{_arch}" == "x86_64" && "%{_target_base_arch}" == "i386"
+	%define	CrossOpts ARCH=%{_target_base_arch}
+	%define	DepMod /sbin/depmod
+	%endif
+
+%else
+	%define CrossOpts CC="%{__cc}"
+	%define	DepMod /sbin/depmod
+%endif
+
 %description
 This package contains the Linux kernel that is used to boot and run
 your system. It contains few device drivers for specific hardware.
@@ -881,21 +899,6 @@ TuneUpConfigForIX86 () {
 %endif
 }
 
-%if "%{_target_base_arch}" != "%{_arch}"
-	CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
-	DepMod=/bin/true
-	%if "%{_arch}" == "sparc" && "%{_target_base_arch}" == "sparc64"
-	DepMod=/sbin/depmod
-	%endif
-	%if "%{_arch}" == "x86_64" && "%{_target_base_arch}" == "i386"
-	CrossOpts="ARCH=%{_target_base_arch}"
-	DepMod=/sbin/depmod
-	%endif
-%else
-	CrossOpts=""
-	DepMod=/sbin/depmod
-%endif
-
 BuildConfig() {
 	%{?debug:set -x}
 	# is this a special kernel we want to build?
@@ -988,7 +991,7 @@ BuildConfig() {
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
 	rm -f include/linux/autoconf.h
-	%{__make} $CrossOpts include/linux/autoconf.h
+	%{__make} %CrossOpts include/linux/autoconf.h
 	if [ "$smp" = "yes" ]; then
 		install include/linux/autoconf.h \
 			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
@@ -1005,7 +1008,7 @@ BuildConfig() {
 BuildKernel() {
 	%{?debug:set -x}
 	echo "Building kernel $1 ..."
-	%{__make} $CrossOpts mrproper \
+	%{__make} %CrossOpts mrproper \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 
@@ -1013,30 +1016,26 @@ BuildKernel() {
 	sparc32 %{__make} clean \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 %else
-	%{__make} $CrossOpts clean \
+	%{__make} %CrossOpts clean \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 %endif
-	%{__make} $CrossOpts include/linux/version.h \
+	%{__make} %CrossOpts include/linux/version.h \
 		%{?with_verbose:V=1}
 
 # make does vmlinux, modules and bzImage at once
 %ifarch sparc sparc64
 %ifarch sparc64
-	%{__make} $CrossOpts image \
-		CC="%{__cc}" \
+	%{__make} %CrossOpts image \
 		%{?with_verbose:V=1}
 
-	%{__make} $CrossOpts modules \
-		CC="%{__cc}" \
+	%{__make} %CrossOpts modules \
 		%{?with_verbose:V=1}
 %else
 	sparc32 %{__make} \
-		CC="%{__cc}" \
 		%{?with_verbose:V=1}
 %endif
 %else
-	%{__make} $CrossOpts \
-		CC="%{__cc}" \
+	%{__make} %CrossOpts \
 %if %{with xen0} || %{with xenU}
 		SHELL=/bin/bash \
 %endif
@@ -1091,7 +1090,7 @@ PreInstallKernel() {
 	install vmlinuz $KERNEL_INSTALL_DIR/boot/efi/vmlinuz-$KernelVer
 	ln -sf efi/vmlinuz-$KernelVer $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
-	%{__make} $CrossOpts modules_install \
+	%{__make} %CrossOpts modules_install \
 		%{?with_verbose:V=1} \
 		DEPMOD=$DepMod \
 		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
@@ -1106,10 +1105,11 @@ PreInstallKernel() {
 	fi
 
 	echo "CHECKING DEPENDENCIES FOR KERNEL MODULES"
-	[ -z "$CrossOpts" ] && \
-	/sbin/depmod --basedir $KERNEL_INSTALL_DIR -ae -F $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer -r $KernelVer || echo
-	[ ! -z "$CrossOpts" ] && \
-	touch $KERNEL_INSTALL_DIR/lib/modules/$KernelVer/modules.dep
+	if [ $DepMod = /sbin/depmod ]; then
+		/sbin/depmod --basedir $KERNEL_INSTALL_DIR -ae -F $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer -r $KernelVer || :
+	else
+		touch $KERNEL_INSTALL_DIR/lib/modules/$KernelVer/modules.dep
+	fi
 	echo "KERNEL RELEASE $KernelVer DONE"
 }
 
@@ -1139,19 +1139,7 @@ PreInstallKernel smp
 rm -rf $RPM_BUILD_ROOT
 umask 022
 
-%if "%{_target_base_arch}" != "%{_arch}"
-	CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
-	export DEPMOD=/bin/true
-	%if "%{_arch}" == "sparc" && "%{_target_base_arch}" == "sparc64"
-	unset DEPMOD
-	%endif
-	%if "%{_arch}" == "x86_64" && "%{_target_base_arch}" == "i386"
-	CrossOpts="ARCH=%{_target_base_arch}"
-	unset DEPMOD
-	%endif
-%else
-	CrossOpts=""
-%endif
+export DEPMOD=%DepMod
 
 install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{version}-%{release}%{xen}{,smp}
@@ -1177,7 +1165,7 @@ find . -maxdepth 1 ! -name "build-done" ! -name "." -exec cp -a "{}" "$RPM_BUILD
 
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
 
-%{__make} $CrossOpts mrproper \
+%{__make} %CrossOpts mrproper \
 	RCS_FIND_IGNORE='-name build-done -prune -o'
 
 if [ -e $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h ]; then
@@ -1200,8 +1188,8 @@ install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{version}/include/l
 	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 %endif
 
-%{__make} $CrossOpts mrproper
-%{__make} $CrossOpts include/linux/version.h
+%{__make} %CrossOpts mrproper
+%{__make} %CrossOpts include/linux/version.h
 install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
 install %{SOURCE2} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/config.h
 
