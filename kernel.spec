@@ -77,7 +77,7 @@
 %define		have_oss	0
 %endif
 
-%if %{with xen0} 
+%if %{with xen0}
 %define		xen	xen0
 %define		dashxen	\-xen0
 %define		pae	1
@@ -129,13 +129,13 @@
 
 %define		xen_version		3.0.2
 
+%define		_basever	2.6.16
+%define		_postver	.29
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
-%define		_basever	2.6.16
-%define		_postver	.29
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
@@ -294,7 +294,6 @@ URL:		http://www.kernel.org/
 BuildRequires:	bash
 %endif
 BuildRequires:	binutils >= 3:2.14.90.0.7
-BuildRequires:	diffutils
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
@@ -650,6 +649,7 @@ Summary:	Development files for building kernel modules
 Summary(pl):	Pliki s³u¿±ce do budowania modu³ów j±dra
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
+Provides:	kernel-module-build = %{epoch}:%{_basever}
 Provides:	kernel-module-build = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
@@ -960,12 +960,12 @@ BuildConfig() {
 
 %if %{with xen0}
 	cat %{SOURCE46} >> arch/%{_target_base_arch}/defconfig
-%endif	
+%endif
 
 %if %{with xenU}
 	cat %{SOURCE47} >> arch/%{_target_base_arch}/defconfig
-%endif	
-	
+%endif
+
 	# fbsplash
 	echo "CONFIG_FB_SPLASH=y" >> arch/%{_target_base_arch}/defconfig
 	# bootsplash
