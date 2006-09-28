@@ -42,26 +42,10 @@ diff -urN linux-2.6.16.2/drivers/char/keyboard.c linux-2.6.16.2-grsec/drivers/ch
  	fn_handler[value](vc, regs);
  }
  
-diff -urN linux-2.6.16.2/drivers/pci/proc.c linux-2.6.16.2-grsec/drivers/pci/proc.c
+diff -urNp linux-2.6.16.2/drivers/pci/proc.c linux-2.6.16.2-grsec/drivers/pci/proc.c
 --- linux-2.6.16.2/drivers/pci/proc.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/drivers/pci/proc.c	2006-04-11 17:44:40.073707250 +0200
-@@ -407,7 +407,15 @@
- 	}
- 
- 	sprintf(name, "%02x.%x", PCI_SLOT(dev->devfn), PCI_FUNC(dev->devfn));
-+#ifdef CONFIG_GRKERNSEC_PROC_ADD
-+#ifdef CONFIG_GRKERNSEC_PROC_USER
-+	e = create_proc_entry(name, S_IFREG | S_IRUGO | S_IWUSR | S_IRUSR, bus->procdir);
-+#elif CONFIG_GRKERNSEC_PROC_USERGROUP
-+	e = create_proc_entry(name, S_IFREG | S_IRUGO | S_IWUSR | S_IRUSR | S_IRGRP, bus->procdir);
-+#endif
-+#else
- 	e = create_proc_entry(name, S_IFREG | S_IRUGO | S_IWUSR, bus->procdir);
-+#endif
- 	if (!e)
- 		return -ENOMEM;
- 	e->proc_fops = &proc_bus_pci_operations;
-@@ -473,7 +481,15 @@
+@@ -467,7 +467,15 @@ static int __init pci_proc_init(void)
  {
  	struct proc_dir_entry *entry;
  	struct pci_dev *dev = NULL;
@@ -77,10 +61,10 @@ diff -urN linux-2.6.16.2/drivers/pci/proc.c linux-2.6.16.2-grsec/drivers/pci/pro
  	entry = create_proc_entry("devices", 0, proc_bus_pci_dir);
  	if (entry)
  		entry->proc_fops = &proc_bus_pci_dev_operations;
-diff -urN linux-2.6.16.2/fs/Kconfig linux-2.6.16.2-grsec/fs/Kconfig
+diff -urNp linux-2.6.16.2/fs/Kconfig linux-2.6.16.2-grsec/fs/Kconfig
 --- linux-2.6.16.2/fs/Kconfig	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/fs/Kconfig	2006-04-11 17:44:40.073707250 +0200
-@@ -794,7 +794,7 @@
+@@ -817,7 +817,7 @@ config PROC_FS
  
  config PROC_KCORE
  	bool "/proc/kcore support" if !ARM
@@ -126,8 +110,8 @@ diff -urN linux-2.6.16.2/fs/namei.c linux-2.6.16.2-grsec/fs/namei.c
 +	}
 +
  	mutex_unlock(&dir->d_inode->i_mutex);
+ 	audit_inode_update(path.dentry->d_inode);
  
- 	error = -EEXIST;
 @@ -1700,6 +1715,13 @@
  	error = security_inode_follow_link(path.dentry, nd);
  	if (error)
@@ -140,8 +124,8 @@ diff -urN linux-2.6.16.2/fs/namei.c linux-2.6.16.2-grsec/fs/namei.c
 +	}
 +
  	error = __do_follow_link(&path, nd);
- 	if (error)
- 		return error;
+ 	if (error) {
+ 		/* Does someone understand code flow here? Or it is only
 @@ -2251,8 +2273,14 @@
  	new_dentry = lookup_create(&nd, 0);
  	error = PTR_ERR(new_dentry);
@@ -177,11 +161,13 @@ diff -urN linux-2.6.16.2/fs/proc/array.c linux-2.6.16.2-grsec/fs/proc/array.c
 +}
 +#endif
 +
-diff -urN linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
+diff -urNp linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
 --- linux-2.6.16.2/fs/proc/base.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/fs/proc/base.c	2006-04-11 17:44:40.077707500 +0200
-@@ -124,6 +124,9 @@
+@@ -141,6 +141,9 @@ enum pid_directory_inos {
  #ifdef CONFIG_AUDITSYSCALL
+b
+b
  	PROC_TGID_LOGINUID,
  #endif
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
@@ -190,18 +176,17 @@ diff -urN linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
  	PROC_TGID_OOM_SCORE,
  	PROC_TGID_OOM_ADJUST,
  	PROC_TID_INO,
-@@ -201,7 +204,10 @@
- 	E(PROC_TGID_ROOT,      "root",    S_IFLNK|S_IRWXUGO),
+@@ -227,6 +230,9 @@ static struct pid_entry tgid_base_stuff[
  	E(PROC_TGID_EXE,       "exe",     S_IFLNK|S_IRWXUGO),
  	E(PROC_TGID_MOUNTS,    "mounts",  S_IFREG|S_IRUGO),
  	E(PROC_TGID_MOUNTSTATS, "mountstats", S_IFREG|S_IRUSR),
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
-+	E(PROC_TGID_IPADDR,     "ipaddr",  S_IFREG|S_IRUSR),
++	E(PROC_TGID_IPADDR,	"ipaddr",  S_IFREG|S_IRUSR),
 +#endif
  #ifdef CONFIG_MMU
  	E(PROC_TGID_SMAPS,     "smaps",   S_IFREG|S_IRUGO),
  #endif
-@@ -1330,6 +1336,9 @@
+@@ -1344,6 +1350,9 @@ static struct inode *proc_pid_make_inode
  	}
  	/* procfs is xid tagged */
  	inode->i_tag = (tag_t)vx_task_xid(task);
@@ -211,9 +196,9 @@ diff -urN linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
  	security_task_to_inode(task, inode);
  
  out:
-@@ -1358,7 +1367,9 @@
- 	if (pid_alive(task)) {
- 		if (proc_type(inode) == PROC_TGID_INO || proc_type(inode) == PROC_TID_INO || task_dumpable(task)) {
+@@ -1386,7 +1395,9 @@ static int pid_revalidate(struct dentry
+ 		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
+ 		    task_dumpable(task)) {
  			inode->i_uid = task->euid;
 +#ifndef CONFIG_GRKERNSEC_PROC_USERGROUP
  			inode->i_gid = task->egid;
@@ -221,7 +206,7 @@ diff -urN linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
  		} else {
  			inode->i_uid = 0;
  			inode->i_gid = 0;
-@@ -1681,6 +1692,12 @@
+@@ -1756,6 +1767,12 @@ static struct dentry *proc_pident_lookup
  			inode->i_fop = &proc_info_file_operations;
  			ei->op.proc_read = proc_pid_status;
  			break;
@@ -234,9 +219,9 @@ diff -urN linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
  		case PROC_TID_STAT:
  			inode->i_fop = &proc_info_file_operations;
  			ei->op.proc_read = proc_tid_stat;
-@@ -1985,11 +2002,29 @@
- 	if (!proc_pid_visible(task, tgid))
- 		goto out_drop_task;
+@@ -2126,6 +2143,17 @@ struct dentry *proc_pid_lookup(struct in
+ 	if (!task)
+ 		goto out;
  
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	if (current->uid && (task->uid != current->uid)
@@ -251,48 +236,11 @@ diff -urN linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
 +
  	inode = proc_pid_make_inode(dir->i_sb, task, PROC_TGID_INO);
  	if (!inode)
- 		goto out_drop_task;
- 
-+#ifdef CONFIG_GRKERNSEC_PROC_USER
-+	inode->i_mode = S_IFDIR|S_IRUSR|S_IXUSR;
-+#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+	inode->i_mode = S_IFDIR|S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP;
-+	inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
-+#else
- 	inode->i_mode = S_IFDIR|S_IRUGO|S_IXUGO;
-+#endif
- 	inode->i_op = &proc_tgid_base_inode_operations;
- 	inode->i_fop = &proc_tgid_base_operations;
- 	inode->i_flags|=S_IMMUTABLE;
-@@ -2084,6 +2120,9 @@
- static int get_tgid_list(int index, unsigned long version, unsigned int *tgids)
- {
- 	struct task_struct *p;
-+#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+	struct task_struct *tmp = current;
-+#endif
- 	int nr_tgids = 0;
- 
- 	index--;
-@@ -2104,6 +2143,14 @@
- 		/* check for context visibility */
- 		if (!proc_pid_visible(p, tgid))
- 			continue;
-+#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+		if (tmp->uid && (p->uid != tmp->uid)
-+#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+		    && !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
-+#endif
-+		)
-+			continue;
-+#endif
- 		if (--index >= 0)
- 			continue;
- 		tgids[nr_tgids] = vx_map_tgid(tgid);
-diff -urN linux-2.6.16.2/fs/proc/inode.c linux-2.6.16.2-grsec/fs/proc/inode.c
+ 		goto out_put_task;
+diff -urNp linux-2.6.16.2/fs/proc/inode.c linux-2.6.16.2-grsec/fs/proc/inode.c
 --- linux-2.6.16.2/fs/proc/inode.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/fs/proc/inode.c	2006-04-11 17:44:40.077707500 +0200
-@@ -168,7 +168,11 @@
+@@ -166,7 +166,11 @@ struct inode *proc_get_inode(struct supe
  		if (de->mode) {
  			inode->i_mode = de->mode;
  			inode->i_uid = de->uid;
@@ -304,10 +252,10 @@ diff -urN linux-2.6.16.2/fs/proc/inode.c linux-2.6.16.2-grsec/fs/proc/inode.c
  		}
  		if (de->vx_flags)
  			PROC_I(inode)->vx_flags = de->vx_flags;
-diff -urN linux-2.6.16.2/fs/proc/internal.h linux-2.6.16.2-grsec/fs/proc/internal.h
+diff -urNp linux-2.6.16.2/fs/proc/internal.h linux-2.6.16.2-grsec/fs/proc/internal.h
 --- linux-2.6.16.2/fs/proc/internal.h	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/fs/proc/internal.h	2006-04-11 17:44:40.077707500 +0200
-@@ -36,6 +36,9 @@
+@@ -36,6 +36,9 @@ extern int proc_tid_stat(struct task_str
  extern int proc_tgid_stat(struct task_struct *, char *);
  extern int proc_pid_status(struct task_struct *, char *);
  extern int proc_pid_statm(struct task_struct *, char *);
@@ -315,8 +263,8 @@ diff -urN linux-2.6.16.2/fs/proc/internal.h linux-2.6.16.2-grsec/fs/proc/interna
 +extern int proc_pid_ipaddr(struct task_struct*,char*);
 +#endif
  
- void free_proc_entry(struct proc_dir_entry *de);
- 
+ extern struct file_operations proc_maps_operations;
+ extern struct file_operations proc_numa_maps_operations;
 diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_misc.c
 --- linux-2.6.16.2/fs/proc/proc_misc.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/fs/proc/proc_misc.c	2006-04-11 17:44:40.109709500 +0200
@@ -1042,12 +990,12 @@ diff -urN linux-2.6.16.2/include/linux/grsecurity.h linux-2.6.16.2-grsec/include
 +#endif
 +
 +#endif
-diff -urN linux-2.6.16.2/include/linux/sched.h linux-2.6.16.2-grsec/include/linux/sched.h
+diff -urNp linux-2.6.16.2/include/linux/sched.h linux-2.6.16.2-grsec/include/linux/sched.h
 --- linux-2.6.16.2/include/linux/sched.h	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/include/linux/sched.h	2006-04-11 19:14:15.574530750 +0200
-@@ -454,6 +454,13 @@
- 	struct key *session_keyring;	/* keyring inherited over fork */
- 	struct key *process_keyring;	/* keyring private to this process */
+@@ -474,6 +474,13 @@ struct signal_struct {
+ 	spinlock_t stats_lock;
+ 	struct taskstats *stats;
  #endif
 +#ifdef CONFIG_GRKERNSEC
 +	u32 curr_ip;
@@ -1086,18 +1034,18 @@ diff -urN linux-2.6.16.2/include/linux/sysctl.h linux-2.6.16.2-grsec/include/lin
  	VM_UNUSED1=1,		/* was: struct: Set vm swapping control */
  	VM_UNUSED2=2,		/* was; int: Linear or sqrt() swapout for hogs */
  	VM_UNUSED3=3,		/* was: struct: Set free page thresholds */
-diff -urN linux-2.6.16.2/ipc/shm.c linux-2.6.16.2-grsec/ipc/shm.c
+diff -urNp linux-2.6.16.2/ipc/shm.c linux-2.6.16.2-grsec/ipc/shm.c
 --- linux-2.6.16.2/ipc/shm.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/ipc/shm.c	2006-04-11 17:44:40.121710250 +0200
-@@ -30,6 +30,7 @@
- #include <linux/seq_file.h>
+@@ -34,6 +34,7 @@
+ #include <linux/mutex.h>
  #include <linux/vs_context.h>
  #include <linux/vs_limit.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
  
-@@ -146,6 +147,17 @@
+@@ -156,6 +157,17 @@ static void shm_close (struct vm_area_st
  	shp->shm_lprid = current->tgid;
  	shp->shm_dtim = get_seconds();
  	shp->shm_nattch--;
@@ -1115,7 +1063,7 @@ diff -urN linux-2.6.16.2/ipc/shm.c linux-2.6.16.2-grsec/ipc/shm.c
  	if(shp->shm_nattch == 0 &&
  	   shp->shm_perm.mode & SHM_DEST)
  		shm_destroy (shp);
-@@ -243,6 +255,9 @@
+@@ -258,6 +270,9 @@ static int newseg (key_t key, int shmflg
  	shp->shm_lprid = 0;
  	shp->shm_atim = shp->shm_dtim = 0;
  	shp->shm_ctim = get_seconds();
@@ -1125,7 +1073,7 @@ diff -urN linux-2.6.16.2/ipc/shm.c linux-2.6.16.2-grsec/ipc/shm.c
  	shp->shm_segsz = size;
  	shp->shm_nattch = 0;
  	shp->id = shm_buildid(id,shp->shm_perm.seq);
-@@ -750,6 +765,11 @@
+@@ -774,6 +789,11 @@ long do_shmat(int shmid, char __user *sh
  	file = shp->shm_file;
  	size = i_size_read(file->f_dentry->d_inode);
  	shp->shm_nattch++;
@@ -1137,7 +1085,7 @@ diff -urN linux-2.6.16.2/ipc/shm.c linux-2.6.16.2-grsec/ipc/shm.c
  	shm_unlock(shp);
  
  	down_write(&current->mm->mmap_sem);
-@@ -916,3 +936,24 @@
+@@ -946,3 +966,24 @@ static int sysvipc_shm_proc_show(struct
  			  shp->shm_ctim);
  }
  #endif
@@ -1166,9 +1114,9 @@ diff -urN linux-2.6.16.2/kernel/exit.c linux-2.6.16.2-grsec/kernel/exit.c
 --- linux-2.6.16.2/kernel/exit.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/kernel/exit.c	2006-04-11 17:44:40.125710500 +0200
 @@ -36,6 +36,7 @@
- #include <linux/compat.h>
  #include <linux/pipe_fs_i.h>
  #include <linux/audit.h> /* for audit_free() */
+ #include <linux/resource.h>
 +#include <linux/grsecurity.h>
  #include <linux/vs_limit.h>
  #include <linux/vs_context.h>
@@ -1184,7 +1132,7 @@ diff -urN linux-2.6.16.2/kernel/exit.c linux-2.6.16.2-grsec/kernel/exit.c
 diff -urN linux-2.6.16.2/kernel/sysctl.c linux-2.6.16.2-grsec/kernel/sysctl.c
 --- linux-2.6.16.2/kernel/sysctl.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/kernel/sysctl.c	2006-04-11 17:44:40.125710500 +0200
-@@ -54,6 +54,11 @@
+@@ -54,6 +54,11 @@ extern int proc_nr_files(ctl_table *tabl
                       void __user *buffer, size_t *lenp, loff_t *ppos);
  
  #if defined(CONFIG_SYSCTL)
@@ -1196,7 +1144,7 @@ diff -urN linux-2.6.16.2/kernel/sysctl.c linux-2.6.16.2-grsec/kernel/sysctl.c
  
  /* External variables not in a header file. */
  extern int C_A_D;
-@@ -157,6 +162,7 @@
+@@ -163,6 +168,7 @@ extern ctl_table inotify_table[];
  #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
  int sysctl_legacy_va_layout;
  #endif
@@ -1204,8 +1152,8 @@ diff -urN linux-2.6.16.2/kernel/sysctl.c linux-2.6.16.2-grsec/kernel/sysctl.c
  
  /* /proc declarations: */
  
-@@ -683,6 +689,16 @@
- 		.proc_handler	= &proc_dointvec,
+@@ -972,6 +978,16 @@ static ctl_table vm_table[] = {
+ 		.extra1		= &zero,
  	},
  #endif
 +
@@ -1221,7 +1169,7 @@ diff -urN linux-2.6.16.2/kernel/sysctl.c linux-2.6.16.2-grsec/kernel/sysctl.c
  	{ .ctl_name = 0 }
  };
  
-@@ -1181,6 +1197,8 @@
+@@ -1233,6 +1249,8 @@ static int test_perm(int mode, int op)
  static inline int ctl_perm(ctl_table *table, int op)
  {
  	int error;
@@ -1230,7 +1178,7 @@ diff -urN linux-2.6.16.2/kernel/sysctl.c linux-2.6.16.2-grsec/kernel/sysctl.c
  	error = security_sysctl(table, op);
  	if (error)
  		return error;
-diff -urN linux-2.6.16.2/net/ipv4/inet_hashtables.c linux-2.6.16.2-grsec/net/ipv4/inet_hashtables.c
+diff -urNp linux-2.6.16.2/net/ipv4/inet_hashtables.c linux-2.6.16.2-grsec/net/ipv4/inet_hashtables.c
 --- linux-2.6.16.2/net/ipv4/inet_hashtables.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/net/ipv4/inet_hashtables.c	2006-04-11 17:44:40.125710500 +0200
 @@ -19,11 +19,14 @@
@@ -1248,19 +1196,19 @@ diff -urN linux-2.6.16.2/net/ipv4/inet_hashtables.c linux-2.6.16.2-grsec/net/ipv
  /*
   * Allocate and initialize a new local port bind bucket.
   * The bindhash mutex for snum's hash chain must be held here.
-@@ -314,6 +317,8 @@
+@@ -308,6 +311,8 @@ ok:
   		}
   		spin_unlock(&head->lock);
  
 +		gr_update_task_in_ip_table(current, inet_sk(sk));
 +
   		if (tw) {
-  			inet_twsk_deschedule(tw, death_row);;
+  			inet_twsk_deschedule(tw, death_row);
   			inet_twsk_put(tw);
-diff -urN linux-2.6.16.2/net/socket.c linux-2.6.16.2-grsec/net/socket.c
+diff -urNp linux-2.6.16.2/net/socket.c linux-2.6.16.2-grsec/net/socket.c
 --- linux-2.6.16.2/net/socket.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/net/socket.c	2006-04-11 17:44:40.125710500 +0200
-@@ -85,6 +85,7 @@
+@@ -84,6 +84,7 @@
  #include <linux/compat.h>
  #include <linux/kmod.h>
  #include <linux/audit.h>
@@ -1268,7 +1216,7 @@ diff -urN linux-2.6.16.2/net/socket.c linux-2.6.16.2-grsec/net/socket.c
  #include <linux/wireless.h>
  
  #include <asm/uaccess.h>
-@@ -97,6 +98,7 @@
+@@ -95,6 +96,7 @@
  #include <linux/netfilter.h>
  #include <linux/vs_socket.h>
  
@@ -1276,14 +1224,14 @@ diff -urN linux-2.6.16.2/net/socket.c linux-2.6.16.2-grsec/net/socket.c
  static int sock_no_open(struct inode *irrelevant, struct file *dontcare);
  static ssize_t sock_aio_read(struct kiocb *iocb, char __user *buf,
  			 size_t size, loff_t pos);
-@@ -1396,6 +1398,7 @@
- 		goto out_release;
+@@ -1482,6 +1484,7 @@ asmlinkage long sys_accept(int fd, struc
+ 	err = newfd;
  
  	security_socket_post_accept(sock, newsock);
 +	gr_attach_curr_ip(newsock->sk);
  
  out_put:
- 	sockfd_put(sock);
+ 	fput_light(sock->file, fput_needed);
 diff -urN linux-2.6.16.2/security/Kconfig linux-2.6.16.2-grsec/security/Kconfig
 --- linux-2.6.16.2/security/Kconfig	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/security/Kconfig	2006-04-11 17:44:40.129710750 +0200
