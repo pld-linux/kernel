@@ -163,20 +163,21 @@ software suspend works only on ix86 platforms
 %define		pcmcia_version		3.1.22
 %define		drm_xfree_version	4.3.0
 
+%define		_basever	2.6.14
+%define		_postver	.7
+#define		_postver	%{nil}
+%define		_rc	%{nil}
+#define		_rc	-rc5
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsecurity:-grsecurity}%{?with_omosix:-openmosix}%{?with_vserver:-vserver}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_preemptive:-preempt}
-%define		_postver	.7
-#define		_postver	%{nil}
-Version:	2.6.14%{_postver}
+Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-%define		_rc	%{nil}
-#define		_rc	-rc5
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 # Source0-md5:	cdc8b60949f1cea6634fd9cfe9670ada
@@ -373,7 +374,6 @@ Patch402:	linux-em8300-2.6.11.2.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 2.14.90.0.7
-BuildRequires:	diffutils
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
@@ -383,11 +383,11 @@ BuildRequires:	net-tools
 BuildRequires:	perl-base
 BuildRequires:	rpmbuild(macros) >= 1.217
 Autoreqprov:	no
-PreReq:		coreutils
-PreReq:		module-init-tools >= 0.9.9
-PreReq:		geninitrd >= 2.57
-Provides:	kernel = %{epoch}:%{version}-%{release}
+Requires:	coreutils
+Requires:	geninitrd >= 2.57
+Requires:	module-init-tools >= 0.9.9
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
+Provides:	kernel = %{epoch}:%{version}-%{release}
 Provides:	kernel(netfilter) = %{_netfilter_snap}
 Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
 Provides:	kernel(realtime-lsm) = 0.1.1
@@ -401,20 +401,20 @@ Obsoletes:	kernel-misc-fuse
 Obsoletes:	kernel-modules
 Obsoletes:	kernel-net-hostap
 Obsoletes:	kernel-net-ieee80211
-Conflicts:	util-linux < %{_util_linux_ver}
-Conflicts:	module-init-tool < %{_module_init_tool_ver}
-Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
-Conflicts:	jfsutils < %{_jfsutils_ver}
-Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
-Conflicts:	reiser4progs < %{_reiser4progs_ver}
-Conflicts:	xfsprogs < %{_xfsprogs_ver}
-Conflicts:	quota-tools < %{_quota_tools_ver}
 Conflicts:	PPP < %{_PPP_ver}
+Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
 Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
+Conflicts:	jfsutils < %{_jfsutils_ver}
+Conflicts:	module-init-tool < %{_module_init_tool_ver}
 Conflicts:	nfs-utils < %{_nfs_utils_ver}
-Conflicts:	procps < %{_procps_ver}
 Conflicts:	oprofile < %{_oprofile_ver}
+Conflicts:	procps < %{_procps_ver}
+Conflicts:	quota-tools < %{_quota_tools_ver}
+Conflicts:	reiser4progs < %{_reiser4progs_ver}
+Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
 Conflicts:	udev < %{_udev_ver}
+Conflicts:	util-linux < %{_util_linux_ver}
+Conflicts:	xfsprogs < %{_xfsprogs_ver}
 %if %{with xen}
 %if %{with xendev}
 ExclusiveArch:	%{ix86} %{x8664}
@@ -470,8 +470,8 @@ vmlinux - rozpakowany obraz j±dra.
 Summary:	DRM kernel modules
 Summary(pl):	Sterowniki DRM
 Group:		Base/Kernel
-PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
+Requires:	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	kernel-drm = %{drm_xfree_version}
 Autoreqprov:	no
 
@@ -485,10 +485,10 @@ Sterowniki DRM (%{drm_xfree_version}).
 Summary:	PCMCIA modules
 Summary(pl):	Modu³y PCMCIA
 Group:		Base/Kernel
-PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
-Provides:	kernel-pcmcia = %{pcmcia_version}
+Requires:	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	kernel(pcmcia)
+Provides:	kernel-pcmcia = %{pcmcia_version}
 Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
 Autoreqprov:	no
 
@@ -507,19 +507,19 @@ Requires:	mkvmlinuz >= %{_mkvmlinuz_ver}
 Autoreqprov:	no
 
 %description libs
-Libraries for preparing bootable kernel on PowerPCs.
-Script called mkvmlinuz may be useful for this.
+Libraries for preparing bootable kernel on PowerPCs. Script called
+mkvmlinuz may be useful for this.
 
 %description libs -l pl
-Biblioteki do przygotowania bootowalnego j±dra dla PowerPC.
-Skrypt mkvmlinuz mo¿e byæ do tego przydatny.
+Biblioteki do przygotowania bootowalnego j±dra dla PowerPC. Skrypt
+mkvmlinuz mo¿e byæ do tego przydatny.
 
 %package sound-alsa
 Summary:	ALSA kernel modules
 Summary(pl):	Sterowniki d¼wiêku ALSA
 Group:		Base/Kernel
-PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
+Requires:	%{name}-up = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description sound-alsa
@@ -532,8 +532,8 @@ Sterowniki d¼wiêku ALSA (Advanced Linux Sound Architecture).
 Summary:	OSS kernel modules
 Summary(pl):	Sterowniki d¼wiêku OSS
 Group:		Base/Kernel
-PreReq:		%{name}-up = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
+Requires:	%{name}-up = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description sound-oss
@@ -548,9 +548,9 @@ Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
 Summary(pl):	J±dro Linuksa w wersji %{version} dla maszyn wieloprocesorowych
 Group:		Base/Kernel
-PreReq:		coreutils
-PreReq:		module-init-tools >= 0.9.9
-PreReq:		geninitrd >= 2.26
+Requires:	coreutils
+Requires:	geninitrd >= 2.26
+Requires:	module-init-tools >= 0.9.9
 Provides:	kernel = %{epoch}:%{version}-%{release}
 Provides:	kernel(netfilter) = %{_netfilter_snap}
 Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
@@ -564,18 +564,18 @@ Provides:	module-info
 Obsoletes:	kernel-smp-misc-fuse
 Obsoletes:	kernel-smp-net-hostap
 Obsoletes:	kernel-smp-net-ieee80211
-Conflicts:	util-linux < %{_util_linux_ver}
-Conflicts:	module-init-tool < %{_module_init_tool_ver}
-Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
-Conflicts:	jfsutils < %{_jfsutils_ver}
-Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
-Conflicts:	xfsprogs < %{_xfsprogs_ver}
-Conflicts:	quota-tools < %{_quota_tools_ver}
 Conflicts:	PPP < %{_PPP_ver}
+Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
 Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
+Conflicts:	jfsutils < %{_jfsutils_ver}
+Conflicts:	module-init-tool < %{_module_init_tool_ver}
 Conflicts:	nfs-utils < %{_nfs_utils_ver}
-Conflicts:	procps < %{_procps_ver}
 Conflicts:	oprofile < %{_oprofile_ver}
+Conflicts:	procps < %{_procps_ver}
+Conflicts:	quota-tools < %{_quota_tools_ver}
+Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
+Conflicts:	util-linux < %{_util_linux_ver}
+Conflicts:	xfsprogs < %{_xfsprogs_ver}
 Autoreqprov:	no
 
 %description smp
@@ -614,8 +614,8 @@ vmlinux - rozpakowany obraz j±dra SMP.
 Summary:	DRM SMP kernel modules
 Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
 Group:		Base/Kernel
-PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
+Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
 Provides:	kernel-drm = %{drm_xfree_version}
 Autoreqprov:	no
 
@@ -629,10 +629,10 @@ Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
 Summary:	PCMCIA modules for SMP kernel
 Summary(pl):	Modu³y PCMCIA dla maszyn SMP
 Group:		Base/Kernel
-PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
-Provides:	kernel-pcmcia = %{pcmcia_version}
+Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
 Provides:	kernel(pcmcia)
+Provides:	kernel-pcmcia = %{pcmcia_version}
 Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
 Autoreqprov:	no
 
@@ -651,8 +651,8 @@ Requires:	mkvmlinuz >= %{_mkvmlinuz_ver}
 Autoreqprov:	no
 
 %description smp-libs
-Libraries for preparing bootable SMP kernel on PowerPCs.
-Script called mkvmlinuz may be useful for this.
+Libraries for preparing bootable SMP kernel on PowerPCs. Script called
+mkvmlinuz may be useful for this.
 
 %description smp-libs -l pl
 Biblioteki do przygotowania bootowalnego j±dra dla wieloprocesorowych
@@ -662,8 +662,8 @@ PowerPC. Skrypt mkvmlinuz mo¿e byæ do tego przydatny.
 Summary:	ALSA SMP kernel modules
 Summary(pl):	Sterowniki d¼wiêku ALSA dla maszyn wieloprocesorowych
 Group:		Base/Kernel
-PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
+Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description smp-sound-alsa
@@ -677,8 +677,8 @@ wieloprocesorowych.
 Summary:	OSS SMP kernel modules
 Summary(pl):	Sterowniki d¼wiêku OSS dla maszyn wieloprocesorowych
 Group:		Base/Kernel
-PreReq:		%{name}-smp = %{epoch}:%{version}-%{release}
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
+Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description smp-sound-oss
@@ -691,13 +691,13 @@ Sterowniki OSS (Open Sound System) dla maszyn wieloprocesorowych.
 Summary:	Header files for the Linux kernel
 Summary(pl):	Pliki nag³ówkowe j±dra Linuksa
 Group:		Development/Building
-Provides:	kernel-headers(agpgart) = %{version}
-Provides:	kernel-headers(reiserfs) = %{version}
-Provides:	kernel-headers(bridging) = %{version}
-Provides:	kernel-i2c-devel
-Provides:	kernel-headers(netfilter) = %{_netfilter_snap}
-Provides:	kernel-headers(alsa-drivers)
 Provides:	kernel-headers = %{epoch}:%{version}-%{release}
+Provides:	kernel-headers(agpgart) = %{version}
+Provides:	kernel-headers(alsa-drivers)
+Provides:	kernel-headers(bridging) = %{version}
+Provides:	kernel-headers(netfilter) = %{_netfilter_snap}
+Provides:	kernel-headers(reiserfs) = %{version}
+Provides:	kernel-i2c-devel
 Obsoletes:	kernel-i2c-devel
 Autoreqprov:	no
 
@@ -716,6 +716,7 @@ Summary(pl):	Pliki s³u¿±ce do budowania modu³ów j±dra
 Group:		Base/Kernel
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
+Provides:	kernel-module-build = %{epoch}:%{_basever}
 Provides:	kernel-module-build = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
