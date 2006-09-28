@@ -4,7 +4,6 @@
 # - all netfilter patches needs update (API changed again)
 # - VESAFB-TNG
 # - IMQ
-# - grsecurity_minimal
 # - wanpipe
 # - reiser4
 # - Linux ABI
@@ -275,7 +274,7 @@ Patch102:	linux-2.6-vs2.1-128IPs.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
-#Patch1000:	linux-2.6-grsec-minimal.patch
+Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
 
@@ -894,9 +893,9 @@ done
 #%endif
 #%endif
 
-#%if %{with grsec_minimal}
-#%patch1000 -p1
-#%endif
+%if %{with grsec_minimal}
+%patch1000 -p1
+%endif
 %if %{with grsec_full}
 %patch9999 -p1
 %endif
@@ -1707,7 +1706,7 @@ fi
 %{_prefix}/src/linux-%{version}/drivers
 %{_prefix}/src/linux-%{version}/fs
 %if %{with grsecurity}
-#%{_prefix}/src/linux-%{version}/grsecurity
+%{_prefix}/src/linux-%{version}/grsecurity
 %endif
 %{_prefix}/src/linux-%{version}/init
 %{_prefix}/src/linux-%{version}/ipc
