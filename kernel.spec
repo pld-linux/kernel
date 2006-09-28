@@ -1092,7 +1092,7 @@ PreInstallKernel() {
 %endif
 	%{__make} %CrossOpts modules_install \
 		%{?with_verbose:V=1} \
-		DEPMOD=$DepMod \
+		DEPMOD=%DepMod \
 		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 		KERNELRELEASE=$KernelVer
 
@@ -1105,7 +1105,7 @@ PreInstallKernel() {
 	fi
 
 	echo "CHECKING DEPENDENCIES FOR KERNEL MODULES"
-	if [ $DepMod = /sbin/depmod ]; then
+	if [ %DepMod = /sbin/depmod ]; then
 		/sbin/depmod --basedir $KERNEL_INSTALL_DIR -ae -F $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer -r $KernelVer || :
 	else
 		touch $KERNEL_INSTALL_DIR/lib/modules/$KernelVer/modules.dep
