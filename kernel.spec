@@ -98,7 +98,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			1
+%define		_rel			2
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
@@ -724,6 +724,7 @@ oraz budowania modu³ów j±dra.
 Summary:	Development files for building kernel modules
 Summary(pl):	Pliki s³u¿±ce do budowania modu³ów j±dra
 Group:		Development/Building
+Conflicts:	rpmbuild(macros) < 1.321
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
 Provides:	kernel-module-build = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
@@ -1183,6 +1184,8 @@ echo "-%{release}" > localversion
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig
+%{__make} $CrossOpts include/linux/utsrelease.h
+cp include/linux/utsrelease.h{,.save}
 %if %{with up}
 BuildKernel
 PreInstallKernel
@@ -1263,6 +1266,7 @@ install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{version}/include/l
 %endif
 
 %{__make} $CrossOpts mrproper
+mv -f include/linux/utsrelease.h.save $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/utsrelease.h
 %{__make} $CrossOpts include/linux/version.h
 install %{SOURCE3} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
 install %{SOURCE4} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/config.h
