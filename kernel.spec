@@ -1,7 +1,6 @@
 #
 # TODO:
 # - all netfilter patches needs update (API changed again)
-# - PaX support cleanup
 # - separate PaX and grsecurity support
 #
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
@@ -103,7 +102,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			3
+%define		_rel			4
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
@@ -382,6 +381,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -398,6 +398,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -414,6 +415,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -429,6 +431,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -577,6 +580,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -593,6 +597,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -608,6 +613,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -623,6 +629,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -996,6 +1003,27 @@ TuneUpConfigForIX86 () {
 %endif
 }
 
+PaXconfig () {
+	set -x
+	%ifarch %{ix86}
+		sed -i 's:# CONFIG_PAX_SEGMEXEC is not set:CONFIG_PAX_SEGMEXEC=y:' $1
+		sed -i 's:# CONFIG_PAX_DEFAULT_SEGMEXEC is not set:CONFIG_PAX_DEFAULT_SEGMEXEC=y:' $1
+		%ifnarch i386 i486
+			sed -i 's:# CONFIG_PAX_NOVSYSCALL is not set:CONFIG_PAX_NOVSYSCALL=y:' $1
+		%endif
+	%endif
+	%ifarch ppc64
+		sed -i 's:CONFIG_PAX_NOELFRELOCS=y:# CONFIG_PAX_NOELFRELOCS is not set:' $1
+	%endif
+	%ifarch ppc
+		sed -i 's:# CONFIG_PAX_EMUTRAMP is not set:CONFIG_PAX_EMUTRAMP=y:' $1
+	%endif
+	%ifarch %{ix8664}
+		sed -i 's:# CONFIG_PAX_MEMORY_UDEREF is not set:# CONFIG_PAX_MEMORY_UDEREF=y:' $1
+	%endif
+	return 0
+}
+
 %if "%{_target_base_arch}" != "%{_arch}"
 	CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
 	DepMod=/bin/true
@@ -1060,6 +1088,7 @@ BuildConfig() {
 
 %if %{with pax}
 	cat %{SOURCE49} >> arch/%{_target_base_arch}/defconfig
+	PaXconfig arch/%{_target_base_arch}/defconfig
 %else
 	cat %{SOURCE50} >> arch/%{_target_base_arch}/defconfig
 %endif
