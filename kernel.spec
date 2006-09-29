@@ -885,7 +885,9 @@ done
 
 # vserver:
 %patch100 -p1
+%ifarch %{ix86} %{x8664} ia64
 %patch101 -p1
+%endif
 %patch102 -p1
 
 #%if %{with xen0} || %{with xenU}
