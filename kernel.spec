@@ -343,7 +343,7 @@ Conflicts:	xfsprogs < %{_xfsprogs_ver}
 %if %{with xen0} || %{with xenU}
 ExclusiveArch:	%{ix86}
 %else
-ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc ppc64 sparc sparc64
+ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc ppc64 sparc sparc64 arm
 %endif
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -802,7 +802,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch1 -p1
 
 # suspend2:
-%ifnarch ppc sparc sparc64
+%ifarch %{ix86} %{x8664} ia64
 for i in suspend2-%{suspend_version}-for-*/[0-9]*; do
 patch -p1 -s < $i
 done
