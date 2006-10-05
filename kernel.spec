@@ -102,7 +102,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			4
+%define		_rel			5
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
@@ -278,6 +278,10 @@ Patch75:	linux-2.6.15_ide-gtm-stm.diff
 
 # cx88-blackbird based tv tuner card audio fix
 Patch80:        linux-2.6.17-cx88-tvaudio.patch
+
+# adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
+# http://patches.aircrack-ng.org/hostap-kernel-2.6.17.patch 
+Patch85:	hostap-kernel-2.6.17.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.17.11-vs2.1.1-rc31.diff
 Patch100:	linux-2.6-vs2.1.patch
@@ -915,6 +919,9 @@ done
 
 # cx88-tvaudio
 %patch80 -p1
+
+# hostap enhancements from/for aircrack-ng 
+%patch85 -p1
 
 # vserver:
 %patch100 -p1
