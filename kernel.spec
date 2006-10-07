@@ -48,11 +48,6 @@
 %define		with_grsecurity		1
 %endif
 
-%ifarch sparc
-# sparc32 is missing important updates from 2.5 cycle - won't build.
-%undefine	with_smp
-%endif
-
 %ifarch ia64
 # broken
 %undefine	with_up
