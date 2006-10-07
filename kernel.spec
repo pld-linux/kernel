@@ -263,6 +263,7 @@ Patch60:	linux-2.6-sk98lin-8.36.1.3.patch
 
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
+Patch72:	linux-2.6-suspend2-off.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.18-vs2.1.1-rc35-t1.diff
 Patch100:	linux-2.6-vs2.1.patch
@@ -808,6 +809,7 @@ patch -p1 -s < $i
 done
 %patch70 -p1
 %patch71 -p1
+%patch72 -p1
 %endif
 
 # reiserfs4
