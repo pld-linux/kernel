@@ -93,7 +93,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			2
+%define		_rel			3
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
@@ -277,8 +277,8 @@ Patch2000:	kernel-small_fixes.patch
 #wanpipe 
 #Patch3000:	wanpipe-beta7-2.3.4.patch
 
-# unofficial grsecurity for 2.6.18
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.18-200609261743.patch
+# official grsecurity for 2.6.18
+# based on http://www.grsecurity.net/grsecurity-2.1.9-2.6.18-200610021833.patch.gz
 Patch9999:	grsecurity-2.1.9-2.6.18.patch
 
 URL:		http://www.kernel.org/
