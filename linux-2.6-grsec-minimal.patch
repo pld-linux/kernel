@@ -184,26 +184,75 @@ diff -urNp linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
  #ifdef CONFIG_MMU
  	E(PROC_TGID_SMAPS,     "smaps",   S_IFREG|S_IRUGO),
  #endif
-@@ -1344,6 +1350,9 @@ static struct inode *proc_pid_make_inode
+@@ -1321,7 +1332,11 @@ static struct inode *proc_pid_make_inode
+ 	if (task_dumpable(task)) {
+ 		inode->i_uid = task->euid;
+ 		inode->i_gid = task->egid;
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++		inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
++#endif
  	}
++
  	/* procfs is xid tagged */
  	inode->i_tag = (tag_t)vx_task_xid(task);
-+#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+	inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
-+#endif
  	security_task_to_inode(task, inode);
+@@ -1353,18 +1368,37 @@ static int pid_revalidate(struct dentry 
+ {
+ 	struct inode *inode = dentry->d_inode;
+ 	struct task_struct *task = get_proc_task(inode);
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++	struct task_struct *tmp = current;
++#endif
+ 	int ret = 0;
  
- out:
-@@ -1386,7 +1395,9 @@ static int pid_revalidate(struct dentry
+-	if (task) {
++	if (task &&
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++	    (!tmp->uid || (tmp->uid == task->uid)
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++	    || in_group_p(CONFIG_GRKERNSEC_PROC_GID)
++#endif
++	    ) &&
++#endif
++	    !gr_check_hidden_task(task)) {
+ 		ret = 1;
+ 		/* discard wrong fakeinit */
+ 		if (!vx_check(vx_task_xid(task), VX_IDENT))
+ 			goto out_drop;
+ 
  		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
++#ifdef CONFIG_GRKERNSEC_PROC_USER
++		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
++#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP)) ||
++#endif
  		    task_dumpable(task)) {
  			inode->i_uid = task->euid;
-+#ifndef CONFIG_GRKERNSEC_PROC_USERGROUP
  			inode->i_gid = task->egid;
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++			inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
 +#endif
  		} else {
  			inode->i_uid = 0;
  			inode->i_gid = 0;
+@@ -1383,9 +1418,17 @@ static int pid_getattr(struct vfsmount *
+ 	task = pid_task(proc_pid(inode), PIDTYPE_PID);
+ 	if (task) {
+ 		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
++#ifdef CONFIG_GRKERNSEC_PROC_USER
++		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
++#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP)) ||
++#endif
+ 		    task_dumpable(task)) {
+ 			stat->uid = task->euid;
+ 			stat->gid = task->egid;
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++			stat->gid = CONFIG_GRKERNSEC_PROC_GID;
++#endif
+ 		}
+ 	}
+ 	rcu_read_unlock();
 @@ -1756,6 +1767,12 @@ static struct dentry *proc_pident_lookup
  			inode->i_fop = &proc_info_file_operations;
  			ei->op.proc_read = proc_pid_status;
@@ -217,24 +266,96 @@ diff -urNp linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
  		case PROC_TID_STAT:
  			inode->i_fop = &proc_info_file_operations;
  			ei->op.proc_read = proc_tid_stat;
-@@ -2126,6 +2143,17 @@ struct dentry *proc_pid_lookup(struct in
- 	if (!task)
- 		goto out;
- 
-+#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+	if (current->uid && (task->uid != current->uid)
-+#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+	    && !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
-+#endif
-+	) {
-+		put_task_struct(task);
-+		goto out;
-+	}
-+#endif
-+
- 	inode = proc_pid_make_inode(dir->i_sb, task, PROC_TGID_INO);
+@@ -2057,11 +2109,14 @@ struct dentry *proc_pid_lookup(struct in
  	if (!inode)
  		goto out_put_task;
+ 
++#ifdef CONFIG_GRKERNSEC_PROC_USER
++	inode->i_mode = S_IFDIR|S_IRUSR|S_IXUSR;
++#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++	inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
++	inode->i_mode = S_IFDIR|S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP;
++#else
+ 	inode->i_mode = S_IFDIR|S_IRUGO|S_IXUGO;
++#endif
+ 	inode->i_op = &proc_tgid_base_inode_operations;
+ 	inode->i_fop = &proc_tgid_base_operations;
+ 	inode->i_flags|=S_IMMUTABLE;
+@@ -2155,12 +2217,27 @@ out_no_task:
+ static struct task_struct *first_tgid(int tgid, unsigned int nr)
+ {
+ 	struct task_struct *pos;
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++	struct task_struct *tmp = current;
++#endif
+ 	rcu_read_lock();
+ 	if (tgid && nr) {
+ 		pos = find_task_by_pid(tgid);
++		if (pos && (
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++		    (tmp->uid && (pos->uid != tmp->uid)
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++			&& !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
++#endif
++			)
++#endif
++		))
++			goto not_found;
++
+ 		if (pos && thread_group_leader(pos))
+ 			goto found;
+ 	}
++not_found:
+ 	/* If nr exceeds the number of processes get out quickly */
+ 	pos = NULL;
+ 	if (nr && nr >= nr_processes())
+@@ -2175,6 +2252,16 @@ static struct task_struct *first_tgid(in
+ 			pos = NULL;
+ 			goto done;
+ 		}
++		if (pos && (
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++		    (tmp->uid && (pos->uid != tmp->uid)
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++			&& !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
++#endif
++			)
++#endif
++		))
++			nr++;
+ 	}
+ found:
+ 	get_task_struct(pos);
+@@ -2212,6 +2299,9 @@ int proc_pid_readdir(struct file * filp,
+ {
+ 	char buf[PROC_NUMBUF];
+ 	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++	struct task_struct *tmp = current;
++#endif
+ 	struct task_struct *task;
+ 	int tgid;
+ 
+@@ -2234,6 +2324,19 @@ int proc_pid_readdir(struct file * filp,
+ 	     task = next_tgid(task), filp->f_pos++) {
+ 		int len;
+ 		ino_t ino;
++
++		if (
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++		    (tmp->uid && (task->uid != tmp->uid)
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++			&& !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
++#endif
++			)
++#endif
++		) {
++			continue;
++		}
++
+ 		tgid = vx_map_tgid(task->pid);
+ 		len = snprintf(buf, sizeof(buf), "%d", tgid);
+ 		ino = fake_ino(tgid, PROC_TGID_INO);
 diff -urNp linux-2.6.16.2/fs/proc/inode.c linux-2.6.16.2-grsec/fs/proc/inode.c
 --- linux-2.6.16.2/fs/proc/inode.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/fs/proc/inode.c	2006-04-11 17:44:40.077707500 +0200
@@ -323,13 +444,7 @@ diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_m
  #ifdef CONFIG_DEBUG_SLAB_LEAK
  	create_seq_entry("slab_allocators", 0 ,&proc_slabstats_operations);
  #endif
-@@ -730,12 +752,12 @@
- 	create_seq_entry("zoneinfo",S_IRUGO, &proc_zoneinfo_file_operations);
- 	create_seq_entry("diskstats", 0, &proc_diskstats_operations);
- #ifdef CONFIG_MODULES
--	create_seq_entry("modules", 0, &proc_modules_operations);
-+	create_seq_entry("modules", gr_mode, &proc_modules_operations);
- #endif
+@@ -705,7 +726,7 @@ void __init proc_misc_init(void)
  #ifdef CONFIG_SCHEDSTATS
  	create_seq_entry("schedstat", 0, &proc_schedstat_operations);
  #endif
@@ -1108,6 +1223,26 @@ diff -urNp linux-2.6.16.2/ipc/shm.c linux-2.6.16.2-grsec/ipc/shm.c
 +#endif
 +	return;
 +}
+diff -urNp linux-2.6.18/kernel/configs.c linux-2.6.18/kernel/configs.c
+--- linux-2.6.18/kernel/configs.c	2006-09-19 23:42:06.000000000 -0400
++++ linux-2.6.18/kernel/configs.c	2006-09-22 20:04:35.000000000 -0400
+@@ -88,8 +88,16 @@ static int __init ikconfig_init(void)
+ 	struct proc_dir_entry *entry;
+ 
+ 	/* create the current config file */
++#ifdef CONFIG_GRKERNSEC_PROC_ADD
++#ifdef CONFIG_GRKERNSEC_PROC_USER
++	entry = create_proc_entry("config.gz", S_IFREG | S_IRUSR, &proc_root);
++#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++	entry = create_proc_entry("config.gz", S_IFREG | S_IRUSR | S_IRGRP, &proc_root);
++#endif
++#else
+ 	entry = create_proc_entry("config.gz", S_IFREG | S_IRUGO,
+ 				  &proc_root);
++#endif
+ 	if (!entry)
+ 		return -ENOMEM;
+ 
 diff -urN linux-2.6.16.2/kernel/exit.c linux-2.6.16.2-grsec/kernel/exit.c
 --- linux-2.6.16.2/kernel/exit.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/kernel/exit.c	2006-04-11 17:44:40.125710500 +0200
@@ -1127,6 +1262,56 @@ diff -urN linux-2.6.16.2/kernel/exit.c linux-2.6.16.2-grsec/kernel/exit.c
  		/*
  		 * Accumulate here the counters for all threads but the
  		 * group leader as they die, so they can be added into
+diff -urNp linux-2.6.18/kernel/kallsyms.c linux-2.6.18/kernel/kallsyms.c
+--- linux-2.6.18/kernel/kallsyms.c	2006-09-19 23:42:06.000000000 -0400
++++ linux-2.6.18/kernel/kallsyms.c	2006-09-22 20:45:04.000000000 -0400
+@@ -411,7 +410,15 @@ static int __init kallsyms_init(void)
+ {
+ 	struct proc_dir_entry *entry;
+ 
++#ifdef CONFIG_GRKERNSEC_PROC_ADD
++#ifdef CONFIG_GRKERNSEC_PROC_USER
++	entry = create_proc_entry("kallsyms", S_IFREG | S_IRUSR, NULL);
++#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++	entry = create_proc_entry("kallsyms", S_IFREG | S_IRUSR | S_IRGRP, NULL);
++#endif
++#else
+ 	entry = create_proc_entry("kallsyms", 0444, NULL);
++#endif
+ 	if (entry)
+ 		entry->proc_fops = &kallsyms_operations;
+ 	return 0;
+diff -urNp linux-2.6.18/kernel/resource.c linux-2.6.18/kernel/resource.c
+--- linux-2.6.18/kernel/resource.c	2006-09-19 23:42:06.000000000 -0400
++++ linux-2.6.18/kernel/resource.c	2006-09-22 20:04:35.000000000 -0400
+@@ -133,10 +133,27 @@ static int __init ioresources_init(void)
+ {
+ 	struct proc_dir_entry *entry;
+ 
++#ifdef CONFIG_GRKERNSEC_PROC_ADD
++#ifdef CONFIG_GRKERNSEC_PROC_USER
++	entry = create_proc_entry("ioports", S_IRUSR, NULL);
++#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++	entry = create_proc_entry("ioports", S_IRUSR | S_IRGRP, NULL);
++#endif
++#else
+ 	entry = create_proc_entry("ioports", 0, NULL);
++#endif
+ 	if (entry)
+ 		entry->proc_fops = &proc_ioports_operations;
++
++#ifdef CONFIG_GRKERNSEC_PROC_ADD
++#ifdef CONFIG_GRKERNSEC_PROC_USER
++	entry = create_proc_entry("iomem", S_IRUSR, NULL);
++#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++	entry = create_proc_entry("iomem", S_IRUSR | S_IRGRP, NULL);
++#endif
++#else
+ 	entry = create_proc_entry("iomem", 0, NULL);
++#endif
+ 	if (entry)
+ 		entry->proc_fops = &proc_iomem_operations;
+ 	return 0;
 diff -urN linux-2.6.16.2/kernel/sysctl.c linux-2.6.16.2-grsec/kernel/sysctl.c
 --- linux-2.6.16.2/kernel/sysctl.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/kernel/sysctl.c	2006-04-11 17:44:40.125710500 +0200
