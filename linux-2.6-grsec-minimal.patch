@@ -52,7 +52,7 @@ diff -urNp linux-2.6.16.2/drivers/pci/proc.c linux-2.6.16.2-grsec/drivers/pci/pr
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +	proc_bus_pci_dir = proc_mkdir_mode("pci", S_IRUSR | S_IXUSR, proc_bus);
-+#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	proc_bus_pci_dir = proc_mkdir_mode("pci", S_IRUSR | S_IXUSR | S_IRGRP | S_IXGRP, proc_bus);
 +#endif
 +#else
@@ -223,7 +223,7 @@ diff -urNp linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
  		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
-+#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP)) ||
 +#endif
  		    task_dumpable(task)) {
@@ -241,7 +241,7 @@ diff -urNp linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
  		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
-+#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP)) ||
 +#endif
  		    task_dumpable(task)) {
@@ -272,7 +272,7 @@ diff -urNp linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
  
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +	inode->i_mode = S_IFDIR|S_IRUSR|S_IXUSR;
-+#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
 +	inode->i_mode = S_IFDIR|S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP;
 +#else
@@ -291,15 +291,15 @@ diff -urNp linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
  	rcu_read_lock();
  	if (tgid && nr) {
  		pos = find_task_by_pid(tgid);
-+		if (pos && (
++		if (pos
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+		    (tmp->uid && (pos->uid != tmp->uid)
++		    && (tmp->uid && (pos->uid != tmp->uid)
 +#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
 +			&& !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
 +#endif
 +			)
 +#endif
-+		))
++		)
 +			goto not_found;
 +
  		if (pos && thread_group_leader(pos))
@@ -313,15 +313,15 @@ diff -urNp linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
  			pos = NULL;
  			goto done;
  		}
-+		if (pos && (
++		if (pos
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+		    (tmp->uid && (pos->uid != tmp->uid)
++		    && (tmp->uid && (pos->uid != tmp->uid)
 +#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
 +			&& !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
 +#endif
 +			)
 +#endif
-+		))
++		)
 +			nr++;
  	}
  found:
@@ -336,22 +336,20 @@ diff -urNp linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
  	struct task_struct *task;
  	int tgid;
  
-@@ -2234,6 +2324,19 @@ int proc_pid_readdir(struct file * filp,
+@@ -2234,6 +2324,17 @@ int proc_pid_readdir(struct file * filp,
  	     task = next_tgid(task), filp->f_pos++) {
  		int len;
  		ino_t ino;
 +
-+		if (
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+		    (tmp->uid && (task->uid != tmp->uid)
++		if (tmp->uid && (task->uid != tmp->uid)
 +#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
 +			&& !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
-+#endif
-+			)
 +#endif
 +		) {
 +			continue;
 +		}
++#endif
 +
  		tgid = vx_map_tgid(task->pid);
  		len = snprintf(buf, sizeof(buf), "%d", tgid);
@@ -387,11 +385,13 @@ diff -urNp linux-2.6.16.2/fs/proc/internal.h linux-2.6.16.2-grsec/fs/proc/intern
 diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_misc.c
 --- linux-2.6.16.2/fs/proc/proc_misc.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/fs/proc/proc_misc.c	2006-04-11 17:44:40.109709500 +0200
-@@ -708,6 +708,8 @@
+@@ -708,6 +708,10 @@
  void __init proc_misc_init(void)
  {
  	struct proc_dir_entry *entry;
++#ifdef CONFIG_GRKERNSEC_PROC
 +	int gr_mode = 0;
++#endif
 +
  	static struct {
  		char *name;
@@ -1175,7 +1175,7 @@ diff -urNp linux-2.6.18/kernel/configs.c linux-2.6.18/kernel/configs.c
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +	entry = create_proc_entry("config.gz", S_IFREG | S_IRUSR, &proc_root);
-+#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	entry = create_proc_entry("config.gz", S_IFREG | S_IRUSR | S_IRGRP, &proc_root);
 +#endif
 +#else
@@ -1214,7 +1214,7 @@ diff -urNp linux-2.6.18/kernel/kallsyms.c linux-2.6.18/kernel/kallsyms.c
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +	entry = create_proc_entry("kallsyms", S_IFREG | S_IRUSR, NULL);
-+#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	entry = create_proc_entry("kallsyms", S_IFREG | S_IRUSR | S_IRGRP, NULL);
 +#endif
 +#else
@@ -1233,7 +1233,7 @@ diff -urNp linux-2.6.18/kernel/resource.c linux-2.6.18/kernel/resource.c
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +	entry = create_proc_entry("ioports", S_IRUSR, NULL);
-+#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	entry = create_proc_entry("ioports", S_IRUSR | S_IRGRP, NULL);
 +#endif
 +#else
@@ -1245,7 +1245,7 @@ diff -urNp linux-2.6.18/kernel/resource.c linux-2.6.18/kernel/resource.c
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +	entry = create_proc_entry("iomem", S_IRUSR, NULL);
-+#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	entry = create_proc_entry("iomem", S_IRUSR | S_IRGRP, NULL);
 +#endif
 +#else
