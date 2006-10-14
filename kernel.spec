@@ -7,6 +7,8 @@
 # - wanpipe
 # - reiser4
 # - Linux ABI
+# - vs patches (#100 ... #102 )
+# - grsecurity - does not builds --without grsecuriy 
 #
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
 #
@@ -93,7 +95,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			3
+%define		_rel			1
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
@@ -116,8 +118,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
-%define		_basever	2.6.18
-#define		_postver	.13
+%define		_basever	2.6.18.1
+#define		_postver	.1
 %define		_postver	%{nil}
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
@@ -128,7 +130,7 @@ Group:		Base/Kernel
 #define		_rc	-rc7
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
-# Source0-md5:	296a6d150d260144639c3664d127d174
+# Source0-md5:	38f00633b02f07819d17bcd87d03eb3a
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	8bba5493a097abac45df584d863fba67
@@ -261,9 +263,9 @@ Patch71:	linux-2.6-suspend2-page.patch
 Patch72:	linux-2.6-suspend2-off.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.18-vs2.1.1-rc35-t1.diff
-Patch100:	linux-2.6-vs2.1.patch
-Patch101:	linux-2.6-vs2.1-suspend2.patch
-Patch102:	linux-2.6-vs2.1-128IPs.patch
+# Patch100:	linux-2.6-vs2.1.patch
+# Patch101:	linux-2.6-vs2.1-suspend2.patch
+# Patch102:	linux-2.6-vs2.1-128IPs.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 #Patch120:	xen-3.0-2.6.16.patch
@@ -881,11 +883,11 @@ done
 %patch60 -p1
 
 # vserver:
-%patch100 -p1
+# patch100 -p1
 %ifarch %{ix86} %{x8664} ia64
-%patch101 -p1
+# patch101 -p1
 %endif
-%patch102 -p1
+# patch102 -p1
 
 #%if %{with xen0} || %{with xenU}
 #%ifarch %{ix86} %{x8664} ia64
