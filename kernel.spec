@@ -95,7 +95,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			2
+%define		_rel			3
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
@@ -261,6 +261,9 @@ Patch60:	linux-2.6-sk98lin-8.36.1.3.patch
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
 Patch72:	linux-2.6-suspend2-off.patch
+
+# Fix for pcie cards against 2.6.18.1 from ftp://lwfinger.dynalias.org/patches
+Patch73:        kernel-bcm43xx-patch_2.6.18.1_for_PCI-E.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.18-vs2.1.1-rc35-t1.diff
 # Patch100:	linux-2.6-vs2.1.patch
@@ -808,6 +811,8 @@ done
 %patch71 -p1
 %patch72 -p1
 %endif
+
+%patch73 -p1
 
 # reiserfs4
 #%{__gzip} -dc %{SOURCE12} | %{__patch} -s -p1
