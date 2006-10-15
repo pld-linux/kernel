@@ -8,7 +8,7 @@
 # - reiser4
 # - Linux ABI
 # - vs patches (#100 ... #102 )
-# - grsecurity - does not builds --without grsecuriy 
+# - grsecurity - does not builds --without grsecuriy
 #
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
 #
@@ -722,9 +722,9 @@ oraz budowania modu³ów j±dra.
 Summary:	Development files for building kernel modules
 Summary(pl):	Pliki s³u¿±ce do budowania modu³ów j±dra
 Group:		Development/Building
-Conflicts:	rpmbuild(macros) < 1.321
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
 Provides:	kernel-module-build = %{epoch}:%{version}-%{release}
+Conflicts:	rpmbuild(macros) < 1.321
 Autoreqprov:	no
 
 %description module-build
@@ -1031,12 +1031,12 @@ BuildConfig() {
 
 %if %{with xen0}
 	cat %{SOURCE46} >> arch/%{_target_base_arch}/defconfig
-%endif	
+%endif
 
 %if %{with xenU}
 	cat %{SOURCE47} >> arch/%{_target_base_arch}/defconfig
-%endif	
-	
+%endif
+
 	# fbsplash && bootsplash
 	echo "CONFIG_FB_SPLASH=y" >> arch/%{_target_base_arch}/defconfig
 	echo "CONFIG_BOOTSPLASH=y" >> arch/%{_target_base_arch}/defconfig
