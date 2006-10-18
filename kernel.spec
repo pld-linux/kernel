@@ -102,7 +102,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			5
+%define		_rel			1
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
@@ -126,7 +126,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 %define		_basever	2.6.17
-%define		_postver	.13
+%define		_postver	.14
 #define		_postver	%{nil}
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
@@ -140,7 +140,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar
 # Source0-md5:	37ddefe96625502161f075b9d907f21e
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	8bba5493a097abac45df584d863fba67
+# Source1-md5:	ea360a4ffddb249333fb8fab35e6e7e7
 %endif
 Source3:	kernel-autoconf.h
 Source4:	kernel-config.h
