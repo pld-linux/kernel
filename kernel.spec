@@ -7,7 +7,6 @@
 # - wanpipe
 # - reiser4
 # - Linux ABI
-# - vs patches (#100 ... #102 )
 # - grsecurity - does not builds --without grsecuriy
 #
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
@@ -266,9 +265,9 @@ Patch72:	linux-2.6-suspend2-off.patch
 Patch73:        kernel-bcm43xx-patch_2.6.18.1_for_PCI-E.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.18-vs2.1.1-rc35-t1.diff
-# Patch100:	linux-2.6-vs2.1.patch
-# Patch101:	linux-2.6-vs2.1-suspend2.patch
-# Patch102:	linux-2.6-vs2.1-128IPs.patch
+Patch100:	linux-2.6-vs2.1.patch
+Patch101:	linux-2.6-vs2.1-suspend2.patch
+Patch102:	linux-2.6-vs2.1-128IPs.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 #Patch120:	xen-3.0-2.6.16.patch
@@ -888,11 +887,11 @@ done
 %patch60 -p1
 
 # vserver:
-# patch100 -p1
+%patch100 -p1
 %ifarch %{ix86} %{x8664} ia64
-# patch101 -p1
+%patch101 -p1
 %endif
-# patch102 -p1
+%patch102 -p1
 
 #%if %{with xen0} || %{with xenU}
 #%ifarch %{ix86} %{x8664} ia64
