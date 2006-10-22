@@ -25,6 +25,7 @@
 %bcond_with	vesafb_tng	# vesafb-tng, vesafb replacement from gentoo
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
+%bcond_with	reiserfs4	# build with ReuserFS 4 support
 
 %{?debug:%define with_verbose 1}
 
@@ -92,7 +93,7 @@
 %endif
 %endif
 
-## Program required by kernel to work.
+## Programs required by kernel to work.
 %define		_binutils_ver		2.12.1
 %define		_util_linux_ver		2.10o
 %define		_module_init_tool_ver	0.9.10
@@ -112,7 +113,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			2
+%define		_rel			3
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
@@ -339,7 +340,9 @@ Conflicts:	oprofile < %{_oprofile_ver}
 Conflicts:	ppp < %{_ppp_ver}
 Conflicts:	procps < %{_procps_ver}
 Conflicts:	quota-tools < %{_quota_tools_ver}
+%if %{with reiserfs4}
 Conflicts:	reiser4progs < %{_reiser4progs_ver}
+%endif
 Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
 Conflicts:	udev < %{_udev_ver}
 Conflicts:	util-linux < %{_util_linux_ver}
@@ -525,7 +528,9 @@ Conflicts:	oprofile < %{_oprofile_ver}
 Conflicts:	ppp < %{_ppp_ver}
 Conflicts:	procps < %{_procps_ver}
 Conflicts:	quota-tools < %{_quota_tools_ver}
+%if %{with reiserfs4}
 Conflicts:	reiser4progs < %{_reiser4progs_ver}
+%endif
 Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
 Conflicts:	util-linux < %{_util_linux_ver}
 Conflicts:	xfsprogs < %{_xfsprogs_ver}
@@ -744,7 +749,9 @@ done
 %patch71 -p1
 
 # reiserfs4
+%if %{with reiserfs4}
 %{__gzip} -dc %{SOURCE12} | %{__patch} -s -p1
+%endif
 
 %patch2 -p1
 
