@@ -27,7 +27,7 @@
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
 
-%bcond_with	ide_acpi	# support for ide-acpi from SuSE (instead of previous hack)
+%bcond_without	ide_acpi	# support for ide-acpi from SuSE (instead of previous hack)
 
 %{?debug:%define with_verbose 1}
 
