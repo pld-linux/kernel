@@ -27,6 +27,8 @@
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
 
+%bcond_with	ide_acpi	# support for ide-acpi from SuSE (instead of previous hack)
+
 %{?debug:%define with_verbose 1}
 
 %if %{without grsecurity}
@@ -102,7 +104,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			1
+%define		_rel			3
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
@@ -272,9 +274,9 @@ Patch60:	linux-2.6-sk98lin-8.32.2.3.patch
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
 
-# ide s3 wakeup for hp nx8220 notebooks
-# from http://hehe.pl/drg/trash/nx8220-s3/
-Patch75:	linux-2.6.15_ide-gtm-stm.diff
+# ide-acpi instead of nx8220 s3 suspend/resume hack
+# http://svn.uludag.org.tr/pardus/devel/kernel/kernel/files/suse/ide-acpi-support.patch
+Patch75:	linux-2.6.17-ide-acpi-support.patch
 
 # cx88-blackbird based tv tuner card audio fix
 Patch80:        linux-2.6.17-cx88-tvaudio.patch
@@ -391,6 +393,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{?with_fbsplash:Fbsplash - enabled }
 %{?with_vesafb_tng:VesaFB New generation - enabled}
 %{?with_nfsroot:Root on NFS - enabled}
+%{?with_ide_acpi:IDE ACPI - enabled}
 
 %description -l de
 Das Kernel-Paket enthält den Linux-Kernel (vmlinuz), den Kern des
@@ -408,6 +411,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{?with_fbsplash:Fbsplash - enabled }
 %{?with_vesafb_tng:VesaFB New generation - enabled}
 %{?with_nfsroot:Root on NFS - enabled}
+%{?with_ide_acpi:IDE ACPI - enabled}
 
 %description -l fr
 Le package kernel contient le kernel linux (vmlinuz), la partie
@@ -425,6 +429,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{?with_fbsplash:Fbsplash - enabled }
 %{?with_vesafb_tng:VesaFB New generation - enabled}
 %{?with_nfsroot:Root on NFS - enabled}
+%{?with_ide_acpi:IDE ACPI - enabled}
 
 %description -l pl
 Pakiet zawiera j±dro Linuksa niezbêdne do prawid³owego dzia³ania
@@ -441,6 +446,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{?with_fbsplash:Fbsplash - enabled }
 %{?with_vesafb_tng:VesaFB New generation - enabled}
 %{?with_nfsroot:Root on NFS - enabled}
+%{?with_ide_acpi:IDE ACPI - enabled}
 
 %package vmlinux
 Summary:	vmlinux - uncompressed kernel image
@@ -590,6 +596,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{?with_fbsplash:Fbsplash - enabled }
 %{?with_vesafb_tng:VesaFB New generation - enabled}
 %{?with_nfsroot:Root on NFS - enabled}
+%{?with_ide_acpi:IDE ACPI - enabled}
 
 %description smp -l de
 Dieses Paket enthält eine SMP (Multiprozessor)-Version von
@@ -607,6 +614,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{?with_fbsplash:Fbsplash - enabled }
 %{?with_vesafb_tng:VesaFB New generation - enabled}
 %{?with_nfsroot:Root on NFS - enabled}
+%{?with_ide_acpi:IDE ACPI - enabled}
 
 %description smp -l fr
 Ce package inclu une version SMP du noyau de Linux version {version}.
@@ -623,6 +631,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{?with_fbsplash:Fbsplash - enabled }
 %{?with_vesafb_tng:VesaFB New generation - enabled}
 %{?with_nfsroot:Root on NFS - enabled}
+%{?with_ide_acpi:IDE ACPI - enabled}
 
 %description smp -l pl
 Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono
@@ -639,6 +648,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{?with_fbsplash:Fbsplash - enabled }
 %{?with_vesafb_tng:VesaFB New generation - enabled}
 %{?with_nfsroot:Root on NFS - enabled}
+%{?with_ide_acpi:IDE ACPI - enabled}
 
 %package smp-vmlinux
 Summary:	vmlinux - uncompressed SMP kernel image
@@ -914,8 +924,10 @@ done
 
 %patch60 -p1
 
-# ide s3 wakeup on hp nx8220
-%patch75 -p1 
+%if %{with ide_acpi}
+# ide-acpi instead of nx8220 s3 suspend/resume hack
+%patch75 -p1
+%endif
 
 # cx88-tvaudio
 %patch80 -p1
@@ -1098,6 +1110,10 @@ BuildConfig() {
 	PaXconfig arch/%{_target_base_arch}/defconfig
 %else
 	cat %{SOURCE50} >> arch/%{_target_base_arch}/defconfig
+%endif
+
+%if %{with ide_acpi}
+	echo "CONFIG_BLK_DEV_IDEACPI=y" >> arch/%{_target_base_arch}/defconfig
 %endif
 
 %if %{with xen0} || %{with xenU}
