@@ -295,8 +295,6 @@ BuildRequires:	elftoaout
 %endif
 BuildRequires:	gcc >= 5:3.2
 BuildRequires:	module-init-tools
-# That package provides dummy module-init-tools:
-Conflicts:	vserver-packages
 # for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
@@ -341,6 +339,7 @@ Conflicts:	reiser4progs < %{_reiser4progs_ver}
 Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
 Conflicts:	udev < %{_udev_ver}
 Conflicts:	util-linux < %{_util_linux_ver}
+Conflicts:	vserver-packages
 Conflicts:	xfsprogs < %{_xfsprogs_ver}
 %if %{with xen0} || %{with xenU}
 ExclusiveArch:	%{ix86}
@@ -548,6 +547,7 @@ Conflicts:	quota-tools < %{_quota_tools_ver}
 Conflicts:	reiser4progs < %{_reiser4progs_ver}
 Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
 Conflicts:	util-linux < %{_util_linux_ver}
+Conflicts:	vserver-packages
 Conflicts:	xfsprogs < %{_xfsprogs_ver}
 Autoreqprov:	no
 
@@ -727,6 +727,7 @@ Summary:	Development files for building kernel modules
 Summary(pl):	Pliki s³u¿±ce do budowania modu³ów j±dra
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
+Provides:	kernel-module-build = %{epoch}:%{_basever}
 Provides:	kernel-module-build = %{epoch}:%{version}-%{release}
 Conflicts:	rpmbuild(macros) < 1.321
 Autoreqprov:	no
