@@ -346,6 +346,7 @@ Conflicts:	reiser4progs < %{_reiser4progs_ver}
 Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
 Conflicts:	udev < %{_udev_ver}
 Conflicts:	util-linux < %{_util_linux_ver}
+Conflicts:	vserver-packages
 Conflicts:	xfsprogs < %{_xfsprogs_ver}
 %if %{with xen0} || %{with xenU}
 ExclusiveArch:	%{ix86}
@@ -533,6 +534,7 @@ Conflicts:	reiser4progs < %{_reiser4progs_ver}
 %endif
 Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
 Conflicts:	util-linux < %{_util_linux_ver}
+Conflicts:	vserver-packages
 Conflicts:	xfsprogs < %{_xfsprogs_ver}
 Autoreqprov:	no
 
