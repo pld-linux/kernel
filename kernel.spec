@@ -280,7 +280,7 @@ Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-drm_pciids-via.patch
-#wanpipe 
+#wanpipe
 #Patch3000:	wanpipe-beta7-2.3.4.patch
 
 # official grsecurity for 2.6.18
@@ -289,7 +289,6 @@ Patch9999:	grsecurity-2.1.9-2.6.18.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
-BuildRequires:	diffutils
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
