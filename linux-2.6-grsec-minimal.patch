@@ -161,199 +161,6 @@ diff -urN linux-2.6.16.2/fs/proc/array.c linux-2.6.16.2-grsec/fs/proc/array.c
 +}
 +#endif
 +
-diff -urNp linux-2.6.16.2/fs/proc/base.c linux-2.6.16.2-grsec/fs/proc/base.c
---- linux-2.6.16.2/fs/proc/base.c	2006-04-07 18:56:47.000000000 +0200
-+++ linux-2.6.16.2-grsec/fs/proc/base.c	2006-04-11 17:44:40.077707500 +0200
-@@ -141,6 +141,9 @@ enum pid_directory_inos {
- #ifdef CONFIG_AUDITSYSCALL
- 	PROC_TGID_LOGINUID,
- #endif
-+#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
-+	PROC_TGID_IPADDR,
-+#endif
- 	PROC_TGID_OOM_SCORE,
- 	PROC_TGID_OOM_ADJUST,
- 	PROC_TID_INO,
-@@ -227,6 +230,9 @@ static struct pid_entry tgid_base_stuff[
- 	E(PROC_TGID_EXE,       "exe",     S_IFLNK|S_IRWXUGO),
- 	E(PROC_TGID_MOUNTS,    "mounts",  S_IFREG|S_IRUGO),
- 	E(PROC_TGID_MOUNTSTATS, "mountstats", S_IFREG|S_IRUSR),
-+#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
-+	E(PROC_TGID_IPADDR,	"ipaddr",  S_IFREG|S_IRUSR),
-+#endif
- #ifdef CONFIG_MMU
- 	E(PROC_TGID_SMAPS,     "smaps",   S_IFREG|S_IRUGO),
- #endif
-@@ -1321,7 +1332,11 @@ static struct inode *proc_pid_make_inode
- 	if (task_dumpable(task)) {
- 		inode->i_uid = task->euid;
- 		inode->i_gid = task->egid;
-+#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+		inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
-+#endif
- 	}
-+
- 	/* procfs is xid tagged */
- 	inode->i_tag = (tag_t)vx_task_xid(task);
- 	security_task_to_inode(task, inode);
-@@ -1353,18 +1368,37 @@ static int pid_revalidate(struct dentry 
- {
- 	struct inode *inode = dentry->d_inode;
- 	struct task_struct *task = get_proc_task(inode);
-+#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+	struct task_struct *tmp = current;
-+#endif
- 	int ret = 0;
- 
--	if (task) {
-+	if (task
-+#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+	    && (!tmp->uid || (tmp->uid == task->uid)
-+#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+	    || in_group_p(CONFIG_GRKERNSEC_PROC_GID)
-+#endif
-+	    )
-+#endif
-+	    ) {
- 		ret = 1;
- 		/* discard wrong fakeinit */
- 		if (!vx_check(vx_task_xid(task), VX_IDENT))
- 			goto out_drop;
- 
- 		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
-+#ifdef CONFIG_GRKERNSEC_PROC_USER
-+		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
-+#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP)) ||
-+#endif
- 		    task_dumpable(task)) {
- 			inode->i_uid = task->euid;
- 			inode->i_gid = task->egid;
-+#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+			inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
-+#endif
- 		} else {
- 			inode->i_uid = 0;
- 			inode->i_gid = 0;
-@@ -1383,9 +1418,17 @@ static int pid_getattr(struct vfsmount *
- 	task = pid_task(proc_pid(inode), PIDTYPE_PID);
- 	if (task) {
- 		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
-+#ifdef CONFIG_GRKERNSEC_PROC_USER
-+		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
-+#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP)) ||
-+#endif
- 		    task_dumpable(task)) {
- 			stat->uid = task->euid;
- 			stat->gid = task->egid;
-+#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+			stat->gid = CONFIG_GRKERNSEC_PROC_GID;
-+#endif
- 		}
- 	}
- 	rcu_read_unlock();
-@@ -1756,6 +1767,12 @@ static struct dentry *proc_pident_lookup
- 			inode->i_fop = &proc_info_file_operations;
- 			ei->op.proc_read = proc_pid_status;
- 			break;
-+#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
-+		case PROC_TGID_IPADDR:
-+			inode->i_fop = &proc_info_file_operations;
-+			ei->op.proc_read = proc_pid_ipaddr;
-+			break;
-+#endif
- 		case PROC_TID_STAT:
- 			inode->i_fop = &proc_info_file_operations;
- 			ei->op.proc_read = proc_tid_stat;
-@@ -2057,7 +2109,14 @@ struct dentry *proc_pid_lookup(struct in
- 	if (!inode)
- 		goto out_put_task;
- 
-+#ifdef CONFIG_GRKERNSEC_PROC_USER
-+	inode->i_mode = S_IFDIR|S_IRUSR|S_IXUSR;
-+#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+	inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
-+	inode->i_mode = S_IFDIR|S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP;
-+#else
- 	inode->i_mode = S_IFDIR|S_IRUGO|S_IXUGO;
-+#endif
- 	inode->i_op = &proc_tgid_base_inode_operations;
- 	inode->i_fop = &proc_tgid_base_operations;
- 	inode->i_flags|=S_IMMUTABLE;
-@@ -2155,12 +2217,27 @@ out_no_task:
- static struct task_struct *first_tgid(int tgid, unsigned int nr)
- {
- 	struct task_struct *pos;
-+#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+	struct task_struct *tmp = current;
-+#endif
- 	rcu_read_lock();
- 	if (tgid && nr) {
- 		pos = find_task_by_pid(tgid);
-+		if (pos
-+#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+		    && (tmp->uid && (pos->uid != tmp->uid)
-+#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+			&& !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
-+#endif
-+			)
-+#endif
-+		)
-+			goto not_found;
-+
- 		if (pos && thread_group_leader(pos))
- 			goto found;
- 	}
-+not_found:
- 	/* If nr exceeds the number of processes get out quickly */
- 	pos = NULL;
- 	if (nr && nr >= nr_processes())
-@@ -2175,6 +2252,16 @@ static struct task_struct *first_tgid(in
- 			pos = NULL;
- 			goto done;
- 		}
-+		if (pos
-+#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+		    && (tmp->uid && (pos->uid != tmp->uid)
-+#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+			&& !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
-+#endif
-+			)
-+#endif
-+		)
-+			nr++;
- 	}
- found:
- 	get_task_struct(pos);
-@@ -2212,6 +2299,9 @@ int proc_pid_readdir(struct file * filp,
- {
- 	char buf[PROC_NUMBUF];
- 	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
-+#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+	struct task_struct *tmp = current;
-+#endif
- 	struct task_struct *task;
- 	int tgid;
- 
-@@ -2234,6 +2324,17 @@ int proc_pid_readdir(struct file * filp,
- 	     task = next_tgid(task), filp->f_pos++) {
- 		int len;
- 		ino_t ino;
-+
-+#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+		if (tmp->uid && (task->uid != tmp->uid)
-+#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+			&& !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
-+#endif
-+		) {
-+			continue;
-+		}
-+#endif
-+
- 		tgid = vx_map_tgid(task->pid);
- 		len = snprintf(buf, sizeof(buf), "%d", tgid);
- 		ino = fake_ino(tgid, PROC_TGID_INO);
 diff -urNp linux-2.6.16.2/fs/proc/inode.c linux-2.6.16.2-grsec/fs/proc/inode.c
 --- linux-2.6.16.2/fs/proc/inode.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/fs/proc/inode.c	2006-04-11 17:44:40.077707500 +0200
@@ -1369,3 +1176,197 @@ diff -urN linux-2.6.16.2/security/Kconfig linux-2.6.16.2-grsec/security/Kconfig
  config KEYS
  	bool "Enable access key retention support"
  	help
+diff -urN linux-2.6.18/fs/proc/base.c linux-2.6.18-grsec/fs/proc/base.c
+--- linux-2.6.18/fs/proc/base.c.orig	2006-11-03 18:27:40.112510768 +0100
++++ linux-2.6.18/fs/proc/base.c	2006-11-03 18:42:56.408212648 +0100
+@@ -141,6 +141,9 @@
+ #ifdef CONFIG_AUDITSYSCALL
+ 	PROC_TGID_LOGINUID,
+ #endif
++#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
++	PROC_TGID_IPADDR,
++#endif
+ 	PROC_TGID_OOM_SCORE,
+ 	PROC_TGID_OOM_ADJUST,
+ 	PROC_TID_INO,
+@@ -227,6 +230,9 @@
+ 	E(PROC_TGID_EXE,       "exe",     S_IFLNK|S_IRWXUGO),
+ 	E(PROC_TGID_MOUNTS,    "mounts",  S_IFREG|S_IRUGO),
+ 	E(PROC_TGID_MOUNTSTATS, "mountstats", S_IFREG|S_IRUSR),
++#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
++	E(PROC_TGID_IPADDR,	"ipaddr",  S_IFREG|S_IRUSR),
++#endif
+ #ifdef CONFIG_MMU
+ 	E(PROC_TGID_SMAPS,     "smaps",   S_IFREG|S_IRUGO),
+ #endif
+@@ -1341,7 +1347,11 @@
+ 	if (task_dumpable(task)) {
+ 		inode->i_uid = task->euid;
+ 		inode->i_gid = task->egid;
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++		inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
++#endif
+ 	}
++
+ 	/* procfs is xid tagged */
+ 	inode->i_tag = (tag_t)vx_task_xid(task);
+ 	security_task_to_inode(task, inode);
+@@ -1375,9 +1385,20 @@
+ {
+ 	struct inode *inode = dentry->d_inode;
+ 	struct task_struct *task = get_proc_task(inode);
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++	struct task_struct *tmp = current;
++#endif
+ 	int ret = 0;
+ 
+-	if (task) {
++	if (task
++	#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++		&& (!tmp->uid || (tmp->uid == task->uid)
++	#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++		|| in_group_p(CONFIG_GRKERNSEC_PROC_GID)
++	#endif
++		)
++	#endif
++	) {
+ 		int pid = (inode->i_ino >> 16) & 0xFFFF;
+ 
+ 		if (!proc_pid_visible(task, pid))
+@@ -1385,9 +1406,17 @@
+ 
+ 		ret = 1;
+ 		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
++	#ifdef CONFIG_GRKERNSEC_PROC_USER
++		(inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
++	#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++		(inode->i_mode == (S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP)) ||
++	#endif
+ 		    task_dumpable(task)) {
+ 			inode->i_uid = task->euid;
+ 			inode->i_gid = task->egid;
++	#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++			inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
++	#endif
+ 		} else {
+ 			inode->i_uid = 0;
+ 			inode->i_gid = 0;
+@@ -1416,9 +1445,17 @@
+ 	task = pid_task(proc_pid(inode), PIDTYPE_PID);
+ 	if (task) {
+ 		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
++#ifdef CONFIG_GRKERNSEC_PROC_USER
++		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP)) ||
++#endif
+ 		    task_dumpable(task)) {
+ 			stat->uid = task->euid;
+ 			stat->gid = task->egid;
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++			stat->gid = CONFIG_GRKERNSEC_PROC_GID;
++#endif
+ 		}
+ 	}
+ 	rcu_read_unlock();
+@@ -1757,6 +1794,12 @@
+ 			inode->i_fop = &proc_info_file_operations;
+ 			ei->op.proc_read = proc_pid_status;
+ 			break;
++#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
++		case PROC_TGID_IPADDR:
++			inode->i_fop = &proc_info_file_operations;
++			ei->op.proc_read = proc_pid_ipaddr;
++			break;
++#endif
+ 		case PROC_TID_STAT:
+ 			inode->i_fop = &proc_info_file_operations;
+ 			ei->op.proc_read = proc_tid_stat;
+@@ -2117,7 +2160,14 @@
+ 	if (!inode)
+ 		goto out_put_task;
+ 
++#ifdef CONFIG_GRKERNSEC_PROC_USER
++	inode->i_mode = S_IFDIR|S_IRUSR|S_IXUSR;
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++	inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
++	inode->i_mode = S_IFDIR|S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP;
++#else
+ 	inode->i_mode = S_IFDIR|S_IRUGO|S_IXUGO;
++#endif
+ 	inode->i_op = &proc_tgid_base_inode_operations;
+ 	inode->i_fop = &proc_tgid_base_operations;
+ 	inode->i_flags|=S_IMMUTABLE;
+@@ -2213,12 +2263,27 @@
+ static struct task_struct *first_tgid(int tgid, unsigned int nr)
+ {
+ 	struct task_struct *pos;
++	#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++		struct task_struct *tmp = current;
++	#endif
+ 	rcu_read_lock();
+ 	if (tgid && nr) {
+ 		pos = find_proc_task_by_pid(tgid);
++		if (pos
++	#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++			&& (tmp->uid && (pos->uid != tmp->uid)
++	#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++			&& !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
++	#endif
++			)
++	#endif
++		)
++			goto not_found;
++
+ 		if (pos && thread_group_leader(pos))
+ 			goto found;
+ 	}
++	not_found:
+ 	/* If nr exceeds the number of processes get out quickly */
+ 	pos = NULL;
+ 	if (nr && nr >= nr_processes())
+@@ -2233,6 +2298,16 @@
+ 			pos = NULL;
+ 			goto done;
+ 		}
++		if (pos
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++		    && (tmp->uid && (pos->uid != tmp->uid)
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++			&& !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
++#endif
++			)
++#endif
++		)
++			nr++;
+ 	}
+ found:
+ 	get_task_struct(pos);
+@@ -2270,6 +2345,9 @@
+ {
+ 	char buf[PROC_NUMBUF];
+ 	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++	struct task_struct *tmp = current;
++#endif
+ 	struct task_struct *task;
+ 	int tgid;
+ 
+@@ -2292,6 +2370,17 @@
+ 	     task = next_tgid(task), filp->f_pos++) {
+ 		int len;
+ 		ino_t ino;
++
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++		if (tmp->uid && (task->uid != tmp->uid)
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++			&& !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
++#endif
++		) {
++			continue;
++		}
++#endif
++
+ 		tgid = vx_map_tgid(task->pid);
+ 		if (!proc_pid_visible(task, tgid))
+ 			continue;
