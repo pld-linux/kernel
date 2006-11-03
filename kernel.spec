@@ -113,7 +113,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			3
+%define		_rel			1
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
@@ -131,7 +131,7 @@
 %define		xen_version		3.0.2
 
 %define		_basever	2.6.16
-%define		_postver	.29
+%define		_postver	.30
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
@@ -147,7 +147,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source3-md5:	eaac691e53491e9523e0adea2bb0a3c0
+# Source3-md5:	38d41539f86faccddf1f92bc8c066d37
 
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
