@@ -280,7 +280,6 @@ Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-drm_pciids-via.patch
-Patch2002:	linux-2.6-ti_sd.patch
 #wanpipe
 #Patch3000:	wanpipe-beta7-2.3.4.patch
 
@@ -937,7 +936,6 @@ done
 #Small fixes:
 %patch2000 -p1
 %patch2001 -p1
-%patch2002 -p1
 
 #%if %{with abi}
 #patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
