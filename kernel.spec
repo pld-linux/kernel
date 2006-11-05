@@ -8,6 +8,7 @@
 # - reiser4
 # - Linux ABI
 # - grsecurity - does not builds --without grsecuriy
+# - move config preparing from build to setup
 #
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
 #
@@ -94,7 +95,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			4
+%define		_rel			0.1
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
@@ -118,7 +119,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 %define		_basever	2.6.18
-%define		_postver	.1
+%define		_postver	.2
 #define		_postver	%{nil}
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
@@ -132,7 +133,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar
 # Source0-md5:	296a6d150d260144639c3664d127d174
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	f6401edf6b88f809b7bee2a117c260d2
+# Source1-md5:	70c23255c697aa18a6e6ce97dc4eeb9b
 %endif
 Source3:	kernel-autoconf.h
 Source4:	kernel-config.h
@@ -280,6 +281,7 @@ Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-drm_pciids-via.patch
+Patch2002:	linux-2.6-ti_sd.patch
 #wanpipe
 #Patch3000:	wanpipe-beta7-2.3.4.patch
 
@@ -936,6 +938,7 @@ done
 #Small fixes:
 %patch2000 -p1
 %patch2001 -p1
+%patch2002 -p1
 
 #%if %{with abi}
 #patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
