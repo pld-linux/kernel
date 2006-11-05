@@ -950,9 +950,6 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
 # on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 
-# cleanup backups after patching
-find . '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
-
 TuneUpConfigForIX86 () {
 	set -x
 %ifarch %{ix86}
@@ -1092,6 +1089,9 @@ BuildConfig() {
 # Prepare configs:
 BuildConfig
 BuildConfig smp
+
+# cleanup backups after patching
+find . '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
 
 %build
 BuildKernel() {
