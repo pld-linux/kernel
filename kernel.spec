@@ -8,7 +8,6 @@
 # - reiser4
 # - Linux ABI
 # - grsecurity - does not builds --without grsecuriy
-# - move config preparing from build to setup
 #
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
 #
@@ -95,7 +94,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.1
+%define		_rel			0.2
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
@@ -956,7 +955,6 @@ sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 # cleanup backups after patching
 find . '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
 
-%build
 TuneUpConfigForIX86 () {
 	set -x
 %ifarch %{ix86}
@@ -1093,6 +1091,11 @@ BuildConfig() {
 	fi
 }
 
+# Prepare configs:
+BuildConfig
+BuildConfig smp
+
+%build
 BuildKernel() {
 	%{?debug:set -x}
 	echo "Building kernel $1 ..."
@@ -1201,7 +1204,6 @@ echo "-%{release}" > localversion
 # UP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 rm -rf $KERNEL_INSTALL_DIR
-BuildConfig
 %{__make} %CrossOpts include/linux/utsrelease.h
 cp include/linux/utsrelease.h{,.save}
 %if %{with up}
@@ -1212,7 +1214,6 @@ PreInstallKernel
 # SMP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
-BuildConfig smp
 %if %{with smp}
 BuildKernel smp
 PreInstallKernel smp
