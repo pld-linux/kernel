@@ -142,9 +142,9 @@ Source7:	kernel-module-build.pl
 Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.18.tar.bz2
 # Source10-md5:	8a24775d9e83cfaaf1d3ff56fc0648cf
 #Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.17/reiser4-for-2.6.17-3.patch.gz
-# Source12-md5:	593c3296ddf40c5b116ee129781da341
+##Source12-md5:	593c3296ddf40c5b116ee129781da341
 #Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
-# Source14-md5:	f2563a2d748c7480559e8d3ff77eb18a
+##Source14-md5:	f2563a2d748c7480559e8d3ff77eb18a
 
 Source20:	kernel-i386.config
 Source21:	kernel-i386-smp.config
