@@ -34,7 +34,7 @@
 
 %{?debug:%define with_verbose 1}
 
-%if %{without grsecurity}
+%if !%{with grsecurity}
 %undefine	with_grsec_full
 %undefine	with_grsec_minimal
 %endif
@@ -843,7 +843,7 @@ done
 
 %patch8 -p1
 
-%if %{without fbsplash}
+%if !%{with fbsplash}
 %patch3 -p1
 %else
 %patch4 -p1
