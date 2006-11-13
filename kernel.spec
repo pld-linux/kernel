@@ -1086,9 +1086,21 @@ BuildConfig() {
 	fi
 }
 
-# Prepare configs:
+## Prepare configs:
+KERNEL_BUILD_DIR=`pwd`
+# UP KERNEL
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
+rm -rf $KERNEL_INSTALL_DIR
+%if %{with up}
 BuildConfig
+%endif
+
+# SMP KERNEL
+KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
+rm -rf $KERNEL_INSTALL_DIR
+%if %{with smp}
 BuildConfig smp
+%endif
 
 # cleanup backups after patching
 find . '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
@@ -1178,6 +1190,8 @@ PreInstallKernel() {
 		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 		KERNELRELEASE=$KernelVer
 
+	# You'd probabelly want to make it somewhat different
+	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}
 	if [ "$smp" = "yes" ]; then
 		install Module.symvers \
 			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/Module.symvers-smp
@@ -1266,7 +1280,7 @@ fi
 
 %if %{with up} || %{with smp}
 # UP or SMP
-install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{version}/include/linux/* \
+install $KERNEL_BUILD_DIR/include/linux/* \
 	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 %endif
 
