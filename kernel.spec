@@ -31,7 +31,7 @@
 
 %{?debug:%define with_verbose 1}
 
-%if %{without grsecurity}
+%if !%{with grsecurity}
 %undefine	with_grsec_full
 %undefine	with_grsec_minimal
 %undefine	with_pax
@@ -854,7 +854,7 @@ done
 
 %patch8 -p1
 
-%if %{without fbsplash}
+%if !%{with fbsplash}
 %patch3 -p1
 %else
 %patch4 -p1
@@ -1562,7 +1562,7 @@ fi
 %if %{have_drm}
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
 %endif
-%if %{without xen0} && %{without xenU}
+%if !%{with xen0} && !%{with xenU}
 %if %{have_oss} && %{have_isa}
 %exclude /lib/modules/%{version}-%{release}/kernel/drivers/media/radio/miropcm20.ko*
 %endif
@@ -1654,7 +1654,7 @@ fi
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}/kernel/sound/oss
 
-%if %{without xen0} && %{without xenU}
+%if !%{with xen0} && !%{with xenU}
 %if %{have_isa}
 /lib/modules/%{version}-%{release}/kernel/drivers/media/radio/miropcm20.ko*
 %endif
@@ -1683,7 +1683,7 @@ fi
 %if %{have_drm}
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
 %endif
-%if %{without xen0} && %{without xenU}
+%if !%{with xen0} && !%{with xenU}
 %if %{have_oss} && %{have_isa}
 %exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/media/radio/miropcm20.ko*
 %endif
@@ -1774,7 +1774,7 @@ fi
 %files smp-sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}smp/kernel/sound/oss
-%if %{without xen0} && %{without xenU}
+%if !%{with xen0} && !%{with xenU}
 %if %{have_isa}
 /lib/modules/%{version}-%{release}smp/kernel/drivers/media/radio/miropcm20.ko*
 %endif
