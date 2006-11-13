@@ -29,7 +29,7 @@
 
 %{?debug:%define with_verbose 1}
 
-%if %{without grsecurity}
+%if !%{with grsecurity}
 %undefine	with_grsec_full
 %undefine	with_grsec_minimal
 %undefine	with_pax
@@ -1233,7 +1233,7 @@ ln -sf System.map-%{version}-%{release}%{xen} /boot/System.map%{dashxen}
 
 %depmod %{version}-%{release}%{xen}
 
-%if %{without xenU}
+%if !%{with xenU}
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}%{xen}.gz %{version}-%{release}%{xen}
 mv -f %{initrd_dir}/initrd%{dashxen} %{initrd_dir}/initrd%{dashxen}.old 2> /dev/null > /dev/null
 ln -sf initrd-%{version}-%{release}%{xen}.gz %{initrd_dir}/initrd%{dashxen}
@@ -1307,7 +1307,7 @@ ln -sf System.map-%{version}-%{release}%{xen}smp /boot/System.map%{dashxen}
 
 %depmod %{version}-%{release}%{xen}smp
 
-%if %{without xenU}
+%if !%{with xenU}
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}%{xen}smp.gz %{version}-%{release}%{xen}smp
 mv -f %{initrd_dir}/initrd%{dashxen} %{initrd_dir}/initrd%{dashxen}.old 2> /dev/null > /dev/null
 ln -sf initrd-%{version}-%{release}%{xen}smp.gz %{initrd_dir}/initrd%{dashxen}
@@ -1397,7 +1397,7 @@ fi
 %if %{have_drm}
 %exclude /lib/modules/%{version}-%{release}%{xen}/kernel/drivers/char/drm
 %endif
-%if %{have_oss} && %{have_isa} && %{without xen0} && %{without xenU}
+%if %{have_oss} && %{have_isa} && !%{with xen0} && !%{with xenU}
 %exclude /lib/modules/%{version}-%{release}%{xen}/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 /lib/modules/%{version}-%{release}%{xen}/kernel/fs
@@ -1486,7 +1486,7 @@ fi
 %files sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}%{xen}/kernel/sound/oss
-%if %{have_isa} && %{without xen0} && %{without xenU}
+%if %{have_isa} && !%{with xen0} && !%{with xenU}
 /lib/modules/%{version}-%{release}%{xen}/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 %endif
@@ -1513,7 +1513,7 @@ fi
 %if %{have_drm}
 %exclude /lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/char/drm
 %endif
-%if %{have_oss} && %{have_isa} && %{without xen0} && %{without xenU}
+%if %{have_oss} && %{have_isa} && !%{with xen0} && !%{with xenU}
 %exclude /lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 /lib/modules/%{version}-%{release}%{xen}smp/kernel/fs
@@ -1602,7 +1602,7 @@ fi
 %files smp-sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{version}-%{release}%{xen}smp/kernel/sound/oss
-%if %{have_isa} && %{without xen0} && %{without xenU}
+%if %{have_isa} && !%{with xen0} && !%{with xenU}
 /lib/modules/%{version}-%{release}%{xen}smp/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 %endif
