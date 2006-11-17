@@ -1202,8 +1202,6 @@ echo "-%{release}" > localversion
 # UP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 rm -rf $KERNEL_INSTALL_DIR
-%{__make} %CrossOpts include/linux/utsrelease.h
-cp include/linux/utsrelease.h{,.save}
 %if %{with up}
 BuildConfig
 BuildKernel
@@ -1218,6 +1216,9 @@ BuildConfig smp
 BuildKernel smp
 PreInstallKernel smp
 %endif
+
+%{__make} %CrossOpts include/linux/utsrelease.h
+cp include/linux/utsrelease.h{,.save}
 
 %install
 rm -rf $RPM_BUILD_ROOT
