@@ -950,6 +950,10 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
 # on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 
+# cleanup backups after patching
+find . '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
+
+%build
 TuneUpConfigForIX86 () {
 	set -x
 %ifarch %{ix86}
@@ -1086,26 +1090,8 @@ BuildConfig() {
 	fi
 }
 
-## Prepare configs:
-KERNEL_BUILD_DIR=`pwd`
-# UP KERNEL
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
-rm -rf $KERNEL_INSTALL_DIR
-%if %{with up}
-BuildConfig
-%endif
 
-# SMP KERNEL
-KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
-rm -rf $KERNEL_INSTALL_DIR
-%if %{with smp}
-BuildConfig smp
-%endif
 
-# cleanup backups after patching
-find . '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
-
-%build
 BuildKernel() {
 	%{?debug:set -x}
 	echo "Building kernel $1 ..."
@@ -1219,6 +1205,7 @@ rm -rf $KERNEL_INSTALL_DIR
 %{__make} %CrossOpts include/linux/utsrelease.h
 cp include/linux/utsrelease.h{,.save}
 %if %{with up}
+BuildConfig
 BuildKernel
 PreInstallKernel
 %endif
@@ -1227,6 +1214,7 @@ PreInstallKernel
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
 %if %{with smp}
+BuildConfig smp
 BuildKernel smp
 PreInstallKernel smp
 %endif
@@ -1280,7 +1268,7 @@ fi
 
 %if %{with up} || %{with smp}
 # UP or SMP
-install $KERNEL_BUILD_DIR/include/linux/* \
+cp -Rdp $KERNEL_BUILD_DIR/include/linux/* \
 	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
 %endif
 
