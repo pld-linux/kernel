@@ -151,7 +151,7 @@ software suspend works only on ix86 platforms
 %define		_udev_ver		058
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			5
+%define		_rel			6
 
 %define		_netfilter_snap		20051125
 %define		_nf_hipac_ver		0.9.1
@@ -364,6 +364,9 @@ Patch204:	linux-2.6.12-smp-alts.patch
 Patch205:	linux-2.6.12.3-xen.patch
 Patch206:	linux-2.6.12.3-xenbus.patch
 Patch207:	linux-2.6.12.3-xen-fixes.patch
+
+# Wake-On-Lan workaround for nVidia nForce (forcedeth)
+Patch250:	linux-2.6.14-forcedeth-WON.patch
 
 # vserver-2.1.0
 Patch300:	linux-2.6-vs2.1.patch
@@ -928,6 +931,8 @@ install %{SOURCE5} Makefile.ppclibs
 %patch203 -p1
 %endif
 %endif
+
+%patch250 -p1
 
 %patch400 -p1
 %patch401 -p1
