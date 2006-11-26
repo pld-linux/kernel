@@ -113,7 +113,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			1
+%define		_rel			2
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
@@ -284,6 +284,9 @@ Patch140:	linux-2.6.16-we20-6.patch
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 Patch201:	linux-2.6-x86_64-stack-protector.patch
 Patch202:	linux-2.6-unwind-through-signal-frames.patch
+
+# Wake-On-Lan patch for nVidia nForce ethernet driver forcedeth
+Patch250:	linux-2.6.16-forcedeth-WON.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
@@ -848,6 +851,8 @@ done
 %ifarch ppc ppc64 %{ix86} %{x8664}
 %patch202 -p1
 %endif
+
+%patch250 -p1
 
 %if %{with grsec_minimal}
 %patch1000 -p1
