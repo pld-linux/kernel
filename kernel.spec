@@ -303,7 +303,7 @@ BuildRequires:	binutils >= 3:2.14.90.0.7
 BuildRequires:	elftoaout
 %endif
 BuildRequires:	gcc >= 5:3.2
-BuildRequires:	module-init-tools
+BuildRequires:	/sbin/depmod
 # for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
@@ -1022,7 +1022,7 @@ BuildConfig() {
 
 BuildKernel() {
 	%{?debug:set -x}
-	echo "Building kernel $1 ..."
+	echo "Building kernel${1:+ $1}..."
 	%{__make} %CrossOpts mrproper \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 	ln -sf arch/%{_target_base_arch}/defconfig .config
