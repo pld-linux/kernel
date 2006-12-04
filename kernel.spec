@@ -94,7 +94,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.2
+%define		_rel			0.3
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
@@ -279,6 +279,8 @@ Patch102:	linux-2.6-vs2.1-128IPs.patch
 Patch130:	linux-2.6-forcedeth-WON.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
+
+Patch300:	http://www.ssi.bg/~ja/routes-2.6.17-12.diff
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
@@ -927,7 +929,7 @@ done
 #%endif
 
 # forcedeth:
-%patch130 -p1
+#%patch130 -p1
 
 %if %{with grsec_minimal}
 %patch1000 -p1
@@ -939,6 +941,8 @@ done
 %ifarch ppc ppc64
 %patch200 -p1
 %endif
+
+%patch300 -p1
 
 #Small fixes:
 %patch2000 -p1
