@@ -279,6 +279,8 @@ Patch130:	linux-2.6-forcedeth-WON.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
+Patch300:	http://www.ssi.bg/~ja/routes-2.6.19-12.diff
+
 Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
@@ -938,6 +940,8 @@ done
 %ifarch ppc ppc64
 %patch200 -p1
 %endif
+
+%patch300 -p1
 
 #Small fixes:
 %patch2000 -p1
