@@ -17,7 +17,7 @@ sub wanted {
 	return if $File::Find::name =~ /(Documentation|scripts)/;
 	(my $file = $File::Find::name) =~ s#^\./##;
 	$file =~ m#^(.*)/#;
-	my $dir = $1;
+	my $dir = $1 || "";
 	my $subdir = "";
 	foreach my $sub ( split( '/', $dir )) {
 		$subdir .= "/" . $sub;
