@@ -26,6 +26,7 @@
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
 %bcond_with	reiserfs4	# build with ReuserFS 4 support
+%bcond_with	ext2compiled		# compile ext2 into kernel to be able to boot from ext2 rootfs
 
 %{?debug:%define with_verbose 1}
 
@@ -138,7 +139,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{_subname}
 Version:	%{_basever}%{_postver}
-Release:	%{_rel}
+Release:	%{_rel}%{?with_ext2compiled:ext2}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
@@ -997,6 +998,10 @@ BuildConfig() {
 %if %{with nfsroot}
 	sed -i "s:CONFIG_NFS_FS=m:CONFIG_NFS_FS=y:" arch/%{_target_base_arch}/defconfig
 	echo "CONFIG_ROOT_NFS=y" >> arch/%{_target_base_arch}/defconfig
+%endif
+
+%if %{with ext2compiled}
+	sed -i 's,CONFIG_EXT2_FS=m,CONFIG_EXT2_FS=y,' arch/%{_target_base_arch}/defconfig
 %endif
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{_target_base_arch}/defconfig}
