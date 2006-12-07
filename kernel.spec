@@ -25,7 +25,7 @@
 %bcond_with	vesafb_tng	# vesafb-tng, vesafb replacement from gentoo
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
-%bcond_with	reiserfs4	# build with ReuserFS 4 support
+%bcond_with	reiserfs4	# build with ReiserFS 4 support
 %bcond_with	ext2compiled		# compile ext2 into kernel to be able to boot from ext2 rootfs
 
 %{?debug:%define with_verbose 1}
