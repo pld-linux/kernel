@@ -131,7 +131,7 @@
 
 %define		_basever	2.6.16
 %define		_postver	.35
-%define		_rel			1
+%define		_rel		2
 %define		_subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -235,7 +235,7 @@ Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
 Patch33:	pom-ng-TARPIT-%{_netfilter_snap}.patch
 Patch34:	pom-ng-XOR-%{_netfilter_snap}.patch
 Patch35:	pom-ng-account-%{_netfilter_snap}.patch
-Patch36:	pom-ng-ipp2p-%{_netfilter_snap}.patch
+Patch36:	ipp2p-0.8.2.patch
 Patch37:	pom-ng-rpc-%{_netfilter_snap}.patch
 Patch38:	pom-ng-unclean-%{_netfilter_snap}.patch
 
