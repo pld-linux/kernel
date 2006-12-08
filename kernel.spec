@@ -155,7 +155,7 @@
 %define		drm_xfree_version	4.3.0
 
 %define		squashfs_version	3.1
-%define		suspend_version		2.2.8
+%define		suspend_version		2.2.9
 
 %define		xen_version		3.0.2
 
@@ -185,8 +185,8 @@ Source4:	kernel-config.h
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
 
-Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.18.tar.bz2
-# Source10-md5:	8a24775d9e83cfaaf1d3ff56fc0648cf
+#Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.19-rc6.tar.bz2
+##Source10-md5:	8a24775d9e83cfaaf1d3ff56fc0648cf
 #Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.17/reiser4-for-2.6.17-3.patch.gz
 ##Source12-md5:	593c3296ddf40c5b116ee129781da341
 #Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
@@ -302,6 +302,8 @@ Patch57:	linux-2.6-cpuset_virtualization.patch
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_36.tar.bz2
 Patch60:	linux-2.6-sk98lin-8.36.1.3.patch
 
+# http://www.suspend2.net/downloads/all/suspend2-2.2.9-for-2.6.19-rc6.patch.bz2
+Patch69:	suspend2-2.2.9-for-2.6.19-rc6.patch
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
 Patch72:	linux-2.6-suspend2-off.patch
@@ -857,7 +859,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{_basever}%{_rc} -a10 %{?with_abi:-a14}
+%setup -q -n linux-%{_basever}%{_rc} %{?with_abi:-a14}
 
 # borooken in this time.
 #patch0 -p1
@@ -874,9 +876,10 @@ install %{SOURCE5} Makefile.ppclibs
 
 # suspend2:
 %ifarch %{ix86} %{x8664} ia64
-for i in suspend2-%{suspend_version}-for-*/[0-9]*; do
-patch -p1 -s < $i
-done
+##for i in suspend2-%{suspend_version}-for-*/[0-9]*; do
+##patch -p1 -s < $i
+%patch69 -p1
+##done
 %patch70 -p1
 %patch71 -p1
 %patch72 -p1
