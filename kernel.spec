@@ -12,10 +12,10 @@
 # TODO 2.6.19:
 # - all above todos ???
 # - (patch 1) linux-2.6-sata-promise-pata-ports.patch - done, but test two alternatives 
-# - (patch 70) linux-2.6-suspend2-avoid-redef.patch - untested
-# - (patch 71) linux-2.6-suspend2-page.patch - untested
-# - (patch 72) linux-2.6-suspend2-off.patch - untested
-# - (patch 73) kernel-bcm43xx-patch_2.6.18.1_for_PCI-E.patch - untested
+# - (patch 70) linux-2.6-suspend2-avoid-redef.patch - updated
+# - (patch 71) linux-2.6-suspend2-page.patch - applies
+# - (patch 72) linux-2.6-suspend2-off.patch - not needed anymore
+# - (patch 73) kernel-bcm43xx-patch_2.6.18.1_for_PCI-E.patch - needs update
 # - (patch 75) kernel-bcm43xx-patch_2.6.18.1_signal_quality.patch - untested
 # - (patch 2) tahoe9xx-2.6.11.5.patch - untested
 # - (patch 8) linux-fbcon-margins.patch - untested
@@ -306,7 +306,7 @@ Patch60:	linux-2.6-sk98lin-8.36.1.3.patch
 Patch69:	suspend2-2.2.9-for-2.6.19-rc6.patch
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
-Patch72:	linux-2.6-suspend2-off.patch
+#Patch72:	linux-2.6-suspend2-off.patch
 
 # Fix for pcie cards against 2.6.18.1 from ftp://lwfinger.dynalias.org/patches
 Patch73:        kernel-bcm43xx-patch_2.6.18.1_for_PCI-E.patch
@@ -882,7 +882,7 @@ install %{SOURCE5} Makefile.ppclibs
 ##done
 %patch70 -p1
 %patch71 -p1
-%patch72 -p1
+#patch72 -p1
 %endif
 
 # bcm43xx patch set
