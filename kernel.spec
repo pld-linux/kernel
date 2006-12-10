@@ -11,32 +11,9 @@
 #
 # TODO 2.6.19:
 # - all above todos ???
-# - (patch 1) linux-2.6-sata-promise-pata-ports.patch - done, but test two alternatives 
-# - (patch 70) linux-2.6-suspend2-avoid-redef.patch - updated
-# - (patch 71) linux-2.6-suspend2-page.patch - applies
-# - (patch 72) linux-2.6-suspend2-off.patch - not needed anymore
-# - (patch 2) tahoe9xx-2.6.11.5.patch - untested
-# - (patch 8) linux-fbcon-margins.patch - untested
-# - (patch 3) bootsplash-3.1.6-2.6.15.diff - untested
-# - (patch 4) fbsplash-0.9.2-r5-2.6.18-rc4.patch - untested
-# - (patch 6) squashfs%{squashfs_version}-patch - untested
-# - (patch 7) linux-alpha-isa.patch  - untested
-# - (patch 9) linux-static-dev.patch - untested
-# - (patch 14) pom-ng-ipv4options-%{_netfilter_snap}.patch - untested
-# - (patch 20) pom-ng-set-%{_netfilter_snap}.patch - untested
-# - (patch 22) pom-ng-u32-%{_netfilter_snap}.patch - untested
-# - (patch 32) pom-ng-ROUTE-%{_netfilter_snap}.patch - untested
-# - (patch 40) pom-ng-IPMARK-%{_netfilter_snap}.patch - untested
-# - (patch 41) pom-ng-condition-%{_netfilter_snap}.patch - untested
-# - (patch 42) pom-ng-connlimit-%{_netfilter_snap}.patch - untested
-# - (patch 43) pom-ng-ipp2p-%{_netfilter_snap}.patch - untested
-# - (patch 44) pom-ng-time-%{_netfilter_snap}.patch - untested
-# - (patch 53) esfq-kernel.patch - untested
-# - (patch 54) linux-2.6-toshiba_acpi_0.18-dev_toshiba_test4.patch - untested
-# - (patch 55) linux-2.6-atm-vbr.patch - untested
-# - (patch 56) linux-2.6-atmdd.patch - untested
-# - (patch 57) linux-2.6-cpuset_virtualization.patch - untested
-# - (patch 60) linux-2.6-sk98lin-8.36.1.3.patch - untested
+# - (patch 1) linux-2.6-sata-promise-pata-ports.patch - test second alternative 
+# - (patch 4) fbsplash-0.9.2-r5-2.6.18-rc4.patch - untested (bcond)
+# - (patch 60) linux-2.6-sk98lin-8.36.1.3.patch - needs update
 # - use p75 from LINUX_2_6_17 - linux-2.6.17-ide-acpi-support.patch
 # - use p80 from LINUX_2_6_17 - linux-2.6.17-cx88-tvaudio.patch
 # - use p85 from LINUX_2_6_17 - hostap-kernel-2.6.17.patch
