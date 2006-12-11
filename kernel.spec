@@ -139,7 +139,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 %define		_basever	2.6.19
-%define		_postver	%{nil}
+%define		_postver	.1
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
@@ -152,7 +152,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar
 # Source0-md5:	443c265b57e87eadc0c677c3acc37e20
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	43915b499164c0e2560d147638fd21ac
+# Source1-md5:	899a0932373a5299b69b9579fceb099e
 %endif
 Source3:	kernel-autoconf.h
 Source4:	kernel-config.h
