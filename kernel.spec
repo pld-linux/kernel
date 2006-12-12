@@ -13,14 +13,7 @@
 # - all above todos ???
 # - (patch 1) linux-2.6-sata-promise-pata-ports.patch - test second alternative 
 # - (patch 4) fbsplash-0.9.2-r5-2.6.18-rc4.patch - untested (bcond)
-# - (patch 60) linux-2.6-sk98lin-8.36.1.3.patch - needs update
-# - use p75 from LINUX_2_6_17 - linux-2.6.17-ide-acpi-support.patch
-# - use p80 from LINUX_2_6_17 - linux-2.6.17-cx88-tvaudio.patch
-# - use p85 from LINUX_2_6_17 - hostap-kernel-2.6.17.patch
-# - (patch 100) linux-2.6-vs2.1.patch - untested
-# - (patch 101) linux-2.6-vs2.1-suspend2.patch - untested
-# - (patch 102) linux-2.6-vs2.1-128IPs.patch - untested
-# - (patch 130) linux-2.6-forcedeth-WON.patch - untested
+# - (patch 130) linux-2.6-forcedeth-WON.patch - needs update
 # - (patch 1000) linux-2.6-grsec-minimal.patch - untested
 # - (patch 9999) grsecurity-2.1.9-2.6.18.patch - use spender snapshot
 # - (patch 200) linux-2.6-ppc-ICE-hacks.patch - untested
@@ -40,6 +33,7 @@
 
 %bcond_with	abi		# build ABI support only ix86 !!
 %bcond_with	grsec_full	# build full grsecurity
+%bcond_with	pax		# build PaX and full grsecurity (todo: separate)
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	xen0		# added Xen0 support
 %bcond_with	xenU		# added XenU support
@@ -53,21 +47,31 @@
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
 
+%bcond_without	ide_acpi	# support for ide-acpi from SuSE (instead of previous hack)
+
 %{?debug:%define with_verbose 1}
 
-%if !%{with grsecurity}
+%if %{without grsecurity}
 %undefine	with_grsec_full
 %undefine	with_grsec_minimal
+%undefine	with_pax
+%endif
+
+%if %{with pax}
+%undefine	with_grsec_minimal
+%undefine	with_grsec_full
+%define		with_grsecurity		1
 %endif
 
 %if %{with grsec_full}
 %undefine	with_grsec_minimal
 %define		with_grsecurity		1
 %endif
-
-%if %{with grsec_minimal}
+																						     
+%if %{with grsec_minimal}																			    
 %undefine	with_grsec_full
 %define		with_grsecurity		1
+%undefine	with_pax
 %endif
 
 %ifarch ia64
@@ -137,7 +141,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
-Name:		kernel%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
+Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 %define		_basever	2.6.19
 %define		_postver	.1
 Version:	%{_basever}%{_postver}
@@ -190,6 +194,9 @@ Source44:	kernel-vesafb-tng.config
 Source45:	kernel-grsec.config
 Source46:	kernel-xen0.config
 Source47:	kernel-xenU.config
+
+Source49:	kernel-pax.config
+Source50:	kernel-no-pax.config
 
 ###
 #	Patches
@@ -282,7 +289,19 @@ Patch71:	linux-2.6-suspend2-page.patch
 # Fix for pcie cards against 2.6.18.1 from ftp://lwfinger.dynalias.org/patches
 Patch73:	kernel-bcm43xx-patch_2.6.18.1_for_PCI-E.patch
 
-# vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.18-vs2.1.1-rc35-t1.diff
+# ide-acpi instead of nx8220 s3 suspend/resume hack
+# http://svn.uludag.org.tr/pardus/devel/kernel/kernel/files/suse/ide-acpi-support.patch
+Patch75:	linux-2.6.17-ide-acpi-support.patch
+
+# cx88-blackbird based tv tuner card audio fix
+Patch80:	linux-2.6.19-cx88-tvaudio.patch
+
+# adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
+# http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch 
+Patch85:	hostap-kernel-2.6.18.patch
+
+# http://ftp.linux-vserver.org/pub/kernel/vs2.1/patch-2.6.19-vs2.1.1.5.diff.bz2
+# same as http://vserver.13thfloor.at/Experimental/patch-2.6.19-vs2.1.1.5.diff
 Patch100:	linux-2.6-vs2.1.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
@@ -305,8 +324,7 @@ Patch2001:	kernel-drm_pciids-via.patch
 #wanpipe
 #Patch3000:	wanpipe-beta7-2.3.4.patch
 
-# official grsecurity for 2.6.18
-# based on http://www.grsecurity.net/grsecurity-2.1.9-2.6.18-200610021833.patch.gz
+# use http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.19-200612102128.patch
 Patch9999:	grsecurity-2.1.9-2.6.18.patch
 
 URL:		http://www.kernel.org/
@@ -403,6 +421,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -419,6 +438,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -435,6 +455,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -450,6 +471,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -599,6 +621,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -615,6 +638,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -630,6 +654,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -645,6 +670,7 @@ Netfilter module dated: %{_netfilter_snap}
 %{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -926,6 +952,17 @@ install %{SOURCE5} Makefile.ppclibs
 
 %patch60 -p1
 
+%if %{with ide_acpi}
+# ide-acpi instead of nx8220 s3 suspend/resume hack
+%patch75 -p1
+%endif
+
+# cx88-tvaudio
+%patch80 -p1
+
+# hostap enhancements from/for aircrack-ng 
+%patch85 -p1
+
 # vserver:
 %patch100 -p1
 %ifarch %{ix86} %{x8664} ia64
@@ -945,9 +982,15 @@ install %{SOURCE5} Makefile.ppclibs
 %if %{with grsec_minimal}
 %patch1000 -p1
 %endif
+
 %if %{with grsec_full}
 %patch9999 -p1
 %endif
+
+%if %{with pax}
+%patch9999 -p1
+%endif
+
 
 %ifarch ppc ppc64
 %patch200 -p1
@@ -1016,6 +1059,28 @@ TuneUpConfigForIX86 () {
 %endif
 }
 
+PaXconfig () {
+	set -x
+	%ifarch %{ix86}
+		sed -i 's:# CONFIG_PAX_SEGMEXEC is not set:CONFIG_PAX_SEGMEXEC=y:' $1
+		sed -i 's:# CONFIG_PAX_DEFAULT_SEGMEXEC is not set:CONFIG_PAX_DEFAULT_SEGMEXEC=y:' $1
+		%ifnarch i386 i486
+			sed -i 's:# CONFIG_PAX_NOVSYSCALL is not set:CONFIG_PAX_NOVSYSCALL=y:' $1
+		%endif
+	%endif
+	%ifarch ppc64
+		sed -i 's:CONFIG_PAX_NOELFRELOCS=y:# CONFIG_PAX_NOELFRELOCS is not set:' $1
+	%endif
+	%ifarch ppc
+		sed -i 's:# CONFIG_PAX_EMUTRAMP is not set:CONFIG_PAX_EMUTRAMP=y:' $1
+	%endif
+	%ifarch %{ix8664}
+		sed -i 's:# CONFIG_PAX_MEMORY_UDEREF is not set:# CONFIG_PAX_MEMORY_UDEREF=y:' $1
+	%endif
+	return 0
+}
+
+
 BuildConfig() {
 	%{?debug:set -x}
 	# is this a special kernel we want to build?
@@ -1062,6 +1127,18 @@ BuildConfig() {
 %if %{with grsecurity}
 	cat %{SOURCE45} >> arch/%{_target_base_arch}/defconfig
 %endif
+
+%if %{with pax}
+	cat %{SOURCE49} >> arch/%{_target_base_arch}/defconfig
+	PaXconfig arch/%{_target_base_arch}/defconfig
+%else   
+	cat %{SOURCE50} >> arch/%{_target_base_arch}/defconfig
+%endif
+
+%if %{with ide_acpi}
+	echo "CONFIG_BLK_DEV_IDEACPI=y" >> arch/%{_target_base_arch}/defconfig
+%endif
+
 
 %if %{with xen0}
 	cat %{SOURCE46} >> arch/%{_target_base_arch}/defconfig
@@ -1343,7 +1420,7 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title='PLD Linux'
 	fi
 
-	ext='%{?with_grsec_full:grsecurity}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
+	ext='%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
 	if [ "$ext" ]; then
 		title="$title $ext"
 	fi
@@ -1415,7 +1492,7 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title='PLD Linux'
 	fi
 
-	ext='%{?with_grsec_full:grsecurity}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
+	ext='%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
 	if [ "$ext" ]; then
 		title="$title $ext"
 	fi
