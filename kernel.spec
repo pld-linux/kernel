@@ -276,7 +276,7 @@ Patch102:	linux-2.6-vs2.1-128IPs.patch
 
 # Wake-On-Lan fix for nForce drivers; using http://atlas.et.tudelft.nl/verwei90/nforce2/wol.html
 # Fix verified for that kernel version.
-Patch130:	linux-2.6-forcedeth-WON.patch
+Patch130:	linux-2.6.18-forcedeth-WON.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
@@ -929,7 +929,7 @@ done
 #%endif
 
 # forcedeth:
-#%patch130 -p1
+%patch130 -p1
 
 %if %{with grsec_minimal}
 %patch1000 -p1
