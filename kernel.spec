@@ -13,15 +13,11 @@
 # - all above todos ???
 # - (patch 1) linux-2.6-sata-promise-pata-ports.patch - test second alternative 
 # - (patch 4) fbsplash-0.9.2-r5-2.6.18-rc4.patch - untested (bcond)
-# - (patch 130) linux-2.6-forcedeth-WON.patch - needs update
-# - (patch 1000) linux-2.6-grsec-minimal.patch - untested
+# - (patch 1000) linux-2.6-grsec-minimal.patch - needs update
 # - (patch 9999) grsecurity-2.1.9-2.6.18.patch - use spender snapshot
-# - (patch 200) linux-2.6-ppc-ICE-hacks.patch - untested
-# - (patch 300) http://www.ssi.bg/~ja/routes-2.6.19-12.diff - untested 
-# - (patch 2000) kernel-small_fixes.patch - untested
-# - (patch 2001) kernel-drm_pciids-via.patch - untested
-# - use PaXconfig() from LINUX_2_6_17 and pax bcond/support
+# - (patch 200) linux-2.6-ppc-ICE-hacks.patch - untested - ppc needed
 # - separate PaX and grsecurity support 
+# - update configs for all supported archs
 #
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
 #
@@ -320,7 +316,6 @@ Patch300:	http://www.ssi.bg/~ja/routes-2.6.19-12.diff
 Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
-Patch2001:	kernel-drm_pciids-via.patch
 #wanpipe
 #Patch3000:	wanpipe-beta7-2.3.4.patch
 
@@ -1000,7 +995,6 @@ install %{SOURCE5} Makefile.ppclibs
 
 #Small fixes:
 %patch2000 -p1
-%patch2001 -p1
 
 #%if %{with abi}
 #patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
