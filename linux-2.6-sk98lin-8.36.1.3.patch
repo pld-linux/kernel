@@ -13638,7 +13638,7 @@ diff -ruN linux/drivers/net/sk98lin/skethtool.c linux-new/drivers/net/sk98lin/sk
  	return 0;
  }
  
--struct ethtool_ops SkGeEthtoolOps = {
+-const struct ethtool_ops SkGeEthtoolOps = {
 -	.get_settings		= getSettings,
 -	.set_settings		= setSettings,
 -	.get_drvinfo		= getDriverInfo,
@@ -13916,8 +13916,8 @@ diff -ruN linux/drivers/net/sk98lin/skge.c linux-new/drivers/net/sk98lin/skge.c
  static void	BoardInitMem(SK_AC *pAC);
 -static void	SetupRing(SK_AC*, void*, uintptr_t, RXD**, RXD**, RXD**, int*, SK_BOOL);
 +static void	SetupRing(SK_AC*, void*, uintptr_t, RXD**, RXD**, RXD**, int*, int*, SK_BOOL);
- static SkIsrRetVar	SkGeIsr(int irq, void *dev_id, struct pt_regs *ptregs);
- static SkIsrRetVar	SkGeIsrOnePort(int irq, void *dev_id, struct pt_regs *ptregs);
+ static SkIsrRetVar	SkGeIsr(int irq, void *dev_id);
+ static SkIsrRetVar	SkGeIsrOnePort(int irq, void *dev_id);
  static int	SkGeOpen(struct SK_NET_DEVICE *dev);
 @@ -206,39 +134,76 @@
  static struct	net_device_stats *SkGeStats(struct SK_NET_DEVICE *dev);
@@ -14013,7 +14013,7 @@ diff -ruN linux/drivers/net/sk98lin/skge.c linux-new/drivers/net/sk98lin/skge.c
 +static const char *BootString = BOOT_STRING;
 +struct SK_NET_DEVICE *SkGeRootDev = NULL;
  static SK_BOOL DoPrintInterfaceChange = SK_TRUE;
--extern  struct ethtool_ops SkGeEthtoolOps;
+-extern const struct ethtool_ops SkGeEthtoolOps;
  
  /* local variables **********************************************************/
  static uintptr_t TxQueueAddr[SK_MAX_MACS][2] = {{0x680, 0x600},{0x780, 0x700}};
@@ -15802,7 +15802,7 @@ diff -ruN linux/drivers/net/sk98lin/skge.c linux-new/drivers/net/sk98lin/skge.c
 -static void SkGePollController(struct net_device *dev)
 -{
 -	disable_irq(dev->irq);
--	SkGeIsr(dev->irq, dev, NULL);
+-	SkGeIsr(dev->irq, dev);
 -	enable_irq(dev->irq);
 -}
 -#endif
@@ -16320,7 +16320,7 @@ diff -ruN linux/drivers/net/sk98lin/skge.c linux-new/drivers/net/sk98lin/skge.c
 @@ -1560,10 +2789,8 @@
  	pTxd->pMBuf     = pMessage;
  
- 	if (pMessage->ip_summed == CHECKSUM_HW) {
+ 	if (pMessage->ip_summed == CHECKSUM_PARTIAL) {
 -		u16 hdrlen = pMessage->h.raw - pMessage->data;
 -		u16 offset = hdrlen + pMessage->csum;
 -
@@ -16381,7 +16381,7 @@ diff -ruN linux/drivers/net/sk98lin/skge.c linux-new/drivers/net/sk98lin/skge.c
 @@ -1679,31 +2913,32 @@
  	** Does the HW need to evaluate checksum for TCP or UDP packets? 
  	*/
- 	if (pMessage->ip_summed == CHECKSUM_HW) {
+ 	if (pMessage->ip_summed == CHECKSUM_PARTIAL) {
 -		u16 hdrlen = pMessage->h.raw - pMessage->data;
 -		u16 offset = hdrlen + pMessage->csum;
 -
@@ -16739,7 +16739,7 @@ diff -ruN linux/drivers/net/sk98lin/skge.c linux-new/drivers/net/sk98lin/skge.c
 -
 -#ifdef USE_SK_RX_CHECKSUM
 -		pMsg->csum = pRxd->TcpSums & 0xffff;
--		pMsg->ip_summed = CHECKSUM_HW;
+-		pMsg->ip_summed = CHECKSUM_COMPLETE;
 -#else
 -		pMsg->ip_summed = CHECKSUM_NONE;
 -#endif
@@ -19577,7 +19577,7 @@ diff -ruN linux/drivers/net/sk98lin/skge.c linux-new/drivers/net/sk98lin/skge.c
 -
 -static int __init skge_init(void)
 -{
--	return pci_module_init(&skge_driver);
+-	return pci_register_driver(&skge_driver);
 -}
 -
 -static void __exit skge_exit(void)
