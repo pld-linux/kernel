@@ -13979,7 +13979,7 @@ diff -ruN linux/drivers/net/sk98lin/skge.c linux-new/drivers/net/sk98lin/skge.c
 +extern void SkY2AllocateRxBuffers(SK_AC *pAC,SK_IOC IoC,int Port);
 +extern void SkY2FreeRxBuffers(SK_AC *pAC,SK_IOC IoC,int Port);
 +extern void SkY2FreeTxBuffers(SK_AC *pAC,SK_IOC IoC,int Port);
-+extern SkIsrRetVar SkY2Isr(int irq,void *dev_id,struct pt_regs *ptregs);
++extern SkIsrRetVar SkY2Isr(int irq,void *dev_id /*,struct pt_regs *ptregs*/ );
 +extern int SkY2Xmit(struct sk_buff *skb,struct SK_NET_DEVICE *dev);
 +extern void SkY2PortStop(SK_AC *pAC,SK_IOC IoC,int Port,int Dir,int RstMode);
 +extern void SkY2PortStart(SK_AC *pAC,SK_IOC IoC,int Port);
@@ -16260,9 +16260,9 @@ diff -ruN linux/drivers/net/sk98lin/skge.c linux-new/drivers/net/sk98lin/skge.c
 +		if (!CHIP_ID_YUKON_2(pAC)) {
 +		/* Handle the GENESIS Isr */
 +			if (pAC->GIni.GIMacsFound == 2)
-+				SkGeIsr(dev->irq, dev, NULL);
++				SkGeIsr(dev->irq, dev);
 +			else
-+				SkGeIsrOnePort(dev->irq, dev, NULL);
++				SkGeIsrOnePort(dev->irq, dev);
 +		} else {
 +		/* Handle the Yukon2 Isr */
 +			SkY2Isr(dev->irq, dev, NULL);
@@ -42324,8 +42324,8 @@ diff -ruN linux/drivers/net/sk98lin/sky2.c linux-new/drivers/net/sk98lin/sky2.c
 + */
 +SkIsrRetVar SkY2Isr (
 +int              irq,     /* the irq we have received (might be shared!) */
-+void            *dev_id,  /* current device id                           */
-+struct  pt_regs *ptregs)  /* not used by our driver                      */
++void            *dev_id  /* current device id                           */
++/*  */
 +{
 +	struct SK_NET_DEVICE  *dev  = (struct SK_NET_DEVICE *)dev_id;
 +	DEV_NET               *pNet = (DEV_NET*) dev->priv;
