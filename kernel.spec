@@ -17,7 +17,15 @@
 # - (patch 9999) grsecurity-2.1.9-2.6.18.patch - use spender snapshot
 # - (patch 200) linux-2.6-ppc-ICE-hacks.patch - untested - ppc needed
 # - separate PaX and grsecurity support 
-# - update configs for all supported archs
+# - update configs for up/smp i386 (almost done) 
+# - check status of kernel-netfilter.config 
+# - check status of kernel-suspend2.config 
+# - update configs for up/smp x86_64
+# - update configs for up/smp sparc
+# - update configs for up/smp sparc64
+# - update configs for up/smp alpha
+# - update configs for up/smp ppc
+# - update configs for up/smp ia64
 #
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
 #
@@ -33,6 +41,7 @@
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	xen0		# added Xen0 support
 %bcond_with	xenU		# added XenU support
+%bcond_with	reiser4		# support for reiser4 fs
 
 %bcond_without	grsecurity	# don't build grsecurity at all
 %bcond_without	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
@@ -212,10 +221,12 @@ Patch2:		tahoe9xx-2.6.11.5.patch
 Patch3:		bootsplash-3.1.6-2.6.15.diff
 #	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.18-rc4.patch
 Patch4:		fbsplash-0.9.2-r5-2.6.18-rc4.patch
-#Patch5:		linux-2.6-vesafb-tng.patch
 
-# directly from http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.0.tar.gz
-#		from linux-2.6.15
+# vesafb-tng: http://dev.gentoo.org/~spock/projects/vesafb-tng/archive/vesafb-tng-1.0-rc2-2.6.19-rc2.patch
+Patch5:		vesafb-tng-1.0-rc2-2.6.19-rc2.patch
+
+# squashfs based on http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.1-r2.tar.gz
+# from linux-2.6.18 with squashfs3.1-r2_for_2.6.19.patch applied
 Patch6:		squashfs%{squashfs_version}-patch
 Patch7:		linux-alpha-isa.patch
 Patch8:		linux-fbcon-margins.patch
@@ -260,6 +271,12 @@ Patch44:	pom-ng-time-%{_netfilter_snap}.patch
 
 # from http://www.linuximq.net/patchs/linux-2.6.16-imq2.diff
 #Patch50:	linux-2.6.16-imq2.diff
+
+# from http://laurent.riffard.free.fr/reiser4/reiser4-for-2.6.19.patch.gz
+# based on http://ftp.namesys.com/pub/reiser4-for-2.6/2.6.18/reiser4-for-2.6.18-3.patch.gz
+# with 9 pathes from reiserfs mailing-list.
+# details http://www.mail-archive.com/reiserfs-list@namesys.com/msg22492.html
+Patch51:	reiser4-for-2.6.19.patch
 
 # esfq
 # from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
@@ -319,7 +336,7 @@ Patch2000:	kernel-small_fixes.patch
 #wanpipe
 #Patch3000:	wanpipe-beta7-2.3.4.patch
 
-# use http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.19-200612102128.patch
+# use http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.19.1-200612121859.patch
 Patch9999:	grsecurity-2.1.9-2.6.18.patch
 
 URL:		http://www.kernel.org/
@@ -890,9 +907,9 @@ install %{SOURCE5} Makefile.ppclibs
 %patch4 -p1
 %endif
 
-#%ifarch %{ix86}
-#%{?with_vesafb_tng:%patch5 -p1}
-#%endif
+%ifarch %{ix86}
+%{?with_vesafb_tng:%patch5 -p1}
+%endif
 
 %patch6 -p1
 
@@ -935,6 +952,11 @@ install %{SOURCE5} Makefile.ppclibs
 # end of netfilter
 
 #%patch50 -p1
+
+# reiser4
+%if %{with reiser4}
+%patch51 -p1
+%endif
 
 %patch53 -p1
 %patch54 -p1
