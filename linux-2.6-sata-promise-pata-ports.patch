@@ -1,106 +1,156 @@
---- linux-2.6.19/drivers/ata/libata-core.c.orig1	2006-12-08 17:11:58.000000000 +0100
-+++ linux-2.6.19/drivers/ata/libata-core.c	2006-12-08 17:31:12.000000000 +0100
+--- linux-2.6.19/drivers/ata/libata-core.c.~1~ 2006-12-05 20:42:18.000000000 +0100
++++ linux-2.6.19/drivers/ata/libata-core.c     2006-12-05 21:01:26.000000000 +0100
 @@ -5298,13 +5298,13 @@ void ata_port_init(struct ata_port *ap, 
  		ap->pio_mask = ent->pinfo2->pio_mask;
  		ap->mwdma_mask = ent->pinfo2->mwdma_mask;
  		ap->udma_mask = ent->pinfo2->udma_mask;
 -		ap->flags |= ent->pinfo2->flags;
-+		ap->flags |= ent->pinfo2->flags | ent->_port_flags[port_no]; 
++		ap->flags |= ent->pinfo2->flags | ent->_port_flags[port_no];
  		ap->ops = ent->pinfo2->port_ops;
  	} else {
  		ap->pio_mask = ent->pio_mask;
  		ap->mwdma_mask = ent->mwdma_mask;
  		ap->udma_mask = ent->udma_mask;
 -		ap->flags |= ent->port_flags;
-+		ap->flags |= ent->port_flags | ent->_port_flags[port_no]; 
++		ap->flags |= ent->port_flags | ent->_port_flags[port_no];
  		ap->ops = ent->port_ops;
  	}
  	ap->hw_sata_spd_limit = UINT_MAX;
---- linux-2.6.19/drivers/ata/sata_promise.c.orig1	2006-12-08 16:58:49.000000000 +0100
-+++ linux-2.6.19/drivers/ata/sata_promise.c	2006-12-08 17:03:55.000000000 +0100
+--- linux-2.6.19/drivers/ata/sata_promise.c.~1~ 2006-12-05 20:42:18.000000000 +0100
++++ linux-2.6.19/drivers/ata/sata_promise.c     2006-12-05 21:01:26.000000000 +0100
 @@ -175,7 +175,7 @@ static const struct ata_port_info pdc_po
  	/* board_2037x */
  	{
  		.sht		= &pdc_ata_sht,
 -		.flags		= PDC_COMMON_FLAGS | ATA_FLAG_SATA,
-+		.flags		= PDC_COMMON_FLAGS /* | ATA_FLAG_SATA */,	/* pata fix */
++		.flags		= PDC_COMMON_FLAGS,
  		.pio_mask	= 0x1f, /* pio0-4 */
  		.mwdma_mask	= 0x07, /* mwdma0-2 */
  		.udma_mask	= 0x7f, /* udma0-6 ; FIXME */
-@@ -354,8 +354,16 @@ static void pdc_reset_port(struct ata_po
- 
+@@ -213,7 +213,7 @@ static const struct ata_port_info pdc_po
+ 	/* board_2057x */
+ 	{
+ 		.sht		= &pdc_ata_sht,
+-		.flags		= PDC_COMMON_FLAGS | ATA_FLAG_SATA,
++		.flags		= PDC_COMMON_FLAGS /* | ATA_FLAG_SATA*/,
+ 		.pio_mask	= 0x1f, /* pio0-4 */
+ 		.mwdma_mask	= 0x07, /* mwdma0-2 */
+ 		.udma_mask	= 0x7f, /* udma0-6 ; FIXME */
+@@ -355,23 +355,27 @@ static void pdc_reset_port(struct ata_po
  static void pdc_sata_phy_reset(struct ata_port *ap)
  {
--	pdc_reset_port(ap);
+ 	pdc_reset_port(ap);
 -	sata_phy_reset(ap);
-+/*	pdc_reset_port(ap); */	/* pata fix */
-+/*	sata_phy_reset(ap); */	/* pata fix */
-+	/* if no sata flag, test for pata drive */	/* pata fix */
-+	if (ap->flags & ATA_FLAG_SATA)	/* pata fix */
-+	{				/* pata fix */
-+		pdc_reset_port(ap);	/* pata fix */
-+		sata_phy_reset(ap);	/* pata fix */
-+	}				/* pata fix */
-+	else				/* pata fix */
-+		pdc_pata_phy_reset(ap);	/* pata fix */
++	if (ap->flags & ATA_FLAG_SATA)
++		sata_phy_reset(ap);
++	else
++		pdc_pata_phy_reset(ap);
  }
  
  static void pdc_pata_cbl_detect(struct ata_port *ap)
-@@ -679,6 +687,7 @@ static int pdc_ata_init_one (struct pci_
+ {
+ 	u8 tmp;
+-	void __iomem *mmio = (void __iomem *) ap->ioaddr.cmd_addr + PDC_CTLSTAT + 0x03;
++	void __iomem *mmio =
++		(void __iomem *) ap->ioaddr.cmd_addr + PDC_CTLSTAT + 0x03;
+ 
+ 	tmp = readb(mmio);
+-
++	
+ 	if (tmp & 0x01) {
+ 		ap->cbl = ATA_CBL_PATA40;
+ 		ap->udma_mask &= ATA_UDMA_MASK_40C;
+ 	} else
+ 		ap->cbl = ATA_CBL_PATA80;
+ }
+-
++		
+ static void pdc_pata_phy_reset(struct ata_port *ap)
+ {
+ 	pdc_pata_cbl_detect(ap);
+@@ -384,6 +388,20 @@ static u32 pdc_sata_scr_read (struct ata
+ {
+ 	if (sc_reg > SCR_CONTROL)
+ 		return 0xffffffffU;
++	if (ap->flags & ATA_FLAG_SLAVE_POSS)
++	{
++		switch (sc_reg) {
++			case SCR_STATUS:
++				return 0x113;
++			case SCR_CONTROL:
++				return 0x300;
++			case SCR_ERROR:
++			case SCR_ACTIVE:
++			default:
++				return 0xffffffffU;
++		}
++	}
++
+ 	return readl((void __iomem *) ap->ioaddr.scr_addr + (sc_reg * 4));
+ }
+ 
+@@ -391,7 +409,7 @@ static u32 pdc_sata_scr_read (struct ata
+ static void pdc_sata_scr_write (struct ata_port *ap, unsigned int sc_reg,
+ 			       u32 val)
+ {
+-	if (sc_reg > SCR_CONTROL)
++	if ((sc_reg > SCR_CONTROL) || (ap->flags & ATA_FLAG_SLAVE_POSS))
+ 		return;
+ 	writel(val, (void __iomem *) ap->ioaddr.scr_addr + (sc_reg * 4));
+ }
+@@ -679,6 +697,7 @@ static int pdc_ata_init_one (struct pci_
  	unsigned int board_idx = (unsigned int) ent->driver_data;
  	int pci_dev_busy = 0;
  	int rc;
-+	u8 tmp;		/* pata fix */
++	u8 tmp;
  
  	if (!printed_version++)
  		dev_printk(KERN_DEBUG, &pdev->dev, "version " DRV_VERSION "\n");
-@@ -743,6 +752,9 @@ static int pdc_ata_init_one (struct pci_
+@@ -743,6 +762,9 @@ static int pdc_ata_init_one (struct pci_
  	probe_ent->port[0].scr_addr = base + 0x400;
  	probe_ent->port[1].scr_addr = base + 0x500;
  
-+	probe_ent->port_flags[0] = ATA_FLAG_SATA;	/* pata fix */
-+	probe_ent->port_flags[1] = ATA_FLAG_SATA;	/* pata fix */
++	probe_ent->_port_flags[0] = ATA_FLAG_SATA;
++	probe_ent->_port_flags[1] = ATA_FLAG_SATA;
 +	
  	/* notice 4-port boards */
  	switch (board_idx) {
  	case board_40518:
-@@ -757,13 +769,28 @@ static int pdc_ata_init_one (struct pci_
+@@ -757,13 +779,27 @@ static int pdc_ata_init_one (struct pci_
  
  		probe_ent->port[2].scr_addr = base + 0x600;
  		probe_ent->port[3].scr_addr = base + 0x700;
-+
-+		probe_ent->port_flags[2] = ATA_FLAG_SATA;	/* pata fix */
-+		probe_ent->port_flags[3] = ATA_FLAG_SATA;	/* pata fix */
++	
++		probe_ent->_port_flags[2] = ATA_FLAG_SATA;
++		probe_ent->_port_flags[3] = ATA_FLAG_SATA;
  		break;
  	case board_2057x:
  		/* Override hotplug offset for SATAII150 */
  		hp->hotplug_offset = PDC2_SATA_PLUG_CSR;
  		/* Fall through */
  	case board_2037x:
--		probe_ent->n_ports = 2;
-+/*		probe_ent->n_ports = 2; */					/* pata fix */
-+/*		Some boards have also PATA port */				/* pata fix */
-+
-+		tmp = readb(mmio_base + PDC_FLASH_CTL+1);			/* pata fix */
-+		if (!(tmp & 0x80))						/* pata fix */
-+		{								/* pata fix */
-+			probe_ent->n_ports = 3;					/* pata fix */
-+			pdc_ata_setup_port(&probe_ent->port[2], base + 0x300);	/* pata fix */
-+			probe_ent->port_flags[2] = ATA_FLAG_SLAVE_POSS;		/* pata fix */
-+			printk(KERN_INFO DRV_NAME " PATA port found\n");	/* pata fix */
-+		}								/* pata fix */
-+		else								/* pata fix */
-+       			probe_ent->n_ports = 2;				/* pata fix */
++		/* Some boards have also PATA port */
+ 		probe_ent->n_ports = 2;
++		probe_ent->_port_flags[0] = ATA_FLAG_SATA;
++		probe_ent->_port_flags[1] = ATA_FLAG_SATA;
++		tmp = readb(mmio_base + PDC_FLASH_CTL+1);
++		if (!(tmp & 0x80))
++		{
++			probe_ent->n_ports = 3;
++			pdc_ata_setup_port(&probe_ent->port[2], base + 0x300);
++			probe_ent->_port_flags[2] = ATA_FLAG_SLAVE_POSS;
++			printk(KERN_INFO DRV_NAME " PATA port found\n");
++		}
  		break;
  	case board_20771:
  		probe_ent->n_ports = 2;
-@@ -776,6 +803,9 @@ static int pdc_ata_init_one (struct pci_
+--- linux-2.6.19/include/linux/libata.h.~1~ 2006-12-05 20:42:18.000000000 +0100
++++ linux-2.6.19/include/linux/libata.h     2006-12-05 21:01:26.000000000 +0100
+@@ -377,6 +377,7 @@ struct ata_probe_ent {
+ 	unsigned int		irq_flags;
+ 	unsigned long		port_flags;
+ 	unsigned long		_host_flags;
++	unsigned long		_port_flags[ATA_MAX_PORTS];
+ 	void __iomem		*mmio_base;
+ 	void			*private_data;
  
- 		probe_ent->port[2].scr_addr = base + 0x600;
- 		probe_ent->port[3].scr_addr = base + 0x700;
-+
-+		probe_ent->port_flags[2] = ATA_FLAG_SATA;	/* pata fix */
-+		probe_ent->port_flags[3] = ATA_FLAG_SATA;	/* pata fix */
- 		break;
- 	default:
- 		BUG();
