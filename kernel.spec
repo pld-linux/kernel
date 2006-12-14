@@ -296,7 +296,7 @@ Patch120:	linux-2.6-xen.patch
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
 # Wake-On-Lan patch for nVidia nForce ethernet driver forcedeth
-Patch250:	linux-2.6-17-forcedeth-WON.patch
+Patch250:	linux-2.6.17-forcedeth-WON.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
