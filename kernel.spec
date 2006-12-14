@@ -245,23 +245,19 @@ Patch20:	pom-ng-set-%{_netfilter_snap}.patch
 Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
 
 # base unapplied - not ready for 2.6.19
-#Patch12:       pom-ng-expire-%{_old_netfilter_snap}.patch
-#Patch13:       pom-ng-fuzzy-%{_old_netfilter_snap}.patch
-#Patch15:       pom-ng-nth-%{_old_netfilter_snap}.patch
-#Patch16:       pom-ng-osf-%{_old_netfilter_snap}.patch
-#Patch17:       pom-ng-psd-%{_old_netfilter_snap}.patch
-#Patch18:       pom-ng-quota-%{_old_netfilter_snap}.patch
-#Patch19:       pom-ng-random-%{_old_netfilter_snap}.patch
+#Patch12:	pom-ng-expire-%{_old_netfilter_snap}.patch
+#Patch13:	pom-ng-fuzzy-%{_old_netfilter_snap}.patch
+#Patch15:	pom-ng-nth-%{_old_netfilter_snap}.patch
+#Patch16:	pom-ng-osf-%{_old_netfilter_snap}.patch
+#Patch17:	pom-ng-psd-%{_old_netfilter_snap}.patch
+#Patch18:	pom-ng-quota-%{_old_netfilter_snap}.patch
+#Patch19:	pom-ng-random-%{_old_netfilter_snap}.patch
 
 # extra
 Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
 Patch33:	pom-ng-TARPIT-%{_netfilter_snap}.patch
 Patch34:	pom-ng-mms-conntrack-nat-%{_netfilter_snap}.patch
-Patch35:	pom-ng-quake3-conntrack-nat-%{_netfilter_snap}.patch
-Patch36:	pom-ng-rpc-%{_netfilter_snap}.patch
 Patch37:	pom-ng-rsh-%{_netfilter_snap}.patch
-Patch38:	pom-ng-rtsp-conntrack-%{_netfilter_snap}.patch
-Patch39:	pom-ng-talk-conntrack-nat-%{_netfilter_snap}.patch
 
 # extra unapplied - not ready for 2.6.19
 #Patch30:	pom-ng-ACCOUNT-%{_old_netfilter_snap}.patch
@@ -269,7 +265,10 @@ Patch39:	pom-ng-talk-conntrack-nat-%{_netfilter_snap}.patch
 #Patch35:	pom-ng-account-%{_old_netfilter_snap}.patch
 #Patch37:	pom-ng-rpc-%{_old_netfilter_snap}.patch
 #Patch38:	pom-ng-unclean-%{_old_netfilter_snap}.patch
-
+#Patch35:	pom-ng-quake3-conntrack-nat-%{_netfilter_snap}.patch
+#Patch36:	pom-ng-rpc-%{_netfilter_snap}.patch
+#Patch38:	pom-ng-rtsp-conntrack-%{_netfilter_snap}.patch
+#Patch39:	pom-ng-talk-conntrack-nat-%{_netfilter_snap}.patch
 
 #external
 Patch40:	pom-ng-IPMARK-%{_netfilter_snap}.patch
@@ -977,11 +976,11 @@ install %{SOURCE5} Makefile.ppclibs
 %patch32 -p1
 %patch33 -p1
 %patch34 -p1
-%patch35 -p1
-%patch36 -p1
+#patch35 -p1
+#patch36 -p1
 %patch37 -p1
-%patch38 -p1
-%patch39 -p1
+#patch38 -p1
+#patch39 -p1
 
 ## external
 %patch40 -p1
