@@ -295,13 +295,8 @@ Patch49:	kernel-2.6.18-layer7-2.7.patch
 #	pom-ng-ROUTE-20061213.patch
 # 	pom-ng-TARPIT-20061213.patch
 #	pom-ng-mms-conntrack-nat-20061213.patch
-# applied to source with applied all above patches:
-#	pom-ng-quake3-conntrack-nat-20061213.patch
-#	pom-ng-rpc-20061213.patch
 # all below applied to sources with all preceeding patches applied:
 #	pom-ng-rsh-20061213.patch
-#	pom-ng-rtsp-conntrack-20061213.patch
-#	pom-ng-talk-conntrack-nat-20061213.patch
 # [pom external]
 #	pom-ng-IPMARK-20061213.patch
 #	pom-ng-connlimit-20061213.patch
@@ -976,11 +971,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch32 -p1
 %patch33 -p1
 %patch34 -p1
-#patch35 -p1
-#patch36 -p1
 %patch37 -p1
-#patch38 -p1
-#patch39 -p1
 
 ## external
 %patch40 -p1
