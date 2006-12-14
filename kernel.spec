@@ -130,7 +130,7 @@
 %define		_rel			0.1
 
 %define		_old_netfilter_snap	20060504
-%define		_netfilter_snap		20060829
+%define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
 
 %define		_enable_debug_packages			0
@@ -239,22 +239,32 @@ Patch9:		linux-static-dev.patch
 # submitted
 
 # base
-#Patch10:	pom-ng-IPV4OPTSSTRIP-%{_old_netfilter_snap}.patch
-#Patch12:	pom-ng-expire-%{_old_netfilter_snap}.patch
-#Patch13:	pom-ng-fuzzy-%{_old_netfilter_snap}.patch
+Patch10:	pom-ng-IPV4OPTSSTRIP-%{_netfilter_snap}.patch
 Patch14:	pom-ng-ipv4options-%{_netfilter_snap}.patch
-#Patch15:	pom-ng-nth-%{_old_netfilter_snap}.patch
-#Patch16:	pom-ng-osf-%{_old_netfilter_snap}.patch
-#Patch17:	pom-ng-psd-%{_old_netfilter_snap}.patch
-#Patch18:	pom-ng-quota-%{_old_netfilter_snap}.patch
-#Patch19:	pom-ng-random-%{_old_netfilter_snap}.patch
 Patch20:	pom-ng-set-%{_netfilter_snap}.patch
 Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
 
+# base unapplied - not ready for 2.6.19
+#Patch12:       pom-ng-expire-%{_old_netfilter_snap}.patch
+#Patch13:       pom-ng-fuzzy-%{_old_netfilter_snap}.patch
+#Patch15:       pom-ng-nth-%{_old_netfilter_snap}.patch
+#Patch16:       pom-ng-osf-%{_old_netfilter_snap}.patch
+#Patch17:       pom-ng-psd-%{_old_netfilter_snap}.patch
+#Patch18:       pom-ng-quota-%{_old_netfilter_snap}.patch
+#Patch19:       pom-ng-random-%{_old_netfilter_snap}.patch
+
 # extra
-#Patch30:	pom-ng-ACCOUNT-%{_old_netfilter_snap}.patch
 Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
-#Patch33:	pom-ng-TARPIT-%{_old_netfilter_snap}.patch
+Patch33:	pom-ng-TARPIT-%{_netfilter_snap}.patch
+Patch34:	pom-ng-mms-conntrack-nat-%{_netfilter_snap}.patch
+Patch35:	pom-ng-quake3-conntrack-nat-%{_netfilter_snap}.patch
+Patch36:	pom-ng-rpc-%{_netfilter_snap}.patch
+Patch37:	pom-ng-rsh-%{_netfilter_snap}.patch
+Patch38:	pom-ng-rtsp-conntrack-%{_netfilter_snap}.patch
+Patch39:	pom-ng-talk-conntrack-nat-%{_netfilter_snap}.patch
+
+# extra unapplied - not ready for 2.6.19
+#Patch30:	pom-ng-ACCOUNT-%{_old_netfilter_snap}.patch
 #Patch34:	pom-ng-XOR-%{_old_netfilter_snap}.patch
 #Patch35:	pom-ng-account-%{_old_netfilter_snap}.patch
 #Patch37:	pom-ng-rpc-%{_old_netfilter_snap}.patch
@@ -263,10 +273,45 @@ Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
 
 #external
 Patch40:	pom-ng-IPMARK-%{_netfilter_snap}.patch
-Patch41:	pom-ng-condition-%{_netfilter_snap}.patch
-Patch42:	pom-ng-connlimit-%{_netfilter_snap}.patch
+Patch41:	pom-ng-connlimit-%{_netfilter_snap}.patch
+Patch42:	pom-ng-geoip-%{_netfilter_snap}.patch
 Patch43:	pom-ng-ipp2p-%{_netfilter_snap}.patch
 Patch44:	pom-ng-time-%{_netfilter_snap}.patch
+
+# external unapplied - not ready for 2.6.19
+#Patch41:       pom-ng-condition-%{_netfilter_snap}.patch
+
+#layer7
+Patch49:	kernel-2.6.18-layer7-2.7.patch
+
+# netfilter patches preparation order:
+#
+# [pom base]
+# can be independently applied on 2.6.19.1 source:
+# 	pom-ng-IPV4OPTSSTRIP-20061213.patch
+# 	pom-ng-ipv4options-20061213.patch
+#	pom-ng-set-20061213.patch
+#	pom-ng-u32-20061213.patch
+# [pom extra]
+#	pom-ng-ROUTE-20061213.patch
+# 	pom-ng-TARPIT-20061213.patch
+#	pom-ng-mms-conntrack-nat-20061213.patch
+# applied to source with applied all above patches:
+#	pom-ng-quake3-conntrack-nat-20061213.patch
+#	pom-ng-rpc-20061213.patch
+# all below applied to sources with all preceeding patches applied:
+#	pom-ng-rsh-20061213.patch
+#	pom-ng-rtsp-conntrack-20061213.patch
+#	pom-ng-talk-conntrack-nat-20061213.patch
+# [pom external]
+#	pom-ng-IPMARK-20061213.patch
+#	pom-ng-connlimit-20061213.patch
+#	pom-ng-geoip-20061213.patch
+#	pom-ng-ipp2p-20061213.patch
+#	pom-ng-time-20061213.patch
+#
+# layer7: 
+# 	kernel-2.6.18-layer7-2.7.patch
 
 ###
 #	End netfilter
@@ -920,29 +965,23 @@ install %{SOURCE5} Makefile.ppclibs
 %patch9 -p1
 
 ## netfilter
-# submitted
+#
 
 # base
-#%{!?without_old_netfilter:%patch10 -p1}
-#%{!?without_old_netfilter:%patch12 -p1}
-#%{!?without_old_netfilter:%patch13 -p1}
+%patch10 -p1
 %patch14 -p1
-#%{!?without_old_netfilter:%patch15 -p1}
-#%{!?without_old_netfilter:%patch16 -p1}
-#%{!?without_old_netfilter:%patch17 -p1}
-#%{!?without_old_netfilter:%patch18 -p1}
-#%{!?without_old_netfilter:%patch19 -p1}
 %patch20 -p1
 %patch22 -p1
 
 ## extra
-#%{!?without_old_netfilter:%patch30 -p1}
 %patch32 -p1
-#%{!?without_old_netfilter:%patch33 -p1}
-#%{!?without_old_netfilter:%patch34 -p1}
-#%{!?without_old_netfilter:%patch35 -p1}
-#%{!?without_old_netfilter:%patch37 -p1}
-#%{!?without_old_netfilter:%patch38 -p1}
+%patch33 -p1
+%patch34 -p1
+%patch35 -p1
+%patch36 -p1
+%patch37 -p1
+%patch38 -p1
+%patch39 -p1
 
 ## external
 %patch40 -p1
@@ -950,6 +989,10 @@ install %{SOURCE5} Makefile.ppclibs
 %patch42 -p1
 %patch43 -p1
 %patch44 -p1
+
+## layer7
+
+%patch49 -p1
 
 ##
 # end of netfilter
