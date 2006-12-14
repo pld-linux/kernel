@@ -171,8 +171,8 @@ Source4:	kernel-config.h
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
 
-#Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.19-rc6.tar.bz2
-##Source10-md5:	8a24775d9e83cfaaf1d3ff56fc0648cf
+Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.19-rc6.patch.bz2
+# Source10-md5:	ce94df22b93c74f1637d2429c1093ec7
 #Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.17/reiser4-for-2.6.17-3.patch.gz
 ##Source12-md5:	593c3296ddf40c5b116ee129781da341
 #Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
@@ -222,8 +222,8 @@ Patch2:		tahoe9xx-2.6.11.5.patch
 
 #	ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.15.diff
 Patch3:		bootsplash-3.1.6-2.6.15.diff
-#	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.18-rc4.patch
-Patch4:		fbsplash-0.9.2-r5-2.6.18-rc4.patch
+#	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.19-rc2.patch
+Patch4:		fbsplash-0.9.2-r5-2.6.19-rc2.patch
 
 # vesafb-tng: http://dev.gentoo.org/~spock/projects/vesafb-tng/archive/vesafb-tng-1.0-rc2-2.6.19-rc2.patch
 Patch5:		vesafb-tng-1.0-rc2-2.6.19-rc2.patch
