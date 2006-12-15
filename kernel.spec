@@ -26,7 +26,6 @@
 # - update configs for up/smp alpha
 # - update configs for up/smp ppc
 # - update configs for up/smp ia64
-# - netfilter pom stuff - ipset update
 # - (patch5) vesafb-tng - applies but untested (bcond off)
 # - (patch51) reiser4 - applies but untested (bcond off)
 #
