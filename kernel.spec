@@ -464,6 +464,13 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		initrd_dir	/boot
 %endif
 
+# kernel release (used in filesystem and eventually in uname -r)
+# modules will be looked from /lib/modules/%{kernel_release}%{?smp}
+# _localversion is just that without version for "> localversion"
+%define		_localversion %{release}
+%define		kernel_release %{version}-%{_localversion}
+%define		_kernelsrcdir	/usr/src/linux-%{version}
+
 %if "%{_target_base_arch}" != "%{_arch}"
 	%define	CrossOpts ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-
 	%define	DepMod /bin/true
@@ -1163,7 +1170,7 @@ BuildConfig() {
 	else
 		Config="%{_target_base_arch}"
 	fi
-	KernelVer=%{version}-%{release}$1
+	KernelVer=%{kernel_release}$1
 
 	echo "Building config file [using $Config.conf] for KERNEL $1..."
 	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
@@ -1306,7 +1313,7 @@ PreInstallKernel() {
 	else
 		Config="%{_target_base_arch}"
 	fi
-	KernelVer=%{version}-%{release}$1
+	KernelVer=%{kernel_release}$1
 
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
@@ -1367,7 +1374,7 @@ PreInstallKernel() {
 }
 
 KERNEL_BUILD_DIR=`pwd`
-echo "-%{release}" > localversion
+echo "-%{_localversion}" > localversion
 #install -m 644 %{SOURCE50} FAQ-pl
 
 # UP KERNEL
@@ -1397,8 +1404,8 @@ umask 022
 
 export DEPMOD=%DepMod
 
-install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
-install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{version}-%{release}{,smp}
+install -d $RPM_BUILD_ROOT%{_kernelsrcdir}
+install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{kernel_release}{,smp}
 
 # test if we can hardlink -- %{_builddir} and $RPM_BUILD_ROOT on same partition
 if cp -al COPYING $RPM_BUILD_ROOT/COPYING 2>/dev/null; then
@@ -1413,11 +1420,11 @@ cp -a$l $KERNEL_BUILD_DIR/build-done/kernel-*/* $RPM_BUILD_ROOT
 %endif
 
 for i in "" smp ; do
-	if [ -e  $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i ] ; then
-		rm -f $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
-		ln -sf %{_prefix}/src/linux-%{version} \
-			$RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/build
-		install -d $RPM_BUILD_ROOT/lib/modules/%{version}-%{release}$i/{cluster,misc}
+	if [ -e  $RPM_BUILD_ROOT/lib/modules/%{kernel_release}$i ] ; then
+		rm -f $RPM_BUILD_ROOT/lib/modules/%{kernel_release}$i/build
+		ln -sf %{_kernelsrcdir} \
+			$RPM_BUILD_ROOT/lib/modules/%{kernel_release}$i/build
+		install -d $RPM_BUILD_ROOT/lib/modules/%{kernel_release}$i/{cluster,misc}
 	fi
 done
 
@@ -1425,7 +1432,7 @@ ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
 
 find . -maxdepth 1 ! -name "build-done" ! -name "." -exec cp -a$l "{}" "$RPM_BUILD_ROOT/usr/src/linux-%{version}/" ";"
 
-cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}
+cd $RPM_BUILD_ROOT%{_kernelsrcdir}
 
 %{__make} %CrossOpts mrproper \
 	RCS_FIND_IGNORE='-name build-done -prune -o'
@@ -1451,26 +1458,26 @@ cp -Rdp $KERNEL_BUILD_DIR/include/linux/* \
 %endif
 
 %{__make} %CrossOpts mrproper
-mv -f include/linux/utsrelease.h.save $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/utsrelease.h
+mv -f include/linux/utsrelease.h.save $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/utsrelease.h
 %{__make} %CrossOpts include/linux/version.h
-install %{SOURCE3} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/autoconf.h
-install %{SOURCE4} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{version}/include/linux/config.h
+install %{SOURCE3} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/autoconf.h
+install %{SOURCE4} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
 
 # collect module-build files and directories
-perl %{SOURCE7} %{_prefix}/src/linux-%{version} $KERNEL_BUILD_DIR
+perl %{SOURCE7} %{_kernelsrcdir} $KERNEL_BUILD_DIR
 
 %if %{with up} || %{with smp}
 # ghosted initrd
-touch $RPM_BUILD_ROOT/boot/initrd-%{version}-%{release}{,smp}.gz
+touch $RPM_BUILD_ROOT/boot/initrd-%{kernel_release}{,smp}.gz
 %endif
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %preun
-rm -f /lib/modules/%{version}-%{release}/modules.*
+rm -f /lib/modules/%{kernel_release}/modules.*
 if [ -x /sbin/new-kernel-pkg ]; then
-	/sbin/new-kernel-pkg --remove %{version}-%{release}
+	/sbin/new-kernel-pkg --remove %{kernel_release}
 fi
 
 %post
@@ -1480,16 +1487,16 @@ mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 %ifarch ia64
-ln -sf vmlinuz-%{version}-%{release} /boot/efi/vmlinuz
+ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz
 %endif
-ln -sf vmlinuz-%{version}-%{release} /boot/vmlinuz
-ln -sf System.map-%{version}-%{release} /boot/System.map
+ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz
+ln -sf System.map-%{kernel_release} /boot/System.map
 
-%depmod %{version}-%{release}
+%depmod %{kernel_release}
 
-/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}.gz %{version}-%{release}
+/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
 mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
-ln -sf initrd-%{version}-%{release}.gz %{initrd_dir}/initrd
+ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
 
 if [ -x /sbin/new-kernel-pkg ]; then
 	if [ -f /etc/pld-release ]; then
@@ -1503,46 +1510,46 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title="$title $ext"
 	fi
 
-	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{version}-%{release}.gz --install %{version}-%{release} --banner "$title"
+	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{kernel_release}.gz --install %{kernel_release} --banner "$title"
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
 %post vmlinux
 mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
-ln -sf vmlinux-%{version}-%{release} /boot/vmlinux
+ln -sf vmlinux-%{kernel_release} /boot/vmlinux
 
 %post libs
-%{_sbindir}/mkvmlinuz /boot/zImage-%{version}-%{release} %{version}-%{release}
+%{_sbindir}/mkvmlinuz /boot/zImage-%{kernel_release} %{kernel_release}
 
 %post drm
-%depmod %{version}-%{release}
+%depmod %{kernel_release}
 
 %postun drm
-%depmod %{version}-%{release}
+%depmod %{kernel_release}
 
 %post pcmcia
-%depmod %{version}-%{release}
+%depmod %{kernel_release}
 
 %postun pcmcia
-%depmod %{version}-%{release}
+%depmod %{kernel_release}
 
 %post sound-alsa
-%depmod %{version}-%{release}
+%depmod %{kernel_release}
 
 %postun sound-alsa
-%depmod %{version}-%{release}
+%depmod %{kernel_release}
 
 %post sound-oss
-%depmod %{version}-%{release}
+%depmod %{kernel_release}
 
 %postun sound-oss
-%depmod %{version}-%{release}
+%depmod %{kernel_release}
 
 %preun smp
-rm -f /lib/modules/%{version}-%{release}smp/modules.*
+rm -f /lib/modules/%{kernel_release}smp/modules.*
 if [ -x /sbin/new-kernel-pkg ]; then
-	/sbin/new-kernel-pkg --remove %{version}-%{release}smp
+	/sbin/new-kernel-pkg --remove %{kernel_release}smp
 fi
 
 %post smp
@@ -1552,16 +1559,16 @@ mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 %ifarch ia64
-ln -sf vmlinuz-%{version}-%{release}smp /boot/efi/vmlinuz
+ln -sf vmlinuz-%{kernel_release}smp /boot/efi/vmlinuz
 %endif
-ln -sf vmlinuz-%{version}-%{release}smp /boot/vmlinuz
-ln -sf System.map-%{version}-%{release}smp /boot/System.map
+ln -sf vmlinuz-%{kernel_release}smp /boot/vmlinuz
+ln -sf System.map-%{kernel_release}smp /boot/System.map
 
-%depmod %{version}-%{release}smp
+%depmod %{kernel_release}smp
 
-/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{version}-%{release}smp.gz %{version}-%{release}smp
+/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}smp.gz %{kernel_release}smp
 mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
-ln -sf initrd-%{version}-%{release}smp.gz %{initrd_dir}/initrd
+ln -sf initrd-%{kernel_release}smp.gz %{initrd_dir}/initrd
 
 if [ -x /sbin/new-kernel-pkg ]; then
 	if [ -f /etc/pld-release ]; then
@@ -1575,50 +1582,50 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title="$title $ext"
 	fi
 
-	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{version}-%{release}smp.gz --install %{version}-%{release}smp --banner "$title"
+	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{kernel_release}smp.gz --install %{kernel_release}smp --banner "$title"
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
 %post smp-vmlinux
 mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
-ln -sf vmlinux-%{version}-%{release}smp /boot/vmlinux
+ln -sf vmlinux-%{kernel_release}smp /boot/vmlinux
 
 %post smp-libs
-%{_sbindir}/mkvmlinuz /boot/zImage-%{version}-%{release}smp %{version}-%{release}smp
+%{_sbindir}/mkvmlinuz /boot/zImage-%{kernel_release}smp %{kernel_release}smp
 
 %post smp-drm
-%depmod %{version}-%{release}smp
+%depmod %{kernel_release}smp
 
 %postun smp-drm
-%depmod %{version}-%{release}smp
+%depmod %{kernel_release}smp
 
 %post smp-pcmcia
-%depmod %{version}-%{release}smp
+%depmod %{kernel_release}smp
 
 %postun smp-pcmcia
-%depmod %{version}-%{release}smp
+%depmod %{kernel_release}smp
 
 %post smp-sound-alsa
-%depmod %{version}-%{release}smp
+%depmod %{kernel_release}smp
 
 %postun smp-sound-alsa
-%depmod %{version}-%{release}smp
+%depmod %{kernel_release}smp
 
 %post smp-sound-oss
-%depmod %{version}-%{release}smp
+%depmod %{kernel_release}smp
 
 %postun smp-sound-oss
-%depmod %{version}-%{release}smp
+%depmod %{kernel_release}smp
 
 %post headers
-rm -f /usr/src/linux
-ln -snf linux-%{version} /usr/src/linux
+rm -f %{_prefix}/src/linux
+ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux
 
 %postun headers
 if [ "$1" = "0" ]; then
 	if [ -L %{_prefix}/src/linux ]; then
-		if [ "`ls -l %{_prefix}/src/linux | awk '{ print $10 }'`" = "linux-%{version}" ]; then
+		if [ "$(readlink %{_prefix}/src/linux)" = "linux-%{version}" ]; then
 			rm -f %{_prefix}/src/linux
 		fi
 	fi
@@ -1629,110 +1636,110 @@ fi
 %defattr(644,root,root,755)
 #doc FAQ-pl
 %ifarch sparc sparc64
-/boot/vmlinux.aout-%{version}-%{release}
+/boot/vmlinux.aout-%{kernel_release}
 %endif
 %ifarch ia64
-/boot/efi/vmlinuz-%{version}-%{release}
+/boot/efi/vmlinuz-%{kernel_release}
 %endif
-/boot/vmlinuz-%{version}-%{release}
-/boot/System.map-%{version}-%{release}
-%ghost /boot/initrd-%{version}-%{release}.gz
-%dir /lib/modules/%{version}-%{release}
-%dir /lib/modules/%{version}-%{release}/kernel
+/boot/vmlinuz-%{kernel_release}
+/boot/System.map-%{kernel_release}
+%ghost /boot/initrd-%{kernel_release}.gz
+%dir /lib/modules/%{kernel_release}
+%dir /lib/modules/%{kernel_release}/kernel
 %ifnarch sparc
-/lib/modules/%{version}-%{release}/kernel/arch
+/lib/modules/%{kernel_release}/kernel/arch
 %endif
-/lib/modules/%{version}-%{release}/kernel/crypto
-/lib/modules/%{version}-%{release}/kernel/drivers
+/lib/modules/%{kernel_release}/kernel/crypto
+/lib/modules/%{kernel_release}/kernel/drivers
 %if %{have_drm}
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/char/drm
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/char/drm
 %endif
-/lib/modules/%{version}-%{release}/kernel/fs
-/lib/modules/%{version}-%{release}/kernel/kernel
-/lib/modules/%{version}-%{release}/kernel/lib
-/lib/modules/%{version}-%{release}/kernel/net
-/lib/modules/%{version}-%{release}/kernel/security
+/lib/modules/%{kernel_release}/kernel/fs
+/lib/modules/%{kernel_release}/kernel/kernel
+/lib/modules/%{kernel_release}/kernel/lib
+/lib/modules/%{kernel_release}/kernel/net
+/lib/modules/%{kernel_release}/kernel/security
 %if %{have_sound}
-%dir /lib/modules/%{version}-%{release}/kernel/sound
-/lib/modules/%{version}-%{release}/kernel/sound/soundcore.*
+%dir /lib/modules/%{kernel_release}/kernel/sound
+/lib/modules/%{kernel_release}/kernel/sound/soundcore.*
 %endif
-%dir /lib/modules/%{version}-%{release}/misc
+%dir /lib/modules/%{kernel_release}/misc
 %if %{with pcmcia}
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/ide/legacy/ide-cs.ko*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/telephony/ixj_pcmcia.ko*
-%exclude /lib/modules/%{version}-%{release}/kernel/drivers/usb/host/sl811_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/*/pcmcia
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/legacy/ide-cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/*_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/parport/parport_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/serial/serial_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
-/lib/modules/%{version}-%{release}/build
-%ghost /lib/modules/%{version}-%{release}/modules.*
-%dir %{_sysconfdir}/modprobe.d/%{version}-%{release}
+/lib/modules/%{kernel_release}/build
+%ghost /lib/modules/%{kernel_release}/modules.*
+%dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
 %ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
 %files vmlinux
 %defattr(644,root,root,755)
-/boot/vmlinux-%{version}-%{release}
+/boot/vmlinux-%{kernel_release}
 %endif
 
 %if %{have_drm}
 %files drm
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/drivers/char/drm
+/lib/modules/%{kernel_release}/kernel/drivers/char/drm
 %endif
 
 %if %{with pcmcia}
 %files pcmcia
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/drivers/pcmcia
-/lib/modules/%{version}-%{release}/kernel/drivers/*/pcmcia
-/lib/modules/%{version}-%{release}/kernel/drivers/bluetooth/*_cs.ko*
-/lib/modules/%{version}-%{release}/kernel/drivers/ide/legacy/ide-cs.ko*
-/lib/modules/%{version}-%{release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
-/lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/*_cs.ko*
-/lib/modules/%{version}-%{release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
-/lib/modules/%{version}-%{release}/kernel/drivers/parport/parport_cs.ko*
-/lib/modules/%{version}-%{release}/kernel/drivers/serial/serial_cs.ko*
-/lib/modules/%{version}-%{release}/kernel/drivers/telephony/ixj_pcmcia.ko*
-/lib/modules/%{version}-%{release}/kernel/drivers/usb/host/sl811_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/pcmcia
+/lib/modules/%{kernel_release}/kernel/drivers/*/pcmcia
+/lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/ide/legacy/ide-cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/wireless/*_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/parport/parport_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/serial/serial_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 
 %ifarch ppc-broken
 %if "%{_arch}" == "ppc"
 %files libs
 %defattr(644,root,root,755)
-%dir /boot/libs-%{version}-%{release}
-/boot/libs-%{version}-%{release}/common
-/boot/libs-%{version}-%{release}/kernel
-/boot/libs-%{version}-%{release}/lib
-/boot/libs-%{version}-%{release}/of1275
-/boot/libs-%{version}-%{release}/openfirmware
-/boot/libs-%{version}-%{release}/simple
-%dir /boot/libs-%{version}-%{release}/utils
-%attr(755,root,root) /boot/libs-%{version}-%{release}/utils/*
-/boot/libs-%{version}-%{release}/ld.script
+%dir /boot/libs-%{kernel_release}
+/boot/libs-%{kernel_release}/common
+/boot/libs-%{kernel_release}/kernel
+/boot/libs-%{kernel_release}/lib
+/boot/libs-%{kernel_release}/of1275
+/boot/libs-%{kernel_release}/openfirmware
+/boot/libs-%{kernel_release}/simple
+%dir /boot/libs-%{kernel_release}/utils
+%attr(755,root,root) /boot/libs-%{kernel_release}/utils/*
+/boot/libs-%{kernel_release}/ld.script
 %endif
 %endif
 
 %if %{have_sound}
 %files sound-alsa
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/sound
-%exclude %dir /lib/modules/%{version}-%{release}/kernel/sound
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/soundcore.*
+/lib/modules/%{kernel_release}/kernel/sound
+%exclude %dir /lib/modules/%{kernel_release}/kernel/sound
+%exclude /lib/modules/%{kernel_release}/kernel/sound/soundcore.*
 %if %{have_oss}
-%exclude /lib/modules/%{version}-%{release}/kernel/sound/oss
+%exclude /lib/modules/%{kernel_release}/kernel/sound/oss
 %endif
 
 %if %{have_oss}
 %files sound-oss
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}/kernel/sound/oss
+/lib/modules/%{kernel_release}/kernel/sound/oss
 %endif
 %endif			# %%{have_sound}
 %endif			# %%{with up}
@@ -1742,183 +1749,183 @@ fi
 %defattr(644,root,root,755)
 #doc FAQ-pl
 %ifarch ia64
-/boot/efi/vmlinuz-%{version}-%{release}smp
+/boot/efi/vmlinuz-%{kernel_release}smp
 %endif
-/boot/vmlinuz-%{version}-%{release}smp
-/boot/System.map-%{version}-%{release}smp
-%ghost /boot/initrd-%{version}-%{release}smp.gz
-%dir /lib/modules/%{version}-%{release}smp
-%dir /lib/modules/%{version}-%{release}smp/kernel
+/boot/vmlinuz-%{kernel_release}smp
+/boot/System.map-%{kernel_release}smp
+%ghost /boot/initrd-%{kernel_release}smp.gz
+%dir /lib/modules/%{kernel_release}smp
+%dir /lib/modules/%{kernel_release}smp/kernel
 %ifnarch sparc
-/lib/modules/%{version}-%{release}smp/kernel/arch
+/lib/modules/%{kernel_release}smp/kernel/arch
 %endif
-/lib/modules/%{version}-%{release}smp/kernel/crypto
-/lib/modules/%{version}-%{release}smp/kernel/drivers
+/lib/modules/%{kernel_release}smp/kernel/crypto
+/lib/modules/%{kernel_release}smp/kernel/drivers
 %if %{have_drm}
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
+%exclude /lib/modules/%{kernel_release}smp/kernel/drivers/char/drm
 %endif
-/lib/modules/%{version}-%{release}smp/kernel/fs
-/lib/modules/%{version}-%{release}smp/kernel/kernel
-/lib/modules/%{version}-%{release}smp/kernel/lib
-/lib/modules/%{version}-%{release}smp/kernel/net
-/lib/modules/%{version}-%{release}smp/kernel/security
+/lib/modules/%{kernel_release}smp/kernel/fs
+/lib/modules/%{kernel_release}smp/kernel/kernel
+/lib/modules/%{kernel_release}smp/kernel/lib
+/lib/modules/%{kernel_release}smp/kernel/net
+/lib/modules/%{kernel_release}smp/kernel/security
 %if %{have_sound}
-%dir /lib/modules/%{version}-%{release}smp/kernel/sound
-/lib/modules/%{version}-%{release}smp/kernel/sound/soundcore.*
+%dir /lib/modules/%{kernel_release}smp/kernel/sound
+/lib/modules/%{kernel_release}smp/kernel/sound/soundcore.*
 %endif
-%dir /lib/modules/%{version}-%{release}smp/misc
+%dir /lib/modules/%{kernel_release}smp/misc
 %if %{with pcmcia}
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/ide/legacy/ide-cs.ko*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/ixj_pcmcia.ko*
-%exclude /lib/modules/%{version}-%{release}smp/kernel/drivers/usb/host/sl811_cs.ko*
+%exclude /lib/modules/%{kernel_release}smp/kernel/drivers/pcmcia
+%exclude /lib/modules/%{kernel_release}smp/kernel/drivers/*/pcmcia
+%exclude /lib/modules/%{kernel_release}smp/kernel/drivers/bluetooth/*_cs.ko*
+%exclude /lib/modules/%{kernel_release}smp/kernel/drivers/ide/legacy/ide-cs.ko*
+%exclude /lib/modules/%{kernel_release}smp/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
+%exclude /lib/modules/%{kernel_release}smp/kernel/drivers/net/wireless/*_cs.ko*
+%exclude /lib/modules/%{kernel_release}smp/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
+%exclude /lib/modules/%{kernel_release}smp/kernel/drivers/parport/parport_cs.ko*
+%exclude /lib/modules/%{kernel_release}smp/kernel/drivers/serial/serial_cs.ko*
+%exclude /lib/modules/%{kernel_release}smp/kernel/drivers/telephony/ixj_pcmcia.ko*
+%exclude /lib/modules/%{kernel_release}smp/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
-/lib/modules/%{version}-%{release}smp/build
-%ghost /lib/modules/%{version}-%{release}smp/modules.*
-%dir %{_sysconfdir}/modprobe.d/%{version}-%{release}smp
+/lib/modules/%{kernel_release}smp/build
+%ghost /lib/modules/%{kernel_release}smp/modules.*
+%dir %{_sysconfdir}/modprobe.d/%{kernel_release}smp
 
 %ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
 %files smp-vmlinux
 %defattr(644,root,root,755)
-/boot/vmlinux-%{version}-%{release}smp
+/boot/vmlinux-%{kernel_release}smp
 %endif
 
 %if %{have_drm}
 %files smp-drm
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/drivers/char/drm
+/lib/modules/%{kernel_release}smp/kernel/drivers/char/drm
 %endif
 
 %if %{with pcmcia}
 %files smp-pcmcia
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/drivers/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/*/pcmcia
-/lib/modules/%{version}-%{release}smp/kernel/drivers/bluetooth/*_cs.ko*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/ide/legacy/ide-cs.ko*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/*_cs.ko*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/parport/parport_cs.ko*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/serial/serial_cs.ko*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/telephony/ixj_pcmcia.ko*
-/lib/modules/%{version}-%{release}smp/kernel/drivers/usb/host/sl811_cs.ko*
+/lib/modules/%{kernel_release}smp/kernel/drivers/pcmcia
+/lib/modules/%{kernel_release}smp/kernel/drivers/*/pcmcia
+/lib/modules/%{kernel_release}smp/kernel/drivers/bluetooth/*_cs.ko*
+/lib/modules/%{kernel_release}smp/kernel/drivers/ide/legacy/ide-cs.ko*
+/lib/modules/%{kernel_release}smp/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
+/lib/modules/%{kernel_release}smp/kernel/drivers/net/wireless/*_cs.ko*
+/lib/modules/%{kernel_release}smp/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
+/lib/modules/%{kernel_release}smp/kernel/drivers/parport/parport_cs.ko*
+/lib/modules/%{kernel_release}smp/kernel/drivers/serial/serial_cs.ko*
+/lib/modules/%{kernel_release}smp/kernel/drivers/telephony/ixj_pcmcia.ko*
+/lib/modules/%{kernel_release}smp/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 
 %ifarch ppc-broken
 %if "%{_arch}" == "ppc"
 %files smp-libs
 %defattr(644,root,root,755)
-%dir /boot/libs-%{version}-%{release}smp
-/boot/libs-%{version}-%{release}smp/common
-/boot/libs-%{version}-%{release}smp/kernel
-/boot/libs-%{version}-%{release}smp/lib
-/boot/libs-%{version}-%{release}smp/of1275
-/boot/libs-%{version}-%{release}smp/openfirmware
-/boot/libs-%{version}-%{release}smp/simple
-%dir /boot/libs-%{version}-%{release}smp/utils
-%attr(755,root,root) /boot/libs-%{version}-%{release}smp/utils/*
-/boot/libs-%{version}-%{release}smp/ld.script
+%dir /boot/libs-%{kernel_release}smp
+/boot/libs-%{kernel_release}smp/common
+/boot/libs-%{kernel_release}smp/kernel
+/boot/libs-%{kernel_release}smp/lib
+/boot/libs-%{kernel_release}smp/of1275
+/boot/libs-%{kernel_release}smp/openfirmware
+/boot/libs-%{kernel_release}smp/simple
+%dir /boot/libs-%{kernel_release}smp/utils
+%attr(755,root,root) /boot/libs-%{kernel_release}smp/utils/*
+/boot/libs-%{kernel_release}smp/ld.script
 %endif
 %endif
 
 %if %{have_sound}
 %files smp-sound-alsa
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/sound
-%exclude %dir /lib/modules/%{version}-%{release}smp/kernel/sound
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/soundcore.*
+/lib/modules/%{kernel_release}smp/kernel/sound
+%exclude %dir /lib/modules/%{kernel_release}smp/kernel/sound
+%exclude /lib/modules/%{kernel_release}smp/kernel/sound/soundcore.*
 %if %{have_oss}
-%exclude /lib/modules/%{version}-%{release}smp/kernel/sound/oss
+%exclude /lib/modules/%{kernel_release}smp/kernel/sound/oss
 %endif
 
 %if %{have_oss}
 %files smp-sound-oss
 %defattr(644,root,root,755)
-/lib/modules/%{version}-%{release}smp/kernel/sound/oss
+/lib/modules/%{kernel_release}smp/kernel/sound/oss
 %endif
 %endif			# %%{have_sound}
 %endif			# %%{with smp}
 
 %files headers
 %defattr(644,root,root,755)
-%dir %{_prefix}/src/linux-%{version}
-%{_prefix}/src/linux-%{version}/include
+%dir %{_kernelsrcdir}
+%{_kernelsrcdir}/include
 %if %{with smp}
-%{_prefix}/src/linux-%{version}/config-smp
-%{_prefix}/src/linux-%{version}/Module.symvers-smp
+%{_kernelsrcdir}/config-smp
+%{_kernelsrcdir}/Module.symvers-smp
 %endif
-%{_prefix}/src/linux-%{version}/config-up
-%{?with_up:%{_prefix}/src/linux-%{version}/Module.symvers-up}
+%{_kernelsrcdir}/config-up
+%{?with_up:%{_kernelsrcdir}/Module.symvers-up}
 
 %files module-build -f aux_files
 %defattr(644,root,root,755)
-%{_prefix}/src/linux-%{version}/Kbuild
-%{_prefix}/src/linux-%{version}/localversion
-%{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
-%{_prefix}/src/linux-%{version}/arch/*/kernel/sigframe.h
-%dir %{_prefix}/src/linux-%{version}/scripts
-%dir %{_prefix}/src/linux-%{version}/scripts/kconfig
-%{_prefix}/src/linux-%{version}/scripts/Kbuild.include
-%{_prefix}/src/linux-%{version}/scripts/Makefile*
-%{_prefix}/src/linux-%{version}/scripts/basic
-%{_prefix}/src/linux-%{version}/scripts/mkmakefile
-%{_prefix}/src/linux-%{version}/scripts/mod
-%{_prefix}/src/linux-%{version}/scripts/setlocalversion
-%{_prefix}/src/linux-%{version}/scripts/*.c
-%{_prefix}/src/linux-%{version}/scripts/*.sh
-%{_prefix}/src/linux-%{version}/scripts/kconfig/*
+%{_kernelsrcdir}/Kbuild
+%{_kernelsrcdir}/localversion
+%{_kernelsrcdir}/arch/*/kernel/asm-offsets.*
+%{_kernelsrcdir}/arch/*/kernel/sigframe.h
+%dir %{_kernelsrcdir}/scripts
+%dir %{_kernelsrcdir}/scripts/kconfig
+%{_kernelsrcdir}/scripts/Kbuild.include
+%{_kernelsrcdir}/scripts/Makefile*
+%{_kernelsrcdir}/scripts/basic
+%{_kernelsrcdir}/scripts/mkmakefile
+%{_kernelsrcdir}/scripts/mod
+%{_kernelsrcdir}/scripts/setlocalversion
+%{_kernelsrcdir}/scripts/*.c
+%{_kernelsrcdir}/scripts/*.sh
+%{_kernelsrcdir}/scripts/kconfig/*
 
 %files doc
 %defattr(644,root,root,755)
-%{_prefix}/src/linux-%{version}/Documentation
+%{_kernelsrcdir}/Documentation
 
 %if %{with source}
 %files source -f aux_files_exc
 %defattr(644,root,root,755)
 %if %{with abi}
-%{_prefix}/src/linux-%{version}/abi
+%{_kernelsrcdir}/abi
 %endif /* abi */
-%{_prefix}/src/linux-%{version}/arch/*/[!Mk]*
-%{_prefix}/src/linux-%{version}/arch/*/kernel/[!M]*
-%exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/asm-offsets.*
-%exclude %{_prefix}/src/linux-%{version}/arch/*/kernel/sigframe.h
-%{_prefix}/src/linux-%{version}/block
-%{_prefix}/src/linux-%{version}/crypto
-%{_prefix}/src/linux-%{version}/drivers
-%{_prefix}/src/linux-%{version}/fs
+%{_kernelsrcdir}/arch/*/[!Mk]*
+%{_kernelsrcdir}/arch/*/kernel/[!M]*
+%exclude %{_kernelsrcdir}/arch/*/kernel/asm-offsets.*
+%exclude %{_kernelsrcdir}/arch/*/kernel/sigframe.h
+%{_kernelsrcdir}/block
+%{_kernelsrcdir}/crypto
+%{_kernelsrcdir}/drivers
+%{_kernelsrcdir}/fs
 %if %{with grsecurity}
-%{_prefix}/src/linux-%{version}/grsecurity
+%{_kernelsrcdir}/grsecurity
 %endif
-%{_prefix}/src/linux-%{version}/init
-%{_prefix}/src/linux-%{version}/ipc
-%{_prefix}/src/linux-%{version}/kernel
-%{_prefix}/src/linux-%{version}/lib
-%{_prefix}/src/linux-%{version}/mm
-%{_prefix}/src/linux-%{version}/net
-%{_prefix}/src/linux-%{version}/scripts/*
-%exclude %{_prefix}/src/linux-%{version}/scripts/Kbuild.include
-%exclude %{_prefix}/src/linux-%{version}/scripts/Makefile*
-%exclude %{_prefix}/src/linux-%{version}/scripts/basic
-%exclude %{_prefix}/src/linux-%{version}/scripts/kconfig
-%exclude %{_prefix}/src/linux-%{version}/scripts/mkmakefile
-%exclude %{_prefix}/src/linux-%{version}/scripts/mod
-%exclude %{_prefix}/src/linux-%{version}/scripts/setlocalversion
-%exclude %{_prefix}/src/linux-%{version}/scripts/*.c
-%exclude %{_prefix}/src/linux-%{version}/scripts/*.sh
-%{_prefix}/src/linux-%{version}/sound
-%{_prefix}/src/linux-%{version}/security
-%{_prefix}/src/linux-%{version}/usr
-%{_prefix}/src/linux-%{version}/COPYING
-%{_prefix}/src/linux-%{version}/CREDITS
-%{_prefix}/src/linux-%{version}/MAINTAINERS
-%{_prefix}/src/linux-%{version}/README
-%{_prefix}/src/linux-%{version}/REPORTING-BUGS
+%{_kernelsrcdir}/init
+%{_kernelsrcdir}/ipc
+%{_kernelsrcdir}/kernel
+%{_kernelsrcdir}/lib
+%{_kernelsrcdir}/mm
+%{_kernelsrcdir}/net
+%{_kernelsrcdir}/scripts/*
+%exclude %{_kernelsrcdir}/scripts/Kbuild.include
+%exclude %{_kernelsrcdir}/scripts/Makefile*
+%exclude %{_kernelsrcdir}/scripts/basic
+%exclude %{_kernelsrcdir}/scripts/kconfig
+%exclude %{_kernelsrcdir}/scripts/mkmakefile
+%exclude %{_kernelsrcdir}/scripts/mod
+%exclude %{_kernelsrcdir}/scripts/setlocalversion
+%exclude %{_kernelsrcdir}/scripts/*.c
+%exclude %{_kernelsrcdir}/scripts/*.sh
+%{_kernelsrcdir}/sound
+%{_kernelsrcdir}/security
+%{_kernelsrcdir}/usr
+%{_kernelsrcdir}/COPYING
+%{_kernelsrcdir}/CREDITS
+%{_kernelsrcdir}/MAINTAINERS
+%{_kernelsrcdir}/README
+%{_kernelsrcdir}/REPORTING-BUGS
 %endif
