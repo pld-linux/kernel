@@ -1456,7 +1456,7 @@ cp -Rdp$l $KERNEL_BUILD_DIR/include/linux/* \
 %endif
 
 %{__make} %CrossOpts mrproper
-cp -f include/linux/utsrelease.h.save $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/utsrelease.h
+mv -f include/linux/utsrelease.h.save $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/utsrelease.h
 %{__make} %CrossOpts include/linux/version.h
 install %{SOURCE3} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/autoconf.h
 install %{SOURCE4} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
