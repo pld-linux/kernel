@@ -1252,19 +1252,19 @@ BuildConfig() {
 	fi
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
-	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux
+	install -d $KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/linux
 	rm -f include/linux/autoconf.h
 	%{__make} %CrossOpts include/linux/autoconf.h
 	if [ "$smp" = "yes" ]; then
 		install include/linux/autoconf.h \
-			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-smp.h
+			$KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/linux/autoconf-smp.h
 		install .config \
-			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/config-smp
+			$KERNEL_INSTALL_DIR%{_kernelsrcdir}/config-smp
 	else
 		install include/linux/autoconf.h \
-			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/include/linux/autoconf-up.h
+			$KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/linux/autoconf-up.h
 		install .config \
-			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/config-up
+			$KERNEL_INSTALL_DIR%{_kernelsrcdir}/config-up
 	fi
 }
 
@@ -1355,13 +1355,13 @@ PreInstallKernel() {
 		KERNELRELEASE=$KernelVer
 
 	# You'd probabelly want to make it somewhat different
-	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{version}
+	install -d $KERNEL_INSTALL_DIR%{_kernelsrcdir}
 	if [ "$smp" = "yes" ]; then
 		install Module.symvers \
-			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/Module.symvers-smp
+			$KERNEL_INSTALL_DIR%{_kernelsrcdir}/Module.symvers-smp
 	else
 		install Module.symvers \
-			$KERNEL_INSTALL_DIR/usr/src/linux-%{version}/Module.symvers-up
+			$KERNEL_INSTALL_DIR%{_kernelsrcdir}/Module.symvers-up
 	fi
 
 	echo "CHECKING DEPENDENCIES FOR KERNEL MODULES"
@@ -1428,33 +1428,31 @@ for i in "" smp ; do
 	fi
 done
 
-ln -sf linux-%{version} $RPM_BUILD_ROOT%{_prefix}/src/linux
-
-find . -maxdepth 1 ! -name "build-done" ! -name "." -exec cp -a$l "{}" "$RPM_BUILD_ROOT/usr/src/linux-%{version}/" ";"
+find . -maxdepth 1 ! -name "build-done" ! -name "." -exec cp -a$l "{}" "$RPM_BUILD_ROOT%{_kernelsrcdir}/" ";"
 
 cd $RPM_BUILD_ROOT%{_kernelsrcdir}
 
 %{__make} %CrossOpts mrproper \
 	RCS_FIND_IGNORE='-name build-done -prune -o'
 
-if [ -e $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h ]; then
-install $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/include/linux/autoconf-up.h \
-	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
-install	$KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{version}/config-up \
-	$RPM_BUILD_ROOT/usr/src/linux-%{version}
+if [ -e $KERNEL_BUILD_DIR/build-done/kernel-UP%{_kernelsrcdir}/include/linux/autoconf-up.h ]; then
+install $KERNEL_BUILD_DIR/build-done/kernel-UP%{_kernelsrcdir}/include/linux/autoconf-up.h \
+	$RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
+install	$KERNEL_BUILD_DIR/build-done/kernel-UP%{_kernelsrcdir}/config-up \
+	$RPM_BUILD_ROOT%{_kernelsrcdir}
 fi
 
-if [ -e $KERNEL_BUILD_DIR/build-done/kernel-SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h ]; then
-install $KERNEL_BUILD_DIR/build-done/kernel-SMP/usr/src/linux-%{version}/include/linux/autoconf-smp.h \
-	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
-install	$KERNEL_BUILD_DIR/build-done/kernel-SMP/usr/src/linux-%{version}/config-smp \
-	$RPM_BUILD_ROOT/usr/src/linux-%{version}
+if [ -e $KERNEL_BUILD_DIR/build-done/kernel-SMP%{_kernelsrcdir}/include/linux/autoconf-smp.h ]; then
+install $KERNEL_BUILD_DIR/build-done/kernel-SMP%{_kernelsrcdir}/include/linux/autoconf-smp.h \
+	$RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
+install	$KERNEL_BUILD_DIR/build-done/kernel-SMP%{_kernelsrcdir}/config-smp \
+	$RPM_BUILD_ROOT%{_kernelsrcdir}
 fi
 
 %if %{with up} || %{with smp}
 # UP or SMP
-cp -Rdp $KERNEL_BUILD_DIR/include/linux/* \
-	$RPM_BUILD_ROOT/usr/src/linux-%{version}/include/linux
+cp -Rdp$l $KERNEL_BUILD_DIR/include/linux/* \
+	$RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
 %endif
 
 %{__make} %CrossOpts mrproper
