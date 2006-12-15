@@ -171,8 +171,8 @@ Source4:	kernel-config.h
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
 
-Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.19-rc6.patch.bz2
-# Source10-md5:	ce94df22b93c74f1637d2429c1093ec7
+#Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.19-rc6.patch.bz2
+##Source10-md5:	ce94df22b93c74f1637d2429c1093ec7
 #Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.17/reiser4-for-2.6.17-3.patch.gz
 ##Source12-md5:	593c3296ddf40c5b116ee129781da341
 #Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
@@ -340,6 +340,7 @@ Patch69:	suspend2-2.2.9-for-2.6.19-rc6.patch
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
 #Patch72:	linux-2.6-suspend2-off.patch
+Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 
 # Fix for pcie cards against 2.6.18.1 from ftp://lwfinger.dynalias.org/patches
 Patch73:	kernel-bcm43xx-patch_2.6.18.1_for_PCI-E.patch
@@ -350,6 +351,9 @@ Patch75:	linux-2.6.17-ide-acpi-support.patch
 
 # cx88-blackbird based tv tuner card audio fix
 Patch80:	linux-2.6.19-cx88-tvaudio.patch
+
+# see comments on http://lkml.org/lkml/2006/12/12/339
+Patch81:	linux-2.6.19-atiixp-legacy.patch
 
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch 
@@ -931,7 +935,8 @@ install %{SOURCE5} Makefile.ppclibs
 ##done
 %patch70 -p1
 %patch71 -p1
-#patch72 -p1
+# kernel-2.6-ueagle-atm-freezer.patch
+%patch72 -p1
 %endif
 
 %patch73 -p1
@@ -1012,6 +1017,9 @@ install %{SOURCE5} Makefile.ppclibs
 
 # cx88-tvaudio
 %patch80 -p1
+
+# atiixp-legacy
+%patch81 -p1
 
 # hostap enhancements from/for aircrack-ng 
 %patch85 -p1
