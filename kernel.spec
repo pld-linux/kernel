@@ -279,8 +279,9 @@ Patch44:	pom-ng-time-%{_netfilter_snap}.patch
 # external unapplied - not ready for 2.6.19
 #Patch41:       pom-ng-condition-%{_netfilter_snap}.patch
 
-#layer7
-Patch49:	kernel-2.6.18-layer7-2.7.patch
+#layer7 with temporary fix
+Patch48:	kernel-2.6.18-layer7-2.7.patch
+Patch49:	kernel-2.6.18-layer7-2.7-2.6.19-fix.patch
 
 # netfilter patches preparation order:
 #
@@ -985,7 +986,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch44 -p1
 
 ## layer7
-
+%patch48 -p1
 %patch49 -p1
 
 ##
