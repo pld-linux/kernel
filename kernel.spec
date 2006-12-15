@@ -11,11 +11,11 @@
 #
 # TODO 2.6.19:
 # - all above todos ???
-# - (patch 1) linux-2.6-sata-promise-pata-ports.patch - test second alternative 
-# - (patch 4) fbsplash-0.9.2-r5-2.6.18-rc4.patch - untested (bcond)
-# - (patch 1000) linux-2.6-grsec-minimal.patch - needs update
-# - (patch 9999) grsecurity-2.1.9-2.6.18.patch - use spender snapshot
-# - (patch 200) linux-2.6-ppc-ICE-hacks.patch - untested - ppc needed
+# - p1 linux-2.6-sata-promise-pata-ports.patch - test second alternative 
+# - p4 fbsplash-0.9.2-r5-2.6.18-rc4.patch - untested (bcond)
+# - p1000 linux-2.6-grsec-minimal.patch - needs update
+# - p9999 grsecurity-2.1.9-2.6.18.patch - use spender snapshot
+# - p200 linux-2.6-ppc-ICE-hacks.patch - untested - ppc needed
 # - separate PaX and grsecurity support 
 # - update configs for up/smp i386 (almost done) 
 # - check status of kernel-netfilter.config 
@@ -26,8 +26,20 @@
 # - update configs for up/smp alpha
 # - update configs for up/smp ppc
 # - update configs for up/smp ia64
-# - (patch5) vesafb-tng - applies but untested (bcond off)
-# - (patch51) reiser4 - applies but untested (bcond off)
+# - p5 vesafb-tng - applies but untested (bcond off)
+# - p51 reiser4 - applies but untested (bcond off)
+# - p60 linux-2.6-sk98lin-8.36.1.3.patch - needs update to 2.6.19
+# - p10 pom-ng-IPV4OPTSSTRIP-%{_netfilter_snap}.patch - needs API update
+# - p14 pom-ng-ipv4options-%{_netfilter_snap}.patch - needs API update
+# - p22 pom-ng-u32-%{_netfilter_snap}.patch - needs API update
+# - p32 pom-ng-ROUTE-%{_netfilter_snap}.patch - needs API update
+# - p33 pom-ng-TARPIT-%{_netfilter_snap}.patch - needs API update
+# - p34 pom-ng-mms-conntrack-nat-%{_netfilter_snap}.patch - needs API update
+# - p37 pom-ng-rsh-%{_netfilter_snap}.patch - needs API update
+# - p40 pom-ng-IPMARK-%{_netfilter_snap}.patch - needs API update
+# - p41 pom-ng-connlimit-%{_netfilter_snap}.patch - needs API update
+# - p44 pom-ng-time-%{_netfilter_snap}.patch - needs API update
+
 #
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
 #
