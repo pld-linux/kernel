@@ -39,9 +39,9 @@ diff -urNp linux-2.6.19.1/arch/alpha/kernel/ptrace.c linux-2.6.19.1/arch/alpha/k
 --- linux-2.6.19.1/arch/alpha/kernel/ptrace.c	2006-11-29 16:57:37.000000000 -0500
 +++ linux-2.6.19.1/arch/alpha/kernel/ptrace.c	2006-12-03 15:15:43.000000000 -0500
 @@ -15,6 +15,7 @@
- #include <linux/slab.h>
  #include <linux/security.h>
  #include <linux/signal.h>
+ #include <linux/vs_base.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
@@ -5928,9 +5928,9 @@ diff -urNp linux-2.6.19.1/arch/ia64/kernel/ptrace.c linux-2.6.19.1/arch/ia64/ker
 --- linux-2.6.19.1/arch/ia64/kernel/ptrace.c	2006-11-29 16:57:37.000000000 -0500
 +++ linux-2.6.19.1/arch/ia64/kernel/ptrace.c	2006-12-03 15:15:46.000000000 -0500
 @@ -17,6 +17,7 @@
- #include <linux/security.h>
  #include <linux/audit.h>
  #include <linux/signal.h>
+ #include <linux/vs_base.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/pgtable.h>
@@ -5978,9 +5978,9 @@ diff -urNp linux-2.6.19.1/arch/ia64/mm/fault.c linux-2.6.19.1/arch/ia64/mm/fault
 --- linux-2.6.19.1/arch/ia64/mm/fault.c	2006-11-29 16:57:37.000000000 -0500
 +++ linux-2.6.19.1/arch/ia64/mm/fault.c	2006-12-03 15:15:46.000000000 -0500
 @@ -10,6 +10,7 @@
- #include <linux/smp_lock.h>
  #include <linux/interrupt.h>
  #include <linux/kprobes.h>
+ #include <linux/vs_memory.h>
 +#include <linux/binfmts.h>
  
  #include <asm/pgtable.h>
@@ -7652,9 +7652,9 @@ diff -urNp linux-2.6.19.1/arch/sparc/kernel/ptrace.c linux-2.6.19.1/arch/sparc/k
 --- linux-2.6.19.1/arch/sparc/kernel/ptrace.c	2006-11-29 16:57:37.000000000 -0500
 +++ linux-2.6.19.1/arch/sparc/kernel/ptrace.c	2006-12-03 15:15:54.000000000 -0500
 @@ -19,6 +19,7 @@
- #include <linux/smp_lock.h>
  #include <linux/security.h>
  #include <linux/signal.h>
+ #include <linux/vs_base.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/pgtable.h>
@@ -8035,9 +8035,9 @@ diff -urNp linux-2.6.19.1/arch/sparc64/kernel/ptrace.c linux-2.6.19.1/arch/sparc
 --- linux-2.6.19.1/arch/sparc64/kernel/ptrace.c	2006-11-29 16:57:37.000000000 -0500
 +++ linux-2.6.19.1/arch/sparc64/kernel/ptrace.c	2006-12-03 15:15:54.000000000 -0500
 @@ -22,6 +22,7 @@
- #include <linux/seccomp.h>
  #include <linux/audit.h>
  #include <linux/signal.h>
+ #include <linux/vs_base.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/asi.h>
@@ -9580,9 +9580,9 @@ diff -urNp linux-2.6.19.1/fs/binfmt_aout.c linux-2.6.19.1/fs/binfmt_aout.c
 --- linux-2.6.19.1/fs/binfmt_aout.c	2006-11-29 16:57:37.000000000 -0500
 +++ linux-2.6.19.1/fs/binfmt_aout.c	2006-12-03 15:16:12.000000000 -0500
 @@ -24,6 +24,7 @@
- #include <linux/binfmts.h>
  #include <linux/personality.h>
  #include <linux/init.h>
+ #include <linux/vs_memory.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/system.h>
@@ -9667,6 +9667,7 @@ diff -urNp linux-2.6.19.1/fs/binfmt_elf.c linux-2.6.19.1/fs/binfmt_elf.c
  #include <linux/syscalls.h>
  #include <linux/random.h>
  #include <linux/elf.h>
+ #include <linux/vs_memory.h>
 +#include <linux/grsecurity.h>
 +
  #include <asm/uaccess.h>
@@ -10536,6 +10537,7 @@ diff -urNp linux-2.6.19.1/fs/exec.c linux-2.6.19.1/fs/exec.c
  #include <linux/tsacct_kern.h>
  #include <linux/cn_proc.h>
  #include <linux/audit.h>
+ #include <linux/vs_memory.h>
 +#include <linux/random.h>
 +#include <linux/grsecurity.h>
  
@@ -10647,7 +10649,8 @@ diff -urNp linux-2.6.19.1/fs/exec.c linux-2.6.19.1/fs/exec.c
 +
  			return ret;
  		}
- 		mm->stack_vm = mm->total_vm = vma_pages(mpnt);
+		vx_vmpages_sub(mm, mm->total_vm - vma_pages(mpnt));
+ 		mm->stack_vm = mm->total_vm;
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
 +		if (mpnt_m) {
@@ -10963,6 +10966,7 @@ diff -urNp linux-2.6.19.1/fs/fcntl.c linux-2.6.19.1/fs/fcntl.c
  #include <linux/ptrace.h>
  #include <linux/signal.h>
  #include <linux/rcupdate.h>
+ #include <linux/vs_limit.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/poll.h>
@@ -11018,9 +11022,10 @@ diff -urNp linux-2.6.19.1/fs/namei.c linux-2.6.19.1/fs/namei.c
 --- linux-2.6.19.1/fs/namei.c	2006-11-29 16:57:37.000000000 -0500
 +++ linux-2.6.19.1/fs/namei.c	2006-12-03 15:16:15.000000000 -0500
 @@ -32,6 +32,7 @@
- #include <linux/file.h>
- #include <linux/fcntl.h>
- #include <linux/namei.h>
+ #include <linux/vserver/inode.h>
+ #include <linux/vs_base.h>
+ #include <linux/vs_tag.h>
+ #include <linux/vs_cowbl.h>
 +#include <linux/grsecurity.h>
  #include <asm/namei.h>
  #include <asm/uaccess.h>
@@ -11177,7 +11182,7 @@ diff -urNp linux-2.6.19.1/fs/namei.c linux-2.6.19.1/fs/namei.c
 +
  	if (!IS_POSIXACL(nd.dentry->d_inode))
  		mode &= ~current->fs->umask;
- 	error = vfs_mkdir(nd.dentry->d_inode, dentry, mode);
+ 	error = vfs_mkdir(nd.dentry->d_inode, dentry, mode, &nd);
 +
 +	if (!error)
 +		gr_handle_create(dentry, nd.mnt);
@@ -11210,7 +11215,7 @@ diff -urNp linux-2.6.19.1/fs/namei.c linux-2.6.19.1/fs/namei.c
 +			goto dput_exit2;
 +		}
 +	}
- 	error = vfs_rmdir(nd.dentry->d_inode, dentry);
+ 	error = vfs_rmdir(nd.dentry->d_inode, dentry, &nd);
 +	if (!error && (saved_dev || saved_ino))
 +		gr_handle_delete(saved_ino, saved_dev);
 +dput_exit2:
@@ -11246,10 +11251,10 @@ diff -urNp linux-2.6.19.1/fs/namei.c linux-2.6.19.1/fs/namei.c
 +				error = -EACCES;
 +
  			atomic_inc(&inode->i_count);
--		error = vfs_unlink(nd.dentry->d_inode, dentry);
+-		error = vfs_unlink(nd.dentry->d_inode, dentry, &nd);
 +		}
 +		if (!error)
-+			error = vfs_unlink(nd.dentry->d_inode, dentry);
++			error = vfs_unlink(nd.dentry->d_inode, dentry, &nd);
 +		if (!error && (saved_ino || saved_dev))
 +			gr_handle_delete(saved_ino, saved_dev);
  	exit2:
@@ -11264,7 +11269,7 @@ diff -urNp linux-2.6.19.1/fs/namei.c linux-2.6.19.1/fs/namei.c
 +		goto out_dput_unlock;
 +	}
 +
- 	error = vfs_symlink(nd.dentry->d_inode, dentry, from, S_IALLUGO);
+ 	error = vfs_symlink(nd.dentry->d_inode, dentry, from, S_IALLUGO, &nd);
 +
 +	if (!error)
 +		gr_handle_create(dentry, nd.mnt);
@@ -11290,7 +11295,7 @@ diff -urNp linux-2.6.19.1/fs/namei.c linux-2.6.19.1/fs/namei.c
 +		goto out_unlock_dput;
 +	}
 +
- 	error = vfs_link(old_nd.dentry, nd.dentry->d_inode, new_dentry);
+ 	error = vfs_link(old_nd.dentry, nd.dentry->d_inode, new_dentry, &nd);
 +
 +	if (!error)
 +		gr_handle_create(new_dentry, nd.mnt);
@@ -11320,9 +11325,9 @@ diff -urNp linux-2.6.19.1/fs/namespace.c linux-2.6.19.1/fs/namespace.c
 --- linux-2.6.19.1/fs/namespace.c	2006-11-29 16:57:37.000000000 -0500
 +++ linux-2.6.19.1/fs/namespace.c	2006-12-03 15:16:15.000000000 -0500
 @@ -25,6 +25,7 @@
- #include <linux/security.h>
- #include <linux/mount.h>
- #include <linux/ramfs.h>
+ #include <linux/vserver/space.h>
+ #include <linux/vs_context.h>
+ #include <linux/vs_tag.h>
 +#include <linux/grsecurity.h>
  #include <asm/uaccess.h>
  #include <asm/unistd.h>
@@ -11382,9 +11387,9 @@ diff -urNp linux-2.6.19.1/fs/open.c linux-2.6.19.1/fs/open.c
 --- linux-2.6.19.1/fs/open.c	2006-11-29 16:57:37.000000000 -0500
 +++ linux-2.6.19.1/fs/open.c	2006-12-03 15:16:15.000000000 -0500
 @@ -27,6 +27,7 @@
- #include <linux/syscalls.h>
- #include <linux/rcupdate.h>
- #include <linux/audit.h>
+ #include <linux/vs_dlimit.h>
+ #include <linux/vs_tag.h>
+ #include <linux/vs_cowbl.h>
 +#include <linux/grsecurity.h>
  
  int vfs_statfs(struct dentry *dentry, struct kstatfs *buf)
@@ -11494,15 +11499,6 @@ diff -urNp linux-2.6.19.1/fs/open.c linux-2.6.19.1/fs/open.c
  	newattrs.ia_mode = (mode & S_IALLUGO) | (inode->i_mode & ~S_IALLUGO);
  	newattrs.ia_valid = ATTR_MODE | ATTR_CTIME;
  	error = notify_change(nd.dentry, &newattrs);
-@@ -568,7 +617,7 @@ asmlinkage long sys_chmod(const char __u
- 	return sys_fchmodat(AT_FDCWD, filename, mode);
- }
- 
--static int chown_common(struct dentry * dentry, uid_t user, gid_t group)
-+static int chown_common(struct dentry * dentry, uid_t user, gid_t group, struct vfsmount *mnt)
- {
- 	struct inode * inode;
- 	int error;
 @@ -585,6 +634,12 @@ static int chown_common(struct dentry * 
  	error = -EPERM;
  	if (IS_IMMUTABLE(inode) || IS_APPEND(inode))
@@ -11516,42 +11512,6 @@ diff -urNp linux-2.6.19.1/fs/open.c linux-2.6.19.1/fs/open.c
  	newattrs.ia_valid =  ATTR_CTIME;
  	if (user != (uid_t) -1) {
  		newattrs.ia_valid |= ATTR_UID;
-@@ -611,7 +666,7 @@ asmlinkage long sys_chown(const char __u
- 	error = user_path_walk(filename, &nd);
- 	if (error)
- 		goto out;
--	error = chown_common(nd.dentry, user, group);
-+	error = chown_common(nd.dentry, user, group, nd.mnt);
- 	path_release(&nd);
- out:
- 	return error;
-@@ -631,7 +686,7 @@ asmlinkage long sys_fchownat(int dfd, co
- 	error = __user_walk_fd(dfd, filename, follow, &nd);
- 	if (error)
- 		goto out;
--	error = chown_common(nd.dentry, user, group);
-+	error = chown_common(nd.dentry, user, group, nd.mnt);
- 	path_release(&nd);
- out:
- 	return error;
-@@ -645,7 +700,7 @@ asmlinkage long sys_lchown(const char __
- 	error = user_path_walk_link(filename, &nd);
- 	if (error)
- 		goto out;
--	error = chown_common(nd.dentry, user, group);
-+	error = chown_common(nd.dentry, user, group, nd.mnt);
- 	path_release(&nd);
- out:
- 	return error;
-@@ -664,7 +719,7 @@ asmlinkage long sys_fchown(unsigned int 
- 
- 	dentry = file->f_dentry;
- 	audit_inode(NULL, dentry->d_inode);
--	error = chown_common(dentry, user, group);
-+	error = chown_common(dentry, user, group, file->f_vfsmnt);
- 	fput(file);
- out:
- 	return error;
 @@ -872,6 +927,7 @@ repeat:
  	 * N.B. For clone tasks sharing a files structure, this test
  	 * will limit the total number of files that can be opened.
@@ -11685,10 +11645,11 @@ diff -urNp linux-2.6.19.1/fs/proc/base.c linux-2.6.19.1/fs/proc/base.c
 --- linux-2.6.19.1/fs/proc/base.c	2006-11-29 16:57:37.000000000 -0500
 +++ linux-2.6.19.1/fs/proc/base.c	2006-12-03 15:41:31.000000000 -0500
 @@ -73,6 +73,7 @@
- #include <linux/poll.h>
- #include <linux/nsproxy.h>
  #include <linux/oom.h>
+ #include <linux/vs_context.h>
+ #include <linux/vs_network.h>
 +#include <linux/grsecurity.h>
+
  #include "internal.h"
  
  /* NOTE:
@@ -11858,7 +11819,7 @@ diff -urNp linux-2.6.19.1/fs/proc/base.c linux-2.6.19.1/fs/proc/base.c
 @@ -1992,6 +2048,9 @@ int proc_pid_readdir(struct file * filp,
  {
  	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
- 	struct task_struct *reaper = get_proc_task(filp->f_dentry->d_inode);
+ 	struct task_struct *reaper = get_proc_task_real(filp->f_dentry->d_inode);
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	struct task_struct *tmp = current;
 +#endif
@@ -12012,6 +11973,7 @@ diff -urNp linux-2.6.19.1/fs/proc/root.c linux-2.6.19.1/fs/proc/root.c
 +#else
  	proc_bus = proc_mkdir("bus", NULL);
 +#endif
+ 	proc_vx_init();
  }
  
  static int proc_root_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat
@@ -12358,9 +12320,9 @@ diff -urNp linux-2.6.19.1/fs/utimes.c linux-2.6.19.1/fs/utimes.c
 --- linux-2.6.19.1/fs/utimes.c	2006-11-29 16:57:37.000000000 -0500
 +++ linux-2.6.19.1/fs/utimes.c	2006-12-03 15:16:16.000000000 -0500
 @@ -3,6 +3,7 @@
- #include <linux/linkage.h>
- #include <linux/namei.h>
  #include <linux/utime.h>
+ #include <linux/mount.h>
+ #include <linux/vs_cowbl.h>
 +#include <linux/grsecurity.h>
  #include <asm/uaccess.h>
  #include <asm/unistd.h>
@@ -21502,9 +21464,9 @@ diff -urNp linux-2.6.19.1/include/asm-i386/elf.h linux-2.6.19.1/include/asm-i386
     that it will "exec", and that there is sufficient room for the brk.  */
  
 +#ifdef CONFIG_PAX_SEGMEXEC
-+#define ELF_ET_DYN_BASE         ((current->mm->pax_flags & MF_PAX_SEGMEXEC) ? SEGMEXEC_TASK_SIZE/3*2 : TASK_SIZE/3*2)
++#define ELF_ET_DYN_BASE	((current->mm->pax_flags & MF_PAX_SEGMEXEC) ? SEGMEXEC_TASK_SIZE/3*2 : (TASK_UNMAPPED_BASE) * 2)
 +#else
- #define ELF_ET_DYN_BASE         (TASK_SIZE / 3 * 2)
+ #define ELF_ET_DYN_BASE	((TASK_UNMAPPED_BASE) * 2)
 +#endif
 +
 +#ifdef CONFIG_PAX_ASLR
@@ -24694,23 +24656,28 @@ diff -urNp linux-2.6.19.1/init/do_mounts.c linux-2.6.19.1/init/do_mounts.c
  	sys_close(fd);
  	if (len <= 0 || len == 32 || buf[len - 1] != '\n')
  		goto fail;
-@@ -142,8 +144,8 @@ dev_t name_to_dev_t(char *name)
- 	int part;
+@@ -142,12 +144,12 @@ dev_t name_to_dev_t(char *name)
+ 	int part, mount_result;
  
  #ifdef CONFIG_SYSFS
 -	int mkdir_err = sys_mkdir("/sys", 0700);
--	if (sys_mount("sysfs", "/sys", "sysfs", 0, NULL) < 0)
 +	int mkdir_err = sys_mkdir((char __user *)"/sys", 0700);
-+	if (sys_mount((char __user *)"sysfs", (char __user *)"/sys", (char __user *)"sysfs", 0, NULL) < 0)
+ 	/*
+ 	 * When changing resume2 parameter for Software Suspend, sysfs may
+ 	 * already be mounted.
+ 	 */
+-	mount_result = sys_mount("sysfs", "/sys", "sysfs", 0, NULL);
++	mount_result = sys_mount((char __user *)"sysfs", (char __user *)"/sys", (char __user *)"sysfs", 0, NULL)
+ 	if (mount_result < 0 && mount_result != -EBUSY)
  		goto out;
  #endif
- 
 @@ -195,10 +197,10 @@ dev_t name_to_dev_t(char *name)
  	res = try_name(s, part);
  done:
  #ifdef CONFIG_SYSFS
--	sys_umount("/sys", 0);
-+	sys_umount((char __user *)"/sys", 0);
+ 	if (mount_result >= 0)
+-		sys_umount("/sys", 0);
++		sys_umount((char __user *)"/sys", 0);
  out:
  	if (!mkdir_err)
 -		sys_rmdir("/sys");
