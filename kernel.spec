@@ -395,7 +395,7 @@ Patch2000:	kernel-small_fixes.patch
 #Patch3000:	wanpipe-beta7-2.3.4.patch
 
 # use http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.19.1-200612121859.patch
-Patch9999:	grsecurity-2.1.9-2.6.18.patch
+Patch9999:	grsecurity-2.1.9-2.6.19.1.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
