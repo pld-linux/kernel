@@ -24654,18 +24654,21 @@ diff -urNp linux-2.6.19.1/init/do_mounts.c linux-2.6.19.1/init/do_mounts.c
  	sys_close(fd);
  	if (len <= 0 || len == 32 || buf[len - 1] != '\n')
  		goto fail;
-@@ -142,12 +144,12 @@ dev_t name_to_dev_t(char *name)
+@@ -158,7 +159,7 @@ dev_t name_to_dev_t(char *name)
  	int part, mount_result;
  
  #ifdef CONFIG_SYSFS
 -	int mkdir_err = sys_mkdir("/sys", 0700);
 +	int mkdir_err = sys_mkdir((char __user *)"/sys", 0700);
- 	/*
+	/* 
+	 * When changing resume2 parameter for Software Suspend, sysfs may
+	 * already be mounted. 
+@@ -163,7 +164,7 @@ dev_t name_to_dev_t(char *name)
  	 * When changing resume2 parameter for Software Suspend, sysfs may
- 	 * already be mounted.
+ 	 * already be mounted. 
  	 */
 -	mount_result = sys_mount("sysfs", "/sys", "sysfs", 0, NULL);
-+	mount_result = sys_mount((char __user *)"sysfs", (char __user *)"/sys", (char __user *)"sysfs", 0, NULL)
++	mount_result = sys_mount((char __user *)"sysfs", (char __user *)"/sys", (char __user *)"sysfs", 0, NULL);
  	if (mount_result < 0 && mount_result != -EBUSY)
  		goto out;
  #endif
@@ -28703,25 +28706,20 @@ diff -urNp linux-2.6.19.1/scripts/Kbuild.include linux-2.6.19.1/scripts/Kbuild.i
 diff -urNp linux-2.6.19.1/security/commoncap.c linux-2.6.19.1/security/commoncap.c
 --- linux-2.6.19.1/security/commoncap.c	2006-11-29 16:57:37.000000000 -0500
 +++ linux-2.6.19.1/security/commoncap.c	2006-12-03 15:16:30.000000000 -0500
-@@ -23,10 +23,11 @@
- #include <linux/ptrace.h>
+@@ -23,6 +23,7 @@
  #include <linux/xattr.h>
  #include <linux/hugetlb.h>
+ #include <linux/vs_context.h>
 +#include <linux/grsecurity.h>
  
  int cap_netlink_send(struct sock *sk, struct sk_buff *skb)
  {
--	NETLINK_CB(skb).eff_cap = current->cap_effective;
-+	NETLINK_CB(skb).eff_cap = gr_cap_rtnetlink();
- 	return 0;
- }
- 
 @@ -44,7 +45,15 @@ EXPORT_SYMBOL(cap_netlink_recv);
  int cap_capable (struct task_struct *tsk, int cap)
  {
  	/* Derived from include/linux/sched.h:capable. */
--	if (cap_raised(tsk->cap_effective, cap))
-+	if (cap_raised (tsk->cap_effective, cap) && gr_task_is_capable(tsk, cap))
+-       if (vx_cap_raised(tsk->vx_info, tsk->cap_effective, cap))
++	if (vx_cap_raised(tsk->vx_info, tsk->cap_effective, cap) && gr_task_is_capable(tsk, cap))
 +		return 0;
 +	return -EPERM;
 +}
@@ -28775,9 +28773,9 @@ diff -urNp linux-2.6.19.1/security/dummy.c linux-2.6.19.1/security/dummy.c
 --- linux-2.6.19.1/security/dummy.c	2006-11-29 16:57:37.000000000 -0500
 +++ linux-2.6.19.1/security/dummy.c	2006-12-03 15:16:30.000000000 -0500
 @@ -28,6 +28,7 @@
- #include <linux/hugetlb.h>
  #include <linux/ptrace.h>
  #include <linux/file.h>
+ #include <linux/vs_context.h>
 +#include <linux/grsecurity.h>
  
  static int dummy_ptrace (struct task_struct *parent, struct task_struct *child)
