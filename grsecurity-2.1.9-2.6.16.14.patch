@@ -6628,7 +6628,7 @@ diff -urNp linux-2.6.16.12/fs/binfmt_elf.c linux-2.6.16.12/fs/binfmt_elf.c
 -	     * <= p_memsize so it is only necessary to check p_memsz.
 -	     */
 -	    k = load_addr + eppnt->p_vaddr;
--	    if (k > TASK_SIZE || eppnt->p_filesz > eppnt->p_memsz ||
+-	    if (BAD_ADDR(k) || eppnt->p_filesz > eppnt->p_memsz ||
 -		eppnt->p_memsz > TASK_SIZE || TASK_SIZE - eppnt->p_memsz < k) {
 -	        error = -ENOMEM;
 +		if (eppnt->p_type != PT_LOAD)
@@ -7030,10 +7030,10 @@ diff -urNp linux-2.6.16.12/fs/binfmt_elf.c linux-2.6.16.12/fs/binfmt_elf.c
  		 * allowed task size. Note that p_filesz must always be
  		 * <= p_memsz so it is only necessary to check p_memsz.
  		 */
--		if (k > TASK_SIZE || elf_ppnt->p_filesz > elf_ppnt->p_memsz ||
+-		if (BAD_ADDR(k) || elf_ppnt->p_filesz > elf_ppnt->p_memsz ||
 -		    elf_ppnt->p_memsz > TASK_SIZE ||
 -		    TASK_SIZE - elf_ppnt->p_memsz < k) {
-+		if (k > task_size || elf_ppnt->p_filesz > elf_ppnt->p_memsz ||
++		if (BAD_ADDR(k) || elf_ppnt->p_filesz > elf_ppnt->p_memsz ||
 +		    elf_ppnt->p_memsz > task_size ||
 +		    task_size - elf_ppnt->p_memsz < k) {
  			/* set_brk can never work.  Avoid overflows.  */
@@ -7052,15 +7052,6 @@ diff -urNp linux-2.6.16.12/fs/binfmt_elf.c linux-2.6.16.12/fs/binfmt_elf.c
  	/* Calling set_brk effectively mmaps the pages that we need
  	 * for the bss and break sections.  We must do this before
  	 * mapping in the interpreter, to make sure it doesn't wind
-@@ -929,7 +1220,7 @@ static int load_elf_binary(struct linux_
- 			printk(KERN_ERR "Unable to load interpreter %.128s\n",
- 				elf_interpreter);
- 			force_sig(SIGSEGV, current);
--			retval = -ENOEXEC; /* Nobody gets to see this, but.. */
-+			retval = elf_entry; /* Nobody gets to see this, but.. */
- 			goto out_free_dentry;
- 		}
- 		reloc_func_desc = interp_load_addr;
 @@ -1153,7 +1444,7 @@ static int dump_seek(struct file *file, 
   *
   * I think we should skip something. But I am not sure how. H.J.
