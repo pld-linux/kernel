@@ -457,6 +457,9 @@ ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc ppc64 sparc sparc64 arm
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
+# No ELF objects there to strip (skips processing 27k files)
+%define		_noautostrip	.*%{_kernelsrcdir}/.*
+
 %ifarch ia64
 %define		initrd_dir	/boot/efi
 %else
