@@ -14,7 +14,6 @@
 # - p1 linux-2.6-sata-promise-pata-ports.patch - test second alternative 
 # - p4 fbsplash-0.9.2-r5-2.6.18-rc4.patch - untested (bcond)
 # - p1000 linux-2.6-grsec-minimal.patch - needs update
-# - p9999 grsecurity-2.1.9-2.6.18.patch - use spender snapshot
 # - p200 linux-2.6-ppc-ICE-hacks.patch - untested - ppc needed
 # - separate PaX and grsecurity support 
 # - update configs for up/smp i386 (almost done) 
@@ -138,7 +137,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.1
+%define		_rel			0.2
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20061213
