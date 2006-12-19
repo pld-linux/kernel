@@ -1388,6 +1388,7 @@ BuildKernel
 PreInstallKernel
 %endif
 
+
 # SMP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
@@ -1399,6 +1400,7 @@ PreInstallKernel smp
 
 %{__make} %CrossOpts include/linux/utsrelease.h
 cp include/linux/utsrelease.h{,.save}
+sed -i 's:smp::' include/linux/utsrelease.h.save
 
 %install
 rm -rf $RPM_BUILD_ROOT
