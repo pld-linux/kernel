@@ -28,16 +28,6 @@
 # - p5 vesafb-tng - applies but untested (bcond off)
 # - p51 reiser4 - applies but untested (bcond off)
 # - p60 linux-2.6-sk98lin-8.36.1.3.patch - needs update to 2.6.19
-# - p10 pom-ng-IPV4OPTSSTRIP-%{_netfilter_snap}.patch - needs API update
-# - p14 pom-ng-ipv4options-%{_netfilter_snap}.patch - needs API update
-# - p22 pom-ng-u32-%{_netfilter_snap}.patch - needs API update
-# - p32 pom-ng-ROUTE-%{_netfilter_snap}.patch - needs API update
-# - p33 pom-ng-TARPIT-%{_netfilter_snap}.patch - needs API update
-# - p34 pom-ng-mms-conntrack-nat-%{_netfilter_snap}.patch - needs API update
-# - p37 pom-ng-rsh-%{_netfilter_snap}.patch - needs API update
-# - p40 pom-ng-IPMARK-%{_netfilter_snap}.patch - needs API update
-# - p41 pom-ng-connlimit-%{_netfilter_snap}.patch - needs API update
-# - p44 pom-ng-time-%{_netfilter_snap}.patch - needs API update
 
 #
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
@@ -245,8 +235,7 @@ Patch7:		linux-alpha-isa.patch
 Patch8:		linux-fbcon-margins.patch
 Patch9:		linux-static-dev.patch
 
-# netfilter snap
-# submitted
+# netfilter p-o-m-ng snap 20061213
 
 # base
 Patch10:	pom-ng-IPV4OPTSSTRIP-%{_netfilter_snap}.patch
@@ -254,31 +243,11 @@ Patch14:	pom-ng-ipv4options-%{_netfilter_snap}.patch
 Patch20:	pom-ng-set-%{_netfilter_snap}.patch
 Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
 
-# base unapplied - not ready for 2.6.19
-#Patch12:	pom-ng-expire-%{_old_netfilter_snap}.patch
-#Patch13:	pom-ng-fuzzy-%{_old_netfilter_snap}.patch
-#Patch15:	pom-ng-nth-%{_old_netfilter_snap}.patch
-#Patch16:	pom-ng-osf-%{_old_netfilter_snap}.patch
-#Patch17:	pom-ng-psd-%{_old_netfilter_snap}.patch
-#Patch18:	pom-ng-quota-%{_old_netfilter_snap}.patch
-#Patch19:	pom-ng-random-%{_old_netfilter_snap}.patch
-
 # extra
 Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
 Patch33:	pom-ng-TARPIT-%{_netfilter_snap}.patch
 Patch34:	pom-ng-mms-conntrack-nat-%{_netfilter_snap}.patch
 Patch37:	pom-ng-rsh-%{_netfilter_snap}.patch
-
-# extra unapplied - not ready for 2.6.19
-#Patch30:	pom-ng-ACCOUNT-%{_old_netfilter_snap}.patch
-#Patch34:	pom-ng-XOR-%{_old_netfilter_snap}.patch
-#Patch35:	pom-ng-account-%{_old_netfilter_snap}.patch
-#Patch37:	pom-ng-rpc-%{_old_netfilter_snap}.patch
-#Patch38:	pom-ng-unclean-%{_old_netfilter_snap}.patch
-#Patch35:	pom-ng-quake3-conntrack-nat-%{_netfilter_snap}.patch
-#Patch36:	pom-ng-rpc-%{_netfilter_snap}.patch
-#Patch38:	pom-ng-rtsp-conntrack-%{_netfilter_snap}.patch
-#Patch39:	pom-ng-talk-conntrack-nat-%{_netfilter_snap}.patch
 
 #external
 Patch40:	pom-ng-IPMARK-%{_netfilter_snap}.patch
@@ -286,9 +255,6 @@ Patch41:	pom-ng-connlimit-%{_netfilter_snap}.patch
 Patch42:	pom-ng-geoip-%{_netfilter_snap}.patch
 Patch43:	pom-ng-ipp2p-%{_netfilter_snap}.patch
 Patch44:	pom-ng-time-%{_netfilter_snap}.patch
-
-# external unapplied - not ready for 2.6.19
-#Patch41:       pom-ng-condition-%{_netfilter_snap}.patch
 
 #layer7 with temporary fix
 Patch48:	kernel-2.6.18-layer7-2.7.patch
