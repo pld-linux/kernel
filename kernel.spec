@@ -1,23 +1,11 @@
 #
-# TODO:
-# - update xen patch for 2.6.18 
-# - all netfilter patches needs update (API changed again)
-# - VESAFB-TNG
-# - IMQ
-# - wanpipe
-# - reiser4
-# - Linux ABI
-# - grsecurity - does not builds --without grsecuriy
-#
 # TODO 2.6.19:
-# - all above todos ???
-# - p1 linux-2.6-sata-promise-pata-ports.patch - test second alternative 
-# - p4 fbsplash-0.9.2-r5-2.6.18-rc4.patch - untested (bcond)
+#
+# - p4 fbsplash - needs update (bcond off)
 # - p1000 linux-2.6-grsec-minimal.patch - needs update
 # - p200 linux-2.6-ppc-ICE-hacks.patch - untested - ppc needed
-# - separate PaX and grsecurity support 
+# - separate PaX and grsecurity support - future
 # - update configs for up/smp i386 (almost done) 
-# - check status of kernel-netfilter.config 
 # - check status of kernel-suspend2.config 
 # - update configs for up/smp x86_64
 # - update configs for up/smp sparc
@@ -25,12 +13,15 @@
 # - update configs for up/smp alpha
 # - update configs for up/smp ppc
 # - update configs for up/smp ia64
-# - p5 vesafb-tng - applies but untested (bcond off)
-# - p51 reiser4 - applies but untested (bcond off)
-# - p60 linux-2.6-sk98lin-8.36.1.3.patch - needs update to 2.6.19
-
+# - p5 vesafb-tng - needs update (bcond off)
+# - p51 reiser4 - needs update (bcond off)
+# - p50 imq - test (bcond off)
 #
-# WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
+# FUTURE:
+# - separate PaX and grsecurity support - future
+# - update xen patch for 2.6.19 
+# - wanpipe
+# - Linux ABI
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -55,7 +46,8 @@
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
 
-%bcond_without	ide_acpi	# support for ide-acpi from SuSE (instead of previous hack)
+%bcond_without	ide_acpi	# support for ide-acpi from SuSE
+%bcond_with	imq		# imq support
 
 %{?debug:%define with_verbose 1}
 
@@ -127,7 +119,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.3
+%define		_rel			0.4
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20061213
@@ -205,6 +197,7 @@ Source47:	kernel-xenU.config
 
 Source49:	kernel-pax.config
 Source50:	kernel-no-pax.config
+Source55:	kernel-imq.config
 
 ###
 #	Patches
@@ -288,8 +281,11 @@ Patch49:	kernel-2.6.18-layer7-2.7-2.6.19-fix.patch
 #	End netfilter
 ###
 
-# from http://www.linuximq.net/patchs/linux-2.6.16-imq2.diff
-#Patch50:	linux-2.6.16-imq2.diff
+# based on 2.6.17 patch from http://www.linuximq.net/patchs/linux-2.6.17-imq1.diff, 
+# some stuff moved from net/sched/sch_generic.c to net/core/dev.c for 2.6.19 
+# compatibility. not tested. 
+
+Patch50:	linux-2.6.19-imq1.diff
 
 # from http://laurent.riffard.free.fr/reiser4/reiser4-for-2.6.19.patch.gz
 # based on http://ftp.namesys.com/pub/reiser4-for-2.6/2.6.18/reiser4-for-2.6.18-3.patch.gz
@@ -979,7 +975,9 @@ install %{SOURCE5} Makefile.ppclibs
 ##
 # end of netfilter
 
-#%patch50 -p1
+%if %{with imq}
+%patch50 -p1
+%endif
 
 # reiser4
 %if %{with reiser4}
@@ -1180,6 +1178,10 @@ BuildConfig() {
 	PaXconfig arch/%{_target_base_arch}/defconfig
 %else   
 	cat %{SOURCE50} >> arch/%{_target_base_arch}/defconfig
+%endif
+
+%if %{with imq}
+	cat %{SOURCE55} >> arch/%{_target_base_arch}/defconfig
 %endif
 
 %if %{with ide_acpi}
