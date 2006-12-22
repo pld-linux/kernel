@@ -131,7 +131,7 @@
 
 %define		_basever	2.6.16
 %define		_postver	.36
-%define		_rel		1
+%define		_rel		2
 %define		_subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -291,10 +291,12 @@ Patch250:	linux-2.6.16-forcedeth-WON.patch
 Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch1200:	linux-2.6-apparmor.patch
+Patch1201:	linux-2.6-apparmor-caps.patch
 
 # grsecurity snap for 2.6.16.14
 # based on http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.16.14-200605060936.patch
 Patch9999:	grsecurity-2.1.9-2.6.16.14.patch
+Patch10000:	linux-2.6-grsec-caps.patch
 
 URL:		http://www.kernel.org/
 %if %{with xen0} || %{with xenU}
@@ -864,16 +866,19 @@ done
 %patch250 -p1
 
 %patch1200 -p1
+%patch1201 -p1
 
 %if %{with grsec_minimal}
 %patch1000 -p1
 %endif
 %if %{with grsec_full}
 %patch9999 -p1
+%patch10000 -p1
 %endif
 
 %if %{with pax}
 %patch9999 -p1
+%patch10000 -p1
 %endif
 
 # Fix EXTRAVERSION in main Makefile
