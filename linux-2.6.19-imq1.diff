@@ -675,8 +675,8 @@ diff -Nru linux-2.6.17.orig/net/ipv4/netfilter/ipt_IMQ.c linux-2.6.17/net/ipv4/n
 +                              const struct net_device *out,
 +                              unsigned int hooknum,
 +                              const struct xt_target *target,
-+                              const void *targinfo,
-+                              void *userdata)
++                              const void *targinfo
++                              )
 +{
 +       struct ipt_imq_info *mr = (struct ipt_imq_info*)targinfo;
 +
@@ -689,15 +689,15 @@ diff -Nru linux-2.6.17.orig/net/ipv4/netfilter/ipt_IMQ.c linux-2.6.17/net/ipv4/n
 +                         const void *e,
 +                         const struct xt_target *target,
 +                         void *targinfo,
-+                         unsigned int targinfosize,
++                         
 +                         unsigned int hook_mask)
 +{
 +       struct ipt_imq_info *mr;
 +
-+       if (targinfosize != IPT_ALIGN(sizeof(struct ipt_imq_info))) {
++       /* if (targinfosize != IPT_ALIGN(sizeof(struct ipt_imq_info))) {
 +               printk(KERN_WARNING "IMQ: invalid targinfosize\n");
 +               return 0;
-+       }
++       } */
 +       mr = (struct ipt_imq_info*)targinfo;
 +
 +       if (strcmp(tablename, "mangle") != 0) {
@@ -788,11 +788,11 @@ diff -Nru linux-2.6.17.orig/net/ipv6/netfilter/ip6t_IMQ.c linux-2.6.17/net/ipv6/
 +#include <linux/imq.h>
 +
 +static unsigned int imq_target(struct sk_buff **pskb,
-+                              unsigned int hooknum,
 +                              const struct net_device *in,
 +                              const struct net_device *out,
-+                              const void *targinfo,
-+                              void *userdata)
++                              unsigned int hooknum,
++                              const struct xt_target *target,
++                              const void *targinfo)
 +{
 +       struct ip6t_imq_info *mr = (struct ip6t_imq_info*)targinfo;
 +
@@ -802,17 +802,17 @@ diff -Nru linux-2.6.17.orig/net/ipv6/netfilter/ip6t_IMQ.c linux-2.6.17/net/ipv6/
 +}
 +
 +static int imq_checkentry(const char *tablename,
-+                         const struct ip6t_entry *e,
++                         const void *e,
++			  const struct xt_target *target,
 +                         void *targinfo,
-+                         unsigned int targinfosize,
 +                         unsigned int hook_mask)
 +{
 +       struct ip6t_imq_info *mr;
 +
-+       if (targinfosize != IP6T_ALIGN(sizeof(struct ip6t_imq_info))) {
++       /* if (targinfosize != IP6T_ALIGN(sizeof(struct ip6t_imq_info))) {
 +               printk(KERN_WARNING "IMQ: invalid targinfosize\n");
 +               return 0;
-+       }
++       } */
 +       mr = (struct ip6t_imq_info*)targinfo;
 +
 +       if (strcmp(tablename, "mangle") != 0) {
@@ -834,7 +834,7 @@ diff -Nru linux-2.6.17.orig/net/ipv6/netfilter/ip6t_IMQ.c linux-2.6.17/net/ipv6/
 +
 +static struct ip6t_target ip6t_imq_reg = {
 +       .name           = "IMQ",
-+       .target         = imq_target,
++       .target         = imq_target,	.targetsize     = sizeof(struct ip6t_imq_info),
 +       .checkentry     = imq_checkentry,
 +       .me             = THIS_MODULE
 +};
