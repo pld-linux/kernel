@@ -886,3 +886,34 @@ diff -Nru linux-2.6.17.orig/net/ipv6/netfilter/ip6t_IMQ.c linux-2.6.17/net/ipv6/
  			dev_queue_xmit_nit(skb, dev);
  
  		if (netif_needs_gso(dev, skb)) {
+--- linux-2.6.19i/net/sched/sch_generic.c	2006-11-29 22:57:37.000000000 +0100
++++ linux-2.6.19o/net/sched/sch_generic.c	2006-12-22 15:56:48.000000000 +0100
+@@ -88,7 +88,7 @@ void qdisc_unlock_tree(struct net_device
+    NOTE: Called under dev->queue_lock with locally disabled BH.
+ */
+ 
+-static inline int qdisc_restart(struct net_device *dev)
++int qdisc_restart(struct net_device *dev)
+ {
+ 	struct Qdisc *q = dev->qdisc;
+ 	struct sk_buff *skb;
+@@ -181,6 +181,8 @@ requeue:
+ 	return q->q.qlen;
+ }
+ 
++EXPORT_SYMBOL(qdisc_restart);
++
+ void __qdisc_run(struct net_device *dev)
+ {
+ 	if (unlikely(dev->qdisc == &noop_qdisc))
+--- linux-2.6.19i/include/net/pkt_sched.h	2006-11-29 22:57:37.000000000 +0100
++++ linux-2.6.19o/include/net/pkt_sched.h	2006-12-22 11:47:02.000000000 +0100
+@@ -218,6 +218,8 @@ extern struct qdisc_rate_table *qdisc_ge
+ 		struct rtattr *tab);
+ extern void qdisc_put_rtab(struct qdisc_rate_table *tab);
+ 
++extern int qdisc_restart(struct net_device *dev);
++
+ extern void __qdisc_run(struct net_device *dev);
+ 
+ static inline void qdisc_run(struct net_device *dev)
