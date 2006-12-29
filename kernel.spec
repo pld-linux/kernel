@@ -130,8 +130,8 @@
 %define		xen_version		3.0.2
 
 %define		_basever	2.6.16
-%define		_postver	.36
-%define		_rel		2
+%define		_postver	.37
+%define		_rel		1
 %define		_subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -148,7 +148,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source3-md5:	5fcba3258c556e4bba27408e533ab42c
+# Source3-md5:	382147b7ba88268db52a6b6355ed2bbe
 
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
@@ -266,6 +266,7 @@ Patch60:	linux-2.6-sk98lin-8.31.2.3.patch
 
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
+Patch72:	suspend2-2.2.5-for-2.6.16.37-fix.patch
 
 Patch81:	linux-2.6-md.patch
 
@@ -759,6 +760,7 @@ install %{SOURCE5} Makefile.ppclibs
 
 %patch1 -p1
 
+%patch72 -p0
 for i in suspend2-%{suspend_version}-for-2.6.16.9/[0-9]*; do
 patch -p1 -s < $i
 done
