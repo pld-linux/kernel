@@ -47,7 +47,7 @@
 %bcond_with	nfsroot		# build with root on NFS support
 
 %bcond_without	ide_acpi	# support for ide-acpi from SuSE
-%bcond_with	imq		# imq support
+%bcond_without	imq		# imq support
 
 %{?debug:%define with_verbose 1}
 
@@ -119,7 +119,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.4
+%define		_rel			0.5
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20061213
