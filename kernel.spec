@@ -332,9 +332,8 @@ Patch81:	linux-2.6.19-atiixp-legacy.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch 
 Patch85:	hostap-kernel-2.6.18.patch
 
-# http://ftp.linux-vserver.org/pub/kernel/vs2.1/patch-2.6.19-vs2.1.1.5.diff.bz2
-# same as http://vserver.13thfloor.at/Experimental/patch-2.6.19-vs2.1.1.5.diff
-Patch100:	linux-2.6-vs2.1.patch
+# http://vserver.13thfloor.at/Experimental/patch-2.6.19.1-vs2.3.0.6.diff
+Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
 
