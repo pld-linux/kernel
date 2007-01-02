@@ -39,7 +39,7 @@ diff -urN linux-2.6.16.2/drivers/char/keyboard.c linux-2.6.16.2-grsec/drivers/ch
 +	}
 +#endif
 +
- 	fn_handler[value](vc, regs);
+ 	fn_handler[value](vc);
  }
  
 diff -urNp linux-2.6.16.2/drivers/pci/proc.c linux-2.6.16.2-grsec/drivers/pci/proc.c
@@ -126,22 +126,22 @@ diff -urN linux-2.6.16.2/fs/namei.c linux-2.6.16.2-grsec/fs/namei.c
  	error = __do_follow_link(&path, nd);
  	if (error) {
  		/* Does someone understand code flow here? Or it is only
-@@ -2251,8 +2273,14 @@
- 	new_dentry = lookup_create(&nd, 0);
+@@ -2326,7 +2454,16 @@ asmlinkage long sys_linkat(int olddfd, c
  	error = PTR_ERR(new_dentry);
- 	if (!IS_ERR(new_dentry)) {
--		error = vfs_link(old_nd.dentry, nd.dentry->d_inode,
--			new_dentry, &nd);
-+		error = 0;
-+		if (gr_handle_hardlink(old_nd.dentry, old_nd.mnt,
-+				       old_nd.dentry->d_inode,
-+				       old_nd.dentry->d_inode->i_mode, to))
-+			error = -EPERM;
-+		if (!error)
-+			error = vfs_link(old_nd.dentry, nd.dentry->d_inode,
-+				new_dentry, &nd);
- 		dput(new_dentry);
- 	}
+ 	if (IS_ERR(new_dentry))
+ 		goto out_unlock;
++
++	if (gr_handle_hardlink(old_nd.dentry, old_nd.mnt,
++			       old_nd.dentry->d_inode,
++			       old_nd.dentry->d_inode->i_mode, to)) {
++		error = -EACCES;
++		goto out_unlock_dput;
++	}
++
+ 	error = vfs_link(old_nd.dentry, nd.dentry->d_inode, new_dentry, &nd);
++out_unlock_dput:
+ 	dput(new_dentry);
+ out_unlock:
  	mutex_unlock(&nd.dentry->d_inode->i_mutex);
 diff -urN linux-2.6.16.2/fs/proc/array.c linux-2.6.16.2-grsec/fs/proc/array.c
 --- linux-2.6.16.2/fs/proc/array.c	2006-04-07 18:56:47.000000000 +0200
@@ -192,7 +192,7 @@ diff -urNp linux-2.6.16.2/fs/proc/internal.h linux-2.6.16.2-grsec/fs/proc/intern
 diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_misc.c
 --- linux-2.6.16.2/fs/proc/proc_misc.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/fs/proc/proc_misc.c	2006-04-11 17:44:40.109709500 +0200
-@@ -708,6 +708,10 @@
+@@ -670,6 +670,10 @@ void create_seq_entry(char *name, mode_t
  void __init proc_misc_init(void)
  {
  	struct proc_dir_entry *entry;
@@ -203,7 +203,7 @@ diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_m
  	static struct {
  		char *name;
  		int (*read_proc)(char*,char**,off_t,int,int*,void*);
-@@ -723,7 +725,9 @@
+@@ -685,7 +687,9 @@ void __init proc_misc_init(void)
  		{"stram",	stram_read_proc},
  #endif
  		{"filesystems",	filesystems_read_proc},
@@ -213,7 +213,7 @@ diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_m
  		{"locks",	locks_read_proc},
  		{"execdomains",	execdomains_read_proc},
  		{NULL,}
-@@ -708,19 +712,37 @@
+@@ -693,13 +697,26 @@ void __init proc_misc_init(void)
  	for (p = simple_ones; p->name; p++)
  		create_proc_read_entry(p->name, 0, NULL, p->read_proc, NULL);
  
@@ -232,14 +232,15 @@ diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_m
  	entry = create_proc_entry("kmsg", S_IRUSR, &proc_root);
  	if (entry)
  		entry->proc_fops = &proc_kmsg_operations;
-+
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +	create_seq_entry("devices", gr_mode, &proc_devinfo_operations);
 +#else
  	create_seq_entry("devices", 0, &proc_devinfo_operations);
 +#endif
  	create_seq_entry("cpuinfo", 0, &proc_cpuinfo_operations);
+ #ifdef CONFIG_BLOCK
  	create_seq_entry("partitions", 0, &proc_partitions_operations);
+@@ -707,7 +724,11 @@ void __init proc_misc_init(void)
  	create_seq_entry("stat", 0, &proc_stat_operations);
  	create_seq_entry("interrupts", 0, &proc_interrupts_operations);
  #ifdef CONFIG_SLAB
@@ -251,7 +252,7 @@ diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_m
  #ifdef CONFIG_DEBUG_SLAB_LEAK
  	create_seq_entry("slab_allocators", 0 ,&proc_slabstats_operations);
  #endif
-@@ -705,7 +726,7 @@ void __init proc_misc_init(void)
+@@ -724,7 +745,7 @@ void __init proc_misc_init(void)
  #ifdef CONFIG_SCHEDSTATS
  	create_seq_entry("schedstat", 0, &proc_schedstat_operations);
  #endif
@@ -996,21 +997,29 @@ diff -urN linux-2.6.16.2/kernel/exit.c linux-2.6.16.2-grsec/kernel/exit.c
 --- linux-2.6.16.2/kernel/exit.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/kernel/exit.c	2006-04-11 17:44:40.125710500 +0200
 @@ -36,6 +36,7 @@
- #include <linux/pipe_fs_i.h>
  #include <linux/audit.h> /* for audit_free() */
  #include <linux/resource.h>
+ #include <linux/blkdev.h>
 +#include <linux/grsecurity.h>
  #include <linux/vs_limit.h>
  #include <linux/vs_context.h>
  #include <linux/vs_network.h>
-@@ -97,6 +98,7 @@
- 		}
- 		if (tsk == sig->curr_target)
- 			sig->curr_target = next_thread(tsk);
-+		gr_del_task_from_ip_table(tsk);
- 		/*
- 		 * Accumulate here the counters for all threads but the
- 		 * group leader as they die, so they can be added into
+@@ -118,6 +123,7 @@ static void __exit_signal(struct task_st
+ 
+ 	__unhash_process(tsk);
+ 
++	gr_del_task_from_ip_table(tsk);
+ 	tsk->signal = NULL;
+ 	tsk->sighand = NULL;
+ 	spin_unlock(&sighand->siglock);
+@@ -914,6 +942,7 @@ fastcall NORET_TYPE void do_exit(long co
+ 	if (group_dead)
+ 		acct_process();
+ 	exit_sem(tsk);
++	gr_shm_exit(tsk);
+ 	__exit_files(tsk);
+ 	__exit_fs(tsk);
+ 	exit_thread();
 diff -urNp linux-2.6.18/kernel/kallsyms.c linux-2.6.18/kernel/kallsyms.c
 --- linux-2.6.18/kernel/kallsyms.c	2006-09-19 23:42:06.000000000 -0400
 +++ linux-2.6.18/kernel/kallsyms.c	2006-09-22 20:45:04.000000000 -0400
@@ -1179,27 +1188,7 @@ diff -urN linux-2.6.16.2/security/Kconfig linux-2.6.16.2-grsec/security/Kconfig
 diff -urN linux-2.6.18/fs/proc/base.c linux-2.6.18-grsec/fs/proc/base.c
 --- linux-2.6.18/fs/proc/base.c.orig	2006-11-03 18:27:40.112510768 +0100
 +++ linux-2.6.18/fs/proc/base.c	2006-11-03 18:42:56.408212648 +0100
-@@ -141,6 +141,9 @@
- #ifdef CONFIG_AUDITSYSCALL
- 	PROC_TGID_LOGINUID,
- #endif
-+#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
-+	PROC_TGID_IPADDR,
-+#endif
- 	PROC_TGID_OOM_SCORE,
- 	PROC_TGID_OOM_ADJUST,
- 	PROC_TID_INO,
-@@ -227,6 +230,9 @@
- 	E(PROC_TGID_EXE,       "exe",     S_IFLNK|S_IRWXUGO),
- 	E(PROC_TGID_MOUNTS,    "mounts",  S_IFREG|S_IRUGO),
- 	E(PROC_TGID_MOUNTSTATS, "mountstats", S_IFREG|S_IRUSR),
-+#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
-+	E(PROC_TGID_IPADDR,	"ipaddr",  S_IFREG|S_IRUSR),
-+#endif
- #ifdef CONFIG_MMU
- 	E(PROC_TGID_SMAPS,     "smaps",   S_IFREG|S_IRUGO),
- #endif
-@@ -1341,7 +1347,11 @@
+@@ -969,7 +969,11 @@ static struct inode *proc_pid_make_inode
  	if (task_dumpable(task)) {
  		inode->i_uid = task->euid;
  		inode->i_gid = task->egid;
@@ -1211,49 +1200,30 @@ diff -urN linux-2.6.18/fs/proc/base.c linux-2.6.18-grsec/fs/proc/base.c
  	/* procfs is xid tagged */
  	inode->i_tag = (tag_t)vx_task_xid(task);
  	security_task_to_inode(task, inode);
-@@ -1375,9 +1385,20 @@
+@@ -985,17 +992,38 @@ static int pid_getattr(struct vfsmount *
  {
  	struct inode *inode = dentry->d_inode;
- 	struct task_struct *task = get_proc_task(inode);
+ 	struct task_struct *task;
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	struct task_struct *tmp = current;
 +#endif
- 	int ret = 0;
++
+ 	generic_fillattr(inode, stat);
  
+ 	rcu_read_lock();
+ 	stat->uid = 0;
+ 	stat->gid = 0;
+ 	task = pid_task(proc_pid(inode), PIDTYPE_PID);
 -	if (task) {
 +	if (task
-+	#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+		&& (!tmp->uid || (tmp->uid == task->uid)
-+	#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+		|| in_group_p(CONFIG_GRKERNSEC_PROC_GID)
-+	#endif
-+		)
-+	#endif
-+	) {
- 		int pid = (inode->i_ino >> 16) & 0xFFFF;
- 
- 		if (!proc_pid_visible(task, pid))
-@@ -1385,9 +1406,17 @@
- 
- 		ret = 1;
- 		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
-+	#ifdef CONFIG_GRKERNSEC_PROC_USER
-+		(inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
-+	#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+		(inode->i_mode == (S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP)) ||
-+	#endif
- 		    task_dumpable(task)) {
- 			inode->i_uid = task->euid;
- 			inode->i_gid = task->egid;
-+	#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+			inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
-+	#endif
- 		} else {
- 			inode->i_uid = 0;
- 			inode->i_gid = 0;
-@@ -1416,9 +1445,17 @@
- 	task = pid_task(proc_pid(inode), PIDTYPE_PID);
- 	if (task) {
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++	    && (!tmp->uid || (tmp->uid == task->uid)
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++	    || in_group_p(CONFIG_GRKERNSEC_PROC_GID)
++#endif
++	    )
++#endif
++	    ) {
  		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
@@ -1262,111 +1232,82 @@ diff -urN linux-2.6.18/fs/proc/base.c linux-2.6.18-grsec/fs/proc/base.c
 +#endif
  		    task_dumpable(task)) {
  			stat->uid = task->euid;
- 			stat->gid = task->egid;
 +#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
 +			stat->gid = CONFIG_GRKERNSEC_PROC_GID;
++#else
+ 			stat->gid = task->egid;
 +#endif
  		}
  	}
  	rcu_read_unlock();
-@@ -1757,6 +1794,12 @@
- 			inode->i_fop = &proc_info_file_operations;
- 			ei->op.proc_read = proc_pid_status;
- 			break;
-+#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
-+		case PROC_TGID_IPADDR:
-+			inode->i_fop = &proc_info_file_operations;
-+			ei->op.proc_read = proc_pid_ipaddr;
-+			break;
+@@ -1025,9 +1053,18 @@ static int pid_revalidate(struct dentry 
+ 	struct task_struct *task = get_proc_task(inode);
+ 	if (task) {
+ 		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
++#ifdef CONFIG_GRKERNSEC_PROC_USER
++		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP)) ||
 +#endif
- 		case PROC_TID_STAT:
- 			inode->i_fop = &proc_info_file_operations;
- 			ei->op.proc_read = proc_tid_stat;
-@@ -2117,7 +2160,14 @@
+ 		    task_dumpable(task)) {
+ 			inode->i_uid = task->euid;
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++			inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
++#else
+ 			inode->i_gid = task->egid;
++#endif
+ 		} else {
+ 			inode->i_uid = 0;
+ 			inode->i_gid = 0;
+@@ -1791,6 +1833,9 @@ static struct pid_entry tgid_base_stuff[
+ #ifdef CONFIG_AUDITSYSCALL
+ 	REG("loginuid",   S_IWUSR|S_IRUGO, loginuid),
+ #endif
++#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
++	INF("ipaddr",	  S_IRUSR, pid_ipaddr),
++#endif
+ };
+ 
+ static int proc_tgid_base_readdir(struct file * filp,
+@@ -1893,7 +1938,14 @@ struct dentry *proc_pid_instantiate(stru
  	if (!inode)
- 		goto out_put_task;
+ 		goto out;
  
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +	inode->i_mode = S_IFDIR|S_IRUSR|S_IXUSR;
 +#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
-+	inode->i_mode = S_IFDIR|S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP;
++	inode->i_mode = S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP;
 +#else
  	inode->i_mode = S_IFDIR|S_IRUGO|S_IXUGO;
 +#endif
  	inode->i_op = &proc_tgid_base_inode_operations;
  	inode->i_fop = &proc_tgid_base_operations;
  	inode->i_flags|=S_IMMUTABLE;
-@@ -2213,12 +2263,27 @@
- static struct task_struct *first_tgid(int tgid, unsigned int nr)
+@@ -1992,6 +2048,9 @@ int proc_pid_readdir(struct file * filp,
  {
- 	struct task_struct *pos;
-+	#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+		struct task_struct *tmp = current;
-+	#endif
- 	rcu_read_lock();
- 	if (tgid && nr) {
- 		pos = find_proc_task_by_pid(tgid);
-+		if (pos
-+	#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+			&& (tmp->uid && (pos->uid != tmp->uid)
-+	#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+			&& !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
-+	#endif
-+			)
-+	#endif
-+		)
-+			goto not_found;
-+
- 		if (pos && thread_group_leader(pos))
- 			goto found;
- 	}
-+	not_found:
- 	/* If nr exceeds the number of processes get out quickly */
- 	pos = NULL;
- 	if (nr && nr >= nr_processes())
-@@ -2233,6 +2298,16 @@
- 			pos = NULL;
- 			goto done;
- 		}
-+		if (pos
-+#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+		    && (tmp->uid && (pos->uid != tmp->uid)
-+#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+			&& !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
-+#endif
-+			)
-+#endif
-+		)
-+			nr++;
- 	}
- found:
- 	get_task_struct(pos);
-@@ -2270,6 +2345,9 @@
- {
- 	char buf[PROC_NUMBUF];
  	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
+ 	struct task_struct *reaper = get_proc_task_real(filp->f_dentry->d_inode);
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	struct task_struct *tmp = current;
 +#endif
  	struct task_struct *task;
  	int tgid;
  
-@@ -2292,6 +2370,17 @@
- 	     task = next_tgid(task), filp->f_pos++) {
- 		int len;
- 		ino_t ino;
+@@ -2009,6 +2068,16 @@ int proc_pid_readdir(struct file * filp,
+ 	     task;
+ 	     put_task_struct(task), task = next_tgid(tgid + 1)) {
+ 		tgid = task->pid;
 +
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +		if (tmp->uid && (task->uid != tmp->uid)
 +#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+			&& !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
++		        && !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
 +#endif
-+		) {
++		)
 +			continue;
-+		}
 +#endif
 +
- 		tgid = vx_map_tgid(task->pid);
- 		if (!proc_pid_visible(task, tgid))
- 			continue;
+ 		filp->f_pos = tgid + TGID_OFFSET;
+ 		if (proc_pid_fill_cache(filp, dirent, filldir, task, tgid) < 0) {
+ 			put_task_struct(task);
