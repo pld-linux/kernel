@@ -2,7 +2,6 @@
 # TODO 2.6.19:
 #
 # - p4 fbsplash - needs update (bcond off)
-# - p1000 linux-2.6-grsec-minimal.patch - needs update
 # - p200 linux-2.6-ppc-ICE-hacks.patch - untested - ppc needed
 # - separate PaX and grsecurity support - future
 # - update configs for up/smp i386 (almost done) 
