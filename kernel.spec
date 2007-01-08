@@ -1,4 +1,15 @@
 #
+# STATUS: 2.6.20-rc4
+# - builds --without grsecurity --without smp on i686, works too
+#
+# TODO 2.6.20-rc4
+# - suspend2
+# - grsecurity
+# - vserver
+# - stuff from 2.6.19 and future  todos
+# - todo inside spec (some stuff out, connlimit linking problem ...)
+# - spec cleanup
+#
 # TODO 2.6.19:
 #
 # - p4 fbsplash - needs update (bcond off)
@@ -14,7 +25,6 @@
 # - update configs for up/smp ia64
 # - p5 vesafb-tng - needs update (bcond off)
 # - p51 reiser4 - needs update (bcond off)
-# - p50 imq - test (bcond off)
 #
 # FUTURE:
 # - separate PaX and grsecurity support - future
@@ -47,6 +57,9 @@
 
 %bcond_without	ide_acpi	# support for ide-acpi from SuSE
 %bcond_without	imq		# imq support
+
+%bcond_with	vserver		# support for VServer (temporary off)
+%bcond_with	suspend2	# support for Suspend2 (temporary off)
 
 %{?debug:%define with_verbose 1}
 
@@ -118,7 +131,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.5
+%define		_rel			0.2
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20061213
@@ -131,7 +144,7 @@
 %define		pcmcia_version		3.1.22
 %define		drm_xfree_version	4.3.0
 
-%define		squashfs_version	3.1
+%define		squashfs_version	3.2
 %define		suspend_version		2.2.9
 
 %define		xen_version		3.0.2
@@ -141,22 +154,37 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
+
 %define		_basever	2.6.19
-%define		_postver	.1
+%define		_postver	%{nil}
+%define		_prepatch	2.6.20
+%define		_pre_rc		rc4
+%define		_rc		%{nil}
+#define		_rc		-rc7
+
+%if "%{_prepatch}" == "%{nil}"
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
+%else
+Version:	%{_prepatch}
+Release:	0.%{_pre_rc}.%{_rel}
+%endif
+
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-%define		_rc	%{nil}
-#define		_rc	-rc7
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
 # Source0-md5:	443c265b57e87eadc0c677c3acc37e20
+%if "%{_prepatch}" != "%{nil}"
+Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}-%{_pre_rc}.bz2
+# Source90-md5:	9b325c6086ad2a3fcde643f01a4c4640
+%endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	899a0932373a5299b69b9579fceb099e
 %endif
+
 Source3:	kernel-autoconf.h
 Source4:	kernel-config.h
 Source5:	kernel-ppclibs.Makefile
@@ -220,8 +248,8 @@ Patch4:		fbsplash-0.9.2-r5-2.6.19-rc2.patch
 # vesafb-tng: http://dev.gentoo.org/~spock/projects/vesafb-tng/archive/vesafb-tng-1.0-rc2-2.6.19-rc2.patch
 Patch5:		vesafb-tng-1.0-rc2-2.6.19-rc2.patch
 
-# squashfs based on http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.1-r2.tar.gz
-# from linux-2.6.18 with squashfs3.1-r2_for_2.6.19.patch applied
+# Derived from squashfs: http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.2.tar.gz for linux-2.6.20
+# 
 Patch6:		squashfs%{squashfs_version}-patch
 Patch7:		linux-alpha-isa.patch
 Patch8:		linux-fbcon-margins.patch
@@ -243,6 +271,7 @@ Patch37:	pom-ng-rsh-%{_netfilter_snap}.patch
 
 #external
 Patch40:	pom-ng-IPMARK-%{_netfilter_snap}.patch
+# connlimit linking is broken - temporary disabled in kernel-netfilter.config
 Patch41:	pom-ng-connlimit-%{_netfilter_snap}.patch
 Patch42:	pom-ng-geoip-%{_netfilter_snap}.patch
 Patch43:	pom-ng-ipp2p-%{_netfilter_snap}.patch
@@ -304,28 +333,28 @@ Patch56:	linux-2.6-atmdd.patch
 
 Patch57:	linux-2.6-cpuset_virtualization.patch
 
-# Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_36.tar.bz2
-Patch60:	linux-2.6-sk98lin-8.36.1.3.patch
+# Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_41.tar.bz2
+Patch60:	linux-2.6-sk98lin_8.41.2.3.patch
 
-# http://www.suspend2.net/downloads/all/suspend2-2.2.9-for-2.6.19-rc6.patch.bz2
-Patch69:	suspend2-2.2.9-for-2.6.19-rc6.patch
+# based on http://www.suspend2.net/downloads/all/suspend2-2.2.9-for-2.6.19.patch.bz2
+Patch69:	suspend2-2.2.9-for-2.6.20-rc3.patch
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
 #Patch72:	linux-2.6-suspend2-off.patch
 Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 
-# Fix for pcie cards against 2.6.18.1 from ftp://lwfinger.dynalias.org/patches
-Patch73:	kernel-bcm43xx-patch_2.6.18.1_for_PCI-E.patch
+# Fix for pcie cards against 2.6.18.1 from ftp://lwfinger.dynalias.org/patches - looks obsoleted
+# Patch73:	kernel-bcm43xx-patch_2.6.18.1_for_PCI-E.patch
 
 # ide-acpi instead of nx8220 s3 suspend/resume hack
 # http://svn.uludag.org.tr/pardus/devel/kernel/kernel/files/suse/ide-acpi-support.patch
-Patch75:	linux-2.6.17-ide-acpi-support.patch
+Patch75:	linux-2.6-ide-acpi-support.patch
 
-# cx88-blackbird based tv tuner card audio fix
-Patch80:	linux-2.6.19-cx88-tvaudio.patch
+# cx88-blackbird based tv tuner card audio fix - obsolete, but keep for testing
+#Patch80:	linux-2.6.19-cx88-tvaudio.patch
 
-# see comments on http://lkml.org/lkml/2006/12/12/339
-Patch81:	linux-2.6.19-atiixp-legacy.patch
+# see comments on http://lkml.org/lkml/2006/12/12/339 - applied in 2.6.20-rc3
+# Patch81:	linux-2.6.19-atiixp-legacy.patch
 
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch 
@@ -345,7 +374,9 @@ Patch130:	linux-2.6-forcedeth-WON.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
-Patch300:	http://www.ssi.bg/~ja/routes-2.6.19-12.diff
+# http://www.ssi.bg/~ja/routes-2.6.19-12.diff
+Patch300:	routes-2.6.19-12.diff
+Patch301:	linux-2.6-ip_conntrack_find_get.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
@@ -902,25 +933,33 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 install %{SOURCE5} Makefile.ppclibs
 %endif
 
+# sources 1 and 90 should be mutually exclusive btw.
+
+%if "%{_prepatch}" != "%{nil}"
+%{__bzip2} -dc %{SOURCE90} | patch -p1 -s
+%endif
+
 %if "%{_postver}" != "%{nil}"
 %{__bzip2} -dc %{SOURCE1} | patch -p1 -s
 %endif
 
-%patch1 -p1
+# TODO 2.6.20 - check this out.
+#patch1 -p1
 
 # suspend2:
+%if %{with suspend}
 %ifarch %{ix86} %{x8664} ia64
-##for i in suspend2-%{suspend_version}-for-*/[0-9]*; do
-##patch -p1 -s < $i
 %patch69 -p1
-##done
-%patch70 -p1
+# TODO check linux-2.6-suspend2-avoid-redef.patch
+#patch70 -p1
 %patch71 -p1
 # kernel-2.6-ueagle-atm-freezer.patch
 %patch72 -p1
 %endif
+%endif
 
-%patch73 -p1
+# TODO remove obsolete kernel-bcm43xx-patch_2.6.18.1_for_PCI-E.patch
+#patch73 -p1
 
 # reiserfs4
 #%{__gzip} -dc %{SOURCE12} | %{__patch} -s -p1
@@ -983,7 +1022,8 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 %patch53 -p1
-%patch54 -p1
+# TODO check linux-2.6-toshiba_acpi_0.18-dev_toshiba_test4.patch
+#patch54 -p1
 %patch55 -p1
 %patch56 -p1
 
@@ -991,6 +1031,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch57 -p1
 %endif
 
+# linux-2.6-sk98lin_8.41.2.3.patch
 %patch60 -p1
 
 %if %{with ide_acpi}
@@ -998,21 +1039,24 @@ install %{SOURCE5} Makefile.ppclibs
 %patch75 -p1
 %endif
 
+# TODO - remove p80 - not needed in 2.6.20 (as of rc2)
 # cx88-tvaudio
-%patch80 -p1
+#patch80 -p1
 
-# atiixp-legacy
-%patch81 -p1
+# atiixp-legacy - obsoleted TODO - cleanup
+#patch81 -p1
 
 # hostap enhancements from/for aircrack-ng 
 %patch85 -p1
 
-# vserver:
+# vserver
+%if %{with vserver}
 %patch100 -p1
 %ifarch %{ix86} %{x8664} ia64
 %patch101 -p1
 %endif
 %patch102 -p1
+%endif
 
 #%if %{with xen0} || %{with xenU}
 #%ifarch %{ix86} %{x8664} ia64
@@ -1041,6 +1085,7 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 %patch300 -p1
+%patch301 -p1
 
 #Small fixes:
 %patch2000 -p1
@@ -1157,13 +1202,18 @@ BuildConfig() {
 	cat %{SOURCE40} >> arch/%{_target_base_arch}/defconfig
 	# squashfs
 	cat %{SOURCE41} >> arch/%{_target_base_arch}/defconfig
-	# suspend2
+
+# suspend2
+%if %{with suspend2}
 	cat %{SOURCE42} >> arch/%{_target_base_arch}/defconfig
+%endif
+
 %ifarch ppc ppc64
 	sed -i "s:CONFIG_SUSPEND2=y:# CONFIG_SUSPEND2 is not set:" arch/%{_target_base_arch}/defconfig
 %endif
-	# vserver
+%if %{with vserver}
 	cat %{SOURCE43} >> arch/%{_target_base_arch}/defconfig
+%endif
 	# vesafb-tng
 	cat %{SOURCE44} >> arch/%{_target_base_arch}/defconfig
 
@@ -1346,9 +1396,9 @@ echo "-%{_localversion}" > localversion
 #install -m 644 %{SOURCE50} FAQ-pl
 
 # UP KERNEL
+%if %{with up}
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
 rm -rf $KERNEL_INSTALL_DIR
-%if %{with up}
 BuildConfig
 BuildKernel
 PreInstallKernel
@@ -1356,9 +1406,9 @@ PreInstallKernel
 
 
 # SMP KERNEL
+%if %{with smp}
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-SMP"
 rm -rf $KERNEL_INSTALL_DIR
-%if %{with smp}
 BuildConfig smp
 BuildKernel smp
 PreInstallKernel smp
@@ -1366,6 +1416,7 @@ PreInstallKernel smp
 
 %{__make} %CrossOpts include/linux/utsrelease.h
 cp include/linux/utsrelease.h{,.save}
+cp include/linux/version.h{,.save}
 sed -i 's:smp::' include/linux/utsrelease.h.save
 
 %install
@@ -1427,7 +1478,8 @@ cp -Rdp$l $KERNEL_BUILD_DIR/include/linux/* \
 
 %{__make} %CrossOpts mrproper
 mv -f include/linux/utsrelease.h.save $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/utsrelease.h
-%{__make} %CrossOpts include/linux/version.h
+#{__make} %CrossOpts include/linux/version.h
+cp include/linux/version.h{.save,}
 install %{SOURCE3} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/autoconf.h
 install %{SOURCE4} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
 
