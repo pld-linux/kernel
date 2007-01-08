@@ -1,0 +1,509 @@
+diff -ur linux-2.6.14.3/arch/i386/kernel/cpu/proc.c linux-2.6.14.3-cpusetvirt/arch/i386/kernel/cpu/proc.c
+--- linux-2.6.14.3/arch/i386/kernel/cpu/proc.c	2005-11-24 23:10:21.000000000 +0100
++++ linux-2.6.14.3-cpusetvirt/arch/i386/kernel/cpu/proc.c	2005-11-25 19:28:28.088979320 +0100
+@@ -3,6 +3,7 @@
+ #include <asm/semaphore.h>
+ #include <linux/seq_file.h>
+ #include <linux/cpufreq.h>
++#include <linux/cpuset.h>
+ 
+ /*
+  *	Get CPU information for use by the procfs.
+@@ -69,12 +70,20 @@
+ 	if (!cpu_online(n))
+ 		return 0;
+ #endif
++#ifdef CONFIG_CPUSETS
++	if (!cpu_visible_in_cpuset(n, current->cpuset))
++		return 0;
++#endif
+ 	seq_printf(m, "processor\t: %d\n"
+ 		"vendor_id\t: %s\n"
+ 		"cpu family\t: %d\n"
+ 		"model\t\t: %d\n"
+ 		"model name\t: %s\n",
++#ifdef CONFIG_CPUSETS
++		cpuid_in_cpuset(n, current->cpuset),
++#else
+ 		n,
++#endif
+ 		c->x86_vendor_id[0] ? c->x86_vendor_id : "unknown",
+ 		c->x86,
+ 		c->x86_model,
+diff -ur linux-2.6.14.3/arch/ia64/kernel/setup.c linux-2.6.14.3-cpusetvirt/arch/ia64/kernel/setup.c
+--- linux-2.6.14.3/arch/ia64/kernel/setup.c	2005-11-24 23:10:21.000000000 +0100
++++ linux-2.6.14.3-cpusetvirt/arch/ia64/kernel/setup.c	2005-11-25 19:28:28.090979016 +0100
+@@ -43,6 +43,7 @@
+ #include <linux/initrd.h>
+ #include <linux/pm.h>
+ #include <linux/cpufreq.h>
++#include <linux/cpuset.h>
+ 
+ #include <asm/ia32.h>
+ #include <asm/machvec.h>
+@@ -476,6 +477,11 @@
+ 	unsigned long proc_freq;
+ 	int i;
+ 
++#ifdef CONFIG_CPUSETS
++	if (!cpu_visible_in_cpuset(cpunum, current->cpuset))
++		return 0;
++#endif
++	
+ 	mask = c->features;
+ 
+ 	switch (c->family) {
+@@ -520,7 +526,12 @@
+ 		   "cpu MHz    : %lu.%06lu\n"
+ 		   "itc MHz    : %lu.%06lu\n"
+ 		   "BogoMIPS   : %lu.%02lu\n",
+-		   cpunum, c->vendor, c->family, c->model,
++#ifdef CONFIG_CPUSETS
++		   cpuid_in_cpuset(cpunum, current->cpuset),
++#else
++		   cpunum,
++#endif
++		   c->vendor, c->family, c->model,
+ 		   c->model_name, c->revision, c->archrev,
+ 		   features, c->ppn, c->number,
+ 		   proc_freq / 1000, proc_freq % 1000,
+diff -ur linux-2.6.14.3/arch/x86_64/kernel/setup.c linux-2.6.14.3-cpusetvirt/arch/x86_64/kernel/setup.c
+--- linux-2.6.14.3/arch/x86_64/kernel/setup.c	2005-11-24 23:10:21.000000000 +0100
++++ linux-2.6.14.3-cpusetvirt/arch/x86_64/kernel/setup.c	2005-11-25 19:37:48.755745016 +0100
+@@ -42,6 +42,7 @@
+ #include <linux/dmi.h>
+ #include <linux/dma-mapping.h>
+ #include <linux/ctype.h>
++#include <linux/cpuset.h>
+ 
+ #include <asm/mtrr.h>
+ #include <asm/uaccess.h>
+@@ -1249,13 +1250,20 @@
+ 	if (!cpu_online(c-cpu_data))
+ 		return 0;
+ #endif
+-
++#ifdef CONFIG_CPUSETS
++	if (!cpu_visible_in_cpuset(c-cpu_data, current->cpuset))
++		return 0;
++#endif
+ 	seq_printf(m,"processor\t: %u\n"
+ 		     "vendor_id\t: %s\n"
+ 		     "cpu family\t: %d\n"
+ 		     "model\t\t: %d\n"
+ 		     "model name\t: %s\n",
++#ifdef CONFIG_CPUSETS
++		     cpuid_in_cpuset(c-cpu_data, current->cpuset),
++#else
+ 		     (unsigned)(c-cpu_data),
++#endif
+ 		     c->x86_vendor_id[0] ? c->x86_vendor_id : "unknown",
+ 		     c->x86,
+ 		     (int)c->x86_model,
+diff -ur linux-2.6.14.3/fs/proc/proc_misc.c linux-2.6.14.3-cpusetvirt/fs/proc/proc_misc.c
+--- linux-2.6.14.3/fs/proc/proc_misc.c	2005-11-24 23:10:21.000000000 +0100
++++ linux-2.6.14.3-cpusetvirt/fs/proc/proc_misc.c	2005-11-25 19:28:28.092978712 +0100
+@@ -44,6 +44,7 @@
+ #include <linux/jiffies.h>
+ #include <linux/sysrq.h>
+ #include <linux/vmalloc.h>
++#include <linux/cpuset.h>
+ #include <linux/crash_dump.h>
+ #include <asm/uaccess.h>
+ #include <asm/pgtable.h>
+@@ -353,6 +354,10 @@
+ 	for_each_possible_cpu(i) {
+ 		int j;
+ 
++#ifdef CONFIG_CPUSETS
++		if (!cpu_visible_in_cpuset(i, current->cpuset))
++			continue;
++#endif
+ 		user = cputime64_add(user, kstat_cpu(i).cpustat.user);
+ 		nice = cputime64_add(nice, kstat_cpu(i).cpustat.nice);
+ 		system = cputime64_add(system, kstat_cpu(i).cpustat.system);
+@@ -376,6 +381,10 @@
+ 		(unsigned long long)cputime64_to_clock_t(steal));
+ 	for_each_online_cpu(i) {
+ 
++#ifdef CONFIG_CPUSETS
++		if (!cpu_visible_in_cpuset(i, current->cpuset))
++			continue;
++#endif
+ 		/* Copy values here to work around gcc-2.95.3, gcc-2.96 */
+ 		user = kstat_cpu(i).cpustat.user;
+ 		nice = kstat_cpu(i).cpustat.nice;
+@@ -386,7 +395,11 @@
+ 		softirq = kstat_cpu(i).cpustat.softirq;
+ 		steal = kstat_cpu(i).cpustat.steal;
+ 		seq_printf(p, "cpu%d %llu %llu %llu %llu %llu %llu %llu %llu\n",
++#ifdef CONFIG_CPUSETS
++			cpuid_in_cpuset(i, current->cpuset),
++#else
+ 			i,
++#endif
+ 			(unsigned long long)cputime64_to_clock_t(user),
+ 			(unsigned long long)cputime64_to_clock_t(nice),
+ 			(unsigned long long)cputime64_to_clock_t(system),
+diff -ur linux-2.6.14.3/include/linux/cpuset.h linux-2.6.14.3-cpusetvirt/include/linux/cpuset.h
+--- linux-2.6.14.3/include/linux/cpuset.h	2005-11-24 23:10:21.000000000 +0100
++++ linux-2.6.14.3-cpusetvirt/include/linux/cpuset.h	2005-11-25 19:28:28.093978560 +0100
+@@ -28,6 +28,9 @@
+ 	return current->flags & PF_SPREAD_SLAB;
+ }
+ 
++int cpu_visible_in_cpuset(int cpu, struct cpuset * cs);
++int cpuid_in_cpuset(int cpu, struct cpuset * cs);
++
+ #else /* !CONFIG_CPUSETS */
+ 
+ static inline int cpuset_init_early(void) { return 0; }
+diff -ur linux-2.6.14.3/include/linux/init_task.h linux-2.6.14.3-cpusetvirt/include/linux/init_task.h
+--- linux-2.6.14.3/include/linux/init_task.h	2005-11-24 23:10:21.000000000 +0100
++++ linux-2.6.14.3-cpusetvirt/include/linux/init_task.h	2005-11-25 19:28:28.079980688 +0100
+@@ -88,6 +88,7 @@
+ 	.normal_prio	= MAX_PRIO-20,					\
+ 	.policy		= SCHED_NORMAL,					\
+ 	.cpus_allowed	= CPU_MASK_ALL,					\
++	.cpus_virt_allowed	= CPU_MASK_ALL,				\
+ 	.mm		= NULL,						\
+ 	.active_mm	= &init_mm,					\
+ 	.run_list	= LIST_HEAD_INIT(tsk.run_list),			\
+diff -ur linux-2.6.14.3/include/linux/sched.h linux-2.6.14.3-cpusetvirt/include/linux/sched.h
+--- linux-2.6.14.3/include/linux/sched.h	2005-11-24 23:10:21.000000000 +0100
++++ linux-2.6.14.3-cpusetvirt/include/linux/sched.h	2005-11-25 19:28:28.081980384 +0100
+@@ -808,6 +808,7 @@
+   	struct mempolicy *mempolicy;
+ 	short il_next;
+ #endif
++	cpumask_t cpus_virt_allowed;
+ #ifdef CONFIG_CPUSETS
+ 	struct cpuset *cpuset;
+ 	nodemask_t mems_allowed;
+diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.c
+--- linux-2.6.14.3/kernel/cpuset.c	2005-11-24 23:10:21.000000000 +0100
++++ linux-2.6.14.3-cpusetvirt/kernel/cpuset.c	2005-11-25 19:28:28.084979928 +0100
+@@ -83,6 +83,7 @@
+ 	CS_CPU_EXCLUSIVE,
+ 	CS_MEM_EXCLUSIVE,
+ 	CS_MEMORY_MIGRATE,
++	CS_VIRTUALIZED,
+ 	CS_REMOVED,
+ 	CS_NOTIFY_ON_RELEASE,
+ 	CS_SPREAD_PAGE,
+@@ -98,6 +99,10 @@
+ 	return test_bit(CS_MEM_EXCLUSIVE, &cs->flags);
+ }
+ 
++static inline int is_virtualized(const struct cpuset *cs)
++{
++	return test_bit(CS_VIRTUALIZED, &cs->flags);
++}
+ static inline int is_removed(const struct cpuset *cs)
+ {
+ 	return test_bit(CS_REMOVED, &cs->flags);
+@@ -590,6 +595,145 @@
+ 		is_mem_exclusive(p) <= is_mem_exclusive(q);
+ }
+ 
++#define cyclic_next_cpu(index, mask)	__cyclic_next_cpu(index, &mask)
++static inline int __cyclic_next_cpu(int index, const cpumask_t * mask)
++{
++	int i;
++	i = next_cpu(index, *mask);
++	if (i >= NR_CPUS) {
++		if (cpu_isset(0, *mask))
++			return 0;
++		i = next_cpu(0, *mask);
++	}
++	return i;
++}
++
++/**
++ *	cpuset_combine_mask - translate a user cpu mask to a physical one.
++ *	@virt_allowed:	the mask given by the user to sched_setaffinity()
++ *	@cs_allowed:	the mask of the current cpuset.
++ *
++ *	Returns combined mask in *mask.
++ */
++static int combine_mask(cpumask_t *mask, const cpumask_t virt_allowed, const cpumask_t cs_allowed)
++{
++	int i;
++
++	/* start with current cpu out of the mask
++	 * so the first call to next_cpu will take the first cpu
++	 * even if it is cpu zero
++	 */
++	int cpu = NR_CPUS;
++	cpus_clear(*mask);
++
++	if (cpus_empty(virt_allowed)) return 0;
++	if (cpus_empty(cs_allowed)) return 0;
++
++	for (i = 0; i < NR_CPUS; i++) {
++		cpu = cyclic_next_cpu(cpu, cs_allowed);
++		if (cpu_isset(i, virt_allowed))
++			cpu_set(cpu, *mask);
++	}
++	return 0;
++}
++
++/**
++ * Find out whether a cpu should be listed in /proc/cpuinfo
++ *
++ * For virtualized cpusets, only cpus present in the cpuset are shown
++ */
++int cpu_visible_in_cpuset(int cpu, struct cpuset * cs)
++{
++	/* all cpus are visible in non-virtualized cpusets */
++	if (!is_virtualized(cs))
++		return 1;
++
++	return cpu_isset(cpu, cs->cpus_allowed);
++}
++
++/**
++ *	cpuid_in_cpuset - translate a "real" cpu number to a "inside cpuset" (logical)
++ *	@cs:	the cpuset where all the magic occurs.
++ *	@cpu:	cpu number to be translated
++ *
++ *	Used for /proc/cpuinfo.
++ *	Returns the translated cpu number.
++ */
++int cpuid_in_cpuset(int cpu, struct cpuset * cs)
++{
++	int i;
++	int l = 0;
++	
++	/* translation needed only for virtualized cpusets */
++	if (!is_virtualized(cs))
++		return cpu;
++		
++	for(i=0; i < NR_CPUS; i++)
++	{
++		if (i == cpu) return l;
++		if (cpu_isset(i, cs->cpus_allowed))
++			l++;
++	}
++	/* NOT REACHED */
++	BUG();
++	return 0;
++}
++
++/**
++ *	set_cpus_virt_allowed - updated cpus_virt_allowed AND cpus_allowed masks
++ *	@virt_allowed:        the mask given by the user to sched_setaffinity()
++ *	@p:		the task
++ *
++ *	This function does not mess with scheduler internals. Here we rely
++ *	on set_cpus_allowed(), that should, for instance, migrate the task 
++ *	if necessary.
++ */
++static int set_cpus_virt_allowed(struct task_struct *p, cpumask_t mask)
++{
++	cpumask_t new_mask;
++	int retval;
++
++	p->cpus_virt_allowed = mask;
++	combine_mask(&new_mask, p->cpus_virt_allowed, p->cpuset->cpus_allowed);
++	retval = set_cpus_allowed(p, new_mask);
++	return retval;
++}
++
++/**
++ *	This is the exported entry point that will be called
++ *	by sched_setaffinity().
++ */
++int cpuset_set_cpus_affinity(struct task_struct *p, cpumask_t mask)
++{
++	int retval;
++
++	mutex_lock(&callback_mutex);
++	if (is_virtualized(p->cpuset))
++		retval = set_cpus_virt_allowed(p, mask);
++	else {
++		cpumask_t cpus_allowed;
++		cpus_allowed = cpuset_cpus_allowed(p);
++		cpus_and(mask, mask, cpus_allowed);
++		retval = set_cpus_allowed(p, mask);
++	}
++	mutex_unlock(&callback_mutex);
++	return retval;
++}
++
++/**
++ *	This is the exported entry point that will be called
++ *	by sched_getaffinity().
++ */
++int cpuset_get_cpus_virt_affinity(struct task_struct *p, cpumask_t *mask)
++{
++	if (is_virtualized(p->cpuset)) {
++		*mask = p->cpus_virt_allowed;
++		return 0;
++	}
++	return -1;
++}
++
++
+ /*
+  * validate_change() - Used to validate that any proposed cpuset change
+  *		       follows the structural rules for cpusets.
+@@ -624,6 +768,11 @@
+ 	if ((par = cur->parent) == NULL)
+ 		return 0;
+ 
++	/* virtualization can only be turned on/off on empty cpusets  */
++	if ((atomic_read(&cur->count) > 0) || (!list_empty(&cur->children)))
++		if (is_virtualized(cur) != is_virtualized(trial))
++			return -EBUSY;
++
+ 	/* We must be a subset of our parent cpuset */
+ 	if (!is_cpuset_subset(trial, par))
+ 		return -EACCES;
+@@ -818,11 +967,29 @@
+ 		return -ESRCH;
+ 	}
+ 	atomic_inc(&cs->count);
++
++	/* depending on current and future cpuset for this task,
++	 * affinity masks may be meaningful or not
++	 */
++	cpumask_t virt_allowed, allowed;
++	if (is_virtualized(cs) == is_virtualized(tsk->cpuset)) {
++		virt_allowed = tsk->cpus_virt_allowed;
++		allowed = tsk->cpus_allowed;
++	} else {
++		virt_allowed = CPU_MASK_ALL;
++		allowed = CPU_MASK_ALL;
++	}
++		
+ 	rcu_assign_pointer(tsk->cpuset, cs);
+ 	task_unlock(tsk);
+ 
+-	guarantee_online_cpus(cs, &cpus);
+-	set_cpus_allowed(tsk, cpus);
++
++	if (is_virtualized(cs))
++		set_cpus_virt_allowed(tsk, virt_allowed);
++	else {
++		guarantee_online_cpus(cs, &cpus);
++		set_cpus_allowed(tsk, cpus);
++	}
+ 
+ 	from = oldcs->mems_allowed;
+ 	to = cs->mems_allowed;
+@@ -839,6 +1006,7 @@
+ 	FILE_MEMLIST,
+ 	FILE_CPU_EXCLUSIVE,
+ 	FILE_MEM_EXCLUSIVE,
++	FILE_VIRTUALIZE,
+ 	FILE_NOTIFY_ON_RELEASE,
+ 	FILE_MEMORY_PRESSURE_ENABLED,
+ 	FILE_MEMORY_PRESSURE,
+@@ -887,6 +1055,9 @@
+ 	case FILE_MEM_EXCLUSIVE:
+ 		retval = update_flag(CS_MEM_EXCLUSIVE, cs, buffer);
+ 		break;
++	case FILE_VIRTUALIZE:
++		retval = update_flag(CS_VIRTUALIZED, cs, buffer);
++		break;
+ 	case FILE_NOTIFY_ON_RELEASE:
+ 		retval = update_flag(CS_NOTIFY_ON_RELEASE, cs, buffer);
+ 		break;
+@@ -987,6 +1158,9 @@
+ 	case FILE_MEM_EXCLUSIVE:
+ 		*s++ = is_mem_exclusive(cs) ? '1' : '0';
+ 		break;
++	case FILE_VIRTUALIZE:
++		*s++ = is_virtualized(cs) ? '1' : '0';
++		break;
+ 	case FILE_NOTIFY_ON_RELEASE:
+ 		*s++ = notify_on_release(cs) ? '1' : '0';
+ 		break;
+@@ -1310,6 +1484,11 @@
+ 	.private = FILE_MEM_EXCLUSIVE,
+ };
+ 
++static struct cftype cft_virtualize = {
++	.name = "virtualize",
++	.private = FILE_VIRTUALIZE,
++};
++
+ static struct cftype cft_notify_on_release = {
+ 	.name = "notify_on_release",
+ 	.private = FILE_NOTIFY_ON_RELEASE,
+@@ -1327,6 +1506,8 @@
+ 		return err;
+ 	if ((err = cpuset_add_file(cs_dentry, &cft_mem_exclusive)) < 0)
+ 		return err;
++	if ((err = cpuset_add_file(cs_dentry, &cft_virtualize)) < 0)
++		return err;
+ 	if ((err = cpuset_add_file(cs_dentry, &cft_notify_on_release)) < 0)
+ 		return err;
+ 	if ((err = cpuset_add_file(cs_dentry, &cft_memory_migrate)) < 0)
+diff -ur linux-2.6.14.3/kernel/kthread.c linux-2.6.14.3-cpusetvirt/kernel/kthread.c
+--- linux-2.6.14.3/kernel/kthread.c	2005-11-24 23:10:21.000000000 +0100
++++ linux-2.6.14.3-cpusetvirt/kernel/kthread.c	2005-11-25 19:28:28.094978408 +0100
+@@ -160,6 +160,15 @@
+ 	wait_task_inactive(k);
+ 	set_task_cpu(k, cpu);
+ 	k->cpus_allowed = cpumask_of_cpu(cpu);
++#ifdef CONFIG_CPUSETS
++	/* kthreads don't use sched_setaffinity() to bind themselves to
++	 * CPUs, we need to take care.
++	 * This should not be problem since it is unlikely that kthreads
++	 * will run in a virtualized cpuset.
++	 * But better be ready, so:
++	 */
++	k->cpus_virt_allowed = cpumask_of_cpu(cpu);
++#endif
+ }
+ EXPORT_SYMBOL(kthread_bind);
+ 
+diff -ur linux-2.6.14.3/kernel/sched.c linux-2.6.14.3-cpusetvirt/kernel/sched.c
+--- linux-2.6.14.3/kernel/sched.c	2005-11-24 23:10:21.000000000 +0100
++++ linux-2.6.14.3-cpusetvirt/kernel/sched.c	2005-11-25 19:28:28.087979472 +0100
+@@ -3798,9 +3798,13 @@
+ 	return retval;
+ }
+ 
++#ifdef CONFIG_CPUSETS
++int cpuset_set_cpus_affinity(struct task_struct *p, cpumask_t mask);
++int cpuset_get_cpus_virt_affinity(struct task_struct *p, cpumask_t *mask);
++#endif
++
+ long sched_setaffinity(pid_t pid, cpumask_t new_mask)
+ {
+-	cpumask_t cpus_allowed;
+ 	struct task_struct *p;
+ 	int retval;
+ 
+@@ -3827,9 +3827,11 @@
+ 	if (retval)
+ 		goto out_unlock;
+ 
+-	cpus_allowed = cpuset_cpus_allowed(p);
+-	cpus_and(new_mask, new_mask, cpus_allowed);
+-	retval = set_cpus_allowed(p, new_mask);
++#ifdef CONFIG_CPUSETS
++	retval = cpuset_set_cpus_affinity(p, new_mask);
++#else
++  	retval = set_cpus_allowed(p, new_mask);
++#endif
+ 
+ out_unlock:
+ 	put_task_struct(p);
+@@ -3897,7 +3904,12 @@
+ 	if (retval)
+ 		goto out_unlock;
+ 
+-	cpus_and(*mask, p->cpus_allowed, cpu_online_map);
++#ifdef CONFIG_CPUSETS
++	if (cpuset_get_cpus_virt_affinity(p, mask) < 0)
++		cpus_and(*mask, p->cpus_allowed, cpu_online_map);
++#else
++  	cpus_and(*mask, p->cpus_allowed, cpu_online_map);
++#endif
+ 
+ out_unlock:
+ 	read_unlock(&tasklist_lock);
