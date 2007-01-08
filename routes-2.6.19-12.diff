@@ -31,18 +31,18 @@ diff -urp v2.6.19/linux/include/net/flow.h linux/include/net/flow.h
 --- v2.6.19/linux/include/net/flow.h	2006-12-01 00:26:11.000000000 +0200
 +++ linux/include/net/flow.h	2006-12-03 00:04:49.000000000 +0200
 @@ -19,6 +19,8 @@ struct flowi {
+ 		struct {
  			__be32			daddr;
  			__be32			saddr;
- 			__u32			fwmark;
 +			__be32			lsrc;
 +			__be32			gw;
  			__u8			tos;
  			__u8			scope;
  		} ip4_u;
 @@ -48,6 +50,8 @@ struct flowi {
+ #define fl6_flowlabel		nl_u.ip6_u.flowlabel
  #define fl4_dst		nl_u.ip4_u.daddr
  #define fl4_src		nl_u.ip4_u.saddr
- #define fl4_fwmark	nl_u.ip4_u.fwmark
 +#define fl4_lsrc	nl_u.ip4_u.lsrc
 +#define fl4_gw		nl_u.ip4_u.gw
  #define fl4_tos		nl_u.ip4_u.tos
@@ -904,10 +904,10 @@ diff -urp v2.6.19/linux/net/ipv4/netfilter/ipt_MASQUERADE.c linux/net/ipv4/netfi
 +					      { .daddr = (*pskb)->nh.iph->daddr,
 +						.tos = (RT_TOS((*pskb)->nh.iph->tos) |
 +							RTO_CONN),
-+						.gw = ((struct rtable *) (*pskb)->dst)->rt_gateway,
-+#ifdef CONFIG_IP_ROUTE_FWMARK
-+						.fwmark = (*pskb)->nfmark
-+#endif
++						.gw = ((struct rtable *) (*pskb)->dst)->rt_gateway
++
++
++
 +					      } },
 +				    .oif = out->ifindex };
 +		if (ip_route_output_key(&rt, &fl) != 0) {
@@ -1046,7 +1046,7 @@ diff -urp v2.6.19/linux/net/ipv4/route.c linux/net/ipv4/route.c
  #endif /* CONFIG_IP_ROUTE_MULTIPATH_CACHED  */
  }
  
-@@ -1911,20 +1918,20 @@ static inline int ip_mkroute_input(struc
+@@ -1911,18 +1918,18 @@ static inline int ip_mkroute_input(struc
   */
  
  static int ip_route_input_slow(struct sk_buff *skb, __be32 daddr, __be32 saddr,
@@ -1061,10 +1061,8 @@ diff -urp v2.6.19/linux/net/ipv4/route.c linux/net/ipv4/route.c
 +					.saddr = lsrc? : saddr,
  					.tos = tos,
  					.scope = RT_SCOPE_UNIVERSE,
- #ifdef CONFIG_IP_ROUTE_FWMARK
- 					.fwmark = skb->nfmark
- #endif
  				      } },
+ 			    .mark = skb->mark,
 -			    .iif = dev->ifindex };
 +			    .iif = lsrc? loopback_dev.ifindex : dev->ifindex };
  	unsigned	flags = 0;
@@ -1138,8 +1136,8 @@ diff -urp v2.6.19/linux/net/ipv4/route.c linux/net/ipv4/route.c
  		    rth->fl.iif == iif &&
 +		    rth->fl.fl4_lsrc == lsrc &&
  		    rth->fl.oif == 0 &&
- #ifdef CONFIG_IP_ROUTE_FWMARK
- 		    rth->fl.fl4_fwmark == skb->nfmark &&
+ 		    rth->fl.mark == skb->mark &&
+ 		    rth->fl.fl4_tos == tos) {
 @@ -2160,7 +2182,19 @@ int ip_route_input(struct sk_buff *skb, 
  		rcu_read_unlock();
  		return -EINVAL;
@@ -1166,9 +1164,9 @@ diff -urp v2.6.19/linux/net/ipv4/route.c linux/net/ipv4/route.c
  	rth->fl.fl4_src	= oldflp->fl4_src;
  	rth->fl.oif	= oldflp->oif;
 +	rth->fl.fl4_gw	= oldflp->fl4_gw;
- #ifdef CONFIG_IP_ROUTE_FWMARK
- 	rth->fl.fl4_fwmark= oldflp->fl4_fwmark;
- #endif
+ 	rth->fl.mark    = oldflp->mark;
+ 	rth->rt_dst	= fl->fl4_dst;
+ 	rth->rt_src	= fl->fl4_src;
 @@ -2381,6 +2416,7 @@ static int ip_route_output_slow(struct r
  	struct flowi fl = { .nl_u = { .ip4_u =
  				      { .daddr = oldflp->fl4_dst,
@@ -1224,9 +1222,9 @@ diff -urp v2.6.19/linux/net/ipv4/route.c linux/net/ipv4/route.c
  		    rth->fl.iif == 0 &&
  		    rth->fl.oif == flp->oif &&
 +		    rth->fl.fl4_gw == flp->fl4_gw &&
- #ifdef CONFIG_IP_ROUTE_FWMARK
- 		    rth->fl.fl4_fwmark == flp->fl4_fwmark &&
- #endif
+ 		    rth->fl.mark == flp->mark &&
+ 		    !((rth->fl.fl4_tos ^ flp->fl4_tos) &
+ 			    (IPTOS_RT_MASK | RTO_ONLINK))) {
 @@ -3221,3 +3259,4 @@ int __init ip_rt_init(void)
  EXPORT_SYMBOL(__ip_select_ident);
  EXPORT_SYMBOL(ip_route_input);
