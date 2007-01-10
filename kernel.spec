@@ -1,9 +1,11 @@
 #
 # STATUS: 2.6.20-rc4
 # - builds --without grsecurity --without smp on i686, works too
-# - nvidia works
+# - nvidia works with & wo regparm
+# - nvidia-legacy works with & wo regparm
 # - ati blob doesn't build
-# - madwifi-ng works
+# - slmodem builds but needs update (?)
+# - madwifi-ng works with & wo regparm
 #
 # TODO 2.6.20-rc4
 # - suspend2
@@ -12,12 +14,12 @@
 # - stuff from 2.6.19 and future  todos
 # - todo inside spec (some stuff out, connlimit linking problem ...)
 # - spec cleanup
+# - test external modules
 #
 # TODO 2.6.19:
 #
 # - p4 fbsplash - needs update (bcond off)
 # - p200 linux-2.6-ppc-ICE-hacks.patch - untested - ppc needed
-# - separate PaX and grsecurity support - future
 # - update configs for up/smp i386 (almost done) 
 # - check status of kernel-suspend2.config 
 # - update configs for up/smp x86_64
@@ -31,7 +33,7 @@
 #
 # FUTURE:
 # - separate PaX and grsecurity support - future
-# - update xen patch for 2.6.19 
+# - update xen patch for 2.6.20
 # - wanpipe
 # - Linux ABI
 #
@@ -40,7 +42,7 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
-%bcond_with	regparm		# off for compatibility with blobs
+%bcond_without	regparm		# if your blob doesn't work try disable this
 
 %bcond_with	abi		# build ABI support only ix86 !!
 %bcond_with	grsec_full	# build full grsecurity
@@ -135,7 +137,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.3
+%define		_rel			0.4
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20061213
