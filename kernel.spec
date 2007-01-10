@@ -1,6 +1,9 @@
 #
 # STATUS: 2.6.20-rc4
 # - builds --without grsecurity --without smp on i686, works too
+# - nvidia works
+# - ati blob doesn't build
+# - madwifi-ng works
 #
 # TODO 2.6.20-rc4
 # - suspend2
@@ -37,6 +40,7 @@
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
+%bcond_with	regparm		# off for compatibility with blobs
 
 %bcond_with	abi		# build ABI support only ix86 !!
 %bcond_with	grsec_full	# build full grsecurity
@@ -131,7 +135,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.2
+%define		_rel			0.3
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20061213
@@ -190,6 +194,7 @@ Source4:	kernel-config.h
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
 
+# TODO - cleanup
 #Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.19-rc6.patch.bz2
 ##Source10-md5:	ce94df22b93c74f1637d2429c1093ec7
 #Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.17/reiser4-for-2.6.17-3.patch.gz
@@ -230,11 +235,12 @@ Source55:	kernel-imq.config
 #	Patches
 ###
 
+# TODO: patch not active for some time 
 Patch0:		linux-net-2.6.19.patch
 #
+# TODO: not compatible - still needed?
 # PATA ports on SATA Promise controller; patch based on:
 # http://cvs.fedora.redhat.com/viewcvs/*checkout*/rpms/kernel/devel/linux-2.6-sata-promise-pata-ports.patch
-#
 Patch1:		linux-2.6-sata-promise-pata-ports.patch
 
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
@@ -271,7 +277,7 @@ Patch37:	pom-ng-rsh-%{_netfilter_snap}.patch
 
 #external
 Patch40:	pom-ng-IPMARK-%{_netfilter_snap}.patch
-# connlimit linking is broken - temporary disabled in kernel-netfilter.config
+# TODO: fix: connlimit linking is broken - temporary disabled in kernel-netfilter.config
 Patch41:	pom-ng-connlimit-%{_netfilter_snap}.patch
 Patch42:	pom-ng-geoip-%{_netfilter_snap}.patch
 Patch43:	pom-ng-ipp2p-%{_netfilter_snap}.patch
@@ -343,18 +349,9 @@ Patch71:	linux-2.6-suspend2-page.patch
 #Patch72:	linux-2.6-suspend2-off.patch
 Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 
-# Fix for pcie cards against 2.6.18.1 from ftp://lwfinger.dynalias.org/patches - looks obsoleted
-# Patch73:	kernel-bcm43xx-patch_2.6.18.1_for_PCI-E.patch
-
 # ide-acpi instead of nx8220 s3 suspend/resume hack
 # http://svn.uludag.org.tr/pardus/devel/kernel/kernel/files/suse/ide-acpi-support.patch
 Patch75:	linux-2.6-ide-acpi-support.patch
-
-# cx88-blackbird based tv tuner card audio fix - obsolete, but keep for testing
-#Patch80:	linux-2.6.19-cx88-tvaudio.patch
-
-# see comments on http://lkml.org/lkml/2006/12/12/339 - applied in 2.6.20-rc3
-# Patch81:	linux-2.6.19-atiixp-legacy.patch
 
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch 
@@ -377,6 +374,10 @@ Patch200:	linux-2.6-ppc-ICE-hacks.patch
 # http://www.ssi.bg/~ja/routes-2.6.19-12.diff
 Patch300:	routes-2.6.19-12.diff
 Patch301:	linux-2.6-ip_conntrack_find_get.patch
+
+# For compatibility with such blobs like HAL from madwifi-ng
+# before we had CONFIG_REGPARM option disabled
+Patch500:	linux-2.6.20_i386_regparm_off.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
@@ -943,7 +944,7 @@ install %{SOURCE5} Makefile.ppclibs
 %{__bzip2} -dc %{SOURCE1} | patch -p1 -s
 %endif
 
-# TODO 2.6.20 - check this out.
+# TODO 2.6.20 - check this out - promise pata-sata stuff.
 #patch1 -p1
 
 # suspend2:
@@ -957,9 +958,6 @@ install %{SOURCE5} Makefile.ppclibs
 %patch72 -p1
 %endif
 %endif
-
-# TODO remove obsolete kernel-bcm43xx-patch_2.6.18.1_for_PCI-E.patch
-#patch73 -p1
 
 # reiserfs4
 #%{__gzip} -dc %{SOURCE12} | %{__patch} -s -p1
@@ -1039,13 +1037,6 @@ install %{SOURCE5} Makefile.ppclibs
 %patch75 -p1
 %endif
 
-# TODO - remove p80 - not needed in 2.6.20 (as of rc2)
-# cx88-tvaudio
-#patch80 -p1
-
-# atiixp-legacy - obsoleted TODO - cleanup
-#patch81 -p1
-
 # hostap enhancements from/for aircrack-ng 
 %patch85 -p1
 
@@ -1066,6 +1057,11 @@ install %{SOURCE5} Makefile.ppclibs
 
 # forcedeth:
 %patch130 -p1
+
+# desables regparms
+%if %{without regparm}
+%patch500 -p1
+%endif
 
 %if %{with grsec_minimal}
 %patch1000 -p1
@@ -1305,6 +1301,12 @@ BuildKernel() {
 	%{__make} %CrossOpts include/linux/version.h \
 		%{?with_verbose:V=1}
 
+	%{__make} %CrossOpts include/linux/compile.h \
+		%{?with_verbose:V=1}
+
+	%{__make} %CrossOpts scripts/mkcompile_h \
+		%{?with_verbose:V=1}
+
 # make does vmlinux, modules and bzImage at once
 %ifarch sparc sparc64
 %ifarch sparc64
@@ -1417,6 +1419,8 @@ PreInstallKernel smp
 %{__make} %CrossOpts include/linux/utsrelease.h
 cp include/linux/utsrelease.h{,.save}
 cp include/linux/version.h{,.save}
+cp include/linux/compile.h{,.save}
+cp scripts/mkcompile_h{,.save}
 sed -i 's:smp::' include/linux/utsrelease.h.save
 
 %install
@@ -1480,6 +1484,11 @@ cp -Rdp$l $KERNEL_BUILD_DIR/include/linux/* \
 mv -f include/linux/utsrelease.h.save $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/utsrelease.h
 #{__make} %CrossOpts include/linux/version.h
 cp include/linux/version.h{.save,}
+cp include/linux/compile.h{.save,}
+cp scripts/mkcompile_h{.save,}
+rm -rf include/linux/version.h.save
+rm -rf include/linux/compile.h.save
+rm -rf scripts/mkcompile_h.save
 install %{SOURCE3} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/autoconf.h
 install %{SOURCE4} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
 
@@ -1902,6 +1911,7 @@ fi
 %{_kernelsrcdir}/scripts/*.c
 %{_kernelsrcdir}/scripts/*.sh
 %{_kernelsrcdir}/scripts/kconfig/*
+%{_kernelsrcdir}/scripts/mkcompile_h
 
 %files doc
 %defattr(644,root,root,755)
