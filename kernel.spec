@@ -1,6 +1,10 @@
 #
 # TODO 2.6.19:
 #
+# - grsecurity patch update for 2.6.19.2 - 1 hunk failed in:
+#	arch/i386/kernel/smpboot.c
+#	drivers/char/mem.c
+#	scripts/Kbuild.include
 # - p4 fbsplash - needs update (bcond off)
 # - p200 linux-2.6-ppc-ICE-hacks.patch - untested - ppc needed
 # - separate PaX and grsecurity support - future
@@ -345,7 +349,8 @@ Patch130:	linux-2.6-forcedeth-WON.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
-Patch300:	http://www.ssi.bg/~ja/routes-2.6.19-12.diff
+# http://www.ssi.bg/~ja/routes-2.6.19-12.diff
+Patch300:	routes-2.6.19-12.diff
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
