@@ -137,7 +137,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.4
+%define		_rel			0.5
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20061213
@@ -344,8 +344,8 @@ Patch57:	linux-2.6-cpuset_virtualization.patch
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_41.tar.bz2
 Patch60:	linux-2.6-sk98lin_8.41.2.3.patch
 
-# based on http://www.suspend2.net/downloads/all/suspend2-2.2.9-for-2.6.19.patch.bz2
-Patch69:	suspend2-2.2.9-for-2.6.20-rc3.patch
+# based on http://www.suspend2.net/downloads/all/suspend2-2.2.9.3-for-2.6.20-rc4.patch.bz2
+Patch69:	suspend2-2.2.9.3-for-2.6.20-rc4.patch
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
 #Patch72:	linux-2.6-suspend2-off.patch
@@ -950,7 +950,7 @@ install %{SOURCE5} Makefile.ppclibs
 #patch1 -p1
 
 # suspend2:
-%if %{with suspend}
+%if %{with suspend2}
 %ifarch %{ix86} %{x8664} ia64
 %patch69 -p1
 # TODO check linux-2.6-suspend2-avoid-redef.patch
