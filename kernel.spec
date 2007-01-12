@@ -8,7 +8,7 @@
 # - madwifi-ng works with & wo regparm
 #
 # TODO 2.6.20-rc4
-# - suspend2
+# - suspend2 - builds ok after small fix - testers needed :-)
 # - grsecurity
 # - vserver
 # - stuff from 2.6.19 and future  todos
@@ -65,7 +65,7 @@
 %bcond_without	imq		# imq support
 
 %bcond_with	vserver		# support for VServer (temporary off)
-%bcond_with	suspend2	# support for Suspend2 (temporary off)
+%bcond_without	suspend2	# support for Suspend2 
 
 %{?debug:%define with_verbose 1}
 
