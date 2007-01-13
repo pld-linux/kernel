@@ -137,7 +137,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.5
+%define		_rel			0.6
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20061213
@@ -253,8 +253,8 @@ Patch3:		bootsplash-3.1.6-2.6.15.diff
 #	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.19-rc2.patch
 Patch4:		fbsplash-0.9.2-r5-2.6.19-rc2.patch
 
-# vesafb-tng: http://dev.gentoo.org/~spock/projects/vesafb-tng/archive/vesafb-tng-1.0-rc2-2.6.19-rc2.patch
-Patch5:		vesafb-tng-1.0-rc2-2.6.19-rc2.patch
+# http://dev.gentoo.org/~spock/projects/vesafb-tng/archive/vesafb-tng-1.0-rc2-2.6.20-rc2.patch
+Patch5:		vesafb-tng-1.0-rc2-2.6.20-rc2.patch
 
 # Derived from squashfs: http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.2.tar.gz for linux-2.6.20
 # 
@@ -387,8 +387,8 @@ Patch2000:	kernel-small_fixes.patch
 #wanpipe
 #Patch3000:	wanpipe-beta7-2.3.4.patch
 
-# use http://www.grsecurity.net/~spender/grsecurity-2.1.9-2.6.19.1-200612121859.patch
-Patch9999:	grsecurity-2.1.9-2.6.19.1.patch
+# http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.19.2-200701121837.patch.gz
+Patch9999:	grsecurity-2.1.10-2.6.19.2.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
