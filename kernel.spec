@@ -1303,8 +1303,8 @@ BuildKernel() {
 	%{__make} %CrossOpts include/linux/version.h \
 		%{?with_verbose:V=1}
 
-	%{__make} %CrossOpts include/linux/compile.h \
-		%{?with_verbose:V=1}
+#{__make} %CrossOpts include/linux/compile.h \
+#		%{?with_verbose:V=1}
 
 	%{__make} %CrossOpts scripts/mkcompile_h \
 		%{?with_verbose:V=1}
@@ -1421,7 +1421,7 @@ PreInstallKernel smp
 %{__make} %CrossOpts include/linux/utsrelease.h
 cp include/linux/utsrelease.h{,.save}
 cp include/linux/version.h{,.save}
-cp include/linux/compile.h{,.save}
+# cp include/linux/compile.h{,.save}
 cp scripts/mkcompile_h{,.save}
 sed -i 's:smp::' include/linux/utsrelease.h.save
 
@@ -1486,10 +1486,10 @@ cp -Rdp$l $KERNEL_BUILD_DIR/include/linux/* \
 mv -f include/linux/utsrelease.h.save $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/utsrelease.h
 #{__make} %CrossOpts include/linux/version.h
 cp include/linux/version.h{.save,}
-cp include/linux/compile.h{.save,}
+#cp include/linux/compile.h{.save,}
 cp scripts/mkcompile_h{.save,}
 rm -rf include/linux/version.h.save
-rm -rf include/linux/compile.h.save
+#rm -rf include/linux/compile.h.save
 rm -rf scripts/mkcompile_h.save
 install %{SOURCE3} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/autoconf.h
 install %{SOURCE4} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
