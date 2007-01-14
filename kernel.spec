@@ -137,7 +137,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.6
+%define		_rel			0.1
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20061213
@@ -164,7 +164,7 @@ Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}
 %define		_basever	2.6.19
 %define		_postver	%{nil}
 %define		_prepatch	2.6.20
-%define		_pre_rc		rc4
+%define		_pre_rc		rc5
 %define		_rc		%{nil}
 #define		_rc		-rc7
 
@@ -184,7 +184,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar
 # Source0-md5:	443c265b57e87eadc0c677c3acc37e20
 %if "%{_prepatch}" != "%{nil}"
 Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}-%{_pre_rc}.bz2
-# Source90-md5:	9b325c6086ad2a3fcde643f01a4c4640
+# Source90-md5:	06468af3de151f7325dca1899e355830
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
