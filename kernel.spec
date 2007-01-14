@@ -1,13 +1,14 @@
 #
-# STATUS: 2.6.20-rc4
+# STATUS: 2.6.20-rc5
 # - builds --without grsecurity --without smp on i686, works too
+# - builds also --with vesafb_tng
 # - nvidia works with & wo regparm
 # - nvidia-legacy works with & wo regparm
 # - ati blob doesn't build
 # - slmodem builds but needs update (?)
 # - madwifi-ng works with & wo regparm
 #
-# TODO 2.6.20-rc4
+# TODO 2.6.20-rc5
 # - suspend2 - builds ok after small fix - testers needed :-)
 # - grsecurity
 # - vserver
@@ -35,7 +36,7 @@
 # - separate PaX and grsecurity support - future
 # - update xen patch for 2.6.20
 # - wanpipe
-# - Linux ABI
+# - Linux ABI - still active ? 
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -1310,9 +1311,6 @@ BuildKernel() {
 	%{__make} %CrossOpts include/linux/version.h \
 		%{?with_verbose:V=1}
 
-#{__make} %CrossOpts include/linux/compile.h \
-#		%{?with_verbose:V=1}
-
 	%{__make} %CrossOpts scripts/mkcompile_h \
 		%{?with_verbose:V=1}
 
@@ -1428,7 +1426,6 @@ PreInstallKernel smp
 %{__make} %CrossOpts include/linux/utsrelease.h
 cp include/linux/utsrelease.h{,.save}
 cp include/linux/version.h{,.save}
-# cp include/linux/compile.h{,.save}
 cp scripts/mkcompile_h{,.save}
 sed -i 's:smp::' include/linux/utsrelease.h.save
 
@@ -1491,12 +1488,9 @@ cp -Rdp$l $KERNEL_BUILD_DIR/include/linux/* \
 
 %{__make} %CrossOpts mrproper
 mv -f include/linux/utsrelease.h.save $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/utsrelease.h
-#{__make} %CrossOpts include/linux/version.h
 cp include/linux/version.h{.save,}
-#cp include/linux/compile.h{.save,}
 cp scripts/mkcompile_h{.save,}
 rm -rf include/linux/version.h.save
-#rm -rf include/linux/compile.h.save
 rm -rf scripts/mkcompile_h.save
 install %{SOURCE3} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/autoconf.h
 install %{SOURCE4} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
