@@ -9985,8 +9985,8 @@ diff -NurpP --minimal linux-2.6.19.1/fs/proc/proc_misc.c linux-2.6.19.1-vs2.3.0.
  		LOAD_INT(a), LOAD_FRAC(a),
  		LOAD_INT(b), LOAD_FRAC(b),
  		LOAD_INT(c), LOAD_FRAC(c),
--		nr_running(), nr_threads, init_pspace.last_pid);
-+		running, threads, init_pspace.last_pid);
+-		nr_running(), nr_threads, current->nsproxy->pid_ns->last_pid);
++		running, threads, current->nsproxy->pid_ns->last_pid);
  	return proc_calc_metrics(page, start, off, count, eof, len);
  }
  
@@ -10009,17 +10009,6 @@ diff -NurpP --minimal linux-2.6.19.1/fs/proc/proc_misc.c linux-2.6.19.1-vs2.3.0.
  		cached = 0;
  
  	get_vmalloc_info(&vmi);
-@@ -252,8 +272,8 @@ static int version_read_proc(char *page,
- {
- 	int len;
- 
--	strcpy(page, linux_banner);
--	len = strlen(page);
-+	len = sprintf(page, linux_banner,
-+		utsname()->release, utsname()->version);
- 	return proc_calc_metrics(page, start, off, count, eof, len);
- }
- 
 diff -NurpP --minimal linux-2.6.19.1/fs/proc/root.c linux-2.6.19.1-vs2.3.0.6/fs/proc/root.c
 --- linux-2.6.19.1/fs/proc/root.c	2006-11-30 21:19:28 +0100
 +++ linux-2.6.19.1-vs2.3.0.6/fs/proc/root.c	2006-11-08 04:57:41 +0100
