@@ -7364,7 +7364,7 @@ diff -NurpP --minimal linux-2.6.19.1/fs/locks.c linux-2.6.19.1-vs2.3.0.6/fs/lock
  {
 +	if (!vx_locks_avail(1))
 +		return NULL;
- 	return kmem_cache_alloc(filelock_cache, SLAB_KERNEL);
+ 	return kmem_cache_alloc(filelock_cache, GFP_KERNEL);
  }
  
 @@ -172,6 +176,7 @@ static void locks_free_lock(struct file_
@@ -7466,8 +7466,8 @@ diff -NurpP --minimal linux-2.6.19.1/fs/locks.c linux-2.6.19.1-vs2.3.0.6/fs/lock
   */
  int posix_lock_file(struct file *filp, struct file_lock *fl)
  {
--	return __posix_lock_file_conf(filp->f_dentry->d_inode, fl, NULL);
-+	return __posix_lock_file_conf(filp->f_dentry->d_inode,
+-	return __posix_lock_file_conf(filp->f_path.dentry->d_inode, fl, NULL);
++	return __posix_lock_file_conf(filp->f_path.dentry->d_inode,
 +		fl, NULL, filp->f_xid);
  }
  EXPORT_SYMBOL(posix_lock_file);
@@ -7476,8 +7476,8 @@ diff -NurpP --minimal linux-2.6.19.1/fs/locks.c linux-2.6.19.1-vs2.3.0.6/fs/lock
  int posix_lock_file_conf(struct file *filp, struct file_lock *fl,
  			struct file_lock *conflock)
  {
--	return __posix_lock_file_conf(filp->f_dentry->d_inode, fl, conflock);
-+	return __posix_lock_file_conf(filp->f_dentry->d_inode,
+-	return __posix_lock_file_conf(filp->f_path.dentry->d_inode, fl, conflock);
++	return __posix_lock_file_conf(filp->f_path.dentry->d_inode,
 +		fl, conflock, filp->f_xid);
  }
  EXPORT_SYMBOL(posix_lock_file_conf);
