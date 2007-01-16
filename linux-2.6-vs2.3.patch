@@ -825,17 +825,17 @@ diff -NurpP --minimal linux-2.6.19.1/arch/ia64/kernel/traps.c linux-2.6.19.1-vs2
  		show_regs(regs);
    	} else
 @@ -331,8 +332,9 @@ handle_fpu_swa (int fp_fault, struct pt_
- 		last_time = jiffies;
- 		++fpu_swa_count;
- 		printk(KERN_WARNING
--		       "%s(%d): floating-point assist fault at ip %016lx, isr %016lx\n",
--		       current->comm, current->pid, regs->cr_iip + ia64_psr(regs)->ri, isr);
-+		       "%s(%d[#%u]): floating-point assist fault at ip %016lx, isr %016lx\n",
-+		       current->comm, current->pid, current->xid,
-+		       regs->cr_iip + ia64_psr(regs)->ri, isr);
+ 			if ((last.count & 15) < 5 && (ia64_fetchadd(1, &last.count, acq) & 15) < 5) {
+ 				last.time = current_jiffies + 5 * HZ;
+ 				printk(KERN_WARNING
+-		       			"%s(%d): floating-point assist fault at ip %016lx, isr %016lx\n",
+-		       			current->comm, current->pid, regs->cr_iip + ia64_psr(regs)->ri, isr);
++		       			"%s(%d[#%u]): floating-point assist fault at ip %016lx, isr %016lx\n",
++		       			current->comm, current->pid, current->xid,
++		       			regs->cr_iip + ia64_psr(regs)->ri, isr);
+ 			}
+ 		}
  	}
- 
- 	exception = fp_emulate(fp_fault, bundle, &regs->cr_ipsr, &regs->ar_fpsr, &isr, &regs->pr,
 diff -NurpP --minimal linux-2.6.19.1/arch/ia64/mm/fault.c linux-2.6.19.1-vs2.3.0.6/arch/ia64/mm/fault.c
 --- linux-2.6.19.1/arch/ia64/mm/fault.c	2006-11-30 21:18:27 +0100
 +++ linux-2.6.19.1-vs2.3.0.6/arch/ia64/mm/fault.c	2006-11-08 04:57:40 +0100
