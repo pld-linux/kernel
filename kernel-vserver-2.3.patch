@@ -3409,13 +3409,13 @@ diff -NurpP --minimal linux-2.6.19.1/fs/dquot.c linux-2.6.19.1-vs2.3.0.6/fs/dquo
  }
  
 @@ -837,7 +848,7 @@ static void print_warning(struct dquot *
- 	mutex_lock(&tty_mutex);
- 	if (!current->signal->tty)
+ 	tty = get_current_tty();
+ 	if (!tty)
  		goto out_lock;
--	tty_write_message(current->signal->tty, dquot->dq_sb->s_id);
-+	tty_write_message(current->signal->tty, dquot->dq_dqh->dqh_sb->s_id);
+-	tty_write_message(tty, dquot->dq_sb->s_id);
++	tty_write_message(tty, dquot->dq_dqh->dqh_sb->s_id);
  	if (warntype == ISOFTWARN || warntype == BSOFTWARN)
- 		tty_write_message(current->signal->tty, ": warning, ");
+ 		tty_write_message(tty, ": warning, ");
  	else
 @@ -879,7 +890,7 @@ static inline void flush_warnings(struct
  
