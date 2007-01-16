@@ -11127,7 +11127,7 @@ diff -NurpP --minimal linux-2.6.19.1/fs/read_write.c linux-2.6.19.1-vs2.3.0.6/fs
 +	ssize_t ret;
 +
 +	/* verify in_file */
-+	in_inode = in_file->f_dentry->d_inode;
++	in_inode = in_file->f_path.dentry->d_inode;
 +	if (!in_inode)
 +		return -EINVAL;
 +	if (!in_file->f_op || !in_file->f_op->sendfile)
@@ -11145,7 +11145,7 @@ diff -NurpP --minimal linux-2.6.19.1/fs/read_write.c linux-2.6.19.1-vs2.3.0.6/fs
 +	count = ret;
 +
 +	/* verify out_file */
-+	out_inode = out_file->f_dentry->d_inode;
++	out_inode = out_file->f_path.dentry->d_inode;
 +	if (!out_inode)
 +		return -EINVAL;
 +	if (!out_file->f_op || !out_file->f_op->sendpage)
@@ -11200,7 +11200,7 @@ diff -NurpP --minimal linux-2.6.19.1/fs/read_write.c linux-2.6.19.1-vs2.3.0.6/fs
  	if (!(in_file->f_mode & FMODE_READ))
  		goto fput_in;
 -	retval = -EINVAL;
--	in_inode = in_file->f_dentry->d_inode;
+-	in_inode = in_file->f_path.dentry->d_inode;
 -	if (!in_inode)
 -		goto fput_in;
 -	if (!in_file->f_op || !in_file->f_op->sendfile)
@@ -11225,7 +11225,7 @@ diff -NurpP --minimal linux-2.6.19.1/fs/read_write.c linux-2.6.19.1-vs2.3.0.6/fs
 -	retval = -EINVAL;
 -	if (!out_file->f_op || !out_file->f_op->sendpage)
 -		goto fput_out;
--	out_inode = out_file->f_dentry->d_inode;
+-	out_inode = out_file->f_path.dentry->d_inode;
 -	retval = rw_verify_area(WRITE, out_file, &out_file->f_pos, count);
 -	if (retval < 0)
 -		goto fput_out;
