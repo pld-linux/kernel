@@ -2059,18 +2059,18 @@ diff -NurpP --minimal linux-2.6.19.1/arch/x86_64/mm/fault.c linux-2.6.19.1-vs2.3
  		}
         
  		tsk->thread.cr2 = address;
-diff -NurpP --minimal linux-2.6.19.1/arch/xtensa/kernel/process.c linux-2.6.19.1-vs2.3.0.6/arch/xtensa/kernel/process.c
---- linux-2.6.19.1/arch/xtensa/kernel/process.c	2006-09-20 16:58:06 +0200
-+++ linux-2.6.19.1-vs2.3.0.6/arch/xtensa/kernel/process.c	2006-11-08 04:57:50 +0100
-@@ -206,7 +206,7 @@ int kernel_thread(int (*fn)(void *), voi
- 		 :"=r" (retval)
- 		 :"i" (__NR_clone), "i" (__NR_exit),
- 		 "r" (arg), "r" (fn),
--		 "r" (flags | CLONE_VM)
-+		 "r" (flags | CLONE_VM | CLONE_KTHREAD)
- 		 : "a2", "a3", "a4", "a5", "a6" );
- 	return retval;
- }
+diff -NurpP --minimal linux-2.6.20-rc5.clean/arch/xtensa/kernel/entry.S linux-2.6.20-rc5.vserver/arch/xtensa/kernel/entry.S
+--- linux-2.6.20-rc5.clean/arch/xtensa/kernel/entry.S	2007-01-16 09:35:55.000000000 +0100
++++ linux-2.6.20-rc5.vserver/arch/xtensa/kernel/entry.S	2007-01-16 11:04:24.000000000 +0100
+@@ -1971,7 +1971,7 @@ ENTRY(kernel_thread)
+ 	mov	a5, a2			# preserve fn over syscall
+ 	mov	a7, a3			# preserve args over syscall
+ 
+-	movi	a3, _CLONE_VM | _CLONE_UNTRACED
++	movi	a3, _CLONE_VM | _CLONE_UNTRACED | _CLONE_KTHREAD
+ 	movi	a2, __NR_clone
+ 	or	a6, a4, a3		# arg0: flags
+ 	mov	a3, a1			# arg1: sp
 diff -NurpP --minimal linux-2.6.19.1/block/cfq-iosched.c linux-2.6.19.1-vs2.3.0.6/block/cfq-iosched.c
 --- linux-2.6.19.1/block/cfq-iosched.c	2006-11-30 21:18:37 +0100
 +++ linux-2.6.19.1-vs2.3.0.6/block/cfq-iosched.c	2006-11-08 21:52:08 +0100
