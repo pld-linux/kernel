@@ -4265,9 +4265,9 @@ diff -NurpP --minimal linux-2.6.19.1/fs/ext2/ioctl.c linux-2.6.19.1-vs2.3.0.6/fs
 +		if ((oldflags & EXT2_IMMUTABLE_FL) ||
 +			((flags ^ oldflags) & (EXT2_APPEND_FL |
 +			EXT2_IMMUTABLE_FL | EXT2_IUNLINK_FL))) {
- 			if (!capable(CAP_LINUX_IMMUTABLE))
+ 			if (!capable(CAP_LINUX_IMMUTABLE)) {
+ 				mutex_unlock(&inode->i_mutex);
  				return -EPERM;
- 		}
 @@ -71,7 +75,8 @@ int ext2_ioctl (struct inode * inode, st
  	case EXT2_IOC_SETVERSION:
  		if ((current->fsuid != inode->i_uid) && !capable(CAP_FOWNER))
