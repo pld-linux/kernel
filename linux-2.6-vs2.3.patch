@@ -20140,7 +20140,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  
  /*
   * Convert user-nice values [ -20 ... 0 ... 19 ]
-@@ -243,6 +245,16 @@ struct rq {
+@@ -245,6 +247,16 @@ struct rq {
  	struct task_struct *migration_thread;
  	struct list_head migration_queue;
  #endif
@@ -20157,7 +20157,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  
  #ifdef CONFIG_SCHEDSTATS
  	/* latency stats */
-@@ -672,6 +684,7 @@ sched_info_switch(struct task_struct *pr
+@@ -677,6 +689,7 @@ sched_info_switch(struct task_struct *pr
   */
  static void dequeue_task(struct task_struct *p, struct prio_array *array)
  {
@@ -20165,7 +20165,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  	array->nr_active--;
  	list_del(&p->run_list);
  	if (list_empty(array->queue + p->prio))
-@@ -680,6 +693,7 @@ static void dequeue_task(struct task_str
+@@ -685,6 +698,7 @@ static void dequeue_task(struct task_str
  
  static void enqueue_task(struct task_struct *p, struct prio_array *array)
  {
@@ -20173,7 +20173,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  	sched_info_queued(p);
  	list_add_tail(&p->run_list, array->queue + p->prio);
  	__set_bit(p->prio, array->bitmap);
-@@ -693,12 +707,14 @@ static void enqueue_task(struct task_str
+@@ -698,12 +712,14 @@ static void enqueue_task(struct task_str
   */
  static void requeue_task(struct task_struct *p, struct prio_array *array)
  {
@@ -20188,7 +20188,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  	list_add(&p->run_list, array->queue + p->prio);
  	__set_bit(p->prio, array->bitmap);
  	array->nr_active++;
-@@ -727,6 +743,10 @@ static inline int __normal_prio(struct t
+@@ -732,6 +748,10 @@ static inline int __normal_prio(struct t
  	bonus = CURRENT_BONUS(p) - MAX_BONUS / 2;
  
  	prio = p->static_prio - bonus;
@@ -20199,7 +20199,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  	if (prio < MAX_RT_PRIO)
  		prio = MAX_RT_PRIO;
  	if (prio > MAX_PRIO-1)
-@@ -836,6 +856,9 @@ static int effective_prio(struct task_st
+@@ -841,6 +861,9 @@ static int effective_prio(struct task_st
  	return p->prio;
  }
  
@@ -20209,7 +20209,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  /*
   * __activate_task - move a task to the runqueue.
   */
-@@ -845,6 +868,7 @@ static void __activate_task(struct task_
+@@ -850,6 +873,7 @@ static void __activate_task(struct task_
  
  	if (batch_task(p))
  		target = rq->expired;
@@ -20217,7 +20217,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  	enqueue_task(p, target);
  	inc_nr_running(p, rq);
  }
-@@ -854,6 +878,7 @@ static void __activate_task(struct task_
+@@ -859,6 +883,7 @@ static void __activate_task(struct task_
   */
  static inline void __activate_idle_task(struct task_struct *p, struct rq *rq)
  {
@@ -20225,10 +20225,10 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  	enqueue_task_head(p, rq->active);
  	inc_nr_running(p, rq);
  }
-@@ -975,19 +1000,30 @@ static void activate_task(struct task_st
+@@ -993,19 +1018,30 @@ static void activate_task(struct task_st
  	}
  	p->timestamp = now;
- 
+ out:
 +	vx_activate_task(p);
  	__activate_task(p, rq);
  }
@@ -20257,7 +20257,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  /*
   * resched_task - mark a task 'to be rescheduled now'.
   *
-@@ -1063,6 +1099,7 @@ migrate_task(struct task_struct *p, int 
+@@ -1081,6 +1117,7 @@ migrate_task(struct task_struct *p, int 
  {
  	struct rq *rq = task_rq(p);
  
@@ -20265,7 +20265,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  	/*
  	 * If the task is not on a runqueue (and not running), then
  	 * it is sufficient to simply update the task's cpu field.
-@@ -1391,6 +1428,12 @@ static int try_to_wake_up(struct task_st
+@@ -1409,6 +1446,12 @@ static int try_to_wake_up(struct task_st
  
  	rq = task_rq_lock(p, &flags);
  	old_state = p->state;
@@ -20278,7 +20278,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  	if (!(old_state & state))
  		goto out;
  
-@@ -1496,6 +1539,7 @@ out_activate:
+@@ -1516,6 +1559,7 @@ out_activate:
  #endif /* CONFIG_SMP */
  	if (old_state == TASK_UNINTERRUPTIBLE) {
  		rq->nr_uninterruptible--;
@@ -20286,7 +20286,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  		/*
  		 * Tasks on involuntary sleep don't earn
  		 * sleep_avg beyond just interactive state.
-@@ -1642,6 +1686,7 @@ void fastcall wake_up_new_task(struct ta
+@@ -1663,6 +1707,7 @@ void fastcall wake_up_new_task(struct ta
  
  	p->prio = effective_prio(p);
  
@@ -20294,7 +20294,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  	if (likely(cpu == this_cpu)) {
  		if (!(clone_flags & CLONE_VM)) {
  			/*
-@@ -1653,6 +1698,7 @@ void fastcall wake_up_new_task(struct ta
+@@ -1674,6 +1719,7 @@ void fastcall wake_up_new_task(struct ta
  				__activate_task(p, rq);
  			else {
  				p->prio = current->prio;
@@ -20302,7 +20302,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  				p->normal_prio = current->normal_prio;
  				list_add_tail(&p->run_list, &current->run_list);
  				p->array = current->array;
-@@ -2973,13 +3019,16 @@ static inline int expired_starving(struc
+@@ -3065,13 +3111,16 @@ static inline int expired_starving(struc
  void account_user_time(struct task_struct *p, cputime_t cputime)
  {
  	struct cpu_usage_stat *cpustat = &kstat_this_cpu.cpustat;
@@ -20320,7 +20320,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  		cpustat->nice = cputime64_add(cpustat->nice, tmp);
  	else
  		cpustat->user = cputime64_add(cpustat->user, tmp);
-@@ -2995,10 +3044,12 @@ void account_system_time(struct task_str
+@@ -3087,10 +3136,12 @@ void account_system_time(struct task_str
  			 cputime_t cputime)
  {
  	struct cpu_usage_stat *cpustat = &kstat_this_cpu.cpustat;
@@ -20333,22 +20333,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  
  	/* Add system time to cpustat. */
  	tmp = cputime_to_cputime64(cputime);
-@@ -3052,12 +3103,14 @@ void scheduler_tick(void)
- 	struct rq *rq = cpu_rq(cpu);
- 
- 	update_cpu_clock(p, rq, now);
-+	vxm_sync(now, cpu);
- 
- 	rq->timestamp_last_tick = now;
- 
- 	if (p == rq->idle) {
- 		if (wake_priority_sleeper(rq))
- 			goto out;
-+		vx_idle_resched(rq);
- 		rebalance_tick(cpu, rq, SCHED_IDLE);
- 		return;
- 	}
-@@ -3090,7 +3143,7 @@ void scheduler_tick(void)
+@@ -3159,7 +3210,7 @@ static void task_running_tick(struct rq 
  		}
  		goto out_unlock;
  	}
@@ -20357,7 +20342,23 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  		dequeue_task(p, rq->active);
  		set_tsk_need_resched(p);
  		p->prio = effective_prio(p);
-@@ -3377,14 +3430,25 @@ need_resched_nonpreemptible:
+@@ -3219,10 +3270,14 @@ void scheduler_tick(void)
+ 	struct rq *rq = cpu_rq(cpu);
+ 
+ 	update_cpu_clock(p, rq, now);
++	vxm_sync(now, cpu);
++
+ 
+-	if (p == rq->idle)
++	if (p == rq->idle) {
+ 		/* Task on the idle queue */
+ 		wake_priority_sleeper(rq);
++		vx_idle_resched(rq);
++	}
+ 	else
+ 		task_running_tick(rq, p);
+ #ifdef CONFIG_SMP
+@@ -3476,14 +3531,25 @@ need_resched_nonpreemptible:
  				unlikely(signal_pending(prev))))
  			prev->state = TASK_RUNNING;
  		else {
@@ -20384,7 +20385,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  		idle_balance(cpu, rq);
  		if (!rq->nr_running) {
  			next = rq->idle;
-@@ -3411,6 +3475,10 @@ need_resched_nonpreemptible:
+@@ -3510,6 +3576,10 @@ need_resched_nonpreemptible:
  	queue = array->queue + idx;
  	next = list_entry(queue->next, struct task_struct, run_list);
  
@@ -20395,7 +20396,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  	if (!rt_task(next) && interactive_sleep(next->sleep_type)) {
  		unsigned long long delta = now - next->timestamp;
  		if (unlikely((long long)(now - next->timestamp) < 0))
-@@ -4013,7 +4081,7 @@ asmlinkage long sys_nice(int increment)
+@@ -4112,7 +4182,7 @@ asmlinkage long sys_nice(int increment)
  		nice = 19;
  
  	if (increment < 0 && !can_nice(current, nice))
@@ -20404,7 +20405,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  
  	retval = security_task_setnice(current, nice);
  	if (retval)
-@@ -4186,6 +4254,7 @@ recheck:
+@@ -4285,6 +4355,7 @@ recheck:
  	oldprio = p->prio;
  	__setscheduler(p, policy, param->sched_priority);
  	if (array) {
@@ -20412,15 +20413,15 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  		__activate_task(p, rq);
  		/*
  		 * Reschedule if we are currently running on this runqueue and
-@@ -4976,6 +5045,7 @@ static int __migrate_task(struct task_st
- 		p->timestamp = p->timestamp - rq_src->timestamp_last_tick
- 				+ rq_dest->timestamp_last_tick;
+@@ -5083,6 +5154,7 @@ static int __migrate_task(struct task_st
+ 		p->timestamp = p->timestamp - rq_src->most_recent_timestamp
+ 				+ rq_dest->most_recent_timestamp;
  		deactivate_task(p, rq_src);
 +		vx_activate_task(p);
  		__activate_task(p, rq_dest);
  		if (TASK_PREEMPTS_CURR(p, rq_dest))
  			resched_task(rq_dest->curr);
-@@ -6819,7 +6889,10 @@ void __init sched_init(void)
+@@ -6930,7 +7002,10 @@ void __init sched_init(void)
  		INIT_LIST_HEAD(&rq->migration_queue);
  #endif
  		atomic_set(&rq->nr_iowait, 0);
@@ -20432,7 +20433,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  		for (j = 0; j < 2; j++) {
  			array = rq->arrays + j;
  			for (k = 0; k < MAX_PRIO; k++) {
-@@ -6895,6 +6968,7 @@ void normalize_rt_tasks(void)
+@@ -7013,6 +7088,7 @@ void normalize_rt_tasks(void)
  			deactivate_task(p, task_rq(p));
  		__setscheduler(p, SCHED_NORMAL, 0);
  		if (array) {
