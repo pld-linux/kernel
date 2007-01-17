@@ -8079,7 +8079,7 @@ diff -NurpP --minimal linux-2.6.19.1/fs/namespace.c linux-2.6.19.1-vs2.3.0.6/fs/
 +	struct dentry *root, *point;
 +	int ret;
 +
-+	if (mnt == mnt->mnt_namespace->root)
++	if (mnt == mnt->mnt_ns->root)
 +		return 1;
 +
 +	spin_lock(&dcache_lock);
@@ -14736,10 +14736,11 @@ diff -NurpP --minimal linux-2.6.19.1/include/linux/vs_base.h linux-2.6.19.1-vs2.
 diff -NurpP --minimal linux-2.6.19.1/include/linux/vs_context.h linux-2.6.19.1-vs2.3.0.6/include/linux/vs_context.h
 --- linux-2.6.19.1/include/linux/vs_context.h	1970-01-01 01:00:00 +0100
 +++ linux-2.6.19.1-vs2.3.0.6/include/linux/vs_context.h	2006-11-30 18:53:18 +0100
-@@ -0,0 +1,244 @@
+@@ -0,0 +1,245 @@
 +#ifndef _VS_CONTEXT_H
 +#define _VS_CONTEXT_H
 +
++#include <linux/pid_namespace.h>
 +#include "vserver/base.h"
 +#include "vserver/context.h"
 +#include "vserver/history.h"
@@ -14958,7 +14959,7 @@ diff -NurpP --minimal linux-2.6.19.1/include/linux/vs_context.h linux-2.6.19.1-v
 +struct task_struct *vx_child_reaper(struct task_struct *p)
 +{
 +	struct vx_info *vxi = p->vx_info;
-+	struct task_struct *reaper = child_reaper;
++	struct task_struct *reaper = child_reaper(p);
 +
 +	if (!vxi)
 +		goto out;
@@ -19665,10 +19666,11 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/compat.c linux-2.6.19.1-vs2.3.0.6/ke
 diff -NurpP --minimal linux-2.6.19.1/kernel/exit.c linux-2.6.19.1-vs2.3.0.6/kernel/exit.c
 --- linux-2.6.19.1/kernel/exit.c	2006-11-30 21:19:43 +0100
 +++ linux-2.6.19.1-vs2.3.0.6/kernel/exit.c	2006-11-08 04:57:53 +0100
-@@ -41,6 +41,9 @@
+@@ -41,6 +41,10 @@
  #include <linux/audit.h> /* for audit_free() */
  #include <linux/resource.h>
  #include <linux/blkdev.h>
++#include <linux/pid_namespace.h>
 +#include <linux/vs_limit.h>
 +#include <linux/vs_context.h>
 +#include <linux/vs_network.h>
@@ -20338,7 +20340,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sched.c linux-2.6.19.1-vs2.3.0.6/ker
  		goto out_unlock;
  	}
 -	if (!--p->time_slice) {
-+	if (vx_need_resched(p, --p->time_slice, cpu)) {
++	if (vx_need_resched(p, --p->time_slice, cpu_of(rq))) {
  		dequeue_task(p, rq->active);
  		set_tsk_need_resched(p);
  		p->prio = effective_prio(p);
@@ -21873,7 +21875,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/vserver/cacct_proc.h linux-2.6.19.1-
 diff -NurpP --minimal linux-2.6.19.1/kernel/vserver/context.c linux-2.6.19.1-vs2.3.0.6/kernel/vserver/context.c
 --- linux-2.6.19.1/kernel/vserver/context.c	1970-01-01 01:00:00 +0100
 +++ linux-2.6.19.1-vs2.3.0.6/kernel/vserver/context.c	2006-12-17 05:32:40 +0100
-@@ -0,0 +1,959 @@
+@@ -0,0 +1,960 @@
 +/*
 + *  linux/kernel/vserver/context.c
 + *
@@ -21901,9 +21903,10 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/vserver/context.c linux-2.6.19.1-vs2
 +
 +#include <linux/slab.h>
 +#include <linux/types.h>
-+#include <linux/namespace.h>
++#include <linux/mnt_namespace.h>
 +
 +#include <linux/sched.h>
++#include <linux/pid_namespace.h>
 +#include <linux/vserver/context.h>
 +#include <linux/vserver/network.h>
 +#include <linux/vserver/debug.h>
@@ -23225,7 +23228,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/vserver/cvirt_proc.h linux-2.6.19.1-
 +#define _VX_CVIRT_PROC_H
 +
 +#include <linux/nsproxy.h>
-+#include <linux/namespace.h>
++#include <linux/mnt_namespace.h>
 +#include <linux/utsname.h>
 +#include <linux/ipc.h>
 +
@@ -23415,7 +23418,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/vserver/dlimit.c linux-2.6.19.1-vs2.
 + */
 +
 +#include <linux/fs.h>
-+#include <linux/namespace.h>
++#include <linux/mnt_namespace.h>
 +#include <linux/namei.h>
 +#include <linux/statfs.h>
 +#include <linux/compat.h>
@@ -27650,7 +27653,7 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/vserver/space.c linux-2.6.19.1-vs2.3
 +
 +/* namespace functions */
 +
-+#include <linux/namespace.h>
++#include <linux/mnt_namespace.h>
 +
 +const struct vcmd_space_mask space_mask = {
 +	.mask = CLONE_NEWNS |
@@ -30537,3 +30540,193 @@ diff -NurpP --minimal linux-2.6.19.1/security/selinux/hooks.c linux-2.6.19.1-vs2
  
  	if (!sb)
  		return 0;
+diff -NurpP --minimal linux-2.6.20-rc5.vserver.target/include/linux/proc_fs.h linux-2.6.20-rc5.vserver.source/include/linux/proc_fs.h
+--- linux-2.6.20-rc5.vserver.target/include/linux/proc_fs.h	2007-01-17 15:06:47.000000000 +0100
++++ linux-2.6.20-rc5.vserver.source/include/linux/proc_fs.h	2007-01-17 16:38:25.000000000 +0100
+@@ -245,6 +245,9 @@ static inline void kclist_add(struct kco
+ extern void kclist_add(struct kcore_list *, void *, size_t);
+ #endif
+ 
++struct vx_info;
++struct nx_info;
++
+ union proc_op {
+ 	int (*proc_get_link)(struct inode *, struct dentry **, struct vfsmount **);
+ 	int (*proc_read)(struct task_struct *task, char *page);
+diff -NurpP --minimal linux-2.6.20-rc5.vserver.target/include/linux/sched.h linux-2.6.20-rc5.vserver.source/include/linux/sched.h
+--- linux-2.6.20-rc5.vserver.target/include/linux/sched.h	2007-01-17 15:06:44.000000000 +0100
++++ linux-2.6.20-rc5.vserver.source/include/linux/sched.h	2007-01-17 16:14:15.000000000 +0100
+@@ -27,6 +27,8 @@
+ #define CLONE_NEWUTS		0x04000000	/* New utsname group? */
+ #define CLONE_NEWIPC		0x08000000	/* New ipcs */
+ #define CLONE_KTHREAD		0x10000000	/* clone a kernel thread */
++#define CLONE_NEWPID		0x20000000	/* new pid namespace */
++#define CLONE_NEWMNT		0x40000000	/* new mnt namespace */
+ 
+ /*
+  * Scheduling policies
+diff -NurpP --minimal linux-2.6.20-rc5.vserver.target/kernel/vserver/context.c linux-2.6.20-rc5.vserver.source/kernel/vserver/context.c
+--- linux-2.6.20-rc5.vserver.target/kernel/vserver/context.c	2007-01-17 15:06:37.000000000 +0100
++++ linux-2.6.20-rc5.vserver.source/kernel/vserver/context.c	2007-01-17 15:51:37.000000000 +0100
+@@ -92,8 +92,8 @@ static struct vx_info *__alloc_vx_info(x
+ 	init_waitqueue_head(&new->vx_wait);
+ 
+ 	/* prepare reaper */
+-	get_task_struct(child_reaper);
+-	new->vx_reaper = child_reaper;
++	get_task_struct(child_reaper(current));
++	new->vx_reaper = child_reaper(current);
+ 
+ 	/* rest of init goes here */
+ 	vx_info_init_limit(&new->limit);
+@@ -683,7 +683,7 @@ void	exit_vx_info_early(struct task_stru
+ 		if (vxi->vx_initpid == p->tgid)
+ 			vx_exit_init(vxi, p, code);
+ 		if (vxi->vx_reaper == p)
+-			vx_set_reaper(vxi, child_reaper);
++			vx_set_reaper(vxi, child_reaper(p));
+ 	}
+ }
+ 
+diff -NurpP --minimal linux-2.6.20-rc5.vserver.target/kernel/vserver/cvirt_proc.h linux-2.6.20-rc5.vserver.source/kernel/vserver/cvirt_proc.h
+--- linux-2.6.20-rc5.vserver.target/kernel/vserver/cvirt_proc.h	2007-01-17 15:06:37.000000000 +0100
++++ linux-2.6.20-rc5.vserver.source/kernel/vserver/cvirt_proc.h	2007-01-17 16:31:42.000000000 +0100
+@@ -10,7 +10,8 @@
+ static inline
+ int vx_info_proc_nsproxy(struct nsproxy *nsproxy, char *buffer)
+ {
+-	struct namespace *ns;
++	struct pid_namespace *pid_ns;
++	struct mnt_namespace *mnt_ns;
+ 	struct uts_namespace *uts;
+ 	struct ipc_namespace *ipc;
+ 	struct vfsmount *mnt;
+@@ -21,27 +22,27 @@ int vx_info_proc_nsproxy(struct nsproxy 
+ 		goto out;
+ 
+ 	length += sprintf(buffer + length,
+-		"NSProxy:\t%p [%p,%p,%p]\n",
+-		nsproxy, nsproxy->namespace,
++		"NSProxy:\t%p [%p,%p,%p,%p]\n",
++		nsproxy, nsproxy->pid_ns, nsproxy->mnt_ns,
+ 		nsproxy->uts_ns, nsproxy->ipc_ns);
+ 
+-	ns = nsproxy->namespace;
+-	if (!ns)
+-		goto skip_ns;
++	mnt_ns = nsproxy->mnt_ns;
++	if (!mnt_ns)
++		goto skip_mnt_ns;
+ 
+ 	path = kmalloc(PATH_MAX, GFP_KERNEL);
+ 	if (!path)
+-		goto skip_ns;
++		goto skip_mnt_ns;
+ 
+-	mnt = ns->root;
++	mnt = mnt_ns->root;
+ 	root = d_path(mnt->mnt_root, mnt->mnt_parent, path, PATH_MAX-2);
+ 	length += sprintf(buffer + length,
+ 		"Namespace:\t%p [#%u]\n"
+ 		"RootPath:\t%s\n"
+-		,ns , atomic_read(&ns->count)
++		,mnt_ns , atomic_read(&mnt_ns->count)
+ 		,root);
+ 	kfree(path);
+-skip_ns:
++skip_mnt_ns:
+ 
+ 	uts = nsproxy->uts_ns;
+ 	if (!uts)
+@@ -81,6 +82,14 @@ skip_uts:
+ 		);
+ skip_ipc:
+ 
++	pid_ns = nsproxy->pid_ns;
++	if (!pid_ns)
++		goto out;
++
++	length += sprintf(buffer + length,
++			"PID_NS TODO\n"
++			);
++
+ out:
+ 	return length;
+ }
+diff -NurpP --minimal linux-2.6.20-rc5.vserver.target/kernel/vserver/space.c linux-2.6.20-rc5.vserver.source/kernel/vserver/space.c
+--- linux-2.6.20-rc5.vserver.target/kernel/vserver/space.c	2007-01-17 15:06:37.000000000 +0100
++++ linux-2.6.20-rc5.vserver.source/kernel/vserver/space.c	2007-01-17 16:14:52.000000000 +0100
+@@ -30,7 +30,8 @@
+ #include <linux/mnt_namespace.h>
+ 
+ const struct vcmd_space_mask space_mask = {
+-	.mask = CLONE_NEWNS |
++	.mask = CLONE_NEWMNT |
++		CLONE_NEWPID |
+ 		CLONE_NEWUTS |
+ 		CLONE_NEWIPC |
+ 		CLONE_FS
+@@ -46,12 +47,14 @@ const struct vcmd_space_mask space_mask 
+ struct nsproxy *vs_mix_nsproxy(struct nsproxy *old_nsproxy,
+ 	struct nsproxy *new_nsproxy, unsigned long mask)
+ {
+-	struct namespace *old_ns;
+ 	struct uts_namespace *old_uts;
+ 	struct ipc_namespace *old_ipc;
++	struct mnt_namespace *old_mnt;
++	struct pid_namespace *old_pid;
+ 	struct nsproxy *nsproxy;
+ 
+-	old_ns = old_nsproxy->namespace;
++	old_mnt = old_nsproxy->mnt_ns;
++	old_pid = old_nsproxy->pid_ns;
+ 	old_uts = old_nsproxy->uts_ns;
+ 	old_ipc = old_nsproxy->ipc_ns;
+ 
+@@ -59,12 +62,19 @@ struct nsproxy *vs_mix_nsproxy(struct ns
+ 	if (!nsproxy)
+ 		goto out;
+ 
+-	if (mask & CLONE_NEWNS) {
+-		nsproxy->namespace = new_nsproxy->namespace;
+-		if (nsproxy->namespace)
+-			get_namespace(nsproxy->namespace);
++	if (mask & CLONE_NEWPID) {
++		nsproxy->pid_ns = new_nsproxy->pid_ns;
++		if (nsproxy->pid_ns)
++			get_pid_ns(nsproxy->pid_ns);
+ 	} else
+-		old_ns = NULL;
++		old_pid = NULL;
++
++	if (mask & CLONE_NEWMNT) {
++		nsproxy->mnt_ns = new_nsproxy->mnt_ns;
++		if (nsproxy->mnt_ns)
++			get_mnt_ns(nsproxy->mnt_ns);
++	} else
++		old_mnt = NULL;
+ 
+ 	if (mask & CLONE_NEWUTS) {
+ 		nsproxy->uts_ns = new_nsproxy->uts_ns;
+@@ -80,8 +90,10 @@ struct nsproxy *vs_mix_nsproxy(struct ns
+ 	} else
+ 		old_ipc = NULL;
+ 
+-	if (old_ns)
+-		put_namespace(old_ns);
++	if (old_pid)
++		put_pid_ns(old_pid);
++	if (old_mnt)
++		put_mnt_ns(old_mnt);
+ 	if (old_uts)
+ 		put_uts_ns(old_uts);
+ 	if (old_ipc)
+@@ -95,7 +107,7 @@ void __vs_merge_nsproxy(struct nsproxy *
+ 	struct nsproxy *nsproxy, unsigned long mask)
+ {
+ 	struct nsproxy *old = *ptr;
+-	struct nsproxy null_proxy = { .namespace = NULL };
++	struct nsproxy null_proxy = {  };
+ 
+ 	BUG_ON(!nsproxy);
+ 
