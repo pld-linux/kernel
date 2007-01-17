@@ -29294,28 +29294,27 @@ diff -NurpP --minimal linux-2.6.19.1/mm/oom_kill.c linux-2.6.19.1-vs2.3.0.6/mm/o
  #endif
  	return points;
  }
-@@ -279,8 +286,8 @@ static void __oom_kill_task(struct task_
+@@ -284,7 +291,8 @@ static void __oom_kill_task(struct task_
  	}
  
- 	if (message) {
--		printk(KERN_ERR "%s: Killed process %d (%s).\n",
--				message, p->pid, p->comm);
-+		printk(KERN_ERR "%s: Killed process %d:#%u (%s).\n",
-+				message, p->pid, p->xid, p->comm);
- 	}
+ 	if (verbose)
+-		printk(KERN_ERR "Killed process %d (%s)\n", p->pid, p->comm);
++		printk(KERN_ERR "Killed process %d:#%u (%s).\n",
++				p->pid, p->xid, p->comm);
  
  	/*
-@@ -341,8 +348,8 @@ static int oom_kill_process(struct task_
+ 	 * We give our sacrificial lamb high priority and access to
+@@ -354,8 +362,8 @@ static int oom_kill_process(struct task_
  		return 0;
  	}
  
--	printk(KERN_ERR "Out of Memory: Kill process %d (%s) score %li"
--			" and children.\n", p->pid, p->comm, points);
-+	printk(KERN_ERR "Out of Memory: Kill process %d:#%u (%s) score %li"
-+			" and children.\n", p->pid, p->xid, p->comm, points);
+-	printk(KERN_ERR "%s: kill process %d (%s) score %li or a child\n",
+-					message, p->pid, p->comm, points);
++	printk(KERN_ERR "%s: kill process %d:#%u (%s) score %li or a child\n",
++			message, p->pid, p->xid, p->comm, points);
+ 
  	/* Try to kill a child first */
  	list_for_each(tsk, &p->children) {
- 		c = list_entry(tsk, struct task_struct, sibling);
 diff -NurpP --minimal linux-2.6.19.1/mm/page_alloc.c linux-2.6.19.1-vs2.3.0.6/mm/page_alloc.c
 --- linux-2.6.19.1/mm/page_alloc.c	2006-11-30 21:19:44 +0100
 +++ linux-2.6.19.1-vs2.3.0.6/mm/page_alloc.c	2006-11-30 20:55:45 +0100
