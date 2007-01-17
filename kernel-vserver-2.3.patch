@@ -21159,20 +21159,17 @@ diff -NurpP --minimal linux-2.6.19.1/kernel/sys.c linux-2.6.19.1-vs2.3.0.6/kerne
  	/* From this point forward we keep holding onto the tasklist lock
  	 * so that our parent does not change from under us. -DaveM
  	 */
-@@ -1399,22 +1415,22 @@ asmlinkage long sys_setpgid(pid_t pid, p
- 	if (pgid != pid) {
- 		struct task_struct *p;
+@@ -1399,20 +1415,20 @@ asmlinkage long sys_setpgid(pid_t pid, p
  
--		do_each_task_pid(pgid, PIDTYPE_PGID, p) {
-+		do_each_task_pid(rpgid, PIDTYPE_PGID, p) {
- 			if (p->signal->session == group_leader->signal->session)
- 				goto ok_pgid;
--		} while_each_task_pid(pgid, PIDTYPE_PGID, p);
-+		} while_each_task_pid(rpgid, PIDTYPE_PGID, p);
- 		goto out;
+ 	if (pgid != pid) {
+ 		struct task_struct *g =
+-			find_task_by_pid_type(PIDTYPE_PGID, pgid);
++			find_task_by_pid_type(PIDTYPE_PGID, rpgid);
+ 
+ 		if (!g || process_session(g) != process_session(group_leader))
+ 			goto out;
  	}
  
- ok_pgid:
 -	err = security_task_setpgid(p, pgid);
 +	err = security_task_setpgid(p, rpgid);
  	if (err)
