@@ -145,8 +145,8 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
-%define		_basever	2.6.19
-%define		_postver	.2
+%define		_basever	2.6.21
+%define		_postver	%{nil}
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
