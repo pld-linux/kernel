@@ -268,6 +268,8 @@ Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
 Patch72:	suspend2-2.2.5-for-2.6.16.37-fix.patch
 
+Patch80:	kernel-ahci-sb600.patch
+
 Patch81:	linux-2.6-md.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.1.1-rc15.diff
@@ -840,6 +842,8 @@ done
 %endif
 
 %patch60 -p1
+
+%patch80 -p1
 
 %patch81 -p1
 
