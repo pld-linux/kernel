@@ -1404,9 +1404,8 @@ ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux%{_subname}
 %postun headers
 if [ "$1" = "0" ]; then
 	if [ -L %{_prefix}/src/linux ]; then
-		# FIXME: shouldn't here be 'linux%{_subname}' ?
-		if [ "$(readlink %{_prefix}/src/linux)" = "linux-%{version}" ]; then
-			rm -f %{_prefix}/src/linux
+		if [ "$(readlink %{_prefix}/src/linux%{_subname})" = "linux%{_subname}-%{version}" ]; then
+			rm -f %{_prefix}/src/linux%{_subname}
 		fi
 	fi
 fi
