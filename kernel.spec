@@ -1687,7 +1687,10 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/char/drm
 %endif
 /lib/modules/%{kernel_release}/kernel/fs
+
+# this directory will be removed after disabling rcutorture mod. in 2.6.20.
 /lib/modules/%{kernel_release}/kernel/kernel
+
 /lib/modules/%{kernel_release}/kernel/lib
 /lib/modules/%{kernel_release}/kernel/net
 /lib/modules/%{kernel_release}/kernel/security
@@ -1797,7 +1800,10 @@ fi
 %exclude /lib/modules/%{kernel_release}smp/kernel/drivers/char/drm
 %endif
 /lib/modules/%{kernel_release}smp/kernel/fs
+
+# see above note.
 /lib/modules/%{kernel_release}smp/kernel/kernel
+
 /lib/modules/%{kernel_release}smp/kernel/lib
 /lib/modules/%{kernel_release}smp/kernel/net
 /lib/modules/%{kernel_release}smp/kernel/security
@@ -1894,7 +1900,7 @@ fi
 %{_kernelsrcdir}/config-smp
 %{_kernelsrcdir}/Module.symvers-smp
 %endif
-%{_kernelsrcdir}/config-up
+%{?with_up:%{_kernelsrcdir}/config-up}
 %{?with_up:%{_kernelsrcdir}/Module.symvers-up}
 
 %files module-build -f aux_files
