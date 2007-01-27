@@ -5,12 +5,29 @@
 %bcond_without	source		# don't build kernel-source package
 
 %bcond_with	vserver		# build with vserver support
-%bcond_with	grsec_minimal	# build minimal grsecurity subset (proc,link,fifo,shm)
+%bcond_without	grsecurity	# build with grsecurity support
+
+%bcond_without	grsec_minimal	# build minimal grsecurity subset (proc,link,fifo,shm)
 %bcond_with	grsec_full	# build full grsecurity
 
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	preempt-nort	# build preemptable no realtime kernel
+
+%if %{without grsecurity}
+%undefine	with_grsec_full
+%undefine	with_grsec_minimal
+%endif
+
+%if %{with grsec_full}
+%undefine	with_grsec_minimal
+%define		with_grsecurity		1
+%endif
+																						     
+%if %{with grsec_minimal}																			    
+%undefine	with_grsec_full
+%define		with_grsecurity		1
+%endif
 
 %{?debug:%define with_verbose 1}
 
@@ -60,7 +77,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
-Name:		kernel-%{alt_kernel}
+Name:		kernel
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
@@ -93,6 +110,16 @@ Source32:	kernel-sparc-smp.config
 Source40:	kernel-preempt-nort.config
 Source41:	kernel-no-preempt-nort.config
 Source42:	kernel-netfilter.config
+
+# http://vserver.13thfloor.at/Experimental/patch-2.6.19.2-vs2.3.0.7.diff
+Patch100:	linux-2.6-vs2.3.patch
+Patch101:	linux-2.6-vs2.1-128IPs.patch
+
+# from http://www.grsecurity.net/grsecurity-2.1.10-2.6.19.2-200701222307.patch.gz
+Patch200:	grsecurity-2.1.10-2.6.19.2-200701222307.patch
+Patch201:	grsecurity-vs-2.1.10-2.6.19.2-200701222307.patch
+Patch202:	linux-2.6-grsec-minimal.patch
+Patch203:	linux-2.6-grsec-vs-minimal.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -145,8 +172,8 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 # modules will be looked from /lib/modules/%{kernel_release}%{?smp}
 # _localversion is just that without version for "> localversion"
 %define		_localversion %{release}
-%define		kernel_release %{version}_%{alt_kernel}-%{_localversion}
-%define		_kernelsrcdir	/usr/src/linux-%{version}_%{alt_kernel}
+%define		kernel_release %{version}-%{_localversion}
+%define		_kernelsrcdir	/usr/src/linux-%{version}
 
 %define	CommonOpts	HOSTCC="%{__cc}" HOSTCFLAGS="-Wall -Wstrict-prototypes %{rpmcflags} -fomit-frame-pointer"
 %if "%{_target_base_arch}" != "%{_arch}"
@@ -560,8 +587,30 @@ Documentation.
 %{__bzip2} -dc %{SOURCE1} | %{__patch} -p1 -s
 %endif
 
-# Fix EXTRAVERSION in main Makefile
-sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{alt_kernel}#g' Makefile
+# conditional vserver/grsecurity patching
+%if %{with vserver}
+%patch100 -p1
+%patch101 -p1
+
+# vserver enabled, patch with modified grsecurity
+%if %{with grsec_full}
+%patch201 -p1
+%endif
+%if %{with grsec_minimal}
+%patch203 -p1
+%endif
+
+%else
+
+# vserver disabled, patch with original grsecurity
+%if %{with grsec_full}
+%patch200 -p1
+%endif
+%if %{with grsec_minimal}
+%patch202 -p1
+%endif
+
+%endif
 
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 
@@ -850,24 +899,24 @@ if [ -x /sbin/new-kernel-pkg ]; then
 fi
 
 %post
-mv -f /boot/vmlinuz-%{alt_kernel} /boot/vmlinuz-%{alt_kernel}.old 2> /dev/null > /dev/null
-mv -f /boot/System.map-%{alt_kernel} /boot/System.map-%{alt_kernel}.old 2> /dev/null > /dev/null
-ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz-%{alt_kernel}
-ln -sf System.map-%{kernel_release} /boot/System.map-%{alt_kernel}
+mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
+mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz
+ln -sf System.map-%{kernel_release} /boot/System.map
 if [ ! -e /boot/vmlinuz ]; then
 	mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 	mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 	ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz
-	ln -sf System.map-%{alt_kernel} /boot/System.map
+	ln -sf System.map /boot/System.map
 	mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
-	ln -sf initrd-%{alt_kernel} %{initrd_dir}/initrd
+	ln -sf initrd %{initrd_dir}/initrd
 fi
 
 %depmod %{kernel_release}
 
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
-mv -f %{initrd_dir}/initrd-%{alt_kernel} %{initrd_dir}/initrd-%{alt_kernel}.old 2> /dev/null > /dev/null
-ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd-%{alt_kernel}
+mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
+ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
 
 if [ -x /sbin/new-kernel-pkg ]; then
 if [ -f %{_sysconfdir}/pld-release ]; then
@@ -876,7 +925,7 @@ title=$(sed 's/^[0-9.]\+ //' < %{_sysconfdir}/pld-release)
 		title='PLD Linux'
 	fi
 
-	title="$title %{alt_kernel}"
+	title="$title"
 
 	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{kernel_release}.gz --install %{kernel_release} --banner "$title"
 elif [ -x /sbin/rc-boot ]; then
@@ -884,8 +933,8 @@ elif [ -x /sbin/rc-boot ]; then
 fi
 
 %post vmlinux
-mv -f /boot/vmlinux-%{alt_kernel} /boot/vmlinux-%{alt_kernel}.old 2> /dev/null > /dev/null
-ln -sf vmlinux-%{kernel_release} /boot/vmlinux-%{alt_kernel}
+mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
+ln -sf vmlinux-%{kernel_release} /boot/vmlinux
 
 %post drm
 %depmod %{kernel_release}
@@ -918,24 +967,24 @@ if [ -x /sbin/new-kernel-pkg ]; then
 fi
 
 %post smp
-mv -f /boot/vmlinuz-%{alt_kernel} /boot/vmlinuz.old-%{alt_kernel} 2> /dev/null > /dev/null
-mv -f /boot/System.map-%{alt_kernel} /boot/System.map.old-%{alt_kernel} 2> /dev/null > /dev/null
-ln -sf vmlinuz-%{kernel_release}smp /boot/vmlinuz-%{alt_kernel}
-ln -sf System.map-%{kernel_release}smp /boot/System.map-%{alt_kernel}
+mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
+mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+ln -sf vmlinuz-%{kernel_release}smp /boot/vmlinuz
+ln -sf System.map-%{kernel_release}smp /boot/System.map
 if [ ! -e /boot/vmlinuz ]; then
 	mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 	mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 	ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz
 	ln -sf System.map-%{kernel_release} /boot/System.map
 	mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
-	ln -sf initrd-%{alt_kernel} %{initrd_dir}/initrd
+	ln -sf initrd %{initrd_dir}/initrd
 fi
 
 %depmod %{kernel_release}smp
 
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}smp.gz %{kernel_release}smp
-mv -f %{initrd_dir}/initrd-%{alt_kernel} %{initrd_dir}/initrd.old-%{alt_kernel} 2> /dev/null > /dev/null
-ln -sf initrd-%{kernel_release}smp.gz %{initrd_dir}/initrd-%{alt_kernel}
+mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
+ln -sf initrd-%{kernel_release}smp.gz %{initrd_dir}/initrd
 
 if [ -x /sbin/new-kernel-pkg ]; then
 if [ -f %{_sysconfdir}/pld-release ]; then
@@ -944,7 +993,7 @@ title=$(sed 's/^[0-9.]\+ //' < %{_sysconfdir}/pld-release)
 		title='PLD Linux'
 	fi
 
-	title="$title %{alt_kernel}"
+	title="$title"
 
 	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{kernel_release}smp.gz --install %{kernel_release}smp --banner "$title"
 elif [ -x /sbin/rc-boot ]; then
@@ -952,8 +1001,8 @@ elif [ -x /sbin/rc-boot ]; then
 fi
 
 %post smp-vmlinux
-mv -f /boot/vmlinux-%{alt_kernel} /boot/vmlinux.old-%{alt_kernel} 2> /dev/null > /dev/null
-ln -sf vmlinux-%{kernel_release}smp /boot/vmlinux-%{alt_kernel}
+mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
+ln -sf vmlinux-%{kernel_release}smp /boot/vmlinux
 
 %post smp-drm
 %depmod %{kernel_release}smp
@@ -980,14 +1029,14 @@ ln -sf vmlinux-%{kernel_release}smp /boot/vmlinux-%{alt_kernel}
 %depmod %{kernel_release}smp
 
 %post headers
-rm -f %{_kernelsrcdir}-%{alt_kernel}
-ln -snf %{basename:%{_kernelsrcdir}} %{_kernelsrcdir}-%{alt_kernel}
+rm -f %{_kernelsrcdir}
+ln -snf %{basename:%{_kernelsrcdir}} %{_kernelsrcdir}
 
 %postun headers
 if [ "$1" = "0" ]; then
-	if [ -L %{_kernelsrcdir}-%{alt_kernel} ]; then
-		if [ "$(readlink %{_kernelsrcdir}-%{alt_kernel})" = "linux-%{version}_%{alt_kernel}" ]; then
-			rm -f %{_kernelsrcdir}-%{alt_kernel}
+	if [ -L %{_kernelsrcdir} ]; then
+		if [ "$(readlink %{_kernelsrcdir})" = "linux-%{version}" ]; then
+			rm -f %{_kernelsrcdir}
 		fi
 	fi
 fi
