@@ -76,6 +76,8 @@
 %define		_oprofile_ver		0.9
 %define		_udev_ver		071
 
+%define		squashfs_version	3.2
+
 %define		_basever	2.6.19
 %define		_postver	.2
 %define		_rel		1
@@ -121,6 +123,7 @@ Source43:	kernel-vserver.config
 Source44:	kernel-grsec.config
 Source45:	kernel-pax.config
 Source46:	kernel-no-pax.config
+Source47:	kernel-squashfs.config
 
 # http://vserver.13thfloor.at/Experimental/patch-2.6.19.2-vs2.3.0.8.diff
 Patch100:	linux-2.6-vs2.3.patch
@@ -131,6 +134,9 @@ Patch200:	grsecurity-2.1.10-2.6.19.2-200701222307.patch
 Patch201:	grsecurity-vs-2.1.10-2.6.19.2-200701222307.patch
 Patch202:	linux-2.6-grsec-minimal.patch
 Patch203:	linux-2.6-grsec-vs-minimal.patch
+
+# from squashfs: http://dl.sourceforge.net/sourceforge/squashfs/squashfs3.2-r2.tar.gz for linux-2.6.19
+Patch300:	squashfs%{squashfs_version}-patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -623,6 +629,9 @@ Documentation.
 
 %endif
 
+# other patches
+%patch300 -p1
+
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 
 # remove unwanted files after patching (if any)
@@ -720,6 +729,7 @@ BuildConfig() {
 	%else
 		cat %{SOURCE41} >> .config
 	%endif
+
 	cat %{SOURCE42} >> .config
 
 	%if %{with vserver}
@@ -736,6 +746,8 @@ BuildConfig() {
 	%else   
 		cat %{SOURCE46} >> .config
 	%endif
+
+	cat %{SOURCE47} >> .config
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" .config}
 %{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" .config}
