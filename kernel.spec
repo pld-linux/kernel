@@ -110,6 +110,8 @@ Source32:	kernel-sparc-smp.config
 Source40:	kernel-preempt-nort.config
 Source41:	kernel-no-preempt-nort.config
 Source42:	kernel-netfilter.config
+Source43:	kernel-vserver.config
+Source44:	kernel-grsec.config
 
 # http://vserver.13thfloor.at/Experimental/patch-2.6.19.2-vs2.3.0.7.diff
 Patch100:	linux-2.6-vs2.3.patch
@@ -689,6 +691,14 @@ BuildConfig() {
 		cat %{SOURCE41} >> .config
 	%endif
 	cat %{SOURCE42} >> .config
+
+	%if %{with vserver}
+	cat %{SOURCE43} >> arch/%{_target_base_arch}/defconfig
+	%endif
+
+	%if %{with grsecurity}
+	cat %{SOURCE44} >> arch/%{_target_base_arch}/defconfig
+	%endif
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" .config}
 %{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" .config}
