@@ -9,6 +9,7 @@
 
 %bcond_without	grsec_minimal	# build minimal grsecurity subset (proc,link,fifo,shm)
 %bcond_with	grsec_full	# build full grsecurity
+%bcond_with	pax		# build PaX (requires full grsecurity)
 
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
@@ -17,16 +18,22 @@
 %if %{without grsecurity}
 %undefine	with_grsec_full
 %undefine	with_grsec_minimal
+%undefine	with_pax
 %endif
 
 %if %{with grsec_full}
 %undefine	with_grsec_minimal
 %define		with_grsecurity		1
 %endif
-																						     
+
 %if %{with grsec_minimal}																			    
 %undefine	with_grsec_full
+%undefine	with_pax
 %define		with_grsecurity		1
+%endif
+
+%if %{without grsec_full}
+%undefine	with_pax
 %endif
 
 %{?debug:%define with_verbose 1}
@@ -112,6 +119,8 @@ Source41:	kernel-no-preempt-nort.config
 Source42:	kernel-netfilter.config
 Source43:	kernel-vserver.config
 Source44:	kernel-grsec.config
+Source45:	kernel-pax.config
+Source46:	kernel-no-pax.config
 
 # http://vserver.13thfloor.at/Experimental/patch-2.6.19.2-vs2.3.0.7.diff
 Patch100:	linux-2.6-vs2.3.patch
@@ -659,6 +668,27 @@ TuneUpConfigForIX86 () {
 %endif
 }
 
+PaXconfig () {
+	set -x
+	%ifarch %{ix86}
+		sed -i 's:# CONFIG_PAX_SEGMEXEC is not set:CONFIG_PAX_SEGMEXEC=y:' $1
+		sed -i 's:# CONFIG_PAX_DEFAULT_SEGMEXEC is not set:CONFIG_PAX_DEFAULT_SEGMEXEC=y:' $1
+		%ifnarch i386 i486
+			sed -i 's:# CONFIG_PAX_NOVSYSCALL is not set:CONFIG_PAX_NOVSYSCALL=y:' $1
+		%endif
+	%endif
+	%ifarch ppc64
+		sed -i 's:CONFIG_PAX_NOELFRELOCS=y:# CONFIG_PAX_NOELFRELOCS is not set:' $1
+	%endif
+	%ifarch ppc
+		sed -i 's:# CONFIG_PAX_EMUTRAMP is not set:CONFIG_PAX_EMUTRAMP=y:' $1
+	%endif
+	%ifarch %{ix8664}
+		sed -i 's:# CONFIG_PAX_MEMORY_UDEREF is not set:# CONFIG_PAX_MEMORY_UDEREF=y:' $1
+	%endif
+	return 0
+}
+
 rm -f .config
 BuildConfig() {
 	%{?debug:set -x}
@@ -678,7 +708,7 @@ BuildConfig() {
 
 	echo "" > .config
 	%ifnarch alpha sparc sparc64
-	cat %{SOURCE20} > .config
+		cat %{SOURCE20} > .config
 	%endif
 	cat $RPM_SOURCE_DIR/kernel-$Config.config >> .config
 	echo "CONFIG_LOCALVERSION=\"-%{_localversion}$smp\"" >> .config
@@ -693,11 +723,18 @@ BuildConfig() {
 	cat %{SOURCE42} >> .config
 
 	%if %{with vserver}
-	cat %{SOURCE43} >> .config
+		cat %{SOURCE43} >> .config
 	%endif
 
 	%if %{with grsecurity}
-	cat %{SOURCE44} >> .config
+		cat %{SOURCE44} >> .config
+	%endif
+
+	%if %{with pax}
+		cat %{SOURCE45} >> .config
+		PaXconfig .config
+	%else   
+		cat %{SOURCE46} >> .config
 	%endif
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" .config}
