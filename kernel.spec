@@ -77,7 +77,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
-Name:		kernel
+Name:		kernel{?with_grsec_full:-grsecurity}{?with_vserver:-vserver}
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
@@ -693,11 +693,11 @@ BuildConfig() {
 	cat %{SOURCE42} >> .config
 
 	%if %{with vserver}
-	cat %{SOURCE43} >> arch/%{_target_base_arch}/defconfig
+	cat %{SOURCE43} >> .config
 	%endif
 
 	%if %{with grsecurity}
-	cat %{SOURCE44} >> arch/%{_target_base_arch}/defconfig
+	cat %{SOURCE44} >> .config
 	%endif
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" .config}
