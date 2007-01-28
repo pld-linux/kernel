@@ -122,7 +122,7 @@ Source44:	kernel-grsec.config
 Source45:	kernel-pax.config
 Source46:	kernel-no-pax.config
 
-# http://vserver.13thfloor.at/Experimental/patch-2.6.19.2-vs2.3.0.7.diff
+# http://vserver.13thfloor.at/Experimental/patch-2.6.19.2-vs2.3.0.8.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-128IPs.patch
 
