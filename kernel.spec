@@ -84,7 +84,7 @@ Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
-Name:		kernel{?with_pax:-pax}{?with_grsec_full:-grsecurity}{?with_vserver:-vserver}
+Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_vserver:-vserver}
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
