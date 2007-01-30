@@ -11,7 +11,7 @@
 # TODO 2.6.20-rc5
 # - suspend2 - builds ok after small fix - testers needed :-)
 # - grsecurity
-# - vserver
+# - vserver - still broken but there should be an official devel snap 
 # - stuff from 2.6.19 and future  todos
 # - todo inside spec (some stuff out, connlimit linking problem ...)
 # - spec cleanup
@@ -35,7 +35,7 @@
 # FUTURE:
 # - separate PaX and grsecurity support - future
 # - update xen patch for 2.6.20
-# - wanpipe
+# - wanpipe -> use wanpipe.spec instead ?
 # - Linux ABI - still active ? 
 #
 # Conditional build:
@@ -138,7 +138,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.2
+%define		_rel			0.1
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20061213
@@ -165,7 +165,7 @@ Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}
 %define		_basever	2.6.19
 %define		_postver	%{nil}
 %define		_prepatch	2.6.20
-%define		_pre_rc		rc5
+%define		_pre_rc		rc6
 %define		_rc		%{nil}
 #define		_rc		-rc7
 
@@ -185,7 +185,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar
 # Source0-md5:	443c265b57e87eadc0c677c3acc37e20
 %if "%{_prepatch}" != "%{nil}"
 Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}-%{_pre_rc}.bz2
-# Source90-md5:	06468af3de151f7325dca1899e355830
+# Source90-md5:	7c6dca292f886e7f79df72501f7bfac4
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
@@ -385,9 +385,6 @@ Patch500:	linux-2.6.20_i386_regparm_off.patch
 Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
-
-# 2.6.20-rc5 kvm fix
-Patch2010:	linux-2.6.20-rc5-profile_hits.patch
 
 #wanpipe
 #Patch3000:	wanpipe-beta7-2.3.4.patch
@@ -1092,9 +1089,6 @@ install %{SOURCE5} Makefile.ppclibs
 
 #Small fixes:
 %patch2000 -p1
-
-# 2.6.20-rc5 kvm fix
-%patch2010 -p1
 
 #%if %{with abi}
 #patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
