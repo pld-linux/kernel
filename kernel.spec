@@ -386,6 +386,9 @@ Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
 
+# ocfs2 fix from lkml/git tree - should be merged in -rc7
+Patch2010:	linux-2.6.20-rc6-ocfs2.patch
+
 #wanpipe
 #Patch3000:	wanpipe-beta7-2.3.4.patch
 
@@ -1089,6 +1092,9 @@ install %{SOURCE5} Makefile.ppclibs
 
 #Small fixes:
 %patch2000 -p1
+
+# rc6 ocfs2 fix 
+%patch2010 -p1
 
 #%if %{with abi}
 #patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
