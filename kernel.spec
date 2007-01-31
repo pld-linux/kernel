@@ -1,17 +1,17 @@
 #
 # STATUS: 2.6.20-rc6
 # - builds --without grsecurity on i686 (up & smp)
-# - builds also --with vesafb_tng
+# - builds --with vesafb_tng
 # - nvidia works with & wo regparm
 # - nvidia-legacy works with & wo regparm
-# - ati blob doesn't build
+# - ati blob doesn't build - apply pluto patch
 # - slmodem builds - needs testing
 # - madwifi-ng works with & wo regparm
+# - vserver works
 #
 # TODO 2.6.20-rc6
 # - suspend2 - builds ok after small fix - testers needed :-)
 # - grsecurity
-# - vserver -  patch applies, test-build
 # - todo inside spec (some stuff out, connlimit linking problem ...)
 # - spec cleanup
 # - test external modules
@@ -58,7 +58,7 @@
 %bcond_without	ide_acpi	# support for ide-acpi from SuSE
 %bcond_without	imq		# imq support
 
-%bcond_with	vserver		# support for VServer (temporary off)
+%bcond_without	vserver		# support for VServer 
 %bcond_without	suspend2	# support for Suspend2 
 
 %{?debug:%define with_verbose 1}
