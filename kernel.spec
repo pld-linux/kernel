@@ -1,38 +1,31 @@
 #
-# STATUS: 2.6.20-rc5
-# - builds --without grsecurity --without smp on i686, works too
+# STATUS: 2.6.20-rc6
+# - builds --without grsecurity on i686 (up & smp)
 # - builds also --with vesafb_tng
 # - nvidia works with & wo regparm
 # - nvidia-legacy works with & wo regparm
 # - ati blob doesn't build
-# - slmodem builds but needs update (?)
+# - slmodem builds - needs testing
 # - madwifi-ng works with & wo regparm
 #
-# TODO 2.6.20-rc5
+# TODO 2.6.20-rc6
 # - suspend2 - builds ok after small fix - testers needed :-)
 # - grsecurity
-# - vserver - still broken but there should be an official devel snap 
-# - stuff from 2.6.19 and future  todos
+# - vserver -  patch applies, test-build
 # - todo inside spec (some stuff out, connlimit linking problem ...)
 # - spec cleanup
 # - test external modules
-#
-# TODO 2.6.19:
-#
 # - p4 fbsplash - needs update (bcond off)
 # - p200 linux-2.6-ppc-ICE-hacks.patch - untested - ppc needed
-# - update configs for up/smp i386 (almost done) 
-# - check status of kernel-suspend2.config 
 # - update configs for up/smp x86_64
 # - update configs for up/smp sparc
 # - update configs for up/smp sparc64
 # - update configs for up/smp alpha
 # - update configs for up/smp ppc
 # - update configs for up/smp ia64
-# - p5 vesafb-tng - needs update (bcond off)
-# - p51 reiser4 - needs update (bcond off)
 #
 # FUTURE:
+# - p51 reiser4 - needs update (bcond off)
 # - separate PaX and grsecurity support - future
 # - update xen patch for 2.6.20
 # - wanpipe -> use wanpipe.spec instead ?
@@ -138,7 +131,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.1
+%define		_rel			0.2
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20061213
