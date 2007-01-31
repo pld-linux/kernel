@@ -131,7 +131,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.2
+%define		_rel			0.3
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20061213
@@ -381,6 +381,9 @@ Patch2000:	kernel-small_fixes.patch
 
 # ocfs2 fix from lkml/git tree - should be merged in -rc7
 Patch2010:	linux-2.6.20-rc6-ocfs2.patch
+
+# Some non-GPL modules (nvidia, nvidia-legacy, mdwifi-ng) looks for the paravirt_ops symbol
+Patch2100:	linux-2.6.20-paravirt_ops-needed-by-blobs.patch
 
 #wanpipe
 #Patch3000:	wanpipe-beta7-2.3.4.patch
@@ -1088,6 +1091,9 @@ install %{SOURCE5} Makefile.ppclibs
 
 # rc6 ocfs2 fix 
 %patch2010 -p1
+
+# exporting paravirt_ops as non-GPL-only symbol
+%patch2100 -p1
 
 #%if %{with abi}
 #patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
