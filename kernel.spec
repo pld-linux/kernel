@@ -80,13 +80,14 @@
 
 %define		_basever	2.6.19
 %define		_postver	.2
-%define		_rel		1
-%define		_rc	%{nil}
+%define		_rel		2
+%define		_rc		%{nil}
+%define		_subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_vserver:-vserver}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
-Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_vserver:-vserver}
+Name:		kernel%{_subname}
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
@@ -1089,7 +1090,7 @@ ln -sf vmlinux-%{kernel_release}smp /boot/vmlinux
 
 %post headers
 rm -f %{_kernelsrcdir}
-ln -snf %{basename:%{_kernelsrcdir}} %{_kernelsrcdir}
+ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux%{_subname}
 
 %postun headers
 if [ "$1" = "0" ]; then
