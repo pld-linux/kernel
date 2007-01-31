@@ -80,7 +80,7 @@
 
 %define		_basever	2.6.19
 %define		_postver	.2
-%define		_rel		2
+%define		_rel		3
 %define		_rc		%{nil}
 %define		_subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_vserver:-vserver}
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -191,7 +191,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 # _localversion is just that without version for "> localversion"
 %define		_localversion %{release}
 %define		kernel_release %{version}-%{_localversion}
-%define		_kernelsrcdir	/usr/src/linux-%{version}
+%define		_kernelsrcdir	/usr/src/linux%{_subname}-%{version}
 
 %define	CommonOpts	HOSTCC="%{__cc}" HOSTCFLAGS="-Wall -Wstrict-prototypes %{rpmcflags} -fomit-frame-pointer"
 %if "%{_target_base_arch}" != "%{_arch}"
@@ -1089,14 +1089,14 @@ ln -sf vmlinux-%{kernel_release}smp /boot/vmlinux
 %depmod %{kernel_release}smp
 
 %post headers
-rm -f %{_kernelsrcdir}
+rm -f %{_prefix}/src/linux{_subname}
 ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux%{_subname}
 
 %postun headers
 if [ "$1" = "0" ]; then
-	if [ -L %{_kernelsrcdir} ]; then
-		if [ "$(readlink %{_kernelsrcdir})" = "linux-%{version}" ]; then
-			rm -f %{_kernelsrcdir}
+	if [ -L %{_prefix}/src/linux ]; then
+		if [ "$(readlink %{_prefix}/src/linux%{_subname})" = "linux%{_subname}-%{version}" ]; then
+			rm -f %{_prefix}/src/linux%{_subname}
 		fi
 	fi
 fi
