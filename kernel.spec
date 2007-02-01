@@ -139,6 +139,9 @@ Patch203:	linux-2.6-grsec-vs-minimal.patch
 # from squashfs: http://dl.sourceforge.net/sourceforge/squashfs/squashfs3.2-r2.tar.gz for linux-2.6.19
 Patch300:	squashfs%{squashfs_version}-patch
 
+# fixes
+Patch400:	linux-2.6-ppc-ICE-hacks.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
 %ifarch sparc sparc64
@@ -632,6 +635,7 @@ Documentation.
 
 # other patches
 %patch300 -p1
+%patch400 -p1
 
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 
