@@ -11,6 +11,7 @@
 #
 # TODO 2.6.20-rc7
 # - grsecurity
+# - connlimit linking problem ...
 # - spec cleanup
 # - test external modules
 # - p4 fbsplash - needs update (bcond off)
