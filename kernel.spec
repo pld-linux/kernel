@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.20-rc6
+# STATUS: 2.6.20-rc6 (rc7 not yet tested)
 # - builds --without grsecurity on i686 (up & smp)
 # - builds --with vesafb_tng
 # - nvidia works with & wo regparm
@@ -9,10 +9,8 @@
 # - madwifi-ng works with & wo regparm
 # - vserver works
 #
-# TODO 2.6.20-rc6
-# - suspend2 - builds ok after small fix - testers needed :-)
+# TODO 2.6.20-rc7
 # - grsecurity
-# - todo inside spec (some stuff out, connlimit linking problem ...)
 # - spec cleanup
 # - test external modules
 # - p4 fbsplash - needs update (bcond off)
@@ -131,7 +129,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.3
+%define		_rel			0.1
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20061213
@@ -158,7 +156,7 @@ Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}
 %define		_basever	2.6.19
 %define		_postver	%{nil}
 %define		_prepatch	2.6.20
-%define		_pre_rc		rc6
+%define		_pre_rc		rc7
 %define		_rc		%{nil}
 #define		_rc		-rc7
 
@@ -178,7 +176,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar
 # Source0-md5:	443c265b57e87eadc0c677c3acc37e20
 %if "%{_prepatch}" != "%{nil}"
 Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}-%{_pre_rc}.bz2
-# Source90-md5:	7c6dca292f886e7f79df72501f7bfac4
+# Source90-md5:	b78873f8a3aff5bdc719fc7fb4c66a9b
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
@@ -379,16 +377,13 @@ Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
 
-# ocfs2 fix from lkml/git tree - should be merged in -rc7
-Patch2010:	linux-2.6.20-rc6-ocfs2.patch
-
 # Some non-GPL modules (nvidia, nvidia-legacy, mdwifi-ng) looks for the paravirt_ops symbol
 Patch2100:	linux-2.6.20-paravirt_ops-needed-by-blobs.patch
 
 #wanpipe
 #Patch3000:	wanpipe-beta7-2.3.4.patch
 
-# http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.19.2-200701121837.patch.gz
+# http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.19.2-200701222307.patch.gz
 Patch9999:	grsecurity-2.1.10-2.6.19.2.patch
 
 URL:		http://www.kernel.org/
@@ -1088,9 +1083,6 @@ install %{SOURCE5} Makefile.ppclibs
 
 #Small fixes:
 %patch2000 -p1
-
-# rc6 ocfs2 fix 
-%patch2010 -p1
 
 # exporting paravirt_ops as non-GPL-only symbol
 %patch2100 -p1
