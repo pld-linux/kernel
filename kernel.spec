@@ -786,7 +786,7 @@ BuildKernel() {
 	%{__make} %{MakeOpts} modules \
 		%{?with_verbose:V=1}
 %else
-	sparc %{__make} \
+	sparc32 %{__make} \
 		%{?with_verbose:V=1}
 %endif
 %else
