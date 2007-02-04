@@ -47,7 +47,6 @@
 
 %bcond_without	grsecurity	# don't build grsecurity at all
 %bcond_without	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
-%bcond_without	old_netfilter	# don't build old netfilter module [not supported in this time may not work]
 
 %bcond_with	fbsplash	# fbsplash instead of bootsplash
 %bcond_with	vesafb_tng	# vesafb-tng, vesafb replacement from gentoo
@@ -132,7 +131,6 @@
 
 %define		_rel			0.1
 
-%define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
 
@@ -488,7 +486,6 @@ your system. It contains few device drivers for specific hardware.
 Most hardware is instead supported by modules loaded after booting.
 
 Netfilter module dated: %{_netfilter_snap}
-%{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX and Grsecurity full support - enabled}
@@ -505,7 +502,6 @@ Systemfunktionen verantwortlich: Speicherreservierung,
 Prozeß-Management, Geräte Ein- und Ausgaben, usw.
 
 Netfilter module dated: %{_netfilter_snap}
-%{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX and Grsecurity full support - enabled}
@@ -522,7 +518,6 @@ fonctions basiques d'un système d'exploitation: allocation mémoire,
 allocation de process, entrée/sortie de peripheriques, etc.
 
 Netfilter module dated: %{_netfilter_snap}
-%{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX and Grsecurity full support - enabled}
@@ -538,7 +533,6 @@ Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takiego jak sterowniki dysków itp.
 
 Netfilter module dated: %{_netfilter_snap}
-%{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX and Grsecurity full support - enabled}
@@ -688,7 +682,6 @@ is required only on machines with two or more CPUs, although it should
 work fine on single-CPU boxes.
 
 Netfilter module dated: %{_netfilter_snap}
-%{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX and Grsecurity full support - enabled}
@@ -705,7 +698,6 @@ Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
 CPU laufen.
 
 Netfilter module dated: %{_netfilter_snap}
-%{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX and Grsecurity full support - enabled}
@@ -721,7 +713,6 @@ Il et nécessaire seulement pour les machine avec deux processeurs ou
 plus, il peut quand même fonctionner pour les système mono-processeur.
 
 Netfilter module dated: %{_netfilter_snap}
-%{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX and Grsecurity full support - enabled}
@@ -737,7 +728,6 @@ wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
 Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
 
 Netfilter module dated: %{_netfilter_snap}
-%{!?without_old_netfilter:Old netfilter module dated: %{_old_netfilter_snap}}
 %{?with_abi:Linux ABI suppor - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX and Grsecurity full support - enabled}
