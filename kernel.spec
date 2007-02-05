@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.20-rc6 (rc7 not yet tested)
+# STATUS: 2.6.20-rc7 (.20 not yet tested)
 # - builds --without grsecurity on i686 (up & smp)
 # - builds --with vesafb_tng
 # - nvidia works with & wo regparm
@@ -9,9 +9,10 @@
 # - madwifi-ng works with & wo regparm
 # - vserver works
 #
-# TODO 2.6.20-rc7
+# TODO 2.6.20
 # - grsecurity
 # - connlimit linking problem ...
+# - new alsa rc2
 # - spec cleanup
 # - test external modules
 # - p4 fbsplash - needs update (bcond off)
@@ -152,10 +153,10 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
-%define		_basever	2.6.19
+%define		_basever	2.6.20
 %define		_postver	%{nil}
-%define		_prepatch	2.6.20
-%define		_pre_rc		rc7
+%define		_prepatch	%{nil}
+%define		_pre_rc		%{nil}
 %define		_rc		%{nil}
 #define		_rc		-rc7
 
@@ -172,7 +173,7 @@ License:	GPL v2
 Group:		Base/Kernel
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
-# Source0-md5:	443c265b57e87eadc0c677c3acc37e20
+# Source0-md5:	34b0f354819217e6a345f48ebbd8f13e
 %if "%{_prepatch}" != "%{nil}"
 Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}-%{_pre_rc}.bz2
 # Source90-md5:	b78873f8a3aff5bdc719fc7fb4c66a9b
