@@ -130,7 +130,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.1
+%define		_rel			0.2
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -368,6 +368,8 @@ Patch200:	linux-2.6-ppc-ICE-hacks.patch
 # http://www.ssi.bg/~ja/routes-2.6.19-12.diff
 Patch300:	routes-2.6.19-12.diff
 Patch301:	linux-2.6-ip_conntrack_find_get.patch
+
+Patch400:       kernel-bcm43xx-2.6.20_combined.patch
 
 # For compatibility with such blobs like HAL from madwifi-ng
 # before we had CONFIG_REGPARM option disabled
@@ -1073,6 +1075,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch300 -p1
 %patch301 -p1
 
+%patch400 -p1
 #Small fixes:
 %patch2000 -p1
 
