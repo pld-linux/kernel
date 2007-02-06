@@ -1,0 +1,91 @@
+--- linux-2.6.20-0.1/net/ipv4/netfilter/ipt_connlimit.c	2007-02-05 22:17:02.000000000 +0100
++++ linux-2.6.20-temp/net/ipv4/netfilter/ipt_connlimit.c	2007-02-06 10:12:58.000000000 +0100
+@@ -4,6 +4,8 @@
+  *   (c) 2000 Gerd Knorr <kraxel@bytesex.org>
+  *   Nov 2002: Martin Bene <martin.bene@icomedias.com>:
+  *		only ignore TIME_WAIT or gone connections
++ *   Feb 2007: Marek Guevara Braun <mguevara@pld-linux.org>:
++ *   		from ip_conntrack to nf_conntrack
+  *
+  * based on ...
+  *
+@@ -14,9 +16,10 @@
+ #include <linux/skbuff.h>
+ #include <linux/version.h>
+ #include <linux/list.h>
+-#include <linux/netfilter_ipv4/ip_conntrack.h>
+-#include <linux/netfilter_ipv4/ip_conntrack_core.h>
+-#include <linux/netfilter_ipv4/ip_conntrack_tcp.h>
++#include <net/netfilter/nf_conntrack.h>
++#include <net/netfilter/nf_conntrack_core.h>
++#include <net/netfilter/ipv4/nf_conntrack_ipv4.h>
++#include <net/netfilter/nf_conntrack_compat.h>
+ #include <linux/netfilter_ipv4/ip_tables.h>
+ #include <linux/netfilter_ipv4/ipt_connlimit.h>
+ 
+@@ -28,7 +31,7 @@ MODULE_LICENSE("GPL");
+ struct ipt_connlimit_conn
+ {
+         struct list_head list;
+-	struct ip_conntrack_tuple tuple;
++	struct nf_conntrack_tuple tuple;
+ };
+ 
+ struct ipt_connlimit_data {
+@@ -43,7 +46,7 @@ static inline unsigned ipt_iphash(const 
+ 
+ static int count_them(struct ipt_connlimit_data *data,
+ 		      u_int32_t addr, u_int32_t mask,
+-		      struct ip_conntrack *ct)
++		      struct nf_conn *ct)
+ {
+ #if DEBUG
+ 	const static char *tcp[] = { "none", "established", "syn_sent", "syn_recv",
+@@ -51,8 +54,8 @@ static int count_them(struct ipt_connlim
+ 				     "last_ack", "listen" };
+ #endif
+ 	int addit = 1, matches = 0;
+-	struct ip_conntrack_tuple tuple;
+-	struct ip_conntrack_tuple_hash *found;
++	struct nf_conntrack_tuple tuple;
++	struct nf_conntrack_tuple_hash *found;
+ 	struct ipt_connlimit_conn *conn;
+ 	struct list_head *hash,*lh;
+ 
+@@ -62,11 +65,11 @@ static int count_them(struct ipt_connlim
+ 
+ 	/* check the saved connections */
+ 	for (lh = hash->next; lh != hash; lh = lh->next) {
+-		struct ip_conntrack *found_ct = NULL;
++		struct nf_conn *found_ct = NULL;
+ 		conn = list_entry(lh,struct ipt_connlimit_conn,list);
+-		found = ip_conntrack_find_get(&conn->tuple,ct);
++		found = nf_conntrack_find_get(&conn->tuple,ct);
+ 		 if (found != NULL 
+-		     && (found_ct = tuplehash_to_ctrack(found)) != NULL
++		     && (found_ct = nf_ct_tuplehash_to_ctrack(found)) != NULL
+ 		     && 0 == memcmp(&conn->tuple,&tuple,sizeof(tuple)) 
+ 		     && found_ct->proto.tcp.state != TCP_CONNTRACK_TIME_WAIT) {
+ 			/* Just to be sure we have it only once in the list.
+@@ -97,7 +100,7 @@ static int count_them(struct ipt_connlim
+ 			nf_conntrack_put(&found_ct->ct_general);
+ 			continue;
+ 		}
+-		if ((addr & mask) == (conn->tuple.src.ip & mask)) {
++		if ((addr & mask) == (conn->tuple.src.u3.ip & mask)) {
+ 			/* same source IP address -> be counted! */
+ 			matches++;
+ 		}
+@@ -142,10 +145,10 @@ match(const struct sk_buff *skb,
+ {
+ 	const struct ipt_connlimit_info *info = matchinfo;
+ 	int connections, rv;
+-	struct ip_conntrack *ct;
++	struct nf_conn *ct;
+ 	enum ip_conntrack_info ctinfo;
+ 
+-	ct = ip_conntrack_get((struct sk_buff *)skb, &ctinfo);
++	ct = nf_ct_get(skb, &ctinfo);
+ 	if (NULL == ct) {
+ 		printk("ipt_connlimit: Oops: invalid ct state ?\n");
+ 		*hotdrop = 1;
