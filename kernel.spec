@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.20-0.1
+# STATUS: 2.6.20-0.3
 # - works for me
 # - builds --without grsecurity on i686 (up & smp)
 # - builds --with vesafb_tng
@@ -10,10 +10,10 @@
 # - madwifi-ng works with & wo regparm
 # - madwifi-old-openhal builds but have no supported hardware
 # - vserver works
+# - connlimit works
 #
 # TODO 2.6.20
 # - grsecurity
-# - connlimit - porting from ip_conntrack to nf_conntrack
 # - new alsa rc2
 # - spec cleanup
 # - test external modules
@@ -132,7 +132,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.3
+%define		_rel			0.4
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
