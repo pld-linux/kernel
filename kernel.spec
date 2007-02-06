@@ -1,17 +1,19 @@
 #
-# STATUS: 2.6.20-rc7 (.20 not yet tested)
+# STATUS: 2.6.20-0.1
+# - works for me
 # - builds --without grsecurity on i686 (up & smp)
 # - builds --with vesafb_tng
 # - nvidia works with & wo regparm
 # - nvidia-legacy works with & wo regparm
 # - ati blob doesn't build - apply pluto patch
-# - slmodem builds - needs testing
+# - slmodem builds
 # - madwifi-ng works with & wo regparm
+# - madwifi-old-openhal builds but have no supported hardware
 # - vserver works
 #
 # TODO 2.6.20
 # - grsecurity
-# - connlimit linking problem ...
+# - connlimit - porting from ip_conntrack to nf_conntrack
 # - new alsa rc2
 # - spec cleanup
 # - test external modules
@@ -130,7 +132,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.2
+%define		_rel			0.3
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -367,19 +369,19 @@ Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
 # http://www.ssi.bg/~ja/routes-2.6.19-12.diff
 Patch300:	routes-2.6.19-12.diff
-Patch301:	linux-2.6-ip_conntrack_find_get.patch
+Patch301:	pom-ng-connlimit-20061213_nf_conntrack_port.patch
 
 Patch400:       kernel-bcm43xx-2.6.20_combined.patch
 
 # For compatibility with such blobs like HAL from madwifi-ng
-# before we had CONFIG_REGPARM option disabled
+# before we had CONFIG_REGPARM option disabled - it is bconded and disabled now
 Patch500:	linux-2.6.20_i386_regparm_off.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
 
-# Some non-GPL modules (nvidia, nvidia-legacy, mdwifi-ng) looks for the paravirt_ops symbol
+# Some non-GPL modules (nvidia, nvidia-legacy) looks for the paravirt_ops symbol
 Patch2100:	linux-2.6.20-paravirt_ops-needed-by-blobs.patch
 
 #wanpipe
