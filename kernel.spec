@@ -492,7 +492,7 @@ your system. It contains few device drivers for specific hardware.
 Most hardware is instead supported by modules loaded after booting.
 
 Netfilter module dated: %{_netfilter_snap}
-%{?with_abi:Linux ABI suppor - enabled}
+%{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
@@ -508,7 +508,7 @@ Systemfunktionen verantwortlich: Speicherreservierung,
 Prozeß-Management, Geräte Ein- und Ausgaben, usw.
 
 Netfilter module dated: %{_netfilter_snap}
-%{?with_abi:Linux ABI suppor - enabled}
+%{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
@@ -524,7 +524,7 @@ fonctions basiques d'un système d'exploitation: allocation mémoire,
 allocation de process, entrée/sortie de peripheriques, etc.
 
 Netfilter module dated: %{_netfilter_snap}
-%{?with_abi:Linux ABI suppor - enabled}
+%{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
@@ -539,7 +539,7 @@ Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takiego jak sterowniki dysków itp.
 
 Netfilter module dated: %{_netfilter_snap}
-%{?with_abi:Linux ABI suppor - enabled}
+%{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
@@ -688,7 +688,7 @@ is required only on machines with two or more CPUs, although it should
 work fine on single-CPU boxes.
 
 Netfilter module dated: %{_netfilter_snap}
-%{?with_abi:Linux ABI suppor - enabled}
+%{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
@@ -704,7 +704,7 @@ Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
 CPU laufen.
 
 Netfilter module dated: %{_netfilter_snap}
-%{?with_abi:Linux ABI suppor - enabled}
+%{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
@@ -719,7 +719,7 @@ Il et nécessaire seulement pour les machine avec deux processeurs ou
 plus, il peut quand même fonctionner pour les système mono-processeur.
 
 Netfilter module dated: %{_netfilter_snap}
-%{?with_abi:Linux ABI suppor - enabled}
+%{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
@@ -734,7 +734,7 @@ wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
 Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
 
 Netfilter module dated: %{_netfilter_snap}
-%{?with_abi:Linux ABI suppor - enabled}
+%{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX and Grsecurity full support - enabled}
 %{?with_xen0:Xen 0 - enabled}
