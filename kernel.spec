@@ -9,10 +9,11 @@
 # - slmodem builds
 # - madwifi-ng works with & wo regparm
 # - madwifi-old-openhal builds but have no supported hardware
-# - vserver works
+# - vserver works but have some issues related to processes removal
 # - connlimit works
 #
 # TODO 2.6.20
+# - vserver 2.2.0 
 # - grsecurity
 # - new alsa rc2
 # - spec cleanup
@@ -353,8 +354,8 @@ Patch75:	linux-2.6-ide-acpi-support.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch 
 Patch85:	hostap-kernel-2.6.18.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-2.6.19.1-vs2.3.0.6.diff
-Patch100:	linux-2.6-vs2.3.patch
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.20-vs2.2.0-pre1.diff
+Patch100:	linux-2.6-vs2.2.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
 
