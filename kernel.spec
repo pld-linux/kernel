@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.20-0.3
+# STATUS: 2.6.20-0.4
 # - works for me
 # - builds --without grsecurity on i686 (up & smp)
 # - builds --with vesafb_tng
@@ -8,12 +8,12 @@
 # - ati blob doesn't build - apply pluto patch
 # - slmodem builds
 # - madwifi-ng works with & wo regparm
-# - madwifi-old-openhal builds but have no supported hardware
+# - madwifi-old-openhal builds but have no supported hardware to test
 # - vserver works but have some issues related to processes removal
 # - connlimit works
 #
 # TODO 2.6.20
-# - vserver 2.2.0 
+# - vserver 2.2.0 - test pre3 version
 # - grsecurity
 # - new alsa rc2
 # - spec cleanup
@@ -26,13 +26,14 @@
 # - update configs for up/smp alpha
 # - update configs for up/smp ppc
 # - update configs for up/smp ia64
+# - enable gcc42/th build (in bcond)
 #
 # FUTURE:
 # - p51 reiser4 - needs update (bcond off)
 # - separate PaX and grsecurity support - future
 # - update xen patch for 2.6.20
 # - wanpipe -> use wanpipe.spec instead ?
-# - Linux ABI - still active ? 
+# - Linux ABI - needs update.
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -133,7 +134,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.4
+%define		_rel			0.5
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
