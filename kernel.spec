@@ -1702,7 +1702,6 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
-/lib/modules/%{kernel_release}/build
 %ghost /lib/modules/%{kernel_release}/modules.*
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
@@ -1815,7 +1814,6 @@ fi
 %exclude /lib/modules/%{kernel_release}smp/kernel/drivers/telephony/ixj_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}smp/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
-/lib/modules/%{kernel_release}smp/build
 %ghost /lib/modules/%{kernel_release}smp/modules.*
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}smp
 
@@ -1895,6 +1893,15 @@ fi
 
 %files module-build -f aux_files
 %defattr(644,root,root,755)
+# symlinks pointint to kernelsrcdir
+%if %{with up}
+%dir /lib/modules/%{kernel_release}
+/lib/modules/%{kernel_release}/build
+%endif
+%if %{with smp}
+%dir /lib/modules/%{kernel_release}smp
+/lib/modules/%{kernel_release}smp/build
+%endif
 %{_kernelsrcdir}/Kbuild
 %{_kernelsrcdir}/localversion
 %{_kernelsrcdir}/arch/*/kernel/asm-offsets.*
