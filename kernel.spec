@@ -30,7 +30,7 @@
 
 %{?debug:%define with_verbose 1}
 
-%if !%{with grsecurity}
+%if %{without grsecurity}
 %undefine	with_grsec_full
 %undefine	with_grsec_minimal
 %undefine	with_pax
@@ -1273,7 +1273,7 @@ ln -sf System.map-%{kernel_release} /boot/System.map%{dashxen}
 
 %depmod %{kernel_release}
 
-%if !%{with xenU}
+%if %{without xenU}
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
 mv -f %{initrd_dir}/initrd%{dashxen} %{initrd_dir}/initrd%{dashxen}.old 2> /dev/null > /dev/null
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{dashxen}
@@ -1347,7 +1347,7 @@ ln -sf System.map-%{kernel_release}smp /boot/System.map%{dashxen}
 
 %depmod %{kernel_release}smp
 
-%if !%{with xenU}
+%if %{without xenU}
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}smp.gz %{kernel_release}smp
 mv -f %{initrd_dir}/initrd%{dashxen} %{initrd_dir}/initrd%{dashxen}.old 2> /dev/null > /dev/null
 ln -sf initrd-%{kernel_release}smp.gz %{initrd_dir}/initrd%{dashxen}
@@ -1437,7 +1437,7 @@ fi
 %if %{have_drm}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/char/drm
 %endif
-%if %{have_oss} && %{have_isa} && !%{with xen0} && !%{with xenU}
+%if %{have_oss} && %{have_isa} && %{without xen0} && %{without xenU}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 /lib/modules/%{kernel_release}/kernel/fs
@@ -1525,7 +1525,7 @@ fi
 %files sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}/kernel/sound/oss
-%if %{have_isa} && !%{with xen0} && !%{with xenU}
+%if %{have_isa} && %{without xen0} && %{without xenU}
 /lib/modules/%{kernel_release}/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 %endif
@@ -1552,7 +1552,7 @@ fi
 %if %{have_drm}
 %exclude /lib/modules/%{kernel_release}smp/kernel/drivers/char/drm
 %endif
-%if %{have_oss} && %{have_isa} && !%{with xen0} && !%{with xenU}
+%if %{have_oss} && %{have_isa} && %{without xen0} && %{without xenU}
 %exclude /lib/modules/%{kernel_release}smp/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 /lib/modules/%{kernel_release}smp/kernel/fs
@@ -1640,7 +1640,7 @@ fi
 %files smp-sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}smp/kernel/sound/oss
-%if %{have_isa} && !%{with xen0} && !%{with xenU}
+%if %{have_isa} && %{without xen0} && %{without xenU}
 /lib/modules/%{kernel_release}smp/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 %endif
@@ -1660,7 +1660,7 @@ fi
 
 %files module-build -f aux_files
 %defattr(644,root,root,755)
-# symlinks pointint to kernelsrcdir
+# symlinks pointing to kernelsrcdir
 %if %{with up}
 %dir /lib/modules/%{kernel_release}
 /lib/modules/%{kernel_release}/build
