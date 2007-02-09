@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.20-0.4
+# STATUS: 2.6.20-0.5
 # - works for me
 # - builds --without grsecurity on i686 (up & smp)
 # - builds --with vesafb_tng
@@ -9,11 +9,11 @@
 # - slmodem builds
 # - madwifi-ng works with & wo regparm
 # - madwifi-old-openhal builds but have no supported hardware to test
-# - vserver works but have some issues related to processes removal
+# - vserver looks good
 # - connlimit works
 #
 # TODO 2.6.20
-# - vserver 2.2.0 - test pre3 version
+# - vserver - port changes from 2.2 to 2.3
 # - grsecurity
 # - new alsa rc2
 # - spec cleanup
