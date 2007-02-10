@@ -2327,7 +2327,7 @@ diff -urNp linux-2.6.19.1/arch/i386/kernel/smpboot.c linux-2.6.19.1/arch/i386/ke
  
  	/* init low mem mapping */
  	clone_pgd_range(swapper_pg_dir, swapper_pg_dir + USER_PGD_PTRS,
--			KERNEL_PGD_PTRS);
+-			min_t(unsigned long, KERNEL_PGD_PTRS, USER_PGD_PTRS));
 +			USER_PGD_PTRS >= KERNEL_PGD_PTRS ? KERNEL_PGD_PTRS : USER_PGD_PTRS);
  	flush_tlb_all();
  	schedule_work(&task);
@@ -9026,11 +9026,12 @@ diff -urNp linux-2.6.19.1/drivers/char/mem.c linux-2.6.19.1/drivers/char/mem.c
  	if (p < (unsigned long) high_memory) {
  
  		wrote = count;
-@@ -646,7 +666,23 @@ static inline size_t read_zero_pagealign
+@@ -646,8 +666,23 @@ static inline size_t read_zero_pagealign
  			count = size;
  
  		zap_page_range(vma, addr, count, NULL);
--        	zeromap_page_range(vma, addr, count, PAGE_COPY);
+-        	if (zeromap_page_range(vma, addr, count, PAGE_COPY))
+-			break;
 +        	zeromap_page_range(vma, addr, count, vma->vm_page_prot);
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
@@ -28684,21 +28685,21 @@ diff -urNp linux-2.6.19.1/net/xfrm/xfrm_user.c linux-2.6.19.1/net/xfrm/xfrm_user
  {
  	int l = 0;
  	if (x->aalg)
-diff -urNp linux-2.6.19.1/scripts/Kbuild.include linux-2.6.19.1/scripts/Kbuild.include
---- linux-2.6.19.1/scripts/Kbuild.include	2006-11-29 16:57:37.000000000 -0500
-+++ linux-2.6.19.1/scripts/Kbuild.include	2006-12-10 21:43:36.000000000 -0500
-@@ -66,9 +66,8 @@ as-option = $(shell if $(CC) $(CFLAGS) $
- # as-instr
- # Usage: cflags-y += $(call as-instr, instr, option1, option2)
- 
--as-instr = $(shell if echo -e "$(1)" | $(AS) >/dev/null 2>&1 -W -Z -o astest$$$$.out ; \
--		   then echo "$(2)"; else echo "$(3)"; fi; \
--	           rm -f astest$$$$.out)
-+as-instr = $(shell if echo -e "$(1)" | $(AS) >/dev/null 2>&1 -W -Z -o /dev/null ; \
-+		   then echo "$(2)"; else echo "$(3)"; fi; )
- 
- # cc-option
- # Usage: cflags-y += $(call cc-option, -march=winchip-c6, -march=i586)
+#diff -urNp linux-2.6.19.1/scripts/Kbuild.include linux-2.6.19.1/scripts/Kbuild.include
+#--- linux-2.6.19.1/scripts/Kbuild.include	2006-11-29 16:57:37.000000000 -0500
+#+++ linux-2.6.19.1/scripts/Kbuild.include	2006-12-10 21:43:36.000000000 -0500
+#@@ -66,9 +66,8 @@ as-option = $(shell if $(CC) $(CFLAGS) $
+# # as-instr
+# # Usage: cflags-y += $(call as-instr, instr, option1, option2)
+# 
+#-as-instr = $(shell if echo -e "$(1)" | $(AS) >/dev/null 2>&1 -W -Z -o astest$$$$.out ; \
+#-		   then echo "$(2)"; else echo "$(3)"; fi; \
+#-	           rm -f astest$$$$.out)
+#+as-instr = $(shell if echo -e "$(1)" | $(AS) >/dev/null 2>&1 -W -Z -o /dev/null ; \
+#+		   then echo "$(2)"; else echo "$(3)"; fi; )
+# 
+# # cc-option
+# # Usage: cflags-y += $(call cc-option, -march=winchip-c6, -march=i586)
 diff -urNp linux-2.6.19.1/security/commoncap.c linux-2.6.19.1/security/commoncap.c
 --- linux-2.6.19.1/security/commoncap.c	2006-11-29 16:57:37.000000000 -0500
 +++ linux-2.6.19.1/security/commoncap.c	2006-12-03 15:16:30.000000000 -0500
