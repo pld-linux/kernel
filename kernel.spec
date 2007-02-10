@@ -134,7 +134,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.5
+%define		_rel			0.6
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -302,6 +302,7 @@ Patch49:	kernel-2.6.18-layer7-2.7-2.6.19-fix.patch
 # [pom external]
 #	pom-ng-IPMARK-20061213.patch
 #	pom-ng-connlimit-20061213.patch
+#	(note: connlimit needs an additional patch to work with nf_conntrack -> p301)
 #	pom-ng-geoip-20061213.patch
 #	pom-ng-ipp2p-20061213.patch
 #	pom-ng-time-20061213.patch
@@ -340,8 +341,8 @@ Patch57:	linux-2.6-cpuset_virtualization.patch
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_41.tar.bz2
 Patch60:	linux-2.6-sk98lin_8.41.2.3.patch
 
-# based on http://www.suspend2.net/downloads/all/suspend2-2.2.9.3-for-2.6.20-rc4.patch.bz2
-Patch69:	suspend2-2.2.9.3-for-2.6.20-rc4.patch
+# based on http://www.suspend2.net/downloads/all/suspend2-2.2.9.7-for-2.6.20.patch.bz2
+Patch69:	linux-2.6-suspend2.patch
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
 #Patch72:	linux-2.6-suspend2-off.patch
