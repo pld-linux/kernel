@@ -1,10 +1,6 @@
 #
 # TODO 2.6.19:
 #
-# - grsecurity patch update for 2.6.19.2 - 1 hunk failed in:
-#	arch/i386/kernel/smpboot.c
-#	drivers/char/mem.c
-#	scripts/Kbuild.include
 # - p4 fbsplash - needs update (bcond off)
 # - p200 linux-2.6-ppc-ICE-hacks.patch - untested - ppc needed
 # - separate PaX and grsecurity support - future
@@ -22,7 +18,6 @@
 #
 # FUTURE:
 # - separate PaX and grsecurity support - future
-# - update xen patch for 2.6.19 
 # - wanpipe
 # - Linux ABI
 #
@@ -138,7 +133,22 @@
 %define		squashfs_version	3.1
 %define		suspend_version		2.2.9
 
-%define		xen_version		3.0.2
+%define		xen_version		3.0.4
+
+%if %{with xen0}
+%define		xen	xen0
+%define		dashxen	\-xen0
+%define		pae	1
+%else
+%if %{with xenU}
+%define		xen	xenU
+%define		dashxen	\-xenU
+%define		pae	1
+%else
+%define		xen	%{nil}
+%define		dashxen	%{nil}
+%endif
+%endif
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -195,9 +205,7 @@ Source42:	kernel-suspend2.config
 Source43:	kernel-vserver.config
 Source44:	kernel-vesafb-tng.config
 Source45:	kernel-grsec.config
-Source46:	kernel-xen0.config
-Source47:	kernel-xenU.config
-
+Source46:	kernel-xen.config
 Source49:	kernel-pax.config
 Source50:	kernel-no-pax.config
 Source55:	kernel-imq.config
@@ -341,7 +349,7 @@ Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
-#Patch120:	xen-3.0-2.6.16.patch
+Patch120:	xen-3.0.4-2.6.19.patch
 
 # Wake-On-Lan fix for nForce drivers; using http://atlas.et.tudelft.nl/verwei90/nforce2/wol.html
 # Fix verified for that kernel version.
@@ -384,8 +392,8 @@ Provides:	kernel = %{epoch}:%{version}-%{release}
 Provides:	kernel(netfilter) = %{_netfilter_snap}
 Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
 Provides:	kernel(realtime-lsm) = 0.1.1
-%if %{with xen0} || %{with xenU}
-Provides:	kernel(xen) = %{_xen_version}
+%if %{with xen0}
+Provides:	kernel(xen0) = %{xen_version}
 %endif
 Provides:	kernel-misc-fuse
 Provides:	kernel-net-hostap = 0.4.4
@@ -415,7 +423,7 @@ Conflicts:	util-linux < %{_util_linux_ver}
 Conflicts:	vserver-packages
 Conflicts:	xfsprogs < %{_xfsprogs_ver}
 %if %{with xen0} || %{with xenU}
-ExclusiveArch:	%{ix86}
+ExclusiveArch:	%{ix86} %{x8664}
 %else
 ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc ppc64 sparc sparc64 arm
 %endif
@@ -434,7 +442,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}%{?smp}
 # _localversion is just that without version for "> localversion"
-%define		_localversion %{release}
+%define		_localversion %{release}%{xen}
 %define		kernel_release %{version}-%{_localversion}
 %define		_kernelsrcdir	/usr/src/linux-%{version}
 
@@ -626,8 +634,8 @@ Provides:	kernel = %{epoch}:%{version}-%{release}
 Provides:	kernel(netfilter) = %{_netfilter_snap}
 Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
 Provides:	kernel(realtime-lsm) = 0.1.1
-%if %{with xen0} || %{with xenU}
-Provides:	kernel(xen) = %{_xen_version}
+%if %{with xen0}
+Provides:	kernel(xen0) = %{xen_version}
 %endif
 Provides:	kernel-smp-misc-fuse
 Provides:	kernel-smp-net-hostap = 0.4.4
@@ -1019,11 +1027,11 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 %patch102 -p1
 
-#%if %{with xen0} || %{with xenU}
-#%ifarch %{ix86} %{x8664} ia64
-#%patch120 -p1
-#%endif
-#%endif
+%if %{with xen0} || %{with xenU}
+%ifarch %{ix86} %{x8664}
+%patch120 -p1
+%endif
+%endif
 
 # forcedeth:
 %patch130 -p1
@@ -1191,13 +1199,24 @@ BuildConfig() {
 	echo "CONFIG_BLK_DEV_IDEACPI=y" >> arch/%{_target_base_arch}/defconfig
 %endif
 
+%if %{with xen0} || %{with xenU}
+	sed -i "s:CONFIG_X86_PC=y:# CONFIG_X86_PC is not set:" arch/%{_target_base_arch}/defconfig
+	sed -i "s:CONFIG_RIO=[ym]:# CONFIG_RIO is not set:" arch/%{_target_base_arch}/defconfig
+	sed -i "s:CONFIG_SOUND_PAS=[ym]:# CONFIG_SOUND_PAS is not set:" arch/%{_target_base_arch}/defconfig
 
-%if %{with xen0}
+	# framebuffer devices generally don't work with xen
+	# and kernel will crash on boot if vesafb-tng is compiled in (even if off by default)
+	sed -i "s:CONFIG_FB=y:# CONFIG_FB is not set:" arch/%{_target_base_arch}/defconfig
+
 	cat %{SOURCE46} >> arch/%{_target_base_arch}/defconfig
 %endif
 
+%if %{with xen0}
+	sed -i "s:# CONFIG_XEN_PRIVILEGED_GUEST is not set:CONFIG_XEN_PRIVILEGED_GUEST=y:" arch/%{_target_base_arch}/defconfig
+%endif
+
 %if %{with xenU}
-	cat %{SOURCE47} >> arch/%{_target_base_arch}/defconfig
+	sed -i "s:# CONFIG_XEN_UNPRIVILEGED_GUEST is not set:CONFIG_XEN_UNPRIVILEGED_GUEST=y:" arch/%{_target_base_arch}/defconfig
 %endif
 
 	# fbsplash && bootsplash
@@ -1274,6 +1293,9 @@ BuildKernel() {
 %endif
 %else
 	%{__make} %CrossOpts \
+%if %{with xen0} || %{with xenU}
+		SHELL=/bin/bash \
+%endif
 		%{?with_verbose:V=1}
 %endif
 }
@@ -1291,7 +1313,11 @@ PreInstallKernel() {
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
 %ifarch %{ix86} %{x8664}
+%if %{with xen0} || %{with xenU}
+	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%else
 	install arch/%{_target_base_arch}/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%endif
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 %endif
 %ifarch alpha sparc sparc64
@@ -1457,8 +1483,8 @@ fi
 %ifarch ia64
 mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
 %endif
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+mv -f /boot/vmlinuz%{dashxen} /boot/vmlinuz%{dashxen}.old 2> /dev/null > /dev/null
+mv -f /boot/System.map%{dashxen} /boot/System.map%{dashxen}.old 2> /dev/null > /dev/null
 %ifarch ia64
 ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz
 %endif
@@ -1467,9 +1493,10 @@ ln -sf System.map-%{kernel_release} /boot/System.map
 
 %depmod %{kernel_release}
 
+%if !%{with xenU}
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
-mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
-ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
+mv -f %{initrd_dir}/initrd%{dashxen} %{initrd_dir}/initrd%{dashxen}.old 2> /dev/null > /dev/null
+ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{dashxen}
 
 if [ -x /sbin/new-kernel-pkg ]; then
 	if [ -f /etc/pld-release ]; then
@@ -1487,10 +1514,11 @@ if [ -x /sbin/new-kernel-pkg ]; then
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
+%endif
 
 %post vmlinux
-mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
-ln -sf vmlinux-%{kernel_release} /boot/vmlinux
+mv -f /boot/vmlinux%{dashxen} /boot/vmlinux%{dashxen}.old 2> /dev/null > /dev/null
+ln -sf vmlinux-%{kernel_release} /boot/vmlinux%{dashxen}
 
 %post libs
 %{_sbindir}/mkvmlinuz /boot/zImage-%{kernel_release} %{kernel_release}
@@ -1529,19 +1557,20 @@ fi
 %ifarch ia64
 mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
 %endif
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+mv -f /boot/vmlinuz%{dashxen} /boot/vmlinuz%{dashxen}.old 2> /dev/null > /dev/null
+mv -f /boot/System.map%{dashxen} /boot/System.map%{dashxen}.old 2> /dev/null > /dev/null
 %ifarch ia64
 ln -sf vmlinuz-%{kernel_release}smp /boot/efi/vmlinuz
 %endif
-ln -sf vmlinuz-%{kernel_release}smp /boot/vmlinuz
-ln -sf System.map-%{kernel_release}smp /boot/System.map
+ln -sf vmlinuz-%{kernel_release}smp /boot/vmlinuz%{dashxen}
+ln -sf System.map-%{kernel_release}smp /boot/System.map%{dashxen}
 
 %depmod %{kernel_release}smp
 
+%if !%{with xenU}
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}smp.gz %{kernel_release}smp
-mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
-ln -sf initrd-%{kernel_release}smp.gz %{initrd_dir}/initrd
+mv -f %{initrd_dir}/initrd%{dashxen} %{initrd_dir}/initrd%{dashxen}.old 2> /dev/null > /dev/null
+ln -sf initrd-%{kernel_release}smp.gz %{initrd_dir}/initrd%{dashxen}
 
 if [ -x /sbin/new-kernel-pkg ]; then
 	if [ -f /etc/pld-release ]; then
@@ -1559,10 +1588,11 @@ if [ -x /sbin/new-kernel-pkg ]; then
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
+%endif
 
 %post smp-vmlinux
-mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
-ln -sf vmlinux-%{kernel_release}smp /boot/vmlinux
+mv -f /boot/vmlinux%{dashxen} /boot/vmlinux%{dashxen}.old 2> /dev/null > /dev/null
+ln -sf vmlinux-%{kernel_release}smp /boot/vmlinux%{dashxen}
 
 %post smp-libs
 %{_sbindir}/mkvmlinuz /boot/zImage-%{kernel_release}smp %{kernel_release}smp
