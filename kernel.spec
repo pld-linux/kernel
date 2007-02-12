@@ -136,7 +136,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.7
+%define		_rel			0.8
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -242,12 +242,10 @@ Patch1:		linux-2.6-sata-promise-pata-ports.patch
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
 Patch2:		tahoe9xx-2.6.11.5.patch
 
-#	ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.15.diff
 # TODO:	ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.18.diff
-Patch3:		bootsplash-3.1.6-2.6.15.diff
-#	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.19-rc2.patch
+Patch3:		bootsplash-3.1.6-2.6.18.diff
 # TODO:	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.20-rc6.patch
-Patch4:		fbsplash-0.9.2-r5-2.6.19-rc2.patch
+Patch4:		fbsplash-0.9.2-r5-2.6.20-rc6.patch
 
 # http://dev.gentoo.org/~spock/projects/vesafb-tng/archive/vesafb-tng-1.0-rc2-2.6.20-rc2.patch
 Patch5:		vesafb-tng-1.0-rc2-2.6.20-rc2.patch
@@ -324,7 +322,7 @@ Patch50:	linux-2.6.19-imq1.diff
 # with 9 pathes from reiserfs mailing-list.
 # details http://www.mail-archive.com/reiserfs-list@namesys.com/msg22492.html
 # TODO: 	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.19/reiser4-for-2.6.19-2.patch.gz
-Patch51:	reiser4-for-2.6.19.patch
+Patch51:	reiser4-for-2.6.19-2.patch
 
 # esfq
 # from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
