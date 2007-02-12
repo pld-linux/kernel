@@ -134,7 +134,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.6
+%define		_rel			0.7
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -356,8 +356,8 @@ Patch75:	linux-2.6-ide-acpi-support.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch 
 Patch85:	hostap-kernel-2.6.18.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.20-vs2.2.0-pre1.diff
-Patch100:	linux-2.6-vs2.2.patch
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.20-vs2.3.0.9.diff
+Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
 
