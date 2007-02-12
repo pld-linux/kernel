@@ -27,9 +27,9 @@
 %define		hostap_version		2002-10-12
 %define		netfilter_snap		20030306
 Summary:	The Linux kernel (the core of the Linux operating system)
-Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
-Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
-Summary(pl):	J±dro Linuksa
+Summary(de.UTF-8):   Der Linux-Kernel (Kern des Linux-Betriebssystems)
+Summary(fr.UTF-8):   Le Kernel-Linux (La partie centrale du systeme)
+Summary(pl.UTF-8):   JÄ…dro Linuksa
 Name:		kernel
 Version:	2.4.20
 Release:	0.%{pre_version}.%{?_with_preemptive:_pr}%{?_without_grsec:_nogrsec}.1
@@ -333,28 +333,28 @@ This package contains the Linux kernel that is used to boot and run
 your system. It contains few device drivers for specific hardware.
 Most hardware is instead supported by modules loaded after booting.
 
-%description -l de
-Das Kernel-Paket enthält den Linux-Kernel (vmlinuz), den Kern des
-Linux-Betriebssystems. Der Kernel ist für grundliegende
+%description -l de.UTF-8
+Das Kernel-Paket enthÃ¤lt den Linux-Kernel (vmlinuz), den Kern des
+Linux-Betriebssystems. Der Kernel ist fÃ¼r grundliegende
 Systemfunktionen verantwortlich: Speicherreservierung,
-Prozeß-Management, Geräte Ein- und Ausgaben, usw.
+ProzeÃŸ-Management, GerÃ¤te Ein- und Ausgaben, usw.
 
-%description -l fr
+%description -l fr.UTF-8
 Le package kernel contient le kernel linux (vmlinuz), la partie
-centrale d'un système d'exploitation Linux. Le noyau traite les
-fonctions basiques d'un système d'exploitation: allocation mémoire,
-allocation de process, entrée/sortie de peripheriques, etc.
+centrale d'un systÃ¨me d'exploitation Linux. Le noyau traite les
+fonctions basiques d'un systÃ¨me d'exploitation: allocation mÃ©moire,
+allocation de process, entrÃ©e/sortie de peripheriques, etc.
 
-%description -l pl
-Pakiet zawiera j±dro Linuksa niezbêdne do prawid³owego dzia³ania
-Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
-siê w komputerze, takich jak karty muzyczne, sterowniki dysków, etc.
+%description -l pl.UTF-8
+Pakiet zawiera jÄ…dro Linuksa niezbÄ™dne do prawidÅ‚owego dziaÅ‚ania
+Twojego komputera. Zawiera w sobie sterowniki do sprzÄ™tu znajdujÄ…cego
+siÄ™ w komputerze, takich jak karty muzyczne, sterowniki dyskÃ³w, etc.
 
 %package smp
 Summary:	Kernel version %{version} compiled for SMP machines
-Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
-Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
-Summary(pl):	J±dro Linuksa %{version} skompilowane dla maszyn wieloprocesorowych
+Summary(de.UTF-8):   Kernel version %{version} fÃ¼r Multiprozessor-Maschinen
+Summary(fr.UTF-8):   Kernel version %{version} compiler pour les machine Multi-Processeur
+Summary(pl.UTF-8):   JÄ…dro Linuksa %{version} skompilowane dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Provides:	%{name}-smp = %{version}-%{release}
 Provides:	module-info
@@ -386,27 +386,27 @@ This package includes a SMP version of the Linux %{version} kernel. It
 is required only on machines with two or more CPUs, although it should
 work fine on single-CPU boxes.
 
-%description smp -l de
-Dieses Paket enthält eine SMP (Multiprozessor)-Version von
-Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
+%description smp -l de.UTF-8
+Dieses Paket enthÃ¤lt eine SMP (Multiprozessor)-Version von
+Linux-Kernel %{version}. Es wird fÃ¼r Maschinen mit zwei oder mehr
 Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
 CPU laufen.
 
-%description smp -l fr
+%description smp -l fr.UTF-8
 Ce package inclu une version SMP du noyau de Linux version {version}.
-Il et nécessaire seulement pour les machine avec deux processeurs ou
-plus, il peut quand même fonctionner pour les système mono-processeur.
+Il et nÃ©cessaire seulement pour les machine avec deux processeurs ou
+plus, il peut quand mÃªme fonctionner pour les systÃ¨me mono-processeur.
 
-%description smp -l pl
-Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono
-wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
-Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
+%description smp -l pl.UTF-8
+Pakiet zawiera jÄ…dro SMP Linuksa w wersji %{version}. Jest ono
+wymagane przez komputery zawierajÄ…ce dwa lub wiÄ™cej procesorÃ³w.
+Powinno rÃ³wnieÅ¼ dobrze dziaÅ‚aÄ‡ na maszynach z jednym procesorem.
 
 %package BOOT
 Summary:	Kernel version %{version} used on the installation boot disks
-Summary(de):	Kernel version %{version} für Installationsdisketten
-Summary(fr):	Kernel version %{version} utiliser pour les disquettes d'installation
-Summary(pl):	J±dro Linuksa %{version} dla bootkietek instalacyjnych
+Summary(de.UTF-8):   Kernel version %{version} fÃ¼r Installationsdisketten
+Summary(fr.UTF-8):   Kernel version %{version} utiliser pour les disquettes d'installation
+Summary(pl.UTF-8):   JÄ…dro Linuksa %{version} dla bootkietek instalacyjnych
 Group:		Base/Kernel
 Prereq:		modutils
 Autoreqprov:	no
@@ -417,22 +417,22 @@ kernel. This kernel is used on the installation boot disks only and
 should not be used for an installed system, as many features in this
 kernel are turned off because of the size constraints.
 
-%description BOOT -l de
-Dieses Paket enthält eine verkleinerte Version vom Linux-Kernel
+%description BOOT -l de.UTF-8
+Dieses Paket enthÃ¤lt eine verkleinerte Version vom Linux-Kernel
 version %{version}. Dieser Kernel wird auf den
 Installations-Bootdisketten benutzt und sollte nicht auf einem
 installierten System verwendet werden, da viele Funktionen wegen der
 Platzprobleme abgeschaltet sind.
 
-%description BOOT -l pl
-Pakiet zawiera j±dro Linuksa dedykowane dyskietkom startowym i powinno
-byæ u¿ywane jedynie podczas instalacji systemu. Wiele u¿ytecznych
-opcji zosta³o wy³±czonych, aby jak najbardziej zmniejszyæ jego
+%description BOOT -l pl.UTF-8
+Pakiet zawiera jÄ…dro Linuksa dedykowane dyskietkom startowym i powinno
+byÄ‡ uÅ¼ywane jedynie podczas instalacji systemu. Wiele uÅ¼ytecznych
+opcji zostaÅ‚o wyÅ‚Ä…czonych, aby jak najbardziej zmniejszyÄ‡ jego
 rozmiar.
 
 %package pcmcia-cs
 Summary:	PCMCIA-CS modules
-Summary(pl):	Modu³y PCMCIA-CS 
+Summary(pl.UTF-8):   ModuÅ‚y PCMCIA-CS 
 Group:		Base/Kernel
 Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
 PreReq:		%{name}-up = %{version}-%{release}
@@ -441,12 +441,12 @@ Requires(postun):	%{name}-up = %{version}-%{release}
 %description pcmcia-cs
 PCMCIA-CS modules (%{pcmcia_version}).
 
-%description pcmcia-cs -l pl
-Modu³y PCMCIA-CS (%{pcmcia_version}).
+%description pcmcia-cs -l pl.UTF-8
+ModuÅ‚y PCMCIA-CS (%{pcmcia_version}).
 
 %package smp-pcmcia-cs
 Summary:	PCMCIA-CS modules for SMP kernel
-Summary(pl):	Modu³y PCMCIA-CS dla maszyn SMP
+Summary(pl.UTF-8):   ModuÅ‚y PCMCIA-CS dla maszyn SMP
 Group:		Base/Kernel
 Provides:	%{name}-pcmcia-cs = %{pcmcia_version}
 PreReq:		%{name}-smp = %{version}-%{release}
@@ -455,12 +455,12 @@ Requires(postun):	%{name}-smp = %{version}-%{release}
 %description smp-pcmcia-cs
 PCMCIA-CS modules for SMP kernel (%{pcmcia_version}).
 
-%description smp-pcmcia-cs -l pl
-Modu³y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
+%description smp-pcmcia-cs -l pl.UTF-8
+ModuÅ‚y PCMCIA-CS dla maszyn SMP (%{pcmcia_version}).
 
 %package drm
 Summary:	DRM kernel modules
-Summary(pl):	Sterowniki DRM
+Summary(pl.UTF-8):   Sterowniki DRM
 Group:		Base/Kernel
 Provides:       %{name}-drm = %{drm_xfree_version}
 PreReq:		%{name}-up = %{version}-%{release}
@@ -469,12 +469,12 @@ Requires(postun):	%{name}-up = %{version}-%{release}
 %description drm
 DRM kernel modules (%{drm_xfree_version}).
 
-%description drm -l pl
+%description drm -l pl.UTF-8
 Sterowniki DRM (%{drm_xfree_version}).
 
 %package smp-drm
 Summary:	DRM SMP kernel modules
-Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
+Summary(pl.UTF-8):   Sterowniki DRM dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Provides:       %{name}-drm = %{drm_xfree_version}
 PreReq:		%{name}-smp = %{version}-%{release}
@@ -483,12 +483,12 @@ Requires(postun):	%{name}-smp = %{version}-%{release}
 %description smp-drm
 DRM SMP kernel modules (%{drm_xfree_version}).
 
-%description smp-drm -l pl
+%description smp-drm -l pl.UTF-8
 Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
 
 %package headers
 Summary:	Header files for the Linux kernel
-Summary(pl):	Pliki nag³ówkowe j±dra
+Summary(pl.UTF-8):   Pliki nagÅ‚Ã³wkowe jÄ…dra
 Group:		Base/Kernel
 Provides:	%{name}-headers(agpgart) = %{version}
 Provides:	%{name}-headers(reiserfs) = %{version}
@@ -502,13 +502,13 @@ These are the C header files for the Linux kernel, which define
 structures and constants that are needed when building most standard
 programs under Linux, as well as to rebuild the kernel.
 
-%description headers -l pl
-Pakiet zawiera pliki nag³ówkowe j±dra, niezbêdne do rekompilacji j±dra
-oraz niektórych programów.
+%description headers -l pl.UTF-8
+Pakiet zawiera pliki nagÅ‚Ã³wkowe jÄ…dra, niezbÄ™dne do rekompilacji jÄ…dra
+oraz niektÃ³rych programÃ³w.
 
 %package source
 Summary:	Kernel source tree
-Summary(pl):	Kod ¼ród³owy j±dra Linuksa
+Summary(pl.UTF-8):   Kod ÅºrÃ³dÅ‚owy jÄ…dra Linuksa
 Group:		Base/Kernel
 Autoreqprov:	no
 Requires:	%{name}-headers = %{version}-%{release}
@@ -522,28 +522,28 @@ most C programs as they depend on constants defined in here. You can
 also build a custom kernel that is better tuned to your particular
 hardware.
 
-%description source -l de
-Das Kernel-Source-Paket enthält den source code (C/Assembler-Code) des
+%description source -l de.UTF-8
+Das Kernel-Source-Paket enthÃ¤lt den source code (C/Assembler-Code) des
 Linux-Kernels. Die Source-Dateien werden gebraucht, um viele
-C-Programme zu compilieren, da sie auf Konstanten zurückgreifen, die
-im Kernel-Source definiert sind. Die Source-Dateien können auch
+C-Programme zu compilieren, da sie auf Konstanten zurÃ¼ckgreifen, die
+im Kernel-Source definiert sind. Die Source-Dateien kÃ¶nnen auch
 benutzt werden, um einen Kernel zu compilieren, der besser auf Ihre
 Hardware ausgerichtet ist.
 
-%description source -l fr
+%description source -l fr.UTF-8
 Le package pour le kernel-source contient le code source pour le noyau
-linux. Ces sources sont nécessaires pour compiler la plupart des
-programmes C, car il dépend de constantes définies dans le code
-source. Les sources peuvent être aussi utilisée pour compiler un noyau
-personnalisé pour avoir de meilleures performances sur des matériels
+linux. Ces sources sont nÃ©cessaires pour compiler la plupart des
+programmes C, car il dÃ©pend de constantes dÃ©finies dans le code
+source. Les sources peuvent Ãªtre aussi utilisÃ©e pour compiler un noyau
+personnalisÃ© pour avoir de meilleures performances sur des matÃ©riels
 particuliers.
 
-%description source -l pl
-Pakiet zawiera kod ¼ród³owy j±dra systemu.
+%description source -l pl.UTF-8
+Pakiet zawiera kod ÅºrÃ³dÅ‚owy jÄ…dra systemu.
 
 %package doc
 Summary:	Kernel documentation
-Summary(pl):	Dokumentacja do j±dra Linuksa
+Summary(pl.UTF-8):   Dokumentacja do jÄ…dra Linuksa
 Group:		Base/Kernel
 Provides:	%{name}-doc = %{version}
 Autoreqprov:	no
@@ -552,8 +552,8 @@ Autoreqprov:	no
 This is the documentation for the Linux kernel, as found in
 /usr/src/linux/Documentation directory.
 
-%description doc -l pl
-Pakiet zawiera dokumentacjê j±dra z katalogu
+%description doc -l pl.UTF-8
+Pakiet zawiera dokumentacjÄ™ jÄ…dra z katalogu
 /usr/src/linux/Documentation.
 
 %prep
