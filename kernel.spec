@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.20-0.5
+# STATUS: 2.6.20-0.6
 # - works for me
 # - builds --without grsecurity on i686 (up & smp)
 # - builds --with vesafb_tng
@@ -9,11 +9,11 @@
 # - slmodem builds
 # - madwifi-ng works with & wo regparm
 # - madwifi-old-openhal builds but have no supported hardware to test
-# - vserver looks good
+# - vserver 2.2.0-pre3 looks good
 # - connlimit works
 #
 # TODO 2.6.20
-# - vserver - port changes from 2.2 to 2.3
+# - vserver - use 2.3 development line
 # - grsecurity
 # - new alsa rc2
 # - spec cleanup
@@ -27,6 +27,8 @@
 # - update configs for up/smp ppc
 # - update configs for up/smp ia64
 # - enable gcc42/th build (in bcond)
+# - update patch3 - bootsplash
+# - update patch4 - fbsplash
 #
 # FUTURE:
 # - p51 reiser4 - needs update (bcond off)
@@ -193,12 +195,8 @@ Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
 
 # TODO - cleanup
-#Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.19-rc6.patch.bz2
-##Source10-md5:	ce94df22b93c74f1637d2429c1093ec7
-#Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.17/reiser4-for-2.6.17-3.patch.gz
-##Source12-md5:	593c3296ddf40c5b116ee129781da341
-#Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
-##Source14-md5:	f2563a2d748c7480559e8d3ff77eb18a
+Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
+#Source14-md5:	f2563a2d748c7480559e8d3ff77eb18a
 
 Source20:	kernel-i386.config
 Source21:	kernel-i386-smp.config
@@ -245,8 +243,10 @@ Patch1:		linux-2.6-sata-promise-pata-ports.patch
 Patch2:		tahoe9xx-2.6.11.5.patch
 
 #	ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.15.diff
+# TODO:	ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.18.diff
 Patch3:		bootsplash-3.1.6-2.6.15.diff
 #	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.19-rc2.patch
+# TODO:	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.20-rc6.patch
 Patch4:		fbsplash-0.9.2-r5-2.6.19-rc2.patch
 
 # http://dev.gentoo.org/~spock/projects/vesafb-tng/archive/vesafb-tng-1.0-rc2-2.6.20-rc2.patch
@@ -275,7 +275,6 @@ Patch37:	pom-ng-rsh-%{_netfilter_snap}.patch
 
 #external
 Patch40:	pom-ng-IPMARK-%{_netfilter_snap}.patch
-# TODO: fix: connlimit linking is broken - temporary disabled in kernel-netfilter.config
 Patch41:	pom-ng-connlimit-%{_netfilter_snap}.patch
 Patch42:	pom-ng-geoip-%{_netfilter_snap}.patch
 Patch43:	pom-ng-ipp2p-%{_netfilter_snap}.patch
@@ -324,6 +323,7 @@ Patch50:	linux-2.6.19-imq1.diff
 # based on http://ftp.namesys.com/pub/reiser4-for-2.6/2.6.18/reiser4-for-2.6.18-3.patch.gz
 # with 9 pathes from reiserfs mailing-list.
 # details http://www.mail-archive.com/reiserfs-list@namesys.com/msg22492.html
+# TODO: 	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.19/reiser4-for-2.6.19-2.patch.gz
 Patch51:	reiser4-for-2.6.19.patch
 
 # esfq
@@ -1087,9 +1087,9 @@ install %{SOURCE5} Makefile.ppclibs
 # exporting paravirt_ops as non-GPL-only symbol
 %patch2100 -p1
 
-#%if %{with abi}
-#patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
-#%endif
+%if %{with abi}
+patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
+%endif
 
 # wanpipe
 #patch3000 -p1
