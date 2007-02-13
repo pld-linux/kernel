@@ -136,7 +136,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.8
+%define		_rel			0.9
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
