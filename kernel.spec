@@ -136,7 +136,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.9
+%define		_rel			0.10
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -226,6 +226,7 @@ Source47:	kernel-xenU.config
 Source49:	kernel-pax.config
 Source50:	kernel-no-pax.config
 Source55:	kernel-imq.config
+Source56:	kernel-reiser4.config
 
 ###
 #	Patches
@@ -1227,10 +1228,13 @@ BuildConfig() {
 	cat %{SOURCE55} >> arch/%{_target_base_arch}/defconfig
 %endif
 
+%if %{with reiser4}
+	cat %{SOURCE56} >> arch/%{_target_base_arch}/defconfig
+%endif
+
 %if %{with ide_acpi}
 	echo "CONFIG_BLK_DEV_IDEACPI=y" >> arch/%{_target_base_arch}/defconfig
 %endif
-
 
 %if %{with xen0}
 	cat %{SOURCE46} >> arch/%{_target_base_arch}/defconfig
