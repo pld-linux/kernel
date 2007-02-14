@@ -9089,7 +9089,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/dscale.h linux-2.6.19/fs/reiser4/dscale.h
 diff -urN linux-2.6.19.orig/fs/reiser4/entd.c linux-2.6.19/fs/reiser4/entd.c
 --- linux-2.6.19.orig/fs/reiser4/entd.c	1970-01-01 03:00:00.000000000 +0300
 +++ linux-2.6.19/fs/reiser4/entd.c	2007-01-20 02:33:56.537041477 +0300
-@@ -0,0 +1,334 @@
+@@ -0,0 +1,335 @@
 +/* Copyright 2003, 2004 by Hans Reiser, licensing governed by
 + * reiser4/README */
 +
@@ -9114,6 +9114,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/entd.c linux-2.6.19/fs/reiser4/entd.c
 +#include <linux/backing-dev.h>	/* bdi_write_congested */
 +#include <linux/wait.h>
 +#include <linux/kthread.h>
++#include <linux/freezer.h>
 +
 +#define DEF_PRIORITY 12
 +#define MAX_ENTD_ITERS 10
@@ -22261,7 +22262,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/key.h linux-2.6.19/fs/reiser4/key.h
 diff -urN linux-2.6.19.orig/fs/reiser4/ktxnmgrd.c linux-2.6.19/fs/reiser4/ktxnmgrd.c
 --- linux-2.6.19.orig/fs/reiser4/ktxnmgrd.c	1970-01-01 03:00:00.000000000 +0300
 +++ linux-2.6.19/fs/reiser4/ktxnmgrd.c	2007-01-20 02:33:56.581053060 +0300
-@@ -0,0 +1,214 @@
+@@ -0,0 +1,215 @@
 +/* Copyright 2002, 2003 by Hans Reiser, licensing governed by reiser4/README */
 +/* Transaction manager daemon. */
 +
@@ -22299,6 +22300,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/ktxnmgrd.c linux-2.6.19/fs/reiser4/ktxnmg
 +#include <linux/kernel.h>
 +#include <linux/writeback.h>
 +#include <linux/kthread.h>
++#include <linux/freezer.h>
 +
 +static int scan_mgr(struct super_block *);
 +
@@ -31969,7 +31971,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/plugin/file/cryptcompress.c linux-2.6.19/
 +		lock_page(clust->pages[i]);
 +		if (PageDirty(clust->pages[i])) {
 +			assert("edward-1277", PageUptodate(clust->pages[i]));
-+			test_clear_page_dirty(clust->pages[i]);
++			TestClearPageDirty(clust->pages[i]);
 +		}
 +#if REISER4_DEBUG
 +		else
