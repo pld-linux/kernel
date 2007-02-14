@@ -214,7 +214,7 @@ diff -urNP linux-2.6.19.2/fs/proc/proc_misc.c linux-2.6.19.2/fs/proc/proc_misc.c
  		{"locks",	locks_read_proc},
  		{"execdomains",	execdomains_read_proc},
  		{NULL,}
-@@ -693,13 +697,26 @@
+@@ -696,6 +703,15 @@
  	for (p = simple_ones; p->name; p++)
  		create_proc_read_entry(p->name, 0, NULL, p->read_proc, NULL);
  
@@ -230,9 +230,10 @@ diff -urNP linux-2.6.19.2/fs/proc/proc_misc.c linux-2.6.19.2/fs/proc/proc_misc.c
  	proc_symlink("mounts", NULL, "self/mounts");
  
  	/* And now for trickier ones */
- 	entry = create_proc_entry("kmsg", S_IRUSR, &proc_root);
+@@ -704,7 +720,11 @@
  	if (entry)
  		entry->proc_fops = &proc_kmsg_operations;
+ #endif
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +	create_seq_entry("devices", gr_mode, &proc_devinfo_operations);
 +#else
@@ -1003,9 +1004,9 @@ diff -urNP linux-2.6.19.2/kernel/exit.c linux-2.6.19.2/kernel/exit.c
 --- linux-2.6.19.2/kernel/exit.c	2006-11-29 16:57:37.000000000 -0500
 +++ linux-2.6.19.2/kernel/exit.c	2007-01-20 17:29:55.000000000 -0500
 @@ -41,6 +41,7 @@
- #include <linux/vs_limit>
- #include <linux/vs_context.h>
  #include <linux/vs_network.h>
+ #include <linux/vs_pid.h>
+ #include <linux/vserver/global.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
@@ -1293,7 +1294,7 @@ diff -urNP linux-2.6.19.2/fs/proc/base.c linux-2.6.19.2/fs/proc/base.c
 @@ -1992,6 +2048,9 @@
  {
  	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
- 	struct task_struct *reaper = get_proc_task_real(filp->f_dentry->d_inode);
+ 	struct task_struct *reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	struct task_struct *tmp = current;
 +#endif
