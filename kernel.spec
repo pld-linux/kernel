@@ -136,7 +136,7 @@ Patch201:	grsecurity-vs-2.1.10-2.6.19.2-200701222307.patch
 Patch202:	linux-2.6-grsec-minimal.patch
 Patch203:	linux-2.6-grsec-vs-minimal.patch
 
-# from squashfs: http://dl.sourceforge.net/sourceforge/squashfs/squashfs3.2-r2.tar.gz for linux-2.6.19
+# from squashfs: http://dl.sourceforge.net/sourceforge/squashfs/squashfs3.2-r2.tar.gz for linux-2.6.20
 Patch300:	squashfs%{squashfs_version}-patch
 
 # fixes
