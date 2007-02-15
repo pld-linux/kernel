@@ -244,7 +244,7 @@ Patch38:	pom-ng-unclean-%{_netfilter_snap}.patch
 ###
 
 # derived from http://dl.sourceforge.net/l7-filter/netfilter-layer7-v2.2.tar.gz
-#Patch49:	kernel-2.6.13-2.6.16-layer7-2.2.patch
+Patch49:	kernel-2.6.13-2.6.16-layer7-2.2.patch
 
 # from http://www.linuximq.net/patchs/linux-2.6.16-imq2.diff
 Patch50:	linux-2.6.16-imq2.diff
@@ -828,7 +828,7 @@ done
 ##
 # end of netfilter
 
-#%patch49 -p1
+%patch49 -p1
 
 %patch50 -p1
 
