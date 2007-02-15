@@ -770,6 +770,8 @@ install %{SOURCE5} Makefile.ppclibs
 for i in suspend2-%{suspend_version}-for-2.6.16.9/[0-9]*; do
 patch -p1 -s < $i
 done
+rm -rf suspend2-%{suspend_version}-for-2.6.16.9
+
 %patch70 -p1
 %patch71 -p1
 
@@ -1697,6 +1699,9 @@ fi
 %if %{with source}
 %files source -f aux_files_exc
 %defattr(644,root,root,755)
+# TODO: here or -modules, or rm -f in install?
+#  %{_kernelsrcdir}/arch/parisc/lib/bitops.c
+#  %{_kernelsrcdir}/arch/sh/mm/Makefile
 %{_kernelsrcdir}/arch/*/[!Mk]*
 %{_kernelsrcdir}/arch/*/kernel/[!M]*
 %exclude %{_kernelsrcdir}/arch/*/kernel/asm-offsets.*
