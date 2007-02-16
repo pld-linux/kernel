@@ -1,0 +1,109 @@
+--- a/include/net/netfilter/nf_conntrack.h	2007-02-16 19:47:56.000000000 +0100
++++ b/include/net/netfilter/nf_conntrack.h	2007-02-16 22:13:48.000000000 +0100
+@@ -98,6 +98,14 @@ struct nf_conn
+ 	/* These are my tuples; original and reply */
+ 	struct nf_conntrack_tuple_hash tuplehash[IP_CT_DIR_MAX];
+ 
++#if defined(CONFIG_IP_NF_MATCH_LAYER7) || defined(CONFIG_IP_NF_MATCH_LAYER7_MODULE)
++	struct {
++		char * app_proto; /* e.g. "http". NULL before decision. "unknown" after decision if no match */
++		char * app_data;  /* application layer data so far.  NULL after match decision */
++		unsigned int app_data_len;
++	} layer7;
++#endif
++
+ 	/* Have we seen traffic both ways yet? (bitset) */
+ 	unsigned long status;
+ 
+--- a/net/netfilter/nf_conntrack_core.c	2007-02-16 21:52:48.000000000 +0100
++++ b/net/netfilter/nf_conntrack_core.c	2007-02-16 22:09:20.000000000 +0100
+@@ -350,6 +350,13 @@ destroy_conntrack(struct nf_conntrack *n
+ 	 * too. */
+ 	nf_ct_remove_expectations(ct);
+ 
++#if defined(CONFIG_IP_NF_MATCH_LAYER7) || defined(CONFIG_IP_NF_MATCH_LAYER7_MODULE)
++	if(ct->layer7.app_proto)
++		kfree(ct->layer7.app_proto);
++	if(ct->layer7.app_data)
++		kfree(ct->layer7.app_data);
++#endif
++
+ 	/* We overload first tuple to link into unconfirmed list. */
+ 	if (!nf_ct_is_confirmed(ct)) {
+ 		BUG_ON(list_empty(&ct->tuplehash[IP_CT_DIR_ORIGINAL].list));
+--- a/net/netfilter/nf_conntrack_standalone.c	2007-02-16 21:52:38.000000000 +0100
++++ b/net/netfilter/nf_conntrack_standalone.c	2007-02-16 22:05:10.000000000 +0100
+@@ -195,6 +195,12 @@ static int ct_seq_show(struct seq_file *
+ 		return -ENOSPC;
+ #endif
+ 
++#if defined(CONFIG_IP_NF_MATCH_LAYER7) || defined(CONFIG_IP_NF_MATCH_LAYER7_MODULE)
++	if(conntrack->layer7.app_proto)
++		if (seq_printf(s, "l7proto=%s ",conntrack->layer7.app_proto))
++			return 1;
++#endif
++
+ 	if (seq_printf(s, "use=%u\n", atomic_read(&conntrack->ct_general.use)))
+ 		return -ENOSPC;
+ 	
+--- a/net/ipv4/netfilter/Kconfig	2007-02-16 22:36:52.000000000 +0100
++++ b/net/ipv4/netfilter/Kconfig	2007-02-16 23:30:35.000000000 +0100
+@@ -247,7 +247,7 @@ config IP_NF_MATCH_IPRANGE
+ 
+ config IP_NF_MATCH_LAYER7
+ 	tristate "Layer 7 match support (EXPERIMENTAL)"
+-	depends on IP_NF_IPTABLES && IP_NF_CT_ACCT && IP_NF_CONNTRACK && EXPERIMENTAL
++	depends on NETFILTER_XTABLES && NF_CT_ACCT && NF_CONNTRACK && EXPERIMENTAL
+ 	help
+ 	  Say Y if you want to be able to classify connections (and their
+ 	  packets) based on regular expression matching of their application
+--- a/net/ipv4/netfilter/ipt_layer7.c	2007-02-16 23:58:06.000000000 +0100
++++ b/net/ipv4/netfilter/ipt_layer7.c	2007-02-17 00:04:09.000000000 +0100
+@@ -18,7 +18,8 @@
+ 
+ #include <linux/module.h>
+ #include <linux/skbuff.h>
+-#include <linux/netfilter_ipv4/ip_conntrack.h>
++#include <net/netfilter/nf_conntrack.h>
++#include <net/netfilter/nf_conntrack_core.h>
+ #include <linux/proc_fs.h>
+ #include <linux/ctype.h>
+ #include <net/ip.h>
+@@ -239,7 +240,7 @@ static int app_data_offset(const struct 
+ }
+ 
+ /* handles whether there's a match when we aren't appending data anymore */
+-static int match_no_append(struct ip_conntrack * conntrack, struct ip_conntrack * master_conntrack,
++static int match_no_append(struct nf_conn * conntrack, struct nf_conn * master_conntrack,
+ 			enum ip_conntrack_info ctinfo, enum ip_conntrack_info master_ctinfo,
+ 			struct ipt_layer7_info * info)
+ {
+@@ -299,7 +300,7 @@ static int match_no_append(struct ip_con
+ }
+ 
+ /* add the new app data to the conntrack.  Return number of bytes added. */
+-static int add_data(struct ip_conntrack * master_conntrack,
++static int add_data(struct nf_conn * master_conntrack,
+ 			char * app_data, int appdatalen)
+ {
+ 	int length = 0, i;
+@@ -340,7 +341,7 @@ match(const struct sk_buff *skb1,
+ {
+ 	struct ipt_layer7_info * info = (struct ipt_layer7_info *)matchinfo;
+ 	enum ip_conntrack_info master_ctinfo, ctinfo;
+-	struct ip_conntrack *master_conntrack, *conntrack;
++	struct nf_conn *master_conntrack, *conntrack;
+ 	unsigned char * app_data;
+ 	unsigned int pattern_result, appdatalen;
+ 	regexp * comppattern;
+@@ -359,8 +360,8 @@ match(const struct sk_buff *skb1,
+ 	/* Treat parent & all its children together as one connection, except
+ 	for the purpose of setting conntrack->layer7.app_proto in the actual
+ 	connection. This makes /proc/net/ip_conntrack more satisfying. */
+-	if(!(conntrack = ip_conntrack_get((struct sk_buff *)skb, &ctinfo)) ||
+-	   !(master_conntrack = ip_conntrack_get((struct sk_buff *)skb, &master_ctinfo))) {
++	if(!(conntrack = nf_ct_get((struct sk_buff *)skb, &ctinfo)) ||
++	   !(master_conntrack = nf_ct_get((struct sk_buff *)skb, &master_ctinfo))) {
+ 		//DPRINTK("layer7: packet is not from a known connection, giving up.\n");
+ 		return info->invert;
+ 	}
