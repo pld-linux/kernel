@@ -11,7 +11,7 @@
 # - (external) madwifi-old-openhal builds but have no supported hardware to test
 # - vserver 2.2.0-pre3 is (2.3.0.9 not yet tested)
 # - connlimit works
-# - raiser4 builds
+# - reiser4 builds
 #
 # TODO 2.6.20
 # - grsecurity
