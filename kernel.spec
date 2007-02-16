@@ -1,24 +1,23 @@
 #
-# STATUS: 2.6.20-0.6
+# STATUS: 2.6.20-0.6/0.10
 # - works for me
 # - builds --without grsecurity on i686 (up & smp)
 # - builds --with vesafb_tng
-# - nvidia works with & wo regparm
-# - nvidia-legacy works with & wo regparm
-# - ati blob doesn't build - apply pluto patch
-# - slmodem builds
-# - madwifi-ng works with & wo regparm
-# - madwifi-old-openhal builds but have no supported hardware to test
-# - vserver 2.2.0-pre3 looks good
+# - (external) nvidia works with & wo regparm
+# - (external) nvidia-legacy works with & wo regparm
+# - (external) ati blob doesn't build - apply pluto patch
+# - (external) slmodem builds
+# - (external) madwifi-ng works with & wo regparm
+# - (external) madwifi-old-openhal builds but have no supported hardware to test
+# - vserver 2.2.0-pre3 is (2.3.0.9 not yet tested)
 # - connlimit works
+# - raiser4 builds
 #
 # TODO 2.6.20
-# - vserver - use 2.3 development line
 # - grsecurity
-# - new alsa rc2
+# - new alsa rc2 - 1.0.14rc2 is in git10 tree
 # - spec cleanup
 # - test external modules
-# - p4 fbsplash - needs update (bcond off)
 # - p200 linux-2.6-ppc-ICE-hacks.patch - untested - ppc needed
 # - update configs for up/smp x86_64
 # - update configs for up/smp sparc
@@ -27,11 +26,8 @@
 # - update configs for up/smp ppc
 # - update configs for up/smp ia64
 # - enable gcc42/th build (in bcond)
-# - update patch3 - bootsplash
-# - update patch4 - fbsplash
 #
 # FUTURE:
-# - p51 reiser4 - needs update (bcond off)
 # - separate PaX and grsecurity support - future
 # - update xen patch for 2.6.20
 # - wanpipe -> use wanpipe.spec instead ?
@@ -136,7 +132,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.10
+%define		_rel			0.11
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
