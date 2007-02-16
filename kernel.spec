@@ -1699,58 +1699,6 @@ fi
 %if %{with source}
 %files source -f aux_files_exc
 %defattr(644,root,root,755)
-# TODO: here or -modules, or rm -f in install?
-%if 0
-# ac-ppc:
-%{_kernelsrcdir}/arch/parisc/lib/bitops.c
-%{_kernelsrcdir}/arch/sh/mm/Makefile
-# ac-sparc:
-%{_kernelsrcdir}/arch/cris/mm/fault.c
-%{_kernelsrcdir}/drivers/crypto/padlock-aes.c
-%{_kernelsrcdir}/drivers/message/fusion/Makefile
-%{_kernelsrcdir}/drivers/sh/superhyway/superhyway-sysfs.c
-%{_kernelsrcdir}/fs/sysv/balloc.c
-# ac-i686:
-%{_kernelsrcdir}/arch/arm/plat-omap/clock.c
-%{_kernelsrcdir}/arch/m68k/atari/ataints.c
-%{_kernelsrcdir}/drivers/base/power/main.c
-%{_kernelsrcdir}/drivers/media/common/ir-common.c
-%{_kernelsrcdir}/drivers/s390/block/Kconfig
-%{_kernelsrcdir}/fs/hfsplus/bfind.c
-%{_kernelsrcdir}/net/lapb/lapb_iface.c
-# ac-i386:
-%{_kernelsrcdir}/arch/arm/plat-omap/clock.c
-%{_kernelsrcdir}/arch/m68k/atari/ataints.c
-%{_kernelsrcdir}/drivers/base/power/main.c
-%{_kernelsrcdir}/drivers/media/common/ir-common.c
-%{_kernelsrcdir}/drivers/s390/block/Kconfig
-%{_kernelsrcdir}/fs/hfsplus/bfind.c
-%{_kernelsrcdir}/net/lapb/lapb_iface.c
-# ac-athlon:
-%{_kernelsrcdir}/arch/arm/plat-omap/clock.c
-%{_kernelsrcdir}/arch/m68k/atari/ataints.c
-%{_kernelsrcdir}/drivers/base/power/main.c
-%{_kernelsrcdir}/drivers/media/common/ir-common.c
-%{_kernelsrcdir}/drivers/s390/block/Kconfig
-%{_kernelsrcdir}/fs/hfsplus/bfind.c
-%{_kernelsrcdir}/net/lapb/lapb_iface.c
-# ac-i586:
-%{_kernelsrcdir}/arch/arm/plat-omap/clock.c
-%{_kernelsrcdir}/arch/m68k/atari/ataints.c
-%{_kernelsrcdir}/drivers/base/power/main.c
-%{_kernelsrcdir}/drivers/media/common/ir-common.c
-%{_kernelsrcdir}/drivers/s390/block/Kconfig
-%{_kernelsrcdir}/fs/hfsplus/bfind.c
-%{_kernelsrcdir}/net/lapb/lapb_iface.c
-# ac-alpha:
-%{_kernelsrcdir}/arch/arm26/nwfpe/double_cpdo.c
-%{_kernelsrcdir}/drivers/char/agp/agp.h
-%{_kernelsrcdir}/drivers/media/dvb/frontends/Makefile
-%{_kernelsrcdir}/drivers/scsi/NCR5380.c
-%{_kernelsrcdir}/fs/ncpfs/Makefile
-%{_kernelsrcdir}/net/sctp/Makefile
-%endif
-
 %{_kernelsrcdir}/arch/*/[!Mk]*
 %{_kernelsrcdir}/arch/*/kernel/[!M]*
 %exclude %{_kernelsrcdir}/arch/*/kernel/asm-offsets.*
