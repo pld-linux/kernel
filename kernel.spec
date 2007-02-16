@@ -352,6 +352,7 @@ Patch75:	linux-2.6-ide-acpi-support.patch
 Patch85:	hostap-kernel-2.6.18.patch
 
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.20-vs2.3.0.9.diff
+# TODO: http://vserver.13thfloor.at/Experimental/patch-2.6.20-vs2.3.0.10.1.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
@@ -368,6 +369,7 @@ Patch200:	linux-2.6-ppc-ICE-hacks.patch
 # http://www.ssi.bg/~ja/routes-2.6.19-12.diff
 Patch300:	routes-2.6.19-12.diff
 Patch301:	pom-ng-connlimit-20061213_nf_conntrack_port.patch
+Patch302:	linux-2.6-layer7_nf_conntrack_port.patch
 
 Patch400:       kernel-bcm43xx-2.6.20_combined.patch
 
@@ -998,6 +1000,7 @@ install %{SOURCE5} Makefile.ppclibs
 ## layer7
 %patch48 -p1
 %patch49 -p1
+%patch302 -p1
 
 ##
 # end of netfilter
