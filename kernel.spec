@@ -12,8 +12,10 @@
 # - vserver 2.2.0-pre3 is (2.3.0.9 not yet tested)
 # - connlimit works
 # - reiser4 builds
+# - layer7 builds
 #
 # TODO 2.6.20
+# - testbuild of smp TARPIT and ROUTE nf targets
 # - grsecurity
 # - new alsa rc2 - 1.0.14rc2 is in git10 tree
 # - spec cleanup
@@ -132,7 +134,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.11
+%define		_rel			0.12
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
