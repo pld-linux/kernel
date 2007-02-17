@@ -213,7 +213,7 @@ diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_m
  		{"locks",	locks_read_proc},
  		{"execdomains",	execdomains_read_proc},
  		{NULL,}
-@@ -693,13 +697,26 @@ void __init proc_misc_init(void)
+@@ -735,6 +735,15 @@ void __init proc_misc_init(void) 
  	for (p = simple_ones; p->name; p++)
  		create_proc_read_entry(p->name, 0, NULL, p->read_proc, NULL);
  
@@ -229,9 +229,10 @@ diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_m
  	proc_symlink("mounts", NULL, "self/mounts");
  
  	/* And now for trickier ones */
- 	entry = create_proc_entry("kmsg", S_IRUSR, &proc_root);
+@@ -743,7 +752,11 @@
  	if (entry)
  		entry->proc_fops = &proc_kmsg_operations;
+ #endif
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +	create_seq_entry("devices", gr_mode, &proc_devinfo_operations);
 +#else
@@ -1290,7 +1291,7 @@ diff -urN linux-2.6.18/fs/proc/base.c linux-2.6.18-grsec/fs/proc/base.c
 @@ -1992,6 +2048,9 @@ int proc_pid_readdir(struct file * filp,
  {
  	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
- 	struct task_struct *reaper = get_proc_task_real(filp->f_dentry->d_inode);
+ 	struct task_struct *reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	struct task_struct *tmp = current;
 +#endif
