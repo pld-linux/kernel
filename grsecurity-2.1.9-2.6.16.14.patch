@@ -6130,13 +6130,14 @@ diff -urNp linux-2.6.16.12/drivers/char/mem.c linux-2.6.16.12/drivers/char/mem.c
  	if (p < (unsigned long) high_memory) {
  
  		wrote = count;
-@@ -613,7 +633,23 @@ static inline size_t read_zero_pagealign
+@@ -633,9 +633,25 @@
  			count = size;
  
  		zap_page_range(vma, addr, count, NULL);
--        	zeromap_page_range(vma, addr, count, PAGE_COPY);
-+        	zeromap_page_range(vma, addr, count, vma->vm_page_prot);
-+
+-        	if (zeromap_page_range(vma, addr, count, PAGE_COPY))
++		if (zeromap_page_range(vma, addr, count, vma->vm_page_prot))
+ 			break;
+ 
 +#ifdef CONFIG_PAX_SEGMEXEC
 +		if (vma->vm_flags & VM_MIRROR) {
 +			unsigned long addr_m;
@@ -6149,12 +6150,13 @@ diff -urNp linux-2.6.16.12/drivers/char/mem.c linux-2.6.16.12/drivers/char/mem.c
 +				zap_page_range(vma_m, addr_m, count, NULL);
 +			} else
 +				printk(KERN_ERR "PAX: VMMIRROR: read_zero bug, %08lx, %08lx\n",
-+				       addr, vma->vm_start);
++						addr, vma->vm_start);
 +		}
 +#endif
- 
++
  		size -= count;
  		buf += count;
+ 		addr += count;
 @@ -762,6 +798,16 @@ static loff_t memory_lseek(struct file *
  
  static int open_port(struct inode * inode, struct file * filp)
