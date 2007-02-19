@@ -1,22 +1,23 @@
 #
-# STATUS: 2.6.20-0.6/0.12
+# STATUS: 2.6.20-0.6/0.13
 # - works for me
-# - builds --without grsecurity on i686 (up & smp)
-# - builds --with vesafb_tng
+# - builds on i686 (up & smp)
+# - builds --with vesafb_tng --with reiser4 (with grsec_minimal)
+# - builds --with fbsplash
 # - (external) nvidia works with & wo regparm
 # - (external) nvidia-legacy works with & wo regparm
 # - (external) ati blob doesn't build - apply pluto patch
 # - (external) slmodem builds
 # - (external) madwifi-ng works with & wo regparm
 # - (external) madwifi-old-openhal builds but have no supported hardware to test
-# - vserver 2.2.0-pre3 is (2.3.0.9 not yet tested)
+# - vserver 2.2.0-pre3 works (2.3.0.10.1 not yet tested)
 # - connlimit works
 # - reiser4 builds
 # - layer7 builds
 # - TARPIT and ROUTE smp locking issues should be resolved
 #
 # TODO 2.6.20
-# - testbuild of vserver 2.3.0.10.1 and updated grsec_minimal
+# - testbuild of updated reiser4 and ipset patches (kmem_cache_t -> struct kmem_cache)
 # - grsec_full and pax
 # - new alsa rc2 - 1.0.14rc2 is in git10 tree
 # - spec cleanup
@@ -40,6 +41,7 @@
 # - pom-ng rpc -> ?
 # - pom-ng rtsp-conntrack -> nf_conntrack ?
 # - pom-ng talk-conntrack-nat -> nf_conntrack ?
+# - nf-hipac ?
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -140,7 +142,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.13
+%define		_rel			0.14
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
