@@ -145,7 +145,7 @@ Summary(de.UTF-8):   Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr.UTF-8):   Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl.UTF-8):   Jądro Linuksa
 Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
-%define		_basever	2.6.21
+%define		_basever	2.6.20
 %define		_postver	%{nil}
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
