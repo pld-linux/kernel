@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.20-0.6/0.10
+# STATUS: 2.6.20-0.6/0.12
 # - works for me
 # - builds --without grsecurity on i686 (up & smp)
 # - builds --with vesafb_tng
@@ -13,10 +13,11 @@
 # - connlimit works
 # - reiser4 builds
 # - layer7 builds
+# - TARPIT and ROUTE smp locking issues should be resolved
 #
 # TODO 2.6.20
-# - testbuild of smp TARPIT and ROUTE nf targets
-# - grsecurity
+# - testbuild of vserver 2.3.0.10.1 and updated grsec_minimal
+# - grsec_full and pax
 # - new alsa rc2 - 1.0.14rc2 is in git10 tree
 # - spec cleanup
 # - test external modules
@@ -28,12 +29,17 @@
 # - update configs for up/smp ppc
 # - update configs for up/smp ia64
 # - enable gcc42/th build (in bcond)
+# - mms-conntrack-nat - port to nf_conntrack and enable in kernel-netfilter.config
 #
 # FUTURE:
 # - separate PaX and grsecurity support - future
 # - update xen patch for 2.6.20
 # - wanpipe -> use wanpipe.spec instead ?
 # - Linux ABI - needs update.
+# - pom-ng quake3-conntrack-nat -> nf_conntrack ?
+# - pom-ng rpc -> ?
+# - pom-ng rtsp-conntrack -> nf_conntrack ?
+# - pom-ng talk-conntrack-nat -> nf_conntrack ?
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -134,7 +140,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.12
+%define		_rel			0.13
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -293,6 +299,7 @@ Patch49:	kernel-2.6.18-layer7-2.7-2.6.19-fix.patch
 #	pom-ng-ROUTE-20061213.patch
 # 	pom-ng-TARPIT-20061213.patch
 #	pom-ng-mms-conntrack-nat-20061213.patch
+#	(note: mms-conntrack-nat depends on ip_conntrack - needs porting to nf_conntrack)
 # all below applied to sources with all preceeding patches applied:
 #	pom-ng-rsh-20061213.patch
 # [pom external]
@@ -316,11 +323,7 @@ Patch49:	kernel-2.6.18-layer7-2.7-2.6.19-fix.patch
 
 Patch50:	linux-2.6.19-imq1.diff
 
-# from http://laurent.riffard.free.fr/reiser4/reiser4-for-2.6.19.patch.gz
-# based on http://ftp.namesys.com/pub/reiser4-for-2.6/2.6.18/reiser4-for-2.6.18-3.patch.gz
-# with 9 pathes from reiserfs mailing-list.
-# details http://www.mail-archive.com/reiserfs-list@namesys.com/msg22492.html
-# TODO: 	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.19/reiser4-for-2.6.19-2.patch.gz
+# based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.19/reiser4-for-2.6.19-2.patch.gz
 Patch51:	reiser4-for-2.6.19-2.patch
 
 # esfq
@@ -353,8 +356,7 @@ Patch75:	linux-2.6-ide-acpi-support.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch 
 Patch85:	hostap-kernel-2.6.18.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.20-vs2.3.0.9.diff
-# TODO: http://vserver.13thfloor.at/Experimental/patch-2.6.20-vs2.3.0.10.1.diff
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.20-vs2.3.0.10.1.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
