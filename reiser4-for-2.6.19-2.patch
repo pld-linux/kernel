@@ -14463,7 +14463,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/flush_queue.c linux-2.6.19/fs/reiser4/flu
 +}
 +
 +/* slab for flush queues */
-+static kmem_cache_t *fq_slab;
++static struct kmem_cache *fq_slab;
 +
 +/**
 + * reiser4_init_fqs - create flush queue cache
@@ -15305,7 +15305,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/fsdata.c linux-2.6.19/fs/reiser4/fsdata.c
 +#include "inode.h"
 +
 +/* cache or dir_cursors */
-+static kmem_cache_t *d_cursor_cache;
++static struct kmem_cache *d_cursor_cache;
 +static struct shrinker *d_cursor_shrinker;
 +
 +/* list of unused cursors */
@@ -15894,7 +15894,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/fsdata.c linux-2.6.19/fs/reiser4/fsdata.c
 +}
 +
 +/* slab for reiser4_dentry_fsdata */
-+static kmem_cache_t *dentry_fsdata_cache;
++static struct kmem_cache *dentry_fsdata_cache;
 +
 +/**
 + * reiser4_init_dentry_fsdata - create cache of dentry_fsdata
@@ -15961,7 +15961,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/fsdata.c linux-2.6.19/fs/reiser4/fsdata.c
 +}
 +
 +/* slab for reiser4_file_fsdata */
-+static kmem_cache_t *file_fsdata_cache;
++static struct kmem_cache *file_fsdata_cache;
 +
 +/**
 + * reiser4_init_file_fsdata - create cache of reiser4_file_fsdata
@@ -18406,7 +18406,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/jnode.c linux-2.6.19/fs/reiser4/jnode.c
 +#include <linux/fs.h>		/* for struct address_space  */
 +#include <linux/writeback.h>	/* for inode_lock */
 +
-+static kmem_cache_t *_jnode_slab = NULL;
++static struct kmem_cache *_jnode_slab = NULL;
 +
 +static void jnode_set_type(jnode * node, jnode_type type);
 +static int jdelete(jnode * node);
@@ -60903,7 +60903,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/plugin/plugin_set.c linux-2.6.19/fs/reise
 +#include <linux/stddef.h>
 +
 +/* slab for plugin sets */
-+static kmem_cache_t *plugin_set_slab;
++static struct kmem_cache *plugin_set_slab;
 +
 +static spinlock_t plugin_set_lock[8] __cacheline_aligned_in_smp = {
 +	[0 ... 7] = SPIN_LOCK_UNLOCKED
@@ -67488,7 +67488,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/super.h linux-2.6.19/fs/reiser4/super.h
 +void print_fs_info(const char *prefix, const struct super_block *);
 +#endif
 +
-+extern void destroy_reiser4_cache(kmem_cache_t **);
++extern void destroy_reiser4_cache(struct kmem_cache **);
 +
 +extern struct super_operations reiser4_super_operations;
 +extern struct export_operations reiser4_export_operations;
@@ -67526,7 +67526,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/super_ops.c linux-2.6.19/fs/reiser4/super
 +#include <linux/debugfs.h>
 +
 +/* slab cache for inodes */
-+static kmem_cache_t *inode_cache;
++static struct kmem_cache *inode_cache;
 +
 +static struct dentry *reiser4_debugfs_root = NULL;
 +
@@ -67539,7 +67539,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/super_ops.c linux-2.6.19/fs/reiser4/super
 + * Initialization function to be called when new page is allocated by reiser4
 + * inode cache. It is set on inode cache creation.
 + */
-+static void init_once(void *obj, kmem_cache_t *cache, unsigned long flags)
++static void init_once(void *obj, struct kmem_cache *cache, unsigned long flags)
 +{
 +	reiser4_inode_object *info;
 +
@@ -68107,7 +68107,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/super_ops.c linux-2.6.19/fs/reiser4/super
 +	.next = NULL
 +};
 +
-+void destroy_reiser4_cache(kmem_cache_t **cachep)
++void destroy_reiser4_cache(struct kmem_cache **cachep)
 +{
 +	BUG_ON(*cachep == NULL);
 +	kmem_cache_destroy(*cachep);
@@ -72734,7 +72734,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/txnmgr.c linux-2.6.19/fs/reiser4/txnmgr.c
 +   For actually implementing these out-of-system-call-scopped transcrashes, the
 +   reiser4_context has a "txn_handle *trans" pointer that may be set to an open
 +   transcrash.  Currently there are no dynamically-allocated transcrashes, but there is a
-+   "kmem_cache_t *_txnh_slab" created for that purpose in this file.
++   "struct kmem_cache *_txnh_slab" created for that purpose in this file.
 +*/
 +
 +/* Extending the other system call interfaces for future transaction features:
@@ -72923,9 +72923,9 @@ diff -urN linux-2.6.19.orig/fs/reiser4/txnmgr.c linux-2.6.19/fs/reiser4/txnmgr.c
 +
 +/* FIXME: In theory, we should be using the slab cache init & destructor
 +   methods instead of, e.g., jnode_init, etc. */
-+static kmem_cache_t *_atom_slab = NULL;
++static struct kmem_cache *_atom_slab = NULL;
 +/* this is for user-visible, cross system-call transactions. */
-+static kmem_cache_t *_txnh_slab = NULL;
++static struct kmem_cache *_txnh_slab = NULL;
 +
 +/**
 + * init_txnmgr_static - create transaction manager slab caches
@@ -79329,7 +79329,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/znode.c linux-2.6.19/fs/reiser4/znode.c
 +#undef KMALLOC
 +
 +/* slab for znodes */
-+static kmem_cache_t *znode_cache;
++static struct kmem_cache *znode_cache;
 +
 +int znode_shift_order;
 +
