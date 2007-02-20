@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.20-0.6/0.13
+# STATUS: 2.6.20-0.13/0.14
 # - works for me
 # - builds on i686 (up & smp)
 # - builds --with vesafb_tng --with reiser4 (with grsec_minimal)
@@ -10,14 +10,13 @@
 # - (external) slmodem builds
 # - (external) madwifi-ng works with & wo regparm
 # - (external) madwifi-old-openhal builds but have no supported hardware to test
-# - vserver 2.2.0-pre3 works (2.3.0.10.1 not yet tested)
+# - vserver 2.3.0.10.1 works
 # - connlimit works
 # - reiser4 builds
 # - layer7 builds
 # - TARPIT and ROUTE smp locking issues should be resolved
 #
-# TODO 2.6.20
-# - testbuild of updated reiser4 and ipset patches (kmem_cache_t -> struct kmem_cache)
+# TODO 2.6.20.1
 # - grsec_full and pax
 # - new alsa rc2 - 1.0.14rc2 is in git10 tree
 # - spec cleanup
@@ -142,7 +141,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.14
+%define		_rel			0.1
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -166,7 +165,7 @@ Summary(pl.UTF-8):   Jądro Linuksa
 Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_basever	2.6.20
-%define		_postver	%{nil}
+%define		_postver	.1
 %define		_prepatch	%{nil}
 %define		_pre_rc		%{nil}
 %define		_rc		%{nil}
@@ -192,7 +191,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	899a0932373a5299b69b9579fceb099e
+# Source1-md5:	5739512c396b37d9506bca2afe5aaa1d
 %endif
 
 Source3:	kernel-autoconf.h
@@ -202,7 +201,7 @@ Source7:	kernel-module-build.pl
 
 # TODO - cleanup
 Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
-#Source14-md5:	f2563a2d748c7480559e8d3ff77eb18a
+# Source14-md5:	f2563a2d748c7480559e8d3ff77eb18a
 
 Source20:	kernel-i386.config
 Source21:	kernel-i386-smp.config
