@@ -1,9 +1,11 @@
 #
 # STATUS: 2.6.20-0.13/0.14
-# - works for me
-# - builds on i686 (up & smp)
-# - builds --with vesafb_tng --with reiser4 (with grsec_minimal)
-# - builds --with fbsplash
+# - works for me (i686 up)
+# - builds on i686 (up & smp) with gcc-3.3.6-4 (Ac)
+# - builds on x86_64 (up & smp) with gcc-4.2.0-0.20070214.1.x86_64 (Th)
+# - standard config includes vserver, suspend2 and grsec_minimal
+# - builds --with vesafb_tng (i686) --with reiser4 (i686/x86_64)
+# - builds --with fbsplash (i686)
 # - (external) nvidia works with & wo regparm
 # - (external) nvidia-legacy works with & wo regparm
 # - (external) ati blob doesn't build - apply pluto patch
@@ -22,13 +24,11 @@
 # - spec cleanup
 # - test external modules
 # - p200 linux-2.6-ppc-ICE-hacks.patch - untested - ppc needed
-# - update configs for up/smp x86_64
 # - update configs for up/smp sparc
 # - update configs for up/smp sparc64
 # - update configs for up/smp alpha
 # - update configs for up/smp ppc
 # - update configs for up/smp ia64
-# - enable gcc42/th build (in bcond)
 # - mms-conntrack-nat - port to nf_conntrack and enable in kernel-netfilter.config
 #
 # FUTURE:
@@ -141,7 +141,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.1
+%define		_rel			0.2
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
