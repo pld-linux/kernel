@@ -143,7 +143,12 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.3
+%define		_basever		2.6.20
+%define		_postver		.1
+%define		_prepatch		%{nil}
+%define		_pre_rc			%{nil}
+%define		_rc			%{nil}
+%define		_rel			0.4
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -165,13 +170,6 @@ Summary(de.UTF-8):   Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr.UTF-8):   Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl.UTF-8):   Jądro Linuksa
 Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
-
-%define		_basever	2.6.20
-%define		_postver	.1
-%define		_prepatch	%{nil}
-%define		_pre_rc		%{nil}
-%define		_rc		%{nil}
-#define		_rc		-rc7
 
 %if "%{_prepatch}" == "%{nil}"
 Version:	%{_basever}%{_postver}
