@@ -148,7 +148,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.4
+%define		_rel			0.5
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
