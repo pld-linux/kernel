@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.20-0.13/0.14
+# STATUS: 2.6.20-0.13/2.6.20.1-0.1
 # - works for me (i686 up)
 # - builds on i686 (up & smp) with gcc-3.3.6-4 (Ac)
 # - builds on x86_64 (up & smp) with gcc-4.2.0-0.20070214.1.x86_64 (Th)
@@ -12,6 +12,8 @@
 # - (external) slmodem builds
 # - (external) madwifi-ng works with & wo regparm
 # - (external) madwifi-old-openhal builds but have no supported hardware to test
+# - (external) lirc builds
+# - (external) ipp2p builds
 # - vserver 2.3.0.10.1 works
 # - connlimit works
 # - reiser4 builds
@@ -141,7 +143,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			0.2
+%define		_rel			0.3
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
