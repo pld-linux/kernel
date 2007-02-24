@@ -156,7 +156,7 @@ Summary(fr.UTF-8):   Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl.UTF-8):   Jądro Linuksa
 Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 %define		_basever	2.6.19
-%define		_postver	.2
+%define		_postver	.3
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
@@ -169,7 +169,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar
 # Source0-md5:	443c265b57e87eadc0c677c3acc37e20
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	e8a9a6dc65da3f7b192e7caa969f9a1b
+# Source1-md5:	ef8491f189893c250a61cea825de025c
 %endif
 Source3:	kernel-autoconf.h
 Source4:	kernel-config.h
@@ -1200,15 +1200,20 @@ BuildConfig() {
 %endif
 
 %if %{with xen0} || %{with xenU}
+	cat %{SOURCE46} >> arch/%{_target_base_arch}/defconfig
+%ifarch %{ix86}
 	sed -i "s:CONFIG_X86_PC=y:# CONFIG_X86_PC is not set:" arch/%{_target_base_arch}/defconfig
+	sed -i "s:# CONFIG_X86_XEN is not set:CONFIG_X86_XEN=y:" arch/%{_target_base_arch}/defconfig
+%endif
+%ifarch %{x8664}
+	sed -i "s:# CONFIG_X86_64_XEN is not set:CONFIG_X86_64_XEN=y:" arch/%{_target_base_arch}/defconfig
+%endif
 	sed -i "s:CONFIG_RIO=[ym]:# CONFIG_RIO is not set:" arch/%{_target_base_arch}/defconfig
 	sed -i "s:CONFIG_SOUND_PAS=[ym]:# CONFIG_SOUND_PAS is not set:" arch/%{_target_base_arch}/defconfig
 
 	# framebuffer devices generally don't work with xen
 	# and kernel will crash on boot if vesafb-tng is compiled in (even if off by default)
 	sed -i "s:CONFIG_FB=y:# CONFIG_FB is not set:" arch/%{_target_base_arch}/defconfig
-
-	cat %{SOURCE46} >> arch/%{_target_base_arch}/defconfig
 %endif
 
 %if %{with xen0}
