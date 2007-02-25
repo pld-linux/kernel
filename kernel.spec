@@ -8,7 +8,7 @@
 # - builds --with fbsplash (i686)
 # - (external) nvidia works with & wo regparm
 # - (external) nvidia-legacy works with & wo regparm
-# - (external) ati blob doesn't build - apply pluto patch
+# - (external) ati firegl builds (but probably have issues with smp)
 # - (external) slmodem builds
 # - (external) madwifi-ng works with & wo regparm
 # - (external) madwifi-old-openhal builds but have no supported hardware to test
@@ -21,6 +21,7 @@
 # - TARPIT and ROUTE smp locking issues should be resolved
 #
 # TODO 2.6.20.1
+# - fine-tune the ppc configs and test build on ppc
 # - grsec_full and pax
 # - new alsa rc2 - 1.0.14rc2 is in git10 tree
 # - spec cleanup
@@ -29,7 +30,6 @@
 # - update configs for up/smp sparc
 # - update configs for up/smp sparc64
 # - update configs for up/smp alpha
-# - update configs for up/smp ppc
 # - update configs for up/smp ia64
 # - mms-conntrack-nat - port to nf_conntrack and enable in kernel-netfilter.config
 #
@@ -148,7 +148,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.5
+%define		_rel			0.6
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
