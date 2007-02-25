@@ -22,15 +22,12 @@
 #
 # TODO 2.6.20.1
 # - fine-tune the ppc configs and test build on ppc
+# - test build on sparc, sparc64, alpha
 # - grsec_full and pax
-# - new alsa rc2 - 1.0.14rc2 is in git10 tree
+# - new alsa rc2 - 1.0.14rc2 is in 2.6.20-git10 tree
 # - spec cleanup
 # - test external modules
 # - p200 linux-2.6-ppc-ICE-hacks.patch - untested - ppc needed
-# - update configs for up/smp sparc
-# - update configs for up/smp sparc64
-# - update configs for up/smp alpha
-# - update configs for up/smp ia64
 # - mms-conntrack-nat - port to nf_conntrack and enable in kernel-netfilter.config
 #
 # FUTURE:
@@ -43,6 +40,7 @@
 # - pom-ng rtsp-conntrack -> nf_conntrack ?
 # - pom-ng talk-conntrack-nat -> nf_conntrack ?
 # - nf-hipac ?
+# - update configs for up/smp ia64 - no builder ?
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -70,8 +68,8 @@
 %bcond_without	ide_acpi	# support for ide-acpi from SuSE
 %bcond_without	imq		# imq support
 
-%bcond_without	vserver		# support for VServer 
-%bcond_without	suspend2	# support for Suspend2 
+%bcond_without	vserver		# support for VServer (enabled by default) 
+%bcond_without	suspend2	# support for Suspend2 (enabled by default)
 
 %{?debug:%define with_verbose 1}
 
@@ -148,7 +146,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.6
+%define		_rel			0.7
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
