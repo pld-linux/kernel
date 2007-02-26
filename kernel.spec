@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.20-0.13/2.6.20.1-0.1
+# STATUS: 2.6.20-0.13/2.6.20.1-0.8
 # - works for me (i686 up)
 # - builds on i686 (up & smp) with gcc-3.3.6-4 (Ac)
 # - builds on x86_64 (up & smp) with gcc-4.2.0-0.20070214.1.x86_64 (Th)
@@ -147,7 +147,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.9
+%define		_rel			0.10
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
