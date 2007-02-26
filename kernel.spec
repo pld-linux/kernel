@@ -67,7 +67,7 @@
 
 %bcond_without	ide_acpi	# support for ide-acpi from SuSE
 %bcond_without	imq		# imq support
-%bcond_with	wrr		# wrr support
+%bcond_without	wrr		# wrr support
 
 %bcond_without	vserver		# support for VServer (enabled by default) 
 %bcond_without	suspend2	# support for Suspend2 (enabled by default)
@@ -147,7 +147,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.8
+%define		_rel			0.9
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
