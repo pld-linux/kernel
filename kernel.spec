@@ -67,6 +67,7 @@
 
 %bcond_without	ide_acpi	# support for ide-acpi from SuSE
 %bcond_without	imq		# imq support
+%bcond_with	wrr		# wrr support
 
 %bcond_without	vserver		# support for VServer (enabled by default) 
 %bcond_without	suspend2	# support for Suspend2 (enabled by default)
@@ -146,7 +147,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.7
+%define		_rel			0.8
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -230,6 +231,7 @@ Source49:	kernel-pax.config
 Source50:	kernel-no-pax.config
 Source55:	kernel-imq.config
 Source56:	kernel-reiser4.config
+Source57:	kernel-wrr.config
 
 ###
 #	Patches
@@ -322,12 +324,15 @@ Patch49:	kernel-2.6.18-layer7-2.7-2.6.19-fix.patch
 
 Patch50:	linux-2.6.19-imq1.diff
 
-# based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.19/reiser4-for-2.6.19-2.patch.gz
+# reiser4 based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.19/reiser4-for-2.6.19-2.patch.gz
 Patch51:	reiser4-for-2.6.19-2.patch
 
-# esfq
-# from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
+# wrr http://www.zz9.dk/patches/wrr-linux-051111-2.6.20.patch.gz
+Patch52:	wrr-linux-051111-2.6.20.patch
+
+# esfq from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
 Patch53:	esfq-kernel.patch
+
 # from http://memebeam.org/free-software/toshiba_acpi/
 Patch54:	linux-2.6-toshiba_acpi_0.18-dev_toshiba_test4.patch
 # by Baggins request:
@@ -1017,9 +1022,16 @@ install %{SOURCE5} Makefile.ppclibs
 %patch51 -p1
 %endif
 
+# esfq
 %patch53 -p1
+
+%if %{with wrr} 
+%patch52 -p1
+%endif
+
 # TODO check linux-2.6-toshiba_acpi_0.18-dev_toshiba_test4.patch
 #patch54 -p1
+
 %patch55 -p1
 %patch56 -p1
 
@@ -1228,6 +1240,10 @@ BuildConfig() {
 
 %if %{with imq}
 	cat %{SOURCE55} >> arch/%{_target_base_arch}/defconfig
+%endif
+
+%if %{with wrr}
+	cat %{SOURCE57} >> arch/%{_target_base_arch}/defconfig
 %endif
 
 %if %{with reiser4}
