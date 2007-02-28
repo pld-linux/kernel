@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.20-0.13/2.6.20.1-0.8
+# STATUS: 2.6.20.1-0.11
 # - works for me (i686 up)
 # - builds on i686 (up & smp) with gcc-3.3.6-4 (Ac)
 # - builds on x86_64 (up & smp) with gcc-4.2.0-0.20070214.1.x86_64 (Th)
@@ -14,7 +14,8 @@
 # - (external) madwifi-old-openhal builds but have no supported hardware to test
 # - (external) lirc builds
 # - (external) ipp2p builds
-# - vserver 2.3.0.10.1 works
+# - (external) truecrypt builds
+# - vserver 2.3.0.11 works
 # - connlimit works
 # - reiser4 builds
 # - layer7 builds
@@ -147,7 +148,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.11
+%define		_rel			0.12
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -395,8 +396,11 @@ Patch2100:	linux-2.6.20-paravirt_ops-needed-by-blobs.patch
 #wanpipe
 #Patch3000:	wanpipe-beta7-2.3.4.patch
 
-# http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.19.2-200701222307.patch.gz
-Patch9999:	grsecurity-2.1.10-2.6.19.2.patch
+# TODO: http://www.grsecurity.net/~paxguy1/pax-linux-2.6.20.1-test5.patch
+Patch9998:	pax-linux-2.6.20.patch
+
+# TODO: http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.19.3-200702201828.patch
+Patch9999:	grsecurity-2.1.10.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -1082,7 +1086,7 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 %if %{with pax}
-%patch9999 -p1
+%patch9998 -p1
 %endif
 
 
