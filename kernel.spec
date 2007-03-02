@@ -1067,6 +1067,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch101 -p1
 %endif
 %patch102 -p1
+%patch103 -p1
 %endif
 
 #%if %{with xen0} || %{with xenU}
