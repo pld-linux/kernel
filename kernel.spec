@@ -51,15 +51,16 @@
 %bcond_without	regparm		# if your blob doesn't work try disable this
 
 %bcond_with	abi		# build ABI support only ix86 !!
-%bcond_with	grsec_full	# build full grsecurity
-%bcond_with	pax		# build PaX and full grsecurity (todo: separate)
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	xen0		# added Xen0 support
 %bcond_with	xenU		# added XenU support
 %bcond_with	reiser4		# support for reiser4 fs
 
-%bcond_without	grsecurity	# don't build grsecurity at all
+%bcond_without	grsecurity	# don't build grsecurity nor pax at all
 %bcond_without	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
+%bcond_with	grsec_full	# build full grsecurity
+%bcond_with	pax_full	# build pax and full grsecurity (ie. grsec_full && pax)
+%bcond_with	pax		# build pax support
 
 %bcond_with	fbsplash	# fbsplash instead of bootsplash
 %bcond_with	vesafb_tng	# vesafb-tng, vesafb replacement from gentoo
@@ -79,12 +80,14 @@
 %undefine	with_grsec_full
 %undefine	with_grsec_minimal
 %undefine	with_pax
+%undefine	with_pax_full
 %endif
 
-%if %{with pax}
+%if %{with pax_full}
 %undefine	with_grsec_minimal
-%undefine	with_grsec_full
+%define		with_grsec_full		1
 %define		with_grsecurity		1
+%define		with_pax		1
 %endif
 
 %if %{with grsec_full}
@@ -94,8 +97,8 @@
 
 %if %{with grsec_minimal}
 %undefine	with_grsec_full
+%undefine	with_pax_full
 %define		with_grsecurity		1
-%undefine	with_pax
 %endif
 
 %ifarch ia64
@@ -230,6 +233,7 @@ Source47:	kernel-xenU.config
 
 Source49:	kernel-pax.config
 Source50:	kernel-no-pax.config
+Source51:	kernel-grsec_minimal.config
 Source55:	kernel-imq.config
 Source56:	kernel-reiser4.config
 Source57:	kernel-wrr.config
@@ -1077,18 +1081,38 @@ install %{SOURCE5} Makefile.ppclibs
 %patch500 -p1
 %endif
 
-%if %{with grsec_minimal}
-%patch1000 -p1
-%endif
+# grsecurity & pax stuff - temporary - work in progress
+#
+
+%if %{with pax_full}
+%patch9999 -p1
+%else 
 
 %if %{with grsec_full}
 %patch9999 -p1
+%else
+%if %{with grsec_minimal}
+%patch1000 -p1
+# remember that we have the same config file for grsec_minimal and
+# grsec_full, but the patches are different.
+%endif
 %endif
 
 %if %{with pax}
 %patch9998 -p1
+# now we have an separate testing pax-only patch - in the future we 
+# could have single grsecurity patch and will have to prepare separate
+# configs for grsec_minimal, grsec_full and pax to support such 
+# configurations like pax & grsec_minimal.
+# So, in a future there could be no patch9998, but only config 
+# would tell which options should be enabled.
+# The second option is to maintain separate pax-only patch.
 %endif
 
+%endif
+
+#
+# end of grsecurity & pax stuff
 
 %ifarch ppc ppc64
 %patch200 -p1
@@ -1212,9 +1236,10 @@ BuildConfig() {
 	sed -i "s:# CONFIG_PPC64 is not set:CONFIG_PPC64=y:" arch/%{_target_base_arch}/defconfig
 %endif
 
-	# netfilter
+# netfilter
 	cat %{SOURCE40} >> arch/%{_target_base_arch}/defconfig
-	# squashfs
+
+# squashfs
 	cat %{SOURCE41} >> arch/%{_target_base_arch}/defconfig
 
 # suspend2
@@ -1228,19 +1253,39 @@ BuildConfig() {
 %if %{with vserver}
 	cat %{SOURCE43} >> arch/%{_target_base_arch}/defconfig
 %endif
-	# vesafb-tng
+
+# vesafb-tng
 	cat %{SOURCE44} >> arch/%{_target_base_arch}/defconfig
 
-%if %{with grsecurity}
+# grsecurity & pax stuff - temporary - work in progress
+#
+
+%if %{with pax_full}
 	cat %{SOURCE45} >> arch/%{_target_base_arch}/defconfig
+	cat %{SOURCE49} >> arch/%{_target_base_arch}/defconfig
+	PaXconfig arch/%{_target_base_arch}/defconfig
+%else
+
+%if %{with grsec_full}
+	cat %{SOURCE45} >> arch/%{_target_base_arch}/defconfig
+%else
+%if %{with grsec_minimal}
+	cat %{SOURCE51} >> arch/%{_target_base_arch}/defconfig
+%endif
 %endif
 
 %if %{with pax}
 	cat %{SOURCE49} >> arch/%{_target_base_arch}/defconfig
 	PaXconfig arch/%{_target_base_arch}/defconfig
-%else   
+%else
 	cat %{SOURCE50} >> arch/%{_target_base_arch}/defconfig
 %endif
+
+%endif
+
+#
+# end of grsecurity & pax stuff
+
 
 %if %{with imq}
 	cat %{SOURCE55} >> arch/%{_target_base_arch}/defconfig
