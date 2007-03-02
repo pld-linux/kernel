@@ -369,6 +369,8 @@ Patch85:	hostap-kernel-2.6.18.patch
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
+# Quota on vroot fix, reported upstream
+Patch103:	linux-2.6-vs2.3-quota.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 #Patch120:	xen-3.0-2.6.16.patch
