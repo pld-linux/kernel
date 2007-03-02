@@ -11761,9 +11761,9 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
 --- linux-2.6.20.1/fs/exec.c	2007-02-04 19:44:54.000000000 +0100
 +++ linux-2.6.20.1-pax/fs/exec.c	2007-02-08 22:47:56.000000000 +0100
 @@ -50,6 +50,7 @@
- #include <linux/tsacct_kern.h>
  #include <linux/cn_proc.h>
  #include <linux/audit.h>
+ #include <linux/vs_memory.h>
 +#include <linux/random.h>
  
  #include <asm/uaccess.h>
@@ -11850,7 +11850,7 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
  
  	down_write(&mm->mmap_sem);
  	{
-@@ -431,13 +469,50 @@ int setup_arg_pages(struct linux_binprm 
+@@ -431,14 +469,51 @@ int setup_arg_pages(struct linux_binprm 
  		else
  			mpnt->vm_flags = VM_STACK_FLAGS;
  		mpnt->vm_flags |= mm->def_flags;
@@ -11874,7 +11874,8 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
 +
  			return ret;
  		}
- 		mm->stack_vm = mm->total_vm = vma_pages(mpnt);
+ 		vx_vmpages_sub(mm, mm->total_vm - vma_pages(mpnt));
+ 		mm->stack_vm = mm->total_vm;
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
 +		if (mpnt_m) {
