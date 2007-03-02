@@ -1201,8 +1201,22 @@ PaXconfig () {
 		sed -i 's:# CONFIG_PAX_EMUTRAMP is not set:CONFIG_PAX_EMUTRAMP=y:' $1
 	%endif
 	%ifarch %{ix8664}
-		sed -i 's:# CONFIG_PAX_MEMORY_UDEREF is not set:# CONFIG_PAX_MEMORY_UDEREF=y:' $1
+		sed -i 's:# CONFIG_PAX_MEMORY_UDEREF is not set:CONFIG_PAX_MEMORY_UDEREF=y:' $1
 	%endif
+
+	# Now we have to check MAC system integration. Grsecurity (full) uses PAX_HAVE_ACL_FLAGS
+	# setting (direct acces). grsec_minimal probably have no idea about PaX so we probably 
+	# could use PAX_NO_ACL_FLAGS, but for testing the hooks setting will be used
+	# PAX_HOOK_ACL_FLAGS. SELinux should also be able to make PaX settings via hooks 
+
+	%if %{with grsec_full}
+		# no change needed CONFIG=PAX_HAVE_ACL_FLAGS=y is taken from the kernel-pax.config
+	%else
+		# grsec_minimal or selinux ?
+		sed -i 's:CONFIG_PAX_HAVE_ACL_FLAGS=y:# CONFIG_PAX_HAVE_ACL_FLAGS is not set:' $1
+		sed -i 's:# CONFIG_PAX_HOOK_ACL_FLAGS is not set:CONFIG_PAX_HOOK_ACL_FLAGS=y:' $1
+	%endif
+
 	return 0
 }
 
