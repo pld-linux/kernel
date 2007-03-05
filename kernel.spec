@@ -118,8 +118,6 @@
 %define		_nf_hipac_ver		0.9.1
 
 %define		_enable_debug_packages			0
-%define		no_install_post_strip			1
-%define		no_install_post_chrpath			1
 
 %define		pcmcia_version		3.1.22
 %define		drm_xfree_version	4.3.0
@@ -370,6 +368,10 @@ ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc ppc64 sparc sparc64
 %endif
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+
+# No ELF objects there to strip (skips processing 27k files)
+%define		_noautostrip	.*%{_kernelsrcdir}/.*
+%define		_noautochrpath	.*%{_kernelsrcdir}/.*
 
 %ifarch ia64
 %define		initrd_dir	/boot/efi
