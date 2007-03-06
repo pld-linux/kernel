@@ -20,11 +20,13 @@
 # - reiser4 builds
 # - layer7 builds
 # - TARPIT and ROUTE smp locking issues should be resolved
+# - pax & grsec_min builds on x86_64, fails on i686
 #
 # TODO 2.6.20.1
 # - fine-tune the ppc configs and test build on ppc
 # - test build on sparc, sparc64, alpha
 # - grsec_full and pax
+# - pax hooks for selinux (experimental)
 # - new alsa rc2 - 1.0.14rc2 is in 2.6.20-git10 tree
 # - spec cleanup
 # - test external modules
@@ -401,6 +403,8 @@ Patch2100:	linux-2.6.20-paravirt_ops-needed-by-blobs.patch
 
 #wanpipe
 #Patch3000:	wanpipe-beta7-2.3.4.patch
+
+Patch9997:	pax_selinux_hooks-2.6.20.patch
 
 # TODO: http://www.grsecurity.net/~paxguy1/pax-linux-2.6.20.1-test5.patch
 Patch9998:	pax-linux-2.6.20.patch
@@ -1102,7 +1106,6 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 %if %{with pax}
-%patch9998 -p1
 # now we have an separate testing pax-only patch - in the future we 
 # could have single grsecurity patch and will have to prepare separate
 # configs for grsec_minimal, grsec_full and pax to support such 
@@ -1110,6 +1113,8 @@ install %{SOURCE5} Makefile.ppclibs
 # So, in a future there could be no patch9998, but only config 
 # would tell which options should be enabled.
 # The second option is to maintain separate pax-only patch.
+%patch9998 -p1
+#patch9997 -p1 - needs update
 %endif
 
 %endif
@@ -1196,6 +1201,13 @@ PaXconfig () {
 		%ifnarch i386 i486
 			sed -i 's:# CONFIG_PAX_NOVSYSCALL is not set:CONFIG_PAX_NOVSYSCALL=y:' $1
 		%endif
+
+		# Testing KERNEXEC
+
+		# sed -i 's:CONFIG_HOTPLUG_PCI_COMPAQ_NVRAM=y:# CONFIG_HOTPLUG_PCI_COMPAQ_NVRAM is not set:' $1
+		# sed -i 's:CONFIG_PCI_BIOS=y:# CONFIG_PCI_BIOS is not set:' $1
+		# sed -i 's:CONFIG_EFI=y:# CONFIG_EFI is not set:' $1
+		
 	%endif
 	%ifarch ppc64
 		sed -i 's:CONFIG_PAX_NOELFRELOCS=y:# CONFIG_PAX_NOELFRELOCS is not set:' $1
