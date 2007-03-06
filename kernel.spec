@@ -20,7 +20,7 @@
 # - reiser4 builds
 # - layer7 builds
 # - TARPIT and ROUTE smp locking issues should be resolved
-# - pax & grsec_min builds on x86_64, fails on i686
+# - pax & grsec_min builds on x86_64 and i686
 #
 # TODO 2.6.20.1
 # - fine-tune the ppc configs and test build on ppc
@@ -153,7 +153,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.12
+%define		_rel			0.13
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
