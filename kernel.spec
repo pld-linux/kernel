@@ -515,7 +515,7 @@ Most hardware is instead supported by modules loaded after booting.
 Netfilter module dated: %{_netfilter_snap}
 %{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
-%{?with_pax:PaX and Grsecurity full support - enabled}
+%{?with_pax:PaX support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -531,7 +531,7 @@ Prozeß-Management, Geräte Ein- und Ausgaben, usw.
 Netfilter module dated: %{_netfilter_snap}
 %{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
-%{?with_pax:PaX and Grsecurity full support - enabled}
+%{?with_pax:PaX support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -547,7 +547,7 @@ allocation de process, entrée/sortie de peripheriques, etc.
 Netfilter module dated: %{_netfilter_snap}
 %{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
-%{?with_pax:PaX and Grsecurity full support - enabled}
+%{?with_pax:PaX support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -562,7 +562,7 @@ się w komputerze, takiego jak sterowniki dysków itp.
 Netfilter module dated: %{_netfilter_snap}
 %{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
-%{?with_pax:PaX and Grsecurity full support - enabled}
+%{?with_pax:PaX support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -711,7 +711,7 @@ work fine on single-CPU boxes.
 Netfilter module dated: %{_netfilter_snap}
 %{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
-%{?with_pax:PaX and Grsecurity full support - enabled}
+%{?with_pax:PaX support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -727,7 +727,7 @@ CPU laufen.
 Netfilter module dated: %{_netfilter_snap}
 %{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
-%{?with_pax:PaX and Grsecurity full support - enabled}
+%{?with_pax:PaX support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -742,7 +742,7 @@ plus, il peut quand même fonctionner pour les système mono-processeur.
 Netfilter module dated: %{_netfilter_snap}
 %{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
-%{?with_pax:PaX and Grsecurity full support - enabled}
+%{?with_pax:PaX support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
@@ -757,7 +757,7 @@ Powinno również dobrze działać na maszynach z jednym procesorem.
 Netfilter module dated: %{_netfilter_snap}
 %{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
-%{?with_pax:PaX and Grsecurity full support - enabled}
+%{?with_pax:PaX support - enabled}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
