@@ -396,7 +396,7 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
  	movw	$0x0e00 + 'B', 0xb8018
 diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.20.1/arch/i386/kernel/alternative.c linux-2.6.20.1-pax/arch/i386/kernel/alternative.c
 --- linux-2.6.20.1/arch/i386/kernel/alternative.c	2007-02-04 19:44:54.000000000 +0100
-+++ linux-2.6.20.1-pax/arch/i386/kernel/alternative.c	2007-02-18 20:20:56.000000000 +0100
++++ linux-2.6.20.1-pax/arch/i386/kernel/alternative.c	2007-02-21 11:06:26.000000000 +0100
 @@ -4,6 +4,7 @@
  #include <linux/list.h>
  #include <asm/alternative.h>
@@ -488,12 +488,12 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
  {
 -	u8 **ptr;
 +	u8 *ptr;
-+
-+#ifdef CONFIG_PAX_KERNEXEC
-+	unsigned long cr0;
  
 -	for (ptr = start; ptr < end; ptr++) {
 -		if (*ptr < text)
++#ifdef CONFIG_PAX_KERNEXEC
++	unsigned long cr0;
++
 +	pax_open_kernel(cr0);
 +#endif
 +
@@ -545,8 +545,16 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
  }
  
  struct smp_alt_module {
-@@ -356,8 +414,9 @@ void apply_paravirt(struct paravirt_patc
+@@ -354,10 +412,17 @@ void apply_paravirt(struct paravirt_patc
+ {
+ 	struct paravirt_patch *p;
  
++#ifdef CONFIG_PAX_KERNEXEC
++	unsigned long cr0;
++
++	pax_open_kernel(cr0);
++#endif
++
  	for (p = start; p < end; p++) {
  		unsigned int used;
 +		u8 *instr = p->instr + __KERNEL_TEXT_OFFSET;
@@ -556,7 +564,7 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
  					  p->len);
  #ifdef CONFIG_DEBUG_PARAVIRT
  		{
-@@ -365,15 +424,14 @@ void apply_paravirt(struct paravirt_patc
+@@ -365,17 +430,20 @@ void apply_paravirt(struct paravirt_patc
  		/* Deliberately clobber regs using "not %reg" to find bugs. */
  		for (i = 0; i < 3; i++) {
  			if (p->len - used >= 2 && (p->clobbers & (1 << i))) {
@@ -574,7 +582,13 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
 +		nop_out(instr + used, p->len - used);
  	}
  
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_close_kernel(cr0);
++#endif
++
  	/* Sync to be conservative, in case we patched following instructions */
+ 	sync_core();
+ }
 diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.20.1/arch/i386/kernel/apic.c linux-2.6.20.1-pax/arch/i386/kernel/apic.c
 --- linux-2.6.20.1/arch/i386/kernel/apic.c	2007-02-04 19:44:54.000000000 +0100
 +++ linux-2.6.20.1-pax/arch/i386/kernel/apic.c	2007-02-05 00:56:18.000000000 +0100
@@ -3470,7 +3484,7 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
  		tsk->thread.sysenter_cs = 0;
 diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.20.1/arch/i386/kernel/vmlinux.lds.S linux-2.6.20.1-pax/arch/i386/kernel/vmlinux.lds.S
 --- linux-2.6.20.1/arch/i386/kernel/vmlinux.lds.S	2007-02-04 19:44:54.000000000 +0100
-+++ linux-2.6.20.1-pax/arch/i386/kernel/vmlinux.lds.S	2007-02-20 00:23:33.000000000 +0100
++++ linux-2.6.20.1-pax/arch/i386/kernel/vmlinux.lds.S	2007-03-07 00:12:15.000000000 +0100
 @@ -8,12 +8,6 @@
   * put it inside the section definition.
   */
@@ -3620,7 +3634,7 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
    .exit.data : AT(ADDR(.exit.data) - LOAD_OFFSET) { *(.exit.data) }
    . = ALIGN(4096);
    .init.ramfs : AT(ADDR(.init.ramfs) - LOAD_OFFSET) {
-@@ -193,11 +121,134 @@ SECTIONS
+@@ -193,11 +121,131 @@ SECTIONS
  	*(.data.percpu)
  	__per_cpu_end = .;
    }
@@ -3642,7 +3656,6 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
 +  .text.align : AT(ADDR(.text.align) - LOAD_OFFSET + __KERNEL_TEXT_OFFSET) {
 +	. = ALIGN(__KERNEL_TEXT_OFFSET - LOAD_OFFSET) - 1;
 +	BYTE(0)
-+	__init_end = . + __KERNEL_TEXT_OFFSET;
 +  }
 +#else
    . = ALIGN(4096);
@@ -3652,6 +3665,7 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
 -	
 +
 +  .text : AT(ADDR(.text) - LOAD_OFFSET + __KERNEL_TEXT_OFFSET) {
++	__init_end = . + __KERNEL_TEXT_OFFSET;
 +	_text = .;			/* Text and read-only data */
 +	*(.text)
 +	SCHED_TEXT
@@ -3750,9 +3764,7 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
 +  . = ALIGN(4096);
 +
    .bss : AT(ADDR(.bss) - LOAD_OFFSET) {
-+#ifndef CONFIG_PAX_KERNEXEC
- 	__init_end = .;
-+#endif
+-	__init_end = .;
  	__bss_start = .;		/* BSS */
  	*(.bss.page_aligned)
  	*(.bss)
