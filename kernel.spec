@@ -32,6 +32,9 @@
 # - test external modules
 # - p200 linux-2.6-ppc-ICE-hacks.patch - untested - ppc needed
 # - mms-conntrack-nat - port to nf_conntrack and enable in kernel-netfilter.config
+# - move drivers/usb/net/{cdc_ether,rndis_host,usbnet}.ko.* modules to 
+#   separate kernel-net-rndis subpackage for easy replacement 
+#   by kernel-misc-usb-rndis-lite 
 #
 # FUTURE:
 # - separate PaX and grsecurity support - future
@@ -153,7 +156,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.13
+%define		_rel			0.14
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -940,6 +943,32 @@ This is the documentation for the Linux kernel, as found in
 Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 /usr/src/linux/Documentation.
 
+%package net-rndis
+Summary:	cdc_ether, rndis_host and usbnet drivers
+Group:		Base/Kernel
+Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
+Requires:	%{name}-up = %{epoch}:%{version}-%{release}
+Provides:	kernel-net-rndis = %{epoch}:%{version}-%{release}
+Obsoletes:	kernel-misc-usb-rndis-lite
+Autoreqprov:	no
+
+%description net-rndis
+Provides cdc_ether, rndis_host and usbnet device driver kernel modules. You 
+could consider replacing this package with kernel-misc-usb-rndis-lite.
+
+%package smp-net-rndis
+Summary:	cdc_ether, rndis_host and usbnet drivers
+Group:		Base/Kernel
+Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
+Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
+Provides:	kernel-net-rndis = %{epoch}:%{version}-%{release}
+Obsoletes:	kernel-misc-usb-rndis-lite
+Autoreqprov:	no
+
+%description smp-net-rndis
+Provides cdc_ether, rndis_host and usbnet device driver kernel modules. You
+could consider replacing this package with kernel-smp-misc-usb-rndis-lite.
+
 %prep
 %setup -q -n linux-%{_basever}%{_rc} %{?with_abi:-a14}
 
@@ -1667,6 +1696,12 @@ ln -sf vmlinux-%{kernel_release} /boot/vmlinux
 %postun sound-oss
 %depmod %{kernel_release}
 
+%post net-rndis
+%depmod %{kernel_release}
+
+%postun net-rndis
+%depmod %{kernel_release}
+
 %preun smp
 rm -f /lib/modules/%{kernel_release}smp/modules.*
 if [ -x /sbin/new-kernel-pkg ]; then
@@ -1739,6 +1774,12 @@ ln -sf vmlinux-%{kernel_release}smp /boot/vmlinux
 %postun smp-sound-oss
 %depmod %{kernel_release}smp
 
+%post smp-net-rndis
+%depmod %{kernel_release}smp
+
+%postun smp-net-rndis
+%depmod %{kernel_release}smp
+
 %post headers
 rm -f %{_prefix}/src/linux
 ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux
@@ -1801,6 +1842,9 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/net/cdc_ether.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/net/rndis_host.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/net/usbnet.ko*
 %ghost /lib/modules/%{kernel_release}/modules.*
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
@@ -1913,6 +1957,9 @@ fi
 %exclude /lib/modules/%{kernel_release}smp/kernel/drivers/telephony/ixj_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}smp/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
+%exclude /lib/modules/%{kernel_release}smp/kernel/drivers/usb/net/cdc_ether.ko*
+%exclude /lib/modules/%{kernel_release}smp/kernel/drivers/usb/net/rndis_host.ko*
+%exclude /lib/modules/%{kernel_release}smp/kernel/drivers/usb/net/usbnet.ko*
 %ghost /lib/modules/%{kernel_release}smp/modules.*
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}smp
 
@@ -2017,6 +2064,18 @@ fi
 %{_kernelsrcdir}/scripts/*.sh
 %{_kernelsrcdir}/scripts/kconfig/*
 %{_kernelsrcdir}/scripts/mkcompile_h
+
+%files net-rndis
+%defattr(644,root,root,755)
+/lib/modules/%{kernel_release}/kernel/drivers/usb/net/cdc_ether.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/usb/net/rndis_host.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/usb/net/usbnet.ko*
+
+%files smp-net-rndis
+%defattr(644,root,root,755)
+/lib/modules/%{kernel_release}smp/kernel/drivers/usb/net/cdc_ether.ko*
+/lib/modules/%{kernel_release}smp/kernel/drivers/usb/net/rndis_host.ko*
+/lib/modules/%{kernel_release}smp/kernel/drivers/usb/net/usbnet.ko*
 
 %files doc
 %defattr(644,root,root,755)
