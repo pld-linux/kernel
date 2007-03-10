@@ -14,7 +14,7 @@
 # - (external) madwifi-old-openhal builds but have no supported hardware to test
 # - (external) lirc builds
 # - (external) ipp2p builds
-# - (external) truecrypt builds
+# - (external) truecrypt builds and works (for me)
 # - vserver 2.3.0.11 works
 # - connlimit works
 # - reiser4 builds
@@ -22,19 +22,15 @@
 # - TARPIT and ROUTE smp locking issues should be resolved
 # - pax & grsec_min builds on x86_64 and i686
 #
-# TODO 2.6.20.1
-# - fine-tune the ppc configs and test build on ppc
-# - test build on sparc, sparc64, alpha
-# - grsec_full and pax
+# TODO 2.6.20.2
+# - test build on ppc, sparc, sparc64, alpha
+# - grsec_full
 # - pax hooks for selinux (experimental)
 # - new alsa rc2 - 1.0.14rc2 is in 2.6.20-git10 tree
 # - spec cleanup
 # - test external modules
 # - p200 linux-2.6-ppc-ICE-hacks.patch - untested - ppc needed
 # - mms-conntrack-nat - port to nf_conntrack and enable in kernel-netfilter.config
-# - move drivers/usb/net/{cdc_ether,rndis_host,usbnet}.ko.* modules to 
-#   separate kernel-net-rndis subpackage for easy replacement 
-#   by kernel-misc-usb-rndis-lite 
 #
 # FUTURE:
 # - separate PaX and grsecurity support - future
@@ -152,11 +148,11 @@
 %define		_mkvmlinuz_ver		1.3
 
 %define		_basever		2.6.20
-%define		_postver		.1
+%define		_postver		.2
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.14
+%define		_rel			0.1
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -199,7 +195,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	5739512c396b37d9506bca2afe5aaa1d
+# Source1-md5:	8ec54f93d13d6b7a1fed09b1e0416be3
 %endif
 
 Source3:	kernel-autoconf.h
@@ -1158,7 +1154,9 @@ install %{SOURCE5} Makefile.ppclibs
 %patch300 -p1
 %patch301 -p1
 
+# bcm43xx
 %patch400 -p1
+
 #Small fixes:
 %patch2000 -p1
 
