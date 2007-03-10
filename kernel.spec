@@ -1876,6 +1876,12 @@ fi
 /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 
+%files net-rndis
+%defattr(644,root,root,755)
+/lib/modules/%{kernel_release}/kernel/drivers/usb/net/cdc_ether.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/usb/net/rndis_host.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/usb/net/usbnet.ko*
+
 %ifarch ppc-broken
 %if "%{_arch}" == "ppc"
 %files libs
@@ -1991,6 +1997,12 @@ fi
 /lib/modules/%{kernel_release}smp/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 
+%files smp-net-rndis
+%defattr(644,root,root,755)
+/lib/modules/%{kernel_release}smp/kernel/drivers/usb/net/cdc_ether.ko*
+/lib/modules/%{kernel_release}smp/kernel/drivers/usb/net/rndis_host.ko*
+/lib/modules/%{kernel_release}smp/kernel/drivers/usb/net/usbnet.ko*
+
 %ifarch ppc-broken
 %if "%{_arch}" == "ppc"
 %files smp-libs
@@ -2064,18 +2076,6 @@ fi
 %{_kernelsrcdir}/scripts/*.sh
 %{_kernelsrcdir}/scripts/kconfig/*
 %{_kernelsrcdir}/scripts/mkcompile_h
-
-%files net-rndis
-%defattr(644,root,root,755)
-/lib/modules/%{kernel_release}/kernel/drivers/usb/net/cdc_ether.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/usb/net/rndis_host.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/usb/net/usbnet.ko*
-
-%files smp-net-rndis
-%defattr(644,root,root,755)
-/lib/modules/%{kernel_release}smp/kernel/drivers/usb/net/cdc_ether.ko*
-/lib/modules/%{kernel_release}smp/kernel/drivers/usb/net/rndis_host.ko*
-/lib/modules/%{kernel_release}smp/kernel/drivers/usb/net/usbnet.ko*
 
 %files doc
 %defattr(644,root,root,755)
