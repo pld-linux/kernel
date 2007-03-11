@@ -152,7 +152,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.1
+%define		_rel			0.2
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -387,7 +387,7 @@ Patch300:	routes-2.6.19-12.diff
 Patch301:	pom-ng-connlimit-20061213_nf_conntrack_port.patch
 Patch302:	linux-2.6-layer7_nf_conntrack_port.patch
 
-Patch400:       kernel-bcm43xx-2.6.20_combined.patch
+Patch400:       kernel-bcm43xx-combined_2.6.20.2.patch
 
 # For compatibility with such blobs like HAL from madwifi-ng
 # before we had CONFIG_REGPARM option disabled - it is bconded and disabled now
