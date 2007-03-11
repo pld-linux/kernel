@@ -1,11 +1,13 @@
 #
-# STATUS: 2.6.20.1-0.11
+# STATUS: 2.6.20.2-0.1
+# - standard config includes vserver, suspend2 and grsec_minimal
 # - works for me (i686 up)
 # - builds on i686 (up & smp) with gcc-3.3.6-4 (Ac)
 # - builds on x86_64 (up & smp) with gcc-4.2.0-0.20070214.1.x86_64 (Th)
-# - standard config includes vserver, suspend2 and grsec_minimal
-# - builds --with vesafb_tng (i686) --with reiser4 (i686/x86_64)
+# - builds --with vesafb_tng (i686) 
+# - builds --with reiser4 (i686/x86_64)
 # - builds --with fbsplash (i686)
+# - builds --with pax (i686/x86_64)
 # - (external) nvidia works with & wo regparm
 # - (external) nvidia-legacy works with & wo regparm
 # - (external) ati firegl builds (but probably have issues with smp)
@@ -15,25 +17,19 @@
 # - (external) lirc builds
 # - (external) ipp2p builds
 # - (external) truecrypt builds and works (for me)
-# - vserver 2.3.0.11 works
-# - connlimit works
-# - reiser4 builds
-# - layer7 builds
-# - TARPIT and ROUTE smp locking issues should be resolved
-# - pax & grsec_min builds on x86_64 and i686
 #
 # TODO 2.6.20.2
+# - test crossbuild --target=ppc-linux
 # - test build on ppc, sparc, sparc64, alpha
 # - grsec_full
 # - pax hooks for selinux (experimental)
-# - new alsa rc2 - 1.0.14rc2 is in 2.6.20-git10 tree
 # - spec cleanup
 # - test external modules
 # - p200 linux-2.6-ppc-ICE-hacks.patch - untested - ppc needed
 # - mms-conntrack-nat - port to nf_conntrack and enable in kernel-netfilter.config
 #
 # FUTURE:
-# - separate PaX and grsecurity support - future
+# - new alsa rc2 - 1.0.14rc2 is in 2.6.20-git10 tree and in 2.6.21 line
 # - update xen patch for 2.6.20
 # - wanpipe -> use wanpipe.spec instead ?
 # - Linux ABI - needs update.
@@ -990,7 +986,7 @@ install %{SOURCE5} Makefile.ppclibs
 
 # suspend2:
 %if %{with suspend2}
-%ifarch %{ix86} %{x8664} ia64
+%ifarch %{ix86} %{x8664} ia64 ppc
 %patch69 -p1
 # TODO check linux-2.6-suspend2-avoid-redef.patch
 #patch70 -p1
