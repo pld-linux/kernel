@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.20.2-0.1
+# STATUS: 2.6.20.1-0.11/2.6.20.2-0.1
 # - standard config includes vserver, suspend2 and grsec_minimal
 # - works for me (i686 up)
 # - builds on i686 (up & smp) with gcc-3.3.6-4 (Ac)
@@ -148,7 +148,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.2
+%define		_rel			0.3
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
