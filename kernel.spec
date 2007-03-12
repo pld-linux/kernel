@@ -1238,7 +1238,14 @@ PaXconfig () {
 	%endif
 	%ifarch ppc
 		sed -i 's:# CONFIG_PAX_EMUTRAMP is not set:CONFIG_PAX_EMUTRAMP=y:' $1
+		sed -i 's:# CONFIG_PAX_EMUSIGRT is not set:CONFIG_PAX_EMUSIGRT=y:' $1
+		sed -i 's:# CONFIG_PAX_EMUPLT is not set:CONFIG_PAX_EMUPLT=y:' $1
 	%endif
+
+	%ifarch sparc || sparc64 || alpha
+		sed -i 's:# CONFIG_PAX_EMUPLT is not set:CONFIG_PAX_EMUPLT=y:' $1
+	%endif
+
 	%ifarch %{ix8664}
 		sed -i 's:# CONFIG_PAX_MEMORY_UDEREF is not set:CONFIG_PAX_MEMORY_UDEREF=y:' $1
 	%endif
