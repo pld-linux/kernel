@@ -990,7 +990,7 @@ install %{SOURCE5} Makefile.ppclibs
 
 # suspend2:
 %if %{with suspend2}
-%ifarch %{ix86} %{x8664} ia64 ppc
+%ifarch %{ix86} %{x8664} ia64 ppc alpha
 %patch69 -p1
 # TODO check linux-2.6-suspend2-avoid-redef.patch
 #patch70 -p1
