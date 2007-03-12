@@ -4,7 +4,8 @@
 # - works for me (i686 up)
 # - builds on i686 (up & smp) with gcc-3.3.6-4 (Ac)
 # - builds on x86_64 (up & smp) with gcc-4.2.0-0.20070214.1.x86_64 (Th)
-# - builds on ppc (up & smp) with crossppc-gcc-4.0.2-2 (Ac)
+# - builds for ppc (up & smp) with crossppc-gcc-4.0.2-2 (Ac)
+# - builds for alpha (up & smp) with crossalpha-gcc-4.0.1-1 (Th)
 # - builds --with vesafb_tng (i686) 
 # - builds --with reiser4 (i686/x86_64)
 # - builds --with fbsplash (i686)
@@ -20,12 +21,12 @@
 # - (external) truecrypt builds and works (for me)
 #
 # TODO 2.6.20.2
-# - test build on sparc, sparc64, alpha
+# - test build --with pax --with reiser4 for ppc and alpha
+# - test build on sparc, sparc64
 # - grsec_full
 # - pax hooks for selinux (experimental)
 # - spec cleanup
 # - test external modules
-# - p200 linux-2.6-ppc-ICE-hacks.patch - untested - ppc needed
 # - mms-conntrack-nat - port to nf_conntrack and enable in kernel-netfilter.config
 #
 # FUTURE:
@@ -149,7 +150,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.4
+%define		_rel			0.5
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
