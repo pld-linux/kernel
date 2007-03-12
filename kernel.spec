@@ -4,6 +4,7 @@
 # - works for me (i686 up)
 # - builds on i686 (up & smp) with gcc-3.3.6-4 (Ac)
 # - builds on x86_64 (up & smp) with gcc-4.2.0-0.20070214.1.x86_64 (Th)
+# - builds on ppc (up & smp) with crossppc-gcc-4.0.2-2 (Ac)
 # - builds --with vesafb_tng (i686) 
 # - builds --with reiser4 (i686/x86_64)
 # - builds --with fbsplash (i686)
@@ -19,8 +20,7 @@
 # - (external) truecrypt builds and works (for me)
 #
 # TODO 2.6.20.2
-# - test crossbuild --target=ppc-linux
-# - test build on ppc, sparc, sparc64, alpha
+# - test build on sparc, sparc64, alpha
 # - grsec_full
 # - pax hooks for selinux (experimental)
 # - spec cleanup
@@ -39,6 +39,7 @@
 # - pom-ng talk-conntrack-nat -> nf_conntrack ?
 # - nf-hipac ?
 # - update configs for up/smp ia64 - no builder ?
+# - acrypto - http://tservice.net.ru/~s0mbre/blog/devel/acrypto
 #
 # Conditional build:
 %bcond_without	smp		# don't build SMP kernel
@@ -148,7 +149,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.3
+%define		_rel			0.4
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
