@@ -394,6 +394,9 @@ Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
 
+# Compilation with gcc-4.1.2:
+Patch2001:	kernel-proxy-pda.patch
+
 # Some non-GPL modules (nvidia, nvidia-legacy) looks for the paravirt_ops symbol
 Patch2100:	linux-2.6.20-paravirt_ops-needed-by-blobs.patch
 
@@ -1154,8 +1157,11 @@ install %{SOURCE5} Makefile.ppclibs
 # bcm43xx
 %patch400 -p1
 
-#Small fixes:
+# Small fixes:
 %patch2000 -p1
+
+# Compilation with gcc-4.1.2:
+%patch2001 -p1
 
 # exporting paravirt_ops as non-GPL-only symbol
 %patch2100 -p1
