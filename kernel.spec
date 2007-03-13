@@ -20,7 +20,9 @@
 # - (external) ipp2p builds
 # - (external) truecrypt builds and works (for me)
 #
-# TODO 2.6.20.2
+# TODO 2.6.20.3
+# - test build 2.6.20.3
+# - test non default bconds for 2.6.20.3
 # - test build --with pax --with reiser4 for alpha
 # - test build on sparc, sparc64
 # - grsec_full
@@ -28,6 +30,7 @@
 # - spec cleanup
 # - test external modules
 # - mms-conntrack-nat - port to nf_conntrack and enable in kernel-netfilter.config
+# - for pax on 32-bit ppc disable CONFIG_PAX_EMUPLT (it will need gcc4 build userland -> Th only)
 #
 # FUTURE:
 # - new alsa rc2 - 1.0.14rc2 is in 2.6.20-git10 tree and in 2.6.21 line
@@ -146,11 +149,11 @@
 %define		_mkvmlinuz_ver		1.3
 
 %define		_basever		2.6.20
-%define		_postver		.2
+%define		_postver		.3
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.5
+%define		_rel			0.1
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -193,7 +196,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	8ec54f93d13d6b7a1fed09b1e0416be3
+# Source1-md5:	30764d4152c727b8ec7b709ab5464ec3
 %endif
 
 Source3:	kernel-autoconf.h
@@ -991,14 +994,14 @@ install %{SOURCE5} Makefile.ppclibs
 
 # suspend2:
 %if %{with suspend2}
-%ifarch %{ix86} %{x8664} ia64 ppc alpha
+##ifarch %{ix86} %{x8664} ia64 ppc alpha
 %patch69 -p1
 # TODO check linux-2.6-suspend2-avoid-redef.patch
 #patch70 -p1
 %patch71 -p1
 # kernel-2.6-ueagle-atm-freezer.patch
 %patch72 -p1
-%endif
+##endif
 %endif
 
 # reiserfs4
