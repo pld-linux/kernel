@@ -7,9 +7,9 @@
 # - builds for ppc (up & smp) with crossppc-gcc-4.0.2-2 (Ac)
 # - builds for alpha (up & smp) with crossalpha-gcc-4.0.1-1 (Th)
 # - builds --with vesafb_tng (i686) 
-# - builds --with reiser4 (i686/x86_64)
+# - builds --with reiser4 (i686/x86_64/ppc)
 # - builds --with fbsplash (i686)
-# - builds --with pax (i686/x86_64)
+# - builds --with pax (i686/x86_64/ppc)
 # - (external) nvidia works with & wo regparm
 # - (external) nvidia-legacy works with & wo regparm
 # - (external) ati firegl builds (but probably have issues with smp)
@@ -21,7 +21,7 @@
 # - (external) truecrypt builds and works (for me)
 #
 # TODO 2.6.20.2
-# - test build --with pax --with reiser4 for ppc and alpha
+# - test build --with pax --with reiser4 for alpha
 # - test build on sparc, sparc64
 # - grsec_full
 # - pax hooks for selinux (experimental)
