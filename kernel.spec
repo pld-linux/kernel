@@ -6,7 +6,7 @@
 # - builds on x86_64 (up & smp) with gcc-4.2.0-0.20070214.1.x86_64 (Th)
 # - builds for ppc (up & smp) with crossppc-gcc-4.0.2-2 (Ac)
 # - builds for alpha (up & smp) with crossalpha-gcc-4.0.1-1 (Th)
-# - builds --with vesafb_tng (i686) 
+# - builds --with vesafb_tng (i686)
 # - builds --with reiser4 (i686/x86_64/ppc)
 # - builds --with fbsplash (i686)
 # - builds --with pax (i686/x86_64/ppc)
@@ -171,9 +171,9 @@
 %define		xen_version		3.0.2
 
 Summary:	The Linux kernel (the core of the Linux operating system)
-Summary(de.UTF-8):   Der Linux-Kernel (Kern des Linux-Betriebssystems)
-Summary(fr.UTF-8):   Le Kernel-Linux (La partie centrale du systeme)
-Summary(pl.UTF-8):   Jądro Linuksa
+Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
+Summary(fr.UTF-8):	Le Kernel-Linux (La partie centrale du systeme)
+Summary(pl.UTF-8):	Jądro Linuksa
 Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %if "%{_prepatch}" == "%{nil}"
@@ -244,7 +244,7 @@ Source57:	kernel-wrr.config
 #	Patches
 ###
 
-# TODO: patch not active for some time 
+# TODO: patch not active for some time
 Patch0:		linux-net-2.6.19.patch
 #
 # TODO: not compatible - still needed?
@@ -264,7 +264,7 @@ Patch4:		fbsplash-0.9.2-r5-2.6.20-rc6.patch
 Patch5:		vesafb-tng-1.0-rc2-2.6.20-rc2.patch
 
 # Derived from squashfs: http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.2.tar.gz for linux-2.6.20
-# 
+#
 Patch6:		squashfs%{squashfs_version}-patch
 Patch7:		linux-alpha-isa.patch
 Patch8:		linux-fbcon-margins.patch
@@ -318,16 +318,16 @@ Patch49:	kernel-2.6.18-layer7-2.7-2.6.19-fix.patch
 #	pom-ng-ipp2p-20061213.patch
 #	pom-ng-time-20061213.patch
 #
-# layer7: 
+# layer7:
 # 	kernel-2.6.18-layer7-2.7.patch
 
 ###
 #	End netfilter
 ###
 
-# based on 2.6.17 patch from http://www.linuximq.net/patchs/linux-2.6.17-imq1.diff, 
-# some stuff moved from net/sched/sch_generic.c to net/core/dev.c for 2.6.19 
-# compatibility. not tested. 
+# based on 2.6.17 patch from http://www.linuximq.net/patchs/linux-2.6.17-imq1.diff,
+# some stuff moved from net/sched/sch_generic.c to net/core/dev.c for 2.6.19
+# compatibility. not tested.
 
 Patch50:	linux-2.6.19-imq1.diff
 
@@ -356,7 +356,7 @@ Patch60:	linux-2.6-sk98lin_8.41.2.3.patch
 Patch69:	linux-2.6-suspend2.patch
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
-#Patch72:	linux-2.6-suspend2-off.patch
+#Patch72: linux-2.6-suspend2-off.patch
 Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 
 # ide-acpi instead of nx8220 s3 suspend/resume hack
@@ -364,7 +364,7 @@ Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 Patch75:	linux-2.6-ide-acpi-support.patch
 
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
-# http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch 
+# http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	hostap-kernel-2.6.18.patch
 
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.20.1-vs2.3.0.11.diff
@@ -375,7 +375,7 @@ Patch102:	linux-2.6-vs2.1-128IPs.patch
 Patch103:	linux-2.6-vs2.3-quota.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
-#Patch120:	xen-3.0-2.6.16.patch
+#Patch120: xen-3.0-2.6.16.patch
 
 # Wake-On-Lan fix for nForce drivers; using http://atlas.et.tudelft.nl/verwei90/nforce2/wol.html
 # Fix verified for that kernel version.
@@ -388,7 +388,7 @@ Patch300:	routes-2.6.19-12.diff
 Patch301:	pom-ng-connlimit-20061213_nf_conntrack_port.patch
 Patch302:	linux-2.6-layer7_nf_conntrack_port.patch
 
-Patch400:       kernel-bcm43xx-combined_2.6.20.2.patch
+Patch400:	kernel-bcm43xx-combined_2.6.20.2.patch
 
 # For compatibility with such blobs like HAL from madwifi-ng
 # before we had CONFIG_REGPARM option disabled - it is bconded and disabled now
@@ -405,7 +405,7 @@ Patch2001:	kernel-proxy-pda.patch
 Patch2100:	linux-2.6.20-paravirt_ops-needed-by-blobs.patch
 
 #wanpipe
-#Patch3000:	wanpipe-beta7-2.3.4.patch
+#Patch3000: wanpipe-beta7-2.3.4.patch
 
 Patch9997:	pax_selinux_hooks-2.6.20.patch
 
@@ -585,7 +585,7 @@ vmlinux - rozpakowany obraz jądra.
 
 %package drm
 Summary:	DRM kernel modules
-Summary(pl.UTF-8):   Sterowniki DRM
+Summary(pl.UTF-8):	Sterowniki DRM
 Group:		Base/Kernel
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
@@ -600,7 +600,7 @@ Sterowniki DRM (%{drm_xfree_version}).
 
 %package pcmcia
 Summary:	PCMCIA modules
-Summary(pl.UTF-8):   Moduły PCMCIA
+Summary(pl.UTF-8):	Moduły PCMCIA
 Group:		Base/Kernel
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
@@ -618,7 +618,7 @@ Moduły PCMCIA (%{pcmcia_version}).
 
 %package libs
 Summary:	Libraries for preparing bootable kernel on PowerPCs
-Summary(pl.UTF-8):   Biblioteki do przygotowania bootowalnego jądra dla PowerPC
+Summary(pl.UTF-8):	Biblioteki do przygotowania bootowalnego jądra dla PowerPC
 Group:		Base/Kernel
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
 Requires:	mkvmlinuz >= %{_mkvmlinuz_ver}
@@ -634,7 +634,7 @@ mkvmlinuz może być do tego przydatny.
 
 %package sound-alsa
 Summary:	ALSA kernel modules
-Summary(pl.UTF-8):   Sterowniki dźwięku ALSA
+Summary(pl.UTF-8):	Sterowniki dźwięku ALSA
 Group:		Base/Kernel
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
@@ -648,7 +648,7 @@ Sterowniki dźwięku ALSA (Advanced Linux Sound Architecture).
 
 %package sound-oss
 Summary:	OSS kernel modules
-Summary(pl.UTF-8):   Sterowniki dźwięku OSS
+Summary(pl.UTF-8):	Sterowniki dźwięku OSS
 Group:		Base/Kernel
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
@@ -662,9 +662,9 @@ Sterowniki dźwięku OSS (Open Sound System).
 
 %package smp
 Summary:	Kernel version %{version} compiled for SMP machines
-Summary(de.UTF-8):   Kernel version %{version} für Multiprozessor-Maschinen
-Summary(fr.UTF-8):   Kernel version %{version} compiler pour les machine Multi-Processeur
-Summary(pl.UTF-8):   Jądro Linuksa w wersji %{version} dla maszyn wieloprocesorowych
+Summary(de.UTF-8):	Kernel version %{version} für Multiprozessor-Maschinen
+Summary(fr.UTF-8):	Kernel version %{version} compiler pour les machine Multi-Processeur
+Summary(pl.UTF-8):	Jądro Linuksa w wersji %{version} dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Requires(post):	coreutils
 Requires(post):	geninitrd >= 2.57
@@ -780,7 +780,7 @@ vmlinux - rozpakowany obraz jądra SMP.
 
 %package smp-drm
 Summary:	DRM SMP kernel modules
-Summary(pl.UTF-8):   Sterowniki DRM dla maszyn wieloprocesorowych
+Summary(pl.UTF-8):	Sterowniki DRM dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
@@ -795,7 +795,7 @@ Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
 
 %package smp-pcmcia
 Summary:	PCMCIA modules for SMP kernel
-Summary(pl.UTF-8):   Moduły PCMCIA dla maszyn SMP
+Summary(pl.UTF-8):	Moduły PCMCIA dla maszyn SMP
 Group:		Base/Kernel
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
@@ -813,7 +813,7 @@ Moduły PCMCIA dla maszyn SMP (%{pcmcia_version}).
 
 %package smp-libs
 Summary:	Libraries for preparing bootable SMP kernel on PowerPCs
-Summary(pl.UTF-8):   Biblioteki do przygotowania bootowalnego jądra dla wieloprocesorowych PowerPC
+Summary(pl.UTF-8):	Biblioteki do przygotowania bootowalnego jądra dla wieloprocesorowych PowerPC
 Group:		Base/Kernel
 Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
 Requires:	mkvmlinuz >= %{_mkvmlinuz_ver}
@@ -829,7 +829,7 @@ PowerPC. Skrypt mkvmlinuz może być do tego przydatny.
 
 %package smp-sound-alsa
 Summary:	ALSA SMP kernel modules
-Summary(pl.UTF-8):   Sterowniki dźwięku ALSA dla maszyn wieloprocesorowych
+Summary(pl.UTF-8):	Sterowniki dźwięku ALSA dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
@@ -844,7 +844,7 @@ wieloprocesorowych.
 
 %package smp-sound-oss
 Summary:	OSS SMP kernel modules
-Summary(pl.UTF-8):   Sterowniki dźwięku OSS dla maszyn wieloprocesorowych
+Summary(pl.UTF-8):	Sterowniki dźwięku OSS dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
@@ -858,7 +858,7 @@ Sterowniki OSS (Open Sound System) dla maszyn wieloprocesorowych.
 
 %package headers
 Summary:	Header files for the Linux kernel
-Summary(pl.UTF-8):   Pliki nagłówkowe jądra Linuksa
+Summary(pl.UTF-8):	Pliki nagłówkowe jądra Linuksa
 Group:		Development/Building
 Provides:	kernel-headers = %{epoch}:%{version}-%{release}
 Provides:	kernel-headers(agpgart) = %{version}
@@ -879,7 +879,7 @@ oraz budowania modułów jądra.
 
 %package module-build
 Summary:	Development files for building kernel modules
-Summary(pl.UTF-8):   Pliki służące do budowania modułów jądra
+Summary(pl.UTF-8):	Pliki służące do budowania modułów jądra
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
 Provides:	kernel-module-build = %{epoch}:%{_basever}
@@ -897,7 +897,7 @@ Linuksa z zewnętrznych pakietów.
 
 %package source
 Summary:	Kernel source tree
-Summary(pl.UTF-8):   Kod źródłowy jądra Linuksa
+Summary(pl.UTF-8):	Kod źródłowy jądra Linuksa
 Group:		Development/Building
 Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
 Provides:	kernel-source = %{epoch}:%{version}-%{release}
@@ -930,7 +930,7 @@ Pakiet zawiera kod źródłowy jądra systemu.
 
 %package doc
 Summary:	Kernel documentation
-Summary(pl.UTF-8):   Dokumentacja do jądra Linuksa
+Summary(pl.UTF-8):	Dokumentacja do jądra Linuksa
 Group:		Documentation
 Provides:	kernel-doc = %{version}
 Autoreqprov:	no
@@ -953,8 +953,9 @@ Obsoletes:	kernel-misc-usb-rndis-lite
 Autoreqprov:	no
 
 %description net-rndis
-Provides cdc_ether, rndis_host and usbnet device driver kernel modules. You 
-could consider replacing this package with kernel-misc-usb-rndis-lite.
+Provides cdc_ether, rndis_host and usbnet device driver kernel
+modules. You could consider replacing this package with
+kernel-misc-usb-rndis-lite.
 
 %package smp-net-rndis
 Summary:	cdc_ether, rndis_host and usbnet drivers
@@ -966,8 +967,29 @@ Obsoletes:	kernel-misc-usb-rndis-lite
 Autoreqprov:	no
 
 %description smp-net-rndis
-Provides cdc_ether, rndis_host and usbnet device driver kernel modules. You
-could consider replacing this package with kernel-smp-misc-usb-rndis-lite.
+Provides cdc_ether, rndis_host and usbnet device driver kernel
+modules. You could consider replacing this package with
+kernel-smp-misc-usb-rndis-lite.
+
+%package libc-headers
+Summary:	Header files for userspace applications
+Summary(pl.UTF-8):	Pliki nagłówkowe dla aplikacji użytkownika
+Group:		Development
+Provides:	alsa-driver-devel
+Provides:	glibc-kernel-headers = 7:%{version}-%{release}
+Provides:	i2c-devel = 2.8.2
+Provides:	linux-libc-headers = 7:%{version}-%{release}
+Obsoletes:	alsa-driver-devel
+Obsoletes:	glibc-kernel-headers
+Obsoletes:	glibc-kernheaders
+Obsoletes:	linux-libc-headers
+Autoreqprov:	no
+
+%description libc-headers
+These are the C header files for userspace applications.
+
+%description libc-headers -l pl.UTF-8
+Pakiet zawiera pliki nagłówkowe dla aplikacji użytkownika.
 
 %prep
 %setup -q -n linux-%{_basever}%{_rc} %{?with_abi:-a14}
@@ -1068,7 +1090,7 @@ install %{SOURCE5} Makefile.ppclibs
 # esfq
 %patch53 -p1
 
-%if %{with wrr} 
+%if %{with wrr}
 %patch52 -p1
 %endif
 
@@ -1090,7 +1112,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch75 -p1
 %endif
 
-# hostap enhancements from/for aircrack-ng 
+# hostap enhancements from/for aircrack-ng
 %patch85 -p1
 
 # vserver
@@ -1122,7 +1144,7 @@ install %{SOURCE5} Makefile.ppclibs
 
 %if %{with pax_full}
 %patch9999 -p1
-%else 
+%else
 
 %if %{with grsec_full}
 %patch9999 -p1
@@ -1135,11 +1157,11 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 %if %{with pax}
-# now we have an separate testing pax-only patch - in the future we 
+# now we have an separate testing pax-only patch - in the future we
 # could have single grsecurity patch and will have to prepare separate
-# configs for grsec_minimal, grsec_full and pax to support such 
+# configs for grsec_minimal, grsec_full and pax to support such
 # configurations like pax & grsec_minimal.
-# So, in a future there could be no patch9998, but only config 
+# So, in a future there could be no patch9998, but only config
 # would tell which options should be enabled.
 # The second option is to maintain separate pax-only patch.
 %patch9998 -p1
@@ -1241,7 +1263,7 @@ PaXconfig () {
 		# sed -i 's:CONFIG_HOTPLUG_PCI_COMPAQ_NVRAM=y:# CONFIG_HOTPLUG_PCI_COMPAQ_NVRAM is not set:' $1
 		# sed -i 's:CONFIG_PCI_BIOS=y:# CONFIG_PCI_BIOS is not set:' $1
 		# sed -i 's:CONFIG_EFI=y:# CONFIG_EFI is not set:' $1
-		
+
 	%endif
 	%ifarch ppc64
 		sed -i 's:CONFIG_PAX_NOELFRELOCS=y:# CONFIG_PAX_NOELFRELOCS is not set:' $1
@@ -1261,9 +1283,9 @@ PaXconfig () {
 	%endif
 
 	# Now we have to check MAC system integration. Grsecurity (full) uses PAX_HAVE_ACL_FLAGS
-	# setting (direct acces). grsec_minimal probably have no idea about PaX so we probably 
+	# setting (direct acces). grsec_minimal probably have no idea about PaX so we probably
 	# could use PAX_NO_ACL_FLAGS, but for testing the hooks setting will be used
-	# PAX_HOOK_ACL_FLAGS. SELinux should also be able to make PaX settings via hooks 
+	# PAX_HOOK_ACL_FLAGS. SELinux should also be able to make PaX settings via hooks
 
 	%if %{with grsec_full}
 		# no change needed CONFIG=PAX_HAVE_ACL_FLAGS=y is taken from the kernel-pax.config
@@ -1567,6 +1589,11 @@ export DEPMOD=%DepMod
 
 install -d $RPM_BUILD_ROOT%{_kernelsrcdir}
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{kernel_release}{,smp}
+
+%{__make} headers_install \
+	INSTALL_HDR_PATH=$RPM_BUILD_ROOT%{_prefix}
+# glibc-headers
+rm -rf $RPM_BUILD_ROOT%{_prefix}/include/scsi
 
 # test if we can hardlink -- %{_builddir} and $RPM_BUILD_ROOT on same partition
 if cp -al COPYING $RPM_BUILD_ROOT/COPYING 2>/dev/null; then
@@ -2088,6 +2115,10 @@ fi
 %{_kernelsrcdir}/scripts/*.sh
 %{_kernelsrcdir}/scripts/kconfig/*
 %{_kernelsrcdir}/scripts/mkcompile_h
+
+%files libc-headers
+%defattr(644,root,root,755)
+%{_includedir}/*
 
 %files doc
 %defattr(644,root,root,755)
