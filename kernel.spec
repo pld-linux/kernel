@@ -172,9 +172,9 @@
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
+Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
 Summary(fr.UTF-8):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl.UTF-8):	Jądro Linuksa
-Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
 Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %if "%{_prepatch}" == "%{nil}"
