@@ -957,7 +957,7 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
  
  	BLANK();
 - 	OFFSET(PDA_cpu, i386_pda, cpu_number);
-+	DEFINE(PDA_size, sizeof __cpu_pda);
++	DEFINE(PDA_size, sizeof __cpu_pda[0]);
 +	OFFSET(PDA_cpu, i386_pda, cpu_number);
  	OFFSET(PDA_pcurrent, i386_pda, pcurrent);
  
@@ -980,7 +980,7 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
  #include <asm/semaphore.h>
  #include <asm/processor.h>
  #include <asm/i387.h>
-@@ -22,16 +21,18 @@
+@@ -22,16 +21,17 @@
  
  #include "cpu.h"
  
@@ -988,7 +988,6 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
 -EXPORT_PER_CPU_SYMBOL(cpu_gdt_descr);
 -
 -struct i386_pda *_cpu_pda[NR_CPUS] __read_mostly;
-+struct i386_pda *_cpu_pda[NR_CPUS];
  EXPORT_SYMBOL(_cpu_pda);
  
  static int cachesize_override __cpuinitdata = -1;
@@ -1056,7 +1055,7 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
  /* Initial PDA used by boot CPU */
  struct i386_pda boot_pda = {
  	._pda = &boot_pda,
-@@ -672,59 +627,47 @@ static inline void set_kernel_gs(void)
+@@ -672,59 +627,43 @@ static inline void set_kernel_gs(void)
  
  /* Initialize the CPU's GDT and PDA.  The boot CPU does this for
     itself, but secondaries find this done for them. */
@@ -1073,16 +1072,14 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
 -		printk(KERN_CRIT "CPU%d failed to allocate GDT or PDA\n", cpu);
 -		return 0;
 -	}
--
--	gdt = (struct desc_struct *)cpu_gdt_descr->address;
--	pda = cpu_pda(cpu);
 +	struct desc_struct *gdt = get_cpu_gdt_table(cpu);
 +	struct i386_pda *pda = __cpu_pda + cpu;
-+	struct i386_pda **_pda = (struct i386_pda **)&pda->_pda;
  
+-	gdt = (struct desc_struct *)cpu_gdt_descr->address;
+-	pda = cpu_pda(cpu);
+-
 -	BUG_ON(gdt == NULL || pda == NULL);
 +	cpu_gdt_descr[cpu].address = gdt;
-+	cpu_pda(cpu) = pda;
  
  	/*
  	 * Initialize the per-CPU GDT with the boot GDT,
@@ -1100,13 +1097,13 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
 -			0x80 | DESCTYPE_S | 0x2, 0); /* present read-write data segment */
 +			0x80 | DESCTYPE_S | 0x3, 0); /* present read-write data segment */
  
- 	memset(pda, 0, sizeof(*pda));
+-	memset(pda, 0, sizeof(*pda));
 -	pda->_pda = pda;
-+	*_pda = pda;
- 	pda->cpu_number = cpu;
+-	pda->cpu_number = cpu;
  	pda->pcurrent = idle;
 -
 -	return 1;
+++	pda->irq_regs = NULL;
  }
  
  void __cpuinit cpu_set_gdt(int cpu)
@@ -1922,7 +1919,7 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
  
  	/* We take pains to preserve all the regs. */
  	pushl	%edx
-@@ -519,30 +578,52 @@ startup_paravirt:
+@@ -519,30 +578,66 @@ startup_paravirt:
  	jmp	1b
  #endif
  
@@ -1980,8 +1977,22 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
  ENTRY(start_pda)
  	.long boot_pda
  
++cpu=0
++ENTRY(_cpu_pda)
++.rept NR_CPUS
++	.long __cpu_pda + cpu*PDA_size
++cpu=cpu+1
++.endr
++
++cpu=0
 +ENTRY(__cpu_pda)
-+	.fill PDA_size,1,0
++.rept NR_CPUS
++1:	.long 1b
++	.long cpu
++	.long 0
++	.long 0
++cpu=cpu+1
++.endr
 +
  ENTRY(stack_start)
 -	.long init_thread_union+THREAD_SIZE
@@ -13182,13 +13193,14 @@ diff -NurpX linux-2.6.20.1-pax/Documentation/dontdiff -x 'netfilter*' linux-2.6.
 -	struct i386_pda *_pda;		/* pointer to self */
 +	struct i386_pda * const _pda;	/* pointer to self */
  
- 	int cpu_number;
+-	int cpu_number;
++	const int cpu_number;
  	struct task_struct *pcurrent;	/* current process */
  	struct pt_regs *irq_regs;
  };
  
 -extern struct i386_pda *_cpu_pda[];
-+extern struct i386_pda *_cpu_pda[NR_CPUS];
++extern struct i386_pda * const _cpu_pda[NR_CPUS];
 +extern struct i386_pda __cpu_pda[NR_CPUS];
  
  #define cpu_pda(i)	(_cpu_pda[i])
