@@ -146,7 +146,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.2
+%define		_rel			0.3
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -203,19 +203,13 @@ Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-l
 # Source14-md5:	f2563a2d748c7480559e8d3ff77eb18a
 
 Source20:	kernel-i386.config
-Source21:	kernel-i386-smp.config
-Source22:	kernel-x86_64.config
-Source23:	kernel-x86_64-smp.config
-Source24:	kernel-sparc.config
-Source25:	kernel-sparc-smp.config
-Source26:	kernel-sparc64.config
-Source27:	kernel-sparc64-smp.config
-Source28:	kernel-alpha.config
-Source29:	kernel-alpha-smp.config
-Source30:	kernel-ppc.config
-Source31:	kernel-ppc-smp.config
-Source32:	kernel-ia64.config
-Source33:	kernel-ia64-smp.config
+Source21:	kernel-x86_64.config
+Source22:	kernel-sparc.config
+Source23:	kernel-sparc64.config
+Source24:	kernel-alpha.config
+Source25:	kernel-ppc.config
+Source26:	kernel-ia64.config
+
 Source34:	kernel-abi.config
 
 Source40:	kernel-netfilter.config
@@ -1092,22 +1086,17 @@ PaXconfig () {
 BuildConfig() {
 	%{?debug:set -x}
 	# is this a special kernel we want to build?
-	Config="%{_target_base_arch}-smp"
+	Config="%{_target_base_arch}"
 	KernelVer=%{kernel_release}
 	echo "Building config file using $Config.conf..."
 	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
 	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
 
 %ifarch ppc ppc64
-	if [ "$smp" = "yes" ]; then
-		install %{SOURCE31} arch/%{_target_base_arch}/defconfig
-	else
-		install %{SOURCE30} arch/%{_target_base_arch}/defconfig
-	fi
-%endif
-
+	install %{SOURCE25} arch/%{_target_base_arch}/defconfig
 %ifarch ppc64
 	sed -i "s:# CONFIG_PPC64 is not set:CONFIG_PPC64=y:" arch/%{_target_base_arch}/defconfig
+%endif
 %endif
 
 # netfilter
@@ -1255,7 +1244,7 @@ BuildKernel() {
 }
 
 PreInstallKernel() {
-	Config="%{_target_base_arch}-smp"
+	Config="%{_target_base_arch}"
 	KernelVer=%{kernel_release}
 
 	mkdir -p $KERNEL_INSTALL_DIR/boot
@@ -1382,6 +1371,9 @@ install %{SOURCE4} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
 
 # collect module-build files and directories
 perl %{SOURCE7} %{_kernelsrcdir} $KERNEL_BUILD_DIR
+
+# ghosted initrd
+touch $RPM_BUILD_ROOT/boot/initrd-%{kernel_release}.gz
 
 %clean
 rm -rf $RPM_BUILD_ROOT
