@@ -3381,8 +3381,8 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/k
 -		regs->xds & 0xffff, regs->xes & 0xffff, ss);
 +	printk(KERN_EMERG "ds: %04x   es: %04x   gs: %04x   ss: %04x\n",
 +		regs->xds & 0xffff, regs->xes & 0xffff, regs->xgs & 0xffff, ss);
- 	printk(KERN_EMERG "Process %.*s (pid: %d, ti=%p task=%p task.ti=%p)",
- 		TASK_COMM_LEN, current->comm, current->pid,
+ 	printk(KERN_EMERG "Process %.*s (pid: %d[#%u], ti=%p task=%p task.ti=%p)",
+ 		TASK_COMM_LEN, current->comm, current->pid, current->xid,
  		current_thread_info(), current, current->thread_info);
 @@ -332,11 +328,11 @@ void show_registers(struct pt_regs *regs
  
@@ -6799,9 +6799,9 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/ia64/m
 --- linux-2.6.20.3/arch/ia64/mm/fault.c	2007-02-04 19:44:54.000000000 +0100
 +++ linux-2.6.20.3-pax/arch/ia64/mm/fault.c	2007-02-05 00:56:19.000000000 +0100
 @@ -10,6 +10,7 @@
- #include <linux/smp_lock.h>
  #include <linux/interrupt.h>
  #include <linux/kprobes.h>
+ #include <linux/vs_memory.h>
 +#include <linux/binfmts.h>
  
  #include <asm/pgtable.h>
@@ -11985,9 +11985,9 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/fs/exec.c l
 --- linux-2.6.20.3/fs/exec.c	2007-02-04 19:44:54.000000000 +0100
 +++ linux-2.6.20.3-pax/fs/exec.c	2007-02-08 22:47:56.000000000 +0100
 @@ -50,6 +50,7 @@
- #include <linux/tsacct_kern.h>
  #include <linux/cn_proc.h>
  #include <linux/audit.h>
+ #include <linux/vs_memory.h>
 +#include <linux/random.h>
  
  #include <asm/uaccess.h>
@@ -12074,7 +12074,7 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/fs/exec.c l
  
  	down_write(&mm->mmap_sem);
  	{
-@@ -431,13 +469,50 @@ int setup_arg_pages(struct linux_binprm 
+@@ -431,14 +469,51 @@ int setup_arg_pages(struct linux_binprm 
  		else
  			mpnt->vm_flags = VM_STACK_FLAGS;
  		mpnt->vm_flags |= mm->def_flags;
@@ -12098,7 +12098,8 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/fs/exec.c l
 +
  			return ret;
  		}
- 		mm->stack_vm = mm->total_vm = vma_pages(mpnt);
+ 		vx_vmpages_sub(mm, mm->total_vm - vma_pages(mpnt));
+ 		mm->stack_vm = mm->total_vm;
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
 +		if (mpnt_m) {
@@ -12973,7 +12974,7 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/include/asm
 +#ifdef CONFIG_PAX_SEGMEXEC
 +#define ELF_ET_DYN_BASE         ((current->mm->pax_flags & MF_PAX_SEGMEXEC) ? SEGMEXEC_TASK_SIZE/3*2 : TASK_SIZE/3*2)
 +#else
- #define ELF_ET_DYN_BASE         (TASK_SIZE / 3 * 2)
+ #define ELF_ET_DYN_BASE		((TASK_UNMAPPED_BASE) * 2)
 +#endif
 +
 +#ifdef CONFIG_PAX_ASLR
@@ -15336,23 +15337,27 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/init/do_mou
  	sys_close(fd);
  	if (len <= 0 || len == 32 || buf[len - 1] != '\n')
  		goto fail;
-@@ -142,8 +144,8 @@ dev_t name_to_dev_t(char *name)
- 	int part;
+@@ -142,12 +144,12 @@ dev_t name_to_dev_t(char *name)
+ 	int part, mount_result;
  
  #ifdef CONFIG_SYSFS
 -	int mkdir_err = sys_mkdir("/sys", 0700);
--	if (sys_mount("sysfs", "/sys", "sysfs", 0, NULL) < 0)
 +	int mkdir_err = sys_mkdir((char __user *)"/sys", 0700);
-+	if (sys_mount((char __user *)"sysfs", (char __user *)"/sys", (char __user *)"sysfs", 0, NULL) < 0)
+ 	/* 
+ 	 * When changing resume2 parameter for Software Suspend, sysfs may
+ 	 * already be mounted. 
+ 	 */
+-	mount_result = sys_mount("sysfs", "/sys", "sysfs", 0, NULL);
++	mount_result = sys_mount((char __user *)"sysfs", (char __user *)"/sys", (char __user *)"sysfs", 0, NULL);
+ 	if (mount_result < 0 && mount_result != -EBUSY)
  		goto out;
  #endif
- 
 @@ -195,10 +197,10 @@ dev_t name_to_dev_t(char *name)
- 	res = try_name(s, part);
  done:
  #ifdef CONFIG_SYSFS
--	sys_umount("/sys", 0);
-+	sys_umount((char __user *)"/sys", 0);
+ 	if (mount_result >= 0)
+-		sys_umount("/sys", 0);
++		sys_umount((char __user *)"/sys", 0);
  out:
  	if (!mkdir_err)
 -		sys_rmdir("/sys");
@@ -16652,7 +16657,7 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/mm/mlock.c 
 @@ -66,6 +73,48 @@ success:
  	}
  
- 	mm->locked_vm -= pages;
+ 	vx_vmlocked_sub(mm, pages);
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
 +	if (vma->vm_flags & VM_MIRROR)
@@ -18930,3 +18935,13 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/sound/pci/i
  };
  
  static int __devinit snd_intel8x0m_probe(struct pci_dev *pci,
+--- a/include/asm-i386/pda.h	2007-03-02 02:42:24.000000000 +0100
++++ b/include/asm-i386/pda.h	2007-03-02 09:29:36.000000000 +0100
+@@ -8,6 +8,7 @@
+ 
+ #include <linux/stddef.h>
+ #include <linux/types.h>
++#include <linux/threads.h>
+ 
+ struct i386_pda
+ {
