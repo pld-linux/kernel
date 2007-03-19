@@ -208,7 +208,7 @@ Source23:	kernel-sparc64.config
 Source24:	kernel-alpha.config
 Source25:	kernel-ppc.config
 Source26:	kernel-ia64.config
-Source27:	kernel-powerpc.config
+Source27:	kernel-ppc64.config
 
 Source34:	kernel-abi.config
 
@@ -456,7 +456,7 @@ Conflicts:	xfsprogs < %{_xfsprogs_ver}
 %if %{with xen0} || %{with xenU}
 ExclusiveArch:	%{ix86}
 %else
-ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc ppc64 powerpc sparc sparc64 arm
+ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc ppc64 sparc sparc64 arm
 %endif
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -952,7 +952,7 @@ install %{SOURCE5} Makefile.ppclibs
 #
 # end of grsecurity & pax stuff
 
-%ifarch ppc ppc64 powerpc
+%ifarch ppc ppc64
 %patch200 -p1
 %endif
 
@@ -1044,7 +1044,7 @@ PaXconfig () {
 		# sed -i 's:CONFIG_EFI=y:# CONFIG_EFI is not set:' $1
 
 	%endif
-	%ifarch ppc64 powerpc
+	%ifarch ppc64
 		sed -i 's:CONFIG_PAX_NOELFRELOCS=y:# CONFIG_PAX_NOELFRELOCS is not set:' $1
 	%endif
 	%ifarch ppc
@@ -1091,7 +1091,7 @@ BuildConfig() {
 	install %{SOURCE25} arch/%{_target_base_arch}/defconfig
 %endif
 
-%ifarch ppc64 powerpc
+%ifarch ppc64
 	install %{SOURCE27} arch/%{_target_base_arch}/defconfig
 	# sed -i "s:# CONFIG_PPC64 is not set:CONFIG_PPC64=y:" arch/%{_target_base_arch}/defconfig
 %endif
@@ -1107,7 +1107,7 @@ BuildConfig() {
 	cat %{SOURCE42} >> arch/%{_target_base_arch}/defconfig
 %endif
 
-%ifarch ppc ppc64 powerpc
+%ifarch ppc ppc64
 	sed -i "s:CONFIG_SUSPEND2=y:# CONFIG_SUSPEND2 is not set:" arch/%{_target_base_arch}/defconfig
 %endif
 %if %{with vserver}
@@ -1263,7 +1263,7 @@ PreInstallKernel() {
 	install vmlinux.aout $KERNEL_INSTALL_DIR/boot/vmlinux.aout-$KernelVer
 %endif
 %endif
-%ifarch ppc ppc64 powerpc
+%ifarch ppc ppc64
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
@@ -1519,7 +1519,7 @@ fi
 %ghost /lib/modules/%{kernel_release}/modules.*
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
-%ifarch alpha %{ix86} %{x8664} ppc ppc64 powerpc sparc sparc64
+%ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
 %files vmlinux
 %defattr(644,root,root,755)
 /boot/vmlinux-%{kernel_release}
