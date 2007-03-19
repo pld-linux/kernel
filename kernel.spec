@@ -1087,14 +1087,16 @@ BuildConfig() {
 	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
 	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
 
-%ifarch ppc
-	install %{SOURCE25} arch/%{_target_base_arch}/defconfig
-%endif
-
-%ifarch ppc64
-	install %{SOURCE27} arch/%{_target_base_arch}/defconfig
-	# sed -i "s:# CONFIG_PPC64 is not set:CONFIG_PPC64=y:" arch/%{_target_base_arch}/defconfig
-%endif
+## Temporary disabled - we should have the proper config files in defconfig loaded
+##
+## %ifarch ppc
+##	install %{SOURCE25} arch/%{_target_base_arch}/defconfig
+## %endif
+##
+## %ifarch ppc64
+##	install %{SOURCE27} arch/%{_target_base_arch}/defconfig
+##	# sed -i "s:# CONFIG_PPC64 is not set:CONFIG_PPC64=y:" arch/%{_target_base_arch}/defconfig
+## %endif
 
 # netfilter
 	cat %{SOURCE40} >> arch/%{_target_base_arch}/defconfig
