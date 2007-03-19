@@ -145,7 +145,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.5
+%define		_rel			0.6
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -316,8 +316,8 @@ Patch49:	kernel-2.6.18-layer7-2.7-2.6.19-fix.patch
 
 Patch50:	linux-2.6.19-imq1.diff
 
-# reiser4 based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.19/reiser4-for-2.6.19-2.patch.gz
-Patch51:	reiser4-for-2.6.19-2.patch
+# reiser4 based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.19/reiser4-for-2.6.19-3.patch.gz
+Patch51:	reiser4-for-2.6.19-3.patch
 
 # wrr http://www.zz9.dk/patches/wrr-linux-051111-2.6.20.patch.gz
 Patch52:	wrr-linux-051111-2.6.20.patch
