@@ -9089,7 +9089,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/dscale.h linux-2.6.19/fs/reiser4/dscale.h
 diff -urN linux-2.6.19.orig/fs/reiser4/entd.c linux-2.6.19/fs/reiser4/entd.c
 --- linux-2.6.19.orig/fs/reiser4/entd.c	1970-01-01 03:00:00.000000000 +0300
 +++ linux-2.6.19/fs/reiser4/entd.c	2007-02-27 21:16:37.332210279 +0300
-@@ -0,0 +1,334 @@
+@@ -0,0 +1,335 @@
 +/* Copyright 2003, 2004 by Hans Reiser, licensing governed by
 + * reiser4/README */
 +
@@ -9114,6 +9114,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/entd.c linux-2.6.19/fs/reiser4/entd.c
 +#include <linux/backing-dev.h>	/* bdi_write_congested */
 +#include <linux/wait.h>
 +#include <linux/kthread.h>
++#include <linux/freezer.h>
 +
 +#define DEF_PRIORITY 12
 +#define MAX_ENTD_ITERS 10
@@ -14462,7 +14463,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/flush_queue.c linux-2.6.19/fs/reiser4/flu
 +}
 +
 +/* slab for flush queues */
-+static kmem_cache_t *fq_slab;
++static struct kmem_cache *fq_slab;
 +
 +/**
 + * reiser4_init_fqs - create flush queue cache
@@ -15304,7 +15305,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/fsdata.c linux-2.6.19/fs/reiser4/fsdata.c
 +#include "inode.h"
 +
 +/* cache or dir_cursors */
-+static kmem_cache_t *d_cursor_cache;
++static struct kmem_cache *d_cursor_cache;
 +static struct shrinker *d_cursor_shrinker;
 +
 +/* list of unused cursors */
@@ -15893,7 +15894,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/fsdata.c linux-2.6.19/fs/reiser4/fsdata.c
 +}
 +
 +/* slab for reiser4_dentry_fsdata */
-+static kmem_cache_t *dentry_fsdata_cache;
++static struct kmem_cache *dentry_fsdata_cache;
 +
 +/**
 + * reiser4_init_dentry_fsdata - create cache of dentry_fsdata
@@ -15960,7 +15961,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/fsdata.c linux-2.6.19/fs/reiser4/fsdata.c
 +}
 +
 +/* slab for reiser4_file_fsdata */
-+static kmem_cache_t *file_fsdata_cache;
++static struct kmem_cache *file_fsdata_cache;
 +
 +/**
 + * reiser4_init_file_fsdata - create cache of reiser4_file_fsdata
@@ -18394,7 +18395,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/jnode.c linux-2.6.19/fs/reiser4/jnode.c
 +#include <linux/fs.h>		/* for struct address_space  */
 +#include <linux/writeback.h>	/* for inode_lock */
 +
-+static kmem_cache_t *_jnode_slab = NULL;
++static struct kmem_cache *_jnode_slab = NULL;
 +
 +static void jnode_set_type(jnode * node, jnode_type type);
 +static int jdelete(jnode * node);
@@ -22250,7 +22251,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/key.h linux-2.6.19/fs/reiser4/key.h
 diff -urN linux-2.6.19.orig/fs/reiser4/ktxnmgrd.c linux-2.6.19/fs/reiser4/ktxnmgrd.c
 --- linux-2.6.19.orig/fs/reiser4/ktxnmgrd.c	1970-01-01 03:00:00.000000000 +0300
 +++ linux-2.6.19/fs/reiser4/ktxnmgrd.c	2007-02-27 21:16:37.372220844 +0300
-@@ -0,0 +1,214 @@
+@@ -0,0 +1,215 @@
 +/* Copyright 2002, 2003 by Hans Reiser, licensing governed by reiser4/README */
 +/* Transaction manager daemon. */
 +
@@ -22288,6 +22289,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/ktxnmgrd.c linux-2.6.19/fs/reiser4/ktxnmg
 +#include <linux/kernel.h>
 +#include <linux/writeback.h>
 +#include <linux/kthread.h>
++#include <linux/freezer.h>
 +
 +static int scan_mgr(struct super_block *);
 +
@@ -31962,7 +31964,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/plugin/file/cryptcompress.c linux-2.6.19/
 +		lock_page(clust->pages[i]);
 +		if (PageDirty(clust->pages[i])) {
 +			assert("edward-1277", PageUptodate(clust->pages[i]));
-+			test_clear_page_dirty(clust->pages[i]);
++			TestClearPageDirty(clust->pages[i]);
 +		}
 +#if REISER4_DEBUG
 +		else
@@ -60887,7 +60889,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/plugin/plugin_set.c linux-2.6.19/fs/reise
 +#include <linux/stddef.h>
 +
 +/* slab for plugin sets */
-+static kmem_cache_t *plugin_set_slab;
++static struct kmem_cache *plugin_set_slab;
 +
 +static spinlock_t plugin_set_lock[8] __cacheline_aligned_in_smp = {
 +	[0 ... 7] = SPIN_LOCK_UNLOCKED
@@ -67510,7 +67512,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/super_ops.c linux-2.6.19/fs/reiser4/super
 +#include <linux/debugfs.h>
 +
 +/* slab cache for inodes */
-+static kmem_cache_t *inode_cache;
++static struct kmem_cache *inode_cache;
 +
 +static struct dentry *reiser4_debugfs_root = NULL;
 +
@@ -72906,9 +72908,9 @@ diff -urN linux-2.6.19.orig/fs/reiser4/txnmgr.c linux-2.6.19/fs/reiser4/txnmgr.c
 +
 +/* FIXME: In theory, we should be using the slab cache init & destructor
 +   methods instead of, e.g., jnode_init, etc. */
-+static kmem_cache_t *_atom_slab = NULL;
++static struct kmem_cache *_atom_slab = NULL;
 +/* this is for user-visible, cross system-call transactions. */
-+static kmem_cache_t *_txnh_slab = NULL;
++static struct kmem_cache *_txnh_slab = NULL;
 +
 +/**
 + * init_txnmgr_static - create transaction manager slab caches
@@ -79312,7 +79314,7 @@ diff -urN linux-2.6.19.orig/fs/reiser4/znode.c linux-2.6.19/fs/reiser4/znode.c
 +#undef KMALLOC
 +
 +/* slab for znodes */
-+static kmem_cache_t *znode_cache;
++static struct kmem_cache *znode_cache;
 +
 +int znode_shift_order;
 +
