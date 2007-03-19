@@ -146,7 +146,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.3
+%define		_rel			0.4
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -395,9 +395,10 @@ Patch2100:	linux-2.6.20-paravirt_ops-needed-by-blobs.patch
 #wanpipe
 #Patch3000: wanpipe-beta7-2.3.4.patch
 
+# not ready yet
 Patch9997:	pax_selinux_hooks-2.6.20.patch
 
-# TODO: http://www.grsecurity.net/~paxguy1/pax-linux-2.6.20.1-test5.patch
+# based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.20.3-test9.patch
 Patch9998:	pax-linux-2.6.20.patch
 
 # TODO: http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.19.3-200702201828.patch
