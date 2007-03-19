@@ -21,7 +21,6 @@
 # - (external) truecrypt builds and works (for me)
 #
 # TODO 2.6.20.3
-# - test build 2.6.20.3
 # - test non default bconds for 2.6.20.3
 # - test build --with pax --with reiser4 for alpha
 # - test build on sparc, sparc64
@@ -146,7 +145,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.4
+%define		_rel			0.5
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -209,6 +208,7 @@ Source23:	kernel-sparc64.config
 Source24:	kernel-alpha.config
 Source25:	kernel-ppc.config
 Source26:	kernel-ia64.config
+Source27:	kernel-powerpc.config
 
 Source34:	kernel-abi.config
 
@@ -232,9 +232,6 @@ Source57:	kernel-wrr.config
 #	Patches
 ###
 
-# TODO: patch not active for some time
-Patch0:		linux-net-2.6.19.patch
-#
 # TODO: not compatible - still needed?
 # PATA ports on SATA Promise controller; patch based on:
 # http://cvs.fedora.redhat.com/viewcvs/*checkout*/rpms/kernel/devel/linux-2.6-sata-promise-pata-ports.patch
@@ -459,7 +456,7 @@ Conflicts:	xfsprogs < %{_xfsprogs_ver}
 %if %{with xen0} || %{with xenU}
 ExclusiveArch:	%{ix86}
 %else
-ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc ppc64 sparc sparc64 arm
+ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc ppc64 powerpc sparc sparc64 arm
 %endif
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -779,9 +776,6 @@ Pakiet zawiera pliki nagłówkowe dla aplikacji użytkownika.
 %prep
 %setup -q -n linux-%{_basever}%{_rc} %{?with_abi:-a14}
 
-# borooken in this time.
-#patch0 -p1
-
 %ifarch ppc
 install %{SOURCE5} Makefile.ppclibs
 %endif
@@ -958,7 +952,7 @@ install %{SOURCE5} Makefile.ppclibs
 #
 # end of grsecurity & pax stuff
 
-%ifarch ppc ppc64
+%ifarch ppc ppc64 powerpc
 %patch200 -p1
 %endif
 
@@ -1050,7 +1044,7 @@ PaXconfig () {
 		# sed -i 's:CONFIG_EFI=y:# CONFIG_EFI is not set:' $1
 
 	%endif
-	%ifarch ppc64
+	%ifarch ppc64 powerpc
 		sed -i 's:CONFIG_PAX_NOELFRELOCS=y:# CONFIG_PAX_NOELFRELOCS is not set:' $1
 	%endif
 	%ifarch ppc
@@ -1059,7 +1053,7 @@ PaXconfig () {
 		sed -i 's:# CONFIG_PAX_EMUPLT is not set:CONFIG_PAX_EMUPLT=y:' $1
 	%endif
 
-	%ifarch sparc || sparc64 || alpha
+	%ifarch sparc sparc64 alpha
 		sed -i 's:# CONFIG_PAX_EMUPLT is not set:CONFIG_PAX_EMUPLT=y:' $1
 	%endif
 
@@ -1093,11 +1087,13 @@ BuildConfig() {
 	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
 	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
 
-%ifarch ppc ppc64
+%ifarch ppc
 	install %{SOURCE25} arch/%{_target_base_arch}/defconfig
-%ifarch ppc64
-	sed -i "s:# CONFIG_PPC64 is not set:CONFIG_PPC64=y:" arch/%{_target_base_arch}/defconfig
 %endif
+
+%ifarch ppc64 powerpc
+	install %{SOURCE27} arch/%{_target_base_arch}/defconfig
+	# sed -i "s:# CONFIG_PPC64 is not set:CONFIG_PPC64=y:" arch/%{_target_base_arch}/defconfig
 %endif
 
 # netfilter
@@ -1111,7 +1107,7 @@ BuildConfig() {
 	cat %{SOURCE42} >> arch/%{_target_base_arch}/defconfig
 %endif
 
-%ifarch ppc ppc64
+%ifarch ppc ppc64 powerpc
 	sed -i "s:CONFIG_SUSPEND2=y:# CONFIG_SUSPEND2 is not set:" arch/%{_target_base_arch}/defconfig
 %endif
 %if %{with vserver}
@@ -1267,7 +1263,7 @@ PreInstallKernel() {
 	install vmlinux.aout $KERNEL_INSTALL_DIR/boot/vmlinux.aout-$KernelVer
 %endif
 %endif
-%ifarch ppc ppc64
+%ifarch ppc ppc64 powerpc
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
@@ -1523,7 +1519,7 @@ fi
 %ghost /lib/modules/%{kernel_release}/modules.*
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
-%ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
+%ifarch alpha %{ix86} %{x8664} ppc ppc64 powerpc sparc sparc64
 %files vmlinux
 %defattr(644,root,root,755)
 /boot/vmlinux-%{kernel_release}
