@@ -4,12 +4,12 @@
 # - works for me (i686 up)
 # - builds on i686 with gcc-3.3.6-4 (Ac)
 # - builds on x86_64 with gcc-4.2.0-0.20070214.1.x86_64 (Th)
-# - builds for ppc with crossppc-gcc-4.0.2-2 (Ac)
+# - builds for ppc with crossppc-gcc-4.0.2-2 (Ac) (but have to use proper ppc)
 # - builds for alpha with crossalpha-gcc-4.0.1-1 (Th)
 # - builds --with vesafb_tng (i686)
-# - builds --with reiser4 (i686/x86_64/ppc)
+# - builds --with reiser4 (i686/x86_64)
 # - builds --with fbsplash (i686)
-# - builds --with pax (i686/x86_64/ppc)
+# - builds --with pax (i686/x86_64)
 # - (external) nvidia works with & wo regparm
 # - (external) nvidia-legacy works with & wo regparm
 # - (external) ati firegl builds (but probably have issues)
@@ -21,6 +21,7 @@
 # - (external) truecrypt builds and works (for me)
 #
 # TODO 2.6.20.3
+# - regenerete ppc and ppc64 config files based on powerpc kernel target
 # - test non default bconds for 2.6.20.3
 # - test build --with pax --with reiser4 for alpha
 # - test build on sparc, sparc64
@@ -53,7 +54,7 @@
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	xen0		# added Xen0 support
 %bcond_with	xenU		# added XenU support
-%bcond_with	reiser4		# support for reiser4 fs
+%bcond_without	reiser4		# support for reiser4 fs (experimental)
 
 %bcond_without	grsecurity	# don't build grsecurity nor pax at all
 %bcond_without	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
@@ -145,7 +146,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.6
+%define		_rel			0.7
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
