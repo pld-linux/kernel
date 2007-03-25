@@ -399,10 +399,8 @@ Patch9997:	pax_selinux_hooks-2.6.20.patch
 # based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.20.3-test9.patch
 Patch9998:	pax-linux-2.6.20.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.20.3-200703231034.patch
-Patch9999:	grsecurity-2.1.10-2.6.20.3.patch
-Patch10000:	linux-2.6-grsec-caps.patch
-Patch10001:	linux-2.6-grsec-common.patch
+# TODO: http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.19.3-200702201828.patch
+Patch9999:	grsecurity-2.1.10.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -926,14 +924,10 @@ install %{SOURCE5} Makefile.ppclibs
 
 %if %{with pax_full}
 %patch9999 -p1
-%patch10000 -p1
-%patch10001 -p1
 %else
 
 %if %{with grsec_full}
 %patch9999 -p1
-%patch10000 -p1
-%patch10001 -p1
 %else
 %if %{with grsec_minimal}
 %patch1000 -p1
