@@ -393,6 +393,8 @@ Patch2100:	linux-2.6.20-paravirt_ops-needed-by-blobs.patch
 #wanpipe
 #Patch3000: wanpipe-beta7-2.3.4.patch
 
+Patch5000:	apparmor-2.6.20.3-v405-fullseries.diff
+
 # not ready yet
 Patch9997:	pax_selinux_hooks-2.6.20.patch
 
@@ -920,6 +922,8 @@ install %{SOURCE5} Makefile.ppclibs
 %if %{without regparm}
 %patch500 -p1
 %endif
+
+%patch5000 -p1
 
 # grsecurity & pax stuff - temporary - work in progress
 #
