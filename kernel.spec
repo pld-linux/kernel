@@ -25,7 +25,6 @@
 # - test non default bconds for 2.6.20.3
 # - test build --with pax --with reiser4 for alpha
 # - test build on sparc, sparc64
-# - grsec_full
 # - pax hooks for selinux (experimental)
 # - spec cleanup
 # - test external modules
@@ -394,6 +393,7 @@ Patch2100:	linux-2.6.20-paravirt_ops-needed-by-blobs.patch
 #Patch3000: wanpipe-beta7-2.3.4.patch
 
 Patch5000:	apparmor-2.6.20.3-v405-fullseries.diff
+Patch5001:	linux-2.6-apparmor-caps.patch
 
 # not ready yet
 Patch9997:	pax_selinux_hooks-2.6.20.patch
@@ -924,6 +924,7 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 %patch5000 -p1
+%patch5001 -p1
 
 # grsecurity & pax stuff - temporary - work in progress
 #
