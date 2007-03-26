@@ -79,7 +79,7 @@
 %define		squashfs_version	3.2
 
 %define		_basever	2.6.20
-%define		_postver	%{nil}
+%define		_postver	.4
 %define		_rel		0.1
 %define		_rc		%{nil}
 %define		_subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_vserver:-vserver}
@@ -97,7 +97,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	34b0f354819217e6a345f48ebbd8f13e
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	e8a9a6dc65da3f7b192e7caa969f9a1b
+# Source1-md5:	5653a8ff0d117e89c6c1cf519a113f83
 %endif
 
 Source2:	kernel-module-build.pl
@@ -126,13 +126,13 @@ Source45:	kernel-pax.config
 Source46:	kernel-no-pax.config
 Source47:	kernel-squashfs.config
 
-# http://vserver.13thfloor.at/Experimental/patch-2.6.20-vs2.3.0.9.diff
+# http://vserver.13thfloor.at/Experimental/patch-2.6.20.1-vs2.3.0.11.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-128IPs.patch
 
-# from http://www.grsecurity.net/grsecurity-2.1.10-2.6.19.2-200701222307.patch.gz
-Patch200:	grsecurity-2.1.10-2.6.19.2-200701222307.patch
-Patch201:	grsecurity-vs-2.1.10-2.6.19.2-200701222307.patch
+# from http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.20.3-200703231034.patch
+Patch200:	grsecurity-2.1.10-2.6.20.3-200703231034.patch
+Patch201:	grsecurity-vs-2.1.10-2.6.20.3-200703231034.patch
 Patch202:	linux-2.6-grsec-minimal.patch
 Patch203:	linux-2.6-grsec-vs-minimal.patch
 
