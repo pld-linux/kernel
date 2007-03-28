@@ -130,9 +130,9 @@ Source47:	kernel-squashfs.config
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-128IPs.patch
 
-# from http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.20.3-200703231034.patch
-Patch200:	grsecurity-2.1.10-2.6.20.3-200703231034.patch
-Patch201:	grsecurity-vs-2.1.10-2.6.20.3-200703231034.patch
+# from http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.20.4-200703271911.patch
+Patch200:	grsecurity-2.1.10-2.6.20.4-200703271911.patch
+Patch201:	grsecurity-vs-2.1.10-2.6.20.4-200703271911.patch
 Patch202:	linux-2.6-grsec-minimal.patch
 Patch203:	linux-2.6-grsec-vs-minimal.patch
 
@@ -1122,9 +1122,6 @@ fi
 %ifnarch sparc
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/char/drm
 %endif
-%if %{have_oss} && %{have_isa}
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/media/radio/miropcm20*.ko*
-%endif
 /lib/modules/%{kernel_release}/kernel/fs
 /lib/modules/%{kernel_release}/kernel/kernel
 /lib/modules/%{kernel_release}/kernel/lib
@@ -1202,9 +1199,6 @@ fi
 %files sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}/kernel/sound/oss
-%if %{have_isa}
-/lib/modules/%{kernel_release}/kernel/drivers/media/radio/miropcm20*.ko*
-%endif
 %endif			# %{have_oss}
 %endif			# %{have_sound}
 %endif			# %%{with up}
@@ -1226,9 +1220,6 @@ fi
 /lib/modules/%{kernel_release}smp/kernel/drivers
 %ifnarch sparc
 %exclude /lib/modules/%{kernel_release}smp/kernel/drivers/char/drm
-%endif
-%if %{have_oss} && %{have_isa}
-%exclude /lib/modules/%{kernel_release}smp/kernel/drivers/media/radio/miropcm20*.ko*
 %endif
 /lib/modules/%{kernel_release}smp/kernel/fs
 /lib/modules/%{kernel_release}smp/kernel/kernel
@@ -1307,9 +1298,6 @@ fi
 %files smp-sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}smp/kernel/sound/oss
-%if %{have_isa}
-/lib/modules/%{kernel_release}smp/kernel/drivers/media/radio/miropcm20*.ko*
-%endif
 %endif			# %{have_oss}
 %endif			# %{have_sound}
 %endif			# %{with_smp}
