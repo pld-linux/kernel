@@ -80,7 +80,7 @@
 
 %define		_basever	2.6.20
 %define		_postver	.4
-%define		_rel		0.1
+%define		_rel		1
 %define		_rc		%{nil}
 %define		_subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_vserver:-vserver}
 Summary:	The Linux kernel (the core of the Linux operating system)
