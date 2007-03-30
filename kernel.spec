@@ -1,13 +1,12 @@
 #
-# STATUS: 2.6.20.1-0.11/2.6.20.2-0.1
+# STATUS: 2.6.20.4-1
 # - standard config includes vserver, suspend2 and grsec_minimal
-# - works for me (i686 up)
+# - works for me (i686)
 # - builds on i686 with gcc-3.3.6-4 (Ac)
 # - builds on x86_64 with gcc-4.2.0-0.20070214.1.x86_64 (Th)
-# - builds for ppc with crossppc-gcc-4.0.2-2 (Ac) (but have to use proper ppc)
+# - builds for ppc 
 # - builds for alpha with crossalpha-gcc-4.0.1-1 (Th)
 # - builds --with vesafb_tng (i686)
-# - builds --with reiser4 (i686/x86_64)
 # - builds --with fbsplash (i686)
 # - builds --with pax (i686/x86_64)
 # - (external) nvidia works with & wo regparm
@@ -20,21 +19,17 @@
 # - (external) ipp2p builds
 # - (external) truecrypt builds and works (for me)
 #
-# TODO 2.6.20.3
-# - regenerete ppc and ppc64 config files based on powerpc kernel target
-# - test non default bconds for 2.6.20.3
+# TODO 2.6.20.4
+# - test non default bconds for 2.6.20.4
 # - test build --with pax --with reiser4 for alpha
 # - test build on sparc, sparc64
 # - pax hooks for selinux (experimental)
 # - spec cleanup
 # - test external modules
-# - mms-conntrack-nat - port to nf_conntrack and enable in kernel-netfilter.config
-# - for pax on 32-bit ppc disable CONFIG_PAX_EMUPLT (it will need gcc4 build userland -> Th only)
 #
 # FUTURE:
 # - new alsa rc2 - 1.0.14rc2 is in 2.6.20-git10 tree and in 2.6.21 line
 # - update xen patch for 2.6.20
-# - wanpipe -> use wanpipe.spec instead ?
 # - Linux ABI - needs update.
 # - pom-ng quake3-conntrack-nat -> nf_conntrack ?
 # - pom-ng rpc -> ?
@@ -43,6 +38,7 @@
 # - nf-hipac ?
 # - update configs for ia64 - no builder ?
 # - acrypto - http://tservice.net.ru/~s0mbre/blog/devel/acrypto
+# - for pax on 32-bit ppc disable CONFIG_PAX_EMUPLT (it will need gcc4 build userland -> Th only)
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
@@ -145,7 +141,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			1
+%define		_rel			2
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -275,6 +271,9 @@ Patch41:	pom-ng-connlimit-%{_netfilter_snap}.patch
 Patch42:	pom-ng-geoip-%{_netfilter_snap}.patch
 Patch43:	pom-ng-ipp2p-%{_netfilter_snap}.patch
 Patch44:	pom-ng-time-%{_netfilter_snap}.patch
+
+# nf_conntrack ports
+Patch45:	nf_conntrack_mms.patch
 
 #layer7 with temporary fix
 Patch48:	kernel-2.6.18-layer7-2.7.patch
@@ -853,6 +852,9 @@ install %{SOURCE5} Makefile.ppclibs
 %patch42 -p1
 %patch43 -p1
 %patch44 -p1
+
+# nf_conn mms
+%patch45 -p1
 
 ## layer7
 %patch48 -p1
