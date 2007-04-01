@@ -128,7 +128,7 @@
 %define		xen_version		3.0.2
 
 %define		_basever	2.6.16
-%define		_postver	.45
+%define		_postver	.46
 %define		_rel		1
 %define		_subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -146,15 +146,15 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source3-md5:	82ed3781bb956ae13230f5babbd99618
+# Source3-md5:	5ceac58367a2d1d3ea6ac333626c26d6
 
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
 
 Source10:	http://suspend2.net/downloads/all/suspend2-%{suspend_version}-for-2.6.16.9.tar.bz2
 # Source10-md5:	34345b1f7ad1505f6b264427a21e8a04
-Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.16/reiser4-for-2.6.16-1.patch.gz
-# Source12-md5:	f51303b5e445432b974a729b76036c40
+Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.16/reiser4-for-2.6.16-5.patch.gz
+# Source12-md5:	6ad22d084e12257781f205ec248e4f64
 
 Source20:	kernel-i386.config
 Source21:	kernel-i386-smp.config
