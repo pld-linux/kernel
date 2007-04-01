@@ -1,5 +1,6 @@
 #
 # TODO:
+#   - grsec needs patch update
 #	- test pax stuff (btw. tested ok in softmode)
 #	- prepare config for non SEGMEXEC capable archs (ie not x86/32bit)
 #	- patch scripts/Makefile.xen not to require bash
