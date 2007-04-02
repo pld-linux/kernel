@@ -2562,13 +2562,14 @@ diff -urNp linux-2.6.16.12/arch/i386/mach-voyager/voyager_smp.c linux-2.6.16.12/
  	}
  
  	if( ((1<<cpu) & voyager_extended_vic_processors) == 0)
-diff -urNp linux-2.6.16.12/arch/i386/mm/boot_ioremap.c linux-2.6.16.12/arch/i386/mm/boot_ioremap.c
---- linux-2.6.16.12/arch/i386/mm/boot_ioremap.c	2006-05-01 15:14:26.000000000 -0400
-+++ linux-2.6.16.12/arch/i386/mm/boot_ioremap.c	2006-05-01 20:17:33.000000000 -0400
-@@ -8,53 +8,37 @@
+diff -urNp linux-2.6.16/arch/i386/mm/boot_ioremap.c linux-2.6.16/arch/i386/mm/boot_ioremap.c
+--- linux-2.6.16/arch/i386/mm/boot_ioremap.c	2007-04-02 01:58:56.298176750 +0200
++++ linux-2.6.16/arch/i386/mm/boot_ioremap.c	2007-04-02 02:02:20.994969500 +0200
+@@ -7,57 +7,36 @@
+  * Written by Dave Hansen <haveblue@us.ibm.com>
   */
  
- 
+-
 -/*
 - * We need to use the 2-level pagetable functions, but CONFIG_X86_PAE
 - * keeps that from happenning.  If anyone has a better way, I'm listening.
@@ -2591,15 +2592,18 @@ diff -urNp linux-2.6.16.12/arch/i386/mm/boot_ioremap.c linux-2.6.16.12/arch/i386
 - */
 -
 -#define BOOT_PTE_PTRS (PTRS_PER_PTE*2)
--#define boot_pte_index(address) \
--	     (((address) >> PAGE_SHIFT) & (BOOT_PTE_PTRS - 1))
+-
+-static unsigned long boot_pte_index(unsigned long vaddr)
+-{
+-	return __pa(vaddr) >> PAGE_SHIFT;
+-}
 -
 -static inline boot_pte_t* boot_vaddr_to_pte(void *address)
 -{
 -	boot_pte_t* boot_pg = (boot_pte_t*)pg0;
 -	return &boot_pg[boot_pte_index((unsigned long)address)];
 -}
- 
+-
  /*
   * This is only for a caller who is clever enough to page-align
   * phys_addr and virtual_source, and who also has a preference
