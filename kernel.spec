@@ -45,6 +45,8 @@
 %bcond_without	pcmcia		# don't build pcmcia
 %bcond_without	regparm		# if your blob doesn't work try disable this
 
+%bcond_with	uheaders	# userspace headers
+
 %bcond_with	abi		# build ABI support only ix86 !!
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	xen0		# added Xen0 support
@@ -1632,9 +1634,11 @@ fi
 %{_kernelsrcdir}/scripts/kconfig/*
 %{_kernelsrcdir}/scripts/mkcompile_h
 
+%if %{with uheaders}
 %files libc-headers
 %defattr(644,root,root,755)
 %{_includedir}/*
+%endif
 
 %files doc
 %defattr(644,root,root,755)
