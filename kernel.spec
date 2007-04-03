@@ -1,28 +1,28 @@
 #
 # STATUS: 2.6.20.4-1
 # - standard config includes vserver, suspend2 and grsec_minimal
-# - works for me (i686)
-# - builds on i686 with gcc-3.3.6-4 (Ac)
-# - builds on x86_64 with gcc-4.2.0-0.20070214.1.x86_64 (Th)
-# - builds for ppc 
+# - builds on i686 (Ac & Th)
+# - builds on x86_64 (Th)
+# - builds on ppc (Th) 
 # - builds for alpha with crossalpha-gcc-4.0.1-1 (Th)
 # - builds --with vesafb_tng (i686)
 # - builds --with fbsplash (i686)
-# - builds --with pax (i686/x86_64)
-# - (external) nvidia works with & wo regparm
-# - (external) nvidia-legacy works with & wo regparm
+# - builds --with pax_full and --with pax (i686/x86_64)
+# - (external) nvidia works
+# - (external) nvidia-legacy works
 # - (external) ati firegl builds (but probably have issues)
 # - (external) slmodem builds
-# - (external) madwifi-ng works with & wo regparm
+# - (external) madwifi-ng works
 # - (external) madwifi-old-openhal builds but have no supported hardware to test
 # - (external) lirc builds
 # - (external) ipp2p builds
 # - (external) truecrypt builds and works (for me)
 #
 # TODO 2.6.20.4
+# - update vserver to 2.3.0.12 snapshot
+# - update grsecurity to the newest ~spender snapshot
+# - update pax to the newest ~paxguy1 snapshot or replace by ~spender grsecurity 
 # - test non default bconds for 2.6.20.4
-# - test build --with pax --with reiser4 for alpha
-# - test build on sparc, sparc64
 # - pax hooks for selinux (experimental)
 # - spec cleanup
 # - test external modules
@@ -36,7 +36,6 @@
 # - pom-ng rtsp-conntrack -> nf_conntrack ?
 # - pom-ng talk-conntrack-nat -> nf_conntrack ?
 # - nf-hipac ?
-# - update configs for ia64 - no builder ?
 # - acrypto - http://tservice.net.ru/~s0mbre/blog/devel/acrypto
 # - for pax on 32-bit ppc disable CONFIG_PAX_EMUPLT (it will need gcc4 build userland -> Th only)
 #
@@ -354,6 +353,7 @@ Patch75:	linux-2.6-ide-acpi-support.patch
 Patch85:	hostap-kernel-2.6.18.patch
 
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.20.1-vs2.3.0.11.diff
+# TODO: http://vserver.13thfloor.at/Experimental/patch-2.6.20.4-vs2.3.0.12.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
@@ -376,8 +376,9 @@ Patch302:	linux-2.6-layer7_nf_conntrack_port.patch
 
 Patch400:	kernel-bcm43xx-combined_2.6.20.2.patch
 
-# For compatibility with such blobs like HAL from madwifi-ng
+# For compatibility with (not updated) blobs like ... ? 
 # before we had CONFIG_REGPARM option disabled - it is bconded and disabled now
+# probably not needed anymore.
 Patch500:	linux-2.6.20_i386_regparm_off.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
@@ -400,9 +401,13 @@ Patch5001:	linux-2.6-apparmor-caps.patch
 Patch9997:	pax_selinux_hooks-2.6.20.patch
 
 # based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.20.3-test9.patch
+# TODO: http://www.grsecurity.net/~paxguy1/pax-linux-2.6.20.4-test11.patch 
+#       or use pax from grsecurity patch (which could still have issues when 
+#       grsecurity part is disabled) 
 Patch9998:	pax-linux-2.6.20.patch
 
 # based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.20.3-200703231034.patch
+# TODO: http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.20.4-200704021831.patch
 Patch9999:	grsecurity-2.1.10-2.6.20.3.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
