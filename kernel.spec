@@ -1337,10 +1337,16 @@ export DEPMOD=%DepMod
 install -d $RPM_BUILD_ROOT%{_kernelsrcdir}
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{kernel_release}
 
+%if %{with uheaders}
 %{__make} headers_install \
-	INSTALL_HDR_PATH=$RPM_BUILD_ROOT%{_prefix}
+	INSTALL_HDR_PATH=$RPM_BUILD_ROOT%{_prefix} \
+%if "%{_target_base_arch}" != "%{_arch}"
+	ARCH=%{_target_base_arch}
+%endif
+
 # glibc-headers
 rm -rf $RPM_BUILD_ROOT%{_includedir}/scsi
+%endif
 
 # test if we can hardlink -- %{_builddir} and $RPM_BUILD_ROOT on same partition
 if cp -al COPYING $RPM_BUILD_ROOT/COPYING 2>/dev/null; then
