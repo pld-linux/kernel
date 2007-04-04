@@ -394,6 +394,9 @@ Patch2100:	linux-2.6.20-paravirt_ops-needed-by-blobs.patch
 #wanpipe
 #Patch3000: wanpipe-beta7-2.3.4.patch
 
+# gfs2 and dlm modules ported from 2.6.21rc5, current are broken
+Patch4000:	linux-2.6-gfs2_dlm-2.6.21.patch
+
 Patch5000:	apparmor-2.6.20.3-v405-fullseries.diff
 Patch5001:	linux-2.6-apparmor-caps.patch
 
@@ -932,6 +935,10 @@ install %{SOURCE5} Makefile.ppclibs
 %patch500 -p1
 %endif
 
+# gfs2 from 2.6.21
+%patch4000 -p1
+
+# Apparmor
 %patch5000 -p1
 %patch5001 -p1
 
