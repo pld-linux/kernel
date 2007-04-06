@@ -20,7 +20,6 @@
 #
 # TODO 2.6.20.4
 # - update vserver to 2.3.0.12 snapshot
-# - update grsecurity to the newest ~spender snapshot
 # - update pax to the newest ~paxguy1 snapshot or replace by ~spender grsecurity 
 # - test non default bconds for 2.6.20.4
 # - pax hooks for selinux (experimental)
@@ -409,8 +408,7 @@ Patch9997:	pax_selinux_hooks-2.6.20.patch
 #       grsecurity part is disabled) 
 Patch9998:	pax-linux-2.6.20.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.20.3-200703231034.patch
-# TODO: http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.20.4-200704021831.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.20.4-200704021831.patch
 Patch9999:	grsecurity-2.1.10-2.6.20.3.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
