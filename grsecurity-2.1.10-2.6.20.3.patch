@@ -2550,7 +2550,7 @@ diff -urNp linux-2.6.20.3/arch/i386/kernel/process.c linux-2.6.20.3/arch/i386/ke
  
  /*
 @@ -298,7 +298,7 @@ void show_regs(struct pt_regs * regs)
- 	printk("EIP: %04x:[<%08lx>] CPU: %d\n",0xffff & regs->xcs,regs->eip, smp_processor_id());
+ 		0xffff & regs->xcs,regs->eip, smp_processor_id());
  	print_symbol("EIP is at %s\n", regs->eip);
  
 -	if (user_mode_vm(regs))
@@ -3102,7 +3102,7 @@ diff -urNp linux-2.6.20.3/arch/i386/kernel/sysenter.c linux-2.6.20.3/arch/i386/k
  	/*
  	 * Make sure the vDSO gets into every core dump.
  	 * Dumping its contents makes post-mortem fully interpretable later
-@@ -150,17 +176,42 @@ int arch_setup_additional_pages(struct l
+@@ -151,17 +177,42 @@ int arch_setup_additional_pages(struct l
  	 */
  	vma->vm_flags |= VM_ALWAYSDUMP;
  	vma->vm_flags |= mm->def_flags;
@@ -3146,7 +3146,7 @@ diff -urNp linux-2.6.20.3/arch/i386/kernel/sysenter.c linux-2.6.20.3/arch/i386/k
 +	current->mm->context.vdso = addr;
  	current_thread_info()->sysenter_return =
  				    (void *)VDSO_SYM(&SYSENTER_RETURN);
- 	mm->total_vm++;
+ 	vx_vmpages_inc(mm);
 @@ -171,8 +222,17 @@ up_fail:
  
  const char *arch_vma_name(struct vm_area_struct *vma)
@@ -5634,7 +5634,7 @@ diff -urNp linux-2.6.20.3/arch/i386/mm/extable.c linux-2.6.20.3/arch/i386/mm/ext
 diff -urNp linux-2.6.20.3/arch/i386/mm/fault.c linux-2.6.20.3/arch/i386/mm/fault.c
 --- linux-2.6.20.3/arch/i386/mm/fault.c	2007-03-13 14:27:08.000000000 -0400
 +++ linux-2.6.20.3/arch/i386/mm/fault.c	2007-03-23 08:32:22.000000000 -0400
-@@ -23,6 +23,9 @@
+@@ -23,11 +23,15 @@
  #include <linux/module.h>
  #include <linux/kprobes.h>
  #include <linux/uaccess.h>
@@ -5644,7 +5644,13 @@ diff -urNp linux-2.6.20.3/arch/i386/mm/fault.c linux-2.6.20.3/arch/i386/mm/fault
  
  #include <asm/system.h>
  #include <asm/desc.h>
-@@ -104,7 +107,8 @@ static inline unsigned long get_segment_
+ #include <asm/kdebug.h>
+ #include <asm/segment.h>
++#include <asm/tlbflush.h>
+ 
+ extern void die(const char *,struct pt_regs *,long);
+ 
+@@ -104,7 +108,8 @@ static inline unsigned long get_segment_
  {
  	unsigned long eip = regs->eip;
  	unsigned seg = regs->xcs & 0xffff;
@@ -5654,7 +5660,7 @@ diff -urNp linux-2.6.20.3/arch/i386/mm/fault.c linux-2.6.20.3/arch/i386/mm/fault
  
  	/* Unlikely, but must come before segment checks. */
  	if (unlikely(regs->eflags & VM_MASK)) {
-@@ -118,7 +122,7 @@ static inline unsigned long get_segment_
+@@ -118,7 +123,7 @@ static inline unsigned long get_segment_
  	
  	/* By far the most common cases. */
  	if (likely(SEGMENT_IS_FLAT_CODE(seg)))
@@ -6336,7 +6342,7 @@ diff -urNp linux-2.6.20.3/arch/i386/mm/init.c linux-2.6.20.3/arch/i386/mm/init.c
 -#endif
  }
  
- #if defined(CONFIG_SOFTWARE_SUSPEND) || defined(CONFIG_ACPI_SLEEP)
+ #if defined(CONFIG_SUSPEND_SHARED) || defined(CONFIG_ACPI_SLEEP)
 @@ -388,12 +358,12 @@ static void __init pagetable_init (void)
   * Swap suspend & friends need this for resume because things like the intel-agp
   * driver might have split up a kernel 4MB mapping.
@@ -8541,8 +8547,8 @@ diff -urNp linux-2.6.20.3/arch/sparc/kernel/ptrace.c linux-2.6.20.3/arch/sparc/k
  
  #include <asm/pgtable.h>
  #include <asm/system.h>
-@@ -303,6 +304,11 @@ asmlinkage void do_ptrace(struct pt_regs
- 		goto out;
+@@ -308,6 +309,11 @@ asmlinkage void do_ptrace(struct pt_regs
+ 		goto out_tsk;
  	}
  
 +	if (gr_handle_ptrace(child, request)) {
@@ -8948,8 +8954,8 @@ diff -urNp linux-2.6.20.3/arch/sparc64/kernel/ptrace.c linux-2.6.20.3/arch/sparc
  
  #include <asm/asi.h>
  #include <asm/pgtable.h>
-@@ -216,6 +217,11 @@ asmlinkage void do_ptrace(struct pt_regs
- 		goto out;
+@@ -221,6 +222,11 @@ asmlinkage void do_ptrace(struct pt_regs
+ 		goto out_tsk;
  	}
  
 +	if (gr_handle_ptrace(child, (long)request)) {
@@ -9772,8 +9778,8 @@ diff -urNp linux-2.6.20.3/arch/x86_64/mm/fault.c linux-2.6.20.3/arch/x86_64/mm/f
  		default:	/* 3: write, present */
  			/* fall through */
 @@ -519,7 +549,14 @@ bad_area_nosemaphore:
- 					tsk->comm, tsk->pid, address, regs->rip,
- 					regs->rsp, error_code);
+ 					tsk->comm, tsk->pid, tsk->xid, address,
+ 					regs->rip, regs->rsp, error_code);
  		}
 -       
 +
@@ -13067,14 +13073,14 @@ diff -urNp linux-2.6.20.3/fs/fcntl.c linux-2.6.20.3/fs/fcntl.c
  	if (orig_start >= current->signal->rlim[RLIMIT_NOFILE].rlim_cur)
  		goto out;
  
-@@ -82,6 +84,7 @@ repeat:
+@@ -83,6 +85,7 @@ repeat:
  					   fdt->max_fds, start);
  	
  	error = -EMFILE;
 +	gr_learn_resource(current, RLIMIT_NOFILE, newfd, 0);
  	if (newfd >= current->signal->rlim[RLIMIT_NOFILE].rlim_cur)
  		goto out;
- 
+ 	if (!vx_files_avail(1))
 @@ -140,6 +143,8 @@ asmlinkage long sys_dup2(unsigned int ol
  	struct files_struct * files = current->files;
  	struct fdtable *fdt;
@@ -14037,8 +14043,8 @@ diff -urNp linux-2.6.20.3/fs/proc/inode.c linux-2.6.20.3/fs/proc/inode.c
  			inode->i_gid = de->gid;
 +#endif
  		}
- 		if (de->size)
- 			inode->i_size = de->size;
+ 		if (de->vx_flags)
+ 			PROC_I(inode)->vx_flags = de->vx_flags;
 diff -urNp linux-2.6.20.3/fs/proc/internal.h linux-2.6.20.3/fs/proc/internal.h
 --- linux-2.6.20.3/fs/proc/internal.h	2007-03-13 14:27:08.000000000 -0400
 +++ linux-2.6.20.3/fs/proc/internal.h	2007-03-23 08:11:31.000000000 -0400
@@ -18204,7 +18210,7 @@ diff -urNp linux-2.6.20.3/grsecurity/gracl.c linux-2.6.20.3/grsecurity/gracl.c
 diff -urNp linux-2.6.20.3/grsecurity/gracl_cap.c linux-2.6.20.3/grsecurity/gracl_cap.c
 --- linux-2.6.20.3/grsecurity/gracl_cap.c	1969-12-31 19:00:00.000000000 -0500
 +++ linux-2.6.20.3/grsecurity/gracl_cap.c	2007-03-23 08:11:31.000000000 -0400
-@@ -0,0 +1,109 @@
+@@ -0,0 +1,110 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
 +#include <linux/sched.h>
@@ -18246,6 +18252,7 @@ diff -urNp linux-2.6.20.3/grsecurity/gracl_cap.c linux-2.6.20.3/grsecurity/gracl
 +};
 +
 +EXPORT_SYMBOL(gr_task_is_capable);
++EXPORT_SYMBOL(gr_is_capable_nolog);
 +
 +int
 +gr_task_is_capable(struct task_struct *task, const int cap)
@@ -20023,7 +20030,7 @@ diff -urNp linux-2.6.20.3/grsecurity/grsec_chroot.c linux-2.6.20.3/grsecurity/gr
 diff -urNp linux-2.6.20.3/grsecurity/grsec_disabled.c linux-2.6.20.3/grsecurity/grsec_disabled.c
 --- linux-2.6.20.3/grsecurity/grsec_disabled.c	1969-12-31 19:00:00.000000000 -0500
 +++ linux-2.6.20.3/grsecurity/grsec_disabled.c	2007-03-23 08:11:31.000000000 -0400
-@@ -0,0 +1,417 @@
+@@ -0,0 +1,418 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
 +#include <linux/sched.h>
@@ -20435,6 +20442,7 @@ diff -urNp linux-2.6.20.3/grsecurity/grsec_disabled.c linux-2.6.20.3/grsecurity/
 +
 +
 +EXPORT_SYMBOL(gr_task_is_capable);
++EXPORT_SYMBOL(gr_is_capable_nolog);
 +EXPORT_SYMBOL(gr_learn_resource);
 +EXPORT_SYMBOL(gr_set_kernel_label);
 +#ifdef CONFIG_SECURITY
@@ -23510,7 +23518,7 @@ diff -urNp linux-2.6.20.3/include/asm-i386/desc.h linux-2.6.20.3/include/asm-i38
  
  #define LDT_empty(info) (\
  	(info)->base_addr	== 0	&& \
-@@ -176,15 +197,25 @@ static inline void load_LDT(mm_context_t
+@@ -176,15 +197,23 @@ static inline void load_LDT(mm_context_t
  	preempt_enable();
  }
  
@@ -23529,12 +23537,10 @@ diff -urNp linux-2.6.20.3/include/asm-i386/desc.h linux-2.6.20.3/include/asm-i38
  
 +static inline void set_user_cs(unsigned long base, unsigned long limit, int cpu)
 +{
-+#if defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC)
 +	__u32 a, b;
 +
 +	pack_descriptor(&a, &b, base, limit - 1, 0xFB, 0xC);
 +	write_gdt_entry(get_cpu_gdt_table(cpu), GDT_ENTRY_DEFAULT_USER_CS, a, b);
-+#endif
 +}
 +
  #else /* __ASSEMBLY__ */
@@ -23772,26 +23778,28 @@ diff -urNp linux-2.6.20.3/include/asm-i386/mman.h linux-2.6.20.3/include/asm-i38
 diff -urNp linux-2.6.20.3/include/asm-i386/mmu_context.h linux-2.6.20.3/include/asm-i386/mmu_context.h
 --- linux-2.6.20.3/include/asm-i386/mmu_context.h	2007-03-13 14:27:08.000000000 -0400
 +++ linux-2.6.20.3/include/asm-i386/mmu_context.h	2007-03-23 09:11:44.000000000 -0400
-@@ -45,6 +45,18 @@ static inline void switch_mm(struct mm_s
+@@ -45,6 +45,20 @@ static inline void switch_mm(struct mm_s
  		 */
  		if (unlikely(prev->context.ldt != next->context.ldt))
  			load_LDT_nolock(&next->context);
 +
 +#if defined(CONFIG_PAX_PAGEEXEC) && defined(CONFIG_SMP)
++		smp_mb__before_clear_bit();
 +		cpu_clear(cpu, prev->context.cpu_user_cs_mask);
++		smp_mb__after_clear_bit();
 +		cpu_set(cpu, next->context.cpu_user_cs_mask);
 +#endif
 +
 +#if defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC)
 +		if (unlikely(prev->context.user_cs_base != next->context.user_cs_base ||
 +			     prev->context.user_cs_limit != next->context.user_cs_limit))
-+#endif
 +			set_user_cs(next->context.user_cs_base, next->context.user_cs_limit, cpu);
++#endif
 +
  	}
  #ifdef CONFIG_SMP
  	else {
-@@ -57,6 +69,12 @@ static inline void switch_mm(struct mm_s
+@@ -57,6 +71,15 @@ static inline void switch_mm(struct mm_s
  			 */
  			load_cr3(next->pgd);
  			load_LDT_nolock(&next->context);
@@ -23800,7 +23808,10 @@ diff -urNp linux-2.6.20.3/include/asm-i386/mmu_context.h linux-2.6.20.3/include/
 +			cpu_set(cpu, next->context.cpu_user_cs_mask);
 +#endif
 +
++#if defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC)
 +			set_user_cs(next->context.user_cs_base, next->context.user_cs_limit, cpu);
++#endif
++
  		}
  	}
  #endif
