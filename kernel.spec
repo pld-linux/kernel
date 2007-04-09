@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.20.4-1
+# STATUS: 2.6.20.6-1
 # - standard config includes vserver, suspend2 and grsec_minimal
 # - builds on i686 (Ac & Th)
 # - builds on x86_64 (Th)
@@ -7,7 +7,9 @@
 # - builds for alpha with crossalpha-gcc-4.0.1-1 (Th)
 # - builds --with vesafb_tng (i686)
 # - builds --with fbsplash (i686)
-# - builds --with pax_full and --with pax (i686/x86_64)
+# - builds --with pax_full (x86_64)
+# - builds --with pax (x86_64)
+# - builds --with grsec_full (x86_64)
 # - (external) nvidia works
 # - (external) nvidia-legacy works
 # - (external) ati firegl builds (but probably have issues)
@@ -141,7 +143,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			1
+%define		_rel			2
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -351,13 +353,10 @@ Patch75:	linux-2.6-ide-acpi-support.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	hostap-kernel-2.6.18.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.20.1-vs2.3.0.11.diff
-# TODO: http://vserver.13thfloor.at/Experimental/patch-2.6.20.4-vs2.3.0.12.diff
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.20.4-vs2.3.0.12.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
-# Quota on vroot fix, reported upstream
-Patch103:	linux-2.6-vs2.3-quota.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 #Patch120: xen-3.0-2.6.16.patch
@@ -916,7 +915,6 @@ install %{SOURCE5} Makefile.ppclibs
 %patch101 -p1
 %endif
 %patch102 -p1
-%patch103 -p1
 %endif
 
 #%if %{with xen0} || %{with xenU}
