@@ -13876,20 +13876,17 @@ diff -urNp linux-2.6.20.3/fs/proc/base.c linux-2.6.20.3/fs/proc/base.c
  		}
  	}
  	rcu_read_unlock();
-@@ -1093,15 +1127,29 @@ static int pid_revalidate(struct dentry 
+@@ -1093,11 +1127,26 @@ static int pid_revalidate(struct dentry 
+ {
+ 	struct inode *inode = dentry->d_inode;
  	struct task_struct *task = get_proc_task(inode);
- 	int ret = 0;
- 
++
 +	if (task && (gr_pid_is_chrooted(task) || gr_check_hidden_task(task))) {
 +		put_task_struct(task);
 +		goto out;
 +	}
 +
  	if (task) {
- 		if (!vx_proc_task_visible(task))
- 			goto out_put;
- 
- 		ret = 1;
  		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
@@ -13906,15 +13903,14 @@ diff -urNp linux-2.6.20.3/fs/proc/base.c linux-2.6.20.3/fs/proc/base.c
  		} else {
  			inode->i_uid = 0;
  			inode->i_gid = 0;
-@@ -1111,6 +1159,8 @@ static int pid_revalidate(struct dentry 
- 	out_put:
+@@ -1111,6 +1159,7 @@ static int pid_revalidate(struct dentry 
  		put_task_struct(task);
+ 		return 1;
  	}
-+
 +out:
- 	if (!ret)
- 		d_drop(dentry);
- 	return ret;
+ 	d_drop(dentry);
+ 	return 0;
+ }
 @@ -1336,6 +1387,9 @@ static struct dentry *proc_lookupfd(stru
  	if (fd == ~0U)
  		goto out;
@@ -23556,7 +23552,7 @@ diff -urNp linux-2.6.20.3/include/asm-i386/elf.h linux-2.6.20.3/include/asm-i386
 +#ifdef CONFIG_PAX_SEGMEXEC
 +#define ELF_ET_DYN_BASE         ((current->mm->pax_flags & MF_PAX_SEGMEXEC) ? SEGMEXEC_TASK_SIZE/3*2 : TASK_SIZE/3*2)
 +#else
- #define ELF_ET_DYN_BASE		((TASK_UNMAPPED_BASE) * 2)
+ #define ELF_ET_DYN_BASE         (TASK_SIZE / 3 * 2)
 +#endif
 +
 +#ifdef CONFIG_PAX_ASLR
