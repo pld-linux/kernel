@@ -1,32 +1,17 @@
 #
-# STATUS: 2.6.20.6-1
+# STATUS: 2.6.20.6-2
 # - standard config includes vserver, suspend2 and grsec_minimal
-# - builds on i686 (Ac & Th)
-# - builds on x86_64 (Th)
-# - builds on ppc (Th) 
-# - builds for alpha with crossalpha-gcc-4.0.1-1 (Th)
+# - builds on i686 (custom Ac & Th - 2.6.20.4-1)
+# - builds on x86_64 (carme)
+# - builds on ppc (last build on Th - 2.6.20.4-1) 
 # - builds --with vesafb_tng (i686)
-# - builds --with fbsplash (i686)
-# - builds --with pax_full (x86_64)
-# - builds --with pax (x86_64)
-# - builds --with grsec_full (x86_64)
-# - (external) nvidia works
-# - (external) nvidia-legacy works
-# - (external) ati firegl builds (but probably have issues)
-# - (external) slmodem builds
-# - (external) madwifi-ng works
-# - (external) madwifi-old-openhal builds but have no supported hardware to test
-# - (external) lirc builds
-# - (external) ipp2p builds
-# - (external) truecrypt builds and works (for me)
+# - builds --with pax_full (carme)
+# - builds --with pax (carme)
+# - builds --with grsec_full (carme)
 #
-# TODO 2.6.20.4
-# - update vserver to 2.3.0.12 snapshot
-# - update pax to the newest ~paxguy1 snapshot or replace by ~spender grsecurity 
-# - test non default bconds for 2.6.20.4
-# - pax hooks for selinux (experimental)
+# TODO 2.6.20.6
+# - test non default bconds for 2.6.20.6 (esp. fb related for i386)
 # - spec cleanup
-# - test external modules
 #
 # FUTURE:
 # - new alsa rc2 - 1.0.14rc2 is in 2.6.20-git10 tree and in 2.6.21 line
@@ -39,6 +24,7 @@
 # - nf-hipac ?
 # - acrypto - http://tservice.net.ru/~s0mbre/blog/devel/acrypto
 # - for pax on 32-bit ppc disable CONFIG_PAX_EMUPLT (it will need gcc4 build userland -> Th only)
+# - pax hooks for selinux (experimental)
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
@@ -375,8 +361,8 @@ Patch302:	linux-2.6-layer7_nf_conntrack_port.patch
 Patch400:	kernel-bcm43xx-combined_2.6.20.2.patch
 
 # For compatibility with (not updated) blobs like ... ? 
-# before we had CONFIG_REGPARM option disabled - it is bconded and disabled now
-# probably not needed anymore.
+# Before 2.6.20 we had CONFIG_REGPARM option disabled.
+# Probably not needed anymore - it is bconded and disabled now
 Patch500:	linux-2.6.20_i386_regparm_off.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
@@ -401,13 +387,11 @@ Patch5001:	linux-2.6-apparmor-caps.patch
 # not ready yet
 Patch9997:	pax_selinux_hooks-2.6.20.patch
 
-# based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.20.3-test9.patch
-# TODO: http://www.grsecurity.net/~paxguy1/pax-linux-2.6.20.4-test11.patch 
-#       or use pax from grsecurity patch (which could still have issues when 
-#       grsecurity part is disabled) 
+# based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.20.6-test13.patch
+# TODO: Prepare configs to use PaX from grsecurity (grsec_full) patch
 Patch9998:	pax-linux-2.6.20.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.20.4-200704021831.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.20.6-200704091818.patch
 Patch9999:	grsecurity-2.1.10-2.6.20.3.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
