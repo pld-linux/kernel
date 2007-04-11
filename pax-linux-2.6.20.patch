@@ -3511,6 +3511,15 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/k
  	unsigned long base = (kesp - uesp) & -THREAD_SIZE;
  	unsigned long new_kesp = kesp - base;
  	unsigned long lim_pages = (new_kesp | (THREAD_SIZE - 1)) >> PAGE_SHIFT;
+@@ -1076,7 +1095,7 @@ void __init trap_init_f00f_bug(void)
+ 	 * Update the IDT descriptor and reload the IDT so that
+ 	 * it uses the read-only mapped virtual address.
+ 	 */
+-	idt_descr.address = fix_to_virt(FIX_F00F_IDT);
++	idt_descr.address = (struct desc_struct *)fix_to_virt(FIX_F00F_IDT);
+ 	load_idt(&idt_descr);
+ }
+ #endif
 diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/kernel/tsc.c linux-2.6.20.3-pax/arch/i386/kernel/tsc.c
 --- linux-2.6.20.3/arch/i386/kernel/tsc.c	2007-02-04 19:44:54.000000000 +0100
 +++ linux-2.6.20.3-pax/arch/i386/kernel/tsc.c	2007-02-15 01:44:46.000000000 +0100
@@ -4091,18 +4100,15 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/l
 diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/lib/mmx.c linux-2.6.20.3-pax/arch/i386/lib/mmx.c
 --- linux-2.6.20.3/arch/i386/lib/mmx.c	2007-02-04 19:44:54.000000000 +0100
 +++ linux-2.6.20.3-pax/arch/i386/lib/mmx.c	2007-03-18 13:39:49.000000000 +0100
-@@ -31,6 +31,10 @@ void *_mmx_memcpy(void *to, const void *
+@@ -31,6 +31,7 @@ void *_mmx_memcpy(void *to, const void *
+ {
  	void *p;
  	int i;
- 
-+#ifdef CONFIG_PAX_KERNEXEC
 +	unsigned long cr0;
-+#endif
-+
+ 
  	if (unlikely(in_interrupt()))
  		return __memcpy(to, from, len);
- 
-@@ -40,52 +44,80 @@ void *_mmx_memcpy(void *to, const void *
+@@ -40,52 +41,80 @@ void *_mmx_memcpy(void *to, const void *
  	kernel_fpu_begin();
  
  	__asm__ __volatile__ (
@@ -4209,17 +4215,15 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/l
  		from+=64;
  		to+=64;
  	}
-@@ -165,57 +197,89 @@ static void fast_copy_page(void *to, voi
+@@ -164,6 +193,7 @@ static void fast_clear_page(void *page)
+ static void fast_copy_page(void *to, void *from)
  {
  	int i;
- 
-+#ifdef CONFIG_PAX_KERNEXEC
 +	unsigned long cr0;
-+#endif
-+
+ 
  	kernel_fpu_begin();
  
- 	/* maybe the prefetch stuff can go before the expensive fnsave...
+@@ -171,51 +201,79 @@ static void fast_copy_page(void *to, voi
  	 * but that is for later. -AV
  	 */
  	__asm__ __volatile__ (
@@ -4325,16 +4329,13 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/l
  		from+=64;
  		to+=64;
  	}
-@@ -296,56 +360,87 @@ static void fast_clear_page(void *page)
+@@ -296,56 +354,84 @@ static void fast_clear_page(void *page)
  static void fast_copy_page(void *to, void *from)
  {
  	int i;
 -	
 -	
-+
-+#ifdef CONFIG_PAX_KERNEXEC
 +	unsigned long cr0;
-+#endif
 +
  	kernel_fpu_begin();
  
@@ -5590,7 +5591,7 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/m
 diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/mm/fault.c linux-2.6.20.3-pax/arch/i386/mm/fault.c
 --- linux-2.6.20.3/arch/i386/mm/fault.c	2007-02-04 19:44:54.000000000 +0100
 +++ linux-2.6.20.3-pax/arch/i386/mm/fault.c	2007-02-05 00:56:18.000000000 +0100
-@@ -23,6 +23,9 @@
+@@ -23,11 +23,15 @@
  #include <linux/module.h>
  #include <linux/kprobes.h>
  #include <linux/uaccess.h>
@@ -5600,7 +5601,13 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/m
  
  #include <asm/system.h>
  #include <asm/desc.h>
-@@ -104,7 +107,8 @@ static inline unsigned long get_segment_
+ #include <asm/kdebug.h>
+ #include <asm/segment.h>
++#include <asm/tlbflush.h>
+ 
+ extern void die(const char *,struct pt_regs *,long);
+ 
+@@ -104,7 +108,8 @@ static inline unsigned long get_segment_
  {
  	unsigned long eip = regs->eip;
  	unsigned seg = regs->xcs & 0xffff;
@@ -5610,7 +5617,7 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/m
  
  	/* Unlikely, but must come before segment checks. */
  	if (unlikely(regs->eflags & VM_MASK)) {
-@@ -118,7 +122,7 @@ static inline unsigned long get_segment_
+@@ -118,7 +123,7 @@ static inline unsigned long get_segment_
  	
  	/* By far the most common cases. */
  	if (likely(SEGMENT_IS_FLAT_CODE(seg)))
@@ -5619,7 +5626,7 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/m
  
  	/* Check the segment exists, is within the current LDT/GDT size,
  	   that kernel/user (ring 0..3) has the appropriate privilege,
-@@ -136,16 +140,14 @@ static inline unsigned long get_segment_
+@@ -136,16 +141,14 @@ static inline unsigned long get_segment_
  	if (seg & (1<<2)) {
  		/* Must lock the LDT while reading it. */
  		down(&current->mm->context.sem);
@@ -5639,7 +5646,7 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/m
  
  	if (seg & (1<<2)) { 
  		up(&current->mm->context.sem);
-@@ -246,6 +248,30 @@ static noinline void force_sig_info_faul
+@@ -246,6 +249,30 @@ static noinline void force_sig_info_faul
  
  fastcall void do_invalid_op(struct pt_regs *, unsigned long);
  
@@ -5670,7 +5677,7 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/m
  static inline pmd_t *vmalloc_sync_one(pgd_t *pgd, unsigned long address)
  {
  	unsigned index = pgd_index(address);
-@@ -326,14 +352,20 @@ fastcall void __kprobes do_page_fault(st
+@@ -326,14 +353,20 @@ fastcall void __kprobes do_page_fault(st
  	struct task_struct *tsk;
  	struct mm_struct *mm;
  	struct vm_area_struct * vma;
@@ -5694,7 +5701,7 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/m
  
  	si_code = SEGV_MAPERR;
  
-@@ -372,14 +404,12 @@ fastcall void __kprobes do_page_fault(st
+@@ -372,14 +405,12 @@ fastcall void __kprobes do_page_fault(st
  	if (regs->eflags & (X86_EFLAGS_IF|VM_MASK))
  		local_irq_enable();
  
@@ -5710,7 +5717,7 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/m
  
  	/* When running in the kernel we expect faults to occur only to
  	 * addresses in user space.  All other faults represent errors in the
-@@ -399,10 +429,101 @@ fastcall void __kprobes do_page_fault(st
+@@ -399,10 +430,101 @@ fastcall void __kprobes do_page_fault(st
  	if (!down_read_trylock(&mm->mmap_sem)) {
  		if ((error_code & 4) == 0 &&
  		    !search_exception_tables(regs->eip))
@@ -5813,7 +5820,7 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/m
  	vma = find_vma(mm, address);
  	if (!vma)
  		goto bad_area;
-@@ -420,6 +541,12 @@ fastcall void __kprobes do_page_fault(st
+@@ -420,6 +542,12 @@ fastcall void __kprobes do_page_fault(st
  		if (address + 65536 + 32 * sizeof(unsigned long) < regs->esp)
  			goto bad_area;
  	}
@@ -5826,7 +5833,7 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/m
  	if (expand_stack(vma, address))
  		goto bad_area;
  /*
-@@ -484,6 +611,36 @@ bad_area:
+@@ -484,6 +612,36 @@ bad_area:
  	up_read(&mm->mmap_sem);
  
  bad_area_nosemaphore:
@@ -5863,7 +5870,16 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/m
  	/* User mode accesses just cause a SIGSEGV */
  	if (error_code & 4) {
  		/* 
-@@ -551,6 +708,17 @@ no_context:
+@@ -508,7 +666,7 @@ bad_area_nosemaphore:
+ 	if (boot_cpu_data.f00f_bug) {
+ 		unsigned long nr;
+ 		
+-		nr = (address - idt_descr.address) >> 3;
++		nr = (address - (unsigned long)idt_descr.address) >> 3;
+ 
+ 		if (nr == 6) {
+ 			do_invalid_op(regs, 0);
+@@ -551,6 +709,17 @@ no_context:
  		if (address < PAGE_SIZE)
  			printk(KERN_ALERT "BUG: unable to handle kernel NULL "
  					"pointer dereference");
@@ -5881,7 +5897,7 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/m
  		else
  			printk(KERN_ALERT "BUG: unable to handle kernel paging"
  					" request");
-@@ -558,24 +726,34 @@ no_context:
+@@ -558,24 +727,34 @@ no_context:
  		printk(KERN_ALERT " printing eip:\n");
  		printk("%08lx\n", regs->eip);
  	}
@@ -5932,7 +5948,7 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/arch/i386/m
  	tsk->thread.cr2 = address;
  	tsk->thread.trap_no = 14;
  	tsk->thread.error_code = error_code;
-@@ -652,3 +830,101 @@ void vmalloc_sync_all(void)
+@@ -652,3 +831,101 @@ void vmalloc_sync_all(void)
  	}
  }
  #endif
@@ -12934,7 +12950,7 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/include/asm
  
  #define LDT_empty(info) (\
  	(info)->base_addr	== 0	&& \
-@@ -176,15 +197,25 @@ static inline void load_LDT(mm_context_t
+@@ -176,15 +197,23 @@ static inline void load_LDT(mm_context_t
  	preempt_enable();
  }
  
@@ -12953,12 +12969,10 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/include/asm
  
 +static inline void set_user_cs(unsigned long base, unsigned long limit, int cpu)
 +{
-+#if defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC)
 +	__u32 a, b;
 +
 +	pack_descriptor(&a, &b, base, limit - 1, 0xFB, 0xC);
 +	write_gdt_entry(get_cpu_gdt_table(cpu), GDT_ENTRY_DEFAULT_USER_CS, a, b);
-+#endif
 +}
 +
  #else /* __ASSEMBLY__ */
@@ -13221,25 +13235,28 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/include/asm
 diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/include/asm-i386/mmu_context.h linux-2.6.20.3-pax/include/asm-i386/mmu_context.h
 --- linux-2.6.20.3/include/asm-i386/mmu_context.h	2007-02-04 19:44:54.000000000 +0100
 +++ linux-2.6.20.3-pax/include/asm-i386/mmu_context.h	2007-03-18 14:50:38.000000000 +0100
-@@ -45,6 +45,17 @@ static inline void switch_mm(struct mm_s
+@@ -45,6 +45,20 @@ static inline void switch_mm(struct mm_s
  		 */
  		if (unlikely(prev->context.ldt != next->context.ldt))
  			load_LDT_nolock(&next->context);
 +
 +#if defined(CONFIG_PAX_PAGEEXEC) && defined(CONFIG_SMP)
++		smp_mb__before_clear_bit();
 +		cpu_clear(cpu, prev->context.cpu_user_cs_mask);
++		smp_mb__after_clear_bit();
 +		cpu_set(cpu, next->context.cpu_user_cs_mask);
 +#endif
 +
 +#if defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC)
 +		if (unlikely(prev->context.user_cs_base != next->context.user_cs_base ||
 +			     prev->context.user_cs_limit != next->context.user_cs_limit))
-+#endif
 +			set_user_cs(next->context.user_cs_base, next->context.user_cs_limit, cpu);
++#endif                                                                                                                                                                                           
++
  	}
  #ifdef CONFIG_SMP
  	else {
-@@ -57,6 +68,12 @@ static inline void switch_mm(struct mm_s
+@@ -57,6 +71,15 @@ static inline void switch_mm(struct mm_s
  			 */
  			load_cr3(next->pgd);
  			load_LDT_nolock(&next->context);
@@ -13248,7 +13265,10 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/include/asm
 +			cpu_set(cpu, next->context.cpu_user_cs_mask);
 +#endif
 +
++#if defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC)
 +			set_user_cs(next->context.user_cs_base, next->context.user_cs_limit, cpu);
++#endif
++
  		}
  	}
  #endif
@@ -13345,7 +13365,7 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/include/asm
  
  #define DISABLE_INTERRUPTS(clobbers)			\
  	PARA_PATCH(PARAVIRT_IRQ_DISABLE, clobbers,	\
-@@ -490,16 +490,28 @@ static inline unsigned long __raw_local_
+@@ -490,16 +490,26 @@ static inline unsigned long __raw_local_
  #define ENABLE_INTERRUPTS(clobbers)			\
  	PARA_PATCH(PARAVIRT_IRQ_ENABLE, clobbers,	\
  	pushl %ecx; pushl %edx;				\
@@ -13358,20 +13378,19 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/include/asm
 -	jmp *%cs:paravirt_ops+PARAVIRT_irq_enable_sysexit)
 +	jmp *%ss:paravirt_ops+PARAVIRT_irq_enable_sysexit)
  
- #define GET_CR0_INTO_EAX			\
+-#define GET_CR0_INTO_EAX			\
++#define GET_CR0_INTO_EAX				\
  	call *paravirt_ops+PARAVIRT_read_cr0
  
-+#define GET_CR0_INTO_EDX			\
-+	pushl %eax;				\
-+	call *paravirt_ops+PARAVIRT_read_cr0;	\
-+	movl %eax, %edx;			\
-+	popl %eax
++#define GET_CR0_INTO_EDX				\
++	movl %eax, %edx;				\
++	call *%ss:paravirt_ops+PARAVIRT_read_cr0;	\
++	xchgl %eax, %edx;				\
 +
-+#define SET_CR0_FROM_EDX			\
-+	pushl %eax;				\
-+	movl %edx, %eax;			\
-+	call *paravirt_ops+PARAVIRT_write_cr0;	\
-+	popl %eax
++#define SET_CR0_FROM_EDX				\
++	xchgl %edx, %eax;				\
++	call *%ss:paravirt_ops+PARAVIRT_write_cr0;	\
++	movl %edx, %eax
 +
  #endif /* __ASSEMBLY__ */
  #endif /* CONFIG_PARAVIRT */
@@ -13386,8 +13405,7 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/include/asm
 -	struct i386_pda *_pda;		/* pointer to self */
 +	struct i386_pda * const _pda;	/* pointer to self */
  
--	int cpu_number;
-+	const int cpu_number;
+ 	int cpu_number;
  	struct task_struct *pcurrent;	/* current process */
  	struct pt_regs *irq_regs;
  };
@@ -13501,7 +13519,12 @@ diff -NurpX linux-2.6.20.3-pax/Documentation/dontdiff linux-2.6.20.3/include/asm
  
  /* Just any arbitrary offset to the start of the vmalloc VM area: the
   * current 8MB value just means that there will be a 8MB "hole" after the
-@@ -141,17 +147,26 @@ void paging_init(void);
+@@ -137,21 +143,30 @@ void paging_init(void);
+ #define PAGE_NONE \
+ 	__pgprot(_PAGE_PROTNONE | _PAGE_ACCESSED)
+ #define PAGE_SHARED \
+-	__pgprot(_PAGE_PRESENT | _PAGE_RW | _PAGE_USER | _PAGE_ACCESSED)
++	__pgprot(_PAGE_PRESENT | _PAGE_RW | _PAGE_USER | _PAGE_ACCESSED | _PAGE_NX)
  
  #define PAGE_SHARED_EXEC \
  	__pgprot(_PAGE_PRESENT | _PAGE_RW | _PAGE_USER | _PAGE_ACCESSED)
