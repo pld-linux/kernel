@@ -5,9 +5,9 @@
 # - builds on x86_64 (carme)
 # - builds on ppc (last build on Th - 2.6.20.4-1) 
 # - builds --with vesafb_tng (i686)
-# - builds --with pax_full (carme)
+# - builds --with pax_full (i686, x86_64, ppc)
 # - builds --with pax (carme)
-# - builds --with grsec_full (carme)
+# - builds --with grsec_full (i686, x86_64, ppc)
 #
 # TODO 2.6.20.6
 # - test non default bconds for 2.6.20.6 (esp. fb related for i386)
@@ -374,6 +374,9 @@ Patch2001:	kernel-proxy-pda.patch
 
 # Some non-GPL modules (nvidia, nvidia-legacy) looks for the paravirt_ops symbol
 Patch2100:	linux-2.6.20-paravirt_ops-needed-by-blobs.patch
+
+# kill some thousands of warnings
+Patch2500:	linux-2.6-warnings.patch
 
 #wanpipe
 #Patch3000: wanpipe-beta7-2.3.4.patch
@@ -914,6 +917,8 @@ install %{SOURCE5} Makefile.ppclibs
 %if %{without regparm}
 %patch500 -p1
 %endif
+
+%patch2500 -p1
 
 # gfs2 from 2.6.21
 %patch4000 -p1
