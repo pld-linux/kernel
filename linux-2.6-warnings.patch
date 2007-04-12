@@ -1,0 +1,257 @@
+--- linux-2.6.20/include/asm-sparc64/spinlock.h~	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.20/include/asm-sparc64/spinlock.h	2007-04-10 01:05:35.426190250 +0200
+@@ -105,7 +105,7 @@
+ 
+ /* Multi-reader locks, these are much saner than the 32-bit Sparc ones... */
+ 
+-static void inline __read_lock(raw_rwlock_t *lock)
++static inline void __read_lock(raw_rwlock_t *lock)
+ {
+ 	unsigned long tmp1, tmp2;
+ 
+@@ -130,7 +130,7 @@
+ 	: "memory");
+ }
+ 
+-static int inline __read_trylock(raw_rwlock_t *lock)
++static inline int __read_trylock(raw_rwlock_t *lock)
+ {
+ 	int tmp1, tmp2;
+ 
+@@ -152,7 +152,7 @@
+ 	return tmp1;
+ }
+ 
+-static void inline __read_unlock(raw_rwlock_t *lock)
++static inline void __read_unlock(raw_rwlock_t *lock)
+ {
+ 	unsigned long tmp1, tmp2;
+ 
+@@ -169,7 +169,7 @@
+ 	: "memory");
+ }
+ 
+-static void inline __write_lock(raw_rwlock_t *lock)
++static inline void __write_lock(raw_rwlock_t *lock)
+ {
+ 	unsigned long mask, tmp1, tmp2;
+ 
+@@ -196,7 +196,7 @@
+ 	: "memory");
+ }
+ 
+-static void inline __write_unlock(raw_rwlock_t *lock)
++static inline void __write_unlock(raw_rwlock_t *lock)
+ {
+ 	__asm__ __volatile__(
+ "	membar		#LoadStore | #StoreStore\n"
+@@ -206,7 +206,7 @@
+ 	: "memory");
+ }
+ 
+-static int inline __write_trylock(raw_rwlock_t *lock)
++static inline int __write_trylock(raw_rwlock_t *lock)
+ {
+ 	unsigned long mask, tmp1, tmp2, result;
+ 
+--- linux-2.6.20/arch/powerpc/kernel/prom_init.c~	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.20/arch/powerpc/kernel/prom_init.c	2007-04-10 01:59:33.712570500 +0200
+@@ -429,14 +429,14 @@
+ 	}
+ }
+ 
+-static int inline prom_getprop(phandle node, const char *pname,
++static inline int prom_getprop(phandle node, const char *pname,
+ 			       void *value, size_t valuelen)
+ {
+ 	return call_prom("getprop", 4, 1, node, ADDR(pname),
+ 			 (u32)(unsigned long) value, (u32) valuelen);
+ }
+ 
+-static int inline prom_getproplen(phandle node, const char *pname)
++static inline int prom_getproplen(phandle node, const char *pname)
+ {
+ 	return call_prom("getproplen", 2, 1, node, ADDR(pname));
+ }
+--- linux-2.6.20/include/asm-powerpc/spinlock.h~	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.20/include/asm-powerpc/spinlock.h	2007-04-10 02:04:45.976085750 +0200
+@@ -72,7 +72,7 @@
+ 	return tmp;
+ }
+ 
+-static int __inline__ __raw_spin_trylock(raw_spinlock_t *lock)
++static __inline__ int __raw_spin_trylock(raw_spinlock_t *lock)
+ {
+ 	CLEAR_IO_SYNC;
+ 	return __spin_trylock(lock) == 0;
+@@ -103,7 +103,7 @@
+ #define SHARED_PROCESSOR	0
+ #endif
+ 
+-static void __inline__ __raw_spin_lock(raw_spinlock_t *lock)
++static __inline__ void __raw_spin_lock(raw_spinlock_t *lock)
+ {
+ 	CLEAR_IO_SYNC;
+ 	while (1) {
+@@ -118,7 +118,7 @@
+ 	}
+ }
+ 
+-static void __inline__ __raw_spin_lock_flags(raw_spinlock_t *lock, unsigned long flags)
++static __inline__ void __raw_spin_lock_flags(raw_spinlock_t *lock, unsigned long flags)
+ {
+ 	unsigned long flags_dis;
+ 
+@@ -179,7 +179,7 @@
+  * This returns the old value in the lock + 1,
+  * so we got a read lock if the return value is > 0.
+  */
+-static long __inline__ __read_trylock(raw_rwlock_t *rw)
++static __inline__ long __read_trylock(raw_rwlock_t *rw)
+ {
+ 	long tmp;
+ 
+@@ -223,7 +223,7 @@
+ 	return tmp;
+ }
+ 
+-static void __inline__ __raw_read_lock(raw_rwlock_t *rw)
++static __inline__ void __raw_read_lock(raw_rwlock_t *rw)
+ {
+ 	while (1) {
+ 		if (likely(__read_trylock(rw) > 0))
+@@ -237,7 +237,7 @@
+ 	}
+ }
+ 
+-static void __inline__ __raw_write_lock(raw_rwlock_t *rw)
++static __inline__ void __raw_write_lock(raw_rwlock_t *rw)
+ {
+ 	while (1) {
+ 		if (likely(__write_trylock(rw) == 0))
+@@ -251,17 +251,17 @@
+ 	}
+ }
+ 
+-static int __inline__ __raw_read_trylock(raw_rwlock_t *rw)
++static __inline__ int __raw_read_trylock(raw_rwlock_t *rw)
+ {
+ 	return __read_trylock(rw) > 0;
+ }
+ 
+-static int __inline__ __raw_write_trylock(raw_rwlock_t *rw)
++static __inline__ int __raw_write_trylock(raw_rwlock_t *rw)
+ {
+ 	return __write_trylock(rw) == 0;
+ }
+ 
+-static void __inline__ __raw_read_unlock(raw_rwlock_t *rw)
++static __inline__ int __raw_read_unlock(raw_rwlock_t *rw)
+ {
+ 	long tmp;
+ 
+--- linux-2.6.20/include/linux/cpuset.h~	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.20/include/linux/cpuset.h	2007-04-10 02:06:13.121532000 +0200
+@@ -33,13 +33,13 @@
+ extern int __cpuset_zone_allowed_softwall(struct zone *z, gfp_t gfp_mask);
+ extern int __cpuset_zone_allowed_hardwall(struct zone *z, gfp_t gfp_mask);
+ 
+-static int inline cpuset_zone_allowed_softwall(struct zone *z, gfp_t gfp_mask)
++static inline int cpuset_zone_allowed_softwall(struct zone *z, gfp_t gfp_mask)
+ {
+ 	return number_of_cpusets <= 1 ||
+ 		__cpuset_zone_allowed_softwall(z, gfp_mask);
+ }
+ 
+-static int inline cpuset_zone_allowed_hardwall(struct zone *z, gfp_t gfp_mask)
++static inline int cpuset_zone_allowed_hardwall(struct zone *z, gfp_t gfp_mask)
+ {
+ 	return number_of_cpusets <= 1 ||
+ 		__cpuset_zone_allowed_hardwall(z, gfp_mask);
+--- linux-2.6.20/fs/ocfs2/namei.c~	2007-04-10 01:58:15.000000000 +0200
++++ linux-2.6.20/fs/ocfs2/namei.c	2007-04-10 02:10:03.999961000 +0200
+@@ -70,7 +70,7 @@
+ #define NAMEI_RA_SIZE        (NAMEI_RA_CHUNKS * NAMEI_RA_BLOCKS)
+ #define NAMEI_RA_INDEX(c,b)  (((c) * NAMEI_RA_BLOCKS) + (b))
+ 
+-static int inline ocfs2_search_dirblock(struct buffer_head *bh,
++static inline int ocfs2_search_dirblock(struct buffer_head *bh,
+ 					struct inode *dir,
+ 					const char *name, int namelen,
+ 					unsigned long offset,
+@@ -1936,7 +1936,7 @@
+ /*
+  * Returns 0 if not found, -1 on failure, and 1 on success
+  */
+-static int inline ocfs2_search_dirblock(struct buffer_head *bh,
++static inline int ocfs2_search_dirblock(struct buffer_head *bh,
+ 					struct inode *dir,
+ 					const char *name, int namelen,
+ 					unsigned long offset,
+--- linux-2.6.20/net/bluetooth/hidp/core.c~	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.20/net/bluetooth/hidp/core.c	2007-04-10 02:13:05.403298000 +0200
+@@ -260,7 +260,7 @@
+ 	return 0;
+ }
+ 
+-static int inline hidp_send_ctrl_message(struct hidp_session *session,
++static inline int hidp_send_ctrl_message(struct hidp_session *session,
+ 			unsigned char hdr, unsigned char *data, int size)
+ {
+ 	int err;
+--- linux-2.6.20/net/bridge/br_netfilter.c~	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.20/net/bridge/br_netfilter.c	2007-04-10 02:14:02.318855000 +0200
+@@ -61,7 +61,7 @@
+ #define brnf_filter_vlan_tagged 1
+ #endif
+ 
+-static __be16 inline vlan_proto(const struct sk_buff *skb)
++static inline __be16 vlan_proto(const struct sk_buff *skb)
+ {
+ 	return vlan_eth_hdr(skb)->h_vlan_encapsulated_proto;
+ }
+--- linux-2.6.20/drivers/media/video/cx88/cx88.h~	2007-04-10 01:58:14.000000000 +0200
++++ linux-2.6.20/drivers/media/video/cx88/cx88.h	2007-04-10 02:17:05.442299500 +0200
+@@ -89,13 +89,13 @@
+ 	u32                    cxoformat;
+ };
+ 
+-static unsigned int inline norm_maxw(struct cx88_tvnorm *norm)
++static inline unsigned int norm_maxw(struct cx88_tvnorm *norm)
+ {
+ 	return (norm->id & (V4L2_STD_MN & ~V4L2_STD_PAL_Nc)) ? 720 : 768;
+ }
+ 
+ 
+-static unsigned int inline norm_maxh(struct cx88_tvnorm *norm)
++static inline unsigned int norm_maxh(struct cx88_tvnorm *norm)
+ {
+ 	return (norm->id & V4L2_STD_625_50) ? 576 : 480;
+ }
+--- linux-2.6.20/drivers/isdn/hardware/eicon/platform.h~	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.20/drivers/isdn/hardware/eicon/platform.h	2007-04-10 02:20:13.490051750 +0200
+@@ -219,7 +219,7 @@
+ /*
+ **  I/O Port utilities
+ */
+-int diva_os_register_io_port (void *adapter, int register, unsigned long port,
++int diva_os_register_io_port (void *adapter, register int, unsigned long port,
+ 				unsigned long length, const char* name, int id);
+ /*
+ **  I/O port access abstraction
+@@ -287,13 +287,13 @@
+ **  atomic operation, fake because we use threads
+ */
+ typedef int diva_os_atomic_t;
+-static diva_os_atomic_t __inline__
++static __inline__ diva_os_atomic_t
+ diva_os_atomic_increment(diva_os_atomic_t* pv)
+ {
+   *pv += 1;
+   return (*pv);
+ }
+-static diva_os_atomic_t __inline__
++static __inline__ diva_os_atomic_t
+ diva_os_atomic_decrement(diva_os_atomic_t* pv)
+ {
+   *pv -= 1;
