@@ -1,13 +1,11 @@
 #
 # STATUS: 2.6.20.6-2
 # - standard config includes vserver, suspend2 and grsec_minimal
-# - builds on i686 (custom Ac & Th - 2.6.20.4-1)
-# - builds on x86_64 (carme)
-# - builds on ppc (last build on Th - 2.6.20.4-1) 
+# - builds (alpha, i686, ppc, sparc64, x86_64) 
 # - builds --with vesafb_tng (i686)
 # - builds --with pax_full (i686, x86_64, ppc)
 # - builds --with pax (carme)
-# - builds --with grsec_full (i686, x86_64, ppc)
+# - builds --with grsec_full (alpha, i486, i686, ppc, sparc64, x86_64)
 #
 # TODO 2.6.20.6
 # - test non default bconds for 2.6.20.6 (esp. fb related for i386)
@@ -773,6 +771,11 @@ Pakiet zawiera pliki nagłówkowe dla aplikacji użytkownika.
 
 %prep
 %setup -q -n linux-%{_basever}%{_rc} %{?with_abi:-a14}
+
+# hack against warning in pax/grsec
+%ifarch alpha
+sed -i 's/-Werror//' arch/alpha/kernel/Makefile
+%endif
 
 %ifarch ppc
 install %{SOURCE5} Makefile.ppclibs
