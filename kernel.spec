@@ -129,7 +129,7 @@
 %define		xen_version		3.0.2
 
 %define		_basever	2.6.16
-%define		_postver	.46
+%define		_postver	.47
 %define		_rel		1
 %define		_subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -147,7 +147,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source3-md5:	5ceac58367a2d1d3ea6ac333626c26d6
+# Source3-md5:	e481b6846b86d410d9b195ea7d2bf155
 
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
