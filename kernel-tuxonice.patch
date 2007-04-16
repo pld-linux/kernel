@@ -10,7 +10,7 @@ index 25d2985..588676f 100644
  	SWSUSP	Software suspend is enabled.
  	TS	Appropriate touchscreen support is enabled.
  	USB	USB support is enabled.
-@@ -1099,6 +1100,8 @@ and is between 256 and 4096 characters. 
+@@ -1099,6 +1100,8 @@ and is between 256 and 4096 characters. It is defined in the file
  	noresume	[SWSUSP] Disables resume and restores original swap
  			space.
  
@@ -19,7 +19,7 @@ index 25d2985..588676f 100644
  	no-scroll	[VGA] Disables scrollback.
  			This is required for the Braillex ib80-piezo Braille
  			reader made by F.H. Papenmeier (Germany).
-@@ -1396,6 +1399,11 @@ and is between 256 and 4096 characters. 
+@@ -1396,6 +1399,11 @@ and is between 256 and 4096 characters. It is defined in the file
  			in <PAGE_SIZE> units (needed only for swap files).
  			See  Documentation/power/swsusp-and-swap-files.txt
  
@@ -33,24 +33,72 @@ index 25d2985..588676f 100644
  
 diff --git a/Documentation/power/Suspend2-Changelog.txt b/Documentation/power/Suspend2-Changelog.txt
 new file mode 100644
-index 0000000..e0bd736
+index 0000000..58f82be
 --- /dev/null
 +++ b/Documentation/power/Suspend2-Changelog.txt
-@@ -0,0 +1,998 @@
+@@ -0,0 +1,1046 @@
 +Suspend2 changelog.
 +
 +Still to do prior to 2.2.10...
 +
-+- Test new code for more intelligent page freeing - per zone.
-+- Abort if fail to initialise encryption algo at resume time.
-+- Check encryption works.
 +- Double check OOM killer disabled while suspending.
-+- Remove RH copyrights - no RH invoices for Suspend2 work to date.
 +- RAID support.
-+- Block io mutex contention reduction.
-+- Complete improvements to highmem support - check what reworking
-+  of calculations needs to be done so we don't free more memory
-+  than necessary or (wrongly) fail to suspend.
++- Fix building core as a module for people who currently get a hang
++  while doing the atomic restore.
++
++2.2.9.11 - 14 April 2007
++- Remove RH copyrights - no Suspend2 work done in Redhat time to date.
++- Update copyrights to 2007.
++- Obfuscate my email address. I get enough spam already.
++- HighMem + core as module makes things unreliable at the moment. Temporarily
++  disable building the core as a module.
++- Only do 2 tries at eating memory. New code frees all freeable memory in one
++  try.
++- Tidy compression code initialisation and cleanup.
++- Correctly handle changed error codes from cryptoapi.
++- Free slab as well as pagecache when freeing memory.
++- Correct handling of io_mutex in worker_rw_loop error paths.
++- Remove unused counting of nr of pages read directly.
++- Remove unused x86 page protection code.
++- Stop always displaying image preparation statistics.
++- Remove unneeded zone index printk.
++- Clear some resume related state flags when finished resuming - stops us
++  powering down instead of aborting when user presses escape on attempt 2+.
++- Simplify code path for not running powerdown step at resume time.
++- Rename rw to writing in suspend_block_io.c
++- Add BUG_ON() to catch image header overwriting pageset2 (would have
++  simplified debugging the filewriter issue also fixed in this release).
++- Reset current_stream to 0 on completion of writing a pageset so the
++  above fix is not wrongly triggered.
++- Some coding style fixes.
++- Don't << devinfo.bmap_shift in filewriter considered whether we have
++  enough storage.
++- Modify order of setting suspend_fileops members from block writer to
++  match order in swapallocator.
++- Double checked that userui API version mismatches don't cause failures.
++- Removed encryption support. I don't believe there were many users, and
++  dm-crypt support can stil be utilised to encrypt the image without this.
++  Of course the real reason was programming issues :)
++- Added Rafael's kswap freezing fix.
++- Corrected compilation issue with page fault handling code.
++
++2.2.9.10 - 21 March 2007
++
++- Further post 2.2.9.4 bug fixes.
++
++2.2.9.9 - 12 March 2007
++
++- Further post 2.2.9.4 bug fixes. I've now been able to do 30 cycles on the
++  trot with multithreaded I/O and highmem.
++
++2.2.9.8 - 15 February 2007
++
++- Bug fixes.
++- Give earlier error messages for issues with reading the message.
++- Resume-time highmem bugfixing work.
++- Initial version of addition of warnings for drivers that lack .resume
++  methods. (dmesg | grep lacks)
++- Cleanup now unused readahead exports from block i/o code.
 +
 +2.2.9.7 - 8 February 2007
 +
@@ -2234,7 +2282,7 @@ index 0000000..b5a8edb
 +   most of us (Nigel included!) would consider testing. His efforts have
 +   contributed as much to Suspend2 as any of the names above.
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 16c0e15..e7da20d 100644
+index 0ad8803..8a54929 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
 @@ -3141,6 +3141,13 @@ M:	sammy@sammy.net
@@ -2251,11 +2299,54 @@ index 16c0e15..e7da20d 100644
  SVGA HANDLING
  P:	Martin Mares
  M:	mj@ucw.cz
+diff --git a/arch/i386/mm/fault.c b/arch/i386/mm/fault.c
+index aaaa4d2..b9b1509 100644
+--- a/arch/i386/mm/fault.c
++++ b/arch/i386/mm/fault.c
+@@ -23,6 +23,7 @@
+ #include <linux/module.h>
+ #include <linux/kprobes.h>
+ #include <linux/uaccess.h>
++#include <linux/suspend.h>
+ 
+ #include <asm/system.h>
+ #include <asm/desc.h>
+@@ -33,6 +34,9 @@ extern void die(const char *,struct pt_regs *,long);
+ 
+ static ATOMIC_NOTIFIER_HEAD(notify_page_fault_chain);
+ 
++int suspend2_faulted = 0;
++EXPORT_SYMBOL(suspend2_faulted);
++
+ int register_page_fault_notifier(struct notifier_block *nb)
+ {
+ 	vmalloc_sync_all();
+@@ -337,6 +341,20 @@ fastcall void __kprobes do_page_fault(struct pt_regs *regs,
+ 
+ 	si_code = SEGV_MAPERR;
+ 
++	/* During a Suspend2 atomic copy, with DEBUG_SLAB, we will
++	 * get page faults where slab has been unmapped. Map them
++	 * temporarily and set the variable that tells Suspend2 to
++	 * unmap afterwards.
++	 */
++
++	if (unlikely(suspend2_running && !suspend2_faulted)) {
++		struct page *page = NULL;
++		suspend2_faulted = 1;
++		page = virt_to_page(address);
++		kernel_map_pages(page, 1, 1);
++		return;
++	}
++
+ 	/*
+ 	 * We fault-in kernel-space virtual memory on-demand. The
+ 	 * 'reference' page table is init_mm.pgd.
 diff --git a/arch/i386/mm/init.c b/arch/i386/mm/init.c
-index c5c5ea7..611ed7e 100644
+index c5c5ea7..22bf577 100644
 --- a/arch/i386/mm/init.c
 +++ b/arch/i386/mm/init.c
-@@ -383,7 +383,7 @@ #ifdef CONFIG_X86_PAE
+@@ -383,7 +383,7 @@ static void __init pagetable_init (void)
  #endif
  }
  
@@ -2264,6 +2355,57 @@ index c5c5ea7..611ed7e 100644
  /*
   * Swap suspend & friends need this for resume because things like the intel-agp
   * driver might have split up a kernel 4MB mapping.
+@@ -770,13 +770,13 @@ void free_init_pages(char *what, unsigned long begin, unsigned long end)
+ 	unsigned long addr;
+ 
+ 	for (addr = begin; addr < end; addr += PAGE_SIZE) {
+-		ClearPageReserved(virt_to_page(addr));
+-		init_page_count(virt_to_page(addr));
++		//ClearPageReserved(virt_to_page(addr));
++		//init_page_count(virt_to_page(addr));
+ 		memset((void *)addr, POISON_FREE_INITMEM, PAGE_SIZE);
+-		free_page(addr);
+-		totalram_pages++;
++		//free_page(addr);
++		//totalram_pages++;
+ 	}
+-	printk(KERN_INFO "Freeing %s: %ldk freed\n", what, (end - begin) >> 10);
++	//printk(KERN_INFO "Freeing %s: %ldk freed\n", what, (end - begin) >> 10);
+ }
+ 
+ void free_initmem(void)
+diff --git a/arch/i386/mm/pageattr.c b/arch/i386/mm/pageattr.c
+index ad91528..2e0f0f8 100644
+--- a/arch/i386/mm/pageattr.c
++++ b/arch/i386/mm/pageattr.c
+@@ -250,7 +250,27 @@ void kernel_map_pages(struct page *page, int numpages, int enable)
+ 	 */
+ 	__flush_tlb_all();
+ }
++EXPORT_SYMBOL(kernel_map_pages);
+ #endif
+ 
++int page_is_mapped(struct page *page)
++{
++	pte_t *kpte; 
++	unsigned long address;
++	struct page *kpte_page;
++
++	if(PageHighMem(page))
++		return 0;
++
++	address = (unsigned long)page_address(page);
++
++	kpte = lookup_address(address);
++	if (!kpte)
++		return -EINVAL;
++	kpte_page = virt_to_page(kpte);
++
++	return (pte_val(*kpte) & (__PAGE_KERNEL_EXEC | __PAGE_KERNEL)) ? 1:0;
++}
+ EXPORT_SYMBOL(change_page_attr);
+ EXPORT_SYMBOL(global_flush_tlb);
++EXPORT_SYMBOL(page_is_mapped);
 diff --git a/arch/i386/power/Makefile b/arch/i386/power/Makefile
 index 2de7bbf..72a6169 100644
 --- a/arch/i386/power/Makefile
@@ -2276,7 +2418,7 @@ diff --git a/arch/powerpc/kernel/Makefile b/arch/powerpc/kernel/Makefile
 index d2ded19..a5a5895 100644
 --- a/arch/powerpc/kernel/Makefile
 +++ b/arch/powerpc/kernel/Makefile
-@@ -35,7 +35,7 @@ obj-$(CONFIG_GENERIC_TBSYNC)	+= smp-tbsy
+@@ -35,7 +35,7 @@ obj-$(CONFIG_GENERIC_TBSYNC)	+= smp-tbsync.o
  obj-$(CONFIG_CRASH_DUMP)	+= crash_dump.o
  obj-$(CONFIG_6xx)		+= idle_6xx.o l2cr_6xx.o cpu_setup_6xx.o
  obj-$(CONFIG_TAU)		+= tau_6xx.o
@@ -2317,26 +2459,11 @@ index 91f7e67..983f16f 100644
  }
 -#endif /* CONFIG_SOFTWARE_SUSPEND */
 +#endif /* CONFIG_SUSPEND_SHARED */
-diff --git a/arch/x86_64/kernel/time.c b/arch/x86_64/kernel/time.c
-index 5cc76d0..f78ac43 100644
---- a/arch/x86_64/kernel/time.c
-+++ b/arch/x86_64/kernel/time.c
-@@ -1070,9 +1070,9 @@ #ifdef CONFIG_X86_PM_TIMER
- #endif
- 	} else
- 		vxtime.last_tsc = get_cycles_sync();
--	write_sequnlock_irqrestore(&xtime_lock,flags);
- 	jiffies += sleep_length;
- 	monotonic_base += sleep_length * (NSEC_PER_SEC/HZ);
-+	write_sequnlock_irqrestore(&xtime_lock,flags);
- 	touch_softlockup_watchdog();
- 	return 0;
- }
 diff --git a/block/ll_rw_blk.c b/block/ll_rw_blk.c
-index fb67897..5b19efb 100644
+index 38c293b..1f0d329 100644
 --- a/block/ll_rw_blk.c
 +++ b/block/ll_rw_blk.c
-@@ -30,6 +30,8 @@ #include <linux/interrupt.h>
+@@ -30,6 +30,8 @@
  #include <linux/cpu.h>
  #include <linux/blktrace_api.h>
  #include <linux/fault-inject.h>
@@ -2357,15 +2484,16 @@ index fb67897..5b19efb 100644
  }
  
 diff --git a/crypto/Kconfig b/crypto/Kconfig
-index 918b4d8..0eae3cb 100644
+index 92ba249..e3fbcfe 100644
 --- a/crypto/Kconfig
 +++ b/crypto/Kconfig
-@@ -390,6 +390,13 @@ config CRYPTO_DEFLATE
+@@ -439,6 +439,14 @@ config CRYPTO_DEFLATE
  	  
  	  You will most probably want this if using IPSec.
  
 +config CRYPTO_LZF
 +	tristate "LZF compression algorithm"
++	default y
 +	select CRYPTO_ALGAPI
 +	help
 +	  This is the LZF algorithm. It is especially useful for Suspend2,
@@ -2726,11 +2854,63 @@ index 0000000..2da44d9
 +MODULE_LICENSE("GPL");
 +MODULE_DESCRIPTION("LZF Compression Algorithm");
 +MODULE_AUTHOR("Marc Alexander Lehmann & Nigel Cunningham");
+diff --git a/drivers/base/core.c b/drivers/base/core.c
+index 67b79a7..362757f 100644
+--- a/drivers/base/core.c
++++ b/drivers/base/core.c
+@@ -27,6 +27,8 @@
+ int (*platform_notify)(struct device * dev) = NULL;
+ int (*platform_notify_remove)(struct device * dev) = NULL;
+ 
++static int do_dump_stack;
++
+ /*
+  * sysfs bindings for devices.
+  */
+@@ -552,6 +554,18 @@ int device_add(struct device *dev)
+ 				class_intf->add_dev(dev, class_intf);
+ 		up(&dev->class->sem);
+ 	}
++
++#ifdef CONFIG_PM
++	if (!((dev->class && dev->class->resume) ||
++	      (dev->bus && (dev->bus->resume || dev->bus->resume_early))) &&
++	    !dev->pm_safe) {
++		printk("Device driver %s lacks bus and class support for "
++				"being resumed.\n", kobject_name(&dev->kobj));
++		if (do_dump_stack)
++			dump_stack();
++	}
++#endif
++
+  Done:
+  	kfree(class_name);
+ 	put_device(dev);
+@@ -851,6 +865,7 @@ struct device *device_create(struct class *class, struct device *parent,
+ 	dev->class = class;
+ 	dev->parent = parent;
+ 	dev->release = device_create_release;
++	dev->pm_safe = 1;
+ 
+ 	va_start(args, fmt);
+ 	vsnprintf(dev->bus_id, BUS_ID_SIZE, fmt, args);
+@@ -1048,3 +1063,11 @@ out:
+ }
+ 
+ EXPORT_SYMBOL_GPL(device_move);
++
++static int __init pm_debug_dump_stack(char *str)
++{
++	do_dump_stack = 1;
++	return 1;
++}
++
++__setup("pm_debug_dump_stack", pm_debug_dump_stack);
 diff --git a/drivers/macintosh/via-pmu.c b/drivers/macintosh/via-pmu.c
 index 8ca75e5..9f56087 100644
 --- a/drivers/macintosh/via-pmu.c
 +++ b/drivers/macintosh/via-pmu.c
-@@ -42,7 +42,6 @@ #include <linux/init.h>
+@@ -42,7 +42,6 @@
  #include <linux/interrupt.h>
  #include <linux/device.h>
  #include <linux/sysdev.h>
@@ -2738,11 +2918,104 @@ index 8ca75e5..9f56087 100644
  #include <linux/syscalls.h>
  #include <linux/suspend.h>
  #include <linux/cpu.h>
+diff --git a/drivers/pci/pci-driver.c b/drivers/pci/pci-driver.c
+index 92d5e8d..f49da90 100644
+--- a/drivers/pci/pci-driver.c
++++ b/drivers/pci/pci-driver.c
+@@ -449,6 +449,10 @@ int __pci_register_driver(struct pci_driver *drv, struct module *owner)
+ 	if (error)
+ 		driver_unregister(&drv->driver);
+ 
++	if (!drv->resume)
++		printk("PCI driver %s lacks driver specific resume support.\n",
++				drv->name);
++
+ 	return error;
+ }
+ 
+diff --git a/drivers/usb/core/driver.c b/drivers/usb/core/driver.c
+index d6eb5ce..1edc9f5 100644
+--- a/drivers/usb/core/driver.c
++++ b/drivers/usb/core/driver.c
+@@ -709,6 +709,9 @@ int usb_register_device_driver(struct usb_device_driver *new_udriver,
+ 		pr_info("%s: registered new device driver %s\n",
+ 			usbcore_name, new_udriver->name);
+ 		usbfs_update_special();
++		if (!new_udriver->resume)
++			printk("USB driver %s lacks resume support.\n",
++					new_udriver->name);
+ 	} else {
+ 		printk(KERN_ERR "%s: error %d registering device "
+ 			"	driver %s\n",
+diff --git a/include/asm-i386/cacheflush.h b/include/asm-i386/cacheflush.h
+index 74e03c8..3bb8575 100644
+--- a/include/asm-i386/cacheflush.h
++++ b/include/asm-i386/cacheflush.h
+@@ -36,4 +36,6 @@ void kernel_map_pages(struct page *page, int numpages, int enable);
+ void mark_rodata_ro(void);
+ #endif
+ 
++extern int page_is_mapped(struct page *page);
++
+ #endif /* _I386_CACHEFLUSH_H */
+diff --git a/include/asm-i386/suspend.h b/include/asm-i386/suspend.h
+index 8dbaafe..e23fd20 100644
+--- a/include/asm-i386/suspend.h
++++ b/include/asm-i386/suspend.h
+@@ -8,6 +8,9 @@
+ 
+ static inline int arch_prepare_suspend(void) { return 0; }
+ 
++extern int suspend2_faulted;
++#define clear_suspend2_fault() do { suspend2_faulted = 0; } while(0)
++
+ /* image of the saved processor state */
+ struct saved_context {
+   	u16 es, fs, gs, ss;
+diff --git a/include/asm-ppc/suspend.h b/include/asm-ppc/suspend.h
+index 3df9f32..9d5db0e 100644
+--- a/include/asm-ppc/suspend.h
++++ b/include/asm-ppc/suspend.h
+@@ -10,3 +10,6 @@ static inline void save_processor_state(void)
+ static inline void restore_processor_state(void)
+ {
+ }
++
++#define suspend2_faulted (0)
++#define clear_suspend2_fault() do { } while(0)
+diff --git a/include/asm-x86_64/cacheflush.h b/include/asm-x86_64/cacheflush.h
+index ab1cb5c..b8e7def 100644
+--- a/include/asm-x86_64/cacheflush.h
++++ b/include/asm-x86_64/cacheflush.h
+@@ -32,4 +32,9 @@ int change_page_attr_addr(unsigned long addr, int numpages, pgprot_t prot);
+ void mark_rodata_ro(void);
+ #endif
+ 
++static inline int page_is_mapped(struct page *page)
++{
++	return 1;
++}
++
+ #endif /* _X8664_CACHEFLUSH_H */
+diff --git a/include/asm-x86_64/suspend.h b/include/asm-x86_64/suspend.h
+index bc7f817..2f18e1b 100644
+--- a/include/asm-x86_64/suspend.h
++++ b/include/asm-x86_64/suspend.h
+@@ -12,6 +12,9 @@ arch_prepare_suspend(void)
+ 	return 0;
+ }
+ 
++#define suspend2_faulted (0)
++#define clear_suspend2_fault() do { } while(0)
++
+ /* Image of the saved processor state. If you touch this, fix acpi_wakeup.S. */
+ struct saved_context {
+   	u16 ds, es, fs, gs, ss;
 diff --git a/include/linux/bio.h b/include/linux/bio.h
 index 08daf32..8552932 100644
 --- a/include/linux/bio.h
 +++ b/include/linux/bio.h
-@@ -125,6 +125,7 @@ #define BIO_CLONED	4	/* doesn't own data
+@@ -125,6 +125,7 @@ struct bio {
  #define BIO_BOUNCED	5	/* bio is a bounce bio */
  #define BIO_USER_MAPPED 6	/* contains user pages */
  #define BIO_EOPNOTSUPP	7	/* not supported */
@@ -2750,6 +3023,18 @@ index 08daf32..8552932 100644
  #define bio_flagged(bio, flag)	((bio)->bi_flags & (1 << (flag)))
  
  /*
+diff --git a/include/linux/device.h b/include/linux/device.h
+index f44247f..bca61a0 100644
+--- a/include/linux/device.h
++++ b/include/linux/device.h
+@@ -356,6 +356,7 @@ struct device {
+ 	struct kobject kobj;
+ 	char	bus_id[BUS_ID_SIZE];	/* position on parent bus */
+ 	unsigned		is_registered:1;
++	unsigned		pm_safe:1; /* No resume fn is ok? */
+ 	struct device_attribute uevent_attr;
+ 	struct device_attribute *devt_attr;
+ 
 diff --git a/include/linux/dyn_pageflags.h b/include/linux/dyn_pageflags.h
 new file mode 100644
 index 0000000..23d9127
@@ -2859,7 +3144,7 @@ index 5e75e26..f49c9be 100644
  #else
  static inline int frozen(struct task_struct *p) { return 0; }
  static inline int freezing(struct task_struct *p) { return 0; }
-@@ -85,6 +100,9 @@ static inline int freeze_processes(void)
+@@ -85,6 +100,9 @@ static inline int freeze_processes(void) { BUG(); return 0; }
  static inline void thaw_processes(void) {}
  
  static inline int try_to_freeze(void) { return 0; }
@@ -2873,7 +3158,7 @@ diff --git a/include/linux/kernel.h b/include/linux/kernel.h
 index 63fb18d..161c54e 100644
 --- a/include/linux/kernel.h
 +++ b/include/linux/kernel.h
-@@ -118,6 +118,8 @@ extern int vsprintf(char *buf, const cha
+@@ -118,6 +118,8 @@ extern int vsprintf(char *buf, const char *, va_list)
  	__attribute__ ((format (printf, 2, 0)));
  extern int snprintf(char * buf, size_t size, const char * fmt, ...)
  	__attribute__ ((format (printf, 3, 4)));
@@ -2886,7 +3171,7 @@ diff --git a/include/linux/netlink.h b/include/linux/netlink.h
 index b3b9b60..dbf46f0 100644
 --- a/include/linux/netlink.h
 +++ b/include/linux/netlink.h
-@@ -23,6 +23,8 @@ #define NETLINK_KOBJECT_UEVENT	15	/* Ker
+@@ -23,6 +23,8 @@
  #define NETLINK_GENERIC		16
  /* leave room for NETLINK_DM (DM Events) */
  #define NETLINK_SCSITRANSPORT	18	/* SCSI Transports */
@@ -2896,10 +3181,10 @@ index b3b9b60..dbf46f0 100644
  #define MAX_LINKS 32		
  
 diff --git a/include/linux/suspend.h b/include/linux/suspend.h
-index bf99bd4..b5475f3 100644
+index bf99bd4..8840f4b 100644
 --- a/include/linux/suspend.h
 +++ b/include/linux/suspend.h
-@@ -27,14 +27,9 @@ #ifdef CONFIG_PM
+@@ -27,14 +27,9 @@ extern void mark_free_pages(struct zone *zone);
  /* kernel/power/swsusp.c */
  extern int software_suspend(void);
  
@@ -2914,7 +3199,7 @@ index bf99bd4..b5475f3 100644
  static inline int software_suspend(void)
  {
  	printk("Warning: fake suspend called\n");
-@@ -45,8 +40,6 @@ #endif /* CONFIG_PM */
+@@ -45,8 +40,6 @@ static inline int software_suspend(void)
  void save_processor_state(void);
  void restore_processor_state(void);
  struct saved_context;
@@ -2923,7 +3208,7 @@ index bf99bd4..b5475f3 100644
  unsigned long get_safe_page(gfp_t gfp_mask);
  
  /*
-@@ -55,4 +48,58 @@ unsigned long get_safe_page(gfp_t gfp_ma
+@@ -55,4 +48,69 @@ unsigned long get_safe_page(gfp_t gfp_mask);
   */
  #define PAGES_FOR_IO	1024
  
@@ -2944,6 +3229,8 @@ index bf99bd4..b5475f3 100644
 +	SUSPEND_TRYING_TO_RESUME,
 +	SUSPEND_TRY_RESUME_RD,
 +	SUSPEND_LOADING_ALT_IMAGE,
++	SUSPEND_STOP_RESUME,
++	SUSPEND_IO_STOPPED,
 +};
 +
 +#ifdef CONFIG_SUSPEND2
@@ -2956,12 +3243,15 @@ index bf99bd4..b5475f3 100644
 +#define test_suspend_state(bit) (test_bit(bit, &suspend_state))
 +
 +extern void suspend2_try_resume(void);
++extern int suspend2_running;
 +#else
 +
 +#define suspend_state		(0)
 +#define set_suspend_state(bit) do { } while(0)
 +#define clear_suspend_state(bit) do { } while (0)
 +#define test_suspend_state(bit) (0)
++
++#define suspend2_running (0)
 +
 +#define suspend2_try_resume() do { } while(0)
 +#endif /* CONFIG_SUSPEND2 */
@@ -2981,6 +3271,12 @@ index bf99bd4..b5475f3 100644
 +#endif
 +#endif
 +
++#ifdef CONFIG_PRINTK_NOSAVE
++#define POSS_NOSAVE __nosavedata
++#else
++#define POSS_NOSAVE
++#endif
++
  #endif /* _LINUX_SWSUSP_H */
 diff --git a/include/linux/swap.h b/include/linux/swap.h
 index 5423559..9d01fd5 100644
@@ -2994,7 +3290,7 @@ index 5423559..9d01fd5 100644
  extern int vm_swappiness;
  extern int remove_mapping(struct address_space *mapping, struct page *page);
  extern long vm_total_pages;
-@@ -366,5 +367,10 @@ #define has_swap_token(x) 0
+@@ -366,5 +367,10 @@ static inline swp_entry_t get_swap_page(void)
  #define disable_swap_token() do { } while(0)
  
  #endif /* CONFIG_SWAP */
@@ -3028,7 +3324,7 @@ index dc1ec08..3ad203d 100644
  		goto out;
  #endif
  
-@@ -195,7 +200,8 @@ #endif
+@@ -195,7 +200,8 @@ dev_t name_to_dev_t(char *name)
  	res = try_name(s, part);
  done:
  #ifdef CONFIG_SYSFS
@@ -3070,7 +3366,7 @@ diff --git a/init/do_mounts_initrd.c b/init/do_mounts_initrd.c
 index 2cfd7cb..06584f2 100644
 --- a/init/do_mounts_initrd.c
 +++ b/init/do_mounts_initrd.c
-@@ -6,6 +6,7 @@ #include <linux/ext2_fs.h>
+@@ -6,6 +6,7 @@
  #include <linux/romfs_fs.h>
  #include <linux/initrd.h>
  #include <linux/sched.h>
@@ -3101,7 +3397,7 @@ diff --git a/init/main.c b/init/main.c
 index 8b4a7d7..d7ce79c 100644
 --- a/init/main.c
 +++ b/init/main.c
-@@ -52,6 +52,7 @@ #include <linux/debug_locks.h>
+@@ -52,6 +52,7 @@
  #include <linux/lockdep.h>
  #include <linux/pid_namespace.h>
  #include <linux/device.h>
@@ -3124,7 +3420,7 @@ diff --git a/kernel/kmod.c b/kernel/kmod.c
 index 3a7379a..cbea323 100644
 --- a/kernel/kmod.c
 +++ b/kernel/kmod.c
-@@ -34,6 +34,7 @@ #include <linux/mount.h>
+@@ -34,6 +34,7 @@
  #include <linux/kernel.h>
  #include <linux/init.h>
  #include <linux/resource.h>
@@ -3132,7 +3428,7 @@ index 3a7379a..cbea323 100644
  #include <asm/uaccess.h>
  
  extern int max_threads;
-@@ -283,6 +284,11 @@ int call_usermodehelper_keys(char *path,
+@@ -283,6 +284,11 @@ int call_usermodehelper_keys(char *path, char **argv, char **envp,
  	if (path[0] == '\0')
  		return 0;
  
@@ -3145,10 +3441,28 @@ index 3a7379a..cbea323 100644
  	wait_for_completion(&done);
  	return sub_info.retval;
 diff --git a/kernel/power/Kconfig b/kernel/power/Kconfig
-index ed29622..3a71492 100644
+index ed29622..0a7f24f 100644
 --- a/kernel/power/Kconfig
 +++ b/kernel/power/Kconfig
-@@ -131,3 +131,159 @@ config SUSPEND_SMP
+@@ -48,6 +48,17 @@ config DISABLE_CONSOLE_SUSPEND
+ 	suspend/resume routines, but may itself lead to problems, for example
+ 	if netconsole is used.
+ 
++config PRINTK_NOSAVE
++	bool "Preserve printk data from boot kernel when resuming."
++	default n
++	---help---
++	This option gives printk data and the associated variables the
++	attribute __nosave, which means that they will not be saves as
++	part of the image. The net effect is that after resuming, your
++	dmesg will show the messages from prior to the atomic restore,
++	instead of the messages from the resumed kernel. This may be
++	useful for debugging hibernation.
++
+ config PM_TRACE
+ 	bool "Suspend/resume event tracing"
+ 	depends on PM && PM_DEBUG && X86_32 && EXPERIMENTAL
+@@ -131,3 +142,158 @@ config SUSPEND_SMP
  	bool
  	depends on HOTPLUG_CPU && X86 && PM
  	default y
@@ -3190,16 +3504,16 @@ index ed29622..3a71492 100644
 +		depends on SUSPEND2_CORE
 +
 +	config SUSPEND2_CRYPTO
-+		tristate "Compression and encryption support"
++		tristate "Compression support"
 +		depends on SUSPEND2_CORE && CRYPTO
 +		default y
 +		---help---
-+		  This option adds support for using cryptoapi compression and
-+		  encryption algorithms. Compression is particularly useful as
++		  This option adds support for using cryptoapi compression
++		  algorithms. Compression is particularly useful as
 +		  the LZF support that comes with the Suspend2 patch can double
 +		  your suspend and resume speed.
 +
-+		  You probably want at least compression support, so say Y here.
++		  You probably want this, so say Y here.
 +
 +	comment "No compression support available without Cryptoapi support."
 +		depends on SUSPEND2_CORE && !CRYPTO
@@ -3219,7 +3533,7 @@ index ed29622..3a71492 100644
 +		  This option allows you to keep and image and reuse it. It is intended
 +		  __ONLY__ for use with systems where all filesystems are mounted read-
 +		  only (kiosks, for example). To use it, compile this option in and boot
-+		  normally. Set the KEEP_IMAGE flag in /proc/suspend2 and suspend.
++		  normally. Set the KEEP_IMAGE flag in /sys/power/suspend2 and suspend.
 +		  When you resume, the image will not be removed. You will be unable to turn
 +		  off swap partitions (assuming you are using the swap allocator), but future
 +		  suspends simply do a power-down. The image can be updated using the
@@ -3307,20 +3621,16 @@ index ed29622..3a71492 100644
 +	bool
 +	depends on SUSPEND2_CORE!=n
 +	default y
-+
 diff --git a/kernel/power/Makefile b/kernel/power/Makefile
-index 38725f5..197edc7 100644
+index 38725f5..79e78b7 100644
 --- a/kernel/power/Makefile
 +++ b/kernel/power/Makefile
-@@ -5,6 +5,33 @@ endif
+@@ -5,6 +5,30 @@ endif
  
  obj-y				:= main.o process.o console.o
  obj-$(CONFIG_PM_LEGACY)		+= pm.o
 -obj-$(CONFIG_SOFTWARE_SUSPEND)	+= swsusp.o disk.o snapshot.o swap.o user.o
 +obj-$(CONFIG_SUSPEND_SHARED)	+= snapshot.o
-+
-+# Order is important for compression and encryption - we
-+# compress before encrypting.
 +
 +suspend_core-objs := modules.o sysfs.o suspend.o \
 +		io.o pagedir.o prepare_image.o \
@@ -3338,7 +3648,7 @@ index 38725f5..197edc7 100644
 +endif
 +
 +obj-$(CONFIG_SUSPEND2_CORE)	+= suspend_core.o
-+obj-$(CONFIG_SUSPEND2_CRYPTO)	+= suspend_compress.o suspend_encrypt.o
++obj-$(CONFIG_SUSPEND2_CRYPTO)	+= suspend_compress.o
 +
 +obj-$(CONFIG_SUSPEND2_SWAP)	+= suspend_block_io.o suspend_swap.o
 +obj-$(CONFIG_SUSPEND2_FILE)	+= suspend_block_io.o suspend_file.o
@@ -3349,14 +3659,14 @@ index 38725f5..197edc7 100644
  obj-$(CONFIG_MAGIC_SYSRQ)	+= poweroff.o
 diff --git a/kernel/power/atomic_copy.c b/kernel/power/atomic_copy.c
 new file mode 100644
-index 0000000..41bafdc
+index 0000000..ab20796
 --- /dev/null
 +++ b/kernel/power/atomic_copy.c
-@@ -0,0 +1,402 @@
+@@ -0,0 +1,407 @@
 +/*
 + * kernel/power/atomic_copy.c
 + *
-+ * Copyright 2004-2006 Nigel Cunningham <nigel@suspend2.net>
++ * Copyright 2004-2007 Nigel Cunningham (nigel at suspend2 net)
 + * Copyright (C) 2006 Red Hat, inc.
 + *
 + * Distributed under GPLv2.
@@ -3416,10 +3726,10 @@ index 0000000..41bafdc
 +	while (this_pbe) {
 +		int loop = (PAGE_SIZE / sizeof(unsigned long)) - 1;
 +
-+		origpage = kmap_atomic((struct page *) this_pbe->orig_address, 
-+				KM_BIO_DST_IRQ);
++		origpage = kmap_atomic((struct page *) this_pbe->orig_address,
++			KM_BIO_DST_IRQ);
 +		copypage = kmap_atomic((struct page *) this_pbe->address,
-+				KM_BIO_SRC_IRQ);
++			KM_BIO_SRC_IRQ);
 +
 +		while (loop >= 0) {
 +			*(origpage + loop) = *(copypage + loop);
@@ -3561,15 +3871,13 @@ index 0000000..41bafdc
 +		origpage = pfn_to_page(source_index);
 +		copypage = pfn_to_page(dest_index);
 +		
-+	       	if (PageHighMem(origpage))
-+			origvirt = kmap_atomic(origpage, KM_USER0);
-+		else
-+			origvirt = page_address(origpage);
++		origvirt = PageHighMem(origpage) ?
++			kmap_atomic(origpage, KM_USER0) :
++			page_address(origpage);
 +
-+	       	if (PageHighMem(copypage))
-+			copyvirt = kmap_atomic(copypage, KM_USER1);
-+		else
-+			copyvirt = page_address(copypage);
++	       	copyvirt = PageHighMem(copypage) ?
++			kmap_atomic(copypage, KM_USER1) :
++			page_address(copypage);
 +
 +		while (loop >= 0) {
 +			*(copyvirt + loop) = *(origvirt + loop);
@@ -3578,6 +3886,12 @@ index 0000000..41bafdc
 +		
 +		if (PageHighMem(origpage))
 +			kunmap_atomic(origvirt, KM_USER0);
++		else if (suspend2_faulted) {
++			printk("%p (%lu) being unmapped after faulting during atomic copy.\n", origpage, source_index);
++			kernel_map_pages(origpage, 1, 0);
++			clear_suspend2_fault();
++		}
++
 +		if (PageHighMem(copypage))
 +			kunmap_atomic(copyvirt, KM_USER1);
 +		
@@ -3608,7 +3922,7 @@ index 0000000..41bafdc
 +	extra_pd1_pages_used = pagedir1.size - old_ps1_size;
 +
 +	if (extra_pd1_pages_used > extra_pd1_pages_allowance) {
-+		printk("Pageset1 has grown by %ld pages. "
++		printk("Pageset1 has grown by %d pages. "
 +			"extra_pages_allowance is currently only %d.\n",
 +			pagedir1.size - old_ps1_size,
 +			extra_pd1_pages_allowance);
@@ -3730,6 +4044,7 @@ index 0000000..41bafdc
 +
 +	/* We'll ignore saved state, but this gets preempt count (etc) right */
 +	save_processor_state();
++
 +	error = swsusp_arch_resume();
 +	/* 
 +	 * Code below is only ever reached in case of failure. Otherwise
@@ -3757,14 +4072,14 @@ index 0000000..41bafdc
 +}
 diff --git a/kernel/power/block_io.h b/kernel/power/block_io.h
 new file mode 100644
-index 0000000..6bff3cd
+index 0000000..49eaa51
 --- /dev/null
 +++ b/kernel/power/block_io.h
-@@ -0,0 +1,59 @@
+@@ -0,0 +1,55 @@
 +/*
 + * kernel/power/block_io.h
 + *
-+ * Copyright 2004-2006 Nigel Cunningham <nigel@suspend2.net>
++ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
 + * Copyright (C) 2006 Red Hat, inc.
 + *
 + * Distributed under GPLv2.
@@ -3793,17 +4108,13 @@ index 0000000..6bff3cd
 +	void (*check_io_stats) (void);
 +	void (*reset_io_stats) (void);
 +	void (*finish_all_io) (void);
-+	int (*prepare_readahead) (int index);
-+	void (*cleanup_readahead) (int index);
-+	struct page ** readahead_pages;
-+	int (*readahead_ready) (int readahead_index);
 +	int (*forward_one_page) (void);
 +	void (*set_extra_page_forward) (void);
 +	void (*set_devinfo) (struct suspend_bdev_info *info);
 +	int (*read_chunk) (unsigned long *index, struct page *buffer_page,
-+			int *buf_size, int sync);
++			unsigned int *buf_size, int sync);
 +	int (*write_chunk) (unsigned long index, struct page *buffer_page,
-+			int buf_size);
++			unsigned int buf_size);
 +	void (*read_header_init) (void);
 +	int (*rw_header_chunk) (int rw, struct suspend_module_ops *owner,
 +			char *buffer, int buffer_size);
@@ -3822,14 +4133,14 @@ index 0000000..6bff3cd
 +extern int suspend_header_bytes_used;
 diff --git a/kernel/power/checksum.c b/kernel/power/checksum.c
 new file mode 100644
-index 0000000..4fd7c31
+index 0000000..96c9ca5
 --- /dev/null
 +++ b/kernel/power/checksum.c
 @@ -0,0 +1,371 @@
 +/*
 + * kernel/power/checksum.c
 + *
-+ * Copyright (C) 2006 Nigel Cunningham <nigel@suspend2.net>
++ * Copyright (C) 2006-2007 Nigel Cunningham (nigel at suspend2 net)
 + * Copyright (C) 2006 Red Hat, inc.
 + *
 + * This file is released under the GPLv2.
@@ -4199,10 +4510,23 @@ index 0000000..4fd7c31
 +}
 diff --git a/kernel/power/checksum.h b/kernel/power/checksum.h
 new file mode 100644
-index 0000000..00227e1
+index 0000000..9984eec
 --- /dev/null
 +++ b/kernel/power/checksum.h
-@@ -0,0 +1,14 @@
+@@ -0,0 +1,27 @@
++/*
++ * kernel/power/checksum.h
++ *
++ * Copyright (C) 2006-2007 Nigel Cunningham (nigel at suspend2 net)
++ * Copyright (C) 2006 Red Hat, inc.
++ *
++ * This file is released under the GPLv2.
++ *
++ * This file contains data checksum routines for suspend2,
++ * using cryptoapi. They are used to locate any modifications
++ * made to pageset 2 while we're saving it.
++ */
++
 +#if defined(CONFIG_SUSPEND2_CHECKSUM)
 +extern int s2_checksum_init(void);
 +extern void s2_checksum_exit(void);
@@ -4219,14 +4543,14 @@ index 0000000..00227e1
 +
 diff --git a/kernel/power/cluster.c b/kernel/power/cluster.c
 new file mode 100644
-index 0000000..97efc26
+index 0000000..b5ab9ad
 --- /dev/null
 +++ b/kernel/power/cluster.c
 @@ -0,0 +1,152 @@
 +/*
 + * kernel/power/cluster.c
 + *
-+ * Copyright (C) 2006 Nigel Cunningham <nigel@suspend2.net>
++ * Copyright (C) 2006-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
@@ -4377,10 +4701,19 @@ index 0000000..97efc26
 +#endif
 diff --git a/kernel/power/cluster.h b/kernel/power/cluster.h
 new file mode 100644
-index 0000000..97be5d5
+index 0000000..d44bbf7
 --- /dev/null
 +++ b/kernel/power/cluster.h
-@@ -0,0 +1,8 @@
+@@ -0,0 +1,17 @@
++/*
++ * kernel/power/cluster.h
++ *
++ * Copyright (C) 2006-2007 Nigel Cunningham (nigel at suspend2 net)
++ * Copyright (C) 2006 Red Hat, inc.
++ *
++ * This file is released under the GPLv2.
++ */
++
 +#ifdef CONFIG_SUSPEND2_CLUSTER
 +extern int s2_cluster_init(void);
 +extern void s2_cluster_exit(void);
@@ -4393,7 +4726,7 @@ diff --git a/kernel/power/disk.c b/kernel/power/disk.c
 index 88fc5d7..adce096 100644
 --- a/kernel/power/disk.c
 +++ b/kernel/power/disk.c
-@@ -24,6 +24,7 @@ #include <linux/freezer.h>
+@@ -24,6 +24,7 @@
  
  #include "power.h"
  
@@ -4445,7 +4778,7 @@ index 88fc5d7..adce096 100644
  static const char * const pm_disk_modes[] = {
  	[PM_DISK_FIRMWARE]	= "firmware",
  	[PM_DISK_PLATFORM]	= "platform",
-@@ -463,6 +476,7 @@ static int __init resume_offset_setup(ch
+@@ -463,6 +476,7 @@ static int __init resume_offset_setup(char *str)
  static int __init noresume_setup(char *str)
  {
  	noresume = 1;
@@ -4455,15 +4788,14 @@ index 88fc5d7..adce096 100644
  
 diff --git a/kernel/power/extent.c b/kernel/power/extent.c
 new file mode 100644
-index 0000000..6c5639a
+index 0000000..858ce32
 --- /dev/null
 +++ b/kernel/power/extent.c
-@@ -0,0 +1,306 @@
+@@ -0,0 +1,305 @@
 +/* 
 + * kernel/power/extent.c
 + * 
-+ * Copyright (C) 2003-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2003-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * Distributed under GPLv2.
 + * 
@@ -4767,15 +5099,14 @@ index 0000000..6c5639a
 +#endif
 diff --git a/kernel/power/extent.h b/kernel/power/extent.h
 new file mode 100644
-index 0000000..c647384
+index 0000000..d9070dc
 --- /dev/null
 +++ b/kernel/power/extent.h
-@@ -0,0 +1,78 @@
+@@ -0,0 +1,77 @@
 +/*
 + * kernel/power/extent.h
 + *
-+ * Copyright (C) 2004-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2003-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
@@ -4851,18 +5182,17 @@ index 0000000..c647384
 +#endif
 diff --git a/kernel/power/io.c b/kernel/power/io.c
 new file mode 100644
-index 0000000..ed06ff8
+index 0000000..09e9bde
 --- /dev/null
 +++ b/kernel/power/io.c
-@@ -0,0 +1,1374 @@
+@@ -0,0 +1,1400 @@
 +/*
 + * kernel/power/io.c
 + *
 + * Copyright (C) 1998-2001 Gabor Kuti <seasons@fornax.hu>
 + * Copyright (C) 1998,2001,2002 Pavel Machek <pavel@suse.cz>
 + * Copyright (C) 2002-2003 Florent Chabaud <fchabaud@free.fr>
-+ * Copyright (C) 2002-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2002-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
@@ -4898,9 +5228,10 @@ index 0000000..ed06ff8
 +static unsigned long pfn, other_pfn;
 +static DEFINE_MUTEX(io_mutex);
 +static DEFINE_PER_CPU(struct page *, last_sought);
-+static struct page *last_high_page, *last_high_page_first_orig;
-+static struct pbe *last_low_page;
++static DEFINE_PER_CPU(struct page *, last_high_page);
++static DEFINE_PER_CPU(struct pbe *, last_low_page);
 +static atomic_t worker_thread_count;
++static atomic_t io_count;
 +
 +/* suspend_attempt_to_parse_resume_device
 + *
@@ -5149,31 +5480,25 @@ index 0000000..ed06ff8
 +	return result;
 +}
 +
-+static DEFINE_MUTEX(last_high_page_details);
-+
 +static struct page *copy_page_from_orig_page(struct page *orig_page)
 +{
 +	int is_high = PageHighMem(orig_page), index, min, max;
-+	struct page *high_page = NULL, *my_last_high_page,
-+		    *my_last_high_page_first_orig,
++	struct page *high_page = NULL,
++		    **my_last_high_page = &__get_cpu_var(last_high_page),
 +		    **my_last_sought = &__get_cpu_var(last_sought);
-+	struct pbe *this, *my_last_low_page = last_low_page;
++	struct pbe *this, **my_last_low_page = &__get_cpu_var(last_low_page);
 +	void *compare;
 +
 +	if (is_high) {
-+		mutex_lock(&last_high_page_details);
-+		my_last_high_page = last_high_page;
-+		my_last_high_page_first_orig = last_high_page_first_orig;
-+		mutex_unlock(&last_high_page_details);
-+		if (*my_last_sought && my_last_high_page && my_last_high_page_first_orig <= orig_page)
-+			high_page = my_last_high_page;
++		if (*my_last_sought && *my_last_high_page && *my_last_sought < orig_page)
++			high_page = *my_last_high_page;
 +		else
 +			high_page = (struct page *) restore_highmem_pblist;
 +		this = (struct pbe *) kmap(high_page);
 +		compare = orig_page;
 +	} else {
-+		if (*my_last_sought && my_last_low_page && my_last_low_page->orig_address <= (void *) page_address(orig_page))
-+			this = my_last_low_page;
++		if (*my_last_sought && *my_last_low_page && *my_last_sought < orig_page)
++			this = *my_last_low_page;
 +		else
 +			this = restore_pblist;
 +		compare = page_address(orig_page);
@@ -5205,16 +5530,11 @@ index 0000000..ed06ff8
 +		else if (this[index].orig_address == compare) {
 +			if (is_high) {
 +				struct page *page = this[index].address;
-+				mutex_lock(&last_high_page_details);
-+				last_high_page_first_orig = this->orig_address;
-+				last_high_page = high_page;
-+				mutex_unlock(&last_high_page_details);
++				*my_last_high_page = high_page;
 +				kunmap(high_page);
 +				return page;
 +			} else {
-+				last_low_page = this;
-+				if (!virt_to_page(this[index].address))
-+					printk("Going to return NULL. This[%d].orig_address=%p but address is %p. This is %p.\n", index, this[index].orig_address, this[index].address, this);
++				*my_last_low_page = this;
 +				return virt_to_page(this[index].address);
 +			}
 +		} else
@@ -5225,7 +5545,9 @@ index 0000000..ed06ff8
 +	if (is_high)
 +		kunmap(high_page);
 +
-+	printk("Failed to get destination page for orig page %p. This[min].orig_address=%p.\n", orig_page, this[index].orig_address);
++	abort_suspend(SUSPEND_FAILED_IO, "Failed to get destination page for"
++		" orig page %p. This[min].orig_address=%p.\n", orig_page,
++		this[index].orig_address);
 +	return NULL;
 +}
 +
@@ -5237,39 +5559,16 @@ index 0000000..ed06ff8
 +static int worker_rw_loop(void *data)
 +{
 +	unsigned long orig_pfn, write_pfn;
-+	int result, my_io_index;
++	int result, my_io_index = 0;
 +	struct suspend_module_ops *first_filter = suspend_get_next_filter(NULL);
 +	struct page *buffer = alloc_page(GFP_ATOMIC);
-+	int num_direct = 0, first_time = 1;
 +
 +	atomic_inc(&worker_thread_count);
 +
++	mutex_lock(&io_mutex);
++
 +	do {
-+		struct page *page;
 +		int buf_size;
-+
-+		/* Already at the end of the list or aborted? */
-+		if ((!first_time && pfn == max_pfn + 1) || 
-+			  (io_write && test_result_state(SUSPEND_ABORTED)))
-+			break;
-+
-+		first_time = 0;
-+
-+		/* Get the next page to store/read */
-+		mutex_lock(&io_mutex);
-+
-+		pfn = get_next_bit_on(io_map, pfn);
-+		orig_pfn = pfn;
-+		write_pfn = pfn;
-+
-+		if (pfn == max_pfn + 1 ||
-+			  (io_write && test_result_state(SUSPEND_ABORTED))) {
-+			mutex_unlock(&io_mutex);
-+			break;
-+		}
-+
-+		if (io_write)
-+			clear_dynpageflag(&io_map, pfn_to_page(pfn));
 +
 +		/*
 +		 * What page to use? If reading, don't know yet which page's
@@ -5278,21 +5577,113 @@ index 0000000..ed06ff8
 +		 * always write the pfn of the original page.
 +		 */
 +		if (io_write) {
++			struct page *page;
++
++			pfn = get_next_bit_on(io_map, pfn);
++
++			/* Another thread could have beaten us to it. */
++			if (pfn == max_pfn + 1) {
++				BUG_ON(atomic_read(&io_count));
++				break;
++			}
++
++			atomic_dec(&io_count);
++
++			orig_pfn = pfn;
++			write_pfn = pfn;
++
++			/* 
++			 * Other_pfn is updated by all threads, so we're not
++			 * writing the same page multiple times.
++			 */
++			clear_dynpageflag(&io_map, pfn_to_page(pfn));
 +			if (io_pageset == 1) {
 +				other_pfn = get_next_bit_on(pageset1_map, other_pfn);
 +				write_pfn = other_pfn;
 +			}
 +			page = pfn_to_page(pfn);
-+		} else
-+			page = buffer;
 +
-+		my_io_index = io_index++;
++			my_io_index = io_finish_at - atomic_read(&io_count);
 +
-+		mutex_unlock(&io_mutex);
++			mutex_unlock(&io_mutex);
++
++			result = first_filter->write_chunk(write_pfn, page,
++					PAGE_SIZE);
++		} else {
++			atomic_dec(&io_count);
++			mutex_unlock(&io_mutex);
++
++			/* 
++			 * Are we aborting? If so, don't submit any more I/O as
++			 * resetting the resume_attempted flag (from ui.c) will
++			 * clear the bdev flags, making this thread oops.
++			 */
++			if (unlikely(test_suspend_state(SUSPEND_STOP_RESUME))) {
++				atomic_dec(&worker_thread_count);
++				if (!atomic_read(&worker_thread_count))
++					set_suspend_state(SUSPEND_IO_STOPPED);
++				while (1)
++					schedule();
++			}
++
++			result = first_filter->read_chunk(&write_pfn, buffer,
++					&buf_size, SUSPEND_ASYNC);
++			if (buf_size != PAGE_SIZE) {
++				abort_suspend(SUSPEND_FAILED_IO,
++					"I/O pipeline returned %d bytes instead "
++					"of %d.\n", buf_size, PAGE_SIZE);
++				mutex_lock(&io_mutex);
++				break;
++			}
++		}
++
++		if (result) {
++			io_result = result;
++			if (io_write) {
++				printk("Write chunk returned %d.\n", result);
++				abort_suspend(SUSPEND_FAILED_IO,
++					"Failed to write a chunk of the "
++					"image.");
++				mutex_lock(&io_mutex);
++				break;
++			} else
++				panic("Read chunk returned (%d)", result);
++		}
++
++		/* 
++		 * Discard reads of resaved pages while reading ps2
++		 * and unwanted pages while rereading ps2 when aborting.
++		 */
++		if (!io_write && !PageResave(pfn_to_page(write_pfn))) {
++			struct page *final_page = pfn_to_page(write_pfn),
++				    *copy_page = final_page;
++			char *virt, *buffer_virt;
++
++			if (io_pageset == 1 && !load_direct(final_page)) {
++				copy_page = copy_page_from_orig_page(final_page);
++				BUG_ON(!copy_page);
++			}
++
++			if (test_dynpageflag(&io_map, final_page)) {
++				virt = kmap(copy_page);
++				buffer_virt = kmap(buffer);
++				memcpy(virt, buffer_virt, PAGE_SIZE);
++				kunmap(copy_page);
++				kunmap(buffer);
++				clear_dynpageflag(&io_map, final_page);
++				mutex_lock(&io_mutex);
++				my_io_index = io_finish_at - atomic_read(&io_count);
++				mutex_unlock(&io_mutex);
++			} else {
++				mutex_lock(&io_mutex);
++				atomic_inc(&io_count);
++				mutex_unlock(&io_mutex);
++			}
++		}
 +
 +		/* Strictly speaking, this is racy - another thread could
 +		 * output the next the next percentage before we've done
-+		 * ours. 1/5th of the pageset would have to be written first,
++		 * ours. 1/5th of the pageset would have to be done first,
 +		 * though, so I'm not worried. In addition, the only impact
 +		 * would be messed up output, not image corruption. Doing
 +		 * this under the mutex seems an unnecessary slowdown.
@@ -5308,77 +5699,27 @@ index 0000000..ed06ff8
 +			io_pc = io_finish_at * io_pc_step / 5;
 +		}
 +		
-+		if (io_write) {
-+			if (test_result_state(SUSPEND_ABORTED))
-+				printk("Abort flag set prior to write chunk.\n");
-+			result = first_filter->write_chunk(write_pfn, page,
-+					PAGE_SIZE);
-+			if (test_result_state(SUSPEND_ABORTED))
-+				printk("Abort flag set on return from write chunk.\n");
-+		} else {
-+			result = first_filter->read_chunk(&write_pfn, buffer,
-+					&buf_size, SUSPEND_ASYNC);
-+			if (buf_size != PAGE_SIZE) {
-+				abort_suspend(SUSPEND_FAILED_IO,
-+					"I/O pipeline returned %d bytes instead "
-+					"of %d.\n", buf_size, PAGE_SIZE);
-+				break;
-+			}
-+		}
-+
-+		if (result) {
-+			io_result = result;
-+			if (io_write) {
-+				printk("Write chunk returned %d.\n", result);
-+				abort_suspend(SUSPEND_FAILED_IO,
-+					"Failed to write a chunk of the "
-+					"image.");
-+				break;
-+			} else
-+				panic("Failed to read chunk %d/%d of the image. (%d)",
-+					my_io_index, io_finish_at, result);
-+		}
-+
-+		/* 
-+		 * Discard reads of resaved pages while reading ps2
-+		 * and unwanted pages while rereading ps2 when aborting.
-+		 */
-+		if (!io_write && !PageResave(pfn_to_page(write_pfn))) {
-+			struct page *final_page = pfn_to_page(write_pfn), *copy_page = final_page;
-+			char *virt, *buffer_virt;
-+
-+			if (io_pageset == 1 && !load_direct(final_page)) {
-+				copy_page = copy_page_from_orig_page(final_page);
-+				if (!copy_page) {
-+					abort_suspend(SUSPEND_FAILED_IO,
-+						"Failed to get copy page for i/o %d/%d. Orig copy was pfn %d(%p).", my_io_index, io_finish_at, write_pfn, final_page);
-+					break;
-+				}
-+			} else {
-+				/* Pageset2 or Pageset1 directly loaded */
-+				if (io_pageset == 1)
-+					num_direct++;
-+			}
-+			if (test_dynpageflag(&io_map, final_page)) {
-+				virt = kmap(copy_page);
-+				buffer_virt = kmap(buffer);
-+				memcpy(virt, buffer_virt, PAGE_SIZE);
-+				kunmap(copy_page);
-+				kunmap(buffer);
-+				clear_dynpageflag(&io_map, final_page);
-+			} else
-+				suspend_prepare_status(DONT_CLEAR_BAR, "Discarding I/O on page %p.\n", final_page);
-+		}
-+
 +		suspend_cond_pause(0, NULL);
 +
-+		if (test_result_state(SUSPEND_ABORTED) && io_write)
-+			break;
-+	} while(1);
++		/* 
++		 * Subtle: If there's less I/O still to be done than threads
++		 * running, quit. This stops us doing I/O beyond the end of
++		 * the image when reading.
++		 *
++		 * Possible race condition. Two threads could do the test at
++		 * the same time; one should exit and one should continue.
++		 * Therefore we take the mutex before comparing and exiting.
++		 */
 +
-+	__free_pages(buffer, 0);
++		mutex_lock(&io_mutex);
++
++	} while(atomic_read(&io_count) >= atomic_read(&worker_thread_count) &&
++		!(io_write && test_result_state(SUSPEND_ABORTED)));
 +
 +	atomic_dec(&worker_thread_count);
++	mutex_unlock(&io_mutex);
++
++	__free_pages(buffer, 0);
 +
 +	return 0;
 +}
@@ -5412,6 +5753,9 @@ index 0000000..ed06ff8
 +{
 +	int index = 0, cpu;
 +
++	if (!finish_at)
++		return 0;
++
 +	io_write = write;
 +	io_finish_at = finish_at;
 +	io_base = base;
@@ -5423,10 +5767,11 @@ index 0000000..ed06ff8
 +	io_result = 0;
 +	io_nextupdate = 0;
 +
-+	for_each_online_cpu(cpu)
++	for_each_online_cpu(cpu) {
 +		per_cpu(last_sought, cpu) = NULL;
-+	last_low_page = NULL;
-+	last_high_page = NULL;
++		per_cpu(last_low_page, cpu) = NULL;
++		per_cpu(last_high_page, cpu) = NULL;
++	}
 +
 +	/* Ensure all bits clear */
 +	pfn = get_next_bit_on(io_map, max_pfn + 1);
@@ -5445,8 +5790,12 @@ index 0000000..ed06ff8
 +		index++;
 +	}
 +
++	atomic_set(&io_count, finish_at);
++
 +	pfn = max_pfn + 1;
 +	other_pfn = pfn;
++
++	clear_suspend_state(SUSPEND_IO_STOPPED);
 +
 +	if (!test_action_state(SUSPEND_NO_MULTITHREADED_IO))
 +		start_other_threads();
@@ -5455,6 +5804,12 @@ index 0000000..ed06ff8
 +	while (atomic_read(&worker_thread_count))
 +		schedule();
 +
++	set_suspend_state(SUSPEND_IO_STOPPED);
++	if (unlikely(test_suspend_state(SUSPEND_STOP_RESUME))) {
++		while (1)
++			schedule();
++	}
++
 +	if (!io_result) {
 +		printk("done.\n");
 +
@@ -5462,8 +5817,10 @@ index 0000000..ed06ff8
 +				MB(io_base + io_finish_at), MB(io_barmax));
 +	}
 +
-+	if ((write || test_suspend_state(SUSPEND_NOW_RESUMING)) && test_result_state(SUSPEND_ABORTED))
++	if (io_write && test_result_state(SUSPEND_ABORTED))
 +		io_result = 1;
++	else /* All I/O done? */
++		BUG_ON(get_next_bit_on(io_map, max_pfn + 1) != max_pfn + 1);
 +
 +	return io_result;
 +}
@@ -6010,6 +6367,8 @@ index 0000000..ed06ff8
 +
 +	suspend_prepare_console();
 +
++	set_suspend_state(SUSPEND_NOW_RESUMING);
++
 +	suspend_cond_pause(1, "About to read original pageset1 locations.");
 +
 +	/*
@@ -6025,8 +6384,6 @@ index 0000000..ed06ff8
 +		goto out_invalidate_image;
 +	if (load_dyn_pageflags(pageset1_map))
 +		goto out_reset_console;
-+
-+	set_suspend_state(SUSPEND_NOW_RESUMING);
 +
 +	/* Clean up after reading the header */
 +	if ((result = suspendActiveAllocator->read_header_cleanup())) {
@@ -6231,15 +6588,14 @@ index 0000000..ed06ff8
 +
 diff --git a/kernel/power/io.h b/kernel/power/io.h
 new file mode 100644
-index 0000000..cd565b7
+index 0000000..3e6760b
 --- /dev/null
 +++ b/kernel/power/io.h
-@@ -0,0 +1,50 @@
+@@ -0,0 +1,49 @@
 +/*
 + * kernel/power/io.h
 + *
-+ * Copyright (C) 2005-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2005-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
@@ -6289,7 +6645,7 @@ diff --git a/kernel/power/main.c b/kernel/power/main.c
 index ff3a618..e38e630 100644
 --- a/kernel/power/main.c
 +++ b/kernel/power/main.c
-@@ -149,7 +149,7 @@ static void suspend_finish(suspend_state
+@@ -149,7 +149,7 @@ static void suspend_finish(suspend_state_t state)
  static const char * const pm_states[PM_SUSPEND_MAX] = {
  	[PM_SUSPEND_STANDBY]	= "standby",
  	[PM_SUSPEND_MEM]	= "mem",
@@ -6300,15 +6656,14 @@ index ff3a618..e38e630 100644
  };
 diff --git a/kernel/power/modules.c b/kernel/power/modules.c
 new file mode 100644
-index 0000000..6ee4df9
+index 0000000..95c40eb
 --- /dev/null
 +++ b/kernel/power/modules.c
-@@ -0,0 +1,397 @@
+@@ -0,0 +1,396 @@
 +/*
 + * kernel/power/modules.c
 + *
-+ * Copyright (C) 2004-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + */
 +
@@ -6703,15 +7058,14 @@ index 0000000..6ee4df9
 +#endif
 diff --git a/kernel/power/modules.h b/kernel/power/modules.h
 new file mode 100644
-index 0000000..f0037c1
+index 0000000..cd6892f
 --- /dev/null
 +++ b/kernel/power/modules.h
-@@ -0,0 +1,164 @@
+@@ -0,0 +1,163 @@
 +/*
 + * kernel/power/modules.h
 + *
-+ * Copyright (C) 2004-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
@@ -6809,9 +7163,9 @@ index 0000000..f0037c1
 +	int (*rw_init) (int rw, int stream_number);
 +	int (*rw_cleanup) (int rw);
 +	int (*write_chunk) (unsigned long index, struct page *buffer_page,
-+			int buf_size);
++			unsigned int buf_size);
 +	int (*read_chunk) (unsigned long *index, struct page *buffer_page,
-+			int *buf_size, int sync);
++			unsigned int *buf_size, int sync);
 +
 +	/* Reset module if image exists but reading aborted */
 +	void (*noresume_reset) (void);
@@ -6873,15 +7227,14 @@ index 0000000..f0037c1
 +#endif
 diff --git a/kernel/power/netlink.c b/kernel/power/netlink.c
 new file mode 100644
-index 0000000..1a34482
+index 0000000..737d0c9
 --- /dev/null
 +++ b/kernel/power/netlink.c
-@@ -0,0 +1,384 @@
+@@ -0,0 +1,383 @@
 +/*
 + * kernel/power/netlink.c
 + *
-+ * Copyright (C) 2004-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
@@ -6977,7 +7330,7 @@ index 0000000..1a34482
 +	if ((t = find_task_by_pid(uhd->pid)) == NULL) {
 +		read_unlock(&tasklist_lock);
 +		if (uhd->pid > -1)
-+			printk("Strange. Can't find the userspace task %d.\n", uhd->pid);
++			printk("Hmm. Can't find the userspace task %d.\n", uhd->pid);
 +		return;
 +	}
 +	wake_up_process(t);
@@ -7263,15 +7616,14 @@ index 0000000..1a34482
 +}
 diff --git a/kernel/power/netlink.h b/kernel/power/netlink.h
 new file mode 100644
-index 0000000..a0c6beb
+index 0000000..97647e8
 --- /dev/null
 +++ b/kernel/power/netlink.h
-@@ -0,0 +1,59 @@
+@@ -0,0 +1,58 @@
 +/*
 + * kernel/power/netlink.h
 + *
-+ * Copyright (C) 2004-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
@@ -7328,18 +7680,17 @@ index 0000000..a0c6beb
 +#endif
 diff --git a/kernel/power/pagedir.c b/kernel/power/pagedir.c
 new file mode 100644
-index 0000000..13f5393
+index 0000000..9a33035
 --- /dev/null
 +++ b/kernel/power/pagedir.c
-@@ -0,0 +1,490 @@
+@@ -0,0 +1,461 @@
 +/*
 + * kernel/power/pagedir.c
 + *
 + * Copyright (C) 1998-2001 Gabor Kuti <seasons@fornax.hu>
 + * Copyright (C) 1998,2001,2002 Pavel Machek <pavel@suse.cz>
 + * Copyright (C) 2002-2003 Florent Chabaud <fchabaud@free.fr>
-+ * Copyright (C) 2002-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2006-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
@@ -7367,40 +7718,6 @@ index 0000000..13f5393
 +#define PAGESET2 1
 +
 +static int ps2_pfn;
-+
-+int suspend_protect_pageset2(void)
-+{
-+#ifdef CONFIG_DEBUG_PAGEALLOC
-+	int pfn;
-+
-+	BITMAP_FOR_EACH_SET(pageset2_map, pfn) {
-+		struct page *page = pfn_to_page(pfn);
-+		if (PageHighMem(page))
-+			continue;
-+
-+		change_page_attr(page, 1, __pgprot(0));
-+		__flush_tlb_all();
-+	}
-+#endif
-+	
-+	return 0;
-+}
-+
-+void suspend_restore_pageset2_permissions(void)
-+{
-+#ifdef CONFIG_DEBUG_PAGEALLOC
-+	int pfn;
-+
-+	BITMAP_FOR_EACH_SET(pageset2_map, pfn) {
-+		struct page *page = pfn_to_page(pfn);
-+		if (PageHighMem(page))
-+			continue;
-+
-+		change_page_attr(page, 1, PAGE_KERNEL);
-+		__flush_tlb_all();
-+	}
-+#endif
-+}
 +
 +/*
 + * suspend_mark_task_as_pageset
@@ -7651,17 +7968,18 @@ index 0000000..13f5393
 +int suspend_get_pageset1_load_addresses(void)
 +{
 +	int pfn, highallocd = 0, lowallocd = 0;
-+	int low_needed = pagedir1.size_low;
-+	int high_needed = pagedir1.size - pagedir1.size_low;
++	int low_needed = pagedir1.size - get_highmem_size(pagedir1);
++	int high_needed = get_highmem_size(pagedir1);
 +	int low_pages_for_highmem = 0;
 +	unsigned long flags = GFP_ATOMIC | __GFP_NOWARN | __GFP_HIGHMEM;
-+	struct page *page, *high_pbe_page, *low_pbe_page;
++	struct page *page, *high_pbe_page = NULL, *last_high_pbe_page = NULL,
++		    *low_pbe_page;
 +	struct pbe **last_low_pbe_ptr = &restore_pblist,
 +		   **last_high_pbe_ptr = &restore_highmem_pblist,
 +		   *this_low_pbe = NULL, *this_high_pbe = NULL;
 +	int orig_low_pfn = max_pfn + 1, orig_high_pfn = max_pfn + 1;
-+	int unmap_last_high = 0, high_pbes_done=0, low_pbes_done=0;
-+	int first = 1, low_direct = 0, high_direct = 0;
++	int high_pbes_done=0, low_pbes_done=0;
++	int low_direct = 0, high_direct = 0;
 +	int high_to_free, low_to_free;
 +
 +	/* First, allocate pages for the start of our pbe lists. */
@@ -7670,6 +7988,7 @@ index 0000000..13f5393
 +		if (!high_pbe_page)
 +			return 1;
 +		this_high_pbe = (struct pbe *) kmap(high_pbe_page);
++		memset(this_high_pbe, 0, PAGE_SIZE);
 +	}
 +
 +	low_pbe_page = ___suspend_get_nonconflicting_page(0);
@@ -7761,7 +8080,6 @@ index 0000000..13f5393
 +
 +		/* Nope. We're going to use this page. Add a pbe. */
 +		if (is_high || low_pages_for_highmem) {
-+			struct page *old_pbe_page = high_pbe_page;
 +			struct page *orig_page;
 +			high_pbes_done++;
 +			if (!is_high)
@@ -7776,23 +8094,22 @@ index 0000000..13f5393
 +			this_high_pbe->orig_address = orig_page;
 +			this_high_pbe->address = page;
 +			this_high_pbe->next = NULL;
-+			if (unmap_last_high || first) {
-+				first = 0;
++			if (last_high_pbe_page != high_pbe_page) {
 +				*last_high_pbe_ptr = (struct pbe *) high_pbe_page;
++				if (!last_high_pbe_page)
++					last_high_pbe_page = high_pbe_page;
 +			} else
 +				*last_high_pbe_ptr = this_high_pbe;
 +			last_high_pbe_ptr = &this_high_pbe->next;
-+			if (unmap_last_high) {
-+				kunmap(virt_to_page(*last_high_pbe_ptr));
-+				unmap_last_high = 0;
++			if (last_high_pbe_page != high_pbe_page) {
++				kunmap(last_high_pbe_page);
++				last_high_pbe_page = high_pbe_page;
 +			}
 +			this_high_pbe = get_next_pbe(&high_pbe_page, this_high_pbe, 1);
 +			if (IS_ERR(this_high_pbe)) {
 +				printk("This high pbe is an error.\n");
 +				return -ENOMEM;
 +			}
-+			if (high_pbe_page != old_pbe_page)
-+				unmap_last_high = 1;
 +		} else {
 +			struct page *orig_page;
 +			low_pbes_done++;
@@ -7816,7 +8133,13 @@ index 0000000..13f5393
 +		}
 +	}
 +
-+	suspend_free_extra_pagedir_memory(1);
++	if (high_pbe_page)
++		kunmap(high_pbe_page);
++
++	if (last_high_pbe_page != high_pbe_page) {
++		kunmap(last_high_pbe_page);
++		__free_page(high_pbe_page);
++	}
 +
 +	free_conflicting_pages();
 +
@@ -7824,15 +8147,14 @@ index 0000000..13f5393
 +}
 diff --git a/kernel/power/pagedir.h b/kernel/power/pagedir.h
 new file mode 100644
-index 0000000..4357827
+index 0000000..6b70482
 --- /dev/null
 +++ b/kernel/power/pagedir.h
-@@ -0,0 +1,42 @@
+@@ -0,0 +1,53 @@
 +/*
 + * kernel/power/pagedir.h
 + *
-+ * Copyright (C) 2004-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2006-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
@@ -7849,8 +8171,23 @@ index 0000000..4357827
 +
 +struct pagedir {
 +	int id;
-+	long size, size_low;
++	int size;
++#ifdef CONFIG_HIGHMEM
++	int size_high;
++#endif
 +};
++
++#ifdef CONFIG_HIGHMEM
++#define get_highmem_size(pagedir) (pagedir.size_high)
++#define set_highmem_size(pagedir, sz) do { pagedir.size_high = sz; } while(0)
++#define inc_highmem_size(pagedir) do { pagedir.size_high++; } while(0)
++#define get_lowmem_size(pagedir) (pagedir.size - pagedir.size_high)
++#else
++#define get_highmem_size(pagedir) (0)
++#define set_highmem_size(pagedir, sz) do { } while(0)
++#define inc_highmem_size(pagedir) do { } while(0)
++#define get_lowmem_size(pagedir) (pagedir.size)
++#endif
 +
 +extern struct pagedir pagedir1, pagedir2;
 +
@@ -7863,24 +8200,20 @@ index 0000000..4357827
 +extern unsigned long __suspend_get_nonconflicting_page(void);
 +struct page * ___suspend_get_nonconflicting_page(int can_be_highmem);
 +
-+int suspend_protect_pageset2(void);
-+void suspend_restore_pageset2_permissions(void);
-+
 +extern void suspend_reset_alt_image_pageset2_pfn(void);
 +
 +extern struct page *suspend2_follow_page(struct mm_struct *mm, unsigned long address);
 +#endif
 diff --git a/kernel/power/pageflags.c b/kernel/power/pageflags.c
 new file mode 100644
-index 0000000..fc264e9
+index 0000000..dccac97
 --- /dev/null
 +++ b/kernel/power/pageflags.c
-@@ -0,0 +1,152 @@
+@@ -0,0 +1,149 @@
 +/*
 + * kernel/power/pageflags.c
 + *
-+ * Copyright (C) 2004-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
 + * 
 + * This file is released under the GPLv2.
 + *
@@ -7899,8 +8232,6 @@ index 0000000..fc264e9
 +#include "pagedir.h"
 +#include "suspend.h"
 +
-+dyn_pageflags_t pageset1_map;
-+dyn_pageflags_t pageset1_copy_map;
 +dyn_pageflags_t pageset2_map;
 +dyn_pageflags_t page_resave_map;
 +dyn_pageflags_t io_map;
@@ -8030,15 +8361,14 @@ index 0000000..fc264e9
 +}
 diff --git a/kernel/power/pageflags.h b/kernel/power/pageflags.h
 new file mode 100644
-index 0000000..a178679
+index 0000000..405cbce
 --- /dev/null
 +++ b/kernel/power/pageflags.h
-@@ -0,0 +1,50 @@
+@@ -0,0 +1,49 @@
 +/*
 + * kernel/power/pageflags.h
 + *
-+ * Copyright (C) 2004-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
@@ -8085,13 +8415,12 @@ index 0000000..a178679
 +extern int load_dyn_pageflags(dyn_pageflags_t pagemap);
 +extern int suspend_pageflags_space_needed(void);
 diff --git a/kernel/power/power.h b/kernel/power/power.h
-index eb461b8..ca98038 100644
+index eb461b8..f2f6a9f 100644
 --- a/kernel/power/power.h
 +++ b/kernel/power/power.h
-@@ -1,5 +1,11 @@
+@@ -1,5 +1,10 @@
 +/*
-+ * Copyright (C) 2004-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
 + */
 +
  #include <linux/suspend.h>
@@ -8100,7 +8429,7 @@ index eb461b8..ca98038 100644
  
  struct swsusp_info {
  	struct new_utsname	uts;
-@@ -15,11 +21,15 @@ struct swsusp_info {
+@@ -15,11 +20,15 @@ struct swsusp_info {
  
  #ifdef CONFIG_SOFTWARE_SUSPEND
  extern int pm_suspend_disk(void);
@@ -8109,15 +8438,16 @@ index eb461b8..ca98038 100644
  #else
  static inline int pm_suspend_disk(void)
  {
+-	return -EPERM;
 +#ifdef CONFIG_SUSPEND2
 +	return suspend2_try_suspend(1);
 +#else
- 	return -EPERM;
++	return -ENODEV;
 +#endif
  }
  #endif
  
-@@ -40,6 +50,8 @@ extern struct subsystem power_subsys;
+@@ -40,6 +49,8 @@ extern struct subsystem power_subsys;
  /* References to section boundaries */
  extern const void __nosave_begin, __nosave_end;
  
@@ -8126,7 +8456,7 @@ index eb461b8..ca98038 100644
  /* Preferred image size in bytes (default 500 MB) */
  extern unsigned long image_size;
  extern int in_suspend;
-@@ -177,3 +189,15 @@ extern int suspend_enter(suspend_state_t
+@@ -177,3 +188,14 @@ extern int suspend_enter(suspend_state_t state);
  struct timeval;
  extern void swsusp_show_speed(struct timeval *, struct timeval *,
  				unsigned int, char *);
@@ -8136,7 +8466,6 @@ index eb461b8..ca98038 100644
 +#else
 +static inline void *saveable_highmem_page(unsigned long pfn) { return NULL; }
 +#endif
-+extern int suspend2_running;
 +extern unsigned long suspend_get_nonconflicting_page(void);
 +extern int suspend_post_context_save(void);
 +extern int suspend2_try_suspend(int have_pmsem);
@@ -8144,15 +8473,14 @@ index eb461b8..ca98038 100644
 +#define PBES_PER_PAGE (PAGE_SIZE / sizeof(struct pbe))
 diff --git a/kernel/power/power_off.c b/kernel/power/power_off.c
 new file mode 100644
-index 0000000..f52cb8f
+index 0000000..c1c40b5
 --- /dev/null
 +++ b/kernel/power/power_off.c
-@@ -0,0 +1,90 @@
+@@ -0,0 +1,89 @@
 +/*
 + * kernel/power/power_off.c
 + *
-+ * Copyright (C) 2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2006-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
@@ -8240,15 +8568,14 @@ index 0000000..f52cb8f
 +}
 diff --git a/kernel/power/power_off.h b/kernel/power/power_off.h
 new file mode 100644
-index 0000000..f71a201
+index 0000000..333e8a1
 --- /dev/null
 +++ b/kernel/power/power_off.h
-@@ -0,0 +1,14 @@
+@@ -0,0 +1,13 @@
 +/*
 + * kernel/power/power_off.h
 + *
-+ * Copyright (C) 2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2006-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
@@ -8260,20 +8587,19 @@ index 0000000..f71a201
 +extern unsigned long suspend_powerdown_method;
 diff --git a/kernel/power/prepare_image.c b/kernel/power/prepare_image.c
 new file mode 100644
-index 0000000..5fc7ed2
+index 0000000..6273b4e
 --- /dev/null
 +++ b/kernel/power/prepare_image.c
-@@ -0,0 +1,774 @@
+@@ -0,0 +1,827 @@
 +/*
 + * kernel/power/prepare_image.c
 + *
-+ * Copyright (C) 2003-2006 Nigel Cunningham <nigel@suspend.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2003-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
 + * We need to eat memory until we can:
-+ * 1. Perform the save without changing anything (RAM_NEEDED < max_pfn)
++ * 1. Perform the save without changing anything (RAM_NEEDED < #pages)
 + * 2. Fit it all in available space (suspendActiveAllocator->available_space() >=
 + *    main_storage_needed())
 + * 3. Reload the pagedir and pageset1 to places that don't collide with their
@@ -8291,6 +8617,7 @@ index 0000000..5fc7ed2
 +#include <linux/highmem.h>
 +#include <linux/freezer.h>
 +#include <linux/hardirq.h>
++#include <linux/mmzone.h>
 +
 +#include "pageflags.h"
 +#include "modules.h"
@@ -8319,12 +8646,11 @@ index 0000000..5fc7ed2
 +
 +static struct extras *extras_list;
 +
-+#define real_nr_free_low_pages() (real_nr_free_pages() - (int) nr_free_highpages())
-+
 +/*
-+ * num_pcp_pages: Count pcp pages.
++ * real_nr_free_pages: Count pcp pages for a zone type or all zones
++ * (-1 for all, otherwise zone_idx() result desired).
 + */
-+static int num_pcp_pages(void)
++int real_nr_free_pages(unsigned long zone_idx_mask)
 +{
 +	struct zone *zone;
 +	int result = 0, i = 0, cpu;
@@ -8334,6 +8660,9 @@ index 0000000..5fc7ed2
 +		if (!populated_zone(zone))
 +			continue;
 +		
++		if (!(zone_idx_mask & (1 << zone_idx(zone))))
++			continue;
++
 +		for_each_online_cpu(cpu) {
 +			struct per_cpu_pageset *pset = zone_pcp(zone, cpu);
 +
@@ -8344,16 +8673,10 @@ index 0000000..5fc7ed2
 +				result += pcp->count;
 +			}
 +		}
++
++		result += zone->free_pages;
 +	}
 +	return result;
-+}
-+
-+/*
-+ * Number of free pages, including pcp pages.
-+ */
-+int real_nr_free_pages(void)
-+{
-+	return nr_free_pages() + num_pcp_pages();
 +}
 +
 +/*
@@ -8363,7 +8686,7 @@ index 0000000..5fc7ed2
 + */
 +static void get_extra_pd1_allowance(void)
 +{
-+	int orig_num_free = real_nr_free_pages(), final;
++	int orig_num_free = real_nr_free_pages(all_zones_mask), final;
 +	
 +	suspend_prepare_status(CLEAR_BAR, "Finding allowance for drivers.");
 +
@@ -8371,7 +8694,7 @@ index 0000000..5fc7ed2
 +	local_irq_disable(); /* irqs might have been re-enabled on us */
 +	device_power_down(PMSG_FREEZE);
 +	
-+	final = real_nr_free_pages();
++	final = real_nr_free_pages(all_zones_mask);
 +
 +	device_power_up();
 +	local_irq_enable();
@@ -8386,7 +8709,7 @@ index 0000000..5fc7ed2
 + *
 + * Description:	Free previously allocated extra pagedir memory.
 + */
-+void suspend_free_extra_pagedir_memory(int just_records)
++void suspend_free_extra_pagedir_memory(void)
 +{
 +	/* Free allocated pages */
 +	while (extras_list) {
@@ -8398,8 +8721,7 @@ index 0000000..5fc7ed2
 +		for (i = 0; i < (1 << this->order); i++)
 +			ClearPageNosave(this->page + i);
 +
-+		if (!just_records)
-+			__free_pages(this->page, this->order);
++		__free_pages(this->page, this->order);
 +		kfree(this);
 +	}
 +
@@ -8413,7 +8735,7 @@ index 0000000..5fc7ed2
 + * Arguments:	int	num_to_alloc: Number of extra pages needed.
 + * Result:	int. Zero on success. One if unable to allocate enough memory.
 + */
-+int suspend_allocate_extra_pagedir_memory(int extra_pages_needed, int highmem)
++static int suspend_allocate_extra_pagedir_memory(int extra_pages_needed, int highmem)
 +{
 +	int j, order, num_to_alloc = extra_pages_needed - extra_pages_allocated;
 +	int allocd = 0;
@@ -8496,34 +8818,81 @@ index 0000000..5fc7ed2
 + */
 +static int header_storage_needed(void)
 +{
-+	int bytes =	(int) sizeof(struct suspend_header) +
++	int bytes = (int) sizeof(struct suspend_header) +
 +			suspend_header_storage_for_modules() +
 +			suspend_pageflags_space_needed();
 +
 +	return DIV_ROUND_UP(bytes, PAGE_SIZE);
 +}
 +
++#ifdef CONFIG_HIGHMEM
++static int highpages_needed_to_suspend(void)
++{
++	int result = max_t(int,
++		(get_highmem_size(pagedir1) - get_highmem_size(pagedir2)) / 2 -
++		real_nr_free_high_pages(),
++		0);
++
++	return result;
++}
++
++static int lowpages_needed_to_suspend(void)
++{
++	int result = max_t(int, (get_lowmem_size(pagedir1) -
++		get_lowmem_size(pagedir2) + extra_pd1_pages_allowance)/2 -
++		real_nr_free_low_pages(), 0);
++
++	return result;
++}
++
++static int ram_to_suspend(void)
++{
++	int first, second;
++
++	first = (1 + max_t(int, (pagedir1.size + extra_pd1_pages_allowance -
++			get_lowmem_size(pagedir2)) / 2, 0) +
++		MIN_FREE_RAM + suspend_memory_for_modules());
++
++	second = highpages_needed_to_suspend() + lowpages_needed_to_suspend();
++
++	return max(first, second);
++}
++#else
++static inline int highpages_needed_to_suspend(void)
++{
++	return 0;
++}
++
 +static int ram_to_suspend(void)
 +{
 +	return (1 + max_t(int, (pagedir1.size + extra_pd1_pages_allowance -
-+			pagedir2.size_low) / 2, 0) +
++			get_lowmem_size(pagedir2)) / 2, 0) +
 +		MIN_FREE_RAM + suspend_memory_for_modules());
 +}
++
++static int lowpages_needed_to_suspend(void)
++{
++	return ram_to_suspend();
++}
++
++#define ZONE_HIGHMEM (MAX_NR_ZONES + 1)
++#endif
 +
 +static void display_stats(int always, int sub_extra_pd1_allow)
 +{ 
 +	char buffer[255];
 +	snprintf(buffer, 254, 
-+		"Free:%d(%d). Sets:%ld(%ld),%ld(%ld). Header:%d. Nosave:%d-%d"
++		"Free:%d(%d). Sets:%d(%d),%d(%d). Header:%d. Nosave:%d-%d"
 +		"=%d. Storage:%u/%u(%u). Needed:(%d+%d)%d-%d-%d)%d|(%d-%d)%d|"
 +		"%d.\n",
 +		
 +		/* Free */
-+		real_nr_free_pages(), real_nr_free_low_pages(),
++		real_nr_free_pages(all_zones_mask),
++		real_nr_free_low_pages(),
 +		
 +		/* Sets */
-+		pagedir1.size, pagedir1.size_low,
-+		pagedir2.size, pagedir2.size_low,
++		pagedir1.size, pagedir1.size - get_highmem_size(pagedir1),
++		pagedir2.size, pagedir2.size - get_highmem_size(pagedir2),
 +
 +		/* Header */
 +		header_storage_needed(),
@@ -8632,9 +9001,10 @@ index 0000000..5fc7ed2
 +	struct zone *zone;
 +
 +	pagedir1.size = 0;
-+	pagedir1.size_low = 0;
 +	pagedir2.size = 0;
-+	pagedir2.size_low = 0;
++
++	set_highmem_size(pagedir1, 0);
++	set_highmem_size(pagedir2, 0);
 +
 +	num_nosave = 0;
 +
@@ -8680,21 +9050,22 @@ index 0000000..5fc7ed2
 +
 +			if (PagePageset2(page)) {
 +				pagedir2.size++;
-+				if (!PageHighMem(page)) {
-+					pagedir2.size_low++;
++				if (PageHighMem(page))
++					inc_highmem_size(pagedir2);
++				else
 +					SetPagePageset1Copy(page);
-+				}
 +				if (PageResave(page)) {
 +					SetPagePageset1(page);
++					ClearPagePageset1Copy(page);
 +					pagedir1.size++;
-+					if (!PageHighMem(page))
-+						pagedir1.size_low++;
++					if (PageHighMem(page))
++						inc_highmem_size(pagedir1);
 +				}
 +			} else {
 +				pagedir1.size++;
 +				SetPagePageset1(page);
-+				if (!PageHighMem(page))
-+					pagedir1.size_low++;
++				if (PageHighMem(page))
++					inc_highmem_size(pagedir1);
 +			}
 +		}
 +	}
@@ -8737,7 +9108,7 @@ index 0000000..5fc7ed2
 +
 +	if (!atomic_copy) {
 +		storage_available = suspendActiveAllocator->storage_available();
-+		display_stats(1, 0);
++		display_stats(0, 0);
 +	}
 +	return;
 +}
@@ -8753,7 +9124,8 @@ index 0000000..5fc7ed2
 +	suspend_recalculate_image_contents(0);
 +
 +	/* Include allowance for growth in pagedir1 while writing pagedir 2 */
-+	wanted = pagedir1.size +  extra_pd1_pages_allowance - pagedir2.size_low;
++	wanted = pagedir1.size +  extra_pd1_pages_allowance -
++		get_lowmem_size(pagedir2);
 +	if (suspend_allocate_extra_pagedir_memory(wanted, 0) < wanted) { 
 +		suspend_message(SUSPEND_EAT_MEMORY, SUSPEND_LOW, 1,
 +			"Still need to get more pages for pagedir 1.\n");
@@ -8914,26 +9286,33 @@ index 0000000..5fc7ed2
 +	if (amount_wanted > 0 && !test_result_state(SUSPEND_ABORTED) &&
 +			image_size_limit != -1) {
 +		struct zone *zone;
-+		int zone_idx, to_free = amount_needed(0);
++		int zone_idx, to_free = amount_needed(1);
 +
 +		suspend_prepare_status(CLEAR_BAR, "Seeking to free %dMB of memory.", MB(amount_wanted));
 +		for (zone_idx = 0; zone_idx < MAX_NR_ZONES; zone_idx++) {
-+			if (!to_free)
++			int zone_type_free = max_t(int, (zone_idx == ZONE_HIGHMEM) ?
++				highpages_needed_to_suspend() :
++				lowpages_needed_to_suspend(), to_free);
++
++			if (!zone_type_free)
 +				break;
 +
 +			for_each_zone(zone) {
 +				if (zone_idx(zone) != zone_idx)
 +					continue;
 +
-+				shrink_one_zone(zone, to_free);
++				shrink_one_zone(zone, zone_type_free);
 +
 +				did_eat_memory = 1;
 +
 +				suspend_recalculate_image_contents(0);
 +
-+				to_free = amount_needed(0);
++				to_free = amount_needed(1);
++				zone_type_free = max_t(int, (zone_idx == ZONE_HIGHMEM) ?
++					highpages_needed_to_suspend() :
++					lowpages_needed_to_suspend(), to_free);
 +
-+				if (!to_free)
++				if (to_free < 0)
 +					break;
 +			}
 +		}
@@ -8980,7 +9359,7 @@ index 0000000..5fc7ed2
 + *   us).
 + * - Make sure that all dirty buffers are written out.
 + */
-+#define MAX_TRIES 4
++#define MAX_TRIES 2
 +int suspend_prepare_image(void)
 +{
 +	int result = 1, tries = 1;
@@ -8988,6 +9367,7 @@ index 0000000..5fc7ed2
 +	are_frozen = 0;
 +
 +	header_space_allocated = 0;
++	storage_allocated = 0;
 +
 +	if (attempt_to_freeze())
 +		return 1;
@@ -9040,15 +9420,14 @@ index 0000000..5fc7ed2
 +#endif
 diff --git a/kernel/power/prepare_image.h b/kernel/power/prepare_image.h
 new file mode 100644
-index 0000000..aecc785
+index 0000000..5a4f257
 --- /dev/null
 +++ b/kernel/power/prepare_image.h
-@@ -0,0 +1,22 @@
+@@ -0,0 +1,31 @@
 +/*
 + * kernel/power/prepare_image.h
 + *
-+ * Copyright (C) 2003-2006 Nigel Cunningham <nigel@suspend.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2003-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
@@ -9058,19 +9437,29 @@ index 0000000..aecc785
 +
 +extern int suspend_prepare_image(void);
 +extern void suspend_recalculate_image_contents(int storage_available);
-+extern int real_nr_free_pages(void);
++extern int real_nr_free_pages(unsigned long zone_idx_mask);
 +extern int image_size_limit;
-+extern void suspend_free_extra_pagedir_memory(int just_records);
-+extern int suspend_allocate_extra_pagedir_memory(int extra_pages_needed, int highmem);
++extern void suspend_free_extra_pagedir_memory(void);
 +extern int extra_pd1_pages_allowance;
 +
 +#define MIN_FREE_RAM 100
 +#define MIN_EXTRA_PAGES_ALLOWANCE 500
++
++#define all_zones_mask ((unsigned long) ((1 << MAX_NR_ZONES) - 1))
++#ifdef CONFIG_HIGHMEM
++#define real_nr_free_high_pages() (real_nr_free_pages(1 << ZONE_HIGHMEM))
++#define real_nr_free_low_pages() (real_nr_free_pages(all_zones_mask - \
++						(1 << ZONE_HIGHMEM)))
++#else
++#define real_nr_free_high_pages() (0)
++#define real_nr_free_low_pages() (real_nr_free_pages(all_zones_mask))
++#endif
++
 diff --git a/kernel/power/process.c b/kernel/power/process.c
 index 6d566bf..9639b83 100644
 --- a/kernel/power/process.c
 +++ b/kernel/power/process.c
-@@ -15,6 +15,8 @@ #include <linux/module.h>
+@@ -15,6 +15,8 @@
  #include <linux/syscalls.h>
  #include <linux/freezer.h>
  
@@ -9089,7 +9478,7 @@ index 6d566bf..9639b83 100644
  	if (nr_unfrozen)
  		return nr_unfrozen;
  
-@@ -209,11 +213,30 @@ static void thaw_tasks(int thaw_user_spa
+@@ -209,11 +213,30 @@ static void thaw_tasks(int thaw_user_space)
  
  void thaw_processes(void)
  {
@@ -9125,7 +9514,7 @@ diff --git a/kernel/power/snapshot.c b/kernel/power/snapshot.c
 index c024606..4d39d60 100644
 --- a/kernel/power/snapshot.c
 +++ b/kernel/power/snapshot.c
-@@ -41,6 +41,11 @@ #include "power.h"
+@@ -41,6 +41,11 @@
   */
  struct pbe *restore_pblist;
  
@@ -9137,7 +9526,7 @@ index c024606..4d39d60 100644
  /* Pointer to an auxiliary buffer (1 page) */
  static void *buffer;
  
-@@ -82,6 +87,11 @@ static void *get_image_page(gfp_t gfp_ma
+@@ -82,6 +87,11 @@ static void *get_image_page(gfp_t gfp_mask, int safe_needed)
  
  unsigned long get_safe_page(gfp_t gfp_mask)
  {
@@ -9149,7 +9538,7 @@ index c024606..4d39d60 100644
  	return (unsigned long)get_image_page(gfp_mask, PG_SAFE);
  }
  
-@@ -604,7 +614,7 @@ static unsigned int count_free_highmem_p
+@@ -604,7 +614,7 @@ static unsigned int count_free_highmem_pages(void)
   *	and it isn't a part of a free chunk of pages.
   */
  
@@ -9166,7 +9555,7 @@ index c024606..4d39d60 100644
  static inline unsigned int count_highmem_pages(void) { return 0; }
  #endif /* CONFIG_HIGHMEM */
  
-@@ -670,7 +679,7 @@ static inline int pfn_is_nosave(unsigned
+@@ -670,7 +679,7 @@ static inline int pfn_is_nosave(unsigned long pfn)
   *	a free chunk of pages.
   */
  
@@ -9189,15 +9578,14 @@ index c024606..4d39d60 100644
  	drain_local_pages();
 diff --git a/kernel/power/storage.c b/kernel/power/storage.c
 new file mode 100644
-index 0000000..ebbcc76
+index 0000000..6c506ad
 --- /dev/null
 +++ b/kernel/power/storage.c
-@@ -0,0 +1,289 @@
+@@ -0,0 +1,288 @@
 +/*
 + * kernel/power/storage.c
 + *
-+ * Copyright (C) 2005-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2005-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
@@ -9484,15 +9872,14 @@ index 0000000..ebbcc76
 +}
 diff --git a/kernel/power/storage.h b/kernel/power/storage.h
 new file mode 100644
-index 0000000..918ebac
+index 0000000..e05eeef
 --- /dev/null
 +++ b/kernel/power/storage.h
-@@ -0,0 +1,54 @@
+@@ -0,0 +1,53 @@
 +/*
 + * kernel/power/storage.h
 + *
-+ * Copyright (C) 2005-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2005-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + */
@@ -9544,10 +9931,10 @@ index 0000000..918ebac
 +#endif
 diff --git a/kernel/power/suspend.c b/kernel/power/suspend.c
 new file mode 100644
-index 0000000..9702737
+index 0000000..c97e3d4
 --- /dev/null
 +++ b/kernel/power/suspend.c
-@@ -0,0 +1,990 @@
+@@ -0,0 +1,987 @@
 +/*
 + * kernel/power/suspend.c
 + */
@@ -9575,8 +9962,7 @@ index 0000000..9702737
 + * Copyright (C) 1998-2001 Gabor Kuti <seasons@fornax.hu><BR>
 + * Copyright (C) 1998,2001,2002 Pavel Machek <pavel@suse.cz><BR>
 + * Copyright (C) 2002-2003 Florent Chabaud <fchabaud@free.fr><BR>
-+ * Copyright (C) 2002-2006 Nigel Cunningham <nigel@suspend2.net><BR>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2002-2007 Nigel Cunningham (nigel at suspend2 net)<BR>
 + *
 + * \section Credits
 + * 
@@ -9655,9 +10041,6 @@ index 0000000..9702737
 +/* Variables to be preserved over suspend */
 +int image_size_limit = 0;
 +
-+unsigned long suspend_result = 0;
-+unsigned long suspend_debug_state = 0;
-+
 +static int orig_system_state;
 +
 +int do_suspend2_step(int step);
@@ -9671,10 +10054,8 @@ index 0000000..9702737
 + * found in process.c
 + */
 +
-+int suspend_io_time[2][2];
-+
 +/*! Pageset metadata. */
-+struct pagedir pagedir1 = {1, 0, 0}, pagedir2 = {2, 0, 0}; 
++struct pagedir pagedir2 = {2}; 
 +
 +static mm_segment_t oldfs;
 +
@@ -9685,26 +10066,26 @@ index 0000000..9702737
 +/*
 + * Basic clean-up routine.
 + */
-+void suspend_finish_anything(int finishing_cycle)
++void suspend_finish_anything(int suspend_or_resume)
 +{
 +	if (!atomic_dec_and_test(&actions_running))
 +		return;
 +
-+	suspend_cleanup_modules(finishing_cycle);
++	suspend_cleanup_modules(suspend_or_resume);
 +	suspend_put_modules();
 +	clear_suspend_state(SUSPEND_RUNNING);
 +	set_fs(oldfs);
-+	if (finishing_cycle)
++	if (suspend_or_resume)
 +		block_dump = block_dump_save;
 +}
 +
 +/*
 + * Basic set-up routine.
 + */
-+int suspend_start_anything(int starting_cycle)
++int suspend_start_anything(int suspend_or_resume)
 +{
 +	if (atomic_add_return(1, &actions_running) != 1) {
-+		if (starting_cycle) {
++		if (suspend_or_resume) {
 +			printk("Can't start a cycle when actions are "
 +					"already running.\n");
 +			atomic_dec(&actions_running);
@@ -9716,6 +10097,9 @@ index 0000000..9702737
 +	oldfs = get_fs();
 +	set_fs(KERNEL_DS);
 +
++	if (!suspendActiveAllocator)
++		suspend_attempt_to_parse_resume_device(1);
++
 +	set_suspend_state(SUSPEND_RUNNING);
 +
 +	if (suspend_get_modules()) {
@@ -9723,12 +10107,12 @@ index 0000000..9702737
 +		goto out_err;
 +	}
 +
-+	if (suspend_initialise_modules(starting_cycle)) {
++	if (suspend_initialise_modules(suspend_or_resume)) {
 +		printk("Suspend2: Initialise modules failed!\n");
 +		goto out_err;
 +	}
 +
-+	if (starting_cycle) {
++	if (suspend_or_resume) {
 +		block_dump_save = block_dump;
 +		block_dump = 0;
 +		set_cpus_allowed(current, CPU_MASK_CPU0);
@@ -9737,9 +10121,9 @@ index 0000000..9702737
 +	return 0;
 +
 +out_err:
-+	if (starting_cycle)
++	if (suspend_or_resume)
 +		block_dump_save = block_dump;
-+	suspend_finish_anything(starting_cycle);
++	suspend_finish_anything(suspend_or_resume);
 +	return -EBUSY;
 +}
 +
@@ -9836,9 +10220,11 @@ index 0000000..9702737
 +	if (buffer)
 +		i = get_suspend_debug_info(buffer, PAGE_SIZE);
 +
-+	suspend_free_extra_pagedir_memory(0);
++	suspend_free_extra_pagedir_memory();
 +	
 +	pagedir1.size = pagedir2.size = 0;
++	set_highmem_size(pagedir1, 0);
++	set_highmem_size(pagedir2, 0);
 +
 +	system_state = orig_system_state;
 +
@@ -9867,6 +10253,11 @@ index 0000000..9702737
 +	}
 +
 +	suspend_cleanup_console();
++
++	clear_suspend_state(SUSPEND_IGNORE_LOGLEVEL);
++	clear_suspend_state(SUSPEND_TRYING_TO_RESUME);
++	clear_suspend_state(SUSPEND_NOW_RESUMING);
++
 +	if (!had_pmsem)
 +		mutex_unlock(&pm_mutex);
 +}
@@ -9970,10 +10361,8 @@ index 0000000..9702737
 +	if (test_action_state(SUSPEND_TEST_BIO))
 +		return 1;
 +
-+	if (temp_result || test_result_state(SUSPEND_ABORTED))
-+		goto abort_reloading_pagedir_two;
-+
-+	return 0;
++	if (!temp_result && !test_result_state(SUSPEND_ABORTED))
++		return 0;
 +
 +abort_reloading_pagedir_two:
 +	temp_result = read_pageset2(1);
@@ -10007,7 +10396,6 @@ index 0000000..9702737
 +	printk(KERN_INFO "Suspend2: Initiating a software suspend cycle.\n");
 +
 +	nr_suspends++;
-+	clear_suspend_state(SUSPEND_NOW_RESUMING);
 +	
 +	orig_system_state = system_state;
 +	
@@ -10291,12 +10679,13 @@ index 0000000..9702737
 +
 +	clear_suspend_state(SUSPEND_IGNORE_LOGLEVEL);
 +	clear_suspend_state(SUSPEND_TRYING_TO_RESUME);
++	clear_suspend_state(SUSPEND_NOW_RESUMING);
 +}
 +
 +/* Wrapper for when called from init/do_mounts.c */
 +void __suspend2_try_resume(void)
 +{
-+	if (suspend_start_anything(0))
++	if (suspend_start_anything(1))
 +		return;
 +
 +	mutex_lock(&pm_mutex);
@@ -10310,7 +10699,7 @@ index 0000000..9702737
 +
 +	mutex_unlock(&pm_mutex);
 +
-+	suspend_finish_anything(0);
++	suspend_finish_anything(1);
 +}
 +
 +/*
@@ -10325,7 +10714,7 @@ index 0000000..9702737
 +
 +	if (!atomic_read(&actions_running)) {
 +		/* Came in via /sys/power/disk */
-+		if (suspend_start_anything(0))
++		if (suspend_start_anything(1))
 +			return -EBUSY;
 +		sys_power_disk = 1;
 +	}
@@ -10344,14 +10733,17 @@ index 0000000..9702737
 +	if ((result = do_suspend2_step(STEP_SUSPEND_PREPARE_IMAGE)))
 +		goto out;
 +
++	if (test_action_state(SUSPEND_FREEZER_TEST)) {
++		do_cleanup();
++		goto out;
++	}
++
 +	if ((result = do_suspend2_step(STEP_SUSPEND_SAVE_IMAGE)))
 +		goto out;
 +
 +	/* This code runs at resume time too! */
-+	if (!suspend2_in_suspend)
-+		goto out;
-+
-+	result = do_suspend2_step(STEP_SUSPEND_POWERDOWN);
++	if (suspend2_in_suspend)
++		result = do_suspend2_step(STEP_SUSPEND_POWERDOWN);
 +out:
 +	if (sys_power_disk)
 +		suspend_finish_anything(1);
@@ -10418,11 +10810,6 @@ index 0000000..9702737
 +	{ SUSPEND2_ATTR("resume_commandline", SYSFS_RW),
 +	  SYSFS_STRING(suspend2_nosave_commandline, COMMAND_LINE_SIZE,
 +			  SYSFS_SM_NOT_NEEDED)
-+	},
-+
-+	{ SUSPEND2_ATTR("do_resume", SYSFS_WRITEONLY),
-+	  SYSFS_CUSTOM(NULL, NULL, SYSFS_NEEDS_FOR_WRITE),
-+	  .write_side_effect = __suspend_try_resume
 +	},
 +
 +	{ SUSPEND2_ATTR("version", SYSFS_READONLY),
@@ -10534,21 +10921,17 @@ index 0000000..9702737
 +
 +#ifdef CONFIG_SUSPEND2_EXPORTS
 +EXPORT_SYMBOL(pagedir2);
-+EXPORT_SYMBOL(suspend_io_time);
-+EXPORT_SYMBOL(suspend_debug_state);
-+EXPORT_SYMBOL(suspend_result);
 +#endif
 diff --git a/kernel/power/suspend.h b/kernel/power/suspend.h
 new file mode 100644
-index 0000000..2b6770c
+index 0000000..9ad2607
 --- /dev/null
 +++ b/kernel/power/suspend.h
 @@ -0,0 +1,179 @@
 +/*
 + * kernel/power/suspend.h
 + *
-+ * Copyright (C) 2004-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
@@ -10566,7 +10949,7 @@ index 0000000..2b6770c
 +#include <asm/setup.h>
 +#include "pageflags.h"
 +
-+#define SUSPEND_CORE_VERSION "2.2.9.7"
++#define SUSPEND_CORE_VERSION "2.2.9.11"
 +
 +/*		 == Action states == 		*/
 +
@@ -10691,14 +11074,15 @@ index 0000000..2b6770c
 +#define KB(x) ((x) << (PAGE_SHIFT - 10))
 +#define MB(x) ((x) >> (20 - PAGE_SHIFT))
 +
-+extern int suspend_start_anything(int starting_cycle);
-+extern void suspend_finish_anything(int finishing_cycle);
++extern int suspend_start_anything(int suspend_or_resume);
++extern void suspend_finish_anything(int suspend_or_resume);
 +
 +extern int save_image_part1(void);
 +extern int suspend_atomic_restore(void);
 +
 +extern int __suspend2_try_suspend(int had_pmsem);
 +extern int suspend2_try_suspend(int have_pmsem);
++extern void __suspend_try_resume(void);
 +
 +extern int __suspend_post_context_save(void);
 +
@@ -10725,15 +11109,14 @@ index 0000000..2b6770c
 +#endif
 diff --git a/kernel/power/suspend_block_io.c b/kernel/power/suspend_block_io.c
 new file mode 100644
-index 0000000..6089246
+index 0000000..1b710b6
 --- /dev/null
 +++ b/kernel/power/suspend_block_io.c
-@@ -0,0 +1,934 @@
+@@ -0,0 +1,945 @@
 +/*
 + * kernel/power/suspend_block_io.c
 + *
-+ * Copyright 2004-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * Distributed under GPLv2.
 + * 
@@ -10758,7 +11141,6 @@ index 0000000..6089246
 +
 +#if 0
 +#define PR_DEBUG(a, b...) do { if (pr_index < 20) printk(a, ##b); } while(0)
-+//#define PR_DEBUG(a, b...) do { printk(a, ##b); } while(0)
 +#else
 +#define PR_DEBUG(a, b...) do { } while(0)
 +#endif
@@ -10770,7 +11152,7 @@ index 0000000..6089246
 +	struct bio *sys_struct;
 +	sector_t first_block;
 +	struct page *bio_page, *dest_page;
-+	int rw, readahead_index;
++	int writing, readahead_index;
 +	struct block_device *dev;
 +	struct list_head list;
 +};
@@ -10831,7 +11213,7 @@ index 0000000..6089246
 +	suspend_message(SUSPEND_WRITER, SUSPEND_HIGH, 0,
 +		"Cleanup IO: [%p]\n", io_info);
 +
-+	if (io_info->rw == READ && io_info->readahead_index == -1) {
++	if (!io_info->writing && io_info->readahead_index == -1) {
 +		char *from, *to;
 +		/*
 +		 * Copy the page we read into the buffer our caller provided.
@@ -10843,7 +11225,7 @@ index 0000000..6089246
 +		kunmap(io_info->bio_page);
 +	}
 +
-+	if (io_info->rw == WRITE || io_info->readahead_index == -1) {
++	if (io_info->writing || io_info->readahead_index == -1) {
 +		/* Sanity check */
 +		if (page_count(io_info->bio_page) != 2)
 +			printk(KERN_EMERG "Cleanup IO: Page count on page %p"
@@ -10981,7 +11363,7 @@ index 0000000..6089246
 + * Set up for doing readahead on an image */
 +static int suspend_prepare_readahead(int index)
 +{
-+	unsigned long new_page = get_zeroed_page(GFP_ATOMIC);
++	unsigned long new_page = get_zeroed_page(GFP_ATOMIC | __GFP_NOWARN);
 +
 +	if(!new_page)
 +		return -ENOMEM;
@@ -11026,7 +11408,7 @@ index 0000000..6089246
 +
 +/**
 + *	submit - submit BIO request.
-+ *	@rw:	READ or WRITE.
++ *	@writing: READ or WRITE.
 + *	@io_info: IO info structure.
 + *
 + * 	Based on Patrick's pmdisk code from long ago:
@@ -11063,14 +11445,14 @@ index 0000000..6089246
 +		return -EFAULT;
 +	}
 +
-+	if (io_info->rw == WRITE)
++	if (io_info->writing)
 +		bio_set_pages_dirty(bio);
 +
 +	spin_lock_irqsave(&ioinfo_busy_lock, flags);
 +	list_add_tail(&io_info->list, &ioinfo_busy);
 +	spin_unlock_irqrestore(&ioinfo_busy_lock, flags);
 +	
-+	submit_bio(io_info->rw, bio);
++	submit_bio(io_info->writing, bio);
 +
 +	return 0;
 +}
@@ -11158,7 +11540,7 @@ index 0000000..6089246
 + * 		Failure? What's that?
 + * Returns:	The io_info struct created.
 + */
-+static int suspend_do_io(int rw, struct block_device *bdev, long block0,
++static int suspend_do_io(int writing, struct block_device *bdev, long block0,
 +	struct page *page, int readahead_index, int syncio)
 +{
 +	struct io_info *io_info;
@@ -11176,19 +11558,19 @@ index 0000000..6089246
 +			"Start_IO: [%p]", io_info);
 +	
 +	/* Copy settings to the io_info struct */
-+	io_info->rw = rw;
++	io_info->writing = writing;
 +	io_info->dev = bdev;
 +	io_info->first_block = block0;
 +	io_info->dest_page = page;
 +	io_info->readahead_index = readahead_index;
 +
 +	if (io_info->readahead_index == -1) {
-+		while (!(buffer_virt = get_zeroed_page(GFP_ATOMIC)))
++		while (!(buffer_virt = get_zeroed_page(GFP_ATOMIC | __GFP_NOWARN)))
 +			do_bio_wait();
 +
 +		suspend_message(SUSPEND_WRITER, SUSPEND_HIGH, 0,
 +				"[ALLOC BUFFER]->%d",
-+				real_nr_free_pages());
++				real_nr_free_pages(all_zones_mask));
 +		io_info->bio_page = virt_to_page(buffer_virt);
 +	} else {
 +		unsigned long flags;
@@ -11206,7 +11588,7 @@ index 0000000..6089246
 +	 * lowmem, but we cannot be certain. If there is no
 +	 * compression/encryption, we might be passed the
 +	 * actual source page's address. */
-+	if (rw == WRITE) {
++	if (writing) {
 +		to = (char *) buffer_virt;
 +		from = kmap_atomic(page, KM_USER1);
 +		memcpy(to, from, PAGE_SIZE);
@@ -11217,7 +11599,7 @@ index 0000000..6089246
 +	get_page(io_info->bio_page);
 +	
 +	suspend_message(SUSPEND_WRITER, SUSPEND_HIGH, 1,
-+			"-> (PRE BRW) %d\n", real_nr_free_pages());
++		"-> (PRE BRW) %d\n", real_nr_free_pages(all_zones_mask));
 +
 +	if (syncio)
 +	 	submit(io_info);
@@ -11237,10 +11619,10 @@ index 0000000..6089246
 + * want and use our normal routines (synchronously).
 + */
 +
-+static int suspend_bdev_page_io(int rw, struct block_device *bdev, long pos,
-+		struct page *page)
++static int suspend_bdev_page_io(int writing, struct block_device *bdev,
++		long pos, struct page *page)
 +{
-+	return suspend_do_io(rw, bdev, pos, page, -1, 1);
++	return suspend_do_io(writing, bdev, pos, page, -1, 1);
 +}
 +
 +static int suspend_bio_memory_needed(void)
@@ -11281,9 +11663,8 @@ index 0000000..6089246
 +	 * before we can know how many more blocks to skip.*/
 +	suspend_extent_state_next(&suspend_writer_posn);
 +
-+	if (!at_start)
-+		if (forward_extra_blocks())
-+			return -ENODATA;
++	if (!at_start && forward_extra_blocks())
++		return -ENODATA;
 +
 +	if (extra_page_forward) {
 +		extra_page_forward = 0;
@@ -11300,7 +11681,7 @@ index 0000000..6089246
 +	extra_page_forward = 1;
 +}
 +
-+static int suspend_bio_rw_page(int rw, struct page *page,
++static int suspend_bio_rw_page(int writing, struct page *page,
 +		int readahead_index, int sync)
 +{
 +	struct suspend_bdev_info *dev_info;
@@ -11313,22 +11694,26 @@ index 0000000..6089246
 +		return -ENODATA;
 +	}
 +
++	BUG_ON(current_stream == 0 && writing &&
++		suspend_writer_posn.current_chain == suspend_writer_posn_save[2].chain_num &&
++		suspend_writer_posn.current_offset == suspend_writer_posn_save[2].offset);
++
 +	dev_info = &suspend_devinfo[suspend_writer_posn.current_chain];
 +
-+	return suspend_do_io(rw, dev_info->bdev,
++	return suspend_do_io(writing, dev_info->bdev,
 +		suspend_writer_posn.current_offset <<
 +			dev_info->bmap_shift,
 +		page, readahead_index, sync);
 +}
 +
-+static int suspend_rw_init(int rw, int stream_number)
++static int suspend_rw_init(int writing, int stream_number)
 +{
 +	suspend_header_bytes_used = 0;
 +
 +	suspend_extent_state_restore(&suspend_writer_posn,
 +			&suspend_writer_posn_save[stream_number]);
 +
-+	suspend_writer_buffer_posn = rw ? 0 : PAGE_SIZE;
++	suspend_writer_buffer_posn = writing ? 0 : PAGE_SIZE;
 +
 +	current_stream = stream_number;
 +
@@ -11344,25 +11729,27 @@ index 0000000..6089246
 +	readahead_index = readahead_submit_index = -1;
 +}
 +
-+static int suspend_rw_cleanup(int rw)
++static int suspend_rw_cleanup(int writing)
 +{
-+	if (rw && suspend_bio_rw_page(WRITE, virt_to_page(suspend_writer_buffer),
-+		-1, 0))
++	if (writing && suspend_bio_rw_page(WRITE,
++			virt_to_page(suspend_writer_buffer), -1, 0))
 +		return -EIO;
 +
-+	if (rw && current_stream == 2)
++	if (writing && current_stream == 2)
 +		suspend_extent_state_save(&suspend_writer_posn,
 +				&suspend_writer_posn_save[1]);
 +	
 +	suspend_finish_all_io();
 +	
-+	if (rw == READ)
++	if (!writing)
 +		while (readahead_index != readahead_submit_index) {
 +			suspend_cleanup_readahead(readahead_index);
 +			readahead_index++;
 +			if (readahead_index == MAX_OUTSTANDING_IO)
 +				readahead_index = 0;
 +		}
++
++	current_stream = 0;
 +
 +	return 0;
 +}
@@ -11372,7 +11759,6 @@ index 0000000..6089246
 +	static int last_result;
 +	unsigned long *virt;
 +
-+	/* Start new readahead while we wait for our page */
 +	if (readahead_index == -1) {
 +		last_result = 0;
 +		readahead_index = readahead_submit_index = 0;
@@ -11383,8 +11769,9 @@ index 0000000..6089246
 +		/* We failed to submit a read, and have cleaned up
 +		 * all the readahead previously submitted */
 +		if (readahead_submit_index == readahead_index) {
-+			printk("Failed to submit a read and no readahead left.\n");
-+			return -EPERM;
++			abort_suspend(SUSPEND_FAILED_IO, "Failed to submit"
++				" a read and no readahead left.\n");
++			return -EIO;
 +		}
 +		goto wait;
 +	}
@@ -11431,18 +11818,17 @@ index 0000000..6089246
 + *
 + */
 +
-+static int suspend_rw_buffer(int rw, char *buffer, int buffer_size)
++static int suspend_rw_buffer(int writing, char *buffer, int buffer_size)
 +{
 +	int bytes_left = buffer_size;
-+	int result = 0;
 +
 +	/* Read/write a chunk of the header */
 +	while (bytes_left) {
 +		char *source_start = buffer + buffer_size - bytes_left;
 +		char *dest_start = suspend_writer_buffer + suspend_writer_buffer_posn;
 +		int capacity = PAGE_SIZE - suspend_writer_buffer_posn;
-+		char *to = rw ? dest_start : source_start;
-+		char *from = rw ? source_start : dest_start;
++		char *to = writing ? dest_start : source_start;
++		char *from = writing ? source_start : dest_start;
 +
 +		if (bytes_left <= capacity) {
 +			if (test_debug_state(SUSPEND_HEADER))
@@ -11454,7 +11840,7 @@ index 0000000..6089246
 +			memcpy(to, from, bytes_left);
 +			suspend_writer_buffer_posn += bytes_left;
 +			suspend_header_bytes_used += bytes_left;
-+			return result;
++			return 0;
 +		}
 +
 +		/* Complete this page and start a new one */
@@ -11468,7 +11854,7 @@ index 0000000..6089246
 +		bytes_left -= capacity;
 +		suspend_header_bytes_used += capacity;
 +
-+		if (rw == READ) {
++		if (!writing) {
 +			if (test_suspend_state(SUSPEND_TRY_RESUME_RD))
 +				sys_read(suspend_read_fd,
 +					suspend_writer_buffer, BLOCK_SIZE);
@@ -11497,7 +11883,7 @@ index 0000000..6089246
 + */
 +
 +static int suspend_bio_read_chunk(unsigned long *index, struct page *buffer_page,
-+		int *buf_size, int sync)
++		unsigned int *buf_size, int sync)
 +{
 +	int result;
 +	char *buffer_virt = kmap(buffer_page);
@@ -11508,19 +11894,30 @@ index 0000000..6089246
 +		do_bio_wait();
 +	
 +	if ((result = suspend_rw_buffer(READ, (char *) index,
-+			sizeof(unsigned long))))
++			sizeof(unsigned long)))) {
++		abort_suspend(SUSPEND_FAILED_IO,
++				"Read of index returned %d.\n", result);
 +		goto out;
++	}
 +
-+	if ((result = suspend_rw_buffer(READ, (char *) buf_size, sizeof(int))))
++	if ((result = suspend_rw_buffer(READ, (char *) buf_size, sizeof(int)))) {
++		abort_suspend(SUSPEND_FAILED_IO,
++				"Read of buffer size is %d.\n", result);
 +		goto out;
++	}
 +
 +	result = suspend_rw_buffer(READ, buffer_virt, *buf_size);
++	if (result)
++		abort_suspend(SUSPEND_FAILED_IO,
++				"Read of data returned %d.\n", result);
 +
++	PR_DEBUG("%d: Index %ld, %d bytes.\n", pr_index, *index, *buf_size);
 +out:
 +	mutex_unlock(&suspend_bio_mutex);
 +	kunmap(buffer_page);
 +	if (result)
-+		printk("Returning %d from suspend_bio_read_chunk.\n", result);
++		abort_suspend(SUSPEND_FAILED_IO,
++			"Returning %d from suspend_bio_read_chunk.\n", result);
 +	return result;
 +}
 +
@@ -11532,7 +11929,7 @@ index 0000000..6089246
 + */
 +
 +static int suspend_bio_write_chunk(unsigned long index, struct page *buffer_page,
-+		int buf_size)
++		unsigned int buf_size)
 +{
 +	int result;
 +	char *buffer_virt = kmap(buffer_page);
@@ -11551,6 +11948,7 @@ index 0000000..6089246
 +
 +	result = suspend_rw_buffer(WRITE, buffer_virt, buf_size);
 +
++	PR_DEBUG("%d: Index %ld, %d bytes.\n", pr_index, index, buf_size);
 +out:
 +	mutex_unlock(&suspend_bio_mutex);
 +	kunmap(buffer_page);
@@ -11563,7 +11961,8 @@ index 0000000..6089246
 + * Read or write a portion of the header.
 + */
 +
-+static int suspend_rw_header_chunk(int rw, struct suspend_module_ops *owner,
++static int suspend_rw_header_chunk(int writing,
++		struct suspend_module_ops *owner,
 +		char *buffer, int buffer_size)
 +{
 +	if (owner) {
@@ -11578,7 +11977,7 @@ index 0000000..6089246
 +		}
 +	}
 +
-+	return suspend_rw_buffer(rw, buffer, buffer_size);
++	return suspend_rw_buffer(writing, buffer, buffer_size);
 +}
 +
 +/*
@@ -11610,10 +12009,6 @@ index 0000000..6089246
 +struct suspend_bio_ops suspend_bio_ops = {
 +	.bdev_page_io = suspend_bdev_page_io,
 +	.finish_all_io = suspend_finish_all_io,
-+	.prepare_readahead = suspend_prepare_readahead,
-+	.cleanup_readahead = suspend_cleanup_readahead,
-+	.readahead_pages = suspend_readahead_pages,
-+	.readahead_ready = suspend_readahead_ready,
 +	.forward_one_page = forward_one_page,
 +	.set_extra_page_forward = set_extra_page_forward,
 +	.set_devinfo = suspend_set_devinfo,
@@ -11665,10 +12060,15 @@ index 0000000..6089246
 +#endif
 diff --git a/kernel/power/suspend_builtin.c b/kernel/power/suspend_builtin.c
 new file mode 100644
-index 0000000..140fa2e
+index 0000000..e2bec6d
 --- /dev/null
 +++ b/kernel/power/suspend_builtin.c
-@@ -0,0 +1,263 @@
+@@ -0,0 +1,286 @@
++/*
++ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
++ *
++ * This file is released under the GPLv2.
++ */
 +#include <linux/module.h>
 +#include <linux/resume-trace.h>
 +#include <linux/syscalls.h>
@@ -11694,6 +12094,7 @@ index 0000000..140fa2e
 +#include "sysfs.h"
 +#include "pagedir.h"
 +#include "modules.h"
++#include "suspend_builtin.h"
 +
 +#ifdef CONFIG_SUSPEND2_CORE_EXPORTS
 +#ifdef CONFIG_SOFTWARE_SUSPEND
@@ -11771,12 +12172,12 @@ index 0000000..140fa2e
 +EXPORT_SYMBOL(root_device_name);
 +EXPORT_SYMBOL(sys_unlink);
 +EXPORT_SYMBOL(sys_mknod);
-+EXPORT_SYMBOL(name_to_dev_t);
 +#endif
 +
 +/* Swap or file */
 +#if defined(CONFIG_SUSPEND2_FILE_EXPORTS) || defined(CONFIG_SUSPEND2_SWAP_EXPORTS)
 +EXPORT_SYMBOL(bio_set_pages_dirty);
++EXPORT_SYMBOL(name_to_dev_t);
 +#endif
 +
 +#if defined(CONFIG_SUSPEND2_EXPORTS) || defined(CONFIG_SUSPEND2_CORE_EXPORTS)
@@ -11784,6 +12185,21 @@ index 0000000..140fa2e
 +#endif
 +struct suspend2_core_fns *s2_core_fns;
 +EXPORT_SYMBOL(s2_core_fns);
++
++dyn_pageflags_t pageset1_map;
++dyn_pageflags_t pageset1_copy_map;
++EXPORT_SYMBOL(pageset1_map);
++EXPORT_SYMBOL(pageset1_copy_map);
++
++unsigned long suspend_result = 0;
++unsigned long suspend_debug_state = 0;
++int suspend_io_time[2][2];
++struct pagedir pagedir1 = {1};
++
++EXPORT_SYMBOL(suspend_io_time);
++EXPORT_SYMBOL(suspend_debug_state);
++EXPORT_SYMBOL(suspend_result);
++EXPORT_SYMBOL(pagedir1);
 +
 +unsigned long suspend_get_nonconflicting_page(void)
 +{
@@ -11836,7 +12252,9 @@ index 0000000..140fa2e
 +EXPORT_SYMBOL(suspend_action);
 +
 +unsigned long suspend_state = ((1 << SUSPEND_BOOT_TIME) |
-+		(1 << SUSPEND_RESUME_NOT_DONE) | (1 << SUSPEND_IGNORE_LOGLEVEL));
++		(1 << SUSPEND_RESUME_NOT_DONE) | 
++		(1 << SUSPEND_IGNORE_LOGLEVEL) |
++		(1 << SUSPEND_IO_STOPPED));
 +EXPORT_SYMBOL(suspend_state);
 +
 +/* The number of suspends we have started (some may have been cancelled) */
@@ -11934,10 +12352,15 @@ index 0000000..140fa2e
 +
 diff --git a/kernel/power/suspend_builtin.h b/kernel/power/suspend_builtin.h
 new file mode 100644
-index 0000000..a21403b
+index 0000000..33fc0c3
 --- /dev/null
 +++ b/kernel/power/suspend_builtin.h
-@@ -0,0 +1,18 @@
+@@ -0,0 +1,31 @@
++/*
++ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
++ *
++ * This file is released under the GPLv2.
++ */
 +#include <linux/dyn_pageflags.h>
 +#include <asm/setup.h>
 +
@@ -11946,7 +12369,7 @@ index 0000000..a21403b
 +extern unsigned long suspend_action, suspend_state;
 +extern unsigned int nr_suspends;
 +extern char resume2_file[256];
-+extern int suspend2_running, suspend2_in_suspend;
++extern int suspend2_in_suspend;
 +
 +extern unsigned long suspend2_nosave_state1 __nosavedata;
 +extern unsigned long suspend2_nosave_state2 __nosavedata;
@@ -11956,17 +12379,24 @@ index 0000000..a21403b
 +extern __nosavedata struct pbe *restore_highmem_pblist;
 +
 +int suspend2_lowlevel_builtin(void);
++
++extern dyn_pageflags_t __nosavedata suspend2_nosave_origmap;
++extern dyn_pageflags_t __nosavedata suspend2_nosave_copymap;
++
++#ifdef CONFIG_HIGHMEM
++extern __nosavedata struct zone_data *suspend2_nosave_zone_list;
++extern __nosavedata unsigned long suspend2_nosave_max_pfn;
++#endif
 diff --git a/kernel/power/suspend_compress.c b/kernel/power/suspend_compress.c
 new file mode 100644
-index 0000000..6559fdb
+index 0000000..7348ba7
 --- /dev/null
 +++ b/kernel/power/suspend_compress.c
-@@ -0,0 +1,468 @@
+@@ -0,0 +1,434 @@
 +/*
 + * kernel/power/compression.c
 + *
-+ * Copyright (C) 2003-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2003-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
@@ -11985,6 +12415,7 @@ index 0000000..6559fdb
 +#include "modules.h"
 +#include "sysfs.h"
 +#include "io.h"
++#include "ui.h"
 +
 +static int suspend_expected_compression = 0;
 +
@@ -11997,74 +12428,39 @@ index 0000000..6559fdb
 +
 +struct cpu_context {
 +	u8 * page_buffer;
-+	struct crypto_tfm *transform;
-+	int len;
++	struct crypto_comp *transform;
++	unsigned int len;
 +	char *buffer_start;
 +};
 +
 +static DEFINE_PER_CPU(struct cpu_context, contexts);
 +
-+/* ---- Local buffer management ---- */
-+
-+/* allocate_local_buffers
-+ *
-+ * Description:	Allocates a page of memory for buffering output.
-+ * Returns:	Int: Zero if successful, -ENONEM otherwise.
-+ */
-+static int allocate_local_buffers(void)
-+{
-+	int cpu;
-+
-+	for_each_online_cpu(cpu) {
-+		struct cpu_context *this = &per_cpu(contexts, cpu);
-+		this->page_buffer = (char *) get_zeroed_page(GFP_ATOMIC);
-+	
-+		if (!this->page_buffer) {
-+			printk(KERN_ERR
-+			  "Failed to allocate a page buffer for suspend2 "
-+			  "encryption driver.\n");
-+			return -ENOMEM;
-+		}
-+	}
-+
-+	return 0;
-+}
-+
-+/* free_local_buffers
-+ *
-+ * Description:	Frees memory allocated for buffering output.
-+ */
-+static void free_local_buffers(void)
-+{
-+	int cpu;
-+
-+	for_each_online_cpu(cpu) {
-+		struct cpu_context *this = &per_cpu(contexts, cpu);
-+		if (this->page_buffer)
-+			free_page((unsigned long) this->page_buffer);
-+
-+		this->page_buffer = NULL;
-+	}
-+}
++static int suspend_compress_prepare_result;
 +
 +/* 
 + * suspend_compress_cleanup
 + *
 + * Frees memory allocated for our labours.
 + */
-+static void suspend_compress_cleanup(void)
++static void suspend_compress_cleanup(int suspend_or_resume)
 +{
 +	int cpu;
++
++	if (!suspend_or_resume)
++		return;
 +
 +	for_each_online_cpu(cpu) {
 +		struct cpu_context *this = &per_cpu(contexts, cpu);
 +		if (this->transform) {
-+			crypto_free_tfm(this->transform);
++			crypto_free_comp(this->transform);
 +			this->transform = NULL;
 +		}
-+	}
 +
-+	free_local_buffers();
++		if (this->page_buffer)
++			free_page((unsigned long) this->page_buffer);
++
++		this->page_buffer = NULL;
++	}
 +}
 +
 +/* 
@@ -12083,48 +12479,59 @@ index 0000000..6559fdb
 +
 +	for_each_online_cpu(cpu) {
 +		struct cpu_context *this = &per_cpu(contexts, cpu);
-+		if (!(this->transform =
-+				crypto_alloc_tfm(suspend_compressor_name, 0))) {
++		this->transform = crypto_alloc_comp(suspend_compressor_name,
++				0, 0);
++		if (IS_ERR(this->transform)) {
 +			printk("Suspend2: Failed to initialise the %s "
 +					"compression transform.\n",
 +					suspend_compressor_name);
++			this->transform = NULL;
 +			return 1;
 +		}
++
++		this->page_buffer = (char *) get_zeroed_page(GFP_ATOMIC);
++	
++		if (!this->page_buffer) {
++			printk(KERN_ERR
++			  "Failed to allocate a page buffer for suspend2 "
++			  "encryption driver.\n");
++			return -ENOMEM;
++		}
 +	}
-+
-+	return allocate_local_buffers();
-+}
-+
-+/* 
-+ * suspend_compress_write_cleanup(): Write unflushed data and free workspace.
-+ * 
-+ * Returns: Result of writing last page.
-+ */
-+static int suspend_compress_rw_cleanup(int rw)
-+{
-+	suspend_compress_cleanup();
 +
 +	return 0;
 +}
 +
-+/* 
-+ * suspend_compress_rw_init()
-+ * @stream_number:	Ignored.
-+ *
-+ * Allocate buffers and prepare to compress data.
-+ * Returns: Zero on success, -ENOMEM if unable to vmalloc.
++/*
++ * suspend_compress_init
 + */
-+static int suspend_compress_rw_init(int rw, int stream_number)
++
++static int suspend_compress_init(int suspend_or_resume)
 +{
++	if (suspend_or_resume)
++		suspend_compress_bytes_in = suspend_compress_bytes_out = 0;
++
 +	next_driver = suspend_get_next_filter(&suspend_compression_ops);
 +
 +	if (!next_driver) {
 +		printk("Compression Driver: Argh! Nothing follows me in"
-+				" the pipeline!");
++				" the pipeline!\n");
 +		return -ECHILD;
 +	}
 +
-+	if (suspend_compress_crypto_prepare()) {
++	suspend_compress_prepare_result = suspend_compress_crypto_prepare();
++
++	return 0;
++}
++
++/*
++ * suspend_compress_rw_init()
++ */
++
++int suspend_compress_rw_init(int rw, int stream_number)
++{
++	if (suspend_compress_prepare_result) {
++		printk("Failed to initialise compression algorithm.\n");
 +		if (rw == READ)
 +			return -ENODEV;
 +		else
@@ -12148,7 +12555,7 @@ index 0000000..6559fdb
 + * 		zlib errs.
 + */
 +static int suspend_compress_write_chunk(unsigned long index,
-+		struct page *buffer_page, int buf_size)
++		struct page *buffer_page, unsigned int buf_size)
 +{
 +	int ret, cpu = smp_processor_id();
 +	struct cpu_context *ctx = &per_cpu(contexts, cpu);
@@ -12198,11 +12605,11 @@ index 0000000..6559fdb
 + * Zero if successful. Error condition from me or from downstream on failure.
 + */
 +static int suspend_compress_read_chunk(unsigned long *index,
-+		struct page *buffer_page, int *buf_size, int sync)
++		struct page *buffer_page, unsigned int *buf_size, int sync)
 +{
 +	int ret, cpu = smp_processor_id(); 
 +	unsigned int len;
-+	int outlen = PAGE_SIZE;
++	unsigned int outlen = PAGE_SIZE;
 +	char *buffer_start;
 +	struct cpu_context *ctx = &per_cpu(contexts, cpu);
 +
@@ -12217,7 +12624,7 @@ index 0000000..6559fdb
 +
 +	*buf_size = PAGE_SIZE;
 +
-+	ret = next_driver->read_chunk(index, buffer_page, &len, sync);
++	ret = next_driver->read_chunk(index, buffer_page, &len, SUSPEND_SYNC);
 +
 +	/* Error or uncompressed data */
 +	if (ret || len == PAGE_SIZE)
@@ -12230,10 +12637,12 @@ index 0000000..6559fdb
 +			ctx->page_buffer,
 +			len, buffer_start, &outlen);
 +	if (ret)
-+		printk("Compress_read returned %d.\n", ret);
++		abort_suspend(SUSPEND_FAILED_IO,
++			"Compress_read returned %d.\n", ret);
 +	else if (outlen != PAGE_SIZE) {
-+		printk("Decompression yielded %d bytes instead of %ld.\n",
-+				outlen, PAGE_SIZE);
++		abort_suspend(SUSPEND_FAILED_IO,
++			"Decompression yielded %d bytes instead of %ld.\n",
++			outlen, PAGE_SIZE);
 +		ret = -EIO;
 +		*buf_size = outlen;
 +	}
@@ -12352,18 +12761,6 @@ index 0000000..6559fdb
 +}
 +
 +/*
-+ * suspend_compress_init
-+ *
-+ */
-+
-+static int suspend_compress_init(int starting_cycle)
-+{
-+	if (starting_cycle)
-+		suspend_compress_bytes_in = suspend_compress_bytes_out = 0;
-+	return 0;
-+}
-+
-+/*
 + * data for our sysfs entries.
 + */
 +static struct suspend_sysfs_data sysfs_params[] = {
@@ -12392,6 +12789,7 @@ index 0000000..6559fdb
 +	.directory		= "compression",
 +	.module			= THIS_MODULE,
 +	.initialise		= suspend_compress_init,
++	.cleanup		= suspend_compress_cleanup,
 +	.memory_needed 		= suspend_compress_memory_needed,
 +	.print_debug_info	= suspend_compress_print_debug_stats,
 +	.save_config_info	= suspend_compress_save_config_info,
@@ -12400,7 +12798,6 @@ index 0000000..6559fdb
 +	.expected_compression	= suspend_compress_expected_ratio,
 +	
 +	.rw_init		= suspend_compress_rw_init,
-+	.rw_cleanup		= suspend_compress_rw_cleanup,
 +
 +	.write_chunk		= suspend_compress_write_chunk,
 +	.read_chunk		= suspend_compress_read_chunk,
@@ -12430,488 +12827,16 @@ index 0000000..6559fdb
 +#else
 +late_initcall(suspend_compress_load);
 +#endif
-diff --git a/kernel/power/suspend_encrypt.c b/kernel/power/suspend_encrypt.c
-new file mode 100644
-index 0000000..afbcfcd
---- /dev/null
-+++ b/kernel/power/suspend_encrypt.c
-@@ -0,0 +1,465 @@
-+/*
-+ * kernel/power/encryption.c
-+ *
-+ * Copyright (C) 2003-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
-+ *
-+ * This file is released under the GPLv2.
-+ *
-+ * This file contains data encryption routines for suspend,
-+ * using cryptoapi transforms.
-+ *
-+ * ToDo:
-+ * - Apply min/max_keysize the cipher changes.
-+ * - Test.
-+ */
-+
-+#include <linux/suspend.h>
-+#include <linux/module.h>
-+#include <linux/highmem.h>
-+#include <linux/vmalloc.h>
-+#include <linux/crypto.h>
-+#include <asm/scatterlist.h>
-+
-+#include "suspend.h"
-+#include "modules.h"
-+#include "sysfs.h"
-+#include "io.h"
-+
-+static struct suspend_module_ops suspend_encryption_ops;
-+static struct suspend_module_ops *next_driver;
-+
-+static char suspend_encryptor_name[32];
-+static struct crypto_blkcipher *suspend_encryptor_transform;
-+static struct blkcipher_desc suspend_encryptor_desc;
-+static char suspend_encryptor_key[256];
-+static int suspend_key_len;
-+static char suspend_encryptor_iv[256];
-+static int suspend_encryptor_save_key_and_iv;
-+
-+static u8 *page_buffer = NULL;
-+
-+static struct scatterlist suspend_crypt_sg[PAGE_SIZE/8];
-+       
-+/* ---- Local buffer management ---- */
-+
-+/* allocate_local_buffer
-+ *
-+ * Description:	Allocates a page of memory for buffering output.
-+ * Returns:	Int: Zero if successful, -ENONEM otherwise.
-+ */
-+static int allocate_local_buffer(void)
-+{
-+	if (!page_buffer) {
-+		int i, remainder;
-+		
-+		page_buffer = (char *) get_zeroed_page(GFP_ATOMIC);
-+	
-+		if (!page_buffer) {
-+			printk(KERN_ERR
-+				"Failed to allocate the page buffer for "
-+				"suspend2 encryption driver.\n");
-+			return -ENOMEM;
-+		}
-+
-+		for (i=0; i < (PAGE_SIZE / suspend_key_len); i++) {
-+			suspend_crypt_sg[i].page = virt_to_page(page_buffer);
-+			suspend_crypt_sg[i].offset = suspend_key_len * i;
-+			suspend_crypt_sg[i].length = suspend_key_len;
-+		}
-+		
-+		remainder = PAGE_SIZE % suspend_key_len;
-+
-+		if (remainder) {
-+			suspend_crypt_sg[i].page = virt_to_page(page_buffer);
-+			suspend_crypt_sg[i].offset = suspend_key_len * i;
-+			suspend_crypt_sg[i].length = remainder;
-+		}
-+	}
-+
-+	return 0;
-+}
-+
-+/* free_local_buffer
-+ *
-+ * Description:	Frees memory allocated for buffering output.
-+ */
-+static void free_local_buffer(void)
-+{
-+	if (page_buffer)
-+		free_page((unsigned long) page_buffer);
-+
-+	page_buffer = NULL;
-+}
-+
-+/* suspend_encrypt_rw_cleanup
-+ *
-+ * Description:	Frees memory allocated for our labours.
-+ */
-+static int suspend_encrypt_rw_cleanup(int rw)
-+{
-+	if (suspend_encryptor_transform) {
-+		crypto_free_blkcipher(suspend_encryptor_transform);
-+		suspend_encryptor_transform = NULL;
-+	}
-+
-+	free_local_buffer();
-+
-+	return 0;
-+}
-+
-+/* suspend_crypto_prepare
-+ *
-+ * Description:	Prepare to do some work by allocating buffers and transforms.
-+ * Returns:	Int: Zero if successful, 1 otherwise.
-+ */
-+static int suspend_encrypt_rw_prepare(int rw)
-+{
-+	int iv_len;
-+
-+	if (!*suspend_encryptor_name) {
-+		printk("Suspend2: Encryptor enabled but no name set.\n");
-+		suspend_encryption_ops.enabled = 0;
-+		return 1;
-+	}
-+
-+	suspend_encryptor_desc.tfm = suspend_encryptor_transform;
-+	suspend_encryptor_desc.flags = 0;
-+
-+	suspend_encryptor_transform = crypto_alloc_blkcipher(
-+		suspend_encryptor_name, 0, 0);
-+	if (!suspend_encryptor_transform) {
-+		printk("Suspend2: Failed to initialise the encryption "
-+				"transform (%s).\n",
-+				suspend_encryptor_name);
-+		suspend_encryption_ops.enabled = 0;
-+		return 1;
-+	}
-+
-+	crypto_blkcipher_clear_flags(suspend_encryptor_transform, 0);
-+
-+	suspend_key_len = strlen(suspend_encryptor_key);
-+
-+	if (crypto_blkcipher_setkey(suspend_encryptor_transform,
-+			suspend_encryptor_key, suspend_key_len)) {
-+		printk("%d is an invalid key length for cipher %s.\n",
-+					suspend_key_len,
-+					suspend_encryptor_name);
-+		return 1;
-+	}
-+	
-+	iv_len = crypto_blkcipher_ivsize(suspend_encryptor_transform);
-+
-+	if (iv_len)
-+		crypto_blkcipher_set_iv(suspend_encryptor_transform,
-+			suspend_encryptor_iv,
-+			iv_len);
-+		
-+	return 0;
-+}
-+
-+/* ---- Exported functions ---- */
-+
-+/* suspend_encrypt_write_chunk()
-+ *
-+ * Description:	Encrypt a page of data, buffering output and passing on
-+ * 		filled pages to the next module in the pipeline.
-+ * Arguments:	Buffer_page:	Pointer to a buffer of size PAGE_SIZE, 
-+ * 				containing data to be encrypted.
-+ * Returns:	0 on success. Otherwise the error is that returned by later
-+ * 		modules, -ECHILD if we have a broken pipeline or -EIO if
-+ * 		zlib errs.
-+ */
-+static int suspend_encrypt_write_chunk(unsigned long index,
-+		struct page *buffer_page, int buf_size)
-+{
-+	int ret; 
-+	char *buffer_start;
-+	
-+	if (!suspend_encryptor_transform)
-+		return next_driver->write_chunk(index, buffer_page, buf_size);
-+
-+	buffer_start = kmap(buffer_page);
-+	memcpy(page_buffer, buffer_start, buf_size);
-+	kunmap(buffer_page);
-+	
-+	ret = crypto_blkcipher_encrypt(&suspend_encryptor_desc,
-+			suspend_crypt_sg, suspend_crypt_sg, buf_size);
-+	
-+	if (ret)
-+		printk("Encryption failed.\n");
-+	else 
-+		ret = next_driver->write_chunk(index, virt_to_page(page_buffer),
-+				buf_size);
-+
-+	return ret;
-+}
-+
-+/* rw_init()
-+ *
-+ * Description:	Prepare to read a new stream of data.
-+ * Arguments:	int: Section of image about to be read.
-+ * Returns:	int: Zero on success, error number otherwise.
-+ */
-+static int suspend_encrypt_rw_init(int rw, int stream_number)
-+{
-+	int result;
-+
-+	next_driver = suspend_get_next_filter(&suspend_encryption_ops);
-+
-+	if (!next_driver) {
-+		printk("Encryption Driver: Argh! I'm at the end of the pipeline!");
-+		return -ECHILD;
-+	}
-+	
-+	if ((result = suspend_encrypt_rw_prepare(rw))) {
-+		set_result_state(SUSPEND_ENCRYPTION_SETUP_FAILED);
-+		suspend_encrypt_rw_cleanup(rw);
-+		return result;
-+	}
-+	
-+	if ((result = allocate_local_buffer()))
-+		return result;
-+
-+	return 0;
-+}
-+
-+/* suspend_encrypt_read_chunk()
-+ *
-+ * Description:	Retrieve data from later modules and deencrypt it until the
-+ * 		input buffer is filled.
-+ * Arguments:	Buffer_start: 	Pointer to a buffer of size PAGE_SIZE.
-+ * 		Sync:		Whether the previous module (or core) wants its
-+ * 				data synchronously.
-+ * Returns:	Zero if successful. Error condition from me or from downstream
-+ * 		on failure.
-+ */
-+static int suspend_encrypt_read_chunk(unsigned long *index,
-+		struct page *buffer_page, int *buf_size, int sync)
-+{
-+	int ret; 
-+	char *buffer_start;
-+
-+	if (!suspend_encryptor_transform)
-+		return next_driver->read_chunk(index, buffer_page,
-+				buf_size, sync);
-+
-+	/* 
-+	 * All our reads must be synchronous - we can't deencrypt
-+	 * data that hasn't been read yet.
-+	 */
-+
-+	if ((ret = next_driver->read_chunk(index, virt_to_page(page_buffer),
-+					buf_size, SUSPEND_SYNC)) < 0) {
-+		printk("Failed to read an encrypted block.\n");
-+		return ret;
-+	}
-+
-+	ret = crypto_blkcipher_decrypt(&suspend_encryptor_desc,
-+			suspend_crypt_sg, suspend_crypt_sg, *buf_size);
-+
-+	if (ret < 0)
-+		printk("Decrypt function returned %d.\n", ret);
-+
-+	buffer_start = kmap(buffer_page);
-+	memcpy(buffer_start, page_buffer, *buf_size);
-+	kunmap(buffer_page);
-+	return ret;
-+}
-+
-+/* suspend_encrypt_print_debug_stats
-+ *
-+ * Description:	Print information to be recorded for debugging purposes into a
-+ * 		buffer.
-+ * Arguments:	buffer: Pointer to a buffer into which the debug info will be
-+ * 			printed.
-+ * 		size:	Size of the buffer.
-+ * Returns:	Number of characters written to the buffer.
-+ */
-+static int suspend_encrypt_print_debug_stats(char *buffer, int size)
-+{
-+	int len;
-+	
-+	if (*suspend_encryptor_name)
-+		len = snprintf_used(buffer, size, "- Encryptor is '%s'.\n",
-+				suspend_encryptor_name);
-+	else
-+		len = snprintf_used(buffer, size, "- Encryptor is not set.\n");
-+	return len;
-+}
-+
-+/* encryption_memory_needed
-+ *
-+ * Description:	Tell the caller how much memory we need to operate during
-+ * 		suspend/resume.
-+ * Returns:	Unsigned long. Maximum number of bytes of memory required for
-+ * 		operation.
-+ */
-+static int suspend_encrypt_memory_needed(void)
-+{
-+	return PAGE_SIZE;
-+}
-+
-+static int suspend_encrypt_storage_needed(void)
-+{
-+	return 3 + strlen(suspend_encryptor_name) +
-+		(suspend_encryptor_save_key_and_iv ?
-+		 (4 + strlen(suspend_encryptor_key) +
-+		  strlen(suspend_encryptor_iv)) : 0);
-+}
-+	
-+/* suspend_encrypt_save_config_info
-+ *
-+ * Description:	Save informaton needed when reloading the image at resume time.
-+ * Arguments:	Buffer:		Pointer to a buffer of size PAGE_SIZE.
-+ * Returns:	Number of bytes used for saving our data.
-+ */
-+static int suspend_encrypt_save_config_info(char *buffer)
-+{
-+	int buf_offset, str_size;
-+
-+	str_size = strlen(suspend_encryptor_name);
-+	*buffer = (char) str_size;
-+	strncpy(buffer + 1, suspend_encryptor_name, str_size + 1);
-+	buf_offset = str_size + 2;
-+
-+	*(buffer + buf_offset) = (char) suspend_encryptor_save_key_and_iv;
-+	buf_offset++;
-+
-+	if (suspend_encryptor_save_key_and_iv) {
-+		
-+		str_size = strlen(suspend_encryptor_key);
-+		*(buffer + buf_offset) = (char) str_size;
-+		strncpy(buffer + buf_offset + 1, suspend_encryptor_key, str_size + 1);
-+
-+		buf_offset += str_size + 2;
-+
-+		str_size = strlen(suspend_encryptor_iv);
-+		*(buffer + buf_offset) = (char) str_size;
-+		strncpy(buffer + buf_offset + 1, suspend_encryptor_iv, str_size + 1);
-+
-+		buf_offset += str_size + 2;
-+	}
-+
-+	return buf_offset;
-+}
-+
-+/* suspend_encrypt_load_config_info
-+ *
-+ * Description:	Reload information needed for deencrypting the image at 
-+ * 		resume time.
-+ * Arguments:	Buffer:		Pointer to the start of the data.
-+ *		Size:		Number of bytes that were saved.
-+ */
-+static void suspend_encrypt_load_config_info(char *buffer, int size)
-+{
-+	int buf_offset, str_size;
-+
-+	str_size = (int) *buffer;
-+	strncpy(suspend_encryptor_name, buffer + 1, str_size + 1);
-+	buf_offset = str_size + 2;
-+	
-+	suspend_encryptor_save_key_and_iv = (int) *(buffer + buf_offset);
-+	buf_offset++;
-+
-+	if (suspend_encryptor_save_key_and_iv) {
-+		str_size = (int) *(buffer + buf_offset);
-+		strncpy(suspend_encryptor_key, buffer + buf_offset + 1, str_size + 1);
-+
-+		buf_offset += str_size + 2;
-+
-+		str_size = (int) *(buffer + buf_offset);
-+		strncpy(suspend_encryptor_iv, buffer + buf_offset + 1, str_size + 1);
-+
-+		buf_offset += str_size + 2;
-+	}
-+	
-+	if (buf_offset != size) {
-+		printk("Suspend Encryptor config info size mismatch (%d != %d): settings ignored.\n",
-+				buf_offset, size);
-+		*suspend_encryptor_key = 0;
-+		*suspend_encryptor_iv = 0;
-+	}
-+	return;
-+}
-+
-+/*
-+ * data for our sysfs entries.
-+ */
-+static struct suspend_sysfs_data sysfs_params[] = {
-+	{
-+		SUSPEND2_ATTR("algorithm", SYSFS_RW),
-+		SYSFS_STRING(suspend_encryptor_name, 31, SYSFS_SM_NOT_NEEDED)
-+	},
-+
-+	{
-+		SUSPEND2_ATTR("save_key_and_iv", SYSFS_RW),
-+		SYSFS_INT(&suspend_encryptor_save_key_and_iv, 0, 1)
-+	},
-+
-+	{
-+		SUSPEND2_ATTR("key", SYSFS_RW),
-+		SYSFS_STRING(suspend_encryptor_key, 255, SYSFS_SM_NOT_NEEDED)
-+	},
-+
-+	{
-+		SUSPEND2_ATTR("iv", SYSFS_RW),
-+		SYSFS_STRING(suspend_encryptor_iv, 255, SYSFS_SM_NOT_NEEDED)
-+	},
-+
-+	{
-+		SUSPEND2_ATTR("enabled", SYSFS_RW),
-+		SYSFS_INT(&suspend_encryption_ops.enabled, 0, 1)
-+	}
-+};
-+
-+/*
-+ * Ops structure.
-+ */
-+
-+static struct suspend_module_ops suspend_encryption_ops = {
-+	.type			= FILTER_MODULE,
-+	.name			= "Encryptor",
-+	.directory		= "encryption",
-+	.module			= THIS_MODULE,
-+	.memory_needed 		= suspend_encrypt_memory_needed,
-+	.print_debug_info	= suspend_encrypt_print_debug_stats,
-+	.save_config_info	= suspend_encrypt_save_config_info,
-+	.load_config_info	= suspend_encrypt_load_config_info,
-+	.storage_needed		= suspend_encrypt_storage_needed,
-+	
-+	.rw_init		= suspend_encrypt_rw_init,
-+	.rw_cleanup		= suspend_encrypt_rw_cleanup,
-+
-+	.write_chunk		= suspend_encrypt_write_chunk,
-+	.read_chunk		= suspend_encrypt_read_chunk,
-+
-+	.sysfs_data		= sysfs_params,
-+	.num_sysfs_entries	= sizeof(sysfs_params) / sizeof(struct suspend_sysfs_data),
-+};
-+
-+/* ---- Registration ---- */
-+
-+static __init int suspend_encrypt_load(void)
-+{
-+	int temp = suspend_register_module(&suspend_encryption_ops);
-+
-+	/* Disabled in default configuration */
-+	suspend_encryption_ops.enabled = 0;
-+	return temp;	
-+}
-+
-+#ifdef MODULE
-+static __exit void suspend_encrypt_unload(void)
-+{
-+	suspend_unregister_module(&suspend_encryption_ops);
-+}
-+
-+module_init(suspend_encrypt_load);
-+module_exit(suspend_encrypt_unload);
-+MODULE_LICENSE("GPL");
-+MODULE_AUTHOR("Nigel Cunningham");
-+MODULE_DESCRIPTION("Encryption Support for Suspend2");
-+#else
-+late_initcall(suspend_encrypt_load);
-+#endif
 diff --git a/kernel/power/suspend_file.c b/kernel/power/suspend_file.c
 new file mode 100644
-index 0000000..4426d27
+index 0000000..10282ea
 --- /dev/null
 +++ b/kernel/power/suspend_file.c
-@@ -0,0 +1,1151 @@
+@@ -0,0 +1,1147 @@
 +/*
 + * kernel/power/suspend_file.c
 + *
-+ * Copyright 2005-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2005-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * Distributed under GPLv2.
 + * 
@@ -13357,7 +13282,7 @@ index 0000000..4426d27
 +
 +	suspend_extent_state_goto_start(&suspend_writer_posn);
 +	suspend_bio_ops.forward_one_page(); /* To first page */
-+	
++
 +	for (i = 0; i < space_requested; i++) {
 +		if (suspend_bio_ops.forward_one_page()) {
 +			printk("Out of space while seeking to allocate "
@@ -13395,8 +13320,7 @@ index 0000000..4426d27
 +			(sizeof(unsigned long) + sizeof(int)), PAGE_SIZE);
 +	int pages_to_get = main_space_requested + extra_pages +
 +		header_space_requested;
-+	int blocks_to_get = (pages_to_get << devinfo.bmap_shift) -
-+		block_chain.size;
++	int blocks_to_get = pages_to_get - block_chain.size;
 +	
 +	/* Only release_storage reduces the size */
 +	if (blocks_to_get < 1)
@@ -13408,11 +13332,10 @@ index 0000000..4426d27
 +		"Finished with block_chain.size == %d.\n",
 +		block_chain.size);
 +
-+	if (block_chain.size < (pages_to_get << devinfo.bmap_shift)) {
-+		printk("Block chain size (%d) < header pages (%d) + extra pages (%d) + main pages (%d) (=%d).\n",
-+				block_chain.size,
-+				header_pages_allocated, main_pages_requested,
-+				extra_pages, pages_to_get);
++	if (block_chain.size < pages_to_get) {
++		printk("Block chain size (%d) < header pages (%d) + extra pages (%d) + main pages (%d) (=%d pages).\n",
++			block_chain.size, header_pages_allocated, extra_pages,
++			main_space_requested, pages_to_get);
 +		result = -ENOSPC;
 +	}
 +
@@ -14034,12 +13957,11 @@ index 0000000..4426d27
 +/* ---- Registration ---- */
 +static __init int suspend_file_load(void)
 +{
-+	suspend_fileops.read_chunk = suspend_bio_ops.read_chunk;
-+	suspend_fileops.write_chunk = suspend_bio_ops.write_chunk;
 +	suspend_fileops.rw_init = suspend_bio_ops.rw_init;
 +	suspend_fileops.rw_cleanup = suspend_bio_ops.rw_cleanup;
-+	suspend_fileops.rw_header_chunk =
-+		suspend_bio_ops.rw_header_chunk;
++	suspend_fileops.read_chunk = suspend_bio_ops.read_chunk;
++	suspend_fileops.write_chunk = suspend_bio_ops.write_chunk;
++	suspend_fileops.rw_header_chunk = suspend_bio_ops.rw_header_chunk;
 +
 +	return suspend_register_module(&suspend_fileops);
 +}
@@ -14060,15 +13982,14 @@ index 0000000..4426d27
 +#endif
 diff --git a/kernel/power/suspend_swap.c b/kernel/power/suspend_swap.c
 new file mode 100644
-index 0000000..23b241a
+index 0000000..32ef0c6
 --- /dev/null
 +++ b/kernel/power/suspend_swap.c
-@@ -0,0 +1,1249 @@
+@@ -0,0 +1,1250 @@
 +/*
 + * kernel/power/suspend_swap.c
 + *
-+ * Copyright 2004-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * Distributed under GPLv2.
 + * 
@@ -14300,8 +14221,8 @@ index 0000000..23b241a
 +		return 1;
 +	}
 +
-+	if (IS_ERR(resume_block_device =
-+	     open_bdev(MAX_SWAPFILES, resume_swap_dev_t, 0))) {
++	resume_block_device = open_bdev(MAX_SWAPFILES, resume_swap_dev_t, 0);
++	if (IS_ERR(resume_block_device)) {
 +		if (!quiet)
 +			suspend_early_boot_message(1, SUSPEND_CONTINUE_REQ,
 +				"Failed to get access to \"%s\", where"
@@ -14309,7 +14230,7 @@ index 0000000..23b241a
 +				commandline);
 +		return 1;
 +	}
-+
++	
 +	return 0;
 +}
 +
@@ -14508,7 +14429,7 @@ index 0000000..23b241a
 +static int suspend_swap_storage_available(void)
 +{
 +	si_swapinfo(&swapinfo);
-+	return ((swapinfo.freeswap + main_pages_allocated) * PAGE_SIZE /
++	return (((int) swapinfo.freeswap + main_pages_allocated) * PAGE_SIZE /
 +		(PAGE_SIZE + sizeof(unsigned long) + sizeof(int)));
 +}
 +
@@ -14656,20 +14577,9 @@ index 0000000..23b241a
 +	int i, result;
 +	struct swap_info_struct *si;
 +
-+	suspend_header_bytes_used = 0;
-+
 +	suspend_extent_state_goto_start(&suspend_writer_posn);
 +
-+	/* Forward one page will be done prior to the read */
-+	for (i = 0; i < MAX_SWAPFILES; i++) {
-+		si = get_swap_info_struct(i);
-+		if (si->swap_file)
-+			devinfo[i].dev_t = si->bdev->bd_dev;
-+		else
-+			devinfo[i].dev_t = (dev_t) 0;
-+	}
-+
-+	suspend_writer_buffer_posn = 0;
++	suspend_writer_buffer_posn = suspend_header_bytes_used = 0;
 +
 +	/* Info needed to bootstrap goes at the start of the header.
 +	 * First we save the positions and devinfo, including the number
@@ -14679,6 +14589,15 @@ index 0000000..23b241a
 +	 * read back the info, we will have restored the location of the
 +	 * next header page by the time we go to use it.
 +	 */
++
++	/* Forward one page will be done prior to the read */
++	for (i = 0; i < MAX_SWAPFILES; i++) {
++		si = get_swap_info_struct(i);
++		if (si->swap_file)
++			devinfo[i].dev_t = si->bdev->bd_dev;
++		else
++			devinfo[i].dev_t = (dev_t) 0;
++	}
 +
 +	if ((result = suspend_bio_ops.rw_header_chunk(WRITE,
 +			&suspend_swapops,
@@ -14931,7 +14850,7 @@ index 0000000..23b241a
 +	si_swapinfo(&sysinfo);
 +	
 +	len+= snprintf_used(buffer+len, size-len, "  Swap available for image: %ld pages.\n",
-+			sysinfo.freeswap + suspend_swap_storage_allocated());
++			(int) sysinfo.freeswap + suspend_swap_storage_allocated());
 +
 +	return len;
 +}
@@ -15204,7 +15123,8 @@ index 0000000..23b241a
 +			haveswap = 1;
 +			if (!printedpartitionsmessage) {
 +				len += sprintf(output + len, 
-+					"For swap partitions, simply use the format: resume2=swap:/dev/hda1.\n");
++					"For swap partitions, simply use the "
++					"format: resume2=swap:/dev/hda1.\n");
 +				printedpartitionsmessage = 1;
 +			}
 +		} else {
@@ -15220,21 +15140,24 @@ index 0000000..23b241a
 +			swapf = si->swap_file->f_mapping->host;
 +			if (!(zone = bmap(swapf,0))) {
 +				len+= sprintf(output + len, 
-+					"Swapfile %s has been corrupted. Reuse mkswap on it and try again.\n",
++					"Swapfile %s has been corrupted. Reuse"
++					" mkswap on it and try again.\n",
 +					path_page);
 +			} else {
 +				char name_buffer[255];
-+				len+= sprintf(output + len, "For swapfile `%s`, use resume2=swap:/dev/%s:0x%x.\n",
-+						path_page,
-+						bdevname(si->bdev, name_buffer),
-+						zone << (swapf->i_blkbits - 9));
++				len+= sprintf(output + len, "For swapfile `%s`,"
++					" use resume2=swap:/dev/%s:0x%x.\n",
++					path_page,
++					bdevname(si->bdev, name_buffer),
++					zone << (swapf->i_blkbits - 9));
 +			}
 +
 +		}
 +	}
 +	
 +	if (!haveswap)
-+		len = sprintf(output, "You need to turn on swap partitions before examining this file.\n");
++		len = sprintf(output, "You need to turn on swap partitions "
++				"before examining this file.\n");
 +
 +	free_page((unsigned long) path_page);
 +	return len;
@@ -15315,15 +15238,14 @@ index 0000000..23b241a
 +#endif
 diff --git a/kernel/power/sysfs.c b/kernel/power/sysfs.c
 new file mode 100644
-index 0000000..d33d579
+index 0000000..5752da3
 --- /dev/null
 +++ b/kernel/power/sysfs.c
-@@ -0,0 +1,340 @@
+@@ -0,0 +1,345 @@
 +/*
 + * kernel/power/sysfs.c
 + *
-+ * Copyright (C) 2002-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2002-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
@@ -15417,7 +15339,7 @@ index 0000000..d33d579
 +{
 +	int assigned_temp_buffer = 0, result = count;
 +	struct suspend_sysfs_data *sysfs_data = to_sysfs_data(attr);
-+	
++
 +	if (suspend_start_anything((sysfs_data == &sysfs_params[0])))
 +		return -EBUSY;
 +
@@ -15532,6 +15454,12 @@ index 0000000..d33d579
 +	  SYSFS_CUSTOM(NULL, NULL, SYSFS_NEEDS_FOR_WRITE),
 +	  .write_side_effect = suspend_main_wrapper
 +	},
++
++	{ SUSPEND2_ATTR("do_resume", SYSFS_WRITEONLY),
++	  SYSFS_CUSTOM(NULL, NULL, SYSFS_NEEDS_FOR_WRITE),
++	  .write_side_effect = __suspend_try_resume
++	},
++
 +};
 +
 +void remove_suspend2_sysdir(struct kobject *kobj)
@@ -15661,15 +15589,14 @@ index 0000000..d33d579
 +}
 diff --git a/kernel/power/sysfs.h b/kernel/power/sysfs.h
 new file mode 100644
-index 0000000..9d8b7b4
+index 0000000..2a81bf2
 --- /dev/null
 +++ b/kernel/power/sysfs.h
-@@ -0,0 +1,123 @@
+@@ -0,0 +1,122 @@
 +/*
 + * kernel/power/sysfs.h
 + *
-+ * Copyright (C) 2004-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
@@ -15790,18 +15717,17 @@ index 0000000..9d8b7b4
 +extern void s2_sysfs_exit(void);
 diff --git a/kernel/power/ui.c b/kernel/power/ui.c
 new file mode 100644
-index 0000000..418411f
+index 0000000..e7ac056
 --- /dev/null
 +++ b/kernel/power/ui.c
-@@ -0,0 +1,761 @@
+@@ -0,0 +1,764 @@
 +/*
 + * kernel/power/ui.c
 + *
 + * Copyright (C) 1998-2001 Gabor Kuti <seasons@fornax.hu>
 + * Copyright (C) 1998,2001,2002 Pavel Machek <pavel@suse.cz>
 + * Copyright (C) 2002-2003 Florent Chabaud <fchabaud@free.fr>
-+ * Copyright (C) 2002-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2002-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
 + *
@@ -16187,6 +16113,9 @@ index 0000000..418411f
 +	if (test_suspend_state(SUSPEND_NOW_RESUMING)) {
 +		suspend_prepare_status(CLEAR_BAR, "Escape pressed. "
 +					"Powering down again.");
++		set_suspend_state(SUSPEND_STOP_RESUME);
++		while (!test_suspend_state(SUSPEND_IO_STOPPED))
++			schedule();
 +		if (suspendActiveAllocator->mark_resume_attempted)
 +			suspendActiveAllocator->mark_resume_attempted(0);
 +		suspend_power_down();
@@ -16456,7 +16385,7 @@ index 0000000..418411f
 +		set_suspend_state(SUSPEND_CONTINUE_REQ);
 +
 +#endif /* CONFIG_VT or CONFIG_SERIAL_CONSOLE */
-+	return -EPERM;
++	return -EIO;
 +}
 +#undef say
 +
@@ -16554,18 +16483,18 @@ index 0000000..418411f
 +EXPORT_SYMBOL(__suspend_message);
 +EXPORT_SYMBOL(suspend_prepare_status);
 +EXPORT_SYMBOL(suspend_early_boot_message);
++EXPORT_SYMBOL(abort_suspend);
 +#endif
 diff --git a/kernel/power/ui.h b/kernel/power/ui.h
 new file mode 100644
-index 0000000..ad9bd3d
+index 0000000..1302fa7
 --- /dev/null
 +++ b/kernel/power/ui.h
-@@ -0,0 +1,84 @@
+@@ -0,0 +1,83 @@
 +/*
 + * kernel/power/ui.h
 + *
-+ * Copyright 2004-2006 Nigel Cunningham <nigel@suspend2.net>
-+ * Copyright (C) 2006 Red Hat, inc.
++ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
 + */
 +
 +enum {
@@ -16645,11 +16574,51 @@ index 0000000..ad9bd3d
 +#endif
 +extern int s2_ui_init(void);
 +extern void s2_ui_exit(void);
+diff --git a/kernel/printk.c b/kernel/printk.c
+index c770e1a..e8b6f1a 100644
+--- a/kernel/printk.c
++++ b/kernel/printk.c
+@@ -32,6 +32,7 @@
+ #include <linux/bootmem.h>
+ #include <linux/syscalls.h>
+ #include <linux/jiffies.h>
++#include <linux/suspend.h>
+ 
+ #include <asm/uaccess.h>
+ 
+@@ -92,9 +93,9 @@ static DEFINE_SPINLOCK(logbuf_lock);
+  * The indices into log_buf are not constrained to log_buf_len - they
+  * must be masked before subscripting
+  */
+-static unsigned long log_start;	/* Index into log_buf: next char to be read by syslog() */
+-static unsigned long con_start;	/* Index into log_buf: next char to be sent to consoles */
+-static unsigned long log_end;	/* Index into log_buf: most-recently-written-char + 1 */
++static unsigned long POSS_NOSAVE log_start;	/* Index into log_buf: next char to be read by syslog() */
++static unsigned long POSS_NOSAVE con_start;	/* Index into log_buf: next char to be sent to consoles */
++static unsigned long POSS_NOSAVE log_end;	/* Index into log_buf: most-recently-written-char + 1 */
+ 
+ /*
+  *	Array of consoles built from command line options (console=)
+@@ -117,10 +118,10 @@ static int console_may_schedule;
+ 
+ #ifdef CONFIG_PRINTK
+ 
+-static char __log_buf[__LOG_BUF_LEN];
+-static char *log_buf = __log_buf;
+-static int log_buf_len = __LOG_BUF_LEN;
+-static unsigned long logged_chars; /* Number of chars produced since last read+clear operation */
++static char POSS_NOSAVE __log_buf[__LOG_BUF_LEN];
++static char POSS_NOSAVE *log_buf = __log_buf;
++static int POSS_NOSAVE log_buf_len = __LOG_BUF_LEN;
++static unsigned long POSS_NOSAVE logged_chars; /* Number of chars produced since last read+clear operation */
+ 
+ static int __init log_buf_len_setup(char *str)
+ {
 diff --git a/kernel/timer.c b/kernel/timer.c
 index c2a8ccf..e90891b 100644
 --- a/kernel/timer.c
 +++ b/kernel/timer.c
-@@ -34,6 +34,7 @@ #include <linux/posix-timers.h>
+@@ -34,6 +34,7 @@
  #include <linux/cpu.h>
  #include <linux/syscalls.h>
  #include <linux/delay.h>
@@ -16657,7 +16626,7 @@ index c2a8ccf..e90891b 100644
  
  #include <asm/uaccess.h>
  #include <asm/unistd.h>
-@@ -1150,9 +1151,18 @@ static inline void calc_load(unsigned lo
+@@ -1150,9 +1151,18 @@ static inline void calc_load(unsigned long ticks)
  	if (unlikely(count < 0)) {
  		active_tasks = count_active_tasks();
  		do {
@@ -17029,7 +16998,7 @@ diff --git a/lib/vsprintf.c b/lib/vsprintf.c
 index bed7229..abc81c8 100644
 --- a/lib/vsprintf.c
 +++ b/lib/vsprintf.c
-@@ -236,6 +236,29 @@ static char * number(char * buf, char * 
+@@ -236,6 +236,29 @@ static char * number(char * buf, char * end, unsigned long long num, int base, i
  	return buf;
  }
  
@@ -17080,10 +17049,70 @@ index ef09f0a..2f7f513 100644
  		unsigned long start, int len, int write, int force,
  		struct page **pages, struct vm_area_struct **vmas)
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index 7430df6..4f28c86 100644
+index 5b4528a..c0da219 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
-@@ -1270,6 +1270,80 @@ out:
+@@ -654,6 +654,28 @@ static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
+ 	return nr_taken;
+ }
+ 
++/* return_lru_pages puts a list of pages back on a zone's lru lists. */
++
++static void return_lru_pages(struct list_head *page_list, struct zone *zone,
++		struct pagevec *pvec)
++{
++	while (!list_empty(page_list)) {
++		struct page *page = lru_to_page(page_list);
++		VM_BUG_ON(PageLRU(page));
++		SetPageLRU(page);
++		list_del(&page->lru);
++		if (PageActive(page))
++			add_page_to_active_list(zone, page);
++		else
++			add_page_to_inactive_list(zone, page);
++		if (!pagevec_add(pvec, page)) {
++			spin_unlock_irq(&zone->lru_lock);
++			__pagevec_release(pvec);
++			spin_lock_irq(&zone->lru_lock);
++		}
++	}
++}
++
+ /*
+  * shrink_inactive_list() is a helper for shrink_zone().  It returns the number
+  * of reclaimed pages
+@@ -671,7 +693,6 @@ static unsigned long shrink_inactive_list(unsigned long max_scan,
+ 	lru_add_drain();
+ 	spin_lock_irq(&zone->lru_lock);
+ 	do {
+-		struct page *page;
+ 		unsigned long nr_taken;
+ 		unsigned long nr_scan;
+ 		unsigned long nr_freed;
+@@ -701,21 +722,7 @@ static unsigned long shrink_inactive_list(unsigned long max_scan,
+ 		/*
+ 		 * Put back any unfreeable pages.
+ 		 */
+-		while (!list_empty(&page_list)) {
+-			page = lru_to_page(&page_list);
+-			VM_BUG_ON(PageLRU(page));
+-			SetPageLRU(page);
+-			list_del(&page->lru);
+-			if (PageActive(page))
+-				add_page_to_active_list(zone, page);
+-			else
+-				add_page_to_inactive_list(zone, page);
+-			if (!pagevec_add(&pvec, page)) {
+-				spin_unlock_irq(&zone->lru_lock);
+-				__pagevec_release(&pvec);
+-				spin_lock_irq(&zone->lru_lock);
+-			}
+-		}
++		return_lru_pages(&page_list, zone, &pvec);
+   	} while (nr_scanned < max_scan);
+ 	spin_unlock(&zone->lru_lock);
+ done:
+@@ -1270,6 +1277,72 @@ out:
  	return nr_reclaimed;
  }
  
@@ -17091,21 +17120,10 @@ index 7430df6..4f28c86 100644
 +	struct zone 		*zone;
 +	struct list_head	active_list;
 +	struct list_head	inactive_list;
-+	unsigned long		nr_active;
-+	unsigned long		nr_inactive;
 +	struct lru_save		*next;
 +};
 +
 +struct lru_save *lru_save_list;
-+
-+static void _relink_lru_list(struct list_head *src, struct list_head *dest)
-+{
-+	while (!list_empty(src)) {
-+		struct page *page = lru_to_page(src);
-+		list_del(&page->lru);
-+		list_add(&page->lru, dest);
-+	}
-+}
 +
 +void unlink_lru_lists(void)
 +{
@@ -17113,6 +17131,7 @@ index 7430df6..4f28c86 100644
 +
 +	for_each_zone(zone) {
 +		struct lru_save *this;
++		unsigned long moved, scanned;
 +
 +		if (!zone->spanned_pages)
 +			continue;
@@ -17128,16 +17147,16 @@ index 7430df6..4f28c86 100644
 +		this->zone = zone;
 +
 +		spin_lock_irq(&zone->lru_lock);
-+		this->nr_active = zone->nr_active;
-+		this->nr_inactive = zone->nr_inactive;
 +		INIT_LIST_HEAD(&this->active_list);
 +		INIT_LIST_HEAD(&this->inactive_list);
-+		_relink_lru_list(&zone->active_list, &this->active_list);
-+		_relink_lru_list(&zone->inactive_list, &this->inactive_list);
-+		BUG_ON(!list_empty(&zone->active_list));
-+		BUG_ON(!list_empty(&zone->inactive_list));
-+		zone->nr_active = zone->nr_inactive = 0;
-+
++		moved = isolate_lru_pages(zone->nr_active,
++				&zone->active_list, &this->active_list,
++				&scanned);
++		zone->nr_active -= moved;
++		moved = isolate_lru_pages(zone->nr_inactive,
++				&zone->inactive_list, &this->inactive_list,
++				&scanned);
++		zone->nr_inactive -= moved;
 +		spin_unlock_irq(&zone->lru_lock);
 +	}
 +}
@@ -17147,15 +17166,17 @@ index 7430df6..4f28c86 100644
 +	while(lru_save_list) {
 +		struct lru_save *this = lru_save_list;
 +		struct zone *zone = this->zone;
++		struct pagevec pvec;
++
++		pagevec_init(&pvec, 1);
 +
 +		lru_save_list = this->next;
 +
 +		spin_lock_irq(&zone->lru_lock);
-+		_relink_lru_list(&this->active_list, &zone->active_list);
-+		_relink_lru_list(&this->inactive_list, &zone->inactive_list);
-+		zone->nr_active += this->nr_active;
-+		zone->nr_inactive += this->nr_inactive;
++		return_lru_pages(&this->active_list, zone, &pvec);
++		return_lru_pages(&this->inactive_list, zone, &pvec);
 +		spin_unlock_irq(&zone->lru_lock);
++		pagevec_release(&pvec);
 +
 +		kfree(this);
 +	}
@@ -17164,13 +17185,44 @@ index 7430df6..4f28c86 100644
  /*
   * The background pageout daemon, started as a kernel thread
   * from the init process. 
-@@ -1362,6 +1436,47 @@ void wakeup_kswapd(struct zone *zone, in
+@@ -1317,8 +1390,6 @@ static int kswapd(void *p)
+ 	for ( ; ; ) {
+ 		unsigned long new_order;
+ 
+-		try_to_freeze();
+-
+ 		prepare_to_wait(&pgdat->kswapd_wait, &wait, TASK_INTERRUPTIBLE);
+ 		new_order = pgdat->kswapd_max_order;
+ 		pgdat->kswapd_max_order = 0;
+@@ -1329,12 +1400,19 @@ static int kswapd(void *p)
+ 			 */
+ 			order = new_order;
+ 		} else {
+-			schedule();
++			if (!freezing(current))
++				schedule();
++
+ 			order = pgdat->kswapd_max_order;
+ 		}
+ 		finish_wait(&pgdat->kswapd_wait, &wait);
+ 
+-		balance_pgdat(pgdat, order);
++		if (!try_to_freeze()) {
++			/* We can speed up thawing tasks if we don't call
++			 * balance_pgdat after returning from the refrigerator
++			 */
++			balance_pgdat(pgdat, order);
++		}
+ 	}
+ 	return 0;
+ }
+@@ -1362,6 +1440,79 @@ void wakeup_kswapd(struct zone *zone, int order)
  }
  
  #ifdef CONFIG_PM
-+void shrink_one_zone(struct zone *zone, int desired_size)
++void shrink_one_zone(struct zone *zone, int total_to_free)
 +{
-+	int freed = 0, to_free, prio;
++	int still_to_free = total_to_free, prio;
 +	struct scan_control sc = {
 +		.gfp_mask = GFP_KERNEL,
 +		.may_swap = 0,
@@ -17178,32 +17230,64 @@ index 7430df6..4f28c86 100644
 +		.swappiness = vm_swappiness,
 +	};
 +
-+	if (!populated_zone(zone))
++	if (!populated_zone(zone) || zone->all_unreclaimable)
 +		return;
 +
-+	if (zone->all_unreclaimable)
++	if (still_to_free <= 0)
 +		return;
++
++	if (is_highmem(zone))
++		sc.gfp_mask |= __GFP_HIGHMEM;
 +
 +	for (prio = DEF_PRIORITY; prio >= 0; prio--) {
-+		to_free = zone->nr_active + zone->nr_inactive - desired_size;
++		unsigned long to_free = zone->nr_active + zone->nr_inactive,
++			      orig_size = to_free;
 +
-+		if (to_free < 0)
++		if (to_free > still_to_free)
++			to_free = still_to_free;
++
++		if (to_free <= 0)
 +			return;
 +
 +		sc.swap_cluster_max = to_free - zone->nr_inactive;
 +
-+		if (sc.swap_cluster_max > 0)
++		if (sc.swap_cluster_max > 0) {
++			zone->nr_scan_active = sc.swap_cluster_max - 1;
 +			shrink_active_list(sc.swap_cluster_max, zone, &sc,
 +					prio);
++			zone->nr_scan_active = 0;
++		}
 +
-+		to_free = zone->nr_active + zone->nr_inactive - desired_size;
++		to_free = zone->nr_active + zone->nr_inactive;
++
++		if (to_free > still_to_free)
++			to_free = still_to_free;
 +		
 +		if (to_free > 0) {
-+			int last_freed = shrink_inactive_list(to_free, zone,
++			int just_freed;
++			zone->nr_scan_inactive = to_free;
++			sc.swap_cluster_max = to_free;
++			just_freed += shrink_inactive_list(to_free, zone,
 +					&sc);
-+			freed += last_freed;
++			zone->nr_scan_inactive = 0;
++			still_to_free -= (orig_size - (zone->nr_active + zone->nr_inactive));
 +		}
 +	};
++
++	while (still_to_free > 0) {
++		unsigned long nr_slab = global_page_state(NR_SLAB_RECLAIMABLE);
++		struct reclaim_state reclaim_state;
++
++		if (nr_slab > still_to_free)
++			nr_slab = still_to_free;
++
++		reclaim_state.reclaimed_slab = 0;
++		shrink_slab(nr_slab, sc.gfp_mask, nr_slab);
++		if (!reclaim_state.reclaimed_slab)
++			break;
++
++		still_to_free -= reclaim_state.reclaimed_slab;
++	}
 +
 +	return;
 +}
@@ -17212,7 +17296,7 @@ index 7430df6..4f28c86 100644
  /*
   * Helper function for shrink_all_memory().  Tries to reclaim 'nr_pages' pages
   * from LRU lists system-wide, for given pass and priority, and returns the
-@@ -1395,9 +1510,12 @@ static unsigned long shrink_all_zones(un
+@@ -1395,9 +1546,12 @@ static unsigned long shrink_all_zones(unsigned long nr_pages, int prio,
  
  		zone->nr_scan_inactive += (zone->nr_inactive >> prio) + 1;
  		if (zone->nr_scan_inactive >= nr_pages || pass > 3) {
@@ -17226,7 +17310,7 @@ index 7430df6..4f28c86 100644
  			if (ret >= nr_pages)
  				return ret;
  		}
-@@ -1475,9 +1593,14 @@ unsigned long shrink_all_memory(unsigned
+@@ -1475,9 +1629,14 @@ unsigned long shrink_all_memory(unsigned long nr_pages)
  
  		for (prio = DEF_PRIORITY; prio >= 0; prio--) {
  			unsigned long nr_to_scan = nr_pages - ret;
