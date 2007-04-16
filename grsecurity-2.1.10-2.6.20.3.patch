@@ -23961,7 +23961,7 @@ diff -urNp linux-2.6.20.3/include/asm-i386/paravirt.h linux-2.6.20.3/include/asm
  
  #define DISABLE_INTERRUPTS(clobbers)			\
  	PARA_PATCH(PARAVIRT_IRQ_DISABLE, clobbers,	\
-@@ -490,16 +490,28 @@ static inline unsigned long __raw_local_
+@@ -490,16 +490,26 @@ static inline unsigned long __raw_local_
  #define ENABLE_INTERRUPTS(clobbers)			\
  	PARA_PATCH(PARAVIRT_IRQ_ENABLE, clobbers,	\
  	pushl %ecx; pushl %edx;				\
@@ -23974,20 +23974,19 @@ diff -urNp linux-2.6.20.3/include/asm-i386/paravirt.h linux-2.6.20.3/include/asm
 -	jmp *%cs:paravirt_ops+PARAVIRT_irq_enable_sysexit)
 +	jmp *%ss:paravirt_ops+PARAVIRT_irq_enable_sysexit)
  
- #define GET_CR0_INTO_EAX			\
+-#define GET_CR0_INTO_EAX			\
++#define GET_CR0_INTO_EAX				\
  	call *paravirt_ops+PARAVIRT_read_cr0
  
-+#define GET_CR0_INTO_EDX			\
-+	pushl %eax;				\
-+	call *paravirt_ops+PARAVIRT_read_cr0;	\
-+	movl %eax, %edx;			\
-+	popl %eax
++#define GET_CR0_INTO_EDX				\
++	movl %eax, %edx;				\
++	call *%ss:paravirt_ops+PARAVIRT_read_cr0;	\
++	xchgl %eax, %edx;				\
 +
-+#define SET_CR0_FROM_EDX			\
-+	pushl %eax;				\
-+	movl %edx, %eax;			\
-+	call *paravirt_ops+PARAVIRT_write_cr0;	\
-+	popl %eax
++#define SET_CR0_FROM_EDX				\
++	xchgl %edx, %eax;				\
++	call *%ss:paravirt_ops+PARAVIRT_write_cr0;	\
++	movl %edx, %eax
 +
  #endif /* __ASSEMBLY__ */
  #endif /* CONFIG_PARAVIRT */
@@ -24116,7 +24115,12 @@ diff -urNp linux-2.6.20.3/include/asm-i386/pgtable.h linux-2.6.20.3/include/asm-
  
  /* Just any arbitrary offset to the start of the vmalloc VM area: the
   * current 8MB value just means that there will be a 8MB "hole" after the
-@@ -141,17 +147,26 @@ void paging_init(void);
+@@ -137,21 +143,30 @@ void paging_init(void);
+ #define PAGE_NONE \
+ 	__pgprot(_PAGE_PROTNONE | _PAGE_ACCESSED)
+ #define PAGE_SHARED \
+-	__pgprot(_PAGE_PRESENT | _PAGE_RW | _PAGE_USER | _PAGE_ACCESSED)
++	__pgprot(_PAGE_PRESENT | _PAGE_RW | _PAGE_USER | _PAGE_ACCESSED | _PAGE_NX)
  
  #define PAGE_SHARED_EXEC \
  	__pgprot(_PAGE_PRESENT | _PAGE_RW | _PAGE_USER | _PAGE_ACCESSED)
