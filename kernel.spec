@@ -388,11 +388,12 @@ Patch5001:	linux-2.6-apparmor-caps.patch
 # not ready yet
 Patch9997:	pax_selinux_hooks-2.6.20.patch
 
-# based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.20.6-test13.patch
+# based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.20.7-test13.patch
 # TODO: Prepare configs to use PaX from grsecurity (grsec_full) patch
 Patch9998:	pax-linux-2.6.20.patch
 
 # based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.20.6-200704091818.patch
+# with pax updates from http://www.grsecurity.net/~paxguy1/pax-linux-2.6.20.7-test13.patch
 Patch9999:	grsecurity-2.1.10-2.6.20.3.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
