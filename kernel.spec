@@ -322,7 +322,7 @@ Patch57:	linux-2.6-cpuset_virtualization.patch
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_41.tar.bz2
 Patch60:	linux-2.6-sk98lin_8.41.2.3.patch
 
-# based on http://www.suspend2.net/downloads/all/suspend2-2.2.9.7-for-2.6.20.patch.bz2
+# based on http://www.suspend2.net/downloads/all/suspend2-2.2.9.11-for-2.6.20.patch.bz2
 Patch69:	linux-2.6-suspend2.patch
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
