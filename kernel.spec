@@ -20,8 +20,6 @@
 # - pom-ng rtsp-conntrack -> nf_conntrack ?
 # - pom-ng talk-conntrack-nat -> nf_conntrack ?
 # - nf-hipac ?
-# - acrypto - http://tservice.net.ru/~s0mbre/blog/devel/acrypto
-# - for pax on 32-bit ppc disable CONFIG_PAX_EMUPLT (it will need gcc4 build userland -> Th only)
 # - pax hooks for selinux (experimental)
 #
 # Conditional build:
