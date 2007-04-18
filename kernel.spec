@@ -1307,9 +1307,8 @@ PreInstallKernel() {
 	echo "CHECKING DEPENDENCIES FOR KERNEL MODULES"
 	if [ %DepMod = /sbin/depmod ]; then
 		/sbin/depmod --basedir $KERNEL_INSTALL_DIR -ae -F $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer -r $KernelVer || :
-	else
-		touch $KERNEL_INSTALL_DIR/lib/modules/$KernelVer/modules.dep
 	fi
+	touch $KERNEL_INSTALL_DIR/lib/modules/$KernelVer/modules.dep
 	echo "KERNEL RELEASE $KernelVer DONE"
 }
 
