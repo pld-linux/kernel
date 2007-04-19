@@ -27,8 +27,6 @@
 %bcond_without	pcmcia		# don't build pcmcia
 %bcond_without	regparm		# if your blob doesn't work try disable this
 
-%bcond_with	uheaders	# userspace headers
-
 %bcond_with	abi		# build ABI support only ix86 !!
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	xen0		# added Xen0 support
@@ -748,26 +746,6 @@ Provides cdc_ether, rndis_host and usbnet device driver kernel
 modules. You could consider replacing this package with
 kernel-misc-usb-rndis-lite.
 
-%package libc-headers
-Summary:	Header files for userspace applications
-Summary(pl.UTF-8):	Pliki nagłówkowe dla aplikacji użytkownika
-Group:		Development
-Provides:	alsa-driver-devel
-Provides:	glibc-kernel-headers = 7:%{version}-%{release}
-Provides:	i2c-devel = 2.8.2
-Provides:	linux-libc-headers = 7:%{version}-%{release}
-Obsoletes:	alsa-driver-devel
-Obsoletes:	glibc-kernel-headers
-Obsoletes:	glibc-kernheaders
-Obsoletes:	linux-libc-headers
-Autoreqprov:	no
-
-%description libc-headers
-These are the C header files for userspace applications.
-
-%description libc-headers -l pl.UTF-8
-Pakiet zawiera pliki nagłówkowe dla aplikacji użytkownika.
-
 %prep
 %setup -q -n linux-%{_basever}%{_rc} %{?with_abi:-a14}
 
@@ -1335,17 +1313,6 @@ export DEPMOD=%DepMod
 install -d $RPM_BUILD_ROOT%{_kernelsrcdir}
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{kernel_release}
 
-%if %{with uheaders}
-%{__make} headers_install \
-	INSTALL_HDR_PATH=$RPM_BUILD_ROOT%{_prefix} \
-%if "%{_target_base_arch}" != "%{_arch}"
-	ARCH=%{_target_base_arch}
-%endif
-
-# glibc-headers
-rm -rf $RPM_BUILD_ROOT%{_includedir}/scsi
-%endif
-
 # test if we can hardlink -- %{_builddir} and $RPM_BUILD_ROOT on same partition
 if cp -al COPYING $RPM_BUILD_ROOT/COPYING 2>/dev/null; then
 	l=l
@@ -1637,12 +1604,6 @@ fi
 %{_kernelsrcdir}/scripts/*.sh
 %{_kernelsrcdir}/scripts/kconfig/*
 %{_kernelsrcdir}/scripts/mkcompile_h
-
-%if %{with uheaders}
-%files libc-headers
-%defattr(644,root,root,755)
-%{_includedir}/*
-%endif
 
 %files doc
 %defattr(644,root,root,755)
