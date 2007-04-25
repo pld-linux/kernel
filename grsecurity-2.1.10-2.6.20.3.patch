@@ -2859,10 +2859,10 @@ diff -urNp linux-2.6.20.3/arch/i386/kernel/reboot.c linux-2.6.20.3/arch/i386/ker
  	   of BIOS variables. */
  
 -	memcpy ((void *) (0x1000 - sizeof (real_mode_switch) - 100),
-+	flags = __copy_to_user ((void __user *) (0x1000 - sizeof (real_mode_switch) - 100),
++	flags = __copy_to_user_inatomic((void __user *) (0x1000 - sizeof (real_mode_switch) - 100),
  		real_mode_switch, sizeof (real_mode_switch));
 -	memcpy ((void *) (0x1000 - 100), code, length);
-+	flags = __copy_to_user ((void __user *) (0x1000 - 100), code, length);
++	flags = __copy_to_user_inatomic((void __user *) (0x1000 - 100), code, length);
  
  	/* Set up the IDT for real mode. */
  
@@ -26676,11 +26676,11 @@ diff -urNp linux-2.6.20.3/include/linux/mm.h linux-2.6.20.3/include/linux/mm.h
  #define VM_ALWAYSDUMP	0x04000000	/* Always include in core dumps */
  
 +#ifdef CONFIG_PAX_SEGMEXEC
-+#define VM_MIRROR	0x04000000	/* vma is mirroring another */
++#define VM_MIRROR	0x08000000	/* vma is mirroring another */
 +#endif
 +
 +#ifdef CONFIG_PAX_MPROTECT
-+#define VM_MAYNOTWRITE	0x08000000	/* vma cannot be granted VM_WRITE any more */
++#define VM_MAYNOTWRITE	0x10000000	/* vma cannot be granted VM_WRITE any more */
 +#endif
 +
 +#ifdef __VM_STACK_FLAGS
@@ -27697,6 +27697,17 @@ diff -urNp linux-2.6.20.3/kernel/irq/handle.c linux-2.6.20.3/kernel/irq/handle.c
 diff -urNp linux-2.6.20.3/kernel/kallsyms.c linux-2.6.20.3/kernel/kallsyms.c
 --- linux-2.6.20.3/kernel/kallsyms.c	2007-03-13 14:27:08.000000000 -0400
 +++ linux-2.6.20.3/kernel/kallsyms.c	2007-03-23 08:11:31.000000000 -0400
+@@ -72,8 +72,8 @@ static inline int is_kernel(unsigned lon
+ 
+ static int is_ksym_addr(unsigned long addr)
+ {
+-	if (all_var)
+-		return is_kernel(addr);
++	if (all_var && is_kernel(addr))
++		return 1;
+ 
+ 	return is_kernel_text(addr) || is_kernel_inittext(addr) ||
+ 		is_kernel_extratext(addr);
 @@ -334,7 +334,6 @@ static unsigned long get_ksymbol_core(st
  
  static void reset_iter(struct kallsym_iter *iter, loff_t new_pos)
@@ -30404,7 +30415,7 @@ diff -urNp linux-2.6.20.3/mm/rmap.c linux-2.6.20.3/mm/rmap.c
 +			if (vma->vm_flags & VM_MIRROR) {
 +				struct vm_area_struct *vma_m;
 +
-+				vma_m = find_vma(vma->vm_mm, vma->vm_start + vma->vm_mirror);
++				vma_m = find_vma(mm, vma->vm_start + vma->vm_mirror);
 +				BUG_ON(!vma_m || vma_m->vm_start != vma->vm_start + vma->vm_mirror);
 +				BUG_ON(vma_m->anon_vma || vma->vm_pgoff != vma_m->vm_pgoff);
 +				vma_m->anon_vma = anon_vma;
