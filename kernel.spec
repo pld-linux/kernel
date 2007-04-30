@@ -1,19 +1,14 @@
 #
-# STATUS: 2.6.20.6-2
-# - standard config includes vserver, suspend2 and grsec_minimal
-# - builds (alpha, i686, ppc, sparc64, x86_64) 
-# - builds --with vesafb_tng (i686)
-# - builds --with pax_full (i686, x86_64, ppc)
-# - builds --with pax (carme)
-# - builds --with grsec_full (alpha, i486, i686, ppc, sparc64, x86_64)
+# STATUS: 2.6.21.1-0.1
+# - not ready yet - work in progress, but You are welcome :-)
 #
-# TODO 2.6.20.7
-# - test non default bconds for 2.6.20.7 (esp. fb related for i386)
-# - spec cleanup
+# TODO:
+# - update configs for all archs
+# - prepare vserver (you could try --without vserver)
+# - update linux-2.6-warnings.patch
 #
 # FUTURE:
-# - new alsa rc2 - 1.0.14rc2 is in 2.6.20-git10 tree and in 2.6.21 line
-# - update xen patch for 2.6.20
+# - update xen patch for 2.6.21
 # - Linux ABI - needs update.
 # - pom-ng quake3-conntrack-nat -> nf_conntrack ?
 # - pom-ng rpc -> ?
@@ -44,7 +39,6 @@
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
 
-%bcond_without	ide_acpi	# support for ide-acpi from SuSE
 %bcond_without	imq		# imq support
 %bcond_without	wrr		# wrr support
 
@@ -118,12 +112,12 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_basever		2.6.20
-%define		_postver		.7
+%define		_basever		2.6.21
+%define		_postver		.1
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			1
+%define		_rel			0.1
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -160,14 +154,14 @@ License:	GPL v2
 Group:		Base/Kernel
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
-# Source0-md5:	34b0f354819217e6a345f48ebbd8f13e
+# Source0-md5:	1b515f588078dfa7f4bab2634bd17e80
 %if "%{_prepatch}" != "%{nil}"
 Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}-%{_pre_rc}.bz2
 # Source90-md5:	b78873f8a3aff5bdc719fc7fb4c66a9b
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	d56fd9b25c86144f47c0b9df4fc1f534
+# Source1-md5:	c4c368f173af267a564948065ffc1689
 %endif
 
 Source3:	kernel-autoconf.h
@@ -218,8 +212,8 @@ Patch1:		linux-2.6-sata-promise-pata-ports.patch
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
 Patch2:		tahoe9xx-2.6.11.5.patch
 
-# ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.18.diff
-Patch3:		bootsplash-3.1.6-2.6.18.diff
+# ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.21.diff.gz
+Patch3:		linux-2.6-bootsplash.patch
 # http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.20-rc6.patch
 Patch4:		fbsplash-0.9.2-r5-2.6.20-rc6.patch
 
@@ -318,16 +312,12 @@ Patch57:	linux-2.6-cpuset_virtualization.patch
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_41.tar.bz2
 Patch60:	linux-2.6-sk98lin_8.41.2.3.patch
 
-# based on http://www.suspend2.net/downloads/all/suspend2-2.2.9.11-for-2.6.20.patch.bz2
+# http://www.suspend2.net/downloads/all/suspend2-2.2.9.13-for-2.6.21-rc7.patch.bz2
 Patch69:	linux-2.6-suspend2.patch
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
 #Patch72: linux-2.6-suspend2-off.patch
 Patch72:	kernel-2.6-ueagle-atm-freezer.patch
-
-# ide-acpi instead of nx8220 s3 suspend/resume hack
-# http://svn.uludag.org.tr/pardus/devel/kernel/kernel/files/suse/ide-acpi-support.patch
-Patch75:	linux-2.6-ide-acpi-support.patch
 
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
@@ -866,11 +856,6 @@ install %{SOURCE5} Makefile.ppclibs
 # linux-2.6-sk98lin_8.41.2.3.patch
 %patch60 -p1
 
-%if %{with ide_acpi}
-# ide-acpi instead of nx8220 s3 suspend/resume hack
-%patch75 -p1
-%endif
-
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
 
@@ -1151,10 +1136,6 @@ BuildConfig() {
 
 %if %{with reiser4}
 	cat %{SOURCE56} >> arch/%{_target_base_arch}/defconfig
-%endif
-
-%if %{with ide_acpi}
-	echo "CONFIG_BLK_DEV_IDEACPI=y" >> arch/%{_target_base_arch}/defconfig
 %endif
 
 %if %{with xen0}
