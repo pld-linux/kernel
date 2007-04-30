@@ -1,16 +1,16 @@
 diff --git a/Documentation/kernel-parameters.txt b/Documentation/kernel-parameters.txt
-index 25d2985..588676f 100644
+index 12533a9..68e902e 100644
 --- a/Documentation/kernel-parameters.txt
 +++ b/Documentation/kernel-parameters.txt
-@@ -80,6 +80,7 @@ parameter is applicable:
- 	SERIAL	Serial support is enabled.
+@@ -82,6 +82,7 @@ parameter is applicable:
+ 	SH	SuperH architecture is enabled.
  	SMP	The kernel is an SMP kernel.
  	SPARC	Sparc architecture is enabled.
 +	SUSPEND2 Suspend2 is enabled.
  	SWSUSP	Software suspend is enabled.
  	TS	Appropriate touchscreen support is enabled.
  	USB	USB support is enabled.
-@@ -1099,6 +1100,8 @@ and is between 256 and 4096 characters. It is defined in the file
+@@ -1140,6 +1141,8 @@ and is between 256 and 4096 characters. It is defined in the file
  	noresume	[SWSUSP] Disables resume and restores original swap
  			space.
  
@@ -19,9 +19,9 @@ index 25d2985..588676f 100644
  	no-scroll	[VGA] Disables scrollback.
  			This is required for the Braillex ib80-piezo Braille
  			reader made by F.H. Papenmeier (Germany).
-@@ -1396,6 +1399,11 @@ and is between 256 and 4096 characters. It is defined in the file
- 			in <PAGE_SIZE> units (needed only for swap files).
- 			See  Documentation/power/swsusp-and-swap-files.txt
+@@ -1445,6 +1448,11 @@ and is between 256 and 4096 characters. It is defined in the file
+ 
+ 	retain_initrd	[RAM] Keep initrd memory after extraction
  
 + 	resume2=	[SUSPEND2] Specify the storage device for Suspend2.
 +			Format: <writer>:<writer-parameters>.
@@ -33,10 +33,10 @@ index 25d2985..588676f 100644
  
 diff --git a/Documentation/power/Suspend2-Changelog.txt b/Documentation/power/Suspend2-Changelog.txt
 new file mode 100644
-index 0000000..58f82be
+index 0000000..a9b672a
 --- /dev/null
 +++ b/Documentation/power/Suspend2-Changelog.txt
-@@ -0,0 +1,1046 @@
+@@ -0,0 +1,1093 @@
 +Suspend2 changelog.
 +
 +Still to do prior to 2.2.10...
@@ -45,6 +45,53 @@ index 0000000..58f82be
 +- RAID support.
 +- Fix building core as a module for people who currently get a hang
 +  while doing the atomic restore.
++- Trying to reserve swap space before any allocated? (Kenneth's extent
++  state eof while preparing the image).
++- Look at testing lid state when wake from STR and powering off immediately.
++- Fix checksumming.
++
++2.2.9.13 - 24 April 2007
++
++- RAID BUG() addressed.
++- Fixed exports for new userui module (compilation issue).
++- Fixed missed sysfs macro changes in checksum module.
++- Fix missed suspend_extent_state_eof() modification.
++- Modify 'initrd lacks echo' message to be more specific.
++- Give more details status to help with diagnosing atomic copy hangs.
++- In suspend_start_anything, if rechecking which allocator to use,
++  be quiet only if we're not starting a cycle.
++- Supress (renamed) 'lacks an echo' whenever the echo is done, not just
++  if we succeed in initialising modules.
++- Fix infinite loop in shrink_one_zone.
++- Fix oops if highmem support enabled but no highmem pages are in pageset 1.
++- Fix failure to add flag enabling storage manager usage.
++- Fix missing cpus allowed reseting on finish_anything.
++
++2.2.9.12 - 18 April 2007
++- Fix compressor initialisation failures when active allocator isn't yet set
++  (dmsetup, eg).
++- Early cpu hotplugging support, enabled the default while late hotplugging
++  is being worked on upstream. This means that, by default, you won't get
++  multithreaded I/O. /sys/power/suspend2/late_cpu_hotplug enables the
++  late cpu hotplugging that was the default between 2.2.9.4 and .11.
++- Separated userui support into its own module (CONFIG_SUSPEND2_USERUI).
++- Correction to code iterating through block chains (test for ==, not >).
++- Support for modules sharing a directory. Used in userui separation so
++  that the location of userui entries didn't change.
++- Yield instead of scheduling in netlink code. This results in actually
++  seeing progress_granularity steps in the userui display on my computer;
++  previously the netlink messages were being bunched up.
++- Further improvements to memory freeing code, seeking to make it more
++  reliable.
++- Make sysfs entry flags more generic and use to indicate separately whether
++  suspending or resuming.
++- Dump block chains if we discover we're going to overwrite the start of
++  pageset2 with the header.
++- Don't do anything in compression initialisation routine if we're not
++  starting a cycle.
++- Correct bug that stopped us releasing fileallocator storage when a first
++  cycle was aborted.
++- Filewriter shouldn't complain if no target has been set when we're resuming.
 +
 +2.2.9.11 - 14 April 2007
 +- Remove RH copyrights - no Suspend2 work done in Redhat time to date.
@@ -2282,10 +2329,10 @@ index 0000000..b5a8edb
 +   most of us (Nigel included!) would consider testing. His efforts have
 +   contributed as much to Suspend2 as any of the names above.
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 0ad8803..8a54929 100644
+index ef84419..2ec9eaa 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -3141,6 +3141,13 @@ M:	sammy@sammy.net
+@@ -3227,6 +3227,13 @@ M:	sammy@sammy.net
  W:	http://sammy.net/sun3/
  S:	Maintained
  
@@ -2300,7 +2347,7 @@ index 0ad8803..8a54929 100644
  P:	Martin Mares
  M:	mj@ucw.cz
 diff --git a/arch/i386/mm/fault.c b/arch/i386/mm/fault.c
-index aaaa4d2..b9b1509 100644
+index b8c4e25..21982d9 100644
 --- a/arch/i386/mm/fault.c
 +++ b/arch/i386/mm/fault.c
 @@ -23,6 +23,7 @@
@@ -2321,7 +2368,7 @@ index aaaa4d2..b9b1509 100644
  int register_page_fault_notifier(struct notifier_block *nb)
  {
  	vmalloc_sync_all();
-@@ -337,6 +341,20 @@ fastcall void __kprobes do_page_fault(struct pt_regs *regs,
+@@ -311,6 +315,20 @@ fastcall void __kprobes do_page_fault(struct pt_regs *regs,
  
  	si_code = SEGV_MAPERR;
  
@@ -2343,10 +2390,10 @@ index aaaa4d2..b9b1509 100644
  	 * We fault-in kernel-space virtual memory on-demand. The
  	 * 'reference' page table is init_mm.pgd.
 diff --git a/arch/i386/mm/init.c b/arch/i386/mm/init.c
-index c5c5ea7..22bf577 100644
+index ae43688..a180d21 100644
 --- a/arch/i386/mm/init.c
 +++ b/arch/i386/mm/init.c
-@@ -383,7 +383,7 @@ static void __init pagetable_init (void)
+@@ -387,7 +387,7 @@ static void __init pagetable_init (void)
  #endif
  }
  
@@ -2355,7 +2402,7 @@ index c5c5ea7..22bf577 100644
  /*
   * Swap suspend & friends need this for resume because things like the intel-agp
   * driver might have split up a kernel 4MB mapping.
-@@ -770,13 +770,13 @@ void free_init_pages(char *what, unsigned long begin, unsigned long end)
+@@ -774,13 +774,13 @@ void free_init_pages(char *what, unsigned long begin, unsigned long end)
  	unsigned long addr;
  
  	for (addr = begin; addr < end; addr += PAGE_SIZE) {
@@ -2375,10 +2422,10 @@ index c5c5ea7..22bf577 100644
  
  void free_initmem(void)
 diff --git a/arch/i386/mm/pageattr.c b/arch/i386/mm/pageattr.c
-index ad91528..2e0f0f8 100644
+index 412ebbd..dded2e1 100644
 --- a/arch/i386/mm/pageattr.c
 +++ b/arch/i386/mm/pageattr.c
-@@ -250,7 +250,27 @@ void kernel_map_pages(struct page *page, int numpages, int enable)
+@@ -252,7 +252,27 @@ void kernel_map_pages(struct page *page, int numpages, int enable)
  	 */
  	__flush_tlb_all();
  }
@@ -2415,10 +2462,10 @@ index 2de7bbf..72a6169 100644
 -obj-$(CONFIG_SOFTWARE_SUSPEND)	+= swsusp.o suspend.o
 +obj-$(CONFIG_SUSPEND_SHARED)	+= swsusp.o suspend.o
 diff --git a/arch/powerpc/kernel/Makefile b/arch/powerpc/kernel/Makefile
-index d2ded19..a5a5895 100644
+index 8120d42..5d57f0c 100644
 --- a/arch/powerpc/kernel/Makefile
 +++ b/arch/powerpc/kernel/Makefile
-@@ -35,7 +35,7 @@ obj-$(CONFIG_GENERIC_TBSYNC)	+= smp-tbsync.o
+@@ -36,7 +36,7 @@ obj-$(CONFIG_GENERIC_TBSYNC)	+= smp-tbsync.o
  obj-$(CONFIG_CRASH_DUMP)	+= crash_dump.o
  obj-$(CONFIG_6xx)		+= idle_6xx.o l2cr_6xx.o cpu_setup_6xx.o
  obj-$(CONFIG_TAU)		+= tau_6xx.o
@@ -2428,7 +2475,7 @@ index d2ded19..a5a5895 100644
  
  ifeq ($(CONFIG_PPC_MERGE),y)
 diff --git a/arch/x86_64/kernel/Makefile b/arch/x86_64/kernel/Makefile
-index 3c7cbff..3cb3c7b 100644
+index bb47e86..9943190 100644
 --- a/arch/x86_64/kernel/Makefile
 +++ b/arch/x86_64/kernel/Makefile
 @@ -26,7 +26,7 @@ obj-y				+= io_apic.o mpparse.o \
@@ -2460,7 +2507,7 @@ index 91f7e67..983f16f 100644
 -#endif /* CONFIG_SOFTWARE_SUSPEND */
 +#endif /* CONFIG_SUSPEND_SHARED */
 diff --git a/block/ll_rw_blk.c b/block/ll_rw_blk.c
-index 38c293b..1f0d329 100644
+index 3de0695..3fb956d 100644
 --- a/block/ll_rw_blk.c
 +++ b/block/ll_rw_blk.c
 @@ -30,6 +30,8 @@
@@ -2472,22 +2519,20 @@ index 38c293b..1f0d329 100644
  
  /*
   * for max sense size
-@@ -3248,6 +3250,10 @@ void submit_bio(int rw, struct bio *bio)
+@@ -3247,7 +3249,7 @@ void submit_bio(int rw, struct bio *bio)
+ 			(unsigned long long)bio->bi_sector,
  			bdevname(bio->bi_bdev,b));
  	}
- 
-+	BUG_ON( test_suspend_state(SUSPEND_RUNNING) &&	/* Suspend2, that is */
-+		freezer_is_on() &&
-+		!(bio->bi_flags & (1 << BIO_SUSPEND_DATA)));
+-
 +	
  	generic_make_request(bio);
  }
  
 diff --git a/crypto/Kconfig b/crypto/Kconfig
-index 92ba249..e3fbcfe 100644
+index 086fcec..efde46c 100644
 --- a/crypto/Kconfig
 +++ b/crypto/Kconfig
-@@ -439,6 +439,14 @@ config CRYPTO_DEFLATE
+@@ -406,6 +406,14 @@ config CRYPTO_DEFLATE
  	  
  	  You will most probably want this if using IPSec.
  
@@ -2503,10 +2548,10 @@ index 92ba249..e3fbcfe 100644
  	tristate "Michael MIC keyed digest algorithm"
  	select CRYPTO_ALGAPI
 diff --git a/crypto/Makefile b/crypto/Makefile
-index 60e3d24..cd605ec 100644
+index 12f93f5..69a8af3 100644
 --- a/crypto/Makefile
 +++ b/crypto/Makefile
-@@ -43,5 +43,6 @@ obj-$(CONFIG_CRYPTO_ANUBIS) += anubis.o
+@@ -46,5 +46,6 @@ obj-$(CONFIG_CRYPTO_ANUBIS) += anubis.o
  obj-$(CONFIG_CRYPTO_DEFLATE) += deflate.o
  obj-$(CONFIG_CRYPTO_MICHAEL_MIC) += michael_mic.o
  obj-$(CONFIG_CRYPTO_CRC32C) += crc32c.o
@@ -2855,7 +2900,7 @@ index 0000000..2da44d9
 +MODULE_DESCRIPTION("LZF Compression Algorithm");
 +MODULE_AUTHOR("Marc Alexander Lehmann & Nigel Cunningham");
 diff --git a/drivers/base/core.c b/drivers/base/core.c
-index 67b79a7..362757f 100644
+index d7fcf82..edbbf76 100644
 --- a/drivers/base/core.c
 +++ b/drivers/base/core.c
 @@ -27,6 +27,8 @@
@@ -2867,7 +2912,7 @@ index 67b79a7..362757f 100644
  /*
   * sysfs bindings for devices.
   */
-@@ -552,6 +554,18 @@ int device_add(struct device *dev)
+@@ -638,6 +640,18 @@ int device_add(struct device *dev)
  				class_intf->add_dev(dev, class_intf);
  		up(&dev->class->sem);
  	}
@@ -2886,7 +2931,7 @@ index 67b79a7..362757f 100644
   Done:
   	kfree(class_name);
  	put_device(dev);
-@@ -851,6 +865,7 @@ struct device *device_create(struct class *class, struct device *parent,
+@@ -975,6 +989,7 @@ struct device *device_create(struct class *class, struct device *parent,
  	dev->class = class;
  	dev->parent = parent;
  	dev->release = device_create_release;
@@ -2894,7 +2939,7 @@ index 67b79a7..362757f 100644
  
  	va_start(args, fmt);
  	vsnprintf(dev->bus_id, BUS_ID_SIZE, fmt, args);
-@@ -1048,3 +1063,11 @@ out:
+@@ -1183,3 +1198,11 @@ out:
  }
  
  EXPORT_SYMBOL_GPL(device_move);
@@ -2907,7 +2952,7 @@ index 67b79a7..362757f 100644
 +
 +__setup("pm_debug_dump_stack", pm_debug_dump_stack);
 diff --git a/drivers/macintosh/via-pmu.c b/drivers/macintosh/via-pmu.c
-index 8ca75e5..9f56087 100644
+index b6073bd..32bd423 100644
 --- a/drivers/macintosh/via-pmu.c
 +++ b/drivers/macintosh/via-pmu.c
 @@ -42,7 +42,6 @@
@@ -2919,10 +2964,10 @@ index 8ca75e5..9f56087 100644
  #include <linux/suspend.h>
  #include <linux/cpu.h>
 diff --git a/drivers/pci/pci-driver.c b/drivers/pci/pci-driver.c
-index 92d5e8d..f49da90 100644
+index a3c1755..171be82 100644
 --- a/drivers/pci/pci-driver.c
 +++ b/drivers/pci/pci-driver.c
-@@ -449,6 +449,10 @@ int __pci_register_driver(struct pci_driver *drv, struct module *owner)
+@@ -451,6 +451,10 @@ int __pci_register_driver(struct pci_driver *drv, struct module *owner,
  	if (error)
  		driver_unregister(&drv->driver);
  
@@ -2934,10 +2979,10 @@ index 92d5e8d..f49da90 100644
  }
  
 diff --git a/drivers/usb/core/driver.c b/drivers/usb/core/driver.c
-index d6eb5ce..1edc9f5 100644
+index 9e3e943..d0ced9e 100644
 --- a/drivers/usb/core/driver.c
 +++ b/drivers/usb/core/driver.c
-@@ -709,6 +709,9 @@ int usb_register_device_driver(struct usb_device_driver *new_udriver,
+@@ -721,6 +721,9 @@ int usb_register_device_driver(struct usb_device_driver *new_udriver,
  		pr_info("%s: registered new device driver %s\n",
  			usbcore_name, new_udriver->name);
  		usbfs_update_special();
@@ -3024,12 +3069,12 @@ index 08daf32..8552932 100644
  
  /*
 diff --git a/include/linux/device.h b/include/linux/device.h
-index f44247f..bca61a0 100644
+index 5cf30e9..69122c1 100644
 --- a/include/linux/device.h
 +++ b/include/linux/device.h
-@@ -356,6 +356,7 @@ struct device {
- 	struct kobject kobj;
+@@ -402,6 +402,7 @@ struct device {
  	char	bus_id[BUS_ID_SIZE];	/* position on parent bus */
+ 	struct device_type	*type;
  	unsigned		is_registered:1;
 +	unsigned		pm_safe:1; /* No resume fn is ok? */
  	struct device_attribute uevent_attr;
@@ -3155,10 +3200,10 @@ index 5e75e26..f49c9be 100644
  #endif
 +#endif
 diff --git a/include/linux/kernel.h b/include/linux/kernel.h
-index 63fb18d..161c54e 100644
+index 9ddf25c..c18ec95 100644
 --- a/include/linux/kernel.h
 +++ b/include/linux/kernel.h
-@@ -118,6 +118,8 @@ extern int vsprintf(char *buf, const char *, va_list)
+@@ -113,6 +113,8 @@ extern int vsprintf(char *buf, const char *, va_list)
  	__attribute__ ((format (printf, 2, 0)));
  extern int snprintf(char * buf, size_t size, const char * fmt, ...)
  	__attribute__ ((format (printf, 3, 4)));
@@ -3168,15 +3213,15 @@ index 63fb18d..161c54e 100644
  	__attribute__ ((format (printf, 3, 0)));
  extern int scnprintf(char * buf, size_t size, const char * fmt, ...)
 diff --git a/include/linux/netlink.h b/include/linux/netlink.h
-index b3b9b60..dbf46f0 100644
+index 2a20f48..b4d9db1 100644
 --- a/include/linux/netlink.h
 +++ b/include/linux/netlink.h
-@@ -23,6 +23,8 @@
- #define NETLINK_GENERIC		16
+@@ -24,6 +24,8 @@
  /* leave room for NETLINK_DM (DM Events) */
  #define NETLINK_SCSITRANSPORT	18	/* SCSI Transports */
-+#define NETLINK_SUSPEND2_USERUI	19	/* For suspend2's userui */
-+#define NETLINK_SUSPEND2_USM	20	/* For suspend2's userspace storage manager */
+ #define NETLINK_ECRYPTFS	19
++#define NETLINK_SUSPEND2_USERUI	20	/* For suspend2's userui */
++#define NETLINK_SUSPEND2_USM	21	/* For suspend2's userspace storage manager */
  
  #define MAX_LINKS 32		
  
@@ -3279,10 +3324,10 @@ index bf99bd4..8840f4b 100644
 +
  #endif /* _LINUX_SWSUSP_H */
 diff --git a/include/linux/swap.h b/include/linux/swap.h
-index 5423559..9d01fd5 100644
+index 0068688..ad3fead 100644
 --- a/include/linux/swap.h
 +++ b/include/linux/swap.h
-@@ -188,6 +188,7 @@ extern void swap_setup(void);
+@@ -190,6 +190,7 @@ extern void swap_setup(void);
  /* linux/mm/vmscan.c */
  extern unsigned long try_to_free_pages(struct zone **, gfp_t);
  extern unsigned long shrink_all_memory(unsigned long nr_pages);
@@ -3290,7 +3335,7 @@ index 5423559..9d01fd5 100644
  extern int vm_swappiness;
  extern int remove_mapping(struct address_space *mapping, struct page *page);
  extern long vm_total_pages;
-@@ -366,5 +367,10 @@ static inline swp_entry_t get_swap_page(void)
+@@ -368,5 +369,10 @@ static inline swp_entry_t get_swap_page(void)
  #define disable_swap_token() do { } while(0)
  
  #endif /* CONFIG_SWAP */
@@ -3363,7 +3408,7 @@ index dc1ec08..3ad203d 100644
  		ROOT_DEV = Root_RAM0;
  
 diff --git a/init/do_mounts_initrd.c b/init/do_mounts_initrd.c
-index 2cfd7cb..06584f2 100644
+index 2cfd7cb..b32a3dc 100644
 --- a/init/do_mounts_initrd.c
 +++ b/init/do_mounts_initrd.c
 @@ -6,6 +6,7 @@
@@ -3374,7 +3419,7 @@ index 2cfd7cb..06584f2 100644
  #include <linux/freezer.h>
  
  #include "do_mounts.h"
-@@ -58,10 +59,17 @@ static void __init handle_initrd(void)
+@@ -58,10 +59,18 @@ static void __init handle_initrd(void)
  	current->flags |= PF_NOFREEZE;
  	pid = kernel_thread(do_linuxrc, "/linuxrc", SIGCHLD);
  	if (pid > 0) {
@@ -3386,7 +3431,8 @@ index 2cfd7cb..06584f2 100644
  	}
  
 +	if (test_suspend_state(SUSPEND_RESUME_NOT_DONE))
-+		printk(KERN_ERR "Suspend2: Initrd lacks echo > /sys/power/suspend2/do_resume.\n");
++		printk(KERN_ERR "Suspend2: No attempt was made to resume from "
++				"any image that might exist.\n");
 +	clear_suspend_state(SUSPEND_BOOT_TIME);
 +	current->flags &= ~PF_NOFREEZE;
 +
@@ -3394,10 +3440,10 @@ index 2cfd7cb..06584f2 100644
  	sys_fchdir(old_fd);
  	sys_mount("/", ".", NULL, MS_MOVE, NULL);
 diff --git a/init/main.c b/init/main.c
-index 8b4a7d7..d7ce79c 100644
+index a92989e..cd3f60f 100644
 --- a/init/main.c
 +++ b/init/main.c
-@@ -52,6 +52,7 @@
+@@ -54,6 +54,7 @@
  #include <linux/lockdep.h>
  #include <linux/pid_namespace.h>
  #include <linux/device.h>
@@ -3405,7 +3451,7 @@ index 8b4a7d7..d7ce79c 100644
  
  #include <asm/io.h>
  #include <asm/bugs.h>
-@@ -745,7 +746,9 @@ static int init(void * unused)
+@@ -804,7 +805,9 @@ static int __init init(void * unused)
  
  	/*
  	 * check if there is an early userspace init.  If yes, let it do all
@@ -3417,7 +3463,7 @@ index 8b4a7d7..d7ce79c 100644
  
  	if (!ramdisk_execute_command)
 diff --git a/kernel/kmod.c b/kernel/kmod.c
-index 3a7379a..cbea323 100644
+index 7962761..f0d6fc1 100644
 --- a/kernel/kmod.c
 +++ b/kernel/kmod.c
 @@ -34,6 +34,7 @@
@@ -3428,9 +3474,9 @@ index 3a7379a..cbea323 100644
  #include <asm/uaccess.h>
  
  extern int max_threads;
-@@ -283,6 +284,11 @@ int call_usermodehelper_keys(char *path, char **argv, char **envp,
- 	if (path[0] == '\0')
- 		return 0;
+@@ -338,6 +339,11 @@ int call_usermodehelper_pipe(char *path, char **argv, char **envp,
+ 	}
+ 	sub_info.stdin = f;
  
 +	if (freezer_is_on()) {
 +		printk(KERN_WARNING "Freezer is on. Refusing to start %s.\n", path);
@@ -3441,7 +3487,7 @@ index 3a7379a..cbea323 100644
  	wait_for_completion(&done);
  	return sub_info.retval;
 diff --git a/kernel/power/Kconfig b/kernel/power/Kconfig
-index ed29622..0a7f24f 100644
+index 51a4dd0..5d4b077 100644
 --- a/kernel/power/Kconfig
 +++ b/kernel/power/Kconfig
 @@ -48,6 +48,17 @@ config DISABLE_CONSOLE_SUSPEND
@@ -3462,10 +3508,10 @@ index ed29622..0a7f24f 100644
  config PM_TRACE
  	bool "Suspend/resume event tracing"
  	depends on PM && PM_DEBUG && X86_32 && EXPERIMENTAL
-@@ -131,3 +142,158 @@ config SUSPEND_SMP
- 	bool
- 	depends on HOTPLUG_CPU && X86 && PM
- 	default y
+@@ -162,3 +173,174 @@ config APM_EMULATION
+ 	  random kernel OOPSes or reboots that don't seem to be related to
+ 	  anything, try disabling/enabling this option (or disabling/enabling
+ 	  APM in your BIOS).
 +
 +menuconfig SUSPEND2_CORE
 +	tristate "Suspend2"
@@ -3517,6 +3563,16 @@ index ed29622..0a7f24f 100644
 +
 +	comment "No compression support available without Cryptoapi support."
 +		depends on SUSPEND2_CORE && !CRYPTO
++
++	config SUSPEND2_USERUI
++		tristate "Userspace User Interface support"
++		depends on SUSPEND2_CORE && NET
++		default y
++		---help---
++		  This option enabled support for a userspace based user interface
++		  to Suspend2, which allows you to have a nice display while suspending
++		  and resuming, and also enables features such as pressing escape to
++		  cancel a cycle or interactive debugging.
 +
 +	config SUSPEND2_DEFAULT_RESUME2
 +		string "Default resume device name"
@@ -3591,6 +3647,11 @@ index ed29622..0a7f24f 100644
 +	depends on SUSPEND2_CORE || SOFTWARE_SUSPEND
 +	default y
 +
++config SUSPEND2_USERUI_EXPORTS
++	bool
++	depends on SUSPEND2_USERUI=m
++	default y
++
 +config SUSPEND2_SWAP_EXPORTS
 +	bool
 +	depends on SUSPEND2_SWAP=m
@@ -3614,7 +3675,8 @@ index ed29622..0a7f24f 100644
 +config SUSPEND2_EXPORTS
 +	bool
 +	depends on SUSPEND2_SWAP_EXPORTS || SUSPEND2_FILE_EXPORTS || \
-+		SUSPEND2_CRYPTO_EXPORTS || SUSPEND2_CLUSTER=m
++		SUSPEND2_CRYPTO_EXPORTS || SUSPEND2_CLUSTER=m || \
++		SUSPEND2_USERUI_EXPORTS
 +	default y
 +
 +config SUSPEND2
@@ -3622,10 +3684,10 @@ index ed29622..0a7f24f 100644
 +	depends on SUSPEND2_CORE!=n
 +	default y
 diff --git a/kernel/power/Makefile b/kernel/power/Makefile
-index 38725f5..79e78b7 100644
+index 38725f5..1e15b8d 100644
 --- a/kernel/power/Makefile
 +++ b/kernel/power/Makefile
-@@ -5,6 +5,30 @@ endif
+@@ -5,6 +5,32 @@ endif
  
  obj-y				:= main.o process.o console.o
  obj-$(CONFIG_PM_LEGACY)		+= pm.o
@@ -3654,15 +3716,17 @@ index 38725f5..79e78b7 100644
 +obj-$(CONFIG_SUSPEND2_FILE)	+= suspend_block_io.o suspend_file.o
 +obj-$(CONFIG_SUSPEND2_CLUSTER)	+= cluster.o
 +
++obj-$(CONFIG_SUSPEND2_USERUI)	+= suspend_userui.o
++
 +obj-$(CONFIG_SOFTWARE_SUSPEND)	+= swsusp.o disk.o swap.o user.o
  
  obj-$(CONFIG_MAGIC_SYSRQ)	+= poweroff.o
 diff --git a/kernel/power/atomic_copy.c b/kernel/power/atomic_copy.c
 new file mode 100644
-index 0000000..ab20796
+index 0000000..1e8a22a
 --- /dev/null
 +++ b/kernel/power/atomic_copy.c
-@@ -0,0 +1,407 @@
+@@ -0,0 +1,425 @@
 +/*
 + * kernel/power/atomic_copy.c
 + *
@@ -3831,7 +3895,7 @@ index 0000000..ab20796
 +	if (suspend_activate_storage(1))
 +		panic("Failed to reactivate our storage.");
 +
-+	userui_redraw();
++	suspend_ui_redraw();
 +
 +	suspend_cond_pause(1, "About to reload secondary pagedir.");
 +
@@ -4007,22 +4071,36 @@ index 0000000..ab20796
 +
 +	suspend2_running = 1;
 +
-+	suspend_prepare_status(DONT_CLEAR_BAR,	"Atomic restore preparation");
++	suspend_prepare_status(DONT_CLEAR_BAR,	"Prepare console");
 +
 +	if (test_action_state(SUSPEND_PM_PREPARE_CONSOLE))
 +		pm_prepare_console();
++
++	if (!test_action_state(SUSPEND_LATE_CPU_HOTPLUG)) {
++		suspend_prepare_status(DONT_CLEAR_BAR,	"Disable nonboot cpus.");
++		disable_nonboot_cpus();
++	}
++
++	suspend_prepare_status(DONT_CLEAR_BAR,	"Freeze processes.");
 +
 +	if ((error = freeze_processes())) {
 +		printk("Some processes failed to suspend\n");
 +		goto thaw_processes;
 +	}
 +
++	suspend_prepare_status(DONT_CLEAR_BAR,	"Device suspend.");
++
 +	if ((error = device_suspend(PMSG_FREEZE))) {
 +		printk("Some devices failed to suspend\n");
 +		goto device_resume;
 +	}
 +
-+	disable_nonboot_cpus();
++	if (test_action_state(SUSPEND_LATE_CPU_HOTPLUG)) {
++		suspend_prepare_status(DONT_CLEAR_BAR,	"Disable nonboot cpus.");
++		disable_nonboot_cpus();
++	}
++
++	suspend_prepare_status(DONT_CLEAR_BAR,	"Atomic restore preparation");
 +
 +	suspend2_nosave_state1 = suspend_action;
 +	suspend2_nosave_state2 = suspend_debug_state;
@@ -4057,11 +4135,15 @@ index 0000000..ab20796
 +
 +device_power_up:
 +	device_power_up();
-+	enable_nonboot_cpus();
++	if (test_action_state(SUSPEND_LATE_CPU_HOTPLUG))
++		enable_nonboot_cpus();
 +device_resume:
 +	device_resume();
 +thaw_processes:
 +	thaw_processes();
++	if (!test_action_state(SUSPEND_LATE_CPU_HOTPLUG))
++		enable_nonboot_cpus();
++
 +	if (test_action_state(SUSPEND_PM_PREPARE_CONSOLE))
 +		pm_restore_console();
 +	free_pbe_list(&restore_pblist, 0);
@@ -4133,7 +4215,7 @@ index 0000000..49eaa51
 +extern int suspend_header_bytes_used;
 diff --git a/kernel/power/checksum.c b/kernel/power/checksum.c
 new file mode 100644
-index 0000000..96c9ca5
+index 0000000..b9267c0
 --- /dev/null
 +++ b/kernel/power/checksum.c
 @@ -0,0 +1,371 @@
@@ -4467,11 +4549,11 @@ index 0000000..96c9ca5
 +
 +static struct suspend_sysfs_data sysfs_params[] = {
 +	{ SUSPEND2_ATTR("enabled", SYSFS_RW),
-+	  SYSFS_INT(&suspend_checksum_ops.enabled, 0, 1)
++	  SYSFS_INT(&suspend_checksum_ops.enabled, 0, 1, 0)
 +	},
 +
 +	{ SUSPEND2_ATTR("abort_if_resave_needed", SYSFS_RW),
-+	  SYSFS_BIT(&suspend_action, SUSPEND_ABORT_ON_RESAVE_NEEDED)
++	  SYSFS_BIT(&suspend_action, SUSPEND_ABORT_ON_RESAVE_NEEDED, 0)
 +	}
 +};
 +
@@ -4723,7 +4805,7 @@ index 0000000..d44bbf7
 +#endif
 +
 diff --git a/kernel/power/disk.c b/kernel/power/disk.c
-index 88fc5d7..adce096 100644
+index aec19b0..af81684 100644
 --- a/kernel/power/disk.c
 +++ b/kernel/power/disk.c
 @@ -24,6 +24,7 @@
@@ -4734,7 +4816,7 @@ index 88fc5d7..adce096 100644
  
  static int noresume = 0;
  char resume_file[256] = CONFIG_PM_STD_PARTITION;
-@@ -146,6 +147,11 @@ int pm_suspend_disk(void)
+@@ -118,6 +119,11 @@ int pm_suspend_disk(void)
  {
  	int error;
  
@@ -4746,7 +4828,7 @@ index 88fc5d7..adce096 100644
  	error = prepare_processes();
  	if (error)
  		return error;
-@@ -209,10 +215,20 @@ int pm_suspend_disk(void)
+@@ -200,10 +206,20 @@ int pm_suspend_disk(void)
   *
   */
  
@@ -4768,7 +4850,7 @@ index 88fc5d7..adce096 100644
  	mutex_lock(&pm_mutex);
  	if (!swsusp_resume_device) {
  		if (!strlen(resume_file)) {
-@@ -280,9 +296,6 @@ static int software_resume(void)
+@@ -274,9 +290,6 @@ static int software_resume(void)
  	return 0;
  }
  
@@ -4778,7 +4860,7 @@ index 88fc5d7..adce096 100644
  static const char * const pm_disk_modes[] = {
  	[PM_DISK_FIRMWARE]	= "firmware",
  	[PM_DISK_PLATFORM]	= "platform",
-@@ -463,6 +476,7 @@ static int __init resume_offset_setup(char *str)
+@@ -457,6 +470,7 @@ static int __init resume_offset_setup(char *str)
  static int __init noresume_setup(char *str)
  {
  	noresume = 1;
@@ -4788,7 +4870,7 @@ index 88fc5d7..adce096 100644
  
 diff --git a/kernel/power/extent.c b/kernel/power/extent.c
 new file mode 100644
-index 0000000..858ce32
+index 0000000..871e214
 --- /dev/null
 +++ b/kernel/power/extent.c
 @@ -0,0 +1,305 @@
@@ -4995,7 +5077,7 @@ index 0000000..858ce32
 + */
 +unsigned long suspend_extent_state_next(struct extent_iterate_state *state)
 +{
-+	if (state->current_chain > state->num_chains)
++	if (state->current_chain == state->num_chains)
 +		return 0;
 +
 +	if (state->current_extent) {
@@ -5014,7 +5096,7 @@ index 0000000..858ce32
 +	while(!state->current_extent) {
 +		int chain_num = ++(state->current_chain);
 +
-+		if (chain_num > state->num_chains)
++		if (chain_num == state->num_chains)
 +			return 0;
 +
 +		state->current_extent = (state->chains + chain_num)->first;
@@ -5099,7 +5181,7 @@ index 0000000..858ce32
 +#endif
 diff --git a/kernel/power/extent.h b/kernel/power/extent.h
 new file mode 100644
-index 0000000..d9070dc
+index 0000000..c97772b
 --- /dev/null
 +++ b/kernel/power/extent.h
 @@ -0,0 +1,77 @@
@@ -5146,7 +5228,7 @@ index 0000000..d9070dc
 +	unsigned long offset;
 +};
 +
-+#define suspend_extent_state_eof(state) ((state)->num_chains < (state)->current_chain)
++#define suspend_extent_state_eof(state) ((state)->num_chains == (state)->current_chain)
 +
 +/* Simplify iterating through all the values in an extent chain */
 +#define suspend_extent_for_each(extent_chain, extentpointer, value) \
@@ -6642,10 +6724,10 @@ index 0000000..3e6760b
 +
 +extern dev_t name_to_dev_t(char *line);
 diff --git a/kernel/power/main.c b/kernel/power/main.c
-index ff3a618..e38e630 100644
+index a064dfd..05b6686 100644
 --- a/kernel/power/main.c
 +++ b/kernel/power/main.c
-@@ -149,7 +149,7 @@ static void suspend_finish(suspend_state_t state)
+@@ -155,7 +155,7 @@ static void suspend_finish(suspend_state_t state)
  static const char * const pm_states[PM_SUSPEND_MAX] = {
  	[PM_SUSPEND_STANDBY]	= "standby",
  	[PM_SUSPEND_MEM]	= "mem",
@@ -6656,10 +6738,10 @@ index ff3a618..e38e630 100644
  };
 diff --git a/kernel/power/modules.c b/kernel/power/modules.c
 new file mode 100644
-index 0000000..95c40eb
+index 0000000..0d9dec7
 --- /dev/null
 +++ b/kernel/power/modules.c
-@@ -0,0 +1,396 @@
+@@ -0,0 +1,415 @@
 +/*
 + * kernel/power/modules.c
 + *
@@ -6853,9 +6935,26 @@ index 0000000..95c40eb
 +	list_add_tail(&module->module_list, &suspend_modules);
 +	suspend_num_modules++;
 +
-+	printk("Suspend2 %s support registered.\n", module->name);
-+	if (module->directory) {
-+		kobj = make_suspend2_sysdir(module->directory);
++	if (module->directory || module->shared_directory) {
++		/* 
++		 * Modules may share a directory, but those with shared_dir
++		 * set must be loaded (via symbol dependencies) after parents
++		 * and unloaded beforehand.
++		 */
++		if (module->shared_directory) {
++			struct suspend_module_ops *shared =
++				suspend_find_module_given_name(module->shared_directory);
++			if (!shared) {
++				printk("Suspend2: Module %s wants to share %s's directory but %s isn't loaded.\n",
++						module->name,
++						module->shared_directory,
++						module->shared_directory);
++				suspend_unregister_module(module);
++				return -ENODEV;
++			}
++			kobj = shared->dir_kobj;
++		} else
++			kobj = make_suspend2_sysdir(module->directory);
 +		module->dir_kobj = kobj;
 +		for (i=0; i < module->num_sysfs_entries; i++) {
 +			int result = suspend_register_sysfs_file(kobj, &module->sysfs_data[i]);
@@ -6863,6 +6962,8 @@ index 0000000..95c40eb
 +				return result;
 +		}
 +	}
++
++	printk("Suspend2 %s support registered.\n", module->name);
 +	return 0;
 +}
 +
@@ -6875,12 +6976,12 @@ index 0000000..95c40eb
 +{
 +	int i;
 +
-+	printk("Suspend2 %s support removed.\n", module->name);
++	if (module->dir_kobj)
++		for (i=0; i < module->num_sysfs_entries; i++)
++			suspend_unregister_sysfs_file(module->dir_kobj, &module->sysfs_data[i]);
 +
-+	for (i=0; i < module->num_sysfs_entries; i++)
-+		suspend_unregister_sysfs_file(&module->sysfs_data[i]);
-+
-+	remove_suspend2_sysdir(module->dir_kobj);
++	if (!module->shared_directory && module->directory)
++		remove_suspend2_sysdir(module->dir_kobj);
 +
 +	switch (module->type) {
 +		case FILTER_MODULE:
@@ -7058,10 +7159,10 @@ index 0000000..95c40eb
 +#endif
 diff --git a/kernel/power/modules.h b/kernel/power/modules.h
 new file mode 100644
-index 0000000..cd6892f
+index 0000000..ed94458
 --- /dev/null
 +++ b/kernel/power/modules.h
-@@ -0,0 +1,163 @@
+@@ -0,0 +1,164 @@
 +/*
 + * kernel/power/modules.h
 + *
@@ -7107,6 +7208,7 @@ index 0000000..cd6892f
 +	int type;
 +	char *name;
 +	char *directory;
++	char *shared_directory;
 +	struct kobject *dir_kobj;
 +	struct module *module;
 +	int enabled;
@@ -7227,10 +7329,10 @@ index 0000000..cd6892f
 +#endif
 diff --git a/kernel/power/netlink.c b/kernel/power/netlink.c
 new file mode 100644
-index 0000000..737d0c9
+index 0000000..36f5c0c
 --- /dev/null
 +++ b/kernel/power/netlink.c
-@@ -0,0 +1,383 @@
+@@ -0,0 +1,387 @@
 +/*
 + * kernel/power/netlink.c
 + *
@@ -7336,7 +7438,7 @@ index 0000000..737d0c9
 +	wake_up_process(t);
 +	read_unlock(&tasklist_lock);
 +
-+	schedule();
++	yield();
 +
 +	return;
 +
@@ -7614,6 +7716,10 @@ index 0000000..737d0c9
 +
 +	return 0;
 +}
++
++EXPORT_SYMBOL(suspend_netlink_setup);
++EXPORT_SYMBOL(suspend_netlink_close);
++EXPORT_SYMBOL(suspend_send_netlink_message);
 diff --git a/kernel/power/netlink.h b/kernel/power/netlink.h
 new file mode 100644
 index 0000000..97647e8
@@ -7680,10 +7786,10 @@ index 0000000..97647e8
 +#endif
 diff --git a/kernel/power/pagedir.c b/kernel/power/pagedir.c
 new file mode 100644
-index 0000000..9a33035
+index 0000000..f170960
 --- /dev/null
 +++ b/kernel/power/pagedir.c
-@@ -0,0 +1,461 @@
+@@ -0,0 +1,462 @@
 +/*
 + * kernel/power/pagedir.c
 + *
@@ -7776,12 +7882,12 @@ index 0000000..9a33035
 +
 +	for_each_zone(zone) {
 +		spin_lock_irqsave(&zone->lru_lock, flags);
-+		if (zone->nr_inactive) {
++		if (zone_page_state(zone, NR_INACTIVE)) {
 +			struct page *page;
 +			list_for_each_entry(page, &zone->inactive_list, lru)
 +				SetPagePageset2(page);
 +		}
-+		if (zone->nr_active) {
++		if (zone_page_state(zone, NR_ACTIVE)) {
 +			struct page *page;
 +			list_for_each_entry(page, &zone->active_list, lru)
 +				SetPagePageset2(page);
@@ -8137,7 +8243,8 @@ index 0000000..9a33035
 +		kunmap(high_pbe_page);
 +
 +	if (last_high_pbe_page != high_pbe_page) {
-+		kunmap(last_high_pbe_page);
++		if (last_high_pbe_page)
++			kunmap(last_high_pbe_page);
 +		__free_page(high_pbe_page);
 +	}
 +
@@ -8473,10 +8580,10 @@ index eb461b8..f2f6a9f 100644
 +#define PBES_PER_PAGE (PAGE_SIZE / sizeof(struct pbe))
 diff --git a/kernel/power/power_off.c b/kernel/power/power_off.c
 new file mode 100644
-index 0000000..c1c40b5
+index 0000000..87b2228
 --- /dev/null
 +++ b/kernel/power/power_off.c
-@@ -0,0 +1,89 @@
+@@ -0,0 +1,92 @@
 +/*
 + * kernel/power/power_off.c
 + *
@@ -8500,7 +8607,7 @@ index 0000000..c1c40b5
 +
 +unsigned long suspend_powerdown_method = 0; /* 0 - Kernel power off */
 +
-+int try_pm_state_powerdown(void)
++static int try_pm_state_powerdown(void)
 +{
 +	int result = 0;
 +
@@ -8566,6 +8673,9 @@ index 0000000..c1c40b5
 +	while (1)
 +		cpu_relax();
 +}
++
++EXPORT_SYMBOL(suspend_powerdown_method);
++EXPORT_SYMBOL(suspend_power_down);
 diff --git a/kernel/power/power_off.h b/kernel/power/power_off.h
 new file mode 100644
 index 0000000..333e8a1
@@ -8587,10 +8697,10 @@ index 0000000..333e8a1
 +extern unsigned long suspend_powerdown_method;
 diff --git a/kernel/power/prepare_image.c b/kernel/power/prepare_image.c
 new file mode 100644
-index 0000000..6273b4e
+index 0000000..4222c87
 --- /dev/null
 +++ b/kernel/power/prepare_image.c
-@@ -0,0 +1,827 @@
+@@ -0,0 +1,819 @@
 +/*
 + * kernel/power/prepare_image.c
 + *
@@ -8674,7 +8784,7 @@ index 0000000..6273b4e
 +			}
 +		}
 +
-+		result += zone->free_pages;
++		result += zone_page_state(zone, NR_FREE_PAGES);
 +	}
 +	return result;
 +}
@@ -9294,7 +9404,7 @@ index 0000000..6273b4e
 +				highpages_needed_to_suspend() :
 +				lowpages_needed_to_suspend(), to_free);
 +
-+			if (!zone_type_free)
++			if (zone_type_free < 0)
 +				break;
 +
 +			for_each_zone(zone) {
@@ -9312,7 +9422,7 @@ index 0000000..6273b4e
 +					highpages_needed_to_suspend() :
 +					lowpages_needed_to_suspend(), to_free);
 +
-+				if (to_free < 0)
++				if (zone_type_free < 0)
 +					break;
 +			}
 +		}
@@ -9334,14 +9444,6 @@ index 0000000..6273b4e
 +
 +	/* Blank out image size display */
 +	suspend_update_status(100, 100, NULL);
-+
-+	if (!test_result_state(SUSPEND_ABORTED) &&
-+	    (amount_needed(0) > 0)) {
-+		display_stats(1, 1);
-+		abort_suspend(SUSPEND_UNABLE_TO_FREE_ENOUGH_MEMORY,
-+			"Unable to free sufficient memory to suspend. Still "
-+			"need %d pages.\n", amount_needed(0));
-+	}
 +}
 +
 +/* suspend_prepare_image
@@ -9403,9 +9505,9 @@ index 0000000..6273b4e
 +
 +	if (!test_result_state(SUSPEND_ABORTED)) {
 +		if (amount_needed(0) > 0) {
++			display_stats(1, 0);
 +			abort_suspend(SUSPEND_UNABLE_TO_PREPARE_IMAGE,
 +				"Unable to successfully prepare the image.\n");
-+			display_stats(1, 0);
 +		} else {
 +			result = 0;
 +			suspend_cond_pause(1, "Image preparation complete.");
@@ -9511,7 +9613,7 @@ index 6d566bf..9639b83 100644
 +
  EXPORT_SYMBOL(refrigerator);
 diff --git a/kernel/power/snapshot.c b/kernel/power/snapshot.c
-index c024606..4d39d60 100644
+index fc53ad0..43263a0 100644
 --- a/kernel/power/snapshot.c
 +++ b/kernel/power/snapshot.c
 @@ -41,6 +41,11 @@
@@ -9578,7 +9680,7 @@ index c024606..4d39d60 100644
  	drain_local_pages();
 diff --git a/kernel/power/storage.c b/kernel/power/storage.c
 new file mode 100644
-index 0000000..6c506ad
+index 0000000..702c1d4
 --- /dev/null
 +++ b/kernel/power/storage.c
 @@ -0,0 +1,288 @@
@@ -9819,15 +9921,15 @@ index 0000000..6c506ad
 +	},
 +
 +	{ SUSPEND2_ATTR("enabled", SYSFS_RW),
-+	  SYSFS_INT(&usm_ops.enabled, 0, 1)
++	  SYSFS_INT(&usm_ops.enabled, 0, 1, 0)
 +	},
 +
 +	{ SUSPEND2_ATTR("program", SYSFS_RW),
-+	  SYSFS_STRING(usm_helper_data.program, 254, SYSFS_SM_NOT_NEEDED)
++	  SYSFS_STRING(usm_helper_data.program, 254, 0)
 +	},
 +
 +	{ SUSPEND2_ATTR("activate_storage", SYSFS_RW),
-+	  SYSFS_INT(&storage_manager_action, 0, 1),
++	  SYSFS_INT(&storage_manager_action, 0, 1, 0),
 +	  .write_side_effect		= storage_manager_activate,
 +	}
 +};
@@ -9931,10 +10033,10 @@ index 0000000..e05eeef
 +#endif
 diff --git a/kernel/power/suspend.c b/kernel/power/suspend.c
 new file mode 100644
-index 0000000..c97e3d4
+index 0000000..bce795c
 --- /dev/null
 +++ b/kernel/power/suspend.c
-@@ -0,0 +1,987 @@
+@@ -0,0 +1,1006 @@
 +/*
 + * kernel/power/suspend.c
 + */
@@ -10075,8 +10177,10 @@ index 0000000..c97e3d4
 +	suspend_put_modules();
 +	clear_suspend_state(SUSPEND_RUNNING);
 +	set_fs(oldfs);
-+	if (suspend_or_resume)
++	if (suspend_or_resume) {
 +		block_dump = block_dump_save;
++		set_cpus_allowed(current, CPU_MASK_ALL);
++	}
 +}
 +
 +/*
@@ -10097,8 +10201,13 @@ index 0000000..c97e3d4
 +	oldfs = get_fs();
 +	set_fs(KERNEL_DS);
 +
-+	if (!suspendActiveAllocator)
-+		suspend_attempt_to_parse_resume_device(1);
++	if (!suspendActiveAllocator) {
++		/* Be quiet if we're not trying to suspend or resume */ 
++		if (suspend_or_resume)
++			printk("No storage allocator is currently active. "
++					"Rechecking whether we can use one.\n");
++		suspend_attempt_to_parse_resume_device(!suspend_or_resume);
++	}
 +
 +	set_suspend_state(SUSPEND_RUNNING);
 +
@@ -10252,6 +10361,8 @@ index 0000000..c97e3d4
 +		free_page((unsigned long) buffer);
 +	}
 +
++	if (!test_action_state(SUSPEND_LATE_CPU_HOTPLUG))
++		enable_nonboot_cpus();
 +	suspend_cleanup_console();
 +
 +	clear_suspend_state(SUSPEND_IGNORE_LOGLEVEL);
@@ -10305,14 +10416,16 @@ index 0000000..c97e3d4
 +		return 1;
 +	}
 +	
-+	disable_nonboot_cpus();
++	if (test_action_state(SUSPEND_LATE_CPU_HOTPLUG))
++		disable_nonboot_cpus();
 +
 +	temp_result = suspend2_suspend();
 +
 +	if (pm_ops && pm_ops->finish && suspend_powerdown_method > 3)
 +		pm_ops->finish(suspend_powerdown_method);
 +
-+	enable_nonboot_cpus();
++	if (test_action_state(SUSPEND_LATE_CPU_HOTPLUG))
++		enable_nonboot_cpus();
 +
 +	device_resume();
 +
@@ -10409,6 +10522,8 @@ index 0000000..c97e3d4
 +		return 0;
 +	
 +	suspend_prepare_console();
++	if (!test_action_state(SUSPEND_LATE_CPU_HOTPLUG))
++		disable_nonboot_cpus();
 +
 +	return 1;
 +}
@@ -10685,7 +10800,9 @@ index 0000000..c97e3d4
 +/* Wrapper for when called from init/do_mounts.c */
 +void __suspend2_try_resume(void)
 +{
-+	if (suspend_start_anything(1))
++	clear_suspend_state(SUSPEND_RESUME_NOT_DONE);
++
++	if (suspend_start_anything(SYSFS_RESUMING))
 +		return;
 +
 +	mutex_lock(&pm_mutex);
@@ -10699,7 +10816,7 @@ index 0000000..c97e3d4
 +
 +	mutex_unlock(&pm_mutex);
 +
-+	suspend_finish_anything(1);
++	suspend_finish_anything(SYSFS_RESUMING);
 +}
 +
 +/*
@@ -10714,7 +10831,7 @@ index 0000000..c97e3d4
 +
 +	if (!atomic_read(&actions_running)) {
 +		/* Came in via /sys/power/disk */
-+		if (suspend_start_anything(1))
++		if (suspend_start_anything(SYSFS_SUSPENDING))
 +			return -EBUSY;
 +		sys_power_disk = 1;
 +	}
@@ -10746,7 +10863,7 @@ index 0000000..c97e3d4
 +		result = do_suspend2_step(STEP_SUSPEND_POWERDOWN);
 +out:
 +	if (sys_power_disk)
-+		suspend_finish_anything(1);
++		suspend_finish_anything(SYSFS_SUSPENDING);
 +	return result;
 +}
 +
@@ -10756,99 +10873,102 @@ index 0000000..c97e3d4
 + */
 +static struct suspend_sysfs_data sysfs_params[] = {
 +	{ SUSPEND2_ATTR("extra_pages_allowance", SYSFS_RW),
-+	  SYSFS_INT(&extra_pd1_pages_allowance, 0, INT_MAX)
++	  SYSFS_INT(&extra_pd1_pages_allowance, 0, INT_MAX, 0)
 +	},
 +
 +	{ SUSPEND2_ATTR("image_exists", SYSFS_RW),
 +	  SYSFS_CUSTOM(image_exists_read, image_exists_write,
-+			  SYSFS_NEEDS_FOR_BOTH)
++			  SYSFS_NEEDS_SM_FOR_BOTH)
 +	},
 +
 +	{ SUSPEND2_ATTR("resume2", SYSFS_RW),
-+	  SYSFS_STRING(resume2_file, 255, SYSFS_NEEDS_FOR_WRITE),
++	  SYSFS_STRING(resume2_file, 255, SYSFS_NEEDS_SM_FOR_WRITE),
 +	  .write_side_effect = attempt_to_parse_resume_device2,
 +	},
 +
 +	{ SUSPEND2_ATTR("poweroff_resume2", SYSFS_RW),
-+	  SYSFS_STRING(poweroff_resume2, 255, SYSFS_NEEDS_FOR_WRITE),
++	  SYSFS_STRING(poweroff_resume2, 255, SYSFS_NEEDS_SM_FOR_WRITE),
 +	  .write_side_effect = attempt_to_parse_po_resume_device2,
 +	},
 +	{ SUSPEND2_ATTR("debug_info", SYSFS_READONLY),
-+	  SYSFS_CUSTOM(get_suspend_debug_info, NULL, SYSFS_SM_NOT_NEEDED)
++	  SYSFS_CUSTOM(get_suspend_debug_info, NULL, 0)
 +	},
 +	
 +	{ SUSPEND2_ATTR("ignore_rootfs", SYSFS_RW),
-+	  SYSFS_BIT(&suspend_action, SUSPEND_IGNORE_ROOTFS)
++	  SYSFS_BIT(&suspend_action, SUSPEND_IGNORE_ROOTFS, 0)
 +	},
 +	
 +	{ SUSPEND2_ATTR("image_size_limit", SYSFS_RW),
-+	  SYSFS_INT(&image_size_limit, -2, INT_MAX)
++	  SYSFS_INT(&image_size_limit, -2, INT_MAX, 0)
 +	},
 +
 +	{ SUSPEND2_ATTR("last_result", SYSFS_RW),
-+	  SYSFS_UL(&suspend_result, 0, 0)
++	  SYSFS_UL(&suspend_result, 0, 0, 0)
 +	},
 +	
 +	{ SUSPEND2_ATTR("no_multithreaded_io", SYSFS_RW),
-+	  SYSFS_BIT(&suspend_action, SUSPEND_NO_MULTITHREADED_IO)
++	  SYSFS_BIT(&suspend_action, SUSPEND_NO_MULTITHREADED_IO, 0)
 +	},
 +
 +	{ SUSPEND2_ATTR("full_pageset2", SYSFS_RW),
-+	  SYSFS_BIT(&suspend_action, SUSPEND_PAGESET2_FULL)
++	  SYSFS_BIT(&suspend_action, SUSPEND_PAGESET2_FULL, 0)
 +	},
 +
 +	{ SUSPEND2_ATTR("reboot", SYSFS_RW),
-+	  SYSFS_BIT(&suspend_action, SUSPEND_REBOOT)
++	  SYSFS_BIT(&suspend_action, SUSPEND_REBOOT, 0)
 +	},
 +
 +#ifdef CONFIG_SOFTWARE_SUSPEND
 +	{ SUSPEND2_ATTR("replace_swsusp", SYSFS_RW),
-+	  SYSFS_BIT(&suspend_action, SUSPEND_REPLACE_SWSUSP)
++	  SYSFS_BIT(&suspend_action, SUSPEND_REPLACE_SWSUSP, 0)
 +	},
 +#endif
 +
 +	{ SUSPEND2_ATTR("resume_commandline", SYSFS_RW),
-+	  SYSFS_STRING(suspend2_nosave_commandline, COMMAND_LINE_SIZE,
-+			  SYSFS_SM_NOT_NEEDED)
++	  SYSFS_STRING(suspend2_nosave_commandline, COMMAND_LINE_SIZE, 0)
 +	},
 +
 +	{ SUSPEND2_ATTR("version", SYSFS_READONLY),
-+	  SYSFS_STRING(SUSPEND_CORE_VERSION, 0, SYSFS_SM_NOT_NEEDED)
++	  SYSFS_STRING(SUSPEND_CORE_VERSION, 0, 0)
 +	},
 +
 +	{ SUSPEND2_ATTR("no_load_direct", SYSFS_RW),
-+	  SYSFS_BIT(&suspend_action, SUSPEND_NO_DIRECT_LOAD)
++	  SYSFS_BIT(&suspend_action, SUSPEND_NO_DIRECT_LOAD, 0)
 +	},
 +
 +	{ SUSPEND2_ATTR("freezer_test", SYSFS_RW),
-+	  SYSFS_BIT(&suspend_action, SUSPEND_FREEZER_TEST)
++	  SYSFS_BIT(&suspend_action, SUSPEND_FREEZER_TEST, 0)
 +	},
 +
 +	{ SUSPEND2_ATTR("test_bio", SYSFS_RW),
-+	  SYSFS_BIT(&suspend_action, SUSPEND_TEST_BIO)
++	  SYSFS_BIT(&suspend_action, SUSPEND_TEST_BIO, 0)
 +	},
 +
 +	{ SUSPEND2_ATTR("test_filter_speed", SYSFS_RW),
-+	  SYSFS_BIT(&suspend_action, SUSPEND_TEST_FILTER_SPEED)
++	  SYSFS_BIT(&suspend_action, SUSPEND_TEST_FILTER_SPEED, 0)
 +	},
 +
 +	{ SUSPEND2_ATTR("slow", SYSFS_RW),
-+	  SYSFS_BIT(&suspend_action, SUSPEND_SLOW)
++	  SYSFS_BIT(&suspend_action, SUSPEND_SLOW, 0)
 +	},
 +
 +	{ SUSPEND2_ATTR("no_pageset2", SYSFS_RW),
-+	  SYSFS_BIT(&suspend_action, SUSPEND_NO_PAGESET2)
++	  SYSFS_BIT(&suspend_action, SUSPEND_NO_PAGESET2, 0)
++	},
++	  
++	{ SUSPEND2_ATTR("late_cpu_hotplug", SYSFS_RW),
++	  SYSFS_BIT(&suspend_action, SUSPEND_LATE_CPU_HOTPLUG, 0)
 +	},
 +	  
 +#if defined(CONFIG_ACPI)
 +	{ SUSPEND2_ATTR("powerdown_method", SYSFS_RW),
-+	  SYSFS_UL(&suspend_powerdown_method, 0, 5)
++	  SYSFS_UL(&suspend_powerdown_method, 0, 5, 0)
 +	},
 +#endif
 +
 +#ifdef CONFIG_SUSPEND2_KEEP_IMAGE
 +	{ SUSPEND2_ATTR("keep_image", SYSFS_RW),
-+	  SYSFS_BIT(&suspend_action, SUSPEND_KEEP_IMAGE)
++	  SYSFS_BIT(&suspend_action, SUSPEND_KEEP_IMAGE, 0)
 +	},
 +#endif
 +};
@@ -10906,7 +11026,8 @@ index 0000000..c97e3d4
 +	s2_usm_exit();
 +
 +	for (i=0; i< numfiles; i++)
-+		suspend_unregister_sysfs_file(&sysfs_params[i]);
++		suspend_unregister_sysfs_file(&suspend2_subsys.kset.kobj,
++				&sysfs_params[i]);
 +
 +	s2_core_fns = NULL;
 +
@@ -10924,10 +11045,10 @@ index 0000000..c97e3d4
 +#endif
 diff --git a/kernel/power/suspend.h b/kernel/power/suspend.h
 new file mode 100644
-index 0000000..9ad2607
+index 0000000..bae7226
 --- /dev/null
 +++ b/kernel/power/suspend.h
-@@ -0,0 +1,179 @@
+@@ -0,0 +1,180 @@
 +/*
 + * kernel/power/suspend.h
 + *
@@ -10949,7 +11070,7 @@ index 0000000..9ad2607
 +#include <asm/setup.h>
 +#include "pageflags.h"
 +
-+#define SUSPEND_CORE_VERSION "2.2.9.11"
++#define SUSPEND_CORE_VERSION "2.2.9.13"
 +
 +/*		 == Action states == 		*/
 +
@@ -10974,6 +11095,7 @@ index 0000000..9ad2607
 +	SUSPEND_ABORT_ON_RESAVE_NEEDED,
 +	SUSPEND_NO_MULTITHREADED_IO,
 +	SUSPEND_NO_DIRECT_LOAD,
++	SUSPEND_LATE_CPU_HOTPLUG,
 +};
 +
 +extern unsigned long suspend_action;
@@ -11109,10 +11231,10 @@ index 0000000..9ad2607
 +#endif
 diff --git a/kernel/power/suspend_block_io.c b/kernel/power/suspend_block_io.c
 new file mode 100644
-index 0000000..1b710b6
+index 0000000..3a505bf
 --- /dev/null
 +++ b/kernel/power/suspend_block_io.c
-@@ -0,0 +1,945 @@
+@@ -0,0 +1,978 @@
 +/*
 + * kernel/power/suspend_block_io.c
 + *
@@ -11639,6 +11761,35 @@ index 0000000..1b710b6
 +	suspend_devinfo = info;
 +}
 +
++static void dump_block_chains(void)
++{
++	int i;
++
++	for (i = 0; i < suspend_writer_posn.num_chains; i++) {
++		struct extent *this;
++
++		printk("Chain %d:", i);
++
++		this = (suspend_writer_posn.chains + i)->first;
++
++		if (!this)
++			printk(" (Empty)");
++
++		while (this) {
++			printk(" [%lu-%lu]%s", this->minimum, this->maximum,
++					this->next ? "," : "");
++			this = this->next;
++		}
++
++		printk("\n");
++	}
++
++	for (i = 0; i < 3; i++)
++		printk("Posn %d: Chain %d, extent %d, offset %lu.\n", i,
++				suspend_writer_posn_save[i].chain_num,
++				suspend_writer_posn_save[i].extent_num,
++				suspend_writer_posn_save[i].offset);
++}
 +static int forward_extra_blocks(void)
 +{
 +	int i;
@@ -11649,6 +11800,7 @@ index 0000000..1b710b6
 +
 +	if (suspend_extent_state_eof(&suspend_writer_posn)) {
 +		printk("Extent state eof.\n");
++		dump_block_chains();
 +		return -ENODATA;
 +	}
 +
@@ -11694,9 +11846,12 @@ index 0000000..1b710b6
 +		return -ENODATA;
 +	}
 +
-+	BUG_ON(current_stream == 0 && writing &&
++	if (current_stream == 0 && writing &&
 +		suspend_writer_posn.current_chain == suspend_writer_posn_save[2].chain_num &&
-+		suspend_writer_posn.current_offset == suspend_writer_posn_save[2].offset);
++		suspend_writer_posn.current_offset == suspend_writer_posn_save[2].offset) {
++		dump_block_chains();
++		BUG();
++	}
 +
 +	dev_info = &suspend_devinfo[suspend_writer_posn.current_chain];
 +
@@ -12060,10 +12215,10 @@ index 0000000..1b710b6
 +#endif
 diff --git a/kernel/power/suspend_builtin.c b/kernel/power/suspend_builtin.c
 new file mode 100644
-index 0000000..e2bec6d
+index 0000000..78471c0
 --- /dev/null
 +++ b/kernel/power/suspend_builtin.c
-@@ -0,0 +1,286 @@
+@@ -0,0 +1,288 @@
 +/*
 + * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
@@ -12119,7 +12274,6 @@ index 0000000..e2bec6d
 +EXPORT_SYMBOL(drop_pagecache);
 +EXPORT_SYMBOL(restore_pblist);
 +EXPORT_SYMBOL(pm_mutex);
-+EXPORT_SYMBOL(console_printk);
 +EXPORT_SYMBOL(pm_restore_console);
 +EXPORT_SYMBOL(super_blocks);
 +EXPORT_SYMBOL(next_zone);
@@ -12139,7 +12293,6 @@ index 0000000..e2bec6d
 +EXPORT_SYMBOL(block_dump);
 +EXPORT_SYMBOL(unlink_lru_lists);
 +EXPORT_SYMBOL(relink_lru_lists);
-+EXPORT_SYMBOL(kmsg_redirect);
 +EXPORT_SYMBOL(power_subsys);
 +EXPORT_SYMBOL(machine_power_off);
 +EXPORT_SYMBOL(suspend_enter);
@@ -12151,6 +12304,14 @@ index 0000000..e2bec6d
 +#ifdef CONFIG_SUSPEND_SMP
 +EXPORT_SYMBOL(disable_nonboot_cpus);
 +EXPORT_SYMBOL(enable_nonboot_cpus);
++#endif
++#endif
++
++#ifdef CONFIG_SUSPEND2_USERUI_EXPORTS
++EXPORT_SYMBOL(kmsg_redirect);
++EXPORT_SYMBOL(console_printk);
++#ifndef CONFIG_COMPAT
++EXPORT_SYMBOL(sys_ioctl);
 +#endif
 +#endif
 +
@@ -12285,10 +12446,6 @@ index 0000000..e2bec6d
 +EXPORT_SYMBOL(restore_highmem_pblist);
 +#endif
 +
-+#ifndef CONFIG_COMPAT
-+EXPORT_SYMBOL(sys_ioctl);
-+#endif
-+
 +EXPORT_SYMBOL(suspend2_nosave_state1);
 +EXPORT_SYMBOL(suspend2_nosave_state2);
 +EXPORT_SYMBOL(suspend2_nosave_state3);
@@ -12389,10 +12546,10 @@ index 0000000..33fc0c3
 +#endif
 diff --git a/kernel/power/suspend_compress.c b/kernel/power/suspend_compress.c
 new file mode 100644
-index 0000000..7348ba7
+index 0000000..87304b3
 --- /dev/null
 +++ b/kernel/power/suspend_compress.c
-@@ -0,0 +1,434 @@
+@@ -0,0 +1,436 @@
 +/*
 + * kernel/power/compression.c
 + *
@@ -12508,8 +12665,10 @@ index 0000000..7348ba7
 +
 +static int suspend_compress_init(int suspend_or_resume)
 +{
-+	if (suspend_or_resume)
-+		suspend_compress_bytes_in = suspend_compress_bytes_out = 0;
++	if (!suspend_or_resume)
++		return 0;
++
++	suspend_compress_bytes_in = suspend_compress_bytes_out = 0;
 +
 +	next_driver = suspend_get_next_filter(&suspend_compression_ops);
 +
@@ -12766,17 +12925,17 @@ index 0000000..7348ba7
 +static struct suspend_sysfs_data sysfs_params[] = {
 +	{
 +		SUSPEND2_ATTR("expected_compression", SYSFS_RW),
-+		SYSFS_INT(&suspend_expected_compression, 0, 99)
++		SYSFS_INT(&suspend_expected_compression, 0, 99, 0)
 +	},
 +
 +	{
 +		SUSPEND2_ATTR("enabled", SYSFS_RW),
-+		SYSFS_INT(&suspend_compression_ops.enabled, 0, 1)
++		SYSFS_INT(&suspend_compression_ops.enabled, 0, 1, 0)
 +	},
 +
 +	{
 +		SUSPEND2_ATTR("algorithm", SYSFS_RW),
-+		SYSFS_STRING(suspend_compressor_name, 31, SYSFS_SM_NOT_NEEDED)
++		SYSFS_STRING(suspend_compressor_name, 31, 0)
 +	}
 +};
 +
@@ -12829,10 +12988,10 @@ index 0000000..7348ba7
 +#endif
 diff --git a/kernel/power/suspend_file.c b/kernel/power/suspend_file.c
 new file mode 100644
-index 0000000..10282ea
+index 0000000..c9cd597
 --- /dev/null
 +++ b/kernel/power/suspend_file.c
-@@ -0,0 +1,1147 @@
+@@ -0,0 +1,1146 @@
 +/*
 + * kernel/power/suspend_file.c
 + *
@@ -13628,8 +13787,7 @@ index 0000000..10282ea
 +{
 +	int result;
 +
-+	if (nr_suspends > 0)
-+		suspend_file_release_storage();
++	suspend_file_release_storage();
 +
 +	result = suspend_file_signature_op(INVALIDATE);
 +	if (result == 1 && !nr_suspends)
@@ -13890,7 +14048,7 @@ index 0000000..10282ea
 +		if (suspendActiveAllocator != &suspend_fileops)
 +			return 0;
 +
-+		if (!*suspend_file_target) {
++		if (starting_cycle & SYSFS_SUSPEND && !*suspend_file_target) {
 +			printk("FileAllocator is the active writer,  "
 +					"but no filename has been set.\n");
 +			return 1;
@@ -13913,13 +14071,13 @@ index 0000000..10282ea
 +
 +	{
 +	 SUSPEND2_ATTR("target", SYSFS_RW),
-+	 SYSFS_STRING(suspend_file_target, 256, SYSFS_NEEDS_FOR_WRITE),
++	 SYSFS_STRING(suspend_file_target, 256, SYSFS_NEEDS_SM_FOR_WRITE),
 +	 .write_side_effect		= test_suspend_file_target,
 +	},
 +
 +	{
 +	  SUSPEND2_ATTR("enabled", SYSFS_RW),
-+	  SYSFS_INT(&suspend_fileops.enabled, 0, 1),
++	  SYSFS_INT(&suspend_fileops.enabled, 0, 1, 0),
 +	  .write_side_effect		= attempt_to_parse_resume_device2,
 +	}
 +};
@@ -13982,7 +14140,7 @@ index 0000000..10282ea
 +#endif
 diff --git a/kernel/power/suspend_swap.c b/kernel/power/suspend_swap.c
 new file mode 100644
-index 0000000..32ef0c6
+index 0000000..885439f
 --- /dev/null
 +++ b/kernel/power/suspend_swap.c
 @@ -0,0 +1,1250 @@
@@ -15166,16 +15324,16 @@ index 0000000..32ef0c6
 +static struct suspend_sysfs_data sysfs_params[] = {
 +	{
 +	 SUSPEND2_ATTR("swapfilename", SYSFS_RW),
-+	 SYSFS_STRING(swapfilename, 255, SYSFS_SM_NOT_NEEDED)
++	 SYSFS_STRING(swapfilename, 255, 0)
 +	},
 +
 +	{
 +	 SUSPEND2_ATTR("headerlocations", SYSFS_READONLY),
-+	 SYSFS_CUSTOM(header_locations_read_sysfs, NULL, SYSFS_SM_NOT_NEEDED)
++	 SYSFS_CUSTOM(header_locations_read_sysfs, NULL, 0)
 +	},
 +
 +	{ SUSPEND2_ATTR("enabled", SYSFS_RW),
-+	  SYSFS_INT(&suspend_swapops.enabled, 0, 1),
++	  SYSFS_INT(&suspend_swapops.enabled, 0, 1, 0),
 +	  .write_side_effect		= attempt_to_parse_resume_device2,
 +	}
 +};
@@ -15236,497 +15394,16 @@ index 0000000..32ef0c6
 +#else
 +late_initcall(suspend_swap_load);
 +#endif
-diff --git a/kernel/power/sysfs.c b/kernel/power/sysfs.c
+diff --git a/kernel/power/suspend_userui.c b/kernel/power/suspend_userui.c
 new file mode 100644
-index 0000000..5752da3
+index 0000000..9d983c4
 --- /dev/null
-+++ b/kernel/power/sysfs.c
-@@ -0,0 +1,345 @@
++++ b/kernel/power/suspend_userui.c
+@@ -0,0 +1,648 @@
 +/*
-+ * kernel/power/sysfs.c
++ * kernel/power/user_ui.c
 + *
-+ * Copyright (C) 2002-2007 Nigel Cunningham (nigel at suspend2 net)
-+ *
-+ * This file is released under the GPLv2.
-+ *
-+ * This file contains support for sysfs entries for tuning Suspend2.
-+ *
-+ * We have a generic handler that deals with the most common cases, and
-+ * hooks for special handlers to use.
-+ */
-+
-+#include <linux/suspend.h>
-+#include <linux/module.h>
-+#include <asm/uaccess.h>
-+
-+#include "sysfs.h"
-+#include "suspend.h"
-+#include "storage.h"
-+
-+static int suspend_sysfs_initialised = 0;
-+
-+static void suspend_initialise_sysfs(void);
-+
-+static struct suspend_sysfs_data sysfs_params[];
-+
-+#define to_sysfs_data(_attr) container_of(_attr, struct suspend_sysfs_data, attr)
-+
-+static void suspend_main_wrapper(void)
-+{
-+	__suspend2_try_suspend(0);
-+}
-+
-+static ssize_t suspend2_attr_show(struct kobject *kobj, struct attribute *attr,
-+			      char *page)
-+{
-+	struct suspend_sysfs_data *sysfs_data = to_sysfs_data(attr);
-+	int len = 0;
-+
-+	if (suspend_start_anything(0))
-+		return -EBUSY;
-+
-+	if (sysfs_data->needs_storage_manager & SYSFS_NEEDS_FOR_READ)
-+		suspend_prepare_usm();
-+	
-+	switch (sysfs_data->type) {
-+		case SUSPEND_SYSFS_DATA_CUSTOM:
-+			len = (sysfs_data->data.special.read_sysfs) ?
-+				(sysfs_data->data.special.read_sysfs)(page, PAGE_SIZE)
-+				: 0;
-+			break;
-+		case SUSPEND_SYSFS_DATA_BIT:
-+			len = sprintf(page, "%d\n", 
-+				-test_bit(sysfs_data->data.bit.bit,
-+					sysfs_data->data.bit.bit_vector));
-+			break;
-+		case SUSPEND_SYSFS_DATA_INTEGER:
-+			len = sprintf(page, "%d\n",
-+				*(sysfs_data->data.integer.variable));
-+			break;
-+		case SUSPEND_SYSFS_DATA_LONG:
-+			len = sprintf(page, "%ld\n",
-+				*(sysfs_data->data.a_long.variable));
-+			break;
-+		case SUSPEND_SYSFS_DATA_UL:
-+			len = sprintf(page, "%lu\n",
-+				*(sysfs_data->data.ul.variable));
-+			break;
-+		case SUSPEND_SYSFS_DATA_STRING:
-+			len = sprintf(page, "%s\n",
-+				sysfs_data->data.string.variable);
-+			break;
-+	}
-+	/* Side effect routine? */
-+	if (sysfs_data->read_side_effect)
-+		sysfs_data->read_side_effect();
-+
-+	if (sysfs_data->needs_storage_manager & SYSFS_NEEDS_FOR_READ)
-+		suspend_cleanup_usm();
-+
-+	suspend_finish_anything(0);
-+
-+	return len;
-+}
-+
-+#define BOUND(_variable, _type) \
-+	if (*_variable < sysfs_data->data._type.minimum) \
-+		*_variable = sysfs_data->data._type.minimum; \
-+	else if (*_variable > sysfs_data->data._type.maximum) \
-+		*_variable = sysfs_data->data._type.maximum;
-+
-+static ssize_t suspend2_attr_store(struct kobject *kobj, struct attribute *attr,
-+		const char *my_buf, size_t count)
-+{
-+	int assigned_temp_buffer = 0, result = count;
-+	struct suspend_sysfs_data *sysfs_data = to_sysfs_data(attr);
-+
-+	if (suspend_start_anything((sysfs_data == &sysfs_params[0])))
-+		return -EBUSY;
-+
-+	((char *) my_buf)[count] = 0;
-+
-+	if (sysfs_data->needs_storage_manager & SYSFS_NEEDS_FOR_WRITE)
-+		suspend_prepare_usm();
-+
-+	switch (sysfs_data->type) {
-+		case SUSPEND_SYSFS_DATA_CUSTOM:
-+			if (sysfs_data->data.special.write_sysfs)
-+				result = (sysfs_data->data.special.write_sysfs)
-+					(my_buf, count);
-+			break;
-+		case SUSPEND_SYSFS_DATA_BIT:
-+			{
-+			int value = simple_strtoul(my_buf, NULL, 0);
-+			if (value)
-+				set_bit(sysfs_data->data.bit.bit, 
-+					(sysfs_data->data.bit.bit_vector));
-+			else
-+				clear_bit(sysfs_data->data.bit.bit,
-+					(sysfs_data->data.bit.bit_vector));
-+			}
-+			break;
-+		case SUSPEND_SYSFS_DATA_INTEGER:
-+			{
-+				int *variable = sysfs_data->data.integer.variable;
-+				*variable = simple_strtol(my_buf, NULL, 0);
-+				BOUND(variable, integer);
-+				break;
-+			}
-+		case SUSPEND_SYSFS_DATA_LONG:
-+			{
-+				long *variable = sysfs_data->data.a_long.variable;
-+				*variable = simple_strtol(my_buf, NULL, 0);
-+				BOUND(variable, a_long);
-+				break;
-+			}
-+		case SUSPEND_SYSFS_DATA_UL:
-+			{
-+				unsigned long *variable = sysfs_data->data.ul.variable;
-+				*variable = simple_strtoul(my_buf, NULL, 0);
-+				BOUND(variable, ul);
-+				break;
-+			}
-+			break;
-+		case SUSPEND_SYSFS_DATA_STRING:
-+			{
-+				int copy_len = count;
-+				char *variable =
-+					sysfs_data->data.string.variable;
-+
-+				if (sysfs_data->data.string.max_length &&
-+				    (copy_len > sysfs_data->data.string.max_length))
-+					copy_len = sysfs_data->data.string.max_length;
-+
-+				if (!variable) {
-+					sysfs_data->data.string.variable =
-+						variable = (char *) get_zeroed_page(GFP_ATOMIC);
-+					assigned_temp_buffer = 1;
-+				}
-+				strncpy(variable, my_buf, copy_len);
-+				if ((copy_len) &&
-+					 (my_buf[copy_len - 1] == '\n'))
-+					variable[count - 1] = 0;
-+				variable[count] = 0;
-+			}
-+			break;
-+	}
-+
-+	/* Side effect routine? */
-+	if (sysfs_data->write_side_effect)
-+		sysfs_data->write_side_effect();
-+
-+	/* Free temporary buffers */
-+	if (assigned_temp_buffer) {
-+		free_page((unsigned long) sysfs_data->data.string.variable);
-+		sysfs_data->data.string.variable = NULL;
-+	}
-+
-+	if (sysfs_data->needs_storage_manager & SYSFS_NEEDS_FOR_WRITE)
-+		suspend_cleanup_usm();
-+
-+	suspend_finish_anything(0);
-+
-+	return result;
-+}
-+
-+static struct sysfs_ops suspend2_sysfs_ops = {
-+	.show	= &suspend2_attr_show,
-+	.store	= &suspend2_attr_store,
-+};
-+
-+static struct kobj_type suspend2_ktype = {
-+	.sysfs_ops	= &suspend2_sysfs_ops,
-+};
-+
-+decl_subsys(suspend2, &suspend2_ktype, NULL);
-+
-+/* Non-module sysfs entries.
-+ *
-+ * This array contains entries that are automatically registered at
-+ * boot. Modules and the console code register their own entries separately.
-+ *
-+ * NB: If you move do_suspend, change suspend_write_sysfs's test so that
-+ * suspend_start_anything still gets a 1 when the user echos > do_suspend!
-+ */
-+
-+static struct suspend_sysfs_data sysfs_params[] = {
-+	{ SUSPEND2_ATTR("do_suspend", SYSFS_WRITEONLY),
-+	  SYSFS_CUSTOM(NULL, NULL, SYSFS_NEEDS_FOR_WRITE),
-+	  .write_side_effect = suspend_main_wrapper
-+	},
-+
-+	{ SUSPEND2_ATTR("do_resume", SYSFS_WRITEONLY),
-+	  SYSFS_CUSTOM(NULL, NULL, SYSFS_NEEDS_FOR_WRITE),
-+	  .write_side_effect = __suspend_try_resume
-+	},
-+
-+};
-+
-+void remove_suspend2_sysdir(struct kobject *kobj)
-+{
-+	if (!kobj)
-+		return;
-+
-+	kobject_unregister(kobj);
-+
-+	kfree(kobj);
-+}
-+
-+struct kobject *make_suspend2_sysdir(char *name)
-+{
-+	struct kobject *kobj = kzalloc(sizeof(struct kobject), GFP_KERNEL);
-+	int err;
-+
-+	if(!kobj) {
-+		printk("Suspend2: Can't allocate kobject for sysfs dir!\n");
-+		return NULL;
-+	}
-+
-+	err = kobject_set_name(kobj, "%s", name);
-+
-+	if (err) {
-+		kfree(kobj);
-+		return NULL;
-+	}
-+
-+	kobj->kset = &suspend2_subsys.kset;
-+
-+	err = kobject_register(kobj);
-+
-+	if (err)
-+		kfree(kobj);
-+
-+	return err ? NULL : kobj;
-+}
-+
-+/* suspend_register_sysfs_file
-+ *
-+ * Helper for registering a new /sysfs/suspend2 entry.
-+ */
-+
-+int suspend_register_sysfs_file(
-+		struct kobject *kobj,
-+		struct suspend_sysfs_data *suspend_sysfs_data)
-+{
-+	int result;
-+
-+	if (!suspend_sysfs_initialised)
-+		suspend_initialise_sysfs();
-+
-+	if ((result = sysfs_create_file(kobj, &suspend_sysfs_data->attr)))
-+		printk("Suspend2: sysfs_create_file for %s returned %d.\n",
-+			suspend_sysfs_data->attr.name, result);
-+
-+	return result;
-+}
-+
-+/* suspend_unregister_sysfs_file
-+ *
-+ * Helper for removing unwanted /sysfs/suspend2 entries.
-+ *
-+ */
-+void suspend_unregister_sysfs_file(struct suspend_sysfs_data *suspend_sysfs_data)
-+{
-+	sysfs_remove_file(&suspend2_subsys.kset.kobj, &suspend_sysfs_data->attr);
-+}
-+
-+void suspend_cleanup_sysfs(void)
-+{
-+	int i,
-+	    numfiles = sizeof(sysfs_params) / sizeof(struct suspend_sysfs_data);
-+
-+	if (!suspend_sysfs_initialised)
-+		return;
-+
-+	for (i=0; i< numfiles; i++)
-+		suspend_unregister_sysfs_file(&sysfs_params[i]);
-+
-+	kobj_set_kset_s(&suspend2_subsys.kset, power_subsys);
-+	subsystem_unregister(&suspend2_subsys);
-+
-+	suspend_sysfs_initialised = 0;
-+}
-+
-+/* suspend_initialise_sysfs
-+ *
-+ * Initialise the /sysfs/suspend2 directory.
-+ */
-+
-+static void suspend_initialise_sysfs(void)
-+{
-+	int i, error;
-+	int numfiles = sizeof(sysfs_params) / sizeof(struct suspend_sysfs_data);
-+	
-+	if (suspend_sysfs_initialised)
-+		return;
-+
-+	/* Make our suspend2 directory a child of /sys/power */
-+	kobj_set_kset_s(&suspend2_subsys.kset, power_subsys);
-+	error = subsystem_register(&suspend2_subsys);
-+
-+	if (error)
-+		return;
-+
-+	/* Make it use the .store and .show routines above */
-+	kobj_set_kset_s(&suspend2_subsys.kset, suspend2_subsys);
-+
-+	suspend_sysfs_initialised = 1;
-+
-+	for (i=0; i< numfiles; i++)
-+		suspend_register_sysfs_file(&suspend2_subsys.kset.kobj,
-+				&sysfs_params[i]);
-+}
-+
-+int s2_sysfs_init(void)
-+{
-+	suspend_initialise_sysfs();
-+	return 0;
-+}
-+
-+void s2_sysfs_exit(void)
-+{
-+	suspend_cleanup_sysfs();
-+}
-diff --git a/kernel/power/sysfs.h b/kernel/power/sysfs.h
-new file mode 100644
-index 0000000..2a81bf2
---- /dev/null
-+++ b/kernel/power/sysfs.h
-@@ -0,0 +1,122 @@
-+/*
-+ * kernel/power/sysfs.h
-+ *
-+ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
-+ *
-+ * This file is released under the GPLv2.
-+ *
-+ * It provides declarations for suspend to use in managing
-+ * /sysfs/suspend2. When we switch to kobjects,
-+ * this will become redundant.
-+ *
-+ */
-+
-+#include <linux/sysfs.h>
-+#include "power.h"
-+
-+struct suspend_sysfs_data {
-+	struct attribute attr;
-+	int type;
-+	int needs_storage_manager;
-+	union {
-+		struct {
-+			unsigned long *bit_vector;
-+			int bit;
-+		} bit;
-+		struct {
-+			int *variable;
-+			int minimum;
-+			int maximum;
-+		} integer;
-+		struct {
-+			long *variable;
-+			long minimum;
-+			long maximum;
-+		} a_long;
-+		struct {
-+			unsigned long *variable;
-+			unsigned long minimum;
-+			unsigned long maximum;
-+		} ul;
-+		struct {
-+			char *variable;
-+			int max_length;
-+		} string;
-+		struct {
-+			int (*read_sysfs) (const char *buffer, int count);
-+			int (*write_sysfs) (const char *buffer, int count);
-+			void *data;
-+		} special;
-+	} data;
-+	
-+	/* Side effects routines. Used, eg, for reparsing the
-+	 * resume2 entry when it changes */
-+	void (*read_side_effect) (void);
-+	void (*write_side_effect) (void); 
-+	struct list_head sysfs_data_list;
-+};
-+
-+enum {
-+	SUSPEND_SYSFS_DATA_NONE = 1,
-+	SUSPEND_SYSFS_DATA_CUSTOM,
-+	SUSPEND_SYSFS_DATA_BIT,
-+	SUSPEND_SYSFS_DATA_INTEGER,
-+	SUSPEND_SYSFS_DATA_UL,
-+	SUSPEND_SYSFS_DATA_LONG,
-+	SUSPEND_SYSFS_DATA_STRING
-+};
-+
-+#define SUSPEND2_ATTR(_name, _mode)      \
-+        .attr = {.name  = _name , .mode   = _mode }
-+
-+#define SYSFS_BIT(_ul, _bit) \
-+	.type = SUSPEND_SYSFS_DATA_BIT, \
-+	.data = { .bit = { .bit_vector = _ul, .bit = _bit } }
-+
-+#define SYSFS_INT(_int, _min, _max) \
-+	.type = SUSPEND_SYSFS_DATA_INTEGER, \
-+	.data = { .integer = { .variable = _int, .minimum = _min, \
-+			.maximum = _max } }
-+
-+#define SYSFS_UL(_ul, _min, _max) \
-+	.type = SUSPEND_SYSFS_DATA_UL, \
-+	.data = { .ul = { .variable = _ul, .minimum = _min, \
-+			.maximum = _max } }
-+
-+#define SYSFS_LONG(_long, _min, _max) \
-+	.type = SUSPEND_SYSFS_DATA_LONG, \
-+	.data = { .a_long = { .variable = _long, .minimum = _min, \
-+			.maximum = _max } }
-+
-+#define SYSFS_STRING(_string, _max_len, _needs_usm) \
-+	.type = SUSPEND_SYSFS_DATA_STRING, \
-+	.needs_storage_manager = _needs_usm, \
-+	.data = { .string = { .variable = _string, .max_length = _max_len } }
-+
-+#define SYSFS_CUSTOM(_read, _write, _needs_storage_manager) \
-+	.type = SUSPEND_SYSFS_DATA_CUSTOM, \
-+	.needs_storage_manager = _needs_storage_manager, \
-+	.data = { .special = { .read_sysfs = _read, .write_sysfs = _write } }
-+
-+#define SYSFS_WRITEONLY 0200
-+#define SYSFS_READONLY 0444
-+#define SYSFS_RW 0644
-+
-+/* Storage manager needed? */
-+#define SYSFS_SM_NOT_NEEDED 0
-+#define SYSFS_NEEDS_FOR_READ 1
-+#define SYSFS_NEEDS_FOR_WRITE 2
-+#define SYSFS_NEEDS_FOR_BOTH 3
-+
-+int suspend_register_sysfs_file(struct kobject *kobj,
-+		struct suspend_sysfs_data *suspend_sysfs_data);
-+void suspend_unregister_sysfs_file(struct suspend_sysfs_data *suspend_sysfs_data);
-+
-+extern struct subsystem suspend2_subsys;
-+
-+struct kobject *make_suspend2_sysdir(char *name);
-+void remove_suspend2_sysdir(struct kobject *obj);
-+extern void suspend_cleanup_sysfs(void);
-+
-+extern int s2_sysfs_init(void);
-+extern void s2_sysfs_exit(void);
-diff --git a/kernel/power/ui.c b/kernel/power/ui.c
-new file mode 100644
-index 0000000..e7ac056
---- /dev/null
-+++ b/kernel/power/ui.c
-@@ -0,0 +1,764 @@
-+/*
-+ * kernel/power/ui.c
-+ *
-+ * Copyright (C) 1998-2001 Gabor Kuti <seasons@fornax.hu>
-+ * Copyright (C) 1998,2001,2002 Pavel Machek <pavel@suse.cz>
-+ * Copyright (C) 2002-2003 Florent Chabaud <fchabaud@free.fr>
++ * Copyright (C) 2005-2007 Bernard Blackham
 + * Copyright (C) 2002-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
 + * This file is released under the GPLv2.
@@ -15768,10 +15445,6 @@ index 0000000..e7ac056
 +
 +static char local_printf_buf[1024];	/* Same as printk - should be safe */
 +
-+#ifdef CONFIG_NET
-+/*! The console log level we default to. */
-+int suspend_default_console_level = 0;
-+
 +static struct user_helper_data ui_helper_data;
 +static struct suspend_module_ops userui_ops;
 +static int orig_loglevel;
@@ -15804,7 +15477,7 @@ index 0000000..e7ac056
 +		wake_up_interruptible(&userui_wait_for_key);
 +}
 +
-+void userui_redraw(void)
++static void userui_redraw(void)
 +{
 +	suspend_send_netlink_message(&ui_helper_data,
 +			USERUI_MSG_REDRAW, NULL, 0);
@@ -15861,8 +15534,8 @@ index 0000000..e7ac056
 + * Returns:	Unsigned long: The next value where status needs to be updated.
 + * 		This is to reduce unnecessary calls to update_status.
 + */
-+unsigned long suspend_update_status(unsigned long value, unsigned long maximum,
-+		const char *fmt, ...)
++static unsigned long userui_update_status(unsigned long value,
++		unsigned long maximum, const char *fmt, ...)
 +{
 +	static int last_step = -1;
 +	struct userui_msg_params msg;
@@ -15922,7 +15595,7 @@ index 0000000..e7ac056
 +	return next_update;
 +}
 +
-+/* __suspend_message.
++/* userui_message.
 + *
 + * Description:	This function is intended to do the same job as printk, but
 + * 		without normally logging what is printed. The point is to be
@@ -15937,9 +15610,8 @@ index 0000000..e7ac056
 + * 			(\n if we're logging all output).
 + * 		const char *fmt, ...: Message to be displayed a la printk.
 + */
-+void __suspend_message(unsigned long section, unsigned long level,
-+		int normally_logged,
-+		const char *fmt, ...)
++static void userui_message(unsigned long section, unsigned long level,
++		int normally_logged, const char *fmt, ...)
 +{
 +	struct userui_msg_params msg;
 +
@@ -15980,7 +15652,7 @@ index 0000000..e7ac056
 +	remove_wait_queue(&userui_wait_for_key, &wait);
 +}
 +
-+static char suspend_wait_for_keypress(int timeout)
++static char userui_wait_for_keypress(int timeout)
 +{
 +	int fd;
 +	char key = '\0';
@@ -16045,7 +15717,7 @@ index 0000000..e7ac056
 + * 		int clearbar: Whether to reset the progress bar.
 + * 		const char *fmt, ...: The action to be displayed.
 + */
-+void suspend_prepare_status(int clearbar, const char *fmt, ...)
++static void userui_prepare_status(int clearbar, const char *fmt, ...)
 +{
 +	va_list args;
 +
@@ -16073,7 +15745,7 @@ index 0000000..e7ac056
 + *	 	telling the user why we're aborting.
 + */
 +
-+void abort_suspend(int result_code, const char *fmt, ...)
++static void userui_abort_suspend(int result_code, const char *fmt, ...)
 +{
 +	va_list args;
 +	int printed_len = 0;
@@ -16200,7 +15872,7 @@ index 0000000..e7ac056
 +	return 1;
 +}
 +
-+/* suspend_cond_pause
++/* userui_cond_pause
 + * 
 + * Description:	Potentially pause and wait for the user to tell us to continue.
 + * 		We normally only pause when @pause is set.
@@ -16209,7 +15881,7 @@ index 0000000..e7ac056
 + * 		 because it's normally a constant.
 + */
 +
-+void suspend_cond_pause(int pause, char *message)
++static void userui_cond_pause(int pause, char *message)
 +{
 +	int displayed_message = 0, last_key = 0;
 +	
@@ -16231,13 +15903,13 @@ index 0000000..e7ac056
 +	schedule();
 +}
 +
-+/* suspend_prepare_console
++/* userui_prepare_console
 + *
 + * Description:	Prepare a console for use, save current settings.
 + * Returns:	Boolean: Whether an error occured. Errors aren't
 + * 		treated as fatal, but a warning is printed.
 + */
-+void suspend_prepare_console(void)
++static void userui_prepare_console(void)
 +{
 +	orig_loglevel = console_loglevel;
 +	orig_default_message_loglevel = default_message_loglevel;
@@ -16261,12 +15933,12 @@ index 0000000..e7ac056
 +	return;
 +}
 +
-+/* suspend_cleanup_console
++/* userui_cleanup_console
 + *
 + * Description: Restore the settings we saved above.
 + */
 +
-+void suspend_cleanup_console(void)
++static void userui_cleanup_console(void)
 +{
 +	suspend_default_console_level = console_loglevel;
 +
@@ -16277,7 +15949,652 @@ index 0000000..e7ac056
 +	kmsg_redirect = orig_kmsg;
 +	default_message_loglevel = orig_default_message_loglevel;
 +}
++
++/*
++ * User interface specific /sys/power/suspend2 entries.
++ */
++
++static struct suspend_sysfs_data sysfs_params[] = {
++#if defined(CONFIG_NET) && defined(CONFIG_SYSFS)
++	{ SUSPEND2_ATTR("enable_escape", SYSFS_RW),
++	  SYSFS_BIT(&suspend_action, SUSPEND_CAN_CANCEL, 0)
++	},
++
++	{ SUSPEND2_ATTR("pause_between_steps", SYSFS_RW),
++	  SYSFS_BIT(&suspend_action, SUSPEND_PAUSE, 0)
++	},
++
++	{ SUSPEND2_ATTR("enabled", SYSFS_RW),
++	  SYSFS_INT(&userui_ops.enabled, 0, 1, 0)
++	},
++
++	{ SUSPEND2_ATTR("progress_granularity", SYSFS_RW),
++	  SYSFS_INT(&progress_granularity, 1, 2048, 0)
++	},
++
++	{ SUSPEND2_ATTR("program", SYSFS_RW),
++	  SYSFS_STRING(ui_helper_data.program, 255, 0),
++	  .write_side_effect = set_ui_program_set,
++	},
 +#endif
++};
++
++static struct suspend_module_ops userui_ops = {
++	.type				= MISC_MODULE,
++	.name				= "Userspace UI",
++	.shared_directory		= "Basic User Interface",
++	.module				= THIS_MODULE,
++	.storage_needed			= userui_storage_needed,
++	.save_config_info		= userui_save_config_info,
++	.load_config_info		= userui_load_config_info,
++	.memory_needed			= userui_memory_needed,
++	.sysfs_data			= sysfs_params,
++	.num_sysfs_entries		= sizeof(sysfs_params) / sizeof(struct suspend_sysfs_data),
++};
++
++static struct ui_ops my_ui_ops = {
++	.redraw				= userui_redraw,
++	.update_status			= userui_update_status,
++	.message			= userui_message,
++	.prepare_status			= userui_prepare_status,
++	.abort				= userui_abort_suspend,
++	.cond_pause			= userui_cond_pause,
++	.prepare			= userui_prepare_console,
++	.cleanup			= userui_cleanup_console,
++	.wait_for_key			= userui_wait_for_keypress,
++};
++
++/* suspend_console_sysfs_init
++ * Description: Boot time initialisation for user interface.
++ */
++
++static __init int s2_user_ui_init(void)
++{
++	int result;
++
++	ui_helper_data.nl = NULL;
++	ui_helper_data.program[0] = '\0';
++	ui_helper_data.pid = -1;
++	ui_helper_data.skb_size = sizeof(struct userui_msg_params);
++	ui_helper_data.pool_limit = 6;
++	ui_helper_data.netlink_id = NETLINK_SUSPEND2_USERUI;
++	ui_helper_data.name = "userspace ui";
++	ui_helper_data.rcv_msg = userui_user_rcv_msg;
++	ui_helper_data.interface_version = 7;
++	ui_helper_data.must_init = 0;
++	ui_helper_data.not_ready = userui_cleanup_console;
++	init_completion(&ui_helper_data.wait_for_process);
++	result = suspend_register_module(&userui_ops);
++	if (!result)
++		result = s2_register_ui_ops(&my_ui_ops);
++	if (result)
++		suspend_unregister_module(&userui_ops);
++
++	return result;
++}
++
++#ifdef MODULE
++static __exit void s2_user_ui_exit(void)
++{
++	s2_remove_ui_ops(&my_ui_ops);
++	suspend_unregister_module(&userui_ops);
++}
++
++module_init(s2_user_ui_init);
++module_exit(s2_user_ui_exit);
++MODULE_AUTHOR("Nigel Cunningham");
++MODULE_DESCRIPTION("Suspend2 Userui Support");
++MODULE_LICENSE("GPL");
++#else
++late_initcall(s2_user_ui_init);
++#endif
+diff --git a/kernel/power/sysfs.c b/kernel/power/sysfs.c
+new file mode 100644
+index 0000000..549aff0
+--- /dev/null
++++ b/kernel/power/sysfs.c
+@@ -0,0 +1,347 @@
++/*
++ * kernel/power/sysfs.c
++ *
++ * Copyright (C) 2002-2007 Nigel Cunningham (nigel at suspend2 net)
++ *
++ * This file is released under the GPLv2.
++ *
++ * This file contains support for sysfs entries for tuning Suspend2.
++ *
++ * We have a generic handler that deals with the most common cases, and
++ * hooks for special handlers to use.
++ */
++
++#include <linux/suspend.h>
++#include <linux/module.h>
++#include <asm/uaccess.h>
++
++#include "sysfs.h"
++#include "suspend.h"
++#include "storage.h"
++
++static int suspend_sysfs_initialised = 0;
++
++static void suspend_initialise_sysfs(void);
++
++static struct suspend_sysfs_data sysfs_params[];
++
++#define to_sysfs_data(_attr) container_of(_attr, struct suspend_sysfs_data, attr)
++
++static void suspend_main_wrapper(void)
++{
++	__suspend2_try_suspend(0);
++}
++
++static ssize_t suspend2_attr_show(struct kobject *kobj, struct attribute *attr,
++			      char *page)
++{
++	struct suspend_sysfs_data *sysfs_data = to_sysfs_data(attr);
++	int len = 0;
++
++	if (suspend_start_anything(0))
++		return -EBUSY;
++
++	if (sysfs_data->flags & SYSFS_NEEDS_SM_FOR_READ)
++		suspend_prepare_usm();
++	
++	switch (sysfs_data->type) {
++		case SUSPEND_SYSFS_DATA_CUSTOM:
++			len = (sysfs_data->data.special.read_sysfs) ?
++				(sysfs_data->data.special.read_sysfs)(page, PAGE_SIZE)
++				: 0;
++			break;
++		case SUSPEND_SYSFS_DATA_BIT:
++			len = sprintf(page, "%d\n", 
++				-test_bit(sysfs_data->data.bit.bit,
++					sysfs_data->data.bit.bit_vector));
++			break;
++		case SUSPEND_SYSFS_DATA_INTEGER:
++			len = sprintf(page, "%d\n",
++				*(sysfs_data->data.integer.variable));
++			break;
++		case SUSPEND_SYSFS_DATA_LONG:
++			len = sprintf(page, "%ld\n",
++				*(sysfs_data->data.a_long.variable));
++			break;
++		case SUSPEND_SYSFS_DATA_UL:
++			len = sprintf(page, "%lu\n",
++				*(sysfs_data->data.ul.variable));
++			break;
++		case SUSPEND_SYSFS_DATA_STRING:
++			len = sprintf(page, "%s\n",
++				sysfs_data->data.string.variable);
++			break;
++	}
++	/* Side effect routine? */
++	if (sysfs_data->read_side_effect)
++		sysfs_data->read_side_effect();
++
++	if (sysfs_data->flags & SYSFS_NEEDS_SM_FOR_READ)
++		suspend_cleanup_usm();
++
++	suspend_finish_anything(0);
++
++	return len;
++}
++
++#define BOUND(_variable, _type) \
++	if (*_variable < sysfs_data->data._type.minimum) \
++		*_variable = sysfs_data->data._type.minimum; \
++	else if (*_variable > sysfs_data->data._type.maximum) \
++		*_variable = sysfs_data->data._type.maximum;
++
++static ssize_t suspend2_attr_store(struct kobject *kobj, struct attribute *attr,
++		const char *my_buf, size_t count)
++{
++	int assigned_temp_buffer = 0, result = count;
++	struct suspend_sysfs_data *sysfs_data = to_sysfs_data(attr);
++
++	if (suspend_start_anything((sysfs_data->flags & SYSFS_SUSPEND_OR_RESUME)))
++		return -EBUSY;
++
++	((char *) my_buf)[count] = 0;
++
++	if (sysfs_data->flags & SYSFS_NEEDS_SM_FOR_WRITE)
++		suspend_prepare_usm();
++
++	switch (sysfs_data->type) {
++		case SUSPEND_SYSFS_DATA_CUSTOM:
++			if (sysfs_data->data.special.write_sysfs)
++				result = (sysfs_data->data.special.write_sysfs)
++					(my_buf, count);
++			break;
++		case SUSPEND_SYSFS_DATA_BIT:
++			{
++			int value = simple_strtoul(my_buf, NULL, 0);
++			if (value)
++				set_bit(sysfs_data->data.bit.bit, 
++					(sysfs_data->data.bit.bit_vector));
++			else
++				clear_bit(sysfs_data->data.bit.bit,
++					(sysfs_data->data.bit.bit_vector));
++			}
++			break;
++		case SUSPEND_SYSFS_DATA_INTEGER:
++			{
++				int *variable = sysfs_data->data.integer.variable;
++				*variable = simple_strtol(my_buf, NULL, 0);
++				BOUND(variable, integer);
++				break;
++			}
++		case SUSPEND_SYSFS_DATA_LONG:
++			{
++				long *variable = sysfs_data->data.a_long.variable;
++				*variable = simple_strtol(my_buf, NULL, 0);
++				BOUND(variable, a_long);
++				break;
++			}
++		case SUSPEND_SYSFS_DATA_UL:
++			{
++				unsigned long *variable = sysfs_data->data.ul.variable;
++				*variable = simple_strtoul(my_buf, NULL, 0);
++				BOUND(variable, ul);
++				break;
++			}
++			break;
++		case SUSPEND_SYSFS_DATA_STRING:
++			{
++				int copy_len = count;
++				char *variable =
++					sysfs_data->data.string.variable;
++
++				if (sysfs_data->data.string.max_length &&
++				    (copy_len > sysfs_data->data.string.max_length))
++					copy_len = sysfs_data->data.string.max_length;
++
++				if (!variable) {
++					sysfs_data->data.string.variable =
++						variable = (char *) get_zeroed_page(GFP_ATOMIC);
++					assigned_temp_buffer = 1;
++				}
++				strncpy(variable, my_buf, copy_len);
++				if ((copy_len) &&
++					 (my_buf[copy_len - 1] == '\n'))
++					variable[count - 1] = 0;
++				variable[count] = 0;
++			}
++			break;
++	}
++
++	/* Side effect routine? */
++	if (sysfs_data->write_side_effect)
++		sysfs_data->write_side_effect();
++
++	/* Free temporary buffers */
++	if (assigned_temp_buffer) {
++		free_page((unsigned long) sysfs_data->data.string.variable);
++		sysfs_data->data.string.variable = NULL;
++	}
++
++	if (sysfs_data->flags & SYSFS_NEEDS_SM_FOR_WRITE)
++		suspend_cleanup_usm();
++
++	suspend_finish_anything(sysfs_data->flags & SYSFS_SUSPEND_OR_RESUME);
++
++	return result;
++}
++
++static struct sysfs_ops suspend2_sysfs_ops = {
++	.show	= &suspend2_attr_show,
++	.store	= &suspend2_attr_store,
++};
++
++static struct kobj_type suspend2_ktype = {
++	.sysfs_ops	= &suspend2_sysfs_ops,
++};
++
++decl_subsys(suspend2, &suspend2_ktype, NULL);
++
++/* Non-module sysfs entries.
++ *
++ * This array contains entries that are automatically registered at
++ * boot. Modules and the console code register their own entries separately.
++ *
++ * NB: If you move do_suspend, change suspend_write_sysfs's test so that
++ * suspend_start_anything still gets a 1 when the user echos > do_suspend!
++ */
++
++static struct suspend_sysfs_data sysfs_params[] = {
++	{ SUSPEND2_ATTR("do_suspend", SYSFS_WRITEONLY),
++	  SYSFS_CUSTOM(NULL, NULL, SYSFS_SUSPENDING),
++	  .write_side_effect = suspend_main_wrapper
++	},
++
++	{ SUSPEND2_ATTR("do_resume", SYSFS_WRITEONLY),
++	  SYSFS_CUSTOM(NULL, NULL, SYSFS_RESUMING),
++	  .write_side_effect = __suspend_try_resume
++	},
++
++};
++
++void remove_suspend2_sysdir(struct kobject *kobj)
++{
++	if (!kobj)
++		return;
++
++	kobject_unregister(kobj);
++
++	kfree(kobj);
++}
++
++struct kobject *make_suspend2_sysdir(char *name)
++{
++	struct kobject *kobj = kzalloc(sizeof(struct kobject), GFP_KERNEL);
++	int err;
++
++	if(!kobj) {
++		printk("Suspend2: Can't allocate kobject for sysfs dir!\n");
++		return NULL;
++	}
++
++	err = kobject_set_name(kobj, "%s", name);
++
++	if (err) {
++		kfree(kobj);
++		return NULL;
++	}
++
++	kobj->kset = &suspend2_subsys.kset;
++
++	err = kobject_register(kobj);
++
++	if (err)
++		kfree(kobj);
++
++	return err ? NULL : kobj;
++}
++
++/* suspend_register_sysfs_file
++ *
++ * Helper for registering a new /sysfs/suspend2 entry.
++ */
++
++int suspend_register_sysfs_file(
++		struct kobject *kobj,
++		struct suspend_sysfs_data *suspend_sysfs_data)
++{
++	int result;
++
++	if (!suspend_sysfs_initialised)
++		suspend_initialise_sysfs();
++
++	if ((result = sysfs_create_file(kobj, &suspend_sysfs_data->attr)))
++		printk("Suspend2: sysfs_create_file for %s returned %d.\n",
++			suspend_sysfs_data->attr.name, result);
++
++	return result;
++}
++
++/* suspend_unregister_sysfs_file
++ *
++ * Helper for removing unwanted /sys/power/suspend2 entries.
++ *
++ */
++void suspend_unregister_sysfs_file(struct kobject *kobj,
++		struct suspend_sysfs_data *suspend_sysfs_data)
++{
++	sysfs_remove_file(kobj, &suspend_sysfs_data->attr);
++}
++
++void suspend_cleanup_sysfs(void)
++{
++	int i,
++	    numfiles = sizeof(sysfs_params) / sizeof(struct suspend_sysfs_data);
++
++	if (!suspend_sysfs_initialised)
++		return;
++
++	for (i=0; i< numfiles; i++)
++		suspend_unregister_sysfs_file(&suspend2_subsys.kset.kobj,
++				&sysfs_params[i]);
++
++	kobj_set_kset_s(&suspend2_subsys.kset, power_subsys);
++	subsystem_unregister(&suspend2_subsys);
++
++	suspend_sysfs_initialised = 0;
++}
++
++/* suspend_initialise_sysfs
++ *
++ * Initialise the /sysfs/suspend2 directory.
++ */
++
++static void suspend_initialise_sysfs(void)
++{
++	int i, error;
++	int numfiles = sizeof(sysfs_params) / sizeof(struct suspend_sysfs_data);
++	
++	if (suspend_sysfs_initialised)
++		return;
++
++	/* Make our suspend2 directory a child of /sys/power */
++	kobj_set_kset_s(&suspend2_subsys.kset, power_subsys);
++	error = subsystem_register(&suspend2_subsys);
++
++	if (error)
++		return;
++
++	/* Make it use the .store and .show routines above */
++	kobj_set_kset_s(&suspend2_subsys.kset, suspend2_subsys);
++
++	suspend_sysfs_initialised = 1;
++
++	for (i=0; i< numfiles; i++)
++		suspend_register_sysfs_file(&suspend2_subsys.kset.kobj,
++				&sysfs_params[i]);
++}
++
++int s2_sysfs_init(void)
++{
++	suspend_initialise_sysfs();
++	return 0;
++}
++
++void s2_sysfs_exit(void)
++{
++	suspend_cleanup_sysfs();
++}
+diff --git a/kernel/power/sysfs.h b/kernel/power/sysfs.h
+new file mode 100644
+index 0000000..aad5e26
+--- /dev/null
++++ b/kernel/power/sysfs.h
+@@ -0,0 +1,132 @@
++/*
++ * kernel/power/sysfs.h
++ *
++ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
++ *
++ * This file is released under the GPLv2.
++ *
++ * It provides declarations for suspend to use in managing
++ * /sysfs/suspend2. When we switch to kobjects,
++ * this will become redundant.
++ *
++ */
++
++#include <linux/sysfs.h>
++#include "power.h"
++
++struct suspend_sysfs_data {
++	struct attribute attr;
++	int type;
++	int flags;
++	union {
++		struct {
++			unsigned long *bit_vector;
++			int bit;
++		} bit;
++		struct {
++			int *variable;
++			int minimum;
++			int maximum;
++		} integer;
++		struct {
++			long *variable;
++			long minimum;
++			long maximum;
++		} a_long;
++		struct {
++			unsigned long *variable;
++			unsigned long minimum;
++			unsigned long maximum;
++		} ul;
++		struct {
++			char *variable;
++			int max_length;
++		} string;
++		struct {
++			int (*read_sysfs) (const char *buffer, int count);
++			int (*write_sysfs) (const char *buffer, int count);
++			void *data;
++		} special;
++	} data;
++	
++	/* Side effects routines. Used, eg, for reparsing the
++	 * resume2 entry when it changes */
++	void (*read_side_effect) (void);
++	void (*write_side_effect) (void); 
++	struct list_head sysfs_data_list;
++};
++
++enum {
++	SUSPEND_SYSFS_DATA_NONE = 1,
++	SUSPEND_SYSFS_DATA_CUSTOM,
++	SUSPEND_SYSFS_DATA_BIT,
++	SUSPEND_SYSFS_DATA_INTEGER,
++	SUSPEND_SYSFS_DATA_UL,
++	SUSPEND_SYSFS_DATA_LONG,
++	SUSPEND_SYSFS_DATA_STRING
++};
++
++#define SUSPEND2_ATTR(_name, _mode)      \
++        .attr = {.name  = _name , .mode   = _mode }
++
++#define SYSFS_BIT(_ul, _bit, _flags) \
++	.type = SUSPEND_SYSFS_DATA_BIT, \
++	.flags = _flags, \
++	.data = { .bit = { .bit_vector = _ul, .bit = _bit } }
++
++#define SYSFS_INT(_int, _min, _max, _flags) \
++	.type = SUSPEND_SYSFS_DATA_INTEGER, \
++	.flags = _flags, \
++	.data = { .integer = { .variable = _int, .minimum = _min, \
++			.maximum = _max } }
++
++#define SYSFS_UL(_ul, _min, _max, _flags) \
++	.type = SUSPEND_SYSFS_DATA_UL, \
++	.flags = _flags, \
++	.data = { .ul = { .variable = _ul, .minimum = _min, \
++			.maximum = _max } }
++
++#define SYSFS_LONG(_long, _min, _max, _flags) \
++	.type = SUSPEND_SYSFS_DATA_LONG, \
++	.flags = _flags, \
++	.data = { .a_long = { .variable = _long, .minimum = _min, \
++			.maximum = _max } }
++
++#define SYSFS_STRING(_string, _max_len, _flags) \
++	.type = SUSPEND_SYSFS_DATA_STRING, \
++	.flags = _flags, \
++	.data = { .string = { .variable = _string, .max_length = _max_len } }
++
++#define SYSFS_CUSTOM(_read, _write, _flags) \
++	.type = SUSPEND_SYSFS_DATA_CUSTOM, \
++	.flags = _flags, \
++	.data = { .special = { .read_sysfs = _read, .write_sysfs = _write } }
++
++#define SYSFS_WRITEONLY 0200
++#define SYSFS_READONLY 0444
++#define SYSFS_RW 0644
++
++/* Flags */
++#define SYSFS_NEEDS_SM_FOR_READ 1
++#define SYSFS_NEEDS_SM_FOR_WRITE 2
++#define SYSFS_SUSPEND 4
++#define SYSFS_RESUME 8
++#define SYSFS_SUSPEND_OR_RESUME (SYSFS_SUSPEND | SYSFS_RESUME)
++#define SYSFS_SUSPENDING (SYSFS_SUSPEND | SYSFS_NEEDS_SM_FOR_WRITE)
++#define SYSFS_RESUMING (SYSFS_RESUME | SYSFS_NEEDS_SM_FOR_WRITE)
++#define SYSFS_NEEDS_SM_FOR_BOTH \
++ (SYSFS_NEEDS_SM_FOR_READ | SYSFS_NEEDS_SM_FOR_WRITE)
++
++int suspend_register_sysfs_file(struct kobject *kobj,
++		struct suspend_sysfs_data *suspend_sysfs_data);
++void suspend_unregister_sysfs_file(struct kobject *kobj,
++		struct suspend_sysfs_data *suspend_sysfs_data);
++
++extern struct subsystem suspend2_subsys;
++
++struct kobject *make_suspend2_sysdir(char *name);
++void remove_suspend2_sysdir(struct kobject *obj);
++extern void suspend_cleanup_sysfs(void);
++
++extern int s2_sysfs_init(void);
++extern void s2_sysfs_exit(void);
+diff --git a/kernel/power/ui.c b/kernel/power/ui.c
+new file mode 100644
+index 0000000..743f98d
+--- /dev/null
++++ b/kernel/power/ui.c
+@@ -0,0 +1,235 @@
++/*
++ * kernel/power/ui.c
++ *
++ * Copyright (C) 1998-2001 Gabor Kuti <seasons@fornax.hu>
++ * Copyright (C) 1998,2001,2002 Pavel Machek <pavel@suse.cz>
++ * Copyright (C) 2002-2003 Florent Chabaud <fchabaud@free.fr>
++ * Copyright (C) 2002-2007 Nigel Cunningham (nigel at suspend2 net)
++ *
++ * This file is released under the GPLv2.
++ *
++ * Routines for Suspend2's user interface.
++ *
++ * The user interface code talks to a userspace program via a
++ * netlink socket.
++ *
++ * The kernel side:
++ * - starts the userui program;
++ * - sends text messages and progress bar status;
++ *
++ * The user space side:
++ * - passes messages regarding user requests (abort, toggle reboot etc)
++ *
++ */
++
++#define __KERNEL_SYSCALLS__
++
++#include <linux/suspend.h>
++#include <linux/freezer.h>
++#include <linux/console.h>
++#include <linux/ctype.h>
++#include <linux/tty.h>
++#include <linux/vt_kern.h>
++#include <linux/module.h>
++#include <linux/reboot.h>
++#include <linux/kmod.h>
++#include <linux/security.h>
++#include <linux/syscalls.h>
++ 
++#include "sysfs.h"
++#include "modules.h"
++#include "suspend.h"
++#include "ui.h"
++#include "netlink.h"
++#include "power_off.h"
++
++static char local_printf_buf[1024];	/* Same as printk - should be safe */
++struct ui_ops *s2_current_ui;
++
++/*! The console log level we default to. */
++int suspend_default_console_level = 0;
 +
 +/* suspend_early_boot_message()
 + * Description:	Handle errors early in the process of booting.
@@ -16396,58 +16713,51 @@ index 0000000..e7ac056
 +static struct suspend_sysfs_data sysfs_params[] = {
 +#if defined(CONFIG_NET) && defined(CONFIG_SYSFS)
 +	{ SUSPEND2_ATTR("default_console_level", SYSFS_RW),
-+	  SYSFS_INT(&suspend_default_console_level, 0, 7)
-+	},
-+
-+	{ SUSPEND2_ATTR("enable_escape", SYSFS_RW),
-+	  SYSFS_BIT(&suspend_action, SUSPEND_CAN_CANCEL)
++	  SYSFS_INT(&suspend_default_console_level, 0, 7, 0)
 +	},
 +
 +	{ SUSPEND2_ATTR("debug_sections", SYSFS_RW),
-+	  SYSFS_UL(&suspend_debug_state, 0, 1 << 30)
++	  SYSFS_UL(&suspend_debug_state, 0, 1 << 30, 0)
 +	},
 +
 +	{ SUSPEND2_ATTR("log_everything", SYSFS_RW),
-+	  SYSFS_BIT(&suspend_action, SUSPEND_LOGALL)
-+	},
-+	  
-+	{ SUSPEND2_ATTR("pause_between_steps", SYSFS_RW),
-+	  SYSFS_BIT(&suspend_action, SUSPEND_PAUSE)
-+	},
-+
-+	{ SUSPEND2_ATTR("enabled", SYSFS_RW),
-+	  SYSFS_INT(&userui_ops.enabled, 0, 1)
-+	},
-+
-+	{ SUSPEND2_ATTR("progress_granularity", SYSFS_RW),
-+	  SYSFS_INT(&progress_granularity, 1, 2048)
-+	},
-+
-+	{ SUSPEND2_ATTR("program", SYSFS_RW),
-+	  SYSFS_STRING(ui_helper_data.program, 255, SYSFS_SM_NOT_NEEDED),
-+	  .write_side_effect = set_ui_program_set,
++	  SYSFS_BIT(&suspend_action, SUSPEND_LOGALL, 0)
 +	},
 +#endif
 +	{ SUSPEND2_ATTR("pm_prepare_console", SYSFS_RW),
-+	  SYSFS_BIT(&suspend_action, SUSPEND_PM_PREPARE_CONSOLE)
++	  SYSFS_BIT(&suspend_action, SUSPEND_PM_PREPARE_CONSOLE, 0)
 +	}
 +};
 +
 +static struct suspend_module_ops userui_ops = {
 +	.type				= MISC_MODULE,
-+	.name				= "Userspace UI",
++	.name				= "Basic User Interface",
 +	.directory			= "user_interface",
 +	.module				= THIS_MODULE,
-+#ifdef CONFIG_NET
-+	.storage_needed			= userui_storage_needed,
-+	.save_config_info		= userui_save_config_info,
-+	.load_config_info		= userui_load_config_info,
-+	.memory_needed			= userui_memory_needed,
-+#endif
-+
 +	.sysfs_data			= sysfs_params,
 +	.num_sysfs_entries		= sizeof(sysfs_params) / sizeof(struct suspend_sysfs_data),
 +};
++
++int s2_register_ui_ops(struct ui_ops *this_ui)
++{
++	if (s2_current_ui) {
++		printk("Only one Suspend2 user interface module can be loaded"
++			" at a time.");
++		return -EBUSY;
++	}
++
++	s2_current_ui = this_ui;
++
++	return 0;
++}
++
++void s2_remove_ui_ops(struct ui_ops *this_ui)
++{
++	if (s2_current_ui != this_ui)
++		return;
++
++	s2_current_ui = NULL;
++}
 +
 +/* suspend_console_sysfs_init
 + * Description: Boot time initialisation for user interface.
@@ -16455,21 +16765,6 @@ index 0000000..e7ac056
 +
 +int s2_ui_init(void)
 +{
-+#ifdef CONFIG_NET
-+	ui_helper_data.nl = NULL;
-+	ui_helper_data.program[0] = '\0';
-+	ui_helper_data.pid = -1;
-+	ui_helper_data.skb_size = sizeof(struct userui_msg_params);
-+	ui_helper_data.pool_limit = 6;
-+	ui_helper_data.netlink_id = NETLINK_SUSPEND2_USERUI;
-+	ui_helper_data.name = "userspace ui";
-+	ui_helper_data.rcv_msg = userui_user_rcv_msg;
-+	ui_helper_data.interface_version = 7;
-+	ui_helper_data.must_init = 0;
-+	ui_helper_data.not_ready = suspend_cleanup_console;
-+	init_completion(&ui_helper_data.wait_for_process);
-+#endif
-+
 +	return suspend_register_module(&userui_ops);
 +}
 +
@@ -16479,18 +16774,18 @@ index 0000000..e7ac056
 +}
 +
 +#ifdef CONFIG_SUSPEND2_EXPORTS
-+EXPORT_SYMBOL(suspend_cond_pause);
-+EXPORT_SYMBOL(__suspend_message);
-+EXPORT_SYMBOL(suspend_prepare_status);
++EXPORT_SYMBOL(s2_current_ui);
 +EXPORT_SYMBOL(suspend_early_boot_message);
-+EXPORT_SYMBOL(abort_suspend);
++EXPORT_SYMBOL(s2_register_ui_ops);
++EXPORT_SYMBOL(s2_remove_ui_ops);
++EXPORT_SYMBOL(suspend_default_console_level);
 +#endif
 diff --git a/kernel/power/ui.h b/kernel/power/ui.h
 new file mode 100644
-index 0000000..1302fa7
+index 0000000..59bce0a
 --- /dev/null
 +++ b/kernel/power/ui.h
-@@ -0,0 +1,83 @@
+@@ -0,0 +1,106 @@
 +/*
 + * kernel/power/ui.h
 + *
@@ -16526,56 +16821,79 @@ index 0000000..1302fa7
 +	char text[255];
 +};
 +
-+#ifdef CONFIG_NET
++struct ui_ops {
++	char (*wait_for_key) (int timeout);
++	unsigned long (*update_status) (unsigned long value,
++		unsigned long maximum, const char *fmt, ...);
++	void (*prepare_status) (int clearbar, const char *fmt, ...);
++	void (*cond_pause) (int pause, char *message);
++	void (*abort)(int result_code, const char *fmt, ...);
++	void (*prepare)(void);
++	void (*cleanup)(void);
++	void (*redraw)(void);
++	void (*message)(unsigned long section, unsigned long level,
++		int normally_logged, const char *fmt, ...);
++};
++
++extern struct ui_ops *s2_current_ui;
++
++#define suspend_update_status(val, max, fmt, args...) \
++ (s2_current_ui ? (s2_current_ui->update_status) (val, max, fmt, ##args) : max)
++
++#define suspend_wait_for_keypress(timeout) \
++ (s2_current_ui ? (s2_current_ui->wait_for_key) (timeout) : 0)
++
++#define suspend_ui_redraw(void) \
++	do { if (s2_current_ui) \
++		(s2_current_ui->redraw)(); \
++	} while(0)
++
++#define suspend_prepare_console(void) \
++	do { if (s2_current_ui) \
++		(s2_current_ui->prepare)(); \
++	} while(0)
++
++#define suspend_cleanup_console(void) \
++	do { if (s2_current_ui) \
++		(s2_current_ui->cleanup)(); \
++	} while(0)
++
++#define abort_suspend(result, fmt, args...) \
++	do { if (s2_current_ui) \
++		(s2_current_ui->abort)(result, fmt, ##args); \
++	     else { \
++		set_result_state(SUSPEND_ABORTED); \
++		set_result_state(result); \
++	     } \
++	} while(0)
++
++#define suspend_cond_pause(pause, message) \
++	do { if (s2_current_ui) \
++		(s2_current_ui->cond_pause)(pause, message); \
++	} while(0)
++
++#define suspend_prepare_status(clear, fmt, args...) \
++	do { if (s2_current_ui) \
++		(s2_current_ui->prepare_status)(clear, fmt, ##args); \
++	     else \
++		printk(fmt, ##args); \
++	} while(0)
 +
 +extern int suspend_default_console_level;
 +
-+extern unsigned long suspend_update_status(unsigned long value,
-+	unsigned long maximum, const char *fmt, ...);
-+extern void suspend_prepare_status (int clearbar, const char *fmt, ...);
-+extern void suspend_cond_pause(int pause, char *message);
-+extern void abort_suspend(int result_code, const char *fmt, ...);
-+extern void suspend_prepare_console(void);
-+extern void suspend_cleanup_console(void);
-+extern void userui_redraw(void);
-+extern void __suspend_message(unsigned long section, unsigned long level,
-+		int normally_logged, const char *fmt, ...);
 +#define suspend_message(sn, lev, log, fmt, a...) \
 +do { \
-+	if (!sn || test_debug_state(sn)) \
-+		__suspend_message(sn, lev, log, fmt, ##a); \
++	if (s2_current_ui && (!sn || test_debug_state(sn))) \
++		s2_current_ui->message(sn, lev, log, fmt, ##a); \
 +} while(0)
 +
 +__exit void suspend_ui_cleanup(void);
-+#else
-+static inline char suspend_wait_for_keypress(int timeout)
-+{
-+	return 0;
-+} 
-+
-+static inline unsigned long suspend_update_status(unsigned long value,
-+	unsigned long maximum, const char *fmt, ...)
-+{
-+	return maximum;
-+} 
-+
-+static inline void __suspend_message(unsigned long section, unsigned long level,
-+		int normally_logged,
-+		const char *fmt, ...)  { }
-+#define suspend_message(sn, lev, log, fmt, a...) { }
-+static inline void suspend_prepare_status(int clearbar, const char *fmt, ...) { }
-+static inline void suspend_cond_pause(int pause, char *message) { }
-+static inline void abort_suspend(int result_code, const char *fmt, ...) { }
-+static inline void suspend_prepare_console(void) { }
-+static inline void suspend_cleanup_console(void) { }
-+static inline void userui_redraw(void) { }
-+#define suspend_ui_cleanup() do { } while(0)
-+#define suspend_default_console_level (0)
-+#endif
 +extern int s2_ui_init(void);
 +extern void s2_ui_exit(void);
++extern int s2_register_ui_ops(struct ui_ops *this_ui);
++extern void s2_remove_ui_ops(struct ui_ops *this_ui);
 diff --git a/kernel/printk.c b/kernel/printk.c
-index c770e1a..e8b6f1a 100644
+index 4b47e59..39edd7f 100644
 --- a/kernel/printk.c
 +++ b/kernel/printk.c
 @@ -32,6 +32,7 @@
@@ -16615,18 +16933,18 @@ index c770e1a..e8b6f1a 100644
  static int __init log_buf_len_setup(char *str)
  {
 diff --git a/kernel/timer.c b/kernel/timer.c
-index c2a8ccf..e90891b 100644
+index dd6c2c1..60f9a39 100644
 --- a/kernel/timer.c
 +++ b/kernel/timer.c
-@@ -34,6 +34,7 @@
- #include <linux/cpu.h>
- #include <linux/syscalls.h>
+@@ -36,6 +36,7 @@
  #include <linux/delay.h>
+ #include <linux/tick.h>
+ #include <linux/kallsyms.h>
 +#include <linux/freezer.h>
  
  #include <asm/uaccess.h>
  #include <asm/unistd.h>
-@@ -1150,9 +1151,18 @@ static inline void calc_load(unsigned long ticks)
+@@ -1253,9 +1254,18 @@ static inline void calc_load(unsigned long ticks)
  	if (unlikely(count < 0)) {
  		active_tasks = count_active_tasks();
  		do {
@@ -16649,7 +16967,7 @@ index c2a8ccf..e90891b 100644
  		} while (count < 0);
  	}
 diff --git a/lib/Kconfig b/lib/Kconfig
-index 9b03581..f5d0a72 100644
+index 3842499..758a928 100644
 --- a/lib/Kconfig
 +++ b/lib/Kconfig
 @@ -47,6 +47,9 @@ config AUDIT_GENERIC
@@ -16663,10 +16981,10 @@ index 9b03581..f5d0a72 100644
  # compression support is select'ed if needed
  #
 diff --git a/lib/Makefile b/lib/Makefile
-index 77b4bad..e6e3779 100644
+index 992a39e..b974998 100644
 --- a/lib/Makefile
 +++ b/lib/Makefile
-@@ -37,6 +37,9 @@ ifneq ($(CONFIG_HAVE_DEC_LOCK),y)
+@@ -38,6 +38,9 @@ ifneq ($(CONFIG_HAVE_DEC_LOCK),y)
  endif
  
  obj-$(CONFIG_BITREVERSE) += bitrev.o
@@ -16995,7 +17313,7 @@ index 0000000..963ac5c
 +}
 +
 diff --git a/lib/vsprintf.c b/lib/vsprintf.c
-index bed7229..abc81c8 100644
+index b025864..2138c47 100644
 --- a/lib/vsprintf.c
 +++ b/lib/vsprintf.c
 @@ -236,6 +236,29 @@ static char * number(char * buf, char * end, unsigned long long num, int base, i
@@ -17029,7 +17347,7 @@ index bed7229..abc81c8 100644
   * vsnprintf - Format a string and place it in a buffer
   * @buf: The buffer to place the result into
 diff --git a/mm/memory.c b/mm/memory.c
-index ef09f0a..2f7f513 100644
+index e7066e7..4329652 100644
 --- a/mm/memory.c
 +++ b/mm/memory.c
 @@ -976,6 +976,15 @@ no_page_table:
@@ -17049,7 +17367,7 @@ index ef09f0a..2f7f513 100644
  		unsigned long start, int len, int write, int force,
  		struct page **pages, struct vm_area_struct **vmas)
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index 5b4528a..c0da219 100644
+index db023e2..b7f1dd2 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
 @@ -654,6 +654,28 @@ static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
@@ -17112,7 +17430,7 @@ index 5b4528a..c0da219 100644
    	} while (nr_scanned < max_scan);
  	spin_unlock(&zone->lru_lock);
  done:
-@@ -1270,6 +1277,72 @@ out:
+@@ -1276,6 +1283,72 @@ out:
  	return nr_reclaimed;
  }
  
@@ -17149,14 +17467,14 @@ index 5b4528a..c0da219 100644
 +		spin_lock_irq(&zone->lru_lock);
 +		INIT_LIST_HEAD(&this->active_list);
 +		INIT_LIST_HEAD(&this->inactive_list);
-+		moved = isolate_lru_pages(zone->nr_active,
++		moved = isolate_lru_pages(zone_page_state(zone, NR_ACTIVE),
 +				&zone->active_list, &this->active_list,
 +				&scanned);
-+		zone->nr_active -= moved;
-+		moved = isolate_lru_pages(zone->nr_inactive,
++		__mod_zone_page_state(zone, NR_ACTIVE, -moved);
++		moved = isolate_lru_pages(zone_page_state(zone, NR_INACTIVE),
 +				&zone->inactive_list, &this->inactive_list,
 +				&scanned);
-+		zone->nr_inactive -= moved;
++		__mod_zone_page_state(zone, NR_INACTIVE, -moved);
 +		spin_unlock_irq(&zone->lru_lock);
 +	}
 +}
@@ -17185,7 +17503,7 @@ index 5b4528a..c0da219 100644
  /*
   * The background pageout daemon, started as a kernel thread
   * from the init process. 
-@@ -1317,8 +1390,6 @@ static int kswapd(void *p)
+@@ -1323,8 +1396,6 @@ static int kswapd(void *p)
  	for ( ; ; ) {
  		unsigned long new_order;
  
@@ -17194,7 +17512,7 @@ index 5b4528a..c0da219 100644
  		prepare_to_wait(&pgdat->kswapd_wait, &wait, TASK_INTERRUPTIBLE);
  		new_order = pgdat->kswapd_max_order;
  		pgdat->kswapd_max_order = 0;
-@@ -1329,12 +1400,19 @@ static int kswapd(void *p)
+@@ -1335,12 +1406,19 @@ static int kswapd(void *p)
  			 */
  			order = new_order;
  		} else {
@@ -17216,13 +17534,14 @@ index 5b4528a..c0da219 100644
  	}
  	return 0;
  }
-@@ -1362,6 +1440,79 @@ void wakeup_kswapd(struct zone *zone, int order)
+@@ -1368,6 +1446,91 @@ void wakeup_kswapd(struct zone *zone, int order)
  }
  
  #ifdef CONFIG_PM
 +void shrink_one_zone(struct zone *zone, int total_to_free)
 +{
-+	int still_to_free = total_to_free, prio;
++	int prio;
++	unsigned long still_to_free = total_to_free;
 +	struct scan_control sc = {
 +		.gfp_mask = GFP_KERNEL,
 +		.may_swap = 0,
@@ -17240,38 +17559,49 @@ index 5b4528a..c0da219 100644
 +		sc.gfp_mask |= __GFP_HIGHMEM;
 +
 +	for (prio = DEF_PRIORITY; prio >= 0; prio--) {
-+		unsigned long to_free = zone->nr_active + zone->nr_inactive,
-+			      orig_size = to_free;
++		unsigned long to_free, just_freed, orig_size;
++		unsigned long old_nr_active;
 +
-+		if (to_free > still_to_free)
-+			to_free = still_to_free;
++		to_free = min(zone_page_state(zone, NR_ACTIVE) +
++				zone_page_state(zone, NR_INACTIVE),
++				still_to_free);
 +
 +		if (to_free <= 0)
 +			return;
 +
-+		sc.swap_cluster_max = to_free - zone->nr_inactive;
++		sc.swap_cluster_max = to_free -
++			zone_page_state(zone, NR_INACTIVE);
 +
-+		if (sc.swap_cluster_max > 0) {
++		do {
++			old_nr_active = zone_page_state(zone, NR_ACTIVE);
 +			zone->nr_scan_active = sc.swap_cluster_max - 1;
 +			shrink_active_list(sc.swap_cluster_max, zone, &sc,
 +					prio);
 +			zone->nr_scan_active = 0;
-+		}
 +
-+		to_free = zone->nr_active + zone->nr_inactive;
++			sc.swap_cluster_max = to_free - zone_page_state(zone,
++					NR_INACTIVE);
 +
-+		if (to_free > still_to_free)
-+			to_free = still_to_free;
++		} while (sc.swap_cluster_max > 0 &&
++			 zone_page_state(zone, NR_ACTIVE) > old_nr_active);
++
++		to_free = min(zone_page_state(zone, NR_ACTIVE) +
++				zone_page_state(zone, NR_INACTIVE),
++				still_to_free);
 +		
-+		if (to_free > 0) {
-+			int just_freed;
++		do {
++			orig_size = zone_page_state(zone, NR_ACTIVE) +
++				zone_page_state(zone, NR_INACTIVE);
 +			zone->nr_scan_inactive = to_free;
 +			sc.swap_cluster_max = to_free;
-+			just_freed += shrink_inactive_list(to_free, zone,
-+					&sc);
++			shrink_inactive_list(to_free, zone, &sc);
++			just_freed = (orig_size -
++				(zone_page_state(zone, NR_ACTIVE) +
++				 zone_page_state(zone, NR_INACTIVE)));
 +			zone->nr_scan_inactive = 0;
-+			still_to_free -= (orig_size - (zone->nr_active + zone->nr_inactive));
-+		}
++			still_to_free -= just_freed;
++			to_free -= just_freed;
++		} while (just_freed > 0 && still_to_free > 0);
 +	};
 +
 +	while (still_to_free > 0) {
@@ -17296,13 +17626,14 @@ index 5b4528a..c0da219 100644
  /*
   * Helper function for shrink_all_memory().  Tries to reclaim 'nr_pages' pages
   * from LRU lists system-wide, for given pass and priority, and returns the
-@@ -1395,9 +1546,12 @@ static unsigned long shrink_all_zones(unsigned long nr_pages, int prio,
- 
- 		zone->nr_scan_inactive += (zone->nr_inactive >> prio) + 1;
+@@ -1404,10 +1567,13 @@ static unsigned long shrink_all_zones(unsigned long nr_pages, int prio,
+ 		zone->nr_scan_inactive +=
+ 			(zone_page_state(zone, NR_INACTIVE) >> prio) + 1;
  		if (zone->nr_scan_inactive >= nr_pages || pass > 3) {
 +			int freed;
  			zone->nr_scan_inactive = 0;
- 			nr_to_scan = min(nr_pages, zone->nr_inactive);
+ 			nr_to_scan = min(nr_pages,
+ 				zone_page_state(zone, NR_INACTIVE));
 -			ret += shrink_inactive_list(nr_to_scan, zone, sc);
 +			freed = shrink_inactive_list(nr_to_scan, zone, sc);
 +			ret += freed;
@@ -17310,7 +17641,7 @@ index 5b4528a..c0da219 100644
  			if (ret >= nr_pages)
  				return ret;
  		}
-@@ -1475,9 +1629,14 @@ unsigned long shrink_all_memory(unsigned long nr_pages)
+@@ -1480,9 +1646,14 @@ unsigned long shrink_all_memory(unsigned long nr_pages)
  
  		for (prio = DEF_PRIORITY; prio >= 0; prio--) {
  			unsigned long nr_to_scan = nr_pages - ret;
