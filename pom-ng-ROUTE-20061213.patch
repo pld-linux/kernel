@@ -92,7 +92,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/Makefi
 diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_ROUTE.c linux-2.6.19/net/ipv4/netfilter/ipt_ROUTE.c
 --- /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_ROUTE.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.19/net/ipv4/netfilter/ipt_ROUTE.c	2006-12-14 10:26:46.000000000 +0100
-@@ -0,0 +1,464 @@
+@@ -0,0 +1,457 @@
 +/*
 + * This implements the ROUTE target, which enables you to setup unusual
 + * routes not supported by the standard kernel routing table.
@@ -229,14 +229,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_RO
 +	}
 +
 +	if (hh) {
-+		int hh_alen;
-+
-+		read_lock_bh(&hh->hh_lock);
-+		hh_alen = HH_DATA_ALIGN(hh->hh_len);
-+  		memcpy(skb->data - hh_alen, hh->hh_data, hh_alen);
-+		read_unlock_bh(&hh->hh_lock);
-+		skb_push(skb, hh->hh_len);
-+		hh->hh_output(skb);
++		neigh_hh_output(dst->hh, skb);
 +	} else if (dst->neighbour)
 +		dst->neighbour->output(skb);
 +	else {
@@ -617,7 +610,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv6/netfilter/Kconfi
  	  <file:Documentation/modules.txt>.  If unsure, say `N'.
  
 +config IP6_NF_TARGET_ROUTE
-+	tristate '    ROUTE target support'
++	tristate 'ROUTE target support'
 +	depends on IP6_NF_MANGLE
 +	help
 +	  This option adds a `ROUTE' target, which enables you to setup unusual
@@ -645,7 +638,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv6/netfilter/Makefi
 diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv6/netfilter/ip6t_ROUTE.c linux-2.6.19/net/ipv6/netfilter/ip6t_ROUTE.c
 --- /home/users/builder/linux-2.6.19/net/ipv6/netfilter/ip6t_ROUTE.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.19/net/ipv6/netfilter/ip6t_ROUTE.c	2006-12-14 10:26:46.000000000 +0100
-@@ -0,0 +1,311 @@
+@@ -0,0 +1,307 @@
 +/*
 + * This implements the ROUTE v6 target, which enables you to setup unusual
 + * routes not supported by the standard kernel routing table.
@@ -769,11 +762,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv6/netfilter/ip6t_R
 +	struct hh_cache *hh = dst->hh;
 +
 +	if (hh) {
-+		read_lock_bh(&hh->hh_lock);
-+		memcpy(skb->data - 16, hh->hh_data, 16);
-+		read_unlock_bh(&hh->hh_lock);
-+		skb_push(skb, hh->hh_len);
-+		hh->hh_output(skb);
++		neigh_hh_output(dst->hh, skb);
 +	} else if (dst->neighbour)
 +		dst->neighbour->output(skb);
 +	else {
@@ -841,8 +830,8 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv6/netfilter/ip6t_R
 +		  const struct net_device *out,
 +		  unsigned int hooknum,
 +		  const struct xt_target *target,
-+		  const void *targinfo,
-+		  void *userinfo)
++		  const void *targinfo
++		  )
 +{
 +	const struct ip6t_route_target_info *route_info = targinfo;
 +	struct sk_buff *skb = *pskb;
@@ -911,7 +900,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv6/netfilter/ip6t_R
 +		      const void *entry,
 +		      const struct xt_target *target,
 +		      void *targinfo,
-+		      unsigned int targinfosize,
++		      
 +		      unsigned int hook_mask)
 +{
 +	if (strcmp(tablename, "mangle") != 0) {
@@ -919,12 +908,12 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv6/netfilter/ip6t_R
 +		return 0;
 +	}
 +
-+	if (targinfosize != IP6T_ALIGN(sizeof(struct ip6t_route_target_info))) {
++	/* if (targinfosize != IP6T_ALIGN(sizeof(struct ip6t_route_target_info))) {
 +		printk(KERN_WARNING "ip6t_ROUTE: targinfosize %u != %Zu\n",
 +		       targinfosize,
 +		       IP6T_ALIGN(sizeof(struct ip6t_route_target_info)));
 +		return 0;
-+	}
++	} */
 +
 +	return 1;
 +}

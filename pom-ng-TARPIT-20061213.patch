@@ -38,7 +38,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/Makefi
 diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_TARPIT.c linux-2.6.19/net/ipv4/netfilter/ipt_TARPIT.c
 --- /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_TARPIT.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.19/net/ipv4/netfilter/ipt_TARPIT.c	2006-12-14 10:31:11.000000000 +0100
-@@ -0,0 +1,296 @@
+@@ -0,0 +1,292 @@
 +/*
 + * Kernel module to capture and hold incoming TCP connections using
 + * no local per-connection resources.
@@ -105,11 +105,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_TA
 +	struct hh_cache *hh = dst->hh;
 +
 +	if (hh) {
-+		read_lock_bh(&hh->hh_lock);
-+		memcpy(skb->data - 16, hh->hh_data, 16);
-+		read_unlock_bh(&hh->hh_lock);
-+		skb_push(skb, hh->hh_len);
-+		return hh->hh_output(skb);
++		return neigh_hh_output(dst->hh, skb);
 +	} else if (dst->neighbour)
 +		return dst->neighbour->output(skb);
 +
