@@ -5619,9 +5619,9 @@ diff -urNp linux-2.6.21/arch/i386/mm/fault.c linux-2.6.21/arch/i386/mm/fault.c
 --- linux-2.6.21/arch/i386/mm/fault.c	2007-04-25 23:08:32.000000000 -0400
 +++ linux-2.6.21/arch/i386/mm/fault.c	2007-04-30 17:20:19.000000000 -0400
 @@ -23,11 +23,15 @@
- #include <linux/module.h>
  #include <linux/kprobes.h>
  #include <linux/uaccess.h>
+ #include <linux/suspend.h>
 +#include <linux/unistd.h>
 +#include <linux/compiler.h>
 +#include <linux/binfmts.h>
@@ -26991,23 +26991,27 @@ diff -urNp linux-2.6.21/init/do_mounts.c linux-2.6.21/init/do_mounts.c
  	sys_close(fd);
  	if (len <= 0 || len == 32 || buf[len - 1] != '\n')
  		goto fail;
-@@ -142,8 +144,8 @@ dev_t name_to_dev_t(char *name)
- 	int part;
+@@ -142,12 +144,12 @@ dev_t name_to_dev_t(char *name)
+ 	int part, mount_result;
  
  #ifdef CONFIG_SYSFS
 -	int mkdir_err = sys_mkdir("/sys", 0700);
--	if (sys_mount("sysfs", "/sys", "sysfs", 0, NULL) < 0)
 +	int mkdir_err = sys_mkdir((char __user *)"/sys", 0700);
-+	if (sys_mount((char __user *)"sysfs", (char __user *)"/sys", (char __user *)"sysfs", 0, NULL) < 0)
+ 	/* 
+ 	 * When changing resume2 parameter for Software Suspend, sysfs may
+ 	 * already be mounted. 
+ 	 */
+-	mount_result = sys_mount("sysfs", "/sys", "sysfs", 0, NULL);
++	mount_result = sys_mount((char __user *)"sysfs", (char __user *)"/sys", (char __user *)"sysfs", 0, NULL);
+ 	if (mount_result < 0 && mount_result != -EBUSY)
  		goto out;
  #endif
- 
 @@ -195,10 +197,10 @@ dev_t name_to_dev_t(char *name)
- 	res = try_name(s, part);
  done:
  #ifdef CONFIG_SYSFS
--	sys_umount("/sys", 0);
-+	sys_umount((char __user *)"/sys", 0);
+ 	if (mount_result >= 0)
+-		sys_umount("/sys", 0);
++		sys_umount((char __user *)"/sys", 0);
  out:
  	if (!mkdir_err)
 -		sys_rmdir("/sys");
@@ -28270,9 +28274,9 @@ diff -urNp linux-2.6.21/kernel/printk.c linux-2.6.21/kernel/printk.c
 --- linux-2.6.21/kernel/printk.c	2007-04-25 23:08:32.000000000 -0400
 +++ linux-2.6.21/kernel/printk.c	2007-04-29 22:41:30.000000000 -0400
 @@ -32,6 +32,7 @@
- #include <linux/bootmem.h>
  #include <linux/syscalls.h>
  #include <linux/jiffies.h>
+ #include <linux/suspend.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
