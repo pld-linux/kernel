@@ -3,9 +3,10 @@
 # - not ready yet - work in progress, but You are welcome :-)
 #
 # TODO:
-# - update configs for all archs
-# - prepare vserver (you could try --without vserver)
-# - update linux-2.6-warnings.patch
+# - update configs for all archs (NO_HZ and more)
+# - prepare vserver (or you could try --without vserver)
+# - update linux-2.6-grsec-minimal.patch (or you could try
+#   --with pax_full or --with grsec_full)
 #
 # FUTURE:
 # - update xen patch for 2.6.21
@@ -342,8 +343,6 @@ Patch300:	routes-2.6.19-12.diff
 Patch301:	pom-ng-connlimit-20061213_nf_conntrack_port.patch
 Patch302:	linux-2.6-layer7_nf_conntrack_port.patch
 
-Patch400:	kernel-bcm43xx-combined_2.6.20.2.patch
-
 # For compatibility with (not updated) blobs like ... ? 
 # Before 2.6.20 we had CONFIG_REGPARM option disabled.
 # Probably not needed anymore - it is bconded and disabled now
@@ -353,9 +352,6 @@ Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
 
-# Compilation with gcc-4.1.2:
-Patch2001:	kernel-proxy-pda.patch
-
 # Some non-GPL modules (nvidia, nvidia-legacy) looks for the paravirt_ops symbol
 Patch2100:	linux-2.6.20-paravirt_ops-needed-by-blobs.patch
 
@@ -364,9 +360,6 @@ Patch2500:	linux-2.6-warnings.patch
 
 #wanpipe
 #Patch3000: wanpipe-beta7-2.3.4.patch
-
-# gfs2 and dlm modules ported from 2.6.21rc5, current are broken
-Patch4000:	linux-2.6-gfs2_dlm-2.6.21.patch
 
 Patch5000:	apparmor-2.6.20.3-v405-fullseries.diff
 Patch5001:	linux-2.6-apparmor-caps.patch
@@ -379,7 +372,7 @@ Patch9998:	pax-linux-2.6.20.patch
 
 # based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.20.6-200704091818.patch
 # with pax updates from http://www.grsecurity.net/~paxguy1/pax-linux-2.6.20.7-test15.patch
-Patch9999:	grsecurity-2.1.10-2.6.20.3.patch
+Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
 
@@ -884,9 +877,6 @@ install %{SOURCE5} Makefile.ppclibs
 
 %patch2500 -p1
 
-# gfs2 from 2.6.21
-%patch4000 -p1
-
 # Apparmor
 %patch5000 -p1
 %patch5001 -p1
@@ -936,14 +926,8 @@ install %{SOURCE5} Makefile.ppclibs
 %patch300 -p1
 %patch301 -p1
 
-# bcm43xx
-%patch400 -p1
-
 # Small fixes:
 %patch2000 -p1
-
-# Compilation with gcc-4.1.2:
-%patch2001 -p1
 
 # exporting paravirt_ops as non-GPL-only symbol
 %patch2100 -p1
