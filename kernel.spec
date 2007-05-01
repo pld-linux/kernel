@@ -325,6 +325,7 @@ Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 Patch85:	hostap-kernel-2.6.18.patch
 
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.20.4-vs2.3.0.12.diff
+# TODO: update for 2.6.21
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
@@ -358,9 +359,6 @@ Patch2100:	linux-2.6.20-paravirt_ops-needed-by-blobs.patch
 # kill some thousands of warnings
 Patch2500:	linux-2.6-warnings.patch
 
-#wanpipe
-#Patch3000: wanpipe-beta7-2.3.4.patch
-
 Patch5000:	apparmor-2.6.20.3-v405-fullseries.diff
 Patch5001:	linux-2.6-apparmor-caps.patch
 
@@ -370,8 +368,8 @@ Patch9997:	pax_selinux_hooks-2.6.20.patch
 # based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.20.7-test15.patch
 Patch9998:	pax-linux-2.6.20.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.20.6-200704091818.patch
-# with pax updates from http://www.grsecurity.net/~paxguy1/pax-linux-2.6.20.7-test15.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.21-200704301822.patch
+# with suspend2 related fixes - no vs fixes yet
 Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
