@@ -30746,7 +30746,7 @@ diff -urNp linux-2.6.21/net/ipv4/inet_hashtables.c linux-2.6.21/net/ipv4/inet_ha
 diff -urNp linux-2.6.21/net/ipv4/netfilter/ipt_stealth.c linux-2.6.21/net/ipv4/netfilter/ipt_stealth.c
 --- linux-2.6.21/net/ipv4/netfilter/ipt_stealth.c	1969-12-31 19:00:00.000000000 -0500
 +++ linux-2.6.21/net/ipv4/netfilter/ipt_stealth.c	2007-04-29 22:41:30.000000000 -0400
-@@ -0,0 +1,113 @@
+@@ -0,0 +1,114 @@
 +/* Kernel module to add stealth support.
 + *
 + * Copyright (C) 2002-2006 Brad Spengler  <spender@grsecurity.net>
@@ -30840,8 +30840,9 @@ diff -urNp linux-2.6.21/net/ipv4/netfilter/ipt_stealth.c linux-2.6.21/net/ipv4/n
 +}
 +
 +
-+static struct ipt_match stealth_match = {
++static struct xt_match stealth_match = {
 +	.name = "stealth",
++	.family = AF_INET,
 +	.match = match,
 +	.checkentry = checkentry,
 +	.destroy = NULL,
@@ -30850,12 +30851,12 @@ diff -urNp linux-2.6.21/net/ipv4/netfilter/ipt_stealth.c linux-2.6.21/net/ipv4/n
 +
 +static int __init init(void)
 +{
-+	return ipt_register_match(&stealth_match);
++	return xt_register_match(&stealth_match);
 +}
 +
 +static void __exit fini(void)
 +{
-+	ipt_unregister_match(&stealth_match);
++	xt_unregister_match(&stealth_match);
 +}
 +
 +module_init(init);
@@ -31394,7 +31395,7 @@ diff -urNp linux-2.6.21/security/Kconfig linux-2.6.21/security/Kconfig
 +
 +config PAX
 +	bool "Enable various PaX features"
-+	depends on GRSECURITY && (ALPHA || ARM || AVR32 || IA64 || MIPS32 || MIPS64 || PARISC || PPC32 || PPC64 || SPARC32 || SPARC64 || X86 || X86_64)
++	depends on GRKERNSEC && (ALPHA || ARM || AVR32 || IA64 || MIPS32 || MIPS64 || PARISC || PPC32 || PPC64 || SPARC32 || SPARC64 || X86 || X86_64)
 +	help
 +	  This allows you to enable various PaX features.  PaX adds
 +	  intrusion prevention mechanisms to the kernel that reduce
