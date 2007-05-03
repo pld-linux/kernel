@@ -1,10 +1,13 @@
 #
 # STATUS: 2.6.21.1-0.1
 # - not ready yet - work in progress, but You are welcome :-)
+# - builds --without vserver --with pax_full on i686
 #
 # TODO:
-# - update configs for all archs (NO_HZ and more)
+# - update configs for all archs
+# - test NO_HZ & HZ=1000 on i686
 # - prepare vserver (or you could try --without vserver)
+#   2.2 should be ready for 2.6.21 but there is still no 2.3
 # - update linux-2.6-grsec-minimal.patch (or you could try
 #   --with pax_full or --with grsec_full)
 #
@@ -330,6 +333,10 @@ Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
 
+# http://vserver.13thfloor.at/Experimental/patch-2.6.21-vs2.2.0-rc1.diff
+# TODO: use temp instead of patches 100-102
+Patch110:	linux-2.6-vs2.2.patch
+
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 #Patch120: xen-3.0-2.6.16.patch
 
@@ -352,6 +359,7 @@ Patch500:	linux-2.6.20_i386_regparm_off.patch
 Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
+Patch2001:	linux-2.6.21.1-pwc-uncompress.patch
 
 # Some non-GPL modules (nvidia, nvidia-legacy) looks for the paravirt_ops symbol
 Patch2100:	linux-2.6.20-paravirt_ops-needed-by-blobs.patch
@@ -885,13 +893,13 @@ install %{SOURCE5} Makefile.ppclibs
 %if %{with pax_full}
 %patch9999 -p1
 %patch10000 -p1
-%patch10001 -p1
+%{?with_vserver:%patch10001 -p1}
 %else
 
 %if %{with grsec_full}
 %patch9999 -p1
 %patch10000 -p1
-%patch10001 -p1
+%{?with_vserver:%patch10001 -p1}
 %else
 %if %{with grsec_minimal}
 %patch1000 -p1
@@ -926,6 +934,7 @@ install %{SOURCE5} Makefile.ppclibs
 
 # Small fixes:
 %patch2000 -p1
+%patch2001 -p1
 
 # exporting paravirt_ops as non-GPL-only symbol
 %patch2100 -p1
