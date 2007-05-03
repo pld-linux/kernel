@@ -192,13 +192,11 @@ diff -urNp linux-2.6.16.2/fs/proc/internal.h linux-2.6.16.2-grsec/fs/proc/intern
 diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_misc.c
 --- linux-2.6.16.2/fs/proc/proc_misc.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/fs/proc/proc_misc.c	2006-04-11 17:44:40.109709500 +0200
-@@ -670,6 +670,10 @@ void create_seq_entry(char *name, mode_t
+@@ -667,6 +667,8 @@ void create_seq_entry(char *name, mode_t
+ 
  void __init proc_misc_init(void)
  {
- 	struct proc_dir_entry *entry;
-+#ifdef CONFIG_GRKERNSEC_PROC
 +	int gr_mode = 0;
-+#endif
 +
  	static struct {
  		char *name;
@@ -937,18 +935,16 @@ diff -urNp linux-2.6.16.2/ipc/shm.c linux-2.6.16.2-grsec/ipc/shm.c
  	shp->shm_segsz = size;
  	shp->shm_nattch = 0;
  	shp->id = shm_buildid(id,shp->shm_perm.seq);
-@@ -774,6 +789,11 @@ long do_shmat(int shmid, char __user *sh
- 	file = shp->shm_file;
- 	size = i_size_read(file->f_dentry->d_inode);
+@@ -774,6 +789,9 @@ long do_shmat(int shmid, char __user *sh
+ 	path.dentry = dget(shp->shm_file->f_path.dentry);
+ 	path.mnt    = mntget(shp->shm_file->f_path.mnt);
  	shp->shm_nattch++;
-+
 +#ifdef CONFIG_GRKERNSEC
 +	shp->shm_lapid = current->pid;
 +#endif
-+
+ 	size = i_size_read(path.dentry->d_inode);
  	shm_unlock(shp);
  
- 	down_write(&current->mm->mmap_sem);
 @@ -1014,3 +1059,27 @@ static int sysvipc_shm_proc_show(struct 
  			  shp->shm_ctim);
  }
@@ -1077,8 +1073,8 @@ diff -urNp linux-2.6.18/kernel/resource.c linux-2.6.18/kernel/resource.c
 diff -urN linux-2.6.16.2/kernel/sysctl.c linux-2.6.16.2-grsec/kernel/sysctl.c
 --- linux-2.6.16.2/kernel/sysctl.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/kernel/sysctl.c	2006-04-11 17:44:40.125710500 +0200
-@@ -54,6 +54,11 @@ extern int proc_nr_files(ctl_table *tabl
-                      void __user *buffer, size_t *lenp, loff_t *ppos);
+@@ -58,6 +58,11 @@ extern int proc_nr_files(ctl_table *tabl
+ #endif
  
  #if defined(CONFIG_SYSCTL)
 +#include <linux/grsecurity.h>
@@ -1114,11 +1110,13 @@ diff -urN linux-2.6.16.2/kernel/sysctl.c linux-2.6.16.2-grsec/kernel/sysctl.c
  	{ .ctl_name = 0 }
  };
  
-@@ -1233,6 +1249,8 @@ static int test_perm(int mode, int op)
+@@ -1233,6 +1249,10 @@ static int test_perm(int mode, int op)
  static inline int ctl_perm(ctl_table *table, int op)
  {
  	int error;
-+	if (table->de && gr_handle_sysctl_mod(table->de->parent->name, table->de->name, op))
++	if (table->parent != NULL && table->parent->procname != NULL &&
++	    table->procname != NULL &&
++	    gr_handle_sysctl_mod(table->parent->procname, table->procname, op))
 +		return -EACCES;
  	error = security_sysctl(table, op);
  	if (error)
@@ -1142,14 +1140,14 @@ diff -urNp linux-2.6.16.2/net/ipv4/inet_hashtables.c linux-2.6.16.2-grsec/net/ip
   * Allocate and initialize a new local port bind bucket.
   * The bindhash mutex for snum's hash chain must be held here.
 @@ -308,6 +311,8 @@ ok:
-  		}
-  		spin_unlock(&head->lock);
+ 		}
+ 		spin_unlock(&head->lock);
  
 +		gr_update_task_in_ip_table(current, inet_sk(sk));
 +
-  		if (tw) {
-  			inet_twsk_deschedule(tw, death_row);
-  			inet_twsk_put(tw);
+ 		if (tw) {
+ 			inet_twsk_deschedule(tw, death_row);
+ 			inet_twsk_put(tw);
 diff -urNp linux-2.6.16.2/net/socket.c linux-2.6.16.2-grsec/net/socket.c
 --- linux-2.6.16.2/net/socket.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/net/socket.c	2006-04-11 17:44:40.125710500 +0200
