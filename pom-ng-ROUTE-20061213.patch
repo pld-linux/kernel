@@ -92,7 +92,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/Makefi
 diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_ROUTE.c linux-2.6.19/net/ipv4/netfilter/ipt_ROUTE.c
 --- /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_ROUTE.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.19/net/ipv4/netfilter/ipt_ROUTE.c	2006-12-14 10:26:46.000000000 +0100
-@@ -0,0 +1,457 @@
+@@ -0,0 +1,458 @@
 +/*
 + * This implements the ROUTE target, which enables you to setup unusual
 + * routes not supported by the standard kernel routing table.
@@ -107,6 +107,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_RO
 +#include <linux/module.h>
 +#include <linux/skbuff.h>
 +#include <linux/ip.h>
++#include <linux/netfilter/x_tables.h>
 +#include <linux/netfilter_ipv4/ip_tables.h>
 +#include <linux/netfilter_ipv4/ip_conntrack.h>
 +#include <linux/netfilter_ipv4/ipt_ROUTE.h>
@@ -539,13 +540,13 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_RO
 +	/* Initialize fake conntrack so that NAT will skip it */
 +	route_tee_track.status |= IPS_NAT_DONE_MASK;
 +
-+	return ipt_register_target(&ipt_route_reg);
++	return xt_register_target(&ipt_route_reg);
 +}
 +
 +
 +static void __exit fini(void)
 +{
-+	ipt_unregister_target(&ipt_route_reg);
++	xt_unregister_target(&ipt_route_reg);
 +}
 +
 +module_init(init);
@@ -597,7 +598,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv6/netfilter/Makefi
 diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv6/netfilter/ip6t_ROUTE.c linux-2.6.19/net/ipv6/netfilter/ip6t_ROUTE.c
 --- /home/users/builder/linux-2.6.19/net/ipv6/netfilter/ip6t_ROUTE.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.19/net/ipv6/netfilter/ip6t_ROUTE.c	2006-12-14 10:26:46.000000000 +0100
-@@ -0,0 +1,307 @@
+@@ -0,0 +1,308 @@
 +/*
 + * This implements the ROUTE v6 target, which enables you to setup unusual
 + * routes not supported by the standard kernel routing table.
@@ -612,6 +613,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv6/netfilter/ip6t_R
 +#include <linux/module.h>
 +#include <linux/skbuff.h>
 +#include <linux/ipv6.h>
++#include <linux/netfilter/x_tables.h>
 +#include <linux/netfilter_ipv6/ip6_tables.h>
 +#include <linux/netfilter_ipv6/ip6t_ROUTE.h>
 +#include <linux/netdevice.h>
@@ -890,7 +892,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv6/netfilter/ip6t_R
 +static int __init init(void)
 +{
 +	printk(KERN_DEBUG "registering ipv6 ROUTE target\n");
-+	if (ip6t_register_target(&ip6t_route_reg))
++	if (xt_register_target(&ip6t_route_reg))
 +		return -EINVAL;
 +
 +	return 0;
@@ -899,7 +901,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv6/netfilter/ip6t_R
 +
 +static void __exit fini(void)
 +{
-+	ip6t_unregister_target(&ip6t_route_reg);
++	xt_unregister_target(&ip6t_route_reg);
 +}
 +
 +module_init(init);

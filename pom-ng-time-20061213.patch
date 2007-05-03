@@ -57,7 +57,7 @@ diff -NurpP --minimal linux-2.6.19-pom-ng/net/ipv4/netfilter/Makefile linux-2.6.
 diff -NurpP --minimal linux-2.6.19-pom-ng/net/ipv4/netfilter/ipt_time.c linux-2.6.19/net/ipv4/netfilter/ipt_time.c
 --- linux-2.6.19-pom-ng/net/ipv4/netfilter/ipt_time.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.19/net/ipv4/netfilter/ipt_time.c	2006-12-14 16:26:45.000000000 +0100
-@@ -0,0 +1,198 @@
+@@ -0,0 +1,200 @@
 +/*
 +  This is a module which is used for time matching
 +  It is using some modified code from dietlibc (localtime() function)
@@ -76,6 +76,7 @@ diff -NurpP --minimal linux-2.6.19-pom-ng/net/ipv4/netfilter/ipt_time.c linux-2.
 +#include <linux/module.h>
 +#include <linux/skbuff.h>
 +#include <linux/version.h>
++#include <linux/netfilter/x_tables.h>
 +#include <linux/netfilter_ipv4/ip_tables.h>
 +#include <linux/netfilter_ipv4/ipt_time.h>
 +#include <linux/time.h>
@@ -187,8 +188,9 @@ diff -NurpP --minimal linux-2.6.19-pom-ng/net/ipv4/netfilter/ipt_time.c linux-2.
 +	return 1;
 +}
 +
-+static struct ipt_match time_match = {
++static struct xt_match time_match = {
 +	.name		= "time",
++	.family 	= AF_INET,
 +	.match		= &match,
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,17)
 +	.matchsize      = sizeof(struct ipt_time_info),
@@ -200,12 +202,12 @@ diff -NurpP --minimal linux-2.6.19-pom-ng/net/ipv4/netfilter/ipt_time.c linux-2.
 +static int __init init(void)
 +{
 +	printk("ipt_time loading\n");
-+	return ipt_register_match(&time_match);
++	return xt_register_match(&time_match);
 +}
 +
 +static void __exit fini(void)
 +{
-+	ipt_unregister_match(&time_match);
++	xt_unregister_match(&time_match);
 +	printk("ipt_time unloaded\n");
 +}
 +

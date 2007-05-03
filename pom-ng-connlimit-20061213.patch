@@ -47,7 +47,7 @@ diff -NurpP --minimal linux-2.6.19-pom-ng/net/ipv4/netfilter/Makefile linux-2.6.
 diff -NurpP --minimal linux-2.6.19-pom-ng/net/ipv4/netfilter/ipt_connlimit.c linux-2.6.19/net/ipv4/netfilter/ipt_connlimit.c
 --- linux-2.6.19-pom-ng/net/ipv4/netfilter/ipt_connlimit.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.19/net/ipv4/netfilter/ipt_connlimit.c	2006-12-14 16:21:04.000000000 +0100
-@@ -0,0 +1,255 @@
+@@ -0,0 +1,257 @@
 +/*
 + * netfilter module to limit the number of parallel tcp
 + * connections per IP address.
@@ -64,6 +64,7 @@ diff -NurpP --minimal linux-2.6.19-pom-ng/net/ipv4/netfilter/ipt_connlimit.c lin
 +#include <linux/skbuff.h>
 +#include <linux/version.h>
 +#include <linux/list.h>
++#include <linux/netfilter/x_tables.h>
 +#include <linux/netfilter_ipv4/ip_conntrack.h>
 +#include <linux/netfilter_ipv4/ip_conntrack_core.h>
 +#include <linux/netfilter_ipv4/ip_conntrack_tcp.h>
@@ -280,8 +281,9 @@ diff -NurpP --minimal linux-2.6.19-pom-ng/net/ipv4/netfilter/ipt_connlimit.c lin
 +	kfree(info->data);
 +}
 +
-+static struct ipt_match connlimit_match = { 
++static struct xt_match connlimit_match = { 
 +	.name		= "connlimit",
++	.family 	= AF_INET,
 +	.match		= &match,
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,17)
 +	.matchsize	= sizeof(struct ipt_connlimit_info),
@@ -293,12 +295,12 @@ diff -NurpP --minimal linux-2.6.19-pom-ng/net/ipv4/netfilter/ipt_connlimit.c lin
 +
 +static int __init init(void)
 +{
-+	return ipt_register_match(&connlimit_match);
++	return xt_register_match(&connlimit_match);
 +}
 +
 +static void __exit fini(void)
 +{
-+	ipt_unregister_match(&connlimit_match);
++	xt_unregister_match(&connlimit_match);
 +}
 +
 +module_init(init);

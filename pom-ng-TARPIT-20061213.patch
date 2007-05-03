@@ -76,7 +76,6 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_TA
 + * - Reply to TCP !SYN,!RST,!FIN with ACK, window 0 bytes, rate-limited
 + */
 +
-+
 +#include <linux/version.h>
 +#include <linux/module.h>
 +#include <linux/skbuff.h>
@@ -88,6 +87,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_TA
 +#include <net/route.h>
 +#include <linux/random.h>
 +#include <linux/netfilter_ipv4/ip_tables.h>
++#include <linux/netfilter/x_tables.h>
 +
 +#if 0
 +#define DEBUGP printk
@@ -143,7 +143,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_TA
 +		return;
 +
 +	/* Check checksum. */
-+	if (tcp_v4_check(otcph, otcplen, oskb->nh.iph->saddr,
++	if (tcp_v4_check(otcplen, oskb->nh.iph->saddr,
 +			 oskb->nh.iph->daddr,
 +			 csum_partial((char *)otcph, otcplen, 0)) != 0)
 +		return;
@@ -201,7 +201,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_TA
 +
 +	/* Adjust TCP checksum */
 +	ntcph->check = 0;
-+	ntcph->check = tcp_v4_check(ntcph, sizeof(struct tcphdr),
++	ntcph->check = tcp_v4_check(sizeof(struct tcphdr),
 +				   nskb->nh.iph->saddr,
 +				   nskb->nh.iph->daddr,
 +				   csum_partial((char *)ntcph,
@@ -321,12 +321,12 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_TA
 +
 +static int __init init(void)
 +{
-+	return ipt_register_target(&ipt_tarpit_reg);
++	return xt_register_target(&ipt_tarpit_reg);
 +}
 +
 +static void __exit fini(void)
 +{
-+	ipt_unregister_target(&ipt_tarpit_reg);
++	xt_unregister_target(&ipt_tarpit_reg);
 +}
 +
 +module_init(init);

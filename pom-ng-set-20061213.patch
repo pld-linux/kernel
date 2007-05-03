@@ -6288,7 +6288,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ip_set
 diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_SET.c linux-2.6.19/net/ipv4/netfilter/ipt_SET.c
 --- /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_SET.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.19/net/ipv4/netfilter/ipt_SET.c	2006-12-14 10:13:41.000000000 +0100
-@@ -0,0 +1,160 @@
+@@ -0,0 +1,161 @@
 +/* Copyright (C) 2000-2002 Joakim Axelsson <gozem@linux.nu>
 + *                         Patrick Schaaf <bof@bof.de>
 + *                         Martin Josefsson <gandalf@wlug.westbo.se>
@@ -6312,6 +6312,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_SE
 +#include <linux/version.h>
 +#include <net/protocol.h>
 +#include <net/checksum.h>
++#include <linux/netfilter/x_tables.h>
 +#include <linux/netfilter_ipv4.h>
 +#include <linux/netfilter_ipv4/ip_nat_rule.h>
 +#include <linux/netfilter_ipv4/ipt_set.h>
@@ -6439,12 +6440,12 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_SE
 +
 +static int __init ipt_SET_init(void)
 +{
-+	return ipt_register_target(&SET_target);
++	return xt_register_target(&SET_target);
 +}
 +
 +static void __exit ipt_SET_fini(void)
 +{
-+	ipt_unregister_target(&SET_target);
++	xt_unregister_target(&SET_target);
 +}
 +
 +module_init(ipt_SET_init);
@@ -6452,7 +6453,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_SE
 diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_set.c linux-2.6.19/net/ipv4/netfilter/ipt_set.c
 --- /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_set.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.19/net/ipv4/netfilter/ipt_set.c	2006-12-14 10:13:41.000000000 +0100
-@@ -0,0 +1,142 @@
+@@ -0,0 +1,143 @@
 +/* Copyright (C) 2000-2002 Joakim Axelsson <gozem@linux.nu>
 + *                         Patrick Schaaf <bof@bof.de>
 + *                         Martin Josefsson <gandalf@wlug.westbo.se>
@@ -6469,7 +6470,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_se
 +#include <linux/ip.h>
 +#include <linux/skbuff.h>
 +#include <linux/version.h>
-+
++#include <linux/netfilter/x_tables.h>
 +#include <linux/netfilter_ipv4/ip_tables.h>
 +#include <linux/netfilter_ipv4/ip_set.h>
 +#include <linux/netfilter_ipv4/ipt_set.h>
@@ -6568,8 +6569,9 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_se
 +	ip_set_put(info->match_set.index);
 +}
 +
-+static struct ipt_match set_match = {
++static struct xt_match set_match = {
 +	.name		= "set",
++	.family 	= AF_INET,
 +	.match		= &match,
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,17)
 +	.matchsize	= sizeof(struct ipt_set_info_match),
@@ -6585,12 +6587,12 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_se
 +
 +static int __init ipt_ipset_init(void)
 +{
-+	return ipt_register_match(&set_match);
++	return xt_register_match(&set_match);
 +}
 +
 +static void __exit ipt_ipset_fini(void)
 +{
-+	ipt_unregister_match(&set_match);
++	xt_unregister_match(&set_match);
 +}
 +
 +module_init(ipt_ipset_init);

@@ -66,12 +66,13 @@ diff -NurpP --minimal linux-2.6.19-pom-ng/net/ipv4/netfilter/Makefile linux-2.6.
 diff -NurpP --minimal linux-2.6.19-pom-ng/net/ipv4/netfilter/ipt_ipp2p.c linux-2.6.19/net/ipv4/netfilter/ipt_ipp2p.c
 --- linux-2.6.19-pom-ng/net/ipv4/netfilter/ipt_ipp2p.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.19/net/ipv4/netfilter/ipt_ipp2p.c	2006-12-14 16:25:11.000000000 +0100
-@@ -0,0 +1,886 @@
+@@ -0,0 +1,888 @@
 +#if defined(MODVERSIONS)
 +#include <linux/modversions.h>
 +#endif
 +#include <linux/module.h>
 +#include <linux/version.h>
++#include <linux/netfilter/x_tables.h>
 +#include <linux/netfilter_ipv4/ip_tables.h>
 +#include <linux/netfilter_ipv4/ipt_ipp2p.h>
 +#include <net/tcp.h>
@@ -916,7 +917,7 @@ diff -NurpP --minimal linux-2.6.19-pom-ng/net/ipv4/netfilter/ipt_ipp2p.c linux-2
 +
 +
 +
-+static struct ipt_match ipp2p_match = { 
++static struct xt_match ipp2p_match = { 
 +#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 +	{ NULL, NULL }, 
 +	"ipp2p", 
@@ -927,6 +928,7 @@ diff -NurpP --minimal linux-2.6.19-pom-ng/net/ipv4/netfilter/ipt_ipp2p.c linux-2
 +#endif
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
 +	.name		= "ipp2p",
++	.family 	= AF_INET,
 +	.match		= &match,
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,17)
 +	.matchsize	= sizeof(struct ipt_p2p_info),
@@ -940,12 +942,12 @@ diff -NurpP --minimal linux-2.6.19-pom-ng/net/ipv4/netfilter/ipt_ipp2p.c linux-2
 +static int __init init(void)
 +{
 +    printk(KERN_INFO "IPP2P v%s loading\n", IPP2P_VERSION);
-+    return ipt_register_match(&ipp2p_match);
++    return xt_register_match(&ipp2p_match);
 +}
 +	
 +static void __exit fini(void)
 +{
-+    ipt_unregister_match(&ipp2p_match);
++    xt_unregister_match(&ipp2p_match);
 +    printk(KERN_INFO "IPP2P v%s unloaded\n", IPP2P_VERSION);    
 +}
 +	

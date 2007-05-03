@@ -61,7 +61,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/Makefi
 diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_ipv4options.c linux-2.6.19/net/ipv4/netfilter/ipt_ipv4options.c
 --- /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_ipv4options.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.19/net/ipv4/netfilter/ipt_ipv4options.c	2006-12-14 10:09:19.000000000 +0100
-@@ -0,0 +1,176 @@
+@@ -0,0 +1,177 @@
 +/*
 +  This is a module which is used to match ipv4 options.
 +  This file is distributed under the terms of the GNU General Public
@@ -78,7 +78,7 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_ip
 +#include <linux/module.h>
 +#include <linux/skbuff.h>
 +#include <net/ip.h>
-+
++#include <linux/netfilter/x_tables.h>
 +#include <linux/netfilter_ipv4/ip_tables.h>
 +#include <linux/netfilter_ipv4/ipt_ipv4options.h>
 +
@@ -218,8 +218,9 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_ip
 +	return 1;
 +}
 +
-+static struct ipt_match ipv4options_match = { 
++static struct xt_match ipv4options_match = { 
 +	.name = "ipv4options",
++	.family = AF_INET,
 +	.match = match,
 +	.matchsize = sizeof(struct ipt_ipv4options_info),
 +	.checkentry = checkentry,
@@ -228,12 +229,12 @@ diff -NurpP --minimal /home/users/builder/linux-2.6.19/net/ipv4/netfilter/ipt_ip
 +
 +static int __init init(void)
 +{
-+	return ipt_register_match(&ipv4options_match);
++	return xt_register_match(&ipv4options_match);
 +}
 +
 +static void __exit fini(void)
 +{
-+	ipt_unregister_match(&ipv4options_match);
++	xt_unregister_match(&ipv4options_match);
 +}
 +
 +module_init(init);
