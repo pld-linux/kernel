@@ -1412,12 +1412,12 @@ ln -sf vmlinux-%{kernel_release}smp /boot/vmlinux%{dashxen}
 %depmod %{kernel_release}smp
 
 %post headers
-rm -f %{_prefix}/src/linux
+rm -f %{_prefix}/src/linux%{_subname}
 ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux%{_subname}
 
 %postun headers
 if [ "$1" = "0" ]; then
-	if [ -L %{_prefix}/src/linux ]; then
+	if [ -L %{_prefix}/src/linux%{_subname} ]; then
 		if [ "$(readlink %{_prefix}/src/linux%{_subname})" = "linux%{_subname}-%{version}" ]; then
 			rm -f %{_prefix}/src/linux%{_subname}
 		fi
