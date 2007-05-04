@@ -1,13 +1,12 @@
 #
-# STATUS: 2.6.21.1-0.2
+# STATUS: 2.6.21.1-0.3
 # - not ready yet - work in progress, but You are welcome :-)
-# - builds --without vserver --with pax_full on i686
+# - builds --with pax_full on i686
 # - builds w/o any 'with' switches on i686 too 
 #
 # TODO:
 # - update configs for all archs
 # - replace vs-2.2 with vs-2.3 
-# - update linux-2.6-grsec_full.patch for vserver
 # - test NO_HZ & HZ=1000 on i686
 #
 # FUTURE:
@@ -120,7 +119,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.2
+%define		_rel			0.3
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
