@@ -1,15 +1,14 @@
 #
-# STATUS: 2.6.21.1-0.1
+# STATUS: 2.6.21.1-0.2
 # - not ready yet - work in progress, but You are welcome :-)
 # - builds --without vserver --with pax_full on i686
+# - builds w/o any 'with' switches on i686 too 
 #
 # TODO:
 # - update configs for all archs
+# - replace vs-2.2 with vs-2.3 
+# - update linux-2.6-grsec_full.patch for vserver
 # - test NO_HZ & HZ=1000 on i686
-# - prepare vserver (or you could try --without vserver)
-#   2.2 should be ready for 2.6.21 but there is still no 2.3
-# - update linux-2.6-grsec-minimal.patch (or you could try
-#   --with pax_full or --with grsec_full)
 #
 # FUTURE:
 # - update xen patch for 2.6.21
@@ -121,7 +120,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.1
+%define		_rel			0.2
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -860,7 +859,8 @@ install %{SOURCE5} Makefile.ppclibs
 
 # vserver
 %if %{with vserver}
-%patch100 -p1
+# p100: vs2.3 p110: vs2.2
+%patch110 -p1
 %ifarch %{ix86} %{x8664} ia64
 %patch101 -p1
 %endif
