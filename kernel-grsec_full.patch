@@ -14576,7 +14576,7 @@ diff -urNp linux-2.6.21/grsecurity/gracl_alloc.c linux-2.6.21/grsecurity/gracl_a
 diff -urNp linux-2.6.21/grsecurity/gracl.c linux-2.6.21/grsecurity/gracl.c
 --- linux-2.6.21/grsecurity/gracl.c	1969-12-31 19:00:00.000000000 -0500
 +++ linux-2.6.21/grsecurity/gracl.c	2007-04-29 23:39:37.000000000 -0400
-@@ -0,0 +1,3550 @@
+@@ -0,0 +1,3547 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
 +#include <linux/sched.h>
@@ -17729,8 +17729,6 @@ diff -urNp linux-2.6.21/grsecurity/gracl.c linux-2.6.21/grsecurity/gracl.c
 +#endif
 +
 +#ifdef CONFIG_SYSCTL
-+extern ctl_table root_table[];
-+
 +/* the following function is called under the BKL */
 +
 +__u32
@@ -17758,7 +17756,7 @@ diff -urNp linux-2.6.21/grsecurity/gracl.c linux-2.6.21/grsecurity/gracl.c
 +
 +	/* convert the requested sysctl entry into a pathname */
 +
-+	for (tmp = (ctl_table *)table; tmp != (ctl_table *)&root_table; tmp = tmp->parent) {
++	for (tmp = (ctl_table *)table; tmp != NULL; tmp = tmp->parent) {
 +		len += strlen(tmp->procname);
 +		len++;
 +		depth++;
@@ -17776,8 +17774,7 @@ diff -urNp linux-2.6.21/grsecurity/gracl.c linux-2.6.21/grsecurity/gracl.c
 +	for (; depth > 0; depth--) {
 +		path[pos] = '/';
 +		pos++;
-+		for (i = 1, tmp = (ctl_table *)table; tmp != (ctl_table *)&root_table;
-+		     tmp = tmp->parent) {
++		for (i = 1, tmp = (ctl_table *)table; tmp != NULL; tmp = tmp->parent) {
 +			if (depth == i) {
 +				memcpy(path + pos, tmp->procname,
 +				       strlen(tmp->procname));
@@ -28522,19 +28519,16 @@ diff -urNp linux-2.6.21/kernel/sysctl.c linux-2.6.21/kernel/sysctl.c
  
  /* External variables not in a header file. */
  extern int C_A_D;
-@@ -137,9 +145,9 @@ static int proc_dointvec_taint(ctl_table
- 			       void __user *buffer, size_t *lenp, loff_t *ppos);
- #endif
+@@ -139,7 +147,7 @@ static int proc_dointvec_taint(ctl_table
  
--static ctl_table root_table[];
-+ctl_table root_table[];
+ static ctl_table root_table[];
  static struct ctl_table_header root_table_header =
 -	{ root_table, LIST_HEAD_INIT(root_table_header.ctl_entry) };
 +	{ root_table, LIST_HEAD_INIT(root_table_header.ctl_entry), 0, NULL };
  
  static ctl_table kern_table[];
  static ctl_table vm_table[];
-@@ -153,15 +161,30 @@ extern ctl_table pty_table[];
+@@ -153,11 +161,26 @@ extern ctl_table pty_table[];
  #ifdef CONFIG_INOTIFY_USER
  extern ctl_table inotify_table[];
  #endif
@@ -28561,11 +28555,6 @@ diff -urNp linux-2.6.21/kernel/sysctl.c linux-2.6.21/kernel/sysctl.c
  
  /* The default sysctl tables: */
  
--static ctl_table root_table[] = {
-+ctl_table root_table[] = {
- 	{
- 		.ctl_name	= CTL_KERN,
- 		.procname	= "kernel",
 @@ -200,7 +223,6 @@ static ctl_table root_table[] = {
  		.mode		= 0555,
  		.child		= dev_table,
@@ -31348,7 +31337,7 @@ diff -urNp linux-2.6.21/security/Kconfig linux-2.6.21/security/Kconfig
 +
 +config PAX
 +	bool "Enable various PaX features"
-+	depends on GRKERNSEC && (ALPHA || ARM || AVR32 || IA64 || MIPS32 || MIPS64 || PARISC || PPC32 || PPC64 || SPARC32 || SPARC64 || X86 || X86_64)
++	depends on GRSECURITY && (ALPHA || ARM || AVR32 || IA64 || MIPS32 || MIPS64 || PARISC || PPC32 || PPC64 || SPARC32 || SPARC64 || X86 || X86_64)
 +	help
 +	  This allows you to enable various PaX features.  PaX adds
 +	  intrusion prevention mechanisms to the kernel that reduce
