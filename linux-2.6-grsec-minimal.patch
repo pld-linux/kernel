@@ -1109,11 +1109,13 @@ diff -urNp linux-2.6.20.3/kernel/sysctl.c linux-2.6.20.3/kernel/sysctl.c
  	{ .ctl_name = 0 }
  };
  
-@@ -1295,6 +1335,8 @@ static int test_perm(int mode, int op)
+@@ -1233,6 +1249,10 @@ static int test_perm(int mode, int op)
  static inline int ctl_perm(ctl_table *table, int op)
  {
  	int error;
-+	if (table->de && gr_handle_sysctl_mod(table->de->parent->name, table->de->name, op))
++	if (table->parent != NULL && table->parent->procname != NULL &&
++	    table->procname != NULL &&
++	    gr_handle_sysctl_mod(table->parent->procname, table->procname, op))
 +		return -EACCES;
  	error = security_sysctl(table, op);
  	if (error)
