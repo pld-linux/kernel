@@ -5567,9 +5567,9 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/mm/fa
 --- linux-2.6.21/arch/i386/mm/fault.c	2007-04-26 08:50:58.000000000 +0200
 +++ linux-2.6.21-pax/arch/i386/mm/fault.c	2007-04-26 09:01:08.000000000 +0200
 @@ -23,11 +23,15 @@
- #include <linux/module.h>
  #include <linux/kprobes.h>
  #include <linux/uaccess.h>
+ #include <linux/suspend.h>
 +#include <linux/unistd.h>
 +#include <linux/compiler.h>
 +#include <linux/binfmts.h>
@@ -6808,9 +6808,9 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/ia64/mm/fa
 --- linux-2.6.21/arch/ia64/mm/fault.c	2007-02-04 19:44:54.000000000 +0100
 +++ linux-2.6.21-pax/arch/ia64/mm/fault.c	2007-04-26 09:01:08.000000000 +0200
 @@ -10,6 +10,7 @@
- #include <linux/smp_lock.h>
  #include <linux/interrupt.h>
  #include <linux/kprobes.h>
+ #include <linux/vs_memory.h>
 +#include <linux/binfmts.h>
  
  #include <asm/pgtable.h>
@@ -11913,9 +11913,9 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/fs/exec.c linux
 --- linux-2.6.21/fs/exec.c	2007-04-26 08:53:59.000000000 +0200
 +++ linux-2.6.21-pax/fs/exec.c	2007-04-26 09:01:19.000000000 +0200
 @@ -50,6 +50,7 @@
- #include <linux/tsacct_kern.h>
  #include <linux/cn_proc.h>
  #include <linux/audit.h>
+ #include <linux/vs_memory.h>
 +#include <linux/random.h>
  
  #include <asm/uaccess.h>
@@ -11997,7 +11997,7 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/fs/exec.c linux
  	down_write(&mm->mmap_sem);
  	{
  		mpnt->vm_mm = mm;
-@@ -429,13 +469,50 @@ int setup_arg_pages(struct linux_binprm 
+@@ -429,14 +469,51 @@ int setup_arg_pages(struct linux_binprm 
  		else
  			mpnt->vm_flags = VM_STACK_FLAGS;
  		mpnt->vm_flags |= mm->def_flags;
@@ -12021,7 +12021,8 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/fs/exec.c linux
 +
  			return ret;
  		}
- 		mm->stack_vm = mm->total_vm = vma_pages(mpnt);
+ 		vx_vmpages_sub(mm, mm->total_vm - vma_pages(mpnt));
+ 		mm->stack_vm = mm->total_vm;
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
 +		if (mpnt_m) {
@@ -15295,23 +15296,27 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/init/do_mounts.
  	sys_close(fd);
  	if (len <= 0 || len == 32 || buf[len - 1] != '\n')
  		goto fail;
-@@ -142,8 +144,8 @@ dev_t name_to_dev_t(char *name)
- 	int part;
+@@ -142,12 +144,12 @@ dev_t name_to_dev_t(char *name)
+ 	int part, mount_result;
  
  #ifdef CONFIG_SYSFS
 -	int mkdir_err = sys_mkdir("/sys", 0700);
--	if (sys_mount("sysfs", "/sys", "sysfs", 0, NULL) < 0)
 +	int mkdir_err = sys_mkdir((char __user *)"/sys", 0700);
-+	if (sys_mount((char __user *)"sysfs", (char __user *)"/sys", (char __user *)"sysfs", 0, NULL) < 0)
+ 	/* 
+ 	 * When changing resume2 parameter for Software Suspend, sysfs may
+ 	 * already be mounted. 
+ 	 */
+-	mount_result = sys_mount("sysfs", "/sys", "sysfs", 0, NULL);
++	mount_result = sys_mount((char __user *)"sysfs", (char __user *)"/sys", (char __user *)"sysfs", 0, NULL);
+ 	if (mount_result < 0 && mount_result != -EBUSY)
  		goto out;
  #endif
- 
 @@ -195,10 +197,10 @@ dev_t name_to_dev_t(char *name)
- 	res = try_name(s, part);
  done:
  #ifdef CONFIG_SYSFS
--	sys_umount("/sys", 0);
-+	sys_umount((char __user *)"/sys", 0);
+ 	if (mount_result >= 0)
+-		sys_umount("/sys", 0);
++		sys_umount((char __user *)"/sys", 0);
  out:
  	if (!mkdir_err)
 -		sys_rmdir("/sys");
@@ -16621,7 +16626,7 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/mm/mlock.c linu
 @@ -66,6 +73,48 @@ success:
  	}
  
- 	mm->locked_vm -= pages;
+ 	vx_vmlocked_sub(mm, pages);
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
 +	if (vma->vm_flags & VM_MIRROR)
@@ -17350,8 +17355,8 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/mm/mmap.c linux
  		return -ENOMEM;
  	}
  
- 	mm->total_vm += len >> PAGE_SHIFT;
- 
+ 	// mm->total_vm += len >> PAGE_SHIFT;
+ 	vx_vmpages_add(mm, len >> PAGE_SHIFT);
 +#ifdef CONFIG_PAX_SEGMEXEC
 +	if (vma_m) {
 +		*vma_m = *vma;
