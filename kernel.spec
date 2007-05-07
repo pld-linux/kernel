@@ -78,9 +78,9 @@
 
 %define		squashfs_version	3.2
 
-%define		_basever	2.6.20
-%define		_postver	.7
-%define		_rel		1
+%define		_basever	2.6.21
+%define		_postver	.1
+%define		_rel		0.1
 %define		_rc		%{nil}
 %define		_subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_vserver:-vserver}
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -94,10 +94,10 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
-# Source0-md5:	34b0f354819217e6a345f48ebbd8f13e
+# Source0-md5:	1b515f588078dfa7f4bab2634bd17e80
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	d56fd9b25c86144f47c0b9df4fc1f534
+# Source1-md5:	c4c368f173af267a564948065ffc1689
 %endif
 
 Source2:	kernel-module-build.pl
@@ -126,13 +126,13 @@ Source45:	kernel-pax.config
 Source46:	kernel-no-pax.config
 Source47:	kernel-squashfs.config
 
-# http://vserver.13thfloor.at/Experimental/patch-2.6.20.4-vs2.3.0.12.diff
+# http://vserver.13thfloor.at/Experimental/
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-128IPs.patch
 
-# from http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.20.6-200704091818.patch
-Patch200:	grsecurity-2.1.10-2.6.20.6-200704091818.patch
-Patch201:	grsecurity-vs-2.1.10-2.6.20.6-200704091818.patch
+# from http://www.grsecurity.net/~spender/
+Patch200:	linux-2.6-grsec-full.patch
+Patch201:	linux-2.6-grsec-vs-full.patch
 Patch202:	linux-2.6-grsec-minimal.patch
 Patch203:	linux-2.6-grsec-vs-minimal.patch
 
