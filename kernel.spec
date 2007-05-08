@@ -1,14 +1,15 @@
 #
-# STATUS: 2.6.21.1-0.3
+# STATUS: 2.6.21.1-0.4
 # - not ready yet - work in progress, but You are welcome :-)
-# - builds --with pax_full on i686
-# - builds --with pax on i686
-# - builds w/o any 'with' switches on i686 too 
+# - builds --with pax_full on i686 & x86_64
+# - builds --with grsec_full on i686 & x86_64
+# - builds --with pax on i686 & x86_64
+# - builds w/o any 'with' switches on i686 & x86_64 too 
 #
 # TODO:
 # - replace vs-2.2 with vs-2.3 
 # - test NO_HZ & HZ=1000 on i686
-# - test build on carme (x86_64)
+# - add lzma support for squashfs
 #
 # FUTURE:
 # - update xen patch for 2.6.21
@@ -120,7 +121,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.4
+%define		_rel			0.5
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -223,7 +224,8 @@ Patch4:		fbsplash-0.9.2-r5-2.6.20-rc6.patch
 # http://dev.gentoo.org/~spock/projects/vesafb-tng/archive/vesafb-tng-1.0-rc2-2.6.20-rc2.patch
 Patch5:		vesafb-tng-1.0-rc2-2.6.20-rc2.patch
 
-# Directly from squashfs: http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.2-r2.tar.gz for linux-2.6.20
+# Squashfs from squashfs: http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.2-r2.tar.gz for linux-2.6.20
+# lzma support in patch65
 #
 Patch6:		squashfs%{squashfs_version}-patch
 Patch7:		linux-alpha-isa.patch
@@ -314,6 +316,9 @@ Patch57:	linux-2.6-cpuset_virtualization.patch
 
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_41.tar.bz2
 Patch60:	linux-2.6-sk98lin_8.41.2.3.patch
+
+# lzma support for squashfs (patch6) from http://www.squashfs-lzma.org/dl/sqlzma3.2-r2b.tar.bz2
+Patch65:	sqlzma2k-3.2-r2.patch
 
 # http://www.suspend2.net/downloads/all/suspend2-2.2.9.13-for-2.6.21-rc7.patch.bz2
 Patch69:	linux-2.6-suspend2.patch
@@ -786,7 +791,9 @@ install %{SOURCE5} Makefile.ppclibs
 %{?with_vesafb_tng:%patch5 -p1}
 %endif
 
+# squashfs with lzma support
 %patch6 -p1
+%patch65 -p1
 
 %patch7 -p1
 %patch9 -p1
