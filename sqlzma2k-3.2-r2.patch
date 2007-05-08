@@ -534,3 +534,107 @@ diff -u -p -r1.1 -r1.2
  	long long		*inode_lookup_table;
  	int			(*read_inode)(struct inode *i,  squashfs_inode_t \
  				inode);
+diff -NurpP --minimal linux-2.6.21.a/fs/squashfs/sqlzma.h linux-2.6.21/fs/squashfs/sqlzma.h
+--- linux-2.6.21.a/fs/squashfs/sqlzma.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.21/fs/squashfs/sqlzma.h	2007-01-07 16:12:48.000000000 +0100
+@@ -0,0 +1,79 @@
++/*
++ * Copyright (C) 2006 Junjiro Okajima
++ * Copyright (C) 2006 Tomas Matejicek, slax.org
++ *
++ * LICENSE follows the described one in lzma.
++ */
++
++/* $Id$ */
++
++#ifndef __sqlzma_h__
++#define __sqlzma_h__
++
++#ifndef __KERNEL__
++#include <stdlib.h>
++#include <string.h>
++#include <zlib.h>
++#ifdef _REENTRANT
++#include <pthread.h>
++#endif
++#else
++#include <linux/zlib.h>
++#endif
++#define _7ZIP_BYTE_DEFINED
++
++/*
++ * detect the compression method automatically by the first byte of compressed
++ * data.
++ * according to rfc1950, the first byte of zlib compression must be 0x?8.
++ */
++#define is_lzma(c)	(c == 0x5d)
++
++/* ---------------------------------------------------------------------- */
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#ifndef __KERNEL__
++/* for mksquashfs only */
++int sqlzma_cm(int lzma, z_stream *stream, Bytef *next_in, uInt avail_in,
++	      Bytef *next_out, uInt avail_out);
++#endif
++
++/* ---------------------------------------------------------------------- */
++/*
++ * Three patterns for sqlzma uncompression. very dirty code.
++ * - kernel space (squashfs kernel module)
++ * - user space with pthread (mksquashfs)
++ * - user space without pthread (unsquashfs)
++ */
++
++struct sized_buf {
++	unsigned int	sz;
++	unsigned char	*buf;
++};
++
++enum {SQUN_PROB, SQUN_RESULT, SQUN_LAST};
++struct sqlzma_un {
++	int			un_lzma;
++	struct sized_buf	un_a[SQUN_LAST];
++	unsigned char		un_prob[31960]; /* unlzma 64KB */
++	z_stream		un_stream;
++#define un_cmbuf	un_stream.next_in
++#define un_cmlen	un_stream.avail_in
++#define un_resbuf	un_stream.next_out
++#define un_resroom	un_stream.avail_out
++#define un_reslen	un_stream.total_out
++};
++
++int sqlzma_init(struct sqlzma_un *un, int do_lzma, unsigned int res_sz);
++int sqlzma_un(struct sqlzma_un *un, struct sized_buf *src, struct sized_buf *dst);
++void sqlzma_fin(struct sqlzma_un *un);
++
++/* ---------------------------------------------------------------------- */
++
++#ifdef __cplusplus
++};
++#endif
++#endif
+diff -NurpP --minimal linux-2.6.21.a/fs/squashfs/sqmagic.h linux-2.6.21/fs/squashfs/sqmagic.h
+--- linux-2.6.21.a/fs/squashfs/sqmagic.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.21/fs/squashfs/sqmagic.h	2006-11-27 04:54:58.000000000 +0100
+@@ -0,0 +1,17 @@
++/*
++ * Copyright (C) 2006 Junjiro Okajima
++ * Copyright (C) 2006 Tomas Matejicek, slax.org
++ *
++ * LICENSE must follow the one in squashfs.
++ */
++
++/* $Id$ */
++
++#ifndef __sqmagic_h__
++#define __sqmagic_h__
++
++/* see SQUASHFS_MAGIC in squashfs_fs.h */
++#define SQUASHFS_MAGIC_LZMA		0x71736873
++#define SQUASHFS_MAGIC_LZMA_SWAP	0x73687371
++
++#endif
