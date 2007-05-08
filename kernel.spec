@@ -2,12 +2,13 @@
 # STATUS: 2.6.21.1-0.3
 # - not ready yet - work in progress, but You are welcome :-)
 # - builds --with pax_full on i686
+# - builds --with pax on i686
 # - builds w/o any 'with' switches on i686 too 
 #
 # TODO:
-# - update configs for all archs
 # - replace vs-2.2 with vs-2.3 
 # - test NO_HZ & HZ=1000 on i686
+# - test build on carme (x86_64)
 #
 # FUTURE:
 # - update xen patch for 2.6.21
@@ -119,7 +120,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.3
+%define		_rel			0.4
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -371,11 +372,10 @@ Patch5001:	linux-2.6-apparmor-caps.patch
 # not ready yet
 Patch9997:	pax_selinux_hooks-2.6.20.patch
 
-# based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.20.7-test15.patch
+# based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.21-test1.patch
 Patch9998:	pax-linux-2.6.20.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.21-200704301822.patch
-# with suspend2 related fixes - no vs fixes yet
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.21-200705041939.patch
 Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
