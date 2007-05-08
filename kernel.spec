@@ -791,9 +791,9 @@ install %{SOURCE5} Makefile.ppclibs
 %{?with_vesafb_tng:%patch5 -p1}
 %endif
 
-# squashfs with lzma support
+# squashfs with (TODO) lzma support
 %patch6 -p1
-%patch65 -p1
+# %patch65 -p1
 
 %patch7 -p1
 %patch9 -p1
