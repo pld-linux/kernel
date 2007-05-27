@@ -1466,7 +1466,6 @@ fi
 /lib/modules/%{kernel_release}/kernel/sound/soundcore.*
 %endif
 %dir /lib/modules/%{kernel_release}/misc
-%dir /lib/modules/%{kernel_release}/video
 %if %{with pcmcia}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/*/pcmcia
