@@ -121,7 +121,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.1
+%define		_rel			0.2
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -350,8 +350,15 @@ Patch130:	linux-2.6-forcedeth-WON.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
-# http://www.ssi.bg/~ja/routes-2.6.19-12.diff
-Patch300:	routes-2.6.19-12.diff
+# The following patch extend the routing functionality in Linux 
+# to support static routes (defined by user), new way to use the 
+# alternative routes, the reverse path protection (rp_filter), 
+# the NAT processing to use correctly the routing when multiple 
+# gateways are used.
+# http://www.ssi.bg/~ja/routes-2.6.21-15.diff
+# We need to disable CONFIG_IP_ROUTE_MULTIPATH_CACHED
+Patch300:	routes-2.6.21-15.diff
+
 Patch301:	pom-ng-connlimit-20061213_nf_conntrack_port.patch
 Patch302:	linux-2.6-layer7_nf_conntrack_port.patch
 
@@ -935,7 +942,10 @@ install %{SOURCE5} Makefile.ppclibs
 %patch200 -p1
 %endif
 
+# routes
 %patch300 -p1
+
+
 %patch301 -p1
 
 # Small fixes:
