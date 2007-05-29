@@ -31,1105 +31,6 @@ index 12533a9..68e902e 100644
  	rhash_entries=	[KNL,NET]
  			Set number of hash buckets for route cache
  
-diff --git a/Documentation/power/Suspend2-Changelog.txt b/Documentation/power/Suspend2-Changelog.txt
-new file mode 100644
-index 0000000..a9b672a
---- /dev/null
-+++ b/Documentation/power/Suspend2-Changelog.txt
-@@ -0,0 +1,1093 @@
-+Suspend2 changelog.
-+
-+Still to do prior to 2.2.10...
-+
-+- Double check OOM killer disabled while suspending.
-+- RAID support.
-+- Fix building core as a module for people who currently get a hang
-+  while doing the atomic restore.
-+- Trying to reserve swap space before any allocated? (Kenneth's extent
-+  state eof while preparing the image).
-+- Look at testing lid state when wake from STR and powering off immediately.
-+- Fix checksumming.
-+
-+2.2.9.13 - 24 April 2007
-+
-+- RAID BUG() addressed.
-+- Fixed exports for new userui module (compilation issue).
-+- Fixed missed sysfs macro changes in checksum module.
-+- Fix missed suspend_extent_state_eof() modification.
-+- Modify 'initrd lacks echo' message to be more specific.
-+- Give more details status to help with diagnosing atomic copy hangs.
-+- In suspend_start_anything, if rechecking which allocator to use,
-+  be quiet only if we're not starting a cycle.
-+- Supress (renamed) 'lacks an echo' whenever the echo is done, not just
-+  if we succeed in initialising modules.
-+- Fix infinite loop in shrink_one_zone.
-+- Fix oops if highmem support enabled but no highmem pages are in pageset 1.
-+- Fix failure to add flag enabling storage manager usage.
-+- Fix missing cpus allowed reseting on finish_anything.
-+
-+2.2.9.12 - 18 April 2007
-+- Fix compressor initialisation failures when active allocator isn't yet set
-+  (dmsetup, eg).
-+- Early cpu hotplugging support, enabled the default while late hotplugging
-+  is being worked on upstream. This means that, by default, you won't get
-+  multithreaded I/O. /sys/power/suspend2/late_cpu_hotplug enables the
-+  late cpu hotplugging that was the default between 2.2.9.4 and .11.
-+- Separated userui support into its own module (CONFIG_SUSPEND2_USERUI).
-+- Correction to code iterating through block chains (test for ==, not >).
-+- Support for modules sharing a directory. Used in userui separation so
-+  that the location of userui entries didn't change.
-+- Yield instead of scheduling in netlink code. This results in actually
-+  seeing progress_granularity steps in the userui display on my computer;
-+  previously the netlink messages were being bunched up.
-+- Further improvements to memory freeing code, seeking to make it more
-+  reliable.
-+- Make sysfs entry flags more generic and use to indicate separately whether
-+  suspending or resuming.
-+- Dump block chains if we discover we're going to overwrite the start of
-+  pageset2 with the header.
-+- Don't do anything in compression initialisation routine if we're not
-+  starting a cycle.
-+- Correct bug that stopped us releasing fileallocator storage when a first
-+  cycle was aborted.
-+- Filewriter shouldn't complain if no target has been set when we're resuming.
-+
-+2.2.9.11 - 14 April 2007
-+- Remove RH copyrights - no Suspend2 work done in Redhat time to date.
-+- Update copyrights to 2007.
-+- Obfuscate my email address. I get enough spam already.
-+- HighMem + core as module makes things unreliable at the moment. Temporarily
-+  disable building the core as a module.
-+- Only do 2 tries at eating memory. New code frees all freeable memory in one
-+  try.
-+- Tidy compression code initialisation and cleanup.
-+- Correctly handle changed error codes from cryptoapi.
-+- Free slab as well as pagecache when freeing memory.
-+- Correct handling of io_mutex in worker_rw_loop error paths.
-+- Remove unused counting of nr of pages read directly.
-+- Remove unused x86 page protection code.
-+- Stop always displaying image preparation statistics.
-+- Remove unneeded zone index printk.
-+- Clear some resume related state flags when finished resuming - stops us
-+  powering down instead of aborting when user presses escape on attempt 2+.
-+- Simplify code path for not running powerdown step at resume time.
-+- Rename rw to writing in suspend_block_io.c
-+- Add BUG_ON() to catch image header overwriting pageset2 (would have
-+  simplified debugging the filewriter issue also fixed in this release).
-+- Reset current_stream to 0 on completion of writing a pageset so the
-+  above fix is not wrongly triggered.
-+- Some coding style fixes.
-+- Don't << devinfo.bmap_shift in filewriter considered whether we have
-+  enough storage.
-+- Modify order of setting suspend_fileops members from block writer to
-+  match order in swapallocator.
-+- Double checked that userui API version mismatches don't cause failures.
-+- Removed encryption support. I don't believe there were many users, and
-+  dm-crypt support can stil be utilised to encrypt the image without this.
-+  Of course the real reason was programming issues :)
-+- Added Rafael's kswap freezing fix.
-+- Corrected compilation issue with page fault handling code.
-+
-+2.2.9.10 - 21 March 2007
-+
-+- Further post 2.2.9.4 bug fixes.
-+
-+2.2.9.9 - 12 March 2007
-+
-+- Further post 2.2.9.4 bug fixes. I've now been able to do 30 cycles on the
-+  trot with multithreaded I/O and highmem.
-+
-+2.2.9.8 - 15 February 2007
-+
-+- Bug fixes.
-+- Give earlier error messages for issues with reading the message.
-+- Resume-time highmem bugfixing work.
-+- Initial version of addition of warnings for drivers that lack .resume
-+  methods. (dmesg | grep lacks)
-+- Cleanup now unused readahead exports from block i/o code.
-+
-+2.2.9.7 - 8 February 2007
-+
-+- Delete bogus addition to init/main.c, which broke initramfs support.
-+- Use a new #define to clean up calculation of nr of free lowmem pages.
-+- Correct usage of extra_pages_allocated in calculating ram needed to suspend.
-+- Move kunmapping of pages in compression support so we don't invoke the next
-+  plugin with the page still/already kmapped.
-+- Small cleanups in swapwriter (remove debugging printks).
-+- Don't print 'failed to send a message' from netlink code if userui exited
-+  already (pid = -1, formerly wasn't).
-+- Tidy up storage_needed calls; now exactly equal to main_storage_needed().
-+- Correct calculation of storage available in swapwriter.
-+- Remove debugging printk from shrink_one_zone.
-+
-+2.2.9.6 - 7 February 2007
-+
-+- Fix another compilation error.
-+
-+2.2.9.5 - 7 February 2007
-+
-+- Fixed a compilation error discovered quickly after the previous release.
-+
-+2.2.9.4 - 7 February 2007
-+
-+Ooh. Ahh. The biggest changes to Suspend2 in quite a while!
-+
-+- Full NUMA support in dyn_pageflags code.
-+- Removal of include/linux/suspend2.h.
-+- Fixes for support for no initrd and swsusp replacement.
-+- Make aborting suspend code uniform - add parameter to abort_suspend
-+  for result code to set and do it there.
-+- Reworked highmem support, including adding support for loading
-+  pages directly to final address where possible and using high pages
-+  for the pbes for high pages to be restored.
-+- Remove some debugging code from block_io.c
-+- Late cpu hotplugging, which lays the groundwork for...
-+- Multithreaded i/o! Rework I/O submission so pages can be stored out of
-+  order within a pageset and multiple threads (one per core) can be
-+  compressing/encrypting/submitting I/O simultaneously. Lots of changes
-+  in relation to this! No buffer in page transformers - it's all done
-+  in the block_io code now (same code as for writing the header).
-+
-+2.2.9.3 - 12 January 2007
-+
-+- Revert unnecessary macintosh freezer.h modification.
-+- Cleanup up commented lines in linux/suspend2.h.
-+- Revert mistaken 2.6.19 highmem changes (some needed but not all).
-+- Warn when fail to obtain pm semaphore (we abort).
-+- Export save/restore_processor_state for x86_64 only (already exported
-+  in x86 case).
-+- Add exports for tasklist_lock, dis/enable_nonboot_cpus if SUSPEND_SMP.
-+- Move name_to_dev_t export to be done for either swap or file writer.
-+- Synchronise whitespace in suspend_file.
-+
-+2.2.9.2 - 10 January 2007
-+
-+- Add some missing freezer.h #includes for mips.
-+- Backport _TIF_FREEZE changes.
-+- Synchronise process.c and freezer.h across versions.
-+- Address compilation warnings and errors in highmem support.
-+- Inline suspend2_suspend_builtin - it doesn't need to be built in to core.
-+- Correct CONFIG_SUSPEND2_CORE to CONFIG_SUSPEND2 in swsusp code.
-+- Better error message if fail to initialise modules.
-+- Improve/cleanup error handling in reading pageset1.
-+- Remove suspend_notify_userspace. No need to poke userui.
-+- Generic netlink connection closure with a wait for an ack from userspace.
-+- Never use zone->present_pages (populated_zone instead).
-+- Always use for_each_online_cpu().
-+- Highmem modifications for 2.6.19.
-+- Fix old block i/o commands.
-+- Correct EXPORT_SYMBOL omissions in 2.6.19 (thanks Andrey).
-+- Abort if fail to initialise compression algo at resume time but at suspend
-+  time just disable compression (and record it wasn't used for resume).
-+- Resume resume_dev_t to resume_file_dev_t and resume_swap_dev_t for kdb
-+  checking.
-+- Remove addition of thaw_kernel_threads and freeze_processes from swsusp
-+  code since they insist they don't need it. Please complain to Pavel or
-+  Rafael if/when you use swsusp and it freezes on you.
-+- Cleanup initialisation code in starting/finishing a cycle.
-+
-+2.2.9.1 - 4 January 2007
-+
-+- Support for resuming a different image instead of powering down. Set
-+  the alternate image using /sys/power/suspend2/poweroff_resume2. The
-+  normal restrictions with regard to mounted filesystems still apply!
-+- Cleanups.
-+- Separate compile-time configuration option for MD5 checksumming.
-+- Reinstated support for building Suspend2 as modules. Requires an
-+  initrd/ramfs if you want to be able to resume! This is back in partly
-+  because I don't expect Suspend2 to be seriously considered for merging
-+  any time soon. If that happens, it will almost certainly go in without
-+  module support, because of the large number of exported symbols needed.
-+  That said, I like module support for embedded systems, as well as for
-+  my own development use.
-+  As part of this, improved initialisation and cleanup routines.
-+- Start of support for clusters. Won't appear in the configuration
-+  options at the moment though.
-+- Improved CodingStyle compliance work (atomic_copy.c only so far).
-+- Eliminated all but one BUG().
-+- In checksumming, try to find and print tasks using a page if one needs
-+  resaving.
-+- Use one routine for marking task pages as either pageset1 or pageset2.
-+- Clear the flag saying a resume has been attempted if you press escape
-+  to cancel a resume.
-+- Use filp_open and vfs_getattr instead of vfs_stat when attempting to
-+  access files at resume time.
-+- Always do sysfs bounding of min/max values, so the maximum can be 0.
-+- Rearrange functions in some files to remove the need for forward decls.
-+- Ensure the cleanup message is sent to userspace helpers.
-+- Allow suspend to ram to be toggled from userui.
-+- Improve memory shrinking code to account for pages already freed when
-+  trying to free more pages in the same invocation.
-+- Use max_pfn + 1 instead of max_pfn to indicate start/end of an iteration.
-+
-+
-+2.2.9 - 24 November 2006
-+
-+- Remove bdev freezing - XFS users, proceed with caution!
-+  I'm told this shouldn't be needed any more as XFS threads are now behaving
-+  properly. Let's see.
-+- Remove dependancy on CONFIG_PM_DEBUG (All debugging code available always).
-+- Don't wait for a keypress if aborting because pageset1 waits too much.
-+  We're in the midst of an atomic copy, so can't interact with the user.
-+- Related to the previous one, add a new bit in the result code to say that
-+  the extra pages allowance was too small.
-+- Restore freezing of processes prior to atomic copy at resume time. When did
-+  it go missing? (Haven't looked).
-+- Add support for aborting if pages need resaving.
-+- Don't clear the encryption key and iv when loading plugin configs if they
-+  weren't saved in the image.
-+- Mark only readonly process pages as pageset2 by default. The old behaviour
-+  of marking all process pages as pageset2 (thereby letting you save a large
-+  image) can be reenabled by:
-+  procsetting full_pageset2 1
-+  or
-+  echo 1 > /sys/power/suspend2/full_pageset2
-+  I think that most people might want this to be the default, but I'll see.
-+  Not doing it is theoretically safer, at least until I identify the cause
-+  of the few cases that have appeared so far where pageset2 pages do change.
-+
-+2.2.8.5 - 14 November 2006
-+
-+- Rework LRU page un/relinking code.
-+- Add cryptoapi based hashing for verification that Pageset2 doesn't
-+  change while being written. Off by default. To enable:
-+  echo 1 > /sys/power/suspend2/checksum/enabled
-+  This calculates MD5 checksums for all pageset2 pages prior to starting
-+  to save the image and again prior to the atomic copy. If any pages have
-+  changed, they will be resaved in the atomic copy, and the original version
-+  discarded when the image is reloaded. If checksumming is enabled, the
-+  debug info will contain:
-+  - Checksum method is 'md5'.
-+    0 pages resaved in atomic copy.
-+  If the number is non-zero, please contact me - I will be interested to
-+  see if we can track down which pages change and why.
-+
-+2.2.8.4 - 8 November 2006
-+
-+- Update documentation some more.
-+- Completion of renaming 'writers' to 'allocators'.
-+
-+2.2.8.3 - 7 November 2006
-+
-+- Freezer.h instead of suspend.h/sched.h used for freezing functions.
-+- Select CRYPTO_ALGAPI when LZF chosen.
-+- Modifications to freezer.
-+- Rename swap and file 'writers' to 'allocators'.
-+- Add Redhat copyrights.
-+- Cleanup some unused declarations in compression.c.
-+- Call read_header_cleanup functions in __read_pageset1 error pages.
-+- Fix accounting for number of highmem pages needed.
-+- Use swsusp saveable() function.
-+- Use drop_pagecache() function for image_size_limit=-2.
-+- Make 'Initiating a software suspend cycle' KERN_INFO level.
-+- Remove buffer_alloc|free paranoia code.
-+- If open_bdev (swap allocator), don't treat device as a string and
-+  only display error when we're not going to in the caller.
-+- Use DIV_ROUND_UP in dyn_pageflags code.
-+- Use kzalloc instead of kmalloc in dyn_pageflags code.
-+- printk error if allocating memory for dynamic pageflags fails.
-+
-+2.2.8.2 - 12 October 2006
-+
-+- Update internals document and rename to suspend2-internals.txt.
-+- Remove device and suspend2 beeping code.
-+- Fix compilation issues with !CONFIG_NET.
-+- Lots of whitespace cleanups & removal of spurious comments.
-+- Remove some now unused members in extent struct and unused variables.
-+- Rename struct pagedir pageset_size member to size.
-+- Make unsigned longs used in image preparation into ints.
-+- Cleanups in unused/unnecessary return values and procedures with just one
-+  caller.
-+- Rework [de]registering modules.
-+- Use DIV_ROUND_UP macro.
-+- Revert power_off changes.
-+
-+2.2.8.1 - 5 October 2006
-+
-+- Try to make freezing more reliable under load by doing
-+  sys_sync after signalling userspace threads the first time,
-+  and start the timeout from the completion of the sys_sync.
-+- Handle the return value from sysfs_create_file.
-+- Reset compression stats on any action so they don't cause
-+  confusion in debugging.
-+- Poweroff improvements, I hope!
-+- Block i/o cleanups - 200 lines less, no problems seen so far!
-+- Fix a compilation warning when swsusp and suspend2 are both disabled.
-+- Work toward completion of Documentation/power/internals.
-+- Correct complain when an initrd lacks echo > do_resume (s/proc/sysfs)
-+
-+2.2.8 - 20 September 2006
-+
-+- Add Changelog as Documentation/power/Suspend2-Changelog.txt
-+- Don't replace swsusp completely when the do-it-by-default option is on.
-+
-+2.2.7.6 - 15 September 2006
-+
-+- Let swsusp work. The readding of BUG_ON(non suspend2 io) test
-+  wasn't targetted enough.
-+- Fix the swsusp replacement code to work with initramfses.
-+- Explicitly case the sizeof(struct suspend_header) as int. One case
-+  reported where the lack of a cast seems to have caused huge header
-+  size values.
-+- Make the suspend_file routine parse_signature static.
-+- Fix handling of swapwriter code so that the filewriter can still work
-+  with the new swsusp replacement functionality.
-+
-+2.2.7.5 - 5 September 2006
-+
-+- Documentation updates
-+- Add support for beeping at signficant lowlevel suspending points,
-+  to help in diagnosing resume failures.
-+  suspend_beep=1 on commandline to activate.
-+- Add support for beeping while invoking driver suspend and resume
-+  routines, to help in diagnosing resume failures.
-+  Boot with device_beep=1 to activate.
-+- Add a timer_resume fix that I'm hoping to see John Stultz submit
-+  upstream.
-+- Readd BUG_ON(non suspend2 io during suspend) in response to a
-+  recent corruption report.
-+- Remove deflate fix. We were the only ones needing it, and I don't
-+  recommend the use of glacially slow compression anyway.
-+- Remove PPC SOFTWARE_REPLACE_SLEEP configuration option.
-+- Better typing of pageflags variables.
-+- Use max_pfn rather than -1 to indicate the start/end of a scan.
-+- Remove LRU paranoia. No reports of it being hit.
-+- Consolidate Suspend2 specific kernel/power/*.h.
-+- Unlink LRU pages instead of avoiding vmscanning during suspend.
-+- Make Suspend2 a drop-in replacement for swsusp (compile time
-+  option). This doesn't stop swsusp from working. Instead it lets you
-+  * use resume= instead of resume2= (resume= takes precedence if set)
-+  * use noresume instead of noresume2
-+  * use echo disk > /sys/power/state to activate suspend2.
-+  By default suspend2 is configured to use lzf compression, if available,
-+  and no encryption.
-+  Overriding swsusp can by disabled via /sys/power/suspend2.
-+- Add further printks to help diagnose resume issues.
-+- Replace zone->spanned_pages with populated_zone() test.
-+- Some initial work on code to prove/ensure LRU pages aren't modified
-+  while being written. Relies on DEBUG_PAGEALLOC, so shouldn't interfere
-+  with normal use of this release, but it isn't working yet. x86 only.
-+- Some further cleanups from sysfs conversion.
-+
-+2.2.7.4 - 19 July 2006
-+
-+- Update Documentation to refer to /sys/power/suspend2.
-+- Make invocation of pm_console_suspend/resume optional
-+  and disabled by default.
-+- Add some printks for -EBUSY error messages.
-+- Rename proc.c to sysfs.c.
-+- Apply Rafael's suggestion of using the zone table info.
-+- Change .disabled to .enabled in the module structure.
-+- Change all references to proc to be sysfs.
-+- Add one second delay between powering down devices and
-+  doing the acpi state enter/machine_power_off/machine_halt.
-+- Add result code flag for drivers failing to suspend.
-+
-+2.2.7.3 - 11 July 2006
-+
-+- Add subdirectories for modules.
-+- Fix do_suspend and do_resume.
-+
-+2.2.7.2 - 11 July 2006
-+
-+- Console suspend and resume fix.
-+- Initial sysfs support. /proc support retained for the interim. Note that the
-+  sysfs layout is subject to change. I may make subdirectories for the modules
-+  (compressor etc) and put their entries in there.
-+- Modifed debugging info for compressor and encryptor so it's clearer when the
-+  name of the algorithm to be used hasn't been set.
-+- Try kernel_halt() if kernel_power_off() fails.
-+
-+2.2.7.1 - 6 July 2006
-+
-+- Remove Linus patches.
-+- Remove some debugging code from atomic_copy.c
-+- Change quotes and remove leading spaces in Kconfig
-+- Shift resetting accounting of module header storage usage.
-+- Add a missing reset of suspend2_running.
-+- Remove some extra whitespace that was used when splitting the patches.
-+- Enable some code in dyn_pageflags.c that was disabled and correct a typo
-+  in it.
-+
-+2.2.7 - 2 July 2006
-+
-+- Fix test debugging patch to run on powering down devices instead of
-+  when suspending them, and re-disable interrupts when we find something
-+  to complain about.
-+
-+2.2.6.3 - 2 July 2006
-+
-+- Add Bernard's 2.2.6.2 fix patch (thanks, Bernard!)
-+- Add test debugging patch to capture drivers that reenable irqs when they
-+  ought not.
-+
-+2.2.6.2 - 1 July 2006
-+
-+- Fix date on last release :)
-+- Fix freeze when eating memory that I forgot about before doing 2.2.6.1
-+- Small commenting fix.
-+- Quieten pdflush when thawed.
-+
-+2.2.6.1 - 1 July 2006
-+
-+- Cleanups: Whitespace/line wrapping, removal of asm-ppc/cpu_context.h,
-+  old/unnecessary declarations in dyn_pageflags.h, freezer.h. Atomic_copy
-+  prepare_pbe_list.
-+- Commenting: dyn_pageflags.h
-+- Rename: pageflags_space_needed -> suspend_*
-+- Add zones_in_use variable, to save recalculating how many zones are in use
-+  all the time (ta Rafael).
-+- !(CONFIG_VT && VT_CONSOLE) compile fix from LKML.
-+- Fix SYSTEM_BOOTING->RUNNING, from old version of Linus' console patch.
-+- Quoting of KConfig options. Addresses warnings that have appeared in
-+  post 2.6.17 git.
-+- Reverse early pm_ops->prepare and late ->finish invocations.
-+- Handle errors if bdev freezing kmalloc fails or suspend2_suspend fails.
-+- Correct error handling in suspend_main().
-+- Remove block_dump debugging in file_writer.
-+- Re-enable populate_block_list printk condition.
-+- Disable pm_prepare_console and pm_restore_console calls for now. Still
-+  seem to be problematic.
-+- Add MAINTAINERS file entry.
-+
-+2.2.6 - 23 June 2006
-+
-+- No problems reported so far with 2.2.5.3, so I'm
-+  renaming it to 2.2.6.
-+
-+2.2.5.3 - 22 June 2006
-+
-+- Update to 2.6.17
-+- Bring figuring out which pages to save closer to the
-+  algorithm used by swsusp.
-+- Move allocation of image header storage last in updating
-+  the image contents.
-+- Reset the header bytes used by each module when getting
-+  the request so S3 powerdown doesn't only work once.
-+- Tidy header allocation code.
-+- Tidy process refreezing when updating the image metadata.
-+- Add debugging code to check that LRU pages are not modified
-+  while the freezer is on.
-+- Do pm_state->prepare and finish right at the start and
-+  end of a cycle.
-+- Add Ben Collin's patch for a trace data section for ppc
-+  (needed for Linus' debugging patch, added in 2.2.5.2).
-+- Rework extra pageset1 pages allowance so that we have a
-+  hardcoded minimum and default (now 500) that is more
-+  easily modified (prepare_image.h).
-+- Take pm_sem when suspending and add PM_SEM failure bit
-+  to the result code.
-+- Use console suspend/resume code.
-+
-+2.2.5.2 - 16 June 2006
-+
-+- Remove x86_64 e820 code.
-+- Add #include to Linus' tracing code to fix compilation in
-+  Ubuntu backport.
-+- Add display of number of extra pageset 1 pages used.
-+- Modify the code which tracks our position in storage so that
-+  it sits at the start of a page and not the end. Simplifies
-+  finding where to start when resuming.
-+- Add pdflush post-resume fix from LKML.
-+
-+2.2.5.1 - 15 June 2006
-+
-+- Updated to 2.6.17-rc6.
-+- Fixed filewriter issue when header is not at the lowest block
-+  number in the file.
-+- Moved refrigerator closer to the vanilla implementation.
-+- Removed per-workqueue freezing.
-+- Carefully audited header space usage and added debugging
-+  support.
-+- Fixed compilation issues with sharing code with swsusp.
-+- Removed SUSPEND_TEST_BIO flag.
-+- Added paragraph to suspend2.txt. Pavel forked, not us :)
-+- Removed arm code. No recent updates.
-+- Added (temporary) e820 amd64 code.
-+- Fix BITMAP_FOR_EACH_SET to check for -1 instead of max_pfn.
-+- Add ifdefs around some highmem code.
-+- Fix some line length issues.
-+- Rename attempt_to_parse_resume_device to suspend_...
-+- Remove DEBUG_PAGEALLOC support.
-+- Prepare to power off with POWER_OFF, not SUSPEND_DISK.
-+- Max extra pages allowance should be INT_MAX, not 32768.
-+
-+2.2.5 - 21 April 2006
-+
-+- Cleanups from ongoing preparation of the git tree.
-+- Correction to x86_64 page_is_ram function.
-+- New FREEZING_COMPLETE status variable, used in debugging the
-+  new shrink_all_memory implementation.
-+- Improvements to calculations of header space required. More
-+  work to be done.
-+- Fix compilation with !CONFIG_NET
-+- Some new image calculation paranoia. Shouldn't be needed, but
-+  you can't always know everything that changes from one kernel
-+  version to the next.
-+- Use Con Kolivas and Rafael Wysocki's shrink_all_memory rework,
-+  with a couple of bug fixes of my own. In combination with this,
-+  simplify the memory freeing in suspend2 to use a single pass.
-+- Fix suspend_running not being set at resume time, which caused
-+  spontaneous reboots when the temporary pagedir allocator then
-+  got unsafe pages.
-+- Remove setting swap info struct data during resume.
-+- Update hooks in the pagealloc routines that prevented memory
-+  freeing while we're writing the image.
-+
-+2.2.4.1 - 13 April 2006
-+
-+- Removed use of max_pfn to make life simpler on ARM.
-+- Fix line length in atomic_copy.c.
-+- Rename suspend_recalculate_stats to suspend_recalculate_image_contents
-+- Remove checksumming code.
-+- Apply Jens Gustedt's checks for which filesystems are mounted
-+  on resume.
-+- Fix encryption where PAGE_SIZE % key length != 0.
-+- Move swsusp Makefile entries below Suspend2 again - it doesn't play
-+  nicely with Suspend2, and so needs to have it's boot time routines
-+  run later. noresume2 will also not work with noresume being compiled
-+  in first.
-+- Rework the allocation of extra pages to use PageNosave instead of
-+  PageAllocd and don't completely clear Pageset1Copy on every iteration
-+  through count_data_pages. 
-+- Remove the ConflictingPages bitmap.
-+- Remove a bogus comment that said we remember conflicting pages and
-+  free them.
-+- Remove DEBUG_PAGEALLOC support.
-+- Add extra message for when powering off.
-+- Rework and cleanup code which determines which pages to save.
-+- Correction to ram_to_suspend function - it should halve the
-+  amount calculated and take account of extra pagedir pages that have
-+  been allocated.
-+- Correct handling of proc entries that use longs. This is particularly
-+  relevant to the image_size_limit. It wasn't previously correctly set
-+  to -1 or -2. (This would have broken the nocaches functionality).
-+- Move suspend_default_console_level to ui.c.
-+- Remove unused suspend_bio_task in block_io.c.
-+- Use progress granularity that was saved in the image header, even
-+  if the userui helper program stored in the image header won't be
-+  used because it was overridden by the initrd/ramfs script.
-+- Don't update the load average while the freezer is on. This fixes
-+  an unintended sideeffect wherein mail services will refuse to
-+  operate post-resume because the load average had been pushed up
-+  by Suspend's intensive CPU use.
-+
-+2.2.4 - 2 April 2006
-+
-+- Fixed what are hopefully the last outstanding issues with
-+  the switchover to using the swsusp lowlevel code:
-+  * Corrected compilation issues with the difference
-+    combinations of swsusp and Suspend2.
-+  * Make x86_64 work correctly - get_safe_page() was using
-+    the swsusp code instead of Suspend2 code.
-+
-+2.2.3 - 1 April 2006
-+
-+- Add better powerdown_methods documentation (thanks
-+  Jens Gustedt).
-+- Further work addressing issues with using the swsusp
-+  lowlevel code.
-+- Abort on resume if we fail to initialise the compression
-+  transform used when suspending.
-+- Switch filewriter to use add_to_extent_chain instead of
-+  append_extent_to_extent_chain and remove now the now
-+  unused function.
-+- Fix compilation errors if swsusp and Suspend2 are both
-+  disabled.
-+- Fix PPC compilation error with !rtas.
-+
-+2.2.2.1 - 28 March 2006
-+
-+- Missed a part of the backport, inadvertently making
-+  a requirement that you also select
-+  CONFIG_SOFTWARE_SUSPEND. Fix that by making Suspend2
-+  select SOFTWARE_SUSPEND automatically.
-+
-+2.2.2 - 28 March 2006
-+
-+- Backported to 2.6.16.
-+- Added a couple of printks for when we fail to write a
-+  block of the image. Saw this in unusual circumstances
-+  while testing, and need to seek to reproduce and fix.
-+
-+2.2.1.3 - 27 March 2006
-+Prepared against current git as at 7.30pm AEST
-+- Further cleanups as I begin to prepare the git tree
-+  in earnest.
-+- Highmem fixes I almost forgot for this release!
-+
-+2.2.1.2 - 23 March 2006
-+Prepared against current git as at 11pm AEST.
-+
-+- Further cleanups from the switch to swsusp lowlevel
-+  code. Should not longer require swsusp to be selected.
-+
-+2.2.1.1 - 23 March 2006
-+Prepared against current git as at 4:20pm AEST.
-+
-+- Switch suspend2 to use the swsusp lowlevel code.
-+- Rework freeing of extra pages allocated for the
-+  atomic copy.
-+- Misc cleanups.
-+
-+2.2.1 - 17 March 2006
-+
-+- Remove debug_pagealloc support
-+- Documentation update
-+- Move device_suspend at resume time prior to setting
-+  up temporary page tables (Lamarque Souza).
-+
-+2.2.0.8 - 15 March 2006
-+
-+- Convert pageset sizes to longs.
-+- Convert [read|write]_header_chunk to
-+  rw_header_chunk([READ|WRITE]...) and do similar
-+  cleanups with other i/o routines.
-+- Remove some unused module structure members.
-+- Flatten the module ops.
-+- Fix a couple of harmless compile warnings.
-+
-+2.2.0.7 - 15 March 2006
-+
-+- Further fixes from 2.2.0.6. Now tested with modifying
-+  resume2= in an initrd and checking image_exists prior
-+  to do the echo > do_resume.
-+
-+2.2.0.6 - 13 March 2006
-+
-+- Split logic for determining whether we can suspend from
-+  that for figuring out whether we can resume. This is
-+  useful for the filewriter, where resume2= can be valid
-+  (allowing us to resume) while filewriter_target isn't
-+  set (prohibiting suspending).
-+- Update file headers.
-+
-+2.2.0.5 - 13 March 2006
-+
-+- Oh dear. I somehow reversed the 2.2.0.3 fix in 2.2.0.4.
-+  Let's try and get them both in the same patch, shall we?
-+
-+2.2.0.4 - 13 March 2006
-+
-+- Fix missing incrementation of # extents freed in new
-+  swap storage code.
-+
-+2.2.0.3 - 11 March 2006
-+
-+- Add x86 compilation error fix I missed.
-+
-+2.2.0.2 - 11 March 2006
-+
-+- Fix minimum free ram at 2000 pages rather than nr pages >> 7.
-+- Remove command line suspend_act, suspend_lvl and suspend_dbg
-+  options.
-+- Fix issues with swap allocation that made suspend not work
-+  properly with multiple swap storage at the same priority or
-+  highly fragmented storage.
-+- Add Randy Dunlap's libata patches (sata).
-+- Removed time patches.
-+- Documentation updates
-+- Remove un-needed x86_64 fix processor context patch.
-+- Remove x86_64 mcheck_init invocation.
-+- Separate workqueue freezer, dynamic pageflags and
-+  lzf patches.
-+- Remove obsolete configuration flags from the enums in suspend2.h.
-+- Correct various typos in headers.
-+- Various cleanups.
-+- Remove command line parameters suspend_act, suspend_dbg and
-+  suspend_lvl.
-+- Remove HALT_ON debugging macro from pagedir.c.
-+- Add tags for my new patch splitting utility.
-+
-+2.2.0.1 - 15 February 2006
-+
-+- Update to 2.6.16-rc3.
-+- Further cleanups, removing fragments that are no longer needed
-+  and applying suggestions from code review.
-+- Remove Christoph's todo list code. Not because I don't like it,
-+  but because it was originally designed to help SMP cleanness,
-+  and cpu hotplug has taken over that need.
-+
-+2.2 - 24 January 2006 (Happy Birthday, Dad!)
-+
-+- Fix amd64 page_is_ram typo.
-+- Fix unintentional dependence on swsusp (amd64).
-+- Make swapwriter select swap support instead of depending
-+  on it already being selected.
-+- Make a new common function for writing the last (partial)
-+  page of a header.
-+- Remove temporary enabling of block dump when reading pageset1.
-+- Extend have_image to also display some of the details from
-+  the header.
-+- Cleanup count_data_pages changes.
-+- Save and restore the block_dump setting when starting/finishing
-+  a cycle.
-+- Add support for debugging the image header reading & writing.
-+- A few fixes to the filewriter.
-+- Cleanups in swapwriter and arch specific code.
-+
-+2.2-rc16 - 8 January 2006
-+
-+- Small updates to documentation.
-+- Fix amd64 support.
-+- Remove no-unneeded modifications to fs/super.c & mtrr code.
-+- Cleanup dyn pageflags include files.
-+- Clean freezer header.
-+- Move swsusp to bottom of Makefile to make interoperability work better.
-+- Move pm_ops prepare/finish calls back -moving the calls to pre/post
-+  hotplugging doesn't seem to be the right thing to do at the moment.
-+- Save zone info that's used during atomic restore in memory that can
-+  be safely accessed during that period.
-+- Modify swsusp so it can be used with the new freezer without causing
-+  a deadlock.
-+- Reinstate the ability to cancel a suspend part way through writing a
-+  pageset.
-+- Fix some duplicated allowance for extra pd1 pages.
-+- Further work on new PageNoSave code.
-+- Increase max outstanding I/O to 2048.
-+- Remove some unnecessary forced inlining.
-+
-+2.2-rc15 - 26 December 2005
-+
-+- Call the correct writer init routine (read/write were transposed!)
-+- Freeze filesystems in reverse order so loopback doesn't result in
-+  a hang.
-+- Select HOTPLUG_CPU instead of depending on it (SMP).
-+- Further switchovers from assuming pfns start at 0 to using per zone
-+  ranges.
-+- Lots of architecture specific fixes for PPC, x86_64 and ARM.
-+- Work on removing PageNosave dependency and changes outside kernel/power.
-+- Support new read-only section patches.
-+- Remove b44 patch.
-+- Cleanups (as always!). This time, we remove driver_model.[ch], and
-+  remove some now unused MTRR modifications and lowlevel x86 code.
-+- Small modifications to lowlevel code routine.
-+- Reintroduce /proc/suspend2/no_pageset2 for testing.
-+- Compile fix for !SUSPEND2.
-+- Fixups to powerdown code (yes, again!).
-+- Bug fix to rw_init_plugins.
-+- Small rework of sanity checking.
-+- Make num_pcp_pages() numa compatible.
-+- Cleanup filesystem freezing code.
-+- More consolidation of swapwriter and filewriter code into bio.c.
-+- Attempt to parse resume device when checking if can suspend and
-+  suspend is currently disabled.
-+- Rename noresume_setup to noresume2_setup so it works with swsusp
-+  compiled in.
-+- Fix filewriter so it again tries to stat the file if name_to_dev_t
-+  fails.
-+
-+2.2-rc14 - 2 December 2005
-+
-+- Correct header_locations in documentation to headerlocations.
-+- Remove BUG_ON() in ll_rw_blk.c.
-+- Correction to nvidia agp suspend/resume support.
-+- Complete removal of syncthread code.
-+- Consolidate all of the page i/o code from swapwriter and
-+  filewriter into one version, moved to block_io.c.
-+- Combine the io.c read & write pageset routines and make
-+  separate routines of plugin setup/cleanup and the main loop.
-+- Fix for AMD64 reading wrong block for header at resume time
-+  (and thus reporting 0.0.0 kernel version in the image).
-+
-+2.2-rc13 - 25 November 2005
-+
-+- Add ARM support, thanks to Hiroki Kaminaga at Sony.
-+- Replace remounting with freezing and thawing filesystems.
-+- Remove now unneeded syncthread code (more to be done).
-+- Don't sys_sync after freezing filesystems. That way lies deadlocks.
-+- Beginnings of cleanups for writers.
-+- Make number of extra pagedir 1 pages allowed for tunable via a
-+  new proc entry. Set it to 0 for autotuning.
-+- Fix an oops in the filewriter.
-+- Fix for typo in power off code (thanks, _damjan_).
-+
-+2.2-rc12 - 22 November 2005
-+
-+- New test_bio proc debugging entry; don't actually write anything,
-+  just say where the data would be put.
-+- Further filewriter fixes. It should be perfectly usable now,
-+  but I would still recommend care and backups!
-+- Don't use smp_processor_id in lowlevel code. With cpuhotplug, we
-+  know we're on processor zero.
-+- Fix some indentation in the lowlevel code.
-+- Touch softlockup watchdog when resuming. Shouldn't be needed and
-+  doesn't seem to make any difference, but I'll seek consistency
-+  with Pavel at this point.
-+- Show what processes enter and leave the fridge and when iff
-+  PM Debug is enabled (wRAR).
-+- Modify remounting logic introduced in rc11 so that syslog etc
-+  continue to work postresume.
-+- Remove some extra debugging code in the freezer.
-+- Prune the number of calls to attempt_to_parse so that we can
-+  properly figure out whether suspending should be enabled.
-+- Don't unblank the console from the kernel code. Doesn't play
-+  nicely with vesafb-tng. 
-+
-+2.2-rc11 - 15 November 2005
-+
-+- Remount filesystems readonly while suspending so as to ensure
-+  xfs flushes all pending writes. This also means things should
-+  be nice and clean if you fail to resume (for whatever reason).
-+- Fix highmem support that I broke with rc10.
-+- Fix typo in 2nd+ attempt at resuming message.
-+
-+2.2-rc10 - 14 November 2005
-+
-+- Increased allowance for extra pagedir1 pages. This is primarily
-+  for the new flgrx driver. If you don't use it, you'll see a
-+  bigger drop in the total image size after the atomic copy. This
-+  is nothing to be concerned about.
-+- Some debugging code has been temporarily modified to always
-+  print, to help address some particular users' issues.
-+- More helpful debugging for AMD64 preemption problems.
-+- Rework of powerdown code. Powerdown method can now also be 0,
-+  meaning Suspend won't try to use ACPI to powerdown. 1 & 2 are
-+  also accepted values. You might find Standby (1) useful, but 2
-+  will probably only make the computer resume again immediately.
-+- Big rework of blocksize handling. Suspend2 is now tested with the
-+  swap files and ordinary files on ext3, xfs and reiser with each
-+  blocksize allowed by the filesystem type. Other filesystems should
-+  work without a problem because the algorithm is basically the same
-+  as that used for swapfiles.
-+- Initial version of discontiguous memory support.
-+- Replace /proc/software_suspend with /proc/suspend2.
-+- Make Suspend2 explicitly depend upon cpu hotplug for SMP.
-+- Leave interrupts enabled when powering down.
-+- Make storage manager testing proc entry depend on PM_DEBUG.
-+- Remove unnecessary check at the start of save image.
-+- Small cleanups in the swapwriter (swapfile management).
-+
-+2.2-rc9 - 5 November 2005
-+
-+- Filewriter cleanups and bug fixes.
-+- Display stats when unable to allocate enough storage, to help diagnosing
-+  this issue.
-+- Some cleanups to e820 table support.
-+- Various small fixes to PPC support.
-+- Modifed BIO submission check to be smarter (use new Suspend2 flag in BIO
-+  flags).
-+- Add userspace storage manager (usm) support. Requires userspace program.
-+  None are available yet. This change included a separation of the netlink
-+  code from the userui code into a new file.
-+- Replace type * name with type *name everywhere.
-+- Made debugging code for driver suspend/resume calls more gentle
-+  (delay/print instead of BUG_ON().
-+- Don't mark image as resumed before when in KEEP_IMAGE made.
-+- Seek to address BUG_ONs being hit in marking a task as pageset1.
-+- Address some arch/config specific compilation warnings.
-+- Use kernel_power_off_prepare instead of device_shutdown when not entering
-+  suspend to ram.
-+- Thaw kernel processes before beginning to eat memory.
-+- Make freezer quiet by default.
-+- Export freezer state for when ext3 (eg) built as a module.
-+- Add news_storage_manager to proc entry info so that entries that needs
-+  access to storage for reading and/or writing can enable it as required.
-+  There is also a new activate_storage entry that can be used in a script to
-+  avoid having it repetitively enabled and disabled by a number of instructions.
-+	echo 1 >  /proc/suspend2/activate_storage
-+  at the start of the sequence and
-+	echo 0 > /proc/suspend2/activate_storage
-+  and the end.
-+- Correct bits in result code so hibernate script gives the correct
-+  interpretation again.
-+- Cleanup and simplify file management in the file writer. (Debugging printks
-+  left in for this release).
-+- Poke blanked console when resuming.
-+ 
-+2.2-rc8 - October 3, 2005.
-+
-+REQUIRES hibernate script 1.12 or newer. 
-+
-+- Changed name of proc directory to suspend2.
-+- Removed suspend_drivers_init/cleanup
-+- Cleaned up debug_info entry
-+- Remove atomic_restore conflict check
-+- Stop tracking max extents used.
-+- put_extent. Just BUG_ON(!extent). Or don't handle.
-+- put_extent_chain remove if (!this) return
-+- Removed references to chain optimisation info
-+- Remove error messages in <load|serialise>_extent_chain (should
-+  come from real cause of err)
-+- attempt_to_parse_resume_device should return whether successful
-+- Merge plugin read/write inits/cleanups into one loop.
-+- Merge read & write routines into one generic I/O loop?
-+- Sanity check kernel version - macros for digits?
-+- Rename free_pagedir_data to free_extra_pagedir_memory. Don't reset pageset
-+  sizes there.
-+- Removed SetPageConflicting
-+- release_conflicting_pages: Delete. Not used.
-+- remove version info in proc.c
-+- Remove #ifdef CONFIG_SUSPEND2_DEFAULT_RESUME2 in suspend2
-+- compress <allocate|free>_bitmaps functions
-+- Remove #ifdef DEBUG_PAGE_ALLOC in suspend2.c
-+- can_suspend: if(DISABLED && !attempt_to_parse())
-+- Remove keep_metadata proc entry
-+- Use (DISABLED && !attempt_to_parse() in suspend2_resume, too.
-+- Removed unused fields used in io_info struct
-+- flush_dcache_page needed?
-+- Use put_page to free pages.
-+- Some extraneous comments removed.
-+- Removed header_data comment
-+- /*^N *^N *^N* ^N* ^N */
-+- Remove PRINTK in swapwriter
-+- Remove swapwriter file management?
-+- Cleaned up get_blocks_per_page in swapwriter
-+- Integrated get_path_for_swapfile to caller
-+- Parse signature - remove old pmdisk version support
-+- Removed unneeded extern int signature_check? (swapwriter:478)
-+- Cleaned up swapwriter_storage_allocated
-+- Remove space_requests = ((long) space_really_requested) << PAGE_SHIFT
-+- Remove allocate_header_space comment "was going to be in bytes"
-+- Simplified header space allocated calculation.
-+- Remove extra escape action in request_abort_suspend (not used and would
-+  be a problem anyway).
-+- Fix compile error for AMD64 SMP.
-+- Fix error in the filewriter.
-+
-+2.2-rc7 - September 16 2005
-+
-+- Further fixing of powerdown code. If !pm_ops, just use
-+  kernel_power_off.
-+- Use return code when freezing failure occurs.
-+- Make userui disabling effective.
-+
-+2.2-rc6 - September 6 2005 (The Hamilton Release)
-+
-+- Fix for corruption caused when failing to power down.
-+- Fix for failing to power down.
-+- Separated refrigerator changes from Suspend2 for separate
-+  merge.
-+- Misc other cleanups.
-+
-+2.2-rc5 - September 2 2005
-+- Add more detailed debugging information regarding which
-+  driver re-enables interrupts and recover.
-+- Handle wrong userui interface version by resetting userui
-+  and continuing without it.
-+- Fix for powerdown issues.
-+- Ensure resumed before flag isn't unintentionally set when
-+  writing header.
-+- Seek to address trace given in refrigerator code.
-+- Complain if can't find the userui process number given
-+  for setting nofreeze.
-+- Fixed a bug in the swap allocation routine that would
-+  result in swap being allocated but not freed.
-+
-+2.2-rc4 - August 30 2005
-+
-+- Fixed bounding error in swapwriter device closing. This
-+  had 'interesting' side effects.
-+- Moved storing the console log level used to before asking
-+  the userui to cleanup, so that after suspending.
-+  default_console_loglevel contains the last one used, and
-+  not the original value.
-+- Fixed a mistake in include/asm-i386/suspend2.h that broke
-+  compilation for gcc 4 users.
-+- Made the refrigerator ignore Stopped processes again. Mea
-+  culpa. As always :|
-+
-+2.2-rc3 - August 29 2005
-+
-+- Modified error message for setting the blocksize to give
-+  some useful information.
-+- Fixed typo in todo_list_active calls in jfs_txnmgr.c
-+- Fixed size of blocksize storage in header. Thanks Ola!
-+- Merged in initramfs changes to filewriter. Added new state
-+  flag for resuming from initramfs and call from do_mounts_rd.c.
-+  Yet to test.
-+- Implemented communication of the netlink socket number to use
-+  to the userui program when invoking it. (Changes to commit to
-+  userui tree)
-+- Give more information and invalidate the image when we fail to
-+  initialise a filter at resume.
-+- Clean up console when failing to resume.
-+- Make escape and toggling pause and single step take effect
-+  immediately.
-+- Fixed log everything so that it does again.
-+- Expand userui message buffer from 80 to 255 characters.
-+- Fixed a silly bug when the header is not stored on the resume
-+  block device.
-+- Modify freezer implementation to signal all processes once,
-+  separate to waiting for them to enter the refrigerator. This
-+  will be more robust and quicker if/when the todo list gets used
-+  for other things.
-+- Modify userui version to 6.
-+- Move freeing of freezer notifier entry to post spinlock release.
-+- Fix compilation error when !SUSPEND2 & CRYPTO
-+- Fix missing ; in macro for !SUSPEND2
-+
-+2.2-rc2 - August 24 2005
-+- Apply LZF 64 bit from Anders Fugmann.
-+- Complete transition to todo list and fix up jffs2.
-+- Temporary fix for gcc 4, telling it lies that we're
-+  not clobbering ebp. Something similar needed for other
-+  archs?
-+
-+2.2-rc1 - August 23 2005
-+- Fixed problem with swapwriter buffer offset not being reset
-+  when beginning to write the image header.
-+- PPC fixes from Johannes Berg.
-+- Give a better message when can't initialise a compressor.
-+- Remove an unused variable from the pageset_sizes_result struct.
-+- Make Suspend still compile ok when networking is disabled.
-+  Userui won't work (it uses netlink), but suspending will.
-+  This will also be handy for embedded support.
-+- Say why we can't do userui when we can't open /dev/console
-+  (entirely possible when resuming from an initrd).
-+
-+2.1.9.14 - August 22 2005
-+- Fixes for previous patch - base tree was slightly corrupted.
-+- Also fixed agp driver cleanups - humble apologies to ATI and
-+  Nvidia users.
-+- Small fixes for new bdev management code in swapwriter.
-+
-+2.1.9.13 - August 20 2005
-+- Added support for Christoph Lameter's todo list changes.
-+- Reworked device setup at resume time.
-+- Began splitting up patches into many more changesets for
-+  the (to be made) git tree. I'll now ship the patch as one
-+  big patch.
-+- Miscellaneous other bug fixes and cleanups.
-+
-+2.1.9.12 - August 4 2005
-+- Bug fixes for the refrigerator code
-+- Fixed bug in dyn_pageflags code that would cause an oops if
-+  allocating pageflags ever failed.
-+- Changed block io code to use kblockd_flush.
-+- Reworking of semantics for workqueue calls (merge work).
-+
-+2.1.9.11 - July 30 2005
-+- More cleanups.
-+
-+2.1.9.10 - July 23 2005
-+- Lots more cleanups and little fixes.
-+- Changed workqueue freezer implementation from using an extra parameter
-+  to using new routines with nofreeze in the name. Greatly reduces the
-+  number of files we touch.
-+- Remove SYNCTHREAD flag from kernel threads. It really means nothing.
-+  (They are frozen anyway, after real syncthreads).
-+- In the process of re-adding checksumming as a standalone patch. Not
-+  to be submitted.
-+- Cleaned up LZF. Removed macros and ifdefs.
-+- Started pushing patches.
-+- Renamed arch specific functions to include _arch_.
-+- Removed all_settings after asking how many people use it.
-+- Fixed up copyback thread spawning so as to ensure that the stack used
-+  is not in a conflicting page. We spwan new threads until one is ok.
-+  Each thread spawned will keep spawning other threads (with a delay)
-+  until one has a non conflicting page. This means you can end up with
-+  a large number of threads quickly. We guarantee that only one will
-+  continue on to the copyback. All others enter the freezer.
-+
-+2.1.9.9 - July 8 2005
-+- Move suspend2_core directory contents up to kernel/power.
-+- Further work on x86_64 (more to be done before it can be tested).
-+- Lots of cleanups in response to premerge (I hope) comments. As part
-+  of this, converted a number of lists of #defined bit indices to
-+  enums. This will break saved all_settings files, so I bumped the
-+  version.
-+- Added debugging info to swapwriter to try and diagnose set block size
-+  oops some people are seeing.
 diff --git a/Documentation/power/suspend2-internals.txt b/Documentation/power/suspend2-internals.txt
 new file mode 100644
 index 0000000..ba4e1e5
@@ -2329,10 +1230,10 @@ index 0000000..b5a8edb
 +   most of us (Nigel included!) would consider testing. His efforts have
 +   contributed as much to Suspend2 as any of the names above.
 diff --git a/MAINTAINERS b/MAINTAINERS
-index ef84419..2ec9eaa 100644
+index 277877a..f1adba1 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -3227,6 +3227,13 @@ M:	sammy@sammy.net
+@@ -3218,6 +3218,13 @@ M:	sammy@sammy.net
  W:	http://sammy.net/sun3/
  S:	Maintained
  
@@ -2474,6 +1375,39 @@ index 8120d42..5d57f0c 100644
  obj32-$(CONFIG_MODULES)		+= module_32.o
  
  ifeq ($(CONFIG_PPC_MERGE),y)
+diff --git a/arch/powerpc/platforms/powermac/setup.c b/arch/powerpc/platforms/powermac/setup.c
+index 651fa42..243e5f4 100644
+--- a/arch/powerpc/platforms/powermac/setup.c
++++ b/arch/powerpc/platforms/powermac/setup.c
+@@ -425,7 +425,7 @@ static void __init find_boot_device(void)
+  * only
+  */
+ 
+-#ifdef CONFIG_SOFTWARE_SUSPEND
++#ifdef CONFIG_SUSPEND_SHARED
+ 
+ static int pmac_pm_prepare(suspend_state_t state)
+ {
+@@ -480,16 +480,16 @@ static struct pm_ops pmac_pm_ops = {
+ 	.valid		= pmac_pm_valid,
+ };
+ 
+-#endif /* CONFIG_SOFTWARE_SUSPEND */
++#endif /* CONFIG_SUSPEND_SHARED */
+ 
+ static int initializing = 1;
+ 
+ static int pmac_late_init(void)
+ {
+ 	initializing = 0;
+-#ifdef CONFIG_SOFTWARE_SUSPEND
++#ifdef CONFIG_SUSPEND_SHARED
+ 	pm_set_ops(&pmac_pm_ops);
+-#endif /* CONFIG_SOFTWARE_SUSPEND */
++#endif /* CONFIG_SUSPEND_SHARED */
+ 	return 0;
+ }
+ 
 diff --git a/arch/x86_64/kernel/Makefile b/arch/x86_64/kernel/Makefile
 index bb47e86..9943190 100644
 --- a/arch/x86_64/kernel/Makefile
@@ -2506,28 +1440,6 @@ index 91f7e67..983f16f 100644
  }
 -#endif /* CONFIG_SOFTWARE_SUSPEND */
 +#endif /* CONFIG_SUSPEND_SHARED */
-diff --git a/block/ll_rw_blk.c b/block/ll_rw_blk.c
-index 3de0695..3fb956d 100644
---- a/block/ll_rw_blk.c
-+++ b/block/ll_rw_blk.c
-@@ -30,6 +30,8 @@
- #include <linux/cpu.h>
- #include <linux/blktrace_api.h>
- #include <linux/fault-inject.h>
-+#include <linux/freezer.h>
-+#include <linux/suspend.h>
- 
- /*
-  * for max sense size
-@@ -3247,7 +3249,7 @@ void submit_bio(int rw, struct bio *bio)
- 			(unsigned long long)bio->bi_sector,
- 			bdevname(bio->bi_bdev,b));
- 	}
--
-+	
- 	generic_make_request(bio);
- }
- 
 diff --git a/crypto/Kconfig b/crypto/Kconfig
 index 086fcec..efde46c 100644
 --- a/crypto/Kconfig
@@ -2560,10 +1472,10 @@ index 12f93f5..69a8af3 100644
  obj-$(CONFIG_CRYPTO_TEST) += tcrypt.o
 diff --git a/crypto/lzf.c b/crypto/lzf.c
 new file mode 100644
-index 0000000..2da44d9
+index 0000000..7c74784
 --- /dev/null
 +++ b/crypto/lzf.c
-@@ -0,0 +1,335 @@
+@@ -0,0 +1,325 @@
 +/* 
 + * Cryptoapi LZF compression module.
 + *
@@ -2686,10 +1598,11 @@ index 0000000..2da44d9
 +{
 +	struct lzf_ctx *ctx = crypto_tfm_ctx(tfm);
 +
-+	if (ctx->hbuf) {
-+		vfree(ctx->hbuf);
-+		ctx->hbuf = NULL;
-+	}
++	if (!ctx->hbuf)
++		return;
++
++	vfree(ctx->hbuf);
++	ctx->hbuf = NULL;
 +}
 +
 +static int lzf_compress_init(struct crypto_tfm *tfm)
@@ -2698,13 +1611,12 @@ index 0000000..2da44d9
 +
 +	/* Get LZF ready to go */
 +	ctx->hbuf = vmalloc_32((1 << hlog) * sizeof(char *));
-+	if (!ctx->hbuf) {
-+		printk(KERN_WARNING
-+		       "Failed to allocate %ld bytes for lzf workspace\n",
-+		       (long) ((1 << hlog) * sizeof(char *)));
-+		return -ENOMEM;
-+	}
-+	return 0;
++	if (ctx->hbuf)
++		return 0;
++
++	printk(KERN_WARNING "Failed to allocate %ld bytes for lzf workspace\n",
++			(long) ((1 << hlog) * sizeof(char *)));
++	return -ENOMEM;
 +}
 +
 +static int lzf_compress(struct crypto_tfm *tfm, const u8 *in_data,
@@ -2822,16 +1734,15 @@ index 0000000..2da44d9
 +	u8 const *const in_end = ip + slen;
 +	u8 *const out_end = op + *dlen;
 +
++	*dlen = PAGE_SIZE;
 +	do {
 +		unsigned int ctrl = *ip++;
 +
 +		if (ctrl < (1 << 5)) {	/* literal run */
 +			ctrl++;
 +
-+			if (op + ctrl > out_end) {
-+				*dlen = PAGE_SIZE;
++			if (op + ctrl > out_end)
 +				return 0;
-+			}
 +			memcpy(op, ip, ctrl);
 +			op += ctrl;
 +			ip += ctrl;
@@ -2845,19 +1756,10 @@ index 0000000..2da44d9
 +				len += *ip++;
 +
 +			ref -= *ip++;
++			len += 2;
 +
-+			if (op + len + 2 > out_end) {
-+				*dlen = PAGE_SIZE;
++			if (op + len > out_end || ref < (u8 *) dst)
 +				return 0;
-+			}
-+
-+			if (ref < (u8 *) dst) {
-+				*dlen = PAGE_SIZE;
-+				return 0;
-+			}
-+
-+			*op++ = *ref++;
-+			*op++ = *ref++;
 +
 +			do
 +				*op++ = *ref++;
@@ -2963,6 +1865,19 @@ index b6073bd..32bd423 100644
  #include <linux/syscalls.h>
  #include <linux/suspend.h>
  #include <linux/cpu.h>
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 509171c..76e5ac8 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -5309,6 +5309,8 @@ void md_do_sync(mddev_t *mddev)
+ 			last_mark = next;
+ 		}
+ 
++		while(freezer_is_on())
++			yield();
+ 
+ 		if (kthread_should_stop()) {
+ 			/*
 diff --git a/drivers/pci/pci-driver.c b/drivers/pci/pci-driver.c
 index a3c1755..171be82 100644
 --- a/drivers/pci/pci-driver.c
@@ -2979,18 +1894,18 @@ index a3c1755..171be82 100644
  }
  
 diff --git a/drivers/usb/core/driver.c b/drivers/usb/core/driver.c
-index 9e3e943..d0ced9e 100644
+index 9e3e943..e91fdef 100644
 --- a/drivers/usb/core/driver.c
 +++ b/drivers/usb/core/driver.c
-@@ -721,6 +721,9 @@ int usb_register_device_driver(struct usb_device_driver *new_udriver,
- 		pr_info("%s: registered new device driver %s\n",
- 			usbcore_name, new_udriver->name);
+@@ -788,6 +788,9 @@ int usb_register_driver(struct usb_driver *new_driver, struct module *owner,
+ 			usbcore_name, new_driver->name);
  		usbfs_update_special();
-+		if (!new_udriver->resume)
+ 		usb_create_newid_file(new_driver);
++		if (!new_driver->resume)
 +			printk("USB driver %s lacks resume support.\n",
-+					new_udriver->name);
++					new_driver->name);
  	} else {
- 		printk(KERN_ERR "%s: error %d registering device "
+ 		printk(KERN_ERR "%s: error %d registering interface "
  			"	driver %s\n",
 diff --git a/include/asm-i386/cacheflush.h b/include/asm-i386/cacheflush.h
 index 74e03c8..3bb8575 100644
@@ -3056,18 +1971,6 @@ index bc7f817..2f18e1b 100644
  /* Image of the saved processor state. If you touch this, fix acpi_wakeup.S. */
  struct saved_context {
    	u16 ds, es, fs, gs, ss;
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 08daf32..8552932 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -125,6 +125,7 @@ struct bio {
- #define BIO_BOUNCED	5	/* bio is a bounce bio */
- #define BIO_USER_MAPPED 6	/* contains user pages */
- #define BIO_EOPNOTSUPP	7	/* not supported */
-+#define BIO_SUSPEND_DATA 8
- #define bio_flagged(bio, flag)	((bio)->bi_flags & (1 << (flag)))
- 
- /*
 diff --git a/include/linux/device.h b/include/linux/device.h
 index 5cf30e9..69122c1 100644
 --- a/include/linux/device.h
@@ -3226,7 +2129,7 @@ index 2a20f48..b4d9db1 100644
  #define MAX_LINKS 32		
  
 diff --git a/include/linux/suspend.h b/include/linux/suspend.h
-index bf99bd4..8840f4b 100644
+index bf99bd4..02c1184 100644
 --- a/include/linux/suspend.h
 +++ b/include/linux/suspend.h
 @@ -27,14 +27,9 @@ extern void mark_free_pages(struct zone *zone);
@@ -3253,7 +2156,7 @@ index bf99bd4..8840f4b 100644
  unsigned long get_safe_page(gfp_t gfp_mask);
  
  /*
-@@ -55,4 +48,69 @@ unsigned long get_safe_page(gfp_t gfp_mask);
+@@ -55,4 +48,81 @@ unsigned long get_safe_page(gfp_t gfp_mask);
   */
  #define PAGES_FOR_IO	1024
  
@@ -3282,38 +2185,50 @@ index bf99bd4..8840f4b 100644
 +
 +/* Used in init dir files */
 +extern unsigned long suspend_state;
-+
 +#define set_suspend_state(bit) (set_bit(bit, &suspend_state))
 +#define clear_suspend_state(bit) (clear_bit(bit, &suspend_state))
 +#define test_suspend_state(bit) (test_bit(bit, &suspend_state))
-+
-+extern void suspend2_try_resume(void);
 +extern int suspend2_running;
-+#else
++
++#else /* !CONFIG_SUSPEND2 */
 +
 +#define suspend_state		(0)
 +#define set_suspend_state(bit) do { } while(0)
 +#define clear_suspend_state(bit) do { } while (0)
 +#define test_suspend_state(bit) (0)
-+
 +#define suspend2_running (0)
-+
-+#define suspend2_try_resume() do { } while(0)
 +#endif /* CONFIG_SUSPEND2 */
++
++#ifdef CONFIG_SUSPEND_SHARED
++#ifdef CONFIG_SUSPEND2
++extern void suspend2_try_resume(void);
++#else
++#define suspend2_try_resume() do { } while(0)
++#endif
++
++extern int resume_attempted;
 +
 +#ifdef CONFIG_SOFTWARE_SUSPEND
 +extern int software_resume(void);
 +#else
-+#ifdef CONFIG_SUSPEND2
-+extern void suspend2_try_resume(void);
 +static inline int software_resume(void)
 +{
++	resume_attempted = 1;
 +	suspend2_try_resume();
 +	return 0;
 +}
-+#else
-+#define software_resume() do { } while(0)
 +#endif
++
++static inline void check_resume_attempted(void)
++{
++	if (resume_attempted)
++		return;
++
++	software_resume();
++}
++#else
++#define check_resume_attempted() do { } while(0)
++#define resume_attempted (0)
 +#endif
 +
 +#ifdef CONFIG_PRINTK_NOSAVE
@@ -3346,8 +2261,20 @@ index 0068688..ad3fead 100644
 +
  #endif /* __KERNEL__*/
  #endif /* _LINUX_SWAP_H */
+diff --git a/include/linux/time.h b/include/linux/time.h
+index 8ea8dea..5c07f00 100644
+--- a/include/linux/time.h
++++ b/include/linux/time.h
+@@ -224,4 +224,7 @@ struct itimerval {
+  */
+ #define TIMER_ABSTIME			0x01
+ 
++extern void save_avenrun(void);
++extern void restore_avenrun(void);
++
+ #endif
 diff --git a/init/do_mounts.c b/init/do_mounts.c
-index dc1ec08..3ad203d 100644
+index dc1ec08..3e67387 100644
 --- a/init/do_mounts.c
 +++ b/init/do_mounts.c
 @@ -139,11 +139,16 @@ dev_t name_to_dev_t(char *name)
@@ -3379,7 +2306,7 @@ index dc1ec08..3ad203d 100644
  out:
  	if (!mkdir_err)
  		sys_rmdir("/sys");
-@@ -434,9 +440,27 @@ void __init prepare_namespace(void)
+@@ -434,12 +440,27 @@ void __init prepare_namespace(void)
  
  	is_floppy = MAJOR(ROOT_DEV) == FLOPPY_MAJOR;
  
@@ -3399,16 +2326,16 @@ index dc1ec08..3ad203d 100644
  	if (initrd_load())
  		goto out;
  
-+#ifdef CONFIG_SUSPEND2
-+	if (test_suspend_state(SUSPEND_RESUME_NOT_DONE))
-+		software_resume();
-+#endif
-+	
  	if (is_floppy && rd_doload && rd_load_disk(0))
  		ROOT_DEV = Root_RAM0;
  
++	check_resume_attempted();
++
+ 	mount_root();
+ out:
+ 	sys_mount(".", "/", NULL, MS_MOVE, NULL);
 diff --git a/init/do_mounts_initrd.c b/init/do_mounts_initrd.c
-index 2cfd7cb..b32a3dc 100644
+index 2cfd7cb..9c24ec4 100644
 --- a/init/do_mounts_initrd.c
 +++ b/init/do_mounts_initrd.c
 @@ -6,6 +6,7 @@
@@ -3430,7 +2357,7 @@ index 2cfd7cb..b32a3dc 100644
 +		}
  	}
  
-+	if (test_suspend_state(SUSPEND_RESUME_NOT_DONE))
++	if (!resume_attempted)
 +		printk(KERN_ERR "Suspend2: No attempt was made to resume from "
 +				"any image that might exist.\n");
 +	clear_suspend_state(SUSPEND_BOOT_TIME);
@@ -3487,19 +2414,20 @@ index 7962761..f0d6fc1 100644
  	wait_for_completion(&done);
  	return sub_info.retval;
 diff --git a/kernel/power/Kconfig b/kernel/power/Kconfig
-index 51a4dd0..5d4b077 100644
+index 51a4dd0..4caac70 100644
 --- a/kernel/power/Kconfig
 +++ b/kernel/power/Kconfig
-@@ -48,6 +48,17 @@ config DISABLE_CONSOLE_SUSPEND
+@@ -48,6 +48,18 @@ config DISABLE_CONSOLE_SUSPEND
  	suspend/resume routines, but may itself lead to problems, for example
  	if netconsole is used.
  
 +config PRINTK_NOSAVE
++	depends on PM && PM_DEBUG
 +	bool "Preserve printk data from boot kernel when resuming."
 +	default n
 +	---help---
 +	This option gives printk data and the associated variables the
-+	attribute __nosave, which means that they will not be saves as
++	attribute __nosave, which means that they will not be saved as
 +	part of the image. The net effect is that after resuming, your
 +	dmesg will show the messages from prior to the atomic restore,
 +	instead of the messages from the resumed kernel. This may be
@@ -3508,7 +2436,7 @@ index 51a4dd0..5d4b077 100644
  config PM_TRACE
  	bool "Suspend/resume event tracing"
  	depends on PM && PM_DEBUG && X86_32 && EXPERIMENTAL
-@@ -162,3 +173,174 @@ config APM_EMULATION
+@@ -162,3 +174,174 @@ config APM_EMULATION
  	  random kernel OOPSes or reboots that don't seem to be related to
  	  anything, try disabling/enabling this option (or disabling/enabling
  	  APM in your BIOS).
@@ -3684,7 +2612,7 @@ index 51a4dd0..5d4b077 100644
 +	depends on SUSPEND2_CORE!=n
 +	default y
 diff --git a/kernel/power/Makefile b/kernel/power/Makefile
-index 38725f5..1e15b8d 100644
+index 38725f5..a4a8c5b 100644
 --- a/kernel/power/Makefile
 +++ b/kernel/power/Makefile
 @@ -5,6 +5,32 @@ endif
@@ -3699,7 +2627,7 @@ index 38725f5..1e15b8d 100644
 +		extent.o pageflags.o ui.o \
 +		power_off.o atomic_copy.o
 +
-+obj-$(CONFIG_SUSPEND2)		+= suspend_builtin.o
++obj-$(CONFIG_SUSPEND2)		+= suspend2_builtin.o
 +
 +ifdef CONFIG_SUSPEND2_CHECKSUM
 +suspend_core-objs	+= checksum.o
@@ -3723,10 +2651,10 @@ index 38725f5..1e15b8d 100644
  obj-$(CONFIG_MAGIC_SYSRQ)	+= poweroff.o
 diff --git a/kernel/power/atomic_copy.c b/kernel/power/atomic_copy.c
 new file mode 100644
-index 0000000..1e8a22a
+index 0000000..2e1ab1f
 --- /dev/null
 +++ b/kernel/power/atomic_copy.c
-@@ -0,0 +1,425 @@
+@@ -0,0 +1,423 @@
 +/*
 + * kernel/power/atomic_copy.c
 + *
@@ -3742,6 +2670,7 @@ index 0000000..1e8a22a
 +#include <linux/highmem.h>
 +#include <linux/cpu.h>
 +#include <linux/freezer.h>
++#include <linux/console.h>
 +#include "suspend.h"
 +#include "storage.h"
 +#include "power_off.h"
@@ -3751,7 +2680,7 @@ index 0000000..1e8a22a
 +#include "prepare_image.h"
 +#include "pageflags.h"
 +#include "checksum.h"
-+#include "suspend_builtin.h"
++#include "suspend2_builtin.h"
 +
 +int extra_pd1_pages_used;
 +
@@ -3835,34 +2764,41 @@ index 0000000..1e8a22a
 + **/
 +static void free_pbe_list(struct pbe **list, int highmem)
 +{
-+	struct pbe *free_pbe = *list;
-+	struct page *page = (struct page *) free_pbe;
-+
-+	do {
++	while(*list) {
 +		int i;
++		struct pbe *free_pbe, *next_page = NULL;
++		struct page *page;
 +
-+		if (highmem)
++		if (highmem) {
++			page = (struct page *) *list;
 +			free_pbe = (struct pbe *) kmap(page);
++		} else {
++			page = virt_to_page(*list);
++			free_pbe = *list;
++		}
 +
 +		for (i = 0; i < PBES_PER_PAGE; i++) {
 +			if (!free_pbe)
 +				break;
-+			__free_page(free_pbe->address);
++			if (highmem)
++				__free_page(free_pbe->address);
++			else
++				free_page((unsigned long) free_pbe->address);
 +			free_pbe = free_pbe->next;
 +		}
 +
 +		if (highmem) {
-+			struct page *next_page = NULL;
 +			if (free_pbe)
-+				next_page = (struct page *) free_pbe->next;
++				next_page = free_pbe;
 +			kunmap(page);
-+			__free_page(page);
-+			page = next_page;
++		} else {
++			if (free_pbe)
++				next_page = free_pbe;
 +		}
 +
-+	} while(page && free_pbe);
-+
-+	*list = NULL;
++		__free_page(page);
++		*list = (struct pbe *) next_page;
++	};
 +}
 +
 +/**
@@ -3873,7 +2809,7 @@ index 0000000..1e8a22a
 + * these from the nosave variables to the normal ones.
 + * 2) Set the status flags.
 + * 3) Resume devices.
-+ * 4) Get userui to redraw.
++ * 4) Tell userui so it can redraw & restore settings.
 + * 5) Reread the page cache.
 + **/
 +
@@ -3895,7 +2831,7 @@ index 0000000..1e8a22a
 +	if (suspend_activate_storage(1))
 +		panic("Failed to reactivate our storage.");
 +
-+	suspend_ui_redraw();
++	suspend_ui_post_atomic_restore();
 +
 +	suspend_cond_pause(1, "About to reload secondary pagedir.");
 +
@@ -4076,28 +3012,21 @@ index 0000000..1e8a22a
 +	if (test_action_state(SUSPEND_PM_PREPARE_CONSOLE))
 +		pm_prepare_console();
 +
-+	if (!test_action_state(SUSPEND_LATE_CPU_HOTPLUG)) {
-+		suspend_prepare_status(DONT_CLEAR_BAR,	"Disable nonboot cpus.");
-+		disable_nonboot_cpus();
-+	}
-+
-+	suspend_prepare_status(DONT_CLEAR_BAR,	"Freeze processes.");
-+
-+	if ((error = freeze_processes())) {
-+		printk("Some processes failed to suspend\n");
-+		goto thaw_processes;
-+	}
-+
 +	suspend_prepare_status(DONT_CLEAR_BAR,	"Device suspend.");
 +
-+	if ((error = device_suspend(PMSG_FREEZE))) {
++	suspend_console();
++	if ((error = device_suspend(PMSG_PRETHAW))) {
 +		printk("Some devices failed to suspend\n");
 +		goto device_resume;
 +	}
 +
 +	if (test_action_state(SUSPEND_LATE_CPU_HOTPLUG)) {
 +		suspend_prepare_status(DONT_CLEAR_BAR,	"Disable nonboot cpus.");
-+		disable_nonboot_cpus();
++		if (disable_nonboot_cpus()) {
++			set_result_state(SUSPEND_CPU_HOTPLUG_FAILED);
++			set_result_state(SUSPEND_ABORTED);
++			goto device_resume;
++		}
 +	}
 +
 +	suspend_prepare_status(DONT_CLEAR_BAR,	"Atomic restore preparation");
@@ -4139,17 +3068,14 @@ index 0000000..1e8a22a
 +		enable_nonboot_cpus();
 +device_resume:
 +	device_resume();
-+thaw_processes:
-+	thaw_processes();
-+	if (!test_action_state(SUSPEND_LATE_CPU_HOTPLUG))
-+		enable_nonboot_cpus();
-+
-+	if (test_action_state(SUSPEND_PM_PREPARE_CONSOLE))
-+		pm_restore_console();
++	resume_console();
 +	free_pbe_list(&restore_pblist, 0);
 +#ifdef CONFIG_HIGHMEM
 +	free_pbe_list(&restore_highmem_pblist, 1);
 +#endif
++	if (test_action_state(SUSPEND_PM_PREPARE_CONSOLE))
++		pm_restore_console();
++	suspend2_running = 0;
 +	return 1;
 +}
 diff --git a/kernel/power/block_io.h b/kernel/power/block_io.h
@@ -4215,7 +3141,7 @@ index 0000000..49eaa51
 +extern int suspend_header_bytes_used;
 diff --git a/kernel/power/checksum.c b/kernel/power/checksum.c
 new file mode 100644
-index 0000000..b9267c0
+index 0000000..356af21
 --- /dev/null
 +++ b/kernel/power/checksum.c
 @@ -0,0 +1,371 @@
@@ -4341,7 +3267,7 @@ index 0000000..b9267c0
 +			for (posn = vma->vm_start; posn < vma->vm_end;
 +					posn += PAGE_SIZE) {
 +				struct page *page = 
-+					suspend2_follow_page(mm, posn);
++					follow_page(vma, posn, 0);
 +				if (page == seeking) {
 +					printk("%s(%d)", t->comm, t->pid);
 +					result = 1;
@@ -4805,18 +3731,19 @@ index 0000000..d44bbf7
 +#endif
 +
 diff --git a/kernel/power/disk.c b/kernel/power/disk.c
-index aec19b0..af81684 100644
+index aec19b0..5d014f1 100644
 --- a/kernel/power/disk.c
 +++ b/kernel/power/disk.c
-@@ -24,6 +24,7 @@
+@@ -24,6 +24,8 @@
  
  #include "power.h"
  
 +#include "suspend.h"
++#include "suspend2_builtin.h"
  
  static int noresume = 0;
  char resume_file[256] = CONFIG_PM_STD_PARTITION;
-@@ -118,6 +119,11 @@ int pm_suspend_disk(void)
+@@ -118,6 +120,11 @@ int pm_suspend_disk(void)
  {
  	int error;
  
@@ -4828,7 +3755,7 @@ index aec19b0..af81684 100644
  	error = prepare_processes();
  	if (error)
  		return error;
-@@ -200,10 +206,20 @@ int pm_suspend_disk(void)
+@@ -200,10 +207,22 @@ int pm_suspend_disk(void)
   *
   */
  
@@ -4837,6 +3764,8 @@ index aec19b0..af81684 100644
  {
  	int error;
  
++	resume_attempted = 1;
++
 +#ifdef CONFIG_SUSPEND2
 +	/* 
 +	 * We can't know (until an image header - if any - is loaded), whether
@@ -4850,7 +3779,7 @@ index aec19b0..af81684 100644
  	mutex_lock(&pm_mutex);
  	if (!swsusp_resume_device) {
  		if (!strlen(resume_file)) {
-@@ -274,9 +290,6 @@ static int software_resume(void)
+@@ -274,9 +293,6 @@ static int software_resume(void)
  	return 0;
  }
  
@@ -4860,7 +3789,7 @@ index aec19b0..af81684 100644
  static const char * const pm_disk_modes[] = {
  	[PM_DISK_FIRMWARE]	= "firmware",
  	[PM_DISK_PLATFORM]	= "platform",
-@@ -457,6 +470,7 @@ static int __init resume_offset_setup(char *str)
+@@ -457,6 +473,7 @@ static int __init resume_offset_setup(char *str)
  static int __init noresume_setup(char *str)
  {
  	noresume = 1;
@@ -4870,7 +3799,7 @@ index aec19b0..af81684 100644
  
 diff --git a/kernel/power/extent.c b/kernel/power/extent.c
 new file mode 100644
-index 0000000..871e214
+index 0000000..cd0ff0c
 --- /dev/null
 +++ b/kernel/power/extent.c
 @@ -0,0 +1,305 @@
@@ -5170,14 +4099,14 @@ index 0000000..871e214
 +}
 +
 +#ifdef CONFIG_SUSPEND2_EXPORTS
-+EXPORT_SYMBOL(suspend_add_to_extent_chain);
-+EXPORT_SYMBOL(suspend_put_extent_chain);
-+EXPORT_SYMBOL(suspend_load_extent_chain);
-+EXPORT_SYMBOL(suspend_serialise_extent_chain);
-+EXPORT_SYMBOL(suspend_extent_state_save);
-+EXPORT_SYMBOL(suspend_extent_state_restore);
-+EXPORT_SYMBOL(suspend_extent_state_goto_start);
-+EXPORT_SYMBOL(suspend_extent_state_next);
++EXPORT_SYMBOL_GPL(suspend_add_to_extent_chain);
++EXPORT_SYMBOL_GPL(suspend_put_extent_chain);
++EXPORT_SYMBOL_GPL(suspend_load_extent_chain);
++EXPORT_SYMBOL_GPL(suspend_serialise_extent_chain);
++EXPORT_SYMBOL_GPL(suspend_extent_state_save);
++EXPORT_SYMBOL_GPL(suspend_extent_state_restore);
++EXPORT_SYMBOL_GPL(suspend_extent_state_goto_start);
++EXPORT_SYMBOL_GPL(suspend_extent_state_next);
 +#endif
 diff --git a/kernel/power/extent.h b/kernel/power/extent.h
 new file mode 100644
@@ -5264,10 +4193,10 @@ index 0000000..c97772b
 +#endif
 diff --git a/kernel/power/io.c b/kernel/power/io.c
 new file mode 100644
-index 0000000..09e9bde
+index 0000000..854d1a7
 --- /dev/null
 +++ b/kernel/power/io.c
-@@ -0,0 +1,1400 @@
+@@ -0,0 +1,1407 @@
 +/*
 + * kernel/power/io.c
 + *
@@ -5300,7 +4229,7 @@ index 0000000..09e9bde
 +#include "prepare_image.h"
 +#include "extent.h"
 +#include "sysfs.h"
-+#include "suspend_builtin.h"
++#include "suspend2_builtin.h"
 +
 +char poweroff_resume2[256];
 +
@@ -5396,7 +4325,7 @@ index 0000000..09e9bde
 +	suspend_cleanup_usm();
 +}
 +
-+void replace_restore_resume2(int replace, int quiet)
++void save_restore_resume2(int replace, int quiet)
 +{
 +	static char resume2_save[255];
 +	static unsigned long suspend_state_save;
@@ -5421,12 +4350,12 @@ index 0000000..09e9bde
 +		return;
 +
 +	printk("=== Trying Poweroff Resume2 ===\n");
-+	replace_restore_resume2(1, 0);
++	save_restore_resume2(SAVE, NOQUIET);
 +	if (test_suspend_state(SUSPEND_CAN_RESUME))
 +		ok = 1;
 +	
 +	printk("=== Done ===\n");
-+	replace_restore_resume2(0, 1);
++	save_restore_resume2(RESTORE, QUIET);
 +	
 +	/* If not ok, clear the string */
 +	if (ok)
@@ -5615,10 +4544,9 @@ index 0000000..09e9bde
 +				*my_last_high_page = high_page;
 +				kunmap(high_page);
 +				return page;
-+			} else {
-+				*my_last_low_page = this;
-+				return virt_to_page(this[index].address);
 +			}
++			*my_last_low_page = this;
++			return virt_to_page(this[index].address);
 +		} else
 +			min = index;
 +		index = ((max + min) / 2);
@@ -5665,7 +4593,10 @@ index 0000000..09e9bde
 +
 +			/* Another thread could have beaten us to it. */
 +			if (pfn == max_pfn + 1) {
-+				BUG_ON(atomic_read(&io_count));
++				if (atomic_read(&io_count)) {
++					printk("Ran out of pfns but io_count is still %d.\n", atomic_read(&io_count));
++					BUG();
++				}
 +				break;
 +			}
 +
@@ -5728,8 +4659,8 @@ index 0000000..09e9bde
 +					"image.");
 +				mutex_lock(&io_mutex);
 +				break;
-+			} else
-+				panic("Read chunk returned (%d)", result);
++			}
++			panic("Read chunk returned (%d)", result);
 +		}
 +
 +		/* 
@@ -5871,6 +4802,8 @@ index 0000000..09e9bde
 +		pfn = get_next_bit_on(*pageflags, pfn);
 +		index++;
 +	}
++
++	BUG_ON(index < finish_at);
 +
 +	atomic_set(&io_count, finish_at);
 +
@@ -6370,6 +5303,7 @@ index 0000000..09e9bde
 +		int resumed_before_default = 0;
 +		if (test_suspend_state(SUSPEND_RETRY_RESUME))
 +			resumed_before_default = SUSPEND_CONTINUE_REQ;
++
 +		suspend_early_boot_message(1, resumed_before_default, NULL);
 +		clear_suspend_state(SUSPEND_RETRY_RESUME);
 +		if (!(test_suspend_state(SUSPEND_CONTINUE_REQ))) {
@@ -6451,6 +5385,9 @@ index 0000000..09e9bde
 +
 +	set_suspend_state(SUSPEND_NOW_RESUMING);
 +
++	if (pre_resume_freeze())
++		goto out_reset_console;
++
 +	suspend_cond_pause(1, "About to read original pageset1 locations.");
 +
 +	/*
@@ -6458,12 +5395,11 @@ index 0000000..09e9bde
 +	 * use for the data to be restored.
 +	 */
 +
-+	if (allocate_dyn_pageflags(&pageset1_map))
-+		goto out_invalidate_image;
-+	if (allocate_dyn_pageflags(&pageset1_copy_map))
-+		goto out_invalidate_image;
-+	if (allocate_dyn_pageflags(&io_map))
-+		goto out_invalidate_image;
++	if (allocate_dyn_pageflags(&pageset1_map) ||
++	    allocate_dyn_pageflags(&pageset1_copy_map) ||
++	    allocate_dyn_pageflags(&io_map))
++		goto out_reset_console;
++
 +	if (load_dyn_pageflags(pageset1_map))
 +		goto out_reset_console;
 +
@@ -6664,16 +5600,16 @@ index 0000000..09e9bde
 +}
 +
 +#ifdef CONFIG_SUSPEND2_EXPORTS
-+EXPORT_SYMBOL(suspend_attempt_to_parse_resume_device);
-+EXPORT_SYMBOL(attempt_to_parse_resume_device2);
++EXPORT_SYMBOL_GPL(suspend_attempt_to_parse_resume_device);
++EXPORT_SYMBOL_GPL(attempt_to_parse_resume_device2);
 +#endif
 +
 diff --git a/kernel/power/io.h b/kernel/power/io.h
 new file mode 100644
-index 0000000..3e6760b
+index 0000000..527b39e
 --- /dev/null
 +++ b/kernel/power/io.h
-@@ -0,0 +1,49 @@
+@@ -0,0 +1,56 @@
 +/*
 + * kernel/power/io.h
 + *
@@ -6720,7 +5656,14 @@ index 0000000..3e6760b
 +extern void attempt_to_parse_po_resume_device2(void);
 +int image_exists_read(const char *page, int count);
 +int image_exists_write(const char *buffer, int count);
-+extern void replace_restore_resume2(int replace, int quiet);
++extern void save_restore_resume2(int replace, int quiet);
++
++/* Args to save_restore_resume2 */
++#define RESTORE 0
++#define SAVE 1
++
++#define NOQUIET 0
++#define QUIET 1
 +
 +extern dev_t name_to_dev_t(char *line);
 diff --git a/kernel/power/main.c b/kernel/power/main.c
@@ -6738,7 +5681,7 @@ index a064dfd..05b6686 100644
  };
 diff --git a/kernel/power/modules.c b/kernel/power/modules.c
 new file mode 100644
-index 0000000..0d9dec7
+index 0000000..a6b574f
 --- /dev/null
 +++ b/kernel/power/modules.c
 @@ -0,0 +1,415 @@
@@ -7152,10 +6095,10 @@ index 0000000..0d9dec7
 +}
 +
 +#ifdef CONFIG_SUSPEND2_EXPORTS
-+EXPORT_SYMBOL(suspend_register_module);
-+EXPORT_SYMBOL(suspend_unregister_module);
-+EXPORT_SYMBOL(suspend_get_next_filter);
-+EXPORT_SYMBOL(suspendActiveAllocator);
++EXPORT_SYMBOL_GPL(suspend_register_module);
++EXPORT_SYMBOL_GPL(suspend_unregister_module);
++EXPORT_SYMBOL_GPL(suspend_get_next_filter);
++EXPORT_SYMBOL_GPL(suspendActiveAllocator);
 +#endif
 diff --git a/kernel/power/modules.h b/kernel/power/modules.h
 new file mode 100644
@@ -7329,7 +6272,7 @@ index 0000000..ed94458
 +#endif
 diff --git a/kernel/power/netlink.c b/kernel/power/netlink.c
 new file mode 100644
-index 0000000..36f5c0c
+index 0000000..bb1d563
 --- /dev/null
 +++ b/kernel/power/netlink.c
 @@ -0,0 +1,387 @@
@@ -7717,9 +6660,9 @@ index 0000000..36f5c0c
 +	return 0;
 +}
 +
-+EXPORT_SYMBOL(suspend_netlink_setup);
-+EXPORT_SYMBOL(suspend_netlink_close);
-+EXPORT_SYMBOL(suspend_send_netlink_message);
++EXPORT_SYMBOL_GPL(suspend_netlink_setup);
++EXPORT_SYMBOL_GPL(suspend_netlink_close);
++EXPORT_SYMBOL_GPL(suspend_send_netlink_message);
 diff --git a/kernel/power/netlink.h b/kernel/power/netlink.h
 new file mode 100644
 index 0000000..97647e8
@@ -7786,10 +6729,10 @@ index 0000000..97647e8
 +#endif
 diff --git a/kernel/power/pagedir.c b/kernel/power/pagedir.c
 new file mode 100644
-index 0000000..f170960
+index 0000000..4e74689
 --- /dev/null
 +++ b/kernel/power/pagedir.c
-@@ -0,0 +1,462 @@
+@@ -0,0 +1,480 @@
 +/*
 + * kernel/power/pagedir.c
 + *
@@ -7818,7 +6761,7 @@ index 0000000..f170960
 +#include "prepare_image.h"
 +#include "suspend.h"
 +#include "power.h"
-+#include "suspend_builtin.h"
++#include "suspend2_builtin.h"
 +
 +#define PAGESET1 0
 +#define PAGESET2 1
@@ -7858,7 +6801,7 @@ index 0000000..f170960
 +
 +		for (posn = vma->vm_start; posn < vma->vm_end;
 +				posn += PAGE_SIZE) {
-+			struct page *page = suspend2_follow_page(mm, posn);
++			struct page *page = follow_page(vma, posn, 0);
 +			if (!page)
 +				continue;
 +
@@ -7912,7 +6855,8 @@ index 0000000..f170960
 +void suspend_mark_pages_for_pageset2(void)
 +{
 +	struct task_struct *p;
-+	struct attention_list *attention_list = NULL, *last = NULL;
++	struct attention_list *attention_list = NULL, *last = NULL, *next;
++	int i, task_count = 0;
 +
 +	if (test_action_state(SUSPEND_NO_PAGESET2))
 +		return;
@@ -7932,35 +6876,52 @@ index 0000000..f170960
 +		read_unlock(&tasklist_lock);
 +	}
 +
-+	/* Now we find all userspace process (with task->mm) marked PF_NOFREEZE
-+	 * and move them into pageset1.
++	/* 
++	 * Now we count all userspace process (with task->mm) marked PF_NOFREEZE.
 +	 */
 +	read_lock(&tasklist_lock);
 +	for_each_process(p)
++		if ((p->flags & PF_NOFREEZE) || p == current)
++			task_count++;
++	read_unlock(&tasklist_lock);
++
++	/* 
++	 * Allocate attention list structs.
++	 */
++	for (i = 0; i < task_count; i++) {
++		struct attention_list *this =
++			kmalloc(sizeof(struct attention_list), GFP_ATOMIC);
++		if (!this) {
++			printk("Failed to allocate slab for attention list.\n");
++			set_result_state(SUSPEND_ABORTED);
++			goto free_attention_list;
++		}
++		this->next = NULL;
++		if (attention_list) {
++			last->next = this;
++			last = this;
++		} else
++			attention_list = last = this;
++	}
++
++	next = attention_list;
++	read_lock(&tasklist_lock);
++	for_each_process(p)
 +		if ((p->flags & PF_NOFREEZE) || p == current) {
-+			struct attention_list *this = kmalloc(sizeof(struct attention_list), GFP_NOIO);
-+			if (!this) {
-+				printk("Failed to allocate slab for attention"
-+						" list.\n");
-+				set_result_state(SUSPEND_ABORTED);
-+				break;
-+			}
-+			this->task = p;
-+			this->next = NULL;
-+			if (attention_list) {
-+				last->next = this;
-+				last = this;
-+			} else
-+				attention_list = last = this;
++			next->task = p;
++			next = next->next;
 +		}
 +	read_unlock(&tasklist_lock);
 +
-+	/* Because the tasks in attention_list are ones related to suspending,
++	/* 
++	 * Because the tasks in attention_list are ones related to suspending,
 +	 * we know that they won't go away under us.
 +	 */
 +
++free_attention_list:
 +	while (attention_list) {
-+		suspend_mark_task_as_pageset(attention_list->task, PAGESET1);
++		if (!test_result_state(SUSPEND_ABORTED))
++			suspend_mark_task_as_pageset(attention_list->task, PAGESET1);
 +		last = attention_list;
 +		attention_list = attention_list->next;
 +		kfree(last);
@@ -8254,10 +7215,10 @@ index 0000000..f170960
 +}
 diff --git a/kernel/power/pagedir.h b/kernel/power/pagedir.h
 new file mode 100644
-index 0000000..6b70482
+index 0000000..2ae395f
 --- /dev/null
 +++ b/kernel/power/pagedir.h
-@@ -0,0 +1,53 @@
+@@ -0,0 +1,51 @@
 +/*
 + * kernel/power/pagedir.h
 + *
@@ -8308,8 +7269,6 @@ index 0000000..6b70482
 +struct page * ___suspend_get_nonconflicting_page(int can_be_highmem);
 +
 +extern void suspend_reset_alt_image_pageset2_pfn(void);
-+
-+extern struct page *suspend2_follow_page(struct mm_struct *mm, unsigned long address);
 +#endif
 diff --git a/kernel/power/pageflags.c b/kernel/power/pageflags.c
 new file mode 100644
@@ -8522,10 +7481,10 @@ index 0000000..405cbce
 +extern int load_dyn_pageflags(dyn_pageflags_t pagemap);
 +extern int suspend_pageflags_space_needed(void);
 diff --git a/kernel/power/power.h b/kernel/power/power.h
-index eb461b8..f2f6a9f 100644
+index eb461b8..a4d6550 100644
 --- a/kernel/power/power.h
 +++ b/kernel/power/power.h
-@@ -1,5 +1,10 @@
+@@ -1,5 +1,11 @@
 +/*
 + * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
 + */
@@ -8533,10 +7492,11 @@ index eb461b8..f2f6a9f 100644
  #include <linux/suspend.h>
  #include <linux/utsname.h>
 +#include "suspend.h"
++#include "suspend2_builtin.h"
  
  struct swsusp_info {
  	struct new_utsname	uts;
-@@ -15,11 +20,15 @@ struct swsusp_info {
+@@ -15,11 +21,15 @@ struct swsusp_info {
  
  #ifdef CONFIG_SOFTWARE_SUSPEND
  extern int pm_suspend_disk(void);
@@ -8554,7 +7514,7 @@ index eb461b8..f2f6a9f 100644
  }
  #endif
  
-@@ -40,6 +49,8 @@ extern struct subsystem power_subsys;
+@@ -40,6 +50,8 @@ extern struct subsystem power_subsys;
  /* References to section boundaries */
  extern const void __nosave_begin, __nosave_end;
  
@@ -8563,7 +7523,7 @@ index eb461b8..f2f6a9f 100644
  /* Preferred image size in bytes (default 500 MB) */
  extern unsigned long image_size;
  extern int in_suspend;
-@@ -177,3 +188,14 @@ extern int suspend_enter(suspend_state_t state);
+@@ -177,3 +189,11 @@ extern int suspend_enter(suspend_state_t state);
  struct timeval;
  extern void swsusp_show_speed(struct timeval *, struct timeval *,
  				unsigned int, char *);
@@ -8573,17 +7533,14 @@ index eb461b8..f2f6a9f 100644
 +#else
 +static inline void *saveable_highmem_page(unsigned long pfn) { return NULL; }
 +#endif
-+extern unsigned long suspend_get_nonconflicting_page(void);
-+extern int suspend_post_context_save(void);
-+extern int suspend2_try_suspend(int have_pmsem);
 +
 +#define PBES_PER_PAGE (PAGE_SIZE / sizeof(struct pbe))
 diff --git a/kernel/power/power_off.c b/kernel/power/power_off.c
 new file mode 100644
-index 0000000..87b2228
+index 0000000..172c762
 --- /dev/null
 +++ b/kernel/power/power_off.c
-@@ -0,0 +1,92 @@
+@@ -0,0 +1,109 @@
 +/*
 + * kernel/power/power_off.c
 + *
@@ -8600,49 +7557,16 @@ index 0000000..87b2228
 +#include <linux/pm.h>
 +#include <linux/reboot.h>
 +#include <linux/cpu.h>
++#include <linux/console.h>
 +#include "suspend.h"
 +#include "ui.h"
 +#include "power_off.h"
 +#include "power.h"
 +
-+unsigned long suspend_powerdown_method = 0; /* 0 - Kernel power off */
-+
-+static int try_pm_state_powerdown(void)
-+{
-+	int result = 0;
-+
-+	if (pm_ops && pm_ops->prepare && suspend_powerdown_method &&
-+	    pm_ops->prepare(suspend_powerdown_method))
-+			return 0;
-+
-+	if (suspend_powerdown_method > 3)
-+		kernel_shutdown_prepare(SYSTEM_SUSPEND_DISK);
-+	else {
-+		if (device_suspend(PMSG_SUSPEND)) {
-+			printk(KERN_ERR "Some devices failed to suspend\n");
-+			return 0;
-+		}
-+
-+		disable_nonboot_cpus();
-+	}
-+
-+	mdelay(1000); /* Give time for devices to power down */
-+	
-+	if (!suspend_enter(suspend_powerdown_method))
-+		result = 1;
-+
-+	enable_nonboot_cpus();
-+
-+	if (pm_ops && pm_ops->finish && suspend_powerdown_method > 3)
-+		pm_ops->finish(suspend_powerdown_method);
-+
-+	device_resume();
-+
-+	return result;
-+}
++unsigned long suspend2_poweroff_method = 0; /* 0 - Kernel power off */
 +
 +/*
-+ * suspend_power_down
++ * suspend2_power_down
 + * Functionality   : Powers down or reboots the computer once the image
 + *                   has been written to disk.
 + * Key Assumptions : Able to reboot/power down via code called or that
@@ -8651,8 +7575,10 @@ index 0000000..87b2228
 + * Called From     : do_suspend2_suspend_2
 + */
 +
-+void suspend_power_down(void)
++void suspend2_power_down(void)
 +{
++	int result = 0;
++
 +	if (test_action_state(SUSPEND_REBOOT)) {
 +		suspend_prepare_status(DONT_CLEAR_BAR, "Ready to reboot.");
 +		kernel_restart(NULL);
@@ -8660,25 +7586,73 @@ index 0000000..87b2228
 +
 +	suspend_prepare_status(DONT_CLEAR_BAR, "Powering down.");
 +
-+	if (pm_ops && pm_ops->enter && suspend_powerdown_method && try_pm_state_powerdown())
-+		return;
++	switch (suspend2_poweroff_method) {
++		case 0:
++			break;
++		case 3:
++			suspend_console();
 +
-+	kernel_shutdown_prepare(SYSTEM_POWER_OFF);
++			if (device_suspend(PMSG_SUSPEND)) {
++				suspend_prepare_status(DONT_CLEAR_BAR, "Device "
++					"suspend failure.");
++				goto ResumeConsole;
++			}
 +
-+	mdelay(1000); /* Give time for devices to power down */
++			if (!pm_ops ||
++			    (pm_ops->prepare && pm_ops->prepare(PM_SUSPEND_MEM)))
++				goto DeviceResume;
 +
-+	machine_power_off();
-+	machine_halt();
-+	suspend_prepare_status(DONT_CLEAR_BAR, "Powerdown failed");
++			if (test_action_state(SUSPEND_LATE_CPU_HOTPLUG) &&
++				disable_nonboot_cpus())
++				goto PmOpsFinish;
++	
++			if (!suspend_enter(PM_SUSPEND_MEM))
++				result = 1;
++
++			if (test_action_state(SUSPEND_LATE_CPU_HOTPLUG))
++				enable_nonboot_cpus();
++
++PmOpsFinish:
++			if (pm_ops->finish)
++				pm_ops->finish(PM_SUSPEND_MEM);
++
++DeviceResume:
++			device_resume();
++
++ResumeConsole:
++			resume_console();
++
++			/* If suspended to ram and later woke. */
++			if (result)
++				return;
++			break;
++		case 4:
++		case 5:
++			if (!pm_ops ||
++			    (pm_ops->prepare && pm_ops->prepare(PM_SUSPEND_MAX)))
++				break;
++
++			kernel_shutdown_prepare(SYSTEM_SUSPEND_DISK);
++			suspend_enter(suspend2_poweroff_method);
++
++			/* Failed. Fall back to kernel_power_off etc. */
++			if (pm_ops->finish)
++				pm_ops->finish(PM_SUSPEND_MAX);
++	}
++
++	suspend_prepare_status(DONT_CLEAR_BAR, "Falling back to alternate power off method.");
++	kernel_power_off();
++	kernel_halt();
++	suspend_prepare_status(DONT_CLEAR_BAR, "Powerdown failed.");
 +	while (1)
 +		cpu_relax();
 +}
 +
-+EXPORT_SYMBOL(suspend_powerdown_method);
-+EXPORT_SYMBOL(suspend_power_down);
++EXPORT_SYMBOL_GPL(suspend2_poweroff_method);
++EXPORT_SYMBOL_GPL(suspend2_power_down);
 diff --git a/kernel/power/power_off.h b/kernel/power/power_off.h
 new file mode 100644
-index 0000000..333e8a1
+index 0000000..40e0c46
 --- /dev/null
 +++ b/kernel/power/power_off.h
 @@ -0,0 +1,13 @@
@@ -8693,14 +7667,14 @@ index 0000000..333e8a1
 + */
 +
 +int suspend_pm_state_finish(void);
-+void suspend_power_down(void);
-+extern unsigned long suspend_powerdown_method;
++void suspend2_power_down(void);
++extern unsigned long suspend2_poweroff_method;
 diff --git a/kernel/power/prepare_image.c b/kernel/power/prepare_image.c
 new file mode 100644
-index 0000000..4222c87
+index 0000000..779341b
 --- /dev/null
 +++ b/kernel/power/prepare_image.c
-@@ -0,0 +1,819 @@
+@@ -0,0 +1,798 @@
 +/*
 + * kernel/power/prepare_image.c
 + *
@@ -8728,6 +7702,7 @@ index 0000000..4222c87
 +#include <linux/freezer.h>
 +#include <linux/hardirq.h>
 +#include <linux/mmzone.h>
++#include <linux/console.h>
 +
 +#include "pageflags.h"
 +#include "modules.h"
@@ -8740,11 +7715,20 @@ index 0000000..4222c87
 +#include "checksum.h"
 +#include "sysfs.h"
 +
-+static int are_frozen = 0, num_nosave = 0;
++static int num_nosave = 0;
 +static int header_space_allocated = 0;
-+static int storage_allocated = 0;
++static int main_storage_allocated = 0;
 +static int storage_available = 0;
 +int extra_pd1_pages_allowance = MIN_EXTRA_PAGES_ALLOWANCE;
++int image_size_limit = 0;
++
++/*
++ * The atomic copy of pageset1 is stored in pageset2 pages.
++ * But if pageset1 is larger (normally only just after boot),
++ * we need to allocate extra pages to store the atomic copy.
++ * The following data struct and functions are used to handle
++ * the allocation and freeing of that memory.
++ */
 +
 +static int extra_pages_allocated;
 +
@@ -8755,6 +7739,96 @@ index 0000000..4222c87
 +};
 +
 +static struct extras *extras_list;
++
++/* suspend_free_extra_pagedir_memory
++ *
++ * Description:	Free previously allocated extra pagedir memory.
++ */
++void suspend_free_extra_pagedir_memory(void)
++{
++	/* Free allocated pages */
++	while (extras_list) {
++		struct extras *this = extras_list;
++		int i;
++
++		extras_list = this->next;
++
++		for (i = 0; i < (1 << this->order); i++)
++			ClearPageNosave(this->page + i);
++
++		__free_pages(this->page, this->order);
++		kfree(this);
++	}
++
++	extra_pages_allocated = 0;
++}
++
++/* suspend_allocate_extra_pagedir_memory
++ *
++ * Description:	Allocate memory for making the atomic copy of pagedir1 in the
++ * 		case where it is bigger than pagedir2.
++ * Arguments:	int	num_to_alloc: Number of extra pages needed.
++ * Result:	int. 	Number of extra pages we now have allocated.
++ */
++static int suspend_allocate_extra_pagedir_memory(int extra_pages_needed)
++{
++	int j, order, num_to_alloc = extra_pages_needed - extra_pages_allocated;
++	unsigned long flags = GFP_ATOMIC | __GFP_NOWARN;
++
++	if (num_to_alloc < 1)
++		return 0;
++
++	order = fls(num_to_alloc);
++	if (order >= MAX_ORDER)
++		order = MAX_ORDER - 1;
++
++	while (num_to_alloc) {
++		struct page *newpage;
++		unsigned long virt;
++		struct extras *extras_entry;
++			
++		while ((1 << order) > num_to_alloc)
++			order--;
++
++		extras_entry = (struct extras *) kmalloc(sizeof(struct extras),
++			GFP_ATOMIC);
++
++		if (!extras_entry)
++			return extra_pages_allocated;
++
++		virt = __get_free_pages(flags, order);
++		while (!virt && order) {
++			order--;
++			virt = __get_free_pages(flags, order);
++		}
++
++		if (!virt) {
++			kfree(extras_entry);
++			return extra_pages_allocated;
++		}
++
++		newpage = virt_to_page(virt);
++
++		extras_entry->page = newpage;
++		extras_entry->order = order;
++		extras_entry->next = NULL;
++
++		if (extras_list)
++			extras_entry->next = extras_list;
++
++		extras_list = extras_entry;
++
++		for (j = 0; j < (1 << order); j++) {
++			SetPageNosave(newpage + j);
++			SetPagePageset1Copy(newpage + j);
++		}
++
++		extra_pages_allocated += (1 << order);
++		num_to_alloc -= (1 << order);
++	}
++
++	return extra_pages_allocated;
++}
 +
 +/*
 + * real_nr_free_pages: Count pcp pages for a zone type or all zones
@@ -8800,6 +7874,7 @@ index 0000000..4222c87
 +	
 +	suspend_prepare_status(CLEAR_BAR, "Finding allowance for drivers.");
 +
++	suspend_console();
 +	device_suspend(PMSG_FREEZE);
 +	local_irq_disable(); /* irqs might have been re-enabled on us */
 +	device_power_down(PMSG_FREEZE);
@@ -8809,105 +7884,11 @@ index 0000000..4222c87
 +	device_power_up();
 +	local_irq_enable();
 +	device_resume();
++	resume_console();
 +
 +	extra_pd1_pages_allowance = max(
 +		orig_num_free - final + MIN_EXTRA_PAGES_ALLOWANCE,
 +		MIN_EXTRA_PAGES_ALLOWANCE);
-+}
-+
-+/* suspend_free_extra_pagedir_memory
-+ *
-+ * Description:	Free previously allocated extra pagedir memory.
-+ */
-+void suspend_free_extra_pagedir_memory(void)
-+{
-+	/* Free allocated pages */
-+	while (extras_list) {
-+		struct extras *this = extras_list;
-+		int i;
-+
-+		extras_list = this->next;
-+
-+		for (i = 0; i < (1 << this->order); i++)
-+			ClearPageNosave(this->page + i);
-+
-+		__free_pages(this->page, this->order);
-+		kfree(this);
-+	}
-+
-+	extra_pages_allocated = 0;
-+}
-+
-+/* suspend_allocate_extra_pagedir_memory
-+ *
-+ * Description:	Allocate memory for making the atomic copy of pagedir1 in the
-+ * 		case where it is bigger than pagedir2.
-+ * Arguments:	int	num_to_alloc: Number of extra pages needed.
-+ * Result:	int. Zero on success. One if unable to allocate enough memory.
-+ */
-+static int suspend_allocate_extra_pagedir_memory(int extra_pages_needed, int highmem)
-+{
-+	int j, order, num_to_alloc = extra_pages_needed - extra_pages_allocated;
-+	int allocd = 0;
-+	unsigned long flags = GFP_ATOMIC | __GFP_NOWARN;
-+
-+	if (num_to_alloc < 1)
-+		return 0;
-+
-+	if (highmem)
-+		flags |= __GFP_HIGHMEM;
-+
-+	order = fls(num_to_alloc);
-+	if (order >= MAX_ORDER)
-+		order = MAX_ORDER - 1;
-+
-+	while (num_to_alloc) {
-+		struct page *newpage;
-+		unsigned long virt;
-+		struct extras *extras_entry;
-+			
-+		while ((1 << order) > num_to_alloc)
-+			order--;
-+
-+		virt = __get_free_pages(flags, order);
-+		while (!virt && order) {
-+			order--;
-+			virt = __get_free_pages(flags, order);
-+		}
-+
-+		if (!virt)
-+			return allocd;
-+
-+		newpage = virt_to_page(virt);
-+
-+		extras_entry = (struct extras *) kmalloc(sizeof(struct extras),
-+			GFP_ATOMIC);
-+
-+		if (!extras_entry) {
-+			__free_pages(newpage, order);
-+			return allocd;
-+		}
-+
-+		extras_entry->page = newpage;
-+		extras_entry->order = order;
-+		extras_entry->next = NULL;
-+
-+		if (extras_list)
-+			extras_entry->next = extras_list;
-+
-+		extras_list = extras_entry;
-+
-+		for (j = 0; j < (1 << order); j++) {
-+			SetPageNosave(newpage + j);
-+			SetPagePageset1Copy(newpage + j);
-+		}
-+
-+		allocd += (1 << order);
-+		extra_pages_allocated += (1 << order);
-+		num_to_alloc -= (1 << order);
-+	}
-+
-+	return allocd;
 +}
 +
 +/*
@@ -8935,66 +7916,93 @@ index 0000000..4222c87
 +	return DIV_ROUND_UP(bytes, PAGE_SIZE);
 +}
 +
-+#ifdef CONFIG_HIGHMEM
-+static int highpages_needed_to_suspend(void)
-+{
-+	int result = max_t(int,
-+		(get_highmem_size(pagedir1) - get_highmem_size(pagedir2)) / 2 -
-+		real_nr_free_high_pages(),
-+		0);
++/*
++ * When freeing memory, pages from either pageset might be freed.
++ *
++ * When seeking to free memory to be able to suspend, for every ps1 page freed,
++ * we need 2 less pages for the atomic copy because there is one less page to
++ * copy and one more page into which data can be copied.
++ *
++ * Freeing ps2 pages saves us nothing directly. No more memory is available
++ * for the atomic copy. Indirectly, a ps1 page might be freed (slab?), but
++ * that's too much work to figure out.
++ *
++ * => ps1_to_free functions
++ *
++ * Of course if we just want to reduce the image size, because of storage
++ * limitations or an image size limit either ps will do.
++ *
++ * => any_to_free function
++ */
 +
-+	return result;
++static int highpages_ps1_to_free(void)
++{
++	return max_t(int, 0, DIV_ROUND_UP(get_highmem_size(pagedir1) -
++		get_highmem_size(pagedir2), 2) - real_nr_free_high_pages());
 +}
 +
-+static int lowpages_needed_to_suspend(void)
++static int lowpages_ps1_to_free(void)
 +{
-+	int result = max_t(int, (get_lowmem_size(pagedir1) -
-+		get_lowmem_size(pagedir2) + extra_pd1_pages_allowance)/2 -
-+		real_nr_free_low_pages(), 0);
-+
-+	return result;
++	return max_t(int, 0, DIV_ROUND_UP(get_lowmem_size(pagedir1) +
++		extra_pd1_pages_allowance + MIN_FREE_RAM +
++		suspend_memory_for_modules() - get_lowmem_size(pagedir2) -
++		real_nr_free_low_pages() - extra_pages_allocated, 2));
 +}
 +
-+static int ram_to_suspend(void)
++static int current_image_size(void)
 +{
-+	int first, second;
-+
-+	first = (1 + max_t(int, (pagedir1.size + extra_pd1_pages_allowance -
-+			get_lowmem_size(pagedir2)) / 2, 0) +
-+		MIN_FREE_RAM + suspend_memory_for_modules());
-+
-+	second = highpages_needed_to_suspend() + lowpages_needed_to_suspend();
-+
-+	return max(first, second);
-+}
-+#else
-+static inline int highpages_needed_to_suspend(void)
-+{
-+	return 0;
++	return pagedir1.size + pagedir2.size + header_space_allocated;
 +}
 +
-+static int ram_to_suspend(void)
++static int any_to_free(int use_image_size_limit)
 +{
-+	return (1 + max_t(int, (pagedir1.size + extra_pd1_pages_allowance -
-+			get_lowmem_size(pagedir2)) / 2, 0) +
-+		MIN_FREE_RAM + suspend_memory_for_modules());
++	int user_limit = (use_image_size_limit && image_size_limit > 0) ?
++		max_t(int, 0, current_image_size() - (image_size_limit << 8))
++		: 0;
++
++	int storage_limit = max_t(int, 0,
++			main_storage_needed(1, 1) - storage_available);
++
++	return max(user_limit, storage_limit);
 +}
 +
-+static int lowpages_needed_to_suspend(void)
++/* amount_needed
++ *
++ * Calculates the amount by which the image size needs to be reduced to meet
++ * our constraints.
++ */
++static int amount_needed(int use_image_size_limit)
 +{
-+	return ram_to_suspend();
++	return max(highpages_ps1_to_free() + lowpages_ps1_to_free(),
++			any_to_free(use_image_size_limit));
 +}
 +
-+#define ZONE_HIGHMEM (MAX_NR_ZONES + 1)
-+#endif
++static int image_not_ready(int use_image_size_limit)
++{
++	suspend_message(SUSPEND_EAT_MEMORY, SUSPEND_LOW, 1,
++		"Amount still needed (%d) > 0:%d. Header: %d < %d: %d,"
++		" Storage allocd: %d < %d: %d.\n",
++			amount_needed(use_image_size_limit),
++			(amount_needed(use_image_size_limit) > 0),
++			header_space_allocated, header_storage_needed(),
++			header_space_allocated < header_storage_needed(),
++		 	main_storage_allocated,
++			main_storage_needed(1, 1),
++			main_storage_allocated < main_storage_needed(1, 1));
++
++	suspend_cond_pause(0, NULL);
++
++	return ((amount_needed(use_image_size_limit) > 0) ||
++		header_space_allocated < header_storage_needed() ||
++		 main_storage_allocated < main_storage_needed(1, 1));
++}
 +
 +static void display_stats(int always, int sub_extra_pd1_allow)
 +{ 
 +	char buffer[255];
 +	snprintf(buffer, 254, 
-+		"Free:%d(%d). Sets:%d(%d),%d(%d). Header:%d. Nosave:%d-%d"
-+		"=%d. Storage:%u/%u(%u). Needed:(%d+%d)%d-%d-%d)%d|(%d-%d)%d|"
-+		"%d.\n",
++		"Free:%d(%d). Sets:%d(%d),%d(%d). Header:%d/%d. Nosave:%d-%d"
++		"=%d. Storage:%u/%u(%u=>%u). Needed:%d,%d,%d(%d,%d,%d,%d)\n",
 +		
 +		/* Free */
 +		real_nr_free_pages(all_zones_mask),
@@ -9005,27 +8013,23 @@ index 0000000..4222c87
 +		pagedir2.size, pagedir2.size - get_highmem_size(pagedir2),
 +
 +		/* Header */
-+		header_storage_needed(),
++		header_space_allocated, header_storage_needed(),
 +
 +		/* Nosave */
 +		num_nosave, extra_pages_allocated,
 +		num_nosave - extra_pages_allocated,
 +
-+		/* Storage - converted to pages for comparison */
-+		storage_allocated,
-+		main_storage_needed(1, sub_extra_pd1_allow),
++		/* Storage */
++		main_storage_allocated,
 +		storage_available,
++		main_storage_needed(1, sub_extra_pd1_allow),
++		main_storage_needed(1, 1),
 +
 +		/* Needed */
++		lowpages_ps1_to_free(), highpages_ps1_to_free(),
++		any_to_free(1),
 +		MIN_FREE_RAM, suspend_memory_for_modules(),
-+		ram_to_suspend(), real_nr_free_low_pages(),
-+		extra_pages_allocated,
-+		ram_to_suspend() - real_nr_free_low_pages() -
-+				extra_pages_allocated,
-+		main_storage_needed(1, sub_extra_pd1_allow), storage_available,
-+		main_storage_needed(1, sub_extra_pd1_allow) - storage_available,
-+		(image_size_limit > 0) ? (main_storage_needed(1,
-+			sub_extra_pd1_allow) - (image_size_limit << 8)) : 0);
++		extra_pd1_pages_allowance, image_size_limit << 8);
 +
 +	if (always)
 +		printk(buffer);
@@ -9104,7 +8108,7 @@ index 0000000..4222c87
 + * extents might allocate a new extent page, this routine may well
 + * be called more than once.
 + */
-+static void flag_image_pages(void)
++static void flag_image_pages(int atomic_copy)
 +{
 +	int num_free = 0;
 +	unsigned long loop;
@@ -9180,28 +8184,14 @@ index 0000000..4222c87
 +		}
 +	}
 +
++	if (atomic_copy)
++		return;
++
 +	suspend_message(SUSPEND_EAT_MEMORY, SUSPEND_MEDIUM, 0,
 +		"Count data pages: Set1 (%d) + Set2 (%d) + Nosave (%d) + "
 +		"NumFree (%d) = %d.\n",
 +		pagedir1.size, pagedir2.size, num_nosave, num_free,
 +		pagedir1.size + pagedir2.size + num_nosave + num_free);
-+}
-+
-+/* amount_needed
-+ *
-+ * Calculates the amount by which the image size needs to be reduced to meet
-+ * our constraints.
-+ */
-+static int amount_needed(int use_image_size_limit)
-+{
-+	int max1 = max(ram_to_suspend() - real_nr_free_low_pages() -
-+			extra_pages_allocated,
-+			main_storage_needed(1, 0) - storage_available);
-+
-+	if (!use_image_size_limit || image_size_limit < 1)
-+		return max1;
-+
-+	return max(max1, main_storage_needed(1, 0) - (image_size_limit << 8));
 +}
 +
 +void suspend_recalculate_image_contents(int atomic_copy) 
@@ -9214,49 +8204,38 @@ index 0000000..4222c87
 +		/* Need to call this before getting pageset1_size! */
 +		suspend_mark_pages_for_pageset2();
 +	}
-+	flag_image_pages();
++	flag_image_pages(atomic_copy);
 +
 +	if (!atomic_copy) {
 +		storage_available = suspendActiveAllocator->storage_available();
 +		display_stats(0, 0);
 +	}
-+	return;
 +}
 +
 +/* update_image
 + *
 + * Allocate [more] memory and storage for the image.
 + */
-+static int update_image(void) 
++static void update_image(void) 
 +{ 
-+	int result2, param_used, wanted;
++	int result, param_used, wanted, got;
 +
 +	suspend_recalculate_image_contents(0);
 +
 +	/* Include allowance for growth in pagedir1 while writing pagedir 2 */
 +	wanted = pagedir1.size +  extra_pd1_pages_allowance -
 +		get_lowmem_size(pagedir2);
-+	if (suspend_allocate_extra_pagedir_memory(wanted, 0) < wanted) { 
-+		suspend_message(SUSPEND_EAT_MEMORY, SUSPEND_LOW, 1,
-+			"Still need to get more pages for pagedir 1.\n");
-+		return 1;
++	if (wanted > extra_pages_allocated) {
++		got = suspend_allocate_extra_pagedir_memory(wanted);
++		if (wanted < got) {
++			suspend_message(SUSPEND_EAT_MEMORY, SUSPEND_LOW, 1,
++				"Want %d extra pages for pageset1, got %d.\n",
++				wanted, got);
++			return;
++		}
 +	}
 +
 +	thaw_kernel_threads();
-+
-+	param_used = main_storage_needed(1, 0);
-+	if ((result2 = suspendActiveAllocator->allocate_storage(param_used))) {
-+		suspend_message(SUSPEND_EAT_MEMORY, SUSPEND_LOW, 1,
-+			"Allocate storage returned %d. Still need to get more"
-+			" storage space for the image proper.\n",
-+			result2);
-+		storage_allocated = suspendActiveAllocator->storage_allocated();
-+		if (freeze_processes()) {
-+			set_result_state(SUSPEND_FREEZING_FAILED);
-+			set_result_state(SUSPEND_ABORTED);
-+		}
-+		return 1;
-+	}
 +
 +	/* 
 +	 * Allocate remaining storage space, if possible, up to the
@@ -9272,50 +8251,26 @@ index 0000000..4222c87
 +	suspendActiveAllocator->allocate_storage(
 +		min(storage_available, main_storage_needed(0, 0)));
 +
-+	storage_allocated = suspendActiveAllocator->storage_allocated();
-+
-+	/* Allocate the header storage after allocating main storage
-+	 * so that the overhead for metadata doesn't change the amount
-+	 * of storage needed for the header itself.
-+	 */
++	main_storage_allocated = suspendActiveAllocator->storage_allocated();
 +
 +	param_used = header_storage_needed();
 +
-+	result2 = suspendActiveAllocator->allocate_header_space(param_used);
++	result = suspendActiveAllocator->allocate_header_space(param_used);
++
++	if (result)
++		suspend_message(SUSPEND_EAT_MEMORY, SUSPEND_LOW, 1,
++			"Still need to get more storage space for header.\n");
++	else
++		header_space_allocated = param_used;
 +
 +	if (freeze_processes()) {
 +		set_result_state(SUSPEND_FREEZING_FAILED);
 +		set_result_state(SUSPEND_ABORTED);
 +	}
 +
-+	if (result2) {
-+		suspend_message(SUSPEND_EAT_MEMORY, SUSPEND_LOW, 1,
-+			"Still need to get more storage space for header.\n");
-+		return 1;
-+	}
-+
-+	header_space_allocated = param_used;
-+
 +	allocate_checksum_pages();
 +
 +	suspend_recalculate_image_contents(0);
-+
-+	suspend_message(SUSPEND_EAT_MEMORY, SUSPEND_LOW, 1,
-+		"Amount still needed (%d) > 0:%d. Header: %d < %d: %d,"
-+		" Storage allocd: %d < %d: %d.\n",
-+			amount_needed(1),
-+			(amount_needed(1) > 0),
-+			header_space_allocated, header_storage_needed(),
-+			header_space_allocated < header_storage_needed(),
-+		 	storage_allocated,
-+			main_storage_needed(1, 1),
-+			storage_allocated < main_storage_needed(1, 1));
-+
-+	suspend_cond_pause(0, NULL);
-+
-+	return ((amount_needed(1) > 0) ||
-+		header_space_allocated < header_storage_needed() ||
-+		 storage_allocated < main_storage_needed(1, 1));
 +}
 +
 +/* attempt_to_freeze
@@ -9335,8 +8290,7 @@ index 0000000..4222c87
 +	if (result) {
 +		set_result_state(SUSPEND_ABORTED);
 +		set_result_state(SUSPEND_FREEZING_FAILED);
-+	} else
-+		are_frozen = 1;
++	}
 +
 +	return result;
 +}
@@ -9391,18 +8345,19 @@ index 0000000..4222c87
 +			free_flags = GFP_ATOMIC | __GFP_HIGHMEM;
 +	}
 +
-+	thaw_kernel_threads();
-+
 +	if (amount_wanted > 0 && !test_result_state(SUSPEND_ABORTED) &&
 +			image_size_limit != -1) {
 +		struct zone *zone;
-+		int zone_idx, to_free = amount_needed(1);
++		int zone_idx;
 +
 +		suspend_prepare_status(CLEAR_BAR, "Seeking to free %dMB of memory.", MB(amount_wanted));
++
++		thaw_kernel_threads();
++
 +		for (zone_idx = 0; zone_idx < MAX_NR_ZONES; zone_idx++) {
 +			int zone_type_free = max_t(int, (zone_idx == ZONE_HIGHMEM) ?
-+				highpages_needed_to_suspend() :
-+				lowpages_needed_to_suspend(), to_free);
++				highpages_ps1_to_free() :
++				lowpages_ps1_to_free(), amount_wanted);
 +
 +			if (zone_type_free < 0)
 +				break;
@@ -9417,10 +8372,10 @@ index 0000000..4222c87
 +
 +				suspend_recalculate_image_contents(0);
 +
-+				to_free = amount_needed(1);
++				amount_wanted = amount_needed(1);
 +				zone_type_free = max_t(int, (zone_idx == ZONE_HIGHMEM) ?
-+					highpages_needed_to_suspend() :
-+					lowpages_needed_to_suspend(), to_free);
++					highpages_ps1_to_free() :
++					lowpages_ps1_to_free(), amount_wanted);
 +
 +				if (zone_type_free < 0)
 +					break;
@@ -9428,11 +8383,11 @@ index 0000000..4222c87
 +		}
 +
 +		suspend_cond_pause(0, NULL);
-+	}
 +
-+	if (freeze_processes()) {
-+		set_result_state(SUSPEND_FREEZING_FAILED);
-+		set_result_state(SUSPEND_ABORTED);
++		if (freeze_processes()) {
++			set_result_state(SUSPEND_FREEZING_FAILED);
++			set_result_state(SUSPEND_ABORTED);
++		}
 +	}
 +	
 +	if (did_eat_memory) {
@@ -9466,10 +8421,8 @@ index 0000000..4222c87
 +{
 +	int result = 1, tries = 1;
 +
-+	are_frozen = 0;
-+
 +	header_space_allocated = 0;
-+	storage_allocated = 0;
++	main_storage_allocated = 0;
 +
 +	if (attempt_to_freeze())
 +		return 1;
@@ -9494,22 +8447,22 @@ index 0000000..4222c87
 +		if (test_result_state(SUSPEND_ABORTED))
 +			break;
 +
-+		result = update_image();
++		update_image();
 +
-+		suspend_cond_pause(0, NULL);
-+		
 +		tries++;
 +
-+	} while (result && (tries <= MAX_TRIES) && (!test_result_state(SUSPEND_ABORTED)) &&
-+		(!test_result_state(SUSPEND_UNABLE_TO_FREE_ENOUGH_MEMORY)));
++	} while (image_not_ready(1) && tries <= MAX_TRIES &&
++			!test_result_state(SUSPEND_ABORTED));
++
++	result = image_not_ready(0);
 +
 +	if (!test_result_state(SUSPEND_ABORTED)) {
-+		if (amount_needed(0) > 0) {
++		if (result) {
 +			display_stats(1, 0);
 +			abort_suspend(SUSPEND_UNABLE_TO_PREPARE_IMAGE,
 +				"Unable to successfully prepare the image.\n");
 +		} else {
-+			result = 0;
++			unlink_lru_lists();
 +			suspend_cond_pause(1, "Image preparation complete.");
 +		}
 +	}
@@ -9518,14 +8471,14 @@ index 0000000..4222c87
 +}
 +
 +#ifdef CONFIG_SUSPEND2_EXPORTS
-+EXPORT_SYMBOL(real_nr_free_pages);
++EXPORT_SYMBOL_GPL(real_nr_free_pages);
 +#endif
 diff --git a/kernel/power/prepare_image.h b/kernel/power/prepare_image.h
 new file mode 100644
-index 0000000..5a4f257
+index 0000000..8c2e426
 --- /dev/null
 +++ b/kernel/power/prepare_image.h
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,34 @@
 +/*
 + * kernel/power/prepare_image.h
 + *
@@ -9555,10 +8508,13 @@ index 0000000..5a4f257
 +#else
 +#define real_nr_free_high_pages() (0)
 +#define real_nr_free_low_pages() (real_nr_free_pages(all_zones_mask))
++
++/* For eat_memory function */
++#define ZONE_HIGHMEM (MAX_NR_ZONES + 1)
 +#endif
 +
 diff --git a/kernel/power/process.c b/kernel/power/process.c
-index 6d566bf..9639b83 100644
+index 6d566bf..90a4cc5 100644
 --- a/kernel/power/process.c
 +++ b/kernel/power/process.c
 @@ -15,6 +15,8 @@
@@ -9570,17 +8526,29 @@ index 6d566bf..9639b83 100644
  /* 
   * Timeout for stopping processes
   */
-@@ -179,7 +181,9 @@ int freeze_processes(void)
+@@ -179,10 +181,11 @@ int freeze_processes(void)
  		return nr_unfrozen;
  
  	sys_sync();
-+	freezer_state = 1;
++	freezer_state = FREEZER_USERSPACE_FROZEN;
  	nr_unfrozen = try_to_freeze_tasks(FREEZER_KERNEL_THREADS);
-+	freezer_state = 2;
  	if (nr_unfrozen)
  		return nr_unfrozen;
+-
++	freezer_state = FREEZER_FULLY_ON;
+ 	printk("done.\n");
+ 	BUG_ON(in_atomic());
+ 	return 0;
+@@ -200,7 +203,7 @@ static void thaw_tasks(int thaw_user_space)
+ 		if (is_user_space(p) == !thaw_user_space)
+ 			continue;
  
-@@ -209,11 +213,30 @@ static void thaw_tasks(int thaw_user_space)
+-		if (!thaw_process(p))
++		if (!thaw_process(p) && p->state != TASK_TRACED)
+ 			printk(KERN_WARNING " Strange, %s not stopped\n",
+ 				p->comm );
+ 	} while_each_thread(g, p);
+@@ -209,11 +212,31 @@ static void thaw_tasks(int thaw_user_space)
  
  void thaw_processes(void)
  {
@@ -9612,23 +8580,34 @@ index 6d566bf..9639b83 100644
 +}
 +
  EXPORT_SYMBOL(refrigerator);
++EXPORT_SYMBOL(freezer_state);
 diff --git a/kernel/power/snapshot.c b/kernel/power/snapshot.c
-index fc53ad0..43263a0 100644
+index fc53ad0..319c96a 100644
 --- a/kernel/power/snapshot.c
 +++ b/kernel/power/snapshot.c
-@@ -41,6 +41,11 @@
+@@ -33,6 +33,7 @@
+ #include <asm/io.h>
+ 
+ #include "power.h"
++#include "suspend2_builtin.h"
+ 
+ /* List of PBEs needed for restoring the pages that were allocated before
+  * the suspend and included in the suspend image, but have also been
+@@ -40,6 +41,13 @@
+  * directly to their "original" page frames.
   */
  struct pbe *restore_pblist;
- 
++int resume_attempted;
++EXPORT_SYMBOL_GPL(resume_attempted);
++
 +#ifdef CONFIG_SUSPEND2
 +#include "pagedir.h"
 +int suspend_post_context_save(void);
 +#endif
-+
+ 
  /* Pointer to an auxiliary buffer (1 page) */
  static void *buffer;
- 
-@@ -82,6 +87,11 @@ static void *get_image_page(gfp_t gfp_mask, int safe_needed)
+@@ -82,6 +90,11 @@ static void *get_image_page(gfp_t gfp_mask, int safe_needed)
  
  unsigned long get_safe_page(gfp_t gfp_mask)
  {
@@ -9640,7 +8619,7 @@ index fc53ad0..43263a0 100644
  	return (unsigned long)get_image_page(gfp_mask, PG_SAFE);
  }
  
-@@ -604,7 +614,7 @@ static unsigned int count_free_highmem_pages(void)
+@@ -604,7 +617,7 @@ static unsigned int count_free_highmem_pages(void)
   *	and it isn't a part of a free chunk of pages.
   */
  
@@ -9649,7 +8628,7 @@ index fc53ad0..43263a0 100644
  {
  	struct page *page;
  
-@@ -646,7 +656,6 @@ unsigned int count_highmem_pages(void)
+@@ -646,7 +659,6 @@ unsigned int count_highmem_pages(void)
  	return n;
  }
  #else
@@ -9657,7 +8636,7 @@ index fc53ad0..43263a0 100644
  static inline unsigned int count_highmem_pages(void) { return 0; }
  #endif /* CONFIG_HIGHMEM */
  
-@@ -670,7 +679,7 @@ static inline int pfn_is_nosave(unsigned long pfn)
+@@ -670,7 +682,7 @@ static inline int pfn_is_nosave(unsigned long pfn)
   *	a free chunk of pages.
   */
  
@@ -9666,7 +8645,7 @@ index fc53ad0..43263a0 100644
  {
  	struct page *page;
  
-@@ -986,6 +995,11 @@ asmlinkage int swsusp_save(void)
+@@ -986,6 +998,11 @@ asmlinkage int swsusp_save(void)
  {
  	unsigned int nr_pages, nr_highmem;
  
@@ -10033,10 +9012,10 @@ index 0000000..e05eeef
 +#endif
 diff --git a/kernel/power/suspend.c b/kernel/power/suspend.c
 new file mode 100644
-index 0000000..bce795c
+index 0000000..3de56ac
 --- /dev/null
 +++ b/kernel/power/suspend.c
-@@ -0,0 +1,1006 @@
+@@ -0,0 +1,1022 @@
 +/*
 + * kernel/power/suspend.c
 + */
@@ -10107,63 +9086,33 @@ index 0000000..bce795c
 +
 +#include <linux/suspend.h>
 +#include <linux/module.h>
-+#include <linux/console.h>
-+#include <linux/version.h>
-+#include <linux/reboot.h>
-+#include <linux/mm.h>
-+#include <linux/highmem.h>
-+#include <linux/writeback.h>
 +#include <linux/freezer.h>
 +#include <linux/utsrelease.h>
-+#include <linux/swap.h> /* For LRU unlinking prototypes */
 +#include <linux/cpu.h>
-+#include <linux/resume-trace.h>
++#include <linux/console.h>
 +#include <asm/uaccess.h>
-+#include <asm/setup.h>
 +
 +#include "modules.h"
 +#include "sysfs.h"
-+#include "pageflags.h"
 +#include "prepare_image.h"
 +#include "io.h"
 +#include "ui.h"
-+#include "extent.h"
 +#include "power_off.h"
 +#include "storage.h"
 +#include "checksum.h"
 +#include "cluster.h"
-+#include "suspend_builtin.h"
-+
-+#ifdef  CONFIG_X86
-+#include <asm/i387.h> /* for kernel_fpu_end */
-+#endif
-+
-+static int had_pmsem = 0;
-+
-+/* Variables to be preserved over suspend */
-+int image_size_limit = 0;
-+
-+static int orig_system_state;
-+
-+int do_suspend2_step(int step);
-+
-+/* 
-+ * ---  Variables -----
-+ * 
-+ * The following are used by the arch specific low level routines 
-+ * and only needed if suspend2 is compiled in. Other variables,
-+ * used by the freezer even if suspend2 is not compiled in, are
-+ * found in process.c
-+ */
++#include "suspend2_builtin.h"
 +
 +/*! Pageset metadata. */
 +struct pagedir pagedir2 = {2}; 
 +
++static int get_pmsem = 0, got_pmsem;
 +static mm_segment_t oldfs;
-+
 +static atomic_t actions_running;
++static int block_dump_save;
++extern int block_dump;
 +
-+int block_dump_save;
++int do_suspend2_step(int step);
 +
 +/*
 + * Basic clean-up routine.
@@ -10236,6 +9185,9 @@ index 0000000..bce795c
 +	return -EBUSY;
 +}
 +
++/*
++ * Allocate & free bitmaps.
++ */
 +static int allocate_bitmaps(void)
 +{
 +	if (allocate_dyn_pageflags(&pageset1_map) ||
@@ -10248,7 +9200,7 @@ index 0000000..bce795c
 +	return 0;
 +}
 +
-+static void free_metadata(void)
++static void free_bitmaps(void)
 +{
 +	free_dyn_pageflags(&pageset1_map);
 +	free_dyn_pageflags(&pageset1_copy_map);
@@ -10284,11 +9236,11 @@ index 0000000..bce795c
 +			suspend_debug_state,
 +			suspend_default_console_level,
 +			image_size_limit,
-+			suspend_powerdown_method);
++			suspend2_poweroff_method);
 +	SNPRINTF("- Overall expected compression percentage: %d.\n",
 +			100 - suspend_expected_compression_ratio());
 +	len+= suspend_print_module_debug_info(((char *) buffer) + len, 
-+			PAGE_SIZE - len - 1);
++			count - len - 1);
 +	if (suspend_io_time[0][1]) {
 +		if ((io_MB_per_second(0) < 5) || (io_MB_per_second(1) < 5)) {
 +			SNPRINTF("- I/O speed: Write %d KB/s",
@@ -10317,14 +9269,23 @@ index 0000000..bce795c
 +	return len;
 +}
 +
-+static void suspend_cleanup(void)
++/*
++ * do_cleanup
++ */
++
++static void do_cleanup(int get_debug_info)
 +{
 +	int i = 0;
-+	char *buffer;;
++	char *buffer = NULL;
++
++	if (get_debug_info)
++		suspend_prepare_status(DONT_CLEAR_BAR, "Cleaning up...");
++	relink_lru_lists();
 +
 +	free_checksum_pages();
 +
-+	buffer = (char *) get_zeroed_page(GFP_ATOMIC);
++	if (get_debug_info)
++		buffer = (char *) get_zeroed_page(GFP_ATOMIC);
 +
 +	if (buffer)
 +		i = get_suspend_debug_info(buffer, PAGE_SIZE);
@@ -10335,7 +9296,7 @@ index 0000000..bce795c
 +	set_highmem_size(pagedir1, 0);
 +	set_highmem_size(pagedir2, 0);
 +
-+	system_state = orig_system_state;
++	restore_avenrun();
 +
 +	thaw_processes();
 +
@@ -10351,7 +9312,7 @@ index 0000000..bce795c
 +		if (suspendActiveAllocator)
 +			suspendActiveAllocator->invalidate_image();
 +
-+	free_metadata();
++	free_bitmaps();
 +
 +	if (buffer && i) {
 +		/* Printk can only handle 1023 bytes, including
@@ -10365,12 +9326,109 @@ index 0000000..bce795c
 +		enable_nonboot_cpus();
 +	suspend_cleanup_console();
 +
++	suspend_deactivate_storage(0);
++
 +	clear_suspend_state(SUSPEND_IGNORE_LOGLEVEL);
 +	clear_suspend_state(SUSPEND_TRYING_TO_RESUME);
 +	clear_suspend_state(SUSPEND_NOW_RESUMING);
 +
-+	if (!had_pmsem)
++	if (got_pmsem) {
 +		mutex_unlock(&pm_mutex);
++		got_pmsem = 0;
++	}
++}
++
++static int check_still_keeping_image(void)
++{
++	if (test_action_state(SUSPEND_KEEP_IMAGE)) {
++		printk("Image already stored: powering down immediately.");
++		do_suspend2_step(STEP_SUSPEND_POWERDOWN);
++		return 1;	/* Just in case we're using S3 */
++	}
++
++	printk("Invalidating previous image.\n");
++	suspendActiveAllocator->invalidate_image();
++
++	return 0;
++}
++
++static int suspend_init(void)
++{
++	suspend_result = 0;
++
++	printk(KERN_INFO "Suspend2: Initiating a software suspend cycle.\n");
++
++	nr_suspends++;
++	
++	save_avenrun();
++	
++	suspend_io_time[0][0] = suspend_io_time[0][1] = 
++		suspend_io_time[1][0] =	suspend_io_time[1][1] = 0;
++
++	if (!test_suspend_state(SUSPEND_CAN_SUSPEND) ||
++	    allocate_bitmaps())
++		return 0;
++	
++	suspend_prepare_console();
++	if (test_action_state(SUSPEND_LATE_CPU_HOTPLUG) ||
++			!disable_nonboot_cpus())
++		return 1;
++
++	set_result_state(SUSPEND_CPU_HOTPLUG_FAILED);
++	set_result_state(SUSPEND_ABORTED);
++	return 0;
++}
++
++static int can_suspend(void)
++{
++	if (get_pmsem) {
++		if (!mutex_trylock(&pm_mutex)) {
++			printk("Suspend2: Failed to obtain pm_mutex.\n");
++			dump_stack();
++			set_result_state(SUSPEND_ABORTED);
++			set_result_state(SUSPEND_PM_SEM);
++			return 0;
++		}
++		got_pmsem = 1;
++	}
++
++	if (!test_suspend_state(SUSPEND_CAN_SUSPEND))
++		suspend_attempt_to_parse_resume_device(0);
++
++	if (!test_suspend_state(SUSPEND_CAN_SUSPEND)) {
++		printk("Suspend2: Software suspend is disabled.\n"
++			"This may be because you haven't put something along "
++			"the lines of\n\nresume2=swap:/dev/hda1\n\n"
++			"in lilo.conf or equivalent. (Where /dev/hda1 is your "
++			"swap partition).\n");
++		set_result_state(SUSPEND_ABORTED);
++		if (!got_pmsem) {
++			mutex_unlock(&pm_mutex);
++			got_pmsem = 0;
++		}
++		return 0;
++	}
++	
++	return 1;
++}
++
++static int do_power_down(void)
++{
++	/* If switching images fails, do normal powerdown */
++	if (poweroff_resume2[0])
++		do_suspend2_step(STEP_RESUME_ALT_IMAGE);
++
++	suspend_cond_pause(1, "About to power down or reboot.");
++	suspend2_power_down();
++
++	/* If we return, it's because we suspended to ram */
++	if (read_pageset2(1))
++		panic("Attempt to reload pagedir 2 failed. Try rebooting.");
++
++	barrier();
++	mb();
++	do_cleanup(1);
++	return 0;
 +}
 +
 +/*
@@ -10410,26 +9468,37 @@ index 0000000..bce795c
 +	
 +	suspend2_in_suspend = 1;
 +	
++	suspend_console();
 +	if (device_suspend(PMSG_FREEZE)) {
 +		set_result_state(SUSPEND_DEVICE_REFUSED);
 +		set_result_state(SUSPEND_ABORTED);
-+		return 1;
++		goto ResumeConsole;
 +	}
 +	
-+	if (test_action_state(SUSPEND_LATE_CPU_HOTPLUG))
-+		disable_nonboot_cpus();
++	if (test_action_state(SUSPEND_LATE_CPU_HOTPLUG) &&
++			disable_nonboot_cpus()) {
++		set_result_state(SUSPEND_CPU_HOTPLUG_FAILED);
++		set_result_state(SUSPEND_ABORTED);
++	} else
++		temp_result = suspend2_suspend();
 +
-+	temp_result = suspend2_suspend();
-+
-+	if (pm_ops && pm_ops->finish && suspend_powerdown_method > 3)
-+		pm_ops->finish(suspend_powerdown_method);
++	/* We return here at resume time too! */
++	if (!suspend2_in_suspend && pm_ops && pm_ops->finish &&
++			suspend2_poweroff_method > 3)
++		pm_ops->finish(suspend2_poweroff_method);
 +
 +	if (test_action_state(SUSPEND_LATE_CPU_HOTPLUG))
 +		enable_nonboot_cpus();
 +
 +	device_resume();
 +
-+	if (temp_result)
++ResumeConsole:
++	resume_console();
++
++	if (suspend_activate_storage(1))
++		panic("Failed to reactivate our storage.");
++	
++	if (temp_result || test_result_state(SUSPEND_ABORTED))
 +		return 1;
 +	
 +	/* Resume time? */
@@ -10440,9 +9509,6 @@ index 0000000..bce795c
 +
 +	/* Nope. Suspending. So, see if we can save the image... */
 +
-+	if (suspend_activate_storage(1))
-+		panic("Failed to reactivate our storage.");
-+	
 +	suspend_update_status(pagedir2.size,
 +			pagedir1.size + pagedir2.size,
 +			NULL);
@@ -10488,104 +9554,6 @@ index 0000000..bce795c
 +	return 1;
 +}
 +
-+static int check_still_keeping_image(void)
-+{
-+	if (test_action_state(SUSPEND_KEEP_IMAGE)) {
-+		printk("Image already stored: powering down immediately.");
-+		do_suspend2_step(STEP_SUSPEND_POWERDOWN);
-+		return 1;	/* Just in case we're using S3 */
-+	}
-+
-+	printk("Invalidating previous image.\n");
-+	suspendActiveAllocator->invalidate_image();
-+
-+	return 0;
-+}
-+
-+static int suspend_init(void)
-+{
-+	suspend_result = 0;
-+
-+	printk(KERN_INFO "Suspend2: Initiating a software suspend cycle.\n");
-+
-+	nr_suspends++;
-+	
-+	orig_system_state = system_state;
-+	
-+	suspend_io_time[0][0] = suspend_io_time[0][1] = 
-+		suspend_io_time[1][0] =	suspend_io_time[1][1] = 0;
-+
-+	free_metadata();	/* We might have kept it */
-+
-+	if (!test_suspend_state(SUSPEND_CAN_SUSPEND) ||
-+	    allocate_bitmaps())
-+		return 0;
-+	
-+	suspend_prepare_console();
-+	if (!test_action_state(SUSPEND_LATE_CPU_HOTPLUG))
-+		disable_nonboot_cpus();
-+
-+	return 1;
-+}
-+
-+static int can_suspend(void)
-+{
-+	if (!had_pmsem && !mutex_trylock(&pm_mutex)) {
-+		printk("Suspend2: Failed to obtain pm_mutex.\n");
-+		set_result_state(SUSPEND_ABORTED);
-+		set_result_state(SUSPEND_PM_SEM);
-+		return 0;
-+	}
-+
-+	if (!test_suspend_state(SUSPEND_CAN_SUSPEND))
-+		suspend_attempt_to_parse_resume_device(0);
-+
-+	if (!test_suspend_state(SUSPEND_CAN_SUSPEND)) {
-+		printk("Suspend2: Software suspend is disabled.\n"
-+			"This may be because you haven't put something along "
-+			"the lines of\n\nresume2=swap:/dev/hda1\n\n"
-+			"in lilo.conf or equivalent. (Where /dev/hda1 is your "
-+			"swap partition).\n");
-+		set_result_state(SUSPEND_ABORTED);
-+		if (!had_pmsem)
-+			mutex_unlock(&pm_mutex);
-+		return 0;
-+	}
-+	
-+	return 1;
-+}
-+
-+/*
-+ * do_cleanup
-+ */
-+
-+static void do_cleanup(void)
-+{
-+	suspend_prepare_status(DONT_CLEAR_BAR, "Cleaning up...");
-+	relink_lru_lists();
-+	suspend_cleanup();
-+	suspend_deactivate_storage(0);
-+}
-+
-+static int do_power_down(void)
-+{
-+	/* If switching images fails, do normal powerdown */
-+	if (poweroff_resume2[0])
-+		do_suspend2_step(STEP_RESUME_ALT_IMAGE);
-+
-+	suspend_cond_pause(1, "About to power down or reboot.");
-+	suspend_power_down();
-+
-+	/* If we return, it's because we suspended to ram */
-+	if (read_pageset2(1))
-+		panic("Attempt to reload pagedir 2 failed. Try rebooting.");
-+
-+	barrier();
-+	mb();
-+	do_cleanup();
-+	return 0;
-+}
-+
 +/* 
 + * do_save_image
 + *
@@ -10594,12 +9562,9 @@ index 0000000..bce795c
 +
 +static int do_save_image(void)
 +{
-+	int result;
-+
-+	unlink_lru_lists();
-+	result = __save_image();
++	int result = __save_image();
 +	if (!suspend2_in_suspend || result)
-+		do_cleanup();
++		do_cleanup(1);
 +	return result;
 +}
 +
@@ -10615,16 +9580,15 @@ index 0000000..bce795c
 +	if (suspend_activate_storage(0))
 +		return 1;
 +
-+	if (!can_suspend())
-+		goto cleanup_deactivate_storage;
-+
 +	/*
 +	 * If kept image and still keeping image and suspending to RAM, we will 
 +	 * return 1 after suspending and resuming (provided the power doesn't
 +	 * run out.
 +	 */
 +
-+	if (test_result_state(SUSPEND_KEPT_IMAGE) && check_still_keeping_image()) 
++	if (!can_suspend() ||
++	    (test_result_state(SUSPEND_KEPT_IMAGE) &&
++	     check_still_keeping_image()))
 +		goto cleanup;
 +
 +	if (suspend_init() && !suspend_prepare_image() &&
@@ -10632,9 +9596,7 @@ index 0000000..bce795c
 +		return 0;
 +
 +cleanup:
-+	suspend_cleanup();
-+cleanup_deactivate_storage:
-+	suspend_deactivate_storage(0);
++	do_cleanup(0);
 +	return 1;
 +}
 +
@@ -10664,9 +9626,8 @@ index 0000000..bce795c
 +	int read_image_result = 0;
 +
 +	if (sizeof(swp_entry_t) != sizeof(long)) {
-+		printk(KERN_WARNING "Suspend2: "
-+			"The size of swp_entry_t != size of long. "
-+			"Please report this!\n");
++		printk(KERN_WARNING "Suspend2: The size of swp_entry_t != size"
++			" of long. Please report this!\n");
 +		return 1;
 +	}
 +	
@@ -10712,7 +9673,7 @@ index 0000000..bce795c
 +	return 0;
 +}
 +
-+void prepare_restore_load_alt_image(int prepare)
++static void prepare_restore_load_alt_image(int prepare)
 +{
 +	static dyn_pageflags_t pageset1_map_save, pageset1_copy_map_save;
 +
@@ -10735,8 +9696,38 @@ index 0000000..bce795c
 +	}
 +}
 +
++int pre_resume_freeze(void)
++{
++	if (!test_action_state(SUSPEND_LATE_CPU_HOTPLUG)) {
++		suspend_prepare_status(DONT_CLEAR_BAR,	"Disable nonboot cpus.");
++		if (disable_nonboot_cpus()) {
++			set_result_state(SUSPEND_CPU_HOTPLUG_FAILED);
++			set_result_state(SUSPEND_ABORTED);
++			return 1;
++		}
++	}
++
++	suspend_prepare_status(DONT_CLEAR_BAR,	"Freeze processes.");
++
++	if (freeze_processes()) {
++		printk("Some processes failed to suspend\n");
++		return 1;
++	}
++
++	return 0;
++}
++
++void post_resume_thaw(void)
++{
++	thaw_processes();
++	if (!test_action_state(SUSPEND_LATE_CPU_HOTPLUG))
++		enable_nonboot_cpus();
++}
++
 +int do_suspend2_step(int step)
 +{
++	int result;
++
 +	switch (step) {
 +		case STEP_SUSPEND_PREPARE_IMAGE:
 +			return do_prepare_image();
@@ -10754,11 +9745,14 @@ index 0000000..bce795c
 +			 * Instead, we return from do_save_image() in the
 +			 * suspended kernel.
 +			 */
-+			return suspend_atomic_restore();
++			result = suspend_atomic_restore();
++			if (result)
++				post_resume_thaw();
++			return result;
 +		case STEP_RESUME_ALT_IMAGE:
 +			printk("Trying to resume alternate image.\n");
 +			suspend2_in_suspend = 0;
-+			replace_restore_resume2(1, 0);
++			save_restore_resume2(SAVE, NOQUIET);
 +			prepare_restore_load_alt_image(1);
 +			if (!do_check_can_resume()) {
 +				printk("Nothing to resume from.\n");
@@ -10770,7 +9764,7 @@ index 0000000..bce795c
 +			}
 +out:
 +			prepare_restore_load_alt_image(0);
-+			replace_restore_resume2(0, 0);
++			save_restore_resume2(RESTORE, NOQUIET);
 +			break;
 +	}
 +
@@ -10782,15 +9776,16 @@ index 0000000..bce795c
 +/*
 + * Check if we have an image and if so try to resume.
 + */
-+void __suspend_try_resume(void)
++void __suspend2_try_resume(void)
 +{
 +	set_suspend_state(SUSPEND_TRYING_TO_RESUME);
-+	clear_suspend_state(SUSPEND_RESUME_NOT_DONE);
++	resume_attempted = 1;
 +
 +	if (do_suspend2_step(STEP_RESUME_CAN_RESUME) &&
-+	    !do_suspend2_step(STEP_RESUME_LOAD_PS1) &&
-+	    do_suspend2_step(STEP_RESUME_DO_RESTORE))
-+		do_cleanup();
++	    !do_suspend2_step(STEP_RESUME_LOAD_PS1))
++	    do_suspend2_step(STEP_RESUME_DO_RESTORE);
++
++	do_cleanup(0);
 +
 +	clear_suspend_state(SUSPEND_IGNORE_LOGLEVEL);
 +	clear_suspend_state(SUSPEND_TRYING_TO_RESUME);
@@ -10798,34 +9793,34 @@ index 0000000..bce795c
 +}
 +
 +/* Wrapper for when called from init/do_mounts.c */
-+void __suspend2_try_resume(void)
++void _suspend2_try_resume(void)
 +{
-+	clear_suspend_state(SUSPEND_RESUME_NOT_DONE);
++	resume_attempted = 1;
 +
 +	if (suspend_start_anything(SYSFS_RESUMING))
 +		return;
 +
++	/* Unlock will be done in do_cleanup */
 +	mutex_lock(&pm_mutex);
-+	__suspend_try_resume();
++	got_pmsem = 1;
++
++	__suspend2_try_resume();
 +
 +	/* 
 +	 * For initramfs, we have to clear the boot time
 +	 * flag after trying to resume
 +	 */
 +	clear_suspend_state(SUSPEND_BOOT_TIME);
-+
-+	mutex_unlock(&pm_mutex);
-+
 +	suspend_finish_anything(SYSFS_RESUMING);
 +}
 +
 +/*
-+ * suspend2_try_suspend
++ * _suspend2_try_suspend
 + * Functionality   : 
 + * Called From     : drivers/acpi/sleep/main.c
 + *                   kernel/reboot.c
 + */
-+int __suspend2_try_suspend(int have_pmsem)
++int _suspend2_try_suspend(int have_pmsem)
 +{
 +	int result = 0, sys_power_disk = 0;
 +
@@ -10836,7 +9831,7 @@ index 0000000..bce795c
 +		sys_power_disk = 1;
 +	}
 +
-+	had_pmsem = have_pmsem;
++	get_pmsem = !have_pmsem;
 +
 +	if (strlen(poweroff_resume2)) {
 +		attempt_to_parse_po_resume_device2();
@@ -10851,7 +9846,7 @@ index 0000000..bce795c
 +		goto out;
 +
 +	if (test_action_state(SUSPEND_FREEZER_TEST)) {
-+		do_cleanup();
++		do_cleanup(0);
 +		goto out;
 +	}
 +
@@ -10962,7 +9957,7 @@ index 0000000..bce795c
 +	  
 +#if defined(CONFIG_ACPI)
 +	{ SUSPEND2_ATTR("powerdown_method", SYSFS_RW),
-+	  SYSFS_UL(&suspend_powerdown_method, 0, 5, 0)
++	  SYSFS_UL(&suspend2_poweroff_method, 0, 5, 0)
 +	},
 +#endif
 +
@@ -10976,8 +9971,8 @@ index 0000000..bce795c
 +struct suspend2_core_fns my_fns = {
 +	.get_nonconflicting_page = __suspend_get_nonconflicting_page,
 +	.post_context_save = __suspend_post_context_save,
-+	.try_suspend = __suspend2_try_suspend,
-+	.try_resume = __suspend2_try_resume,
++	.try_suspend = _suspend2_try_suspend,
++	.try_resume = _suspend2_try_resume,
 +};
 + 
 +static __init int core_load(void)
@@ -11041,14 +10036,14 @@ index 0000000..bce795c
 +#endif
 +
 +#ifdef CONFIG_SUSPEND2_EXPORTS
-+EXPORT_SYMBOL(pagedir2);
++EXPORT_SYMBOL_GPL(pagedir2);
 +#endif
 diff --git a/kernel/power/suspend.h b/kernel/power/suspend.h
 new file mode 100644
-index 0000000..bae7226
+index 0000000..0fe3a9a
 --- /dev/null
 +++ b/kernel/power/suspend.h
-@@ -0,0 +1,180 @@
+@@ -0,0 +1,182 @@
 +/*
 + * kernel/power/suspend.h
 + *
@@ -11070,7 +10065,7 @@ index 0000000..bae7226
 +#include <asm/setup.h>
 +#include "pageflags.h"
 +
-+#define SUSPEND_CORE_VERSION "2.2.9.13"
++#define SUSPEND_CORE_VERSION "2.2.10"
 +
 +/*		 == Action states == 		*/
 +
@@ -11125,6 +10120,8 @@ index 0000000..bae7226
 +	SUSPEND_FAILED_IO,
 +	SUSPEND_OUT_OF_MEMORY,
 +	SUSPEND_IMAGE_ERROR,
++	SUSPEND_PLATFORM_PREP_FAILED,
++	SUSPEND_CPU_HOTPLUG_FAILED,
 +};
 +
 +extern unsigned long suspend_result;
@@ -11202,9 +10199,8 @@ index 0000000..bae7226
 +extern int save_image_part1(void);
 +extern int suspend_atomic_restore(void);
 +
-+extern int __suspend2_try_suspend(int had_pmsem);
-+extern int suspend2_try_suspend(int have_pmsem);
-+extern void __suspend_try_resume(void);
++extern int _suspend2_try_suspend(int have_pmsem);
++extern void __suspend2_try_resume(void);
 +
 +extern int __suspend_post_context_save(void);
 +
@@ -11228,13 +10224,350 @@ index 0000000..bae7226
 +	return test_action_state(SUSPEND_NO_DIRECT_LOAD) ? 0 : PagePageset1Copy(page);
 +}
 +
++extern int pre_resume_freeze(void);
 +#endif
+diff --git a/kernel/power/suspend2_builtin.c b/kernel/power/suspend2_builtin.c
+new file mode 100644
+index 0000000..621cf20
+--- /dev/null
++++ b/kernel/power/suspend2_builtin.c
+@@ -0,0 +1,289 @@
++/*
++ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
++ *
++ * This file is released under the GPLv2.
++ */
++#include <linux/module.h>
++#include <linux/resume-trace.h>
++#include <linux/syscalls.h>
++#include <linux/kernel.h>
++#include <linux/swap.h>
++#include <linux/syscalls.h>
++#include <linux/bio.h>
++#include <linux/root_dev.h>
++#include <linux/freezer.h>
++#include <linux/reboot.h>
++#include <linux/writeback.h>
++#include <linux/tty.h>
++#include <linux/crypto.h>
++#include <linux/cpu.h>
++#include <linux/dyn_pageflags.h>
++#include "io.h"
++#include "suspend.h"
++#include "extent.h"
++#include "block_io.h"
++#include "netlink.h"
++#include "prepare_image.h"
++#include "ui.h"
++#include "sysfs.h"
++#include "pagedir.h"
++#include "modules.h"
++#include "suspend2_builtin.h"
++
++#ifdef CONFIG_SUSPEND2_CORE_EXPORTS
++#ifdef CONFIG_SOFTWARE_SUSPEND
++EXPORT_SYMBOL_GPL(resume_file);
++#endif
++
++EXPORT_SYMBOL_GPL(max_pfn);
++EXPORT_SYMBOL_GPL(free_dyn_pageflags);
++EXPORT_SYMBOL_GPL(clear_dynpageflag);
++EXPORT_SYMBOL_GPL(test_dynpageflag);
++EXPORT_SYMBOL_GPL(set_dynpageflag);
++EXPORT_SYMBOL_GPL(get_next_bit_on);
++EXPORT_SYMBOL_GPL(allocate_dyn_pageflags);
++EXPORT_SYMBOL_GPL(clear_dyn_pageflags);
++
++#ifdef CONFIG_X86_64
++EXPORT_SYMBOL_GPL(restore_processor_state);
++EXPORT_SYMBOL_GPL(save_processor_state);
++#endif
++
++EXPORT_SYMBOL_GPL(kernel_shutdown_prepare);
++EXPORT_SYMBOL_GPL(drop_pagecache);
++EXPORT_SYMBOL_GPL(restore_pblist);
++EXPORT_SYMBOL_GPL(pm_mutex);
++EXPORT_SYMBOL_GPL(pm_restore_console);
++EXPORT_SYMBOL_GPL(super_blocks);
++EXPORT_SYMBOL_GPL(next_zone);
++
++EXPORT_SYMBOL_GPL(freeze_processes);
++EXPORT_SYMBOL_GPL(thaw_processes);
++EXPORT_SYMBOL_GPL(thaw_kernel_threads);
++EXPORT_SYMBOL_GPL(shrink_all_memory);
++EXPORT_SYMBOL_GPL(shrink_one_zone);
++EXPORT_SYMBOL_GPL(saveable_page);
++EXPORT_SYMBOL_GPL(swsusp_arch_suspend);
++EXPORT_SYMBOL_GPL(swsusp_arch_resume);
++EXPORT_SYMBOL_GPL(pm_ops);
++EXPORT_SYMBOL_GPL(pm_prepare_console);
++EXPORT_SYMBOL_GPL(follow_page);
++EXPORT_SYMBOL_GPL(machine_halt);
++EXPORT_SYMBOL_GPL(block_dump);
++EXPORT_SYMBOL_GPL(unlink_lru_lists);
++EXPORT_SYMBOL_GPL(relink_lru_lists);
++EXPORT_SYMBOL_GPL(power_subsys);
++EXPORT_SYMBOL_GPL(machine_power_off);
++EXPORT_SYMBOL_GPL(suspend_enter);
++EXPORT_SYMBOL_GPL(first_online_pgdat);
++EXPORT_SYMBOL_GPL(next_online_pgdat);
++EXPORT_SYMBOL_GPL(machine_restart);
++EXPORT_SYMBOL_GPL(saved_command_line);
++EXPORT_SYMBOL_GPL(tasklist_lock);
++#ifdef CONFIG_SUSPEND_SMP
++EXPORT_SYMBOL_GPL(disable_nonboot_cpus);
++EXPORT_SYMBOL_GPL(enable_nonboot_cpus);
++#endif
++#endif
++
++#ifdef CONFIG_SUSPEND2_USERUI_EXPORTS
++EXPORT_SYMBOL_GPL(kmsg_redirect);
++#ifndef CONFIG_COMPAT
++EXPORT_SYMBOL_GPL(sys_ioctl);
++#endif
++#endif
++
++#if defined(CONFIG_SUSPEND2_USERUI_EXPORTS) || defined(CONFIG_SUSPEND2_CORE_EXPORTS)
++EXPORT_SYMBOL_GPL(console_printk);
++#endif
++#ifdef CONFIG_SUSPEND2_SWAP_EXPORTS	/* Suspend swap specific */
++EXPORT_SYMBOL_GPL(sys_swapon);
++EXPORT_SYMBOL_GPL(sys_swapoff);
++EXPORT_SYMBOL_GPL(si_swapinfo);
++EXPORT_SYMBOL_GPL(map_swap_page);
++EXPORT_SYMBOL_GPL(get_swap_page);
++EXPORT_SYMBOL_GPL(swap_free);
++EXPORT_SYMBOL_GPL(get_swap_info_struct);
++#endif
++
++#ifdef CONFIG_SUSPEND2_FILE_EXPORTS
++/* Suspend_file specific */
++extern char * __initdata root_device_name;
++
++EXPORT_SYMBOL_GPL(ROOT_DEV);
++EXPORT_SYMBOL_GPL(root_device_name);
++EXPORT_SYMBOL_GPL(sys_unlink);
++EXPORT_SYMBOL_GPL(sys_mknod);
++#endif
++
++/* Swap or file */
++#if defined(CONFIG_SUSPEND2_FILE_EXPORTS) || defined(CONFIG_SUSPEND2_SWAP_EXPORTS)
++EXPORT_SYMBOL_GPL(bio_set_pages_dirty);
++EXPORT_SYMBOL_GPL(name_to_dev_t);
++#endif
++
++#if defined(CONFIG_SUSPEND2_EXPORTS) || defined(CONFIG_SUSPEND2_CORE_EXPORTS)
++EXPORT_SYMBOL_GPL(snprintf_used);
++#endif
++struct suspend2_core_fns *s2_core_fns;
++EXPORT_SYMBOL_GPL(s2_core_fns);
++
++dyn_pageflags_t pageset1_map;
++dyn_pageflags_t pageset1_copy_map;
++EXPORT_SYMBOL_GPL(pageset1_map);
++EXPORT_SYMBOL_GPL(pageset1_copy_map);
++
++unsigned long suspend_result = 0;
++unsigned long suspend_debug_state = 0;
++int suspend_io_time[2][2];
++struct pagedir pagedir1 = {1};
++
++EXPORT_SYMBOL_GPL(suspend_io_time);
++EXPORT_SYMBOL_GPL(suspend_debug_state);
++EXPORT_SYMBOL_GPL(suspend_result);
++EXPORT_SYMBOL_GPL(pagedir1);
++
++unsigned long suspend_get_nonconflicting_page(void)
++{
++	return s2_core_fns->get_nonconflicting_page();
++}
++
++int suspend_post_context_save(void)
++{
++	return s2_core_fns->post_context_save();
++}
++
++int suspend2_try_suspend(int have_pmsem)
++{
++	if (!s2_core_fns)
++		return -ENODEV;
++
++	return s2_core_fns->try_suspend(have_pmsem);
++}
++
++void suspend2_try_resume(void)
++{
++	if (s2_core_fns)
++		s2_core_fns->try_resume();
++}
++
++int suspend2_lowlevel_builtin(void)
++{
++	int error = 0;
++
++	save_processor_state();
++	if ((error = swsusp_arch_suspend()))
++		printk(KERN_ERR "Error %d suspending\n", error);
++	/* Restore control flow appears here */
++	restore_processor_state();
++
++	return error;
++}
++
++EXPORT_SYMBOL_GPL(suspend2_lowlevel_builtin);
++
++unsigned long suspend_compress_bytes_in, suspend_compress_bytes_out;
++EXPORT_SYMBOL_GPL(suspend_compress_bytes_in);
++EXPORT_SYMBOL_GPL(suspend_compress_bytes_out);
++
++#ifdef CONFIG_SUSPEND2_REPLACE_SWSUSP
++unsigned long suspend_action = (1 << SUSPEND_REPLACE_SWSUSP) | (1 << SUSPEND_PAGESET2_FULL);
++#else
++unsigned long suspend_action = 1 << SUSPEND_PAGESET2_FULL;
++#endif
++EXPORT_SYMBOL_GPL(suspend_action);
++
++unsigned long suspend_state = ((1 << SUSPEND_BOOT_TIME) |
++		(1 << SUSPEND_IGNORE_LOGLEVEL) |
++		(1 << SUSPEND_IO_STOPPED));
++EXPORT_SYMBOL_GPL(suspend_state);
++
++/* The number of suspends we have started (some may have been cancelled) */
++unsigned int nr_suspends;
++EXPORT_SYMBOL_GPL(nr_suspends);
++
++char resume2_file[256] = CONFIG_SUSPEND2_DEFAULT_RESUME2;
++EXPORT_SYMBOL_GPL(resume2_file);
++
++int suspend2_running = 0;
++EXPORT_SYMBOL_GPL(suspend2_running);
++
++int suspend2_in_suspend __nosavedata;
++EXPORT_SYMBOL_GPL(suspend2_in_suspend);
++
++unsigned long suspend2_nosave_state1 __nosavedata = 0;
++unsigned long suspend2_nosave_state2 __nosavedata = 0;
++int suspend2_nosave_state3 __nosavedata = 0;
++int suspend2_nosave_io_speed[2][2] __nosavedata;
++__nosavedata char suspend2_nosave_commandline[COMMAND_LINE_SIZE];
++
++__nosavedata struct pbe *restore_highmem_pblist;
++
++#ifdef CONFIG_SUSPEND2_CORE_EXPORTS
++#ifdef CONFIG_HIGHMEM
++EXPORT_SYMBOL_GPL(nr_free_highpages);
++EXPORT_SYMBOL_GPL(saveable_highmem_page);
++EXPORT_SYMBOL_GPL(restore_highmem_pblist);
++#endif
++
++EXPORT_SYMBOL_GPL(suspend2_nosave_state1);
++EXPORT_SYMBOL_GPL(suspend2_nosave_state2);
++EXPORT_SYMBOL_GPL(suspend2_nosave_state3);
++EXPORT_SYMBOL_GPL(suspend2_nosave_io_speed);
++EXPORT_SYMBOL_GPL(suspend2_nosave_commandline);
++#endif
++
++/* --  Commandline Parameter Handling ---
++ *
++ * Resume setup: obtain the storage device.
++ */
++static int __init resume2_setup(char *str)
++{
++	if (!*str)
++		return 0;
++	
++	strncpy(resume2_file, str, 255);
++	return 0;
++}
++
++/*
++ * Allow the user to specify that we should ignore any image found and
++ * invalidate the image if necesssary. This is equivalent to running
++ * the task queue and a sync and then turning off the power. The same
++ * precautions should be taken: fsck if you're not journalled.
++ */
++static int __init noresume2_setup(char *str)
++{
++	set_suspend_state(SUSPEND_NORESUME_SPECIFIED);
++	return 0;
++}
++
++static int __init suspend_retry_resume_setup(char *str)
++{
++	set_suspend_state(SUSPEND_RETRY_RESUME);
++	return 0;
++}
++
++#ifndef CONFIG_SOFTWARE_SUSPEND
++static int __init resume_setup(char *str)
++{
++	if (!*str)
++		return 0;
++	
++	strncpy(resume2_file, str, 255);
++	return 0;
++}
++
++static int __init noresume_setup(char *str)
++{
++	set_suspend_state(SUSPEND_NORESUME_SPECIFIED);
++	return 0;
++}
++__setup("noresume", noresume_setup);
++__setup("resume=", resume_setup);
++#endif
++
++__setup("noresume2", noresume2_setup);
++__setup("resume2=", resume2_setup);
++__setup("suspend_retry_resume", suspend_retry_resume_setup);
++
+diff --git a/kernel/power/suspend2_builtin.h b/kernel/power/suspend2_builtin.h
+new file mode 100644
+index 0000000..968b24b
+--- /dev/null
++++ b/kernel/power/suspend2_builtin.h
+@@ -0,0 +1,35 @@
++/*
++ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
++ *
++ * This file is released under the GPLv2.
++ */
++#include <linux/dyn_pageflags.h>
++#include <asm/setup.h>
++
++extern struct suspend2_core_fns *s2_core_fns;
++extern unsigned long suspend_compress_bytes_in, suspend_compress_bytes_out;
++extern unsigned long suspend_action;
++extern unsigned int nr_suspends;
++extern char resume2_file[256];
++extern int suspend2_in_suspend;
++
++extern unsigned long suspend2_nosave_state1 __nosavedata;
++extern unsigned long suspend2_nosave_state2 __nosavedata;
++extern int suspend2_nosave_state3 __nosavedata;
++extern int suspend2_nosave_io_speed[2][2] __nosavedata;
++extern __nosavedata char suspend2_nosave_commandline[COMMAND_LINE_SIZE];
++extern __nosavedata struct pbe *restore_highmem_pblist;
++
++int suspend2_lowlevel_builtin(void);
++
++extern dyn_pageflags_t __nosavedata suspend2_nosave_origmap;
++extern dyn_pageflags_t __nosavedata suspend2_nosave_copymap;
++
++#ifdef CONFIG_HIGHMEM
++extern __nosavedata struct zone_data *suspend2_nosave_zone_list;
++extern __nosavedata unsigned long suspend2_nosave_max_pfn;
++#endif
++
++extern unsigned long suspend_get_nonconflicting_page(void);
++extern int suspend_post_context_save(void);
++extern int suspend2_try_suspend(int have_pmsem);
 diff --git a/kernel/power/suspend_block_io.c b/kernel/power/suspend_block_io.c
 new file mode 100644
-index 0000000..3a505bf
+index 0000000..533ae5c
 --- /dev/null
 +++ b/kernel/power/suspend_block_io.c
-@@ -0,0 +1,978 @@
+@@ -0,0 +1,1020 @@
 +/*
 + * kernel/power/suspend_block_io.c
 + *
@@ -11268,7 +10601,10 @@ index 0000000..3a505bf
 +#endif
 +
 +#define MAX_OUTSTANDING_IO 2048
-+#define SUBMIT_BATCH_SIZE 64
++#define SUBMIT_BATCH_SIZE 128
++
++static int max_outstanding_io = MAX_OUTSTANDING_IO;
++static int submit_batch_size = SUBMIT_BATCH_SIZE;
 +
 +struct io_info {
 +	struct bio *sys_struct;
@@ -11413,7 +10749,7 @@ index 0000000..3a505bf
 +		spin_lock_irqsave(&ioinfo_ready_lock, flags);
 +
 +		num_cleaned++;
-+		if (num_cleaned == SUBMIT_BATCH_SIZE)
++		if (num_cleaned == submit_batch_size)
 +			break;
 +	}
 +	spin_unlock_irqrestore(&ioinfo_ready_lock, flags);
@@ -11557,7 +10893,6 @@ index 0000000..3a505bf
 +	bio->bi_sector = io_info->first_block;
 +	bio->bi_private = io_info;
 +	bio->bi_end_io = suspend_end_bio;
-+	bio->bi_flags |= (1 << BIO_SUSPEND_DATA);
 +	io_info->sys_struct = bio;
 +
 +	if (bio_add_page(bio, io_info->bio_page, PAGE_SIZE, 0) < PAGE_SIZE) {
@@ -11604,7 +10939,7 @@ index 0000000..3a505bf
 +		submit(first);
 +		spin_lock_irqsave(&ioinfo_submit_lock, flags);
 +		num_submitted++;
-+		if (num_submitted == SUBMIT_BATCH_SIZE)
++		if (num_submitted == submit_batch_size)
 +			break;
 +	}
 +	spin_unlock_irqrestore(&ioinfo_submit_lock, flags);
@@ -11624,7 +10959,7 @@ index 0000000..3a505bf
 +	waiting = atomic_add_return(1, &submit_batch);
 +	spin_unlock_irqrestore(&ioinfo_submit_lock, flags);
 +
-+	if (waiting >= SUBMIT_BATCH_SIZE)
++	if (waiting >= submit_batch_size)
 +		submit_batched();
 +}
 +
@@ -11639,7 +10974,7 @@ index 0000000..3a505bf
 +	struct io_info *this = NULL;
 +
 +	do {
-+		while (atomic_read(&outstanding_io) >= MAX_OUTSTANDING_IO)
++		while (atomic_read(&outstanding_io) >= max_outstanding_io)
 +			do_bio_wait();
 +
 +		this = kmalloc(sizeof(struct io_info), GFP_ATOMIC);
@@ -11750,9 +11085,9 @@ index 0000000..3a505bf
 +static int suspend_bio_memory_needed(void)
 +{
 +	/* We want to have at least enough memory so as to have
-+	 * MAX_OUTSTANDING_IO transactions on the fly at once. If we 
++	 * max_outstanding_io transactions on the fly at once. If we 
 +	 * can do more, fine. */
-+	return (MAX_OUTSTANDING_IO * (PAGE_SIZE + sizeof(struct request) +
++	return (max_outstanding_io * (PAGE_SIZE + sizeof(struct request) +
 +				sizeof(struct bio) + sizeof(struct io_info)));
 +}
 +
@@ -11900,7 +11235,7 @@ index 0000000..3a505bf
 +		while (readahead_index != readahead_submit_index) {
 +			suspend_cleanup_readahead(readahead_index);
 +			readahead_index++;
-+			if (readahead_index == MAX_OUTSTANDING_IO)
++			if (readahead_index == max_outstanding_io)
 +				readahead_index = 0;
 +		}
 +
@@ -11947,7 +11282,7 @@ index 0000000..3a505bf
 +
 +		readahead_submit_index++;
 +
-+		if (readahead_submit_index == MAX_OUTSTANDING_IO)
++		if (readahead_submit_index == max_outstanding_io)
 +			readahead_submit_index = 0;
 +
 +	} while((!last_result) && (readahead_submit_index != readahead_index) &&
@@ -11963,7 +11298,7 @@ index 0000000..3a505bf
 +	suspend_cleanup_readahead(readahead_index);
 +
 +	readahead_index++;
-+	if (readahead_index == MAX_OUTSTANDING_IO)
++	if (readahead_index == max_outstanding_io)
 +		readahead_index = 0;
 +
 +	return 0;
@@ -12146,6 +11481,26 @@ index 0000000..3a505bf
 +		-1, 0) ? -EIO : 0;
 +}
 +
++static int suspend_bio_storage_needed(void)
++{
++	return 2 * sizeof(int);
++}
++
++static int suspend_bio_save_config_info(char *buf)
++{
++	int *ints = (int *) buf;
++	ints[0] = max_outstanding_io;
++	ints[1] = submit_batch_size;
++	return 2 * sizeof(int);
++}
++
++static void suspend_bio_load_config_info(char *buf, int size)
++{
++	int *ints = (int *) buf;
++	max_outstanding_io  = ints[0];
++	submit_batch_size = ints[1];
++}
++
 +static int suspend_bio_initialise(int starting_cycle)
 +{
 +	suspend_writer_buffer = (char *) get_zeroed_page(GFP_ATOMIC);
@@ -12176,14 +11531,31 @@ index 0000000..3a505bf
 +	.write_header_chunk_finish = write_header_chunk_finish,
 +};
 +
++static struct suspend_sysfs_data sysfs_params[] = {
++	{ SUSPEND2_ATTR("max_outstanding_io", SYSFS_RW),
++	  SYSFS_INT(&max_outstanding_io, 16, MAX_OUTSTANDING_IO, 0),
++	},
++
++	{ SUSPEND2_ATTR("submit_batch_size", SYSFS_RW),
++	  SYSFS_INT(&submit_batch_size, 16, SUBMIT_BATCH_SIZE, 0),
++	}
++};
++
 +static struct suspend_module_ops suspend_blockwriter_ops = 
 +{
 +	.name					= "Block I/O",
 +	.type					= MISC_MODULE,
++	.directory				= "block_io",
 +	.module					= THIS_MODULE,
 +	.memory_needed				= suspend_bio_memory_needed,
++	.storage_needed				= suspend_bio_storage_needed,
++	.save_config_info			= suspend_bio_save_config_info,
++	.load_config_info			= suspend_bio_load_config_info,
 +	.initialise				= suspend_bio_initialise,
 +	.cleanup				= suspend_bio_cleanup,
++
++	.sysfs_data		= sysfs_params,
++	.num_sysfs_entries	= sizeof(sysfs_params) / sizeof(struct suspend_sysfs_data),
 +};
 +
 +static __init int suspend_block_io_load(void)
@@ -12191,6 +11563,17 @@ index 0000000..3a505bf
 +	return suspend_register_module(&suspend_blockwriter_ops);
 +}
 +
++#ifdef CONFIG_SUSPEND2_FILE_EXPORTS
++EXPORT_SYMBOL_GPL(suspend_read_fd);
++#endif
++#if defined(CONFIG_SUSPEND2_FILE_EXPORTS) || defined(CONFIG_SUSPEND2_SWAP_EXPORTS)
++EXPORT_SYMBOL_GPL(suspend_writer_posn);
++EXPORT_SYMBOL_GPL(suspend_writer_posn_save);
++EXPORT_SYMBOL_GPL(suspend_writer_buffer);
++EXPORT_SYMBOL_GPL(suspend_writer_buffer_posn);
++EXPORT_SYMBOL_GPL(suspend_header_bytes_used);
++EXPORT_SYMBOL_GPL(suspend_bio_ops);
++#endif
 +#ifdef MODULE
 +static __exit void suspend_block_io_unload(void)
 +{
@@ -12202,351 +11585,12 @@ index 0000000..3a505bf
 +MODULE_LICENSE("GPL");
 +MODULE_AUTHOR("Nigel Cunningham");
 +MODULE_DESCRIPTION("Suspend2 block io functions");
-+
-+EXPORT_SYMBOL(suspend_writer_posn);
-+EXPORT_SYMBOL(suspend_writer_posn_save);
-+EXPORT_SYMBOL(suspend_bio_ops);
-+EXPORT_SYMBOL(suspend_writer_buffer);
-+EXPORT_SYMBOL(suspend_writer_buffer_posn);
-+EXPORT_SYMBOL(suspend_header_bytes_used);
-+EXPORT_SYMBOL(suspend_read_fd);
 +#else
 +late_initcall(suspend_block_io_load);
 +#endif
-diff --git a/kernel/power/suspend_builtin.c b/kernel/power/suspend_builtin.c
-new file mode 100644
-index 0000000..78471c0
---- /dev/null
-+++ b/kernel/power/suspend_builtin.c
-@@ -0,0 +1,288 @@
-+/*
-+ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
-+ *
-+ * This file is released under the GPLv2.
-+ */
-+#include <linux/module.h>
-+#include <linux/resume-trace.h>
-+#include <linux/syscalls.h>
-+#include <linux/kernel.h>
-+#include <linux/swap.h>
-+#include <linux/syscalls.h>
-+#include <linux/bio.h>
-+#include <linux/root_dev.h>
-+#include <linux/freezer.h>
-+#include <linux/reboot.h>
-+#include <linux/writeback.h>
-+#include <linux/tty.h>
-+#include <linux/crypto.h>
-+#include <linux/cpu.h>
-+#include <linux/dyn_pageflags.h>
-+#include "io.h"
-+#include "suspend.h"
-+#include "extent.h"
-+#include "block_io.h"
-+#include "netlink.h"
-+#include "prepare_image.h"
-+#include "ui.h"
-+#include "sysfs.h"
-+#include "pagedir.h"
-+#include "modules.h"
-+#include "suspend_builtin.h"
-+
-+#ifdef CONFIG_SUSPEND2_CORE_EXPORTS
-+#ifdef CONFIG_SOFTWARE_SUSPEND
-+EXPORT_SYMBOL(resume_file);
-+#endif
-+
-+EXPORT_SYMBOL(max_pfn);
-+EXPORT_SYMBOL(free_dyn_pageflags);
-+EXPORT_SYMBOL(clear_dynpageflag);
-+EXPORT_SYMBOL(test_dynpageflag);
-+EXPORT_SYMBOL(set_dynpageflag);
-+EXPORT_SYMBOL(get_next_bit_on);
-+EXPORT_SYMBOL(allocate_dyn_pageflags);
-+EXPORT_SYMBOL(clear_dyn_pageflags);
-+
-+#ifdef CONFIG_X86_64
-+EXPORT_SYMBOL(restore_processor_state);
-+EXPORT_SYMBOL(save_processor_state);
-+#endif
-+
-+EXPORT_SYMBOL(kernel_shutdown_prepare);
-+EXPORT_SYMBOL(drop_pagecache);
-+EXPORT_SYMBOL(restore_pblist);
-+EXPORT_SYMBOL(pm_mutex);
-+EXPORT_SYMBOL(pm_restore_console);
-+EXPORT_SYMBOL(super_blocks);
-+EXPORT_SYMBOL(next_zone);
-+
-+EXPORT_SYMBOL(freeze_processes);
-+EXPORT_SYMBOL(thaw_processes);
-+EXPORT_SYMBOL(thaw_kernel_threads);
-+EXPORT_SYMBOL(shrink_all_memory);
-+EXPORT_SYMBOL(shrink_one_zone);
-+EXPORT_SYMBOL(saveable_page);
-+EXPORT_SYMBOL(swsusp_arch_suspend);
-+EXPORT_SYMBOL(swsusp_arch_resume);
-+EXPORT_SYMBOL(pm_ops);
-+EXPORT_SYMBOL(pm_prepare_console);
-+EXPORT_SYMBOL(suspend2_follow_page);
-+EXPORT_SYMBOL(machine_halt);
-+EXPORT_SYMBOL(block_dump);
-+EXPORT_SYMBOL(unlink_lru_lists);
-+EXPORT_SYMBOL(relink_lru_lists);
-+EXPORT_SYMBOL(power_subsys);
-+EXPORT_SYMBOL(machine_power_off);
-+EXPORT_SYMBOL(suspend_enter);
-+EXPORT_SYMBOL(first_online_pgdat);
-+EXPORT_SYMBOL(next_online_pgdat);
-+EXPORT_SYMBOL(machine_restart);
-+EXPORT_SYMBOL(saved_command_line);
-+EXPORT_SYMBOL(tasklist_lock);
-+#ifdef CONFIG_SUSPEND_SMP
-+EXPORT_SYMBOL(disable_nonboot_cpus);
-+EXPORT_SYMBOL(enable_nonboot_cpus);
-+#endif
-+#endif
-+
-+#ifdef CONFIG_SUSPEND2_USERUI_EXPORTS
-+EXPORT_SYMBOL(kmsg_redirect);
-+EXPORT_SYMBOL(console_printk);
-+#ifndef CONFIG_COMPAT
-+EXPORT_SYMBOL(sys_ioctl);
-+#endif
-+#endif
-+
-+#ifdef CONFIG_SUSPEND2_SWAP_EXPORTS	/* Suspend swap specific */
-+EXPORT_SYMBOL(sys_swapon);
-+EXPORT_SYMBOL(sys_swapoff);
-+EXPORT_SYMBOL(si_swapinfo);
-+EXPORT_SYMBOL(map_swap_page);
-+EXPORT_SYMBOL(get_swap_page);
-+EXPORT_SYMBOL(swap_free);
-+EXPORT_SYMBOL(get_swap_info_struct);
-+#endif
-+
-+#ifdef CONFIG_SUSPEND2_FILE_EXPORTS
-+/* Suspend_file specific */
-+extern char * __initdata root_device_name;
-+
-+EXPORT_SYMBOL(ROOT_DEV);
-+EXPORT_SYMBOL(root_device_name);
-+EXPORT_SYMBOL(sys_unlink);
-+EXPORT_SYMBOL(sys_mknod);
-+#endif
-+
-+/* Swap or file */
-+#if defined(CONFIG_SUSPEND2_FILE_EXPORTS) || defined(CONFIG_SUSPEND2_SWAP_EXPORTS)
-+EXPORT_SYMBOL(bio_set_pages_dirty);
-+EXPORT_SYMBOL(name_to_dev_t);
-+#endif
-+
-+#if defined(CONFIG_SUSPEND2_EXPORTS) || defined(CONFIG_SUSPEND2_CORE_EXPORTS)
-+EXPORT_SYMBOL(snprintf_used);
-+#endif
-+struct suspend2_core_fns *s2_core_fns;
-+EXPORT_SYMBOL(s2_core_fns);
-+
-+dyn_pageflags_t pageset1_map;
-+dyn_pageflags_t pageset1_copy_map;
-+EXPORT_SYMBOL(pageset1_map);
-+EXPORT_SYMBOL(pageset1_copy_map);
-+
-+unsigned long suspend_result = 0;
-+unsigned long suspend_debug_state = 0;
-+int suspend_io_time[2][2];
-+struct pagedir pagedir1 = {1};
-+
-+EXPORT_SYMBOL(suspend_io_time);
-+EXPORT_SYMBOL(suspend_debug_state);
-+EXPORT_SYMBOL(suspend_result);
-+EXPORT_SYMBOL(pagedir1);
-+
-+unsigned long suspend_get_nonconflicting_page(void)
-+{
-+	return s2_core_fns->get_nonconflicting_page();
-+}
-+
-+int suspend_post_context_save(void)
-+{
-+	return s2_core_fns->post_context_save();
-+}
-+
-+int suspend2_try_suspend(int have_pmsem)
-+{
-+	if (!s2_core_fns)
-+		return -ENODEV;
-+
-+	return s2_core_fns->try_suspend(have_pmsem);
-+}
-+
-+void suspend2_try_resume(void)
-+{
-+	if (s2_core_fns)
-+		s2_core_fns->try_resume();
-+}
-+
-+int suspend2_lowlevel_builtin(void)
-+{
-+	int error = 0;
-+
-+	save_processor_state();
-+	if ((error = swsusp_arch_suspend()))
-+		printk(KERN_ERR "Error %d suspending\n", error);
-+	/* Restore control flow appears here */
-+	restore_processor_state();
-+
-+	return error;
-+}
-+
-+EXPORT_SYMBOL(suspend2_lowlevel_builtin);
-+
-+unsigned long suspend_compress_bytes_in, suspend_compress_bytes_out;
-+EXPORT_SYMBOL(suspend_compress_bytes_in);
-+EXPORT_SYMBOL(suspend_compress_bytes_out);
-+
-+#ifdef CONFIG_SUSPEND2_REPLACE_SWSUSP
-+unsigned long suspend_action = (1 << SUSPEND_REPLACE_SWSUSP) | (1 << SUSPEND_PAGESET2_FULL);
-+#else
-+unsigned long suspend_action = 1 << SUSPEND_PAGESET2_FULL;
-+#endif
-+EXPORT_SYMBOL(suspend_action);
-+
-+unsigned long suspend_state = ((1 << SUSPEND_BOOT_TIME) |
-+		(1 << SUSPEND_RESUME_NOT_DONE) | 
-+		(1 << SUSPEND_IGNORE_LOGLEVEL) |
-+		(1 << SUSPEND_IO_STOPPED));
-+EXPORT_SYMBOL(suspend_state);
-+
-+/* The number of suspends we have started (some may have been cancelled) */
-+unsigned int nr_suspends;
-+EXPORT_SYMBOL(nr_suspends);
-+
-+char resume2_file[256] = CONFIG_SUSPEND2_DEFAULT_RESUME2;
-+EXPORT_SYMBOL(resume2_file);
-+
-+int suspend2_running = 0;
-+EXPORT_SYMBOL(suspend2_running);
-+
-+int suspend2_in_suspend __nosavedata;
-+EXPORT_SYMBOL(suspend2_in_suspend);
-+
-+unsigned long suspend2_nosave_state1 __nosavedata = 0;
-+unsigned long suspend2_nosave_state2 __nosavedata = 0;
-+int suspend2_nosave_state3 __nosavedata = 0;
-+int suspend2_nosave_io_speed[2][2] __nosavedata;
-+__nosavedata char suspend2_nosave_commandline[COMMAND_LINE_SIZE];
-+
-+__nosavedata struct pbe *restore_highmem_pblist;
-+
-+#ifdef CONFIG_SUSPEND2_CORE_EXPORTS
-+#ifdef CONFIG_HIGHMEM
-+EXPORT_SYMBOL(nr_free_highpages);
-+EXPORT_SYMBOL(saveable_highmem_page);
-+EXPORT_SYMBOL(restore_highmem_pblist);
-+#endif
-+
-+EXPORT_SYMBOL(suspend2_nosave_state1);
-+EXPORT_SYMBOL(suspend2_nosave_state2);
-+EXPORT_SYMBOL(suspend2_nosave_state3);
-+EXPORT_SYMBOL(suspend2_nosave_io_speed);
-+EXPORT_SYMBOL(suspend2_nosave_commandline);
-+#endif
-+
-+/* --  Commandline Parameter Handling ---
-+ *
-+ * Resume setup: obtain the storage device.
-+ */
-+static int __init resume2_setup(char *str)
-+{
-+	if (!*str)
-+		return 0;
-+	
-+	strncpy(resume2_file, str, 255);
-+	return 0;
-+}
-+
-+/*
-+ * Allow the user to specify that we should ignore any image found and
-+ * invalidate the image if necesssary. This is equivalent to running
-+ * the task queue and a sync and then turning off the power. The same
-+ * precautions should be taken: fsck if you're not journalled.
-+ */
-+static int __init noresume2_setup(char *str)
-+{
-+	set_suspend_state(SUSPEND_NORESUME_SPECIFIED);
-+	return 0;
-+}
-+
-+static int __init suspend_retry_resume_setup(char *str)
-+{
-+	set_suspend_state(SUSPEND_RETRY_RESUME);
-+	return 0;
-+}
-+
-+#ifndef CONFIG_SOFTWARE_SUSPEND
-+static int __init resume_setup(char *str)
-+{
-+	if (!*str)
-+		return 0;
-+	
-+	strncpy(resume2_file, str, 255);
-+	return 0;
-+}
-+
-+static int __init noresume_setup(char *str)
-+{
-+	set_suspend_state(SUSPEND_NORESUME_SPECIFIED);
-+	return 0;
-+}
-+__setup("noresume", noresume_setup);
-+__setup("resume=", resume_setup);
-+#endif
-+
-+__setup("noresume2", noresume2_setup);
-+__setup("resume2=", resume2_setup);
-+__setup("suspend_retry_resume", suspend_retry_resume_setup);
-+
-diff --git a/kernel/power/suspend_builtin.h b/kernel/power/suspend_builtin.h
-new file mode 100644
-index 0000000..33fc0c3
---- /dev/null
-+++ b/kernel/power/suspend_builtin.h
-@@ -0,0 +1,31 @@
-+/*
-+ * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
-+ *
-+ * This file is released under the GPLv2.
-+ */
-+#include <linux/dyn_pageflags.h>
-+#include <asm/setup.h>
-+
-+extern struct suspend2_core_fns *s2_core_fns;
-+extern unsigned long suspend_compress_bytes_in, suspend_compress_bytes_out;
-+extern unsigned long suspend_action, suspend_state;
-+extern unsigned int nr_suspends;
-+extern char resume2_file[256];
-+extern int suspend2_in_suspend;
-+
-+extern unsigned long suspend2_nosave_state1 __nosavedata;
-+extern unsigned long suspend2_nosave_state2 __nosavedata;
-+extern int suspend2_nosave_state3 __nosavedata;
-+extern int suspend2_nosave_io_speed[2][2] __nosavedata;
-+extern __nosavedata char suspend2_nosave_commandline[COMMAND_LINE_SIZE];
-+extern __nosavedata struct pbe *restore_highmem_pblist;
-+
-+int suspend2_lowlevel_builtin(void);
-+
-+extern dyn_pageflags_t __nosavedata suspend2_nosave_origmap;
-+extern dyn_pageflags_t __nosavedata suspend2_nosave_copymap;
-+
-+#ifdef CONFIG_HIGHMEM
-+extern __nosavedata struct zone_data *suspend2_nosave_zone_list;
-+extern __nosavedata unsigned long suspend2_nosave_max_pfn;
-+#endif
 diff --git a/kernel/power/suspend_compress.c b/kernel/power/suspend_compress.c
 new file mode 100644
-index 0000000..87304b3
+index 0000000..6e70e33
 --- /dev/null
 +++ b/kernel/power/suspend_compress.c
 @@ -0,0 +1,436 @@
@@ -12567,7 +11611,7 @@ index 0000000..87304b3
 +#include <linux/vmalloc.h>
 +#include <linux/crypto.h>
 +
-+#include "suspend_builtin.h"
++#include "suspend2_builtin.h"
 +#include "suspend.h"
 +#include "modules.h"
 +#include "sysfs.h"
@@ -12988,10 +12032,10 @@ index 0000000..87304b3
 +#endif
 diff --git a/kernel/power/suspend_file.c b/kernel/power/suspend_file.c
 new file mode 100644
-index 0000000..c9cd597
+index 0000000..e523f8b
 --- /dev/null
 +++ b/kernel/power/suspend_file.c
-@@ -0,0 +1,1146 @@
+@@ -0,0 +1,1131 @@
 +/*
 + * kernel/power/suspend_file.c
 + *
@@ -13160,14 +12204,14 @@ index 0000000..c9cd597
 +{
 +	int mappable = 0, i;
 +	
-+	if (target_is_normal_file()) {
-+		for (i = 0; i < (target_inode->i_size >> PAGE_SHIFT) ; i++)
-+			if (has_contiguous_blocks(i))
-+				mappable++;
-+	
-+		return mappable;
-+	} else
++	if (!target_is_normal_file())
 +		return suspend_file_storage_available();
++
++	for (i = 0; i < (target_inode->i_size >> PAGE_SHIFT) ; i++)
++		if (has_contiguous_blocks(i))
++			mappable++;
++	
++	return mappable;
 +}
 +
 +static void __populate_block_list(int min, int max)
@@ -13182,58 +12226,57 @@ index 0000000..c9cd597
 +static void populate_block_list(void)
 +{
 +	int i;
++	int extent_min = -1, extent_max = -1, got_header = 0;
 +	
 +	if (block_chain.first)
 +		suspend_put_extent_chain(&block_chain);
 +
-+	if (target_is_normal_file()) {
-+		int extent_min = -1, extent_max = -1, got_header = 0;
-+
-+		for (i = 0;
-+		     i < (target_inode->i_size >> PAGE_SHIFT);
-+		     i++) {
-+			sector_t new_sector;
-+
-+			if (!has_contiguous_blocks(i))
-+				continue;
-+
-+			new_sector = bmap(target_inode,
-+				(i * devinfo.blocks_per_page));
-+
-+			/* 
-+			 * Ignore the first block in the file.
-+			 * It gets the header.
-+			 */
-+			if (new_sector == target_firstblock >> devinfo.bmap_shift) {
-+				got_header = 1;
-+				continue;
-+			}
-+
-+			/* 
-+			 * I'd love to be able to fill in holes and resize 
-+			 * files, but not yet...
-+			 */
-+
-+			if (new_sector == extent_max + 1)
-+				extent_max+= devinfo.blocks_per_page;
-+			else {
-+				if (extent_min > -1)
-+					__populate_block_list(extent_min,
-+							extent_max);
-+
-+				extent_min = new_sector;
-+				extent_max = extent_min +
-+					devinfo.blocks_per_page - 1;
-+			}
-+		}
-+		if (extent_min > -1)
-+			__populate_block_list(extent_min, extent_max);
-+	} else {
++	if (!target_is_normal_file()) {
 +		if (target_storage_available > 0)
 +			__populate_block_list(devinfo.blocks_per_page, 
 +				(target_storage_available + 1) *
 +			 	devinfo.blocks_per_page - 1);
++		return;
 +	}
++
++	for (i = 0; i < (target_inode->i_size >> PAGE_SHIFT); i++) {
++		sector_t new_sector;
++
++		if (!has_contiguous_blocks(i))
++			continue;
++
++		new_sector = bmap(target_inode,
++		(i * devinfo.blocks_per_page));
++
++		/* 
++		 * Ignore the first block in the file.
++		 * It gets the header.
++		 */
++		if (new_sector == target_firstblock >> devinfo.bmap_shift) {
++			got_header = 1;
++			continue;
++		}
++
++		/* 
++		 * I'd love to be able to fill in holes and resize 
++		 * files, but not yet...
++		 */
++
++		if (new_sector == extent_max + 1)
++			extent_max+= devinfo.blocks_per_page;
++		else {
++			if (extent_min > -1)
++				__populate_block_list(extent_min,
++						extent_max);
++
++			extent_min = new_sector;
++			extent_max = extent_min +
++				devinfo.blocks_per_page - 1;
++		}
++	}
++
++	if (extent_min > -1)
++		__populate_block_list(extent_min, extent_max);
 +}
 +
 +static void suspend_file_cleanup(int finishing_cycle)
@@ -13302,22 +12345,20 @@ index 0000000..c9cd597
 +		target_file = NULL;
 +		resume_file_dev_t = name_to_dev_t(target);
 +		if (!resume_file_dev_t) {
++			struct kstat stat;
++			int error = vfs_stat(target, &stat);
 +			printk("Open file %s returned %p and name_to_devt "
-+					"failed.\n",
-+					target, target_file);
-+			if (!resume_file_dev_t) {
-+				struct kstat stat;
-+				int error = vfs_stat(target, &stat);
-+				if (error) {
-+					printk("Stating the file also failed."
-+						" Nothing more we can do.\n");
-+					return;
-+				}
++					"failed.\n", target, target_file);
++			if (error)
++				printk("Stating the file also failed."
++					" Nothing more we can do.\n");
++			else
 +				resume_file_dev_t = stat.rdev;
-+			}
 +			return;
 +		}
-+	     	suspend_file_target_bdev = open_by_devnum(resume_file_dev_t, FMODE_READ);
++
++	     	suspend_file_target_bdev = open_by_devnum(resume_file_dev_t,
++				FMODE_READ);
 +		if (IS_ERR(suspend_file_target_bdev)) {
 +			printk("Got a dev_num (%lx) but failed to open it.\n",
 +					(unsigned long) resume_file_dev_t);
@@ -13328,10 +12369,8 @@ index 0000000..c9cd597
 +	} else
 +		target_inode = target_file->f_mapping->host;
 +
-+	if (S_ISLNK(target_inode->i_mode) ||
-+	    S_ISDIR(target_inode->i_mode) ||
-+	    S_ISSOCK(target_inode->i_mode) ||
-+	    S_ISFIFO(target_inode->i_mode)) {
++	if (S_ISLNK(target_inode->i_mode) || S_ISDIR(target_inode->i_mode) ||
++	    S_ISSOCK(target_inode->i_mode) || S_ISFIFO(target_inode->i_mode)) {
 +		printk("File support works with regular files, character "
 +				"files and block devices.\n");
 +		goto cleanup;
@@ -13399,23 +12438,19 @@ index 0000000..c9cd597
 +
 +static int suspend_file_storage_allocated(void)
 +{
-+	int result;
-+
 +	if (!target_inode)
 +		return 0;
 +
-+	if (target_is_normal_file()) {
-+		result = (int) target_storage_available;
-+	} else
-+		result = header_pages_allocated + main_pages_requested;
-+
-+	return result;
++	if (target_is_normal_file())
++		return (int) target_storage_available;
++	else
++		return header_pages_allocated + main_pages_requested;
 +}
 +
 +static int suspend_file_release_storage(void)
 +{
-+	if ((test_action_state(SUSPEND_KEEP_IMAGE)) &&
-+	     test_suspend_state(SUSPEND_NOW_RESUMING))
++	if (test_action_state(SUSPEND_KEEP_IMAGE) &&
++	    test_suspend_state(SUSPEND_NOW_RESUMING))
 +		return 0;
 +
 +	suspend_put_extent_chain(&block_chain);
@@ -13461,12 +12496,11 @@ index 0000000..c9cd597
 +
 +static int suspend_file_allocate_storage(int space_requested)
 +{
-+	if (!__suspend_file_allocate_storage(space_requested,
-+				header_pages_allocated)) {
-+		main_pages_requested = space_requested;
-+		return 0;
-+	}
++	if (__suspend_file_allocate_storage(space_requested,
++				header_pages_allocated))
++		return -ENOSPC;
 +
++	main_pages_requested = space_requested;
 +	return -ENOSPC;
 +}
 +
@@ -13886,14 +12920,11 @@ index 0000000..c9cd597
 +
 +static void test_suspend_file_target(void)
 +{
-+	int cant_suspend;
-+
 +	setting_suspend_file_target = 1;
 +       	
-+	printk("Suspend2: FileAllocator: Testing whether you can suspend:\n");
-+	cant_suspend =__test_suspend_file_target(suspend_file_target, 0, 1);
-+
-+	printk("Suspend2: Suspending %sabled.\n",  cant_suspend ? "dis" : "en");
++	printk("Suspend2: Suspending %sabled.\n",
++			__test_suspend_file_target(suspend_file_target, 0, 1) ?
++			"dis" : "en");
 +	
 +	setting_suspend_file_target = 0;
 +}
@@ -14042,8 +13073,6 @@ index 0000000..c9cd597
 +
 +static int suspend_file_initialise(int starting_cycle)
 +{
-+	int result = 0;
-+
 +	if (starting_cycle) {
 +		if (suspendActiveAllocator != &suspend_fileops)
 +			return 0;
@@ -14061,10 +13090,10 @@ index 0000000..c9cd597
 +	if (starting_cycle && (suspend_file_image_exists() == -1)) {
 +		printk("%s is does not have a valid signature for suspending.\n",
 +				suspend_file_target);
-+		result = 1;
++		return 1;
 +	}
 +
-+	return result;
++	return 0;
 +}
 +
 +static struct suspend_sysfs_data sysfs_params[] = {
@@ -14140,10 +13169,10 @@ index 0000000..c9cd597
 +#endif
 diff --git a/kernel/power/suspend_swap.c b/kernel/power/suspend_swap.c
 new file mode 100644
-index 0000000..885439f
+index 0000000..a81dcc1
 --- /dev/null
 +++ b/kernel/power/suspend_swap.c
-@@ -0,0 +1,1250 @@
+@@ -0,0 +1,1262 @@
 +/*
 + * kernel/power/suspend_swap.c
 + *
@@ -14399,7 +13428,6 @@ index 0000000..885439f
 +static void suspend_swap_noresume_reset(void)
 +{
 +	memset((char *) &devinfo, 0, sizeof(devinfo));
-+	close_bdevs();
 +}
 +
 +static int parse_signature(char *header, int restore)
@@ -14629,12 +13657,9 @@ index 0000000..885439f
 +		/* Free swap entries */
 +		struct extent *extentpointer;
 +		unsigned long extentvalue;
-+		swp_entry_t entry;
 +		suspend_extent_for_each(&swapextents, extentpointer, 
-+				extentvalue) {
-+			entry = extent_val_to_swap_entry(extentvalue);
-+			swap_free(entry);
-+		}
++				extentvalue)
++			swap_free(extent_val_to_swap_entry(extentvalue));
 +
 +		suspend_put_extent_chain(&swapextents);
 +
@@ -14657,6 +13682,14 @@ index 0000000..885439f
 +	return -ENOSPC;
 +}
 +
++static void free_swap_range(unsigned long min, unsigned long max)
++{
++	int j;
++
++	for (j = min; j < max; j++)
++		swap_free(extent_val_to_swap_entry(j));
++}
++
 +/* 
 + * Round robin allocation (where swap storage has the same priority).
 + * could make this very inefficient, so we track extents allocated on
@@ -14665,7 +13698,7 @@ index 0000000..885439f
 +static int __suspend_swap_allocate_storage(int main_space_requested,
 +		int header_space_requested)
 +{
-+	int i, result = 0, first[MAX_SWAPFILES], pages_to_get, extra_pages;
++	int i, result = 0, first[MAX_SWAPFILES], pages_to_get, extra_pages, gotten = 0;
 +	unsigned long extent_min[MAX_SWAPFILES], extent_max[MAX_SWAPFILES];
 +
 +	extra_pages = DIV_ROUND_UP(main_space_requested * (sizeof(unsigned long)
@@ -14691,41 +13724,53 @@ index 0000000..885439f
 +		unsigned swapfilenum;
 +
 +		entry = get_swap_page();
-+		if (!entry.val) {
-+			printk("Failed to get a swap page.\n");
-+			main_pages_allocated += i - 1;
-+			result = -ENOSPC;
++		if (!entry.val)
 +			break;
-+		}
 +
 +		swapfilenum = swp_type(entry);
 +		new_value = swap_entry_to_extent_val(entry);
++
 +		if (first[swapfilenum]) {
 +			first[swapfilenum] = 0;
-+			extent_min[swapfilenum] = extent_max[swapfilenum] =
-+				new_value;
-+		} else {
-+			if (new_value == extent_max[swapfilenum] + 1)
-+				extent_max[swapfilenum]++;
-+			else {
-+				suspend_add_to_extent_chain(
-+					&swapextents,
++			extent_min[swapfilenum] = new_value;
++			extent_max[swapfilenum] = new_value;
++			gotten++;
++			continue;
++		}
++
++		if (new_value == extent_max[swapfilenum] + 1) {
++			extent_max[swapfilenum]++;
++			gotten++;
++			continue;
++		}
++
++		if (suspend_add_to_extent_chain(&swapextents,
 +					extent_min[swapfilenum],
++					extent_max[swapfilenum])) {
++			free_swap_range(extent_min[swapfilenum],
 +					extent_max[swapfilenum]);
-+				extent_min[swapfilenum] =
-+					extent_max[swapfilenum] = new_value;
-+			}
++			swap_free(entry);
++			gotten -= (extent_max[swapfilenum] -
++					extent_min[swapfilenum]);
++			break;
++		} else {
++			extent_min[swapfilenum] = new_value;
++			extent_max[swapfilenum] = new_value;
++			gotten++;
 +		}
 +	}
 +
 +	for (i = 0; i < MAX_SWAPFILES; i++)
-+		if (!first[i])
-+			suspend_add_to_extent_chain(
-+				&swapextents,
-+				extent_min[i], extent_max[i]);
++		if (!first[i] && suspend_add_to_extent_chain(&swapextents,
++					extent_min[i], extent_max[i])) {
++			free_swap_range(extent_min[i], extent_max[i]);
++			gotten -= (extent_max[i] - extent_min[i]);
++		}
 +
-+	main_pages_requested = main_space_requested;
-+	main_pages_allocated = main_space_requested + extra_pages;
++	if (gotten < pages_to_get)
++		result = -ENOSPC;
++
++	main_pages_allocated += gotten;
 +	get_main_pool_phys_params();
 +	return result;
 +}
@@ -14894,10 +13939,8 @@ index 0000000..885439f
 +		}
 +
 +		result = open_bdev(i, thisdevice, 1);
-+		if (IS_ERR(result)) {
-+			close_bdevs();
++		if (IS_ERR(result))
 +			return PTR_ERR(result);
-+		}
 +	}
 +
 +	suspend_bio_ops.read_header_init();
@@ -15128,8 +14171,6 @@ index 0000000..885439f
 +			virt_to_page(diskpage.ptr));
 +	suspend_bio_ops.finish_all_io();
 +	free_page(diskpage.address);
-+	
-+	close_bdevs();
 +	return;
 +}
 +
@@ -15396,10 +14437,10 @@ index 0000000..885439f
 +#endif
 diff --git a/kernel/power/suspend_userui.c b/kernel/power/suspend_userui.c
 new file mode 100644
-index 0000000..9d983c4
+index 0000000..47ef604
 --- /dev/null
 +++ b/kernel/power/suspend_userui.c
-@@ -0,0 +1,648 @@
+@@ -0,0 +1,649 @@
 +/*
 + * kernel/power/user_ui.c
 + *
@@ -15447,8 +14488,6 @@ index 0000000..9d983c4
 +
 +static struct user_helper_data ui_helper_data;
 +static struct suspend_module_ops userui_ops;
-+static int orig_loglevel;
-+static int orig_default_message_loglevel;
 +static int orig_kmsg;
 +
 +static char lastheader[512];
@@ -15477,10 +14516,10 @@ index 0000000..9d983c4
 +		wake_up_interruptible(&userui_wait_for_key);
 +}
 +
-+static void userui_redraw(void)
++static void userui_post_atomic_restore(void)
 +{
 +	suspend_send_netlink_message(&ui_helper_data,
-+			USERUI_MSG_REDRAW, NULL, 0);
++			USERUI_MSG_POST_ATOMIC_RESTORE, NULL, 0);
 +}
 +
 +static int userui_storage_needed(void)
@@ -15790,7 +14829,7 @@ index 0000000..9d983c4
 +			schedule();
 +		if (suspendActiveAllocator->mark_resume_attempted)
 +			suspendActiveAllocator->mark_resume_attempted(0);
-+		suspend_power_down();
++		suspend2_power_down();
 +	} else {
 +		suspend_prepare_status(CLEAR_BAR, "--- ESCAPE PRESSED :"
 +					" ABORTING SUSPEND ---");
@@ -15859,13 +14898,24 @@ index 0000000..9d983c4
 +		case USERUI_MSG_GET_POWERDOWN_METHOD:
 +			suspend_send_netlink_message(&ui_helper_data,
 +					USERUI_MSG_GET_POWERDOWN_METHOD,
-+					&suspend_powerdown_method,
-+					sizeof(suspend_powerdown_method));
++					&suspend2_poweroff_method,
++					sizeof(suspend2_poweroff_method));
 +			break;
 +		case USERUI_MSG_SET_POWERDOWN_METHOD:
 +			if (nlh->nlmsg_len < NLMSG_LENGTH(sizeof(int)))
 +				return -EINVAL;
-+			suspend_powerdown_method = (*data);
++			suspend2_poweroff_method = (*data);
++			break;
++		case USERUI_MSG_GET_LOGLEVEL:
++			suspend_send_netlink_message(&ui_helper_data,
++					USERUI_MSG_GET_LOGLEVEL,
++					&suspend_default_console_level,
++					sizeof(suspend_default_console_level));
++			break;
++		case USERUI_MSG_SET_LOGLEVEL:
++			if (nlh->nlmsg_len < NLMSG_LENGTH(sizeof(int)))
++				return -EINVAL;
++			suspend_default_console_level = (*data);
 +			break;
 +	}
 +
@@ -15911,12 +14961,8 @@ index 0000000..9d983c4
 + */
 +static void userui_prepare_console(void)
 +{
-+	orig_loglevel = console_loglevel;
-+	orig_default_message_loglevel = default_message_loglevel;
 +	orig_kmsg = kmsg_redirect;
 +	kmsg_redirect = fg_console + 1;
-+	default_message_loglevel = 1;
-+	console_loglevel = suspend_default_console_level;
 +
 +	ui_helper_data.pid = -1;
 +
@@ -15940,14 +14986,10 @@ index 0000000..9d983c4
 +
 +static void userui_cleanup_console(void)
 +{
-+	suspend_default_console_level = console_loglevel;
-+
 +	if (ui_helper_data.pid > -1)
 +		suspend_netlink_close(&ui_helper_data);
 +
-+	console_loglevel = orig_loglevel;
 +	kmsg_redirect = orig_kmsg;
-+	default_message_loglevel = orig_default_message_loglevel;
 +}
 +
 +/*
@@ -15993,7 +15035,7 @@ index 0000000..9d983c4
 +};
 +
 +static struct ui_ops my_ui_ops = {
-+	.redraw				= userui_redraw,
++	.post_atomic_restore		= userui_post_atomic_restore,
 +	.update_status			= userui_update_status,
 +	.message			= userui_message,
 +	.prepare_status			= userui_prepare_status,
@@ -16050,7 +15092,7 @@ index 0000000..9d983c4
 +#endif
 diff --git a/kernel/power/sysfs.c b/kernel/power/sysfs.c
 new file mode 100644
-index 0000000..549aff0
+index 0000000..47eca3b
 --- /dev/null
 +++ b/kernel/power/sysfs.c
 @@ -0,0 +1,347 @@
@@ -16083,9 +15125,9 @@ index 0000000..549aff0
 +
 +#define to_sysfs_data(_attr) container_of(_attr, struct suspend_sysfs_data, attr)
 +
-+static void suspend_main_wrapper(void)
++static void suspend2_main_wrapper(void)
 +{
-+	__suspend2_try_suspend(0);
++	_suspend2_try_suspend(0);
 +}
 +
 +static ssize_t suspend2_attr_show(struct kobject *kobj, struct attribute *attr,
@@ -16264,12 +15306,12 @@ index 0000000..549aff0
 +static struct suspend_sysfs_data sysfs_params[] = {
 +	{ SUSPEND2_ATTR("do_suspend", SYSFS_WRITEONLY),
 +	  SYSFS_CUSTOM(NULL, NULL, SYSFS_SUSPENDING),
-+	  .write_side_effect = suspend_main_wrapper
++	  .write_side_effect = suspend2_main_wrapper
 +	},
 +
 +	{ SUSPEND2_ATTR("do_resume", SYSFS_WRITEONLY),
 +	  SYSFS_CUSTOM(NULL, NULL, SYSFS_RESUMING),
-+	  .write_side_effect = __suspend_try_resume
++	  .write_side_effect = __suspend2_try_resume
 +	},
 +
 +};
@@ -16541,7 +15583,7 @@ index 0000000..aad5e26
 +extern void s2_sysfs_exit(void);
 diff --git a/kernel/power/ui.c b/kernel/power/ui.c
 new file mode 100644
-index 0000000..743f98d
+index 0000000..5b6789f
 --- /dev/null
 +++ b/kernel/power/ui.c
 @@ -0,0 +1,235 @@
@@ -16774,18 +15816,18 @@ index 0000000..743f98d
 +}
 +
 +#ifdef CONFIG_SUSPEND2_EXPORTS
-+EXPORT_SYMBOL(s2_current_ui);
-+EXPORT_SYMBOL(suspend_early_boot_message);
-+EXPORT_SYMBOL(s2_register_ui_ops);
-+EXPORT_SYMBOL(s2_remove_ui_ops);
-+EXPORT_SYMBOL(suspend_default_console_level);
++EXPORT_SYMBOL_GPL(s2_current_ui);
++EXPORT_SYMBOL_GPL(suspend_early_boot_message);
++EXPORT_SYMBOL_GPL(s2_register_ui_ops);
++EXPORT_SYMBOL_GPL(s2_remove_ui_ops);
++EXPORT_SYMBOL_GPL(suspend_default_console_level);
 +#endif
 diff --git a/kernel/power/ui.h b/kernel/power/ui.h
 new file mode 100644
-index 0000000..59bce0a
+index 0000000..8379444
 --- /dev/null
 +++ b/kernel/power/ui.h
-@@ -0,0 +1,106 @@
+@@ -0,0 +1,108 @@
 +/*
 + * kernel/power/ui.h
 + *
@@ -16807,11 +15849,13 @@ index 0000000..59bce0a
 +	USERUI_MSG_SPACE = 0x18,
 +	USERUI_MSG_GET_POWERDOWN_METHOD = 0x1A,
 +	USERUI_MSG_SET_POWERDOWN_METHOD = 0x1B,
++	USERUI_MSG_GET_LOGLEVEL = 0x1C,
++	USERUI_MSG_SET_LOGLEVEL = 0x1D,
 +
 +	/* Kernel -> Userspace */
 +	USERUI_MSG_MESSAGE = 0x21,
 +	USERUI_MSG_PROGRESS = 0x22,
-+	USERUI_MSG_REDRAW = 0x25,
++	USERUI_MSG_POST_ATOMIC_RESTORE = 0x25,
 +
 +	USERUI_MSG_MAX,
 +};
@@ -16830,7 +15874,7 @@ index 0000000..59bce0a
 +	void (*abort)(int result_code, const char *fmt, ...);
 +	void (*prepare)(void);
 +	void (*cleanup)(void);
-+	void (*redraw)(void);
++	void (*post_atomic_restore)(void);
 +	void (*message)(unsigned long section, unsigned long level,
 +		int normally_logged, const char *fmt, ...);
 +};
@@ -16843,9 +15887,9 @@ index 0000000..59bce0a
 +#define suspend_wait_for_keypress(timeout) \
 + (s2_current_ui ? (s2_current_ui->wait_for_key) (timeout) : 0)
 +
-+#define suspend_ui_redraw(void) \
++#define suspend_ui_post_atomic_restore(void) \
 +	do { if (s2_current_ui) \
-+		(s2_current_ui->redraw)(); \
++		(s2_current_ui->post_atomic_restore)(); \
 +	} while(0)
 +
 +#define suspend_prepare_console(void) \
@@ -16893,7 +15937,7 @@ index 0000000..59bce0a
 +extern int s2_register_ui_ops(struct ui_ops *this_ui);
 +extern void s2_remove_ui_ops(struct ui_ops *this_ui);
 diff --git a/kernel/printk.c b/kernel/printk.c
-index 4b47e59..39edd7f 100644
+index 4b47e59..6cafd3b 100644
 --- a/kernel/printk.c
 +++ b/kernel/printk.c
 @@ -32,6 +32,7 @@
@@ -16932,40 +15976,64 @@ index 4b47e59..39edd7f 100644
  
  static int __init log_buf_len_setup(char *str)
  {
+@@ -739,12 +740,14 @@ void suspend_console(void)
+ 	acquire_console_sem();
+ 	console_suspended = 1;
+ }
++EXPORT_SYMBOL(suspend_console);
+ 
+ void resume_console(void)
+ {
+ 	console_suspended = 0;
+ 	release_console_sem();
+ }
++EXPORT_SYMBOL(resume_console);
+ #endif /* CONFIG_DISABLE_CONSOLE_SUSPEND */
+ 
+ /**
 diff --git a/kernel/timer.c b/kernel/timer.c
-index dd6c2c1..60f9a39 100644
+index dd6c2c1..aded05d 100644
 --- a/kernel/timer.c
 +++ b/kernel/timer.c
-@@ -36,6 +36,7 @@
- #include <linux/delay.h>
- #include <linux/tick.h>
- #include <linux/kallsyms.h>
-+#include <linux/freezer.h>
+@@ -1240,6 +1240,38 @@ unsigned long avenrun[3];
  
- #include <asm/uaccess.h>
- #include <asm/unistd.h>
-@@ -1253,9 +1254,18 @@ static inline void calc_load(unsigned long ticks)
- 	if (unlikely(count < 0)) {
- 		active_tasks = count_active_tasks();
- 		do {
--			CALC_LOAD(avenrun[0], EXP_1, active_tasks);
--			CALC_LOAD(avenrun[1], EXP_5, active_tasks);
--			CALC_LOAD(avenrun[2], EXP_15, active_tasks);
-+			/* Suspend2 does a lot of work (pagecache I/O) before
-+			 * and after the atomic copy. If we let the load average
-+			 * be updated while suspending, it will be very high
-+			 * post resume. Processes such as some MTAs that stop
-+			 * work while the average is high will be unnecessarily
-+			 * disrupted.
-+			 */
-+			if (likely(!freezer_is_on())) {
-+				CALC_LOAD(avenrun[0], EXP_1, active_tasks);
-+				CALC_LOAD(avenrun[1], EXP_5, active_tasks);
-+				CALC_LOAD(avenrun[2], EXP_15, active_tasks);
-+			}
- 			count += LOAD_FREQ;
- 		} while (count < 0);
- 	}
+ EXPORT_SYMBOL(avenrun);
+ 
++static unsigned long avenrun_save[3];
++/*
++ * save_avenrun - Record the values prior to starting a hibernation cycle.
++ * We do this to make the work done in hibernation invisible to userspace
++ * post-suspend. Some programs, including some MTAs, watch the load average
++ * and stop work until it lowers. Without this, they would stop working for
++ * a while post-resume, unnecessarily.
++ */
++
++void save_avenrun(void)
++{
++	avenrun_save[0] = avenrun[0];
++	avenrun_save[1] = avenrun[1];
++	avenrun_save[2] = avenrun[2];
++}
++
++EXPORT_SYMBOL_GPL(save_avenrun);
++
++void restore_avenrun(void)
++{
++	if (!avenrun_save[0])
++		return;
++
++	avenrun[0] = avenrun_save[0];
++	avenrun[1] = avenrun_save[1];
++	avenrun[2] = avenrun_save[2];
++
++	avenrun_save[0] = 0;
++}
++
++EXPORT_SYMBOL_GPL(restore_avenrun);
++
+ /*
+  * calc_load - given tick count, update the avenrun load estimates.
+  * This is called while holding a write_lock on xtime_lock.
 diff --git a/lib/Kconfig b/lib/Kconfig
 index 3842499..758a928 100644
 --- a/lib/Kconfig
@@ -17346,28 +16414,8 @@ index b025864..2138c47 100644
  /**
   * vsnprintf - Format a string and place it in a buffer
   * @buf: The buffer to place the result into
-diff --git a/mm/memory.c b/mm/memory.c
-index e7066e7..4329652 100644
---- a/mm/memory.c
-+++ b/mm/memory.c
-@@ -976,6 +976,15 @@ no_page_table:
- 	return page;
- }
- 
-+/*
-+ * We want the address of the page for Suspend2 to mark as being in pageset1. 
-+ */
-+
-+struct page *suspend2_follow_page(struct mm_struct *mm, unsigned long address)
-+{
-+	return follow_page(mm->mmap, address, 0);
-+}
-+
- int get_user_pages(struct task_struct *tsk, struct mm_struct *mm,
- 		unsigned long start, int len, int write, int force,
- 		struct page **pages, struct vm_area_struct **vmas)
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index db023e2..b7f1dd2 100644
+index db023e2..54acc2c 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
 @@ -654,6 +654,28 @@ static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
@@ -17534,7 +16582,17 @@ index db023e2..b7f1dd2 100644
  	}
  	return 0;
  }
-@@ -1368,6 +1446,91 @@ void wakeup_kswapd(struct zone *zone, int order)
+@@ -1355,6 +1433,9 @@ void wakeup_kswapd(struct zone *zone, int order)
+ 	if (!populated_zone(zone))
+ 		return;
+ 
++	if (freezer_is_on())
++		return;
++
+ 	pgdat = zone->zone_pgdat;
+ 	if (zone_watermark_ok(zone, order, zone->pages_low, 0, 0))
+ 		return;
+@@ -1368,6 +1449,91 @@ void wakeup_kswapd(struct zone *zone, int order)
  }
  
  #ifdef CONFIG_PM
@@ -17626,34 +16684,3 @@ index db023e2..b7f1dd2 100644
  /*
   * Helper function for shrink_all_memory().  Tries to reclaim 'nr_pages' pages
   * from LRU lists system-wide, for given pass and priority, and returns the
-@@ -1404,10 +1567,13 @@ static unsigned long shrink_all_zones(unsigned long nr_pages, int prio,
- 		zone->nr_scan_inactive +=
- 			(zone_page_state(zone, NR_INACTIVE) >> prio) + 1;
- 		if (zone->nr_scan_inactive >= nr_pages || pass > 3) {
-+			int freed;
- 			zone->nr_scan_inactive = 0;
- 			nr_to_scan = min(nr_pages,
- 				zone_page_state(zone, NR_INACTIVE));
--			ret += shrink_inactive_list(nr_to_scan, zone, sc);
-+			freed = shrink_inactive_list(nr_to_scan, zone, sc);
-+			ret += freed;
-+			sc->swap_cluster_max -= freed;
- 			if (ret >= nr_pages)
- 				return ret;
- 		}
-@@ -1480,9 +1646,14 @@ unsigned long shrink_all_memory(unsigned long nr_pages)
- 
- 		for (prio = DEF_PRIORITY; prio >= 0; prio--) {
- 			unsigned long nr_to_scan = nr_pages - ret;
-+			int freed;
- 
- 			sc.nr_scanned = 0;
--			ret += shrink_all_zones(nr_to_scan, prio, pass, &sc);
-+			sc.swap_cluster_max = nr_pages - ret;
-+			freed = shrink_all_zones(nr_to_scan, prio, pass, &sc);
-+			ret += freed;
-+			lru_pages -= freed;
-+			nr_to_scan = nr_pages - ret;
- 			if (ret >= nr_pages)
- 				goto out;
- 
