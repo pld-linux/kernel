@@ -121,7 +121,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.2
+%define		_rel			0.3
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -320,7 +320,7 @@ Patch60:	linux-2.6-sk98lin_8.41.2.3.patch
 # lzma support for squashfs (patch6) from http://www.squashfs-lzma.org/dl/sqlzma3.2-r2b.tar.bz2
 Patch65:	sqlzma2k-3.2-r2.patch
 
-# http://www.suspend2.net/downloads/all/suspend2-2.2.9.13-for-2.6.21-rc7.patch.bz2
+# http://www.suspend2.net/downloads/all/suspend2-2.2.10-for-2.6.21.1.patch.bz2
 Patch69:	linux-2.6-suspend2.patch
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
