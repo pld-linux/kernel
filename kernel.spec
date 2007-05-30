@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.21.1-0.4
+# STATUS: 2.6.21.3-0.3
 # - not ready yet - work in progress, but You are welcome :-)
 # - builds --with pax_full on i686 & x86_64
 # - builds --with grsec_full on i686 & x86_64
@@ -232,63 +232,29 @@ Patch7:		linux-alpha-isa.patch
 Patch8:		linux-fbcon-margins.patch
 Patch9:		linux-static-dev.patch
 
-# netfilter p-o-m-ng snap 20061213
 
-# base
-Patch10:	pom-ng-IPV4OPTSSTRIP-%{_netfilter_snap}.patch
-Patch14:	pom-ng-ipv4options-%{_netfilter_snap}.patch
-Patch20:	pom-ng-set-%{_netfilter_snap}.patch
-Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
+# netfilter related stuff mostly based on patch-o-matic-ng
+# snapshot 20061213 with some fixes related to changes in
+# netfilter api in 2.6.19, 2.6.20 and 2.6.21. Some modules 
+# were ported to nf_conntrack. Some of these are unique.
 
-# extra
-Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
-Patch33:	pom-ng-TARPIT-%{_netfilter_snap}.patch
-Patch34:	pom-ng-mms-conntrack-nat-%{_netfilter_snap}.patch
-Patch37:	pom-ng-rsh-%{_netfilter_snap}.patch
+Patch10:	kernel-pom-ng-IPV4OPTSSTRIP.patch
+Patch11:	kernel-pom-ng-ipv4options.patch
+Patch12:	kernel-pom-ng-set.patch
+Patch13:	kernel-pom-ng-u32.patch
+Patch14:	kernel-pom-ng-ROUTE.patch
+Patch15:	kernel-pom-ng-TARPIT.patch
+Patch16:	kernel-pom-ng-mms-conntrack-nat.patch
+Patch17:	kernel-pom-ng-rsh.patch
+Patch18:	kernel-pom-ng-IPMARK.patch
+Patch19:	kernel-pom-ng-connlimit.patch
+Patch20:	kernel-pom-ng-geoip.patch
+Patch21:	kernel-pom-ng-ipp2p.patch
+Patch22:	kernel-pom-ng-time.patch
 
-#external
-Patch40:	pom-ng-IPMARK-%{_netfilter_snap}.patch
-Patch41:	pom-ng-connlimit-%{_netfilter_snap}.patch
-Patch42:	pom-ng-geoip-%{_netfilter_snap}.patch
-Patch43:	pom-ng-ipp2p-%{_netfilter_snap}.patch
-Patch44:	pom-ng-time-%{_netfilter_snap}.patch
-
-# nf_conntrack ports
-Patch45:	nf_conntrack_mms.patch
-
-#layer7 with temporary fix
-Patch48:	kernel-2.6.18-layer7-2.7.patch
-Patch49:	kernel-2.6.18-layer7-2.7-2.6.19-fix.patch
-
-# netfilter patches preparation order:
-#
-# [pom base]
-# can be independently applied on 2.6.19.1 source:
-# 	pom-ng-IPV4OPTSSTRIP-20061213.patch
-# 	pom-ng-ipv4options-20061213.patch
-#	pom-ng-set-20061213.patch
-#	pom-ng-u32-20061213.patch
-# [pom extra]
-#	pom-ng-ROUTE-20061213.patch
-# 	pom-ng-TARPIT-20061213.patch
-#	pom-ng-mms-conntrack-nat-20061213.patch
-#	(note: mms-conntrack-nat depends on ip_conntrack - needs porting to nf_conntrack)
-# all below applied to sources with all preceeding patches applied:
-#	pom-ng-rsh-20061213.patch
-# [pom external]
-#	pom-ng-IPMARK-20061213.patch
-#	pom-ng-connlimit-20061213.patch
-#	(note: connlimit needs an additional patch to work with nf_conntrack -> p301)
-#	pom-ng-geoip-20061213.patch
-#	pom-ng-ipp2p-20061213.patch
-#	pom-ng-time-20061213.patch
-#
-# layer7:
-# 	kernel-2.6.18-layer7-2.7.patch
-
-###
-#	End netfilter
-###
+Patch40:	kernel-layer7.patch
+ 
+### End netfilter
 
 # based on 2.6.17 patch from http://www.linuximq.net/patchs/linux-2.6.17-imq1.diff,
 # some stuff moved from net/sched/sch_generic.c to net/core/dev.c for 2.6.19
@@ -358,9 +324,6 @@ Patch200:	linux-2.6-ppc-ICE-hacks.patch
 # http://www.ssi.bg/~ja/routes-2.6.21-15.diff
 # We need to disable CONFIG_IP_ROUTE_MULTIPATH_CACHED
 Patch300:	routes-2.6.21-15.diff
-
-Patch301:	pom-ng-connlimit-20061213_nf_conntrack_port.patch
-Patch302:	linux-2.6-layer7_nf_conntrack_port.patch
 
 # For compatibility with (not updated) blobs like ... ? 
 # Before 2.6.20 we had CONFIG_REGPARM option disabled.
@@ -808,32 +771,47 @@ install %{SOURCE5} Makefile.ppclibs
 ## netfilter
 #
 
-# base
+# kernel-pom-ng-IPV4OPTSSTRIP.patch
 %patch10 -p1
+
+# kernel-pom-ng-ipv4options.patch
+%patch11 -p1
+
+# kernel-pom-ng-set.patch
+%patch12 -p1
+
+# kernel-pom-ng-u32.patch
+%patch13 -p1
+
+# kernel-pom-ng-ROUTE.patch
 %patch14 -p1
+
+# kernel-pom-ng-TARPIT.patch
+%patch15 -p1
+
+# kernel-pom-ng-mms-conntrack-nat.patch
+%patch16 -p1
+
+# kernel-pom-ng-rsh.patch
+%patch17 -p1
+
+# kernel-pom-ng-IPMARK.patch
+%patch18 -p1
+
+# kernel-pom-ng-connlimit.patch
+%patch19 -p1
+
+# kernel-pom-ng-geoip.patch
 %patch20 -p1
+
+# kernel-pom-ng-ipp2p.patch
+%patch21 -p1
+
+# kernel-pom-ng-time.patch
 %patch22 -p1
 
-## extra
-%patch32 -p1
-%patch33 -p1
-%patch34 -p1
-%patch37 -p1
-
-## external
+# kernel-layer7.patch
 %patch40 -p1
-%patch41 -p1
-%patch42 -p1
-%patch43 -p1
-%patch44 -p1
-
-# nf_conn mms
-%patch45 -p1
-
-## layer7
-%patch48 -p1
-%patch49 -p1
-%patch302 -p1
 
 ##
 # end of netfilter
@@ -944,9 +922,6 @@ install %{SOURCE5} Makefile.ppclibs
 
 # routes
 %patch300 -p1
-
-
-%patch301 -p1
 
 # Small fixes:
 %patch2000 -p1
