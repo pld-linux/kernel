@@ -292,7 +292,7 @@ Patch49:	kernel-2.6.18-layer7-2.7-2.6.19-fix.patch
 
 # based on 2.6.17 patch from http://www.linuximq.net/patchs/linux-2.6.17-imq1.diff,
 # some stuff moved from net/sched/sch_generic.c to net/core/dev.c for 2.6.19
-# compatibility. not tested.
+# compatibility. Should work, but not with wrr.
 
 Patch50:	linux-2.6.19-imq1.diff
 
@@ -338,7 +338,7 @@ Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
 
 # http://vserver.13thfloor.at/Experimental/patch-2.6.21-vs2.2.0-rc1.diff
-# TODO: use temp instead of patches 100-102
+# TODO: temporary use instead of patch100
 Patch110:	linux-2.6-vs2.2.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
@@ -385,9 +385,12 @@ Patch5001:	linux-2.6-apparmor-caps.patch
 Patch9997:	pax_selinux_hooks-2.6.20.patch
 
 # based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.21-test1.patch
+# TODO: http://www.grsecurity.net/~paxguy1/pax-linux-2.6.21.3-test3.patch
 Patch9998:	pax-linux-2.6.20.patch
 
 # based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.21-200705071727.patch
+# TODO: apply PaX related changes from 
+#       http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.21.3-200705292345.patch
 Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
@@ -781,9 +784,6 @@ install %{SOURCE5} Makefile.ppclibs
 ##endif
 %endif
 
-# reiserfs4
-#%{__gzip} -dc %{SOURCE12} | %{__patch} -s -p1
-
 %patch2 -p1
 
 %patch8 -p1
@@ -958,9 +958,6 @@ install %{SOURCE5} Makefile.ppclibs
 %if %{with abi}
 patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
 %endif
-
-# wanpipe
-#patch3000 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
