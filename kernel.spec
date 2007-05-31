@@ -79,7 +79,7 @@
 %define		squashfs_version	3.2
 
 %define		_basever	2.6.21
-%define		_postver	.1
+%define		_postver	.3
 %define		_rel		0.1
 %define		_rc		%{nil}
 %define		_subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_vserver:-vserver}
@@ -97,7 +97,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	1b515f588078dfa7f4bab2634bd17e80
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	c4c368f173af267a564948065ffc1689
+# Source1-md5:	f7057a8dff173a6665fd61b69ed54a12
 %endif
 
 Source2:	kernel-module-build.pl
