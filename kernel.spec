@@ -80,7 +80,7 @@
 
 %define		_basever	2.6.21
 %define		_postver	.3
-%define		_rel		0.1
+%define		_rel		1
 %define		_rc		%{nil}
 %define		_subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_vserver:-vserver}
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -193,7 +193,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 # modules will be looked from /lib/modules/%{kernel_release}%{?smp}
 # _localversion is just that without version for "> localversion"
 %define		_localversion %{release}
-%define		kernel_release %{version}-%{_localversion}
+%define		kernel_release %{version}%{_subname}-%{_localversion}
 %define		_kernelsrcdir	/usr/src/linux%{_subname}-%{version}
 
 %define	CommonOpts	HOSTCC="%{__cc}" HOSTCFLAGS="-Wall -Wstrict-prototypes %{rpmcflags} -fomit-frame-pointer"
