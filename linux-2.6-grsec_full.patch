@@ -14123,6 +14123,17 @@ diff -urNp linux-2.6.21/fs/proc/proc_misc.c linux-2.6.21/fs/proc/proc_misc.c
  	proc_root_kcore = create_proc_entry("kcore", S_IRUSR, NULL);
  	if (proc_root_kcore) {
  		proc_root_kcore->proc_fops = &proc_kcore_operations;
+diff -urNp linux-2.6.21.3/fs/proc/proc_sysctl.c linux-2.6.21.3/fs/proc/proc_sysctl.c
+--- linux-2.6.21.3/fs/proc/proc_sysctl.c	2007-04-25 23:08:32.000000000 -0400
++++ linux-2.6.21.3/fs/proc/proc_sysctl.c	2007-06-04 11:34:37.000000000 -0400
+@@ -305,6 +305,7 @@ end_instantiate:
+ 		ino= find_inode_number(dir, &qname);
+ 	if (!ino)
+ 		ino = 1;
++
+ 	return filldir(dirent, qname.name, qname.len, filp->f_pos, ino, type);
+ }
+ 
 diff -urNp linux-2.6.21/fs/proc/root.c linux-2.6.21/fs/proc/root.c
 --- linux-2.6.21/fs/proc/root.c	2007-04-25 23:08:32.000000000 -0400
 +++ linux-2.6.21/fs/proc/root.c	2007-04-29 23:02:11.000000000 -0400
@@ -14650,7 +14661,7 @@ diff -urNp linux-2.6.21/grsecurity/gracl_alloc.c linux-2.6.21/grsecurity/gracl_a
 diff -urNp linux-2.6.21/grsecurity/gracl.c linux-2.6.21/grsecurity/gracl.c
 --- linux-2.6.21/grsecurity/gracl.c	1969-12-31 19:00:00.000000000 -0500
 +++ linux-2.6.21/grsecurity/gracl.c	2007-04-29 23:39:37.000000000 -0400
-@@ -0,0 +1,3547 @@
+@@ -0,0 +1,3610 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
 +#include <linux/sched.h>
@@ -17803,11 +17814,68 @@ diff -urNp linux-2.6.21/grsecurity/gracl.c linux-2.6.21/grsecurity/gracl.c
 +#endif
 +
 +#ifdef CONFIG_SYSCTL
-+/* the following function is called under the BKL */
++/* Eric Biederman likes breaking userland ABI and every inode-based security
++   system to save 35kb of memory */
++
++/* we modify the passed in filename, but adjust it back before returning */
++static struct acl_object_label *gr_lookup_by_name(char *name, unsigned int len)
++{
++	struct name_entry *nmatch;
++	char *p, *lastp = NULL;
++	struct acl_object_label *obj = NULL, *tmp;
++	struct acl_subject_label *tmpsubj;
++	int done = 0;
++	char c = '\0';
++
++	read_lock(&gr_inode_lock);
++
++	p = name + len - 1;
++	do {
++		nmatch = lookup_name_entry(name);
++		if (lastp != NULL)
++			*lastp = c;
++
++		if (nmatch == NULL)
++			goto next_component;
++		tmpsubj = current->acl;
++		do {
++			obj = lookup_acl_obj_label(nmatch->inode, nmatch->device, tmpsubj);
++			if (obj != NULL) {
++				tmp = obj->globbed;
++				while (tmp) {
++					if (!glob_match(tmp->filename, name)) {
++						obj = tmp;
++						goto found_obj;
++					}
++					tmp = tmp->next;
++				}
++				goto found_obj;
++			}
++		} while ((tmpsubj = tmpsubj->parent_subject));
++next_component:
++		/* end case */
++		if (p == name)
++			break;
++
++		while (*p != '/')
++			p--;
++		if (p == name)
++			lastp = p + 1;
++		else {
++			lastp = p;
++			p--;
++		}
++		c = *lastp;
++		*lastp = '\0';
++	} while (1);
++found_obj:
++	read_unlock(&gr_inode_lock);
++	/* obj returned will always be non-null */
++	return obj;
++}
 +
 +__u32
-+gr_handle_sysctl(const struct ctl_table *table, const void *oldval,
-+		 const void *newval)
++gr_handle_sysctl(const struct ctl_table *table, const int op)
 +{
 +	ctl_table *tmp;
 +	struct nameidata nd;
@@ -17816,16 +17884,21 @@ diff -urNp linux-2.6.21/grsecurity/gracl.c linux-2.6.21/grsecurity/gracl.c
 +	struct acl_object_label *obj;
 +	unsigned short len = 0, pos = 0, depth = 0, i;
 +	__u32 err = 0;
-+	__u32 mode = 0;
++	__u32 mode = GR_FIND;
 +
 +	if (unlikely(!(gr_status & GR_READY)))
 +		return 1;
 +
++	preempt_disable();
++
 +	path = per_cpu_ptr(gr_shared_page[0], smp_processor_id());
 +
-+	if (oldval)
++	/* it's only a read if it's an actual entry, not a dir
++	   (which are opened for readdir)
++	*/
++	if (op & 004 && table->child == NULL)
 +		mode |= GR_READ;
-+	if (newval)
++	if (op & 002)
 +		mode |= GR_WRITE;
 +
 +	/* convert the requested sysctl entry into a pathname */
@@ -17836,8 +17909,10 @@ diff -urNp linux-2.6.21/grsecurity/gracl.c linux-2.6.21/grsecurity/gracl.c
 +		depth++;
 +	}
 +
-+	if ((len + depth + strlen(proc_sys) + 1) > PAGE_SIZE)
-+		return 0;	/* deny */
++	if ((len + depth + strlen(proc_sys) + 1) > PAGE_SIZE) {
++		err = 0; /* deny */
++		goto out;
++	}
 +
 +	memset(path, 0, PAGE_SIZE);
 +
@@ -17858,12 +17933,7 @@ diff -urNp linux-2.6.21/grsecurity/gracl.c linux-2.6.21/grsecurity/gracl.c
 +		}
 +	}
 +
-+	err = path_lookup(path, LOOKUP_FOLLOW, &nd);
-+
-+	if (err)
-+		goto out;
-+
-+	obj = chk_obj_label(nd.dentry, nd.mnt, current->acl);
++	obj = gr_lookup_by_name(path, pos);
 +	err = obj->mode & (mode | to_gr_audit(mode) | GR_SUPPRESS);
 +
 +	if (unlikely((current->acl->mode & (GR_LEARN | GR_INHERITLEARN)) &&
@@ -17872,8 +17942,12 @@ diff -urNp linux-2.6.21/grsecurity/gracl.c linux-2.6.21/grsecurity/gracl.c
 +
 +		new_mode &= ~(GR_AUDITS | GR_SUPPRESS);
 +
++		err = path_lookup(path, LOOKUP_FOLLOW, &nd);
++		if (err)
++			goto out;
 +		err = new_mode;
 +		gr_log_learn(current, nd.dentry, nd.mnt, new_mode);
++		path_release(&nd);
 +	} else if ((err & mode) != mode && !(err & GR_SUPPRESS)) {
 +		gr_log_str4(GR_DONT_AUDIT, GR_SYSCTL_ACL_MSG, "denied",
 +			       path, (mode & GR_READ) ? " reading" : "",
@@ -17887,9 +17961,9 @@ diff -urNp linux-2.6.21/grsecurity/gracl.c linux-2.6.21/grsecurity/gracl.c
 +			       (mode & GR_WRITE) ? " writing" : "");
 +	}
 +
-+	path_release(&nd);
-+
 +      out:
++	preempt_enable();
++
 +	return err;
 +}
 +#endif
@@ -20044,9 +20118,9 @@ diff -urNp linux-2.6.21/grsecurity/grsec_disabled.c linux-2.6.21/grsecurity/grse
 +
 +#ifdef CONFIG_SYSCTL
 +__u32
-+gr_handle_sysctl(const struct ctl_table * table, __u32 mode)
++gr_handle_sysctl(const struct ctl_table * table, const int op)
 +{
-+	return mode;
++	return 1;
 +}
 +#endif
 +
@@ -28591,15 +28665,14 @@ diff -urNp linux-2.6.21/kernel/sys.c linux-2.6.21/kernel/sys.c
 diff -urNp linux-2.6.21/kernel/sysctl.c linux-2.6.21/kernel/sysctl.c
 --- linux-2.6.21/kernel/sysctl.c	2007-04-25 23:08:32.000000000 -0400
 +++ linux-2.6.21/kernel/sysctl.c	2007-04-30 17:15:45.000000000 -0400
-@@ -58,6 +58,14 @@ extern int proc_nr_files(ctl_table *tabl
+@@ -58,6 +58,13 @@ extern int proc_nr_files(ctl_table *tabl
  #endif
  
  #if defined(CONFIG_SYSCTL)
 +#include <linux/grsecurity.h>
 +#include <linux/grinternal.h>
 +
-+extern __u32 gr_handle_sysctl(const ctl_table *table, const void *oldval,
-+			      const void *newval);
++extern __u32 gr_handle_sysctl(const ctl_table *table, const int op);
 +extern int gr_handle_sysctl_mod(const char *dirname, const char *name,
 +				const int op);
 +extern int gr_handle_chroot_sysctl(const int op);
@@ -28675,7 +28748,7 @@ diff -urNp linux-2.6.21/kernel/sysctl.c linux-2.6.21/kernel/sysctl.c
  	{ .ctl_name = 0 }
  };
  
-@@ -1149,6 +1189,12 @@ static int test_perm(int mode, int op)
+@@ -1149,6 +1189,28 @@ static int test_perm(int mode, int op)
  int sysctl_perm(ctl_table *table, int op)
  {
  	int error;
@@ -28685,16 +28758,37 @@ diff -urNp linux-2.6.21/kernel/sysctl.c linux-2.6.21/kernel/sysctl.c
 +		return -EACCES;
 +	if (gr_handle_chroot_sysctl(op))
 +		return -EACCES;
++	if (!gr_handle_sysctl(table, op)) {
++		if (!(op & 006))
++			return -ENOENT;
++		else
++			return -EACCES;
++	}
++	error = security_sysctl(table, op);
++	if (error)
++		return error;
++	return test_perm(table->mode, op);
++}
++
++int sysctl_perm_nochk(ctl_table *table, int op)
++{
++	int error;
++
  	error = security_sysctl(table, op);
  	if (error)
  		return error;
-@@ -1180,6 +1226,10 @@ repeat:
+@@ -1173,13 +1234,14 @@ repeat:
+ 		if (n == table->ctl_name) {
+ 			int error;
+ 			if (table->child) {
+-				if (sysctl_perm(table, 001))
++				if (sysctl_perm_nochk(table, 001))
+ 					return -EPERM;
+ 				name++;
+ 				nlen--;
  				table = table->child;
  				goto repeat;
  			}
-+
-+			if (!gr_handle_sysctl(table, oldval, newval))
-+				return -EPERM;
 +
  			error = do_sysctl_strategy(table, name, nlen,
  						   oldval, oldlenp,
