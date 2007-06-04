@@ -1,9 +1,9 @@
 #
 # STATUS: 2.6.21.3-1
 # - builds --with pax_full on i686 & x86_64
-# - builds --with grsec_full on i686 & x86_64
+# - builds --with grsec_full on i486, i686, athlon, x86_64, ppc (Th)
 # - builds --with pax on i686 & x86_64
-# - builds w/o any 'with' switches on i686 & x86_64 too 
+# - builds w/o any 'with' switches on all Th supported archs
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
@@ -119,7 +119,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			1
+%define		_rel			1.1
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -132,7 +132,7 @@
 %define		drm_xfree_version	4.3.0
 
 %define		squashfs_version	3.2
-%define		suspend_version		2.2.9
+%define		suspend_version		2.2.10
 
 %define		xen_version		3.0.2
 
@@ -348,7 +348,7 @@ Patch9997:	pax_selinux_hooks-2.6.20.patch
 # based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.21.3-test4.patch
 Patch9998:	pax-linux-2.6.20.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.21.3-200706022012.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.21.3-200706041205.patch
 Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
