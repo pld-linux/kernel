@@ -80,7 +80,7 @@
 
 %define		_basever	2.6.21
 %define		_postver	.3
-%define		_rel		1
+%define		_rel		2
 %define		_rc		%{nil}
 %define		_subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_vserver:-vserver}
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -638,6 +638,9 @@ Documentation.
 %patch400 -p1
 
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
+
+# Fix EXTRAVERSION in main Makefile
+sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}%{_subname}#g' Makefile
 
 # remove unwanted files after patching (if any)
 find . '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
