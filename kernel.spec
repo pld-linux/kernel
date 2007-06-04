@@ -1,15 +1,12 @@
 #
-# STATUS: 2.6.21.3-0.3
-# - not ready yet - work in progress, but You are welcome :-)
+# STATUS: 2.6.21.3-1
 # - builds --with pax_full on i686 & x86_64
 # - builds --with grsec_full on i686 & x86_64
 # - builds --with pax on i686 & x86_64
 # - builds w/o any 'with' switches on i686 & x86_64 too 
 #
 # TODO:
-# - replace vs-2.2 with vs-2.3 
-# - test NO_HZ & HZ=1000 on i686
-# - add lzma support for squashfs
+# - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 #
 # FUTURE:
 # - update xen patch for 2.6.21
@@ -20,6 +17,7 @@
 # - pom-ng talk-conntrack-nat -> nf_conntrack ?
 # - nf-hipac ?
 # - pax hooks for selinux (experimental)
+# - add lzma support for squashfs
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
@@ -121,7 +119,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.5
+%define		_rel			1
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
