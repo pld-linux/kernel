@@ -121,7 +121,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.4
+%define		_rel			0.5
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -848,7 +848,7 @@ install %{SOURCE5} Makefile.ppclibs
 # vserver
 %if %{with vserver}
 # p100: vs2.3 p110: vs2.2
-%patch110 -p1
+%patch100 -p1
 %ifarch %{ix86} %{x8664} ia64
 %patch101 -p1
 %endif
