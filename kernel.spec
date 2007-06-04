@@ -119,7 +119,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			1.1
+%define		_rel			1.2
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -348,7 +348,7 @@ Patch9997:	pax_selinux_hooks-2.6.20.patch
 # based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.21.3-test4.patch
 Patch9998:	pax-linux-2.6.20.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.21.3-200706041205.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.21.3-200706041811.patch
 Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
