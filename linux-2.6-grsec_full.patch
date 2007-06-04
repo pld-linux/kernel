@@ -321,6 +321,15 @@ diff -urNp linux-2.6.21/arch/i386/boot/setup.S linux-2.6.21/arch/i386/boot/setup
 diff -urNp linux-2.6.21/arch/i386/Kconfig linux-2.6.21/arch/i386/Kconfig
 --- linux-2.6.21/arch/i386/Kconfig	2007-04-25 23:08:32.000000000 -0400
 +++ linux-2.6.21/arch/i386/Kconfig	2007-04-30 17:07:41.000000000 -0400
+@@ -578,7 +578,7 @@ endchoice
+ config PAGE_OFFSET
+ 	hex
+ 	default 0xB0000000 if VMSPLIT_3G_OPT
+-	default 0x78000000 if VMSPLIT_2G
++	default 0x70000000 if VMSPLIT_2G
+ 	default 0x40000000 if VMSPLIT_1G
+ 	default 0xC0000000
+ 
 @@ -892,7 +892,7 @@ config HOTPLUG_CPU
  
  config COMPAT_VDSO
@@ -1764,9 +1773,9 @@ diff -urNp linux-2.6.21/arch/i386/kernel/head.S linux-2.6.21/arch/i386/kernel/he
 +
 +	movl $((((__PAGE_OFFSET-1) & 0xf0000000) >> 12) | 0x00c09700),%eax
 +	movl %eax,(cpu_gdt_table - __PAGE_OFFSET + GDT_ENTRY_KERNEL_DS * 8 + 4)
++1:
 +	movl $((((__PAGE_OFFSET-1) & 0xf0000000) >> 12) | 0x00c0f300),%eax
 +	movl %eax,(cpu_gdt_table - __PAGE_OFFSET + GDT_ENTRY_DEFAULT_USER_DS * 8 + 4)
-+1:
 +#endif
 +
 +#ifdef CONFIG_PAX_KERNEXEC
@@ -2635,8 +2644,8 @@ diff -urNp linux-2.6.21/arch/i386/kernel/process.c linux-2.6.21/arch/i386/kernel
  	savesegment(gs, prev->gs);
  
 +#ifdef CONFIG_PAX_MEMORY_UDEREF
-+	if (!segment_eq(prev_p->thread_info->addr_limit, next_p->thread_info->addr_limit))
-+		__set_fs(next_p->thread_info->addr_limit, cpu);
++	if (!segment_eq(task_thread_info(prev_p)->addr_limit, task_thread_info(next_p)->addr_limit))
++		__set_fs(task_thread_info(next_p)->addr_limit, cpu);
 +#endif
 +
  	/*
@@ -5744,7 +5753,7 @@ diff -urNp linux-2.6.21/arch/i386/mm/fault.c linux-2.6.21/arch/i386/mm/fault.c
  
  	/* When running in the kernel we expect faults to occur only to
  	 * addresses in user space.  All other faults represent errors in the
-@@ -371,10 +402,101 @@ fastcall void __kprobes do_page_fault(st
+@@ -371,10 +402,105 @@ fastcall void __kprobes do_page_fault(st
  	if (!down_read_trylock(&mm->mmap_sem)) {
  		if ((error_code & 4) == 0 &&
  		    !search_exception_tables(regs->eip))
@@ -5812,8 +5821,10 @@ diff -urNp linux-2.6.21/arch/i386/mm/fault.c linux-2.6.21/arch/i386/mm/fault.c
 +	 * PaX: fill DTLB with user rights and retry
 +	 */
 +	__asm__ __volatile__ (
-+		"movw %w4,%%ds\n"
-+		"orb %2,%%ss:(%1)\n"
++#ifdef CONFIG_PAX_MEMORY_UDEREF
++		"movw %w4,%%es\n"
++#endif
++		"orb %2,(%1)\n"
 +#if defined(CONFIG_M586) || defined(CONFIG_M586TSC)
 +/*
 + * PaX: let this uncommented 'invlpg' remind us on the behaviour of Intel's
@@ -5830,10 +5841,12 @@ diff -urNp linux-2.6.21/arch/i386/mm/fault.c linux-2.6.21/arch/i386/mm/fault.c
 + */
 +		"invlpg (%0)\n"
 +#endif
-+		"testb $0,(%0)\n"
-+		"xorb %3,%%ss:(%1)\n"
++		"testb $0,%%es:(%0)\n"
++		"xorb %3,(%1)\n"
++#ifdef CONFIG_PAX_MEMORY_UDEREF
 +		"pushl %%ss\n"
-+		"popl %%ds\n"
++		"popl %%es\n"
++#endif
 +		:
 +		: "q" (address), "r" (pte), "q" (pte_mask), "i" (_PAGE_USER), "r" (__USER_DS)
 +		: "memory", "cc");
@@ -5979,7 +5992,7 @@ diff -urNp linux-2.6.21/arch/i386/mm/fault.c linux-2.6.21/arch/i386/mm/fault.c
  	tsk->thread.cr2 = address;
  	tsk->thread.trap_no = 14;
  	tsk->thread.error_code = error_code;
-@@ -624,3 +807,101 @@ void vmalloc_sync_all(void)
+@@ -624,3 +811,110 @@ void vmalloc_sync_all(void)
  	}
  }
  #endif
@@ -5994,7 +6007,16 @@ diff -urNp linux-2.6.21/arch/i386/mm/fault.c linux-2.6.21/arch/i386/mm/fault.c
 +static int pax_handle_fetch_fault(struct pt_regs *regs)
 +{
 +
-+	static const unsigned char trans[8] = {6, 1, 2, 0, 13, 5, 3, 4};
++	static const unsigned char trans[8] = {
++		offsetof(struct pt_regs, eax) / 4,
++		offsetof(struct pt_regs, ecx) / 4,
++		offsetof(struct pt_regs, edx) / 4,
++		offsetof(struct pt_regs, ebx) / 4,
++		offsetof(struct pt_regs, esp) / 4,
++		offsetof(struct pt_regs, ebp) / 4,
++		offsetof(struct pt_regs, esi) / 4,
++		offsetof(struct pt_regs, edi) / 4,
++	};
 +	int err;
 +
 +	if (regs->eflags & X86_EFLAGS_VM)
@@ -9522,6 +9544,28 @@ diff -urNp linux-2.6.21/arch/x86_64/ia32/ia32_binfmt.c linux-2.6.21/arch/x86_64/
  typedef struct user_i387_ia32_struct elf_fpregset_t;
  typedef struct user32_fxsr_struct elf_fpxregset_t;
  
+@@ -327,15 +338,18 @@ int ia32_setup_arg_pages(struct linux_bi
+ 
+ 	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
+ 		struct page *page = bprm->page[i];
++		int retval;
+ 		if (page) {
+ 			bprm->page[i] = NULL;
+-			install_arg_page(mpnt, page, stack_base);
++			retval = install_arg_page(mpnt, page, stack_base);
++			if (!ret)
++				ret = retval;
+ 		}
+ 		stack_base += PAGE_SIZE;
+ 	}
+ 	up_write(&mm->mmap_sem);
+-	
+-	return 0;
++
++	return ret;
+ }
+ EXPORT_SYMBOL(ia32_setup_arg_pages);
+ 
 diff -urNp linux-2.6.21/arch/x86_64/ia32/mmap32.c linux-2.6.21/arch/x86_64/ia32/mmap32.c
 --- linux-2.6.21/arch/x86_64/ia32/mmap32.c	2007-04-25 23:08:32.000000000 -0400
 +++ linux-2.6.21/arch/x86_64/ia32/mmap32.c	2007-04-30 17:07:42.000000000 -0400
@@ -10292,6 +10336,15 @@ diff -urNp linux-2.6.21/drivers/char/random.c linux-2.6.21/drivers/char/random.c
  #if 0
  	/* x^2048 + x^1638 + x^1231 + x^819 + x^411 + x + 1  -- 115 */
  	{ 2048,	1638,	1231,	819,	411,	1 },
+@@ -1162,7 +1174,7 @@ EXPORT_SYMBOL(generate_random_uuid);
+ #include <linux/sysctl.h>
+ 
+ static int min_read_thresh = 8, min_write_thresh;
+-static int max_read_thresh = INPUT_POOL_WORDS * 32;
++static int max_read_thresh = INPUT_POOL_WORDS * 8;
+ static int max_write_thresh = INPUT_POOL_WORDS * 32;
+ static char sysctl_bootid[16];
+ 
 @@ -1662,3 +1674,25 @@ randomize_range(unsigned long start, uns
  		return 0;
  	return PAGE_ALIGN(get_random_int() % range + start);
@@ -10946,18 +10999,6 @@ diff -urNp linux-2.6.21/drivers/net/pcnet32.c linux-2.6.21/drivers/net/pcnet32.c
      { 0x300, 0x320, 0x340, 0x360, 0 };
  
  static int pcnet32_debug = 0;
-diff -urNp linux-2.6.21/drivers/net/tg3.c linux-2.6.21/drivers/net/tg3.c
---- linux-2.6.21/drivers/net/tg3.c	2007-04-25 23:08:32.000000000 -0400
-+++ linux-2.6.21/drivers/net/tg3.c	2007-04-30 17:07:42.000000000 -0400
-@@ -10578,7 +10578,7 @@ static int __devinit tg3_get_invariants(
- 			tp->tg3_flags2 |= TG3_FLG2_HW_TSO_1 | TG3_FLG2_TSO_BUG;
- 			if (GET_ASIC_REV(tp->pci_chip_rev_id) ==
- 				ASIC_REV_5750 &&
--	     		    tp->pci_chip_rev_id >= CHIPREV_ID_5750_C2)
-+	     		    tp->pci_chip_rev_id >= CHIPREV_ID_5750_C1)
- 				tp->tg3_flags2 &= ~TG3_FLG2_TSO_BUG;
- 		}
- 	}
 diff -urNp linux-2.6.21/drivers/net/tg3.h linux-2.6.21/drivers/net/tg3.h
 --- linux-2.6.21/drivers/net/tg3.h	2007-04-25 23:08:32.000000000 -0400
 +++ linux-2.6.21/drivers/net/tg3.h	2007-04-30 17:07:42.000000000 -0400
@@ -12577,6 +12618,15 @@ diff -urNp linux-2.6.21/fs/exec.c linux-2.6.21/fs/exec.c
  int register_binfmt(struct linux_binfmt * fmt)
  {
  	struct linux_binfmt ** tmp = &formats;
+@@ -303,7 +314,7 @@ EXPORT_SYMBOL(copy_strings_kernel);
+  *
+  * vma->vm_mm->mmap_sem is held for writing.
+  */
+-void install_arg_page(struct vm_area_struct *vma,
++int install_arg_page(struct vm_area_struct *vma,
+ 			struct page *page, unsigned long address)
+ {
+ 	struct mm_struct *mm = vma->vm_mm;
 @@ -313,6 +324,10 @@ void install_arg_page(struct vm_area_str
  	if (unlikely(anon_vma_prepare(vma)))
  		goto out;
@@ -12588,7 +12638,7 @@ diff -urNp linux-2.6.21/fs/exec.c linux-2.6.21/fs/exec.c
  	flush_dcache_page(page);
  	pte = get_locked_pte(mm, address, &ptl);
  	if (!pte)
-@@ -322,9 +337,21 @@ void install_arg_page(struct vm_area_str
+@@ -322,17 +337,30 @@ void install_arg_page(struct vm_area_str
  		goto out;
  	}
  	inc_mm_counter(mm, anon_rss);
@@ -12610,7 +12660,17 @@ diff -urNp linux-2.6.21/fs/exec.c linux-2.6.21/fs/exec.c
  	page_add_new_anon_rmap(page, vma, address);
  	pte_unmap_unlock(pte, ptl);
  
-@@ -347,6 +374,10 @@ int setup_arg_pages(struct linux_binprm 
+ 	/* no need for flush_tlb */
+-	return;
++	return 0;
+ out:
+ 	__free_page(page);
+ 	force_sig(SIGKILL, current);
++	return -ENOMEM;
+ }
+ 
+ #define EXTRA_STACK_VM_PAGES	20	/* random */
+@@ -347,6 +375,10 @@ int setup_arg_pages(struct linux_binprm 
  	int i, ret;
  	long arg_size;
  
@@ -12638,7 +12698,7 @@ diff -urNp linux-2.6.21/fs/exec.c linux-2.6.21/fs/exec.c
  	down_write(&mm->mmap_sem);
  	{
  		mpnt->vm_mm = mm;
-@@ -429,14 +470,51 @@ int setup_arg_pages(struct linux_binprm 
+@@ -429,27 +470,77 @@ int setup_arg_pages(struct linux_binprm 
  		else
  			mpnt->vm_flags = VM_STACK_FLAGS;
  		mpnt->vm_flags |= mm->def_flags;
@@ -12691,21 +12751,35 @@ diff -urNp linux-2.6.21/fs/exec.c linux-2.6.21/fs/exec.c
  	}
  
  	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
-@@ -443,6 +521,14 @@ int setup_arg_pages(struct linux_binprm 
+ 		struct page *page = bprm->page[i];
++		int retval;
  		if (page) {
  			bprm->page[i] = NULL;
- 			install_arg_page(mpnt, page, stack_base);
+-			install_arg_page(mpnt, page, stack_base);
++			retval = install_arg_page(mpnt, page, stack_base);
++			if (!ret)
++				ret = retval;
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
-+			if (mpnt_m) {
++			if (mpnt_m && !retval) {
 +				page_cache_get(page);
-+				install_arg_page(mpnt_m, page, stack_base + SEGMEXEC_TASK_SIZE);
++				retval = install_arg_page(mpnt_m, page, stack_base + SEGMEXEC_TASK_SIZE);
++				if (!ret)
++					ret = retval;
 +			}
 +#endif
 +
  		}
  		stack_base += PAGE_SIZE;
  	}
+ 	up_write(&mm->mmap_sem);
+-	
+-	return 0;
++
++	return ret;
+ }
+ 
+ EXPORT_SYMBOL(setup_arg_pages);
 @@ -1127,6 +1213,11 @@ int do_execve(char * filename,
  	struct file *file;
  	int retval;
@@ -23197,7 +23271,7 @@ diff -urNp linux-2.6.21/include/asm-arm/elf.h linux-2.6.21/include/asm-arm/elf.h
  #define ELF_ET_DYN_BASE	(2 * TASK_SIZE / 3)
  
 +#ifdef CONFIG_PAX_ASLR
-+#define PAX_ELF_ET_DYN_BASE(tsk)	0x00008000UL
++#define PAX_ELF_ET_DYN_BASE(tsk)	0x00001000UL
 +
 +#define PAX_DELTA_MMAP_LSB(tsk)		PAGE_SHIFT
 +#define PAX_DELTA_MMAP_LEN(tsk)		((tsk->personality == PER_LINUX_32BIT) ? 16 : 10)
@@ -23902,7 +23976,11 @@ diff -urNp linux-2.6.21/include/asm-i386/paravirt.h linux-2.6.21/include/asm-i38
 diff -urNp linux-2.6.21/include/asm-i386/pda.h linux-2.6.21/include/asm-i386/pda.h
 --- linux-2.6.21/include/asm-i386/pda.h	2007-04-25 23:08:32.000000000 -0400
 +++ linux-2.6.21/include/asm-i386/pda.h	2007-04-30 17:07:43.000000000 -0400
-@@ -11,14 +11,15 @@
+@@ -8,17 +8,19 @@
+ 
+ #include <linux/stddef.h>
+ #include <linux/types.h>
++#include <linux/threads.h>
  
  struct i386_pda
  {
@@ -26604,6 +26682,15 @@ diff -urNp linux-2.6.21/include/linux/mm.h linux-2.6.21/include/linux/mm.h
  #ifndef VM_STACK_DEFAULT_FLAGS		/* arch can override this */
  #define VM_STACK_DEFAULT_FLAGS VM_DATA_DEFAULT_FLAGS
  #endif
+@@ -771,7 +819,7 @@ static inline int handle_mm_fault(struct
+ 
+ extern int make_pages_present(unsigned long addr, unsigned long end);
+ extern int access_process_vm(struct task_struct *tsk, unsigned long addr, void *buf, int len, int write);
+-void install_arg_page(struct vm_area_struct *, struct page *, unsigned long);
++int install_arg_page(struct vm_area_struct *, struct page *, unsigned long);
+ 
+ int get_user_pages(struct task_struct *tsk, struct mm_struct *mm, unsigned long start,
+ 		int len, int write, int force, struct page **pages, struct vm_area_struct **vmas);
 @@ -1114,7 +1162,6 @@ static inline unsigned long vma_pages(st
  }
  
@@ -31621,7 +31708,7 @@ diff -urNp linux-2.6.21/security/Kconfig linux-2.6.21/security/Kconfig
 +
 +config PAX_KERNEXEC
 +	bool "Enforce non-executable kernel pages"
-+	depends on PAX_NOEXEC && X86_32 && !HOTPLUG_PCI_COMPAQ_NVRAM && !PCI_BIOS && !EFI && !COMPAT_VDSO && X86_WP_WORKS_OK
++	depends on PAX_NOEXEC && X86_32 && !HOTPLUG_PCI_COMPAQ_NVRAM && !PCI_BIOS && !EFI && !COMPAT_VDSO && X86_WP_WORKS_OK && !PARAVIRT
 +	help
 +	  This is the kernel land equivalent of PAGEEXEC and MPROTECT,
 +	  that is, enabling this option will make it harder to inject
