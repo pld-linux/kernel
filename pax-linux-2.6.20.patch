@@ -1,47 +1,3 @@
-diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/Documentation/dontdiff linux-2.6.21-pax/Documentation/dontdiff
---- linux-2.6.21/Documentation/dontdiff	2007-02-04 19:44:54.000000000 +0100
-+++ linux-2.6.21-pax/Documentation/dontdiff	2007-04-26 09:01:05.000000000 +0200
-@@ -55,7 +55,7 @@ aic7*seq.h*
- aicasm
- aicdb.h*
- asm
--asm-offsets.*
-+asm-offsets.h
- asm_offsets.*
- autoconf.h*
- bbootsect
-@@ -127,6 +127,7 @@ pss_boot.h
- raid6altivec*.c
- raid6int*.c
- raid6tables.c
-+relocs
- setup
- sim710_d.h*
- sm_tbl*
-@@ -139,8 +140,11 @@ utsrelease.h*
- version.h*
- vmlinux
- vmlinux-*
-+vmlinux.bin.all
- vmlinux.lds
-+vmlinux.relocs
- vsyscall.lds
- wanxlfw.inc
- uImage
-+utsrelease.h
- zImage
-diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/Makefile linux-2.6.21-pax/Makefile
---- linux-2.6.21/Makefile	2007-04-26 08:50:43.000000000 +0200
-+++ linux-2.6.21-pax/Makefile	2007-04-26 09:01:05.000000000 +0200
-@@ -312,7 +312,7 @@ LINUXINCLUDE    := -Iinclude \
- 
- CPPFLAGS        := -D__KERNEL__ $(LINUXINCLUDE)
- 
--CFLAGS          := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
-+CFLAGS          := -Wall -W -Wno-unused -Wno-sign-compare -Wundef -Wstrict-prototypes -Wno-trigraphs \
-                    -fno-strict-aliasing -fno-common
- AFLAGS          := -D__ASSEMBLY__
- 
 diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/alpha/kernel/module.c linux-2.6.21-pax/arch/alpha/kernel/module.c
 --- linux-2.6.21/arch/alpha/kernel/module.c	2007-04-26 08:50:43.000000000 +0200
 +++ linux-2.6.21-pax/arch/alpha/kernel/module.c	2007-04-26 09:01:05.000000000 +0200
@@ -324,9 +280,35 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/avr32/mm/f
  		/* Hmm...we have to pass address and ecr somehow... */
  		/* tsk->thread.address = address;
  		   tsk->thread.error_code = ecr; */
+diff -NurpX linux-2.6.21.3-pax/Documentation/dontdiff linux-2.6.21.3/arch/i386/boot/setup.S linux-2.6.21.3-pax/arch/i386/boot/setup.S
+--- linux-2.6.21.3/arch/i386/boot/setup.S	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.21.3-pax/arch/i386/boot/setup.S	2007-04-26 09:01:05.000000000 +0200
+@@ -869,11 +869,13 @@ startup_32:
+ 	movl %eax, %gs
+ 	movl %eax, %ss
+ 
++	movl 0x00000000, %ecx
+ 	xorl %eax, %eax
+ 1:	incl %eax				# check that A20 really IS enabled
+ 	movl %eax, 0x00000000			# loop forever if it isn't
+ 	cmpl %eax, 0x00100000
+ 	je 1b
++	movl %ecx, 0x00000000
+ 
+ 	# Jump to the 32bit entry point
+ 	jmpl *(code32_start - start + (DELTA_INITSEG << 4))(%esi)
 diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/Kconfig linux-2.6.21-pax/arch/i386/Kconfig
 --- linux-2.6.21/arch/i386/Kconfig	2007-04-26 08:50:54.000000000 +0200
 +++ linux-2.6.21-pax/arch/i386/Kconfig	2007-04-26 09:01:05.000000000 +0200
+@@ -578,7 +578,7 @@ endchoice
+ config PAGE_OFFSET
+ 	hex
+ 	default 0xB0000000 if VMSPLIT_3G_OPT
+-	default 0x78000000 if VMSPLIT_2G
++	default 0x70000000 if VMSPLIT_2G
+ 	default 0x40000000 if VMSPLIT_1G
+ 	default 0xC0000000
+ 
 @@ -892,7 +892,7 @@ config HOTPLUG_CPU
  
  config COMPAT_VDSO
@@ -378,23 +360,6 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/Kconf
  	help
  	  Mark the kernel read-only data as write-protected in the pagetables,
  	  in order to catch accidental (and incorrect) writes to such const
-diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/boot/setup.S linux-2.6.21-pax/arch/i386/boot/setup.S
---- linux-2.6.21/arch/i386/boot/setup.S	2007-02-04 19:44:54.000000000 +0100
-+++ linux-2.6.21-pax/arch/i386/boot/setup.S	2007-04-26 09:01:05.000000000 +0200
-@@ -869,11 +869,13 @@ startup_32:
- 	movl %eax, %gs
- 	movl %eax, %ss
- 
-+	movl 0x00000000, %ecx
- 	xorl %eax, %eax
- 1:	incl %eax				# check that A20 really IS enabled
- 	movl %eax, 0x00000000			# loop forever if it isn't
- 	cmpl %eax, 0x00100000
- 	je 1b
-+	movl %ecx, 0x00000000
- 
- 	# Jump to the 32bit entry point
- 	jmpl *(code32_start - start + (DELTA_INITSEG << 4))(%esi)
 diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/kernel/acpi/boot.c linux-2.6.21-pax/arch/i386/kernel/acpi/boot.c
 --- linux-2.6.21/arch/i386/kernel/acpi/boot.c	2007-04-26 08:50:55.000000000 +0200
 +++ linux-2.6.21-pax/arch/i386/kernel/acpi/boot.c	2007-04-26 09:01:05.000000000 +0200
@@ -1778,9 +1743,9 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/kerne
 +
 +	movl $((((__PAGE_OFFSET-1) & 0xf0000000) >> 12) | 0x00c09700),%eax
 +	movl %eax,(cpu_gdt_table - __PAGE_OFFSET + GDT_ENTRY_KERNEL_DS * 8 + 4)
++1:
 +	movl $((((__PAGE_OFFSET-1) & 0xf0000000) >> 12) | 0x00c0f300),%eax
 +	movl %eax,(cpu_gdt_table - __PAGE_OFFSET + GDT_ENTRY_DEFAULT_USER_DS * 8 + 4)
-+1:
 +#endif
 +
 +#ifdef CONFIG_PAX_KERNEXEC
@@ -2609,8 +2574,8 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/kerne
  	savesegment(gs, prev->gs);
  
 +#ifdef CONFIG_PAX_MEMORY_UDEREF
-+	if (!segment_eq(prev_p->thread_info->addr_limit, next_p->thread_info->addr_limit))
-+		__set_fs(next_p->thread_info->addr_limit, cpu);
++	if (!segment_eq(task_thread_info(prev_p)->addr_limit, task_thread_info(next_p)->addr_limit))
++		__set_fs(task_thread_info(next_p)->addr_limit, cpu);
 +#endif
 +
  	/*
@@ -2917,18 +2882,6 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/kerne
  		return;
  
  	if (test_thread_flag(TIF_RESTORE_SIGMASK))
-diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/kernel/smp.c linux-2.6.21-pax/arch/i386/kernel/smp.c
---- linux-2.6.21/arch/i386/kernel/smp.c	2007-04-26 08:50:57.000000000 +0200
-+++ linux-2.6.21-pax/arch/i386/kernel/smp.c	2007-04-26 09:01:07.000000000 +0200
-@@ -104,7 +104,7 @@
-  *	about nothing of note with C stepping upwards.
-  */
- 
--DEFINE_PER_CPU(struct tlb_state, cpu_tlbstate) ____cacheline_aligned = { &init_mm, 0, };
-+DEFINE_PER_CPU(struct tlb_state, cpu_tlbstate) ____cacheline_aligned = { &init_mm, 0, {0} };
- 
- /*
-  * the following functions deal with sending IPIs between CPUs.
 diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/kernel/smpboot.c linux-2.6.21-pax/arch/i386/kernel/smpboot.c
 --- linux-2.6.21/arch/i386/kernel/smpboot.c	2007-04-26 08:50:57.000000000 +0200
 +++ linux-2.6.21-pax/arch/i386/kernel/smpboot.c	2007-04-26 09:01:07.000000000 +0200
@@ -2987,6 +2940,93 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/kerne
  	info.complete = &done;
  	info.apicid = apicid;
  	info.cpu = cpu;
+diff -NurpX linux-2.6.21.3-pax/Documentation/dontdiff linux-2.6.21.3/arch/i386/kernel/smp.c linux-2.6.21.3-pax/arch/i386/kernel/smp.c
+--- linux-2.6.21.3/arch/i386/kernel/smp.c	2007-04-26 08:50:57.000000000 +0200
++++ linux-2.6.21.3-pax/arch/i386/kernel/smp.c	2007-04-26 09:01:07.000000000 +0200
+@@ -104,7 +104,7 @@
+  *	about nothing of note with C stepping upwards.
+  */
+ 
+-DEFINE_PER_CPU(struct tlb_state, cpu_tlbstate) ____cacheline_aligned = { &init_mm, 0, };
++DEFINE_PER_CPU(struct tlb_state, cpu_tlbstate) ____cacheline_aligned = { &init_mm, 0, {0} };
+ 
+ /*
+  * the following functions deal with sending IPIs between CPUs.
+diff -NurpX linux-2.6.21.3-pax/Documentation/dontdiff linux-2.6.21.3/arch/i386/kernel/syscall_table.S linux-2.6.21.3-pax/arch/i386/kernel/syscall_table.S
+--- linux-2.6.21.3/arch/i386/kernel/syscall_table.S	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.21.3-pax/arch/i386/kernel/syscall_table.S	2007-04-26 09:01:07.000000000 +0200
+@@ -1,3 +1,4 @@
++.section .rodata,"a",@progbits
+ ENTRY(sys_call_table)
+ 	.long sys_restart_syscall	/* 0 - old "setup()" system call, used for restarting */
+ 	.long sys_exit
+diff -NurpX linux-2.6.21.3-pax/Documentation/dontdiff linux-2.6.21.3/arch/i386/kernel/sysenter.c linux-2.6.21.3-pax/arch/i386/kernel/sysenter.c
+--- linux-2.6.21.3/arch/i386/kernel/sysenter.c	2007-04-26 08:50:57.000000000 +0200
++++ linux-2.6.21.3-pax/arch/i386/kernel/sysenter.c	2007-04-26 09:01:07.000000000 +0200
+@@ -49,7 +49,7 @@ extern asmlinkage void sysenter_entry(vo
+ void enable_sep_cpu(void)
+ {
+ 	int cpu = get_cpu();
+-	struct tss_struct *tss = &per_cpu(init_tss, cpu);
++	struct tss_struct *tss = init_tss + cpu;
+ 
+ 	if (!boot_cpu_has(X86_FEATURE_SEP)) {
+ 		put_cpu();
+@@ -106,9 +106,10 @@ int arch_setup_additional_pages(struct l
+ 	struct mm_struct *mm = current->mm;
+ 	unsigned long addr;
+ 	int ret;
++	unsigned long vm_flags = VM_READ|VM_EXEC|VM_MAYREAD|VM_MAYWRITE|VM_MAYEXEC|VM_ALWAYSDUMP;
+ 
+ 	down_write(&mm->mmap_sem);
+-	addr = get_unmapped_area(NULL, 0, PAGE_SIZE, 0, 0);
++	addr = get_unmapped_area(NULL, 0, PAGE_SIZE, 0, MAP_EXECUTABLE);
+ 	if (IS_ERR_VALUE(addr)) {
+ 		ret = addr;
+ 		goto up_fail;
+@@ -122,15 +123,17 @@ int arch_setup_additional_pages(struct l
+ 	 * without matching up the same kernel and hardware config to see
+ 	 * what PC values meant.
+ 	 */
+-	ret = install_special_mapping(mm, addr, PAGE_SIZE,
+-				      VM_READ|VM_EXEC|
+-				      VM_MAYREAD|VM_MAYWRITE|VM_MAYEXEC|
+-				      VM_ALWAYSDUMP,
+-				      syscall_pages);
++
++#ifdef CONFIG_PAX_MPROTECT
++	if (mm->pax_flags & MF_PAX_MPROTECT)
++		vm_flags &= ~VM_MAYWRITE;
++#endif
++
++	ret = install_special_mapping(mm, addr, PAGE_SIZE, vm_flags, syscall_pages);
+ 	if (ret)
+ 		goto up_fail;
+ 
+-	current->mm->context.vdso = (void *)addr;
++	current->mm->context.vdso = addr;
+ 	current_thread_info()->sysenter_return =
+ 				    (void *)VDSO_SYM(&SYSENTER_RETURN);
+ up_fail:
+@@ -140,8 +143,17 @@ up_fail:
+ 
+ const char *arch_vma_name(struct vm_area_struct *vma)
+ {
+-	if (vma->vm_mm && vma->vm_start == (long)vma->vm_mm->context.vdso)
++	if (vma->vm_start == vma->vm_mm->context.vdso)
++		return "[vdso]";
++
++#ifdef CONFIG_PAX_SEGMEXEC
++	if (!(vma->vm_mm->pax_flags & MF_PAX_SEGMEXEC) || !(vma->vm_flags & VM_MIRROR))
++		return NULL;
++
++	if (vma->vm_start + vma->vm_mirror == vma->vm_mm->context.vdso)
+ 		return "[vdso]";
++#endif
++
+ 	return NULL;
+ }
+ 
 diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/kernel/sys_i386.c linux-2.6.21-pax/arch/i386/kernel/sys_i386.c
 --- linux-2.6.21/arch/i386/kernel/sys_i386.c	2007-02-04 19:44:54.000000000 +0100
 +++ linux-2.6.21-pax/arch/i386/kernel/sys_i386.c	2007-04-26 09:01:07.000000000 +0200
@@ -3182,81 +3222,6 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/kerne
  
  struct sel_arg_struct {
  	unsigned long n;
-diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/kernel/syscall_table.S linux-2.6.21-pax/arch/i386/kernel/syscall_table.S
---- linux-2.6.21/arch/i386/kernel/syscall_table.S	2007-02-04 19:44:54.000000000 +0100
-+++ linux-2.6.21-pax/arch/i386/kernel/syscall_table.S	2007-04-26 09:01:07.000000000 +0200
-@@ -1,3 +1,4 @@
-+.section .rodata,"a",@progbits
- ENTRY(sys_call_table)
- 	.long sys_restart_syscall	/* 0 - old "setup()" system call, used for restarting */
- 	.long sys_exit
-diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/kernel/sysenter.c linux-2.6.21-pax/arch/i386/kernel/sysenter.c
---- linux-2.6.21/arch/i386/kernel/sysenter.c	2007-04-26 08:50:57.000000000 +0200
-+++ linux-2.6.21-pax/arch/i386/kernel/sysenter.c	2007-04-26 09:01:07.000000000 +0200
-@@ -49,7 +49,7 @@ extern asmlinkage void sysenter_entry(vo
- void enable_sep_cpu(void)
- {
- 	int cpu = get_cpu();
--	struct tss_struct *tss = &per_cpu(init_tss, cpu);
-+	struct tss_struct *tss = init_tss + cpu;
- 
- 	if (!boot_cpu_has(X86_FEATURE_SEP)) {
- 		put_cpu();
-@@ -106,9 +106,10 @@ int arch_setup_additional_pages(struct l
- 	struct mm_struct *mm = current->mm;
- 	unsigned long addr;
- 	int ret;
-+	unsigned long vm_flags = VM_READ|VM_EXEC|VM_MAYREAD|VM_MAYWRITE|VM_MAYEXEC|VM_ALWAYSDUMP;
- 
- 	down_write(&mm->mmap_sem);
--	addr = get_unmapped_area(NULL, 0, PAGE_SIZE, 0, 0);
-+	addr = get_unmapped_area(NULL, 0, PAGE_SIZE, 0, MAP_EXECUTABLE);
- 	if (IS_ERR_VALUE(addr)) {
- 		ret = addr;
- 		goto up_fail;
-@@ -122,15 +123,17 @@ int arch_setup_additional_pages(struct l
- 	 * without matching up the same kernel and hardware config to see
- 	 * what PC values meant.
- 	 */
--	ret = install_special_mapping(mm, addr, PAGE_SIZE,
--				      VM_READ|VM_EXEC|
--				      VM_MAYREAD|VM_MAYWRITE|VM_MAYEXEC|
--				      VM_ALWAYSDUMP,
--				      syscall_pages);
-+
-+#ifdef CONFIG_PAX_MPROTECT
-+	if (mm->pax_flags & MF_PAX_MPROTECT)
-+		vm_flags &= ~VM_MAYWRITE;
-+#endif
-+
-+	ret = install_special_mapping(mm, addr, PAGE_SIZE, vm_flags, syscall_pages);
- 	if (ret)
- 		goto up_fail;
- 
--	current->mm->context.vdso = (void *)addr;
-+	current->mm->context.vdso = addr;
- 	current_thread_info()->sysenter_return =
- 				    (void *)VDSO_SYM(&SYSENTER_RETURN);
- up_fail:
-@@ -140,8 +143,17 @@ up_fail:
- 
- const char *arch_vma_name(struct vm_area_struct *vma)
- {
--	if (vma->vm_mm && vma->vm_start == (long)vma->vm_mm->context.vdso)
-+	if (vma->vm_start == vma->vm_mm->context.vdso)
-+		return "[vdso]";
-+
-+#ifdef CONFIG_PAX_SEGMEXEC
-+	if (!(vma->vm_mm->pax_flags & MF_PAX_SEGMEXEC) || !(vma->vm_flags & VM_MIRROR))
-+		return NULL;
-+
-+	if (vma->vm_start + vma->vm_mirror == vma->vm_mm->context.vdso)
- 		return "[vdso]";
-+#endif
-+
- 	return NULL;
- }
- 
 diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/kernel/traps.c linux-2.6.21-pax/arch/i386/kernel/traps.c
 --- linux-2.6.21/arch/i386/kernel/traps.c	2007-04-26 08:50:57.000000000 +0200
 +++ linux-2.6.21-pax/arch/i386/kernel/traps.c	2007-04-26 09:01:07.000000000 +0200
@@ -5692,7 +5657,7 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/mm/fa
  
  	/* When running in the kernel we expect faults to occur only to
  	 * addresses in user space.  All other faults represent errors in the
-@@ -371,10 +402,101 @@ fastcall void __kprobes do_page_fault(st
+@@ -371,10 +402,105 @@ fastcall void __kprobes do_page_fault(st
  	if (!down_read_trylock(&mm->mmap_sem)) {
  		if ((error_code & 4) == 0 &&
  		    !search_exception_tables(regs->eip))
@@ -5760,8 +5725,10 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/mm/fa
 +	 * PaX: fill DTLB with user rights and retry
 +	 */
 +	__asm__ __volatile__ (
-+		"movw %w4,%%ds\n"
-+		"orb %2,%%ss:(%1)\n"
++#ifdef CONFIG_PAX_MEMORY_UDEREF
++		"movw %w4,%%es\n"
++#endif
++		"orb %2,(%1)\n"
 +#if defined(CONFIG_M586) || defined(CONFIG_M586TSC)
 +/*
 + * PaX: let this uncommented 'invlpg' remind us on the behaviour of Intel's
@@ -5778,10 +5745,12 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/mm/fa
 + */
 +		"invlpg (%0)\n"
 +#endif
-+		"testb $0,(%0)\n"
-+		"xorb %3,%%ss:(%1)\n"
++		"testb $0,%%es:(%0)\n"
++		"xorb %3,(%1)\n"
++#ifdef CONFIG_PAX_MEMORY_UDEREF
 +		"pushl %%ss\n"
-+		"popl %%ds\n"
++		"popl %%es\n"
++#endif
 +		:
 +		: "q" (address), "r" (pte), "q" (pte_mask), "i" (_PAGE_USER), "r" (__USER_DS)
 +		: "memory", "cc");
@@ -5923,7 +5892,7 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/mm/fa
  	tsk->thread.cr2 = address;
  	tsk->thread.trap_no = 14;
  	tsk->thread.error_code = error_code;
-@@ -624,3 +803,101 @@ void vmalloc_sync_all(void)
+@@ -624,3 +803,110 @@ void vmalloc_sync_all(void)
  	}
  }
  #endif
@@ -5938,7 +5907,16 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/i386/mm/fa
 +static int pax_handle_fetch_fault(struct pt_regs *regs)
 +{
 +
-+	static const unsigned char trans[8] = {6, 1, 2, 0, 13, 5, 3, 4};
++	static const unsigned char trans[8] = {
++		offsetof(struct pt_regs, eax) / 4,
++		offsetof(struct pt_regs, ecx) / 4,
++		offsetof(struct pt_regs, edx) / 4,
++		offsetof(struct pt_regs, ebx) / 4,
++		offsetof(struct pt_regs, esp) / 4,
++		offsetof(struct pt_regs, ebp) / 4,
++		offsetof(struct pt_regs, esi) / 4,
++		offsetof(struct pt_regs, edi) / 4,
++	};
 +	int err;
 +
 +	if (regs->eflags & X86_EFLAGS_VM)
@@ -8886,18 +8864,6 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/sparc64/ke
  		mm->get_unmapped_area = arch_get_unmapped_area_topdown;
  		mm->unmap_area = arch_unmap_area_topdown;
  	}
-diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/sparc64/mm/Makefile linux-2.6.21-pax/arch/sparc64/mm/Makefile
---- linux-2.6.21/arch/sparc64/mm/Makefile	2007-02-04 19:44:54.000000000 +0100
-+++ linux-2.6.21-pax/arch/sparc64/mm/Makefile	2007-04-26 09:01:10.000000000 +0200
-@@ -3,7 +3,7 @@
- #
- 
- EXTRA_AFLAGS := -ansi
--EXTRA_CFLAGS := -Werror
-+#EXTRA_CFLAGS := -Werror
- 
- obj-y    := ultra.o tlb.o tsb.o fault.o init.o generic.o
- 
 diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/sparc64/mm/fault.c linux-2.6.21-pax/arch/sparc64/mm/fault.c
 --- linux-2.6.21/arch/sparc64/mm/fault.c	2007-02-04 19:44:54.000000000 +0100
 +++ linux-2.6.21-pax/arch/sparc64/mm/fault.c	2007-04-26 09:01:10.000000000 +0200
@@ -9324,6 +9290,18 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/sparc64/mm
  	/* Pure DTLB misses do not tell us whether the fault causing
  	 * load/store/atomic was a write or not, it only says that there
  	 * was no match.  So in such a case we (carefully) read the
+diff -NurpX linux-2.6.21.3-pax/Documentation/dontdiff linux-2.6.21.3/arch/sparc64/mm/Makefile linux-2.6.21.3-pax/arch/sparc64/mm/Makefile
+--- linux-2.6.21.3/arch/sparc64/mm/Makefile	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.21.3-pax/arch/sparc64/mm/Makefile	2007-04-26 09:01:10.000000000 +0200
+@@ -3,7 +3,7 @@
+ #
+ 
+ EXTRA_AFLAGS := -ansi
+-EXTRA_CFLAGS := -Werror
++#EXTRA_CFLAGS := -Werror
+ 
+ obj-y    := ultra.o tlb.o tsb.o fault.o init.o generic.o
+ 
 diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/v850/kernel/module.c linux-2.6.21-pax/arch/v850/kernel/module.c
 --- linux-2.6.21/arch/v850/kernel/module.c	2007-02-04 19:44:54.000000000 +0100
 +++ linux-2.6.21-pax/arch/v850/kernel/module.c	2007-04-26 09:01:11.000000000 +0200
@@ -9375,6 +9353,28 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/x86_64/ia3
 +
  typedef struct user_i387_ia32_struct elf_fpregset_t;
  typedef struct user32_fxsr_struct elf_fpxregset_t;
+ 
+@@ -327,15 +338,18 @@ int ia32_setup_arg_pages(struct linux_bi
+ 
+ 	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
+ 		struct page *page = bprm->page[i];
++		int retval;
+ 		if (page) {
+ 			bprm->page[i] = NULL;
+-			install_arg_page(mpnt, page, stack_base);
++			retval = install_arg_page(mpnt, page, stack_base);
++			if (!ret)
++				ret = retval;
+ 		}
+ 		stack_base += PAGE_SIZE;
+ 	}
+ 	up_write(&mm->mmap_sem);
+-	
+-	return 0;
++
++	return ret;
+ }
+ EXPORT_SYMBOL(ia32_setup_arg_pages);
  
 diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/arch/x86_64/ia32/mmap32.c linux-2.6.21-pax/arch/x86_64/ia32/mmap32.c
 --- linux-2.6.21/arch/x86_64/ia32/mmap32.c	2007-02-04 19:44:54.000000000 +0100
@@ -9636,6 +9636,38 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/crypto/lrw.c li
  	int bsize = crypto_cipher_blocksize(child);
  
  	crypto_cipher_clear_flags(child, CRYPTO_TFM_REQ_MASK);
+diff -NurpX linux-2.6.21.3-pax/Documentation/dontdiff linux-2.6.21.3/Documentation/dontdiff linux-2.6.21.3-pax/Documentation/dontdiff
+--- linux-2.6.21.3/Documentation/dontdiff	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.21.3-pax/Documentation/dontdiff	2007-04-26 09:01:05.000000000 +0200
+@@ -55,7 +55,7 @@ aic7*seq.h*
+ aicasm
+ aicdb.h*
+ asm
+-asm-offsets.*
++asm-offsets.h
+ asm_offsets.*
+ autoconf.h*
+ bbootsect
+@@ -127,6 +127,7 @@ pss_boot.h
+ raid6altivec*.c
+ raid6int*.c
+ raid6tables.c
++relocs
+ setup
+ sim710_d.h*
+ sm_tbl*
+@@ -139,8 +140,11 @@ utsrelease.h*
+ version.h*
+ vmlinux
+ vmlinux-*
++vmlinux.bin.all
+ vmlinux.lds
++vmlinux.relocs
+ vsyscall.lds
+ wanxlfw.inc
+ uImage
++utsrelease.h
+ zImage
 diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/drivers/acpi/blacklist.c linux-2.6.21-pax/drivers/acpi/blacklist.c
 --- linux-2.6.21/drivers/acpi/blacklist.c	2007-04-26 08:51:44.000000000 +0200
 +++ linux-2.6.21-pax/drivers/acpi/blacklist.c	2007-04-26 09:01:11.000000000 +0200
@@ -9918,6 +9950,26 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/drivers/char/nv
 diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/drivers/char/random.c linux-2.6.21-pax/drivers/char/random.c
 --- linux-2.6.21/drivers/char/random.c	2007-04-26 08:52:01.000000000 +0200
 +++ linux-2.6.21-pax/drivers/char/random.c	2007-04-26 09:01:14.000000000 +0200
+@@ -693,8 +693,8 @@ static void xfer_secondary_pool(struct e
+ 
+ 	if (r->pull && r->entropy_count < nbytes * 8 &&
+ 	    r->entropy_count < r->poolinfo->POOLBITS) {
+-		int bytes = max_t(int, random_read_wakeup_thresh / 8,
+-				min_t(int, nbytes, sizeof(tmp)));
++		int bytes = min_t(int, max_t(int, random_read_wakeup_thresh / 8,
++				nbytes), sizeof(tmp));
+ 		int rsvd = r->limit ? 0 : random_read_wakeup_thresh/4;
+ 
+ 		DEBUG_ENT("going to reseed %s with %d bits "
+@@ -1162,7 +1162,7 @@ EXPORT_SYMBOL(generate_random_uuid);
+ #include <linux/sysctl.h>
+ 
+ static int min_read_thresh = 8, min_write_thresh;
+-static int max_read_thresh = INPUT_POOL_WORDS * 32;
++static int max_read_thresh = OUTPUT_POOL_WORDS * 32;
+ static int max_write_thresh = INPUT_POOL_WORDS * 32;
+ static char sysctl_bootid[16];
+ 
 @@ -1662,3 +1662,23 @@ randomize_range(unsigned long start, uns
  		return 0;
  	return PAGE_ALIGN(get_random_int() % range + start);
@@ -10528,18 +10580,6 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/drivers/net/pcn
      { 0x300, 0x320, 0x340, 0x360, 0 };
  
  static int pcnet32_debug = 0;
-diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/drivers/net/tg3.c linux-2.6.21-pax/drivers/net/tg3.c
---- linux-2.6.21/drivers/net/tg3.c	2007-04-26 08:53:10.000000000 +0200
-+++ linux-2.6.21-pax/drivers/net/tg3.c	2007-04-26 09:01:17.000000000 +0200
-@@ -10578,7 +10578,7 @@ static int __devinit tg3_get_invariants(
- 			tp->tg3_flags2 |= TG3_FLG2_HW_TSO_1 | TG3_FLG2_TSO_BUG;
- 			if (GET_ASIC_REV(tp->pci_chip_rev_id) ==
- 				ASIC_REV_5750 &&
--	     		    tp->pci_chip_rev_id >= CHIPREV_ID_5750_C2)
-+	     		    tp->pci_chip_rev_id >= CHIPREV_ID_5750_C1)
- 				tp->tg3_flags2 &= ~TG3_FLG2_TSO_BUG;
- 		}
- 	}
 diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/drivers/net/tg3.h linux-2.6.21-pax/drivers/net/tg3.h
 --- linux-2.6.21/drivers/net/tg3.h	2007-04-26 08:53:11.000000000 +0200
 +++ linux-2.6.21-pax/drivers/net/tg3.h	2007-04-26 09:01:17.000000000 +0200
@@ -11936,6 +11976,15 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/fs/exec.c linux
  int register_binfmt(struct linux_binfmt * fmt)
  {
  	struct linux_binfmt ** tmp = &formats;
+@@ -303,7 +313,7 @@ EXPORT_SYMBOL(copy_strings_kernel);
+  *
+  * vma->vm_mm->mmap_sem is held for writing.
+  */
+-void install_arg_page(struct vm_area_struct *vma,
++int install_arg_page(struct vm_area_struct *vma,
+ 			struct page *page, unsigned long address)
+ {
+ 	struct mm_struct *mm = vma->vm_mm;
 @@ -313,6 +323,10 @@ void install_arg_page(struct vm_area_str
  	if (unlikely(anon_vma_prepare(vma)))
  		goto out;
@@ -11947,7 +11996,7 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/fs/exec.c linux
  	flush_dcache_page(page);
  	pte = get_locked_pte(mm, address, &ptl);
  	if (!pte)
-@@ -322,9 +336,21 @@ void install_arg_page(struct vm_area_str
+@@ -322,17 +336,30 @@ void install_arg_page(struct vm_area_str
  		goto out;
  	}
  	inc_mm_counter(mm, anon_rss);
@@ -11969,7 +12018,17 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/fs/exec.c linux
  	page_add_new_anon_rmap(page, vma, address);
  	pte_unmap_unlock(pte, ptl);
  
-@@ -347,6 +373,10 @@ int setup_arg_pages(struct linux_binprm 
+ 	/* no need for flush_tlb */
+-	return;
++	return 0;
+ out:
+ 	__free_page(page);
+ 	force_sig(SIGKILL, current);
++	return -ENOMEM;
+ }
+ 
+ #define EXTRA_STACK_VM_PAGES	20	/* random */
+@@ -347,6 +374,10 @@ int setup_arg_pages(struct linux_binprm 
  	int i, ret;
  	long arg_size;
  
@@ -11997,7 +12056,7 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/fs/exec.c linux
  	down_write(&mm->mmap_sem);
  	{
  		mpnt->vm_mm = mm;
-@@ -429,14 +469,51 @@ int setup_arg_pages(struct linux_binprm 
+@@ -429,27 +469,77 @@ int setup_arg_pages(struct linux_binprm 
  		else
  			mpnt->vm_flags = VM_STACK_FLAGS;
  		mpnt->vm_flags |= mm->def_flags;
@@ -12050,22 +12109,36 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/fs/exec.c linux
  	}
  
  	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
-@@ -443,6 +520,14 @@ int setup_arg_pages(struct linux_binprm 
+ 		struct page *page = bprm->page[i];
++		int retval;
  		if (page) {
  			bprm->page[i] = NULL;
- 			install_arg_page(mpnt, page, stack_base);
+-			install_arg_page(mpnt, page, stack_base);
++			retval = install_arg_page(mpnt, page, stack_base);
++			if (!ret)
++				ret = retval;
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
-+			if (mpnt_m) {
++			if (mpnt_m && !retval) {
 +				page_cache_get(page);
-+				install_arg_page(mpnt_m, page, stack_base + SEGMEXEC_TASK_SIZE);
++				retval = install_arg_page(mpnt_m, page, stack_base + SEGMEXEC_TASK_SIZE);
++				if (!ret)
++					ret = retval;
 +			}
 +#endif
 +
  		}
  		stack_base += PAGE_SIZE;
  	}
-@@ -1142,6 +1227,11 @@ int do_execve(char * filename,
+ 	up_write(&mm->mmap_sem);
+-	
+-	return 0;
++
++	return ret;
+ }
+ 
+ EXPORT_SYMBOL(setup_arg_pages);
+@@ -1142,6 +1233,11 @@ int do_execve(char * filename,
  
  	bprm->p = PAGE_SIZE*MAX_ARG_PAGES-sizeof(void *);
  
@@ -12679,7 +12752,7 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/include/asm-avr
 +#define ELF_ET_DYN_BASE         (TASK_SIZE / 3 * 2)
  
 +#ifdef CONFIG_PAX_ASLR
-+#define PAX_ELF_ET_DYN_BASE(tsk)	0x10000000UL
++#define PAX_ELF_ET_DYN_BASE(tsk)	0x00001000UL
 +
 +#define PAX_DELTA_MMAP_LSB(tsk)		PAGE_SHIFT
 +#define PAX_DELTA_MMAP_LEN(tsk)		15
@@ -12724,22 +12797,6 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/include/asm-h83
  	KM_TYPE_NR
  };
  
-diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/include/asm-i386/a.out.h linux-2.6.21-pax/include/asm-i386/a.out.h
---- linux-2.6.21/include/asm-i386/a.out.h	2007-02-04 19:44:54.000000000 +0100
-+++ linux-2.6.21-pax/include/asm-i386/a.out.h	2007-04-26 09:01:22.000000000 +0200
-@@ -19,7 +19,11 @@ struct exec
- 
- #ifdef __KERNEL__
- 
--#define STACK_TOP	TASK_SIZE
-+#ifdef CONFIG_PAX_SEGMEXEC
-+#define __STACK_TOP ((current->mm->pax_flags & MF_PAX_SEGMEXEC)?TASK_SIZE/2:TASK_SIZE)
-+#else
-+#define __STACK_TOP TASK_SIZE
-+#endif
- 
- #endif
- 
 diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/include/asm-i386/alternative.h linux-2.6.21-pax/include/asm-i386/alternative.h
 --- linux-2.6.21/include/asm-i386/alternative.h	2007-02-04 19:44:54.000000000 +0100
 +++ linux-2.6.21-pax/include/asm-i386/alternative.h	2007-04-26 09:01:22.000000000 +0200
@@ -12760,6 +12817,22 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/include/asm-i38
 +		      ".section .altinstr_replacement,\"a\"\n"		\
  		      "663:\n\t" newinstr "\n664:\n"   /* replacement */\
  		      ".previous" :: "i" (feature), ##input)
+ 
+diff -NurpX linux-2.6.21.3-pax/Documentation/dontdiff linux-2.6.21.3/include/asm-i386/a.out.h linux-2.6.21.3-pax/include/asm-i386/a.out.h
+--- linux-2.6.21.3/include/asm-i386/a.out.h	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.21.3-pax/include/asm-i386/a.out.h	2007-04-26 09:01:22.000000000 +0200
+@@ -19,7 +19,11 @@ struct exec
+ 
+ #ifdef __KERNEL__
+ 
+-#define STACK_TOP	TASK_SIZE
++#ifdef CONFIG_PAX_SEGMEXEC
++#define __STACK_TOP ((current->mm->pax_flags & MF_PAX_SEGMEXEC)?TASK_SIZE/2:TASK_SIZE)
++#else
++#define __STACK_TOP TASK_SIZE
++#endif
+ 
+ #endif
  
 diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/include/asm-i386/apic.h linux-2.6.21-pax/include/asm-i386/apic.h
 --- linux-2.6.21/include/asm-i386/apic.h	2007-04-26 08:54:26.000000000 +0200
@@ -13307,7 +13380,11 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/include/asm-i38
 diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/include/asm-i386/pda.h linux-2.6.21-pax/include/asm-i386/pda.h
 --- linux-2.6.21/include/asm-i386/pda.h	2007-04-26 08:54:26.000000000 +0200
 +++ linux-2.6.21-pax/include/asm-i386/pda.h	2007-04-26 09:01:23.000000000 +0200
-@@ -11,14 +11,15 @@
+@@ -8,17 +8,19 @@
+ 
+ #include <linux/stddef.h>
+ #include <linux/types.h>
++#include <linux/threads.h>
  
  struct i386_pda
  {
@@ -14894,21 +14971,9 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/include/linux/h
  /*
   * Same but also flushes aliased cache contents to RAM.
   */
-diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/include/linux/jbd.h linux-2.6.21-pax/include/linux/jbd.h
---- linux-2.6.21/include/linux/jbd.h	2007-02-04 19:44:54.000000000 +0100
-+++ linux-2.6.21-pax/include/linux/jbd.h	2007-04-26 09:01:25.000000000 +0200
-@@ -68,7 +68,7 @@ extern int journal_enable_debug;
- 		}							\
- 	} while (0)
- #else
--#define jbd_debug(f, a...)	/**/
-+#define jbd_debug(f, a...)	do {} while (0)
- #endif
- 
- extern void * __jbd_kmalloc (const char *where, size_t size, gfp_t flags, int retry);
-diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/include/linux/jbd2.h linux-2.6.21-pax/include/linux/jbd2.h
---- linux-2.6.21/include/linux/jbd2.h	2007-02-04 19:44:54.000000000 +0100
-+++ linux-2.6.21-pax/include/linux/jbd2.h	2007-04-26 09:01:25.000000000 +0200
+diff -NurpX linux-2.6.21.3-pax/Documentation/dontdiff linux-2.6.21.3/include/linux/jbd2.h linux-2.6.21.3-pax/include/linux/jbd2.h
+--- linux-2.6.21.3/include/linux/jbd2.h	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.21.3-pax/include/linux/jbd2.h	2007-04-26 09:01:25.000000000 +0200
 @@ -68,7 +68,7 @@ extern int jbd2_journal_enable_debug;
  		}							\
  	} while (0)
@@ -14918,6 +14983,33 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/include/linux/j
  #endif
  
  extern void * __jbd2_kmalloc (const char *where, size_t size, gfp_t flags, int retry);
+diff -NurpX linux-2.6.21.3-pax/Documentation/dontdiff linux-2.6.21.3/include/linux/jbd.h linux-2.6.21.3-pax/include/linux/jbd.h
+--- linux-2.6.21.3/include/linux/jbd.h	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.21.3-pax/include/linux/jbd.h	2007-04-26 09:01:25.000000000 +0200
+@@ -68,7 +68,7 @@ extern int journal_enable_debug;
+ 		}							\
+ 	} while (0)
+ #else
+-#define jbd_debug(f, a...)	/**/
++#define jbd_debug(f, a...)	do {} while (0)
+ #endif
+ 
+ extern void * __jbd_kmalloc (const char *where, size_t size, gfp_t flags, int retry);
+diff -NurpX linux-2.6.21.3-pax/Documentation/dontdiff linux-2.6.21.3/include/linux/mman.h linux-2.6.21.3-pax/include/linux/mman.h
+--- linux-2.6.21.3/include/linux/mman.h	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.21.3-pax/include/linux/mman.h	2007-04-26 09:01:25.000000000 +0200
+@@ -61,6 +61,11 @@ static inline unsigned long
+ calc_vm_flag_bits(unsigned long flags)
+ {
+ 	return _calc_vm_trans(flags, MAP_GROWSDOWN,  VM_GROWSDOWN ) |
++
++#ifdef CONFIG_PAX_SEGMEXEC
++	       _calc_vm_trans(flags, MAP_MIRROR, VM_MIRROR) |
++#endif
++
+ 	       _calc_vm_trans(flags, MAP_DENYWRITE,  VM_DENYWRITE ) |
+ 	       _calc_vm_trans(flags, MAP_EXECUTABLE, VM_EXECUTABLE) |
+ 	       _calc_vm_trans(flags, MAP_LOCKED,     VM_LOCKED    );
 diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/include/linux/mm.h linux-2.6.21-pax/include/linux/mm.h
 --- linux-2.6.21/include/linux/mm.h	2007-04-26 08:54:42.000000000 +0200
 +++ linux-2.6.21-pax/include/linux/mm.h	2007-04-26 09:01:25.000000000 +0200
@@ -14992,6 +15084,15 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/include/linux/m
  #ifndef VM_STACK_DEFAULT_FLAGS		/* arch can override this */
  #define VM_STACK_DEFAULT_FLAGS VM_DATA_DEFAULT_FLAGS
  #endif
+@@ -771,7 +819,7 @@ static inline int handle_mm_fault(struct
+ 
+ extern int make_pages_present(unsigned long addr, unsigned long end);
+ extern int access_process_vm(struct task_struct *tsk, unsigned long addr, void *buf, int len, int write);
+-void install_arg_page(struct vm_area_struct *, struct page *, unsigned long);
++int install_arg_page(struct vm_area_struct *, struct page *, unsigned long);
+ 
+ int get_user_pages(struct task_struct *tsk, struct mm_struct *mm, unsigned long start,
+ 		int len, int write, int force, struct page **pages, struct vm_area_struct **vmas);
 @@ -1114,7 +1162,6 @@ static inline unsigned long vma_pages(st
  }
  
@@ -15012,21 +15113,6 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/include/linux/m
 +
  #endif /* __KERNEL__ */
  #endif /* _LINUX_MM_H */
-diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/include/linux/mman.h linux-2.6.21-pax/include/linux/mman.h
---- linux-2.6.21/include/linux/mman.h	2007-02-04 19:44:54.000000000 +0100
-+++ linux-2.6.21-pax/include/linux/mman.h	2007-04-26 09:01:25.000000000 +0200
-@@ -61,6 +61,11 @@ static inline unsigned long
- calc_vm_flag_bits(unsigned long flags)
- {
- 	return _calc_vm_trans(flags, MAP_GROWSDOWN,  VM_GROWSDOWN ) |
-+
-+#ifdef CONFIG_PAX_SEGMEXEC
-+	       _calc_vm_trans(flags, MAP_MIRROR, VM_MIRROR) |
-+#endif
-+
- 	       _calc_vm_trans(flags, MAP_DENYWRITE,  VM_DENYWRITE ) |
- 	       _calc_vm_trans(flags, MAP_EXECUTABLE, VM_EXECUTABLE) |
- 	       _calc_vm_trans(flags, MAP_LOCKED,     VM_LOCKED    );
 diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/include/linux/module.h linux-2.6.21-pax/include/linux/module.h
 --- linux-2.6.21/include/linux/module.h	2007-04-26 08:54:42.000000000 +0200
 +++ linux-2.6.21-pax/include/linux/module.h	2007-04-26 09:01:25.000000000 +0200
@@ -16181,6 +16267,18 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/lib/radix-tree.
  
  static inline gfp_t root_gfp_mask(struct radix_tree_root *root)
  {
+diff -NurpX linux-2.6.21.3-pax/Documentation/dontdiff linux-2.6.21.3/Makefile linux-2.6.21.3-pax/Makefile
+--- linux-2.6.21.3/Makefile	2007-05-26 11:12:38.000000000 +0200
++++ linux-2.6.21.3-pax/Makefile	2007-06-02 23:25:38.000000000 +0200
+@@ -312,7 +312,7 @@ LINUXINCLUDE    := -Iinclude \
+ 
+ CPPFLAGS        := -D__KERNEL__ $(LINUXINCLUDE)
+ 
+-CFLAGS          := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
++CFLAGS          := -Wall -W -Wno-unused -Wno-sign-compare -Wundef -Wstrict-prototypes -Wno-trigraphs \
+                    -fno-strict-aliasing -fno-common
+ AFLAGS          := -D__ASSEMBLY__
+ 
 diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/mm/filemap.c linux-2.6.21-pax/mm/filemap.c
 --- linux-2.6.21/mm/filemap.c	2007-04-26 08:55:02.000000000 +0200
 +++ linux-2.6.21-pax/mm/filemap.c	2007-04-26 09:01:27.000000000 +0200
@@ -18381,7 +18479,7 @@ diff -NurpX linux-2.6.21-pax/Documentation/dontdiff linux-2.6.21/security/Kconfi
 +
 +config PAX_KERNEXEC
 +	bool "Enforce non-executable kernel pages"
-+	depends on PAX_NOEXEC && X86_32 && !HOTPLUG_PCI_COMPAQ_NVRAM && !PCI_BIOS && !EFI && !COMPAT_VDSO && X86_WP_WORKS_OK
++	depends on PAX_NOEXEC && X86_32 && !HOTPLUG_PCI_COMPAQ_NVRAM && !PCI_BIOS && !EFI && !COMPAT_VDSO && X86_WP_WORKS_OK && !PARAVIRT
 +	help
 +	  This is the kernel land equivalent of PAGEEXEC and MPROTECT,
 +	  that is, enabling this option will make it harder to inject
