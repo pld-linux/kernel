@@ -121,7 +121,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.3
+%define		_rel			0.4
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -347,13 +347,10 @@ Patch5001:	linux-2.6-apparmor-caps.patch
 # not ready yet
 Patch9997:	pax_selinux_hooks-2.6.20.patch
 
-# based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.21-test1.patch
-# TODO: http://www.grsecurity.net/~paxguy1/pax-linux-2.6.21.3-test3.patch
+# based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.21.3-test4.patch
 Patch9998:	pax-linux-2.6.20.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.21-200705071727.patch
-# TODO: apply PaX related changes from 
-#       http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.21.3-200705292345.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.21.3-200706022012.patch
 Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
