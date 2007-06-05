@@ -14139,7 +14139,7 @@ diff -urNp linux-2.6.21.3/fs/proc/proc_sysctl.c linux-2.6.21.3/fs/proc/proc_sysc
  	if (!table)
  		goto out;
  
-+	if (!gr_handle_sysctl(table, 001))
++	if (gr_handle_sysctl(table, 001))
 +		goto out;
 +
  	err = ERR_PTR(-ENOMEM);
@@ -14157,7 +14157,7 @@ diff -urNp linux-2.6.21.3/fs/proc/proc_sysctl.c linux-2.6.21.3/fs/proc/proc_sysc
  			if (pos < filp->f_pos)
  				continue;
  
-+			if (!gr_handle_sysctl(table, 001))
++			if (gr_handle_sysctl(table, 0))
 +				continue;
 +
  			if (proc_sys_fill_cache(filp, dirent, filldir, table) < 0)
@@ -14179,7 +14179,7 @@ diff -urNp linux-2.6.21.3/fs/proc/proc_sysctl.c linux-2.6.21.3/fs/proc/proc_sysc
 +	if (!table)
 +		goto out;
 +
-+	if (!gr_handle_sysctl(table, 001)) {
++	if (gr_handle_sysctl(table, 001)) {
 +		error = -ENOENT;
 +		goto out;
 +	}
@@ -14729,7 +14729,7 @@ diff -urNp linux-2.6.21/grsecurity/gracl_alloc.c linux-2.6.21/grsecurity/gracl_a
 diff -urNp linux-2.6.21/grsecurity/gracl.c linux-2.6.21/grsecurity/gracl.c
 --- linux-2.6.21/grsecurity/gracl.c	1969-12-31 19:00:00.000000000 -0500
 +++ linux-2.6.21/grsecurity/gracl.c	2007-04-29 23:39:37.000000000 -0400
-@@ -0,0 +1,3624 @@
+@@ -0,0 +1,3641 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
 +#include <linux/sched.h>
@@ -17955,6 +17955,9 @@ diff -urNp linux-2.6.21/grsecurity/gracl.c linux-2.6.21/grsecurity/gracl.c
 +	return obj;
 +}
 +
++/* returns 0 when allowing, non-zero on error
++   op of 0 is used for readdir, so we don't log the names of hidden files
++*/
 +__u32
 +gr_handle_sysctl(const struct ctl_table *table, const int op)
 +{
@@ -17965,10 +17968,22 @@ diff -urNp linux-2.6.21/grsecurity/gracl.c linux-2.6.21/grsecurity/gracl.c
 +	struct acl_object_label *obj;
 +	unsigned short len = 0, pos = 0, depth = 0, i;
 +	__u32 err = 0;
-+	__u32 mode = GR_FIND;
++	__u32 mode = 0;
 +
 +	if (unlikely(!(gr_status & GR_READY)))
-+		return 1;
++		return 0;
++
++	/* for now, ignore operations on non-sysctl entries if it's not a
++	   readdir*/
++	if (table->child != NULL && op != 0)
++		return 0;
++
++	mode |= GR_FIND;
++	/* it's only a read if it's an entry, read on dirs is for readdir */
++	if (op & 004)
++		mode |= GR_READ;
++	if (op & 002)
++		mode |= GR_WRITE;
 +
 +	preempt_disable();
 +
@@ -17977,12 +17992,7 @@ diff -urNp linux-2.6.21/grsecurity/gracl.c linux-2.6.21/grsecurity/gracl.c
 +	/* it's only a read/write if it's an actual entry, not a dir
 +	   (which are opened for readdir)
 +	*/
-+	if (table->child == NULL) {
-+		if (op & 004)
-+			mode |= GR_READ;
-+		if (op & 002)
-+			mode |= GR_WRITE;
-+	}
++
 +	/* convert the requested sysctl entry into a pathname */
 +
 +	for (tmp = (ctl_table *)table; tmp != NULL; tmp = tmp->parent) {
@@ -17992,7 +18002,7 @@ diff -urNp linux-2.6.21/grsecurity/gracl.c linux-2.6.21/grsecurity/gracl.c
 +	}
 +
 +	if ((len + depth + strlen(proc_sys) + 1) > PAGE_SIZE) {
-+		err = 0; /* deny */
++		/* deny */
 +		goto out;
 +	}
 +
@@ -18024,20 +18034,27 @@ diff -urNp linux-2.6.21/grsecurity/gracl.c linux-2.6.21/grsecurity/gracl.c
 +
 +		new_mode &= ~(GR_AUDITS | GR_SUPPRESS);
 +
-+		err = new_mode;
++		err = 0;
 +		gr_log_learn_sysctl(current, path, new_mode);
++	} else if (!(err & GR_FIND) && !(err & GR_SUPPRESS) && op != 0) {
++		gr_log_hidden_sysctl(GR_DONT_AUDIT, GR_HIDDEN_ACL_MSG, path);
++		err = -ENOENT;
++	} else if (!(err & GR_FIND)) {
++		err = -ENOENT;
 +	} else if (((err & mode) & ~GR_FIND) != (mode & ~GR_FIND) && !(err & GR_SUPPRESS)) {
 +		gr_log_str4(GR_DONT_AUDIT, GR_SYSCTL_ACL_MSG, "denied",
 +			       path, (mode & GR_READ) ? " reading" : "",
 +			       (mode & GR_WRITE) ? " writing" : "");
-+		err = 0;
++		err = -EACCES;
 +	} else if ((err & mode) != mode) {
-+		err = 0;
++		err = -EACCES;
 +	} else if ((((err & mode) & ~GR_FIND) == (mode & ~GR_FIND)) && (err & GR_AUDITS)) {
 +		gr_log_str4(GR_DO_AUDIT, GR_SYSCTL_ACL_MSG, "successful",
 +			       path, (mode & GR_READ) ? " reading" : "",
 +			       (mode & GR_WRITE) ? " writing" : "");
-+	}
++		err = 0;
++	} else
++		err = 0;
 +
 +      out:
 +	preempt_enable();
@@ -20202,7 +20219,7 @@ diff -urNp linux-2.6.21/grsecurity/grsec_disabled.c linux-2.6.21/grsecurity/grse
 +__u32
 +gr_handle_sysctl(const struct ctl_table * table, const int op)
 +{
-+	return 1;
++	return 0;
 +}
 +#endif
 +
@@ -21100,7 +21117,7 @@ diff -urNp linux-2.6.21/grsecurity/grsec_link.c linux-2.6.21/grsecurity/grsec_li
 diff -urNp linux-2.6.21/grsecurity/grsec_log.c linux-2.6.21/grsecurity/grsec_log.c
 --- linux-2.6.21/grsecurity/grsec_log.c	1969-12-31 19:00:00.000000000 -0500
 +++ linux-2.6.21/grsecurity/grsec_log.c	2007-04-29 22:41:27.000000000 -0400
-@@ -0,0 +1,265 @@
+@@ -0,0 +1,269 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
 +#include <linux/file.h>
@@ -21234,6 +21251,10 @@ diff -urNp linux-2.6.21/grsecurity/grsec_log.c linux-2.6.21/grsecurity/grsec_log
 +	case GR_TTYSNIFF:
 +		task = va_arg(ap, struct task_struct *);
 +		gr_log_middle_varargs(audit, msg, NIPQUAD(task->signal->curr_ip), gr_task_fullpath0(task), task->comm, task->pid, gr_parent_task_fullpath0(task), task->parent->comm, task->parent->pid);
++		break;
++	case GR_SYSCTL_HIDDEN:
++		str1 = va_arg(ap, char *);
++		gr_log_middle_varargs(audit, msg, result, str1);
 +		break;
 +	case GR_RBAC:
 +		dentry = va_arg(ap, struct dentry *);
@@ -26187,7 +26208,7 @@ diff -urNp linux-2.6.21/include/linux/grdefs.h linux-2.6.21/include/linux/grdefs
 diff -urNp linux-2.6.21/include/linux/grinternal.h linux-2.6.21/include/linux/grinternal.h
 --- linux-2.6.21/include/linux/grinternal.h	1969-12-31 19:00:00.000000000 -0500
 +++ linux-2.6.21/include/linux/grinternal.h	2007-04-29 22:41:28.000000000 -0400
-@@ -0,0 +1,208 @@
+@@ -0,0 +1,210 @@
 +#ifndef __GRINTERNAL_H
 +#define __GRINTERNAL_H
 +
@@ -26335,6 +26356,7 @@ diff -urNp linux-2.6.21/include/linux/grinternal.h linux-2.6.21/include/linux/gr
 +	GR_RBAC_MODE2,
 +	GR_RBAC_MODE3,
 +	GR_FILENAME,
++	GR_SYSCTL_HIDDEN,
 +	GR_NOARGS,
 +	GR_ONE_INT,
 +	GR_ONE_INT_TWO_STR,
@@ -26360,6 +26382,7 @@ diff -urNp linux-2.6.21/include/linux/grinternal.h linux-2.6.21/include/linux/gr
 +	GR_PSACCT
 +};
 +
++#define gr_log_hidden_sysctl(audit, msg, str) gr_log_varargs(audit, msg, GR_SYSCTL_HIDDEN, str)
 +#define gr_log_ttysniff(audit, msg, task) gr_log_varargs(audit, msg, GR_TTYSNIFF, task)
 +#define gr_log_fs_rbac_generic(audit, msg, dentry, mnt) gr_log_varargs(audit, msg, GR_RBAC, dentry, mnt)
 +#define gr_log_fs_rbac_str(audit, msg, dentry, mnt, str) gr_log_varargs(audit, msg, GR_RBAC_STR, dentry, mnt, str)
@@ -28830,7 +28853,7 @@ diff -urNp linux-2.6.21/kernel/sysctl.c linux-2.6.21/kernel/sysctl.c
  	{ .ctl_name = 0 }
  };
  
-@@ -1149,6 +1189,28 @@ static int test_perm(int mode, int op)
+@@ -1149,6 +1188,25 @@ static int test_perm(int mode, int op)
  int sysctl_perm(ctl_table *table, int op)
  {
  	int error;
@@ -28840,12 +28863,9 @@ diff -urNp linux-2.6.21/kernel/sysctl.c linux-2.6.21/kernel/sysctl.c
 +		return -EACCES;
 +	if (gr_handle_chroot_sysctl(op))
 +		return -EACCES;
-+	if (!gr_handle_sysctl(table, op)) {
-+		if (!(op & 006))
-+			return -ENOENT;
-+		else
-+			return -EACCES;
-+	}
++	error = gr_handle_sysctl(table, op);
++	if (error)
++		return error;
 +	error = security_sysctl(table, op);
 +	if (error)
 +		return error;
@@ -28859,7 +28879,7 @@ diff -urNp linux-2.6.21/kernel/sysctl.c linux-2.6.21/kernel/sysctl.c
  	error = security_sysctl(table, op);
  	if (error)
  		return error;
-@@ -1173,13 +1234,14 @@ repeat:
+@@ -1173,13 +1231,14 @@ repeat:
  		if (n == table->ctl_name) {
  			int error;
  			if (table->child) {
