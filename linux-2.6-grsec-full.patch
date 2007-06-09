@@ -320,7 +320,16 @@ diff -urNp linux-2.6.21.3/arch/i386/boot/setup.S linux-2.6.21.3/arch/i386/boot/s
  	jmpl *(code32_start - start + (DELTA_INITSEG << 4))(%esi)
 diff -urNp linux-2.6.21.3/arch/i386/Kconfig linux-2.6.21.3/arch/i386/Kconfig
 --- linux-2.6.21.3/arch/i386/Kconfig	2007-04-25 23:08:32.000000000 -0400
-+++ linux-2.6.21.3/arch/i386/Kconfig	2007-05-24 22:04:52.000000000 -0400
++++ linux-2.6.21.3/arch/i386/Kconfig	2007-06-01 22:13:13.000000000 -0400
+@@ -578,7 +578,7 @@ endchoice
+ config PAGE_OFFSET
+ 	hex
+ 	default 0xB0000000 if VMSPLIT_3G_OPT
+-	default 0x78000000 if VMSPLIT_2G
++	default 0x70000000 if VMSPLIT_2G
+ 	default 0x40000000 if VMSPLIT_1G
+ 	default 0xC0000000
+ 
 @@ -892,7 +892,7 @@ config HOTPLUG_CPU
  
  config COMPAT_VDSO
@@ -1721,7 +1730,7 @@ diff -urNp linux-2.6.21.3/arch/i386/kernel/entry.S linux-2.6.21.3/arch/i386/kern
  syscall_table_size=(.-sys_call_table)
 diff -urNp linux-2.6.21.3/arch/i386/kernel/head.S linux-2.6.21.3/arch/i386/kernel/head.S
 --- linux-2.6.21.3/arch/i386/kernel/head.S	2007-04-25 23:08:32.000000000 -0400
-+++ linux-2.6.21.3/arch/i386/kernel/head.S	2007-05-24 22:04:52.000000000 -0400
++++ linux-2.6.21.3/arch/i386/kernel/head.S	2007-06-01 22:13:13.000000000 -0400
 @@ -45,6 +45,16 @@
   */
  #define INIT_MAP_BEYOND_END	(128*1024)
@@ -1764,9 +1773,9 @@ diff -urNp linux-2.6.21.3/arch/i386/kernel/head.S linux-2.6.21.3/arch/i386/kerne
 +
 +	movl $((((__PAGE_OFFSET-1) & 0xf0000000) >> 12) | 0x00c09700),%eax
 +	movl %eax,(cpu_gdt_table - __PAGE_OFFSET + GDT_ENTRY_KERNEL_DS * 8 + 4)
++1:
 +	movl $((((__PAGE_OFFSET-1) & 0xf0000000) >> 12) | 0x00c0f300),%eax
 +	movl %eax,(cpu_gdt_table - __PAGE_OFFSET + GDT_ENTRY_DEFAULT_USER_DS * 8 + 4)
-+1:
 +#endif
 +
 +#ifdef CONFIG_PAX_KERNEXEC
@@ -5617,7 +5626,7 @@ diff -urNp linux-2.6.21.3/arch/i386/mm/extable.c linux-2.6.21.3/arch/i386/mm/ext
  		extern u32 pnp_bios_is_utter_crap;
 diff -urNp linux-2.6.21.3/arch/i386/mm/fault.c linux-2.6.21.3/arch/i386/mm/fault.c
 --- linux-2.6.21.3/arch/i386/mm/fault.c	2007-04-25 23:08:32.000000000 -0400
-+++ linux-2.6.21.3/arch/i386/mm/fault.c	2007-05-24 22:04:52.000000000 -0400
++++ linux-2.6.21.3/arch/i386/mm/fault.c	2007-06-01 22:13:13.000000000 -0400
 @@ -23,11 +23,15 @@
  #include <linux/module.h>
  #include <linux/kprobes.h>
@@ -5744,7 +5753,7 @@ diff -urNp linux-2.6.21.3/arch/i386/mm/fault.c linux-2.6.21.3/arch/i386/mm/fault
  
  	/* When running in the kernel we expect faults to occur only to
  	 * addresses in user space.  All other faults represent errors in the
-@@ -371,10 +402,101 @@ fastcall void __kprobes do_page_fault(st
+@@ -371,10 +402,105 @@ fastcall void __kprobes do_page_fault(st
  	if (!down_read_trylock(&mm->mmap_sem)) {
  		if ((error_code & 4) == 0 &&
  		    !search_exception_tables(regs->eip))
@@ -5812,8 +5821,10 @@ diff -urNp linux-2.6.21.3/arch/i386/mm/fault.c linux-2.6.21.3/arch/i386/mm/fault
 +	 * PaX: fill DTLB with user rights and retry
 +	 */
 +	__asm__ __volatile__ (
-+		"movw %w4,%%ds\n"
-+		"orb %2,%%ss:(%1)\n"
++#ifdef CONFIG_PAX_MEMORY_UDEREF
++		"movw %w4,%%es\n"
++#endif
++		"orb %2,(%1)\n"
 +#if defined(CONFIG_M586) || defined(CONFIG_M586TSC)
 +/*
 + * PaX: let this uncommented 'invlpg' remind us on the behaviour of Intel's
@@ -5830,10 +5841,12 @@ diff -urNp linux-2.6.21.3/arch/i386/mm/fault.c linux-2.6.21.3/arch/i386/mm/fault
 + */
 +		"invlpg (%0)\n"
 +#endif
-+		"testb $0,(%0)\n"
-+		"xorb %3,%%ss:(%1)\n"
++		"testb $0,%%es:(%0)\n"
++		"xorb %3,(%1)\n"
++#ifdef CONFIG_PAX_MEMORY_UDEREF
 +		"pushl %%ss\n"
-+		"popl %%ds\n"
++		"popl %%es\n"
++#endif
 +		:
 +		: "q" (address), "r" (pte), "q" (pte_mask), "i" (_PAGE_USER), "r" (__USER_DS)
 +		: "memory", "cc");
@@ -5847,7 +5860,7 @@ diff -urNp linux-2.6.21.3/arch/i386/mm/fault.c linux-2.6.21.3/arch/i386/mm/fault
  	vma = find_vma(mm, address);
  	if (!vma)
  		goto bad_area;
-@@ -392,6 +514,12 @@ fastcall void __kprobes do_page_fault(st
+@@ -392,6 +518,12 @@ fastcall void __kprobes do_page_fault(st
  		if (address + 65536 + 32 * sizeof(unsigned long) < regs->esp)
  			goto bad_area;
  	}
@@ -5860,7 +5873,7 @@ diff -urNp linux-2.6.21.3/arch/i386/mm/fault.c linux-2.6.21.3/arch/i386/mm/fault
  	if (expand_stack(vma, address))
  		goto bad_area;
  /*
-@@ -456,6 +584,36 @@ bad_area:
+@@ -456,6 +588,36 @@ bad_area:
  	up_read(&mm->mmap_sem);
  
  bad_area_nosemaphore:
@@ -5897,7 +5910,7 @@ diff -urNp linux-2.6.21.3/arch/i386/mm/fault.c linux-2.6.21.3/arch/i386/mm/fault
  	/* User mode accesses just cause a SIGSEGV */
  	if (error_code & 4) {
  		/* 
-@@ -480,7 +638,7 @@ bad_area_nosemaphore:
+@@ -480,7 +642,7 @@ bad_area_nosemaphore:
  	if (boot_cpu_data.f00f_bug) {
  		unsigned long nr;
  		
@@ -5906,7 +5919,7 @@ diff -urNp linux-2.6.21.3/arch/i386/mm/fault.c linux-2.6.21.3/arch/i386/mm/fault
  
  		if (nr == 6) {
  			do_invalid_op(regs, 0);
-@@ -523,6 +681,21 @@ no_context:
+@@ -523,6 +685,21 @@ no_context:
  		if (address < PAGE_SIZE)
  			printk(KERN_ALERT "BUG: unable to handle kernel NULL "
  					"pointer dereference");
@@ -5928,7 +5941,7 @@ diff -urNp linux-2.6.21.3/arch/i386/mm/fault.c linux-2.6.21.3/arch/i386/mm/fault
  		else
  			printk(KERN_ALERT "BUG: unable to handle kernel paging"
  					" request");
-@@ -530,24 +703,34 @@ no_context:
+@@ -530,24 +707,34 @@ no_context:
  		printk(KERN_ALERT " printing eip:\n");
  		printk("%08lx\n", regs->eip);
  	}
@@ -5979,7 +5992,7 @@ diff -urNp linux-2.6.21.3/arch/i386/mm/fault.c linux-2.6.21.3/arch/i386/mm/fault
  	tsk->thread.cr2 = address;
  	tsk->thread.trap_no = 14;
  	tsk->thread.error_code = error_code;
-@@ -624,3 +807,101 @@ void vmalloc_sync_all(void)
+@@ -624,3 +811,110 @@ void vmalloc_sync_all(void)
  	}
  }
  #endif
@@ -5994,7 +6007,16 @@ diff -urNp linux-2.6.21.3/arch/i386/mm/fault.c linux-2.6.21.3/arch/i386/mm/fault
 +static int pax_handle_fetch_fault(struct pt_regs *regs)
 +{
 +
-+	static const unsigned char trans[8] = {6, 1, 2, 0, 13, 5, 3, 4};
++	static const unsigned char trans[8] = {
++		offsetof(struct pt_regs, eax) / 4,
++		offsetof(struct pt_regs, ecx) / 4,
++		offsetof(struct pt_regs, edx) / 4,
++		offsetof(struct pt_regs, ebx) / 4,
++		offsetof(struct pt_regs, esp) / 4,
++		offsetof(struct pt_regs, ebp) / 4,
++		offsetof(struct pt_regs, esi) / 4,
++		offsetof(struct pt_regs, edi) / 4,
++	};
 +	int err;
 +
 +	if (regs->eflags & X86_EFLAGS_VM)
@@ -14145,6 +14167,85 @@ diff -urNp linux-2.6.21.3/fs/proc/proc_misc.c linux-2.6.21.3/fs/proc/proc_misc.c
  	proc_root_kcore = create_proc_entry("kcore", S_IRUSR, NULL);
  	if (proc_root_kcore) {
  		proc_root_kcore->proc_fops = &proc_kcore_operations;
+diff -urNp linux-2.6.21.3/fs/proc/proc_sysctl.c linux-2.6.21.3/fs/proc/proc_sysctl.c
+--- linux-2.6.21.3/fs/proc/proc_sysctl.c	2007-04-25 23:08:32.000000000 -0400
++++ linux-2.6.21.3/fs/proc/proc_sysctl.c	2007-06-04 21:20:46.000000000 -0400
+@@ -7,6 +7,8 @@
+ #include <linux/security.h>
+ #include "internal.h"
+ 
++extern __u32 gr_handle_sysctl(const struct ctl_table *table, const int op);
++
+ static struct dentry_operations proc_sys_dentry_operations;
+ static const struct file_operations proc_sys_file_operations;
+ static struct inode_operations proc_sys_inode_operations;
+@@ -151,6 +153,9 @@ static struct dentry *proc_sys_lookup(st
+ 	if (!table)
+ 		goto out;
+ 
++	if (gr_handle_sysctl(table, 001))
++		goto out;
++
+ 	err = ERR_PTR(-ENOMEM);
+ 	inode = proc_sys_make_inode(dir, table);
+ 	if (!inode)
+@@ -305,6 +310,7 @@ end_instantiate:
+ 		ino= find_inode_number(dir, &qname);
+ 	if (!ino)
+ 		ino = 1;
++
+ 	return filldir(dirent, qname.name, qname.len, filp->f_pos, ino, type);
+ }
+ 
+@@ -358,6 +364,9 @@ static int proc_sys_readdir(struct file 
+ 			if (pos < filp->f_pos)
+ 				continue;
+ 
++			if (gr_handle_sysctl(table, 0))
++				continue;
++
+ 			if (proc_sys_fill_cache(filp, dirent, filldir, table) < 0)
+ 				goto out;
+ 			filp->f_pos = pos + 1;
+@@ -420,6 +429,30 @@ out:
+ 	return error;
+ }
+ 
++/* Eric Biederman is to blame */
++static int proc_sys_getattr(struct vfsmount *mnt, struct dentry *dentry, struct kstat *stat)
++{
++	int error = 0;
++	struct ctl_table_header *head;
++	struct ctl_table *table;
++
++	table = do_proc_sys_lookup(dentry->d_parent, &dentry->d_name, &head);
++	/* Has the sysctl entry disappeared on us? */
++	if (!table)
++		goto out;
++
++	if (gr_handle_sysctl(table, 001)) {
++		error = -ENOENT;
++		goto out;
++	}
++
++out:
++	sysctl_head_finish(head);
++
++	generic_fillattr(dentry->d_inode, stat);
++
++	return error;
++}
+ static int proc_sys_setattr(struct dentry *dentry, struct iattr *attr)
+ {
+ 	struct inode *inode = dentry->d_inode;
+@@ -451,6 +484,7 @@ static struct inode_operations proc_sys_
+ 	.lookup		= proc_sys_lookup,
+ 	.permission	= proc_sys_permission,
+ 	.setattr	= proc_sys_setattr,
++	.getattr	= proc_sys_getattr,
+ };
+ 
+ static int proc_sys_revalidate(struct dentry *dentry, struct nameidata *nd)
 diff -urNp linux-2.6.21.3/fs/proc/root.c linux-2.6.21.3/fs/proc/root.c
 --- linux-2.6.21.3/fs/proc/root.c	2007-04-25 23:08:32.000000000 -0400
 +++ linux-2.6.21.3/fs/proc/root.c	2007-05-24 22:04:53.000000000 -0400
@@ -14671,8 +14772,8 @@ diff -urNp linux-2.6.21.3/grsecurity/gracl_alloc.c linux-2.6.21.3/grsecurity/gra
 +}
 diff -urNp linux-2.6.21.3/grsecurity/gracl.c linux-2.6.21.3/grsecurity/gracl.c
 --- linux-2.6.21.3/grsecurity/gracl.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.21.3/grsecurity/gracl.c	2007-05-24 22:04:53.000000000 -0400
-@@ -0,0 +1,3547 @@
++++ linux-2.6.21.3/grsecurity/gracl.c	2007-06-04 21:22:10.000000000 -0400
+@@ -0,0 +1,3641 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
 +#include <linux/sched.h>
@@ -16357,7 +16458,9 @@ diff -urNp linux-2.6.21.3/grsecurity/gracl.c linux-2.6.21.3/grsecurity/gracl.c
 +
 +	spin_lock(&dcache_lock);
 +
-+	if (unlikely(mnt == shm_mnt || mnt == pipe_mnt || mnt == sock_mnt)) {
++	if (unlikely(mnt == shm_mnt || mnt == pipe_mnt || mnt == sock_mnt ||
++		/* ignore Eric Biederman */
++	    IS_PRIVATE(l_dentry->d_inode))) {
 +		retval = fakefs_obj;
 +		goto out;
 +	}
@@ -16474,6 +16577,17 @@ diff -urNp linux-2.6.21.3/grsecurity/gracl.c linux-2.6.21.3/grsecurity/gracl.c
 +		       task->uid, task->gid, task->exec_file ? gr_to_filename1(task->exec_file->f_dentry,
 +		       task->exec_file->f_vfsmnt) : task->acl->filename, task->acl->filename,
 +		       1, 1, gr_to_filename(dentry, mnt), (unsigned long) mode, NIPQUAD(task->signal->curr_ip));
++
++	return;
++}
++
++static void
++gr_log_learn_sysctl(const struct task_struct *task, const char *path, const __u32 mode)
++{
++	security_learn(GR_LEARN_AUDIT_MSG, task->role->rolename, task->role->roletype,
++		       task->uid, task->gid, task->exec_file ? gr_to_filename1(task->exec_file->f_dentry,
++		       task->exec_file->f_vfsmnt) : task->acl->filename, task->acl->filename,
++		       1, 1, path, (unsigned long) mode, NIPQUAD(task->signal->curr_ip));
 +
 +	return;
 +}
@@ -17825,11 +17939,71 @@ diff -urNp linux-2.6.21.3/grsecurity/gracl.c linux-2.6.21.3/grsecurity/gracl.c
 +#endif
 +
 +#ifdef CONFIG_SYSCTL
-+/* the following function is called under the BKL */
++/* Eric Biederman likes breaking userland ABI and every inode-based security
++   system to save 35kb of memory */
 +
++/* we modify the passed in filename, but adjust it back before returning */
++static struct acl_object_label *gr_lookup_by_name(char *name, unsigned int len)
++{
++	struct name_entry *nmatch;
++	char *p, *lastp = NULL;
++	struct acl_object_label *obj = NULL, *tmp;
++	struct acl_subject_label *tmpsubj;
++	int done = 0;
++	char c = '\0';
++
++	read_lock(&gr_inode_lock);
++
++	p = name + len - 1;
++	do {
++		nmatch = lookup_name_entry(name);
++		if (lastp != NULL)
++			*lastp = c;
++
++		if (nmatch == NULL)
++			goto next_component;
++		tmpsubj = current->acl;
++		do {
++			obj = lookup_acl_obj_label(nmatch->inode, nmatch->device, tmpsubj);
++			if (obj != NULL) {
++				tmp = obj->globbed;
++				while (tmp) {
++					if (!glob_match(tmp->filename, name)) {
++						obj = tmp;
++						goto found_obj;
++					}
++					tmp = tmp->next;
++				}
++				goto found_obj;
++			}
++		} while ((tmpsubj = tmpsubj->parent_subject));
++next_component:
++		/* end case */
++		if (p == name)
++			break;
++
++		while (*p != '/')
++			p--;
++		if (p == name)
++			lastp = p + 1;
++		else {
++			lastp = p;
++			p--;
++		}
++		c = *lastp;
++		*lastp = '\0';
++	} while (1);
++found_obj:
++	read_unlock(&gr_inode_lock);
++	/* obj returned will always be non-null */
++	return obj;
++}
++
++/* returns 0 when allowing, non-zero on error
++   op of 0 is used for readdir, so we don't log the names of hidden files
++*/
 +__u32
-+gr_handle_sysctl(const struct ctl_table *table, const void *oldval,
-+		 const void *newval)
++gr_handle_sysctl(const struct ctl_table *table, const int op)
 +{
 +	ctl_table *tmp;
 +	struct nameidata nd;
@@ -17841,14 +18015,27 @@ diff -urNp linux-2.6.21.3/grsecurity/gracl.c linux-2.6.21.3/grsecurity/gracl.c
 +	__u32 mode = 0;
 +
 +	if (unlikely(!(gr_status & GR_READY)))
-+		return 1;
++		return 0;
++
++	/* for now, ignore operations on non-sysctl entries if it's not a
++	   readdir*/
++	if (table->child != NULL && op != 0)
++		return 0;
++
++	mode |= GR_FIND;
++	/* it's only a read if it's an entry, read on dirs is for readdir */
++	if (op & 004)
++		mode |= GR_READ;
++	if (op & 002)
++		mode |= GR_WRITE;
++
++	preempt_disable();
 +
 +	path = per_cpu_ptr(gr_shared_page[0], smp_processor_id());
 +
-+	if (oldval)
-+		mode |= GR_READ;
-+	if (newval)
-+		mode |= GR_WRITE;
++	/* it's only a read/write if it's an actual entry, not a dir
++	   (which are opened for readdir)
++	*/
 +
 +	/* convert the requested sysctl entry into a pathname */
 +
@@ -17858,8 +18045,10 @@ diff -urNp linux-2.6.21.3/grsecurity/gracl.c linux-2.6.21.3/grsecurity/gracl.c
 +		depth++;
 +	}
 +
-+	if ((len + depth + strlen(proc_sys) + 1) > PAGE_SIZE)
-+		return 0;	/* deny */
++	if ((len + depth + strlen(proc_sys) + 1) > PAGE_SIZE) {
++		/* deny */
++		goto out;
++	}
 +
 +	memset(path, 0, PAGE_SIZE);
 +
@@ -17880,12 +18069,7 @@ diff -urNp linux-2.6.21.3/grsecurity/gracl.c linux-2.6.21.3/grsecurity/gracl.c
 +		}
 +	}
 +
-+	err = path_lookup(path, LOOKUP_FOLLOW, &nd);
-+
-+	if (err)
-+		goto out;
-+
-+	obj = chk_obj_label(nd.dentry, nd.mnt, current->acl);
++	obj = gr_lookup_by_name(path, pos);
 +	err = obj->mode & (mode | to_gr_audit(mode) | GR_SUPPRESS);
 +
 +	if (unlikely((current->acl->mode & (GR_LEARN | GR_INHERITLEARN)) &&
@@ -17894,24 +18078,31 @@ diff -urNp linux-2.6.21.3/grsecurity/gracl.c linux-2.6.21.3/grsecurity/gracl.c
 +
 +		new_mode &= ~(GR_AUDITS | GR_SUPPRESS);
 +
-+		err = new_mode;
-+		gr_log_learn(current, nd.dentry, nd.mnt, new_mode);
-+	} else if ((err & mode) != mode && !(err & GR_SUPPRESS)) {
++		err = 0;
++		gr_log_learn_sysctl(current, path, new_mode);
++	} else if (!(err & GR_FIND) && !(err & GR_SUPPRESS) && op != 0) {
++		gr_log_hidden_sysctl(GR_DONT_AUDIT, GR_HIDDEN_ACL_MSG, path);
++		err = -ENOENT;
++	} else if (!(err & GR_FIND)) {
++		err = -ENOENT;
++	} else if (((err & mode) & ~GR_FIND) != (mode & ~GR_FIND) && !(err & GR_SUPPRESS)) {
 +		gr_log_str4(GR_DONT_AUDIT, GR_SYSCTL_ACL_MSG, "denied",
 +			       path, (mode & GR_READ) ? " reading" : "",
 +			       (mode & GR_WRITE) ? " writing" : "");
-+		err = 0;
++		err = -EACCES;
 +	} else if ((err & mode) != mode) {
-+		err = 0;
-+	} else if (((err & mode) == mode) && (err & GR_AUDITS)) {
++		err = -EACCES;
++	} else if ((((err & mode) & ~GR_FIND) == (mode & ~GR_FIND)) && (err & GR_AUDITS)) {
 +		gr_log_str4(GR_DO_AUDIT, GR_SYSCTL_ACL_MSG, "successful",
 +			       path, (mode & GR_READ) ? " reading" : "",
 +			       (mode & GR_WRITE) ? " writing" : "");
-+	}
-+
-+	path_release(&nd);
++		err = 0;
++	} else
++		err = 0;
 +
 +      out:
++	preempt_enable();
++
 +	return err;
 +}
 +#endif
@@ -18168,6 +18359,10 @@ diff -urNp linux-2.6.21.3/grsecurity/gracl.c linux-2.6.21.3/grsecurity/gracl.c
 +		return 1;
 +
 +	if (task->acl->mode & (GR_LEARN | GR_INHERITLEARN))
++		return 1;
++
++	/* ignore Eric Biederman */
++	if (IS_PRIVATE(dentry->d_inode))
 +		return 1;
 +
 +	subj = task->acl;
@@ -20042,7 +20237,7 @@ diff -urNp linux-2.6.21.3/grsecurity/grsec_chroot.c linux-2.6.21.3/grsecurity/gr
 +#endif
 diff -urNp linux-2.6.21.3/grsecurity/grsec_disabled.c linux-2.6.21.3/grsecurity/grsec_disabled.c
 --- linux-2.6.21.3/grsecurity/grsec_disabled.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.21.3/grsecurity/grsec_disabled.c	2007-05-24 22:04:53.000000000 -0400
++++ linux-2.6.21.3/grsecurity/grsec_disabled.c	2007-06-04 19:21:29.000000000 -0400
 @@ -0,0 +1,418 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
@@ -20066,9 +20261,9 @@ diff -urNp linux-2.6.21.3/grsecurity/grsec_disabled.c linux-2.6.21.3/grsecurity/
 +
 +#ifdef CONFIG_SYSCTL
 +__u32
-+gr_handle_sysctl(const struct ctl_table * table, __u32 mode)
++gr_handle_sysctl(const struct ctl_table * table, const int op)
 +{
-+	return mode;
++	return 0;
 +}
 +#endif
 +
@@ -20965,8 +21160,8 @@ diff -urNp linux-2.6.21.3/grsecurity/grsec_link.c linux-2.6.21.3/grsecurity/grse
 +}
 diff -urNp linux-2.6.21.3/grsecurity/grsec_log.c linux-2.6.21.3/grsecurity/grsec_log.c
 --- linux-2.6.21.3/grsecurity/grsec_log.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.21.3/grsecurity/grsec_log.c	2007-05-24 22:04:53.000000000 -0400
-@@ -0,0 +1,265 @@
++++ linux-2.6.21.3/grsecurity/grsec_log.c	2007-06-04 20:35:41.000000000 -0400
+@@ -0,0 +1,269 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
 +#include <linux/file.h>
@@ -21100,6 +21295,10 @@ diff -urNp linux-2.6.21.3/grsecurity/grsec_log.c linux-2.6.21.3/grsecurity/grsec
 +	case GR_TTYSNIFF:
 +		task = va_arg(ap, struct task_struct *);
 +		gr_log_middle_varargs(audit, msg, NIPQUAD(task->signal->curr_ip), gr_task_fullpath0(task), task->comm, task->pid, gr_parent_task_fullpath0(task), task->parent->comm, task->parent->pid);
++		break;
++	case GR_SYSCTL_HIDDEN:
++		str1 = va_arg(ap, char *);
++		gr_log_middle_varargs(audit, msg, result, str1);
 +		break;
 +	case GR_RBAC:
 +		dentry = va_arg(ap, struct dentry *);
@@ -26052,8 +26251,8 @@ diff -urNp linux-2.6.21.3/include/linux/grdefs.h linux-2.6.21.3/include/linux/gr
 +#endif
 diff -urNp linux-2.6.21.3/include/linux/grinternal.h linux-2.6.21.3/include/linux/grinternal.h
 --- linux-2.6.21.3/include/linux/grinternal.h	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.21.3/include/linux/grinternal.h	2007-05-24 22:04:53.000000000 -0400
-@@ -0,0 +1,208 @@
++++ linux-2.6.21.3/include/linux/grinternal.h	2007-06-04 20:33:04.000000000 -0400
+@@ -0,0 +1,210 @@
 +#ifndef __GRINTERNAL_H
 +#define __GRINTERNAL_H
 +
@@ -26201,6 +26400,7 @@ diff -urNp linux-2.6.21.3/include/linux/grinternal.h linux-2.6.21.3/include/linu
 +	GR_RBAC_MODE2,
 +	GR_RBAC_MODE3,
 +	GR_FILENAME,
++	GR_SYSCTL_HIDDEN,
 +	GR_NOARGS,
 +	GR_ONE_INT,
 +	GR_ONE_INT_TWO_STR,
@@ -26226,6 +26426,7 @@ diff -urNp linux-2.6.21.3/include/linux/grinternal.h linux-2.6.21.3/include/linu
 +	GR_PSACCT
 +};
 +
++#define gr_log_hidden_sysctl(audit, msg, str) gr_log_varargs(audit, msg, GR_SYSCTL_HIDDEN, str)
 +#define gr_log_ttysniff(audit, msg, task) gr_log_varargs(audit, msg, GR_TTYSNIFF, task)
 +#define gr_log_fs_rbac_generic(audit, msg, dentry, mnt) gr_log_varargs(audit, msg, GR_RBAC, dentry, mnt)
 +#define gr_log_fs_rbac_str(audit, msg, dentry, mnt, str) gr_log_varargs(audit, msg, GR_RBAC_STR, dentry, mnt, str)
@@ -28611,23 +28812,22 @@ diff -urNp linux-2.6.21.3/kernel/sys.c linux-2.6.21.3/kernel/sys.c
  			}
 diff -urNp linux-2.6.21.3/kernel/sysctl.c linux-2.6.21.3/kernel/sysctl.c
 --- linux-2.6.21.3/kernel/sysctl.c	2007-04-25 23:08:32.000000000 -0400
-+++ linux-2.6.21.3/kernel/sysctl.c	2007-05-24 22:04:53.000000000 -0400
-@@ -58,6 +58,14 @@ extern int proc_nr_files(ctl_table *tabl
++++ linux-2.6.21.3/kernel/sysctl.c	2007-06-04 19:25:09.000000000 -0400
+@@ -58,6 +58,13 @@ extern int proc_nr_files(ctl_table *tabl
  #endif
  
  #if defined(CONFIG_SYSCTL)
 +#include <linux/grsecurity.h>
 +#include <linux/grinternal.h>
 +
-+extern __u32 gr_handle_sysctl(const ctl_table *table, const void *oldval,
-+			      const void *newval);
++extern __u32 gr_handle_sysctl(const ctl_table *table, const int op);
 +extern int gr_handle_sysctl_mod(const char *dirname, const char *name,
 +				const int op);
 +extern int gr_handle_chroot_sysctl(const int op);
  
  /* External variables not in a header file. */
  extern int C_A_D;
-@@ -139,7 +147,7 @@ static int proc_dointvec_taint(ctl_table
+@@ -139,7 +146,7 @@ static int proc_dointvec_taint(ctl_table
  
  static ctl_table root_table[];
  static struct ctl_table_header root_table_header =
@@ -28636,7 +28836,7 @@ diff -urNp linux-2.6.21.3/kernel/sysctl.c linux-2.6.21.3/kernel/sysctl.c
  
  static ctl_table kern_table[];
  static ctl_table vm_table[];
-@@ -153,11 +161,26 @@ extern ctl_table pty_table[];
+@@ -153,11 +160,26 @@ extern ctl_table pty_table[];
  #ifdef CONFIG_INOTIFY_USER
  extern ctl_table inotify_table[];
  #endif
@@ -28663,7 +28863,7 @@ diff -urNp linux-2.6.21.3/kernel/sysctl.c linux-2.6.21.3/kernel/sysctl.c
  
  /* The default sysctl tables: */
  
-@@ -200,7 +223,6 @@ static ctl_table root_table[] = {
+@@ -200,7 +222,6 @@ static ctl_table root_table[] = {
  		.mode		= 0555,
  		.child		= dev_table,
  	},
@@ -28671,7 +28871,7 @@ diff -urNp linux-2.6.21.3/kernel/sysctl.c linux-2.6.21.3/kernel/sysctl.c
  	{ .ctl_name = 0 }
  };
  
-@@ -604,6 +626,24 @@ static ctl_table kern_table[] = {
+@@ -604,6 +625,24 @@ static ctl_table kern_table[] = {
  	},
  #endif
  
@@ -28696,7 +28896,7 @@ diff -urNp linux-2.6.21.3/kernel/sysctl.c linux-2.6.21.3/kernel/sysctl.c
  	{ .ctl_name = 0 }
  };
  
-@@ -1149,6 +1189,12 @@ static int test_perm(int mode, int op)
+@@ -1149,6 +1188,25 @@ static int test_perm(int mode, int op)
  int sysctl_perm(ctl_table *table, int op)
  {
  	int error;
@@ -28706,16 +28906,34 @@ diff -urNp linux-2.6.21.3/kernel/sysctl.c linux-2.6.21.3/kernel/sysctl.c
 +		return -EACCES;
 +	if (gr_handle_chroot_sysctl(op))
 +		return -EACCES;
++	error = gr_handle_sysctl(table, op);
++	if (error)
++		return error;
++	error = security_sysctl(table, op);
++	if (error)
++		return error;
++	return test_perm(table->mode, op);
++}
++
++int sysctl_perm_nochk(ctl_table *table, int op)
++{
++	int error;
++
  	error = security_sysctl(table, op);
  	if (error)
  		return error;
-@@ -1180,6 +1226,10 @@ repeat:
+@@ -1173,13 +1231,14 @@ repeat:
+ 		if (n == table->ctl_name) {
+ 			int error;
+ 			if (table->child) {
+-				if (sysctl_perm(table, 001))
++				if (sysctl_perm_nochk(table, 001))
+ 					return -EPERM;
+ 				name++;
+ 				nlen--;
  				table = table->child;
  				goto repeat;
  			}
-+
-+			if (!gr_handle_sysctl(table, oldval, newval))
-+				return -EPERM;
 +
  			error = do_sysctl_strategy(table, name, nlen,
  						   oldval, oldlenp,
