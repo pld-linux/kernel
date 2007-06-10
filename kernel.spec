@@ -278,6 +278,9 @@ Patch56:	linux-2.6-atmdd.patch
 
 Patch57:	linux-2.6-cpuset_virtualization.patch
 
+#http://www.ntop.org/PF_RING.html 20070610
+Patch58:	linux-PF_RING.patch
+
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_41.tar.bz2
 Patch60:	linux-2.6-sk98lin_8.41.2.3.patch
 
@@ -836,6 +839,9 @@ install %{SOURCE5} Makefile.ppclibs
 %ifarch %{ix86} %{x8664} ia64
 %patch57 -p1
 %endif
+
+%patch58 -p1
+
 
 # linux-2.6-sk98lin_8.41.2.3.patch
 %patch60 -p1
