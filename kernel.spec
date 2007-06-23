@@ -103,19 +103,18 @@ Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 Source2:	kernel-module-build.pl
 Source3:	kernel-config.h
 
-Source20:	kernel-common.config
-Source21:	kernel-i386.config
-Source22:	kernel-i386-smp.config
-Source23:	kernel-x86_64.config
-Source24:	kernel-x86_64-smp.config
-Source25:	kernel-ppc.config
-Source26:	kernel-ppc-smp.config
-Source27:	kernel-alpha.config
-Source28:	kernel-alpha-smp.config
-Source29:	kernel-sparc64.config
-Source30:	kernel-sparc64-smp.config
-Source31:	kernel-sparc.config
-Source32:	kernel-sparc-smp.config
+Source20:	kernel-i386.config
+Source21:	kernel-i386-smp.config
+Source22:	kernel-x86_64.config
+Source23:	kernel-x86_64-smp.config
+Source24:	kernel-ppc.config
+Source25:	kernel-ppc-smp.config
+Source26:	kernel-alpha.config
+Source27:	kernel-alpha-smp.config
+Source28:	kernel-sparc64.config
+Source29:	kernel-sparc64-smp.config
+Source30:	kernel-sparc.config
+Source31:	kernel-sparc-smp.config
 
 Source40:	kernel-preempt-nort.config
 Source41:	kernel-no-preempt-nort.config
@@ -126,7 +125,7 @@ Source45:	kernel-pax.config
 Source46:	kernel-no-pax.config
 Source47:	kernel-squashfs.config
 
-# http://vserver.13thfloor.at/Experimental/
+# from http://vserver.13thfloor.at/Experimental/
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-128IPs.patch
 
@@ -141,6 +140,9 @@ Patch300:	squashfs%{squashfs_version}-patch
 
 # fixes
 Patch400:	linux-2.6-ppc-ICE-hacks.patch
+
+# driver updates
+Patch500:	linux-2.6-sk98lin.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -636,6 +638,7 @@ Documentation.
 # other patches
 %patch300 -p1
 %patch400 -p1
+%patch500 -p1
 
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 
@@ -724,9 +727,6 @@ BuildConfig() {
 	echo "Building config file [using $Config.conf] for KERNEL $1..."
 
 	echo "" > .config
-	%ifnarch alpha sparc sparc64
-		cat %{SOURCE20} > .config
-	%endif
 	cat $RPM_SOURCE_DIR/kernel-$Config.config >> .config
 	echo "CONFIG_LOCALVERSION=\"-%{_localversion}$smp\"" >> .config
 
