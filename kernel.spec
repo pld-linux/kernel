@@ -272,6 +272,7 @@ Patch80:	kernel-ahci-sb600.patch
 
 Patch81:	linux-2.6-md.patch
 Patch82:	linux-3w-9xxx.patch
+Patch83:	linux-nvidia.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.1.1-rc15.diff
 Patch100:	linux-2.6-vs2.1.patch
@@ -856,6 +857,7 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 
 %patch81 -p1
 %patch82 -p1
+%patch83 -p1
 
 %patch100 -p1
 %patch101 -p1
