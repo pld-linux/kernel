@@ -272,7 +272,6 @@ Patch80:	kernel-ahci-sb600.patch
 
 Patch81:	linux-2.6-md.patch
 Patch82:	linux-3w-9xxx.patch
-Patch83:	linux-nvidia.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.1.1-rc15.diff
 Patch100:	linux-2.6-vs2.1.patch
@@ -293,6 +292,7 @@ Patch202:	linux-2.6-unwind-through-signal-frames.patch
 
 # Wake-On-Lan patch for nVidia nForce ethernet driver forcedeth
 Patch250:	linux-2.6.16-forcedeth-WON.patch
+Patch251:	linux-nvidia.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
@@ -857,7 +857,6 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 
 %patch81 -p1
 %patch82 -p1
-%patch83 -p1
 
 %patch100 -p1
 %patch101 -p1
@@ -884,6 +883,7 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %endif
 
 %patch250 -p1
+%patch251 -p1
 
 %patch1200 -p1
 %patch1201 -p1
