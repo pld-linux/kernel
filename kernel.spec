@@ -294,6 +294,9 @@ Patch202:	linux-2.6-unwind-through-signal-frames.patch
 Patch250:	linux-2.6.16-forcedeth-WON.patch
 Patch251:	linux-nvidia.patch
 
+# From ALSA 1.0.13 for nVidia 
+Patch252:	linux-alsa-hda.patch
+
 Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch1200:	linux-2.6-apparmor.patch
@@ -884,6 +887,8 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 
 %patch250 -p1
 %patch251 -p1
+
+%patch252 -p1
 
 %patch1200 -p1
 %patch1201 -p1
