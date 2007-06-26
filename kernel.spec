@@ -120,6 +120,7 @@
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
 %define		_rel			0.1
+%define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
@@ -141,7 +142,7 @@ Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
 Summary(fr.UTF-8):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl.UTF-8):	Jądro Linuksa
-Name:		kernel%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
+Name:		kernel%{subname}
 
 %if "%{_prepatch}" == "%{nil}"
 Version:	%{_basever}%{_postver}
@@ -430,7 +431,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 # _localversion is just that without version for "> localversion"
 %define		_localversion %{release}
 %define		kernel_release %{version}-%{_localversion}
-%define		_kernelsrcdir	/usr/src/linux-%{version}
+%define		_kernelsrcdir	/usr/src/linux%{subname}-%{version}
 
 %if "%{_target_base_arch}" != "%{_arch}"
 	%define	CrossOpts ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-
@@ -1406,14 +1407,14 @@ ln -sf vmlinux-%{kernel_release} /boot/vmlinux
 %depmod %{kernel_release}
 
 %post headers
-rm -f %{_prefix}/src/linux
-ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux
+rm -f %{_prefix}/src/linux%{subname}
+ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux%{subname}
 
 %postun headers
 if [ "$1" = "0" ]; then
-	if [ -L %{_prefix}/src/linux ]; then
-		if [ "$(readlink %{_prefix}/src/linux)" = "linux-%{version}" ]; then
-			rm -f %{_prefix}/src/linux
+	if [ -L %{_prefix}/src/linux%{subname} ]; then
+		if [ "$(readlink %{_prefix}/src/linux%{subname})" = "linux%{subname}-%{version}" ]; then
+			rm -f %{_prefix}/src/linux%{subname}
 		fi
 	fi
 fi
