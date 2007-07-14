@@ -128,7 +128,7 @@
 
 %define		_basever	2.6.16
 %define		_postver	.52
-%define		_rel		1
+%define		_rel		2
 %define		_subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -298,6 +298,7 @@ Patch251:	linux-nvidia.patch
 Patch252:	linux-alsa-hda.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
+Patch1001:	linux-2.6-grsec-wrong-deref.patch
 
 Patch1200:	linux-2.6-apparmor.patch
 Patch1201:	linux-2.6-apparmor-caps.patch
@@ -904,6 +905,10 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %if %{with pax}
 %patch9999 -p1
 %patch10000 -p1
+%endif
+
+%if %{with grsecurity}
+%patch1001 -p1
 %endif
 
 # Fix EXTRAVERSION in main Makefile
