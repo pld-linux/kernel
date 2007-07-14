@@ -1,0 +1,23 @@
+Fixes dereference of already freed signal structs on conn_table_entry traversal.
+(removal of "tsk == sig->curr_target" comparison in a case of 1-element
+ process group caused to apply gr_del_task_from_ip_table(tsk) hunk to be
+ applied in wrong place, where struct signal is still kept, not where it
+ is freed)
+--- linux-2.6.16/kernel/signal.c.orig	2007-07-14 12:16:07.661313000 +0200
++++ linux-2.6.16/kernel/signal.c	2007-07-14 13:40:35.919325560 +0200
+@@ -367,6 +367,7 @@
+ 	posix_cpu_timers_exit(tsk);
+ 	if (atomic_dec_and_test(&sig->count)) {
+ 		posix_cpu_timers_exit_group(tsk);
++		gr_del_task_from_ip_table(tsk);
+ 		tsk->signal = NULL;
+ 		__exit_sighand(tsk);
+ 		spin_unlock(&sighand->siglock);
+@@ -382,7 +383,6 @@
+ 		}
+ 		if (tsk == sig->curr_target)
+ 			sig->curr_target = next_thread(tsk);
+-		gr_del_task_from_ip_table(tsk);
+ 		tsk->signal = NULL;
+ 		/*
+ 		 * Accumulate here the counters for all threads but the
