@@ -119,7 +119,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.1
+%define		_rel			0.2
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20061213
@@ -298,6 +298,9 @@ Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	hostap-kernel-2.6.18.patch
+
+# Fixes for bcm43xx from ftp://lwfinger.dynalias.org/patches/
+Patch86:	kernel-bcm43xx-combined_2.6.21.patch
 
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.20.4-vs2.3.0.12.diff
 # TODO: update for 2.6.21
@@ -849,6 +852,9 @@ install %{SOURCE5} Makefile.ppclibs
 
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
+
+# bcm43xx fixes
+%patch86 -p1
 
 # vserver
 %if %{with vserver}
