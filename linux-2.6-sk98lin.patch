@@ -28847,9 +28847,9 @@ diff -ruN linux/drivers/net/sk98lin/skge.c linux-new/drivers/net/sk98lin/skge.c
 -		return -EIO;
 +	if (!CHIP_ID_YUKON_2(pAC)) {
 +		if (pAC->GIni.GIMacsFound == 2) {
-+			Ret = request_irq(dev->irq, SkGeIsr, SA_SHIRQ, dev->name, dev);
++			Ret = request_irq(dev->irq, SkGeIsr, IRQF_SHARED, dev->name, dev);
 +		} else if (pAC->GIni.GIMacsFound == 1) {
-+			Ret = request_irq(dev->irq, SkGeIsrOnePort, SA_SHIRQ, dev->name, dev);
++			Ret = request_irq(dev->irq, SkGeIsrOnePort, IRQF_SHARED, dev->name, dev);
 +		} else {
 +			printk(KERN_WARNING "sk98lin: Illegal number of ports: %d\n",
 +				pAC->GIni.GIMacsFound);
@@ -28857,7 +28857,7 @@ diff -ruN linux/drivers/net/sk98lin/skge.c linux-new/drivers/net/sk98lin/skge.c
 +		}
 +	}
 +	else {
-+		Ret = request_irq(dev->irq, SkY2Isr, SA_SHIRQ, dev->name, dev);
++		Ret = request_irq(dev->irq, SkY2Isr, IRQF_SHARED, dev->name, dev);
  	}
  
  	if (Ret) {
@@ -32907,7 +32907,7 @@ diff -ruN linux/drivers/net/sk98lin/skge.c linux-new/drivers/net/sk98lin/skge.c
 -#endif
 +static int __init sk98lin_init(void)
 +{
-+	return pci_module_init(&sk98lin_driver);
++	return pci_register_driver(&sk98lin_driver);
 +}
 +
 +static void __exit sk98lin_cleanup(void)
@@ -58766,6 +58766,7 @@ diff -ruN linux/drivers/net/sk98lin/sky2.c linux-new/drivers/net/sk98lin/sky2.c
 +#include <linux/tcp.h>
 +#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,14)
 +#include <linux/ip.h>
++#include <net/ip.h>
 +#endif
 +/******************************************************************************
 + *
@@ -59768,9 +59769,9 @@ diff -ruN linux/drivers/net/sk98lin/sky2.c linux-new/drivers/net/sk98lin/sky2.c
 +#ifdef SK_EXTREME
 +				if (!HW_IS_EXT_LE_FORMAT(pAC)) {
 +#endif
-+					TcpOptLen = ((pSkPacket->pMBuf->h.th->doff - 5) * 4);
-+					IpTcpLen  = ((pSkPacket->pMBuf->nh.iph->ihl * 4) + 
-+						sizeof(struct tcphdr));
++					TcpOptLen = tcp_optlen(pSkPacket->pMBuf);
++					IpTcpLen  = ip_hdrlen(pSkPacket->pMBuf) + 
++						sizeof(struct tcphdr);
 +					Mss += (TcpOptLen + IpTcpLen + C_LEN_ETHERMAC_HEADER);
 +#ifdef SK_EXTREME
 +				}
