@@ -1,8 +1,7 @@
-diff --git a/Documentation/kernel-parameters.txt b/Documentation/kernel-parameters.txt
-index 12533a9..68e902e 100644
---- a/Documentation/kernel-parameters.txt
-+++ b/Documentation/kernel-parameters.txt
-@@ -82,6 +82,7 @@ parameter is applicable:
+diff -ruN linux-2.6.22/Documentation/kernel-parameters.txt suspend2-2.2.10-for-2.6.22/Documentation/kernel-parameters.txt
+--- linux-2.6.22/Documentation/kernel-parameters.txt	2007-07-11 22:18:38.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/Documentation/kernel-parameters.txt	2007-07-11 22:25:42.000000000 +1000
+@@ -83,6 +83,7 @@
  	SH	SuperH architecture is enabled.
  	SMP	The kernel is an SMP kernel.
  	SPARC	Sparc architecture is enabled.
@@ -10,7 +9,7 @@ index 12533a9..68e902e 100644
  	SWSUSP	Software suspend is enabled.
  	TS	Appropriate touchscreen support is enabled.
  	USB	USB support is enabled.
-@@ -1140,6 +1141,8 @@ and is between 256 and 4096 characters. It is defined in the file
+@@ -1214,6 +1215,8 @@
  	noresume	[SWSUSP] Disables resume and restores original swap
  			space.
  
@@ -19,7 +18,7 @@ index 12533a9..68e902e 100644
  	no-scroll	[VGA] Disables scrollback.
  			This is required for the Braillex ib80-piezo Braille
  			reader made by F.H. Papenmeier (Germany).
-@@ -1445,6 +1448,11 @@ and is between 256 and 4096 characters. It is defined in the file
+@@ -1519,6 +1522,11 @@
  
  	retain_initrd	[RAM] Keep initrd memory after extraction
  
@@ -31,11 +30,9 @@ index 12533a9..68e902e 100644
  	rhash_entries=	[KNL,NET]
  			Set number of hash buckets for route cache
  
-diff --git a/Documentation/power/suspend2-internals.txt b/Documentation/power/suspend2-internals.txt
-new file mode 100644
-index 0000000..ba4e1e5
---- /dev/null
-+++ b/Documentation/power/suspend2-internals.txt
+diff -ruN linux-2.6.22/Documentation/power/suspend2-internals.txt suspend2-2.2.10-for-2.6.22/Documentation/power/suspend2-internals.txt
+--- linux-2.6.22/Documentation/power/suspend2-internals.txt	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/Documentation/power/suspend2-internals.txt	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,473 @@
 +		Software Suspend 2.2 Internal Documentation.
 +				Version 1
@@ -510,11 +507,9 @@ index 0000000..ba4e1e5
 +    Sysfs entries are registered under /sys/power/suspend2, and entries for
 +    modules are located in a subdirectory named after the module.
 +
-diff --git a/Documentation/power/suspend2.txt b/Documentation/power/suspend2.txt
-new file mode 100644
-index 0000000..b5a8edb
---- /dev/null
-+++ b/Documentation/power/suspend2.txt
+diff -ruN linux-2.6.22/Documentation/power/suspend2.txt suspend2-2.2.10-for-2.6.22/Documentation/power/suspend2.txt
+--- linux-2.6.22/Documentation/power/suspend2.txt	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/Documentation/power/suspend2.txt	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,713 @@
 +	--- Suspend2, version 2.2 ---
 +
@@ -1229,11 +1224,10 @@ index 0000000..b5a8edb
 +   scripts to stress the system and test Suspend2 far beyond the point
 +   most of us (Nigel included!) would consider testing. His efforts have
 +   contributed as much to Suspend2 as any of the names above.
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 277877a..f1adba1 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -3218,6 +3218,13 @@ M:	sammy@sammy.net
+diff -ruN linux-2.6.22/MAINTAINERS suspend2-2.2.10-for-2.6.22/MAINTAINERS
+--- linux-2.6.22/MAINTAINERS	2007-07-11 22:18:39.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/MAINTAINERS	2007-07-11 22:25:42.000000000 +1000
+@@ -3440,6 +3440,13 @@
  W:	http://sammy.net/sun3/
  S:	Maintained
  
@@ -1247,19 +1241,18 @@ index 277877a..f1adba1 100644
  SVGA HANDLING
  P:	Martin Mares
  M:	mj@ucw.cz
-diff --git a/arch/i386/mm/fault.c b/arch/i386/mm/fault.c
-index b8c4e25..21982d9 100644
---- a/arch/i386/mm/fault.c
-+++ b/arch/i386/mm/fault.c
-@@ -23,6 +23,7 @@
- #include <linux/module.h>
+diff -ruN linux-2.6.22/arch/i386/mm/fault.c suspend2-2.2.10-for-2.6.22/arch/i386/mm/fault.c
+--- linux-2.6.22/arch/i386/mm/fault.c	2007-07-11 22:18:41.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/arch/i386/mm/fault.c	2007-07-11 22:25:42.000000000 +1000
+@@ -25,6 +25,7 @@
  #include <linux/kprobes.h>
  #include <linux/uaccess.h>
+ #include <linux/kdebug.h>
 +#include <linux/suspend.h>
  
  #include <asm/system.h>
  #include <asm/desc.h>
-@@ -33,6 +34,9 @@ extern void die(const char *,struct pt_regs *,long);
+@@ -34,6 +35,9 @@
  
  static ATOMIC_NOTIFIER_HEAD(notify_page_fault_chain);
  
@@ -1269,7 +1262,7 @@ index b8c4e25..21982d9 100644
  int register_page_fault_notifier(struct notifier_block *nb)
  {
  	vmalloc_sync_all();
-@@ -311,6 +315,20 @@ fastcall void __kprobes do_page_fault(struct pt_regs *regs,
+@@ -311,6 +315,20 @@
  
  	si_code = SEGV_MAPERR;
  
@@ -1290,12 +1283,11 @@ index b8c4e25..21982d9 100644
  	/*
  	 * We fault-in kernel-space virtual memory on-demand. The
  	 * 'reference' page table is init_mm.pgd.
-diff --git a/arch/i386/mm/init.c b/arch/i386/mm/init.c
-index ae43688..a180d21 100644
---- a/arch/i386/mm/init.c
-+++ b/arch/i386/mm/init.c
-@@ -387,7 +387,7 @@ static void __init pagetable_init (void)
- #endif
+diff -ruN linux-2.6.22/arch/i386/mm/init.c suspend2-2.2.10-for-2.6.22/arch/i386/mm/init.c
+--- linux-2.6.22/arch/i386/mm/init.c	2007-07-11 22:18:41.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/arch/i386/mm/init.c	2007-07-11 22:25:42.000000000 +1000
+@@ -432,7 +432,7 @@
+ 	paravirt_pagetable_setup_done(pgd_base);
  }
  
 -#if defined(CONFIG_SOFTWARE_SUSPEND) || defined(CONFIG_ACPI_SLEEP)
@@ -1303,7 +1295,7 @@ index ae43688..a180d21 100644
  /*
   * Swap suspend & friends need this for resume because things like the intel-agp
   * driver might have split up a kernel 4MB mapping.
-@@ -774,13 +774,13 @@ void free_init_pages(char *what, unsigned long begin, unsigned long end)
+@@ -832,13 +832,13 @@
  	unsigned long addr;
  
  	for (addr = begin; addr < end; addr += PAGE_SIZE) {
@@ -1317,16 +1309,15 @@ index ae43688..a180d21 100644
 +		//free_page(addr);
 +		//totalram_pages++;
  	}
--	printk(KERN_INFO "Freeing %s: %ldk freed\n", what, (end - begin) >> 10);
-+	//printk(KERN_INFO "Freeing %s: %ldk freed\n", what, (end - begin) >> 10);
+-	printk(KERN_INFO "Freeing %s: %luk freed\n", what, (end - begin) >> 10);
++	//printk(KERN_INFO "Freeing %s: %luk freed\n", what, (end - begin) >> 10);
  }
  
  void free_initmem(void)
-diff --git a/arch/i386/mm/pageattr.c b/arch/i386/mm/pageattr.c
-index 412ebbd..dded2e1 100644
---- a/arch/i386/mm/pageattr.c
-+++ b/arch/i386/mm/pageattr.c
-@@ -252,7 +252,27 @@ void kernel_map_pages(struct page *page, int numpages, int enable)
+diff -ruN linux-2.6.22/arch/i386/mm/pageattr.c suspend2-2.2.10-for-2.6.22/arch/i386/mm/pageattr.c
+--- linux-2.6.22/arch/i386/mm/pageattr.c	2007-07-11 22:18:41.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/arch/i386/mm/pageattr.c	2007-07-11 22:25:42.000000000 +1000
+@@ -258,7 +258,27 @@
  	 */
  	__flush_tlb_all();
  }
@@ -1354,65 +1345,33 @@ index 412ebbd..dded2e1 100644
  EXPORT_SYMBOL(change_page_attr);
  EXPORT_SYMBOL(global_flush_tlb);
 +EXPORT_SYMBOL(page_is_mapped);
-diff --git a/arch/i386/power/Makefile b/arch/i386/power/Makefile
-index 2de7bbf..72a6169 100644
---- a/arch/i386/power/Makefile
-+++ b/arch/i386/power/Makefile
+diff -ruN linux-2.6.22/arch/i386/power/Makefile suspend2-2.2.10-for-2.6.22/arch/i386/power/Makefile
+--- linux-2.6.22/arch/i386/power/Makefile	2007-07-11 22:18:41.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/arch/i386/power/Makefile	2007-07-11 22:25:42.000000000 +1000
 @@ -1,2 +1,2 @@
  obj-$(CONFIG_PM)		+= cpu.o
 -obj-$(CONFIG_SOFTWARE_SUSPEND)	+= swsusp.o suspend.o
 +obj-$(CONFIG_SUSPEND_SHARED)	+= swsusp.o suspend.o
-diff --git a/arch/powerpc/kernel/Makefile b/arch/powerpc/kernel/Makefile
-index 8120d42..5d57f0c 100644
---- a/arch/powerpc/kernel/Makefile
-+++ b/arch/powerpc/kernel/Makefile
-@@ -36,7 +36,7 @@ obj-$(CONFIG_GENERIC_TBSYNC)	+= smp-tbsync.o
+diff -ruN linux-2.6.22/arch/powerpc/kernel/Makefile suspend2-2.2.10-for-2.6.22/arch/powerpc/kernel/Makefile
+--- linux-2.6.22/arch/powerpc/kernel/Makefile	2007-07-11 22:18:44.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/arch/powerpc/kernel/Makefile	2007-07-11 22:25:42.000000000 +1000
+@@ -36,9 +36,9 @@
  obj-$(CONFIG_CRASH_DUMP)	+= crash_dump.o
  obj-$(CONFIG_6xx)		+= idle_6xx.o l2cr_6xx.o cpu_setup_6xx.o
  obj-$(CONFIG_TAU)		+= tau_6xx.o
+-obj-$(CONFIG_SOFTWARE_SUSPEND)	+= swsusp.o suspend.o
 -obj32-$(CONFIG_SOFTWARE_SUSPEND) += swsusp_32.o
-+obj32-$(CONFIG_SUSPEND_SHARED)	+= swsusp_32.o
+-obj64-$(CONFIG_SOFTWARE_SUSPEND) += swsusp_64.o swsusp_asm64.o
++obj-$(CONFIG_SUSPEND_SHARED)	+= swsusp.o suspend.o
++obj32-$(CONFIG_SUSPEND_SHARED) += swsusp_32.o
++obj64-$(CONFIG_SUSPEND_SHARED) += swsusp_64.o swsusp_asm64.o
  obj32-$(CONFIG_MODULES)		+= module_32.o
  
  ifeq ($(CONFIG_PPC_MERGE),y)
-diff --git a/arch/powerpc/platforms/powermac/setup.c b/arch/powerpc/platforms/powermac/setup.c
-index 651fa42..243e5f4 100644
---- a/arch/powerpc/platforms/powermac/setup.c
-+++ b/arch/powerpc/platforms/powermac/setup.c
-@@ -425,7 +425,7 @@ static void __init find_boot_device(void)
-  * only
-  */
- 
--#ifdef CONFIG_SOFTWARE_SUSPEND
-+#ifdef CONFIG_SUSPEND_SHARED
- 
- static int pmac_pm_prepare(suspend_state_t state)
- {
-@@ -480,16 +480,16 @@ static struct pm_ops pmac_pm_ops = {
- 	.valid		= pmac_pm_valid,
- };
- 
--#endif /* CONFIG_SOFTWARE_SUSPEND */
-+#endif /* CONFIG_SUSPEND_SHARED */
- 
- static int initializing = 1;
- 
- static int pmac_late_init(void)
- {
- 	initializing = 0;
--#ifdef CONFIG_SOFTWARE_SUSPEND
-+#ifdef CONFIG_SUSPEND_SHARED
- 	pm_set_ops(&pmac_pm_ops);
--#endif /* CONFIG_SOFTWARE_SUSPEND */
-+#endif /* CONFIG_SUSPEND_SHARED */
- 	return 0;
- }
- 
-diff --git a/arch/x86_64/kernel/Makefile b/arch/x86_64/kernel/Makefile
-index bb47e86..9943190 100644
---- a/arch/x86_64/kernel/Makefile
-+++ b/arch/x86_64/kernel/Makefile
-@@ -26,7 +26,7 @@ obj-y				+= io_apic.o mpparse.o \
+diff -ruN linux-2.6.22/arch/x86_64/kernel/Makefile suspend2-2.2.10-for-2.6.22/arch/x86_64/kernel/Makefile
+--- linux-2.6.22/arch/x86_64/kernel/Makefile	2007-07-11 22:18:48.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/arch/x86_64/kernel/Makefile	2007-07-11 22:25:42.000000000 +1000
+@@ -26,7 +26,7 @@
  obj-$(CONFIG_KEXEC)		+= machine_kexec.o relocate_kernel.o crash.o
  obj-$(CONFIG_CRASH_DUMP)	+= crash_dump.o
  obj-$(CONFIG_PM)		+= suspend.o
@@ -1421,11 +1380,10 @@ index bb47e86..9943190 100644
  obj-$(CONFIG_CPU_FREQ)		+= cpufreq/
  obj-$(CONFIG_EARLY_PRINTK)	+= early_printk.o
  obj-$(CONFIG_IOMMU)		+= pci-gart.o aperture.o
-diff --git a/arch/x86_64/kernel/suspend.c b/arch/x86_64/kernel/suspend.c
-index 91f7e67..983f16f 100644
---- a/arch/x86_64/kernel/suspend.c
-+++ b/arch/x86_64/kernel/suspend.c
-@@ -140,7 +140,7 @@ void fix_processor_context(void)
+diff -ruN linux-2.6.22/arch/x86_64/kernel/suspend.c suspend2-2.2.10-for-2.6.22/arch/x86_64/kernel/suspend.c
+--- linux-2.6.22/arch/x86_64/kernel/suspend.c	2007-07-11 22:18:48.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/arch/x86_64/kernel/suspend.c	2007-07-11 22:25:42.000000000 +1000
+@@ -146,7 +146,7 @@
  
  }
  
@@ -1434,17 +1392,16 @@ index 91f7e67..983f16f 100644
  /* Defined in arch/x86_64/kernel/suspend_asm.S */
  extern int restore_image(void);
  
-@@ -219,4 +219,4 @@ int swsusp_arch_resume(void)
- 	restore_image();
- 	return 0;
+@@ -236,4 +236,4 @@
+ 	unsigned long nosave_end_pfn = PAGE_ALIGN(__pa_symbol(&__nosave_end)) >> PAGE_SHIFT;
+ 	return (pfn >= nosave_begin_pfn) && (pfn < nosave_end_pfn);
  }
 -#endif /* CONFIG_SOFTWARE_SUSPEND */
 +#endif /* CONFIG_SUSPEND_SHARED */
-diff --git a/crypto/Kconfig b/crypto/Kconfig
-index 086fcec..efde46c 100644
---- a/crypto/Kconfig
-+++ b/crypto/Kconfig
-@@ -406,6 +406,14 @@ config CRYPTO_DEFLATE
+diff -ruN linux-2.6.22/crypto/Kconfig suspend2-2.2.10-for-2.6.22/crypto/Kconfig
+--- linux-2.6.22/crypto/Kconfig	2007-07-11 22:18:48.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/crypto/Kconfig	2007-07-11 22:25:42.000000000 +1000
+@@ -419,6 +419,14 @@
  	  
  	  You will most probably want this if using IPSec.
  
@@ -1459,22 +1416,19 @@ index 086fcec..efde46c 100644
  config CRYPTO_MICHAEL_MIC
  	tristate "Michael MIC keyed digest algorithm"
  	select CRYPTO_ALGAPI
-diff --git a/crypto/Makefile b/crypto/Makefile
-index 12f93f5..69a8af3 100644
---- a/crypto/Makefile
-+++ b/crypto/Makefile
-@@ -46,5 +46,6 @@ obj-$(CONFIG_CRYPTO_ANUBIS) += anubis.o
+diff -ruN linux-2.6.22/crypto/Makefile suspend2-2.2.10-for-2.6.22/crypto/Makefile
+--- linux-2.6.22/crypto/Makefile	2007-07-11 22:18:48.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/crypto/Makefile	2007-07-11 22:25:42.000000000 +1000
+@@ -48,5 +48,6 @@
  obj-$(CONFIG_CRYPTO_DEFLATE) += deflate.o
  obj-$(CONFIG_CRYPTO_MICHAEL_MIC) += michael_mic.o
  obj-$(CONFIG_CRYPTO_CRC32C) += crc32c.o
 +obj-$(CONFIG_CRYPTO_LZF) += lzf.o
  
  obj-$(CONFIG_CRYPTO_TEST) += tcrypt.o
-diff --git a/crypto/lzf.c b/crypto/lzf.c
-new file mode 100644
-index 0000000..7c74784
---- /dev/null
-+++ b/crypto/lzf.c
+diff -ruN linux-2.6.22/crypto/lzf.c suspend2-2.2.10-for-2.6.22/crypto/lzf.c
+--- linux-2.6.22/crypto/lzf.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/crypto/lzf.c	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,325 @@
 +/* 
 + * Cryptoapi LZF compression module.
@@ -1801,10 +1755,51 @@ index 0000000..7c74784
 +MODULE_LICENSE("GPL");
 +MODULE_DESCRIPTION("LZF Compression Algorithm");
 +MODULE_AUTHOR("Marc Alexander Lehmann & Nigel Cunningham");
-diff --git a/drivers/base/core.c b/drivers/base/core.c
-index d7fcf82..edbbf76 100644
---- a/drivers/base/core.c
-+++ b/drivers/base/core.c
+diff -ruN linux-2.6.22/drivers/acpi/sleep/main.c suspend2-2.2.10-for-2.6.22/drivers/acpi/sleep/main.c
+--- linux-2.6.22/drivers/acpi/sleep/main.c	2007-07-11 22:18:49.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/drivers/acpi/sleep/main.c	2007-07-11 22:25:42.000000000 +1000
+@@ -181,7 +181,7 @@
+ 	.finish = acpi_pm_finish,
+ };
+ 
+-#ifdef CONFIG_SOFTWARE_SUSPEND
++#ifdef CONFIG_SUSPEND_SHARED
+ static int acpi_hibernation_prepare(void)
+ {
+ 	return acpi_sleep_prepare(ACPI_STATE_S4);
+@@ -222,7 +222,7 @@
+ 	.enter = acpi_hibernation_enter,
+ 	.finish = acpi_hibernation_finish,
+ };
+-#endif				/* CONFIG_SOFTWARE_SUSPEND */
++#endif				/* CONFIG_SUSPEND_SHARED */
+ 
+ /*
+  * Toshiba fails to preserve interrupts over S1, reinitialization
+@@ -267,7 +267,7 @@
+ 
+ 	pm_set_ops(&acpi_pm_ops);
+ 
+-#ifdef CONFIG_SOFTWARE_SUSPEND
++#ifdef CONFIG_SUSPEND_SHARED
+ 	if (sleep_states[ACPI_STATE_S4])
+ 		hibernation_set_ops(&acpi_hibernation_ops);
+ #else
+diff -ruN linux-2.6.22/drivers/acpi/sleep/proc.c suspend2-2.2.10-for-2.6.22/drivers/acpi/sleep/proc.c
+--- linux-2.6.22/drivers/acpi/sleep/proc.c	2007-07-11 22:18:49.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/drivers/acpi/sleep/proc.c	2007-07-11 22:25:42.000000000 +1000
+@@ -58,7 +58,7 @@
+ 		goto Done;
+ 	}
+ 	state = simple_strtoul(str, NULL, 0);
+-#ifdef CONFIG_SOFTWARE_SUSPEND
++#ifdef CONFIG_SUSPEND_SHARED
+ 	if (state == 4) {
+ 		error = hibernate();
+ 		goto Done;
+diff -ruN linux-2.6.22/drivers/base/core.c suspend2-2.2.10-for-2.6.22/drivers/base/core.c
+--- linux-2.6.22/drivers/base/core.c	2007-07-11 22:18:49.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/drivers/base/core.c	2007-07-11 22:25:42.000000000 +1000
 @@ -27,6 +27,8 @@
  int (*platform_notify)(struct device * dev) = NULL;
  int (*platform_notify_remove)(struct device * dev) = NULL;
@@ -1814,7 +1809,7 @@ index d7fcf82..edbbf76 100644
  /*
   * sysfs bindings for devices.
   */
-@@ -638,6 +640,18 @@ int device_add(struct device *dev)
+@@ -755,6 +757,18 @@
  				class_intf->add_dev(dev, class_intf);
  		up(&dev->class->sem);
  	}
@@ -1831,9 +1826,9 @@ index d7fcf82..edbbf76 100644
 +#endif
 +
   Done:
-  	kfree(class_name);
+ 	kfree(class_name);
  	put_device(dev);
-@@ -975,6 +989,7 @@ struct device *device_create(struct class *class, struct device *parent,
+@@ -1103,6 +1117,7 @@
  	dev->class = class;
  	dev->parent = parent;
  	dev->release = device_create_release;
@@ -1841,7 +1836,7 @@ index d7fcf82..edbbf76 100644
  
  	va_start(args, fmt);
  	vsnprintf(dev->bus_id, BUS_ID_SIZE, fmt, args);
-@@ -1183,3 +1198,11 @@ out:
+@@ -1311,3 +1326,11 @@
  }
  
  EXPORT_SYMBOL_GPL(device_move);
@@ -1853,10 +1848,9 @@ index d7fcf82..edbbf76 100644
 +}
 +
 +__setup("pm_debug_dump_stack", pm_debug_dump_stack);
-diff --git a/drivers/macintosh/via-pmu.c b/drivers/macintosh/via-pmu.c
-index b6073bd..32bd423 100644
---- a/drivers/macintosh/via-pmu.c
-+++ b/drivers/macintosh/via-pmu.c
+diff -ruN linux-2.6.22/drivers/macintosh/via-pmu.c suspend2-2.2.10-for-2.6.22/drivers/macintosh/via-pmu.c
+--- linux-2.6.22/drivers/macintosh/via-pmu.c	2007-07-11 22:19:03.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/drivers/macintosh/via-pmu.c	2007-07-11 22:25:42.000000000 +1000
 @@ -42,7 +42,6 @@
  #include <linux/interrupt.h>
  #include <linux/device.h>
@@ -1865,11 +1859,10 @@ index b6073bd..32bd423 100644
  #include <linux/syscalls.h>
  #include <linux/suspend.h>
  #include <linux/cpu.h>
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 509171c..76e5ac8 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -5309,6 +5309,8 @@ void md_do_sync(mddev_t *mddev)
+diff -ruN linux-2.6.22/drivers/md/md.c suspend2-2.2.10-for-2.6.22/drivers/md/md.c
+--- linux-2.6.22/drivers/md/md.c	2007-07-11 22:19:04.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/drivers/md/md.c	2007-07-11 22:25:42.000000000 +1000
+@@ -5401,6 +5401,8 @@
  			last_mark = next;
  		}
  
@@ -1878,11 +1871,10 @@ index 509171c..76e5ac8 100644
  
  		if (kthread_should_stop()) {
  			/*
-diff --git a/drivers/pci/pci-driver.c b/drivers/pci/pci-driver.c
-index a3c1755..171be82 100644
---- a/drivers/pci/pci-driver.c
-+++ b/drivers/pci/pci-driver.c
-@@ -451,6 +451,10 @@ int __pci_register_driver(struct pci_driver *drv, struct module *owner,
+diff -ruN linux-2.6.22/drivers/pci/pci-driver.c suspend2-2.2.10-for-2.6.22/drivers/pci/pci-driver.c
+--- linux-2.6.22/drivers/pci/pci-driver.c	2007-07-11 22:19:27.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/drivers/pci/pci-driver.c	2007-07-11 22:25:42.000000000 +1000
+@@ -432,6 +432,10 @@
  	if (error)
  		driver_unregister(&drv->driver);
  
@@ -1893,11 +1885,10 @@ index a3c1755..171be82 100644
  	return error;
  }
  
-diff --git a/drivers/usb/core/driver.c b/drivers/usb/core/driver.c
-index 9e3e943..e91fdef 100644
---- a/drivers/usb/core/driver.c
-+++ b/drivers/usb/core/driver.c
-@@ -788,6 +788,9 @@ int usb_register_driver(struct usb_driver *new_driver, struct module *owner,
+diff -ruN linux-2.6.22/drivers/usb/core/driver.c suspend2-2.2.10-for-2.6.22/drivers/usb/core/driver.c
+--- linux-2.6.22/drivers/usb/core/driver.c	2007-07-11 22:19:28.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/drivers/usb/core/driver.c	2007-07-11 22:25:42.000000000 +1000
+@@ -756,6 +756,9 @@
  			usbcore_name, new_driver->name);
  		usbfs_update_special();
  		usb_create_newid_file(new_driver);
@@ -1907,21 +1898,19 @@ index 9e3e943..e91fdef 100644
  	} else {
  		printk(KERN_ERR "%s: error %d registering interface "
  			"	driver %s\n",
-diff --git a/include/asm-i386/cacheflush.h b/include/asm-i386/cacheflush.h
-index 74e03c8..3bb8575 100644
---- a/include/asm-i386/cacheflush.h
-+++ b/include/asm-i386/cacheflush.h
-@@ -36,4 +36,6 @@ void kernel_map_pages(struct page *page, int numpages, int enable);
+diff -ruN linux-2.6.22/include/asm-i386/cacheflush.h suspend2-2.2.10-for-2.6.22/include/asm-i386/cacheflush.h
+--- linux-2.6.22/include/asm-i386/cacheflush.h	2007-07-11 22:19:34.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/include/asm-i386/cacheflush.h	2007-07-11 22:25:42.000000000 +1000
+@@ -36,4 +36,6 @@
  void mark_rodata_ro(void);
  #endif
  
 +extern int page_is_mapped(struct page *page);
 +
  #endif /* _I386_CACHEFLUSH_H */
-diff --git a/include/asm-i386/suspend.h b/include/asm-i386/suspend.h
-index 8dbaafe..e23fd20 100644
---- a/include/asm-i386/suspend.h
-+++ b/include/asm-i386/suspend.h
+diff -ruN linux-2.6.22/include/asm-i386/suspend.h suspend2-2.2.10-for-2.6.22/include/asm-i386/suspend.h
+--- linux-2.6.22/include/asm-i386/suspend.h	2007-07-11 22:19:34.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/include/asm-i386/suspend.h	2007-07-11 22:25:42.000000000 +1000
 @@ -8,6 +8,9 @@
  
  static inline int arch_prepare_suspend(void) { return 0; }
@@ -1932,22 +1921,20 @@ index 8dbaafe..e23fd20 100644
  /* image of the saved processor state */
  struct saved_context {
    	u16 es, fs, gs, ss;
-diff --git a/include/asm-ppc/suspend.h b/include/asm-ppc/suspend.h
-index 3df9f32..9d5db0e 100644
---- a/include/asm-ppc/suspend.h
-+++ b/include/asm-ppc/suspend.h
-@@ -10,3 +10,6 @@ static inline void save_processor_state(void)
+diff -ruN linux-2.6.22/include/asm-ppc/suspend.h suspend2-2.2.10-for-2.6.22/include/asm-ppc/suspend.h
+--- linux-2.6.22/include/asm-ppc/suspend.h	2007-07-11 22:19:36.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/include/asm-ppc/suspend.h	2007-07-11 22:25:42.000000000 +1000
+@@ -10,3 +10,6 @@
  static inline void restore_processor_state(void)
  {
  }
 +
 +#define suspend2_faulted (0)
 +#define clear_suspend2_fault() do { } while(0)
-diff --git a/include/asm-x86_64/cacheflush.h b/include/asm-x86_64/cacheflush.h
-index ab1cb5c..b8e7def 100644
---- a/include/asm-x86_64/cacheflush.h
-+++ b/include/asm-x86_64/cacheflush.h
-@@ -32,4 +32,9 @@ int change_page_attr_addr(unsigned long addr, int numpages, pgprot_t prot);
+diff -ruN linux-2.6.22/include/asm-x86_64/cacheflush.h suspend2-2.2.10-for-2.6.22/include/asm-x86_64/cacheflush.h
+--- linux-2.6.22/include/asm-x86_64/cacheflush.h	2007-07-11 22:19:38.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/include/asm-x86_64/cacheflush.h	2007-07-11 22:25:42.000000000 +1000
+@@ -32,4 +32,9 @@
  void mark_rodata_ro(void);
  #endif
  
@@ -1957,11 +1944,10 @@ index ab1cb5c..b8e7def 100644
 +}
 +
  #endif /* _X8664_CACHEFLUSH_H */
-diff --git a/include/asm-x86_64/suspend.h b/include/asm-x86_64/suspend.h
-index bc7f817..2f18e1b 100644
---- a/include/asm-x86_64/suspend.h
-+++ b/include/asm-x86_64/suspend.h
-@@ -12,6 +12,9 @@ arch_prepare_suspend(void)
+diff -ruN linux-2.6.22/include/asm-x86_64/suspend.h suspend2-2.2.10-for-2.6.22/include/asm-x86_64/suspend.h
+--- linux-2.6.22/include/asm-x86_64/suspend.h	2007-07-11 22:19:38.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/include/asm-x86_64/suspend.h	2007-07-11 22:25:42.000000000 +1000
+@@ -12,6 +12,9 @@
  	return 0;
  }
  
@@ -1971,23 +1957,20 @@ index bc7f817..2f18e1b 100644
  /* Image of the saved processor state. If you touch this, fix acpi_wakeup.S. */
  struct saved_context {
    	u16 ds, es, fs, gs, ss;
-diff --git a/include/linux/device.h b/include/linux/device.h
-index 5cf30e9..69122c1 100644
---- a/include/linux/device.h
-+++ b/include/linux/device.h
-@@ -402,6 +402,7 @@ struct device {
+diff -ruN linux-2.6.22/include/linux/device.h suspend2-2.2.10-for-2.6.22/include/linux/device.h
+--- linux-2.6.22/include/linux/device.h	2007-07-11 22:19:38.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/include/linux/device.h	2007-07-11 22:25:42.000000000 +1000
+@@ -418,6 +418,7 @@
  	char	bus_id[BUS_ID_SIZE];	/* position on parent bus */
  	struct device_type	*type;
  	unsigned		is_registered:1;
 +	unsigned		pm_safe:1; /* No resume fn is ok? */
+ 	unsigned		uevent_suppress:1;
  	struct device_attribute uevent_attr;
  	struct device_attribute *devt_attr;
- 
-diff --git a/include/linux/dyn_pageflags.h b/include/linux/dyn_pageflags.h
-new file mode 100644
-index 0000000..23d9127
---- /dev/null
-+++ b/include/linux/dyn_pageflags.h
+diff -ruN linux-2.6.22/include/linux/dyn_pageflags.h suspend2-2.2.10-for-2.6.22/include/linux/dyn_pageflags.h
+--- linux-2.6.22/include/linux/dyn_pageflags.h	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/include/linux/dyn_pageflags.h	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,68 @@
 +/*
 + * include/linux/dyn_pageflags.h
@@ -2057,25 +2040,19 @@ index 0000000..23d9127
 + * #define ClearPagePageset1(page) (clear_dynpageflag(&pageset1_map, page))
 + */
 +
-diff --git a/include/linux/freezer.h b/include/linux/freezer.h
-index 5e75e26..f49c9be 100644
---- a/include/linux/freezer.h
-+++ b/include/linux/freezer.h
-@@ -1,7 +1,10 @@
--/* Freezer declarations */
+diff -ruN linux-2.6.22/include/linux/freezer.h suspend2-2.2.10-for-2.6.22/include/linux/freezer.h
+--- linux-2.6.22/include/linux/freezer.h	2007-07-11 22:19:38.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/include/linux/freezer.h	2007-07-11 22:25:42.000000000 +1000
+@@ -1,4 +1,6 @@
+ /* Freezer declarations */
 +#ifndef LINUX_FREEZER_H
 +#define LINUX_FREEZER_H
  
  #include <linux/sched.h>
  
-+/* Freezer declarations */
-+
- #ifdef CONFIG_PM
- /*
-  * Check if a process has been frozen
-@@ -73,6 +76,18 @@ static inline int try_to_freeze(void)
- 
- extern void thaw_some_processes(int all);
+@@ -115,6 +117,18 @@
+ 	return !!(p->flags & PF_FREEZER_SKIP);
+ }
  
 +extern int freezer_state;
 +#define FREEZER_OFF 0
@@ -2092,21 +2069,22 @@ index 5e75e26..f49c9be 100644
  #else
  static inline int frozen(struct task_struct *p) { return 0; }
  static inline int freezing(struct task_struct *p) { return 0; }
-@@ -85,6 +100,9 @@ static inline int freeze_processes(void) { BUG(); return 0; }
+@@ -126,8 +140,11 @@
  static inline void thaw_processes(void) {}
  
  static inline int try_to_freeze(void) { return 0; }
 +static inline int freezer_is_on(void) { return 0; }
 +static inline void thaw_kernel_threads(void) { }
  
- 
+ static inline void freezer_do_not_count(void) {}
+ static inline void freezer_count(void) {}
+ static inline int freezer_should_skip(struct task_struct *p) { return 0; }
  #endif
 +#endif
-diff --git a/include/linux/kernel.h b/include/linux/kernel.h
-index 9ddf25c..c18ec95 100644
---- a/include/linux/kernel.h
-+++ b/include/linux/kernel.h
-@@ -113,6 +113,8 @@ extern int vsprintf(char *buf, const char *, va_list)
+diff -ruN linux-2.6.22/include/linux/kernel.h suspend2-2.2.10-for-2.6.22/include/linux/kernel.h
+--- linux-2.6.22/include/linux/kernel.h	2007-07-11 22:19:39.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/include/linux/kernel.h	2007-07-11 22:25:42.000000000 +1000
+@@ -124,6 +124,8 @@
  	__attribute__ ((format (printf, 2, 0)));
  extern int snprintf(char * buf, size_t size, const char * fmt, ...)
  	__attribute__ ((format (printf, 3, 4)));
@@ -2115,10 +2093,9 @@ index 9ddf25c..c18ec95 100644
  extern int vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
  	__attribute__ ((format (printf, 3, 0)));
  extern int scnprintf(char * buf, size_t size, const char * fmt, ...)
-diff --git a/include/linux/netlink.h b/include/linux/netlink.h
-index 2a20f48..b4d9db1 100644
---- a/include/linux/netlink.h
-+++ b/include/linux/netlink.h
+diff -ruN linux-2.6.22/include/linux/netlink.h suspend2-2.2.10-for-2.6.22/include/linux/netlink.h
+--- linux-2.6.22/include/linux/netlink.h	2007-07-11 22:19:39.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/include/linux/netlink.h	2007-07-11 22:25:42.000000000 +1000
 @@ -24,6 +24,8 @@
  /* leave room for NETLINK_DM (DM Events) */
  #define NETLINK_SCSITRANSPORT	18	/* SCSI Transports */
@@ -2128,37 +2105,21 @@ index 2a20f48..b4d9db1 100644
  
  #define MAX_LINKS 32		
  
-diff --git a/include/linux/suspend.h b/include/linux/suspend.h
-index bf99bd4..02c1184 100644
---- a/include/linux/suspend.h
-+++ b/include/linux/suspend.h
-@@ -27,14 +27,9 @@ extern void mark_free_pages(struct zone *zone);
- /* kernel/power/swsusp.c */
- extern int software_suspend(void);
+diff -ruN linux-2.6.22/include/linux/suspend.h suspend2-2.2.10-for-2.6.22/include/linux/suspend.h
+--- linux-2.6.22/include/linux/suspend.h	2007-07-11 22:19:39.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/include/linux/suspend.h	2007-07-11 22:25:42.000000000 +1000
+@@ -50,7 +50,7 @@
+ 	void (*finish)(void);
+ };
  
--#if defined(CONFIG_VT) && defined(CONFIG_VT_CONSOLE)
- extern int pm_prepare_console(void);
- extern void pm_restore_console(void);
- #else
--static inline int pm_prepare_console(void) { return 0; }
--static inline void pm_restore_console(void) {}
--#endif /* defined(CONFIG_VT) && defined(CONFIG_VT_CONSOLE) */
--#else
- static inline int software_suspend(void)
- {
- 	printk("Warning: fake suspend called\n");
-@@ -45,8 +40,6 @@ static inline int software_suspend(void)
- void save_processor_state(void);
- void restore_processor_state(void);
- struct saved_context;
--void __save_processor_state(struct saved_context *ctxt);
--void __restore_processor_state(struct saved_context *ctxt);
- unsigned long get_safe_page(gfp_t gfp_mask);
- 
- /*
-@@ -55,4 +48,81 @@ unsigned long get_safe_page(gfp_t gfp_mask);
-  */
- #define PAGES_FOR_IO	1024
+-#if defined(CONFIG_PM) && defined(CONFIG_SOFTWARE_SUSPEND)
++#if defined(CONFIG_PM) && defined(CONFIG_SUSPEND_SHARED)
+ /* kernel/power/snapshot.c */
+ extern void __register_nosave_region(unsigned long b, unsigned long e, int km);
+ static inline void register_nosave_region(unsigned long b, unsigned long e)
+@@ -85,4 +85,81 @@
+ void __save_processor_state(struct saved_context *ctxt);
+ void __restore_processor_state(struct saved_context *ctxt);
  
 +enum {
 +	SUSPEND_CAN_SUSPEND,
@@ -2238,11 +2199,10 @@ index bf99bd4..02c1184 100644
 +#endif
 +
  #endif /* _LINUX_SWSUSP_H */
-diff --git a/include/linux/swap.h b/include/linux/swap.h
-index 0068688..ad3fead 100644
---- a/include/linux/swap.h
-+++ b/include/linux/swap.h
-@@ -190,6 +190,7 @@ extern void swap_setup(void);
+diff -ruN linux-2.6.22/include/linux/swap.h suspend2-2.2.10-for-2.6.22/include/linux/swap.h
+--- linux-2.6.22/include/linux/swap.h	2007-07-11 22:19:39.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/include/linux/swap.h	2007-07-11 22:25:42.000000000 +1000
+@@ -190,6 +190,7 @@
  /* linux/mm/vmscan.c */
  extern unsigned long try_to_free_pages(struct zone **, gfp_t);
  extern unsigned long shrink_all_memory(unsigned long nr_pages);
@@ -2250,7 +2210,7 @@ index 0068688..ad3fead 100644
  extern int vm_swappiness;
  extern int remove_mapping(struct address_space *mapping, struct page *page);
  extern long vm_total_pages;
-@@ -368,5 +369,10 @@ static inline swp_entry_t get_swap_page(void)
+@@ -368,5 +369,10 @@
  #define disable_swap_token() do { } while(0)
  
  #endif /* CONFIG_SWAP */
@@ -2261,11 +2221,10 @@ index 0068688..ad3fead 100644
 +
  #endif /* __KERNEL__*/
  #endif /* _LINUX_SWAP_H */
-diff --git a/include/linux/time.h b/include/linux/time.h
-index 8ea8dea..5c07f00 100644
---- a/include/linux/time.h
-+++ b/include/linux/time.h
-@@ -224,4 +224,7 @@ struct itimerval {
+diff -ruN linux-2.6.22/include/linux/time.h suspend2-2.2.10-for-2.6.22/include/linux/time.h
+--- linux-2.6.22/include/linux/time.h	2007-07-11 22:19:40.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/include/linux/time.h	2007-07-11 22:25:42.000000000 +1000
+@@ -225,4 +225,7 @@
   */
  #define TIMER_ABSTIME			0x01
  
@@ -2273,11 +2232,10 @@ index 8ea8dea..5c07f00 100644
 +extern void restore_avenrun(void);
 +
  #endif
-diff --git a/init/do_mounts.c b/init/do_mounts.c
-index dc1ec08..3e67387 100644
---- a/init/do_mounts.c
-+++ b/init/do_mounts.c
-@@ -139,11 +139,16 @@ dev_t name_to_dev_t(char *name)
+diff -ruN linux-2.6.22/init/do_mounts.c suspend2-2.2.10-for-2.6.22/init/do_mounts.c
+--- linux-2.6.22/init/do_mounts.c	2007-07-11 22:19:40.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/init/do_mounts.c	2007-07-11 22:25:42.000000000 +1000
+@@ -141,11 +141,16 @@
  	char s[32];
  	char *p;
  	dev_t res = 0;
@@ -2296,7 +2254,7 @@ index dc1ec08..3e67387 100644
  		goto out;
  #endif
  
-@@ -195,7 +200,8 @@ dev_t name_to_dev_t(char *name)
+@@ -197,7 +202,8 @@
  	res = try_name(s, part);
  done:
  #ifdef CONFIG_SYSFS
@@ -2306,7 +2264,7 @@ index dc1ec08..3e67387 100644
  out:
  	if (!mkdir_err)
  		sys_rmdir("/sys");
-@@ -434,12 +440,27 @@ void __init prepare_namespace(void)
+@@ -440,12 +446,27 @@
  
  	is_floppy = MAJOR(ROOT_DEV) == FLOPPY_MAJOR;
  
@@ -2334,10 +2292,9 @@ index dc1ec08..3e67387 100644
  	mount_root();
  out:
  	sys_mount(".", "/", NULL, MS_MOVE, NULL);
-diff --git a/init/do_mounts_initrd.c b/init/do_mounts_initrd.c
-index 2cfd7cb..9c24ec4 100644
---- a/init/do_mounts_initrd.c
-+++ b/init/do_mounts_initrd.c
+diff -ruN linux-2.6.22/init/do_mounts_initrd.c suspend2-2.2.10-for-2.6.22/init/do_mounts_initrd.c
+--- linux-2.6.22/init/do_mounts_initrd.c	2007-07-11 22:19:40.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/init/do_mounts_initrd.c	2007-07-11 22:25:42.000000000 +1000
 @@ -6,6 +6,7 @@
  #include <linux/romfs_fs.h>
  #include <linux/initrd.h>
@@ -2346,39 +2303,30 @@ index 2cfd7cb..9c24ec4 100644
  #include <linux/freezer.h>
  
  #include "do_mounts.h"
-@@ -58,10 +59,18 @@ static void __init handle_initrd(void)
- 	current->flags |= PF_NOFREEZE;
- 	pid = kernel_thread(do_linuxrc, "/linuxrc", SIGCHLD);
- 	if (pid > 0) {
--		while (pid != sys_wait4(-1, NULL, 0, NULL))
-+		while (pid != sys_wait4(-1, NULL, 0, NULL)) {
- 			yield();
-+			try_to_freeze();
-+		}
+@@ -63,6 +64,11 @@
+ 		}
  	}
  
 +	if (!resume_attempted)
 +		printk(KERN_ERR "Suspend2: No attempt was made to resume from "
 +				"any image that might exist.\n");
 +	clear_suspend_state(SUSPEND_BOOT_TIME);
-+	current->flags &= ~PF_NOFREEZE;
 +
  	/* move initrd to rootfs' /old */
  	sys_fchdir(old_fd);
  	sys_mount("/", ".", NULL, MS_MOVE, NULL);
-diff --git a/init/main.c b/init/main.c
-index a92989e..cd3f60f 100644
---- a/init/main.c
-+++ b/init/main.c
-@@ -54,6 +54,7 @@
- #include <linux/lockdep.h>
+diff -ruN linux-2.6.22/init/main.c suspend2-2.2.10-for-2.6.22/init/main.c
+--- linux-2.6.22/init/main.c	2007-07-11 22:19:40.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/init/main.c	2007-07-11 22:25:42.000000000 +1000
+@@ -55,6 +55,7 @@
  #include <linux/pid_namespace.h>
  #include <linux/device.h>
+ #include <linux/kthread.h>
 +#include <linux/suspend.h>
  
  #include <asm/io.h>
  #include <asm/bugs.h>
-@@ -804,7 +805,9 @@ static int __init init(void * unused)
+@@ -817,7 +818,9 @@
  
  	/*
  	 * check if there is an early userspace init.  If yes, let it do all
@@ -2389,11 +2337,10 @@ index a92989e..cd3f60f 100644
  	 */
  
  	if (!ramdisk_execute_command)
-diff --git a/kernel/kmod.c b/kernel/kmod.c
-index 7962761..f0d6fc1 100644
---- a/kernel/kmod.c
-+++ b/kernel/kmod.c
-@@ -34,6 +34,7 @@
+diff -ruN linux-2.6.22/kernel/kmod.c suspend2-2.2.10-for-2.6.22/kernel/kmod.c
+--- linux-2.6.22/kernel/kmod.c	2007-07-11 22:19:41.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/kmod.c	2007-07-11 22:25:42.000000000 +1000
+@@ -33,6 +33,7 @@
  #include <linux/kernel.h>
  #include <linux/init.h>
  #include <linux/resource.h>
@@ -2401,7 +2348,7 @@ index 7962761..f0d6fc1 100644
  #include <asm/uaccess.h>
  
  extern int max_threads;
-@@ -338,6 +339,11 @@ int call_usermodehelper_pipe(char *path, char **argv, char **envp,
+@@ -337,6 +338,11 @@
  	}
  	sub_info.stdin = f;
  
@@ -2413,11 +2360,10 @@ index 7962761..f0d6fc1 100644
  	queue_work(khelper_wq, &sub_info.work);
  	wait_for_completion(&done);
  	return sub_info.retval;
-diff --git a/kernel/power/Kconfig b/kernel/power/Kconfig
-index 51a4dd0..4caac70 100644
---- a/kernel/power/Kconfig
-+++ b/kernel/power/Kconfig
-@@ -48,6 +48,18 @@ config DISABLE_CONSOLE_SUSPEND
+diff -ruN linux-2.6.22/kernel/power/Kconfig suspend2-2.2.10-for-2.6.22/kernel/power/Kconfig
+--- linux-2.6.22/kernel/power/Kconfig	2007-07-11 22:19:41.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/Kconfig	2007-07-11 22:25:42.000000000 +1000
+@@ -48,6 +48,18 @@
  	suspend/resume routines, but may itself lead to problems, for example
  	if netconsole is used.
  
@@ -2436,7 +2382,7 @@ index 51a4dd0..4caac70 100644
  config PM_TRACE
  	bool "Suspend/resume event tracing"
  	depends on PM && PM_DEBUG && X86_32 && EXPERIMENTAL
-@@ -162,3 +174,174 @@ config APM_EMULATION
+@@ -167,3 +179,174 @@
  	  random kernel OOPSes or reboots that don't seem to be related to
  	  anything, try disabling/enabling this option (or disabling/enabling
  	  APM in your BIOS).
@@ -2611,11 +2557,10 @@ index 51a4dd0..4caac70 100644
 +	bool
 +	depends on SUSPEND2_CORE!=n
 +	default y
-diff --git a/kernel/power/Makefile b/kernel/power/Makefile
-index 38725f5..a4a8c5b 100644
---- a/kernel/power/Makefile
-+++ b/kernel/power/Makefile
-@@ -5,6 +5,32 @@ endif
+diff -ruN linux-2.6.22/kernel/power/Makefile suspend2-2.2.10-for-2.6.22/kernel/power/Makefile
+--- linux-2.6.22/kernel/power/Makefile	2007-07-11 22:19:41.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/Makefile	2007-07-11 22:25:42.000000000 +1000
+@@ -5,6 +5,32 @@
  
  obj-y				:= main.o process.o console.o
  obj-$(CONFIG_PM_LEGACY)		+= pm.o
@@ -2649,11 +2594,9 @@ index 38725f5..a4a8c5b 100644
 +obj-$(CONFIG_SOFTWARE_SUSPEND)	+= swsusp.o disk.o swap.o user.o
  
  obj-$(CONFIG_MAGIC_SYSRQ)	+= poweroff.o
-diff --git a/kernel/power/atomic_copy.c b/kernel/power/atomic_copy.c
-new file mode 100644
-index 0000000..2e1ab1f
---- /dev/null
-+++ b/kernel/power/atomic_copy.c
+diff -ruN linux-2.6.22/kernel/power/atomic_copy.c suspend2-2.2.10-for-2.6.22/kernel/power/atomic_copy.c
+--- linux-2.6.22/kernel/power/atomic_copy.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/atomic_copy.c	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,423 @@
 +/*
 + * kernel/power/atomic_copy.c
@@ -3078,11 +3021,9 @@ index 0000000..2e1ab1f
 +	suspend2_running = 0;
 +	return 1;
 +}
-diff --git a/kernel/power/block_io.h b/kernel/power/block_io.h
-new file mode 100644
-index 0000000..49eaa51
---- /dev/null
-+++ b/kernel/power/block_io.h
+diff -ruN linux-2.6.22/kernel/power/block_io.h suspend2-2.2.10-for-2.6.22/kernel/power/block_io.h
+--- linux-2.6.22/kernel/power/block_io.h	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/block_io.h	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,55 @@
 +/*
 + * kernel/power/block_io.h
@@ -3139,11 +3080,9 @@ index 0000000..49eaa51
 +extern struct extent_iterate_saved_state suspend_writer_posn_save[3];
 +extern struct extent_iterate_state suspend_writer_posn;
 +extern int suspend_header_bytes_used;
-diff --git a/kernel/power/checksum.c b/kernel/power/checksum.c
-new file mode 100644
-index 0000000..356af21
---- /dev/null
-+++ b/kernel/power/checksum.c
+diff -ruN linux-2.6.22/kernel/power/checksum.c suspend2-2.2.10-for-2.6.22/kernel/power/checksum.c
+--- linux-2.6.22/kernel/power/checksum.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/checksum.c	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,371 @@
 +/*
 + * kernel/power/checksum.c
@@ -3516,11 +3455,9 @@ index 0000000..356af21
 +{
 +	suspend_unregister_module(&suspend_checksum_ops);
 +}
-diff --git a/kernel/power/checksum.h b/kernel/power/checksum.h
-new file mode 100644
-index 0000000..9984eec
---- /dev/null
-+++ b/kernel/power/checksum.h
+diff -ruN linux-2.6.22/kernel/power/checksum.h suspend2-2.2.10-for-2.6.22/kernel/power/checksum.h
+--- linux-2.6.22/kernel/power/checksum.h	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/checksum.h	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,27 @@
 +/*
 + * kernel/power/checksum.h
@@ -3549,11 +3486,9 @@ index 0000000..9984eec
 +static inline void free_checksum_pages(void) { };
 +#endif
 +
-diff --git a/kernel/power/cluster.c b/kernel/power/cluster.c
-new file mode 100644
-index 0000000..b5ab9ad
---- /dev/null
-+++ b/kernel/power/cluster.c
+diff -ruN linux-2.6.22/kernel/power/cluster.c suspend2-2.2.10-for-2.6.22/kernel/power/cluster.c
+--- linux-2.6.22/kernel/power/cluster.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/cluster.c	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,152 @@
 +/*
 + * kernel/power/cluster.c
@@ -3707,11 +3642,9 @@ index 0000000..b5ab9ad
 +MODULE_AUTHOR("Nigel Cunningham");
 +MODULE_DESCRIPTION("Cluster Support for Suspend2");
 +#endif
-diff --git a/kernel/power/cluster.h b/kernel/power/cluster.h
-new file mode 100644
-index 0000000..d44bbf7
---- /dev/null
-+++ b/kernel/power/cluster.h
+diff -ruN linux-2.6.22/kernel/power/cluster.h suspend2-2.2.10-for-2.6.22/kernel/power/cluster.h
+--- linux-2.6.22/kernel/power/cluster.h	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/cluster.h	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,17 @@
 +/*
 + * kernel/power/cluster.h
@@ -3730,10 +3663,9 @@ index 0000000..d44bbf7
 +static inline void s2_cluster_exit(void) { }
 +#endif
 +
-diff --git a/kernel/power/disk.c b/kernel/power/disk.c
-index aec19b0..5d014f1 100644
---- a/kernel/power/disk.c
-+++ b/kernel/power/disk.c
+diff -ruN linux-2.6.22/kernel/power/disk.c suspend2-2.2.10-for-2.6.22/kernel/power/disk.c
+--- linux-2.6.22/kernel/power/disk.c	2007-07-11 22:19:41.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/disk.c	2007-07-11 22:25:42.000000000 +1000
 @@ -24,6 +24,8 @@
  
  #include "power.h"
@@ -3743,7 +3675,7 @@ index aec19b0..5d014f1 100644
  
  static int noresume = 0;
  char resume_file[256] = CONFIG_PM_STD_PARTITION;
-@@ -118,6 +120,11 @@ int pm_suspend_disk(void)
+@@ -152,6 +154,11 @@
  {
  	int error;
  
@@ -3752,10 +3684,10 @@ index aec19b0..5d014f1 100644
 +		return suspend2_try_suspend(1);
 +#endif
 +
- 	error = prepare_processes();
- 	if (error)
- 		return error;
-@@ -200,10 +207,22 @@ int pm_suspend_disk(void)
+ 	/* The snapshot device should not be opened while we're running */
+ 	if (!atomic_add_unless(&snapshot_device_available, -1, 0))
+ 		return -EBUSY;
+@@ -250,10 +257,22 @@
   *
   */
  
@@ -3779,17 +3711,17 @@ index aec19b0..5d014f1 100644
  	mutex_lock(&pm_mutex);
  	if (!swsusp_resume_device) {
  		if (!strlen(resume_file)) {
-@@ -274,9 +293,6 @@ static int software_resume(void)
+@@ -336,9 +355,6 @@
  	return 0;
  }
  
 -late_initcall(software_resume);
 -
 -
- static const char * const pm_disk_modes[] = {
- 	[PM_DISK_FIRMWARE]	= "firmware",
- 	[PM_DISK_PLATFORM]	= "platform",
-@@ -457,6 +473,7 @@ static int __init resume_offset_setup(char *str)
+ static const char * const hibernation_modes[] = {
+ 	[HIBERNATION_PLATFORM]	= "platform",
+ 	[HIBERNATION_SHUTDOWN]	= "shutdown",
+@@ -545,6 +561,7 @@
  static int __init noresume_setup(char *str)
  {
  	noresume = 1;
@@ -3797,11 +3729,9 @@ index aec19b0..5d014f1 100644
  	return 1;
  }
  
-diff --git a/kernel/power/extent.c b/kernel/power/extent.c
-new file mode 100644
-index 0000000..cd0ff0c
---- /dev/null
-+++ b/kernel/power/extent.c
+diff -ruN linux-2.6.22/kernel/power/extent.c suspend2-2.2.10-for-2.6.22/kernel/power/extent.c
+--- linux-2.6.22/kernel/power/extent.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/extent.c	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,305 @@
 +/* 
 + * kernel/power/extent.c
@@ -4108,11 +4038,9 @@ index 0000000..cd0ff0c
 +EXPORT_SYMBOL_GPL(suspend_extent_state_goto_start);
 +EXPORT_SYMBOL_GPL(suspend_extent_state_next);
 +#endif
-diff --git a/kernel/power/extent.h b/kernel/power/extent.h
-new file mode 100644
-index 0000000..c97772b
---- /dev/null
-+++ b/kernel/power/extent.h
+diff -ruN linux-2.6.22/kernel/power/extent.h suspend2-2.2.10-for-2.6.22/kernel/power/extent.h
+--- linux-2.6.22/kernel/power/extent.h	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/extent.h	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,77 @@
 +/*
 + * kernel/power/extent.h
@@ -4191,11 +4119,9 @@ index 0000000..c97772b
 +void suspend_extent_state_goto_start(struct extent_iterate_state *state);
 +unsigned long suspend_extent_state_next(struct extent_iterate_state *state);
 +#endif
-diff --git a/kernel/power/io.c b/kernel/power/io.c
-new file mode 100644
-index 0000000..854d1a7
---- /dev/null
-+++ b/kernel/power/io.c
+diff -ruN linux-2.6.22/kernel/power/io.c suspend2-2.2.10-for-2.6.22/kernel/power/io.c
+--- linux-2.6.22/kernel/power/io.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/io.c	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,1407 @@
 +/*
 + * kernel/power/io.c
@@ -5604,11 +5530,9 @@ index 0000000..854d1a7
 +EXPORT_SYMBOL_GPL(attempt_to_parse_resume_device2);
 +#endif
 +
-diff --git a/kernel/power/io.h b/kernel/power/io.h
-new file mode 100644
-index 0000000..527b39e
---- /dev/null
-+++ b/kernel/power/io.h
+diff -ruN linux-2.6.22/kernel/power/io.h suspend2-2.2.10-for-2.6.22/kernel/power/io.h
+--- linux-2.6.22/kernel/power/io.h	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/io.h	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,56 @@
 +/*
 + * kernel/power/io.h
@@ -5666,24 +5590,21 @@ index 0000000..527b39e
 +#define QUIET 1
 +
 +extern dev_t name_to_dev_t(char *line);
-diff --git a/kernel/power/main.c b/kernel/power/main.c
-index a064dfd..05b6686 100644
---- a/kernel/power/main.c
-+++ b/kernel/power/main.c
-@@ -155,7 +155,7 @@ static void suspend_finish(suspend_state_t state)
- static const char * const pm_states[PM_SUSPEND_MAX] = {
- 	[PM_SUSPEND_STANDBY]	= "standby",
- 	[PM_SUSPEND_MEM]	= "mem",
+diff -ruN linux-2.6.22/kernel/power/main.c suspend2-2.2.10-for-2.6.22/kernel/power/main.c
+--- linux-2.6.22/kernel/power/main.c	2007-07-11 22:19:41.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/main.c	2007-07-11 22:25:42.000000000 +1000
+@@ -272,7 +272,7 @@
+ 		if (pm_states[i] && valid_state(i))
+ 			s += sprintf(s,"%s ", pm_states[i]);
+ 	}
 -#ifdef CONFIG_SOFTWARE_SUSPEND
-+#if defined(CONFIG_SOFTWARE_SUSPEND) || defined(CONFIG_SUSPEND2)
- 	[PM_SUSPEND_DISK]	= "disk",
- #endif
- };
-diff --git a/kernel/power/modules.c b/kernel/power/modules.c
-new file mode 100644
-index 0000000..a6b574f
---- /dev/null
-+++ b/kernel/power/modules.c
++#ifdef CONFIG_SUSPEND_SHARED
+ 	s += sprintf(s, "%s\n", "disk");
+ #else
+ 	if (s != buf)
+diff -ruN linux-2.6.22/kernel/power/modules.c suspend2-2.2.10-for-2.6.22/kernel/power/modules.c
+--- linux-2.6.22/kernel/power/modules.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/modules.c	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,415 @@
 +/*
 + * kernel/power/modules.c
@@ -6100,11 +6021,9 @@ index 0000000..a6b574f
 +EXPORT_SYMBOL_GPL(suspend_get_next_filter);
 +EXPORT_SYMBOL_GPL(suspendActiveAllocator);
 +#endif
-diff --git a/kernel/power/modules.h b/kernel/power/modules.h
-new file mode 100644
-index 0000000..ed94458
---- /dev/null
-+++ b/kernel/power/modules.h
+diff -ruN linux-2.6.22/kernel/power/modules.h suspend2-2.2.10-for-2.6.22/kernel/power/modules.h
+--- linux-2.6.22/kernel/power/modules.h	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/modules.h	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,164 @@
 +/*
 + * kernel/power/modules.h
@@ -6270,11 +6189,9 @@ index 0000000..ed94458
 +int suspend_get_modules(void);
 +void suspend_put_modules(void);
 +#endif
-diff --git a/kernel/power/netlink.c b/kernel/power/netlink.c
-new file mode 100644
-index 0000000..bb1d563
---- /dev/null
-+++ b/kernel/power/netlink.c
+diff -ruN linux-2.6.22/kernel/power/netlink.c suspend2-2.2.10-for-2.6.22/kernel/power/netlink.c
+--- linux-2.6.22/kernel/power/netlink.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/netlink.c	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,387 @@
 +/*
 + * kernel/power/netlink.c
@@ -6556,7 +6473,7 @@ index 0000000..bb1d563
 +
 +	uhd->sock_seq = 0x42c0ffee;
 +	uhd->nl = netlink_kernel_create(uhd->netlink_id, 0,
-+			suspend_netlink_input, THIS_MODULE);
++			suspend_netlink_input, NULL, THIS_MODULE);
 +	if (!uhd->nl) {
 +		printk("Failed to allocate netlink socket for %s.\n",
 +				uhd->name);
@@ -6663,11 +6580,9 @@ index 0000000..bb1d563
 +EXPORT_SYMBOL_GPL(suspend_netlink_setup);
 +EXPORT_SYMBOL_GPL(suspend_netlink_close);
 +EXPORT_SYMBOL_GPL(suspend_send_netlink_message);
-diff --git a/kernel/power/netlink.h b/kernel/power/netlink.h
-new file mode 100644
-index 0000000..97647e8
---- /dev/null
-+++ b/kernel/power/netlink.h
+diff -ruN linux-2.6.22/kernel/power/netlink.h suspend2-2.2.10-for-2.6.22/kernel/power/netlink.h
+--- linux-2.6.22/kernel/power/netlink.h	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/netlink.h	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,58 @@
 +/*
 + * kernel/power/netlink.h
@@ -6727,11 +6642,9 @@ index 0000000..97647e8
 +static inline void suspend_send_netlink_message(struct user_helper_data *uhd,
 +		int type, void* params, size_t len) { };
 +#endif
-diff --git a/kernel/power/pagedir.c b/kernel/power/pagedir.c
-new file mode 100644
-index 0000000..4e74689
---- /dev/null
-+++ b/kernel/power/pagedir.c
+diff -ruN linux-2.6.22/kernel/power/pagedir.c suspend2-2.2.10-for-2.6.22/kernel/power/pagedir.c
+--- linux-2.6.22/kernel/power/pagedir.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/pagedir.c	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,480 @@
 +/*
 + * kernel/power/pagedir.c
@@ -7213,11 +7126,9 @@ index 0000000..4e74689
 +
 +	return 0;
 +}
-diff --git a/kernel/power/pagedir.h b/kernel/power/pagedir.h
-new file mode 100644
-index 0000000..2ae395f
---- /dev/null
-+++ b/kernel/power/pagedir.h
+diff -ruN linux-2.6.22/kernel/power/pagedir.h suspend2-2.2.10-for-2.6.22/kernel/power/pagedir.h
+--- linux-2.6.22/kernel/power/pagedir.h	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/pagedir.h	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,51 @@
 +/*
 + * kernel/power/pagedir.h
@@ -7270,12 +7181,10 @@ index 0000000..2ae395f
 +
 +extern void suspend_reset_alt_image_pageset2_pfn(void);
 +#endif
-diff --git a/kernel/power/pageflags.c b/kernel/power/pageflags.c
-new file mode 100644
-index 0000000..dccac97
---- /dev/null
-+++ b/kernel/power/pageflags.c
-@@ -0,0 +1,149 @@
+diff -ruN linux-2.6.22/kernel/power/pageflags.c suspend2-2.2.10-for-2.6.22/kernel/power/pageflags.c
+--- linux-2.6.22/kernel/power/pageflags.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/pageflags.c	2007-07-11 22:25:42.000000000 +1000
+@@ -0,0 +1,151 @@
 +/*
 + * kernel/power/pageflags.c
 + *
@@ -7301,6 +7210,8 @@ index 0000000..dccac97
 +dyn_pageflags_t pageset2_map;
 +dyn_pageflags_t page_resave_map;
 +dyn_pageflags_t io_map;
++dyn_pageflags_t nosave_map;
++dyn_pageflags_t free_map;
 +
 +static int pages_for_zone(struct zone *zone)
 +{
@@ -7425,12 +7336,10 @@ index 0000000..dccac97
 +
 +	return 0;
 +}
-diff --git a/kernel/power/pageflags.h b/kernel/power/pageflags.h
-new file mode 100644
-index 0000000..405cbce
---- /dev/null
-+++ b/kernel/power/pageflags.h
-@@ -0,0 +1,49 @@
+diff -ruN linux-2.6.22/kernel/power/pageflags.h suspend2-2.2.10-for-2.6.22/kernel/power/pageflags.h
+--- linux-2.6.22/kernel/power/pageflags.h	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/pageflags.h	2007-07-11 22:25:42.000000000 +1000
+@@ -0,0 +1,59 @@
 +/*
 + * kernel/power/pageflags.h
 + *
@@ -7456,6 +7365,8 @@ index 0000000..405cbce
 +extern dyn_pageflags_t pageset2_map;
 +extern dyn_pageflags_t page_resave_map;
 +extern dyn_pageflags_t io_map;
++extern dyn_pageflags_t nosave_map;
++extern dyn_pageflags_t free_map;
 +
 +#define PagePageset1(page) (test_dynpageflag(&pageset1_map, page))
 +#define SetPagePageset1(page) (set_dynpageflag(&pageset1_map, page))
@@ -7477,13 +7388,20 @@ index 0000000..405cbce
 +#define SetPageResave(page) (set_dynpageflag(&page_resave_map, page))
 +#define ClearPageResave(page) (clear_dynpageflag(&page_resave_map, page))
 +
++#define PageNosave(page) (nosave_map ? test_dynpageflag(&nosave_map, page) : 0)
++#define SetPageNosave(page) (set_dynpageflag(&nosave_map, page))
++#define ClearPageNosave(page) (clear_dynpageflag(&nosave_map, page))
++
++#define PageNosaveFree(page) (free_map ? test_dynpageflag(&free_map, page) : 0)
++#define SetPageNosaveFree(page) (set_dynpageflag(&free_map, page))
++#define ClearPageNosaveFree(page) (clear_dynpageflag(&free_map, page))
++
 +extern void save_dyn_pageflags(dyn_pageflags_t pagemap);
 +extern int load_dyn_pageflags(dyn_pageflags_t pagemap);
 +extern int suspend_pageflags_space_needed(void);
-diff --git a/kernel/power/power.h b/kernel/power/power.h
-index eb461b8..a4d6550 100644
---- a/kernel/power/power.h
-+++ b/kernel/power/power.h
+diff -ruN linux-2.6.22/kernel/power/power.h suspend2-2.2.10-for-2.6.22/kernel/power/power.h
+--- linux-2.6.22/kernel/power/power.h	2007-07-11 22:19:41.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/power.h	2007-07-11 22:25:42.000000000 +1000
 @@ -1,5 +1,11 @@
 +/*
 + * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
@@ -7496,34 +7414,28 @@ index eb461b8..a4d6550 100644
  
  struct swsusp_info {
  	struct new_utsname	uts;
-@@ -15,11 +21,15 @@ struct swsusp_info {
+@@ -13,7 +19,10 @@
  
- #ifdef CONFIG_SOFTWARE_SUSPEND
- extern int pm_suspend_disk(void);
--
+ 
+ 
+-#ifdef CONFIG_SOFTWARE_SUSPEND
++#ifdef CONFIG_SUSPEND_SHARED
++
 +extern char resume_file[256];
- #else
- static inline int pm_suspend_disk(void)
- {
--	return -EPERM;
-+#ifdef CONFIG_SUSPEND2
-+	return suspend2_try_suspend(1);
-+#else
-+	return -ENODEV;
-+#endif
- }
- #endif
++
+ /*
+  * Keep some memory free so that I/O operations can succeed without paging
+  * [Might this be more than 4 MB?]
+@@ -44,6 +53,8 @@
  
-@@ -40,6 +50,8 @@ extern struct subsystem power_subsys;
- /* References to section boundaries */
- extern const void __nosave_begin, __nosave_end;
+ extern struct kset power_subsys;
  
 +extern struct pbe *restore_pblist;
 +
  /* Preferred image size in bytes (default 500 MB) */
  extern unsigned long image_size;
  extern int in_suspend;
-@@ -177,3 +189,11 @@ extern int suspend_enter(suspend_state_t state);
+@@ -165,3 +176,11 @@
  struct timeval;
  extern void swsusp_show_speed(struct timeval *, struct timeval *,
  				unsigned int, char *);
@@ -7535,12 +7447,10 @@ index eb461b8..a4d6550 100644
 +#endif
 +
 +#define PBES_PER_PAGE (PAGE_SIZE / sizeof(struct pbe))
-diff --git a/kernel/power/power_off.c b/kernel/power/power_off.c
-new file mode 100644
-index 0000000..172c762
---- /dev/null
-+++ b/kernel/power/power_off.c
-@@ -0,0 +1,109 @@
+diff -ruN linux-2.6.22/kernel/power/power_off.c suspend2-2.2.10-for-2.6.22/kernel/power/power_off.c
+--- linux-2.6.22/kernel/power/power_off.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/power_off.c	2007-07-11 22:25:42.000000000 +1000
+@@ -0,0 +1,128 @@
 +/*
 + * kernel/power/power_off.c
 + *
@@ -7564,6 +7474,16 @@ index 0000000..172c762
 +#include "power.h"
 +
 +unsigned long suspend2_poweroff_method = 0; /* 0 - Kernel power off */
++
++extern struct hibernation_ops *hibernation_ops;
++
++int suspend2_platform_prepare(void)
++{
++	if (suspend2_poweroff_method == 4 && hibernation_ops)
++		return hibernation_ops->prepare();
++
++	return 0;
++}
 +
 +/*
 + * suspend2_power_down
@@ -7627,6 +7547,9 @@ index 0000000..172c762
 +				return;
 +			break;
 +		case 4:
++			kernel_shutdown_prepare(SYSTEM_SUSPEND_DISK);
++			hibernation_ops->enter();
++			break;
 +		case 5:
 +			if (!pm_ops ||
 +			    (pm_ops->prepare && pm_ops->prepare(PM_SUSPEND_MAX)))
@@ -7648,14 +7571,18 @@ index 0000000..172c762
 +		cpu_relax();
 +}
 +
++void suspend2_platform_finish(void)
++{
++	if (suspend2_poweroff_method == 4 && hibernation_ops)
++		hibernation_ops->finish();
++}
++
 +EXPORT_SYMBOL_GPL(suspend2_poweroff_method);
 +EXPORT_SYMBOL_GPL(suspend2_power_down);
-diff --git a/kernel/power/power_off.h b/kernel/power/power_off.h
-new file mode 100644
-index 0000000..40e0c46
---- /dev/null
-+++ b/kernel/power/power_off.h
-@@ -0,0 +1,13 @@
+diff -ruN linux-2.6.22/kernel/power/power_off.h suspend2-2.2.10-for-2.6.22/kernel/power/power_off.h
+--- linux-2.6.22/kernel/power/power_off.h	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/power_off.h	2007-07-11 22:25:42.000000000 +1000
+@@ -0,0 +1,15 @@
 +/*
 + * kernel/power/power_off.h
 + *
@@ -7669,11 +7596,11 @@ index 0000000..40e0c46
 +int suspend_pm_state_finish(void);
 +void suspend2_power_down(void);
 +extern unsigned long suspend2_poweroff_method;
-diff --git a/kernel/power/prepare_image.c b/kernel/power/prepare_image.c
-new file mode 100644
-index 0000000..779341b
---- /dev/null
-+++ b/kernel/power/prepare_image.c
++extern int suspend2_platform_prepare(void);
++extern void suspend2_platform_finish(void);
+diff -ruN linux-2.6.22/kernel/power/prepare_image.c suspend2-2.2.10-for-2.6.22/kernel/power/prepare_image.c
+--- linux-2.6.22/kernel/power/prepare_image.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/prepare_image.c	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,798 @@
 +/*
 + * kernel/power/prepare_image.c
@@ -8157,7 +8084,7 @@ index 0000000..779341b
 +			else
 +				page = saveable_page(pfn);
 +
-+			if (!page) {
++			if (!page || PageNosave(page)) {
 +				num_nosave++;
 +				continue;
 +			}
@@ -8473,11 +8400,9 @@ index 0000000..779341b
 +#ifdef CONFIG_SUSPEND2_EXPORTS
 +EXPORT_SYMBOL_GPL(real_nr_free_pages);
 +#endif
-diff --git a/kernel/power/prepare_image.h b/kernel/power/prepare_image.h
-new file mode 100644
-index 0000000..8c2e426
---- /dev/null
-+++ b/kernel/power/prepare_image.h
+diff -ruN linux-2.6.22/kernel/power/prepare_image.h suspend2-2.2.10-for-2.6.22/kernel/power/prepare_image.h
+--- linux-2.6.22/kernel/power/prepare_image.h	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/prepare_image.h	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,34 @@
 +/*
 + * kernel/power/prepare_image.h
@@ -8513,11 +8438,10 @@ index 0000000..8c2e426
 +#define ZONE_HIGHMEM (MAX_NR_ZONES + 1)
 +#endif
 +
-diff --git a/kernel/power/process.c b/kernel/power/process.c
-index 6d566bf..90a4cc5 100644
---- a/kernel/power/process.c
-+++ b/kernel/power/process.c
-@@ -15,6 +15,8 @@
+diff -ruN linux-2.6.22/kernel/power/process.c suspend2-2.2.10-for-2.6.22/kernel/power/process.c
+--- linux-2.6.22/kernel/power/process.c	2007-07-11 22:19:41.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/process.c	2007-07-11 22:25:42.000000000 +1000
+@@ -14,6 +14,8 @@
  #include <linux/syscalls.h>
  #include <linux/freezer.h>
  
@@ -8526,7 +8450,7 @@ index 6d566bf..90a4cc5 100644
  /* 
   * Timeout for stopping processes
   */
-@@ -179,10 +181,11 @@ int freeze_processes(void)
+@@ -192,10 +194,11 @@
  		return nr_unfrozen;
  
  	sys_sync();
@@ -8539,16 +8463,7 @@ index 6d566bf..90a4cc5 100644
  	printk("done.\n");
  	BUG_ON(in_atomic());
  	return 0;
-@@ -200,7 +203,7 @@ static void thaw_tasks(int thaw_user_space)
- 		if (is_user_space(p) == !thaw_user_space)
- 			continue;
- 
--		if (!thaw_process(p))
-+		if (!thaw_process(p) && p->state != TASK_TRACED)
- 			printk(KERN_WARNING " Strange, %s not stopped\n",
- 				p->comm );
- 	} while_each_thread(g, p);
-@@ -209,11 +212,31 @@ static void thaw_tasks(int thaw_user_space)
+@@ -220,11 +223,31 @@
  
  void thaw_processes(void)
  {
@@ -8581,19 +8496,18 @@ index 6d566bf..90a4cc5 100644
 +
  EXPORT_SYMBOL(refrigerator);
 +EXPORT_SYMBOL(freezer_state);
-diff --git a/kernel/power/snapshot.c b/kernel/power/snapshot.c
-index fc53ad0..319c96a 100644
---- a/kernel/power/snapshot.c
-+++ b/kernel/power/snapshot.c
+diff -ruN linux-2.6.22/kernel/power/snapshot.c suspend2-2.2.10-for-2.6.22/kernel/power/snapshot.c
+--- linux-2.6.22/kernel/power/snapshot.c	2007-07-11 22:19:41.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/snapshot.c	2007-07-11 22:25:42.000000000 +1000
 @@ -33,6 +33,7 @@
  #include <asm/io.h>
  
  #include "power.h"
 +#include "suspend2_builtin.h"
  
- /* List of PBEs needed for restoring the pages that were allocated before
-  * the suspend and included in the suspend image, but have also been
-@@ -40,6 +41,13 @@
+ static int swsusp_page_is_free(struct page *);
+ static void swsusp_set_page_forbidden(struct page *);
+@@ -44,6 +45,13 @@
   * directly to their "original" page frames.
   */
  struct pbe *restore_pblist;
@@ -8607,7 +8521,7 @@ index fc53ad0..319c96a 100644
  
  /* Pointer to an auxiliary buffer (1 page) */
  static void *buffer;
-@@ -82,6 +90,11 @@ static void *get_image_page(gfp_t gfp_mask, int safe_needed)
+@@ -86,6 +94,11 @@
  
  unsigned long get_safe_page(gfp_t gfp_mask)
  {
@@ -8619,7 +8533,18 @@ index fc53ad0..319c96a 100644
  	return (unsigned long)get_image_page(gfp_mask, PG_SAFE);
  }
  
-@@ -604,7 +617,7 @@ static unsigned int count_free_highmem_pages(void)
+@@ -598,7 +611,9 @@
+ 	unsigned long end_pfn;
+ };
+ 
+-static LIST_HEAD(nosave_regions);
++LIST_HEAD(nosave_regions);
++
++EXPORT_SYMBOL_GPL(nosave_regions);
+ 
+ /**
+  *	register_nosave_region - register a range of page frames the contents
+@@ -827,7 +842,7 @@
   *	and it isn't a part of a free chunk of pages.
   */
  
@@ -8628,7 +8553,7 @@ index fc53ad0..319c96a 100644
  {
  	struct page *page;
  
-@@ -646,7 +659,6 @@ unsigned int count_highmem_pages(void)
+@@ -870,7 +885,6 @@
  	return n;
  }
  #else
@@ -8636,7 +8561,7 @@ index fc53ad0..319c96a 100644
  static inline unsigned int count_highmem_pages(void) { return 0; }
  #endif /* CONFIG_HIGHMEM */
  
-@@ -670,7 +682,7 @@ static inline int pfn_is_nosave(unsigned long pfn)
+@@ -883,7 +897,7 @@
   *	a free chunk of pages.
   */
  
@@ -8645,7 +8570,7 @@ index fc53ad0..319c96a 100644
  {
  	struct page *page;
  
-@@ -986,6 +998,11 @@ asmlinkage int swsusp_save(void)
+@@ -1200,6 +1214,11 @@
  {
  	unsigned int nr_pages, nr_highmem;
  
@@ -8657,11 +8582,9 @@ index fc53ad0..319c96a 100644
  	printk("swsusp: critical section: \n");
  
  	drain_local_pages();
-diff --git a/kernel/power/storage.c b/kernel/power/storage.c
-new file mode 100644
-index 0000000..702c1d4
---- /dev/null
-+++ b/kernel/power/storage.c
+diff -ruN linux-2.6.22/kernel/power/storage.c suspend2-2.2.10-for-2.6.22/kernel/power/storage.c
+--- linux-2.6.22/kernel/power/storage.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/storage.c	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,288 @@
 +/*
 + * kernel/power/storage.c
@@ -8951,11 +8874,9 @@ index 0000000..702c1d4
 +{
 +	suspend_unregister_module(&usm_ops);
 +}
-diff --git a/kernel/power/storage.h b/kernel/power/storage.h
-new file mode 100644
-index 0000000..e05eeef
---- /dev/null
-+++ b/kernel/power/storage.h
+diff -ruN linux-2.6.22/kernel/power/storage.h suspend2-2.2.10-for-2.6.22/kernel/power/storage.h
+--- linux-2.6.22/kernel/power/storage.h	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/storage.h	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,53 @@
 +/*
 + * kernel/power/storage.h
@@ -9010,12 +8931,10 @@ index 0000000..e05eeef
 +#define suspend_usm_init() do { } while(0)
 +#define suspend_usb_cleanup() do { } while(0)
 +#endif
-diff --git a/kernel/power/suspend.c b/kernel/power/suspend.c
-new file mode 100644
-index 0000000..3de56ac
---- /dev/null
-+++ b/kernel/power/suspend.c
-@@ -0,0 +1,1022 @@
+diff -ruN linux-2.6.22/kernel/power/suspend.c suspend2-2.2.10-for-2.6.22/kernel/power/suspend.c
+--- linux-2.6.22/kernel/power/suspend.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/suspend.c	2007-07-11 22:25:42.000000000 +1000
+@@ -0,0 +1,1058 @@
 +/*
 + * kernel/power/suspend.c
 + */
@@ -9186,6 +9105,32 @@ index 0000000..3de56ac
 +}
 +
 +/*
++ * Nosave page tracking.
++ *
++ * Here rather than in prepare_image because we want to do it once only at the
++ * start of a cycle.
++ */
++extern struct list_head nosave_regions;
++
++struct nosave_region {
++	struct list_head list;
++	unsigned long start_pfn;
++	unsigned long end_pfn;
++};
++
++static void mark_nosave_pages(void)
++{
++	struct nosave_region *region;
++
++	list_for_each_entry(region, &nosave_regions, list) {
++		unsigned long pfn;
++
++		for (pfn = region->start_pfn; pfn < region->end_pfn; pfn++)
++			SetPageNosave(pfn_to_page(pfn));
++	}
++}
++
++/*
 + * Allocate & free bitmaps.
 + */
 +static int allocate_bitmaps(void)
@@ -9194,6 +9139,8 @@ index 0000000..3de56ac
 +	    allocate_dyn_pageflags(&pageset1_copy_map) ||
 +	    allocate_dyn_pageflags(&pageset2_map) ||
 +	    allocate_dyn_pageflags(&io_map) ||
++	    allocate_dyn_pageflags(&nosave_map) ||
++	    allocate_dyn_pageflags(&free_map) ||
 +	    allocate_dyn_pageflags(&page_resave_map))
 +		return 1;
 +
@@ -9206,6 +9153,8 @@ index 0000000..3de56ac
 +	free_dyn_pageflags(&pageset1_copy_map);
 +	free_dyn_pageflags(&pageset2_map);
 +	free_dyn_pageflags(&io_map);
++	free_dyn_pageflags(&nosave_map);
++	free_dyn_pageflags(&free_map);
 +	free_dyn_pageflags(&page_resave_map);
 +}
 +
@@ -9361,7 +9310,7 @@ index 0000000..3de56ac
 +	nr_suspends++;
 +	
 +	save_avenrun();
-+	
++
 +	suspend_io_time[0][0] = suspend_io_time[0][1] = 
 +		suspend_io_time[1][0] =	suspend_io_time[1][1] = 0;
 +
@@ -9369,6 +9318,8 @@ index 0000000..3de56ac
 +	    allocate_bitmaps())
 +		return 0;
 +	
++	mark_nosave_pages();
++
 +	suspend_prepare_console();
 +	if (test_action_state(SUSPEND_LATE_CPU_HOTPLUG) ||
 +			!disable_nonboot_cpus())
@@ -9468,6 +9419,12 @@ index 0000000..3de56ac
 +	
 +	suspend2_in_suspend = 1;
 +	
++	if (suspend2_platform_prepare()) {
++		set_result_state(SUSPEND_PLATFORM_PREP_FAILED);
++		set_result_state(SUSPEND_ABORTED);
++		return 1;
++	}
++
 +	suspend_console();
 +	if (device_suspend(PMSG_FREEZE)) {
 +		set_result_state(SUSPEND_DEVICE_REFUSED);
@@ -9483,10 +9440,6 @@ index 0000000..3de56ac
 +		temp_result = suspend2_suspend();
 +
 +	/* We return here at resume time too! */
-+	if (!suspend2_in_suspend && pm_ops && pm_ops->finish &&
-+			suspend2_poweroff_method > 3)
-+		pm_ops->finish(suspend2_poweroff_method);
-+
 +	if (test_action_state(SUSPEND_LATE_CPU_HOTPLUG))
 +		enable_nonboot_cpus();
 +
@@ -9494,6 +9447,8 @@ index 0000000..3de56ac
 +
 +ResumeConsole:
 +	resume_console();
++
++	suspend2_platform_finish();
 +
 +	if (suspend_activate_storage(1))
 +		panic("Failed to reactivate our storage.");
@@ -9986,7 +9941,7 @@ index 0000000..3de56ac
 +		return 1;
 +
 +	for (i=0; i< numfiles; i++)
-+		suspend_register_sysfs_file(&suspend2_subsys.kset.kobj,
++		suspend_register_sysfs_file(&suspend2_subsys.kobj,
 +				&sysfs_params[i]);
 +
 +	s2_core_fns = &my_fns;
@@ -10021,7 +9976,7 @@ index 0000000..3de56ac
 +	s2_usm_exit();
 +
 +	for (i=0; i< numfiles; i++)
-+		suspend_unregister_sysfs_file(&suspend2_subsys.kset.kobj,
++		suspend_unregister_sysfs_file(&suspend2_subsys.kobj,
 +				&sysfs_params[i]);
 +
 +	s2_core_fns = NULL;
@@ -10038,11 +9993,9 @@ index 0000000..3de56ac
 +#ifdef CONFIG_SUSPEND2_EXPORTS
 +EXPORT_SYMBOL_GPL(pagedir2);
 +#endif
-diff --git a/kernel/power/suspend.h b/kernel/power/suspend.h
-new file mode 100644
-index 0000000..0fe3a9a
---- /dev/null
-+++ b/kernel/power/suspend.h
+diff -ruN linux-2.6.22/kernel/power/suspend.h suspend2-2.2.10-for-2.6.22/kernel/power/suspend.h
+--- linux-2.6.22/kernel/power/suspend.h	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/suspend.h	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,182 @@
 +/*
 + * kernel/power/suspend.h
@@ -10226,12 +10179,10 @@ index 0000000..0fe3a9a
 +
 +extern int pre_resume_freeze(void);
 +#endif
-diff --git a/kernel/power/suspend2_builtin.c b/kernel/power/suspend2_builtin.c
-new file mode 100644
-index 0000000..621cf20
---- /dev/null
-+++ b/kernel/power/suspend2_builtin.c
-@@ -0,0 +1,289 @@
+diff -ruN linux-2.6.22/kernel/power/suspend2_builtin.c suspend2-2.2.10-for-2.6.22/kernel/power/suspend2_builtin.c
+--- linux-2.6.22/kernel/power/suspend2_builtin.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/suspend2_builtin.c	2007-07-11 22:25:42.000000000 +1000
+@@ -0,0 +1,319 @@
 +/*
 + * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
 + *
@@ -10263,6 +10214,29 @@ index 0000000..621cf20
 +#include "pagedir.h"
 +#include "modules.h"
 +#include "suspend2_builtin.h"
++
++#ifndef CONFIG_SOFTWARE_SUSPEND
++struct hibernation_ops *hibernation_ops;
++
++/**
++ * hibernation_set_ops - set the global hibernate operations
++ * @ops: the hibernation operations to use in subsequent hibernation transitions
++ */
++
++void hibernation_set_ops(struct hibernation_ops *ops)
++{
++	if (ops && !(ops->prepare && ops->enter && ops->finish)) {
++		WARN_ON(1);
++		return;
++	}
++	mutex_lock(&pm_mutex);
++	hibernation_ops = ops;
++	mutex_unlock(&pm_mutex);
++}
++EXPORT_SYMBOL_GPL(hibernation_set_ops);
++#endif
++
++EXPORT_SYMBOL_GPL(hibernation_ops);
 +
 +#ifdef CONFIG_SUSPEND2_CORE_EXPORTS
 +#ifdef CONFIG_SOFTWARE_SUSPEND
@@ -10414,6 +10388,13 @@ index 0000000..621cf20
 +	return error;
 +}
 +
++#ifndef CONFIG_SOFTWARE_SUSPEND
++int hibernate(void)
++{
++	return suspend2_try_suspend(0);
++}
++#endif
++
 +EXPORT_SYMBOL_GPL(suspend2_lowlevel_builtin);
 +
 +unsigned long suspend_compress_bytes_in, suspend_compress_bytes_out;
@@ -10521,11 +10502,9 @@ index 0000000..621cf20
 +__setup("resume2=", resume2_setup);
 +__setup("suspend_retry_resume", suspend_retry_resume_setup);
 +
-diff --git a/kernel/power/suspend2_builtin.h b/kernel/power/suspend2_builtin.h
-new file mode 100644
-index 0000000..968b24b
---- /dev/null
-+++ b/kernel/power/suspend2_builtin.h
+diff -ruN linux-2.6.22/kernel/power/suspend2_builtin.h suspend2-2.2.10-for-2.6.22/kernel/power/suspend2_builtin.h
+--- linux-2.6.22/kernel/power/suspend2_builtin.h	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/suspend2_builtin.h	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,35 @@
 +/*
 + * Copyright (C) 2004-2007 Nigel Cunningham (nigel at suspend2 net)
@@ -10562,12 +10541,10 @@ index 0000000..968b24b
 +extern unsigned long suspend_get_nonconflicting_page(void);
 +extern int suspend_post_context_save(void);
 +extern int suspend2_try_suspend(int have_pmsem);
-diff --git a/kernel/power/suspend_block_io.c b/kernel/power/suspend_block_io.c
-new file mode 100644
-index 0000000..533ae5c
---- /dev/null
-+++ b/kernel/power/suspend_block_io.c
-@@ -0,0 +1,1020 @@
+diff -ruN linux-2.6.22/kernel/power/suspend_block_io.c suspend2-2.2.10-for-2.6.22/kernel/power/suspend_block_io.c
+--- linux-2.6.22/kernel/power/suspend_block_io.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/suspend_block_io.c	2007-07-11 22:25:42.000000000 +1000
+@@ -0,0 +1,1018 @@
 +/*
 + * kernel/power/suspend_block_io.c
 + *
@@ -10768,8 +10745,6 @@ index 0000000..533ae5c
 +
 +	/* Don't want to wait on I/O we haven't submitted! */
 +	num_submitted = submit_batched();
-+
-+	kblockd_flush();
 +	
 +	io_schedule();
 +
@@ -11588,11 +11563,9 @@ index 0000000..533ae5c
 +#else
 +late_initcall(suspend_block_io_load);
 +#endif
-diff --git a/kernel/power/suspend_compress.c b/kernel/power/suspend_compress.c
-new file mode 100644
-index 0000000..6e70e33
---- /dev/null
-+++ b/kernel/power/suspend_compress.c
+diff -ruN linux-2.6.22/kernel/power/suspend_compress.c suspend2-2.2.10-for-2.6.22/kernel/power/suspend_compress.c
+--- linux-2.6.22/kernel/power/suspend_compress.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/suspend_compress.c	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,436 @@
 +/*
 + * kernel/power/compression.c
@@ -12030,11 +12003,9 @@ index 0000000..6e70e33
 +#else
 +late_initcall(suspend_compress_load);
 +#endif
-diff --git a/kernel/power/suspend_file.c b/kernel/power/suspend_file.c
-new file mode 100644
-index 0000000..e523f8b
---- /dev/null
-+++ b/kernel/power/suspend_file.c
+diff -ruN linux-2.6.22/kernel/power/suspend_file.c suspend2-2.2.10-for-2.6.22/kernel/power/suspend_file.c
+--- linux-2.6.22/kernel/power/suspend_file.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/suspend_file.c	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,1131 @@
 +/*
 + * kernel/power/suspend_file.c
@@ -13167,11 +13138,9 @@ index 0000000..e523f8b
 +#else
 +late_initcall(suspend_file_load);
 +#endif
-diff --git a/kernel/power/suspend_swap.c b/kernel/power/suspend_swap.c
-new file mode 100644
-index 0000000..a81dcc1
---- /dev/null
-+++ b/kernel/power/suspend_swap.c
+diff -ruN linux-2.6.22/kernel/power/suspend_swap.c suspend2-2.2.10-for-2.6.22/kernel/power/suspend_swap.c
+--- linux-2.6.22/kernel/power/suspend_swap.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/suspend_swap.c	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,1262 @@
 +/*
 + * kernel/power/suspend_swap.c
@@ -14435,11 +14404,9 @@ index 0000000..a81dcc1
 +#else
 +late_initcall(suspend_swap_load);
 +#endif
-diff --git a/kernel/power/suspend_userui.c b/kernel/power/suspend_userui.c
-new file mode 100644
-index 0000000..47ef604
---- /dev/null
-+++ b/kernel/power/suspend_userui.c
+diff -ruN linux-2.6.22/kernel/power/suspend_userui.c suspend2-2.2.10-for-2.6.22/kernel/power/suspend_userui.c
+--- linux-2.6.22/kernel/power/suspend_userui.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/suspend_userui.c	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,649 @@
 +/*
 + * kernel/power/user_ui.c
@@ -15090,11 +15057,9 @@ index 0000000..47ef604
 +#else
 +late_initcall(s2_user_ui_init);
 +#endif
-diff --git a/kernel/power/sysfs.c b/kernel/power/sysfs.c
-new file mode 100644
-index 0000000..47eca3b
---- /dev/null
-+++ b/kernel/power/sysfs.c
+diff -ruN linux-2.6.22/kernel/power/sysfs.c suspend2-2.2.10-for-2.6.22/kernel/power/sysfs.c
+--- linux-2.6.22/kernel/power/sysfs.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/sysfs.c	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,347 @@
 +/*
 + * kernel/power/sysfs.c
@@ -15343,7 +15308,7 @@ index 0000000..47eca3b
 +		return NULL;
 +	}
 +
-+	kobj->kset = &suspend2_subsys.kset;
++	kobj->kset = &suspend2_subsys;
 +
 +	err = kobject_register(kobj);
 +
@@ -15394,10 +15359,10 @@ index 0000000..47eca3b
 +		return;
 +
 +	for (i=0; i< numfiles; i++)
-+		suspend_unregister_sysfs_file(&suspend2_subsys.kset.kobj,
++		suspend_unregister_sysfs_file(&suspend2_subsys.kobj,
 +				&sysfs_params[i]);
 +
-+	kobj_set_kset_s(&suspend2_subsys.kset, power_subsys);
++	kobj_set_kset_s(&suspend2_subsys, power_subsys);
 +	subsystem_unregister(&suspend2_subsys);
 +
 +	suspend_sysfs_initialised = 0;
@@ -15417,19 +15382,19 @@ index 0000000..47eca3b
 +		return;
 +
 +	/* Make our suspend2 directory a child of /sys/power */
-+	kobj_set_kset_s(&suspend2_subsys.kset, power_subsys);
++	kobj_set_kset_s(&suspend2_subsys, power_subsys);
 +	error = subsystem_register(&suspend2_subsys);
 +
 +	if (error)
 +		return;
 +
 +	/* Make it use the .store and .show routines above */
-+	kobj_set_kset_s(&suspend2_subsys.kset, suspend2_subsys);
++	kobj_set_kset_s(&suspend2_subsys, suspend2_subsys);
 +
 +	suspend_sysfs_initialised = 1;
 +
 +	for (i=0; i< numfiles; i++)
-+		suspend_register_sysfs_file(&suspend2_subsys.kset.kobj,
++		suspend_register_sysfs_file(&suspend2_subsys.kobj,
 +				&sysfs_params[i]);
 +}
 +
@@ -15443,11 +15408,9 @@ index 0000000..47eca3b
 +{
 +	suspend_cleanup_sysfs();
 +}
-diff --git a/kernel/power/sysfs.h b/kernel/power/sysfs.h
-new file mode 100644
-index 0000000..aad5e26
---- /dev/null
-+++ b/kernel/power/sysfs.h
+diff -ruN linux-2.6.22/kernel/power/sysfs.h suspend2-2.2.10-for-2.6.22/kernel/power/sysfs.h
+--- linux-2.6.22/kernel/power/sysfs.h	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/sysfs.h	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,132 @@
 +/*
 + * kernel/power/sysfs.h
@@ -15573,7 +15536,7 @@ index 0000000..aad5e26
 +void suspend_unregister_sysfs_file(struct kobject *kobj,
 +		struct suspend_sysfs_data *suspend_sysfs_data);
 +
-+extern struct subsystem suspend2_subsys;
++extern struct kset suspend2_subsys;
 +
 +struct kobject *make_suspend2_sysdir(char *name);
 +void remove_suspend2_sysdir(struct kobject *obj);
@@ -15581,11 +15544,9 @@ index 0000000..aad5e26
 +
 +extern int s2_sysfs_init(void);
 +extern void s2_sysfs_exit(void);
-diff --git a/kernel/power/ui.c b/kernel/power/ui.c
-new file mode 100644
-index 0000000..5b6789f
---- /dev/null
-+++ b/kernel/power/ui.c
+diff -ruN linux-2.6.22/kernel/power/ui.c suspend2-2.2.10-for-2.6.22/kernel/power/ui.c
+--- linux-2.6.22/kernel/power/ui.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/ui.c	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,235 @@
 +/*
 + * kernel/power/ui.c
@@ -15822,11 +15783,9 @@ index 0000000..5b6789f
 +EXPORT_SYMBOL_GPL(s2_remove_ui_ops);
 +EXPORT_SYMBOL_GPL(suspend_default_console_level);
 +#endif
-diff --git a/kernel/power/ui.h b/kernel/power/ui.h
-new file mode 100644
-index 0000000..8379444
---- /dev/null
-+++ b/kernel/power/ui.h
+diff -ruN linux-2.6.22/kernel/power/ui.h suspend2-2.2.10-for-2.6.22/kernel/power/ui.h
+--- linux-2.6.22/kernel/power/ui.h	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/power/ui.h	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,108 @@
 +/*
 + * kernel/power/ui.h
@@ -15936,11 +15895,10 @@ index 0000000..8379444
 +extern void s2_ui_exit(void);
 +extern int s2_register_ui_ops(struct ui_ops *this_ui);
 +extern void s2_remove_ui_ops(struct ui_ops *this_ui);
-diff --git a/kernel/printk.c b/kernel/printk.c
-index 4b47e59..6cafd3b 100644
---- a/kernel/printk.c
-+++ b/kernel/printk.c
-@@ -32,6 +32,7 @@
+diff -ruN linux-2.6.22/kernel/printk.c suspend2-2.2.10-for-2.6.22/kernel/printk.c
+--- linux-2.6.22/kernel/printk.c	2007-07-11 22:19:41.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/printk.c	2007-07-11 22:25:42.000000000 +1000
+@@ -31,6 +31,7 @@
  #include <linux/bootmem.h>
  #include <linux/syscalls.h>
  #include <linux/jiffies.h>
@@ -15948,7 +15906,7 @@ index 4b47e59..6cafd3b 100644
  
  #include <asm/uaccess.h>
  
-@@ -92,9 +93,9 @@ static DEFINE_SPINLOCK(logbuf_lock);
+@@ -91,9 +92,9 @@
   * The indices into log_buf are not constrained to log_buf_len - they
   * must be masked before subscripting
   */
@@ -15961,7 +15919,7 @@ index 4b47e59..6cafd3b 100644
  
  /*
   *	Array of consoles built from command line options (console=)
-@@ -117,10 +118,10 @@ static int console_may_schedule;
+@@ -116,10 +117,10 @@
  
  #ifdef CONFIG_PRINTK
  
@@ -15976,7 +15934,7 @@ index 4b47e59..6cafd3b 100644
  
  static int __init log_buf_len_setup(char *str)
  {
-@@ -739,12 +740,14 @@ void suspend_console(void)
+@@ -738,12 +739,14 @@
  	acquire_console_sem();
  	console_suspended = 1;
  }
@@ -15991,11 +15949,10 @@ index 4b47e59..6cafd3b 100644
  #endif /* CONFIG_DISABLE_CONSOLE_SUSPEND */
  
  /**
-diff --git a/kernel/timer.c b/kernel/timer.c
-index dd6c2c1..aded05d 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -1240,6 +1240,38 @@ unsigned long avenrun[3];
+diff -ruN linux-2.6.22/kernel/timer.c suspend2-2.2.10-for-2.6.22/kernel/timer.c
+--- linux-2.6.22/kernel/timer.c	2007-07-11 22:19:41.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/kernel/timer.c	2007-07-11 22:25:42.000000000 +1000
+@@ -843,6 +843,38 @@
  
  EXPORT_SYMBOL(avenrun);
  
@@ -16034,11 +15991,10 @@ index dd6c2c1..aded05d 100644
  /*
   * calc_load - given tick count, update the avenrun load estimates.
   * This is called while holding a write_lock on xtime_lock.
-diff --git a/lib/Kconfig b/lib/Kconfig
-index 3842499..758a928 100644
---- a/lib/Kconfig
-+++ b/lib/Kconfig
-@@ -47,6 +47,9 @@ config AUDIT_GENERIC
+diff -ruN linux-2.6.22/lib/Kconfig suspend2-2.2.10-for-2.6.22/lib/Kconfig
+--- linux-2.6.22/lib/Kconfig	2007-07-11 22:19:41.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/lib/Kconfig	2007-07-11 22:25:42.000000000 +1000
+@@ -55,6 +55,9 @@
  	depends on AUDIT && !AUDIT_ARCH
  	default y
  
@@ -16048,11 +16004,10 @@ index 3842499..758a928 100644
  #
  # compression support is select'ed if needed
  #
-diff --git a/lib/Makefile b/lib/Makefile
-index 992a39e..b974998 100644
---- a/lib/Makefile
-+++ b/lib/Makefile
-@@ -38,6 +38,9 @@ ifneq ($(CONFIG_HAVE_DEC_LOCK),y)
+diff -ruN linux-2.6.22/lib/Makefile suspend2-2.2.10-for-2.6.22/lib/Makefile
+--- linux-2.6.22/lib/Makefile	2007-07-11 22:19:41.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/lib/Makefile	2007-07-11 22:25:42.000000000 +1000
+@@ -39,6 +39,9 @@
  endif
  
  obj-$(CONFIG_BITREVERSE) += bitrev.o
@@ -16061,12 +16016,10 @@ index 992a39e..b974998 100644
 +
  obj-$(CONFIG_CRC_CCITT)	+= crc-ccitt.o
  obj-$(CONFIG_CRC16)	+= crc16.o
- obj-$(CONFIG_CRC32)	+= crc32.o
-diff --git a/lib/dyn_pageflags.c b/lib/dyn_pageflags.c
-new file mode 100644
-index 0000000..963ac5c
---- /dev/null
-+++ b/lib/dyn_pageflags.c
+ obj-$(CONFIG_CRC_ITU_T)	+= crc-itu-t.o
+diff -ruN linux-2.6.22/lib/dyn_pageflags.c suspend2-2.2.10-for-2.6.22/lib/dyn_pageflags.c
+--- linux-2.6.22/lib/dyn_pageflags.c	1970-01-01 10:00:00.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/lib/dyn_pageflags.c	2007-07-11 22:25:42.000000000 +1000
 @@ -0,0 +1,312 @@
 +/*
 + * lib/dyn_pageflags.c
@@ -16380,11 +16333,10 @@ index 0000000..963ac5c
 +	return zone->zone_start_pfn + zone_offset;
 +}
 +
-diff --git a/lib/vsprintf.c b/lib/vsprintf.c
-index b025864..2138c47 100644
---- a/lib/vsprintf.c
-+++ b/lib/vsprintf.c
-@@ -236,6 +236,29 @@ static char * number(char * buf, char * end, unsigned long long num, int base, i
+diff -ruN linux-2.6.22/lib/vsprintf.c suspend2-2.2.10-for-2.6.22/lib/vsprintf.c
+--- linux-2.6.22/lib/vsprintf.c	2007-07-11 22:19:42.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/lib/vsprintf.c	2007-07-11 22:25:42.000000000 +1000
+@@ -236,6 +236,29 @@
  	return buf;
  }
  
@@ -16414,11 +16366,10 @@ index b025864..2138c47 100644
  /**
   * vsnprintf - Format a string and place it in a buffer
   * @buf: The buffer to place the result into
-diff --git a/mm/vmscan.c b/mm/vmscan.c
-index db023e2..54acc2c 100644
---- a/mm/vmscan.c
-+++ b/mm/vmscan.c
-@@ -654,6 +654,28 @@ static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
+diff -ruN linux-2.6.22/mm/vmscan.c suspend2-2.2.10-for-2.6.22/mm/vmscan.c
+--- linux-2.6.22/mm/vmscan.c	2007-07-11 22:19:42.000000000 +1000
++++ suspend2-2.2.10-for-2.6.22/mm/vmscan.c	2007-07-11 22:25:42.000000000 +1000
+@@ -650,6 +650,28 @@
  	return nr_taken;
  }
  
@@ -16447,7 +16398,7 @@ index db023e2..54acc2c 100644
  /*
   * shrink_inactive_list() is a helper for shrink_zone().  It returns the number
   * of reclaimed pages
-@@ -671,7 +693,6 @@ static unsigned long shrink_inactive_list(unsigned long max_scan,
+@@ -667,7 +689,6 @@
  	lru_add_drain();
  	spin_lock_irq(&zone->lru_lock);
  	do {
@@ -16455,7 +16406,7 @@ index db023e2..54acc2c 100644
  		unsigned long nr_taken;
  		unsigned long nr_scan;
  		unsigned long nr_freed;
-@@ -701,21 +722,7 @@ static unsigned long shrink_inactive_list(unsigned long max_scan,
+@@ -697,21 +718,7 @@
  		/*
  		 * Put back any unfreeable pages.
  		 */
@@ -16478,7 +16429,7 @@ index db023e2..54acc2c 100644
    	} while (nr_scanned < max_scan);
  	spin_unlock(&zone->lru_lock);
  done:
-@@ -1276,6 +1283,72 @@ out:
+@@ -1272,6 +1279,72 @@
  	return nr_reclaimed;
  }
  
@@ -16551,38 +16502,7 @@ index db023e2..54acc2c 100644
  /*
   * The background pageout daemon, started as a kernel thread
   * from the init process. 
-@@ -1323,8 +1396,6 @@ static int kswapd(void *p)
- 	for ( ; ; ) {
- 		unsigned long new_order;
- 
--		try_to_freeze();
--
- 		prepare_to_wait(&pgdat->kswapd_wait, &wait, TASK_INTERRUPTIBLE);
- 		new_order = pgdat->kswapd_max_order;
- 		pgdat->kswapd_max_order = 0;
-@@ -1335,12 +1406,19 @@ static int kswapd(void *p)
- 			 */
- 			order = new_order;
- 		} else {
--			schedule();
-+			if (!freezing(current))
-+				schedule();
-+
- 			order = pgdat->kswapd_max_order;
- 		}
- 		finish_wait(&pgdat->kswapd_wait, &wait);
- 
--		balance_pgdat(pgdat, order);
-+		if (!try_to_freeze()) {
-+			/* We can speed up thawing tasks if we don't call
-+			 * balance_pgdat after returning from the refrigerator
-+			 */
-+			balance_pgdat(pgdat, order);
-+		}
- 	}
- 	return 0;
- }
-@@ -1355,6 +1433,9 @@ void wakeup_kswapd(struct zone *zone, int order)
+@@ -1356,6 +1429,9 @@
  	if (!populated_zone(zone))
  		return;
  
@@ -16592,7 +16512,7 @@ index db023e2..54acc2c 100644
  	pgdat = zone->zone_pgdat;
  	if (zone_watermark_ok(zone, order, zone->pages_low, 0, 0))
  		return;
-@@ -1368,6 +1449,91 @@ void wakeup_kswapd(struct zone *zone, int order)
+@@ -1369,6 +1445,91 @@
  }
  
  #ifdef CONFIG_PM
