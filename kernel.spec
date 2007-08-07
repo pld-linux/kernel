@@ -4,11 +4,7 @@
 # TODO:
 # - update all config files
 # - update grsec_full & pax patches
-# - update or drop patch1 linux-2.6-sata-promise-pata-ports.patch (probably drop)
 # - update or drop patch17 kernel-pom-ng-rsh.patch
-# - update or drop patch54 linux-2.6-toshiba_acpi_0.18-dev_toshiba_test4.patch
-# - update or drop patch60 linux-2.6-sk98lin_8.41.2.3.patch
-# - update or drop patch65 sqlzma2k-3.2-r2.patch (there is an external spec for the module btw)
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 #
 # FUTURE:
@@ -20,7 +16,6 @@
 # - pom-ng talk-conntrack-nat -> nf_conntrack ?
 # - nf-hipac ?
 # - pax hooks for selinux (experimental)
-# - add lzma support for squashfs
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
@@ -210,11 +205,6 @@ Source57:	kernel-wrr.config
 #	Patches
 ###
 
-# PATA ports on SATA Promise controller; patch based on:
-# http://cvs.fedora.redhat.com/viewcvs/*checkout*/rpms/kernel/devel/linux-2.6-sata-promise-pata-ports.patch
-## TODO: patch1 -- update or drop -- not updated for a long time
-Patch1:		linux-2.6-sata-promise-pata-ports.patch
-
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
 Patch2:		tahoe9xx-2.6.11.5.patch
 
@@ -274,9 +264,8 @@ Patch52:	wrr-linux-051111-2.6.20.patch
 # esfq from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
 Patch53:	esfq-kernel.patch
 
-# from http://memebeam.org/free-software/toshiba_acpi/
-## TODO: patch54 -- update or drop 
-Patch54:	linux-2.6-toshiba_acpi_0.18-dev_toshiba_test4.patch
+# http://memebeam.org/free-software/toshiba_acpi/toshiba_acpi-dev_toshiba_test5-linux_2.6.21.patch
+Patch54:	linux-2.6-toshiba_acpi.patch
 # by Baggins request:
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch55:	linux-2.6-atm-vbr.patch
@@ -288,11 +277,9 @@ Patch57:	linux-2.6-cpuset_virtualization.patch
 Patch58:	linux-PF_RING.patch
 
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_41.tar.bz2
-## TODO: patch60 -- update or drop -- needs update to 2.6.22
-Patch60:	linux-2.6-sk98lin_8.41.2.3.patch
+Patch60:	linux-2.6-sk98lin_v10.0.4.3.patch
 
 # lzma support for squashfs (patch6) from http://www.squashfs-lzma.org/dl/sqlzma3.2-r2b.tar.bz2
-## TODO: patch65 -- update or drop 
 Patch65:	sqlzma2k-3.2-r2.patch
 
 # http://www.tuxonice.net/downloads/all/suspend2-2.2.10-for-2.6.22.patch.bz2
@@ -727,9 +714,6 @@ install %{SOURCE5} Makefile.ppclibs
 %{__bzip2} -dc %{SOURCE1} | patch -p1 -s
 %endif
 
-# TODO 2.6.20 - check this out - promise pata-sata stuff.
-#patch1 -p1
-
 # suspend2:
 %if %{with suspend2}
 ##ifarch %{ix86} %{x8664} ia64 ppc alpha
@@ -756,7 +740,7 @@ install %{SOURCE5} Makefile.ppclibs
 
 # squashfs with (TODO) lzma support
 %patch6 -p1
-# %patch65 -p1
+%patch65 -p1
 
 %patch7 -p1
 %patch9 -p1
@@ -825,8 +809,8 @@ install %{SOURCE5} Makefile.ppclibs
 %patch52 -p1
 %endif
 
-# TODO check linux-2.6-toshiba_acpi_0.18-dev_toshiba_test4.patch
-#patch54 -p1
+# toshiba_acpi
+%patch54 -p1
 
 %patch55 -p1
 %patch56 -p1
@@ -838,8 +822,8 @@ install %{SOURCE5} Makefile.ppclibs
 %patch58 -p1
 
 
-# linux-2.6-sk98lin_8.41.2.3.patch
-## TODO update to 2.6.22 -- patch60 -p1
+# linux-2.6-sk98lin_v10.0.4.3.patch
+%patch60 -p1
 
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
