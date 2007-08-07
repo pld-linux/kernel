@@ -602,31 +602,6 @@ diff -Nru linux-2.6.17.orig/include/linux/skbuff.h linux-2.6.17/include/linux/sk
  #ifdef CONFIG_BRIDGE_NETFILTER
  	struct nf_bridge_info	*nf_bridge;
  #endif
-diff -Nru linux-2.6.17.orig/net/core/skbuff.c linux-2.6.17/net/core/skbuff.c
---- linux-2.6.17.orig/net/core/skbuff.c	2006-06-18 01:49:35.000000000 +0000
-+++ linux-2.6.17/net/core/skbuff.c	2006-09-06 20:58:51.000000000 +0000
-@@ -451,6 +451,10 @@
- 	C(nfct_reasm);
- 	nf_conntrack_get_reasm(skb->nfct_reasm);
- #endif
-+#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
-+	C(imq_flags);
-+	C(nf_info);
-+#endif /*CONFIG_IMQ*/
- #ifdef CONFIG_BRIDGE_NETFILTER
- 	C(nf_bridge);
- 	nf_bridge_get(skb->nf_bridge);
-@@ -515,6 +519,10 @@
- #if defined(CONFIG_IP_VS) || defined(CONFIG_IP_VS_MODULE)
- 	new->ipvs_property = old->ipvs_property;
- #endif
-+#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
-+	new->imq_flags	= old->imq_flags;
-+	new->nf_info	= old->nf_info;
-+#endif /*CONFIG_IMQ*/
- #ifdef CONFIG_BRIDGE_NETFILTER
- 	new->nf_bridge	= old->nf_bridge;
- 	nf_bridge_get(old->nf_bridge);
 diff -Nru linux-2.6.17.orig/net/ipv4/netfilter/Kconfig linux-2.6.17/net/ipv4/netfilter/Kconfig
 --- linux-2.6.17.orig/net/ipv4/netfilter/Kconfig	2006-06-18 01:49:35.000000000 +0000
 +++ linux-2.6.17/net/ipv4/netfilter/Kconfig	2006-09-06 20:58:51.000000000 +0000
@@ -879,8 +854,8 @@ diff -Nru linux-2.6.17.orig/net/ipv6/netfilter/ip6t_IMQ.c linux-2.6.17/net/ipv6/
  int dev_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
  {
  	if (likely(!skb->next)) {
--		if (netdev_nit)
-+		if (netdev_nit
+-		if (!list_empty(&ptype_all))
++		if (!list_empty(&ptype_all)
 +#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
 +			&& !(skb->imq_flags & IMQ_F_ENQUEUE)
 +#endif
@@ -919,3 +894,16 @@ diff -Nru linux-2.6.17.orig/net/ipv6/netfilter/ip6t_IMQ.c linux-2.6.17/net/ipv6/
  extern void __qdisc_run(struct net_device *dev);
  
  static inline void qdisc_run(struct net_device *dev)
+--- a/include/linux/skbuff.h	2007-08-07 13:43:34.000000000 +0200
++++ b/include/linux/skbuff.h	2007-08-07 15:22:14.000000000 +0200
+@@ -1677,6 +1677,10 @@
+ 	dst->nfct_reasm = src->nfct_reasm;
+ 	nf_conntrack_get_reasm(src->nfct_reasm);
+ #endif
++#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
++	dst->imq_flags = src->imq_flags;
++	dst->nf_info = src->nf_info;
++#endif /*CONFIG_IMQ*/
+ #ifdef CONFIG_BRIDGE_NETFILTER
+ 	dst->nf_bridge  = src->nf_bridge;
+ 	nf_bridge_get(src->nf_bridge);
