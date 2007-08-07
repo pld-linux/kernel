@@ -9,9 +9,6 @@
 # - update or drop patch54 linux-2.6-toshiba_acpi_0.18-dev_toshiba_test4.patch
 # - update or drop patch60 linux-2.6-sk98lin_8.41.2.3.patch
 # - update or drop patch65 sqlzma2k-3.2-r2.patch (there is an external spec for the module btw)
-# - update or drop patch70 linux-2.6-suspend2-avoid-redef.patch
-# - update or drop patch86 kernel-bcm43xx-combined_2.6.21.patch
-# - update or drop patch102 linux-2.6-vs2.1-128IPs.patch
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 #
 # FUTURE:
@@ -268,9 +265,8 @@ Patch40:	kernel-layer7.patch
 
 Patch50:	linux-2.6.19-imq1.diff
 
-# reiser4 based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.19/reiser4-for-2.6.19-3.patch.gz
-## TODO: check ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.22/reiser4-for-2.6.22-2.patch.gz
-Patch51:	reiser4-for-2.6.19-3.patch
+# based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.22/reiser4-for-2.6.22-2.patch.gz
+Patch51:	reiser4-for-2.6.22-2.patch
 
 # wrr http://www.zz9.dk/patches/wrr-linux-051111-2.6.20.patch.gz
 Patch52:	wrr-linux-051111-2.6.20.patch
@@ -301,7 +297,6 @@ Patch65:	sqlzma2k-3.2-r2.patch
 
 # http://www.tuxonice.net/downloads/all/suspend2-2.2.10-for-2.6.22.patch.bz2
 Patch69:	linux-2.6-suspend2.patch
-Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
 Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 
@@ -309,19 +304,9 @@ Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	hostap-kernel-2.6.18.patch
 
-# Fixes for bcm43xx from ftp://lwfinger.dynalias.org/patches/
-## TODO: patch86 -- update or drop -- verify that this is included in 2.6.22 
-Patch86:	kernel-bcm43xx-combined_2.6.21.patch
-
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.22.1-vs2.3.0.15.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
-## TODO: patch102 -- update or drop -- looks like we do not use NB_IPV4ROOT 
-Patch102:	linux-2.6-vs2.1-128IPs.patch
-
-# http://vserver.13thfloor.at/Experimental/patch-2.6.21-vs2.2.0-rc1.diff
-# TODO: temporary use instead of patch100
-Patch110:	linux-2.6-vs2.2.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 #Patch120: xen-3.0-2.6.16.patch
@@ -749,8 +734,6 @@ install %{SOURCE5} Makefile.ppclibs
 %if %{with suspend2}
 ##ifarch %{ix86} %{x8664} ia64 ppc alpha
 %patch69 -p1
-# TODO check linux-2.6-suspend2-avoid-redef.patch
-#patch70 -p1
 %patch71 -p1
 # kernel-2.6-ueagle-atm-freezer.patch
 %patch72 -p1
@@ -861,17 +844,12 @@ install %{SOURCE5} Makefile.ppclibs
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
 
-# bcm43xx fixes
-## TODO verify that this is included in 2.6.22 -- patch86 -p1
-
 # vserver
 %if %{with vserver}
-# p100: vs2.3 p110: vs2.2
 %patch100 -p1
 %ifarch %{ix86} %{x8664} ia64
 %patch101 -p1
 %endif
-## TODO obsolete or needs update -- patch102 -p1
 %endif
 
 #%if %{with xen0} || %{with xenU}
