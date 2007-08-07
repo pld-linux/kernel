@@ -1,11 +1,17 @@
 #
-# STATUS: 2.6.21.3-1
-# - builds --with pax_full on i686 & x86_64
-# - builds --with grsec_full on i486, i686, athlon, x86_64, ppc (Th)
-# - builds --with pax on i686 & x86_64
-# - builds w/o any 'with' switches on all Th supported archs
+# STATUS: 2.6.22.1 work in progress
 #
 # TODO:
+# - update all config files
+# - update grsec_full & pax patches
+# - update or drop patch1 linux-2.6-sata-promise-pata-ports.patch (probably drop)
+# - update or drop patch17 kernel-pom-ng-rsh.patch
+# - update or drop patch54 linux-2.6-toshiba_acpi_0.18-dev_toshiba_test4.patch
+# - update or drop patch60 linux-2.6-sk98lin_8.41.2.3.patch
+# - update or drop patch65 sqlzma2k-3.2-r2.patch (there is an external spec for the module btw)
+# - update or drop patch70 linux-2.6-suspend2-avoid-redef.patch
+# - update or drop patch86 kernel-bcm43xx-combined_2.6.21.patch
+# - update or drop patch102 linux-2.6-vs2.1-128IPs.patch
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 #
 # FUTURE:
@@ -114,12 +120,12 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_basever		2.6.21
-%define		_postver		.6
+%define		_basever		2.6.22
+%define		_postver		.1
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.2
+%define		_rel			0.1
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20061213
@@ -157,14 +163,14 @@ License:	GPL v2
 Group:		Base/Kernel
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
-# Source0-md5:	1b515f588078dfa7f4bab2634bd17e80
+# Source0-md5:	2e230d005c002fb3d38a3ca07c0200d0
 %if "%{_prepatch}" != "%{nil}"
 Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}-%{_pre_rc}.bz2
 # Source90-md5:	b78873f8a3aff5bdc719fc7fb4c66a9b
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	f6941d0ddc39726042626e027fd3ed08
+# Source1-md5:	a29ac92cd688d591afd3fec48905e329
 %endif
 
 Source3:	kernel-autoconf.h
@@ -207,9 +213,9 @@ Source57:	kernel-wrr.config
 #	Patches
 ###
 
-# TODO: not compatible - still needed?
 # PATA ports on SATA Promise controller; patch based on:
 # http://cvs.fedora.redhat.com/viewcvs/*checkout*/rpms/kernel/devel/linux-2.6-sata-promise-pata-ports.patch
+## TODO: patch1 -- update or drop -- not updated for a long time
 Patch1:		linux-2.6-sata-promise-pata-ports.patch
 
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
@@ -244,6 +250,7 @@ Patch13:	kernel-pom-ng-u32.patch
 Patch14:	kernel-pom-ng-ROUTE.patch
 Patch15:	kernel-pom-ng-TARPIT.patch
 Patch16:	kernel-pom-ng-mms-conntrack-nat.patch
+## TODO: patch17 -- update or drop -- needs porting to nf_conntrack
 Patch17:	kernel-pom-ng-rsh.patch
 Patch18:	kernel-pom-ng-IPMARK.patch
 Patch19:	kernel-pom-ng-connlimit.patch
@@ -262,6 +269,7 @@ Patch40:	kernel-layer7.patch
 Patch50:	linux-2.6.19-imq1.diff
 
 # reiser4 based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.19/reiser4-for-2.6.19-3.patch.gz
+## TODO: check ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.22/reiser4-for-2.6.22-2.patch.gz
 Patch51:	reiser4-for-2.6.19-3.patch
 
 # wrr http://www.zz9.dk/patches/wrr-linux-051111-2.6.20.patch.gz
@@ -271,6 +279,7 @@ Patch52:	wrr-linux-051111-2.6.20.patch
 Patch53:	esfq-kernel.patch
 
 # from http://memebeam.org/free-software/toshiba_acpi/
+## TODO: patch54 -- update or drop 
 Patch54:	linux-2.6-toshiba_acpi_0.18-dev_toshiba_test4.patch
 # by Baggins request:
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
@@ -283,16 +292,17 @@ Patch57:	linux-2.6-cpuset_virtualization.patch
 Patch58:	linux-PF_RING.patch
 
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_41.tar.bz2
+## TODO: patch60 -- update or drop -- needs update to 2.6.22
 Patch60:	linux-2.6-sk98lin_8.41.2.3.patch
 
 # lzma support for squashfs (patch6) from http://www.squashfs-lzma.org/dl/sqlzma3.2-r2b.tar.bz2
+## TODO: patch65 -- update or drop 
 Patch65:	sqlzma2k-3.2-r2.patch
 
-# http://www.suspend2.net/downloads/all/suspend2-2.2.10-for-2.6.21.1.patch.bz2
+# http://www.tuxonice.net/downloads/all/suspend2-2.2.10-for-2.6.22.patch.bz2
 Patch69:	linux-2.6-suspend2.patch
 Patch70:	linux-2.6-suspend2-avoid-redef.patch
 Patch71:	linux-2.6-suspend2-page.patch
-#Patch72: linux-2.6-suspend2-off.patch
 Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
@@ -300,12 +310,13 @@ Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 Patch85:	hostap-kernel-2.6.18.patch
 
 # Fixes for bcm43xx from ftp://lwfinger.dynalias.org/patches/
+## TODO: patch86 -- update or drop -- verify that this is included in 2.6.22 
 Patch86:	kernel-bcm43xx-combined_2.6.21.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.20.4-vs2.3.0.12.diff
-# TODO: update for 2.6.21
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.22.1-vs2.3.0.15.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
+## TODO: patch102 -- update or drop -- looks like we do not use NB_IPV4ROOT 
 Patch102:	linux-2.6-vs2.1-128IPs.patch
 
 # http://vserver.13thfloor.at/Experimental/patch-2.6.21-vs2.2.0-rc1.diff
@@ -326,9 +337,9 @@ Patch200:	linux-2.6-ppc-ICE-hacks.patch
 # alternative routes, the reverse path protection (rp_filter), 
 # the NAT processing to use correctly the routing when multiple 
 # gateways are used.
-# http://www.ssi.bg/~ja/routes-2.6.21-15.diff
+# http://www.ssi.bg/~ja/routes-2.6.22-15.diff
 # We need to disable CONFIG_IP_ROUTE_MULTIPATH_CACHED
-Patch300:	routes-2.6.21-15.diff
+Patch300:	kernel-routes-2.6.22-15.diff
 
 # For compatibility with (not updated) blobs like ... ? 
 # Before 2.6.20 we had CONFIG_REGPARM option disabled.
@@ -339,9 +350,6 @@ Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	linux-2.6.21.1-pwc-uncompress.patch
-
-# Some non-GPL modules (nvidia, nvidia-legacy) looks for the paravirt_ops symbol
-Patch2100:	linux-2.6.20-paravirt_ops-needed-by-blobs.patch
 
 # kill some thousands of warnings
 Patch2500:	linux-2.6-warnings.patch
@@ -795,7 +803,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch16 -p1
 
 # kernel-pom-ng-rsh.patch
-%patch17 -p1
+##%patch17 -p1
 
 # kernel-pom-ng-IPMARK.patch
 %patch18 -p1
@@ -848,13 +856,13 @@ install %{SOURCE5} Makefile.ppclibs
 
 
 # linux-2.6-sk98lin_8.41.2.3.patch
-%patch60 -p1
+## TODO update to 2.6.22 -- patch60 -p1
 
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
 
 # bcm43xx fixes
-%patch86 -p1
+## TODO verify that this is included in 2.6.22 -- patch86 -p1
 
 # vserver
 %if %{with vserver}
@@ -863,7 +871,7 @@ install %{SOURCE5} Makefile.ppclibs
 %ifarch %{ix86} %{x8664} ia64
 %patch101 -p1
 %endif
-%patch102 -p1
+## TODO obsolete or needs update -- patch102 -p1
 %endif
 
 #%if %{with xen0} || %{with xenU}
@@ -934,9 +942,6 @@ install %{SOURCE5} Makefile.ppclibs
 # Small fixes:
 %patch2000 -p1
 %patch2001 -p1
-
-# exporting paravirt_ops as non-GPL-only symbol
-%patch2100 -p1
 
 %if %{with abi}
 patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
