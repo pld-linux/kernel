@@ -1,44 +1,7 @@
-diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/Kconfig linux-2.6.21.b/net/ipv4/netfilter/Kconfig
---- linux-2.6.21.a/net/ipv4/netfilter/Kconfig	2007-05-30 11:41:48.000000000 +0200
-+++ linux-2.6.21.b/net/ipv4/netfilter/Kconfig	2007-05-30 11:42:48.000000000 +0200
-@@ -830,5 +830,22 @@ config IP_NF_TARGET_ROUTE
- 	  Documentation/modules.txt.  The module will be called ipt_ROUTE.o.
- 	  If unsure, say `N'.
- 
-+config IP_NF_TARGET_TARPIT
-+	tristate 'TARPIT target support'
-+	depends on IP_NF_FILTER
-+	help
-+	  Adds a TARPIT target to iptables, which captures and holds
-+	  incoming TCP connections using no local per-connection resources.
-+	  Connections are accepted, but immediately switched to the persist
-+	  state (0 byte window), in which the remote side stops sending data
-+	  and asks to continue every 60-240 seconds.  Attempts to close the
-+	  connection are ignored, forcing the remote side to time out the
-+	  connection in 12-24 minutes.
-+	
-+	  This offers similar functionality to LaBrea
-+	  <http://www.hackbusters.net/LaBrea/> but doesn't require dedicated
-+	  hardware or IPs.  Any TCP port that you would normally DROP or REJECT
-+	  can instead become a tarpit.
-+
- endmenu
- 
-diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/Makefile linux-2.6.21.b/net/ipv4/netfilter/Makefile
---- linux-2.6.21.a/net/ipv4/netfilter/Makefile	2007-05-30 11:41:48.000000000 +0200
-+++ linux-2.6.21.b/net/ipv4/netfilter/Makefile	2007-05-30 11:42:49.000000000 +0200
-@@ -99,6 +99,7 @@ obj-$(CONFIG_IP_NF_MATCH_ADDRTYPE) += ip
- 
- # targets
- obj-$(CONFIG_IP_NF_TARGET_REJECT) += ipt_REJECT.o
-+obj-$(CONFIG_IP_NF_TARGET_TARPIT) += ipt_TARPIT.o
- obj-$(CONFIG_IP_NF_TARGET_TOS) += ipt_TOS.o
- obj-$(CONFIG_IP_NF_TARGET_ECN) += ipt_ECN.o
- obj-$(CONFIG_IP_NF_TARGET_IMQ) += ipt_IMQ.o
-diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_TARPIT.c linux-2.6.21.b/net/ipv4/netfilter/ipt_TARPIT.c
---- linux-2.6.21.a/net/ipv4/netfilter/ipt_TARPIT.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.21.b/net/ipv4/netfilter/ipt_TARPIT.c	2007-05-30 11:42:49.000000000 +0200
-@@ -0,0 +1,292 @@
+diff -Nru linux-2.6.22/net/ipv4/netfilter/ipt_TARPIT.c linux-2.6.22-pom2patch/net/ipv4/netfilter/ipt_TARPIT.c
+--- linux-2.6.22/net/ipv4/netfilter/ipt_TARPIT.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.22-pom2patch/net/ipv4/netfilter/ipt_TARPIT.c	2007-08-07 18:38:14.000000000 +0200
+@@ -0,0 +1,291 @@
 +/*
 + * Kernel module to capture and hold incoming TCP connections using
 + * no local per-connection resources.
@@ -87,7 +50,6 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_TARPIT.c linux-2.6.2
 +#include <net/route.h>
 +#include <linux/random.h>
 +#include <linux/netfilter_ipv4/ip_tables.h>
-+#include <linux/netfilter/x_tables.h>
 +
 +#if 0
 +#define DEBUGP printk
@@ -102,12 +64,11 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_TARPIT.c linux-2.6.2
 +static int ip_direct_send(struct sk_buff *skb)
 +{
 +	struct dst_entry *dst = skb->dst;
-+	struct hh_cache *hh = dst->hh;
 +
-+	if (hh) {
-+		return neigh_hh_output(dst->hh, skb);
-+	} else if (dst->neighbour)
-+		return dst->neighbour->output(skb);
++        if (dst->hh)
++                return neigh_hh_output(dst->hh, skb);
++        else if (dst->neighbour)
++                return dst->neighbour->output(skb);
 +
 +	if (net_ratelimit())
 +		printk(KERN_DEBUG "TARPIT ip_direct_send: no header cache and no neighbor!\n");
@@ -312,8 +273,9 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_TARPIT.c linux-2.6.2
 +	return 1;
 +}
 +
-+static struct ipt_target ipt_tarpit_reg = {
++static struct xt_target ipt_tarpit_reg = {
 +	.name = "TARPIT",
++	.family = AF_INET,
 +	.target = tarpit,
 +	.checkentry = check,
 +	.me = THIS_MODULE
@@ -331,3 +293,40 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_TARPIT.c linux-2.6.2
 +
 +module_init(init);
 +module_exit(fini);
+diff -Nru linux-2.6.22/net/ipv4/netfilter/Kconfig linux-2.6.22-pom2patch/net/ipv4/netfilter/Kconfig
+--- linux-2.6.22/net/ipv4/netfilter/Kconfig	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22-pom2patch/net/ipv4/netfilter/Kconfig	2007-08-07 18:38:14.000000000 +0200
+@@ -402,5 +402,22 @@
+ 	  Allows altering the ARP packet payload: source and destination
+ 	  hardware and network addresses.
+ 
++config IP_NF_TARGET_TARPIT
++	tristate 'TARPIT target support'
++	depends on IP_NF_FILTER
++	help
++	  Adds a TARPIT target to iptables, which captures and holds
++	  incoming TCP connections using no local per-connection resources.
++	  Connections are accepted, but immediately switched to the persist
++	  state (0 byte window), in which the remote side stops sending data
++	  and asks to continue every 60-240 seconds.  Attempts to close the
++	  connection are ignored, forcing the remote side to time out the
++	  connection in 12-24 minutes.
++	
++	  This offers similar functionality to LaBrea
++	  <http://www.hackbusters.net/LaBrea/> but doesn't require dedicated
++	  hardware or IPs.  Any TCP port that you would normally DROP or REJECT
++	  can instead become a tarpit.
++
+ endmenu
+ 
+diff -Nru linux-2.6.22/net/ipv4/netfilter/Makefile linux-2.6.22-pom2patch/net/ipv4/netfilter/Makefile
+--- linux-2.6.22/net/ipv4/netfilter/Makefile	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22-pom2patch/net/ipv4/netfilter/Makefile	2007-08-07 18:38:14.000000000 +0200
+@@ -52,6 +52,7 @@
+ 
+ # targets
+ obj-$(CONFIG_IP_NF_TARGET_REJECT) += ipt_REJECT.o
++obj-$(CONFIG_IP_NF_TARGET_TARPIT) += ipt_TARPIT.o
+ obj-$(CONFIG_IP_NF_TARGET_TOS) += ipt_TOS.o
+ obj-$(CONFIG_IP_NF_TARGET_ECN) += ipt_ECN.o
+ obj-$(CONFIG_IP_NF_TARGET_MASQUERADE) += ipt_MASQUERADE.o
