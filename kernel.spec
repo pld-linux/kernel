@@ -8,6 +8,7 @@
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - squashfs lzma patch looks broken
 # - squashfs needs update
+# - sk98lin needs skbuff fix
 #
 # FUTURE:
 # - update xen patch for 2.6.21
@@ -233,9 +234,11 @@ Patch9:		linux-static-dev.patch
 # were ported to nf_conntrack. Some of these are unique.
 
 Patch10:	kernel-pom-ng-IPV4OPTSSTRIP.patch
+## TODO: patch16 -- update or drop -- needs porting to nf_conntrack
 Patch11:	kernel-pom-ng-ipv4options.patch
 Patch12:	kernel-pom-ng-set.patch
 Patch13:	kernel-pom-ng-u32.patch
+## TODO: patch16 -- update or drop -- needs porting to nf_conntrack
 Patch14:	kernel-pom-ng-ROUTE.patch
 Patch15:	kernel-pom-ng-TARPIT.patch
 ## TODO: patch16 -- update or drop -- needs porting to nf_conntrack
@@ -755,7 +758,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch10 -p1
 
 # kernel-pom-ng-ipv4options.patch
-%patch11 -p1
+#patch11 -p1
 
 # kernel-pom-ng-set.patch
 %patch12 -p1
@@ -764,7 +767,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch13 -p1
 
 # kernel-pom-ng-ROUTE.patch
-%patch14 -p1
+#patch14 -p1
 
 # kernel-pom-ng-TARPIT.patch
 %patch15 -p1
@@ -826,7 +829,7 @@ install %{SOURCE5} Makefile.ppclibs
 
 
 # linux-2.6-sk98lin_v10.0.4.3.patch
-%patch60 -p1
+#patch60 -p1
 
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
