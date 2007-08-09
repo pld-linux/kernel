@@ -9,6 +9,7 @@
 # - squashfs lzma patch looks broken
 # - squashfs needs update
 # - sk98lin needs skbuff fix
+# - layer7 needs update
 #
 # FUTURE:
 # - update xen patch for 2.6.21
@@ -791,7 +792,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch22 -p1
 
 # kernel-layer7.patch
-%patch40 -p1
+#patch40 -p1
 
 ##
 # end of netfilter
