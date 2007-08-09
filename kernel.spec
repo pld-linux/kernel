@@ -2,7 +2,7 @@
 # STATUS: 2.6.22.1 work in progress
 #
 # TODO:
-# - update all config files (i386 up to date)
+# - update all config files (i386 and x86_64 up to date)
 # - update grsec_full & pax patches
 # - update or drop patch17 kernel-pom-ng-rsh.patch
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
