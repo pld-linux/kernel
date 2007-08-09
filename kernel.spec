@@ -238,6 +238,7 @@ Patch12:	kernel-pom-ng-set.patch
 Patch13:	kernel-pom-ng-u32.patch
 Patch14:	kernel-pom-ng-ROUTE.patch
 Patch15:	kernel-pom-ng-TARPIT.patch
+## TODO: patch16 -- update or drop -- needs porting to nf_conntrack
 Patch16:	kernel-pom-ng-mms-conntrack-nat.patch
 ## TODO: patch17 -- update or drop -- needs porting to nf_conntrack
 Patch17:	kernel-pom-ng-rsh.patch
@@ -769,7 +770,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch15 -p1
 
 # kernel-pom-ng-mms-conntrack-nat.patch
-%patch16 -p1
+#patch16 -p1
 
 # kernel-pom-ng-rsh.patch
 ##%patch17 -p1
