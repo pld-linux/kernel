@@ -88,12 +88,12 @@ diff -Nru linux-2.6.22/net/ipv4/netfilter/ipt_TARPIT.c linux-2.6.22-pom2patch/ne
 +	u_int16_t tmp;
 +
 +	/* A truncated TCP header isn't going to be useful */
-+	if (oskb->len < (oskb->nh.iph->ihl*4) + sizeof(struct tcphdr))
++	if (oskb->len < (ip_hdr(oskb)->ihl*4) + sizeof(struct tcphdr))
 +		return;
 +
-+	otcph = (struct tcphdr *)((u_int32_t*)oskb->nh.iph
-+				  + oskb->nh.iph->ihl);
-+	otcplen = oskb->len - oskb->nh.iph->ihl*4;
++	otcph = (struct tcphdr *)((u_int32_t*)ip_hdr(oskb)
++				  + ip_hdr(oskb)->ihl);
++	otcplen = oskb->len - ip_hdr(oskb)->ihl*4;
 +
 +	/* No replies for RST or FIN */
 +	if (otcph->rst || otcph->fin)
@@ -104,8 +104,8 @@ diff -Nru linux-2.6.22/net/ipv4/netfilter/ipt_TARPIT.c linux-2.6.22-pom2patch/ne
 +		return;
 +
 +	/* Check checksum. */
-+	if (tcp_v4_check(otcplen, oskb->nh.iph->saddr,
-+			 oskb->nh.iph->daddr,
++	if (tcp_v4_check(otcplen, ip_hdr(oskb)->saddr,
++			 ip_hdr(oskb)->daddr,
 +			 csum_partial((char *)otcph, otcplen, 0)) != 0)
 +		return;
 +
@@ -123,23 +123,23 @@ diff -Nru linux-2.6.22/net/ipv4/netfilter/ipt_TARPIT.c linux-2.6.22-pom2patch/ne
 +	nskb->nf_debug = 0;
 +#endif
 +
-+	ntcph = (struct tcphdr *)((u_int32_t*)nskb->nh.iph + nskb->nh.iph->ihl);
++	ntcph = (struct tcphdr *)((u_int32_t*)ip_hdr(nskb) + ip_hdr(nskb)->ihl);
 +
 +	/* Truncate to length (no data) */
 +	ntcph->doff = sizeof(struct tcphdr)/4;
-+	skb_trim(nskb, nskb->nh.iph->ihl*4 + sizeof(struct tcphdr));
-+	nskb->nh.iph->tot_len = htons(nskb->len);
++	skb_trim(nskb, ip_hdr(nskb)->ihl*4 + sizeof(struct tcphdr));
++	ip_hdr(nskb)->tot_len = htons(nskb->len);
 +
 +	/* Swap source and dest */
-+	nskb->nh.iph->daddr = xchg(&nskb->nh.iph->saddr, nskb->nh.iph->daddr);
++	ip_hdr(nskb)->daddr = xchg(&ip_hdr(nskb)->saddr, ip_hdr(nskb)->daddr);
 +	tmp = ntcph->source;
 +	ntcph->source = ntcph->dest;
 +	ntcph->dest = tmp;
 +
 +	/* Use supplied sequence number or make a new one */
 +	ntcph->seq = otcph->ack ? otcph->ack_seq
-+		: htonl(secure_tcp_sequence_number(nskb->nh.iph->saddr,
-+						   nskb->nh.iph->daddr,
++		: htonl(secure_tcp_sequence_number(ip_hdr(nskb)->saddr,
++						   ip_hdr(nskb)->daddr,
 +						   ntcph->source,
 +						   ntcph->dest));
 +
@@ -163,14 +163,14 @@ diff -Nru linux-2.6.22/net/ipv4/netfilter/ipt_TARPIT.c linux-2.6.22-pom2patch/ne
 +	/* Adjust TCP checksum */
 +	ntcph->check = 0;
 +	ntcph->check = tcp_v4_check(sizeof(struct tcphdr),
-+				   nskb->nh.iph->saddr,
-+				   nskb->nh.iph->daddr,
++				   ip_hdr(nskb)->saddr,
++				   ip_hdr(nskb)->daddr,
 +				   csum_partial((char *)ntcph,
 +						sizeof(struct tcphdr), 0));
 +
-+	fl.nl_u.ip4_u.daddr = nskb->nh.iph->daddr;
-+	fl.nl_u.ip4_u.saddr = local ? nskb->nh.iph->saddr : 0;
-+	fl.nl_u.ip4_u.tos = RT_TOS(nskb->nh.iph->tos) | RTO_CONN;
++	fl.nl_u.ip4_u.daddr = ip_hdr(nskb)->daddr;
++	fl.nl_u.ip4_u.saddr = local ? ip_hdr(nskb)->saddr : 0;
++	fl.nl_u.ip4_u.tos = RT_TOS(ip_hdr(nskb)->tos) | RTO_CONN;
 +	fl.oif = 0;
 +
 +	if (ip_route_output_key(&nrt, &fl))
@@ -180,16 +180,16 @@ diff -Nru linux-2.6.22/net/ipv4/netfilter/ipt_TARPIT.c linux-2.6.22-pom2patch/ne
 +	nskb->dst = &nrt->u.dst;
 +
 +	/* Adjust IP TTL */
-+	nskb->nh.iph->ttl = dst_metric(nskb->dst, RTAX_HOPLIMIT);
++	ip_hdr(nskb)->ttl = dst_metric(nskb->dst, RTAX_HOPLIMIT);
 +
 +	/* Set DF, id = 0 */
-+	nskb->nh.iph->frag_off = htons(IP_DF);
-+	nskb->nh.iph->id = 0;
++	ip_hdr(nskb)->frag_off = htons(IP_DF);
++	ip_hdr(nskb)->id = 0;
 +
 +	/* Adjust IP checksum */
-+	nskb->nh.iph->check = 0;
-+	nskb->nh.iph->check = ip_fast_csum((unsigned char *)nskb->nh.iph,
-+					   nskb->nh.iph->ihl);
++	ip_hdr(nskb)->check = 0;
++	ip_hdr(nskb)->check = ip_fast_csum((unsigned char *)ip_hdr(nskb),
++					   ip_hdr(nskb)->ihl);
 +
 +	/* "Never happens" */
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,12)
@@ -232,11 +232,11 @@ diff -Nru linux-2.6.22/net/ipv4/netfilter/ipt_TARPIT.c linux-2.6.22-pom2patch/ne
 +
 +	/* Our naive response construction doesn't deal with IP
 +           options, and probably shouldn't try. */
-+	if (skb->nh.iph->ihl*4 != sizeof(struct iphdr))
++	if (ip_hdr(skb)->ihl*4 != sizeof(struct iphdr))
 +		return NF_DROP;
 +
 +	/* We aren't interested in fragments */
-+	if (skb->nh.iph->frag_off & htons(IP_OFFSET))
++	if (ip_hdr(skb)->frag_off & htons(IP_OFFSET))
 +		return NF_DROP;
 +
 +	tarpit_tcp(skb,rt,hooknum == NF_IP_LOCAL_IN);
