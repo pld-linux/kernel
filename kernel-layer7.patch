@@ -297,11 +297,11 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_layer7.c linux-2.6.2
 +
 +static int can_handle(const struct sk_buff *skb)
 +{
-+	if(!skb->nh.iph) /* not IP */
++	if(!ip_hdr(skb)) /* not IP */
 +		return 0;
-+	if(skb->nh.iph->protocol != IPPROTO_TCP &&
-+	   skb->nh.iph->protocol != IPPROTO_UDP &&
-+	   skb->nh.iph->protocol != IPPROTO_ICMP)
++	if(ip_hdr(skb)->protocol != IPPROTO_TCP &&
++	   ip_hdr(skb)->protocol != IPPROTO_UDP &&
++	   ip_hdr(skb)->protocol != IPPROTO_ICMP)
 +		return 0;
 +	return 1;
 +}
@@ -309,11 +309,11 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_layer7.c linux-2.6.2
 +/* Returns offset the into the skb->data that the application data starts */
 +static int app_data_offset(const struct sk_buff *skb)
 +{
-+	/* In case we are ported somewhere (ebtables?) where skb->nh.iph
++	/* In case we are ported somewhere (ebtables?) where ip_hdr(skb)
 +	isn't set, this can be gotten from 4*(skb->data[0] & 0x0f) as well. */
-+	int ip_hl = 4*skb->nh.iph->ihl;
++	int ip_hl = 4*ip_hdr(skb)->ihl;
 +
-+	if( skb->nh.iph->protocol == IPPROTO_TCP ) {
++	if( ip_hdr(skb)->protocol == IPPROTO_TCP ) {
 +		/* 12 == offset into TCP header for the header length field.
 +		Can't get this with skb->h.th->doff because the tcphdr
 +		struct doesn't get set when routing (this is confirmed to be
@@ -321,9 +321,9 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_layer7.c linux-2.6.2
 +		int tcp_hl = 4*(skb->data[ip_hl + 12] >> 4);
 +
 +		return ip_hl + tcp_hl;
-+	} else if( skb->nh.iph->protocol == IPPROTO_UDP  ) {
++	} else if( ip_hdr(skb)->protocol == IPPROTO_UDP  ) {
 +		return ip_hl + 8; /* UDP header is always 8 bytes */
-+	} else if( skb->nh.iph->protocol == IPPROTO_ICMP ) {
++	} else if( ip_hdr(skb)->protocol == IPPROTO_ICMP ) {
 +		return ip_hl + 8; /* ICMP header is 8 bytes */
 +	} else {
 +		if (net_ratelimit())
