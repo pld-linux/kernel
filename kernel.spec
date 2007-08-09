@@ -6,6 +6,7 @@
 # - update grsec_full & pax patches
 # - update or drop patch17 kernel-pom-ng-rsh.patch
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
+# - squashfs lzma patch looks broken
 #
 # FUTURE:
 # - update xen patch for 2.6.21
@@ -740,7 +741,7 @@ install %{SOURCE5} Makefile.ppclibs
 
 # squashfs with (TODO) lzma support
 %patch6 -p1
-%patch65 -p1
+#patch65 -p1
 
 %patch7 -p1
 %patch9 -p1
