@@ -38,16 +38,16 @@ diff -urNp linux-2.6.22.1/arch/alpha/kernel/osf_sys.c linux-2.6.22.1/arch/alpha/
 diff -urNp linux-2.6.22.1/arch/alpha/kernel/ptrace.c linux-2.6.22.1/arch/alpha/kernel/ptrace.c
 --- linux-2.6.22.1/arch/alpha/kernel/ptrace.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/arch/alpha/kernel/ptrace.c	2007-08-02 11:09:14.000000000 -0400
-@@ -15,6 +15,7 @@
- #include <linux/slab.h>
+@@ -16,6 +16,7 @@
  #include <linux/security.h>
  #include <linux/signal.h>
+ #include <linux/vs_base.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
  #include <asm/pgtable.h>
-@@ -283,6 +284,9 @@ do_sys_ptrace(long request, long pid, lo
- 		goto out_notsk;
+@@ -289,6 +290,9 @@ do_sys_ptrace(long request, long pid, lo
+ 		goto out;
  	}
  
 +	if (gr_handle_ptrace(child, request))
@@ -5823,10 +5823,10 @@ diff -urNp linux-2.6.22.1/arch/i386/mm/extable.c linux-2.6.22.1/arch/i386/mm/ext
 diff -urNp linux-2.6.22.1/arch/i386/mm/fault.c linux-2.6.22.1/arch/i386/mm/fault.c
 --- linux-2.6.22.1/arch/i386/mm/fault.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/arch/i386/mm/fault.c	2007-08-02 11:45:43.000000000 -0400
-@@ -25,10 +25,14 @@
- #include <linux/kprobes.h>
+@@ -26,10 +26,14 @@
  #include <linux/uaccess.h>
  #include <linux/kdebug.h>
+ #include <linux/suspend.h>
 +#include <linux/unistd.h>
 +#include <linux/compiler.h>
 +#include <linux/binfmts.h>
@@ -7500,10 +7500,10 @@ diff -urNp linux-2.6.22.1/arch/ia64/kernel/module.c linux-2.6.22.1/arch/ia64/ker
 diff -urNp linux-2.6.22.1/arch/ia64/kernel/ptrace.c linux-2.6.22.1/arch/ia64/kernel/ptrace.c
 --- linux-2.6.22.1/arch/ia64/kernel/ptrace.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/arch/ia64/kernel/ptrace.c	2007-08-02 11:09:14.000000000 -0400
-@@ -17,6 +17,7 @@
- #include <linux/security.h>
+@@ -18,6 +18,7 @@
  #include <linux/audit.h>
  #include <linux/signal.h>
+ #include <linux/vs_base.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/pgtable.h>
@@ -7550,10 +7550,10 @@ diff -urNp linux-2.6.22.1/arch/ia64/kernel/sys_ia64.c linux-2.6.22.1/arch/ia64/k
 diff -urNp linux-2.6.22.1/arch/ia64/mm/fault.c linux-2.6.22.1/arch/ia64/mm/fault.c
 --- linux-2.6.22.1/arch/ia64/mm/fault.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/arch/ia64/mm/fault.c	2007-08-02 11:38:45.000000000 -0400
-@@ -10,6 +10,7 @@
- #include <linux/interrupt.h>
+@@ -11,6 +11,7 @@
  #include <linux/kprobes.h>
  #include <linux/kdebug.h>
+ #include <linux/vs_memory.h>
 +#include <linux/binfmts.h>
  
  #include <asm/pgtable.h>
@@ -9115,10 +9115,10 @@ diff -urNp linux-2.6.22.1/arch/s390/kernel/module.c linux-2.6.22.1/arch/s390/ker
 diff -urNp linux-2.6.22.1/arch/sparc/kernel/ptrace.c linux-2.6.22.1/arch/sparc/kernel/ptrace.c
 --- linux-2.6.22.1/arch/sparc/kernel/ptrace.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/arch/sparc/kernel/ptrace.c	2007-08-02 11:09:14.000000000 -0400
-@@ -19,6 +19,7 @@
- #include <linux/smp_lock.h>
+@@ -20,6 +20,7 @@
  #include <linux/security.h>
  #include <linux/signal.h>
+ #include <linux/vs_base.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/pgtable.h>
@@ -9495,25 +9495,13 @@ diff -urNp linux-2.6.22.1/arch/sparc/mm/srmmu.c linux-2.6.22.1/arch/sparc/mm/srm
  	BTFIXUPSET_INT(page_kernel, pgprot_val(SRMMU_PAGE_KERNEL));
  	page_kernel = pgprot_val(SRMMU_PAGE_KERNEL);
  
-diff -urNp linux-2.6.22.1/arch/sparc64/kernel/Makefile linux-2.6.22.1/arch/sparc64/kernel/Makefile
---- linux-2.6.22.1/arch/sparc64/kernel/Makefile	2007-07-10 14:56:30.000000000 -0400
-+++ linux-2.6.22.1/arch/sparc64/kernel/Makefile	2007-08-02 11:38:46.000000000 -0400
-@@ -3,7 +3,7 @@
- #
- 
- EXTRA_AFLAGS := -ansi
--EXTRA_CFLAGS := -Werror
-+#EXTRA_CFLAGS := -Werror
- 
- extra-y		:= head.o init_task.o vmlinux.lds
- 
 diff -urNp linux-2.6.22.1/arch/sparc64/kernel/ptrace.c linux-2.6.22.1/arch/sparc64/kernel/ptrace.c
 --- linux-2.6.22.1/arch/sparc64/kernel/ptrace.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/arch/sparc64/kernel/ptrace.c	2007-08-02 11:09:14.000000000 -0400
-@@ -22,6 +22,7 @@
- #include <linux/seccomp.h>
+@@ -23,6 +23,7 @@
  #include <linux/audit.h>
  #include <linux/signal.h>
+ #include <linux/vs_base.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/asi.h>
@@ -10347,8 +10335,8 @@ diff -urNp linux-2.6.22.1/arch/x86_64/mm/fault.c linux-2.6.22.1/arch/x86_64/mm/f
  		default:	/* 3: write, present */
  			/* fall through */
 @@ -502,7 +532,14 @@ bad_area_nosemaphore:
- 					tsk->comm, tsk->pid, address, regs->rip,
- 					regs->rsp, error_code);
+ 					tsk->comm, tsk->pid, tsk->xid, address,
+ 					regs->rip, regs->rsp, error_code);
  		}
 -       
 +
@@ -12224,10 +12212,10 @@ diff -urNp linux-2.6.22.1/drivers/video/vesafb.c linux-2.6.22.1/drivers/video/ve
 diff -urNp linux-2.6.22.1/fs/binfmt_aout.c linux-2.6.22.1/fs/binfmt_aout.c
 --- linux-2.6.22.1/fs/binfmt_aout.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/fs/binfmt_aout.c	2007-08-02 11:38:47.000000000 -0400
-@@ -24,6 +24,7 @@
- #include <linux/binfmts.h>
+@@ -25,6 +25,7 @@
  #include <linux/personality.h>
  #include <linux/init.h>
+ #include <linux/vs_memory.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/system.h>
@@ -12309,9 +12297,9 @@ diff -urNp linux-2.6.22.1/fs/binfmt_elf.c linux-2.6.22.1/fs/binfmt_elf.c
 --- linux-2.6.22.1/fs/binfmt_elf.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/fs/binfmt_elf.c	2007-08-02 11:38:47.000000000 -0400
 @@ -39,10 +39,16 @@
- #include <linux/random.h>
  #include <linux/elf.h>
  #include <linux/utsname.h>
+ #include <linux/vs_memory.h>
 +#include <linux/grsecurity.h>
 +
  #include <asm/uaccess.h>
@@ -13194,16 +13182,16 @@ diff -urNp linux-2.6.22.1/fs/debugfs/inode.c linux-2.6.22.1/fs/debugfs/inode.c
 diff -urNp linux-2.6.22.1/fs/exec.c linux-2.6.22.1/fs/exec.c
 --- linux-2.6.22.1/fs/exec.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/fs/exec.c	2007-08-02 11:44:13.000000000 -0400
-@@ -51,6 +51,8 @@
- #include <linux/cn_proc.h>
+@@ -52,6 +52,8 @@
  #include <linux/audit.h>
  #include <linux/signalfd.h>
+ #include <linux/vs_memory.h>
 +#include <linux/random.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
  #include <asm/mmu_context.h>
-@@ -69,6 +71,15 @@ EXPORT_SYMBOL(suid_dumpable);
+@@ -70,6 +72,15 @@ EXPORT_SYMBOL(suid_dumpable);
  static struct linux_binfmt *formats;
  static DEFINE_RWLOCK(binfmt_lock);
  
@@ -13219,7 +13207,7 @@ diff -urNp linux-2.6.22.1/fs/exec.c linux-2.6.22.1/fs/exec.c
  int register_binfmt(struct linux_binfmt * fmt)
  {
  	struct linux_binfmt ** tmp = &formats;
-@@ -308,7 +319,7 @@ EXPORT_SYMBOL(copy_strings_kernel);
+@@ -309,7 +320,7 @@ EXPORT_SYMBOL(copy_strings_kernel);
   *
   * vma->vm_mm->mmap_sem is held for writing.
   */
@@ -13228,7 +13216,7 @@ diff -urNp linux-2.6.22.1/fs/exec.c linux-2.6.22.1/fs/exec.c
  			struct page *page, unsigned long address)
  {
  	struct mm_struct *mm = vma->vm_mm;
-@@ -326,6 +337,12 @@ void install_arg_page(struct vm_area_str
+@@ -327,6 +338,12 @@ void install_arg_page(struct vm_area_str
  		pte_unmap_unlock(pte, ptl);
  		goto out;
  	}
@@ -13241,7 +13229,7 @@ diff -urNp linux-2.6.22.1/fs/exec.c linux-2.6.22.1/fs/exec.c
  	inc_mm_counter(mm, anon_rss);
  	lru_cache_add_active(page);
  	set_pte_at(mm, address, pte, pte_mkdirty(pte_mkwrite(mk_pte(
-@@ -334,10 +351,42 @@ void install_arg_page(struct vm_area_str
+@@ -335,10 +352,42 @@ void install_arg_page(struct vm_area_str
  	pte_unmap_unlock(pte, ptl);
  
  	/* no need for flush_tlb */
@@ -13285,7 +13273,7 @@ diff -urNp linux-2.6.22.1/fs/exec.c linux-2.6.22.1/fs/exec.c
  }
  
  #define EXTRA_STACK_VM_PAGES	20	/* random */
-@@ -352,6 +401,10 @@ int setup_arg_pages(struct linux_binprm 
+@@ -353,6 +402,10 @@ int setup_arg_pages(struct linux_binprm 
  	int i, ret;
  	long arg_size;
  
@@ -13296,7 +13284,7 @@ diff -urNp linux-2.6.22.1/fs/exec.c linux-2.6.22.1/fs/exec.c
  #ifdef CONFIG_STACK_GROWSUP
  	/* Move the argument and environment strings to the bottom of the
  	 * stack space.
-@@ -434,26 +487,48 @@ int setup_arg_pages(struct linux_binprm 
+@@ -435,7 +488,7 @@ int setup_arg_pages(struct linux_binprm 
  		else
  			mpnt->vm_flags = VM_STACK_FLAGS;
  		mpnt->vm_flags |= mm->def_flags;
@@ -13305,10 +13293,11 @@ diff -urNp linux-2.6.22.1/fs/exec.c linux-2.6.22.1/fs/exec.c
  		if ((ret = insert_vm_struct(mm, mpnt))) {
  			up_write(&mm->mmap_sem);
  			kmem_cache_free(vm_area_cachep, mpnt);
- 			return ret;
- 		}
+@@ -445,17 +498,38 @@ int setup_arg_pages(struct linux_binprm 		
  		mm->stack_vm = mm->total_vm = vma_pages(mpnt);
-+
+ 	}
+ 
+-	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
 +#ifdef CONFIG_PAX_SEGMEXEC
 +		mpnt_m = pax_find_mirror_vma(mpnt);
 +		if (mpnt_m) {
@@ -13317,9 +13306,6 @@ diff -urNp linux-2.6.22.1/fs/exec.c linux-2.6.22.1/fs/exec.c
 +		}
 +#endif
 +
- 	}
- 
--	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
 +	for (i = 0 ; i < MAX_ARG_PAGES ; i++, stack_base += PAGE_SIZE) {
  		struct page *page = bprm->page[i];
 -		if (page) {
@@ -13354,7 +13340,7 @@ diff -urNp linux-2.6.22.1/fs/exec.c linux-2.6.22.1/fs/exec.c
  }
  
  EXPORT_SYMBOL(setup_arg_pages);
-@@ -489,7 +564,7 @@ struct file *open_exec(const char *name)
+@@ -491,7 +565,7 @@ struct file *open_exec(const char *name)
  		file = ERR_PTR(-EACCES);
  		if (!(nd.mnt->mnt_flags & MNT_NOEXEC) &&
  		    S_ISREG(inode->i_mode)) {
@@ -13363,7 +13349,7 @@ diff -urNp linux-2.6.22.1/fs/exec.c linux-2.6.22.1/fs/exec.c
  			file = ERR_PTR(err);
  			if (!err) {
  				file = nameidata_to_filp(&nd, O_RDONLY);
-@@ -1156,6 +1231,11 @@ int do_execve(char * filename,
+@@ -1158,6 +1232,11 @@ int do_execve(char * filename,
  	struct file *file;
  	int retval;
  	int i;
@@ -13375,7 +13361,7 @@ diff -urNp linux-2.6.22.1/fs/exec.c linux-2.6.22.1/fs/exec.c
  
  	retval = -ENOMEM;
  	bprm = kzalloc(sizeof(*bprm), GFP_KERNEL);
-@@ -1167,10 +1247,29 @@ int do_execve(char * filename,
+@@ -1169,10 +1248,29 @@ int do_execve(char * filename,
  	if (IS_ERR(file))
  		goto out_kfree;
  
@@ -13405,7 +13391,7 @@ diff -urNp linux-2.6.22.1/fs/exec.c linux-2.6.22.1/fs/exec.c
  	bprm->file = file;
  	bprm->filename = filename;
  	bprm->interp = filename;
-@@ -1212,8 +1311,38 @@ int do_execve(char * filename,
+@@ -1214,8 +1312,38 @@ int do_execve(char * filename,
  	if (retval < 0)
  		goto out;
  
@@ -13444,7 +13430,7 @@ diff -urNp linux-2.6.22.1/fs/exec.c linux-2.6.22.1/fs/exec.c
  		free_arg_pages(bprm);
  
  		/* execve success */
-@@ -1223,6 +1352,14 @@ int do_execve(char * filename,
+@@ -1225,6 +1353,14 @@ int do_execve(char * filename,
  		return retval;
  	}
  
@@ -13459,7 +13445,7 @@ diff -urNp linux-2.6.22.1/fs/exec.c linux-2.6.22.1/fs/exec.c
  out:
  	/* Something went wrong, return the inode and free the argument pages*/
  	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
-@@ -1386,6 +1523,114 @@ out:
+@@ -1388,6 +1524,114 @@ out:
  	return ispipe;
  }
  
@@ -13574,7 +13560,7 @@ diff -urNp linux-2.6.22.1/fs/exec.c linux-2.6.22.1/fs/exec.c
  static void zap_process(struct task_struct *start)
  {
  	struct task_struct *t;
-@@ -1528,6 +1773,10 @@ int do_coredump(long signr, int exit_cod
+@@ -1530,6 +1774,10 @@ int do_coredump(long signr, int exit_cod
  	 */
  	clear_thread_flag(TIF_SIGPENDING);
  
@@ -13588,7 +13574,7 @@ diff -urNp linux-2.6.22.1/fs/exec.c linux-2.6.22.1/fs/exec.c
 diff -urNp linux-2.6.22.1/fs/ext2/balloc.c linux-2.6.22.1/fs/ext2/balloc.c
 --- linux-2.6.22.1/fs/ext2/balloc.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/fs/ext2/balloc.c	2007-08-02 11:09:15.000000000 -0400
-@@ -111,7 +111,7 @@ static int reserve_blocks(struct super_b
+@@ -114,7 +114,7 @@ static int reserve_blocks(struct super_b
  	if (free_blocks < count)
  		count = free_blocks;
  
@@ -13597,22 +13583,10 @@ diff -urNp linux-2.6.22.1/fs/ext2/balloc.c linux-2.6.22.1/fs/ext2/balloc.c
  	    sbi->s_resuid != current->fsuid &&
  	    (sbi->s_resgid == 0 || !in_group_p (sbi->s_resgid))) {
  		/*
-diff -urNp linux-2.6.22.1/fs/ext3/balloc.c linux-2.6.22.1/fs/ext3/balloc.c
---- linux-2.6.22.1/fs/ext3/balloc.c	2007-07-10 14:56:30.000000000 -0400
-+++ linux-2.6.22.1/fs/ext3/balloc.c	2007-08-02 11:09:15.000000000 -0400
-@@ -1359,7 +1359,7 @@ static int ext3_has_free_blocks(struct e
- 
- 	free_blocks = percpu_counter_read_positive(&sbi->s_freeblocks_counter);
- 	root_blocks = le32_to_cpu(sbi->s_es->s_r_blocks_count);
--	if (free_blocks < root_blocks + 1 && !capable(CAP_SYS_RESOURCE) &&
-+	if (free_blocks < root_blocks + 1 && !capable_nolog(CAP_SYS_RESOURCE) &&
- 		sbi->s_resuid != current->fsuid &&
- 		(sbi->s_resgid == 0 || !in_group_p (sbi->s_resgid))) {
- 		return 0;
 diff -urNp linux-2.6.22.1/fs/ext3/xattr.c linux-2.6.22.1/fs/ext3/xattr.c
 --- linux-2.6.22.1/fs/ext3/xattr.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/fs/ext3/xattr.c	2007-08-02 11:38:47.000000000 -0400
-@@ -89,8 +89,8 @@
+@@ -90,8 +90,8 @@
  		printk("\n"); \
  	} while (0)
  #else
@@ -13623,30 +13597,18 @@ diff -urNp linux-2.6.22.1/fs/ext3/xattr.c linux-2.6.22.1/fs/ext3/xattr.c
  #endif
  
  static void ext3_xattr_cache_insert(struct buffer_head *);
-diff -urNp linux-2.6.22.1/fs/ext4/balloc.c linux-2.6.22.1/fs/ext4/balloc.c
---- linux-2.6.22.1/fs/ext4/balloc.c	2007-07-10 14:56:30.000000000 -0400
-+++ linux-2.6.22.1/fs/ext4/balloc.c	2007-08-02 11:09:15.000000000 -0400
-@@ -1376,7 +1376,7 @@ static int ext4_has_free_blocks(struct e
- 
- 	free_blocks = percpu_counter_read_positive(&sbi->s_freeblocks_counter);
- 	root_blocks = ext4_r_blocks_count(sbi->s_es);
--	if (free_blocks < root_blocks + 1 && !capable(CAP_SYS_RESOURCE) &&
-+	if (free_blocks < root_blocks + 1 && !capable_nolog(CAP_SYS_RESOURCE) &&
- 		sbi->s_resuid != current->fsuid &&
- 		(sbi->s_resgid == 0 || !in_group_p (sbi->s_resgid))) {
- 		return 0;
 diff -urNp linux-2.6.22.1/fs/fcntl.c linux-2.6.22.1/fs/fcntl.c
 --- linux-2.6.22.1/fs/fcntl.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/fs/fcntl.c	2007-08-02 11:09:15.000000000 -0400
 @@ -18,6 +18,7 @@
- #include <linux/ptrace.h>
  #include <linux/signal.h>
  #include <linux/rcupdate.h>
+ #include <linux/vs_limit.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/poll.h>
  #include <asm/siginfo.h>
-@@ -63,6 +64,7 @@ static int locate_fd(struct files_struct
+@@ -64,6 +65,7 @@ static int locate_fd(struct files_struct
  	struct fdtable *fdt;
  
  	error = -EINVAL;
@@ -13661,7 +13623,7 @@ diff -urNp linux-2.6.22.1/fs/fcntl.c linux-2.6.22.1/fs/fcntl.c
 +	gr_learn_resource(current, RLIMIT_NOFILE, newfd, 0);
  	if (newfd >= current->signal->rlim[RLIMIT_NOFILE].rlim_cur)
  		goto out;
- 
+ 	if (!vx_files_avail(1))
 @@ -140,6 +143,8 @@ asmlinkage long sys_dup2(unsigned int ol
  	struct files_struct * files = current->files;
  	struct fdtable *fdt;
@@ -13709,9 +13671,9 @@ diff -urNp linux-2.6.22.1/fs/namei.c linux-2.6.22.1/fs/namei.c
 --- linux-2.6.22.1/fs/namei.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/fs/namei.c	2007-08-02 11:09:15.000000000 -0400
 @@ -31,6 +31,7 @@
- #include <linux/file.h>
- #include <linux/fcntl.h>
- #include <linux/namei.h>
+ #include <linux/vs_base.h>
+ #include <linux/vs_tag.h>
+ #include <linux/vs_cowbl.h>
 +#include <linux/grsecurity.h>
  #include <asm/namei.h>
  #include <asm/uaccess.h>
@@ -13868,7 +13830,7 @@ diff -urNp linux-2.6.22.1/fs/namei.c linux-2.6.22.1/fs/namei.c
 +
  	if (!IS_POSIXACL(nd.dentry->d_inode))
  		mode &= ~current->fs->umask;
- 	error = vfs_mkdir(nd.dentry->d_inode, dentry, mode);
+ 	error = vfs_mkdir(nd.dentry->d_inode, dentry, mode, &nd);
 +
 +	if (!error)
 +		gr_handle_create(dentry, nd.mnt);
@@ -13901,7 +13863,7 @@ diff -urNp linux-2.6.22.1/fs/namei.c linux-2.6.22.1/fs/namei.c
 +			goto dput_exit2;
 +		}
 +	}
- 	error = vfs_rmdir(nd.dentry->d_inode, dentry);
+ 	error = vfs_rmdir(nd.dentry->d_inode, dentry, &nd);
 +	if (!error && (saved_dev || saved_ino))
 +		gr_handle_delete(saved_ino, saved_dev);
 +dput_exit2:
@@ -13937,10 +13899,10 @@ diff -urNp linux-2.6.22.1/fs/namei.c linux-2.6.22.1/fs/namei.c
 +				error = -EACCES;
 +
  			atomic_inc(&inode->i_count);
--		error = vfs_unlink(nd.dentry->d_inode, dentry);
+-		error = vfs_unlink(nd.dentry->d_inode, dentry, &nd);
 +		}
 +		if (!error)
-+			error = vfs_unlink(nd.dentry->d_inode, dentry);
++			error = vfs_unlink(nd.dentry->d_inode, dentry, &nd);
 +		if (!error && (saved_ino || saved_dev))
 +			gr_handle_delete(saved_ino, saved_dev);
  	exit2:
@@ -13955,7 +13917,7 @@ diff -urNp linux-2.6.22.1/fs/namei.c linux-2.6.22.1/fs/namei.c
 +		goto out_dput_unlock;
 +	}
 +
- 	error = vfs_symlink(nd.dentry->d_inode, dentry, from, S_IALLUGO);
+ 	error = vfs_symlink(nd.dentry->d_inode, dentry, from, S_IALLUGO, &nd);
 +
 +	if (!error)
 +		gr_handle_create(dentry, nd.mnt);
@@ -13981,7 +13943,7 @@ diff -urNp linux-2.6.22.1/fs/namei.c linux-2.6.22.1/fs/namei.c
 +		goto out_unlock_dput;
 +	}
 +
- 	error = vfs_link(old_nd.dentry, nd.dentry->d_inode, new_dentry);
+ 	error = vfs_link(old_nd.dentry, nd.dentry->d_inode, new_dentry, &nd);
 +
 +	if (!error)
 +		gr_handle_create(new_dentry, nd.mnt);
@@ -14011,9 +13973,9 @@ diff -urNp linux-2.6.22.1/fs/namespace.c linux-2.6.22.1/fs/namespace.c
 --- linux-2.6.22.1/fs/namespace.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/fs/namespace.c	2007-08-02 11:09:15.000000000 -0400
 @@ -25,6 +25,7 @@
- #include <linux/security.h>
- #include <linux/mount.h>
- #include <linux/ramfs.h>
+ #include <linux/vs_tag.h>
+ #include <linux/vserver/space.h>
+ #include <linux/vserver/global.h>
 +#include <linux/grsecurity.h>
  #include <asm/uaccess.h>
  #include <asm/unistd.h>
@@ -14403,9 +14365,9 @@ diff -urNp linux-2.6.22.1/fs/open.c linux-2.6.22.1/fs/open.c
 --- linux-2.6.22.1/fs/open.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/fs/open.c	2007-08-02 11:09:15.000000000 -0400
 @@ -26,6 +26,7 @@
- #include <linux/syscalls.h>
- #include <linux/rcupdate.h>
- #include <linux/audit.h>
+ #include <linux/vs_dlimit.h>
+ #include <linux/vs_tag.h>
+ #include <linux/vs_cowbl.h>
 +#include <linux/grsecurity.h>
  
  int vfs_statfs(struct dentry *dentry, struct kstatfs *buf)
@@ -14515,15 +14477,6 @@ diff -urNp linux-2.6.22.1/fs/open.c linux-2.6.22.1/fs/open.c
  	newattrs.ia_mode = (mode & S_IALLUGO) | (inode->i_mode & ~S_IALLUGO);
  	newattrs.ia_valid = ATTR_MODE | ATTR_CTIME;
  	error = notify_change(nd.dentry, &newattrs);
-@@ -570,7 +619,7 @@ asmlinkage long sys_chmod(const char __u
- 	return sys_fchmodat(AT_FDCWD, filename, mode);
- }
- 
--static int chown_common(struct dentry * dentry, uid_t user, gid_t group)
-+static int chown_common(struct dentry * dentry, uid_t user, gid_t group, struct vfsmount *mnt)
- {
- 	struct inode * inode;
- 	int error;
 @@ -587,6 +636,12 @@ static int chown_common(struct dentry * 
  	error = -EPERM;
  	if (IS_IMMUTABLE(inode) || IS_APPEND(inode))
@@ -14537,42 +14490,6 @@ diff -urNp linux-2.6.22.1/fs/open.c linux-2.6.22.1/fs/open.c
  	newattrs.ia_valid =  ATTR_CTIME;
  	if (user != (uid_t) -1) {
  		newattrs.ia_valid |= ATTR_UID;
-@@ -613,7 +668,7 @@ asmlinkage long sys_chown(const char __u
- 	error = user_path_walk(filename, &nd);
- 	if (error)
- 		goto out;
--	error = chown_common(nd.dentry, user, group);
-+	error = chown_common(nd.dentry, user, group, nd.mnt);
- 	path_release(&nd);
- out:
- 	return error;
-@@ -633,7 +688,7 @@ asmlinkage long sys_fchownat(int dfd, co
- 	error = __user_walk_fd(dfd, filename, follow, &nd);
- 	if (error)
- 		goto out;
--	error = chown_common(nd.dentry, user, group);
-+	error = chown_common(nd.dentry, user, group, nd.mnt);
- 	path_release(&nd);
- out:
- 	return error;
-@@ -647,7 +702,7 @@ asmlinkage long sys_lchown(const char __
- 	error = user_path_walk_link(filename, &nd);
- 	if (error)
- 		goto out;
--	error = chown_common(nd.dentry, user, group);
-+	error = chown_common(nd.dentry, user, group, nd.mnt);
- 	path_release(&nd);
- out:
- 	return error;
-@@ -666,7 +721,7 @@ asmlinkage long sys_fchown(unsigned int 
- 
- 	dentry = file->f_path.dentry;
- 	audit_inode(NULL, dentry->d_inode);
--	error = chown_common(dentry, user, group);
-+	error = chown_common(dentry, user, group, file->f_vfsmnt);
- 	fput(file);
- out:
- 	return error;
 @@ -873,6 +928,7 @@ repeat:
  	 * N.B. For clone tasks sharing a files structure, this test
  	 * will limit the total number of files that can be opened.
@@ -14706,13 +14623,13 @@ diff -urNp linux-2.6.22.1/fs/proc/base.c linux-2.6.22.1/fs/proc/base.c
 --- linux-2.6.22.1/fs/proc/base.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/fs/proc/base.c	2007-08-02 11:38:47.000000000 -0400
 @@ -73,6 +73,7 @@
- #include <linux/poll.h>
- #include <linux/nsproxy.h>
  #include <linux/oom.h>
+ #include <linux/vs_context.h>
+ #include <linux/vs_network.h>
 +#include <linux/grsecurity.h>
+ 
  #include "internal.h"
  
- /* NOTE:
 @@ -123,7 +124,7 @@ struct pid_entry {
  		NULL, &proc_info_file_operations,	\
  		{ .proc_read = &proc_##OTYPE } )
@@ -14770,7 +14687,7 @@ diff -urNp linux-2.6.22.1/fs/proc/base.c linux-2.6.22.1/fs/proc/base.c
  		goto out;
  
  	copied = -ENOMEM;
-@@ -1047,7 +1050,11 @@ static struct inode *proc_pid_make_inode
+@@ -1050,7 +1053,11 @@ static struct inode *proc_pid_make_inode
  	inode->i_gid = 0;
  	if (task_dumpable(task)) {
  		inode->i_uid = task->euid;
@@ -14780,8 +14697,8 @@ diff -urNp linux-2.6.22.1/fs/proc/base.c linux-2.6.22.1/fs/proc/base.c
  		inode->i_gid = task->egid;
 +#endif
  	}
- 	security_task_to_inode(task, inode);
- 
+ 	/* procfs is xid tagged */
+ 	inode->i_tag = (tag_t)vx_task_xid(task);
 @@ -1063,17 +1070,45 @@ static int pid_getattr(struct vfsmount *
  {
  	struct inode *inode = dentry->d_inode;
@@ -14884,8 +14801,8 @@ diff -urNp linux-2.6.22.1/fs/proc/base.c linux-2.6.22.1/fs/proc/base.c
  			if (!files)
  				goto out;
 @@ -1595,6 +1651,9 @@ static struct dentry *proc_pident_lookup
- 	if (!task)
- 		goto out_no_task;
+ 		!memcmp(dentry->d_name.name, "ninfo", 5)))
+ 		goto out;
  
 +	if (gr_pid_is_chrooted(task) || gr_check_hidden_task(task))
 +		goto out;
@@ -14953,7 +14870,7 @@ diff -urNp linux-2.6.22.1/fs/proc/base.c linux-2.6.22.1/fs/proc/base.c
 @@ -2208,6 +2287,9 @@ int proc_pid_readdir(struct file * filp,
  {
  	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
- 	struct task_struct *reaper = get_proc_task(filp->f_path.dentry->d_inode);
+ 	struct task_struct *reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	struct task_struct *tmp = current;
 +#endif
@@ -14977,8 +14894,8 @@ diff -urNp linux-2.6.22.1/fs/proc/base.c linux-2.6.22.1/fs/proc/base.c
 +			continue;
 +
  		filp->f_pos = tgid + TGID_OFFSET;
- 		if (proc_pid_fill_cache(filp, dirent, filldir, task, tgid) < 0) {
- 			put_task_struct(task);
+ 		if (!vx_proc_task_visible(task))
+ 			continue;
 diff -urNp linux-2.6.22.1/fs/proc/inode.c linux-2.6.22.1/fs/proc/inode.c
 --- linux-2.6.22.1/fs/proc/inode.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/fs/proc/inode.c	2007-08-02 11:09:15.000000000 -0400
@@ -14992,8 +14909,8 @@ diff -urNp linux-2.6.22.1/fs/proc/inode.c linux-2.6.22.1/fs/proc/inode.c
  			inode->i_gid = de->gid;
 +#endif
  		}
- 		if (de->size)
- 			inode->i_size = de->size;
+ 		if (de->vx_flags)
+ 			PROC_I(inode)->vx_flags = de->vx_flags;
 diff -urNp linux-2.6.22.1/fs/proc/internal.h linux-2.6.22.1/fs/proc/internal.h
 --- linux-2.6.22.1/fs/proc/internal.h	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/fs/proc/internal.h	2007-08-02 11:09:15.000000000 -0400
@@ -15152,7 +15069,7 @@ diff -urNp linux-2.6.22.1/fs/proc/proc_sysctl.c linux-2.6.22.1/fs/proc/proc_sysc
 diff -urNp linux-2.6.22.1/fs/proc/root.c linux-2.6.22.1/fs/proc/root.c
 --- linux-2.6.22.1/fs/proc/root.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/fs/proc/root.c	2007-08-02 11:09:15.000000000 -0400
-@@ -61,7 +61,13 @@ void __init proc_root_init(void)
+@@ -64,7 +64,13 @@ void __init proc_root_init(void)
  		return;
  	}
  	proc_misc_init();
@@ -15179,9 +15096,9 @@ diff -urNp linux-2.6.22.1/fs/proc/root.c linux-2.6.22.1/fs/proc/root.c
 +#else
  	proc_bus = proc_mkdir("bus", NULL);
 +#endif
+ 	proc_vx_init();
  	proc_sys_init();
  }
- 
 diff -urNp linux-2.6.22.1/fs/proc/task_mmu.c linux-2.6.22.1/fs/proc/task_mmu.c
 --- linux-2.6.22.1/fs/proc/task_mmu.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/fs/proc/task_mmu.c	2007-08-02 11:38:47.000000000 -0400
@@ -15519,9 +15436,9 @@ diff -urNp linux-2.6.22.1/fs/utimes.c linux-2.6.22.1/fs/utimes.c
 --- linux-2.6.22.1/fs/utimes.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/fs/utimes.c	2007-08-02 11:09:15.000000000 -0400
 @@ -6,6 +6,7 @@
- #include <linux/sched.h>
- #include <linux/stat.h>
  #include <linux/utime.h>
+ #include <linux/mount.h>
+ #include <linux/vs_cowbl.h>
 +#include <linux/grsecurity.h>
  #include <asm/uaccess.h>
  #include <asm/unistd.h>
@@ -15887,7 +15804,7 @@ diff -urNp linux-2.6.22.1/grsecurity/gracl.c linux-2.6.22.1/grsecurity/gracl.c
 +{
 +	char *retval;
 +
-+	retval = __our_d_path(dentry, vfsmnt, root, rootmnt, buf, buflen);
++	retval = __our_d_path(dentry->d_parent, vfsmnt, root, rootmnt, buf, buflen);
 +	if (unlikely(IS_ERR(retval)))
 +		retval = strcpy(buf, "<path too long>");
 +	else if (unlikely(retval[1] == '/' && retval[2] == '\0'))
@@ -26788,7 +26705,7 @@ diff -urNp linux-2.6.22.1/include/linux/cache.h linux-2.6.22.1/include/linux/cac
 diff -urNp linux-2.6.22.1/include/linux/capability.h linux-2.6.22.1/include/linux/capability.h
 --- linux-2.6.22.1/include/linux/capability.h	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/include/linux/capability.h	2007-08-02 11:09:16.000000000 -0400
-@@ -360,6 +360,7 @@ static inline kernel_cap_t cap_invert(ke
+@@ -366,6 +366,7 @@ static inline kernel_cap_t cap_invert(ke
  #define cap_is_fs_cap(c)     (CAP_TO_MASK(c) & CAP_FS_MASK)
  
  int capable(int cap);
@@ -28481,23 +28398,27 @@ diff -urNp linux-2.6.22.1/init/do_mounts.c linux-2.6.22.1/init/do_mounts.c
  	sys_close(fd);
  	if (len <= 0 || len == 32 || buf[len - 1] != '\n')
  		goto fail;
-@@ -144,8 +146,8 @@ dev_t name_to_dev_t(char *name)
- 	int part;
+@@ -144,12 +146,12 @@ dev_t name_to_dev_t(char *name)
+ 	int part, mount_result;
  
  #ifdef CONFIG_SYSFS
 -	int mkdir_err = sys_mkdir("/sys", 0700);
--	if (sys_mount("sysfs", "/sys", "sysfs", 0, NULL) < 0)
 +	int mkdir_err = sys_mkdir((char __user *)"/sys", 0700);
-+	if (sys_mount((char __user *)"sysfs", (char __user *)"/sys", (char __user *)"sysfs", 0, NULL) < 0)
+ 	/* 
+ 	 * When changing resume2 parameter for Software Suspend, sysfs may
+ 	 * already be mounted. 
+ 	 */
+-	mount_result = sys_mount("sysfs", "/sys", "sysfs", 0, NULL);
++	mount_result = sys_mount((char __user *)"sysfs", (char __user *)"/sys", (char __user *)"sysfs", 0, NULL);
+ 	if (mount_result < 0 && mount_result != -EBUSY)
  		goto out;
  #endif
- 
-@@ -197,10 +199,10 @@ dev_t name_to_dev_t(char *name)
- 	res = try_name(s, part);
+@@ -203,10 +205,10 @@ dev_t name_to_dev_t(char *name)
  done:
  #ifdef CONFIG_SYSFS
--	sys_umount("/sys", 0);
-+	sys_umount((char __user *)"/sys", 0);
+ 	if (mount_result >= 0)
+-		sys_umount("/sys", 0);
++		sys_umount((char __user *)"/sys", 0);
  out:
  	if (!mkdir_err)
 -		sys_rmdir("/sys");
@@ -28505,7 +28426,7 @@ diff -urNp linux-2.6.22.1/init/do_mounts.c linux-2.6.22.1/init/do_mounts.c
  #endif
  	return res;
  fail:
-@@ -270,11 +272,11 @@ static void __init get_fs_names(char *pa
+@@ -276,11 +278,11 @@ static void __init get_fs_names(char *pa
  
  static int __init do_mount_root(char *name, char *fs, int flags, void *data)
  {
@@ -28519,7 +28440,7 @@ diff -urNp linux-2.6.22.1/init/do_mounts.c linux-2.6.22.1/init/do_mounts.c
  	ROOT_DEV = current->fs->pwdmnt->mnt_sb->s_dev;
  	printk("VFS: Mounted root (%s filesystem)%s.\n",
  	       current->fs->pwdmnt->mnt_sb->s_type->name,
-@@ -360,18 +362,18 @@ void __init change_floppy(char *fmt, ...
+@@ -366,18 +368,18 @@ void __init change_floppy(char *fmt, ...
  	va_start(args, fmt);
  	vsprintf(buf, fmt, args);
  	va_end(args);
@@ -28541,7 +28462,7 @@ diff -urNp linux-2.6.22.1/init/do_mounts.c linux-2.6.22.1/init/do_mounts.c
  		termios.c_lflag |= ICANON;
  		sys_ioctl(fd, TCSETSF, (long)&termios);
  		sys_close(fd);
-@@ -448,8 +450,8 @@ void __init prepare_namespace(void)
+@@ -469,8 +471,8 @@ void __init prepare_namespace(void)
  
  	mount_root();
  out:
@@ -28761,9 +28682,9 @@ diff -urNp linux-2.6.22.1/ipc/msg.c linux-2.6.22.1/ipc/msg.c
 --- linux-2.6.22.1/ipc/msg.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/ipc/msg.c	2007-08-02 11:09:16.000000000 -0400
 @@ -36,6 +36,7 @@
- #include <linux/seq_file.h>
  #include <linux/mutex.h>
  #include <linux/nsproxy.h>
+ #include <linux/vs_base.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/current.h>
@@ -28789,9 +28710,9 @@ diff -urNp linux-2.6.22.1/ipc/sem.c linux-2.6.22.1/ipc/sem.c
 --- linux-2.6.22.1/ipc/sem.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/ipc/sem.c	2007-08-02 11:09:16.000000000 -0400
 @@ -82,6 +82,7 @@
- #include <linux/seq_file.h>
- #include <linux/mutex.h>
  #include <linux/nsproxy.h>
+ #include <linux/vs_base.h>
+ #include <linux/vs_limit.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
@@ -28818,9 +28739,9 @@ diff -urNp linux-2.6.22.1/ipc/shm.c linux-2.6.22.1/ipc/shm.c
 --- linux-2.6.22.1/ipc/shm.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/ipc/shm.c	2007-08-02 11:09:16.000000000 -0400
 @@ -38,6 +38,7 @@
- #include <linux/mutex.h>
- #include <linux/nsproxy.h>
  #include <linux/mount.h>
+ #include <linux/vs_context.h>
+ #include <linux/vs_limit.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
@@ -28952,14 +28873,14 @@ diff -urNp linux-2.6.22.1/kernel/capability.c linux-2.6.22.1/kernel/capability.c
 --- linux-2.6.22.1/kernel/capability.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/kernel/capability.c	2007-08-02 11:09:16.000000000 -0400
 @@ -12,6 +12,7 @@
- #include <linux/module.h>
  #include <linux/security.h>
  #include <linux/syscalls.h>
+ #include <linux/vs_context.h>
 +#include <linux/grsecurity.h>
  #include <asm/uaccess.h>
  
  unsigned securebits = SECUREBITS_DEFAULT; /* systemwide security settings */
-@@ -236,14 +237,25 @@ out:
+@@ -239,14 +240,25 @@ out:
       return ret;
  }
  
@@ -28985,8 +28906,8 @@ diff -urNp linux-2.6.22.1/kernel/capability.c linux-2.6.22.1/kernel/capability.c
 +}
  EXPORT_SYMBOL(__capable);
  
- int capable(int cap)
-@@ -251,3 +263,4 @@ int capable(int cap)
+ #include <linux/vserver/base.h>
+@@ -258,3 +270,4 @@ int capable(int cap)
  	return __capable(current, cap);
  }
  EXPORT_SYMBOL(capable);
@@ -29015,9 +28936,9 @@ diff -urNp linux-2.6.22.1/kernel/exit.c linux-2.6.22.1/kernel/exit.c
 --- linux-2.6.22.1/kernel/exit.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/kernel/exit.c	2007-08-02 11:38:48.000000000 -0400
 @@ -44,6 +44,11 @@
- #include <linux/resource.h>
- #include <linux/blkdev.h>
- #include <linux/task_io_accounting_ops.h>
+ #include <linux/vs_network.h>
+ #include <linux/vs_pid.h>
+ #include <linux/vserver/global.h>
 +#include <linux/grsecurity.h>
 +
 +#ifdef CONFIG_GRKERNSEC
@@ -29105,9 +29026,9 @@ diff -urNp linux-2.6.22.1/kernel/fork.c linux-2.6.22.1/kernel/fork.c
 --- linux-2.6.22.1/kernel/fork.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/kernel/fork.c	2007-08-02 11:38:48.000000000 -0400
 @@ -49,6 +49,7 @@
- #include <linux/delayacct.h>
- #include <linux/taskstats_kern.h>
- #include <linux/random.h>
+ #include <linux/vs_limit.h>
+ #include <linux/vs_memory.h>
+ #include <linux/vserver/global.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/pgtable.h>
@@ -29141,8 +29062,8 @@ diff -urNp linux-2.6.22.1/kernel/fork.c linux-2.6.22.1/kernel/fork.c
 +	mm->free_area_cache = oldmm->free_area_cache;
 +	mm->cached_hole_size = oldmm->cached_hole_size;
  	mm->map_count = 0;
- 	cpus_clear(mm->cpu_vm_mask);
- 	mm->mm_rb = RB_ROOT;
+ 	__set_mm_counter(mm, file_rss, 0);
+ 	__set_mm_counter(mm, anon_rss, 0);
 @@ -232,6 +237,7 @@ static inline int dup_mmap(struct mm_str
  			continue;
  		}
@@ -29207,7 +29128,7 @@ diff -urNp linux-2.6.22.1/kernel/fork.c linux-2.6.22.1/kernel/fork.c
  		tsk->clear_child_tid = NULL;
  
  		/*
-@@ -469,7 +499,7 @@ void mm_release(struct task_struct *tsk,
+@@ -480,7 +510,7 @@ void mm_release(struct task_struct *tsk,
  		 * not set up a proper pointer then tough luck.
  		 */
  		put_user(0, tidptr);
@@ -29217,15 +29138,15 @@ diff -urNp linux-2.6.22.1/kernel/fork.c linux-2.6.22.1/kernel/fork.c
  }
  
 @@ -996,6 +1026,9 @@ static struct task_struct *copy_process(
- 	DEBUG_LOCKS_WARN_ON(!p->softirqs_enabled);
- #endif
+ 	}
+ 
  	retval = -EAGAIN;
 +
 +	gr_learn_resource(p, RLIMIT_NPROC, atomic_read(&p->user->processes), 0);
 +
- 	if (atomic_read(&p->user->processes) >=
- 			p->signal->rlim[RLIMIT_NPROC].rlim_cur) {
- 		if (!capable(CAP_SYS_ADMIN) && !capable(CAP_SYS_RESOURCE) &&
+ 	if (!vx_nproc_avail(1))
+ 		goto bad_fork_cleanup_vm;
+ 
 @@ -1131,6 +1164,8 @@ static struct task_struct *copy_process(
  	if (retval)
  		goto bad_fork_cleanup_namespaces;
@@ -29910,15 +29831,15 @@ diff -urNp linux-2.6.22.1/kernel/params.c linux-2.6.22.1/kernel/params.c
 diff -urNp linux-2.6.22.1/kernel/pid.c linux-2.6.22.1/kernel/pid.c
 --- linux-2.6.22.1/kernel/pid.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/kernel/pid.c	2007-08-02 11:38:48.000000000 -0400
-@@ -28,6 +28,7 @@
- #include <linux/hash.h>
+@@ -29,6 +29,7 @@
  #include <linux/pid_namespace.h>
  #include <linux/init_task.h>
+ #include <linux/vs_pid.h>
 +#include <linux/grsecurity.h>
  
  #define pid_hashfn(nr) hash_long((unsigned long)nr, pidhash_shift)
  static struct hlist_head *pid_hash;
-@@ -37,7 +38,7 @@ struct pid init_struct_pid = INIT_STRUCT
+@@ -38,7 +39,7 @@ struct pid init_struct_pid = INIT_STRUCT
  
  int pid_max = PID_MAX_DEFAULT;
  
@@ -29927,22 +29848,17 @@ diff -urNp linux-2.6.22.1/kernel/pid.c linux-2.6.22.1/kernel/pid.c
  
  int pid_max_min = RESERVED_PIDS + 1;
  int pid_max_max = PID_MAX_LIMIT;
-@@ -309,7 +310,14 @@ struct task_struct * fastcall pid_task(s
-  */
- struct task_struct *find_task_by_pid_type(int type, int nr)
- {
--	return pid_task(find_pid(nr), type);
-+	struct task_struct *task;
-+	
-+	task = pid_task(find_pid(nr), type);
+@@ -319,6 +320,10 @@ struct task_struct *find_task_by_pid_typ
+ 		nr = vx_rmap_pid(nr);
+ 
+ 	task = pid_task(find_pid(nr), type);
 +
 +	if (gr_pid_is_chrooted(task))
 +		return NULL;
 +
-+	return task;
- }
- 
- EXPORT_SYMBOL(find_task_by_pid_type);
+ 	if (task && (type != PIDTYPE_REALPID) &&
+ 		/* maybe VS_WATCH_P in the future? */
+ 		!vx_check(task->xid, VS_WATCH|VS_IDENT))
 diff -urNp linux-2.6.22.1/kernel/posix-cpu-timers.c linux-2.6.22.1/kernel/posix-cpu-timers.c
 --- linux-2.6.22.1/kernel/posix-cpu-timers.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/kernel/posix-cpu-timers.c	2007-08-02 11:09:16.000000000 -0400
@@ -29978,16 +29894,16 @@ diff -urNp linux-2.6.22.1/kernel/printk.c linux-2.6.22.1/kernel/printk.c
 --- linux-2.6.22.1/kernel/printk.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/kernel/printk.c	2007-08-02 11:09:16.000000000 -0400
 @@ -31,6 +31,7 @@
- #include <linux/bootmem.h>
- #include <linux/syscalls.h>
  #include <linux/jiffies.h>
+ #include <linux/suspend.h>
+ #include <linux/vs_cvirt.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
  
-@@ -184,6 +185,11 @@ int do_syslog(int type, char __user *buf
+@@ -186,6 +187,11 @@ int do_syslog(int type, char __user *buf
  	char c;
- 	int error = 0;
+ 	int error;
  
 +#ifdef CONFIG_GRKERNSEC_DMESG
 +	if (grsec_enable_dmesg && !capable(CAP_SYS_ADMIN))
@@ -30001,14 +29917,14 @@ diff -urNp linux-2.6.22.1/kernel/ptrace.c linux-2.6.22.1/kernel/ptrace.c
 --- linux-2.6.22.1/kernel/ptrace.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/kernel/ptrace.c	2007-08-02 11:11:54.000000000 -0400
 @@ -19,6 +19,7 @@
- #include <linux/security.h>
  #include <linux/signal.h>
  #include <linux/audit.h>
+ #include <linux/vs_context.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/pgtable.h>
  #include <asm/uaccess.h>
-@@ -138,12 +139,12 @@ static int may_attach(struct task_struct
+@@ -139,12 +140,12 @@ static int may_attach(struct task_struct
  	     (current->uid != task->uid) ||
  	     (current->gid != task->egid) ||
  	     (current->gid != task->sgid) ||
@@ -30021,9 +29937,9 @@ diff -urNp linux-2.6.22.1/kernel/ptrace.c linux-2.6.22.1/kernel/ptrace.c
 -	if (!dumpable && !capable(CAP_SYS_PTRACE))
 +	if (!dumpable && !capable_nolog(CAP_SYS_PTRACE))
  		return -EPERM;
- 
- 	return security_ptrace(current, task);
-@@ -480,6 +481,11 @@ asmlinkage long sys_ptrace(long request,
+ 	if (!vx_check(task->xid, VS_ADMIN_P|VS_IDENT))
+ 		return -EPERM;
+@@ -490,6 +491,11 @@ asmlinkage long sys_ptrace(long request,
  	if (ret < 0)
  		goto out_put_task_struct;
  
@@ -30111,7 +30027,7 @@ diff -urNp linux-2.6.22.1/kernel/sched.c linux-2.6.22.1/kernel/sched.c
 -	if (increment < 0 && !can_nice(current, nice))
 +	if (increment < 0 && (!can_nice(current, nice) ||
 +			      gr_handle_chroot_nice()))
- 		return -EPERM;
+ 		return vx_flags(VXF_IGNEG_NICE, 0) ? 0 : -EPERM;
  
  	retval = security_task_setnice(current, nice);
 diff -urNp linux-2.6.22.1/kernel/signal.c linux-2.6.22.1/kernel/signal.c
@@ -30123,23 +30039,23 @@ diff -urNp linux-2.6.22.1/kernel/signal.c linux-2.6.22.1/kernel/signal.c
  #include <linux/pid_namespace.h>
 +#include <linux/grsecurity.h>
  #include <linux/nsproxy.h>
- 
- #include <asm/param.h>
-@@ -529,11 +530,11 @@ static int check_kill_permission(int sig
+ #include <linux/vs_context.h>
+ #include <linux/vs_pid.h>
+@@ -538,11 +539,11 @@ static int check_kill_permission(int sig
+ 		return error;
  
  	error = -EPERM;
- 	if ((info == SEND_SIG_NOINFO || (!is_si_special(info) && SI_FROMUSER(info)))
--	    && ((sig != SIGCONT) ||
-+	    && ((((sig != SIGCONT) ||
+-	if (((sig != SIGCONT) ||
++	if ((((sig != SIGCONT) ||
  		(process_session(current) != process_session(t)))
  	    && (current->euid ^ t->suid) && (current->euid ^ t->uid)
  	    && (current->uid ^ t->suid) && (current->uid ^ t->uid)
 -	    && !capable(CAP_KILL))
-+	    && !capable(CAP_KILL)) || gr_handle_signal(t, sig)))
++	    && !capable(CAP_KILL)) || gr_handle_signal(t, sig))
  		return error;
  
- 	return security_task_kill(t, info, sig, 0);
-@@ -719,7 +720,7 @@ out_set:
+ 	error = -ESRCH;
+@@ -736,7 +737,7 @@ out_set:
  	(((sig) < SIGRTMIN) && sigismember(&(sigptr)->signal, (sig)))
  
  
@@ -30442,7 +30358,7 @@ diff -urNp linux-2.6.22.1/kernel/time.c linux-2.6.22.1/kernel/time.c
 @@ -92,6 +93,9 @@ asmlinkage long sys_stime(time_t __user 
  		return err;
  
- 	do_settimeofday(&tv);
+ 	vx_settimeofday(&tv);
 +
 +	gr_log_timechange();
 +
@@ -31254,10 +31170,10 @@ diff -urNp linux-2.6.22.1/mm/mempolicy.c linux-2.6.22.1/mm/mempolicy.c
 diff -urNp linux-2.6.22.1/mm/mlock.c linux-2.6.22.1/mm/mlock.c
 --- linux-2.6.22.1/mm/mlock.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/mm/mlock.c	2007-08-02 11:38:48.000000000 -0400
-@@ -12,6 +12,7 @@
- #include <linux/syscalls.h>
+@@ -13,6 +13,7 @@
  #include <linux/sched.h>
  #include <linux/module.h>
+ #include <linux/vs_memory.h>
 +#include <linux/grsecurity.h>
  
  int can_do_mlock(void)
@@ -31287,7 +31203,7 @@ diff -urNp linux-2.6.22.1/mm/mlock.c linux-2.6.22.1/mm/mlock.c
  	vma->vm_flags = newflags;
  
  	/*
-@@ -76,6 +88,11 @@ success:
+@@ -77,6 +89,11 @@ success:
  			ret = make_pages_present(start, end);
  	}
  
@@ -31296,7 +31212,7 @@ diff -urNp linux-2.6.22.1/mm/mlock.c linux-2.6.22.1/mm/mlock.c
 +		pages *= 2;
 +#endif
 +
- 	mm->locked_vm -= pages;
+ 	vx_vmlocked_sub(mm, pages);
  out:
  	if (ret == -ENOMEM)
 @@ -95,6 +112,17 @@ static int do_mlock(unsigned long start,
@@ -31317,14 +31233,14 @@ diff -urNp linux-2.6.22.1/mm/mlock.c linux-2.6.22.1/mm/mlock.c
  	vma = find_vma_prev(current->mm, start, &prev);
  	if (!vma || vma->vm_start > start)
  		return -ENOMEM;
-@@ -152,6 +180,7 @@ asmlinkage long sys_mlock(unsigned long 
+@@ -155,6 +183,7 @@ asmlinkage long sys_mlock(unsigned long 
  	lock_limit >>= PAGE_SHIFT;
  
  	/* check against resource limits */
 +	gr_learn_resource(current, RLIMIT_MEMLOCK, (current->mm->locked_vm << PAGE_SHIFT) + len, 1);
  	if ((locked <= lock_limit) || capable(CAP_IPC_LOCK))
  		error = do_mlock(start, len, 1);
- 	up_write(&current->mm->mmap_sem);
+ out:
 @@ -173,10 +202,10 @@ asmlinkage long sys_munlock(unsigned lon
  static int do_mlockall(int flags)
  {
@@ -31351,9 +31267,9 @@ diff -urNp linux-2.6.22.1/mm/mlock.c linux-2.6.22.1/mm/mlock.c
  
  	ret = -ENOMEM;
 +	gr_learn_resource(current, RLIMIT_MEMLOCK, current->mm->total_vm, 1);
+ 	if (!vx_vmlocked_avail(current->mm, current->mm->total_vm))
+ 		goto out;
  	if (!(flags & MCL_CURRENT) || (current->mm->total_vm <= lock_limit) ||
- 	    capable(CAP_IPC_LOCK))
- 		ret = do_mlockall(flags);
 diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
 --- linux-2.6.22.1/mm/mmap.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/mm/mmap.c	2007-08-02 11:38:48.000000000 -0400
@@ -31733,11 +31649,11 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
 +		vma = NULL;
  	}
  out:	
- 	mm->total_vm += len >> PAGE_SHIFT;
+ 	vx_vmpages_add(mm, len >> PAGE_SHIFT);
  	vm_stat_account(mm, vm_flags, file, len >> PAGE_SHIFT);
 +	track_exec_limit(mm, addr, addr + len, vm_flags);
  	if (vm_flags & VM_LOCKED) {
- 		mm->locked_vm += len >> PAGE_SHIFT;
+ 		vx_vmlocked_add(mm, len >> PAGE_SHIFT);
  		make_pages_present(addr, addr + len);
 @@ -1168,6 +1296,12 @@ unmap_and_free_vma:
  	unmap_region(mm, vma, prev, vma->vm_start, vma->vm_end);
@@ -32227,8 +32143,8 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
 +		gr_learn_resource(current, RLIMIT_MEMLOCK, locked << PAGE_SHIFT, 1);
  		if (locked > lock_limit && !capable(CAP_IPC_LOCK))
  			return -EAGAIN;
- 	}
-@@ -1914,22 +2232,22 @@ unsigned long do_brk(unsigned long addr,
+ 		if (!vx_vmlocked_avail(mm, len >> PAGE_SHIFT))
+@@ -1916,23 +2234,23 @@ unsigned long do_brk(unsigned long addr,
  	/*
  	 * Clear old maps.  this also does some error checking for us
  	 */
@@ -32250,8 +32166,10 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
  	if (mm->map_count > sysctl_max_map_count)
  		return -ENOMEM;
  
--	if (security_vm_enough_memory(len >> PAGE_SHIFT))
-+	if (security_vm_enough_memory(charged))
+-	if (security_vm_enough_memory(len >> PAGE_SHIFT) ||
+-		!vx_vmpages_avail(mm, len >> PAGE_SHIFT))
++	if (security_vm_enough_memory(charged) ||
++		!vx_vmpages_avail(mm, charged))
  		return -ENOMEM;
  
  	/* Can we just expand an old private anonymous mapping? */
@@ -32291,11 +32209,11 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
 +#endif
 +
  out:
--	mm->total_vm += len >> PAGE_SHIFT;
-+	mm->total_vm += charged;
+-	vx_vmpages_add(mm, len >> PAGE_SHIFT);
++	vx_vmpages_add(mm, charged);
  	if (flags & VM_LOCKED) {
--		mm->locked_vm += len >> PAGE_SHIFT;
-+		mm->locked_vm += charged;
+-		vx_vmlocked_add(mm, len >> PAGE_SHIFT);
++		vx_vmlocked_add(mm, charged);
  		make_pages_present(addr, addr + len);
  	}
 +	track_exec_limit(mm, addr, addr + len, flags);
@@ -32325,9 +32243,9 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
  	/*
  	 * The vm_pgoff of a purely anonymous vma should be irrelevant
  	 * until its first write fault, when page's anon_vma and index
-@@ -2027,7 +2368,22 @@ int insert_vm_struct(struct mm_struct * 
- 	if ((vma->vm_flags & VM_ACCOUNT) &&
- 	     security_vm_enough_memory(vma_pages(vma)))
+@@ -2036,7 +2377,22 @@ int insert_vm_struct(struct mm_struct * 
+ 		(security_vm_enough_memory(vma_pages(vma)) ||
+ 		!vx_vmpages_avail(mm, vma_pages(vma))))
  		return -ENOMEM;
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
@@ -32348,7 +32266,7 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
  	return 0;
  }
  
-@@ -2085,6 +2441,30 @@ struct vm_area_struct *copy_vma(struct v
+@@ -2094,6 +2450,30 @@ struct vm_area_struct *copy_vma(struct v
  	return new_vma;
  }
  
@@ -32379,7 +32297,7 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
  /*
   * Return true if the calling process may expand its vm space by the passed
   * number of pages
-@@ -2095,7 +2475,7 @@ int may_expand_vm(struct mm_struct *mm, 
+@@ -2104,7 +2484,7 @@ int may_expand_vm(struct mm_struct *mm, 
  	unsigned long lim;
  
  	lim = current->signal->rlim[RLIMIT_AS].rlim_cur >> PAGE_SHIFT;
@@ -32387,8 +32305,8 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
 +	gr_learn_resource(current, RLIMIT_AS, (cur + npages) << PAGE_SHIFT, 1);
  	if (cur + npages > lim)
  		return 0;
- 	return 1;
-@@ -2107,7 +2487,7 @@ static struct page *special_mapping_nopa
+ 	if (!vx_vmpages_avail(mm, npages))
+@@ -2118,7 +2498,7 @@ @@ static struct page *special_mapping_nopa
  {
  	struct page **pages;
  
@@ -32397,7 +32315,7 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
  
  	address -= vma->vm_start;
  	for (pages = vma->vm_private_data; address > 0 && *pages; ++pages)
-@@ -2157,8 +2537,17 @@ int install_special_mapping(struct mm_st
+@@ -2168,8 +2548,17 @@ int install_special_mapping(struct mm_st
  	vma->vm_start = addr;
  	vma->vm_end = addr + len;
  
@@ -32416,10 +32334,11 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
  
  	vma->vm_ops = &special_mapping_vmops;
  	vma->vm_private_data = pages;
-@@ -2170,5 +2559,10 @@ int install_special_mapping(struct mm_st
+@@ -2170,5 +2559,11 @@ int install_special_mapping(struct mm_st
+ 	}
  
- 	mm->total_vm += len >> PAGE_SHIFT;
- 
+ 	vx_vmpages_add(mm, len >> PAGE_SHIFT);
++
 +#ifdef CONFIG_PAX_SEGMEXEC
 +	if (pax_find_mirror_vma(vma))
 +		mm->total_vm += len >> PAGE_SHIFT;
@@ -33302,9 +33221,9 @@ diff -urNp linux-2.6.22.1/net/ipv4/udp.c linux-2.6.22.1/net/ipv4/udp.c
 --- linux-2.6.22.1/net/ipv4/udp.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/net/ipv4/udp.c	2007-08-02 11:28:52.000000000 -0400
 @@ -97,12 +97,19 @@
- #include <linux/skbuff.h>
  #include <linux/proc_fs.h>
  #include <linux/seq_file.h>
+ // #include <linux/vs_inet.h>
 +#include <linux/grsecurity.h>
  #include <net/icmp.h>
  #include <net/route.h>
@@ -33628,9 +33547,9 @@ diff -urNp linux-2.6.22.1/net/unix/af_unix.c linux-2.6.22.1/net/unix/af_unix.c
 --- linux-2.6.22.1/net/unix/af_unix.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/net/unix/af_unix.c	2007-08-02 11:09:17.000000000 -0400
 @@ -115,6 +115,7 @@
- #include <linux/mount.h>
- #include <net/checksum.h>
  #include <linux/security.h>
+ #include <linux/vs_context.h>
+ #include <linux/vs_limit.h>
 +#include <linux/grsecurity.h>
  
  int sysctl_unix_max_dgram_qlen __read_mostly = 10;
@@ -33671,7 +33590,7 @@ diff -urNp linux-2.6.22.1/net/unix/af_unix.c linux-2.6.22.1/net/unix/af_unix.c
 +			goto out_mknod_dput;
 +		}
 +
- 		err = vfs_mknod(nd.dentry->d_inode, dentry, mode, 0);
+ 		err = vfs_mknod(nd.dentry->d_inode, dentry, mode, 0, NULL);
  		if (err)
  			goto out_mknod_dput;
 +
@@ -33724,15 +33643,15 @@ diff -urNp linux-2.6.22.1/security/commoncap.c linux-2.6.22.1/security/commoncap
 --- linux-2.6.22.1/security/commoncap.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/security/commoncap.c	2007-08-02 11:09:17.000000000 -0400
 @@ -22,10 +22,11 @@
- #include <linux/ptrace.h>
  #include <linux/xattr.h>
  #include <linux/hugetlb.h>
+ #include <linux/vs_context.h>
 +#include <linux/grsecurity.h>
  
  int cap_netlink_send(struct sock *sk, struct sk_buff *skb)
  {
--	NETLINK_CB(skb).eff_cap = current->cap_effective;
-+	NETLINK_CB(skb).eff_cap = gr_cap_rtnetlink();
+-	cap_t(NETLINK_CB(skb).eff_cap) = vx_mbcap(cap_effective);
++	cap_t(NETLINK_CB(skb).eff_cap) = gr_cap_rtnetlink();
  	return 0;
  }
  
@@ -33740,8 +33659,8 @@ diff -urNp linux-2.6.22.1/security/commoncap.c linux-2.6.22.1/security/commoncap
  int cap_capable (struct task_struct *tsk, int cap)
  {
  	/* Derived from include/linux/sched.h:capable. */
--	if (cap_raised(tsk->cap_effective, cap))
-+	if (cap_raised (tsk->cap_effective, cap))
+-       if (vx_cap_raised(tsk->vx_info, tsk->cap_effective, cap))
++	if (vx_cap_raised(tsk->vx_info, tsk->cap_effective, cap))
 +		return 0;
 +	return -EPERM;
 +}
@@ -33749,11 +33668,11 @@ diff -urNp linux-2.6.22.1/security/commoncap.c linux-2.6.22.1/security/commoncap
 +int cap_capable_nolog (struct task_struct *tsk, int cap)
 +{
 +	/* tsk = current for all callers */
-+	if (cap_raised(tsk->cap_effective, cap) && gr_is_capable_nolog(cap))
++	if (vx_cap_raised(tsk->vx_info, tsk->cap_effective, cap) && gr_is_capable_nolog(cap))
  		return 0;
  	return -EPERM;
  }
-@@ -162,8 +171,11 @@ void cap_bprm_apply_creds (struct linux_
+@@ -164,8 +173,11 @@ void cap_bprm_apply_creds (struct linux_
  		}
  	}
  
@@ -33767,7 +33686,7 @@ diff -urNp linux-2.6.22.1/security/commoncap.c linux-2.6.22.1/security/commoncap
  
  	/* For init, we want to retain the capabilities set
  	 * in the init_task struct. Thus we skip the usual
-@@ -174,6 +186,8 @@ void cap_bprm_apply_creds (struct linux_
+@@ -176,6 +188,8 @@ void cap_bprm_apply_creds (struct linux_
  		    cap_intersect (new_permitted, bprm->cap_effective);
  	}
  
@@ -33776,7 +33695,7 @@ diff -urNp linux-2.6.22.1/security/commoncap.c linux-2.6.22.1/security/commoncap
  	/* AUD: Audit candidate if current->cap_effective is set */
  
  	current->keep_capabilities = 0;
-@@ -319,12 +333,13 @@ int cap_vm_enough_memory(long pages)
+@@ -322,12 +336,13 @@ int cap_vm_enough_memory(long pages)
  {
  	int cap_sys_admin = 0;
  
@@ -33795,9 +33714,9 @@ diff -urNp linux-2.6.22.1/security/dummy.c linux-2.6.22.1/security/dummy.c
 --- linux-2.6.22.1/security/dummy.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/security/dummy.c	2007-08-02 11:09:17.000000000 -0400
 @@ -28,6 +28,7 @@
- #include <linux/hugetlb.h>
  #include <linux/ptrace.h>
  #include <linux/file.h>
+ #include <linux/vs_context.h>
 +#include <linux/grsecurity.h>
  
  static int dummy_ptrace (struct task_struct *parent, struct task_struct *child)
@@ -34248,7 +34167,7 @@ diff -urNp linux-2.6.22.1/security/Kconfig linux-2.6.22.1/security/Kconfig
 +
  config KEYS
  	bool "Enable access key retention support"
- 	help
+ 	depends on !VSERVER_SECURITY
 diff -urNp linux-2.6.22.1/sound/core/oss/pcm_oss.c linux-2.6.22.1/sound/core/oss/pcm_oss.c
 --- linux-2.6.22.1/sound/core/oss/pcm_oss.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/sound/core/oss/pcm_oss.c	2007-08-02 11:38:48.000000000 -0400
@@ -34356,3 +34275,42 @@ diff -urNp linux-2.6.22.1/sound/pci/intel8x0m.c linux-2.6.22.1/sound/pci/intel8x
  };
  
  static int __devinit snd_intel8x0m_probe(struct pci_dev *pci,
+--- linux-2.6.22./fs/ext3/balloc.c	2007-08-09 00:16:48.425144000 +0200
++++ linux-2.6.22/fs/ext3/balloc.c	2007-08-09 20:38:20.862277750 +0200
+@@ -1373,14 +1373,14 @@ static int ext3_has_free_blocks(struct s
+ 	DLIMIT_ADJUST_BLOCK(sb, dx_current_tag(), &free_blocks, &root_blocks);
+ 
+ 	cond = (free_blocks < root_blocks + 1 &&
+-		!capable(CAP_SYS_RESOURCE) &&
++		!capable_nolog(CAP_SYS_RESOURCE) &&
+ 		sbi->s_resuid != current->fsuid &&
+ 		(sbi->s_resgid == 0 || !in_group_p (sbi->s_resgid)));
+ 
+ 	vxdprintk(VXD_CBIT(dlim, 3),
+ 		"ext3_has_free_blocks(%p): %llu<%llu+1, %c, %u!=%u r=%d",
+ 		sb, free_blocks, root_blocks,
+-		!capable(CAP_SYS_RESOURCE)?'1':'0',
++		!capable_nolog(CAP_SYS_RESOURCE)?'1':'0',
+ 		sbi->s_resuid, current->fsuid, cond?0:1);
+ 
+ 	return (cond ? 0 : 1);
+diff -urNp linux-2.6.22./fs/ext4/balloc.c linux-2.6.22/fs/ext4/balloc.c
+--- linux-2.6.22./fs/ext4/balloc.c	2007-08-09 00:16:48.441145000 +0200
++++ linux-2.6.22/fs/ext4/balloc.c	2007-08-09 20:40:25.878090750 +0200
+@@ -1390,14 +1390,14 @@ static int ext4_has_free_blocks(struct s
+ 	DLIMIT_ADJUST_BLOCK(sb, dx_current_tag(), &free_blocks, &root_blocks);
+ 
+ 	cond = (free_blocks < root_blocks + 1 &&
+-		!capable(CAP_SYS_RESOURCE) &&
++		!capable_nolog(CAP_SYS_RESOURCE) &&
+ 		sbi->s_resuid != current->fsuid &&
+ 		(sbi->s_resgid == 0 || !in_group_p (sbi->s_resgid)));
+ 
+ 	vxdprintk(VXD_CBIT(dlim, 3),
+ 		"ext4_has_free_blocks(%p): %llu<%llu+1, %c, %u!=%u r=%d",
+ 		sb, free_blocks, root_blocks,
+-		!capable(CAP_SYS_RESOURCE)?'1':'0',
++		!capable_nolog(CAP_SYS_RESOURCE)?'1':'0',
+ 		sbi->s_resuid, current->fsuid, cond?0:1);
+ 
+ 	return (cond ? 0 : 1);
