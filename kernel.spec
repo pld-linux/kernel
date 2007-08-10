@@ -3,13 +3,13 @@
 #
 # TODO:
 # - update all config files (i386 and x86_64 up to date)
-# - update grsec_full & pax patches
+# - update pax patch
 # - update or drop patch17 kernel-pom-ng-rsh.patch
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - squashfs lzma patch looks broken
 # - squashfs needs update
 # - sk98lin needs skbuff fix
-# - layer7 needs update
+# - layer7, set, esfq, wrr, PF_RING needs update
 #
 # FUTURE:
 # - update xen patch for 2.6.21
@@ -117,7 +117,7 @@
 %define		_mkvmlinuz_ver		1.3
 
 %define		_basever		2.6.22
-%define		_postver		.1
+%define		_postver		.2
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
@@ -166,7 +166,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	a29ac92cd688d591afd3fec48905e329
+# Source1-md5:	1bf6e4e5100b9af1f5eb361cff5a443e
 %endif
 
 Source3:	kernel-autoconf.h
