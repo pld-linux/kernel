@@ -486,7 +486,7 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/alternative.c linux-2.6.22.1/arch/i38
  #ifdef CONFIG_X86_64
  		/* vsyscall code is not mapped yet. resolve it manually. */
  		if (instr >= (u8 *)VSYSCALL_START && instr < (u8*)VSYSCALL_END) {
-@@ -183,37 +190,68 @@ void apply_alternatives(struct alt_instr
+@@ -183,6 +190,11 @@ void apply_alternatives(struct alt_instr
  		diff = a->instrlen - a->replacementlen;
  		nop_out(instr + a->replacementlen, diff);
  	}
@@ -498,30 +498,25 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/alternative.c linux-2.6.22.1/arch/i38
  }
  
  #ifdef CONFIG_SMP
- 
- static void alternatives_smp_lock(u8 **start, u8 **end, u8 *text, u8 *text_end)
+@@ -191,29 +203,53 @@ static void alternatives_smp_lock(u8 **s
  {
--	u8 **ptr;
-+	u8 *ptr;
-+
+	u8 **ptr;
+
 +#ifdef CONFIG_PAX_KERNEXEC
 +	unsigned long cr0;
- 
--	for (ptr = start; ptr < end; ptr++) {
--		if (*ptr < text)
++
 +	pax_open_kernel(cr0);
 +#endif
 +
-+	for (; start < end; start++) {
-+		ptr = *start + __KERNEL_TEXT_OFFSET;
-+		if (ptr < text)
+ 	for (ptr = start; ptr < end; ptr++) {
+ 		if (*ptr < text)
  			continue;
--		if (*ptr > text_end)
-+		if (ptr > text_end)
+ 		if (*ptr > text_end)
  			continue;
 -		**ptr = 0xf0; /* lock prefix */
-+		*ptr = 0xf0; /* lock prefix */
- 	};
+-	};
++		*(*ptr + __KERNEL_TEXT_OFFSET) = 0xf0; /* lock prefix */
++	}
 +
 +#ifdef CONFIG_PAX_KERNEXEC
 +	pax_close_kernel(cr0);
@@ -531,32 +526,28 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/alternative.c linux-2.6.22.1/arch/i38
  
  static void alternatives_smp_unlock(u8 **start, u8 **end, u8 *text, u8 *text_end)
  {
--	u8 **ptr;
-+	u8 *ptr;
-+
+ 	u8 **ptr;
+ 
 +#ifdef CONFIG_PAX_KERNEXEC
 +	unsigned long cr0;
 +#endif
- 
++
  	if (noreplace_smp)
  		return;
  
--	for (ptr = start; ptr < end; ptr++) {
--		if (*ptr < text)
 +#ifdef CONFIG_PAX_KERNEXEC
 +	pax_open_kernel(cr0);
 +#endif
 +
-+	for (; start < end; start++) {
-+		ptr = *start + __KERNEL_TEXT_OFFSET;
-+		if (ptr < text)
+ 	for (ptr = start; ptr < end; ptr++) {
+ 		if (*ptr < text)
  			continue;
--		if (*ptr > text_end)
-+		if (ptr > text_end)
+		if (*ptr > text_end)
  			continue;
 -		nop_out(*ptr, 1);
-+		nop_out(ptr, 1);
- 	};
+-	};
++		nop_out(*ptr + __KERNEL_TEXT_OFFSET, 1);
++	}
 +
 +#ifdef CONFIG_PAX_KERNEXEC
 +	pax_close_kernel(cr0);
@@ -565,7 +556,7 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/alternative.c linux-2.6.22.1/arch/i38
  }
  
  struct smp_alt_module {
-@@ -340,21 +378,34 @@ void apply_paravirt(struct paravirt_patc
+@@ -340,21 +376,34 @@ void apply_paravirt(struct paravirt_patc
  {
  	struct paravirt_patch_site *p;
  
@@ -5736,7 +5727,7 @@ diff -urNp linux-2.6.22.1/arch/i386/mach-voyager/voyager_smp.c linux-2.6.22.1/ar
 diff -urNp linux-2.6.22.1/arch/i386/mm/boot_ioremap.c linux-2.6.22.1/arch/i386/mm/boot_ioremap.c
 --- linux-2.6.22.1/arch/i386/mm/boot_ioremap.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/arch/i386/mm/boot_ioremap.c	2007-08-02 11:38:45.000000000 -0400
-@@ -7,15 +7,6 @@
+@@ -7,57 +7,37 @@
   * Written by Dave Hansen <haveblue@us.ibm.com>
   */
  
@@ -5752,10 +5743,10 @@ diff -urNp linux-2.6.22.1/arch/i386/mm/boot_ioremap.c linux-2.6.22.1/arch/i386/m
  #undef CONFIG_PARAVIRT
  #include <asm/page.h>
  #include <asm/pgtable.h>
-@@ -23,41 +14,29 @@
+ #include <asm/tlbflush.h>
  #include <linux/init.h>
  #include <linux/stddef.h>
- 
+-
 -/* 
 - * I'm cheating here.  It is known that the two boot PTE pages are 
 - * allocated next to each other.  I'm pretending that they're just
@@ -5774,7 +5765,8 @@ diff -urNp linux-2.6.22.1/arch/i386/mm/boot_ioremap.c linux-2.6.22.1/arch/i386/m
 -	boot_pte_t* boot_pg = (boot_pte_t*)pg0;
 -	return &boot_pg[boot_pte_index((unsigned long)address)];
 -}
--
++#include <linux/sched.h>
+ 
  /*
   * This is only for a caller who is clever enough to page-align
   * phys_addr and virtual_source, and who also has a preference
@@ -13191,14 +13183,10 @@ diff -urNp linux-2.6.22.1/fs/exec.c linux-2.6.22.1/fs/exec.c
  
  #include <asm/uaccess.h>
  #include <asm/mmu_context.h>
-@@ -70,6 +72,15 @@ EXPORT_SYMBOL(suid_dumpable);
+@@ -70,6 +72,11 @@ EXPORT_SYMBOL(suid_dumpable);
  static struct linux_binfmt *formats;
  static DEFINE_RWLOCK(binfmt_lock);
  
-+#ifdef CONFIG_PAX_SOFTMODE
-+unsigned int pax_softmode;
-+#endif
-+
 +#ifdef CONFIG_PAX_HOOK_ACL_FLAGS
 +void (*pax_set_initial_flags_func)(struct linux_binprm *bprm);
 +EXPORT_SYMBOL(pax_set_initial_flags_func);
@@ -15804,7 +15792,7 @@ diff -urNp linux-2.6.22.1/grsecurity/gracl.c linux-2.6.22.1/grsecurity/gracl.c
 +{
 +	char *retval;
 +
-+	retval = __our_d_path(dentry->d_parent, vfsmnt, root, rootmnt, buf, buflen);
++	retval = __our_d_path(dentry, vfsmnt, root, rootmnt, buf, buflen);
 +	if (unlikely(IS_ERR(retval)))
 +		retval = strcpy(buf, "<path too long>");
 +	else if (unlikely(retval[1] == '/' && retval[2] == '\0'))
@@ -25245,99 +25233,23 @@ diff -urNp linux-2.6.22.1/include/asm-i386/pgtable.h linux-2.6.22.1/include/asm-
  
  /* Just any arbitrary offset to the start of the vmalloc VM area: the
   * current 8MB value just means that there will be a 8MB "hole" after the
-@@ -133,24 +139,33 @@ void paging_init(void);
- #define _KERNPG_TABLE	(_PAGE_PRESENT | _PAGE_RW | _PAGE_ACCESSED | _PAGE_DIRTY)
- #define _PAGE_CHG_MASK	(PTE_MASK | _PAGE_ACCESSED | _PAGE_DIRTY)
- 
--#define PAGE_NONE \
-+#define __PAGE_NONE \
+@@ -136,7 +142,7 @@ void paging_init(void);
+ #define PAGE_NONE \
  	__pgprot(_PAGE_PROTNONE | _PAGE_ACCESSED)
--#define PAGE_SHARED \
+ #define PAGE_SHARED \
 -	__pgprot(_PAGE_PRESENT | _PAGE_RW | _PAGE_USER | _PAGE_ACCESSED)
-+#define __PAGE_SHARED \
 +	__pgprot(_PAGE_PRESENT | _PAGE_RW | _PAGE_USER | _PAGE_ACCESSED | _PAGE_NX)
  
--#define PAGE_SHARED_EXEC \
-+#define __PAGE_SHARED_EXEC \
+ #define PAGE_SHARED_EXEC \
  	__pgprot(_PAGE_PRESENT | _PAGE_RW | _PAGE_USER | _PAGE_ACCESSED)
--#define PAGE_COPY_NOEXEC \
-+#define __PAGE_COPY_NOEXEC \
- 	__pgprot(_PAGE_PRESENT | _PAGE_USER | _PAGE_ACCESSED | _PAGE_NX)
--#define PAGE_COPY_EXEC \
-+#define __PAGE_COPY_EXEC \
- 	__pgprot(_PAGE_PRESENT | _PAGE_USER | _PAGE_ACCESSED)
--#define PAGE_COPY \
--	PAGE_COPY_NOEXEC
--#define PAGE_READONLY \
-+#define __PAGE_COPY \
-+	__PAGE_COPY_NOEXEC
-+#define __PAGE_READONLY \
- 	__pgprot(_PAGE_PRESENT | _PAGE_USER | _PAGE_ACCESSED | _PAGE_NX)
--#define PAGE_READONLY_EXEC \
-+#define __PAGE_READONLY_EXEC \
- 	__pgprot(_PAGE_PRESENT | _PAGE_USER | _PAGE_ACCESSED)
- 
-+#define PAGE_NONE		(protection_map[0x0])
-+#define PAGE_SHARED		(protection_map[0xb])
-+#define PAGE_SHARED_EXEC	(protection_map[0xf])
-+#define PAGE_COPY_NOEXEC	(protection_map[0x3])
-+#define PAGE_COPY 		PAGE_COPY_NOEXEC
-+#define PAGE_COPY_EXEC		(protection_map[0x7])
-+#define PAGE_READONLY		(protection_map[0x1])
-+#define PAGE_READONLY_EXEC	(protection_map[0x5])
-+
- #define _PAGE_KERNEL \
- 	(_PAGE_PRESENT | _PAGE_RW | _PAGE_DIRTY | _PAGE_ACCESSED | _PAGE_NX)
- #define _PAGE_KERNEL_EXEC \
-@@ -176,23 +191,23 @@ extern unsigned long long __PAGE_KERNEL,
-  * the same are read. Also, write permissions imply read permissions.
-  * This is the closest we can get..
-  */
--#define __P000	PAGE_NONE
--#define __P001	PAGE_READONLY
--#define __P010	PAGE_COPY
--#define __P011	PAGE_COPY
--#define __P100	PAGE_READONLY_EXEC
--#define __P101	PAGE_READONLY_EXEC
--#define __P110	PAGE_COPY_EXEC
--#define __P111	PAGE_COPY_EXEC
--
--#define __S000	PAGE_NONE
--#define __S001	PAGE_READONLY
--#define __S010	PAGE_SHARED
--#define __S011	PAGE_SHARED
--#define __S100	PAGE_READONLY_EXEC
--#define __S101	PAGE_READONLY_EXEC
--#define __S110	PAGE_SHARED_EXEC
--#define __S111	PAGE_SHARED_EXEC
-+#define __P000	__PAGE_NONE
-+#define __P001	__PAGE_READONLY
-+#define __P010	__PAGE_COPY
-+#define __P011	__PAGE_COPY
-+#define __P100	__PAGE_READONLY_EXEC
-+#define __P101	__PAGE_READONLY_EXEC
-+#define __P110	__PAGE_COPY_EXEC
-+#define __P111	__PAGE_COPY_EXEC
-+
-+#define __S000	__PAGE_NONE
-+#define __S001	__PAGE_READONLY
-+#define __S010	__PAGE_SHARED
-+#define __S011	__PAGE_SHARED
-+#define __S100	__PAGE_READONLY_EXEC
-+#define __S101	__PAGE_READONLY_EXEC
-+#define __S110	__PAGE_SHARED_EXEC
-+#define __S111	__PAGE_SHARED_EXEC
- 
- /*
-  * Define this if things work differently on an i386 and an i486:
-@@ -202,7 +217,7 @@ extern unsigned long long __PAGE_KERNEL,
+@@ -202,7 +208,7 @@ extern unsigned long long __PAGE_KERNEL,
  #undef TEST_ACCESS_OK
  
  /* The boot page tables (all created as a single array) */
 -extern unsigned long pg0[];
 +extern pte_t pg0[];
  
- #define pte_present(x)	((x).pte_low & (_PAGE_PRESENT | _PAGE_PROTNONE))
+ #define pte_present(x) ((x).pte_low & (_PAGE_PRESENT | _PAGE_PROTNONE))
  
 @@ -225,29 +240,51 @@ static inline int pte_young(pte_t pte)		
  static inline int pte_write(pte_t pte)		{ return (pte).pte_low & _PAGE_RW; }
@@ -28632,11 +28544,13 @@ diff -urNp linux-2.6.22.1/init/main.c linux-2.6.22.1/init/main.c
  
  enum system_states system_state;
  EXPORT_SYMBOL(system_state);
-@@ -181,6 +182,15 @@ static int __init set_reset_devices(char
+@@ -181,6 +182,17 @@ static int __init set_reset_devices(char
  
  __setup("reset_devices", set_reset_devices);
  
 +#ifdef CONFIG_PAX_SOFTMODE
++unsigned int pax_softmode;
++
 +static int __init setup_pax_softmode(char *str)
 +{
 +	get_option(&str, &pax_softmode);
@@ -29225,15 +29139,19 @@ diff -urNp linux-2.6.22.1/kernel/irq/handle.c linux-2.6.22.1/kernel/irq/handle.c
 diff -urNp linux-2.6.22.1/kernel/kallsyms.c linux-2.6.22.1/kernel/kallsyms.c
 --- linux-2.6.22.1/kernel/kallsyms.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/kernel/kallsyms.c	2007-08-02 11:38:48.000000000 -0400
-@@ -65,6 +65,15 @@ static inline int is_kernel_text(unsigne
+@@ -65,6 +65,19 @@ static inline int is_kernel_text(unsigne
  
  static inline int is_kernel(unsigned long addr)
  {
 +
 +#ifdef CONFIG_PAX_KERNEXEC
++
++#ifdef CONFIG_MODULES
 +	if ((unsigned long)MODULES_VADDR <= addr + __KERNEL_TEXT_OFFSET &&
 +	    addr + __KERNEL_TEXT_OFFSET < (unsigned long)MODULES_END)
 +		return 0;
++#endif
++
 +	if (is_kernel_inittext(addr))
 +		return 1;
 +#endif
@@ -31859,7 +31777,7 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
  #else
  /*
   * vma is the first one with address < vma->vm_start.  Have to extend vma.
-@@ -1612,6 +1780,13 @@ int expand_stack(struct vm_area_struct *
+@@ -1612,6 +1780,12 @@ int expand_stack(struct vm_area_struct *
  	if (address < vma->vm_start) {
  		unsigned long size, grow;
  
@@ -31867,7 +31785,6 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
 +		struct vm_area_struct *vma_m;
 +
 +		vma_m = pax_find_mirror_vma(vma);
-+		BUG_ON(vma_m && vma->anon_vma != vma_m->anon_vma);
 +#endif
 +
  		size = vma->vm_end - address;
