@@ -759,7 +759,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch11 -p1
 
 # kernel-pom-ng-set.patch
-%patch12 -p1
+#patch12 -p1
 
 # kernel-pom-ng-u32.patch
 %patch13 -p1
@@ -777,7 +777,7 @@ install %{SOURCE5} Makefile.ppclibs
 ##%patch17 -p1
 
 # kernel-pom-ng-IPMARK.patch
-%patch18 -p1
+#patch18 -p1
 
 # kernel-pom-ng-connlimit.patch
 %patch19 -p1
@@ -807,10 +807,10 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 # esfq
-%patch53 -p1
+#patch53 -p1
 
 %if %{with wrr}
-%patch52 -p1
+#patch52 -p1
 %endif
 
 # toshiba_acpi
@@ -823,7 +823,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch57 -p1
 %endif
 
-%patch58 -p1
+#patch58 -p1
 
 
 # linux-2.6-sk98lin_v10.0.4.3.patch
@@ -1146,7 +1146,7 @@ BuildKernel() {
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 
 %ifarch sparc
-	sparc32 %{__make} clean \
+	ARCH=sparc %{__make} clean \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 %else
 	%{__make} %CrossOpts clean \
@@ -1167,7 +1167,7 @@ BuildKernel() {
 	%{__make} %CrossOpts modules \
 		%{?with_verbose:V=1}
 %else
-	sparc32 %{__make} \
+	ARCH=sparc %{__make} \
 		%{?with_verbose:V=1}
 %endif
 %else
@@ -1443,9 +1443,9 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/net/cdc_ether.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/net/rndis_host.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/net/usbnet.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/usb/cdc_ether.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/usb/rndis_host.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/usb/usbnet.ko*
 %ghost /lib/modules/%{kernel_release}/modules.*
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
@@ -1479,9 +1479,9 @@ fi
 
 %files net-rndis
 %defattr(644,root,root,755)
-/lib/modules/%{kernel_release}/kernel/drivers/usb/net/cdc_ether.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/usb/net/rndis_host.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/usb/net/usbnet.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/usb/cdc_ether.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/usb/rndis_host.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/usb/usbnet.ko*
 
 %ifarch ppc-broken
 %if "%{_arch}" == "ppc"
