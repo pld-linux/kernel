@@ -425,16 +425,26 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 	%define	DepMod /bin/true
 
 	%if "%{_arch}" == "sparc" && "%{_target_base_arch}" == "sparc64"
+	%define	CrossOpts ARCH=%{_target_base_arch} CC="%{__cc}"
+	%define	DepMod /sbin/depmod
+	%endif
+
+	%if "%{_arch}" == "sparc64" && "%{_target_base_arch}" == "sparc"
+	%define	CrossOpts ARCH=%{_target_base_arch} CC="%{__cc}"
 	%define	DepMod /sbin/depmod
 	%endif
 
 	%if "%{_arch}" == "x86_64" && "%{_target_base_arch}" == "i386"
-	%define	CrossOpts ARCH=%{_target_base_arch}
+	%define	CrossOpts ARCH=%{_target_base_arch} CC="%{__cc}"
 	%define	DepMod /sbin/depmod
 	%endif
 
 %else
-	%define CrossOpts CC="%{__cc}"
+	%ifarch ppc ppc64
+	%define CrossOpts ARCH=powerpc CC="%{__cc}"
+	%else
+	%define CrossOpts ARCH=%{_target_base_arch} CC="%{__cc}"
+	%endif
 	%define	DepMod /sbin/depmod
 %endif
 
@@ -1145,13 +1155,8 @@ BuildKernel() {
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 
-%ifarch sparc
-	ARCH=sparc %{__make} clean \
-		RCS_FIND_IGNORE='-name build-done -prune -o'
-%else
 	%{__make} %CrossOpts clean \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
-%endif
 	%{__make} %CrossOpts include/linux/version.h \
 		%{?with_verbose:V=1}
 
@@ -1159,17 +1164,12 @@ BuildKernel() {
 		%{?with_verbose:V=1}
 
 # make does vmlinux, modules and bzImage at once
-%ifarch sparc sparc64
 %ifarch sparc64
 	%{__make} %CrossOpts image \
 		%{?with_verbose:V=1}
 
 	%{__make} %CrossOpts modules \
 		%{?with_verbose:V=1}
-%else
-	ARCH=sparc %{__make} \
-		%{?with_verbose:V=1}
-%endif
 %else
 	%{__make} %CrossOpts \
 		%{?with_verbose:V=1}
