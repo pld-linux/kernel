@@ -231,7 +231,7 @@ Patch9:		linux-static-dev.patch
 
 # netfilter related stuff mostly based on patch-o-matic-ng
 # snapshot 20061213 with some fixes related to changes in
-# netfilter api in 2.6.19, 2.6.20 and 2.6.21. Some modules 
+# netfilter api in 2.6.19 up to 2.6.22. Some modules 
 # were ported to nf_conntrack. Some of these are unique.
 
 Patch10:	kernel-pom-ng-IPV4OPTSSTRIP.patch
@@ -241,6 +241,7 @@ Patch13:	kernel-pom-ng-u32.patch
 Patch14:	kernel-pom-ng-ROUTE.patch
 Patch15:	kernel-pom-ng-TARPIT.patch
 Patch16:	kernel-pom-ng-mms-conntrack-nat.patch
+## TODO: patch17 -- update or drop -- needs porting to nf_conntrack
 Patch17:	kernel-pom-ng-rsh.patch
 Patch18:	kernel-pom-ng-IPMARK.patch
 Patch19:	kernel-pom-ng-connlimit.patch
@@ -781,7 +782,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch16 -p1
 
 # kernel-pom-ng-rsh.patch
-%patch17 -p1
+#patch17 -p1
 
 # kernel-pom-ng-IPMARK.patch
 %patch18 -p1
