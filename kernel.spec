@@ -287,6 +287,11 @@ Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	hostap-kernel-2.6.18.patch
 
+# http://client.linux-nfs.org/Linux-2.6.x/2.6.22/linux-2.6.22-NFS_ALL.dif
+Patch90:	linux-2.6.22-NFS_ALL.dif
+# http://www.citi.umich.edu/projects/nfsv4/linux/kernel-patches/2.6.22-rc5-1/linux-2.6.22-rc5-CITI_NFS4_ALL-1.diff
+Patch91:	linux-2.6.22-rc5-CITI_NFS4_ALL-1.diff
+
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.22.1-vs2.3.0.15.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
@@ -830,6 +835,10 @@ install %{SOURCE5} Makefile.ppclibs
 
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
+
+# NFS fixes and NFS4 improvements
+%patch90 -p1
+%patch91 -p1
 
 # vserver
 %if %{with vserver}
