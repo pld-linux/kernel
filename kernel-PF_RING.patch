@@ -4028,7 +4028,7 @@ diff --unified --recursive --new-file linux-2.6.21.4/net/ring/Makefile linux-2.6
 diff --unified --recursive --new-file linux-2.6.21.4/net/ring/ring_packet.c linux-2.6.21.4-1-686-smp-ring3/net/ring/ring_packet.c
 --- linux-2.6.21.4/net/ring/ring_packet.c	1970-01-01 00:00:00.000000000 +0000
 +++ linux-2.6.21.4-1-686-smp-ring3/net/ring/ring_packet.c	2007-06-10 16:43:04.354421694 +0000
-@@ -0,0 +1,4257 @@
+@@ -0,0 +1,4258 @@
 +/* ***************************************************************
 + *
 + * (C) 2004-07 - Luca Deri <deri@ntop.org>
@@ -6992,9 +6992,10 @@ diff --unified --recursive --new-file linux-2.6.21.4/net/ring/ring_packet.c linu
 +
 +    hdr->ts.tv_sec = skb->stamp.tv_sec, hdr->ts.tv_usec = skb->stamp.tv_usec;
 +#else
-+    if(skb->tstamp.off_sec == 0) __net_timestamp(skb);
++    if(skb->tstamp.tv64 == 0) __net_timestamp(skb);
 +
-+    hdr->ts.tv_sec = skb->tstamp.off_sec, hdr->ts.tv_usec = skb->tstamp.off_usec;
++    tv = ktime_to_timeval(skb->tstamp);
++    hdr->ts.tv_sec = tv.tv_sec, hdr->ts.tv_usec = tv.tv_usec;
 +#endif
 +    hdr->caplen    = skb->len+displ;
 +
@@ -7341,7 +7342,7 @@ diff --unified --recursive --new-file linux-2.6.21.4/net/ring/ring_packet.c linu
 +    skb.data_len = len, skb.stamp.tv_sec = 0; /* Calculate the time */
 +#else
 +  skb.dev = dev, skb.len = len, skb.data = data,
-+    skb.data_len = len, skb.tstamp.off_sec = 0; /* Calculate the time */
++    skb.data_len = len, skb.tstamp.tv64 = 0; /* Calculate the time */
 +#endif
 +
 +  skb_ring_handler(&skb, 1, 0 /* fake skb */);
