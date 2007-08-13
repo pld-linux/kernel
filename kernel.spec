@@ -4,7 +4,6 @@
 # TODO:
 # - update all config files (i386 and x86_64 up to date)
 # - update pax patch
-# - update or drop patch17 kernel-pom-ng-rsh.patch
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - squashfs lzma patch looks broken
 # - squashfs needs update
@@ -13,8 +12,9 @@
 # FUTURE:
 # - update xen patch for 2.6.21
 # - Linux ABI - needs update.
+# - pom-ng rsh -> nf_conntrack ?
 # - pom-ng quake3-conntrack-nat -> nf_conntrack ?
-# - pom-ng rpc -> ?
+# - pom-ng rpc -> nf_conntrack ?
 # - pom-ng rtsp-conntrack -> nf_conntrack ?
 # - pom-ng talk-conntrack-nat -> nf_conntrack ?
 # - nf-hipac ?
@@ -241,13 +241,11 @@ Patch13:	kernel-pom-ng-u32.patch
 Patch14:	kernel-pom-ng-ROUTE.patch
 Patch15:	kernel-pom-ng-TARPIT.patch
 Patch16:	kernel-pom-ng-mms-conntrack-nat.patch
-## TODO: patch17 -- update or drop -- needs porting to nf_conntrack
-Patch17:	kernel-pom-ng-rsh.patch
-Patch18:	kernel-pom-ng-IPMARK.patch
-Patch19:	kernel-pom-ng-connlimit.patch
-Patch20:	kernel-pom-ng-geoip.patch
-Patch21:	kernel-pom-ng-ipp2p.patch
-Patch22:	kernel-pom-ng-time.patch
+Patch17:	kernel-pom-ng-IPMARK.patch
+Patch18:	kernel-pom-ng-connlimit.patch
+Patch19:	kernel-pom-ng-geoip.patch
+Patch20:	kernel-pom-ng-ipp2p.patch
+Patch21:	kernel-pom-ng-time.patch
 
 Patch40:	kernel-layer7.patch
  
@@ -781,26 +779,23 @@ install %{SOURCE5} Makefile.ppclibs
 # kernel-pom-ng-mms-conntrack-nat.patch
 %patch16 -p1
 
-# kernel-pom-ng-rsh.patch
-#patch17 -p1
-
 # kernel-pom-ng-IPMARK.patch
-%patch18 -p1
+%patch17 -p1
 
 # kernel-pom-ng-set.patch
 #patch12 -p1
 
 # kernel-pom-ng-connlimit.patch
-%patch19 -p1
+%patch18 -p1
 
 # kernel-pom-ng-geoip.patch
-%patch20 -p1
+%patch19 -p1
 
 # kernel-pom-ng-ipp2p.patch
-%patch21 -p1
+%patch20 -p1
 
 # kernel-pom-ng-time.patch
-%patch22 -p1
+%patch21 -p1
 
 # kernel-layer7.patch
 %patch40 -p1
