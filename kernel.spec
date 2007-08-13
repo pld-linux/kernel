@@ -769,9 +769,6 @@ install %{SOURCE5} Makefile.ppclibs
 # kernel-pom-ng-ipv4options.patch
 %patch11 -p1
 
-# kernel-pom-ng-set.patch
-%patch12 -p1
-
 # kernel-pom-ng-u32.patch
 %patch13 -p1
 
@@ -789,6 +786,9 @@ install %{SOURCE5} Makefile.ppclibs
 
 # kernel-pom-ng-IPMARK.patch
 %patch18 -p1
+
+# kernel-pom-ng-set.patch
+%patch12 -p1
 
 # kernel-pom-ng-connlimit.patch
 %patch19 -p1
