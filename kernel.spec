@@ -8,7 +8,6 @@
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - squashfs lzma patch looks broken
 # - squashfs needs update
-# - sk98lin needs skbuff fix
 # - layer7, set, PF_RING needs update
 #
 # FUTURE:
@@ -835,11 +834,11 @@ install %{SOURCE5} Makefile.ppclibs
 %patch57 -p1
 %endif
 
-#patch58 -p1
+%patch58 -p1
 
 
 # linux-2.6-sk98lin_v10.0.4.3.patch
-#patch60 -p1
+%patch60 -p1
 
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
