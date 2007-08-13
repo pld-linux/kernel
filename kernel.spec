@@ -787,7 +787,7 @@ install %{SOURCE5} Makefile.ppclibs
 ##%patch17 -p1
 
 # kernel-pom-ng-IPMARK.patch
-#patch18 -p1
+%patch18 -p1
 
 # kernel-pom-ng-connlimit.patch
 %patch19 -p1
