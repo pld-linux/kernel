@@ -10,7 +10,6 @@
 # FUTURE:
 # - update xen patch for 2.6.21
 # - Linux ABI - needs update.
-# - pom-ng rsh -> nf_conntrack ?
 # - pom-ng quake3-conntrack-nat -> nf_conntrack ?
 # - pom-ng rpc -> nf_conntrack ?
 # - pom-ng rtsp-conntrack -> nf_conntrack ?
@@ -242,6 +241,7 @@ Patch18:	kernel-pom-ng-connlimit.patch
 Patch19:	kernel-pom-ng-geoip.patch
 Patch20:	kernel-pom-ng-ipp2p.patch
 Patch21:	kernel-pom-ng-time.patch
+Patch22:	kernel-pom-ng-rsh.patch
 
 Patch40:	kernel-layer7.patch
  
@@ -793,6 +793,9 @@ install %{SOURCE5} Makefile.ppclibs
 
 # kernel-pom-ng-time.patch
 %patch21 -p1
+
+# kernel-pom-ng-rsh.patch
+%patch22 -p1
 
 # kernel-layer7.patch
 %patch40 -p1
