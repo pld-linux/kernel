@@ -9,7 +9,7 @@
 # - squashfs lzma patch looks broken
 # - squashfs needs update
 # - sk98lin needs skbuff fix
-# - layer7, set, esfq, wrr, PF_RING needs update
+# - layer7, set, wrr, PF_RING needs update
 #
 # FUTURE:
 # - update xen patch for 2.6.21
@@ -267,6 +267,7 @@ Patch52:	wrr-linux-051111-2.6.20.patch
 
 # esfq from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
 Patch53:	esfq-kernel.patch
+Patch531:	esfq-kernel-2.6.22-rc5.diff
 
 # http://memebeam.org/free-software/toshiba_acpi/toshiba_acpi-dev_toshiba_test5-linux_2.6.21.patch
 Patch54:	linux-2.6-toshiba_acpi.patch
@@ -817,7 +818,8 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 # esfq
-#patch53 -p1
+%patch53 -p1
+%patch531 -p1
 
 %if %{with wrr}
 #patch52 -p1
