@@ -788,7 +788,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch18 -p1
 
 # kernel-pom-ng-set.patch
-%patch12 -p1
+#patch12 -p1
 
 # kernel-pom-ng-connlimit.patch
 %patch19 -p1
