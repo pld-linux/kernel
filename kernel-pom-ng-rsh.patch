@@ -1,31 +1,31 @@
-diff -NurpP --minimal linux-2.6.21.a/include/linux/netfilter_ipv4/ip_conntrack.h linux-2.6.21.b/include/linux/netfilter_ipv4/ip_conntrack.h
---- linux-2.6.21.a/include/linux/netfilter_ipv4/ip_conntrack.h	2007-05-30 11:57:00.000000000 +0200
-+++ linux-2.6.21.b/include/linux/netfilter_ipv4/ip_conntrack.h	2007-05-30 11:58:41.000000000 +0200
-@@ -29,6 +29,7 @@ union ip_conntrack_expect_proto {
+diff -NurpP --minimal linux/include/net/netfilter/nf_conntrack.h linux/include/net/netfilter/nf_conntrack.h
+--- linux/include/net/netfilter/nf_conntrack.h	2007-05-30 11:57:00.000000000 +0200
++++ linux/include/net/netfilter/nf_conntrack.h	2007-05-30 11:58:41.000000000 +0200
+@@ -29,6 +29,7 @@ union nf_conntrack_expect_proto {
  };
  
  /* Add protocol helper include file here */
-+#include <linux/netfilter_ipv4/ip_conntrack_rsh.h>
- #include <linux/netfilter_ipv4/ip_conntrack_mms.h>
- #include <linux/netfilter_ipv4/ip_conntrack_h323.h>
- #include <linux/netfilter_ipv4/ip_conntrack_pptp.h>
-@@ -39,6 +40,7 @@ union ip_conntrack_expect_proto {
++#include <linux/netfilter/nf_conntrack_rsh.h>
+ #include <linux/netfilter/nf_conntrack_ftp.h>
+ #include <linux/netfilter/nf_conntrack_pptp.h>
+ #include <linux/netfilter/nf_conntrack_h323.h>
+@@ -39,6 +40,7 @@ union nf_conntrack_expect_proto {
  /* per conntrack: application helper private data */
- union ip_conntrack_help {
+ union nf_conntrack_help {
  	/* insert conntrack helper private data (master) here */
-+	struct ip_ct_rsh_master ct_rsh_info;
- 	struct ip_ct_mms_master ct_mms_info;
- 	struct ip_ct_h323_master ct_h323_info;
- 	struct ip_ct_pptp_master ct_pptp_info;
-diff -NurpP --minimal linux-2.6.21.a/include/linux/netfilter_ipv4/ip_conntrack_rsh.h linux-2.6.21.b/include/linux/netfilter_ipv4/ip_conntrack_rsh.h
---- linux-2.6.21.a/include/linux/netfilter_ipv4/ip_conntrack_rsh.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.21.b/include/linux/netfilter_ipv4/ip_conntrack_rsh.h	2007-05-30 11:58:41.000000000 +0200
++	struct nf_ct_rsh_master ct_rsh_info;
+ 	struct nf_ct_ftp_master ct_ftp_info;
+ 	struct nf_ct_pptp_master ct_pptp_info;
+ 	struct nf_ct_h323_master ct_h323_info;
+diff -NurpP --minimal linux/include/linux/netfilter/nf_conntrack_rsh.h linux/include/linux/netfilter/nf_conntrack_rsh.h
+--- linux/include/linux/netfilter/nf_conntrack_rsh.h	1970-01-01 01:00:00.000000000 +0100
++++ linux/include/linux/netfilter/nf_conntrack_rsh.h	2007-05-30 11:58:41.000000000 +0200
 @@ -0,0 +1,28 @@
 +/* RSH extension for IP connection tracking, Version 1.0
 + * (C) 2002 by Ian (Larry) Latter <Ian.Latter@mq.edu.au>
 + * based on HW's ip_conntrack_irc.c     
 + *
-+ * ip_conntrack_rsh.c,v 1.0 2002/07/17 14:49:26
++ * nf_conntrack_rsh.c,v 1.0 2002/07/17 14:49:26
 + *
 + *      This program is free software; you can redistribute it and/or
 + *      modify it under the terms of the GNU General Public License
@@ -38,27 +38,27 @@ diff -NurpP --minimal linux-2.6.21.a/include/linux/netfilter_ipv4/ip_conntrack_r
 +#define RSH_PORT	514
 +
 +/* This structure is per expected connection */
-+struct ip_ct_rsh_expect
++struct nf_ct_rsh_expect
 +{
 +	u_int16_t port;
 +};
 +
 +/* This structure exists only once per master */
-+struct ip_ct_rsh_master {
++struct nf_ct_rsh_master {
 +};
 +
 +#endif /* _IP_CONNTRACK_RSH_H */
 +
-diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/Kconfig linux-2.6.21.b/net/ipv4/netfilter/Kconfig
---- linux-2.6.21.a/net/ipv4/netfilter/Kconfig	2007-05-30 11:57:07.000000000 +0200
-+++ linux-2.6.21.b/net/ipv4/netfilter/Kconfig	2007-05-30 11:58:41.000000000 +0200
+diff -NurpP --minimal linux/net/ipv4/netfilter/Kconfig linux/net/ipv4/netfilter/Kconfig
+--- linux/net/ipv4/netfilter/Kconfig	2007-05-30 11:57:07.000000000 +0200
++++ linux/net/ipv4/netfilter/Kconfig	2007-05-30 11:58:41.000000000 +0200
 @@ -870,5 +870,28 @@ config IP_NF_MMS
  	  If you want to compile it as a module, say M here and read
  	  <file:Documentation/modules.txt>.  If unsure, say `Y'.
  
-+config IP_NF_RSH
++config NF_CONNTRACK_RSH
 +	tristate  'RSH protocol support'
-+	depends on IP_NF_CONNTRACK
++	depends on NF_CONNTRACK
 +	help
 +	  The RSH connection tracker is required if the dynamic
 +	  stderr "Server to Client" connection is to occur during a
@@ -81,21 +81,21 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/Kconfig linux-2.6.21.b/n
 +
  endmenu
  
-diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/Makefile linux-2.6.21.b/net/ipv4/netfilter/Makefile
---- linux-2.6.21.a/net/ipv4/netfilter/Makefile	2007-05-30 11:57:07.000000000 +0200
-+++ linux-2.6.21.b/net/ipv4/netfilter/Makefile	2007-05-30 11:58:41.000000000 +0200
-@@ -41,6 +41,7 @@ obj-$(CONFIG_IP_NF_CONNTRACK_NETLINK) +=
- obj-$(CONFIG_IP_NF_CT_PROTO_SCTP) += ip_conntrack_proto_sctp.o
- 
+diff -NurpP --minimal linux/net/netfilter/Makefile linux/net/netfilter/Makefile
+--- linux/net/netfilter/Makefile	2007-05-30 11:57:07.000000000 +0200
++++ linux/net/netfilter/Makefile	2007-05-30 11:58:41.000000000 +0200
+@@ -23,6 +23,7 @@
  # connection tracking helpers
-+obj-$(CONFIG_IP_NF_RSH) += ip_conntrack_rsh.o
- obj-$(CONFIG_IP_NF_MMS) += ip_conntrack_mms.o
- obj-$(CONFIG_IP_NF_H323) += ip_conntrack_h323.o
- obj-$(CONFIG_IP_NF_PPTP) += ip_conntrack_pptp.o
-diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ip_conntrack_rsh.c linux-2.6.21.b/net/ipv4/netfilter/ip_conntrack_rsh.c
---- linux-2.6.21.a/net/ipv4/netfilter/ip_conntrack_rsh.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.21.b/net/ipv4/netfilter/ip_conntrack_rsh.c	2007-05-30 11:58:41.000000000 +0200
-@@ -0,0 +1,369 @@
+ nf_conntrack_h323-objs := nf_conntrack_h323_main.o nf_conntrack_h323_asn1.o
+ 
++obj-$(CONFIG_NF_CONNTRACK_RSH) += nf_conntrack_rsh.o
+ obj-$(CONFIG_NF_CONNTRACK_AMANDA) += nf_conntrack_amanda.o
+ obj-$(CONFIG_NF_CONNTRACK_FTP) += nf_conntrack_ftp.o
+ obj-$(CONFIG_NF_CONNTRACK_H323) += nf_conntrack_h323.o
+diff -NurpP --minimal linux/net/netfilter/nf_conntrack_rsh.c linux/net/netfilter/nf_conntrack_rsh.c
+--- linux/net/netfilter/nf_conntrack_rsh.c	1970-01-01 01:00:00.000000000 +0100
++++ linux/net/netfilter/nf_conntrack_rsh.c	2007-05-30 11:58:41.000000000 +0200
+@@ -0,0 +1,370 @@
 +/* RSH extension for IP connection tracking, Version 1.0
 + * (C) 2002 by Ian (Larry) Latter <Ian.Latter@mq.edu.au>
 + * based on HW's ip_conntrack_irc.c	
@@ -208,8 +208,9 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ip_conntrack_rsh.c linux
 +#include <net/tcp.h>
 +
 +#include <linux/netfilter_ipv4/ip_tables.h>
-+#include <linux/netfilter_ipv4/ip_conntrack_helper.h>
-+#include <linux/netfilter_ipv4/ip_conntrack_rsh.h>
++#include <net/netfilter/nf_conntrack_expect.h>
++#include <net/netfilter/nf_conntrack_helper.h>
++#include <linux/netfilter/nf_conntrack_rsh.h>
 +
 +#define MAX_PORTS 8
 +static int range; /* defaults to = 1023 */
@@ -233,7 +234,7 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ip_conntrack_rsh.c linux
 +unsigned int (*ip_nat_rsh_hook)(struct sk_buff **pskb,
 +				enum ip_conntrack_info ctinfo,
 +				unsigned int matchoff,
-+				struct ip_conntrack_expect *exp);
++				struct nf_conntrack_expect *exp);
 +
 +#define PRINTK(format, args...) printk(KERN_DEBUG "ip_conntrack_rsh: " \
 +					format, ## args)
@@ -248,13 +249,13 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ip_conntrack_rsh.c linux
 +
 +/* FIXME: This should be in userspace.  Later. */
 +static int help(struct sk_buff **pskb,
-+		struct ip_conntrack *ct, enum ip_conntrack_info ctinfo)
++		struct nf_conn *ct, enum ip_conntrack_info ctinfo)
 +{
 +	struct tcphdr _tcph, *th;
 +	char *data, *rb_ptr;
 +	int ret = NF_ACCEPT;
 +	int dir = CTINFO2DIR(ctinfo);
-+        struct ip_conntrack_expect *exp;
++        struct nf_conntrack_expect *exp;
 +	unsigned int dataoff, datalen;
 +	u_int16_t port;
 +	int maxoctet = 4;
@@ -279,7 +280,7 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ip_conntrack_rsh.c linux
 +	}
 +
 +	/* Not a full tcp header? */
-+	th = skb_header_pointer(*pskb, (*pskb)->nh.iph->ihl*4,
++	th = skb_header_pointer(*pskb, ip_hdr(*pskb)->ihl*4,
 +				sizeof(_tcph), &_tcph);
 +	if (!th) {
 +		DEBUGP("rsh: skb_header_pointer null\n");
@@ -287,7 +288,7 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ip_conntrack_rsh.c linux
 +	}
 +
 +	/* No data? */
-+	dataoff = (*pskb)->nh.iph->ihl*4 + th->doff*4;
++	dataoff = ip_hdr(*pskb)->ihl*4 + th->doff*4;
 +	if (dataoff >= (*pskb)->len) {
 +		return NF_ACCEPT;
 +	}
@@ -327,7 +328,7 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ip_conntrack_rsh.c linux
 +		return NF_ACCEPT;
 +	}
 +
-+	exp = ip_conntrack_expect_alloc(ct);
++	exp = nf_conntrack_expect_alloc(ct);
 +	if (!exp) {
 +		ret = NF_DROP;
 +		goto out;
@@ -338,14 +339,14 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ip_conntrack_rsh.c linux
 +	 */
 +
 +	/* Watch out, Radioactive-Man! */
-+	exp->tuple.src.ip = ct->tuplehash[!dir].tuple.src.ip;
-+	exp->tuple.dst.ip = ct->tuplehash[!dir].tuple.dst.ip;
++	exp->tuple.src.u3.ip = ct->tuplehash[!dir].tuple.src.u3.ip;
++	exp->tuple.dst.u3.ip = ct->tuplehash[!dir].tuple.dst.u3.ip;
 +	exp->tuple.src.u.tcp.port = 0;
 +	exp->tuple.dst.u.tcp.port = htons(port);
 +	exp->tuple.dst.protonum = IPPROTO_TCP;
 +
-+	exp->mask.src.ip = 0xffffffff;
-+	exp->mask.dst.ip = 0xffffffff;
++	exp->mask.src.u3.ip = 0xffffffff;
++	exp->mask.dst.u3.ip = 0xffffffff;
 +
 +	exp->mask.src.u.tcp.port = htons(rangemask);
 +	exp->mask.dst.u.tcp.port = htons(0xffff);
@@ -368,18 +369,18 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ip_conntrack_rsh.c linux
 +
 +	if (ip_nat_rsh_hook)
 +		ret = ip_nat_rsh_hook(pskb, ctinfo, rb_ptr - data, exp);
-+	else if (ip_conntrack_expect_related(exp) != 0) {
++	else if (nf_conntrack_expect_related(exp) != 0) {
 +		ret = NF_DROP;
 +	}
 +
-+	ip_conntrack_expect_put(exp);
++	nf_conntrack_expect_put(exp);
 +
 +out:
 +	spin_unlock_bh(&rsh_buffer_lock);
 +	return ret;
 +}
 +
-+static struct ip_conntrack_helper rsh_helpers[MAX_PORTS];
++static struct nf_conntrack_helper rsh_helpers[MAX_PORTS];
 +static char rsh_names[MAX_PORTS][10];
 +
 +static void fini(void);
@@ -404,7 +405,7 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ip_conntrack_rsh.c linux
 +        rangemask = 0xffff ^ range; /* defaults to = 0xfc00 */
 +
 +	for (port = 0; (port < MAX_PORTS) && ports[port]; port++) {
-+		memset(&rsh_helpers[port], 0, sizeof(struct ip_conntrack_helper));
++		memset(&rsh_helpers[port], 0, sizeof(struct nf_conntrack_helper));
 +
 +		tmpname = &rsh_names[port][0];
 +		if (ports[port] == RSH_PORT)
@@ -429,17 +430,17 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ip_conntrack_rsh.c linux
 +
 +		PRINTK("registering helper for port #%d: %d/TCP\n", port, ports[port]);
 +		PRINTK("helper match ip   %u.%u.%u.%u:%u-%u.%u.%u.%u:%u\n",
-+			NIPQUAD(rsh_helpers[port].tuple.src.ip),
++			NIPQUAD(rsh_helpers[port].tuple.src.u3.ip),
 +			ntohs(rsh_helpers[port].tuple.src.u.tcp.port),
-+			NIPQUAD(rsh_helpers[port].tuple.dst.ip),
++			NIPQUAD(rsh_helpers[port].tuple.dst.u3.ip),
 +			ntohs(rsh_helpers[port].tuple.dst.u.tcp.port));
 +		PRINTK("helper match mask %u.%u.%u.%u:%u-%u.%u.%u.%u:%u\n",
-+			NIPQUAD(rsh_helpers[port].mask.src.ip),
++			NIPQUAD(rsh_helpers[port].mask.src.u3.ip),
 +			ntohs(rsh_helpers[port].mask.src.u.tcp.port),
-+			NIPQUAD(rsh_helpers[port].mask.dst.ip),
++			NIPQUAD(rsh_helpers[port].mask.dst.u3.ip),
 +			ntohs(rsh_helpers[port].mask.dst.u.tcp.port));
 +
-+		ret = ip_conntrack_helper_register(&rsh_helpers[port]);
++		ret = nf_conntrack_helper_register(&rsh_helpers[port]);
 +
 +		if (ret) {
 +			printk("ERROR registering port %d\n",
@@ -459,7 +460,7 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ip_conntrack_rsh.c linux
 +	int port;
 +	for (port = 0; (port < MAX_PORTS) && ports[port]; port++) {
 +		DEBUGP("unregistering port %d\n", ports[port]);
-+		ip_conntrack_helper_unregister(&rsh_helpers[port]);
++		nf_conntrack_helper_unregister(&rsh_helpers[port]);
 +	}
 +}
 +
