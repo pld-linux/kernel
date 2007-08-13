@@ -5,8 +5,6 @@
 # - update all config files (i386 and x86_64 up to date)
 # - update pax patch
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
-# - squashfs lzma patch looks broken
-# - squashfs needs update
 # - set needs update
 #
 # FUTURE:
@@ -221,8 +219,6 @@ Patch4:		fbsplash-0.9.2-r5-2.6.20-rc6.patch
 Patch5:		vesafb-tng-1.0-rc2-2.6.20-rc2.patch
 
 # Squashfs from squashfs: http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.2-r2.tar.gz for linux-2.6.20
-# lzma support in patch65
-#
 Patch6:		squashfs%{squashfs_version}-patch
 Patch7:		linux-alpha-isa.patch
 Patch8:		linux-fbcon-margins.patch
@@ -281,9 +277,6 @@ Patch58:	linux-PF_RING.patch
 
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_41.tar.bz2
 Patch60:	linux-2.6-sk98lin_v10.0.4.3.patch
-
-# lzma support for squashfs (patch6) from http://www.squashfs-lzma.org/dl/sqlzma3.2-r2b.tar.bz2
-Patch65:	sqlzma2k-3.2-r2.patch
 
 # http://www.tuxonice.net/downloads/all/suspend2-2.2.10-for-2.6.22.patch.bz2
 Patch69:	linux-2.6-suspend2.patch
@@ -751,9 +744,8 @@ install %{SOURCE5} Makefile.ppclibs
 %{?with_vesafb_tng:%patch5 -p1}
 %endif
 
-# squashfs with (TODO) lzma support
-#patch6 -p1
-#patch65 -p1
+# squashfs
+%patch6 -p1
 
 %patch7 -p1
 %patch9 -p1
