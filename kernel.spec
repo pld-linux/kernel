@@ -8,7 +8,7 @@
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - squashfs lzma patch looks broken
 # - squashfs needs update
-# - layer7, set, PF_RING needs update
+# - set needs update
 #
 # FUTURE:
 # - update xen patch for 2.6.21
@@ -802,7 +802,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch22 -p1
 
 # kernel-layer7.patch
-#patch40 -p1
+%patch40 -p1
 
 ##
 # end of netfilter
