@@ -19,6 +19,7 @@
 # - pom-ng talk-conntrack-nat -> nf_conntrack ?
 # - nf-hipac ?
 # - pax hooks for selinux (experimental)
+# - Remove ROUTE target, its a hack and routing by fwmark should be used instead.
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
@@ -769,7 +770,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch11 -p1
 
 # kernel-pom-ng-set.patch
-#patch12 -p1
+%patch12 -p1
 
 # kernel-pom-ng-u32.patch
 %patch13 -p1
