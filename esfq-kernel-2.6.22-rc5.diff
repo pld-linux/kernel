@@ -1,0 +1,46 @@
+--- linux-2.6.21/net/sched/sch_esfq.c	2007-06-17 21:57:23.000000000 -0700
++++ linux-2.6.22-rc5/net/sched/sch_esfq.c	2007-06-17 22:04:03.000000000 -0700
+@@ -44,6 +44,7 @@
+ #include <linux/notifier.h>
+ #include <linux/init.h>
+ #include <net/ip.h>
++#include <net/netlink.h>
+ #include <linux/ipv6.h>
+ #include <net/route.h>
+ #include <linux/skbuff.h>
+@@ -140,7 +141,7 @@
+ 	switch (skb->protocol) {
+ 	case __constant_htons(ETH_P_IP):
+ 	{
+-		struct iphdr *iph = skb->nh.iph;
++		struct iphdr *iph = ip_hdr(skb);
+ 		info.dst = iph->daddr;
+ 		info.src = iph->saddr;
+ 		if (!(iph->frag_off&htons(IP_MF|IP_OFFSET)) &&
+@@ -156,7 +157,7 @@
+ 	}
+ 	case __constant_htons(ETH_P_IPV6):
+ 	{
+-		struct ipv6hdr *iph = skb->nh.ipv6h;
++		struct ipv6hdr *iph = ipv6_hdr(skb);
+ 		/* Hash ipv6 addresses into a u32. This isn't ideal,
+ 		 * but the code is simple. */
+ 		info.dst = jhash2(iph->daddr.s6_addr32, 4, q->perturbation);
+@@ -616,7 +617,7 @@
+ static int esfq_dump(struct Qdisc *sch, struct sk_buff *skb)
+ {
+ 	struct esfq_sched_data *q = qdisc_priv(sch);
+-	unsigned char *b = skb->tail;
++	unsigned char *b = skb_tail_pointer(skb);
+ 	struct tc_esfq_qopt opt;
+ 
+ 	opt.quantum = q->quantum;
+@@ -632,7 +633,7 @@
+ 	return skb->len;
+ 
+ rtattr_failure:
+-	skb_trim(skb, b - skb->data);
++	nlmsg_trim(skb, b);
+ 	return -1;
+ }
+ 
