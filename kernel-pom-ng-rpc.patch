@@ -1,15 +1,6 @@
- include/linux/netfilter_ipv4/ip_conntrack_rpc.h |   71 +++
- include/linux/netfilter_ipv4/ipt_rpc.h          |   35 +
- net/ipv4/netfilter/Kconfig                      |   32 +
- net/ipv4/netfilter/Makefile                     |    1 
- net/ipv4/netfilter/ip_conntrack_rpc_tcp.c       |  554 ++++++++++++++++++++++++
- net/ipv4/netfilter/ip_conntrack_rpc_udp.c       |  527 ++++++++++++++++++++++
- net/ipv4/netfilter/ipt_rpc.c                    |  443 +++++++++++++++++++
- 7 files changed, 1663 insertions(+)
-
-diff -Nur --exclude '*.orig' linux/include/linux/netfilter_ipv4/ip_conntrack_rpc.h linux/include/linux/netfilter_ipv4/ip_conntrack_rpc.h
---- linux/include/linux/netfilter_ipv4/ip_conntrack_rpc.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/include/linux/netfilter_ipv4/ip_conntrack_rpc.h	2006-05-04 11:26:08.000000000 +0200
+diff -Nur --exclude '*.orig' linux/include/linux/netfilter/nf_conntrack_rpc.h linux/include/linux/netfilter/nf_conntrack_rpc.h
+--- linux/include/linux/netfilter/nf_conntrack_rpc.h	1970-01-01 01:00:00.000000000 +0100
++++ linux/include/linux/netfilter/nf_conntrack_rpc.h	2006-05-04 11:26:08.000000000 +0200
 @@ -0,0 +1,71 @@
 +/* RPC extension for IP connection tracking, Version 2.2
 + * (C) 2000 by Marcelo Barbosa Lima <marcelo.lima@dcc.unicamp.br>
@@ -41,7 +32,7 @@ diff -Nur --exclude '*.orig' linux/include/linux/netfilter_ipv4/ip_conntrack_rpc
 +#include <linux/stddef.h>
 +#include <linux/list.h>
 +
-+#include <linux/netfilter_ipv4/ip_conntrack_helper.h>
++#include <net/netfilter/nf_conntrack_helper.h>
 +
 +#ifndef _IP_CONNTRACK_RPC_H
 +#define _IP_CONNTRACK_RPC_H
@@ -130,7 +121,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/Kconfig linux/net/ipv4/net
  
 +config IP_NF_MATCH_RPC
 +	tristate  'RPC match support'
-+	depends on IP_NF_CONNTRACK && IP_NF_IPTABLES
++	depends on NF_CONNTRACK && IP_NF_IPTABLES
 +	help
 +	  This adds CONFIG_IP_NF_MATCH_RPC, which is the RPC connection
 +	  matcher and tracker.
@@ -169,8 +160,8 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/Makefile linux/net/ipv4/ne
 +obj-$(CONFIG_IP_NF_MATCH_RPC) += ip_conntrack_rpc_tcp.o ip_conntrack_rpc_udp.o ipt_rpc.o
 diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c
 --- linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c	2006-05-04 11:26:08.000000000 +0200
-@@ -0,0 +1,554 @@
++++ linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c	2007-08-15 03:04:53.000000000 +0200
+@@ -0,0 +1,567 @@
 +/* RPC extension for IP (TCP) connection tracking, Version 2.2
 + * (C) 2000 by Marcelo Barbosa Lima <marcelo.lima@dcc.unicamp.br>
 + *	- original rpc tracking module
@@ -240,8 +231,9 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +#include <linux/list.h>
 +
 +#include <linux/netfilter_ipv4/ip_tables.h>
-+#include <linux/netfilter_ipv4/ip_conntrack_helper.h>
-+#include <linux/netfilter_ipv4/ip_conntrack_rpc.h>
++#include <net/netfilter/nf_conntrack_expect.h>
++#include <net/netfilter/nf_conntrack_helper.h>
++#include <linux/netfilter/nf_conntrack_rpc.h>
 +
 +#define MAX_PORTS 8
 +static int ports[MAX_PORTS];
@@ -271,10 +263,10 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +
 +DEFINE_RWLOCK(ipct_rpc_tcp_lock);
 +
-+#define ASSERT_READ_LOCK(x)
-+#define ASSERT_WRITE_LOCK(x)
++//#define ASSERT_READ_LOCK(x)
++//#define ASSERT_WRITE_LOCK(x)
 +
-+#include <linux/netfilter_ipv4/listhelp.h>
++//#include <linux/netfilter_ipv4/listhelp.h>
 +
 +/* For future conections RPC, using client's cache bindings
 + * I'll use ip_conntrack_lock to lock these lists	   */
@@ -287,7 +279,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +	struct request_p *p = (void *)request_p_ul;
 +	
 +	write_lock_bh(&ipct_rpc_tcp_lock);
-+	LIST_DELETE(&request_p_list_tcp, p);
++	list_del(&p->list);
 +	write_unlock_bh(&ipct_rpc_tcp_lock);
 +	kfree(p);
 +	return;
@@ -298,7 +290,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +{
 +	write_lock_bh(&ipct_rpc_tcp_lock);
 +	del_timer(&r->timeout);
-+	LIST_DELETE(&request_p_list_tcp, r);
++	list_del(&r->list);
 +	write_unlock_bh(&ipct_rpc_tcp_lock);
 +	kfree(r);
 +	return;
@@ -327,12 +319,16 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +static void alloc_request_p(u_int32_t xid, u_int16_t proto, u_int32_t ip,
 +		     u_int16_t port)
 +{
-+	struct request_p *req_p;
++	struct request_p *req_p = NULL, *p;
 +	
 +	/* Verifies if entry already exists */
 +	write_lock_bh(&ipct_rpc_tcp_lock);
-+	req_p = LIST_FIND(&request_p_list_tcp, request_p_cmp,
-+		struct request_p *, xid, ip, port);
++//	req_p = LIST_FIND(&request_p_list_tcp, request_p_cmp,
++//		struct request_p *, xid, ip, port);
++
++	list_for_each_entry(p, &request_p_list_tcp, list)
++		if (p->xid == xid && p->ip == ip && p->port == port)
++			req_p = p;
 +
 +	if (req_p) {
 +		/* Refresh timeout */
@@ -369,20 +365,20 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +
 +	/* Put in list */
 +	write_lock_bh(&ipct_rpc_tcp_lock);
-+	list_prepend(&request_p_list_tcp, req_p);
++	list_add(req_p, &request_p_list_tcp);
 +	write_unlock_bh(&ipct_rpc_tcp_lock); 
 +	return; 
 +}
 +
 +
 +static int check_rpc_packet(const u_int32_t *data,
-+			int dir, struct ip_conntrack *ct,
++			int dir, struct nf_conn *ct,
 +			struct list_head request_p_list)
 +{
 +	u_int32_t xid;
 +        int ret = NF_ACCEPT;
-+	struct request_p *req_p;
-+	struct ip_conntrack_expect *exp;
++	struct request_p *req_p = NULL, *p;
++	struct nf_conntrack_expect *exp;
 +
 +
 +	if (ct == NULL) {
@@ -426,12 +422,12 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +
 +		/* Get RPC protocol and store against client parameters */
 +		data = data + 2;
-+		alloc_request_p(xid, IXDR_GET_INT32(data), ct->tuplehash[dir].tuple.src.ip,
++		alloc_request_p(xid, IXDR_GET_INT32(data), ct->tuplehash[dir].tuple.src.u3.ip,
 +				ct->tuplehash[dir].tuple.src.u.all);
 +
 +		DEBUGP("allocated RPC req_p for xid=%u proto=%u %u.%u.%u.%u:%u\n",
 +			xid, IXDR_GET_INT32(data),
-+			NIPQUAD(ct->tuplehash[dir].tuple.src.ip),
++			NIPQUAD(ct->tuplehash[dir].tuple.src.u3.ip),
 +			ntohs(ct->tuplehash[dir].tuple.src.u.all));
 +
 +		DEBUGP("allocated RPC request for protocol %u. [done]\n",
@@ -440,10 +436,17 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +	} else {
 +
 +		/* Check for returning packet's stored counterpart */
-+		req_p = LIST_FIND(&request_p_list_tcp, request_p_cmp,
++	/*	req_p = LIST_FIND(&request_p_list_tcp, request_p_cmp,
 +				  struct request_p *, xid,
-+				  ct->tuplehash[!dir].tuple.src.ip,
++				  ct->tuplehash[!dir].tuple.src.u3.ip,
 +				  ct->tuplehash[!dir].tuple.src.u.all);
++	*/
++
++		list_for_each_entry(p, &request_p_list_tcp, list)
++			if (p->xid == xid &&
++			    p->ip == ct->tuplehash[!dir].tuple.src.u3.ip &&
++			    p->port == ct->tuplehash[!dir].tuple.src.u.all)
++				req_p = p;
 +
 +		/* Drop unexpected packets */
 +		if (!req_p) {
@@ -486,17 +489,17 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +		if (port_buf && port_buf != nsrexec) {
 +			DEBUGP("port found: %u\n", port_buf);
 +
-+                        exp = ip_conntrack_expect_alloc(ct);
++                        exp = nf_conntrack_expect_alloc(ct);
 +                        if (!exp) {
 +                          ret = NF_DROP;
 +                          goto out;
 +                        }
 +
 +			/* Watch out, Radioactive-Man! */
-+			exp->tuple.src.ip = ct->tuplehash[!dir].tuple.src.ip;
-+			exp->tuple.dst.ip = ct->tuplehash[!dir].tuple.dst.ip;
-+			exp->mask.src.ip = 0xffffffff;
-+			exp->mask.dst.ip = 0xffffffff;
++			exp->tuple.src.u3.ip = ct->tuplehash[!dir].tuple.src.u3.ip;
++			exp->tuple.dst.u3.ip = ct->tuplehash[!dir].tuple.dst.u3.ip;
++			exp->mask.src.u3.ip = 0xffffffff;
++			exp->mask.dst.u3.ip = 0xffffffff;
 +
 +			switch (req_p->proto) {
 +				case IPPROTO_UDP:
@@ -520,14 +523,15 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +			exp->expectfn = NULL;
 +			exp->master = ct;
 +
-+			if (exp->master->helper == NULL) {
++			struct nf_conn_help *m_help = nfct_help(exp->master);
++			if (m_help->helper == NULL) {
 +				DEBUGP("master helper NULL");
 +				ret = NF_ACCEPT;
 +			}
 +			
 +			DEBUGP("expect related ip   %u.%u.%u.%u:0-%u.%u.%u.%u:%u proto=%u\n",
-+				NIPQUAD(exp->tuple.src.ip),
-+				NIPQUAD(exp->tuple.dst.ip),
++				NIPQUAD(exp->tuple.src.u3.ip),
++				NIPQUAD(exp->tuple.dst.u3.ip),
 +				port_buf, req_p->proto);
 +
 +			DEBUGP("expect related mask %u.%u.%u.%u:0-%u.%u.%u.%u:65535 proto=%u\n",
@@ -535,7 +539,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +				NIPQUAD(exp->mask.dst.ip),
 +				exp->mask.dst.protonum);
 +
-+			if (ip_conntrack_expect_related(exp) != 0) {
++			if (nf_conntrack_expect_related(exp) != 0) {
 +        		        ret = NF_DROP;
 +        		}
 +
@@ -554,9 +558,9 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +
 +/* RPC TCP helper */
 +/* static int help(const struct iphdr *iph, size_t len,
-+		struct ip_conntrack *ct, enum ip_conntrack_info ctinfo) */
-+static int help(struct sk_buff **pskb,
-+		struct ip_conntrack *ct, enum ip_conntrack_info ctinfo)
++		struct nf_conn *ct, enum ip_conntrack_info ctinfo) */
++static int help(struct sk_buff **pskb, unsigned int protoff,
++		struct nf_conn *ct, enum ip_conntrack_info ctinfo)
 +{
 +	int dir;
 +	int crp_ret;
@@ -567,7 +571,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +        size_t len;
 +
 +	/* Not whole TCP header? */
-+        iph=(*pskb)->nh.iph;
++        iph=ip_hdr(*pskb);
 +	tcph = skb_header_pointer(*pskb,iph->ihl*4,sizeof(_tcph),&_tcph);
 +	if (!tcph)
 +		return NF_ACCEPT;
@@ -634,7 +638,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +}
 +
 +
-+static struct ip_conntrack_helper rpc_helpers[MAX_PORTS];
++static struct nf_conntrack_helper rpc_helpers[MAX_PORTS];
 +static char rpc_names[MAX_PORTS][10];
 +
 +static void fini(void);
@@ -649,7 +653,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +		ports[0] = RPC_PORT;
 +
 +	for (port = 0; (port < MAX_PORTS) && ports[port]; port++) {
-+		memset(&rpc_helpers[port], 0, sizeof(struct ip_conntrack_helper));
++		memset(&rpc_helpers[port], 0, sizeof(struct nf_conntrack_helper));
 +
 +		tmpname = &rpc_names[port][0];
 +		if (ports[port] == RPC_PORT)
@@ -674,17 +678,17 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +
 +		PRINTK("registering helper for port #%d: %d/TCP\n", port, ports[port]);
 +		PRINTK("helper match ip   %u.%u.%u.%u:%u->%u.%u.%u.%u:%u\n",
-+			NIPQUAD(rpc_helpers[port].tuple.dst.ip),
++			NIPQUAD(rpc_helpers[port].tuple.dst.u3.ip),
 +			ntohs(rpc_helpers[port].tuple.dst.u.tcp.port),
-+			NIPQUAD(rpc_helpers[port].tuple.src.ip),
++			NIPQUAD(rpc_helpers[port].tuple.src.u3.ip),
 +			ntohs(rpc_helpers[port].tuple.src.u.tcp.port));
 +		PRINTK("helper match mask %u.%u.%u.%u:%u->%u.%u.%u.%u:%u\n",
-+			NIPQUAD(rpc_helpers[port].mask.dst.ip),
++			NIPQUAD(rpc_helpers[port].mask.dst.u3.ip),
 +			ntohs(rpc_helpers[port].mask.dst.u.tcp.port),
-+			NIPQUAD(rpc_helpers[port].mask.src.ip),
++			NIPQUAD(rpc_helpers[port].mask.src.u3.ip),
 +			ntohs(rpc_helpers[port].mask.src.u.tcp.port));
 +
-+		ret = ip_conntrack_helper_register(&rpc_helpers[port]);
++		ret = nf_conntrack_helper_register(&rpc_helpers[port]);
 +
 +		if (ret) {
 +			printk("ERROR registering port %d\n",
@@ -712,7 +716,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +
 +	for (port = 0; (port < ports_n_c) && ports[port]; port++) {
 +		DEBUGP("unregistering port %d\n", ports[port]);
-+		ip_conntrack_helper_unregister(&rpc_helpers[port]);
++		nf_conntrack_helper_unregister(&rpc_helpers[port]);
 +	}
 +}
 +
@@ -727,8 +731,8 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +
 diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c
 --- linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c	2006-05-04 11:26:08.000000000 +0200
-@@ -0,0 +1,528 @@
++++ linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c	2007-08-15 01:44:02.000000000 +0200
+@@ -0,0 +1,540 @@
 +/* RPC extension for IP (UDP) connection tracking, Version 2.2
 + * (C) 2000 by Marcelo Barbosa Lima <marcelo.lima@dcc.unicamp.br>
 + *	- original rpc tracking module
@@ -793,8 +797,9 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +#include <linux/udp.h>
 +
 +#include <linux/netfilter_ipv4/ip_tables.h>
-+#include <linux/netfilter_ipv4/ip_conntrack_helper.h>
-+#include <linux/netfilter_ipv4/ip_conntrack_rpc.h>
++#include <net/netfilter/nf_conntrack_expect.h>
++#include <net/netfilter/nf_conntrack_helper.h>
++#include <linux/netfilter/nf_conntrack_rpc.h>
 +
 +#define MAX_PORTS 8
 +static int ports[MAX_PORTS];
@@ -820,9 +825,9 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +#endif
 +
 +DEFINE_RWLOCK(ipct_rpc_udp_lock);
-+#define ASSERT_READ_LOCK(x) 
-+#define ASSERT_WRITE_LOCK(x)
-+#include <linux/netfilter_ipv4/listhelp.h>
++//#define ASSERT_READ_LOCK(x) 
++//#define ASSERT_WRITE_LOCK(x)
++//#include <linux/netfilter_ipv4/listhelp.h>
 +
 +/* For future conections RPC, using client's cache bindings
 + * I'll use ip_conntrack_lock to lock these lists           */
@@ -835,7 +840,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +	struct request_p *p = (void *)request_p_ul;
 +	
 +	write_lock_bh(&ipct_rpc_udp_lock);
-+	LIST_DELETE(&request_p_list_udp, p);
++	list_del(&p->list);
 +	write_unlock_bh(&ipct_rpc_udp_lock);
 +	kfree(p);
 +	return;
@@ -846,7 +851,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +{
 +	write_lock_bh(&ipct_rpc_udp_lock);
 +	del_timer(&r->timeout);
-+	LIST_DELETE(&request_p_list_udp, r);
++	list_del(&r->list);
 +	write_unlock_bh(&ipct_rpc_udp_lock);
 +	kfree(r);
 +	return;
@@ -875,12 +880,16 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +static void alloc_request_p(u_int32_t xid, u_int16_t proto, u_int32_t ip,
 +		     u_int16_t port)
 +{
-+	struct request_p *req_p;
++	struct request_p *req_p = NULL, *p;
 +        
 +	/* Verifies if entry already exists */
 +	write_lock_bh(&ipct_rpc_udp_lock);
-+	req_p = LIST_FIND(&request_p_list_udp, request_p_cmp,
-+		struct request_p *, xid, ip, port);
++//	req_p = LIST_FIND(&request_p_list_udp, request_p_cmp,
++//		struct request_p *, xid, ip, port);
++	
++	list_for_each_entry(p, &request_p_list_udp, list)
++		if (p->xid == xid && p->ip == ip && p->port == port)
++			req_p = p;
 +
 +	if (req_p) {
 +		/* Refresh timeout */
@@ -917,7 +926,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +
 +	/* Put in list */
 +	write_lock_bh(&ipct_rpc_udp_lock);
-+	list_prepend(&request_p_list_udp, req_p);
++	list_add(req_p, &request_p_list_udp);
 +	write_unlock_bh(&ipct_rpc_udp_lock); 
 +	return; 
 +
@@ -925,13 +934,13 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +
 +
 +static int check_rpc_packet(const u_int32_t *data,
-+			int dir, struct ip_conntrack *ct,
++			int dir, struct nf_conn *ct,
 +			struct list_head request_p_list)
 +{
 +        int ret = NF_ACCEPT;
 +	u_int32_t xid;
-+	struct request_p *req_p;
-+	struct ip_conntrack_expect *exp;
++	struct request_p *req_p = NULL, *p;
++	struct nf_conntrack_expect *exp;
 +
 +	/* Translstion's buffer for XDR */
 +	u_int16_t port_buf;
@@ -970,12 +979,12 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +
 +		/* Get RPC protocol and store against client parameters */
 +		data = data + 2;
-+		alloc_request_p(xid, IXDR_GET_INT32(data), ct->tuplehash[dir].tuple.src.ip,
++		alloc_request_p(xid, IXDR_GET_INT32(data), ct->tuplehash[dir].tuple.src.u3.ip,
 +				ct->tuplehash[dir].tuple.src.u.all);
 +
 +		DEBUGP("allocated RPC req_p for xid=%u proto=%u %u.%u.%u.%u:%u\n",
 +			xid, IXDR_GET_INT32(data),
-+			NIPQUAD(ct->tuplehash[dir].tuple.src.ip),
++			NIPQUAD(ct->tuplehash[dir].tuple.src.u3.ip),
 +			ntohs(ct->tuplehash[dir].tuple.src.u.all));
 +
 +		DEBUGP("allocated RPC request for protocol %u. [done]\n",
@@ -984,10 +993,17 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +	} else {
 +
 +		/* Check for returning packet's stored counterpart */
-+		req_p = LIST_FIND(&request_p_list_udp, request_p_cmp,
++	/*	req_p = LIST_FIND(&request_p_list_udp, request_p_cmp,
 +				  struct request_p *, xid,
-+				  ct->tuplehash[!dir].tuple.src.ip,
++				  ct->tuplehash[!dir].tuple.src.u3.ip,
 +				  ct->tuplehash[!dir].tuple.src.u.all);
++
++	*/
++		list_for_each_entry(p, &request_p_list_udp, list)
++			if (p->xid == xid &&
++			    p->ip == ct->tuplehash[!dir].tuple.src.u3.ip &&
++			    p->port == ct->tuplehash[!dir].tuple.src.u.all)
++				req_p = p;
 +
 +		/* Drop unexpected packets */
 +		if (!req_p) {
@@ -1030,17 +1046,17 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +		if (port_buf) {
 +			DEBUGP("port found: %u\n", port_buf);
 +
-+                        exp = ip_conntrack_expect_alloc(ct);
++                        exp = nf_conntrack_expect_alloc(ct);
 +                        if (!exp) {
 +                          ret = NF_DROP;
 +                          goto out;
 +                        }
 +
 +			/* Watch out, Radioactive-Man! */
-+			exp->tuple.src.ip = ct->tuplehash[!dir].tuple.src.ip;
-+			exp->tuple.dst.ip = ct->tuplehash[!dir].tuple.dst.ip;
-+			exp->mask.src.ip = 0xffffffff;
-+			exp->mask.dst.ip = 0xffffffff;
++			exp->tuple.src.u3.ip = ct->tuplehash[!dir].tuple.src.u3.ip;
++			exp->tuple.dst.u3.ip = ct->tuplehash[!dir].tuple.dst.u3.ip;
++			exp->mask.src.u3.ip = 0xffffffff;
++			exp->mask.dst.u3.ip = 0xffffffff;
 +
 +			switch (req_p->proto) {
 +				case IPPROTO_UDP:
@@ -1065,8 +1081,8 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +			exp->master = ct;
 +
 +			DEBUGP("expect related ip   %u.%u.%u.%u:0-%u.%u.%u.%u:%u proto=%u\n",
-+				NIPQUAD(exp->tuple.src.ip),
-+				NIPQUAD(exp->tuple.dst.ip),
++				NIPQUAD(exp->tuple.src.u3.ip),
++				NIPQUAD(exp->tuple.dst.u3.ip),
 +				port_buf, req_p->proto);
 +
 +			DEBUGP("expect related mask %u.%u.%u.%u:0-%u.%u.%u.%u:65535 proto=%u\n",
@@ -1074,7 +1090,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +				NIPQUAD(exp->mask.dst.ip),
 +				exp->mask.dst.protonum);
 +
-+			if (ip_conntrack_expect_related(exp) != 0) {
++			if (nf_conntrack_expect_related(exp) != 0) {
 +        		        ret = NF_DROP;
 +        		}
 +		}
@@ -1091,9 +1107,9 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +
 +/* RPC UDP helper */
 +/* static int help(const struct iphdr *iph, size_t len,
-+		struct ip_conntrack *ct, enum ip_conntrack_info ctinfo) */
-+static int help(struct sk_buff **pskb,
-+		struct ip_conntrack *ct, enum ip_conntrack_info ctinfo)
++		struct nf_conn *ct, enum ip_conntrack_info ctinfo) */
++static int help(struct sk_buff **pskb, unsigned int protoff,
++		struct nf_conn *ct, enum ip_conntrack_info ctinfo)
 +{
 +	int dir;
 +	int crp_ret;
@@ -1105,7 +1121,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +	const u_int16_t *chsm;
 +
 +	/* Not whole UDP header? */
-+        iph=(*pskb)->nh.iph;
++        iph=ip_hdr(*pskb);
 +	udph = skb_header_pointer(*pskb,iph->ihl*4,sizeof(_udph),&_udph);
 +	if (!udph)
 +		return NF_ACCEPT;
@@ -1169,7 +1185,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +}
 +
 +
-+static struct ip_conntrack_helper rpc_helpers[MAX_PORTS];
++static struct nf_conntrack_helper rpc_helpers[MAX_PORTS];
 +static char rpc_names[MAX_PORTS][10];
 +
 +static void fini(void);
@@ -1184,7 +1200,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +		ports[0] = RPC_PORT;
 +
 +	for (port = 0; (port < MAX_PORTS) && ports[port]; port++) {
-+		memset(&rpc_helpers[port], 0, sizeof(struct ip_conntrack_helper));
++		memset(&rpc_helpers[port], 0, sizeof(struct nf_conntrack_helper));
 +
 +		tmpname = &rpc_names[port][0];
 +		if (ports[port] == RPC_PORT)
@@ -1209,17 +1225,17 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +
 +		PRINTK("registering helper for port #%d: %d/UDP\n", port, ports[port]);
 +		PRINTK("helper match ip   %u.%u.%u.%u:%u->%u.%u.%u.%u:%u\n",
-+			NIPQUAD(rpc_helpers[port].tuple.dst.ip),
++			NIPQUAD(rpc_helpers[port].tuple.dst.u3.ip),
 +			ntohs(rpc_helpers[port].tuple.dst.u.udp.port),
-+			NIPQUAD(rpc_helpers[port].tuple.src.ip),
++			NIPQUAD(rpc_helpers[port].tuple.src.u3.ip),
 +			ntohs(rpc_helpers[port].tuple.src.u.udp.port));
 +		PRINTK("helper match mask %u.%u.%u.%u:%u->%u.%u.%u.%u:%u\n",
-+			NIPQUAD(rpc_helpers[port].mask.dst.ip),
++			NIPQUAD(rpc_helpers[port].mask.dst.u3.ip),
 +			ntohs(rpc_helpers[port].mask.dst.u.udp.port),
-+			NIPQUAD(rpc_helpers[port].mask.src.ip),
++			NIPQUAD(rpc_helpers[port].mask.src.u3.ip),
 +			ntohs(rpc_helpers[port].mask.src.u.udp.port));
 +
-+		ret = ip_conntrack_helper_register(&rpc_helpers[port]);
++		ret = nf_conntrack_helper_register(&rpc_helpers[port]);
 +
 +		if (ret) {
 +			printk("ERROR registering port %d\n",
@@ -1244,7 +1260,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +
 +	for (port = 0; (port < ports_n_c) && ports[port]; port++) {
 +		DEBUGP("unregistering port %d\n", ports[port]);
-+		ip_conntrack_helper_unregister(&rpc_helpers[port]);
++		nf_conntrack_helper_unregister(&rpc_helpers[port]);
 +	}
 +}
 +
@@ -1259,8 +1275,8 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +
 diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ipt_rpc.c linux/net/ipv4/netfilter/ipt_rpc.c
 --- linux/net/ipv4/netfilter/ipt_rpc.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/net/ipv4/netfilter/ipt_rpc.c	2006-05-04 11:26:08.000000000 +0200
-@@ -0,0 +1,443 @@
++++ linux/net/ipv4/netfilter/ipt_rpc.c	2007-08-15 01:40:43.000000000 +0200
+@@ -0,0 +1,448 @@
 +/* RPC extension for IP connection matching, Version 2.2
 + * (C) 2000 by Marcelo Barbosa Lima <marcelo.lima@dcc.unicamp.br>
 + *	- original rpc tracking module
@@ -1314,9 +1330,8 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ipt_rpc.c linux/net/ipv4/n
 +#include <linux/list.h>
 +#include <linux/udp.h>
 +#include <linux/tcp.h>
-+#include <linux/netfilter_ipv4/ip_conntrack.h>
 +#include <linux/netfilter_ipv4/ip_tables.h>
-+#include <linux/netfilter_ipv4/ip_conntrack_rpc.h>
++#include <linux/netfilter/nf_conntrack_rpc.h>
 +#include <linux/netfilter_ipv4/ipt_rpc.h>
 +
 +#define MAX_PORTS 8
@@ -1376,8 +1391,6 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ipt_rpc.c linux/net/ipv4/n
 +} while (0)
 +#endif
 +
-+#include <linux/netfilter_ipv4/listhelp.h>
-+
 +const int IPT_RPC_CHAR_LEN = 11;
 +
 +static int k_atoi(char *string)
@@ -1425,11 +1438,11 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ipt_rpc.c linux/net/ipv4/n
 +
 +
 +static int check_rpc_packet(const u_int32_t *data, const void *matchinfo,
-+			int *hotdrop, int dir, struct ip_conntrack *ct,
++			int *hotdrop, int dir, struct nf_conn *ct,
 +			int offset, struct list_head request_p_list)
 +{
 +	const struct ipt_rpc_info *rpcinfo = matchinfo;
-+	struct request_p *req_p;
++	struct request_p *req_p = NULL, *p;
 +	u_int32_t xid;
 +
 +
@@ -1473,28 +1486,34 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ipt_rpc.c linux/net/ipv4/n
 +			case IPPROTO_TCP:
 +				write_lock_bh(&ipct_rpc_tcp_lock);
 +		}
-+		req_p = LIST_FIND(&request_p_list, request_p_cmp,
++/*		req_p = LIST_FIND(&request_p_list, request_p_cmp,
 +				  struct request_p *, xid,
-+				  ct->tuplehash[dir].tuple.src.ip,
++				  ct->tuplehash[dir].tuple.src.u3.ip,
 +				  ct->tuplehash[dir].tuple.src.u.all);
++*/
++		list_for_each_entry(p, &request_p_list, list)
++			if (p->xid == xid &&
++			    p->ip == ct->tuplehash[!dir].tuple.src.u3.ip &&
++			    p->port == ct->tuplehash[!dir].tuple.src.u.all)
++				req_p = p;
 +
 +		if (req_p) {
 +			DEBUGP("found req_p for xid=%u proto=%u %u.%u.%u.%u:%u\n",
 +				xid, ct->tuplehash[dir].tuple.dst.protonum,
-+				NIPQUAD(ct->tuplehash[dir].tuple.src.ip),
++				NIPQUAD(ct->tuplehash[dir].tuple.src.u3.ip),
 +				ntohs(ct->tuplehash[dir].tuple.src.u.all));
 +
 +			/* .. remove it */
 +			if (del_timer(&req_p->timeout))
 +				req_p->timeout.expires = 0;
 +
-+       			LIST_DELETE(&request_p_list, req_p);
++       			list_del(&req_p->list);
 +			DEBUGP("RPC req_p removed. [done]\n");
 +
 +		} else {
 +			DEBUGP("no req_p found for xid=%u proto=%u %u.%u.%u.%u:%u\n",
 +				xid, ct->tuplehash[dir].tuple.dst.protonum,
-+				NIPQUAD(ct->tuplehash[dir].tuple.src.ip),
++				NIPQUAD(ct->tuplehash[dir].tuple.src.u3.ip),
 +				ntohs(ct->tuplehash[dir].tuple.src.u.all));
 +
 +		}
@@ -1525,7 +1544,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ipt_rpc.c linux/net/ipv4/n
 +		 const struct net_device *out, const void *matchinfo,
 +		 int offset, unsigned int protoff, int *hotdrop)
 +{
-+	struct ip_conntrack *ct;
++	struct nf_conn *ct;
 +	enum ip_conntrack_info ctinfo;
 +	const u_int32_t *data;
 +	enum ip_conntrack_dir dir;
@@ -1538,13 +1557,13 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ipt_rpc.c linux/net/ipv4/n
 +        u_int16_t datalen; /* stes */
 +
 +	/* Initialization stes - see 2.4 ip_tables.c ipt_do_table() */
-+	ip = skb->nh.iph;
++	ip = ip_hdr(skb);
 +	hdr = (u_int32_t *)ip + ip->ihl;
 +	datalen = skb->len - ip->ihl * 4;
 +
 +	DEBUGP("new packet to evaluate ..\n");
 +
-+	ct = ip_conntrack_get((struct sk_buff *)skb, &ctinfo);
++	ct = nf_ct_get((struct sk_buff *)skb, &ctinfo);
 +	if (!ct) {
 +		DEBUGP("no ct available [skip]\n");
 +		return 0;
@@ -1669,10 +1688,12 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ipt_rpc.c linux/net/ipv4/n
 +	return 1;
 +}
 +
-+static struct ipt_match rpc_match = {
++static struct xt_match rpc_match = {
 +        .name           = "rpc",
-+        .match          = &match,
-+        .checkentry     = &checkentry,
++	.family		= AF_INET,
++        .match          = match,
++	.matchsize	= sizeof(struct ipt_rpc_info),
++        .checkentry     = checkentry,
 +        .me             = THIS_MODULE,
 +};
 +
@@ -1690,14 +1711,14 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ipt_rpc.c linux/net/ipv4/n
 +		ports_n_c++;
 +	}
 +	
-+	return ipt_register_match(&rpc_match);
++	return xt_register_match(&rpc_match);
 +}
 +
 +
 +static void fini(void)
 +{
 +	DEBUGP("unregistering match\n");
-+	ipt_unregister_match(&rpc_match);
++	xt_unregister_match(&rpc_match);
 +}
 +
 +
