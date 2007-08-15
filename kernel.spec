@@ -242,6 +242,7 @@ Patch19:	kernel-pom-ng-geoip.patch
 Patch20:	kernel-pom-ng-ipp2p.patch
 Patch21:	kernel-pom-ng-time.patch
 Patch22:	kernel-pom-ng-rsh.patch
+Patch23:	kernel-pom-ng-rpc.patch
 
 Patch40:	kernel-layer7.patch
  
@@ -796,6 +797,9 @@ install %{SOURCE5} Makefile.ppclibs
 
 # kernel-pom-ng-rsh.patch
 %patch22 -p1
+
+# kernel-pom-ng-rpc.patch
+%patch23 -p1
 
 # kernel-layer7.patch
 %patch40 -p1
