@@ -244,6 +244,9 @@ Patch21:	kernel-pom-ng-time.patch
 Patch22:	kernel-pom-ng-rsh.patch
 Patch23:	kernel-pom-ng-rpc.patch
 
+# based on http://www.svn.barbara.eu.org/ipt_account/attachment/wiki/Software/ipt_account-0.1.21-20070804164729.tar.gz?format=raw
+Patch38:	kernel-ipt_account.patch
+
 # based on http://www.intra2net.com/de/produkte/opensource/ipt_account/pom-ng-ipt_ACCOUNT-1.10.tgz
 Patch39:	kernel-ipt_ACCOUNT.patch
 
@@ -803,6 +806,9 @@ install %{SOURCE5} Makefile.ppclibs
 
 # kernel-pom-ng-rpc.patch
 %patch23 -p1
+
+# kernel-ipt_account.patch
+%patch38 -p1
 
 # kernel-ipt_ACCOUNT.patch
 %patch39 -p1
