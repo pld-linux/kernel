@@ -11,7 +11,6 @@
 # - update xen patch for 2.6.21
 # - Linux ABI - needs update.
 # - pom-ng quake3-conntrack-nat -> nf_conntrack ?
-# - pom-ng rpc -> nf_conntrack ?
 # - pom-ng rtsp-conntrack -> nf_conntrack ?
 # - pom-ng talk-conntrack-nat -> nf_conntrack ?
 # - nf-hipac ?
@@ -114,7 +113,7 @@
 %define		_mkvmlinuz_ver		1.3
 
 %define		_basever		2.6.22
-%define		_postver		.2
+%define		_postver		.3
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
@@ -163,7 +162,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	1bf6e4e5100b9af1f5eb361cff5a443e
+# Source1-md5:	2ada3008a04887c7aac105644333bd31
 %endif
 
 Source3:	kernel-autoconf.h
