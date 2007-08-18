@@ -724,10 +724,8 @@ Provides:	kernel-source = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description source
-This is the source code for the Linux kernel. It is required to build
-most C programs as they depend on constants defined in here. You can
-also build a custom kernel that is better tuned to your particular
-hardware.
+This is the source code for the Linux kernel. You can build a custom kernel
+that is better tuned to your particular hardware.
 
 %description source -l de
 Das Kernel-Source-Paket enthält den source code (C/Assembler-Code) des
