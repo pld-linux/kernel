@@ -120,7 +120,7 @@
 %define		_rel			0.2
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
-%define		_netfilter_snap		20061213
+%define		_netfilter_snap		20070806
 %define		_nf_hipac_ver		0.9.1
 
 %define		_enable_debug_packages			0
