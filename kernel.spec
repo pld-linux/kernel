@@ -172,7 +172,7 @@ Source7:	kernel-module-build.pl
 
 # TODO - cleanup
 Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
-# Source14-md5:	5c96899f30a0bdd5ff044ac58e3d4b24
+# Source14-md5:	f2563a2d748c7480559e8d3ff77eb18a
 
 Source20:	kernel-i386.config
 Source21:	kernel-x86_64.config
