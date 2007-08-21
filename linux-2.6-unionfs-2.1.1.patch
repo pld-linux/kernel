@@ -810,7 +810,7 @@ index 0000000..d77608e
 +					    lower_dentry->d_inode);
 +	}
 +	lower_dir_dentry = lock_parent(lower_dentry);
-+	err = vfs_unlink(lower_dir_dentry->d_inode, lower_dentry);
++	err = vfs_unlink(lower_dir_dentry->d_inode, lower_dentry, NULL);
 +	unlock_dir(lower_dir_dentry);
 +
 +out:
@@ -2039,7 +2039,7 @@ index 0000000..4f6da6f
 +	 * quota, or something else happened so let's unlink; we don't
 +	 * really care about the return value of vfs_unlink
 +	 */
-+	vfs_unlink(new_lower_parent_dentry->d_inode, new_lower_dentry);
++	vfs_unlink(new_lower_parent_dentry->d_inode, new_lower_dentry, NULL);
 +
 +	if (copyup_file) {
 +		/* need to close the file */
@@ -3798,7 +3798,7 @@ index 0000000..a72f711
 +				break;
 +			}
 +			if (lower_dentry->d_inode)
-+				err = vfs_unlink(lower_dir, lower_dentry);
++				err = vfs_unlink(lower_dir, lower_dentry, NULL);
 +			dput(lower_dentry);
 +			if (err)
 +				break;
@@ -4949,7 +4949,7 @@ index 0000000..9adf272
 +		err = is_robranch_super(new_dentry->d_sb, dbstart(new_dentry));
 +		if (!err)
 +			err = vfs_unlink(lower_dir_dentry->d_inode,
-+					 whiteout_dentry);
++					 whiteout_dentry, NULL);
 +
 +		fsstack_copy_attr_times(dir, lower_dir_dentry->d_inode);
 +		dir->i_nlink = unionfs_get_nlinks(dir);
@@ -4977,7 +4977,7 @@ index 0000000..9adf272
 +	lower_dir_dentry = lock_parent(lower_new_dentry);
 +	if (!(err = is_robranch(old_dentry)))
 +		err = vfs_link(lower_old_dentry, lower_dir_dentry->d_inode,
-+			       lower_new_dentry);
++			       lower_new_dentry, NULL);
 +	unlock_dir(lower_dir_dentry);
 +
 +docopyup:
@@ -5003,7 +5003,7 @@ index 0000000..9adf272
 +				/* do vfs_link */
 +				err = vfs_link(lower_old_dentry,
 +					       lower_dir_dentry->d_inode,
-+					       lower_new_dentry);
++					       lower_new_dentry, NULL);
 +				unlock_dir(lower_dir_dentry);
 +				goto check_link;
 +			}
@@ -5100,7 +5100,7 @@ index 0000000..9adf272
 +
 +		if (!(err = is_robranch_super(dentry->d_sb, bstart)))
 +			err = vfs_unlink(lower_dir_dentry->d_inode,
-+					 whiteout_dentry);
++					 whiteout_dentry, NULL);
 +		dput(whiteout_dentry);
 +
 +		fsstack_copy_attr_times(dir, lower_dir_dentry->d_inode);
@@ -5156,7 +5156,7 @@ index 0000000..9adf272
 +			mode = S_IALLUGO;
 +			err =
 +				vfs_symlink(lower_dir_dentry->d_inode,
-+					    lower_dentry, symname, mode);
++					    lower_dentry, symname, mode, NULL);
 +		}
 +		unlock_dir(lower_dir_dentry);
 +
@@ -5300,7 +5300,7 @@ index 0000000..9adf272
 +		}
 +
 +		err = vfs_mkdir(lower_parent_dentry->d_inode, lower_dentry,
-+				mode);
++				mode, NULL);
 +
 +		unlock_dir(lower_parent_dentry);
 +
@@ -5407,7 +5407,7 @@ index 0000000..9adf272
 +		/* found a.wh.foo entry, remove it then do vfs_mkdir */
 +		if (!(err = is_robranch_super(dentry->d_sb, bstart)))
 +			err = vfs_unlink(lower_parent_dentry->d_inode,
-+					 whiteout_dentry);
++					 whiteout_dentry, NULL);
 +		dput(whiteout_dentry);
 +
 +		unlock_dir(lower_parent_dentry);
@@ -5444,7 +5444,7 @@ index 0000000..9adf272
 +		}
 +
 +		err = vfs_mknod(lower_parent_dentry->d_inode,
-+				lower_dentry, mode, dev);
++				lower_dentry, mode, dev, NULL);
 +
 +		if (err) {
 +			unlock_dir(lower_parent_dentry);
@@ -7947,7 +7947,7 @@ index 0000000..362f9ce
 +		lower_wh_dir_dentry = lock_parent(lower_wh_dentry);
 +		if (!(err = is_robranch_super(old_dentry->d_sb, bindex)))
 +			err = vfs_unlink(lower_wh_dir_dentry->d_inode,
-+					 lower_wh_dentry);
++					 lower_wh_dentry, NULL);
 +
 +		dput(lower_wh_dentry);
 +		unlock_dir(lower_wh_dir_dentry);
@@ -8066,7 +8066,7 @@ index 0000000..362f9ce
 +		unlink_dir_dentry = lock_parent(unlink_dentry);
 +		if (!(err = is_robranch_super(old_dir->i_sb, bindex)))
 +			err = vfs_unlink(unlink_dir_dentry->d_inode,
-+					 unlink_dentry);
++					 unlink_dentry, NULL);
 +
 +		fsstack_copy_attr_times(new_dentry->d_parent->d_inode,
 +					unlink_dir_dentry->d_inode);
@@ -8466,7 +8466,7 @@ index 0000000..ce17a8d
 +	struct sioq_args *args = container_of(work, struct sioq_args, work);
 +	struct mkdir_args *m = &args->mkdir;
 +
-+	args->err = vfs_mkdir(m->parent, m->dentry, m->mode);
++	args->err = vfs_mkdir(m->parent, m->dentry, m->mode, NULL);
 +	complete(&args->comp);
 +}
 +
@@ -8475,7 +8475,7 @@ index 0000000..ce17a8d
 +	struct sioq_args *args = container_of(work, struct sioq_args, work);
 +	struct mknod_args *m = &args->mknod;
 +
-+	args->err = vfs_mknod(m->parent, m->dentry, m->mode, m->dev);
++	args->err = vfs_mknod(m->parent, m->dentry, m->mode, m->dev, NULL);
 +	complete(&args->comp);
 +}
 +
@@ -8484,7 +8484,7 @@ index 0000000..ce17a8d
 +	struct sioq_args *args = container_of(work, struct sioq_args, work);
 +	struct symlink_args *s = &args->symlink;
 +
-+	args->err = vfs_symlink(s->parent, s->dentry, s->symbuf, s->mode);
++	args->err = vfs_symlink(s->parent, s->dentry, s->symbuf, s->mode, NULL);
 +	complete(&args->comp);
 +}
 +
@@ -8493,7 +8493,7 @@ index 0000000..ce17a8d
 +	struct sioq_args *args = container_of(work, struct sioq_args, work);
 +	struct unlink_args *u = &args->unlink;
 +
-+	args->err = vfs_unlink(u->parent, u->dentry);
++	args->err = vfs_unlink(u->parent, u->dentry, NULL);
 +	complete(&args->comp);
 +}
 +
@@ -10481,7 +10481,7 @@ index 0000000..4ea350a
 +	/* avoid destroying the lower inode if the file is in use */
 +	dget(lower_dentry);
 +	if (!(err = is_robranch_super(dentry->d_sb, bindex)))
-+		err = vfs_unlink(lower_dir_dentry->d_inode, lower_dentry);
++		err = vfs_unlink(lower_dir_dentry->d_inode, lower_dentry, NULL);
 +	/* if vfs_unlink succeeded, update our inode's times */
 +	if (!err)
 +		unionfs_copy_attr_times(dentry->d_inode);
