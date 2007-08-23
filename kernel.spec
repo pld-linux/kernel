@@ -249,6 +249,7 @@ Patch38:	kernel-ipt_account.patch
 # based on http://www.intra2net.com/de/produkte/opensource/ipt_account/pom-ng-ipt_ACCOUNT-1.10.tgz
 Patch39:	kernel-ipt_ACCOUNT.patch
 
+# netfilter-layer7-v2.13.tar.gz from http://l7-filter.sf.net/
 Patch40:	kernel-layer7.patch
  
 ### End netfilter
