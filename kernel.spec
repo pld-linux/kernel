@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.22.1 work in progress
+# STATUS: 2.6.22.5 work in progress
 #
 # TODO:
 # - update all config files (i386 and x86_64 up to date)
@@ -113,7 +113,7 @@
 %define		_mkvmlinuz_ver		1.3
 
 %define		_basever		2.6.22
-%define		_postver		.4
+%define		_postver		.5
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
@@ -162,7 +162,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	9041cc4a8570b5762a68b23235b6acd4
+# Source1-md5:	27544a58763bbd4ce497a77658af744a
 %endif
 
 Source3:	kernel-autoconf.h
