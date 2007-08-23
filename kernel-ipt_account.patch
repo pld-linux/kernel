@@ -1014,3 +1014,58 @@ diff -uNrp linux/net/ipv4/netfilter/Makefile.a linux/net/ipv4/netfilter/Makefile
  
  obj-$(CONFIG_IP_NF_MATCH_RECENT) += ipt_recent.o
  obj-$(CONFIG_IP_NF_MATCH_GEOIP) += ipt_geoip.o
+diff -Nur linux/net/ipv4/netfilter/Kconfig linux/net/ipv4/netfilter/Kconfig
+--- linux/net/ipv4/netfilter/Kconfig	2006-05-02 23:38:44.000000000 +0200
++++ linux/net/ipv4/netfilter/Kconfig	2006-05-04 11:23:02.000000000 +0200
+@@ -606,5 +606,51 @@
+ 	  Allows altering the ARP packet payload: source and destination
+ 	  hardware and network addresses.
+ 
++config IP_NF_MATCH_ACCOUNT
++	tristate "account match support"
++	depends on IP_NF_IPTABLES && PROC_FS
++	help
++	  This match is used for accounting traffic for all hosts in
++	  defined network/netmask. 
++	  
++	  Features:
++	  - long (one counter per protocol TCP/UDP/IMCP/Other) and short statistics
++	  - one iptables rule for all hosts in network/netmask
++	  - loading/saving counters (by reading/writting to procfs entries)
++	  
++	  Example usage:
++	  
++	  account traffic for/to 192.168.0.0/24 network into table mynetwork:
++	  
++	  # iptables -A FORWARD -m account --aname mynetwork --aaddr 192.168.0.0/24
++	  
++	  account traffic for/to WWW serwer for 192.168.0.0/24 network into table 
++	  mywwwserver:
++	  
++	  # iptables -A INPUT -p tcp --dport 80 
++	    -m account --aname mywwwserver --aaddr 192.168.0.0/24 --ashort
++	  # iptables -A OUTPUT -p tcp --sport 80
++	    -m account --aname mywwwserver --aaddr 192.168.0.0/24 --ashort    
++	  
++	  read counters:
++	  
++	  # cat /proc/net/ipt_account/mynetwork
++	  # cat /proc/net/ipt_account/mywwwserver
++	  
++	  set counters:
++	  
++	  # echo "ip = 192.168.0.1 packets_src = 0" > /proc/net/ipt_account/mywwserver
++	  
++	  Webpage: 
++	    http://www.barbara.eu.org/~quaker/ipt_account/
++
++config IP_NF_MATCH_ACCOUNT_DEBUG
++	bool "account debugging output"
++	depends on IP_NF_MATCH_ACCOUNT
++	help
++	  Say Y to get lots of debugging output.
++	  
++
++
+ endmenu
+ 
