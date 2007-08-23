@@ -1232,7 +1232,7 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/doublefault.c linux-2.6.22.1/arch/i38
 -#define STACK_START (unsigned long)(doublefault_stack+DOUBLEFAULT_STACKSIZE)
 +#define STACK_START (unsigned long)(doublefault_stack+DOUBLEFAULT_STACKSIZE-2)
  
- #define ptr_ok(x) ((x) > PAGE_OFFSET && (x) < PAGE_OFFSET + 0x1000000)
+ #define ptr_ok(x) ((x) > PAGE_OFFSET && (x) < PAGE_OFFSET + MAXMEM)
  
  static void doublefault_fn(void)
  {
@@ -1244,7 +1244,7 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/doublefault.c linux-2.6.22.1/arch/i38
 -	gdt = gdt_desc.address;
 +	gdt = (unsigned long)gdt_desc.address;
  
- 	printk("double fault, gdt at %08lx [%d bytes]\n", gdt, gdt_desc.size);
+ 	printk(KERN_EMERG "PANIC: double fault, gdt at %08lx [%d bytes]\n", gdt, gdt_desc.size);
  
 @@ -59,10 +59,10 @@ struct tss_struct doublefault_tss __cach
  		/* 0x2 bit is always set */
@@ -1256,9 +1256,9 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/doublefault.c linux-2.6.22.1/arch/i38
  		.ss		= __KERNEL_DS,
 -		.ds		= __USER_DS,
 +		.ds		= __KERNEL_DS,
+ 		.fs		= __KERNEL_PERCPU,
  
  		.__cr3		= __pa(swapper_pg_dir)
- 	}
 diff -urNp linux-2.6.22.1/arch/i386/kernel/efi.c linux-2.6.22.1/arch/i386/kernel/efi.c
 --- linux-2.6.22.1/arch/i386/kernel/efi.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/arch/i386/kernel/efi.c	2007-08-02 11:38:45.000000000 -0400
