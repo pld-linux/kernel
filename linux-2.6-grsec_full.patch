@@ -323,6 +323,25 @@ diff -urNp linux-2.6.22.1/arch/i386/boot/setup.S linux-2.6.22.1/arch/i386/boot/s
  
  	# Jump to the 32bit entry point
  	jmpl *(code32_start - start + (DELTA_INITSEG << 4))(%esi)
+diff -urNp linux-2.6.22/arch/i386/boot/video.S linux-2.6.22/arch/i386/boot/video.S
+--- linux-2.6.22/arch/i386/boot/video.S	2007-07-10 14:56:30.000000000 -0400
++++ linux-2.6.22/arch/i386/boot/video.S	2007-07-10 14:56:30.000000000 -0400
+@@ -96,6 +96,7 @@
+ #define PARAM_LFB_PAGES		0x32
+ #define PARAM_VESA_ATTRIB	0x34
+ #define PARAM_CAPABILITIES	0x36
++#define PARAM_VESAPM_SIZE	0x3a
+ 
+ /* Define DO_STORE according to CONFIG_VIDEO_RETAIN */
+ #ifdef CONFIG_VIDEO_RETAIN
+@@ -280,6 +281,7 @@ dac_done:
+ 
+ 	movw	%es, %fs:(PARAM_VESAPM_SEG)
+ 	movw	%di, %fs:(PARAM_VESAPM_OFF)
++	movw	%cx, %fs:(PARAM_VESAPM_SIZE)
+ no_pm:	ret
+ 
+ # The video mode menu
 diff -urNp linux-2.6.22.1/arch/i386/Kconfig linux-2.6.22.1/arch/i386/Kconfig
 --- linux-2.6.22.1/arch/i386/Kconfig	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/arch/i386/Kconfig	2007-08-03 12:36:16.000000000 -0400
@@ -498,10 +517,10 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/alternative.c linux-2.6.22.1/arch/i38
  }
  
  #ifdef CONFIG_SMP
-@@ -191,29 +203,53 @@ static void alternatives_smp_lock(u8 **s
+@@ -191,29 +203,53 @@ static void alternatives_smp_lock(u8 **s 
  {
-	u8 **ptr;
-
+ 	u8 **ptr;
+ 
 +#ifdef CONFIG_PAX_KERNEXEC
 +	unsigned long cr0;
 +
@@ -542,12 +561,12 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/alternative.c linux-2.6.22.1/arch/i38
  	for (ptr = start; ptr < end; ptr++) {
  		if (*ptr < text)
  			continue;
-		if (*ptr > text_end)
+ 		if (*ptr > text_end)
  			continue;
 -		nop_out(*ptr, 1);
 -	};
 +		nop_out(*ptr + __KERNEL_TEXT_OFFSET, 1);
-+	}
++ 	}
 +
 +#ifdef CONFIG_PAX_KERNEXEC
 +	pax_close_kernel(cr0);
@@ -1476,7 +1495,7 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/entry.S linux-2.6.22.1/arch/i386/kern
 +	__SAVE_ALL(__KERNEL_DS); \
 +	GET_CR0_INTO_EDX; \
 +	movl %edx, %esi; \
-+	orl $0x10000, %edx; \
++	orl $X86_CR0_WP, %edx; \
 +	xorl %edx, %esi; \
 +	SET_CR0_FROM_EDX
 +#elif defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC) || defined(CONFIG_PAX_MEMORY_UDEREF)
@@ -1640,7 +1659,7 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/entry.S linux-2.6.22.1/arch/i386/kern
 +#ifdef CONFIG_PAX_KERNEXEC
 +	GET_CR0_INTO_EDX
 +	movl %edx, %esi
-+	orl $0x10000, %edx
++	orl $X86_CR0_WP, %edx
 +	xorl %edx, %esi
 +	SET_CR0_FROM_EDX
 +#endif
@@ -2237,10 +2256,91 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/irq.c linux-2.6.22.1/arch/i386/kernel
  
  		asm volatile(
  			"       xchgl   %%ebx,%%esp     \n"
-diff -urNp linux-2.6.22.1/arch/i386/kernel/kprobes.c linux-2.6.22.1/arch/i386/kernel/kprobes.c
---- linux-2.6.22.1/arch/i386/kernel/kprobes.c	2007-07-10 14:56:30.000000000 -0400
-+++ linux-2.6.22.1/arch/i386/kernel/kprobes.c	2007-08-02 11:38:45.000000000 -0400
-@@ -651,7 +651,7 @@ int __kprobes kprobe_exceptions_notify(s
+diff -urNp linux-2.6.22/arch/i386/kernel/kprobes.c linux-2.6.22/arch/i386/kernel/kprobes.c
+--- linux-2.6.22/arch/i386/kernel/kprobes.c	2007-07-10 14:56:30.000000000 -0400
++++ linux-2.6.22/arch/i386/kernel/kprobes.c	2007-07-10 14:56:30.000000000 -0400
+@@ -48,9 +48,24 @@ static __always_inline void set_jmp_op(v
+ 		char op;
+ 		long raddr;
+ 	} __attribute__((packed)) *jop;
+-	jop = (struct __arch_jmp_op *)from;
++
++#ifdef CONFIG_PAX_KERNEXEC
++	unsigned long cr0;
++#endif
++
++	jop = (struct __arch_jmp_op *)(from + __KERNEL_TEXT_OFFSET);
++
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_open_kernel(cr0);
++#endif
++
+ 	jop->raddr = (long)(to) - ((long)(from) + 5);
+ 	jop->op = RELATIVEJUMP_INSTRUCTION;
++
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_close_kernel(cr0);
++#endif
++
+ }
+ 
+ /*
+@@ -152,12 +167,26 @@ static int __kprobes is_IF_modifier(kpro
+ 
+ int __kprobes arch_prepare_kprobe(struct kprobe *p)
+ {
++
++#ifdef CONFIG_PAX_KERNEXEC
++	unsigned long cr0;
++#endif
++
+ 	/* insn: must be on special executable page on i386. */
+ 	p->ainsn.insn = get_insn_slot();
+ 	if (!p->ainsn.insn)
+ 		return -ENOMEM;
+ 
+-	memcpy(p->ainsn.insn, p->addr, MAX_INSN_SIZE * sizeof(kprobe_opcode_t));
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_open_kernel(cr0);
++#endif
++
++	memcpy(p->ainsn.insn, p->addr + __KERNEL_TEXT_OFFSET, MAX_INSN_SIZE * sizeof(kprobe_opcode_t));
++
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_close_kernel(cr0);
++#endif
++
+ 	p->opcode = *p->addr;
+ 	if (can_boost(p->addr)) {
+ 		p->ainsn.boostable = 0;
+@@ -222,7 +251,7 @@ static void __kprobes prepare_singlestep
+ 	if (p->opcode == BREAKPOINT_INSTRUCTION)
+ 		regs->eip = (unsigned long)p->addr;
+ 	else
+-		regs->eip = (unsigned long)p->ainsn.insn;
++		regs->eip = (unsigned long)p->ainsn.insn - __KERNEL_TEXT_OFFSET;
+ }
+ 
+ /* Called with kretprobe_lock held */
+@@ -328,7 +357,7 @@ ss_probe:
+ 	if (p->ainsn.boostable == 1 && !p->post_handler){
+ 		/* Boost up -- we can execute copied instructions directly */
+ 		reset_current_kprobe();
+-		regs->eip = (unsigned long)p->ainsn.insn;
++		regs->eip = (unsigned long)p->ainsn.insn - __KERNEL_TEXT_OFFSET;
+ 		preempt_enable_no_resched();
+ 		return 1;
+ 	}
+@@ -478,7 +507,7 @@ static void __kprobes resume_execution(s
+ 		struct pt_regs *regs, struct kprobe_ctlblk *kcb)
+ {
+ 	unsigned long *tos = (unsigned long *)&regs->esp;
+-	unsigned long copy_eip = (unsigned long)p->ainsn.insn;
++	unsigned long copy_eip = (unsigned long)p->ainsn.insn - __KERNEL_TEXT_OFFSET;
+ 	unsigned long orig_eip = (unsigned long)p->addr;
+ 
+ 	regs->eflags &= ~TF_MASK;
+@@ -651,7 +680,7 @@ int __kprobes kprobe_exceptions_notify(s
  	struct die_args *args = (struct die_args *)data;
  	int ret = NOTIFY_DONE;
  
@@ -3356,7 +3456,7 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/sys_i386.c linux-2.6.22.1/arch/i386/k
 diff -urNp linux-2.6.22.1/arch/i386/kernel/time.c linux-2.6.22.1/arch/i386/kernel/time.c
 --- linux-2.6.22.1/arch/i386/kernel/time.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/arch/i386/kernel/time.c	2007-08-02 11:38:45.000000000 -0400
-@@ -132,18 +132,24 @@ unsigned long profile_pc(struct pt_regs 
+@@ -132,20 +132,30 @@ unsigned long profile_pc(struct pt_regs 
  	if (!v8086_mode(regs) && SEGMENT_IS_KERNEL_CODE(regs->xcs) &&
  	    in_lock_functions(pc)) {
  #ifdef CONFIG_FRAME_POINTER
@@ -3381,7 +3481,13 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/time.c linux-2.6.22.1/arch/i386/kerne
 +#endif
  	}
  #endif
++
++	if (!v8086_mode(regs) && SEGMENT_IS_KERNEL_CODE(regs->xcs))
++		pc += __KERNEL_TEXT_OFFSET;
++
  	return pc;
+ }
+ EXPORT_SYMBOL(profile_pc);
 diff -urNp linux-2.6.22.1/arch/i386/kernel/traps.c linux-2.6.22.1/arch/i386/kernel/traps.c
 --- linux-2.6.22.1/arch/i386/kernel/traps.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/arch/i386/kernel/traps.c	2007-08-02 11:38:45.000000000 -0400
@@ -3598,31 +3704,54 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/vm86.c linux-2.6.22.1/arch/i386/kerne
  	tsk->thread.esp0 = (unsigned long) &info->VM86_TSS_ESP0;
  	if (cpu_has_sep)
  		tsk->thread.sysenter_cs = 0;
-diff -urNp linux-2.6.22.1/arch/i386/kernel/vmi.c linux-2.6.22.1/arch/i386/kernel/vmi.c
---- linux-2.6.22.1/arch/i386/kernel/vmi.c	2007-07-10 14:56:30.000000000 -0400
-+++ linux-2.6.22.1/arch/i386/kernel/vmi.c	2007-08-02 11:38:45.000000000 -0400
-@@ -89,7 +89,19 @@ struct vmi_timer_ops vmi_timer_ops;
- 
- static inline void patch_offset(unsigned char *eip, unsigned char *dest)
+diff -urNp linux-2.6.22/arch/i386/kernel/vmi.c linux-2.6.22/arch/i386/kernel/vmi.c
+--- linux-2.6.22/arch/i386/kernel/vmi.c	2007-07-10 14:56:30.000000000 -0400
++++ linux-2.6.22/arch/i386/kernel/vmi.c	2007-07-10 14:56:30.000000000 -0400
+@@ -96,18 +96,43 @@ static unsigned patch_internal(int call,
  {
--        *(unsigned long *)(eip+1) = dest-eip-5;
+ 	u64 reloc;
+ 	struct vmi_relocation_info *const rel = (struct vmi_relocation_info *)&reloc;
 +
 +#ifdef CONFIG_PAX_KERNEXEC
 +	unsigned long cr0;
-+
-+	pax_open_kernel(cr0);
 +#endif
 +
-+	*(unsigned long *)(eip+1) = dest-eip-5;
+ 	reloc = call_vrom_long_func(vmi_rom, get_reloc,	call);
+ 	switch(rel->type) {
+ 		case VMI_RELOCATION_CALL_REL:
+ 			BUG_ON(len < 5);
 +
 +#ifdef CONFIG_PAX_KERNEXEC
-+	pax_close_kernel(cr0);
++			pax_open_kernel(cr0);
 +#endif
 +
- }
+ 			*(char *)insns = MNEM_CALL;
+ 			patch_offset(insns, rel->eip);
++
++#ifdef CONFIG_PAX_KERNEXEC
++			pax_close_kernel(cr0);
++#endif
++
+ 			return 5;
  
- static unsigned patch_internal(int call, unsigned len, void *insns)
-@@ -485,14 +497,14 @@ static void vmi_set_pud(pud_t *pudp, pud
+ 		case VMI_RELOCATION_JUMP_REL:
+ 			BUG_ON(len < 5);
++
++#ifdef CONFIG_PAX_KERNEXEC
++			pax_open_kernel(cr0);
++#endif
++
+ 			*(char *)insns = MNEM_JMP;
+ 			patch_offset(insns, rel->eip);
++
++#ifdef CONFIG_PAX_KERNEXEC
++			pax_close_kernel(cr0);
++#endif
++
+ 			return 5;
+ 
+ 		case VMI_RELOCATION_NOP:
+@@ -485,14 +510,14 @@ static void vmi_set_pud(pud_t *pudp, pud
  
  static void vmi_pte_clear(struct mm_struct *mm, unsigned long addr, pte_t *ptep)
  {
@@ -3639,7 +3768,7 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/vmi.c linux-2.6.22.1/arch/i386/kernel
  	vmi_check_page_type(__pa(pmd) >> PAGE_SHIFT, VMI_PAGE_PMD);
  	vmi_ops.set_pte(pte, (pte_t *)pmd, VMI_PAGE_PD);
  }
-@@ -521,8 +533,8 @@ vmi_startup_ipi_hook(int phys_apicid, un
+@@ -521,8 +546,8 @@ vmi_startup_ipi_hook(int phys_apicid, un
  	ap.ss = __KERNEL_DS;
  	ap.esp = (unsigned long) start_esp;
  
@@ -3650,7 +3779,7 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/vmi.c linux-2.6.22.1/arch/i386/kernel
  	ap.fs = __KERNEL_PERCPU;
  	ap.gs = 0;
  
-@@ -719,12 +731,20 @@ static inline int __init activate_vmi(vo
+@@ -719,12 +744,20 @@ static inline int __init activate_vmi(vo
  	u64 reloc;
  	const struct vmi_relocation_info *rel = (struct vmi_relocation_info *)&reloc;
  
@@ -3671,7 +3800,7 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/vmi.c linux-2.6.22.1/arch/i386/kernel
  	paravirt_ops.paravirt_enabled = 1;
  	paravirt_ops.kernel_rpl = kernel_cs & SEGMENT_RPL_MASK;
  
-@@ -903,6 +923,10 @@ static inline int __init activate_vmi(vo
+@@ -903,6 +936,10 @@ static inline int __init activate_vmi(vo
  
  	para_fill(safe_halt, Halt);
  
@@ -5724,9 +5853,9 @@ diff -urNp linux-2.6.22.1/arch/i386/mach-voyager/voyager_smp.c linux-2.6.22.1/ar
  	}
  
  	if( ((1<<cpu) & voyager_extended_vic_processors) == 0)
-diff -urNp linux-2.6.22.1/arch/i386/mm/boot_ioremap.c linux-2.6.22.1/arch/i386/mm/boot_ioremap.c
---- linux-2.6.22.1/arch/i386/mm/boot_ioremap.c	2007-07-10 14:56:30.000000000 -0400
-+++ linux-2.6.22.1/arch/i386/mm/boot_ioremap.c	2007-08-02 11:38:45.000000000 -0400
+diff -urNp linux-2.6.22/arch/i386/mm/boot_ioremap.c linux-2.6.22/arch/i386/mm/boot_ioremap.c
+--- linux-2.6.22/arch/i386/mm/boot_ioremap.c	2007-07-10 14:56:30.000000000 -0400
++++ linux-2.6.22/arch/i386/mm/boot_ioremap.c	2007-07-10 14:56:30.000000000 -0400
 @@ -7,57 +7,37 @@
   * Written by Dave Hansen <haveblue@us.ibm.com>
   */
@@ -6161,6 +6290,15 @@ diff -urNp linux-2.6.22.1/arch/i386/mm/fault.c linux-2.6.22.1/arch/i386/mm/fault
  		else
  			printk(KERN_ALERT "BUG: unable to handle kernel paging"
  					" request");
+@@ -560,7 +750,7 @@ no_context:
+ 		 * it's allocated already.
+ 		 */
+ 		if ((page >> PAGE_SHIFT) < max_low_pfn
+-		    && (page & _PAGE_PRESENT)) {
++		    && (page & (_PAGE_PRESENT | _PAGE_PSE)) == _PAGE_PRESENT) {
+ 			page &= PAGE_MASK;
+ 			page = ((__typeof__(page) *) __va(page))[(address >> PAGE_SHIFT)
+ 			                                         & (PTRS_PER_PTE - 1)];
 @@ -645,3 +835,110 @@ void vmalloc_sync_all(void)
  			start = address + PGDIR_SIZE;
  	}
@@ -7022,10 +7160,10 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/irq.c linux-2.6.22.1/arch/i386/pci/irq.c
  };
  
  static int __init pcibios_irq_init(void)
-diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pcbios.c
---- linux-2.6.22.1/arch/i386/pci/pcbios.c	2007-07-10 14:56:30.000000000 -0400
-+++ linux-2.6.22.1/arch/i386/pci/pcbios.c	2007-08-07 08:41:24.000000000 -0400
-@@ -57,50 +57,102 @@ union bios32 {
+diff -urNp linux-2.6.22/arch/i386/pci/pcbios.c linux-2.6.22/arch/i386/pci/pcbios.c
+--- linux-2.6.22/arch/i386/pci/pcbios.c	2007-07-10 14:56:30.000000000 -0400
++++ linux-2.6.22/arch/i386/pci/pcbios.c	2007-07-10 14:56:30.000000000 -0400
+@@ -57,50 +57,119 @@ union bios32 {
  static struct {
  	unsigned long address;
  	unsigned short segment;
@@ -7054,12 +7192,21 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pc
 -	__asm__("lcall *(%%edi); cld"
 +
 +	gdt = get_cpu_gdt_table(smp_processor_id());
-+	pack_descriptor((u32 *)&gdt[GDT_ENTRY_PCIBIOS_CS].a,
-+			(u32 *)&gdt[GDT_ENTRY_PCIBIOS_CS].b,
++
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_open_kernel(cr0);
++#endif
++
++	pack_descriptor((__u32 *)&gdt[GDT_ENTRY_PCIBIOS_CS].a,
++			(__u32 *)&gdt[GDT_ENTRY_PCIBIOS_CS].b,
 +			0UL, 0xFFFFFUL, 0x9B, 0xC);
-+	pack_descriptor((u32 *)&gdt[GDT_ENTRY_PCIBIOS_DS].a,
-+			(u32 *)&gdt[GDT_ENTRY_PCIBIOS_DS].b,
++	pack_descriptor((__u32 *)&gdt[GDT_ENTRY_PCIBIOS_DS].a,
++			(__u32 *)&gdt[GDT_ENTRY_PCIBIOS_DS].b,
 +			0UL, 0xFFFFFUL, 0x93, 0xC);
++
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_close_kernel(cr0);
++#endif
 +
 +	__asm__("movw %w7, %%ds; lcall *(%%edi); push %%ss; pop %%ds; cld"
  		: "=a" (return_code),
@@ -7073,10 +7220,18 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pc
 +		  "r"(__PCIBIOS_DS)
 +		: "memory");
 +
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_open_kernel(cr0);
++#endif
++
 +	gdt[GDT_ENTRY_PCIBIOS_CS].a = 0;
 +	gdt[GDT_ENTRY_PCIBIOS_CS].b = 0;
 +	gdt[GDT_ENTRY_PCIBIOS_DS].a = 0;
 +	gdt[GDT_ENTRY_PCIBIOS_DS].b = 0;
++
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_close_kernel(cr0);
++#endif
 +
  	local_irq_restore(flags);
  
@@ -7108,11 +7263,11 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pc
 +
 +		for (cpu = 0; cpu < NR_CPUS; cpu++) {
 +			gdt = get_cpu_gdt_table(cpu);
-+			pack_descriptor((u32 *)&gdt[GDT_ENTRY_PCIBIOS_CS].a,
-+					(u32 *)&gdt[GDT_ENTRY_PCIBIOS_CS].b,
++			pack_descriptor((__u32 *)&gdt[GDT_ENTRY_PCIBIOS_CS].a,
++					(__u32 *)&gdt[GDT_ENTRY_PCIBIOS_CS].b,
 +					address, length, 0x9b, flags);
-+			pack_descriptor((u32 *)&gdt[GDT_ENTRY_PCIBIOS_DS].a,
-+					(u32 *)&gdt[GDT_ENTRY_PCIBIOS_DS].b,
++			pack_descriptor((__u32 *)&gdt[GDT_ENTRY_PCIBIOS_DS].a,
++					(__u32 *)&gdt[GDT_ENTRY_PCIBIOS_DS].b,
 +					address, length, 0x93, flags);
 +		}
 +
@@ -7143,7 +7298,7 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pc
  
  static int __devinit check_pcibios(void)
  {
-@@ -109,11 +161,13 @@ static int __devinit check_pcibios(void)
+@@ -109,11 +178,13 @@ static int __devinit check_pcibios(void)
  	unsigned long flags, pcibios_entry;
  
  	if ((pcibios_entry = bios32_service(PCI_SERVICE))) {
@@ -7160,7 +7315,7 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pc
  			"jc 1f\n\t"
  			"xor %%ah, %%ah\n"
  			"1:"
-@@ -122,7 +176,8 @@ static int __devinit check_pcibios(void)
+@@ -122,7 +193,8 @@ static int __devinit check_pcibios(void)
  			  "=b" (ebx),
  			  "=c" (ecx)
  			: "1" (PCIBIOS_PCI_BIOS_PRESENT),
@@ -7170,7 +7325,7 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pc
  			: "memory");
  		local_irq_restore(flags);
  
-@@ -158,7 +213,10 @@ static int __devinit pci_bios_find_devic
+@@ -158,7 +230,10 @@ static int __devinit pci_bios_find_devic
  	unsigned short bx;
  	unsigned short ret;
  
@@ -7182,7 +7337,7 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pc
  		"jc 1f\n\t"
  		"xor %%ah, %%ah\n"
  		"1:"
-@@ -168,7 +226,8 @@ static int __devinit pci_bios_find_devic
+@@ -168,7 +243,8 @@ static int __devinit pci_bios_find_devic
  		  "c" (device_id),
  		  "d" (vendor),
  		  "S" ((int) index),
@@ -7192,7 +7347,7 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pc
  	*bus = (bx >> 8) & 0xff;
  	*device_fn = bx & 0xff;
  	return (int) (ret & 0xff00) >> 8;
-@@ -188,7 +247,10 @@ static int pci_bios_read(unsigned int se
+@@ -188,7 +264,10 @@ static int pci_bios_read(unsigned int se
  
  	switch (len) {
  	case 1:
@@ -7204,7 +7359,7 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pc
  			"jc 1f\n\t"
  			"xor %%ah, %%ah\n"
  			"1:"
-@@ -197,10 +259,14 @@ static int pci_bios_read(unsigned int se
+@@ -197,10 +276,14 @@ static int pci_bios_read(unsigned int se
  			: "1" (PCIBIOS_READ_CONFIG_BYTE),
  			  "b" (bx),
  			  "D" ((long)reg),
@@ -7221,7 +7376,7 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pc
  			"jc 1f\n\t"
  			"xor %%ah, %%ah\n"
  			"1:"
-@@ -209,10 +275,14 @@ static int pci_bios_read(unsigned int se
+@@ -209,10 +292,14 @@ static int pci_bios_read(unsigned int se
  			: "1" (PCIBIOS_READ_CONFIG_WORD),
  			  "b" (bx),
  			  "D" ((long)reg),
@@ -7238,7 +7393,7 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pc
  			"jc 1f\n\t"
  			"xor %%ah, %%ah\n"
  			"1:"
-@@ -221,7 +291,8 @@ static int pci_bios_read(unsigned int se
+@@ -221,7 +308,8 @@ static int pci_bios_read(unsigned int se
  			: "1" (PCIBIOS_READ_CONFIG_DWORD),
  			  "b" (bx),
  			  "D" ((long)reg),
@@ -7248,7 +7403,7 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pc
  		break;
  	}
  
-@@ -244,7 +315,10 @@ static int pci_bios_write(unsigned int s
+@@ -244,7 +332,10 @@ static int pci_bios_write(unsigned int s
  
  	switch (len) {
  	case 1:
@@ -7260,7 +7415,7 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pc
  			"jc 1f\n\t"
  			"xor %%ah, %%ah\n"
  			"1:"
-@@ -253,10 +327,14 @@ static int pci_bios_write(unsigned int s
+@@ -253,10 +344,14 @@ static int pci_bios_write(unsigned int s
  			  "c" (value),
  			  "b" (bx),
  			  "D" ((long)reg),
@@ -7277,7 +7432,7 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pc
  			"jc 1f\n\t"
  			"xor %%ah, %%ah\n"
  			"1:"
-@@ -265,10 +343,14 @@ static int pci_bios_write(unsigned int s
+@@ -265,10 +360,14 @@ static int pci_bios_write(unsigned int s
  			  "c" (value),
  			  "b" (bx),
  			  "D" ((long)reg),
@@ -7294,7 +7449,7 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pc
  			"jc 1f\n\t"
  			"xor %%ah, %%ah\n"
  			"1:"
-@@ -277,7 +359,8 @@ static int pci_bios_write(unsigned int s
+@@ -277,7 +376,8 @@ static int pci_bios_write(unsigned int s
  			  "c" (value),
  			  "b" (bx),
  			  "D" ((long)reg),
@@ -7304,7 +7459,7 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pc
  		break;
  	}
  
-@@ -430,10 +513,13 @@ struct irq_routing_table * __devinit pci
+@@ -430,10 +530,13 @@ struct irq_routing_table * __devinit pci
  
  	DBG("PCI: Fetching IRQ routing table... ");
  	__asm__("push %%es\n\t"
@@ -7319,7 +7474,7 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pc
  		"jc 1f\n\t"
  		"xor %%ah, %%ah\n"
  		"1:"
-@@ -444,7 +530,8 @@ struct irq_routing_table * __devinit pci
+@@ -444,7 +547,8 @@ struct irq_routing_table * __devinit pci
  		  "1" (0),
  		  "D" ((long) &opt),
  		  "S" (&pci_indirect),
@@ -7329,7 +7484,7 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pc
  		: "memory");
  	DBG("OK  ret=%d, size=%d, map=%x\n", ret, opt.size, map);
  	if (ret & 0xff00)
-@@ -468,7 +555,10 @@ int pcibios_set_irq_routing(struct pci_d
+@@ -468,7 +572,10 @@ int pcibios_set_irq_routing(struct pci_d
  {
  	int ret;
  
@@ -7341,7 +7496,7 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/pcbios.c linux-2.6.22.1/arch/i386/pci/pc
  		"jc 1f\n\t"
  		"xor %%ah, %%ah\n"
  		"1:"
-@@ -476,7 +566,8 @@ int pcibios_set_irq_routing(struct pci_d
+@@ -476,7 +583,8 @@ int pcibios_set_irq_routing(struct pci_d
  		: "0" (PCIBIOS_SET_PCI_HW_INT),
  		  "b" ((dev->bus->number << 8) | dev->devfn),
  		  "c" ((irq << 8) | (pin + 10)),
@@ -7380,6 +7535,29 @@ diff -urNp linux-2.6.22.1/arch/ia64/ia32/binfmt_elf32.c linux-2.6.22.1/arch/ia64
  /* Ugly but avoids duplication */
  #include "../../../fs/binfmt_elf.c"
  
+@@ -226,8 +233,20 @@ ia32_setup_arg_pages (struct linux_binpr
+ 			mpnt->vm_flags = VM_STACK_FLAGS & ~VM_EXEC;
+ 		else
+ 			mpnt->vm_flags = VM_STACK_FLAGS;
+-		mpnt->vm_page_prot = (mpnt->vm_flags & VM_EXEC)?
+-					PAGE_COPY_EXEC: PAGE_COPY;
++
++#if defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC)
++		if (current-<mm->pax_flags & (MF_PAX_PAGEEXEC | MF_PAX_SEGMEXEC)) {
++			mpnt->vm_flags &= ~VM_EXEC;
++
++#ifdef CONFIG_PAX_MPROTECT
++			if (current->mm->pax_flags & MF_PAX_MPROTECT)
++				mpnt->vm_flags &= ~VM_MAYEXEC;
++#endif
++
++	}
++#endif
++
++		mpnt->vm_page_prot = vm_get_page_prot(mpnt->vm_flags);
+ 		if ((ret = insert_vm_struct(current->mm, mpnt))) {
+ 			up_write(&current->mm->mmap_sem);
+ 			kmem_cache_free(vm_area_cachep, mpnt);
 diff -urNp linux-2.6.22.1/arch/ia64/ia32/ia32priv.h linux-2.6.22.1/arch/ia64/ia32/ia32priv.h
 --- linux-2.6.22.1/arch/ia64/ia32/ia32priv.h	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/arch/ia64/ia32/ia32priv.h	2007-08-02 11:38:45.000000000 -0400
@@ -7612,15 +7790,29 @@ diff -urNp linux-2.6.22.1/arch/ia64/mm/init.c linux-2.6.22.1/arch/ia64/mm/init.c
  #include <asm/dma.h>
  #include <asm/ia32.h>
  #include <asm/io.h>
-@@ -130,7 +130,7 @@ ia64_init_addr_space (void)
+@@ -130,8 +130,21 @@ ia64_init_addr_space (void)
  		vma->vm_mm = current->mm;
  		vma->vm_start = current->thread.rbs_bot & PAGE_MASK;
  		vma->vm_end = vma->vm_start + PAGE_SIZE;
 -		vma->vm_page_prot = protection_map[VM_DATA_DEFAULT_FLAGS & 0x7];
-+		vma->vm_page_prot = vm_get_page_prot(VM_DATA_DEFAULT_FLAGS);
  		vma->vm_flags = VM_DATA_DEFAULT_FLAGS|VM_GROWSUP|VM_ACCOUNT;
++
++#if defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC)
++		if (current->mm->pax_flags & (MF_PAX_PAGEEXEC | MF_PAX_SEGMEXEC)) {
++			vma->vm_flags &= ~VM_EXEC;
++
++#ifdef CONFIG_PAX_MPROTECT
++			if (current->mm->pax_flags & MF_PAX_MPROTECT)
++				vma->vm_flags &= ~VM_MAYEXEC;
++#endif
++
++	}
++#endif
++
++		vma->vm_page_prot = vm_get_page_prot(VM_DATA_DEFAULT_FLAGS);
  		down_write(&current->mm->mmap_sem);
  		if (insert_vm_struct(current->mm, vma)) {
+ 			up_write(&current->mm->mmap_sem);
 diff -urNp linux-2.6.22.1/arch/mips/kernel/binfmt_elfn32.c linux-2.6.22.1/arch/mips/kernel/binfmt_elfn32.c
 --- linux-2.6.22.1/arch/mips/kernel/binfmt_elfn32.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/arch/mips/kernel/binfmt_elfn32.c	2007-08-02 11:38:45.000000000 -0400
@@ -10060,7 +10252,30 @@ diff -urNp linux-2.6.22.1/arch/x86_64/ia32/ia32_binfmt.c linux-2.6.22.1/arch/x86
  typedef struct user_i387_ia32_struct elf_fpregset_t;
  typedef struct user32_fxsr_struct elf_fpxregset_t;
  
-@@ -329,15 +336,18 @@ int ia32_setup_arg_pages(struct linux_bi
+@@ -317,8 +324,20 @@ int ia32_setup_arg_pages(struct linux_bi
+ 			mpnt->vm_flags = VM_STACK_FLAGS & ~VM_EXEC;
+ 		else
+ 			mpnt->vm_flags = VM_STACK_FLAGS;
+- 		mpnt->vm_page_prot = (mpnt->vm_flags & VM_EXEC) ? 
+- 			PAGE_COPY_EXEC : PAGE_COPY;
++
++#if defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC)
++		if (mm->pax_flags & (MF_PAX_PAGEEXEC | MF_PAX_SEGMEXEC)) {
++			mpnt->vm_flags &= ~VM_EXEC;
++
++#ifdef CONFIG_PAX_MPROTECT
++			if (mm->pax_flags & MF_PAX_MPROTECT)
++				mpnt->vm_flags &= ~VM_MAYEXEC;
++#endif
++
++	}
++#endif
++
++		mpnt->vm_page_prot = vm_get_page_prot(mpnt->vm_flags);
+ 		if ((ret = insert_vm_struct(mm, mpnt))) {
+ 			up_write(&mm->mmap_sem);
+ 			kmem_cache_free(vm_area_cachep, mpnt);
+@@ -329,15 +348,18 @@ int ia32_setup_arg_pages(struct linux_bi
  
  	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
  		struct page *page = bprm->page[i];
@@ -10799,26 +11014,6 @@ diff -urNp linux-2.6.22.1/drivers/char/random.c linux-2.6.22.1/drivers/char/rand
  #if 0
  	/* x^2048 + x^1638 + x^1231 + x^819 + x^411 + x + 1  -- 115 */
  	{ 2048,	1638,	1231,	819,	411,	1 },
-@@ -693,8 +705,8 @@ static void xfer_secondary_pool(struct e
- 
- 	if (r->pull && r->entropy_count < nbytes * 8 &&
- 	    r->entropy_count < r->poolinfo->POOLBITS) {
--		int bytes = max_t(int, random_read_wakeup_thresh / 8,
--				min_t(int, nbytes, sizeof(tmp)));
-+		int bytes = min_t(int, max_t(int, random_read_wakeup_thresh / 8,
-+				nbytes), sizeof(tmp));
- 		int rsvd = r->limit ? 0 : random_read_wakeup_thresh/4;
- 
- 		DEBUG_ENT("going to reseed %s with %d bits "
-@@ -1167,7 +1179,7 @@ EXPORT_SYMBOL(generate_random_uuid);
- #include <linux/sysctl.h>
- 
- static int min_read_thresh = 8, min_write_thresh;
--static int max_read_thresh = INPUT_POOL_WORDS * 32;
-+static int max_read_thresh = OUTPUT_POOL_WORDS * 32;
- static int max_write_thresh = INPUT_POOL_WORDS * 32;
- static char sysctl_bootid[16];
- 
 diff -urNp linux-2.6.22.1/drivers/char/vt_ioctl.c linux-2.6.22.1/drivers/char/vt_ioctl.c
 --- linux-2.6.22.1/drivers/char/vt_ioctl.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/drivers/char/vt_ioctl.c	2007-08-02 11:09:15.000000000 -0400
@@ -11470,6 +11665,23 @@ diff -urNp linux-2.6.22.1/drivers/net/tg3.h linux-2.6.22.1/drivers/net/tg3.h
  #define  CHIPREV_ID_5750_C2		 0x4202
  #define  CHIPREV_ID_5752_A0_HW		 0x5000
  #define  CHIPREV_ID_5752_A0		 0x6000
+diff -urNp linux-2.6.22/drivers/pci/hotplug/cpqphp_nvram.c linux-2.6.22/drivers/pci/hotplug/cpqphp_nvram.c
+--- linux-2.6.22/drivers/pci/hotplug/cpqphp_nvram.c	2007-07-10 14:56:30.000000000 -0400
++++ linux-2.6.22/drivers/pci/hotplug/cpqphp_nvram.c	2007-07-10 14:56:30.000000000 -0400
+@@ -425,9 +425,13 @@ static u32 store_HRT (void __iomem *rom_
+ 
+ void compaq_nvram_init (void __iomem *rom_start)
+ {
++
++#ifndef CONFIG_PAX_KERNEXEC
+ 	if (rom_start) {
+ 		compaq_int15_entry_point = (rom_start + ROM_INT15_PHY_ADDR - ROM_PHY_ADDR);
+ 	}
++#endif
++
+ 	dbg("int15 entry  = %p\n", compaq_int15_entry_point);
+ 
+ 	/* initialize our int15 lock */
 diff -urNp linux-2.6.22.1/drivers/pci/pcie/aer/aerdrv.c linux-2.6.22.1/drivers/pci/pcie/aer/aerdrv.c
 --- linux-2.6.22.1/drivers/pci/pcie/aer/aerdrv.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/drivers/pci/pcie/aer/aerdrv.c	2007-08-02 11:38:47.000000000 -0400
@@ -12189,18 +12401,105 @@ diff -urNp linux-2.6.22.1/drivers/video/modedb.c linux-2.6.22.1/drivers/video/mo
      },
  };
  
-diff -urNp linux-2.6.22.1/drivers/video/vesafb.c linux-2.6.22.1/drivers/video/vesafb.c
---- linux-2.6.22.1/drivers/video/vesafb.c	2007-07-10 14:56:30.000000000 -0400
-+++ linux-2.6.22.1/drivers/video/vesafb.c	2007-08-02 11:38:47.000000000 -0400
-@@ -266,7 +266,7 @@ static int __init vesafb_probe(struct pl
+diff -urNp linux-2.6.22/drivers/video/vesafb.c linux-2.6.22/drivers/video/vesafb.c
+--- linux-2.6.22/drivers/video/vesafb.c	2007-07-10 14:56:30.000000000 -0400
++++ linux-2.6.22/drivers/video/vesafb.c	2007-07-10 14:56:30.000000000 -0400
+@@ -9,6 +9,7 @@
+  */
+ 
+ #include <linux/module.h>
++#include <linux/moduleloader.h>
+ #include <linux/kernel.h>
+ #include <linux/errno.h>
+ #include <linux/string.h>
+@@ -224,6 +225,7 @@ static int __init vesafb_probe(struct pl
+ 	unsigned int size_vmode;
+ 	unsigned int size_remap;
+ 	unsigned int size_total;
++	void *pmi_code = NULL;
+ 
+ 	if (screen_info.orig_video_isVGA != VIDEO_TYPE_VLFB)
+ 		return -ENODEV;
+@@ -266,10 +268,6 @@ static int __init vesafb_probe(struct pl
  		size_remap = size_total;
  	vesafb_fix.smem_len = size_remap;
  
 -#ifndef __i386__
-+#if !defined(__i386__) || defined(CONFIG_PAX_KERNEXEC)
- 	screen_info.vesapm_seg = 0;
- #endif
+-	screen_info.vesapm_seg = 0;
+-#endif
+-
+ 	if (!request_mem_region(vesafb_fix.smem_start, size_total, "vesafb")) {
+ 		printk(KERN_WARNING
+ 		       "vesafb: cannot reserve video memory at 0x%lx\n",
+@@ -302,9 +300,21 @@ static int __init vesafb_probe(struct pl
+ 	printk(KERN_INFO "vesafb: mode is %dx%dx%d, linelength=%d, pages=%d\n",
+ 	       vesafb_defined.xres, vesafb_defined.yres, vesafb_defined.bits_per_pixel, vesafb_fix.line_length, screen_info.pages);
  
++#ifdef __i386__
++
++#ifdef CONFIG_PAX_KERNEXEC
++	pmi_code = module_alloc_exec(screen_info.vesapm_size);
++	if (!pmi_code)
++#else
++	if (0)
++#endif
++
++#endif
++	screen_info.vesapm_seg = 0;
++
+ 	if (screen_info.vesapm_seg) {
+-		printk(KERN_INFO "vesafb: protected mode interface info at %04x:%04x\n",
+-		       screen_info.vesapm_seg,screen_info.vesapm_off);
++		printk(KERN_INFO "vesafb: protected mode interface info at %04x:%04x %04x bytes\n",
++		       screen_info.vesapm_seg,screen_info.vesapm_off,screen_info.vesapm_size);
+ 	}
+ 
+ 	if (screen_info.vesapm_seg < 0xc000)
+@@ -312,9 +322,29 @@ static int __init vesafb_probe(struct pl
+ 
+ 	if (ypan || pmi_setpal) {
+ 		unsigned short *pmi_base;
+-		pmi_base  = (unsigned short*)phys_to_virt(((unsigned long)screen_info.vesapm_seg << 4) + screen_info.vesapm_off);
+-		pmi_start = (void*)((char*)pmi_base + pmi_base[1]);
+-		pmi_pal   = (void*)((char*)pmi_base + pmi_base[2]);
++
++#ifdef CONFIG_PAX_KERNEXEC
++		unsigned long cr0;
++#endif
++
++		pmi_base = (unsigned short*)phys_to_virt(((unsigned long)screen_info.vesapm_seg << 4) + screen_info.vesapm_off);
++
++#ifdef CONFIG_PAX_KERNEXEC
++		pax_open_kernel(cr0);
++		memcpy(pmi_code, pmi_base, screen_info.vesapm_size);
++		pax_close_kernel(cr0);
++#else
++		pmi_code = pmi_base;
++#endif
++
++		pmi_start = (void*)((char*)pmi_code + pmi_base[1]);
++		pmi_pal   = (void*)((char*)pmi_code + pmi_base[2]);
++
++#ifdef CONFIG_PAX_KERNEXEC
++		pmi_start -= __KERNEL_TEXT_OFFSET;
++		pmi_pal -= __KERNEL_TEXT_OFFSET;
++#endif
++
+ 		printk(KERN_INFO "vesafb: pmi: set display start = %p, set palette = %p\n",pmi_start,pmi_pal);
+ 		if (pmi_base[3]) {
+ 			printk(KERN_INFO "vesafb: pmi: ports = ");
+@@ -456,6 +486,11 @@ static int __init vesafb_probe(struct pl
+ 	       info->node, info->fix.id);
+ 	return 0;
+ err:
++
++#ifdef CONFIG_PAX_KERNEXEC
++	module_free_exec(NULL, pmi_code);
++#endif
++
+ 	if (info->screen_base)
+ 		iounmap(info->screen_base);
+ 	framebuffer_release(info);
 diff -urNp linux-2.6.22.1/fs/binfmt_aout.c linux-2.6.22.1/fs/binfmt_aout.c
 --- linux-2.6.22.1/fs/binfmt_aout.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/fs/binfmt_aout.c	2007-08-02 11:38:47.000000000 -0400
@@ -12288,7 +12587,7 @@ diff -urNp linux-2.6.22.1/fs/binfmt_aout.c linux-2.6.22.1/fs/binfmt_aout.c
 diff -urNp linux-2.6.22.1/fs/binfmt_elf.c linux-2.6.22.1/fs/binfmt_elf.c
 --- linux-2.6.22.1/fs/binfmt_elf.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/fs/binfmt_elf.c	2007-08-02 11:38:47.000000000 -0400
-@@ -39,10 +39,16 @@
+@@ -39,10 +39,21 @@
  #include <linux/elf.h>
  #include <linux/utsname.h>
  #include <linux/vs_memory.h>
@@ -12300,6 +12599,11 @@ diff -urNp linux-2.6.22.1/fs/binfmt_elf.c linux-2.6.22.1/fs/binfmt_elf.c
  
 +#ifdef CONFIG_PAX_SEGMEXEC
 +#include <asm/desc.h>
++#endif
++
++#ifdef CONFIG_PAX_HOOK_ACL_FLAGS
++void (*pax_set_initial_flags_func)(struct linux_binprm *bprm);
++EXPORT_SYMBOL(pax_set_initial_flags_func);
 +#endif
 +
  static int load_elf_binary(struct linux_binprm *bprm, struct pt_regs *regs);
@@ -13147,18 +13451,6 @@ diff -urNp linux-2.6.22.1/fs/compat.c linux-2.6.22.1/fs/compat.c
  out:
  	/* Something went wrong, return the inode and free the argument pages*/
  	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
-diff -urNp linux-2.6.22.1/fs/dcache.c linux-2.6.22.1/fs/dcache.c
---- linux-2.6.22.1/fs/dcache.c	2007-07-10 14:56:30.000000000 -0400
-+++ linux-2.6.22.1/fs/dcache.c	2007-08-02 11:09:15.000000000 -0400
-@@ -1776,7 +1776,7 @@ shouldnt_be_hashed:
-  *
-  * "buflen" should be positive. Caller holds the dcache_lock.
-  */
--static char * __d_path( struct dentry *dentry, struct vfsmount *vfsmnt,
-+char * __d_path( struct dentry *dentry, struct vfsmount *vfsmnt,
- 			struct dentry *root, struct vfsmount *rootmnt,
- 			char *buffer, int buflen)
- {
 diff -urNp linux-2.6.22.1/fs/debugfs/inode.c linux-2.6.22.1/fs/debugfs/inode.c
 --- linux-2.6.22.1/fs/debugfs/inode.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/fs/debugfs/inode.c	2007-08-02 11:38:47.000000000 -0400
@@ -13183,18 +13475,6 @@ diff -urNp linux-2.6.22.1/fs/exec.c linux-2.6.22.1/fs/exec.c
  
  #include <asm/uaccess.h>
  #include <asm/mmu_context.h>
-@@ -70,6 +72,11 @@ EXPORT_SYMBOL(suid_dumpable);
- static struct linux_binfmt *formats;
- static DEFINE_RWLOCK(binfmt_lock);
- 
-+#ifdef CONFIG_PAX_HOOK_ACL_FLAGS
-+void (*pax_set_initial_flags_func)(struct linux_binprm *bprm);
-+EXPORT_SYMBOL(pax_set_initial_flags_func);
-+#endif
-+
- int register_binfmt(struct linux_binfmt * fmt)
- {
- 	struct linux_binfmt ** tmp = &formats;
 @@ -309,7 +320,7 @@ EXPORT_SYMBOL(copy_strings_kernel);
   *
   * vma->vm_mm->mmap_sem is held for writing.
@@ -13272,17 +13552,30 @@ diff -urNp linux-2.6.22.1/fs/exec.c linux-2.6.22.1/fs/exec.c
  #ifdef CONFIG_STACK_GROWSUP
  	/* Move the argument and environment strings to the bottom of the
  	 * stack space.
-@@ -435,7 +488,7 @@ int setup_arg_pages(struct linux_binprm 
+@@ -434,7 +478,20 @@ int setup_arg_pages(struct linux_binprm 
  		else
  			mpnt->vm_flags = VM_STACK_FLAGS;
  		mpnt->vm_flags |= mm->def_flags;
 -		mpnt->vm_page_prot = protection_map[mpnt->vm_flags & 0x7];
++
++#if defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC)
++		if (mm->pax_flags & (MF_PAX_PAGEEXEC | MF_PAX_SEGMEXEC)) {
++			mpnt->vm_flags &= ~VM_EXEC;
++
++#ifdef CONFIG_PAX_MPROTECT
++		if (mm->pax_flags & MF_PAX_MPROTECT)
++			mpnt->vm_flags &= ~VM_MAYEXEC;
++#endif
++
++		}
++#endif
++
 +		mpnt->vm_page_prot = vm_get_page_prot(mpnt->vm_flags);
  		if ((ret = insert_vm_struct(mm, mpnt))) {
  			up_write(&mm->mmap_sem);
  			kmem_cache_free(vm_area_cachep, mpnt);
-@@ -445,17 +498,38 @@ int setup_arg_pages(struct linux_binprm 		
- 		mm->stack_vm = mm->total_vm = vma_pages(mpnt);
+@@ -444,17 +498,38 @@ int setup_arg_pages(struct linux_binprm
+ 		mm->stack_vm = mm->total_vm;
  	}
  
 -	for (i = 0 ; i < MAX_ARG_PAGES ; i++) {
@@ -14049,36 +14342,18 @@ diff -urNp linux-2.6.22.1/fs/nfs/nfs4proc.c linux-2.6.22.1/fs/nfs/nfs4proc.c
  {
 -	struct nfs4_exception exception = { };
 +	struct nfs4_exception exception = {0, 0};
- 	struct nfs_server *server = NFS_SERVER(dentry->d_inode);
+ 	struct nfs_server *server = NFS_SERVER(state->inode);
  	int err;
  	do {
 @@ -843,7 +843,7 @@ static int _nfs4_open_expired(struct nfs
  static inline int nfs4_do_open_expired(struct nfs4_state_owner *sp, struct nfs4_state *state, struct dentry *dentry)
  {
- 	struct nfs_server *server = NFS_SERVER(dentry->d_inode);
+ 	struct nfs_server *server = NFS_SERVER(state->inode);
 -	struct nfs4_exception exception = { };
 +	struct nfs4_exception exception = {0, 0};
  	int err;
  
  	do {
-@@ -938,7 +938,7 @@ out_put_state_owner:
- 
- static struct nfs4_state *nfs4_open_delegated(struct inode *inode, int flags, struct rpc_cred *cred)
- {
--	struct nfs4_exception exception = { };
-+	struct nfs4_exception exception = {0, 0};
- 	struct nfs4_state *res = ERR_PTR(-EIO);
- 	int err;
- 
-@@ -1008,7 +1008,7 @@ out_err:
- 
- static struct nfs4_state *nfs4_do_open(struct inode *dir, struct dentry *dentry, int flags, struct iattr *sattr, struct rpc_cred *cred)
- {
--	struct nfs4_exception exception = { };
-+	struct nfs4_exception exception = {0, 0};
- 	struct nfs4_state *res;
- 	int status;
- 
 @@ -1090,7 +1090,7 @@ static int nfs4_do_setattr(struct inode 
                  struct iattr *sattr, struct nfs4_state *state)
  {
@@ -14204,7 +14479,7 @@ diff -urNp linux-2.6.22.1/fs/nfs/nfs4proc.c linux-2.6.22.1/fs/nfs/nfs4proc.c
 +	struct nfs4_exception exception = {0, 0};
  	int err;
  	do {
- 		err = nfs4_handle_exception(NFS_SERVER(dentry->d_inode),
+ 		err = nfs4_handle_exception(NFS_SERVER(state->inode),
 @@ -2180,7 +2180,7 @@ static int _nfs4_proc_mknod(struct inode
  static int nfs4_proc_mknod(struct inode *dir, struct dentry *dentry,
  		struct iattr *sattr, dev_t rdev)
@@ -15431,12 +15706,36 @@ diff -urNp linux-2.6.22.1/fs/utimes.c linux-2.6.22.1/fs/utimes.c
  #include <asm/uaccess.h>
  #include <asm/unistd.h>
  
-@@ -117,6 +118,12 @@ long do_utimes(int dfd, char __user *fil
+@@ -47,6 +48,7 @@ long do_utimes(int dfd, char __user *fil
+ 	int error;
+ 	struct nameidata nd;
+ 	struct dentry *dentry;
++	struct vfsmount *mnt;
+ 	struct inode *inode;
+ 	struct iattr newattrs;
+ 	struct file *f = NULL;
+@@ -65,6 +67,7 @@ long do_utimes(int dfd, char __user *fil
+ 		if (!f)
+ 			goto out;
+ 		dentry = f->f_path.dentry;
++		mnt = f->f_path.mnt;
+ 	} else {
+ 		error = __user_walk_fd(dfd, filename, (flags & AT_SYMLINK_NOFOLLOW) ? 0 : LOOKUP_FOLLOW, &nd);
+ 		if (error)
+@@ -78,6 +81,7 @@ long do_utimes(int dfd, char __user *fil
+ 		if (error)
+ 			goto dput_and_out;
+ 		dentry = nd.dentry;
++		mnt = nd.mnt;
+ 	}
+ 
+ 	inode = dentry->d_inode;
+@@ -117,6 +121,12 @@ long do_utimes(int dfd, char __user *fil
  			}
  		}
  	}
 +
-+	if (!gr_acl_handle_utime(nd.dentry, nd.mnt)) {
++	if (!gr_acl_handle_utime(dentry, mnt)) {
 +		error = -EACCES;
 +		goto dput_and_out;
 +	}
@@ -15554,7 +15853,7 @@ diff -urNp linux-2.6.22.1/grsecurity/gracl_alloc.c linux-2.6.22.1/grsecurity/gra
 diff -urNp linux-2.6.22.1/grsecurity/gracl.c linux-2.6.22.1/grsecurity/gracl.c
 --- linux-2.6.22.1/grsecurity/gracl.c	1969-12-31 19:00:00.000000000 -0500
 +++ linux-2.6.22.1/grsecurity/gracl.c	2007-08-03 10:51:44.000000000 -0400
-@@ -0,0 +1,3679 @@
+@@ -0,0 +1,3675 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
 +#include <linux/sched.h>
@@ -15616,10 +15915,6 @@ diff -urNp linux-2.6.22.1/grsecurity/gracl.c linux-2.6.22.1/grsecurity/gracl.c
 +extern void gr_log_resource(const struct task_struct *task,
 +			    const int res, const unsigned long wanted, const int gt);
 +#endif
-+
-+extern char * __d_path(struct dentry *dentry, struct vfsmount *vfsmnt,
-+                        struct dentry *root, struct vfsmount *rootmnt,
-+                        char *buffer, int buflen);
 +
 +unsigned char *gr_system_salt;
 +unsigned char *gr_system_sum;
@@ -15792,7 +16087,7 @@ diff -urNp linux-2.6.22.1/grsecurity/gracl.c linux-2.6.22.1/grsecurity/gracl.c
 +{
 +	char *retval;
 +
-+	retval = __our_d_path(dentry, vfsmnt, root, rootmnt, buf, buflen);
++	retval = __our_d_path(dentry->d_parent, vfsmnt, root, rootmnt, buf, buflen);
 +	if (unlikely(IS_ERR(retval)))
 +		retval = strcpy(buf, "<path too long>");
 +	else if (unlikely(retval[1] == '/' && retval[2] == '\0'))
@@ -24255,25 +24550,6 @@ diff -urNp linux-2.6.22.1/include/asm-alpha/kmap_types.h linux-2.6.22.1/include/
  };
  
  #undef D
-diff -urNp linux-2.6.22.1/include/asm-alpha/page.h linux-2.6.22.1/include/asm-alpha/page.h
---- linux-2.6.22.1/include/asm-alpha/page.h	2007-07-10 14:56:30.000000000 -0400
-+++ linux-2.6.22.1/include/asm-alpha/page.h	2007-08-02 11:38:47.000000000 -0400
-@@ -93,6 +93,15 @@ typedef unsigned long pgprot_t;
- #define VM_DATA_DEFAULT_FLAGS		(VM_READ | VM_WRITE | VM_EXEC | \
- 					 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
- 
-+#ifdef CONFIG_PAX_PAGEEXEC
-+#ifdef CONFIG_PAX_MPROTECT
-+#define __VM_STACK_FLAGS (((current->mm->pax_flags & MF_PAX_MPROTECT)?0:VM_MAYEXEC) | \
-+			  ((current->mm->pax_flags & MF_PAX_PAGEEXEC)?0:VM_EXEC))
-+#else
-+#define __VM_STACK_FLAGS (VM_MAYEXEC | ((current->mm->pax_flags & MF_PAX_PAGEEXEC)?0:VM_EXEC))
-+#endif
-+#endif
-+
- #include <asm-generic/memory_model.h>
- #include <asm-generic/page.h>
- 
 diff -urNp linux-2.6.22.1/include/asm-alpha/pgtable.h linux-2.6.22.1/include/asm-alpha/pgtable.h
 --- linux-2.6.22.1/include/asm-alpha/pgtable.h	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/include/asm-alpha/pgtable.h	2007-08-02 11:38:47.000000000 -0400
@@ -25013,19 +25289,10 @@ diff -urNp linux-2.6.22.1/include/asm-i386/page.h linux-2.6.22.1/include/asm-i38
  
  #define PAGE_OFFSET		((unsigned long)__PAGE_OFFSET)
  #define VMALLOC_RESERVE		((unsigned long)__VMALLOC_RESERVE)
-@@ -197,6 +206,19 @@ extern int page_is_ram(unsigned long pag
+@@ -197,6 +206,10 @@ extern int page_is_ram(unsigned long pag
  	((current->personality & READ_IMPLIES_EXEC) ? VM_EXEC : 0 ) | \
  		 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
  
-+#if defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC)
-+#ifdef CONFIG_PAX_MPROTECT
-+#define __VM_STACK_FLAGS (((current->mm->pax_flags & MF_PAX_MPROTECT)?0:VM_MAYEXEC) | \
-+			  ((current->mm->pax_flags & (MF_PAX_PAGEEXEC|MF_PAX_SEGMEXEC))?0:VM_EXEC))
-+#else
-+#define __VM_STACK_FLAGS (VM_MAYEXEC | ((current->mm->pax_flags & (MF_PAX_PAGEEXEC|MF_PAX_SEGMEXEC))?0:VM_EXEC))
-+#endif
-+#endif
-+
 +#ifdef CONFIG_PAX_PAGEEXEC
 +#define CONFIG_ARCH_TRACK_EXEC_LIMIT 1
 +#endif
@@ -25198,9 +25465,9 @@ diff -urNp linux-2.6.22.1/include/asm-i386/pgtable-3level.h linux-2.6.22.1/inclu
  }
  
  /*
-diff -urNp linux-2.6.22.1/include/asm-i386/pgtable.h linux-2.6.22.1/include/asm-i386/pgtable.h
---- linux-2.6.22.1/include/asm-i386/pgtable.h	2007-07-10 14:56:30.000000000 -0400
-+++ linux-2.6.22.1/include/asm-i386/pgtable.h	2007-08-02 11:38:48.000000000 -0400
+diff -urNp linux-2.6.22/include/asm-i386/pgtable.h linux-2.6.22/include/asm-i386/pgtable.h
+--- linux-2.6.22/include/asm-i386/pgtable.h	2007-07-10 14:56:30.000000000 -0400
++++ linux-2.6.22/include/asm-i386/pgtable.h	2007-07-10 14:56:30.000000000 -0400
 @@ -34,7 +34,6 @@ struct vm_area_struct;
   */
  #define ZERO_PAGE(vaddr) (virt_to_page(empty_zero_page))
@@ -25249,9 +25516,9 @@ diff -urNp linux-2.6.22.1/include/asm-i386/pgtable.h linux-2.6.22.1/include/asm-
 -extern unsigned long pg0[];
 +extern pte_t pg0[];
  
- #define pte_present(x) ((x).pte_low & (_PAGE_PRESENT | _PAGE_PROTNONE))
+ #define pte_present(x)	((x).pte_low & (_PAGE_PRESENT | _PAGE_PROTNONE))
  
-@@ -225,29 +240,51 @@ static inline int pte_young(pte_t pte)		
+@@ -225,29 +231,51 @@ static inline int pte_young(pte_t pte)		
  static inline int pte_write(pte_t pte)		{ return (pte).pte_low & _PAGE_RW; }
  static inline int pte_huge(pte_t pte)		{ return (pte).pte_low & _PAGE_PSE; }
  
@@ -25311,7 +25578,7 @@ diff -urNp linux-2.6.22.1/include/asm-i386/pgtable.h linux-2.6.22.1/include/asm-
  #ifndef CONFIG_PARAVIRT
  /*
   * Rules for using pte_update - it must be called after any PTE update which
-@@ -538,6 +575,9 @@ static inline void paravirt_pagetable_se
+@@ -538,6 +566,9 @@ static inline void paravirt_pagetable_se
  
  #endif /* !__ASSEMBLY__ */
  
@@ -25491,7 +25758,7 @@ diff -urNp linux-2.6.22.1/include/asm-i386/system.h linux-2.6.22.1/include/asm-i
 +	typecheck(unsigned long, cr0);	\
 +	preempt_disable();		\
 +	cr0 = read_cr0();		\
-+	write_cr0(cr0 & ~0x10000UL);	\
++	write_cr0(cr0 & ~X86_CR0_WP);	\
 +} while (0)
 +
 +#define pax_close_kernel(cr0)		\
@@ -25642,24 +25909,6 @@ diff -urNp linux-2.6.22.1/include/asm-ia64/kmap_types.h linux-2.6.22.1/include/a
  };
  
  #undef D
-diff -urNp linux-2.6.22.1/include/asm-ia64/page.h linux-2.6.22.1/include/asm-ia64/page.h
---- linux-2.6.22.1/include/asm-ia64/page.h	2007-07-10 14:56:30.000000000 -0400
-+++ linux-2.6.22.1/include/asm-ia64/page.h	2007-08-02 11:38:48.000000000 -0400
-@@ -226,5 +226,14 @@ get_order (unsigned long size)
- 					 (((current->personality & READ_IMPLIES_EXEC) != 0)	\
- 					  ? VM_EXEC : 0))
- 
-+#ifdef CONFIG_PAX_PAGEEXEC
-+#ifdef CONFIG_PAX_MPROTECT
-+#define __VM_STACK_FLAGS (((current->mm->pax_flags & MF_PAX_MPROTECT)?0:VM_MAYEXEC) | \
-+			  ((current->mm->pax_flags & MF_PAX_PAGEEXEC)?0:VM_EXEC))
-+#else
-+#define __VM_STACK_FLAGS (VM_MAYEXEC | ((current->mm->pax_flags & MF_PAX_PAGEEXEC)?0:VM_EXEC))
-+#endif
-+#endif
-+
- # endif /* __KERNEL__ */
- #endif /* _ASM_IA64_PAGE_H */
 diff -urNp linux-2.6.22.1/include/asm-ia64/pgtable.h linux-2.6.22.1/include/asm-ia64/pgtable.h
 --- linux-2.6.22.1/include/asm-ia64/pgtable.h	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/include/asm-ia64/pgtable.h	2007-08-02 11:38:48.000000000 -0400
@@ -25800,22 +26049,6 @@ diff -urNp linux-2.6.22.1/include/asm-mips/page.h linux-2.6.22.1/include/asm-mip
    #else
       typedef struct { unsigned long long pte; } pte_t;
       #define pte_val(x)	((x).pte)
-@@ -187,6 +187,15 @@ typedef struct { unsigned long pgprot; }
- #define VM_DATA_DEFAULT_FLAGS	(VM_READ | VM_WRITE | VM_EXEC | \
- 				 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
- 
-+#ifdef CONFIG_PAX_PAGEEXEC
-+#ifdef CONFIG_PAX_MPROTECT
-+#define __VM_STACK_FLAGS (((current->mm->pax_flags & MF_PAX_MPROTECT)?0:VM_MAYEXEC) | \
-+			  ((current->mm->pax_flags & MF_PAX_PAGEEXEC)?0:VM_EXEC))
-+#else
-+#define __VM_STACK_FLAGS (VM_MAYEXEC | ((current->mm->pax_flags & MF_PAX_PAGEEXEC)?0:VM_EXEC))
-+#endif
-+#endif
-+
- #define UNCAC_ADDR(addr)	((addr) - PAGE_OFFSET + UNCAC_BASE)
- #define CAC_ADDR(addr)		((addr) - UNCAC_BASE + PAGE_OFFSET)
- 
 diff -urNp linux-2.6.22.1/include/asm-parisc/a.out.h linux-2.6.22.1/include/asm-parisc/a.out.h
 --- linux-2.6.22.1/include/asm-parisc/a.out.h	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/include/asm-parisc/a.out.h	2007-08-02 11:38:48.000000000 -0400
@@ -25858,25 +26091,6 @@ diff -urNp linux-2.6.22.1/include/asm-parisc/kmap_types.h linux-2.6.22.1/include
  };
  
  #undef D
-diff -urNp linux-2.6.22.1/include/asm-parisc/page.h linux-2.6.22.1/include/asm-parisc/page.h
---- linux-2.6.22.1/include/asm-parisc/page.h	2007-07-10 14:56:30.000000000 -0400
-+++ linux-2.6.22.1/include/asm-parisc/page.h	2007-08-02 11:38:48.000000000 -0400
-@@ -170,6 +170,15 @@ extern int npmem_ranges;
- #define VM_DATA_DEFAULT_FLAGS	(VM_READ | VM_WRITE | VM_EXEC | \
- 				 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
- 
-+#ifdef CONFIG_PAX_PAGEEXEC
-+#ifdef CONFIG_PAX_MPROTECT
-+#define __VM_STACK_FLAGS (((current->mm->pax_flags & MF_PAX_MPROTECT)?0:VM_MAYEXEC) | \
-+			  ((current->mm->pax_flags & MF_PAX_PAGEEXEC)?0:VM_EXEC))
-+#else
-+#define __VM_STACK_FLAGS (VM_MAYEXEC | ((current->mm->pax_flags & MF_PAX_PAGEEXEC)?0:VM_EXEC))
-+#endif
-+#endif
-+
- #include <asm-generic/memory_model.h>
- #include <asm-generic/page.h>
- 
 diff -urNp linux-2.6.22.1/include/asm-parisc/pgtable.h linux-2.6.22.1/include/asm-parisc/pgtable.h
 --- linux-2.6.22.1/include/asm-parisc/pgtable.h	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/include/asm-parisc/pgtable.h	2007-08-02 11:38:48.000000000 -0400
@@ -25988,22 +26202,6 @@ diff -urNp linux-2.6.22.1/include/asm-powerpc/page.h linux-2.6.22.1/include/asm-
  
  #define VM_DATA_DEFAULT_FLAGS64	(VM_READ | VM_WRITE | \
  				 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
-@@ -83,6 +84,15 @@
- #include <asm/page_32.h>
- #endif
- 
-+#ifdef CONFIG_PAX_PAGEEXEC
-+#ifdef CONFIG_PAX_MPROTECT
-+#define __VM_STACK_FLAGS (((current->mm->pax_flags & MF_PAX_MPROTECT)?0:VM_MAYEXEC) | \
-+			  ((current->mm->pax_flags & MF_PAX_PAGEEXEC)?0:VM_EXEC))
-+#else
-+#define __VM_STACK_FLAGS (VM_MAYEXEC | ((current->mm->pax_flags & MF_PAX_PAGEEXEC)?0:VM_EXEC))
-+#endif
-+#endif
-+
- /* align addr on a size boundary - adjust address up/down if needed */
- #define _ALIGN_UP(addr,size)	(((addr)+((size)-1))&(~((size)-1)))
- #define _ALIGN_DOWN(addr,size)	((addr)&(~((size)-1)))
 diff -urNp linux-2.6.22.1/include/asm-ppc/mmu_context.h linux-2.6.22.1/include/asm-ppc/mmu_context.h
 --- linux-2.6.22.1/include/asm-ppc/mmu_context.h	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/include/asm-ppc/mmu_context.h	2007-08-02 11:38:48.000000000 -0400
@@ -26017,25 +26215,6 @@ diff -urNp linux-2.6.22.1/include/asm-ppc/mmu_context.h linux-2.6.22.1/include/a
  	return 0;
  }
  
-diff -urNp linux-2.6.22.1/include/asm-ppc/page.h linux-2.6.22.1/include/asm-ppc/page.h
---- linux-2.6.22.1/include/asm-ppc/page.h	2007-07-10 14:56:30.000000000 -0400
-+++ linux-2.6.22.1/include/asm-ppc/page.h	2007-08-02 11:38:48.000000000 -0400
-@@ -173,6 +173,15 @@ extern __inline__ int get_order(unsigned
- /* We do define AT_SYSINFO_EHDR but don't use the gate mechanism */
- #define __HAVE_ARCH_GATE_AREA		1
- 
-+#ifdef CONFIG_PAX_PAGEEXEC
-+#ifdef CONFIG_PAX_MPROTECT
-+#define __VM_STACK_FLAGS (((current->mm->pax_flags & MF_PAX_MPROTECT)?0:VM_MAYEXEC) | \
-+			  ((current->mm->pax_flags & MF_PAX_PAGEEXEC)?0:VM_EXEC))
-+#else
-+#define __VM_STACK_FLAGS (VM_MAYEXEC | ((current->mm->pax_flags & MF_PAX_PAGEEXEC)?0:VM_EXEC))
-+#endif
-+#endif
-+
- #include <asm-generic/memory_model.h>
- #endif /* __KERNEL__ */
- #endif /* _PPC_PAGE_H */
 diff -urNp linux-2.6.22.1/include/asm-ppc/pgtable.h linux-2.6.22.1/include/asm-ppc/pgtable.h
 --- linux-2.6.22.1/include/asm-ppc/pgtable.h	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/include/asm-ppc/pgtable.h	2007-08-02 11:38:48.000000000 -0400
@@ -26160,25 +26339,6 @@ diff -urNp linux-2.6.22.1/include/asm-sparc/kmap_types.h linux-2.6.22.1/include/
  	KM_TYPE_NR
  };
  
-diff -urNp linux-2.6.22.1/include/asm-sparc/page.h linux-2.6.22.1/include/asm-sparc/page.h
---- linux-2.6.22.1/include/asm-sparc/page.h	2007-07-10 14:56:30.000000000 -0400
-+++ linux-2.6.22.1/include/asm-sparc/page.h	2007-08-02 11:38:48.000000000 -0400
-@@ -160,6 +160,15 @@ extern unsigned long pfn_base;
- #define VM_DATA_DEFAULT_FLAGS	(VM_READ | VM_WRITE | VM_EXEC | \
- 				 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
- 
-+#ifdef CONFIG_PAX_PAGEEXEC
-+#ifdef CONFIG_PAX_MPROTECT
-+#define __VM_STACK_FLAGS (((current->mm->pax_flags & MF_PAX_MPROTECT)?0:VM_MAYEXEC) | \
-+			 ((current->mm->pax_flags & MF_PAX_PAGEEXEC)?0:VM_EXEC))
-+#else
-+#define __VM_STACK_FLAGS (VM_MAYEXEC | ((current->mm->pax_flags & MF_PAX_PAGEEXEC)?0:VM_EXEC))
-+#endif
-+#endif
-+
- #include <asm-generic/memory_model.h>
- #include <asm-generic/page.h>
- 
 diff -urNp linux-2.6.22.1/include/asm-sparc/pgtable.h linux-2.6.22.1/include/asm-sparc/pgtable.h
 --- linux-2.6.22.1/include/asm-sparc/pgtable.h	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/include/asm-sparc/pgtable.h	2007-08-02 11:38:48.000000000 -0400
@@ -26284,25 +26444,6 @@ diff -urNp linux-2.6.22.1/include/asm-sparc64/kmap_types.h linux-2.6.22.1/includ
  	KM_TYPE_NR
  };
  
-diff -urNp linux-2.6.22.1/include/asm-sparc64/page.h linux-2.6.22.1/include/asm-sparc64/page.h
---- linux-2.6.22.1/include/asm-sparc64/page.h	2007-07-10 14:56:30.000000000 -0400
-+++ linux-2.6.22.1/include/asm-sparc64/page.h	2007-08-02 11:38:48.000000000 -0400
-@@ -141,6 +141,15 @@ typedef unsigned long pgprot_t;
- #define VM_DATA_DEFAULT_FLAGS	(VM_READ | VM_WRITE | VM_EXEC | \
- 				 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
- 
-+#ifdef CONFIG_PAX_PAGEEXEC
-+#ifdef CONFIG_PAX_MPROTECT
-+#define __VM_STACK_FLAGS (((current->mm->pax_flags & MF_PAX_MPROTECT)?0:VM_MAYEXEC) | \
-+			  ((current->mm->pax_flags & MF_PAX_PAGEEXEC)?0:VM_EXEC))
-+#else
-+#define __VM_STACK_FLAGS (VM_MAYEXEC | ((current->mm->pax_flags & MF_PAX_PAGEEXEC)?0:VM_EXEC))
-+#endif
-+#endif
-+
- #include <asm-generic/page.h>
- 
- #endif /* __KERNEL__ */
 diff -urNp linux-2.6.22.1/include/asm-um/kmap_types.h linux-2.6.22.1/include/asm-um/kmap_types.h
 --- linux-2.6.22.1/include/asm-um/kmap_types.h	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/include/asm-um/kmap_types.h	2007-08-02 11:38:48.000000000 -0400
@@ -26416,22 +26557,6 @@ diff -urNp linux-2.6.22.1/include/asm-x86_64/page.h linux-2.6.22.1/include/asm-x
  /* to align the pointer to the (next) page boundary */
  #define PAGE_ALIGN(addr)	(((addr)+PAGE_SIZE-1)&PAGE_MASK)
  
-@@ -132,6 +134,15 @@ extern unsigned long __phys_addr(unsigne
- 	(((current->personality & READ_IMPLIES_EXEC) ? VM_EXEC : 0 ) | \
- 	 VM_READ | VM_WRITE | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
- 
-+#ifdef CONFIG_PAX_PAGEEXEC
-+#ifdef CONFIG_PAX_MPROTECT
-+#define __VM_STACK_FLAGS (((current->mm->pax_flags & MF_PAX_MPROTECT)?0:VM_MAYEXEC) | \
-+			  ((current->mm->pax_flags & MF_PAX_PAGEEXEC)?0:VM_EXEC))
-+#else
-+#define __VM_STACK_FLAGS (VM_MAYEXEC | ((current->mm->pax_flags & MF_PAX_PAGEEXEC)?0:VM_EXEC))
-+#endif
-+#endif
-+
- #define __HAVE_ARCH_GATE_AREA 1	
- 
- #include <asm-generic/memory_model.h>
 diff -urNp linux-2.6.22.1/include/asm-x86_64/pgalloc.h linux-2.6.22.1/include/asm-x86_64/pgalloc.h
 --- linux-2.6.22.1/include/asm-x86_64/pgalloc.h	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/include/asm-x86_64/pgalloc.h	2007-08-02 11:38:48.000000000 -0400
@@ -27827,7 +27952,7 @@ diff -urNp linux-2.6.22.1/include/linux/mm.h linux-2.6.22.1/include/linux/mm.h
  };
  
  extern struct kmem_cache *vm_area_cachep;
-@@ -170,6 +173,18 @@ extern unsigned int kobjsize(const void 
+@@ -170,6 +173,14 @@ extern unsigned int kobjsize(const void 
  #define VM_INSERTPAGE	0x02000000	/* The vma has had "vm_insert_page()" done on it */
  #define VM_ALWAYSDUMP	0x04000000	/* Always include in core dumps */
  
@@ -27837,10 +27962,6 @@ diff -urNp linux-2.6.22.1/include/linux/mm.h linux-2.6.22.1/include/linux/mm.h
 +
 +#ifdef CONFIG_PAX_MPROTECT
 +#define VM_MAYNOTWRITE	0x10000000	/* vma cannot be granted VM_WRITE any more */
-+#endif
-+
-+#ifdef __VM_STACK_FLAGS
-+#define VM_STACK_DEFAULT_FLAGS (0x00000033 | __VM_STACK_FLAGS)
 +#endif
 +
  #ifndef VM_STACK_DEFAULT_FLAGS		/* arch can override this */
@@ -28144,6 +28265,22 @@ diff -urNp linux-2.6.22.1/include/linux/sched.h linux-2.6.22.1/include/linux/sch
  	mm->get_unmapped_area = arch_get_unmapped_area;
  	mm->unmap_area = arch_unmap_area;
  }
+diff -urNp linux-2.6.22/include/linux/screen_info.h linux-2.6.22/include/linux/screen_info.h
+--- linux-2.6.22/include/linux/screen_info.h	2007-07-10 14:56:30.000000000 -0400
++++ linux-2.6.22/include/linux/screen_info.h	2007-07-10 14:56:30.000000000 -0400
+@@ -42,9 +42,9 @@ struct screen_info {
+ 	u16 pages;		/* 0x32 */
+ 	u16 vesa_attributes;	/* 0x34 */
+ 	u32 capabilities;       /* 0x36 */
+-				/* 0x3a -- 0x3b reserved for future expansion */
+-				/* 0x3c -- 0x3f micro stack for relocatable kernels */
+-};
++	u16 vesapm_size;	/* 0x3a -- 0x3b reserved for future expansion */
++	u8  _reserved[4];	/* 0x3c -- 0x3f micro stack for relocatable kernels */
++} __attribute__((packed));
+ 
+ extern struct screen_info screen_info;
+ 
 diff -urNp linux-2.6.22.1/include/linux/security.h linux-2.6.22.1/include/linux/security.h
 --- linux-2.6.22.1/include/linux/security.h	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/include/linux/security.h	2007-08-02 11:38:48.000000000 -0400
@@ -29204,6 +29341,15 @@ diff -urNp linux-2.6.22.1/kernel/kprobes.c linux-2.6.22.1/kernel/kprobes.c
  	if (!kip->insns) {
  		kfree(kip);
  		return NULL;
+@@ -200,7 +200,7 @@ static int __kprobes collect_one_slot(st
+ 			hlist_add_head(&kip->hlist,
+ 				       &kprobe_insn_pages);
+ 		} else {
+-			module_free(NULL, kip->insns);
++			module_free_exec(NULL, kip->insns);
+ 			kfree(kip);
+ 		}
+ 		return 1;
 diff -urNp linux-2.6.22.1/kernel/module.c linux-2.6.22.1/kernel/module.c
 --- linux-2.6.22.1/kernel/module.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/kernel/module.c	2007-08-02 11:38:48.000000000 -0400
@@ -30660,8 +30806,8 @@ diff -urNp linux-2.6.22.1/mm/memory.c linux-2.6.22.1/mm/memory.c
 +	if (!pte_present(entry)) {
 +		if (!pte_none(entry)) {
 +			BUG_ON(pte_file(entry));
-+			ptep_get_and_clear(mm, address, pte);
 +			free_swap_and_cache(pte_to_swp_entry(entry));
++			pte_clear_not_present_full(mm, address, pte, 0);
 +		}
 +	} else {
 +		struct page *page;
@@ -30838,18 +30984,19 @@ diff -urNp linux-2.6.22.1/mm/memory.c linux-2.6.22.1/mm/memory.c
  /*
   * This routine handles present pages, when users try to write
   * to a shared page. It is done by copying the page to a new address
-@@ -1719,6 +1923,11 @@ gotten:
- 		cow_user_page(new_page, old_page, address, vma);
- 	}
- 
+@@ -1724,6 +1928,12 @@ gotten:
+ 	 */
+ 	page_table = pte_offset_map_lock(mm, pmd, address, &ptl);
+ 	if (likely(pte_same(*page_table, orig_pte))) {
++
 +#ifdef CONFIG_PAX_SEGMEXEC
-+	if (pax_find_mirror_vma(vma))
-+		BUG_ON(TestSetPageLocked(new_page));
++		if (pax_find_mirror_vma(vma))
++			BUG_ON(TestSetPageLocked(new_page));
 +#endif
 +
- 	/*
- 	 * Re-check the pte - we dropped the lock
- 	 */
+ 		if (old_page) {
+ 			page_remove_rmap(old_page, vma);
+ 			if (!PageAnon(old_page)) {
 @@ -1748,6 +1957,10 @@ gotten:
  		lru_cache_add_active(new_page);
  		page_add_new_anon_rmap(new_page, vma, address);
@@ -30921,18 +31068,19 @@ diff -urNp linux-2.6.22.1/mm/memory.c linux-2.6.22.1/mm/memory.c
  unlock:
  	pte_unmap_unlock(page_table, ptl);
  	return VM_FAULT_MINOR;
-@@ -2342,6 +2580,11 @@ retry:
- 			new_page = page;
- 			anon = 1;
- 
+@@ -2382,6 +2620,12 @@ retry:
+ 	 */
+ 	/* Only go through if we didn't race with anybody else... */
+ 	if (pte_none(*page_table)) {
++
 +#ifdef CONFIG_PAX_SEGMEXEC
-+			if (pax_find_mirror_vma(vma))
-+				BUG_ON(TestSetPageLocked(new_page));
++ 		if (anon && pax_find_mirror_vma(vma))
++ 			BUG_ON(TestSetPageLocked(new_page));
 +#endif
 +
- 		} else {
- 			/* if the page will be shareable, see if the backing
- 			 * address space wants to know that the page is about
+ 		flush_icache_page(vma, new_page);
+ 		entry = mk_pte(new_page, vma->vm_page_prot);
+ 		if (write_access)
 @@ -2408,6 +2651,14 @@ retry:
  	/* no need to invalidate: a not-present page shouldn't be cached */
  	update_mmu_cache(vma, address, entry);
@@ -31396,13 +31544,12 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
  		mm->stack_vm += pages;
  	if (flags & (VM_RESERVED|VM_IO))
  		mm->reserved_vm += pages;
-@@ -903,28 +977,33 @@ unsigned long do_mmap_pgoff(struct file 
+@@ -903,28 +977,32 @@ unsigned long do_mmap_pgoff(struct file 
  	int accountable = 1;
  	unsigned long charged = 0, reqprot = prot;
  
 +#ifdef CONFIG_PAX_SEGMEXEC
 +	struct vm_area_struct *vma_m = NULL, *prev_m;
-+	struct rb_node **rb_link_m, *rb_parent_m;
 +#endif
 +
  	/*
@@ -31710,7 +31857,7 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
  }
  
  unsigned long
-@@ -1459,6 +1622,26 @@ out:
+@@ -1459,6 +1622,32 @@ out:
  	return prev ? prev->vm_next : vma;
  }
  
@@ -31729,7 +31876,13 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
 +	BUG_ON(!vma_m || vma_m->vm_mirror != vma);
 +	BUG_ON(vma->vm_end - vma->vm_start != vma_m->vm_end - vma_m->vm_start);
 +	BUG_ON(vma->vm_pgoff != vma_m->vm_pgoff || vma->anon_vma != vma_m->anon_vma);
++
++#ifdef CONFIG_PAX_MPROTECT
++	BUG_ON((vma->vm_flags ^ vma_m->vm_flags) & ~(VM_WRITE | VM_MAYWRITE | VM_ACCOUNT | VM_MAYNOTWRITE));
++#else
 +	BUG_ON((vma->vm_flags ^ vma_m->vm_flags) & ~(VM_WRITE | VM_MAYWRITE | VM_ACCOUNT));
++#endif
++
 +	return vma_m;
 +}
 +#endif
@@ -33731,8 +33884,8 @@ diff -urNp linux-2.6.22.1/security/Kconfig linux-2.6.22.1/security/Kconfig
 +	  by your particular system.
 +
 +	  - "none": if your MAC system does not interact with PaX,
-+	  - "direct": if your MAC system defines pax_set_flags() itself,
-+	  - "hook": if your MAC system uses the pax_set_flags_func callback.
++	  - "direct": if your MAC system defines pax_set_initial_flags() itself,
++	  - "hook": if your MAC system uses the pax_set_initial_flags_func callback.
 +
 +	  NOTE: this option is for developers/integrators only.
 +
@@ -33946,7 +34099,7 @@ diff -urNp linux-2.6.22.1/security/Kconfig linux-2.6.22.1/security/Kconfig
 +
 +config PAX_KERNEXEC
 +	bool "Enforce non-executable kernel pages"
-+	depends on PAX_NOEXEC && X86_32 && !HOTPLUG_PCI_COMPAQ_NVRAM && !EFI && !COMPAT_VDSO && X86_WP_WORKS_OK && !PARAVIRT
++	depends on PAX_NOEXEC && X86_32 && !EFI && !COMPAT_VDSO && X86_WP_WORKS_OK && !PARAVIRT
 +	help
 +	  This is the kernel land equivalent of PAGEEXEC and MPROTECT,
 +	  that is, enabling this option will make it harder to inject
