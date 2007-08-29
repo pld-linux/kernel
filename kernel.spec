@@ -1117,6 +1117,11 @@ BuildConfig() {
 
 %endif
 
+# Temporary disabled RELOCATABLE. Needed only on x86??
+%if %{with pax} || %{with grsec_full}
+	sed -i "s:CONFIG_RELOCATABLE=y:# CONFIG_RELOCATABLE is not set:" arch/%{_target_base_arch}/defconfig
+%endif
+
 #
 # end of grsecurity & pax stuff
 
