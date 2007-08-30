@@ -1,0 +1,38 @@
+diff -purN a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
+--- a/drivers/scsi/scsi_lib.c	2007-01-23 14:40:28.000000000 -0800
++++ b/drivers/scsi/scsi_lib.c	2007-01-23 14:46:43.000000000 -0800
+@@ -1574,7 +1574,7 @@ struct request_queue *__scsi_alloc_queue
+ {
+ 	struct request_queue *q;
+ 
+-	q = blk_init_queue(request_fn, NULL);
++	q = blk_init_queue(request_fn, shost->req_q_lock);
+ 	if (!q)
+ 		return NULL;
+ 
+diff -purN a/drivers/scsi/stex.c b/drivers/scsi/stex.c
+--- a/drivers/scsi/stex.c	2007-01-23 14:40:28.000000000 -0800
++++ b/drivers/scsi/stex.c	2007-01-23 14:48:59.000000000 -0800
+@@ -1254,6 +1254,8 @@ stex_probe(struct pci_dev *pdev, const s
+ 	if (err)
+ 		goto out_free_irq;
+ 
++	spin_lock_init(&host->__req_q_lock);
++	host->req_q_lock = &host->__req_q_lock;
+ 	err = scsi_init_shared_tag_map(host, host->can_queue);
+ 	if (err) {
+ 		printk(KERN_ERR DRV_NAME "(%s): init shared queue failed\n",
+diff -purN a/include/scsi/scsi_host.h b/include/scsi/scsi_host.h
+--- a/include/scsi/scsi_host.h	2007-01-23 14:40:29.000000000 -0800
++++ b/include/scsi/scsi_host.h	2007-01-23 14:57:04.000000000 -0800
+@@ -508,6 +508,9 @@ struct Scsi_Host {
+ 	spinlock_t		default_lock;
+ 	spinlock_t		*host_lock;
+ 
++	spinlock_t		__req_q_lock;
++	spinlock_t		*req_q_lock;/* protect shared block queue tag */
++
+ 	struct mutex		scan_mutex;/* serialize scanning activity */
+ 
+ 	struct list_head	eh_cmd_q;
+
