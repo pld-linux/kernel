@@ -314,6 +314,10 @@ Patch130:	linux-2.6-forcedeth-WON.patch
 # http://download.filesystems.org/unionfs/unionfs-2.1/unionfs-2.1.1_for_2.6.22.3.diff.gz
 Patch140:	linux-2.6-unionfs-2.1.1.patch
 
+# http://lkml.org/lkml/diff/2007/1/23/268/1
+# http://bugzilla.kernel.org/show_bug.cgi?id=7842
+Patch150:	linux-stex.patch
+
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
 # The following patch extend the routing functionality in Linux 
@@ -931,6 +935,8 @@ install %{SOURCE5} Makefile.ppclibs
 
 #
 # end of grsecurity & pax stuff
+
+%patch150 -p1
 
 %ifarch ppc ppc64
 %patch200 -p1
