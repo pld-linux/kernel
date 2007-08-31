@@ -1478,9 +1478,11 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
+%ifnarch sparc
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/usb/cdc_ether.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/usb/rndis_host.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/usb/usbnet.ko*
+%endif
 %ghost /lib/modules/%{kernel_release}/modules.*
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
@@ -1512,11 +1514,13 @@ fi
 /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 
+%ifnarch sparc
 %files net-rndis
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}/kernel/drivers/net/usb/cdc_ether.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/usb/rndis_host.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/usb/usbnet.ko*
+%endif
 
 %ifarch ppc-broken
 %if "%{_arch}" == "ppc"
