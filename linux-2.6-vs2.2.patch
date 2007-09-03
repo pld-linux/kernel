@@ -156,18 +156,6 @@ diff -NurpP --minimal linux-2.6.22.2/Documentation/vserver/debug.txt linux-2.6.2
 + m 2^m	"vx_acc_page[%5d,%s,%2d]: %5d%s"
 +	"vx_acc_pages[%5d,%s,%2d]: %5d += %5d"
 +	"vx_pages_avail[%5d,%s,%2d]: %5ld > %5d + %5d"
-diff -NurpP --minimal linux-2.6.22.2/Makefile linux-2.6.22.2-vs2.2.0.3/Makefile
---- linux-2.6.22.2/Makefile	2007-08-12 03:07:38 +0200
-+++ linux-2.6.22.2-vs2.2.0.3/Makefile	2007-08-12 12:47:26 +0200
-@@ -1,7 +1,7 @@
- VERSION = 2
- PATCHLEVEL = 6
- SUBLEVEL = 22
--EXTRAVERSION = .2
-+EXTRAVERSION = .2-vs2.2.0.3
- NAME = Holy Dancing Manatees, Batman!
- 
- # *DOCUMENTATION*
 diff -NurpP --minimal linux-2.6.22.2/arch/alpha/Kconfig linux-2.6.22.2-vs2.2.0.3/arch/alpha/Kconfig
 --- linux-2.6.22.2/arch/alpha/Kconfig	2007-07-09 13:17:31 +0200
 +++ linux-2.6.22.2-vs2.2.0.3/arch/alpha/Kconfig	2007-06-15 02:37:02 +0200
@@ -7210,17 +7198,17 @@ diff -NurpP --minimal linux-2.6.22.2/fs/nfs/super.c linux-2.6.22.2-vs2.2.0.3/fs/
 --- linux-2.6.22.2/fs/nfs/super.c	2007-07-09 13:19:27 +0200
 +++ linux-2.6.22.2-vs2.2.0.3/fs/nfs/super.c	2007-06-15 03:03:21 +0200
 @@ -45,6 +45,7 @@
- #include <linux/inet.h>
  #include <linux/nfs_xdr.h>
  #include <linux/magic.h>
+ #include <linux/parser.h>
 +#include <linux/vs_tag.h>
  
  #include <asm/system.h>
  #include <asm/uaccess.h>
 @@ -291,6 +292,7 @@ static void nfs_show_mount_options(struc
- 		{ NFS_MOUNT_NONLM, ",nolock", "" },
  		{ NFS_MOUNT_NOACL, ",noacl", "" },
  		{ NFS_MOUNT_NORDIRPLUS, ",nordirplus", "" },
+ 		{ NFS_MOUNT_UNSHARED, ",nosharecache", ""},
 +		{ NFS_MOUNT_TAGGED, ",tag", "" },
  		{ 0, NULL, NULL }
  	};
@@ -7347,9 +7335,9 @@ diff -NurpP --minimal linux-2.6.22.2/fs/nfsd/nfs4xdr.c linux-2.6.22.2-vs2.2.0.3/
 --- linux-2.6.22.2/fs/nfsd/nfs4xdr.c	2007-07-09 13:19:27 +0200
 +++ linux-2.6.22.2-vs2.2.0.3/fs/nfsd/nfs4xdr.c	2007-06-15 02:37:03 +0200
 @@ -56,6 +56,7 @@
- #include <linux/nfsd_idmap.h>
- #include <linux/nfs4.h>
  #include <linux/nfs4_acl.h>
+ #include <linux/sunrpc/gss_api.h>
+ #include <linux/sunrpc/svcauth_gss.h>
 +#include <linux/vs_tag.h>
  
  #define NFSDDBG_FACILITY		NFSDDBG_XDR
@@ -7486,8 +7474,8 @@ diff -NurpP --minimal linux-2.6.22.2/fs/nfsd/vfs.c linux-2.6.22.2-vs2.2.0.3/fs/n
  	 */
  	if (!(acc & MAY_LOCAL_ACCESS))
  		if (acc & (MAY_WRITE | MAY_SATTR | MAY_TRUNC)) {
--			if (EX_RDONLY(exp) || IS_RDONLY(inode))
-+			if (EX_RDONLY(exp) || IS_RDONLY(inode)
+-			if (EX_RDONLY(exp, rqstp) || IS_RDONLY(inode))
++			if (EX_RDONLY(exp, rqstp) || IS_RDONLY(inode)
 +				|| MNT_IS_RDONLY(exp->ex_mnt))
  				return nfserr_rofs;
  			if (/* (acc & MAY_WRITE) && */ IS_IMMUTABLE(inode))
@@ -10828,10 +10816,10 @@ diff -NurpP --minimal linux-2.6.22.2/include/linux/nfs_mount.h linux-2.6.22.2-vs
 --- linux-2.6.22.2/include/linux/nfs_mount.h	2007-07-09 13:20:00 +0200
 +++ linux-2.6.22.2-vs2.2.0.3/include/linux/nfs_mount.h	2007-06-15 03:54:39 +0200
 @@ -62,6 +62,7 @@ struct nfs_mount_data {
- #define NFS_MOUNT_STRICTLOCK	0x1000	/* reserved for NFSv4 */
  #define NFS_MOUNT_SECFLAVOUR	0x2000	/* 5 */
  #define NFS_MOUNT_NORDIRPLUS	0x4000	/* 5 */
-+#define NFS_MOUNT_TAGGED	0x8000	/* context tagging */
+ #define NFS_MOUNT_UNSHARED	0x8000	/* 5 */
++#define NFS_MOUNT_TAGGED	0x10000	/* context tagging */
  #define NFS_MOUNT_FLAGMASK	0xFFFF
  
  #endif
@@ -11161,11 +11149,11 @@ diff -NurpP --minimal linux-2.6.22.2/include/linux/sunrpc/clnt.h linux-2.6.22.2-
 --- linux-2.6.22.2/include/linux/sunrpc/clnt.h	2007-07-09 13:20:01 +0200
 +++ linux-2.6.22.2-vs2.2.0.3/include/linux/sunrpc/clnt.h	2007-06-15 02:37:04 +0200
 @@ -43,7 +43,8 @@ struct rpc_clnt {
+ 	unsigned int		cl_softrtry : 1,/* soft timeouts */
+ 				cl_intr     : 1,/* interruptible */
  				cl_discrtry : 1,/* disconnect before retry */
- 				cl_autobind : 1,/* use getport() */
- 				cl_oneshot  : 1,/* dispose after use */
--				cl_dead     : 1;/* abandoned */
-+				cl_dead     : 1,/* abandoned */
+-				cl_autobind : 1;/* use getport() */
++				cl_autobind : 1,/* use getport() */
 +				cl_tag      : 1;/* context tagging */
  
  	struct rpc_rtt *	cl_rtt;		/* RTO estimator data */
@@ -15833,9 +15821,9 @@ diff -NurpP --minimal linux-2.6.22.2/init/main.c linux-2.6.22.2-vs2.2.0.3/init/m
 --- linux-2.6.22.2/init/main.c	2007-07-09 13:20:03 +0200
 +++ linux-2.6.22.2-vs2.2.0.3/init/main.c	2007-06-15 04:03:00 +0200
 @@ -55,6 +55,7 @@
- #include <linux/pid_namespace.h>
  #include <linux/device.h>
  #include <linux/kthread.h>
+ #include <linux/suspend.h>
 +#include <linux/vserver/percpu.h>
  
  #include <asm/io.h>
@@ -16655,9 +16643,9 @@ diff -NurpP --minimal linux-2.6.22.2/kernel/printk.c linux-2.6.22.2-vs2.2.0.3/ke
 --- linux-2.6.22.2/kernel/printk.c	2007-07-09 13:20:03 +0200
 +++ linux-2.6.22.2-vs2.2.0.3/kernel/printk.c	2007-06-15 02:37:04 +0200
 @@ -31,6 +31,7 @@
- #include <linux/bootmem.h>
  #include <linux/syscalls.h>
  #include <linux/jiffies.h>
+ #include <linux/suspend.h>
 +#include <linux/vs_cvirt.h>
  
  #include <asm/uaccess.h>
@@ -27694,6 +27682,14 @@ diff -NurpP --minimal linux-2.6.22.2/net/ipv4/tcp_minisocks.c linux-2.6.22.2-vs2
 diff -NurpP --minimal linux-2.6.22.2/net/ipv4/udp.c linux-2.6.22.2-vs2.2.0.3/net/ipv4/udp.c
 --- linux-2.6.22.2/net/ipv4/udp.c	2007-07-09 13:20:06 +0200
 +++ linux-2.6.22.2-vs2.2.0.3/net/ipv4/udp.c	2007-06-17 06:02:02 +0200
+@@ -97,6 +97,7 @@
+ #include <linux/skbuff.h>
+ #include <linux/proc_fs.h>
+ #include <linux/seq_file.h>
++// #include <linux/vs_inet.h>
+ #include <net/icmp.h>
+ #include <net/route.h>
+ #include <net/checksum.h>
 @@ -221,11 +221,8 @@ int udp_get_port(struct sock *sk, unsign
  
  int ipv4_rcv_saddr_equal(const struct sock *sk1, const struct sock *sk2)
