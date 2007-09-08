@@ -1,9 +1,7 @@
 #
-# STATUS: 2.6.22.5 work in progress
+# STATUS: 2.6.22.6 work in progress
 #
 # TODO:
-# - update all config files (i386 and x86_64 up to date)
-# - update pax patch
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - set needs update
 #
@@ -356,10 +354,10 @@ Patch5001:	linux-2.6-apparmor-caps.patch
 # not ready yet
 Patch9997:	pax_selinux_hooks-2.6.20.patch
 
-# based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.21.3-test4.patch
-Patch9998:	pax-linux-2.6.20.patch
+# based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.22.6-test26.patch
+Patch9998:	kernel-pax.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.10-2.6.21.3-200706042125.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.11-2.6.22.6-200709071800.patch
 Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
