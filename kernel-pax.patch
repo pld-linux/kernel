@@ -5904,9 +5904,9 @@ diff -NurpX linux-2.6.22.6-pax/Documentation/dontdiff linux-2.6.22.6/arch/i386/m
 --- linux-2.6.22.6/arch/i386/mm/fault.c	2007-08-31 14:33:34.000000000 +0200
 +++ linux-2.6.22.6-pax/arch/i386/mm/fault.c	2007-08-31 14:37:52.000000000 +0200
 @@ -25,10 +25,14 @@
- #include <linux/kprobes.h>
  #include <linux/uaccess.h>
  #include <linux/kdebug.h>
+ #include <linux/suspend.h>
 +#include <linux/unistd.h>
 +#include <linux/compiler.h>
 +#include <linux/binfmts.h>
@@ -7676,9 +7676,9 @@ diff -NurpX linux-2.6.22.6-pax/Documentation/dontdiff linux-2.6.22.6/arch/ia64/m
 --- linux-2.6.22.6/arch/ia64/mm/fault.c	2007-07-09 01:32:17.000000000 +0200
 +++ linux-2.6.22.6-pax/arch/ia64/mm/fault.c	2007-07-29 21:45:50.000000000 +0200
 @@ -10,6 +10,7 @@
- #include <linux/interrupt.h>
  #include <linux/kprobes.h>
  #include <linux/kdebug.h>
+ #include <linux/vs_memory.h>
 +#include <linux/binfmts.h>
  
  #include <asm/pgtable.h>
@@ -12897,9 +12897,9 @@ diff -NurpX linux-2.6.22.6-pax/Documentation/dontdiff linux-2.6.22.6/fs/exec.c l
 --- linux-2.6.22.6/fs/exec.c	2007-08-31 14:33:33.000000000 +0200
 +++ linux-2.6.22.6-pax/fs/exec.c	2007-09-03 11:58:02.000000000 +0200
 @@ -51,6 +51,7 @@
- #include <linux/cn_proc.h>
  #include <linux/audit.h>
  #include <linux/signalfd.h>
+ #include <linux/vs_memory.h>
 +#include <linux/random.h>
  
  #include <asm/uaccess.h>
@@ -13227,31 +13227,22 @@ diff -NurpX linux-2.6.22.6-pax/Documentation/dontdiff linux-2.6.22.6/fs/nfs/nfs4
  		err = _nfs4_do_open_reclaim(sp, state, dentry);
 @@ -538,7 +538,7 @@ static int _nfs4_open_delegation_recall(
  
- int nfs4_open_delegation_recall(struct dentry *dentry, struct nfs4_state *state)
+ int nfs4_open_delegation_recall(struct nfs_open_context *ctx, struct nfs4_state *state, const nfs4_stateid *stateid)
  {
 -	struct nfs4_exception exception = { };
 +	struct nfs4_exception exception = {0, 0};
- 	struct nfs_server *server = NFS_SERVER(dentry->d_inode);
+ 	struct nfs_server *server = NFS_SERVER(state->inode);
  	int err;
  	do {
 @@ -843,7 +843,7 @@ static int _nfs4_open_expired(struct nfs
- static inline int nfs4_do_open_expired(struct nfs4_state_owner *sp, struct nfs4_state *state, struct dentry *dentry)
+ static inline int nfs4_do_open_expired(struct nfs_open_context *ctx, struct nfs4_state *state)
  {
- 	struct nfs_server *server = NFS_SERVER(dentry->d_inode);
+ 	struct nfs_server *server = NFS_SERVER(state->inode);
 -	struct nfs4_exception exception = { };
 +	struct nfs4_exception exception = {0, 0};
  	int err;
  
  	do {
-@@ -938,7 +938,7 @@ out_put_state_owner:
- 
- static struct nfs4_state *nfs4_open_delegated(struct inode *inode, int flags, struct rpc_cred *cred)
- {
--	struct nfs4_exception exception = { };
-+	struct nfs4_exception exception = {0, 0};
- 	struct nfs4_state *res = ERR_PTR(-EIO);
- 	int err;
- 
 @@ -1008,7 +1008,7 @@ out_err:
  
  static struct nfs4_state *nfs4_do_open(struct inode *dir, struct dentry *dentry, int flags, struct iattr *sattr, struct rpc_cred *cred)
@@ -16683,23 +16674,27 @@ diff -NurpX linux-2.6.22.6-pax/Documentation/dontdiff linux-2.6.22.6/init/do_mou
  	sys_close(fd);
  	if (len <= 0 || len == 32 || buf[len - 1] != '\n')
  		goto fail;
-@@ -144,8 +146,8 @@ dev_t name_to_dev_t(char *name)
- 	int part;
+@@ -144,12 +146,12 @@ dev_t name_to_dev_t(char *name)
+ 	int part, mount_result;
  
  #ifdef CONFIG_SYSFS
 -	int mkdir_err = sys_mkdir("/sys", 0700);
--	if (sys_mount("sysfs", "/sys", "sysfs", 0, NULL) < 0)
 +	int mkdir_err = sys_mkdir((char __user *)"/sys", 0700);
-+	if (sys_mount((char __user *)"sysfs", (char __user *)"/sys", (char __user *)"sysfs", 0, NULL) < 0)
+ 	/* 
+ 	 * When changing resume2 parameter for Software Suspend, sysfs may
+ 	 * already be mounted. 
+ 	 */
+-	mount_result = sys_mount("sysfs", "/sys", "sysfs", 0, NULL);
++	mount_result = sys_mount((char __user *)"sysfs", (char __user *)"/sys", (char __user *)"sysfs", 0, NULL);
+ 	if (mount_result < 0 && mount_result != -EBUSY)
  		goto out;
  #endif
- 
 @@ -197,10 +199,10 @@ dev_t name_to_dev_t(char *name)
- 	res = try_name(s, part);
  done:
  #ifdef CONFIG_SYSFS
--	sys_umount("/sys", 0);
-+	sys_umount((char __user *)"/sys", 0);
+ 	if (mount_result >= 0)
+-		sys_umount("/sys", 0);
++		sys_umount((char __user *)"/sys", 0);
  out:
  	if (!mkdir_err)
 -		sys_rmdir("/sys");
@@ -18980,11 +18975,11 @@ diff -NurpX linux-2.6.22.6-pax/Documentation/dontdiff linux-2.6.22.6/mm/mmap.c l
 +		vma = NULL;
  	}
  out:	
- 	mm->total_vm += len >> PAGE_SHIFT;
+ 	vx_vmpages_add(mm, len >> PAGE_SHIFT);
  	vm_stat_account(mm, vm_flags, file, len >> PAGE_SHIFT);
 +	track_exec_limit(mm, addr, addr + len, vm_flags);
  	if (vm_flags & VM_LOCKED) {
- 		mm->locked_vm += len >> PAGE_SHIFT;
+ 		vx_vmlocked_add(mm, len >> PAGE_SHIFT);
  		make_pages_present(addr, addr + len);
 @@ -1168,6 +1289,12 @@ unmap_and_free_vma:
  	unmap_region(mm, vma, prev, vma->vm_start, vma->vm_end);
@@ -19245,9 +19240,9 @@ diff -NurpX linux-2.6.22.6-pax/Documentation/dontdiff linux-2.6.22.6/mm/mmap.c l
 +		if ((mm->pax_flags & MF_PAX_SEGMEXEC) && (vma->vm_end <= SEGMEXEC_TASK_SIZE))
 +#endif
 +
- 		mm->total_vm -= nrpages;
+ 		vx_vmpages_sub(mm, nrpages);
  		if (vma->vm_flags & VM_LOCKED)
- 			mm->locked_vm -= nrpages;
+ 			vx_vmlocked_sub(mm, nrpages);
 @@ -1708,6 +1869,15 @@ detach_vmas_to_be_unmapped(struct mm_str
  
  	insertion_point = (prev ? &prev->vm_next : &mm->mmap);
@@ -19471,7 +19466,7 @@ diff -NurpX linux-2.6.22.6-pax/Documentation/dontdiff linux-2.6.22.6/mm/mmap.c l
  		locked += mm->locked_vm;
  		lock_limit = current->signal->rlim[RLIMIT_MEMLOCK].rlim_cur;
  		lock_limit >>= PAGE_SHIFT;
-@@ -1914,22 +2231,22 @@ unsigned long do_brk(unsigned long addr,
+@@ -1914,23 +2231,23 @@ unsigned long do_brk(unsigned long addr,
  	/*
  	 * Clear old maps.  this also does some error checking for us
  	 */
@@ -19493,8 +19488,10 @@ diff -NurpX linux-2.6.22.6-pax/Documentation/dontdiff linux-2.6.22.6/mm/mmap.c l
  	if (mm->map_count > sysctl_max_map_count)
  		return -ENOMEM;
  
--	if (security_vm_enough_memory(len >> PAGE_SHIFT))
-+	if (security_vm_enough_memory(charged))
+-	if (security_vm_enough_memory(len >> PAGE_SHIFT) ||
+-		!vx_vmpages_avail(mm, len >> PAGE_SHIFT))
++	if (security_vm_enough_memory(charged) ||
++		!vx_vmpages_avail(mm, charged))
  		return -ENOMEM;
  
  	/* Can we just expand an old private anonymous mapping? */
@@ -19534,11 +19531,11 @@ diff -NurpX linux-2.6.22.6-pax/Documentation/dontdiff linux-2.6.22.6/mm/mmap.c l
 +#endif
 +
  out:
--	mm->total_vm += len >> PAGE_SHIFT;
-+	mm->total_vm += charged;
+-	vx_vmpages_add(mm, len >> PAGE_SHIFT);
++	vx_vmpages_add(mm, charged);
  	if (flags & VM_LOCKED) {
--		mm->locked_vm += len >> PAGE_SHIFT;
-+		mm->locked_vm += charged;
+-		vx_vmlocked_add(mm, len >> PAGE_SHIFT);
++		vx_vmlocked_add(mm, charged);
  		make_pages_present(addr, addr + len);
  	}
 +	track_exec_limit(mm, addr, addr + len, flags);
@@ -19569,8 +19566,8 @@ diff -NurpX linux-2.6.22.6-pax/Documentation/dontdiff linux-2.6.22.6/mm/mmap.c l
  	 * The vm_pgoff of a purely anonymous vma should be irrelevant
  	 * until its first write fault, when page's anon_vma and index
 @@ -2027,7 +2367,22 @@ int insert_vm_struct(struct mm_struct * 
- 	if ((vma->vm_flags & VM_ACCOUNT) &&
- 	     security_vm_enough_memory(vma_pages(vma)))
+ 		(security_vm_enough_memory(vma_pages(vma)) ||
+ 		!vx_vmpages_avail(mm, vma_pages(vma))))
  		return -ENOMEM;
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
