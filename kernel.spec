@@ -243,6 +243,9 @@ Patch21:	kernel-pom-ng-time.patch
 Patch22:	kernel-pom-ng-rsh.patch
 Patch23:	kernel-pom-ng-rpc.patch
 
+# http://ftp.linux-vserver.org/pub/people/dhozac/p/k/delta-owner-xid-feat02.diff
+Patch37:	kernel-owner-xid.patch
+
 # based on http://www.svn.barbara.eu.org/ipt_account/attachment/wiki/Software/ipt_account-0.1.21-20070804164729.tar.gz?format=raw
 Patch38:	kernel-ipt_account.patch
 
@@ -820,6 +823,9 @@ install %{SOURCE5} Makefile.ppclibs
 
 # kernel-pom-ng-rpc.patch
 %patch23 -p1
+
+# kernel-owner-xid.patch
+%patch37 -p1
 
 # kernel-ipt_account.patch
 %patch38 -p1
