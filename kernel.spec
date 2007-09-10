@@ -120,7 +120,7 @@
 %define		_mkvmlinuz_ver		1.3
 
 %define		_basever		2.6.20
-%define		_postver		.18
+%define		_postver		.19
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
@@ -168,7 +168,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	0c849673f3d032582e83100b818ea147
+# Source1-md5:	e5b99cee49276cd4c20258dc74aedb64
 %endif
 
 Source3:	kernel-autoconf.h
