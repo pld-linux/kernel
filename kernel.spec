@@ -117,7 +117,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.2
+%define		_rel			0.3
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20070806
@@ -323,9 +323,7 @@ Patch130:	linux-2.6-forcedeth-WON.patch
 # http://download.filesystems.org/unionfs/unionfs-2.1/unionfs-2.1.1_for_2.6.22.3.diff.gz
 Patch140:	linux-2.6-unionfs-2.1.1.patch
 
-# http://lkml.org/lkml/diff/2007/1/23/268/1
-# http://bugzilla.kernel.org/show_bug.cgi?id=7842
-Patch150:	linux-stex.patch
+Patch150:	linux-blk-race.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
