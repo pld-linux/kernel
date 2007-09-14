@@ -325,6 +325,9 @@ Patch140:	linux-2.6-unionfs-2.1.1.patch
 
 Patch150:	linux-blk-race.patch
 
+# aic94xx patch based on http://georgi.unixsol.org/programs/aic94xx_with_included_firmware_2.6.21.diff
+Patch160:	linux-2.6-aic94xx_with_included_firmware.patch
+
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
 # The following patch extend the routing functionality in Linux 
@@ -362,6 +365,7 @@ Patch9998:	kernel-pax.patch
 Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
+
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -900,6 +904,9 @@ install %{SOURCE5} Makefile.ppclibs
 
 # unionfs
 %patch140 -p1
+
+# aic94xx linux-2.6-aic94xx_with_included_firmware.patch
+%patch160 -p1
 
 # desables regparms
 %if %{without regparm}
