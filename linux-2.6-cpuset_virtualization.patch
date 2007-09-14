@@ -2,9 +2,9 @@ diff -ur linux-2.6.14.3/arch/i386/kernel/cpu/proc.c linux-2.6.14.3-cpusetvirt/ar
 --- linux-2.6.14.3/arch/i386/kernel/cpu/proc.c	2005-11-24 23:10:21.000000000 +0100
 +++ linux-2.6.14.3-cpusetvirt/arch/i386/kernel/cpu/proc.c	2005-11-25 19:28:28.088979320 +0100
 @@ -3,6 +3,7 @@
- #include <linux/string.h>
  #include <asm/semaphore.h>
  #include <linux/seq_file.h>
+ #include <linux/cpufreq.h>
 +#include <linux/cpuset.h>
  
  /*
@@ -34,9 +34,9 @@ diff -ur linux-2.6.14.3/arch/ia64/kernel/setup.c linux-2.6.14.3-cpusetvirt/arch/
 --- linux-2.6.14.3/arch/ia64/kernel/setup.c	2005-11-24 23:10:21.000000000 +0100
 +++ linux-2.6.14.3-cpusetvirt/arch/ia64/kernel/setup.c	2005-11-25 19:28:28.090979016 +0100
 @@ -43,6 +43,7 @@
- #include <linux/initrd.h>
  #include <linux/platform.h>
  #include <linux/pm.h>
+ #include <linux/cpufreq.h>
 +#include <linux/cpuset.h>
  
  #include <asm/ia32.h>
@@ -71,9 +71,9 @@ diff -ur linux-2.6.14.3/arch/x86_64/kernel/setup.c linux-2.6.14.3-cpusetvirt/arc
 --- linux-2.6.14.3/arch/x86_64/kernel/setup.c	2005-11-24 23:10:21.000000000 +0100
 +++ linux-2.6.14.3-cpusetvirt/arch/x86_64/kernel/setup.c	2005-11-25 19:37:48.755745016 +0100
 @@ -42,6 +42,7 @@
- #include <linux/edd.h>
- #include <linux/mmzone.h>
- #include <linux/kexec.h>
+ #include <linux/cpufreq.h>
+ #include <linux/dmi.h>
+ #include <linux/dma-mapping.h>
 +#include <linux/cpuset.h>
  
  #include <asm/mtrr.h>
@@ -184,9 +184,9 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
 --- linux-2.6.14.3/kernel/cpuset.c	2005-11-24 23:10:21.000000000 +0100
 +++ linux-2.6.14.3-cpusetvirt/kernel/cpuset.c	2005-11-25 19:28:28.084979928 +0100
 @@ -83,6 +83,7 @@
- typedef enum {
  	CS_CPU_EXCLUSIVE,
  	CS_MEM_EXCLUSIVE,
+ 	CS_MEMORY_MIGRATE,
 +	CS_VIRTUALIZED,
  	CS_REMOVED,
  	CS_NOTIFY_ON_RELEASE
@@ -318,16 +318,16 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
 +{
 +	int retval;
 +
-+	down(&cpuset_sem);
++	down(&callback_sem);
 +	if (is_virtualized(p->cpuset))
 +		retval = set_cpus_virt_allowed(p, mask);
 +	else {
 +		cpumask_t cpus_allowed;
-+		cpus_allowed = p->cpuset->cpus_allowed;
++		cpus_allowed = cpuset_cpus_allowed(p);
 +		cpus_and(mask, mask, cpus_allowed);
 +		retval = set_cpus_allowed(p, mask);
 +	}
-+	up(&cpuset_sem);
++	up(&callback_sem);
 +	return retval;
 +}
 +
@@ -377,7 +377,7 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
 +		allowed = CPU_MASK_ALL;
 +	}
 +		
- 	tsk->cpuset = cs;
+ 	rcu_assign_pointer(tsk->cpuset, cs);
  	task_unlock(tsk);
  
 -	guarantee_online_cpus(cs, &cpus);
@@ -390,8 +390,8 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
 +		set_cpus_allowed(tsk, cpus);
 +	}
  
- 	put_task_struct(tsk);
- 	if (atomic_dec_and_test(&oldcs->count))
+ 	from = oldcs->mems_allowed;
+ 	to = cs->mems_allowed;
 @@ -839,6 +1006,7 @@
  	FILE_MEMLIST,
  	FILE_CPU_EXCLUSIVE,
@@ -499,12 +499,12 @@ diff -ur linux-2.6.14.3/kernel/sched.c linux-2.6.14.3-cpusetvirt/kernel/sched.c
  		goto out_unlock;
  
  	retval = 0;
--	cpus_and(*mask, p->cpus_allowed, cpu_possible_map);
+-	cpus_and(*mask, p->cpus_allowed, cpu_online_map);
 +#ifdef CONFIG_CPUSETS
 +	if (cpuset_get_cpus_virt_affinity(p, mask) < 0)
-+		cpus_and(*mask, p->cpus_allowed, cpu_possible_map);
++		cpus_and(*mask, p->cpus_allowed, cpu_online_map);
 +#else
-+  	cpus_and(*mask, p->cpus_allowed, cpu_possible_map);
++  	cpus_and(*mask, p->cpus_allowed, cpu_online_map);
 +#endif
  
  out_unlock:
