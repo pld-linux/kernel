@@ -1,0 +1,14 @@
+	Fix a crash that can be caused by a CLONE_DETACHED thread.
+	Author: Ingo Molnar <mingo@elte.hu>
+
+--- linux/kernel/exit.c.orig	Mon Sep  9 14:06:05 2002
++++ linux/kernel/exit.c	Mon Sep  9 14:06:25 2002
+@@ -416,7 +416,7 @@
+ 	 *	
+ 	 */
+ 	
+-	if(current->exit_signal != SIGCHLD &&
++	if(current->exit_signal != SIGCHLD && current->exit_signal != -1 &&
+ 	    ( current->parent_exec_id != t->self_exec_id  ||
+ 	      current->self_exec_id != current->parent_exec_id) 
+ 	    && !capable(CAP_KILL))
