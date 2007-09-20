@@ -320,8 +320,9 @@ Patch102:	linux-2.6-vs2.2.patch
 # Fix verified for that kernel version.
 Patch130:	linux-2.6-forcedeth-WON.patch
 
-# http://download.filesystems.org/unionfs/unionfs-2.1/unionfs-2.1.1_for_2.6.22.3.diff.gz
+# http://download.filesystems.org/unionfs/unionfs-2.1/unionfs-2.1.4_for_2.6.22.6.diff.gz
 Patch140:	linux-2.6-unionfs-2.1.1.patch
+Patch141:	kernel-unionfs-vserver.patch
 
 Patch150:	linux-blk-race.patch
 
@@ -904,6 +905,7 @@ install %{SOURCE5} Makefile.ppclibs
 
 # unionfs
 %patch140 -p1
+%{?with_vserver:%patch141 -p1}
 
 # aic94xx linux-2.6-aic94xx_with_included_firmware.patch
 %patch160 -p1
@@ -924,13 +926,13 @@ install %{SOURCE5} Makefile.ppclibs
 
 %if %{with pax_full}
 %patch9999 -p1
-%patch10000 -p1
+%{?with_vserver:%patch10000 -p1}
 %{?with_vserver:%patch10001 -p1}
 %else
 
 %if %{with grsec_full}
 %patch9999 -p1
-%patch10000 -p1
+%{?with_vserver:%patch10000 -p1}
 %{?with_vserver:%patch10001 -p1}
 %else
 %if %{with grsec_minimal}
