@@ -1,9 +1,8 @@
 #
-# STATUS: 2.6.22.6 work in progress
+# STATUS: 2.6.22.7 ready, needs testing
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
-# - set needs update
 #
 # FUTURE:
 # - update xen patch for 2.6.21
@@ -40,7 +39,7 @@
 %bcond_without	imq		# imq support
 %bcond_without	wrr		# wrr support
 
-%bcond_without	vserver		# support for VServer (enabled by default) 
+%bcond_without	vserver		# support for VServer (enabled by default)
 %bcond_without	suspend2	# support for Suspend2 (enabled by default)
 
 %bcond_with	vs22		# use vserver 2.2 instead of 2.3 (see comment near patch 102)
@@ -117,7 +116,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.3
+%define		_rel			0.4
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20070806
@@ -222,10 +221,9 @@ Patch7:		linux-alpha-isa.patch
 Patch8:		linux-fbcon-margins.patch
 Patch9:		linux-static-dev.patch
 
-
 # netfilter related stuff mostly based on patch-o-matic-ng
 # snapshot 20061213 with some fixes related to changes in
-# netfilter api in 2.6.19 up to 2.6.22. Some modules 
+# netfilter api in 2.6.19 up to 2.6.22. Some modules
 # were ported to nf_conntrack. Some of these are unique.
 
 Patch10:	kernel-pom-ng-IPV4OPTSSTRIP.patch
@@ -254,7 +252,7 @@ Patch39:	kernel-ipt_ACCOUNT.patch
 
 # netfilter-layer7-v2.13.tar.gz from http://l7-filter.sf.net/
 Patch40:	kernel-layer7.patch
- 
+
 ### End netfilter
 
 # based on 2.6.17 patch from http://www.linuximq.net/patchs/linux-2.6.17-imq1.diff,
@@ -311,7 +309,7 @@ Patch102:	linux-2.6-vs2.2.patch
 # note about vserver 2.2 vs 2.3: 2.2 is "stable", 2.3 is "development", currently (2007-09-03)
 # the preferred 2.3 vserver needs CONFIG_IPV6=y config, which break things for some users;
 # it was proposed to use 2.2 as a temp replacement. One couuld use vs 2.2 instead of 2.3
-# by using vs22 bcond - this bcond also changes IPV6 option from "y" to "m". 
+# by using vs22 bcond - this bcond also changes IPV6 option from "y" to "m".
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 #Patch120: xen-3.0-2.6.16.patch
@@ -331,16 +329,16 @@ Patch160:	linux-2.6-aic94xx_with_included_firmware.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
-# The following patch extend the routing functionality in Linux 
-# to support static routes (defined by user), new way to use the 
-# alternative routes, the reverse path protection (rp_filter), 
-# the NAT processing to use correctly the routing when multiple 
+# The following patch extend the routing functionality in Linux
+# to support static routes (defined by user), new way to use the
+# alternative routes, the reverse path protection (rp_filter),
+# the NAT processing to use correctly the routing when multiple
 # gateways are used.
 # http://www.ssi.bg/~ja/routes-2.6.22-15.diff
 # We need to disable CONFIG_IP_ROUTE_MULTIPATH_CACHED
 Patch300:	kernel-routes-2.6.22-15.diff
 
-# For compatibility with (not updated) blobs like ... ? 
+# For compatibility with (not updated) blobs like ... ?
 # Before 2.6.20 we had CONFIG_REGPARM option disabled.
 # Probably not needed anymore - it is bconded and disabled now
 Patch500:	linux-2.6.20_i386_regparm_off.patch
@@ -366,7 +364,6 @@ Patch9998:	kernel-pax.patch
 Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
-
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -536,7 +533,7 @@ Netfilter module dated: %{_netfilter_snap}
 
 %package vmlinux
 Summary:	vmlinux - uncompressed kernel image
-Summary(pl.UTF-8):   vmlinux - rozpakowany obraz jądra
+Summary(pl.UTF-8):	vmlinux - rozpakowany obraz jądra
 Group:		Base/Kernel
 Obsoletes:	kernel-smp-vmlinux
 
@@ -791,6 +788,9 @@ install %{SOURCE5} Makefile.ppclibs
 # kernel-pom-ng-ipv4options.patch
 %patch11 -p1
 
+# kernel-pom-ng-set.patch
+%patch12 -p1
+
 # kernel-pom-ng-u32.patch
 %patch13 -p1
 
@@ -870,7 +870,6 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 %patch58 -p1
-
 
 # linux-2.6-sk98lin_v10.0.4.3.patch
 %patch60 -p1
@@ -1078,7 +1077,6 @@ PaXconfig () {
 	return 0
 }
 
-
 BuildConfig() {
 	%{?debug:set -x}
 	# is this a special kernel we want to build?
@@ -1157,7 +1155,6 @@ BuildConfig() {
 #
 # end of grsecurity & pax stuff
 
-
 %if %{with imq}
 	cat %{SOURCE55} >> arch/%{_target_base_arch}/defconfig
 %endif
@@ -1206,8 +1203,6 @@ BuildConfig() {
 	install .config \
 		$KERNEL_INSTALL_DIR%{_kernelsrcdir}/config-dist
 }
-
-
 
 BuildKernel() {
 	%{?debug:set -x}
