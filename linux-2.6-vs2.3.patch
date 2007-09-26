@@ -163,8 +163,8 @@ diff -NurpP --minimal linux-2.6.22.6/Makefile linux-2.6.22.6-vs2.3.0.24/Makefile
  VERSION = 2
  PATCHLEVEL = 6
  SUBLEVEL = 22
--EXTRAVERSION = .8
-+EXTRAVERSION = .8-vs2.3.0.24
+-EXTRAVERSION = .9
++EXTRAVERSION = .9-vs2.3.0.24
  NAME = Holy Dancing Manatees, Batman!
  
  # *DOCUMENTATION*
@@ -6270,7 +6270,7 @@ diff -NurpP --minimal linux-2.6.22.6/fs/locks.c linux-2.6.22.6-vs2.3.0.24/fs/loc
 @@ -787,6 +806,7 @@ find_conflict:
  		goto out;
  	locks_copy_lock(new_fl, request);
- 	locks_insert_lock(&inode->i_flock, new_fl);
+ 	locks_insert_lock(before, new_fl);
 +	vx_locks_inc(new_fl);
  	new_fl = NULL;
  	error = 0;
@@ -9582,27 +9582,6 @@ diff -NurpP --minimal linux-2.6.22.6/fs/reiserfs/xattr.c linux-2.6.22.6-vs2.3.0.
  		reiserfs_write_unlock_xattrs(inode->i_sb);
  		dput(root);
  	} else {
-diff -NurpP --minimal linux-2.6.22.6/fs/splice.c linux-2.6.22.6-vs2.3.0.24/fs/splice.c
---- linux-2.6.22.6/fs/splice.c	2007-09-05 03:37:50 +0200
-+++ linux-2.6.22.6-vs2.3.0.24/fs/splice.c	2007-09-19 03:19:11 +0200
-@@ -1011,7 +1011,7 @@ long do_splice_direct(struct file *in, l
- 		max_read_len = min(len, (size_t)(PIPE_BUFFERS*PAGE_SIZE));
- 
- 		ret = do_splice_to(in, ppos, pipe, max_read_len, flags);
--		if (unlikely(ret < 0))
-+		if (unlikely(ret <= 0))
- 			goto out_release;
- 
- 		read_len = ret;
-@@ -1023,7 +1023,7 @@ long do_splice_direct(struct file *in, l
- 		 */
- 		ret = do_splice_from(pipe, out, &out_off, read_len,
- 				     flags & ~SPLICE_F_NONBLOCK);
--		if (unlikely(ret < 0))
-+		if (unlikely(ret <= 0))
- 			goto out_release;
- 
- 		bytes += ret;
 diff -NurpP --minimal linux-2.6.22.6/fs/stat.c linux-2.6.22.6-vs2.3.0.24/fs/stat.c
 --- linux-2.6.22.6/fs/stat.c	2007-07-09 13:19:28 +0200
 +++ linux-2.6.22.6-vs2.3.0.24/fs/stat.c	2007-08-05 20:53:13 +0200
