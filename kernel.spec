@@ -112,7 +112,7 @@
 %define		_mkvmlinuz_ver		1.3
 
 %define		_basever		2.6.22
-%define		_postver		.8
+%define		_postver		.9
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
@@ -161,7 +161,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	957192637e6830ba43bad2d9f9ba8324
+# Source1-md5:	6e2e5112d69af5c8d78cff0479c700cd
 %endif
 
 Source3:	kernel-autoconf.h
@@ -321,8 +321,6 @@ Patch130:	linux-2.6-forcedeth-WON.patch
 # http://download.filesystems.org/unionfs/unionfs-2.1/unionfs-2.1.4_for_2.6.22.6.diff.gz
 Patch140:	linux-2.6-unionfs-2.1.1.patch
 Patch141:	kernel-unionfs-vserver.patch
-
-Patch150:	linux-blk-race.patch
 
 # aic94xx patch based on http://georgi.unixsol.org/programs/aic94xx_with_included_firmware_2.6.21.diff
 Patch160:	linux-2.6-aic94xx_with_included_firmware.patch
@@ -957,8 +955,6 @@ install %{SOURCE5} Makefile.ppclibs
 
 #
 # end of grsecurity & pax stuff
-
-%patch150 -p1
 
 %ifarch ppc ppc64
 %patch200 -p1
