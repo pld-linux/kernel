@@ -104,7 +104,7 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_rel			4
+%define		_rel			5
 
 %define		_old_netfilter_snap	20060504
 %define		_netfilter_snap		20060829
@@ -297,6 +297,9 @@ Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
 # Wake-On-Lan patch for nVidia nForce ethernet driver forcedeth
 Patch250:	linux-2.6.17-forcedeth-WON.patch
+
+# root exploit fix
+Patch300:	linux-CVE-2007-4573.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
@@ -965,6 +968,8 @@ done
 %endif
 
 %patch250 -p1
+
+%patch300 -p1
 
 ##Small fixes:
 %patch2000 -p1
