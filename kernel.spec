@@ -307,6 +307,7 @@ Patch86:	kernel-bcm43xx-combined_2.6.21.patch
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
+Patch103:	kernel-timers.patch
 
 # http://vserver.13thfloor.at/Experimental/patch-2.6.21-vs2.2.0-rc1.diff
 # TODO: temporary use instead of patch100
@@ -864,6 +865,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch101 -p1
 %endif
 %patch102 -p1
+%patch103 -p1
 %endif
 
 #%if %{with xen0} || %{with xenU}
