@@ -116,7 +116,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.4
+%define		_rel			0.5
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20070806
@@ -252,6 +252,9 @@ Patch39:	kernel-ipt_ACCOUNT.patch
 
 # netfilter-layer7-v2.13.tar.gz from http://l7-filter.sf.net/
 Patch40:	kernel-layer7.patch
+
+# http://people.linux-vserver.org/~dhozac/p/k/delta-timers-fix01.diff
+Patch41:	kernel-timers.patch
 
 ### End netfilter
 
@@ -889,6 +892,8 @@ install %{SOURCE5} Makefile.ppclibs
 %ifarch %{ix86} %{x8664} ia64
 %patch101 -p1
 %endif
+# kernel-timers.patch
+%patch41 -p1
 %endif
 
 #%if %{with xen0} || %{with xenU}
