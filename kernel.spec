@@ -338,6 +338,7 @@ Patch85:	hostap-kernel-2.6.18.patch
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
+Patch103:	kernel-timers.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 #Patch120: xen-3.0-2.6.16.patch
@@ -882,6 +883,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch101 -p1
 %endif
 %patch102 -p1
+%patch103 -p1
 %endif
 
 #%if %{with xen0} || %{with xenU}
