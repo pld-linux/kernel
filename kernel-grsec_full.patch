@@ -396,15 +396,23 @@ diff -urNp linux-2.6.22.1/arch/i386/Kconfig.cpu linux-2.6.22.1/arch/i386/Kconfig
 diff -urNp linux-2.6.22.1/arch/i386/Kconfig.debug linux-2.6.22.1/arch/i386/Kconfig.debug
 --- linux-2.6.22.1/arch/i386/Kconfig.debug	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/arch/i386/Kconfig.debug	2007-08-02 11:38:45.000000000 -0400
-@@ -48,7 +48,7 @@ config DEBUG_PAGEALLOC
+@@ -46,16 +46,6 @@ config DEBUG_PAGEALLOC
+ 	  This results in a large slowdown, but helps to find certain types
+ 	  of memory corruptions.
  
- config DEBUG_RODATA
- 	bool "Write protect kernel read-only data structures"
+-config DEBUG_RODATA
+-	bool "Write protect kernel read-only data structures"
 -	depends on DEBUG_KERNEL
-+	depends on DEBUG_KERNEL && !PAX_KERNEXEC
- 	help
- 	  Mark the kernel read-only data as write-protected in the pagetables,
- 	  in order to catch accidental (and incorrect) writes to such const
+-	help
+-	  Mark the kernel read-only data as write-protected in the pagetables,
+-	  in order to catch accidental (and incorrect) writes to such const
+-	  data. This option may have a slight performance impact because a
+-	  portion of the kernel code won't be covered by a 2MB TLB anymore.
+-	  If in doubt, say "N".
+-
+ config 4KSTACKS
+ 	bool "Use 4Kb for kernel stacks instead of 8Kb"
+ 	depends on DEBUG_KERNEL
 diff -urNp linux-2.6.22.1/arch/i386/kernel/acpi/boot.c linux-2.6.22.1/arch/i386/kernel/acpi/boot.c
 --- linux-2.6.22.1/arch/i386/kernel/acpi/boot.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/arch/i386/kernel/acpi/boot.c	2007-08-02 11:38:45.000000000 -0400
@@ -3530,17 +3538,24 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/traps.c linux-2.6.22.1/arch/i386/kern
  		in_kernel = 0;
  		esp = regs->esp;
  		ss = regs->xss & 0xffff;
-@@ -321,11 +317,11 @@ void show_registers(struct pt_regs *regs
+@@ -315,17 +311,18 @@ void show_registers(struct pt_regs *regs
+ 		unsigned int code_prologue = code_bytes * 43 / 64;
+ 		unsigned int code_len = code_bytes;
+ 		unsigned char c;
++		unsigned long cs_base = get_desc_base(&get_cpu_gdt_table(smp_processor_id())[(0xffff & regs->xcs) >> 3]);
+ 
+ 		printk("\n" KERN_EMERG "Stack: ");
+ 		show_stack_log_lvl(NULL, regs, (unsigned long *)esp, KERN_EMERG);
  
  		printk(KERN_EMERG "Code: ");
  
 -		eip = (u8 *)regs->eip - code_prologue;
-+		eip = (u8 *)regs->eip - code_prologue + __KERNEL_TEXT_OFFSET;
++		eip = (u8 *)regs->eip - code_prologue + cs_base;
  		if (eip < (u8 *)PAGE_OFFSET ||
  			probe_kernel_address(eip, c)) {
  			/* try starting at EIP */
 -			eip = (u8 *)regs->eip;
-+			eip = (u8 *)regs->eip + __KERNEL_TEXT_OFFSET;
++			eip = (u8 *)regs->eip + cs_base;
  			code_len = code_len - code_prologue + 1;
  		}
  		for (i = 0; i < code_len; i++, eip++) {
@@ -3549,7 +3564,7 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/traps.c linux-2.6.22.1/arch/i386/kern
  				break;
  			}
 -			if (eip == (u8 *)regs->eip)
-+			if (eip == (u8 *)regs->eip + __KERNEL_TEXT_OFFSET)
++			if (eip == (u8 *)regs->eip + cs_base)
  				printk("<%02x> ", c);
  			else
  				printk("%02x ", c);
@@ -6307,7 +6322,7 @@ diff -urNp linux-2.6.22.1/arch/i386/mm/fault.c linux-2.6.22.1/arch/i386/mm/fault
  			page &= PAGE_MASK;
  			page = ((__typeof__(page) *) __va(page))[(address >> PAGE_SHIFT)
  			                                         & (PTRS_PER_PTE - 1)];
-@@ -645,3 +835,110 @@ void vmalloc_sync_all(void)
+@@ -645,3 +835,109 @@ void vmalloc_sync_all(void)
  			start = address + PGDIR_SIZE;
  	}
  }
@@ -6321,7 +6336,6 @@ diff -urNp linux-2.6.22.1/arch/i386/mm/fault.c linux-2.6.22.1/arch/i386/mm/fault
 + */
 +static int pax_handle_fetch_fault(struct pt_regs *regs)
 +{
-+
 +	static const unsigned char trans[8] = {
 +		offsetof(struct pt_regs, eax) / 4,
 +		offsetof(struct pt_regs, ecx) / 4,
@@ -7192,7 +7206,7 @@ diff -urNp linux-2.6.22.1/arch/i386/pci/irq.c linux-2.6.22.1/arch/i386/pci/irq.c
 diff -urNp linux-2.6.22/arch/i386/pci/pcbios.c linux-2.6.22/arch/i386/pci/pcbios.c
 --- linux-2.6.22/arch/i386/pci/pcbios.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22/arch/i386/pci/pcbios.c	2007-07-10 14:56:30.000000000 -0400
-@@ -57,50 +57,119 @@ union bios32 {
+@@ -57,50 +57,120 @@ union bios32 {
  static struct {
  	unsigned long address;
  	unsigned short segment;
@@ -7278,8 +7292,9 @@ diff -urNp linux-2.6.22/arch/i386/pci/pcbios.c linux-2.6.22/arch/i386/pci/pcbios
 +		int cpu;
 +		unsigned char flags;
 +
++		printk(KERN_INFO "bios32_service: base:%08lx length:%08lx entry:%08lx\n", address, length, entry);
 +		address = address + PAGE_OFFSET;
-+		length -= 1UL;
++		length += 16UL; /* some BIOSs underreport this... */
 +		flags = 4;
 +		if (length >= 64*1024*1024) {
 +			length >>= PAGE_SHIFT;
@@ -31430,21 +31445,17 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
  	/*
  	 * We later require that vma->vm_flags == vm_flags,
  	 * so this tests vma->vm_flags & VM_SPECIAL, too.
-@@ -759,6 +793,19 @@ struct vm_area_struct *vma_merge(struct 
+@@ -759,6 +793,15 @@ struct vm_area_struct *vma_merge(struct 
  	if (next && next->vm_end == end)		/* cases 6, 7, 8 */
  		next = next->vm_next;
  
 +#ifdef CONFIG_PAX_SEGMEXEC
-+	if ((mm->pax_flags & MF_PAX_SEGMEXEC) && (vm_flags & VM_EXEC)) {
-+		find_vma_prev(mm, addr_m, &prev_m);
-+		if (prev_m)
-+			next_m = prev_m->vm_next;
-+		else
-+			next_m = mm->mmap;
-+		area_m = next_m;
-+		if (next_m && next_m->vm_end == end_m)	/* cases 6, 7, 8 */
-+			next_m = next_m->vm_next;
-+	}
++	if (prev)
++		prev_m = pax_find_mirror_vma(prev);
++	if (area)
++		area_m = pax_find_mirror_vma(area);
++	if (next)
++		next_m = pax_find_mirror_vma(next);
 +#endif
 +
  	/*
@@ -31457,7 +31468,7 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
 -		} else					/* cases 2, 5, 7 */
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
-+			if (prev->vm_mirror)
++			if (prev_m)
 +				vma_adjust(prev_m, prev_m->vm_start,
 +					next_m->vm_end, prev_m->vm_pgoff, NULL);
 +#endif
@@ -31467,7 +31478,7 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
  				end, prev->vm_pgoff, NULL);
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
-+			if (prev->vm_mirror)
++			if (prev_m)
 +				vma_adjust(prev_m, prev_m->vm_start,
 +					end_m, prev_m->vm_pgoff, NULL);
 +#endif
@@ -31487,7 +31498,7 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
 -		else					/* cases 3, 8 */
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
-+			if (area->vm_mirror)
++			if (prev_m)
 +				vma_adjust(prev_m, prev_m->vm_start,
 +					addr_m, prev_m->vm_pgoff, NULL);
 +#endif
@@ -31497,7 +31508,7 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
  				next->vm_pgoff - pglen, NULL);
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
-+			if (area->vm_mirror)
++			if (area_m)
 +				vma_adjust(area_m, addr_m, next_m->vm_end,
 +					next_m->vm_pgoff - pglen, NULL);
 +#endif
@@ -31976,7 +31987,7 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
  		vx_vmpages_sub(mm, nrpages);
  		if (vma->vm_flags & VM_LOCKED)
  			vx_vmlocked_sub(mm, nrpages);
-@@ -1708,6 +1869,15 @@ detach_vmas_to_be_unmapped(struct mm_str
+@@ -1708,6 +1869,16 @@ detach_vmas_to_be_unmapped(struct mm_str
  
  	insertion_point = (prev ? &prev->vm_next : &mm->mmap);
  	do {
@@ -31985,6 +31996,7 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
 +		if (vma->vm_mirror) {
 +			BUG_ON(!vma->vm_mirror->vm_mirror || vma->vm_mirror->vm_mirror != vma);
 +			vma->vm_mirror->vm_mirror = NULL;
++			vma->vm_mirror->vm_flags &= ~VM_EXEC;
 +			vma->vm_mirror = NULL;
 +		}
 +#endif
@@ -32105,7 +32117,7 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
  int split_vma(struct mm_struct * mm, struct vm_area_struct * vma,
  	      unsigned long addr, int new_below)
  {
-@@ -1774,13 +2050,27 @@ int split_vma(struct mm_struct * mm, str
+@@ -1774,14 +2055,28 @@ int split_vma(struct mm_struct * mm, str
  
  	return 0;
  }
@@ -32117,8 +32129,8 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
   * Jeremy Fitzhardinge <jeremy@goop.org>
   */
 +#ifdef CONFIG_PAX_SEGMEXEC
-+int do_munmap(struct mm_struct *mm, unsigned long start, size_t len)
-+{
+ int do_munmap(struct mm_struct *mm, unsigned long start, size_t len)
+ {
 +	int ret = __do_munmap(mm, start, len);
 +	if (ret || !(mm->pax_flags & MF_PAX_SEGMEXEC))
 +		return ret;
@@ -32128,11 +32140,12 @@ diff -urNp linux-2.6.22.1/mm/mmap.c linux-2.6.22.1/mm/mmap.c
 +
 +int __do_munmap(struct mm_struct *mm, unsigned long start, size_t len)
 +#else
- int do_munmap(struct mm_struct *mm, unsigned long start, size_t len)
++int do_munmap(struct mm_struct *mm, unsigned long start, size_t len)
 +#endif
- {
++{
  	unsigned long end;
  	struct vm_area_struct *vma, *prev, *last;
+ 
 @@ -1834,6 +2124,8 @@ int do_munmap(struct mm_struct *mm, unsi
  	/* Fix up all other VM information */
  	remove_vma_list(mm, vma);
