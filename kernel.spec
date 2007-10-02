@@ -253,9 +253,6 @@ Patch39:	kernel-ipt_ACCOUNT.patch
 # netfilter-layer7-v2.13.tar.gz from http://l7-filter.sf.net/
 Patch40:	kernel-layer7.patch
 
-# http://people.linux-vserver.org/~dhozac/p/k/delta-timers-fix01.diff
-Patch41:	kernel-timers.patch
-
 ### End netfilter
 
 # based on 2.6.17 patch from http://www.linuximq.net/patchs/linux-2.6.17-imq1.diff,
@@ -304,7 +301,7 @@ Patch90:	linux-2.6.22-NFS_ALL.dif
 # http://www.citi.umich.edu/projects/nfsv4/linux/kernel-patches/2.6.22-rc5-1/linux-2.6.22-rc5-CITI_NFS4_ALL-1.diff
 Patch91:	linux-2.6.22-rc5-CITI_NFS4_ALL-1.diff
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.22.1-vs2.3.0.15.diff
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.22.9-vs2.3.0.26.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.22.2-vs2.2.0.3.diff
@@ -892,8 +889,6 @@ install %{SOURCE5} Makefile.ppclibs
 %ifarch %{ix86} %{x8664} ia64
 %patch101 -p1
 %endif
-# kernel-timers.patch
-%patch41 -p1
 %endif
 
 #%if %{with xen0} || %{with xenU}
