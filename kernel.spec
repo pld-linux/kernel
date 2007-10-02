@@ -289,6 +289,7 @@ Patch60:	linux-2.6-sk98lin_v10.0.4.3.patch
 
 # http://www.tuxonice.net/downloads/all/suspend2-2.2.10-for-2.6.22.patch.bz2
 Patch69:	linux-2.6-suspend2.patch
+Patch70:	kernel-suspend2-headers.patch
 Patch71:	linux-2.6-suspend2-page.patch
 Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 
@@ -751,6 +752,7 @@ install %{SOURCE5} Makefile.ppclibs
 %if %{with suspend2}
 ##ifarch %{ix86} %{x8664} ia64 ppc alpha
 %patch69 -p1
+%patch70 -p1
 %patch71 -p1
 # kernel-2.6-ueagle-atm-freezer.patch
 %patch72 -p1
@@ -886,8 +888,10 @@ install %{SOURCE5} Makefile.ppclibs
 %else
 %patch100 -p1
 %endif
-%ifarch %{ix86} %{x8664} ia64
+%if %{with suspend2}
+#ifarch %{ix86} %{x8664} ia64
 %patch101 -p1
+#endif
 %endif
 %endif
 
