@@ -1,0 +1,101 @@
+diff -Nurp linux-2.6.17.11-vs2.1.1-rc31/include/linux/netfilter_ipv4/ipt_owner.h linux-2.6.17.11-vs2.1.1-rc31.owner-xid/include/linux/netfilter_ipv4/ipt_owner.h
+--- linux-2.6.17.11-vs2.1.1-rc31/include/linux/netfilter_ipv4/ipt_owner.h	2006-03-20 06:53:29.000000000 +0100
++++ linux-2.6.17.11-vs2.1.1-rc31.owner-xid/include/linux/netfilter_ipv4/ipt_owner.h	2006-09-05 19:43:48.000000000 +0200
+@@ -1,12 +1,16 @@
+ #ifndef _IPT_OWNER_H
+ #define _IPT_OWNER_H
+ 
++#include <linux/types.h>
++
+ /* match and invert flags */
+ #define IPT_OWNER_UID	0x01
+ #define IPT_OWNER_GID	0x02
+ #define IPT_OWNER_PID	0x04
+ #define IPT_OWNER_SID	0x08
+ #define IPT_OWNER_COMM	0x10
++#define IPT_OWNER_NID	0x20
++#define IPT_OWNER_XID	0x40
+ 
+ struct ipt_owner_info {
+     uid_t uid;
+@@ -15,6 +19,8 @@ struct ipt_owner_info {
+     pid_t sid;
+     char comm[16];
+     u_int8_t match, invert;	/* flags */
++    u_int32_t nid;
++    u_int32_t xid;
+ };
+ 
+ #endif /*_IPT_OWNER_H*/
+diff -Nurp linux-2.6.17.11-vs2.1.1-rc31/include/linux/netfilter_ipv6/ip6t_owner.h linux-2.6.17.11-vs2.1.1-rc31.owner-xid/include/linux/netfilter_ipv6/ip6t_owner.h
+--- linux-2.6.17.11-vs2.1.1-rc31/include/linux/netfilter_ipv6/ip6t_owner.h	2006-03-20 06:53:29.000000000 +0100
++++ linux-2.6.17.11-vs2.1.1-rc31.owner-xid/include/linux/netfilter_ipv6/ip6t_owner.h	2006-09-05 19:45:51.000000000 +0200
+@@ -1,11 +1,15 @@
+ #ifndef _IP6T_OWNER_H
+ #define _IP6T_OWNER_H
+ 
++#include <linux/types.h>
++
+ /* match and invert flags */
+ #define IP6T_OWNER_UID	0x01
+ #define IP6T_OWNER_GID	0x02
+ #define IP6T_OWNER_PID	0x04
+ #define IP6T_OWNER_SID	0x08
++#define IP6T_OWNER_NID	0x20
++#define IP6T_OWNER_XID	0x40
+ 
+ struct ip6t_owner_info {
+     uid_t uid;
+@@ -13,6 +17,8 @@ struct ip6t_owner_info {
+     pid_t pid;
+     pid_t sid;
+     u_int8_t match, invert;	/* flags */
++    u_int32_t nid;
++    u_int32_t xid;
+ };
+ 
+ #endif /*_IPT_OWNER_H*/
+diff -Nurp linux-2.6.17.11-vs2.1.1-rc31/net/ipv4/netfilter/ipt_owner.c linux-2.6.17.11-vs2.1.1-rc31.owner-xid/net/ipv4/netfilter/ipt_owner.c
+--- linux-2.6.17.11-vs2.1.1-rc31/net/ipv4/netfilter/ipt_owner.c	2006-06-18 15:25:05.000000000 +0200
++++ linux-2.6.17.11-vs2.1.1-rc31.owner-xid/net/ipv4/netfilter/ipt_owner.c	2006-09-05 19:44:43.000000000 +0200
+@@ -48,6 +48,18 @@ match(const struct sk_buff *skb,
+ 			return 0;
+ 	}
+ 
++	if(info->match & IPT_OWNER_NID) {
++		if ((skb->sk->sk_nid != info->nid) ^
++		    !!(info->invert & IPT_OWNER_NID))
++			return 0;
++	}
++
++	if(info->match & IPT_OWNER_XID) {
++		if ((skb->sk->sk_xid != info->xid) ^
++		    !!(info->invert & IPT_OWNER_XID))
++			return 0;
++	}
++
+ 	return 1;
+ }
+ 
+diff -Nurp linux-2.6.17.11-vs2.1.1-rc31/net/ipv6/netfilter/ip6t_owner.c linux-2.6.17.11-vs2.1.1-rc31.owner-xid/net/ipv6/netfilter/ip6t_owner.c
+--- linux-2.6.17.11-vs2.1.1-rc31/net/ipv6/netfilter/ip6t_owner.c	2006-06-18 15:25:05.000000000 +0200
++++ linux-2.6.17.11-vs2.1.1-rc31.owner-xid/net/ipv6/netfilter/ip6t_owner.c	2006-09-05 19:46:57.000000000 +0200
+@@ -49,6 +49,18 @@ match(const struct sk_buff *skb,
+ 			return 0;
+ 	}
+ 
++	if (info->match & IP6T_OWNER_NID) {
++		if ((skb->sk->sk_nid != info->nid) ^
++		    !!(info->invert & IP6T_OWNER_NID))
++			return 0;
++	}
++
++	if (info->match & IP6T_OWNER_XID) {
++		if ((skb->sk->sk_xid != info->xid) ^
++		    !!(info->invert & IP6T_OWNER_XID))
++			return 0;
++	}
++
+ 	return 1;
+ }
+ 
