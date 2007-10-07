@@ -79,7 +79,7 @@
 %define		squashfs_version	3.2
 
 %define		_basever	2.6.22
-%define		_postver	.5
+%define		_postver	.9
 %define		_rel		0.1
 %define		_rc		%{nil}
 %define		_subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_vserver:-vserver}
@@ -97,7 +97,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	2e230d005c002fb3d38a3ca07c0200d0
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	27544a58763bbd4ce497a77658af744a
+# Source1-md5:	6e2e5112d69af5c8d78cff0479c700cd
 %endif
 
 Source2:	kernel-module-build.pl
@@ -127,7 +127,6 @@ Source47:	kernel-squashfs.config
 
 # from http://vserver.13thfloor.at/Experimental/
 Patch100:	linux-2.6-vs2.3.patch
-Patch101:	linux-2.6-vs2.1-128IPs.patch
 
 # from http://www.grsecurity.net/~spender/
 Patch200:	linux-2.6-grsec-full.patch
@@ -613,7 +612,6 @@ Documentation.
 # conditional vserver/grsecurity patching
 %if %{with vserver}
 %patch100 -p1
-%patch101 -p1
 
 # vserver enabled, patch with modified grsecurity
 %if %{with grsec_full}
