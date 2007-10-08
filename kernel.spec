@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.22.7 ready, needs testing
+# STATUS: 2.6.22.9 ready, needs testing
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
@@ -116,7 +116,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			2
+%define		_rel			3
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20070806
