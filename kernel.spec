@@ -111,12 +111,12 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_basever		2.6.22
-%define		_postver		.9
+%define		_basever		2.6.23
+%define		_postver		%{nil}
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
-%define		_rc			%{nil}
-%define		_rel			3
+%define		_rc			-rc9
+%define		_rel			0.1
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20070806
@@ -152,9 +152,9 @@ Release:	0.%{_pre_rc}.%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
-# Source0-md5:	2e230d005c002fb3d38a3ca07c0200d0
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
+# Source0-md5:	8a9fe0003b2bbeb8bd8418686f01e7a9
+#Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
 %if "%{_prepatch}" != "%{nil}"
 Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}-%{_pre_rc}.bz2
 # Source90-md5:	b78873f8a3aff5bdc719fc7fb4c66a9b
@@ -171,7 +171,7 @@ Source7:	kernel-module-build.pl
 
 # TODO - cleanup
 Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
-# Source14-md5:	f2563a2d748c7480559e8d3ff77eb18a
+# Source14-md5:	5c96899f30a0bdd5ff044ac58e3d4b24
 
 Source20:	kernel-i386.config
 Source21:	kernel-x86_64.config
@@ -217,7 +217,7 @@ Patch5:		vesafb-tng-1.0-rc2-2.6.20-rc2.patch
 
 # Squashfs from squashfs: http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.2-r2.tar.gz for linux-2.6.20
 Patch6:		squashfs%{squashfs_version}-patch
-Patch7:		linux-alpha-isa.patch
+#Patch7:		linux-alpha-isa.patch # in sources
 Patch8:		linux-fbcon-margins.patch
 Patch9:		linux-static-dev.patch
 
@@ -286,6 +286,7 @@ Patch58:	linux-PF_RING.patch
 
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_41.tar.bz2
 Patch60:	linux-2.6-sk98lin_v10.0.4.3.patch
+# potrzebuje modyfikacji, ale jest zbyt rano
 
 # http://www.tuxonice.net/downloads/all/suspend2-2.2.10-for-2.6.22.patch.bz2
 Patch69:	linux-2.6-suspend2.patch
@@ -296,11 +297,6 @@ Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	hostap-kernel-2.6.18.patch
-
-# http://client.linux-nfs.org/Linux-2.6.x/2.6.22/linux-2.6.22-NFS_ALL.dif
-Patch90:	linux-2.6.22-NFS_ALL.dif
-# http://www.citi.umich.edu/projects/nfsv4/linux/kernel-patches/2.6.22-rc5-1/linux-2.6.22-rc5-CITI_NFS4_ALL-1.diff
-Patch91:	linux-2.6.22-rc5-CITI_NFS4_ALL-1.diff
 
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.22.9-vs2.3.0.26.diff
 Patch100:	linux-2.6-vs2.3.patch
@@ -319,7 +315,7 @@ Patch102:	linux-2.6-vs2.2.patch
 # Fix verified for that kernel version.
 Patch130:	linux-2.6-forcedeth-WON.patch
 
-# http://download.filesystems.org/unionfs/unionfs-2.1/unionfs-2.1.4_for_2.6.22.6.diff.gz
+# http://download.filesystems.org/unionfs/unionfs-2.1/unionfs-2.1.1_for_2.6.23-rc3.diff.gz
 Patch140:	linux-2.6-unionfs-2.1.1.patch
 Patch141:	kernel-unionfs-vserver.patch
 
@@ -774,9 +770,9 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 # squashfs
-%patch6 -p1
+#patch6 -p1 # broken
 
-%patch7 -p1
+#patch7 -p1
 %patch9 -p1
 
 ## netfilter
@@ -872,14 +868,10 @@ install %{SOURCE5} Makefile.ppclibs
 %patch58 -p1
 
 # linux-2.6-sk98lin_v10.0.4.3.patch
-%patch60 -p1
+#patch60 -p1
 
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
-
-# NFS fixes and NFS4 improvements
-%patch90 -p1
-%patch91 -p1
 
 # vserver
 %if %{with vserver}
