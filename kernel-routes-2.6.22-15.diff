@@ -1000,21 +1000,22 @@ diff -urp v2.6.22/linux/net/ipv4/route.c linux/net/ipv4/route.c
  	rth->rt_spec_dst= spec_dst;
  
  	rth->u.dst.input = ip_forward;
-@@ -1816,19 +1822,20 @@ static inline int ip_mkroute_input_def(s
- 				       struct fib_result* res,
- 				       const struct flowi *fl,
- 				       struct in_device *in_dev,
--				       __be32 daddr, __be32 saddr, u32 tos)
-+				       __be32 daddr, __be32 saddr, u32 tos, __be32 lsrc)
+@@ -1806,7 +1806,7 @@ static inline int ip_mkroute_input(struc
+ 				   struct fib_result* res,
+ 				   const struct flowi *fl,
+ 				   struct in_device *in_dev,
+-				   __be32 daddr, __be32 saddr, u32 tos)
++				   __be32 daddr, __be32 saddr, u32 tos, __be32 lsrc)
  {
  	struct rtable* rth = NULL;
+ 	int err;
+@@ -1816,13 +1822,14 @@ static inline int ip_mkroute_input_def(s
  	int err;
  	unsigned hash;
  
 +	fib_select_default(fl, res);
  #ifdef CONFIG_IP_ROUTE_MULTIPATH
--	if (res->fi && res->fi->fib_nhs > 1 && fl->oif == 0)
-+	if (res->fi && res->fi->fib_nhs > 1)
+ 	if (res->fi && res->fi->fib_nhs > 1 && fl->oif == 0)
  		fib_select_multipath(fl, res);
  #endif
  
@@ -1023,42 +1024,6 @@ diff -urp v2.6.22/linux/net/ipv4/route.c linux/net/ipv4/route.c
 +	err = __mkroute_input(skb, res, in_dev, daddr, saddr, tos, lsrc, &rth);
  	if (err)
  		return err;
- 
-@@ -1841,7 +1848,7 @@ static inline int ip_mkroute_input(struc
- 				   struct fib_result* res,
- 				   const struct flowi *fl,
- 				   struct in_device *in_dev,
--				   __be32 daddr, __be32 saddr, u32 tos)
-+				   __be32 daddr, __be32 saddr, u32 tos, __be32 lsrc)
- {
- #ifdef CONFIG_IP_ROUTE_MULTIPATH_CACHED
- 	struct rtable* rth = NULL, *rtres;
-@@ -1857,7 +1864,7 @@ static inline int ip_mkroute_input(struc
- 	/* distinguish between multipath and singlepath */
- 	if (hopcount < 2)
- 		return ip_mkroute_input_def(skb, res, fl, in_dev, daddr,
--					    saddr, tos);
-+					    saddr, tos, 0);
- 
- 	/* add all alternatives to the routing cache */
- 	for (hop = 0; hop < hopcount; hop++) {
-@@ -1869,7 +1876,7 @@ static inline int ip_mkroute_input(struc
- 
- 		/* create a routing cache entry */
- 		err = __mkroute_input(skb, res, in_dev, daddr, saddr, tos,
--				      &rth);
-+				      0, &rth);
- 		if (err)
- 			return err;
- 
-@@ -1889,7 +1896,7 @@ static inline int ip_mkroute_input(struc
- 	skb->dst = &rtres->u.dst;
- 	return err;
- #else /* CONFIG_IP_ROUTE_MULTIPATH_CACHED  */
--	return ip_mkroute_input_def(skb, res, fl, in_dev, daddr, saddr, tos);
-+	return ip_mkroute_input_def(skb, res, fl, in_dev, daddr, saddr, tos, lsrc);
- #endif /* CONFIG_IP_ROUTE_MULTIPATH_CACHED  */
- }
  
 @@ -1905,18 +1912,18 @@ static inline int ip_mkroute_input(struc
   */
