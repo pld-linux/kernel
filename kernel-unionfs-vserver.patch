@@ -37,15 +37,6 @@ diff -urp a/fs/unionfs/dirhelper.c b/fs/unionfs/dirhelper.c
 diff -urp a/fs/unionfs/inode.c b/fs/unionfs/inode.c
 --- a/fs/unionfs/inode.c	2007-09-20 16:19:41.996647500 +0200
 +++ b/fs/unionfs/inode.c	2007-09-20 16:25:09.241099000 +0200
-@@ -85,7 +85,7 @@ static int unionfs_create(struct inode *
- 			struct dentry *lower_dir_dentry;
- 
- 			lower_dir_dentry = lock_parent(wh_dentry);
--			err = vfs_unlink(lower_dir_dentry->d_inode, wh_dentry);
-+			err = vfs_unlink(lower_dir_dentry->d_inode, wh_dentry, NULL);
- 			unlock_dir(lower_dir_dentry);
- 
- 			if (err) {
 @@ -329,7 +329,7 @@ static int unionfs_link(struct dentry *o
  		err = is_robranch_super(new_dentry->d_sb, dbstart(new_dentry));
  		if (!err)
@@ -83,11 +74,11 @@ diff -urp a/fs/unionfs/inode.c b/fs/unionfs/inode.c
  
  		fsstack_copy_attr_times(dir, lower_dir_dentry->d_inode);
 @@ -536,7 +536,7 @@ static int unionfs_symlink(struct inode 
+ 		if (!err) {
  			mode = S_IALLUGO;
- 			err =
- 				vfs_symlink(lower_dir_dentry->d_inode,
--					    lower_dentry, symname, mode);
-+					    lower_dentry, symname, mode, NULL);
+ 			err = vfs_symlink(lower_dir_dentry->d_inode,
+-					  lower_dentry, symname, mode);
++					  lower_dentry, symname, mode, NULL);
  		}
  		unlock_dir(lower_dir_dentry);
  
@@ -182,18 +173,18 @@ diff -urp a/fs/unionfs/unlink.c b/fs/unionfs/unlink.c
 --- a/fs/unionfs/unlink.c	2007-09-20 16:19:42.004648000 +0200
 +++ b/fs/unionfs/unlink.c	2007-09-20 16:25:09.253099750 +0200
 @@ -40,7 +40,7 @@ static int unionfs_unlink_whiteout(struc
- 	/* avoid destroying the lower inode if the file is in use */
  	dget(lower_dentry);
- 	if (!(err = is_robranch_super(dentry->d_sb, bindex)))
+ 	err = is_robranch_super(dentry->d_sb, bindex);
+ 	if (!err)
 -		err = vfs_unlink(lower_dir_dentry->d_inode, lower_dentry);
 +		err = vfs_unlink(lower_dir_dentry->d_inode, lower_dentry, NULL);
  	/* if vfs_unlink succeeded, update our inode's times */
  	if (!err)
  		unionfs_copy_attr_times(dentry->d_inode);
 @@ -127,7 +127,7 @@ static int unionfs_rmdir_first(struct in
- 	/* avoid destroying the lower inode if the file is in use */
  	dget(lower_dentry);
- 	if (!(err = is_robranch(dentry)))
+ 	err = is_robranch(dentry);
+ 	if (!err)
 -		err = vfs_rmdir(lower_dir_dentry->d_inode, lower_dentry);
 +		err = vfs_rmdir(lower_dir_dentry->d_inode, lower_dentry, NULL);
  	dput(lower_dentry);
