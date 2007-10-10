@@ -167,6 +167,7 @@ Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 Source3:	kernel-autoconf.h
 Source4:	kernel-config.h
 Source5:	kernel-ppclibs.Makefile
+Source6:	kernel-config.py
 Source7:	kernel-module-build.pl
 
 # TODO - cleanup
@@ -369,6 +370,8 @@ BuildRequires:	module-init-tools
 # for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
+BuildRequires:	python
+BuildRequires:	python-modules
 BuildRequires:	rpmbuild(macros) >= 1.217
 Autoreqprov:	no
 Requires(post):	coreutils
@@ -743,6 +746,8 @@ install %{SOURCE5} Makefile.ppclibs
 %{__bzip2} -dc %{SOURCE1} | patch -p1 -s
 %endif
 
+install -m 755 %{SOURCE6} .
+
 # suspend2:
 %if %{with suspend2}
 ##ifarch %{ix86} %{x8664} ia64 ppc alpha
@@ -1074,6 +1079,8 @@ BuildConfig() {
 	KernelVer=%{kernel_release}
 	echo "Building config file using $Config.conf..."
 	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
+	./kernel-config.py %{_target_base_arch} $RPM_SOURCE_DIR/kernel-multiarch.config \
+		arch/%{_target_base_arch}/defconfig arch/%{_target_base_arch}/defconfig
 	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
 
 ## Temporary disabled - we should have the proper config files in defconfig loaded
