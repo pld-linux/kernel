@@ -115,7 +115,7 @@
 %define		_postver		%{nil}
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
-%define		_rc			-rc9
+%define		_rc			%{nil}
 %define		_rel			0.1
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
@@ -152,9 +152,9 @@ Release:	0.%{_pre_rc}.%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	8a9fe0003b2bbeb8bd8418686f01e7a9
-#Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
+#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
+Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
+# Source0-md5:	2cc2fd4d521dc5d7cfce0d8a9d1b3472
 %if "%{_prepatch}" != "%{nil}"
 Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}-%{_pre_rc}.bz2
 # Source90-md5:	b78873f8a3aff5bdc719fc7fb4c66a9b
@@ -217,7 +217,6 @@ Patch5:		vesafb-tng-1.0-rc2-2.6.20-rc2.patch
 
 # Squashfs from squashfs: http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.2-r2.tar.gz for linux-2.6.20
 Patch6:		squashfs%{squashfs_version}-patch
-#Patch7:		linux-alpha-isa.patch # in sources
 Patch8:		linux-fbcon-margins.patch
 Patch9:		linux-static-dev.patch
 
@@ -770,9 +769,8 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 # squashfs
-#patch6 -p1 # broken
+%patch6 -p1  
 
-#patch7 -p1
 %patch9 -p1
 
 ## netfilter
