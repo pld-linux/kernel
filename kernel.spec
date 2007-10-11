@@ -337,6 +337,12 @@ Patch200:	linux-2.6-ppc-ICE-hacks.patch
 # We need to disable CONFIG_IP_ROUTE_MULTIPATH_CACHED
 Patch300:	kernel-routes-2.6.22-15.diff
 
+# Linux solution for prefetching necessary data
+# during application and system startup
+# http://code.google.com/p/prefetch/
+# http://prefetch.googlecode.com/svn/trunk/kernel-patches/2.6.22/submitted-2/prefetch-core+boot+app-clean.diff
+Patch400:	linux-2.6-prefetch.patch
+
 # For compatibility with (not updated) blobs like ... ?
 # Before 2.6.20 we had CONFIG_REGPARM option disabled.
 # Probably not needed anymore - it is bconded and disabled now
@@ -910,6 +916,9 @@ install %{SOURCE5} Makefile.ppclibs
 
 # aic94xx linux-2.6-aic94xx_with_included_firmware.patch
 %patch160 -p1
+
+# prefetch
+%patch400 -p1
 
 # desables regparms
 %if %{without regparm}
