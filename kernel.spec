@@ -116,7 +116,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			1
+%define		_rel			1.1
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20070806
@@ -1665,4 +1665,5 @@ fi
 %{_kernelsrcdir}/MAINTAINERS
 %{_kernelsrcdir}/README
 %{_kernelsrcdir}/REPORTING-BUGS
+%{_kernelsrcdir}/.mailmap
 %endif
