@@ -183,6 +183,7 @@ Source26:	kernel-ia64.config
 Source27:	kernel-ppc64.config
 
 Source34:	kernel-abi.config
+Source35:	kernel-prefetch.config
 
 Source40:	kernel-netfilter.config
 Source41:	kernel-squashfs.config
@@ -1105,6 +1106,9 @@ BuildConfig() {
 ##	install %{SOURCE27} arch/%{_target_base_arch}/defconfig
 ##	# sed -i "s:# CONFIG_PPC64 is not set:CONFIG_PPC64=y:" arch/%{_target_base_arch}/defconfig
 ## %endif
+
+# prefetch
+	cat %{SOURCE35} >> arch/%{_target_base_arch}/defconfig
 
 # netfilter
 	cat %{SOURCE40} >> arch/%{_target_base_arch}/defconfig
