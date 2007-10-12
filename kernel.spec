@@ -918,8 +918,8 @@ install %{SOURCE5} Makefile.ppclibs
 # aic94xx linux-2.6-aic94xx_with_included_firmware.patch
 %patch160 -p1
 
-# prefetch
-%patch400 -p1
+# prefetch, DISABLED BECAUSE IT OOPSES!
+#%patch400 -p1
 
 # desables regparms
 %if %{without regparm}
