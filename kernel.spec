@@ -1,5 +1,8 @@
 #
-# STATUS: 2.6.22.9 ready, needs testing
+# STATUS: 2.6.23 work in progresss
+#
+# NOTE:
+# - suspend2 renamed to tuxonice (as project name)
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
@@ -40,7 +43,7 @@
 %bcond_without	wrr		# wrr support
 
 %bcond_without	vserver		# support for VServer (enabled by default)
-%bcond_without	suspend2	# support for Suspend2 (enabled by default)
+%bcond_without	tuxonice	# support for tuxonice (ex-Suspend2) (enabled by default)
 
 %bcond_with	vs22		# use vserver 2.2 instead of 2.3 (see comment near patch 102)
 
@@ -130,7 +133,7 @@
 %define		drm_xfree_version	4.3.0
 
 %define		squashfs_version	3.2
-%define		suspend_version		2.2.10
+%define		tuxonice_version	3.0-rc1
 
 %define		xen_version		3.0.2
 
@@ -172,7 +175,7 @@ Source7:	kernel-module-build.pl
 
 # TODO - cleanup
 Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
-# Source14-md5:	5c96899f30a0bdd5ff044ac58e3d4b24
+# Source14-md5:	bf32f8baa98aeafa75a672097acd9cc8
 
 Source20:	kernel-i386.config
 Source21:	kernel-x86_64.config
@@ -288,7 +291,8 @@ Patch58:	linux-PF_RING.patch
 Patch60:	linux-2.6-sk98lin_v10.0.4.3.patch
 # potrzebuje modyfikacji, ale jest zbyt rano
 
-# http://www.tuxonice.net/downloads/all/suspend2-2.2.10-for-2.6.22.patch.bz2
+# Project suspend2 renamed to tuxonice
+# http://www.tuxonice.net/downloads/all/tuxonice-3.0-rc1-for-2.6.23.patch.bz2
 Patch69:	linux-2.6-suspend2.patch
 Patch70:	kernel-suspend2-headers.patch
 Patch71:	linux-2.6-suspend2-page.patch
@@ -355,7 +359,8 @@ Patch9997:	pax_selinux_hooks-2.6.20.patch
 # based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.22.6-test26.patch
 Patch9998:	kernel-pax.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.11-2.6.22.6-200709071800.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.11-2.6.23-200710111225.patch
+# todo
 Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
@@ -748,8 +753,8 @@ install %{SOURCE5} Makefile.ppclibs
 
 install -m 755 %{SOURCE6} .
 
-# suspend2:
-%if %{with suspend2}
+# tuxonice:
+%if %{with tuxonice}
 ##ifarch %{ix86} %{x8664} ia64 ppc alpha
 %patch69 -p1
 %patch70 -p1
@@ -883,7 +888,7 @@ install -m 755 %{SOURCE6} .
 %else
 %patch100 -p1
 %endif
-%if %{with suspend2}
+%if %{with tuxonice}
 #ifarch %{ix86} %{x8664} ia64
 %patch101 -p1
 #endif
@@ -1100,8 +1105,8 @@ BuildConfig() {
 # squashfs
 	cat %{SOURCE41} >> arch/%{_target_base_arch}/defconfig
 
-# suspend2
-%if %{with suspend2}
+# tuxonice
+%if %{with tuxonice}
 	cat %{SOURCE42} >> arch/%{_target_base_arch}/defconfig
 %endif
 
