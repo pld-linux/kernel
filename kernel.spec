@@ -177,6 +177,7 @@ Source7:	kernel-module-build.pl
 Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
 # Source14-md5:	bf32f8baa98aeafa75a672097acd9cc8
 
+Source19:	kernel-multiarch.config
 Source20:	kernel-i386.config
 Source21:	kernel-x86_64.config
 Source22:	kernel-sparc.config
@@ -190,7 +191,7 @@ Source34:	kernel-abi.config
 
 Source40:	kernel-netfilter.config
 Source41:	kernel-squashfs.config
-Source42:	kernel-suspend2.config
+Source42:	kernel-tuxonice.config
 Source43:	kernel-vserver.config
 Source44:	kernel-vesafb-tng.config
 Source45:	kernel-grsec.config
