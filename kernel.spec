@@ -1492,7 +1492,8 @@ fi
 /lib/modules/%{kernel_release}/kernel/kernel
 
 /lib/modules/%{kernel_release}/kernel/lib
-/lib/modules/%{kernel_release}/kernel/mm
+# uncomment .../mm if you want enable  prefetch 
+#/lib/modules/%{kernel_release}/kernel/mm
 /lib/modules/%{kernel_release}/kernel/net
 /lib/modules/%{kernel_release}/kernel/security
 %if %{have_sound}
