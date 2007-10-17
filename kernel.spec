@@ -116,7 +116,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			1.1
+%define		_rel			2
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20070806
@@ -312,6 +312,7 @@ Patch102:	linux-2.6-vs2.2.patch
 # the preferred 2.3 vserver needs CONFIG_IPV6=y config, which break things for some users;
 # it was proposed to use 2.2 as a temp replacement. One couuld use vs 2.2 instead of 2.3
 # by using vs22 bcond - this bcond also changes IPV6 option from "y" to "m".
+Patch103:	linux-2.6-vs2.3-v6tw.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 #Patch120: xen-3.0-2.6.16.patch
@@ -894,6 +895,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch102 -p1
 %else
 %patch100 -p1
+%patch103 -p1
 %endif
 %if %{with suspend2}
 #ifarch %{ix86} %{x8664} ia64
@@ -918,7 +920,7 @@ install %{SOURCE5} Makefile.ppclibs
 # aic94xx linux-2.6-aic94xx_with_included_firmware.patch
 %patch160 -p1
 
-# prefetch, DISABLED BECAUSE IT OOPSES!
+# prefetch, DISABLED BECAUSE IT OOPSES ON XFS! (at least)
 #%patch400 -p1
 
 # desables regparms
