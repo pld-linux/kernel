@@ -312,7 +312,6 @@ Patch102:	linux-2.6-vs2.2.patch
 # the preferred 2.3 vserver needs CONFIG_IPV6=y config, which break things for some users;
 # it was proposed to use 2.2 as a temp replacement. One couuld use vs 2.2 instead of 2.3
 # by using vs22 bcond - this bcond also changes IPV6 option from "y" to "m".
-Patch103:	linux-2.6-vs2.3-v6tw.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 #Patch120: xen-3.0-2.6.16.patch
@@ -895,7 +894,6 @@ install %{SOURCE5} Makefile.ppclibs
 %patch102 -p1
 %else
 %patch100 -p1
-%patch103 -p1
 %endif
 %if %{with suspend2}
 #ifarch %{ix86} %{x8664} ia64
