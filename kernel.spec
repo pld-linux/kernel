@@ -1365,6 +1365,10 @@ rm -rf scripts/mkcompile_h.save
 install %{SOURCE3} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/autoconf.h
 install %{SOURCE4} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
 
+# Temporary fix for iwlwifi:
+cp $RPM_BUILD_ROOT%{_kernelsrcdir}/net/mac80211/ieee80211_rate.h \
+	$RPM_BUILD_ROOT%{_kernelsrcdir}/include/net
+
 # collect module-build files and directories
 perl %{SOURCE7} %{_kernelsrcdir} $KERNEL_BUILD_DIR
 
