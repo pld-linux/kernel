@@ -347,6 +347,7 @@ Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	linux-2.6.21.1-pwc-uncompress.patch
+Patch2002:	kernel-ieee80211_rate.patch
 
 # kill some thousands of warnings
 Patch2500:	linux-2.6-warnings.patch
@@ -971,6 +972,7 @@ install -m 755 %{SOURCE6} .
 # Small fixes:
 %patch2000 -p1
 %patch2001 -p1
+%patch2002 -p1
 
 %if %{with abi}
 patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
@@ -1356,7 +1358,7 @@ install %{SOURCE3} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/autoconf.h
 install %{SOURCE4} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
 
 # Temporary fix for iwlwifi:
-cp $RPM_BUILD_ROOT%{_kernelsrcdir}/net/mac80211/ieee80211_rate.h \
+cp $RPM_BUILD_ROOT%{_kernelsrcdir}/net/mac80211/{ieee80211_{rate,i},sta_info}.h \
 	$RPM_BUILD_ROOT%{_kernelsrcdir}/include/net
 
 # collect module-build files and directories
