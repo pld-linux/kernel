@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.22.9 ready, needs testing
+# STATUS: 2.6.22.10 ready, needs testing
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
@@ -116,7 +116,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			3
+%define		_rel			4
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20070806
@@ -256,11 +256,8 @@ Patch40:	kernel-layer7.patch
 
 ### End netfilter
 
-# based on 2.6.17 patch from http://www.linuximq.net/patchs/linux-2.6.17-imq1.diff,
-# some stuff moved from net/sched/sch_generic.c to net/core/dev.c for 2.6.19
-# compatibility. Should work, but not with wrr.
-
-Patch50:	linux-2.6.19-imq1.diff
+# http://www.linuximq.net/patchs/linux-2.6.21-img2.diff
+Patch50:	kernel-imq.patch
 
 # based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.22/reiser4-for-2.6.22-2.patch.gz
 Patch51:	reiser4-for-2.6.22-2.patch
