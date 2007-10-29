@@ -1365,7 +1365,7 @@ install %{SOURCE3} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/autoconf.h
 install %{SOURCE4} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
 
 # Temporary fix for iwlwifi:
-cp $RPM_BUILD_ROOT%{_kernelsrcdir}/net/mac80211/{ieee80211_{rate,i},sta_info}.h \
+cp $RPM_BUILD_ROOT%{_kernelsrcdir}/net/mac80211/{ieee80211_{rate,i,key},sta_info}.h \
 	$RPM_BUILD_ROOT%{_kernelsrcdir}/include/net
 
 # collect module-build files and directories
