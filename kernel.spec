@@ -4,6 +4,9 @@
 #	- patch scripts/Makefile.xen not to require bash
 #       - make PAE usage configurable when Xen is on
 #		ALL
+#   - #vserver: try to get a 2.2.x kernel patch or if you like development
+#     features a 2.3.x one instead of the long discontinued 2.1.x you are using
+#
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
 #
 # Conditional build:
