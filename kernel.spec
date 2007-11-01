@@ -1,12 +1,11 @@
+#
 # TODO:
+#   - grsec needs patch update
 #	- test pax stuff (btw. tested ok in softmode)
 #	- prepare config for non SEGMEXEC capable archs (ie not x86/32bit)
 #	- patch scripts/Makefile.xen not to require bash
 #       - make PAE usage configurable when Xen is on
 #		ALL
-#   - #vserver: try to get a 2.2.x kernel patch or if you like development
-#     features a 2.3.x one instead of the long discontinued 2.1.x you are using
-#
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
 #
 # Conditional build:
@@ -130,7 +129,7 @@
 %define		xen_version		3.0.2
 
 %define		_basever	2.6.16
-%define		_postver	.56
+%define		_postver	.49
 %define		_rel		1
 %define		_subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -148,7 +147,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source3-md5:	82cee8fbd084a68cda03004385f465cc
+# Source3-md5:	e46be5ef52ae991575d45ad433132ac8
 
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
@@ -274,7 +273,6 @@ Patch72:	suspend2-2.2.5-for-2.6.16.37-fix.patch
 Patch80:	kernel-ahci-sb600.patch
 
 Patch81:	linux-2.6-md.patch
-Patch82:	linux-3w-9xxx.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.1.1-rc15.diff
 Patch100:	linux-2.6-vs2.1.patch
@@ -295,13 +293,8 @@ Patch202:	linux-2.6-unwind-through-signal-frames.patch
 
 # Wake-On-Lan patch for nVidia nForce ethernet driver forcedeth
 Patch250:	linux-2.6.16-forcedeth-WON.patch
-Patch251:	linux-nvidia.patch
-
-# From ALSA 1.0.13 for nVidia 
-Patch252:	linux-alsa-hda.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
-Patch1001:	linux-2.6-grsec-wrong-deref.patch
 
 Patch1200:	linux-2.6-apparmor.patch
 Patch1201:	linux-2.6-apparmor-caps.patch
@@ -727,8 +720,10 @@ Provides:	kernel-source = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description source
-This is the source code for the Linux kernel. You can build a custom kernel
-that is better tuned to your particular hardware.
+This is the source code for the Linux kernel. It is required to build
+most C programs as they depend on constants defined in here. You can
+also build a custom kernel that is better tuned to your particular
+hardware.
 
 %description source -l de
 Das Kernel-Source-Paket enthält den source code (C/Assembler-Code) des
@@ -861,7 +856,6 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %patch80 -p1
 
 %patch81 -p1
-%patch82 -p1
 
 %patch100 -p1
 %patch101 -p1
@@ -888,9 +882,6 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %endif
 
 %patch250 -p1
-%patch251 -p1
-
-%patch252 -p1
 
 %patch1200 -p1
 %patch1201 -p1
@@ -906,10 +897,6 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %if %{with pax}
 %patch9999 -p1
 %patch10000 -p1
-%endif
-
-%if %{with grsecurity}
-%patch1001 -p1
 %endif
 
 # Fix EXTRAVERSION in main Makefile
@@ -1425,12 +1412,12 @@ ln -sf vmlinux-%{kernel_release}smp /boot/vmlinux%{dashxen}
 %depmod %{kernel_release}smp
 
 %post headers
-rm -f %{_prefix}/src/linux%{_subname}
+rm -f %{_prefix}/src/linux
 ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux%{_subname}
 
 %postun headers
 if [ "$1" = "0" ]; then
-	if [ -L %{_prefix}/src/linux%{_subname} ]; then
+	if [ -L %{_prefix}/src/linux ]; then
 		if [ "$(readlink %{_prefix}/src/linux%{_subname})" = "linux%{_subname}-%{version}" ]; then
 			rm -f %{_prefix}/src/linux%{_subname}
 		fi
