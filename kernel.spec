@@ -349,7 +349,6 @@ Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	linux-2.6.21.1-pwc-uncompress.patch
-Patch2002:	kernel-ieee80211_rate.patch
 
 # kill some thousands of warnings
 Patch2500:	linux-2.6-warnings.patch
@@ -976,7 +975,6 @@ install -m 755 %{SOURCE6} .
 # Small fixes:
 %patch2000 -p1
 %patch2001 -p1
-%patch2002 -p1
 
 %if %{with abi}
 patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
