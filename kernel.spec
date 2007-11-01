@@ -326,8 +326,6 @@ Patch160:	linux-2.6-aic94xx_with_included_firmware.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
-Patch220:	kernel-block.patch
-
 # The following patch extend the routing functionality in Linux
 # to support static routes (defined by user), new way to use the
 # alternative routes, the reverse path protection (rp_filter),
@@ -352,7 +350,6 @@ Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	linux-2.6.21.1-pwc-uncompress.patch
-Patch2002:	kernel-ieee80211_rate.patch
 
 # kill some thousands of warnings
 Patch2500:	linux-2.6-warnings.patch
@@ -974,15 +971,12 @@ install %{SOURCE5} Makefile.ppclibs
 %patch200 -p1
 %endif
 
-%patch220 -p1
-
 # routes
 %patch300 -p1
 
 # Small fixes:
 %patch2000 -p1
 %patch2001 -p1
-%patch2002 -p1
 
 %if %{with abi}
 patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
@@ -1369,7 +1363,7 @@ install %{SOURCE3} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/autoconf.h
 install %{SOURCE4} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
 
 # Temporary fix for iwlwifi:
-cp $RPM_BUILD_ROOT%{_kernelsrcdir}/net/mac80211/{ieee80211_{rate,i,key},sta_info}.h \
+cp $RPM_BUILD_ROOT%{_kernelsrcdir}/net/mac80211/ieee80211_rate.h \
 	$RPM_BUILD_ROOT%{_kernelsrcdir}/include/net
 
 # collect module-build files and directories
