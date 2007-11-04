@@ -131,7 +131,7 @@
 
 %define		_basever	2.6.16
 %define		_postver	.56
-%define		_rel		1
+%define		_rel		2
 %define		_subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -299,6 +299,12 @@ Patch251:	linux-nvidia.patch
 
 # From ALSA 1.0.13 for nVidia 
 Patch252:	linux-alsa-hda.patch
+
+# security patches
+Patch300:	linux-CVE-2007-3740.patch
+Patch301:	linux-CVE-2007-4308.patch
+Patch302:	linux-CVE-2007-4997.patch
+Patch303:	linux-CVE-2007-5093.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 Patch1001:	linux-2.6-grsec-wrong-deref.patch
@@ -891,6 +897,12 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %patch251 -p1
 
 %patch252 -p1
+
+# security patches
+%patch300 -p1
+%patch301 -p1
+%patch302 -p1
+%patch303 -p1
 
 %patch1200 -p1
 %patch1201 -p1
