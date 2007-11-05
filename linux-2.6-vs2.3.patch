@@ -30152,3 +30152,63 @@ diff -NurpP --minimal linux-2.6.22.10/security/selinux/hooks.c linux-2.6.22.10-v
  #include <linux/parser.h>
  #include <linux/nfs_mount.h>
  #include <net/ipv6.h>
+diff -NurpP --minimal linux-2.6.22.10-vs2.3.0.29/init/main.c linux-2.6.22.10-vs2.3.0.29.1/init/main.c
+--- linux-2.6.22.10-vs2.3.0.29/init/main.c	2007-08-05 20:53:13 +0200
++++ linux-2.6.22.10-vs2.3.0.29.1/init/main.c	2007-11-02 00:16:34 +0100
+@@ -375,6 +375,10 @@ static void __init setup_per_cpu_areas(v
+ 	size = ALIGN(PERCPU_ENOUGH_ROOM + vspc, PAGE_SIZE);
+ 	ptr = alloc_bootmem_pages(size * nr_possible_cpus);
+ 
++	printk("percpu: %dx%d=%ld %d+%ld=%ld\n",
++		PERCPU_PERCTX, CONFIG_VSERVER_CONTEXTS, vspc, 
++		PERCPU_ENOUGH_ROOM, vspc, size);
++
+ 	for_each_possible_cpu(i) {
+ 		__per_cpu_offset[i] = ptr - __per_cpu_start;
+ 		memcpy(ptr, __per_cpu_start, __per_cpu_end - __per_cpu_start);
+diff -NurpP --minimal linux-2.6.22.10-vs2.3.0.29/kernel/vserver/context.c linux-2.6.22.10-vs2.3.0.29.1/kernel/vserver/context.c
+--- linux-2.6.22.10-vs2.3.0.29/kernel/vserver/context.c	2007-10-05 14:54:36 +0200
++++ linux-2.6.22.10-vs2.3.0.29.1/kernel/vserver/context.c	2007-11-02 00:32:32 +0100
+@@ -71,14 +71,20 @@ static struct vx_info *__alloc_vx_info(x
+ 
+ 	/* would this benefit from a slab cache? */
+ 	new = kmalloc(sizeof(struct vx_info), GFP_KERNEL);
+-	if (!new)
++	if (!new) {
++		printk("kmalloc failed\n");
+ 		return 0;
++	}
+ 
+ 	memset(new, 0, sizeof(struct vx_info));
+ #ifdef CONFIG_SMP
+ 	new->ptr_pc = alloc_percpu(struct _vx_info_pc);
+-	if (!new->ptr_pc)
++	if (!new->ptr_pc) {
++		printk("percpu failed with %ld\n", PTR_ERR(new->ptr_pc));	
+ 		goto error;
++	}
++	printk("percpu allocated %p[%d]\n", new->ptr_pc, 
++		sizeof(struct _vx_info_pc));
+ #endif
+ 	new->vx_id = xid;
+ 	INIT_HLIST_NODE(&new->vx_hlist);
+@@ -158,6 +164,7 @@ static void __dealloc_vx_info(struct vx_
+ 	vxi->vx_state |= VXS_RELEASED;
+ 
+ #ifdef CONFIG_SMP
++	printk("percpu free %p\n", vxi->ptr_pc);
+ 	free_percpu(vxi->ptr_pc);
+ #endif
+ 	kfree(vxi);
+diff -NurpP --minimal linux-2.6.22.10-vs2.3.0.29.1/net/rxrpc/Kconfig linux-2.6.22.10-vs2.3.0.29.2/net/rxrpc/Kconfig
+--- linux-2.6.22.10-vs2.3.0.29.1/net/rxrpc/Kconfig	2007-07-09 13:20:09 +0200
++++ linux-2.6.22.10-vs2.3.0.29.2/net/rxrpc/Kconfig	2007-11-02 20:54:28 +0100
+@@ -4,7 +4,7 @@
+ 
+ config AF_RXRPC
+ 	tristate "RxRPC session sockets"
+-	depends on INET && EXPERIMENTAL
++	depends on INET && EXPERIMENTAL && !VSERVER_SECURITY
+ 	select KEYS
+ 	help
+ 	  Say Y or M here to include support for RxRPC session sockets (just
