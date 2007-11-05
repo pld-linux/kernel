@@ -112,7 +112,7 @@
 %define		_mkvmlinuz_ver		1.3
 
 %define		_basever		2.6.22
-%define		_postver		.11
+%define		_postver		.12
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
@@ -161,7 +161,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	de5de5b1f7b25477b43fdee15822b91b
+# Source1-md5:	9e31d7d04172ea4b413c089d1e53c7a2
 %endif
 
 Source3:	kernel-autoconf.h
@@ -171,7 +171,7 @@ Source7:	kernel-module-build.pl
 
 # TODO - cleanup
 Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
-# Source14-md5:	f2563a2d748c7480559e8d3ff77eb18a
+# Source14-md5:	bf32f8baa98aeafa75a672097acd9cc8
 
 Source20:	kernel-i386.config
 Source21:	kernel-x86_64.config
