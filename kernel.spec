@@ -297,8 +297,11 @@ Patch202:	linux-2.6-unwind-through-signal-frames.patch
 Patch250:	linux-2.6.16-forcedeth-WON.patch
 Patch251:	linux-nvidia.patch
 
-# From ALSA 1.0.13 for nVidia 
+# From ALSA 1.0.13 for nVidia
 Patch252:	linux-alsa-hda.patch
+
+# add tty ioctl to figure physical device of the console. used by showconsole.spec (blogd)
+Patch256:	kernel-TIOCGDEV.patch
 
 # security patches
 Patch300:	linux-CVE-2007-3740.patch
@@ -325,8 +328,8 @@ BuildRequires:	binutils >= 3:2.14.90.0.7
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
-BuildRequires:	gcc >= 5:3.2
 BuildRequires:	/sbin/depmod
+BuildRequires:	gcc >= 5:3.2
 # for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
@@ -733,8 +736,8 @@ Provides:	kernel-source = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description source
-This is the source code for the Linux kernel. You can build a custom kernel
-that is better tuned to your particular hardware.
+This is the source code for the Linux kernel. You can build a custom
+kernel that is better tuned to your particular hardware.
 
 %description source -l de
 Das Kernel-Source-Paket enthält den source code (C/Assembler-Code) des
@@ -897,6 +900,7 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %patch251 -p1
 
 %patch252 -p1
+%patch256 -p1
 
 # security patches
 %patch300 -p1
