@@ -134,9 +134,9 @@
 %define		_rel		2
 %define		_subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 Summary:	The Linux kernel (the core of the Linux operating system)
-Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
-Summary(fr.UTF-8):	Le Kernel-Linux (La partie centrale du systeme)
-Summary(pl.UTF-8):	JÄ…dro Linuksa
+Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
+Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
+Summary(pl):	J±dro Linuksa
 Name:		kernel%{_subname}
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}%{?with_ext2compiled:ext2}
@@ -425,37 +425,37 @@ This package contains the Linux kernel that is used to boot and run
 your system. It contains few device drivers for specific hardware.
 Most hardware is instead supported by modules loaded after booting.
 
-%description -l de.UTF-8
-Das Kernel-Paket enthÃ¤lt den Linux-Kernel (vmlinuz), den Kern des
-Linux-Betriebssystems. Der Kernel ist fÃ¼r grundliegende
+%description -l de
+Das Kernel-Paket enthält den Linux-Kernel (vmlinuz), den Kern des
+Linux-Betriebssystems. Der Kernel ist für grundliegende
 Systemfunktionen verantwortlich: Speicherreservierung,
-ProzeÃŸ-Management, GerÃ¤te Ein- und Ausgaben, usw.
+Prozeß-Management, Geräte Ein- und Ausgaben, usw.
 
-%description -l fr.UTF-8
+%description -l fr
 Le package kernel contient le kernel linux (vmlinuz), la partie
-centrale d'un systÃ¨me d'exploitation Linux. Le noyau traite les
-fonctions basiques d'un systÃ¨me d'exploitation: allocation mÃ©moire,
-allocation de process, entrÃ©e/sortie de peripheriques, etc.
+centrale d'un système d'exploitation Linux. Le noyau traite les
+fonctions basiques d'un système d'exploitation: allocation mémoire,
+allocation de process, entrée/sortie de peripheriques, etc.
 
-%description -l pl.UTF-8
-Pakiet zawiera jÄ…dro Linuksa niezbÄ™dne do prawidÅ‚owego dziaÅ‚ania
-Twojego komputera. Zawiera w sobie sterowniki do sprzÄ™tu znajdujÄ…cego
-siÄ™ w komputerze, takiego jak sterowniki dyskÃ³w itp.
+%description -l pl
+Pakiet zawiera j±dro Linuksa niezbêdne do prawid³owego dzia³ania
+Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
+siê w komputerze, takiego jak sterowniki dysków itp.
 
 %package vmlinux
 Summary:	vmlinux - uncompressed kernel image
-Summary(pl.UTF-8):	vmlinux - rozpakowany obraz jÄ…dra
+Summary(pl):	vmlinux - rozpakowany obraz j±dra
 Group:		Base/Kernel
 
 %description vmlinux
 vmlinux - uncompressed kernel image.
 
-%description vmlinux -l pl.UTF-8
-vmlinux - rozpakowany obraz jÄ…dra.
+%description vmlinux -l pl
+vmlinux - rozpakowany obraz j±dra.
 
 %package drm
 Summary:	DRM kernel modules
-Summary(pl.UTF-8):	Sterowniki DRM
+Summary(pl):	Sterowniki DRM
 Group:		Base/Kernel
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
@@ -465,12 +465,12 @@ Autoreqprov:	no
 %description drm
 DRM kernel modules (%{drm_xfree_version}).
 
-%description drm -l pl.UTF-8
+%description drm -l pl
 Sterowniki DRM (%{drm_xfree_version}).
 
 %package pcmcia
 Summary:	PCMCIA modules
-Summary(pl.UTF-8):	ModuÅ‚y PCMCIA
+Summary(pl):	Modu³y PCMCIA
 Group:		Base/Kernel
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
@@ -483,12 +483,12 @@ Autoreqprov:	no
 %description pcmcia
 PCMCIA modules (%{pcmcia_version}).
 
-%description pcmcia -l pl.UTF-8
-ModuÅ‚y PCMCIA (%{pcmcia_version}).
+%description pcmcia -l pl
+Modu³y PCMCIA (%{pcmcia_version}).
 
 %package libs
 Summary:	Libraries for preparing bootable kernel on PowerPCs
-Summary(pl.UTF-8):	Biblioteki do przygotowania bootowalnego jÄ…dra dla PowerPC
+Summary(pl):	Biblioteki do przygotowania bootowalnego j±dra dla PowerPC
 Group:		Base/Kernel
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
 Requires:	mkvmlinuz >= %{_mkvmlinuz_ver}
@@ -498,13 +498,13 @@ Autoreqprov:	no
 Libraries for preparing bootable kernel on PowerPCs. Script called
 mkvmlinuz may be useful for this.
 
-%description libs -l pl.UTF-8
-Biblioteki do przygotowania bootowalnego jÄ…dra dla PowerPC. Skrypt
-mkvmlinuz moÅ¼e byÄ‡ do tego przydatny.
+%description libs -l pl
+Biblioteki do przygotowania bootowalnego j±dra dla PowerPC. Skrypt
+mkvmlinuz mo¿e byæ do tego przydatny.
 
 %package sound-alsa
 Summary:	ALSA kernel modules
-Summary(pl.UTF-8):	Sterowniki dÅºwiÄ™ku ALSA
+Summary(pl):	Sterowniki d¼wiêku ALSA
 Group:		Base/Kernel
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
@@ -513,12 +513,12 @@ Autoreqprov:	no
 %description sound-alsa
 ALSA (Advanced Linux Sound Architecture) sound drivers.
 
-%description sound-alsa -l pl.UTF-8
-Sterowniki dÅºwiÄ™ku ALSA (Advanced Linux Sound Architecture).
+%description sound-alsa -l pl
+Sterowniki d¼wiêku ALSA (Advanced Linux Sound Architecture).
 
 %package sound-oss
 Summary:	OSS kernel modules
-Summary(pl.UTF-8):	Sterowniki dÅºwiÄ™ku OSS
+Summary(pl):	Sterowniki d¼wiêku OSS
 Group:		Base/Kernel
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
@@ -527,14 +527,14 @@ Autoreqprov:	no
 %description sound-oss
 OSS (Open Sound System) drivers.
 
-%description sound-oss -l pl.UTF-8
-Sterowniki dÅºwiÄ™ku OSS (Open Sound System).
+%description sound-oss -l pl
+Sterowniki d¼wiêku OSS (Open Sound System).
 
 %package smp
 Summary:	Kernel version %{version} compiled for SMP machines
-Summary(de.UTF-8):	Kernel version %{version} fÃ¼r Multiprozessor-Maschinen
-Summary(fr.UTF-8):	Kernel version %{version} compiler pour les machine Multi-Processeur
-Summary(pl.UTF-8):	JÄ…dro Linuksa w wersji %{version} dla maszyn wieloprocesorowych
+Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
+Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
+Summary(pl):	J±dro Linuksa w wersji %{version} dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Requires(post):	coreutils
 Requires(post):	geninitrd >= 2.57
@@ -583,36 +583,36 @@ This package includes a SMP version of the Linux %{version} kernel. It
 is required only on machines with two or more CPUs, although it should
 work fine on single-CPU boxes.
 
-%description smp -l de.UTF-8
-Dieses Paket enthÃ¤lt eine SMP (Multiprozessor)-Version von
-Linux-Kernel %{version}. Es wird fÃ¼r Maschinen mit zwei oder mehr
+%description smp -l de
+Dieses Paket enthält eine SMP (Multiprozessor)-Version von
+Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
 Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
 CPU laufen.
 
-%description smp -l fr.UTF-8
+%description smp -l fr
 Ce package inclu une version SMP du noyau de Linux version {version}.
-Il et nÃ©cessaire seulement pour les machine avec deux processeurs ou
-plus, il peut quand mÃªme fonctionner pour les systÃ¨me mono-processeur.
+Il et nécessaire seulement pour les machine avec deux processeurs ou
+plus, il peut quand même fonctionner pour les système mono-processeur.
 
-%description smp -l pl.UTF-8
-Pakiet zawiera jÄ…dro SMP Linuksa w wersji %{version}. Jest ono
-wymagane przez komputery zawierajÄ…ce dwa lub wiÄ™cej procesorÃ³w.
-Powinno rÃ³wnieÅ¼ dobrze dziaÅ‚aÄ‡ na maszynach z jednym procesorem.
+%description smp -l pl
+Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono
+wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
+Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
 
 %package smp-vmlinux
 Summary:	vmlinux - uncompressed SMP kernel image
-Summary(pl.UTF-8):	vmlinux - rozpakowany obraz jÄ…dra SMP
+Summary(pl):	vmlinux - rozpakowany obraz j±dra SMP
 Group:		Base/Kernel
 
 %description smp-vmlinux
 vmlinux - uncompressed SMP kernel image.
 
-%description smp-vmlinux -l pl.UTF-8
-vmlinux - rozpakowany obraz jÄ…dra SMP.
+%description smp-vmlinux -l pl
+vmlinux - rozpakowany obraz j±dra SMP.
 
 %package smp-drm
 Summary:	DRM SMP kernel modules
-Summary(pl.UTF-8):	Sterowniki DRM dla maszyn wieloprocesorowych
+Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
@@ -622,12 +622,12 @@ Autoreqprov:	no
 %description smp-drm
 DRM SMP kernel modules (%{drm_xfree_version}).
 
-%description smp-drm -l pl.UTF-8
+%description smp-drm -l pl
 Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
 
 %package smp-pcmcia
 Summary:	PCMCIA modules for SMP kernel
-Summary(pl.UTF-8):	ModuÅ‚y PCMCIA dla maszyn SMP
+Summary(pl):	Modu³y PCMCIA dla maszyn SMP
 Group:		Base/Kernel
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
@@ -640,12 +640,12 @@ Autoreqprov:	no
 %description smp-pcmcia
 PCMCIA modules for SMP kernel (%{pcmcia_version}).
 
-%description smp-pcmcia -l pl.UTF-8
-ModuÅ‚y PCMCIA dla maszyn SMP (%{pcmcia_version}).
+%description smp-pcmcia -l pl
+Modu³y PCMCIA dla maszyn SMP (%{pcmcia_version}).
 
 %package smp-libs
 Summary:	Libraries for preparing bootable SMP kernel on PowerPCs
-Summary(pl.UTF-8):	Biblioteki do przygotowania bootowalnego jÄ…dra dla wieloprocesorowych PowerPC
+Summary(pl):	Biblioteki do przygotowania bootowalnego j±dra dla wieloprocesorowych PowerPC
 Group:		Base/Kernel
 Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
 Requires:	mkvmlinuz >= %{_mkvmlinuz_ver}
@@ -655,13 +655,13 @@ Autoreqprov:	no
 Libraries for preparing bootable SMP kernel on PowerPCs. Script called
 mkvmlinuz may be useful for this.
 
-%description smp-libs -l pl.UTF-8
-Biblioteki do przygotowania bootowalnego jÄ…dra dla wieloprocesorowych
-PowerPC. Skrypt mkvmlinuz moÅ¼e byÄ‡ do tego przydatny.
+%description smp-libs -l pl
+Biblioteki do przygotowania bootowalnego j±dra dla wieloprocesorowych
+PowerPC. Skrypt mkvmlinuz mo¿e byæ do tego przydatny.
 
 %package smp-sound-alsa
 Summary:	ALSA SMP kernel modules
-Summary(pl.UTF-8):	Sterowniki dÅºwiÄ™ku ALSA dla maszyn wieloprocesorowych
+Summary(pl):	Sterowniki d¼wiêku ALSA dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
@@ -670,13 +670,13 @@ Autoreqprov:	no
 %description smp-sound-alsa
 ALSA (Advanced Linux Sound Architecture) SMP sound drivers.
 
-%description smp-sound-alsa -l pl.UTF-8
-Sterowniki dÅºwiÄ™ku ALSA (Advanced Linux Sound Architecture) dla maszyn
+%description smp-sound-alsa -l pl
+Sterowniki d¼wiêku ALSA (Advanced Linux Sound Architecture) dla maszyn
 wieloprocesorowych.
 
 %package smp-sound-oss
 Summary:	OSS SMP kernel modules
-Summary(pl.UTF-8):	Sterowniki dÅºwiÄ™ku OSS dla maszyn wieloprocesorowych
+Summary(pl):	Sterowniki d¼wiêku OSS dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
@@ -685,12 +685,12 @@ Autoreqprov:	no
 %description smp-sound-oss
 OSS (Open Sound System) SMP sound drivers.
 
-%description smp-sound-oss -l pl.UTF-8
+%description smp-sound-oss -l pl
 Sterowniki OSS (Open Sound System) dla maszyn wieloprocesorowych.
 
 %package headers
 Summary:	Header files for the Linux kernel
-Summary(pl.UTF-8):	Pliki nagÅ‚Ã³wkowe jÄ…dra Linuksa
+Summary(pl):	Pliki nag³ówkowe j±dra Linuksa
 Group:		Development/Building
 Provides:	kernel-headers = %{epoch}:%{version}-%{release}
 Provides:	kernel-headers(agpgart) = %{version}
@@ -705,13 +705,13 @@ These are the C header files for the Linux kernel, which define
 structures and constants that are needed when rebuilding the kernel or
 building kernel modules.
 
-%description headers -l pl.UTF-8
-Pakiet zawiera pliki nagÅ‚Ã³wkowe jÄ…dra, niezbÄ™dne do rekompilacji jÄ…dra
-oraz budowania moduÅ‚Ã³w jÄ…dra.
+%description headers -l pl
+Pakiet zawiera pliki nag³ówkowe j±dra, niezbêdne do rekompilacji j±dra
+oraz budowania modu³ów j±dra.
 
 %package module-build
 Summary:	Development files for building kernel modules
-Summary(pl.UTF-8):	Pliki sÅ‚uÅ¼Ä…ce do budowania moduÅ‚Ã³w jÄ…dra
+Summary(pl):	Pliki s³u¿±ce do budowania modu³ów j±dra
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
 Provides:	kernel-module-build = %{epoch}:%{_basever}
@@ -722,13 +722,13 @@ Autoreqprov:	no
 Development files from kernel source tree needed to build Linux kernel
 modules from external packages.
 
-%description module-build -l pl.UTF-8
-Pliki ze drzewa ÅºrÃ³deÅ‚ jÄ…dra potrzebne do budowania moduÅ‚Ã³w jÄ…dra
-Linuksa z zewnÄ™trznych pakietÃ³w.
+%description module-build -l pl
+Pliki ze drzewa ¼róde³ j±dra potrzebne do budowania modu³ów j±dra
+Linuksa z zewnêtrznych pakietów.
 
 %package source
 Summary:	Kernel source tree
-Summary(pl.UTF-8):	Kod ÅºrÃ³dÅ‚owy jÄ…dra Linuksa
+Summary(pl):	Kod ¼ród³owy j±dra Linuksa
 Group:		Development/Building
 Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
 Provides:	kernel-source = %{epoch}:%{version}-%{release}
@@ -738,28 +738,28 @@ Autoreqprov:	no
 This is the source code for the Linux kernel. You can build a custom
 kernel that is better tuned to your particular hardware.
 
-%description source -l de.UTF-8
-Das Kernel-Source-Paket enthÃ¤lt den source code (C/Assembler-Code) des
+%description source -l de
+Das Kernel-Source-Paket enthält den source code (C/Assembler-Code) des
 Linux-Kernels. Die Source-Dateien werden gebraucht, um viele
-C-Programme zu compilieren, da sie auf Konstanten zurÃ¼ckgreifen, die
-im Kernel-Source definiert sind. Die Source-Dateien kÃ¶nnen auch
+C-Programme zu compilieren, da sie auf Konstanten zurückgreifen, die
+im Kernel-Source definiert sind. Die Source-Dateien können auch
 benutzt werden, um einen Kernel zu compilieren, der besser auf Ihre
 Hardware ausgerichtet ist.
 
-%description source -l fr.UTF-8
+%description source -l fr
 Le package pour le kernel-source contient le code source pour le noyau
-linux. Ces sources sont nÃ©cessaires pour compiler la plupart des
-programmes C, car il dÃ©pend de constantes dÃ©finies dans le code
-source. Les sources peuvent Ãªtre aussi utilisÃ©e pour compiler un noyau
-personnalisÃ© pour avoir de meilleures performances sur des matÃ©riels
+linux. Ces sources sont nécessaires pour compiler la plupart des
+programmes C, car il dépend de constantes définies dans le code
+source. Les sources peuvent être aussi utilisée pour compiler un noyau
+personnalisé pour avoir de meilleures performances sur des matériels
 particuliers.
 
-%description source -l pl.UTF-8
-Pakiet zawiera kod ÅºrÃ³dÅ‚owy jÄ…dra systemu.
+%description source -l pl
+Pakiet zawiera kod ¼ród³owy j±dra systemu.
 
 %package doc
 Summary:	Kernel documentation
-Summary(pl.UTF-8):	Dokumentacja do jÄ…dra Linuksa
+Summary(pl):	Dokumentacja do j±dra Linuksa
 Group:		Documentation
 Provides:	kernel-doc = %{version}
 Autoreqprov:	no
@@ -768,8 +768,8 @@ Autoreqprov:	no
 This is the documentation for the Linux kernel, as found in
 /usr/src/linux/Documentation directory.
 
-%description doc -l pl.UTF-8
-Pakiet zawiera dokumentacjÄ™ do jÄ…dra Linuksa pochodzÄ…cÄ… z katalogu
+%description doc -l pl
+Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 /usr/src/linux/Documentation.
 
 %prep
@@ -1026,8 +1026,9 @@ BuildConfig() {
 	%endif
 %endif
 
-	# IPSEC KLIPS
-	cat %{SOURCE50} >> arch/%{_target_base_arch}/defconfig
+        # IPSEC KLIPS
+        cat %{SOURCE50} >> arch/%{_target_base_arch}/defconfig
+
 
 %if %{with xen0} || %{with xenU}
 	sed -i "s:CONFIG_X86_PC=y:# CONFIG_X86_PC is not set:" arch/%{_target_base_arch}/defconfig
