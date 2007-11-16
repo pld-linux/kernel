@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.22.10 ready, needs testing
+# STATUS: 2.6.22.12 ready
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
@@ -38,6 +38,7 @@
 
 %bcond_without	imq		# imq support
 %bcond_without	wrr		# wrr support
+%bcond_without	ipv6		# ipv6 support
 
 %bcond_without	vserver		# support for VServer (enabled by default)
 %bcond_without	suspend2	# support for Suspend2 (enabled by default)
@@ -307,7 +308,7 @@ Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.2.patch
 # note about vserver 2.2 vs 2.3: 2.2 is "stable", 2.3 is "development", currently (2007-09-03)
 # the preferred 2.3 vserver needs CONFIG_IPV6=y config, which break things for some users;
-# it was proposed to use 2.2 as a temp replacement. One couuld use vs 2.2 instead of 2.3
+# it was proposed to use 2.2 as a temp replacement. One could use vs 2.2 instead of 2.3
 # by using vs22 bcond - this bcond also changes IPV6 option from "y" to "m".
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
@@ -1138,10 +1139,14 @@ BuildConfig() {
 %endif
 %endif
 
+%if %{without ipv6}
+	sed -i "s:CONFIG_IPV6=.:# CONFIG_IPV6 is not set:" arch/%{_target_base_arch}/defconfig
+%endif
+
 # vesafb-tng
 	cat %{SOURCE44} >> arch/%{_target_base_arch}/defconfig
 
-# grsecurity & pax stuff - temporary - work in progress
+# grsecurity & pax stuff
 #
 
 %if %{with pax_full}
