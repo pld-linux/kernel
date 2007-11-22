@@ -379,6 +379,7 @@ Conflicts:	vserver-packages
 Conflicts:	xfsprogs < %{_xfsprogs_ver}
 %if %{with xen0} || %{with xenU}
 ExclusiveArch:	%{ix86} %{x8664}
+ExcludeArch:	i386 i486 i586
 %else
 ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc ppc64 sparc sparc64
 %endif
