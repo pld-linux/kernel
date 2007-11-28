@@ -30755,7 +30755,7 @@ diff -urN linux-2.6.22.orig/fs/reiser4/plugin/fibration.h linux-2.6.22/fs/reiser
 diff -urN linux-2.6.22.orig/fs/reiser4/plugin/file/cryptcompress.c linux-2.6.22/fs/reiser4/plugin/file/cryptcompress.c
 --- linux-2.6.22.orig/fs/reiser4/plugin/file/cryptcompress.c	1970-01-01 03:00:00.000000000 +0300
 +++ linux-2.6.22/fs/reiser4/plugin/file/cryptcompress.c	2007-07-29 00:25:34.916706830 +0400
-@@ -0,0 +1,3832 @@
+@@ -0,0 +1,3802 @@
 +/* Copyright 2001, 2002, 2003 by Hans Reiser, licensing governed by
 +   reiser4/README */
 +/*
@@ -34523,36 +34523,6 @@ diff -urN linux-2.6.22.orig/fs/reiser4/plugin/file/cryptcompress.c linux-2.6.22/
 +	return result;
 +}
 +
-+/* sendfile_cryptcompress - sendfile of struct file_operations */
-+ssize_t
-+sendfile_cryptcompress(struct file *file, loff_t *ppos, size_t count,
-+		       read_actor_t actor, void *target)
-+{
-+	reiser4_context *ctx;
-+	ssize_t result;
-+	struct inode *inode;
-+	struct cryptcompress_info *info;
-+
-+	inode = file->f_dentry->d_inode;
-+	ctx = reiser4_init_context(inode->i_sb);
-+	if (IS_ERR(ctx))
-+		return PTR_ERR(ctx);
-+	/*
-+	 * generic_file_sndfile may want to call update_atime. Grab space for
-+	 * stat data update
-+	 */
-+	result = reiser4_grab_space(estimate_update_common(inode),
-+				    BA_CAN_COMMIT);
-+	if (result)
-+		goto exit;
-+	info = cryptcompress_inode_data(inode);
-+
-+	result = generic_file_sendfile(file, ppos, count, actor, target);
-+ exit:
-+	reiser4_exit_context(ctx);
-+	return result;
-+}
-+
 +/*
 + * release_cryptcompress - release of struct file_operations
 + * @inode: inode of released file
@@ -35202,7 +35172,7 @@ diff -urN linux-2.6.22.orig/fs/reiser4/plugin/file/cryptcompress.h linux-2.6.22/
 diff -urN linux-2.6.22.orig/fs/reiser4/plugin/file/file.c linux-2.6.22/fs/reiser4/plugin/file/file.c
 --- linux-2.6.22.orig/fs/reiser4/plugin/file/file.c	1970-01-01 03:00:00.000000000 +0300
 +++ linux-2.6.22/fs/reiser4/plugin/file/file.c	2007-07-29 00:25:34.924708901 +0400
-@@ -0,0 +1,2817 @@
+@@ -0,0 +1,2771 @@
 +/* Copyright 2001, 2002, 2003, 2004 by Hans Reiser, licensing governed by
 + * reiser4/README */
 +
@@ -37935,52 +37905,6 @@ diff -urN linux-2.6.22.orig/fs/reiser4/plugin/file/file.c linux-2.6.22/fs/reiser
 +	return reiser4_delete_object_common(inode);
 +}
 +
-+/**
-+ * sendfile_unix_file - sendfile of struct file_operations
-+ * @file: file to be sent
-+ * @ppos: position to start from
-+ * @count: number of bytes to send
-+ * @actor: function to copy data
-+ * @target: where to copy read data
-+ *
-+ * Reads @count bytes from @file and calls @actor for every page read. This is
-+ * needed for loop back devices support.
-+ */
-+ssize_t
-+sendfile_unix_file(struct file *file, loff_t *ppos, size_t count,
-+		   read_actor_t actor, void *target)
-+{
-+	reiser4_context *ctx;
-+	ssize_t result;
-+	struct inode *inode;
-+	struct unix_file_info *uf_info;
-+
-+	inode = file->f_dentry->d_inode;
-+	ctx = reiser4_init_context(inode->i_sb);
-+	if (IS_ERR(ctx))
-+		return PTR_ERR(ctx);
-+
-+	/*
-+	 * generic_file_sndfile may want to call update_atime. Grab space for
-+	 * stat data update
-+	 */
-+	result = reiser4_grab_space(estimate_update_common(inode),
-+				    BA_CAN_COMMIT);
-+	if (result)
-+		goto error;
-+	mutex_lock(&inode->i_mutex);
-+	reiser4_inode_set_flag(inode, REISER4_HAS_MMAP);
-+	mutex_unlock(&inode->i_mutex);
-+
-+	uf_info = unix_file_inode_data(inode);
-+	get_nonexclusive_access(uf_info);
-+	result = generic_file_sendfile(file, ppos, count, actor, target);
-+	drop_nonexclusive_access(uf_info);
-+ error:
-+	reiser4_exit_context(ctx);
-+	return result;
-+}
-+
 +int
 +prepare_write_unix_file(struct file *file, struct page *page,
 +			unsigned from, unsigned to)
@@ -38023,7 +37947,7 @@ diff -urN linux-2.6.22.orig/fs/reiser4/plugin/file/file.c linux-2.6.22/fs/reiser
 diff -urN linux-2.6.22.orig/fs/reiser4/plugin/file/file_conversion.c linux-2.6.22/fs/reiser4/plugin/file/file_conversion.c
 --- linux-2.6.22.orig/fs/reiser4/plugin/file/file_conversion.c	1970-01-01 03:00:00.000000000 +0300
 +++ linux-2.6.22/fs/reiser4/plugin/file/file_conversion.c	2007-07-29 00:25:34.928709936 +0400
-@@ -0,0 +1,609 @@
+@@ -0,0 +1,599 @@
 +/* Copyright 2001, 2002, 2003 by Hans Reiser,
 +   licensing governed by reiser4/README */
 +
@@ -38593,7 +38517,6 @@ diff -urN linux-2.6.22.orig/fs/reiser4/plugin/file/file_conversion.c linux-2.6.2
 +   . read_cryptcomperess;
 +   . mmap_cryptcompress;
 +   . release_cryptcompress;
-+   . sendfile_cryptcompress;
 +   . delete_object_cryptcompress.
 +*/
 +ssize_t prot_read_cryptcompress(struct file * file, char __user * buf,
@@ -38614,15 +38537,6 @@ diff -urN linux-2.6.22.orig/fs/reiser4/plugin/file/file_conversion.c linux-2.6.2
 +	return PROT_PASSIVE(int, release, (inode, file));
 +}
 +
-+ssize_t prot_sendfile_cryptcompress(struct file *file, loff_t *ppos,
-+				    size_t count, read_actor_t actor,
-+				    void *target)
-+{
-+	struct inode * inode = file->f_dentry->d_inode;
-+	return PROT_PASSIVE(ssize_t, sendfile,
-+			    (file, ppos, count, actor, target));
-+}
-+
 +/*
 +  Local variables:
 +  c-indentation-style: "K&R"
@@ -38636,7 +38550,7 @@ diff -urN linux-2.6.22.orig/fs/reiser4/plugin/file/file_conversion.c linux-2.6.2
 diff -urN linux-2.6.22.orig/fs/reiser4/plugin/file/file.h linux-2.6.22/fs/reiser4/plugin/file/file.h
 --- linux-2.6.22.orig/fs/reiser4/plugin/file/file.h	1970-01-01 03:00:00.000000000 +0300
 +++ linux-2.6.22/fs/reiser4/plugin/file/file.h	2007-07-29 00:25:34.928709936 +0400
-@@ -0,0 +1,272 @@
+@@ -0,0 +1,266 @@
 +/* Copyright 2001, 2002, 2003, 2004 by Hans Reiser, licensing governed by
 + * reiser4/README */
 +
@@ -38663,8 +38577,6 @@ diff -urN linux-2.6.22.orig/fs/reiser4/plugin/file/file.h linux-2.6.22/fs/reiser
 +int open_unix_file(struct inode *, struct file *);
 +int release_unix_file(struct inode *, struct file *);
 +int sync_unix_file(struct file *, struct dentry *, int datasync);
-+ssize_t sendfile_unix_file(struct file *, loff_t *ppos, size_t count,
-+			   read_actor_t, void *target);
 +
 +/* address space operations */
 +int readpage_unix_file(struct file *, struct page *);
@@ -38848,10 +38760,6 @@ diff -urN linux-2.6.22.orig/fs/reiser4/plugin/file/file.h linux-2.6.22/fs/reiser
 +				 loff_t * off);
 +int mmap_cryptcompress(struct file *, struct vm_area_struct *);
 +int prot_mmap_cryptcompress(struct file *, struct vm_area_struct *);
-+ssize_t sendfile_cryptcompress(struct file *file, loff_t *ppos, size_t count,
-+			       read_actor_t actor, void *target);
-+ssize_t prot_sendfile_cryptcompress(struct file *file, loff_t *ppos, size_t count,
-+				    read_actor_t actor, void *target);
 +
 +int release_cryptcompress(struct inode *, struct file *);
 +int prot_release_cryptcompress(struct inode *, struct file *);
@@ -58357,7 +58265,7 @@ diff -urN linux-2.6.22.orig/fs/reiser4/plugin/node/node.h linux-2.6.22/fs/reiser
 diff -urN linux-2.6.22.orig/fs/reiser4/plugin/object.c linux-2.6.22/fs/reiser4/plugin/object.c
 --- linux-2.6.22.orig/fs/reiser4/plugin/object.c	1970-01-01 03:00:00.000000000 +0300
 +++ linux-2.6.22/fs/reiser4/plugin/object.c	2007-07-29 00:25:34.992726502 +0400
-@@ -0,0 +1,516 @@
+@@ -0,0 +1,514 @@
 +/* Copyright 2001, 2002, 2003 by Hans Reiser, licensing governed by
 + * reiser4/README */
 +
@@ -58473,8 +58381,7 @@ diff -urN linux-2.6.22.orig/fs/reiser4/plugin/object.c linux-2.6.22/fs/reiser4/p
 +			.mmap = mmap_unix_file,
 +			.open = open_unix_file,
 +			.release = release_unix_file,
-+			.fsync = sync_unix_file,
-+			.splice_read = sendfile_unix_file
++			.fsync = sync_unix_file
 +		},
 +		.as_ops = {
 +			.writepage = reiser4_writepage,
@@ -58680,8 +58587,7 @@ diff -urN linux-2.6.22.orig/fs/reiser4/plugin/object.c linux-2.6.22/fs/reiser4/p
 +			.aio_read = generic_file_aio_read,
 +			.mmap = prot_mmap_cryptcompress,
 +			.release = prot_release_cryptcompress,
-+			.fsync = reiser4_sync_common,
-+			.splice_read = prot_sendfile_cryptcompress
++			.fsync = reiser4_sync_common
 +		},
 +		.as_ops = {
 +			.writepage = reiser4_writepage,
