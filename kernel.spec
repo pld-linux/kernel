@@ -117,7 +117,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			1
+%define		_rel			1.1
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20070806
@@ -257,7 +257,8 @@ Patch40:	kernel-layer7.patch
 
 ### End netfilter
 
-# http://www.linuximq.net/patchs/linux-2.6.21-img2.diff
+# http://www.linuximq.net/patchs/ (note 2.6.21 patch is broken here)
+# Use patch from http://www.actusa.net/~linuximq/ because linuximq.net one is broken.
 Patch50:	kernel-imq.patch
 
 # based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.22/reiser4-for-2.6.22-2.patch.gz
