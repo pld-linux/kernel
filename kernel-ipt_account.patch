@@ -354,7 +354,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +/*
 + * Match function. Here we do accounting stuff.
 + */
-+static int
++static bool
 +match(const struct sk_buff *skb,
 +      const struct net_device *in,
 +      const struct net_device *out,
@@ -364,7 +364,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +      const void *matchinfo,
 +      int offset,
 +      unsigned int protoff,
-+      int *hotdrop)
++      bool *hotdrop)
 +{
 +  struct t_ipt_account_info *info = (struct t_ipt_account_info *)matchinfo;
 +  struct t_ipt_account_table *table = info->table;
@@ -372,7 +372,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +  /* Get current time. */
 +  struct timespec now = CURRENT_TIME_SEC;
 +  /* Default we assume no match. */
-+  int ret = 0;
++  bool ret = false;
 +    
 +#ifdef DEBUG_IPT_ACCOUNT  
 +  if (debug) printk(KERN_DEBUG "ipt_account [match]: name = %s\n", table->name);
@@ -415,7 +415,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +    }
 +    write_unlock_bh(&table->stats_lock);
 +    /* Yes, it's a match. */
-+    ret = 1;
++    ret = true;
 +  }
 +  
 +  /* Do the same thing with destination ip address. */
@@ -449,7 +449,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +      }
 +    }
 +    write_unlock_bh(&table->stats_lock);
-+    ret = 1;
++    ret = true;
 +  }
 +  
 +  return ret;
@@ -458,7 +458,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +/*
 + * Checkentry function.
 + */
-+static int
++static bool
 +checkentry(const char *tablename,
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,16)    
 +     const void *ip,
@@ -485,7 +485,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +#ifdef DEBUG_IPT_ACCOUNT  
 +    if (debug) printk(KERN_DEBUG "ipt_account [checkentry]: matchsize %u != %u\n", matchsize, IPT_ALIGN(sizeof(struct t_ipt_account_info)));
 +#endif    
-+    return 0;
++    return false;
 +  }
 +#endif
 +
@@ -494,15 +494,15 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +   */
 +  if (info->netmask < ((~0L << (32 - netmask)) & 0xffffffff)) {
 +    printk(KERN_ERR "ipt_account[checkentry]: too big netmask (increase module 'netmask' parameter).\n");
-+    return 0;
++    return false;
 +  }
 +  if ((info->network & info->netmask) != info->network) {
 +    printk(KERN_ERR "ipt_account[checkentry]: wrong network/netmask.\n");
-+    return 0;
++    return false;
 +  }
 +  if (info->name[0] == '\0') {
 +    printk(KERN_ERR "ipt_account[checkentry]: wrong table name.\n");
-+    return 0;
++    return false;
 +  }
 +
 +  /*
@@ -516,10 +516,10 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +      if (info->table != table) {
 +        printk(KERN_ERR "ipt_account[checkentry]: reloaded rule has invalid table pointer.\n");
 +        up(&ipt_account_mutex);
-+        return 0;
++        return false;
 +      }
 +      up(&ipt_account_mutex);
-+      return 1;
++      return true;
 +    } else {
 +#ifdef DEBUG_IPT_ACCOUNT  
 +      if (debug) printk(KERN_DEBUG "ipt_account [checkentry]: table found, checking.\n");
@@ -535,7 +535,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +         */
 +        ipt_account_table_put(table);
 +        up(&ipt_account_mutex);
-+        return 0;
++        return false;
 +      }
 +#ifdef DEBUG_IPT_ACCOUNT  
 +      if (debug) printk(KERN_DEBUG "ipt_account [checkentry]: table found, reusing.\n");
@@ -555,11 +555,11 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +    info->table = table = ipt_account_table_init(info);
 +    if (!table) {
 +      up(&ipt_account_mutex);
-+      return 0;
++      return false;
 +    }
 +  }
 +  up(&ipt_account_mutex);
-+  return 1;
++  return true;
 +}
 +
 +/*
