@@ -407,14 +407,14 @@ diff -Nru linux-2.6.21.1-orig/drivers/net/imq.c linux-2.6.21.1/drivers/net/imq.c
 +err6:
 +	nf_unregister_hook(&imq_ingress_ipv6);
 +err5:
-+	nf_unregister_queue_handler(PF_INET6);
++	nf_unregister_queue_handler(PF_INET6, &nfqh);
 +err4:
 +	nf_unregister_hook(&imq_egress_ipv6);
 +#endif
 +err3:
 +	nf_unregister_hook(&imq_ingress_ipv4);
 +err2:
-+	nf_unregister_queue_handler(PF_INET);
++	nf_unregister_queue_handler(PF_INET, &nfqh);
 +err1:
 +	return err;
 +}
@@ -423,11 +423,11 @@ diff -Nru linux-2.6.21.1-orig/drivers/net/imq.c linux-2.6.21.1/drivers/net/imq.c
 +{
 +	nf_unregister_hook(&imq_ingress_ipv4);
 +	nf_unregister_hook(&imq_egress_ipv4);
-+	nf_unregister_queue_handler(PF_INET);
++	nf_unregister_queue_handler(PF_INET, &nfqh);
 +#if defined(CONFIG_IPV6) || defined (CONFIG_IPV6_MODULE)
 +	nf_unregister_hook(&imq_ingress_ipv6);
 +	nf_unregister_hook(&imq_egress_ipv6);
-+	nf_unregister_queue_handler(PF_INET6);
++	nf_unregister_queue_handler(PF_INET6, &nfqh);
 +#endif
 +}
 +
@@ -813,14 +813,6 @@ diff -Nru linux-2.6.21.1-orig/net/ipv6/netfilter/ip6t_IMQ.c linux-2.6.21.1/net/i
 diff -Nru linux-2.6.21.1-orig/net/sched/sch_generic.c linux-2.6.21.1/net/sched/sch_generic.c
 --- linux-2.6.21.1-orig/net/sched/sch_generic.c	2007-04-27 21:49:26.000000000 +0000
 +++ linux-2.6.21.1/net/sched/sch_generic.c	2007-06-02 21:43:55.000000000 +0000
-@@ -87,7 +87,6 @@
- 
-    NOTE: Called under dev->queue_lock with locally disabled BH.
- */
--
- static inline int qdisc_restart(struct net_device *dev)
- {
- 	struct Qdisc *q = dev->qdisc;
 @@ -181,6 +180,11 @@
  	return q->q.qlen;
  }
