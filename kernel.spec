@@ -47,6 +47,13 @@
 
 %bcond_with	vs22		# use vserver 2.2 instead of 2.3 (see comment near patch 102)
 
+%bcond_with	single		# do not use paralell make - for easier build process debug 
+				# in a smp environment
+
+%if %{with single}
+%define         __make  /usr/bin/make -j1
+%endif
+
 %{?debug:%define with_verbose 1}
 
 %if %{without grsecurity}
@@ -115,7 +122,7 @@
 %define		_mkvmlinuz_ver		1.3
 
 %define		_basever		2.6.23
-%define		_postver		.8
+%define		_postver		.9
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
@@ -164,7 +171,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	8f5bcde606a910025eebe71d8a237e95
+# Source1-md5:	e6970074cfe21201cc1a55d109facb8a
 %endif
 
 Source3:	kernel-autoconf.h
@@ -259,11 +266,10 @@ Patch40:	kernel-layer7.patch
 
 ### End netfilter
 
-# based on 2.6.17 patch from http://www.linuximq.net/patchs/linux-2.6.17-imq1.diff,
-# some stuff moved from net/sched/sch_generic.c to net/core/dev.c for 2.6.19
-# compatibility. Should work, but not with wrr.
+# based on http://www.linuximq.net/patchs/linux-2.6.21-img2.diff with 2.6.23 fixes
+# some people report problems when using imq with wrr.
 
-Patch50:	linux-2.6.19-imq1.diff
+Patch50:	kernel-imq.patch
 
 # based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.22/reiser4-for-2.6.22-2.patch.gz
 Patch51:	reiser4-for-2.6.22-2.patch
