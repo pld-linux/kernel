@@ -47,12 +47,6 @@
 
 %bcond_with	vs22		# use vserver 2.2 instead of 2.3 (see comment near patch 102)
 
-%bcond_with	single		# do not use parallel make - for easier build process debug 
-
-%if %{with single}
-%define         __make  /usr/bin/make -j1
-%endif
-
 %{?debug:%define with_verbose 1}
 
 %if %{without grsecurity}
