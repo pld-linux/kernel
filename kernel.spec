@@ -183,7 +183,6 @@ Source46:	kernel-xen0.config
 Source47:	kernel-xenU.config
 Source48:	kernel-xen-extra.config
 Source49:	kernel-grsec+pax.config
-Source50:	kernel-openswan.config
 ###
 #	Patches
 ###
@@ -276,10 +275,6 @@ Patch80:	kernel-ahci-sb600.patch
 
 Patch81:	linux-2.6-md.patch
 Patch82:	linux-3w-9xxx.patch
-
-# IPSEC KLIPS
-Patch90:        http://www.openswan.org/download/openswan-2.4.9.kernel-2.6-klips.patch.gz
-Patch91:        http://www.openswan.org/download/openswan-2.4.9.kernel-2.6-natt.patch.gz
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.1.1-rc15.diff
 Patch100:	linux-2.6-vs2.1.patch
@@ -872,9 +867,6 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %patch81 -p1
 %patch82 -p1
 
-%patch90 -p1
-%patch91 -p1
-
 %patch100 -p1
 %patch101 -p1
 %patch102 -p1
@@ -1026,9 +1018,6 @@ BuildConfig() {
 		cat %{SOURCE45} >> arch/%{_target_base_arch}/defconfig
 	%endif
 %endif
-
-	# IPSEC KLIPS
-	cat %{SOURCE50} >> arch/%{_target_base_arch}/defconfig
 
 %if %{with xen0} || %{with xenU}
 	sed -i "s:CONFIG_X86_PC=y:# CONFIG_X86_PC is not set:" arch/%{_target_base_arch}/defconfig
