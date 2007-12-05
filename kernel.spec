@@ -117,7 +117,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			2
+%define		_rel			2.1
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20070806
@@ -242,6 +242,9 @@ Patch20:	kernel-pom-ng-ipp2p.patch
 Patch21:	kernel-pom-ng-time.patch
 Patch22:	kernel-pom-ng-rsh.patch
 Patch23:	kernel-pom-ng-rpc.patch
+
+# http://people.linux-vserver.org/~dhozac/p/k/delta-nsproxy-fix01.diff
+Patch36:	kernel-nsproxy-fix.patch
 
 # http://ftp.linux-vserver.org/pub/people/dhozac/p/k/delta-owner-xid-feat02.diff
 Patch37:	kernel-owner-xid.patch
@@ -899,6 +902,8 @@ install %{SOURCE5} Makefile.ppclibs
 %patch102 -p1
 %else
 %patch100 -p1
+# kernel-nsproxy-fix.patch
+%patch36 -p1
 %endif
 %if %{with suspend2}
 #ifarch %{ix86} %{x8664} ia64
