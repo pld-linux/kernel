@@ -117,7 +117,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			2.1
+%define		_rel			3
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20070806
@@ -273,6 +273,9 @@ Patch52:	wrr-linux-070717-2.6.22.patch
 # esfq from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
 Patch53:	esfq-kernel.patch
 Patch531:	esfq-kernel-2.6.22-rc5.diff
+
+# update htb to 2.6.23 version (fixes handling larger packets than 1600)
+Patch532:	linux-htb.patch
 
 # http://memebeam.org/free-software/toshiba_acpi/toshiba_acpi-dev_toshiba_test5-linux_2.6.21.patch
 Patch54:	linux-2.6-toshiba_acpi.patch
@@ -869,6 +872,9 @@ install %{SOURCE5} Makefile.ppclibs
 # esfq
 %patch53 -p1
 %patch531 -p1
+
+# htb
+%patch532 -p1
 
 %if %{with wrr}
 %patch52 -p1
