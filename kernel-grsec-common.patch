@@ -22,3 +22,62 @@
  #include <linux/grsecurity.h>
  #include <linux/grinternal.h>
  #include <linux/gracl.h>
+===
+=== analogous as capable()
+===
+--- a/kernel/capability.c~	2007-12-11 00:46:02.000000000 +0100
++++ a/kernel/capability.c	2007-12-11 01:35:00.244481500 +0100
+@@ -253,6 +253,8 @@ int __capable(struct task_struct *t, int
+ }
+ int capable_nolog(int cap)
+ {
++	if (vs_check_bit(VXC_CAP_MASK, cap) && !vx_mcaps(1L << cap))
++		return 0;
+ 	if ((security_capable(current, cap) == 0) && gr_is_capable_nolog(cap)) {
+ 		current->flags |= PF_SUPERPRIV;
+ 		return 1;
+===
+=== let vserver block signals before grsec
+===
+--- a/kernel/signal.c	2007-10-02 00:08:49.954483500 +0200
++++ b/kernel/signal.c	2007-10-02 00:24:31.969355750 +0200
+@@ -539,11 +539,11 @@ static int check_kill_permission(int sig
+ 		return error;
+ 
+ 	error = -EPERM;
+-	if ((((sig != SIGCONT) ||
++	if (((sig != SIGCONT) ||
+ 		(process_session(current) != process_session(t)))
+ 	    && (current->euid ^ t->suid) && (current->euid ^ t->uid)
+ 	    && (current->uid ^ t->suid) && (current->uid ^ t->uid)
+-	    && !capable(CAP_KILL)) || gr_handle_signal(t, sig))
++	    && !capable(CAP_KILL))
+ 		return error;
+ 
+ 	error = -ESRCH;
+@@ -553,6 +553,11 @@ static int check_kill_permission(int sig
+ 			sig, info, t, vx_task_xid(t), t->pid, current->xid);
+ 		return error;
+ 	}
++
++	error = -EPERM;
++	if (gr_handle_signal(t, sig))
++		return error;
++
+ skip:
+ 	return security_task_kill(t, info, sig, 0);
+ }
+===
+=== vserver netlink protection
+===
+--- a/security/commoncap.c~	2007-12-10 23:52:36.000000000 +0100
++++ a/security/commoncap.c	2007-12-11 01:43:04.426741000 +0100
+@@ -27,7 +27,7 @@
+ 
+ int cap_netlink_send(struct sock *sk, struct sk_buff *skb)
+ {
+-	cap_t(NETLINK_CB(skb).eff_cap) = gr_cap_rtnetlink();
++	cap_t(NETLINK_CB(skb).eff_cap) = gr_cap_rtnetlink() & vx_mbcap(cap_effective);
+ 	return 0;
+ }
+ 
