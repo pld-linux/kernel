@@ -208,6 +208,7 @@ Source57:	kernel-wrr.config
 ###
 #	Patches
 ###
+Patch1:		kernel-modpost_warn.patch
 
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
 Patch2:		tahoe9xx-2.6.11.5.patch
@@ -763,6 +764,8 @@ install -m 755 %{SOURCE6} .
 %patch72 -p1
 ##endif
 %endif
+
+%patch1 -p1
 
 %patch2 -p1
 
