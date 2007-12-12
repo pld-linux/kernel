@@ -117,7 +117,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			3
+%define		_rel			4
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20070806
@@ -205,6 +205,7 @@ Source57:	kernel-wrr.config
 ###
 #	Patches
 ###
+Patch1:		kernel-modpost_warn.patch
 
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
 Patch2:		tahoe9xx-2.6.11.5.patch
@@ -777,6 +778,7 @@ install %{SOURCE5} Makefile.ppclibs
 ##endif
 %endif
 
+%patch1 -p1
 %patch2 -p1
 
 %patch8 -p1
