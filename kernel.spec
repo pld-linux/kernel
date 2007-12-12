@@ -117,7 +117,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			4
+%define		_rel			5
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20070806
@@ -293,6 +293,9 @@ Patch57:	linux-2.6-cpuset_virtualization.patch
 
 # http://www.ntop.org/PF_RING.html 20070610
 Patch58:	linux-PF_RING.patch
+
+# http://synce.svn.sourceforge.net/svnroot/synce/trunk/patches/linux-2.6.22-rndis_host-wm5.patch
+Patch59:	kernel-rndis_host-wm5.patch
 
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_41.tar.bz2
 Patch60:	linux-2.6-sk98lin_v10.0.4.3.patch
@@ -734,21 +737,6 @@ This is the documentation for the Linux kernel, as found in
 Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 /usr/src/linux/Documentation.
 
-%package net-rndis
-Summary:	cdc_ether, rndis_host and usbnet drivers
-Group:		Base/Kernel
-Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
-Requires:	%{name} = %{epoch}:%{version}-%{release}
-Provides:	kernel-net-rndis = %{epoch}:%{version}-%{release}
-Obsoletes:	kernel-smp-net-rndis
-Obsoletes:	kernel-misc-usb-rndis-lite
-Autoreqprov:	no
-
-%description net-rndis
-Provides cdc_ether, rndis_host and usbnet device driver kernel
-modules. You could consider replacing this package with
-kernel-misc-usb-rndis-lite.
-
 %prep
 %setup -q -n linux-%{_basever}%{_rc} %{?with_abi:-a14}
 
@@ -899,7 +887,11 @@ install %{SOURCE5} Makefile.ppclibs
 %patch57 -p1
 %endif
 
+# linux-PF_RING.patch
 %patch58 -p1
+
+# kernel-rndis_host-wm5.patch
+%patch59 -p1
 
 # linux-2.6-sk98lin_v10.0.4.3.patch
 %patch60 -p1
@@ -1485,12 +1477,6 @@ ln -sf vmlinux-%{kernel_release} /boot/vmlinux
 %postun sound-oss
 %depmod %{kernel_release}
 
-%post net-rndis
-%depmod %{kernel_release}
-
-%postun net-rndis
-%depmod %{kernel_release}
-
 %post headers
 rm -f %{_prefix}/src/linux%{subname}
 ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux%{subname}
@@ -1553,11 +1539,6 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
-%ifnarch sparc
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/usb/cdc_ether.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/usb/rndis_host.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/usb/usbnet.ko*
-%endif
 %ghost /lib/modules/%{kernel_release}/modules.*
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
@@ -1587,14 +1568,6 @@ fi
 /lib/modules/%{kernel_release}/kernel/drivers/serial/serial_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
-%endif
-
-%ifnarch sparc
-%files net-rndis
-%defattr(644,root,root,755)
-/lib/modules/%{kernel_release}/kernel/drivers/net/usb/cdc_ether.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/net/usb/rndis_host.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/net/usb/usbnet.ko*
 %endif
 
 %ifarch ppc-broken
