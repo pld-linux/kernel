@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.22.12 ready
+# STATUS: 2.6.22.14 ready
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
@@ -259,6 +259,9 @@ Patch39:	kernel-ipt_ACCOUNT.patch
 # netfilter-layer7-v2.13.tar.gz from http://l7-filter.sf.net/
 Patch40:	kernel-layer7.patch
 
+# http://www.ssi.bg/~ja/nfct/ipvs-nfct-2.6.22-1.diff
+Patch41:	kernel-ipvs-nfct.patch
+
 ### End netfilter
 
 # http://www.linuximq.net/patchs/ (note 2.6.21 patch is broken here)
@@ -382,6 +385,7 @@ Patch9998:	kernel-pax.patch
 Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
+Patch10002:	kernel-grsec_fixes.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -859,6 +863,9 @@ install %{SOURCE5} Makefile.ppclibs
 # kernel-layer7.patch
 %patch40 -p1
 
+# ipvs-nfct
+%patch41 -p1
+
 ##
 # end of netfilter
 
@@ -959,12 +966,14 @@ install %{SOURCE5} Makefile.ppclibs
 %patch9999 -p1
 %{?with_vserver:%patch10000 -p1}
 %{?with_vserver:%patch10001 -p1}
+%{?with_vserver:%patch10002 -p1}
 %else
 
 %if %{with grsec_full}
 %patch9999 -p1
 %{?with_vserver:%patch10000 -p1}
 %{?with_vserver:%patch10001 -p1}
+%{?with_vserver:%patch10002 -p1}
 %else
 %if %{with grsec_minimal}
 %patch1000 -p1
